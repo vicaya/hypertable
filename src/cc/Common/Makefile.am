@@ -22,4 +22,4 @@ libCommon_la_SOURCES = Logger.cc Init.cc Error.cc FileUtils.cc System.cc Propert
 bin_PROGRAMS = htConvert
 
 htConvert_SOURCES = htConvert.cc
-htConvert_LDADD = libCommon.la
+htConvert_LDADD = libCommon.la -llog4cpp
