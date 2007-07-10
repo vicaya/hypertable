@@ -1,0 +1,12 @@
+<Schema>
+  <AccessGroup name="default">
+    <ColumnFamily>
+      <Name>content</Name>
+      <KeepCopies>-1</KeepCopies>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>language</Name>
+      <ExpireDays>7</ExpireDays>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>

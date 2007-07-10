@@ -1,0 +1,58 @@
+
+
+- Overhaul SSTable
+  x Derive from abstract PersistentTable class
+  x Add FileBlockCache
+  x Add Key range qualifier so that tables can be shared
+  x Make sure tablet split point can be computed properly on a shared SSTable
+  x Make sure DiskUsage reports the proper amount for a shared tablet
+  x Clean up SSTable scanner logic
+
+x Add logic to compute tablet split point
+- Add split log field to METADATA
+- Create a split log reader that can replay HDFS commit log
+- Add logic to poison and cancel scanners
+- Add better split key computation logic (exponential backoff sampler)
+
+- Finish Tablet Server (1 week)
+  - Split processing
+  - Add complete parameters to CREATE SCANNER
+  - Add FETCH SCANBLOCK command
+  - Implement 'InMemory' locality groups
+  - Add support for auto-assigned timestamps
+- Host METADATA using Tablet Server (1 week)
+- Finish Master (2 weeks)
+  - METADATA scan
+  - Garbage collection
+  - Split
+  - Tablet Server UDP Ping
+  - Add table modification command
+- Client library (2 weeks)
+  - Location lookup & cache
+  - Implement Scanner
+  - Implement Mutater
+- Write Hadoop InputFormat class for SSTables (1 week)
+
+- Tablet Server Block Cache
+- Tablet Server Scan Cache
+- Add locks to Placerfs
+- Have Tablet Server lock their tablet files
+
+
+- ConnectionManager
+  - Modify to manage more than one connection
+  - Figure out about situation where a connection goes down, how does the app get notified?
+    When does the retry stop?  When should the connection get dropped?
+
+
+LATER:
+- Add SSTable factory class
+- Add a Readonly() API to TableScanner (or Table)
+- Add ability to mark a Memtable record to be deleted via the scanner
+- Use Findbugs (http://findbugs.sourceforge.net/) to find bugs in
+  Java code.
+
+
+TESTING:
+- Try Restricting a row range by providing the row, column family, but no qualifier
+

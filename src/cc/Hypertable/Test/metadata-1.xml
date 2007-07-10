@@ -1,0 +1,34 @@
+<Metadata>
+  <RangeInfo>
+    <TableName>Webtable</TableName>
+    <StartRow> </StartRow>
+    <EndRow> kerchoo </EndRow>
+    <CellStore> /bigtable/tables/Webtable/default/abcdef0123abcdef0123abcd/ss1234 </CellStore>
+    <CellStore> /bigtable/tables/Webtable/default/abcdef0123abcdef0123abcd/ss9233 </CellStore>
+  </RangeInfo>
+  <RangeInfo>
+    <TableName>Webtable</TableName>
+    <StartRow> kerchoo </StartRow>
+    <EndRow> </EndRow>
+    <CellStore> /bigtable/tables/Webtable/default/abcdef0123abcdef0123abcd/ss2183 </CellStore>
+    <CellStore> /bigtable/tables/Webtable/default/abcdef0123abcdef0123abcd/ss2233 </CellStore>
+  </RangeInfo>
+  <RangeInfo>
+    <TableName>METADATA</TableName>
+    <StartRow> </StartRow>
+    <EndRow> </EndRow>
+    <CellStore> /bigtable/tables/METADATA/default/abcdef0123abcdef0123abcd/ss2233 </CellStore>
+  </RangeInfo>
+  <RangeInfo>
+    <TableName>UserSession</TableName>
+    <StartRow> </StartRow>
+    <EndRow> juggernaut </EndRow>
+    <CellStore> /bigtable/tables/UserSession/default/abcdef0123abcdef0123abcd/ss2233 </CellStore>
+  </RangeInfo>
+  <RangeInfo>
+    <TableName>UserSession</TableName>
+    <StartRow> juggernaut </StartRow>
+    <EndRow> </EndRow>
+    <CellStore> /bigtable/tables/UserSession/default/abcdef0123abcdef0123abcd/ss2233 </CellStore>
+  </RangeInfo>
+</Metadata>

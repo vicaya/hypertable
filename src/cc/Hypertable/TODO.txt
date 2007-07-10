@@ -1,0 +1,95 @@
+
+
+- Add logic to compute tablet split point
+- Add split log field to METADATA
+- Create a split log reader that can replay HDFS commit log
+- Add logic to poison and cancel scanners
+
+
+
+- Finish Tablet Server (1 week)
+  - Split processing
+  - Add complete parameters to CREATE SCANNER
+  - Add FETCH SCANBLOCK command
+  - Implement 'InMemory' locality groups
+  - Add support for auto-assigned timestamps
+- Host METADATA using Tablet Server (1 week)
+- Finish Master (2 weeks)
+  - METADATA scan
+  - Garbage collection
+  - Split
+  - Tablet Server UDP Ping
+  - Add table modification command
+- Client library (2 weeks)
+  - Location lookup & cache
+  - Implement Scanner
+  - Implement Mutater
+- Write Hadoop InputFormat class for SSTables (1 week)
+
+- Tablet Server Block Cache
+- Tablet Server Scan Cache
+- Add locks to Placerfs
+- Have Tablet Server lock their tablet files
+
+
+Rename things:
+- Bigtable
+- 
+
+Add logic to handle the death of a Tablet server (Tablets should get
+re-assigned as "phantom" tablets, the commit log should get replayed
+by the Master into these phantom tablets.  Once the replay is complete,
+the phantom tablets can go live.
+
+add Close() method to SSTable
+
+Plan of Attack
+==============
+- Add logic to keep track of SSTables in METADATA
+- Add bit inside SSTable indicating shared
+- Add scanner (aggregation) logic inside Tablet server
+- Add Create scanner(TabletID, predicate) API
+- Add FetchNextBlock(ScannerID) API
+- Add Update(TabletId, series of updates) API
+- Add Split logic (stubbed out master & METADATA interaction)
+- Copy on write / queue on write
+- Add directory scanning interface to Placerfs
+
+
+FUNCTIONALITY:
+- Add merging compaction
+- Add major compaction
+- Add "Scan Cache"
+- Add SSTable "Block Cache"
+- Add Bloom filter
+- Add user supplied block size to LocalityGroup
+- Add user supplied compression type to LocalityGroup
+- Add locks to Placerfs with UDP refresh mechanism
+- Add access control
+
+- Master
+  - Add TabletServer discovery
+
+- Make CommitLogReader more robust
+
+
+CODE:
+- Add destructor to Schema class
+
+THINGS THAT NEED ATTENTION:
+- How are key/value pairs passed?  What about row/colum deletes?  They have no value, should we pass a NULL value?
+  What about supplying timestamps vs. not supplying timestamps?
+
+DONE:
+- Remove argv[0] argument to Comm constructor
+- Get rid of 'name' attribute of Table element
+- Re-organize Bigtable directory, putting Master and TabletServer in a subdirectory so that
+  the word "Master" does not have to get prefixed on all Master source files and likewise
+  for "TabletServer"
+- Add delete records to SSTable
+- Add normalized scan interface for SSTables and Memtable
+- Add Memtable
+- Add minor compaction
+- Figure out reader_writer mutexes in boost and change Memtable to use them
+- Modify SSTable layout to conform to simple key/value sequence layout
+- Add commit log

@@ -1,0 +1,7 @@
+
+TODO:
+- Get Comm destructor working
+
+DONE:
+- Change order of arguments to Comm::Listen and give defaultHandler parameter
+  a default value of 0

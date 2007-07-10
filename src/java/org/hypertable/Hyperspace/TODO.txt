@@ -1,0 +1,6 @@
+
+TODO:
+- Add 'ls' command
+
+DONE:
+- Delete commented out code in NameServer.java

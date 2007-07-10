@@ -1,0 +1,4 @@
+
+- Make ConnectionManager match c++ version
+- Handle simultaneous connect requests
+- Allow application to pass logger into AsyncComm

@@ -1,0 +1,30 @@
+
+TabletServer API
+
+- AssignTablet
+- Flush
+- Compaction
+
+"zventsmarker"
+4 byte checksum
+4 byte lengthn
+compressed data
+
+[...]
+
+"zventsend"
+
+2 byte rowLen
+row data
+1 byte columnFamily
+2 byte columnQualifier len
+columnQualifier data
+4 byte offset
+
+[...]
+
+4 byte index offset
+4 byte index count
+
+[EOF]
+

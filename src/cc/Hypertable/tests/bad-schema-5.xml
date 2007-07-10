@@ -1,0 +1,13 @@
+<Schema>
+  <AccessGroup name="default">
+    <ColumnFamily>
+      <Name>content</Name>
+      <KeepCopies>1</KeepCopies>
+      <BogusElement>1</BogusElement>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>language</Name>
+      <ExpireDays>7</ExpireDays>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>

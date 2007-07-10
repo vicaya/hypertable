@@ -1,0 +1,18 @@
+<Schema>
+  <AccessGroup name="default">
+    <ColumnFamily>
+      <Name>content</Name>
+      <KeepCopies>3</KeepCopies>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>language</Name>
+      <ExpireDays>1.5</ExpireDays>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="volatile" inMemory="true">
+    <ColumnFamily>
+      <Name>location</Name>
+      <KeepCopies>1</KeepCopies>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>

@@ -1,0 +1,42 @@
+<Schema generation="1">
+  <AccessGroup name="default">
+    <ColumnFamily id="1">
+      <Name>apple</Name>
+        <KeepCopies>1</KeepCopies>
+    </ColumnFamily>
+    <ColumnFamily id="2">
+      <Name>banana</Name>
+        <ExpireDays>1.00</ExpireDays>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="marsha">
+    <ColumnFamily id="3">
+      <Name>onion</Name>
+        <KeepCopies>1</KeepCopies>
+    </ColumnFamily>
+    <ColumnFamily id="4">
+      <Name>cassis</Name>
+        <KeepCopies>5</KeepCopies>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="jan" inMemory="true">
+    <ColumnFamily id="5">
+      <Name>cherry</Name>
+        <KeepCopies>3</KeepCopies>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="cindy">
+    <ColumnFamily id="6">
+      <Name>yam</Name>
+        <KeepCopies>1</KeepCopies>
+    </ColumnFamily>
+    <ColumnFamily id="7">
+      <Name>plum</Name>
+        <KeepCopies>1</KeepCopies>
+    </ColumnFamily>
+    <ColumnFamily id="8">
+      <Name>broccoli</Name>
+        <KeepCopies>1</KeepCopies>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>

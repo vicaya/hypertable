@@ -1,0 +1,168 @@
+
+
+/**
+ * This class provides the abstraction for a (big)Table
+ */
+public class Table {
+
+    /**
+     * Creates a scanner for this table.
+     *
+     * @return table scanner
+     */
+    public TableScanner CreateScanner();
+
+    /**
+     * Creates a mutator for this table.
+     *
+     * @return table mutator
+     */
+     public TableMutator CreateMutator();
+}
+
+
+public class TableMutator {
+
+    /**
+     * This method prepares for setting a contents of a table cell.  It does not
+     * execute the operation, but queues it for later execution via a call to
+     * GroupCommit().  It may kick off background processes such as METADATA table
+     * lookups, etc.
+     *
+     * @param row  The string of bytes that represents the row key (must be < 65K)
+     * @param columnFamily  The column family
+     * @param columnQualifier  The column qualifier (may be null)
+     * @param timestamp  Supplied timestamp (set to zero to auto-assign)
+     * @param value  The string of bytes representing the cell contents
+     * @return  Error code, 0 on success
+     */
+    public int Set(String row, String columnFamily, String columnQualifier, long timestamp, byte [] value);
+
+
+    /**
+     * This method prepares for the removal of a table cell or row.  It does not
+     * execute the operation, but queues it for later execution via a call to
+     * GroupCommit().  It may kick off background processes such as METADATA table
+     * lookups, etc.
+     *
+     * @param row  The string of bytes that represents the row key (must be < 65K)
+     * @param columnFamily  The column family
+     * @param columnQualifier  The column qualifier (may be null)
+     * @return  Error code, 0 on success
+     */
+    void Delete(String row, String columnFamily, String columnQualifier);
+
+    void Increment(String row, String columnFamily, String columnQualifier, long timestamp);
+
+    /**
+     * The method initiates the execution of the modifications previously queued via calls
+     * to either Set() or Delete().  All modifications to a given row will happen atomically.
+     * In other words, the queued modifications for a specific row will either all succeed
+     * or all fail.  If the modifications for a row fail, then those modifications will get
+     * returned in the corresponding call to WaitForResult().
+     *
+     * @return error code, Error.OK on success
+     */
+    int GroupCommit();
+
+
+    /**
+     * This method waits for the result of a GroupCommit operation.  If any of the row
+     * modifications failed, then those modifications will be contained in the result object.
+     *
+     * @return error code, Error.OK on success
+     */
+     int WaitForResult();
+
+};
+
+
+
+/**
+ * This class provides the abstraction for a table scanner
+ */
+public class TableScanner {
+
+    /**
+     * This method configures the scanner to begin with the given row.
+     *
+     * @param row The row to start the scan with
+     */
+    public void SetStartRow(String row);
+
+
+    /**
+     * This method configures the scanner to end with the given row (inclusive).
+     *
+     * @param row The row to start the scan with
+     */
+    public void SetEndRow(String row);
+
+
+    /**
+     * This method configures the scanner to include the cells from the given column family
+     * in the returned results.
+     *
+     * @param columnFamily column family to include in returned
+     */
+    public void AddColumnFamily(String columnFamily);
+
+
+    /**
+     * This method configures the scanner to include rows that match the given regular
+     * expression.  If this method is called multiple times, a row will be accepted
+     * if it matches any of the given regular expressions.  NOTE: for the purposes
+     * of the regular expression match, the row key is interpreted as a sequence of
+     * ASCII characters.
+     *
+     * @param regex Regular expression to apply to row keys
+     */
+    public void AddRowRegex(String regex);
+
+
+    /**
+     * This method configures the scanner to include columns whose column family qualifier
+     * match the given regular expression.  If this method is called multiple times, a
+     * row will be accepted if it matches any of the given regular expressions.  NOTE:
+     * for the purpose of the regular expression match, the column family qualifier is
+     * interpreted as a sequence of ASCII characters.
+     *
+     * @param columnFamily column family to apply regex to
+     * @param regex Regular expression to apply to row keys
+     */
+    public void AddColumnRegex(String columnFamily, string regex);
+
+
+    /**
+     * This method configures the scanner to only include cells that have a timestamp
+     * greater than or equal to startTime and less than endTime.
+     *
+     * @param startTime starting timestamp
+     * @param endTime ending timestamp
+
+     */
+    public void SetTimeInterval(long startTime, long endTime);
+
+    /**
+     * This method configures the scanner to only include the last 'count' versions of
+     * each cell.
+     *
+     * @param count the number of versions to return, 0 indicates all versions
+     */
+    public void SetVersionCount(int count);
+
+    /**
+     * This method starts the scan, returning the first cell.
+     *
+     * @return the first cell of the scan
+     */
+    Cell First();
+
+    /**
+     * This method returns the next cell in the scan.
+     *
+     * @return the next cell in the scan, or null if at the end
+     */
+    Cell Next();
+
+}

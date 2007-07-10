@@ -1,0 +1,19 @@
+
+- Base Directory
+- Name Server
+- Extended Attribute Cache
+
+
+Open(fName);
+Mkdir(dName);
+Delete(name);
+
+CheckSequencer();
+
+Acquire(name, type);
+Release(name, type);
+
+AttrSet(fName, aName, aValue, aValueLen);
+AttrGet(fName, aName);
+AttrDel(fName, aName);
+

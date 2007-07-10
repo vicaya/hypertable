@@ -1,0 +1,55 @@
+
+
+- Close all open files on disconnect
+
+== ERROR ==
+Result:
+<errcode>    - 4 bytes
+<command>    - 2 bytes
+<message>    - 2 byte length + data + 1 byte '\0' terminator
+
+== MKDIR ==
+Request:
+  <command>   - 2 bytes
+  <filename>  - 2 byte length + data + 1 byte '\0' terminator
+Result:
+  Error::OK  - 4 bytes
+  <command>  - 2 bytes
+
+== CREATE ==
+Request:
+  <command>   - 2 bytes
+  <filename>  - 2 byte length + data + 1 byte '\0' terminator
+Result:
+  Error::OK  - 4 bytes
+  <command>  - 2 bytes
+
+== ATTRSET ==
+Request:
+  <command>   - 2 bytes
+  <filename>  - 2 byte length + data + 1 byte '\0' terminator
+  <attrname>  - 2 byte length + data + 1 byte '\0' terminator
+  <attrvalue> - 2 byte length + data + 1 byte '\0' terminator
+Result:
+  Error::OK  - 4 bytes
+  <command>  - 2 bytes
+
+== ATTRGET ==
+Request:
+  <command>   - 2 bytes
+  <filename>  - 2 byte length + data + 1 byte '\0' terminator
+  <attrname>  - 2 byte length + data + 1 byte '\0' terminator
+Result:
+  Error::OK   - 4 bytes
+  <command>   - 2 bytes
+  <attrvalue> - 2 byte length + data + 1 byte '\0' terminator
+
+== ATTRDEL ==
+Request:
+  <command>   - 2 bytes
+  <filename>  - 2 byte length + data + 1 byte '\0' terminator
+  <attrname>  - 2 byte length + data + 1 byte '\0' terminator
+Result:
+  Error::OK  - 4 bytes
+  <command>  - 2 bytes
+

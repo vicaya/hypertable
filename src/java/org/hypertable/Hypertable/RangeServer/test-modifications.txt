@@ -1,0 +1,17 @@
+10000	abacinate	apple:foo	Content 1
+10001	abacinate	banana:foo	Content 2
+10002	abacinate	DELETE
+10003	abacinate	onion:foo	Content 3
+10004	abacinate	cherry:foo	Content 4
+10005	Batonga	cassis:	Content 5
+10006	Batonga	yam:baby	Content 6
+10007	Batonga	yam:baby	DELETE
+10007	Batonga	plum:camel	Content 7
+10008	Batonga	plum:Donald	Content 8
+10009	Batonga	banana:egg	Content 9
+10010	listerine	cassis:	Content 5
+10011	listerine	yam:baby	Content 6
+10012	listerine	yam:baby	DELETE
+10013	listerine	plum:camel	Content 7
+10014	listerine	plum:Donald	Content 8
+10015	listerine	banana:egg	Content 9
