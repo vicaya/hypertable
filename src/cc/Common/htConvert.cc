@@ -74,7 +74,6 @@ namespace {
     std::make_pair("TABLETSERVER", "RANGESERVER"),
     std::make_pair("PLACER", "HYPERTABLE"),
     std::make_pair("Bigtable", "Hypertable"),
-#endif
     std::make_pair("namespace Placer", "namespace hypertable"),
     std::make_pair("namespace Bigtable", "namespace hypertable"),
     std::make_pair("namespace Hdfs", "namespace hypertable"),
@@ -94,6 +93,7 @@ namespace {
     std::make_pair("TabletInfo", "RangeInfo"),
     std::make_pair("TableScanner", "CellSequenceScanner"),
     std::make_pair((const char *)0, (const char *)0)
+#endif
   };
 
   typedef struct {
@@ -109,20 +109,22 @@ namespace {
   };
 
   const char *commentHeader = \
-  "/**\n" 
-  " * Copyright 2007 Doug Judd (Zvents, Inc.)\n"
-  " *\n"
-  " * Licensed under the Apache License, Version 2.0 (the \"License\");\n"
-  " * you may not use this file except in compliance with the License.\n"
-  " * You may obtain a copy of the License at \n"
-  " *\n"
-  " * http://www.apache.org/licenses/LICENSE-2.0 \n"
-  " *\n"
-  " * Unless required by applicable law or agreed to in writing, software\n"
-  " * distributed under the License is distributed on an \"AS IS\" BASIS,\n"
-  " * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n"
-  " * See the License for the specific language governing permissions and\n"
-  " * limitations under the License.\n"
+  "/**\n"
+  " * Copyright (C) 2007 Doug Judd (Zvents, Inc.)\n"
+  " * \n"
+  " * This program is free software; you can redistribute it and/or\n"
+  " * modify it under the terms of the GNU General Public License\n"
+  " * as published by the Free Software Foundation; either version 2\n"
+  " * of the License, or any later version.\n"
+  " * \n"
+  " * This program is distributed in the hope that it will be useful,\n"
+  " * but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+  " * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+  " * GNU General Public License for more details.\n"
+  " * \n"
+  " * You should have received a copy of the GNU General Public License\n"
+  " * along with this program; if not, write to the Free Software\n"
+  " * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.\n"
   " */\n";
 
   bool ConvertFile(const char *fname, string &convertedContents) {

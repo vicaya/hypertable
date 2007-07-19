@@ -66,13 +66,13 @@ void System::Initialize(const char *argv0) {
 
   string::size_type pos = installDir.rfind("/bin/");
   if (pos == string::npos) {
-    string::size_type pos = installDir.rfind("/.libs/");
-    if (pos == string::npos) {
-      cerr << "Unable to determine installation directory (" << installDir << ")" << endl;
-      exit(1);
-    }
+    string::size_type pos = installDir.rfind("/");
+    if (pos == string::npos)
+      installDir = ".";
     else
       installDir.erase(pos);
+    cerr << "WARNING: " << executableName << " does not appear to have been run from an installation." << endl;
+    cerr << "WARNING: Using '" << installDir << "' as the installation directory" << endl;
   }
   else
     installDir.erase(pos);

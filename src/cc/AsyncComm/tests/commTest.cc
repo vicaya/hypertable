@@ -1,23 +1,19 @@
-/*
- * commTest.cc
- *
- * $Id$
- *
- * This file is part of Placer.
- *
- * Placer is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser Public License as published by
- * the Free Software Foundation; either version 2.1 of the License, or
- * any later version.
- *
- * Placer is distributed in the hope that it will be useful,
+/**
+ * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser Public License for more details.
- *
- * You should have received a copy of the GNU Lesser Public License
- * along with Placer; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
 extern "C" {
@@ -42,7 +38,7 @@ extern "C" {
 
 #include "CommTestThreadFunction.h"
 
-using namespace Placer;
+using namespace hypertable;
 
 namespace {
   const char *usage[] = {
@@ -111,19 +107,19 @@ int main(int argc, char **argv) {
 
   CommTestThreadFunction threadFunc(comm, addr, "/usr/share/dict/words");
 
-  threadFunc.SetOutputFile("tests/commTest.output.1");
+  threadFunc.SetOutputFile("commTest.output.1");
   thread1 = new boost::thread(threadFunc);
 
-  threadFunc.SetOutputFile("tests/commTest.output.2");
+  threadFunc.SetOutputFile("commTest.output.2");
   thread2 = new boost::thread(threadFunc);
 
   thread1->join();
   thread2->join();
 
-  if (system("diff /usr/share/dict/words tests/commTest.output.1"))
+  if (system("diff /usr/share/dict/words commTest.output.1"))
     return 1;
 
-  if (system("diff tests/commTest.output.1 tests/commTest.output.2"))
+  if (system("diff commTest.output.1 commTest.output.2"))
     return 1;
 
   return 0;

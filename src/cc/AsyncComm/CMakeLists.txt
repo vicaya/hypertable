@@ -1,0 +1,33 @@
+#
+# Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# 
+
+add_library (AsyncComm CallbackHandlerSynchronizer.cc Comm.cc ConnectionManager.cc Event.cc IOHandler.cc IOHandlerAccept.cc IOHandlerData.cc Message.cc MessageBuilder.cc Protocol.cc Reactor.cc ReactorFactory.cc ReactorRunner.cc RequestCache.cc )
+
+# sampleClient
+add_executable (sampleClient sampleClient.cc)
+target_link_libraries (sampleClient pthread boost_thread Common AsyncComm log4cpp)
+
+# testServer
+add_executable (testServer testServer.cc)
+target_link_libraries (testServer pthread boost_thread Common AsyncComm log4cpp)
+
+# commTest
+add_executable (commTest tests/commTest.cc tests/CommTestThreadFunction.cc)
+target_link_libraries (commTest pthread boost_thread Common AsyncComm log4cpp expat)
+
+ADD_TEST(AsyncComm commTest)
