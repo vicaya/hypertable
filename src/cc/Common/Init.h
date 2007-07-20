@@ -22,4 +22,4 @@
 extern void __attribute__ ((constructor)) Util_init(void);
 extern void __attribute__ ((destructor)) Util_fini(void);
 
-#endif INIT_H
+#endif // INIT_H

@@ -18,7 +18,6 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-using namespace std;
 
 extern "C" {
 #include <errno.h>
@@ -35,6 +34,7 @@ extern "C" {
 #include "Logger.h"
 
 using namespace hypertable;
+using namespace std;
 
 /**
  */

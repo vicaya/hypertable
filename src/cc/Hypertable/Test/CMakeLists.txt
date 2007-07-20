@@ -20,4 +20,4 @@ add_library (Test Metadata.cc)
 
 # MetadataTest
 add_executable (MetadataTest MetadataTest.cc)
-target_link_libraries (MetadataTest pthread boost_thread Common AsyncComm log4cpp expat Test)
+target_link_libraries (MetadataTest pthread boost_thread Test AsyncComm Common log4cpp expat)

@@ -20,10 +20,10 @@ add_library (HdfsClient HdfsClient.cc HdfsProtocol.cc)
 
 # testClient
 add_executable (testClient testClient.cc CommandCopyFromLocal.cc CommandCopyToLocal.cc CommandRemove.cc CommandShutdown.cc CommandLength.cc CommandMkdirs.cc Global.cc)
-target_link_libraries (testClient pthread boost_thread Common AsyncComm HdfsClient log4cpp)
+target_link_libraries (testClient pthread boost_thread HdfsClient AsyncComm Common log4cpp)
 
 # hdfsTest
 add_executable (hdfsTest CommandCopyFromLocal.cc CommandCopyToLocal.cc CommandRemove.cc CommandShutdown.cc CommandLength.cc CommandMkdirs.cc Global.cc tests/hdfsTest.cc tests/HdfsTestThreadFunction.cc)
-target_link_libraries (hdfsTest pthread boost_thread Common AsyncComm HdfsClient log4cpp)
+target_link_libraries (hdfsTest pthread boost_thread HdfsClient AsyncComm Common log4cpp)
 
 add_test (HdfsClient hdfsTest)

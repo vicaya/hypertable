@@ -18,6 +18,6 @@
 
 # Hypertable.Master
 add_executable (Hypertable.Master Master.cc ConnectionHandler.cc Global.cc MasterProtocol.cc CreateDirectoryLayout.cc RequestFactory.cc RequestCreateTable.cc RequestGetSchema.cc ../Schema.cc)
-target_link_libraries (Hypertable.Master pthread boost_thread Common AsyncComm Hyperspace HdfsClient log4cpp expat)
+target_link_libraries (Hypertable.Master pthread boost_thread Hyperspace HdfsClient AsyncComm Common log4cpp expat)
 
 install (TARGETS Hypertable.Master RUNTIME DESTINATION bin)

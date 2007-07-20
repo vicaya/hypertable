@@ -100,7 +100,7 @@ CommitLogReaderLocal::CommitLogReaderLocal(std::string &logDirRoot, std::string 
       exit(1);
     }
 
-    if (statbuf.st_size < sizeof(CommitLogHeaderT))
+    if (statbuf.st_size < (off_t)sizeof(CommitLogHeaderT))
       continue;
 
     if ((fd = open(mLogFileInfo[i].fname.c_str(), O_RDONLY)) == -1) {
