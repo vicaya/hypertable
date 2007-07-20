@@ -32,21 +32,21 @@ class TestData {
     /**
      * Load content vector
      */
-    if (stat("tests/shakespeare.txt", &statbuf) != 0) {
-      if (stat("tests/shakespeare.txt.gz", &statbuf) != 0) {
-	LOG_VA_ERROR("Unable to stat file 'tests/shakespeare.txt.gz' : %s", strerror(errno));
+    if (stat("shakespeare.txt", &statbuf) != 0) {
+      if (stat("shakespeare.txt.gz", &statbuf) != 0) {
+	LOG_VA_ERROR("Unable to stat file 'shakespeare.txt.gz' : %s", strerror(errno));
 	harness.DisplayErrorAndExit();
       }
-      if (system("gunzip tests/shakespeare.txt.gz")) {
-	LOG_ERROR("Unable to decompress file 'tests/shakespeare.txt.gz'");
+      if (system("gunzip shakespeare.txt.gz")) {
+	LOG_ERROR("Unable to decompress file 'shakespeare.txt.gz'");
 	harness.DisplayErrorAndExit();
       }
-      if (stat("tests/shakespeare.txt", &statbuf) != 0) {
-	LOG_VA_ERROR("Unable to stat file 'tests/shakespeare.txt' : %s", strerror(errno));
+      if (stat("shakespeare.txt", &statbuf) != 0) {
+	LOG_VA_ERROR("Unable to stat file 'shakespeare.txt' : %s", strerror(errno));
 	harness.DisplayErrorAndExit();
       }
     }
-    if ((contentData = FileUtils::FileToBuffer("tests/shakespeare.txt", &len)) == 0)
+    if ((contentData = FileUtils::FileToBuffer("shakespeare.txt", &len)) == 0)
       harness.DisplayErrorAndExit();
     base = contentData;
     while ((ptr = strstr(base, "\n\n")) != 0) {
@@ -62,21 +62,21 @@ class TestData {
     /**
      * Load words vector
      */
-    if (stat("tests/words", &statbuf) != 0) {
-      if (stat("tests/words.gz", &statbuf) != 0) {
-	LOG_VA_ERROR("Unable to stat file 'tests/words.gz' : %s", strerror(errno));
+    if (stat("words", &statbuf) != 0) {
+      if (stat("words.gz", &statbuf) != 0) {
+	LOG_VA_ERROR("Unable to stat file 'words.gz' : %s", strerror(errno));
 	harness.DisplayErrorAndExit();
       }
-      if (system("gunzip tests/words.gz")) {
-	LOG_ERROR("Unable to decompress file 'tests/words.gz'");
+      if (system("gunzip words.gz")) {
+	LOG_ERROR("Unable to decompress file 'words.gz'");
 	harness.DisplayErrorAndExit();
       }
-      if (stat("tests/words", &statbuf) != 0) {
-	LOG_VA_ERROR("Unable to stat file 'tests/words' : %s", strerror(errno));
+      if (stat("words", &statbuf) != 0) {
+	LOG_VA_ERROR("Unable to stat file 'words' : %s", strerror(errno));
 	harness.DisplayErrorAndExit();
       }
     }
-    if ((wordData = FileUtils::FileToBuffer("tests/words", &len)) == 0)
+    if ((wordData = FileUtils::FileToBuffer("words", &len)) == 0)
       harness.DisplayErrorAndExit();
     base = strtok_r(wordData, "\n\r", &last);
     while (base) {
@@ -91,21 +91,21 @@ class TestData {
     /**
      * Load urls vector
      */
-    if (stat("tests/urls.txt", &statbuf) != 0) {
-      if (stat("tests/urls.txt.gz", &statbuf) != 0) {
-	LOG_VA_ERROR("Unable to stat file 'tests/urls.txt.gz' : %s", strerror(errno));
+    if (stat("urls.txt", &statbuf) != 0) {
+      if (stat("urls.txt.gz", &statbuf) != 0) {
+	LOG_VA_ERROR("Unable to stat file 'urls.txt.gz' : %s", strerror(errno));
 	harness.DisplayErrorAndExit();
       }
-      if (system("gunzip tests/urls.txt.gz")) {
-	LOG_ERROR("Unable to decompress file 'tests/urls.txt.gz'");
+      if (system("gunzip urls.txt.gz")) {
+	LOG_ERROR("Unable to decompress file 'urls.txt.gz'");
 	harness.DisplayErrorAndExit();
       }
-      if (stat("tests/urls.txt", &statbuf) != 0) {
-	LOG_VA_ERROR("Unable to stat file 'tests/urls.txt' : %s", strerror(errno));
+      if (stat("urls.txt", &statbuf) != 0) {
+	LOG_VA_ERROR("Unable to stat file 'urls.txt' : %s", strerror(errno));
 	harness.DisplayErrorAndExit();
       }
     }
-    if ((urlData = FileUtils::FileToBuffer("tests/urls.txt", &len)) == 0)
+    if ((urlData = FileUtils::FileToBuffer("urls.txt", &len)) == 0)
       harness.DisplayErrorAndExit();
     base = strtok_r(urlData, "\n\r", &last);
     while (base) {

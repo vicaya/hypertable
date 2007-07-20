@@ -19,7 +19,7 @@
 set ( SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Hypertable/RangeServer" )
 set ( DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Hypertable/RangeServer" )
 
-set ( TEST_DEPENDENCIES ${SRC_DIR}/tests/shakespeare.txt ${SRC_DIR}/tests/words ${SRC_DIR}/tests/urls.txt ${DST_DIR}/tests )
+set ( TEST_DEPENDENCIES ${DST_DIR}/shakespeare.txt ${DST_DIR}/words ${DST_DIR}/urls.txt ${DST_DIR}/tests )
 
 set ( RangeServer_SRCS
 AccessGroup.cc
@@ -90,19 +90,19 @@ target_link_libraries (commitLogReaderTest pthread boost_thread Common log4cpp)
 # Get test environment setup
 #
 add_custom_command (SOURCE ${SRC_DIR}/tests/urls.txt.gz
-                    COMMAND gzip ARGS -d ${SRC_DIR}/tests/urls.txt.gz
-                    OUTPUT ${SRC_DIR}/tests/urls.txt)
+                    COMMAND cp ARGS ${SRC_DIR}/tests/urls.txt.gz ${DST_DIR}
+                    COMMAND gzip ARGS -d ${DST_DIR}/urls.txt.gz
+                    OUTPUT ${DST_DIR}/urls.txt)
 add_custom_command (SOURCE ${SRC_DIR}/tests/words.gz
-                    COMMAND gzip ARGS -d ${SRC_DIR}/tests/words.gz
-                    OUTPUT ${SRC_DIR}/tests/words)
+                    COMMAND cp ARGS ${SRC_DIR}/tests/words.gz ${DST_DIR}
+                    COMMAND gzip ARGS -d ${DST_DIR}/words.gz
+                    OUTPUT ${DST_DIR}/words)
 add_custom_command (SOURCE ${SRC_DIR}/tests/shakespeare.txt.gz
-                    COMMAND gzip ARGS -d ${SRC_DIR}/tests/shakespeare.txt.gz
-                    OUTPUT ${SRC_DIR}/tests/shakespeare.txt)
+                    COMMAND cp ARGS ${SRC_DIR}/tests/shakespeare.txt.gz ${DST_DIR}
+                    COMMAND gzip ARGS -d ${DST_DIR}/shakespeare.txt.gz
+                    OUTPUT ${DST_DIR}/shakespeare.txt)
 add_custom_command (SOURCE ${SRC_DIR}/tests
-                    COMMAND mkdir ARGS ${DST_DIR}/tests
-                    COMMAND ln ARGS -s ${SRC_DIR}/tests/shakespeare.txt ${DST_DIR}/tests/shakespeare.txt
-                    COMMAND ln ARGS -s ${SRC_DIR}/tests/urls.txt ${DST_DIR}/tests/urls.txt
-                    COMMAND ln ARGS -s ${SRC_DIR}/tests/words ${DST_DIR}/tests/words
+                    COMMAND ln ARGS -s ${SRC_DIR}/tests ${DST_DIR}/tests
                     OUTPUT ${DST_DIR}/tests)
 
 add_test (CellStoreTest cellStoreTest)
