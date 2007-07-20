@@ -42,8 +42,6 @@ add_subdirectory (src/cc/Hypertable/Test)
 add_subdirectory (src/cc/Hypertable/Master)
 add_subdirectory (src/cc/Hypertable/RangeServer)
 
-set (CMAKE_INSTALL_PREFIX "/Users/doug/test")
-
 install (FILES demo/metadata-test.xml DESTINATION demo)
 install (FILES demo/testdata.txt.bz2 DESTINATION demo)
 install (FILES demo/Test.xml DESTINATION demo)
@@ -53,4 +51,8 @@ install (FILES lib/hadoop-0.12.2-core.jar DESTINATION java/lib)
 install (FILES lib/junit-4.3.1.jar DESTINATION java/lib)
 install (FILES lib/log4j-1.2.13.jar DESTINATION java/lib)
 install (FILES build/hypertable.jar DESTINATION java/lib)
+install (FILES bin/jrun 
+         PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+	 DESTINATION bin)
 
+set (CMAKE_INSTALL_PREFIX "/Users/doug/install")
