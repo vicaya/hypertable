@@ -51,12 +51,12 @@ namespace hypertable {
     virtual bool NextBlock(CommitLogHeaderT **blockp);
 
   private:
-    std::string            mLogDir;
-    vector<LogFileInfoT>   mLogFileInfo;
-    uint64_t               mCutoffTime;
-    size_t                 mCurLogOffset;
-    FILE                  *mFp;
-    DynamicBuffer          mBlockBuffer;
+    std::string               mLogDir;
+    std::vector<LogFileInfoT> mLogFileInfo;
+    uint64_t                  mCutoffTime;
+    size_t                    mCurLogOffset;
+    FILE                     *mFp;
+    DynamicBuffer             mBlockBuffer;
   };
 }
 

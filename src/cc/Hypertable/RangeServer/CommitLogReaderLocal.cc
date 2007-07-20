@@ -31,6 +31,7 @@ extern "C" {
 #include "CommitLogReaderLocal.h"
 
 using namespace hypertable;
+using namespace std;
 
 /**
  *

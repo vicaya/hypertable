@@ -55,8 +55,8 @@ namespace hypertable {
     void AddScanner(CellListScanner *scanner);
 
   private:
-    vector<CellListScanner *>  mScanners;
-    priority_queue<ScannerStateT, vector<ScannerStateT>, ltScannerState> mQueue;
+    std::vector<CellListScanner *>  mScanners;
+    std::priority_queue<ScannerStateT, std::vector<ScannerStateT>, ltScannerState> mQueue;
     bool          mDeletePresent;
     DynamicBuffer mDeletedRow;
     uint64_t      mDeletedRowTimestamp;
