@@ -16,14 +16,14 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
 
-add_library (Common Error.cc FileUtils.cc Init.cc Logger.cc Properties.cc System.cc Usage.cc md5.cc)
+add_library (HdfsClient HdfsClient.cc HdfsProtocol.cc)
 
-add_executable (htConvert htConvert.cc)
+# testClient
+add_executable (testClient testClient.cc CommandCopyFromLocal.cc CommandCopyToLocal.cc CommandRemove.cc CommandShutdown.cc CommandLength.cc CommandMkdirs.cc Global.cc)
+target_link_libraries (testClient pthread boost_thread Common AsyncComm HdfsClient log4cpp)
 
-# Link the executable to the Common library.
-target_link_libraries (htConvert Common log4cpp)
+# hdfsTest
+add_executable (hdfsTest CommandCopyFromLocal.cc CommandCopyToLocal.cc CommandRemove.cc CommandShutdown.cc CommandLength.cc CommandMkdirs.cc Global.cc tests/hdfsTest.cc tests/HdfsTestThreadFunction.cc)
+target_link_libraries (hdfsTest pthread boost_thread Common AsyncComm HdfsClient log4cpp)
 
-install (TARGETS Common
-         RUNTIME DESTINATION bin
-         LIBRARY DESTINATION lib
-         ARCHIVE DESTINATION lib/static)
+add_test (HdfsClient hdfsTest)

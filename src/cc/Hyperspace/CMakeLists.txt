@@ -16,14 +16,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
 
-add_library (Common Error.cc FileUtils.cc Init.cc Logger.cc Properties.cc System.cc Usage.cc md5.cc)
+add_library (Hyperspace HyperspaceClient.cc HyperspaceProtocol.cc)
 
-add_executable (htConvert htConvert.cc)
+# hsClient - Hyperspace client program
+add_executable (hsClient tests/hyperspace.cc tests/CommandCreate.cc tests/CommandMkdirs.cc tests/CommandAttrSet.cc tests/CommandAttrGet.cc tests/CommandAttrDel.cc tests/CommandExists.cc)
+target_link_libraries (hsClient pthread boost_thread Common AsyncComm log4cpp Hyperspace)
 
-# Link the executable to the Common library.
-target_link_libraries (htConvert Common log4cpp)
-
-install (TARGETS Common
-         RUNTIME DESTINATION bin
-         LIBRARY DESTINATION lib
-         ARCHIVE DESTINATION lib/static)
+install (TARGETS hsClient RUNTIME DESTINATION bin)

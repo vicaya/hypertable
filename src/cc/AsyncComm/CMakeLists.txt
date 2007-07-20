@@ -30,4 +30,9 @@ target_link_libraries (testServer pthread boost_thread Common AsyncComm log4cpp)
 add_executable (commTest tests/commTest.cc tests/CommTestThreadFunction.cc)
 target_link_libraries (commTest pthread boost_thread Common AsyncComm log4cpp expat)
 
-ADD_TEST(AsyncComm commTest)
+add_test (AsyncComm commTest)
+
+install (TARGETS AsyncComm
+         RUNTIME DESTINATION bin
+         LIBRARY DESTINATION lib
+         ARCHIVE DESTINATION lib/static)

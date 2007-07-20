@@ -87,20 +87,20 @@ int main(int argc, char **argv) {
   HdfsTestThreadFunction threadFunc(addr, "/usr/share/dict/words");
 
   threadFunc.SetHdfsFile("/RegressionTests/hdfs/output.a");
-  threadFunc.SetOutputFile("tests/output.a");
+  threadFunc.SetOutputFile("output.a");
   thread1 = new boost::thread(threadFunc);
 
   threadFunc.SetHdfsFile("/RegressionTests/hdfs/output.b");
-  threadFunc.SetOutputFile("tests/output.b");
+  threadFunc.SetOutputFile("output.b");
   thread2 = new boost::thread(threadFunc);
 
   thread1->join();
   thread2->join();
 
-  if (system("diff /usr/share/dict/words tests/output.a"))
+  if (system("diff /usr/share/dict/words output.a"))
     return 1;
 
-  if (system("diff tests/output.a tests/output.b"))
+  if (system("diff output.a output.b"))
     return 1;
 
   return 0;

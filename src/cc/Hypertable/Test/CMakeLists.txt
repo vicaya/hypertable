@@ -16,14 +16,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
 
-add_library (Common Error.cc FileUtils.cc Init.cc Logger.cc Properties.cc System.cc Usage.cc md5.cc)
+add_library (Test Metadata.cc)
 
-add_executable (htConvert htConvert.cc)
-
-# Link the executable to the Common library.
-target_link_libraries (htConvert Common log4cpp)
-
-install (TARGETS Common
-         RUNTIME DESTINATION bin
-         LIBRARY DESTINATION lib
-         ARCHIVE DESTINATION lib/static)
+# MetadataTest
+add_executable (MetadataTest MetadataTest.cc)
+target_link_libraries (MetadataTest pthread boost_thread Common AsyncComm log4cpp expat Test)

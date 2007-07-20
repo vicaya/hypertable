@@ -16,14 +16,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
 
-add_library (Common Error.cc FileUtils.cc Init.cc Logger.cc Properties.cc System.cc Usage.cc md5.cc)
+# Hypertable.Master
+add_executable (Hypertable.Master Master.cc ConnectionHandler.cc Global.cc MasterProtocol.cc CreateDirectoryLayout.cc RequestFactory.cc RequestCreateTable.cc RequestGetSchema.cc ../Schema.cc)
+target_link_libraries (Hypertable.Master pthread boost_thread Common AsyncComm Hyperspace HdfsClient log4cpp expat)
 
-add_executable (htConvert htConvert.cc)
-
-# Link the executable to the Common library.
-target_link_libraries (htConvert Common log4cpp)
-
-install (TARGETS Common
-         RUNTIME DESTINATION bin
-         LIBRARY DESTINATION lib
-         ARCHIVE DESTINATION lib/static)
+install (TARGETS Hypertable.Master RUNTIME DESTINATION bin)

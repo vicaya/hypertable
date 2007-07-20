@@ -44,16 +44,16 @@ namespace {
     0
   };
   const char *badSchemas[] = {
-    "tests/bad-schema-1.xml",
-    "tests/bad-schema-2.xml",
-    "tests/bad-schema-3.xml",
-    "tests/bad-schema-4.xml",
-    "tests/bad-schema-5.xml",
-    "tests/bad-schema-6.xml",
-    "tests/bad-schema-7.xml",
-    "tests/bad-schema-8.xml",
-    "tests/bad-schema-9.xml",
-    "tests/good-schema-1.xml",
+    "bad-schema-1.xml",
+    "bad-schema-2.xml",
+    "bad-schema-3.xml",
+    "bad-schema-4.xml",
+    "bad-schema-5.xml",
+    "bad-schema-6.xml",
+    "bad-schema-7.xml",
+    "bad-schema-8.xml",
+    "bad-schema-9.xml",
+    "good-schema-1.xml",
     0
   };
 }
@@ -117,9 +117,9 @@ int main(int argc, char **argv) {
   delete schema;
 
   if (!golden)
-    harness.ValidateAndExit("tests/schemaTest.golden");
+    harness.ValidateAndExit("schemaTest.golden");
 
-  harness.RegenerateGoldenFile("tests/schemaTest.golden");
+  harness.RegenerateGoldenFile("schemaTest.golden");
 
   return 0;
 }
