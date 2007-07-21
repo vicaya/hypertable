@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-
 #ifndef HYPERTABLE_CONNECTIONHANDLER_H
 #define HYPERTABLE_CONNECTIONHANDLER_H
 
+#include "Common/WorkQueue.h"
 #include "AsyncComm/CallbackHandler.h"
 
-#include "RequestFactory.h"
+#include "Master.h"
 
 namespace hypertable {
 
@@ -28,11 +28,13 @@ namespace hypertable {
    */
   class ConnectionHandler : public CallbackHandler {
   public:
-
+    ConnectionHandler(Comm *comm, WorkQueue *workQueue, Master *master) : mComm(comm), mWorkQueue(workQueue), mMaster(master) { return; }
     virtual void handle(Event &event);
 
   private:
-    RequestFactory  mRequestFactory;
+    Comm       *mComm;
+    WorkQueue  *mWorkQueue;
+    Master     *mMaster;
   };
 
 }

@@ -14,30 +14,34 @@
  * limitations under the License.
  */
 
-
-#ifndef HYPERTABLE_REQUESTGETSCHEMA_H
-#define HYPERTABLE_REQUESTGETSCHEMA_H
+#ifndef HYPERTABLE_REQUESTHANDLERCREATETABLE_H
+#define HYPERTABLE_REQUESTHANDLERCREATETABLE_H
 
 #include "Common/Runnable.h"
+
+#include "AsyncComm/Comm.h"
 #include "AsyncComm/Event.h"
 
 using namespace hypertable;
 
 namespace hypertable {
 
-  class RequestGetSchema : public Runnable {
+  class Master;
+
+  class RequestHandlerCreateTable : public Runnable {
   public:
-    RequestGetSchema(Event &event) : mEvent(event) {
+    RequestHandlerCreateTable(Comm *comm, Master *master, Event &event) : mComm(comm), mMaster(master), mEvent(event) {
       return;
     }
 
     virtual void run();
 
   private:
-    Event mEvent;
+    Comm   *mComm;
+    Master *mMaster;
+    Event   mEvent;
   };
 
 }
 
-#endif // HYPERTABLE_REQUESTGETSCHEMA_H
-
+#endif // HYPERTABLE_REQUESTHANDLERCREATETABLE_H

@@ -14,29 +14,23 @@
  * limitations under the License.
  */
 
+#ifndef HYPERTABLE_RESPONSECALLBACKGETSCHEMA_H
+#define HYPERTABLE_RESPONSECALLBACKGETSCHEMA_H
 
-#ifndef HYPERTABLE_REQUESTCREATETABLE_H
-#define HYPERTABLE_REQUESTCREATETABLE_H
+#include "Common/Error.h"
 
-#include "Common/Runnable.h"
-#include "AsyncComm/Event.h"
-
-using namespace hypertable;
+#include "AsyncComm/CommBuf.h"
+#include "AsyncComm/ResponseCallback.h"
 
 namespace hypertable {
 
-  class RequestCreateTable : public Runnable {
+  class ResponseCallbackGetSchema : public ResponseCallback {
   public:
-    RequestCreateTable(Event &event) : mEvent(event) {
-      return;
-    }
-
-    virtual void run();
-
-  private:
-    Event mEvent;
+    ResponseCallbackGetSchema(Comm *comm, Event &event) : ResponseCallback(comm, event) { return; }
+    int response(const char *schema);
   };
 
 }
 
-#endif // HYPERTABLE_REQUESTCREATETABLE_H
+
+#endif // HYPERTABLE_RESPONSECALLBACKGETSCHEMA_H

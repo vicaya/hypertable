@@ -14,18 +14,35 @@
  * limitations under the License.
  */
 
+#ifndef HYPERTABLE_REQUESTHANDLERGETSCHEMA_H
+#define HYPERTABLE_REQUESTHANDLERGETSCHEMA_H
 
-#include "Global.h"
+#include "Common/Runnable.h"
+
+#include "AsyncComm/Event.h"
 
 using namespace hypertable;
 
-Comm             *Global::comm = 0;
-Properties       *Global::props = 0;
-WorkQueue        *Global::workQueue;
-HyperspaceClient *Global::hyperspace = 0;
-HdfsClient       *Global::hdfsClient = 0;
-MasterProtocol   *Global::protocol = 0;
-atomic_t          Global::lastTableId = ATOMIC_INIT(1);
-bool              Global::verbose = false;
-std::vector< boost::shared_ptr<RangeServerInfoT> > Global::rangeServerInfo;
-atomic_t          Global::nextServer = ATOMIC_INIT(0);
+namespace hypertable {
+
+  class Comm;
+  class Master;
+
+  class RequestHandlerGetSchema : public Runnable {
+  public:
+    RequestHandlerGetSchema(Comm *comm, Master *master, Event &event) : mComm(comm), mMaster(master), mEvent(event) {
+      return;
+    }
+
+    virtual void run();
+
+  private:
+    Comm   *mComm;
+    Master *mMaster;
+    Event   mEvent;
+  };
+
+}
+
+#endif // HYPERTABLE_REQUESTHANDLERGETSCHEMA_H
+

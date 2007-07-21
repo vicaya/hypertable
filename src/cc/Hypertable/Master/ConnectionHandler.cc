@@ -16,14 +16,15 @@
 
 
 #include "Common/Error.h"
+#include "Common/Exception.h"
+#include "Common/StringExt.h"
 
-#include "AsyncComm/MessageBuilderSimple.h"
-
-#include "Global.h"
 #include "ConnectionHandler.h"
+#include "MasterProtocol.h"
+#include "RequestHandlerCreateTable.h"
+#include "RequestHandlerGetSchema.h"
 
 using namespace hypertable;
-
 
 /**
  *
@@ -32,6 +33,7 @@ void ConnectionHandler::handle(Event &event) {
   short command = -1;
 
   if (event.type == Event::MESSAGE) {
+    Runnable *requestHandler = 0;
 
     //event.Display()
 
@@ -41,24 +43,35 @@ void ConnectionHandler::handle(Event &event) {
 	throw new ProtocolException(message);
       }
       memcpy(&command, event.message, sizeof(int16_t));
-      Global::workQueue->AddRequest( mRequestFactory.newInstance(event, command) );
+
+      // sanity check command code
+      if (command < 0 || command >= MasterProtocol::COMMAND_MAX) {
+	std::string message = (std::string)"Invalid command (" + command + ")";
+	throw ProtocolException(message);
+      }
+
+      switch (command) {
+      case MasterProtocol::COMMAND_CREATE_TABLE:
+	requestHandler = new RequestHandlerCreateTable(mComm, mMaster, event);
+	break;
+      case MasterProtocol::COMMAND_GET_SCHEMA:
+	requestHandler = new RequestHandlerGetSchema(mComm, mMaster, event);
+	break;
+      default:
+	std::string message = (string)"Command code " + command + " not implemented";
+	throw ProtocolException(message);
+      }
+      mWorkQueue->AddRequest( requestHandler );
     }
     catch (ProtocolException &e) {
-      MessageBuilderSimple mbuilder;
-
+      ResponseCallback cb(mComm, event);
+      std::string errMsg = e.what();
       LOG_VA_ERROR("Protocol error '%s'", e.what());
-
-      // Build error message
-      CommBuf *cbuf = Global::protocol->CreateErrorMessage(command, Error::PROTOCOL_ERROR, e.what(), mbuilder.HeaderLength());
-
-      // Encapsulate with Comm message response header
-      mbuilder.LoadFromMessage(event.header);
-      mbuilder.Encapsulate(cbuf);
-
-      Global::comm->SendResponse(event.addr, cbuf);
+      cb.error(Error::PROTOCOL_ERROR, errMsg);
     }
   }
   else if (event.type == Event::DISCONNECT) {
+    // do something here!!!
     LOG_VA_INFO("%s : Closing all open handles", event.toString().c_str());
   }
   else {

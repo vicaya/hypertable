@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-
 #ifndef HYPERTABLE_CREATEDIRECTORYLAYOUT_H
 #define HYPERTABLE_CREATEDIRECTORYLAYOUT_H
 
 namespace hypertable {
-  bool CreateDirectoryLayout();
+  class Properties;
+  class Comm;
+  bool CreateDirectoryLayout(Comm *comm, Properties *props);
 }
 
 #endif // HYPERTABLE_CREATEDIRECTORYLAYOUT_H

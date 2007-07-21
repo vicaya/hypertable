@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-
 #include "Common/Error.h"
 #include "Common/Logger.h"
+#include "Common/Properties.h"
+#include "AsyncComm/Comm.h"
+#include "Hyperspace/HyperspaceClient.h"
 
 #include "CreateDirectoryLayout.h"
-#include "Global.h"
 
 extern "C" {
 #include <stdint.h>
@@ -27,15 +28,23 @@ extern "C" {
 
 using namespace hypertable;
 
-bool hypertable::CreateDirectoryLayout() {
+bool hypertable::CreateDirectoryLayout(Comm *comm, Properties *props) {
+  HyperspaceClient *hyperspace;
   int error;
+
+  hyperspace = new HyperspaceClient(comm, props);
+
+  if (!hyperspace->WaitForConnection()) {
+    LOG_ERROR("Unable to connect to hyperspace, exiting...");
+    exit(1);
+  }
 
   /**
    * Create /hypertable/servers directory
    */
-  error = Global::hyperspace->Exists("/hypertable/servers");
+  error = hyperspace->Exists("/hypertable/servers");
   if (error == Error::HYPERTABLEFS_FILE_NOT_FOUND) {
-    if ((error = Global::hyperspace->Mkdirs("/hypertable/servers")) != Error::OK) {
+    if ((error = hyperspace->Mkdirs("/hypertable/servers")) != Error::OK) {
       LOG_VA_ERROR("Problem creating hyperspace directory '/hypertable/servers' - %s", Error::GetText(error));
       return false;
     }
@@ -47,9 +56,9 @@ bool hypertable::CreateDirectoryLayout() {
   /**
    * Create /hypertable/tables directory
    */
-  error = Global::hyperspace->Exists("/hypertable/tables");
+  error = hyperspace->Exists("/hypertable/tables");
   if (error == Error::HYPERTABLEFS_FILE_NOT_FOUND) {
-    if (Global::hyperspace->Mkdirs("/hypertable/tables") != Error::OK)
+    if (hyperspace->Mkdirs("/hypertable/tables") != Error::OK)
       return false;
   }
   else if (error != Error::OK)
@@ -59,9 +68,9 @@ bool hypertable::CreateDirectoryLayout() {
   /**
    * Create /hypertable/master directory
    */
-  error = Global::hyperspace->Exists("/hypertable/master");
+  error = hyperspace->Exists("/hypertable/master");
   if (error == Error::HYPERTABLEFS_FILE_NOT_FOUND) {
-    if (Global::hyperspace->Mkdirs("/hypertable/master") != Error::OK)
+    if (hyperspace->Mkdirs("/hypertable/master") != Error::OK)
       return false;
   }
   else if (error != Error::OK)
@@ -70,9 +79,9 @@ bool hypertable::CreateDirectoryLayout() {
   /**
    * Create /hypertable/meta directory
    */
-  error = Global::hyperspace->Exists("/hypertable/meta");
+  error = hyperspace->Exists("/hypertable/meta");
   if (error == Error::HYPERTABLEFS_FILE_NOT_FOUND) {
-    if (Global::hyperspace->Mkdirs("/hypertable/meta") != Error::OK)
+    if (hyperspace->Mkdirs("/hypertable/meta") != Error::OK)
       return false;
   }
   else if (error != Error::OK)
@@ -81,7 +90,7 @@ bool hypertable::CreateDirectoryLayout() {
   /**
    * 
    */
-  if ((error = Global::hyperspace->AttrSet("/hypertable/meta", "last_table_id", "0")) != Error::OK)
+  if ((error = hyperspace->AttrSet("/hypertable/meta", "last_table_id", "0")) != Error::OK)
     return false;
 
   return true;

@@ -14,34 +14,21 @@
  * limitations under the License.
  */
 
+#include "Common/Error.h"
 
-#ifndef HYPERTABLE_REQUESTFACTORY_H
-#define HYPERTABLE_REQUESTFACTORY_H
+#include "AsyncComm/CommBuf.h"
 
-#include "Common/Exception.h"
-#include "Common/Runnable.h"
-#include "Common/StringExt.h"
-
-#include "MasterProtocol.h"
+#include "ResponseCallbackGetSchema.h"
 
 using namespace hypertable;
 
-/**
- * Forward declarations
- */
-namespace hypertable {
-  class Event;
+int ResponseCallbackGetSchema::response(const char *schema) {
+  CommBuf *cbuf = new CommBuf(mBuilder.HeaderLength() + 6 + CommBuf::EncodedLength(schema));
+  cbuf->PrependString(schema);
+  cbuf->PrependShort(0); // fix me!!!
+  cbuf->PrependInt(Error::OK);
+  mBuilder.LoadFromMessage(mEvent.header);
+  mBuilder.Encapsulate(cbuf);
+  return mComm->SendResponse(mEvent.addr, cbuf);
+  // do we need to delete cbuf on error?
 }
-
-
-namespace hypertable {
-
-  class RequestFactory {
-  public:
-    Runnable *newInstance(Event &event, short command) throw(ProtocolException);
-  };
-
-}
-
-
-#endif // HYPERTABLE_REQUESTFACTORY_H

@@ -14,148 +14,45 @@
  * limitations under the License.
  */
 
+#include "Hypertable/Schema.h"
 
-#include <string>
-
-#include <boost/shared_array.hpp>
-
-extern "C" {
-#include <string.h>
-}
-
-#include "Common/Error.h"
-#include "Common/Logger.h"
-#include "Common/Properties.h"
-#include "Common/StringExt.h"
-#include "Common/System.h"
-#include "Common/Usage.h"
-#include "Common/WorkQueue.h"
-
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/ConnectionHandlerFactory.h"
-#include "AsyncComm/ConnectionManager.h"
-#include "AsyncComm/ReactorFactory.h"
-
-#include "ConnectionHandler.h"
-#include "CreateDirectoryLayout.h"
-#include "Global.h"
-#include "MasterProtocol.h"
+#include "Master.h"
 
 using namespace hypertable;
 using namespace std;
 
+Master::Master(Comm *comm, Properties *props) : mComm(comm), mVerbose(false), mHyperspace(0), mHdfsClient(0) {
 
-namespace {
-  const char *usage[] = {
-    "usage: Hypertable.Master [OPTIONS]",
-    "",
-    "OPTIONS:",
-    "  --config=<file>  Read configuration from <file>.  The default config file is",
-    "                   \"conf/hypertable.cfg\" relative to the toplevel install directory",
-    "  --initialize     Create directories and files required for Master operation in",
-    "                   hyperspace",
-    "  --help           Display this help text and exit",
-    "  --verbose,-v     Generate verbose output",
-    ""
-    "This program is the Hypertable master server.",
-    (const char *)0
-  };
-  const int DEFAULT_PORT              = 38548;
-  const int DEFAULT_RANGESERVER_PORT  = 38549;
-  const int DEFAULT_WORKERS           = 20;
+  mHyperspace = new HyperspaceClient(comm, props);
 
-  bool LoadRangeServerVector(const char *rangeServers);
-}
-
-
-
-/**
- *
- */
-class HandlerFactory : public ConnectionHandlerFactory {
-public:
-  CallbackHandler *newInstance() {
-    return new ConnectionHandler();
-  }
-};
-
-
-
-/**
- * 
- */
-int main(int argc, char **argv) {
-  string configFile = "";
-  bool initialize = false;
-  int port, reactorCount, workerCount;
-  int exitValue = 1;
-  const char *rangeServers;
-
-  System::Initialize(argv[0]);
-  
-  if (argc > 1) {
-    for (int i=1; i<argc; i++) {
-      if (!strncmp(argv[i], "--config=", 9))
-	configFile = &argv[i][9];
-      else if (!strcmp(argv[i], "--initialize"))
-	initialize = true;
-      else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
-	Global::verbose = true;
-      else
-	Usage::DumpAndExit(usage);
-    }
+  if (!mHyperspace->WaitForConnection()) {
+    LOG_ERROR("Unable to connect to hyperspace, exiting...");
+    exit(1);
   }
 
-  if (configFile == "")
-    configFile = System::installDir + "/conf/hypertable.cfg";
-
-  Global::props = new Properties(configFile);
-
-  port = Global::props->getPropertyInt("Hypertable.Master.port", DEFAULT_PORT);
-  workerCount = Global::props->getPropertyInt("Hypertable.Master.workers", DEFAULT_WORKERS);
-  reactorCount = Global::props->getPropertyInt("Hypertable.Master.reactors", System::GetProcessorCount());
-  rangeServers = Global::props->getProperty("Hypertable.Master.rangeServers", (const char *)0);
-
-  // process range servers ...
-  if (!LoadRangeServerVector(rangeServers))
-    goto done;
-
-  if (Global::verbose) {
-    cout << "CPU count = " << System::GetProcessorCount() << endl;
-    cout << "Hypertable.Master.port=" << port << endl;
-    cout << "Hypertable.Master.workers=" << workerCount << endl;
-    cout << "Hypertable.Master.reactors=" << reactorCount << endl;
-  }
-
-  ReactorFactory::Initialize(reactorCount);
-
-  Global::comm = new Comm(0);
-  Global::protocol = new MasterProtocol();
-  Global::hyperspace = new HyperspaceClient(Global::comm, Global::props);
-
-  if (!Global::hyperspace->WaitForConnection())
-    goto done;
+  mVerbose = props->getPropertyBool("verbose", false);
 
   /**
    * Create HDFS Client connection
    */
   {
     struct sockaddr_in addr;
-    const char *host = Global::props->getProperty("HdfsBroker.Server.host", 0);
-    if (host == 0) {
-      cerr << "HdfsBroker.Server.host property not specified" << endl;
-      goto done;
+    const char *host;
+    int port;
+
+    if ((host = props->getProperty("HdfsBroker.Server.host", 0)) == 0) {
+      LOG_ERROR("HdfsBroker.Server.host property not specified");
+      exit(1);
     }
 
-    int port = Global::props->getPropertyInt("HdfsBroker.Server.port", 0);
-    if (port == 0) {
-      cerr << "HdfsBroker.Server.port property not specified" << endl;
-      goto done;
+    if ((port = props->getPropertyInt("HdfsBroker.Server.port", 0)) == 0) {
+      LOG_ERROR("HdfsBroker.Server.port property not specified");
+      exit(1);
     }
 
-    if (Global::verbose) {
-      cout << "HdfsBroker.host=" << host << endl;
-      cout << "HdfsBroker.port=" << port << endl;
+    if (mVerbose) {
+      cout << "HdfsBroker.Server.host=" << host << endl;
+      cout << "HdfsBroker.Server.port=" << port << endl;
     }
 
     memset(&addr, 0, sizeof(struct sockaddr_in));
@@ -170,112 +67,241 @@ int main(int argc, char **argv) {
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
 
-    Global::hdfsClient = new HdfsClient(Global::comm, addr, 20);
-    if (!Global::hdfsClient->WaitForConnection(30))
-      goto done;
+    mHdfsClient = new HdfsClient(comm, addr, 20);
+    if (!mHdfsClient->WaitForConnection(30)) {
+      LOG_ERROR("Unable to connect to HdfsBroker, exiting...");
+      exit(1);
+    }
   }
 
-  if (initialize) {
-    Global::workQueue = 0;
-    CreateDirectoryLayout();
-  }
-  else {
+  /* Read Last Table ID */
+  {
+    DynamicBuffer valueBuf(0);
+    int error;
 
-    /* Read Last Table ID */
-    {
-      DynamicBuffer valueBuf(0);
-      int error = Global::hyperspace->AttrGet("/hypertable/meta", "last_table_id", valueBuf);
-      if (error != Error::OK)
-	return error;
-
-      if (valueBuf.fill() == 0) {
-	cerr << "Error:  empty value for attribute 'last_table_id' of file '/hypertable/meta'" << endl;
-	goto done;
-      }
-      else {
-	int ival = strtol((const char *)valueBuf.buf, 0, 0);
-	if (ival == 0 && errno == EINVAL) {
-	  cerr << "Error: problem converting attribute 'last_table_id' (" << (const char *)valueBuf.buf << ") to an integer" << endl;
-	  goto done;
-	}
-	atomic_set(&Global::lastTableId, ival);
-	if (Global::verbose)
-	  cout << "Last Table ID: " << ival << endl;
-      }
+    if ((error = mHyperspace->AttrGet("/hypertable/meta", "last_table_id", valueBuf)) != Error::OK) {
+      LOG_ERROR("/hypertable/meta file not found in hyperspace, exiting...");
+      exit(1);
     }
 
-    Global::workQueue = new WorkQueue(workerCount);
-    Global::comm->Listen(port, new HandlerFactory());
-    Global::workQueue->Join();
+    if (valueBuf.fill() == 0) {
+      LOG_ERROR("Empty value for attribute 'last_table_id' of file '/hypertable/meta' in hyperspace");
+      exit(1);
+    }
+    else {
+      int ival = strtol((const char *)valueBuf.buf, 0, 0);
+      if (ival == 0 && errno == EINVAL) {
+	LOG_VA_ERROR("Problem converting attribute 'last_table_id' (%s) to an integer", (const char *)valueBuf.buf);
+	exit(1);
+      }
+      atomic_set(&mLastTableId, ival);
+      if (mVerbose)
+	cout << "Last Table ID: " << ival << endl;
+    }
   }
 
-  exitValue = 0;
-
- done:
-  delete Global::props;
-  delete Global::protocol;
-  delete Global::workQueue;
-  delete Global::hyperspace;
-  delete Global::comm;
-  return exitValue;
 }
 
-namespace {
+Master::~Master() {
+  delete mHyperspace;
+  delete mHdfsClient;
+}
 
-  bool LoadRangeServerVector(const char *rangeServers) {
-    boost::shared_array<char> data( new char [ strlen(rangeServers) + 1 ] );
-    char *base = data.get();
-    char *ptr, *last;
-    boost::shared_ptr<RangeServerInfoT> rsInfoPtr;
-    int defaultPort;
-    uint16_t port;
-    struct sockaddr_in addr;
-    std::string waitMessage;
-    
-    defaultPort = Global::props->getPropertyInt("Hypertable.RangeServer.port", DEFAULT_RANGESERVER_PORT);
+void Master::CreateTable(ResponseCallback *cb, const char *tableName, const char *schemaString) {
+  int error = Error::OK;
+  std::string finalSchema = "";
+  std::string tableFile = (std::string)"/hypertable/tables/" + tableName;
+  std::string errMsg;
+  string tableBaseDir;
+  string lgDir;
+  Schema *schema = 0;
+  list<Schema::AccessGroup *> *lgList;
 
-    strcpy(base, rangeServers);
-
-    ptr = strtok_r(base, " \t\r\n,", &last);
-    while (ptr != 0) {
-      rsInfoPtr.reset( new RangeServerInfoT );
-
-      base = ptr;
-      ptr = strchr(base, ':');
-      if (ptr != 0) {
-	rsInfoPtr->hostname = std::string(base, ptr-base);
-	port = (uint16_t)atoi(ptr+1);
-      }
-      else {
-	rsInfoPtr->hostname = ptr;
-	port = (uint16_t)defaultPort;
-      }
-
-      memset(&addr, 0, sizeof(struct sockaddr_in));
-      {
-	struct hostent *he = gethostbyname(rsInfoPtr->hostname.c_str());
-	if (he == 0) {
-	  herror("gethostbyname()");
-	  exit(1);
-	}
-	memcpy(&addr.sin_addr.s_addr, he->h_addr_list[0], sizeof(uint32_t));
-      }
-      addr.sin_family = AF_INET;
-      addr.sin_port = htons(port);
-
-      waitMessage = (std::string)"Waiting for RangeServer at " + rsInfoPtr->hostname + ":" + port;
-      rsInfoPtr->connManager = new ConnectionManager(waitMessage);
-
-      rsInfoPtr->connManager->Initiate(Global::comm, addr, 20);
-
-      if (!rsInfoPtr->connManager->WaitForConnection(45))
-	return false;
-
-      Global::rangeServerInfo.push_back(rsInfoPtr);
-      ptr = strtok_r(0, " \t\r\n,", &last);
-    }
-
-    return true;
+  /**
+   * Check for table existence
+   */
+  if ((error = mHyperspace->Exists(tableFile.c_str())) == Error::OK) {
+    errMsg = tableName;
+    error = Error::MASTER_TABLE_EXISTS;
+    goto abort;
+  }
+  else if (error != Error::HYPERTABLEFS_FILE_NOT_FOUND) {
+    errMsg = (std::string)"Problem checking for existence of table file '" + tableFile + "'";
+    goto abort;
   }
 
+  /**
+   *  Parse Schema and assign Generation number and Column ids
+   */
+  schema = Schema::NewInstance(schemaString, strlen(schemaString));
+  if (!schema->IsValid()) {
+    errMsg = schema->GetErrorString();
+    error = Error::MASTER_BAD_SCHEMA;
+    return;
+  }
+  schema->AssignIds();
+  schema->Render(finalSchema);
+
+  /**
+   * Create table file
+   */
+  if ((error = mHyperspace->Create(tableFile.c_str())) != Error::OK) {
+    errMsg = "Problem creating table file '" + tableFile + "'";
+    goto abort;
+  }
+
+
+  /**
+   * Write 'table_id' attribute of table file and 'last_table_id' attribute of /hypertable/meta
+   */
+  {
+    char buf[32];
+    int tableId = atomic_inc_return(&mLastTableId);
+    sprintf(buf, "%d", tableId);
+    if ((error = mHyperspace->AttrSet("/hypertable/meta", "last_table_id", buf)) != Error::OK) {
+      errMsg = "Problem updating attribute 'last_table_id' of file '/hypertable/meta'";
+      goto abort;
+    }
+    if ((error = mHyperspace->AttrSet(tableFile.c_str(), "table_id", buf)) != Error::OK) {
+      errMsg = "Problem creating attribute 'table_id' for table file '" + tableFile + "'";
+      goto abort;
+    }
+  }
+
+
+  /**
+   * Write schema attribute
+   */
+  if ((error = mHyperspace->AttrSet(tableFile.c_str(), "schema", finalSchema.c_str())) != Error::OK) {
+    errMsg = "Problem creating attribute 'schema' for table file '" + tableFile + "'";
+    goto abort;
+  }
+
+  /**
+   * Create /hypertable/tables/<table>/<accessGroup> directories for this table in HDFS
+   */
+  tableBaseDir = (string)"/hypertable/tables/" + tableName + "/";
+  lgList = schema->GetAccessGroupList();
+  for (list<Schema::AccessGroup *>::iterator lgIter = lgList->begin(); lgIter != lgList->end(); lgIter++) {
+    lgDir = tableBaseDir + (*lgIter)->name;
+    if ((error = mHdfsClient->Mkdirs(lgDir.c_str())) != Error::OK) {
+      errMsg = (string)"Problem creating table directory '" + lgDir + "'";
+      goto abort;
+    }
+  }
+
+  cb->response();
+
+  if (mVerbose) {
+    LOG_VA_INFO("Successfully created table '%s'", tableName);
+  }
+
+ abort:
+  delete schema;
+  if (error != Error::OK) {
+    if (mVerbose) {
+      LOG_VA_ERROR("%s '%s'", Error::GetText(error), errMsg.c_str());
+    }
+    cb->error(error, errMsg);
+  }
+}
+
+void Master::GetSchema(ResponseCallbackGetSchema *cb, const char *tableName) {
+  int error = Error::OK;
+  std::string tableFile = (std::string)"/hypertable/tables/" + tableName;
+  std::string errMsg;
+  DynamicBuffer schemaBuf(0);
+
+  /**
+   * Check for table existence
+   */
+  if ((error = mHyperspace->Exists(tableFile.c_str())) != Error::OK) {
+    errMsg = tableName;
+    goto abort;
+  }
+
+  /**
+   * Get schema attribute
+   */
+  if ((error = mHyperspace->AttrGet(tableFile.c_str(), "schema", schemaBuf)) != Error::OK) {
+    errMsg = "Problem getting attribute 'schema' for table file '" + tableFile + "'";
+    goto abort;
+  }
+  
+  cb->response((char *)schemaBuf.buf);
+
+  if (mVerbose) {
+    LOG_VA_INFO("Successfully fetched schema (length=%d) for table '%s'", strlen((char *)schemaBuf.buf), tableName);
+  }
+
+ abort:
+  if (error != Error::OK) {
+    if (mVerbose) {
+      LOG_VA_ERROR("%s '%s'", Error::GetText(error), errMsg.c_str());
+    }
+    cb->error(error, errMsg);
+  }
+  return;
+}
+
+
+
+bool Master::CreateDirectoryLayout() {
+  int error;
+
+  /**
+   * Create /hypertable/servers directory
+   */
+  error = mHyperspace->Exists("/hypertable/servers");
+  if (error == Error::HYPERTABLEFS_FILE_NOT_FOUND) {
+    if ((error = mHyperspace->Mkdirs("/hypertable/servers")) != Error::OK) {
+      LOG_VA_ERROR("Problem creating hyperspace directory '/hypertable/servers' - %s", Error::GetText(error));
+      return false;
+    }
+  }
+  else if (error != Error::OK)
+    return false;
+
+
+  /**
+   * Create /hypertable/tables directory
+   */
+  error = mHyperspace->Exists("/hypertable/tables");
+  if (error == Error::HYPERTABLEFS_FILE_NOT_FOUND) {
+    if (mHyperspace->Mkdirs("/hypertable/tables") != Error::OK)
+      return false;
+  }
+  else if (error != Error::OK)
+    return false;
+
+
+  /**
+   * Create /hypertable/master directory
+   */
+  error = mHyperspace->Exists("/hypertable/master");
+  if (error == Error::HYPERTABLEFS_FILE_NOT_FOUND) {
+    if (mHyperspace->Mkdirs("/hypertable/master") != Error::OK)
+      return false;
+  }
+  else if (error != Error::OK)
+    return false;
+
+  /**
+   * Create /hypertable/meta directory
+   */
+  error = mHyperspace->Exists("/hypertable/meta");
+  if (error == Error::HYPERTABLEFS_FILE_NOT_FOUND) {
+    if (mHyperspace->Mkdirs("/hypertable/meta") != Error::OK)
+      return false;
+  }
+  else if (error != Error::OK)
+    return false;
+
+  /**
+   * 
+   */
+  if ((error = mHyperspace->AttrSet("/hypertable/meta", "last_table_id", "0")) != Error::OK)
+    return false;
+
+  return true;
 }
