@@ -16,36 +16,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "ReactorFactory.h"
-#include "ReactorRunner.h"
+#include "Common/Error.h"
+
+#include "CommBuf.h"
+#include "Protocol.h"
+#include "ResponseCallback.h"
+
 using namespace hypertable;
 
-#include <cassert>
-
-extern "C" {
-#include <signal.h>
+int ResponseCallback::error(int error, std::string &msg) {
+  CommBuf *cbuf = Protocol::CreateErrorMessage(0, error, msg.c_str(), mBuilder.HeaderLength()); // fix me!!!
+  mBuilder.LoadFromMessage(mEvent.header);
+  mBuilder.Encapsulate(cbuf);
+  return mComm->SendResponse(mEvent.addr, cbuf);
 }
 
-vector<Reactor *> ReactorFactory::msReactors;
-atomic_t ReactorFactory::msNextReactor = ATOMIC_INIT(0);
-
-
-
-/**
- * Method to initialize the reactor factory
- *
- * @param reactorCount number of reactors to initialize
- */
-void ReactorFactory::Initialize(uint16_t reactorCount) {
-  Reactor *reactor;
-  ReactorRunner rrunner;
-  signal(SIGPIPE, SIG_IGN);
-  assert(reactorCount > 0);
-  for (uint16_t i=0; i<reactorCount; i++) {
-    reactor = new Reactor();
-    msReactors.push_back(reactor);
-    rrunner.SetReactor(reactor);
-    reactor->threadPtr = new boost::thread(rrunner);
-  }
+int ResponseCallback::response() {
+  CommBuf *cbuf = new CommBuf(mBuilder.HeaderLength() + 6);
+  cbuf->PrependShort(0); // fix me!!!
+  cbuf->PrependInt(Error::OK);
+  mBuilder.LoadFromMessage(mEvent.header);
+  mBuilder.Encapsulate(cbuf);
+  return mComm->SendResponse(mEvent.addr, cbuf);
 }
-

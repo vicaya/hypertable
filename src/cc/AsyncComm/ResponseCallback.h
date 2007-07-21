@@ -16,36 +16,31 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "ReactorFactory.h"
-#include "ReactorRunner.h"
-using namespace hypertable;
+#ifndef HYPERTABLE_RESPONSECALLBACK_H
+#define HYPERTABLE_RESPONSECALLBACK_H
 
-#include <cassert>
+#include <string>
 
-extern "C" {
-#include <signal.h>
+#include "Comm.h"
+#include "Event.h"
+#include "MessageBuilderSimple.h"
+
+namespace hypertable {
+
+  class ResponseCallback {
+
+  public:
+    ResponseCallback(Comm *comm, Event &event) : mComm(comm), mEvent(event) { return; }
+    virtual ~ResponseCallback() { return; }
+    int error(int error, std::string &msg);
+    int response();
+
+  protected:
+    Comm  *mComm;
+    Event  mEvent;
+    MessageBuilderSimple mBuilder;
+  };
+
 }
 
-vector<Reactor *> ReactorFactory::msReactors;
-atomic_t ReactorFactory::msNextReactor = ATOMIC_INIT(0);
-
-
-
-/**
- * Method to initialize the reactor factory
- *
- * @param reactorCount number of reactors to initialize
- */
-void ReactorFactory::Initialize(uint16_t reactorCount) {
-  Reactor *reactor;
-  ReactorRunner rrunner;
-  signal(SIGPIPE, SIG_IGN);
-  assert(reactorCount > 0);
-  for (uint16_t i=0; i<reactorCount; i++) {
-    reactor = new Reactor();
-    msReactors.push_back(reactor);
-    rrunner.SetReactor(reactor);
-    reactor->threadPtr = new boost::thread(rrunner);
-  }
-}
-
+#endif // HYPERTABLE_RESPONSECALLBACK_H
