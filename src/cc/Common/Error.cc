@@ -48,7 +48,8 @@ namespace {
     { Error::HYPERTABLEFS_CREATE_FAILED,  "HYPERTABLE FS create failed" },
     { Error::HYPERTABLEFS_FILE_NOT_FOUND, "HYPERTABLE FS file not found" },
     { Error::HYPERTABLEFS_ATTR_NOT_FOUND, "HYPERTABLE FS attribute not found" },
-    { Error::BTMASTER_TABLE_EXISTS,       "HYPERTABLE MASTER table exists" },
+    { Error::MASTER_TABLE_EXISTS,         "HYPERTABLE MASTER table exists" },
+    { Error::MASTER_BAD_SCHEMA,           "HYPERTABLE MASTER bad schema" },
     { Error::RANGESERVER_GENERATION_MISMATCH,  "RANGE SERVER generation mismatch" },
     { Error::RANGESERVER_RANGE_ALREADY_LOADED, "RANGE SERVER range already loaded" },
     { Error::RANGESERVER_RANGE_MISMATCH,       "RANGE SERVER range mismatch" },
@@ -95,7 +96,8 @@ const int Error::HYPERTABLEFS_CREATE_FAILED;
 const int Error::HYPERTABLEFS_FILE_NOT_FOUND;
 const int Error::HYPERTABLEFS_ATTR_NOT_FOUND;
 
-const int Error::BTMASTER_TABLE_EXISTS;
+const int Error::MASTER_TABLE_EXISTS;
+const int Error::MASTER_BAD_SCHEMA;
 
 const int Error::RANGESERVER_GENERATION_MISMATCH;
 const int Error::RANGESERVER_RANGE_ALREADY_LOADED;

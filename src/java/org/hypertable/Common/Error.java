@@ -43,7 +43,8 @@ public class Error {
     static public final int HYPERTABLEFS_FILE_NOT_FOUND = 0x00030003;
     static public final int HYPERTABLEFS_ATTR_NOT_FOUND = 0x00030004;
 
-    static public final int BTMASTER_TABLE_EXISTS = 0x00040001;
+    static public final int MASTER_TABLE_EXISTS  = 0x00040001;
+    static public final int MASTER_BAD_SCHEMA    = 0x00040002;
 
     static public final int RANGESERVER_GENERATION_MISMATCH  = 0x00050001;
     static public final int RANGESERVER_RANGE_ALREADY_LOADED = 0x00050002;
@@ -79,7 +80,8 @@ public class Error {
 	mTextMap.put(HYPERTABLEFS_CREATE_FAILED,  "HYPERTABLE FS create failed");
 	mTextMap.put(HYPERTABLEFS_FILE_NOT_FOUND, "HYPERTABLE FS file not found");
 	mTextMap.put(HYPERTABLEFS_ATTR_NOT_FOUND, "HYPERTABLE FS attribute not found");
-	mTextMap.put(BTMASTER_TABLE_EXISTS,       "BIGTABLE MASTER table exists");
+	mTextMap.put(MASTER_TABLE_EXISTS,         "HYPERTABLE MASTER table exists");
+	mTextMap.put(MASTER_TABLE_EXISTS,         "HYPERTABLE MASTER bad schema");
 	mTextMap.put(RANGESERVER_GENERATION_MISMATCH,  "RANGE SERVER generation mismatch");
 	mTextMap.put(RANGESERVER_RANGE_ALREADY_LOADED, "RANGE SERVER tablet already loaded");
 	mTextMap.put(RANGESERVER_RANGE_MISMATCH,       "RANGE SERVER range mismatch");

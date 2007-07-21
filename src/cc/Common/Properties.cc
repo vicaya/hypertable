@@ -32,6 +32,7 @@ extern "C" {
 #include <sys/types.h>
 }
 
+#include "Logger.h"
 #include "Properties.h"
 
 using namespace std;
@@ -41,6 +42,7 @@ using namespace hypertable;
 void Properties::load(const char *fname) throw(std::invalid_argument) {
   struct stat statbuf;
   char *name, *value, *last, *ptr, *lineChars;
+  std::string valueStr;
 
   if (stat(fname, &statbuf) != 0)
     throw std::invalid_argument(string("Could not stat properties file '") + fname + "' - " + string(strerror(errno)));
@@ -94,13 +96,9 @@ void Properties::load(const char *fname) throw(std::invalid_argument) {
 	    continue;
 	}
 
-	char *newName = new char [ strlen(name) + 1 ];
-	strcpy(newName, name);
+	valueStr = value;
 
-	char *newValue = new char [ strlen(value) + 1 ];
-	strcpy(newValue, value);
-
-	mMap[newName] = newValue;
+	mMap[name] = valueStr;
       }
     }
   }
@@ -110,14 +108,14 @@ const char *Properties::getProperty(const char *str) {
   PropertyMapT::iterator iter =  mMap.find(str);
   if (iter == mMap.end())
     return 0;
-  return ((*iter).second);
+  return ((*iter).second.c_str());
 }
 
 const char *Properties::getProperty(const char *str, const char *defaultValue) {
   PropertyMapT::iterator iter =  mMap.find(str);
   if (iter == mMap.end())
     return defaultValue;
-  return ((*iter).second);
+  return ((*iter).second.c_str());
 }
 
 
@@ -132,7 +130,7 @@ int64_t Properties::getPropertyInt64(const char *str, int64_t defaultValue) {
   if (iter == mMap.end())
     return defaultValue;
 
-  for (ptr = (*iter).second; isdigit(*ptr); ptr++)
+  for (ptr = (*iter).second.c_str(); isdigit(*ptr); ptr++)
     ;
 
   uint64_t factor = 1LL;
@@ -147,7 +145,7 @@ int64_t Properties::getPropertyInt64(const char *str, int64_t defaultValue) {
       throw std::invalid_argument(string("Invalid value for integer property '") + str + "' (value=" + (*iter).second + ")");
   }
 
-  string numericStr = string((*iter).second, ptr-(*iter).second);
+  string numericStr = string((*iter).second.c_str(), ptr-(*iter).second.c_str());
 
   int64_t llval = strtoll(numericStr.c_str(), 0, 0);
   if (llval == 0 && errno == EINVAL)
@@ -165,3 +163,31 @@ int Properties::getPropertyInt(const char *str, int defaultValue) {
   return (int)llval;
 }
 
+bool Properties::getPropertyBool(const char *str, bool defaultValue) {
+  PropertyMapT::iterator iter = mMap.find(str);
+  if (iter == mMap.end())
+    return defaultValue;
+
+  if (!strcasecmp((*iter).second.c_str(), "true") || !strcmp((*iter).second.c_str(), "1"))
+    return true;
+  else if (!strcasecmp((*iter).second.c_str(), "false") || !strcmp((*iter).second.c_str(), "0"))
+    return false;
+
+  LOG_VA_ERROR("Invalid value for property '%s' (%s), using default value", str, (*iter).second.c_str());
+
+  return defaultValue;
+}
+
+
+
+std::string Properties::setProperty(const char *key, const char *value) {
+  std::string oldValue;
+
+  PropertyMapT::iterator iter = mMap.find(key);
+  if (iter != mMap.end())
+    oldValue = (*iter).second;
+
+  mMap[key] = value;
+
+  return oldValue;
+}

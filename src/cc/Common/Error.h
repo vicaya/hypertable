@@ -51,7 +51,8 @@ namespace hypertable {
     static const int HYPERTABLEFS_FILE_NOT_FOUND = 0x00030003;
     static const int HYPERTABLEFS_ATTR_NOT_FOUND = 0x00030004;
 
-    static const int BTMASTER_TABLE_EXISTS = 0x00040001;
+    static const int MASTER_TABLE_EXISTS   = 0x00040001;
+    static const int MASTER_BAD_SCHEMA     = 0x00040002;
 
     static const int RANGESERVER_GENERATION_MISMATCH  = 0x00050001;
     static const int RANGESERVER_RANGE_ALREADY_LOADED = 0x00050002;

@@ -1,0 +1,5 @@
+
+- The event object passed to the application by AsyncComm should be a smart pointer
+- Remove command code from response message
+- Fix MessageBuilder stuff.  There are many places that use MessageBuilderSimple::LoadFromMessage, when
+  they should really be using a message builder that knows how to decode the header.

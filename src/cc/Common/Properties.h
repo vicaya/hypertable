@@ -47,14 +47,18 @@ namespace hypertable {
 
     int64_t getPropertyInt64(const char *str, int64_t defaultValue);
 
+    bool getPropertyBool(const char *str, bool defaultValue);
+
     bool containsKey(const char *str) {
       PropertyMapT::iterator iter = mMap.find(str);
       return (iter == mMap.end()) ? false : true;
     }
 
+    std::string setProperty(const char *key, const char *value);
+
   private:
 
-    typedef __gnu_cxx::hash_map<std::string, const char *> PropertyMapT;
+    typedef __gnu_cxx::hash_map<std::string, std::string> PropertyMapT;
 
     PropertyMapT  mMap;
   };
