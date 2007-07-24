@@ -57,6 +57,7 @@ SplitLogMap.cc
 TableInfo.cc
 VerifySchema.cc
 main.cc
+ResponseCallbackCreateScanner.cc
 )
 
 # RangeServer

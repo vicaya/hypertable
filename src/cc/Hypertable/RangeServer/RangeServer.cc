@@ -19,9 +19,12 @@
 #include <cassert>
 #include <string>
 
+#include <boost/shared_array.hpp>
+
 #include "Common/FileUtils.h"
 
 #include "CommitLogLocal.h"
+#include "FillScanBlock.h"
 #include "Global.h"
 #include "MaintenanceThread.h"
 #include "RangeServer.h"
@@ -29,6 +32,10 @@
 
 using namespace hypertable;
 using namespace std;
+
+namespace {
+  const int DEFAULT_SCANBUF_SIZE = 32768;
+}
 
 
 /**
@@ -226,8 +233,9 @@ int RangeServer::DirectoryInitialize(Properties *props) {
 }
 
 
+
 /**
- *
+ * Compact
  */
 void RangeServer::Compact(ResponseCallback *cb, TabletIdentifierT *tablet, uint8_t compactionType, const char *accessGroup) {
   std::string tableFile = (std::string)"/hypertable/tables/" + tablet->tableName;
@@ -248,11 +256,9 @@ void RangeServer::Compact(ResponseCallback *cb, TabletIdentifierT *tablet, uint8
   }
 
   if (Global::verbose) {
-    cout << "Table file = " << tableFile << endl;
+    cout << *tablet;
     cout << "Compaction type = " << (major ? "major" : "minor") << endl;
-    cout << "Access group = \"" << accessGroup << "\"" << endl;
-    cout << "Start row = \"" << tablet->startRow << "\"" << endl;
-    cout << "End row = \"" << tablet->endRow << "\"" << endl;
+    cout << "Access group = \"" << ((accessGroup) ? accessGroup : "[NULL]") << "\"" << endl;
   }
 
   /**
@@ -298,14 +304,9 @@ void RangeServer::Compact(ResponseCallback *cb, TabletIdentifierT *tablet, uint8
   }
 
   if (Global::verbose) {
-    if (accessGroup == 0) {
-      LOG_VA_INFO("Compaction (%s) scheduled for table '%s' start row '%s', all locality groups", 
-		  (major ? "major" : "minor"), tablet->tableName, tablet->startRow);
-    }
-    else {
-      LOG_VA_INFO("Compaction (%s) scheduled for table '%s' start row '%s' access group '%s'",
-		  (major ? "major" : "minor"), tablet->tableName, tablet->startRow, accessGroup);
-    }
+    LOG_VA_INFO("Compaction (%s) scheduled for table '%s' start row '%s' access group '%s'",
+		(major ? "major" : "minor"), tablet->tableName, tablet->startRow,
+		(accessGroup ? accessGroup : "*"));
   }
 
   return;
@@ -315,36 +316,75 @@ void RangeServer::Compact(ResponseCallback *cb, TabletIdentifierT *tablet, uint8
   if ((error = cb->error(error, errMsg)) != Error::OK) {
     LOG_VA_ERROR("Problem sending error response - %s", Error::GetText(error));
   }
-
   return;
 }
 
 
 
+/** 
+ *  CreateScanner
+ */
 void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, TabletIdentifierT *tablet, ScannerSpecT *spec) {
-#if 0
-  cout << "Table name = " << tableName << endl;
-  cout << "Start row  = " << startRow << endl;
-  cout << "End row  = " << endRow << endl;
-  cout << "Table generation = " << generation << endl;
-  for (int32_t i=0; i<columnCount; i++) {
-    cout << "Column = " << (int)columns[i] << endl;
-  }
-  if (startKey != 0) {
-    rowkey = string((const char *)startKey->data, startKey->len);
-    cout << "Start Key = " << rowkey << endl;
-  }
-  else
-    cout << "Start Key = \"\"" << endl;
+  /*
+  string errMsg;
+  int error = Error::OK;
+  CommBuf *cbuf;
+  MessageBuilderSimple mbuilder;
+  string rowkey;
+  string startRow;
+  string endRow;
+  const char *ptr;
+  const uint8_t *columns;
+  int32_t  columnCount;
+  */
 
-  if (endKey != 0) {
-    rowkey = string((const char *)endKey->data, endKey->len);
-    cout << "End Key = " << rowkey << endl;
+  uint8_t *kvBuffer = 0;
+  uint32_t *kvLenp = 0;
+  boost::shared_array<uint8_t> startKeyPtr(0);
+  boost::shared_array<uint8_t> endKeyPtr(0);
+  KeyT          *startKey = 0;
+  KeyT          *endKey = 0;
+  int error = Error::OK;
+  std::string errMsg;
+  std::string tableName = tablet->tableName;
+  TableInfoPtr tableInfoPtr;
+  RangePtr rangePtr;
+  string startRow = tablet->startRow;
+  CellListScannerPtr scannerPtr;
+  bool more = true;
+  std::set<uint8_t> columnFamilies;
+  uint32_t id;
+
+  /**
+   * Load column families set
+   */
+  for (int32_t i=0; i<spec->columnCount; i++)
+    columnFamilies.insert(spec->columns[i]);
+
+  /**
+   * Setup startKey
+   */
+  if (spec->startKey != 0) {
+    startKey = (KeyT *)new uint8_t [ sizeof(int32_t) + strlen(spec->startKey) ];
+    startKey->len = strlen(spec->startKey);
+    memcpy(startKey->data, spec->startKey, startKey->len);
+    startKeyPtr.reset((uint8_t *)startKey);
   }
-  else
-    cout << "End Key = \"\"" << endl;
-  cout << "Start Time = " << startTime << endl;
-  cout << "End Time = " << endTime << endl;
+
+  /** 
+   * Setup endKey
+   */
+  if (spec->endKey != 0) {
+    endKey = (KeyT *)new uint8_t [ sizeof(int32_t) + strlen(spec->endKey) ];
+    endKey->len = strlen(spec->endKey);
+    memcpy(endKey->data, spec->endKey, endKey->len);
+    endKeyPtr.reset((uint8_t *)endKey);
+  }
+
+  if (Global::verbose) {
+    cout << *tablet << endl;
+    cout << *spec << endl;
+  }
 
   if (!Global::GetTableInfo(tableName, tableInfoPtr)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
@@ -361,16 +401,14 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, TabletIdentif
   kvBuffer = new uint8_t [ sizeof(int32_t) + DEFAULT_SCANBUF_SIZE ];
   kvLenp = (uint32_t *)kvBuffer;
 
-  cerr << "About to scan ..." << endl;
-
   rangePtr->LockShareable();
   if (columnFamilies.size() > 0) 
     scannerPtr.reset( rangePtr->CreateScanner(columnFamilies, true) );
   else
     scannerPtr.reset( rangePtr->CreateScanner(true) );
   scannerPtr->RestrictRange(startKey, endKey);
-  if (columnCount > 0)
-    scannerPtr->RestrictColumns(columns, columnCount);
+  if (spec->columnCount > 0)
+    scannerPtr->RestrictColumns(spec->columns, spec->columnCount);
   scannerPtr->Reset();
   more = FillScanBlock(scannerPtr, kvBuffer+sizeof(int32_t), DEFAULT_SCANBUF_SIZE, kvLenp);
   if (more)
@@ -378,48 +416,31 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, TabletIdentif
 
   rangePtr->UnlockShareable();
 
-  cerr << "Finished to scan ..." << endl;
-
-  /**
-   *  Send back data
-   */
-
-  cbuf = new CommBuf(mbuilder.HeaderLength() + 12);
-  cbuf->SetExt(kvBuffer, sizeof(int32_t) + *kvLenp);
-  cbuf->PrependInt(id);   // scanner ID
-  if (more)
-    cbuf->PrependShort(0);
-  else
-    cbuf->PrependShort(1);
-  cbuf->PrependShort(RangeServerProtocol::COMMAND_CREATE_SCANNER);
-  cbuf->PrependInt(Error::OK);
-  mbuilder.LoadFromMessage(mEvent.header);
-  mbuilder.Encapsulate(cbuf);
-  if ((error = Global::comm->SendResponse(mEvent.addr, cbuf)) != Error::OK) {
-    LOG_VA_ERROR("Comm.SendResponse returned '%s'", Error::GetText(error));
-  }
-
-  error = Error::OK;
-
   if (Global::verbose) {
     LOG_VA_INFO("Successfully created scanner on table '%s'", tableName.c_str());
   }
 
- abort:
-  if (error != Error::OK) {
-    if (Global::verbose) {
-      LOG_VA_ERROR("%s '%s'", Error::GetText(error), errMsg.c_str());
-    }
-    cbuf = Global::protocol->CreateErrorMessage(RangeServerProtocol::COMMAND_CREATE_SCANNER, error,
-						errMsg.c_str(), mbuilder.HeaderLength());
-    mbuilder.LoadFromMessage(mEvent.header);
-    mbuilder.Encapsulate(cbuf);
-    if ((error = Global::comm->SendResponse(mEvent.addr, cbuf)) != Error::OK) {
-      LOG_VA_ERROR("Comm.SendResponse returned '%s'", Error::GetText(error));
+  /**
+   *  Send back data
+   */
+  {
+    short moreFlag = more ? 0 : 1;
+    ExtBufferT ext;
+    ext.buf = kvBuffer;
+    ext.len = sizeof(int32_t) + *kvLenp;
+    if ((error = cb->response(moreFlag, id, ext)) != Error::OK) {
+      LOG_VA_ERROR("Problem sending OK response - %s", Error::GetText(error));
     }
   }
+
   return;
-#endif  
+
+ abort:
+  LOG_VA_ERROR("%s '%s'", Error::GetText(error), errMsg.c_str());
+  if ((error = cb->error(error, errMsg)) != Error::OK) {
+    LOG_VA_ERROR("Problem sending error response - %s", Error::GetText(error));
+  }
+  return;
 }
 
 
