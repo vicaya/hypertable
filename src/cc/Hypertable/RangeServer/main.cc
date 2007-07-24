@@ -77,19 +77,19 @@ int main(int argc, char **argv) {
   string configFile = "";
   string metadataFile = "";
   int port, reactorCount, workerCount;
-  bool verbose = false;
   Comm *comm = 0;
   Properties *props = 0;
   RangeServer *rangeServer = 0;
 
   System::Initialize(argv[0]);
+  Global::verbose = false;
   
   if (argc > 1) {
     for (int i=1; i<argc; i++) {
       if (!strncmp(argv[i], "--config=", 9))
 	configFile = &argv[i][9];
       else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
-	verbose = true;
+	Global::verbose = true;
       else if (!strncmp(argv[i], "--metadata=", 11)) {
 	metadataFile = &argv[i][11];
       }
@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
     configFile = System::installDir + "/conf/hypertable.cfg";
 
   props = new Properties(configFile);
-  if (verbose)
+  if (Global::verbose)
     props->setProperty("verbose", "true");
 
   if (metadataFile == "") {
@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
 
   comm = new Comm(0);
 
-  if (verbose) {
+  if (Global::verbose) {
     cout << "CPU count = " << System::GetProcessorCount() << endl;
     cout << "Hypertable.RangeServer.port=" << port << endl;
     cout << "Hypertable.RangeServer.workers=" << workerCount << endl;
