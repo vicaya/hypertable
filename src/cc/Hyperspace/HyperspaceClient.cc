@@ -96,8 +96,8 @@ bool HyperspaceClient::WaitForConnection() {
  * Submit asynchronous 'mkdirs' request
  */
 int HyperspaceClient::Mkdirs(const char *name, CallbackHandler *handler, uint32_t *msgIdp) {
-  CommBuf *cbuf = mProtocol->CreateMkdirsRequest(name);
-  return SendMessage(cbuf, handler, msgIdp);
+  CommBufPtr cbufPtr( mProtocol->CreateMkdirsRequest(name) );
+  return SendMessage(cbufPtr, handler, msgIdp);
 }
 
 
@@ -107,17 +107,15 @@ int HyperspaceClient::Mkdirs(const char *name, CallbackHandler *handler, uint32_
  */
 int HyperspaceClient::Mkdirs(const char *name) {
   CallbackHandlerSynchronizer syncHandler;
-  Event *event = 0;
-  CommBuf *cbuf = mProtocol->CreateMkdirsRequest(name);
-  int error = SendMessage(cbuf, &syncHandler);
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( mProtocol->CreateMkdirsRequest(name) );
+  int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(&event)) {
-      LOG_VA_ERROR("Placerfs 'mkdirs' error, name=%s : %s", name, mProtocol->StringFormatMessage(event).c_str());
-      error = (int)mProtocol->ResponseCode(event);
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("Placerfs 'mkdirs' error, name=%s : %s", name, mProtocol->StringFormatMessage(eventPtr.get()).c_str());
+      error = (int)mProtocol->ResponseCode(eventPtr.get());
     }
   }
-  delete cbuf;
-  delete event;
   return error;
 }
 
@@ -127,8 +125,8 @@ int HyperspaceClient::Mkdirs(const char *name) {
  * Submit asynchronous 'create' request
  */
 int HyperspaceClient::Create(const char *name, CallbackHandler *handler, uint32_t *msgIdp) {
-  CommBuf *cbuf = mProtocol->CreateCreateRequest(name);
-  return SendMessage(cbuf, handler, msgIdp);
+  CommBufPtr cbufPtr( mProtocol->CreateCreateRequest(name) );
+  return SendMessage(cbufPtr, handler, msgIdp);
 }
 
 
@@ -138,17 +136,15 @@ int HyperspaceClient::Create(const char *name, CallbackHandler *handler, uint32_
  */
 int HyperspaceClient::Create(const char *name) {
   CallbackHandlerSynchronizer syncHandler;
-  Event *event = 0;
-  CommBuf *cbuf = mProtocol->CreateCreateRequest(name);
-  int error = SendMessage(cbuf, &syncHandler);
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( mProtocol->CreateCreateRequest(name) );
+  int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(&event)) {
-      LOG_VA_ERROR("Placerfs 'create' error, name=%s : %s", name, mProtocol->StringFormatMessage(event).c_str());
-      error = (int)mProtocol->ResponseCode(event);
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("Placerfs 'create' error, name=%s : %s", name, mProtocol->StringFormatMessage(eventPtr).c_str());
+      error = (int)mProtocol->ResponseCode(eventPtr);
     }
   }
-  delete cbuf;
-  delete event;
   return error;
 }
 
@@ -157,8 +153,8 @@ int HyperspaceClient::Create(const char *name) {
  * Submit asynchronous 'attrset' request
  */
 int HyperspaceClient::AttrSet(const char *fname, const char *aname, const char *avalue, CallbackHandler *handler, uint32_t *msgIdp) {
-  CommBuf *cbuf = mProtocol->CreateAttrSetRequest(fname, aname, avalue);
-  return SendMessage(cbuf, handler, msgIdp);
+  CommBufPtr cbufPtr( mProtocol->CreateAttrSetRequest(fname, aname, avalue) );
+  return SendMessage(cbufPtr, handler, msgIdp);
 }
 
 
@@ -167,17 +163,15 @@ int HyperspaceClient::AttrSet(const char *fname, const char *aname, const char *
  */
 int HyperspaceClient::AttrSet(const char *fname, const char *aname, const char *avalue) {
   CallbackHandlerSynchronizer syncHandler;
-  Event *event = 0;
-  CommBuf *cbuf = mProtocol->CreateAttrSetRequest(fname, aname, avalue);
-  int error = SendMessage(cbuf, &syncHandler);
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( mProtocol->CreateAttrSetRequest(fname, aname, avalue) );
+  int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(&event)) {
-      LOG_VA_ERROR("Placerfs 'attrset' error, fname=%s aname=%s : %s", fname, aname, mProtocol->StringFormatMessage(event).c_str());
-      error = (int)mProtocol->ResponseCode(event);
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("Placerfs 'attrset' error, fname=%s aname=%s : %s", fname, aname, mProtocol->StringFormatMessage(eventPtr).c_str());
+      error = (int)mProtocol->ResponseCode(eventPtr);
     }
   }
-  delete cbuf;
-  delete event;
   return error;
 }
 
@@ -186,8 +180,8 @@ int HyperspaceClient::AttrSet(const char *fname, const char *aname, const char *
  * Submit asynchronous 'attrget' request
  */
 int HyperspaceClient::AttrGet(const char *fname, const char *aname, CallbackHandler *handler, uint32_t *msgIdp) {
-  CommBuf *cbuf = mProtocol->CreateAttrGetRequest(fname, aname);
-  return SendMessage(cbuf, handler, msgIdp);
+  CommBufPtr cbufPtr( mProtocol->CreateAttrGetRequest(fname, aname) );
+  return SendMessage(cbufPtr, handler, msgIdp);
 }
 
 
@@ -197,23 +191,24 @@ int HyperspaceClient::AttrGet(const char *fname, const char *aname, CallbackHand
  */
 int HyperspaceClient::AttrGet(const char *fname, const char *aname, DynamicBuffer &out) {
   CallbackHandlerSynchronizer syncHandler;
-  Event *event = 0;
-  CommBuf *cbuf = mProtocol->CreateAttrGetRequest(fname, aname);
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( mProtocol->CreateAttrGetRequest(fname, aname) );
   out.clear();
-  int error = SendMessage(cbuf, &syncHandler);
+  int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(&event)) {
-      LOG_VA_WARN("Placerfs 'attrget' error, fname=%s aname=%s : %s", fname, aname, mProtocol->StringFormatMessage(event).c_str());
-      error = (int)mProtocol->ResponseCode(event);
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_WARN("Placerfs 'attrget' error, fname=%s aname=%s : %s", fname, aname, mProtocol->StringFormatMessage(eventPtr).c_str());
+      error = (int)mProtocol->ResponseCode(eventPtr);
     }
     else {
-      if (event->messageLen < 9) {
+      if (eventPtr->messageLen < 9) {
 	LOG_VA_ERROR("Placerfs 'attrget' error, fname=%s aname=%s : short response", fname, aname);
 	error = Error::PROTOCOL_ERROR;
       }
       else {
 	const char *avalue;
-	CommBuf::DecodeString(&event->message[6], event->messageLen-6, &avalue);
+	const uint8_t *ptr = eventPtr->message;
+	CommBuf::DecodeString(&ptr[6], eventPtr->messageLen-6, &avalue);
 	if (avalue != 0) {
 	  out.reserve(strlen(avalue)+1);
 	  out.addNoCheck(avalue, strlen(avalue));
@@ -222,8 +217,6 @@ int HyperspaceClient::AttrGet(const char *fname, const char *aname, DynamicBuffe
       }
     }
   }
-  delete cbuf;
-  delete event;
   return error;
 }
 
@@ -232,8 +225,8 @@ int HyperspaceClient::AttrGet(const char *fname, const char *aname, DynamicBuffe
  * Submit asynchronous 'attrdel' request
  */
 int HyperspaceClient::AttrDel(const char *fname, const char *aname, CallbackHandler *handler, uint32_t *msgIdp) {
-  CommBuf *cbuf = mProtocol->CreateAttrDelRequest(fname, aname);
-  return SendMessage(cbuf, handler, msgIdp);
+  CommBufPtr cbufPtr( mProtocol->CreateAttrDelRequest(fname, aname) );
+  return SendMessage(cbufPtr, handler, msgIdp);
 }
 
 
@@ -242,17 +235,15 @@ int HyperspaceClient::AttrDel(const char *fname, const char *aname, CallbackHand
  */
 int HyperspaceClient::AttrDel(const char *fname, const char *aname) {
   CallbackHandlerSynchronizer syncHandler;
-  Event *event = 0;
-  CommBuf *cbuf = mProtocol->CreateAttrDelRequest(fname, aname);
-  int error = SendMessage(cbuf, &syncHandler);
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( mProtocol->CreateAttrDelRequest(fname, aname) );
+  int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(&event)) {
-      LOG_VA_ERROR("Placerfs 'attrdel' error, fname=%s aname=%s : %s", fname, aname, mProtocol->StringFormatMessage(event).c_str());
-      error = (int)mProtocol->ResponseCode(event);
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("Placerfs 'attrdel' error, fname=%s aname=%s : %s", fname, aname, mProtocol->StringFormatMessage(eventPtr).c_str());
+      error = (int)mProtocol->ResponseCode(eventPtr);
     }
   }
-  delete cbuf;
-  delete event;
   return error;
 }
 
@@ -261,8 +252,8 @@ int HyperspaceClient::AttrDel(const char *fname, const char *aname) {
  * Submit asynchronous 'exists' request
  */
 int HyperspaceClient::Exists(const char *name, CallbackHandler *handler, uint32_t *msgIdp) {
-  CommBuf *cbuf = mProtocol->CreateExistsRequest(name);
-  return SendMessage(cbuf, handler, msgIdp);
+  CommBufPtr cbufPtr( mProtocol->CreateExistsRequest(name) );
+  return SendMessage(cbufPtr, handler, msgIdp);
 }
 
 
@@ -271,30 +262,28 @@ int HyperspaceClient::Exists(const char *name, CallbackHandler *handler, uint32_
  */
 int HyperspaceClient::Exists(const char *name) {
   CallbackHandlerSynchronizer syncHandler;
-  Event *event = 0;
-  CommBuf *cbuf = mProtocol->CreateExistsRequest(name);
-  int error = SendMessage(cbuf, &syncHandler);
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( mProtocol->CreateExistsRequest(name) );
+  int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(&event)) {
-      error = (int)mProtocol->ResponseCode(event);
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      error = (int)mProtocol->ResponseCode(eventPtr);
       if (error != Error::HYPERTABLEFS_FILE_NOT_FOUND) {
-	LOG_VA_ERROR("Placerfs 'attrdel' error, fname=%s : %s", name, mProtocol->StringFormatMessage(event).c_str());
+	LOG_VA_ERROR("Placerfs 'attrdel' error, fname=%s : %s", name, mProtocol->StringFormatMessage(eventPtr).c_str());
       }
     }
   }
-  delete cbuf;
-  delete event;
   return error;
 }
 
 
-int HyperspaceClient::SendMessage(CommBuf *cbuf, CallbackHandler *handler, uint32_t *msgIdp) {
+int HyperspaceClient::SendMessage(CommBufPtr &cbufPtr, CallbackHandler *handler, uint32_t *msgIdp) {
   int error;
 
   if (msgIdp)
-    *msgIdp = ((Message::HeaderT *)cbuf->data)->id;
+    *msgIdp = ((Message::HeaderT *)cbufPtr->data)->id;
 
-  if ((error = mComm->SendRequest(mAddr, cbuf, handler)) != Error::OK) {
+  if ((error = mComm->SendRequest(mAddr, cbufPtr, handler)) != Error::OK) {
     LOG_VA_WARN("Comm::SendRequest to %s:%d failed - %s",
 		inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port), Error::GetText(error));
   }

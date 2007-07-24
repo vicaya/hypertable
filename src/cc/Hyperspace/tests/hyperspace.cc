@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
   System::Initialize(argv[0]);
   ReactorFactory::Initialize(1);
 
-  configFile = System::installDir + "/conf/placer.cfg";
+  configFile = System::installDir + "/conf/hypertable.cfg";
 
   for (int i=1; i<argc; i++) {
     if (!strncmp(argv[i], "--config=", 9))
