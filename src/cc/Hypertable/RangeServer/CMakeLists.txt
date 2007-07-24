@@ -58,6 +58,8 @@ TableInfo.cc
 VerifySchema.cc
 main.cc
 ResponseCallbackCreateScanner.cc
+ResponseCallbackFetchScanblock.cc
+ResponseCallbackUpdate.cc
 )
 
 # RangeServer

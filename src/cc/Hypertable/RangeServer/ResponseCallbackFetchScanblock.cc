@@ -16,24 +16,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RESPONSECALLBACKUPDATE_H
-#define HYPERTABLE_RESPONSECALLBACKUPDATE_H
+#include "ResponseCallbackFetchScanblock.h"
 
-#include "Common/Error.h"
+using namespace hypertable;
 
-#include "AsyncComm/CommBuf.h"
-#include "AsyncComm/ResponseCallback.h"
-
-namespace hypertable {
-
-  class ResponseCallbackUpdate : public ResponseCallback {
-  public:
-    ResponseCallbackUpdate(Comm *comm, Event &event) : ResponseCallback(comm, event) { return; }
-    int response(ExtBufferT &ext);
-    using ResponseCallback::response;
-  };
-
+int ResponseCallbackFetchScanblock::response(short moreFlag, int32_t id, ExtBufferT &ext) {
+  CommBuf *cbuf = new CommBuf(mBuilder.HeaderLength() + 12);
+  cbuf->SetExt(ext.buf, ext.len);
+  cbuf->PrependInt(id);   // scanner ID
+  cbuf->PrependShort(moreFlag);
+  cbuf->PrependShort(0); // fix me!!!
+  cbuf->PrependInt(Error::OK);
+  mBuilder.LoadFromMessage(mEvent.header);
+  mBuilder.Encapsulate(cbuf);
+  return mComm->SendResponse(mEvent.addr, cbuf);
 }
-
-
-#endif // HYPERTABLE_RESPONSECALLBACKUPDATE_H
