@@ -51,35 +51,33 @@ namespace {
 
     ResponseHandler() : mQueue(), mMutex(), mCond(), mConnected(true) { return; }
   
-    virtual void handle(Event &event) {
+    virtual void handle(EventPtr &eventPtr) {
       boost::mutex::scoped_lock lock(mMutex);
-      if (event.type == Event::MESSAGE) {
-	Event *newEvent = new Event(event);
-	mQueue.push(newEvent);
-	event.header = 0;
+      if (eventPtr->type == Event::MESSAGE) {
+	mQueue.push(eventPtr);
 	mCond.notify_one();
       }
       else {
-	event.Display();
+	eventPtr->Display();
 	mConnected = false;
 	mCond.notify_one();
       }
     }
 
-    Event *GetResponse() {
+    bool GetResponse(EventPtr &eventPtr) {
       boost::mutex::scoped_lock lock(mMutex);
       while (mQueue.empty()) {
 	mCond.wait(lock);
 	if (mConnected == false)
-	  return 0;
+	  return false;
       }
-      Event *event = mQueue.front();
+      eventPtr = mQueue.front();
       mQueue.pop();
-      return event;
+      return true;
     }
 
   private:
-    queue<Event *>    mQueue;
+    queue<EventPtr>   mQueue;
     boost::mutex      mMutex;
     boost::condition  mCond;
     bool              mConnected;
@@ -91,9 +89,9 @@ namespace {
  *
  */
 void CommTestThreadFunction::operator()() {
-  MessageBuilderSimple *msgBuilder = new MessageBuilderSimple();
+  MessageBuilderSimple mbuilder;
   int error;
-  Event *event;
+  EventPtr eventPtr;
   CommBuf *cbuf;
   int outstanding = 0;
   int maxOutstanding = 50;
@@ -106,14 +104,15 @@ void CommTestThreadFunction::operator()() {
 
   if (infile.is_open()) {
     while (!infile.eof() ) {
-      msgBuilder->Reset(Message::PROTOCOL_NONE);
+      mbuilder.Reset(Message::PROTOCOL_NONE);
       getline (infile,line);
       if (line.length() > 0) {
-	cbuf = new CommBuf(msgBuilder->HeaderLength() + CommBuf::EncodedLength(line));
+	cbuf = new CommBuf(mbuilder.HeaderLength() + CommBuf::EncodedLength(line));
 	cbuf->PrependString(line);
-	msgBuilder->Encapsulate(cbuf);
+	mbuilder.Encapsulate(cbuf);
+	CommBufPtr cbufPtr(cbuf);
 	int retries = 0;
-	while ((error = mComm->SendRequest(mAddr, cbuf, respHandler)) != Error::OK) {
+	while ((error = mComm->SendRequest(mAddr, cbufPtr, respHandler)) != Error::OK) {
 	  if (error == Error::COMM_NOT_CONNECTED) {
 	    if (retries == 5) {
 	      LOG_ERROR("Connection timeout.");
@@ -130,14 +129,14 @@ void CommTestThreadFunction::operator()() {
 	outstanding++;
 
 	if (outstanding  > maxOutstanding) {
-	  if ((event = respHandler->GetResponse()) == 0)
+	  if (!respHandler->GetResponse(eventPtr))
 	    break;
-	  CommBuf::DecodeString(event->message, event->messageLen, &str);
+	  CommBuf::DecodeString(eventPtr->message, eventPtr->messageLen, &str);
 	  if (str != 0)
 	    outfile << str << endl;
 	  else
 	    outfile << "[NULL]" << endl;
-	  delete event;
+	  eventPtr.reset();
 	  outstanding--;
 	}
       }
@@ -149,14 +148,15 @@ void CommTestThreadFunction::operator()() {
     return;
   }
 
-  while (outstanding > 0 && (event = respHandler->GetResponse()) != 0) {
-    CommBuf::DecodeString(event->message, event->messageLen, &str);
+  while (outstanding > 0 && respHandler->GetResponse(eventPtr)) {
+    CommBuf::DecodeString(eventPtr->message, eventPtr->messageLen, &str);
     if (str != 0)
       outfile << str << endl;
     else
       outfile << "[NULL]" << endl;
     //cout << "out = " << outstanding << endl;
-    delete event;
+    eventPtr.reset();
     outstanding--;
   }
+  delete respHandler;
 }

@@ -28,7 +28,10 @@ int ResponseCallback::error(int error, std::string &msg) {
   CommBuf *cbuf = Protocol::CreateErrorMessage(0, error, msg.c_str(), mBuilder.HeaderLength()); // fix me!!!
   mBuilder.LoadFromMessage(mEvent.header);
   mBuilder.Encapsulate(cbuf);
-  return mComm->SendResponse(mEvent.addr, cbuf);
+  {
+    CommBufPtr cbufPtr(cbuf);
+    return mComm->SendResponse(mEvent.addr, cbufPtr);
+  }
 }
 
 int ResponseCallback::response() {
@@ -37,5 +40,8 @@ int ResponseCallback::response() {
   cbuf->PrependInt(Error::OK);
   mBuilder.LoadFromMessage(mEvent.header);
   mBuilder.Encapsulate(cbuf);
-  return mComm->SendResponse(mEvent.addr, cbuf);
+  {
+    CommBufPtr cbufPtr(cbuf);
+    return mComm->SendResponse(mEvent.addr, cbufPtr);
+  }
 }

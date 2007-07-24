@@ -285,12 +285,12 @@ bool IOHandlerData::HandleWriteReadiness() {
 
 
 
-int IOHandlerData::SendMessage(CommBuf *cbuf, CallbackHandler *responseHandler) {
+int IOHandlerData::SendMessage(CommBufPtr &cbufPtr, CallbackHandler *responseHandler) {
   boost::mutex::scoped_lock lock(mMutex);
   int error;
   struct timeval tv;
   bool initiallyEmpty = mSendQueue.empty() ? true : false;
-  Message::HeaderT *mheader = (Message::HeaderT *)cbuf->data;
+  Message::HeaderT *mheader = (Message::HeaderT *)cbufPtr->data;
 
   LOG_ENTER;
 
@@ -303,9 +303,7 @@ int IOHandlerData::SendMessage(CommBuf *cbuf, CallbackHandler *responseHandler) 
   if (responseHandler != 0 && mheader->flags & Message::FLAGS_MASK_REQUEST)
     mReactor->AddRequest(mheader->id, this, responseHandler, tv.tv_sec + mTimeout);
 
-  mSendQueue.push_back(*cbuf);
-  cbuf->buf = 0;
-  cbuf->ext = 0;
+  mSendQueue.push_back(cbufPtr);
 
   if ((error = FlushSendQueue()) != Error::OK)
     return error;
@@ -331,20 +329,20 @@ int IOHandlerData::FlushSendQueue() {
 
   while (!mSendQueue.empty()) {
 
-    CommBuf &cbuf = mSendQueue.front();
+    CommBufPtr &cbufPtr = mSendQueue.front();
 
     count = 0;
     towrite = 0;
-    if (cbuf.dataLen > 0) {
-      vec[0].iov_base = cbuf.data;
-      vec[0].iov_len = cbuf.dataLen;
-      towrite = cbuf.dataLen;
+    if (cbufPtr->dataLen > 0) {
+      vec[0].iov_base = cbufPtr->data;
+      vec[0].iov_len = cbufPtr->dataLen;
+      towrite = cbufPtr->dataLen;
       ++count;
     }
-    if (cbuf.ext != 0) {
-      ssize_t remaining = cbuf.extLen - (cbuf.extPtr - cbuf.ext);
+    if (cbufPtr->ext != 0) {
+      ssize_t remaining = cbufPtr->extLen - (cbufPtr->extPtr - cbufPtr->ext);
       if (remaining > 0) {
-	vec[count].iov_base = cbuf.extPtr;
+	vec[count].iov_base = cbufPtr->extPtr;
 	vec[count].iov_len = remaining;
 	towrite += remaining;
 	++count;
@@ -359,50 +357,50 @@ int IOHandlerData::FlushSendQueue() {
     else if (nwritten < towrite) {
       if (nwritten == 0)
 	break;
-      if (cbuf.dataLen > 0) {
-	if (nwritten < (ssize_t)cbuf.dataLen) {
-	  cbuf.dataLen -= nwritten;
-	  cbuf.data += nwritten;
+      if (cbufPtr->dataLen > 0) {
+	if (nwritten < (ssize_t)cbufPtr->dataLen) {
+	  cbufPtr->dataLen -= nwritten;
+	  cbufPtr->data += nwritten;
 	  break;
 	}
 	else {
-	  nwritten -= cbuf.dataLen;
-	  cbuf.dataLen = 0;
+	  nwritten -= cbufPtr->dataLen;
+	  cbufPtr->dataLen = 0;
 	}
       }
-      if (cbuf.ext != 0) {
-	cbuf.extPtr += nwritten;
+      if (cbufPtr->ext != 0) {
+	cbufPtr->extPtr += nwritten;
 	break;
       }
     }
 
 #if 0
     // write header
-    if (cbuf.dataLen > 0) {
-      nwritten = writen(mSd, cbuf.data, cbuf.dataLen);
+    if (cbufPtr->dataLen > 0) {
+      nwritten = writen(mSd, cbufPtr->data, cbufPtr->dataLen);
       if (nwritten == (ssize_t)-1) {
-	LOG_VA_WARN("write(%d, len=%d) failed : %s", mSd, cbuf.dataLen, strerror(errno));
+	LOG_VA_WARN("write(%d, len=%d) failed : %s", mSd, cbufPtr->dataLen, strerror(errno));
 	return Error::COMM_BROKEN_CONNECTION;
       }
-      cbuf.dataLen -= nwritten;
-      if (nwritten < cbuf.dataLen) {
-	cbuf.data += nwritten;
-	LOG_VA_WARN("Only flushed %d still have %d", nwritten, cbuf.dataLen);
+      cbufPtr->dataLen -= nwritten;
+      if (nwritten < cbufPtr->dataLen) {
+	cbufPtr->data += nwritten;
+	LOG_VA_WARN("Only flushed %d still have %d", nwritten, cbufPtr->dataLen);
 	break;
       }
     }
 
     // write data
-    if (cbuf.ext != 0) {
-      ssize_t remaining = cbuf.extLen - (cbuf.extPtr - cbuf.ext);
+    if (cbufPtr->ext != 0) {
+      ssize_t remaining = cbufPtr->extLen - (cbufPtr->extPtr - cbufPtr->ext);
       if (remaining > 0) {
-	nwritten = writen(mSd, cbuf.extPtr, remaining);
+	nwritten = writen(mSd, cbufPtr->extPtr, remaining);
 	if (nwritten == (ssize_t)-1) {
 	  LOG_VA_WARN("write(%d, len=%d) failed : %s", mSd, remaining, strerror(errno));
 	  return Error::COMM_BROKEN_CONNECTION;
 	}
 	else if (nwritten < remaining) {
-	  cbuf.extPtr += nwritten;
+	  cbufPtr->extPtr += nwritten;
 	  LOG_VA_WARN("Only flushed %d of %d", nwritten, remaining);
 	  break;
 	}

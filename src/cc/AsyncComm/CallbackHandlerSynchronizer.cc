@@ -38,9 +38,9 @@ CallbackHandlerSynchronizer::CallbackHandlerSynchronizer() : mReceiveQueue(), mM
 /**
  *
  */
-void CallbackHandlerSynchronizer::handle(Event &event) {
+void CallbackHandlerSynchronizer::handle(EventPtr &eventPtr) {
   boost::mutex::scoped_lock lock(mMutex);
-  mReceiveQueue.push( new Event(event) );
+  mReceiveQueue.push(eventPtr);
   mCond.notify_one();    
 }
 
@@ -49,19 +49,16 @@ void CallbackHandlerSynchronizer::handle(Event &event) {
 /**
  * 
  */
-bool CallbackHandlerSynchronizer::WaitForReply(Event **eventPtr) {
+bool CallbackHandlerSynchronizer::WaitForReply(EventPtr &eventPtr) {
   boost::mutex::scoped_lock lock(mMutex);
-  Event *event;
 
   while (mReceiveQueue.empty())
     mCond.wait(lock);
-  
-  event = mReceiveQueue.front();
+
+  eventPtr = mReceiveQueue.front();
   mReceiveQueue.pop();
 
-  *eventPtr = event;
-
-  if (event->type == Event::MESSAGE && Protocol::ResponseCode(event) == Error::OK)
+  if (eventPtr->type == Event::MESSAGE && Protocol::ResponseCode(eventPtr.get()) == Error::OK)
     return true;
 
   return false;
@@ -69,48 +66,22 @@ bool CallbackHandlerSynchronizer::WaitForReply(Event **eventPtr) {
 
 
 /**
- * 
- */
-Event *CallbackHandlerSynchronizer::WaitForReply() {
-  boost::mutex::scoped_lock lock(mMutex);
-  Event *event = 0;
-
-  while (mReceiveQueue.empty())
-    mCond.wait(lock);
-  
-  event = mReceiveQueue.front();
-  mReceiveQueue.pop();
-
-  if (event->type == Event::MESSAGE && Protocol::ResponseCode(event) == Error::OK) {
-    delete event;
-    return 0;
-  }
-
-  return event;
-}
-
-
-
-/**
  * @deprecated
  */
-bool CallbackHandlerSynchronizer::WaitForReply(Event **eventPtr, uint32_t id) {
+bool CallbackHandlerSynchronizer::WaitForReply(EventPtr &eventPtr, uint32_t id) {
   boost::mutex::scoped_lock lock(mMutex);
-  Event *event;
 
   while (true) {
 
     while (mReceiveQueue.empty())
       mCond.wait(lock);
   
-    event = mReceiveQueue.front();
+    eventPtr = mReceiveQueue.front();
     mReceiveQueue.pop();
 
-    if (event->type == Event::MESSAGE && event->header->id == id) {
-      *eventPtr = event;
+    if (eventPtr->type == Event::MESSAGE && eventPtr->header->id == id)
       break;
-    }
-    else if (event->type != Event::MESSAGE)
+    else if (eventPtr->type != Event::MESSAGE)
       return false;
   }
 

@@ -26,7 +26,7 @@ namespace hypertable {
 
   class CallbackHandler {
   public:
-    virtual void handle(Event &event) = 0;
+    virtual void handle(EventPtr &eventPtr) = 0;
 
     virtual ~CallbackHandler() { return; }
   };

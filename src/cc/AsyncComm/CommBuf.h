@@ -16,11 +16,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 #ifndef HYPERTABLE_COMMBUF_H
 #define HYPERTABLE_COMMBUF_H
 
 #include <string>
+
+#include <boost/shared_ptr.hpp>
 
 extern "C" {
 #include <stdint.h>
@@ -173,6 +174,9 @@ namespace hypertable {
     uint8_t *buf;
     uint32_t bufLen;
   };
+
+  typedef boost::shared_ptr<CommBuf> CommBufPtr;
+  
 }
 
 

@@ -72,7 +72,7 @@ namespace hypertable {
 
     int GetFd() { return mSd; }
 
-    int SendMessage(CommBuf *cbuf, CallbackHandler *cbHandler=0);
+    int SendMessage(CommBufPtr &cbufPtr, CallbackHandler *cbHandler=0);
 
     int FlushSendQueue();
 
@@ -101,7 +101,7 @@ namespace hypertable {
     bool                mShutdown;
     RequestCache        mRequestCache;
     time_t              mTimeout;
-    list<CommBuf>       mSendQueue;
+    list<CommBufPtr>    mSendQueue;
   };
 
   typedef boost::shared_ptr<IOHandlerData> IOHandlerDataPtr;

@@ -75,16 +75,16 @@ public:
 
   ResponseHandler() : mQueue(), mMutex(), mCond(), mConnected(false) { return; }
   
-  virtual void handle(Event &event) {
+  virtual void handle(EventPtr &eventPtr) {
     boost::mutex::scoped_lock lock(mMutex);
-    if (event.type == Event::CONNECTION_ESTABLISHED) {
+    if (eventPtr->type == Event::CONNECTION_ESTABLISHED) {
       LOG_INFO("Connection Established.");
       mConnected = true;
       mCond.notify_one();
     }
-    else if (event.type == Event::DISCONNECT) {
-      if (event.error != 0) {
-	LOG_VA_INFO("Disconnect : %s", Error::GetText(event.error));
+    else if (eventPtr->type == Event::DISCONNECT) {
+      if (eventPtr->error != 0) {
+	LOG_VA_INFO("Disconnect : %s", Error::GetText(eventPtr->error));
       }
       else {
 	LOG_INFO("Disconnect.");
@@ -92,14 +92,12 @@ public:
       mConnected = false;
       mCond.notify_one();
     }
-    else if (event.type == Event::ERROR) {
-      LOG_VA_INFO("Error : %s", Error::GetText(event.error));
+    else if (eventPtr->type == Event::ERROR) {
+      LOG_VA_INFO("Error : %s", Error::GetText(eventPtr->error));
       //exit(1);
     }
-    else if (event.type == Event::MESSAGE) {
-      Event *newEvent = new Event(event);
-      mQueue.push(newEvent);
-      event.header = 0;
+    else if (eventPtr->type == Event::MESSAGE) {
+      mQueue.push(eventPtr);
       mCond.notify_one();
     }
   }
@@ -112,20 +110,20 @@ public:
     return mConnected;
   }
 
-  Event *GetResponse() {
+  bool GetResponse(EventPtr &eventPtr) {
     boost::mutex::scoped_lock lock(mMutex);
     while (mQueue.empty()) {
       mCond.wait(lock);
       if (mConnected == false)
-	return 0;
+	return false;
     }
-    Event *event = mQueue.front();
+    eventPtr = mQueue.front();
     mQueue.pop();
-    return event;
+    return true;
   }
 
 private:
-  queue<Event *>    mQueue;
+  queue<EventPtr>   mQueue;
   boost::mutex      mMutex;
   boost::condition  mCond;
   bool              mConnected;
@@ -144,7 +142,7 @@ int main(int argc, char **argv) {
   const char *inputFile = 0;
   MessageBuilderSimple *msgBuilder = new MessageBuilderSimple();
   int error;
-  Event *event;
+  EventPtr eventPtr;
   
   if (argc == 1)
     Usage::DumpAndExit(usage);
@@ -215,8 +213,9 @@ int main(int argc, char **argv) {
 	cbuf = new CommBuf(msgBuilder->HeaderLength() + CommBuf::EncodedLength(line));
 	cbuf->PrependString(line);
 	msgBuilder->Encapsulate(cbuf);
+	CommBufPtr cbufPtr(cbuf);
 	int retries = 0;
-	while ((error = comm->SendRequest(addr, cbuf, respHandler)) != Error::OK) {
+	while ((error = comm->SendRequest(addr, cbufPtr, respHandler)) != Error::OK) {
 	  if (error == Error::COMM_NOT_CONNECTED) {
 	    if (retries == 5) {
 	      LOG_ERROR("Connection timeout.");
@@ -233,14 +232,14 @@ int main(int argc, char **argv) {
 	outstanding++;
 
 	if (outstanding  > maxOutstanding) {
-	  if ((event = respHandler->GetResponse()) == 0)
+	  if (!respHandler->GetResponse(eventPtr))
 	    break;
-	  CommBuf::DecodeString(event->message, event->messageLen, &str);
+	  CommBuf::DecodeString(eventPtr->message, eventPtr->messageLen, &str);
 	  if (str != 0)
 	    cout << "ECHO: " << str << endl;
 	  else
 	    cout << "[NULL]" << endl;
-	  delete event;
+	  eventPtr.reset();
 	  outstanding--;
 	}
       }
@@ -252,14 +251,14 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  while (outstanding > 0 && (event = respHandler->GetResponse()) != 0) {
-    CommBuf::DecodeString(event->message, event->messageLen, &str);
+  while (outstanding > 0 && respHandler->GetResponse(eventPtr)) {
+    CommBuf::DecodeString(eventPtr->message, eventPtr->messageLen, &str);
     if (str != 0)
       cout << "ECHO: " << str << endl;
     else
       cout << "[NULL]" << endl;
     //cout << "out = " << outstanding << endl;
-    delete event;
+    eventPtr.reset();
     outstanding--;
   }
 

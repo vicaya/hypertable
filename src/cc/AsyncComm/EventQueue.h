@@ -21,7 +21,6 @@
 #define HYPERTABLE_EVENTQUEUE_H
 
 #include <queue>
-using namespace std;
 
 #include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
@@ -35,17 +34,17 @@ namespace hypertable {
 
     class EventData {
     public:
-      EventData() : event(0), handler(0) { return; }
-      EventData(Event *e, CallbackHandler *h) : event(e), handler(h) { return; }
-      Event           *event;
+      EventData() : eventPtr(), handler(0) { return; }
+      EventData(EventPtr &ep, CallbackHandler *h) : eventPtr(ep), handler(h) { return; }
+      EventPtr         eventPtr;
       CallbackHandler *handler;
     };
 
   public:
 
-    void Add(Event *event, CallbackHandler *cbh) {
+    void Add(EventPtr &eventPtr, CallbackHandler *cbh) {
       boost::mutex::scoped_lock lock(mMutex);
-      mQueue.push(EventData(event,cbh));
+      mQueue.push(EventData(eventPtr,cbh));
       mCond.notify_one();
     }
 
@@ -57,19 +56,17 @@ namespace hypertable {
 	  boost::mutex::scoped_lock lock(mMutex);
 	  while (mQueue.empty())
 	    mCond.wait(lock);
-	  EventData &tdata = mQueue.front();
+	  ed = mQueue.front();
 	  mQueue.pop();
-	  ed.event = tdata.event;
-	  ed.handler = tdata.handler;
 	}
 
-	ed.handler->handle(*(ed.event));
+	ed.handler->handle(ed.eventPtr);
       }
 
     }
 
   private:
-    queue<EventData>  mQueue;
+    std::queue<EventData>  mQueue;
     boost::mutex     mMutex;
     boost::condition mCond;
   };

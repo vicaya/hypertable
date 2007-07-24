@@ -74,18 +74,18 @@ void ConnectionManager::operator()() {
 /**
  *
  */
-void ConnectionManager::Callback::handle(Event &event) {
+void ConnectionManager::Callback::handle(EventPtr &eventPtr) {
   boost::mutex::scoped_lock lock(mMutex);
 
   //event.Display();
 
-  if (event.type == Event::CONNECTION_ESTABLISHED) {
+  if (eventPtr->type == Event::CONNECTION_ESTABLISHED) {
     mConnected = true;
     mCond.notify_all();
   }
-  else if (event.type == Event::DISCONNECT) {
+  else if (eventPtr->type == Event::DISCONNECT) {
     mConnected = false;
-    LOG_VA_INFO("%s", event.toString().c_str());
+    LOG_VA_INFO("%s", eventPtr->toString().c_str());
     mCond.notify_all();
   }
 

@@ -36,17 +36,16 @@ namespace hypertable {
   
   public:
     CallbackHandlerSynchronizer();
-    virtual void handle(Event &event);
-    bool WaitForReply(Event **eventPtr);
-    Event *WaitForReply();
+    virtual void handle(EventPtr &eventPtr);
+    bool WaitForReply(EventPtr &eventPtr);
 
     /**
      * @deprecated
      */
-    bool WaitForReply(Event **eventPtr, uint32_t id);
+    bool WaitForReply(EventPtr &eventPtr, uint32_t id);
 
   private:
-    queue<Event *>    mReceiveQueue;
+    queue<EventPtr>   mReceiveQueue;
     boost::mutex      mMutex;
     boost::condition  mCond;
   };

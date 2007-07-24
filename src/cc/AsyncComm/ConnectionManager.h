@@ -80,7 +80,7 @@ namespace hypertable {
       Callback(Comm *comm, struct sockaddr_in &addr, time_t timeout) 
 	: mComm(comm), mAddr(addr), mTimeout(timeout), mConnected(false), mMutex(), mCond() { return; }
       virtual ~Callback() { return; }
-      virtual void handle(Event &event);
+      virtual void handle(EventPtr &event);
       void SendConnectRequest();
       bool WaitForEvent(long maxWaitSecs);
       bool WaitForEvent();

@@ -50,9 +50,9 @@ namespace hypertable {
 
     int Listen(uint16_t port, ConnectionHandlerFactory *hfactory, CallbackHandler *defaultHandler=0);
 
-    int SendRequest(struct sockaddr_in &addr, CommBuf *cbuf, CallbackHandler *responseHandler);
+    int SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, CallbackHandler *responseHandler);
 
-    int SendResponse(struct sockaddr_in &addr, CommBuf *cbuf);
+    int SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr);
 
   private:
     const char      *mAppName;

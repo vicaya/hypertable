@@ -71,13 +71,11 @@ namespace hypertable {
 	delete event;
       }
       else {
+	EventPtr eventPtr(event);
 	if (mEventQueue)
-	  mEventQueue->Add(event, handler);
-	else {
-	  handler->handle(*event);
-	  event->header = 0;
-	  delete event;
-	}
+	  mEventQueue->Add(eventPtr, handler);
+	else
+	  handler->handle(eventPtr);
       }
     }
 

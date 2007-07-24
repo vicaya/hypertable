@@ -73,41 +73,40 @@ class RequestHandler : public CallbackHandler {
 
 public:
   
-  virtual void handle(Event &event) {
-    if (event.type == Event::CONNECTION_ESTABLISHED) {
+  virtual void handle(EventPtr &eventPtr) {
+    if (eventPtr->type == Event::CONNECTION_ESTABLISHED) {
       LOG_INFO("Connection Established.");
     }
-    else if (event.type == Event::DISCONNECT) {
-      if (event.error != 0) {
-	LOG_VA_INFO("Disconnect : %s", Error::GetText(event.error));
+    else if (eventPtr->type == Event::DISCONNECT) {
+      if (eventPtr->error != 0) {
+	LOG_VA_INFO("Disconnect : %s", Error::GetText(eventPtr->error));
       }
       else {
 	LOG_INFO("Disconnect.");
       }
     }
-    else if (event.type == Event::ERROR) {
-      LOG_VA_WARN("Error : %s", Error::GetText(event.error));
+    else if (eventPtr->type == Event::ERROR) {
+      LOG_VA_WARN("Error : %s", Error::GetText(eventPtr->error));
     }
-    else if (event.type == Event::MESSAGE) {
+    else if (eventPtr->type == Event::MESSAGE) {
       boost::mutex::scoped_lock lock(mMutex);
-      Event *eventCopy = new Event(event);
-      mQueue.push(eventCopy);
+      mQueue.push(eventPtr);
       mCond.notify_one();
     }
   }
 
-  Event *GetRequest() {
+  bool GetRequest(EventPtr &eventPtr) {
     boost::mutex::scoped_lock lock(mMutex);
     while (mQueue.empty())
       mCond.wait(lock);
-    Event *event = mQueue.front();
+    eventPtr = mQueue.front();
     poll(0, 0, gDelay);
     mQueue.pop();
-    return event;
+    return true;
   }
 
 private:
-  queue<Event *>  mQueue;
+  queue<EventPtr>  mQueue;
   boost::mutex     mMutex;
   boost::condition mCond;
 };
@@ -172,18 +171,19 @@ int main(int argc, char **argv) {
 
   comm->Listen(port, hfactory, requestHandler);
 
-  Event *event;
+  EventPtr eventPtr;
   CommBuf *cbuf;
 
-  while ((event = requestHandler->GetRequest()) != 0) {
-    cbuf = new CommBuf(event->header->totalLen);
-    cbuf->PrependData((uint8_t *)event->header, event->header->totalLen);
-    //event->Display();
-    int error = comm->SendResponse(event->addr, cbuf);
+  while (requestHandler->GetRequest(eventPtr)) {
+    cbuf = new CommBuf(eventPtr->header->totalLen);
+    cbuf->PrependData((uint8_t *)eventPtr->header, eventPtr->header->totalLen);
+    //eventPtr->Display();
+    CommBufPtr cbufPtr(cbuf);
+    int error = comm->SendResponse(eventPtr->addr, cbufPtr);
     if (error != Error::OK) {
       LOG_VA_ERROR("Comm::SendResponse returned %s", Error::GetText(error));
     }
-    delete event;
+    eventPtr.reset();
   }
 
   delete comm;
