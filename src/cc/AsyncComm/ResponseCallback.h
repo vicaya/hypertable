@@ -41,6 +41,11 @@ namespace hypertable {
     MessageBuilderSimple mBuilder;
   };
 
+  typedef struct {
+    uint8_t *buf;
+    uint32_t len;
+  } ExtBufferT;
+
 }
 
 #endif // HYPERTABLE_RESPONSECALLBACK_H
