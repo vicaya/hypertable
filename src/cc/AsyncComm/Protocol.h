@@ -16,16 +16,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 #ifndef HYPERTABLE_PROTOCOL_H
 #define HYPERTABLE_PROTOCOL_H
 
 #include <string>
 
+#include "Event.h"
+
 namespace hypertable {
   
   class CommBuf;
-  class Event;
 
   class Protocol {
 
@@ -34,8 +34,10 @@ namespace hypertable {
     virtual ~Protocol() { return; }
 
     static int32_t ResponseCode(Event *event);
+    static int32_t ResponseCode(EventPtr &eventPtr) { return ResponseCode(eventPtr.get()); }
 
     std::string StringFormatMessage(Event *event);
+    std::string StringFormatMessage(EventPtr &eventPtr) { return StringFormatMessage(eventPtr.get()); }
 
     static CommBuf *CreateErrorMessage(uint16_t command, int error, const char *msg, int extraSpace);
 
