@@ -22,6 +22,7 @@ set ( DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Hypertable/RangeServer" )
 set ( TEST_DEPENDENCIES ${DST_DIR}/shakespeare.txt ${DST_DIR}/words ${DST_DIR}/urls.txt ${DST_DIR}/tests )
 
 set ( RangeServer_SRCS
+../Schema.cc
 AccessGroup.cc
 BlockDeflaterZlib.cc
 BlockInflaterZlib.cc
@@ -45,17 +46,17 @@ MergeScanner.cc
 Range.cc
 RangeServer.cc
 RangeServerProtocol.cc
-RequestCompact.cc
-RequestCreateScanner.cc
-RequestFactory.cc
-RequestFetchScanblock.cc
-RequestLoadRange.cc
-RequestUpdate.cc
+Request.cc
+RequestHandlerCompact.cc
+RequestHandlerCreateScanner.cc
+RequestHandlerFetchScanblock.cc
+RequestHandlerLoadRange.cc
+RequestHandlerUpdate.cc
 ScannerMap.cc
 SplitLogMap.cc
 TableInfo.cc
 VerifySchema.cc
-../Schema.cc
+main.cc
 )
 
 # RangeServer
