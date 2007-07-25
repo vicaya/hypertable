@@ -48,8 +48,8 @@ int hypertable::CommandCopyToLocal(vector<const char *> &args) {
   uint32_t msgId = 0;
   int32_t fd = 0;
   CallbackHandlerSynchronizer *handler = new CallbackHandlerSynchronizer();
-  int error = 1;
-  Event *event = 0;
+  int error = Error::OK;
+  EventPtr eventPtr;
   FILE *fp = 0;
   HdfsProtocol::ResponseHeaderReadT *readHeader = 0;
   int srcArg = 0;
@@ -68,29 +68,29 @@ int hypertable::CommandCopyToLocal(vector<const char *> &args) {
     goto abort;
   }
 
-  if (Global::client->Open(args[srcArg], &fd) != Error::OK)
+  if ((error = Global::client->Open(args[srcArg], &fd)) != Error::OK)
     goto abort;
 
   if (startOffset > 0) {
-    if (Global::client->Seek(fd, startOffset) != Error::OK)
+    if ((error = Global::client->Seek(fd, startOffset)) != Error::OK)
       goto abort;
   }
 
-  if (Global::client->Read(fd, BUFFER_SIZE, handler, &msgId) != Error::OK)
+  if ((error = Global::client->Read(fd, BUFFER_SIZE, handler, &msgId)) != Error::OK)
     goto abort;
 
-  if (Global::client->Read(fd, BUFFER_SIZE, handler, &msgId) != Error::OK)
+  if ((error = Global::client->Read(fd, BUFFER_SIZE, handler, &msgId)) != Error::OK)
     goto abort;
 
-  if (Global::client->Read(fd, BUFFER_SIZE, handler, &msgId) != Error::OK)
+  if ((error = Global::client->Read(fd, BUFFER_SIZE, handler, &msgId)) != Error::OK)
     goto abort;
 
-  while (handler->WaitForReply(&event)) {
+  while (handler->WaitForReply(eventPtr)) {
 
-    if (Global::protocol->ResponseCode(event) != Error::OK)
+    if ((error = Global::protocol->ResponseCode(eventPtr)) != Error::OK)
       goto abort;
 
-    readHeader = (HdfsProtocol::ResponseHeaderReadT *)event->message;
+    readHeader = (HdfsProtocol::ResponseHeaderReadT *)eventPtr->message;
 
     if (readHeader->amount > 0) {
       if (fwrite(&readHeader[1], readHeader->amount, 1, fp) != 1) {
@@ -100,29 +100,23 @@ int hypertable::CommandCopyToLocal(vector<const char *> &args) {
     }
 
     if (readHeader->amount < BUFFER_SIZE) {
-      handler->WaitForReply(&event, msgId);
+      handler->WaitForReply(eventPtr, msgId);
       break;
     }
 
-    if (Global::client->Read(fd, BUFFER_SIZE, handler, &msgId) != Error::OK)
+    if ((error = Global::client->Read(fd, BUFFER_SIZE, handler, &msgId)) != Error::OK)
       goto abort;
   }
 
-  if (Global::client->Close(fd) != Error::OK)
+  if ((error = Global::client->Close(fd)) != Error::OK)
     goto abort;
 
-  error = 0;
-  
   abort:
   if (fp)
     fclose(fp);
-  if (event) {
-    if (error != 0)
-      cerr << Global::protocol->StringFormatMessage(event) << endl;
-    delete event;
-  }
+  if (error != 0)
+    cerr << Error::GetText(error) << endl;
   delete handler;
   return error;
-
 }
 

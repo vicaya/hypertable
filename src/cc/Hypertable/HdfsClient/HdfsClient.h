@@ -88,7 +88,7 @@ namespace hypertable {
     
   private:
 
-    int SendMessage(CommBuf *cbuf, CallbackHandler *handler, uint32_t *msgIdp=0);
+    int SendMessage(CommBufPtr &cbufPtr, CallbackHandler *handler, uint32_t *msgIdp=0);
 
     Comm                 *mComm;
     struct sockaddr_in    mAddr;

@@ -45,8 +45,8 @@ int hypertable::CommandCopyFromLocal(vector<const char *> &args) {
   uint32_t msgId = 0;
   int32_t fd = 0;
   CallbackHandlerSynchronizer *handler = new CallbackHandlerSynchronizer();
-  int error = 1;
-  Event *event = 0;
+  int error = Error::OK;
+  EventPtr eventPtr;
   FILE *fp = 0;
   HdfsProtocol::ResponseHeaderWriteT *writeHeader = 0;
   size_t nread;
@@ -61,7 +61,7 @@ int hypertable::CommandCopyFromLocal(vector<const char *> &args) {
     goto abort;
   }
 
-  if (Global::client->Create(args[srcArg+1], true, -1, -1, -1, &fd) != Error::OK)
+  if ((error = Global::client->Create(args[srcArg+1], true, -1, -1, -1, &fd)) != Error::OK)
     goto abort;
 
   // send 3 writes
@@ -69,43 +69,38 @@ int hypertable::CommandCopyFromLocal(vector<const char *> &args) {
     buf = new uint8_t [ BUFFER_SIZE ];
     if ((nread = fread(buf, 1, BUFFER_SIZE, fp)) == 0)
       goto done;
-    if (Global::client->Write(fd, buf, nread, handler, &msgId) != Error::OK)
+    if ((error = Global::client->Write(fd, buf, nread, handler, &msgId)) != Error::OK)
       goto done;
   }
 
   while (true) {
 
-    if (!handler->WaitForReply(&event)) {
-      LOG_VA_ERROR("%s", event->toString().c_str());
+    if (!handler->WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("%s", eventPtr->toString().c_str());
       goto abort;
     }
 
-    writeHeader = (HdfsProtocol::ResponseHeaderWriteT *)event->message;
+    writeHeader = (HdfsProtocol::ResponseHeaderWriteT *)eventPtr->message;
 
     //LOG_VA_INFO("Wrote %d bytes at offset %lld", writeHeader->amount, writeHeader->offset);
 
     buf = new uint8_t [ BUFFER_SIZE ];
     if ((nread = fread(buf, 1, BUFFER_SIZE, fp)) == 0)
       break;
-    if (Global::client->Write(fd, buf, nread, handler, &msgId) != Error::OK)
+    if ((error = Global::client->Write(fd, buf, nread, handler, &msgId)) != Error::OK)
       goto abort;
   }
 
  done:
 
-  if (Global::client->Close(fd) != Error::OK)
+  if ((error = Global::client->Close(fd)) != Error::OK)
     goto abort;
     
-  error = 0;
-  
   abort:
   if (fp)
     fclose(fp);
-  if (event) {
-    if (error != 0)
-      cerr << Global::protocol->StringFormatMessage(event) << endl;
-    delete event;
-  }
+  if (error != 0)
+    cerr << Error::GetText(error) << endl;
   delete handler;
   return error;
 }
