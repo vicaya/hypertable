@@ -1,4 +1,5 @@
 
+- Get cellStoreTest working on Linux (add consistent random number generator)
 - Figure out why Hyperspace periodically hangs
 - The event object passed to the application by AsyncComm should be a smart pointer
 - Remove command code from response message
