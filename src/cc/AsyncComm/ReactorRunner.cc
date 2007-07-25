@@ -59,14 +59,6 @@ void ReactorRunner::operator()() {
       if (removedHandlers.count(events[i].data.ptr) == 0) {
 	handler = (IOHandler *)events[i].data.ptr;
 	if (handler->HandleEvent(&events[i])) {
-	  int sd = ((IOHandler *)handler)->GetSd();
-	  struct epoll_event event;
-	  memset(&event, 0, sizeof(struct epoll_event));
-	  if (epoll_ctl(mReactor->pollFd, EPOLL_CTL_DEL, sd, &event) < 0) {
-	    LOG_VA_ERROR("epoll_ctl(EPOLL_CTL_DEL, %d) failure, %s", sd, strerror(errno));
-	    exit(1);
-	  }
-	  close(sd);
 	  removedHandlers.insert(handler);
 	}
       }

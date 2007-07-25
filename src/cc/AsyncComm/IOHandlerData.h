@@ -89,6 +89,9 @@ namespace hypertable {
     void Shutdown() { mShutdown = true; }
 
   private:
+
+    void Unregister();
+    
     struct sockaddr_in  mAddr;
     bool                mConnected;
     boost::mutex        mMutex;

@@ -30,14 +30,14 @@ namespace hypertable {
   class ResponseCallback {
 
   public:
-    ResponseCallback(Comm *comm, Event &event) : mComm(comm), mEvent(event) { return; }
+    ResponseCallback(Comm *comm, EventPtr &eventPtr) : mComm(comm), mEventPtr(eventPtr) { return; }
     virtual ~ResponseCallback() { return; }
     int error(int error, std::string &msg);
     int response();
 
   protected:
-    Comm  *mComm;
-    Event  mEvent;
+    Comm     *mComm;
+    EventPtr  mEventPtr;
     MessageBuilderSimple mBuilder;
   };
 

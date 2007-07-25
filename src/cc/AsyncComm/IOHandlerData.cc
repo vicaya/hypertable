@@ -44,20 +44,31 @@ using namespace hypertable;
 
 #if defined(__linux__)
 
+void IOHandlerData::Unregister() {
+  struct epoll_event event;
+  memset(&event, 0, sizeof(struct epoll_event));
+  if (epoll_ctl(mReactor->pollFd, EPOLL_CTL_DEL, mSd, &event) < 0) {
+    LOG_VA_ERROR("epoll_ctl(EPOLL_CTL_DEL, %d) failure, %s", mSd, strerror(errno));
+    exit(1);
+  }
+  close(mSd);
+  mConnMap.Remove(mAddr);
+}
+
 bool IOHandlerData::HandleEvent(struct epoll_event *event) {
 
   //DisplayEvent(event);
 
   if (mShutdown) {
     DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-    mConnMap.Remove(mAddr);
+    Unregister();
     return true;
   }
 
   if (event->events & EPOLLOUT) {
     if (HandleWriteReadiness()) {
       DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-      mConnMap.Remove(mAddr);
+      Unregister();
       return true;
     }
   }
@@ -74,13 +85,13 @@ bool IOHandlerData::HandleEvent(struct epoll_event *event) {
 	  }
 	  int error = (errno == ECONNREFUSED) ? Error::COMM_CONNECT_ERROR : Error::OK;
 	  DeliverEvent( new Event(Event::DISCONNECT, mAddr, error ) );
-	  mConnMap.Remove(mAddr);
+	  Unregister();
 	  return true;
 	}
 	else if (nread == 0 && totalRead == 0) {
 	  // eof
 	  DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-	  mConnMap.Remove(mAddr);
+	  Unregister();
 	  return true;
 	}
 	else if (nread < mMessageHeaderRemaining) {
@@ -102,13 +113,13 @@ bool IOHandlerData::HandleEvent(struct epoll_event *event) {
 	if (nread < 0) {
 	  LOG_VA_ERROR("FileUtils::Read(%d, len=%d) failure : %s", mSd, mMessageHeaderRemaining, strerror(errno));
 	  DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-	  mConnMap.Remove(mAddr);
+	  Unregister();
 	  return true;
 	}
 	else if (nread == 0 && totalRead == 0) {
 	  // eof
 	  DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-	  mConnMap.Remove(mAddr);
+	  Unregister();
 	  return true;
 	}
 	else if (nread < mMessageRemaining) {
@@ -135,14 +146,14 @@ bool IOHandlerData::HandleEvent(struct epoll_event *event) {
   if (event->events & EPOLLERR) {
     LOG_VA_WARN("Received EPOLLERR on descriptor %d (%s:%d)", mSd, inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port));
     DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-    mConnMap.Remove(mAddr);
+    Unregister();
     return true;
   }
 
   if (event->events & EPOLLHUP) {
     LOG_VA_WARN("Received EPOLLHUP on descriptor %d (%s:%d)", mSd, inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port));
     DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-    mConnMap.Remove(mAddr);
+    Unregister();
     return true;
   }
 
@@ -165,14 +176,14 @@ bool IOHandlerData::HandleEvent(struct kevent *event) {
       DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::COMM_CONNECT_ERROR) );
     else
       DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-    mConnMap.Remove(mAddr);
+    Unregister();
     return true;
   }
 
   if (event->filter == EVFILT_WRITE) {
     if (HandleWriteReadiness()) {
       DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-      mConnMap.Remove(mAddr);
+      Unregister();
       return true;
     }
   }
@@ -188,7 +199,7 @@ bool IOHandlerData::HandleEvent(struct kevent *event) {
 	  if (nread < 0) {
 	    LOG_VA_ERROR("FileUtils::Read(%d, len=%d) failure : %s", mSd, mMessageHeaderRemaining, strerror(errno));
 	    DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-	    mConnMap.Remove(mAddr);
+	    Unregister();
 	    return true;
 	  }
 	  assert(nread == mMessageHeaderRemaining);
@@ -205,7 +216,7 @@ bool IOHandlerData::HandleEvent(struct kevent *event) {
 	  if (nread < 0) {
 	    LOG_VA_ERROR("FileUtils::Read(%d, len=%d) failure : %s", mSd, available, strerror(errno));
 	    DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-	    mConnMap.Remove(mAddr);
+	    Unregister();
 	    return true;
 	  }
 	  assert(nread == available);
@@ -219,7 +230,7 @@ bool IOHandlerData::HandleEvent(struct kevent *event) {
 	  if (nread < 0) {
 	    LOG_VA_ERROR("FileUtils::Read(%d, len=%d) failure : %s", mSd, mMessageRemaining, strerror(errno));
 	    DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-	    mConnMap.Remove(mAddr);
+	    Unregister();
 	    return true;
 	  }
 	  assert(nread == mMessageRemaining);
@@ -240,7 +251,7 @@ bool IOHandlerData::HandleEvent(struct kevent *event) {
 	  if (nread < 0) {
 	    LOG_VA_ERROR("FileUtils::Read(%d, len=%d) failure : %s", mSd, available, strerror(errno));
 	    DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-	    mConnMap.Remove(mAddr);
+	    Unregister();
 	    return true;
 	  }
 	  assert(nread == available);

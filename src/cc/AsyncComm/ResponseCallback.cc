@@ -26,11 +26,11 @@ using namespace hypertable;
 
 int ResponseCallback::error(int error, std::string &msg) {
   CommBuf *cbuf = Protocol::CreateErrorMessage(0, error, msg.c_str(), mBuilder.HeaderLength()); // fix me!!!
-  mBuilder.LoadFromMessage(mEvent.header);
+  mBuilder.LoadFromMessage(mEventPtr->header);
   mBuilder.Encapsulate(cbuf);
   {
     CommBufPtr cbufPtr(cbuf);
-    return mComm->SendResponse(mEvent.addr, cbufPtr);
+    return mComm->SendResponse(mEventPtr->addr, cbufPtr);
   }
 }
 
@@ -38,10 +38,10 @@ int ResponseCallback::response() {
   CommBuf *cbuf = new CommBuf(mBuilder.HeaderLength() + 6);
   cbuf->PrependShort(0); // fix me!!!
   cbuf->PrependInt(Error::OK);
-  mBuilder.LoadFromMessage(mEvent.header);
+  mBuilder.LoadFromMessage(mEventPtr->header);
   mBuilder.Encapsulate(cbuf);
   {
     CommBufPtr cbufPtr(cbuf);
-    return mComm->SendResponse(mEvent.addr, cbufPtr);
+    return mComm->SendResponse(mEventPtr->addr, cbufPtr);
   }
 }
