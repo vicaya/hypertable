@@ -29,8 +29,10 @@ int ResponseCallbackGetSchema::response(const char *schema) {
   cbuf->PrependString(schema);
   cbuf->PrependShort(0); // fix me!!!
   cbuf->PrependInt(Error::OK);
-  mBuilder.LoadFromMessage(mEvent.header);
+  mBuilder.LoadFromMessage(mEventPtr->header);
   mBuilder.Encapsulate(cbuf);
-  return mComm->SendResponse(mEvent.addr, cbuf);
-  // do we need to delete cbuf on error?
+  {
+    CommBufPtr cbufPtr(cbuf);
+    return mComm->SendResponse(mEventPtr->addr, cbufPtr);
+  }
 }

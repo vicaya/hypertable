@@ -31,10 +31,10 @@ using namespace hypertable;
  *
  */
 void RequestHandlerGetSchema::run() {
-  ResponseCallbackGetSchema cb(mComm, mEvent);
+  ResponseCallbackGetSchema cb(mComm, mEventPtr);
   const char *tableName;
-  size_t remaining = mEvent.messageLen - sizeof(int16_t);
-  uint8_t *msgPtr = mEvent.message + sizeof(int16_t);
+  size_t remaining = mEventPtr->messageLen - sizeof(int16_t);
+  uint8_t *msgPtr = mEventPtr->message + sizeof(int16_t);
 
   // table name
   if (CommBuf::DecodeString(msgPtr, remaining, &tableName) == 0) {

@@ -1,4 +1,4 @@
-/**
+/** -*- C++ -*-
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
  * 
  * This program is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@ namespace hypertable {
   class ConnectionHandler : public CallbackHandler {
   public:
     ConnectionHandler(Comm *comm, WorkQueue *workQueue, Master *master) : mComm(comm), mWorkQueue(workQueue), mMaster(master) { return; }
-    virtual void handle(Event &event);
+    virtual void handle(EventPtr &eventPtr);
 
   private:
     Comm       *mComm;

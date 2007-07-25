@@ -31,20 +31,20 @@ using namespace hypertable;
 /**
  *
  */
-void ConnectionHandler::handle(Event &event) {
+void ConnectionHandler::handle(EventPtr &eventPtr) {
   short command = -1;
 
-  if (event.type == Event::MESSAGE) {
+  if (eventPtr->type == Event::MESSAGE) {
     Runnable *requestHandler = 0;
 
-    //event.Display()
+    //eventPtr->Display()
 
     try {
-      if (event.messageLen < sizeof(int16_t)) {
+      if (eventPtr->messageLen < sizeof(int16_t)) {
 	std::string message = "Truncated Request";
 	throw new ProtocolException(message);
       }
-      memcpy(&command, event.message, sizeof(int16_t));
+      memcpy(&command, eventPtr->message, sizeof(int16_t));
 
       // sanity check command code
       if (command < 0 || command >= MasterProtocol::COMMAND_MAX) {
@@ -54,10 +54,10 @@ void ConnectionHandler::handle(Event &event) {
 
       switch (command) {
       case MasterProtocol::COMMAND_CREATE_TABLE:
-	requestHandler = new RequestHandlerCreateTable(mComm, mMaster, event);
+	requestHandler = new RequestHandlerCreateTable(mComm, mMaster, eventPtr);
 	break;
       case MasterProtocol::COMMAND_GET_SCHEMA:
-	requestHandler = new RequestHandlerGetSchema(mComm, mMaster, event);
+	requestHandler = new RequestHandlerGetSchema(mComm, mMaster, eventPtr);
 	break;
       default:
 	std::string message = (string)"Command code " + command + " not implemented";
@@ -66,18 +66,18 @@ void ConnectionHandler::handle(Event &event) {
       mWorkQueue->AddRequest( requestHandler );
     }
     catch (ProtocolException &e) {
-      ResponseCallback cb(mComm, event);
+      ResponseCallback cb(mComm, eventPtr);
       std::string errMsg = e.what();
       LOG_VA_ERROR("Protocol error '%s'", e.what());
       cb.error(Error::PROTOCOL_ERROR, errMsg);
     }
   }
-  else if (event.type == Event::DISCONNECT) {
+  else if (eventPtr->type == Event::DISCONNECT) {
     // do something here!!!
-    LOG_VA_INFO("%s : Closing all open handles", event.toString().c_str());
+    LOG_VA_INFO("%s : Closing all open handles", eventPtr->toString().c_str());
   }
   else {
-    LOG_VA_INFO("%s", event.toString().c_str());
+    LOG_VA_INFO("%s", eventPtr->toString().c_str());
   }
 
 }

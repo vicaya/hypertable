@@ -32,16 +32,16 @@ namespace hypertable {
 
   class RequestHandlerGetSchema : public Runnable {
   public:
-    RequestHandlerGetSchema(Comm *comm, Master *master, Event &event) : mComm(comm), mMaster(master), mEvent(event) {
+    RequestHandlerGetSchema(Comm *comm, Master *master, EventPtr &eventPtr) : mComm(comm), mMaster(master), mEventPtr(eventPtr) {
       return;
     }
 
     virtual void run();
 
   private:
-    Comm   *mComm;
-    Master *mMaster;
-    Event   mEvent;
+    Comm     *mComm;
+    Master   *mMaster;
+    EventPtr  mEventPtr;
   };
 
 }

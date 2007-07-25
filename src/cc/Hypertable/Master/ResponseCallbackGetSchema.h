@@ -28,7 +28,7 @@ namespace hypertable {
 
   class ResponseCallbackGetSchema : public ResponseCallback {
   public:
-    ResponseCallbackGetSchema(Comm *comm, Event &event) : ResponseCallback(comm, event) { return; }
+    ResponseCallbackGetSchema(Comm *comm, EventPtr &eventPtr) : ResponseCallback(comm, eventPtr) { return; }
     int response(const char *schema);
   };
 
