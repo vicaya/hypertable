@@ -1,4 +1,4 @@
-/**
+/** -*- C++ -*-
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
  * 
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ namespace hypertable {
 
   class RequestHandlerLoadRange : public Runnable {
   public:
-    RequestHandlerLoadRange(Comm *comm, RangeServer *rangeServer, Event &event) : mComm(comm), mRangeServer(rangeServer), mEvent(event) {
+    RequestHandlerLoadRange(Comm *comm, RangeServer *rangeServer, EventPtr &eventPtr) : mComm(comm), mRangeServer(rangeServer), mEventPtr(eventPtr) {
       return;
     }
 
@@ -41,7 +41,7 @@ namespace hypertable {
   private:
     Comm        *mComm;
     RangeServer *mRangeServer;
-    Event        mEvent;
+    EventPtr     mEventPtr;
   };
 
 }

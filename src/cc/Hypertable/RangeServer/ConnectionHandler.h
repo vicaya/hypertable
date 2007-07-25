@@ -34,7 +34,7 @@ namespace hypertable {
 
     ConnectionHandler(Comm *comm, WorkQueue *workQueue, RangeServer *rangeServer);
 
-    virtual void handle(Event &event);
+    virtual void handle(EventPtr &eventPtr);
 
   private:
     Comm        *mComm;

@@ -31,11 +31,11 @@ using namespace hypertable;
  *
  */
 void RequestHandlerLoadRange::run() {
-  ResponseCallback cb(mComm, mEvent);
+  ResponseCallback cb(mComm, mEventPtr);
   TabletIdentifierT tablet;
   size_t skip;
-  size_t remaining = mEvent.messageLen - sizeof(int16_t);
-  uint8_t *msgPtr = mEvent.message + sizeof(int16_t);
+  size_t remaining = mEventPtr->messageLen - sizeof(int16_t);
+  uint8_t *msgPtr = mEventPtr->message + sizeof(int16_t);
   std::string errMsg;
 
   /**

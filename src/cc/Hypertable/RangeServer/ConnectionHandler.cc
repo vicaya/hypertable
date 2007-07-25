@@ -42,20 +42,20 @@ ConnectionHandler::ConnectionHandler(Comm *comm, WorkQueue *workQueue, RangeServ
 /**
  *
  */
-void ConnectionHandler::handle(Event &event) {
+void ConnectionHandler::handle(EventPtr &eventPtr) {
   short command = -1;
 
-  if (event.type == Event::MESSAGE) {
+  if (eventPtr->type == Event::MESSAGE) {
     Runnable *requestHandler = 0;
 
-    //event.Display()
+    //eventPtr->Display()
 
     try {
-      if (event.messageLen < sizeof(int16_t)) {
+      if (eventPtr->messageLen < sizeof(int16_t)) {
 	std::string message = "Truncated Request";
 	throw new ProtocolException(message);
       }
-      memcpy(&command, event.message, sizeof(int16_t));
+      memcpy(&command, eventPtr->message, sizeof(int16_t));
 
       // sanity check command code
       if (command < 0 || command >= RangeServerProtocol::COMMAND_MAX) {
@@ -65,19 +65,19 @@ void ConnectionHandler::handle(Event &event) {
 
       switch (command) {
       case RangeServerProtocol::COMMAND_COMPACT:
-	requestHandler = new RequestHandlerCompact(mComm, mRangeServer, event);
+	requestHandler = new RequestHandlerCompact(mComm, mRangeServer, eventPtr);
 	break;
       case RangeServerProtocol::COMMAND_LOAD_RANGE:
-	requestHandler = new RequestHandlerLoadRange(mComm, mRangeServer, event);
+	requestHandler = new RequestHandlerLoadRange(mComm, mRangeServer, eventPtr);
 	break;
       case RangeServerProtocol::COMMAND_UPDATE:
-	requestHandler = new RequestHandlerUpdate(mComm, mRangeServer, event);
+	requestHandler = new RequestHandlerUpdate(mComm, mRangeServer, eventPtr);
 	break;
       case RangeServerProtocol::COMMAND_CREATE_SCANNER:
-	requestHandler = new RequestHandlerCreateScanner(mComm, mRangeServer, event);
+	requestHandler = new RequestHandlerCreateScanner(mComm, mRangeServer, eventPtr);
 	break;
       case RangeServerProtocol::COMMAND_FETCH_SCANBLOCK:
-	requestHandler = new RequestHandlerFetchScanblock(mComm, mRangeServer, event);
+	requestHandler = new RequestHandlerFetchScanblock(mComm, mRangeServer, eventPtr);
 	break;
       default:
 	std::string message = (string)"Command code " + command + " not implemented";
@@ -86,18 +86,18 @@ void ConnectionHandler::handle(Event &event) {
       mWorkQueue->AddRequest( requestHandler );
     }
     catch (ProtocolException &e) {
-      ResponseCallback cb(mComm, event);
+      ResponseCallback cb(mComm, eventPtr);
       std::string errMsg = e.what();
       LOG_VA_ERROR("Protocol error '%s'", e.what());
       cb.error(Error::PROTOCOL_ERROR, errMsg);
     }
   }
-  else if (event.type == Event::DISCONNECT) {
+  else if (eventPtr->type == Event::DISCONNECT) {
     // do something here!!!
-    LOG_VA_INFO("%s : Closing all open handles", event.toString().c_str());
+    LOG_VA_INFO("%s : Closing all open handles", eventPtr->toString().c_str());
   }
   else {
-    LOG_VA_INFO("%s", event.toString().c_str());
+    LOG_VA_INFO("%s", eventPtr->toString().c_str());
   }
 
 }

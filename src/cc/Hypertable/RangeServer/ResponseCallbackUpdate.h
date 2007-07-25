@@ -28,7 +28,7 @@ namespace hypertable {
 
   class ResponseCallbackUpdate : public ResponseCallback {
   public:
-    ResponseCallbackUpdate(Comm *comm, Event &event) : ResponseCallback(comm, event) { return; }
+    ResponseCallbackUpdate(Comm *comm, EventPtr &eventPtr) : ResponseCallback(comm, eventPtr) { return; }
     int response(ExtBufferT &ext);
     using ResponseCallback::response;
   };

@@ -32,7 +32,7 @@ namespace hypertable {
 
   class RequestHandlerFetchScanblock : public Runnable {
   public:
-    RequestHandlerFetchScanblock(Comm *comm, RangeServer *rangeServer, Event &event) : mComm(comm), mRangeServer(rangeServer), mEvent(event) {
+    RequestHandlerFetchScanblock(Comm *comm, RangeServer *rangeServer, EventPtr &eventPtr) : mComm(comm), mRangeServer(rangeServer), mEventPtr(eventPtr) {
       return;
     }
 
@@ -41,7 +41,7 @@ namespace hypertable {
   private:
     Comm        *mComm;
     RangeServer *mRangeServer;
-    Event        mEvent;
+    EventPtr     mEventPtr;
   };
 
 }

@@ -25,7 +25,10 @@ int ResponseCallbackUpdate::response(ExtBufferT &ext) {
   cbuf->SetExt(ext.buf, ext.len);
   cbuf->PrependShort(0); // fix me!!!
   cbuf->PrependInt(Error::RANGESERVER_PARTIAL_UPDATE);
-  mBuilder.LoadFromMessage(mEvent.header);
+  mBuilder.LoadFromMessage(mEventPtr->header);
   mBuilder.Encapsulate(cbuf);
-  return mComm->SendResponse(mEvent.addr, cbuf);
+  {
+    CommBufPtr cbufPtr(cbuf);
+    return mComm->SendResponse(mEventPtr->addr, cbufPtr);
+  }
 }
