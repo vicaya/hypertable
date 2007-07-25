@@ -1,4 +1,5 @@
 
+- Figure out why Hyperspace periodically hangs
 - The event object passed to the application by AsyncComm should be a smart pointer
 - Remove command code from response message
 - Fix MessageBuilder stuff.  There are many places that use MessageBuilderSimple::LoadFromMessage, when
