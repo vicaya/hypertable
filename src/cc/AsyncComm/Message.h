@@ -50,6 +50,7 @@ namespace hypertable {
       uint8_t   flags;
       uint8_t   headerLen;
       uint32_t  id;
+      uint32_t  threadGroup;
       uint32_t  totalLen;
     } __attribute__((packed)) HeaderT;
 

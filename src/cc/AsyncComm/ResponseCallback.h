@@ -23,7 +23,7 @@
 
 #include "Comm.h"
 #include "Event.h"
-#include "MessageBuilderSimple.h"
+#include "MessageBuilder.h"
 
 namespace hypertable {
 
@@ -36,9 +36,9 @@ namespace hypertable {
     int response();
 
   protected:
-    Comm     *mComm;
-    EventPtr  mEventPtr;
-    MessageBuilderSimple mBuilder;
+    Comm          *mComm;
+    EventPtr       mEventPtr;
+    MessageBuilder mBuilder;
   };
 
   typedef struct {

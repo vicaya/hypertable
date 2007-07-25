@@ -45,7 +45,7 @@ extern "C" {
 #include "CallbackHandler.h"
 #include "Comm.h"
 #include "Event.h"
-#include "MessageBuilderSimple.h"
+#include "MessageBuilder.h"
 using namespace hypertable;
 
 namespace {
@@ -140,7 +140,7 @@ int main(int argc, char **argv) {
   time_t timeout = DEFAULT_TIMEOUT;
   int reactorCount = 1;
   const char *inputFile = 0;
-  MessageBuilderSimple *msgBuilder = new MessageBuilderSimple();
+  MessageBuilder mbuilder;
   int error;
   EventPtr eventPtr;
   
@@ -207,12 +207,12 @@ int main(int argc, char **argv) {
 
   if (myfile.is_open()) {
     while (!myfile.eof() ) {
-      msgBuilder->Reset(Message::PROTOCOL_NONE);
+      mbuilder.Reset(Message::PROTOCOL_NONE);
       getline (myfile,line);
       if (line.length() > 0) {
-	cbuf = new CommBuf(msgBuilder->HeaderLength() + CommBuf::EncodedLength(line));
+	cbuf = new CommBuf(mbuilder.HeaderLength() + CommBuf::EncodedLength(line));
 	cbuf->PrependString(line);
-	msgBuilder->Encapsulate(cbuf);
+	mbuilder.Encapsulate(cbuf);
 	CommBufPtr cbufPtr(cbuf);
 	int retries = 0;
 	while ((error = comm->SendRequest(addr, cbufPtr, respHandler)) != Error::OK) {

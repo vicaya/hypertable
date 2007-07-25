@@ -25,23 +25,18 @@
 using namespace hypertable;
 
 int ResponseCallback::error(int error, std::string &msg) {
-  CommBuf *cbuf = Protocol::CreateErrorMessage(0, error, msg.c_str(), mBuilder.HeaderLength()); // fix me!!!
+  CommBufPtr cbufPtr( Protocol::CreateErrorMessage(0, error, msg.c_str(), mBuilder.HeaderLength()) ); // fix me!!!
   mBuilder.LoadFromMessage(mEventPtr->header);
-  mBuilder.Encapsulate(cbuf);
-  {
-    CommBufPtr cbufPtr(cbuf);
-    return mComm->SendResponse(mEventPtr->addr, cbufPtr);
-  }
+  mBuilder.Encapsulate(cbufPtr.get());
+  return mComm->SendResponse(mEventPtr->addr, cbufPtr);
 }
 
 int ResponseCallback::response() {
-  CommBuf *cbuf = new CommBuf(mBuilder.HeaderLength() + 6);
-  cbuf->PrependShort(0); // fix me!!!
-  cbuf->PrependInt(Error::OK);
+  CommBufPtr cbufPtr( new CommBuf(mBuilder.HeaderLength() + 6) );
+  cbufPtr->PrependShort(0); // fix me!!!
+  cbufPtr->PrependInt(Error::OK);
   mBuilder.LoadFromMessage(mEventPtr->header);
-  mBuilder.Encapsulate(cbuf);
-  {
-    CommBufPtr cbufPtr(cbuf);
-    return mComm->SendResponse(mEventPtr->addr, cbufPtr);
-  }
+  mBuilder.Encapsulate(cbufPtr.get());
+  return mComm->SendResponse(mEventPtr->addr, cbufPtr);
 }
+

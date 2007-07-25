@@ -33,7 +33,7 @@ extern "C" {
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/CallbackHandler.h"
 #include "AsyncComm/Event.h"
-#include "AsyncComm/MessageBuilderSimple.h"
+#include "AsyncComm/MessageBuilder.h"
 
 #include "CommTestThreadFunction.h"
 
@@ -89,7 +89,7 @@ namespace {
  *
  */
 void CommTestThreadFunction::operator()() {
-  MessageBuilderSimple mbuilder;
+  MessageBuilder mbuilder;
   int error;
   EventPtr eventPtr;
   CommBuf *cbuf;

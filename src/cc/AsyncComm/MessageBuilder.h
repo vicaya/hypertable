@@ -1,4 +1,4 @@
-/**
+/** -*- C++ -*-
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
  * 
  * This program is free software; you can redistribute it and/or
@@ -15,7 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 
 #ifndef HYPERTABLE_MESSAGEBUILDER_H
 #define HYPERTABLE_MESSAGEBUILDER_H
@@ -40,21 +39,39 @@ namespace hypertable {
 
     static atomic_t msNextMessageId;
 
-    MessageBuilder() : mId(0), mProtocol(0), mFlags(0) { return; }
+    MessageBuilder() : mId(0), mThreadGroup(0), mProtocol(0), mFlags(0) { return; }
 
-    virtual ~MessageBuilder() { return; }
-
-    virtual void Reset(uint8_t protocol, uint8_t flags=0) {
+    void Reset(uint8_t protocol, uint8_t flags=0) {
       mId = atomic_inc_return(&msNextMessageId);
-      mFlags = flags;
+      mThreadGroup = 0;
       mProtocol = protocol;
+      mFlags = flags;
     }
 
-    virtual void LoadFromMessage(Message::HeaderT *header) = 0;
+    void LoadFromMessage(Message::HeaderT *header) {
+      mId          = header->id;
+      mThreadGroup = header->threadGroup;
+      mProtocol    = header->protocol;
+      mFlags       = header->flags;
+    }
 
-    virtual size_t HeaderLength() = 0;
+    size_t HeaderLength() {
+      return sizeof(Message::HeaderT);
+    }
 
-    virtual void Encapsulate(CommBuf *cbuf) = 0;
+    void Encapsulate(CommBuf *cbuf) {
+      Message::HeaderT *mheader;
+      cbuf->data -= sizeof(Message::HeaderT);
+      cbuf->dataLen += sizeof(Message::HeaderT);
+      mheader = (Message::HeaderT *)cbuf->data;
+      mheader->version = Message::VERSION;
+      mheader->protocol = mProtocol;
+      mheader->flags = mFlags;
+      mheader->headerLen = sizeof(Message::HeaderT);
+      mheader->id = mId;
+      mheader->threadGroup = mThreadGroup;
+      mheader->totalLen = cbuf->dataLen + cbuf->extLen;
+    }
 
     void SetFlags(uint8_t flags) { mFlags = flags; }
 
@@ -62,8 +79,11 @@ namespace hypertable {
 
     void SetProtocol(uint8_t protocol) { mProtocol = protocol; }
 
+    void SetThreadGroup(uint32_t threadGroup) { mThreadGroup = threadGroup; }
+
   protected:
     uint32_t  mId;
+    uint32_t  mThreadGroup;
     uint8_t   mProtocol;
     uint8_t   mFlags;
   };

@@ -28,13 +28,13 @@ extern "C" {
 }
 
 #include "Common/Error.h"
+#include "Common/StringExt.h"
 
 #include "Event.h"
 
 namespace hypertable {
 
   std::string Event::toString() {
-    char cbuf[32];
     string dstr;
 
     dstr = "Event: type=";
@@ -48,31 +48,21 @@ namespace hypertable {
 	dstr += Message::protocolStrings[header->protocol];
       else
 	dstr += "unknown";
-      dstr += " id=";
-      sprintf(cbuf, "%u", header->id);
-      dstr += cbuf;
-      dstr += " headerLen=";
-      sprintf(cbuf, "%u", header->headerLen);
-      dstr += cbuf;
-      dstr += " totalLen=";
-      sprintf(cbuf, "%u", header->totalLen);
-      dstr += cbuf;
+      dstr += " id=" + header->id;
+      dstr += " threadGroup=" + header->threadGroup;
+      dstr += " headerLen=" + header->headerLen;
+      dstr += " totalLen=" + header->totalLen;
     }
-    else if (type == ERROR) {
+    else if (type == ERROR)
       dstr += "ERROR";
-    }
-    else {
-      sprintf(cbuf, "%d", (int)type);
-      dstr += cbuf;
-    }
+    else
+      dstr += (int)type;
 
     if (error != Error::OK)
       dstr += (std::string)" \"" + Error::GetText(error) + "\"";
 
     dstr += " from=";
-    dstr += inet_ntoa(addr.sin_addr);
-    sprintf(cbuf, ":%d", (int)ntohs(addr.sin_port));
-    dstr += cbuf;
+    dstr += (std::string)inet_ntoa(addr.sin_addr) + ":" + (int)ntohs(addr.sin_port);
 
     return dstr;
   }
