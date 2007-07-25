@@ -47,7 +47,7 @@ void MaintenanceThread::ScheduleCompaction(Range *range, WorkType wtype, uint64_
   workInfo.type = wtype;
   workInfo.range = range;
   workInfo.timestamp = timestamp;
-  workInfo.localityGroupName = lgName;
+  workInfo.localityGroupName = lgName ? lgName : "";
   msInputQueue.push(workInfo);
   msCond.notify_one();
 }
