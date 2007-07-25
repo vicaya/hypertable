@@ -48,7 +48,7 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
   if (eventPtr->type == Event::MESSAGE) {
     Runnable *requestHandler = 0;
 
-    //eventPtr->Display()
+    //eventPtr->Display();
 
     try {
       if (eventPtr->messageLen < sizeof(int16_t)) {

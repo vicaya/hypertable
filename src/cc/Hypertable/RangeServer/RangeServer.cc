@@ -240,16 +240,21 @@ int RangeServer::DirectoryInitialize(Properties *props) {
  * Compact
  */
 void RangeServer::Compact(ResponseCallback *cb, TabletIdentifierT *tablet, uint8_t compactionType, const char *accessGroup) {
-  std::string tableFile = (std::string)"/hypertable/tables/" + tablet->tableName;
   int error = Error::OK;
   std::string errMsg;
-  std::string tableName = tablet->tableName;
+  std::string tableName;
   TableInfoPtr tableInfoPtr;
   RangePtr rangePtr;
   uint64_t commitTime = 0;
-  string startRow = tablet->startRow;
+  string startRow;
   MaintenanceThread::WorkType workType = MaintenanceThread::COMPACTION_MINOR;
   bool major = false;
+
+  if (tablet->tableName)
+    tableName = tablet->tableName;
+
+  if (tablet->startRow)
+    startRow = tablet->startRow;
 
   // Check for major compaction
   if (compactionType == 1) {
@@ -336,14 +341,21 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, TabletIdentif
   KeyT          *endKey = 0;
   int error = Error::OK;
   std::string errMsg;
-  std::string tableName = tablet->tableName;
+  //std::string tableName = tablet->tableName;
+  std::string tableName;
   TableInfoPtr tableInfoPtr;
   RangePtr rangePtr;
-  string startRow = tablet->startRow;
+  //string startRow = tablet->startRow;
+  string startRow;
   CellListScannerPtr scannerPtr;
   bool more = true;
   std::set<uint8_t> columnFamilies;
   uint32_t id;
+
+  if (tablet->tableName != 0)
+    tableName = tablet->tableName;
+
+  startRow = tablet->startRow ? tablet->startRow : "";
 
   /**
    * Load column families set
@@ -607,7 +619,7 @@ namespace {
  * Update
  */
 void RangeServer::Update(ResponseCallbackUpdate *cb, TabletIdentifierT *tablet, BufferT &buffer) {
-  string tableName = tablet->tableName;
+  string tableName;
   const uint8_t *modPtr;
   const uint8_t *modEnd;
   string errMsg;
@@ -630,6 +642,9 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, TabletIdentifierT *tablet, 
   KeyComponentsT keyComps;
   uint64_t commitTime = 0;
   SplitLogMap::SplitLogInfoPtr splitLogInfoPtr;
+
+  if (tablet->tableName)
+    tableName = tablet->tableName;
 
   if (tablet->startRow != 0)
     startRow = tablet->startRow;
