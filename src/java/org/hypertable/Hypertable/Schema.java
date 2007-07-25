@@ -51,7 +51,8 @@ public class Schema {
 
 	NamedNodeMap nodeMap = node.getAttributes();
 	
-	node = nodeMap.getNamedItem("generation");
+	if ((node = nodeMap.getNamedItem("generation")) == null)
+	    throw new ParseException("No 'generation' attribute found in Schema element", 0);
 
 	mGeneration = Integer.parseInt(node.getNodeValue());
 
