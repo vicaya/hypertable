@@ -45,7 +45,7 @@ public class ConnectionManager implements Runnable {
 
 	while (elapsed < maxWaitMs) {
 
-	    if (mHandler.WaitForEvent(maxWaitMs-elapsed))
+	    if (mHandler.WaitForConnection(maxWaitMs-elapsed))
 		return true;
 
 	    elapsed = System.currentTimeMillis() - starttime;
@@ -125,7 +125,9 @@ public class ConnectionManager implements Runnable {
 		log.severe("Connect to " + mAddr + " failed - " + Error.GetText(error));
 	}
 
-	public synchronized boolean WaitForEvent(long maxWaitMs) throws InterruptedException {
+	public synchronized boolean WaitForConnection(long maxWaitMs) throws InterruptedException {
+	    if (mConnected)
+		return true;
 	    wait(maxWaitMs);
 	    return mConnected;
 	}

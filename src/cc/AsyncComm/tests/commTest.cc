@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
 
   connHandler->SendConnectRequest();
 
-  if (!connHandler->WaitForEvent(30)) {
+  if (!connHandler->WaitForConnection(30)) {
     LOG_ERROR("Connect error");
     return 1;
   }

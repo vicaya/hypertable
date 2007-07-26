@@ -96,7 +96,7 @@ public class CommTest {
 
 	    connHandler.SendConnectRequest();
 
-	    if (!connHandler.WaitForEvent(30)) {
+	    if (!connHandler.WaitForConnection(30)) {
 		log.fine("Connect error");
 		msShutdown = true;
 		return;

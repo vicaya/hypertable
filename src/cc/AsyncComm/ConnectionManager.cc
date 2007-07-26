@@ -106,9 +106,12 @@ void ConnectionManager::Callback::SendConnectRequest() {
 }
 
 
-bool ConnectionManager::Callback::WaitForEvent(long maxWaitSecs) {
+bool ConnectionManager::Callback::WaitForConnection(long maxWaitSecs) {
   boost::xtime xt;
   boost::mutex::scoped_lock lock(mMutex);
+
+  if (mConnected)
+    return true;
 
   boost::xtime_get(&xt, boost::TIME_UTC);
   xt.sec += maxWaitSecs;

@@ -64,7 +64,7 @@ namespace hypertable {
 
       while (elapsed < maxWaitSecs) {
 
-	if (mHandler->WaitForEvent(maxWaitSecs-elapsed))
+	if (mHandler->WaitForConnection(maxWaitSecs-elapsed))
 	  return true;
 
 	gettimeofday(&tval, 0);
@@ -82,7 +82,7 @@ namespace hypertable {
       virtual ~Callback() { return; }
       virtual void handle(EventPtr &event);
       void SendConnectRequest();
-      bool WaitForEvent(long maxWaitSecs);
+      bool WaitForConnection(long maxWaitSecs);
       bool WaitForEvent();
 
     private:
@@ -95,6 +95,7 @@ namespace hypertable {
     };
 
   private:
+
     Callback       *mHandler;
     boost::thread  *mThread;
     std::string     mWaitMessage;

@@ -1,12 +1,13 @@
 
 TODO:
-- Figure out why Hyperspace periodically hangs
+- Add support to threadGroup in AsyncComm
 - Remove command code from response message
 - Rename RangeServer/Global::localityGroup member names
 - Get cellStoreTest working on Linux (add consistent random number generator)
 - Add ReactorFactory::Shutdown
 
 DONE:
+- Figure out why Hyperspace periodically hangs
 - Add ~Comm (AsyncComm test is segfaulting at the end because of this)
 - The event object passed to the application by AsyncComm should be a smart pointer
 - Fix MessageBuilder stuff.
