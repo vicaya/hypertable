@@ -33,7 +33,7 @@ extern "C" {
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/CallbackHandler.h"
 #include "AsyncComm/Event.h"
-#include "AsyncComm/MessageBuilder.h"
+#include "AsyncComm/HeaderBuilder.h"
 
 #include "CommTestThreadFunction.h"
 
@@ -89,7 +89,7 @@ namespace {
  *
  */
 void CommTestThreadFunction::operator()() {
-  MessageBuilder mbuilder;
+  HeaderBuilder hbuilder;
   int error;
   EventPtr eventPtr;
   CommBuf *cbuf;
@@ -104,12 +104,12 @@ void CommTestThreadFunction::operator()() {
 
   if (infile.is_open()) {
     while (!infile.eof() ) {
-      mbuilder.Reset(Message::PROTOCOL_NONE);
+      hbuilder.Reset(Header::PROTOCOL_NONE);
       getline (infile,line);
       if (line.length() > 0) {
-	cbuf = new CommBuf(mbuilder.HeaderLength() + CommBuf::EncodedLength(line));
+	cbuf = new CommBuf(hbuilder.HeaderLength() + CommBuf::EncodedLength(line));
 	cbuf->PrependString(line);
-	mbuilder.Encapsulate(cbuf);
+	hbuilder.Encapsulate(cbuf);
 	CommBufPtr cbufPtr(cbuf);
 	int retries = 0;
 	while ((error = mComm->SendRequest(mAddr, cbufPtr, respHandler)) != Error::OK) {

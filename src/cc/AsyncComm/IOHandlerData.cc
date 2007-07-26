@@ -44,31 +44,18 @@ using namespace hypertable;
 
 #if defined(__linux__)
 
-void IOHandlerData::Unregister() {
-  struct epoll_event event;
-  memset(&event, 0, sizeof(struct epoll_event));
-  if (epoll_ctl(mReactor->pollFd, EPOLL_CTL_DEL, mSd, &event) < 0) {
-    LOG_VA_ERROR("epoll_ctl(EPOLL_CTL_DEL, %d) failure, %s", mSd, strerror(errno));
-    exit(1);
-  }
-  close(mSd);
-  mConnMap.Remove(mAddr);
-}
-
 bool IOHandlerData::HandleEvent(struct epoll_event *event) {
 
   //DisplayEvent(event);
 
   if (mShutdown) {
     DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-    Unregister();
     return true;
   }
 
   if (event->events & EPOLLOUT) {
     if (HandleWriteReadiness()) {
       DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-      Unregister();
       return true;
     }
   }
@@ -77,7 +64,7 @@ bool IOHandlerData::HandleEvent(struct epoll_event *event) {
     size_t nread, totalRead = 0;
     while (true) {
       if (!mGotHeader) {
-	uint8_t *ptr = ((uint8_t *)&mMessageHeader) + (sizeof(Message::HeaderT) - mMessageHeaderRemaining);
+	uint8_t *ptr = ((uint8_t *)&mMessageHeader) + (sizeof(Header::HeaderT) - mMessageHeaderRemaining);
 	nread = FileUtils::Read(mSd, ptr, mMessageHeaderRemaining);
 	if (nread == (size_t)-1) {
 	  if (errno != ECONNREFUSED) {
@@ -85,13 +72,11 @@ bool IOHandlerData::HandleEvent(struct epoll_event *event) {
 	  }
 	  int error = (errno == ECONNREFUSED) ? Error::COMM_CONNECT_ERROR : Error::OK;
 	  DeliverEvent( new Event(Event::DISCONNECT, mAddr, error ) );
-	  Unregister();
 	  return true;
 	}
 	else if (nread == 0 && totalRead == 0) {
 	  // eof
 	  DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-	  Unregister();
 	  return true;
 	}
 	else if (nread < mMessageHeaderRemaining) {
@@ -102,9 +87,9 @@ bool IOHandlerData::HandleEvent(struct epoll_event *event) {
 	  mGotHeader = true;
 	  mMessageHeaderRemaining = 0;
 	  mMessage = new uint8_t [ mMessageHeader.totalLen ];
-	  memcpy(mMessage, &mMessageHeader, sizeof(Message::HeaderT));
-	  mMessagePtr = mMessage + sizeof(Message::HeaderT);
-	  mMessageRemaining = (mMessageHeader.totalLen) - sizeof(Message::HeaderT);
+	  memcpy(mMessage, &mMessageHeader, sizeof(Header::HeaderT));
+	  mMessagePtr = mMessage + sizeof(Header::HeaderT);
+	  mMessageRemaining = (mMessageHeader.totalLen) - sizeof(Header::HeaderT);
 	  totalRead += nread;
 	}
       }
@@ -113,13 +98,11 @@ bool IOHandlerData::HandleEvent(struct epoll_event *event) {
 	if (nread < 0) {
 	  LOG_VA_ERROR("FileUtils::Read(%d, len=%d) failure : %s", mSd, mMessageHeaderRemaining, strerror(errno));
 	  DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-	  Unregister();
 	  return true;
 	}
 	else if (nread == 0 && totalRead == 0) {
 	  // eof
 	  DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-	  Unregister();
 	  return true;
 	}
 	else if (nread < mMessageRemaining) {
@@ -128,14 +111,14 @@ bool IOHandlerData::HandleEvent(struct epoll_event *event) {
 	}
 	else {
 	  CallbackHandler *cb = 0;
-	  uint32_t id = ((Message::HeaderT *)mMessage)->id;
-	  if ((((Message::HeaderT *)mMessage)->flags & Message::FLAGS_MASK_REQUEST) == 0 &&
+	  uint32_t id = ((Header::HeaderT *)mMessage)->id;
+	  if ((((Header::HeaderT *)mMessage)->flags & Header::FLAGS_MASK_REQUEST) == 0 &&
 	      (cb = mReactor->RemoveRequest(id)) == 0) {
 	    LOG_VA_WARN("Received response for non-pending event (id=%d,version=%d,totalLen=%d)",
-			id, ((Message::HeaderT *)mMessage)->version, ((Message::HeaderT *)mMessage)->totalLen);
+			id, ((Header::HeaderT *)mMessage)->version, ((Header::HeaderT *)mMessage)->totalLen);
 	  }
 	  else
-	    DeliverEvent( new Event(Event::MESSAGE, mAddr, Error::OK, (Message::HeaderT *)mMessage), cb );
+	    DeliverEvent( new Event(Event::MESSAGE, mAddr, Error::OK, (Header::HeaderT *)mMessage), cb );
 	  ResetIncomingMessageState();
 	}
 	totalRead += nread;
@@ -146,14 +129,12 @@ bool IOHandlerData::HandleEvent(struct epoll_event *event) {
   if (event->events & EPOLLERR) {
     LOG_VA_WARN("Received EPOLLERR on descriptor %d (%s:%d)", mSd, inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port));
     DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-    Unregister();
     return true;
   }
 
   if (event->events & EPOLLHUP) {
     LOG_VA_WARN("Received EPOLLHUP on descriptor %d (%s:%d)", mSd, inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port));
     DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-    Unregister();
     return true;
   }
 
@@ -176,14 +157,12 @@ bool IOHandlerData::HandleEvent(struct kevent *event) {
       DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::COMM_CONNECT_ERROR) );
     else
       DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-    Unregister();
     return true;
   }
 
   if (event->filter == EVFILT_WRITE) {
     if (HandleWriteReadiness()) {
       DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-      Unregister();
       return true;
     }
   }
@@ -193,13 +172,12 @@ bool IOHandlerData::HandleEvent(struct kevent *event) {
     size_t nread;
     while (available > 0) {
       if (!mGotHeader) {
-	uint8_t *ptr = ((uint8_t *)&mMessageHeader) + (sizeof(Message::HeaderT) - mMessageHeaderRemaining);
+	uint8_t *ptr = ((uint8_t *)&mMessageHeader) + (sizeof(Header::HeaderT) - mMessageHeaderRemaining);
 	if (mMessageHeaderRemaining < available) {
 	  nread = FileUtils::Read(mSd, ptr, mMessageHeaderRemaining);
 	  if (nread < 0) {
 	    LOG_VA_ERROR("FileUtils::Read(%d, len=%d) failure : %s", mSd, mMessageHeaderRemaining, strerror(errno));
 	    DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-	    Unregister();
 	    return true;
 	  }
 	  assert(nread == mMessageHeaderRemaining);
@@ -207,16 +185,15 @@ bool IOHandlerData::HandleEvent(struct kevent *event) {
 	  available -= nread;
 	  mMessageHeaderRemaining = 0;
 	  mMessage = new uint8_t [ mMessageHeader.totalLen ];
-	  memcpy(mMessage, &mMessageHeader, sizeof(Message::HeaderT));
-	  mMessagePtr = mMessage + sizeof(Message::HeaderT);
-	  mMessageRemaining = (mMessageHeader.totalLen) - sizeof(Message::HeaderT);
+	  memcpy(mMessage, &mMessageHeader, sizeof(Header::HeaderT));
+	  mMessagePtr = mMessage + sizeof(Header::HeaderT);
+	  mMessageRemaining = (mMessageHeader.totalLen) - sizeof(Header::HeaderT);
 	}
 	else {
 	  nread = FileUtils::Read(mSd, ptr, available);
 	  if (nread < 0) {
 	    LOG_VA_ERROR("FileUtils::Read(%d, len=%d) failure : %s", mSd, available, strerror(errno));
 	    DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-	    Unregister();
 	    return true;
 	  }
 	  assert(nread == available);
@@ -230,20 +207,19 @@ bool IOHandlerData::HandleEvent(struct kevent *event) {
 	  if (nread < 0) {
 	    LOG_VA_ERROR("FileUtils::Read(%d, len=%d) failure : %s", mSd, mMessageRemaining, strerror(errno));
 	    DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-	    Unregister();
 	    return true;
 	  }
 	  assert(nread == mMessageRemaining);
 	  available -= nread;
 
 	  CallbackHandler *cb = 0;
-	  uint32_t id = ((Message::HeaderT *)mMessage)->id;
-	  if ((((Message::HeaderT *)mMessage)->flags & Message::FLAGS_MASK_REQUEST) == 0 &&
+	  uint32_t id = ((Header::HeaderT *)mMessage)->id;
+	  if ((((Header::HeaderT *)mMessage)->flags & Header::FLAGS_MASK_REQUEST) == 0 &&
 	      (cb = mReactor->RemoveRequest(id)) == 0) {
 	    LOG_VA_WARN("Received response for non-pending event (id=%d)", id);
 	  }
 	  else
-	    DeliverEvent( new Event(Event::MESSAGE, mAddr, Error::OK, (Message::HeaderT *)mMessage), cb );
+	    DeliverEvent( new Event(Event::MESSAGE, mAddr, Error::OK, (Header::HeaderT *)mMessage), cb );
 	  ResetIncomingMessageState();
 	}
 	else {
@@ -251,7 +227,6 @@ bool IOHandlerData::HandleEvent(struct kevent *event) {
 	  if (nread < 0) {
 	    LOG_VA_ERROR("FileUtils::Read(%d, len=%d) failure : %s", mSd, available, strerror(errno));
 	    DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
-	    Unregister();
 	    return true;
 	  }
 	  assert(nread == available);
@@ -301,7 +276,7 @@ int IOHandlerData::SendMessage(CommBufPtr &cbufPtr, CallbackHandler *responseHan
   int error;
   struct timeval tv;
   bool initiallyEmpty = mSendQueue.empty() ? true : false;
-  Message::HeaderT *mheader = (Message::HeaderT *)cbufPtr->data;
+  Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
 
   LOG_ENTER;
 
@@ -311,7 +286,7 @@ int IOHandlerData::SendMessage(CommBufPtr &cbufPtr, CallbackHandler *responseHan
   }
 
   // If request, Add message ID to request cache
-  if (responseHandler != 0 && mheader->flags & Message::FLAGS_MASK_REQUEST)
+  if (responseHandler != 0 && mheader->flags & Header::FLAGS_MASK_REQUEST)
     mReactor->AddRequest(mheader->id, this, responseHandler, tv.tv_sec + mTimeout);
 
   mSendQueue.push_back(cbufPtr);

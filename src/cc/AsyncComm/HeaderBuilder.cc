@@ -16,12 +16,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
-#include "MessageBuilder.h"
+#include "HeaderBuilder.h"
 
 namespace hypertable {
 
-  atomic_t MessageBuilder::msNextMessageId = ATOMIC_INIT(0);
+  atomic_t HeaderBuilder::msNextMessageId = ATOMIC_INIT(0);
 
 }
 

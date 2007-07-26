@@ -44,8 +44,8 @@ namespace hypertable {
       dstr += "DISCONNECT";
     else if (type == MESSAGE) {
       dstr += "MESSAGE protocol=";
-      if (header->protocol < Message::PROTOCOL_MAX)
-	dstr += Message::protocolStrings[header->protocol];
+      if (header->protocol < Header::PROTOCOL_MAX)
+	dstr += Header::protocolStrings[header->protocol];
       else
 	dstr += "unknown";
       dstr += " id=" + header->id;

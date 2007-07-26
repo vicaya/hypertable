@@ -16,7 +16,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 #ifndef HYPERTABLE_IOHANDLERDATA_H
 #define HYPERTABLE_IOHANDLERDATA_H
 
@@ -61,7 +60,7 @@ namespace hypertable {
 
     void ResetIncomingMessageState() {
       mGotHeader = false;
-      mMessageHeaderRemaining = sizeof(Message::HeaderT);
+      mMessageHeaderRemaining = sizeof(Header::HeaderT);
     }
 
     void SetTimeout(time_t timeout) {
@@ -90,12 +89,10 @@ namespace hypertable {
 
   private:
 
-    void Unregister();
-    
     struct sockaddr_in  mAddr;
     bool                mConnected;
     boost::mutex        mMutex;
-    Message::HeaderT    mMessageHeader;
+    Header::HeaderT     mMessageHeader;
     size_t              mMessageHeaderRemaining;
     bool                mGotHeader;
     uint8_t            *mMessage;

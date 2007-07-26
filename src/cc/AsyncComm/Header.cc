@@ -16,18 +16,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
-#include "Message.h"
+#include "Header.h"
 
 namespace hypertable {
-
-  const char *Message::protocolStrings[PROTOCOL_MAX] = {
+  const char *Header::protocolStrings[PROTOCOL_MAX] = {
     "none",
     "hdfs",
     "pfs",
     "bigtable master",
     "bigtable tablet server"
   };
-
 }
 

@@ -31,7 +31,7 @@ extern "C" {
 
 using namespace std;
 
-#include "Message.h"
+#include "Header.h"
 
 namespace hypertable {
 
@@ -41,7 +41,7 @@ namespace hypertable {
 
     enum Type { CONNECTION_ESTABLISHED, DISCONNECT, MESSAGE, ERROR };
 
-    Event(Type ct, struct sockaddr_in &a, int err=0, Message::HeaderT *h=0) 
+    Event(Type ct, struct sockaddr_in &a, int err=0, Header::HeaderT *h=0) 
       : type(ct), addr(a), error(err), header(h) {
       if (h != 0) {
 	message = ((uint8_t *)header) + header->headerLen;
@@ -60,7 +60,7 @@ namespace hypertable {
     Type                type;
     struct sockaddr_in  addr;
     int                 error;
-    Message::HeaderT   *header;
+    Header::HeaderT    *header;
     uint8_t            *message;
     size_t              messageLen;
 

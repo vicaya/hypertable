@@ -104,6 +104,8 @@ namespace hypertable {
 
     Reactor *GetReactor() { return mReactor; }
 
+    ConnectionMap &GetConnectionMap() { return mConnMap; }
+
   protected:
     int            mSd;
     CallbackHandler *mCallback;

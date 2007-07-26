@@ -16,9 +16,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
-#ifndef HYPERTABLE_MESSAGE_H
-#define HYPERTABLE_MESSAGE_H
+#ifndef HYPERTABLE_HEADER_H
+#define HYPERTABLE_HEADER_H
 
 extern "C" {
 #include <stdint.h>
@@ -26,7 +25,7 @@ extern "C" {
 
 namespace hypertable {
 
-  class Message {
+  class Header {
 
   public:
 
@@ -58,4 +57,4 @@ namespace hypertable {
 
 }
 
-#endif // HYPERTABLE_MESSAGE_H
+#endif // HYPERTABLE_HEADER_H

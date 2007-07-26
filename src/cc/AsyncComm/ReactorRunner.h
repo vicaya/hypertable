@@ -16,10 +16,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 #include "Reactor.h"
 
 namespace hypertable {
+
+  class IOHandler;
 
   /**
    *
@@ -29,6 +30,7 @@ namespace hypertable {
     void operator()();
     void SetReactor(Reactor *reactor) { mReactor = reactor; }
   private:
+    void UnregisterHandler(IOHandler *handler);
     Reactor *mReactor;
   };
 

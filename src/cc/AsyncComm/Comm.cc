@@ -165,7 +165,7 @@ int Comm::Listen(uint16_t port, ConnectionHandlerFactory *hfactory, CallbackHand
 int Comm::SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, CallbackHandler *responseHandler) {
   boost::mutex::scoped_lock lock(mMutex);
   IOHandlerDataPtr dataHandlerPtr;
-  Message::HeaderT *mheader = (Message::HeaderT *)cbufPtr->data;
+  Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
   int error = Error::OK;
 
   if (!mConnMap.Lookup(addr, dataHandlerPtr)) {
@@ -173,7 +173,7 @@ int Comm::SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, CallbackHan
     return Error::COMM_NOT_CONNECTED;
   }
 
-  mheader->flags |= Message::FLAGS_MASK_REQUEST;
+  mheader->flags |= Header::FLAGS_MASK_REQUEST;
 
   if ((error = dataHandlerPtr->SendMessage(cbufPtr, responseHandler)) != Error::OK)
     dataHandlerPtr->Shutdown();
@@ -185,7 +185,7 @@ int Comm::SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, CallbackHan
 int Comm::SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr) {
   boost::mutex::scoped_lock lock(mMutex);
   IOHandlerDataPtr dataHandlerPtr;
-  Message::HeaderT *mheader = (Message::HeaderT *)cbufPtr->data;
+  Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
   int error = Error::OK;
 
   if (!mConnMap.Lookup(addr, dataHandlerPtr)) {
@@ -193,7 +193,7 @@ int Comm::SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr) {
     return Error::COMM_NOT_CONNECTED;
   }
 
-  mheader->flags &= Message::FLAGS_MASK_RESPONSE;
+  mheader->flags &= Header::FLAGS_MASK_RESPONSE;
 
   if ((error = dataHandlerPtr->SendMessage(cbufPtr)) != Error::OK)
     dataHandlerPtr->Shutdown();

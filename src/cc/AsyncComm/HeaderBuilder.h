@@ -16,8 +16,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MESSAGEBUILDER_H
-#define HYPERTABLE_MESSAGEBUILDER_H
+#ifndef HYPERTABLE_HEADERBUILDER_H
+#define HYPERTABLE_HEADERBUILDER_H
 
 #include <iostream>
 using namespace std;
@@ -29,17 +29,17 @@ extern "C" {
 #include "Common/atomic.h"
 
 #include "CommBuf.h"
-#include "Message.h"
+#include "Header.h"
 
 namespace hypertable {
 
-  class MessageBuilder {
+  class HeaderBuilder {
 
   public:
 
     static atomic_t msNextMessageId;
 
-    MessageBuilder() : mId(0), mThreadGroup(0), mProtocol(0), mFlags(0) { return; }
+    HeaderBuilder() : mId(0), mThreadGroup(0), mProtocol(0), mFlags(0) { return; }
 
     void Reset(uint8_t protocol, uint8_t flags=0) {
       mId = atomic_inc_return(&msNextMessageId);
@@ -48,7 +48,7 @@ namespace hypertable {
       mFlags = flags;
     }
 
-    void LoadFromMessage(Message::HeaderT *header) {
+    void LoadFromMessage(Header::HeaderT *header) {
       mId          = header->id;
       mThreadGroup = header->threadGroup;
       mProtocol    = header->protocol;
@@ -56,18 +56,18 @@ namespace hypertable {
     }
 
     size_t HeaderLength() {
-      return sizeof(Message::HeaderT);
+      return sizeof(Header::HeaderT);
     }
 
     void Encapsulate(CommBuf *cbuf) {
-      Message::HeaderT *mheader;
-      cbuf->data -= sizeof(Message::HeaderT);
-      cbuf->dataLen += sizeof(Message::HeaderT);
-      mheader = (Message::HeaderT *)cbuf->data;
-      mheader->version = Message::VERSION;
+      Header::HeaderT *mheader;
+      cbuf->data -= sizeof(Header::HeaderT);
+      cbuf->dataLen += sizeof(Header::HeaderT);
+      mheader = (Header::HeaderT *)cbuf->data;
+      mheader->version = Header::VERSION;
       mheader->protocol = mProtocol;
       mheader->flags = mFlags;
-      mheader->headerLen = sizeof(Message::HeaderT);
+      mheader->headerLen = sizeof(Header::HeaderT);
       mheader->id = mId;
       mheader->threadGroup = mThreadGroup;
       mheader->totalLen = cbuf->dataLen + cbuf->extLen;
@@ -91,4 +91,4 @@ namespace hypertable {
 }
 
 
-#endif // HYPERTABLE_MESSAGEBUILDER_H
+#endif // HYPERTABLE_HEADERBUILDER_H
