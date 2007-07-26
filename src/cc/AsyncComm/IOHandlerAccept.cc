@@ -16,7 +16,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 #include <iostream>
 using namespace std;
 
@@ -31,7 +30,7 @@ extern "C" {
 #include "Common/FileUtils.h"
 #include "Common/Logger.h"
 
-#include "ConnectionMap.h"
+#include "HandlerMap.h"
 #include "IOHandlerAccept.h"
 #include "IOHandlerData.h"
 #include "ReactorFactory.h"
@@ -44,6 +43,8 @@ using namespace hypertable;
 #if defined(__APPLE__)
 bool IOHandlerAccept::HandleEvent(struct kevent *event) {
   //DisplayEvent(event);
+  if (mShutdown)
+    return true;
   if (event->filter == EVFILT_READ)  
     return HandleIncomingConnection();
   return true;
@@ -51,6 +52,8 @@ bool IOHandlerAccept::HandleEvent(struct kevent *event) {
 #elif defined(__linux__)
 bool IOHandlerAccept::HandleEvent(struct epoll_event *event) {
   //DisplayEvent(event);
+  if (mShutdown)
+    return true;
   return HandleIncomingConnection();
 }
 #else
@@ -92,8 +95,8 @@ bool IOHandlerAccept::HandleIncomingConnection() {
     LOG_VA_WARN("setsockopt(SO_RCVBUF) failed - %s", strerror(errno));
   }
 
-  IOHandlerDataPtr dataHandlerPtr( new IOHandlerData(sd, addr, mHandlerFactory->newInstance(), mConnMap, mEventQueue) );
-  mConnMap.Insert(dataHandlerPtr);
+  IOHandlerDataPtr dataHandlerPtr( new IOHandlerData(sd, addr, mHandlerFactory->newInstance(), mHandlerMap, mEventQueue) );
+  mHandlerMap.InsertDataHandler(dataHandlerPtr);
   dataHandlerPtr->StartPolling();
 
   DeliverEvent( new Event(Event::CONNECTION_ESTABLISHED, addr, Error::OK) );

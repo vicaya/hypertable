@@ -16,7 +16,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 //#define DISABLE_LOG_DEBUG
 
 #include <cassert>
@@ -50,6 +49,7 @@ extern "C" {
 using namespace hypertable;
 
 
+
 /**
  */
 Comm::Comm(uint32_t handlerCount) {
@@ -66,12 +66,21 @@ Comm::Comm(uint32_t handlerCount) {
 
 
 /**
+ *
+ */
+Comm::~Comm() {
+  mHandlerMap.UnregisterAll();
+}
+
+
+
+/**
  */
 int Comm::Connect(struct sockaddr_in &addr, time_t timeout, CallbackHandler *defaultHandler) {
   int sd;
   IOHandlerDataPtr dataHandlerPtr;
 
-  if (mConnMap.Lookup(addr, dataHandlerPtr))
+  if (mHandlerMap.LookupDataHandler(addr, dataHandlerPtr))
     return Error::COMM_ALREADY_CONNECTED;
 
   if ((sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
@@ -88,8 +97,8 @@ int Comm::Connect(struct sockaddr_in &addr, time_t timeout, CallbackHandler *def
     LOG_VA_WARN("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
 #endif
 
-  dataHandlerPtr.reset( new IOHandlerData(sd, addr, defaultHandler, mConnMap, mEventQueue) );
-  mConnMap.Insert(dataHandlerPtr);
+  dataHandlerPtr.reset( new IOHandlerData(sd, addr, defaultHandler, mHandlerMap, mEventQueue) );
+  mHandlerMap.InsertDataHandler(dataHandlerPtr);
   dataHandlerPtr->SetTimeout(timeout);
 
   while (connect(sd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) < 0) {
@@ -155,8 +164,9 @@ int Comm::Listen(uint16_t port, ConnectionHandlerFactory *hfactory, CallbackHand
     exit(1);
   }
 
-  IOHandlerAccept *acceptHandler = new IOHandlerAccept(sd, defaultHandler, mConnMap, mEventQueue, hfactory);
-  acceptHandler->StartPolling();
+  IOHandlerAcceptPtr acceptHandlerPtr( new IOHandlerAccept(sd, addr, defaultHandler, mHandlerMap, mEventQueue, hfactory) );
+  mHandlerMap.InsertAcceptHandler(acceptHandlerPtr);
+  acceptHandlerPtr->StartPolling();
 
   return 0;
 }
@@ -168,7 +178,7 @@ int Comm::SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, CallbackHan
   Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
   int error = Error::OK;
 
-  if (!mConnMap.Lookup(addr, dataHandlerPtr)) {
+  if (!mHandlerMap.LookupDataHandler(addr, dataHandlerPtr)) {
     LOG_VA_ERROR("No connection for %s:%d", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
     return Error::COMM_NOT_CONNECTED;
   }
@@ -188,7 +198,7 @@ int Comm::SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr) {
   Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
   int error = Error::OK;
 
-  if (!mConnMap.Lookup(addr, dataHandlerPtr)) {
+  if (!mHandlerMap.LookupDataHandler(addr, dataHandlerPtr)) {
     LOG_VA_ERROR("No connection for %s:%d", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
     return Error::COMM_NOT_CONNECTED;
   }

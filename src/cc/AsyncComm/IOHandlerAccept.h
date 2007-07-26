@@ -20,6 +20,8 @@
 #ifndef HYPERTABLE_IOHANDLERACCEPT_H
 #define HYPERTABLE_IOHANDLERACCEPT_H
 
+#include <boost/shared_ptr.hpp>
+
 #include "IOHandler.h"
 #include "ConnectionHandlerFactory.h"
 
@@ -36,7 +38,7 @@ namespace hypertable {
 
   public:
 
-    IOHandlerAccept(int sd, CallbackHandler *cbh, ConnectionMap &cm, EventQueue *eq, ConnectionHandlerFactory *hfactory) : IOHandler(sd, cbh, cm, eq) {
+    IOHandlerAccept(int sd, struct sockaddr_in &addr, CallbackHandler *cbh, HandlerMap &hmap, EventQueue *eq, ConnectionHandlerFactory *hfactory) : IOHandler(sd, addr, cbh, hmap, eq) {
       mHandlerFactory = hfactory;
       return;
     }
@@ -58,6 +60,9 @@ namespace hypertable {
   private:
     ConnectionHandlerFactory *mHandlerFactory;
   };
+
+  typedef boost::shared_ptr<IOHandlerAccept> IOHandlerAcceptPtr;
+
 
 }
 

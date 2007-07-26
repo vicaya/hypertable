@@ -32,7 +32,7 @@ extern "C" {
 
 #include "Common/Logger.h"
 
-#include "ConnectionMap.h"
+#include "HandlerMap.h"
 #include "IOHandler.h"
 #include "IOHandlerData.h"
 #include "ReactorFactory.h"
@@ -136,10 +136,7 @@ void ReactorRunner::UnregisterHandler(IOHandler *handler) {
 #elif defined(__APPLE__)
   ImplementMe;
 #endif
-  IOHandlerData *dataHandler = dynamic_cast<IOHandlerData *>(handler);
-  if (dataHandler != 0) {
-    ConnectionMap &connMap = dataHandler->GetConnectionMap();
-    struct sockaddr_in addr = dataHandler->GetAddress();
-    connMap.Remove(addr);
-  }
+  struct sockaddr_in addr = handler->GetAddress();
+  HandlerMap &handlerMap = handler->GetHandlerMap();
+  handlerMap.RemoveHandler(addr);
 }

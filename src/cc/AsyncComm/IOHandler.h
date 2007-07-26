@@ -40,7 +40,7 @@ extern "C" {
 
 namespace hypertable {
 
-  class ConnectionMap;
+  class HandlerMap;
 
   /**
    *
@@ -49,9 +49,10 @@ namespace hypertable {
 
   public:
 
-    IOHandler(int sd, CallbackHandler *cbh, ConnectionMap &cm, EventQueue *eq) : mSd(sd), mCallback(cbh), mConnMap(cm), mEventQueue(eq) {
+    IOHandler(int sd, struct sockaddr_in &addr, CallbackHandler *cbh, HandlerMap &hmap, EventQueue *eq) : mAddr(addr), mSd(sd), mCallback(cbh), mHandlerMap(hmap), mEventQueue(eq) {
       mReactor = ReactorFactory::GetReactor();
       mPollInterest = 0;
+      mShutdown = false;
     }
 
 #if defined(__APPLE__)
@@ -100,19 +101,44 @@ namespace hypertable {
 
     void RemovePollInterest(int mode);
 
+    struct sockaddr_in &GetAddress() { return mAddr; }
+
     int GetSd() { return mSd; }
 
     Reactor *GetReactor() { return mReactor; }
 
-    ConnectionMap &GetConnectionMap() { return mConnMap; }
+    HandlerMap &GetHandlerMap() { return mHandlerMap; }
+
+    void Shutdown() { 
+      mShutdown = true;
+      StopPolling();
+      close(mSd);
+    }
 
   protected:
-    int            mSd;
-    CallbackHandler *mCallback;
-    ConnectionMap &mConnMap;
-    EventQueue    *mEventQueue;
-    Reactor       *mReactor;
-    int            mPollInterest;
+
+    void StopPolling() {
+#if defined(__APPLE__)
+      RemovePollInterest(Reactor::READ_READY|Reactor::WRITE_READY);
+#elif defined(__linux__)
+      struct epoll_event event;  // this is necessary for < Linux 2.6.9
+      if (epoll_ctl(mReactor->pollFd, EPOLL_CTL_DEL, mSd, &event) < 0) {
+	LOG_VA_ERROR("epoll_ctl(%d, EPOLL_CTL_DEL, %d) failed : %s",
+		     mReactor->pollFd, mSd, strerror(errno));
+	exit(1);
+      }
+      mPollInterest = 0;
+#endif
+    }
+
+    struct sockaddr_in  mAddr;
+    int                 mSd;
+    CallbackHandler    *mCallback;
+    HandlerMap         &mHandlerMap;
+    EventQueue         *mEventQueue;
+    Reactor            *mReactor;
+    int                 mPollInterest;
+    bool                mShutdown;
 
 #if defined(__APPLE__)
     void DisplayEvent(struct kevent *event);

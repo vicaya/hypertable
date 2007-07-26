@@ -33,10 +33,10 @@ extern "C" {
 }
 
 #include "CallbackHandler.h"
-#include "ConnectionMap.h"
+#include "CommBuf.h"
 #include "ConnectionHandlerFactory.h"
 #include "EventQueue.h"
-#include "CommBuf.h"
+#include "HandlerMap.h"
 
 namespace hypertable {
 
@@ -45,6 +45,8 @@ namespace hypertable {
   public:
 
     Comm(uint32_t handlerCount);
+
+    ~Comm();
 
     int Connect(struct sockaddr_in &addr, time_t timeout, CallbackHandler *defaultHandler);
 
@@ -55,10 +57,10 @@ namespace hypertable {
     int SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr);
 
   private:
-    const char      *mAppName;
-    ConnectionMap    mConnMap;
-    boost::mutex     mMutex;
-    EventQueue      *mEventQueue;
+    boost::mutex  mMutex;
+    const char   *mAppName;
+    HandlerMap    mHandlerMap;
+    EventQueue   *mEventQueue;
   };
 
 }

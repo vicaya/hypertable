@@ -48,14 +48,13 @@ namespace hypertable {
 
   public:
 
-    IOHandlerData(int sd, struct sockaddr_in &addr, CallbackHandler *cbh, ConnectionMap &cm, EventQueue *eq) 
-      : IOHandler(sd, cbh, cm, eq), mAddr(addr), mRequestCache(), mTimeout(0), mSendQueue() {
+    IOHandlerData(int sd, struct sockaddr_in &addr, CallbackHandler *cbh, HandlerMap &hmap, EventQueue *eq) 
+      : IOHandler(sd, addr, cbh, hmap, eq), mRequestCache(), mTimeout(0), mSendQueue() {
       mConnected = false;
       ResetIncomingMessageState();
       mMessage = 0;
       mMessagePtr = 0;
       mMessageRemaining = 0;
-      mShutdown = false;
     }
 
     void ResetIncomingMessageState() {
@@ -66,10 +65,6 @@ namespace hypertable {
     void SetTimeout(time_t timeout) {
       mTimeout = timeout;
     }
-
-    struct sockaddr_in &GetAddress() { return mAddr; }
-
-    int GetFd() { return mSd; }
 
     int SendMessage(CommBufPtr &cbufPtr, CallbackHandler *cbHandler=0);
 
@@ -85,11 +80,8 @@ namespace hypertable {
 
     bool HandleWriteReadiness();
 
-    void Shutdown() { mShutdown = true; }
-
   private:
 
-    struct sockaddr_in  mAddr;
     bool                mConnected;
     boost::mutex        mMutex;
     Header::HeaderT     mMessageHeader;
@@ -98,7 +90,6 @@ namespace hypertable {
     uint8_t            *mMessage;
     uint8_t            *mMessagePtr;
     size_t              mMessageRemaining;
-    bool                mShutdown;
     RequestCache        mRequestCache;
     time_t              mTimeout;
     list<CommBufPtr>    mSendQueue;

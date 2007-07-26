@@ -38,7 +38,7 @@ extern "C" {
 #include "Common/FileUtils.h"
 
 #include "IOHandlerData.h"
-#include "ConnectionMap.h"
+#include "HandlerMap.h"
 using namespace hypertable;
 
 
@@ -149,6 +149,11 @@ bool IOHandlerData::HandleEvent(struct epoll_event *event) {
 bool IOHandlerData::HandleEvent(struct kevent *event) {
 
   //DisplayEvent(event);
+
+  if (mShutdown) {
+    DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
+    return true;
+  }
 
   assert(mSd == (int)event->ident);
 
