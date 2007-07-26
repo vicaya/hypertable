@@ -1,8 +1,12 @@
 
-- Add ~Comm (AsyncComm test is segfaulting at the end because of this)
-- Get cellStoreTest working on Linux (add consistent random number generator)
+TODO:
 - Figure out why Hyperspace periodically hangs
-- The event object passed to the application by AsyncComm should be a smart pointer
 - Remove command code from response message
-- Fix MessageBuilder stuff.  There are many places that use MessageBuilderSimple::LoadFromMessage, when
-  they should really be using a message builder that knows how to decode the header.
+- Rename RangeServer/Global::localityGroup member names
+- Get cellStoreTest working on Linux (add consistent random number generator)
+- Add ReactorFactory::Shutdown
+
+DONE:
+- Add ~Comm (AsyncComm test is segfaulting at the end because of this)
+- The event object passed to the application by AsyncComm should be a smart pointer
+- Fix MessageBuilder stuff.

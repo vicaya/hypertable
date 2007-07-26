@@ -1,0 +1,52 @@
+
+DEMO #1
+
+rm -rf ~/HypertableLogs/*; cp metadata-test.xml metadata
+../bin/Hypertable.RangeServer --verbose --metadata=metadata
+
+../bin/jrun org.hypertable.Hypertable.RangeServer.Client
+
+more Test.xml
+
+more testdata.txt
+
+load range Test[:kerchoo]
+
+update Test[:kerchoo] testdata.txt
+
+scan Test[:kerchoo]
+
+./bin/hadoop dfs -ls /hypertable/tables/Test/cindy/000000000000000000000000
+
+^C
+
+../bin/Hypertable.RangeServer --verbose --metadata=metadata
+
+load range Test[:kerchoo]
+
+scan Test[:kerchoo]
+
+./bin/hadoop dfs -ls /hypertable/tables/Test/cindy/000000000000000000000000
+
+compact Test[:kerchoo]
+
+scan Test[:kerchoo]
+
+scan Test[:kerchoo]
+
+scan Test[:kerchoo] columns=cherry
+
+DEMO #2
+
+rm -rf ~/HypertableLogs/*; cp metadata-test.xml metadata
+../bin/Hypertable.RangeServer --verbose --metadata=metadata
+
+../bin/jrun org.hypertable.Hypertable.RangeServer.Client
+
+more Test.xml
+
+more testdata.txt
+
+load range Test[:kerchoo]
+
+update Test[:kerchoo] testdata.txt
