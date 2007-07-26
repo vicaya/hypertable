@@ -30,6 +30,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.hypertable.Common.Error;
 import org.hypertable.Common.System;
 import org.hypertable.Common.Usage;
+import org.hypertable.Common.WorkQueue;
 
 import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.CommBuf;
@@ -60,7 +61,10 @@ public class Server {
 		try {
 		    event.msg.buf.position(event.msg.headerLen);
 		    command = event.msg.buf.getShort();
-		    Global.workQueue.AddRequest( mRequestFactory.newInstance(event, command) );
+		    if (event.msg.threadGroup != 0)
+			Global.workQueue.AddSerialRequest(event.msg.threadGroup, mRequestFactory.newInstance(event, command));
+		    else
+			Global.workQueue.AddRequest( mRequestFactory.newInstance(event, command) );
 		}
 		catch (ProtocolException e) {
 		    HeaderBuilder hbuilder = new HeaderBuilder();
@@ -186,7 +190,6 @@ public class Server {
 
 	Global.workQueue.Join();
 
-	java.lang.System.exit(0);
     }
 
 }

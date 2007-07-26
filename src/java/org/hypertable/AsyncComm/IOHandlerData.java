@@ -14,24 +14,26 @@
  * limitations under the License.
  */
 
-
 package org.hypertable.AsyncComm;
 
+import java.io.IOException;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
+import java.nio.ByteOrder;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.nio.channels.ClosedChannelException;
-import java.net.Socket;
-import java.io.IOException;
+import java.nio.channels.SocketChannel;
 import java.util.LinkedList;
-import java.nio.ByteOrder;
-import java.net.ConnectException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.hypertable.Common.Error;
 
 class IOHandlerData extends IOHandler {
+
+    private static AtomicInteger msNextId = new AtomicInteger(1);
     
     public IOHandlerData(SocketChannel chan, CallbackHandler cb, ConnectionMap cm, Event.Queue eq) {
 	super(chan, cb, cm, eq);
@@ -42,6 +44,7 @@ class IOHandlerData extends IOHandler {
 	mGotHeader = false;
 	mSendQueue = new LinkedList<CommBuf>();
 	mShutdown = false;
+	mId = msNextId.getAndIncrement();
     }
 
     public void SetRemoteAddress(InetSocketAddress addr) {
@@ -102,7 +105,7 @@ class IOHandlerData extends IOHandler {
 			mGotHeader = true;
 			header.flip();
 			message = new Message();
-			message.ReadHeader(header);
+			message.ReadHeader(header, mId);
 			message.buf = ByteBuffer.allocate(message.totalLen);
 			message.buf.order(ByteOrder.LITTLE_ENDIAN);
 			header.flip();
@@ -223,4 +226,5 @@ class IOHandlerData extends IOHandler {
     private LinkedList<CommBuf> mSendQueue;
     private long mTimeout;
     private boolean mShutdown;
+    private int mId;
 }

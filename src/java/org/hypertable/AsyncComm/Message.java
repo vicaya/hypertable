@@ -35,14 +35,18 @@ public class Message {
     public static final byte FLAGS_MASK_REQUEST  = (byte)0x01;
     public static final byte FLAGS_MASK_RESPONSE = (byte)0xFE;
 
-    public void ReadHeader(ByteBuffer buf) {
+    public void ReadHeader(ByteBuffer buf, int connectionId) {
 	version     = buf.get();
 	protocol    = buf.get();
 	flags       = buf.get();
 	headerLen   = buf.get();
 	id          = buf.getInt();
-	threadGroup = buf.getInt();
+	gid         = buf.getInt();
 	totalLen    = buf.getInt();
+	if (gid != 0)
+	    threadGroup = ((long)connectionId << 32) | (long)gid;
+	else
+	    threadGroup = 0;
     }
 
     public void RewindToProtocolHeader() {
@@ -54,7 +58,8 @@ public class Message {
     public byte   flags;
     public byte   headerLen;
     public int    id;
-    public int    threadGroup;
+    public int    gid;
     public int    totalLen;
     public ByteBuffer buf;
+    public long   threadGroup;
 }

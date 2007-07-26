@@ -51,9 +51,11 @@ void IOHandler::AddPollInterest(int mode) {
     event.events |= EPOLLOUT;
 
   if (epoll_ctl(mReactor->pollFd, EPOLL_CTL_MOD, mSd, &event) < 0) {
+    /**
     LOG_VA_ERROR("epoll_ctl(%d, EPOLL_CTL_MOD, sd=%d) (mode=%x) : %s", 
 		 mReactor->pollFd, mSd, mode, strerror(errno));
     *((int *)0) = 1;
+    **/
   }
 }
 

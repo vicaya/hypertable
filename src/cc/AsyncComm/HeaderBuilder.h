@@ -39,20 +39,20 @@ namespace hypertable {
 
     static atomic_t msNextMessageId;
 
-    HeaderBuilder() : mId(0), mThreadGroup(0), mProtocol(0), mFlags(0) { return; }
+    HeaderBuilder() : mId(0), mGroupId(0), mProtocol(0), mFlags(0) { return; }
 
     void Reset(uint8_t protocol, uint8_t flags=0) {
       mId = atomic_inc_return(&msNextMessageId);
-      mThreadGroup = 0;
+      mGroupId = 0;
       mProtocol = protocol;
       mFlags = flags;
     }
 
     void LoadFromMessage(Header::HeaderT *header) {
-      mId          = header->id;
-      mThreadGroup = header->threadGroup;
-      mProtocol    = header->protocol;
-      mFlags       = header->flags;
+      mId        = header->id;
+      mGroupId   = header->gid;
+      mProtocol  = header->protocol;
+      mFlags     = header->flags;
     }
 
     size_t HeaderLength() {
@@ -69,7 +69,7 @@ namespace hypertable {
       mheader->flags = mFlags;
       mheader->headerLen = sizeof(Header::HeaderT);
       mheader->id = mId;
-      mheader->threadGroup = mThreadGroup;
+      mheader->gid = mGroupId;
       mheader->totalLen = cbuf->dataLen + cbuf->extLen;
     }
 
@@ -79,11 +79,11 @@ namespace hypertable {
 
     void SetProtocol(uint8_t protocol) { mProtocol = protocol; }
 
-    void SetThreadGroup(uint32_t threadGroup) { mThreadGroup = threadGroup; }
+    void SetGroupId(uint32_t groupId) { mGroupId = groupId; }
 
   protected:
     uint32_t  mId;
-    uint32_t  mThreadGroup;
+    uint32_t  mGroupId;
     uint8_t   mProtocol;
     uint8_t   mFlags;
   };

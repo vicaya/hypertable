@@ -99,6 +99,7 @@ namespace hypertable {
     closeHeader->fd = fd;
 
     hbuilder.Reset(Header::PROTOCOL_HDFS);
+    hbuilder.SetGroupId(fd);
     hbuilder.Encapsulate(cbuf);
 
     return cbuf;
@@ -116,6 +117,7 @@ namespace hypertable {
     readHeader->amount = amount;
 
     hbuilder.Reset(Header::PROTOCOL_HDFS);
+    hbuilder.SetGroupId(fd);
     hbuilder.Encapsulate(cbuf);
 
     return cbuf;
@@ -134,6 +136,7 @@ namespace hypertable {
     writeHeader->amount = amount;
 
     hbuilder.Reset(Header::PROTOCOL_HDFS);
+    hbuilder.SetGroupId(fd);
     hbuilder.Encapsulate(cbuf);
 
     return cbuf;
@@ -150,6 +153,7 @@ namespace hypertable {
     seekHeader->offset = offset;
 
     hbuilder.Reset(Header::PROTOCOL_HDFS);
+    hbuilder.SetGroupId(fd);
     hbuilder.Encapsulate(cbuf);
 
     return cbuf;

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.hypertable.AsyncComm;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -26,20 +25,20 @@ public class HeaderBuilder {
 
     public void Reset(byte protocol) {
 	mId = msNextId.incrementAndGet();
-	mThreadGroup = 0;
+	mGroupId = 0;
 	mProtocol = protocol;
     }
 
     public void Reset(byte protocol, byte flags) {
 	mId = msNextId.incrementAndGet();
-	mThreadGroup = 0;
+	mGroupId = 0;
 	mProtocol = protocol;
 	mFlags = flags;
     }
 
     public void LoadFromMessage(Message msg) {
 	mId = msg.id;
-	mThreadGroup = msg.threadGroup;
+	mGroupId = msg.gid;
 	mProtocol = msg.protocol;
 	mFlags = msg.flags;
     }
@@ -59,7 +58,7 @@ public class HeaderBuilder {
 	cbuf.data.put(mFlags);
 	cbuf.data.put(Message.HEADER_LENGTH);
 	cbuf.data.putInt(mId);
-	cbuf.data.putInt(mThreadGroup);
+	cbuf.data.putInt(mGroupId);
 	cbuf.data.putInt(totalLen);
 	cbuf.data.reset();
 	cbuf.id = mId;
@@ -71,10 +70,10 @@ public class HeaderBuilder {
 
     public void SetProtocol(byte protocol) { mProtocol = protocol; }
 
-    public void SetThreadGroup(int threadGroup) { mThreadGroup = threadGroup; }
+    public void SetGroupId(int gid) { mGroupId = gid; }
 
     protected int mId;
-    protected int mThreadGroup;
+    protected int mGroupId;
     protected byte mProtocol;
     protected byte mFlags;
 }

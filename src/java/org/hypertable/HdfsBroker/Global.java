@@ -20,6 +20,7 @@ package org.hypertable.HdfsBroker;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 
+import org.hypertable.Common.WorkQueue;
 import org.hypertable.AsyncComm.Comm;
 
 public class Global {

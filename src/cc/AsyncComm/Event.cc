@@ -49,7 +49,7 @@ namespace hypertable {
       else
 	dstr += "unknown";
       dstr += " id=" + header->id;
-      dstr += " threadGroup=" + header->threadGroup;
+      dstr += " gid=" + header->gid;
       dstr += " headerLen=" + header->headerLen;
       dstr += " totalLen=" + header->totalLen;
     }
