@@ -19,6 +19,7 @@
 #include <boost/thread/thread.hpp>
 
 #include "AsyncComm/Comm.h"
+#include "AsyncComm/HeaderBuilder.h"
 
 #include "Common/Error.h"
 #include "Common/Logger.h"
@@ -297,7 +298,7 @@ int HdfsClient::SendMessage(CommBufPtr &cbufPtr, CallbackHandler *handler, uint3
   int error;
 
   if (msgIdp)
-    *msgIdp = ((Message::HeaderT *)cbufPtr->data)->id;
+    *msgIdp = ((Header::HeaderT *)cbufPtr->data)->id;
 
   if ((error = mComm->SendRequest(mAddr, cbufPtr, handler)) != Error::OK) {
     LOG_VA_WARN("Comm::SendRequest to %s:%d failed - %s",

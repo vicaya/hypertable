@@ -516,7 +516,6 @@ void RangeServer::LoadRange(ResponseCallback *cb, TabletIdentifierT *tablet) {
   DynamicBuffer endRowBuffer(0);
   std::string errMsg;
   int error = Error::OK;
-  MessageBuilderSimple mbuilder;
   SchemaPtr schemaPtr;
   TableInfoPtr tableInfoPtr;
   string startRow = "";

@@ -21,17 +21,14 @@
 using namespace hypertable;
 
 int ResponseCallbackFetchScanblock::response(short moreFlag, int32_t id, ExtBufferT &ext) {
-  CommBuf *cbuf = new CommBuf(mBuilder.HeaderLength() + 12);
-  cbuf->SetExt(ext.buf, ext.len);
-  cbuf->PrependInt(id);   // scanner ID
-  cbuf->PrependShort(moreFlag);
-  cbuf->PrependShort(0); // fix me!!!
-  cbuf->PrependInt(Error::OK);
-  mBuilder.LoadFromMessage(mEventPtr->header);
-  mBuilder.Encapsulate(cbuf);
-  {
-    CommBufPtr cbufPtr(cbuf);
-    return mComm->SendResponse(mEventPtr->addr, cbufPtr);
-  }
+  CommBufPtr cbufPtr( new CommBuf(hbuilder_.HeaderLength() + 12) );
+  cbufPtr->SetExt(ext.buf, ext.len);
+  cbufPtr->PrependInt(id);   // scanner ID
+  cbufPtr->PrependShort(moreFlag);
+  cbufPtr->PrependShort(0); // fix me!!!
+  cbufPtr->PrependInt(Error::OK);
+  hbuilder_.LoadFromMessage(mEventPtr->header);
+  hbuilder_.Encapsulate(cbufPtr.get());
+  return mComm->SendResponse(mEventPtr->addr, cbufPtr);
 }
 

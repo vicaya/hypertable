@@ -18,7 +18,7 @@
 #include <cassert>
 #include <iostream>
 
-#include "AsyncComm/MessageBuilderSimple.h"
+#include "AsyncComm/HeaderBuilder.h"
 #include "Common/Error.h"
 
 #include "HdfsProtocol.h"
@@ -47,8 +47,8 @@ namespace hypertable {
    *
    */
   CommBuf *HdfsProtocol::CreateOpenRequest(const char *fname, uint32_t bufferSize) {
-    MessageBuilderSimple mbuilder;
-    CommBuf *cbuf = new CommBuf(mbuilder.HeaderLength() + sizeof(RequestHeaderOpenT) + CommBuf::EncodedLength(fname));
+    HeaderBuilder hbuilder;
+    CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(RequestHeaderOpenT) + CommBuf::EncodedLength(fname));
 
     cbuf->PrependString(fname);
 
@@ -56,8 +56,8 @@ namespace hypertable {
     openHeader->hdr.command = COMMAND_OPEN;
     openHeader->bufferSize = bufferSize;
 
-    mbuilder.Reset(Message::PROTOCOL_HDFS);
-    mbuilder.Encapsulate(cbuf);
+    hbuilder.Reset(Header::PROTOCOL_HDFS);
+    hbuilder.Encapsulate(cbuf);
 
     return cbuf;
   }
@@ -67,8 +67,8 @@ namespace hypertable {
    */
   CommBuf *HdfsProtocol::CreateCreateRequest(const char *fname, bool overwrite, int32_t bufferSize,
 					 int32_t replication, int64_t blockSize) {
-    MessageBuilderSimple mbuilder;
-    CommBuf *cbuf = new CommBuf(mbuilder.HeaderLength() + sizeof(RequestHeaderCreateT) + strlen(fname));
+    HeaderBuilder hbuilder;
+    CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(RequestHeaderCreateT) + strlen(fname));
 
     cbuf->PrependData(fname, strlen(fname));
 
@@ -79,8 +79,8 @@ namespace hypertable {
     createHeader->bufferSize = bufferSize;
     createHeader->blockSize = blockSize;
 
-    mbuilder.Reset(Message::PROTOCOL_HDFS);
-    mbuilder.Encapsulate(cbuf);
+    hbuilder.Reset(Header::PROTOCOL_HDFS);
+    hbuilder.Encapsulate(cbuf);
 
     return cbuf;
   }
@@ -91,15 +91,15 @@ namespace hypertable {
    *
    */
   CommBuf *HdfsProtocol::CreateCloseRequest(int32_t fd) {
-    MessageBuilderSimple mbuilder;
-    CommBuf *cbuf = new CommBuf(mbuilder.HeaderLength() + sizeof(RequestHeaderCloseT));
+    HeaderBuilder hbuilder;
+    CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(RequestHeaderCloseT));
   
     RequestHeaderCloseT *closeHeader = (RequestHeaderCloseT *)cbuf->AllocateSpace(sizeof(RequestHeaderCloseT));
     closeHeader->hdr.command = COMMAND_CLOSE;
     closeHeader->fd = fd;
 
-    mbuilder.Reset(Message::PROTOCOL_HDFS);
-    mbuilder.Encapsulate(cbuf);
+    hbuilder.Reset(Header::PROTOCOL_HDFS);
+    hbuilder.Encapsulate(cbuf);
 
     return cbuf;
   }
@@ -107,24 +107,24 @@ namespace hypertable {
 
 
   CommBuf *HdfsProtocol::CreateReadRequest(int32_t fd, uint32_t amount) {
-    MessageBuilderSimple mbuilder;
-    CommBuf *cbuf = new CommBuf(mbuilder.HeaderLength() + sizeof(RequestHeaderReadT));
+    HeaderBuilder hbuilder;
+    CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(RequestHeaderReadT));
   
     RequestHeaderReadT *readHeader = (RequestHeaderReadT *)cbuf->AllocateSpace(sizeof(RequestHeaderReadT));
     readHeader->hdr.command = COMMAND_READ;
     readHeader->fd = fd;
     readHeader->amount = amount;
 
-    mbuilder.Reset(Message::PROTOCOL_HDFS);
-    mbuilder.Encapsulate(cbuf);
+    hbuilder.Reset(Header::PROTOCOL_HDFS);
+    hbuilder.Encapsulate(cbuf);
 
     return cbuf;
   }
 
 
   CommBuf *HdfsProtocol::CreateWriteRequest(int32_t fd, uint8_t *buf, uint32_t amount) {
-    MessageBuilderSimple mbuilder;
-    CommBuf *cbuf = new CommBuf(mbuilder.HeaderLength() + sizeof(RequestHeaderWriteT));
+    HeaderBuilder hbuilder;
+    CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(RequestHeaderWriteT));
 
     cbuf->SetExt(buf, amount);
   
@@ -133,24 +133,24 @@ namespace hypertable {
     writeHeader->fd = fd;
     writeHeader->amount = amount;
 
-    mbuilder.Reset(Message::PROTOCOL_HDFS);
-    mbuilder.Encapsulate(cbuf);
+    hbuilder.Reset(Header::PROTOCOL_HDFS);
+    hbuilder.Encapsulate(cbuf);
 
     return cbuf;
   }
 
 
   CommBuf *HdfsProtocol::CreateSeekRequest(int32_t fd, uint64_t offset) {
-    MessageBuilderSimple mbuilder;
-    CommBuf *cbuf = new CommBuf(mbuilder.HeaderLength() + sizeof(RequestHeaderSeekT));
+    HeaderBuilder hbuilder;
+    CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(RequestHeaderSeekT));
   
     RequestHeaderSeekT *seekHeader = (RequestHeaderSeekT *)cbuf->AllocateSpace(sizeof(RequestHeaderSeekT));
     seekHeader->hdr.command = COMMAND_SEEK;
     seekHeader->fd = fd;
     seekHeader->offset = offset;
 
-    mbuilder.Reset(Message::PROTOCOL_HDFS);
-    mbuilder.Encapsulate(cbuf);
+    hbuilder.Reset(Header::PROTOCOL_HDFS);
+    hbuilder.Encapsulate(cbuf);
 
     return cbuf;
   }
@@ -159,16 +159,16 @@ namespace hypertable {
    *
    */
   CommBuf *HdfsProtocol::CreateRemoveRequest(const char *fname) {
-    MessageBuilderSimple mbuilder;
-    CommBuf *cbuf = new CommBuf(mbuilder.HeaderLength() + sizeof(RequestHeaderRemoveT) + CommBuf::EncodedLength(fname));
+    HeaderBuilder hbuilder;
+    CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(RequestHeaderRemoveT) + CommBuf::EncodedLength(fname));
 
     cbuf->PrependString(fname);
 
     RequestHeaderRemoveT *removeHeader = (RequestHeaderRemoveT *)cbuf->AllocateSpace(sizeof(RequestHeaderRemoveT));
     removeHeader->hdr.command = COMMAND_REMOVE;
 
-    mbuilder.Reset(Message::PROTOCOL_HDFS);
-    mbuilder.Encapsulate(cbuf);
+    hbuilder.Reset(Header::PROTOCOL_HDFS);
+    hbuilder.Encapsulate(cbuf);
 
     return cbuf;
   }
@@ -178,14 +178,14 @@ namespace hypertable {
    *
    */
   CommBuf *HdfsProtocol::CreateShutdownRequest(uint16_t flags) {
-    MessageBuilderSimple mbuilder;
-    CommBuf *cbuf = new CommBuf(mbuilder.HeaderLength() + 4);
+    HeaderBuilder hbuilder;
+    CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + 4);
 
     cbuf->PrependShort(flags);
     cbuf->PrependShort(COMMAND_SHUTDOWN);
 
-    mbuilder.Reset(Message::PROTOCOL_HDFS);
-    mbuilder.Encapsulate(cbuf);
+    hbuilder.Reset(Header::PROTOCOL_HDFS);
+    hbuilder.Encapsulate(cbuf);
 
     return cbuf;
   }
@@ -195,23 +195,23 @@ namespace hypertable {
    *
    */
   CommBuf *HdfsProtocol::CreateLengthRequest(const char *fname) {
-    MessageBuilderSimple mbuilder;
-    CommBuf *cbuf = new CommBuf(mbuilder.HeaderLength() + sizeof(RequestHeaderLengthT) + CommBuf::EncodedLength(fname));
+    HeaderBuilder hbuilder;
+    CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(RequestHeaderLengthT) + CommBuf::EncodedLength(fname));
 
     cbuf->PrependString(fname);
 
     RequestHeaderLengthT *lengthHeader = (RequestHeaderLengthT *)cbuf->AllocateSpace(sizeof(RequestHeaderLengthT));
     lengthHeader->hdr.command = COMMAND_LENGTH;
 
-    mbuilder.Reset(Message::PROTOCOL_HDFS);
-    mbuilder.Encapsulate(cbuf);
+    hbuilder.Reset(Header::PROTOCOL_HDFS);
+    hbuilder.Encapsulate(cbuf);
 
     return cbuf;
   }
 
   CommBuf *HdfsProtocol::CreatePositionReadRequest(int32_t fd, uint64_t offset, uint32_t amount) {
-    MessageBuilderSimple mbuilder;
-    CommBuf *cbuf = new CommBuf(mbuilder.HeaderLength() + sizeof(RequestHeaderPositionReadT));
+    HeaderBuilder hbuilder;
+    CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(RequestHeaderPositionReadT));
   
     RequestHeaderPositionReadT *preadHeader = (RequestHeaderPositionReadT *)cbuf->AllocateSpace(sizeof(RequestHeaderPositionReadT));
     preadHeader->hdr.command = COMMAND_PREAD;
@@ -219,8 +219,8 @@ namespace hypertable {
     preadHeader->offset = offset;
     preadHeader->amount = amount;
 
-    mbuilder.Reset(Message::PROTOCOL_HDFS);
-    mbuilder.Encapsulate(cbuf);
+    hbuilder.Reset(Header::PROTOCOL_HDFS);
+    hbuilder.Encapsulate(cbuf);
 
     return cbuf;
   }
@@ -229,16 +229,16 @@ namespace hypertable {
    *
    */
   CommBuf *HdfsProtocol::CreateMkdirsRequest(const char *fname) {
-    MessageBuilderSimple mbuilder;
-    CommBuf *cbuf = new CommBuf(mbuilder.HeaderLength() + sizeof(RequestHeaderMkdirsT) + CommBuf::EncodedLength(fname));
+    HeaderBuilder hbuilder;
+    CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(RequestHeaderMkdirsT) + CommBuf::EncodedLength(fname));
 
     cbuf->PrependString(fname);
 
     RequestHeaderMkdirsT *removeHeader = (RequestHeaderMkdirsT *)cbuf->AllocateSpace(sizeof(RequestHeaderMkdirsT));
     removeHeader->hdr.command = COMMAND_MKDIRS;
 
-    mbuilder.Reset(Message::PROTOCOL_HDFS);
-    mbuilder.Encapsulate(cbuf);
+    hbuilder.Reset(Header::PROTOCOL_HDFS);
+    hbuilder.Encapsulate(cbuf);
 
     return cbuf;
   }

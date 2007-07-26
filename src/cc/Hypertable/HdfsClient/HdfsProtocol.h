@@ -20,7 +20,6 @@
 
 #include "AsyncComm/CommBuf.h"
 #include "AsyncComm/Event.h"
-#include "AsyncComm/MessageBuilder.h"
 #include "AsyncComm/Protocol.h"
 using namespace hypertable;
 

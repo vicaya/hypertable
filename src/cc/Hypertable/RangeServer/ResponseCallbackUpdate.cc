@@ -21,14 +21,11 @@
 using namespace hypertable;
 
 int ResponseCallbackUpdate::response(ExtBufferT &ext) {
-  CommBuf *cbuf = new CommBuf(mBuilder.HeaderLength() + 6);
-  cbuf->SetExt(ext.buf, ext.len);
-  cbuf->PrependShort(0); // fix me!!!
-  cbuf->PrependInt(Error::RANGESERVER_PARTIAL_UPDATE);
-  mBuilder.LoadFromMessage(mEventPtr->header);
-  mBuilder.Encapsulate(cbuf);
-  {
-    CommBufPtr cbufPtr(cbuf);
-    return mComm->SendResponse(mEventPtr->addr, cbufPtr);
-  }
+  CommBufPtr cbufPtr( new CommBuf(hbuilder_.HeaderLength() + 6) );
+  cbufPtr->SetExt(ext.buf, ext.len);
+  cbufPtr->PrependShort(0); // fix me!!!
+  cbufPtr->PrependInt(Error::RANGESERVER_PARTIAL_UPDATE);
+  hbuilder_.LoadFromMessage(mEventPtr->header);
+  hbuilder_.Encapsulate(cbufPtr.get());
+  return mComm->SendResponse(mEventPtr->addr, cbufPtr);
 }
