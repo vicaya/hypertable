@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.hypertable.AsyncComm;
 
 import java.net.InetSocketAddress;
@@ -170,7 +169,7 @@ public class SampleClient {
 	if (!respHandler.WaitForConnection())
 	    System.exit(1);
 
-	MessageBuilderSimple mbuilder = new MessageBuilderSimple();
+	HeaderBuilder hbuilder = new HeaderBuilder();
 
 	int retries;
 	int outstanding = 0;
@@ -180,10 +179,10 @@ public class SampleClient {
 	CommBuf cbuf;
 
 	while ((str = in.readLine()) != null) {
-	    mbuilder.Reset(Message.PROTOCOL_NONE);
+	    hbuilder.Reset(Message.PROTOCOL_NONE);
 	    cbuf = new CommBuf(CommBuf.EncodedLength(str) + Message.HEADER_LENGTH);
 	    cbuf.PrependString(str);
-	    mbuilder.Encapsulate(cbuf);
+	    hbuilder.Encapsulate(cbuf);
 	    retries = 0;
 	    if (msShutdown == true)
 		System.exit(1);

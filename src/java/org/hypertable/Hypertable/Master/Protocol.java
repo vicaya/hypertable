@@ -14,43 +14,42 @@
  * limitations under the License.
  */
 
-
 package org.hypertable.Hypertable.Master;
 
 import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.Message;
-import org.hypertable.AsyncComm.MessageBuilderSimple;
+import org.hypertable.AsyncComm.HeaderBuilder;
 
 public class Protocol extends org.hypertable.AsyncComm.Protocol {
 
     public CommBuf BuildRequestCreateTable(String tableName, String schema) {
-	MessageBuilderSimple mbuilder = new MessageBuilderSimple();
-	CommBuf cbuf = new CommBuf(mbuilder.HeaderLength() + 2 + CommBuf.EncodedLength(tableName) + CommBuf.EncodedLength(schema));
+	HeaderBuilder hbuilder = new HeaderBuilder();
+	CommBuf cbuf = new CommBuf(hbuilder.HeaderLength() + 2 + CommBuf.EncodedLength(tableName) + CommBuf.EncodedLength(schema));
 	cbuf.PrependString(schema);
 	cbuf.PrependString(tableName);
 	cbuf.PrependShort(COMMAND_CREATE_TABLE);
-	mbuilder.Reset(Message.PROTOCOL_HYPERTABLE_MASTER);
-	mbuilder.Encapsulate(cbuf);
+	hbuilder.Reset(Message.PROTOCOL_HYPERTABLE_MASTER);
+	hbuilder.Encapsulate(cbuf);
 	return cbuf;
     }
 
     public CommBuf BuildRequestGetSchema(String tableName) {
-	MessageBuilderSimple mbuilder = new MessageBuilderSimple();
-	CommBuf cbuf = new CommBuf(mbuilder.HeaderLength() + 2 + CommBuf.EncodedLength(tableName));
+	HeaderBuilder hbuilder = new HeaderBuilder();
+	CommBuf cbuf = new CommBuf(hbuilder.HeaderLength() + 2 + CommBuf.EncodedLength(tableName));
 	cbuf.PrependString(tableName);
 	cbuf.PrependShort(COMMAND_GET_SCHEMA);
-	mbuilder.Reset(Message.PROTOCOL_HYPERTABLE_MASTER);
-	mbuilder.Encapsulate(cbuf);
+	hbuilder.Reset(Message.PROTOCOL_HYPERTABLE_MASTER);
+	hbuilder.Encapsulate(cbuf);
 	return cbuf;
     }
 
     public CommBuf BuildRequestBadCommand(short command) {
-	MessageBuilderSimple mbuilder = new MessageBuilderSimple();
-	CommBuf cbuf = new CommBuf(mbuilder.HeaderLength() + 2);
+	HeaderBuilder hbuilder = new HeaderBuilder();
+	CommBuf cbuf = new CommBuf(hbuilder.HeaderLength() + 2);
 	cbuf.PrependShort(command);
-	mbuilder.Reset(Message.PROTOCOL_HYPERTABLE_MASTER);
-	mbuilder.Encapsulate(cbuf);
+	hbuilder.Reset(Message.PROTOCOL_HYPERTABLE_MASTER);
+	hbuilder.Encapsulate(cbuf);
 	return cbuf;
     }
 

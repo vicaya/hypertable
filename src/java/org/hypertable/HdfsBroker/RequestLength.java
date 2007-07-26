@@ -31,7 +31,7 @@ import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.Message;
-import org.hypertable.AsyncComm.MessageBuilderSimple;
+import org.hypertable.AsyncComm.HeaderBuilder;
 
 import org.hypertable.Common.Error;
 
@@ -50,7 +50,7 @@ public class RequestLength extends Request {
 	int error;
 	CommBuf cbuf = null;
 	long length;
-	MessageBuilderSimple mbuilder = new MessageBuilderSimple();
+	HeaderBuilder hbuilder = new HeaderBuilder();
 
 	try {
 
@@ -59,14 +59,14 @@ public class RequestLength extends Request {
 
 	    length = Global.fileSystem.getLength(new Path(mFilename));
 
-	    cbuf = new CommBuf(mbuilder.HeaderLength() + 14);
+	    cbuf = new CommBuf(hbuilder.HeaderLength() + 14);
 	    cbuf.PrependLong(length);
 	    cbuf.PrependShort(Protocol.COMMAND_LENGTH);
 	    cbuf.PrependInt(Error.OK);
 
 	    // Encapsulate with Comm message response header
-	    mbuilder.LoadFromMessage(mEvent.msg);
-	    mbuilder.Encapsulate(cbuf);
+	    hbuilder.LoadFromMessage(mEvent.msg);
+	    hbuilder.Encapsulate(cbuf);
 	    
 	    if ((error = Global.comm.SendResponse(mEvent.addr, cbuf)) != Error.OK)
 		log.log(Level.SEVERE, "Comm.SendResponse returned " + Error.GetText(error));
@@ -75,17 +75,17 @@ public class RequestLength extends Request {
 	catch (FileNotFoundException e) {
 	    log.log(Level.WARNING, "File not found: " + mFilename);
 	    cbuf = Global.protocol.CreateErrorMessage(Protocol.COMMAND_LENGTH, Error.HDFSBROKER_FILE_NOT_FOUND,
-						      e.getMessage(), mbuilder.HeaderLength());
+						      e.getMessage(), hbuilder.HeaderLength());
 	}
 	catch (IOException e) {
 	    e.printStackTrace();
 	    cbuf = Global.protocol.CreateErrorMessage(Protocol.COMMAND_LENGTH, Error.HDFSBROKER_IO_ERROR,
-						      e.getMessage(), mbuilder.HeaderLength());
+						      e.getMessage(), hbuilder.HeaderLength());
 	}
 
 	// Encapsulate with Comm message response header
-	mbuilder.LoadFromMessage(mEvent.msg);
-	mbuilder.Encapsulate(cbuf);
+	hbuilder.LoadFromMessage(mEvent.msg);
+	hbuilder.Encapsulate(cbuf);
 
 	if ((error = Global.comm.SendResponse(mEvent.addr, cbuf)) != Error.OK)
 	    log.log(Level.SEVERE, "Comm.SendResponse returned " + Error.GetText(error));

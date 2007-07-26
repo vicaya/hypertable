@@ -21,7 +21,7 @@ import java.nio.ByteBuffer;
 
 public class Message {
 
-    public static final byte HEADER_LENGTH = 12;
+    public static final byte HEADER_LENGTH = 16;
 
     public static final byte VERSION = 1;
 
@@ -36,12 +36,13 @@ public class Message {
     public static final byte FLAGS_MASK_RESPONSE = (byte)0xFE;
 
     public void ReadHeader(ByteBuffer buf) {
-	version    = buf.get();
-	protocol   = buf.get();
-	flags      = buf.get();
-	headerLen  = buf.get();
-	id         = buf.getInt();
-	totalLen   = buf.getInt();
+	version     = buf.get();
+	protocol    = buf.get();
+	flags       = buf.get();
+	headerLen   = buf.get();
+	id          = buf.getInt();
+	threadGroup = buf.getInt();
+	totalLen    = buf.getInt();
     }
 
     public void RewindToProtocolHeader() {
@@ -53,6 +54,7 @@ public class Message {
     public byte   flags;
     public byte   headerLen;
     public int    id;
+    public int    threadGroup;
     public int    totalLen;
     public ByteBuffer buf;
 }

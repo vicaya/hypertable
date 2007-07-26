@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.hypertable.HdfsBroker;
 
 import org.apache.hadoop.fs.Path;
@@ -31,7 +30,7 @@ import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.Message;
-import org.hypertable.AsyncComm.MessageBuilderSimple;
+import org.hypertable.AsyncComm.HeaderBuilder;
 
 import org.hypertable.Common.Error;
 
@@ -69,29 +68,29 @@ public class RequestSeek extends Request {
 
 	    mOpenFileData.is.seek(mOffset);
 
-	    cbuf = new CommBuf(mOpenFileData.mbuilder.HeaderLength() + 10);
+	    cbuf = new CommBuf(mOpenFileData.hbuilder.HeaderLength() + 10);
 	    cbuf.PrependInt(mFileId);
 	    cbuf.PrependShort(Protocol.COMMAND_SEEK);
 	    cbuf.PrependInt(Error.OK);
 
 	    // Encapsulate with Comm message response header
-	    mOpenFileData.mbuilder.LoadFromMessage(mEvent.msg);
-	    mOpenFileData.mbuilder.Encapsulate(cbuf);
+	    mOpenFileData.hbuilder.LoadFromMessage(mEvent.msg);
+	    mOpenFileData.hbuilder.Encapsulate(cbuf);
 	    
 	    if ((error = Global.comm.SendResponse(mEvent.addr, cbuf)) != Error.OK)
 		log.log(Level.SEVERE, "Comm.SendResponse returned " + Error.GetText(error));
 	    return;
 	}
 	catch (IOException e) {
-	    MessageBuilderSimple mbuilder = new MessageBuilderSimple();
+	    HeaderBuilder hbuilder = new HeaderBuilder();
 	    e.printStackTrace();
 
 	    cbuf = Global.protocol.CreateErrorMessage(Protocol.COMMAND_SEEK, error,
-						      e.getMessage(), mbuilder.HeaderLength());
+						      e.getMessage(), hbuilder.HeaderLength());
 
 	    // Encapsulate with Comm message response header
-	    mbuilder.LoadFromMessage(mEvent.msg);
-	    mbuilder.Encapsulate(cbuf);
+	    hbuilder.LoadFromMessage(mEvent.msg);
+	    hbuilder.Encapsulate(cbuf);
 
 	    if ((error = Global.comm.SendResponse(mEvent.addr, cbuf)) != Error.OK)
 		log.log(Level.SEVERE, "Comm.SendResponse returned " + Error.GetText(error));

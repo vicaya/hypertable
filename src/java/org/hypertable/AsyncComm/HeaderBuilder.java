@@ -20,21 +20,26 @@ package org.hypertable.AsyncComm;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.nio.ByteBuffer;
 
-public class MessageBuilderSimple extends MessageBuilder {
+public class HeaderBuilder {
+
+    protected static AtomicInteger msNextId = new AtomicInteger();
 
     public void Reset(byte protocol) {
 	mId = msNextId.incrementAndGet();
+	mThreadGroup = 0;
 	mProtocol = protocol;
     }
 
     public void Reset(byte protocol, byte flags) {
 	mId = msNextId.incrementAndGet();
+	mThreadGroup = 0;
 	mProtocol = protocol;
 	mFlags = flags;
     }
 
     public void LoadFromMessage(Message msg) {
 	mId = msg.id;
+	mThreadGroup = msg.threadGroup;
 	mProtocol = msg.protocol;
 	mFlags = msg.flags;
     }
@@ -44,7 +49,7 @@ public class MessageBuilderSimple extends MessageBuilder {
     }
 
     public void Encapsulate(CommBuf cbuf) {
-	cbuf.data.position(cbuf.data.position()-Message.HEADER_LENGTH);
+	cbuf.data.position(cbuf.data.position()-HeaderLength());
 	int totalLen = cbuf.data.remaining();
 	if (cbuf.ext != null)
 	    totalLen += cbuf.ext.remaining();
@@ -54,11 +59,23 @@ public class MessageBuilderSimple extends MessageBuilder {
 	cbuf.data.put(mFlags);
 	cbuf.data.put(Message.HEADER_LENGTH);
 	cbuf.data.putInt(mId);
+	cbuf.data.putInt(mThreadGroup);
 	cbuf.data.putInt(totalLen);
 	cbuf.data.reset();
 	cbuf.id = mId;
     }
 
-}
+    public void SetFlags(byte flags) { mFlags = flags; }
 
+    public void AddFlag(byte flag) { mFlags |= flag; }
+
+    public void SetProtocol(byte protocol) { mProtocol = protocol; }
+
+    public void SetThreadGroup(int threadGroup) { mThreadGroup = threadGroup; }
+
+    protected int mId;
+    protected int mThreadGroup;
+    protected byte mProtocol;
+    protected byte mFlags;
+}
 

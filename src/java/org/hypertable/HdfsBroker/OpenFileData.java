@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-
 package org.hypertable.HdfsBroker;
 
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 
-import org.hypertable.AsyncComm.MessageBuilderSimple;
+import org.hypertable.AsyncComm.HeaderBuilder;
 
 /**
  *
@@ -28,6 +27,6 @@ import org.hypertable.AsyncComm.MessageBuilderSimple;
 public class OpenFileData {
     public FSDataInputStream is = null;
     public FSDataOutputStream os = null;
-    public MessageBuilderSimple mbuilder = new MessageBuilderSimple();
+    public HeaderBuilder hbuilder = new HeaderBuilder();
 }
 

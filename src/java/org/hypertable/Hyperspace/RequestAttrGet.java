@@ -63,9 +63,9 @@ public class RequestAttrGet extends Request {
 
 	    if (!attrFile.exists()) {
 		cbuf = Global.protocol.CreateErrorMessage(Protocol.COMMAND_ATTRGET, Error.HYPERTABLEFS_ATTR_NOT_FOUND,
-							  mAttrName, mMessageBuilder.HeaderLength());
-		mMessageBuilder.LoadFromMessage(mEvent.msg);
-		mMessageBuilder.Encapsulate(cbuf);
+							  mAttrName, mHeaderBuilder.HeaderLength());
+		mHeaderBuilder.LoadFromMessage(mEvent.msg);
+		mHeaderBuilder.Encapsulate(cbuf);
 		if ((error = Global.comm.SendResponse(mEvent.addr, cbuf)) != Error.OK)
 		    log.log(Level.SEVERE, "Comm.SendResponse returned " + Error.GetText(error));
 		return;
@@ -81,14 +81,14 @@ public class RequestAttrGet extends Request {
 
 	    String attrValue = new String(attrBytes);
 
-	    cbuf = new CommBuf(mMessageBuilder.HeaderLength() + 6 + CommBuf.EncodedLength(attrValue));
+	    cbuf = new CommBuf(mHeaderBuilder.HeaderLength() + 6 + CommBuf.EncodedLength(attrValue));
 	    cbuf.PrependString(attrValue);
 	    cbuf.PrependShort(Protocol.COMMAND_ATTRGET);
 	    cbuf.PrependInt(Error.OK);
 
 	    // Encapsulate with Comm message response header
-	    mMessageBuilder.LoadFromMessage(mEvent.msg);
-	    mMessageBuilder.Encapsulate(cbuf);
+	    mHeaderBuilder.LoadFromMessage(mEvent.msg);
+	    mHeaderBuilder.Encapsulate(cbuf);
 	    
 	    if ((error = Global.comm.SendResponse(mEvent.addr, cbuf)) != Error.OK)
 		log.log(Level.SEVERE, "Comm.SendResponse returned " + Error.GetText(error));
@@ -99,18 +99,18 @@ public class RequestAttrGet extends Request {
 	    rwlock.readLock().unlock();
 	    e.printStackTrace();
 	    cbuf = Global.protocol.CreateErrorMessage(Protocol.COMMAND_ATTRGET, Error.HYPERTABLEFS_FILE_NOT_FOUND,
-						      e.getMessage(), mMessageBuilder.HeaderLength());
+						      e.getMessage(), mHeaderBuilder.HeaderLength());
 	}
 	catch (IOException e) {
 	    rwlock.readLock().unlock();
 	    e.printStackTrace();
 	    cbuf = Global.protocol.CreateErrorMessage(Protocol.COMMAND_ATTRGET, Error.HYPERTABLEFS_IO_ERROR,
-						      e.getMessage(), mMessageBuilder.HeaderLength());
+						      e.getMessage(), mHeaderBuilder.HeaderLength());
 	}
 
 	// Encapsulate with Comm message response header
-	mMessageBuilder.LoadFromMessage(mEvent.msg);
-	mMessageBuilder.Encapsulate(cbuf);
+	mHeaderBuilder.LoadFromMessage(mEvent.msg);
+	mHeaderBuilder.Encapsulate(cbuf);
 
 	if ((error = Global.comm.SendResponse(mEvent.addr, cbuf)) != Error.OK)
 	    log.log(Level.SEVERE, "Comm.SendResponse returned " + Error.GetText(error));

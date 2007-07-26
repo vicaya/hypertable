@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.hypertable.HdfsBroker;
 
 import java.io.FileInputStream;
@@ -39,7 +38,7 @@ import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.ReactorFactory;
 import org.hypertable.AsyncComm.CallbackHandler;
 import org.hypertable.AsyncComm.Message;
-import org.hypertable.AsyncComm.MessageBuilderSimple;
+import org.hypertable.AsyncComm.HeaderBuilder;
 
 public class Server {
 
@@ -64,14 +63,14 @@ public class Server {
 		    Global.workQueue.AddRequest( mRequestFactory.newInstance(event, command) );
 		}
 		catch (ProtocolException e) {
-		    MessageBuilderSimple mbuilder = new MessageBuilderSimple();
+		    HeaderBuilder hbuilder = new HeaderBuilder();
 
 		    // Build protocol message
-		    CommBuf cbuf = Global.protocol.CreateErrorMessage(command, Error.PROTOCOL_ERROR, e.getMessage(), mbuilder.HeaderLength());
+		    CommBuf cbuf = Global.protocol.CreateErrorMessage(command, Error.PROTOCOL_ERROR, e.getMessage(), hbuilder.HeaderLength());
 
 		    // Encapsulate with Comm message response header
-		    mbuilder.LoadFromMessage(event.msg);
-		    mbuilder.Encapsulate(cbuf);
+		    hbuilder.LoadFromMessage(event.msg);
+		    hbuilder.Encapsulate(cbuf);
 
 		    Global.comm.SendResponse(event.addr, cbuf);
 		}

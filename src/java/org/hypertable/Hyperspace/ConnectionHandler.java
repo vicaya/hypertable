@@ -22,7 +22,7 @@ import java.util.logging.Logger;
 import org.hypertable.AsyncComm.CallbackHandler;
 import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.Event;
-import org.hypertable.AsyncComm.MessageBuilderSimple;
+import org.hypertable.AsyncComm.HeaderBuilder;
 
 import org.hypertable.Common.Error;
 
@@ -44,12 +44,12 @@ public class ConnectionHandler implements CallbackHandler {
 		Global.workQueue.AddRequest( mRequestFactory.newInstance(event, command) );
 	    }
 	    catch (ProtocolException e) {
-		MessageBuilderSimple mbuilder = new MessageBuilderSimple();
-		CommBuf cbuf = Global.protocol.CreateErrorMessage(command, Error.PROTOCOL_ERROR, e.getMessage(), mbuilder.HeaderLength());
+		HeaderBuilder hbuilder = new HeaderBuilder();
+		CommBuf cbuf = Global.protocol.CreateErrorMessage(command, Error.PROTOCOL_ERROR, e.getMessage(), hbuilder.HeaderLength());
 
 		// Encapsulate with Comm message response header
-		mbuilder.LoadFromMessage(event.msg);
-		mbuilder.Encapsulate(cbuf);
+		hbuilder.LoadFromMessage(event.msg);
+		hbuilder.Encapsulate(cbuf);
 
 		Global.comm.SendResponse(event.addr, cbuf);
 	    }

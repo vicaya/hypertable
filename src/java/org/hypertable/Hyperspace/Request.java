@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import org.hypertable.AsyncComm.Event;
-import org.hypertable.AsyncComm.MessageBuilderSimple;
+import org.hypertable.AsyncComm.HeaderBuilder;
 
 public abstract class Request implements Runnable {
 
@@ -35,5 +35,5 @@ public abstract class Request implements Runnable {
     //public abstract void run();
 
     protected Event  mEvent;
-    protected MessageBuilderSimple mMessageBuilder = new MessageBuilderSimple();
+    protected HeaderBuilder mHeaderBuilder = new HeaderBuilder();
 }

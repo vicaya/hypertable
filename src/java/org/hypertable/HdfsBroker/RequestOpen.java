@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.hypertable.HdfsBroker;
 
 import org.apache.hadoop.fs.Path;
@@ -31,7 +30,7 @@ import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.Message;
-import org.hypertable.AsyncComm.MessageBuilderSimple;
+import org.hypertable.AsyncComm.HeaderBuilder;
 
 import org.hypertable.Common.Error;
 
@@ -68,14 +67,14 @@ public class RequestOpen extends Request {
 	    else
 		mOpenFileData.is = Global.fileSystem.open(new Path(mFilename));
 
-	    cbuf = new CommBuf(mOpenFileData.mbuilder.HeaderLength() + 10);
+	    cbuf = new CommBuf(mOpenFileData.hbuilder.HeaderLength() + 10);
 	    cbuf.PrependInt(mFileId);
 	    cbuf.PrependShort(Protocol.COMMAND_OPEN);
 	    cbuf.PrependInt(Error.OK);
 
 	    // Encapsulate with Comm message response header
-	    mOpenFileData.mbuilder.LoadFromMessage(mEvent.msg);
-	    mOpenFileData.mbuilder.Encapsulate(cbuf);
+	    mOpenFileData.hbuilder.LoadFromMessage(mEvent.msg);
+	    mOpenFileData.hbuilder.Encapsulate(cbuf);
 	    
 	    if ((error = Global.comm.SendResponse(mEvent.addr, cbuf)) != Error.OK)
 		log.log(Level.SEVERE, "Comm.SendResponse returned " + Error.GetText(error));
@@ -84,17 +83,17 @@ public class RequestOpen extends Request {
 	catch (FileNotFoundException e) {
 	    log.log(Level.WARNING, "File not found: " + mFilename);
 	    cbuf = Global.protocol.CreateErrorMessage(Protocol.COMMAND_OPEN, Error.HDFSBROKER_FILE_NOT_FOUND,
-						      e.getMessage(), mOpenFileData.mbuilder.HeaderLength());
+						      e.getMessage(), mOpenFileData.hbuilder.HeaderLength());
 	}
 	catch (IOException e) {
 	    e.printStackTrace();
 	    cbuf = Global.protocol.CreateErrorMessage(Protocol.COMMAND_OPEN, Error.HDFSBROKER_IO_ERROR,
-						      e.getMessage(), mOpenFileData.mbuilder.HeaderLength());
+						      e.getMessage(), mOpenFileData.hbuilder.HeaderLength());
 	}
 
 	// Encapsulate with Comm message response header
-	mOpenFileData.mbuilder.LoadFromMessage(mEvent.msg);
-	mOpenFileData.mbuilder.Encapsulate(cbuf);
+	mOpenFileData.hbuilder.LoadFromMessage(mEvent.msg);
+	mOpenFileData.hbuilder.Encapsulate(cbuf);
 
 	if ((error = Global.comm.SendResponse(mEvent.addr, cbuf)) != Error.OK)
 	    log.log(Level.SEVERE, "Comm.SendResponse returned " + Error.GetText(error));

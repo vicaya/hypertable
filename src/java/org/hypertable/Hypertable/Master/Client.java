@@ -36,8 +36,6 @@ import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.ConnectionManager;
 import org.hypertable.AsyncComm.Event;
-import org.hypertable.AsyncComm.MessageBuilder;
-import org.hypertable.AsyncComm.MessageBuilderSimple;
 import org.hypertable.AsyncComm.MsgId;
 import org.hypertable.AsyncComm.ReactorFactory;
 

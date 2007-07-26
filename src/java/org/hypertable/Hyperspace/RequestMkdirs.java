@@ -48,21 +48,21 @@ public class RequestMkdirs extends Request {
 
 	if (mDirname.indexOf(".attr.") != -1) {
 	    cbuf = Global.protocol.CreateErrorMessage(Protocol.COMMAND_MKDIRS, Error.HYPERTABLEFS_IO_ERROR,
-						      "Bad filename -> " + mDirname, mMessageBuilder.HeaderLength());
+						      "Bad filename -> " + mDirname, mHeaderBuilder.HeaderLength());
 	}
 	else if (!(new File(Global.baseDir + mDirname)).mkdirs()) {
 	    cbuf = Global.protocol.CreateErrorMessage(Protocol.COMMAND_MKDIRS, Error.HYPERTABLEFS_CREATE_FAILED,
-						      mDirname, mMessageBuilder.HeaderLength());
+						      mDirname, mHeaderBuilder.HeaderLength());
 	}
 	else {
-	    cbuf = new CommBuf(mMessageBuilder.HeaderLength() + 6);
+	    cbuf = new CommBuf(mHeaderBuilder.HeaderLength() + 6);
 	    cbuf.PrependShort(Protocol.COMMAND_MKDIRS);
 	    cbuf.PrependInt(Error.OK);
 	}
 
 	// Encapsulate with Comm message response header
-	mMessageBuilder.LoadFromMessage(mEvent.msg);
-	mMessageBuilder.Encapsulate(cbuf);
+	mHeaderBuilder.LoadFromMessage(mEvent.msg);
+	mHeaderBuilder.Encapsulate(cbuf);
 	    
 	if ((error = Global.comm.SendResponse(mEvent.addr, cbuf)) != Error.OK)
 	    log.log(Level.SEVERE, "Comm.SendResponse returned " + Error.GetText(error));

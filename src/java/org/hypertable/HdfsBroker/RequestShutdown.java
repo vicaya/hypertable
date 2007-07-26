@@ -31,7 +31,6 @@ import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.Message;
-import org.hypertable.AsyncComm.MessageBuilderSimple;
 
 import org.hypertable.Common.Error;
 

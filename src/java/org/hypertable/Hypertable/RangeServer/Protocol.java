@@ -21,7 +21,7 @@ import java.io.UnsupportedEncodingException;
 import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.Message;
-import org.hypertable.AsyncComm.MessageBuilderSimple;
+import org.hypertable.AsyncComm.HeaderBuilder;
 
 public class Protocol extends org.hypertable.AsyncComm.Protocol {
 
@@ -29,16 +29,16 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
      * Builds a LOAD RANGE request
      */
     public CommBuf BuildRequestLoadRange(int tableGeneration, RangeIdentifier range) {
-	MessageBuilderSimple mbuilder = new MessageBuilderSimple();
-	CommBuf cbuf = new CommBuf(mbuilder.HeaderLength() + 6 + CommBuf.EncodedLength(range.tableName) +
+	HeaderBuilder hbuilder = new HeaderBuilder();
+	CommBuf cbuf = new CommBuf(hbuilder.HeaderLength() + 6 + CommBuf.EncodedLength(range.tableName) +
 				   CommBuf.EncodedLength(range.startRow) + CommBuf.EncodedLength(range.endRow));
 	cbuf.PrependString(range.endRow);
 	cbuf.PrependString(range.startRow);
 	cbuf.PrependString(range.tableName);
 	cbuf.PrependInt(tableGeneration);
 	cbuf.PrependShort(COMMAND_LOAD_RANGE);
-	mbuilder.Reset(Message.PROTOCOL_HYPERTABLE_RANGESERVER);
-	mbuilder.Encapsulate(cbuf);
+	hbuilder.Reset(Message.PROTOCOL_HYPERTABLE_RANGESERVER);
+	hbuilder.Encapsulate(cbuf);
 	return cbuf;
     }
 
@@ -46,8 +46,8 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
      * Builds an UPDATE request
      */
     public CommBuf BuildRequestUpdate(int tableGeneration, RangeIdentifier range, byte [] mods) {
-	MessageBuilderSimple mbuilder = new MessageBuilderSimple();
-	CommBuf cbuf = new CommBuf(mbuilder.HeaderLength() + 6 + CommBuf.EncodedLength(range.tableName) +
+	HeaderBuilder hbuilder = new HeaderBuilder();
+	CommBuf cbuf = new CommBuf(hbuilder.HeaderLength() + 6 + CommBuf.EncodedLength(range.tableName) +
 				   CommBuf.EncodedLength(range.startRow) + CommBuf.EncodedLength(range.endRow) + 4 + mods.length);
 	cbuf.PrependByteArray(mods);
 	cbuf.PrependString(range.endRow);
@@ -55,8 +55,8 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
 	cbuf.PrependString(range.tableName);
 	cbuf.PrependInt(tableGeneration);
 	cbuf.PrependShort(COMMAND_UPDATE);
-	mbuilder.Reset(Message.PROTOCOL_HYPERTABLE_RANGESERVER);
-	mbuilder.Encapsulate(cbuf);
+	hbuilder.Reset(Message.PROTOCOL_HYPERTABLE_RANGESERVER);
+	hbuilder.Encapsulate(cbuf);
 	return cbuf;
     }
 
@@ -65,8 +65,8 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
      */
     public CommBuf BuildRequestCreateScanner(int tableGeneration, RangeIdentifier range, byte [] columns,
 					     String startKey, String endKey, long startTime, long endTime) {
-	MessageBuilderSimple mbuilder = new MessageBuilderSimple();
-	CommBuf cbuf = new CommBuf(mbuilder.HeaderLength() + 6 + CommBuf.EncodedLength(range.tableName) +
+	HeaderBuilder hbuilder = new HeaderBuilder();
+	CommBuf cbuf = new CommBuf(hbuilder.HeaderLength() + 6 + CommBuf.EncodedLength(range.tableName) +
 				   CommBuf.EncodedLength(range.startRow) + CommBuf.EncodedLength(range.endRow) +
 				   4 + ((columns == null) ? 0 : columns.length) +
 				   CommBuf.EncodedLength(startKey) + CommBuf.EncodedLength(endKey) + 16);
@@ -80,8 +80,8 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
 	cbuf.PrependString(range.tableName);
 	cbuf.PrependInt(tableGeneration);
 	cbuf.PrependShort(COMMAND_CREATE_SCANNER);
-	mbuilder.Reset(Message.PROTOCOL_HYPERTABLE_RANGESERVER);
-	mbuilder.Encapsulate(cbuf);
+	hbuilder.Reset(Message.PROTOCOL_HYPERTABLE_RANGESERVER);
+	hbuilder.Encapsulate(cbuf);
 	return cbuf;
     }
 
@@ -90,12 +90,12 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
      * Builds a FETCH SCANBLOCK request
      */
     public CommBuf BuildRequestFetchScanblock(int scannerId) {
-	MessageBuilderSimple mbuilder = new MessageBuilderSimple();
-	CommBuf cbuf = new CommBuf(mbuilder.HeaderLength() + 6);
+	HeaderBuilder hbuilder = new HeaderBuilder();
+	CommBuf cbuf = new CommBuf(hbuilder.HeaderLength() + 6);
 	cbuf.PrependInt(scannerId);
 	cbuf.PrependShort(COMMAND_FETCH_SCANBLOCK);
-	mbuilder.Reset(Message.PROTOCOL_HYPERTABLE_RANGESERVER);
-	mbuilder.Encapsulate(cbuf);
+	hbuilder.Reset(Message.PROTOCOL_HYPERTABLE_RANGESERVER);
+	hbuilder.Encapsulate(cbuf);
 	return cbuf;
     }
 
@@ -104,8 +104,8 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
      * Builds a COMPACT request
      */
     public CommBuf BuildRequestCompact(int tableGeneration, RangeIdentifier range, boolean major, String localityGroup) {
-	MessageBuilderSimple mbuilder = new MessageBuilderSimple();
-	CommBuf cbuf = new CommBuf(mbuilder.HeaderLength() + 6 + CommBuf.EncodedLength(range.tableName) +
+	HeaderBuilder hbuilder = new HeaderBuilder();
+	CommBuf cbuf = new CommBuf(hbuilder.HeaderLength() + 6 + CommBuf.EncodedLength(range.tableName) +
 				   CommBuf.EncodedLength(range.startRow) + CommBuf.EncodedLength(range.endRow) +
 				   1 + CommBuf.EncodedLength(localityGroup));
 	cbuf.PrependString(localityGroup);
@@ -118,17 +118,17 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
 	cbuf.PrependString(range.tableName);
 	cbuf.PrependInt(tableGeneration);
 	cbuf.PrependShort(COMMAND_COMPACT);
-	mbuilder.Reset(Message.PROTOCOL_HYPERTABLE_RANGESERVER);
-	mbuilder.Encapsulate(cbuf);
+	hbuilder.Reset(Message.PROTOCOL_HYPERTABLE_RANGESERVER);
+	hbuilder.Encapsulate(cbuf);
 	return cbuf;
     }
 
     public CommBuf BuildRequestBadCommand(short command) {
-	MessageBuilderSimple mbuilder = new MessageBuilderSimple();
-	CommBuf cbuf = new CommBuf(mbuilder.HeaderLength() + 2);
+	HeaderBuilder hbuilder = new HeaderBuilder();
+	CommBuf cbuf = new CommBuf(hbuilder.HeaderLength() + 2);
 	cbuf.PrependShort(command);
-	mbuilder.Reset(Message.PROTOCOL_HYPERTABLE_RANGESERVER);
-	mbuilder.Encapsulate(cbuf);
+	hbuilder.Reset(Message.PROTOCOL_HYPERTABLE_RANGESERVER);
+	hbuilder.Encapsulate(cbuf);
 	return cbuf;
     }
 

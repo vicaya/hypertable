@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.hypertable.AsyncComm;
 
 import java.io.IOException;
@@ -43,7 +42,7 @@ class CommTestThreadFunction implements Runnable {
     public void run() {
 	CommBuf cbuf;
 	Event event;
-	MessageBuilderSimple mbuilder = new MessageBuilderSimple();
+	HeaderBuilder hbuilder = new HeaderBuilder();
 	ResponseHandler respHandler = new ResponseHandler();
 	String str;
 	int error;
@@ -56,10 +55,10 @@ class CommTestThreadFunction implements Runnable {
 	    BufferedWriter outfile = new BufferedWriter(new FileWriter(mOutputFile));
 
 	    while ((str = infile.readLine()) != null) {
-		mbuilder.Reset(Message.PROTOCOL_NONE);
+		hbuilder.Reset(Message.PROTOCOL_NONE);
 		cbuf = new CommBuf(CommBuf.EncodedLength(str) + Message.HEADER_LENGTH);
 		cbuf.PrependString(str);
-		mbuilder.Encapsulate(cbuf);
+		hbuilder.Encapsulate(cbuf);
 		retries = 0;
 		while ((error = mComm.SendRequest(mAddr, cbuf, respHandler)) != Error.OK) {
 		    if (error == Error.COMM_NOT_CONNECTED) {

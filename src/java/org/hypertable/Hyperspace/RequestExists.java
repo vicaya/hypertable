@@ -53,7 +53,7 @@ public class RequestExists extends Request {
 	if (Global.verbose)
 	    log.info("Checking for existance of file '" + mFilename + "' : " + exists);
 
-	cbuf = new CommBuf(mMessageBuilder.HeaderLength() + 6);
+	cbuf = new CommBuf(mHeaderBuilder.HeaderLength() + 6);
 	cbuf.PrependShort(Protocol.COMMAND_EXISTS);
 	if (exists)
 	    cbuf.PrependInt(Error.OK);
@@ -61,8 +61,8 @@ public class RequestExists extends Request {
 	    cbuf.PrependInt(Error.HYPERTABLEFS_FILE_NOT_FOUND);
 
 	// Encapsulate with Comm message response header
-	mMessageBuilder.LoadFromMessage(mEvent.msg);
-	mMessageBuilder.Encapsulate(cbuf);
+	mHeaderBuilder.LoadFromMessage(mEvent.msg);
+	mHeaderBuilder.Encapsulate(cbuf);
 	    
 	if ((error = Global.comm.SendResponse(mEvent.addr, cbuf)) != Error.OK)
 	    log.log(Level.SEVERE, "Comm.SendResponse returned " + Error.GetText(error));

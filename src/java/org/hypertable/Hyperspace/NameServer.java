@@ -38,7 +38,6 @@ import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.ReactorFactory;
 import org.hypertable.AsyncComm.CallbackHandler;
 import org.hypertable.AsyncComm.Message;
-import org.hypertable.AsyncComm.MessageBuilderSimple;
 
 public class NameServer {
 

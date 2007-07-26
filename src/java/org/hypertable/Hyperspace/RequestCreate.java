@@ -66,13 +66,13 @@ public class RequestCreate extends Request {
 
 	    (new File(baseDir + mFilename)).createNewFile();
 
-	    cbuf = new CommBuf(mMessageBuilder.HeaderLength() + 6);
+	    cbuf = new CommBuf(mHeaderBuilder.HeaderLength() + 6);
 	    cbuf.PrependShort(Protocol.COMMAND_CREATE);
 	    cbuf.PrependInt(Error.OK);
 
 	    // Encapsulate with Comm message response header
-	    mMessageBuilder.LoadFromMessage(mEvent.msg);
-	    mMessageBuilder.Encapsulate(cbuf);
+	    mHeaderBuilder.LoadFromMessage(mEvent.msg);
+	    mHeaderBuilder.Encapsulate(cbuf);
 	    
 	    if ((error = Global.comm.SendResponse(mEvent.addr, cbuf)) != Error.OK)
 		log.log(Level.SEVERE, "Comm.SendResponse returned " + Error.GetText(error));
@@ -83,18 +83,18 @@ public class RequestCreate extends Request {
 	    rwlock.writeLock().unlock();
 	    e.printStackTrace();
 	    cbuf = Global.protocol.CreateErrorMessage(Protocol.COMMAND_CREATE, Error.HYPERTABLEFS_FILE_NOT_FOUND,
-						      e.getMessage(), mMessageBuilder.HeaderLength());
+						      e.getMessage(), mHeaderBuilder.HeaderLength());
 	}
 	catch (IOException e) {
 	    rwlock.writeLock().unlock();
 	    e.printStackTrace();
 	    cbuf = Global.protocol.CreateErrorMessage(Protocol.COMMAND_CREATE, Error.HYPERTABLEFS_IO_ERROR,
-						      e.getMessage(), mMessageBuilder.HeaderLength());
+						      e.getMessage(), mHeaderBuilder.HeaderLength());
 	}
 
 	// Encapsulate with Comm message response header
-	mMessageBuilder.LoadFromMessage(mEvent.msg);
-	mMessageBuilder.Encapsulate(cbuf);
+	mHeaderBuilder.LoadFromMessage(mEvent.msg);
+	mHeaderBuilder.Encapsulate(cbuf);
 
 	if ((error = Global.comm.SendResponse(mEvent.addr, cbuf)) != Error.OK)
 	    log.log(Level.SEVERE, "Comm.SendResponse returned " + Error.GetText(error));

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.hypertable.HdfsBroker;
 
 import org.apache.hadoop.fs.Path;
@@ -31,7 +30,7 @@ import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.Message;
-import org.hypertable.AsyncComm.MessageBuilderSimple;
+import org.hypertable.AsyncComm.HeaderBuilder;
 
 import org.hypertable.Common.Error;
 
@@ -75,7 +74,7 @@ public class RequestRead extends Request {
 
 	    int nread = mOpenFileData.is.read(data, 0, data.length);
 	    
-	    cbuf = new CommBuf(mOpenFileData.mbuilder.HeaderLength() + 22);
+	    cbuf = new CommBuf(mOpenFileData.hbuilder.HeaderLength() + 22);
 	    cbuf.PrependInt(nread);
 	    cbuf.PrependLong(offset);
 	    cbuf.PrependInt(mFileId);
@@ -89,22 +88,22 @@ public class RequestRead extends Request {
 	    }
 
 	    // Encapsulate with Comm message response header
-	    mOpenFileData.mbuilder.LoadFromMessage(mEvent.msg);
-	    mOpenFileData.mbuilder.Encapsulate(cbuf);
+	    mOpenFileData.hbuilder.LoadFromMessage(mEvent.msg);
+	    mOpenFileData.hbuilder.Encapsulate(cbuf);
 	    
 	    if ((error = Global.comm.SendResponse(mEvent.addr, cbuf)) != Error.OK)
 		log.log(Level.SEVERE, "Comm.SendResponse returned " + Error.GetText(error));
 	    return;
 	}
 	catch (IOException e) {
-	    MessageBuilderSimple mbuilder = new MessageBuilderSimple();
+	    HeaderBuilder hbuilder = new HeaderBuilder();
 	    e.printStackTrace();
 	    cbuf = Global.protocol.CreateErrorMessage(Protocol.COMMAND_READ, error,
-						      e.getMessage(), mbuilder.HeaderLength());
+						      e.getMessage(), hbuilder.HeaderLength());
 
 	    // Encapsulate with Comm message response header
-	    mbuilder.LoadFromMessage(mEvent.msg);
-	    mbuilder.Encapsulate(cbuf);
+	    hbuilder.LoadFromMessage(mEvent.msg);
+	    hbuilder.Encapsulate(cbuf);
 
 	    if ((error = Global.comm.SendResponse(mEvent.addr, cbuf)) != Error.OK)
 		log.log(Level.SEVERE, "Comm.SendResponse returned " + Error.GetText(error));

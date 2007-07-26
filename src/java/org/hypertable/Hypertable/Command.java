@@ -26,7 +26,6 @@ import java.io.StreamTokenizer;
 import java.util.Vector;
 
 import org.hypertable.AsyncComm.Comm;
-import org.hypertable.AsyncComm.MessageBuilderSimple;
 
 abstract class Command implements Runnable {
 
