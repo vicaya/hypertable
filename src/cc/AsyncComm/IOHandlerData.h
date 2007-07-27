@@ -33,7 +33,6 @@ extern "C" {
 #include "Common/atomic.h"
 
 #include "CommBuf.h"
-#include "EventQueue.h"
 #include "IOHandler.h"
 #include "RequestCache.h"
 
@@ -48,8 +47,8 @@ namespace hypertable {
 
   public:
 
-    IOHandlerData(int sd, struct sockaddr_in &addr, CallbackHandler *cbh, HandlerMap &hmap, EventQueue *eq) 
-      : IOHandler(sd, addr, cbh, hmap, eq), mRequestCache(), mTimeout(0), mSendQueue() {
+    IOHandlerData(int sd, struct sockaddr_in &addr, CallbackHandler *cbh, HandlerMap &hmap) 
+      : IOHandler(sd, addr, cbh, hmap), mRequestCache(), mTimeout(0), mSendQueue() {
       mConnected = false;
       ResetIncomingMessageState();
       mMessage = 0;

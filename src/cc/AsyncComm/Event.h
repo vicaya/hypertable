@@ -46,10 +46,15 @@ namespace hypertable {
       if (h != 0) {
 	message = ((uint8_t *)header) + header->headerLen;
 	messageLen = header->totalLen - header->headerLen;
+	if (header->gid != 0)
+	  threadGroup = ((uint64_t)connId << 32) | header->gid;
+	else
+	  threadGroup = 0;
       }
       else {
 	message = 0;
 	messageLen = 0;
+	threadGroup = 0;
       }
     }
 
@@ -64,6 +69,7 @@ namespace hypertable {
     Header::HeaderT    *header;
     uint8_t            *message;
     size_t              messageLen;
+    uint64_t            threadGroup;
 
     std::string toString();
     void Display() { cerr << toString() << endl; }

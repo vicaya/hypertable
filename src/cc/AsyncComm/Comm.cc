@@ -49,21 +49,18 @@ extern "C" {
 using namespace hypertable;
 
 
-
 /**
  */
-Comm::Comm(uint32_t handlerCount) {
+Comm::Comm(uint32_t dispatcherCount) {
 
   if (ReactorFactory::msReactors.size() == 0) {
     LOG_ERROR("ReactorFactory::Initialize must be called before creating AsyncComm::Comm object");
     DUMP_CORE;
   }
-  if (handlerCount == 0)
-    handlerCount = System::GetProcessorCount();
+  if (dispatcherCount == 0)
+    dispatcherCount = System::GetProcessorCount();
 
-  assert(handlerCount > 0);
-
-  mEventQueue = new EventQueue(handlerCount);
+  assert(dispatcherCount > 0);
 }
 
 
@@ -100,7 +97,7 @@ int Comm::Connect(struct sockaddr_in &addr, time_t timeout, CallbackHandler *def
     LOG_VA_WARN("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
 #endif
 
-  dataHandlerPtr.reset( new IOHandlerData(sd, addr, defaultHandler, mHandlerMap, mEventQueue) );
+  dataHandlerPtr.reset( new IOHandlerData(sd, addr, defaultHandler, mHandlerMap) );
   mHandlerMap.InsertDataHandler(dataHandlerPtr);
   dataHandlerPtr->SetTimeout(timeout);
 
@@ -167,7 +164,7 @@ int Comm::Listen(uint16_t port, ConnectionHandlerFactory *hfactory, CallbackHand
     exit(1);
   }
 
-  IOHandlerAcceptPtr acceptHandlerPtr( new IOHandlerAccept(sd, addr, defaultHandler, mHandlerMap, mEventQueue, hfactory) );
+  IOHandlerAcceptPtr acceptHandlerPtr( new IOHandlerAccept(sd, addr, defaultHandler, mHandlerMap, hfactory) );
   mHandlerMap.InsertAcceptHandler(acceptHandlerPtr);
   acceptHandlerPtr->StartPolling();
 

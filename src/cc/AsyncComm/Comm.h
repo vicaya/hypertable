@@ -19,12 +19,7 @@
 #ifndef HYPERTABLE_COMMENGINE_H
 #define HYPERTABLE_COMMENGINE_H
 
-#include <cassert>
-#include <iostream>
-
-#include <queue>
-#include <ext/hash_map>
-using namespace std;
+#include <string>
 
 #include <boost/thread/mutex.hpp>
 
@@ -35,8 +30,9 @@ extern "C" {
 #include "CallbackHandler.h"
 #include "CommBuf.h"
 #include "ConnectionHandlerFactory.h"
-#include "EventQueue.h"
 #include "HandlerMap.h"
+
+using namespace std;
 
 namespace hypertable {
 
@@ -44,7 +40,7 @@ namespace hypertable {
 
   public:
 
-    Comm(uint32_t handlerCount);
+    Comm(uint32_t dispatcherCount=0);
 
     ~Comm();
 
@@ -58,9 +54,8 @@ namespace hypertable {
 
   private:
     boost::mutex  mMutex;
-    const char   *mAppName;
+    std::string   mAppName;
     HandlerMap    mHandlerMap;
-    EventQueue   *mEventQueue;
   };
 
 }

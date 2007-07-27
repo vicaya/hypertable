@@ -35,7 +35,6 @@ extern "C" {
 #include "Common/Logger.h"
 
 #include "CallbackHandler.h"
-#include "EventQueue.h"
 #include "ReactorFactory.h"
 
 namespace hypertable {
@@ -49,7 +48,7 @@ namespace hypertable {
 
   public:
 
-    IOHandler(int sd, struct sockaddr_in &addr, CallbackHandler *cbh, HandlerMap &hmap, EventQueue *eq) : mAddr(addr), mSd(sd), mCallback(cbh), mHandlerMap(hmap), mEventQueue(eq) {
+    IOHandler(int sd, struct sockaddr_in &addr, CallbackHandler *cbh, HandlerMap &hmap) : mAddr(addr), mSd(sd), mCallback(cbh), mHandlerMap(hmap) {
       mReactor = ReactorFactory::GetReactor();
       mPollInterest = 0;
       mShutdown = false;
@@ -73,13 +72,7 @@ namespace hypertable {
       }
       else {
 	EventPtr eventPtr(event);
-	
-	if (event->header && event->header->gid != 0) {
-	  uint64_t threadGroup = ((uint64_t)event->connId << 32) | event->header->gid;
-	  mEventQueue->Add(threadGroup, eventPtr, handler);
-	}
-	else
-	  mEventQueue->Add(eventPtr, handler);
+	handler->handle(eventPtr);
       }
     }
 
@@ -138,7 +131,6 @@ namespace hypertable {
     int                 mSd;
     CallbackHandler    *mCallback;
     HandlerMap         &mHandlerMap;
-    EventQueue         *mEventQueue;
     Reactor            *mReactor;
     int                 mPollInterest;
     bool                mShutdown;
