@@ -31,6 +31,7 @@ extern "C" {
 #include "Common/ByteString.h"
 #include "Common/FileUtils.h"
 #include "Common/Logger.h"
+#include "Common/NumberStream.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
 
@@ -75,7 +76,8 @@ int main(int argc, char **argv) {
   TestHarness harness("/tmp/cellStoreTest");
   std::ostream &logStream = harness.GetLogStream();
   TestData tdata(harness);
-  
+  NumberStream randstr("tests/random.dat");
+
   ReactorFactory::Initialize(1);
   System::Initialize(argv[0]);
 
@@ -91,8 +93,6 @@ int main(int argc, char **argv) {
   logStream << "URL count = " << tdata.urls.size() << endl;
 
   Global::blockCache = new FileBlockCache(200000000LL);
-
-  srand(1234);
 
   /**
    * Sort ordering test
@@ -113,10 +113,10 @@ int main(int argc, char **argv) {
 
   for (size_t i=0; i<10000; i++) {
 
-    family = rand() % 4;
-    timestamp = rand() % 20;
+    family = randstr.getInt() % 4;
+    timestamp = randstr.getInt() % 20;
 
-    index = rand() % 10;
+    index = randstr.getInt() % 10;
     if (index & 1)
       qualifier = tdata.urls[index].get();
     else
@@ -169,10 +169,10 @@ int main(int argc, char **argv) {
   for (size_t i=0; i<20000; i++) {
 
     row = tdata.urls[i].get();
-    family = rand() % 4;
-    timestamp = rand();
+    family = randstr.getInt() % 4;
+    timestamp = randstr.getInt();
 
-    index = rand() % tdata.urls.size();
+    index = randstr.getInt() % tdata.urls.size();
 
     if (index & 1)
       qualifier = tdata.urls[index].get();
@@ -181,7 +181,7 @@ int main(int argc, char **argv) {
 
     key = CreateKey(FLAG_INSERT, row, family, qualifier, timestamp);
 
-    index = rand() % tdata.content.size();
+    index = randstr.getInt() % tdata.content.size();
     value = (ByteString32T *)new uint8_t [ sizeof(int32_t) + strlen(tdata.content[index].get()) ];
     value->len = strlen(tdata.content[index].get());
     memcpy(value->data, tdata.content[index].get(), value->len);
