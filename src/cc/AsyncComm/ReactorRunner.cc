@@ -50,7 +50,6 @@ void ReactorRunner::operator()() {
   int n;
   IOHandler *handler;
   set<void *> removedHandlers;
-  bool verbose = false;
 
 #if defined(__linux__)
   struct epoll_event events[256];
@@ -61,20 +60,15 @@ void ReactorRunner::operator()() {
     for (int i=0; i<n; i++) {
       if (removedHandlers.count(events[i].data.ptr) == 0) {
 	handler = (IOHandler *)events[i].data.ptr;
-	if (verbose)
-	  fprintf(stderr, "About to invoke handler %p", handler);
 	if (handler->HandleEvent(&events[i])) {
 	  UnregisterHandler(handler);
 	  removedHandlers.insert(handler);
-	  fprintf(stderr, "Adding handler %p to removed list", handler);
-	  verbose = true;
 	}
       }
     }
     if (!removedHandlers.empty()) {
       for (set<void *>::iterator iter=removedHandlers.begin(); iter!=removedHandlers.end(); iter++) {
 	mReactor->CancelRequests((IOHandler*)(*iter));
-	//delete (IOHandler *)(*iter);
       }
     }
     mReactor->HandleTimeouts();
@@ -95,13 +89,7 @@ void ReactorRunner::operator()() {
       handler = (IOHandler *)events[i].udata;
       if (removedHandlers.count(handler) == 0) {
 	if (handler->HandleEvent(&events[i])) {
-	  struct kevent devents[2];
-	  EV_SET(&devents[0], events[i].ident, EVFILT_READ, EV_DELETE, 0, 0, 0);
-	  EV_SET(&devents[1], events[i].ident, EVFILT_WRITE, EV_DELETE, 0, 0, 0);
-	  if (kevent(mReactor->kQueue, devents, 2, NULL, 0, NULL) == -1 && errno != ENOENT)
-	    LOG_VA_ERROR("kevent(%d) : %s", events[i].ident, strerror(errno));
-	  close(events[i].ident);
-	  handler->Unregister();
+	  UnregisterHandler(handler);
 	  removedHandlers.insert(handler);
 	}
       }
@@ -109,7 +97,6 @@ void ReactorRunner::operator()() {
     if (!removedHandlers.empty()) {
       for (set<void *>::iterator iter=removedHandlers.begin(); iter!=removedHandlers.end(); iter++) {
 	mReactor->CancelRequests((IOHandler*)(*iter));
-	//delete (IOHandler *)(*iter);
       }
     }
     mReactor->HandleTimeouts();
@@ -132,10 +119,16 @@ void ReactorRunner::UnregisterHandler(IOHandler *handler) {
     LOG_VA_ERROR("epoll_ctl(EPOLL_CTL_DEL, %d) failure, %s", handler->GetSd(), strerror(errno));
     exit(1);
   }
-  close(handler->GetSd());
 #elif defined(__APPLE__)
+  struct kevent devents[2];
+  EV_SET(&devents[0], handler->GetSd(), EVFILT_READ, EV_DELETE, 0, 0, 0);
+  EV_SET(&devents[1], handler->GetSd(), EVFILT_WRITE, EV_DELETE, 0, 0, 0);
+  if (kevent(mReactor->kQueue, devents, 2, NULL, 0, NULL) == -1 && errno != ENOENT)
+    LOG_VA_ERROR("kevent(%d) : %s", handler->GetSd(), strerror(errno));
+#else
   ImplementMe;
 #endif
+  close(handler->GetSd());
   struct sockaddr_in addr = handler->GetAddress();
   HandlerMap &handlerMap = handler->GetHandlerMap();
   handlerMap.RemoveHandler(addr);
