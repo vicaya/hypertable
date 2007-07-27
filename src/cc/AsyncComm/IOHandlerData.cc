@@ -41,6 +41,7 @@ extern "C" {
 #include "HandlerMap.h"
 using namespace hypertable;
 
+atomic_t IOHandlerData::msNextConnectionId = ATOMIC_INIT(1);
 
 #if defined(__linux__)
 
@@ -49,13 +50,13 @@ bool IOHandlerData::HandleEvent(struct epoll_event *event) {
   //DisplayEvent(event);
 
   if (mShutdown) {
-    DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
+    DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
     return true;
   }
 
   if (event->events & EPOLLOUT) {
     if (HandleWriteReadiness()) {
-      DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
+      DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
       return true;
     }
   }
@@ -71,12 +72,12 @@ bool IOHandlerData::HandleEvent(struct epoll_event *event) {
 	    LOG_VA_ERROR("FileUtils::Read(%d, len=%d) failure : %s", mSd, mMessageHeaderRemaining, strerror(errno));
 	  }
 	  int error = (errno == ECONNREFUSED) ? Error::COMM_CONNECT_ERROR : Error::OK;
-	  DeliverEvent( new Event(Event::DISCONNECT, mAddr, error ) );
+	  DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, error ) );
 	  return true;
 	}
 	else if (nread == 0 && totalRead == 0) {
 	  // eof
-	  DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
+	  DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
 	  return true;
 	}
 	else if (nread < mMessageHeaderRemaining) {
@@ -97,12 +98,12 @@ bool IOHandlerData::HandleEvent(struct epoll_event *event) {
 	nread = FileUtils::Read(mSd, mMessagePtr, mMessageRemaining);
 	if (nread < 0) {
 	  LOG_VA_ERROR("FileUtils::Read(%d, len=%d) failure : %s", mSd, mMessageHeaderRemaining, strerror(errno));
-	  DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
+	  DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
 	  return true;
 	}
 	else if (nread == 0 && totalRead == 0) {
 	  // eof
-	  DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
+	  DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
 	  return true;
 	}
 	else if (nread < mMessageRemaining) {
@@ -118,7 +119,7 @@ bool IOHandlerData::HandleEvent(struct epoll_event *event) {
 			id, ((Header::HeaderT *)mMessage)->version, ((Header::HeaderT *)mMessage)->totalLen);
 	  }
 	  else
-	    DeliverEvent( new Event(Event::MESSAGE, mAddr, Error::OK, (Header::HeaderT *)mMessage), cb );
+	    DeliverEvent( new Event(Event::MESSAGE, mId, mAddr, Error::OK, (Header::HeaderT *)mMessage), cb );
 	  ResetIncomingMessageState();
 	}
 	totalRead += nread;
@@ -128,13 +129,13 @@ bool IOHandlerData::HandleEvent(struct epoll_event *event) {
 
   if (event->events & EPOLLERR) {
     LOG_VA_WARN("Received EPOLLERR on descriptor %d (%s:%d)", mSd, inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port));
-    DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
+    DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
     return true;
   }
 
   if (event->events & EPOLLHUP) {
     LOG_VA_WARN("Received EPOLLHUP on descriptor %d (%s:%d)", mSd, inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port));
-    DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
+    DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
     return true;
   }
 
@@ -151,7 +152,7 @@ bool IOHandlerData::HandleEvent(struct kevent *event) {
   //DisplayEvent(event);
 
   if (mShutdown) {
-    DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
+    DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
     return true;
   }
 
@@ -159,15 +160,15 @@ bool IOHandlerData::HandleEvent(struct kevent *event) {
 
   if (event->flags & EV_EOF) {
     if (!mConnected)
-      DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::COMM_CONNECT_ERROR) );
+      DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::COMM_CONNECT_ERROR) );
     else
-      DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
+      DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
     return true;
   }
 
   if (event->filter == EVFILT_WRITE) {
     if (HandleWriteReadiness()) {
-      DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
+      DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
       return true;
     }
   }
@@ -182,7 +183,7 @@ bool IOHandlerData::HandleEvent(struct kevent *event) {
 	  nread = FileUtils::Read(mSd, ptr, mMessageHeaderRemaining);
 	  if (nread < 0) {
 	    LOG_VA_ERROR("FileUtils::Read(%d, len=%d) failure : %s", mSd, mMessageHeaderRemaining, strerror(errno));
-	    DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
+	    DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
 	    return true;
 	  }
 	  assert(nread == mMessageHeaderRemaining);
@@ -198,7 +199,7 @@ bool IOHandlerData::HandleEvent(struct kevent *event) {
 	  nread = FileUtils::Read(mSd, ptr, available);
 	  if (nread < 0) {
 	    LOG_VA_ERROR("FileUtils::Read(%d, len=%d) failure : %s", mSd, available, strerror(errno));
-	    DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
+	    DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
 	    return true;
 	  }
 	  assert(nread == available);
@@ -211,7 +212,7 @@ bool IOHandlerData::HandleEvent(struct kevent *event) {
 	  nread = FileUtils::Read(mSd, mMessagePtr, mMessageRemaining);
 	  if (nread < 0) {
 	    LOG_VA_ERROR("FileUtils::Read(%d, len=%d) failure : %s", mSd, mMessageRemaining, strerror(errno));
-	    DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
+	    DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
 	    return true;
 	  }
 	  assert(nread == mMessageRemaining);
@@ -224,14 +225,14 @@ bool IOHandlerData::HandleEvent(struct kevent *event) {
 	    LOG_VA_WARN("Received response for non-pending event (id=%d)", id);
 	  }
 	  else
-	    DeliverEvent( new Event(Event::MESSAGE, mAddr, Error::OK, (Header::HeaderT *)mMessage), cb );
+	    DeliverEvent( new Event(Event::MESSAGE, mId, mAddr, Error::OK, (Header::HeaderT *)mMessage), cb );
 	  ResetIncomingMessageState();
 	}
 	else {
 	  nread = FileUtils::Read(mSd, mMessagePtr, available);
 	  if (nread < 0) {
 	    LOG_VA_ERROR("FileUtils::Read(%d, len=%d) failure : %s", mSd, available, strerror(errno));
-	    DeliverEvent( new Event(Event::DISCONNECT, mAddr, Error::OK) );
+	    DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
 	    return true;
 	  }
 	  assert(nread == available);
@@ -263,7 +264,7 @@ bool IOHandlerData::HandleWriteReadiness() {
     }
     //clog << "Connection established." << endl;
     mConnected = true;
-    DeliverEvent( new Event(Event::CONNECTION_ESTABLISHED, mAddr, Error::OK) );
+    DeliverEvent( new Event(Event::CONNECTION_ESTABLISHED, mId, mAddr, Error::OK) );
   }
   else {
     if (FlushSendQueue() != Error::OK)

@@ -73,10 +73,13 @@ namespace hypertable {
       }
       else {
 	EventPtr eventPtr(event);
-	if (mEventQueue)
-	  mEventQueue->Add(eventPtr, handler);
+	
+	if (event->header && event->header->gid != 0) {
+	  uint64_t threadGroup = ((uint64_t)event->connId << 32) | event->header->gid;
+	  mEventQueue->Add(threadGroup, eventPtr, handler);
+	}
 	else
-	  handler->handle(eventPtr);
+	  mEventQueue->Add(eventPtr, handler);
       }
     }
 

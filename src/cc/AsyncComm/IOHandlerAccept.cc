@@ -99,7 +99,7 @@ bool IOHandlerAccept::HandleIncomingConnection() {
   mHandlerMap.InsertDataHandler(dataHandlerPtr);
   dataHandlerPtr->StartPolling();
 
-  DeliverEvent( new Event(Event::CONNECTION_ESTABLISHED, addr, Error::OK) );
+  DeliverEvent( new Event(Event::CONNECTION_ESTABLISHED, dataHandlerPtr->ConnectionId(), addr, Error::OK) );
 
   return false;
  }

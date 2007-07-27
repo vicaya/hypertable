@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <cstdlib>
+
 extern "C" {
 #include <poll.h>
 #include <signal.h>
@@ -78,6 +80,8 @@ int main(int argc, char **argv) {
 
   if (argc != 1)
     Usage::DumpAndExit(usage);
+
+  srand(8876);
 
   System::Initialize(argv[0]);
   ReactorFactory::Initialize(1);

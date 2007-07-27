@@ -71,7 +71,7 @@ void Reactor::HandleTimeouts() {
   CallbackHandler *cb;
 
   while ((cb = mRequestCache.GetNextTimeout(tval.tv_sec, handler)) != 0) {
-    handler->DeliverEvent( new Event(Event::ERROR, ((IOHandlerData *)handler)->GetAddress(), Error::COMM_REQUEST_TIMEOUT), cb );
+    handler->DeliverEvent( new Event(Event::ERROR, 0, ((IOHandlerData *)handler)->GetAddress(), Error::COMM_REQUEST_TIMEOUT), cb );
   }
 }
   

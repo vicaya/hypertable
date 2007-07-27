@@ -58,9 +58,12 @@ Comm::Comm(uint32_t handlerCount) {
     LOG_ERROR("ReactorFactory::Initialize must be called before creating AsyncComm::Comm object");
     DUMP_CORE;
   }
-  // TODO: Implement me ...
-  assert(handlerCount == 0);
-  mEventQueue = 0;
+  if (handlerCount == 0)
+    handlerCount = System::GetProcessorCount();
+
+  assert(handlerCount > 0);
+
+  mEventQueue = new EventQueue(handlerCount);
 }
 
 

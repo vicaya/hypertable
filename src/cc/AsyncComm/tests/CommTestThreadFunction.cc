@@ -99,6 +99,7 @@ void CommTestThreadFunction::operator()() {
   ifstream infile(mInputFile);
   ofstream outfile(mOutputFile);
   const char *str;
+  uint32_t gid = rand();
 
   ResponseHandler *respHandler = new ResponseHandler();
 
@@ -109,6 +110,7 @@ void CommTestThreadFunction::operator()() {
       if (line.length() > 0) {
 	cbuf = new CommBuf(hbuilder.HeaderLength() + CommBuf::EncodedLength(line));
 	cbuf->PrependString(line);
+	hbuilder.SetGroupId(gid);
 	hbuilder.Encapsulate(cbuf);
 	CommBufPtr cbufPtr(cbuf);
 	int retries = 0;

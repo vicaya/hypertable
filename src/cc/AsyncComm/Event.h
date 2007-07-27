@@ -41,8 +41,8 @@ namespace hypertable {
 
     enum Type { CONNECTION_ESTABLISHED, DISCONNECT, MESSAGE, ERROR };
 
-    Event(Type ct, struct sockaddr_in &a, int err=0, Header::HeaderT *h=0) 
-      : type(ct), addr(a), error(err), header(h) {
+    Event(Type ct, int cid, struct sockaddr_in &a, int err=0, Header::HeaderT *h=0) 
+      : type(ct), addr(a), connId(cid), error(err), header(h) {
       if (h != 0) {
 	message = ((uint8_t *)header) + header->headerLen;
 	messageLen = header->totalLen - header->headerLen;
@@ -59,6 +59,7 @@ namespace hypertable {
 
     Type                type;
     struct sockaddr_in  addr;
+    int                 connId;
     int                 error;
     Header::HeaderT    *header;
     uint8_t            *message;

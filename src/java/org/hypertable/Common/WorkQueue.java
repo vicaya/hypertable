@@ -67,9 +67,6 @@ public class WorkQueue {
 				    iter.remove();
 				    break;
 				}
-				else {
-				    java.lang.System.err.println("Skipping request from thread group " + rec.usage.threadGroup + " because it's running");
-				}
 				rec = null;
 			    }
 			}
@@ -102,7 +99,6 @@ public class WorkQueue {
     private LinkedList<WorkRec>     mQueue = new LinkedList<WorkRec>();
     private HashMap<Long, UsageRec> mUsageMap = new HashMap<Long, UsageRec>();
     private Thread [] threads = null;
-    private int mRequestCount = 0;
 
     public WorkQueue(int workerCount) {
 	assert (workerCount > 0);

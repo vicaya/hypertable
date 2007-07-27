@@ -55,6 +55,7 @@ namespace hypertable {
       mMessage = 0;
       mMessagePtr = 0;
       mMessageRemaining = 0;
+      mId = atomic_inc_return(&msNextConnectionId);
     }
 
     void ResetIncomingMessageState() {
@@ -80,7 +81,11 @@ namespace hypertable {
 
     bool HandleWriteReadiness();
 
+    int ConnectionId() { return mId; }
+
   private:
+
+    static atomic_t msNextConnectionId;
 
     bool                mConnected;
     boost::mutex        mMutex;
@@ -93,6 +98,7 @@ namespace hypertable {
     RequestCache        mRequestCache;
     time_t              mTimeout;
     list<CommBufPtr>    mSendQueue;
+    int                 mId;
   };
 
   typedef boost::shared_ptr<IOHandlerData> IOHandlerDataPtr;
