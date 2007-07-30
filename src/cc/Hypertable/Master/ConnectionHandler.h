@@ -19,24 +19,25 @@
 #ifndef HYPERTABLE_CONNECTIONHANDLER_H
 #define HYPERTABLE_CONNECTIONHANDLER_H
 
-#include "Common/WorkQueue.h"
 #include "AsyncComm/CallbackHandler.h"
 
 #include "Master.h"
 
 namespace hypertable {
 
+  class ApplicationQueue;
+
   /**
    */
   class ConnectionHandler : public CallbackHandler {
   public:
-    ConnectionHandler(Comm *comm, WorkQueue *workQueue, Master *master) : mComm(comm), mWorkQueue(workQueue), mMaster(master) { return; }
+    ConnectionHandler(Comm *comm, ApplicationQueue *appQueue, Master *master) : mComm(comm), mAppQueue(appQueue), mMaster(master) { return; }
     virtual void handle(EventPtr &eventPtr);
 
   private:
-    Comm       *mComm;
-    WorkQueue  *mWorkQueue;
-    Master     *mMaster;
+    Comm              *mComm;
+    ApplicationQueue  *mAppQueue;
+    Master            *mMaster;
   };
 
 }

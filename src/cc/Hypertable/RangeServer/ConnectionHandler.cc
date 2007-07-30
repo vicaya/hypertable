@@ -16,10 +16,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 #include "Common/Error.h"
 #include "Common/Exception.h"
 #include "Common/StringExt.h"
+
+#include "AsyncComm/ApplicationQueue.h"
 
 #include "ConnectionHandler.h"
 #include "RangeServerProtocol.h"
@@ -35,7 +36,7 @@ using namespace hypertable;
 /**
  *
  */
-ConnectionHandler::ConnectionHandler(Comm *comm, WorkQueue *workQueue, RangeServer *rangeServer) : mComm(comm), mWorkQueue(workQueue), mRangeServer(rangeServer) {
+ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueue *appQueue, RangeServer *rangeServer) : mComm(comm), mAppQueue(appQueue), mRangeServer(rangeServer) {
   return;
 }
 
@@ -46,7 +47,7 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
   short command = -1;
 
   if (eventPtr->type == Event::MESSAGE) {
-    Runnable *requestHandler = 0;
+    ApplicationHandler *requestHandler = 0;
 
     //eventPtr->Display();
 
@@ -83,7 +84,8 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
 	std::string message = (string)"Command code " + command + " not implemented";
 	throw ProtocolException(message);
       }
-      mWorkQueue->AddRequest( requestHandler );
+      ApplicationHandlerPtr appHandlerPtr(requestHandler);
+      mAppQueue->Add(appHandlerPtr);
     }
     catch (ProtocolException &e) {
       ResponseCallback cb(mComm, eventPtr);

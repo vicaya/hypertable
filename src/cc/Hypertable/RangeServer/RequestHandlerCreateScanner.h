@@ -21,6 +21,7 @@
 
 #include "Common/Runnable.h"
 
+#include "AsyncComm/ApplicationHandler.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/Event.h"
 
@@ -30,9 +31,9 @@ namespace hypertable {
 
   class RangeServer;
 
-  class RequestHandlerCreateScanner : public Runnable {
+  class RequestHandlerCreateScanner : public ApplicationHandler {
   public:
-    RequestHandlerCreateScanner(Comm *comm, RangeServer *rangeServer, EventPtr &eventPtr) : mComm(comm), mRangeServer(rangeServer), mEventPtr(eventPtr) {
+    RequestHandlerCreateScanner(Comm *comm, RangeServer *rangeServer, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mComm(comm), mRangeServer(rangeServer) {
       return;
     }
 
@@ -41,7 +42,6 @@ namespace hypertable {
   private:
     Comm        *mComm;
     RangeServer *mRangeServer;
-    EventPtr     mEventPtr;
   };
 
 }

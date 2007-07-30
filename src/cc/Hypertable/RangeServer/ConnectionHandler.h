@@ -19,7 +19,6 @@
 #ifndef HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
 #define HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
 
-#include "Common/WorkQueue.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/CallbackHandler.h"
 
@@ -27,19 +26,21 @@
 
 namespace hypertable {
 
+  class ApplicationQueue;
+
   /**
    */
   class ConnectionHandler : public CallbackHandler {
   public:
 
-    ConnectionHandler(Comm *comm, WorkQueue *workQueue, RangeServer *rangeServer);
+    ConnectionHandler(Comm *comm, ApplicationQueue *appQueue, RangeServer *rangeServer);
 
     virtual void handle(EventPtr &eventPtr);
 
   private:
-    Comm        *mComm;
-    WorkQueue   *mWorkQueue;
-    RangeServer *mRangeServer;
+    Comm             *mComm;
+    ApplicationQueue *mAppQueue;
+    RangeServer      *mRangeServer;
   };
 
 }

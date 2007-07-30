@@ -21,6 +21,7 @@
 
 #include "Common/Runnable.h"
 
+#include "AsyncComm/ApplicationHandler.h"
 #include "AsyncComm/Event.h"
 
 using namespace hypertable;
@@ -30,9 +31,9 @@ namespace hypertable {
   class Comm;
   class Master;
 
-  class RequestHandlerGetSchema : public Runnable {
+  class RequestHandlerGetSchema : public ApplicationHandler {
   public:
-    RequestHandlerGetSchema(Comm *comm, Master *master, EventPtr &eventPtr) : mComm(comm), mMaster(master), mEventPtr(eventPtr) {
+    RequestHandlerGetSchema(Comm *comm, Master *master, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mComm(comm), mMaster(master) {
       return;
     }
 
@@ -41,9 +42,7 @@ namespace hypertable {
   private:
     Comm     *mComm;
     Master   *mMaster;
-    EventPtr  mEventPtr;
   };
-
 }
 
 #endif // HYPERTABLE_REQUESTHANDLERGETSCHEMA_H

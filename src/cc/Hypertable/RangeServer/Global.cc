@@ -18,11 +18,13 @@
 
 #include <cassert>
 
+#include "AsyncComm/ApplicationQueue.h"
+
 #include "Global.h"
 
 using namespace hypertable;
 
-WorkQueue             *Global::workQueue;
+ApplicationQueue      *Global::appQueue;
 HyperspaceClient      *Global::hyperspace = 0;
 HdfsClient            *Global::hdfsClient = 0;
 boost::thread         *Global::maintenanceThreadPtr = 0;

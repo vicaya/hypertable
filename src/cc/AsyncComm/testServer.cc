@@ -34,6 +34,8 @@ extern "C" {
 #include <time.h>
 }
 
+#include "AsyncComm/ApplicationHandler.h"
+#include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/ConnectionHandlerFactory.h"
 
 #include "Common/Error.h"
@@ -55,8 +57,9 @@ namespace {
     "usage: sampleServer [OPTIONS]",
     "",
     "OPTIONS:",
-    "  --help         Display this help text and exit",
-    "  --port=<n>     Specifies the port to listen on (default=11255)",
+    "  --help          Display this help text and exit",
+    "  --port=<n>      Specifies the port to listen on (default=11255)",
+    "  --app-queue     Use an application queue for handling requests",
     "  --reactors=<n>  Specifies the number of reactors (default=1)",
     "  --delay=<ms>    Specifies milliseconds to wait before echoing message (default=0)",
     "  --verbose,-v    Generate verbose output",
@@ -68,17 +71,36 @@ namespace {
   };
 }
 
+class RequestHandler : public ApplicationHandler {
+public:
 
+  RequestHandler(Comm *comm, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mComm(comm) { return; }
 
-class RequestHandler : public CallbackHandler {
+  virtual void run() {
+    CommBuf *cbuf = new CommBuf(mEventPtr->header->totalLen);
+    cbuf->PrependData((uint8_t *)mEventPtr->header, mEventPtr->header->totalLen);
+    CommBufPtr cbufPtr(cbuf);
+    int error = mComm->SendResponse(mEventPtr->addr, cbufPtr);
+    if (error != Error::OK) {
+      LOG_VA_ERROR("Comm::SendResponse returned %s", Error::GetText(error));
+    }
+    mEventPtr.reset();
+  }
+private:
+  Comm *mComm;
+};
+
+class Dispatcher : public CallbackHandler {
 
 public:
+
+  Dispatcher(Comm *comm, ApplicationQueue *appQueue) : mComm(comm), mAppQueue(appQueue) { return; }
   
   virtual void handle(EventPtr &eventPtr) {
-    if (eventPtr->type == Event::CONNECTION_ESTABLISHED) {
+    if (gVerbose && eventPtr->type == Event::CONNECTION_ESTABLISHED) {
       LOG_INFO("Connection Established.");
     }
-    else if (eventPtr->type == Event::DISCONNECT) {
+    else if (gVerbose && eventPtr->type == Event::DISCONNECT) {
       if (eventPtr->error != 0) {
 	LOG_VA_INFO("Disconnect : %s", Error::GetText(eventPtr->error));
       }
@@ -90,26 +112,26 @@ public:
       LOG_VA_WARN("Error : %s", Error::GetText(eventPtr->error));
     }
     else if (eventPtr->type == Event::MESSAGE) {
-      boost::mutex::scoped_lock lock(mMutex);
-      mQueue.push(eventPtr);
-      mCond.notify_one();
+      if (mAppQueue == 0) {
+	CommBuf *cbuf = new CommBuf(eventPtr->header->totalLen);
+	cbuf->PrependData((uint8_t *)eventPtr->header, eventPtr->header->totalLen);
+	CommBufPtr cbufPtr(cbuf);
+	int error = mComm->SendResponse(eventPtr->addr, cbufPtr);
+	if (error != Error::OK) {
+	  LOG_VA_ERROR("Comm::SendResponse returned %s", Error::GetText(error));
+	}
+	eventPtr.reset();
+      }
+      else {
+	ApplicationHandlerPtr appHandlerPtr( new RequestHandler(mComm, eventPtr) );
+	mAppQueue->Add(appHandlerPtr);
+      }
     }
   }
 
-  bool GetRequest(EventPtr &eventPtr) {
-    boost::mutex::scoped_lock lock(mMutex);
-    while (mQueue.empty())
-      mCond.wait(lock);
-    eventPtr = mQueue.front();
-    poll(0, 0, gDelay);
-    mQueue.pop();
-    return true;
-  }
-
 private:
-  queue<EventPtr>  mQueue;
-  boost::mutex     mMutex;
-  boost::condition mCond;
+  Comm             *mComm;
+  ApplicationQueue *mAppQueue;
 };
 
 
@@ -134,12 +156,16 @@ int main(int argc, char **argv) {
   Comm *comm;
   int rval;
   uint16_t port = DEFAULT_PORT;
-  int reactorCount = 1;
+  int reactorCount = 2;
   HandlerFactory *hfactory = 0;
+  ApplicationQueue *appQueue = 0;
 
   for (int i=1; i<argc; i++) {
     if (!strcmp(argv[i], "--help"))
       Usage::DumpAndExit(usage);
+    else if (!strcmp(argv[i], "--app-queue")) {
+      appQueue = new ApplicationQueue(5);
+    }
     else if (!strncmp(argv[i], "--port=", 7)) {
       rval = atoi(&argv[i][7]);
       if (rval <= 1024 || rval > 65535) {
@@ -161,32 +187,21 @@ int main(int argc, char **argv) {
   System::Initialize(argv[0]);
   ReactorFactory::Initialize(reactorCount);
 
-  RequestHandler *requestHandler = new RequestHandler();
-
-  hfactory = new HandlerFactory(requestHandler);
-
   comm = new Comm(0);
+
+  Dispatcher *dispatcher = new Dispatcher(comm, appQueue);
+
+  hfactory = new HandlerFactory(dispatcher);
 
   if (gVerbose)
     cout << "Listening on port " << port << endl;
 
-  comm->Listen(port, hfactory, requestHandler);
+  comm->Listen(port, hfactory, dispatcher);
 
-  EventPtr eventPtr;
-  CommBuf *cbuf;
+  poll(0, 0, -1);
 
-  while (requestHandler->GetRequest(eventPtr)) {
-    cbuf = new CommBuf(eventPtr->header->totalLen);
-    cbuf->PrependData((uint8_t *)eventPtr->header, eventPtr->header->totalLen);
-    //eventPtr->Display();
-    CommBufPtr cbufPtr(cbuf);
-    int error = comm->SendResponse(eventPtr->addr, cbufPtr);
-    if (error != Error::OK) {
-      LOG_VA_ERROR("Comm::SendResponse returned %s", Error::GetText(error));
-    }
-    eventPtr.reset();
-  }
-
+  delete hfactory;
+  delete dispatcher;
   delete comm;
   return 0;
 }  

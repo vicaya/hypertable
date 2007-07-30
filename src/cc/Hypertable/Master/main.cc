@@ -18,10 +18,14 @@
 
 #include <string>
 
+extern "C" {
+#include <poll.h>
+}
+
 #include "Common/System.h"
 #include "Common/Usage.h"
-#include "Common/WorkQueue.h"
 
+#include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ConnectionHandlerFactory.h"
 
@@ -50,8 +54,8 @@ namespace {
   };
   const int DEFAULT_PORT              = 38548;
   const int DEFAULT_WORKERS           = 20;
-
 }
+
 
 
 /**
@@ -59,14 +63,14 @@ namespace {
  */
 class HandlerFactory : public ConnectionHandlerFactory {
 public:
-  HandlerFactory(Comm *comm, WorkQueue *workQueue, Master *master) : mComm(comm), mWorkQueue(workQueue), mMaster(master) { return; }
+  HandlerFactory(Comm *comm, ApplicationQueue *appQueue, Master *master) : mComm(comm), mAppQueue(appQueue), mMaster(master) { return; }
   CallbackHandler *newInstance() {
-    return new ConnectionHandler(mComm, mWorkQueue, mMaster);
+    return new ConnectionHandler(mComm, mAppQueue, mMaster);
   }
 private:
-  Comm      *mComm;
-  WorkQueue *mWorkQueue;
-  Master    *mMaster;
+  Comm              *mComm;
+  ApplicationQueue  *mAppQueue;
+  Master            *mMaster;
 };
 
 
@@ -82,7 +86,7 @@ int main(int argc, char **argv) {
   Master *master = 0;
   int port, reactorCount, workerCount;
   Comm *comm;
-  WorkQueue *workQueue = 0;
+  ApplicationQueue *appQueue = 0;
 
   System::Initialize(argv[0]);
   
@@ -128,11 +132,14 @@ int main(int argc, char **argv) {
   }
 
   master = new Master(comm, props);
-  workQueue = new WorkQueue(workerCount);
-  comm->Listen(port, new HandlerFactory(comm, workQueue, master));
-  workQueue->Join();
+  appQueue = new ApplicationQueue(workerCount);
+  comm->Listen(port, new HandlerFactory(comm, appQueue, master));
 
-  delete workQueue;
+  poll(0, 0, -1);
+
+  appQueue->Shutdown();
+
+  delete appQueue;
   delete master;
   delete props;
   delete comm;

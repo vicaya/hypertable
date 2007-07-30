@@ -57,7 +57,7 @@ namespace {
   public:
     ServerLauncher() {
       if ((mChildPid = fork()) == 0) {
-	execl("./testServer", "./testServer", DEFAULT_PORT_ARG, (char *)0);
+	execl("./testServer", "./testServer", DEFAULT_PORT_ARG, "--app-queue", (char *)0);
       }
       poll(0,0,2000);
     }

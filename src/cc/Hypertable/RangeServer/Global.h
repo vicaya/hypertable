@@ -24,7 +24,6 @@
 #include <boost/thread/thread.hpp>
 
 #include "Common/Properties.h"
-#include "Common/WorkQueue.h"
 
 #include "AsyncComm/Comm.h"
 
@@ -42,12 +41,14 @@
 
 namespace hypertable {
 
+  class ApplicationQueue;
+
   class Global {
   public:
 
     typedef __gnu_cxx::hash_map<string, TableInfoPtr> TableInfoMapT;
 
-    static hypertable::WorkQueue  *workQueue;
+    static hypertable::ApplicationQueue *appQueue;
     static hypertable::HyperspaceClient *hyperspace;
     static hypertable::HdfsClient  *hdfsClient;
     static boost::thread *maintenanceThreadPtr;

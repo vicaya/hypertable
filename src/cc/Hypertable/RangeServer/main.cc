@@ -18,12 +18,16 @@
 
 #include <string>
 
+extern "C" {
+#include <poll.h>
+}
+
 #include "Common/Logger.h"
 #include "Common/Properties.h"
 #include "Common/System.h"
-#include "Common/WorkQueue.h"
 #include "Common/Usage.h"
 
+#include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ConnectionHandlerFactory.h"
 
@@ -58,13 +62,13 @@ namespace {
  */
 class HandlerFactory : public ConnectionHandlerFactory {
 public:
-  HandlerFactory(Comm *comm, WorkQueue *workQueue, RangeServer *rangeServer) : mComm(comm), mWorkQueue(workQueue), mRangeServer(rangeServer) { return; }
+  HandlerFactory(Comm *comm, ApplicationQueue *appQueue, RangeServer *rangeServer) : mComm(comm), mAppQueue(appQueue), mRangeServer(rangeServer) { return; }
   CallbackHandler *newInstance() {
-    return new ConnectionHandler(mComm, mWorkQueue, mRangeServer);
+    return new ConnectionHandler(mComm, mAppQueue, mRangeServer);
   }
 private:
   Comm        *mComm;
-  WorkQueue   *mWorkQueue;
+  ApplicationQueue   *mAppQueue;
   RangeServer *mRangeServer;
 };
 
@@ -127,11 +131,14 @@ int main(int argc, char **argv) {
   }
 
   rangeServer = new RangeServer (comm, props);
-  Global::workQueue = new WorkQueue(workerCount);
-  comm->Listen(port, new HandlerFactory(comm, Global::workQueue, rangeServer));
-  Global::workQueue->Join();
+  Global::appQueue = new ApplicationQueue(workerCount);
+  comm->Listen(port, new HandlerFactory(comm, Global::appQueue, rangeServer));
 
-  delete Global::workQueue;
+  poll(0, 0, -1);
+
+  Global::appQueue->Shutdown();
+
+  delete Global::appQueue;
   delete rangeServer;
   delete props;
   delete comm;

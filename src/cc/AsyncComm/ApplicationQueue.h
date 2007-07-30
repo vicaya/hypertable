@@ -27,26 +27,36 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 
-#include "CallbackHandler.h"
-#include "Event.h"
+#include "ApplicationHandler.h"
+
+namespace __gnu_cxx {
+  template<> struct hash< uint64_t > {
+    size_t operator()( const uint64_t val ) const {
+      return size_t(val);
+    }
+  };
+}
+
 
 namespace hypertable {
 
   class ApplicationQueue {
 
+    
+
     class UsageRec {
     public:
       UsageRec() : threadGroup(0), running(false), outstanding(1) { return; }
-      long  threadGroup;
-      bool  running;
-      int   outstanding;
+      uint64_t threadGroup;
+      bool     running;
+      int      outstanding;
     };
 
     typedef __gnu_cxx::hash_map<uint64_t, UsageRec *> UsageRecMapT;
 
     class WorkRec {
     public:
-      WorkRec() : handler(0), usage(0) { return; }
+      WorkRec(ApplicationHandlerPtr &ahPtr) : appHandlerPtr(ahPtr), usage(0) { return; }
       ApplicationHandlerPtr appHandlerPtr;
       UsageRec             *usage;
     };
@@ -104,7 +114,7 @@ namespace hypertable {
 	  }
 		    
 	  if (rec) {
-	    rec->handler->handle(rec->eventPtr);
+	    rec->appHandlerPtr->run();
 	    if (rec->usage) {
 	      boost::mutex::scoped_lock ulock(mState.usageMutex);
 	      rec->usage->running = false;
@@ -147,8 +157,7 @@ namespace hypertable {
     void Add(ApplicationHandlerPtr &appHandlerPtr) {
       UsageRecMapT::iterator uiter;
       uint64_t threadGroup = appHandlerPtr->GetThreadGroup();
-      WorkRec *rec = new WorkRec;
-      rec->appHandlerPtr = appHandlerPtr;
+      WorkRec *rec = new WorkRec(appHandlerPtr);
       rec->usage = 0;
 
       if (threadGroup != 0) {
