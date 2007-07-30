@@ -16,26 +16,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+package org.hypertable.AsyncComm;
 
-
-package org.hypertable.Hypertable;
-
-
-public class Table {
-
-    public Table(Schema schema) {
-	mSchema = schema;
-    }
-
-    /**
-     * Creates a mutator for this table.
-     *
-     * @return table mutator
-     */
-    public TableMutator CreateMutator() {
-	return null;
-    }
-
-    private Schema mSchema;
+public interface DispatchHandler {
+    public void handle(Event event);
 }
 

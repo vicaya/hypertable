@@ -1,17 +1,19 @@
 /**
- * Copyright 2007 Doug Judd (Zvents, Inc.)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at 
- *
- * http://www.apache.org/licenses/LICENSE-2.0 
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 package org.hypertable.Hypertable.RangeServer;
 
@@ -28,8 +30,8 @@ import org.hypertable.Common.Error;
 import org.hypertable.Common.System;
 import org.hypertable.Common.Usage;
 
-import org.hypertable.AsyncComm.CallbackHandler;
-import org.hypertable.AsyncComm.CallbackHandlerSynchronizer;
+import org.hypertable.AsyncComm.DispatchHandler;
+import org.hypertable.AsyncComm.DispatchHandlerSynchronizer;
 import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.ConnectionManager;
@@ -70,14 +72,14 @@ public class Client {
  
     /**
      */
-    public int LoadRange(int tableGeneration, RangeIdentifier range, CallbackHandler handler) {
+    public int LoadRange(int tableGeneration, RangeIdentifier range, DispatchHandler handler) {
 	CommBuf cbuf = mProtocol.BuildRequestLoadRange(tableGeneration, range);
 	return SendRangeServerMessage(cbuf, handler);
     }
 
     /**
      */
-    public int Update(int tableGeneration, RangeIdentifier range, byte [] mods, CallbackHandler handler) {
+    public int Update(int tableGeneration, RangeIdentifier range, byte [] mods, DispatchHandler handler) {
 	CommBuf cbuf = mProtocol.BuildRequestUpdate(tableGeneration, range, mods);
 	return SendRangeServerMessage(cbuf, handler);
     }
@@ -85,7 +87,7 @@ public class Client {
     /**
      */
     public int CreateScanner(int tableGeneration, RangeIdentifier range, byte [] columns, String startRow,
-			     String endRow, long startTime, long endTime, CallbackHandler handler) {
+			     String endRow, long startTime, long endTime, DispatchHandler handler) {
 	
 	CommBuf cbuf = mProtocol.BuildRequestCreateScanner(tableGeneration, range, columns, startRow, endRow, startTime, endTime);
 	return SendRangeServerMessage(cbuf, handler);
@@ -93,21 +95,21 @@ public class Client {
 
     /**
      */
-    public int FetchScanblock(int scannerId, CallbackHandler handler) {
+    public int FetchScanblock(int scannerId, DispatchHandler handler) {
 	CommBuf cbuf = mProtocol.BuildRequestFetchScanblock(scannerId);
 	return SendRangeServerMessage(cbuf, handler);
     }
 
     /**
      */
-    public int Compact(int tableGeneration, RangeIdentifier range, boolean major, String localityGroup, CallbackHandler handler) {
+    public int Compact(int tableGeneration, RangeIdentifier range, boolean major, String localityGroup, DispatchHandler handler) {
 	CommBuf cbuf = mProtocol.BuildRequestCompact(tableGeneration, range, major, localityGroup);
 	return SendRangeServerMessage(cbuf, handler);
     }
 
     /**
      */
-    public int BadCommand(short command, CallbackHandler handler) {
+    public int BadCommand(short command, DispatchHandler handler) {
 	CommBuf cbuf = mProtocol.BuildRequestBadCommand(command);
 	return SendRangeServerMessage(cbuf, handler);
     }
@@ -115,7 +117,7 @@ public class Client {
     /**
      * 
      */
-    private int SendRangeServerMessage(CommBuf cbuf, CallbackHandler handler) {
+    private int SendRangeServerMessage(CommBuf cbuf, DispatchHandler handler) {
 	int error;
 
 	if ((error = mComm.SendRequest(mAddr, cbuf, handler)) != Error.OK) {

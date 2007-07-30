@@ -1,19 +1,20 @@
 /**
- * Copyright 2007 Doug Judd (Zvents, Inc.)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at 
- *
- * http://www.apache.org/licenses/LICENSE-2.0 
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 
 package org.hypertable.AsyncComm;
 
@@ -35,7 +36,7 @@ public class Comm {
 	mConnMap = new ConnectionMap();
     }
 
-    public int Connect(InetSocketAddress addr, long timeout, CallbackHandler defaultHandler) {
+    public int Connect(InetSocketAddress addr, long timeout, DispatchHandler defaultHandler) {
 	try {
 	    SocketChannel channel = SocketChannel.open();
             channel.configureBlocking(false);
@@ -53,7 +54,7 @@ public class Comm {
 	return Error.OK;
     }
 
-    public int Listen(int port, ConnectionHandlerFactory handlerFactory, CallbackHandler acceptHandler) {
+    public int Listen(int port, ConnectionHandlerFactory handlerFactory, DispatchHandler acceptHandler) {
 	try {
 	    ServerSocketChannel channel = ServerSocketChannel.open();
 	    channel.socket().setReuseAddress(true);
@@ -69,7 +70,7 @@ public class Comm {
 	return Error.OK;
     }
     
-    public int SendRequest(InetSocketAddress addr, CommBuf cbuf, CallbackHandler responseHandler) {
+    public int SendRequest(InetSocketAddress addr, CommBuf cbuf, DispatchHandler responseHandler) {
 	IOHandlerData handler = (IOHandlerData)mConnMap.Get(addr);
 	int id;
 	if (handler == null)
@@ -114,12 +115,6 @@ public class Comm {
 	if (error == Error.COMM_BROKEN_CONNECTION)
 	    mConnMap.Remove(addr);
 	return error;
-    }
-
-    public void SetHandler(InetSocketAddress addr, CallbackHandler defaultHandler) {
-	IOHandlerData handler = (IOHandlerData)mConnMap.Get(addr);
-	if (handler != null)
-	    handler.SetCallback(defaultHandler);
     }
 
     public Event.Queue mEventQueue;

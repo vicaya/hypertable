@@ -16,26 +16,34 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+package org.hypertable.AsyncComm;
 
+import java.util.LinkedList;
+import java.util.logging.Logger;
 
-package org.hypertable.Hypertable;
+public class DispatchHandlerSynchronizer implements DispatchHandler {
 
+    static final Logger log = Logger.getLogger("org.hypertable.AsyncComm");
 
-public class Table {
-
-    public Table(Schema schema) {
-	mSchema = schema;
+    public DispatchHandlerSynchronizer(long timeoutSecs) {
+	mTimeoutMs = timeoutSecs*1000;
+    }
+  
+    public void handle(Event event) {
+	synchronized (this) {
+	    mReceiveQueue.add(event);
+	    notify();
+	}
     }
 
-    /**
-     * Creates a mutator for this table.
-     *
-     * @return table mutator
-     */
-    public TableMutator CreateMutator() {
-	return null;
+    public synchronized Event WaitForEvent() throws InterruptedException {
+	if (mReceiveQueue.isEmpty())
+	    wait(mTimeoutMs);
+	if (mReceiveQueue.isEmpty())
+	    return null;
+	return mReceiveQueue.remove();
     }
 
-    private Schema mSchema;
+    private LinkedList<Event> mReceiveQueue = new LinkedList<Event>();
+    private long mTimeoutMs;
 }
-
