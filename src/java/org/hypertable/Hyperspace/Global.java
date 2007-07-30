@@ -18,15 +18,15 @@
 
 package org.hypertable.Hyperspace;
 
+import org.hypertable.AsyncComm.ApplicationQueue;
 import org.hypertable.AsyncComm.Comm;
-import org.hypertable.Common.WorkQueue;
 
 public class Global {
-    public static Comm       comm = null;
-    public static LockMap    lockMap = new LockMap();
-    public static WorkQueue  workQueue = null;
-    public static String     baseDir = null;
-    public static Protocol   protocol = null;
-    public static boolean    verbose = false;
+    public static Comm              comm = null;
+    public static LockMap           lockMap = new LockMap();
+    public static ApplicationQueue  requestQueue = null;
+    public static String            baseDir = null;
+    public static Protocol          protocol = null;
+    public static boolean           verbose = false;
 }
 

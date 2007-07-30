@@ -31,8 +31,8 @@ import org.apache.hadoop.fs.FileSystem;
 import org.hypertable.Common.Error;
 import org.hypertable.Common.System;
 import org.hypertable.Common.Usage;
-import org.hypertable.Common.WorkQueue;
 
+import org.hypertable.AsyncComm.ApplicationQueue;
 import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.ConnectionHandlerFactory;
@@ -119,7 +119,7 @@ public class NameServer {
 	ReactorFactory.Initialize(reactorCount);
 
 	Global.comm = new Comm(0);
-	Global.workQueue = new WorkQueue(workerCount);
+	Global.requestQueue = new ApplicationQueue(workerCount);
 	Global.protocol = new Protocol();
 
 	if (Global.verbose) {

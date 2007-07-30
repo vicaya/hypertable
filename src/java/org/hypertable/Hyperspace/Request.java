@@ -23,19 +23,19 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
+import org.hypertable.AsyncComm.ApplicationHandler;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.HeaderBuilder;
 
-public abstract class Request implements Runnable {
+public abstract class Request extends ApplicationHandler {
 
     static final Logger log = Logger.getLogger("org.hypertable.Hyperspace");
 
     public Request(Event event) {
-	mEvent = event;
+	super(event);
     }
 
     //public abstract void run();
 
-    protected Event  mEvent;
     protected HeaderBuilder mHeaderBuilder = new HeaderBuilder();
 }

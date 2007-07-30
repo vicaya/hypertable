@@ -16,7 +16,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 package org.hypertable.AsyncComm;
 
 import java.util.Date;
@@ -26,20 +25,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import org.hypertable.Common.Error;
 
 public class Event {
-
-    public static class Queue extends ConcurrentLinkedQueue<Event> {
-	synchronized public void Add(Event event) {
-	    add(event);
-	    notify();
-	}
-	synchronized public Event Remove() throws InterruptedException {
-	    while (isEmpty())
-		wait();
-	    Event event = peek();
-	    remove(event);
-	    return event;
-	}
-    }
 
     public enum Type { CONNECTION_ESTABLISHED, DISCONNECT, MESSAGE, ERROR }
 

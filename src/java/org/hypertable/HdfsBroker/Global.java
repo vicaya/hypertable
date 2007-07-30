@@ -22,15 +22,15 @@ package org.hypertable.HdfsBroker;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 
-import org.hypertable.Common.WorkQueue;
+import org.hypertable.AsyncComm.ApplicationQueue;
 import org.hypertable.AsyncComm.Comm;
 
 public class Global {
-    public static Comm          comm;
-    public static WorkQueue     workQueue;
-    public static Configuration conf;
-    public static FileSystem    fileSystem;
-    public static Protocol      protocol;
-    public static boolean       verbose = false;
+    public static Comm              comm;
+    public static ApplicationQueue  requestQueue;
+    public static Configuration     conf;
+    public static FileSystem        fileSystem;
+    public static Protocol          protocol;
+    public static boolean           verbose = false;
 }
 

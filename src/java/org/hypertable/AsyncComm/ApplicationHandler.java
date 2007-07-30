@@ -16,34 +16,24 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+package org.hypertable.AsyncComm;
 
-package org.hypertable.HdfsBroker;
+import java.util.LinkedList;
+import java.util.ListIterator;
+import java.util.HashMap;
 
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
+abstract public class ApplicationHandler {
 
-import org.hypertable.AsyncComm.ApplicationHandler;
-import org.hypertable.AsyncComm.Event;
-
-
-public abstract class Request extends ApplicationHandler {
-
-    public Request(OpenFileMap ofmap, Event event) {
-	super(event);
-	mOpenFileMap = ofmap;
+    public ApplicationHandler(Event event) {
+	mEvent = event;
     }
 
-    static final Logger log = Logger.getLogger("org.hypertable.HdfsBroker");
+    abstract public void run();
 
-    public abstract void run();
+    public long GetThreadGroup() {
+	return (mEvent.msg != null) ? mEvent.msg.threadGroup : 0;
+    }
 
-    public int GetFileId() { return mFileId; }
-
-    protected OpenFileMap mOpenFileMap;
-    protected OpenFileData  mOpenFileData;
-    protected int mFileId;
-
-    protected static AtomicInteger msUniqueId = new AtomicInteger(0);
-
+    protected Event mEvent;
 }
+

@@ -52,7 +52,7 @@ public class RequestShutdown extends Request {
 	    System.exit(0);
 	}
 
-	Global.workQueue.Shutdown();
+	Global.requestQueue.Shutdown();
     }
 
     public void run() {

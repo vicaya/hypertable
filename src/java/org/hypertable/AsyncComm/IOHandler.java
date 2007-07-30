@@ -32,27 +32,21 @@ public abstract class IOHandler {
 
     protected static final Logger log = Logger.getLogger("org.hypertable");
 
-    public IOHandler(AbstractSelectableChannel chan, DispatchHandler dh, ConnectionMap cm, Event.Queue eq) {
+    public IOHandler(AbstractSelectableChannel chan, DispatchHandler dh, ConnectionMap cm) {
 	mChannel = chan;
 	mDispatchHandler = dh;
 	mConnMap = cm;
-	mEventQueue = eq;
 	mReactor = ReactorFactory.Get();
 	mAddr = null;
 	mInterest = 0;
     }
 
     public void DeliverEvent(Event event, DispatchHandler dh) {
-	if (mEventQueue != null)
-	    mEventQueue.Add(event);  // ??? , handler);
-	else
-	    dh.handle(event);
+	dh.handle(event);
     }
 
     public void DeliverEvent(Event event) {
-	if (mEventQueue != null)
-	    mEventQueue.Add(event);  // ??? , handler);
-	else if (mDispatchHandler != null)
+	if (mDispatchHandler != null)
 	    mDispatchHandler.handle(event);
 	else
 	    log.info(event.toString());
@@ -107,7 +101,6 @@ public abstract class IOHandler {
     protected InetSocketAddress mAddr;
     protected DispatchHandler mDispatchHandler;
     protected ConnectionMap mConnMap;
-    protected Event.Queue mEventQueue;
     protected Reactor mReactor;
     protected AbstractSelectableChannel mChannel;
     protected int mInterest;

@@ -32,7 +32,6 @@ public class Comm {
     public Comm(int handlerCount) {
 	if (handlerCount != 0)
 	    throw new AssertionError("handlerCount != 0");
-	mEventQueue = null;
 	mConnMap = new ConnectionMap();
     }
 
@@ -41,7 +40,7 @@ public class Comm {
 	    SocketChannel channel = SocketChannel.open();
             channel.configureBlocking(false);
             channel.connect(addr);
-	    IOHandlerData handler = new IOHandlerData(channel, defaultHandler, mConnMap, mEventQueue);
+	    IOHandlerData handler = new IOHandlerData(channel, defaultHandler, mConnMap);
 	    handler.SetTimeout(timeout);
 	    handler.SetRemoteAddress(addr);
 	    mConnMap.Put(addr, handler);
@@ -60,7 +59,7 @@ public class Comm {
 	    channel.socket().setReuseAddress(true);
 	    channel.socket().bind(new InetSocketAddress(port));
 	    channel.configureBlocking(false);
-	    IOHandlerAccept handler = new IOHandlerAccept(channel, acceptHandler, mConnMap, mEventQueue, handlerFactory);
+	    IOHandlerAccept handler = new IOHandlerAccept(channel, acceptHandler, mConnMap, handlerFactory);
 	    handler.SetInterest(SelectionKey.OP_ACCEPT);
 	}		
 	catch (IOException e) {
@@ -117,7 +116,6 @@ public class Comm {
 	return error;
     }
 
-    public Event.Queue mEventQueue;
     public ConnectionMap mConnMap;
 }
 

@@ -42,8 +42,6 @@ namespace hypertable {
 
   class ApplicationQueue {
 
-    
-
     class UsageRec {
     public:
       UsageRec() : threadGroup(0), running(false), outstanding(1) { return; }

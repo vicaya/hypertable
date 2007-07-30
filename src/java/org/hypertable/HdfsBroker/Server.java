@@ -32,8 +32,8 @@ import org.apache.hadoop.fs.FileSystem;
 import org.hypertable.Common.Error;
 import org.hypertable.Common.System;
 import org.hypertable.Common.Usage;
-import org.hypertable.Common.WorkQueue;
 
+import org.hypertable.AsyncComm.ApplicationQueue;
 import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.ConnectionHandlerFactory;
@@ -63,10 +63,7 @@ public class Server {
 		try {
 		    event.msg.buf.position(event.msg.headerLen);
 		    command = event.msg.buf.getShort();
-		    if (event.msg.threadGroup != 0)
-			Global.workQueue.AddSerialRequest(event.msg.threadGroup, mRequestFactory.newInstance(event, command));
-		    else
-			Global.workQueue.AddRequest( mRequestFactory.newInstance(event, command) );
+		    Global.requestQueue.Add( mRequestFactory.newInstance(event, command) );
 		}
 		catch (ProtocolException e) {
 		    HeaderBuilder hbuilder = new HeaderBuilder();
@@ -176,7 +173,7 @@ public class Server {
 	Global.conf.set("dfs.client.buffer.dir", "/tmp");
 	Global.conf.setInt("dfs.client.block.write.retries", 3);
 	Global.fileSystem = FileSystem.get(Global.conf);
-	Global.workQueue = new WorkQueue(workerCount);
+	Global.requestQueue = new ApplicationQueue(workerCount);
 
 	if (Global.verbose) {
 	    java.lang.System.out.println("Total CPUs: " + System.processorCount);
@@ -190,8 +187,7 @@ public class Server {
 
 	Global.comm.Listen(port, handlerFactory, null);
 
-	Global.workQueue.Join();
-
+	Global.requestQueue.Join();
     }
 
 }

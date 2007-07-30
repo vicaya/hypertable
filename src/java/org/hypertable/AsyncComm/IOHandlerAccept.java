@@ -28,8 +28,8 @@ import org.hypertable.Common.Error;
 
 class IOHandlerAccept extends IOHandler {
     
-    public IOHandlerAccept(ServerSocketChannel chan, DispatchHandler dh, ConnectionMap cm, Event.Queue eq, ConnectionHandlerFactory chf) {
-	super(chan, dh, cm, eq);
+    public IOHandlerAccept(ServerSocketChannel chan, DispatchHandler dh, ConnectionMap cm, ConnectionHandlerFactory chf) {
+	super(chan, dh, cm);
 	mServerSocketChannel = chan;
 	mHandlerFactory = chf;
     }
@@ -39,7 +39,7 @@ class IOHandlerAccept extends IOHandler {
 	    if (selkey.isAcceptable()) {
 		SocketChannel newChannel = mServerSocketChannel.accept();
 		newChannel.configureBlocking(false);
-		IOHandlerData handler = new IOHandlerData(newChannel, mHandlerFactory.newInstance(), mConnMap, mEventQueue);
+		IOHandlerData handler = new IOHandlerData(newChannel, mHandlerFactory.newInstance(), mConnMap);
 		Socket socket = newChannel.socket();
 		InetSocketAddress addr = new InetSocketAddress(socket.getInetAddress(), socket.getPort());
 		handler.SetRemoteAddress(addr);

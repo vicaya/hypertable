@@ -37,8 +37,8 @@ class IOHandlerData extends IOHandler {
 
     private static AtomicInteger msNextId = new AtomicInteger(1);
     
-    public IOHandlerData(SocketChannel chan, DispatchHandler dh, ConnectionMap cm, Event.Queue eq) {
-	super(chan, dh, cm, eq);
+    public IOHandlerData(SocketChannel chan, DispatchHandler dh, ConnectionMap cm) {
+	super(chan, dh, cm);
 	mSocketChannel = chan;
 	header = ByteBuffer.allocate(1024);
 	header.order(ByteOrder.LITTLE_ENDIAN);

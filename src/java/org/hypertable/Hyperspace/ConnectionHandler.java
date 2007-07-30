@@ -43,7 +43,7 @@ public class ConnectionHandler implements DispatchHandler {
 	    try {
 		event.msg.buf.position(event.msg.headerLen);
 		command = event.msg.buf.getShort();
-		Global.workQueue.AddRequest( mRequestFactory.newInstance(event, command) );
+		Global.requestQueue.Add( mRequestFactory.newInstance(event, command) );
 	    }
 	    catch (ProtocolException e) {
 		HeaderBuilder hbuilder = new HeaderBuilder();
