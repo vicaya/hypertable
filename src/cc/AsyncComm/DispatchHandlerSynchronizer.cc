@@ -20,7 +20,7 @@
 #include "Common/Error.h"
 #include "Common/Logger.h"
 
-#include "CallbackHandlerSynchronizer.h"
+#include "DispatchHandlerSynchronizer.h"
 #include "Protocol.h"
 
 using namespace hypertable;
@@ -29,7 +29,7 @@ using namespace hypertable;
 /**
  *
  */
-CallbackHandlerSynchronizer::CallbackHandlerSynchronizer() : mReceiveQueue(), mMutex(), mCond() {
+DispatchHandlerSynchronizer::DispatchHandlerSynchronizer() : mReceiveQueue(), mMutex(), mCond() {
   return;
 }
 
@@ -38,7 +38,7 @@ CallbackHandlerSynchronizer::CallbackHandlerSynchronizer() : mReceiveQueue(), mM
 /**
  *
  */
-void CallbackHandlerSynchronizer::handle(EventPtr &eventPtr) {
+void DispatchHandlerSynchronizer::handle(EventPtr &eventPtr) {
   boost::mutex::scoped_lock lock(mMutex);
   mReceiveQueue.push(eventPtr);
   mCond.notify_one();    
@@ -49,7 +49,7 @@ void CallbackHandlerSynchronizer::handle(EventPtr &eventPtr) {
 /**
  * 
  */
-bool CallbackHandlerSynchronizer::WaitForReply(EventPtr &eventPtr) {
+bool DispatchHandlerSynchronizer::WaitForReply(EventPtr &eventPtr) {
   boost::mutex::scoped_lock lock(mMutex);
 
   while (mReceiveQueue.empty())
@@ -68,7 +68,7 @@ bool CallbackHandlerSynchronizer::WaitForReply(EventPtr &eventPtr) {
 /**
  * @deprecated
  */
-bool CallbackHandlerSynchronizer::WaitForReply(EventPtr &eventPtr, uint32_t id) {
+bool DispatchHandlerSynchronizer::WaitForReply(EventPtr &eventPtr, uint32_t id) {
   boost::mutex::scoped_lock lock(mMutex);
 
   while (true) {

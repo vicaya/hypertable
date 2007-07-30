@@ -39,11 +39,11 @@ namespace hypertable {
 
     void operator()();
 
-    void AddRequest(uint32_t id, IOHandler *handler, CallbackHandler *cb, time_t expire) {
-      mRequestCache.Insert(id, handler, cb, expire);
+    void AddRequest(uint32_t id, IOHandler *handler, DispatchHandler *dh, time_t expire) {
+      mRequestCache.Insert(id, handler, dh, expire);
     }
 
-    CallbackHandler *RemoveRequest(uint32_t id) {
+    DispatchHandler *RemoveRequest(uint32_t id) {
       return mRequestCache.Remove(id);
     }
 

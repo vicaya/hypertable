@@ -76,7 +76,7 @@ Comm::~Comm() {
 
 /**
  */
-int Comm::Connect(struct sockaddr_in &addr, time_t timeout, CallbackHandler *defaultHandler) {
+int Comm::Connect(struct sockaddr_in &addr, time_t timeout, DispatchHandler *defaultHandler) {
   int sd;
   IOHandlerDataPtr dataHandlerPtr;
 
@@ -124,7 +124,7 @@ int Comm::Connect(struct sockaddr_in &addr, time_t timeout, CallbackHandler *def
 /**
  *
  */
-int Comm::Listen(uint16_t port, ConnectionHandlerFactory *hfactory, CallbackHandler *defaultHandler) {
+int Comm::Listen(uint16_t port, ConnectionHandlerFactory *hfactory, DispatchHandler *defaultHandler) {
   struct sockaddr_in addr;
   int one = 1;
   int sd;
@@ -172,7 +172,7 @@ int Comm::Listen(uint16_t port, ConnectionHandlerFactory *hfactory, CallbackHand
 }
 
 
-int Comm::SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, CallbackHandler *responseHandler) {
+int Comm::SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *responseHandler) {
   boost::mutex::scoped_lock lock(mMutex);
   IOHandlerDataPtr dataHandlerPtr;
   Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;

@@ -17,20 +17,39 @@
  */
 
 
-#ifndef HYPERTABLE_CALLBACKHANDLER_H
-#define HYPERTABLE_CALLBACKHANDLER_H
+#ifndef DISPATCHHANDLERSYNCHRONIZER_H
+#define DISPATCHHANDLERSYNCHRONIZER_H
 
+#include <queue>
+
+#include <boost/thread/condition.hpp>
+#include <boost/thread/mutex.hpp>
+
+#include "DispatchHandler.h"
 #include "Event.h"
+
+using namespace std;
 
 namespace hypertable {
 
-  class CallbackHandler {
+  class DispatchHandlerSynchronizer : public DispatchHandler {
+  
   public:
-    virtual void handle(EventPtr &eventPtr) = 0;
+    DispatchHandlerSynchronizer();
+    virtual void handle(EventPtr &eventPtr);
+    bool WaitForReply(EventPtr &eventPtr);
 
-    virtual ~CallbackHandler() { return; }
+    /**
+     * @deprecated
+     */
+    bool WaitForReply(EventPtr &eventPtr, uint32_t id);
+
+  private:
+    queue<EventPtr>   mReceiveQueue;
+    boost::mutex      mMutex;
+    boost::condition  mCond;
   };
-
 }
 
-#endif // HYPERTABLE_CALLBACKHANDLER_H
+
+#endif // DISPATCHHANDLERSYNCHRONIZER_H

@@ -24,7 +24,7 @@
 
 #include <ext/hash_map>
 
-#include "CallbackHandler.h"
+#include "DispatchHandler.h"
 
 namespace hypertable {
 
@@ -37,7 +37,7 @@ namespace hypertable {
       time_t             expire;
       uint32_t           id;
       IOHandler         *handler;
-      CallbackHandler   *cb;
+      DispatchHandler   *dh;
     } CacheNodeT;
 
     typedef __gnu_cxx::hash_map<uint32_t, CacheNodeT *> IdHandlerMapT;
@@ -45,11 +45,11 @@ namespace hypertable {
   public:
     RequestCache() : mIdMap(), mHead(0), mTail(0), mMutex() { return; }
 
-    void Insert(uint32_t id, IOHandler *handler, CallbackHandler *cb, time_t expire);
+    void Insert(uint32_t id, IOHandler *handler, DispatchHandler *dh, time_t expire);
 
-    CallbackHandler *Remove(uint32_t id);
+    DispatchHandler *Remove(uint32_t id);
 
-    CallbackHandler *GetNextTimeout(time_t now, IOHandler *&handlerp);
+    DispatchHandler *GetNextTimeout(time_t now, IOHandler *&handlerp);
 
     void PurgeRequests(IOHandler *handler);
 

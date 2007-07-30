@@ -42,7 +42,7 @@ extern "C" {
 #include "Common/System.h"
 #include "Common/Usage.h"
 
-#include "CallbackHandler.h"
+#include "DispatchHandler.h"
 #include "Comm.h"
 #include "Event.h"
 #include "HeaderBuilder.h"
@@ -69,7 +69,7 @@ namespace {
 }
 
 
-class ResponseHandler : public CallbackHandler {
+class ResponseHandler : public DispatchHandler {
 
 public:
 

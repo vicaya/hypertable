@@ -63,7 +63,7 @@ namespace {
 class HandlerFactory : public ConnectionHandlerFactory {
 public:
   HandlerFactory(Comm *comm, ApplicationQueue *appQueue, RangeServer *rangeServer) : mComm(comm), mAppQueue(appQueue), mRangeServer(rangeServer) { return; }
-  CallbackHandler *newInstance() {
+  DispatchHandler *newInstance() {
     return new ConnectionHandler(mComm, mAppQueue, mRangeServer);
   }
 private:

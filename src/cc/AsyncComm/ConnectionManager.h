@@ -31,7 +31,7 @@ extern "C" {
 #include <sys/time.h>
 }
 
-#include "CallbackHandler.h"
+#include "DispatchHandler.h"
 
 namespace hypertable {
 
@@ -75,7 +75,7 @@ namespace hypertable {
 
     void operator()();
 
-    class Callback : public CallbackHandler {
+    class Callback : public DispatchHandler {
     public:
       Callback(Comm *comm, struct sockaddr_in &addr, time_t timeout) 
 	: mComm(comm), mAddr(addr), mTimeout(timeout), mConnected(false), mMutex(), mCond() { return; }

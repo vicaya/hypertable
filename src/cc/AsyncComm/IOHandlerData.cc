@@ -111,15 +111,15 @@ bool IOHandlerData::HandleEvent(struct epoll_event *event) {
 	  mMessageRemaining -= nread;
 	}
 	else {
-	  CallbackHandler *cb = 0;
+	  DispatchHandler *dh = 0;
 	  uint32_t id = ((Header::HeaderT *)mMessage)->id;
 	  if ((((Header::HeaderT *)mMessage)->flags & Header::FLAGS_MASK_REQUEST) == 0 &&
-	      (cb = mReactor->RemoveRequest(id)) == 0) {
+	      (dh = mReactor->RemoveRequest(id)) == 0) {
 	    LOG_VA_WARN("Received response for non-pending event (id=%d,version=%d,totalLen=%d)",
 			id, ((Header::HeaderT *)mMessage)->version, ((Header::HeaderT *)mMessage)->totalLen);
 	  }
 	  else
-	    DeliverEvent( new Event(Event::MESSAGE, mId, mAddr, Error::OK, (Header::HeaderT *)mMessage), cb );
+	    DeliverEvent( new Event(Event::MESSAGE, mId, mAddr, Error::OK, (Header::HeaderT *)mMessage), dh );
 	  ResetIncomingMessageState();
 	}
 	totalRead += nread;
@@ -218,14 +218,14 @@ bool IOHandlerData::HandleEvent(struct kevent *event) {
 	  assert(nread == mMessageRemaining);
 	  available -= nread;
 
-	  CallbackHandler *cb = 0;
+	  DispatchHandler *dh = 0;
 	  uint32_t id = ((Header::HeaderT *)mMessage)->id;
 	  if ((((Header::HeaderT *)mMessage)->flags & Header::FLAGS_MASK_REQUEST) == 0 &&
-	      (cb = mReactor->RemoveRequest(id)) == 0) {
+	      (dh = mReactor->RemoveRequest(id)) == 0) {
 	    LOG_VA_WARN("Received response for non-pending event (id=%d)", id);
 	  }
 	  else
-	    DeliverEvent( new Event(Event::MESSAGE, mId, mAddr, Error::OK, (Header::HeaderT *)mMessage), cb );
+	    DeliverEvent( new Event(Event::MESSAGE, mId, mAddr, Error::OK, (Header::HeaderT *)mMessage), dh );
 	  ResetIncomingMessageState();
 	}
 	else {
@@ -277,7 +277,7 @@ bool IOHandlerData::HandleWriteReadiness() {
 
 
 
-int IOHandlerData::SendMessage(CommBufPtr &cbufPtr, CallbackHandler *responseHandler) {
+int IOHandlerData::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *dispatchHandler) {
   boost::mutex::scoped_lock lock(mMutex);
   int error;
   struct timeval tv;
@@ -292,8 +292,8 @@ int IOHandlerData::SendMessage(CommBufPtr &cbufPtr, CallbackHandler *responseHan
   }
 
   // If request, Add message ID to request cache
-  if (responseHandler != 0 && mheader->flags & Header::FLAGS_MASK_REQUEST)
-    mReactor->AddRequest(mheader->id, this, responseHandler, tv.tv_sec + mTimeout);
+  if (dispatchHandler != 0 && mheader->flags & Header::FLAGS_MASK_REQUEST)
+    mReactor->AddRequest(mheader->id, this, dispatchHandler, tv.tv_sec + mTimeout);
 
   mSendQueue.push_back(cbufPtr);
 

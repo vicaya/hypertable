@@ -20,7 +20,7 @@
 #define HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
 
 #include "AsyncComm/Comm.h"
-#include "AsyncComm/CallbackHandler.h"
+#include "AsyncComm/DispatchHandler.h"
 
 #include "RangeServer.h"
 
@@ -30,7 +30,7 @@ namespace hypertable {
 
   /**
    */
-  class ConnectionHandler : public CallbackHandler {
+  class ConnectionHandler : public DispatchHandler {
   public:
 
     ConnectionHandler(Comm *comm, ApplicationQueue *appQueue, RangeServer *rangeServer);

@@ -43,7 +43,7 @@ extern "C" {
 #include "Common/SockAddrMap.h"
 #include "Common/Usage.h"
 
-#include "CallbackHandler.h"
+#include "DispatchHandler.h"
 #include "Comm.h"
 #include "Event.h"
 using namespace hypertable;
@@ -90,7 +90,7 @@ private:
   Comm *mComm;
 };
 
-class Dispatcher : public CallbackHandler {
+class Dispatcher : public DispatchHandler {
 
 public:
 
@@ -137,17 +137,18 @@ private:
 
 
 /**
+ *
  */
 class HandlerFactory : public ConnectionHandlerFactory {
 public:
-  HandlerFactory(CallbackHandler *cb) {
-    mCallback = cb;
+  HandlerFactory(DispatchHandler *dh) {
+    mDispatchHandler = dh;
   }
-  virtual CallbackHandler *newInstance() {
-    return mCallback;
+  virtual DispatchHandler *newInstance() {
+    return mDispatchHandler;
   }
 private:
-  CallbackHandler *mCallback;
+  DispatchHandler *mDispatchHandler;
 };
 
 

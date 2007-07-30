@@ -20,14 +20,14 @@
 #ifndef HYPERTABLE_CONNECTIONHANDLERFACTORY_H
 #define HYPERTABLE_CONNECTIONHANDLERFACTORY_H
 
-#include "CallbackHandler.h"
+#include "DispatchHandler.h"
 
 namespace hypertable {
 
   class ConnectionHandlerFactory {
   public:
     virtual ~ConnectionHandlerFactory() { }
-    virtual CallbackHandler *newInstance() = 0;
+    virtual DispatchHandler *newInstance() = 0;
   };
 
 }

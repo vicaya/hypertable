@@ -35,7 +35,6 @@ extern "C" {
 #include "Common/System.h"
 #include "Common/Usage.h"
 
-#include "AsyncComm/CallbackHandlerSynchronizer.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ReactorFactory.h"
 

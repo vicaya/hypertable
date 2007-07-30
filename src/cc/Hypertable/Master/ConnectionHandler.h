@@ -19,7 +19,7 @@
 #ifndef HYPERTABLE_CONNECTIONHANDLER_H
 #define HYPERTABLE_CONNECTIONHANDLER_H
 
-#include "AsyncComm/CallbackHandler.h"
+#include "AsyncComm/DispatchHandler.h"
 
 #include "Master.h"
 
@@ -29,7 +29,7 @@ namespace hypertable {
 
   /**
    */
-  class ConnectionHandler : public CallbackHandler {
+  class ConnectionHandler : public DispatchHandler {
   public:
     ConnectionHandler(Comm *comm, ApplicationQueue *appQueue, Master *master) : mComm(comm), mAppQueue(appQueue), mMaster(master) { return; }
     virtual void handle(EventPtr &eventPtr);

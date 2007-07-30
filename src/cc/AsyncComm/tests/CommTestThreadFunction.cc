@@ -31,7 +31,7 @@ extern "C" {
 #include "Common/Error.h"
 
 #include "AsyncComm/Comm.h"
-#include "AsyncComm/CallbackHandler.h"
+#include "AsyncComm/DispatchHandler.h"
 #include "AsyncComm/Event.h"
 #include "AsyncComm/HeaderBuilder.h"
 
@@ -45,7 +45,7 @@ namespace {
   /**
    *
    */
-  class ResponseHandler : public CallbackHandler {
+  class ResponseHandler : public DispatchHandler {
 
   public:
 

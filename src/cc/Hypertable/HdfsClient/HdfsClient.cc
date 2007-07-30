@@ -1,17 +1,19 @@
 /**
- * Copyright 2007 Doug Judd (Zvents, Inc.)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at 
- *
- * http://www.apache.org/licenses/LICENSE-2.0 
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
 #include <cassert>
@@ -36,7 +38,7 @@ HdfsClient::HdfsClient(Comm *comm, struct sockaddr_in &addr, time_t timeout) :
 }
 
 
-int HdfsClient::Open(const char *name, CallbackHandler *handler, uint32_t *msgIdp) {
+int HdfsClient::Open(const char *name, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateOpenRequest(name, 0) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
@@ -44,7 +46,7 @@ int HdfsClient::Open(const char *name, CallbackHandler *handler, uint32_t *msgId
 
 
 int HdfsClient::Open(const char *name, int32_t *fdp) {
-  CallbackHandlerSynchronizer syncHandler;
+  DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   *fdp = -1;
   CommBufPtr cbufPtr( mProtocol->CreateOpenRequest(name, 0) );
@@ -62,7 +64,7 @@ int HdfsClient::Open(const char *name, int32_t *fdp) {
 
 
 int HdfsClient::Create(const char *name, bool overwrite, int32_t bufferSize,
-		   int32_t replication, int64_t blockSize, CallbackHandler *handler, uint32_t *msgIdp) {
+		   int32_t replication, int64_t blockSize, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateCreateRequest(name, overwrite, bufferSize, replication, blockSize) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
@@ -70,7 +72,7 @@ int HdfsClient::Create(const char *name, bool overwrite, int32_t bufferSize,
 
 int HdfsClient::Create(const char *name, bool overwrite, int32_t bufferSize,
 		   int32_t replication, int64_t blockSize, int32_t *fdp) {
-  CallbackHandlerSynchronizer syncHandler;
+  DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   *fdp = -1;
   CommBufPtr cbufPtr( mProtocol->CreateCreateRequest(name, overwrite, bufferSize, replication, blockSize) );
@@ -88,7 +90,7 @@ int HdfsClient::Create(const char *name, bool overwrite, int32_t bufferSize,
 
 
 
-int HdfsClient::Close(int32_t fd, CallbackHandler *handler, uint32_t *msgIdp) {
+int HdfsClient::Close(int32_t fd, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateCloseRequest(fd) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
@@ -96,7 +98,7 @@ int HdfsClient::Close(int32_t fd, CallbackHandler *handler, uint32_t *msgIdp) {
 
 
 int HdfsClient::Close(int32_t fd) {
-  CallbackHandlerSynchronizer syncHandler;
+  DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateCloseRequest(fd) );
   int error = SendMessage(cbufPtr, &syncHandler);
@@ -111,7 +113,7 @@ int HdfsClient::Close(int32_t fd) {
 
 
 
-int HdfsClient::Read(int32_t fd, uint32_t amount, CallbackHandler *handler, uint32_t *msgIdp) {
+int HdfsClient::Read(int32_t fd, uint32_t amount, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateReadRequest(fd, amount) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
@@ -119,7 +121,7 @@ int HdfsClient::Read(int32_t fd, uint32_t amount, CallbackHandler *handler, uint
 
 
 int HdfsClient::Read(int32_t fd, uint32_t amount, uint8_t *dst, uint32_t *nreadp) {
-  CallbackHandlerSynchronizer syncHandler;
+  DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateReadRequest(fd, amount) );
   int error = SendMessage(cbufPtr, &syncHandler);
@@ -141,7 +143,7 @@ int HdfsClient::Read(int32_t fd, uint32_t amount, uint8_t *dst, uint32_t *nreadp
 
 
 
-int HdfsClient::Write(int32_t fd, uint8_t *buf, uint32_t amount, CallbackHandler *handler, uint32_t *msgIdp) {
+int HdfsClient::Write(int32_t fd, uint8_t *buf, uint32_t amount, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateWriteRequest(fd, buf, amount) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
@@ -149,7 +151,7 @@ int HdfsClient::Write(int32_t fd, uint8_t *buf, uint32_t amount, CallbackHandler
 
 
 int HdfsClient::Write(int32_t fd, uint8_t *buf, uint32_t amount) {
-  CallbackHandlerSynchronizer syncHandler;
+  DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateWriteRequest(fd, buf, amount) );
   int error = SendMessage(cbufPtr, &syncHandler);
@@ -168,14 +170,14 @@ int HdfsClient::Write(int32_t fd, uint8_t *buf, uint32_t amount) {
 }
 
 
-int HdfsClient::Seek(int32_t fd, uint64_t offset, CallbackHandler *handler, uint32_t *msgIdp) {
+int HdfsClient::Seek(int32_t fd, uint64_t offset, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateSeekRequest(fd, offset) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
 
 
 int HdfsClient::Seek(int32_t fd, uint64_t offset) {
-  CallbackHandlerSynchronizer syncHandler;
+  DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateSeekRequest(fd, offset) );
   int error = SendMessage(cbufPtr, &syncHandler);
@@ -189,14 +191,14 @@ int HdfsClient::Seek(int32_t fd, uint64_t offset) {
 }
 
 
-int HdfsClient::Remove(const char *name, CallbackHandler *handler, uint32_t *msgIdp) {
+int HdfsClient::Remove(const char *name, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateRemoveRequest(name) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
 
 
 int HdfsClient::Remove(const char *name) {
-  CallbackHandlerSynchronizer syncHandler;
+  DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateRemoveRequest(name) );
   int error = SendMessage(cbufPtr, &syncHandler);
@@ -211,14 +213,14 @@ int HdfsClient::Remove(const char *name) {
 
 
 
-int HdfsClient::Shutdown(uint16_t flags, CallbackHandler *handler, uint32_t *msgIdp) {
+int HdfsClient::Shutdown(uint16_t flags, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateShutdownRequest(flags) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
 
 
 
-int HdfsClient::Length(const char *name, CallbackHandler *handler, uint32_t *msgIdp) {
+int HdfsClient::Length(const char *name, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateLengthRequest(name) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
@@ -226,7 +228,7 @@ int HdfsClient::Length(const char *name, CallbackHandler *handler, uint32_t *msg
 
 
 int HdfsClient::Length(const char *name, int64_t *lenp) {
-  CallbackHandlerSynchronizer syncHandler;
+  DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateLengthRequest(name) );
   int error = SendMessage(cbufPtr, &syncHandler);
@@ -243,7 +245,7 @@ int HdfsClient::Length(const char *name, int64_t *lenp) {
 
 
 
-int HdfsClient::Pread(int32_t fd, uint64_t offset, uint32_t amount, CallbackHandler *handler, uint32_t *msgIdp) {
+int HdfsClient::Pread(int32_t fd, uint64_t offset, uint32_t amount, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreatePositionReadRequest(fd, offset, amount) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
@@ -251,7 +253,7 @@ int HdfsClient::Pread(int32_t fd, uint64_t offset, uint32_t amount, CallbackHand
 
 
 int HdfsClient::Pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst, uint32_t *nreadp) {
-  CallbackHandlerSynchronizer syncHandler;
+  DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreatePositionReadRequest(fd, offset, amount) );
   int error = SendMessage(cbufPtr, &syncHandler);
@@ -272,14 +274,14 @@ int HdfsClient::Pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst
 }
 
 
-int HdfsClient::Mkdirs(const char *name, CallbackHandler *handler, uint32_t *msgIdp) {
+int HdfsClient::Mkdirs(const char *name, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateMkdirsRequest(name) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
 
 
 int HdfsClient::Mkdirs(const char *name) {
-  CallbackHandlerSynchronizer syncHandler;
+  DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateMkdirsRequest(name) );
   int error = SendMessage(cbufPtr, &syncHandler);
@@ -294,7 +296,7 @@ int HdfsClient::Mkdirs(const char *name) {
 
 
 
-int HdfsClient::SendMessage(CommBufPtr &cbufPtr, CallbackHandler *handler, uint32_t *msgIdp) {
+int HdfsClient::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler, uint32_t *msgIdp) {
   int error;
 
   if (msgIdp)

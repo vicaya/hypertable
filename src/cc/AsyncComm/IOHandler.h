@@ -34,7 +34,7 @@ extern "C" {
 
 #include "Common/Logger.h"
 
-#include "CallbackHandler.h"
+#include "DispatchHandler.h"
 #include "ReactorFactory.h"
 
 namespace hypertable {
@@ -48,7 +48,7 @@ namespace hypertable {
 
   public:
 
-    IOHandler(int sd, struct sockaddr_in &addr, CallbackHandler *cbh, HandlerMap &hmap) : mAddr(addr), mSd(sd), mCallback(cbh), mHandlerMap(hmap) {
+    IOHandler(int sd, struct sockaddr_in &addr, DispatchHandler *dh, HandlerMap &hmap) : mAddr(addr), mSd(sd), mDispatchHandler(dh), mHandlerMap(hmap) {
       mReactor = ReactorFactory::GetReactor();
       mPollInterest = 0;
       mShutdown = false;
@@ -64,8 +64,8 @@ namespace hypertable {
 
     virtual ~IOHandler() { return; }
 
-    void DeliverEvent(Event *event, CallbackHandler *cbh=0) {
-      CallbackHandler *handler = (cbh == 0) ? mCallback : cbh;
+    void DeliverEvent(Event *event, DispatchHandler *dh=0) {
+      DispatchHandler *handler = (dh == 0) ? mDispatchHandler : dh;
       if (handler == 0) {
 	LOG_VA_INFO("%s", event->toString().c_str());
 	delete event;
@@ -129,7 +129,7 @@ namespace hypertable {
 
     struct sockaddr_in  mAddr;
     int                 mSd;
-    CallbackHandler    *mCallback;
+    DispatchHandler    *mDispatchHandler;
     HandlerMap         &mHandlerMap;
     Reactor            *mReactor;
     int                 mPollInterest;

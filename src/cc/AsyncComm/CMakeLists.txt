@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
 
-add_library (AsyncComm CallbackHandlerSynchronizer.cc Comm.cc ConnectionManager.cc Event.cc IOHandler.cc IOHandlerAccept.cc IOHandlerData.cc Header.cc HeaderBuilder.cc Protocol.cc Reactor.cc ReactorFactory.cc ReactorRunner.cc RequestCache.cc ResponseCallback.cc )
+add_library (AsyncComm DispatchHandlerSynchronizer.cc Comm.cc ConnectionManager.cc Event.cc IOHandler.cc IOHandlerAccept.cc IOHandlerData.cc Header.cc HeaderBuilder.cc Protocol.cc Reactor.cc ReactorFactory.cc ReactorRunner.cc RequestCache.cc ResponseCallback.cc )
 
 # sampleClient
 add_executable (sampleClient sampleClient.cc)

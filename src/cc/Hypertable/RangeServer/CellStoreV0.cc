@@ -40,7 +40,7 @@ using namespace hypertable;
 
 CellStoreV0::CellStoreV0(HdfsClient *client) : mClient(client), mFilename(), mFd(-1), mIndex(),
   mBuffer(0), mFixIndexBuffer(0), mVarIndexBuffer(0), mBlockSize(Constants::DEFAULT_BLOCKSIZE),
-  mHandler(0), mOutstandingId(0), mOffset(0), mGotFirstIndex(false), mFileLength(0),
+  mOutstandingId(0), mOffset(0), mGotFirstIndex(false), mFileLength(0),
   mDiskUsage(0), mSplitKey(0), mFileId(0), mStartKeyPtr(0), mEndKeyPtr(0) {
   mProtocol = mClient->GetProtocolObject();
   mBlockDeflater = new BlockDeflaterZlib();
@@ -51,7 +51,6 @@ CellStoreV0::CellStoreV0(HdfsClient *client) : mClient(client), mFilename(), mFd
 
 CellStoreV0::~CellStoreV0() {
   delete mBlockDeflater;
-  delete mHandler;
 }
 
 
@@ -77,7 +76,6 @@ int CellStoreV0::Create(const char *fname, size_t blockSize) {
   mBlockSize = blockSize;
   mBuffer.reserve(mBlockSize*2);
 
-  mHandler = new CallbackHandlerSynchronizer();
   mFd = -1;
   mOffset = 0;
   mGotFirstIndex = false;
@@ -109,7 +107,7 @@ int CellStoreV0::Add(const KeyT *key, const ByteString32T *value) {
     mBuffer.clear();
 
     if (mOutstandingId != 0) {
-      if (!mHandler->WaitForReply(eventPtr)) {
+      if (!mSyncHandler.WaitForReply(eventPtr)) {
 	LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), mProtocol->StringFormatMessage(eventPtr).c_str());
 	return -1;
       }
@@ -118,7 +116,7 @@ int CellStoreV0::Add(const KeyT *key, const ByteString32T *value) {
     size_t  zlen;
     uint8_t *zbuf = zBuffer.release(&zlen);
 
-    if ((error = mClient->Write(mFd, zbuf, zlen, mHandler, &mOutstandingId)) != Error::OK) {
+    if ((error = mClient->Write(mFd, zbuf, zlen, &mSyncHandler, &mOutstandingId)) != Error::OK) {
       LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), Error::GetText(error));
       return -1;
     }
@@ -156,12 +154,12 @@ int CellStoreV0::Finalize(uint64_t timestamp) {
     mBlockDeflater->deflate(mBuffer, zBuffer, Constants::DATA_BLOCK_MAGIC);
     zbuf = zBuffer.release(&zlen);
 
-    if (mOutstandingId != 0 && !mHandler->WaitForReply(eventPtr)) {
+    if (mOutstandingId != 0 && !mSyncHandler.WaitForReply(eventPtr)) {
       LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), mProtocol->StringFormatMessage(eventPtr).c_str());
       goto abort;
     }
 
-    if ((error = mClient->Write(mFd, zbuf, zlen, mHandler, &mOutstandingId)) != Error::OK) {
+    if ((error = mClient->Write(mFd, zbuf, zlen, &mSyncHandler, &mOutstandingId)) != Error::OK) {
       LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), mProtocol->StringFormatMessage(eventPtr).c_str());
       goto abort;
     }
@@ -195,12 +193,12 @@ int CellStoreV0::Finalize(uint64_t timestamp) {
   /**
    * wait for last Client op
    */
-  if (mOutstandingId != 0 && !mHandler->WaitForReply(eventPtr)) {
+  if (mOutstandingId != 0 && !mSyncHandler.WaitForReply(eventPtr)) {
     LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), mProtocol->StringFormatMessage(eventPtr).c_str());
     goto abort;
   }
 
-  if (mClient->Write(mFd, zbuf, zlen, mHandler, &mOutstandingId) != Error::OK)
+  if (mClient->Write(mFd, zbuf, zlen, &mSyncHandler, &mOutstandingId) != Error::OK)
     goto abort;
   mOffset += zlen;
 
@@ -211,7 +209,7 @@ int CellStoreV0::Finalize(uint64_t timestamp) {
   mBlockDeflater->deflate(mVarIndexBuffer, zBuffer, Constants::INDEX_VARIABLE_BLOCK_MAGIC, sizeof(mTrailer));
 
   // wait for fixed index write
-  if (mOutstandingId == 0 || !mHandler->WaitForReply(eventPtr)) {
+  if (mOutstandingId == 0 || !mSyncHandler.WaitForReply(eventPtr)) {
     LOG_VA_ERROR("Problem writing fixed index to HDFS file '%s' : %s", mFilename.c_str(), mProtocol->StringFormatMessage(eventPtr).c_str());
     goto abort;
   }

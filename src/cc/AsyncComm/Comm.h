@@ -27,7 +27,7 @@ extern "C" {
 #include <stdint.h>
 }
 
-#include "CallbackHandler.h"
+#include "DispatchHandler.h"
 #include "CommBuf.h"
 #include "ConnectionHandlerFactory.h"
 #include "HandlerMap.h"
@@ -44,11 +44,11 @@ namespace hypertable {
 
     ~Comm();
 
-    int Connect(struct sockaddr_in &addr, time_t timeout, CallbackHandler *defaultHandler);
+    int Connect(struct sockaddr_in &addr, time_t timeout, DispatchHandler *defaultHandler);
 
-    int Listen(uint16_t port, ConnectionHandlerFactory *hfactory, CallbackHandler *defaultHandler=0);
+    int Listen(uint16_t port, ConnectionHandlerFactory *hfactory, DispatchHandler *defaultHandler=0);
 
-    int SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, CallbackHandler *responseHandler);
+    int SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *responseHandler);
 
     int SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr);
 

@@ -1,17 +1,19 @@
 /**
- * Copyright 2007 Doug Judd (Zvents, Inc.)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at 
- *
- * http://www.apache.org/licenses/LICENSE-2.0 
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
 #include <cassert>
@@ -23,7 +25,7 @@ extern "C" {
 #include <arpa/inet.h>
 }
 
-#include "AsyncComm/CallbackHandlerSynchronizer.h"
+#include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ConnectionManager.h"
 
@@ -95,7 +97,7 @@ bool HyperspaceClient::WaitForConnection() {
 /**
  * Submit asynchronous 'mkdirs' request
  */
-int HyperspaceClient::Mkdirs(const char *name, CallbackHandler *handler, uint32_t *msgIdp) {
+int HyperspaceClient::Mkdirs(const char *name, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateMkdirsRequest(name) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
@@ -106,7 +108,7 @@ int HyperspaceClient::Mkdirs(const char *name, CallbackHandler *handler, uint32_
  * Blocking 'mkdirs' request
  */
 int HyperspaceClient::Mkdirs(const char *name) {
-  CallbackHandlerSynchronizer syncHandler;
+  DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateMkdirsRequest(name) );
   int error = SendMessage(cbufPtr, &syncHandler);
@@ -124,7 +126,7 @@ int HyperspaceClient::Mkdirs(const char *name) {
 /**
  * Submit asynchronous 'create' request
  */
-int HyperspaceClient::Create(const char *name, CallbackHandler *handler, uint32_t *msgIdp) {
+int HyperspaceClient::Create(const char *name, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateCreateRequest(name) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
@@ -135,7 +137,7 @@ int HyperspaceClient::Create(const char *name, CallbackHandler *handler, uint32_
  * Blocking 'create' method
  */
 int HyperspaceClient::Create(const char *name) {
-  CallbackHandlerSynchronizer syncHandler;
+  DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateCreateRequest(name) );
   int error = SendMessage(cbufPtr, &syncHandler);
@@ -152,7 +154,7 @@ int HyperspaceClient::Create(const char *name) {
 /**
  * Submit asynchronous 'attrset' request
  */
-int HyperspaceClient::AttrSet(const char *fname, const char *aname, const char *avalue, CallbackHandler *handler, uint32_t *msgIdp) {
+int HyperspaceClient::AttrSet(const char *fname, const char *aname, const char *avalue, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateAttrSetRequest(fname, aname, avalue) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
@@ -162,7 +164,7 @@ int HyperspaceClient::AttrSet(const char *fname, const char *aname, const char *
  * Blocking 'attrset' method
  */
 int HyperspaceClient::AttrSet(const char *fname, const char *aname, const char *avalue) {
-  CallbackHandlerSynchronizer syncHandler;
+  DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateAttrSetRequest(fname, aname, avalue) );
   int error = SendMessage(cbufPtr, &syncHandler);
@@ -179,7 +181,7 @@ int HyperspaceClient::AttrSet(const char *fname, const char *aname, const char *
 /**
  * Submit asynchronous 'attrget' request
  */
-int HyperspaceClient::AttrGet(const char *fname, const char *aname, CallbackHandler *handler, uint32_t *msgIdp) {
+int HyperspaceClient::AttrGet(const char *fname, const char *aname, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateAttrGetRequest(fname, aname) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
@@ -190,7 +192,7 @@ int HyperspaceClient::AttrGet(const char *fname, const char *aname, CallbackHand
  * Blocking 'attrget' method
  */
 int HyperspaceClient::AttrGet(const char *fname, const char *aname, DynamicBuffer &out) {
-  CallbackHandlerSynchronizer syncHandler;
+  DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateAttrGetRequest(fname, aname) );
   out.clear();
@@ -224,7 +226,7 @@ int HyperspaceClient::AttrGet(const char *fname, const char *aname, DynamicBuffe
 /**
  * Submit asynchronous 'attrdel' request
  */
-int HyperspaceClient::AttrDel(const char *fname, const char *aname, CallbackHandler *handler, uint32_t *msgIdp) {
+int HyperspaceClient::AttrDel(const char *fname, const char *aname, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateAttrDelRequest(fname, aname) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
@@ -234,7 +236,7 @@ int HyperspaceClient::AttrDel(const char *fname, const char *aname, CallbackHand
  * Blocking 'attrdel' method
  */
 int HyperspaceClient::AttrDel(const char *fname, const char *aname) {
-  CallbackHandlerSynchronizer syncHandler;
+  DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateAttrDelRequest(fname, aname) );
   int error = SendMessage(cbufPtr, &syncHandler);
@@ -251,7 +253,7 @@ int HyperspaceClient::AttrDel(const char *fname, const char *aname) {
 /**
  * Submit asynchronous 'exists' request
  */
-int HyperspaceClient::Exists(const char *name, CallbackHandler *handler, uint32_t *msgIdp) {
+int HyperspaceClient::Exists(const char *name, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateExistsRequest(name) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
@@ -261,7 +263,7 @@ int HyperspaceClient::Exists(const char *name, CallbackHandler *handler, uint32_
  * Blocking 'exists' method
  */
 int HyperspaceClient::Exists(const char *name) {
-  CallbackHandlerSynchronizer syncHandler;
+  DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateExistsRequest(name) );
   int error = SendMessage(cbufPtr, &syncHandler);
@@ -277,7 +279,7 @@ int HyperspaceClient::Exists(const char *name) {
 }
 
 
-int HyperspaceClient::SendMessage(CommBufPtr &cbufPtr, CallbackHandler *handler, uint32_t *msgIdp) {
+int HyperspaceClient::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler, uint32_t *msgIdp) {
   int error;
 
   if (msgIdp)

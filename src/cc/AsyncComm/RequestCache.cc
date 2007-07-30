@@ -27,7 +27,7 @@ using namespace std;
 #include "RequestCache.h"
 using namespace hypertable;
 
-void RequestCache::Insert(uint32_t id, IOHandler *handler, CallbackHandler *cb, time_t expire) {
+void RequestCache::Insert(uint32_t id, IOHandler *handler, DispatchHandler *dh, time_t expire) {
   boost::mutex::scoped_lock lock(mMutex);
 
   CacheNodeT *node = new CacheNodeT;
@@ -36,7 +36,7 @@ void RequestCache::Insert(uint32_t id, IOHandler *handler, CallbackHandler *cb, 
 
   node->id = id;
   node->handler = handler;
-  node->cb = cb;
+  node->dh = dh;
   node->expire = expire;
 
   if (mHead == 0) {
@@ -54,7 +54,7 @@ void RequestCache::Insert(uint32_t id, IOHandler *handler, CallbackHandler *cb, 
 }
 
 
-CallbackHandler *RequestCache::Remove(uint32_t id) {
+DispatchHandler *RequestCache::Remove(uint32_t id) {
   boost::mutex::scoped_lock lock(mMutex);
 
   LOG_VA_DEBUG("Removing id %d", id);
@@ -81,9 +81,9 @@ CallbackHandler *RequestCache::Remove(uint32_t id) {
   mIdMap.erase(iter);
 
   if (node->handler != 0) {
-    CallbackHandler *cb = node->cb;
+    DispatchHandler *dh = node->dh;
     delete node;
-    return cb;
+    return dh;
   }
   delete node;
   return 0;
@@ -91,7 +91,7 @@ CallbackHandler *RequestCache::Remove(uint32_t id) {
 
 
 
-CallbackHandler *RequestCache::GetNextTimeout(time_t now, IOHandler *&handlerp)  {
+DispatchHandler *RequestCache::GetNextTimeout(time_t now, IOHandler *&handlerp)  {
   boost::mutex::scoped_lock lock(mMutex);
 
   while (mHead && mHead->expire < now) {
@@ -109,9 +109,9 @@ CallbackHandler *RequestCache::GetNextTimeout(time_t now, IOHandler *&handlerp) 
 
     if (node->handler != 0) {
       handlerp = node->handler;
-      CallbackHandler *cb = node->cb;
+      DispatchHandler *dh = node->dh;
       delete node;
-      return cb;
+      return dh;
     }
     delete node;
   }

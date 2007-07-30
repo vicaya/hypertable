@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-#include "AsyncComm/CallbackHandlerSynchronizer.h"
+#include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "Common/DynamicBuffer.h"
 #include "Hypertable/HdfsClient/HdfsClient.h"
 
@@ -96,7 +96,7 @@ namespace hypertable {
     DynamicBuffer          mFixIndexBuffer;
     DynamicBuffer          mVarIndexBuffer;
     size_t                 mBlockSize;
-    CallbackHandlerSynchronizer  *mHandler;
+    DispatchHandlerSynchronizer  mSyncHandler;
     uint32_t               mOutstandingId;
     uint32_t               mOffset;
     bool                   mGotFirstIndex;

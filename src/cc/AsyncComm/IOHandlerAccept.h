@@ -38,7 +38,7 @@ namespace hypertable {
 
   public:
 
-    IOHandlerAccept(int sd, struct sockaddr_in &addr, CallbackHandler *cbh, HandlerMap &hmap, ConnectionHandlerFactory *hfactory) : IOHandler(sd, addr, cbh, hmap) {
+    IOHandlerAccept(int sd, struct sockaddr_in &addr, DispatchHandler *dh, HandlerMap &hmap, ConnectionHandlerFactory *hfactory) : IOHandler(sd, addr, dh, hmap) {
       mHandlerFactory = hfactory;
       return;
     }
