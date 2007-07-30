@@ -73,13 +73,14 @@ int main(int argc, char **argv) {
   HdfsClient *client;
   struct sockaddr_in addr;
   bool golden = false;
+
+  ReactorFactory::Initialize(1);
+  System::Initialize(argv[0]);
+
   TestHarness harness("/tmp/cellStoreTest");
   std::ostream &logStream = harness.GetLogStream();
   TestData tdata(harness);
   NumberStream randstr("tests/random.dat");
-
-  ReactorFactory::Initialize(1);
-  System::Initialize(argv[0]);
 
   if (argc > 1) {
     if (!strcmp(argv[1], "--golden"))
@@ -103,7 +104,7 @@ int main(int argc, char **argv) {
   KeySetT keys;
   KeyT  *key;
   ByteString32T *value;
-  int index;
+  uint32_t index;
   uint8_t family;
   const char *qualifier;
   const char *row;

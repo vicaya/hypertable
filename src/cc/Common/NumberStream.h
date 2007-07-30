@@ -40,7 +40,7 @@ namespace hypertable {
 	LOG_VA_ERROR("Problem stating file '%s' - %s", fname, strerror(errno));
 	exit(1);
       }
-      if (statbuf.st_size < sizeof(int32_t)) {
+      if (statbuf.st_size < (off_t)sizeof(int32_t)) {
 	LOG_VA_ERROR("Number stream file '%s' is not big enough, must be at least 4 bytes long", fname);
 	exit(1);
       }
@@ -53,8 +53,8 @@ namespace hypertable {
     ~NumberStream() {
       fclose(mFp);
     }
-    int32_t getInt() {
-      int32_t number;
+    uint32_t getInt() {
+      uint32_t number;
 
       if (fread(&number, sizeof(int32_t), 1, mFp) == 0) {
 	fseek(mFp, 0L, SEEK_SET);
