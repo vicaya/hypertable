@@ -20,18 +20,19 @@
 package org.hypertable.HdfsBroker;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-
 
 /**
  *
  */
 public class OpenFileMap {
 
-    public synchronized OpenFileData Create(int fd) {
+    public synchronized OpenFileData Create(int fd, InetSocketAddress addr) {
 	OpenFileData ofd = new OpenFileData();	
+	ofd.addr = addr;
 	mFileMap.put(fd, ofd);
 	return ofd;
     }
@@ -44,21 +45,20 @@ public class OpenFileMap {
 	return mFileMap.remove(fd);
     }
 
-    public synchronized void RemoveAll() {
+    public synchronized void RemoveAll(InetSocketAddress addr) {
 	for (Iterator<Map.Entry<Integer,OpenFileData>> iter = mFileMap.entrySet().iterator(); iter.hasNext();) {
 	    try {
 		Map.Entry<Integer,OpenFileData> entry = iter.next();
 		int id = entry.getKey();
 		OpenFileData ofd = entry.getValue();
-		if (ofd.is != null) {
-		    if (Global.verbose)
-			System.out.println("Closing input stream for file id " + id);
-		    ofd.is.close();
-		}
-		else if (ofd.os != null) {
-		    if (Global.verbose)
-			System.out.println("Closing output stream for file id " + id);
-		    ofd.os.close();
+		if (ofd.addr.equals(addr)) {
+		    if (ofd.is != null) {
+			ofd.is.close();
+		    }
+		    else if (ofd.os != null) {
+			ofd.os.close();
+		    }
+		    iter.remove();
 		}
 	    }
 	    catch (IOException e) {

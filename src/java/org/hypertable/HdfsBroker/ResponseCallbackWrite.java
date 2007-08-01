@@ -16,34 +16,32 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 package org.hypertable.HdfsBroker;
 
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
-
-import org.hypertable.AsyncComm.ApplicationHandler;
+import org.hypertable.AsyncComm.Comm;
+import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.Event;
+import org.hypertable.AsyncComm.ResponseCallback;
+import org.hypertable.Common.Error;
 
+public class ResponseCallbackWrite extends ResponseCallback {
 
-public abstract class Request extends ApplicationHandler {
-
-    public Request(OpenFileMap ofmap, Event event) {
-	super(event);
-	mOpenFileMap = ofmap;
+    ResponseCallbackWrite(Comm comm, Event event) {
+	super(comm, event);
     }
 
-    static final Logger log = Logger.getLogger("org.hypertable.HdfsBroker");
+    int response(long offset, int amount) {
+	CommBuf cbuf = new CommBuf(mHeaderBuilder.HeaderLength() + 18);
+	cbuf.PrependInt(amount);
+	cbuf.PrependLong(offset);
+	cbuf.PrependShort((short)0);
+	cbuf.PrependInt(Error.OK);
 
-    public abstract void run();
+	// Encapsulate with Comm message response header
+	mHeaderBuilder.LoadFromMessage(mEvent.msg);
+	mHeaderBuilder.Encapsulate(cbuf);
 
-    public int GetFileId() { return mFileId; }
-
-    protected OpenFileMap mOpenFileMap;
-    protected OpenFileData  mOpenFileData;
-    protected int mFileId;
-
-    protected static AtomicInteger msUniqueId = new AtomicInteger(0);
-
+	return mComm.SendResponse(mEvent.addr, cbuf);
+    }
 }
+

@@ -16,45 +16,46 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 package org.hypertable.HdfsBroker;
 
-import org.apache.hadoop.fs.Path;
-
-import java.nio.ByteBuffer;
-import java.io.IOException;
-import java.io.FileNotFoundException;
 import java.net.ProtocolException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
-import java.util.logging.Level;
-
+import org.hypertable.AsyncComm.ApplicationHandler;
 import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.Event;
-import org.hypertable.AsyncComm.Message;
-
+import org.hypertable.AsyncComm.ResponseCallback;
 import org.hypertable.Common.Error;
 
+public class RequestHandlerMkdirs extends ApplicationHandler {
 
-public class RequestShutdown extends Request {
+    static final Logger log = Logger.getLogger("org.hypertable.HdfsBroker");
 
-    public RequestShutdown(OpenFileMap ofmap, Event event) throws ProtocolException {
-	super(ofmap, event);
-
-	if (event.msg.buf.remaining() < 2)
-	    throw new ProtocolException("Truncated message");
-
-	short flags = event.msg.buf.getShort();
-
-	if ((flags & Protocol.SHUTDOWN_FLAG_IMMEDIATE) != 0) {
-	    log.info("Immediate shutdown.");
-	    System.exit(0);
-	}
-
-	Global.requestQueue.Shutdown();
+    public RequestHandlerMkdirs(Comm comm, HdfsBroker broker, Event event) {
+	super(event);
+	mComm = comm;
+	mBroker = broker;
     }
 
     public void run() {
+	String  fileName;
+	ResponseCallback cb = new ResponseCallback(mComm, mEvent);
+
+	try {
+
+	    if ((fileName = CommBuf.DecodeString(mEvent.msg.buf)) == null)
+		throw new ProtocolException("Filename not properly encoded in request packet");
+
+	    mBroker.Mkdirs(cb, fileName);
+	}
+	catch (ProtocolException e) {
+	    int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());
+	    log.severe("Protocol error (MKDIRS) - " + e.getMessage());
+	    if (error != Error.OK)
+		log.severe("Problem sending (MKDIRS) error back to client - " + Error.GetText(error));
+	}
     }
+
+    private Comm       mComm;
+    private HdfsBroker mBroker;
 }

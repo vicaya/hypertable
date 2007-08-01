@@ -131,7 +131,6 @@ namespace hypertable {
     typedef struct {
       int32_t  error;
       uint16_t command;
-      int32_t  handle;
       uint64_t offset;
       int32_t  amount;
     } __attribute__((packed)) ResponseHeaderReadT;

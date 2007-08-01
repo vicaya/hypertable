@@ -70,9 +70,9 @@ namespace hypertable {
   CommBuf *HdfsProtocol::CreateCreateRequest(const char *fname, bool overwrite, int32_t bufferSize,
 					 int32_t replication, int64_t blockSize) {
     HeaderBuilder hbuilder;
-    CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(RequestHeaderCreateT) + strlen(fname));
+    CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(RequestHeaderCreateT) +  + CommBuf::EncodedLength(fname));
 
-    cbuf->PrependData(fname, strlen(fname));
+    cbuf->PrependString(fname);
 
     RequestHeaderCreateT *createHeader = (RequestHeaderCreateT *)cbuf->AllocateSpace(sizeof(RequestHeaderCreateT));
     createHeader->hdr.command = COMMAND_CREATE;

@@ -16,21 +16,31 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 package org.hypertable.HdfsBroker;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-
-import org.hypertable.AsyncComm.ApplicationQueue;
 import org.hypertable.AsyncComm.Comm;
+import org.hypertable.AsyncComm.CommBuf;
+import org.hypertable.AsyncComm.Event;
+import org.hypertable.AsyncComm.ResponseCallback;
+import org.hypertable.Common.Error;
 
-public class Global {
-    public static Comm              comm;
-    public static ApplicationQueue  requestQueue;
-    public static Configuration     conf;
-    public static FileSystem        fileSystem;
-    public static Protocol          protocol;
-    public static boolean           verbose = false;
+public class ResponseCallbackCreate extends ResponseCallback {
+
+    ResponseCallbackCreate(Comm comm, Event event) {
+	super(comm, event);
+    }
+
+    int response(int fd) {
+	CommBuf cbuf = new CommBuf(mHeaderBuilder.HeaderLength() + 10);
+	cbuf.PrependInt(fd);
+	cbuf.PrependShort((short)0);
+	cbuf.PrependInt(Error.OK);
+
+	// Encapsulate with Comm message response header
+	mHeaderBuilder.LoadFromMessage(mEvent.msg);
+	mHeaderBuilder.Encapsulate(cbuf);
+
+	return mComm.SendResponse(mEvent.addr, cbuf);
+    }
 }
 

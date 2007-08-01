@@ -1,0 +1,82 @@
+
+ConnectionHandler.java 
+  This is the connection dispatch handler that gets registered with AsyncComm
+  for each incoming connection.  For MESSAGE events, it inspects the incoming
+  message, extracts the command code, creates a RequestHandler to carry out the
+  request and enque's it on the application work queue.  For DISCONNECT events,
+  it purges all of the open file descriptors that were created on the
+  connection.  All other events are logged.
+
+HdfsBroker.java
+  This is the actual HdfsBroker object that contains all of the application
+  logic is.  It has a method for each of the request types (e.g. Open, Close,
+  Read, Write, etc.)  There is only one of these objects for each server
+  instance which carries out all of the requests from all connections.
+
+OpenFileData.java
+  Simple record to hold state (e.g. input/output streams) for an open file
+
+OpenFileMap.java
+  This is a synchronized HashMap that maps open file descriptors to
+  OpenFileData objects
+
+Protocol.java
+  This is essentially a static class that defines constants for each command
+  code (e.g. COMMAND_OPEN, COMMAND_CLOSE, etc.) and includes an indexed array
+  of strings that provides a text description of each command.
+
+RequestHandlerClose.java
+  Deserializes request parameters and then invokes HdfsBroker.Close()
+
+RequestHandlerCreate.java
+  Deserializes request parameters and then invokes HdfsBroker.Create()
+
+RequestHandlerLength.java
+  Deserializes request parameters and then invokes HdfsBroker.Length()
+
+RequestHandlerMkdirs.java
+  Deserializes request parameters and then invokes HdfsBroker.Mkdirs()
+
+RequestHandlerOpen.java
+  Deserializes request parameters and then invokes HdfsBroker.Open()
+
+RequestHandlerPositionRead.java
+  Deserializes request parameters and then invokes HdfsBroker.PositionRead()
+
+RequestHandlerRead.java
+  Deserializes request parameters and then invokes HdfsBroker.Read()
+
+RequestHandlerRemove.java
+  Deserializes request parameters and then invokes HdfsBroker.Remove()
+
+RequestHandlerSeek.java
+  Deserializes request parameters and then invokes HdfsBroker.Seek()
+
+RequestHandlerShutdown.java
+  Deserializes request parameters and then invokes HdfsBroker.Shutdown()
+
+RequestHandlerWrite.java
+  Deserializes request parameters and then invokes HdfsBroker.Write()
+
+ResponseCallbackCreate.java
+  Callback invoked by HdfsBroker.Create() to send back created file descriptor
+
+ResponseCallbackLength.java
+  Callback invoked by HdfsBroker.Length() to send back file length
+
+ResponseCallbackOpen.java
+  Callback invoked by HdfsBroker.Open() to send back opened file descriptor
+
+ResponseCallbackPositionRead.java
+  Callback invoked by HdfsBroker.PositionRead() to send back read data
+
+ResponseCallbackRead.java
+  Callback invoked by HdfsBroker.Read() to send back read data
+
+ResponseCallbackWrite.java
+  Callback invoked by HdfsBroker.Write() to send back result of write
+
+main.java
+  This is the main driver class for the HdfsBroker.  It sets up the
+  communication subsystem and creates the HdfsBroker object.
+

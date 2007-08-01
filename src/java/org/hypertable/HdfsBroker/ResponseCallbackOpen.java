@@ -18,16 +18,29 @@
 
 package org.hypertable.HdfsBroker;
 
-import java.net.InetSocketAddress;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FSDataOutputStream;
+import org.hypertable.Common.Error;
+import org.hypertable.AsyncComm.Comm;
+import org.hypertable.AsyncComm.CommBuf;
+import org.hypertable.AsyncComm.Event;
+import org.hypertable.AsyncComm.ResponseCallback;
 
-/**
- *
- */
-public class OpenFileData {
-    public FSDataInputStream is = null;
-    public FSDataOutputStream os = null;
-    public InetSocketAddress addr = null;
+public class ResponseCallbackOpen extends ResponseCallback {
+
+    ResponseCallbackOpen(Comm comm, Event event) {
+	super(comm, event);
+    }
+
+    int response(int fd) {
+	CommBuf cbuf = new CommBuf(mHeaderBuilder.HeaderLength() + 10);
+	cbuf.PrependInt(fd);
+	cbuf.PrependShort((short)0);
+	cbuf.PrependInt(Error.OK);
+
+	// Encapsulate with Comm message response header
+	mHeaderBuilder.LoadFromMessage(mEvent.msg);
+	mHeaderBuilder.Encapsulate(cbuf);
+
+	return mComm.SendResponse(mEvent.addr, cbuf);
+    }
 }
 

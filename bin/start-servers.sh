@@ -15,5 +15,5 @@
 # limitations under the License.
 #
 
-nohup ./bin/jrun org.hypertable.HdfsBroker.Server --verbose 1>&log/HdfsBroker &
+nohup ./bin/jrun org.hypertable.HdfsBroker.main --verbose 1>&log/HdfsBroker &
 nohup ./bin/jrun org.hypertable.Hyperspace.NameServer --verbose 1>&log/Hyperspace &

@@ -59,7 +59,7 @@ public abstract class Protocol {
 
     public abstract String CommandText(short command);
 
-    public CommBuf CreateErrorMessage(short command, int error, String msg, int extraSpace) {
+    public static CommBuf CreateErrorMessage(short command, int error, String msg, int extraSpace) {
 	CommBuf cbuf = new CommBuf(extraSpace + 6 + CommBuf.EncodedLength(msg));
 	cbuf.PrependString(msg);
 	cbuf.PrependShort(command);
