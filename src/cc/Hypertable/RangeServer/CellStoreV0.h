@@ -25,7 +25,7 @@
 
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "Common/DynamicBuffer.h"
-#include "Hypertable/HdfsClient/HdfsClient.h"
+#include "HdfsClient/HdfsClient.h"
 
 #include "BlockDeflater.h"
 #include "CellStore.h"

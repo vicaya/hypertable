@@ -27,7 +27,7 @@ extern "C" {
 #include "Common/Logger.h"
 #include "Common/System.h"
 
-#include "Hypertable/HdfsClient/HdfsClient.h"
+#include "HdfsClient/HdfsClient.h"
 
 #include "BlockDeflaterZlib.h"
 #include "BlockInflaterZlib.h"

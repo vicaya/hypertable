@@ -21,7 +21,7 @@
 #include "Common/Error.h"
 #include "Common/System.h"
 
-#include "Hypertable/HdfsClient/HdfsClient.h"
+#include "HdfsClient/HdfsClient.h"
 
 #include "BlockInflaterZlib.h"
 #include "Global.h"

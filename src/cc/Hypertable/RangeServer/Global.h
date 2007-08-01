@@ -31,7 +31,7 @@
 
 #include "Hypertable/Test/Metadata.h"
 #include "Hypertable/Schema.h"
-#include "Hypertable/HdfsClient/HdfsClient.h"
+#include "HdfsClient/HdfsClient.h"
 #include "CommitLog.h"
 #include "FileBlockCache.h"
 #include "RangeServerProtocol.h"

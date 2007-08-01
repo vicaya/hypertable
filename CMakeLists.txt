@@ -18,6 +18,12 @@
 
 project (HYPERTABLE)
 
+set (CMAKE_BUILD_TYPE, Debug)
+set (CMAKE_INSTALL_PREFIX "/Users/doug/install")
+
+# CMAKE_CXX_FLAGS
+#set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-variadic-macros -Wall")
+
 # Enable testing
 enable_testing()
 
@@ -27,17 +33,14 @@ find_package(ZLIB REQUIRED)
 # include directories
 include_directories( /usr/local/include/boost-1_33_1 src/cc )
 
-# CMAKE_CXX_FLAGS
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-variadic-macros -Wall")
-
 # Recurse into the "Hello" and "Demo" subdirectories.  This does not actually
 # cause another cmake executable to run.  The same process will walk through
 # the project's entire directory structure.
 add_subdirectory (src/cc/AsyncComm)
 add_subdirectory (src/cc/Common)
 add_subdirectory (src/cc/Hyperspace)
+add_subdirectory (src/cc/HdfsClient)
 add_subdirectory (src/cc/Hypertable)
-add_subdirectory (src/cc/Hypertable/HdfsClient)
 add_subdirectory (src/cc/Hypertable/Test)
 add_subdirectory (src/cc/Hypertable/Master)
 add_subdirectory (src/cc/Hypertable/RangeServer)
@@ -57,5 +60,3 @@ install (FILES bin/jrun
 install (FILES bin/start-servers.sh
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 	 DESTINATION bin)
-
-set (CMAKE_INSTALL_PREFIX "/Users/doug/install")

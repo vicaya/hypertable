@@ -38,7 +38,7 @@ extern "C" {
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ReactorFactory.h"
 
-#include "Hypertable/HdfsClient/HdfsClient.h"
+#include "HdfsClient/HdfsClient.h"
 #include "Hypertable/RangeServer/CellStoreV0.h"
 #include "Hypertable/RangeServer/CellCache.h"
 

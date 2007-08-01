@@ -25,7 +25,7 @@
 #include "Common/TestHarness.h"
 #include "Common/Usage.h"
 
-#include "Hypertable/HdfsClient/HdfsClient.h"
+#include "HdfsClient/HdfsClient.h"
 #include "Hypertable/Schema.h"
 #include "Hypertable/RangeServer/CellCache.h"
 #include "Hypertable/RangeServer/MergeScanner.h"

@@ -24,7 +24,7 @@
 #include "AsyncComm/Event.h"
 #include "AsyncComm/ResponseCallback.h"
 
-#include "Hypertable/HdfsClient/HdfsClient.h"
+#include "HdfsClient/HdfsClient.h"
 #include "Hyperspace/HyperspaceClient.h"
 
 #include "ResponseCallbackCreateScanner.h"

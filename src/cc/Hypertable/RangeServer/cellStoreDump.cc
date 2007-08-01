@@ -27,7 +27,7 @@
 #include "Common/System.h"
 #include "Common/Usage.h"
 
-#include "Hypertable/HdfsClient/HdfsClient.h"
+#include "HdfsClient/HdfsClient.h"
 #include "Hypertable/RangeServer/CellStoreV0.h"
 #include "Hypertable/RangeServer/Global.h"
 #include "Hypertable/RangeServer/Key.h"
