@@ -16,4 +16,4 @@
 #
 
 nohup ./bin/jrun org.hypertable.HdfsBroker.main --verbose 1>&log/HdfsBroker &
-nohup ./bin/jrun org.hypertable.Hyperspace.NameServer --verbose 1>&log/Hyperspace &
+nohup ./bin/jrun org.hypertable.Hyperspace.main --verbose 1>&log/Hyperspace &

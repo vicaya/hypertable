@@ -1,7 +1,11 @@
 
 TODO:
+- Add Hyperspace regression test
+- Sweep through HyperspaceClient and get rid of references to Placer, also make
+  sure Hyperspace requests to the same file are serialized
+- Push try/catch blocks out of HdfsBroker methods and up into the RequestHandler
+  objects that call them
 - Try to move some of the RangerServer::Global members to RangeServer class members
-- Restructure Hyperspace to use ICE-like object model
 - Fatten up HdfsBroker test
 - Change ResponseCallback::response to response_ok in C++ source
 - Remove command code from response message
@@ -9,6 +13,7 @@ TODO:
 - Add ReactorFactory::Shutdown
 
 DONE:
+- Restructure Hyperspace to use ICE-like object model
 - Move HdfsClient to same level as Hypertable in C++ tree
 - Restructure HdfsBroker to use ICE-like object model
 - Get cellStoreTest working on Linux (add consistent random number generator)

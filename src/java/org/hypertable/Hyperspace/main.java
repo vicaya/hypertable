@@ -41,19 +41,28 @@ import org.hypertable.AsyncComm.ReactorFactory;
 import org.hypertable.AsyncComm.DispatchHandler;
 import org.hypertable.AsyncComm.Message;
 
-public class NameServer {
+public class main {
 
     static final Logger log = Logger.getLogger("org.hypertable.Hyperspace");
 
     private static class HandlerFactory implements ConnectionHandlerFactory {
-	public DispatchHandler newInstance() {
-	    return new ConnectionHandler();
+	public HandlerFactory(Comm comm, ApplicationQueue appQueue, Hyperspace hyperspace) {
+	    mComm = comm;
+	    mAppQueue = appQueue;
+	    mHyperspace = hyperspace;
 	}
-    }
+	public DispatchHandler newInstance() {
+	    return new ConnectionHandler(mComm, mAppQueue, mHyperspace);
+	}
 
+	private Comm  mComm;
+	private ApplicationQueue mAppQueue;
+	private Hyperspace mHyperspace;
+    }
+    
     static String usage[] = {
 	"",
-	"usage: Hyperspace.NameServer [OPTIONS]",
+	"usage: java org.hypertable.Hyperspace.main [OPTIONS]",
 	"",
 	"OPTIONS:",
 	"  --config=<file>  Read configuration from <file>",
@@ -72,9 +81,13 @@ public class NameServer {
 	int port;
 	short reactorCount;
 	int   workerCount;
-	String configFile = null;
+	String str, configFile = null;
 	Properties props = new Properties();
 	HandlerFactory handlerFactory;
+	boolean verbose = false;
+	Comm comm;
+	ApplicationQueue requestQueue;
+	Hyperspace hyperspace;
 
 	if (args.length == 1 && args[0].equals("--help"))
 	    Usage.DumpAndExit(usage);
@@ -83,7 +96,7 @@ public class NameServer {
 	    if (args[i].startsWith("--config="))
 		configFile = args[i].substring(9);
 	    else if (args[i].equals("--verbose"))
-		Global.verbose = true;
+		verbose = true;
 	    else
 		Usage.DumpAndExit(usage);
 	}
@@ -94,45 +107,42 @@ public class NameServer {
 	FileInputStream fis = new FileInputStream(configFile);
 	props.load(fis);
 
-	String str;
+	if (verbose)
+	    props.setProperty("verbose", "true");
 
 	// Determine listen port
-	str  = props.getProperty("Hyperspace.Server.port", DEFAULT_PORT);
+	str  = props.getProperty("Hyperspace.port", DEFAULT_PORT);
 	port = Integer.parseInt(str);
 
 	// Determine reactor count
-	str = props.getProperty("Hyperspace.Server.reactors");
+	str = props.getProperty("Hyperspace.reactors");
 	reactorCount = (str == null) ? (short)System.processorCount : Short.parseShort(str);
 
 	// Determine worker count
-	str = props.getProperty("Hyperspace.Server.workers");
+	str = props.getProperty("Hyperspace.workers");
 	workerCount = (str == null) ? (short)System.processorCount : Integer.parseInt(str);
 
-	// Determine working directory
-	if ((Global.baseDir = props.getProperty("Hyperspace.Server.dir")) == null) {
-	    java.lang.System.err.println("Required config property 'Hyperspace.dir' not found.");
-	    java.lang.System.exit(1);
+	if (verbose) {
+	    java.lang.System.out.println("Num CPUs=" + System.processorCount);
+	    java.lang.System.out.println("Hyperspace.port=" + port);
+	    java.lang.System.out.println("Hyperspace.reactors=" + reactorCount);
+	    java.lang.System.out.println("Hyperspace.workers=" + workerCount);
 	}
-	if (Global.baseDir.endsWith("/"))
-	    Global.baseDir = Global.baseDir.substring(0, Global.baseDir.length()-1);
 
 	ReactorFactory.Initialize(reactorCount);
 
-	Global.comm = new Comm(0);
-	Global.requestQueue = new ApplicationQueue(workerCount);
-	Global.protocol = new Protocol();
+	comm = new Comm(0);
+	//Global.protocol = new Protocol();
+	requestQueue = new ApplicationQueue(workerCount);
 
-	if (Global.verbose) {
-	    java.lang.System.out.println("Total CPUs: " + System.processorCount);
-	    java.lang.System.out.println("Hyperspace.Server.port=" + port);
-	    java.lang.System.out.println("Hyperspace.Server.reactors=" + reactorCount);
-	    java.lang.System.out.println("Hyperspace.Server.workers=" + workerCount);
-	    java.lang.System.out.println("Hyperspace.Server.dir=" + Global.baseDir);
-	}
+	hyperspace = new Hyperspace(comm, props);
 
-	handlerFactory = new HandlerFactory();
+	handlerFactory = new HandlerFactory(comm, requestQueue, hyperspace);
 
-	Global.comm.Listen(port, handlerFactory, null);
+	comm.Listen(port, handlerFactory, null);
+
+	requestQueue.Join();
+
     }
 
 }

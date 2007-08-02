@@ -18,34 +18,31 @@
 
 package org.hypertable.Hyperspace;
 
-import java.net.ProtocolException;
-
+import java.nio.ByteBuffer;
 import org.hypertable.AsyncComm.Comm;
+import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.Event;
+import org.hypertable.AsyncComm.ResponseCallback;
+import org.hypertable.Common.Error;
 
-public class RequestFactory {
+public class ResponseCallbackAttrGet extends ResponseCallback {
 
-    public Request newInstance(Event event, short command) throws ProtocolException {
-
-	if (command < 0 || command >= Protocol.COMMAND_MAX)
-	    throw new ProtocolException("Invalid command (" + command + ")");
-
-	switch (command) {
-	case Protocol.COMMAND_CREATE:
-	    return new RequestCreate(event);
-	case Protocol.COMMAND_MKDIRS:
-	    return new RequestMkdirs(event);
-	case Protocol.COMMAND_ATTRSET:
-	    return new RequestAttrSet(event);
-	case Protocol.COMMAND_ATTRGET:
-	    return new RequestAttrGet(event);
-	case Protocol.COMMAND_ATTRDEL:
-	    return new RequestAttrDel(event);
-	case Protocol.COMMAND_EXISTS:
-	    return new RequestExists(event);
-	default:
-	    throw new ProtocolException("Command '" + Global.protocol.CommandText(command) + "' not implemented");
-	}
+    ResponseCallbackAttrGet(Comm comm, Event event) {
+	super(comm, event);
     }
 
+    int response(String attrValue) {
+	CommBuf cbuf = new CommBuf(mHeaderBuilder.HeaderLength() + 6 + CommBuf.EncodedLength(attrValue));
+
+	cbuf.PrependString(attrValue);
+	cbuf.PrependShort((short)0);
+	cbuf.PrependInt(Error.OK);
+
+	// Encapsulate with Comm message response header
+	mHeaderBuilder.LoadFromMessage(mEvent.msg);
+	mHeaderBuilder.Encapsulate(cbuf);
+
+	return mComm.SendResponse(mEvent.addr, cbuf);
+    }
 }
+

@@ -19,23 +19,43 @@
 package org.hypertable.Hyperspace;
 
 import java.net.ProtocolException;
-import java.nio.ByteBuffer;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
-
 import org.hypertable.AsyncComm.ApplicationHandler;
+import org.hypertable.AsyncComm.Comm;
+import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.Event;
-import org.hypertable.AsyncComm.HeaderBuilder;
+import org.hypertable.AsyncComm.ResponseCallback;
+import org.hypertable.Common.Error;
 
-public abstract class Request extends ApplicationHandler {
+public class RequestHandlerExists extends ApplicationHandler {
 
     static final Logger log = Logger.getLogger("org.hypertable.Hyperspace");
 
-    public Request(Event event) {
+    public RequestHandlerExists(Comm comm, Hyperspace hyperspace, Event event) {
 	super(event);
+	mComm = comm;
+	mHyperspace = hyperspace;
     }
 
-    //public abstract void run();
+    public void run() {
+	ResponseCallback cb = new ResponseCallback(mComm, mEvent);
+	String  fileName;
 
-    protected HeaderBuilder mHeaderBuilder = new HeaderBuilder();
+	try {
+
+	    if ((fileName = CommBuf.DecodeString(mEvent.msg.buf)) == null)
+		throw new ProtocolException("Filename not properly encoded in request packet");
+
+	    mHyperspace.Exists(cb, fileName);
+	}
+	catch (ProtocolException e) {
+	    int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());
+	    log.severe("Protocol error (EXISTS) - " + e.getMessage());
+	    if (error != Error.OK)
+		log.severe("Problem sending (EXISTS) error back to client - " + Error.GetText(error));
+	}
+    }
+
+    private Comm       mComm;
+    private Hyperspace mHyperspace;
 }

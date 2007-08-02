@@ -38,7 +38,7 @@ public class main {
 
     static String usage[] = {
 	"",
-	"usage: HdfsBroker.Server [OPTIONS]",
+	"usage: java org.hypertable.HdfsBroker.main [OPTIONS]",
 	"",
 	"OPTIONS:",
 	"  --help           Display this help text and exit",

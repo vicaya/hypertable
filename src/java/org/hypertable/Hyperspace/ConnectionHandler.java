@@ -20,14 +20,13 @@ package org.hypertable.Hyperspace;
 
 import java.net.ProtocolException;
 import java.util.logging.Logger;
-
+import org.hypertable.AsyncComm.ApplicationHandler;
+import org.hypertable.AsyncComm.ApplicationQueue;
+import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.DispatchHandler;
-import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.Event;
-import org.hypertable.AsyncComm.HeaderBuilder;
-
+import org.hypertable.AsyncComm.ResponseCallback;
 import org.hypertable.Common.Error;
-
 
 /**
  */
@@ -35,30 +34,58 @@ public class ConnectionHandler implements DispatchHandler {
 
     static final Logger log = Logger.getLogger("org.hypertable.Hyperspace");
 
+    public ConnectionHandler(Comm comm, ApplicationQueue appQueue, Hyperspace hyperspace) {
+	mComm = comm;
+	mAppQueue = appQueue;
+	mHyperspace = hyperspace;
+    }
+
     public void handle(Event event) {
-	short command = -1;
+	short command;
 
 	if (event.type == Event.Type.MESSAGE) {
 	    //log.info(event.toString());
-	    try {
-		event.msg.buf.position(event.msg.headerLen);
-		command = event.msg.buf.getShort();
-		Global.requestQueue.Add( mRequestFactory.newInstance(event, command) );
-	    }
-	    catch (ProtocolException e) {
-		HeaderBuilder hbuilder = new HeaderBuilder();
-		CommBuf cbuf = Global.protocol.CreateErrorMessage(command, Error.PROTOCOL_ERROR, e.getMessage(), hbuilder.HeaderLength());
 
-		// Encapsulate with Comm message response header
-		hbuilder.LoadFromMessage(event.msg);
-		hbuilder.Encapsulate(cbuf);
+	    ApplicationHandler requestHandler;
 
-		Global.comm.SendResponse(event.addr, cbuf);
+	    event.msg.buf.position(event.msg.headerLen);
+	    command = event.msg.buf.getShort();
+
+	    switch (command) {
+	    case Protocol.COMMAND_CREATE:
+		requestHandler = new RequestHandlerCreate(mComm, mHyperspace, event);
+		break;
+	    case Protocol.COMMAND_MKDIRS:
+		requestHandler = new RequestHandlerMkdirs(mComm, mHyperspace, event);
+		break;
+	    case Protocol.COMMAND_ATTRSET:
+		requestHandler = new RequestHandlerAttrSet(mComm, mHyperspace, event);
+		break;
+	    case Protocol.COMMAND_ATTRGET:
+		requestHandler = new RequestHandlerAttrGet(mComm, mHyperspace, event);
+		break;
+	    case Protocol.COMMAND_ATTRDEL:
+		requestHandler = new RequestHandlerAttrDel(mComm, mHyperspace, event);
+		break;
+	    case Protocol.COMMAND_EXISTS:
+		requestHandler = new RequestHandlerExists(mComm, mHyperspace, event);
+		break;
+	    default:
+		ResponseCallback cb = new ResponseCallback(mComm, event);
+		log.severe("Command code " + command + " not implemented");
+		cb.error(Error.PROTOCOL_ERROR, "Command code " + command + " not implemented");
+		return;
 	    }
+
+	    mAppQueue.Add(requestHandler);
+
 	}
 	else
 	    log.info(event.toString());
     }
 
-    private RequestFactory mRequestFactory = new RequestFactory();
+    private Comm mComm;
+    private ApplicationQueue mAppQueue;
+    private Hyperspace mHyperspace;
 }
+
