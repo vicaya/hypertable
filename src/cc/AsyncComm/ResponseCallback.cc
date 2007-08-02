@@ -32,8 +32,7 @@ int ResponseCallback::error(int error, std::string &msg) {
 }
 
 int ResponseCallback::response() {
-  CommBufPtr cbufPtr( new CommBuf(hbuilder_.HeaderLength() + 6) );
-  cbufPtr->PrependShort(0); // fix me!!!
+  CommBufPtr cbufPtr( new CommBuf(hbuilder_.HeaderLength() + 4) );
   cbufPtr->PrependInt(Error::OK);
   hbuilder_.LoadFromMessage(mEventPtr->header);
   hbuilder_.Encapsulate(cbufPtr.get());

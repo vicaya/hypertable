@@ -31,9 +31,8 @@ public class ResponseCallbackLength extends ResponseCallback {
     }
 
     int response(long length) {
-	CommBuf cbuf = new CommBuf(mHeaderBuilder.HeaderLength() + 14);
+	CommBuf cbuf = new CommBuf(mHeaderBuilder.HeaderLength() + 12);
 	cbuf.PrependLong(length);
-	cbuf.PrependShort((short)0);
 	cbuf.PrependInt(Error.OK);
 
 	// Encapsulate with Comm message response header

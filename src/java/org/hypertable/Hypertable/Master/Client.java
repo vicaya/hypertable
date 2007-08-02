@@ -141,7 +141,6 @@ public class Client {
 	    else {
 		event.msg.RewindToProtocolHeader();
 		event.msg.buf.getInt();   // skip error
-		event.msg.buf.getShort(); // skip command
 		String schemaString = CommBuf.DecodeString(event.msg.buf);
 		if (schemaString == null) {
 		    log.severe("GetSchema failure - problem decoding response packet");

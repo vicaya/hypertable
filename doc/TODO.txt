@@ -1,18 +1,16 @@
 
 TODO:
 - Add Hyperspace regression test
-- Sweep through HyperspaceClient and get rid of references to Placer, also make
-  sure Hyperspace requests to the same file are serialized
-- Push try/catch blocks out of HdfsBroker methods and up into the RequestHandler
-  objects that call them
 - Try to move some of the RangerServer::Global members to RangeServer class members
 - Fatten up HdfsBroker test
 - Change ResponseCallback::response to response_ok in C++ source
-- Remove command code from response message
 - Rename RangeServer/Global::localityGroup member names
 - Add ReactorFactory::Shutdown
 
 DONE:
+- Remove command code from response message
+- Sweep through HyperspaceClient and get rid of references to Placer, also make
+  sure Hyperspace requests to the same file are serialized
 - Restructure Hyperspace to use ICE-like object model
 - Move HdfsClient to same level as Hypertable in C++ tree
 - Restructure HdfsBroker to use ICE-like object model
@@ -22,3 +20,12 @@ DONE:
 - Add ~Comm (AsyncComm test is segfaulting at the end because of this)
 - The event object passed to the application by AsyncComm should be a smart pointer
 - Fix MessageBuilder stuff.
+
+
+DEFERRED:
+- Push try/catch blocks out of HdfsBroker methods and up into the RequestHandler
+  objects that call them.  NOTE: ICE actually prefers that method implementations
+  use the callback object to report errors.  Therefore, we should keep the try/catch
+  blocks and report errors via the callback object.
+
+

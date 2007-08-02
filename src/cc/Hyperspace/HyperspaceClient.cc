@@ -48,23 +48,23 @@ namespace {
 
 
 HyperspaceClient::HyperspaceClient(Comm *comm, struct sockaddr_in &addr, time_t timeout) :
-  mComm(comm), mAddr(addr), mTimeout(timeout), mConnManager("Waiting for Placerfs server") {
+  mComm(comm), mAddr(addr), mTimeout(timeout), mConnManager("Waiting for Hyperspace server") {
   mConnManager.Initiate(comm, addr, timeout);
   mProtocol = new HyperspaceProtocol();
 }
 
 
 
-HyperspaceClient::HyperspaceClient(Comm *comm, Properties *props) : mComm(comm), mConnManager("Waiting for Placerfs server") {
+HyperspaceClient::HyperspaceClient(Comm *comm, Properties *props) : mComm(comm), mConnManager("Waiting for Hyperspace server") {
 
   assert(comm);
   assert(props);
 
-  const char *host = props->getProperty("Placerfs.Server.host", DEFAULT_HOST);
+  const char *host = props->getProperty("Hyperspace.host", DEFAULT_HOST);
 
-  int port = props->getPropertyInt("Placerfs.Server.port", DEFAULT_PORT);
+  int port = props->getPropertyInt("Hyperspace.port", DEFAULT_PORT);
 
-  mTimeout = (time_t)props->getPropertyInt("Placerfs.Client.timeout", DEFAULT_TIMEOUT);
+  mTimeout = (time_t)props->getPropertyInt("Hyperspace.Client.timeout", DEFAULT_TIMEOUT);
 
   memset(&mAddr, 0, sizeof(struct sockaddr_in));
   {
@@ -114,7 +114,7 @@ int HyperspaceClient::Mkdirs(const char *name) {
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Placerfs 'mkdirs' error, name=%s : %s", name, mProtocol->StringFormatMessage(eventPtr.get()).c_str());
+      LOG_VA_ERROR("Hyperspace 'mkdirs' error, name=%s : %s", name, mProtocol->StringFormatMessage(eventPtr.get()).c_str());
       error = (int)mProtocol->ResponseCode(eventPtr.get());
     }
   }
@@ -143,7 +143,7 @@ int HyperspaceClient::Create(const char *name) {
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Placerfs 'create' error, name=%s : %s", name, mProtocol->StringFormatMessage(eventPtr).c_str());
+      LOG_VA_ERROR("Hyperspace 'create' error, name=%s : %s", name, mProtocol->StringFormatMessage(eventPtr).c_str());
       error = (int)mProtocol->ResponseCode(eventPtr);
     }
   }
@@ -170,7 +170,7 @@ int HyperspaceClient::AttrSet(const char *fname, const char *aname, const char *
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Placerfs 'attrset' error, fname=%s aname=%s : %s", fname, aname, mProtocol->StringFormatMessage(eventPtr).c_str());
+      LOG_VA_ERROR("Hyperspace 'attrset' error, fname=%s aname=%s : %s", fname, aname, mProtocol->StringFormatMessage(eventPtr).c_str());
       error = (int)mProtocol->ResponseCode(eventPtr);
     }
   }
@@ -199,18 +199,18 @@ int HyperspaceClient::AttrGet(const char *fname, const char *aname, DynamicBuffe
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_WARN("Placerfs 'attrget' error, fname=%s aname=%s : %s", fname, aname, mProtocol->StringFormatMessage(eventPtr).c_str());
+      LOG_VA_WARN("Hyperspace 'attrget' error, fname=%s aname=%s : %s", fname, aname, mProtocol->StringFormatMessage(eventPtr).c_str());
       error = (int)mProtocol->ResponseCode(eventPtr);
     }
     else {
-      if (eventPtr->messageLen < 9) {
-	LOG_VA_ERROR("Placerfs 'attrget' error, fname=%s aname=%s : short response", fname, aname);
+      if (eventPtr->messageLen < 7) {
+	LOG_VA_ERROR("Hyperspace 'attrget' error, fname=%s aname=%s : short response", fname, aname);
 	error = Error::PROTOCOL_ERROR;
       }
       else {
 	const char *avalue;
 	const uint8_t *ptr = eventPtr->message;
-	CommBuf::DecodeString(&ptr[6], eventPtr->messageLen-6, &avalue);
+	CommBuf::DecodeString(&ptr[4], eventPtr->messageLen-4, &avalue);
 	if (avalue != 0) {
 	  out.reserve(strlen(avalue)+1);
 	  out.addNoCheck(avalue, strlen(avalue));
@@ -242,7 +242,7 @@ int HyperspaceClient::AttrDel(const char *fname, const char *aname) {
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Placerfs 'attrdel' error, fname=%s aname=%s : %s", fname, aname, mProtocol->StringFormatMessage(eventPtr).c_str());
+      LOG_VA_ERROR("Hyperspace 'attrdel' error, fname=%s aname=%s : %s", fname, aname, mProtocol->StringFormatMessage(eventPtr).c_str());
       error = (int)mProtocol->ResponseCode(eventPtr);
     }
   }
@@ -271,7 +271,7 @@ int HyperspaceClient::Exists(const char *name) {
     if (!syncHandler.WaitForReply(eventPtr)) {
       error = (int)mProtocol->ResponseCode(eventPtr);
       if (error != Error::HYPERTABLEFS_FILE_NOT_FOUND) {
-	LOG_VA_ERROR("Placerfs 'attrdel' error, fname=%s : %s", name, mProtocol->StringFormatMessage(eventPtr).c_str());
+	LOG_VA_ERROR("Hyperspace 'attrdel' error, fname=%s : %s", name, mProtocol->StringFormatMessage(eventPtr).c_str());
       }
     }
   }

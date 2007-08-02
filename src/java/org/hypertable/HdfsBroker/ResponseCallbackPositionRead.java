@@ -32,10 +32,9 @@ public class ResponseCallbackPositionRead extends ResponseCallback {
     }
 
     int response(long offset, int nread, byte [] data) {
-	CommBuf cbuf = new CommBuf(mHeaderBuilder.HeaderLength() + 18);
+	CommBuf cbuf = new CommBuf(mHeaderBuilder.HeaderLength() + 16);
 	cbuf.PrependInt(nread);
 	cbuf.PrependLong(offset);
-	cbuf.PrependShort((short)0);
 	cbuf.PrependInt(Error.OK);
 	
 	if (nread > 0) {

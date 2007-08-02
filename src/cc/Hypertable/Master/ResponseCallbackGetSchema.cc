@@ -25,9 +25,8 @@
 using namespace hypertable;
 
 int ResponseCallbackGetSchema::response(const char *schema) {
-  CommBufPtr cbufPtr( new CommBuf(hbuilder_.HeaderLength() + 6 + CommBuf::EncodedLength(schema)) );
+  CommBufPtr cbufPtr( new CommBuf(hbuilder_.HeaderLength() + 4 + CommBuf::EncodedLength(schema)) );
   cbufPtr->PrependString(schema);
-  cbufPtr->PrependShort(0); // fix me!!!
   cbufPtr->PrependInt(Error::OK);
   hbuilder_.LoadFromMessage(mEventPtr->header);
   hbuilder_.Encapsulate(cbufPtr.get());

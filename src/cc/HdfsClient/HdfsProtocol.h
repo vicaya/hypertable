@@ -122,7 +122,6 @@ namespace hypertable {
 
     typedef struct {
       int32_t  error;
-      uint16_t command;
       int32_t  handle;
     } __attribute__((packed)) ResponseHeaderOpenT;
 
@@ -130,7 +129,6 @@ namespace hypertable {
 
     typedef struct {
       int32_t  error;
-      uint16_t command;
       uint64_t offset;
       int32_t  amount;
     } __attribute__((packed)) ResponseHeaderReadT;
@@ -143,7 +141,6 @@ namespace hypertable {
 
     typedef struct {
       int32_t  error;
-      uint16_t command;
       int64_t  length;
     } __attribute__((packed)) ResponseHeaderLengthT;
 

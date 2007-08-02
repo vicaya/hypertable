@@ -142,7 +142,6 @@ class CommandScan extends Command {
 	    else {
 		event.msg.RewindToProtocolHeader();
 		int error = event.msg.buf.getInt();
-		short command = event.msg.buf.getShort();
 		short flags = event.msg.buf.getShort();
 		int id = event.msg.buf.getInt();
 		Command.msOutstandingScanId = (flags == 1) ? -1 : id;

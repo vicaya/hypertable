@@ -42,19 +42,19 @@ Master::Master(Comm *comm, Properties *props) : mComm(comm), mVerbose(false), mH
     const char *host;
     int port;
 
-    if ((host = props->getProperty("HdfsBroker.Server.host", 0)) == 0) {
-      LOG_ERROR("HdfsBroker.Server.host property not specified");
+    if ((host = props->getProperty("HdfsBroker.host", 0)) == 0) {
+      LOG_ERROR("HdfsBroker.host property not specified");
       exit(1);
     }
 
-    if ((port = props->getPropertyInt("HdfsBroker.Server.port", 0)) == 0) {
-      LOG_ERROR("HdfsBroker.Server.port property not specified");
+    if ((port = props->getPropertyInt("HdfsBroker.port", 0)) == 0) {
+      LOG_ERROR("HdfsBroker.port property not specified");
       exit(1);
     }
 
     if (mVerbose) {
-      cout << "HdfsBroker.Server.host=" << host << endl;
-      cout << "HdfsBroker.Server.port=" << port << endl;
+      cout << "HdfsBroker.host=" << host << endl;
+      cout << "HdfsBroker.port=" << port << endl;
     }
 
     memset(&addr, 0, sizeof(struct sockaddr_in));

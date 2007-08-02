@@ -57,7 +57,8 @@ CommBuf *HyperspaceProtocol::CreateMkdirsRequest(const char *fname) {
   cbuf->PrependString(fname);
   cbuf->PrependShort(COMMAND_MKDIRS);
 
-  hbuilder.Reset(Header::PROTOCOL_PFS);
+  hbuilder.Reset(Header::PROTOCOL_HYPERSPACE);
+  hbuilder.SetGroupId(fileNameToGroupId(fname));
   hbuilder.Encapsulate(cbuf);
 
   return cbuf;
@@ -74,7 +75,8 @@ CommBuf *HyperspaceProtocol::CreateCreateRequest(const char *fname) {
   cbuf->PrependString(fname);
   cbuf->PrependShort(COMMAND_CREATE);
 
-  hbuilder.Reset(Header::PROTOCOL_PFS);
+  hbuilder.Reset(Header::PROTOCOL_HYPERSPACE);
+  hbuilder.SetGroupId(fileNameToGroupId(fname));
   hbuilder.Encapsulate(cbuf);
 
   return cbuf;
@@ -93,7 +95,8 @@ CommBuf *HyperspaceProtocol::CreateAttrSetRequest(const char *fname, const char 
   cbuf->PrependString(fname);
   cbuf->PrependShort(COMMAND_ATTRSET);
 
-  hbuilder.Reset(Header::PROTOCOL_PFS);
+  hbuilder.Reset(Header::PROTOCOL_HYPERSPACE);
+  hbuilder.SetGroupId(fileNameToGroupId(fname));
   hbuilder.Encapsulate(cbuf);
 
   return cbuf;
@@ -111,7 +114,8 @@ CommBuf *HyperspaceProtocol::CreateAttrGetRequest(const char *fname, const char 
   cbuf->PrependString(fname);
   cbuf->PrependShort(COMMAND_ATTRGET);
 
-  hbuilder.Reset(Header::PROTOCOL_PFS);
+  hbuilder.Reset(Header::PROTOCOL_HYPERSPACE);
+  hbuilder.SetGroupId(fileNameToGroupId(fname));
   hbuilder.Encapsulate(cbuf);
 
   return cbuf;
@@ -129,7 +133,8 @@ CommBuf *HyperspaceProtocol::CreateAttrDelRequest(const char *fname, const char 
   cbuf->PrependString(fname);
   cbuf->PrependShort(COMMAND_ATTRDEL);
 
-  hbuilder.Reset(Header::PROTOCOL_PFS);
+  hbuilder.Reset(Header::PROTOCOL_HYPERSPACE);
+  hbuilder.SetGroupId(fileNameToGroupId(fname));
   hbuilder.Encapsulate(cbuf);
 
   return cbuf;
@@ -146,7 +151,8 @@ CommBuf *HyperspaceProtocol::CreateExistsRequest(const char *fname) {
   cbuf->PrependString(fname);
   cbuf->PrependShort(COMMAND_EXISTS);
 
-  hbuilder.Reset(Header::PROTOCOL_PFS);
+  hbuilder.Reset(Header::PROTOCOL_HYPERSPACE);
+  hbuilder.SetGroupId(fileNameToGroupId(fname));
   hbuilder.Encapsulate(cbuf);
 
   return cbuf;

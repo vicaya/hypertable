@@ -32,10 +32,9 @@ public class ResponseCallbackAttrGet extends ResponseCallback {
     }
 
     int response(String attrValue) {
-	CommBuf cbuf = new CommBuf(mHeaderBuilder.HeaderLength() + 6 + CommBuf.EncodedLength(attrValue));
+	CommBuf cbuf = new CommBuf(mHeaderBuilder.HeaderLength() + 4 + CommBuf.EncodedLength(attrValue));
 
 	cbuf.PrependString(attrValue);
-	cbuf.PrependShort((short)0);
 	cbuf.PrependInt(Error.OK);
 
 	// Encapsulate with Comm message response header

@@ -31,10 +31,9 @@ public class ResponseCallbackWrite extends ResponseCallback {
     }
 
     int response(long offset, int amount) {
-	CommBuf cbuf = new CommBuf(mHeaderBuilder.HeaderLength() + 18);
+	CommBuf cbuf = new CommBuf(mHeaderBuilder.HeaderLength() + 16);
 	cbuf.PrependInt(amount);
 	cbuf.PrependLong(offset);
-	cbuf.PrependShort((short)0);
 	cbuf.PrependInt(Error.OK);
 
 	// Encapsulate with Comm message response header

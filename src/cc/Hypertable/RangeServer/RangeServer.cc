@@ -98,15 +98,15 @@ RangeServer::RangeServer(Comm *comm, Properties *props) : mComm(comm) {
    */
   {
     struct sockaddr_in addr;
-    const char *host = props->getProperty("HdfsBroker.Server.host", 0);
+    const char *host = props->getProperty("HdfsBroker.host", 0);
     if (host == 0) {
-      LOG_ERROR("HdfsBroker.Server.host property not specified");
+      LOG_ERROR("HdfsBroker.host property not specified");
       exit(1);
     }
 
-    int port = props->getPropertyInt("HdfsBroker.Server.port", 0);
+    int port = props->getPropertyInt("HdfsBroker.port", 0);
     if (port == 0) {
-      LOG_ERROR("HdfsBroker.Server.port property not specified");
+      LOG_ERROR("HdfsBroker.port property not specified");
       exit(1);
     }
 

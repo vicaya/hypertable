@@ -45,8 +45,7 @@ public class ResponseCallback {
     }
 
     public int response_ok() {
-	CommBuf cbuf = new CommBuf( mHeaderBuilder.HeaderLength() + 6 );
-	cbuf.PrependShort((short)0);
+	CommBuf cbuf = new CommBuf( mHeaderBuilder.HeaderLength() + 4 );
 	cbuf.PrependInt(Error.OK);
 	mHeaderBuilder.LoadFromMessage(mEvent.msg);
 	mHeaderBuilder.Encapsulate(cbuf);

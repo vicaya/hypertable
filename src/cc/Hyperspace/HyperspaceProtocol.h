@@ -59,6 +59,15 @@ namespace hypertable {
 
     static const char * commandStrings[COMMAND_MAX];
 
+  private:
+
+    uint32_t fileNameToGroupId(const char *fname) {
+      uint32_t gid = 0;
+      for (const char *ptr=fname; *ptr; ++ptr)
+	gid += (uint32_t)*ptr;
+      return gid;
+    }
+
   };
 
 }
