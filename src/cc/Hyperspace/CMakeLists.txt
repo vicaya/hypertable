@@ -19,7 +19,7 @@
 add_library (Hyperspace HyperspaceClient.cc HyperspaceProtocol.cc)
 
 # hsClient - Hyperspace client program
-add_executable (hsClient tests/hyperspace.cc tests/CommandCreate.cc tests/CommandMkdirs.cc tests/CommandAttrSet.cc tests/CommandAttrGet.cc tests/CommandAttrDel.cc tests/CommandExists.cc)
+add_executable (hsClient tests/hyperspace.cc tests/CommandCreate.cc tests/CommandMkdirs.cc tests/CommandAttrSet.cc tests/CommandAttrGet.cc tests/CommandAttrDel.cc tests/CommandExists.cc tests/CommandDelete.cc)
 target_link_libraries (hsClient pthread boost_thread Hyperspace AsyncComm Common log4cpp)
 
 install (TARGETS hsClient RUNTIME DESTINATION bin)

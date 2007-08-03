@@ -22,41 +22,33 @@ extern "C" {
 #include <string.h>
 }
 
-#include "Common/Error.h"
 #include "Common/Usage.h"
 
 #include "Hyperspace/HyperspaceClient.h"
 
-#include "CommandExists.h"
+#include "CommandDelete.h"
 
 using namespace hypertable;
-
 
 namespace {
   const char *usage[] = {
     "",
-    "usage: hyperspaceClient exists <fname>",
+    "usage: hyperspaceClient touch <fname>",
     "",
-    "This program tests whether a file named <fname> in HYPERSPACE exists and",
-    "displays 'true' if it does and 'false' if it does not.",
+    "This program deletes a file named <fname> in HYPERSPACE if it does",
+    "not already exist.",
+    "",
     (const char *)0
   };
 
 }
 
-int hypertable::CommandExists(HyperspaceClient *client, vector<const char *> &args) {
+int hypertable::CommandDelete(HyperspaceClient *client, vector<const char *> &args) {
 
   if (args.size() < 1)
     Usage::DumpAndExit(usage);
 
-  int error = client->Exists(args[0]);
-  if (error == Error::HYPERSPACE_FILE_NOT_FOUND)
-    cout << "false" << endl;
-  else if (error == Error::OK)
-    cout << "true" << endl;
-  else
-    return error;
+  return client->Delete(args[0]);
 
-  return Error::OK;
 }
 

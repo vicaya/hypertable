@@ -274,7 +274,6 @@ void RequestUpdate::run() {
       ByteString32T *value = (ByteString32T *)(goMods[i].base + Length(key));
       goMods[i].range->Add(key, value);
     }
-
   }
 
   /**

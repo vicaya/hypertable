@@ -55,6 +55,9 @@ public class ConnectionHandler implements DispatchHandler {
 	    case Protocol.COMMAND_CREATE:
 		requestHandler = new RequestHandlerCreate(mComm, mHyperspace, event);
 		break;
+	    case Protocol.COMMAND_DELETE:
+		requestHandler = new RequestHandlerDelete(mComm, mHyperspace, event);
+		break;
 	    case Protocol.COMMAND_MKDIRS:
 		requestHandler = new RequestHandlerMkdirs(mComm, mHyperspace, event);
 		break;

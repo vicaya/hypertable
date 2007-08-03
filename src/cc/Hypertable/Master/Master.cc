@@ -127,7 +127,7 @@ void Master::CreateTable(ResponseCallback *cb, const char *tableName, const char
     error = Error::MASTER_TABLE_EXISTS;
     goto abort;
   }
-  else if (error != Error::HYPERTABLEFS_FILE_NOT_FOUND) {
+  else if (error != Error::HYPERSPACE_FILE_NOT_FOUND) {
     errMsg = (std::string)"Problem checking for existence of table file '" + tableFile + "'";
     goto abort;
   }
@@ -255,7 +255,7 @@ bool Master::CreateDirectoryLayout() {
    * Create /hypertable/servers directory
    */
   error = mHyperspace->Exists("/hypertable/servers");
-  if (error == Error::HYPERTABLEFS_FILE_NOT_FOUND) {
+  if (error == Error::HYPERSPACE_FILE_NOT_FOUND) {
     if ((error = mHyperspace->Mkdirs("/hypertable/servers")) != Error::OK) {
       LOG_VA_ERROR("Problem creating hyperspace directory '/hypertable/servers' - %s", Error::GetText(error));
       return false;
@@ -269,7 +269,7 @@ bool Master::CreateDirectoryLayout() {
    * Create /hypertable/tables directory
    */
   error = mHyperspace->Exists("/hypertable/tables");
-  if (error == Error::HYPERTABLEFS_FILE_NOT_FOUND) {
+  if (error == Error::HYPERSPACE_FILE_NOT_FOUND) {
     if (mHyperspace->Mkdirs("/hypertable/tables") != Error::OK)
       return false;
   }
@@ -281,7 +281,7 @@ bool Master::CreateDirectoryLayout() {
    * Create /hypertable/master directory
    */
   error = mHyperspace->Exists("/hypertable/master");
-  if (error == Error::HYPERTABLEFS_FILE_NOT_FOUND) {
+  if (error == Error::HYPERSPACE_FILE_NOT_FOUND) {
     if (mHyperspace->Mkdirs("/hypertable/master") != Error::OK)
       return false;
   }
@@ -292,7 +292,7 @@ bool Master::CreateDirectoryLayout() {
    * Create /hypertable/meta directory
    */
   error = mHyperspace->Exists("/hypertable/meta");
-  if (error == Error::HYPERTABLEFS_FILE_NOT_FOUND) {
+  if (error == Error::HYPERSPACE_FILE_NOT_FOUND) {
     if (mHyperspace->Mkdirs("/hypertable/meta") != Error::OK)
       return false;
   }

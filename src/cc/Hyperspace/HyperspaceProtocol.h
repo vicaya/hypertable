@@ -48,6 +48,8 @@ namespace hypertable {
 
     CommBuf *CreateExistsRequest(const char *fname);
 
+    CommBuf *CreateDeleteRequest(const char *fname);
+
     static const uint16_t COMMAND_CREATE  = 0;
     static const uint16_t COMMAND_DELETE  = 1;
     static const uint16_t COMMAND_MKDIRS  = 2;

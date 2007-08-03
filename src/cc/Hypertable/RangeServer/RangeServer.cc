@@ -43,6 +43,7 @@ namespace {
 /**
  *  Constructor
  */
+
 RangeServer::RangeServer(Comm *comm, Properties *props) : mComm(comm) {
   const char *metadataFile = 0;
 
@@ -172,7 +173,7 @@ int RangeServer::DirectoryInitialize(Properties *props) {
    * Create /hypertable/servers directory
    */
   error = Global::hyperspace->Exists("/hypertable/servers");
-  if (error == Error::HYPERTABLEFS_FILE_NOT_FOUND) {
+  if (error == Error::HYPERSPACE_FILE_NOT_FOUND) {
     LOG_ERROR("Hypertablefs directory '/hypertable/servers' does not exist, try running 'Hypertable.Master --initialize' first");
     return error;
   }
@@ -191,7 +192,7 @@ int RangeServer::DirectoryInitialize(Properties *props) {
    * Create /hypertable/servers/X.X.X.X_nnnnn directory
    */
   error = Global::hyperspace->Exists(topDir);
-  if (error == Error::HYPERTABLEFS_FILE_NOT_FOUND) {
+  if (error == Error::HYPERSPACE_FILE_NOT_FOUND) {
     error = Global::hyperspace->Mkdirs(topDir);
     if (error != Error::OK) {
       LOG_VA_ERROR("Problem creating hypertablefs directory '%s' - %s", topDir, Error::GetText(error));

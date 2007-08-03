@@ -1,6 +1,15 @@
 
 WARNING: Some of this information is out of date.
 
+Master/RangeServer Interaction
+- Master is responsible for:
+  1. assigning tablets to tablet servers
+  2. detecting the addition and expiration of tablet servers
+  3. Balancing tablet server load
+  4. Garbage collection of files in GFS
+  5. Schema changes such as table and column family creations
+
+
 
 Determining Split Key
 - Theoretically, the entire table should be scanned and the median key should

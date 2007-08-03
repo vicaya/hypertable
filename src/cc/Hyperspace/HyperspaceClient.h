@@ -68,6 +68,9 @@ namespace hypertable {
     int Exists(const char *name, DispatchHandler *handler, uint32_t *msgIdp);
     int Exists(const char *name);
 
+    int Delete(const char *name, DispatchHandler *handler, uint32_t *msgIdp);
+    int Delete(const char *name);
+
     HyperspaceProtocol *Protocol() { return mProtocol; }
     
   private:

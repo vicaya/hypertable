@@ -45,7 +45,7 @@ bool hypertable::CreateDirectoryLayout(Comm *comm, Properties *props) {
    * Create /hypertable/servers directory
    */
   error = hyperspace->Exists("/hypertable/servers");
-  if (error == Error::HYPERTABLEFS_FILE_NOT_FOUND) {
+  if (error == Error::HYPERSPACE_FILE_NOT_FOUND) {
     if ((error = hyperspace->Mkdirs("/hypertable/servers")) != Error::OK) {
       LOG_VA_ERROR("Problem creating hyperspace directory '/hypertable/servers' - %s", Error::GetText(error));
       return false;
@@ -59,7 +59,7 @@ bool hypertable::CreateDirectoryLayout(Comm *comm, Properties *props) {
    * Create /hypertable/tables directory
    */
   error = hyperspace->Exists("/hypertable/tables");
-  if (error == Error::HYPERTABLEFS_FILE_NOT_FOUND) {
+  if (error == Error::HYPERSPACE_FILE_NOT_FOUND) {
     if (hyperspace->Mkdirs("/hypertable/tables") != Error::OK)
       return false;
   }
@@ -71,7 +71,7 @@ bool hypertable::CreateDirectoryLayout(Comm *comm, Properties *props) {
    * Create /hypertable/master directory
    */
   error = hyperspace->Exists("/hypertable/master");
-  if (error == Error::HYPERTABLEFS_FILE_NOT_FOUND) {
+  if (error == Error::HYPERSPACE_FILE_NOT_FOUND) {
     if (hyperspace->Mkdirs("/hypertable/master") != Error::OK)
       return false;
   }
@@ -82,7 +82,7 @@ bool hypertable::CreateDirectoryLayout(Comm *comm, Properties *props) {
    * Create /hypertable/meta directory
    */
   error = hyperspace->Exists("/hypertable/meta");
-  if (error == Error::HYPERTABLEFS_FILE_NOT_FOUND) {
+  if (error == Error::HYPERSPACE_FILE_NOT_FOUND) {
     if (hyperspace->Mkdirs("/hypertable/meta") != Error::OK)
       return false;
   }

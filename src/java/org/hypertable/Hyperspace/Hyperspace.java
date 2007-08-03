@@ -18,6 +18,7 @@
 package org.hypertable.Hyperspace;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
@@ -82,11 +83,11 @@ public class Hyperspace {
 	}
 	catch (FileNotFoundException e) {
 	    log.info("File not found - " + e.getMessage());
-	    error = cb.error(Error.HYPERTABLEFS_FILE_NOT_FOUND, e.getMessage());
+	    error = cb.error(Error.HYPERSPACE_FILE_NOT_FOUND, e.getMessage());
 	}
 	catch (IOException e) {
 	    log.info("I/O exception - " + e.getMessage());
-	    error = cb.error(Error.HYPERTABLEFS_IO_ERROR, e.getMessage());
+	    error = cb.error(Error.HYPERSPACE_IO_ERROR, e.getMessage());
 	}
 
 	if (error != Error.OK)
@@ -109,7 +110,7 @@ public class Hyperspace {
 	if (exists)
 	    error = cb.response_ok();
 	else
-	    error = cb.error(Error.HYPERTABLEFS_FILE_NOT_FOUND, fileName);
+	    error = cb.error(Error.HYPERSPACE_FILE_NOT_FOUND, fileName);
 
 	if (error != Error.OK)
 	    log.severe("Problem sending response to EXISTS command - " + Error.GetText(error));
@@ -141,11 +142,11 @@ public class Hyperspace {
 	}
 	catch (FileNotFoundException e) {
 	    log.info("File not found - " + e.getMessage());
-	    error = cb.error(Error.HYPERTABLEFS_FILE_NOT_FOUND, e.getMessage());
+	    error = cb.error(Error.HYPERSPACE_FILE_NOT_FOUND, e.getMessage());
 	}
 	catch (IOException e) {
 	    log.info("I/O exception - " + e.getMessage());
-	    error = cb.error(Error.HYPERTABLEFS_IO_ERROR, e.getMessage());
+	    error = cb.error(Error.HYPERSPACE_IO_ERROR, e.getMessage());
 	}
 
 	if (error != Error.OK)
@@ -154,7 +155,7 @@ public class Hyperspace {
     }
 
     public void AttrDel(ResponseCallback cb, String fileName, String attrName) {
-	int error = Error.HYPERTABLEFS_IO_ERROR;
+	int error = Error.HYPERSPACE_IO_ERROR;
 
 	try {
 
@@ -169,7 +170,7 @@ public class Hyperspace {
 	    File attrFile = new File(baseDir + fileName + ".attr." + attrName);
 
 	    if (!attrFile.exists()) {
-		error = Error.HYPERTABLEFS_ATTR_NOT_FOUND;
+		error = Error.HYPERSPACE_ATTR_NOT_FOUND;
 		throw new IOException("Attribute '" + attrName + "' not found");
 	    }
 
@@ -180,7 +181,7 @@ public class Hyperspace {
 	}
 	catch (FileNotFoundException e) {
 	    log.info("File not found - " + e.getMessage());
-	    error = cb.error(Error.HYPERTABLEFS_FILE_NOT_FOUND, e.getMessage());
+	    error = cb.error(Error.HYPERSPACE_FILE_NOT_FOUND, e.getMessage());
 	}
 	catch (IOException e) {
 	    log.info("I/O exception - " + e.getMessage());
@@ -194,7 +195,7 @@ public class Hyperspace {
 
 
     public void AttrGet(ResponseCallbackAttrGet cb, String fileName, String attrName) {
-	int error = Error.HYPERTABLEFS_IO_ERROR;
+	int error = Error.HYPERSPACE_IO_ERROR;
 
 	try {
 
@@ -209,7 +210,7 @@ public class Hyperspace {
 	    File attrFile = new File(baseDir + fileName + ".attr." + attrName);
 
 	    if (!attrFile.exists()) {
-		error = Error.HYPERTABLEFS_ATTR_NOT_FOUND;
+		error = Error.HYPERSPACE_ATTR_NOT_FOUND;
 		throw new IOException("Attribute '" + attrName + "' not found");
 	    }
 
@@ -226,7 +227,7 @@ public class Hyperspace {
 	}
 	catch (FileNotFoundException e) {
 	    log.info("File not found - " + fileName);
-	    error = cb.error(Error.HYPERTABLEFS_FILE_NOT_FOUND, fileName);
+	    error = cb.error(Error.HYPERSPACE_FILE_NOT_FOUND, fileName);
 	}
 	catch (IOException e) {
 	    log.info("I/O exception - " + e.getMessage());
@@ -240,7 +241,7 @@ public class Hyperspace {
 
 
     public void Mkdirs(ResponseCallback cb, String dirName) {
-	int error = Error.HYPERTABLEFS_IO_ERROR;
+	int error = Error.HYPERSPACE_IO_ERROR;
 
 	if (mVerbose)
 	    log.info("Creating directory '" + dirName + "'");
@@ -256,7 +257,7 @@ public class Hyperspace {
 
 	    if (!absName.mkdirs()) {
 		log.info("mkdirs failure - " + absName);
-		error = Error.HYPERTABLEFS_CREATE_FAILED;
+		error = Error.HYPERSPACE_CREATE_FAILED;
 		throw new IOException("mkdirs failure - " + dirName);
 	    }
 
@@ -268,6 +269,80 @@ public class Hyperspace {
 
 	if (error != Error.OK)
 	    log.severe("Problem sending response to MKDIRS command - " + Error.GetText(error));
+    }
+
+    private static class DeleteFilter implements FilenameFilter {
+	public DeleteFilter(String name) {
+	    mName = name;
+	}
+	public boolean accept(File dir, String name) {
+	    int attrOffset = name.indexOf(".attr.");
+	    if (attrOffset == -1) {
+		if (name.equals(mName))
+		    return true;
+	    }
+	    else if (name.substring(0, attrOffset).equals(mName))
+		return true;
+	    return false;
+	}
+	private String mName;
+    }
+
+    public void Delete(ResponseCallback cb, String fileName) {
+	int error = Error.OK;
+
+	if (mVerbose)
+	    log.info("DELETE file=" + fileName);
+
+	String baseDir = fileName.startsWith("/") ? mBasedir : mBasedir + "/";
+
+	String absName = baseDir + fileName;
+	File absFile = new File(absName);
+
+	/**
+	 * Make sure pathname exists
+	 */
+	if (!absFile.exists()) {
+	    log.info("Delete error for '" + fileName + "' - not found");
+	    if ((error = cb.error(Error.HYPERSPACE_FILE_NOT_FOUND, fileName)) != Error.OK)
+		log.severe("Problem sending error response to DELETE command - " + Error.GetText(error));
+	    return;
+	}
+
+	/**
+	 * Delete the file or directory
+	 */
+	if (!absFile.delete()) {
+	    log.info("Problem deleting '" + fileName + "'");
+	    if ((error = cb.error(Error.HYPERSPACE_DELETE_ERROR, fileName)) != Error.OK)
+		log.severe("Problem sending error response to DELETE command - " + Error.GetText(error));
+	    return;
+	}
+
+	/**
+	 * Delete the attributes;
+	 */
+	int lastSlash = absName.lastIndexOf('/');
+	if (lastSlash != -1) {
+	    String parentPath = absName.substring(0, lastSlash);
+	    String entryName = absName.substring(lastSlash+1);
+	    File parentFile = new File(parentPath);
+	    
+	    File [] attrFiles = parentFile.listFiles( new DeleteFilter(entryName) );
+
+	    for (int i=0; i<attrFiles.length; i++) {
+		if (!attrFiles[i].delete()) {
+		    log.info("Problem deleting attribute file '" + attrFiles[i].toString() + "'");
+		    if ((error = cb.error(Error.HYPERSPACE_DELETE_ERROR, attrFiles[i].toString())) != Error.OK)
+			log.severe("Problem sending error response to DELETE command - " + Error.GetText(error));
+		    return;
+		}
+	    }
+	}
+
+	if ((error = cb.response_ok()) != Error.OK)
+	    log.severe("Problem sending response to DELETE command - " + Error.GetText(error));
+
     }
 
     private boolean mVerbose;

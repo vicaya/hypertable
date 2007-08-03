@@ -44,10 +44,11 @@ namespace {
     { Error::HDFSBROKER_BAD_FILE_HANDLE,  "HDFS BROKER bad file handle" },
     { Error::HDFSBROKER_IO_ERROR,         "HDFS BROKER i/o error" },
     { Error::HDFSBROKER_FILE_NOT_FOUND,   "HDFS BROKER file not found" },
-    { Error::HYPERTABLEFS_IO_ERROR,       "HYPERTABLE FS i/o error" },
-    { Error::HYPERTABLEFS_CREATE_FAILED,  "HYPERTABLE FS create failed" },
-    { Error::HYPERTABLEFS_FILE_NOT_FOUND, "HYPERTABLE FS file not found" },
-    { Error::HYPERTABLEFS_ATTR_NOT_FOUND, "HYPERTABLE FS attribute not found" },
+    { Error::HYPERSPACE_IO_ERROR,         "HYPERSPACE i/o error" },
+    { Error::HYPERSPACE_CREATE_FAILED,    "HYPERSPACE create failed" },
+    { Error::HYPERSPACE_FILE_NOT_FOUND,   "HYPERSPACE file not found" },
+    { Error::HYPERSPACE_ATTR_NOT_FOUND,   "HYPERSPACE attribute not found" },
+    { Error::HYPERSPACE_DELETE_ERROR,     "HYPERSPACE delete error" },
     { Error::MASTER_TABLE_EXISTS,         "HYPERTABLE MASTER table exists" },
     { Error::MASTER_BAD_SCHEMA,           "HYPERTABLE MASTER bad schema" },
     { Error::RANGESERVER_GENERATION_MISMATCH,  "RANGE SERVER generation mismatch" },
@@ -91,10 +92,11 @@ const int Error::HDFSBROKER_BAD_FILE_HANDLE;
 const int Error::HDFSBROKER_IO_ERROR;
 const int Error::HDFSBROKER_FILE_NOT_FOUND;
 
-const int Error::HYPERTABLEFS_IO_ERROR;
-const int Error::HYPERTABLEFS_CREATE_FAILED;
-const int Error::HYPERTABLEFS_FILE_NOT_FOUND;
-const int Error::HYPERTABLEFS_ATTR_NOT_FOUND;
+const int Error::HYPERSPACE_IO_ERROR;
+const int Error::HYPERSPACE_CREATE_FAILED;
+const int Error::HYPERSPACE_FILE_NOT_FOUND;
+const int Error::HYPERSPACE_ATTR_NOT_FOUND;
+const int Error::HYPERSPACE_DELETE_ERROR;
 
 const int Error::MASTER_TABLE_EXISTS;
 const int Error::MASTER_BAD_SCHEMA;

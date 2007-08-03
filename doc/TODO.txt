@@ -1,5 +1,6 @@
 
 TODO:
+- Add a way to destroy a ConnectionManager (including Comm::Disconnect)
 - Add Hyperspace regression test
 - Try to move some of the RangerServer::Global members to RangeServer class members
 - Fatten up HdfsBroker test

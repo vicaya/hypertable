@@ -270,7 +270,36 @@ int HyperspaceClient::Exists(const char *name) {
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
       error = (int)mProtocol->ResponseCode(eventPtr);
-      if (error != Error::HYPERTABLEFS_FILE_NOT_FOUND) {
+      if (error != Error::HYPERSPACE_FILE_NOT_FOUND) {
+	LOG_VA_ERROR("Hyperspace 'attrdel' error, fname=%s : %s", name, mProtocol->StringFormatMessage(eventPtr).c_str());
+      }
+    }
+  }
+  return error;
+}
+
+
+/**
+ * Submit asynchronous 'delete' request
+ */
+int HyperspaceClient::Delete(const char *name, DispatchHandler *handler, uint32_t *msgIdp) {
+  CommBufPtr cbufPtr( mProtocol->CreateDeleteRequest(name) );
+  return SendMessage(cbufPtr, handler, msgIdp);
+}
+
+
+/**
+ * Blocking 'delete' method
+ */
+int HyperspaceClient::Delete(const char *name) {
+  DispatchHandlerSynchronizer syncHandler;
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( mProtocol->CreateDeleteRequest(name) );
+  int error = SendMessage(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      error = (int)mProtocol->ResponseCode(eventPtr);
+      if (error != Error::HYPERSPACE_FILE_NOT_FOUND) {
 	LOG_VA_ERROR("Hyperspace 'attrdel' error, fname=%s : %s", name, mProtocol->StringFormatMessage(eventPtr).c_str());
       }
     }

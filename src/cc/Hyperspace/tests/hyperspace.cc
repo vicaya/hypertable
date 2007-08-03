@@ -36,6 +36,7 @@ extern "C" {
 #include "../HyperspaceClient.h"
 #include "../HyperspaceProtocol.h"
 #include "CommandCreate.h"
+#include "CommandDelete.h"
 #include "CommandMkdirs.h"
 #include "CommandAttrSet.h"
 #include "CommandAttrGet.h"
@@ -59,6 +60,7 @@ namespace {
     "commands:",
     "  mkdirs <dir>",
     "  touch <file>",
+    "  delete <file>",
     "  attrset <file> <attr> <value>",
     "  attrget <file> <attr>",
     "  attrdel <file> <attr>",
@@ -120,6 +122,8 @@ int main(int argc, char **argv) {
     error = CommandMkdirs(hyperspaceClient, args);
   else if (!strcmp(command, "touch"))
     error = CommandCreate(hyperspaceClient, args);
+  else if (!strcmp(command, "delete"))
+    error = CommandDelete(hyperspaceClient, args);
   else if (!strcmp(command, "attrset"))
     error = CommandAttrSet(hyperspaceClient, args);
   else if (!strcmp(command, "attrget"))
@@ -132,6 +136,9 @@ int main(int argc, char **argv) {
     LOG_VA_ERROR("Unrecognized command '%s'", command);
     exit(1);
   }
+
+  if (error != Error::OK)
+    cerr << "Problem executing command - " << Error::GetText(error) << endl;
 
  done:
   delete hyperspaceClient;

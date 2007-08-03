@@ -46,10 +46,11 @@ namespace hypertable {
     static const int HDFSBROKER_IO_ERROR        = 0x00020002;
     static const int HDFSBROKER_FILE_NOT_FOUND  = 0x00020003;
 
-    static const int HYPERTABLEFS_IO_ERROR       = 0x00030001;
-    static const int HYPERTABLEFS_CREATE_FAILED  = 0x00030002;
-    static const int HYPERTABLEFS_FILE_NOT_FOUND = 0x00030003;
-    static const int HYPERTABLEFS_ATTR_NOT_FOUND = 0x00030004;
+    static const int HYPERSPACE_IO_ERROR       = 0x00030001;
+    static const int HYPERSPACE_CREATE_FAILED  = 0x00030002;
+    static const int HYPERSPACE_FILE_NOT_FOUND = 0x00030003;
+    static const int HYPERSPACE_ATTR_NOT_FOUND = 0x00030004;
+    static const int HYPERSPACE_DELETE_ERROR   = 0x00030005;
 
     static const int MASTER_TABLE_EXISTS   = 0x00040001;
     static const int MASTER_BAD_SCHEMA     = 0x00040002;

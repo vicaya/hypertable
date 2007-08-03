@@ -157,3 +157,21 @@ CommBuf *HyperspaceProtocol::CreateExistsRequest(const char *fname) {
 
   return cbuf;
 }
+
+
+/**
+ *
+ */
+CommBuf *HyperspaceProtocol::CreateDeleteRequest(const char *fname) {
+  HeaderBuilder hbuilder;
+  CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(int16_t) + CommBuf::EncodedLength(fname));
+
+  cbuf->PrependString(fname);
+  cbuf->PrependShort(COMMAND_DELETE);
+
+  hbuilder.Reset(Header::PROTOCOL_HYPERSPACE);
+  hbuilder.SetGroupId(fileNameToGroupId(fname));
+  hbuilder.Encapsulate(cbuf);
+
+  return cbuf;
+}

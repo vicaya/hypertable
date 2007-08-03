@@ -40,10 +40,11 @@ public class Error {
     static public final int HDFSBROKER_IO_ERROR         = 0x00020002;
     static public final int HDFSBROKER_FILE_NOT_FOUND   = 0x00020003;
 
-    static public final int HYPERTABLEFS_IO_ERROR       = 0x00030001;
-    static public final int HYPERTABLEFS_CREATE_FAILED  = 0x00030002;
-    static public final int HYPERTABLEFS_FILE_NOT_FOUND = 0x00030003;
-    static public final int HYPERTABLEFS_ATTR_NOT_FOUND = 0x00030004;
+    static public final int HYPERSPACE_IO_ERROR       = 0x00030001;
+    static public final int HYPERSPACE_CREATE_FAILED  = 0x00030002;
+    static public final int HYPERSPACE_FILE_NOT_FOUND = 0x00030003;
+    static public final int HYPERSPACE_ATTR_NOT_FOUND = 0x00030004;
+    static public final int HYPERSPACE_DELETE_ERROR   = 0x00030005;
 
     static public final int MASTER_TABLE_EXISTS  = 0x00040001;
     static public final int MASTER_BAD_SCHEMA    = 0x00040002;
@@ -78,12 +79,12 @@ public class Error {
 	mTextMap.put(HDFSBROKER_BAD_FILE_HANDLE, "HDFS BROKER bad file handle");
 	mTextMap.put(HDFSBROKER_IO_ERROR,        "HDFS BROKER i/o error");
 	mTextMap.put(HDFSBROKER_FILE_NOT_FOUND,  "HDFS BROKER file not found");
-	mTextMap.put(HYPERTABLEFS_IO_ERROR,       "HYPERTABLE FS i/o error");
-	mTextMap.put(HYPERTABLEFS_CREATE_FAILED,  "HYPERTABLE FS create failed");
-	mTextMap.put(HYPERTABLEFS_FILE_NOT_FOUND, "HYPERTABLE FS file not found");
-	mTextMap.put(HYPERTABLEFS_ATTR_NOT_FOUND, "HYPERTABLE FS attribute not found");
-	mTextMap.put(MASTER_TABLE_EXISTS,         "HYPERTABLE MASTER table exists");
-	mTextMap.put(MASTER_TABLE_EXISTS,         "HYPERTABLE MASTER bad schema");
+	mTextMap.put(HYPERSPACE_IO_ERROR,        "HYPERTABLE FS i/o error");
+	mTextMap.put(HYPERSPACE_CREATE_FAILED,   "HYPERTABLE FS create failed");
+	mTextMap.put(HYPERSPACE_FILE_NOT_FOUND,  "HYPERTABLE FS file not found");
+	mTextMap.put(HYPERSPACE_ATTR_NOT_FOUND,  "HYPERTABLE FS attribute not found");
+	mTextMap.put(MASTER_TABLE_EXISTS,        "HYPERTABLE MASTER table exists");
+	mTextMap.put(MASTER_TABLE_EXISTS,        "HYPERTABLE MASTER bad schema");
 	mTextMap.put(RANGESERVER_GENERATION_MISMATCH,  "RANGE SERVER generation mismatch");
 	mTextMap.put(RANGESERVER_RANGE_ALREADY_LOADED, "RANGE SERVER tablet already loaded");
 	mTextMap.put(RANGESERVER_RANGE_MISMATCH,       "RANGE SERVER range mismatch");
