@@ -1,7 +1,6 @@
 
 TODO:
 - Add a way to destroy a ConnectionManager (including Comm::Disconnect)
-- Add Hyperspace regression test
 - Try to move some of the RangerServer::Global members to RangeServer class members
 - Fatten up HdfsBroker test
 - Change ResponseCallback::response to response_ok in C++ source
@@ -9,6 +8,7 @@ TODO:
 - Add ReactorFactory::Shutdown
 
 DONE:
+- Add Hyperspace regression test
 - Remove command code from response message
 - Sweep through HyperspaceClient and get rid of references to Placer, also make
   sure Hyperspace requests to the same file are serialized

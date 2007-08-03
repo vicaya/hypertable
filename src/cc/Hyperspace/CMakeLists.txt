@@ -16,10 +16,23 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
 
+set ( SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Hyperspace" )
+set ( DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Hyperspace" )
+
 add_library (Hyperspace HyperspaceClient.cc HyperspaceProtocol.cc)
 
 # hsClient - Hyperspace client program
 add_executable (hsClient tests/hyperspace.cc tests/CommandCreate.cc tests/CommandMkdirs.cc tests/CommandAttrSet.cc tests/CommandAttrGet.cc tests/CommandAttrDel.cc tests/CommandExists.cc tests/CommandDelete.cc)
 target_link_libraries (hsClient pthread boost_thread Hyperspace AsyncComm Common log4cpp)
 
+# hsTest
+add_executable (hsTest tests/hsTest.cc ${DST_DIR}/tests)
+target_link_libraries (hsTest pthread boost_thread Hyperspace AsyncComm Common log4cpp)
+
+add_custom_command (SOURCE ${SRC_DIR}/tests
+                    COMMAND ln ARGS -s ${SRC_DIR}/tests ${DST_DIR}/tests
+                    OUTPUT ${DST_DIR}/tests)
+
 install (TARGETS hsClient RUNTIME DESTINATION bin)
+
+add_test (Hyperspace hsTest)

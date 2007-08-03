@@ -321,11 +321,9 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  /**
   unlink(outfileA);
   unlink(outfileB);
   unlink(outfileC);
-  **/
 
   if (!golden)
     harness.ValidateAndExit("tests/cellStoreTest.golden");
