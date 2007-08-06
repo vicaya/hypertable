@@ -1,0 +1,102 @@
+
+Updating
+
+1. Obtain an "update timestamp" from Commit Log
+2. Lock the split mutex for the Range
+3. If the splitPending flag set, wait on the PendingUpdates condition variable
+   increment update counter
+4. Unlock the split mutex
+5. Sort modifications into three sets GO, STOP, and SPLIT
+  A. GO mods lie within the specified range
+  B. STOP mods lie outside the specified range (because of prior split)
+  C. SPLIT mods lie within the specified range, but a split is in progress
+    and the modifications are for the portion that is being split off
+    [NOTE: When a split is pending on the range, if a modification is for the
+     split off portion of the range, then if the "update timestamp" is later than
+     the "split timestamp", then the modification is marked SPLIT ]
+6. Write SPLIT mods to split log
+7. Write GO mods to commit log
+8. Lock the Range's access locks for all of its CellCaches
+9. Apply the SPLIT and GO updates to the Range's CellCaches
+10. For delete modifications, add a special DELETE entry into each CellCache.
+    Store iterator pointers to all of the delete entries in a set.  Add this
+    set to a sorted list of delete sets, sorted by "update timestamp".
+11. Unlock the Range's (CellCache) access locks
+12. Lock the split mutex for the Range
+13. Decrement update counter
+14. If counter is zero, signal the FinishSplit condition variable
+15. Unlock the split mutex
+16. Send back STOP modifications
+
+
+Scanning
+
+1. Obtain "scanner timestamp" from commit log
+2. Create a MergeScanner (with shared_ptrs to all underlying CellStores and CellCaches)
+3. For each CellCache scanner add the scanner to it's sorted list of scanners (by timestamp)
+4. Lock CellCache's access lock during scanner::next()
+5. At end of scan, remove scanner from CellCache's sorted list of scanners. If the scanner was the 'oldest'
+   outstanding scanner, then apply the deletes from the sorted list of delete sets for any that occur before
+   the new 'oldest' outstanding scanner timestamp (see Update 10.) Since DELETE entries sort ahead of normal entries,
+   a scan starting from the delete entry should suffice to apply the delete.
+6. Delete the MergeScanner (thus resetting the shared_ptrs to underlying CellCache/CellStore and possibly garbage collecting these objects)
+
+
+Compaction
+
+1. Obtain a "compaction timestamp" from the commit log
+2. Do a normal scan over the set of CellStores and CellCache involved in the compaction
+3. For each AccessGroup, lock the CellCache access lock
+4. Create a new empty CellCache for each AccessGroup, copy any updates that occurred after the compaction start time to the new CellCache.
+5. Update the AccessGroup's set of CellStores, creating a shared_ptr to the new CellStore and deleting shared_ptrs to the old CellStores, if any.
+6. For each AccessGroup, unlock the CellCache access lock
+
+
+Split
+
+1. Determine split point
+2. Modify METADATA for existing range with location of split log
+3. Atomically obtain a "split timestamp" and install split log for the range
+   [NOTE:  All updates for the split-off portion of the range that have a timestamp
+    later than the one for the split log will be committed to the split log instead
+    of the normal commit log]
+
+=== At this point, split has commenced.  If the RangeServer crashes, ===
+=== it will reconstruct it's state by first replaying the normal commit ===
+=== log and then the split log. ===
+
+4. Perform a major compaction 
+5. Create METADATA entry for new range
+   (with pointer to split log, empty 'location' column, and list of CellStores)
+6. Update METADATA entry for existing range with new end row and remove split log info
+7. Lock the split mutex for the Range
+8. Set the splitPending flag to true
+9. Wait on the FinishSplit condition variable
+10. Do the actual split
+  A. Create new CellCaches (memtables) for each AccessGroup in the range
+  B. Copy the old CellCache entries for the remaining portion of the split to the
+     new CellCache
+  C. Create new CellStore objects that point to CellStore files with a restricted
+     range.
+  D. Reset (e.g. clear) the smart pointers to the old CellCache and CellStore objects
+  [NOTE: If there are any outstanding scanners on the Range, they will have smart
+   pointers to the old CellCache and CellStore objects.  These objects will get
+   garbage collected when the last scanner finishes]
+11. Set the splitPending flag to false
+12. Signal the PendingUpdates condition variable (to unblock the pending updates)
+13. Unlock the split mutex
+
+=== At this point the range server is no longer serving the "split off" ===
+=== part of the range ===
+
+14. Notify Master of the split
+15. Master will select a RangeServer for the new range and issue a LOADRANGE command
+    to that RangeServer for the newly created range
+
+
+ISSUES:
+- What to do about abandoned Scanners?  Should scanners have an expiration time an automatically get deleted after that time?
+- How does the Master know what CellStore files to garbage collect?
+- Memory accounting after split.  Any oustanding scanners will hold reference to the old CellCaches and CellStores,
+  should we worry about accounting for this memory?  Or should we just assume that it will get garbaged collected
+  promptly and not account for it.
