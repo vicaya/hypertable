@@ -33,13 +33,20 @@ Scanning
 
 1. Obtain "scanner timestamp" from commit log
 2. Create a MergeScanner (with shared_ptrs to all underlying CellStores and CellCaches)
-3. For each CellCache scanner add the scanner to it's sorted list of scanners (by timestamp)
-4. Lock CellCache's access lock during scanner::next()
-5. At end of scan, remove scanner from CellCache's sorted list of scanners. If the scanner was the 'oldest'
-   outstanding scanner, then apply the deletes from the sorted list of delete sets for any that occur before
-   the new 'oldest' outstanding scanner timestamp (see Update 10.) Since DELETE entries sort ahead of normal entries,
-   a scan starting from the delete entry should suffice to apply the delete.
-6. Delete the MergeScanner (thus resetting the shared_ptrs to underlying CellCache/CellStore and possibly garbage collecting these objects)
+3. For each CellCache involved in the scan:
+   A. Lock the access lock
+   B. Add the scanner to the CellCache's sorted list of scanners (by timestamp)
+   C. Unlock the access lock
+4. Add the MergeScanner to the Reaper thread's scanner set
+5. Lock CellCache's access lock during scanner::next()
+6. At end of scan, for each CellCache:
+  A. Lock CellCache's access lock
+  B. Remove scanner from CellCache's sorted list of scanners.
+  C. If the scanner was the 'oldest' outstanding scanner, then apply the deletes from the sorted list of delete sets for any that occur before
+   the new 'oldest' outstanding scanner timestamp (see Update 10.)
+   [NOTE: Since DELETE entries sort ahead of normal entries, a scan starting from the delete entry should suffice to apply the delete. ]
+  D. Unlock CellCache's access lock
+7. Delete the MergeScanner (thus resetting the shared_ptrs to underlying CellCache/CellStore and possibly garbage collecting these objects)
 
 
 Compaction
