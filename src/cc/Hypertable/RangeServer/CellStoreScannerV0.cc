@@ -29,12 +29,14 @@
 
 using namespace hypertable;
 
-CellStoreScannerV0::CellStoreScannerV0(CellStoreV0 *store) :
-  CellListScanner(), mStore(store), mClient(store->mClient), mFd(store->mFd), mFilename(store->mFilename),
-  mIndex(store->mIndex), mDataEndOffset(store->mTrailer.fixIndexOffset), mCurKey(0),
-  mCurValue(0), mCheckForRangeEnd(false), mFileId(store->mFileId) {
+CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr) : CellListScanner(), mCellStorePtr(cellStorePtr), mCurKey(0), mCurValue(0), mCheckForRangeEnd(false) {
+
+  mCellStoreV0 = dynamic_cast< CellStoreV0*>(mCellStorePtr.get());
+  assert(mCellStoreV0);
+
+  mIndex = mCellStoreV0->mIndex;
+  mFileId = mCellStoreV0->mFileId;
   mBlockInflater = new BlockInflaterZlib();
-  mProtocol = mClient->GetProtocolObject();
   memset(&mBlock, 0, sizeof(mBlock));
 }
 
@@ -53,7 +55,7 @@ void CellStoreScannerV0::Reset() {
   KeyT *tmpKey;
 
   // compute mStartKey
-  tmpKey = mStore->mStartKeyPtr.get();
+  tmpKey = mCellStoreV0->mStartKeyPtr.get();
   if (mRangeStart != 0)
     mStartKey = (tmpKey != 0 && *mRangeStart < *tmpKey) ? tmpKey : mRangeStart;
   else if (tmpKey != 0)
@@ -62,7 +64,7 @@ void CellStoreScannerV0::Reset() {
     mStartKey = 0;
 
   // compute mEndKey
-  tmpKey = mStore->mEndKeyPtr.get();
+  tmpKey = mCellStoreV0->mEndKeyPtr.get();
   if (mRangeEnd != 0)
     mEndKey = (tmpKey != 0 && *tmpKey < *mRangeEnd) ? tmpKey : mRangeEnd;
   else if (tmpKey != 0)
@@ -180,7 +182,7 @@ bool CellStoreScannerV0::FetchNextBlock() {
     CellStoreV0::IndexMapT::iterator iterNext = mIter;
     iterNext++;
     if (iterNext == mIndex.end()) {
-      mBlock.zlength = mDataEndOffset - mBlock.offset;
+      mBlock.zlength = mCellStoreV0->mTrailer.fixIndexOffset - mBlock.offset;
       if (mEndKey != 0)
 	mCheckForRangeEnd = true;
     }
@@ -197,7 +199,7 @@ bool CellStoreScannerV0::FetchNextBlock() {
       /** Read compressed block **/
       buf = new uint8_t [ mBlock.zlength ];
       uint32_t nread;
-      if (mClient->Pread(mFd, mBlock.offset, mBlock.zlength, buf, &nread) != Error::OK)
+      if (mCellStoreV0->mClient->Pread(mCellStoreV0->mFd, mBlock.offset, mBlock.zlength, buf, &nread) != Error::OK)
 	goto abort;
 
       /** inflate compressed block **/

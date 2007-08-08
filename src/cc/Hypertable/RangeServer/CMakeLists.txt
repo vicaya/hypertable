@@ -53,7 +53,6 @@ RequestHandlerFetchScanblock.cc
 RequestHandlerLoadRange.cc
 RequestHandlerUpdate.cc
 ScannerMap.cc
-SplitLogMap.cc
 TableInfo.cc
 VerifySchema.cc
 main.cc

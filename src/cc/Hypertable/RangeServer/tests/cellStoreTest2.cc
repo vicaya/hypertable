@@ -28,7 +28,9 @@
 #include "HdfsClient/HdfsClient.h"
 #include "Hypertable/Schema.h"
 #include "Hypertable/RangeServer/CellCache.h"
+#include "Hypertable/RangeServer/CellCacheScanner.h"
 #include "Hypertable/RangeServer/MergeScanner.h"
+#include "Hypertable/RangeServer/CellStoreScannerV0.h"
 #include "Hypertable/RangeServer/CellStoreV0.h"
 
 #include "TestSource.h"
@@ -109,8 +111,8 @@ namespace {
     Schema *schema;
     KeyT *key;
     ByteString32T *value;
-    CellStoreV0 *cellStore[4];
-    CellCache *cellCache;
+    CellStorePtr cellStorePtr[4];
+    CellCachePtr cellCachePtr;
     //vector<string> files;
     MergeScanner *mscanner, *mscannerA, *mscannerB;
 
@@ -123,21 +125,21 @@ namespace {
     }
 
     for (size_t i=0; i<4; i++)
-      cellStore[i] = new CellStoreV0(client);
+      cellStorePtr[i].reset( new CellStoreV0(client) );
 
-    if (cellStore[0]->Create("/cellStore0.tmp") != 0)
+    if (cellStorePtr[0]->Create("/cellStore0.tmp") != 0)
       return false;
 
-    if (cellStore[1]->Create("/cellStore1.tmp") != 0)
+    if (cellStorePtr[1]->Create("/cellStore1.tmp") != 0)
       return false;
 
-    if (cellStore[2]->Create("/cellStore2.tmp") != 0)
+    if (cellStorePtr[2]->Create("/cellStore2.tmp") != 0)
       return false;
 
-    if (cellStore[3]->Create("/cellStore3.tmp") != 0)
+    if (cellStorePtr[3]->Create("/cellStore3.tmp") != 0)
       return false;
 
-    cellCache = new CellCache();
+    cellCachePtr.reset( new CellCache() );
 
     std::string inputFile = "tests/testdata.txt";
 
@@ -161,15 +163,15 @@ namespace {
 	return 1;
       }
 
-      cellCache->Add((*iter).first.get(), (*iter).second.get());
+      cellCachePtr->Add((*iter).first.get(), (*iter).second.get());
 
       if (keyComps.flag == FLAG_INSERT) {
-	if (cellStore[i%4]->Add((*iter).first.get(), (*iter).second.get()) != Error::OK)
+	if (cellStorePtr[i%4]->Add((*iter).first.get(), (*iter).second.get()) != Error::OK)
 	  return false;
       }
       else {
 	for (size_t j=0; j<4; j++) {
-	  if (cellStore[j]->Add((*iter).first.get(), (*iter).second.get()) != Error::OK)
+	  if (cellStorePtr[j]->Add((*iter).first.get(), (*iter).second.get()) != Error::OK)
 	    return false;
 	}
       }
@@ -180,7 +182,7 @@ namespace {
     //files.push_back("bar");
 
     for (size_t i=0; i<4; i++)
-      cellStore[i]->Finalize(0);
+      cellStorePtr[i]->Finalize(0);
 
     char outfileA[64];
     strcpy(outfileA, "/tmp/cellStoreTest1-cellCache-XXXXXX");
@@ -190,12 +192,11 @@ namespace {
     }
     ofstream outstreamA(outfileA);
 
-    cellCache->LockShareable();
     mscanner = new MergeScanner(suppressDeleted);
-    mscanner->AddScanner(cellCache->CreateScanner(suppressDeleted));
+    mscanner->AddScanner( new CellCacheScanner(cellCachePtr) );
     mscanner->Reset();
 
-    //CellSequenceScanner *scanner = cellCache->CreateScanner(suppressDeleted);
+    //CellSequenceScanner *scanner = cellCachePtr->CreateScanner(suppressDeleted);
     //scanner->Reset();
 
     while (mscanner->Get(&key, &value)) {
@@ -205,7 +206,6 @@ namespace {
     }
 
     //delete scanner;
-    cellCache->UnlockShareable();
     //delete cellCache;
 
     char outfileB[64];
@@ -219,13 +219,13 @@ namespace {
     mscanner = new MergeScanner(suppressDeleted);
 
     mscannerA = new MergeScanner(suppressDeleted);
-    mscannerA->AddScanner( cellStore[0]->CreateScanner(suppressDeleted) );
-    mscannerA->AddScanner( cellStore[1]->CreateScanner(suppressDeleted) );
+    mscannerA->AddScanner( new CellStoreScannerV0(cellStorePtr[0]) );
+    mscannerA->AddScanner( new CellStoreScannerV0(cellStorePtr[1]) );
     mscanner->AddScanner(mscannerA);
 
     mscannerB = new MergeScanner(suppressDeleted);
-    mscannerB->AddScanner( cellStore[2]->CreateScanner(suppressDeleted) );
-    mscannerB->AddScanner( cellStore[3]->CreateScanner(suppressDeleted) );
+    mscannerB->AddScanner( new CellStoreScannerV0(cellStorePtr[2]) );
+    mscannerB->AddScanner( new CellStoreScannerV0(cellStorePtr[3]) );
     mscanner->AddScanner(mscannerB);
 
     mscanner->Reset();

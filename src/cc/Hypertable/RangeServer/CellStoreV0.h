@@ -29,7 +29,6 @@
 
 #include "BlockDeflater.h"
 #include "CellStore.h"
-#include "Constants.h"
 #include "Key.h"
 
 using namespace hypertable;
@@ -51,19 +50,17 @@ namespace hypertable {
     CellStoreV0(HdfsClient *client);
     virtual ~CellStoreV0();
 
-    int Create(const char *fname, size_t blockSize=Constants::DEFAULT_BLOCKSIZE);
+    virtual int Create(const char *fname, size_t blockSize=Constants::DEFAULT_BLOCKSIZE);
     virtual int Add(const KeyT *key, const ByteString32T *value);
-    int Finalize(uint64_t timestamp);
+    virtual int Finalize(uint64_t timestamp);
 
     virtual int Open(const char *fname, const KeyT *startKey, const KeyT *endKey);
     virtual int LoadIndex();
-    virtual CellListScanner *CreateScanner(bool suppressDeleted=false);
     virtual uint64_t GetLogCutoffTime();
     virtual uint64_t DiskUsage() { return mDiskUsage; }
     virtual KeyT *GetSplitKey();
     virtual std::string &GetFilename() { return mFilename; }
     virtual uint16_t GetFlags();
-    virtual int Close();
 
     friend class CellStoreScannerV0;
 

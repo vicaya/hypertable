@@ -50,7 +50,13 @@ CellStoreV0::CellStoreV0(HdfsClient *client) : mClient(client), mFilename(), mFd
 
 
 CellStoreV0::~CellStoreV0() {
+  int error;
   delete mBlockDeflater;
+  if (mFd != -1) {
+    if ((error = mClient->Close(mFd)) != Error::OK) {
+      LOG_VA_ERROR("Problem closing HDFS client - %s", Error::GetText(error));
+    }
+  }
 }
 
 
@@ -465,23 +471,13 @@ int CellStoreV0::LoadIndex() {
   return error;
 }
 
-
-int CellStoreV0::Close() {
-  int error = Error::OK;
-  if (mFd != -1)
-    error = mClient->Close(mFd);
-  return error;
-}
-
-
-
 /**
  * 
- */
+
 CellListScanner *CellStoreV0::CreateScanner(bool suppressDeleted) {
   return new CellStoreScannerV0(this);
 }
-
+ */
 
 void CellStoreV0::RecordSplitKey(const uint8_t *keyBytes) {
   mSplitKey.reset( CreateCopy((KeyT *)keyBytes) );

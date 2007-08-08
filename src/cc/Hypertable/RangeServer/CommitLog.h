@@ -22,7 +22,12 @@
 #include <queue>
 #include <string>
 
-#include "Common/read_write_mutex_generic.hpp"
+extern "C" {
+#include <sys/time.h>
+}
+
+#include <boost/shared_ptr.hpp>
+#include <boost/thread/mutex.hpp>
 
 namespace hypertable {
 
@@ -58,10 +63,16 @@ namespace hypertable {
     CommitLog(std::string &logDirRoot, std::string &logDir, int64_t logFileSize);
     virtual ~CommitLog() { return; }
     int Write(const char *tableName, uint8_t *data, uint32_t len, uint64_t timestamp);
+    int Close(uint64_t timestamp);
     int Purge(uint64_t timestamp);
     std::string &GetLogDir() { return mLogDir; }
-    boost::read_write_mutex &ReadWriteMutex() { return mRwMutex; }
-    uint64_t GetLastTimestamp() { return mLastTimestamp; }
+
+    uint64_t GetTimestamp() { 
+      struct timeval tval;
+      boost::mutex::scoped_lock lock(mMutex);
+      gettimeofday(&tval, 0);
+      return ((uint64_t)tval.tv_sec * 1000000LL) + (uint64_t)tval.tv_usec;
+    }
 
   protected:
     virtual int create(std::string &name, int32_t *fdp) = 0;
@@ -76,10 +87,12 @@ namespace hypertable {
     int64_t                    mCurLogLength;
     uint32_t                   mCurLogNum;
     int                        mFd;
-    boost::read_write_mutex    mRwMutex;
+    boost::mutex               mMutex;
     std::queue<CommitLogFileInfoT>   mFileInfoQueue;
-    uint64_t                   mLastTimestamp;
   };
+
+  typedef boost::shared_ptr<CommitLog> CommitLogPtr;
+  
 }
 
 #endif // HYPERTABLE_COMMITLOG_H

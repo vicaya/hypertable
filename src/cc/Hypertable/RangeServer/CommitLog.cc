@@ -29,7 +29,7 @@ using namespace hypertable;
 /**
  *
  */
-CommitLog::CommitLog(std::string &logDirRoot, std::string &logDir, int64_t logFileSize) : mLogDir(), mLogFile(), mMaxFileSize(logFileSize), mCurLogLength(0), mCurLogNum(0), mRwMutex(), mFileInfoQueue(), mLastTimestamp(0) {
+CommitLog::CommitLog(std::string &logDirRoot, std::string &logDir, int64_t logFileSize) : mLogDir(), mLogFile(), mMaxFileSize(logFileSize), mCurLogLength(0), mCurLogNum(0), mMutex(), mFileInfoQueue() {
   char buf[32];
 
   if (logDirRoot.find('/', logDirRoot.length()-1) == string::npos)
@@ -63,7 +63,6 @@ int CommitLog::Write(const char *tableName, uint8_t *data, uint32_t len, uint64_
   // marker
   memcpy(header->marker, "-BLOCK--", 8);
 
-  mLastTimestamp = timestamp;
   header->timestamp = timestamp;
 
   // length
@@ -132,6 +131,31 @@ int CommitLog::Write(const char *tableName, uint8_t *data, uint32_t len, uint64_
 
     mCurLogLength = 0;
   }
+
+  return Error::OK;
+}
+
+
+
+/**
+ * 
+ */
+int CommitLog::Close(uint64_t timestamp) {
+  CommitLogHeaderT header;
+  int error = Error::OK;
+  memcpy(header.marker, "-BLOCK--", 8);
+  header.timestamp = timestamp;
+  header.checksum = 0;
+  header.length = sizeof(CommitLogHeaderT);
+
+  if ((error = this->write(mFd, &header, sizeof(CommitLogHeaderT))) != Error::OK)
+    return error;
+
+  if ((error = this->sync(mFd)) != Error::OK)
+    return error;
+
+  if ((error = this->close(mFd)) != Error::OK)
+    return error;
 
   return Error::OK;
 }

@@ -36,7 +36,6 @@
 #include "FileBlockCache.h"
 #include "RangeServerProtocol.h"
 #include "ScannerMap.h"
-#include "SplitLogMap.h"
 #include "TableInfo.h"
 
 namespace hypertable {
@@ -66,7 +65,6 @@ namespace hypertable {
     static int32_t        localityGroupMaxMemory;
     static ScannerMap     scannerMap;
     static hypertable::FileBlockCache *blockCache;
-    static SplitLogMap    splitLogMap;
 
     static bool GetTableInfo(string &name, TableInfoPtr &info);
     static void SetTableInfo(string &name, TableInfoPtr &info);

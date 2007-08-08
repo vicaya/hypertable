@@ -23,13 +23,13 @@
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
-
-#include "Common/read_write_mutex_generic.hpp"
+#include <boost/thread/condition.hpp>
 
 #include "Hypertable/Schema.h"
 
 #include "AccessGroup.h"
 #include "CellStore.h"
+#include "CommitLog.h"
 #include "Key.h"
 #include "RangeInfo.h"
 
@@ -47,8 +47,6 @@ namespace hypertable {
     virtual CellListScanner *CreateScanner(bool suppressDeleted);
     virtual void Lock();
     virtual void Unlock();
-    virtual void LockShareable();
-    virtual void UnlockShareable();
     virtual KeyT *GetSplitKey();
 
     uint64_t GetLogCutoffTime();
@@ -57,9 +55,26 @@ namespace hypertable {
 
     string &StartRow() { return mStartRow; }
     string &EndRow() { return mEndRow; }
-    bool CheckAndSetMaintenance();
-    void ClearMaintenenceMode() { mMaintenanceMode = false; }
+
+    void ScheduleMaintenance(uint64_t timestamp);
+    void ClearMaintenenceMode() {
+      boost::mutex::scoped_lock lock(mMutex);
+      mMaintenanceMode = false;
+    }
     void DoMaintenance(uint64_t timestamp);
+
+    void IncrementUpdateCounter();
+    void DecrementUpdateCounter();
+
+    bool GetSplitInfo(KeyPtr &splitKeyPtr, CommitLogPtr &splitLogPtr, uint64_t *splitStartTime) {
+      boost::mutex::scoped_lock lock(mMutex);
+      *splitStartTime = mSplitStartTime;
+      if (mSplitStartTime == 0)
+	return false;
+      splitKeyPtr = mSplitKeyPtr;
+      splitLogPtr = mSplitLogPtr;
+      return true;
+    }
 
     std::vector<AccessGroup *> &AccessGroupVector() { return mAccessGroupVector; }
     AccessGroup *GetAccessGroup(string &lgName) { return mAccessGroupMap[lgName]; }
@@ -69,7 +84,7 @@ namespace hypertable {
     void ReplayCommitLog(string &logDir, uint64_t minLogCutoff);
     bool ExtractAccessGroupFromPath(std::string &path, std::string &name, uint32_t *tableIdp);
 
-    boost::mutex     mMaintenanceMutex;
+    boost::mutex     mMutex;
     std::string      mTableName;
     SchemaPtr        mSchema;
     std::string      mStartRow;
@@ -80,6 +95,16 @@ namespace hypertable {
     std::vector<AccessGroup *>  mAccessGroupVector;
     ColumnFamilyVectorT      mColumnFamilyVector;
     bool       mMaintenanceMode;
+
+    uint64_t         mSplitStartTime;
+    KeyPtr           mSplitKeyPtr;
+    CommitLogPtr     mSplitLogPtr;
+
+    boost::mutex     mSplitMutex;
+    boost::condition mSplitFinishedCond;
+    boost::condition mSplitReadyCond;
+    bool             mSplitPending;
+    uint32_t         mUpdateCounter;
   };
 
   typedef boost::shared_ptr<Range> RangePtr;

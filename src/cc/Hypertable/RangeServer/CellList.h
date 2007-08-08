@@ -28,11 +28,6 @@ namespace hypertable {
   public:
     virtual ~CellList() { return; }
     virtual int Add(const KeyT *key, const ByteString32T *value) = 0;
-    virtual CellListScanner *CreateScanner(bool suppressDeleted=false) = 0;
-    virtual void Lock() { return; }
-    virtual void Unlock() { return; }
-    virtual void LockShareable() { return; }
-    virtual void UnlockShareable() { return; }
   };
 
 }

@@ -1,11 +1,18 @@
 
+LoadRange
+
+TBD...
+Check for SplitPoint metadata entry, if exists and there isn't an entry for the new split off portion,
+the replay the split log
+
+
 Updating
 
-1. Obtain an "update timestamp" from Commit Log
-2. Lock the split mutex for the Range
-3. If the splitPending flag set, wait on the PendingUpdates condition variable
+1. Lock the split mutex for the Range
+2. If the splitPending flag set, wait on the SplitFinished condition variable
    increment update counter
-4. Unlock the split mutex
+3. Unlock the split mutex
+4. Obtain an "update timestamp" from Commit Log
 5. Sort modifications into three sets GO, STOP, and SPLIT
   A. GO mods lie within the specified range
   B. STOP mods lie outside the specified range (because of prior split)
@@ -24,7 +31,7 @@ Updating
 11. Unlock the Range's (CellCache) access locks
 12. Lock the split mutex for the Range
 13. Decrement update counter
-14. If counter is zero, signal the FinishSplit condition variable
+14. If counter is zero, signal the SplitReady condition variable
 15. Unlock the split mutex
 16. Send back STOP modifications
 
@@ -78,7 +85,7 @@ Split
 6. Update METADATA entry for existing range with new end row and remove split log info
 7. Lock the split mutex for the Range
 8. Set the splitPending flag to true
-9. Wait on the FinishSplit condition variable
+9. Wait on the SplitReady condition variable
 10. Do the actual split
   A. Create new CellCaches (memtables) for each AccessGroup in the range
   B. Copy the old CellCache entries for the remaining portion of the split to the
@@ -90,7 +97,7 @@ Split
    pointers to the old CellCache and CellStore objects.  These objects will get
    garbage collected when the last scanner finishes]
 11. Set the splitPending flag to false
-12. Signal the PendingUpdates condition variable (to unblock the pending updates)
+12. Signal the SplitFinished condition variable (to unblock the pending updates)
 13. Unlock the split mutex
 
 === At this point the range server is no longer serving the "split off" ===

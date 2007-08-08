@@ -32,17 +32,19 @@ extern "C" {
 #include "CommitLogLocal.h"
 #include "CommitLogReaderLocal.h"
 #include "Global.h"
+#include "MaintenanceThread.h"
 #include "MergeScanner.h"
 #include "Range.h"
-#include "SplitLogMap.h"
 
 using namespace hypertable;
 using namespace std;
 
-Range::Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), mMaintenanceMutex(), mSchema(schemaPtr), mAccessGroupMap(), mAccessGroupVector(), mColumnFamilyVector(), mMaintenanceMode(false) {
-  CellStoreV0 *cellStore;
-  std::string localityGroupName;
-  AccessGroup *lg;
+
+
+Range::Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), mMutex(), mSchema(schemaPtr), mAccessGroupMap(), mAccessGroupVector(), mColumnFamilyVector(), mMaintenanceMode(false), mSplitStartTime(0), mSplitKeyPtr(), mSplitLogPtr(), mSplitMutex(), mSplitFinishedCond(), mSplitReadyCond(), mSplitPending(false), mUpdateCounter(0) {
+  CellStorePtr cellStorePtr;
+  std::string accessGroupName;
+  AccessGroup *ag;
   uint64_t minLogCutoff = 0;
   uint32_t storeId;
   KeyT *startKey=0, *endKey=0;
@@ -72,14 +74,14 @@ Range::Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), mMa
 
   mColumnFamilyVector.resize( mSchema->GetMaxColumnFamilyId() + 1 );
 
-  list<Schema::AccessGroup *> *lgList = mSchema->GetAccessGroupList();
+  list<Schema::AccessGroup *> *agList = mSchema->GetAccessGroupList();
 
-  for (list<Schema::AccessGroup *>::iterator lgIter = lgList->begin(); lgIter != lgList->end(); lgIter++) {
-    lg = new AccessGroup((*lgIter), rangeInfoPtr);
-    mAccessGroupMap[(*lgIter)->name] = lg;
-    mAccessGroupVector.push_back(lg);
-    for (list<Schema::ColumnFamily *>::iterator cfIter = (*lgIter)->columns.begin(); cfIter != (*lgIter)->columns.end(); cfIter++)
-      mColumnFamilyVector[(*cfIter)->id] = lg;
+  for (list<Schema::AccessGroup *>::iterator agIter = agList->begin(); agIter != agList->end(); agIter++) {
+    ag = new AccessGroup((*agIter), rangeInfoPtr);
+    mAccessGroupMap[(*agIter)->name] = ag;
+    mAccessGroupVector.push_back(ag);
+    for (list<Schema::ColumnFamily *>::iterator cfIter = (*agIter)->columns.begin(); cfIter != (*agIter)->columns.end(); cfIter++)
+      mColumnFamilyVector[(*cfIter)->id] = ag;
   }
 
   /**
@@ -88,29 +90,24 @@ Range::Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), mMa
   vector<string> cellStoreVector;
   rangeInfoPtr->GetTables(cellStoreVector);
   for (size_t i=0; i<cellStoreVector.size(); i++) {
-    cellStore = new CellStoreV0(Global::hdfsClient);
-    if (!ExtractAccessGroupFromPath(cellStoreVector[i], localityGroupName, &storeId)) {
+    cellStorePtr.reset( new CellStoreV0(Global::hdfsClient) );
+    if (!ExtractAccessGroupFromPath(cellStoreVector[i], accessGroupName, &storeId)) {
       LOG_VA_ERROR("Unable to extract locality group name from path '%s'", cellStoreVector[i].c_str());
       continue;
     }
-    if (cellStore->Open(cellStoreVector[i].c_str(), startKey, endKey) != Error::OK) {
-      delete cellStore;
+    if (cellStorePtr->Open(cellStoreVector[i].c_str(), startKey, endKey) != Error::OK)
+      continue;
+    if (cellStorePtr->LoadIndex() != Error::OK)
+      continue;
+    ag = mAccessGroupMap[accessGroupName];
+    if (ag == 0) {
+      LOG_VA_ERROR("Unrecognized locality group name '%s' in path '%s'", accessGroupName.c_str(), cellStoreVector[i].c_str());
       continue;
     }
-    if (cellStore->LoadIndex() != Error::OK) {
-      delete cellStore;
-      continue;
-    }
-    lg = mAccessGroupMap[localityGroupName];
-    if (lg == 0) {
-      LOG_VA_ERROR("Unrecognized locality group name '%s' in path '%s'", localityGroupName.c_str(), cellStoreVector[i].c_str());
-      delete cellStore;
-      continue;
-    }
-    if (minLogCutoff == 0 || cellStore->GetLogCutoffTime() < minLogCutoff)
-      minLogCutoff = cellStore->GetLogCutoffTime();
-    lg->AddCellStore(cellStore, storeId);
-    //cout << "Just added " << cellStoreVector[i].c_str() << endl;
+    if (minLogCutoff == 0 || cellStorePtr->GetLogCutoffTime() < minLogCutoff)
+      minLogCutoff = cellStorePtr->GetLogCutoffTime();
+    ag->AddCellStore(cellStorePtr, storeId);
+    //cout << "Just added " << cellStorePtrVector[i].c_str() << endl;
   }
 
   /**
@@ -234,97 +231,151 @@ uint64_t Range::GetLogCutoffTime() {
 /**
  * 
  */
-bool Range::CheckAndSetMaintenance() {
-  boost::mutex::scoped_lock lock(mMaintenanceMutex);
-  if (NeedMaintenance()) {
-      mMaintenanceMode = true;
-      return true;
-  }
-  return false;
-}
+void Range::ScheduleMaintenance(uint64_t timestamp) {
+  boost::mutex::scoped_lock lock(mMutex);
 
-
-bool Range::NeedMaintenance() {
-  uint64_t du;
   if (mMaintenanceMode)
-    return false;
+    return;
+
   // Need split?
-  du = DiskUsage();
-  if (du > Global::rangeMaxBytes)
-    return true;
-  // Need compaction?
-  for (size_t i=0; i<mAccessGroupVector.size(); i++) {
-    if (mAccessGroupVector[i]->NeedsCompaction())
-      return true;
+  if (DiskUsage() > Global::rangeMaxBytes) {
+    mMaintenanceMode = true;
+    MaintenanceThread::ScheduleMaintenance(this, timestamp);
   }
-  return false;
+  else {
+    // Need compaction?
+    for (size_t i=0; i<mAccessGroupVector.size(); i++) {
+      if (mAccessGroupVector[i]->NeedsCompaction()) {
+	mMaintenanceMode = true;
+	MaintenanceThread::ScheduleMaintenance(this, timestamp);
+	break;
+      }
+    }
+  }
 }
+
 
 void Range::DoMaintenance(uint64_t timestamp) {
   assert(mMaintenanceMode);
   if (DiskUsage() > Global::rangeMaxBytes) {
+    KeyT *key;
+    std::string splitPoint;
+    std::string splitLogDir;
+    char md5DigestStr[33];
+    RangeInfoPtr rangeInfoPtr;
+    int error;
+
+    key = GetSplitKey();
+    assert(key);
+
+    splitPoint = (const char *)key->data;
+
+    /**
+     * Create Split LOG
+     */
+    md5_string(splitPoint.c_str(), md5DigestStr);
+    md5DigestStr[24] = 0;
+    std::string::size_type pos = Global::logDir.rfind("primary", Global::logDir.length());
+    assert (pos != std::string::npos);
+    splitLogDir = Global::logDir.substr(0, pos) + md5DigestStr;
+
+    // Create split log dir
+    string logDir = Global::logDirRoot + splitLogDir;
+    if (!FileUtils::Mkdirs(logDir.c_str())) {
+      LOG_VA_ERROR("Problem creating local log directory '%s'", logDir.c_str());
+      exit(1);
+    }
+
+    /**
+     *  Update METADATA with split information
+     */
+    if ((error = Global::metadata->GetRangeInfo(mTableName, mStartRow, mEndRow, rangeInfoPtr)) != Error::OK) {
+      LOG_VA_ERROR("Unable to find range (table='%s' startRow='%s' endRow='%s') in metadata - %s",
+		   mTableName.c_str(), mStartRow.c_str(), mEndRow.c_str(), Error::GetText(error));
+      exit(1);
+    }
+    rangeInfoPtr->SetSplitPoint(splitPoint);
+    rangeInfoPtr->SetSplitLogDir(splitLogDir);
+    Global::metadata->Sync();
+
+    /**
+     * Atomically obtain split start time and install split log
+     */
     {
-      boost::read_write_mutex::scoped_write_lock lock(Global::log->ReadWriteMutex());
-      KeyT *key;
-      std::string splitLogDir;
-      std::string splitPoint;
-      char md5DigestStr[33];
-      RangeInfoPtr rangeInfoPtr;
-      int error;
-      SplitLogMap::SplitLogInfoT *splitLogInfo = 0;
+      boost::mutex::scoped_lock lock(mMutex);
+      mSplitStartTime = Global::log->GetTimestamp();
+      mSplitKeyPtr.reset( CreateCopy(key) );
+      mSplitLogPtr.reset( new CommitLogLocal(Global::logDirRoot, splitLogDir, 0x100000000LL) );
+    }
 
-      key = GetSplitKey();
-      assert(key);
+    /**
+     * Perform major compaction
+     */
+    for (size_t i=0; i<mAccessGroupVector.size(); i++) {
+      mAccessGroupVector[i]->RunCompaction(mSplitStartTime, true);  // verify the timestamp
+    }
 
-      splitPoint = (const char *)key->data;
+    /**
+     * Create METADATA entry for new range
+     */
+    {
+      RangeInfoPtr newRangePtr( new RangeInfo() );
+      newRangePtr->SetTableName(mTableName);
+      newRangePtr->SetStartRow(splitPoint);
+      newRangePtr->SetEndRow(mEndRow);
+      newRangePtr->SetSplitLogDir(splitLogDir);
+      Global::metadata->AddRangeInfo(newRangePtr);
+      Global::metadata->Sync();
+    }
 
-      md5_string(splitPoint.c_str(), md5DigestStr);
-      md5DigestStr[24] = 0;
-
-      std::string::size_type pos = Global::logDir.rfind("primary", Global::logDir.length());
-      assert (pos != std::string::npos);
-      
-      splitLogDir = Global::logDir.substr(0, pos) + md5DigestStr;
-
-      // create split log dir
-      string logDir = Global::logDirRoot + splitLogDir;
-      if (!FileUtils::Mkdirs(logDir.c_str())) {
-	LOG_VA_ERROR("Problem creating local log directory '%s'", logDir.c_str());
-	exit(1);
-      }
-
-      /**
-       *  Update METADATA with split information
-       */
-      if ((error = Global::metadata->GetRangeInfo(mTableName, mStartRow, mEndRow, rangeInfoPtr)) != Error::OK) {
-	LOG_VA_ERROR("Unable to find range (table='%s' startRow='%s' endRow='%s') in metadata - %s",
-		     mTableName.c_str(), mStartRow.c_str(), mEndRow.c_str(), Error::GetText(error));
-	exit(1);
-      }
-      rangeInfoPtr->SetSplitPoint(splitPoint);
+    /**
+     *  Shrink range and remove pending split info from METADATA for existing range
+     */
+    {
+      boost::mutex::scoped_lock lock(mMutex);      
+      mEndRow = splitPoint;
+      splitLogDir = "";
+      rangeInfoPtr->SetEndRow(mEndRow);
       rangeInfoPtr->SetSplitLogDir(splitLogDir);
       Global::metadata->Sync();
+    }
 
-      /**
-       * Create Split log info and insert into split log map
-       */
-      splitLogInfo = new SplitLogMap::SplitLogInfoT;
-      timestamp = Global::log->GetLastTimestamp();  // make sure this makes sense!!!
-      splitLogInfo->cutoffTime = timestamp;
-      splitLogInfo->rangeInfo = new RangeInfo();
-      splitLogInfo->rangeInfo->SetTableName(mTableName);
-      splitLogInfo->rangeInfo->SetStartRow(splitPoint);
-      splitLogInfo->rangeInfo->SetEndRow(mEndRow);
-      splitLogInfo->rangeInfo->SetSplitLogDir(splitLogDir);
-      splitLogInfo->splitLog = new CommitLogLocal(Global::logDirRoot, splitLogDir, 0x100000000LL);
-      Global::splitLogMap.Insert(splitLogInfo);
+    /**
+     *  Do the split
+     */
+    {
+      boost::mutex::scoped_lock lock(mSplitMutex);
+
+      {
+	boost::mutex::scoped_lock lock(mMutex);
+	mSplitStartTime = 0;
+	mSplitKeyPtr.reset(0);
+      }
+
+      mSplitPending = true;
+
+      while (mUpdateCounter > 0)
+	mSplitReadyCond.wait(lock);
+
+      // at this point, there are no running updates
+
+      // TBD: Do the actual split
+
+      mSplitPending = false;
+
+      mSplitFinishedCond.notify_all();
     }
-    LOG_INFO("SPLITTING!");
-    for (size_t i=0; i<mAccessGroupVector.size(); i++) {
-      mAccessGroupVector[i]->RunCompaction(timestamp, true);
-      poll(0, 0, 100);  // hack: allow updates to proceed
+
+    if ((error = mSplitLogPtr->Close(Global::log->GetTimestamp())) != Error::OK) {
+      LOG_VA_ERROR("Problem closing split log '%s' - %s", mSplitLogPtr->GetLogDir().c_str(), Error::GetText(error));
     }
-    LOG_INFO("DONE SPLITTING!");
+    mSplitLogPtr.reset();
+
+    /**
+     *  TBD:  Notify Master of split
+     */
+    LOG_VA_INFO("Split Complete.  New Range: start=%s", splitPoint.c_str());
+
   }
   else {
     for (size_t i=0; i<mAccessGroupVector.size(); i++) {
@@ -333,7 +384,7 @@ void Range::DoMaintenance(uint64_t timestamp) {
     }
   }
   {
-    boost::mutex::scoped_lock lock(mMaintenanceMutex);  // is this necessary?
+    boost::mutex::scoped_lock lock(mMutex);  // is this necessary?
     mMaintenanceMode = false;
   }
 }
@@ -349,18 +400,6 @@ void Range::Lock() {
 void Range::Unlock() {
   for (AccessGroupMapT::iterator iter = mAccessGroupMap.begin(); iter != mAccessGroupMap.end(); iter++)
     (*iter).second->Unlock();
-}
-
-
-void Range::LockShareable() {
-  for (AccessGroupMapT::iterator iter = mAccessGroupMap.begin(); iter != mAccessGroupMap.end(); iter++)
-    (*iter).second->LockShareable();
-}
-
-
-void Range::UnlockShareable() {
-  for (AccessGroupMapT::iterator iter = mAccessGroupMap.begin(); iter != mAccessGroupMap.end(); iter++)
-    (*iter).second->UnlockShareable();
 }
 
 
@@ -463,4 +502,26 @@ void Range::ReplayCommitLog(string &logDir, uint64_t minLogCutoff) {
 
   LOG_VA_INFO("LOAD RANGE replayed %d updates (%d blocks) from commit log '%s'", count, nblocks, logDir.c_str());
 
+}
+
+
+/**
+ *
+ */
+void Range::IncrementUpdateCounter() {
+  boost::mutex::scoped_lock lock(mSplitMutex);
+  while (mSplitPending)
+    mSplitFinishedCond.wait(lock);
+  mUpdateCounter++;
+}
+
+
+/**
+ *
+ */
+void Range::DecrementUpdateCounter() {
+  boost::mutex::scoped_lock lock(mSplitMutex);
+  mUpdateCounter--;
+  if (mSplitPending && mUpdateCounter == 0)
+    mSplitReadyCond.notify_one();
 }

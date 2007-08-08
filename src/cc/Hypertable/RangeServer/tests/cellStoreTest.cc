@@ -39,8 +39,10 @@ extern "C" {
 #include "AsyncComm/ReactorFactory.h"
 
 #include "HdfsClient/HdfsClient.h"
+#include "Hypertable/RangeServer/CellStoreScannerV0.h"
 #include "Hypertable/RangeServer/CellStoreV0.h"
 #include "Hypertable/RangeServer/CellCache.h"
+#include "Hypertable/RangeServer/CellCacheScanner.h"
 
 #include "Hypertable/RangeServer/FileBlockCache.h"
 #include "Hypertable/RangeServer/Global.h"
@@ -152,10 +154,10 @@ int main(int argc, char **argv) {
   if (!client->WaitForConnection(10))
     harness.DisplayErrorAndExit();
 
-  CellStoreV0 *cellStore = new CellStoreV0(client);
-  CellCache *memtable = new CellCache();
+  CellStorePtr cellStorePtr( new CellStoreV0(client) );
+  CellCachePtr cellCachePtr( new CellCache() );
 
-  if (cellStore->Create("/cellStore.tmp") != 0)
+  if (cellStorePtr->Create("/cellStore.tmp") != 0)
     harness.DisplayErrorAndExit();
 
   typedef std::map<KeyPtr, ByteString32Ptr, ltKeyPtr> KeyValueMapT;
@@ -206,8 +208,8 @@ int main(int argc, char **argv) {
   for (KeyValueMapT::iterator iter = kvMap.begin(); iter != kvMap.end(); iter++) {
     key = (KeyT *)(*iter).first.get();
     value = (ByteString32T *)(*iter).second.get();
-    cellStore->Add(key, value);
-    memtable->Add(key, value);
+    cellStorePtr->Add(key, value);
+    cellCachePtr->Add(key, value);
   }
 
   /**
@@ -218,7 +220,7 @@ int main(int argc, char **argv) {
   replacedFiles.push_back(fname);
   **/
 
-  if (cellStore->Finalize(1234567) != 0) {
+  if (cellStorePtr->Finalize(1234567) != 0) {
     cout << "Problem finalizing CellStore '/cellStore.tmp'" << endl;
     exit(1);
   }
@@ -228,8 +230,7 @@ int main(int argc, char **argv) {
   /**
    * Scan through newly created table dumping out keys
    */
-  cellStore->LockShareable();
-  scanner = cellStore->CreateScanner();
+  scanner = new CellStoreScannerV0( cellStorePtr );
   scanner->RestrictRange(startKey, endKey);
   scanner->Reset();
 
@@ -248,23 +249,20 @@ int main(int argc, char **argv) {
   outstreamA.close();
 
   delete scanner;
-  cellStore->UnlockShareable();
-  delete cellStore;
 
   /**
    * Scan through re-opened table dumping out keys
    */
 
-  cellStore = new CellStoreV0(client);
+  cellStorePtr.reset( new CellStoreV0(client) );
 
-  if (cellStore->Open("/cellStore.tmp", 0, 0) != 0)
+  if (cellStorePtr->Open("/cellStore.tmp", 0, 0) != 0)
     harness.DisplayErrorAndExit();
 
-  if (cellStore->LoadIndex() != 0)
+  if (cellStorePtr->LoadIndex() != 0)
     harness.DisplayErrorAndExit();    
 
-  cellStore->LockShareable();
-  scanner = cellStore->CreateScanner();
+  scanner = new CellStoreScannerV0( cellStorePtr );
   scanner->RestrictRange(startKey, endKey);
   scanner->Reset();
 
@@ -283,8 +281,6 @@ int main(int argc, char **argv) {
   outstreamB.close();
 
   delete scanner;
-  cellStore->UnlockShareable();
-  delete cellStore;
   
   string command = (string)"diff " + outfileA + " " + outfileB;
   if (system(command.c_str())) {
@@ -292,8 +288,7 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  memtable->LockShareable();
-  scanner = memtable->CreateScanner();
+  scanner = new CellCacheScanner( cellCachePtr );
   scanner->RestrictRange(startKey, endKey);
   scanner->Reset();
 
@@ -312,8 +307,6 @@ int main(int argc, char **argv) {
   outstreamC.close();
 
   delete scanner;
-  memtable->UnlockShareable();
-  delete memtable;
 
   command = (string)"diff " + outfileA + " " + outfileC;
   if (system(command.c_str())) {

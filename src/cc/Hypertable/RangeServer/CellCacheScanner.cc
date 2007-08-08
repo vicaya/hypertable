@@ -27,7 +27,7 @@
 /**
  * 
  */
-CellCacheScanner::CellCacheScanner(CellCache *memtable) : CellListScanner(), mTable(memtable) {
+CellCacheScanner::CellCacheScanner(CellCachePtr &cellCachePtr) : CellListScanner(), mCellCachePtr(cellCachePtr), mCellCacheMutex(cellCachePtr->mMutex), mCurKey(0), mCurValue(0), mEos(false) {
 }
 
 
@@ -35,30 +35,40 @@ CellCacheScanner::CellCacheScanner(CellCache *memtable) : CellListScanner(), mTa
  *
  */
 void CellCacheScanner::Reset() {
+  boost::mutex::scoped_lock lock(mCellCacheMutex);
+
   if (mRangeStart == 0)
-    mStartIter = mTable->mCellMap->begin();
+    mStartIter = mCellCachePtr->mCellMap.begin();
   else
-    mStartIter = mTable->mCellMap->lower_bound(mRangeStartPtr);
+    mStartIter = mCellCachePtr->mCellMap.lower_bound(mRangeStartPtr);
   if (mRangeEnd == 0)
-    mEndIter = mTable->mCellMap->end();
+    mEndIter = mCellCachePtr->mCellMap.end();
   else
-    mEndIter = mTable->mCellMap->lower_bound(mRangeEndPtr);
+    mEndIter = mCellCachePtr->mCellMap.lower_bound(mRangeEndPtr);
   mCurIter = mStartIter;
+  if (mCurIter != mEndIter) {
+    mCurKey = (KeyT *)(*mCurIter).first.get();
+    mCurValue = (ByteString32T *)(*mCurIter).second.get();
+    mEos = false;
+  }
+  else
+    mEos = true;
   mReset = true;
 }
 
 
 bool CellCacheScanner::Get(KeyT **keyp, ByteString32T **valuep) {
   assert(mReset);
-  if (mCurIter != mEndIter) {
-    *keyp = (KeyT *)(*mCurIter).first.get();
-    *valuep = (ByteString32T *)(*mCurIter).second.get();
+  if (!mEos) {
+    *keyp = mCurKey;
+    *valuep = mCurValue;
     return true;
   }
   return false;
 }
 
 void CellCacheScanner::Forward() {
+  boost::mutex::scoped_lock lock(mCellCacheMutex);
   KeyT *key;
   KeyComponentsT keyComps;
 
@@ -67,10 +77,13 @@ void CellCacheScanner::Forward() {
     key = (KeyT *)(*mCurIter).first.get();
     if (!Load(key, keyComps)) {
       LOG_ERROR("Problem parsing key!");
-      break;
     }
-    if (mFamilyMask[keyComps.columnFamily])
-      break;
+    else if (mFamilyMask[keyComps.columnFamily]) {
+      mCurKey = (KeyT *)(*mCurIter).first.get();
+      mCurValue = (ByteString32T *)(*mCurIter).second.get();
+      return;
+    }
     mCurIter++;
   }
+  mEos = true;
 }

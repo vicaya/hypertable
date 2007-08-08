@@ -30,7 +30,7 @@ namespace hypertable {
 
   class CellStoreScannerV0 : public CellListScanner {
   public:
-    CellStoreScannerV0(CellStoreV0 *store);
+    CellStoreScannerV0(CellStorePtr &cellStorePtr);
     virtual ~CellStoreScannerV0();
     virtual void Lock() { return; }
     virtual void Unlock() { return; }
@@ -54,13 +54,9 @@ namespace hypertable {
 
     bool Initialize();
 
-    CellStoreV0            *mStore;
-    HdfsClient             *mClient;
-    int32_t                 mFd;
-    HdfsProtocol           *mProtocol;
-    std::string             mFilename;
+    CellStorePtr            mCellStorePtr;
+    CellStoreV0            *mCellStoreV0;
     CellStoreV0::IndexMapT  mIndex;
-    uint32_t                mDataEndOffset;
 
     CellStoreV0::IndexMapT::iterator mIter;
 

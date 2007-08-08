@@ -17,14 +17,12 @@
  */
 
 #include <cassert>
-
-#include "CellCacheScanner.h"
+#include <iostream>
 
 #include "Common/Logger.h"
 
 #include "CellCache.h"
-
-#include <iostream>
+#include "CellCacheScanner.h"
 
 using namespace hypertable;
 using namespace std;
@@ -45,9 +43,9 @@ int CellCache::Add(const KeyT *key, const ByteString32T *value) {
   addedMem += Length(value);
 
   KeyPtr keyPtr(newKey);
-  CellMapT::iterator iter = mCellMap->lower_bound(keyPtr);
+  CellMapT::iterator iter = mCellMap.lower_bound(keyPtr);
 
-  mCellMap->insert(iter, CellMapT::value_type(keyPtr, ByteString32Ptr(newValue)));
+  mCellMap.insert(iter, CellMapT::value_type(keyPtr, ByteString32Ptr(newValue)));
 
   mMemoryUsed += addedMem;
 
@@ -56,40 +54,26 @@ int CellCache::Add(const KeyT *key, const ByteString32T *value) {
 
 
 
-/**
- *
- */
-CellListScanner *CellCache::CreateScanner(bool suppressDeleted) {
-  return new CellCacheScanner(this);
-}
-
-
-
-/**
- *
- */
-void CellCache::Purge(uint64_t timestamp) {
-  CellMapT *newMap = new CellMapT;
+CellCache *CellCache::SliceCopy(uint64_t timestamp) {
+  boost::mutex::scoped_lock lock(mMutex);
+  CellCache *cache = new CellCache();
   KeyComponentsT keyComps;
+  KeyT *key;
+  ByteString32T *value;
 
-  mMemoryUsed = 0;
 
-  for (CellMapT::iterator iter = mCellMap->begin(); iter != mCellMap->end(); iter++) {
+  for (CellMapT::iterator iter = mCellMap.begin(); iter != mCellMap.end(); iter++) {
 
     if (!Load((KeyT *)(*iter).first.get(), keyComps)) {
       LOG_ERROR("Problem deserializing key/value pair");
       continue;
     }
 
-    if (keyComps.timestamp > timestamp) {
-      mMemoryUsed += sizeof(CellMapT::value_type);
-      mMemoryUsed += Length((KeyT *)(*iter).first.get());
-      mMemoryUsed += Length((ByteString32T *)(*iter).second.get());
-      newMap->insert(CellMapT::value_type((*iter).first, (*iter).second));
-    }
+    if (keyComps.timestamp > timestamp)
+      cache->Add((*iter).first.get(), (*iter).second.get());
 
   }
 
-  delete mCellMap;
-  mCellMap = newMap;
+  return cache;
 }
+

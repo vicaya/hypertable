@@ -29,6 +29,7 @@
 
 #include "HdfsClient/HdfsClient.h"
 #include "Hypertable/RangeServer/CellStoreV0.h"
+#include "Hypertable/RangeServer/CellStoreScannerV0.h"
 #include "Hypertable/RangeServer/Global.h"
 #include "Hypertable/RangeServer/Key.h"
 
@@ -60,6 +61,7 @@ int main(int argc, char **argv) {
   KeyT *key;
   ByteString32T *value;
   bool trailer_only = false;
+  CellStorePtr cellStorePtr;
 
   ReactorFactory::Initialize(1);
   System::Initialize(argv[0]);
@@ -106,39 +108,34 @@ int main(int argc, char **argv) {
   /**
    * Open cellStore
    */
-  CellStoreV0 *cellStore = new CellStoreV0(client);
+  cellStorePtr.reset( new CellStoreV0(client) );
   CellListScanner *scanner = 0;
 
-  if (cellStore->Open(fname.c_str(), 0, 0) != 0)
+  if (cellStorePtr->Open(fname.c_str(), 0, 0) != 0)
     return 1;
 
-  if (cellStore->LoadIndex() != 0)
+  if (cellStorePtr->LoadIndex() != 0)
     return 1;
 
   /**
    * Dump keys
    */
   if (!trailer_only) {
-    cellStore->LockShareable();
-    scanner = cellStore->CreateScanner();
+    scanner = new CellStoreScannerV0(cellStorePtr);
     scanner->Reset();
     while (scanner->Get(&key, &value)) {
       cout << *key << endl;
       scanner->Forward();
     }
     delete scanner;
-    cellStore->UnlockShareable();
   }
 
   /**
    * Dump trailer
    */
-  cout << "timestamp " << cellStore->GetLogCutoffTime() << endl;
-  KeyT *splitKey = cellStore->GetSplitKey();
+  cout << "timestamp " << cellStorePtr->GetLogCutoffTime() << endl;
+  KeyT *splitKey = cellStorePtr->GetSplitKey();
   cout << "split key '" << *splitKey << "'" << endl;
-
-
-  delete cellStore;
 
   return 0;
 }

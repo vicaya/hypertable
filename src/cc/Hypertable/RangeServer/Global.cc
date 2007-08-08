@@ -42,7 +42,6 @@ int32_t                Global::localityGroupMergeFiles = 0;
 int32_t                Global::localityGroupMaxMemory = 0;
 ScannerMap             Global::scannerMap;
 FileBlockCache        *Global::blockCache = 0;
-SplitLogMap            Global::splitLogMap;
 
 
 /**

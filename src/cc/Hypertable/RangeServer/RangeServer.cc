@@ -287,10 +287,8 @@ void RangeServer::Compact(ResponseCallback *cb, TabletIdentifierT *tablet, uint8
     goto abort;
   }
 
-  {
-    boost::read_write_mutex::scoped_write_lock lock(Global::log->ReadWriteMutex());
-    commitTime = Global::log->GetLastTimestamp();
-  }
+  /** Get compaction timestamp **/
+  commitTime = Global::log->GetTimestamp();
 
   MaintenanceThread::ScheduleCompaction(rangePtr.get(), workType, commitTime, accessGroup);
 
@@ -342,11 +340,9 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, TabletIdentif
   KeyT          *endKey = 0;
   int error = Error::OK;
   std::string errMsg;
-  //std::string tableName = tablet->tableName;
   std::string tableName;
   TableInfoPtr tableInfoPtr;
   RangePtr rangePtr;
-  //string startRow = tablet->startRow;
   string startRow;
   CellListScannerPtr scannerPtr;
   bool more = true;
@@ -404,7 +400,6 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, TabletIdentif
   kvBuffer = new uint8_t [ sizeof(int32_t) + DEFAULT_SCANBUF_SIZE ];
   kvLenp = (uint32_t *)kvBuffer;
 
-  rangePtr->LockShareable();
   if (columnFamilies.size() > 0) 
     scannerPtr.reset( rangePtr->CreateScanner(columnFamilies, true) );
   else
@@ -416,8 +411,6 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, TabletIdentif
   more = FillScanBlock(scannerPtr, kvBuffer+sizeof(int32_t), DEFAULT_SCANBUF_SIZE, kvLenp);
   if (more)
     id = Global::scannerMap.Put(scannerPtr, rangePtr);
-
-  rangePtr->UnlockShareable();
 
   if (Global::verbose) {
     LOG_VA_INFO("Successfully created scanner on table '%s'", tableName.c_str());
@@ -473,11 +466,9 @@ void RangeServer::FetchScanblock(ResponseCallbackFetchScanblock *cb, uint32_t sc
   kvBuffer = new uint8_t [ sizeof(int32_t) + DEFAULT_SCANBUF_SIZE ];
   kvLenp = (uint32_t *)kvBuffer;
 
-  rangePtr->LockShareable();
   more = FillScanBlock(scannerPtr, kvBuffer+sizeof(int32_t), DEFAULT_SCANBUF_SIZE, kvLenp);
   if (!more)
     Global::scannerMap.Remove(scannerId);
-  rangePtr->UnlockShareable();
   bytesFetched = *kvLenp;
 
   /**
@@ -609,10 +600,10 @@ namespace {
   typedef struct {
     const uint8_t *base;
     size_t len;
-    Range *range;
   } UpdateRecT;
 
 }
+
 
 
 /**
@@ -638,10 +629,12 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, TabletIdentifierT *tablet, 
   size_t goSize = 0;
   size_t stopSize = 0;
   size_t splitSize = 0;
-  set<Range *> rangeSet;
   KeyComponentsT keyComps;
-  uint64_t commitTime = 0;
-  SplitLogMap::SplitLogInfoPtr splitLogInfoPtr;
+  uint64_t updateTimestamp = 0;
+  KeyPtr       splitKeyPtr;
+  CommitLogPtr splitLogPtr;
+  uint64_t splitStartTime;
+  std::string  splitRow;
 
   if (tablet->tableName)
     tableName = tablet->tableName;
@@ -683,114 +676,102 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, TabletIdentifierT *tablet, 
     goto abort;
   }
 
+  /** Increment update count (block if split pending) **/
+  rangePtr->IncrementUpdateCounter();
+
+  /** Obtain "update timestamp" **/
+  updateTimestamp = Global::log->GetTimestamp();
+
+  /** Fetch range split information **/
+  if (rangePtr->GetSplitInfo(splitKeyPtr, splitLogPtr, &splitStartTime)) {
+    splitRow = (const char *)(splitKeyPtr.get())->data;
+  }
+
   /**
-   * We're locking the commit log here because we don't want the set of ranges
-   * to change between when we figure out a destination range for each mutation
-   * and when we actually apply the mutations to the ranges.
-   *
-   * Why is it a read lock?  Because ranges can't split while the commit log is read locked.
-   * But writing to the commit log needs a write lock, so let's just do a write lock here
-   * But we can change the CommitLog to be thread safe, so we should do so
+   * Figure out destination for each mutations
    */
-  {
-    boost::read_write_mutex::scoped_write_lock lock(Global::log->ReadWriteMutex());
+  modEnd = buffer.buf + buffer.len;
+  modPtr = buffer.buf;
+  while (modPtr < modEnd) {
+    if (!Load((KeyT *)modPtr, keyComps)) {
+      error = Error::PROTOCOL_ERROR;
+      errMsg = "Problem de-serializing key/value pair";
+      goto abort;
+    }
+    rowkey = keyComps.rowKey;
+    update.base = modPtr;
+    modPtr = keyComps.endPtr + Length((const ByteString32T *)keyComps.endPtr);
+    update.len = modPtr - update.base;
 
-    /**
-     * Figure out destination for each mutations
-     */
-    modEnd = buffer.buf + buffer.len;
-    modPtr = buffer.buf;
-    while (modPtr < modEnd) {
-      if (!Load((KeyT *)modPtr, keyComps)) {
-	error = Error::PROTOCOL_ERROR;
-	errMsg = "Problem de-serializing key/value pair";
-	goto abort;
-      }
-      if (commitTime < keyComps.timestamp)
-	commitTime = keyComps.timestamp;
-      rowkey = keyComps.rowKey;
-      update.base = modPtr;
-      modPtr = keyComps.endPtr + Length((const ByteString32T *)keyComps.endPtr);
-      update.len = modPtr - update.base;
-
-      if (Global::splitLogMap.Lookup(rowkey, splitLogInfoPtr)) {
+    if (rowkey > rangePtr->StartRow() && (rangePtr->EndRow() == "" || rowkey <= rangePtr->EndRow())) {
+      if (splitStartTime != 0 && updateTimestamp > splitStartTime && rowkey >= splitRow) {
 	splitMods.push_back(update);
 	splitSize += update.len;
       }
-      else if (rowkey > rangePtr->StartRow() && (rangePtr->EndRow() == "" || rowkey <= rangePtr->EndRow())) {
-	update.range = rangePtr.get();
-	rangeSet.insert(update.range);
+      else {
 	goMods.push_back(update);
 	goSize += update.len;
       }
-      else {
-	update.range = 0;
-	stopMods.push_back(update);
-	stopSize += update.len;
-      }
-
-      //cout << "KeyLen = " << keyLen << ", ValueLen = " << valueLen << endl;
     }
+    else {
+      stopMods.push_back(update);
+      stopSize += update.len;
+    }
+  }
 
-    /**
-    cout << "goMods.size() = " << goMods.size() << endl;
-    cout << "stopMods.size() = " << stopMods.size() << endl;
-    **/
+  /**
+     cout << "goMods.size() = " << goMods.size() << endl;
+     cout << "stopMods.size() = " << stopMods.size() << endl;
+  **/
 
-    if (splitSize > 0) {
-      boost::shared_array<uint8_t> bufPtr( new uint8_t [ splitSize ] );
-      uint8_t *base = bufPtr.get();
-      uint8_t *ptr = base;
+  if (splitSize > 0) {
+    boost::shared_array<uint8_t> bufPtr( new uint8_t [ splitSize ] );
+    uint8_t *base = bufPtr.get();
+    uint8_t *ptr = base;
       
-      for (size_t i=0; i<splitMods.size(); i++) {
-	memcpy(ptr, splitMods[i].base, splitMods[i].len);
-	ptr += splitMods[i].len;
-      }
-
-      if ((error = splitLogInfoPtr->splitLog->Write(tableName.c_str(), base, ptr-base, commitTime)) != Error::OK) {
-	errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to split log";
-	goto abort;
-      }
-      //exit(1);
+    for (size_t i=0; i<splitMods.size(); i++) {
+      memcpy(ptr, splitMods[i].base, splitMods[i].len);
+      ptr += splitMods[i].len;
     }
 
-    /**
-     * Commit mutations that are destined for this range server
-     */
-    if (goSize > 0) {
-      // free base!!!
-      uint8_t *base = new uint8_t [ goSize ];
-      uint8_t *ptr = base;
-      for (size_t i=0; i<goMods.size(); i++) {
-	memcpy(ptr, goMods[i].base, goMods[i].len);
-	ptr += goMods[i].len;
-      }
-      if ((error = Global::log->Write(tableName.c_str(), base, ptr-base, commitTime)) != Error::OK) {
-	errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to commit log";
-	goto abort;
-      }
+    if ((error = splitLogPtr->Write(tableName.c_str(), base, ptr-base, updateTimestamp)) != Error::OK) {
+      errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to split log";
+      goto abort;
     }
+  }
 
-    /**
-     * Apply the updates
-     */
+  /**
+   * Commit mutations that are destined for this range server
+   */
+  if (goSize > 0) {
+    boost::shared_array<uint8_t> bufPtr( new uint8_t [ goSize ] );
+    uint8_t *base = bufPtr.get();
+    uint8_t *ptr = base;
+
     for (size_t i=0; i<goMods.size(); i++) {
-      KeyT *key = (KeyT *)goMods[i].base;
-      ByteString32T *value = (ByteString32T *)(goMods[i].base + Length(key));
-      goMods[i].range->Add(key, value);
+      memcpy(ptr, goMods[i].base, goMods[i].len);
+      ptr += goMods[i].len;
     }
+    if ((error = Global::log->Write(tableName.c_str(), base, ptr-base, updateTimestamp)) != Error::OK) {
+      errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to commit log";
+      goto abort;
+    }
+  }
 
+  /**
+   * Apply the updates
+   * TODO: Lock the Range
+   */
+  for (size_t i=0; i<goMods.size(); i++) {
+    KeyT *key = (KeyT *)goMods[i].base;
+    ByteString32T *value = (ByteString32T *)(goMods[i].base + Length(key));
+    rangePtr->Add(key, value);
   }
 
   /**
    * Split and Compaction processing
    */
-  for (set<Range *>::iterator iter = rangeSet.begin(); iter != rangeSet.end(); iter++) {
-    if ((*iter)->CheckAndSetMaintenance()) {
-      MaintenanceThread::ScheduleMaintenance(*iter, commitTime);
-    }
-  }
-
+  rangePtr->ScheduleMaintenance(updateTimestamp);
 
   /**
    * Send back response

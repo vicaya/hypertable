@@ -52,16 +52,17 @@ namespace hypertable {
     AccessGroup(Schema::AccessGroup *lg, RangeInfoPtr &tabletInfoPtr);
     virtual ~AccessGroup();
     virtual int Add(const KeyT *key, const ByteString32T *value);
-    virtual CellListScanner *CreateScanner(bool suppressDeleted);
-    virtual void Lock() { mRwMutex.lock(); }
-    virtual void Unlock() { mRwMutex.unlock(); }
-    virtual void LockShareable() { mRwMutex.lock_shareable(); }
-    virtual void UnlockShareable() { mRwMutex.unlock_shareable(); }
     virtual void GetSplitKeys(SplitKeyQueueT &keyHeap);
+
+    void Lock() { mCellCachePtr->Lock(); }
+    void Unlock() { mCellCachePtr->Unlock(); }
+
+    CellListScanner *CreateScanner(bool suppressDeleted);
+
 
     bool FamiliesIntersect(std::set<uint8_t> &families);
     uint64_t DiskUsage();
-    void AddCellStore(CellStore *table, uint32_t id);
+    void AddCellStore(CellStorePtr &cellStorePtr, uint32_t id);
     bool NeedsCompaction();
     void RunCompaction(uint64_t timestamp, bool major);
     uint64_t GetLogCutoffTime() { return mLogCutoffTime; }
@@ -69,14 +70,14 @@ namespace hypertable {
     void UnmarkBusy();
 
   private:
-    boost::read_write_mutex  mRwMutex;
+    boost::mutex         mMutex;
     std::set<uint8_t>    mColumnFamilies;
     std::string          mName;
     std::string          mTableName;
     std::string          mStartRow;
     std::string          mEndRow;
-    std::vector<CellStore *> mStores;
-    CellCache            *mCellCache;
+    std::vector<CellStorePtr> mStores;
+    CellCachePtr         mCellCachePtr;
     uint32_t             mNextTableId;
     uint64_t             mLogCutoffTime;
     bool                 mBusy;

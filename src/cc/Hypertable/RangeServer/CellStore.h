@@ -18,8 +18,12 @@
 #ifndef HYPERTABLE_CELLSTORE_H
 #define HYPERTABLE_CELLSTORE_H
 
+#include <boost/shared_ptr.hpp>
+
 #include "Key.h"
 #include "CellList.h"
+#include "Constants.h"
+
 
 namespace hypertable {
 
@@ -29,14 +33,19 @@ namespace hypertable {
     static const uint16_t FLAG_SHARED;
 
     virtual ~CellStore() { return; }
+    virtual int Create(const char *fname, size_t blockSize=Constants::DEFAULT_BLOCKSIZE) = 0;
+    virtual int Finalize(uint64_t timestamp) = 0;
+    virtual int Open(const char *fname, const KeyT *startKey, const KeyT *endKey) = 0;
+    virtual int LoadIndex() = 0;
     virtual uint64_t GetLogCutoffTime() = 0;
     virtual uint64_t DiskUsage() = 0;
     virtual std::string &GetFilename() = 0;
     virtual uint16_t GetFlags() = 0;
     virtual KeyT *GetSplitKey() = 0;
-    virtual int Close() = 0;
 
   };
+
+  typedef boost::shared_ptr<CellStore> CellStorePtr;
 
 }
 

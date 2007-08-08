@@ -32,6 +32,7 @@ extern "C" {
 
 #include "Hypertable/RangeServer/Key.h"
 #include "Hypertable/RangeServer/CellCache.h"
+#include "Hypertable/RangeServer/CellCacheScanner.h"
 
 using namespace hypertable;
 using namespace std;
@@ -106,7 +107,7 @@ void LoadCell(char *line, KeyPtr &keyPtr, ByteString32Ptr &valuePtr) {
 int main(int argc, char **argv) {
   char *cellData, *line, *last;
   off_t len;
-  CellCache tables[3];
+  CellCachePtr cellCachePtr;
   TestHarness harness("/tmp/cellCacheTest");
   CellListScanner  *scanner;
   KeyT             *key;
@@ -120,9 +121,11 @@ int main(int argc, char **argv) {
   if ((cellData = FileUtils::FileToBuffer("tests/cellCacheTestData.txt", &len)) == 0)
     harness.DisplayErrorAndExit();
 
+  cellCachePtr.reset( new CellCache() );
+
   for (line = strtok_r(cellData, "\n\r", &last); line; line = strtok_r(0, "\n\r", &last)) {
     LoadCell(line, keyPtr, valuePtr);
-    tables[0].Add(keyPtr.get(), valuePtr.get());
+    cellCachePtr->Add(keyPtr.get(), valuePtr.get());
     //cout << cell << endl << flush;
     //cells.push_back(cell);
     //cout << cell << endl;
@@ -130,15 +133,12 @@ int main(int argc, char **argv) {
 
   cout << endl;
 
-  tables[0].LockShareable();
-  scanner = tables[0].CreateScanner();
+  scanner = new CellCacheScanner( cellCachePtr );
   scanner->Reset();
-
   while (scanner->Get(&key, &value)) {
     cout << *key << " " << *value << endl << flush;
     scanner->Forward();
   }
-  tables[0].UnlockShareable();
 
   // Load up 3 cellCaches with data
 

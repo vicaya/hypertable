@@ -25,9 +25,13 @@ using namespace hypertable;
 
 namespace hypertable {
 
+  /**
+   * CellCacheScanner is a class that provides a scanning interface to
+   * a CellCache.
+   */
   class CellCacheScanner : public CellListScanner {
   public:
-    CellCacheScanner(CellCache *memtable);
+    CellCacheScanner(CellCachePtr &cellCachePtr);
     virtual ~CellCacheScanner() { return; }
     virtual void Forward();
     virtual bool Get(KeyT **keyp, ByteString32T **valuep);
@@ -36,10 +40,15 @@ namespace hypertable {
     using CellListScanner::RestrictColumns;
 
   private:
-    CellCache::CellMapT::iterator      mStartIter;
-    CellCache::CellMapT::iterator      mEndIter;
-    CellCache::CellMapT::iterator      mCurIter;
-    CellCache                         *mTable;
+    CellCache::CellMapT::iterator  mStartIter;
+    CellCache::CellMapT::iterator  mEndIter;
+    CellCache::CellMapT::iterator  mCurIter;
+    CellCachePtr                   mCellCachePtr;
+    boost::mutex                  &mCellCacheMutex;
+    KeyT                          *mCurKey;
+    ByteString32T                 *mCurValue;
+    bool                           mEos;
+
   };
 }
 
