@@ -322,7 +322,6 @@ void Range::DoMaintenance() {
       mMaintenanceFinishedCond.notify_all();
     }
 
-
     /**
      * Perform major compaction
      */
@@ -334,11 +333,15 @@ void Range::DoMaintenance() {
      * Create METADATA entry for new range
      */
     {
+      std::vector<std::string> stores;
       RangeInfoPtr newRangePtr( new RangeInfo() );
       newRangePtr->SetTableName(mTableName);
       newRangePtr->SetStartRow(splitPoint);
       newRangePtr->SetEndRow(mEndRow);
       newRangePtr->SetSplitLogDir(splitLogDir);
+      rangeInfoPtr->GetTables(stores);
+      for (std::vector<std::string>::iterator iter = stores.begin(); iter != stores.end(); iter++)
+	newRangePtr->AddCellStore(*iter);
       Global::metadata->AddRangeInfo(newRangePtr);
       Global::metadata->Sync();
     }

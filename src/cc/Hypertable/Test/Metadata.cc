@@ -221,7 +221,6 @@ void Metadata::AddRangeInfo(RangeInfoPtr &rangePtr) {
 void Metadata::Sync(const char *fname) {
   string tmpFile = (fname == 0) ? mFilename + ".tmp" : (string)fname + ".tmp";
   ofstream outfile(tmpFile.c_str());
-  TableMapT  oldTableMap = mTableMap;
   string tableName;
   string startRow;
   string endRow;
@@ -230,10 +229,8 @@ void Metadata::Sync(const char *fname) {
   string splitPoint;
   vector<string> cellStoreVector;
 
-  mTableMap.clear();
-
   outfile << "<Metadata>" << endl;
-  for (TableMapT::iterator tmIter = oldTableMap.begin(); tmIter != oldTableMap.end(); tmIter++) {
+  for (TableMapT::iterator tmIter = mTableMap.begin(); tmIter != mTableMap.end(); tmIter++) {
 
     for (RangeInfoMapT::iterator iter = (*tmIter).second.begin(); iter != (*tmIter).second.end(); iter++) {
       RangeInfoPtr rangePtr = (*iter).second;
@@ -257,7 +254,6 @@ void Metadata::Sync(const char *fname) {
       for (size_t i=0; i<cellStoreVector.size(); i++)
 	outfile << "    <CellStore>" << cellStoreVector[i] << "</CellStore>" << endl;
       outfile << "  </RangeInfo>" << endl;
-      AddRangeInfo(rangePtr);
     }
   }
   outfile << "</Metadata>" << endl;
