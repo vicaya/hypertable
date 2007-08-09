@@ -34,7 +34,7 @@
 #include "MergeScanner.h"
 
 
-AccessGroup::AccessGroup(Schema::AccessGroup *lg, RangeInfoPtr &rangeInfoPtr) : CellList(), mMutex(), mName(lg->name), mStores(), mCellCachePtr(), mNextTableId(0), mLogCutoffTime(0), mDiskUsage(0), mSplitKeys() {
+AccessGroup::AccessGroup(Schema::AccessGroup *lg, RangeInfoPtr &rangeInfoPtr) : CellList(), mMutex(), mLock(mMutex,false), mName(lg->name), mStores(), mCellCachePtr(), mNextTableId(0), mLogCutoffTime(0), mDiskUsage(0), mSplitKeys() {
   rangeInfoPtr->GetTableName(mTableName);
   rangeInfoPtr->GetStartRow(mStartRow);
   rangeInfoPtr->GetEndRow(mEndRow);

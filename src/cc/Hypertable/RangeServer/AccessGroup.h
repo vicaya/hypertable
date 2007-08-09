@@ -54,8 +54,8 @@ namespace hypertable {
     virtual int Add(const KeyT *key, const ByteString32T *value);
     virtual void GetSplitKeys(SplitKeyQueueT &keyHeap);
 
-    void Lock() { mCellCachePtr->Lock(); }
-    void Unlock() { mCellCachePtr->Unlock(); }
+    void Lock() { mLock.lock(); mCellCachePtr->Lock(); }
+    void Unlock() { mCellCachePtr->Unlock(); mLock.unlock(); }
 
     CellListScanner *CreateScanner(bool suppressDeleted);
 
@@ -69,6 +69,7 @@ namespace hypertable {
 
   private:
     boost::mutex         mMutex;
+    boost::mutex::scoped_lock  mLock;
     std::set<uint8_t>    mColumnFamilies;
     std::string          mName;
     std::string          mTableName;

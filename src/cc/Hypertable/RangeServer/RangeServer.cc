@@ -630,8 +630,10 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, TabletIdentifierT *tablet, 
   if (tablet->endRow != 0)
     endRow = tablet->endRow;
 
+  /**
   if (Global::verbose)
     cout << *tablet << endl;
+  */
 
   // TODO: Sanity check mod data (checksum validation)
 
