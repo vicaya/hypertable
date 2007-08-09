@@ -29,6 +29,7 @@
 
 #include "ApplicationHandler.h"
 
+#if defined(__APPLE__)
 namespace __gnu_cxx {
   template<> struct hash< uint64_t > {
     size_t operator()( const uint64_t val ) const {
@@ -36,7 +37,7 @@ namespace __gnu_cxx {
     }
   };
 }
-
+#endif
 
 namespace hypertable {
 

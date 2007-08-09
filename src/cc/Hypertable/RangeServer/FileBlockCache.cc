@@ -79,9 +79,12 @@ bool FileBlockCache::InsertAndCheckout(int fileId, uint32_t offset, uint8_t *blo
   cacheValue->length = length;
   cacheValue->refCount = 1;
 
-  if (mHead == 0)
+  if (mHead == 0) {
+    cacheValue->next = cacheValue->prev = 0;
     mHead = mTail = cacheValue;
+  }
   else {
+    mHead->next = cacheValue;
     cacheValue->prev = mHead;
     cacheValue->next = 0;
     mHead = cacheValue;
@@ -94,28 +97,18 @@ bool FileBlockCache::InsertAndCheckout(int fileId, uint32_t offset, uint8_t *blo
 
 void FileBlockCache::MoveToHead(CacheValueT *cacheValue) {
 
-  if (mHead == mTail)
+  if (mHead == cacheValue)
     return;
 
-  if (cacheValue->next == 0) {
-    mHead = cacheValue->prev;
-    if (cacheValue->prev != 0)
-      cacheValue->prev->next = 0;
-    else
-      mTail = 0;
-  }
-  else {
-    cacheValue->next->prev = cacheValue->prev;
-    if (cacheValue->prev != 0) {
-      cacheValue->prev->next = cacheValue->next;
-    }
-    else
-      mTail = cacheValue->next;
-  }
+  cacheValue->next->prev = cacheValue->prev;
+  if (cacheValue->prev == 0)
+    mTail = cacheValue->next;
+  else
+    cacheValue->prev->next = cacheValue->next;
 
   cacheValue->next = 0;
+  mHead->next = cacheValue;
   cacheValue->prev = mHead;
   mHead = cacheValue;
-
 }
 
