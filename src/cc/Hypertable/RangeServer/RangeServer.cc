@@ -246,7 +246,6 @@ void RangeServer::Compact(ResponseCallback *cb, TabletIdentifierT *tablet, uint8
   std::string tableName;
   TableInfoPtr tableInfoPtr;
   RangePtr rangePtr;
-  uint64_t commitTime = 0;
   string startRow;
   MaintenanceThread::WorkType workType = MaintenanceThread::COMPACTION_MINOR;
   bool major = false;
@@ -287,23 +286,7 @@ void RangeServer::Compact(ResponseCallback *cb, TabletIdentifierT *tablet, uint8
     goto abort;
   }
 
-  /** Get compaction timestamp **/
-  commitTime = Global::log->GetTimestamp();
-
-  MaintenanceThread::ScheduleCompaction(rangePtr.get(), workType, commitTime, accessGroup);
-
-#if 0
-  if (accessGroup != "") {
-    MaintenanceThread::ScheduleCompaction(lg, commitTime, major);
-    lg = rangePtr->GetAccessGroup(accessGroup);
-    MaintenanceThread::ScheduleCompaction(lg, commitTime, major);
-  }
-  else {
-    vector<AccessGroup *> accessGroups = rangePtr->AccessGroupVector();
-    for (size_t i=0; i< accessGroups.size(); i++)
-      MaintenanceThread::ScheduleCompaction(accessGroups[i], commitTime, major);
-  }
-#endif
+  MaintenanceThread::ScheduleCompaction(rangePtr.get(), workType);
 
   if ((error = cb->response()) != Error::OK) {
     LOG_VA_ERROR("Problem sending OK response - %s", Error::GetText(error));
@@ -631,10 +614,12 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, TabletIdentifierT *tablet, 
   size_t splitSize = 0;
   KeyComponentsT keyComps;
   uint64_t updateTimestamp = 0;
+  uint64_t clientTimestamp = 0;
   KeyPtr       splitKeyPtr;
   CommitLogPtr splitLogPtr;
   uint64_t splitStartTime;
   std::string  splitRow;
+  bool needDecrement = false;
 
   if (tablet->tableName)
     tableName = tablet->tableName;
@@ -676,8 +661,9 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, TabletIdentifierT *tablet, 
     goto abort;
   }
 
-  /** Increment update count (block if split pending) **/
+  /** Increment update count (block if maintenance in progress) **/
   rangePtr->IncrementUpdateCounter();
+  needDecrement = true;
 
   /** Obtain "update timestamp" **/
   updateTimestamp = Global::log->GetTimestamp();
@@ -698,6 +684,9 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, TabletIdentifierT *tablet, 
       errMsg = "Problem de-serializing key/value pair";
       goto abort;
     }
+    if (clientTimestamp < keyComps.timestamp)
+      clientTimestamp = keyComps.timestamp;
+
     rowkey = keyComps.rowKey;
     update.base = modPtr;
     modPtr = keyComps.endPtr + Length((const ByteString32T *)keyComps.endPtr);
@@ -734,7 +723,7 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, TabletIdentifierT *tablet, 
       ptr += splitMods[i].len;
     }
 
-    if ((error = splitLogPtr->Write(tableName.c_str(), base, ptr-base, updateTimestamp)) != Error::OK) {
+    if ((error = splitLogPtr->Write(tableName.c_str(), base, ptr-base, clientTimestamp)) != Error::OK) {
       errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to split log";
       goto abort;
     }
@@ -752,26 +741,34 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, TabletIdentifierT *tablet, 
       memcpy(ptr, goMods[i].base, goMods[i].len);
       ptr += goMods[i].len;
     }
-    if ((error = Global::log->Write(tableName.c_str(), base, ptr-base, updateTimestamp)) != Error::OK) {
+    if ((error = Global::log->Write(tableName.c_str(), base, ptr-base, clientTimestamp)) != Error::OK) {
       errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to commit log";
       goto abort;
     }
   }
 
   /**
-   * Apply the updates
-   * TODO: Lock the Range
+   * Apply the modifications
    */
+  rangePtr->Lock();
+  /** Apply the GO mods **/
   for (size_t i=0; i<goMods.size(); i++) {
     KeyT *key = (KeyT *)goMods[i].base;
     ByteString32T *value = (ByteString32T *)(goMods[i].base + Length(key));
     rangePtr->Add(key, value);
   }
+  /** Apply the SPLIT mods **/
+  for (size_t i=0; i<splitMods.size(); i++) {
+    KeyT *key = (KeyT *)splitMods[i].base;
+    ByteString32T *value = (ByteString32T *)(splitMods[i].base + Length(key));
+    rangePtr->Add(key, value);
+  }
+  rangePtr->Unlock();
 
   /**
    * Split and Compaction processing
    */
-  rangePtr->ScheduleMaintenance(updateTimestamp);
+  rangePtr->ScheduleMaintenance();
 
   /**
    * Send back response
@@ -815,6 +812,10 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, TabletIdentifierT *tablet, 
   error = Error::OK;
 
  abort:
+
+  if (needDecrement)
+    rangePtr->DecrementUpdateCounter();
+
   if (error != Error::OK) {
     LOG_VA_ERROR("%s '%s'", Error::GetText(error), errMsg.c_str());
     if ((error = cb->error(error, errMsg)) != Error::OK) {

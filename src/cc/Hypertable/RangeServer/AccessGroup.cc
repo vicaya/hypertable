@@ -34,7 +34,7 @@
 #include "MergeScanner.h"
 
 
-AccessGroup::AccessGroup(Schema::AccessGroup *lg, RangeInfoPtr &rangeInfoPtr) : CellList(), mMutex(), mName(lg->name), mStores(), mCellCachePtr(), mNextTableId(0), mLogCutoffTime(0), mBusy(false), mDiskUsage(0), mSplitKeys() {
+AccessGroup::AccessGroup(Schema::AccessGroup *lg, RangeInfoPtr &rangeInfoPtr) : CellList(), mMutex(), mName(lg->name), mStores(), mCellCachePtr(), mNextTableId(0), mLogCutoffTime(0), mDiskUsage(0), mSplitKeys() {
   rangeInfoPtr->GetTableName(mTableName);
   rangeInfoPtr->GetStartRow(mStartRow);
   rangeInfoPtr->GetEndRow(mEndRow);
@@ -120,21 +120,11 @@ KeyT *AccessGroup::GetSplitKey() {
 
 bool AccessGroup::NeedsCompaction() {
   boost::mutex::scoped_lock lock(mMutex);
-  // should we also lock the memtable?
-  if (!mBusy && mCellCachePtr->MemoryUsed() >= (uint32_t)Global::localityGroupMaxMemory)
+  if (mCellCachePtr->MemoryUsed() >= (uint32_t)Global::localityGroupMaxMemory)
     return true;
   return false;
 }
 
-void AccessGroup::MarkBusy() {
-  boost::mutex::scoped_lock lock(mMutex);
-  mBusy = true;
-}
-
-void AccessGroup::UnmarkBusy() {
-  boost::mutex::scoped_lock lock(mMutex);
-  mBusy = false;
-}
 
 void AccessGroup::AddCellStore(CellStorePtr &cellStorePtr, uint32_t id) {
   boost::mutex::scoped_lock lock(mMutex);
@@ -171,28 +161,31 @@ void AccessGroup::RunCompaction(uint64_t timestamp, bool major) {
   CellStorePtr cellStorePtr;
   vector<string> replacedFiles;
 
-
-  if (mCellCachePtr->MemoryUsed() == 0) {
-    if ((major && mStores.size() <= (size_t)1) || (!major && mStores.size() <= (size_t)Global::localityGroupMaxFiles))
-      return;
-  }
-
-  if (major) {
-    tableIndex = 0;
-    LOG_INFO("Starting Major Compaction");
-  }
-  else if (mStores.size() > (size_t)Global::localityGroupMaxFiles) {
+  {
     boost::mutex::scoped_lock lock(mMutex);
-    ltCellStore sortObj;
-    sort(mStores.begin(), mStores.end(), sortObj);
-    tableIndex = mStores.size() - Global::localityGroupMergeFiles;
-    LOG_INFO("Starting Merging Compaction");
-  }
-  else {
-    tableIndex = mStores.size();
-    LOG_INFO("Starting Minor Compaction");
-  }
+    if (major) {
+      // TODO: if the oldest CellCache entry is newer than timestamp, then return
+      if (mCellCachePtr->MemoryUsed() == 0 && mStores.size() <= (size_t)1)
+	return;
+      tableIndex = 0;
+      LOG_INFO("Starting Major Compaction");
+    }
+    else {
+      if (mCellCachePtr->MemoryUsed() < (uint32_t)Global::localityGroupMaxMemory)
+	return;
 
+      if (mStores.size() > (size_t)Global::localityGroupMaxFiles) {
+	ltCellStore sortObj;
+	sort(mStores.begin(), mStores.end(), sortObj);
+	tableIndex = mStores.size() - Global::localityGroupMergeFiles;
+	LOG_INFO("Starting Merging Compaction");
+      }
+      else {
+	tableIndex = mStores.size();
+	LOG_INFO("Starting Minor Compaction");
+      }
+    }
+  }
 
   if (mStartRow == "")
     memset(md5DigestStr, '0', 24);
@@ -288,7 +281,11 @@ void AccessGroup::RunCompaction(uint64_t timestamp, bool major) {
   /**
    * Create new CellCache with compacted entries sliced off
    */
-  mCellCachePtr.reset( mCellCachePtr->SliceCopy(timestamp) );
+  CellCache *newCellCache = mCellCachePtr->SliceCopy(timestamp);
+  {
+    boost::mutex::scoped_lock lock(mMutex);
+    mCellCachePtr.reset(newCellCache);
+  }
 
   // Compaction thread function should re-shuffle the heap of locality groups and purge the commit log
 

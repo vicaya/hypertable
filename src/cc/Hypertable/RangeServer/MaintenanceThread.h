@@ -37,8 +37,6 @@ namespace hypertable {
     typedef struct {
       WorkType   type;
       Range     *range;
-      uint64_t   timestamp;
-      std::string localityGroupName;
     } CompactionInfoT;
 
     static std::queue<CompactionInfoT> msInputQueue;
@@ -46,8 +44,8 @@ namespace hypertable {
     static boost::mutex     msMutex;
     static boost::condition msCond;
 
-    static void ScheduleMaintenance(Range *range, uint64_t timestamp);
-    static void ScheduleCompaction(Range *range, WorkType wtype, uint64_t timestamp, const char *lgName);
+    static void ScheduleMaintenance(Range *rangen);
+    static void ScheduleCompaction(Range *range, WorkType wtype);
 
     void operator()();
 

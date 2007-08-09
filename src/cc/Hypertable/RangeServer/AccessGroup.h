@@ -66,8 +66,6 @@ namespace hypertable {
     bool NeedsCompaction();
     void RunCompaction(uint64_t timestamp, bool major);
     uint64_t GetLogCutoffTime() { return mLogCutoffTime; }
-    void MarkBusy();
-    void UnmarkBusy();
 
   private:
     boost::mutex         mMutex;
@@ -80,7 +78,6 @@ namespace hypertable {
     CellCachePtr         mCellCachePtr;
     uint32_t             mNextTableId;
     uint64_t             mLogCutoffTime;
-    bool                 mBusy;
     uint64_t             mDiskUsage;
     std::vector<KeyPtr>  mSplitKeys;
   };

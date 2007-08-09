@@ -41,7 +41,7 @@ using namespace std;
 
 
 
-Range::Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), mMutex(), mSchema(schemaPtr), mAccessGroupMap(), mAccessGroupVector(), mColumnFamilyVector(), mMaintenanceMode(false), mSplitStartTime(0), mSplitKeyPtr(), mSplitLogPtr(), mSplitMutex(), mSplitFinishedCond(), mSplitReadyCond(), mSplitPending(false), mUpdateCounter(0) {
+Range::Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), mMutex(), mSchema(schemaPtr), mAccessGroupMap(), mAccessGroupVector(), mColumnFamilyVector(), mMaintenanceInProgress(false), mLatestTimestamp(0), mSplitStartTime(0), mSplitKeyPtr(), mSplitLogPtr(), mMaintenanceMutex(), mMaintenanceFinishedCond(), mUpdateQuiesceCond(), mHoldUpdates(false), mUpdateCounter(0) {
   CellStorePtr cellStorePtr;
   std::string accessGroupName;
   AccessGroup *ag;
@@ -161,6 +161,9 @@ int Range::Add(const KeyT *key, const ByteString32T *value) {
     return 0;
   }
 
+  if (keyComps.timestamp > mLatestTimestamp)
+    mLatestTimestamp = keyComps.timestamp;
+
   if (keyComps.flag == FLAG_DELETE_ROW) {
     for (AccessGroupMapT::iterator iter = mAccessGroupMap.begin(); iter != mAccessGroupMap.end(); iter++) {
       (*iter).second->Add(key, value);
@@ -179,7 +182,7 @@ int Range::Add(const KeyT *key, const ByteString32T *value) {
 CellListScanner *Range::CreateScanner(bool suppressDeleted) {
   MergeScanner *scanner = new MergeScanner(suppressDeleted);
   for (AccessGroupMapT::iterator iter = mAccessGroupMap.begin(); iter != mAccessGroupMap.end(); iter++)
-    scanner->AddScanner((*iter).second->CreateScanner(false));
+    scanner->AddScanner((*iter).second->CreateScanner(suppressDeleted));
   return scanner;
 }
 
@@ -188,7 +191,7 @@ CellListScanner *Range::CreateScanner(std::set<uint8_t> &columns, bool suppressD
   MergeScanner *scanner = new MergeScanner(suppressDeleted);
   for (AccessGroupMapT::iterator iter = mAccessGroupMap.begin(); iter != mAccessGroupMap.end(); iter++) {
     if ((*iter).second->FamiliesIntersect(columns)) {
-      scanner->AddScanner((*iter).second->CreateScanner(false));
+      scanner->AddScanner((*iter).second->CreateScanner(suppressDeleted));
     }
   }
   return scanner;
@@ -231,23 +234,23 @@ uint64_t Range::GetLogCutoffTime() {
 /**
  * 
  */
-void Range::ScheduleMaintenance(uint64_t timestamp) {
+void Range::ScheduleMaintenance() {
   boost::mutex::scoped_lock lock(mMutex);
 
-  if (mMaintenanceMode)
+  if (mMaintenanceInProgress)
     return;
 
   // Need split?
   if (DiskUsage() > Global::rangeMaxBytes) {
-    mMaintenanceMode = true;
-    MaintenanceThread::ScheduleMaintenance(this, timestamp);
+    mMaintenanceInProgress = true;
+    MaintenanceThread::ScheduleMaintenance(this);
   }
   else {
     // Need compaction?
     for (size_t i=0; i<mAccessGroupVector.size(); i++) {
       if (mAccessGroupVector[i]->NeedsCompaction()) {
-	mMaintenanceMode = true;
-	MaintenanceThread::ScheduleMaintenance(this, timestamp);
+	mMaintenanceInProgress = true;
+	MaintenanceThread::ScheduleMaintenance(this);
 	break;
       }
     }
@@ -255,8 +258,8 @@ void Range::ScheduleMaintenance(uint64_t timestamp) {
 }
 
 
-void Range::DoMaintenance(uint64_t timestamp) {
-  assert(mMaintenanceMode);
+void Range::DoMaintenance() {
+  assert(mMaintenanceInProgress);
   if (DiskUsage() > Global::rangeMaxBytes) {
     KeyT *key;
     std::string splitPoint;
@@ -298,15 +301,27 @@ void Range::DoMaintenance(uint64_t timestamp) {
     rangeInfoPtr->SetSplitLogDir(splitLogDir);
     Global::metadata->Sync();
 
+
     /**
-     * Atomically obtain split start time and install split log
+     * Atomically obtain timestamp and install split log
      */
     {
-      boost::mutex::scoped_lock lock(mMutex);
-      mSplitStartTime = Global::log->GetTimestamp();
+      boost::mutex::scoped_lock lock(mMaintenanceMutex);
+
+      /** block updates **/
+      mHoldUpdates = true;
+      while (mUpdateCounter > 0)
+	mUpdateQuiesceCond.wait(lock);
+
+      mSplitStartTime = mLatestTimestamp;
       mSplitKeyPtr.reset( CreateCopy(key) );
       mSplitLogPtr.reset( new CommitLogLocal(Global::logDirRoot, splitLogDir, 0x100000000LL) );
+
+      /** unblock updates **/
+      mHoldUpdates = false;
+      mMaintenanceFinishedCond.notify_all();
     }
+
 
     /**
      * Perform major compaction
@@ -344,7 +359,7 @@ void Range::DoMaintenance(uint64_t timestamp) {
      *  Do the split
      */
     {
-      boost::mutex::scoped_lock lock(mSplitMutex);
+      boost::mutex::scoped_lock lock(mMaintenanceMutex);
 
       {
 	boost::mutex::scoped_lock lock(mMutex);
@@ -352,18 +367,18 @@ void Range::DoMaintenance(uint64_t timestamp) {
 	mSplitKeyPtr.reset(0);
       }
 
-      mSplitPending = true;
-
+      /** block updates **/
+      mHoldUpdates = true;
       while (mUpdateCounter > 0)
-	mSplitReadyCond.wait(lock);
+	mUpdateQuiesceCond.wait(lock);
 
       // at this point, there are no running updates
 
       // TBD: Do the actual split
 
-      mSplitPending = false;
-
-      mSplitFinishedCond.notify_all();
+      /** unblock updates **/
+      mHoldUpdates = false;
+      mMaintenanceFinishedCond.notify_all();
     }
 
     if ((error = mSplitLogPtr->Close(Global::log->GetTimestamp())) != Error::OK) {
@@ -377,16 +392,41 @@ void Range::DoMaintenance(uint64_t timestamp) {
     LOG_VA_INFO("Split Complete.  New Range: start=%s", splitPoint.c_str());
 
   }
-  else {
-    for (size_t i=0; i<mAccessGroupVector.size(); i++) {
-      if (mAccessGroupVector[i]->NeedsCompaction())
-	mAccessGroupVector[i]->RunCompaction(timestamp, false);
-    }
-  }
+  else
+    RunCompaction(false);
+
+  mMaintenanceInProgress = false;
+}
+
+
+void Range::DoCompaction(bool major) {
+  RunCompaction(major);
+  mMaintenanceInProgress = false;
+}
+
+
+uint64_t Range::RunCompaction(bool major) {
+  uint64_t timestamp;
+  
   {
-    boost::mutex::scoped_lock lock(mMutex);  // is this necessary?
-    mMaintenanceMode = false;
+    boost::mutex::scoped_lock lock(mMaintenanceMutex);
+
+    /** block updates **/
+    mHoldUpdates = true;
+    while (mUpdateCounter > 0)
+      mUpdateQuiesceCond.wait(lock);
+
+    timestamp = mLatestTimestamp;
+
+    /** unblock updates **/
+    mHoldUpdates = false;
+    mMaintenanceFinishedCond.notify_all();
   }
+
+  for (size_t i=0; i<mAccessGroupVector.size(); i++)
+    mAccessGroupVector[i]->RunCompaction(timestamp, major);
+
+  return timestamp;
 }
 
 
@@ -509,9 +549,9 @@ void Range::ReplayCommitLog(string &logDir, uint64_t minLogCutoff) {
  *
  */
 void Range::IncrementUpdateCounter() {
-  boost::mutex::scoped_lock lock(mSplitMutex);
-  while (mSplitPending)
-    mSplitFinishedCond.wait(lock);
+  boost::mutex::scoped_lock lock(mMaintenanceMutex);
+  while (mHoldUpdates)
+    mMaintenanceFinishedCond.wait(lock);
   mUpdateCounter++;
 }
 
@@ -520,8 +560,9 @@ void Range::IncrementUpdateCounter() {
  *
  */
 void Range::DecrementUpdateCounter() {
-  boost::mutex::scoped_lock lock(mSplitMutex);
+  boost::mutex::scoped_lock lock(mMaintenanceMutex);
   mUpdateCounter--;
-  if (mSplitPending && mUpdateCounter == 0)
-    mSplitReadyCond.notify_one();
+  if (mHoldUpdates && mUpdateCounter == 0)
+    mUpdateQuiesceCond.notify_one();
 }
+

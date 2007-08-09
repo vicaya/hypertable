@@ -30,24 +30,21 @@ boost::mutex      MaintenanceThread::msMutex;
 boost::condition  MaintenanceThread::msCond;
 
 
-void MaintenanceThread::ScheduleMaintenance(Range *range, uint64_t timestamp) {
+void MaintenanceThread::ScheduleMaintenance(Range *range) {
   boost::mutex::scoped_lock lock(msMutex);
   CompactionInfoT workInfo;
   workInfo.type = MAINTENANCE;
   workInfo.range = range;
-  workInfo.timestamp = timestamp;
   msInputQueue.push(workInfo);
   msCond.notify_one();
 }
 
 
-void MaintenanceThread::ScheduleCompaction(Range *range, WorkType wtype, uint64_t timestamp, const char *lgName) {
+void MaintenanceThread::ScheduleCompaction(Range *range, WorkType wtype) {
   boost::mutex::scoped_lock lock(msMutex);
   CompactionInfoT workInfo;
   workInfo.type = wtype;
   workInfo.range = range;
-  workInfo.timestamp = timestamp;
-  workInfo.localityGroupName = lgName ? lgName : "";
   msInputQueue.push(workInfo);
   msCond.notify_one();
 }
@@ -74,19 +71,10 @@ void MaintenanceThread::operator()() {
 
     if (workInfo.type == COMPACTION_MAJOR || workInfo.type == COMPACTION_MINOR) {
       bool majorCompaction = (workInfo.type == COMPACTION_MAJOR) ? true : false;
-
-      if (workInfo.localityGroupName != "") {
-	lg = workInfo.range->GetAccessGroup(workInfo.localityGroupName);
-	lg->RunCompaction(workInfo.timestamp, majorCompaction);
-      }
-      else {
-	vector<AccessGroup *> localityGroups = workInfo.range->AccessGroupVector();
-	for (size_t i=0; i< localityGroups.size(); i++)
-	  localityGroups[i]->RunCompaction(workInfo.timestamp, majorCompaction);
-      }
+      workInfo.range->DoCompaction(majorCompaction);
     }
     else if (workInfo.type == MAINTENANCE) {
-      workInfo.range->DoMaintenance(workInfo.timestamp);
+      workInfo.range->DoMaintenance();
     }
     else {
       assert(!"WorkType not implemented");
@@ -96,7 +84,6 @@ void MaintenanceThread::operator()() {
     {
       boost::mutex::scoped_lock lock(msMutex);
       msInputQueue.pop();
-      //workInfo.localityGroup->UnmarkBusy();
     }
   }
   

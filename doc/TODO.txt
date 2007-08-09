@@ -1,5 +1,31 @@
 
+Fix this deadlock ...
+
+Type "help show" followed by show subcommand name for full documentation.
+Command name abbreviations are allowed if unambiguous.
+(gdb) where
+#0  0x900248c7 in semaphore_wait_signal_trap ()
+#1  0x90001582 in pthread_mutex_lock ()
+#2  0x0001ee61 in boost::mutex::do_lock ()
+#3  0x00035833 in boost::detail::thread::lock_ops<boost::mutex>::lock ()
+#4  0x000358b7 in boost::detail::thread::scoped_lock<boost::mutex>::lock ()
+#5  0x000358fe in boost::detail::thread::scoped_lock<boost::mutex>::scoped_lock ()
+#6  0x0003a9ff in hypertable::CellCache::MemoryUsed ()
+#7  0x00007e41 in hypertable::AccessGroup::RunCompaction ()
+#8  0x0001410e in hypertable::Range::RunCompaction ()
+#9  0x00014c7e in hypertable::Range::DoMaintenance ()
+#10 0x000121e5 in hypertable::MaintenanceThread::operator() ()
+#11 0x0005a77d in boost::detail::function::void_function_obj_invoker0<hypertable::MaintenanceThread, void>::invoke ()
+#12 0x0002b4d0 in thread_proxy ()
+#13 0x90024227 in _pthread_body ()
+
+
 TODO:
+- Writes to the commit log should be asynchronous (or concurrent)
+- Get rid of smart pointers in CellCache key/value map
+- Get rid of accessGroup argument to COMPACTION command!
+- In AccessGroup::RunCompaction, on major compaction check if the oldest
+  CellCache entry is newer than the supplied timestamp, if so return
 - Move as much stuff as makes sense from CellStoreV0 to CellStore
 - Add a way to destroy a ConnectionManager (including Comm::Disconnect)
 - Try to move some of the RangerServer::Global members to RangeServer class members
