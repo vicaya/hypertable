@@ -47,7 +47,7 @@ namespace hypertable {
       }
     };
 
-    MergeScanner(bool suppressDeleted);
+    MergeScanner(bool showDeletes);
     virtual ~MergeScanner();
     virtual void RestrictRange(KeyT *start, KeyT *end);
     virtual void RestrictColumns(const uint8_t *families, size_t count);
@@ -64,7 +64,7 @@ namespace hypertable {
     uint64_t      mDeletedRowTimestamp;
     DynamicBuffer mDeletedCell;
     uint64_t      mDeletedCellTimestamp;
-    bool          mSuppressDeleted;
+    bool          mShowDeletes;
   };
 }
 

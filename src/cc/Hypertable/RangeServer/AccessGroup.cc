@@ -59,9 +59,9 @@ int AccessGroup::Add(const KeyT *key, const ByteString32T *value) {
 }
 
 
-CellListScanner *AccessGroup::CreateScanner(bool suppressDeleted) {
+CellListScanner *AccessGroup::CreateScanner(bool showDeletes) {
   boost::mutex::scoped_lock lock(mMutex);
-  MergeScanner *scanner = new MergeScanner(suppressDeleted);
+  MergeScanner *scanner = new MergeScanner(showDeletes);
   scanner->AddScanner( new CellCacheScanner(mCellCachePtr) );
   for (size_t i=0; i<mStores.size(); i++)
     scanner->AddScanner( new CellStoreScannerV0(mStores[i]) );
@@ -203,7 +203,7 @@ void AccessGroup::RunCompaction(uint64_t timestamp, bool major) {
   }
 
   if (major || tableIndex < mStores.size()) {
-    MergeScanner *mscanner = new MergeScanner(major);
+    MergeScanner *mscanner = new MergeScanner(!major);
     mscanner->AddScanner( new CellCacheScanner(mCellCachePtr) );
     for (size_t i=tableIndex; i<mStores.size(); i++)
       mscanner->AddScanner( new CellStoreScannerV0(mStores[i]) );
@@ -226,10 +226,13 @@ void AccessGroup::RunCompaction(uint64_t timestamp, bool major) {
     scannerPtr->Forward();
   }
 
-  string fname;
-  for (size_t i=tableIndex; i<mStores.size(); i++) {
-    fname = mStores[i]->GetFilename();
-    replacedFiles.push_back(fname);  // hack: fix me!
+  {
+    boost::mutex::scoped_lock lock(mMutex);
+    string fname;
+    for (size_t i=tableIndex; i<mStores.size(); i++) {
+      fname = mStores[i]->GetFilename();
+      replacedFiles.push_back(fname);  // hack: fix me!
+    }
   }
     
   if (cellStorePtr->Finalize(timestamp) != 0) {
@@ -239,31 +242,13 @@ void AccessGroup::RunCompaction(uint64_t timestamp, bool major) {
 
   /**
    * HACK: Delete underlying files -- fix me!!!
-   */
   for (size_t i=tableIndex; i<mStores.size(); i++) {
     if ((mStores[i]->GetFlags() & CellStore::FLAG_SHARED) == 0) {
       std::string &fname = mStores[i]->GetFilename();
       Global::hdfsClient->Remove(fname.c_str());
     }
   }
-
-  /**
-   * Drop the compacted tables from the table vector
-   */
-  if (tableIndex < mStores.size())
-    mStores.resize(tableIndex);
-
-  /**
-   * Add the new table to the table vector
-   */
-  mStores.push_back(cellStorePtr);
-
-  /**
-   * Re-compute disk usage
-   */
-  mDiskUsage = 0;
-  for (size_t i=0; i<mStores.size(); i++)
-    mDiskUsage += mStores[i]->DiskUsage();
+  */
 
   /**
    *  Update METADATA with new cellStore information
@@ -279,12 +264,26 @@ void AccessGroup::RunCompaction(uint64_t timestamp, bool major) {
   Global::metadata->Sync();
 
   /**
-   * Create new CellCache with compacted entries sliced off
+   * Install new CellCache and CellStore
    */
-  CellCache *newCellCache = mCellCachePtr->SliceCopy(timestamp);
   {
     boost::mutex::scoped_lock lock(mMutex);
+
+    /** Slice and install new CellCache **/
+    CellCache *newCellCache = mCellCachePtr->SliceCopy(timestamp);
     mCellCachePtr.reset(newCellCache);
+
+    /** Drop the compacted tables from the table vector **/
+    if (tableIndex < mStores.size())
+      mStores.resize(tableIndex);
+
+    /** Add the new table to the table vector **/
+    mStores.push_back(cellStorePtr);
+
+    /** Re-compute disk usage **/
+    mDiskUsage = 0;
+    for (size_t i=0; i<mStores.size(); i++)
+      mDiskUsage += mStores[i]->DiskUsage();
   }
 
   // Compaction thread function should re-shuffle the heap of locality groups and purge the commit log

@@ -1,5 +1,8 @@
 
 TODO:
+- Add back CellStore::CreateScanner
+- Fix AsyncComm/Protocol::StringFormatMessage (get rid of command)
+- Add new DELETE handling in RangeServer
 - Figure out why poll drops out of RangeServer/main.cc when gdb detaches from process
 - Writes to the commit log should be asynchronous (or concurrent)
 - Get rid of smart pointers in CellCache key/value map

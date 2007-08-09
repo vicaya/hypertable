@@ -384,9 +384,9 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, TabletIdentif
   kvLenp = (uint32_t *)kvBuffer;
 
   if (columnFamilies.size() > 0) 
-    scannerPtr.reset( rangePtr->CreateScanner(columnFamilies, true) );
+    scannerPtr.reset( rangePtr->CreateScanner(columnFamilies, false) );
   else
-    scannerPtr.reset( rangePtr->CreateScanner(true) );
+    scannerPtr.reset( rangePtr->CreateScanner(false) );
   scannerPtr->RestrictRange(startKey, endKey);
   if (spec->columnCount > 0)
     scannerPtr->RestrictColumns(spec->columns, spec->columnCount);

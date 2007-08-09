@@ -179,19 +179,19 @@ int Range::Add(const KeyT *key, const ByteString32T *value) {
 }
 
 
-CellListScanner *Range::CreateScanner(bool suppressDeleted) {
-  MergeScanner *scanner = new MergeScanner(suppressDeleted);
+CellListScanner *Range::CreateScanner(bool showDeletes) {
+  MergeScanner *scanner = new MergeScanner(showDeletes);
   for (AccessGroupMapT::iterator iter = mAccessGroupMap.begin(); iter != mAccessGroupMap.end(); iter++)
-    scanner->AddScanner((*iter).second->CreateScanner(suppressDeleted));
+    scanner->AddScanner((*iter).second->CreateScanner(showDeletes));
   return scanner;
 }
 
 
-CellListScanner *Range::CreateScanner(std::set<uint8_t> &columns, bool suppressDeleted) {
-  MergeScanner *scanner = new MergeScanner(suppressDeleted);
+CellListScanner *Range::CreateScanner(std::set<uint8_t> &columns, bool showDeletes) {
+  MergeScanner *scanner = new MergeScanner(showDeletes);
   for (AccessGroupMapT::iterator iter = mAccessGroupMap.begin(); iter != mAccessGroupMap.end(); iter++) {
     if ((*iter).second->FamiliesIntersect(columns)) {
-      scanner->AddScanner((*iter).second->CreateScanner(suppressDeleted));
+      scanner->AddScanner((*iter).second->CreateScanner(showDeletes));
     }
   }
   return scanner;

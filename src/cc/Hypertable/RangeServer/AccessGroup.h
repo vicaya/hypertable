@@ -57,7 +57,7 @@ namespace hypertable {
     void Lock() { mLock.lock(); mCellCachePtr->Lock(); }
     void Unlock() { mCellCachePtr->Unlock(); mLock.unlock(); }
 
-    CellListScanner *CreateScanner(bool suppressDeleted);
+    CellListScanner *CreateScanner(bool showDeletes);
 
 
     bool FamiliesIntersect(std::set<uint8_t> &families);

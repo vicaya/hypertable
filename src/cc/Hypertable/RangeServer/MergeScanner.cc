@@ -28,7 +28,7 @@ using namespace hypertable;
 /**
  * 
  */
-MergeScanner::MergeScanner(bool suppressDeleted) : CellListScanner(), mScanners(), mQueue(), mDeletePresent(false), mDeletedRow(0), mDeletedCell(0), mSuppressDeleted(suppressDeleted) {
+MergeScanner::MergeScanner(bool showDeletes) : CellListScanner(), mScanners(), mQueue(), mDeletePresent(false), mDeletedRow(0), mDeletedCell(0), mShowDeletes(showDeletes) {
 }
 
 void MergeScanner::AddScanner(CellListScanner *scanner) {
@@ -59,6 +59,7 @@ void MergeScanner::RestrictColumns(const uint8_t *families, size_t count) {
 void MergeScanner::Forward() {
   ScannerStateT sstate;
   KeyComponentsT keyComps;
+  size_t len;
 
   if (mQueue.empty())
     return;
@@ -68,86 +69,82 @@ void MergeScanner::Forward() {
   /**
    * Pop the top element, forward it, re-insert it back into the queue;
    */
-  if (mSuppressDeleted) {
-    size_t len;
 
-    while (true) {
+  while (true) {
 
-      mQueue.pop();
-      sstate.scanner->Forward();
-      if (sstate.scanner->Get(&sstate.key, &sstate.value))
-	mQueue.push(sstate);
-
-      if (mQueue.empty())
-	return;
-
-      sstate = mQueue.top();
-
-      if (!Load(sstate.key, keyComps)) {
-	LOG_ERROR("Problem decoding key!");
-      }
-      else if (keyComps.flag == FLAG_DELETE_ROW) {
-	len = strlen(keyComps.rowKey) + 1;
-	if (mDeletePresent && mDeletedRow.fill() == len && !memcmp(mDeletedRow.buf, keyComps.rowKey, len)) {
-	  if (mDeletedRowTimestamp < keyComps.timestamp)
-	    mDeletedRowTimestamp = keyComps.timestamp;
-	}
-	else {
-	  mDeletedRow.clear();
-	  mDeletedRow.ensure(len);
-	  memcpy(mDeletedRow.buf, keyComps.rowKey, len);
-	  mDeletedRow.ptr = mDeletedRow.buf + len;
-	  mDeletedRowTimestamp = keyComps.timestamp;
-	  mDeletePresent = true;
-	}
-      }
-      else if (keyComps.flag == FLAG_DELETE_CELL) {
-	len = (keyComps.columnQualifier - keyComps.rowKey) + strlen(keyComps.columnQualifier) + 1;
-	if (mDeletePresent && mDeletedCell.fill() == len && !memcmp(mDeletedCell.buf, keyComps.rowKey, len)) {
-	  if (mDeletedCellTimestamp < keyComps.timestamp)
-	    mDeletedCellTimestamp = keyComps.timestamp;
-	}
-	else {
-	  mDeletedCell.clear();
-	  mDeletedCell.ensure(len);
-	  memcpy(mDeletedCell.buf, sstate.key->data, len);
-	  mDeletedCell.ptr = mDeletedCell.buf + len;
-	  mDeletedCellTimestamp = keyComps.timestamp;
-	  mDeletePresent = true;
-	}
-      }
-      else {
-	if (mDeletePresent) {
-	  if (mDeletedCell.fill() > 0) {
-	    len = (keyComps.columnQualifier - keyComps.rowKey) + strlen(keyComps.columnQualifier) + 1;
-	    if (mDeletedCell.fill() == len && !memcmp(mDeletedCell.buf, keyComps.rowKey, len)) {
-	      if (keyComps.timestamp < mDeletedCellTimestamp)
-		continue;
-	      break;
-	    }
-	    mDeletedCell.clear();
-	  }
-	  if (mDeletedRow.fill() > 0) {
-	    len = strlen(keyComps.rowKey) + 1;
-	    if (mDeletedRow.fill() == len && !memcmp(mDeletedRow.buf, keyComps.rowKey, len)) {
-	      if (keyComps.timestamp < mDeletedRowTimestamp)
-		continue;
-	      break;
-	    }
-	    mDeletedRow.clear();
-	  }
-	  mDeletePresent = false;
-	}
-	break;
-      }
-    }
-  }
-  else {
     mQueue.pop();
     sstate.scanner->Forward();
     if (sstate.scanner->Get(&sstate.key, &sstate.value))
       mQueue.push(sstate);
+
+    if (mQueue.empty())
+      return;
+
+    sstate = mQueue.top();
+
+    if (!Load(sstate.key, keyComps)) {
+      LOG_ERROR("Problem decoding key!");
+    }
+    else if (keyComps.flag == FLAG_DELETE_ROW) {
+      len = strlen(keyComps.rowKey) + 1;
+      if (mDeletePresent && mDeletedRow.fill() == len && !memcmp(mDeletedRow.buf, keyComps.rowKey, len)) {
+	if (mDeletedRowTimestamp < keyComps.timestamp)
+	  mDeletedRowTimestamp = keyComps.timestamp;
+      }
+      else {
+	mDeletedRow.clear();
+	mDeletedRow.ensure(len);
+	memcpy(mDeletedRow.buf, keyComps.rowKey, len);
+	mDeletedRow.ptr = mDeletedRow.buf + len;
+	mDeletedRowTimestamp = keyComps.timestamp;
+	mDeletePresent = true;
+      }
+      if (mShowDeletes)
+	break;
+    }
+    else if (keyComps.flag == FLAG_DELETE_CELL) {
+      len = (keyComps.columnQualifier - keyComps.rowKey) + strlen(keyComps.columnQualifier) + 1;
+      if (mDeletePresent && mDeletedCell.fill() == len && !memcmp(mDeletedCell.buf, keyComps.rowKey, len)) {
+	if (mDeletedCellTimestamp < keyComps.timestamp)
+	  mDeletedCellTimestamp = keyComps.timestamp;
+      }
+      else {
+	mDeletedCell.clear();
+	mDeletedCell.ensure(len);
+	memcpy(mDeletedCell.buf, sstate.key->data, len);
+	mDeletedCell.ptr = mDeletedCell.buf + len;
+	mDeletedCellTimestamp = keyComps.timestamp;
+	mDeletePresent = true;
+      }
+      if (mShowDeletes)
+	break;
+    }
+    else {
+      if (mDeletePresent) {
+	if (mDeletedCell.fill() > 0) {
+	  len = (keyComps.columnQualifier - keyComps.rowKey) + strlen(keyComps.columnQualifier) + 1;
+	  if (mDeletedCell.fill() == len && !memcmp(mDeletedCell.buf, keyComps.rowKey, len)) {
+	    if (keyComps.timestamp < mDeletedCellTimestamp)
+	      continue;
+	    break;
+	  }
+	  mDeletedCell.clear();
+	}
+	if (mDeletedRow.fill() > 0) {
+	  len = strlen(keyComps.rowKey) + 1;
+	  if (mDeletedRow.fill() == len && !memcmp(mDeletedRow.buf, keyComps.rowKey, len)) {
+	    if (keyComps.timestamp < mDeletedRowTimestamp)
+	      continue;
+	    break;
+	  }
+	  mDeletedRow.clear();
+	}
+	mDeletePresent = false;
+      }
+      break;
+    }
   }
+
 }
 
 bool MergeScanner::Get(KeyT **keyp, ByteString32T **valuep) {

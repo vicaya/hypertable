@@ -1,6 +1,8 @@
 
 LoadRange
 
+1. If SplitLogDir is present in METADATA entry for range
+
 TBD...
 Check for SplitPoint metadata entry, if exists and there isn't an entry for the new split off portion,
 the replay the split log

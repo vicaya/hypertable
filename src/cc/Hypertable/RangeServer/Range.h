@@ -51,8 +51,8 @@ namespace hypertable {
     uint64_t GetLogCutoffTime();
     uint64_t DiskUsage();
 
-    CellListScanner *CreateScanner(std::set<uint8_t> &columns, bool suppressDeleted);
-    CellListScanner *CreateScanner(bool suppressDeleted);
+    CellListScanner *CreateScanner(std::set<uint8_t> &columns, bool showDeletes);
+    CellListScanner *CreateScanner(bool showDeletes);
 
     string &StartRow() { return mStartRow; }
     string &EndRow() { return mEndRow; }
