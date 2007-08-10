@@ -1,11 +1,11 @@
-ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:81) Schema Parse Error: Schema Parse Error: not well-formed (invalid token) line 2, offset 29
-ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:81) Schema Parse Error: Nested ColumnFamily elements not allowed
-ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:81) Schema Parse Error: ColumnFamily defined outside of AccessGroup
-ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:81) Schema Parse Error: Invalid AccessGroup attribute 'foo'
-ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:81) Schema Parse Error: Unrecognized element - 'BogusElement'
-ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:81) Schema Parse Error: Invalid value (abc) for KeepCopies
-ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:81) Schema Parse Error: Invalid value (abc) for ExpireDays
-ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:81) Schema Parse Error: Invalid value (foo) for AccessGroup attribute 'inMemory'
+ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:84) Schema Parse Error: Schema Parse Error: not well-formed (invalid token) line 2, offset 29
+ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:84) Schema Parse Error: Nested ColumnFamily elements not allowed
+ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:84) Schema Parse Error: ColumnFamily defined outside of AccessGroup
+ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:84) Schema Parse Error: Invalid AccessGroup attribute 'foo'
+ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:84) Schema Parse Error: Unrecognized element - 'BogusElement'
+ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:84) Schema Parse Error: Invalid value (abc) for KeepCopies
+ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:84) Schema Parse Error: Invalid value (abc) for ExpireDays
+ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:84) Schema Parse Error: Invalid value (foo) for AccessGroup attribute 'inMemory'
 <Schema>
   <AccessGroup name="default">
     <ColumnFamily>

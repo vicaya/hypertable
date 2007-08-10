@@ -1,8 +1,6 @@
 
 TODO:
 - Overhaul CreateScanner scan spec
-- Replace KeyT type with ByteString32T
-- Get rid of smart pointers in CellCache key/value map
 - Add back CellStore::CreateScanner
 - Fix AsyncComm/Protocol::StringFormatMessage (get rid of command)
 - Add new DELETE handling in RangeServer
@@ -20,6 +18,9 @@ TODO:
 - Add ReactorFactory::Shutdown
 
 DONE:
+- Fix copyright
+- Replace KeyT type with ByteString32T
+- Get rid of smart pointers in CellCache key/value map
 - Add Hyperspace regression test
 - Remove command code from response message
 - Sweep through HyperspaceClient and get rid of references to Placer, also make

@@ -1,12 +1,14 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
  * 
- * This program is free software; you can redistribute it and/or
+ * This file is part of Hypertable.
+ * 
+ * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
  * 
- * This program is distributed in the hope that it will be useful,
+ * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -114,12 +116,14 @@ namespace {
   "/**\n"
   " * Copyright (C) 2007 Doug Judd (Zvents, Inc.)\n"
   " * \n"
-  " * This program is free software; you can redistribute it and/or\n"
+  " * This file is part of Hypertable.\n"
+  " * \n"
+  " * Hypertable is free software; you can redistribute it and/or\n"
   " * modify it under the terms of the GNU General Public License\n"
   " * as published by the Free Software Foundation; either version 2\n"
   " * of the License, or any later version.\n"
   " * \n"
-  " * This program is distributed in the hope that it will be useful,\n"
+  " * Hypertable is distributed in the hope that it will be useful,\n"
   " * but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
   " * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
   " * GNU General Public License for more details.\n"

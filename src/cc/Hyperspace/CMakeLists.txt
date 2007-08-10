@@ -1,12 +1,14 @@
 #
 # Copyright (C) 2007 Doug Judd (Zvents, Inc.)
 # 
-# This program is free software; you can redistribute it and/or
+# This file is part of Hypertable.
+# 
+# Hypertable is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or any later version.
 # 
-# This program is distributed in the hope that it will be useful,
+# Hypertable is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
@@ -26,12 +28,14 @@ add_executable (hsClient tests/hyperspace.cc tests/CommandCreate.cc tests/Comman
 target_link_libraries (hsClient pthread boost_thread Hyperspace AsyncComm Common log4cpp)
 
 # hsTest
-add_executable (hsTest tests/hsTest.cc ${DST_DIR}/tests)
+add_executable (hsTest tests/hsTest.cc)
 target_link_libraries (hsTest pthread boost_thread Hyperspace AsyncComm Common log4cpp)
 
-add_custom_command (SOURCE ${SRC_DIR}/tests
-                    COMMAND ln ARGS -s ${SRC_DIR}/tests ${DST_DIR}/tests
-                    OUTPUT ${DST_DIR}/tests)
+#add_custom_command (SOURCE ${SRC_DIR}/tests
+#                    COMMAND ln ARGS -s ${SRC_DIR}/tests ${DST_DIR}/tests
+#                    OUTPUT ${DST_DIR}/tests)
+
+configure_file(${SRC_DIR}/tests/hsTest.golden ${DST_DIR}/hsTest.golden)
 
 install (TARGETS hsClient RUNTIME DESTINATION bin)
 

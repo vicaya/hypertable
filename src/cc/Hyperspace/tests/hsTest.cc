@@ -1,12 +1,14 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
  * 
- * This program is free software; you can redistribute it and/or
+ * This file is part of Hypertable.
+ * 
+ * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
  * 
- * This program is distributed in the hope that it will be useful,
+ * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -175,7 +177,7 @@ int main(int argc, char **argv) {
     LOG_VA_INFO("DELETE chumba - %s", Error::GetText(error));
 
     if (!golden)
-      harness.ValidateAndExit("tests/hsTest.golden");
+      harness.ValidateAndExit("hsTest.golden");
 
     harness.RegenerateGoldenFile("hsTest.golden");
 
