@@ -131,7 +131,7 @@ int main(int argc, char **argv) {
   }
 
   for (KeySetT::iterator iter = keys.begin(); iter != keys.end(); iter++)
-    logStream << KeyComponentsT(*iter) << endl;
+    logStream << Key(*iter) << endl;
 
 
   /**
@@ -199,8 +199,8 @@ int main(int argc, char **argv) {
   }
   endKey = (*iter).first;
 
-  logStream << "Range Start: " << KeyComponentsT(startKey) << endl;
-  logStream << "Range End: " << KeyComponentsT(endKey) << endl;
+  logStream << "Range Start: " << Key(startKey) << endl;
+  logStream << "Range End: " << Key(endKey) << endl;
 
   for (KeyValueMapT::iterator iter = kvMap.begin(); iter != kvMap.end(); iter++) {
     cellStorePtr->Add((*iter).first, (*iter).second);

@@ -155,7 +155,7 @@ void AccessGroup::RunCompaction(uint64_t timestamp, bool major) {
   char filename[16];
   ByteString32T *key = 0;
   ByteString32T *value = 0;
-  KeyComponentsT keyComps;
+  Key keyComps;
   boost::shared_ptr<CellListScanner> scannerPtr;
   RangeInfoPtr rangeInfoPtr;
   size_t tableIndex = 1;
@@ -217,7 +217,7 @@ void AccessGroup::RunCompaction(uint64_t timestamp, bool major) {
   scannerPtr->Reset();
 
   while (scannerPtr->Get(&key, &value)) {
-    if (!Load(key, keyComps)) {
+    if (!keyComps.load(key)) {
       LOG_ERROR("Problem deserializing key/value pair");
       return;
     }

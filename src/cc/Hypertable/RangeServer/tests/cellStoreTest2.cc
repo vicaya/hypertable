@@ -151,7 +151,7 @@ namespace {
     typedef std::map<ByteString32T *, ByteString32T *, ltByteString32> KeyValueMapT;
 
     KeyValueMapT  kvMap;
-    KeyComponentsT keyComps;
+    Key keyComps;
     kvMap.clear();
 
     for (size_t i=0; inputSource->Next(&key, &value); i++) {
@@ -161,7 +161,7 @@ namespace {
     size_t i=0;
     for (KeyValueMapT::iterator iter = kvMap.begin(); iter != kvMap.end(); iter++) {
     
-      if (!Load((*iter).first, keyComps)) {
+      if (!keyComps.load((*iter).first)) {
 	LOG_ERROR("Problem parsing key!!");
 	return 1;
       }
@@ -203,7 +203,7 @@ namespace {
     //scanner->Reset();
 
     while (mscanner->Get(&key, &value)) {
-      outstreamA << KeyComponentsT(key) << " " << *value << endl;
+      outstreamA << Key(key) << " " << *value << endl;
       //scanner->Forward();
       mscanner->Forward();
     }
@@ -234,7 +234,7 @@ namespace {
     mscanner->Reset();
 
     while (mscanner->Get(&key, &value)) {
-      outstreamB << KeyComponentsT(key) << " " << *value << endl;
+      outstreamB << Key(key) << " " << *value << endl;
       mscanner->Forward();
     }
 

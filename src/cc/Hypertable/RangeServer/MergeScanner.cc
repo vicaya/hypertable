@@ -60,7 +60,7 @@ void MergeScanner::RestrictColumns(const uint8_t *families, size_t count) {
 
 void MergeScanner::Forward() {
   ScannerStateT sstate;
-  KeyComponentsT keyComps;
+  Key keyComps;
   size_t len;
 
   if (mQueue.empty())
@@ -84,7 +84,7 @@ void MergeScanner::Forward() {
 
     sstate = mQueue.top();
 
-    if (!Load(sstate.key, keyComps)) {
+    if (!keyComps.load(sstate.key)) {
       LOG_ERROR("Problem decoding key!");
     }
     else if (keyComps.flag == FLAG_DELETE_ROW) {
@@ -173,8 +173,8 @@ void MergeScanner::Reset() {
   }
   if (!mQueue.empty()) {
     const ScannerStateT &sstate = mQueue.top();
-    KeyComponentsT keyComps;
-    if (!Load(sstate.key, keyComps)) {
+    Key keyComps;
+    if (!keyComps.load(sstate.key)) {
       assert(!"MergeScanner::Reset() - Problem decoding key!");
     }
     mDeletePresent = false;

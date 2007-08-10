@@ -73,14 +73,14 @@ int CellCache::Add(const ByteString32T *key, const ByteString32T *value) {
 CellCache *CellCache::SliceCopy(uint64_t timestamp) {
   boost::mutex::scoped_lock lock(mMutex);
   CellCache *cache = new CellCache();
-  KeyComponentsT keyComps;
+  Key keyComps;
   ByteString32T *key;
   ByteString32T *value;
   size_t kvLen;
 
   for (CellMapT::iterator iter = mCellMap.begin(); iter != mCellMap.end(); iter++) {
 
-    if (!Load((*iter).first, keyComps)) {
+    if (!keyComps.load((*iter).first)) {
       LOG_ERROR("Problem deserializing key/value pair");
       continue;
     }

@@ -65,11 +65,49 @@ namespace hypertable {
   }
 
 
-  KeyComponentsT::KeyComponentsT(const ByteString32T *key) {
-    Load(key, *this);
+  Key::Key(const ByteString32T *key) {
+    load(key);
   }
 
-  std::ostream &operator<<(std::ostream &os, const KeyComponentsT &keyComps) {
+  /**
+   * TODO: Re-implement below function in terms of this function
+   */
+  bool Key::load(const ByteString32T *key) {
+    const uint8_t *ptr = key->data;
+    const uint8_t *endptr = key->data + key->len;
+
+    rowKey = (const char *)ptr;
+
+    while (ptr < endptr && *ptr != 0)
+      ptr++;
+    ptr++;
+    if (ptr >= endptr)
+      return false;
+
+    columnFamily = *ptr++;
+    columnQualifier = (const char *)ptr;
+
+    while (ptr < endptr && *ptr != 0)
+      ptr++;
+    ptr++;
+    if (ptr >= endptr)
+      return false;
+
+    if ((endptr - ptr) != 9)
+      return false;
+
+    flag = *ptr++;
+    memcpy(&timestamp, ptr, sizeof(uint64_t));
+    endPtr = ptr + sizeof(uint64_t);
+
+    timestamp = ByteOrderSwapInt64(timestamp);
+    timestamp = ~timestamp;
+
+    return true;
+  }
+
+
+  std::ostream &operator<<(std::ostream &os, const Key &keyComps) {
     os << "row='" << keyComps.rowKey << "' ";
     if (keyComps.flag == FLAG_DELETE_ROW)
       os << "ts=" << keyComps.timestamp << " DELETE";
@@ -81,74 +119,6 @@ namespace hypertable {
     }
     return os;
   }
-
-  /**
-   * TODO: Re-implement below function in terms of this function
-   */
-  bool Load(const ByteString32T *key, KeyComponentsT &comps) {
-    const uint8_t *ptr = key->data;
-    const uint8_t *endptr = key->data + key->len;
-
-    comps.rowKey = (const char *)ptr;
-
-    while (ptr < endptr && *ptr != 0)
-      ptr++;
-    ptr++;
-    if (ptr >= endptr)
-      return false;
-
-    comps.columnFamily = *ptr++;
-    comps.columnQualifier = (const char *)ptr;
-
-    while (ptr < endptr && *ptr != 0)
-      ptr++;
-    ptr++;
-    if (ptr >= endptr)
-      return false;
-
-    if ((endptr - ptr) != 9)
-      return false;
-
-    comps.flag = *ptr++;
-    memcpy(&comps.timestamp, ptr, sizeof(uint64_t));
-    comps.endPtr = ptr + sizeof(uint64_t);
-
-    comps.timestamp = ByteOrderSwapInt64(comps.timestamp);
-    comps.timestamp = ~comps.timestamp;
-
-    return true;
-  }
-
-#if 0
-  std::ostream &operator <<(std::ostream &os, const KeyT &key) {
-    uint64_t timestamp;
-    uint8_t *tsPtr = (uint8_t *)&timestamp;
-    const uint8_t *ptr = key.data + (key.len - sizeof(int64_t));
-    uint8_t flag = *(ptr-1);
-
-    // decode timestamp
-    tsPtr += sizeof(int64_t);
-    for (size_t i=0; i<sizeof(int64_t); i++) {
-      tsPtr--;
-      *tsPtr = *ptr++;
-    }
-    timestamp = ~timestamp;
-
-    os << "row='" << (const char *)key.data << "' ";
-    if (flag == FLAG_DELETE_ROW)
-      os << "ts=" << timestamp << " DELETE";
-    else {
-      ptr = key.data + strlen((char *)key.data) + 1;
-      os << "family=" << (int)*ptr;
-      ptr++;
-      os << " qualifier='" << (const char *)ptr << "' ts=" << timestamp;
-      if (flag == FLAG_DELETE_CELL)
-	os << " DELETE";
-    }
-
-    return os;
-  }
-#endif
 
 
 }

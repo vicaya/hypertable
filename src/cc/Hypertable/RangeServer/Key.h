@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 #ifndef HYPERTABLE_KEY_H
 #define HYPERTABLE_KEY_H
 
@@ -36,32 +35,33 @@ namespace hypertable {
   static const uint32_t FLAG_DELETE_CELL  = 0x01;
   static const uint32_t FLAG_INSERT       = 0xFF;
 
-#if 0
-  typedef struct {
-    uint32_t   len;
-    uint8_t    data[1];
-  } __attribute__((packed)) KeyT;
-
-  inline size_t Length(const KeyT *key) {
-    return key->len + sizeof(key->len);
-  }
-
-
-  typedef struct {
-    const char    *rowKey;
-    const char    *columnQualifier;
-    const uint8_t *endPtr;
-    uint64_t    timestamp;
-    uint8_t     columnFamily;
-    uint8_t     flag;
-  } __attribute__((packed)) KeyComponentsT;
-
-#endif
-
-  class KeyComponentsT {
+  /**
+   * Key is a class that is used to access the internal components of an opaque key
+   */
+  class Key {
   public:
-    KeyComponentsT() { return; }
-    KeyComponentsT(const ByteString32T *key);
+
+    /**
+     * Constructor (for implicit construction).
+     */
+    Key() { return; }
+
+    /**
+     * Constructor that takes an opaque key as an argument.  load is called to
+     * load the object with the key's components.
+     *
+     * @param key the opaque key
+     */
+    Key(const ByteString32T *key);
+
+    /**
+     * Parses the opaque key and loads the components into the member variables
+     *
+     * @param key the opaque key
+     * @return true on success, false otherwise
+     */
+    bool load(const ByteString32T *key);
+
     const char    *rowKey;
     const char    *columnQualifier;
     const uint8_t *endPtr;
@@ -70,82 +70,32 @@ namespace hypertable {
     uint8_t     flag;
   };
 
-  
-  std::ostream &operator<<(std::ostream &os, const KeyComponentsT &keyComps);
+
+  /**
+   * Prints a one-line representation of the key to the given ostream.
+   * 
+   * @param os output stream to print key to
+   * @param key the key to print
+   * @return the output stream
+   */
+  std::ostream &operator<<(std::ostream &os, const Key &key);
 
 
-
+  /**
+   * Builds an opaque key from a set of key components.  This function allocates
+   * memory for the key an then packs the components into the key so that keys can
+   * be lexicographically compared.  The opaque key has the following packed format:
+   * <p>
+   * <rowKey> '\0' <columnFamily> <columnQualifier> '\0' <flag> ~BIGENDIAN(<timestamp>)
+   * <p>
+   * @param flag DELETE_ROW, DELETE_CELL, or INSERT
+   * @param rowKey '\0' terminated row key
+   * @param columnFamily column family
+   * @param columnQualifier '\0' terminated column qualifier
+   * @param timestamp timestamp in microseconds
+   * @return newly allocated opaque key
+   */
   ByteString32T *CreateKey(uint8_t flag, const char *rowKey, uint8_t columnFamily, const char *columnQualifier, uint64_t timestamp);
-
-  bool Load(const ByteString32T *key, KeyComponentsT &comps);
-
-#if 0
-
-  inline KeyT *CreateCopy(const KeyT *key) {
-    size_t len = Length(key);
-    KeyT *newKey = (KeyT *)new uint8_t [ len ];
-    memcpy(newKey, key, len);
-    return newKey;
-  }
-  
-  std::ostream &operator<<(std::ostream &os, const KeyT &key);
-
-  /**
-   * Less than operator for KeyT
-   */
-  inline bool operator<(const KeyT &k1, const KeyT &k2) {
-    uint32_t len = (k1.len < k2.len) ? k1.len : k2.len;
-    int cmp = memcmp(k1.data, k2.data, len);
-    return (cmp==0) ? k1.len < k2.len : cmp < 0;
-  }
-
-  /**
-   * Equality operator for KeyT
-   */
-  inline bool operator==(const KeyT &k1, const KeyT &k2) {
-    if (k1.len != k2.len)
-      return false;
-    return memcmp(k1.data, k2.data, k1.len) == 0;
-  }  
-
-  /**
-   * Inequality operator for KeyT
-   */
-  inline bool operator!=(const KeyT &k1, const KeyT &k2) {
-    return !(k1 == k2);
-  }
-
-  struct ltKey {
-    bool operator()(const KeyT * k1ptr, const KeyT *k2ptr) const {
-      return *k1ptr < *k2ptr;
-    }
-  };
-
-  /**
-   *  KeyPtr class (and less than functor)
-   */
-
-  class KeyPtr : public boost::shared_array<const uint8_t> {
-  public:
-    KeyPtr() : boost::shared_array<const uint8_t>(0) { return; }
-    KeyPtr(KeyT *key) : boost::shared_array<const uint8_t>((uint8_t *)key) { return; }
-    KeyT *get() const {
-      return (KeyT *)boost::shared_array<const uint8_t>::get();
-    }
-    void reset(KeyT *key) {
-      boost::shared_array<const uint8_t>::reset((const uint8_t *)key);
-    }
-  };
-
-  struct ltKeyPtr {
-    bool operator()(const KeyPtr &kp1, const KeyPtr &kp2) const {
-      KeyT *k1ptr = (KeyT *)kp1.get();
-      KeyT *k2ptr = (KeyT *)kp2.get();
-      return *k1ptr < *k2ptr;
-    }
-  };
-
-#endif
 
 }
 

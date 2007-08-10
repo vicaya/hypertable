@@ -614,7 +614,7 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, TabletIdentifierT *tablet, 
   size_t goSize = 0;
   size_t stopSize = 0;
   size_t splitSize = 0;
-  KeyComponentsT keyComps;
+  Key keyComps;
   uint64_t updateTimestamp = 0;
   uint64_t clientTimestamp = 0;
   ByteString32Ptr splitKeyPtr;
@@ -683,7 +683,7 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, TabletIdentifierT *tablet, 
   modEnd = buffer.buf + buffer.len;
   modPtr = buffer.buf;
   while (modPtr < modEnd) {
-    if (!Load((ByteString32T *)modPtr, keyComps)) {
+    if (!keyComps.load((ByteString32T *)modPtr)) {
       error = Error::PROTOCOL_ERROR;
       errMsg = "Problem de-serializing key/value pair";
       goto abort;

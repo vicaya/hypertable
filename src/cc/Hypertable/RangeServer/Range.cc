@@ -151,9 +151,9 @@ bool Range::ExtractAccessGroupFromPath(std::string &path, std::string &name, uin
  * TODO: Make this more robust
  */
 int Range::Add(const ByteString32T *key, const ByteString32T *value) {
-  KeyComponentsT keyComps;
+  Key keyComps;
 
-  if (!Load(key, keyComps)) {
+  if (!keyComps.load(key)) {
     LOG_ERROR("Problem parsing key!!");
     return 0;
   }
@@ -479,7 +479,7 @@ void Range::ReplayCommitLog(string &logDir, uint64_t minLogCutoff) {
   size_t nblocks = 0;
   pair<ByteString32T *, ByteString32T *>  kvPair;
   queue< pair<ByteString32T *, ByteString32T *> >  insertQueue;
-  KeyComponentsT keyComps;
+  Key keyComps;
   uint64_t cutoffTime;
   
   clogReader->InitializeRead(0);
@@ -494,7 +494,7 @@ void Range::ReplayCommitLog(string &logDir, uint64_t minLogCutoff) {
     
       while (modPtr < modEnd) {
 	modBase = modPtr;
-	if (!Load((ByteString32T *)modBase, keyComps)) {
+	if (!keyComps.load((ByteString32T *)modBase)) {
 	  LOG_ERROR("Problem deserializing key/value pair from commit log, skipping block...");
 	  break;
 	}

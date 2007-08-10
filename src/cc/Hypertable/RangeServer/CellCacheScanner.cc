@@ -71,11 +71,11 @@ bool CellCacheScanner::Get(ByteString32T **keyp, ByteString32T **valuep) {
 
 void CellCacheScanner::Forward() {
   boost::mutex::scoped_lock lock(mCellCacheMutex);
-  KeyComponentsT keyComps;
+  Key keyComps;
 
   mCurIter++;
   while (mCurIter != mEndIter) {
-    if (!Load((*mCurIter).first, keyComps)) {
+    if (!keyComps.load((*mCurIter).first)) {
       LOG_ERROR("Problem parsing key!");
     }
     else if (mFamilyMask[keyComps.columnFamily]) {

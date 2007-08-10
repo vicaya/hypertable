@@ -114,7 +114,7 @@ bool CellStoreScannerV0::Get(ByteString32T **keyp, ByteString32T **valuep) {
 
 
 void CellStoreScannerV0::Forward() {
-  KeyComponentsT keyComps;
+  Key keyComps;
 
   while (true) {
 
@@ -141,7 +141,7 @@ void CellStoreScannerV0::Forward() {
     /**
      * Column family check
      */
-    if (!Load(mCurKey, keyComps)) {
+    if (!keyComps.load(mCurKey)) {
       LOG_ERROR("Problem parsing key!");
       break;
     }
