@@ -70,6 +70,13 @@ int CellCache::Add(const ByteString32T *key, const ByteString32T *value) {
 
 
 
+CellListScanner *CellCache::CreateScanner() {
+  CellCachePtr cellCachePtr(this);
+  return new CellCacheScanner(cellCachePtr);
+}
+
+
+
 CellCache *CellCache::SliceCopy(uint64_t timestamp) {
   boost::mutex::scoped_lock lock(mMutex);
   CellCache *cache = new CellCache();

@@ -249,7 +249,7 @@ int main(int argc, char **argv) {
    * Scan through re-opened table dumping out keys
    */
 
-  cellStorePtr.reset( new CellStoreV0(client) );
+  cellStorePtr = new CellStoreV0(client);
 
   if (cellStorePtr->Open("/cellStore.tmp", 0, 0) != 0)
     harness.DisplayErrorAndExit();

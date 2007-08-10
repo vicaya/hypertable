@@ -20,7 +20,7 @@
 #ifndef HYPERTABLE_CELLSTORE_H
 #define HYPERTABLE_CELLSTORE_H
 
-#include <boost/shared_ptr.hpp>
+#include <boost/intrusive_ptr.hpp>
 
 #include "Common/ByteString.h"
 
@@ -48,7 +48,7 @@ namespace hypertable {
 
   };
 
-  typedef boost::shared_ptr<CellStore> CellStorePtr;
+  typedef boost::intrusive_ptr<CellStore> CellStorePtr;
 
 }
 

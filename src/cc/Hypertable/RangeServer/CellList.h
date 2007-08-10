@@ -20,17 +20,51 @@
 #ifndef HYPERTABLE_CELLLIST_H
 #define HYPERTABLE_CELLLIST_H
 
-#include "CellListScanner.h"
+#include "Common/atomic.h"
+#include "Common/ByteString.h"
 
 namespace hypertable {
 
+  class CellList;
   class CellListScanner;
 
+  void intrusive_ptr_add_ref(CellList *cl);
+  void intrusive_ptr_release(CellList *cl);
+
+  /**
+   * Abstract base class for all Cell list classes (e.g. CellCache, CellStore, etc.)
+   */
   class CellList {
   public:
+    CellList() { atomic_set(&refCount, 0); }
     virtual ~CellList() { return; }
     virtual int Add(const ByteString32T *key, const ByteString32T *value) = 0;
+    virtual CellListScanner *CreateScanner() { return 0; }
+    friend void intrusive_ptr_add_ref(CellList *cl);
+    friend void intrusive_ptr_release(CellList *cl);    
+  private:
+    atomic_t refCount;
   };
+
+  /**
+   * Atomically increments reference count of given CellList
+   *
+   * @param cl pointer to the Cell list
+   */
+  inline void intrusive_ptr_add_ref(CellList *cl) {
+    atomic_inc_return(&cl->refCount);
+  }
+
+  /**
+   * Atomically decrements reference count of given Cell list, deleting
+   * the Cell list when the count reaches zero
+   *
+   * @param cl pointer to the Cell list
+   */
+  inline void intrusive_ptr_release(CellList *cl) {
+    if (atomic_sub_and_test(1, &cl->refCount))
+      delete cl;
+  } 
 
 }
 

@@ -63,6 +63,12 @@ namespace hypertable {
     virtual std::string &GetFilename() { return mFilename; }
     virtual uint16_t GetFlags();
 
+    /**
+     * Creates a CellStoreScannerV0 object that contains an shared pointer (intrusive_ptr)
+     * to this CellStore;
+     */
+    virtual CellListScanner *CreateScanner();
+
     friend class CellStoreScannerV0;
 
   protected:

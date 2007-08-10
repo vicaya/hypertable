@@ -61,7 +61,6 @@ namespace hypertable {
 
     CellListScanner *CreateScanner(bool showDeletes);
 
-
     bool FamiliesIntersect(std::set<uint8_t> &families);
     uint64_t DiskUsage();
     void AddCellStore(CellStorePtr &cellStorePtr, uint32_t id);

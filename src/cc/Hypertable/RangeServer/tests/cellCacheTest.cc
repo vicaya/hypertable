@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
   if ((cellData = FileUtils::FileToBuffer("tests/cellCacheTestData.txt", &len)) == 0)
     harness.DisplayErrorAndExit();
 
-  cellCachePtr.reset( new CellCache() );
+  cellCachePtr = new CellCache();
 
   for (line = strtok_r(cellData, "\n\r", &last); line; line = strtok_r(0, "\n\r", &last)) {
     LoadCell(line, keyPtr, valuePtr);

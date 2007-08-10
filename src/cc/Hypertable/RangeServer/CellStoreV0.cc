@@ -78,6 +78,11 @@ ByteString32T *CellStoreV0::GetSplitKey() {
 }
 
 
+CellListScanner *CellStoreV0::CreateScanner() {
+  CellStorePtr cellStorePtr(this);
+  return new CellStoreScannerV0(cellStorePtr);
+}
+
 
 int CellStoreV0::Create(const char *fname, size_t blockSize) {
 

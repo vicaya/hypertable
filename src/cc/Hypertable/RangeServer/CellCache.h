@@ -23,7 +23,7 @@
 #include <map>
 
 #include <boost/thread/mutex.hpp>
-#include <boost/shared_ptr.hpp>
+#include <boost/intrusive_ptr.hpp>
 
 #include "CellListScanner.h"
 #include "CellList.h"
@@ -51,6 +51,12 @@ namespace hypertable {
      * @return zero
      */
     virtual int Add(const ByteString32T *key, const ByteString32T *value);
+
+    /**
+     * Creates a CellCacheScanner object that contains an shared pointer (intrusive_ptr)
+     * to this CellCache.
+     */
+    virtual CellListScanner *CreateScanner();
 
     void Lock()   { mLock.lock(); }
     void Unlock() { mLock.unlock(); }
@@ -86,7 +92,7 @@ namespace hypertable {
     uint64_t                   mMemoryUsed;
   };
 
-  typedef boost::shared_ptr<CellCache> CellCachePtr;
+  typedef boost::intrusive_ptr<CellCache> CellCachePtr;
 
 }
 

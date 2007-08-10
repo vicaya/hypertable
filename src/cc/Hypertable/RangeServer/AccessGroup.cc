@@ -40,7 +40,7 @@ AccessGroup::AccessGroup(Schema::AccessGroup *lg, RangeInfoPtr &rangeInfoPtr) : 
   rangeInfoPtr->GetTableName(mTableName);
   rangeInfoPtr->GetStartRow(mStartRow);
   rangeInfoPtr->GetEndRow(mEndRow);
-  mCellCachePtr.reset( new CellCache() );
+  mCellCachePtr = new CellCache();
   for (list<Schema::ColumnFamily *>::iterator iter = lg->columns.begin(); iter != lg->columns.end(); iter++) {
     mColumnFamilies.insert((uint8_t)(*iter)->id);
   }
@@ -197,7 +197,7 @@ void AccessGroup::RunCompaction(uint64_t timestamp, bool major) {
   sprintf(filename, "cs%d", mNextTableId++);
   cellStoreFile = (string)"/hypertable/tables/" + mTableName + "/" + mName + "/" + md5DigestStr + "/" + filename;
 
-  cellStorePtr.reset( new CellStoreV0(Global::hdfsClient) );
+  cellStorePtr = new CellStoreV0(Global::hdfsClient);
 
   if (cellStorePtr->Create(cellStoreFile.c_str()) != 0) {
     LOG_VA_ERROR("Problem compacting locality group to file '%s'", cellStoreFile.c_str());
@@ -272,8 +272,7 @@ void AccessGroup::RunCompaction(uint64_t timestamp, bool major) {
     boost::mutex::scoped_lock lock(mMutex);
 
     /** Slice and install new CellCache **/
-    CellCache *newCellCache = mCellCachePtr->SliceCopy(timestamp);
-    mCellCachePtr.reset(newCellCache);
+    mCellCachePtr = mCellCachePtr->SliceCopy(timestamp);
 
     /** Drop the compacted tables from the table vector **/
     if (tableIndex < mStores.size())

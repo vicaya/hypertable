@@ -128,7 +128,7 @@ namespace {
     }
 
     for (size_t i=0; i<4; i++)
-      cellStorePtr[i].reset( new CellStoreV0(client) );
+      cellStorePtr[i] = new CellStoreV0(client);
 
     if (cellStorePtr[0]->Create("/cellStore0.tmp") != 0)
       return false;
@@ -142,7 +142,7 @@ namespace {
     if (cellStorePtr[3]->Create("/cellStore3.tmp") != 0)
       return false;
 
-    cellCachePtr.reset( new CellCache() );
+    cellCachePtr = new CellCache();
 
     std::string inputFile = "tests/testdata.txt";
 

@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
   /**
    * Open cellStore
    */
-  cellStorePtr.reset( new CellStoreV0(client) );
+  cellStorePtr = new CellStoreV0(client);
   CellListScanner *scanner = 0;
 
   if (cellStorePtr->Open(fname.c_str(), 0, 0) != 0)
