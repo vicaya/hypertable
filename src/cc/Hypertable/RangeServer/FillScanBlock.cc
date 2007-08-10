@@ -27,7 +27,7 @@ namespace hypertable {
   bool FillScanBlock(CellListScannerPtr &scannerPtr, uint8_t *dst, size_t dstLen, uint32_t *lenp) {
     uint8_t *ptr = dst;
     uint8_t *end = dst + dstLen;
-    KeyT          *key;
+    ByteString32T *key;
     ByteString32T *value;
     bool more = true;
 

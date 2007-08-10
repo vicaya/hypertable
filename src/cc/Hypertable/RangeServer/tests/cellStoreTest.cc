@@ -43,7 +43,6 @@ extern "C" {
 #include "Hypertable/RangeServer/CellStoreV0.h"
 #include "Hypertable/RangeServer/CellCache.h"
 #include "Hypertable/RangeServer/CellCacheScanner.h"
-
 #include "Hypertable/RangeServer/FileBlockCache.h"
 #include "Hypertable/RangeServer/Global.h"
 #include "Hypertable/RangeServer/Key.h"
@@ -100,10 +99,10 @@ int main(int argc, char **argv) {
    * Sort ordering test
    */
 
-  typedef set<KeyPtr, ltKeyPtr> KeySetT;
+  typedef set<ByteString32T *, ltByteString32> KeySetT;
 
   KeySetT keys;
-  KeyT  *key;
+  ByteString32T  *key;
   ByteString32T *value;
   uint32_t index;
   uint8_t family;
@@ -124,13 +123,12 @@ int main(int argc, char **argv) {
     else
       qualifier = 0;
 
-    keys.insert( KeyPtr(CreateKey(FLAG_INSERT, tdata.urls[0].get(), family, qualifier, timestamp)) );
+    keys.insert( CreateKey(FLAG_INSERT, tdata.urls[0].get(), family, qualifier, timestamp) );
   }
 
-  for (KeySetT::iterator iter = keys.begin(); iter != keys.end(); iter++) {
-    key = (KeyT *)(*iter).get();
-    logStream << *key << endl;
-  }
+  for (KeySetT::iterator iter = keys.begin(); iter != keys.end(); iter++)
+    logStream << KeyComponentsT(*iter) << endl;
+
 
   /**
    *  Write/Scan test
@@ -160,13 +158,11 @@ int main(int argc, char **argv) {
   if (cellStorePtr->Create("/cellStore.tmp") != 0)
     harness.DisplayErrorAndExit();
 
-  typedef std::map<KeyPtr, ByteString32Ptr, ltKeyPtr> KeyValueMapT;
+  typedef std::map<ByteString32T *, ByteString32T *, ltByteString32> KeyValueMapT;
 
   KeyValueMapT  kvMap;
   kvMap.clear();
-  KeyPtr startKeyPtr;
-  KeyPtr endKeyPtr;
-  KeyT *startKey, *endKey;
+  ByteString32T *startKey, *endKey;
 
   for (size_t i=0; i<20000; i++) {
 
@@ -188,28 +184,23 @@ int main(int argc, char **argv) {
     value->len = strlen(tdata.content[index].get());
     memcpy(value->data, tdata.content[index].get(), value->len);
 
-    kvMap.insert( KeyValueMapT::value_type(KeyPtr(key), ByteString32Ptr(value)) );
+    kvMap.insert( KeyValueMapT::value_type(key, value) );
   }
 
   KeyValueMapT::iterator iter = kvMap.begin();
   for (size_t i=0; i<15000; i++) {
     if (i == 6000)
-      startKeyPtr = (*iter).first;
+      startKey = (*iter).first;
     iter++;
   }
-  endKeyPtr = (*iter).first;
+  endKey = (*iter).first;
 
-  startKey = (KeyT *)startKeyPtr.get();
-  endKey = (KeyT *)endKeyPtr.get();
-
-  logStream << "Range Start: " << *(KeyT *)startKeyPtr.get() << endl;
-  logStream << "Range End: " << *(KeyT *)endKeyPtr.get() << endl;
+  logStream << "Range Start: " << KeyComponentsT(startKey) << endl;
+  logStream << "Range End: " << KeyComponentsT(endKey) << endl;
 
   for (KeyValueMapT::iterator iter = kvMap.begin(); iter != kvMap.end(); iter++) {
-    key = (KeyT *)(*iter).first.get();
-    value = (ByteString32T *)(*iter).second.get();
-    cellStorePtr->Add(key, value);
-    cellCachePtr->Add(key, value);
+    cellStorePtr->Add((*iter).first, (*iter).second);
+    cellCachePtr->Add((*iter).first, (*iter).second);
   }
 
   /**

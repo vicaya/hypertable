@@ -27,7 +27,7 @@ namespace hypertable {
   class CellList {
   public:
     virtual ~CellList() { return; }
-    virtual int Add(const KeyT *key, const ByteString32T *value) = 0;
+    virtual int Add(const ByteString32T *key, const ByteString32T *value) = 0;
   };
 
 }

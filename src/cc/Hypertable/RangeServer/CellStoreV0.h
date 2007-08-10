@@ -29,7 +29,6 @@
 
 #include "BlockDeflater.h"
 #include "CellStore.h"
-#include "Key.h"
 
 using namespace hypertable;
 
@@ -51,14 +50,14 @@ namespace hypertable {
     virtual ~CellStoreV0();
 
     virtual int Create(const char *fname, size_t blockSize=Constants::DEFAULT_BLOCKSIZE);
-    virtual int Add(const KeyT *key, const ByteString32T *value);
+    virtual int Add(const ByteString32T *key, const ByteString32T *value);
     virtual int Finalize(uint64_t timestamp);
 
-    virtual int Open(const char *fname, const KeyT *startKey, const KeyT *endKey);
+    virtual int Open(const char *fname, const ByteString32T *startKey, const ByteString32T *endKey);
     virtual int LoadIndex();
     virtual uint64_t GetLogCutoffTime();
     virtual uint64_t DiskUsage() { return mDiskUsage; }
-    virtual KeyT *GetSplitKey();
+    virtual ByteString32T *GetSplitKey();
     virtual std::string &GetFilename() { return mFilename; }
     virtual uint16_t GetFlags();
 
@@ -66,7 +65,7 @@ namespace hypertable {
 
   protected:
 
-    void AddIndexEntry(const KeyT *key, uint32_t offset);
+    void AddIndexEntry(const ByteString32T *key, uint32_t offset);
     void RecordSplitKey(const uint8_t *keyBytes);
 
     typedef struct {
@@ -80,7 +79,7 @@ namespace hypertable {
       uint16_t  version;
     } __attribute__((packed)) StoreTrailerT;
 
-    typedef map<KeyT *,uint32_t, ltKey> IndexMapT;
+    typedef map<ByteString32T *, uint32_t, ltByteString32> IndexMapT;
 
     HdfsClient            *mClient;
     HdfsProtocol          *mProtocol;
@@ -99,10 +98,10 @@ namespace hypertable {
     bool                   mGotFirstIndex;
     uint64_t               mFileLength;
     uint32_t               mDiskUsage;
-    KeyPtr                 mSplitKey;
+    ByteString32Ptr        mSplitKey;
     int                    mFileId;
-    KeyPtr                 mStartKeyPtr;
-    KeyPtr                 mEndKeyPtr;
+    ByteString32Ptr        mStartKeyPtr;
+    ByteString32Ptr        mEndKeyPtr;
   };
 
 }

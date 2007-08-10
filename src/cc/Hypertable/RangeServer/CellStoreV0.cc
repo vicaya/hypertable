@@ -71,7 +71,7 @@ uint16_t CellStoreV0::GetFlags() {
   return mTrailer.flags;
 }
 
-KeyT *CellStoreV0::GetSplitKey() {
+ByteString32T *CellStoreV0::GetSplitKey() {
   return mSplitKey.get();
 }
 
@@ -97,7 +97,7 @@ int CellStoreV0::Create(const char *fname, size_t blockSize) {
 }
 
 
-int CellStoreV0::Add(const KeyT *key, const ByteString32T *value) {
+int CellStoreV0::Add(const ByteString32T *key, const ByteString32T *value) {
   int error;
   EventPtr eventPtr;
   DynamicBuffer zBuffer(0);
@@ -224,12 +224,12 @@ int CellStoreV0::Finalize(uint64_t timestamp) {
    * Set up mIndex map
    */
   uint32_t offset;
-  KeyT *key;
+  ByteString32T *key;
   mFixIndexBuffer.ptr = mFixIndexBuffer.buf;
   mVarIndexBuffer.ptr = mVarIndexBuffer.buf;
   for (size_t i=0; i<mTrailer.indexEntries; i++) {
     // variable portion
-    key = (KeyT *)mVarIndexBuffer.ptr;
+    key = (ByteString32T *)mVarIndexBuffer.ptr;
     mVarIndexBuffer.ptr += sizeof(int32_t) + key->len;
     // fixed portion (e.g. offset)
     memcpy(&offset, mFixIndexBuffer.ptr, sizeof(offset));
@@ -276,7 +276,7 @@ int CellStoreV0::Finalize(uint64_t timestamp) {
 /**
  *
  */
-void CellStoreV0::AddIndexEntry(const KeyT *key, uint32_t offset) {
+void CellStoreV0::AddIndexEntry(const ByteString32T *key, uint32_t offset) {
 
   size_t keyLen = sizeof(int32_t) + key->len;
   mVarIndexBuffer.ensure( keyLen );
@@ -296,7 +296,7 @@ void CellStoreV0::AddIndexEntry(const KeyT *key, uint32_t offset) {
 /**
  *
  */
-int CellStoreV0::Open(const char *fname, const KeyT *startKey, const KeyT *endKey) {
+int CellStoreV0::Open(const char *fname, const ByteString32T *startKey, const ByteString32T *endKey) {
   int error = 0;
 
   if (startKey != 0)
@@ -404,7 +404,7 @@ int CellStoreV0::LoadIndex() {
 
   mIndex.clear();
 
-  KeyT *key;
+  ByteString32T *key;
   uint32_t offset;
 
   // record end offsets for sanity checking and reset ptr
@@ -419,7 +419,7 @@ int CellStoreV0::LoadIndex() {
     assert(mVarIndexBuffer.ptr < vEnd);
 
     // Deserialized cell key (variable portion)
-    key = (KeyT *)mVarIndexBuffer.ptr;
+    key = (ByteString32T *)mVarIndexBuffer.ptr;
     mVarIndexBuffer.ptr += sizeof(int32_t) + key->len;
 
     // Deserialize offset
@@ -480,5 +480,5 @@ CellListScanner *CellStoreV0::CreateScanner(bool suppressDeleted) {
  */
 
 void CellStoreV0::RecordSplitKey(const uint8_t *keyBytes) {
-  mSplitKey.reset( CreateCopy((KeyT *)keyBytes) );
+  mSplitKey.reset( CreateCopy((ByteString32T *)keyBytes) );
 }

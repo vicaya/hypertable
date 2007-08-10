@@ -34,10 +34,16 @@ namespace hypertable {
   static const uint32_t FLAG_DELETE_CELL  = 0x01;
   static const uint32_t FLAG_INSERT       = 0xFF;
 
+#if 0
   typedef struct {
     uint32_t   len;
     uint8_t    data[1];
   } __attribute__((packed)) KeyT;
+
+  inline size_t Length(const KeyT *key) {
+    return key->len + sizeof(key->len);
+  }
+
 
   typedef struct {
     const char    *rowKey;
@@ -48,11 +54,30 @@ namespace hypertable {
     uint8_t     flag;
   } __attribute__((packed)) KeyComponentsT;
 
-  inline size_t Length(const KeyT *key) {
-    return key->len + sizeof(key->len);
-  }
+#endif
 
-  KeyT *CreateKey(uint8_t flag, const char *rowKey, uint8_t columnFamily, const char *columnQualifier, uint64_t timestamp);
+  class KeyComponentsT {
+  public:
+    KeyComponentsT() { return; }
+    KeyComponentsT(const ByteString32T *key);
+    const char    *rowKey;
+    const char    *columnQualifier;
+    const uint8_t *endPtr;
+    uint64_t    timestamp;
+    uint8_t     columnFamily;
+    uint8_t     flag;
+  };
+
+  
+  std::ostream &operator<<(std::ostream &os, const KeyComponentsT &keyComps);
+
+
+
+  ByteString32T *CreateKey(uint8_t flag, const char *rowKey, uint8_t columnFamily, const char *columnQualifier, uint64_t timestamp);
+
+  bool Load(const ByteString32T *key, KeyComponentsT &comps);
+
+#if 0
 
   inline KeyT *CreateCopy(const KeyT *key) {
     size_t len = Length(key);
@@ -62,9 +87,6 @@ namespace hypertable {
   }
   
   std::ostream &operator<<(std::ostream &os, const KeyT &key);
-
-  bool Load(const KeyT *key, KeyComponentsT &comps);
-
 
   /**
    * Less than operator for KeyT
@@ -121,6 +143,7 @@ namespace hypertable {
     }
   };
 
+#endif
 
 }
 

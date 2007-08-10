@@ -1,11 +1,13 @@
 
 TODO:
+- Overhaul CreateScanner scan spec
+- Replace KeyT type with ByteString32T
+- Get rid of smart pointers in CellCache key/value map
 - Add back CellStore::CreateScanner
 - Fix AsyncComm/Protocol::StringFormatMessage (get rid of command)
 - Add new DELETE handling in RangeServer
 - Figure out why poll drops out of RangeServer/main.cc when gdb detaches from process
 - Writes to the commit log should be asynchronous (or concurrent)
-- Get rid of smart pointers in CellCache key/value map
 - Get rid of accessGroup argument to COMPACTION command!
 - In AccessGroup::RunCompaction, on major compaction check if the oldest
   CellCache entry is newer than the supplied timestamp, if so return

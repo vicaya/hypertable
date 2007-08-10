@@ -34,7 +34,7 @@ namespace hypertable {
     CellCacheScanner(CellCachePtr &cellCachePtr);
     virtual ~CellCacheScanner() { return; }
     virtual void Forward();
-    virtual bool Get(KeyT **keyp, ByteString32T **valuep);
+    virtual bool Get(ByteString32T **keyp, ByteString32T **valuep);
     virtual void Reset();
     using CellListScanner::RestrictRange;
     using CellListScanner::RestrictColumns;
@@ -45,8 +45,8 @@ namespace hypertable {
     CellCache::CellMapT::iterator  mCurIter;
     CellCachePtr                   mCellCachePtr;
     boost::mutex                  &mCellCacheMutex;
-    KeyT                          *mCurKey;
-    ByteString32T                 *mCurValue;
+    const ByteString32T           *mCurKey;
+    const ByteString32T           *mCurValue;
     bool                           mEos;
 
   };

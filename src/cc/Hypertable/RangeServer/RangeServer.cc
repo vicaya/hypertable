@@ -319,8 +319,8 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, TabletIdentif
   uint32_t *kvLenp = 0;
   boost::shared_array<uint8_t> startKeyPtr(0);
   boost::shared_array<uint8_t> endKeyPtr(0);
-  KeyT          *startKey = 0;
-  KeyT          *endKey = 0;
+  ByteString32T          *startKey = 0;
+  ByteString32T          *endKey = 0;
   int error = Error::OK;
   std::string errMsg;
   std::string tableName;
@@ -347,7 +347,7 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, TabletIdentif
    * Setup startKey
    */
   if (spec->startKey != 0) {
-    startKey = (KeyT *)new uint8_t [ sizeof(int32_t) + strlen(spec->startKey) ];
+    startKey = (ByteString32T *)new uint8_t [ sizeof(int32_t) + strlen(spec->startKey) ];
     startKey->len = strlen(spec->startKey);
     memcpy(startKey->data, spec->startKey, startKey->len);
     startKeyPtr.reset((uint8_t *)startKey);
@@ -357,7 +357,7 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, TabletIdentif
    * Setup endKey
    */
   if (spec->endKey != 0) {
-    endKey = (KeyT *)new uint8_t [ sizeof(int32_t) + strlen(spec->endKey) ];
+    endKey = (ByteString32T *)new uint8_t [ sizeof(int32_t) + strlen(spec->endKey) ];
     endKey->len = strlen(spec->endKey);
     memcpy(endKey->data, spec->endKey, endKey->len);
     endKeyPtr.reset((uint8_t *)endKey);
@@ -615,7 +615,7 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, TabletIdentifierT *tablet, 
   KeyComponentsT keyComps;
   uint64_t updateTimestamp = 0;
   uint64_t clientTimestamp = 0;
-  KeyPtr       splitKeyPtr;
+  ByteString32Ptr splitKeyPtr;
   CommitLogPtr splitLogPtr;
   uint64_t splitStartTime;
   std::string  splitRow;
@@ -681,7 +681,7 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, TabletIdentifierT *tablet, 
   modEnd = buffer.buf + buffer.len;
   modPtr = buffer.buf;
   while (modPtr < modEnd) {
-    if (!Load((KeyT *)modPtr, keyComps)) {
+    if (!Load((ByteString32T *)modPtr, keyComps)) {
       error = Error::PROTOCOL_ERROR;
       errMsg = "Problem de-serializing key/value pair";
       goto abort;
@@ -755,13 +755,13 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, TabletIdentifierT *tablet, 
   rangePtr->Lock();
   /** Apply the GO mods **/
   for (size_t i=0; i<goMods.size(); i++) {
-    KeyT *key = (KeyT *)goMods[i].base;
+    ByteString32T *key = (ByteString32T *)goMods[i].base;
     ByteString32T *value = (ByteString32T *)(goMods[i].base + Length(key));
     rangePtr->Add(key, value);
   }
   /** Apply the SPLIT mods **/
   for (size_t i=0; i<splitMods.size(); i++) {
-    KeyT *key = (KeyT *)splitMods[i].base;
+    ByteString32T *key = (ByteString32T *)splitMods[i].base;
     ByteString32T *value = (ByteString32T *)(splitMods[i].base + Length(key));
     rangePtr->Add(key, value);
   }

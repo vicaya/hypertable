@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -22,9 +21,7 @@
 #include "Common/ByteString.h"
 #include "Common/DynamicBuffer.h"
 #include "Hypertable/Schema.h"
-#include "Hypertable/RangeServer/Key.h"
 
-using namespace hypertable;
 using namespace hypertable;
 
 class TestSource {
@@ -34,12 +31,12 @@ class TestSource {
     return;
   }
 
-  bool Next(KeyT **keyp, ByteString32T **valuep);
+  bool Next(ByteString32T **keyp, ByteString32T **valuep);
 
  private:
-  bool CreateRowDelete(const char *row, uint64_t timestamp, KeyT **keyp, ByteString32T **valuep);
-  bool CreateColumnDelete(const char *row, const char *column, uint64_t timestamp, KeyT **keyp, ByteString32T **valuep);
-  bool CreateInsert(const char *row, const char *column, uint64_t timestamp, const char *value, KeyT **keyp, ByteString32T **valuep);
+  bool CreateRowDelete(const char *row, uint64_t timestamp, ByteString32T **keyp, ByteString32T **valuep);
+  bool CreateColumnDelete(const char *row, const char *column, uint64_t timestamp, ByteString32T **keyp, ByteString32T **valuep);
+  bool CreateInsert(const char *row, const char *column, uint64_t timestamp, const char *value, ByteString32T **keyp, ByteString32T **valuep);
 
   Schema *mSchema;
   ifstream mFin;

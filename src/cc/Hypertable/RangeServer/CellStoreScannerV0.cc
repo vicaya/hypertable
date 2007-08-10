@@ -52,7 +52,7 @@ CellStoreScannerV0::~CellStoreScannerV0() {
  *
  */
 void CellStoreScannerV0::Reset() {
-  KeyT *tmpKey;
+  ByteString32T *tmpKey;
 
   // compute mStartKey
   tmpKey = mCellStoreV0->mStartKeyPtr.get();
@@ -91,7 +91,7 @@ void CellStoreScannerV0::Reset() {
 
 
 
-bool CellStoreScannerV0::Get(KeyT **keyp, ByteString32T **valuep) {
+bool CellStoreScannerV0::Get(ByteString32T **keyp, ByteString32T **valuep) {
 
   assert(mReset);
 
@@ -126,7 +126,7 @@ void CellStoreScannerV0::Forward() {
 	return;
     }
 
-    mCurKey = (KeyT *)mBlock.ptr;
+    mCurKey = (ByteString32T *)mBlock.ptr;
     mCurValue = (ByteString32T *)(mBlock.ptr + Length(mCurKey));
 
     if (mCheckForRangeEnd) {
@@ -241,14 +241,14 @@ bool CellStoreScannerV0::Initialize() {
   /**
    * Seek to start of range in block
    */
-  mCurKey = (KeyT *)mBlock.ptr;
+  mCurKey = (ByteString32T *)mBlock.ptr;
   mCurValue = (ByteString32T *)(mBlock.ptr + Length(mCurKey));
   if (mStartKey != 0) {
     while (*mCurKey < *mStartKey) {
       mBlock.ptr = ((uint8_t *)mCurValue) + Length(mCurValue);
       if (mBlock.ptr >= mBlock.end)
 	break;
-      mCurKey = (KeyT *)mBlock.ptr;
+      mCurKey = (ByteString32T *)mBlock.ptr;
       mCurValue = (ByteString32T *)(mBlock.ptr + Length(mCurKey));
     }
   }
@@ -259,7 +259,7 @@ bool CellStoreScannerV0::Initialize() {
   if (mBlock.ptr >= mBlock.end) {
     if (!FetchNextBlock())
       return false;
-    mCurKey = (KeyT *)mBlock.ptr;
+    mCurKey = (ByteString32T *)mBlock.ptr;
     mCurValue = (ByteString32T *)(mBlock.ptr + Length(mCurKey));
   }
 

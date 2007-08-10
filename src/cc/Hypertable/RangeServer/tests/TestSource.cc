@@ -25,11 +25,13 @@ extern "C" {
 #include "Common/ByteOrder.h"
 #include "Common/DynamicBuffer.h"
 
+#include "Hypertable/RangeServer/Key.h"
+
 #include "TestSource.h"
 
 using namespace std;
 
-bool TestSource::Next(KeyT **keyp, ByteString32T **valuep) {
+bool TestSource::Next(ByteString32T **keyp, ByteString32T **valuep) {
   string line;
   boost::shared_array<char> linePtr;
   char *base, *ptr, *last;
@@ -102,7 +104,7 @@ bool TestSource::Next(KeyT **keyp, ByteString32T **valuep) {
 }
 
 
-bool TestSource::CreateRowDelete(const char *row, uint64_t timestamp, KeyT **keyp, ByteString32T **valuep) {
+bool TestSource::CreateRowDelete(const char *row, uint64_t timestamp, ByteString32T **keyp, ByteString32T **valuep) {
   int32_t keyLen = strlen(row) + 12;
   int32_t valueLen = 0;
 
@@ -118,7 +120,7 @@ bool TestSource::CreateRowDelete(const char *row, uint64_t timestamp, KeyT **key
   timestamp = ByteOrderSwapInt64(timestamp);
   timestamp = ~timestamp;
   mKeyBuffer.addNoCheck(&timestamp, sizeof(timestamp));
-  *keyp = (KeyT *)mKeyBuffer.buf;
+  *keyp = (ByteString32T *)mKeyBuffer.buf;
 
   mValueBuffer.clear();
   mValueBuffer.ensure(sizeof(int32_t));
@@ -128,7 +130,7 @@ bool TestSource::CreateRowDelete(const char *row, uint64_t timestamp, KeyT **key
 }
 
 
-bool TestSource::CreateColumnDelete(const char *row, const char *column, uint64_t timestamp, KeyT **keyp, ByteString32T **valuep) {
+bool TestSource::CreateColumnDelete(const char *row, const char *column, uint64_t timestamp, ByteString32T **keyp, ByteString32T **valuep) {
   int32_t keyLen = 0;
   int32_t valueLen = 0;
   string columnFamily;
@@ -162,7 +164,7 @@ bool TestSource::CreateColumnDelete(const char *row, const char *column, uint64_
   timestamp = ByteOrderSwapInt64(timestamp);
   timestamp = ~timestamp;
   mKeyBuffer.addNoCheck(&timestamp, sizeof(timestamp));
-  *keyp = (KeyT *)mKeyBuffer.buf;
+  *keyp = (ByteString32T *)mKeyBuffer.buf;
 
   mValueBuffer.clear();
   mValueBuffer.ensure(sizeof(int32_t));
@@ -172,7 +174,7 @@ bool TestSource::CreateColumnDelete(const char *row, const char *column, uint64_
 }
 
 
-bool TestSource::CreateInsert(const char *row, const char *column, uint64_t timestamp, const char *value, KeyT **keyp, ByteString32T **valuep) {
+bool TestSource::CreateInsert(const char *row, const char *column, uint64_t timestamp, const char *value, ByteString32T **keyp, ByteString32T **valuep) {
   int32_t keyLen = 0;
   int32_t valueLen = strlen(value) + 1;
   string columnFamily;
@@ -206,7 +208,7 @@ bool TestSource::CreateInsert(const char *row, const char *column, uint64_t time
   timestamp = ByteOrderSwapInt64(timestamp);
   timestamp = ~timestamp;
   mKeyBuffer.addNoCheck(&timestamp, sizeof(timestamp));
-  *keyp = (KeyT *)mKeyBuffer.buf;
+  *keyp = (ByteString32T *)mKeyBuffer.buf;
 
   mValueBuffer.clear();
   mValueBuffer.ensure(sizeof(int32_t) + valueLen);

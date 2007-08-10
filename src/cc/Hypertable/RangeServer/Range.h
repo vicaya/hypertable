@@ -43,10 +43,10 @@ namespace hypertable {
   public:
     Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr);
     virtual ~Range() { return; }
-    virtual int Add(const KeyT *key, const ByteString32T *value);
+    virtual int Add(const ByteString32T *key, const ByteString32T *value);
     virtual void Lock();
     virtual void Unlock();
-    virtual KeyT *GetSplitKey();
+    virtual ByteString32T *GetSplitKey();
 
     uint64_t GetLogCutoffTime();
     uint64_t DiskUsage();
@@ -64,7 +64,7 @@ namespace hypertable {
     void IncrementUpdateCounter();
     void DecrementUpdateCounter();
 
-    bool GetSplitInfo(KeyPtr &splitKeyPtr, CommitLogPtr &splitLogPtr, uint64_t *splitStartTime) {
+    bool GetSplitInfo(ByteString32Ptr &splitKeyPtr, CommitLogPtr &splitLogPtr, uint64_t *splitStartTime) {
       boost::mutex::scoped_lock lock(mMutex);
       *splitStartTime = mSplitStartTime;
       if (mSplitStartTime == 0)
@@ -88,8 +88,8 @@ namespace hypertable {
     SchemaPtr        mSchema;
     std::string      mStartRow;
     std::string      mEndRow;
-    KeyPtr           mStartKeyPtr;
-    KeyPtr           mEndKeyPtr;
+    ByteString32Ptr  mStartKeyPtr;
+    ByteString32Ptr  mEndKeyPtr;
     AccessGroupMapT        mAccessGroupMap;
     std::vector<AccessGroup *>  mAccessGroupVector;
     ColumnFamilyVectorT      mColumnFamilyVector;
@@ -97,7 +97,7 @@ namespace hypertable {
 
     uint64_t         mLatestTimestamp;
     uint64_t         mSplitStartTime;
-    KeyPtr           mSplitKeyPtr;
+    ByteString32Ptr  mSplitKeyPtr;
     CommitLogPtr     mSplitLogPtr;
 
     boost::mutex     mMaintenanceMutex;

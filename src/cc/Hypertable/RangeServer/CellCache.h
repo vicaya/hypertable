@@ -23,7 +23,6 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "Key.h"
 #include "CellListScanner.h"
 #include "CellList.h"
 
@@ -38,7 +37,7 @@ namespace hypertable {
 
   public:
     CellCache() : CellList(), mMutex(), mLock(mMutex,false), mMemoryUsed(0) { return; }
-    virtual ~CellCache() { return; }
+    virtual ~CellCache();
 
     /**
      * Adds a key/value pair to the CellCache.  This method assumes that
@@ -49,7 +48,7 @@ namespace hypertable {
      * @param value value to inserted
      * @return zero
      */
-    virtual int Add(const KeyT *key, const ByteString32T *value);
+    virtual int Add(const ByteString32T *key, const ByteString32T *value);
 
     void Lock()   { mLock.lock(); }
     void Unlock() { mLock.unlock(); }
@@ -77,7 +76,7 @@ namespace hypertable {
     friend class CellCacheScanner;
 
   protected:
-    typedef std::map<KeyPtr, ByteString32Ptr, ltKeyPtr> CellMapT;
+    typedef std::map<const ByteString32T *, const ByteString32T *, ltByteString32> CellMapT;
 
     boost::mutex               mMutex;
     boost::mutex::scoped_lock  mLock;

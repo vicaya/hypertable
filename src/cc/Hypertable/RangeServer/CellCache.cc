@@ -23,31 +23,45 @@
 
 #include "CellCache.h"
 #include "CellCacheScanner.h"
+#include "Key.h"
 
 using namespace hypertable;
 using namespace std;
 
 
+CellCache::~CellCache() {
+  for (CellMapT::iterator iter = mCellMap.begin(); iter != mCellMap.end(); iter++)
+    delete [] (*iter).first;
+}
+
+
 /**
  * 
  */
-int CellCache::Add(const KeyT *key, const ByteString32T *value) {
-  size_t addedMem = sizeof(CellMapT::value_type);
-  KeyT *newKey;
+int CellCache::Add(const ByteString32T *key, const ByteString32T *value) {
+  size_t kvLen = key->len + (2*sizeof(int32_t));
+  ByteString32T *newKey;
   ByteString32T *newValue;
 
-  newKey = CreateCopy(key);
-  addedMem += Length(key);
+  if (value) {
+    kvLen += value->len;
+    newKey = (ByteString32T *)new uint8_t [ kvLen ];
+    newValue = (ByteString32T *)(newKey->data + key->len);
+    memcpy(newKey, key, sizeof(int32_t) + key->len);
+    memcpy(newValue, value, sizeof(int32_t) + value->len);
+  }
+  else {
+    newKey = (ByteString32T *)new uint8_t [ kvLen ];
+    newValue = (ByteString32T *)(newKey->data + key->len);
+    memcpy(newKey, key, sizeof(int32_t) + key->len);
+    newValue->len = 0;
+  }
 
-  newValue = CreateCopy(value);
-  addedMem += Length(value);
+  CellMapT::iterator iter = mCellMap.lower_bound(key);
 
-  KeyPtr keyPtr(newKey);
-  CellMapT::iterator iter = mCellMap.lower_bound(keyPtr);
+  mCellMap.insert(iter, CellMapT::value_type(newKey, newValue));
 
-  mCellMap.insert(iter, CellMapT::value_type(keyPtr, ByteString32Ptr(newValue)));
-
-  mMemoryUsed += addedMem;
+  mMemoryUsed += sizeof(CellMapT::value_type) + kvLen;
 
   return 0;
 }
@@ -58,19 +72,24 @@ CellCache *CellCache::SliceCopy(uint64_t timestamp) {
   boost::mutex::scoped_lock lock(mMutex);
   CellCache *cache = new CellCache();
   KeyComponentsT keyComps;
-  KeyT *key;
+  ByteString32T *key;
   ByteString32T *value;
-
+  size_t kvLen;
 
   for (CellMapT::iterator iter = mCellMap.begin(); iter != mCellMap.end(); iter++) {
 
-    if (!Load((KeyT *)(*iter).first.get(), keyComps)) {
+    if (!Load((*iter).first, keyComps)) {
       LOG_ERROR("Problem deserializing key/value pair");
       continue;
     }
 
-    if (keyComps.timestamp > timestamp)
-      cache->Add((*iter).first.get(), (*iter).second.get());
+    if (keyComps.timestamp > timestamp) {
+      kvLen = (*iter).first->len + (*iter).second->len + (2*sizeof(int32_t));
+      key = (ByteString32T *) new uint8_t [ kvLen ];
+      memcpy(key, (*iter).first, kvLen);
+      value = (ByteString32T *)(key->data + key->len);
+      cache->Add(key, value);
+    }
 
   }
 

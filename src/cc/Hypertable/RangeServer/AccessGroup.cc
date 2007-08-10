@@ -34,7 +34,7 @@
 #include "MergeScanner.h"
 
 
-AccessGroup::AccessGroup(Schema::AccessGroup *lg, RangeInfoPtr &rangeInfoPtr) : CellList(), mMutex(), mLock(mMutex,false), mName(lg->name), mStores(), mCellCachePtr(), mNextTableId(0), mLogCutoffTime(0), mDiskUsage(0), mSplitKeys() {
+AccessGroup::AccessGroup(Schema::AccessGroup *lg, RangeInfoPtr &rangeInfoPtr) : CellList(), mMutex(), mLock(mMutex,false), mName(lg->name), mStores(), mCellCachePtr(), mNextTableId(0), mLogCutoffTime(0), mDiskUsage(0) {
   rangeInfoPtr->GetTableName(mTableName);
   rangeInfoPtr->GetStartRow(mStartRow);
   rangeInfoPtr->GetEndRow(mEndRow);
@@ -54,7 +54,7 @@ AccessGroup::~AccessGroup() {
  * Also, at the end of compaction processing, when mCellCachePtr gets reset to a new value,
  * the CellCache should be locked as well.
  */
-int AccessGroup::Add(const KeyT *key, const ByteString32T *value) {
+int AccessGroup::Add(const ByteString32T *key, const ByteString32T *value) {
   return mCellCachePtr->Add(key, value);
 }
 
@@ -99,12 +99,12 @@ uint64_t AccessGroup::DiskUsage() {
 
 /**
  * This method
-KeyT *AccessGroup::GetSplitKey() {
+ByteString32T *AccessGroup::GetSplitKey() {
   boost::read_write_mutex::scoped_read_lock lock(mRwMutex);
   uint64_t  chosenTime = 0;
   uint64_t  time;
-  KeyT     *chosenKey = 0;
-  KeyT     *key;
+  ByteString32T     *chosenKey = 0;
+  ByteString32T     *key;
 
   for (size_t i=0; i<mStores.size(); i++) {
     time = mStores[i]->GetLogCutoffTime();
@@ -151,7 +151,7 @@ void AccessGroup::RunCompaction(uint64_t timestamp, bool major) {
   std::string cellStoreFile;
   char md5DigestStr[33];
   char filename[16];
-  KeyT  *key = 0;
+  ByteString32T *key = 0;
   ByteString32T *value = 0;
   KeyComponentsT keyComps;
   boost::shared_ptr<CellListScanner> scannerPtr;

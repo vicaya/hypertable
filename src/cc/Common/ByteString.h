@@ -66,6 +66,37 @@ namespace hypertable {
   };
 
   /**
+   * Less than operator for ByteString32T
+   */
+  inline bool operator<(const ByteString32T &bs1, const ByteString32T &bs2) {
+    uint32_t len = (bs1.len < bs2.len) ? bs1.len : bs2.len;
+    int cmp = memcmp(bs1.data, bs2.data, len);
+    return (cmp==0) ? bs1.len < bs2.len : cmp < 0;
+  }
+
+  /**
+   * Equality operator for ByteString32T
+   */
+  inline bool operator==(const ByteString32T &bs1, const ByteString32T &bs2) {
+    if (bs1.len != bs2.len)
+      return false;
+    return memcmp(bs1.data, bs2.data, bs1.len) == 0;
+  }  
+
+  /**
+   * Inequality operator for ByteString32T
+   */
+  inline bool operator!=(const ByteString32T &bs1, const ByteString32T &bs2) {
+    return !(bs1 == bs2);
+  }
+
+  struct ltByteString32 {
+    bool operator()(const ByteString32T * bs1ptr, const ByteString32T *bs2ptr) const {
+      return *bs1ptr < *bs2ptr;
+    }
+  };
+
+  /**
    *  For testing
    */
   inline std::ostream &operator <<(std::ostream &os, const ByteString32T &bs) {

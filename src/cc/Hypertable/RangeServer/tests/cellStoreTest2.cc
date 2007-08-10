@@ -37,7 +37,6 @@
 
 #include "Hypertable/RangeServer/FileBlockCache.h"
 #include "Hypertable/RangeServer/Global.h"
-#include "Hypertable/RangeServer/Key.h"
 
 
 using namespace hypertable;
@@ -109,7 +108,7 @@ namespace {
     const char *schemaData;
     off_t len;
     Schema *schema;
-    KeyT *key;
+    ByteString32T *key;
     ByteString32T *value;
     CellStorePtr cellStorePtr[4];
     CellCachePtr cellCachePtr;
@@ -145,33 +144,33 @@ namespace {
 
     TestSource *inputSource = new TestSource(inputFile, schema);
 
-    typedef std::map<KeyPtr, ByteString32Ptr, ltKeyPtr> KeyValueMapT;
+    typedef std::map<ByteString32T *, ByteString32T *, ltByteString32> KeyValueMapT;
 
     KeyValueMapT  kvMap;
     KeyComponentsT keyComps;
     kvMap.clear();
 
     for (size_t i=0; inputSource->Next(&key, &value); i++) {
-      kvMap.insert( KeyValueMapT::value_type(KeyPtr(CreateCopy(key)), ByteString32Ptr(CreateCopy(value))) );
+      kvMap.insert( KeyValueMapT::value_type(CreateCopy(key), CreateCopy(value)) );  // do we need to make the copy?
     }
 
     size_t i=0;
     for (KeyValueMapT::iterator iter = kvMap.begin(); iter != kvMap.end(); iter++) {
     
-      if (!Load((*iter).first.get(), keyComps)) {
+      if (!Load((*iter).first, keyComps)) {
 	LOG_ERROR("Problem parsing key!!");
 	return 1;
       }
 
-      cellCachePtr->Add((*iter).first.get(), (*iter).second.get());
+      cellCachePtr->Add((*iter).first, (*iter).second);
 
       if (keyComps.flag == FLAG_INSERT) {
-	if (cellStorePtr[i%4]->Add((*iter).first.get(), (*iter).second.get()) != Error::OK)
+	if (cellStorePtr[i%4]->Add((*iter).first, (*iter).second) != Error::OK)
 	  return false;
       }
       else {
 	for (size_t j=0; j<4; j++) {
-	  if (cellStorePtr[j]->Add((*iter).first.get(), (*iter).second.get()) != Error::OK)
+	  if (cellStorePtr[j]->Add((*iter).first, (*iter).second) != Error::OK)
 	    return false;
 	}
       }
@@ -200,7 +199,7 @@ namespace {
     //scanner->Reset();
 
     while (mscanner->Get(&key, &value)) {
-      outstreamA << *key << " " << *value << endl;
+      outstreamA << KeyComponentsT(key) << " " << *value << endl;
       //scanner->Forward();
       mscanner->Forward();
     }
@@ -231,7 +230,7 @@ namespace {
     mscanner->Reset();
 
     while (mscanner->Get(&key, &value)) {
-      outstreamB << *key << " " << *value << endl;
+      outstreamB << KeyComponentsT(key) << " " << *value << endl;
       mscanner->Forward();
     }
 

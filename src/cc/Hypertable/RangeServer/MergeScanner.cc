@@ -44,7 +44,7 @@ MergeScanner::~MergeScanner() {
 
 
 
-void MergeScanner::RestrictRange(KeyT *start, KeyT *end) {
+void MergeScanner::RestrictRange(ByteString32T *start, ByteString32T *end) {
   for (size_t i=0; i<mScanners.size(); i++)
     mScanners[i]->RestrictRange(start, end);
   mReset = false;
@@ -147,7 +147,7 @@ void MergeScanner::Forward() {
 
 }
 
-bool MergeScanner::Get(KeyT **keyp, ByteString32T **valuep) {
+bool MergeScanner::Get(ByteString32T **keyp, ByteString32T **valuep) {
   assert(mReset);
   if (!mQueue.empty()) {
     const ScannerStateT &sstate = mQueue.top();

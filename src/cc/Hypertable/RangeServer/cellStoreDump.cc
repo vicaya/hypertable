@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
   HdfsClient *client;
   std::string fname = "";
   struct sockaddr_in addr;
-  KeyT *key;
+  ByteString32T *key;
   ByteString32T *value;
   bool trailer_only = false;
   CellStorePtr cellStorePtr;
@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
    * Dump trailer
    */
   cout << "timestamp " << cellStorePtr->GetLogCutoffTime() << endl;
-  KeyT *splitKey = cellStorePtr->GetSplitKey();
+  ByteString32T *splitKey = cellStorePtr->GetSplitKey();
   cout << "split key '" << *splitKey << "'" << endl;
 
   return 0;

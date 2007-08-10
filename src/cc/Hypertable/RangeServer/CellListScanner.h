@@ -21,9 +21,8 @@
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include "Common/ByteString.h"
 #include "Common/DynamicBuffer.h"
-
-#include "Key.h"
 
 using namespace hypertable;
 
@@ -33,18 +32,18 @@ namespace hypertable {
   public:
     CellListScanner();
     virtual ~CellListScanner() { return; }
-    virtual void RestrictRange(KeyT *start, KeyT *end);
+    virtual void RestrictRange(ByteString32T *start, ByteString32T *end);
     virtual void RestrictColumns(const uint8_t *families, size_t count);
     virtual void Forward() = 0;
-    virtual bool Get(KeyT **keyp, ByteString32T **valuep) = 0;
+    virtual bool Get(ByteString32T **keyp, ByteString32T **valuep) = 0;
     virtual void Reset() = 0;
 
   protected:
     bool  mReset;
-    KeyT *mRangeStart;
-    KeyT *mRangeEnd;
-    KeyPtr mRangeStartPtr;
-    KeyPtr mRangeEndPtr;
+    ByteString32T  *mRangeStart;
+    ByteString32T  *mRangeEnd;
+    ByteString32Ptr mRangeStartPtr;
+    ByteString32Ptr mRangeEndPtr;
     boost::shared_array<bool> mFamilyMask;
   };
 

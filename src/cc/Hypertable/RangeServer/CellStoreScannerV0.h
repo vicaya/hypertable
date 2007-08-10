@@ -35,7 +35,7 @@ namespace hypertable {
     virtual void Lock() { return; }
     virtual void Unlock() { return; }
     virtual void Forward();
-    virtual bool Get(KeyT **keyp, ByteString32T **valuep);
+    virtual bool Get(ByteString32T **keyp, ByteString32T **valuep);
     virtual void Reset();
     using CellListScanner::RestrictRange;
     using CellListScanner::RestrictColumns;
@@ -61,13 +61,13 @@ namespace hypertable {
     CellStoreV0::IndexMapT::iterator mIter;
 
     BlockInfoT            mBlock;
-    KeyT                 *mCurKey;
+    ByteString32T        *mCurKey;
     ByteString32T        *mCurValue;
     BlockInflater        *mBlockInflater;
     bool                  mCheckForRangeEnd;
     int                   mFileId;
-    KeyT                 *mStartKey;
-    KeyT                 *mEndKey;
+    ByteString32T        *mStartKey;
+    ByteString32T        *mEndKey;
   };
 
 }

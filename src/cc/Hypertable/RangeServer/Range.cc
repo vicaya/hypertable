@@ -47,7 +47,7 @@ Range::Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), mMu
   AccessGroup *ag;
   uint64_t minLogCutoff = 0;
   uint32_t storeId;
-  KeyT *startKey=0, *endKey=0;
+  ByteString32T *startKey=0, *endKey=0;
   int32_t len;
 
   rangeInfoPtr->GetTableName(mTableName);
@@ -57,7 +57,7 @@ Range::Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), mMu
   // set up start key
   if (mStartRow != "") {
     len = strlen(mStartRow.c_str()) + 1;
-    startKey = (KeyT *)new uint8_t [ sizeof(int32_t) + len ];
+    startKey = (ByteString32T *)new uint8_t [ sizeof(int32_t) + len ];
     strcpy((char *)startKey->data, mStartRow.c_str());
     startKey->len = len;
     mStartKeyPtr.reset(startKey);
@@ -66,7 +66,7 @@ Range::Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), mMu
   // set up end key
   if (mEndRow != "") {
     len = strlen(mEndRow.c_str()) + 1;
-    endKey = (KeyT *)new uint8_t [ sizeof(int32_t) + len ];
+    endKey = (ByteString32T *)new uint8_t [ sizeof(int32_t) + len ];
     strcpy((char *)endKey->data, mEndRow.c_str());
     endKey->len = len;
     mEndKeyPtr.reset(endKey);
@@ -148,7 +148,7 @@ bool Range::ExtractAccessGroupFromPath(std::string &path, std::string &name, uin
 /**
  * TODO: Make this more robust
  */
-int Range::Add(const KeyT *key, const ByteString32T *value) {
+int Range::Add(const ByteString32T *key, const ByteString32T *value) {
   KeyComponentsT keyComps;
 
   if (!Load(key, keyComps)) {
@@ -205,10 +205,10 @@ uint64_t Range::DiskUsage() {
   return usage;
 }
 
-KeyT *Range::GetSplitKey() {
+ByteString32T *Range::GetSplitKey() {
   AccessGroup::SplitKeyQueueT splitKeyHeap;
-  ltKey sortObj;
-  vector<KeyT *> splitKeys;
+  ltByteString32 sortObj;
+  vector<ByteString32T *> splitKeys;
   for (size_t i=0; i<mAccessGroupVector.size(); i++)
     mAccessGroupVector[i]->GetSplitKeys(splitKeyHeap);
   for (int32_t i=0; i<Global::localityGroupMaxFiles && !splitKeyHeap.empty(); i++) {
@@ -261,7 +261,7 @@ void Range::ScheduleMaintenance() {
 void Range::DoMaintenance() {
   assert(mMaintenanceInProgress);
   if (DiskUsage() > Global::rangeMaxBytes) {
-    KeyT *key;
+    ByteString32T *key;
     std::string splitPoint;
     std::string splitLogDir;
     char md5DigestStr[33];
@@ -475,8 +475,8 @@ void Range::ReplayCommitLog(string &logDir, uint64_t minLogCutoff) {
   size_t len;
   size_t count = 0;
   size_t nblocks = 0;
-  pair<KeyT *, ByteString32T *>  kvPair;
-  queue< pair<KeyT *, ByteString32T *> >  insertQueue;
+  pair<ByteString32T *, ByteString32T *>  kvPair;
+  queue< pair<ByteString32T *, ByteString32T *> >  insertQueue;
   KeyComponentsT keyComps;
   uint64_t cutoffTime;
   
@@ -492,7 +492,7 @@ void Range::ReplayCommitLog(string &logDir, uint64_t minLogCutoff) {
     
       while (modPtr < modEnd) {
 	modBase = modPtr;
-	if (!Load((KeyT *)modBase, keyComps)) {
+	if (!Load((ByteString32T *)modBase, keyComps)) {
 	  LOG_ERROR("Problem deserializing key/value pair from commit log, skipping block...");
 	  break;
 	}
@@ -523,7 +523,7 @@ void Range::ReplayCommitLog(string &logDir, uint64_t minLogCutoff) {
 	  }
 	  assert(len <= (size_t)(goEnd-goNext));
 	  memcpy(goNext, modBase, len);
-	  kvPair.first = (KeyT *)goNext;
+	  kvPair.first = (ByteString32T *)goNext;
 	  kvPair.second = (ByteString32T *)(goNext + sizeof(int32_t) + keyLen);
 	  goNext += len;
 	  insertQueue.push(kvPair);

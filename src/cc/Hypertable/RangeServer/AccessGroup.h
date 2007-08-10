@@ -37,7 +37,7 @@ namespace hypertable {
   public:
 
     typedef struct {
-      KeyT     *key;
+      ByteString32T *key;
       uint64_t timestamp;
     } SplitKeyInfoT;
 
@@ -51,7 +51,7 @@ namespace hypertable {
     
     AccessGroup(Schema::AccessGroup *lg, RangeInfoPtr &tabletInfoPtr);
     virtual ~AccessGroup();
-    virtual int Add(const KeyT *key, const ByteString32T *value);
+    virtual int Add(const ByteString32T *key, const ByteString32T *value);
     virtual void GetSplitKeys(SplitKeyQueueT &keyHeap);
 
     void Lock() { mLock.lock(); mCellCachePtr->Lock(); }
@@ -80,7 +80,6 @@ namespace hypertable {
     uint32_t             mNextTableId;
     uint64_t             mLogCutoffTime;
     uint64_t             mDiskUsage;
-    std::vector<KeyPtr>  mSplitKeys;
   };
 
 }

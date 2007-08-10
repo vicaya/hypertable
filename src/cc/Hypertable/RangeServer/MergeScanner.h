@@ -37,7 +37,7 @@ namespace hypertable {
 
     typedef struct {
       CellListScanner *scanner;
-      KeyT            *key;
+      ByteString32T   *key;
       ByteString32T   *value;
     } ScannerStateT;
 
@@ -49,10 +49,10 @@ namespace hypertable {
 
     MergeScanner(bool showDeletes);
     virtual ~MergeScanner();
-    virtual void RestrictRange(KeyT *start, KeyT *end);
+    virtual void RestrictRange(ByteString32T *start, ByteString32T *end);
     virtual void RestrictColumns(const uint8_t *families, size_t count);
     virtual void Forward();
-    virtual bool Get(KeyT **keyp, ByteString32T **valuep);
+    virtual bool Get(ByteString32T **keyp, ByteString32T **valuep);
     virtual void Reset();
     void AddScanner(CellListScanner *scanner);
 

@@ -30,9 +30,9 @@ extern "C" {
 #include "Common/TestHarness.h"
 #include "Common/Usage.h"
 
-#include "Hypertable/RangeServer/Key.h"
 #include "Hypertable/RangeServer/CellCache.h"
 #include "Hypertable/RangeServer/CellCacheScanner.h"
+#include "Hypertable/RangeServer/Key.h"
 
 using namespace hypertable;
 using namespace std;
@@ -47,7 +47,7 @@ namespace {
 }
 
 
-void LoadCell(char *line, KeyPtr &keyPtr, ByteString32Ptr &valuePtr) {
+void LoadCell(char *line, ByteString32Ptr &keyPtr, ByteString32Ptr &valuePtr) {
   char *base = line;
   char *ptr;
   char *rowKey = line;
@@ -110,9 +110,9 @@ int main(int argc, char **argv) {
   CellCachePtr cellCachePtr;
   TestHarness harness("/tmp/cellCacheTest");
   CellListScanner  *scanner;
-  KeyT             *key;
+  ByteString32T    *key;
   ByteString32T    *value;
-  KeyPtr           keyPtr;
+  ByteString32Ptr  keyPtr;
   ByteString32Ptr  valuePtr;
   
   if (argc != 1)
