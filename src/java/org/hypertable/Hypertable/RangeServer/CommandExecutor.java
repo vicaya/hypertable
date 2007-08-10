@@ -40,7 +40,7 @@ class CommandExecutor implements Runnable {
 	"  to the range server running on localhost.  It assumes that there exists a",
 	"  schema file for <table> in the current directory named '<table>.xml'.",
 	"",
-	"scan <range> [start=<key>] [end=<key>] [columns=<column1>[,<column2>...]] [timeInterval=<startTime>-<stopTime>]",
+	"scan <range> [--latest-cells] [start=<key>] [end=<key>] [columns=<column1>[,<column2>...]] [timeInterval=<startTime>-<stopTime>]",
 	"  This comand sends a CREATE SCANNER and FETCH NEXT SCANBLOCK requests to the",
 	"  range server running on localhost.  It assumes that there exists a schema",
 	"  file for <table> in the current directory named '<table>.xml'",

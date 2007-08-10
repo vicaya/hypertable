@@ -21,10 +21,15 @@
 #ifndef HYPERTABLE_REQUEST_H
 #define HYPERTABLE_REQUEST_H
 
+
+#include <utility>
+
 extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 }
+
+#include "Common/ByteString.h"
 
 namespace hypertable {
 
@@ -36,12 +41,11 @@ namespace hypertable {
   } TabletIdentifierT;
 
   typedef struct {
-    const uint8_t *columns;
-    int32_t  columnCount;
-    const char *startKey;
-    const char *endKey;
-    int64_t     startTime;
-    int64_t     endTime;
+    uint16_t flags;
+    ByteString32T *columns;
+    ByteString32T *startRow;
+    ByteString32T *endRow;
+    std::pair<uint64_t,uint64_t> interval;
   } ScannerSpecT;
 
   typedef struct {

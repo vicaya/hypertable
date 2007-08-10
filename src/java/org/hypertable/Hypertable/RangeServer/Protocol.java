@@ -65,18 +65,28 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
     /**
      * Builds a CREATE SCANNER request
      */
-    public CommBuf BuildRequestCreateScanner(int tableGeneration, RangeIdentifier range, byte [] columns,
+    public CommBuf BuildRequestCreateScanner(int tableGeneration, RangeIdentifier range, short flags, byte [] columns,
 					     String startKey, String endKey, long startTime, long endTime) {
 	HeaderBuilder hbuilder = new HeaderBuilder();
-	CommBuf cbuf = new CommBuf(hbuilder.HeaderLength() + 6 + CommBuf.EncodedLength(range.tableName) +
-				   CommBuf.EncodedLength(range.startRow) + CommBuf.EncodedLength(range.endRow) +
+	byte [] startKeyBytes = (startKey != null) ? startKey.getBytes() : null;
+	byte [] endKeyBytes = (endKey != null) ? endKey.getBytes() : null;
+	CommBuf cbuf = new CommBuf(hbuilder.HeaderLength() +
+				   6 +
+				   CommBuf.EncodedLength(range.tableName) +
+				   CommBuf.EncodedLength(range.startRow) +
+				   CommBuf.EncodedLength(range.endRow) +
+				   2 +
 				   4 + ((columns == null) ? 0 : columns.length) +
-				   CommBuf.EncodedLength(startKey) + CommBuf.EncodedLength(endKey) + 16);
+				   4 + ((startKeyBytes == null) ? 0 : startKeyBytes.length) + 
+				   4 + ((endKeyBytes == null) ? 0 : endKeyBytes.length) +
+				   16);
+
 	cbuf.PrependLong(endTime);
 	cbuf.PrependLong(startTime);
-	cbuf.PrependString(endKey);
-	cbuf.PrependString(startKey);
+	cbuf.PrependByteArray(endKeyBytes);
+	cbuf.PrependByteArray(startKeyBytes);
 	cbuf.PrependByteArray(columns);
+	cbuf.PrependShort(flags);
 	cbuf.PrependString(range.endRow);
 	cbuf.PrependString(range.startRow);
 	cbuf.PrependString(range.tableName);

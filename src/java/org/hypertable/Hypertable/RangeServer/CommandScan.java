@@ -79,6 +79,7 @@ class CommandScan extends Command {
 	    byte [] columns = null;
 	    long startTime = 0;
 	    long endTime = 0;
+	    short flags = 0;
 
 	    for (int i=1; i<mArgs.size(); i++) {
 
@@ -89,6 +90,9 @@ class CommandScan extends Command {
 		}
 		else if (arg.name.equals("end")) {
 		    endRow = arg.value;
+		}
+		else if (arg.name.equals("--latest-cells")) {
+		    flags = 1;
 		}
 		else if (arg.name.equals("columns")) {
 		    if ((columns = ParseColumnsArgument( arg.value )) == null)
@@ -130,7 +134,7 @@ class CommandScan extends Command {
 		}
 	    }
 
-	    Global.client.CreateScanner(msOutstandingSchema.GetGeneration(), range, columns, startKey, endRow, startTime, endTime, mSyncHandler);
+	    Global.client.CreateScanner(msOutstandingSchema.GetGeneration(), range, flags, columns, startKey, endRow, startTime, endTime, mSyncHandler);
 
 	    Event event = mSyncHandler.WaitForEvent();
 
@@ -142,7 +146,7 @@ class CommandScan extends Command {
 	    else {
 		event.msg.RewindToProtocolHeader();
 		int error = event.msg.buf.getInt();
-		short flags = event.msg.buf.getShort();
+		flags = event.msg.buf.getShort();
 		int id = event.msg.buf.getInt();
 		Command.msOutstandingScanId = (flags == 1) ? -1 : id;
 		int dataLen = event.msg.buf.getInt();

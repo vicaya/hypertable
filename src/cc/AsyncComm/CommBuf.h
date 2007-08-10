@@ -31,6 +31,8 @@ extern "C" {
 #include <string.h>
 }
 
+#include "Common/ByteString.h"
+
 namespace hypertable {
 
   class CommBuf {
@@ -90,6 +92,16 @@ namespace hypertable {
       *rptr = buf + sizeof(int32_t);
       return *lenp + sizeof(int32_t);
     }
+
+    static size_t DecodeByteArray(const uint8_t *buf, size_t remain, ByteString32T **bsp) {
+      if (remain < sizeof(int32_t))
+	return 0;
+      *bsp = (ByteString32T *)buf;
+      if (remain < (*bsp)->len + sizeof(int32_t))
+	return 0;
+      return (*bsp)->len + sizeof(int32_t);
+    }
+
 
     void PrependString(std::string &str) {
       PrependString(str.c_str());

@@ -1,6 +1,11 @@
 
 TODO:
-- Overhaul CreateScanner scan spec
+- Create ScanContext class and push object of this type into CreateScanner APIs
+- Clean up java/org/hypertable/Hypertable/RangeServer/Command*
+- Make sure single row range restriction works in CreateScanner
+- Add better split key computation logic (exponential backoff sampler)
+- Implement 'InMemory' locality groups
+- Add support for auto-assigned timestamps
 - Fix AsyncComm/Protocol::StringFormatMessage (get rid of command)
 - Add new DELETE handling in RangeServer
 - Figure out why poll drops out of RangeServer/main.cc when gdb detaches from process
@@ -15,8 +20,11 @@ TODO:
 - Change ResponseCallback::response to response_ok in C++ source
 - Rename RangeServer/Global::localityGroup member names
 - Add ReactorFactory::Shutdown
+- Add Scan Cache
+- Use Findbugs (http://findbugs.sourceforge.net/) to find bugs in Java code.
 
 DONE:
+- Overhaul CreateScanner scan spec
 - Add back CellStore::CreateScanner
 - Fix copyright in C++ files
 - Replace KeyT type with ByteString32T

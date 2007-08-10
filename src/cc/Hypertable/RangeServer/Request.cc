@@ -72,34 +72,39 @@ namespace hypertable {
   
     memset(scannerSpecPtr, 0, sizeof(ScannerSpecT));
 
+    /** flags **/
+    if (remaining < sizeof(int16_t))
+      return 0;
+    memcpy(&scannerSpecPtr->flags, ptr, sizeof(int16_t));
+    ptr += sizeof(int16_t);
+    remaining -= sizeof(int16_t);
+
     /** Columns **/
-    if ((skip = CommBuf::DecodeByteArray(ptr, remaining, &scannerSpecPtr->columns, &scannerSpecPtr->columnCount)) == 0)
+    if ((skip = CommBuf::DecodeByteArray(ptr, remaining, &scannerSpecPtr->columns)) == 0)
       return 0;
     ptr += skip;
     remaining -= skip;
 
-    /** Start Key **/
-    if ((skip = CommBuf::DecodeString(ptr, remaining, &scannerSpecPtr->startKey)) == 0)
+    /** Start Row **/
+    if ((skip = CommBuf::DecodeByteArray(ptr, remaining, &scannerSpecPtr->startRow)) == 0)
       return 0;
-    if (*scannerSpecPtr->startKey == 0)
-      scannerSpecPtr->startKey = 0;    
     ptr += skip;
     remaining -= skip;
 
-    /** End Key **/
-    if ((skip = CommBuf::DecodeString(ptr, remaining, &scannerSpecPtr->endKey)) == 0)
+    /** End Row **/
+    if ((skip = CommBuf::DecodeByteArray(ptr, remaining, &scannerSpecPtr->endRow)) == 0)
       return 0;
-    if (*scannerSpecPtr->endKey == 0)
-      scannerSpecPtr->endKey = 0;    
     ptr += skip;
     remaining -= skip;
 
-    /** Start time / End time **/
+    /** Time Interval  **/
     if (remaining < 2*sizeof(uint64_t))
       return 0;
-    memcpy(&scannerSpecPtr->startTime, ptr, sizeof(int64_t));
+
+    memcpy(&scannerSpecPtr->interval.first, ptr, sizeof(int64_t));
     ptr += sizeof(int64_t);
-    memcpy(&scannerSpecPtr->endTime, ptr, sizeof(int64_t));
+
+    memcpy(&scannerSpecPtr->interval.second, ptr, sizeof(int64_t));
     ptr += sizeof(int64_t);
   
     return ptr-base;
@@ -120,18 +125,19 @@ namespace hypertable {
   }
 
   std::ostream &operator<<(std::ostream &os, const ScannerSpecT &scannerSpec) {
-    if (scannerSpec.startKey != 0)
-      os << "Start Key = " << scannerSpec.startKey << endl;
+    os << "Flags = 0x" << hex << scannerSpec.flags << dec << endl;
+    if (scannerSpec.startRow->len != 0)
+      os << "Start Row = " << (const char *)scannerSpec.startRow->data << endl;
     else
       os << "Start Key = [NULL]" << endl;
-    if (scannerSpec.endKey != 0)
-      os << "End Key = " << scannerSpec.endKey << endl;
+    if (scannerSpec.endRow != 0)
+      os << "End Row = " << (const char *)scannerSpec.endRow->data << endl;
     else
       os << "End Key = [NULL]" << endl;
-    os << "Start Time = " << scannerSpec.startTime << endl;
-    os << "End Time = " << scannerSpec.endTime << endl;
-    for (int32_t i=0; i<scannerSpec.columnCount; i++)
-      os << "Column = " << (int)scannerSpec.columns[i] << endl;
+    os << "Start Time = " << scannerSpec.interval.first << endl;
+    os << "End Time = " << scannerSpec.interval.second << endl;
+    for (int32_t i=0; i<scannerSpec.columns->len; i++)
+      os << "Column = " << (int)scannerSpec.columns->data[i] << endl;
     return os;
   }
 

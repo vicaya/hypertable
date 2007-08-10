@@ -86,10 +86,10 @@ public class Client {
 
     /**
      */
-    public int CreateScanner(int tableGeneration, RangeIdentifier range, byte [] columns, String startRow,
+    public int CreateScanner(int tableGeneration, RangeIdentifier range, short flags, byte [] columns, String startRow,
 			     String endRow, long startTime, long endTime, DispatchHandler handler) {
 	
-	CommBuf cbuf = mProtocol.BuildRequestCreateScanner(tableGeneration, range, columns, startRow, endRow, startTime, endTime);
+	CommBuf cbuf = mProtocol.BuildRequestCreateScanner(tableGeneration, range, flags, columns, startRow, endRow, startTime, endTime);
 	return SendRangeServerMessage(cbuf, handler);
     }
 

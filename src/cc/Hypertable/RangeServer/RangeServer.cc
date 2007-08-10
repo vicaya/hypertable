@@ -319,10 +319,6 @@ void RangeServer::Compact(ResponseCallback *cb, TabletIdentifierT *tablet, uint8
 void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, TabletIdentifierT *tablet, ScannerSpecT *spec) {
   uint8_t *kvBuffer = 0;
   uint32_t *kvLenp = 0;
-  boost::shared_array<uint8_t> startKeyPtr(0);
-  boost::shared_array<uint8_t> endKeyPtr(0);
-  ByteString32T          *startKey = 0;
-  ByteString32T          *endKey = 0;
   int error = Error::OK;
   std::string errMsg;
   std::string tableName;
@@ -342,28 +338,8 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, TabletIdentif
   /**
    * Load column families set
    */
-  for (int32_t i=0; i<spec->columnCount; i++)
-    columnFamilies.insert(spec->columns[i]);
-
-  /**
-   * Setup startKey
-   */
-  if (spec->startKey != 0) {
-    startKey = (ByteString32T *)new uint8_t [ sizeof(int32_t) + strlen(spec->startKey) ];
-    startKey->len = strlen(spec->startKey);
-    memcpy(startKey->data, spec->startKey, startKey->len);
-    startKeyPtr.reset((uint8_t *)startKey);
-  }
-
-  /** 
-   * Setup endKey
-   */
-  if (spec->endKey != 0) {
-    endKey = (ByteString32T *)new uint8_t [ sizeof(int32_t) + strlen(spec->endKey) ];
-    endKey->len = strlen(spec->endKey);
-    memcpy(endKey->data, spec->endKey, endKey->len);
-    endKeyPtr.reset((uint8_t *)endKey);
-  }
+  for (int32_t i=0; i<spec->columns->len; i++)
+    columnFamilies.insert(spec->columns->data[i]);
 
   if (Global::verbose) {
     cout << *tablet << endl;
@@ -389,9 +365,9 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, TabletIdentif
     scannerPtr.reset( rangePtr->CreateScanner(columnFamilies, false) );
   else
     scannerPtr.reset( rangePtr->CreateScanner(false) );
-  scannerPtr->RestrictRange(startKey, endKey);
-  if (spec->columnCount > 0)
-    scannerPtr->RestrictColumns(spec->columns, spec->columnCount);
+  scannerPtr->RestrictRange(spec->startRow, spec->endRow);
+  if (spec->columns->len > 0)
+    scannerPtr->RestrictColumns(spec->columns->data, spec->columns->len);
   scannerPtr->Reset();
   more = FillScanBlock(scannerPtr, kvBuffer+sizeof(int32_t), DEFAULT_SCANBUF_SIZE, kvLenp);
   if (more)

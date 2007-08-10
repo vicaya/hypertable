@@ -34,11 +34,11 @@ CellListScanner::CellListScanner() : mReset(false), mRangeStart(0), mRangeEnd(0)
 /**
  */
 void CellListScanner::RestrictRange(ByteString32T *start, ByteString32T *end) {
-  if (start != 0) {
+  if (start != 0 && start->len != 0) {
     mRangeStart = CreateCopy(start);
     mRangeStartPtr.reset(mRangeStart);
   }
-  if (end != 0) {
+  if (end != 0 && end->len != 0) {
     mRangeEnd = CreateCopy(end);
     mRangeEndPtr.reset(mRangeEnd);
   }
