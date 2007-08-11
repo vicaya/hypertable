@@ -1,12 +1,14 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
  * 
- * This program is free software; you can redistribute it and/or
+ * This file is part of Hypertable.
+ * 
+ * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
  * 
- * This program is distributed in the hope that it will be useful,
+ * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -64,52 +66,47 @@ class CommandScan extends Command {
 	    }
 
 	    RangeIdentifier range = new RangeIdentifier(arg.name);
-
-	    java.lang.System.out.println("Table Name        = " + range.tableName);
-	    java.lang.System.out.println("Start Row         = " + range.startRow);
-	    java.lang.System.out.println("End Row           = " + range.endRow);
+	    ScanSpecification scanSpec = new ScanSpecification();
 
 	    String schemaFile = range.tableName + ".xml";
 	    java.lang.System.out.println("Schema File       = " + schemaFile);
 	    byte [] schemaBytes = FileUtils.FileToBuffer(new File(schemaFile));
 	    msOutstandingSchema = new Schema(new String(schemaBytes));
 
-	    String startKey = null;
-	    String endRow = null;
-	    byte [] columns = null;
-	    long startTime = 0;
-	    long endTime = 0;
-	    short flags = 0;
+	    range.generation = msOutstandingSchema.GetGeneration();
 
 	    for (int i=1; i<mArgs.size(); i++) {
 
 		arg = mArgs.elementAt(i);
 
 		if (arg.name.equals("start")) {
-		    startKey = arg.value;
+		    scanSpec.startRow = arg.value;
 		}
 		else if (arg.name.equals("end")) {
-		    endRow = arg.value;
+		    scanSpec.endRow = arg.value;
 		}
 		else if (arg.name.equals("--latest-cells")) {
-		    flags = 1;
+		    scanSpec.flags = ScanSpecification.ONLY_LATEST_CELLS;
 		}
 		else if (arg.name.equals("columns")) {
-		    if ((columns = ParseColumnsArgument( arg.value )) == null)
+		    if ((scanSpec.columns = ParseColumnsArgument( arg.value )) == null)
 			return;
+		}
+		else if (arg.name.equals("cellCount")) {
+		    scanSpec.cellCount = Integer.parseInt(arg.value);
 		}
 		else if (arg.name.equals("timeInterval")) {
 		    if (arg.value != null) {
 			if (arg.value.startsWith("..")) {
-			    endTime = Long.parseLong(arg.value.substring(2));
+			    scanSpec.maxTime = Long.parseLong(arg.value.substring(2));
 			}
 			else if (arg.value.endsWith("..")) {
-			    startTime = Long.parseLong(arg.value.substring(0, arg.value.length()-2));
+			    scanSpec.minTime = Long.parseLong(arg.value.substring(0, arg.value.length()-2));
 			}
 			else if (arg.value.indexOf("..") != -1) {
 			    int offset = arg.value.indexOf("..");
-			    startTime = Long.parseLong(arg.value.substring(0, offset));
-			    endTime = Long.parseLong(arg.value.substring(offset+2));
+			    scanSpec.minTime = Long.parseLong(arg.value.substring(0, offset));
+			    scanSpec.maxTime = Long.parseLong(arg.value.substring(offset+2));
 			}
 			else {
 			    ReportError("Invalid timeInterval specifier");
@@ -123,18 +120,10 @@ class CommandScan extends Command {
 		}
 	    }
 
-	    java.lang.System.out.println("Schema Generation = " + msOutstandingSchema.GetGeneration());
-	    java.lang.System.out.println("Start Key         = " + startKey);
-	    java.lang.System.out.println("End Key           = " + endRow);
-	    java.lang.System.out.println("Start Time        = " + startTime);
-	    java.lang.System.out.println("End Time          = " + endTime);
-	    if (columns != null) {
-		for (int i=0; i<columns.length; i++) {
-		    java.lang.System.out.println("Column            = " + (int)columns[i]);
-		}
-	    }
+	    out.println(range);
+	    out.println(scanSpec);
 
-	    Global.client.CreateScanner(msOutstandingSchema.GetGeneration(), range, flags, columns, startKey, endRow, startTime, endTime, mSyncHandler);
+	    Global.client.CreateScanner(msOutstandingSchema.GetGeneration(), range, scanSpec, mSyncHandler);
 
 	    Event event = mSyncHandler.WaitForEvent();
 
@@ -146,7 +135,7 @@ class CommandScan extends Command {
 	    else {
 		event.msg.RewindToProtocolHeader();
 		int error = event.msg.buf.getInt();
-		flags = event.msg.buf.getShort();
+		short flags = event.msg.buf.getShort();
 		int id = event.msg.buf.getInt();
 		Command.msOutstandingScanId = (flags == 1) ? -1 : id;
 		int dataLen = event.msg.buf.getInt();
@@ -240,7 +229,7 @@ class CommandScan extends Command {
     }
 
     private void DisplayUsage() {
-	ReportError("usage: scan <range> [start=<key>] [end=<key>] [columns=<column1>[,<column2>...] [timeInterval=<startTime>..<stopTime>] ");
+	ReportError("usage: scan <range> [--latest-cells] [cellCount=<n>] [start=<row>] [end=<row>] [columns=<column1>[,<column2>...] [timeInterval=<start>..<stop>] ");
     }
 
 }

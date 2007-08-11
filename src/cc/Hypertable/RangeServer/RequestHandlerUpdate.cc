@@ -34,7 +34,7 @@ using namespace hypertable;
  */
 void RequestHandlerUpdate::run() {
   ResponseCallbackUpdate cb(mComm, mEventPtr);
-  TabletIdentifierT tablet;
+  RangeSpecificationT rangeSpec;
   size_t skip;
   size_t remaining = mEventPtr->messageLen - sizeof(int16_t);
   uint8_t *msgPtr = mEventPtr->message + sizeof(int16_t);
@@ -42,9 +42,9 @@ void RequestHandlerUpdate::run() {
   BufferT mods;
 
   /**
-   * Deserialize Tablet Identifier
+   * Deserialize Range Specification
    */
-  if ((skip = DeserializeTabletIdentifier(msgPtr, remaining, &tablet)) == 0)
+  if ((skip = DeserializeRangeSpecification(msgPtr, remaining, &rangeSpec)) == 0)
     goto abort;
 
   msgPtr += skip;
@@ -56,7 +56,7 @@ void RequestHandlerUpdate::run() {
   if (CommBuf::DecodeByteArray(msgPtr, remaining, &mods.buf, &mods.len) == 0)
     goto abort;
 
-  mRangeServer->Update(&cb, &tablet, mods);
+  mRangeServer->Update(&cb, &rangeSpec, mods);
 
   return;
 

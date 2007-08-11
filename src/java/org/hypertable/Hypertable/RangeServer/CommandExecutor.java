@@ -1,12 +1,14 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
  * 
- * This program is free software; you can redistribute it and/or
+ * This file is part of Hypertable.
+ * 
+ * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
  * 
- * This program is distributed in the hope that it will be useful,
+ * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -40,7 +42,15 @@ class CommandExecutor implements Runnable {
 	"  to the range server running on localhost.  It assumes that there exists a",
 	"  schema file for <table> in the current directory named '<table>.xml'.",
 	"",
-	"scan <range> [--latest-cells] [start=<key>] [end=<key>] [columns=<column1>[,<column2>...]] [timeInterval=<startTime>-<stopTime>]",
+	"scan <range> [OPTIONS]",
+	"OPTIONS:",
+	"  --latest-cells  Return only the most recent version of each cell",
+	"  count=<n>       Return at most <n> cells",
+	"  start=<row>     Start the scan at <row>",
+	"  end=<row>       End the scan at <row> inclusive",
+	"  columns=<column1>[,<column2>...]  Include only specified columns",
+	"  timeInterval=<start>..<stop>  Include only cells within given time interval",
+	"",
 	"  This comand sends a CREATE SCANNER and FETCH NEXT SCANBLOCK requests to the",
 	"  range server running on localhost.  It assumes that there exists a schema",
 	"  file for <table> in the current directory named '<table>.xml'",

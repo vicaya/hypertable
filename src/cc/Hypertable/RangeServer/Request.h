@@ -21,7 +21,6 @@
 #ifndef HYPERTABLE_REQUEST_H
 #define HYPERTABLE_REQUEST_H
 
-
 #include <utility>
 
 extern "C" {
@@ -38,28 +37,31 @@ namespace hypertable {
     const char *tableName;
     const char *startRow;
     const char *endRow;
-  } TabletIdentifierT;
+  } RangeSpecificationT;
+
+  extern const uint16_t SCAN_FLAGS_ONLY_LATEST_CELLS;
 
   typedef struct {
     uint16_t flags;
+    uint32_t cellCount;
     ByteString32T *columns;
     ByteString32T *startRow;
     ByteString32T *endRow;
     std::pair<uint64_t,uint64_t> interval;
-  } ScannerSpecT;
+  } ScanSpecificationT;
 
   typedef struct {
     const uint8_t *buf;
     int32_t len;
   } BufferT;
 
-  size_t DeserializeTabletIdentifier(uint8_t *ptr, size_t remaining, TabletIdentifierT *tabletIdPtr);
+  size_t DeserializeRangeSpecification(uint8_t *ptr, size_t remaining, RangeSpecificationT *rangeSpec);
 
-  size_t DeserializeScannerSpec(uint8_t *ptr, size_t remaining, ScannerSpecT *scannerSpecPtr);
+  size_t DeserializeScanSpecification(uint8_t *ptr, size_t remaining, ScanSpecificationT *scanSpec);
 
-  std::ostream &operator<<(std::ostream &os, const TabletIdentifierT &tablet);
+  std::ostream &operator<<(std::ostream &os, const RangeSpecificationT &rangeSpec);
 
-  std::ostream &operator<<(std::ostream &os, const ScannerSpecT &scannerSpec);
+  std::ostream &operator<<(std::ostream &os, const ScanSpecificationT &scannerSpec);
 
 }
 

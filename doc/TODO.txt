@@ -26,7 +26,7 @@ TODO:
 DONE:
 - Overhaul CreateScanner scan spec
 - Add back CellStore::CreateScanner
-- Fix copyright in C++ files
+- Fix copyright header notice to be GPL
 - Replace KeyT type with ByteString32T
 - Get rid of smart pointers in CellCache key/value map
 - Add Hyperspace regression test

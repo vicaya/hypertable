@@ -34,7 +34,7 @@ using namespace hypertable;
  */
 void RequestHandlerCompact::run() {
   ResponseCallback cb(mComm, mEventPtr);
-  TabletIdentifierT tablet;
+  RangeSpecificationT rangeSpec;
   uint8_t compactionType = 0;
   const char *accessGroup = 0;
   size_t skip;
@@ -43,9 +43,9 @@ void RequestHandlerCompact::run() {
   std::string errMsg;
 
   /**
-   * Deserialize Tablet Identifier
+   * Deserialize Range Specification
    */
-  if ((skip = DeserializeTabletIdentifier(msgPtr, remaining, &tablet)) == 0)
+  if ((skip = DeserializeRangeSpecification(msgPtr, remaining, &rangeSpec)) == 0)
     goto abort;
 
   msgPtr += skip;
@@ -68,7 +68,7 @@ void RequestHandlerCompact::run() {
   if (*accessGroup == 0)
     accessGroup = 0;
 
-  mRangeServer->Compact(&cb, &tablet, compactionType, accessGroup);
+  mRangeServer->Compact(&cb, &rangeSpec, compactionType, accessGroup);
 
   return;
 

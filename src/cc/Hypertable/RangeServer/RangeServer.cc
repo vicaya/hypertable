@@ -242,7 +242,7 @@ int RangeServer::DirectoryInitialize(Properties *props) {
 /**
  * Compact
  */
-void RangeServer::Compact(ResponseCallback *cb, TabletIdentifierT *tablet, uint8_t compactionType, const char *accessGroup) {
+void RangeServer::Compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, uint8_t compactionType, const char *accessGroup) {
   int error = Error::OK;
   std::string errMsg;
   std::string tableName;
@@ -252,11 +252,11 @@ void RangeServer::Compact(ResponseCallback *cb, TabletIdentifierT *tablet, uint8
   MaintenanceThread::WorkType workType = MaintenanceThread::COMPACTION_MINOR;
   bool major = false;
 
-  if (tablet->tableName)
-    tableName = tablet->tableName;
+  if (rangeSpec->tableName)
+    tableName = rangeSpec->tableName;
 
-  if (tablet->startRow)
-    startRow = tablet->startRow;
+  if (rangeSpec->startRow)
+    startRow = rangeSpec->startRow;
 
   // Check for major compaction
   if (compactionType == 1) {
@@ -265,7 +265,7 @@ void RangeServer::Compact(ResponseCallback *cb, TabletIdentifierT *tablet, uint8
   }
 
   if (Global::verbose) {
-    cout << *tablet;
+    cout << *rangeSpec;
     cout << "Compaction type = " << (major ? "major" : "minor") << endl;
     cout << "Access group = \"" << ((accessGroup) ? accessGroup : "[NULL]") << "\"" << endl;
   }
@@ -296,7 +296,7 @@ void RangeServer::Compact(ResponseCallback *cb, TabletIdentifierT *tablet, uint8
 
   if (Global::verbose) {
     LOG_VA_INFO("Compaction (%s) scheduled for table '%s' start row '%s' access group '%s'",
-		(major ? "major" : "minor"), tablet->tableName, tablet->startRow,
+		(major ? "major" : "minor"), rangeSpec->tableName, rangeSpec->startRow,
 		(accessGroup ? accessGroup : "*"));
   }
 
@@ -316,7 +316,7 @@ void RangeServer::Compact(ResponseCallback *cb, TabletIdentifierT *tablet, uint8
 /** 
  *  CreateScanner
  */
-void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, TabletIdentifierT *tablet, ScannerSpecT *spec) {
+void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, RangeSpecificationT *rangeSpec, ScanSpecificationT *scanSpec) {
   uint8_t *kvBuffer = 0;
   uint32_t *kvLenp = 0;
   int error = Error::OK;
@@ -330,20 +330,20 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, TabletIdentif
   std::set<uint8_t> columnFamilies;
   uint32_t id;
 
-  if (tablet->tableName != 0)
-    tableName = tablet->tableName;
+  if (rangeSpec->tableName != 0)
+    tableName = rangeSpec->tableName;
 
-  startRow = tablet->startRow ? tablet->startRow : "";
+  startRow = rangeSpec->startRow ? rangeSpec->startRow : "";
 
   /**
    * Load column families set
    */
-  for (int32_t i=0; i<spec->columns->len; i++)
-    columnFamilies.insert(spec->columns->data[i]);
+  for (int32_t i=0; i<scanSpec->columns->len; i++)
+    columnFamilies.insert(scanSpec->columns->data[i]);
 
   if (Global::verbose) {
-    cout << *tablet << endl;
-    cout << *spec << endl;
+    cout << *rangeSpec << endl;
+    cout << *scanSpec << endl;
   }
 
   if (!Global::GetTableInfo(tableName, tableInfoPtr)) {
@@ -365,9 +365,9 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, TabletIdentif
     scannerPtr.reset( rangePtr->CreateScanner(columnFamilies, false) );
   else
     scannerPtr.reset( rangePtr->CreateScanner(false) );
-  scannerPtr->RestrictRange(spec->startRow, spec->endRow);
-  if (spec->columns->len > 0)
-    scannerPtr->RestrictColumns(spec->columns->data, spec->columns->len);
+  scannerPtr->RestrictRange(scanSpec->startRow, scanSpec->endRow);
+  if (scanSpec->columns->len > 0)
+    scannerPtr->RestrictColumns(scanSpec->columns->data, scanSpec->columns->len);
   scannerPtr->Reset();
   more = FillScanBlock(scannerPtr, kvBuffer+sizeof(int32_t), DEFAULT_SCANBUF_SIZE, kvLenp);
   if (more)
@@ -464,8 +464,8 @@ void RangeServer::FetchScanblock(ResponseCallbackFetchScanblock *cb, uint32_t sc
 /**
  * LoadRange
  */
-void RangeServer::LoadRange(ResponseCallback *cb, TabletIdentifierT *tablet) {
-  std::string tableName = tablet->tableName;
+void RangeServer::LoadRange(ResponseCallback *cb, RangeSpecificationT *rangeSpec) {
+  std::string tableName = rangeSpec->tableName;
   DynamicBuffer endRowBuffer(0);
   std::string errMsg;
   int error = Error::OK;
@@ -480,21 +480,21 @@ void RangeServer::LoadRange(ResponseCallback *cb, TabletIdentifierT *tablet) {
   char md5DigestStr[33];
   bool registerTable = false;
 
-  if (tablet->startRow != 0)
-    startRow = tablet->startRow;
+  if (rangeSpec->startRow != 0)
+    startRow = rangeSpec->startRow;
 
-  if (tablet->endRow != 0)
-    endRow = tablet->endRow;
+  if (rangeSpec->endRow != 0)
+    endRow = rangeSpec->endRow;
 
   if (Global::verbose)
-    cout << *tablet << endl;
+    cout << *rangeSpec << endl;
 
   if (!Global::GetTableInfo(tableName, tableInfoPtr)) {
     tableInfoPtr.reset( new TableInfo(tableName, schemaPtr) );
     registerTable = true;
   }
 
-  if ((error = VerifySchema(tableInfoPtr, tablet->generation, errMsg)) != Error::OK)
+  if ((error = VerifySchema(tableInfoPtr, rangeSpec->generation, errMsg)) != Error::OK)
     goto abort;
 
   if (registerTable)
@@ -507,10 +507,10 @@ void RangeServer::LoadRange(ResponseCallback *cb, TabletIdentifierT *tablet) {
    * under all locality group directories for this table
    */
   {
-    if (tablet->startRow == 0)
+    if (rangeSpec->startRow == 0)
       memset(md5DigestStr, '0', 24);
     else
-      md5_string(tablet->startRow, md5DigestStr);
+      md5_string(rangeSpec->startRow, md5DigestStr);
     md5DigestStr[24] = 0;
     tableHdfsDir = (string)"/hypertable/tables/" + tableName;
     list<Schema::AccessGroup *> *lgList = schemaPtr->GetAccessGroupList();
@@ -570,7 +570,7 @@ namespace {
 /**
  * Update
  */
-void RangeServer::Update(ResponseCallbackUpdate *cb, TabletIdentifierT *tablet, BufferT &buffer) {
+void RangeServer::Update(ResponseCallbackUpdate *cb, RangeSpecificationT *rangeSpec, BufferT &buffer) {
   string tableName;
   const uint8_t *modPtr;
   const uint8_t *modEnd;
@@ -599,18 +599,18 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, TabletIdentifierT *tablet, 
   std::string  splitRow;
   bool needDecrement = false;
 
-  if (tablet->tableName)
-    tableName = tablet->tableName;
+  if (rangeSpec->tableName)
+    tableName = rangeSpec->tableName;
 
-  if (tablet->startRow != 0)
-    startRow = tablet->startRow;
+  if (rangeSpec->startRow != 0)
+    startRow = rangeSpec->startRow;
 
-  if (tablet->endRow != 0)
-    endRow = tablet->endRow;
+  if (rangeSpec->endRow != 0)
+    endRow = rangeSpec->endRow;
 
   /**
   if (Global::verbose)
-    cout << *tablet << endl;
+    cout << *rangeSpec << endl;
   */
 
   // TODO: Sanity check mod data (checksum validation)

@@ -1,12 +1,14 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
  * 
- * This program is free software; you can redistribute it and/or
+ * This file is part of Hypertable.
+ * 
+ * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
  * 
- * This program is distributed in the hope that it will be useful,
+ * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -19,6 +21,8 @@
 package org.hypertable.Hypertable.RangeServer;
 
 import java.text.ParseException;
+
+import org.hypertable.AsyncComm.CommBuf;
 
 public class RangeIdentifier {
     public RangeIdentifier(String idStr) throws ParseException {
@@ -46,6 +50,28 @@ public class RangeIdentifier {
 	    }
 	}
     }
+
+    public int SerializedLength() {
+	return 4 + CommBuf.EncodedLength(tableName) + CommBuf.EncodedLength(startRow) + CommBuf.EncodedLength(endRow);
+    }
+
+    public void Prepend(CommBuf cbuf) {
+	cbuf.PrependString(endRow);
+	cbuf.PrependString(startRow);
+	cbuf.PrependString(tableName);
+	cbuf.PrependInt(generation);
+    }
+
+    public String toString() {
+	StringBuilder sb = new StringBuilder();
+	sb.append("TableGeneration = " + generation + "\n");
+	sb.append("TableName       = " + tableName + "\n");
+	sb.append("StartRow        = " + startRow + "\n");
+	sb.append("EndRow          = " + endRow + "\n");
+	return sb.toString();
+    }
+
+    public int generation = 0;
     public String tableName = null;
     public String startRow = null;
     public String endRow = null;

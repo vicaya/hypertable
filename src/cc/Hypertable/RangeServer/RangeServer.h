@@ -42,11 +42,11 @@ namespace hypertable {
   public:
     RangeServer(Comm *comm, Properties *props);
 
-    void Compact(ResponseCallback *cb, TabletIdentifierT *tablet, uint8_t compactionType, const char *accessGroup);
-    void CreateScanner(ResponseCallbackCreateScanner *cb, TabletIdentifierT *tablet, ScannerSpecT *spec);
+    void Compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, uint8_t compactionType, const char *accessGroup);
+    void CreateScanner(ResponseCallbackCreateScanner *cb, RangeSpecificationT *rangeSpec, ScanSpecificationT *spec);
     void FetchScanblock(ResponseCallbackFetchScanblock *cb, uint32_t scannerId);
-    void LoadRange(ResponseCallback *cb, TabletIdentifierT *tablet);
-    void Update(ResponseCallbackUpdate *cb, TabletIdentifierT *tablet, BufferT &buffer);
+    void LoadRange(ResponseCallback *cb, RangeSpecificationT *rangeSpec);
+    void Update(ResponseCallbackUpdate *cb, RangeSpecificationT *rangeSpec, BufferT &buffer);
 
   private:
     int DirectoryInitialize(Properties *props);

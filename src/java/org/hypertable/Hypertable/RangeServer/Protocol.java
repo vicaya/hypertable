@@ -1,12 +1,14 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
  * 
- * This program is free software; you can redistribute it and/or
+ * This file is part of Hypertable.
+ * 
+ * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
  * 
- * This program is distributed in the hope that it will be useful,
+ * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -65,31 +67,12 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
     /**
      * Builds a CREATE SCANNER request
      */
-    public CommBuf BuildRequestCreateScanner(int tableGeneration, RangeIdentifier range, short flags, byte [] columns,
-					     String startKey, String endKey, long startTime, long endTime) {
+    public CommBuf BuildRequestCreateScanner(int tableGeneration, RangeIdentifier range, ScanSpecification spec) {
 	HeaderBuilder hbuilder = new HeaderBuilder();
-	byte [] startKeyBytes = (startKey != null) ? startKey.getBytes() : null;
-	byte [] endKeyBytes = (endKey != null) ? endKey.getBytes() : null;
-	CommBuf cbuf = new CommBuf(hbuilder.HeaderLength() +
-				   6 +
-				   CommBuf.EncodedLength(range.tableName) +
-				   CommBuf.EncodedLength(range.startRow) +
-				   CommBuf.EncodedLength(range.endRow) +
-				   2 +
-				   4 + ((columns == null) ? 0 : columns.length) +
-				   4 + ((startKeyBytes == null) ? 0 : startKeyBytes.length) + 
-				   4 + ((endKeyBytes == null) ? 0 : endKeyBytes.length) +
-				   16);
+	CommBuf cbuf = new CommBuf(hbuilder.HeaderLength() + 6 + range.SerializedLength() + spec.SerializedLength());
 
-	cbuf.PrependLong(endTime);
-	cbuf.PrependLong(startTime);
-	cbuf.PrependByteArray(endKeyBytes);
-	cbuf.PrependByteArray(startKeyBytes);
-	cbuf.PrependByteArray(columns);
-	cbuf.PrependShort(flags);
-	cbuf.PrependString(range.endRow);
-	cbuf.PrependString(range.startRow);
-	cbuf.PrependString(range.tableName);
+	spec.Prepend(cbuf);
+	range.Prepend(cbuf);
 	cbuf.PrependInt(tableGeneration);
 	cbuf.PrependShort(COMMAND_CREATE_SCANNER);
 	hbuilder.Reset(Message.PROTOCOL_HYPERTABLE_RANGESERVER);

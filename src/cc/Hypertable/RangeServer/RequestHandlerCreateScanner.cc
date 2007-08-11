@@ -34,17 +34,17 @@ using namespace hypertable;
  */
 void RequestHandlerCreateScanner::run() {
   ResponseCallbackCreateScanner cb(mComm, mEventPtr);
-  TabletIdentifierT tablet;
-  ScannerSpecT scannerSpec;
+  RangeSpecificationT rangeSpec;
+  ScanSpecificationT scanSpec;
   size_t skip;
   size_t remaining = mEventPtr->messageLen - sizeof(int16_t);
   uint8_t *msgPtr = mEventPtr->message + sizeof(int16_t);
   std::string errMsg;
 
   /**
-   * Deserialize Tablet Identifier
+   * Deserialize Range Specification
    */
-  if ((skip = DeserializeTabletIdentifier(msgPtr, remaining, &tablet)) == 0)
+  if ((skip = DeserializeRangeSpecification(msgPtr, remaining, &rangeSpec)) == 0)
     goto abort;
 
   msgPtr += skip;
@@ -53,10 +53,10 @@ void RequestHandlerCreateScanner::run() {
   /**
    * Deserialize Scanner Spec
    */
-  if (DeserializeScannerSpec(msgPtr, remaining, &scannerSpec) == 0)
+  if (DeserializeScanSpecification(msgPtr, remaining, &scanSpec) == 0)
     goto abort;
 
-  mRangeServer->CreateScanner(&cb, &tablet, &scannerSpec);
+  mRangeServer->CreateScanner(&cb, &rangeSpec, &scanSpec);
 
   return;
 

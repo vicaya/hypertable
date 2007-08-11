@@ -34,19 +34,19 @@ using namespace hypertable;
  */
 void RequestHandlerLoadRange::run() {
   ResponseCallback cb(mComm, mEventPtr);
-  TabletIdentifierT tablet;
+  RangeSpecificationT rangeSpec;
   size_t skip;
   size_t remaining = mEventPtr->messageLen - sizeof(int16_t);
   uint8_t *msgPtr = mEventPtr->message + sizeof(int16_t);
   std::string errMsg;
 
   /**
-   * Deserialize Tablet Identifier
+   * Deserialize Range Specification
    */
-  if ((skip = DeserializeTabletIdentifier(msgPtr, remaining, &tablet)) == 0)
+  if ((skip = DeserializeRangeSpecification(msgPtr, remaining, &rangeSpec)) == 0)
     goto abort;
 
-  mRangeServer->LoadRange(&cb, &tablet);
+  mRangeServer->LoadRange(&cb, &rangeSpec);
 
   return;
 

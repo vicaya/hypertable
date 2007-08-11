@@ -29,70 +29,79 @@ using namespace std;
 
 namespace hypertable {
 
-  size_t DeserializeTabletIdentifier(uint8_t *ptr, size_t remaining, TabletIdentifierT *tabletIdPtr) {
+  const uint16_t SCAN_FLAGS_ONLY_LATEST_CELLS = 0x01;
+
+  size_t DeserializeRangeSpecification(uint8_t *ptr, size_t remaining, RangeSpecificationT *rangeSpec) {
     size_t skip;
     uint8_t *base = ptr;
 
-    memset(tabletIdPtr, 0, sizeof(TabletIdentifierT));
+    memset(rangeSpec, 0, sizeof(RangeSpecificationT));
   
     /** Generation **/
     if (remaining < sizeof(int32_t))
       return 0;
-    memcpy(&tabletIdPtr->generation, ptr, sizeof(int32_t));
+    memcpy(&rangeSpec->generation, ptr, sizeof(int32_t));
     ptr += sizeof(int32_t);
     remaining -= sizeof(int32_t);
 
     /** Table name **/
-    if ((skip = CommBuf::DecodeString(ptr, remaining, &tabletIdPtr->tableName)) == 0)
+    if ((skip = CommBuf::DecodeString(ptr, remaining, &rangeSpec->tableName)) == 0)
       return 0;
     ptr += skip;
     remaining -= skip;
 
     /** Start row **/
-    if ((skip = CommBuf::DecodeString(ptr, remaining, &tabletIdPtr->startRow)) == 0)
+    if ((skip = CommBuf::DecodeString(ptr, remaining, &rangeSpec->startRow)) == 0)
       return 0;
     ptr += skip;
     remaining -= skip;
-    if (*tabletIdPtr->startRow == 0)
-      tabletIdPtr->startRow = 0;
+    if (*rangeSpec->startRow == 0)
+      rangeSpec->startRow = 0;
 
     /** End row **/
-    if ((skip = CommBuf::DecodeString(ptr, remaining, &tabletIdPtr->endRow)) == 0)
+    if ((skip = CommBuf::DecodeString(ptr, remaining, &rangeSpec->endRow)) == 0)
       return 0;
     ptr += skip;
-    if (*tabletIdPtr->endRow == 0)
-      tabletIdPtr->endRow = 0;
+    if (*rangeSpec->endRow == 0)
+      rangeSpec->endRow = 0;
 
     return ptr-base;
   }
 
-  size_t DeserializeScannerSpec(uint8_t *ptr, size_t remaining, ScannerSpecT *scannerSpecPtr) {
+  size_t DeserializeScanSpecification(uint8_t *ptr, size_t remaining, ScanSpecificationT *scanSpec) {
     size_t skip;
     uint8_t *base = ptr;
   
-    memset(scannerSpecPtr, 0, sizeof(ScannerSpecT));
+    memset(scanSpec, 0, sizeof(ScanSpecificationT));
 
     /** flags **/
     if (remaining < sizeof(int16_t))
       return 0;
-    memcpy(&scannerSpecPtr->flags, ptr, sizeof(int16_t));
+    memcpy(&scanSpec->flags, ptr, sizeof(int16_t));
     ptr += sizeof(int16_t);
     remaining -= sizeof(int16_t);
 
+    /** cellCount **/
+    if (remaining < sizeof(int32_t))
+      return 0;
+    memcpy(&scanSpec->cellCount, ptr, sizeof(int32_t));
+    ptr += sizeof(int32_t);
+    remaining -= sizeof(int32_t);
+
     /** Columns **/
-    if ((skip = CommBuf::DecodeByteArray(ptr, remaining, &scannerSpecPtr->columns)) == 0)
+    if ((skip = CommBuf::DecodeByteArray(ptr, remaining, &scanSpec->columns)) == 0)
       return 0;
     ptr += skip;
     remaining -= skip;
 
     /** Start Row **/
-    if ((skip = CommBuf::DecodeByteArray(ptr, remaining, &scannerSpecPtr->startRow)) == 0)
+    if ((skip = CommBuf::DecodeByteArray(ptr, remaining, &scanSpec->startRow)) == 0)
       return 0;
     ptr += skip;
     remaining -= skip;
 
     /** End Row **/
-    if ((skip = CommBuf::DecodeByteArray(ptr, remaining, &scannerSpecPtr->endRow)) == 0)
+    if ((skip = CommBuf::DecodeByteArray(ptr, remaining, &scanSpec->endRow)) == 0)
       return 0;
     ptr += skip;
     remaining -= skip;
@@ -101,43 +110,43 @@ namespace hypertable {
     if (remaining < 2*sizeof(uint64_t))
       return 0;
 
-    memcpy(&scannerSpecPtr->interval.first, ptr, sizeof(int64_t));
+    memcpy(&scanSpec->interval.first, ptr, sizeof(int64_t));
     ptr += sizeof(int64_t);
 
-    memcpy(&scannerSpecPtr->interval.second, ptr, sizeof(int64_t));
+    memcpy(&scanSpec->interval.second, ptr, sizeof(int64_t));
     ptr += sizeof(int64_t);
   
     return ptr-base;
   }
 
-  std::ostream &operator<<(std::ostream &os, const TabletIdentifierT &tablet) {
-    os << "Table name = " << tablet.tableName << endl;
-    os << "Table generation = " << tablet.generation << endl;
-    if (tablet.startRow == 0)
+  std::ostream &operator<<(std::ostream &os, const RangeSpecificationT &rangeSpec) {
+    os << "Table name = " << rangeSpec.tableName << endl;
+    os << "Table generation = " << rangeSpec.generation << endl;
+    if (rangeSpec.startRow == 0)
       os << "Start row = [NULL]" << endl;
     else
-      os << "Start row = \"" << tablet.startRow << "\"" << endl;
-    if (tablet.endRow == 0)
+      os << "Start row = \"" << rangeSpec.startRow << "\"" << endl;
+    if (rangeSpec.endRow == 0)
       os << "End row = [NULL]" << endl;
     else
-      os << "End row = \"" << tablet.endRow << "\"" << endl;
+      os << "End row = \"" << rangeSpec.endRow << "\"" << endl;
     return os;
   }
 
-  std::ostream &operator<<(std::ostream &os, const ScannerSpecT &scannerSpec) {
-    os << "Flags = 0x" << hex << scannerSpec.flags << dec << endl;
-    if (scannerSpec.startRow->len != 0)
-      os << "Start Row = " << (const char *)scannerSpec.startRow->data << endl;
+  std::ostream &operator<<(std::ostream &os, const ScanSpecificationT &scanSpec) {
+    os << "Flags = 0x" << hex << scanSpec.flags << dec << endl;
+    if (scanSpec.startRow->len != 0)
+      os << "Start Row = " << (const char *)scanSpec.startRow->data << endl;
     else
       os << "Start Key = [NULL]" << endl;
-    if (scannerSpec.endRow != 0)
-      os << "End Row = " << (const char *)scannerSpec.endRow->data << endl;
+    if (scanSpec.endRow != 0)
+      os << "End Row = " << (const char *)scanSpec.endRow->data << endl;
     else
       os << "End Key = [NULL]" << endl;
-    os << "Start Time = " << scannerSpec.interval.first << endl;
-    os << "End Time = " << scannerSpec.interval.second << endl;
-    for (int32_t i=0; i<scannerSpec.columns->len; i++)
-      os << "Column = " << (int)scannerSpec.columns->data[i] << endl;
+    os << "Start Time = " << scanSpec.interval.first << endl;
+    os << "End Time = " << scanSpec.interval.second << endl;
+    for (int32_t i=0; i<scanSpec.columns->len; i++)
+      os << "Column = " << (int)scanSpec.columns->data[i] << endl;
     return os;
   }
 
