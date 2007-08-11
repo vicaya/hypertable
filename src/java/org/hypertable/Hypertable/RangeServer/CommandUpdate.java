@@ -26,8 +26,9 @@ import java.io.StreamTokenizer;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 
+import static java.lang.System.out;
+
 import org.hypertable.Common.Error;
-import org.hypertable.Common.FileUtils;
 
 import org.hypertable.AsyncComm.Event;
 
@@ -56,7 +57,7 @@ class CommandUpdate extends Command {
 		DisplayUsage();
 		return;
 	    }
-	    RangeIdentifier range = new RangeIdentifier(arg.name);
+	    RangeSpecification rangeSpec = new RangeSpecification(arg.name);
 
 	    arg = mArgs.elementAt(1);
 	    if (arg.value != null) {
@@ -65,22 +66,12 @@ class CommandUpdate extends Command {
 	    }
 	    String dataFile = arg.name;
 	    
-	    String schemaFile = range.tableName + ".xml";
-
-	    java.lang.System.out.println("Table Name  = " + range.tableName);
-	    java.lang.System.out.println("Start Row   = " + range.startRow);
-	    java.lang.System.out.println("End Row     = " + range.endRow);
-	    java.lang.System.out.println("Schema File = " + schemaFile);
+	    out.println(rangeSpec);
 	    java.lang.System.out.println("Data File   = " + dataFile);
 
 	    LinkedList<ByteBuffer>  modList = new LinkedList<ByteBuffer>();
 
-	    byte [] bytes = FileUtils.FileToBuffer(new File(schemaFile));
-	    String schemaStr = new String(bytes);
-
-	    Schema schema = new Schema(schemaStr);
-
-	    TestSource testSource = new TestSource(dataFile, schema);
+	    TestSource testSource = new TestSource(dataFile, rangeSpec.schema);
 
 	    ByteBuffer sendBuf = ByteBuffer.allocate(65536);
 	    boolean outstanding = false;
@@ -116,7 +107,7 @@ class CommandUpdate extends Command {
 		    sendBuf.flip();
 		    sendBuf.get(mods);
 
-		    Global.client.Update(schema.GetGeneration(), range, mods, mSyncHandler);
+		    Global.client.Update(rangeSpec, mods, mSyncHandler);
 		    outstanding = true;
 		}
 

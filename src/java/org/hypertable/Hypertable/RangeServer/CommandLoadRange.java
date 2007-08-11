@@ -61,23 +61,11 @@ class CommandLoadRange extends Command {
 		return;
 	    }
 
-	    RangeIdentifier range = new RangeIdentifier(arg.name);
+	    RangeSpecification rangeSpec = new RangeSpecification(arg.name);
 
-	    java.lang.System.out.println("Table Name        = " + range.tableName);
-	    java.lang.System.out.println("Start Row         = " + range.startRow);
-	    java.lang.System.out.println("End Row           = " + range.endRow);
+	    out.println(rangeSpec);
 
-	    String schemaFile = range.tableName + ".xml";
-	    java.lang.System.out.println("Schema File       = " + schemaFile);
-
-	    byte [] schemaBytes = FileUtils.FileToBuffer(new File(schemaFile));
-
-	    Schema schema = new Schema(new String(schemaBytes));
-	    int tableGeneration = schema.GetGeneration();
-
-	    java.lang.System.out.println("Schema Generation = " + tableGeneration);
-
-	    Global.client.LoadRange(tableGeneration, range, mSyncHandler);
+	    Global.client.LoadRange(rangeSpec, mSyncHandler);
 
 	    Event event = mSyncHandler.WaitForEvent();
 

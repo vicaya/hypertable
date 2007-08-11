@@ -31,14 +31,12 @@ import java.util.Vector;
 import static java.lang.System.out;
 
 import org.hypertable.Common.Error;
-import org.hypertable.Common.FileUtils;
 
 import org.hypertable.AsyncComm.Event;
 
 import org.hypertable.Hypertable.ColumnFamily;
 import org.hypertable.Hypertable.Key;
 import org.hypertable.Hypertable.ParseCommandLine;
-import org.hypertable.Hypertable.Schema;
 
 class CommandScan extends Command {
 
@@ -65,15 +63,8 @@ class CommandScan extends Command {
 		return;
 	    }
 
-	    RangeIdentifier range = new RangeIdentifier(arg.name);
+	    RangeSpecification rangeSpec = new RangeSpecification(arg.name);
 	    ScanSpecification scanSpec = new ScanSpecification();
-
-	    String schemaFile = range.tableName + ".xml";
-	    java.lang.System.out.println("Schema File       = " + schemaFile);
-	    byte [] schemaBytes = FileUtils.FileToBuffer(new File(schemaFile));
-	    msOutstandingSchema = new Schema(new String(schemaBytes));
-
-	    range.generation = msOutstandingSchema.GetGeneration();
 
 	    for (int i=1; i<mArgs.size(); i++) {
 
@@ -120,10 +111,10 @@ class CommandScan extends Command {
 		}
 	    }
 
-	    out.println(range);
+	    out.println(rangeSpec);
 	    out.println(scanSpec);
 
-	    Global.client.CreateScanner(msOutstandingSchema.GetGeneration(), range, scanSpec, mSyncHandler);
+	    Global.client.CreateScanner(rangeSpec, scanSpec, mSyncHandler);
 
 	    Event event = mSyncHandler.WaitForEvent();
 

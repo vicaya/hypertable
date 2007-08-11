@@ -74,23 +74,23 @@ public class Client {
  
     /**
      */
-    public int LoadRange(int tableGeneration, RangeIdentifier range, DispatchHandler handler) {
-	CommBuf cbuf = mProtocol.BuildRequestLoadRange(tableGeneration, range);
+    public int LoadRange(RangeSpecification rangeSpec, DispatchHandler handler) {
+	CommBuf cbuf = mProtocol.BuildRequestLoadRange(rangeSpec);
 	return SendRangeServerMessage(cbuf, handler);
     }
 
     /**
      */
-    public int Update(int tableGeneration, RangeIdentifier range, byte [] mods, DispatchHandler handler) {
-	CommBuf cbuf = mProtocol.BuildRequestUpdate(tableGeneration, range, mods);
+    public int Update(RangeSpecification rangeSpec, byte [] mods, DispatchHandler handler) {
+	CommBuf cbuf = mProtocol.BuildRequestUpdate(rangeSpec, mods);
 	return SendRangeServerMessage(cbuf, handler);
     }
 
     /**
      */
-    public int CreateScanner(int tableGeneration, RangeIdentifier range, ScanSpecification spec, DispatchHandler handler) {
+    public int CreateScanner(RangeSpecification rangeSpec, ScanSpecification spec, DispatchHandler handler) {
 	
-	CommBuf cbuf = mProtocol.BuildRequestCreateScanner(tableGeneration, range, spec);
+	CommBuf cbuf = mProtocol.BuildRequestCreateScanner(rangeSpec, spec);
 	return SendRangeServerMessage(cbuf, handler);
     }
 
@@ -103,8 +103,8 @@ public class Client {
 
     /**
      */
-    public int Compact(int tableGeneration, RangeIdentifier range, boolean major, String localityGroup, DispatchHandler handler) {
-	CommBuf cbuf = mProtocol.BuildRequestCompact(tableGeneration, range, major, localityGroup);
+    public int Compact(RangeSpecification rangeSpec, boolean major, String localityGroup, DispatchHandler handler) {
+	CommBuf cbuf = mProtocol.BuildRequestCompact(rangeSpec, major, localityGroup);
 	return SendRangeServerMessage(cbuf, handler);
     }
 

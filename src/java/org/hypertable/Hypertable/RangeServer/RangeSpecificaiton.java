@@ -24,8 +24,8 @@ import java.text.ParseException;
 
 import org.hypertable.AsyncComm.CommBuf;
 
-public class RangeIdentifier {
-    public RangeIdentifier(String idStr) throws ParseException {
+public class RangeSpecification {
+    public RangeSpecification(String idStr) throws ParseException {
 	int openBracket = idStr.indexOf('[');
 	if (openBracket == -1)
 	    tableName = idStr;
@@ -49,6 +49,12 @@ public class RangeIdentifier {
 		}
 	    }
 	}
+
+	String schemaFile = tableName + ".xml";
+	byte [] bytes = FileUtils.FileToBuffer(new File(schemaFile));
+	String schemaStr = new String(bytes);
+	schema = new Schema(schemaStr);
+	generation = schema.GetGeneration();
     }
 
     public int SerializedLength() {
@@ -75,5 +81,6 @@ public class RangeIdentifier {
     public String tableName = null;
     public String startRow = null;
     public String endRow = null;
+    public Schema schema = null;
 }
 

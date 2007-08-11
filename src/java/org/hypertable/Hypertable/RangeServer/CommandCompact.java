@@ -24,13 +24,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StreamTokenizer;
 
+import static java.lang.System.out;
+
 import org.hypertable.Common.Error;
-import org.hypertable.Common.FileUtils;
 
 import org.hypertable.AsyncComm.Event;
-
 import org.hypertable.Hypertable.ParseCommandLine;
-import org.hypertable.Hypertable.Schema;
 
 class CommandCompact extends Command {
 
@@ -55,26 +54,13 @@ class CommandCompact extends Command {
 		DisplayUsage();
 		return;
 	    }
-	    RangeIdentifier range = new RangeIdentifier(arg.name);
-
-	    /**
-	     * Load schema
-	     */
-	    String schemaFile = range.tableName + ".xml";
-	    byte [] bytes = FileUtils.FileToBuffer(new File(schemaFile));
-	    String schemaStr = new String(bytes);
-	    Schema schema = new Schema(schemaStr);
-
-	    String accessGroup = null;
+	    RangeSpecSpecification rangeSpec = new RangeSpecification(arg.name);
 
 	    for (int i=1; i<mArgs.size(); i++) {
 
 		arg = mArgs.elementAt(i);
 
-		if (arg.name.equals("ag")) {
-		    accessGroup = arg.value;
-		}
-		else if (arg.name.equals("type")) {
+		if (arg.name.equals("type")) {
 		    if (arg.value != null) {
 			if (arg.value.equals("minor")) {
 			    major = false;
@@ -91,13 +77,10 @@ class CommandCompact extends Command {
 		}
 	    }
 
-	    java.lang.System.out.println("Table Name        = " + range.tableName);
-	    java.lang.System.out.println("Start Row         = " + range.startRow);
-	    java.lang.System.out.println("End Row           = " + range.endRow);
-	    java.lang.System.out.println("Access Group      = " + accessGroup);
-	    java.lang.System.out.println("Major Compaction  = " + major);
+	    out.println(rangeSpec);
+	    out.println("Major Compaction  = " + major);
 
-	    Global.client.Compact(schema.GetGeneration(), range, major, accessGroup, mSyncHandler);
+	    Global.client.Compact(rangeSpec, major, accessGroup, mSyncHandler);
 
 	    Event event = mSyncHandler.WaitForEvent();
 	    
@@ -115,6 +98,6 @@ class CommandCompact extends Command {
     }
 
     private void DisplayUsage() {
-	ReportError("usage:  compact <range> [ag=<accessGroup>] [type=major|minor]");
+	ReportError("usage:  compact <range> [type=major|minor]");
     }
 }
