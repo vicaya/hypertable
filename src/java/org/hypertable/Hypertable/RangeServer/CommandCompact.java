@@ -20,7 +20,6 @@
 
 package org.hypertable.Hypertable.RangeServer;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.StreamTokenizer;
 
@@ -54,7 +53,7 @@ class CommandCompact extends Command {
 		DisplayUsage();
 		return;
 	    }
-	    RangeSpecSpecification rangeSpec = new RangeSpecification(arg.name);
+	    RangeSpecification rangeSpec = new RangeSpecification(arg.name);
 
 	    for (int i=1; i<mArgs.size(); i++) {
 
@@ -80,7 +79,7 @@ class CommandCompact extends Command {
 	    out.println(rangeSpec);
 	    out.println("Major Compaction  = " + major);
 
-	    Global.client.Compact(rangeSpec, major, accessGroup, mSyncHandler);
+	    Global.client.Compact(rangeSpec, major, mSyncHandler);
 
 	    Event event = mSyncHandler.WaitForEvent();
 	    

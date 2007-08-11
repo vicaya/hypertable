@@ -36,7 +36,6 @@ void RequestHandlerCompact::run() {
   ResponseCallback cb(mComm, mEventPtr);
   RangeSpecificationT rangeSpec;
   uint8_t compactionType = 0;
-  const char *accessGroup = 0;
   size_t skip;
   size_t remaining = mEventPtr->messageLen - sizeof(int16_t);
   uint8_t *msgPtr = mEventPtr->message + sizeof(int16_t);
@@ -57,18 +56,8 @@ void RequestHandlerCompact::run() {
    * Deserialize Compaction Type
    */
   compactionType = *msgPtr++;
-  remaining--;
 
-  /**
-   * Deserialize Access Group
-   */
-  if ((skip = CommBuf::DecodeString(msgPtr, remaining, (const char **)&accessGroup)) == 0)
-    goto abort;
-
-  if (*accessGroup == 0)
-    accessGroup = 0;
-
-  mRangeServer->Compact(&cb, &rangeSpec, compactionType, accessGroup);
+  mRangeServer->Compact(&cb, &rangeSpec, compactionType);
 
   return;
 

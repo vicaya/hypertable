@@ -20,12 +20,19 @@
 
 package org.hypertable.Hypertable.RangeServer;
 
+import java.io.File;
+import java.io.IOException;
 import java.text.ParseException;
+import javax.xml.parsers.ParserConfigurationException;
+import org.xml.sax.SAXException;
 
+import org.hypertable.Common.FileUtils;
 import org.hypertable.AsyncComm.CommBuf;
+import org.hypertable.Hypertable.Schema;
+
 
 public class RangeSpecification {
-    public RangeSpecification(String idStr) throws ParseException {
+    public RangeSpecification(String idStr) throws ParseException, IOException, ParserConfigurationException, SAXException {
 	int openBracket = idStr.indexOf('[');
 	if (openBracket == -1)
 	    tableName = idStr;

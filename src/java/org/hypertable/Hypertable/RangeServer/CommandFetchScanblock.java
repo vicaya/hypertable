@@ -20,7 +20,6 @@
 
 package org.hypertable.Hypertable.RangeServer;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.StreamTokenizer;
 import java.nio.ByteBuffer;
@@ -31,14 +30,12 @@ import java.util.Vector;
 import static java.lang.System.out;
 
 import org.hypertable.Common.Error;
-import org.hypertable.Common.FileUtils;
 
 import org.hypertable.AsyncComm.Event;
 
 import org.hypertable.Hypertable.ColumnFamily;
 import org.hypertable.Hypertable.Key;
 import org.hypertable.Hypertable.ParseCommandLine;
-import org.hypertable.Hypertable.Schema;
 
 class CommandFetchScanblock extends Command {
 

@@ -103,8 +103,8 @@ public class Client {
 
     /**
      */
-    public int Compact(RangeSpecification rangeSpec, boolean major, String localityGroup, DispatchHandler handler) {
-	CommBuf cbuf = mProtocol.BuildRequestCompact(rangeSpec, major, localityGroup);
+    public int Compact(RangeSpecification rangeSpec, boolean major, DispatchHandler handler) {
+	CommBuf cbuf = mProtocol.BuildRequestCompact(rangeSpec, major);
 	return SendRangeServerMessage(cbuf, handler);
     }
 

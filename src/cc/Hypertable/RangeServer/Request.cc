@@ -120,33 +120,33 @@ namespace hypertable {
   }
 
   std::ostream &operator<<(std::ostream &os, const RangeSpecificationT &rangeSpec) {
-    os << "Table name = " << rangeSpec.tableName << endl;
-    os << "Table generation = " << rangeSpec.generation << endl;
+    os << "TableName  = " << rangeSpec.tableName << endl;
+    os << "Generation = " << rangeSpec.generation << endl;
     if (rangeSpec.startRow == 0)
-      os << "Start row = [NULL]" << endl;
+      os << "StartRow = [NULL]" << endl;
     else
-      os << "Start row = \"" << rangeSpec.startRow << "\"" << endl;
+      os << "StartRow = \"" << rangeSpec.startRow << "\"" << endl;
     if (rangeSpec.endRow == 0)
-      os << "End row = [NULL]" << endl;
+      os << "EndRow   = [NULL]" << endl;
     else
-      os << "End row = \"" << rangeSpec.endRow << "\"" << endl;
+      os << "EndRow   = \"" << rangeSpec.endRow << "\"" << endl;
     return os;
   }
 
   std::ostream &operator<<(std::ostream &os, const ScanSpecificationT &scanSpec) {
-    os << "Flags = 0x" << hex << scanSpec.flags << dec << endl;
+    os << "Flags    = 0x" << hex << scanSpec.flags << dec << endl;
     if (scanSpec.startRow->len != 0)
-      os << "Start Row = " << (const char *)scanSpec.startRow->data << endl;
+      os << "StartRow = " << (const char *)scanSpec.startRow->data << endl;
     else
-      os << "Start Key = [NULL]" << endl;
-    if (scanSpec.endRow != 0)
-      os << "End Row = " << (const char *)scanSpec.endRow->data << endl;
+      os << "StartRow = [NULL]" << endl;
+    if (scanSpec.endRow->len != 0)
+      os << "EndRow   = " << (const char *)scanSpec.endRow->data << endl;
     else
-      os << "End Key = [NULL]" << endl;
-    os << "Start Time = " << scanSpec.interval.first << endl;
-    os << "End Time = " << scanSpec.interval.second << endl;
+      os << "EndRow   = [NULL]" << endl;
+    os << "MinTime  = " << scanSpec.interval.first << endl;
+    os << "MaxTime  = " << scanSpec.interval.second << endl;
     for (int32_t i=0; i<scanSpec.columns->len; i++)
-      os << "Column = " << (int)scanSpec.columns->data[i] << endl;
+      os << "Column   = " << (int)scanSpec.columns->data[i] << endl;
     return os;
   }
 

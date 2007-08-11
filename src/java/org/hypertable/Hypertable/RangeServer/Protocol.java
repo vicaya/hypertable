@@ -67,7 +67,6 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
 
 	scanSpec.Prepend(cbuf);
 	rangeSpec.Prepend(cbuf);
-	cbuf.PrependInt(tableGeneration);
 	cbuf.PrependShort(COMMAND_CREATE_SCANNER);
 	hbuilder.Reset(Message.PROTOCOL_HYPERTABLE_RANGESERVER);
 	hbuilder.Encapsulate(cbuf);

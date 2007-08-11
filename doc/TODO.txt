@@ -1,7 +1,6 @@
 
 TODO:
 - Create ScanContext class and push object of this type into CreateScanner APIs
-- Clean up java/org/hypertable/Hypertable/RangeServer/Command*
 - Make sure single row range restriction works in CreateScanner
 - Add better split key computation logic (exponential backoff sampler)
 - Implement 'InMemory' locality groups
@@ -10,7 +9,6 @@ TODO:
 - Add new DELETE handling in RangeServer
 - Figure out why poll drops out of RangeServer/main.cc when gdb detaches from process
 - Writes to the commit log should be asynchronous (or concurrent)
-- Get rid of accessGroup argument to COMPACTION command!
 - In AccessGroup::RunCompaction, on major compaction check if the oldest
   CellCache entry is newer than the supplied timestamp, if so return
 - Move as much stuff as makes sense from CellStoreV0 to CellStore
@@ -24,6 +22,8 @@ TODO:
 - Use Findbugs (http://findbugs.sourceforge.net/) to find bugs in Java code.
 
 DONE:
+- Get rid of accessGroup argument to COMPACTION command
+- Clean up java/org/hypertable/Hypertable/RangeServer/Command*
 - Overhaul CreateScanner scan spec
 - Add back CellStore::CreateScanner
 - Fix copyright header notice to be GPL

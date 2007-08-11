@@ -20,7 +20,6 @@
 
 package org.hypertable.Hypertable.RangeServer;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.StreamTokenizer;
 import java.nio.ByteBuffer;
@@ -33,7 +32,6 @@ import org.hypertable.Common.Error;
 import org.hypertable.AsyncComm.Event;
 
 import org.hypertable.Hypertable.ParseCommandLine;
-import org.hypertable.Hypertable.Schema;
 
 class CommandUpdate extends Command {
 
@@ -76,6 +74,7 @@ class CommandUpdate extends Command {
 	    ByteBuffer sendBuf = ByteBuffer.allocate(65536);
 	    boolean outstanding = false;
 	    Event event = null;
+	    byte [] bytes = null;
 
 	    while (true) {
 

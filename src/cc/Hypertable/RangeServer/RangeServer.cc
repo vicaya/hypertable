@@ -242,7 +242,7 @@ int RangeServer::DirectoryInitialize(Properties *props) {
 /**
  * Compact
  */
-void RangeServer::Compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, uint8_t compactionType, const char *accessGroup) {
+void RangeServer::Compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, uint8_t compactionType) {
   int error = Error::OK;
   std::string errMsg;
   std::string tableName;
@@ -267,7 +267,6 @@ void RangeServer::Compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, 
   if (Global::verbose) {
     cout << *rangeSpec;
     cout << "Compaction type = " << (major ? "major" : "minor") << endl;
-    cout << "Access group = \"" << ((accessGroup) ? accessGroup : "[NULL]") << "\"" << endl;
   }
 
   /**
@@ -295,9 +294,8 @@ void RangeServer::Compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, 
   }
 
   if (Global::verbose) {
-    LOG_VA_INFO("Compaction (%s) scheduled for table '%s' start row '%s' access group '%s'",
-		(major ? "major" : "minor"), rangeSpec->tableName, rangeSpec->startRow,
-		(accessGroup ? accessGroup : "*"));
+    LOG_VA_INFO("Compaction (%s) scheduled for table '%s' start row '%s'",
+		(major ? "major" : "minor"), rangeSpec->tableName, rangeSpec->startRow);
   }
 
   error = Error::OK;

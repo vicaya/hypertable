@@ -42,7 +42,7 @@ namespace hypertable {
   public:
     RangeServer(Comm *comm, Properties *props);
 
-    void Compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, uint8_t compactionType, const char *accessGroup);
+    void Compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, uint8_t compactionType);
     void CreateScanner(ResponseCallbackCreateScanner *cb, RangeSpecificationT *rangeSpec, ScanSpecificationT *spec);
     void FetchScanblock(ResponseCallbackFetchScanblock *cb, uint32_t scannerId);
     void LoadRange(ResponseCallback *cb, RangeSpecificationT *rangeSpec);

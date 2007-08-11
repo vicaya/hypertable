@@ -20,7 +20,6 @@
 
 package org.hypertable.Hypertable.RangeServer;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.StreamTokenizer;
 import java.nio.ByteBuffer;
@@ -65,6 +64,8 @@ class CommandScan extends Command {
 
 	    RangeSpecification rangeSpec = new RangeSpecification(arg.name);
 	    ScanSpecification scanSpec = new ScanSpecification();
+
+	    msOutstandingSchema = rangeSpec.schema;
 
 	    for (int i=1; i<mArgs.size(); i++) {
 
