@@ -95,15 +95,19 @@ namespace hypertable {
 
     ColumnFamily *GetColumnFamily(string &name) { return mColumnFamilyMap[name]; }
 
+    ColumnFamily *GetColumnFamily(uint32_t id) { return mColumnFamilyIdMap[id]; }
+
   private:
 
     typedef __gnu_cxx::hash_map<string, ColumnFamily *> ColumnFamilyMapT;
+    typedef __gnu_cxx::hash_map<uint32_t, ColumnFamily *> ColumnFamilyIdMapT;
     typedef __gnu_cxx::hash_map<string, AccessGroup *> AccessGroupMapT;
 
     std::string mErrorString;
     int    mNextColumnId;
     AccessGroupMapT mAccessGroupMap;
     ColumnFamilyMapT mColumnFamilyMap;
+    ColumnFamilyIdMapT mColumnFamilyIdMap;
     int32_t mGeneration;
     list<AccessGroup *> mAccessGroups;
     AccessGroup *mOpenAccessGroup;

@@ -24,7 +24,7 @@ using namespace hypertable;
 
 /**
  */
-CellListScanner::CellListScanner() : mReset(false), mRangeStart(0), mRangeEnd(0), mRangeStartPtr(), mRangeEndPtr() {
+CellListScanner::CellListScanner(ScanContextPtr &scanContextPtr) : mScanContextPtr(scanContextPtr), mReset(false), mRangeStart(0), mRangeEnd(0), mRangeStartPtr(), mRangeEndPtr() {
   bool *mask = new bool [ 256 ];
   memset(mask, 1, 256*sizeof(bool));
   mFamilyMask.reset(mask);

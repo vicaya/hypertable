@@ -31,7 +31,7 @@
 
 using namespace hypertable;
 
-CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr) : CellListScanner(), mCellStorePtr(cellStorePtr), mCurKey(0), mCurValue(0), mCheckForRangeEnd(false) {
+CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPtr &scanContextPtr) : CellListScanner(scanContextPtr), mCellStorePtr(cellStorePtr), mCurKey(0), mCurValue(0), mCheckForRangeEnd(false) {
 
   mCellStoreV0 = dynamic_cast< CellStoreV0*>(mCellStorePtr.get());
   assert(mCellStoreV0);

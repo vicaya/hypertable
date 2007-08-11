@@ -29,7 +29,7 @@
 /**
  * 
  */
-CellCacheScanner::CellCacheScanner(CellCachePtr &cellCachePtr) : CellListScanner(), mCellCachePtr(cellCachePtr), mCellCacheMutex(cellCachePtr->mMutex), mCurKey(0), mCurValue(0), mEos(false) {
+CellCacheScanner::CellCacheScanner(CellCachePtr &cellCachePtr, ScanContextPtr &scanContextPtr) : CellListScanner(scanContextPtr), mCellCachePtr(cellCachePtr), mCellCacheMutex(cellCachePtr->mMutex), mCurKey(0), mCurValue(0), mEos(false) {
 }
 
 

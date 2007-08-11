@@ -22,6 +22,7 @@
 
 #include "CellCache.h"
 #include "CellListScanner.h"
+#include "ScanContext.h"
 
 using namespace hypertable;
 
@@ -33,7 +34,7 @@ namespace hypertable {
    */
   class CellCacheScanner : public CellListScanner {
   public:
-    CellCacheScanner(CellCachePtr &cellCachePtr);
+    CellCacheScanner(CellCachePtr &cellCachePtr, ScanContextPtr &scanContextPtr);
     virtual ~CellCacheScanner() { return; }
     virtual void Forward();
     virtual bool Get(ByteString32T **keyp, ByteString32T **valuep);

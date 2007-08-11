@@ -79,7 +79,7 @@ Range::Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), mMu
   list<Schema::AccessGroup *> *agList = mSchema->GetAccessGroupList();
 
   for (list<Schema::AccessGroup *>::iterator agIter = agList->begin(); agIter != agList->end(); agIter++) {
-    ag = new AccessGroup((*agIter), rangeInfoPtr);
+    ag = new AccessGroup(mSchema, (*agIter), rangeInfoPtr);
     mAccessGroupMap[(*agIter)->name] = ag;
     mAccessGroupVector.push_back(ag);
     for (list<Schema::ColumnFamily *>::iterator cfIter = (*agIter)->columns.begin(); cfIter != (*agIter)->columns.end(); cfIter++)
@@ -181,22 +181,29 @@ int Range::Add(const ByteString32T *key, const ByteString32T *value) {
 }
 
 
-CellListScanner *Range::CreateScanner(bool showDeletes) {
-  MergeScanner *scanner = new MergeScanner(showDeletes);
-  for (AccessGroupMapT::iterator iter = mAccessGroupMap.begin(); iter != mAccessGroupMap.end(); iter++)
-    scanner->AddScanner((*iter).second->CreateScanner(showDeletes));
-  return scanner;
-}
-
-
-CellListScanner *Range::CreateScanner(std::set<uint8_t> &columns, bool showDeletes) {
-  MergeScanner *scanner = new MergeScanner(showDeletes);
+CellListScanner *Range::CreateScanner(ScanContextPtr &scanContextPtr) {
+  CellListScanner *lastScanner = 0;
+  MergeScanner *mscanner = 0;
   for (AccessGroupMapT::iterator iter = mAccessGroupMap.begin(); iter != mAccessGroupMap.end(); iter++) {
-    if ((*iter).second->FamiliesIntersect(columns)) {
-      scanner->AddScanner((*iter).second->CreateScanner(showDeletes));
+    if ((*iter).second->IncludeInScan(scanContextPtr)) {
+      if (mscanner != 0)
+	mscanner->AddScanner((*iter).second->CreateScanner(scanContextPtr));
+      else {
+	if (lastScanner == 0)
+	  lastScanner = (*iter).second->CreateScanner(scanContextPtr);
+	else {
+	  mscanner = new MergeScanner(scanContextPtr);
+	  mscanner->AddScanner(lastScanner);
+	  mscanner->AddScanner((*iter).second->CreateScanner(scanContextPtr));
+	}
+      }
     }
   }
-  return scanner;
+  if (mscanner)
+    return mscanner;
+  else if (lastScanner)
+    return lastScanner;
+  return new MergeScanner(scanContextPtr);  // should never happen
 }
 
 
@@ -315,7 +322,11 @@ void Range::DoMaintenance() {
       while (mUpdateCounter > 0)
 	mUpdateQuiesceCond.wait(lock);
 
-      mSplitStartTime = mLatestTimestamp;
+      {
+	boost::mutex::scoped_lock lock(mMutex);
+	mSplitStartTime = mLatestTimestamp;
+      }
+
       mSplitKeyPtr.reset( CreateCopy(key) );
       mSplitLogPtr.reset( new CommitLogLocal(Global::logDirRoot, splitLogDir, 0x100000000LL) );
 
@@ -421,7 +432,10 @@ uint64_t Range::RunCompaction(bool major) {
     while (mUpdateCounter > 0)
       mUpdateQuiesceCond.wait(lock);
 
-    timestamp = mLatestTimestamp;
+    {
+      boost::mutex::scoped_lock lock(mMutex);
+      timestamp = mLatestTimestamp;
+    }
 
     /** unblock updates **/
     mHoldUpdates = false;

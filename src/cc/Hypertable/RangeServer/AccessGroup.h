@@ -51,7 +51,7 @@ namespace hypertable {
 
     typedef std::priority_queue<SplitKeyInfoT, vector<SplitKeyInfoT>, ltSplitKeyInfo> SplitKeyQueueT;
     
-    AccessGroup(Schema::AccessGroup *lg, RangeInfoPtr &tabletInfoPtr);
+    AccessGroup(SchemaPtr &schemaPtr, Schema::AccessGroup *lg, RangeInfoPtr &tabletInfoPtr);
     virtual ~AccessGroup();
     virtual int Add(const ByteString32T *key, const ByteString32T *value);
     virtual void GetSplitKeys(SplitKeyQueueT &keyHeap);
@@ -59,9 +59,9 @@ namespace hypertable {
     void Lock() { mLock.lock(); mCellCachePtr->Lock(); }
     void Unlock() { mCellCachePtr->Unlock(); mLock.unlock(); }
 
-    CellListScanner *CreateScanner(bool showDeletes);
+    CellListScanner *CreateScanner(ScanContextPtr &scanContextPtr);
 
-    bool FamiliesIntersect(std::set<uint8_t> &families);
+    bool IncludeInScan(ScanContextPtr &scanContextPtr);
     uint64_t DiskUsage();
     void AddCellStore(CellStorePtr &cellStorePtr, uint32_t id);
     bool NeedsCompaction();
@@ -71,6 +71,7 @@ namespace hypertable {
   private:
     boost::mutex         mMutex;
     boost::mutex::scoped_lock  mLock;
+    SchemaPtr            mSchemaPtr;
     std::set<uint8_t>    mColumnFamilies;
     std::string          mName;
     std::string          mTableName;

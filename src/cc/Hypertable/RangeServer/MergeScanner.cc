@@ -30,7 +30,7 @@ using namespace hypertable;
 /**
  * 
  */
-MergeScanner::MergeScanner(bool showDeletes) : CellListScanner(), mScanners(), mQueue(), mDeletePresent(false), mDeletedRow(0), mDeletedCell(0), mShowDeletes(showDeletes) {
+MergeScanner::MergeScanner(ScanContextPtr &scanContextPtr) : CellListScanner(scanContextPtr), mScanners(), mQueue(), mDeletePresent(false), mDeletedRow(0), mDeletedCell(0), mShowDeletes(scanContextPtr->returnDeletes) {
 }
 
 void MergeScanner::AddScanner(CellListScanner *scanner) {

@@ -53,11 +53,20 @@ namespace hypertable {
     uint64_t GetLogCutoffTime();
     uint64_t DiskUsage();
 
+    /**
     CellListScanner *CreateScanner(std::set<uint8_t> &columns, bool showDeletes);
     CellListScanner *CreateScanner(bool showDeletes);
+    **/
+
+    CellListScanner *CreateScanner(ScanContextPtr &scanContextPtr);
 
     string &StartRow() { return mStartRow; }
     string &EndRow() { return mEndRow; }
+
+    uint64_t GetTimestamp() {
+      boost::mutex::scoped_lock lock(mMutex);
+      return mLatestTimestamp;
+    }
 
     void ScheduleMaintenance();
     void DoMaintenance();

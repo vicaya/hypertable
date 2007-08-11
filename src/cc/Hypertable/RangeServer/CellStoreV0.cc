@@ -78,9 +78,9 @@ ByteString32T *CellStoreV0::GetSplitKey() {
 }
 
 
-CellListScanner *CellStoreV0::CreateScanner() {
+CellListScanner *CellStoreV0::CreateScanner(ScanContextPtr &scanContextPtr) {
   CellStorePtr cellStorePtr(this);
-  return new CellStoreScannerV0(cellStorePtr);
+  return new CellStoreScannerV0(cellStorePtr, scanContextPtr);
 }
 
 

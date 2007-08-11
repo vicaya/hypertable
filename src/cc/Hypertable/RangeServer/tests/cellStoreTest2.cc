@@ -118,6 +118,10 @@ namespace {
     CellCachePtr cellCachePtr;
     //vector<string> files;
     MergeScanner *mscanner, *mscannerA, *mscannerB;
+    ScanContextPtr scanContextPtr( new ScanContext() ); 
+
+    scanContextPtr->Initialize((uint64_t)-1);
+    scanContextPtr->returnDeletes = !suppressDeleted;
 
     if ((schemaData = FileUtils::FileToBuffer("tests/Test.xml", &len)) == 0)
       return false;
@@ -195,8 +199,8 @@ namespace {
     }
     ofstream outstreamA(outfileA);
 
-    mscanner = new MergeScanner(suppressDeleted);
-    mscanner->AddScanner( new CellCacheScanner(cellCachePtr) );
+    mscanner = new MergeScanner(scanContextPtr);
+    mscanner->AddScanner( cellCachePtr->CreateScanner(scanContextPtr) );
     mscanner->Reset();
 
     //CellSequenceScanner *scanner = cellCachePtr->CreateScanner(suppressDeleted);
@@ -219,16 +223,16 @@ namespace {
     }
     ofstream outstreamB(outfileB);
 
-    mscanner = new MergeScanner(suppressDeleted);
+    mscanner = new MergeScanner(scanContextPtr);
 
-    mscannerA = new MergeScanner(suppressDeleted);
-    mscannerA->AddScanner( new CellStoreScannerV0(cellStorePtr[0]) );
-    mscannerA->AddScanner( new CellStoreScannerV0(cellStorePtr[1]) );
+    mscannerA = new MergeScanner(scanContextPtr);
+    mscannerA->AddScanner( cellStorePtr[0]->CreateScanner(scanContextPtr) );
+    mscannerA->AddScanner( cellStorePtr[1]->CreateScanner(scanContextPtr) );
     mscanner->AddScanner(mscannerA);
 
-    mscannerB = new MergeScanner(suppressDeleted);
-    mscannerB->AddScanner( new CellStoreScannerV0(cellStorePtr[2]) );
-    mscannerB->AddScanner( new CellStoreScannerV0(cellStorePtr[3]) );
+    mscannerB = new MergeScanner(scanContextPtr);
+    mscannerB->AddScanner( cellStorePtr[2]->CreateScanner(scanContextPtr) );
+    mscannerB->AddScanner( cellStorePtr[3]->CreateScanner(scanContextPtr) );
     mscanner->AddScanner(mscannerB);
 
     mscanner->Reset();

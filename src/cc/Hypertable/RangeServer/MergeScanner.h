@@ -49,7 +49,7 @@ namespace hypertable {
       }
     };
 
-    MergeScanner(bool showDeletes);
+    MergeScanner(ScanContextPtr &scanContextPtr);
     virtual ~MergeScanner();
     virtual void RestrictRange(ByteString32T *start, ByteString32T *end);
     virtual void RestrictColumns(const uint8_t *families, size_t count);

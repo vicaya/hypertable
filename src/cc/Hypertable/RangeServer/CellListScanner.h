@@ -25,6 +25,7 @@
 
 #include "Common/ByteString.h"
 #include "Common/DynamicBuffer.h"
+#include "ScanContext.h"
 
 using namespace hypertable;
 
@@ -32,7 +33,7 @@ namespace hypertable {
 
   class CellListScanner {
   public:
-    CellListScanner();
+    CellListScanner(ScanContextPtr &scanContextPtr);
     virtual ~CellListScanner() { return; }
     virtual void RestrictRange(ByteString32T *start, ByteString32T *end);
     virtual void RestrictColumns(const uint8_t *families, size_t count);
@@ -41,6 +42,7 @@ namespace hypertable {
     virtual void Reset() = 0;
 
   protected:
+    ScanContextPtr mScanContextPtr;
     bool  mReset;
     ByteString32T  *mRangeStart;
     ByteString32T  *mRangeEnd;

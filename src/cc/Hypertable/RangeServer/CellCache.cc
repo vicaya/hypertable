@@ -70,9 +70,9 @@ int CellCache::Add(const ByteString32T *key, const ByteString32T *value) {
 
 
 
-CellListScanner *CellCache::CreateScanner() {
+CellListScanner *CellCache::CreateScanner(ScanContextPtr &scanContextPtr) {
   CellCachePtr cellCachePtr(this);
-  return new CellCacheScanner(cellCachePtr);
+  return new CellCacheScanner(cellCachePtr, scanContextPtr);
 }
 
 

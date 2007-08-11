@@ -41,7 +41,7 @@ Updating
 
 Scanning
 
-1. Obtain "scanner timestamp" from commit log
+1. Set "scan timestamp" to the Range's mLatestTimestamp
 2. Create a MergeScanner (with shared_ptrs to all underlying CellStores and CellCaches)
 3. For each CellCache involved in the scan:
    A. Lock the access lock
@@ -53,7 +53,7 @@ Scanning
   A. Lock CellCache's access lock
   B. Remove scanner from CellCache's sorted list of scanners.
   C. If the scanner was the 'oldest' outstanding scanner, then apply the deletes from the sorted list of delete sets for any that occur before
-   the new 'oldest' outstanding scanner timestamp (see Update 10.)
+   the new 'oldest' outstanding scan timestamp (see Update 10.)
    [NOTE: Since DELETE entries sort ahead of normal entries, a scan starting from the delete entry should suffice to apply the delete. ]
   D. Unlock CellCache's access lock
 7. Delete the MergeScanner (thus resetting the shared_ptrs to underlying CellCache/CellStore and possibly garbage collecting these objects)
@@ -66,7 +66,7 @@ NOTE: There can only be one compaction or split happening for a Range at any giv
 1. Quiesce updates
    A. Set the holdUpdates flag to true
    B. Wait on the UpdateQuiesce condition variable
-2. Set the "compaction timestamp" to the Range's mLatestTimestamp
+2. Set the "compaction timestamp "to the Range's mLatestTimestamp
 3. Un-quiesce updates
     A. Set the holdUpdates flag to false
     B. Signal the MaintenanceFinished condition variable (to unblock the pending updates)

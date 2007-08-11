@@ -123,7 +123,9 @@ int main(int argc, char **argv) {
    * Dump keys
    */
   if (!trailer_only) {
-    scanner = new CellStoreScannerV0(cellStorePtr);
+    ScanContextPtr scanContextPtr( new ScanContext() );
+    scanContextPtr->Initialize((uint64_t)-1);
+    scanner = cellStorePtr->CreateScanner(scanContextPtr);
     scanner->Reset();
     while (scanner->Get(&key, &value)) {
       cout << *key << endl;

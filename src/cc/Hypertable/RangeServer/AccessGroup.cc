@@ -30,13 +30,12 @@
 #include "AccessGroup.h"
 #include "CellCache.h"
 #include "CellCacheScanner.h"
-#include "CellStoreScannerV0.h"
 #include "CellStoreV0.h"
 #include "Global.h"
 #include "MergeScanner.h"
 
 
-AccessGroup::AccessGroup(Schema::AccessGroup *lg, RangeInfoPtr &rangeInfoPtr) : CellList(), mMutex(), mLock(mMutex,false), mName(lg->name), mStores(), mCellCachePtr(), mNextTableId(0), mLogCutoffTime(0), mDiskUsage(0) {
+AccessGroup::AccessGroup(SchemaPtr &schemaPtr, Schema::AccessGroup *lg, RangeInfoPtr &rangeInfoPtr) : CellList(), mMutex(), mLock(mMutex,false), mSchemaPtr(schemaPtr), mName(lg->name), mStores(), mCellCachePtr(), mNextTableId(0), mLogCutoffTime(0), mDiskUsage(0) {
   rangeInfoPtr->GetTableName(mTableName);
   rangeInfoPtr->GetStartRow(mStartRow);
   rangeInfoPtr->GetEndRow(mEndRow);
@@ -61,23 +60,22 @@ int AccessGroup::Add(const ByteString32T *key, const ByteString32T *value) {
 }
 
 
-CellListScanner *AccessGroup::CreateScanner(bool showDeletes) {
+CellListScanner *AccessGroup::CreateScanner(ScanContextPtr &scanContextPtr) {
   boost::mutex::scoped_lock lock(mMutex);
-  MergeScanner *scanner = new MergeScanner(showDeletes);
-  scanner->AddScanner( new CellCacheScanner(mCellCachePtr) );
+  MergeScanner *scanner = new MergeScanner(scanContextPtr);
+  scanner->AddScanner( mCellCachePtr->CreateScanner(scanContextPtr) );
   for (size_t i=0; i<mStores.size(); i++)
-    scanner->AddScanner( new CellStoreScannerV0(mStores[i]) );
+    scanner->AddScanner( mStores[i]->CreateScanner(scanContextPtr) );
   return scanner;
 }
 
-/**
- * Should we lock here?  what about the addition of column families?
- */
-bool AccessGroup::FamiliesIntersect(std::set<uint8_t> &families) {
+bool AccessGroup::IncludeInScan(ScanContextPtr &scanContextPtr) {
   boost::mutex::scoped_lock lock(mMutex);
-  std::set<uint8_t> commonFamilies;
-  set_intersection(families.begin(), families.end(), mColumnFamilies.begin(), mColumnFamilies.end(), inserter(commonFamilies, commonFamilies.begin()));
-  return commonFamilies.size() > 0;
+  for (std::set<uint8_t>::iterator iter = mColumnFamilies.begin(); iter != mColumnFamilies.end(); iter++) {
+    if (scanContextPtr->familyMask[*iter])
+      return true;
+  }
+  return false;
 }
 
 
@@ -204,15 +202,19 @@ void AccessGroup::RunCompaction(uint64_t timestamp, bool major) {
     return;
   }
 
+  ScanContextPtr scanContextPtr( new ScanContext() ); 
+  scanContextPtr->Initialize(timestamp);
+  scanContextPtr->returnDeletes = !major;
+
   if (major || tableIndex < mStores.size()) {
-    MergeScanner *mscanner = new MergeScanner(!major);
-    mscanner->AddScanner( new CellCacheScanner(mCellCachePtr) );
+    MergeScanner *mscanner = new MergeScanner(scanContextPtr);
+    mscanner->AddScanner( mCellCachePtr->CreateScanner(scanContextPtr) );
     for (size_t i=tableIndex; i<mStores.size(); i++)
-      mscanner->AddScanner( new CellStoreScannerV0(mStores[i]) );
+      mscanner->AddScanner( mStores[i]->CreateScanner(scanContextPtr) );
     scannerPtr.reset(mscanner);
   }
   else
-    scannerPtr.reset( new CellCacheScanner(mCellCachePtr) );
+    scannerPtr.reset( mCellCachePtr->CreateScanner(scanContextPtr) );
 
   scannerPtr->Reset();
 

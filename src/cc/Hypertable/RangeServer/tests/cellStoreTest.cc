@@ -225,7 +225,9 @@ int main(int argc, char **argv) {
   /**
    * Scan through newly created table dumping out keys
    */
-  scanner = new CellStoreScannerV0( cellStorePtr );
+  ScanContextPtr scanContextPtr( new ScanContext() ); 
+  scanContextPtr->Initialize((uint64_t)-1);
+  scanner = cellStorePtr->CreateScanner(scanContextPtr);
   scanner->RestrictRange(startKey, endKey);
   scanner->Reset();
 
@@ -257,7 +259,7 @@ int main(int argc, char **argv) {
   if (cellStorePtr->LoadIndex() != 0)
     harness.DisplayErrorAndExit();    
 
-  scanner = new CellStoreScannerV0( cellStorePtr );
+  scanner = cellStorePtr->CreateScanner(scanContextPtr);
   scanner->RestrictRange(startKey, endKey);
   scanner->Reset();
 
@@ -283,7 +285,7 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  scanner = new CellCacheScanner( cellCachePtr );
+  scanner = cellCachePtr->CreateScanner(scanContextPtr);
   scanner->RestrictRange(startKey, endKey);
   scanner->Reset();
 

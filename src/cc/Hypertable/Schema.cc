@@ -183,6 +183,9 @@ void Schema::OpenColumnFamily() {
       SetErrorString((string)"Nested ColumnFamily elements not allowed");
     else {
       mOpenColumnFamily = new ColumnFamily();
+      mOpenColumnFamily->id = 0;
+      mOpenColumnFamily->keepCopies = 0;
+      mOpenColumnFamily->expireTime = 0;
       mOpenColumnFamily->lg = mOpenAccessGroup->name;
     }
   }
@@ -198,11 +201,16 @@ void Schema::CloseColumnFamily() {
   else {
     if (mOpenColumnFamily->name == "")
       SetErrorString((string)"ColumnFamily must have Name child element");
+    else if (mReadIds && mOpenColumnFamily->id == 0) {
+      SetErrorString((string)"No id specifid for ColumnFamily '" + mOpenColumnFamily->name + "'");
+    }
     else {
       if (mColumnFamilyMap.find(mOpenColumnFamily->name) != mColumnFamilyMap.end())
 	SetErrorString((string)"Multiply defined column families '" + mOpenColumnFamily->name + "'");
       else {
 	mColumnFamilyMap[mOpenColumnFamily->name] = mOpenColumnFamily;
+	if (mReadIds)
+	  mColumnFamilyIdMap[mOpenColumnFamily->id] = mOpenColumnFamily;
 	mOpenAccessGroup->columns.push_back(mOpenColumnFamily);
       }
       mOpenColumnFamily = 0;

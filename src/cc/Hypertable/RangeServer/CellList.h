@@ -22,6 +22,7 @@
 
 #include "Common/atomic.h"
 #include "Common/ByteString.h"
+#include "ScanContext.h"
 
 namespace hypertable {
 
@@ -39,7 +40,7 @@ namespace hypertable {
     CellList() { atomic_set(&refCount, 0); }
     virtual ~CellList() { return; }
     virtual int Add(const ByteString32T *key, const ByteString32T *value) = 0;
-    virtual CellListScanner *CreateScanner() { return 0; }
+    virtual CellListScanner *CreateScanner(ScanContextPtr &scanContextPtr) { return 0; }
     friend void intrusive_ptr_add_ref(CellList *cl);
     friend void intrusive_ptr_release(CellList *cl);    
   private:

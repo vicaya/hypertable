@@ -61,6 +61,7 @@ namespace {
     { Error::RANGESERVER_RANGE_NOT_FOUND,      "RANGE SERVER range not found" },
     { Error::RANGESERVER_INVALID_SCANNER_ID,   "RANGE SERVER invalid scanner id" },
     { Error::RANGESERVER_SCHEMA_PARSE_ERROR,   "RANGE SERVER schema parse error" },
+    { Error::RANGESERVER_SCHEMA_INVALID_CFID,  "RANGE SERVER invalid column family id" },
     { 0, 0 }
   };
 
@@ -111,6 +112,7 @@ const int Error::RANGESERVER_PARTIAL_UPDATE;
 const int Error::RANGESERVER_RANGE_NOT_FOUND;
 const int Error::RANGESERVER_INVALID_SCANNER_ID;
 const int Error::RANGESERVER_SCHEMA_PARSE_ERROR;
+const int Error::RANGESERVER_SCHEMA_INVALID_CFID;
 
 const char *Error::GetText(int error) {
   const char *text = textMap[error];

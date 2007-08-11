@@ -32,7 +32,7 @@ namespace hypertable {
 
   class CellStoreScannerV0 : public CellListScanner {
   public:
-    CellStoreScannerV0(CellStorePtr &cellStorePtr);
+    CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPtr &scanContextPtr);
     virtual ~CellStoreScannerV0();
     virtual void Lock() { return; }
     virtual void Unlock() { return; }

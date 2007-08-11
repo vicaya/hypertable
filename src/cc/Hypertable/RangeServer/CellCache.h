@@ -56,7 +56,7 @@ namespace hypertable {
      * Creates a CellCacheScanner object that contains an shared pointer (intrusive_ptr)
      * to this CellCache.
      */
-    virtual CellListScanner *CreateScanner();
+    virtual CellListScanner *CreateScanner(ScanContextPtr &scanContextPtr);
 
     void Lock()   { mLock.lock(); }
     void Unlock() { mLock.unlock(); }

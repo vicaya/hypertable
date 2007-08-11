@@ -67,7 +67,7 @@ namespace hypertable {
      * Creates a CellStoreScannerV0 object that contains an shared pointer (intrusive_ptr)
      * to this CellStore;
      */
-    virtual CellListScanner *CreateScanner();
+    virtual CellListScanner *CreateScanner(ScanContextPtr &scanContextPtr);
 
     friend class CellStoreScannerV0;
 

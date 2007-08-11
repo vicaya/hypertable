@@ -32,6 +32,7 @@
 #include "MaintenanceThread.h"
 #include "RangeServer.h"
 #include "RangeServerProtocol.h"
+#include "ScanContext.h"
 #include "VerifySchema.h"
 
 using namespace hypertable;
@@ -327,6 +328,9 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, RangeSpecific
   bool more = true;
   std::set<uint8_t> columnFamilies;
   uint32_t id;
+  uint64_t scanTimestamp;
+  SchemaPtr schemaPtr;
+  ScanContextPtr scanContextPtr( new ScanContext() ); 
 
   if (rangeSpec->tableName != 0)
     tableName = rangeSpec->tableName;
@@ -356,13 +360,19 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, RangeSpecific
     goto abort;
   }
 
+  scanTimestamp = rangePtr->GetTimestamp();
+
+  schemaPtr = tableInfoPtr->GetSchema();
+
   kvBuffer = new uint8_t [ sizeof(int32_t) + DEFAULT_SCANBUF_SIZE ];
   kvLenp = (uint32_t *)kvBuffer;
 
-  if (columnFamilies.size() > 0) 
-    scannerPtr.reset( rangePtr->CreateScanner(columnFamilies, false) );
-  else
-    scannerPtr.reset( rangePtr->CreateScanner(false) );
+  if ((error = scanContextPtr->Initialize(schemaPtr, scanTimestamp, scanSpec)) != Error::OK) {
+    errMsg = "Problem initializing scan context";
+    goto abort;
+  }
+ 
+  scannerPtr.reset( rangePtr->CreateScanner(scanContextPtr));
   scannerPtr->RestrictRange(scanSpec->startRow, scanSpec->endRow);
   if (scanSpec->columns->len > 0)
     scannerPtr->RestrictColumns(scanSpec->columns->data, scanSpec->columns->len);
