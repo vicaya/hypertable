@@ -29,6 +29,7 @@
 #include "Common/Error.h"
 
 #include "Hypertable/Schema.h"
+#include "Key.h"
 #include "Request.h"
 
 namespace hypertable {
@@ -44,109 +45,55 @@ namespace hypertable {
   class ScanContext {
   public:
 
-    /**
-     * Constructor
-     */
-    ScanContext() : returnDeletes(false), gcbuf(0) { return; }
+    static const uint64_t END_OF_TIME;
 
-    /**
-     * Destructor, deletes gcbuf 
-     */
-    ~ScanContext() { delete [] gcbuf; }
-
-    void Initialize(uint64_t ts) {
-      timestamp = ts;
-      memset(familyMask, true, 256*sizeof(bool));
-      memset(familyInfo, 0, 256*sizeof(CellFilterInfoT));
-    }
-
-    /**
-     * Initializes the scan context.  Sets up the familyMask filter that allows for
-     * quick lookups to see if a family is included in the scan.  Also sets up
-     * familyInfo entries for the column families that are included in the scan
-     * which contains cell garbage collection info for each family (e.g. cutoff
-     * timestamp and number of copies to keep).
-     *
-     * @param sp shared pointer to schema object
-     * @param ts scan timestamp (point in time when scan began)
-     * @param ss scan specification
-     * @return Error::OK on success, or other error code on failure
-     */
-    int Initialize(SchemaPtr &sp, uint64_t ts, ScanSpecificationT *ss) {
-      Schema::ColumnFamily *columnFamily;
-      schemaPtr = sp;
-      spec = ss;
-      timestamp = ts;
-      assert(spec);
-      remainingCells = (spec->cellCount != 0) ? spec->cellCount : (uint64_t)-1;
-      memset(familyMask, false, 256*sizeof(bool));
-      if (spec->columns && spec->columns->len > 0) {
-	for (uint32_t i=0; i<spec->columns->len; i++) {
-	  if ((columnFamily = schemaPtr->GetColumnFamily(spec->columns->data[i])) == 0)
-	    return Error::RANGESERVER_SCHEMA_INVALID_CFID;
-	  familyMask[spec->columns->data[i]] = true;
-	  if (columnFamily->expireTime == 0)
-	    familyInfo[spec->columns->data[i]].cutoffTime == 0;
-	  else
-	    familyInfo[spec->columns->data[i]].cutoffTime == timestamp - (columnFamily->expireTime * 1000000);
-	  familyInfo[spec->columns->data[i]].keepCopies = columnFamily->keepCopies;
-	}
-      }
-      else {
-	list<Schema::AccessGroup *> *agList = schemaPtr->GetAccessGroupList();
-
-	for (list<Schema::AccessGroup *>::iterator agIter = agList->begin(); agIter != agList->end(); agIter++) {
-	  for (list<Schema::ColumnFamily *>::iterator cfIter = (*agIter)->columns.begin(); cfIter != (*agIter)->columns.end(); cfIter++) {
-	    if ((*cfIter)->id == 0)
-	      return Error::RANGESERVER_SCHEMA_INVALID_CFID;
-	    familyMask[(*cfIter)->id] = true;
-	    if ((*cfIter)->expireTime == 0)
-	      familyInfo[(*cfIter)->id].cutoffTime == 0;
-	    else
-	      familyInfo[(*cfIter)->id].cutoffTime == timestamp - ((*cfIter)->expireTime * 1000000);
-	    familyInfo[(*cfIter)->id].keepCopies = (*cfIter)->keepCopies;
-	  }
-	}
-      }
-      return Error::OK;
-    }
-
-    /**
-     * Makes a deep copy of the ScanSpecification.  Entire specification is written
-     * to a single array 'gcbuf' that gets deleted in the destructor.
-     */
-    void CopyScanSpecification() {
-      if (spec) {
-	int32_t len = sizeof(ScanSpecificationT) + Length(spec->columns) + Length(spec->startRow) + Length(spec->endRow);
-	ScanSpecificationT *oldSpec = spec;
-	uint8_t *ptr;
-	gcbuf = new uint8_t [ len ];
-	spec = (ScanSpecificationT *)gcbuf;
-	memcpy(spec, oldSpec, sizeof(ScanSpecificationT));
-	ptr = gcbuf + sizeof(ScanSpecificationT);
-
-	memcpy(ptr, oldSpec->columns, Length(oldSpec->columns));
-	spec->columns = (ByteString32T *)ptr;
-	ptr += Length(oldSpec->columns);
-
-	memcpy(ptr, oldSpec->startRow, Length(oldSpec->startRow));
-	spec->startRow = (ByteString32T *)ptr;
-	ptr += Length(oldSpec->startRow);
-
-	memcpy(ptr, oldSpec->endRow, Length(oldSpec->endRow));
-	spec->endRow = (ByteString32T *)ptr;
-	ptr += Length(oldSpec->endRow);
-      }
-    }
-    
     SchemaPtr schemaPtr;
     ScanSpecificationT *spec;
-    uint8_t *gcbuf;
-    bool returnDeletes;
+    ByteString32Ptr endKeyPtr;
     uint64_t timestamp;
     uint64_t remainingCells;
+    int error;
     bool familyMask[256];
     CellFilterInfoT familyInfo[256];
+
+    /**
+     * Constructor.
+     *
+     * @param ts scan timestamp (point in time when scan began)
+     * @param ss scan specification (can be NULL)
+     * @param sp shared pointer to schema object
+     */
+    ScanContext(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp) : endKeyPtr(), error(Error::OK) {
+      initialize(ts, ss, sp);
+    }
+
+    /**
+     * Constructor.  Calls initialize() with an empty schema pointer.
+     *
+     * @param ts scan timestamp (point in time when scan began)
+     * @param ss scan specification (can be NULL)
+     */
+    ScanContext(uint64_t ts, ScanSpecificationT *ss) : endKeyPtr(), error(Error::OK) {
+      SchemaPtr schemaPtr;
+      initialize(ts, ss, schemaPtr);
+    }
+
+  private:
+
+    /**
+     * Initializes the scan context.  Sets up the familyMask filter that
+     * allows for quick lookups to see if a family is included in the scan.  Also sets
+     * up familyInfo entries for the column families that are included in the scan
+     * which contains cell garbage collection info for each family (e.g. cutoff
+     * timestamp and number of copies to keep).  Also sets up endKeyPtr to be the
+     * last possible key in spec->endRow.
+     *
+     * @param ts scan timestamp (point in time when scan began)
+     * @param ss scan specification
+     * @param sp shared pointer to schema object
+     */
+    void initialize(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp);
+
   };
 
   typedef boost::shared_ptr<ScanContext> ScanContextPtr;

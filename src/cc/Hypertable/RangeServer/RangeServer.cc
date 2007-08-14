@@ -330,7 +330,7 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, RangeSpecific
   uint32_t id;
   uint64_t scanTimestamp;
   SchemaPtr schemaPtr;
-  ScanContextPtr scanContextPtr( new ScanContext() ); 
+  ScanContextPtr scanContextPtr;
 
   if (rangeSpec->tableName != 0)
     tableName = rangeSpec->tableName;
@@ -367,16 +367,14 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, RangeSpecific
   kvBuffer = new uint8_t [ sizeof(int32_t) + DEFAULT_SCANBUF_SIZE ];
   kvLenp = (uint32_t *)kvBuffer;
 
-  if ((error = scanContextPtr->Initialize(schemaPtr, scanTimestamp, scanSpec)) != Error::OK) {
+  scanContextPtr.reset( new ScanContext(scanTimestamp, scanSpec, schemaPtr) );
+  if (scanContextPtr->error != Error::OK) {
     errMsg = "Problem initializing scan context";
     goto abort;
   }
  
   scannerPtr.reset( rangePtr->CreateScanner(scanContextPtr));
-  scannerPtr->RestrictRange(scanSpec->startRow, scanSpec->endRow);
-  if (scanSpec->columns->len > 0)
-    scannerPtr->RestrictColumns(scanSpec->columns->data, scanSpec->columns->len);
-  scannerPtr->Reset();
+
   more = FillScanBlock(scannerPtr, kvBuffer+sizeof(int32_t), DEFAULT_SCANBUF_SIZE, kvLenp);
   if (more)
     id = Global::scannerMap.Put(scannerPtr, rangePtr);

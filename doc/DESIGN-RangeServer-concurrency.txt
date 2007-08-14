@@ -1,13 +1,4 @@
 
-LoadRange
-
-1. If SplitLogDir is present in METADATA entry for range
-
-TBD...
-Check for SplitPoint metadata entry, if exists and there isn't an entry for the new split off portion,
-the replay the split log
-
-
 Updating
 
 1. Lock the maintenance mutex for the Range
@@ -123,8 +114,12 @@ NOTE: There can only be one compaction or split happening for a Range at any giv
     to that RangeServer for the newly created range
 
 
+LoadRange
+
+[TBD]
+
+
 ISSUES:
-- What to do about abandoned Scanners?  Should scanners have an expiration time an automatically get deleted after that time?
 - How does the Master know what CellStore files to garbage collect?
 - Memory accounting after split.  Any oustanding scanners will hold reference to the old CellCaches and CellStores,
   should we worry about accounting for this memory?  Or should we just assume that it will get garbaged collected

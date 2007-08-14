@@ -34,13 +34,8 @@ namespace hypertable {
   public:
     CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPtr &scanContextPtr);
     virtual ~CellStoreScannerV0();
-    virtual void Lock() { return; }
-    virtual void Unlock() { return; }
     virtual void Forward();
     virtual bool Get(ByteString32T **keyp, ByteString32T **valuep);
-    virtual void Reset();
-    using CellListScanner::RestrictRange;
-    using CellListScanner::RestrictColumns;
 
   private:
 
@@ -68,8 +63,7 @@ namespace hypertable {
     BlockInflater        *mBlockInflater;
     bool                  mCheckForRangeEnd;
     int                   mFileId;
-    ByteString32T        *mStartKey;
-    ByteString32T        *mEndKey;
+    ByteString32Ptr       mEndKeyPtr;
   };
 
 }

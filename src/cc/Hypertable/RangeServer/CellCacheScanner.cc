@@ -30,24 +30,21 @@
  * 
  */
 CellCacheScanner::CellCacheScanner(CellCachePtr &cellCachePtr, ScanContextPtr &scanContextPtr) : CellListScanner(scanContextPtr), mCellCachePtr(cellCachePtr), mCellCacheMutex(cellCachePtr->mMutex), mCurKey(0), mCurValue(0), mEos(false) {
-}
 
-
-/**
- *
- */
-void CellCacheScanner::Reset() {
-  boost::mutex::scoped_lock lock(mCellCacheMutex);
-
-  if (mRangeStart == 0)
+  /** set start iterator **/
+  if (scanContextPtr->spec == 0 || scanContextPtr->spec->startRow->len == 0)
     mStartIter = mCellCachePtr->mCellMap.begin();
   else
-    mStartIter = mCellCachePtr->mCellMap.lower_bound(mRangeStart);
-  if (mRangeEnd == 0)
+    mStartIter = mCellCachePtr->mCellMap.lower_bound(scanContextPtr->spec->startRow);
+
+  /** set end iterator **/
+  if (scanContextPtr->spec == 0 || scanContextPtr->spec->endRow->len == 0)
     mEndIter = mCellCachePtr->mCellMap.end();
   else
-    mEndIter = mCellCachePtr->mCellMap.lower_bound(mRangeEnd);
+    mEndIter = mCellCachePtr->mCellMap.upper_bound(scanContextPtr->spec->endRow);
+
   mCurIter = mStartIter;
+
   if (mCurIter != mEndIter) {
     mCurKey = (*mCurIter).first;
     mCurValue = (*mCurIter).second;
@@ -55,12 +52,10 @@ void CellCacheScanner::Reset() {
   }
   else
     mEos = true;
-  mReset = true;
 }
 
 
 bool CellCacheScanner::Get(ByteString32T **keyp, ByteString32T **valuep) {
-  assert(mReset);
   if (!mEos) {
     *keyp = (ByteString32T *)mCurKey;
     *valuep = (ByteString32T *)mCurValue;
@@ -78,7 +73,7 @@ void CellCacheScanner::Forward() {
     if (!keyComps.load((*mCurIter).first)) {
       LOG_ERROR("Problem parsing key!");
     }
-    else if (mFamilyMask[keyComps.columnFamily]) {
+    else if (mScanContextPtr->familyMask[keyComps.columnFamily]) {
       mCurKey = (*mCurIter).first;
       mCurValue = (*mCurIter).second;
       return;

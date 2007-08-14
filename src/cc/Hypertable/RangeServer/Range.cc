@@ -192,7 +192,7 @@ CellListScanner *Range::CreateScanner(ScanContextPtr &scanContextPtr) {
 	if (lastScanner == 0)
 	  lastScanner = (*iter).second->CreateScanner(scanContextPtr);
 	else {
-	  mscanner = new MergeScanner(scanContextPtr);
+	  mscanner = new MergeScanner(scanContextPtr, false);
 	  mscanner->AddScanner(lastScanner);
 	  mscanner->AddScanner((*iter).second->CreateScanner(scanContextPtr));
 	}
@@ -203,7 +203,7 @@ CellListScanner *Range::CreateScanner(ScanContextPtr &scanContextPtr) {
     return mscanner;
   else if (lastScanner)
     return lastScanner;
-  return new MergeScanner(scanContextPtr);  // should never happen
+  return new MergeScanner(scanContextPtr, false);
 }
 
 

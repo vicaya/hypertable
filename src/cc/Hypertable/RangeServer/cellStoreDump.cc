@@ -123,12 +123,11 @@ int main(int argc, char **argv) {
    * Dump keys
    */
   if (!trailer_only) {
-    ScanContextPtr scanContextPtr( new ScanContext() );
-    scanContextPtr->Initialize((uint64_t)-1);
+    ScanContextPtr scanContextPtr( new ScanContext(ScanContext::END_OF_TIME, 0) );
+
     scanner = cellStorePtr->CreateScanner(scanContextPtr);
-    scanner->Reset();
     while (scanner->Get(&key, &value)) {
-      cout << *key << endl;
+      cout << Key(key) << endl;
       scanner->Forward();
     }
     delete scanner;

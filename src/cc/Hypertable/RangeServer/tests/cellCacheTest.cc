@@ -118,7 +118,6 @@ int main(int argc, char **argv) {
   ByteString32T    *value;
   ByteString32Ptr  keyPtr;
   ByteString32Ptr  valuePtr;
-  ScanContextPtr scanContextPtr( new ScanContext() );
   
   if (argc != 1)
     Usage::DumpAndExit(usage);
@@ -138,13 +137,14 @@ int main(int argc, char **argv) {
 
   cout << endl;
 
-  scanContextPtr->Initialize((uint64_t)-1);
+  {
+    ScanContextPtr scanContextPtr( new ScanContext(ScanContext::END_OF_TIME, 0) );
 
-  scanner = cellCachePtr->CreateScanner(scanContextPtr);
-  scanner->Reset();
-  while (scanner->Get(&key, &value)) {
-    cout << *key << " " << *value << endl << flush;
-    scanner->Forward();
+    scanner = cellCachePtr->CreateScanner(scanContextPtr);
+    while (scanner->Get(&key, &value)) {
+      cout << *key << " " << *value << endl << flush;
+      scanner->Forward();
+    }
   }
 
   // Load up 3 cellCaches with data

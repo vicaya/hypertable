@@ -38,9 +38,6 @@ namespace hypertable {
     virtual ~CellCacheScanner() { return; }
     virtual void Forward();
     virtual bool Get(ByteString32T **keyp, ByteString32T **valuep);
-    virtual void Reset();
-    using CellListScanner::RestrictRange;
-    using CellListScanner::RestrictColumns;
 
   private:
     CellCache::CellMapT::iterator  mStartIter;

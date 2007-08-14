@@ -77,6 +77,7 @@ int main(int argc, char **argv) {
   HdfsClient *client;
   struct sockaddr_in addr;
   bool golden = false;
+  ScanSpecificationT scanSpec;
 
   ReactorFactory::Initialize(1);
   System::Initialize(argv[0]);
@@ -225,11 +226,15 @@ int main(int argc, char **argv) {
   /**
    * Scan through newly created table dumping out keys
    */
-  ScanContextPtr scanContextPtr( new ScanContext() ); 
-  scanContextPtr->Initialize((uint64_t)-1);
+  ScanContextPtr scanContextPtr;
+
+  memset(&scanSpec, 0, sizeof(ScanSpecificationT));
+  scanSpec.startRow = startKey;
+  scanSpec.endRow = endKey;
+
+  scanContextPtr.reset( new ScanContext(ScanContext::END_OF_TIME, &scanSpec) ); 
+
   scanner = cellStorePtr->CreateScanner(scanContextPtr);
-  scanner->RestrictRange(startKey, endKey);
-  scanner->Reset();
 
   char outfileA[32];
   strcpy(outfileA, "/tmp/cellStoreTest-1-XXXXXX");
@@ -260,8 +265,10 @@ int main(int argc, char **argv) {
     harness.DisplayErrorAndExit();    
 
   scanner = cellStorePtr->CreateScanner(scanContextPtr);
+  /**
   scanner->RestrictRange(startKey, endKey);
   scanner->Reset();
+  **/
 
   char outfileB[32];
   strcpy(outfileB, "/tmp/cellStoreTest-2-XXXXXX");
@@ -286,8 +293,6 @@ int main(int argc, char **argv) {
   }
 
   scanner = cellCachePtr->CreateScanner(scanContextPtr);
-  scanner->RestrictRange(startKey, endKey);
-  scanner->Reset();
 
   char outfileC[32];
   strcpy(outfileC, "/tmp/cellStoreTest-3-XXXXXX");

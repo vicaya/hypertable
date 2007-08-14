@@ -25,10 +25,10 @@
 #include <string>
 #include <vector>
 
+#include "Common/ByteString.h"
 #include "Common/DynamicBuffer.h"
 
 #include "CellListScanner.h"
-#include "Key.h"
 
 using namespace hypertable;
 
@@ -49,16 +49,17 @@ namespace hypertable {
       }
     };
 
-    MergeScanner(ScanContextPtr &scanContextPtr);
+    MergeScanner(ScanContextPtr &scanContextPtr, bool returnDeletes=true);
     virtual ~MergeScanner();
-    virtual void RestrictRange(ByteString32T *start, ByteString32T *end);
-    virtual void RestrictColumns(const uint8_t *families, size_t count);
     virtual void Forward();
     virtual bool Get(ByteString32T **keyp, ByteString32T **valuep);
-    virtual void Reset();
     void AddScanner(CellListScanner *scanner);
 
   private:
+
+    void Initialize();
+
+    bool          mInitialized;
     std::vector<CellListScanner *>  mScanners;
     std::priority_queue<ScannerStateT, std::vector<ScannerStateT>, ltScannerState> mQueue;
     bool          mDeletePresent;
@@ -66,7 +67,7 @@ namespace hypertable {
     uint64_t      mDeletedRowTimestamp;
     DynamicBuffer mDeletedCell;
     uint64_t      mDeletedCellTimestamp;
-    bool          mShowDeletes;
+    bool          mReturnDeletes;
   };
 }
 

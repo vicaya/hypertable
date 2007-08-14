@@ -95,29 +95,6 @@ uint64_t AccessGroup::DiskUsage() {
   return mDiskUsage + mCellCachePtr->MemoryUsed();
 }
 
-
-
-/**
- * This method
-ByteString32T *AccessGroup::GetSplitKey() {
-  boost::read_write_mutex::scoped_read_lock lock(mRwMutex);
-  uint64_t  chosenTime = 0;
-  uint64_t  time;
-  ByteString32T     *chosenKey = 0;
-  ByteString32T     *key;
-
-  for (size_t i=0; i<mStores.size(); i++) {
-    time = mStores[i]->GetLogCutoffTime();
-    if (chosenTime == 0 || time > chosenTime) {
-      chosenKey = mStores[i]->GetSplitKey();
-      chosenTime = time;
-    }
-  }
-
-  return chosenKey;
-}
-*/
-
 bool AccessGroup::NeedsCompaction() {
   boost::mutex::scoped_lock lock(mMutex);
   if (mCellCachePtr->MemoryUsed() >= (uint32_t)Global::localityGroupMaxMemory)
@@ -202,21 +179,21 @@ void AccessGroup::RunCompaction(uint64_t timestamp, bool major) {
     return;
   }
 
-  ScanContextPtr scanContextPtr( new ScanContext() ); 
-  scanContextPtr->Initialize(timestamp);
-  scanContextPtr->returnDeletes = !major;
+  {
+    ScanContextPtr scanContextPtr;
 
-  if (major || tableIndex < mStores.size()) {
-    MergeScanner *mscanner = new MergeScanner(scanContextPtr);
-    mscanner->AddScanner( mCellCachePtr->CreateScanner(scanContextPtr) );
-    for (size_t i=tableIndex; i<mStores.size(); i++)
-      mscanner->AddScanner( mStores[i]->CreateScanner(scanContextPtr) );
-    scannerPtr.reset(mscanner);
+    scanContextPtr.reset( new ScanContext(timestamp, 0, mSchemaPtr) );
+
+    if (major || tableIndex < mStores.size()) {
+      MergeScanner *mscanner = new MergeScanner(scanContextPtr, !major);
+      mscanner->AddScanner( mCellCachePtr->CreateScanner(scanContextPtr) );
+      for (size_t i=tableIndex; i<mStores.size(); i++)
+	mscanner->AddScanner( mStores[i]->CreateScanner(scanContextPtr) );
+      scannerPtr.reset(mscanner);
+    }
+    else
+      scannerPtr.reset( mCellCachePtr->CreateScanner(scanContextPtr) );
   }
-  else
-    scannerPtr.reset( mCellCachePtr->CreateScanner(scanContextPtr) );
-
-  scannerPtr->Reset();
 
   while (scannerPtr->Get(&key, &value)) {
     if (!keyComps.load(key)) {

@@ -31,7 +31,8 @@
 
 using namespace hypertable;
 
-CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPtr &scanContextPtr) : CellListScanner(scanContextPtr), mCellStorePtr(cellStorePtr), mCurKey(0), mCurValue(0), mCheckForRangeEnd(false) {
+CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPtr &scanContextPtr) : CellListScanner(scanContextPtr), mCellStorePtr(cellStorePtr), mCurKey(0), mCurValue(0), mCheckForRangeEnd(false), mEndKeyPtr() {
+  ByteString32T  *tmpKey, *startKey, *endKey;
 
   mCellStoreV0 = dynamic_cast< CellStoreV0*>(mCellStorePtr.get());
   assert(mCellStoreV0);
@@ -40,6 +41,81 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPt
   mFileId = mCellStoreV0->mFileId;
   mBlockInflater = new BlockInflaterZlib();
   memset(&mBlock, 0, sizeof(mBlock));
+
+  // compute startKey
+  tmpKey = mCellStoreV0->mStartKeyPtr.get();
+  if (scanContextPtr->spec && scanContextPtr->spec->startRow->len != 0)
+    startKey = (tmpKey != 0 && *scanContextPtr->spec->startRow < *tmpKey) ? tmpKey : scanContextPtr->spec->startRow;
+  else
+    startKey = tmpKey;
+
+  // compute mEndKeyPtr
+  if (scanContextPtr->endKeyPtr.get() != 0) {
+    if (mCellStoreV0->mEndKeyPtr.get() == 0 || *scanContextPtr->endKeyPtr.get() < *mCellStoreV0->mEndKeyPtr.get())
+      mEndKeyPtr = scanContextPtr->endKeyPtr;
+    else
+      mEndKeyPtr = mCellStoreV0->mEndKeyPtr;
+  }
+  else
+    mEndKeyPtr = mCellStoreV0->mEndKeyPtr;
+
+  if (mBlock.base != 0)
+    Global::blockCache->Checkin(mFileId, mBlock.offset);
+  memset(&mBlock, 0, sizeof(mBlock));
+
+  mCheckForRangeEnd = false;
+
+  if (startKey != 0) {
+    mIter = mIndex.upper_bound(startKey);
+    mIter--;
+  }
+  else
+    mIter = mIndex.begin();
+
+  mCurKey = 0;
+
+  if (!FetchNextBlock()) {
+    mIter = mIndex.end();
+    return;
+  }
+
+  /**
+   * Seek to start of range in block
+   */
+  mCurKey = (ByteString32T *)mBlock.ptr;
+  mCurValue = (ByteString32T *)(mBlock.ptr + Length(mCurKey));
+  if (startKey != 0) {
+    while (*mCurKey < *startKey) {
+      mBlock.ptr = ((uint8_t *)mCurValue) + Length(mCurValue);
+      if (mBlock.ptr >= mBlock.end)
+	break;
+      mCurKey = (ByteString32T *)mBlock.ptr;
+      mCurValue = (ByteString32T *)(mBlock.ptr + Length(mCurKey));
+    }
+  }
+
+  /**
+   * If we seeked to the end of the block, fetch the next one
+   */
+  if (mBlock.ptr >= mBlock.end) {
+    if (!FetchNextBlock()) {
+      mIter = mIndex.end();
+      return;
+    }
+    mCurKey = (ByteString32T *)mBlock.ptr;
+    mCurValue = (ByteString32T *)(mBlock.ptr + Length(mCurKey));
+  }
+
+  /**
+   * End of range check
+   */
+  if (mCheckForRangeEnd) {
+    if (!(*mCurKey < *mEndKeyPtr.get())) {
+      mIter = mIndex.end();
+      return;
+    }
+  }
+
 }
 
 
@@ -50,57 +126,7 @@ CellStoreScannerV0::~CellStoreScannerV0() {
 }
 
 
-/**
- *
- */
-void CellStoreScannerV0::Reset() {
-  ByteString32T *tmpKey;
-
-  // compute mStartKey
-  tmpKey = mCellStoreV0->mStartKeyPtr.get();
-  if (mRangeStart != 0)
-    mStartKey = (tmpKey != 0 && *mRangeStart < *tmpKey) ? tmpKey : mRangeStart;
-  else if (tmpKey != 0)
-    mStartKey = tmpKey;
-  else
-    mStartKey = 0;
-
-  // compute mEndKey
-  tmpKey = mCellStoreV0->mEndKeyPtr.get();
-  if (mRangeEnd != 0)
-    mEndKey = (tmpKey != 0 && *tmpKey < *mRangeEnd) ? tmpKey : mRangeEnd;
-  else if (tmpKey != 0)
-    mEndKey = tmpKey;
-  else
-    mEndKey = 0;
-
-  if (mBlock.base != 0)
-    Global::blockCache->Checkin(mFileId, mBlock.offset);
-  memset(&mBlock, 0, sizeof(mBlock));
-
-  mCheckForRangeEnd = false;
-
-  if (mStartKey != 0) {
-    mIter = mIndex.upper_bound(mStartKey);
-    mIter--;
-  }
-  else
-    mIter = mIndex.begin();
-
-  mCurKey = 0;
-  mReset = true;
-}
-
-
-
 bool CellStoreScannerV0::Get(ByteString32T **keyp, ByteString32T **valuep) {
-
-  assert(mReset);
-
-  if (mCurKey == 0) {
-    if (!Initialize())
-      return false;
-  }
 
   if (mIter == mIndex.end())
     return false;
@@ -132,7 +158,7 @@ void CellStoreScannerV0::Forward() {
     mCurValue = (ByteString32T *)(mBlock.ptr + Length(mCurKey));
 
     if (mCheckForRangeEnd) {
-      if (!(*mCurKey < *mEndKey)) {
+      if (!(*mCurKey < *mEndKeyPtr.get())) {
 	mIter = mIndex.end();
 	break;
       }
@@ -145,7 +171,7 @@ void CellStoreScannerV0::Forward() {
       LOG_ERROR("Problem parsing key!");
       break;
     }
-    if (mFamilyMask[keyComps.columnFamily])
+    if (mScanContextPtr->familyMask[keyComps.columnFamily])
       break;
   }
 }
@@ -185,11 +211,11 @@ bool CellStoreScannerV0::FetchNextBlock() {
     iterNext++;
     if (iterNext == mIndex.end()) {
       mBlock.zlength = mCellStoreV0->mTrailer.fixIndexOffset - mBlock.offset;
-      if (mEndKey != 0)
+      if (mEndKeyPtr.get() != 0)
 	mCheckForRangeEnd = true;
     }
     else {
-      if (mEndKey != 0 && !(*((*iterNext).first) < *mEndKey))
+      if (mEndKeyPtr.get() != 0 && !(*((*iterNext).first) < *mEndKeyPtr.get()))
 	mCheckForRangeEnd = true;
       mBlock.zlength = (*iterNext).second - mBlock.offset;
     }
@@ -232,51 +258,3 @@ bool CellStoreScannerV0::FetchNextBlock() {
   delete [] buf;
   return rval;
 }
-
-
-
-bool CellStoreScannerV0::Initialize() {
-
-  if (!FetchNextBlock())
-    return false;
-
-  /**
-   * Seek to start of range in block
-   */
-  mCurKey = (ByteString32T *)mBlock.ptr;
-  mCurValue = (ByteString32T *)(mBlock.ptr + Length(mCurKey));
-  if (mStartKey != 0) {
-    while (*mCurKey < *mStartKey) {
-      mBlock.ptr = ((uint8_t *)mCurValue) + Length(mCurValue);
-      if (mBlock.ptr >= mBlock.end)
-	break;
-      mCurKey = (ByteString32T *)mBlock.ptr;
-      mCurValue = (ByteString32T *)(mBlock.ptr + Length(mCurKey));
-    }
-  }
-
-  /**
-   * If we seeked to the end of the block, fetch the next one
-   */
-  if (mBlock.ptr >= mBlock.end) {
-    if (!FetchNextBlock())
-      return false;
-    mCurKey = (ByteString32T *)mBlock.ptr;
-    mCurValue = (ByteString32T *)(mBlock.ptr + Length(mCurKey));
-  }
-
-  /**
-   * End of range check
-   */
-  if (mCheckForRangeEnd) {
-    if (!(*mCurKey < *mEndKey)) {
-      mIter = mIndex.end();
-      return false;
-    }
-  }
-
-
-  return true;
-}
-
-

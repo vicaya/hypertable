@@ -30,7 +30,6 @@ BlockDeflaterZlib.cc
 BlockInflaterZlib.cc
 CellCache.cc
 CellCacheScanner.cc
-CellListScanner.cc
 CellStore.cc
 CellStoreScannerV0.cc
 CellStoreV0.cc
@@ -55,6 +54,7 @@ RequestHandlerFetchScanblock.cc
 RequestHandlerLoadRange.cc
 RequestHandlerUpdate.cc
 ScannerMap.cc
+ScanContext.cc
 TableInfo.cc
 VerifySchema.cc
 main.cc
@@ -68,19 +68,19 @@ add_executable (Hypertable.RangeServer ${RangeServer_SRCS})
 target_link_libraries (Hypertable.RangeServer pthread boost_thread Hyperspace HdfsClient Test AsyncComm Common log4cpp expat ${ZLIB_LIBRARIES})
 
 # cellCacheTest
-add_executable (cellCacheTest CellCache.cc CellCacheScanner.cc tests/cellCacheTest.cc CellListScanner.cc Key.cc ${TEST_DEPENDENCIES})
+add_executable (cellCacheTest CellCache.cc CellCacheScanner.cc tests/cellCacheTest.cc Key.cc ScanContext.cc ${TEST_DEPENDENCIES})
 target_link_libraries (cellCacheTest pthread boost_thread AsyncComm Common log4cpp)
 
 # cellStoreDump
-add_executable (cellStoreDump Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc cellStoreDump.cc CellListScanner.cc CellStoreScannerV0.cc Key.cc FileBlockCache.cc Global.cc)
+add_executable (cellStoreDump Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc cellStoreDump.cc CellStoreScannerV0.cc Key.cc FileBlockCache.cc Global.cc ScanContext.cc)
 target_link_libraries (cellStoreDump pthread boost_thread HdfsClient AsyncComm Common log4cpp ${ZLIB_LIBRARIES})
 
 # cellStoreTest
-add_executable (cellStoreTest Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc tests/cellStoreTest.cc CellListScanner.cc CellStoreScannerV0.cc CellCache.cc CellCacheScanner.cc Key.cc tests/TestSource.cc FileBlockCache.cc Global.cc CellStore.cc ${TEST_DEPENDENCIES})
+add_executable (cellStoreTest Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc tests/cellStoreTest.cc CellStoreScannerV0.cc CellCache.cc CellCacheScanner.cc Key.cc tests/TestSource.cc FileBlockCache.cc Global.cc CellStore.cc ScanContext.cc ${TEST_DEPENDENCIES})
 target_link_libraries (cellStoreTest pthread boost_thread HdfsClient AsyncComm Common log4cpp ${ZLIB_LIBRARIES})
 
 # cellStoreTest2
-add_executable (cellStoreTest2 Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc tests/cellStoreTest2.cc CellListScanner.cc CellStoreScannerV0.cc CellCache.cc CellCacheScanner.cc Key.cc tests/TestSource.cc ../Schema.cc MergeScanner.cc FileBlockCache.cc Global.cc CellStore.cc ${TEST_DEPENDENCIES})
+add_executable (cellStoreTest2 Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc tests/cellStoreTest2.cc CellStoreScannerV0.cc CellCache.cc CellCacheScanner.cc Key.cc tests/TestSource.cc ../Schema.cc MergeScanner.cc FileBlockCache.cc Global.cc CellStore.cc ScanContext.cc ${TEST_DEPENDENCIES})
 target_link_libraries (cellStoreTest2 pthread boost_thread HdfsClient AsyncComm Common log4cpp ${ZLIB_LIBRARIES} expat)
 
 # generateTestData

@@ -118,10 +118,8 @@ namespace {
     CellCachePtr cellCachePtr;
     //vector<string> files;
     MergeScanner *mscanner, *mscannerA, *mscannerB;
-    ScanContextPtr scanContextPtr( new ScanContext() ); 
 
-    scanContextPtr->Initialize((uint64_t)-1);
-    scanContextPtr->returnDeletes = !suppressDeleted;
+    ScanContextPtr scanContextPtr( new ScanContext(ScanContext::END_OF_TIME, 0) ); 
 
     if ((schemaData = FileUtils::FileToBuffer("tests/Test.xml", &len)) == 0)
       return false;
@@ -185,9 +183,6 @@ namespace {
       i++;
     }
 
-    //files.push_back("foo");
-    //files.push_back("bar");
-
     for (size_t i=0; i<4; i++)
       cellStorePtr[i]->Finalize(0);
 
@@ -199,21 +194,13 @@ namespace {
     }
     ofstream outstreamA(outfileA);
 
-    mscanner = new MergeScanner(scanContextPtr);
+    mscanner = new MergeScanner(scanContextPtr, !suppressDeleted);
     mscanner->AddScanner( cellCachePtr->CreateScanner(scanContextPtr) );
-    mscanner->Reset();
-
-    //CellSequenceScanner *scanner = cellCachePtr->CreateScanner(suppressDeleted);
-    //scanner->Reset();
 
     while (mscanner->Get(&key, &value)) {
       outstreamA << Key(key) << " " << *value << endl;
-      //scanner->Forward();
       mscanner->Forward();
     }
-
-    //delete scanner;
-    //delete cellCache;
 
     char outfileB[64];
     strcpy(outfileB, "/tmp/cellStoreTest1-merge-XXXXXX");
@@ -223,19 +210,17 @@ namespace {
     }
     ofstream outstreamB(outfileB);
 
-    mscanner = new MergeScanner(scanContextPtr);
+    mscanner = new MergeScanner(scanContextPtr, !suppressDeleted);
 
-    mscannerA = new MergeScanner(scanContextPtr);
+    mscannerA = new MergeScanner(scanContextPtr, !suppressDeleted);
     mscannerA->AddScanner( cellStorePtr[0]->CreateScanner(scanContextPtr) );
     mscannerA->AddScanner( cellStorePtr[1]->CreateScanner(scanContextPtr) );
     mscanner->AddScanner(mscannerA);
 
-    mscannerB = new MergeScanner(scanContextPtr);
+    mscannerB = new MergeScanner(scanContextPtr, !suppressDeleted);
     mscannerB->AddScanner( cellStorePtr[2]->CreateScanner(scanContextPtr) );
     mscannerB->AddScanner( cellStorePtr[3]->CreateScanner(scanContextPtr) );
     mscanner->AddScanner(mscannerB);
-
-    mscanner->Reset();
 
     while (mscanner->Get(&key, &value)) {
       outstreamB << Key(key) << " " << *value << endl;
