@@ -1,8 +1,5 @@
 
 TODO:
-- Create ScanContext class and push object of this type into CreateScanner APIs
-- Make sure single row range restriction works in CreateScanner
-- Add better split key computation logic (exponential backoff sampler)
 - Implement 'InMemory' locality groups
 - Add support for auto-assigned timestamps
 - Fix AsyncComm/Protocol::StringFormatMessage (get rid of command)
@@ -18,10 +15,18 @@ TODO:
 - Change ResponseCallback::response to response_ok in C++ source
 - Rename RangeServer/Global::localityGroup member names
 - Add ReactorFactory::Shutdown
-- Add Scan Cache
+- Add "Scan Cache"
+- Add Bloom filter
+- Add user supplied block size to LocalityGroup
+- Add user supplied compression type to LocalityGroup
 - Use Findbugs (http://findbugs.sourceforge.net/) to find bugs in Java code.
+- Add access control
+- Add better split key computation logic (exponential backoff sampler)
+
 
 DONE:
+- Create ScanContext class and push object of this type into CreateScanner APIs
+- Make sure single row range restriction works in CreateScanner
 - Get rid of accessGroup argument to COMPACTION command
 - Clean up java/org/hypertable/Hypertable/RangeServer/Command*
 - Overhaul CreateScanner scan spec
@@ -51,3 +56,23 @@ DEFERRED:
   blocks and report errors via the callback object.
 
 
+Original estimate:
+
+- Finish Tablet Server (1 week)
+  - Split processing
+  - Add complete parameters to CREATE SCANNER
+  - Add FETCH SCANBLOCK command
+  - Implement 'InMemory' locality groups
+  - Add support for auto-assigned timestamps
+- Host METADATA using Tablet Server (1 week)
+- Finish Master (2 weeks)
+  - METADATA scan
+  - Garbage collection
+  - Split
+  - Tablet Server UDP Ping
+  - Add table modification command
+- Client library (2 weeks)
+  - Location lookup & cache
+  - Implement Scanner
+  - Implement Mutater
+- Write Hadoop InputFormat class for SSTables (1 week)

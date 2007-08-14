@@ -31,8 +31,8 @@
 
 #include "Hyperspace/HyperspaceClient.h"
 
-#include "Hypertable/Test/Metadata.h"
-#include "Hypertable/Schema.h"
+#include "Hypertable/Lib/Metadata.h"
+#include "Hypertable/Lib/Schema.h"
 #include "HdfsClient/HdfsClient.h"
 #include "CommitLog.h"
 #include "FileBlockCache.h"

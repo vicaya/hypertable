@@ -24,7 +24,6 @@ set ( DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Hypertable/RangeServer" )
 set ( TEST_DEPENDENCIES ${DST_DIR}/shakespeare.txt ${DST_DIR}/words ${DST_DIR}/urls.txt ${DST_DIR}/tests )
 
 set ( RangeServer_SRCS
-../Schema.cc
 AccessGroup.cc
 BlockDeflaterZlib.cc
 BlockInflaterZlib.cc
@@ -65,7 +64,7 @@ ResponseCallbackUpdate.cc
 
 # RangeServer
 add_executable (Hypertable.RangeServer ${RangeServer_SRCS})
-target_link_libraries (Hypertable.RangeServer pthread boost_thread Hyperspace HdfsClient Test AsyncComm Common log4cpp expat ${ZLIB_LIBRARIES})
+target_link_libraries (Hypertable.RangeServer pthread boost_thread Hypertable Hyperspace HdfsClient AsyncComm Common log4cpp expat ${ZLIB_LIBRARIES})
 
 # cellCacheTest
 add_executable (cellCacheTest CellCache.cc CellCacheScanner.cc tests/cellCacheTest.cc Key.cc ScanContext.cc ${TEST_DEPENDENCIES})
@@ -80,12 +79,12 @@ add_executable (cellStoreTest Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc B
 target_link_libraries (cellStoreTest pthread boost_thread HdfsClient AsyncComm Common log4cpp ${ZLIB_LIBRARIES})
 
 # cellStoreTest2
-add_executable (cellStoreTest2 Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc tests/cellStoreTest2.cc CellStoreScannerV0.cc CellCache.cc CellCacheScanner.cc Key.cc tests/TestSource.cc ../Schema.cc MergeScanner.cc FileBlockCache.cc Global.cc CellStore.cc ScanContext.cc ${TEST_DEPENDENCIES})
-target_link_libraries (cellStoreTest2 pthread boost_thread HdfsClient AsyncComm Common log4cpp ${ZLIB_LIBRARIES} expat)
+add_executable (cellStoreTest2 Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc tests/cellStoreTest2.cc CellStoreScannerV0.cc CellCache.cc CellCacheScanner.cc Key.cc tests/TestSource.cc MergeScanner.cc FileBlockCache.cc Global.cc CellStore.cc ScanContext.cc ${TEST_DEPENDENCIES})
+target_link_libraries (cellStoreTest2 pthread boost_thread Hypertable HdfsClient AsyncComm Common log4cpp ${ZLIB_LIBRARIES} expat)
 
 # generateTestData
-add_executable (generateTestData tests/generateTestData.cc ../Schema.cc)
-target_link_libraries (generateTestData pthread boost_thread Common log4cpp expat)
+add_executable (generateTestData tests/generateTestData.cc)
+target_link_libraries (generateTestData Hypertable pthread boost_thread Common log4cpp expat)
 
 # commitLogReaderTest
 add_executable (commitLogReaderTest CommitLogReaderLocal.cc tests/commitLogReaderTest.cc)

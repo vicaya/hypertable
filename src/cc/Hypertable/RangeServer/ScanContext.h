@@ -28,7 +28,7 @@
 #include "Common/ByteString.h"
 #include "Common/Error.h"
 
-#include "Hypertable/Schema.h"
+#include "Hypertable/Lib/Schema.h"
 #include "Key.h"
 #include "Request.h"
 

@@ -27,7 +27,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/condition.hpp>
 
-#include "Hypertable/Schema.h"
+#include "Hypertable/Lib/Schema.h"
 
 #include "AccessGroup.h"
 #include "CellStore.h"

@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-#include "Hypertable/Schema.h"
+#include "Hypertable/Lib/Schema.h"
 
 #include "CellCache.h"
 #include "CellStore.h"

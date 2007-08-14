@@ -17,7 +17,6 @@
 # 
 
 set ( Master_SRCS
-../Schema.cc
 ConnectionHandler.cc
 CreateDirectoryLayout.cc
 Master.cc
@@ -30,6 +29,6 @@ main.cc
 
 # Hypertable.Master
 add_executable (Hypertable.Master ${Master_SRCS})
-target_link_libraries (Hypertable.Master pthread boost_thread Hyperspace HdfsClient AsyncComm Common log4cpp expat)
+target_link_libraries (Hypertable.Master pthread boost_thread Hypertable Hyperspace HdfsClient AsyncComm Common log4cpp expat)
 
 install (TARGETS Hypertable.Master RUNTIME DESTINATION bin)

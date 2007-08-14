@@ -33,9 +33,8 @@ extern "C" {
 #include "Common/TestHarness.h"
 #include "Common/Usage.h"
 
-#include "Hypertable/Schema.h"
+#include "Hypertable/Lib/Schema.h"
 
-using namespace hypertable;
 using namespace hypertable;
 
 namespace {

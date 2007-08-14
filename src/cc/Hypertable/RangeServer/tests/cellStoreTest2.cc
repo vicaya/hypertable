@@ -30,7 +30,7 @@
 #include "Common/Usage.h"
 
 #include "HdfsClient/HdfsClient.h"
-#include "Hypertable/Schema.h"
+#include "Hypertable/Lib/Schema.h"
 #include "Hypertable/RangeServer/CellCache.h"
 #include "Hypertable/RangeServer/CellCacheScanner.h"
 #include "Hypertable/RangeServer/MergeScanner.h"

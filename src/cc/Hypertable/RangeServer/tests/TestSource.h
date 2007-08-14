@@ -24,7 +24,7 @@
 
 #include "Common/ByteString.h"
 #include "Common/DynamicBuffer.h"
-#include "Hypertable/Schema.h"
+#include "Hypertable/Lib/Schema.h"
 
 using namespace hypertable;
 
