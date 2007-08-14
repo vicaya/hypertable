@@ -1,5 +1,6 @@
 
 TODO:
+- Change Range key to endRow
 - Implement 'InMemory' locality groups
 - Add support for auto-assigned timestamps
 - Fix AsyncComm/Protocol::StringFormatMessage (get rid of command)
@@ -25,6 +26,7 @@ TODO:
 
 
 DONE:
+- Change CellStoreV0 to use last key in block for index entry
 - Create ScanContext class and push object of this type into CreateScanner APIs
 - Make sure single row range restriction works in CreateScanner
 - Get rid of accessGroup argument to COMPACTION command

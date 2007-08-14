@@ -42,7 +42,7 @@ using namespace hypertable;
 
 CellStoreV0::CellStoreV0(HdfsClient *client) : mClient(client), mFilename(), mFd(-1), mIndex(),
   mBuffer(0), mFixIndexBuffer(0), mVarIndexBuffer(0), mBlockSize(Constants::DEFAULT_BLOCKSIZE),
-  mOutstandingId(0), mOffset(0), mGotFirstIndex(false), mFileLength(0),
+  mOutstandingId(0), mOffset(0), mLastKey(0), mFileLength(0),
   mDiskUsage(0), mSplitKey(0), mFileId(0), mStartKeyPtr(0), mEndKeyPtr(0) {
   mProtocol = mClient->GetProtocolObject();
   mBlockDeflater = new BlockDeflaterZlib();
@@ -91,7 +91,7 @@ int CellStoreV0::Create(const char *fname, size_t blockSize) {
 
   mFd = -1;
   mOffset = 0;
-  mGotFirstIndex = false;
+  mLastKey = 0;
   mFixIndexBuffer.reserve(mBlockSize);
   mVarIndexBuffer.reserve(mBlockSize);
 
@@ -109,12 +109,9 @@ int CellStoreV0::Add(const ByteString32T *key, const ByteString32T *value) {
   EventPtr eventPtr;
   DynamicBuffer zBuffer(0);
 
-  if (!mGotFirstIndex) {
-    AddIndexEntry(key, mOffset);
-    mGotFirstIndex = true;
-  }
-
   if (mBuffer.fill() > mBlockSize) {
+
+    AddIndexEntry(mLastKey, mOffset);
 
     mBlockDeflater->deflate(mBuffer, zBuffer, Constants::DATA_BLOCK_MAGIC);
     mBuffer.clear();
@@ -134,7 +131,6 @@ int CellStoreV0::Add(const ByteString32T *key, const ByteString32T *value) {
       return -1;
     }
     mOffset += zlen;
-    AddIndexEntry(key, mOffset);
   }
 
   size_t keyLen = sizeof(int32_t) + key->len;
@@ -143,6 +139,7 @@ int CellStoreV0::Add(const ByteString32T *key, const ByteString32T *value) {
   mBuffer.ensure( keyLen + valueLen );
 
   memcpy(mBuffer.ptr, key, keyLen);
+  mLastKey = (ByteString32T *)mBuffer.ptr;
   mBuffer.ptr += keyLen;
 
   memcpy(mBuffer.ptr, value, valueLen);
@@ -163,6 +160,8 @@ int CellStoreV0::Finalize(uint64_t timestamp) {
   uint8_t *base;
 
   if (mBuffer.fill() > 0) {
+
+    AddIndexEntry(mLastKey, mOffset);
 
     mBlockDeflater->deflate(mBuffer, zBuffer, Constants::DATA_BLOCK_MAGIC);
     zbuf = zBuffer.release(&zlen);

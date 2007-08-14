@@ -103,7 +103,7 @@ namespace hypertable {
     DispatchHandlerSynchronizer  mSyncHandler;
     uint32_t               mOutstandingId;
     uint32_t               mOffset;
-    bool                   mGotFirstIndex;
+    ByteString32T         *mLastKey;
     uint64_t               mFileLength;
     uint32_t               mDiskUsage;
     ByteString32Ptr        mSplitKey;

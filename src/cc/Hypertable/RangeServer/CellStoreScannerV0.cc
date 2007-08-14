@@ -65,10 +65,8 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPt
 
   mCheckForRangeEnd = false;
 
-  if (startKey != 0) {
-    mIter = mIndex.upper_bound(startKey);
-    mIter--;
-  }
+  if (startKey != 0)
+    mIter = mIndex.lower_bound(startKey);
   else
     mIter = mIndex.begin();
 
@@ -87,23 +85,13 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPt
   if (startKey != 0) {
     while (*mCurKey < *startKey) {
       mBlock.ptr = ((uint8_t *)mCurValue) + Length(mCurValue);
-      if (mBlock.ptr >= mBlock.end)
-	break;
+      if (mBlock.ptr >= mBlock.end) {
+	mIter = mIndex.end();
+	return;
+      }
       mCurKey = (ByteString32T *)mBlock.ptr;
       mCurValue = (ByteString32T *)(mBlock.ptr + Length(mCurKey));
     }
-  }
-
-  /**
-   * If we seeked to the end of the block, fetch the next one
-   */
-  if (mBlock.ptr >= mBlock.end) {
-    if (!FetchNextBlock()) {
-      mIter = mIndex.end();
-      return;
-    }
-    mCurKey = (ByteString32T *)mBlock.ptr;
-    mCurValue = (ByteString32T *)(mBlock.ptr + Length(mCurKey));
   }
 
   /**
