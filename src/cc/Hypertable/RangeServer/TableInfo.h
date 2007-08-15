@@ -29,6 +29,7 @@
 #include "Common/StringExt.h"
 
 #include "Range.h"
+#include "Request.h"
 
 namespace hypertable {
 
@@ -38,6 +39,7 @@ namespace hypertable {
 
   public:
     TableInfo(std::string &name, SchemaPtr &schemaPtr) : mMutex(), mName(name), mSchema(schemaPtr) { return; }
+    TableInfo(const char *name, SchemaPtr &schemaPtr) : mMutex(), mName(name), mSchema(schemaPtr) { return; }
     std::string &GetName() { return mName; }
     SchemaPtr &GetSchema() { 
       boost::mutex::scoped_lock lock(mMutex);
@@ -47,7 +49,8 @@ namespace hypertable {
       boost::mutex::scoped_lock lock(mMutex);
       mSchema = schemaPtr;
     }
-    bool GetRange(string &startRow, RangePtr &rangePtr);
+    bool GetRange(string &endRow, RangePtr &rangePtr);
+    bool GetRange(RangeSpecificationT *rangeSpec, RangePtr &rangePtr);
     void AddRange(RangeInfoPtr &rangeInfoPtr);
 
   private:

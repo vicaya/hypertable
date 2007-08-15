@@ -71,6 +71,16 @@ namespace hypertable {
     static bool GetTableInfo(string &name, TableInfoPtr &info);
     static void SetTableInfo(string &name, TableInfoPtr &info);
 
+    static bool GetTableInfo(const char *name, TableInfoPtr &info) {
+      std::string nameStr = name;
+      return GetTableInfo(nameStr, info);
+    }
+
+    static void SetTableInfo(const char *name, TableInfoPtr &info) {
+      std::string nameStr = name;
+      SetTableInfo(nameStr, info);
+    }
+
   };
 }
 

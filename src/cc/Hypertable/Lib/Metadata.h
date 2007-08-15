@@ -43,8 +43,18 @@ namespace hypertable {
   class Metadata {
 
   public:
+
     Metadata(const char *fname=0);
+
     int GetRangeInfo(std::string &tableName, std::string &startRow, std::string &endRow, RangeInfoPtr &rangeInfoPtr);
+
+    int GetRangeInfo(const char *tableName, const char *startRow, const char *endRow, RangeInfoPtr &rangeInfoPtr) {
+      std::string tableNameStr = tableName;
+      std::string startRowStr  = startRow;
+      std::string endRowStr    = endRow;
+      return GetRangeInfo(tableNameStr, startRowStr, endRowStr, rangeInfoPtr);
+    }
+
     void AddRangeInfo(RangeInfoPtr &rangePtr);
 
     void Sync(const char *fname=0);

@@ -164,10 +164,10 @@ void AccessGroup::RunCompaction(uint64_t timestamp, bool major) {
     }
   }
 
-  if (mStartRow == "")
+  if (mEndRow == "")
     memset(md5DigestStr, '0', 24);
   else
-    md5_string(mStartRow.c_str(), md5DigestStr);
+    md5_string(mEndRow.c_str(), md5DigestStr);
   md5DigestStr[24] = 0;
   sprintf(filename, "cs%d", mNextTableId++);
   cellStoreFile = (string)"/hypertable/tables/" + mTableName + "/" + mName + "/" + md5DigestStr + "/" + filename;

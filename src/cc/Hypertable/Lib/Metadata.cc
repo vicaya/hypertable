@@ -193,14 +193,14 @@ int Metadata::GetRangeInfo(std::string &tableName, std::string &startRow, std::s
   if (tmIter == mTableMap.end())
     return Error::RANGESERVER_RANGE_NOT_FOUND;
 
-  RangeInfoMapT::iterator iter = (*tmIter).second.find(startRow);
+  RangeInfoMapT::iterator iter = (*tmIter).second.find(endRow);
   if (iter == (*tmIter).second.end())
     return Error::RANGESERVER_RANGE_NOT_FOUND;
 
-  std::string rangeEndRow;
+  std::string rangeStartRow;
 
-  (*iter).second->GetEndRow(rangeEndRow);
-  if (rangeEndRow != endRow)
+  (*iter).second->GetStartRow(rangeStartRow);
+  if (rangeStartRow != startRow)
     return Error::RANGESERVER_RANGE_MISMATCH;
 
   rangeInfoPtr = (*iter).second;
@@ -209,16 +209,16 @@ int Metadata::GetRangeInfo(std::string &tableName, std::string &startRow, std::s
 
 
 void Metadata::AddRangeInfo(RangeInfoPtr &rangePtr) {
-  string tableName, startRow;
+  string tableName, endRow;
   rangePtr->GetTableName(tableName);
-  rangePtr->GetStartRow(startRow);
+  rangePtr->GetEndRow(endRow);
   assert(tableName != "");
   TableMapT::iterator iter = mTableMap.find(tableName);
   if (iter == mTableMap.end()) {
     mTableMap[tableName] = RangeInfoMapT();
     iter = mTableMap.find(tableName);
   }
-  (*iter).second[startRow] = rangePtr;
+  (*iter).second[endRow] = rangePtr;
 }
 
 

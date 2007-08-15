@@ -116,6 +116,9 @@ NOTE: There can only be one compaction or split happening for a Range at any giv
 
 LoadRange
 
+1. Lookup Range information from METADATA (verify that an entry for the range exists)
+
+
 [TBD]
 
 

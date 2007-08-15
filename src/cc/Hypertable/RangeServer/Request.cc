@@ -55,15 +55,11 @@ namespace hypertable {
       return 0;
     ptr += skip;
     remaining -= skip;
-    if (*rangeSpec->startRow == 0)
-      rangeSpec->startRow = 0;
 
     /** End row **/
     if ((skip = CommBuf::DecodeString(ptr, remaining, &rangeSpec->endRow)) == 0)
       return 0;
     ptr += skip;
-    if (*rangeSpec->endRow == 0)
-      rangeSpec->endRow = 0;
 
     return ptr-base;
   }

@@ -53,11 +53,6 @@ namespace hypertable {
     uint64_t GetLogCutoffTime();
     uint64_t DiskUsage();
 
-    /**
-    CellListScanner *CreateScanner(std::set<uint8_t> &columns, bool showDeletes);
-    CellListScanner *CreateScanner(bool showDeletes);
-    **/
-
     CellListScanner *CreateScanner(ScanContextPtr &scanContextPtr);
 
     string &StartRow() { return mStartRow; }

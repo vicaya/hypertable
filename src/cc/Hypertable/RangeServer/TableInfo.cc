@@ -18,19 +18,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 #include "TableInfo.h"
 
 using namespace hypertable;
 
-
 /**
  * 
  */
-bool TableInfo::GetRange(string &startRow, RangePtr &rangePtr) {
+bool TableInfo::GetRange(string &endRow, RangePtr &rangePtr) {
   boost::mutex::scoped_lock lock(mMutex);
 
-  RangeMapT::iterator iter = mRangeMap.find(startRow);
+  RangeMapT::iterator iter = mRangeMap.find(endRow);
 
   if (iter == mRangeMap.end())
     return false;
@@ -41,21 +39,41 @@ bool TableInfo::GetRange(string &startRow, RangePtr &rangePtr) {
 }
 
 
+bool TableInfo::GetRange(RangeSpecificationT *rangeSpec, RangePtr &rangePtr) {
+  boost::mutex::scoped_lock lock(mMutex);
+  string startRow = (rangeSpec->startRow) ? rangeSpec->startRow : "";
+  string endRow = (rangeSpec->endRow) ? rangeSpec->endRow : "";
+
+  RangeMapT::iterator iter = mRangeMap.find(endRow);
+
+  if (iter == mRangeMap.end())
+    return false;
+
+  rangePtr = (*iter).second;
+
+  if (rangePtr->StartRow() != startRow)
+    return false;
+
+  return true;
+  
+}
+
+
 
 /**
  * 
  */
 void TableInfo::AddRange(RangeInfoPtr &rangeInfoPtr) {
   boost::mutex::scoped_lock lock(mMutex);
-  std::string rangeStartRow;
+  std::string rangeEndRow;
 
-  rangeInfoPtr->GetStartRow(rangeStartRow);
+  rangeInfoPtr->GetEndRow(rangeEndRow);
 
-  RangeMapT::iterator iter = mRangeMap.find(rangeStartRow);
+  RangeMapT::iterator iter = mRangeMap.find(rangeEndRow);
   assert(iter == mRangeMap.end());
 
   RangePtr rangePtr( new Range(mSchema, rangeInfoPtr) );
 
-  mRangeMap[rangeStartRow] = rangePtr;
+  mRangeMap[rangeEndRow] = rangePtr;
 }
 

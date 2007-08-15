@@ -349,8 +349,8 @@ void Range::DoMaintenance() {
       std::vector<std::string> stores;
       RangeInfoPtr newRangePtr( new RangeInfo() );
       newRangePtr->SetTableName(mTableName);
-      newRangePtr->SetStartRow(splitPoint);
-      newRangePtr->SetEndRow(mEndRow);
+      newRangePtr->SetStartRow(mStartRow);
+      newRangePtr->SetEndRow(splitPoint);
       newRangePtr->SetSplitLogDir(splitLogDir);
       rangeInfoPtr->GetTables(stores);
       for (std::vector<std::string>::iterator iter = stores.begin(); iter != stores.end(); iter++)
@@ -364,9 +364,9 @@ void Range::DoMaintenance() {
      */
     {
       boost::mutex::scoped_lock lock(mMutex);      
-      mEndRow = splitPoint;
+      mStartRow = splitPoint;
       splitLogDir = "";
-      rangeInfoPtr->SetEndRow(mEndRow);
+      rangeInfoPtr->SetStartRow(mStartRow);
       rangeInfoPtr->SetSplitLogDir(splitLogDir);
       Global::metadata->Sync();
     }
@@ -405,7 +405,7 @@ void Range::DoMaintenance() {
     /**
      *  TBD:  Notify Master of split
      */
-    LOG_VA_INFO("Split Complete.  New Range: start=%s", splitPoint.c_str());
+    LOG_VA_INFO("Split Complete.  New Range endRow=%s", splitPoint.c_str());
 
   }
   else
