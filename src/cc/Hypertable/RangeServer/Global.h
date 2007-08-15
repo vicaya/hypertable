@@ -26,17 +26,15 @@
 #include <boost/thread/thread.hpp>
 
 #include "Common/Properties.h"
-
 #include "AsyncComm/Comm.h"
-
 #include "Hyperspace/HyperspaceClient.h"
-
 #include "Hypertable/Lib/Metadata.h"
+#include "Hypertable/Lib/RangeServerProtocol.h"
 #include "Hypertable/Lib/Schema.h"
 #include "HdfsClient/HdfsClient.h"
+
 #include "CommitLog.h"
 #include "FileBlockCache.h"
-#include "RangeServerProtocol.h"
 #include "ScannerMap.h"
 #include "TableInfo.h"
 

@@ -25,7 +25,7 @@
 #include "AsyncComm/ApplicationQueue.h"
 
 #include "ConnectionHandler.h"
-#include "RangeServerProtocol.h"
+#include "Hypertable/Lib/RangeServerProtocol.h"
 
 #include "RequestHandlerCompact.h"
 #include "RequestHandlerLoadRange.h"

@@ -45,7 +45,6 @@ MaintenanceThread.cc
 MergeScanner.cc
 Range.cc
 RangeServer.cc
-RangeServerProtocol.cc
 Request.cc
 RequestHandlerCompact.cc
 RequestHandlerCreateScanner.cc

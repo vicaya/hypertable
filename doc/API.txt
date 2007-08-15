@@ -1,0 +1,84 @@
+
+
+namespace hypertable {
+
+  /**
+   * This class is a singleton class that is used to do global
+   * management operations on a Hypertable cluster, including table
+   * creation and deletion.
+   */
+  public class Manager {
+    static public Manager Instance(String configFile);
+    public Table OpenTable();
+    public Table CreateTable(String name, String schema);
+    public void DeleteTable();
+    public String [] ListTables();
+  }
+
+
+  /**
+   *  This class represents an open table.
+   */
+  public class Table {
+    public Scanner CreateScanner(ScannerSpecification scanSpec);
+    public Mutator CreateMutator();
+  }
+
+  /**
+   *  This class represents a table cell.
+   */
+  public class Cell {
+    public String row;
+    public String columnFamily;
+    public String columnQualifier;
+    public long timestamp;
+  }
+
+
+  /**
+   *  This class represents a scanner specification.  It is used
+   *  to create a table scanner and controls what subset of the table
+   *  is to be scanned.
+   */
+  public class ScannerSpecification {    
+    public void SetStartRow(String row);
+    public void SetEndRow(String row);
+    public void AddColumnFamily(String columnFamily);
+    public void AddRowRegex(String regex);
+    public void AddColumnRegex(String columnFamily, string regex);
+    public void SetTimeInterval(long startTime, long endTime);
+    public void SetReturnCount(int count);
+
+    private String startRow;
+    private String endRow;
+    private String rowRegex;
+    private String columnRegex;
+    private LinkedList<String> columnFamilies;
+    private long startTime;
+    private long endTime;
+    private int returnCount;
+  }
+
+
+  /**
+   *  This class represents a table scanner
+   */
+  public class Scanner {
+    public Cell First();
+    public Cell Next();
+  }
+
+
+  /**
+   *  This class represents a table mutator
+   */
+  public class Mutator {
+    public void Set(Cell cell, byte [] value);
+    public void Delete(String row);
+    public void Delete(String row, String columnFamily);
+    public void Delete(String row, String columnFamily, String columnQualifier);
+    public void Send();
+    public MutationResult WaitForResult();
+  }
+
+}

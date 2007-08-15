@@ -24,8 +24,9 @@
 
 #include "AsyncComm/ApplicationQueue.h"
 
+#include "Hypertable/Lib/MasterProtocol.h"
+
 #include "ConnectionHandler.h"
-#include "MasterProtocol.h"
 #include "RequestHandlerCreateTable.h"
 #include "RequestHandlerGetSchema.h"
 

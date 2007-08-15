@@ -17,10 +17,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#ifndef HYPERTABLE_MASTERPROTOCOL_H
-#define HYPERTABLE_MASTERPROTOCOL_H
 
+#ifndef MASTER_PROTOCOL_H
+#define MASTER_PROTOCOL_H
+
+#include "AsyncComm/CommBuf.h"
+#include "AsyncComm/Event.h"
 #include "AsyncComm/Protocol.h"
+
+using namespace hypertable;
+
 
 namespace hypertable {
 
@@ -34,9 +40,14 @@ namespace hypertable {
 
     static const char *mCommandStrings[];
 
+    CommBuf *CreateCreateTableRequest(const char *tableName, const char *schemaString);
+
+    CommBuf *CreateGetSchemaRequest(const char *tableName);
+
     virtual const char *CommandText(short command);
+    
   };
 
 }
 
-#endif // HYPERTABLE_MASTERPROTOCOL_H
+#endif // MASTER_PROTOCOL_H

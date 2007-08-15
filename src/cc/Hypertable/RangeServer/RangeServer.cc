@@ -26,12 +26,13 @@
 #include "Common/FileUtils.h"
 #include "Common/md5.h"
 
+#include "Hypertable/Lib/RangeServerProtocol.h"
+
 #include "CommitLogLocal.h"
 #include "FillScanBlock.h"
 #include "Global.h"
 #include "MaintenanceThread.h"
 #include "RangeServer.h"
-#include "RangeServerProtocol.h"
 #include "ScanContext.h"
 #include "VerifySchema.h"
 

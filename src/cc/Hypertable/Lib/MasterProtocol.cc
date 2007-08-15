@@ -22,6 +22,15 @@
 
 namespace hypertable {
 
+  
+  CommBuf *MasterProtocol::CreateCreateTableRequest(const char *tableName, const char *schemaString) {
+    return 0;
+  }
+
+  CommBuf *MasterProtocol::CreateGetSchemaRequest(const char *tableName) {
+    return 0;
+  }
+
   const char *MasterProtocol::mCommandStrings[] = {
     "create table",
     "get schema"

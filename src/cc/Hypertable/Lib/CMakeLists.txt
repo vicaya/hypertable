@@ -16,7 +16,14 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
 
-add_library (Hypertable Metadata.cc Schema.cc)
+set ( Hypertable_SRCS
+MasterProtocol.cc
+Metadata.cc
+RangeServerProtocol.cc
+Schema.cc
+)
+
+add_library (Hypertable ${Hypertable_SRCS})
 
 # MetadataTest
 add_executable (MetadataTest MetadataTest.cc)

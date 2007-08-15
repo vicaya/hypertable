@@ -20,7 +20,6 @@ set ( Master_SRCS
 ConnectionHandler.cc
 CreateDirectoryLayout.cc
 Master.cc
-MasterProtocol.cc
 RequestHandlerCreateTable.cc
 RequestHandlerGetSchema.cc
 ResponseCallbackGetSchema.cc
