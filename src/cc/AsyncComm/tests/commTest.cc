@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
   addr.sin_family = AF_INET;
   addr.sin_port = htons(DEFAULT_PORT);
 
-  comm = new Comm(0);
+  comm = new Comm();
 
   ConnectionManager::Callback *connHandler = new ConnectionManager::Callback(comm, addr, 5);
 

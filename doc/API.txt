@@ -8,7 +8,8 @@ namespace hypertable {
    * creation and deletion.
    */
   public class Manager {
-    static public Manager Instance(String configFile);
+    static public Manager Initialize(String configFile);
+    static public Manager Instance();
     public Table OpenTable();
     public Table CreateTable(String name, String schema);
     public void DeleteTable();

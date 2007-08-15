@@ -18,27 +18,63 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include <iostream>
+#include "Common/Logger.h"
+#include "Common/Properties.h"
+#include "Common/System.h"
 
-extern "C" {
-#include <stdlib.h>
+#include "Manager.h"
+
+
+static Manager *static Manager::msInstance = 0;
+
+
+/**
+ *
+ */
+Manager::Manager(PropertiesPtr &propsPtr) {
+
+  mComm = new Comm();
+
+  /**
+   *  Create Master
+   */
+
+  
+
+  
 }
 
-#include "Usage.h"
 
-using namespace hypertable;
-using namespace std;
+/**
+ *
+ */
+void Manager::Initialize(std::string configFile) {
+  PropertiesPtr propsPtr( new Properties(configFile) );
 
+  ReactorFactory::Initialize((uint16_t)System::GetProcessorCount());
 
-void Usage::Dump(const char **usage) {
-  for (int i=0; usage[i] != 0; i++)
-    cout << usage[i] << endl;
+  if (msInstance != 0) {
+    LOG_ERROR("Initialize can only be called once.");
+    DUMP_CORE;
+  }
+
+  msInstance = new Manager(propsPtr);
+
 }
 
 
-void Usage::DumpAndExit(const char **usage, int rcode) {
-  cout << endl;
-  Dump(usage);
-  cout << endl;
-  exit(1);
+
+/**
+ * 
+ */
+Manager *Manager::Instance(std::string configFile) {
+
+  if (msConfigFile == "") {
+    
+  }
+  else if (msConfigFile != configFile) {
+    LOG_VA_ERROR("");
+  }
+  
 }
+

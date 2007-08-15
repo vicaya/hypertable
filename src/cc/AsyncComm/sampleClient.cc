@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 #include <queue>
 #include <cstdio>
 #include <iostream>
@@ -188,7 +187,7 @@ int main(int argc, char **argv) {
   System::Initialize(argv[0]);
   ReactorFactory::Initialize(1);
 
-  comm = new Comm(0);
+  comm = new Comm();
 
   ResponseHandler *respHandler = new ResponseHandler();
 

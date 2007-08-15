@@ -53,16 +53,11 @@ using namespace hypertable;
 
 /**
  */
-Comm::Comm(uint32_t dispatcherCount) {
-
+Comm::Comm() {
   if (ReactorFactory::msReactors.size() == 0) {
     LOG_ERROR("ReactorFactory::Initialize must be called before creating AsyncComm::Comm object");
     DUMP_CORE;
   }
-  if (dispatcherCount == 0)
-    dispatcherCount = System::GetProcessorCount();
-
-  assert(dispatcherCount > 0);
 }
 
 

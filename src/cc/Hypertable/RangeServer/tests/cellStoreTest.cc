@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
   addr.sin_family = AF_INET;
   addr.sin_port = htons(DEFAULT_HDFSBROKER_PORT);
 
-  comm = new Comm(0);
+  comm = new Comm();
 
   client = new HdfsClient(comm, addr, 20);
   if (!client->WaitForConnection(10))

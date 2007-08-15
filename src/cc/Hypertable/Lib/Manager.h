@@ -18,48 +18,45 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_COMMENGINE_H
-#define HYPERTABLE_COMMENGINE_H
+#ifndef HYPERTABLE_MANAGER_H
+#define HYPERTABLE_MANAGER_H
 
 #include <string>
 
-#include <boost/thread/mutex.hpp>
+#include "Common/Properties.h"
+#include "AsyncComm/Comm.h"
 
-extern "C" {
-#include <stdint.h>
-}
-
-#include "DispatchHandler.h"
-#include "CommBuf.h"
-#include "ConnectionHandlerFactory.h"
-#include "HandlerMap.h"
-
-using namespace std;
 
 namespace hypertable {
 
-  class Comm {
+  class Manager {
 
   public:
 
-    Comm();
+    static void Initialize(std::string configFile);
+    static Manager *Instance();
 
-    ~Comm();
+  protected:
 
-    int Connect(struct sockaddr_in &addr, time_t timeout, DispatchHandler *defaultHandler);
-
-    int Listen(uint16_t port, ConnectionHandlerFactory *hfactory, DispatchHandler *defaultHandler=0);
-
-    int SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *responseHandler);
-
-    int SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr);
+    /**
+     *  Constructor.
+     */
+    Manager(PropertiesPtr &propsPtr);
 
   private:
-    boost::mutex  mMutex;
-    std::string   mAppName;
-    HandlerMap    mHandlerMap;
+
+    static Manager *msInstance;
+
+    Comm *mComm;
+
+    //public Table CreateTable(std::string name, std::string schema);
+    //public std::string GetSchema(std::string tableName);
+    //Table OpenTable();
+    //void DeleteTable();
+    // String [] ListTables();
   };
 
 }
 
-#endif // HYPERTABLE_COMMENGINE_H
+#endif // HYPERTABLE_MANAGER_H
+

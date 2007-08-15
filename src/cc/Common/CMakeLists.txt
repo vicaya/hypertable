@@ -16,7 +16,19 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
 
-add_library (Common Error.cc FileUtils.cc Init.cc Logger.cc Properties.cc System.cc Usage.cc md5.cc)
+set (Common_SRCS
+Error.cc
+FileUtils.cc
+Init.cc
+InteractiveCommand.cc
+Logger.cc
+Properties.cc
+System.cc
+Usage.cc
+md5.cc
+)
+
+add_library (Common ${Common_SRCS})
 
 add_executable (htConvert htConvert.cc)
 

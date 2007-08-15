@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 #include <iostream>
 #include <queue>
 #include <string>
@@ -190,7 +189,7 @@ int main(int argc, char **argv) {
   System::Initialize(argv[0]);
   ReactorFactory::Initialize(reactorCount);
 
-  comm = new Comm(0);
+  comm = new Comm();
 
   Dispatcher *dispatcher = new Dispatcher(comm, appQueue);
 

@@ -18,48 +18,31 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_COMMENGINE_H
-#define HYPERTABLE_COMMENGINE_H
+#ifndef HYPERTABLE_INTERACTIVECOMMAND_H
+#define HYPERTABLE_INTERACTIVECOMMAND_H
 
-#include <string>
+#include <cstring>
 
-#include <boost/thread/mutex.hpp>
-
-extern "C" {
-#include <stdint.h>
-}
-
-#include "DispatchHandler.h"
-#include "CommBuf.h"
-#include "ConnectionHandlerFactory.h"
-#include "HandlerMap.h"
-
-using namespace std;
+#include <utility>
+#include <vector>
 
 namespace hypertable {
 
-  class Comm {
+  class InteractiveCommand {
 
   public:
 
-    Comm();
+    void ParseCommandLine(const char *line);
+    bool Matches(const char *line) { return !strncmp(line, CommandText(), strlen(CommandText())); }
 
-    ~Comm();
+    virtual const char *CommandText() = 0;
+    virtual const char **Usage() = 0;
+    virtual void run() = 0;
 
-    int Connect(struct sockaddr_in &addr, time_t timeout, DispatchHandler *defaultHandler);
-
-    int Listen(uint16_t port, ConnectionHandlerFactory *hfactory, DispatchHandler *defaultHandler=0);
-
-    int SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *responseHandler);
-
-    int SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr);
-
-  private:
-    boost::mutex  mMutex;
-    std::string   mAppName;
-    HandlerMap    mHandlerMap;
+  protected:
+    std::vector< std::pair<std::string, std::string> >  mArgs;
   };
 
 }
 
-#endif // HYPERTABLE_COMMENGINE_H
+#endif // HYPERTABLE_INTERACTIVECOMMAND_H

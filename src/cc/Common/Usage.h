@@ -18,25 +18,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef USAGE_H
-#define USAGE_H
-
-#include <iostream>
-using namespace std;
-
-extern "C" {
-#include <stdlib.h>
-}
+#ifndef HYPERTABLE_USAGE_H
+#define HYPERTABLE_USAGE_H
 
 namespace hypertable {
 
-  void DumpUsageAndExit(const char **usage);
-
   class Usage {
   public:
+    static void Dump(const char **usage);
     static void DumpAndExit(const char **usage, int rcode=1);
   };
 
 }
 
-#endif // USAGE_H
+#endif // HYPERTABLE_USAGE_H

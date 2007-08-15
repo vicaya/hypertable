@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
 
   props->load(configFile);
 
-  comm = new Comm(0);
+  comm = new Comm();
 
   hyperspaceClient = new HyperspaceClient(comm, props);
 

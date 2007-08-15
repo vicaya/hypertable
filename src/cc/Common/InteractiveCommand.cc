@@ -18,48 +18,45 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_COMMENGINE_H
-#define HYPERTABLE_COMMENGINE_H
-
 #include <string>
 
-#include <boost/thread/mutex.hpp>
+#include <cstring>
 
-extern "C" {
-#include <stdint.h>
-}
+#include "InteractiveCommand.h"
+#include "Usage.h"
 
-#include "DispatchHandler.h"
-#include "CommBuf.h"
-#include "ConnectionHandlerFactory.h"
-#include "HandlerMap.h"
-
+using namespace hypertable;
 using namespace std;
 
-namespace hypertable {
+/**
+ *
+ */
+void InteractiveCommand::ParseCommandLine(const char *line) {
+  size_t commandLen = strlen(this->CommandText());
+  const char *base, *ptr;
 
-  class Comm {
+  assert(!strncmp(line, CommandText(), commandLen));
 
-  public:
+  mArgs.clear();
 
-    Comm();
+  ptr = line + commandLen;
 
-    ~Comm();
+  while (true) {
 
-    int Connect(struct sockaddr_in &addr, time_t timeout, DispatchHandler *defaultHandler);
+    // skip whitespace
+    while (*ptr && isspace(*ptr))
+      ptr++;
+    if (*ptr == 0)
+      break;
 
-    int Listen(uint16_t port, ConnectionHandlerFactory *hfactory, DispatchHandler *defaultHandler=0);
+    if (*ptr == '\"') {
+      base = ptr+1;
+      ptr = strchr(base, '\"');
+      if (ptr == 0)
+	Usage::DumpAndExit(Usage());
+      mArgs.push_back( pair<string, string>("", string(base, ptr-base)) );
+    }
 
-    int SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *responseHandler);
-
-    int SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr);
-
-  private:
-    boost::mutex  mMutex;
-    std::string   mAppName;
-    HandlerMap    mHandlerMap;
-  };
-
+    break;
+  }
 }
-
-#endif // HYPERTABLE_COMMENGINE_H

@@ -23,6 +23,8 @@
 #include <log4cpp/Category.hh>
 #include <log4cpp/Priority.hh>
 
+#define DUMP_CORE *((int *)0) = 1;
+
 namespace hypertable {
   class Logger {
   public:

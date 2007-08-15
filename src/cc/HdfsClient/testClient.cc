@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 #include <string>
 #include <vector>
 
@@ -100,7 +99,7 @@ int main(int argc, char **argv) {
   if ((command = Initialize(argc, argv, &addr, args)) == 0)
     return 1;
 
-  Global::comm = new Comm(0);
+  Global::comm = new Comm();
   Global::client = new HdfsClient(Global::comm, addr, 20);
   Global::protocol = new HdfsProtocol();
 
@@ -160,7 +159,7 @@ namespace {
     }
 
     if (command == 0)
-      DumpUsageAndExit(usage);
+      Usage::DumpAndExit(usage);
 
     if (!strcmp(command, "copyToLocal"))
       commandVal = COMMAND_COPY_TO_LOCAL;

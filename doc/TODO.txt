@@ -1,5 +1,6 @@
 
 TODO:
+- Add support for LZO and BZIP2 compression
 - Implement 'InMemory' locality groups
 - Add support for auto-assigned timestamps
 - Fix AsyncComm/Protocol::StringFormatMessage (get rid of command)

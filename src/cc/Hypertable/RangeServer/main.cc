@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
 
   ReactorFactory::Initialize(reactorCount);
 
-  comm = new Comm(0);
+  comm = new Comm();
 
   if (Global::verbose) {
     cout << "CPU count = " << System::GetProcessorCount() << endl;

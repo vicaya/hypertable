@@ -23,6 +23,8 @@
 
 #include <ext/hash_map>
 
+#include <boost/shared_ptr.hpp>
+
 #include "StringExt.h"
 
 namespace hypertable {
@@ -64,6 +66,8 @@ namespace hypertable {
 
     PropertyMapT  mMap;
   };
+
+  typedef boost::shared_ptr<Properties> PropertiesPtr;
 
 }
 

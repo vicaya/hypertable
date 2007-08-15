@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 extern "C" {
 #include <poll.h>
 #include <signal.h>
@@ -79,7 +78,7 @@ int main(int argc, char **argv) {
   addr.sin_family = AF_INET;
   addr.sin_port = htons(DEFAULT_PORT);
 
-  Global::comm = new Comm(0);
+  Global::comm = new Comm();
   Global::client = new HdfsClient(Global::comm, addr, 15);
   Global::protocol = new HdfsProtocol();
 
