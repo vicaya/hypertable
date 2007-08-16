@@ -23,8 +23,11 @@
 
 #include "Common/Properties.h"
 #include "AsyncComm/Comm.h"
+#include "AsyncComm/CommBuf.h"
 #include "AsyncComm/ConnectionManager.h"
 #include "AsyncComm/DispatchHandler.h"
+
+#include "MasterProtocol.h"
 
 using namespace hypertable;
 
@@ -41,7 +44,7 @@ namespace hypertable {
     }
 
     int CreateTable(const char *tableName, const char *schemaString, DispatchHandler *handler, uint32_t *msgIdp);
-    int CreateTable(const char *tableName, const char *schemaString, int32_t *fdp);
+    int CreateTable(const char *tableName, const char *schemaString);
 
     int GetSchema(const char *tableName, DispatchHandler *handler, uint32_t *msgIdp);
     int GetSchema(const char *tableName, std::string &schema);
@@ -52,8 +55,13 @@ namespace hypertable {
     **/
 
   private:
+
+    int SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler, uint32_t *msgIdp=0);
+  
     Comm              *mComm;
     ConnectionManager  mConnectionManager;
+    MasterProtocol    *mProtocol;
+    struct sockaddr_in mAddr;
   };
 
 }

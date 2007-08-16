@@ -18,17 +18,34 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include "AsyncComm/HeaderBuilder.h"
+
 #include "MasterProtocol.h"
 
 namespace hypertable {
 
-  
+  /**
+   *
+   */
   CommBuf *MasterProtocol::CreateCreateTableRequest(const char *tableName, const char *schemaString) {
-    return 0;
+    HeaderBuilder hbuilder;
+    CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(int16_t) + CommBuf::EncodedLength(tableName) + CommBuf::EncodedLength(schemaString));
+    cbuf->PrependString(schemaString);
+    cbuf->PrependString(tableName);
+    cbuf->PrependShort(COMMAND_CREATE_TABLE);
+    hbuilder.Reset(Header::PROTOCOL_HYPERTABLE_MASTER);
+    hbuilder.Encapsulate(cbuf);
+    return cbuf;
   }
 
   CommBuf *MasterProtocol::CreateGetSchemaRequest(const char *tableName) {
-    return 0;
+    HeaderBuilder hbuilder;
+    CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(int16_t) + CommBuf::EncodedLength(tableName));
+    cbuf->PrependString(tableName);
+    cbuf->PrependShort(COMMAND_GET_SCHEMA);
+    hbuilder.Reset(Header::PROTOCOL_HYPERTABLE_MASTER);
+    hbuilder.Encapsulate(cbuf);
+    return cbuf;
   }
 
   const char *MasterProtocol::mCommandStrings[] = {
