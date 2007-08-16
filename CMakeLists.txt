@@ -43,6 +43,7 @@ add_subdirectory (src/cc/HdfsClient)
 add_subdirectory (src/cc/Hypertable/Master)
 add_subdirectory (src/cc/Hypertable/RangeServer)
 add_subdirectory (src/cc/Hypertable/Lib)
+add_subdirectory (src/cc/Hypertable/Tools/hypertable)
 
 install (FILES demo/metadata-test.xml DESTINATION demo)
 install (FILES demo/testdata.txt.bz2 DESTINATION demo)
