@@ -18,10 +18,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <iostream>
+#include <fstream>
 #include <string>
 
 extern "C" {
 #include <poll.h>
+#include <sys/types.h>
+#include <unistd.h>
 }
 
 #include "Common/System.h"
@@ -44,12 +48,13 @@ namespace {
     "usage: Hypertable.Master [OPTIONS]",
     "",
     "OPTIONS:",
-    "  --config=<file>  Read configuration from <file>.  The default config file is",
-    "                   \"conf/hypertable.cfg\" relative to the toplevel install directory",
-    "  --initialize     Create directories and files required for Master operation in",
-    "                   hyperspace",
-    "  --help           Display this help text and exit",
-    "  --verbose,-v     Generate verbose output",
+    "  --config=<file>   Read configuration from <file>.  The default config file is",
+    "                    \"conf/hypertable.cfg\" relative to the toplevel install directory",
+    "  --initialize      Create directories and files required for Master operation in",
+    "                    hyperspace",
+    "  --pidfile=<fname> Write the process ID to <fname> upon successful startup",
+    "  --help            Display this help text and exit",
+    "  --verbose,-v      Generate verbose output",
     ""
     "This program is the Hypertable master server.",
     (const char *)0
@@ -82,6 +87,7 @@ private:
  */
 int main(int argc, char **argv) {
   string configFile = "";
+  string pidFile = "";
   Properties *props = 0;
   bool verbose = false;
   bool initialize = false;
@@ -96,6 +102,8 @@ int main(int argc, char **argv) {
     for (int i=1; i<argc; i++) {
       if (!strncmp(argv[i], "--config=", 9))
 	configFile = &argv[i][9];
+      if (!strncmp(argv[i], "--pidfile=", 10))
+	pidFile = &argv[i][10];
       else if (!strcmp(argv[i], "--initialize"))
 	initialize = true;
       else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
@@ -136,6 +144,12 @@ int main(int argc, char **argv) {
   master = new Master(comm, props);
   appQueue = new ApplicationQueue(workerCount);
   comm->Listen(port, new HandlerFactory(comm, appQueue, master));
+
+  if (pidFile != "") {
+    fstream filestr (pidFile.c_str(), fstream::out);
+    filestr << getpid() << endl;
+    filestr.close();
+  }
 
   poll(0, 0, -1);
 

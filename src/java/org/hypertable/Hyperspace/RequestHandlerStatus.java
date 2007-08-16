@@ -20,32 +20,30 @@
 
 package org.hypertable.Hyperspace;
 
-public class Protocol extends org.hypertable.AsyncComm.Protocol {
+import java.net.ProtocolException;
+import java.util.logging.Logger;
+import org.hypertable.AsyncComm.ApplicationHandler;
+import org.hypertable.AsyncComm.Comm;
+import org.hypertable.AsyncComm.CommBuf;
+import org.hypertable.AsyncComm.Event;
+import org.hypertable.AsyncComm.ResponseCallback;
+import org.hypertable.Common.Error;
 
-    public static final short COMMAND_CREATE  = 0;
-    public static final short COMMAND_DELETE  = 1;
-    public static final short COMMAND_MKDIRS  = 2;
-    public static final short COMMAND_ATTRSET = 3;
-    public static final short COMMAND_ATTRGET = 4;
-    public static final short COMMAND_ATTRDEL = 5;
-    public static final short COMMAND_EXISTS  = 6;
-    public static final short COMMAND_STATUS  = 7;
-    public static final short COMMAND_MAX     = 8;
+public class RequestHandlerStatus extends ApplicationHandler {
 
-    public String CommandText(short command) {
-	if (command < 0 || command >= COMMAND_MAX)
-	    return "UNKNOWN (" + command + ")";
-	return msCommandStrings[command];
+    static final Logger log = Logger.getLogger("org.hypertable.Hyperspace");
+
+    public RequestHandlerStatus(Comm comm, Hyperspace hyperspace, Event event) {
+	super(event);
+	mComm = comm;
+	mHyperspace = hyperspace;
     }
 
-    public static String msCommandStrings[] = {
-	"create",
-	"delete",
-	"mkdirs",
-	"attrset",
-	"attrget",
-	"attrdel",
-	"exists",
-	"status"
-    };
+    public void run() {
+	ResponseCallback cb = new ResponseCallback(mComm, mEvent);
+	cb.response_ok();
+    }
+
+    private Comm       mComm;
+    private Hyperspace mHyperspace;
 }

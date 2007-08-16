@@ -50,6 +50,8 @@ namespace hypertable {
 
     ConnectionManager(const char *waitMessage) : mWaitMessage(waitMessage) { return; }
 
+    ConnectionManager() : mWaitMessage("") { return; }
+
     void Initiate(Comm *comm, struct sockaddr_in &addr, time_t timeout) {
       mHandler = new Callback(comm, addr, timeout);
       mThread = new boost::thread(*this);

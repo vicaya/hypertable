@@ -18,9 +18,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <cstring>
 #include <iostream>
 #include <string>
-using namespace std;
 
 extern "C" {
 #include <stdlib.h>
@@ -29,6 +29,7 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include "FileUtils.h"
 #include "Logger.h"
 #include "System.h"
 
@@ -41,16 +42,37 @@ string System::executableName;
 
 
 void System::Initialize(const char *argv0) {
-  char *execPath = getenv("_");
+  const char *execPath = getenv("_");
   char cwd[1024];
+  int offset;
 
   getcwd(cwd, 1024);
   strcat(cwd, "/");
 
   char *ptr = strrchr(argv0, '/');
-  executableName = (ptr == 0) ? argv0 : ptr+1;
+  if (ptr == 0) {
+    executableName = argv0;
+#if 0
+    std::string fname;
+    char *path = getenv("PATH");
+    char *last;
+    execPath = 0;
+    ptr = strtok_r(path, ":", &last);
+    while (ptr) {
+      fname = (std::string)ptr + "/" + executableName;
+      if (FileUtils::Exists(fname.c_str())) {
+	execPath = fname.c_str();
+	break;
+      }
+      ptr = strtok_r(0, ":", &last);      
+    }
+#endif
+  }
+  else
+    executableName = ptr+1;
 
-  if (execPath && (ptr = strstr(execPath, argv0)) != 0 && (ptr-execPath) == (int)(strlen(execPath)-strlen(argv0))) {
+  offset = (execPath) ? strlen(execPath) - strlen(argv0) : -1;
+  if (execPath && offset >= 0) {
     if (execPath[0] != '/') {
       installDir = cwd;
       installDir += execPath;

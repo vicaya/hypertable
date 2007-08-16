@@ -16,19 +16,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
 
-set ( Master_SRCS
-ConnectionHandler.cc
-CreateDirectoryLayout.cc
-Master.cc
-RequestHandlerCreateTable.cc
-RequestHandlerGetSchema.cc
-RequestHandlerStatus.cc
-ResponseCallbackGetSchema.cc
-main.cc
-)
+# hypertable - command interpreter
+add_executable (serverup serverup.cc)
+target_link_libraries (serverup pthread boost_thread AsyncComm Common log4cpp expat Hypertable Hyperspace HdfsClient)
 
-# Hypertable.Master
-add_executable (Hypertable.Master ${Master_SRCS})
-target_link_libraries (Hypertable.Master pthread boost_thread Hypertable Hyperspace HdfsClient AsyncComm Common log4cpp expat)
+install (TARGETS serverup RUNTIME DESTINATION bin)
 
-install (TARGETS Hypertable.Master RUNTIME DESTINATION bin)

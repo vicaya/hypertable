@@ -87,6 +87,9 @@ public class ConnectionHandler implements DispatchHandler {
 	    case Protocol.COMMAND_SHUTDOWN:
 		requestHandler = new RequestHandlerShutdown(mComm, mAppQueue, event);
 		break;
+	    case Protocol.COMMAND_STATUS:
+		requestHandler = new RequestHandlerStatus(mComm, mAppQueue, event);
+		break;
 	    default:
 		ResponseCallback cb = new ResponseCallback(mComm, event);
 		log.severe("Command code " + command + " not implemented");

@@ -59,3 +59,11 @@ if [ -f  $HYPERTABLE_HOME/run/Hyperspace.pid ] ; then
     rm $HYPERTABLE_HOME/run/Hyperspace.pid
 fi
 
+#
+# Stop Hypertable.Master
+#
+if [ -f  $HYPERTABLE_HOME/run/Hypertable.Master.pid ] ; then
+    kill -9 `cat  $HYPERTABLE_HOME/run/Hypertable.Master.pid`
+    rm $HYPERTABLE_HOME/run/Hypertable.Master.pid
+fi
+

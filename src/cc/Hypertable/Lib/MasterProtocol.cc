@@ -48,9 +48,19 @@ namespace hypertable {
     return cbuf;
   }
 
+  CommBuf *MasterProtocol::CreateStatusRequest() {
+    HeaderBuilder hbuilder;
+    CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(int16_t));
+    cbuf->PrependShort(COMMAND_STATUS);
+    hbuilder.Reset(Header::PROTOCOL_HYPERTABLE_MASTER);
+    hbuilder.Encapsulate(cbuf);
+    return cbuf;
+  }
+
   const char *MasterProtocol::mCommandStrings[] = {
     "create table",
-    "get schema"
+    "get schema",
+    "status"
   };
 
   const char *MasterProtocol::CommandText(short command) {

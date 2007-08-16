@@ -29,6 +29,7 @@
 #include "ConnectionHandler.h"
 #include "RequestHandlerCreateTable.h"
 #include "RequestHandlerGetSchema.h"
+#include "RequestHandlerStatus.h"
 
 using namespace hypertable;
 
@@ -62,6 +63,9 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
 	break;
       case MasterProtocol::COMMAND_GET_SCHEMA:
 	requestHandler = new RequestHandlerGetSchema(mComm, mMaster, eventPtr);
+	break;
+      case MasterProtocol::COMMAND_STATUS:
+	requestHandler = new RequestHandlerStatus(mComm, mMaster, eventPtr);
 	break;
       default:
 	std::string message = (string)"Command code " + command + " not implemented";

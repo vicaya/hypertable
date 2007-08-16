@@ -17,31 +17,35 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#ifndef HYPERTABLE_FDUTILS_H
-#define HYPERTABLE_FDUTILS_H
 
-extern "C" {
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/uio.h>
-}
+#ifndef HYPERTABLE_REQUESTHANDLERSTATUS_H
+#define HYPERTABLE_REQUESTHANDLERSTATUS_H
+
+#include "Common/Runnable.h"
+
+#include "AsyncComm/ApplicationHandler.h"
+#include "AsyncComm/Event.h"
+
+using namespace hypertable;
 
 namespace hypertable {
 
-  class FileUtils {
+  class Comm;
+  class Master;
 
+  class RequestHandlerStatus : public ApplicationHandler {
   public:
-    static ssize_t Read(int fd, void *vptr, size_t n);
-    static ssize_t Pread(int fd, void *vptr, size_t n, off_t offset);
-    static ssize_t Write(int fd, const void *vptr, size_t n);
-    static ssize_t Writev(int fd, const struct iovec *vector, int count);
-    static void SetFlags(int fd, int flags);
-    static char *FileToBuffer(const char *fname, off_t *lenp);
-    static bool Mkdirs(const char *dirname);
-    static bool Exists(const char *fname);
-  };
+    RequestHandlerStatus(Comm *comm, Master *master, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mComm(comm), mMaster(master) {
+      return;
+    }
 
+    virtual void run();
+
+  private:
+    Comm     *mComm;
+    Master   *mMaster;
+  };
 }
 
-#endif // HYPERTABLE_FDUITLS_H
+#endif // HYPERTABLE_REQUESTHANDLERSTATUS_H
 

@@ -62,6 +62,20 @@ LOGFILE=$HYPERTABLE_HOME/log/HdfsBroker.log
 
 nohup $HYPERTABLE_HOME/bin/jrun --pidfile $PIDFILE org.hypertable.HdfsBroker.main --verbose 1>& $LOGFILE &
 
+sleep 1
+
+$HYPERTABLE_HOME/bin/serverup hdfsbroker
+if [ $? != 0 ] ; then
+  echo -n "HdfsBroker hasn't come up yet, trying again in 5 seconds ..."
+  sleep 5
+  echo ""
+  $HYPERTABLE_HOME/bin/serverup hdfsbroker
+  if [ $? != 0 ] ; then
+      echo "Problem statring HdfsBroker";
+      exit 1
+  fi
+fi
+
 #
 # Start Hyperspace
 #
@@ -69,3 +83,40 @@ PIDFILE=$HYPERTABLE_HOME/run/Hyperspace.pid
 LOGFILE=$HYPERTABLE_HOME/log/Hyperspace.log
 
 nohup $HYPERTABLE_HOME/bin/jrun --pidfile $PIDFILE org.hypertable.Hyperspace.main --verbose 1>& $LOGFILE &
+
+sleep 1
+
+$HYPERTABLE_HOME/bin/serverup hyperspace
+if [ $? != 0 ] ; then
+  echo -n "Hyperspace hasn't come up yet, trying again in 5 seconds ..."
+  sleep 5
+  echo ""
+  $HYPERTABLE_HOME/bin/serverup hyperspace
+  if [ $? != 0 ] ; then
+      echo "Problem statring Hyperspace";
+      exit 1
+  fi
+fi
+
+
+#
+# Start Hypertable.Master
+#
+PIDFILE=$HYPERTABLE_HOME/run/Hypertable.Master.pid
+LOGFILE=$HYPERTABLE_HOME/log/Hypertable.Master.log
+
+nohup $HYPERTABLE_HOME/bin/Hypertable.Master --pidfile=$PIDFILE --verbose 1>& $LOGFILE &
+
+sleep 1
+
+$HYPERTABLE_HOME/bin/serverup master
+if [ $? != 0 ] ; then
+  echo -n "Hypertable.Master hasn't come up yet, trying again in 5 seconds ..."
+  sleep 5
+  echo ""
+  $HYPERTABLE_HOME/bin/serverup master
+  if [ $? != 0 ] ; then
+      echo "Problem statring Hypertable.Master";
+      exit 1
+  fi
+fi

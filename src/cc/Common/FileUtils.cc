@@ -229,3 +229,11 @@ bool FileUtils::Mkdirs(const char *dirname) {
 
   return true;
 }
+
+
+bool FileUtils::Exists(const char *fname) {
+  struct stat statbuf;
+  if (stat(fname, &statbuf) != 0)
+    return false;
+  return true;
+}

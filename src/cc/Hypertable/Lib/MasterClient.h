@@ -38,11 +38,11 @@ namespace hypertable {
   class MasterClient {
   public:
 
-    MasterClient(CommPtr &commPtr, PropertiesPtr &propsPt);
+    MasterClient(CommPtr &commPtr, PropertiesPtr &propsPtr, bool quiet=false);
     ~MasterClient();
 
     bool WaitForConnection(long maxWaitSecs) {
-      return mConnectionManager.WaitForConnection(maxWaitSecs);
+      return mConnectionManager->WaitForConnection(maxWaitSecs);
     }
 
     int CreateTable(const char *tableName, const char *schemaString, DispatchHandler *handler, uint32_t *msgIdp);
@@ -50,6 +50,8 @@ namespace hypertable {
 
     int GetSchema(const char *tableName, DispatchHandler *handler, uint32_t *msgIdp);
     int GetSchema(const char *tableName, std::string &schema);
+
+    int Status();
 
     /**
     int ReportSplit(const char *name, DispatchHandler *handler, uint32_t *msgIdp);
@@ -61,7 +63,7 @@ namespace hypertable {
     int SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler, uint32_t *msgIdp=0);
   
     CommPtr            mCommPtr;
-    ConnectionManager  mConnectionManager;
+    ConnectionManager *mConnectionManager;
     MasterProtocol    *mProtocol;
     struct sockaddr_in mAddr;
   };

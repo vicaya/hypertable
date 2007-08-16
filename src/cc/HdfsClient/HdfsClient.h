@@ -47,10 +47,10 @@ namespace hypertable {
   class HdfsClient {
   public:
 
-    HdfsClient(Comm *comm, struct sockaddr_in &addr, time_t timeout);
+    HdfsClient(Comm *comm, struct sockaddr_in &addr, time_t timeout, bool quiet=false);
 
     bool WaitForConnection(long maxWaitSecs) {
-      return mConnectionManager.WaitForConnection(maxWaitSecs);
+      return mConnectionManager->WaitForConnection(maxWaitSecs);
     }
 
     int Open(const char *name, DispatchHandler *handler, uint32_t *msgIdp);
@@ -87,6 +87,8 @@ namespace hypertable {
     int Mkdirs(const char *name, DispatchHandler *handler, uint32_t *msgIdp);
     int Mkdirs(const char *name);
 
+    int Status();
+
     HdfsProtocol *GetProtocolObject() { return mProtocol; }
     
   private:
@@ -98,7 +100,7 @@ namespace hypertable {
     time_t                mTimeout;
     MessageBuilderSimple *mMessageBuilder;
     HdfsProtocol         *mProtocol;
-    ConnectionManager     mConnectionManager;
+    ConnectionManager    *mConnectionManager;
   };
 
 }

@@ -33,10 +33,13 @@
 using namespace hypertable;
 
 
-HdfsClient::HdfsClient(Comm *comm, struct sockaddr_in &addr, time_t timeout) :
-  mComm(comm), mAddr(addr), mTimeout(timeout), mConnectionManager("Waiting for HdfsBroker") {
+HdfsClient::HdfsClient(Comm *comm, struct sockaddr_in &addr, time_t timeout, bool quiet) : mComm(comm), mAddr(addr), mTimeout(timeout) {
+  if (quiet)
+    mConnectionManager = new ConnectionManager();
+  else
+    mConnectionManager = new ConnectionManager("Waiting for HdfsBroker");
   mProtocol = new HdfsProtocol();
-  mConnectionManager.Initiate(comm, addr, timeout);
+  mConnectionManager->Initiate(comm, addr, timeout);
 }
 
 
@@ -220,6 +223,20 @@ int HdfsClient::Shutdown(uint16_t flags, DispatchHandler *handler, uint32_t *msg
   return SendMessage(cbufPtr, handler, msgIdp);
 }
 
+
+int HdfsClient::Status() {
+  DispatchHandlerSynchronizer syncHandler;
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( mProtocol->CreateStatusRequest() );
+  int error = SendMessage(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("HdfsBroker 'status' error : %s", mProtocol->StringFormatMessage(eventPtr).c_str());
+      error = (int)mProtocol->ResponseCode(eventPtr);
+    }
+  }
+  return error;
+}
 
 
 int HdfsClient::Length(const char *name, DispatchHandler *handler, uint32_t *msgIdp) {

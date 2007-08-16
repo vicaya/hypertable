@@ -24,9 +24,14 @@
 #include "MasterClient.h"
 
 
-MasterClient::MasterClient(CommPtr &commPtr, PropertiesPtr &propsPtr) : mCommPtr(commPtr), mConnectionManager("Waiting for connection to Master") {
+MasterClient::MasterClient(CommPtr &commPtr, PropertiesPtr &propsPtr, bool quiet) : mCommPtr(commPtr) {
   uint16_t masterPort = 0;
   const char *masterHost = 0;
+
+  if (quiet)
+    mConnectionManager = new ConnectionManager();
+  else
+    mConnectionManager = new ConnectionManager("Waiting for connection to Master");
 
   /**
    *  Establish connection to Master
@@ -56,7 +61,7 @@ MasterClient::MasterClient(CommPtr &commPtr, PropertiesPtr &propsPtr) : mCommPtr
 
   }
 
-  mConnectionManager.Initiate(mCommPtr.get(), mAddr, 30);
+  mConnectionManager->Initiate(mCommPtr.get(), mAddr, 30);
 
   mProtocol = new MasterProtocol();
   
@@ -65,6 +70,7 @@ MasterClient::MasterClient(CommPtr &commPtr, PropertiesPtr &propsPtr) : mCommPtr
 
 MasterClient::~MasterClient() {
   // TODO:  implement me!
+  delete mConnectionManager;
   return;
 }
 
@@ -120,6 +126,22 @@ int MasterClient::GetSchema(const char *tableName, std::string &schema) {
   }
   return error;
 }
+
+
+int MasterClient::Status() {
+  DispatchHandlerSynchronizer syncHandler;
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( mProtocol->CreateStatusRequest() );
+  int error = SendMessage(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("Master 'status' error : %s", mProtocol->StringFormatMessage(eventPtr).c_str());
+      error = (int)mProtocol->ResponseCode(eventPtr);
+    }
+  }
+  return error;
+}
+
 
 
 int MasterClient::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler, uint32_t *msgIdp) {

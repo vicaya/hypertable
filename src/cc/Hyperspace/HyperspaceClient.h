@@ -46,9 +46,9 @@ namespace hypertable {
   class HyperspaceClient {
   public:
 
-    HyperspaceClient(Comm *comm, struct sockaddr_in &addr, time_t timeout);
+    HyperspaceClient(Comm *comm, struct sockaddr_in &addr, time_t timeout, bool quiet=false);
 
-    HyperspaceClient(Comm *comm, Properties *props);
+    HyperspaceClient(Comm *comm, Properties *props, bool quiet=false);
 
     bool WaitForConnection();
 
@@ -73,6 +73,8 @@ namespace hypertable {
     int Delete(const char *name, DispatchHandler *handler, uint32_t *msgIdp);
     int Delete(const char *name);
 
+    int Status();
+
     HyperspaceProtocol *Protocol() { return mProtocol; }
     
   private:
@@ -83,7 +85,7 @@ namespace hypertable {
     struct sockaddr_in    mAddr;
     time_t                mTimeout;
     HyperspaceProtocol   *mProtocol;
-    ConnectionManager     mConnManager;
+    ConnectionManager    *mConnManager;
   };
 }
 

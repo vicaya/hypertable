@@ -43,7 +43,8 @@ namespace hypertable {
     "shutdown",
     "length",
     "pread",
-    "mkdirs"
+    "mkdirs",
+    "status"
   };
 
 
@@ -195,6 +196,19 @@ namespace hypertable {
     hbuilder.Reset(Header::PROTOCOL_HDFS);
     hbuilder.Encapsulate(cbuf);
 
+    return cbuf;
+  }
+
+
+  /**
+   *
+   */
+  CommBuf *HdfsProtocol::CreateStatusRequest() {
+    HeaderBuilder hbuilder;
+    CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + 2);
+    cbuf->PrependShort(COMMAND_STATUS);
+    hbuilder.Reset(Header::PROTOCOL_HDFS);
+    hbuilder.Encapsulate(cbuf);
     return cbuf;
   }
 

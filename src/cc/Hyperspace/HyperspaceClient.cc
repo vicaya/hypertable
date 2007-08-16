@@ -49,18 +49,27 @@ namespace {
 
 
 
-HyperspaceClient::HyperspaceClient(Comm *comm, struct sockaddr_in &addr, time_t timeout) :
-  mComm(comm), mAddr(addr), mTimeout(timeout), mConnManager("Waiting for Hyperspace server") {
-  mConnManager.Initiate(comm, addr, timeout);
+HyperspaceClient::HyperspaceClient(Comm *comm, struct sockaddr_in &addr, time_t timeout, bool quiet) :
+  mComm(comm), mAddr(addr), mTimeout(timeout) {
+  if (quiet)
+    mConnManager = new ConnectionManager();
+  else
+    mConnManager = new ConnectionManager("Waiting for Hyperspace server");       
+  mConnManager->Initiate(comm, addr, timeout);
   mProtocol = new HyperspaceProtocol();
 }
 
 
 
-HyperspaceClient::HyperspaceClient(Comm *comm, Properties *props) : mComm(comm), mConnManager("Waiting for Hyperspace server") {
+HyperspaceClient::HyperspaceClient(Comm *comm, Properties *props, bool quiet) : mComm(comm) {
 
   assert(comm);
   assert(props);
+
+  if (quiet)
+    mConnManager = new ConnectionManager();
+  else
+    mConnManager = new ConnectionManager("Waiting for Hyperspace server");
 
   const char *host = props->getProperty("Hyperspace.host", DEFAULT_HOST);
 
@@ -80,7 +89,7 @@ HyperspaceClient::HyperspaceClient(Comm *comm, Properties *props) : mComm(comm),
   mAddr.sin_family = AF_INET;
   mAddr.sin_port = htons(port);
 
-  mConnManager.Initiate(mComm, mAddr, mTimeout);
+  mConnManager->Initiate(mComm, mAddr, mTimeout);
 
   mProtocol = new HyperspaceProtocol();
 }
@@ -88,7 +97,7 @@ HyperspaceClient::HyperspaceClient(Comm *comm, Properties *props) : mComm(comm),
 
 
 bool HyperspaceClient::WaitForConnection() {
-  if (!mConnManager.WaitForConnection(mTimeout)) {
+  if (!mConnManager->WaitForConnection(mTimeout)) {
     LOG_VA_WARN("Timed out waiting for connection to master at %s:%d", inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port));
     return false;
   }
@@ -304,6 +313,24 @@ int HyperspaceClient::Delete(const char *name) {
       if (error != Error::HYPERSPACE_FILE_NOT_FOUND) {
 	LOG_VA_ERROR("Hyperspace 'attrdel' error, fname=%s : %s", name, mProtocol->StringFormatMessage(eventPtr).c_str());
       }
+    }
+  }
+  return error;
+}
+
+
+/**
+ * Blocking 'status' method
+ */
+int HyperspaceClient::Status() {
+  DispatchHandlerSynchronizer syncHandler;
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( mProtocol->CreateStatusRequest() );
+  int error = SendMessage(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      error = (int)mProtocol->ResponseCode(eventPtr);
+      LOG_VA_ERROR("Hyperspace 'status' error : %s", mProtocol->StringFormatMessage(eventPtr).c_str());
     }
   }
   return error;

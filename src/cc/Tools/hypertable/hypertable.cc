@@ -83,8 +83,6 @@ int main(int argc, char **argv) {
   vector<InteractiveCommand *>  commands;
   Manager *manager = 0;
 
-  cout << "argv0 = " << argv[0] << endl << flush;
-
   System::Initialize(argv[0]);
 
   for (int i=1; i<argc; i++) {

@@ -36,13 +36,16 @@ namespace hypertable {
 
     static const short COMMAND_CREATE_TABLE = 0;
     static const short COMMAND_GET_SCHEMA   = 1;
-    static const short COMMAND_MAX          = 2;
+    static const short COMMAND_STATUS       = 2;
+    static const short COMMAND_MAX          = 3;
 
     static const char *mCommandStrings[];
 
     CommBuf *CreateCreateTableRequest(const char *tableName, const char *schemaString);
 
     CommBuf *CreateGetSchemaRequest(const char *tableName);
+
+    CommBuf *CreateStatusRequest();
 
     virtual const char *CommandText(short command);
     

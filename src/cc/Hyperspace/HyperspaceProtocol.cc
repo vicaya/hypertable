@@ -36,7 +36,8 @@ const char *HyperspaceProtocol::commandStrings[COMMAND_MAX] = {
   "attrset",
   "attrget",
   "attrdel",
-  "exists"
+  "exists",
+  "status"
 };
 
 
@@ -175,5 +176,17 @@ CommBuf *HyperspaceProtocol::CreateDeleteRequest(const char *fname) {
   hbuilder.SetGroupId(fileNameToGroupId(fname));
   hbuilder.Encapsulate(cbuf);
 
+  return cbuf;
+}
+
+/**
+ *
+ */
+CommBuf *HyperspaceProtocol::CreateStatusRequest() {
+  HeaderBuilder hbuilder;
+  CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(int16_t));
+  cbuf->PrependShort(COMMAND_STATUS);
+  hbuilder.Reset(Header::PROTOCOL_HYPERSPACE);
+  hbuilder.Encapsulate(cbuf);
   return cbuf;
 }

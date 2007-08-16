@@ -61,6 +61,8 @@ namespace hypertable {
 
     CommBuf *CreateMkdirsRequest(const char *fname);
 
+    CommBuf *CreateStatusRequest();
+
     virtual const char *CommandText(short command);
 
     /**
@@ -157,7 +159,8 @@ namespace hypertable {
     static const uint16_t COMMAND_LENGTH   = 8;
     static const uint16_t COMMAND_PREAD    = 9;
     static const uint16_t COMMAND_MKDIRS   = 10;
-    static const uint16_t COMMAND_MAX      = 11;
+    static const uint16_t COMMAND_STATUS   = 11;
+    static const uint16_t COMMAND_MAX      = 12;
 
     static const uint16_t SHUTDOWN_FLAG_IMMEDIATE = 0x0001;
 

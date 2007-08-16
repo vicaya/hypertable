@@ -55,7 +55,8 @@ void ConnectionManager::operator()() {
     elapsed = tval.tv_sec - sendtime;
 
     if (elapsed < RETRY_INTERVAL) {
-      cerr << mWaitMessage << " ...";
+      if (mWaitMessage != "")
+	cerr << mWaitMessage << " ...";
       poll(0, 0, (RETRY_INTERVAL - elapsed)*1000);
       cerr << endl;
     }

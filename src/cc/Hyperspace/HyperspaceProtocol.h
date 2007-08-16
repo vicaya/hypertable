@@ -52,6 +52,8 @@ namespace hypertable {
 
     CommBuf *CreateDeleteRequest(const char *fname);
 
+    CommBuf *CreateStatusRequest();
+
     static const uint16_t COMMAND_CREATE  = 0;
     static const uint16_t COMMAND_DELETE  = 1;
     static const uint16_t COMMAND_MKDIRS  = 2;
@@ -59,7 +61,8 @@ namespace hypertable {
     static const uint16_t COMMAND_ATTRGET = 4;
     static const uint16_t COMMAND_ATTRDEL = 5;
     static const uint16_t COMMAND_EXISTS  = 6;
-    static const uint16_t COMMAND_MAX     = 7;
+    static const uint16_t COMMAND_STATUS  = 7;
+    static const uint16_t COMMAND_MAX     = 8;
 
     static const char * commandStrings[COMMAND_MAX];
 
