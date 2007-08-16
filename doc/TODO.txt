@@ -1,5 +1,6 @@
 
 TODO:
+- Add serverup program to verify if the various servers are up
 - Add support for LZO and BZIP2 compression
 - Implement 'InMemory' locality groups
 - Add support for auto-assigned timestamps
