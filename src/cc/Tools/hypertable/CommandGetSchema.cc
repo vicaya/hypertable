@@ -24,39 +24,37 @@
 #include "Common/FileUtils.h"
 #include "Common/Usage.h"
 
-#include "CommandCreateTable.h"
+#include "CommandGetSchema.h"
 
 using namespace hypertable;
 using namespace std;
 
-const char *CommandCreateTable::msUsage[] = {
-  "create table <name> <schemaFile>",
+const char *CommandGetSchema::msUsage[] = {
+  "get schema <tableName>",
   "",
-  "  This command creates a table called <name> with the schema found",
-  "  in the file <schemaFile>.",
+  "  This command fetches the schema for table <tableName> and displays it to stdout.",
   (const char *)0
 };
 
-int CommandCreateTable::run() {
+int CommandGetSchema::run() {
   off_t len;
-  const char *schema = 0;
+  std::string schema;
   int error;
 
-  if (mArgs.size() != 2) {
+  if (mArgs.size() != 1) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
     return -1;
   }
 
-  if (mArgs[0].second != "" || mArgs[1].second != "")
+  if (mArgs[0].second != "")
     Usage::DumpAndExit(msUsage);
 
-  if ((schema = FileUtils::FileToBuffer(mArgs[1].first.c_str(), &len)) == 0)
-    return -1;
-
-  if ((error = mManager->CreateTable(mArgs[0].first, schema)) != Error::OK) {
-    cerr << "Problem creating table '" << mArgs[0].first << "' - " << Error::GetText(error) << endl;
+  if ((error = mManager->GetSchema(mArgs[0].first, schema)) != Error::OK) {
+    cerr << "Problem getting schema for table '" << mArgs[0].first << "' - " << Error::GetText(error) << endl;
     return error;
   }
+
+  cout << schema << endl;
 
   return Error::OK;
 }

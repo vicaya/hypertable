@@ -68,8 +68,15 @@ void Manager::Initialize(std::string configFile) {
 /**
  * 
  */
-void Manager::CreateTable(std::string name, std::string schema) {
-
-  mMasterPtr->CreateTable(name.c_str(), schema.c_str());
-  
+int Manager::CreateTable(std::string name, std::string schema) {
+  return mMasterPtr->CreateTable(name.c_str(), schema.c_str());
 }
+
+
+/**
+ * 
+ */
+int Manager::GetSchema(std::string tableName, std::string &schema) {
+  return mMasterPtr->GetSchema(tableName.c_str(), schema);
+}
+

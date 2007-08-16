@@ -19,6 +19,7 @@
 set (hypertable_SRCS
 hypertable.cc
 CommandCreateTable.cc
+CommandGetSchema.cc
 )
 
 # hypertable - command interpreter

@@ -32,7 +32,7 @@ namespace hypertable {
     CommandCreateTable(Manager *manager) : mManager(manager) { return; }
     virtual const char *CommandText() { return "create table"; }
     virtual const char **Usage() { return msUsage; }
-    virtual void run();
+    virtual int run();
 
   private:
     static const char *msUsage[];

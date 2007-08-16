@@ -37,7 +37,7 @@ namespace hypertable {
 
     virtual const char *CommandText() = 0;
     virtual const char **Usage() = 0;
-    virtual void run() = 0;
+    virtual int run() = 0;
 
   protected:
     std::vector< std::pair<std::string, std::string> >  mArgs;

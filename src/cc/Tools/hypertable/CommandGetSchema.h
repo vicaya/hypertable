@@ -18,49 +18,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MANAGER_H
-#define HYPERTABLE_MANAGER_H
+#ifndef HYPERTABLE_COMMANDGETSCHEMA_H
+#define HYPERTABLE_COMMANDGETSCHEMA_H
 
-#include <string>
+#include "Common/InteractiveCommand.h"
 
-#include "Common/Properties.h"
-#include "AsyncComm/Comm.h"
-
-#include "MasterClient.h"
+#include "Hypertable/Lib/Manager.h"
 
 namespace hypertable {
 
-  class Manager {
-
+  class CommandGetSchema : public InteractiveCommand {
   public:
-
-    static void Initialize(std::string configFile);
-    static Manager *Instance() { return msInstance; }
-
-    int CreateTable(std::string name, std::string schema);
-    int GetSchema(std::string tableName, std::string &schema);
-
-    //Table OpenTable();
-    //void DeleteTable();
-    // String [] ListTables();
-
-  protected:
-
-    /**
-     *  Constructor.
-     */
-    Manager(PropertiesPtr &propsPtr);
+    CommandGetSchema(Manager *manager) : mManager(manager) { return; }
+    virtual const char *CommandText() { return "get schema"; }
+    virtual const char **Usage() { return msUsage; }
+    virtual int run();
 
   private:
+    static const char *msUsage[];
 
-    static Manager *msInstance;
-
-    CommPtr mCommPtr;
-    MasterClientPtr mMasterPtr;
-
+    Manager *mManager;
   };
 
 }
 
-#endif // HYPERTABLE_MANAGER_H
-
+#endif // HYPERTABLE_COMMANDGETSCHEMA_H

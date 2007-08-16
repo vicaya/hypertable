@@ -33,6 +33,7 @@ extern "C" {
 #include "Hypertable/Lib/Manager.h"
 
 #include "CommandCreateTable.h"
+#include "CommandGetSchema.h"
 
 using namespace hypertable;
 using namespace std;
@@ -100,6 +101,11 @@ int main(int argc, char **argv) {
   manager = Manager::Instance();
 
   commands.push_back( new CommandCreateTable(manager) );
+  commands.push_back( new CommandGetSchema(manager) );
+
+  cout << "Welcome to the Hypertable command interpreter." << endl;
+  cout << "Type 'help' for a description of commands." << endl;
+  cout << endl << flush;
 
   using_history();
   while ((line = rl_gets()) != 0) {
