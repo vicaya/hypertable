@@ -30,6 +30,8 @@ extern "C" {
 #include "Common/System.h"
 #include "Common/Usage.h"
 
+#include "Hypertable/Lib/Manager.h"
+
 #include "CommandCreateTable.h"
 
 using namespace hypertable;
@@ -55,6 +57,19 @@ namespace {
 
     return line_read;
   }
+
+  const char *usage[] = {
+    "usage: hypertable [OPTIONS]",
+    "",
+    "OPTIONS:",
+    "  --config=<file>  Read configuration from <file>.  The default config file is",
+    "                   \"conf/hypertable.cfg\" relative to the toplevel install directory",
+    "  --help             Display this help text and exit",
+    ""
+    "This is a command line interface to a Hypertable cluster.",
+    (const char *)0
+  };
+  
 }
 
 
@@ -64,11 +79,29 @@ namespace {
 int main(int argc, char **argv) {
   const char *line;
   size_t i;
+  string configFile = "";
   vector<InteractiveCommand *>  commands;
+  Manager *manager = 0;
+
+  cout << "argv0 = " << argv[0] << endl << flush;
 
   System::Initialize(argv[0]);
 
-  commands.push_back( new CommandCreateTable() );
+  for (int i=1; i<argc; i++) {
+    if (!strncmp(argv[i], "--config=", 9))
+      configFile = &argv[i][9];
+    else
+      Usage::DumpAndExit(usage);
+  }
+
+  if (configFile == "")
+    configFile = System::installDir + "/conf/hypertable.cfg";
+
+  Manager::Initialize(configFile);
+
+  manager = Manager::Instance();
+
+  commands.push_back( new CommandCreateTable(manager) );
 
   using_history();
   while ((line = rl_gets()) != 0) {

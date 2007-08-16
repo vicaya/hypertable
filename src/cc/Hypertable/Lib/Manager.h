@@ -26,6 +26,7 @@
 #include "Common/Properties.h"
 #include "AsyncComm/Comm.h"
 
+#include "MasterClient.h"
 
 namespace hypertable {
 
@@ -34,7 +35,9 @@ namespace hypertable {
   public:
 
     static void Initialize(std::string configFile);
-    static Manager *Instance();
+    static Manager *Instance() { return msInstance; }
+
+    void CreateTable(std::string name, std::string schema);
 
   protected:
 
@@ -47,7 +50,8 @@ namespace hypertable {
 
     static Manager *msInstance;
 
-    Comm *mComm;
+    CommPtr mCommPtr;
+    MasterClientPtr mMasterPtr;
 
     //public Table CreateTable(std::string name, std::string schema);
     //public std::string GetSchema(std::string tableName);

@@ -32,6 +32,7 @@ import java.util.logging.Logger;
 import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.ResponseCallback;
 import org.hypertable.Common.Error;
+import org.hypertable.Common.System;
 
 
 public class Hyperspace {
@@ -39,17 +40,31 @@ public class Hyperspace {
     static final Logger log = Logger.getLogger("org.hypertable.Hyperspace");
 
     public Hyperspace(Comm comm, Properties props) {
+	String hyperspace_dir;
 
 	if (props.getProperty("verbose").equalsIgnoreCase("true"))
 	    mVerbose = true;
 
 	// Determine working directory
-	if ((mBasedir = props.getProperty("Hyperspace.dir")) == null) {
+	if ((hyperspace_dir = props.getProperty("Hyperspace.dir")) == null) {
 	    java.lang.System.err.println("Required config property 'Hyperspace.dir' not found.");
 	    java.lang.System.exit(1);
 	}
-	if (mBasedir.endsWith("/"))
-	    mBasedir = mBasedir.substring(0, mBasedir.length()-1);
+	if (hyperspace_dir.endsWith("/"))
+	    hyperspace_dir = hyperspace_dir.substring(0, hyperspace_dir.length()-1);
+
+	if (hyperspace_dir.startsWith("/"))
+	    mBasedir = hyperspace_dir;
+	else
+	    mBasedir = System.installDir + "/" + hyperspace_dir;
+
+	File basedirFile = new File(mBasedir);
+	if (!basedirFile.exists()) {
+	    if (!basedirFile.mkdirs()) {
+		java.lang.System.err.println("Unable to create hyperspace directory '" + mBasedir + "'");
+		java.lang.System.exit(1);
+	    }
+	}
 
 	if (mVerbose)
 	    java.lang.System.out.println("Hyperspace.dir=" + mBasedir);

@@ -41,6 +41,9 @@ namespace hypertable {
 
   protected:
     std::vector< std::pair<std::string, std::string> >  mArgs;
+
+  private:
+    bool ParseStringLiteral(const char *str, std::string &text, const char **endptr);
   };
 
 }

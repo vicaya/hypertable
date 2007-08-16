@@ -25,6 +25,7 @@
 
 #include "Common/FileUtils.h"
 #include "Common/md5.h"
+#include "Common/System.h"
 
 #include "Hypertable/Lib/RangeServerProtocol.h"
 
@@ -66,10 +67,11 @@ RangeServer::RangeServer(Comm *comm, Properties *props) : mComm(comm) {
     cerr << "Hypertable.RangeServer.logDirRoot property not specified." << endl;
     exit(1);
   }
+  Global::logDirRoot = (dir[0] == '/') ? "" : System::installDir + "/";
   if (dir[strlen(dir)-1] == '/')
-    Global::logDirRoot = string(dir, strlen(dir)-1);
+    Global::logDirRoot += string(dir, strlen(dir)-1);
   else
-    Global::logDirRoot = dir;
+    Global::logDirRoot += dir;
 
   metadataFile = props->getProperty("metadata");
   assert(metadataFile != 0);
@@ -212,10 +214,10 @@ int RangeServer::DirectoryInitialize(Properties *props) {
     return -1;
   }
 
-  Global::logDir = (string)topDir + "/logs/primary";
+  Global::logDir = (string)topDir + "/commit/primary";
 
   /**
-   * Create /hypertable/servers/X.X.X.X/logs/primary directory
+   * Create /hypertable/servers/X.X.X.X_nnnnn/commit/primary directory
    */
   string logDir = Global::logDirRoot + Global::logDir;
 

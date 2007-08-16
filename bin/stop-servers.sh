@@ -15,7 +15,6 @@
 # limitations under the License.
 #
 
-
 this="$0"
 while [ -h "$this" ]; do
   ls=`ls -ld "$this"`
@@ -43,29 +42,20 @@ cd $HYPERTABLE_HOME
 export HYPERTABLE_HOME=`pwd`
 popd >& /dev/null
 
+
 #
-# Make sure log and run directories exist
+# Stop HdfsBroker
 #
-if [ ! -d $HYPERTABLE_HOME/run ] ; then
-    mkdir $HYPERTABLE_HOME/run
+if [ -f  $HYPERTABLE_HOME/run/HdfsBroker.pid ] ; then
+    kill -9 `cat  $HYPERTABLE_HOME/run/HdfsBroker.pid`
+    rm $HYPERTABLE_HOME/run/HdfsBroker.pid
 fi
-if [ ! -d $HYPERTABLE_HOME/log ] ; then
-    mkdir $HYPERTABLE_HOME/log
+
+#
+# Stop Hyperspace
+#
+if [ -f  $HYPERTABLE_HOME/run/Hyperspace.pid ] ; then
+    kill -9 `cat  $HYPERTABLE_HOME/run/Hyperspace.pid`
+    rm $HYPERTABLE_HOME/run/Hyperspace.pid
 fi
 
-
-#
-# Start HdfsBroker
-#
-PIDFILE=$HYPERTABLE_HOME/run/HdfsBroker.pid
-LOGFILE=$HYPERTABLE_HOME/log/HdfsBroker.log
-
-nohup $HYPERTABLE_HOME/bin/jrun --pidfile $PIDFILE org.hypertable.HdfsBroker.main --verbose 1>& $LOGFILE &
-
-#
-# Start Hyperspace
-#
-PIDFILE=$HYPERTABLE_HOME/run/Hyperspace.pid
-LOGFILE=$HYPERTABLE_HOME/log/Hyperspace.log
-
-nohup $HYPERTABLE_HOME/bin/jrun --pidfile $PIDFILE org.hypertable.Hyperspace.main --verbose 1>& $LOGFILE &

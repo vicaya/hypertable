@@ -20,6 +20,9 @@
 
 #include <iostream>
 
+#include "Common/FileUtils.h"
+#include "Common/Usage.h"
+
 #include "CommandCreateTable.h"
 
 using namespace hypertable;
@@ -34,7 +37,20 @@ const char *CommandCreateTable::msUsage[] = {
 };
 
 void CommandCreateTable::run() {
-  for (size_t i=0; i<mArgs.size(); i++) {
-    cout << mArgs[i].first << " = '" << mArgs[i].second << "'" << endl;
+  off_t len;
+  const char *schema = 0;
+
+  if (mArgs.size() != 2) {
+    cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
+    return;
   }
+
+  if (mArgs[0].second != "" || mArgs[1].second != "")
+    Usage::DumpAndExit(msUsage);
+
+  if ((schema = FileUtils::FileToBuffer(mArgs[1].first.c_str(), &len)) == 0)
+    return;
+
+  mManager->CreateTable(mArgs[0].first, schema);
+
 }

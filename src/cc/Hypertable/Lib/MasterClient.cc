@@ -24,7 +24,7 @@
 #include "MasterClient.h"
 
 
-MasterClient::MasterClient(Comm *comm, Properties *props) : mComm(comm), mConnectionManager("Waiting for connection to Master") {
+MasterClient::MasterClient(CommPtr &commPtr, PropertiesPtr &propsPtr) : mCommPtr(commPtr), mConnectionManager("Waiting for connection to Master") {
   uint16_t masterPort = 0;
   const char *masterHost = 0;
 
@@ -32,12 +32,12 @@ MasterClient::MasterClient(Comm *comm, Properties *props) : mComm(comm), mConnec
    *  Establish connection to Master
    */
   {
-    if ((masterPort = (uint16_t)props->getPropertyInt("Hypertable.Master.port", 0)) == 0) {
+    if ((masterPort = (uint16_t)propsPtr->getPropertyInt("Hypertable.Master.port", 0)) == 0) {
       LOG_ERROR("Hypertable.Master.port property not specified.");
       exit(1);
     }
 
-    if ((masterHost = props->getProperty("Hypertable.Master.host", (const char *)0)) == 0) {
+    if ((masterHost = propsPtr->getProperty("Hypertable.Master.host", (const char *)0)) == 0) {
       LOG_ERROR("Hypertable.Master.host property not specified.");
       exit(1);
     }
@@ -56,7 +56,7 @@ MasterClient::MasterClient(Comm *comm, Properties *props) : mComm(comm), mConnec
 
   }
 
-  mConnectionManager.Initiate(mComm, mAddr, 30);
+  mConnectionManager.Initiate(mCommPtr.get(), mAddr, 30);
 
   mProtocol = new MasterProtocol();
   
@@ -128,7 +128,7 @@ int MasterClient::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler, uin
   if (msgIdp)
     *msgIdp = ((Header::HeaderT *)cbufPtr->data)->id;
 
-  if ((error = mComm->SendRequest(mAddr, cbufPtr, handler)) != Error::OK) {
+  if ((error = mCommPtr->SendRequest(mAddr, cbufPtr, handler)) != Error::OK) {
     LOG_VA_WARN("Comm::SendRequest to %s:%d failed - %s",
 		inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port), Error::GetText(error));
   }

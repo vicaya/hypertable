@@ -23,6 +23,7 @@
 
 #include <string>
 
+#include <boost/shared_ptr.hpp>
 #include <boost/thread/mutex.hpp>
 
 extern "C" {
@@ -59,6 +60,8 @@ namespace hypertable {
     std::string   mAppName;
     HandlerMap    mHandlerMap;
   };
+
+  typedef boost::shared_ptr<Comm> CommPtr;
 
 }
 

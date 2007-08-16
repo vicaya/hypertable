@@ -25,7 +25,7 @@
 #include "Manager.h"
 
 
-static Manager *static Manager::msInstance = 0;
+Manager *Manager::msInstance = 0;
 
 
 /**
@@ -33,14 +33,17 @@ static Manager *static Manager::msInstance = 0;
  */
 Manager::Manager(PropertiesPtr &propsPtr) {
 
-  mComm = new Comm();
+  mCommPtr.reset( new Comm() );
 
   /**
    *  Create Master
    */
+  mMasterPtr.reset( new MasterClient(mCommPtr, propsPtr) );
 
-  
-
+  if (!mMasterPtr->WaitForConnection(60)) {
+    cerr << "Unable to connect to Master, exiting..." << endl;
+    exit(1);
+  }
   
 }
 
@@ -62,19 +65,11 @@ void Manager::Initialize(std::string configFile) {
 
 }
 
-
-
 /**
  * 
  */
-Manager *Manager::Instance(std::string configFile) {
+void Manager::CreateTable(std::string name, std::string schema) {
 
-  if (msConfigFile == "") {
-    
-  }
-  else if (msConfigFile != configFile) {
-    LOG_VA_ERROR("");
-  }
+  mMasterPtr->CreateTable(name.c_str(), schema.c_str());
   
 }
-

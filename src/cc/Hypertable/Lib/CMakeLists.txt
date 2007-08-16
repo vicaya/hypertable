@@ -17,6 +17,7 @@
 # 
 
 set ( Hypertable_SRCS
+Manager.cc
 MasterClient.cc
 MasterProtocol.cc
 Metadata.cc

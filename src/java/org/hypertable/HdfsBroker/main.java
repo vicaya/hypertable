@@ -132,11 +132,15 @@ public class main {
 	//Global.protocol = new Protocol();
 	requestQueue = new ApplicationQueue(workerCount);
 
-	broker = new HdfsBroker(comm, props);
-
-	handlerFactory = new HandlerFactory(comm, requestQueue, broker);
-
-	comm.Listen(port, handlerFactory, null);
+	try {
+	    broker = new HdfsBroker(comm, props);
+	    handlerFactory = new HandlerFactory(comm, requestQueue, broker);
+	    comm.Listen(port, handlerFactory, null);
+	}
+	catch (Exception e) {
+	    e.printStackTrace();
+	    java.lang.System.exit(1);
+	}
 
 	requestQueue.Join();
     }

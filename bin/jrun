@@ -15,7 +15,6 @@
 # limitations under the License.
 #
 
-
 this="$0"
 while [ -h "$this" ]; do
   ls=`ls -ld "$this"`
@@ -45,25 +44,18 @@ popd >& /dev/null
 
 
 #
-# Check for --config argument
+# Parse and remove jrun specific arguments
 #
 
-if [ $# -gt 1 ]
-then
-    if [ "--config" = "$1" ]
-          then
-              shift
-              confdir=$1
-              shift
-              HYPERTABLE_CONF_DIR=$confdir
-    fi
-fi
-
-#
-# Use HYPERTABLE_CONF_DIR environment variable if it exists
-#
-
-HYPERTABLE_CONF_DIR="${HYPERTABLE_CONF_DIR:-$HYPERTABLE_HOME/conf}"
+while [ $# -gt 1 ] ; do
+  if [ "--pidfile" = "$1" ] ; then
+      shift
+      echo "$$" > $1
+      shift
+  else
+      break
+  fi
+done
 
 
 #

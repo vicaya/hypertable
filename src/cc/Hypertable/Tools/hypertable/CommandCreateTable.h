@@ -23,17 +23,21 @@
 
 #include "Common/InteractiveCommand.h"
 
+#include "Hypertable/Lib/Manager.h"
+
 namespace hypertable {
 
   class CommandCreateTable : public InteractiveCommand {
   public:
+    CommandCreateTable(Manager *manager) : mManager(manager) { return; }
     virtual const char *CommandText() { return "create table"; }
     virtual const char **Usage() { return msUsage; }
     virtual void run();
 
   private:
     static const char *msUsage[];
-    
+
+    Manager *mManager;
   };
 
 }

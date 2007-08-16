@@ -21,6 +21,8 @@
 #ifndef HYPERTABLE_MASTERCLIENT_H
 #define HYPERTABLE_MASTERCLIENT_H
 
+#include <boost/shared_ptr.hpp>
+
 #include "Common/Properties.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/CommBuf.h"
@@ -36,7 +38,7 @@ namespace hypertable {
   class MasterClient {
   public:
 
-    MasterClient(Comm *comm, Properties *props);
+    MasterClient(CommPtr &commPtr, PropertiesPtr &propsPt);
     ~MasterClient();
 
     bool WaitForConnection(long maxWaitSecs) {
@@ -58,11 +60,14 @@ namespace hypertable {
 
     int SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler, uint32_t *msgIdp=0);
   
-    Comm              *mComm;
+    CommPtr            mCommPtr;
     ConnectionManager  mConnectionManager;
     MasterProtocol    *mProtocol;
     struct sockaddr_in mAddr;
   };
+
+  typedef boost::shared_ptr<MasterClient> MasterClientPtr;
+  
 
 }
 
