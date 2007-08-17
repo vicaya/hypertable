@@ -38,10 +38,10 @@ namespace hypertable {
     static int32_t ResponseCode(Event *event);
     static int32_t ResponseCode(EventPtr &eventPtr) { return ResponseCode(eventPtr.get()); }
 
-    std::string StringFormatMessage(Event *event);
-    std::string StringFormatMessage(EventPtr &eventPtr) { return StringFormatMessage(eventPtr.get()); }
+    static std::string StringFormatMessage(Event *event);
+    static std::string StringFormatMessage(EventPtr &eventPtr) { return StringFormatMessage(eventPtr.get()); }
 
-    static CommBuf *CreateErrorMessage(uint16_t command, int error, const char *msg, int extraSpace);
+    static CommBuf *CreateErrorMessage(int error, const char *msg, int extraSpace);
 
     virtual const char *CommandText(short command) = 0;
 

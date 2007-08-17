@@ -67,9 +67,9 @@ class CommandLoadRange extends Command {
 	    Event event = mSyncHandler.WaitForEvent();
 
 	    if (event == null)
-		System.err.println("ERROR: Timed out waiting for response from Hypertable Master");
+		System.err.println("ERROR (load range) : Timed out waiting for response from Hypertable Master");
 	    else if (Global.protocol.ResponseCode(event) != Error.OK) {
-		System.err.println(Global.protocol.StringFormatMessage(event));
+		System.err.println("ERROR (load range) : " + Global.protocol.StringFormatMessage(event));
 	    }
 	    else
 		System.out.println("success");

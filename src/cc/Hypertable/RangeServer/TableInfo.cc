@@ -18,31 +18,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include "Common/Logger.h"
+
 #include "TableInfo.h"
 
 using namespace hypertable;
 
+
 /**
  * 
  */
-bool TableInfo::GetRange(string &endRow, RangePtr &rangePtr) {
-  boost::mutex::scoped_lock lock(mMutex);
-
-  RangeMapT::iterator iter = mRangeMap.find(endRow);
-
-  if (iter == mRangeMap.end())
-    return false;
-
-  rangePtr = (*iter).second;
-
-  return true;
-}
-
-
 bool TableInfo::GetRange(RangeSpecificationT *rangeSpec, RangePtr &rangePtr) {
   boost::mutex::scoped_lock lock(mMutex);
-  string startRow = (rangeSpec->startRow) ? rangeSpec->startRow : "";
-  string endRow = (rangeSpec->endRow) ? rangeSpec->endRow : "";
+  string startRow = rangeSpec->startRow;
+  string endRow = rangeSpec->endRow;
 
   RangeMapT::iterator iter = mRangeMap.find(endRow);
 
@@ -55,7 +44,6 @@ bool TableInfo::GetRange(RangeSpecificationT *rangeSpec, RangePtr &rangePtr) {
     return false;
 
   return true;
-  
 }
 
 

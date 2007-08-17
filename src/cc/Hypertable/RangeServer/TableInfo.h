@@ -49,7 +49,6 @@ namespace hypertable {
       boost::mutex::scoped_lock lock(mMutex);
       mSchema = schemaPtr;
     }
-    bool GetRange(string &endRow, RangePtr &rangePtr);
     bool GetRange(RangeSpecificationT *rangeSpec, RangePtr &rangePtr);
     void AddRange(RangeInfoPtr &rangeInfoPtr);
 

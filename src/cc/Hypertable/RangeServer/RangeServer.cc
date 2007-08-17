@@ -279,13 +279,13 @@ void RangeServer::Compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, 
    */
   if (!tableInfoPtr->GetRange(rangeSpec, rangePtr)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errMsg = "No range with end row '" + (std::string)rangeSpec->endRow + "' found for table '" + rangeSpec->tableName + "'";
+    errMsg = (std::string)rangeSpec->tableName + "[" + rangeSpec->startRow + ":" + rangeSpec->endRow + "]";
     goto abort;
   }
 
   MaintenanceThread::ScheduleCompaction(rangePtr.get(), workType);
 
-  if ((error = cb->response()) != Error::OK) {
+  if ((error = cb->response_ok()) != Error::OK) {
     LOG_VA_ERROR("Problem sending OK response - %s", Error::GetText(error));
   }
 
@@ -338,13 +338,13 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, RangeSpecific
 
   if (!Global::GetTableInfo(rangeSpec->tableName, tableInfoPtr)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errMsg = "No ranges for table '" + (std::string)rangeSpec->tableName + "' loaded";
+    errMsg = (std::string)rangeSpec->tableName + "[" + rangeSpec->startRow + ":" + rangeSpec->endRow + "]";
     goto abort;
   }
 
   if (!tableInfoPtr->GetRange(rangeSpec, rangePtr)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errMsg = rangeSpec->endRow;
+    errMsg = (std::string)rangeSpec->tableName + "[" + rangeSpec->startRow + ":" + rangeSpec->endRow + "]";
     goto abort;
   }
 
@@ -478,7 +478,7 @@ void RangeServer::LoadRange(ResponseCallback *cb, RangeSpecificationT *rangeSpec
    * 1. Read METADATA entry for this range and make sure it exists
    */
   if ((error = Global::metadata->GetRangeInfo(rangeSpec->tableName, rangeSpec->startRow, rangeSpec->endRow, rangeInfoPtr)) != Error::OK) {
-    errMsg = (string)"Unable to locate Range (" + (string)rangeSpec->tableName + " start=" + (string)rangeSpec->startRow + " end=" + (string)rangeSpec->endRow + (string)") in METADATA table";
+    errMsg = (std::string)"Unable to locate range" + rangeSpec->tableName + "[" + rangeSpec->startRow + ":" + rangeSpec->endRow + "] in METADATA table";
     goto abort;
   }
 
@@ -519,7 +519,7 @@ void RangeServer::LoadRange(ResponseCallback *cb, RangeSpecificationT *rangeSpec
 
   if (tableInfoPtr->GetRange(rangeSpec, rangePtr)) {
     error = Error::RANGESERVER_RANGE_ALREADY_LOADED;
-    errMsg = rangeSpec->endRow;
+    errMsg = (std::string)rangeSpec->tableName + "[" + rangeSpec->startRow + ":" + rangeSpec->endRow + "]";
     goto abort;
   }
 
@@ -528,7 +528,7 @@ void RangeServer::LoadRange(ResponseCallback *cb, RangeSpecificationT *rangeSpec
   rangeInfoPtr->SetLogDir(Global::log->GetLogDir());
   Global::metadata->Sync();
 
-  if ((error = cb->response()) != Error::OK) {
+  if ((error = cb->response_ok()) != Error::OK) {
     LOG_VA_ERROR("Problem sending OK response - %s", Error::GetText(error));
   }
 
@@ -613,7 +613,7 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, RangeSpecificationT *rangeS
    */
   if (!tableInfoPtr->GetRange(rangeSpec, rangePtr)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errMsg = rangeSpec->endRow;
+    errMsg = (std::string)rangeSpec->tableName + "[" + rangeSpec->startRow + ":" + rangeSpec->endRow + "]";
     goto abort;
   }
 
@@ -743,7 +743,7 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, RangeSpecificationT *rangeS
     }
   }
   else {
-    if ((error = cb->response()) != Error::OK) {
+    if ((error = cb->response_ok()) != Error::OK) {
       LOG_VA_ERROR("Problem sending OK response - %s", Error::GetText(error));
     }
   }

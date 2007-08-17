@@ -27,13 +27,13 @@
 using namespace hypertable;
 
 int ResponseCallback::error(int error, std::string &msg) {
-  CommBufPtr cbufPtr( Protocol::CreateErrorMessage(0, error, msg.c_str(), hbuilder_.HeaderLength()) ); // fix me!!!
+  CommBufPtr cbufPtr( Protocol::CreateErrorMessage(error, msg.c_str(), hbuilder_.HeaderLength()) ); // fix me!!!
   hbuilder_.LoadFromMessage(mEventPtr->header);
   hbuilder_.Encapsulate(cbufPtr.get());
   return mComm->SendResponse(mEventPtr->addr, cbufPtr);
 }
 
-int ResponseCallback::response() {
+int ResponseCallback::response_ok() {
   CommBufPtr cbufPtr( new CommBuf(hbuilder_.HeaderLength() + 4) );
   cbufPtr->PrependInt(Error::OK);
   hbuilder_.LoadFromMessage(mEventPtr->header);

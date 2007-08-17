@@ -122,7 +122,7 @@ class CommandScan extends Command {
 	    if (event == null)
 		System.err.println("ERROR: Timed out waiting for response from Hypertable Master");
 	    else if (Global.protocol.ResponseCode(event) != Error.OK) {
-		System.err.println(Global.protocol.StringFormatMessage(event));
+		System.err.println("ERROR (create scanner) : " + Global.protocol.StringFormatMessage(event));
 	    }
 	    else {
 		event.msg.RewindToProtocolHeader();

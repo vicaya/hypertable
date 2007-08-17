@@ -1,6 +1,5 @@
 
 TODO:
-- Add serverup program to verify if the various servers are up
 - Add support for LZO and BZIP2 compression
 - Implement 'InMemory' locality groups
 - Add support for auto-assigned timestamps
@@ -14,7 +13,6 @@ TODO:
 - Add a way to destroy a ConnectionManager (including Comm::Disconnect)
 - Try to move some of the RangerServer::Global members to RangeServer class members
 - Fatten up HdfsBroker test
-- Change ResponseCallback::response to response_ok in C++ source
 - Rename RangeServer/Global::localityGroup member names
 - Add ReactorFactory::Shutdown
 - Add "Scan Cache"
@@ -27,6 +25,8 @@ TODO:
 
 
 DONE:
+- Change ResponseCallback::response to response_ok in C++ source
+- Add serverup program to verify if the various servers are up
 - Change Range key to endRow
 - Change CellStoreV0 to use last key in block for index entry
 - Create ScanContext class and push object of this type into CreateScanner APIs

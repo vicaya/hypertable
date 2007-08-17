@@ -89,11 +89,11 @@ public class Error {
 	mTextMap.put(MASTER_TABLE_EXISTS,        "HYPERTABLE MASTER table exists");
 	mTextMap.put(MASTER_TABLE_EXISTS,        "HYPERTABLE MASTER bad schema");
 	mTextMap.put(RANGESERVER_GENERATION_MISMATCH,  "RANGE SERVER generation mismatch");
-	mTextMap.put(RANGESERVER_RANGE_ALREADY_LOADED, "RANGE SERVER tablet already loaded");
+	mTextMap.put(RANGESERVER_RANGE_ALREADY_LOADED, "RANGE SERVER range already loaded");
 	mTextMap.put(RANGESERVER_RANGE_MISMATCH,       "RANGE SERVER range mismatch");
-	mTextMap.put(RANGESERVER_NONEXISTENT_RANGE,    "RANGE SERVER non-existent tablet");
+	mTextMap.put(RANGESERVER_NONEXISTENT_RANGE,    "RANGE SERVER non-existent range");
 	mTextMap.put(RANGESERVER_PARTIAL_UPDATE,       "RANGE SERVER partial update");
-	mTextMap.put(RANGESERVER_RANGE_NOT_FOUND,      "RANGE SERVER tablet not found");
+	mTextMap.put(RANGESERVER_RANGE_NOT_FOUND,      "RANGE SERVER range not found");
 	mTextMap.put(RANGESERVER_INVALID_SCANNER_ID,   "RANGE SERVER invalid scanner id");
 	mTextMap.put(RANGESERVER_SCHEMA_PARSE_ERROR,   "RANGE SERVER schema parse error");
 	mTextMap.put(RANGESERVER_SCHEMA_INVALID_CFID,  "RANGE SERVER invalid column family id");

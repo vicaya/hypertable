@@ -32,7 +32,7 @@ namespace hypertable {
   public:
     ResponseCallbackUpdate(Comm *comm, EventPtr &eventPtr) : ResponseCallback(comm, eventPtr) { return; }
     int response(ExtBufferT &ext);
-    using ResponseCallback::response;
+    using ResponseCallback::response_ok;
   };
 
 }

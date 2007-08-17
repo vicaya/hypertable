@@ -33,5 +33,5 @@ using namespace hypertable;
  */
 void RequestHandlerStatus::run() {
   ResponseCallback cb(mComm, mEventPtr);
-  cb.response();
+  cb.response_ok();
 }

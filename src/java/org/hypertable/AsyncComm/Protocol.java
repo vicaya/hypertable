@@ -32,7 +32,7 @@ public abstract class Protocol {
 	return event.msg.buf.getInt();
     }
 
-    public String StringFormatMessage(Event event) {
+    public static String StringFormatMessage(Event event) {
 	event.msg.RewindToProtocolHeader();
 	if (event.type != Event.Type.MESSAGE)
 	    return event.toString();
@@ -42,29 +42,23 @@ public abstract class Protocol {
 
 	int error = event.msg.buf.getInt();
 
-	if (event.msg.buf.remaining() < 2)
-	    return Error.GetText(error) + " - truncated";
-
-	short command = event.msg.buf.getShort();
-
 	if (error == Error.OK)
-	    return "command='" + CommandText(command) + "'"; 
+	    return Error.GetText(error);
 	else {
 	    String str = CommBuf.DecodeString(event.msg.buf);
 
 	    if (str == null)
-		return Error.GetText(error) + " command='" + CommandText(command) + "' - truncated";
+		return Error.GetText(error) + " - truncated";
 
-	    return "ERROR command='" + CommandText(command) + "' [" + Error.GetText(error) + "] " + str;
+	    return Error.GetText(error) + " : " + str;
 	}
     }
 
     public abstract String CommandText(short command);
 
-    public static CommBuf CreateErrorMessage(short command, int error, String msg, int extraSpace) {
-	CommBuf cbuf = new CommBuf(extraSpace + 6 + CommBuf.EncodedLength(msg));
+    public static CommBuf CreateErrorMessage(int error, String msg, int extraSpace) {
+	CommBuf cbuf = new CommBuf(extraSpace + 4 + CommBuf.EncodedLength(msg));
 	cbuf.PrependString(msg);
-	cbuf.PrependShort(command);
 	cbuf.PrependInt(error);
 	return cbuf;
     }

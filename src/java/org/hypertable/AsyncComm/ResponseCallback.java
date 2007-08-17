@@ -39,7 +39,7 @@ public class ResponseCallback {
 
     public int error(int error, String msg) {
 	// Build protocol message
-	CommBuf cbuf = Protocol.CreateErrorMessage((short)0, error, msg, mHeaderBuilder.HeaderLength());
+	CommBuf cbuf = Protocol.CreateErrorMessage(error, msg, mHeaderBuilder.HeaderLength());
 	// Encapsulate with Comm message response header
 	mHeaderBuilder.LoadFromMessage(mEvent.msg);
 	mHeaderBuilder.Encapsulate(cbuf);

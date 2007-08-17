@@ -94,7 +94,7 @@ class CommandUpdate extends Command {
 			System.out.println("partial update");
 		    }
 		    else if (Global.protocol.ResponseCode(event) != Error.OK) {
-			System.err.println(Global.protocol.StringFormatMessage(event));
+			System.err.println("ERROR (update) : " + Global.protocol.StringFormatMessage(event));
 		    }
 		    else
 			System.out.println("success");
@@ -125,7 +125,7 @@ class CommandUpdate extends Command {
 		    System.out.println("partial update");
 		}
 		else if (Global.protocol.ResponseCode(event) != Error.OK) {
-		    System.err.println(Global.protocol.StringFormatMessage(event));
+		    System.err.println("ERROR (update) : " + Global.protocol.StringFormatMessage(event));
 		}
 		else
 		    System.out.println("success");

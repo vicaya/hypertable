@@ -59,7 +59,7 @@ class CommandFetchScanblock extends Command {
 	    if (event == null)
 		System.err.println("ERROR: Timed out waiting for response from Hypertable Master");
 	    else if (Global.protocol.ResponseCode(event) != Error.OK) {
-		System.err.println(Global.protocol.StringFormatMessage(event));
+		System.err.println("ERROR (fetch scanblock) : " + Global.protocol.StringFormatMessage(event));
 	    }
 	    else {
 		event.msg.RewindToProtocolHeader();

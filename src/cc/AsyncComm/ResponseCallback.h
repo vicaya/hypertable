@@ -35,7 +35,7 @@ namespace hypertable {
     ResponseCallback(Comm *comm, EventPtr &eventPtr) : mComm(comm), mEventPtr(eventPtr) { return; }
     virtual ~ResponseCallback() { return; }
     int error(int error, std::string &msg);
-    int response();
+    int response_ok();
 
   protected:
     Comm          *mComm;

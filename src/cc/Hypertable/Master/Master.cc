@@ -194,7 +194,7 @@ void Master::CreateTable(ResponseCallback *cb, const char *tableName, const char
     }
   }
 
-  cb->response();
+  cb->response_ok();
 
   if (mVerbose) {
     LOG_VA_INFO("Successfully created table '%s'", tableName);

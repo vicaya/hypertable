@@ -51,7 +51,6 @@ int32_t Protocol::ResponseCode(Event *event) {
  */
 std::string Protocol::StringFormatMessage(Event *event) {
   int error = 0;
-  uint16_t command;
   uint8_t *msgPtr = event->message;
   size_t len = event->messageLen;
 
@@ -68,22 +67,15 @@ std::string Protocol::StringFormatMessage(Event *event) {
   msgPtr += sizeof(int32_t);
   len -= sizeof(int32_t);
 
-  if (len < sizeof(int16_t))
-    return (std::string)Error::GetText(error) + " - truncated";
-
-  memcpy(&command, msgPtr, sizeof(int16_t));
-  msgPtr += sizeof(int16_t);
-  len -= sizeof(int16_t);
-
   if (error == Error::OK)
-    return (std::string)"command='" + CommandText(command) + "'"; 
+    return (std::string)Error::GetText(error);
   else {
     const char *str;
 
     if (CommBuf::DecodeString(msgPtr, len, &str) == 0)
-      return (std::string)Error::GetText(error) + " command='" + CommandText(command) + "' - truncated";
+      return (std::string)Error::GetText(error) + " - truncated";
 
-    return (std::string)"ERROR command='" + CommandText(command) + "' [" + Error::GetText(error) + "] " + str;
+    return (std::string)Error::GetText(error) + " : " + str;
   }
 }
 
@@ -92,10 +84,9 @@ std::string Protocol::StringFormatMessage(Event *event) {
 /**
  *
  */
-CommBuf *Protocol::CreateErrorMessage(uint16_t command, int error, const char *msg, int extraSpace) {
-  CommBuf *cbuf = new CommBuf(extraSpace + 6 + CommBuf::EncodedLength(msg));
+CommBuf *Protocol::CreateErrorMessage(int error, const char *msg, int extraSpace) {
+  CommBuf *cbuf = new CommBuf(extraSpace + 4 + CommBuf::EncodedLength(msg));
   cbuf->PrependString(msg);
-  cbuf->PrependShort(command);
   cbuf->PrependInt(error);
   return cbuf;
 }
