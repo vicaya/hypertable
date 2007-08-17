@@ -1,40 +1,47 @@
 
-To Build:
+BUILD INSTRUCTIONS
 
 1. Install CMake (http://www.cmake.org/)
 
-2. Make sure Java 1.5 or later is installed on your machine.  Install it if it is not.
-
-  java -version
-  java version "1.5.0_07"
-  [...]
+2. Make sure Java 1.5 or later and the ant build tool is installed on your machine.
 
 3. Install the following libraries:
   - Boost version 1.33.1 or later (http://www.boost.org/)
   - log4cpp version 0.3.5rc3 (http://log4cpp.sourceforge.net/)
 
-4. Put the source code somewhere (e.g. ~/code/hypertable/trunk)
+4. Checkout the source code.
 
-5. Build the JAR file
+  mkdir ~/code
+  cd ~/code
+  svn checkout http://hypertable.googlecode.com/svn/trunk hypertable
 
-  cd ~/code/hypertable/trunk
+5. Build hypertable.jar
+
+  cd ~/code/hypertable
   ant jar
 
 6. Create an install directory
 
-  mkdir ~/install
+  mkdir ~/hypertable
 
 7. Create a build directory
 
-  mkdir -p ~/build/hypertable/trunk
+  mkdir -p ~/build/hypertable
 
-8. Configure the build
+8. Configure the build.  Edit the file ~/code/hypertable/CMakeLists.txt
+and modify the following line:
 
-  cd ~/build/hypertable/trunk
-  cmake -D CMAKE_BUILD_TYPE="Debug" ~/code/hypertable/trunk
+  set (CMAKE_INSTALL_PREFIX "/Users/doug/hypertable")
 
-9. Build
+Change it to point to where you want the binaries to get installed.  Then
+configure the build as follows:
 
-  cd ~/build/hypertable/trunk
+  cd ~/build/hypertable
+  cmake -D CMAKE_BUILD_TYPE="Debug" ~/code/hypertable
+
+9. Build the software.
+
   make
   make install
+
+
