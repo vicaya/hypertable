@@ -6,14 +6,14 @@ INFO hsTest : (${SRC_DIR}/tests/hsTest.cc:136) ATTRSET foo.name - HYPERTABLE ok
 INFO hsTest : (${SRC_DIR}/tests/hsTest.cc:139) foo.name = 'Doug Judd'
 INFO hsTest : (${SRC_DIR}/tests/hsTest.cc:146) ATTRSET foo.address - HYPERTABLE ok
 INFO hsTest : (${SRC_DIR}/tests/hsTest.cc:149) foo.address = '2999 Canyon Rd. Burlingame CA 94010'
-WARN hsTest : (${SRC_DIR}/HyperspaceClient.cc:204) Hyperspace 'attrget' error, fname=foo aname=phone : ERROR command='create' [HYPERSPACE attribute not found] Attribute 'phone' not found
+WARN hsTest : (${SRC_DIR}/HyperspaceClient.cc:213) Hyperspace 'attrget' error, fname=foo aname=phone : HYPERSPACE attribute not found : Attribute 'phone' not found
 INFO hsTest : (${SRC_DIR}/tests/hsTest.cc:156) ATTRGET foo.phone - HYPERSPACE attribute not found
-ERROR hsTest : (${SRC_DIR}/HyperspaceClient.cc:247) Hyperspace 'attrdel' error, fname=foo aname=phone : ERROR command='create' [HYPERSPACE attribute not found] Attribute 'phone' not found
+ERROR hsTest : (${SRC_DIR}/HyperspaceClient.cc:256) Hyperspace 'attrdel' error, fname=foo aname=phone : HYPERSPACE attribute not found : Attribute 'phone' not found
 INFO hsTest : (${SRC_DIR}/tests/hsTest.cc:159) ATTRDEL foo.phone - HYPERSPACE attribute not found
 INFO hsTest : (${SRC_DIR}/tests/hsTest.cc:162) ATTRDEL foo.name - HYPERTABLE ok
 INFO hsTest : (${SRC_DIR}/tests/hsTest.cc:165) DELETE foo - HYPERTABLE ok
 INFO hsTest : (${SRC_DIR}/tests/hsTest.cc:168) MKDIRS chumba/wumba - HYPERTABLE ok
-ERROR hsTest : (${SRC_DIR}/HyperspaceClient.cc:305) Hyperspace 'attrdel' error, fname=chumba : ERROR command='create' [HYPERSPACE delete error] chumba
+ERROR hsTest : (${SRC_DIR}/HyperspaceClient.cc:314) Hyperspace 'attrdel' error, fname=chumba : HYPERSPACE delete error : chumba
 INFO hsTest : (${SRC_DIR}/tests/hsTest.cc:171) DELETE chumba - HYPERSPACE delete error
 INFO hsTest : (${SRC_DIR}/tests/hsTest.cc:174) DELETE chumba/wumba - HYPERTABLE ok
 INFO hsTest : (${SRC_DIR}/tests/hsTest.cc:177) DELETE chumba - HYPERTABLE ok
