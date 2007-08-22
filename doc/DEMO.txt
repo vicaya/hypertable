@@ -1,7 +1,13 @@
 
 DEMO #1
 
-rm -rf ~/HypertableLogs/*; cp metadata-test.xml metadata
+make
+make install
+cd ~/hypertable
+./bin/start-servers.sh
+cd demo
+rm -rf ../log/hypertable/servers/*; cp metadata-test.xml metadata; hadoop dfs -rmr /hypertable/tables/Test
+
 ../bin/Hypertable.RangeServer --verbose --metadata=metadata
 
 ../bin/jrun org.hypertable.Hypertable.RangeServer.Client
@@ -16,7 +22,7 @@ update Test[:kerchoo] testdata.txt
 
 scan Test[:kerchoo]
 
-./bin/hadoop dfs -ls /hypertable/tables/Test/cindy/000000000000000000000000
+./bin/hadoop dfs -ls /hypertable/tables/Test/cindy/CB2CFDF7D46EC23ADC62694C
 
 ^C
 
@@ -26,11 +32,9 @@ load range Test[:kerchoo]
 
 scan Test[:kerchoo]
 
-./bin/hadoop dfs -ls /hypertable/tables/Test/cindy/000000000000000000000000
+./bin/hadoop dfs -ls /hypertable/tables/Test/cindy/CB2CFDF7D46EC23ADC62694C
 
 compact Test[:kerchoo]
-
-scan Test[:kerchoo]
 
 scan Test[:kerchoo]
 
@@ -49,4 +53,4 @@ more testdata.txt
 
 load range Test[:kerchoo]
 
-update Test[:kerchoo] testdata.txt
+update Test[:kerchoo] testdata2.txt
