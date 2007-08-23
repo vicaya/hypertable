@@ -78,13 +78,14 @@ public class Client {
 
 	mProtocol = new Protocol();
 
-	mManager = new ConnectionManager("Waiting for Bigtable.Master...");
-	mManager.Initiate(mComm, mAddr, mTimeout);
+	mConnectionManager = new ConnectionManager(mComm);
+	mConnectionManager.Add(mAddr, 10, "Hypertable.Master");
+
     }
 
     public boolean WaitForReady() throws InterruptedException {
-	if (!mManager.WaitForConnection(mTimeout)) {
-	    log.warning("Timed out waiting for connection to master at " + mAddr);
+	if (!mConnectionManager.WaitForConnection(mAddr, mTimeout)) {
+	    log.warning("Timed out waiting for connection to Hypertable.Master at " + mAddr);
 	    return false;
 	}
 	return true;
@@ -179,7 +180,7 @@ public class Client {
     private Comm     mComm;
     private long     mTimeout;
     private Protocol mProtocol;
-    private ConnectionManager mManager;
+    private ConnectionManager mConnectionManager;
     private InetSocketAddress mAddr;
 
 }

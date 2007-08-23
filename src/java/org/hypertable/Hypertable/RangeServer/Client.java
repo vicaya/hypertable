@@ -59,13 +59,13 @@ public class Client {
 
 	mProtocol = new Protocol();
 
-	mMasterManager = new ConnectionManager("Waiting for Hypertable.RangeServer...");
-	mMasterManager.Initiate(mComm, addr, mTimeout);
+	mConnectionManager = new ConnectionManager(mComm);
+	mConnectionManager.Add(mAddr, 10, "Hypertable.RangeServer");
     }
 
     public boolean WaitForReady() throws InterruptedException {
-	if (!mMasterManager.WaitForConnection(mTimeout)) {
-	    log.warning("Timed out waiting for connection to master at " + mAddr);
+	if (!mConnectionManager.WaitForConnection(mAddr, mTimeout)) {
+	    log.warning("Timed out waiting for connection to Hypertable.RangeServer at " + mAddr);
 	    return false;
 	}
 	return true;
@@ -132,7 +132,7 @@ public class Client {
     private Comm mComm;
     private long mTimeout;
     private Protocol    mProtocol;
-    private ConnectionManager mMasterManager;
+    private ConnectionManager mConnectionManager;
     private InetSocketAddress mAddr;
  
     static String usage[] = {

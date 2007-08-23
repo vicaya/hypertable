@@ -168,7 +168,8 @@ void ConnectionManager::handle(EventPtr &eventPtr) {
     }
     else {
       if (!mImpl->quietMode) {
-	LOG_VA_INFO("%s", eventPtr->toString().c_str());
+	LOG_VA_INFO("%s; Problem connecting to %s, will retry in %d seconds...",
+		    eventPtr->toString().c_str(), connState->serviceName.c_str(), connState->timeout);
       }
       connState->connected = false;
       // this logic could proably be smarter.  For example, if the last
@@ -210,10 +211,12 @@ void ConnectionManager::operator()() {
 
       if (xtime_cmp(connState->nextRetry, now) <= 0) {
 	mImpl->retryQueue.pop();
+	/**
 	if (!mImpl->quietMode) {
 	  LOG_VA_INFO("Attempting to re-establish connection to %s at %s:%d...",
 		      connState->serviceName.c_str(), inet_ntoa(connState->addr.sin_addr), ntohs(connState->addr.sin_port));
 	}
+	*/
 	SendConnectRequest(connState);
       }
       else

@@ -94,12 +94,10 @@ public class CommTest {
 	    mAddr = new InetSocketAddress("localhost", DEFAULT_PORT);
 
 	    mComm = new Comm(0);
+	    mConnectionManager = new ConnectionManager(mComm);
+	    mConnectionManager.Add(mAddr, 5, "SampleServer");
 
-	    ConnectionManager.Callback connHandler = new ConnectionManager.Callback(mComm, mAddr, 5);
-
-	    connHandler.SendConnectRequest();
-
-	    if (!connHandler.WaitForConnection(30)) {
+	    if (!mConnectionManager.WaitForConnection(mAddr, 30)) {
 		log.fine("Connect error");
 		msShutdown = true;
 		return;
@@ -177,6 +175,7 @@ public class CommTest {
     }
 
     private Comm mComm;
+    private ConnectionManager mConnectionManager;
     private ServerLauncher    slauncher;
     private InetSocketAddress mAddr;
     protected static boolean  msShutdown = false;

@@ -82,7 +82,7 @@ HyperspaceClient::HyperspaceClient(ConnectionManager *connManager, Properties *p
   mAddr.sin_family = AF_INET;
   mAddr.sin_port = htons(port);
 
-  mConnManager->Add(mAddr, mTimeout, "Hyperspace");
+  mConnManager->Add(mAddr, 15, "Hyperspace");
 
   mProtocol = new HyperspaceProtocol();
 }
@@ -91,7 +91,7 @@ HyperspaceClient::HyperspaceClient(ConnectionManager *connManager, Properties *p
 
 bool HyperspaceClient::WaitForConnection() {
   if (!mConnManager->WaitForConnection(mAddr, mTimeout)) {
-    LOG_VA_WARN("Timed out waiting for connection to master at %s:%d", inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port));
+    LOG_VA_WARN("Timed out waiting for connection to Hyperspace at %s:%d", inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port));
     return false;
   }
   return true;
