@@ -73,6 +73,7 @@ namespace {
 int main(int argc, char **argv) {
   Properties *props = new Properties();
   Comm *comm;
+  ConnectionManager *connManager;
   HyperspaceClient *client;
   int error;
   string configFile = "";
@@ -95,7 +96,9 @@ int main(int argc, char **argv) {
 
   comm = new Comm();
 
-  client = new HyperspaceClient(comm, props);
+  connManager = new ConnectionManager(comm);
+
+  client = new HyperspaceClient(connManager, props);
 
   if (!client->WaitForConnection())
     goto done;

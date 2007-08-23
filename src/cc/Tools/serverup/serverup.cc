@@ -32,6 +32,7 @@ extern "C" {
 #include "Common/Usage.h"
 
 #include "AsyncComm/Comm.h"
+#include "AsyncComm/ConnectionManager.h"
 #include "AsyncComm/ReactorFactory.h"
 
 #include "HdfsClient/HdfsClient.h"
@@ -91,6 +92,7 @@ int main(int argc, char **argv) {
   HyperspaceClient *hyperspaceClient;
   MasterClient *master;
   Comm *comm = 0;
+  ConnectionManager *connManager;
   int error;
 
   System::Initialize(argv[0]);
@@ -158,24 +160,25 @@ int main(int argc, char **argv) {
   }
 
   comm = new Comm();
+  connManager = new ConnectionManager(comm);
+  connManager->SetQuietMode(true);
 
   if (serverName == "hdfsbroker") {
-    hdfsClient = new HdfsClient(comm, addr, 30, true);
+    hdfsClient = new HdfsClient(connManager, addr, 30);
     if (!hdfsClient->WaitForConnection(2))
       exit(1);
     if ((error = hdfsClient->Status()) != Error::OK)
       exit(1);
   }
   else if (serverName == "hyperspace") {
-    hyperspaceClient = new HyperspaceClient(comm, addr, 2, true);
+    hyperspaceClient = new HyperspaceClient(connManager, addr, 2);
     if (!hyperspaceClient->WaitForConnection())
       exit(1);
     if ((error = hyperspaceClient->Status()) != Error::OK)
       exit(1);
   }
   else if (serverName == "master") {
-    CommPtr commPtr(comm);
-    master = new MasterClient(commPtr, propsPtr, true);
+    master = new MasterClient(connManager, propsPtr);
     if (!master->WaitForConnection(2))
       exit(1);
     if ((error = master->Status()) != Error::OK)

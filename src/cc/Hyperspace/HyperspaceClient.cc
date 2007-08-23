@@ -49,27 +49,20 @@ namespace {
 
 
 
-HyperspaceClient::HyperspaceClient(Comm *comm, struct sockaddr_in &addr, time_t timeout, bool quiet) :
-  mComm(comm), mAddr(addr), mTimeout(timeout) {
-  if (quiet)
-    mConnManager = new ConnectionManager();
-  else
-    mConnManager = new ConnectionManager("Waiting for Hyperspace server");       
-  mConnManager->Initiate(comm, addr, timeout);
+HyperspaceClient::HyperspaceClient(ConnectionManager *connManager, struct sockaddr_in &addr, time_t timeout) : mConnManager(connManager), mAddr(addr), mTimeout(timeout) {
+
+  mComm = mConnManager->GetComm();
+
+  mConnManager->Add(mAddr, mTimeout, "Hyperspace");
+
   mProtocol = new HyperspaceProtocol();
 }
 
 
 
-HyperspaceClient::HyperspaceClient(Comm *comm, Properties *props, bool quiet) : mComm(comm) {
+HyperspaceClient::HyperspaceClient(ConnectionManager *connManager, Properties *props) : mConnManager(connManager) {
 
-  assert(comm);
-  assert(props);
-
-  if (quiet)
-    mConnManager = new ConnectionManager();
-  else
-    mConnManager = new ConnectionManager("Waiting for Hyperspace server");
+  mComm = mConnManager->GetComm();
 
   const char *host = props->getProperty("Hyperspace.host", DEFAULT_HOST);
 
@@ -89,7 +82,7 @@ HyperspaceClient::HyperspaceClient(Comm *comm, Properties *props, bool quiet) : 
   mAddr.sin_family = AF_INET;
   mAddr.sin_port = htons(port);
 
-  mConnManager->Initiate(mComm, mAddr, mTimeout);
+  mConnManager->Add(mAddr, mTimeout, "Hyperspace");
 
   mProtocol = new HyperspaceProtocol();
 }
@@ -97,7 +90,7 @@ HyperspaceClient::HyperspaceClient(Comm *comm, Properties *props, bool quiet) : 
 
 
 bool HyperspaceClient::WaitForConnection() {
-  if (!mConnManager->WaitForConnection(mTimeout)) {
+  if (!mConnManager->WaitForConnection(mAddr, mTimeout)) {
     LOG_VA_WARN("Timed out waiting for connection to master at %s:%d", inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port));
     return false;
   }

@@ -22,16 +22,21 @@
 #ifndef HYPERTABLE_CONNECTIONMANAGER_H
 #define HYPERTABLE_CONNECTIONMANAGER_H
 
+#include <queue>
 #include <string>
 
 #include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
+#include <boost/thread/xtime.hpp>
+
 
 extern "C" {
 #include <time.h>
 #include <sys/time.h>
 }
+
+#include "Common/SockAddrMap.h"
 
 #include "DispatchHandler.h"
 
@@ -40,69 +45,67 @@ namespace hypertable {
   class Comm;
   class Event;
 
-  class ConnectionManager {
+  class ConnectionManager : public DispatchHandler {
 
   public:
 
-    static const int RETRY_INTERVAL = 10;
+    typedef struct {
+      bool                connected;
+      struct sockaddr_in  addr;
+      time_t              timeout;
+      boost::mutex        mutex;
+      boost::condition    cond;
+      boost::xtime        nextRetry;
+      std::string         serviceName;
+    } ConnectionStateT;
 
-    ConnectionManager(std::string &waitMessage) : mWaitMessage(waitMessage) { return; }
-
-    ConnectionManager(const char *waitMessage) : mWaitMessage(waitMessage) { return; }
-
-    ConnectionManager() : mWaitMessage("") { return; }
-
-    void Initiate(Comm *comm, struct sockaddr_in &addr, time_t timeout) {
-      mHandler = new Callback(comm, addr, timeout);
-      mThread = new boost::thread(*this);
-      return;
-    }
-
-    bool WaitForConnection(long maxWaitSecs) {
-      struct timeval tval;
-      long elapsed = 0;
-      long starttime;
-
-      gettimeofday(&tval, 0);
-      starttime = tval.tv_sec;
-
-      while (elapsed < maxWaitSecs) {
-
-	if (mHandler->WaitForConnection(maxWaitSecs-elapsed))
-	  return true;
-
-	gettimeofday(&tval, 0);
-	elapsed = tval.tv_sec - starttime;
+    struct ltConnectionState {
+      bool operator()(const ConnectionStateT *cs1, const ConnectionStateT *cs2) const {
+	return xtime_cmp(cs1->nextRetry, cs2->nextRetry) >= 0;
       }
-      return false;
+    };
+
+    typedef struct {
+      Comm              *comm;
+      boost::mutex       mutex;
+      boost::condition   retryCond;
+      boost::thread     *thread;
+      SockAddrMapT<ConnectionStateT *>  connMap;
+      std::priority_queue<ConnectionStateT *, std::vector<ConnectionStateT *>, ltConnectionState> retryQueue;
+      bool quietMode;
+    } SharedImplT;
+
+    ConnectionManager(Comm *comm) {
+      mImpl = new SharedImplT;
+      mImpl->comm = comm;
+      mImpl->thread = new boost::thread(*this);
+      mImpl->quietMode = false;
     }
+    
+    ConnectionManager(const ConnectionManager &cm) {
+      mImpl = cm.mImpl;
+    }
+
+    virtual ~ConnectionManager() { /** implement me! **/ return; }
+
+    void Add(struct sockaddr_in &addr, time_t timeout, const char *serviceName);
+
+    virtual void handle(EventPtr &event);
+
+    bool WaitForConnection(struct sockaddr_in &addr, long maxWaitSecs);
 
     void operator()();
 
-    class Callback : public DispatchHandler {
-    public:
-      Callback(Comm *comm, struct sockaddr_in &addr, time_t timeout) 
-	: mComm(comm), mAddr(addr), mTimeout(timeout), mConnected(false), mMutex(), mCond() { return; }
-      virtual ~Callback() { return; }
-      virtual void handle(EventPtr &event);
-      void SendConnectRequest();
-      bool WaitForConnection(long maxWaitSecs);
-      bool WaitForEvent();
+    Comm *GetComm() { return mImpl->comm; }
 
-    private:
-      Comm               *mComm;
-      struct sockaddr_in  mAddr;
-      time_t              mTimeout;
-      bool                mConnected;
-      boost::mutex        mMutex;
-      boost::condition    mCond;
-    };
+    void SetQuietMode(bool mode) { mImpl->quietMode = mode; }
 
   private:
 
-    Callback       *mHandler;
-    boost::thread  *mThread;
-    std::string     mWaitMessage;
+    void SendConnectRequest(ConnectionStateT *connState);
+
+    SharedImplT *mImpl;
+
   };
 
 }

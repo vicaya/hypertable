@@ -33,12 +33,13 @@ Manager *Manager::msInstance = 0;
  */
 Manager::Manager(PropertiesPtr &propsPtr) {
 
-  mCommPtr.reset( new Comm() );
+  mComm = new Comm();
+  mConnectionManager = new ConnectionManager(mComm);
 
   /**
    *  Create Master
    */
-  mMasterPtr.reset( new MasterClient(mCommPtr, propsPtr) );
+  mMasterPtr.reset( new MasterClient(mConnectionManager, propsPtr) );
 
   if (!mMasterPtr->WaitForConnection(60)) {
     cerr << "Unable to connect to Master, exiting..." << endl;

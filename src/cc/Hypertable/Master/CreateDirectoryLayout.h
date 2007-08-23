@@ -23,8 +23,8 @@
 
 namespace hypertable {
   class Properties;
-  class Comm;
-  bool CreateDirectoryLayout(Comm *comm, Properties *props);
+  class ConnectionManager;
+  bool CreateDirectoryLayout(ConnectionManager *connManager, Properties *props);
 }
 
 #endif // HYPERTABLE_CREATEDIRECTORYLAYOUT_H

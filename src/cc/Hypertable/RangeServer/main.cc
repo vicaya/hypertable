@@ -31,6 +31,7 @@ extern "C" {
 
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/Comm.h"
+#include "AsyncComm/ConnectionManager.h"
 #include "AsyncComm/ConnectionHandlerFactory.h"
 
 #include "ConnectionHandler.h"
@@ -84,6 +85,7 @@ int main(int argc, char **argv) {
   string metadataFile = "";
   int port, reactorCount, workerCount;
   Comm *comm = 0;
+  ConnectionManager *connManager;
   Properties *props = 0;
   RangeServer *rangeServer = 0;
 
@@ -124,6 +126,7 @@ int main(int argc, char **argv) {
   ReactorFactory::Initialize(reactorCount);
 
   comm = new Comm();
+  connManager = new ConnectionManager(comm);
 
   if (Global::verbose) {
     cout << "CPU count = " << System::GetProcessorCount() << endl;
@@ -132,7 +135,7 @@ int main(int argc, char **argv) {
     cout << "Hypertable.RangeServer.reactors=" << reactorCount << endl;
   }
 
-  rangeServer = new RangeServer (comm, props);
+  rangeServer = new RangeServer (connManager, props);
   Global::appQueue = new ApplicationQueue(workerCount);
   comm->Listen(port, new HandlerFactory(comm, Global::appQueue, rangeServer));
 

@@ -85,6 +85,7 @@ namespace {
 int main(int argc, char **argv) {
   Properties *props = new Properties();
   Comm *comm;
+  ConnectionManager *connManager;
   HyperspaceClient *hyperspaceClient;
   int error;
   const char *command = 0;
@@ -115,7 +116,9 @@ int main(int argc, char **argv) {
 
   comm = new Comm();
 
-  hyperspaceClient = new HyperspaceClient(comm, props);
+  connManager = new ConnectionManager(comm);
+
+  hyperspaceClient = new HyperspaceClient(connManager, props);
 
   if (!hyperspaceClient->WaitForConnection())
     goto done;

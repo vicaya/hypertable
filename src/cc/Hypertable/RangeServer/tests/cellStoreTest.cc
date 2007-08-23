@@ -40,6 +40,7 @@ extern "C" {
 #include "Common/Usage.h"
 
 #include "AsyncComm/Comm.h"
+#include "AsyncComm/ConnectionManager.h"
 #include "AsyncComm/ReactorFactory.h"
 
 #include "HdfsClient/HdfsClient.h"
@@ -74,6 +75,7 @@ namespace {
 
 int main(int argc, char **argv) {
   Comm *comm;
+  ConnectionManager *connManager;
   HdfsClient *client;
   struct sockaddr_in addr;
   bool golden = false;
@@ -152,8 +154,9 @@ int main(int argc, char **argv) {
   addr.sin_port = htons(DEFAULT_HDFSBROKER_PORT);
 
   comm = new Comm();
+  connManager = new ConnectionManager(comm);
 
-  client = new HdfsClient(comm, addr, 20);
+  client = new HdfsClient(connManager, addr, 20);
   if (!client->WaitForConnection(10))
     harness.DisplayErrorAndExit();
 

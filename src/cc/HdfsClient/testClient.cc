@@ -100,7 +100,8 @@ int main(int argc, char **argv) {
     return 1;
 
   Global::comm = new Comm();
-  Global::client = new HdfsClient(Global::comm, addr, 20);
+  Global::connManager = new ConnectionManager(Global::comm);
+  Global::client = new HdfsClient(Global::connManager, addr, 20);
   Global::protocol = new HdfsProtocol();
 
   if (!Global::client->WaitForConnection(30))

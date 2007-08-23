@@ -25,6 +25,7 @@
 
 #include "Common/Properties.h"
 #include "AsyncComm/Comm.h"
+#include "AsyncComm/ConnectionManager.h"
 
 #include "MasterClient.h"
 
@@ -55,9 +56,9 @@ namespace hypertable {
 
     static Manager *msInstance;
 
-    CommPtr mCommPtr;
+    Comm *mComm;
+    ConnectionManager *mConnectionManager;
     MasterClientPtr mMasterPtr;
-
   };
 
 }

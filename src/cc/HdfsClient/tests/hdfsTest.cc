@@ -79,7 +79,8 @@ int main(int argc, char **argv) {
   addr.sin_port = htons(DEFAULT_PORT);
 
   Global::comm = new Comm();
-  Global::client = new HdfsClient(Global::comm, addr, 15);
+  Global::connManager = new ConnectionManager(Global::comm);
+  Global::client = new HdfsClient(Global::connManager, addr, 15);
   Global::protocol = new HdfsProtocol();
 
   if (!Global::client->WaitForConnection(15)) {

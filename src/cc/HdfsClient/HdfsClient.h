@@ -47,10 +47,10 @@ namespace hypertable {
   class HdfsClient {
   public:
 
-    HdfsClient(Comm *comm, struct sockaddr_in &addr, time_t timeout, bool quiet=false);
+    HdfsClient(ConnectionManager *connManager, struct sockaddr_in &addr, time_t timeout);
 
     bool WaitForConnection(long maxWaitSecs) {
-      return mConnectionManager->WaitForConnection(maxWaitSecs);
+      return mConnectionManager->WaitForConnection(mAddr, maxWaitSecs);
     }
 
     int Open(const char *name, DispatchHandler *handler, uint32_t *msgIdp);

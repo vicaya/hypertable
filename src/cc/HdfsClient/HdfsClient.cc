@@ -33,13 +33,10 @@
 using namespace hypertable;
 
 
-HdfsClient::HdfsClient(Comm *comm, struct sockaddr_in &addr, time_t timeout, bool quiet) : mComm(comm), mAddr(addr), mTimeout(timeout) {
-  if (quiet)
-    mConnectionManager = new ConnectionManager();
-  else
-    mConnectionManager = new ConnectionManager("Waiting for HdfsBroker");
+HdfsClient::HdfsClient(ConnectionManager *connManager, struct sockaddr_in &addr, time_t timeout) : mConnectionManager(connManager), mAddr(addr), mTimeout(timeout) {
+  mComm = mConnectionManager->GetComm();
   mProtocol = new HdfsProtocol();
-  mConnectionManager->Initiate(comm, addr, timeout);
+  mConnectionManager->Add(addr, timeout, "HdfsBroker");
 }
 
 

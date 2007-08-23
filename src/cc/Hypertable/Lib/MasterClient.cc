@@ -24,14 +24,11 @@
 #include "MasterClient.h"
 
 
-MasterClient::MasterClient(CommPtr &commPtr, PropertiesPtr &propsPtr, bool quiet) : mCommPtr(commPtr) {
+MasterClient::MasterClient(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mConnectionManager(connManager) {
   uint16_t masterPort = 0;
   const char *masterHost = 0;
 
-  if (quiet)
-    mConnectionManager = new ConnectionManager();
-  else
-    mConnectionManager = new ConnectionManager("Waiting for connection to Master");
+  mComm = mConnectionManager->GetComm();
 
   /**
    *  Establish connection to Master
@@ -61,7 +58,7 @@ MasterClient::MasterClient(CommPtr &commPtr, PropertiesPtr &propsPtr, bool quiet
 
   }
 
-  mConnectionManager->Initiate(mCommPtr.get(), mAddr, 30);
+  mConnectionManager->Add(mAddr, 30, "Master");
 
   mProtocol = new MasterProtocol();
   
@@ -150,7 +147,7 @@ int MasterClient::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler, uin
   if (msgIdp)
     *msgIdp = ((Header::HeaderT *)cbufPtr->data)->id;
 
-  if ((error = mCommPtr->SendRequest(mAddr, cbufPtr, handler)) != Error::OK) {
+  if ((error = mComm->SendRequest(mAddr, cbufPtr, handler)) != Error::OK) {
     LOG_VA_WARN("Comm::SendRequest to %s:%d failed - %s",
 		inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port), Error::GetText(error));
   }

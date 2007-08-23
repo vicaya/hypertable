@@ -23,7 +23,8 @@
 
 using namespace hypertable;
 
-hypertable::Comm *Global::comm = 0;
-HdfsClient       *Global::client = 0;
-HdfsProtocol     *Global::protocol = 0;
-bool              Global::verbose = false;
+Comm              *Global::comm = 0;
+ConnectionManager *Global::connManager = 0;
+HdfsClient        *Global::client = 0;
+HdfsProtocol      *Global::protocol = 0;
+bool               Global::verbose = false;

@@ -23,6 +23,7 @@
 #define HDFS_GLOBAL_H
 
 #include "AsyncComm/Comm.h"
+#include "AsyncComm/ConnectionManager.h"
 
 #include "HdfsClient.h"
 #include "HdfsProtocol.h"
@@ -32,6 +33,7 @@ namespace hypertable {
   class Global {
   public:
     static hypertable::Comm *comm;
+    static hypertable::ConnectionManager *connManager;
     static HdfsClient *client;
     static HdfsProtocol *protocol;
     static bool verbose;

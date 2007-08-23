@@ -19,6 +19,7 @@
  */
 
 #include "AsyncComm/Comm.h"
+#include "AsyncComm/ConnectionManager.h"
 #include "AsyncComm/ReactorFactory.h"
 
 #include "Common/ByteString.h"
@@ -63,6 +64,7 @@ namespace {
 
 int main(int argc, char **argv) {
   Comm *comm;
+  ConnectionManager *connManager;
   HdfsClient *client;
   bool golden = false;
   struct sockaddr_in addr;
@@ -93,8 +95,9 @@ int main(int argc, char **argv) {
   addr.sin_port = htons(DEFAULT_HDFSBROKER_PORT);
 
   comm = new Comm();
+  connManager = new ConnectionManager(comm);
 
-  client = new HdfsClient(comm, addr, 20);
+  client = new HdfsClient(connManager, addr, 20);
   if (!client->WaitForConnection(10))
     harness.DisplayErrorAndExit();
 

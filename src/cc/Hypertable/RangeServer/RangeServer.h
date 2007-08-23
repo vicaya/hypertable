@@ -40,7 +40,7 @@ namespace hypertable {
 
   class RangeServer {
   public:
-    RangeServer(Comm *comm, Properties *props);
+    RangeServer(ConnectionManager *connManager, Properties *props);
 
     void Compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, uint8_t compactionType);
     void CreateScanner(ResponseCallbackCreateScanner *cb, RangeSpecificationT *rangeSpec, ScanSpecificationT *spec);
@@ -51,7 +51,6 @@ namespace hypertable {
   private:
     int DirectoryInitialize(Properties *props);
 
-    Comm *mComm;
     bool mVerbose;
     HyperspaceClient *mHyperspace;
     HdfsClient *mHdfsClient;

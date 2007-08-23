@@ -23,6 +23,7 @@
 
 #include "Common/Properties.h"
 #include "AsyncComm/Comm.h"
+#include "AsyncComm/ConnectionManager.h"
 #include "AsyncComm/Event.h"
 #include "AsyncComm/ResponseCallback.h"
 
@@ -37,14 +38,13 @@ namespace hypertable {
 
   class Master {
   public:
-    Master(Comm *comm, Properties *props);
+    Master(ConnectionManager *connManager, Properties *props);
     ~Master();
     void CreateTable(ResponseCallback *cb, const char *tableName, const char *schemaString);
     void GetSchema(ResponseCallbackGetSchema *cb, const char *tableName);
     bool CreateDirectoryLayout();
 
   private:
-    Comm *mComm;
     bool mVerbose;
     HyperspaceClient *mHyperspace;
     HdfsClient *mHdfsClient;

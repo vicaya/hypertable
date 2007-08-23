@@ -95,6 +95,7 @@ int main(int argc, char **argv) {
   int port, reactorCount, workerCount;
   Comm *comm;
   ApplicationQueue *appQueue = 0;
+  ConnectionManager *connManager;
 
   System::Initialize(argv[0]);
   
@@ -127,6 +128,7 @@ int main(int argc, char **argv) {
   ReactorFactory::Initialize(reactorCount);
 
   comm = new Comm();
+  connManager = new ConnectionManager(comm);
 
   if (verbose) {
     cout << "CPU count = " << System::GetProcessorCount() << endl;
@@ -136,12 +138,12 @@ int main(int argc, char **argv) {
   }
 
   if (initialize) {
-    if (!CreateDirectoryLayout(comm, props))
+    if (!CreateDirectoryLayout(connManager, props))
       return 1;
     return 0;
   }
 
-  master = new Master(comm, props);
+  master = new Master(connManager, props);
   appQueue = new ApplicationQueue(workerCount);
   comm->Listen(port, new HandlerFactory(comm, appQueue, master));
 
@@ -158,6 +160,7 @@ int main(int argc, char **argv) {
   delete appQueue;
   delete master;
   delete props;
+  delete connManager;
   delete comm;
   return 0;
 }

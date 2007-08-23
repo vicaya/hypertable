@@ -38,11 +38,11 @@ namespace hypertable {
   class MasterClient {
   public:
 
-    MasterClient(CommPtr &commPtr, PropertiesPtr &propsPtr, bool quiet=false);
+    MasterClient(ConnectionManager *connManager, PropertiesPtr &propsPtr);
     ~MasterClient();
 
     bool WaitForConnection(long maxWaitSecs) {
-      return mConnectionManager->WaitForConnection(maxWaitSecs);
+      return mConnectionManager->WaitForConnection(mAddr, maxWaitSecs);
     }
 
     int CreateTable(const char *tableName, const char *schemaString, DispatchHandler *handler, uint32_t *msgIdp);
@@ -62,7 +62,7 @@ namespace hypertable {
 
     int SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler, uint32_t *msgIdp=0);
   
-    CommPtr            mCommPtr;
+    Comm              *mComm;
     ConnectionManager *mConnectionManager;
     MasterProtocol    *mProtocol;
     struct sockaddr_in mAddr;

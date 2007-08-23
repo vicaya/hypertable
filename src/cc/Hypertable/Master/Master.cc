@@ -25,9 +25,9 @@
 using namespace hypertable;
 using namespace std;
 
-Master::Master(Comm *comm, Properties *props) : mComm(comm), mVerbose(false), mHyperspace(0), mHdfsClient(0) {
+Master::Master(ConnectionManager *connManager, Properties *props) : mVerbose(false), mHyperspace(0), mHdfsClient(0) {
 
-  mHyperspace = new HyperspaceClient(comm, props);
+  mHyperspace = new HyperspaceClient(connManager, props);
 
   if (!mHyperspace->WaitForConnection()) {
     LOG_ERROR("Unable to connect to hyperspace, exiting...");
@@ -71,7 +71,7 @@ Master::Master(Comm *comm, Properties *props) : mComm(comm), mVerbose(false), mH
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
 
-    mHdfsClient = new HdfsClient(comm, addr, 20);
+    mHdfsClient = new HdfsClient(connManager, addr, 20);
     if (!mHdfsClient->WaitForConnection(30)) {
       LOG_ERROR("Unable to connect to HdfsBroker, exiting...");
       exit(1);

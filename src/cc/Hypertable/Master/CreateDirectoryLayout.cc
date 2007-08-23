@@ -32,11 +32,11 @@ extern "C" {
 
 using namespace hypertable;
 
-bool hypertable::CreateDirectoryLayout(Comm *comm, Properties *props) {
+bool hypertable::CreateDirectoryLayout(ConnectionManager *connManager, Properties *props) {
   HyperspaceClient *hyperspace;
   int error;
 
-  hyperspace = new HyperspaceClient(comm, props);
+  hyperspace = new HyperspaceClient(connManager, props);
 
   if (!hyperspace->WaitForConnection()) {
     LOG_ERROR("Unable to connect to hyperspace, exiting...");

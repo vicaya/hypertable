@@ -18,10 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 #include <iostream>
-
-#include <boost/thread/xtime.hpp>
 
 extern "C" {
 #include <poll.h>
@@ -43,95 +40,188 @@ using namespace std;
 
 
 /**
+ * This method adds a connection to the connection manager if it is not already added.
+ * It first allocates a ConnectionStateT structure for the connection and initializes
+ * it to the non-connected state.  It then attempts to establish the connection.
  *
+ * @param addr         The address to connect to
+ * @param timeout      The timeout passed down into AsyncComm, also used as the retry timeout
+ * @param serviceName  The name of the service we're connnecting to (used for better log messages)
  */
-void ConnectionManager::operator()() {
-  struct timeval tval;
-  long elapsed, sendtime = 0;
+void ConnectionManager::Add(struct sockaddr_in &addr, time_t timeout, const char *serviceName) {
+  boost::mutex::scoped_lock lock(mImpl->mutex);
+  SockAddrMapT<ConnectionStateT *> iter;
+  ConnectionStateT *connState;
+  int error;
 
-  while (true) {
+  if (mImpl->connMap.find(addr) != mImpl->connMap.end())
+    return;
 
-    gettimeofday(&tval, 0);
-    elapsed = tval.tv_sec - sendtime;
+  connState = new ConnectionStateT;
+  connState->connected = false;
+  connState->addr = addr;
+  connState->timeout = timeout;
+  connState->serviceName = (serviceName) ? serviceName : "";
+  boost::xtime_get(&connState->nextRetry, boost::TIME_UTC);
 
-    if (elapsed < RETRY_INTERVAL) {
-      if (mWaitMessage != "")
-	cerr << mWaitMessage << " ...";
-      poll(0, 0, (RETRY_INTERVAL - elapsed)*1000);
-      cerr << endl;
-    }
+  mImpl->connMap[addr] = connState;
 
-    mHandler->SendConnectRequest();
-    gettimeofday(&tval, 0);
-    sendtime = tval.tv_sec;
-
-    while (mHandler->WaitForEvent())
-      ;
-
+  {
+    boost::mutex::scoped_lock connLock(connState->mutex);
+    SendConnectRequest(connState);
   }
-  
 }
 
 
 
 /**
+ * This is the AsyncComm dispatch handler method.  It gets called for each connection
+ * related event (establishment, disconnect, etc.) for each connection.  For connect
+ * events, the connection's connected flag is set to true and it's condition variable
+ * is signaled.  For all other events (e.g. disconnect or error), the connection's
+ * connected flag is set to false and a retry is scheduled.
  *
+ * @param eventPtr shared pointer to event object
  */
-void ConnectionManager::Callback::handle(EventPtr &eventPtr) {
-  boost::mutex::scoped_lock lock(mMutex);
+void ConnectionManager::handle(EventPtr &eventPtr) {
+  boost::mutex::scoped_lock lock(mImpl->mutex);
+  SockAddrMapT<ConnectionStateT *>::iterator iter = mImpl->connMap.find(eventPtr->addr);
 
-  //event.Display();
+  if (iter != mImpl->connMap.end()) {
+    boost::mutex::scoped_lock connLock((*iter).second->mutex);
+    ConnectionStateT *connState = (*iter).second;
 
-  if (eventPtr->type == Event::CONNECTION_ESTABLISHED) {
-    mConnected = true;
-    mCond.notify_all();
+    if (eventPtr->type == Event::CONNECTION_ESTABLISHED) {
+      connState->connected = true;
+      connState->cond.notify_all();
+    }
+    else {
+      if (!mImpl->quietMode) {
+	LOG_VA_INFO("%s", eventPtr->toString().c_str());
+      }
+      connState->connected = false;
+      // this logic could proably be smarter.  For example, if the last
+      // connection attempt was a long time ago, then schedule immediately
+      // otherwise, if this event is the result of an immediately prior connect
+      // attempt, then do the following
+      boost::xtime_get(&connState->nextRetry, boost::TIME_UTC);
+      connState->nextRetry.sec += connState->timeout;
+      // add to retry heap
+      mImpl->retryQueue.push(connState);
+      mImpl->retryCond.notify_one();
+    }
   }
-  else if (eventPtr->type == Event::DISCONNECT) {
-    mConnected = false;
-    LOG_VA_INFO("%s", eventPtr->toString().c_str());
-    mCond.notify_all();
+  else {
+    LOG_VA_ERROR("Unable to find connection for %s:%d in map.", inet_ntoa(eventPtr->addr.sin_addr), ntohs(eventPtr->addr.sin_port));
   }
-
 }
 
 
-void ConnectionManager::Callback::SendConnectRequest() {
 
-  int error = mComm->Connect(mAddr, mTimeout, this);
+/**
+ * This is the boost::thread run method.
+ */
+void ConnectionManager::operator()() {
+  boost::mutex::scoped_lock lock(mImpl->mutex);
+  ConnectionStateT *connState;
+
+  while (true) {
+
+    while (mImpl->retryQueue.empty())
+      mImpl->retryCond.wait(lock);
+
+    connState = mImpl->retryQueue.top();
+
+    if (!connState->connected) {
+      boost::mutex::scoped_lock connLock(connState->mutex);
+      boost::xtime now;
+      boost::xtime_get(&now, boost::TIME_UTC);
+
+      if (xtime_cmp(connState->nextRetry, now) <= 0) {
+	mImpl->retryQueue.pop();
+	if (!mImpl->quietMode) {
+	  LOG_VA_INFO("Attempting to re-establish connection to %s at %s:%d...",
+		      connState->serviceName.c_str(), inet_ntoa(connState->addr.sin_addr), ntohs(connState->addr.sin_port));
+	}
+	SendConnectRequest(connState);
+      }
+      else
+	mImpl->retryCond.timed_wait(lock, connState->nextRetry);
+    }
+    else
+      mImpl->retryQueue.pop();
+  }
+}
+
+
+bool ConnectionManager::WaitForConnection(struct sockaddr_in &addr, long maxWaitSecs) {
+  ConnectionStateT *connState;
+
+  {
+    boost::mutex::scoped_lock lock(mImpl->mutex);
+    SockAddrMapT<ConnectionStateT *>::iterator iter = mImpl->connMap.find(addr);
+    assert(iter != mImpl->connMap.end());
+    connState = (*iter).second;
+  }
+
+  {
+    boost::mutex::scoped_lock connLock(connState->mutex);
+    boost::xtime dropTime, now;
+
+    boost::xtime_get(&dropTime, boost::TIME_UTC);
+    dropTime.sec += maxWaitSecs;
+
+    while (!connState->connected) {
+      connState->cond.timed_wait(connLock, dropTime);
+      boost::xtime_get(&now, boost::TIME_UTC);
+      if (xtime_cmp(now, dropTime) >= 0)
+	return false;
+    }
+  }
+
+  return true;
+}
+
+
+
+/**
+ * Attempts to establish a connection for the given ConnectionState object.  If a failure
+ * occurs, it prints an error message and then schedules a retry by updating the
+ * nextRetry member of the connState object and pushing it onto the retry heap
+ *
+ * @param connState The connection state record
+ */
+void ConnectionManager::SendConnectRequest(ConnectionStateT *connState) {
+  int error;
+
+  error = mImpl->comm->Connect(connState->addr, connState->timeout, this);
 
   if (error == Error::COMM_ALREADY_CONNECTED) {
-    mConnected = true;
-    mCond.notify_all();
+    connState->connected = true;
+    connState->cond.notify_all();
   }
   else if (error != Error::OK) {
-    LOG_VA_ERROR("Comm::Connect to %s:%d failed - %s", inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port), Error::GetText(error));
+    if (connState->serviceName != "") {
+      LOG_VA_ERROR("Connection attempt to %s at %s:%d failed - %s.  Will retry again in %d seconds...", 
+		   connState->serviceName.c_str(), inet_ntoa(connState->addr.sin_addr), ntohs(connState->addr.sin_port),
+		   Error::GetText(error), connState->timeout);
+    }
+    else {
+      LOG_VA_ERROR("Connection attempt to service at %s:%d failed - %s.  Will retry again in %d seconds...",
+		   inet_ntoa(connState->addr.sin_addr), ntohs(connState->addr.sin_port),
+		   Error::GetText(error), connState->timeout);
+    }
+
+    // reschedule
+    boost::xtime_get(&connState->nextRetry, boost::TIME_UTC);
+    connState->nextRetry.sec += connState->timeout;
+
+    // add to retry heap
+    mImpl->retryQueue.push(connState);
+    mImpl->retryCond.notify_one();
   }
+
 }
 
-
-bool ConnectionManager::Callback::WaitForConnection(long maxWaitSecs) {
-  boost::xtime xt;
-  boost::mutex::scoped_lock lock(mMutex);
-
-  if (mConnected)
-    return true;
-
-  boost::xtime_get(&xt, boost::TIME_UTC);
-  xt.sec += maxWaitSecs;
-
-  mCond.timed_wait(lock, xt);
-
-  return mConnected;
-}
-
-
-
-bool ConnectionManager::Callback::WaitForEvent() {
-  boost::mutex::scoped_lock lock(mMutex);
-
-  mCond.wait(lock);
-
-  return mConnected;
-}
 
 

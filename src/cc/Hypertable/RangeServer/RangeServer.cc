@@ -49,7 +49,7 @@ namespace {
  *  Constructor
  */
 
-RangeServer::RangeServer(Comm *comm, Properties *props) : mComm(comm) {
+RangeServer::RangeServer(ConnectionManager *connManager, Properties *props) {
   const char *metadataFile = 0;
 
   Global::rangeMaxBytes           = props->getPropertyInt64("Hypertable.RangeServer.Range.MaxBytes", 200000000LL);
@@ -96,7 +96,7 @@ RangeServer::RangeServer(Comm *comm, Properties *props) : mComm(comm) {
   /**
    * Create HYPERSPACE Client connection
    */
-  Global::hyperspace = new HyperspaceClient(mComm, props);
+  Global::hyperspace = new HyperspaceClient(connManager, props);
   if (!Global::hyperspace->WaitForConnection())
     exit(1);
 
@@ -134,7 +134,7 @@ RangeServer::RangeServer(Comm *comm, Properties *props) : mComm(comm) {
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
 
-    Global::hdfsClient = new HdfsClient(mComm, addr, 20);
+    Global::hdfsClient = new HdfsClient(connManager, addr, 20);
     if (!Global::hdfsClient->WaitForConnection(30))
       exit(1);
   }
