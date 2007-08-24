@@ -20,15 +20,15 @@ add_library (AsyncComm DispatchHandlerSynchronizer.cc Comm.cc ConnectionManager.
 
 # sampleClient
 add_executable (sampleClient sampleClient.cc)
-target_link_libraries (sampleClient pthread boost_thread-mt AsyncComm Common log4cpp)
+target_link_libraries (sampleClient pthread ${BOOST_LIB} AsyncComm Common log4cpp)
 
 # testServer
 add_executable (testServer testServer.cc)
-target_link_libraries (testServer pthread boost_thread-mt AsyncComm Common log4cpp)
+target_link_libraries (testServer pthread ${BOOST_LIB} AsyncComm Common log4cpp)
 
 # commTest
 add_executable (commTest tests/commTest.cc tests/CommTestThreadFunction.cc)
-target_link_libraries (commTest pthread boost_thread-mt AsyncComm Common log4cpp expat)
+target_link_libraries (commTest pthread ${BOOST_LIB} AsyncComm Common log4cpp expat)
 
 add_test (AsyncComm commTest)
 

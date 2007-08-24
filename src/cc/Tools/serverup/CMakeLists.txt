@@ -18,7 +18,7 @@
 
 # hypertable - command interpreter
 add_executable (serverup serverup.cc)
-target_link_libraries (serverup pthread boost_thread-mt Hypertable Hyperspace HdfsClient AsyncComm Common log4cpp expat)
+target_link_libraries (serverup pthread ${BOOST_LIB} Hypertable Hyperspace HdfsClient AsyncComm Common log4cpp expat)
 
 install (TARGETS serverup RUNTIME DESTINATION bin)
 

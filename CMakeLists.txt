@@ -28,9 +28,21 @@ enable_testing()
 
 # Locate zlib
 find_package(ZLIB REQUIRED)
+find_package(Boost REQUIRED)
 
 # include directories
-include_directories( /usr/local/include/boost-1_34_1 src/cc )
+include_directories( ${Boost_INCLUDE_DIRS} src/cc )
+
+# link directories
+link_directories(${Boost_LIBRARY_DIRS})
+
+IF(EXISTS "${Boost_LIBRARY_DIR}/libboost_thread.a")
+  set (BOOST_LIB "boost_thread")
+ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/libboost_thread-mt.a")
+  set (BOOST_LIB "boost_thread-mt")
+ELSE(EXISTS "${Boost_LIBRARY_DIR}/libboost_thread-gcc41-mt.a")
+  set (BOOST_LIB "boost_thread-gcc41-mt")
+ENDIF(EXISTS "${Boost_LIBRARY_DIR}/libboost_thread.a")
 
 # Recurse into the "Hello" and "Demo" subdirectories.  This does not actually
 # cause another cmake executable to run.  The same process will walk through
@@ -64,3 +76,4 @@ install (FILES bin/start-servers.sh
 install (FILES bin/stop-servers.sh
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 	 DESTINATION bin)
+	 

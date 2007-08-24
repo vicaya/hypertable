@@ -20,7 +20,7 @@
 
 # schemaTest
 add_executable (schemaTest tests/schemaTest.cc Schema.cc)
-target_link_libraries (schemaTest pthread boost_thread Common log4cpp expat)
+target_link_libraries (schemaTest Common log4cpp expat)
 
 #
 # Copy test files
