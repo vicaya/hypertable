@@ -30,7 +30,7 @@ enable_testing()
 find_package(ZLIB REQUIRED)
 
 # include directories
-include_directories( /usr/local/include/boost-1_33_1 src/cc )
+include_directories( /usr/local/include/boost-1_34_1 src/cc )
 
 # Recurse into the "Hello" and "Demo" subdirectories.  This does not actually
 # cause another cmake executable to run.  The same process will walk through

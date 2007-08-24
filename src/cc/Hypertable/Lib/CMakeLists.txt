@@ -29,11 +29,11 @@ add_library (Hypertable ${Hypertable_SRCS})
 
 # MetadataTest
 add_executable (MetadataTest MetadataTest.cc)
-target_link_libraries (MetadataTest pthread boost_thread Hypertable AsyncComm Common log4cpp expat)
+target_link_libraries (MetadataTest pthread boost_thread-mt Hypertable AsyncComm Common log4cpp expat)
 
 # schemaTest
 add_executable (schemaTest tests/schemaTest.cc)
-target_link_libraries (schemaTest Hypertable pthread boost_thread Common log4cpp expat)
+target_link_libraries (schemaTest Hypertable pthread boost_thread-mt Common log4cpp expat)
 
 #
 # Copy test files

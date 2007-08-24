@@ -6,7 +6,7 @@ BUILD INSTRUCTIONS
 2. Make sure Java 1.5 or later and the ant build tool is installed on your machine.
 
 3. Install the following libraries:
-  - Boost version 1.33.1 or later (http://www.boost.org/)
+  - Boost version 1.34.1 (http://www.boost.org/)
   - log4cpp version 0.3.5rc3 (http://log4cpp.sourceforge.net/)
 
 4. Checkout the source code.
