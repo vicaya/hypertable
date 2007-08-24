@@ -50,7 +50,7 @@ namespace hypertable {
 
     HyperspaceClient(ConnectionManager *connManager, Properties *props);
 
-    bool WaitForConnection();
+    bool WaitForConnection(long maxWaitSecs);
 
     int Mkdirs(const char *name, DispatchHandler *handler, uint32_t *msgIdp);
     int Mkdirs(const char *name);

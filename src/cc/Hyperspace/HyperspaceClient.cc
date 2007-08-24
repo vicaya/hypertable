@@ -89,8 +89,8 @@ HyperspaceClient::HyperspaceClient(ConnectionManager *connManager, Properties *p
 
 
 
-bool HyperspaceClient::WaitForConnection() {
-  if (!mConnManager->WaitForConnection(mAddr, mTimeout)) {
+bool HyperspaceClient::WaitForConnection(long maxWaitSecs) {
+  if (!mConnManager->WaitForConnection(mAddr, maxWaitSecs)) {
     LOG_VA_WARN("Timed out waiting for connection to Hyperspace at %s:%d", inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port));
     return false;
   }

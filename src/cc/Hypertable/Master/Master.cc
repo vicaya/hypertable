@@ -29,7 +29,7 @@ Master::Master(ConnectionManager *connManager, Properties *props) : mVerbose(fal
 
   mHyperspace = new HyperspaceClient(connManager, props);
 
-  if (!mHyperspace->WaitForConnection()) {
+  if (!mHyperspace->WaitForConnection(30)) {
     LOG_ERROR("Unable to connect to hyperspace, exiting...");
     exit(1);
   }

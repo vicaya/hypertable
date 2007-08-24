@@ -171,8 +171,8 @@ int main(int argc, char **argv) {
       exit(1);
   }
   else if (serverName == "hyperspace") {
-    hyperspaceClient = new HyperspaceClient(connManager, addr, 2);
-    if (!hyperspaceClient->WaitForConnection())
+    hyperspaceClient = new HyperspaceClient(connManager, addr, 30);
+    if (!hyperspaceClient->WaitForConnection(2))
       exit(1);
     if ((error = hyperspaceClient->Status()) != Error::OK)
       exit(1);

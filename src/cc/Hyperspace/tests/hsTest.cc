@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
 
   client = new HyperspaceClient(connManager, props);
 
-  if (!client->WaitForConnection())
+  if (!client->WaitForConnection(30))
     goto done;
 
   error = client->Exists("test");

@@ -97,7 +97,7 @@ RangeServer::RangeServer(ConnectionManager *connManager, Properties *props) {
    * Create HYPERSPACE Client connection
    */
   Global::hyperspace = new HyperspaceClient(connManager, props);
-  if (!Global::hyperspace->WaitForConnection())
+  if (!Global::hyperspace->WaitForConnection(30))
     exit(1);
 
   /**

@@ -38,7 +38,7 @@ bool hypertable::CreateDirectoryLayout(ConnectionManager *connManager, Propertie
 
   hyperspace = new HyperspaceClient(connManager, props);
 
-  if (!hyperspace->WaitForConnection()) {
+  if (!hyperspace->WaitForConnection(30)) {
     LOG_ERROR("Unable to connect to hyperspace, exiting...");
     exit(1);
   }

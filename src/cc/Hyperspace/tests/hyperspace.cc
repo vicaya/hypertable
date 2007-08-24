@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
 
   hyperspaceClient = new HyperspaceClient(connManager, props);
 
-  if (!hyperspaceClient->WaitForConnection())
+  if (!hyperspaceClient->WaitForConnection(30))
     goto done;
 
   if (!strcmp(command, "mkdirs"))
