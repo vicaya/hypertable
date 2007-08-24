@@ -71,17 +71,16 @@ if [ $? != 0 ] ; then
   echo ""
   $HYPERTABLE_HOME/bin/serverup hdfsbroker
   if [ $? != 0 ] ; then
+      tail -100 $LOGFILE
       echo "Problem statring HdfsBroker";
       exit 1
   fi
 fi
 
-#
-# Start Hyperspace
-#
-PIDFILE=$HYPERTABLE_HOME/run/Hyperspace.pid
-LOGFILE=$HYPERTABLE_HOME/log/Hyperspace.log
 
+#
+# If --initialize flag supplied, then run Hypertable.Master --initialize
+#
 if [ "$1" == "--initialize" ] ; then
     $HYPERTABLE_HOME/bin/Hypertable.Master --initialize --verbose
     if [ $? == 0 ] ; then
@@ -90,6 +89,13 @@ if [ "$1" == "--initialize" ] ; then
     fi
     exit 1
 fi
+
+
+#
+# Start Hyperspace
+#
+PIDFILE=$HYPERTABLE_HOME/run/Hyperspace.pid
+LOGFILE=$HYPERTABLE_HOME/log/Hyperspace.log
 
 nohup $HYPERTABLE_HOME/bin/jrun --pidfile $PIDFILE org.hypertable.Hyperspace.main --verbose 1>& $LOGFILE &
 
@@ -102,6 +108,7 @@ if [ $? != 0 ] ; then
   echo ""
   $HYPERTABLE_HOME/bin/serverup hyperspace
   if [ $? != 0 ] ; then
+      tail -100 $LOGFILE
       echo "Problem statring Hyperspace";
       exit 1
   fi
