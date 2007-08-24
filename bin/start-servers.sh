@@ -80,19 +80,6 @@ fi
 
 
 #
-# If --initialize flag supplied, then run Hypertable.Master --initialize
-#
-if [ "$1" == "--initialize" ] ; then
-    $HYPERTABLE_HOME/bin/Hypertable.Master --initialize --verbose
-    if [ $? == 0 ] ; then
-        echo "Successfully initialized."
-        exit 0
-    fi
-    exit 1
-fi
-
-
-#
 # Start Hyperspace
 #
 PIDFILE=$HYPERTABLE_HOME/run/Hyperspace.pid
@@ -114,6 +101,19 @@ if [ $? != 0 ] ; then
 	    exit 1
 	fi
     fi
+fi
+
+
+#
+# If --initialize flag supplied, then run Hypertable.Master --initialize
+#
+if [ "$1" == "--initialize" ] ; then
+    $HYPERTABLE_HOME/bin/Hypertable.Master --initialize --verbose
+    if [ $? == 0 ] ; then
+        echo "Successfully initialized."
+        exit 0
+    fi
+    exit 1
 fi
 
 
