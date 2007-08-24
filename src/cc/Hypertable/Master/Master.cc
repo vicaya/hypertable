@@ -84,7 +84,7 @@ Master::Master(ConnectionManager *connManager, Properties *props) : mVerbose(fal
     int error;
 
     if ((error = mHyperspace->AttrGet("/hypertable/meta", "last_table_id", valueBuf)) != Error::OK) {
-      LOG_ERROR("/hypertable/meta file not found in hyperspace, exiting...");
+      LOG_ERROR("/hypertable/meta file not found in hyperspace.  Try re-running with --initialize.");
       exit(1);
     }
 
