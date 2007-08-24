@@ -44,9 +44,10 @@ namespace hypertable {
     static const int COMM_ALREADY_CONNECTED = 0x00010004;
     static const int COMM_REQUEST_TIMEOUT   = 0x00010005;
 
-    static const int HDFSBROKER_BAD_FILE_HANDLE = 0x00020001;
-    static const int HDFSBROKER_IO_ERROR        = 0x00020002;
-    static const int HDFSBROKER_FILE_NOT_FOUND  = 0x00020003;
+    static const int DFSBROKER_BAD_FILE_HANDLE = 0x00020001;
+    static const int DFSBROKER_IO_ERROR        = 0x00020002;
+    static const int DFSBROKER_FILE_NOT_FOUND  = 0x00020003;
+    static const int DFSBROKER_BAD_FILENAME    = 0x00020004;
 
     static const int HYPERSPACE_IO_ERROR       = 0x00030001;
     static const int HYPERSPACE_CREATE_FAILED  = 0x00030002;

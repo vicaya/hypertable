@@ -30,7 +30,7 @@ public class Message {
     public static final byte VERSION = 1;
 
     public static final byte PROTOCOL_NONE                   = 0;
-    public static final byte PROTOCOL_HDFS                   = 1;
+    public static final byte PROTOCOL_DFSBROKER              = 1;
     public static final byte PROTOCOL_HTFS                   = 2;
     public static final byte PROTOCOL_HYPERTABLE_MASTER      = 3;
     public static final byte PROTOCOL_HYPERTABLE_RANGESERVER = 4;

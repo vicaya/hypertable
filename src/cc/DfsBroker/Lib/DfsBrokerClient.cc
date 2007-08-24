@@ -28,26 +28,68 @@
 #include "Common/Error.h"
 #include "Common/Logger.h"
 
-#include "HdfsClient.h"
+#include "DfsBrokerClient.h"
 
 using namespace hypertable;
 
 
-HdfsClient::HdfsClient(ConnectionManager *connManager, struct sockaddr_in &addr, time_t timeout) : mConnectionManager(connManager), mAddr(addr), mTimeout(timeout) {
+/**
+DfsBrokerClient::DfsBrokerClient(ConnectionManager *connManager, struct sockaddr_in &addr, time_t timeout) : mConnectionManager(connManager), mAddr(addr), mTimeout(timeout) {
   mComm = mConnectionManager->GetComm();
-  mProtocol = new HdfsProtocol();
-  mConnectionManager->Add(addr, timeout, "HdfsBroker");
+  mProtocol = new DfsBrokerProtocol();
+  mConnectionManager->Add(addr, timeout, "DfsBroker");
+}
+**/
+
+
+
+DfsBrokerClient::DfsBrokerClient(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mConnectionManager(connManager) {
+  const char *host;
+  uint16_t port;
+
+  mComm = mConnectionManager->GetComm();
+
+  mProtocol = new DfsBrokerProtocol();
+
+  {
+    if ((port = (uint16_t)propsPtr->getPropertyInt("DfsBroker.port", 0)) == 0) {
+      LOG_ERROR("DfsBroker.port property not specified.");
+      exit(1);
+    }
+
+    if ((host = propsPtr->getProperty("DfsBroker.host", (const char *)0)) == 0) {
+      LOG_ERROR("DfsBroker.host property not specified.");
+      exit(1);
+    }
+
+    mTimeout = propsPtr->getPropertyInt("DfsBroker.timeout", 30);
+
+    memset(&mAddr, 0, sizeof(struct sockaddr_in));
+    {
+      struct hostent *he = gethostbyname(host);
+      if (he == 0) {
+	herror("gethostbyname()");
+	exit(1);
+      }
+      memcpy(&mAddr.sin_addr.s_addr, he->h_addr_list[0], sizeof(uint32_t));
+    }
+    mAddr.sin_family = AF_INET;
+    mAddr.sin_port = htons(port);
+  }
+
+  mConnectionManager->Add(mAddr, mTimeout, "DFS Broker");
+  
 }
 
 
-int HdfsClient::Open(const char *name, DispatchHandler *handler, uint32_t *msgIdp) {
+int DfsBrokerClient::Open(const char *name, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateOpenRequest(name, 0) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
 
 
 
-int HdfsClient::Open(const char *name, int32_t *fdp) {
+int DfsBrokerClient::Open(const char *name, int32_t *fdp) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   *fdp = -1;
@@ -55,24 +97,24 @@ int HdfsClient::Open(const char *name, int32_t *fdp) {
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hdfs 'open' error, name=%s : %s", name, mProtocol->StringFormatMessage(eventPtr).c_str());
+      LOG_VA_ERROR("Dfs 'open' error, name=%s : %s", name, mProtocol->StringFormatMessage(eventPtr).c_str());
       error = (int)mProtocol->ResponseCode(eventPtr);
     }
     else
-      *fdp = ((HdfsProtocol::ResponseHeaderOpenT *)eventPtr->message)->handle;
+      *fdp = ((DfsBrokerProtocol::ResponseHeaderOpenT *)eventPtr->message)->handle;
   }
   return error;
 }
 
 
-int HdfsClient::Create(const char *name, bool overwrite, int32_t bufferSize,
+int DfsBrokerClient::Create(const char *name, bool overwrite, int32_t bufferSize,
 		   int32_t replication, int64_t blockSize, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateCreateRequest(name, overwrite, bufferSize, replication, blockSize) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
 
 
-int HdfsClient::Create(const char *name, bool overwrite, int32_t bufferSize,
+int DfsBrokerClient::Create(const char *name, bool overwrite, int32_t bufferSize,
 		   int32_t replication, int64_t blockSize, int32_t *fdp) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
@@ -81,32 +123,32 @@ int HdfsClient::Create(const char *name, bool overwrite, int32_t bufferSize,
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hdfs 'create' error, name=%s : %s", name, mProtocol->StringFormatMessage(eventPtr).c_str());
+      LOG_VA_ERROR("Dfs 'create' error, name=%s : %s", name, mProtocol->StringFormatMessage(eventPtr).c_str());
       error = (int)mProtocol->ResponseCode(eventPtr);
     }
     else
-      *fdp = ((HdfsProtocol::ResponseHeaderCreateT *)eventPtr->message)->handle;
+      *fdp = ((DfsBrokerProtocol::ResponseHeaderCreateT *)eventPtr->message)->handle;
   }
   return error;
 }
 
 
 
-int HdfsClient::Close(int32_t fd, DispatchHandler *handler, uint32_t *msgIdp) {
+int DfsBrokerClient::Close(int32_t fd, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateCloseRequest(fd) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
 
 
 
-int HdfsClient::Close(int32_t fd) {
+int DfsBrokerClient::Close(int32_t fd) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateCloseRequest(fd) );
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hdfs 'close' error, fd=%d : %s", fd, mProtocol->StringFormatMessage(eventPtr).c_str());
+      LOG_VA_ERROR("Dfs 'close' error, fd=%d : %s", fd, mProtocol->StringFormatMessage(eventPtr).c_str());
       error = (int)mProtocol->ResponseCode(eventPtr);
     }
   }
@@ -115,14 +157,14 @@ int HdfsClient::Close(int32_t fd) {
 
 
 
-int HdfsClient::Read(int32_t fd, uint32_t amount, DispatchHandler *handler, uint32_t *msgIdp) {
+int DfsBrokerClient::Read(int32_t fd, uint32_t amount, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateReadRequest(fd, amount) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
 
 
 
-int HdfsClient::Read(int32_t fd, uint32_t amount, uint8_t *dst, uint32_t *nreadp) {
+int DfsBrokerClient::Read(int32_t fd, uint32_t amount, uint8_t *dst, uint32_t *nreadp) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateReadRequest(fd, amount) );
@@ -130,12 +172,12 @@ int HdfsClient::Read(int32_t fd, uint32_t amount, uint8_t *dst, uint32_t *nreadp
   *nreadp = 0;
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hdfs 'read' error (amount=%d, fd=%d) : %s",
+      LOG_VA_ERROR("Dfs 'read' error (amount=%d, fd=%d) : %s",
 		   amount, fd, mProtocol->StringFormatMessage(eventPtr).c_str());
       error = (int)mProtocol->ResponseCode(eventPtr);
     }
     else {
-      HdfsProtocol::ResponseHeaderReadT *readHeader = (HdfsProtocol::ResponseHeaderReadT *)eventPtr->message;
+      DfsBrokerProtocol::ResponseHeaderReadT *readHeader = (DfsBrokerProtocol::ResponseHeaderReadT *)eventPtr->message;
       *nreadp = readHeader->amount;
       memcpy(dst, &readHeader[1], readHeader->amount);
     }
@@ -145,26 +187,26 @@ int HdfsClient::Read(int32_t fd, uint32_t amount, uint8_t *dst, uint32_t *nreadp
 
 
 
-int HdfsClient::Write(int32_t fd, uint8_t *buf, uint32_t amount, DispatchHandler *handler, uint32_t *msgIdp) {
-  CommBufPtr cbufPtr( mProtocol->CreateWriteRequest(fd, buf, amount) );
+int DfsBrokerClient::Append(int32_t fd, uint8_t *buf, uint32_t amount, DispatchHandler *handler, uint32_t *msgIdp) {
+  CommBufPtr cbufPtr( mProtocol->CreateAppendRequest(fd, buf, amount) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
 
 
 
-int HdfsClient::Write(int32_t fd, uint8_t *buf, uint32_t amount) {
+int DfsBrokerClient::Append(int32_t fd, uint8_t *buf, uint32_t amount) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( mProtocol->CreateWriteRequest(fd, buf, amount) );
+  CommBufPtr cbufPtr( mProtocol->CreateAppendRequest(fd, buf, amount) );
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hdfs 'write' error, fd=%d, amount=%d : %s", fd, amount, mProtocol->StringFormatMessage(eventPtr).c_str());
+      LOG_VA_ERROR("Dfs 'append' error, fd=%d, amount=%d : %s", fd, amount, mProtocol->StringFormatMessage(eventPtr).c_str());
       error = (int)mProtocol->ResponseCode(eventPtr);
     }
-    else if (((HdfsProtocol::ResponseHeaderWriteT *)eventPtr->message)->amount != (int32_t)amount) {
-      LOG_VA_ERROR("Short HDFS file write fd=%d : tried to write %d but only got %d", fd, amount,
-		   ((HdfsProtocol::ResponseHeaderWriteT *)eventPtr->message)->amount);
+    else if (((DfsBrokerProtocol::ResponseHeaderAppendT *)eventPtr->message)->amount != (int32_t)amount) {
+      LOG_VA_ERROR("Short DFS file append fd=%d : tried to append %d but only got %d", fd, amount,
+		   ((DfsBrokerProtocol::ResponseHeaderAppendT *)eventPtr->message)->amount);
       error = Error::DFSBROKER_IO_ERROR;
     }
   }
@@ -172,20 +214,20 @@ int HdfsClient::Write(int32_t fd, uint8_t *buf, uint32_t amount) {
 }
 
 
-int HdfsClient::Seek(int32_t fd, uint64_t offset, DispatchHandler *handler, uint32_t *msgIdp) {
+int DfsBrokerClient::Seek(int32_t fd, uint64_t offset, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateSeekRequest(fd, offset) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
 
 
-int HdfsClient::Seek(int32_t fd, uint64_t offset) {
+int DfsBrokerClient::Seek(int32_t fd, uint64_t offset) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateSeekRequest(fd, offset) );
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hdfs 'seek' error, fd=%d, offset=%lld : %s", fd, offset, mProtocol->StringFormatMessage(eventPtr).c_str());
+      LOG_VA_ERROR("Dfs 'seek' error, fd=%d, offset=%lld : %s", fd, offset, mProtocol->StringFormatMessage(eventPtr).c_str());
       error = (int)mProtocol->ResponseCode(eventPtr);
     }
   }
@@ -193,20 +235,20 @@ int HdfsClient::Seek(int32_t fd, uint64_t offset) {
 }
 
 
-int HdfsClient::Remove(const char *name, DispatchHandler *handler, uint32_t *msgIdp) {
+int DfsBrokerClient::Remove(const char *name, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateRemoveRequest(name) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
 
 
-int HdfsClient::Remove(const char *name) {
+int DfsBrokerClient::Remove(const char *name) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateRemoveRequest(name) );
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hdfs 'remove' error, name=%s : %s", name, mProtocol->StringFormatMessage(eventPtr).c_str());
+      LOG_VA_ERROR("Dfs 'remove' error, name=%s : %s", name, mProtocol->StringFormatMessage(eventPtr).c_str());
       error = (int)mProtocol->ResponseCode(eventPtr);
     }
   }
@@ -215,20 +257,20 @@ int HdfsClient::Remove(const char *name) {
 
 
 
-int HdfsClient::Shutdown(uint16_t flags, DispatchHandler *handler, uint32_t *msgIdp) {
+int DfsBrokerClient::Shutdown(uint16_t flags, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateShutdownRequest(flags) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
 
 
-int HdfsClient::Status() {
+int DfsBrokerClient::Status() {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateStatusRequest() );
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("HdfsBroker 'status' error : %s", mProtocol->StringFormatMessage(eventPtr).c_str());
+      LOG_VA_ERROR("DfsBroker 'status' error : %s", mProtocol->StringFormatMessage(eventPtr).c_str());
       error = (int)mProtocol->ResponseCode(eventPtr);
     }
   }
@@ -236,39 +278,39 @@ int HdfsClient::Status() {
 }
 
 
-int HdfsClient::Length(const char *name, DispatchHandler *handler, uint32_t *msgIdp) {
+int DfsBrokerClient::Length(const char *name, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateLengthRequest(name) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
 
 
 
-int HdfsClient::Length(const char *name, int64_t *lenp) {
+int DfsBrokerClient::Length(const char *name, int64_t *lenp) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateLengthRequest(name) );
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hdfs 'length' error, name=%s : %s", name, mProtocol->StringFormatMessage(eventPtr).c_str());
+      LOG_VA_ERROR("Dfs 'length' error, name=%s : %s", name, mProtocol->StringFormatMessage(eventPtr).c_str());
       error = (int)mProtocol->ResponseCode(eventPtr);
     }
     else
-      *lenp = ((HdfsProtocol::ResponseHeaderLengthT *)eventPtr->message)->length;
+      *lenp = ((DfsBrokerProtocol::ResponseHeaderLengthT *)eventPtr->message)->length;
   }
   return error;
 }
 
 
 
-int HdfsClient::Pread(int32_t fd, uint64_t offset, uint32_t amount, DispatchHandler *handler, uint32_t *msgIdp) {
+int DfsBrokerClient::Pread(int32_t fd, uint64_t offset, uint32_t amount, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreatePositionReadRequest(fd, offset, amount) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
 
 
 
-int HdfsClient::Pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst, uint32_t *nreadp) {
+int DfsBrokerClient::Pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst, uint32_t *nreadp) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreatePositionReadRequest(fd, offset, amount) );
@@ -276,12 +318,12 @@ int HdfsClient::Pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst
   *nreadp = 0;
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hdfs 'pread' error (offset=%lld, amount=%d, fd=%d) : %s",
+      LOG_VA_ERROR("Dfs 'pread' error (offset=%lld, amount=%d, fd=%d) : %s",
 		   offset, amount, fd, mProtocol->StringFormatMessage(eventPtr).c_str());
       error = (int)mProtocol->ResponseCode(eventPtr);
     }
     else {
-      HdfsProtocol::ResponseHeaderReadT *readHeader = (HdfsProtocol::ResponseHeaderReadT *)eventPtr->message;
+      DfsBrokerProtocol::ResponseHeaderReadT *readHeader = (DfsBrokerProtocol::ResponseHeaderReadT *)eventPtr->message;
       *nreadp = readHeader->amount;
       memcpy(dst, &readHeader[1], readHeader->amount);
     }
@@ -290,20 +332,20 @@ int HdfsClient::Pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst
 }
 
 
-int HdfsClient::Mkdirs(const char *name, DispatchHandler *handler, uint32_t *msgIdp) {
+int DfsBrokerClient::Mkdirs(const char *name, DispatchHandler *handler, uint32_t *msgIdp) {
   CommBufPtr cbufPtr( mProtocol->CreateMkdirsRequest(name) );
   return SendMessage(cbufPtr, handler, msgIdp);
 }
 
 
-int HdfsClient::Mkdirs(const char *name) {
+int DfsBrokerClient::Mkdirs(const char *name) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateMkdirsRequest(name) );
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hdfs 'mkdirs' error, name=%s : %s", name, mProtocol->StringFormatMessage(eventPtr).c_str());
+      LOG_VA_ERROR("Dfs 'mkdirs' error, name=%s : %s", name, mProtocol->StringFormatMessage(eventPtr).c_str());
       error = (int)mProtocol->ResponseCode(eventPtr);
     }
   }
@@ -312,7 +354,7 @@ int HdfsClient::Mkdirs(const char *name) {
 
 
 
-int HdfsClient::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler, uint32_t *msgIdp) {
+int DfsBrokerClient::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler, uint32_t *msgIdp) {
   int error;
 
   if (msgIdp)

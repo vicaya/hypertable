@@ -34,7 +34,7 @@ namespace hypertable {
     static const uint8_t VERSION = 1;
 
     static const uint8_t PROTOCOL_NONE                    = 0;
-    static const uint8_t PROTOCOL_HDFS                    = 1;
+    static const uint8_t PROTOCOL_DFSBROKER               = 1;
     static const uint8_t PROTOCOL_HYPERSPACE              = 2;
     static const uint8_t PROTOCOL_HYPERTABLE_MASTER       = 3;
     static const uint8_t PROTOCOL_HYPERTABLE_RANGESERVER  = 4;

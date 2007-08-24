@@ -56,6 +56,8 @@ add_subdirectory (src/cc/Hypertable/RangeServer)
 add_subdirectory (src/cc/Hypertable/Lib)
 add_subdirectory (src/cc/Tools/hypertable)
 add_subdirectory (src/cc/Tools/serverup)
+add_subdirectory (src/cc/DfsBroker/Lib)
+add_subdirectory (src/cc/DfsBroker/Tools/dfstool)
 
 install (FILES demo/metadata-test.xml DESTINATION demo)
 install (FILES demo/testdata.txt.bz2 DESTINATION demo)

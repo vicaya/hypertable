@@ -83,6 +83,12 @@ public class HdfsBroker {
 
 	try {
 
+	    if (fileName.endsWith("/")) {
+		log.severe("Unable to open file, bad filename: " + fileName);
+		error = cb.error(Error.DFSBROKER_BAD_FILENAME, fileName);
+		return;
+	    }
+
 	    fd = msUniqueId.incrementAndGet();
 
 	    if (mVerbose)
@@ -99,11 +105,11 @@ public class HdfsBroker {
 	}
 	catch (FileNotFoundException e) {
 	    log.info("File not found: " + fileName);
-	    error = cb.error(Error.HDFSBROKER_FILE_NOT_FOUND, e.getMessage());
+	    error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
 	}
 	catch (IOException e) {
 	    log.info("I/O exception while opening file '" + fileName + "' - " + e.getMessage());
-	    error = cb.error(Error.HDFSBROKER_IO_ERROR, e.getMessage());
+	    error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
 	}
 
 	if (error != Error.OK)
@@ -126,7 +132,7 @@ public class HdfsBroker {
 		log.info("Closing handle " + fd);
 
 	    if (ofd == null) {
-		error = Error.HDFSBROKER_BAD_FILE_HANDLE;
+		error = Error.DFSBROKER_BAD_FILE_HANDLE;
 		throw new IOException("Invalid file handle " + fd);
 	    }
 
@@ -154,6 +160,12 @@ public class HdfsBroker {
 
 	try {
 
+	    if (fileName.endsWith("/")) {
+		log.severe("Unable to open file, bad filename: " + fileName);
+		error = cb.error(Error.DFSBROKER_BAD_FILENAME, fileName);
+		return;
+	    }
+
 	    fd = msUniqueId.incrementAndGet();
 	    ofd = mOpenFileMap.Create(fd, cb.GetAddress());
 
@@ -175,11 +187,11 @@ public class HdfsBroker {
 	}
 	catch (FileNotFoundException e) {
 	    log.info("File not found: " + fileName);
-	    error = cb.error(Error.HDFSBROKER_FILE_NOT_FOUND, e.getMessage());
+	    error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
 	}
 	catch (IOException e) {
 	    log.info("I/O exception while creating file '" + fileName + "' - " + e.getMessage());
-	    error = cb.error(Error.HDFSBROKER_IO_ERROR, e.getMessage());
+	    error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
 	}
 
 	if (error != Error.OK)
@@ -206,11 +218,11 @@ public class HdfsBroker {
 	}
 	catch (FileNotFoundException e) {
 	    log.info("File not found: " + fileName);
-	    error = cb.error(Error.HDFSBROKER_FILE_NOT_FOUND, e.getMessage());
+	    error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
 	}
 	catch (IOException e) {
 	    log.info("I/O exception while opening file '" + fileName + "' - " + e.getMessage());
-	    error = cb.error(Error.HDFSBROKER_IO_ERROR, e.getMessage());
+	    error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
 	}
 
 	if (error != Error.OK)
@@ -237,11 +249,11 @@ public class HdfsBroker {
 	}
 	catch (FileNotFoundException e) {
 	    log.info("File not found: " + fileName);
-	    error = cb.error(Error.HDFSBROKER_FILE_NOT_FOUND, e.getMessage());
+	    error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
 	}
 	catch (IOException e) {
 	    log.info("I/O exception while opening file '" + fileName + "' - " + e.getMessage());
-	    error = cb.error(Error.HDFSBROKER_IO_ERROR, e.getMessage());
+	    error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
 	}
 
 	if (error != Error.OK)
@@ -256,7 +268,7 @@ public class HdfsBroker {
 	try {
 
 	    if ((ofd = mOpenFileMap.Get(fd)) == null) {
-		error = Error.HDFSBROKER_BAD_FILE_HANDLE;
+		error = Error.DFSBROKER_BAD_FILE_HANDLE;
 		throw new IOException("Invalid file handle " + fd);
 	    }
 
@@ -298,7 +310,7 @@ public class HdfsBroker {
 	    */
 
 	    if ((ofd = mOpenFileMap.Get(fd)) == null) {
-		error = Error.HDFSBROKER_BAD_FILE_HANDLE;
+		error = Error.DFSBROKER_BAD_FILE_HANDLE;
 		throw new IOException("Invalid file handle " + fd);
 	    }
 
@@ -331,7 +343,7 @@ public class HdfsBroker {
 	try {
 
 	    if ((ofd = mOpenFileMap.Get(fd)) == null) {
-		error = Error.HDFSBROKER_BAD_FILE_HANDLE;
+		error = Error.DFSBROKER_BAD_FILE_HANDLE;
 		throw new IOException("Invalid file handle " + fd);
 	    }
 
@@ -380,11 +392,11 @@ public class HdfsBroker {
 	}
 	catch (FileNotFoundException e) {
 	    log.info("File not found: " + fileName);
-	    error = cb.error(Error.HDFSBROKER_FILE_NOT_FOUND, e.getMessage());
+	    error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
 	}
 	catch (IOException e) {
 	    log.info("I/O exception while opening file '" + fileName + "' - " + e.getMessage());
-	    error = cb.error(Error.HDFSBROKER_IO_ERROR, e.getMessage());
+	    error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
 	}
 
 	if (error != Error.OK)
@@ -398,7 +410,7 @@ public class HdfsBroker {
 	try {
 
 	    if ((ofd = mOpenFileMap.Get(fd)) == null) {
-		error = Error.HDFSBROKER_BAD_FILE_HANDLE;
+		error = Error.DFSBROKER_BAD_FILE_HANDLE;
 		throw new IOException("Invalid file handle " + fd);
 	    }
 

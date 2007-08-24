@@ -18,15 +18,31 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "Header.h"
+#ifndef HYPERTABLE_COMMANDCOPYFROMLOCAL_H
+#define HYPERTABLE_COMMANDCOPYFROMLOCAL_H
+
+#include <vector>
+
+#include "Common/InteractiveCommand.h"
+
+#include "DfsBroker/Lib/DfsBrokerClient.h"
 
 namespace hypertable {
-  const char *Header::protocolStrings[PROTOCOL_MAX] = {
-    "none",
-    "dfs broker",
-    "pfs",
-    "bigtable master",
-    "bigtable tablet server"
+
+  class CommandCopyFromLocal : public InteractiveCommand {
+  public:
+    CommandCopyFromLocal(DfsBrokerClient *client) : mClient(client) { return; }
+    virtual const char *CommandText() { return "copyFromLocal"; }
+    virtual const char **Usage() { return msUsage; }
+    virtual int run();
+
+  private:
+    static const char *msUsage[];
+
+    DfsBrokerClient *mClient;
   };
+
 }
 
+
+#endif // HYPERTABLE_COMMANDCOPYFROMLOCAL_H

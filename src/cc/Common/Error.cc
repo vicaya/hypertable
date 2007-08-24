@@ -43,9 +43,10 @@ namespace {
     { Error::COMM_CONNECT_ERROR,          "COMM connect error" },
     { Error::COMM_ALREADY_CONNECTED,      "COMM already connected" },
     { Error::COMM_REQUEST_TIMEOUT,        "COMM request timeout" },
-    { Error::HDFSBROKER_BAD_FILE_HANDLE,  "HDFS BROKER bad file handle" },
-    { Error::HDFSBROKER_IO_ERROR,         "HDFS BROKER i/o error" },
-    { Error::HDFSBROKER_FILE_NOT_FOUND,   "HDFS BROKER file not found" },
+    { Error::DFSBROKER_BAD_FILE_HANDLE,   "DFS BROKER bad file handle" },
+    { Error::DFSBROKER_IO_ERROR,          "DFS BROKER i/o error" },
+    { Error::DFSBROKER_FILE_NOT_FOUND,    "DFS BROKER file not found" },
+    { Error::DFSBROKER_BAD_FILENAME,      "DFS BROKER bad filename" },
     { Error::HYPERSPACE_IO_ERROR,         "HYPERSPACE i/o error" },
     { Error::HYPERSPACE_CREATE_FAILED,    "HYPERSPACE create failed" },
     { Error::HYPERSPACE_FILE_NOT_FOUND,   "HYPERSPACE file not found" },
@@ -91,9 +92,10 @@ const int Error::COMM_CONNECT_ERROR;
 const int Error::COMM_ALREADY_CONNECTED;
 const int Error::COMM_REQUEST_TIMEOUT;
 
-const int Error::HDFSBROKER_BAD_FILE_HANDLE;
-const int Error::HDFSBROKER_IO_ERROR;
-const int Error::HDFSBROKER_FILE_NOT_FOUND;
+const int Error::DFSBROKER_BAD_FILE_HANDLE;
+const int Error::DFSBROKER_IO_ERROR;
+const int Error::DFSBROKER_FILE_NOT_FOUND;
+const int Error::DFSBROKER_BAD_FILENAME;
 
 const int Error::HYPERSPACE_IO_ERROR;
 const int Error::HYPERSPACE_CREATE_FAILED;
