@@ -132,6 +132,7 @@ if [ $? != 0 ] ; then
   echo ""
   $HYPERTABLE_HOME/bin/serverup master
   if [ $? != 0 ] ; then
+      tail -100 $LOGFILE
       echo "Problem statring Hypertable.Master";
       exit 1
   fi

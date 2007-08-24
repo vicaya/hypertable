@@ -195,32 +195,34 @@ void ConnectionManager::handle(EventPtr &eventPtr) {
  */
 void ConnectionManager::operator()() {
   boost::mutex::scoped_lock lock(mImpl->mutex);
-  ConnectionState *connState;
+  ConnectionStatePtr connStatePtr;
 
   while (true) {
 
     while (mImpl->retryQueue.empty())
       mImpl->retryCond.wait(lock);
 
-    connState = mImpl->retryQueue.top().get();
+    connStatePtr = mImpl->retryQueue.top();
 
-    if (!connState->connected) {
-      boost::mutex::scoped_lock connLock(connState->mutex);
-      boost::xtime now;
-      boost::xtime_get(&now, boost::TIME_UTC);
+    if (!connStatePtr->connected) {
+      {
+	boost::mutex::scoped_lock connLock(connStatePtr->mutex);
+	boost::xtime now;
+	boost::xtime_get(&now, boost::TIME_UTC);
 
-      if (xtime_cmp(connState->nextRetry, now) <= 0) {
-	mImpl->retryQueue.pop();
-	/**
-	if (!mImpl->quietMode) {
-	  LOG_VA_INFO("Attempting to re-establish connection to %s at %s:%d...",
-		      connState->serviceName.c_str(), inet_ntoa(connState->addr.sin_addr), ntohs(connState->addr.sin_port));
+	if (xtime_cmp(connStatePtr->nextRetry, now) <= 0) {
+	  mImpl->retryQueue.pop();
+	  /**
+	     if (!mImpl->quietMode) {
+	     LOG_VA_INFO("Attempting to re-establish connection to %s at %s:%d...",
+	     connStatePtr->serviceName.c_str(), inet_ntoa(connStatePtr->addr.sin_addr), ntohs(connStatePtr->addr.sin_port));
+	     }
+	  */
+	  SendConnectRequest(connStatePtr.get());
+	  return;
 	}
-	*/
-	SendConnectRequest(connState);
       }
-      else
-	mImpl->retryCond.timed_wait(lock, connState->nextRetry);
+      mImpl->retryCond.timed_wait(lock, connStatePtr->nextRetry);
     }
     else
       mImpl->retryQueue.pop();
