@@ -33,6 +33,11 @@ extern "C" {
 #include "AsyncComm/Comm.h"
 
 #include "CommandCopyFromLocal.h"
+#include "CommandCopyToLocal.h"
+#include "CommandLength.h"
+#include "CommandMkdirs.h"
+#include "CommandRemove.h"
+#include "CommandShutdown.h"
 
 using namespace hypertable;
 using namespace std;
@@ -112,6 +117,11 @@ int main(int argc, char **argv) {
   }
 
   commands.push_back( new CommandCopyFromLocal(client) );
+  commands.push_back( new CommandCopyToLocal(client) );
+  commands.push_back( new CommandLength(client) );
+  commands.push_back( new CommandMkdirs(client) );
+  commands.push_back( new CommandRemove(client) );
+  commands.push_back( new CommandShutdown(client) );
 
   cout << "Welcome to dsftool, a command-line interface to the DFS broker." << endl;
   cout << "Type 'help' for a description of commands." << endl;

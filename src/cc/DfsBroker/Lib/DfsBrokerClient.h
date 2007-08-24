@@ -49,7 +49,7 @@ namespace hypertable {
   class DfsBrokerClient : public Filesystem {
   public:
 
-    //DfsBrokerClient(ConnectionManager *connManager, struct sockaddr_in &addr, time_t timeout);
+    DfsBrokerClient(ConnectionManager *connManager, struct sockaddr_in &addr, time_t timeout);
 
     DfsBrokerClient(ConnectionManager *connManager, PropertiesPtr &propsPtr);
 

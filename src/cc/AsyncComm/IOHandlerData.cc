@@ -304,11 +304,11 @@ int IOHandlerData::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *dispatchHan
 
   if (initiallyEmpty && !mSendQueue.empty()) {
     AddPollInterest(Reactor::WRITE_READY);
-    LOG_INFO("Adding Write interest");
+    //LOG_INFO("Adding Write interest");
   }
   else if (!initiallyEmpty && mSendQueue.empty()) {
     RemovePollInterest(Reactor::WRITE_READY);
-    LOG_INFO("Removing Write interest");
+    //LOG_INFO("Removing Write interest");
   }
 
   return Error::OK;

@@ -37,8 +37,8 @@ namespace {
 const char *CommandCopyFromLocal::msUsage[] = {
   "copyFromLocal <src> <dst>",
   "",
-  "  This program copies the local file <src> to the",
-  "  remote file <dst> in the DFS.",
+  "  This program copies the local file <src> to the remote",
+  "  file <dst> in the DFS.",
   (const char *)0
 };
 

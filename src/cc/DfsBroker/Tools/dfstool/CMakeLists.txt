@@ -17,13 +17,23 @@
 # 
 
 set (dfstool_SRCS
-dfstool.cc
 CommandCopyFromLocal.cc
+CommandCopyToLocal.cc
+CommandLength.cc
+CommandMkdirs.cc
+CommandRemove.cc
+CommandShutdown.cc
 )
 
 # dfstool - command interpreter
-add_executable (dfstool ${dfstool_SRCS})
+add_executable (dfstool dfstool.cc ${dfstool_SRCS})
 target_link_libraries (dfstool pthread ${BOOST_LIB} DfsBroker AsyncComm Hyperspace Common log4cpp expat readline curses)
+
+# dfsTest
+add_executable (dfsTest dfsTest.cc dfsTestThreadFunction.cc ${dfstool_SRCS})
+target_link_libraries (dfsTest pthread ${BOOST_LIB} DfsBroker AsyncComm Common log4cpp)
+
+add_test (DfsBroker dfsTest)
 
 install (TARGETS dfstool RUNTIME DESTINATION bin)
 

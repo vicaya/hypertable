@@ -1,5 +1,6 @@
 
 TODO:
+- Abstract the Filesystem and Dfs Broker
 - Add support for LZO and BZIP2 compression
 - Implement 'InMemory' locality groups
 - Add support for auto-assigned timestamps

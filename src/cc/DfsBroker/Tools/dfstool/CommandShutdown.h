@@ -18,39 +18,30 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_INTERACTIVECOMMAND_H
-#define HYPERTABLE_INTERACTIVECOMMAND_H
+#ifndef HYPERTABLE_COMMANDSHUTDOWN_H
+#define HYPERTABLE_COMMANDSHUTDOWN_H
 
-#include <cstring>
-
-#include <utility>
 #include <vector>
+
+#include "Common/InteractiveCommand.h"
+
+#include "DfsBroker/Lib/DfsBrokerClient.h"
 
 namespace hypertable {
 
-  class InteractiveCommand {
-
+  class CommandShutdown : public InteractiveCommand {
   public:
-
-    void ParseCommandLine(const char *line);
-    bool Matches(const char *line) { return !strncmp(line, CommandText(), strlen(CommandText())); }
-
-    virtual const char *CommandText() = 0;
-    virtual const char **Usage() = 0;
-    virtual int run() = 0;
-
-    void ClearArgs() { mArgs.clear(); }
-    void PushArg(std::string key, std::string value) { 
-      mArgs.push_back( std::pair<std::string, std::string>(key, value) );
-    }
-
-  protected:
-    std::vector< std::pair<std::string, std::string> >  mArgs;
+    CommandShutdown(DfsBrokerClient *client) : mClient(client) { return; }
+    virtual const char *CommandText() { return "shutdown"; }
+    virtual const char **Usage() { return msUsage; }
+    virtual int run();
 
   private:
-    bool ParseStringLiteral(const char *str, std::string &text, const char **endptr);
-  };
+    static const char *msUsage[];
 
+    DfsBrokerClient *mClient;
+  };
 }
 
-#endif // HYPERTABLE_INTERACTIVECOMMAND_H
+#endif // HYPERTABLE_COMMANDSHUTDOWN_H
+

@@ -33,13 +33,11 @@
 using namespace hypertable;
 
 
-/**
 DfsBrokerClient::DfsBrokerClient(ConnectionManager *connManager, struct sockaddr_in &addr, time_t timeout) : mConnectionManager(connManager), mAddr(addr), mTimeout(timeout) {
   mComm = mConnectionManager->GetComm();
   mProtocol = new DfsBrokerProtocol();
-  mConnectionManager->Add(addr, timeout, "DfsBroker");
+  mConnectionManager->Add(mAddr, mTimeout, "DFS Broker");
 }
-**/
 
 
 
