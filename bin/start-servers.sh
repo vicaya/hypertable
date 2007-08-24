@@ -82,6 +82,15 @@ fi
 PIDFILE=$HYPERTABLE_HOME/run/Hyperspace.pid
 LOGFILE=$HYPERTABLE_HOME/log/Hyperspace.log
 
+if [ "$1" == "--initialize" ] ; then
+    $HYPERTABLE_HOME/bin/Hypertable.Master --initialize --verbose
+    if [ $? == 0 ] ; then
+        echo "Successfully initialized."
+        exit 0
+    fi
+    exit 1
+fi
+
 nohup $HYPERTABLE_HOME/bin/jrun --pidfile $PIDFILE org.hypertable.Hyperspace.main --verbose 1>& $LOGFILE &
 
 sleep 1

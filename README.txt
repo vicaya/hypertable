@@ -8,6 +8,7 @@ BUILD INSTRUCTIONS
 3. Install the following libraries:
   - Boost version 1.34.1 (http://www.boost.org/)
   - log4cpp version 0.3.5rc3 (http://log4cpp.sourceforge.net/)
+  - expat version 2.0.1 (http://sourceforge.net/projects/expat)
 
 4. Checkout the source code.
 
