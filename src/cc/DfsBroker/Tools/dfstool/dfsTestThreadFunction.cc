@@ -68,7 +68,7 @@ void dfsTestThreadFunction::operator()() {
   origSize = statbuf.st_size;
 
   // Determine DFS file size
-  mClient->Length(mDfsFile.c_str(), &dfsSize);
+  mClient->Length(mDfsFile, &dfsSize);
 
   if (origSize != dfsSize) {
     LOG_VA_ERROR("Length mismatch: %ld != %ld", origSize, dfsSize);

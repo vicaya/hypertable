@@ -41,7 +41,7 @@ int CommandLength::run() {
     return -1;
   }
 
-  mClient->Length(mArgs[0].first.c_str(), &length);
+  mClient->Length(mArgs[0].first, &length);
 
   cout << length << endl;
   

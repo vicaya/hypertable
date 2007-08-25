@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
   vector<InteractiveCommand *>  commands;
   Comm *comm;
   ConnectionManager *connManager;
-  DfsBrokerClient *client;
+  DfsBroker::Client *client;
   PropertiesPtr propsPtr;
 
   System::Initialize(argv[0]);
@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
   comm = new Comm();
   connManager = new ConnectionManager(comm);
 
-  client = new DfsBrokerClient(connManager, propsPtr);
+  client = new DfsBroker::Client(connManager, propsPtr);
 
   if (!client->WaitForConnection(15)) {
     LOG_ERROR("Error:  Timed out waiting for DFS broker.");

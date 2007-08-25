@@ -25,13 +25,13 @@
 
 #include "Common/InteractiveCommand.h"
 
-#include "DfsBroker/Lib/DfsBrokerClient.h"
+#include "DfsBroker/Lib/Client.h"
 
 namespace hypertable {
 
   class CommandMkdirs : public InteractiveCommand {
   public:
-    CommandMkdirs(DfsBrokerClient *client) : mClient(client) { return; }
+    CommandMkdirs(DfsBroker::Client *client) : mClient(client) { return; }
     virtual const char *CommandText() { return "mkdirs"; }
     virtual const char **Usage() { return msUsage; }
     virtual int run();
@@ -39,7 +39,7 @@ namespace hypertable {
   private:
     static const char *msUsage[];
 
-    DfsBrokerClient *mClient;
+    DfsBroker::Client *mClient;
   };
 }
 

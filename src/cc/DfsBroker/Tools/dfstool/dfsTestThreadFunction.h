@@ -24,12 +24,14 @@
  *  Forward declarations
  */
 namespace hypertable {
-  class DfsBrokerClient;
+  namespace DfsBroker {
+    class Client;
+  }
 }
 
 class dfsTestThreadFunction {
  public:
-  dfsTestThreadFunction(DfsBrokerClient *client, std::string input) : mClient(client) {
+  dfsTestThreadFunction(DfsBroker::Client *client, std::string input) : mClient(client) {
     mInputFile = input;
   }
   void SetDfsFile(std::string dfsFile) { 
@@ -41,7 +43,7 @@ class dfsTestThreadFunction {
   void operator()();
 
  private:
-  DfsBrokerClient *mClient;
+  DfsBroker::Client *mClient;
   std::string mInputFile;
   std::string mOutputFile;
   std::string mDfsFile;

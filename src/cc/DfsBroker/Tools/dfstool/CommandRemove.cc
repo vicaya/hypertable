@@ -39,6 +39,6 @@ int CommandRemove::run() {
     return -1;
   }
 
-  return mClient->Remove(mArgs[0].first.c_str());
+  return mClient->Remove(mArgs[0].first);
 }
 

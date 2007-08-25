@@ -25,13 +25,13 @@
 
 #include "Common/InteractiveCommand.h"
 
-#include "DfsBroker/Lib/DfsBrokerClient.h"
+#include "DfsBroker/Lib/Client.h"
 
 namespace hypertable {
 
   class CommandCopyToLocal : public InteractiveCommand {
   public:
-    CommandCopyToLocal(DfsBrokerClient *client) : mClient(client) { return; }
+    CommandCopyToLocal(DfsBroker::Client *client) : mClient(client) { return; }
     virtual const char *CommandText() { return "copyToLocal"; }
     virtual const char **Usage() { return msUsage; }
     virtual int run();
@@ -39,7 +39,7 @@ namespace hypertable {
   private:
     static const char *msUsage[];
 
-    DfsBrokerClient *mClient;
+    DfsBroker::Client *mClient;
   };
 
 }

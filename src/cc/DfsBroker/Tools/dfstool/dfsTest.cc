@@ -38,7 +38,7 @@ extern "C" {
 #include "AsyncComm/Event.h"
 #include "AsyncComm/ReactorFactory.h"
 
-#include "DfsBroker/Lib/DfsBrokerClient.h"
+#include "DfsBroker/Lib/Client.h"
 
 #include "dfsTestThreadFunction.h"
 
@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
   struct sockaddr_in addr;
   Comm *comm;
   ConnectionManager *connManager;
-  DfsBrokerClient *client;
+  DfsBroker::Client *client;
 
   if (argc != 1)
     Usage::DumpAndExit(usage);
@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
 
   comm = new Comm();
   connManager = new ConnectionManager(comm);
-  client = new DfsBrokerClient(connManager, addr, 15);
+  client = new DfsBroker::Client(connManager, addr, 15);
 
   if (!client->WaitForConnection(15)) {
     LOG_ERROR("Unable to connect to DFS");

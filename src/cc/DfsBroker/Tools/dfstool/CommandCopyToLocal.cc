@@ -52,8 +52,7 @@ int CommandCopyToLocal::run() {
   int error = Error::OK;
   EventPtr eventPtr;
   FILE *fp = 0;
-  DfsBrokerProtocol::ResponseHeaderReadT *readHeader = 0;
-  const char *src, *dst;
+  DfsBroker::Protocol::ResponseHeaderReadT *readHeader = 0;
   uint64_t startOffset = 0;
   int srcArg = 0;
 
@@ -67,15 +66,12 @@ int CommandCopyToLocal::run() {
     srcArg = 1;
   }
 
-  src = mArgs[srcArg].first.c_str();
-  dst = mArgs[srcArg+1].first.c_str();
-
-  if ((fp = fopen(dst, "w+")) == 0) {
-    perror(dst);
+  if ((fp = fopen(mArgs[srcArg+1].first.c_str(), "w+")) == 0) {
+    perror(mArgs[srcArg+1].first.c_str());
     goto abort;
   }
 
-  if ((error = mClient->Open(src, &fd)) != Error::OK)
+  if ((error = mClient->Open(mArgs[srcArg].first, &fd)) != Error::OK)
     goto abort;
 
   if (startOffset > 0) {
@@ -97,7 +93,7 @@ int CommandCopyToLocal::run() {
     if ((error = Protocol::ResponseCode(eventPtr)) != Error::OK)
       goto abort;
 
-    readHeader = (DfsBrokerProtocol::ResponseHeaderReadT *)eventPtr->message;
+    readHeader = (DfsBroker::Protocol::ResponseHeaderReadT *)eventPtr->message;
 
     if (readHeader->amount > 0) {
       if (fwrite(&readHeader[1], readHeader->amount, 1, fp) != 1) {

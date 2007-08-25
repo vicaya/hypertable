@@ -38,6 +38,6 @@ int CommandMkdirs::run() {
     cerr << "Error:  No directory name supplied." << endl;
     return -1;
   }
-  return mClient->Mkdirs(mArgs[0].first.c_str());
+  return mClient->Mkdirs(mArgs[0].first);
 }
 

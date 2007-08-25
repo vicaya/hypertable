@@ -21,7 +21,7 @@
 #include "Common/Error.h"
 #include "Common/Usage.h"
 
-#include "DfsBroker/Lib/DfsBrokerProtocol.h"
+#include "DfsBroker/Lib/Protocol.h"
 
 #include "CommandShutdown.h"
 
@@ -47,7 +47,7 @@ int CommandShutdown::run() {
 
   if (mArgs.size() > 0) {
     if (mArgs[0].first == "now")
-      flags |= DfsBrokerProtocol::SHUTDOWN_FLAG_IMMEDIATE;
+      flags |= DfsBroker::Protocol::SHUTDOWN_FLAG_IMMEDIATE;
     else {
       Usage::Dump(msUsage);
       return -1;

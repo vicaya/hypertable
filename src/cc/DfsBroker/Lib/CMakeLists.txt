@@ -16,5 +16,5 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
 
-add_library (DfsBroker DfsBrokerClient.cc DfsBrokerProtocol.cc)
+add_library (DfsBroker Client.cc Protocol.cc)
 

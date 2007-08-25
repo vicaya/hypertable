@@ -50,7 +50,7 @@ int CommandCopyFromLocal::run() {
   int error = Error::OK;
   EventPtr eventPtr;
   FILE *fp = 0;
-  DfsBrokerProtocol::ResponseHeaderAppendT *appendHeader = 0;
+  DfsBroker::Protocol::ResponseHeaderAppendT *appendHeader = 0;
   size_t nread;
   int srcArg = 0;
   uint8_t *buf;
@@ -65,7 +65,7 @@ int CommandCopyFromLocal::run() {
     goto abort;
   }
 
-  if ((error = mClient->Create(mArgs[srcArg+1].first.c_str(), true, -1, -1, -1, &fd)) != Error::OK)
+  if ((error = mClient->Create(mArgs[srcArg+1].first, true, -1, -1, -1, &fd)) != Error::OK)
     goto abort;
 
   // send 3 appends
@@ -84,7 +84,7 @@ int CommandCopyFromLocal::run() {
       goto abort;
     }
 
-    appendHeader = (DfsBrokerProtocol::ResponseHeaderAppendT *)eventPtr->message;
+    appendHeader = (DfsBroker::Protocol::ResponseHeaderAppendT *)eventPtr->message;
 
     //LOG_VA_INFO("Wrote %d bytes at offset %lld", appendHeader->amount, appendHeader->offset);
 

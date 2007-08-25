@@ -28,12 +28,12 @@ namespace hypertable {
   class Filesystem {
   public:
 
-    virtual int Open(const char *name, DispatchHandler *handler, uint32_t *msgIdp) = 0;
-    virtual int Open(const char *name, int32_t *fdp) = 0;
+    virtual int Open(std::string &name, DispatchHandler *handler, uint32_t *msgIdp) = 0;
+    virtual int Open(std::string &name, int32_t *fdp) = 0;
 
-    virtual int Create(const char *name, bool overwrite, int32_t bufferSize,
+    virtual int Create(std::string &name, bool overwrite, int32_t bufferSize,
 		       int32_t replication, int64_t blockSize, DispatchHandler *handler, uint32_t *msgIdp) = 0;
-    virtual int Create(const char *name, bool overwrite, int32_t bufferSize,
+    virtual int Create(std::string &name, bool overwrite, int32_t bufferSize,
 		       int32_t replication, int64_t blockSize, int32_t *fdp) = 0;
 
     virtual int Close(int32_t fd, DispatchHandler *handler, uint32_t *msgIdp) = 0;
@@ -48,17 +48,17 @@ namespace hypertable {
     virtual int Seek(int32_t fd, uint64_t offset, DispatchHandler *handler, uint32_t *msgIdp) = 0;
     virtual int Seek(int32_t fd, uint64_t offset) = 0;
 
-    virtual int Remove(const char *name, DispatchHandler *handler, uint32_t *msgIdp) = 0;
-    virtual int Remove(const char *name) = 0;
+    virtual int Remove(std::string &name, DispatchHandler *handler, uint32_t *msgIdp) = 0;
+    virtual int Remove(std::string &name) = 0;
 
-    virtual int Length(const char *name, DispatchHandler *handler, uint32_t *msgIdp) = 0;
-    virtual int Length(const char *name, int64_t *lenp) = 0;
+    virtual int Length(std::string &name, DispatchHandler *handler, uint32_t *msgIdp) = 0;
+    virtual int Length(std::string &name, int64_t *lenp) = 0;
 
     virtual int Pread(int32_t fd, uint64_t offset, uint32_t amount, DispatchHandler *handler, uint32_t *msgIdp) = 0;
     virtual int Pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst, uint32_t *nreadp) = 0;
 
-    virtual int Mkdirs(const char *name, DispatchHandler *handler, uint32_t *msgIdp) = 0;
-    virtual int Mkdirs(const char *name) = 0;
+    virtual int Mkdirs(std::string &name, DispatchHandler *handler, uint32_t *msgIdp) = 0;
+    virtual int Mkdirs(std::string &name) = 0;
 
   };
 
