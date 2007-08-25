@@ -350,6 +350,26 @@ int Client::Mkdirs(std::string &name) {
 }
 
 
+int Client::Flush(int32_t fd, DispatchHandler *handler, uint32_t *msgIdp) {
+  CommBufPtr cbufPtr( mProtocol->CreateFlushRequest(fd) );
+  return SendMessage(cbufPtr, handler, msgIdp);
+}
+
+
+int Client::Flush(int32_t fd) {
+  DispatchHandlerSynchronizer syncHandler;
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( mProtocol->CreateFlushRequest(fd) );
+  int error = SendMessage(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("Dfs 'flush' error, fd=%d : %s", fd, mProtocol->StringFormatMessage(eventPtr).c_str());
+      error = (int)mProtocol->ResponseCode(eventPtr);
+    }
+  }
+  return error;
+}
+
 
 int Client::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler, uint32_t *msgIdp) {
   int error;

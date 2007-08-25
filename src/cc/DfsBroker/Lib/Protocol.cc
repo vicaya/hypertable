@@ -46,7 +46,8 @@ namespace hypertable {
       "length",
       "pread",
       "mkdirs",
-      "status"
+      "status",
+      "flush"
     };
 
 
@@ -262,6 +263,24 @@ namespace hypertable {
       removeHeader->hdr.command = COMMAND_MKDIRS;
 
       hbuilder.Reset(Header::PROTOCOL_DFSBROKER);
+      hbuilder.Encapsulate(cbuf);
+
+      return cbuf;
+    }
+
+    /**
+     *
+     */
+    CommBuf *Protocol::CreateFlushRequest(int32_t fd) {
+      HeaderBuilder hbuilder;
+      CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(RequestHeaderFlushT));
+  
+      RequestHeaderFlushT *flushHeader = (RequestHeaderFlushT *)cbuf->AllocateSpace(sizeof(RequestHeaderFlushT));
+      flushHeader->hdr.command = COMMAND_FLUSH;
+      flushHeader->fd = fd;
+
+      hbuilder.Reset(Header::PROTOCOL_DFSBROKER);
+      hbuilder.SetGroupId(fd);
       hbuilder.Encapsulate(cbuf);
 
       return cbuf;

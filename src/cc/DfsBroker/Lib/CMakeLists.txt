@@ -16,5 +16,26 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
 
-add_library (DfsBroker Client.cc Protocol.cc)
+set ( DfsBroker_SRCS
+Client.cc
+ConnectionHandler.cc
+Protocol.cc
+RequestHandlerClose.cc
+RequestHandlerCreate.cc
+RequestHandlerOpen.cc
+RequestHandlerRead.cc
+RequestHandlerAppend.cc
+RequestHandlerSeek.cc
+RequestHandlerRemove.cc
+RequestHandlerLength.cc
+RequestHandlerPread.cc
+RequestHandlerMkdirs.cc
+RequestHandlerFlush.cc
+RequestHandlerStatus.cc
+ResponseCallbackOpen.cc
+ResponseCallbackRead.cc
+ResponseCallbackAppend.cc
+ResponseCallbackLength.cc
+)
 
+add_library (DfsBroker ${DfsBroker_SRCS})

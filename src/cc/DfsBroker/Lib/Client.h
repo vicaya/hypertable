@@ -91,6 +91,9 @@ namespace hypertable {
       virtual int Mkdirs(std::string &name, DispatchHandler *handler, uint32_t *msgIdp);
       virtual int Mkdirs(std::string &name);
 
+      virtual int Flush(int32_t fd, DispatchHandler *handler, uint32_t *msgIdp);
+      virtual int Flush(int32_t fd);
+
       int Status();
 
       int Shutdown(uint16_t flags, DispatchHandler *handler, uint32_t *msgIdp);

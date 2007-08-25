@@ -59,6 +59,8 @@ namespace hypertable {
 
       CommBuf *CreateMkdirsRequest(std::string &fname);
 
+      CommBuf *CreateFlushRequest(int32_t fd);
+
       CommBuf *CreateStatusRequest();
 
       CommBuf *CreateShutdownRequest(uint16_t flags);
@@ -90,6 +92,8 @@ namespace hypertable {
 	RequestHeaderT hdr;
 	int32_t        fd;
       } __attribute__((packed)) RequestHeaderCloseT;
+
+      typedef RequestHeaderCloseT RequestHeaderFlushT;
 
       typedef struct {
 	RequestHeaderT hdr;
@@ -160,7 +164,8 @@ namespace hypertable {
       static const uint16_t COMMAND_PREAD    = 9;
       static const uint16_t COMMAND_MKDIRS   = 10;
       static const uint16_t COMMAND_STATUS   = 11;
-      static const uint16_t COMMAND_MAX      = 12;
+      static const uint16_t COMMAND_FLUSH    = 12;
+      static const uint16_t COMMAND_MAX      = 13;
 
       static const uint16_t SHUTDOWN_FLAG_IMMEDIATE = 0x0001;
 
