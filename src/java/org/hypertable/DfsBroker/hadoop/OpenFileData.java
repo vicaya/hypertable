@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package org.hypertable.HdfsBroker;
+package org.hypertable.DfsBroker.hadoop;
 
 import java.net.InetSocketAddress;
 import org.apache.hadoop.fs.FSDataInputStream;

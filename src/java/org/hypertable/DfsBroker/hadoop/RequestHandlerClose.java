@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package org.hypertable.HdfsBroker;
+package org.hypertable.DfsBroker.hadoop;
 
 import java.net.ProtocolException;
 import java.util.logging.Logger;
@@ -30,7 +30,7 @@ import org.hypertable.Common.Error;
 
 public class RequestHandlerClose extends ApplicationHandler {
 
-    static final Logger log = Logger.getLogger("org.hypertable.HdfsBroker");
+    static final Logger log = Logger.getLogger("org.hypertable.DfsBroker.hadoop");
 
     public RequestHandlerClose(Comm comm, HdfsBroker broker, Event event) {
 	super(event);

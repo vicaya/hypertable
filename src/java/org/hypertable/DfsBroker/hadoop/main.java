@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package org.hypertable.HdfsBroker;
+package org.hypertable.DfsBroker.hadoop;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -36,11 +36,11 @@ import org.hypertable.Common.Usage;
 
 public class main {
 
-    static final Logger log = Logger.getLogger("org.hypertable.HdfsBroker");
+    static final Logger log = Logger.getLogger("org.hypertable.DfsBroker.hadoop");
 
     static String usage[] = {
 	"",
-	"usage: java org.hypertable.HdfsBroker.main [OPTIONS]",
+	"usage: java org.hypertable.DfsBroker.hadoop.main [OPTIONS]",
 	"",
 	"OPTIONS:",
 	"  --help           Display this help text and exit",

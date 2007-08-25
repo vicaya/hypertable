@@ -76,6 +76,12 @@ namespace hypertable {
       memcpy(data, &ival, sizeof(int32_t));
     }
 
+    void PrependLong(uint64_t lval) {
+      data -= 8;
+      dataLen += 8;
+      memcpy(data, &lval, 8);
+    }
+
     void PrependByteArray(const void *dataBytes, int32_t len) {
       data -= len + sizeof(int32_t);
       dataLen += len + sizeof(int32_t);

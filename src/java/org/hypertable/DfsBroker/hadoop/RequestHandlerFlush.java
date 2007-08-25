@@ -20,36 +20,28 @@
 
 package org.hypertable.DfsBroker.hadoop;
 
-import java.nio.ByteBuffer;
+import java.util.logging.Logger;
+import org.hypertable.AsyncComm.ApplicationHandler;
 import org.hypertable.AsyncComm.Comm;
-import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.ResponseCallback;
 import org.hypertable.Common.Error;
 
-public class ResponseCallbackPositionRead extends ResponseCallback {
+public class RequestHandlerFlush extends ApplicationHandler {
 
-    ResponseCallbackPositionRead(Comm comm, Event event) {
-	super(comm, event);
+    static final Logger log = Logger.getLogger("org.hypertable.DfsBroker.hadoop");
+
+    public RequestHandlerFlush(Comm comm, HdfsBroker broker, Event event) {
+	super(event);
+	mComm = comm;
+	mBroker = broker;
     }
 
-    int response(long offset, int nread, byte [] data) {
-	CommBuf cbuf = new CommBuf(mHeaderBuilder.HeaderLength() + 16);
-	cbuf.PrependInt(nread);
-	cbuf.PrependLong(offset);
-	cbuf.PrependInt(Error.OK);
-	
-	if (nread > 0) {
-	    cbuf.ext = ByteBuffer.allocateDirect(nread);
-	    cbuf.ext.put(data, 0, nread);
-	    cbuf.ext.flip();
-	}
-
-	// Encapsulate with Comm message response header
-	mHeaderBuilder.LoadFromMessage(mEvent.msg);
-	mHeaderBuilder.Encapsulate(cbuf);
-
-	return mComm.SendResponse(mEvent.addr, cbuf);
+    public void run() {
+	ResponseCallback cb = new ResponseCallback(mComm, mEvent);
+	mBroker.Flush(cb);
     }
+
+    private Comm       mComm;
+    private HdfsBroker mBroker;
 }
-

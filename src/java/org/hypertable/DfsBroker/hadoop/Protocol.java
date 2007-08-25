@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package org.hypertable.HdfsBroker;
+package org.hypertable.DfsBroker.hadoop;
 
 public class Protocol extends org.hypertable.AsyncComm.Protocol {
 
@@ -34,7 +34,8 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
     public static final short COMMAND_PREAD    = 9;
     public static final short COMMAND_MKDIRS   = 10;
     public static final short COMMAND_STATUS   = 11;
-    public static final short COMMAND_MAX      = 12;
+    public static final short COMMAND_FLUSH    = 12;
+    public static final short COMMAND_MAX      = 13;
     
     public static final short SHUTDOWN_FLAG_IMMEDIATE = 0x0001;
 
@@ -51,6 +52,7 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
 	"pread",
 	"mkdirs",
 	"status",
+	"flush"
     };
 
     public String CommandText(short command) {

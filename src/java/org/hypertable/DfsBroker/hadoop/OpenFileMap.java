@@ -19,7 +19,7 @@
  */
 
 
-package org.hypertable.HdfsBroker;
+package org.hypertable.DfsBroker.hadoop;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -28,7 +28,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- *
+ * This class acts as a synchronized HashMap that maps open file descriptors to
+ * OpenFileData objects
  */
 public class OpenFileMap {
 

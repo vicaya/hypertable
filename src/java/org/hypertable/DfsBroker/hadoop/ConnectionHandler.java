@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package org.hypertable.HdfsBroker;
+package org.hypertable.DfsBroker.hadoop;
 
 import java.net.ProtocolException;
 import java.util.logging.Logger;
@@ -31,10 +31,16 @@ import org.hypertable.AsyncComm.ResponseCallback;
 import org.hypertable.Common.Error;
 
 /**
+ * This is the connection dispatch handler that gets registered with AsyncComm
+ * for each incoming connection.  For MESSAGE events, it inspects the incoming
+ * message, extracts the command code, creates a RequestHandler to carry out the
+ * request and enque's it on the application work queue.  For DISCONNECT events,
+ * it purges all of the open file descriptors that were created on the
+ * connection.  All other events are logged.
  */
 public class ConnectionHandler implements DispatchHandler {
 
-    static final Logger log = Logger.getLogger("org.hypertable.HdfsBroker");
+    static final Logger log = Logger.getLogger("org.hypertable.DfsBroker.hadoop");
 
     public ConnectionHandler(Comm comm, ApplicationQueue appQueue, HdfsBroker broker) {
 	mComm = comm;
@@ -89,6 +95,9 @@ public class ConnectionHandler implements DispatchHandler {
 		break;
 	    case Protocol.COMMAND_STATUS:
 		requestHandler = new RequestHandlerStatus(mComm, mAppQueue, event);
+		break;
+	    case Protocol.COMMAND_FLUSH:
+		requestHandler = new RequestHandlerFlush(mComm, mBroker, event);
 		break;
 	    default:
 		ResponseCallback cb = new ResponseCallback(mComm, event);

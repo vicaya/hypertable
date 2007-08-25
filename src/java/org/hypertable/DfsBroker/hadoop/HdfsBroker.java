@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package org.hypertable.HdfsBroker;
+package org.hypertable.DfsBroker.hadoop;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -37,9 +37,15 @@ import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.ResponseCallback;
 import org.hypertable.Common.Error;
 
+/**
+ * This is the actual HdfsBroker object that contains all of the application
+ * logic.  It has a method for each of the request types (e.g. Open, Close,
+ * Read, Write, etc.)  There is only one of these objects for each server
+ * instance which carries out all of the requests from all connections.
+ */
 public class HdfsBroker {
 
-    static final Logger log = Logger.getLogger("org.hypertable.HdfsBroker");
+    static final Logger log = Logger.getLogger("org.hypertable.DfsBroker.hadoop");
 
     protected static AtomicInteger msUniqueId = new AtomicInteger(0);
 
@@ -433,6 +439,16 @@ public class HdfsBroker {
 	if (error != Error.OK)
 	    log.severe("Error sending SEEK response back");
     }
+
+    /**
+     *
+     */
+    public void Flush(ResponseCallback cb) {
+	// todo: implement me!!
+	if (cb.response_ok() != Error.OK)
+	    log.severe("Error sending SEEK response back");
+    }
+
 
     private Configuration mConf = new Configuration();
     private FileSystem    mFilesystem;

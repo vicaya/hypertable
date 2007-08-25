@@ -26,7 +26,7 @@
 
 using namespace hypertable;
 
-int ResponseCallback::error(int error, std::string &msg) {
+int ResponseCallback::error(int error, std::string msg) {
   CommBufPtr cbufPtr( Protocol::CreateErrorMessage(error, msg.c_str(), hbuilder_.HeaderLength()) ); // fix me!!!
   hbuilder_.LoadFromMessage(mEventPtr->header);
   hbuilder_.Encapsulate(cbufPtr.get());

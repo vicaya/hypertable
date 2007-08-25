@@ -55,24 +55,24 @@ fi
 
 
 #
-# Start HdfsBroker
+# Start DfsBroker.hadoop
 #
-PIDFILE=$HYPERTABLE_HOME/run/HdfsBroker.pid
-LOGFILE=$HYPERTABLE_HOME/log/HdfsBroker.log
+PIDFILE=$HYPERTABLE_HOME/run/DfsBroker.hadoop.pid
+LOGFILE=$HYPERTABLE_HOME/log/DfsBroker.hadoop.log
 
 $HYPERTABLE_HOME/bin/serverup hdfsbroker
 if [ $? != 0 ] ; then
-  nohup $HYPERTABLE_HOME/bin/jrun --pidfile $PIDFILE org.hypertable.HdfsBroker.main --verbose 1>& $LOGFILE &
+  nohup $HYPERTABLE_HOME/bin/jrun --pidfile $PIDFILE org.hypertable.DfsBroker.hadoop.main --verbose 1>& $LOGFILE &
   sleep 1
   $HYPERTABLE_HOME/bin/serverup hdfsbroker
   if [ $? != 0 ] ; then
-      echo -n "HdfsBroker hasn't come up yet, trying again in 5 seconds ..."
+      echo -n "DfsBroker.hadoop hasn't come up yet, trying again in 5 seconds ..."
       sleep 5
       echo ""
       $HYPERTABLE_HOME/bin/serverup hdfsbroker
       if [ $? != 0 ] ; then
 	  tail -100 $LOGFILE
-	  echo "Problem statring HdfsBroker";
+	  echo "Problem statring DfsBroker.hadoop";
 	  exit 1
       fi
   fi
