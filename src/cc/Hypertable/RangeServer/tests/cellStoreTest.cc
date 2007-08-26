@@ -43,7 +43,8 @@ extern "C" {
 #include "AsyncComm/ConnectionManager.h"
 #include "AsyncComm/ReactorFactory.h"
 
-#include "HdfsClient/HdfsClient.h"
+#include "DfsBroker/Lib/Client.h"
+
 #include "Hypertable/RangeServer/CellStoreScannerV0.h"
 #include "Hypertable/RangeServer/CellStoreV0.h"
 #include "Hypertable/RangeServer/CellCache.h"
@@ -76,7 +77,7 @@ namespace {
 int main(int argc, char **argv) {
   Comm *comm;
   ConnectionManager *connManager;
-  HdfsClient *client;
+  DfsBroker::Client *client;
   struct sockaddr_in addr;
   bool golden = false;
   ScanSpecificationT scanSpec;
@@ -156,7 +157,7 @@ int main(int argc, char **argv) {
   comm = new Comm();
   connManager = new ConnectionManager(comm);
 
-  client = new HdfsClient(connManager, addr, 20);
+  client = new DfsBroker::Client(connManager, addr, 20);
   if (!client->WaitForConnection(10))
     harness.DisplayErrorAndExit();
 

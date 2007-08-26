@@ -23,8 +23,6 @@
 #include "Common/Error.h"
 #include "Common/System.h"
 
-#include "HdfsClient/HdfsClient.h"
-
 #include "BlockInflaterZlib.h"
 #include "Global.h"
 #include "CellStoreScannerV0.h"
@@ -215,7 +213,7 @@ bool CellStoreScannerV0::FetchNextBlock() {
       /** Read compressed block **/
       buf = new uint8_t [ mBlock.zlength ];
       uint32_t nread;
-      if (mCellStoreV0->mClient->Pread(mCellStoreV0->mFd, mBlock.offset, mBlock.zlength, buf, &nread) != Error::OK)
+      if (mCellStoreV0->mFilesys->Pread(mCellStoreV0->mFd, mBlock.offset, mBlock.zlength, buf, &nread) != Error::OK)
 	goto abort;
 
       /** inflate compressed block **/

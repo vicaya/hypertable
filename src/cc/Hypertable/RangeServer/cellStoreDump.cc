@@ -30,7 +30,8 @@
 #include "Common/System.h"
 #include "Common/Usage.h"
 
-#include "HdfsClient/HdfsClient.h"
+#include "DfsBroker/Lib/Client.h"
+
 #include "Hypertable/RangeServer/CellStoreV0.h"
 #include "Hypertable/RangeServer/CellStoreScannerV0.h"
 #include "Hypertable/RangeServer/Global.h"
@@ -59,7 +60,7 @@ namespace {
 int main(int argc, char **argv) {
   Comm *comm;
   ConnectionManager *connManager;
-  HdfsClient *client;
+  DfsBroker::Client *client;
   std::string fname = "";
   struct sockaddr_in addr;
   ByteString32T *key;
@@ -102,9 +103,9 @@ int main(int argc, char **argv) {
   comm = new Comm();
   connManager = new ConnectionManager(comm);
 
-  client = new HdfsClient(connManager, addr, 20);
-  if (!client->WaitForConnection(10)) {
-    cerr << "error: timed out waiting for HDFS broker" << endl;
+  client = new DfsBroker::Client(connManager, addr, 20);
+  if (!client->WaitForConnection(15)) {
+    cerr << "error: timed out waiting for DFS broker" << endl;
     exit(1);
   }
 

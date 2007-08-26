@@ -24,7 +24,7 @@ CommandGetSchema.cc
 
 # hypertable - command interpreter
 add_executable (hypertable ${hypertable_SRCS})
-target_link_libraries (hypertable pthread ${BOOST_LIB} Hypertable AsyncComm Hyperspace HdfsClient Common log4cpp expat readline curses)
+target_link_libraries (hypertable pthread ${BOOST_LIB} Hypertable AsyncComm Hyperspace DfsBroker Common log4cpp expat readline curses)
 
 install (TARGETS hypertable RUNTIME DESTINATION bin)
 

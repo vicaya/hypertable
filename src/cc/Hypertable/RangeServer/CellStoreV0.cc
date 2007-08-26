@@ -29,7 +29,7 @@ extern "C" {
 #include "Common/Logger.h"
 #include "Common/System.h"
 
-#include "HdfsClient/HdfsClient.h"
+#include "AsyncComm/Protocol.h"
 
 #include "BlockDeflaterZlib.h"
 #include "BlockInflaterZlib.h"
@@ -40,11 +40,10 @@ extern "C" {
 
 using namespace hypertable;
 
-CellStoreV0::CellStoreV0(HdfsClient *client) : mClient(client), mFilename(), mFd(-1), mIndex(),
+CellStoreV0::CellStoreV0(Filesystem *filesys) : mFilesys(filesys), mFilename(), mFd(-1), mIndex(),
   mBuffer(0), mFixIndexBuffer(0), mVarIndexBuffer(0), mBlockSize(Constants::DEFAULT_BLOCKSIZE),
   mOutstandingId(0), mOffset(0), mLastKey(0), mFileLength(0),
   mDiskUsage(0), mSplitKey(0), mFileId(0), mStartKeyPtr(0), mEndKeyPtr(0) {
-  mProtocol = mClient->GetProtocolObject();
   mBlockDeflater = new BlockDeflaterZlib();
   mFileId = FileBlockCache::GetNextFileId();
 }
@@ -55,7 +54,7 @@ CellStoreV0::~CellStoreV0() {
   int error;
   delete mBlockDeflater;
   if (mFd != -1) {
-    if ((error = mClient->Close(mFd)) != Error::OK) {
+    if ((error = mFilesys->Close(mFd)) != Error::OK) {
       LOG_VA_ERROR("Problem closing HDFS client - %s", Error::GetText(error));
     }
   }
@@ -99,7 +98,7 @@ int CellStoreV0::Create(const char *fname, size_t blockSize) {
 
   mFilename = fname;
 
-  return mClient->Create(mFilename.c_str(), true, -1, -1, -1, &mFd);
+  return mFilesys->Create(mFilename, true, -1, -1, -1, &mFd);
 
 }
 
@@ -118,7 +117,7 @@ int CellStoreV0::Add(const ByteString32T *key, const ByteString32T *value) {
 
     if (mOutstandingId != 0) {
       if (!mSyncHandler.WaitForReply(eventPtr)) {
-	LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), mProtocol->StringFormatMessage(eventPtr).c_str());
+	LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), hypertable::Protocol::StringFormatMessage(eventPtr).c_str());
 	return -1;
       }
     }
@@ -126,7 +125,7 @@ int CellStoreV0::Add(const ByteString32T *key, const ByteString32T *value) {
     size_t  zlen;
     uint8_t *zbuf = zBuffer.release(&zlen);
 
-    if ((error = mClient->Write(mFd, zbuf, zlen, &mSyncHandler, &mOutstandingId)) != Error::OK) {
+    if ((error = mFilesys->Append(mFd, zbuf, zlen, &mSyncHandler, &mOutstandingId)) != Error::OK) {
       LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), Error::GetText(error));
       return -1;
     }
@@ -167,12 +166,12 @@ int CellStoreV0::Finalize(uint64_t timestamp) {
     zbuf = zBuffer.release(&zlen);
 
     if (mOutstandingId != 0 && !mSyncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), mProtocol->StringFormatMessage(eventPtr).c_str());
+      LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), Protocol::StringFormatMessage(eventPtr).c_str());
       goto abort;
     }
 
-    if ((error = mClient->Write(mFd, zbuf, zlen, &mSyncHandler, &mOutstandingId)) != Error::OK) {
-      LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), mProtocol->StringFormatMessage(eventPtr).c_str());
+    if ((error = mFilesys->Append(mFd, zbuf, zlen, &mSyncHandler, &mOutstandingId)) != Error::OK) {
+      LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), Protocol::StringFormatMessage(eventPtr).c_str());
       goto abort;
     }
     mOffset += zlen;
@@ -206,11 +205,11 @@ int CellStoreV0::Finalize(uint64_t timestamp) {
    * wait for last Client op
    */
   if (mOutstandingId != 0 && !mSyncHandler.WaitForReply(eventPtr)) {
-    LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), mProtocol->StringFormatMessage(eventPtr).c_str());
+    LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), Protocol::StringFormatMessage(eventPtr).c_str());
     goto abort;
   }
 
-  if (mClient->Write(mFd, zbuf, zlen, &mSyncHandler, &mOutstandingId) != Error::OK)
+  if (mFilesys->Append(mFd, zbuf, zlen, &mSyncHandler, &mOutstandingId) != Error::OK)
     goto abort;
   mOffset += zlen;
 
@@ -222,7 +221,7 @@ int CellStoreV0::Finalize(uint64_t timestamp) {
 
   // wait for fixed index write
   if (mOutstandingId == 0 || !mSyncHandler.WaitForReply(eventPtr)) {
-    LOG_VA_ERROR("Problem writing fixed index to HDFS file '%s' : %s", mFilename.c_str(), mProtocol->StringFormatMessage(eventPtr).c_str());
+    LOG_VA_ERROR("Problem writing fixed index to HDFS file '%s' : %s", mFilename.c_str(), Protocol::StringFormatMessage(eventPtr).c_str());
     goto abort;
   }
 
@@ -254,19 +253,19 @@ int CellStoreV0::Finalize(uint64_t timestamp) {
 
   zbuf = zBuffer.release(&zlen);
 
-  if (mClient->Write(mFd, zbuf, zlen) != Error::OK)
+  if (mFilesys->Append(mFd, zbuf, zlen) != Error::OK)
     goto abort;
   mOffset += zlen;
 
   /** close file for writing **/
-  if (mClient->Close(mFd) != Error::OK)
+  if (mFilesys->Close(mFd) != Error::OK)
     goto abort;
 
   /** Set file length **/
   mFileLength = mOffset;
 
   /** Re-open file for reading **/
-  if ((error = mClient->Open(mFilename.c_str(), &mFd)) != Error::OK)
+  if ((error = mFilesys->Open(mFilename, &mFd)) != Error::OK)
     goto abort;
 
   mDiskUsage = (uint32_t)mFileLength;
@@ -316,7 +315,7 @@ int CellStoreV0::Open(const char *fname, const ByteString32T *startKey, const By
   mFilename = fname;
 
   /** Get the file length **/
-  if ((error = mClient->Length(mFilename.c_str(), (int64_t *)&mFileLength)) != Error::OK)
+  if ((error = mFilesys->Length(mFilename, (int64_t *)&mFileLength)) != Error::OK)
     goto abort;
 
   if (mFileLength < sizeof(StoreTrailerT)) {
@@ -325,12 +324,12 @@ int CellStoreV0::Open(const char *fname, const ByteString32T *startKey, const By
   }
 
   /** Open the HDFS file **/
-  if ((error = mClient->Open(mFilename.c_str(), &mFd)) != Error::OK)
+  if ((error = mFilesys->Open(mFilename, &mFd)) != Error::OK)
     goto abort;
 
   /** Read trailer **/
   uint32_t len;
-  if ((error = mClient->Pread(mFd, mFileLength-sizeof(StoreTrailerT), sizeof(StoreTrailerT), (uint8_t *)&mTrailer, &len)) != Error::OK)
+  if ((error = mFilesys->Pread(mFd, mFileLength-sizeof(StoreTrailerT), sizeof(StoreTrailerT), (uint8_t *)&mTrailer, &len)) != Error::OK)
     goto abort;
 
   if (len != sizeof(StoreTrailerT)) {
@@ -389,7 +388,7 @@ int CellStoreV0::LoadIndex() {
   buf = new uint8_t [ amount ];
 
   /** Read index data **/
-  if ((error = mClient->Pread(mFd, mTrailer.fixIndexOffset, amount, buf, &len)) != Error::OK)
+  if ((error = mFilesys->Pread(mFd, mTrailer.fixIndexOffset, amount, buf, &len)) != Error::OK)
     goto abort;
 
   if (len != amount) {

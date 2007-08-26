@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
   int port, reactorCount, workerCount;
   Comm *comm = 0;
   ConnectionManager *connManager;
-  Properties *props = 0;
+  PropertiesPtr propsPtr;
   RangeServer *rangeServer = 0;
 
   System::Initialize(argv[0]);
@@ -109,19 +109,19 @@ int main(int argc, char **argv) {
   if (configFile == "")
     configFile = System::installDir + "/conf/hypertable.cfg";
 
-  props = new Properties(configFile);
+  propsPtr.reset( new Properties(configFile) );
   if (Global::verbose)
-    props->setProperty("verbose", "true");
+    propsPtr->setProperty("verbose", "true");
 
   if (metadataFile == "") {
     LOG_ERROR("--metadata argument not specified.");
     exit(1);
   }
-  props->setProperty("metadata", metadataFile.c_str());
+  propsPtr->setProperty("metadata", metadataFile.c_str());
 
-  port         = props->getPropertyInt("Hypertable.RangeServer.port", DEFAULT_PORT);
-  reactorCount = props->getPropertyInt("Hypertable.RangeServer.reactors", System::GetProcessorCount());
-  workerCount  = props->getPropertyInt("Hypertable.RangeServer.workers", DEFAULT_WORKERS);
+  port         = propsPtr->getPropertyInt("Hypertable.RangeServer.port", DEFAULT_PORT);
+  reactorCount = propsPtr->getPropertyInt("Hypertable.RangeServer.reactors", System::GetProcessorCount());
+  workerCount  = propsPtr->getPropertyInt("Hypertable.RangeServer.workers", DEFAULT_WORKERS);
 
   ReactorFactory::Initialize(reactorCount);
 
@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
     cout << "Hypertable.RangeServer.reactors=" << reactorCount << endl;
   }
 
-  rangeServer = new RangeServer (connManager, props);
+  rangeServer = new RangeServer (connManager, propsPtr);
   Global::appQueue = new ApplicationQueue(workerCount);
   comm->Listen(port, new HandlerFactory(comm, Global::appQueue, rangeServer));
 
@@ -145,7 +145,6 @@ int main(int argc, char **argv) {
 
   delete Global::appQueue;
   delete rangeServer;
-  delete props;
   delete comm;
   return 0;
 }

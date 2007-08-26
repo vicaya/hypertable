@@ -27,8 +27,9 @@
 #include "AsyncComm/Event.h"
 #include "AsyncComm/ResponseCallback.h"
 
-#include "HdfsClient/HdfsClient.h"
 #include "Hyperspace/HyperspaceClient.h"
+
+#include "Hypertable/Lib/Filesystem.h"
 
 #include "ResponseCallbackGetSchema.h"
 
@@ -38,7 +39,7 @@ namespace hypertable {
 
   class Master {
   public:
-    Master(ConnectionManager *connManager, Properties *props);
+    Master(ConnectionManager *connManager, PropertiesPtr &propsPtr);
     ~Master();
     void CreateTable(ResponseCallback *cb, const char *tableName, const char *schemaString);
     void GetSchema(ResponseCallbackGetSchema *cb, const char *tableName);
@@ -47,7 +48,7 @@ namespace hypertable {
   private:
     bool mVerbose;
     HyperspaceClient *mHyperspace;
-    HdfsClient *mHdfsClient;
+    Filesystem *mDfsClient;
     atomic_t mLastTableId;
   };
 

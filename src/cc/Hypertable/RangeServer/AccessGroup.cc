@@ -172,7 +172,7 @@ void AccessGroup::RunCompaction(uint64_t timestamp, bool major) {
   sprintf(filename, "cs%d", mNextTableId++);
   cellStoreFile = (string)"/hypertable/tables/" + mTableName + "/" + mName + "/" + md5DigestStr + "/" + filename;
 
-  cellStorePtr = new CellStoreV0(Global::hdfsClient);
+  cellStorePtr = new CellStoreV0(Global::dfs);
 
   if (cellStorePtr->Create(cellStoreFile.c_str()) != 0) {
     LOG_VA_ERROR("Problem compacting locality group to file '%s'", cellStoreFile.c_str());

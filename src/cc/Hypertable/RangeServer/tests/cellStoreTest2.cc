@@ -30,7 +30,8 @@
 #include "Common/TestHarness.h"
 #include "Common/Usage.h"
 
-#include "HdfsClient/HdfsClient.h"
+#include "DfsBroker/Lib/Client.h"
+
 #include "Hypertable/Lib/Schema.h"
 #include "Hypertable/RangeServer/CellCache.h"
 #include "Hypertable/RangeServer/CellCacheScanner.h"
@@ -57,7 +58,7 @@ namespace {
     "output file 'cellStoreTest2.golden' will be generated",
     0
   };
-  bool RunMergeTest(Comm *comm, HdfsClient *client, bool suppressDeleted);
+  bool RunMergeTest(Comm *comm, DfsBroker::Client *client, bool suppressDeleted);
 }
 
 
@@ -65,7 +66,7 @@ namespace {
 int main(int argc, char **argv) {
   Comm *comm;
   ConnectionManager *connManager;
-  HdfsClient *client;
+  DfsBroker::Client *client;
   bool golden = false;
   struct sockaddr_in addr;
   TestHarness harness("/tmp/cellStoreTest2");
@@ -97,7 +98,7 @@ int main(int argc, char **argv) {
   comm = new Comm();
   connManager = new ConnectionManager(comm);
 
-  client = new HdfsClient(connManager, addr, 20);
+  client = new DfsBroker::Client(connManager, addr, 20);
   if (!client->WaitForConnection(10))
     harness.DisplayErrorAndExit();
 
@@ -111,7 +112,7 @@ int main(int argc, char **argv) {
 
 namespace {
 
-  bool RunMergeTest(Comm *comm, HdfsClient *client, bool suppressDeleted) {
+  bool RunMergeTest(Comm *comm, DfsBroker::Client *client, bool suppressDeleted) {
     const char *schemaData;
     off_t len;
     Schema *schema;

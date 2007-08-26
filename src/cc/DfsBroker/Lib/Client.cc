@@ -49,17 +49,17 @@ Client::Client(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mConne
   mProtocol = new Protocol();
 
   {
-    if ((port = (uint16_t)propsPtr->getPropertyInt(".port", 0)) == 0) {
+    if ((port = (uint16_t)propsPtr->getPropertyInt("DfsBroker.port", 0)) == 0) {
       LOG_ERROR(".port property not specified.");
       exit(1);
     }
 
-    if ((host = propsPtr->getProperty(".host", (const char *)0)) == 0) {
+    if ((host = propsPtr->getProperty("DfsBroker.host", (const char *)0)) == 0) {
       LOG_ERROR(".host property not specified.");
       exit(1);
     }
 
-    mTimeout = propsPtr->getPropertyInt(".timeout", 30);
+    mTimeout = propsPtr->getPropertyInt("DfsBroker.timeout", 30);
 
     memset(&mAddr, 0, sizeof(struct sockaddr_in));
     {

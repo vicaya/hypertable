@@ -27,7 +27,7 @@
 
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "Common/DynamicBuffer.h"
-#include "HdfsClient/HdfsClient.h"
+#include "Hypertable/Lib/Filesystem.h"
 
 #include "BlockDeflater.h"
 #include "CellStore.h"
@@ -48,7 +48,7 @@ namespace hypertable {
 
   public:
 
-    CellStoreV0(HdfsClient *client);
+    CellStoreV0(Filesystem *filesys);
     virtual ~CellStoreV0();
 
     virtual int Create(const char *fname, size_t blockSize=Constants::DEFAULT_BLOCKSIZE);
@@ -89,8 +89,7 @@ namespace hypertable {
 
     typedef map<ByteString32T *, uint32_t, ltByteString32> IndexMapT;
 
-    HdfsClient            *mClient;
-    HdfsProtocol          *mProtocol;
+    Filesystem            *mFilesys;
     std::string            mFilename;
     int32_t                mFd;
     IndexMapT              mIndex;

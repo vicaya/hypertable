@@ -31,7 +31,7 @@
 #include "Hypertable/Lib/Metadata.h"
 #include "Hypertable/Lib/RangeServerProtocol.h"
 #include "Hypertable/Lib/Schema.h"
-#include "HdfsClient/HdfsClient.h"
+#include "Hypertable/Lib/Filesystem.h"
 
 #include "CommitLog.h"
 #include "FileBlockCache.h"
@@ -44,18 +44,13 @@ namespace hypertable {
 
   class Global {
   public:
-
-    typedef __gnu_cxx::hash_map<string, TableInfoPtr> TableInfoMapT;
-
     static hypertable::ApplicationQueue *appQueue;
     static hypertable::HyperspaceClient *hyperspace;
-    static hypertable::HdfsClient  *hdfsClient;
+    static hypertable::Filesystem *dfs;
     static boost::thread *maintenanceThreadPtr;
     static hypertable::RangeServerProtocol *protocol;
     static bool           verbose;
-    static boost::mutex   mutex;
     static Metadata      *metadata;
-    static TableInfoMapT  tableInfoMap;
     static CommitLog     *log;
     static std::string    logDirRoot;
     static std::string    logDir;
@@ -65,19 +60,6 @@ namespace hypertable {
     static int32_t        localityGroupMaxMemory;
     static ScannerMap     scannerMap;
     static hypertable::FileBlockCache *blockCache;
-
-    static bool GetTableInfo(string &name, TableInfoPtr &info);
-    static void SetTableInfo(string &name, TableInfoPtr &info);
-
-    static bool GetTableInfo(const char *name, TableInfoPtr &info) {
-      std::string nameStr = name;
-      return GetTableInfo(nameStr, info);
-    }
-
-    static void SetTableInfo(const char *name, TableInfoPtr &info) {
-      std::string nameStr = name;
-      SetTableInfo(nameStr, info);
-    }
 
   };
 }

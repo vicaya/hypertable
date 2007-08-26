@@ -26,13 +26,13 @@
 #include "AsyncComm/Event.h"
 #include "AsyncComm/ResponseCallback.h"
 
-#include "HdfsClient/HdfsClient.h"
 #include "Hyperspace/HyperspaceClient.h"
 
 #include "ResponseCallbackCreateScanner.h"
 #include "ResponseCallbackFetchScanblock.h"
 #include "ResponseCallbackUpdate.h"
 #include "Request.h"
+#include "TableInfo.h"
 
 using namespace hypertable;
 
@@ -40,7 +40,7 @@ namespace hypertable {
 
   class RangeServer {
   public:
-    RangeServer(ConnectionManager *connManager, Properties *props);
+    RangeServer(ConnectionManager *connManager, PropertiesPtr &propsPtr);
 
     void Compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, uint8_t compactionType);
     void CreateScanner(ResponseCallbackCreateScanner *cb, RangeSpecificationT *rangeSpec, ScanSpecificationT *spec);
@@ -51,9 +51,24 @@ namespace hypertable {
   private:
     int DirectoryInitialize(Properties *props);
 
+    bool GetTableInfo(std::string &name, TableInfoPtr &info);
+    bool GetTableInfo(const char *name, TableInfoPtr &info) {
+      std::string nameStr = name;
+      return GetTableInfo(nameStr, info);
+    }
+
+    void SetTableInfo(std::string &name, TableInfoPtr &info);
+    void SetTableInfo(const char *name, TableInfoPtr &info) {
+      std::string nameStr = name;
+      SetTableInfo(nameStr, info);
+    }
+
+    typedef __gnu_cxx::hash_map<string, TableInfoPtr> TableInfoMapT;
+
+    boost::mutex   mMutex;
     bool mVerbose;
     HyperspaceClient *mHyperspace;
-    HdfsClient *mHdfsClient;
+    TableInfoMapT mTableInfoMap;
   };
 
 }

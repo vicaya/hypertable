@@ -29,6 +29,8 @@
 
 #include "Hypertable/Lib/RangeServerProtocol.h"
 
+#include "DfsBroker/Lib/Client.h"
+
 #include "CommitLogLocal.h"
 #include "FillScanBlock.h"
 #include "Global.h"
@@ -46,23 +48,22 @@ namespace {
 
 
 /**
- *  Constructor
+ * Constructor
  */
-
-RangeServer::RangeServer(ConnectionManager *connManager, Properties *props) {
+RangeServer::RangeServer(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mMutex() {
   const char *metadataFile = 0;
 
-  Global::rangeMaxBytes           = props->getPropertyInt64("Hypertable.RangeServer.Range.MaxBytes", 200000000LL);
-  Global::localityGroupMaxFiles   = props->getPropertyInt("Hypertable.RangeServer.AccessGroup.MaxFiles", 10);
-  Global::localityGroupMergeFiles = props->getPropertyInt("Hypertable.RangeServer.AccessGroup.MergeFiles", 4);
-  Global::localityGroupMaxMemory  = props->getPropertyInt("Hypertable.RangeServer.AccessGroup.MaxMemory", 4000000);
+  Global::rangeMaxBytes           = propsPtr->getPropertyInt64("Hypertable.RangeServer.Range.MaxBytes", 200000000LL);
+  Global::localityGroupMaxFiles   = propsPtr->getPropertyInt("Hypertable.RangeServer.AccessGroup.MaxFiles", 10);
+  Global::localityGroupMergeFiles = propsPtr->getPropertyInt("Hypertable.RangeServer.AccessGroup.MergeFiles", 4);
+  Global::localityGroupMaxMemory  = propsPtr->getPropertyInt("Hypertable.RangeServer.AccessGroup.MaxMemory", 4000000);
 
-  uint64_t blockCacheMemory = props->getPropertyInt64("Hypertable.RangeServer.BlockCache.MaxMemory", 200000000LL);
+  uint64_t blockCacheMemory = propsPtr->getPropertyInt64("Hypertable.RangeServer.BlockCache.MaxMemory", 200000000LL);
   Global::blockCache = new FileBlockCache(blockCacheMemory);
 
   assert(Global::localityGroupMergeFiles <= Global::localityGroupMaxFiles);
 
-  const char *dir = props->getProperty("Hypertable.RangeServer.logDirRoot", 0);
+  const char *dir = propsPtr->getProperty("Hypertable.RangeServer.logDirRoot", 0);
   if (dir == 0) {
     cerr << "Hypertable.RangeServer.logDirRoot property not specified." << endl;
     exit(1);
@@ -73,7 +74,7 @@ RangeServer::RangeServer(ConnectionManager *connManager, Properties *props) {
   else
     Global::logDirRoot += dir;
 
-  metadataFile = props->getProperty("metadata");
+  metadataFile = propsPtr->getProperty("metadata");
   assert(metadataFile != 0);
 
   if (Global::verbose) {
@@ -96,50 +97,26 @@ RangeServer::RangeServer(ConnectionManager *connManager, Properties *props) {
   /**
    * Create HYPERSPACE Client connection
    */
-  Global::hyperspace = new HyperspaceClient(connManager, props);
+  Global::hyperspace = new HyperspaceClient(connManager, propsPtr.get());
   if (!Global::hyperspace->WaitForConnection(30))
     exit(1);
 
-  /**
-   * Create HDFS Client connection
-   */
-  {
-    struct sockaddr_in addr;
-    const char *host = props->getProperty("HdfsBroker.host", 0);
-    if (host == 0) {
-      LOG_ERROR("HdfsBroker.host property not specified");
-      exit(1);
-    }
+  DfsBroker::Client *dfsClient = new DfsBroker::Client(connManager, propsPtr);
 
-    int port = props->getPropertyInt("HdfsBroker.port", 0);
-    if (port == 0) {
-      LOG_ERROR("HdfsBroker.port property not specified");
-      exit(1);
-    }
-
-    if (Global::verbose) {
-      cout << "HdfsBroker.host=" << host << endl;
-      cout << "HdfsBroker.port=" << port << endl;
-    }
-
-    memset(&addr, 0, sizeof(struct sockaddr_in));
-    {
-      struct hostent *he = gethostbyname(host);
-      if (he == 0) {
-	herror("gethostbyname()");
-	exit(1);
-      }
-      memcpy(&addr.sin_addr.s_addr, he->h_addr_list[0], sizeof(uint32_t));
-    }
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-
-    Global::hdfsClient = new HdfsClient(connManager, addr, 20);
-    if (!Global::hdfsClient->WaitForConnection(30))
-      exit(1);
+  if (mVerbose) {
+    cout << "DfsBroker.host=" << propsPtr->getProperty("DfsBroker.host", "") << endl;
+    cout << "DfsBroker.port=" << propsPtr->getProperty("DfsBroker.port", "") << endl;
+    cout << "DfsBroker.timeout=" << propsPtr->getProperty("DfsBroker.timeout", "") << endl;
   }
 
-  if (DirectoryInitialize(props) != Error::OK)
+  if (!dfsClient->WaitForConnection(30)) {
+    LOG_ERROR("Unable to connect to DFS Broker, exiting...");
+    exit(1);
+  }
+
+  Global::dfs = dfsClient;
+
+  if (DirectoryInitialize(propsPtr.get()) != Error::OK)
     exit(1);
 
   // start commpaction thread
@@ -268,7 +245,7 @@ void RangeServer::Compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, 
   /**
    * Fetch table info
    */
-  if (!Global::GetTableInfo(rangeSpec->tableName, tableInfoPtr)) {
+  if (!GetTableInfo(rangeSpec->tableName, tableInfoPtr)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
     errMsg = "No ranges loaded for table '" + (std::string)rangeSpec->tableName + "'";
     goto abort;
@@ -336,7 +313,7 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, RangeSpecific
     cout << *scanSpec << endl;
   }
 
-  if (!Global::GetTableInfo(rangeSpec->tableName, tableInfoPtr)) {
+  if (!GetTableInfo(rangeSpec->tableName, tableInfoPtr)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
     errMsg = (std::string)rangeSpec->tableName + "[" + rangeSpec->startRow + ":" + rangeSpec->endRow + "]";
     goto abort;
@@ -482,7 +459,7 @@ void RangeServer::LoadRange(ResponseCallback *cb, RangeSpecificationT *rangeSpec
     goto abort;
   }
 
-  if (!Global::GetTableInfo(rangeSpec->tableName, tableInfoPtr)) {
+  if (!GetTableInfo(rangeSpec->tableName, tableInfoPtr)) {
     tableInfoPtr.reset( new TableInfo(rangeSpec->tableName, schemaPtr) );
     registerTable = true;
   }
@@ -491,7 +468,7 @@ void RangeServer::LoadRange(ResponseCallback *cb, RangeSpecificationT *rangeSpec
     goto abort;
 
   if (registerTable)
-    Global::SetTableInfo(rangeSpec->tableName, tableInfoPtr);
+    SetTableInfo(rangeSpec->tableName, tableInfoPtr);
 
   schemaPtr = tableInfoPtr->GetSchema();
 
@@ -510,7 +487,7 @@ void RangeServer::LoadRange(ResponseCallback *cb, RangeSpecificationT *rangeSpec
     for (list<Schema::AccessGroup *>::iterator lgIter = lgList->begin(); lgIter != lgList->end(); lgIter++) {
       // notice the below variables are different "range" vs. "table"
       rangeHdfsDir = tableHdfsDir + "/" + (*lgIter)->name + "/" + md5DigestStr;
-      if ((error = Global::hdfsClient->Mkdirs(rangeHdfsDir.c_str())) != Error::OK) {
+      if ((error = Global::dfs->Mkdirs(rangeHdfsDir)) != Error::OK) {
 	errMsg = (string)"Problem creating range directory '" + rangeHdfsDir + "'";
 	goto abort;
       }
@@ -594,7 +571,7 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, RangeSpecificationT *rangeS
   /**
    * Fetch table info
    */
-  if (Global::GetTableInfo(rangeSpec->tableName, tableInfoPtr))
+  if (GetTableInfo(rangeSpec->tableName, tableInfoPtr))
     tableInfo = tableInfoPtr.get();
   else {
     ExtBufferT ext;
@@ -779,3 +756,30 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, RangeSpecificationT *rangeS
     }
   }
 }
+
+
+/**
+ *
+ */
+bool RangeServer::GetTableInfo(string &name, TableInfoPtr &info) {
+  boost::mutex::scoped_lock lock(mMutex);
+  TableInfoMapT::iterator iter = mTableInfoMap.find(name);
+  if (iter == mTableInfoMap.end())
+    return false;
+  info = (*iter).second;
+  return true;
+}
+
+
+
+/**
+ *
+ */
+void RangeServer::SetTableInfo(string &name, TableInfoPtr &info) {
+  boost::mutex::scoped_lock lock(mMutex);
+  TableInfoMapT::iterator iter = mTableInfoMap.find(name);
+  if (iter != mTableInfoMap.end())
+    mTableInfoMap.erase(iter);
+  mTableInfoMap[name] = info;
+}
+

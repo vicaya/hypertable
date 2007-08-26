@@ -88,7 +88,7 @@ private:
 int main(int argc, char **argv) {
   string configFile = "";
   string pidFile = "";
-  Properties *props = 0;
+  PropertiesPtr propsPtr;
   bool verbose = false;
   bool initialize = false;
   Master *master = 0;
@@ -117,13 +117,13 @@ int main(int argc, char **argv) {
   if (configFile == "")
     configFile = System::installDir + "/conf/hypertable.cfg";
 
-  props = new Properties(configFile);
+  propsPtr.reset( new Properties(configFile) );
   if (verbose)
-    props->setProperty("verbose", "true");
+    propsPtr->setProperty("verbose", "true");
 
-  port         = props->getPropertyInt("Hypertable.Master.port", DEFAULT_PORT);
-  reactorCount = props->getPropertyInt("Hypertable.Master.reactors", System::GetProcessorCount());
-  workerCount  = props->getPropertyInt("Hypertable.Master.workers", DEFAULT_WORKERS);
+  port         = propsPtr->getPropertyInt("Hypertable.Master.port", DEFAULT_PORT);
+  reactorCount = propsPtr->getPropertyInt("Hypertable.Master.reactors", System::GetProcessorCount());
+  workerCount  = propsPtr->getPropertyInt("Hypertable.Master.workers", DEFAULT_WORKERS);
 
   ReactorFactory::Initialize(reactorCount);
 
@@ -138,12 +138,12 @@ int main(int argc, char **argv) {
   }
 
   if (initialize) {
-    if (!CreateDirectoryLayout(connManager, props))
+    if (!CreateDirectoryLayout(connManager, propsPtr.get()))
       return 1;
     return 0;
   }
 
-  master = new Master(connManager, props);
+  master = new Master(connManager, propsPtr);
   appQueue = new ApplicationQueue(workerCount);
   comm->Listen(port, new HandlerFactory(comm, appQueue, master));
 
@@ -159,7 +159,6 @@ int main(int argc, char **argv) {
 
   delete appQueue;
   delete master;
-  delete props;
   delete connManager;
   delete comm;
   return 0;

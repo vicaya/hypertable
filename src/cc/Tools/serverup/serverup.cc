@@ -35,7 +35,8 @@ extern "C" {
 #include "AsyncComm/ConnectionManager.h"
 #include "AsyncComm/ReactorFactory.h"
 
-#include "HdfsClient/HdfsClient.h"
+#include "DfsBroker/Lib/Client.h"
+
 #include "Hyperspace/HyperspaceClient.h"
 #include "Hypertable/Lib/MasterClient.h"
 
@@ -88,7 +89,7 @@ int main(int argc, char **argv) {
   const char *hostProperty = 0;
   const char *portProperty = 0;
   const char *portStr = 0;
-  HdfsClient *hdfsClient;
+  DfsBroker::Client *client;
   HyperspaceClient *hyperspaceClient;
   MasterClient *master;
   Comm *comm = 0;
@@ -164,10 +165,10 @@ int main(int argc, char **argv) {
   connManager->SetQuietMode(true);
 
   if (serverName == "hdfsbroker") {
-    hdfsClient = new HdfsClient(connManager, addr, 30);
-    if (!hdfsClient->WaitForConnection(2))
+    client = new DfsBroker::Client(connManager, addr, 30);
+    if (!client->WaitForConnection(2))
       exit(1);
-    if ((error = hdfsClient->Status()) != Error::OK)
+    if ((error = client->Status()) != Error::OK)
       exit(1);
   }
   else if (serverName == "hyperspace") {

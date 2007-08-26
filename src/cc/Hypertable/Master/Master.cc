@@ -18,65 +18,44 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include "DfsBroker/Lib/Client.h"
 #include "Hypertable/Lib/Schema.h"
 
 #include "Master.h"
 
 using namespace hypertable;
+using namespace hypertable::DfsBroker;
 using namespace std;
 
-Master::Master(ConnectionManager *connManager, Properties *props) : mVerbose(false), mHyperspace(0), mHdfsClient(0) {
+Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mVerbose(false), mHyperspace(0), mDfsClient(0) {
+  Client *dfsClient;
 
-  mHyperspace = new HyperspaceClient(connManager, props);
+  mHyperspace = new HyperspaceClient(connManager, propsPtr.get());
 
   if (!mHyperspace->WaitForConnection(30)) {
     LOG_ERROR("Unable to connect to hyperspace, exiting...");
     exit(1);
   }
 
-  mVerbose = props->getPropertyBool("verbose", false);
+  mVerbose = propsPtr->getPropertyBool("verbose", false);
 
   /**
-   * Create HDFS Client connection
+   * Create DFS Client connection
    */
-  {
-    struct sockaddr_in addr;
-    const char *host;
-    int port;
+  dfsClient = new Client(connManager, propsPtr);
 
-    if ((host = props->getProperty("HdfsBroker.host", 0)) == 0) {
-      LOG_ERROR("HdfsBroker.host property not specified");
-      exit(1);
-    }
-
-    if ((port = props->getPropertyInt("HdfsBroker.port", 0)) == 0) {
-      LOG_ERROR("HdfsBroker.port property not specified");
-      exit(1);
-    }
-
-    if (mVerbose) {
-      cout << "HdfsBroker.host=" << host << endl;
-      cout << "HdfsBroker.port=" << port << endl;
-    }
-
-    memset(&addr, 0, sizeof(struct sockaddr_in));
-    {
-      struct hostent *he = gethostbyname(host);
-      if (he == 0) {
-	herror("gethostbyname()");
-	exit(1);
-      }
-      memcpy(&addr.sin_addr.s_addr, he->h_addr_list[0], sizeof(uint32_t));
-    }
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-
-    mHdfsClient = new HdfsClient(connManager, addr, 20);
-    if (!mHdfsClient->WaitForConnection(30)) {
-      LOG_ERROR("Unable to connect to HdfsBroker, exiting...");
-      exit(1);
-    }
+  if (mVerbose) {
+    cout << "DfsBroker.host=" << propsPtr->getProperty("DfsBroker.host", "") << endl;
+    cout << "DfsBroker.port=" << propsPtr->getProperty("DfsBroker.port", "") << endl;
+    cout << "DfsBroker.timeout=" << propsPtr->getProperty("DfsBroker.timeout", "") << endl;
   }
+
+  if (!dfsClient->WaitForConnection(30)) {
+    LOG_ERROR("Unable to connect to DFS Broker, exiting...");
+    exit(1);
+  }
+
+  mDfsClient = dfsClient;
 
   /* Read Last Table ID */
   {
@@ -108,7 +87,7 @@ Master::Master(ConnectionManager *connManager, Properties *props) : mVerbose(fal
 
 Master::~Master() {
   delete mHyperspace;
-  delete mHdfsClient;
+  delete mDfsClient;
 }
 
 void Master::CreateTable(ResponseCallback *cb, const char *tableName, const char *schemaString) {
@@ -188,7 +167,7 @@ void Master::CreateTable(ResponseCallback *cb, const char *tableName, const char
   lgList = schema->GetAccessGroupList();
   for (list<Schema::AccessGroup *>::iterator lgIter = lgList->begin(); lgIter != lgList->end(); lgIter++) {
     lgDir = tableBaseDir + (*lgIter)->name;
-    if ((error = mHdfsClient->Mkdirs(lgDir.c_str())) != Error::OK) {
+    if ((error = mDfsClient->Mkdirs(lgDir)) != Error::OK) {
       errMsg = (string)"Problem creating table directory '" + lgDir + "'";
       goto abort;
     }

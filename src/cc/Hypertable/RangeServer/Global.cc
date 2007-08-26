@@ -28,12 +28,10 @@ using namespace hypertable;
 
 ApplicationQueue      *Global::appQueue;
 HyperspaceClient      *Global::hyperspace = 0;
-HdfsClient            *Global::hdfsClient = 0;
+Filesystem            *Global::dfs = 0;
 boost::thread         *Global::maintenanceThreadPtr = 0;
 RangeServerProtocol   *Global::protocol = 0;
-Global::TableInfoMapT  Global::tableInfoMap;
 bool                   Global::verbose = false;
-boost::mutex           Global::mutex;
 Metadata              *Global::metadata = 0;
 CommitLog             *Global::log = 0;
 std::string            Global::logDirRoot = "";
@@ -44,30 +42,3 @@ int32_t                Global::localityGroupMergeFiles = 0;
 int32_t                Global::localityGroupMaxMemory = 0;
 ScannerMap             Global::scannerMap;
 FileBlockCache        *Global::blockCache = 0;
-
-
-/**
- *
- */
-bool Global::GetTableInfo(string &name, TableInfoPtr &info) {
-  boost::mutex::scoped_lock lock(mutex);
-  TableInfoMapT::iterator iter = tableInfoMap.find(name);
-  if (iter == tableInfoMap.end())
-    return false;
-  info = (*iter).second;
-  return true;
-}
-
-
-
-/**
- *
- */
-void Global::SetTableInfo(string &name, TableInfoPtr &info) {
-  boost::mutex::scoped_lock lock(mutex);  
-  TableInfoMapT::iterator iter = tableInfoMap.find(name);
-  if (iter != tableInfoMap.end())
-    tableInfoMap.erase(iter);
-  tableInfoMap[name] = info;
-}
-

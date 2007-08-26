@@ -92,7 +92,7 @@ Range::Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), mMu
   vector<string> cellStoreVector;
   rangeInfoPtr->GetTables(cellStoreVector);
   for (size_t i=0; i<cellStoreVector.size(); i++) {
-    cellStorePtr = new CellStoreV0(Global::hdfsClient);
+    cellStorePtr = new CellStoreV0(Global::dfs);
     if (!ExtractAccessGroupFromPath(cellStoreVector[i], accessGroupName, &storeId)) {
       LOG_VA_ERROR("Unable to extract locality group name from path '%s'", cellStoreVector[i].c_str());
       continue;
