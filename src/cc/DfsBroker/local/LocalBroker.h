@@ -21,21 +21,52 @@
 #ifndef HYPERTABLE_LOCALBROKER_H
 #define HYPERTABLE_LOCALBROKER_H
 
+#include <string>
+
+#include "Common/atomic.h"
 #include "Common/Properties.h"
 
 #include "DfsBroker/Lib/Broker.h"
+#include "DfsBroker/Lib/OpenFileMap.h"
 
 using namespace hypertable;
 using namespace hypertable::DfsBroker;
 
 namespace hypertable {
 
+  /**
+   *
+   */
+  class OpenFileDataLocal : public OpenFileData {
+  public:
+    OpenFileDataLocal(int fd) : mFd(fd), mOpen(false) { return; }
+    ~OpenFileDataLocal() { /* implement me! */ return; }
+    
+  private:
+    bool mOpen;
+    int  mFd;
+  };
+
+  /**
+   * 
+   */
+  class OpenFileDataLocalPtr : public OpenFileDataPtr {
+  public:
+    OpenFileDataLocalPtr(OpenFileDataLocal *ofdl) : OpenFileDataPtr(ofdl, true) {
+      return;
+    }
+  };
+  
+
+  /**
+   * 
+   */
   class LocalBroker : public DfsBroker::Broker {
   public:
     LocalBroker(PropertiesPtr &propsPtr);
     virtual ~LocalBroker();
 
-    virtual void Open(ResponseCallbackOpen *cb, const char *fieName, uint32_t bufferSize);
+    virtual void Open(ResponseCallbackOpen *cb, const char *fileName, uint32_t bufferSize);
     virtual void Create(ResponseCallbackOpen *cb, const char *fileName, bool overwrite,
 			uint32_t bufferSize, uint16_t replication, uint64_t blockSize);
     virtual void Close(ResponseCallback *cb, uint32_t fd);
@@ -43,7 +74,7 @@ namespace hypertable {
     virtual void Append(ResponseCallbackAppend *cb, uint32_t fd, uint32_t amount, uint8_t *data);
     virtual void Seek(ResponseCallback *cb, uint32_t fd, uint64_t offset);
     virtual void Remove(ResponseCallback *cb, const char *fileName);
-    virtual void Length(ResponseCallbackLength *cb, const char *fieName);
+    virtual void Length(ResponseCallbackLength *cb, const char *fileName);
     virtual void Pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset, uint32_t amount);
     virtual void Mkdirs(ResponseCallback *cb, const char *dirName);
     virtual void Flush(ResponseCallback *cb, uint32_t fd);
@@ -51,7 +82,11 @@ namespace hypertable {
     virtual void Shutdown(ResponseCallback *cb, uint16_t flags);
 
   private:
-    bool mVerbose;
+    //static atomic_t msUniqueId;
+
+    bool         mVerbose;
+    std::string  mRootdir;
+    OpenFileMap  mOpenFileMap;
   };
 
 }

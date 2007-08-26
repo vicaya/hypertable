@@ -38,10 +38,11 @@ public class Error {
     static public final int COMM_ALREADY_CONNECTED  = 0x00010004;
     static public final int COMM_REQUEST_TIMEOUT    = 0x00010005;
 
-    static public final int DFSBROKER_BAD_FILE_HANDLE  = 0x00020001;
-    static public final int DFSBROKER_IO_ERROR         = 0x00020002;
-    static public final int DFSBROKER_FILE_NOT_FOUND   = 0x00020003;
-    static public final int DFSBROKER_BAD_FILENAME     = 0x00020004;
+    static public final int DFSBROKER_BAD_FILE_HANDLE   = 0x00020001;
+    static public final int DFSBROKER_IO_ERROR          = 0x00020002;
+    static public final int DFSBROKER_FILE_NOT_FOUND    = 0x00020003;
+    static public final int DFSBROKER_BAD_FILENAME      = 0x00020004;
+    static public final int DFSBROKER_PERMISSION_DENIED = 0x00020005;
 
     static public final int HYPERSPACE_IO_ERROR       = 0x00030001;
     static public final int HYPERSPACE_CREATE_FAILED  = 0x00030002;
@@ -80,10 +81,11 @@ public class Error {
 	mTextMap.put(COMM_CONNECT_ERROR,         "COMM connect error");
 	mTextMap.put(COMM_ALREADY_CONNECTED,     "COMM already connected");
 	mTextMap.put(COMM_REQUEST_TIMEOUT,       "COMM request timeout");
-	mTextMap.put(DFSBROKER_BAD_FILE_HANDLE, "DFS BROKER bad file handle");
-	mTextMap.put(DFSBROKER_IO_ERROR,        "DFS BROKER i/o error");
-	mTextMap.put(DFSBROKER_FILE_NOT_FOUND,  "DFS BROKER file not found");
-	mTextMap.put(DFSBROKER_BAD_FILENAME,    "DFS BROKER bad filename");
+	mTextMap.put(DFSBROKER_BAD_FILE_HANDLE,  "DFS BROKER bad file handle");
+	mTextMap.put(DFSBROKER_IO_ERROR,         "DFS BROKER i/o error");
+	mTextMap.put(DFSBROKER_FILE_NOT_FOUND,   "DFS BROKER file not found");
+	mTextMap.put(DFSBROKER_BAD_FILENAME,     "DFS BROKER bad filename");
+	mTextMap.put(DFSBROKER_PERMISSION_DENIED,"DFS BROKER permission denied");
 	mTextMap.put(HYPERSPACE_IO_ERROR,        "HYPERTABLE FS i/o error");
 	mTextMap.put(HYPERSPACE_CREATE_FAILED,   "HYPERTABLE FS create failed");
 	mTextMap.put(HYPERSPACE_FILE_NOT_FOUND,  "HYPERTABLE FS file not found");

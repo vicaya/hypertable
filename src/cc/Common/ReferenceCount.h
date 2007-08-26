@@ -40,6 +40,7 @@ namespace hypertable {
    */
   class ReferenceCount {
   public:
+    ReferenceCount() { atomic_set(&refCount, 0); }
     friend void intrusive_ptr_add_ref(ReferenceCount *rc);
     friend void intrusive_ptr_release(ReferenceCount *rc);
   private:

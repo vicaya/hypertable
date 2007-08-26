@@ -36,6 +36,7 @@ namespace hypertable {
     virtual ~ResponseCallback() { return; }
     int error(int error, std::string msg);
     int response_ok();
+    void get_address(struct sockaddr_in &addr) { memcpy(&addr, &mEventPtr->addr, sizeof(addr)); }
 
   protected:
     Comm          *mComm;

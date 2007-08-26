@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <cstring>
+
 #include "Common/Error.h"
 #include "Common/Logger.h"
 
@@ -51,6 +53,13 @@ void RequestHandlerOpen::run() {
   // file name
   if ((skip = CommBuf::DecodeString(msgPtr, remaining, &fileName)) == 0)
     goto abort;
+
+  // validate filename
+  if (fileName[strlen(fileName)-1] == '/') {
+    LOG_VA_ERROR("open failed: bad filename - %s", fileName);
+    cb.error(Error::DFSBROKER_BAD_FILENAME, fileName);
+    return;
+  }
 
   mBroker->Open(&cb, fileName, bufferSize);
 

@@ -20,7 +20,7 @@
 
 #include <ext/hash_map>
 
-#include <boost/shared_ptr.hpp>
+#include <boost/intrusive_ptr.hpp>
 #include <boost/thread/mutex.hpp>
 
 extern "C" {
@@ -28,39 +28,44 @@ extern "C" {
 #include <netinet/in.h>
 }
 
+#include "Common/ReferenceCount.h"
+
+
 namespace hypertable {
 
-  template<typename _OpenFileData> class OpenFileMap {
+
+  /**
+   *
+   */
+  class OpenFileData : public ReferenceCount {
+  public:
+    virtual ~OpenFileData() { return; }
+    struct sockaddr_in addr;    
+  };
+  typedef boost::intrusive_ptr<OpenFileData> OpenFileDataPtr;
+  
+
+  class OpenFileMap {
 
   public:
 
-    typedef boost::shared_ptr<_OpenFileData> OpenFileDataPtr;
-
-    typedef struct {
-      struct sockaddr_in addr;
-      OpenFileDataPtr    dataPtr;
-    } MetaValueT;
-
-    typedef __gnu_cxx::hash_map<int, MetaValueT> OpenFileMapT;
-
     void Create(int fd, struct sockaddr_in &addr, OpenFileDataPtr &dataPtr) {
       boost::mutex::scoped_lock lock(mMutex);
-      MetaValueT meta;
-      meta.addr = addr;
-      meta.dataPtr = dataPtr;
-      mFileMap.put(fd, meta);
+      dataPtr->addr = addr;
+      mFileMap[fd] = dataPtr;
     }
 
     bool Get(int fd, OpenFileDataPtr &dataPtr) {
       boost::mutex::scoped_lock lock(mMutex);
       OpenFileMapT::iterator iter = mFileMap.find(fd);
       if (iter != mFileMap.end()) {
-	dataPtr = (*iter).second.dataPtr;
+	dataPtr = (*iter).second;
 	return true;
       }
       return false;
     }
 
+    /*
     bool Remove(int fd, OpenFileDataPtr &dataPtr) {
       boost::mutex::scoped_lock lock(mMutex);
       OpenFileMapT::iterator iter = mFileMap.find(fd);
@@ -96,11 +101,17 @@ namespace hypertable {
 	  iter++;
       }
     }
+    */
 
   private:
 
+    typedef __gnu_cxx::hash_map<int, OpenFileDataPtr> OpenFileMapT;
+
     boost::mutex  mMutex;
     OpenFileMapT  mFileMap;
+    //_OpenFileHashMap mFileMap;
+    //OpenFile<_OpenFileData>::MapT mFileMap;
+    //OpenFileMapT  mFileMap;
   };
 }
 
