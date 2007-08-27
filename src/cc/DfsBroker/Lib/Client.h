@@ -94,6 +94,9 @@ namespace hypertable {
       virtual int Flush(int32_t fd, DispatchHandler *handler, uint32_t *msgIdp);
       virtual int Flush(int32_t fd);
 
+      virtual int Rmdir(std::string &name, DispatchHandler *handler, uint32_t *msgIdp);
+      virtual int Rmdir(std::string &name);
+
       int Status();
 
       int Shutdown(uint16_t flags, DispatchHandler *handler, uint32_t *msgIdp);

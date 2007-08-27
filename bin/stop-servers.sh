@@ -44,11 +44,27 @@ popd >& /dev/null
 
 
 #
-# Stop HdfsBroker
+# Stop DfsBroker.local
 #
-if [ -f  $HYPERTABLE_HOME/run/HdfsBroker.pid ] ; then
-    kill -9 `cat  $HYPERTABLE_HOME/run/HdfsBroker.pid`
-    rm $HYPERTABLE_HOME/run/HdfsBroker.pid
+if [ -f  $HYPERTABLE_HOME/run/DfsBroker.local.pid ] ; then
+    kill -9 `cat  $HYPERTABLE_HOME/run/DfsBroker.local.pid`
+    rm $HYPERTABLE_HOME/run/DfsBroker.local.pid
+fi
+
+#
+# Stop DfsBroker.hadoop
+#
+if [ -f  $HYPERTABLE_HOME/run/DfsBroker.hadoop.pid ] ; then
+    kill -9 `cat  $HYPERTABLE_HOME/run/DfsBroker.hadoop.pid`
+    rm $HYPERTABLE_HOME/run/DfsBroker.hadoop.pid
+fi
+
+#
+# Stop DfsBroker.kosmos
+#
+if [ -f  $HYPERTABLE_HOME/run/DfsBroker.kosmos.pid ] ; then
+    kill -9 `cat  $HYPERTABLE_HOME/run/DfsBroker.kosmos.pid`
+    rm $HYPERTABLE_HOME/run/DfsBroker.kosmos.pid
 fi
 
 #

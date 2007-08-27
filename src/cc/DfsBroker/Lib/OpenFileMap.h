@@ -28,6 +28,7 @@ extern "C" {
 #include <netinet/in.h>
 }
 
+#include "Common/Logger.h"
 #include "Common/ReferenceCount.h"
 
 

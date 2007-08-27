@@ -191,11 +191,7 @@ namespace {
       cellStorePtr[i]->Finalize(0);
 
     char outfileA[64];
-    strcpy(outfileA, "/tmp/cellStoreTest1-cellCache-XXXXXX");
-    if (mktemp(outfileA) == 0) {
-      LOG_VA_ERROR("mktemp(\"%s\") failed - %s", outfileA, strerror(errno));
-      exit(1);
-    }
+    sprintf(outfileA, "/tmp/cellStoreTest1-cellCache-%d", getpid());
     ofstream outstreamA(outfileA);
 
     mscanner = new MergeScanner(scanContextPtr, !suppressDeleted);
@@ -207,11 +203,7 @@ namespace {
     }
 
     char outfileB[64];
-    strcpy(outfileB, "/tmp/cellStoreTest1-merge-XXXXXX");
-    if (mktemp(outfileB) == 0) {
-      LOG_VA_ERROR("mktemp(\"%s\") failed - %s", outfileB, strerror(errno));
-      exit(1);
-    }
+    sprintf(outfileB, "/tmp/cellStoreTest1-merge-%d", getpid());
     ofstream outstreamB(outfileB);
 
     mscanner = new MergeScanner(scanContextPtr, !suppressDeleted);

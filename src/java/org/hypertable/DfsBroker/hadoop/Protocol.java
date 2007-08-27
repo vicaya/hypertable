@@ -35,7 +35,8 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
     public static final short COMMAND_MKDIRS   = 10;
     public static final short COMMAND_STATUS   = 11;
     public static final short COMMAND_FLUSH    = 12;
-    public static final short COMMAND_MAX      = 13;
+    public static final short COMMAND_RMDIR    = 13;
+    public static final short COMMAND_MAX      = 14;
     
     public static final short SHUTDOWN_FLAG_IMMEDIATE = 0x0001;
 
@@ -52,7 +53,8 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
 	"pread",
 	"mkdirs",
 	"status",
-	"flush"
+	"flush",
+	"rmdir"
     };
 
     public String CommandText(short command) {

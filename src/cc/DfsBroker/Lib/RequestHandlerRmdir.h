@@ -18,21 +18,38 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "Common/Error.h"
+#ifndef HYPERTABLE_REQUESTHANDLERRMDIR_H
+#define HYPERTABLE_REQUESTHANDLERRMDIR_H
 
-#include "AsyncComm/CommBuf.h"
+#include "Common/Runnable.h"
 
-#include "ResponseCallbackAppend.h"
+#include "AsyncComm/ApplicationHandler.h"
+#include "AsyncComm/Comm.h"
+#include "AsyncComm/Event.h"
+
+#include "Broker.h"
 
 using namespace hypertable;
-using namespace hypertable::DfsBroker;
 
-int ResponseCallbackAppend::response(uint64_t offset, uint32_t amount) {
-  CommBufPtr cbufPtr( new CommBuf(hbuilder_.HeaderLength() + 16 ) );
-  cbufPtr->PrependInt(amount);
-  cbufPtr->PrependLong(offset);
-  cbufPtr->PrependInt(Error::OK);
-  hbuilder_.LoadFromMessage(mEventPtr->header);
-  hbuilder_.Encapsulate(cbufPtr.get());
-  return mComm->SendResponse(mEventPtr->addr, cbufPtr);
+namespace hypertable {
+
+  namespace DfsBroker {
+
+    class RequestHandlerRmdir : public ApplicationHandler {
+    public:
+      RequestHandlerRmdir(Comm *comm, Broker *broker, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mComm(comm), mBroker(broker) {
+	return;
+      }
+
+      virtual void run();
+
+    private:
+      Comm   *mComm;
+      Broker *mBroker;
+    };
+
+  }
+
 }
+
+#endif // HYPERTABLE_REQUESTHANDLERRMDIR_H

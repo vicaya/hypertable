@@ -47,7 +47,8 @@ namespace hypertable {
       "pread",
       "mkdirs",
       "status",
-      "flush"
+      "flush",
+      "rmdir"
     };
 
 
@@ -281,6 +282,24 @@ namespace hypertable {
 
       hbuilder.Reset(Header::PROTOCOL_DFSBROKER);
       hbuilder.SetGroupId(fd);
+      hbuilder.Encapsulate(cbuf);
+
+      return cbuf;
+    }
+
+    /**
+     *
+     */
+    CommBuf *Protocol::CreateRmdirRequest(std::string &fname) {
+      HeaderBuilder hbuilder;
+      CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(RequestHeaderRmdirT) + CommBuf::EncodedLength(fname));
+
+      cbuf->PrependString(fname);
+
+      RequestHeaderRmdirT *removeHeader = (RequestHeaderRmdirT *)cbuf->AllocateSpace(sizeof(RequestHeaderRmdirT));
+      removeHeader->hdr.command = COMMAND_RMDIR;
+
+      hbuilder.Reset(Header::PROTOCOL_DFSBROKER);
       hbuilder.Encapsulate(cbuf);
 
       return cbuf;

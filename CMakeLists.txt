@@ -18,7 +18,7 @@
 
 project (HYPERTABLE)
 
-set (CMAKE_INSTALL_PREFIX "/Users/doug/hypertable")
+set (CMAKE_INSTALL_PREFIX "/home/doug/hypertable")
 
 # CMAKE_CXX_FLAGS
 #set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-variadic-macros -Wall")

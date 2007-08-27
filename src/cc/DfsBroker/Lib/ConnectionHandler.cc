@@ -38,6 +38,7 @@
 #include "RequestHandlerMkdirs.h"
 #include "RequestHandlerFlush.h"
 #include "RequestHandlerStatus.h"
+#include "RequestHandlerRmdir.h"
 
 using namespace hypertable;
 using namespace hypertable::DfsBroker;
@@ -100,6 +101,9 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
       case Protocol::COMMAND_FLUSH:
 	requestHandler = new RequestHandlerFlush(mComm, mBroker, eventPtr);
 	break;
+      case Protocol::COMMAND_RMDIR:
+	requestHandler = new RequestHandlerRmdir(mComm, mBroker, eventPtr);
+	break;
       case Protocol::COMMAND_STATUS:
 	requestHandler = new RequestHandlerStatus(mComm, mBroker, eventPtr);
 	break;
@@ -130,8 +134,10 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
     }
   }
   else if (eventPtr->type == Event::DISCONNECT) {
-    // do something here!!!
-    LOG_VA_INFO("%s : Closing all open handles", eventPtr->toString().c_str());
+    LOG_VA_INFO("%s : Closing all open handles from %s:%d", eventPtr->toString().c_str(),
+		inet_ntoa(eventPtr->addr.sin_addr), ntohs(eventPtr->addr.sin_port));
+    OpenFileMap &ofMap = mBroker->GetOpenFileMap();
+    ofMap.RemoveAll(eventPtr->addr);
   }
   else {
     LOG_VA_INFO("%s", eventPtr->toString().c_str());

@@ -371,6 +371,27 @@ int Client::Flush(int32_t fd) {
 }
 
 
+int Client::Rmdir(std::string &name, DispatchHandler *handler, uint32_t *msgIdp) {
+  CommBufPtr cbufPtr( mProtocol->CreateRmdirRequest(name) );
+  return SendMessage(cbufPtr, handler, msgIdp);
+}
+
+
+int Client::Rmdir(std::string &name) {
+  DispatchHandlerSynchronizer syncHandler;
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( mProtocol->CreateRmdirRequest(name) );
+  int error = SendMessage(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("Dfs 'rmdir' error, name=%s : %s", name.c_str(), mProtocol->StringFormatMessage(eventPtr).c_str());
+      error = (int)mProtocol->ResponseCode(eventPtr);
+    }
+  }
+  return error;
+}
+
+
 int Client::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler, uint32_t *msgIdp) {
   int error;
 

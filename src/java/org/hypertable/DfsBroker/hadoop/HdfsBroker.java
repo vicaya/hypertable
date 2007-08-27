@@ -227,12 +227,12 @@ public class HdfsBroker {
 	    error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
 	}
 	catch (IOException e) {
-	    log.info("I/O exception while opening file '" + fileName + "' - " + e.getMessage());
+	    log.info("I/O exception while getting length of file '" + fileName + "' - " + e.getMessage());
 	    error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
 	}
 
 	if (error != Error.OK)
-	    log.severe("Problem sending response to 'open' command - " + Error.GetText(error));
+	    log.severe("Problem sending response to 'length' command - " + Error.GetText(error));
     }
 
 
@@ -258,12 +258,12 @@ public class HdfsBroker {
 	    error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
 	}
 	catch (IOException e) {
-	    log.info("I/O exception while opening file '" + fileName + "' - " + e.getMessage());
+	    log.info("I/O exception while making directory '" + fileName + "' - " + e.getMessage());
 	    error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
 	}
 
 	if (error != Error.OK)
-	    log.severe("Problem sending response to 'open' command - " + Error.GetText(error));
+	    log.severe("Problem sending response to 'mkdirs' command - " + Error.GetText(error));
     }
 
 
@@ -388,7 +388,7 @@ public class HdfsBroker {
 	try {
 
 	    if (mVerbose)
-		log.info("Removeing file '" + fileName);
+		log.info("Removing file '" + fileName);
 
 	    if (!mFilesystem.delete(new Path(fileName)))
 		throw new IOException("Problem deleting file '" + fileName + "'");
@@ -401,7 +401,7 @@ public class HdfsBroker {
 	    error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
 	}
 	catch (IOException e) {
-	    log.info("I/O exception while opening file '" + fileName + "' - " + e.getMessage());
+	    log.info("I/O exception while removing file '" + fileName + "' - " + e.getMessage());
 	    error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
 	}
 
@@ -449,6 +449,37 @@ public class HdfsBroker {
 	if (cb.response_ok() != Error.OK)
 	    log.severe("Error sending SEEK response back");
     }
+
+    /**
+     *
+     */
+    public void Rmdir(ResponseCallback cb, String fileName) {
+	int error = Error.OK;
+
+	try {
+
+	    if (mVerbose)
+		log.info("Removing directory '" + fileName + "'");
+
+	    if (!mFilesystem.delete(new Path(fileName)))
+		throw new IOException("Problem deleting directory '" + fileName + "'");
+
+	    error = cb.response_ok();
+	    
+	}
+	catch (FileNotFoundException e) {
+	    log.info("File not found: " + fileName);
+	    error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
+	}
+	catch (IOException e) {
+	    log.info("I/O exception while removing directory '" + fileName + "' - " + e.getMessage());
+	    error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
+	}
+
+	if (error != Error.OK)
+	    log.severe("Problem sending response to 'rmdir' command - " + Error.GetText(error));
+    }
+
 
 
     private Configuration mConf = new Configuration();

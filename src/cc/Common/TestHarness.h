@@ -62,11 +62,7 @@ namespace hypertable {
       Logger::Initialize(name);
 
       // open temporary output file
-      sprintf(mOutputFile, "%sXXXXXX", name);
-      if (mktemp(mOutputFile) == 0) {
-	LOG_VA_ERROR("mktemp(\"%s\") failed - %s", mOutputFile, strerror(errno));
-	exit(1);
-      }
+      sprintf(mOutputFile, "%s%d", name, getpid());
 
       if ((mFd = open(mOutputFile, O_CREAT | O_TRUNC | O_WRONLY, 0644)) < 0) {
 	LOG_VA_ERROR("open(%s) failed - %s", mOutputFile, strerror(errno));

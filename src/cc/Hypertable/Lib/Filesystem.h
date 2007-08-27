@@ -60,6 +60,12 @@ namespace hypertable {
     virtual int Mkdirs(std::string &name, DispatchHandler *handler, uint32_t *msgIdp) = 0;
     virtual int Mkdirs(std::string &name) = 0;
 
+    virtual int Rmdir(std::string &name, DispatchHandler *handler, uint32_t *msgIdp) = 0;
+    virtual int Rmdir(std::string &name) = 0;
+
+    virtual int Flush(int32_t fd, DispatchHandler *handler, uint32_t *msgIdp) = 0;
+    virtual int Flush(int32_t fd) = 0;
+
   };
 
 }

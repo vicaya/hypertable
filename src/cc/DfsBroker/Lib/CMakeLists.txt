@@ -32,6 +32,7 @@ RequestHandlerPread.cc
 RequestHandlerMkdirs.cc
 RequestHandlerFlush.cc
 RequestHandlerStatus.cc
+RequestHandlerRmdir.cc
 ResponseCallbackOpen.cc
 ResponseCallbackRead.cc
 ResponseCallbackAppend.cc

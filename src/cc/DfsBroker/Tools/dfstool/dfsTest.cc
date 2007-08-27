@@ -29,7 +29,7 @@ extern "C" {
 
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
-#include "Common/TestHarness.h"
+#include "Common/Logger.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
 
@@ -65,6 +65,9 @@ int main(int argc, char **argv) {
   Comm *comm;
   ConnectionManager *connManager;
   DfsBroker::Client *client;
+  char buf[32];
+  std::string testDir, outfileA, outfileB;
+  int error;
 
   if (argc != 1)
     Usage::DumpAndExit(usage);
@@ -93,18 +96,32 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  sprintf(buf, "/dfsTest%d", getpid());
+  testDir = buf;
+  if ((error = client->Mkdirs(testDir)) != Error::OK) {
+    LOG_VA_ERROR("Problem making DFS directory '%s' - %s", testDir.c_str(), Error::GetText(error));
+    exit(1);
+  }
+  outfileA = testDir + "/output.a";
+  outfileB = testDir + "/output.b";
+
   dfsTestThreadFunction threadFunc(client, "/usr/share/dict/words");
 
-  threadFunc.SetDfsFile("/RegressionTests/hdfs/output.a");
+  threadFunc.SetDfsFile(outfileA);
   threadFunc.SetOutputFile("output.a");
   thread1 = new boost::thread(threadFunc);
 
-  threadFunc.SetDfsFile("/RegressionTests/hdfs/output.b");
+  threadFunc.SetDfsFile(outfileB);
   threadFunc.SetOutputFile("output.b");
   thread2 = new boost::thread(threadFunc);
 
   thread1->join();
   thread2->join();
+
+  if ((error = client->Rmdir(testDir)) != Error::OK) {
+    LOG_VA_ERROR("Problem removing DFS test directory '%s' - %s", testDir.c_str(), Error::GetText(error));
+    return 1;
+  }
 
   if (system("diff /usr/share/dict/words output.a"))
     return 1;

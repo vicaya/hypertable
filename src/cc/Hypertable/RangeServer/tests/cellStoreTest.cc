@@ -241,11 +241,7 @@ int main(int argc, char **argv) {
   scanner = cellStorePtr->CreateScanner(scanContextPtr);
 
   char outfileA[32];
-  strcpy(outfileA, "/tmp/cellStoreTest-1-XXXXXX");
-  if (mktemp(outfileA) == 0) {
-    LOG_VA_ERROR("mktemp(\"%s\") failed - %s", outfileA, strerror(errno));
-    exit(1);
-  }
+  sprintf(outfileA, "/tmp/cellStoreTest-1-%d", getpid());
   ofstream outstreamA(outfileA);
 
   while (scanner->Get(&key, &value)) {
@@ -275,11 +271,7 @@ int main(int argc, char **argv) {
   **/
 
   char outfileB[32];
-  strcpy(outfileB, "/tmp/cellStoreTest-2-XXXXXX");
-  if (mktemp(outfileB) == 0) {
-    LOG_VA_ERROR("mktemp(\"%s\") failed - %s", outfileB, strerror(errno));
-    exit(1);
-  }
+  sprintf(outfileB, "/tmp/cellStoreTest-2-%d", getpid());
   ofstream outstreamB(outfileB);
 
   while (scanner->Get(&key, &value)) {
@@ -300,8 +292,8 @@ int main(int argc, char **argv) {
 
   char outfileC[32];
   strcpy(outfileC, "/tmp/cellStoreTest-3-XXXXXX");
-  if (mktemp(outfileC) == 0) {
-    LOG_VA_ERROR("mktemp(\"%s\") failed - %s", outfileC, strerror(errno));
+  if (mkstemp(outfileC) == 0) {
+    LOG_VA_ERROR("mkstemp(\"%s\") failed - %s", outfileC, strerror(errno));
     exit(1);
   }
   ofstream outstreamC(outfileC);

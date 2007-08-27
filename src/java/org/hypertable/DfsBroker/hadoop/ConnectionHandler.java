@@ -99,6 +99,9 @@ public class ConnectionHandler implements DispatchHandler {
 	    case Protocol.COMMAND_FLUSH:
 		requestHandler = new RequestHandlerFlush(mComm, mBroker, event);
 		break;
+	    case Protocol.COMMAND_RMDIR:
+		requestHandler = new RequestHandlerRmdir(mComm, mBroker, event);
+		break;
 	    default:
 		ResponseCallback cb = new ResponseCallback(mComm, event);
 		log.severe("Command code " + command + " not implemented");

@@ -31,7 +31,6 @@ extern "C" {
 #include "Common/Properties.h"
 
 #include "DfsBroker/Lib/Broker.h"
-#include "DfsBroker/Lib/OpenFileMap.h"
 
 using namespace hypertable;
 using namespace hypertable::DfsBroker;
@@ -44,7 +43,7 @@ namespace hypertable {
   class OpenFileDataLocal : public OpenFileData {
   public:
     OpenFileDataLocal(int _fd, int _flags) : fd(_fd), flags(_flags) { return; }
-    ~OpenFileDataLocal() { close(fd); }
+    virtual ~OpenFileDataLocal() { close(fd); }
     int  fd;
     int  flags;
   };
@@ -81,6 +80,7 @@ namespace hypertable {
     virtual void Length(ResponseCallbackLength *cb, const char *fileName);
     virtual void Pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset, uint32_t amount);
     virtual void Mkdirs(ResponseCallback *cb, const char *dirName);
+    virtual void Rmdir(ResponseCallback *cb, const char *dirName);
     virtual void Flush(ResponseCallback *cb, uint32_t fd);
     virtual void Status(ResponseCallback *cb);
     virtual void Shutdown(ResponseCallback *cb);
@@ -91,7 +91,6 @@ namespace hypertable {
 
     bool         mVerbose;
     std::string  mRootdir;
-    OpenFileMap  mOpenFileMap;
   };
 
 }

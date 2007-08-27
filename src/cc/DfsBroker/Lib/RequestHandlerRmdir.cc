@@ -19,20 +19,35 @@
  */
 
 #include "Common/Error.h"
+#include "Common/Logger.h"
 
-#include "AsyncComm/CommBuf.h"
+#include "AsyncComm/ResponseCallback.h"
 
-#include "ResponseCallbackAppend.h"
+#include "RequestHandlerRmdir.h"
 
 using namespace hypertable;
 using namespace hypertable::DfsBroker;
 
-int ResponseCallbackAppend::response(uint64_t offset, uint32_t amount) {
-  CommBufPtr cbufPtr( new CommBuf(hbuilder_.HeaderLength() + 16 ) );
-  cbufPtr->PrependInt(amount);
-  cbufPtr->PrependLong(offset);
-  cbufPtr->PrependInt(Error::OK);
-  hbuilder_.LoadFromMessage(mEventPtr->header);
-  hbuilder_.Encapsulate(cbufPtr.get());
-  return mComm->SendResponse(mEventPtr->addr, cbufPtr);
+/**
+ *
+ */
+void RequestHandlerRmdir::run() {
+  ResponseCallback cb(mComm, mEventPtr);
+  const char *dirName;
+  size_t skip;
+  size_t remaining = mEventPtr->messageLen - sizeof(int16_t);
+  uint8_t *msgPtr = mEventPtr->message + sizeof(int16_t);
+
+  // directory name
+  if ((skip = CommBuf::DecodeString(msgPtr, remaining, &dirName)) == 0)
+    goto abort;
+
+  mBroker->Rmdir(&cb, dirName);
+
+  return;
+
+ abort:
+  LOG_ERROR("Encoding problem with RMDIR message");
+  cb.error(Error::PROTOCOL_ERROR, "Encoding problem with RMDIR message");
+  return;
 }

@@ -355,10 +355,9 @@ void LocalBroker::Pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset, 
  */
 void LocalBroker::Mkdirs(ResponseCallback *cb, const char *dirName) {
   std::string absDirName;
-  uint64_t length;
   
   if (mVerbose) {
-    LOG_VA_INFO("length file='%s'", dirName);
+    LOG_VA_INFO("mkdirs dir='%s'", dirName);
   }
 
   if (dirName[0] == '/')
@@ -368,6 +367,31 @@ void LocalBroker::Mkdirs(ResponseCallback *cb, const char *dirName) {
 
   if (!FileUtils::Mkdirs(absDirName.c_str())) {
     LOG_VA_ERROR("mkdirs failed: dirName='%s' - %s", absDirName.c_str(), strerror(errno));
+    ReportError(cb);
+    return;
+  }
+
+  cb->response_ok();
+}
+
+
+/**
+ * Rmdir
+ */
+void LocalBroker::Rmdir(ResponseCallback *cb, const char *dirName) {
+  std::string absDirName;
+  
+  if (mVerbose) {
+    LOG_VA_INFO("rmdir dir='%s'", dirName);
+  }
+
+  if (dirName[0] == '/')
+    absDirName = mRootdir + dirName;
+  else
+    absDirName = mRootdir + "/" + dirName;
+
+  if (rmdir(absDirName.c_str()) != 0) {
+    LOG_VA_ERROR("rmdir failed: dirName='%s' - %s", absDirName.c_str(), strerror(errno));
     ReportError(cb);
     return;
   }
@@ -426,6 +450,7 @@ void LocalBroker::Shutdown(ResponseCallback *cb) {
  */
 void LocalBroker::ReportError(ResponseCallback *cb) {
   char errbuf[128];
+  errbuf[0] = 0;
   strerror_r(errno, errbuf, 128);
   if (errno == ENOTDIR || errno == ENAMETOOLONG || errno == ENOENT)
     cb->error(Error::DFSBROKER_BAD_FILENAME, errbuf);
