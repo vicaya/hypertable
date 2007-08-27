@@ -48,6 +48,7 @@ namespace {
     { Error::DFSBROKER_FILE_NOT_FOUND,    "DFS BROKER file not found" },
     { Error::DFSBROKER_BAD_FILENAME,      "DFS BROKER bad filename" },
     { Error::DFSBROKER_PERMISSION_DENIED, "DFS BROKER permission denied" },
+    { Error::DFSBROKER_INVALID_ARGUMENT,  "DFS BROKER invalid argument" },
     { Error::HYPERSPACE_IO_ERROR,         "HYPERSPACE i/o error" },
     { Error::HYPERSPACE_CREATE_FAILED,    "HYPERSPACE create failed" },
     { Error::HYPERSPACE_FILE_NOT_FOUND,   "HYPERSPACE file not found" },
@@ -98,6 +99,7 @@ const int Error::DFSBROKER_IO_ERROR;
 const int Error::DFSBROKER_FILE_NOT_FOUND;
 const int Error::DFSBROKER_BAD_FILENAME;
 const int Error::DFSBROKER_PERMISSION_DENIED;
+const int Error::DFSBROKER_INVALID_ARGUMENT;
 
 const int Error::HYPERSPACE_IO_ERROR;
 const int Error::HYPERSPACE_CREATE_FAILED;

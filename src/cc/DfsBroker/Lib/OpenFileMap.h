@@ -33,7 +33,6 @@ extern "C" {
 
 namespace hypertable {
 
-
   /**
    *
    */
@@ -65,12 +64,11 @@ namespace hypertable {
       return false;
     }
 
-    /*
     bool Remove(int fd, OpenFileDataPtr &dataPtr) {
       boost::mutex::scoped_lock lock(mMutex);
       OpenFileMapT::iterator iter = mFileMap.find(fd);
       if (iter != mFileMap.end()) {
-	dataPtr = (*iter).second.dataPtr;
+	dataPtr = (*iter).second;
 	mFileMap.erase(iter);
 	return true;
       }
@@ -89,9 +87,9 @@ namespace hypertable {
       OpenFileMapT::iterator iter = mFileMap.begin();
 
       while (iter != mFileMap.end()) {
-	if ((*iter).second.addr.sin_family == addr.sin_family &&
-	    (*iter).second.addr.sin_port == addr.sin_port &&
-	    (*iter).second.addr.sin_addr.s_addr == addr.sin_addr.s_addr) {
+	if ((*iter).second->addr.sin_family == addr.sin_family &&
+	    (*iter).second->addr.sin_port == addr.sin_port &&
+	    (*iter).second->addr.sin_addr.s_addr == addr.sin_addr.s_addr) {
 	  OpenFileMapT::iterator delIter = iter;
 	  LOG_VA_ERROR("Removing handle %d from open file map because of lost owning client connection", (*iter).first);
 	  iter++;
@@ -101,7 +99,11 @@ namespace hypertable {
 	  iter++;
       }
     }
-    */
+
+    void RemoveAll() {
+      boost::mutex::scoped_lock lock(mMutex);
+      mFileMap.clear();
+    }
 
   private:
 
@@ -109,9 +111,5 @@ namespace hypertable {
 
     boost::mutex  mMutex;
     OpenFileMapT  mFileMap;
-    //_OpenFileHashMap mFileMap;
-    //OpenFile<_OpenFileData>::MapT mFileMap;
-    //OpenFileMapT  mFileMap;
   };
 }
-

@@ -72,6 +72,13 @@ void RequestHandlerCreate::run() {
   if ((skip = CommBuf::DecodeString(msgPtr, remaining, &fileName)) == 0)
     goto abort;
 
+  // validate filename
+  if (fileName[strlen(fileName)-1] == '/') {
+    LOG_VA_ERROR("open failed: bad filename - %s", fileName);
+    cb.error(Error::DFSBROKER_BAD_FILENAME, fileName);
+    return;
+  }
+
   mBroker->Create(&cb, fileName, overwrite, bufferSize, replication, blockSize);
 
   return;

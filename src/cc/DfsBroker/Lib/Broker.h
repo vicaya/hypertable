@@ -48,7 +48,7 @@ namespace hypertable {
       virtual void Mkdirs(ResponseCallback *cb, const char *dirName) = 0;
       virtual void Flush(ResponseCallback *cb, uint32_t fd) = 0;
       virtual void Status(ResponseCallback *cb) = 0;
-      virtual void Shutdown(ResponseCallback *cb, uint16_t flags) = 0;
+      virtual void Shutdown(ResponseCallback *cb) = 0;
     };
   }
 }

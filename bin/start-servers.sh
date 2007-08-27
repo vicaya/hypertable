@@ -53,26 +53,60 @@ if [ ! -d $HYPERTABLE_HOME/log ] ; then
     mkdir $HYPERTABLE_HOME/log
 fi
 
+while [ "$1" != "${1##[-+]}" ]; do
+    case $1 in
+	'')    
+	    echo $"$0: Usage: stat-servers.sh [--initialize] [local|hadoop|kosmos]"
+	    exit 1;;
+	--initialize)
+	    DO_INITIALIZATION="true"
+	    shift
+	    ;;
+	*)     
+	    echo $"$0: Usage: stat-servers.sh [--initialize] [local|hadoop|kosmos]"
+	    exit 1;;
+    esac
+done
+
+if [ "$#" -eq 0 ]; then
+    echo $"$0: Usage: stat-servers.sh [--initialize] [local|hadoop|kosmos]"
+    exit 1
+fi
+
+
+PIDFILE=$HYPERTABLE_HOME/run/DfsBroker.$1.pid
+LOGFILE=$HYPERTABLE_HOME/log/DfsBroker.$1.log
+
 
 #
 # Start DfsBroker.hadoop
 #
-PIDFILE=$HYPERTABLE_HOME/run/DfsBroker.hadoop.pid
-LOGFILE=$HYPERTABLE_HOME/log/DfsBroker.hadoop.log
 
-$HYPERTABLE_HOME/bin/serverup hdfsbroker
+$HYPERTABLE_HOME/bin/serverup dfsbroker
 if [ $? != 0 ] ; then
-  nohup $HYPERTABLE_HOME/bin/jrun --pidfile $PIDFILE org.hypertable.DfsBroker.hadoop.main --verbose 1>& $LOGFILE &
+
+  if [ "$1" == "hadoop" ] ; then
+      nohup $HYPERTABLE_HOME/bin/jrun --pidfile $PIDFILE org.hypertable.DfsBroker.hadoop.main --verbose 1>& $LOGFILE &
+  elif [ "$1" == "kosmos" ] ; then
+      echo "Kosmos DfsBroke not implemented!"
+      exit 1
+  elif [ "$1" == "local" ] ; then
+      $HYPERTABLE_HOME/bin/localBroker --pidfile=$PIDFILE --verbose 1>& $LOGFILE &    
+  else
+      echo $"$0: Usage: stat-servers.sh [--initialize] [local|hadoop|kosmos]"      
+      exit 1
+  fi
+
   sleep 1
-  $HYPERTABLE_HOME/bin/serverup hdfsbroker
+  $HYPERTABLE_HOME/bin/serverup dfsbroker
   if [ $? != 0 ] ; then
-      echo -n "DfsBroker.hadoop hasn't come up yet, trying again in 5 seconds ..."
+      echo -n "DfsBroker ($1) hasn't come up yet, trying again in 5 seconds ..."
       sleep 5
       echo ""
-      $HYPERTABLE_HOME/bin/serverup hdfsbroker
+      $HYPERTABLE_HOME/bin/serverup dfsbroker
       if [ $? != 0 ] ; then
 	  tail -100 $LOGFILE
-	  echo "Problem statring DfsBroker.hadoop";
+	  echo "Problem statring DfsBroker ($1)";
 	  exit 1
       fi
   fi

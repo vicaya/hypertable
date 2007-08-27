@@ -237,3 +237,11 @@ bool FileUtils::Exists(const char *fname) {
     return false;
   return true;
 }
+
+
+off_t FileUtils::Length(const char *fname) {
+  struct stat statbuf;
+  if (stat(fname, &statbuf) != 0)
+    return (off_t)-1;
+  return statbuf.st_size;
+}

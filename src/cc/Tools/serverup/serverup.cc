@@ -66,7 +66,7 @@ namespace {
     "  terminates with an exit status of 1.  <servername> may be one of the",
     "  following values:",
     "",
-    "  hdfsbroker",
+    "  dfsbroker",
     "  hyperspace",
     "  master",
     "",
@@ -117,9 +117,9 @@ int main(int argc, char **argv) {
 
   propsPtr.reset( new Properties(configFile) );
 
-  if (serverName == "hdfsbroker") {
-    hostProperty = "HdfsBroker.host";
-    portProperty = "HdfsBroker.port";
+  if (serverName == "dfsbroker") {
+    hostProperty = "DfsBroker.host";
+    portProperty = "DfsBroker.port";
   }
   else if (serverName == "hyperspace") {
     hostProperty = "Hyperspace.host";
@@ -164,7 +164,7 @@ int main(int argc, char **argv) {
   connManager = new ConnectionManager(comm);
   connManager->SetQuietMode(true);
 
-  if (serverName == "hdfsbroker") {
+  if (serverName == "dfsbroker") {
     client = new DfsBroker::Client(connManager, addr, 30);
     if (!client->WaitForConnection(2))
       exit(1);

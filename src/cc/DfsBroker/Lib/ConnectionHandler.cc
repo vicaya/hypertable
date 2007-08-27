@@ -109,7 +109,10 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
 	  ResponseCallback cb(mComm, eventPtr);
 	  if (eventPtr->messageLen >= 4)
 	    memcpy(&flags, &eventPtr->message[2], 2);
-	  mBroker->Shutdown(&cb, flags);
+	  if ((flags & Protocol::SHUTDOWN_FLAG_IMMEDIATE) != 0)
+	    mAppQueue->Shutdown();
+	  mBroker->Shutdown(&cb);
+	  exit(0);
 	}
 	break;
       default:

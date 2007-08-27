@@ -53,7 +53,7 @@ namespace {
     "  --help            Display this help text and exit",
     "  --verbose,-v      Generate verbose output",
     ""
-    "This program is the Hypertable master server.",
+    "This program is the local DFS broker.",
     (const char *)0
   };
   const int DEFAULT_PORT    = 38546;

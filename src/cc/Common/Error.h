@@ -49,6 +49,7 @@ namespace hypertable {
     static const int DFSBROKER_FILE_NOT_FOUND    = 0x00020003;
     static const int DFSBROKER_BAD_FILENAME      = 0x00020004;
     static const int DFSBROKER_PERMISSION_DENIED = 0x00020005;
+    static const int DFSBROKER_INVALID_ARGUMENT  = 0x00020006;
 
     static const int HYPERSPACE_IO_ERROR       = 0x00030001;
     static const int HYPERSPACE_CREATE_FAILED  = 0x00030002;

@@ -445,6 +445,7 @@ public class HdfsBroker {
      */
     public void Flush(ResponseCallback cb) {
 	// todo: implement me!!
+	log.info("Flush not implemented!");
 	if (cb.response_ok() != Error.OK)
 	    log.severe("Error sending SEEK response back");
     }

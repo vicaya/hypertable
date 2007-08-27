@@ -23,6 +23,10 @@
 
 #include <string>
 
+extern "C" {
+#include <unistd.h>  
+}
+
 #include "Common/atomic.h"
 #include "Common/Properties.h"
 
@@ -39,12 +43,10 @@ namespace hypertable {
    */
   class OpenFileDataLocal : public OpenFileData {
   public:
-    OpenFileDataLocal(int fd) : mFd(fd), mOpen(false) { return; }
-    ~OpenFileDataLocal() { /* implement me! */ return; }
-    
-  private:
-    bool mOpen;
-    int  mFd;
+    OpenFileDataLocal(int _fd, int _flags) : fd(_fd), flags(_flags) { return; }
+    ~OpenFileDataLocal() { close(fd); }
+    int  fd;
+    int  flags;
   };
 
   /**
@@ -52,8 +54,10 @@ namespace hypertable {
    */
   class OpenFileDataLocalPtr : public OpenFileDataPtr {
   public:
-    OpenFileDataLocalPtr(OpenFileDataLocal *ofdl) : OpenFileDataPtr(ofdl, true) {
-      return;
+    OpenFileDataLocalPtr() : OpenFileDataPtr() { return; }
+    OpenFileDataLocalPtr(OpenFileDataLocal *ofdl) : OpenFileDataPtr(ofdl, true) { return; }
+    OpenFileDataLocal *operator->() const {
+      return (OpenFileDataLocal *)get();
     }
   };
   
@@ -79,10 +83,11 @@ namespace hypertable {
     virtual void Mkdirs(ResponseCallback *cb, const char *dirName);
     virtual void Flush(ResponseCallback *cb, uint32_t fd);
     virtual void Status(ResponseCallback *cb);
-    virtual void Shutdown(ResponseCallback *cb, uint16_t flags);
+    virtual void Shutdown(ResponseCallback *cb);
 
   private:
-    //static atomic_t msUniqueId;
+
+    virtual void ReportError(ResponseCallback *cb);
 
     bool         mVerbose;
     std::string  mRootdir;

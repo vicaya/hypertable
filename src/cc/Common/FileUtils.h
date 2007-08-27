@@ -39,6 +39,7 @@ namespace hypertable {
     static char *FileToBuffer(const char *fname, off_t *lenp);
     static bool Mkdirs(const char *dirname);
     static bool Exists(const char *fname);
+    static off_t Length(const char *fname);
   };
 
 }
