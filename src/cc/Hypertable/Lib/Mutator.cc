@@ -18,50 +18,41 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MANAGER_H
-#define HYPERTABLE_MANAGER_H
+#include "Mutator.h"
 
-#include <string>
-
-#include "Common/Properties.h"
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/ConnectionManager.h"
-
-#include "InstanceData.h"
-#include "Table.h"
-
-namespace hypertable {
+/**
+ * 
+ */
+Mutator::Mutator(InstanceDataPtr &instPtr, SchemaPtr &schemaPtr) : mInstPtr(instPtr), mSchemaPtr(schemaPtr) {
+  return;
+}
 
 
-  class Manager {
+/**
+ *
+ */
+void Mutator::Set(CellKey &key, uint8_t *value, uint32_t valueLen) {
 
-  public:
+  // Location Cache lookup
 
-    Manager(std::string configFile);
+  // If failed, Lookup range and Load cache
 
-    int CreateTable(std::string name, std::string schema);
-    int OpenTable(std::string name, TablePtr &tablePtr);
-    int GetSchema(std::string tableName, std::string &schema);
+  // Insert mod into per-range queue
 
-    //Table OpenTable();
-    //void DeleteTable();
-    // String [] ListTables();
-
-    friend class Table;
-
-  protected:
-
-    /**
-     *  Constructor.
-     */
-    Manager(PropertiesPtr &propsPtr);
-
-  private:
-    InstanceDataPtr mInstPtr;
-
-  };
+  // Update memory used
 
 }
 
-#endif // HYPERTABLE_MANAGER_H
 
+/**
+ *
+ */
+void Mutator::Flush(MutationResultPtr &resultPtr) {
+
+  // Sweep through the set of per-range queues, sending UPDATE requests to their range servers
+
+  // Increment useCount variable in callback, once for each request that went out
+
+  // 
+
+}

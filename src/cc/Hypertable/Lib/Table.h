@@ -18,50 +18,31 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MANAGER_H
-#define HYPERTABLE_MANAGER_H
+#ifndef HYPERTABLE_TABLE_H
+#define HYPERTABLE_TABLE_H
 
-#include <string>
-
-#include "Common/Properties.h"
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/ConnectionManager.h"
+#include "Common/ReferenceCount.h"
 
 #include "InstanceData.h"
-#include "Table.h"
+#include "Mutator.h"
+#include "Schema.h"
 
 namespace hypertable {
 
-
-  class Manager {
+  class Table : public ReferenceCount {
 
   public:
+    Table(InstanceDataPtr &instPtr, std::string &name);
+    virtual ~Table() { return; }
 
-    Manager(std::string configFile);
-
-    int CreateTable(std::string name, std::string schema);
-    int OpenTable(std::string name, TablePtr &tablePtr);
-    int GetSchema(std::string tableName, std::string &schema);
-
-    //Table OpenTable();
-    //void DeleteTable();
-    // String [] ListTables();
-
-    friend class Table;
-
-  protected:
-
-    /**
-     *  Constructor.
-     */
-    Manager(PropertiesPtr &propsPtr);
+    int CreateMutator(MutatorPtr &mutatorPtr);
 
   private:
     InstanceDataPtr mInstPtr;
-
+    SchemaPtr mSchemaPtr;
   };
+  typedef boost::intrusive_ptr<Table> TablePtr;
 
 }
 
-#endif // HYPERTABLE_MANAGER_H
-
+#endif // HYPERTABLE_TABLE_H

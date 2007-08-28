@@ -18,50 +18,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MANAGER_H
-#define HYPERTABLE_MANAGER_H
+#ifndef HYPERTABLE_MUTATIONRESULT_H
+#define HYPERTABLE_MUTATIONRESULT_H
 
-#include <string>
-
-#include "Common/Properties.h"
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/ConnectionManager.h"
-
-#include "InstanceData.h"
-#include "Table.h"
+#include <boost/shared_ptr.hpp>
 
 namespace hypertable {
 
-
-  class Manager {
-
-  public:
-
-    Manager(std::string configFile);
-
-    int CreateTable(std::string name, std::string schema);
-    int OpenTable(std::string name, TablePtr &tablePtr);
-    int GetSchema(std::string tableName, std::string &schema);
-
-    //Table OpenTable();
-    //void DeleteTable();
-    // String [] ListTables();
-
-    friend class Table;
-
-  protected:
-
-    /**
-     *  Constructor.
-     */
-    Manager(PropertiesPtr &propsPtr);
-
-  private:
-    InstanceDataPtr mInstPtr;
-
+  class MutationResult {
   };
+  typedef boost::shared_ptr<MutationResult> MutationResultPtr;
 
 }
 
-#endif // HYPERTABLE_MANAGER_H
-
+#endif // HYPERTABLE_MUTATIONRESULT_H

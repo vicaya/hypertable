@@ -48,6 +48,11 @@ namespace hypertable {
   inline bool operator<(const LocationCacheKeyT &k1, const LocationCacheKeyT &k2) {
     if (strcmp(k1.tableName, k2.tableName))
       return strcmp(k1.tableName, k2.tableName) < 0;
+    if (*k2.endRow == 0) {
+      if (*k1.endRow == 0)
+	return false;
+      return true;
+    }
     return strcmp(k1.endRow, k2.endRow) < 0;
   }
 

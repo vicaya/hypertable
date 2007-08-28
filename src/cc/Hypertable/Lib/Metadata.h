@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 #ifndef HYPERTABLE_METADATA_H
 #define HYPERTABLE_METADATA_H
 
@@ -36,9 +35,9 @@ using namespace hypertable;
 
 namespace hypertable {
 
-  typedef map<string, RangeInfoPtr> RangeInfoMapT;
+  typedef std::map<std::string, RangeInfoPtr> RangeInfoMapT;
 
-  typedef map<string, RangeInfoMapT> TableMapT;
+  typedef std::map<std::string, RangeInfoMapT> TableMapT;
 
   class Metadata {
 

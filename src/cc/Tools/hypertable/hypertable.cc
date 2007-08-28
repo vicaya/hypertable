@@ -85,6 +85,7 @@ int main(int argc, char **argv) {
   Manager *manager = 0;
 
   System::Initialize(argv[0]);
+  ReactorFactory::Initialize((uint16_t)System::GetProcessorCount());
 
   for (int i=1; i<argc; i++) {
     if (!strncmp(argv[i], "--config=", 9))
@@ -96,9 +97,7 @@ int main(int argc, char **argv) {
   if (configFile == "")
     configFile = System::installDir + "/conf/hypertable.cfg";
 
-  Manager::Initialize(configFile);
-
-  manager = Manager::Instance();
+  manager = new Manager(configFile);
 
   commands.push_back( new CommandCreateTable(manager) );
   commands.push_back( new CommandGetSchema(manager) );

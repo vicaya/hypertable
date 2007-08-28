@@ -1,11 +1,11 @@
 
 TODO:
+- Add RangeServerClient
+- Change EventPtr to intrusive_ptr
 - Make sure NULL endkey lookups work in RangeServer
 - Add support for LZO and BZIP2 compression
 - Implement 'InMemory' locality groups
 - Add support for auto-assigned timestamps
-- Fix AsyncComm/Protocol::StringFormatMessage (get rid of command)
-- Add new DELETE handling in RangeServer
 - Figure out why poll drops out of RangeServer/main.cc when gdb detaches from process
 - Writes to the commit log should be asynchronous (or concurrent)
 - In AccessGroup::RunCompaction, on major compaction check if the oldest
@@ -29,6 +29,8 @@ TODO CLEANUP:
 
 
 DONE:
+- Fix AsyncComm/Protocol::StringFormatMessage (get rid of command)
+- Add new DELETE handling in RangeServer
 - Abstract the Filesystem and Dfs Broker
 - Change ResponseCallback::response to response_ok in C++ source
 - Add serverup program to verify if the various servers are up

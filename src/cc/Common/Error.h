@@ -21,9 +21,9 @@
 #ifndef HYPERTABLE_ERROR_H
 #define HYPERTABLE_ERROR_H
 
+#include <stdexcept>
 #include <ext/hash_map>
 #include <string>
-using namespace std;
 
 namespace hypertable {
 
@@ -71,7 +71,20 @@ namespace hypertable {
     static const int RANGESERVER_SCHEMA_INVALID_CFID  = 0x00050009;
 
     static const char *GetText(int error);
+    static std::string GetTextString(int error) { return GetText(error); }
 
+  };
+
+  /**
+   * This is a generic exception class for Hypertable.  It takes an error code
+   * as a constructor argument and translates it into an error message.
+   */
+  class Exception : public std::runtime_error {
+  public:
+    Exception(int error) : std::runtime_error(Error::GetTextString(error)), mError(error) { return; }
+    int code() { return mError; }
+  private:
+    int mError;
   };
 }
 

@@ -18,50 +18,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MANAGER_H
-#define HYPERTABLE_MANAGER_H
+#ifndef HYPERTABLE_CELLKEY_H
+#define HYPERTABLE_CELLKEY_H
 
-#include <string>
-
-#include "Common/Properties.h"
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/ConnectionManager.h"
+#include "Common/ReferenceCount.h"
 
 #include "InstanceData.h"
-#include "Table.h"
+#include "Mutator.h"
+#include "Schema.h"
 
 namespace hypertable {
 
-
-  class Manager {
-
+  class CellKey {
   public:
-
-    Manager(std::string configFile);
-
-    int CreateTable(std::string name, std::string schema);
-    int OpenTable(std::string name, TablePtr &tablePtr);
-    int GetSchema(std::string tableName, std::string &schema);
-
-    //Table OpenTable();
-    //void DeleteTable();
-    // String [] ListTables();
-
-    friend class Table;
-
-  protected:
-
-    /**
-     *  Constructor.
-     */
-    Manager(PropertiesPtr &propsPtr);
-
-  private:
-    InstanceDataPtr mInstPtr;
-
+    const char *row;
+    const char *family;
+    const char *qualifier;
+    uint64_t timestamp;
   };
-
+  
 }
 
-#endif // HYPERTABLE_MANAGER_H
-
+#endif // HYPERTABLE_CELLKEY_H

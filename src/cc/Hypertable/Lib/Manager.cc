@@ -18,66 +18,72 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <cassert>
+
+#include "Common/Error.h"
 #include "Common/Logger.h"
 #include "Common/Properties.h"
 #include "Common/System.h"
 
 #include "Manager.h"
+#include "Table.h"
 
-
-Manager *Manager::msInstance = 0;
 
 
 /**
  *
  */
-Manager::Manager(PropertiesPtr &propsPtr) {
+Manager::Manager(std::string configFile) {
+  PropertiesPtr propsPtr( new Properties(configFile) );
 
-  mComm = new Comm();
-  mConnectionManager = new ConnectionManager(mComm);
+  mInstPtr.reset( new InstanceData() );
+
+  mInstPtr->comm = new Comm();
+  mInstPtr->connectionManager = new ConnectionManager(mInstPtr->comm);
 
   /**
    *  Create Master
    */
-  mMasterPtr.reset( new MasterClient(mConnectionManager, propsPtr) );
+  mInstPtr->masterPtr.reset( new MasterClient(mInstPtr->connectionManager, propsPtr) );
 
-  if (!mMasterPtr->WaitForConnection(60)) {
+  if (!mInstPtr->masterPtr->WaitForConnection(60)) {
     cerr << "Unable to connect to Master, exiting..." << endl;
     exit(1);
   }
-  
-}
-
-
-/**
- *
- */
-void Manager::Initialize(std::string configFile) {
-  PropertiesPtr propsPtr( new Properties(configFile) );
-
-  ReactorFactory::Initialize((uint16_t)System::GetProcessorCount());
-
-  if (msInstance != 0) {
-    LOG_ERROR("Initialize can only be called once.");
-    DUMP_CORE;
-  }
-
-  msInstance = new Manager(propsPtr);
 
 }
+
 
 /**
  * 
  */
 int Manager::CreateTable(std::string name, std::string schema) {
-  return mMasterPtr->CreateTable(name.c_str(), schema.c_str());
+  return mInstPtr->masterPtr->CreateTable(name.c_str(), schema.c_str());
 }
+
+
+/**
+ *
+ */
+int Manager::OpenTable(std::string name, TablePtr &tablePtr) {
+  Table *table;
+  try {
+    table = new Table(mInstPtr, name);
+  }
+  catch (Exception &e) {
+    LOG_VA_ERROR("Problem opening table '%s' - %s", name.c_str(), e.what());
+    return e.code();
+  }
+  tablePtr = table;
+  return Error::OK;
+}
+
 
 
 /**
  * 
  */
 int Manager::GetSchema(std::string tableName, std::string &schema) {
-  return mMasterPtr->GetSchema(tableName.c_str(), schema);
+  return mInstPtr->masterPtr->GetSchema(tableName.c_str(), schema);
 }
 

@@ -18,50 +18,36 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MANAGER_H
-#define HYPERTABLE_MANAGER_H
+#ifndef HYPERTABLE_MUTATOR_H
+#define HYPERTABLE_MUTATOR_H
 
-#include <string>
+#include "Common/ReferenceCount.h"
 
-#include "Common/Properties.h"
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/ConnectionManager.h"
-
+#include "CellKey.h"
 #include "InstanceData.h"
-#include "Table.h"
+#include "MutationResult.h"
+#include "Schema.h"
 
 namespace hypertable {
 
-
-  class Manager {
+  class Mutator : public ReferenceCount {
 
   public:
+    Mutator(InstanceDataPtr &instPtr, SchemaPtr &schemaPtr);
+    virtual ~Mutator() { return; }
 
-    Manager(std::string configFile);
+    void Set(CellKey &key, uint8_t *value, uint32_t valueLen);
 
-    int CreateTable(std::string name, std::string schema);
-    int OpenTable(std::string name, TablePtr &tablePtr);
-    int GetSchema(std::string tableName, std::string &schema);
+    void Flush(MutationResultPtr &resultPtr);
 
-    //Table OpenTable();
-    //void DeleteTable();
-    // String [] ListTables();
-
-    friend class Table;
-
-  protected:
-
-    /**
-     *  Constructor.
-     */
-    Manager(PropertiesPtr &propsPtr);
+    uint64_t MemoryUsed();
 
   private:
     InstanceDataPtr mInstPtr;
-
+    SchemaPtr mSchemaPtr;
   };
+  typedef boost::intrusive_ptr<Mutator> MutatorPtr;
 
 }
 
-#endif // HYPERTABLE_MANAGER_H
-
+#endif // HYPERTABLE_MUTATOR_H

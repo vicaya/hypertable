@@ -10,7 +10,7 @@ namespace hypertable {
   public class Manager {
     static public Manager Initialize(String configFile);
     static public Manager Instance();
-    public Table OpenTable();
+    public Table OpenTable(String name);
     public Table CreateTable(String name, String schema);
     public void DeleteTable();
     public String [] ListTables();

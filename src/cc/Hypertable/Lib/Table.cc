@@ -18,50 +18,32 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MANAGER_H
-#define HYPERTABLE_MANAGER_H
+#include <cstring>
 
-#include <string>
+#include "Common/Error.h"
 
-#include "Common/Properties.h"
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/ConnectionManager.h"
-
-#include "InstanceData.h"
 #include "Table.h"
 
-namespace hypertable {
+/**
+ *
+ */
+Table::Table(InstanceDataPtr &instPtr, std::string &name) : mInstPtr(instPtr) {
+  int error;
+  std::string schemaStr;
 
+  if ((error = mInstPtr->masterPtr->GetSchema(name.c_str(), schemaStr)) != Error::OK)
+    throw Exception(error);
 
-  class Manager {
+  mSchemaPtr.reset( Schema::NewInstance(schemaStr.c_str(), strlen(schemaStr.c_str()), true) );
 
-  public:
-
-    Manager(std::string configFile);
-
-    int CreateTable(std::string name, std::string schema);
-    int OpenTable(std::string name, TablePtr &tablePtr);
-    int GetSchema(std::string tableName, std::string &schema);
-
-    //Table OpenTable();
-    //void DeleteTable();
-    // String [] ListTables();
-
-    friend class Table;
-
-  protected:
-
-    /**
-     *  Constructor.
-     */
-    Manager(PropertiesPtr &propsPtr);
-
-  private:
-    InstanceDataPtr mInstPtr;
-
-  };
+  if (!mSchemaPtr->IsValid()) {
+    LOG_VA_ERROR("Schema Parse Error: %s", mSchemaPtr->GetErrorString());
+    throw Exception(Error::MASTER_BAD_SCHEMA);
+  }
 
 }
 
-#endif // HYPERTABLE_MANAGER_H
 
+int Table::CreateMutator(MutatorPtr &mutatorPtr) {
+  
+}

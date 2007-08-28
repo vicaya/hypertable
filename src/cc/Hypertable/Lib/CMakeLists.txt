@@ -22,8 +22,10 @@ Manager.cc
 MasterClient.cc
 MasterProtocol.cc
 Metadata.cc
+Mutator.cc
 RangeServerProtocol.cc
 Schema.cc
+Table.cc
 )
 
 add_library (Hypertable ${Hypertable_SRCS})
