@@ -17,6 +17,7 @@
 # 
 
 set ( Hypertable_SRCS
+LocationCache.cc
 Manager.cc
 MasterClient.cc
 MasterProtocol.cc

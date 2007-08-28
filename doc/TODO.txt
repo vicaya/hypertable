@@ -1,6 +1,6 @@
 
 TODO:
-- Abstract the Filesystem and Dfs Broker
+- Make sure NULL endkey lookups work in RangeServer
 - Add support for LZO and BZIP2 compression
 - Implement 'InMemory' locality groups
 - Add support for auto-assigned timestamps
@@ -29,6 +29,7 @@ TODO CLEANUP:
 
 
 DONE:
+- Abstract the Filesystem and Dfs Broker
 - Change ResponseCallback::response to response_ok in C++ source
 - Add serverup program to verify if the various servers are up
 - Change Range key to endRow
