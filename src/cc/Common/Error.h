@@ -69,6 +69,7 @@ namespace hypertable {
     static const int RANGESERVER_INVALID_SCANNER_ID   = 0x00050007;
     static const int RANGESERVER_SCHEMA_PARSE_ERROR   = 0x00050008;
     static const int RANGESERVER_SCHEMA_INVALID_CFID  = 0x00050009;
+    static const int RANGESERVER_INVALID_COLUMNFAMILY = 0x0005000A;
 
     static const char *GetText(int error);
     static std::string GetTextString(int error) { return GetText(error); }

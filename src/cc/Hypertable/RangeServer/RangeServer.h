@@ -28,10 +28,11 @@
 
 #include "Hyperspace/HyperspaceClient.h"
 
+#include "Hypertable/Lib/Types.h"
+
 #include "ResponseCallbackCreateScanner.h"
 #include "ResponseCallbackFetchScanblock.h"
 #include "ResponseCallbackUpdate.h"
-#include "Request.h"
 #include "TableInfo.h"
 
 using namespace hypertable;

@@ -32,16 +32,16 @@
 CellCacheScanner::CellCacheScanner(CellCachePtr &cellCachePtr, ScanContextPtr &scanContextPtr) : CellListScanner(scanContextPtr), mCellCachePtr(cellCachePtr), mCellCacheMutex(cellCachePtr->mMutex), mCurKey(0), mCurValue(0), mEos(false) {
 
   /** set start iterator **/
-  if (scanContextPtr->spec == 0 || scanContextPtr->spec->startRow->len == 0)
+  if (scanContextPtr->spec == 0 || *scanContextPtr->spec->startRow == 0)
     mStartIter = mCellCachePtr->mCellMap.begin();
   else
-    mStartIter = mCellCachePtr->mCellMap.lower_bound(scanContextPtr->spec->startRow);
+    mStartIter = mCellCachePtr->mCellMap.lower_bound(scanContextPtr->startKeyPtr.get());
 
   /** set end iterator **/
-  if (scanContextPtr->spec == 0 || scanContextPtr->spec->endRow->len == 0)
+  if (scanContextPtr->spec == 0 || *scanContextPtr->spec->endRow == 0)
     mEndIter = mCellCachePtr->mCellMap.end();
   else
-    mEndIter = mCellCachePtr->mCellMap.upper_bound(scanContextPtr->spec->endRow);
+    mEndIter = mCellCachePtr->mCellMap.upper_bound(scanContextPtr->endKeyPtr.get());
 
   mCurIter = mStartIter;
 

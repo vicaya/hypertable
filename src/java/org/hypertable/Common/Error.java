@@ -63,6 +63,7 @@ public class Error {
     static public final int RANGESERVER_INVALID_SCANNER_ID   = 0x00050007;
     static public final int RANGESERVER_SCHEMA_PARSE_ERROR   = 0x00050008;
     static public final int RANGESERVER_SCHEMA_INVALID_CFID  = 0x00050009;
+    static public final int RANGESERVER_INVALID_COLUMNFAMILY = 0x0005000A;
 
     static public String GetText(int lcode) {
 	return mTextMap.get(lcode);
@@ -103,5 +104,6 @@ public class Error {
 	mTextMap.put(RANGESERVER_INVALID_SCANNER_ID,   "RANGE SERVER invalid scanner id");
 	mTextMap.put(RANGESERVER_SCHEMA_PARSE_ERROR,   "RANGE SERVER schema parse error");
 	mTextMap.put(RANGESERVER_SCHEMA_INVALID_CFID,  "RANGE SERVER invalid column family id");
+	mTextMap.put(RANGESERVER_INVALID_COLUMNFAMILY, "RANGE SERVER invalid column family");
     }
 }

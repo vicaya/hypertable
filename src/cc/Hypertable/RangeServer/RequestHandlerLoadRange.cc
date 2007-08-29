@@ -23,8 +23,9 @@
 
 #include "AsyncComm/ResponseCallback.h"
 
+#include "Hypertable/Lib/Types.h"
+
 #include "RangeServer.h"
-#include "Request.h"
 #include "RequestHandlerLoadRange.h"
 
 using namespace hypertable;

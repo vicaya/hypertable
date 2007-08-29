@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <cassert>
+
 #include "ScanContext.h"
 
 using namespace hypertable;
@@ -37,25 +39,22 @@ void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp)
   if (spec == 0) {
     memset(familyMask, true, 256*sizeof(bool));
     memset(familyInfo, 0, 256*sizeof(CellFilterInfoT));
-    remainingCells = (uint64_t)-1;
     return;
   }
-  remainingCells = (spec->cellCount != 0) ? spec->cellCount : (uint64_t)-1;
   if (sp.get() != 0) {
     schemaPtr = sp;
     memset(familyMask, false, 256*sizeof(bool));
-    if (spec->columns && spec->columns->len > 0) {
-      for (uint32_t i=0; i<spec->columns->len; i++) {
-	if ((columnFamily = schemaPtr->GetColumnFamily(spec->columns->data[i])) == 0) {
-	  error = Error::RANGESERVER_SCHEMA_INVALID_CFID;
-	  return;
-	}
-	familyMask[spec->columns->data[i]] = true;
+    if (spec->columns.size() > 0) {
+      for (std::vector<const char *>::const_iterator iter = spec->columns.begin(); iter != spec->columns.end(); iter++) {
+	columnFamily = schemaPtr->GetColumnFamily(*iter);
+	assert(columnFamily);
+
+	familyMask[columnFamily->id] = true;
 	if (columnFamily->expireTime == 0)
-	  familyInfo[spec->columns->data[i]].cutoffTime == 0;
+	  familyInfo[columnFamily->id].cutoffTime == 0;
 	else
-	  familyInfo[spec->columns->data[i]].cutoffTime == timestamp - (columnFamily->expireTime * 1000000);
-	familyInfo[spec->columns->data[i]].keepCopies = columnFamily->keepCopies;
+	  familyInfo[columnFamily->id].cutoffTime == timestamp - (columnFamily->expireTime * 1000000);
+	familyInfo[columnFamily->id].keepCopies = columnFamily->keepCopies;
       }
     }
     else {
@@ -84,9 +83,11 @@ void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp)
   }
 
   /**
-   * Create End Key
+   * Create Start Key and End Key
    */
-  if (spec->endRow->len != 0)
-    endKeyPtr = CreateKey(FLAG_INSERT, (const char *)spec->endRow->data, 0xFF, 0, 0LL);
+  if (*spec->startRow != 0)
+    startKeyPtr = CreateKey(FLAG_INSERT, spec->startRow, 0, 0, 0LL);
+  if (*spec->endRow != 0)
+    endKeyPtr = CreateKey(FLAG_INSERT, spec->endRow, 0xFF, 0, 0LL);
 
 }

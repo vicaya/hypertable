@@ -302,12 +302,6 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, RangeSpecific
   SchemaPtr schemaPtr;
   ScanContextPtr scanContextPtr;
 
-  /**
-   * Load column families set
-   */
-  for (int32_t i=0; i<scanSpec->columns->len; i++)
-    columnFamilies.insert(scanSpec->columns->data[i]);
-
   if (Global::verbose) {
     cout << *rangeSpec << endl;
     cout << *scanSpec << endl;
@@ -328,6 +322,20 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, RangeSpecific
   scanTimestamp = rangePtr->GetTimestamp();
 
   schemaPtr = tableInfoPtr->GetSchema();
+
+  /**
+   * Load column families set
+   */
+  for (std::vector<const char *>::const_iterator iter = scanSpec->columns.begin(); iter != scanSpec->columns.end(); iter++) {
+    Schema::ColumnFamily *cf = schemaPtr->GetColumnFamily(*iter);
+    if (cf == 0) {
+      error = Error::RANGESERVER_INVALID_COLUMNFAMILY;
+      errMsg = (std::string)*iter;
+      goto abort;
+    }
+    columnFamilies.insert((uint8_t)cf->id);
+  }
+
 
   kvBuffer = new uint8_t [ sizeof(int32_t) + DEFAULT_SCANBUF_SIZE ];
   kvLenp = (uint32_t *)kvBuffer;

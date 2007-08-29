@@ -42,14 +42,14 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPt
 
   // compute startKey
   tmpKey = mCellStoreV0->mStartKeyPtr.get();
-  if (scanContextPtr->spec && scanContextPtr->spec->startRow->len != 0)
-    startKey = (tmpKey != 0 && *scanContextPtr->spec->startRow < *tmpKey) ? tmpKey : scanContextPtr->spec->startRow;
+  if (scanContextPtr->startKeyPtr)
+    startKey = (tmpKey != 0 && *scanContextPtr->startKeyPtr.get() < *tmpKey) ? tmpKey : scanContextPtr->startKeyPtr.get();
   else
     startKey = tmpKey;
 
   // compute mEndKeyPtr
-  if (scanContextPtr->endKeyPtr.get() != 0) {
-    if (mCellStoreV0->mEndKeyPtr.get() == 0 || *scanContextPtr->endKeyPtr.get() < *mCellStoreV0->mEndKeyPtr.get())
+  if (scanContextPtr->endKeyPtr) {
+    if (!mCellStoreV0->mEndKeyPtr || *scanContextPtr->endKeyPtr.get() < *mCellStoreV0->mEndKeyPtr.get())
       mEndKeyPtr = scanContextPtr->endKeyPtr;
     else
       mEndKeyPtr = mCellStoreV0->mEndKeyPtr;

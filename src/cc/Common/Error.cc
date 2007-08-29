@@ -65,6 +65,7 @@ namespace {
     { Error::RANGESERVER_INVALID_SCANNER_ID,   "RANGE SERVER invalid scanner id" },
     { Error::RANGESERVER_SCHEMA_PARSE_ERROR,   "RANGE SERVER schema parse error" },
     { Error::RANGESERVER_SCHEMA_INVALID_CFID,  "RANGE SERVER invalid column family id" },
+    { Error::RANGESERVER_INVALID_COLUMNFAMILY, "RANGE SERVER invalid column family" },
     { 0, 0 }
   };
 

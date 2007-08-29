@@ -1,5 +1,6 @@
 
 TODO:
+- Change KeepCopies attribute of column family to VersionLimit
 - Add RangeServerClient
 - Change EventPtr to intrusive_ptr
 - Make sure NULL endkey lookups work in RangeServer

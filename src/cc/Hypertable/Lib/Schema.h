@@ -93,7 +93,7 @@ namespace hypertable {
 
     list<AccessGroup *> *GetAccessGroupList() { return &mAccessGroups; }
 
-    ColumnFamily *GetColumnFamily(string &name) { return mColumnFamilyMap[name]; }
+    ColumnFamily *GetColumnFamily(string name) { return mColumnFamilyMap[name]; }
 
     ColumnFamily *GetColumnFamily(uint32_t id) { return mColumnFamilyIdMap[id]; }
 

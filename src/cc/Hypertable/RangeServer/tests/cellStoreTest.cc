@@ -232,11 +232,15 @@ int main(int argc, char **argv) {
    */
   ScanContextPtr scanContextPtr;
 
+  /**
   memset(&scanSpec, 0, sizeof(ScanSpecificationT));
   scanSpec.startRow = startKey;
   scanSpec.endRow = endKey;
+  **/
 
   scanContextPtr.reset( new ScanContext(ScanContext::END_OF_TIME, &scanSpec) ); 
+  scanContextPtr->endKeyPtr.reset(CreateCopy(startKey));
+  scanContextPtr->endKeyPtr.reset(CreateCopy(endKey));
 
   scanner = cellStorePtr->CreateScanner(scanContextPtr);
 

@@ -28,8 +28,9 @@
 
 #include "Common/StringExt.h"
 
+#include "Hypertable/Lib/Types.h"
+
 #include "Range.h"
-#include "Request.h"
 
 namespace hypertable {
 

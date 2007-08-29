@@ -21,6 +21,8 @@
 package org.hypertable.Hypertable.RangeServer;
 
 import java.lang.StringBuilder;
+import java.util.Vector;
+import java.util.Enumeration;
 
 import org.hypertable.AsyncComm.CommBuf;
 
@@ -30,17 +32,15 @@ public class ScanSpecification {
 
     public String toString() {
 	StringBuilder sb = new StringBuilder();
-	if (flags == ONLY_LATEST_CELLS)
-	    sb.append("Flags     = ONLY_LATEST_CELLS\n");
-	else
-	    sb.append("Flags     = " + flags + "\n");
-	sb.append("CellCount = " + cellCount + "\n");
+	sb.append("RowLimit  = " + rowLimit + "\n");
+	sb.append("CellLimit = " + cellLimit + "\n");
 	sb.append("StartRow  = " + startRow + "\n");
 	sb.append("EndRow    = " + endRow + "\n");
 	if (columns != null) {
 	    sb.append("Columns   = ");
-	    for (int i=0; i<columns.length; i++)
-		sb.append(columns[i] +  " ");
+	    for (Enumeration<String> e = columns.elements() ; e.hasMoreElements() ;) {
+		System.out.println(e.nextElement() + " ");
+	    }	    
 	    sb.append("\n");
 	}
 	sb.append("MinTime   = " + minTime + "\n");
@@ -49,32 +49,60 @@ public class ScanSpecification {
     }
 
     int SerializedLength() {
-	byte [] startRowBytes = (startRow != null) ? startRow.getBytes() : null;
-	byte [] endRowBytes = (endRow != null) ? endRow.getBytes() : null;
-	return 6 +
-	    4 + ((columns == null) ? 0 : columns.length) +
-	    4 + ((startRowBytes == null) ? 0 : startRowBytes.length) + 
-	    4 + ((endRowBytes == null) ? 0 : endRowBytes.length) +
-	    16;
+	int length = 0;
+
+	// rowLimit
+	length += 4;  
+
+	// cellLimit
+	length += 4;  
+
+	// startRow
+	length += CommBuf.EncodedLength(startRow);
+
+	// endRow
+	length += CommBuf.EncodedLength(endRow);
+
+	// columns
+	if (columns != null) {
+	    for (Enumeration<String> e = columns.elements() ; e.hasMoreElements() ;) {
+		length += CommBuf.EncodedLength(e.nextElement());
+	    }
+	}
+	// column count
+	length += 2;  
+
+	// minTime
+	length += 8;
+
+	// maxTime
+	length += 8;
+
+	return length;
     }
 
     void Prepend(CommBuf cbuf) {
-	byte [] startRowBytes = (startRow != null) ? startRow.getBytes() : null;
-	byte [] endRowBytes = (endRow != null) ? endRow.getBytes() : null;
 	cbuf.PrependLong(maxTime);
 	cbuf.PrependLong(minTime);
-	cbuf.PrependByteArray(endRowBytes);
-	cbuf.PrependByteArray(startRowBytes);
-	cbuf.PrependByteArray(columns);
-	cbuf.PrependInt(cellCount);
-	cbuf.PrependShort(flags);
+	if (columns != null) {
+	    for (Enumeration<String> e = columns.elements() ; e.hasMoreElements() ;) {
+		cbuf.PrependString(e.nextElement());
+	    }
+	    cbuf.PrependShort((short)columns.size());
+	}
+	else
+	    cbuf.PrependShort((short)0);
+	cbuf.PrependString(endRow);
+	cbuf.PrependString(startRow);
+	cbuf.PrependInt(cellLimit);
+	cbuf.PrependInt(rowLimit);
     }
 
-    public short flags = 0;
-    public int cellCount = 0;
+    public int rowLimit = 0;
+    public int cellLimit = 0;
     public String startRow = null;
     public String endRow = null;
-    public byte [] columns = null;
+    Vector<String> columns;
     public long minTime = 0;
     public long maxTime = 0;
 }

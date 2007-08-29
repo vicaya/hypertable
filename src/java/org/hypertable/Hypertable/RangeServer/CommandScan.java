@@ -77,15 +77,15 @@ class CommandScan extends Command {
 		else if (arg.name.equals("end")) {
 		    scanSpec.endRow = arg.value;
 		}
-		else if (arg.name.equals("--latest-cells")) {
-		    scanSpec.flags = ScanSpecification.ONLY_LATEST_CELLS;
+		else if (arg.name.equals("row-limit")) {
+		    scanSpec.rowLimit = Integer.parseInt(arg.value);
+		}
+		else if (arg.name.equals("cell-limit")) {
+		    scanSpec.cellLimit = Integer.parseInt(arg.value);
 		}
 		else if (arg.name.equals("columns")) {
 		    if ((scanSpec.columns = ParseColumnsArgument( arg.value )) == null)
 			return;
-		}
-		else if (arg.name.equals("cellCount")) {
-		    scanSpec.cellCount = Integer.parseInt(arg.value);
 		}
 		else if (arg.name.equals("timeInterval")) {
 		    if (arg.value != null) {
@@ -200,28 +200,18 @@ class CommandScan extends Command {
 	}
     }
 
-    private byte [] ParseColumnsArgument( String columns ) {
-	byte [] tempColumnVect = new byte [ 256 ];
-	int nextColumn = 0;
-	ColumnFamily cf;
+    private Vector<String> ParseColumnsArgument( String columns ) {
+	Vector<String> v = new Vector<String>();
 	String name;
 
 	StringTokenizer st = new StringTokenizer(columns, ",");
-	while (st.hasMoreTokens()) {
-	    name = st.nextToken();
-	    if ((cf = msOutstandingSchema.GetColumnFamily(name)) == null) {
-		ReportError("Unrecognized column family '" + name + "'");
-		return null;
-	    }
-	    tempColumnVect[nextColumn++] = (byte)cf.id;
-	}
-	byte [] returnVect = new byte [ nextColumn ];
-	System.arraycopy(tempColumnVect, 0, returnVect, 0, nextColumn);
-	return returnVect;
+	while (st.hasMoreTokens())
+	    v.add(st.nextToken());
+	return v;
     }
 
     private void DisplayUsage() {
-	ReportError("usage: scan <range> [--latest-cells] [cellCount=<n>] [start=<row>] [end=<row>] [columns=<column1>[,<column2>...] [timeInterval=<start>..<stop>] ");
+	ReportError("usage: scan <range> [row-limit=<n>] [cell-limit=<n>] [start=<row>] [end=<row>] [columns=<column1>[,<column2>...] [timeInterval=<start>..<stop>] ");
     }
 
 }

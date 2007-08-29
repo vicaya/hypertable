@@ -29,8 +29,9 @@
 #include "Common/Error.h"
 
 #include "Hypertable/Lib/Schema.h"
+#include "Hypertable/Lib/Types.h"
+
 #include "Key.h"
-#include "Request.h"
 
 namespace hypertable {
 
@@ -50,8 +51,8 @@ namespace hypertable {
     SchemaPtr schemaPtr;
     ScanSpecificationT *spec;
     ByteString32Ptr endKeyPtr;
+    ByteString32Ptr startKeyPtr;
     uint64_t timestamp;
-    uint64_t remainingCells;
     int error;
     bool familyMask[256];
     CellFilterInfoT familyInfo[256];

@@ -26,6 +26,7 @@ Mutator.cc
 RangeServerProtocol.cc
 Schema.cc
 Table.cc
+Types.cc
 )
 
 add_library (Hypertable ${Hypertable_SRCS})
