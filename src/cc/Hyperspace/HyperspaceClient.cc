@@ -30,6 +30,7 @@ extern "C" {
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ConnectionManager.h"
+#include "AsyncComm/Serialization.h"
 
 #include "Common/Error.h"
 #include "Common/Logger.h"
@@ -209,9 +210,11 @@ int HyperspaceClient::AttrGet(const char *fname, const char *aname, DynamicBuffe
       }
       else {
 	const char *avalue;
-	const uint8_t *ptr = eventPtr->message;
-	CommBuf::DecodeString(&ptr[4], eventPtr->messageLen-4, &avalue);
-	if (avalue != 0) {
+	uint8_t *ptr = eventPtr->message + 4;
+	size_t remaining = eventPtr->messageLen - 4;
+	if (!Serialization::DecodeString(&ptr, &remaining, &avalue))
+	  assert(!"problem decoding return packet");
+	if (*avalue != 0) {
 	  out.reserve(strlen(avalue)+1);
 	  out.addNoCheck(avalue, strlen(avalue));
 	  *out.ptr = 0;

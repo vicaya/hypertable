@@ -24,6 +24,7 @@
 #include <string>
 
 #include "Event.h"
+#include "HeaderBuilder.h"
 
 namespace hypertable {
   
@@ -41,7 +42,7 @@ namespace hypertable {
     static std::string StringFormatMessage(Event *event);
     static std::string StringFormatMessage(EventPtr &eventPtr) { return StringFormatMessage(eventPtr.get()); }
 
-    static CommBuf *CreateErrorMessage(int error, const char *msg, int extraSpace);
+    static CommBuf *CreateErrorMessage(HeaderBuilder &hbuilder, int error, const char *msg);
 
     virtual const char *CommandText(short command) = 0;
 

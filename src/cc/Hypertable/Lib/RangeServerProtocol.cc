@@ -18,6 +18,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include "AsyncComm/CommBuf.h"
+#include "AsyncComm/HeaderBuilder.h"
+
 #include "RangeServerProtocol.h"
 
 namespace hypertable {
@@ -27,7 +30,8 @@ namespace hypertable {
     "update",
     "create scanner",
     "fetch scanblock",
-    "compact"
+    "compact",
+    "status"
   };
 
   const char *RangeServerProtocol::CommandText(short command) {
@@ -35,6 +39,37 @@ namespace hypertable {
       return "UNKNOWN";
     return mCommandStrings[command];
   }
+
+  CommBuf *RangeServerProtocol::CreateRequestLoadRange(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec) {
+#if 0    
+    HeaderBuilder hbuilder;
+    CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(int16_t) + CommBuf::EncodedLength(tableName) + CommBuf::EncodedLength(schemaString));
+    cbuf->PrependString(schemaString);
+    cbuf->PrependString(tableName);
+    cbuf->PrependShort(COMMAND_LOAD_RANGE);
+    hbuilder.Reset(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
+    hbuilder.Encapsulate(cbuf);
+    return cbuf;
+#endif
+    return 0;
+  }
+
+  CommBuf *RangeServerProtocol::CreateRequestUpdate(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, uint8_t *data, size_t len) {
+    return 0;
+  }
+
+  CommBuf *RangeServerProtocol::CreateRequestCreateScanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &spec) {
+    return 0;
+  }
+
+  CommBuf *RangeServerProtocol::CreateRequestFetchScanblock(struct sockaddr_in &addr, int scannerId) {
+    return 0;
+  }
+
+  CommBuf *RangeServerProtocol::CreateRequestStatus() {
+    return 0;
+  }
+
 
 }
 

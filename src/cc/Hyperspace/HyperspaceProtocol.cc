@@ -23,6 +23,7 @@
 
 #include "Common/Error.h"
 #include "AsyncComm/HeaderBuilder.h"
+#include "AsyncComm/Serialization.h"
 
 #include "HyperspaceProtocol.h"
 
@@ -54,16 +55,14 @@ const char *HyperspaceProtocol::CommandText(short command) {
  *
  */
 CommBuf *HyperspaceProtocol::CreateMkdirsRequest(const char *fname) {
-  HeaderBuilder hbuilder;
-  CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(int16_t) + CommBuf::EncodedLength(fname));
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
+  CommBuf *cbuf;
 
-  cbuf->PrependString(fname);
-  cbuf->PrependShort(COMMAND_MKDIRS);
-
-  hbuilder.Reset(Header::PROTOCOL_HYPERSPACE);
   hbuilder.SetGroupId(fileNameToGroupId(fname));
-  hbuilder.Encapsulate(cbuf);
 
+  cbuf = new CommBuf(hbuilder, 2 + Serialization::EncodedLengthString(fname));
+  cbuf->AppendShort(COMMAND_MKDIRS);
+  cbuf->AppendString(fname);
   return cbuf;
 }
 
@@ -72,16 +71,13 @@ CommBuf *HyperspaceProtocol::CreateMkdirsRequest(const char *fname) {
  *
  */
 CommBuf *HyperspaceProtocol::CreateCreateRequest(const char *fname) {
-  HeaderBuilder hbuilder;
-  CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(int16_t) + CommBuf::EncodedLength(fname));
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
 
-  cbuf->PrependString(fname);
-  cbuf->PrependShort(COMMAND_CREATE);
-
-  hbuilder.Reset(Header::PROTOCOL_HYPERSPACE);
   hbuilder.SetGroupId(fileNameToGroupId(fname));
-  hbuilder.Encapsulate(cbuf);
 
+  CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::EncodedLengthString(fname));
+  cbuf->AppendShort(COMMAND_CREATE);
+  cbuf->AppendString(fname);
   return cbuf;
 }
 
@@ -89,19 +85,18 @@ CommBuf *HyperspaceProtocol::CreateCreateRequest(const char *fname) {
 /**
  */
 CommBuf *HyperspaceProtocol::CreateAttrSetRequest(const char *fname, const char *aname, const char *avalue) {
-  HeaderBuilder hbuilder;
-  CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(int16_t) + CommBuf::EncodedLength(fname)
-			      + CommBuf::EncodedLength(aname) + CommBuf::EncodedLength(avalue));
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
 
-  cbuf->PrependString(avalue);
-  cbuf->PrependString(aname);
-  cbuf->PrependString(fname);
-  cbuf->PrependShort(COMMAND_ATTRSET);
-
-  hbuilder.Reset(Header::PROTOCOL_HYPERSPACE);
   hbuilder.SetGroupId(fileNameToGroupId(fname));
-  hbuilder.Encapsulate(cbuf);
 
+  CommBuf *cbuf = new CommBuf(hbuilder, + 2 + 
+			      Serialization::EncodedLengthString(fname) + 
+			      Serialization::EncodedLengthString(aname) + 
+			      Serialization::EncodedLengthString(avalue));
+  cbuf->AppendShort(COMMAND_ATTRSET);
+  cbuf->AppendString(fname);
+  cbuf->AppendString(aname);
+  cbuf->AppendString(avalue);
   return cbuf;
 }
 
@@ -109,18 +104,16 @@ CommBuf *HyperspaceProtocol::CreateAttrSetRequest(const char *fname, const char 
 /**
  */
 CommBuf *HyperspaceProtocol::CreateAttrGetRequest(const char *fname, const char *aname) {
-  HeaderBuilder hbuilder;
-  CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(int16_t) + CommBuf::EncodedLength(fname)
-			      + CommBuf::EncodedLength(aname));
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
 
-  cbuf->PrependString(aname);
-  cbuf->PrependString(fname);
-  cbuf->PrependShort(COMMAND_ATTRGET);
-
-  hbuilder.Reset(Header::PROTOCOL_HYPERSPACE);
   hbuilder.SetGroupId(fileNameToGroupId(fname));
-  hbuilder.Encapsulate(cbuf);
 
+  CommBuf *cbuf = new CommBuf(hbuilder, 2 + 
+			      Serialization::EncodedLengthString(fname) +
+			      Serialization::EncodedLengthString(aname));
+  cbuf->AppendShort(COMMAND_ATTRGET);
+  cbuf->AppendString(fname);
+  cbuf->AppendString(aname);
   return cbuf;
 }
 
@@ -128,18 +121,16 @@ CommBuf *HyperspaceProtocol::CreateAttrGetRequest(const char *fname, const char 
 /**
  */
 CommBuf *HyperspaceProtocol::CreateAttrDelRequest(const char *fname, const char *aname) {
-  HeaderBuilder hbuilder;
-  CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(int16_t) + CommBuf::EncodedLength(fname)
-			      + CommBuf::EncodedLength(aname));
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
 
-  cbuf->PrependString(aname);
-  cbuf->PrependString(fname);
-  cbuf->PrependShort(COMMAND_ATTRDEL);
-
-  hbuilder.Reset(Header::PROTOCOL_HYPERSPACE);
   hbuilder.SetGroupId(fileNameToGroupId(fname));
-  hbuilder.Encapsulate(cbuf);
 
+  CommBuf *cbuf = new CommBuf(hbuilder, 2 + 
+			      Serialization::EncodedLengthString(fname) +
+			      Serialization::EncodedLengthString(aname));
+  cbuf->AppendShort(COMMAND_ATTRDEL);
+  cbuf->AppendString(fname);
+  cbuf->AppendString(aname);
   return cbuf;
 }
 
@@ -148,16 +139,13 @@ CommBuf *HyperspaceProtocol::CreateAttrDelRequest(const char *fname, const char 
  *
  */
 CommBuf *HyperspaceProtocol::CreateExistsRequest(const char *fname) {
-  HeaderBuilder hbuilder;
-  CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(int16_t) + CommBuf::EncodedLength(fname));
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
 
-  cbuf->PrependString(fname);
-  cbuf->PrependShort(COMMAND_EXISTS);
-
-  hbuilder.Reset(Header::PROTOCOL_HYPERSPACE);
   hbuilder.SetGroupId(fileNameToGroupId(fname));
-  hbuilder.Encapsulate(cbuf);
 
+  CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::EncodedLengthString(fname));
+  cbuf->AppendShort(COMMAND_EXISTS);
+  cbuf->AppendString(fname);
   return cbuf;
 }
 
@@ -166,16 +154,13 @@ CommBuf *HyperspaceProtocol::CreateExistsRequest(const char *fname) {
  *
  */
 CommBuf *HyperspaceProtocol::CreateDeleteRequest(const char *fname) {
-  HeaderBuilder hbuilder;
-  CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(int16_t) + CommBuf::EncodedLength(fname));
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
 
-  cbuf->PrependString(fname);
-  cbuf->PrependShort(COMMAND_DELETE);
-
-  hbuilder.Reset(Header::PROTOCOL_HYPERSPACE);
   hbuilder.SetGroupId(fileNameToGroupId(fname));
-  hbuilder.Encapsulate(cbuf);
 
+  CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::EncodedLengthString(fname));
+  cbuf->AppendShort(COMMAND_DELETE);
+  cbuf->AppendString(fname);
   return cbuf;
 }
 
@@ -183,10 +168,8 @@ CommBuf *HyperspaceProtocol::CreateDeleteRequest(const char *fname) {
  *
  */
 CommBuf *HyperspaceProtocol::CreateStatusRequest() {
-  HeaderBuilder hbuilder;
-  CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(int16_t));
-  cbuf->PrependShort(COMMAND_STATUS);
-  hbuilder.Reset(Header::PROTOCOL_HYPERSPACE);
-  hbuilder.Encapsulate(cbuf);
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
+  CommBuf *cbuf = new CommBuf(hbuilder, 2);
+  cbuf->AppendShort(COMMAND_STATUS);
   return cbuf;
 }

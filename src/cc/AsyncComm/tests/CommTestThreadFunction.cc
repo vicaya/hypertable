@@ -36,6 +36,7 @@ extern "C" {
 #include "AsyncComm/DispatchHandler.h"
 #include "AsyncComm/Event.h"
 #include "AsyncComm/HeaderBuilder.h"
+#include "AsyncComm/Serialization.h"
 
 #include "CommTestThreadFunction.h"
 
@@ -94,7 +95,6 @@ void CommTestThreadFunction::operator()() {
   HeaderBuilder hbuilder;
   int error;
   EventPtr eventPtr;
-  CommBuf *cbuf;
   int outstanding = 0;
   int maxOutstanding = 50;
   string line;
@@ -110,11 +110,9 @@ void CommTestThreadFunction::operator()() {
       hbuilder.Reset(Header::PROTOCOL_NONE);
       getline (infile,line);
       if (line.length() > 0) {
-	cbuf = new CommBuf(hbuilder.HeaderLength() + CommBuf::EncodedLength(line));
-	cbuf->PrependString(line);
 	hbuilder.SetGroupId(gid);
-	hbuilder.Encapsulate(cbuf);
-	CommBufPtr cbufPtr(cbuf);
+	CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::EncodedLengthString(line)) );
+	cbufPtr->AppendString(line);
 	int retries = 0;
 	while ((error = mComm->SendRequest(mAddr, cbufPtr, respHandler)) != Error::OK) {
 	  if (error == Error::COMM_NOT_CONNECTED) {
@@ -135,11 +133,14 @@ void CommTestThreadFunction::operator()() {
 	if (outstanding  > maxOutstanding) {
 	  if (!respHandler->GetResponse(eventPtr))
 	    break;
-	  CommBuf::DecodeString(eventPtr->message, eventPtr->messageLen, &str);
-	  if (str != 0)
-	    outfile << str << endl;
-	  else
-	    outfile << "[NULL]" << endl;
+	  if (!Serialization::DecodeString(&eventPtr->message, &eventPtr->messageLen, &str))
+	    outfile << "ERROR: deserialization problem." << endl;
+	  else {
+	    if (*str != 0)
+	      outfile << str << endl;
+	    else
+	      outfile << "[NULL]" << endl;
+	  }
 	  eventPtr.reset();
 	  outstanding--;
 	}
@@ -153,11 +154,14 @@ void CommTestThreadFunction::operator()() {
   }
 
   while (outstanding > 0 && respHandler->GetResponse(eventPtr)) {
-    CommBuf::DecodeString(eventPtr->message, eventPtr->messageLen, &str);
-    if (str != 0)
-      outfile << str << endl;
-    else
-      outfile << "[NULL]" << endl;
+    if (!Serialization::DecodeString(&eventPtr->message, &eventPtr->messageLen, &str))
+      outfile << "ERROR: deserialization problem." << endl;
+    else {
+      if (*str != 0)
+	outfile << str << endl;
+      else
+	outfile << "[NULL]" << endl;
+    }
     //cout << "out = " << outstanding << endl;
     eventPtr.reset();
     outstanding--;

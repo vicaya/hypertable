@@ -19,6 +19,7 @@
  */
 
 #include "AsyncComm/HeaderBuilder.h"
+#include "AsyncComm/Serialization.h"
 
 #include "MasterProtocol.h"
 
@@ -28,32 +29,26 @@ namespace hypertable {
    *
    */
   CommBuf *MasterProtocol::CreateCreateTableRequest(const char *tableName, const char *schemaString) {
-    HeaderBuilder hbuilder;
-    CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(int16_t) + CommBuf::EncodedLength(tableName) + CommBuf::EncodedLength(schemaString));
-    cbuf->PrependString(schemaString);
-    cbuf->PrependString(tableName);
-    cbuf->PrependShort(COMMAND_CREATE_TABLE);
-    hbuilder.Reset(Header::PROTOCOL_HYPERTABLE_MASTER);
-    hbuilder.Encapsulate(cbuf);
+    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::EncodedLengthString(tableName) + Serialization::EncodedLengthString(schemaString));
+    cbuf->AppendShort(COMMAND_CREATE_TABLE);
+    cbuf->AppendString(tableName);
+    cbuf->AppendString(schemaString);
     return cbuf;
   }
 
   CommBuf *MasterProtocol::CreateGetSchemaRequest(const char *tableName) {
-    HeaderBuilder hbuilder;
-    CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(int16_t) + CommBuf::EncodedLength(tableName));
-    cbuf->PrependString(tableName);
-    cbuf->PrependShort(COMMAND_GET_SCHEMA);
-    hbuilder.Reset(Header::PROTOCOL_HYPERTABLE_MASTER);
-    hbuilder.Encapsulate(cbuf);
+    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::EncodedLengthString(tableName));
+    cbuf->AppendShort(COMMAND_GET_SCHEMA);
+    cbuf->AppendString(tableName);
     return cbuf;
   }
 
   CommBuf *MasterProtocol::CreateStatusRequest() {
-    HeaderBuilder hbuilder;
-    CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(int16_t));
-    cbuf->PrependShort(COMMAND_STATUS);
-    hbuilder.Reset(Header::PROTOCOL_HYPERTABLE_MASTER);
-    hbuilder.Encapsulate(cbuf);
+    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
+    CommBuf *cbuf = new CommBuf(hbuilder, 2);
+    cbuf->AppendShort(COMMAND_STATUS);
     return cbuf;
   }
 

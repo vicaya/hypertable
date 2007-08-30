@@ -20,6 +20,7 @@
 
 #include "Common/Error.h"
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
+#include "AsyncComm/Serialization.h"
 
 #include "MasterClient.h"
 
@@ -112,9 +113,9 @@ int MasterClient::GetSchema(const char *tableName, std::string &schema) {
     }
     else {
       uint8_t *ptr = eventPtr->message + sizeof(int32_t);
-      size_t remain = eventPtr->messageLen - sizeof(int32_t);
+      size_t remaining = eventPtr->messageLen - sizeof(int32_t);
       const char *schemaStr;
-      if (CommBuf::DecodeString(ptr, remain, &schemaStr) == 0) {
+      if (!Serialization::DecodeString(&ptr, &remaining, &schemaStr)) {
 	LOG_VA_ERROR("Problem decoding response to 'get schema' command for table '%s'", tableName);
 	return Error::PROTOCOL_ERROR;
       }

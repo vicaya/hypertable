@@ -32,167 +32,65 @@ extern "C" {
 }
 
 #include "Common/ByteString.h"
+#include "Common/Logger.h"
+
+#include "HeaderBuilder.h"
+#include "Serialization.h"
 
 namespace hypertable {
 
+  /**
+   * This class is used to carry buffers to be sent by the
+   * AsyncComm subsystem.  It contains a pointer to a primary buffer
+   * and an extended buffer and also contains buffer pointers
+   * that keep track of how much data has already been written
+   * in the case of partial writes.
+   */
   class CommBuf {
   public:
 
+    CommBuf(HeaderBuilder &hbuilder, uint32_t len) {
+      len += hbuilder.HeaderLength();
+      data = dataPtr = new uint8_t [ len ];
+      dataLen = len;
+      ext = extPtr = 0;
+      extLen = 0;
+      hbuilder.SetTotalLen(len);
+      hbuilder.Encode(&dataPtr);
+    }
+
     CommBuf(uint32_t len) {
-      bufLen = len;
-      buf = new uint8_t [ bufLen ];
-      data = buf + bufLen;
-      dataLen = 0;
+      data = dataPtr = new uint8_t [ len ];
+      dataLen = len;
       ext = extPtr = 0;
       extLen = 0;
     }
 
     ~CommBuf() {
-      delete [] buf;
+      delete [] data;
       delete [] ext;
     }
 
-    uint8_t *AllocateSpace(size_t len) {
-      data -= len;
-      dataLen += len;
-      return data;
-    }
-
-    void PrependData(const void *dataBytes, size_t len) {
-      data -= len;
-      dataLen += len;
-      memcpy(data, (uint8_t *)dataBytes, len);
-    }
-
-    void PrependShort(uint16_t sval) {
-      data -= sizeof(int16_t);
-      dataLen += sizeof(int16_t);
-      memcpy(data, &sval, sizeof(int16_t));
-    }
-
-    void PrependInt(uint32_t ival) {
-      data -= sizeof(int32_t);
-      dataLen += sizeof(int32_t);
-      memcpy(data, &ival, sizeof(int32_t));
-    }
-
-    void PrependLong(uint64_t lval) {
-      data -= 8;
-      dataLen += 8;
-      memcpy(data, &lval, 8);
-    }
-
-    void PrependByteArray(const void *dataBytes, int32_t len) {
-      data -= len + sizeof(int32_t);
-      dataLen += len + sizeof(int32_t);
-      memcpy(data, &len, sizeof(int32_t));
-      memcpy(data+sizeof(int32_t), (uint8_t *)dataBytes, len);
-    }
-
-    static size_t DecodeByteArray(const uint8_t *buf, size_t remain, const uint8_t **rptr, int32_t *lenp) {
-      if (remain < sizeof(int32_t))
-	return 0;
-      memcpy(lenp, buf, sizeof(int32_t));
-      if (remain < *lenp + sizeof(int32_t))
-	return 0;
-      *rptr = buf + sizeof(int32_t);
-      return *lenp + sizeof(int32_t);
-    }
-
-    static size_t DecodeByteArray(const uint8_t *buf, size_t remain, ByteString32T **bsp) {
-      if (remain < sizeof(int32_t))
-	return 0;
-      *bsp = (ByteString32T *)buf;
-      if (remain < (*bsp)->len + sizeof(int32_t))
-	return 0;
-      return (*bsp)->len + sizeof(int32_t);
-    }
-
-
-    void PrependString(std::string &str) {
-      PrependString(str.c_str());
-    }
-
-    void PrependString(const char *str) {
-      uint16_t len = (str == 0) ? 0 : strlen(str);
-
-      // '\0' terminator
-      data--;
-      dataLen++;
-      *data = 0;
-
-      // string characters
-      if (len > 0) {
-	data -= len;
-	dataLen += len;
-	memcpy(data, str, len);
-      }
-
-      // 2-byte length
-      data -= sizeof(int16_t);
-      dataLen += sizeof(int16_t);
-      memcpy(data, &len, sizeof(int16_t));
-    }
-
-    // 2 byte length + string + '\0' terminator
-    static size_t EncodedLength(std::string &str) {
-      return EncodedLength(str.c_str());
-    }
-
-    // 2 byte length + string + '\0' terminator
-    static size_t EncodedLength(const char *str) {
-      return sizeof(int16_t) + ((str == 0) ? 0 : strlen(str)) + 1;
-    }
-
-    /**
-     * Static method for decoding a string from a protocol packet.  Strings are
-     * encoded as a 2-byte length followed by the string, followed by a '\0'
-     * terminator.  The length does *not* include the '\0' terminator.
-     *
-     * @param buf    Pointer to beginning of encoded string
-     * @param remain Number of valid bytes that buf points to
-     * @param strp   Address of character pointer to hold return string pointer
-     * @return Length of the encoded string
-     */
-    static size_t DecodeString(const uint8_t *buf, size_t remain, const char **strp) {
-      uint16_t len;
-      *strp = 0;
-      if (remain < 3)
-	return 0;
-      memcpy(&len, buf, sizeof(uint16_t));
-      if (remain < (size_t)len+3)
-	return 0;
-      *strp = (const char *)(buf+2);
-      return len + 3;
-    }
-
-    static size_t DecodeString(const uint8_t *buf, size_t remain, std::string &str) {
-      uint16_t len;
-      str = "";
-      if (remain < 3)
-	return 0;
-      memcpy(&len, buf, sizeof(uint16_t));
-      if (remain < (size_t)len+3)
-	return 0;
-      if (len > 0) {
-	str = (const char *)(buf+2);
-      }
-      return len + 3;
-    }
-
-
-    void SetExt(uint8_t *buf, uint32_t len) {
-      ext = extPtr = buf;
+    void SetExt(const uint8_t *buf, uint32_t len) {
+      ext = extPtr = (uint8_t *)buf;
       extLen = len;
     }
 
-    uint8_t *data;
+    void AppendByte(uint8_t bval) { *dataPtr++ = bval; }
+    void AppendBytes(uint8_t *bytes, uint32_t len) { memcpy(dataPtr, bytes, len); dataPtr += len; }
+    void AppendShort(uint16_t sval) { Serialization::EncodeShort(&dataPtr, sval); }
+    void AppendInt(uint32_t ival) { Serialization::EncodeInt(&dataPtr, ival); }
+    void AppendLong(uint64_t lval) { Serialization::EncodeLong(&dataPtr, lval); }
+    void AppendByteArray(const void *data, int32_t len) { Serialization::EncodeByteArray(&dataPtr, data, len); }
+    void AppendString(const char *str) { Serialization::EncodeString(&dataPtr, str); }
+    void AppendString(const std::string &str) { Serialization::EncodeString(&dataPtr, str.c_str()); }
+
+    const uint8_t *data;
+    uint8_t *dataPtr;
     uint32_t dataLen;
-    uint8_t *ext;
+    const uint8_t *ext;
     uint8_t *extPtr;
     uint32_t extLen;
-    uint8_t *buf;
-    uint32_t bufLen;
   };
 
   typedef boost::shared_ptr<CommBuf> CommBufPtr;

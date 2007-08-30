@@ -30,7 +30,6 @@ extern "C" {
 
 #include "Common/atomic.h"
 
-#include "CommBuf.h"
 #include "Header.h"
 
 namespace hypertable {
@@ -41,13 +40,16 @@ namespace hypertable {
 
     static atomic_t msNextMessageId;
 
-    HeaderBuilder() : mId(0), mGroupId(0), mProtocol(0), mFlags(0) { return; }
+    HeaderBuilder() : mId(0), mGroupId(0), mTotalLen(0), mProtocol(0), mFlags(0) { return; }
+
+    HeaderBuilder(uint8_t protocol) : mId(0), mGroupId(0), mTotalLen(0), mProtocol(protocol), mFlags(0) { return; }
 
     void Reset(uint8_t protocol, uint8_t flags=0) {
       mId = atomic_inc_return(&msNextMessageId);
       mGroupId = 0;
       mProtocol = protocol;
       mFlags = flags;
+      mTotalLen = 0;
     }
 
     void LoadFromMessage(Header::HeaderT *header) {
@@ -55,25 +57,26 @@ namespace hypertable {
       mGroupId   = header->gid;
       mProtocol  = header->protocol;
       mFlags     = header->flags;
+      mTotalLen  = 0;
     }
 
     size_t HeaderLength() {
       return sizeof(Header::HeaderT);
     }
 
-    void Encapsulate(CommBuf *cbuf) {
+    void Encode(uint8_t **bufPtr) {
       Header::HeaderT *mheader;
-      cbuf->data -= sizeof(Header::HeaderT);
-      cbuf->dataLen += sizeof(Header::HeaderT);
-      mheader = (Header::HeaderT *)cbuf->data;
+      mheader = (Header::HeaderT *)*bufPtr;
       mheader->version = Header::VERSION;
       mheader->protocol = mProtocol;
       mheader->flags = mFlags;
       mheader->headerLen = sizeof(Header::HeaderT);
       mheader->id = mId;
       mheader->gid = mGroupId;
-      mheader->totalLen = cbuf->dataLen + cbuf->extLen;
+      mheader->totalLen = mTotalLen;
+      (*bufPtr) += sizeof(Header::HeaderT);
     }
+
 
     void SetFlags(uint8_t flags) { mFlags = flags; }
 
@@ -83,9 +86,12 @@ namespace hypertable {
 
     void SetGroupId(uint32_t groupId) { mGroupId = groupId; }
 
+    void SetTotalLen(uint32_t totalLen) { mTotalLen = totalLen; }
+
   protected:
     uint32_t  mId;
     uint32_t  mGroupId;
+    uint32_t  mTotalLen;
     uint8_t   mProtocol;
     uint8_t   mFlags;
   };

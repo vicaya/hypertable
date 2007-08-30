@@ -22,6 +22,7 @@
 #include <iostream>
 
 #include "AsyncComm/CommBuf.h"
+#include "AsyncComm/Serialization.h"
 
 #include "Types.h"
 
@@ -29,98 +30,128 @@ using namespace std;
 
 namespace hypertable {
 
-  size_t DeserializeRangeSpecification(uint8_t *ptr, size_t remaining, RangeSpecificationT *rangeSpec) {
-    size_t skip;
-    uint8_t *base = ptr;
-
-    memset(rangeSpec, 0, sizeof(RangeSpecificationT));
-  
-    /** Generation **/
-    if (remaining < sizeof(int32_t))
-      return 0;
-    memcpy(&rangeSpec->generation, ptr, sizeof(int32_t));
-    ptr += sizeof(int32_t);
-    remaining -= sizeof(int32_t);
-
-    /** Table name **/
-    if ((skip = CommBuf::DecodeString(ptr, remaining, &rangeSpec->tableName)) == 0)
-      return 0;
-    ptr += skip;
-    remaining -= skip;
-
-    /** Start row **/
-    if ((skip = CommBuf::DecodeString(ptr, remaining, &rangeSpec->startRow)) == 0)
-      return 0;
-    ptr += skip;
-    remaining -= skip;
-
-    /** End row **/
-    if ((skip = CommBuf::DecodeString(ptr, remaining, &rangeSpec->endRow)) == 0)
-      return 0;
-    ptr += skip;
-
-    return ptr-base;
+  /**
+   * 
+   */
+  size_t EncodedLengthRangeSpecification(RangeSpecificationT &rangeSpec) {
+    return 4 + Serialization::EncodedLengthString(rangeSpec.tableName) + Serialization::EncodedLengthString(rangeSpec.startRow) + Serialization::EncodedLengthString(rangeSpec.endRow);
   }
 
-  size_t DeserializeScanSpecification(uint8_t *ptr, size_t remaining, ScanSpecificationT *scanSpec) {
-    size_t skip;
+
+  /**
+   *
+   */
+  size_t EncodeRangeSpecification(uint8_t *ptr, RangeSpecificationT &rangeSpec) {
+    /**
     uint8_t *base = ptr;
-    short columnCount;
-    const char *column;
-  
-    /** rowLimit **/
-    if (remaining < 4)
-      return 0;
-    memcpy(&scanSpec->rowLimit, ptr, 4);
+    memcpy(ptr, &rangeSpec.generation, 4);
     ptr += 4;
-    remaining -= 4;
+    ptr += CommBuf::AppendString(rangeSpec.tableName);
+    ptr += CommBuf::AppendString(rangeSpec.startRow);
+    ptr += CommBuf::AppendString(rangeSpec.endRow);
+    return ptr-base;
+    **/
+  }
 
-    /** cellLimit **/
-    if (remaining < 4)
-      return 0;
-    memcpy(&scanSpec->cellLimit, ptr, 4);
+
+  /**
+   *
+   */
+  bool DecodeRangeSpecification(uint8_t **bufPtr, size_t *remainingPtr, RangeSpecificationT *rangeSpec) {
+
+    memset(rangeSpec, 0, sizeof(RangeSpecificationT));
+
+    if (!Serialization::DecodeInt(bufPtr, remainingPtr, &rangeSpec->generation))
+      return false;
+
+    if (!Serialization::DecodeString(bufPtr, remainingPtr, &rangeSpec->tableName))
+      return false;
+
+    if (!Serialization::DecodeString(bufPtr, remainingPtr, &rangeSpec->startRow))
+      return false;
+
+    if (!Serialization::DecodeString(bufPtr, remainingPtr, &rangeSpec->endRow))
+      return false;
+
+    return true;
+  }
+
+  /**
+   *
+   */
+  size_t EncodedLengthScanSpecification(ScanSpecificationT &scanSpec) {
+    size_t len = 26;
+    len += Serialization::EncodedLengthString(scanSpec.startRow);
+    len += Serialization::EncodedLengthString(scanSpec.endRow);
+    for (int i=0; i<scanSpec.columns.size(); i++)
+      len += Serialization::EncodedLengthString(scanSpec.columns[i]);
+    return len;
+  }
+
+
+  size_t EncodeScanSpecification(uint8_t *ptr, ScanSpecificationT &scanSpec) {
+    /**
+    uint8_t *base = ptr;
+    uint16_t columnCount;
+    // rowLimit
+    memcpy(ptr, &scanSpec.rowLimit, 4);
     ptr += 4;
-    remaining -= 4;
-
-    /** Start Row **/
-    if ((skip = CommBuf::DecodeString(ptr, remaining, &scanSpec->startRow)) == 0)
-      return 0;
-    ptr += skip;
-    remaining -= skip;
-
-    /** End Row **/
-    if ((skip = CommBuf::DecodeString(ptr, remaining, &scanSpec->endRow)) == 0)
-      return 0;
-    ptr += skip;
-    remaining -= skip;
-
-    /** columnCount **/
-    if (remaining < 2)
-      return 0;
-    memcpy(&columnCount, ptr, 2);
+    // cellLimit
+    memcpy(ptr, &scanSpec.cellLimit, 4);
+    ptr += 4;
+    // startRow
+    ptr += CommBuff::AppendString(scanSpec.startRow);
+    // endRow
+    ptr += CommBuff::AppendString(scanSpec.endRow);
+    // columns
+    columnCount = scanSpec.columns.size();
+    memcpy(ptr, &columnCount, 2);
     ptr += 2;
-    remaining -= 2;
+    for (uint16_t i=0; i<columnCount; i++)
+      ptr += CommBuff::AppendString(scanSpec.columns[i]);
+    // minTime
+    memcpy(ptr, &scanSpec->interval.first, 8);
+    ptr += 8;
+    // maxTime
+    memcpy(ptr, &scanSpec->interval.second, 8);
+    ptr += 8;
+    return ptr-base;
+    **/
+  }
 
-    /** columns **/
+
+  bool DeserializeScanSpecification(uint8_t **bufPtr, size_t *remainingPtr, ScanSpecificationT *scanSpec) {
+    uint16_t columnCount;
+    const char *column;
+
+    if (!Serialization::DecodeInt(bufPtr, remainingPtr, &scanSpec->rowLimit))
+      return false;
+
+    if (!Serialization::DecodeInt(bufPtr, remainingPtr, &scanSpec->cellLimit))
+      return false;
+
+    if (!Serialization::DecodeString(bufPtr, remainingPtr, &scanSpec->startRow))
+      return false;
+
+    if (!Serialization::DecodeString(bufPtr, remainingPtr, &scanSpec->endRow))
+      return false;
+
+    if (!Serialization::DecodeShort(bufPtr, remainingPtr, &columnCount))
+      return false;
+
     for (short i=0; i<columnCount; i++) {
-      if ((skip = CommBuf::DecodeString(ptr, remaining, &column)) == 0)
-	return 0;
-      ptr += skip;
-      remaining -= skip;
+    if (!Serialization::DecodeString(bufPtr, remainingPtr, &column))
+      return false;
       scanSpec->columns.push_back(column);
     }
 
-    /** Time Interval  **/
-    if (remaining < 2*sizeof(uint64_t))
-      return 0;
+    if (!Serialization::DecodeLong(bufPtr, remainingPtr, &scanSpec->interval.first))
+      return false;
 
-    memcpy(&scanSpec->interval.first, ptr, sizeof(int64_t));
-    ptr += sizeof(int64_t);
-
-    memcpy(&scanSpec->interval.second, ptr, sizeof(int64_t));
-    ptr += sizeof(int64_t);
+    if (!Serialization::DecodeLong(bufPtr, remainingPtr, &scanSpec->interval.second))
+      return false;
   
-    return ptr-base;
+    return true;
   }
 
   std::ostream &operator<<(std::ostream &os, const RangeSpecificationT &rangeSpec) {

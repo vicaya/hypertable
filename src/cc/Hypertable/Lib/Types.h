@@ -37,7 +37,7 @@ namespace hypertable {
    *
    */
   typedef struct {
-    int32_t generation;
+    uint32_t generation;
     const char *tableName;
     const char *startRow;
     const char *endRow;
@@ -60,9 +60,15 @@ namespace hypertable {
     int32_t len;
   } BufferT;
 
-  size_t DeserializeRangeSpecification(uint8_t *ptr, size_t remaining, RangeSpecificationT *rangeSpec);
+  /** Serialization methods for RangeSpecificationT **/
+  size_t EncodedLengthRangeSpecification(RangeSpecificationT &rangeSpec);
+  size_t EncodeRangeSpecification(uint8_t *ptr, RangeSpecificationT &rangeSpec);
+  bool DecodeRangeSpecification(uint8_t **bufPtr, size_t *remainingPtr, RangeSpecificationT *rangeSpec);
 
-  size_t DeserializeScanSpecification(uint8_t *ptr, size_t remaining, ScanSpecificationT *scanSpec);
+  /** Serialization methods for ScanSpecificationT **/
+  size_t EncodedLengthScanSpecification(ScanSpecificationT &scanSpec);
+  size_t EncodeScanSpecification(uint8_t *ptr, ScanSpecificationT &scanSpec);
+  bool DecodeScanSpecification(uint8_t **bufPtr, size_t *remainingPtr, ScanSpecificationT *scanSpec);
 
   std::ostream &operator<<(std::ostream &os, const RangeSpecificationT &rangeSpec);
 

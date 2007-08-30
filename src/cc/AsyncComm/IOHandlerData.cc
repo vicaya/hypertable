@@ -317,7 +317,7 @@ int IOHandlerData::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *dispatchHan
 
 
 int IOHandlerData::FlushSendQueue() {
-  ssize_t nwritten, towrite;
+  ssize_t nwritten, towrite, remaining;
   struct iovec vec[2];
   int count;
 
@@ -327,16 +327,17 @@ int IOHandlerData::FlushSendQueue() {
 
     count = 0;
     towrite = 0;
-    if (cbufPtr->dataLen > 0) {
-      vec[0].iov_base = cbufPtr->data;
-      vec[0].iov_len = cbufPtr->dataLen;
-      towrite = cbufPtr->dataLen;
+    remaining = cbufPtr->dataLen - (cbufPtr->dataPtr - cbufPtr->data);
+    if (remaining > 0) {
+      vec[0].iov_base = (uint8_t *)cbufPtr->dataPtr;
+      vec[0].iov_len = remaining;
+      towrite = remaining;
       ++count;
     }
-    if (cbufPtr->ext != 0) {
-      ssize_t remaining = cbufPtr->extLen - (cbufPtr->extPtr - cbufPtr->ext);
+    remaining = cbufPtr->extLen - (cbufPtr->extPtr - cbufPtr->ext);
+    if (remaining != 0) {
       if (remaining > 0) {
-	vec[count].iov_base = cbufPtr->extPtr;
+	vec[count].iov_base = (void *)cbufPtr->extPtr;
 	vec[count].iov_len = remaining;
 	towrite += remaining;
 	++count;
@@ -351,56 +352,20 @@ int IOHandlerData::FlushSendQueue() {
     else if (nwritten < towrite) {
       if (nwritten == 0)
 	break;
-      if (cbufPtr->dataLen > 0) {
-	if (nwritten < (ssize_t)cbufPtr->dataLen) {
-	  cbufPtr->dataLen -= nwritten;
-	  cbufPtr->data += nwritten;
-	  break;
-	}
-	else {
-	  nwritten -= cbufPtr->dataLen;
-	  cbufPtr->dataLen = 0;
-	}
-      }
-      if (cbufPtr->ext != 0) {
-	cbufPtr->extPtr += nwritten;
-	break;
-      }
-    }
-
-#if 0
-    // write header
-    if (cbufPtr->dataLen > 0) {
-      nwritten = writen(mSd, cbufPtr->data, cbufPtr->dataLen);
-      if (nwritten == (ssize_t)-1) {
-	LOG_VA_WARN("write(%d, len=%d) failed : %s", mSd, cbufPtr->dataLen, strerror(errno));
-	return Error::COMM_BROKEN_CONNECTION;
-      }
-      cbufPtr->dataLen -= nwritten;
-      if (nwritten < cbufPtr->dataLen) {
-	cbufPtr->data += nwritten;
-	LOG_VA_WARN("Only flushed %d still have %d", nwritten, cbufPtr->dataLen);
-	break;
-      }
-    }
-
-    // write data
-    if (cbufPtr->ext != 0) {
-      ssize_t remaining = cbufPtr->extLen - (cbufPtr->extPtr - cbufPtr->ext);
+      remaining = cbufPtr->dataLen - (cbufPtr->dataPtr - cbufPtr->data);
       if (remaining > 0) {
-	nwritten = writen(mSd, cbufPtr->extPtr, remaining);
-	if (nwritten == (ssize_t)-1) {
-	  LOG_VA_WARN("write(%d, len=%d) failed : %s", mSd, remaining, strerror(errno));
-	  return Error::COMM_BROKEN_CONNECTION;
-	}
-	else if (nwritten < remaining) {
-	  cbufPtr->extPtr += nwritten;
-	  LOG_VA_WARN("Only flushed %d of %d", nwritten, remaining);
+	if (nwritten < remaining) {
+	  cbufPtr->dataPtr += nwritten;
 	  break;
 	}
+	cbufPtr->dataPtr = (uint8_t *)cbufPtr->data + cbufPtr->dataLen;
+	nwritten -= remaining;
       }
+      remaining = cbufPtr->extLen - (cbufPtr->extPtr - cbufPtr->ext);
+      cbufPtr->extPtr += remaining;
+      assert (cbufPtr->extPtr < (cbufPtr->ext + cbufPtr->extLen));
+      break;
     }
-#endif
 
     // buffer written successfully, now remove from queue (which will destroy buffer)
     mSendQueue.pop_front();

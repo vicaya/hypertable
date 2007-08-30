@@ -28,10 +28,10 @@
 #include "CommBuf.h"
 #include "Event.h"
 #include "Protocol.h"
+#include "Serialization.h"
 
 using namespace hypertable;
 using namespace std;
-
 
 /**
  *
@@ -72,7 +72,7 @@ std::string Protocol::StringFormatMessage(Event *event) {
   else {
     const char *str;
 
-    if (CommBuf::DecodeString(msgPtr, len, &str) == 0)
+    if (!Serialization::DecodeString(&msgPtr, &len, &str))
       return (std::string)Error::GetText(error) + " - truncated";
 
     return (std::string)Error::GetText(error) + " : " + str;
@@ -84,9 +84,11 @@ std::string Protocol::StringFormatMessage(Event *event) {
 /**
  *
  */
-CommBuf *Protocol::CreateErrorMessage(int error, const char *msg, int extraSpace) {
-  CommBuf *cbuf = new CommBuf(extraSpace + 4 + CommBuf::EncodedLength(msg));
-  cbuf->PrependString(msg);
-  cbuf->PrependInt(error);
+CommBuf *Protocol::CreateErrorMessage(HeaderBuilder &hbuilder, int error, const char *msg) {
+  CommBuf *cbuf = new CommBuf(hbuilder, 4 + Serialization::EncodedLengthString(msg));
+  cbuf->AppendInt(error);
+  cbuf->AppendString(msg);
   return cbuf;
 }
+
+

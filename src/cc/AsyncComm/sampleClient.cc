@@ -47,6 +47,8 @@ extern "C" {
 #include "Comm.h"
 #include "Event.h"
 #include "HeaderBuilder.h"
+#include "Serialization.h"
+
 using namespace hypertable;
 
 namespace {
@@ -199,7 +201,6 @@ int main(int argc, char **argv) {
   if (!respHandler->WaitForConnection())
     exit(1);
 
-  CommBuf *cbuf;
   int outstanding = 0;
   int maxOutstanding = 50;
   string line;
@@ -211,10 +212,8 @@ int main(int argc, char **argv) {
       hbuilder.Reset(Header::PROTOCOL_NONE);
       getline (myfile,line);
       if (line.length() > 0) {
-	cbuf = new CommBuf(hbuilder.HeaderLength() + CommBuf::EncodedLength(line));
-	cbuf->PrependString(line);
-	hbuilder.Encapsulate(cbuf);
-	CommBufPtr cbufPtr(cbuf);
+	CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::EncodedLengthString(line)) );
+	cbufPtr->AppendString(line);
 	int retries = 0;
 	while ((error = comm->SendRequest(addr, cbufPtr, respHandler)) != Error::OK) {
 	  if (error == Error::COMM_NOT_CONNECTED) {
@@ -235,11 +234,14 @@ int main(int argc, char **argv) {
 	if (outstanding  > maxOutstanding) {
 	  if (!respHandler->GetResponse(eventPtr))
 	    break;
-	  CommBuf::DecodeString(eventPtr->message, eventPtr->messageLen, &str);
-	  if (str != 0)
-	    cout << "ECHO: " << str << endl;
-	  else
-	    cout << "[NULL]" << endl;
+	  if (!Serialization::DecodeString(&eventPtr->message, &eventPtr->messageLen, &str))
+	    cout << "ERROR: deserialization problem." << endl;
+	  else {
+	    if (*str != 0)
+	      cout << "ECHO: " << str << endl;
+	    else
+	      cout << "[NULL]" << endl;
+	  }
 	  eventPtr.reset();
 	  outstanding--;
 	}
@@ -253,11 +255,14 @@ int main(int argc, char **argv) {
   }
 
   while (outstanding > 0 && respHandler->GetResponse(eventPtr)) {
-    CommBuf::DecodeString(eventPtr->message, eventPtr->messageLen, &str);
-    if (str != 0)
-      cout << "ECHO: " << str << endl;
-    else
-      cout << "[NULL]" << endl;
+    if (!Serialization::DecodeString(&eventPtr->message, &eventPtr->messageLen, &str))
+      cout << "ERROR: deserialization problem." << endl;
+    else {
+      if (str != 0)
+	cout << "ECHO: " << str << endl;
+      else
+	cout << "[NULL]" << endl;
+    }
     //cout << "out = " << outstanding << endl;
     eventPtr.reset();
     outstanding--;

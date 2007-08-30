@@ -78,9 +78,8 @@ public:
   RequestHandler(Comm *comm, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mComm(comm) { return; }
 
   virtual void run() {
-    CommBuf *cbuf = new CommBuf(mEventPtr->header->totalLen);
-    cbuf->PrependData((uint8_t *)mEventPtr->header, mEventPtr->header->totalLen);
-    CommBufPtr cbufPtr(cbuf);
+    CommBufPtr cbufPtr( new CommBuf(mEventPtr->header->totalLen) );
+    cbufPtr->AppendBytes((uint8_t *)mEventPtr->header, mEventPtr->header->totalLen);
     int error = mComm->SendResponse(mEventPtr->addr, cbufPtr);
     if (error != Error::OK) {
       LOG_VA_ERROR("Comm::SendResponse returned %s", Error::GetText(error));
@@ -114,9 +113,8 @@ public:
     }
     else if (eventPtr->type == Event::MESSAGE) {
       if (mAppQueue == 0) {
-	CommBuf *cbuf = new CommBuf(eventPtr->header->totalLen);
-	cbuf->PrependData((uint8_t *)eventPtr->header, eventPtr->header->totalLen);
-	CommBufPtr cbufPtr(cbuf);
+	CommBufPtr cbufPtr( new CommBuf(eventPtr->header->totalLen) );
+	cbufPtr->AppendBytes((uint8_t *)eventPtr->header, eventPtr->header->totalLen);
 	int error = mComm->SendResponse(eventPtr->addr, cbufPtr);
 	if (error != Error::OK) {
 	  LOG_VA_ERROR("Comm::SendResponse returned %s", Error::GetText(error));

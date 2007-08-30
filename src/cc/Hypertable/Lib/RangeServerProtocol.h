@@ -22,6 +22,8 @@
 
 #include "AsyncComm/Protocol.h"
 
+#include "Types.h"
+
 namespace hypertable {
 
   class RangeServerProtocol : public Protocol {
@@ -32,9 +34,16 @@ namespace hypertable {
     static const short COMMAND_CREATE_SCANNER   = 2;
     static const short COMMAND_FETCH_SCANBLOCK  = 3;
     static const short COMMAND_COMPACT          = 4;
+    static const short COMMAND_STATUS           = 5;
     static const short COMMAND_MAX              = 5;
 
     static const char *mCommandStrings[];
+
+    CommBuf *CreateRequestLoadRange(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec);
+    CommBuf *CreateRequestUpdate(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, uint8_t *data, size_t len);
+    CommBuf *CreateRequestCreateScanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &spec);
+    CommBuf *CreateRequestFetchScanblock(struct sockaddr_in &addr, int scannerId);
+    CommBuf *CreateRequestStatus();
 
     virtual const char *CommandText(short command);
   };
