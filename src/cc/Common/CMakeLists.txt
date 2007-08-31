@@ -33,7 +33,7 @@ add_library (Common ${Common_SRCS})
 add_executable (htConvert htConvert.cc)
 
 # Link the executable to the Common library.
-target_link_libraries (htConvert Common log4cpp)
+target_link_libraries (htConvert Common log4cpp pthread)
 
 install (TARGETS Common
          RUNTIME DESTINATION bin
