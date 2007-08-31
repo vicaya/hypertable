@@ -23,6 +23,7 @@ MasterClient.cc
 MasterProtocol.cc
 Metadata.cc
 Mutator.cc
+RangeServerClient.cc
 RangeServerProtocol.cc
 Schema.cc
 Table.cc

@@ -39,11 +39,11 @@ namespace hypertable {
 
     static const char *mCommandStrings[];
 
-    CommBuf *CreateRequestLoadRange(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec);
-    CommBuf *CreateRequestUpdate(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, uint8_t *data, size_t len);
-    CommBuf *CreateRequestCreateScanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &scanSpec);
-    CommBuf *CreateRequestFetchScanblock(struct sockaddr_in &addr, int scannerId);
-    CommBuf *CreateRequestStatus();
+    static CommBuf *CreateRequestLoadRange(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec);
+    static CommBuf *CreateRequestUpdate(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, uint8_t *data, size_t len);
+    static CommBuf *CreateRequestCreateScanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &scanSpec);
+    static CommBuf *CreateRequestFetchScanblock(struct sockaddr_in &addr, int scannerId);
+    static CommBuf *CreateRequestStatus();
 
     virtual const char *CommandText(short command);
   };

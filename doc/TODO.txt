@@ -1,8 +1,6 @@
 
 TODO:
-- Remove msgId return parameter from CallbackHandlerSynchronizer and all of the client APIs
 - Change KeepCopies attribute of column family to CellLimit
-- Add RangeServerClient
 - Change EventPtr to intrusive_ptr
 - Make sure NULL endkey lookups work in RangeServer
 - Add support for LZO and BZIP2 compression
@@ -31,6 +29,8 @@ TODO CLEANUP:
 
 
 DONE:
+- Remove msgId return parameter from CallbackHandlerSynchronizer and all of the client APIs
+- Add RangeServerClient
 - Clean up CommBuf, get rid of Prepend* methods in CommBuf for normal forward serialization methods
 - Fix AsyncComm/Protocol::StringFormatMessage (get rid of command)
 - Add new DELETE handling in RangeServer
