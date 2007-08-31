@@ -175,7 +175,7 @@ int Comm::SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHan
   Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
   int error = Error::OK;
 
-  cbufPtr->dataPtr = (uint8_t *)cbufPtr->data;
+  cbufPtr->ResetDataPointers();
 
   if (!mHandlerMap.LookupDataHandler(addr, dataHandlerPtr)) {
     LOG_VA_ERROR("No connection for %s:%d", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
@@ -197,7 +197,7 @@ int Comm::SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr) {
   Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
   int error = Error::OK;
 
-  cbufPtr->dataPtr = (uint8_t *)cbufPtr->data;
+  cbufPtr->ResetDataPointers();
 
   if (!mHandlerMap.LookupDataHandler(addr, dataHandlerPtr)) {
     LOG_VA_ERROR("No connection for %s:%d", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));

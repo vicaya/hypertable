@@ -22,6 +22,7 @@
 #include "Common/Logger.h"
 
 #include "AsyncComm/ResponseCallback.h"
+#include "AsyncComm/Serialization.h"
 
 #include "Hypertable/Lib/Types.h"
 
@@ -36,24 +37,17 @@ using namespace hypertable;
 void RequestHandlerFetchScanblock::run() {
   ResponseCallbackFetchScanblock cb(mComm, mEventPtr);
   uint32_t scannerId;
-  size_t remaining = mEventPtr->messageLen - sizeof(int16_t);
-  uint8_t *msgPtr = mEventPtr->message + sizeof(int16_t);
-  std::string errMsg;
+  size_t remaining = mEventPtr->messageLen - 2;
+  uint8_t *msgPtr = mEventPtr->message + 2;
 
-  /**
-   *  Scanner ID
-   */
-  if (remaining < sizeof(int32_t))
+  // Scanner ID
+  if (!Serialization::DecodeInt(&msgPtr, &remaining, &scannerId))
     goto abort;
-  memcpy(&scannerId, msgPtr, sizeof(int32_t));
 
   mRangeServer->FetchScanblock(&cb, scannerId);
-
   return;
 
  abort:
   LOG_ERROR("Encoding problem with FetchScanblock message");
-  errMsg = "Encoding problem with FetchScanblock message";
-  cb.error(Error::PROTOCOL_ERROR, errMsg);
-  return;
+  cb.error(Error::PROTOCOL_ERROR, "Encoding problem with FetchScanblock message");
 }

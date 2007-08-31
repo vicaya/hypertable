@@ -22,6 +22,7 @@
 #include "Common/Logger.h"
 
 #include "AsyncComm/ResponseCallback.h"
+#include "AsyncComm/Serialization.h"
 
 #include "RequestHandlerRead.h"
 
@@ -34,21 +35,17 @@ using namespace hypertable::DfsBroker;
 void RequestHandlerRead::run() {
   ResponseCallbackRead cb(mComm, mEventPtr);
   uint32_t fd, amount;
-  size_t skip;
-  size_t remaining = mEventPtr->messageLen - sizeof(int16_t);
-  uint8_t *msgPtr = mEventPtr->message + sizeof(int16_t);
-  int error;
+  size_t remaining = mEventPtr->messageLen - 2;
+  uint8_t *msgPtr = mEventPtr->message + 2;
 
   if (remaining < 8)
     goto abort;
 
   // fd
-  memcpy(&fd, msgPtr, 4);
-  msgPtr += 4;
-  remaining -= 4;
+  Serialization::DecodeInt(&msgPtr, &remaining, &fd);
 
   // amount
-  memcpy(&amount, msgPtr, 4);
+  Serialization::DecodeInt(&msgPtr, &remaining, &amount);
 
   mBroker->Read(&cb, fd, amount);
 

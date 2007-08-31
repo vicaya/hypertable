@@ -28,10 +28,9 @@ using namespace hypertable;
 using namespace hypertable::DfsBroker;
 
 int ResponseCallbackOpen::response(int32_t fd) {
-  CommBufPtr cbufPtr( new CommBuf(hbuilder_.HeaderLength() + 8 ) );
-  cbufPtr->PrependInt(fd);
-  cbufPtr->PrependInt(Error::OK);
   hbuilder_.LoadFromMessage(mEventPtr->header);
-  hbuilder_.Encapsulate(cbufPtr.get());
+  CommBufPtr cbufPtr( new CommBuf(hbuilder_, 8 ) );
+  cbufPtr->AppendInt(Error::OK);
+  cbufPtr->AppendInt(fd);
   return mComm->SendResponse(mEventPtr->addr, cbufPtr);
 }

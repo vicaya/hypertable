@@ -49,13 +49,14 @@ namespace hypertable {
   class CommBuf {
   public:
 
-    CommBuf(HeaderBuilder &hbuilder, uint32_t len) {
+    CommBuf(HeaderBuilder &hbuilder, uint32_t len, const uint8_t *_ex=0, uint32_t _exLen=0) {
       len += hbuilder.HeaderLength();
       data = dataPtr = new uint8_t [ len ];
       dataLen = len;
-      ext = extPtr = 0;
-      extLen = 0;
+      ext = extPtr = _ex;
+      extLen = _exLen;
       hbuilder.SetTotalLen(len);
+      hbuilder.AssignUniqueId();
       hbuilder.Encode(&dataPtr);
     }
 
@@ -76,6 +77,14 @@ namespace hypertable {
       extLen = len;
     }
 
+    void ResetDataPointers() {
+      dataPtr = (uint8_t *)data;
+      extPtr = ext;
+    }
+
+    void *GetDataPtr() { return dataPtr; }
+    void *AdvanceDataPtr(size_t len) { dataPtr += len; }
+
     void AppendByte(uint8_t bval) { *dataPtr++ = bval; }
     void AppendBytes(uint8_t *bytes, uint32_t len) { memcpy(dataPtr, bytes, len); dataPtr += len; }
     void AppendShort(uint16_t sval) { Serialization::EncodeShort(&dataPtr, sval); }
@@ -89,7 +98,7 @@ namespace hypertable {
     uint8_t *dataPtr;
     uint32_t dataLen;
     const uint8_t *ext;
-    uint8_t *extPtr;
+    const uint8_t *extPtr;
     uint32_t extLen;
   };
 

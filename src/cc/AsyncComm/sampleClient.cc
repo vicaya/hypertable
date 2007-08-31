@@ -209,7 +209,6 @@ int main(int argc, char **argv) {
 
   if (myfile.is_open()) {
     while (!myfile.eof() ) {
-      hbuilder.Reset(Header::PROTOCOL_NONE);
       getline (myfile,line);
       if (line.length() > 0) {
 	CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::EncodedLengthString(line)) );

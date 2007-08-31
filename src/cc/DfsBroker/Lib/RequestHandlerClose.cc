@@ -22,6 +22,7 @@
 #include "Common/Logger.h"
 
 #include "AsyncComm/ResponseCallback.h"
+#include "AsyncComm/Serialization.h"
 
 #include "RequestHandlerClose.h"
 
@@ -34,15 +35,11 @@ using namespace hypertable::DfsBroker;
 void RequestHandlerClose::run() {
   ResponseCallback cb(mComm, mEventPtr);
   uint32_t fd;
-  size_t skip;
   size_t remaining = mEventPtr->messageLen - sizeof(int16_t);
   uint8_t *msgPtr = mEventPtr->message + sizeof(int16_t);
-  int error;
 
-  if (remaining < 4)
+  if (!Serialization::DecodeInt(&msgPtr, &remaining, &fd))
     goto abort;
-
-  memcpy(&fd, msgPtr, 4);
 
   mBroker->Close(&cb, fd);
 

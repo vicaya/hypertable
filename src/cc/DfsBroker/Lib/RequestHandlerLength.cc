@@ -22,6 +22,7 @@
 #include "Common/Logger.h"
 
 #include "AsyncComm/ResponseCallback.h"
+#include "AsyncComm/Serialization.h"
 
 #include "RequestHandlerLength.h"
 
@@ -34,13 +35,11 @@ using namespace hypertable::DfsBroker;
 void RequestHandlerLength::run() {
   ResponseCallbackLength cb(mComm, mEventPtr);
   const char *fileName;
-  uint32_t bufferSize;
-  size_t skip;
-  size_t remaining = mEventPtr->messageLen - sizeof(int16_t);
-  uint8_t *msgPtr = mEventPtr->message + sizeof(int16_t);
+  size_t remaining = mEventPtr->messageLen - 2;
+  uint8_t *msgPtr = mEventPtr->message + 2;
 
   // file name
-  if ((skip = CommBuf::DecodeString(msgPtr, remaining, &fileName)) == 0)
+  if (!Serialization::DecodeString(&msgPtr, &remaining, &fileName))
     goto abort;
 
   mBroker->Length(&cb, fileName);

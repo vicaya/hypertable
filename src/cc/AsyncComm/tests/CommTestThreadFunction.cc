@@ -92,7 +92,7 @@ namespace {
  *
  */
 void CommTestThreadFunction::operator()() {
-  HeaderBuilder hbuilder;
+  HeaderBuilder hbuilder(Header::PROTOCOL_NONE, rand());
   int error;
   EventPtr eventPtr;
   int outstanding = 0;
@@ -101,16 +101,13 @@ void CommTestThreadFunction::operator()() {
   ifstream infile(mInputFile);
   ofstream outfile(mOutputFile);
   const char *str;
-  uint32_t gid = rand();
 
   ResponseHandler *respHandler = new ResponseHandler();
 
   if (infile.is_open()) {
     while (!infile.eof() ) {
-      hbuilder.Reset(Header::PROTOCOL_NONE);
       getline (infile,line);
       if (line.length() > 0) {
-	hbuilder.SetGroupId(gid);
 	CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::EncodedLengthString(line)) );
 	cbufPtr->AppendString(line);
 	int retries = 0;

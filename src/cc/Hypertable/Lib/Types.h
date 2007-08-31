@@ -56,7 +56,7 @@ namespace hypertable {
   } ScanSpecificationT;
 
   typedef struct {
-    const uint8_t *buf;
+    uint8_t *buf;
     int32_t len;
   } BufferT;
 

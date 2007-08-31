@@ -22,6 +22,7 @@
 #include "Common/Logger.h"
 
 #include "AsyncComm/ResponseCallback.h"
+#include "AsyncComm/Serialization.h"
 
 #include "Master.h"
 #include "RequestHandlerCreateTable.h"
@@ -35,20 +36,15 @@ void RequestHandlerCreateTable::run() {
   ResponseCallback cb(mComm, mEventPtr);
   const char *tableName;
   const char *schemaString;
-  size_t skip;
-  size_t remaining = mEventPtr->messageLen - sizeof(int16_t);
-  uint8_t *msgPtr = mEventPtr->message + sizeof(int16_t);
-  std::string errMsg;
+  size_t remaining = mEventPtr->messageLen - 2;
+  uint8_t *msgPtr = mEventPtr->message + 2;
 
   // table name
-  if ((skip = CommBuf::DecodeString(msgPtr, remaining, &tableName)) == 0)
+  if (!Serialization::DecodeString(&msgPtr, &remaining, &tableName))
     goto abort;
 
-  msgPtr += skip;
-  remaining -= skip;
-
   // schema string
-  if ((skip = CommBuf::DecodeString(msgPtr, remaining, &schemaString)) == 0)
+  if (!Serialization::DecodeString(&msgPtr, &remaining, &schemaString))
     goto abort;
 
   mMaster->CreateTable(&cb, tableName, schemaString);
@@ -57,7 +53,6 @@ void RequestHandlerCreateTable::run() {
 
  abort:
   LOG_ERROR("Encoding problem with Create Table message");
-  errMsg = "Encoding problem with Create Table message";
-  cb.error(Error::PROTOCOL_ERROR, errMsg);
+  cb.error(Error::PROTOCOL_ERROR, "Encoding problem with Create Table message");
   return;
 }

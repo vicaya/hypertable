@@ -1,5 +1,6 @@
 
 TODO:
+- Clean up CommBuf
 - Remove msgId return parameter from CallbackHandlerSynchronizer and all of the client APIs
 - Get rid of Prepend* methods in CommBuf for normal forward serialization methods
 - Change KeepCopies attribute of column family to CellLimit

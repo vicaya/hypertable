@@ -23,10 +23,8 @@
 using namespace hypertable;
 
 int ResponseCallbackUpdate::response(ExtBufferT &ext) {
-  CommBufPtr cbufPtr( new CommBuf(hbuilder_.HeaderLength() + 4) );
-  cbufPtr->SetExt(ext.buf, ext.len);
-  cbufPtr->PrependInt(Error::RANGESERVER_PARTIAL_UPDATE);
   hbuilder_.LoadFromMessage(mEventPtr->header);
-  hbuilder_.Encapsulate(cbufPtr.get());
+  CommBufPtr cbufPtr( new CommBuf(hbuilder_, 4, ext.buf, ext.len) );
+  cbufPtr->AppendInt(Error::RANGESERVER_PARTIAL_UPDATE);
   return mComm->SendResponse(mEventPtr->addr, cbufPtr);
 }

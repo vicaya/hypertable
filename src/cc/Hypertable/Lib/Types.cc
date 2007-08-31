@@ -120,7 +120,7 @@ namespace hypertable {
   }
 
 
-  bool DeserializeScanSpecification(uint8_t **bufPtr, size_t *remainingPtr, ScanSpecificationT *scanSpec) {
+  bool DecodeScanSpecification(uint8_t **bufPtr, size_t *remainingPtr, ScanSpecificationT *scanSpec) {
     uint16_t columnCount;
     const char *column;
 

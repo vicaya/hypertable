@@ -28,15 +28,10 @@ using namespace hypertable;
 using namespace hypertable::DfsBroker;
 
 int ResponseCallbackRead::response(uint64_t offset, uint32_t nread, uint8_t *data) {
-  CommBufPtr cbufPtr( new CommBuf(hbuilder_.HeaderLength() + 16 ) );
-  cbufPtr->PrependInt(nread);
-  cbufPtr->PrependLong(offset);
-  cbufPtr->PrependInt(Error::OK);
-
-  if (nread > 0)
-    cbufPtr->SetExt(data, nread);
-
   hbuilder_.LoadFromMessage(mEventPtr->header);
-  hbuilder_.Encapsulate(cbufPtr.get());
+  CommBufPtr cbufPtr( new CommBuf(hbuilder_, 16, data, nread) );
+  cbufPtr->AppendInt(Error::OK);
+  cbufPtr->AppendLong(offset);
+  cbufPtr->AppendInt(nread);
   return mComm->SendResponse(mEventPtr->addr, cbufPtr);
 }

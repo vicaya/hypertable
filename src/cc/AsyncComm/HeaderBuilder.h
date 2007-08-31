@@ -40,16 +40,12 @@ namespace hypertable {
 
     static atomic_t msNextMessageId;
 
-    HeaderBuilder() : mId(0), mGroupId(0), mTotalLen(0), mProtocol(0), mFlags(0) { return; }
+    HeaderBuilder() : mId(0), mGroupId(0), mTotalLen(0), mProtocol(0), mFlags(0) {
+      return;
+    }
 
-    HeaderBuilder(uint8_t protocol) : mId(0), mGroupId(0), mTotalLen(0), mProtocol(protocol), mFlags(0) { return; }
-
-    void Reset(uint8_t protocol, uint8_t flags=0) {
-      mId = atomic_inc_return(&msNextMessageId);
-      mGroupId = 0;
-      mProtocol = protocol;
-      mFlags = flags;
-      mTotalLen = 0;
+    HeaderBuilder(uint8_t protocol, uint32_t gid=0) : mGroupId(gid), mTotalLen(0), mProtocol(protocol), mFlags(0) {
+      return;
     }
 
     void LoadFromMessage(Header::HeaderT *header) {
@@ -77,6 +73,7 @@ namespace hypertable {
       (*bufPtr) += sizeof(Header::HeaderT);
     }
 
+    uint32_t AssignUniqueId() { mId = atomic_inc_return(&msNextMessageId); return mId; }
 
     void SetFlags(uint8_t flags) { mFlags = flags; }
 

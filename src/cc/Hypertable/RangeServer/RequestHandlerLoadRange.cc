@@ -22,6 +22,7 @@
 #include "Common/Logger.h"
 
 #include "AsyncComm/ResponseCallback.h"
+#include "AsyncComm/Serialization.h"
 
 #include "Hypertable/Lib/Types.h"
 
@@ -36,15 +37,11 @@ using namespace hypertable;
 void RequestHandlerLoadRange::run() {
   ResponseCallback cb(mComm, mEventPtr);
   RangeSpecificationT rangeSpec;
-  size_t skip;
-  size_t remaining = mEventPtr->messageLen - sizeof(int16_t);
-  uint8_t *msgPtr = mEventPtr->message + sizeof(int16_t);
-  std::string errMsg;
+  size_t remaining = mEventPtr->messageLen - 2;
+  uint8_t *msgPtr = mEventPtr->message + 2;
 
-  /**
-   * Deserialize Range Specification
-   */
-  if ((skip = DeserializeRangeSpecification(msgPtr, remaining, &rangeSpec)) == 0)
+  // Range Specification
+  if (!DecodeRangeSpecification(&msgPtr, &remaining, &rangeSpec))
     goto abort;
 
   mRangeServer->LoadRange(&cb, &rangeSpec);
@@ -53,7 +50,5 @@ void RequestHandlerLoadRange::run() {
 
  abort:
   LOG_ERROR("Encoding problem with LoadRange message");
-  errMsg = "Encoding problem with LoadRange message";
-  cb.error(Error::PROTOCOL_ERROR, errMsg);
-  return;
+  cb.error(Error::PROTOCOL_ERROR, "Encoding problem with LoadRange message");
 }

@@ -22,6 +22,7 @@
 #include "Common/Logger.h"
 
 #include "AsyncComm/ResponseCallback.h"
+#include "AsyncComm/Serialization.h"
 
 #include "RequestHandlerMkdirs.h"
 
@@ -34,12 +35,11 @@ using namespace hypertable::DfsBroker;
 void RequestHandlerMkdirs::run() {
   ResponseCallback cb(mComm, mEventPtr);
   const char *dirName;
-  size_t skip;
-  size_t remaining = mEventPtr->messageLen - sizeof(int16_t);
-  uint8_t *msgPtr = mEventPtr->message + sizeof(int16_t);
+  size_t remaining = mEventPtr->messageLen - 2;
+  uint8_t *msgPtr = mEventPtr->message + 2;
 
   // directory name
-  if ((skip = CommBuf::DecodeString(msgPtr, remaining, &dirName)) == 0)
+  if (!Serialization::DecodeString(&msgPtr, &remaining, &dirName))
     goto abort;
 
   mBroker->Mkdirs(&cb, dirName);

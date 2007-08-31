@@ -24,6 +24,7 @@
 #include "Common/Logger.h"
 
 #include "AsyncComm/ResponseCallback.h"
+#include "AsyncComm/Serialization.h"
 
 #include "RequestHandlerOpen.h"
 
@@ -37,21 +38,15 @@ void RequestHandlerOpen::run() {
   ResponseCallbackOpen cb(mComm, mEventPtr);
   const char *fileName;
   uint32_t bufferSize;
-  size_t skip;
   size_t remaining = mEventPtr->messageLen - sizeof(int16_t);
   uint8_t *msgPtr = mEventPtr->message + sizeof(int16_t);
-  int error;
-
-  if (remaining < sizeof(int32_t))
-    goto abort;
 
   // buffer size
-  memcpy(&bufferSize, msgPtr, sizeof(int32_t));
-  msgPtr += sizeof(int32_t);
-  remaining -= sizeof(int32_t);
+  if (!Serialization::DecodeInt(&msgPtr, &remaining, &bufferSize))
+    goto abort;
 
   // file name
-  if ((skip = CommBuf::DecodeString(msgPtr, remaining, &fileName)) == 0)
+  if (!Serialization::DecodeString(&msgPtr, &remaining, &fileName))
     goto abort;
 
   // validate filename

@@ -22,6 +22,7 @@
 #include "Common/Logger.h"
 
 #include "AsyncComm/Comm.h"
+#include "AsyncComm/Serialization.h"
 
 #include "Master.h"
 #include "RequestHandlerGetSchema.h"
@@ -35,16 +36,15 @@ using namespace hypertable;
 void RequestHandlerGetSchema::run() {
   ResponseCallbackGetSchema cb(mComm, mEventPtr);
   const char *tableName;
-  size_t remaining = mEventPtr->messageLen - sizeof(int16_t);
-  uint8_t *msgPtr = mEventPtr->message + sizeof(int16_t);
+  size_t remaining = mEventPtr->messageLen - 2;
+  uint8_t *msgPtr = mEventPtr->message + 2;
 
   // table name
-  if (CommBuf::DecodeString(msgPtr, remaining, &tableName) == 0) {
-    std::string errMsg = "Encoding problem with Create Table message";
+  if (!Serialization::DecodeString(&msgPtr, &remaining, &tableName)) {
     LOG_ERROR("Encoding problem with Create Table message");
-    cb.error(Error::PROTOCOL_ERROR, errMsg);
+    cb.error(Error::PROTOCOL_ERROR, "Encoding problem with Create Table message");
+    return;
   }
 
   mMaster->GetSchema(&cb, tableName);
-
 }

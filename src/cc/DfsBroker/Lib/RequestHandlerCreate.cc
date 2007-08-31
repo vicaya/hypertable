@@ -22,6 +22,7 @@
 #include "Common/Logger.h"
 
 #include "AsyncComm/ResponseCallback.h"
+#include "AsyncComm/Serialization.h"
 
 #include "RequestHandlerCreate.h"
 
@@ -34,10 +35,8 @@ using namespace hypertable::DfsBroker;
 void RequestHandlerCreate::run() {
   ResponseCallbackOpen cb(mComm, mEventPtr);
   const char *fileName;
-  size_t skip;
-  size_t remaining = mEventPtr->messageLen - sizeof(int16_t);
-  uint8_t *msgPtr = mEventPtr->message + sizeof(int16_t);
-  int error;
+  size_t remaining = mEventPtr->messageLen - 2;
+  uint8_t *msgPtr = mEventPtr->message + 2;
   uint16_t sval, replication;
   uint32_t ival, bufferSize;
   uint64_t blockSize;
@@ -47,29 +46,21 @@ void RequestHandlerCreate::run() {
     goto abort;
 
   // overwrite flag
-  memcpy(&sval, msgPtr, 2);
-  msgPtr += 2;
-  remaining -= 2;
+  Serialization::DecodeShort(&msgPtr, &remaining, &sval);
   overwrite = (sval == 0) ? false : true;
 
   // replication
-  memcpy(&ival, msgPtr, 4);
-  msgPtr += 4;
-  remaining -= 4;
+  Serialization::DecodeInt(&msgPtr, &remaining, &ival);
   replication = (short)ival;
 
   // buffer size
-  memcpy(&bufferSize, msgPtr, 4);
-  msgPtr += 4;
-  remaining -= 4;
+  Serialization::DecodeInt(&msgPtr, &remaining, &bufferSize);
 
   // block size
-  memcpy(&blockSize, msgPtr, 8);
-  msgPtr += 8;
-  remaining -= 8;
+  Serialization::DecodeLong(&msgPtr, &remaining, &blockSize);
 
   // file name
-  if ((skip = CommBuf::DecodeString(msgPtr, remaining, &fileName)) == 0)
+  if (!Serialization::DecodeString(&msgPtr, &remaining, &fileName))
     goto abort;
 
   // validate filename

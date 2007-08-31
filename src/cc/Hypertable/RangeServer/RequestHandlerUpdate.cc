@@ -22,6 +22,7 @@
 #include "Common/Logger.h"
 
 #include "AsyncComm/ResponseCallback.h"
+#include "AsyncComm/Serialization.h"
 
 #include "Hypertable/Lib/Types.h"
 
@@ -36,25 +37,16 @@ using namespace hypertable;
 void RequestHandlerUpdate::run() {
   ResponseCallbackUpdate cb(mComm, mEventPtr);
   RangeSpecificationT rangeSpec;
-  size_t skip;
-  size_t remaining = mEventPtr->messageLen - sizeof(int16_t);
-  uint8_t *msgPtr = mEventPtr->message + sizeof(int16_t);
-  std::string errMsg;
+  size_t remaining = mEventPtr->messageLen - 2;
+  uint8_t *msgPtr = mEventPtr->message + 2;
   BufferT mods;
 
-  /**
-   * Deserialize Range Specification
-   */
-  if ((skip = DeserializeRangeSpecification(msgPtr, remaining, &rangeSpec)) == 0)
+  // Range Specification
+  if (!DecodeRangeSpecification(&msgPtr, &remaining, &rangeSpec))
     goto abort;
 
-  msgPtr += skip;
-  remaining -= skip;
-
-  /**
-   * Modifications
-   */
-  if (CommBuf::DecodeByteArray(msgPtr, remaining, &mods.buf, &mods.len) == 0)
+  // Modifications
+  if (!Serialization::DecodeByteArray(&msgPtr, &remaining, &mods.buf, &mods.len))
     goto abort;
 
   mRangeServer->Update(&cb, &rangeSpec, mods);
@@ -63,7 +55,6 @@ void RequestHandlerUpdate::run() {
 
  abort:
   LOG_ERROR("Encoding problem with Update message");
-  errMsg = "Encoding problem with Update message";
-  cb.error(Error::PROTOCOL_ERROR, errMsg);
+  cb.error(Error::PROTOCOL_ERROR, "Encoding problem with Update message");
   return;
 }

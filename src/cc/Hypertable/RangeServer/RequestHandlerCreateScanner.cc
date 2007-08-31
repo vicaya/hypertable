@@ -22,6 +22,7 @@
 #include "Common/Logger.h"
 
 #include "AsyncComm/ResponseCallback.h"
+#include "AsyncComm/Serialization.h"
 
 #include "Hypertable/Lib/Types.h"
 
@@ -37,33 +38,21 @@ void RequestHandlerCreateScanner::run() {
   ResponseCallbackCreateScanner cb(mComm, mEventPtr);
   RangeSpecificationT rangeSpec;
   ScanSpecificationT scanSpec;
-  size_t skip;
-  size_t remaining = mEventPtr->messageLen - sizeof(int16_t);
-  uint8_t *msgPtr = mEventPtr->message + sizeof(int16_t);
-  std::string errMsg;
+  size_t remaining = mEventPtr->messageLen - 2;
+  uint8_t *msgPtr = mEventPtr->message + 2;
 
-  /**
-   * Deserialize Range Specification
-   */
-  if ((skip = DeserializeRangeSpecification(msgPtr, remaining, &rangeSpec)) == 0)
+  // Range Specification
+  if (!DecodeRangeSpecification(&msgPtr, &remaining, &rangeSpec))
     goto abort;
 
-  msgPtr += skip;
-  remaining -= skip;
-
-  /**
-   * Deserialize Scanner Spec
-   */
-  if (DeserializeScanSpecification(msgPtr, remaining, &scanSpec) == 0)
+  // Scan Specification
+  if (!DecodeScanSpecification(&msgPtr, &remaining, &scanSpec))
     goto abort;
 
   mRangeServer->CreateScanner(&cb, &rangeSpec, &scanSpec);
-
   return;
 
  abort:
   LOG_ERROR("Encoding problem with CreateScanner message");
-  errMsg = "Encoding problem with CreateScanner message";
-  cb.error(Error::PROTOCOL_ERROR, errMsg);
-  return;
+  cb.error(Error::PROTOCOL_ERROR, "Encoding problem with CreateScanner message");
 }

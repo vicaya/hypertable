@@ -22,6 +22,7 @@
 #include "Common/Logger.h"
 
 #include "AsyncComm/ResponseCallback.h"
+#include "AsyncComm/Serialization.h"
 
 #include "RequestHandlerPread.h"
 
@@ -35,26 +36,20 @@ void RequestHandlerPread::run() {
   ResponseCallbackRead cb(mComm, mEventPtr);
   uint32_t fd, amount;
   uint64_t offset;
-  size_t skip;
-  size_t remaining = mEventPtr->messageLen - sizeof(int16_t);
-  uint8_t *msgPtr = mEventPtr->message + sizeof(int16_t);
-  int error;
+  size_t remaining = mEventPtr->messageLen - 2;
+  uint8_t *msgPtr = mEventPtr->message + 2;
 
   if (remaining < 16)
     goto abort;
 
   // fd
-  memcpy(&fd, msgPtr, 4);
-  msgPtr += 4;
-  remaining -= 4;
+  Serialization::DecodeInt(&msgPtr, &remaining, &fd);
 
   // offset
-  memcpy(&offset, msgPtr, 8);
-  msgPtr += 8;
-  remaining -= 8;
+  Serialization::DecodeLong(&msgPtr, &remaining, &offset);
 
   // amount
-  memcpy(&amount, msgPtr, 4);
+  Serialization::DecodeInt(&msgPtr, &remaining, &amount);
 
   mBroker->Pread(&cb, fd, offset, amount);
 
