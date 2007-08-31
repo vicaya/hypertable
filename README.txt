@@ -63,7 +63,7 @@ HOW TO BUILD
 2. Initialize Hypertable directory layout
 
   cd ~/hypertable
-  ./bin/install
+  ./bin/initialize.sh
 
   [Sample output]
   CPU count = 2
