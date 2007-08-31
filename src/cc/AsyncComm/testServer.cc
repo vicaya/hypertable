@@ -38,6 +38,7 @@ extern "C" {
 #include "AsyncComm/ApplicationHandler.h"
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/ConnectionHandlerFactory.h"
+#include "AsyncComm/HeaderBuilder.h"
 
 #include "Common/Error.h"
 #include "Common/System.h"
@@ -78,8 +79,9 @@ public:
   RequestHandler(Comm *comm, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mComm(comm) { return; }
 
   virtual void run() {
-    CommBufPtr cbufPtr( new CommBuf(mEventPtr->header->totalLen) );
-    cbufPtr->AppendBytes((uint8_t *)mEventPtr->header, mEventPtr->header->totalLen);
+    mHeaderBuilder.InitializeFromRequest(mEventPtr->header);
+    CommBufPtr cbufPtr( new CommBuf(mHeaderBuilder, mEventPtr->messageLen) );
+    cbufPtr->AppendBytes((uint8_t *)mEventPtr->message, mEventPtr->messageLen);
     int error = mComm->SendResponse(mEventPtr->addr, cbufPtr);
     if (error != Error::OK) {
       LOG_VA_ERROR("Comm::SendResponse returned %s", Error::GetText(error));
@@ -88,6 +90,7 @@ public:
   }
 private:
   Comm *mComm;
+  HeaderBuilder mHeaderBuilder;
 };
 
 class Dispatcher : public DispatchHandler {
@@ -113,8 +116,9 @@ public:
     }
     else if (eventPtr->type == Event::MESSAGE) {
       if (mAppQueue == 0) {
-	CommBufPtr cbufPtr( new CommBuf(eventPtr->header->totalLen) );
-	cbufPtr->AppendBytes((uint8_t *)eventPtr->header, eventPtr->header->totalLen);
+	mHeaderBuilder.InitializeFromRequest(eventPtr->header);
+	CommBufPtr cbufPtr( new CommBuf(mHeaderBuilder, eventPtr->messageLen) );
+	cbufPtr->AppendBytes((uint8_t *)eventPtr->message, eventPtr->messageLen);
 	int error = mComm->SendResponse(eventPtr->addr, cbufPtr);
 	if (error != Error::OK) {
 	  LOG_VA_ERROR("Comm::SendResponse returned %s", Error::GetText(error));
@@ -131,6 +135,7 @@ public:
 private:
   Comm             *mComm;
   ApplicationQueue *mAppQueue;
+  HeaderBuilder     mHeaderBuilder;
 };
 
 

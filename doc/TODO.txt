@@ -1,8 +1,6 @@
 
 TODO:
-- Clean up CommBuf
 - Remove msgId return parameter from CallbackHandlerSynchronizer and all of the client APIs
-- Get rid of Prepend* methods in CommBuf for normal forward serialization methods
 - Change KeepCopies attribute of column family to CellLimit
 - Add RangeServerClient
 - Change EventPtr to intrusive_ptr
@@ -33,6 +31,7 @@ TODO CLEANUP:
 
 
 DONE:
+- Clean up CommBuf, get rid of Prepend* methods in CommBuf for normal forward serialization methods
 - Fix AsyncComm/Protocol::StringFormatMessage (get rid of command)
 - Add new DELETE handling in RangeServer
 - Abstract the Filesystem and Dfs Broker

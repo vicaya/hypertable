@@ -40,15 +40,51 @@ extern "C" {
 namespace hypertable {
 
   /**
-   * This class is used to carry buffers to be sent by the
-   * AsyncComm subsystem.  It contains a pointer to a primary buffer
-   * and an extended buffer and also contains buffer pointers
+   * This class is used to carry buffers to be sent over the network
+   * by the AsyncComm subsystem.  It consists of a primary
+   * buffer and an extended buffer and also contains buffer pointers
    * that keep track of how much data has already been written
-   * in the case of partial writes.
+   * in the case of partial writes.  These pointers are managed by
+   * the AsyncComm subsytem iteslf.  The following example
+   * illustrates how to build a request message using the
+   * CommBuf.
+   *
+   * <pre>
+   *   HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
+   *   hbuilder.AssignUniqueId();
+   *   CommBuf *cbuf = new CommBuf(hbuilder, 2);
+   *   cbuf->AppendShort(COMMAND_STATUS); </pre>
+   *
+   * The following is a real world
+   * example of a CommBuf being used to send back a response from
+   * a read request.
+   *
+   * <pre>
+   *   hbuilder.InitializeFromRequest(mEventPtr->header);
+   *   CommBufPtr cbufPtr( new CommBuf(hbuilder, 16, data, nread) );
+   *   cbufPtr->AppendInt(Error::OK);
+   *   cbufPtr->AppendLong(offset);
+   *   cbufPtr->AppendInt(nread);
+   *   error = mComm->SendResponse(mEventPtr->addr, cbufPtr); </pre>
+   *
    */
   class CommBuf {
   public:
 
+    /**
+     * This constructor initializes the CommBuf object by allocating a
+     * primary buffer of length len and writing the header into it
+     * with the given HeaderBuilder object, hbuilder.  It also sets the
+     * extended buffer to _ex and takes ownership of it.  The total
+     * length written into the header is len plus _exLen.  The internal
+     * pointer into the primary buffer is position to just after the
+     * header.
+     *
+     * @param hbuilder the Header builder object used to write the header
+     * @param len the length of the primary buffer to allocate
+     * @param _ex pointer to the extended buffer (this object takes ownership)
+     * @param _exLen the length of the extended buffer
+     */
     CommBuf(HeaderBuilder &hbuilder, uint32_t len, const uint8_t *_ex=0, uint32_t _exLen=0) {
       len += hbuilder.HeaderLength();
       data = dataPtr = new uint8_t [ len ];
@@ -59,41 +95,103 @@ namespace hypertable {
       hbuilder.Encode(&dataPtr);
     }
 
-    CommBuf(uint32_t len) {
-      data = dataPtr = new uint8_t [ len ];
-      dataLen = len;
-      ext = extPtr = 0;
-      extLen = 0;
-    }
-
+    /**
+     * Destructor.  Deallocates primary and extended buffers.
+     */
     ~CommBuf() {
       delete [] data;
       delete [] ext;
     }
 
+    /**
+     * Resets the primary and extended data pointers to point to the
+     * beginning of their respective buffers.  The AsyncComm layer
+     * uses these pointers to track how much data has been sent and
+     * what is remaining to be sent.
+     */
     void ResetDataPointers() {
       dataPtr = (uint8_t *)data;
       extPtr = ext;
     }
 
+    /**
+     * Returns the primary buffer pointer.
+     */
     void *GetDataPtr() { return dataPtr; }
+
+    /**
+     * Advance the primary buffer pointer by len bytes
+     *
+     * @param len the number of bytes to advance the pointer by
+     */
     void *AdvanceDataPtr(size_t len) { dataPtr += len; }
 
+    /**
+     * Append a byte of data to the primary buffer, advancing the
+     * primary buffer pointer by 1
+     */
     void AppendByte(uint8_t bval) { *dataPtr++ = bval; }
+
+    /**
+     * Appends a sequence of bytes to the primary buffer, advancing
+     * the primary buffer pointer by the number of bytes appended
+     */
     void AppendBytes(uint8_t *bytes, uint32_t len) { memcpy(dataPtr, bytes, len); dataPtr += len; }
+
+    /**
+     * Appends a short integer (16 bit) to the the primary buffer,
+     * advancing the primary buffer pointer
+     */
     void AppendShort(uint16_t sval) { Serialization::EncodeShort(&dataPtr, sval); }
+    
+    /**
+     * Appends an integer (32 bit) to the the primary buffer,
+     * advancing the primary buffer pointer
+     */
     void AppendInt(uint32_t ival) { Serialization::EncodeInt(&dataPtr, ival); }
+
+    /**
+     * Appends a long integer (64 bit) to the the primary buffer,
+     * advancing the primary buffer pointer
+     */
     void AppendLong(uint64_t lval) { Serialization::EncodeLong(&dataPtr, lval); }
+
+    /**
+     * Appends a byte array to the primary buffer.  A byte array
+     * is encoded as a length followd by the data.
+     *
+     * @see Serialization::EncodeByteArray
+     */
     void AppendByteArray(const void *data, int32_t len) { Serialization::EncodeByteArray(&dataPtr, data, len); }
+    
+    /**
+     * Appends a c-style string to the primary buffer.  A string is
+     * encoded as a length, followed by the characters, followed by
+     * a terminating '\\0'.
+     *
+     * @see Serialization::EncodeString
+     */
     void AppendString(const char *str) { Serialization::EncodeString(&dataPtr, str); }
+
+    /**
+     * Appends a std::string to the primary buffer.  A string is
+     * encoded as a length, followed by the characters, followed by
+     * a terminating '\\0'.
+     *
+     * @see Serialization::EncodeString
+     */
     void AppendString(const std::string &str) { Serialization::EncodeString(&dataPtr, str.c_str()); }
 
+    friend class IOHandlerData;
+
     const uint8_t *data;
-    uint8_t *dataPtr;
     uint32_t dataLen;
     const uint8_t *ext;
-    const uint8_t *extPtr;
     uint32_t extLen;
+
+  protected:
+    uint8_t *dataPtr;
+    const uint8_t *extPtr;
   };
 
   typedef boost::shared_ptr<CommBuf> CommBufPtr;
