@@ -361,8 +361,7 @@ int IOHandlerData::FlushSendQueue() {
 	cbufPtr->dataPtr = (uint8_t *)cbufPtr->data + cbufPtr->dataLen;
 	nwritten -= remaining;
       }
-      remaining = cbufPtr->extLen - (cbufPtr->extPtr - cbufPtr->ext);
-      cbufPtr->extPtr += remaining;
+      cbufPtr->extPtr += nwritten;
       assert (cbufPtr->extPtr < (cbufPtr->ext + cbufPtr->extLen));
       break;
     }
