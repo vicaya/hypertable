@@ -65,6 +65,11 @@ namespace hypertable {
     void reset(ByteString32T *bs) {
       boost::shared_array<const uint8_t>::reset((const uint8_t *)bs);
     }
+    ByteString32T * operator-> () const // never throws
+    {
+      return (ByteString32T *)boost::shared_array<const uint8_t>::get();
+    }
+
   };
 
   /**

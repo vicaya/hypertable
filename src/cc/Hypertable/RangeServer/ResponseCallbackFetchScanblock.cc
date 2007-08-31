@@ -23,7 +23,7 @@
 using namespace hypertable;
 
 int ResponseCallbackFetchScanblock::response(short moreFlag, int32_t id, ExtBufferT &ext) {
-  hbuilder_.LoadFromMessage(mEventPtr->header);
+  hbuilder_.InitializeFromRequest(mEventPtr->header);
   CommBufPtr cbufPtr( new CommBuf(hbuilder_, 10, ext.buf, ext.len) );
   cbufPtr->AppendInt(Error::OK);
   cbufPtr->AppendShort(moreFlag);

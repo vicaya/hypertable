@@ -80,7 +80,6 @@ int main(int argc, char **argv) {
   DfsBroker::Client *client;
   struct sockaddr_in addr;
   bool golden = false;
-  ScanSpecificationT scanSpec;
 
   ReactorFactory::Initialize(1);
   System::Initialize(argv[0]);
@@ -212,14 +211,6 @@ int main(int argc, char **argv) {
     cellCachePtr->Add((*iter).first, (*iter).second);
   }
 
-  /**
-  vector<string> replacedFiles;
-  string fname = "/bt/tables/Webtable/default/abcdef0123abcdef0123abcd/ss2345";
-  replacedFiles.push_back(fname);
-  fname = "/bt/tables/Webtable/default/abcdef0123abcdef0123abcd/ss7654";
-  replacedFiles.push_back(fname);
-  **/
-
   if (cellStorePtr->Finalize(1234567) != 0) {
     cout << "Problem finalizing CellStore '/cellStore.tmp'" << endl;
     exit(1);
@@ -232,14 +223,8 @@ int main(int argc, char **argv) {
    */
   ScanContextPtr scanContextPtr;
 
-  /**
-  memset(&scanSpec, 0, sizeof(ScanSpecificationT));
-  scanSpec.startRow = startKey;
-  scanSpec.endRow = endKey;
-  **/
-
-  scanContextPtr.reset( new ScanContext(ScanContext::END_OF_TIME, &scanSpec) ); 
-  scanContextPtr->endKeyPtr.reset(CreateCopy(startKey));
+  scanContextPtr.reset( new ScanContext(ScanContext::END_OF_TIME, 0) ); 
+  scanContextPtr->startKeyPtr.reset(CreateCopy(startKey));
   scanContextPtr->endKeyPtr.reset(CreateCopy(endKey));
 
   scanner = cellStorePtr->CreateScanner(scanContextPtr);

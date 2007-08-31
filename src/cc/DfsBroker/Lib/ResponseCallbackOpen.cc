@@ -28,7 +28,7 @@ using namespace hypertable;
 using namespace hypertable::DfsBroker;
 
 int ResponseCallbackOpen::response(int32_t fd) {
-  hbuilder_.LoadFromMessage(mEventPtr->header);
+  hbuilder_.InitializeFromRequest(mEventPtr->header);
   CommBufPtr cbufPtr( new CommBuf(hbuilder_, 8 ) );
   cbufPtr->AppendInt(Error::OK);
   cbufPtr->AppendInt(fd);

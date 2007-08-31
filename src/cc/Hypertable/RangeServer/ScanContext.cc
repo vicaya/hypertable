@@ -41,7 +41,7 @@ void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp)
     memset(familyInfo, 0, 256*sizeof(CellFilterInfoT));
     return;
   }
-  if (sp.get() != 0) {
+  if (sp) {
     schemaPtr = sp;
     memset(familyMask, false, 256*sizeof(bool));
     if (spec->columns.size() > 0) {

@@ -1,4 +1,4 @@
-/**
+/** -*- C++ -*-
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
@@ -48,7 +48,7 @@ namespace hypertable {
       return;
     }
 
-    void LoadFromMessage(Header::HeaderT *header) {
+    void InitializeFromRequest(Header::HeaderT *header) {
       mId        = header->id;
       mGroupId   = header->gid;
       mProtocol  = header->protocol;

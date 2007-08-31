@@ -211,6 +211,7 @@ int main(int argc, char **argv) {
     while (!myfile.eof() ) {
       getline (myfile,line);
       if (line.length() > 0) {
+	hbuilder.AssignUniqueId();
 	CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::EncodedLengthString(line)) );
 	cbufPtr->AppendString(line);
 	int retries = 0;

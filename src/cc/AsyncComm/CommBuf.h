@@ -55,8 +55,7 @@ namespace hypertable {
       dataLen = len;
       ext = extPtr = _ex;
       extLen = _exLen;
-      hbuilder.SetTotalLen(len);
-      hbuilder.AssignUniqueId();
+      hbuilder.SetTotalLen(len+extLen);
       hbuilder.Encode(&dataPtr);
     }
 
@@ -70,11 +69,6 @@ namespace hypertable {
     ~CommBuf() {
       delete [] data;
       delete [] ext;
-    }
-
-    void SetExt(const uint8_t *buf, uint32_t len) {
-      ext = extPtr = (uint8_t *)buf;
-      extLen = len;
     }
 
     void ResetDataPointers() {

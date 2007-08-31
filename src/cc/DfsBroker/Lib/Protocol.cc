@@ -58,6 +58,7 @@ namespace hypertable {
      */
     CommBuf *Protocol::CreateOpenRequest(std::string &fname, uint32_t bufferSize) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
+      hbuilder.AssignUniqueId();
       CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderOpenT) + Serialization::EncodedLengthString(fname));
 
       RequestHeaderOpenT *openHeader = (RequestHeaderOpenT *)cbuf->GetDataPtr();
@@ -74,6 +75,7 @@ namespace hypertable {
     CommBuf *Protocol::CreateCreateRequest(std::string &fname, bool overwrite, int32_t bufferSize,
 					   int32_t replication, int64_t blockSize) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
+      hbuilder.AssignUniqueId();
       CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderCreateT) + Serialization::EncodedLengthString(fname));
 
       RequestHeaderCreateT *createHeader = (RequestHeaderCreateT *)cbuf->GetDataPtr();
@@ -94,6 +96,7 @@ namespace hypertable {
      */
     CommBuf *Protocol::CreateCloseRequest(int32_t fd) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER, fd);
+      hbuilder.AssignUniqueId();
       CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderCloseT));
       RequestHeaderCloseT *closeHeader = (RequestHeaderCloseT *)cbuf->GetDataPtr();
       closeHeader->hdr.command = COMMAND_CLOSE;
@@ -105,6 +108,7 @@ namespace hypertable {
 
     CommBuf *Protocol::CreateReadRequest(int32_t fd, uint32_t amount) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER, fd);
+      hbuilder.AssignUniqueId();
       CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderReadT));
       RequestHeaderReadT *readHeader = (RequestHeaderReadT *)cbuf->GetDataPtr();
       readHeader->hdr.command = COMMAND_READ;
@@ -116,18 +120,19 @@ namespace hypertable {
 
     CommBuf *Protocol::CreateAppendRequest(int32_t fd, uint8_t *buf, uint32_t amount) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER, fd);
-      CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderAppendT));
+      hbuilder.AssignUniqueId();
+      CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderAppendT), buf, amount);
       RequestHeaderAppendT *appendHeader = (RequestHeaderAppendT *)cbuf->GetDataPtr();
       appendHeader->hdr.command = COMMAND_APPEND;
       appendHeader->fd = fd;
       appendHeader->amount = amount;
-      cbuf->SetExt(buf, amount);
       return cbuf;
     }
 
 
     CommBuf *Protocol::CreateSeekRequest(int32_t fd, uint64_t offset) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER, fd);
+      hbuilder.AssignUniqueId();
       CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderSeekT));
       RequestHeaderSeekT *seekHeader = (RequestHeaderSeekT *)cbuf->GetDataPtr();
       seekHeader->hdr.command = COMMAND_SEEK;
@@ -141,6 +146,7 @@ namespace hypertable {
      */
     CommBuf *Protocol::CreateRemoveRequest(std::string &fname) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
+      hbuilder.AssignUniqueId();
       CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderRemoveT) + Serialization::EncodedLengthString(fname));
 
       RequestHeaderRemoveT *removeHeader = (RequestHeaderRemoveT *)cbuf->GetDataPtr();
@@ -156,6 +162,7 @@ namespace hypertable {
      */
     CommBuf *Protocol::CreateShutdownRequest(uint16_t flags) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
+      hbuilder.AssignUniqueId();
       CommBuf *cbuf = new CommBuf(hbuilder, 4);
       cbuf->AppendShort(COMMAND_SHUTDOWN);
       cbuf->AppendShort(flags);
@@ -168,6 +175,7 @@ namespace hypertable {
      */
     CommBuf *Protocol::CreateStatusRequest() {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
+      hbuilder.AssignUniqueId();
       CommBuf *cbuf = new CommBuf(hbuilder, 2);
       cbuf->AppendShort(COMMAND_STATUS);
       return cbuf;
@@ -179,6 +187,7 @@ namespace hypertable {
      */
     CommBuf *Protocol::CreateLengthRequest(std::string &fname) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
+      hbuilder.AssignUniqueId();
       CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderLengthT) + Serialization::EncodedLengthString(fname));
       RequestHeaderLengthT *lengthHeader = (RequestHeaderLengthT *)cbuf->GetDataPtr();
       lengthHeader->hdr.command = COMMAND_LENGTH;
@@ -193,6 +202,7 @@ namespace hypertable {
      */
     CommBuf *Protocol::CreatePositionReadRequest(int32_t fd, uint64_t offset, uint32_t amount) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER, fd);
+      hbuilder.AssignUniqueId();
       CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderPositionReadT));
       RequestHeaderPositionReadT *preadHeader = (RequestHeaderPositionReadT *)cbuf->GetDataPtr();
       preadHeader->hdr.command = COMMAND_PREAD;
@@ -207,6 +217,7 @@ namespace hypertable {
      */
     CommBuf *Protocol::CreateMkdirsRequest(std::string &fname) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
+      hbuilder.AssignUniqueId();
       CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderMkdirsT) + Serialization::EncodedLengthString(fname));
       RequestHeaderMkdirsT *removeHeader = (RequestHeaderMkdirsT *)cbuf->GetDataPtr();
       removeHeader->hdr.command = COMMAND_MKDIRS;
@@ -220,6 +231,7 @@ namespace hypertable {
      */
     CommBuf *Protocol::CreateFlushRequest(int32_t fd) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER, fd);
+      hbuilder.AssignUniqueId();
       CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderFlushT));
       RequestHeaderFlushT *flushHeader = (RequestHeaderFlushT *)cbuf->GetDataPtr();
       flushHeader->hdr.command = COMMAND_FLUSH;
@@ -232,6 +244,7 @@ namespace hypertable {
      */
     CommBuf *Protocol::CreateRmdirRequest(std::string &fname) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
+      hbuilder.AssignUniqueId();
       CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderRmdirT) + Serialization::EncodedLengthString(fname));
       RequestHeaderRmdirT *removeHeader = (RequestHeaderRmdirT *)cbuf->GetDataPtr();
       removeHeader->hdr.command = COMMAND_RMDIR;

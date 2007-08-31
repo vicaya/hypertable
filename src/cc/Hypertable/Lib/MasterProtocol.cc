@@ -30,6 +30,7 @@ namespace hypertable {
    */
   CommBuf *MasterProtocol::CreateCreateTableRequest(const char *tableName, const char *schemaString) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
+    hbuilder.AssignUniqueId();
     CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::EncodedLengthString(tableName) + Serialization::EncodedLengthString(schemaString));
     cbuf->AppendShort(COMMAND_CREATE_TABLE);
     cbuf->AppendString(tableName);
@@ -39,6 +40,7 @@ namespace hypertable {
 
   CommBuf *MasterProtocol::CreateGetSchemaRequest(const char *tableName) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
+    hbuilder.AssignUniqueId();
     CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::EncodedLengthString(tableName));
     cbuf->AppendShort(COMMAND_GET_SCHEMA);
     cbuf->AppendString(tableName);
@@ -47,6 +49,7 @@ namespace hypertable {
 
   CommBuf *MasterProtocol::CreateStatusRequest() {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
+    hbuilder.AssignUniqueId();
     CommBuf *cbuf = new CommBuf(hbuilder, 2);
     cbuf->AppendShort(COMMAND_STATUS);
     return cbuf;
