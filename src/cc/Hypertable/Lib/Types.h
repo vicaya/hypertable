@@ -62,12 +62,12 @@ namespace hypertable {
 
   /** Serialization methods for RangeSpecificationT **/
   size_t EncodedLengthRangeSpecification(RangeSpecificationT &rangeSpec);
-  size_t EncodeRangeSpecification(uint8_t *ptr, RangeSpecificationT &rangeSpec);
+  void EncodeRangeSpecification(uint8_t **bufPtr, RangeSpecificationT &rangeSpec);
   bool DecodeRangeSpecification(uint8_t **bufPtr, size_t *remainingPtr, RangeSpecificationT *rangeSpec);
 
   /** Serialization methods for ScanSpecificationT **/
   size_t EncodedLengthScanSpecification(ScanSpecificationT &scanSpec);
-  size_t EncodeScanSpecification(uint8_t *ptr, ScanSpecificationT &scanSpec);
+  void EncodeScanSpecification(uint8_t **bufPtr, ScanSpecificationT &scanSpec);
   bool DecodeScanSpecification(uint8_t **bufPtr, size_t *remainingPtr, ScanSpecificationT *scanSpec);
 
   std::ostream &operator<<(std::ostream &os, const RangeSpecificationT &rangeSpec);

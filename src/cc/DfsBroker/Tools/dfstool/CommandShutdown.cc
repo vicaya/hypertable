@@ -41,7 +41,6 @@ const char *CommandShutdown::msUsage[] = {
 
 int CommandShutdown::run() {
   DispatchHandlerSynchronizer syncHandler;
-  uint32_t msgId = 0;
   uint16_t flags = 0;
   EventPtr eventPtr;
 
@@ -54,7 +53,7 @@ int CommandShutdown::run() {
     }
   }
 
-  mClient->Shutdown(flags, &syncHandler, &msgId);
+  mClient->Shutdown(flags, &syncHandler);
 
   syncHandler.WaitForReply(eventPtr);
 

@@ -100,7 +100,7 @@ namespace hypertable {
     DynamicBuffer          mVarIndexBuffer;
     size_t                 mBlockSize;
     DispatchHandlerSynchronizer  mSyncHandler;
-    uint32_t               mOutstandingId;
+    uint32_t               mOutstandingAppends;
     uint32_t               mOffset;
     ByteString32T         *mLastKey;
     uint64_t               mFileLength;

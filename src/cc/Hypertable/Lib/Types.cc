@@ -41,16 +41,11 @@ namespace hypertable {
   /**
    *
    */
-  size_t EncodeRangeSpecification(uint8_t *ptr, RangeSpecificationT &rangeSpec) {
-    /**
-    uint8_t *base = ptr;
-    memcpy(ptr, &rangeSpec.generation, 4);
-    ptr += 4;
-    ptr += CommBuf::AppendString(rangeSpec.tableName);
-    ptr += CommBuf::AppendString(rangeSpec.startRow);
-    ptr += CommBuf::AppendString(rangeSpec.endRow);
-    return ptr-base;
-    **/
+  void EncodeRangeSpecification(uint8_t **bufPtr, RangeSpecificationT &rangeSpec) {
+    Serialization::EncodeInt(bufPtr, rangeSpec.generation);
+    Serialization::EncodeString(bufPtr, rangeSpec.tableName);
+    Serialization::EncodeString(bufPtr, rangeSpec.startRow);
+    Serialization::EncodeString(bufPtr, rangeSpec.endRow);
   }
 
 
@@ -63,13 +58,10 @@ namespace hypertable {
 
     if (!Serialization::DecodeInt(bufPtr, remainingPtr, &rangeSpec->generation))
       return false;
-
     if (!Serialization::DecodeString(bufPtr, remainingPtr, &rangeSpec->tableName))
       return false;
-
     if (!Serialization::DecodeString(bufPtr, remainingPtr, &rangeSpec->startRow))
       return false;
-
     if (!Serialization::DecodeString(bufPtr, remainingPtr, &rangeSpec->endRow))
       return false;
 
@@ -89,34 +81,16 @@ namespace hypertable {
   }
 
 
-  size_t EncodeScanSpecification(uint8_t *ptr, ScanSpecificationT &scanSpec) {
-    /**
-    uint8_t *base = ptr;
-    uint16_t columnCount;
-    // rowLimit
-    memcpy(ptr, &scanSpec.rowLimit, 4);
-    ptr += 4;
-    // cellLimit
-    memcpy(ptr, &scanSpec.cellLimit, 4);
-    ptr += 4;
-    // startRow
-    ptr += CommBuff::AppendString(scanSpec.startRow);
-    // endRow
-    ptr += CommBuff::AppendString(scanSpec.endRow);
-    // columns
-    columnCount = scanSpec.columns.size();
-    memcpy(ptr, &columnCount, 2);
-    ptr += 2;
-    for (uint16_t i=0; i<columnCount; i++)
-      ptr += CommBuff::AppendString(scanSpec.columns[i]);
-    // minTime
-    memcpy(ptr, &scanSpec->interval.first, 8);
-    ptr += 8;
-    // maxTime
-    memcpy(ptr, &scanSpec->interval.second, 8);
-    ptr += 8;
-    return ptr-base;
-    **/
+  void EncodeScanSpecification(uint8_t **bufPtr, ScanSpecificationT &scanSpec) {
+    Serialization::EncodeInt(bufPtr, scanSpec.rowLimit);
+    Serialization::EncodeInt(bufPtr, scanSpec.cellLimit);
+    Serialization::EncodeString(bufPtr, scanSpec.startRow);
+    Serialization::EncodeString(bufPtr, scanSpec.endRow);
+    Serialization::EncodeShort(bufPtr, (short)scanSpec.columns.size());
+    for (int i=0; i<scanSpec.columns.size(); i++)
+      Serialization::EncodeString(bufPtr, scanSpec.columns[i]);
+    Serialization::EncodeLong(bufPtr, scanSpec.interval.first);
+    Serialization::EncodeLong(bufPtr, scanSpec.interval.second);
   }
 
 
@@ -126,28 +100,21 @@ namespace hypertable {
 
     if (!Serialization::DecodeInt(bufPtr, remainingPtr, &scanSpec->rowLimit))
       return false;
-
     if (!Serialization::DecodeInt(bufPtr, remainingPtr, &scanSpec->cellLimit))
       return false;
-
     if (!Serialization::DecodeString(bufPtr, remainingPtr, &scanSpec->startRow))
       return false;
-
     if (!Serialization::DecodeString(bufPtr, remainingPtr, &scanSpec->endRow))
       return false;
-
     if (!Serialization::DecodeShort(bufPtr, remainingPtr, &columnCount))
       return false;
-
     for (short i=0; i<columnCount; i++) {
     if (!Serialization::DecodeString(bufPtr, remainingPtr, &column))
       return false;
       scanSpec->columns.push_back(column);
     }
-
     if (!Serialization::DecodeLong(bufPtr, remainingPtr, &scanSpec->interval.first))
       return false;
-
     if (!Serialization::DecodeLong(bufPtr, remainingPtr, &scanSpec->interval.second))
       return false;
   

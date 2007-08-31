@@ -41,7 +41,7 @@ namespace hypertable {
 
     CommBuf *CreateRequestLoadRange(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec);
     CommBuf *CreateRequestUpdate(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, uint8_t *data, size_t len);
-    CommBuf *CreateRequestCreateScanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &spec);
+    CommBuf *CreateRequestCreateScanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &scanSpec);
     CommBuf *CreateRequestFetchScanblock(struct sockaddr_in &addr, int scannerId);
     CommBuf *CreateRequestStatus();
 

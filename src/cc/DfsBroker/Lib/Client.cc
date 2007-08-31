@@ -79,9 +79,9 @@ Client::Client(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mConne
 }
 
 
-int Client::Open(std::string &name, DispatchHandler *handler, uint32_t *msgIdp) {
+int Client::Open(std::string &name, DispatchHandler *handler) {
   CommBufPtr cbufPtr( mProtocol->CreateOpenRequest(name, 0) );
-  return SendMessage(cbufPtr, handler, msgIdp);
+  return SendMessage(cbufPtr, handler);
 }
 
 
@@ -105,9 +105,9 @@ int Client::Open(std::string &name, int32_t *fdp) {
 
 
 int Client::Create(std::string &name, bool overwrite, int32_t bufferSize,
-		   int32_t replication, int64_t blockSize, DispatchHandler *handler, uint32_t *msgIdp) {
+		   int32_t replication, int64_t blockSize, DispatchHandler *handler) {
   CommBufPtr cbufPtr( mProtocol->CreateCreateRequest(name, overwrite, bufferSize, replication, blockSize) );
-  return SendMessage(cbufPtr, handler, msgIdp);
+  return SendMessage(cbufPtr, handler);
 }
 
 
@@ -131,9 +131,9 @@ int Client::Create(std::string &name, bool overwrite, int32_t bufferSize,
 
 
 
-int Client::Close(int32_t fd, DispatchHandler *handler, uint32_t *msgIdp) {
+int Client::Close(int32_t fd, DispatchHandler *handler) {
   CommBufPtr cbufPtr( mProtocol->CreateCloseRequest(fd) );
-  return SendMessage(cbufPtr, handler, msgIdp);
+  return SendMessage(cbufPtr, handler);
 }
 
 
@@ -154,9 +154,9 @@ int Client::Close(int32_t fd) {
 
 
 
-int Client::Read(int32_t fd, uint32_t amount, DispatchHandler *handler, uint32_t *msgIdp) {
+int Client::Read(int32_t fd, uint32_t amount, DispatchHandler *handler) {
   CommBufPtr cbufPtr( mProtocol->CreateReadRequest(fd, amount) );
-  return SendMessage(cbufPtr, handler, msgIdp);
+  return SendMessage(cbufPtr, handler);
 }
 
 
@@ -184,9 +184,9 @@ int Client::Read(int32_t fd, uint32_t amount, uint8_t *dst, uint32_t *nreadp) {
 
 
 
-int Client::Append(int32_t fd, uint8_t *buf, uint32_t amount, DispatchHandler *handler, uint32_t *msgIdp) {
+int Client::Append(int32_t fd, uint8_t *buf, uint32_t amount, DispatchHandler *handler) {
   CommBufPtr cbufPtr( mProtocol->CreateAppendRequest(fd, buf, amount) );
-  return SendMessage(cbufPtr, handler, msgIdp);
+  return SendMessage(cbufPtr, handler);
 }
 
 
@@ -211,9 +211,9 @@ int Client::Append(int32_t fd, uint8_t *buf, uint32_t amount) {
 }
 
 
-int Client::Seek(int32_t fd, uint64_t offset, DispatchHandler *handler, uint32_t *msgIdp) {
+int Client::Seek(int32_t fd, uint64_t offset, DispatchHandler *handler) {
   CommBufPtr cbufPtr( mProtocol->CreateSeekRequest(fd, offset) );
-  return SendMessage(cbufPtr, handler, msgIdp);
+  return SendMessage(cbufPtr, handler);
 }
 
 
@@ -232,9 +232,9 @@ int Client::Seek(int32_t fd, uint64_t offset) {
 }
 
 
-int Client::Remove(std::string &name, DispatchHandler *handler, uint32_t *msgIdp) {
+int Client::Remove(std::string &name, DispatchHandler *handler) {
   CommBufPtr cbufPtr( mProtocol->CreateRemoveRequest(name) );
-  return SendMessage(cbufPtr, handler, msgIdp);
+  return SendMessage(cbufPtr, handler);
 }
 
 
@@ -254,9 +254,9 @@ int Client::Remove(std::string &name) {
 
 
 
-int Client::Shutdown(uint16_t flags, DispatchHandler *handler, uint32_t *msgIdp) {
+int Client::Shutdown(uint16_t flags, DispatchHandler *handler) {
   CommBufPtr cbufPtr( mProtocol->CreateShutdownRequest(flags) );
-  return SendMessage(cbufPtr, handler, msgIdp);
+  return SendMessage(cbufPtr, handler);
 }
 
 
@@ -275,9 +275,9 @@ int Client::Status() {
 }
 
 
-int Client::Length(std::string &name, DispatchHandler *handler, uint32_t *msgIdp) {
+int Client::Length(std::string &name, DispatchHandler *handler) {
   CommBufPtr cbufPtr( mProtocol->CreateLengthRequest(name) );
-  return SendMessage(cbufPtr, handler, msgIdp);
+  return SendMessage(cbufPtr, handler);
 }
 
 
@@ -300,9 +300,9 @@ int Client::Length(std::string &name, int64_t *lenp) {
 
 
 
-int Client::Pread(int32_t fd, uint64_t offset, uint32_t amount, DispatchHandler *handler, uint32_t *msgIdp) {
+int Client::Pread(int32_t fd, uint64_t offset, uint32_t amount, DispatchHandler *handler) {
   CommBufPtr cbufPtr( mProtocol->CreatePositionReadRequest(fd, offset, amount) );
-  return SendMessage(cbufPtr, handler, msgIdp);
+  return SendMessage(cbufPtr, handler);
 }
 
 
@@ -329,9 +329,9 @@ int Client::Pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst, ui
 }
 
 
-int Client::Mkdirs(std::string &name, DispatchHandler *handler, uint32_t *msgIdp) {
+int Client::Mkdirs(std::string &name, DispatchHandler *handler) {
   CommBufPtr cbufPtr( mProtocol->CreateMkdirsRequest(name) );
-  return SendMessage(cbufPtr, handler, msgIdp);
+  return SendMessage(cbufPtr, handler);
 }
 
 
@@ -350,9 +350,9 @@ int Client::Mkdirs(std::string &name) {
 }
 
 
-int Client::Flush(int32_t fd, DispatchHandler *handler, uint32_t *msgIdp) {
+int Client::Flush(int32_t fd, DispatchHandler *handler) {
   CommBufPtr cbufPtr( mProtocol->CreateFlushRequest(fd) );
-  return SendMessage(cbufPtr, handler, msgIdp);
+  return SendMessage(cbufPtr, handler);
 }
 
 
@@ -371,9 +371,9 @@ int Client::Flush(int32_t fd) {
 }
 
 
-int Client::Rmdir(std::string &name, DispatchHandler *handler, uint32_t *msgIdp) {
+int Client::Rmdir(std::string &name, DispatchHandler *handler) {
   CommBufPtr cbufPtr( mProtocol->CreateRmdirRequest(name) );
-  return SendMessage(cbufPtr, handler, msgIdp);
+  return SendMessage(cbufPtr, handler);
 }
 
 
@@ -392,11 +392,8 @@ int Client::Rmdir(std::string &name) {
 }
 
 
-int Client::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler, uint32_t *msgIdp) {
+int Client::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler) {
   int error;
-
-  if (msgIdp)
-    *msgIdp = ((Header::HeaderT *)cbufPtr->data)->id;
 
   if ((error = mComm->SendRequest(mAddr, cbufPtr, handler)) != Error::OK) {
     LOG_VA_WARN("Comm::SendRequest to %s:%d failed - %s",

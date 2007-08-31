@@ -42,7 +42,7 @@ using namespace hypertable;
 
 CellStoreV0::CellStoreV0(Filesystem *filesys) : mFilesys(filesys), mFilename(), mFd(-1), mIndex(),
   mBuffer(0), mFixIndexBuffer(0), mVarIndexBuffer(0), mBlockSize(Constants::DEFAULT_BLOCKSIZE),
-  mOutstandingId(0), mOffset(0), mLastKey(0), mFileLength(0),
+  mOutstandingAppends(0), mOffset(0), mLastKey(0), mFileLength(0),
   mDiskUsage(0), mSplitKey(0), mFileId(0), mStartKeyPtr(0), mEndKeyPtr(0) {
   mBlockDeflater = new BlockDeflaterZlib();
   mFileId = FileBlockCache::GetNextFileId();
@@ -115,20 +115,22 @@ int CellStoreV0::Add(const ByteString32T *key, const ByteString32T *value) {
     mBlockDeflater->deflate(mBuffer, zBuffer, Constants::DATA_BLOCK_MAGIC);
     mBuffer.clear();
 
-    if (mOutstandingId != 0) {
+    if (mOutstandingAppends > 0) {
       if (!mSyncHandler.WaitForReply(eventPtr)) {
 	LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), hypertable::Protocol::StringFormatMessage(eventPtr).c_str());
 	return -1;
       }
+      mOutstandingAppends--;
     }
 
     size_t  zlen;
     uint8_t *zbuf = zBuffer.release(&zlen);
 
-    if ((error = mFilesys->Append(mFd, zbuf, zlen, &mSyncHandler, &mOutstandingId)) != Error::OK) {
+    if ((error = mFilesys->Append(mFd, zbuf, zlen, &mSyncHandler)) != Error::OK) {
       LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), Error::GetText(error));
       return -1;
     }
+    mOutstandingAppends++;
     mOffset += zlen;
   }
 
@@ -165,15 +167,19 @@ int CellStoreV0::Finalize(uint64_t timestamp) {
     mBlockDeflater->deflate(mBuffer, zBuffer, Constants::DATA_BLOCK_MAGIC);
     zbuf = zBuffer.release(&zlen);
 
-    if (mOutstandingId != 0 && !mSyncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), Protocol::StringFormatMessage(eventPtr).c_str());
-      goto abort;
+    if (mOutstandingAppends > 0) {
+      if (!mSyncHandler.WaitForReply(eventPtr)) {
+	LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), Protocol::StringFormatMessage(eventPtr).c_str());
+	goto abort;
+      }
+      mOutstandingAppends--;
     }
 
-    if ((error = mFilesys->Append(mFd, zbuf, zlen, &mSyncHandler, &mOutstandingId)) != Error::OK) {
+    if ((error = mFilesys->Append(mFd, zbuf, zlen, &mSyncHandler)) != Error::OK) {
       LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), Protocol::StringFormatMessage(eventPtr).c_str());
       goto abort;
     }
+    mOutstandingAppends++;
     mOffset += zlen;
   }
 
@@ -204,13 +210,17 @@ int CellStoreV0::Finalize(uint64_t timestamp) {
   /**
    * wait for last Client op
    */
-  if (mOutstandingId != 0 && !mSyncHandler.WaitForReply(eventPtr)) {
-    LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), Protocol::StringFormatMessage(eventPtr).c_str());
-    goto abort;
+  if (mOutstandingAppends > 0) {
+    if (!mSyncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), Protocol::StringFormatMessage(eventPtr).c_str());
+      goto abort;
+    }
+    mOutstandingAppends--;
   }
 
-  if (mFilesys->Append(mFd, zbuf, zlen, &mSyncHandler, &mOutstandingId) != Error::OK)
+  if (mFilesys->Append(mFd, zbuf, zlen, &mSyncHandler) != Error::OK)
     goto abort;
+  mOutstandingAppends++;
   mOffset += zlen;
 
   /**
@@ -220,9 +230,12 @@ int CellStoreV0::Finalize(uint64_t timestamp) {
   mBlockDeflater->deflate(mVarIndexBuffer, zBuffer, Constants::INDEX_VARIABLE_BLOCK_MAGIC, sizeof(mTrailer));
 
   // wait for fixed index write
-  if (mOutstandingId == 0 || !mSyncHandler.WaitForReply(eventPtr)) {
-    LOG_VA_ERROR("Problem writing fixed index to HDFS file '%s' : %s", mFilename.c_str(), Protocol::StringFormatMessage(eventPtr).c_str());
-    goto abort;
+  if (mOutstandingAppends > 0) {
+    if (!mSyncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("Problem writing fixed index to HDFS file '%s' : %s", mFilename.c_str(), Protocol::StringFormatMessage(eventPtr).c_str());
+      goto abort;
+    }
+    mOutstandingAppends--;
   }
 
   /**
@@ -255,6 +268,7 @@ int CellStoreV0::Finalize(uint64_t timestamp) {
 
   if (mFilesys->Append(mFd, zbuf, zlen) != Error::OK)
     goto abort;
+  mOutstandingAppends++;
   mOffset += zlen;
 
   /** close file for writing **/

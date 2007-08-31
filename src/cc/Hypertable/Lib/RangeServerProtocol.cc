@@ -41,33 +41,49 @@ namespace hypertable {
   }
 
   CommBuf *RangeServerProtocol::CreateRequestLoadRange(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec) {
-#if 0    
-    HeaderBuilder hbuilder;
-    CommBuf *cbuf = new CommBuf(hbuilder.HeaderLength() + sizeof(int16_t) + CommBuf::EncodedLength(tableName) + CommBuf::EncodedLength(schemaString));
-    cbuf->PrependString(schemaString);
-    cbuf->PrependString(tableName);
-    cbuf->PrependShort(COMMAND_LOAD_RANGE);
-    hbuilder.Reset(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
-    hbuilder.Encapsulate(cbuf);
+    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
+    hbuilder.AssignUniqueId();
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthRangeSpecification(rangeSpec));
+    cbuf->AppendShort(COMMAND_LOAD_RANGE);
+    EncodeRangeSpecification(cbuf->GetDataPtrAddress(), rangeSpec);
     return cbuf;
-#endif
-    return 0;
   }
 
   CommBuf *RangeServerProtocol::CreateRequestUpdate(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, uint8_t *data, size_t len) {
-    return 0;
+    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
+    hbuilder.AssignUniqueId();
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthRangeSpecification(rangeSpec) + len);
+    cbuf->AppendShort(COMMAND_UPDATE);
+    EncodeRangeSpecification(cbuf->GetDataPtrAddress(), rangeSpec);
+    memcpy(cbuf->GetDataPtr(), data, len);
+    return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::CreateRequestCreateScanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &spec) {
-    return 0;
+  CommBuf *RangeServerProtocol::CreateRequestCreateScanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &scanSpec) {
+    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
+    hbuilder.AssignUniqueId();
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthRangeSpecification(rangeSpec) + EncodedLengthScanSpecification(scanSpec));
+    cbuf->AppendShort(COMMAND_CREATE_SCANNER);
+    EncodeRangeSpecification(cbuf->GetDataPtrAddress(), rangeSpec);
+    EncodeScanSpecification(cbuf->GetDataPtrAddress(), scanSpec);
+    return cbuf;
   }
 
   CommBuf *RangeServerProtocol::CreateRequestFetchScanblock(struct sockaddr_in &addr, int scannerId) {
-    return 0;
+    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
+    hbuilder.AssignUniqueId();
+    CommBuf *cbuf = new CommBuf(hbuilder, 6);
+    cbuf->AppendShort(COMMAND_FETCH_SCANBLOCK);
+    cbuf->AppendInt(scannerId);
+    return cbuf;
   }
 
   CommBuf *RangeServerProtocol::CreateRequestStatus() {
-    return 0;
+    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
+    hbuilder.AssignUniqueId();
+    CommBuf *cbuf = new CommBuf(hbuilder, 2);
+    cbuf->AppendShort(COMMAND_STATUS);
+    return cbuf;
   }
 
 

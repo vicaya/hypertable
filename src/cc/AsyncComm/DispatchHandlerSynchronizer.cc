@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 #include "Common/Error.h"
 #include "Common/Logger.h"
 
@@ -65,28 +64,3 @@ bool DispatchHandlerSynchronizer::WaitForReply(EventPtr &eventPtr) {
 
   return false;
 }
-
-
-/**
- * @deprecated
- */
-bool DispatchHandlerSynchronizer::WaitForReply(EventPtr &eventPtr, uint32_t id) {
-  boost::mutex::scoped_lock lock(mMutex);
-
-  while (true) {
-
-    while (mReceiveQueue.empty())
-      mCond.wait(lock);
-  
-    eventPtr = mReceiveQueue.front();
-    mReceiveQueue.pop();
-
-    if (eventPtr->type == Event::MESSAGE && eventPtr->header->id == id)
-      break;
-    else if (eventPtr->type != Event::MESSAGE)
-      return false;
-  }
-
-  return true;
-}
-

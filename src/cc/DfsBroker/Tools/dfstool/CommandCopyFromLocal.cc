@@ -45,7 +45,6 @@ const char *CommandCopyFromLocal::msUsage[] = {
 
 int CommandCopyFromLocal::run() {
   DispatchHandlerSynchronizer syncHandler;
-  uint32_t msgId = 0;
   int32_t fd = 0;
   int error = Error::OK;
   EventPtr eventPtr;
@@ -73,7 +72,7 @@ int CommandCopyFromLocal::run() {
     buf = new uint8_t [ BUFFER_SIZE ];
     if ((nread = fread(buf, 1, BUFFER_SIZE, fp)) == 0)
       goto done;
-    if ((error = mClient->Append(fd, buf, nread, &syncHandler, &msgId)) != Error::OK)
+    if ((error = mClient->Append(fd, buf, nread, &syncHandler)) != Error::OK)
       goto done;
   }
 
@@ -91,7 +90,7 @@ int CommandCopyFromLocal::run() {
     buf = new uint8_t [ BUFFER_SIZE ];
     if ((nread = fread(buf, 1, BUFFER_SIZE, fp)) == 0)
       break;
-    if ((error = mClient->Append(fd, buf, nread, &syncHandler, &msgId)) != Error::OK)
+    if ((error = mClient->Append(fd, buf, nread, &syncHandler)) != Error::OK)
       goto abort;
   }
 

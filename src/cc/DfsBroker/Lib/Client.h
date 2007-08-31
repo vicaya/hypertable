@@ -59,53 +59,53 @@ namespace hypertable {
 	return mConnectionManager->WaitForConnection(mAddr, maxWaitSecs);
       }
 
-      virtual int Open(std::string &name, DispatchHandler *handler, uint32_t *msgIdp);
+      virtual int Open(std::string &name, DispatchHandler *handler);
       virtual int Open(std::string &name, int32_t *fdp);
 
       virtual int Create(std::string &name, bool overwrite, int32_t bufferSize,
-			 int32_t replication, int64_t blockSize, DispatchHandler *handler, uint32_t *msgIdp);
+			 int32_t replication, int64_t blockSize, DispatchHandler *handler);
       virtual int Create(std::string &name, bool overwrite, int32_t bufferSize,
 			 int32_t replication, int64_t blockSize, int32_t *fdp);
 
-      virtual int Close(int32_t fd, DispatchHandler *handler, uint32_t *msgIdp);
+      virtual int Close(int32_t fd, DispatchHandler *handler);
       virtual int Close(int32_t fd);
 
-      virtual int Read(int32_t fd, uint32_t amount, DispatchHandler *handler, uint32_t *msgIdp);
+      virtual int Read(int32_t fd, uint32_t amount, DispatchHandler *handler);
       virtual int Read(int32_t fd, uint32_t amount, uint8_t *dst, uint32_t *nreadp);
 
-      virtual int Append(int32_t fd, uint8_t *buf, uint32_t amount, DispatchHandler *handler, uint32_t *msgIdp);
+      virtual int Append(int32_t fd, uint8_t *buf, uint32_t amount, DispatchHandler *handler);
       virtual int Append(int32_t fd, uint8_t *buf, uint32_t amount);
 
-      virtual int Seek(int32_t fd, uint64_t offset, DispatchHandler *handler, uint32_t *msgIdp);
+      virtual int Seek(int32_t fd, uint64_t offset, DispatchHandler *handler);
       virtual int Seek(int32_t fd, uint64_t offset);
 
-      virtual int Remove(std::string &name, DispatchHandler *handler, uint32_t *msgIdp);
+      virtual int Remove(std::string &name, DispatchHandler *handler);
       virtual int Remove(std::string &name);
 
-      virtual int Length(std::string &name, DispatchHandler *handler, uint32_t *msgIdp);
+      virtual int Length(std::string &name, DispatchHandler *handler);
       virtual int Length(std::string &name, int64_t *lenp);
 
-      virtual int Pread(int32_t fd, uint64_t offset, uint32_t amount, DispatchHandler *handler, uint32_t *msgIdp);
+      virtual int Pread(int32_t fd, uint64_t offset, uint32_t amount, DispatchHandler *handler);
       virtual int Pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst, uint32_t *nreadp);
 
-      virtual int Mkdirs(std::string &name, DispatchHandler *handler, uint32_t *msgIdp);
+      virtual int Mkdirs(std::string &name, DispatchHandler *handler);
       virtual int Mkdirs(std::string &name);
 
-      virtual int Flush(int32_t fd, DispatchHandler *handler, uint32_t *msgIdp);
+      virtual int Flush(int32_t fd, DispatchHandler *handler);
       virtual int Flush(int32_t fd);
 
-      virtual int Rmdir(std::string &name, DispatchHandler *handler, uint32_t *msgIdp);
+      virtual int Rmdir(std::string &name, DispatchHandler *handler);
       virtual int Rmdir(std::string &name);
 
       int Status();
 
-      int Shutdown(uint16_t flags, DispatchHandler *handler, uint32_t *msgIdp);
+      int Shutdown(uint16_t flags, DispatchHandler *handler);
 
       Protocol *GetProtocolObject() { return mProtocol; }
     
     private:
 
-      int SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler, uint32_t *msgIdp=0);
+      int SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler);
 
       Comm                 *mComm;
       struct sockaddr_in    mAddr;

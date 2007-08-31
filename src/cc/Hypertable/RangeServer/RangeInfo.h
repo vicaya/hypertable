@@ -23,90 +23,88 @@
 #include <set>
 #include <string>
 #include <vector>
-
 #include <iostream>
 
-#include "Common/read_write_mutex_generic.hpp"
+#include <boost/thread/mutex.hpp>
 
 namespace hypertable {
 
   class RangeInfo {
   public:
-    RangeInfo() : mRwMutex(), mTableName(""), mStartRow(""), mEndRow(""), mLogDir(""), cellStores(), mSplitLogDir(""), mSplitPoint("") {
+    RangeInfo() : mMutex(), mTableName(""), mStartRow(""), mEndRow(""), mLogDir(""), cellStores(), mSplitLogDir(""), mSplitPoint("") {
       return;
     }
 
     void GetTableName(std::string &tableName) {
-      boost::read_write_mutex::scoped_read_lock lock(mRwMutex);
+      boost::mutex::scoped_lock lock(mMutex);
       tableName = mTableName;
     }
     void SetTableName(std::string &tableName) {
-      boost::read_write_mutex::scoped_write_lock lock(mRwMutex);
+      boost::mutex::scoped_lock lock(mMutex);
       mTableName = tableName;
     }
 
     void GetStartRow(std::string &startRow) {
-      boost::read_write_mutex::scoped_read_lock lock(mRwMutex);
+      boost::mutex::scoped_lock lock(mMutex);
       startRow = mStartRow;
     }
     void SetStartRow(std::string &startRow) {
-      boost::read_write_mutex::scoped_write_lock lock(mRwMutex);
+      boost::mutex::scoped_lock lock(mMutex);
       mStartRow = startRow;
     }
 
     void GetEndRow(std::string &endRow) {
-      boost::read_write_mutex::scoped_read_lock lock(mRwMutex);
+      boost::mutex::scoped_lock lock(mMutex);
       endRow = mEndRow;
     }
     void SetEndRow(std::string &endRow) {
-      boost::read_write_mutex::scoped_write_lock lock(mRwMutex);
+      boost::mutex::scoped_lock lock(mMutex);
       mEndRow = endRow;
     }
 
     void GetLogDir(std::string &logDir) {
-      boost::read_write_mutex::scoped_read_lock lock(mRwMutex);
+      boost::mutex::scoped_lock lock(mMutex);
       logDir = mLogDir;
     }
     void SetLogDir(std::string &logDir) {
-      boost::read_write_mutex::scoped_write_lock lock(mRwMutex);
+      boost::mutex::scoped_lock lock(mMutex);
       mLogDir = logDir;
     }
 
     void AddCellStore(std::string &cellStore) {
-      boost::read_write_mutex::scoped_write_lock lock(mRwMutex);
+      boost::mutex::scoped_lock lock(mMutex);
       cellStores.insert(cellStore);
     }
     void RemoveCellStore(std::string &cellStore) {
-      boost::read_write_mutex::scoped_write_lock lock(mRwMutex);
+      boost::mutex::scoped_lock lock(mMutex);
       cellStores.erase(cellStore);
     }
     void GetTables(std::vector<std::string> &tableVec) {
-      boost::read_write_mutex::scoped_read_lock lock(mRwMutex);
+      boost::mutex::scoped_lock lock(mMutex);
       for (std::set<std::string>::iterator iter = cellStores.begin(); iter != cellStores.end(); iter++)
 	tableVec.push_back(*iter);
     }
 
     void GetSplitLogDir(std::string &splitLogDir) {
-      boost::read_write_mutex::scoped_read_lock lock(mRwMutex);
+      boost::mutex::scoped_lock lock(mMutex);
       splitLogDir = mSplitLogDir;
     }
     void SetSplitLogDir(std::string &splitLogDir) {
-      boost::read_write_mutex::scoped_write_lock lock(mRwMutex);
+      boost::mutex::scoped_lock lock(mMutex);
       mSplitLogDir = splitLogDir;
     }
 
     void GetSplitPoint(std::string &splitPoint) {
-      boost::read_write_mutex::scoped_read_lock lock(mRwMutex);
+      boost::mutex::scoped_lock lock(mMutex);
       splitPoint = mSplitPoint;
     }
     void SetSplitPoint(std::string &splitPoint) {
-      boost::read_write_mutex::scoped_write_lock lock(mRwMutex);
+      boost::mutex::scoped_lock lock(mMutex);
       mSplitPoint = splitPoint;
     }
 
-
   private:
-    boost::read_write_mutex  mRwMutex;
+    boost::mutex mMutex;
     std::string mTableName;
     std::string mStartRow;
     std::string mEndRow;
@@ -117,7 +115,6 @@ namespace hypertable {
   };
 
   typedef boost::shared_ptr<RangeInfo> RangeInfoPtr;
-
 
 }
 

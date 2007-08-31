@@ -47,7 +47,6 @@ const char *CommandCopyToLocal::msUsage[] = {
 
 int CommandCopyToLocal::run() {
   DispatchHandlerSynchronizer syncHandler;
-  uint32_t msgId = 0;
   int32_t fd = 0;
   int error = Error::OK;
   EventPtr eventPtr;
@@ -79,13 +78,13 @@ int CommandCopyToLocal::run() {
       goto abort;
   }
 
-  if ((error = mClient->Read(fd, BUFFER_SIZE, &syncHandler, &msgId)) != Error::OK)
+  if ((error = mClient->Read(fd, BUFFER_SIZE, &syncHandler)) != Error::OK)
     goto abort;
 
-  if ((error = mClient->Read(fd, BUFFER_SIZE, &syncHandler, &msgId)) != Error::OK)
+  if ((error = mClient->Read(fd, BUFFER_SIZE, &syncHandler)) != Error::OK)
     goto abort;
 
-  if ((error = mClient->Read(fd, BUFFER_SIZE, &syncHandler, &msgId)) != Error::OK)
+  if ((error = mClient->Read(fd, BUFFER_SIZE, &syncHandler)) != Error::OK)
     goto abort;
 
   while (syncHandler.WaitForReply(eventPtr)) {
@@ -103,11 +102,11 @@ int CommandCopyToLocal::run() {
     }
 
     if (readHeader->amount < BUFFER_SIZE) {
-      syncHandler.WaitForReply(eventPtr, msgId);
+      syncHandler.WaitForReply(eventPtr);
       break;
     }
 
-    if ((error = mClient->Read(fd, BUFFER_SIZE, &syncHandler, &msgId)) != Error::OK)
+    if ((error = mClient->Read(fd, BUFFER_SIZE, &syncHandler)) != Error::OK)
       goto abort;
   }
 

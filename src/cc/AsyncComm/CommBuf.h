@@ -120,6 +120,11 @@ namespace hypertable {
     void *GetDataPtr() { return dataPtr; }
 
     /**
+     * Returns address of the primary buffer pointer.
+     */
+    uint8_t **GetDataPtrAddress() { return &dataPtr; }
+
+    /**
      * Advance the primary buffer pointer by len bytes
      *
      * @param len the number of bytes to advance the pointer by

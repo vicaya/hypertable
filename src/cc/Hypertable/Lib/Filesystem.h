@@ -28,42 +28,42 @@ namespace hypertable {
   class Filesystem {
   public:
 
-    virtual int Open(std::string &name, DispatchHandler *handler, uint32_t *msgIdp) = 0;
+    virtual int Open(std::string &name, DispatchHandler *handler) = 0;
     virtual int Open(std::string &name, int32_t *fdp) = 0;
 
     virtual int Create(std::string &name, bool overwrite, int32_t bufferSize,
-		       int32_t replication, int64_t blockSize, DispatchHandler *handler, uint32_t *msgIdp) = 0;
+		       int32_t replication, int64_t blockSize, DispatchHandler *handler) = 0;
     virtual int Create(std::string &name, bool overwrite, int32_t bufferSize,
 		       int32_t replication, int64_t blockSize, int32_t *fdp) = 0;
 
-    virtual int Close(int32_t fd, DispatchHandler *handler, uint32_t *msgIdp) = 0;
+    virtual int Close(int32_t fd, DispatchHandler *handler) = 0;
     virtual int Close(int32_t fd) = 0;
 
-    virtual int Read(int32_t fd, uint32_t amount, DispatchHandler *handler, uint32_t *msgIdp) = 0;
+    virtual int Read(int32_t fd, uint32_t amount, DispatchHandler *handler) = 0;
     virtual int Read(int32_t fd, uint32_t amount, uint8_t *dst, uint32_t *nreadp) = 0;
 
-    virtual int Append(int32_t fd, uint8_t *buf, uint32_t amount, DispatchHandler *handler, uint32_t *msgIdp) = 0;
+    virtual int Append(int32_t fd, uint8_t *buf, uint32_t amount, DispatchHandler *handler) = 0;
     virtual int Append(int32_t fd, uint8_t *buf, uint32_t amount) = 0;
 
-    virtual int Seek(int32_t fd, uint64_t offset, DispatchHandler *handler, uint32_t *msgIdp) = 0;
+    virtual int Seek(int32_t fd, uint64_t offset, DispatchHandler *handler) = 0;
     virtual int Seek(int32_t fd, uint64_t offset) = 0;
 
-    virtual int Remove(std::string &name, DispatchHandler *handler, uint32_t *msgIdp) = 0;
+    virtual int Remove(std::string &name, DispatchHandler *handler) = 0;
     virtual int Remove(std::string &name) = 0;
 
-    virtual int Length(std::string &name, DispatchHandler *handler, uint32_t *msgIdp) = 0;
+    virtual int Length(std::string &name, DispatchHandler *handler) = 0;
     virtual int Length(std::string &name, int64_t *lenp) = 0;
 
-    virtual int Pread(int32_t fd, uint64_t offset, uint32_t amount, DispatchHandler *handler, uint32_t *msgIdp) = 0;
+    virtual int Pread(int32_t fd, uint64_t offset, uint32_t amount, DispatchHandler *handler) = 0;
     virtual int Pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst, uint32_t *nreadp) = 0;
 
-    virtual int Mkdirs(std::string &name, DispatchHandler *handler, uint32_t *msgIdp) = 0;
+    virtual int Mkdirs(std::string &name, DispatchHandler *handler) = 0;
     virtual int Mkdirs(std::string &name) = 0;
 
-    virtual int Rmdir(std::string &name, DispatchHandler *handler, uint32_t *msgIdp) = 0;
+    virtual int Rmdir(std::string &name, DispatchHandler *handler) = 0;
     virtual int Rmdir(std::string &name) = 0;
 
-    virtual int Flush(int32_t fd, DispatchHandler *handler, uint32_t *msgIdp) = 0;
+    virtual int Flush(int32_t fd, DispatchHandler *handler) = 0;
     virtual int Flush(int32_t fd) = 0;
 
   };
