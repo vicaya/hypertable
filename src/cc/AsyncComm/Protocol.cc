@@ -37,6 +37,8 @@ using namespace std;
  *
  */
 int32_t Protocol::ResponseCode(Event *event) {
+  if (event->type == Event::ERROR)
+    return event->error;
   if (event->messageLen < sizeof(int32_t))
     return Error::RESPONSE_TRUNCATED;
   int32_t error;
