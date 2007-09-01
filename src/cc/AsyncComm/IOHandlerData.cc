@@ -317,7 +317,7 @@ int IOHandlerData::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *dispatchHan
 
 
 int IOHandlerData::FlushSendQueue() {
-  ssize_t nwritten, towrite, remaining;
+  ssize_t nwritten, towrite;
   struct iovec vec[2];
   int count;
 
@@ -327,15 +327,14 @@ int IOHandlerData::FlushSendQueue() {
 
     count = 0;
     towrite = 0;
-    remaining = cbufPtr->dataLen - (cbufPtr->dataPtr - cbufPtr->data);
-    if (remaining > 0) {
-      vec[0].iov_base = (uint8_t *)cbufPtr->dataPtr;
-      vec[0].iov_len = remaining;
-      towrite = remaining;
+    if (cbufPtr->dataLen > 0) {
+      vec[0].iov_base = (void *)cbufPtr->data;
+      vec[0].iov_len = cbufPtr->dataLen;
+      towrite = cbufPtr->dataLen;
       ++count;
     }
-    remaining = cbufPtr->extLen - (cbufPtr->extPtr - cbufPtr->ext);
-    if (remaining != 0) {
+    if (cbufPtr->ext != 0) {
+      ssize_t remaining = cbufPtr->extLen - (cbufPtr->extPtr - cbufPtr->ext);
       if (remaining > 0) {
 	vec[count].iov_base = (void *)cbufPtr->extPtr;
 	vec[count].iov_len = remaining;
@@ -352,18 +351,21 @@ int IOHandlerData::FlushSendQueue() {
     else if (nwritten < towrite) {
       if (nwritten == 0)
 	break;
-      remaining = cbufPtr->dataLen - (cbufPtr->dataPtr - cbufPtr->data);
-      if (remaining > 0) {
-	if (nwritten < remaining) {
-	  cbufPtr->dataPtr += nwritten;
+      if (cbufPtr->dataLen > 0) {
+	if (nwritten < (ssize_t)cbufPtr->dataLen) {
+	  cbufPtr->dataLen -= nwritten;
+	  cbufPtr->data += nwritten;
 	  break;
 	}
-	cbufPtr->dataPtr = (uint8_t *)cbufPtr->data + cbufPtr->dataLen;
-	nwritten -= remaining;
+	else {
+	  nwritten -= cbufPtr->dataLen;
+	  cbufPtr->dataLen = 0;
+	}
       }
-      cbufPtr->extPtr += nwritten;
-      assert (cbufPtr->extPtr < (cbufPtr->ext + cbufPtr->extLen));
-      break;
+      if (cbufPtr->ext != 0) {
+	cbufPtr->extPtr += nwritten;
+	break;
+      }
     }
 
     // buffer written successfully, now remove from queue (which will destroy buffer)
