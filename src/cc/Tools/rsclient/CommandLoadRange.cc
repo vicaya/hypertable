@@ -29,7 +29,7 @@ using namespace hypertable;
 using namespace std;
 
 const char *CommandLoadRange::msUsage[] = {
-  "load range <range-spec>",
+  "load range <range>",
   "",
   "  This command issues a LOAD RANGE command to the range server.",
   (const char *)0

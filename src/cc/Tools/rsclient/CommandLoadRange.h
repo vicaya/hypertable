@@ -31,7 +31,7 @@ namespace hypertable {
   class CommandLoadRange : public InteractiveCommand {
   public:
     CommandLoadRange(MasterClient *masterClient, RangeServerClient *rsClient) : mMaster(masterClient), mRangeServer(rsClient) { return; }
-    virtual const char *CommandText() { return "create table"; }
+    virtual const char *CommandText() { return "load range"; }
     virtual const char **Usage() { return msUsage; }
     virtual int run();
 

@@ -129,6 +129,41 @@ namespace {
     "This program provides a command line interface to a Range Server.",
     (const char *)0
   };
+
+  const char *helpHeader[] = {
+    "",
+    "The following commands can be used to send requests to a Range Server.",
+    "In the command descriptions below, the argument <range> has the format",
+    "<table>[<startRow>:<endRow>].  For example, to specify a range from",
+    "table Test that has a start row of 'carrot' and an end row of 'kerchoo',",
+    "you would type the following:",
+    "",
+    "  Test[carrot:kerchoo]",
+    "",
+    "To specify a range that starts at the beginning of a table or one that",
+    "spans to the end of a table, you can omit the row key as follows:",
+    "",
+    "  Test[carrot:]",
+    "  Test[:kerchoo]",
+    "",
+    "",
+    "Command Summary",
+    "---------------",
+    "",
+    (const char *)0
+  };
+
+  const char *helpTrailer[] = {
+    "help",
+    "",
+    "  Display this help text.",
+    "",
+    "quit",
+    "",
+    "  Exit the program.",
+    "",
+    (const char *)0
+  };
   
 }
 
@@ -213,11 +248,12 @@ int main(int argc, char **argv) {
       if (!strcmp(line, "quit") || !strcmp(line, "exit"))
 	exit(0);
       else if (!strcmp(line, "help")) {
-	cout << endl;
+	Usage::Dump(helpHeader);
 	for (i=0; i<commands.size(); i++) {
 	  Usage::Dump(commands[i]->Usage());
 	  cout << endl;
 	}
+	Usage::Dump(helpTrailer);
       }
       else
 	cout << "Unrecognized command." << endl;
