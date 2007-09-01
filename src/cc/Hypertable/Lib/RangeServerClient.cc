@@ -26,7 +26,7 @@
 using namespace hypertable;
 
 
-RangeServerClient::RangeServerClient(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mConnectionManager(connManager) {
+RangeServerClient::RangeServerClient(ConnectionManager *connManager) : mConnectionManager(connManager) {
   mComm = mConnectionManager->GetComm();
 }
 
@@ -40,14 +40,14 @@ RangeServerClient::~RangeServerClient() {
 
 int RangeServerClient::LoadRange(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, DispatchHandler *handler) {
   CommBufPtr cbufPtr( RangeServerProtocol::CreateRequestLoadRange(addr, rangeSpec) );
-  return SendMessage(cbufPtr, handler);
+  return SendMessage(addr, cbufPtr, handler);
 }
 
 int RangeServerClient::LoadRange(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( RangeServerProtocol::CreateRequestLoadRange(addr, rangeSpec) );
-  int error = SendMessage(cbufPtr, &syncHandler);
+  int error = SendMessage(addr, cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
       LOG_VA_ERROR("RangeServer 'load range' error : %s", Protocol::StringFormatMessage(eventPtr).c_str());
@@ -59,7 +59,7 @@ int RangeServerClient::LoadRange(struct sockaddr_in &addr, RangeSpecificationT &
 
 int RangeServerClient::Update(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, uint8_t *data, size_t len, DispatchHandler *handler) {
   CommBufPtr cbufPtr( RangeServerProtocol::CreateRequestUpdate(addr, rangeSpec, data, len) );
-  return SendMessage(cbufPtr, handler);
+  return SendMessage(addr, cbufPtr, handler);
 }
 
 
@@ -67,7 +67,7 @@ int RangeServerClient::Update(struct sockaddr_in &addr, RangeSpecificationT &ran
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( RangeServerProtocol::CreateRequestUpdate(addr, rangeSpec, data, len) );
-  int error = SendMessage(cbufPtr, &syncHandler);
+  int error = SendMessage(addr, cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
       LOG_VA_ERROR("RangeServer 'update' error : %s", Protocol::StringFormatMessage(eventPtr).c_str());
@@ -80,7 +80,7 @@ int RangeServerClient::Update(struct sockaddr_in &addr, RangeSpecificationT &ran
 
 int RangeServerClient::CreateScanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &scanSpec, DispatchHandler *handler) {
   CommBufPtr cbufPtr( RangeServerProtocol::CreateRequestCreateScanner(addr, rangeSpec, scanSpec) );
-  return SendMessage(cbufPtr, handler);
+  return SendMessage(addr, cbufPtr, handler);
 }
 
 
@@ -88,7 +88,7 @@ int RangeServerClient::CreateScanner(struct sockaddr_in &addr, RangeSpecificatio
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( RangeServerProtocol::CreateRequestCreateScanner(addr, rangeSpec, scanSpec) );
-  int error = SendMessage(cbufPtr, &syncHandler);
+  int error = SendMessage(addr, cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
       LOG_VA_ERROR("RangeServer 'create scanner' error : %s", Protocol::StringFormatMessage(eventPtr).c_str());
@@ -101,7 +101,7 @@ int RangeServerClient::CreateScanner(struct sockaddr_in &addr, RangeSpecificatio
 
 int RangeServerClient::FetchScanblock(struct sockaddr_in &addr, int scannerId, DispatchHandler *handler) {
   CommBufPtr cbufPtr( RangeServerProtocol::CreateRequestFetchScanblock(addr, scannerId) );
-  return SendMessage(cbufPtr, handler);
+  return SendMessage(addr, cbufPtr, handler);
 }
 
 
@@ -109,7 +109,7 @@ int RangeServerClient::FetchScanblock(struct sockaddr_in &addr, int scannerId) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( RangeServerProtocol::CreateRequestFetchScanblock(addr, scannerId) );
-  int error = SendMessage(cbufPtr, &syncHandler);
+  int error = SendMessage(addr, cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
       LOG_VA_ERROR("RangeServer 'fetch scanblock' error : %s", Protocol::StringFormatMessage(eventPtr).c_str());
@@ -119,12 +119,12 @@ int RangeServerClient::FetchScanblock(struct sockaddr_in &addr, int scannerId) {
   return error;
 }
 
-int RangeServerClient::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler) {
+int RangeServerClient::SendMessage(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *handler) {
   int error;
 
-  if ((error = mComm->SendRequest(mAddr, cbufPtr, handler)) != Error::OK) {
+  if ((error = mComm->SendRequest(addr, cbufPtr, handler)) != Error::OK) {
     LOG_VA_WARN("Comm::SendRequest to %s:%d failed - %s",
-		inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port), Error::GetText(error));
+		inet_ntoa(addr.sin_addr), ntohs(addr.sin_port), Error::GetText(error));
   }
   return error;
 }

@@ -39,12 +39,8 @@ namespace hypertable {
   class RangeServerClient {
   public:
 
-    RangeServerClient(ConnectionManager *connManager, PropertiesPtr &propsPtr);
+    RangeServerClient(ConnectionManager *connManager);
     ~RangeServerClient();
-
-    bool WaitForConnection(long maxWaitSecs) {
-      return mConnectionManager->WaitForConnection(mAddr, maxWaitSecs);
-    }
 
     int LoadRange(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, DispatchHandler *handler);
     int LoadRange(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec);
@@ -60,11 +56,10 @@ namespace hypertable {
 
   private:
 
-    int SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler);
+    int SendMessage(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *handler);
   
     Comm                *mComm;
     ConnectionManager   *mConnectionManager;
-    struct sockaddr_in   mAddr;
   };
 
   typedef boost::shared_ptr<RangeServerClient> RangeServerClientPtr;
