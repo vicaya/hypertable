@@ -26,6 +26,9 @@ set (CMAKE_INSTALL_PREFIX "/Users/doug/hypertable")
 # Enable testing
 enable_testing()
 
+# Uncomment the following to build dynamic libraries
+# set (BUILD_SHARED_LIBS ON)
+
 # Locate zlib
 find_package(ZLIB REQUIRED)
 find_package(Boost REQUIRED)
