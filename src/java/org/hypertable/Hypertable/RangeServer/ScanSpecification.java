@@ -25,6 +25,7 @@ import java.util.Vector;
 import java.util.Enumeration;
 
 import org.hypertable.AsyncComm.CommBuf;
+import org.hypertable.AsyncComm.Serialization;
 
 public class ScanSpecification {
 
@@ -58,15 +59,15 @@ public class ScanSpecification {
 	length += 4;  
 
 	// startRow
-	length += CommBuf.EncodedLength(startRow);
+	length += Serialization.EncodedLengthString(startRow);
 
 	// endRow
-	length += CommBuf.EncodedLength(endRow);
+	length += Serialization.EncodedLengthString(endRow);
 
 	// columns
 	if (columns != null) {
 	    for (Enumeration<String> e = columns.elements() ; e.hasMoreElements() ;) {
-		length += CommBuf.EncodedLength(e.nextElement());
+		length += Serialization.EncodedLengthString(e.nextElement());
 	    }
 	}
 	// column count
@@ -81,21 +82,21 @@ public class ScanSpecification {
 	return length;
     }
 
-    void Prepend(CommBuf cbuf) {
-	cbuf.PrependLong(maxTime);
-	cbuf.PrependLong(minTime);
+    void Append(CommBuf cbuf) {
+	cbuf.AppendInt(rowLimit);
+	cbuf.AppendInt(cellLimit);
+	cbuf.AppendString(startRow);
+	cbuf.AppendString(endRow);
 	if (columns != null) {
+	    cbuf.AppendShort((short)columns.size());
 	    for (Enumeration<String> e = columns.elements() ; e.hasMoreElements() ;) {
-		cbuf.PrependString(e.nextElement());
+		cbuf.AppendString(e.nextElement());
 	    }
-	    cbuf.PrependShort((short)columns.size());
 	}
 	else
-	    cbuf.PrependShort((short)0);
-	cbuf.PrependString(endRow);
-	cbuf.PrependString(startRow);
-	cbuf.PrependInt(cellLimit);
-	cbuf.PrependInt(rowLimit);
+	    cbuf.AppendShort((short)0);
+	cbuf.AppendLong(minTime);
+	cbuf.AppendLong(maxTime);
     }
 
     public int rowLimit = 0;

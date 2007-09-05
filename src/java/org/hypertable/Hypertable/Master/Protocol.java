@@ -24,36 +24,31 @@ import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.Message;
 import org.hypertable.AsyncComm.HeaderBuilder;
+import org.hypertable.AsyncComm.Serialization;
 
 public class Protocol extends org.hypertable.AsyncComm.Protocol {
 
     public CommBuf BuildRequestCreateTable(String tableName, String schema) {
-	HeaderBuilder hbuilder = new HeaderBuilder();
-	CommBuf cbuf = new CommBuf(hbuilder.HeaderLength() + 2 + CommBuf.EncodedLength(tableName) + CommBuf.EncodedLength(schema));
-	cbuf.PrependString(schema);
-	cbuf.PrependString(tableName);
-	cbuf.PrependShort(COMMAND_CREATE_TABLE);
-	hbuilder.Reset(Message.PROTOCOL_HYPERTABLE_MASTER);
-	hbuilder.Encapsulate(cbuf);
+	HeaderBuilder hbuilder = new HeaderBuilder(Message.PROTOCOL_HYPERTABLE_MASTER, 0);
+	CommBuf cbuf = new CommBuf(hbuilder, 2 + Serialization.EncodedLengthString(tableName) + Serialization.EncodedLengthString(schema));
+	cbuf.AppendShort(COMMAND_CREATE_TABLE);
+	cbuf.AppendString(tableName);
+	cbuf.AppendString(schema);
 	return cbuf;
     }
 
     public CommBuf BuildRequestGetSchema(String tableName) {
-	HeaderBuilder hbuilder = new HeaderBuilder();
-	CommBuf cbuf = new CommBuf(hbuilder.HeaderLength() + 2 + CommBuf.EncodedLength(tableName));
-	cbuf.PrependString(tableName);
-	cbuf.PrependShort(COMMAND_GET_SCHEMA);
-	hbuilder.Reset(Message.PROTOCOL_HYPERTABLE_MASTER);
-	hbuilder.Encapsulate(cbuf);
+	HeaderBuilder hbuilder = new HeaderBuilder(Message.PROTOCOL_HYPERTABLE_MASTER, 0);
+	CommBuf cbuf = new CommBuf(hbuilder, 2 + Serialization.EncodedLengthString(tableName));
+	cbuf.AppendShort(COMMAND_GET_SCHEMA);
+	cbuf.AppendString(tableName);
 	return cbuf;
     }
 
     public CommBuf BuildRequestBadCommand(short command) {
-	HeaderBuilder hbuilder = new HeaderBuilder();
-	CommBuf cbuf = new CommBuf(hbuilder.HeaderLength() + 2);
-	cbuf.PrependShort(command);
-	hbuilder.Reset(Message.PROTOCOL_HYPERTABLE_MASTER);
-	hbuilder.Encapsulate(cbuf);
+	HeaderBuilder hbuilder = new HeaderBuilder(Message.PROTOCOL_HYPERTABLE_MASTER, 0);
+	CommBuf cbuf = new CommBuf(hbuilder, 2);
+	cbuf.AppendShort(command);
 	return cbuf;
     }
 

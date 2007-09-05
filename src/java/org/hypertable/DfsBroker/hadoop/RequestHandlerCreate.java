@@ -24,7 +24,7 @@ import java.net.ProtocolException;
 import java.util.logging.Logger;
 import org.hypertable.AsyncComm.ApplicationHandler;
 import org.hypertable.AsyncComm.Comm;
-import org.hypertable.AsyncComm.CommBuf;
+import org.hypertable.AsyncComm.Serialization;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.Common.Error;
 
@@ -61,7 +61,7 @@ public class RequestHandlerCreate extends ApplicationHandler {
 	
 	    blockSize = mEvent.msg.buf.getLong();
 
-	    if ((fileName = CommBuf.DecodeString(mEvent.msg.buf)) == null)
+	    if ((fileName = Serialization.DecodeString(mEvent.msg.buf)) == null)
 		throw new ProtocolException("Filename not properly encoded in request packet");
 
 	    mBroker.Create(cb, fileName, overwrite, bufferSize, replication, blockSize);

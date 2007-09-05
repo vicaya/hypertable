@@ -176,13 +176,18 @@ namespace hypertable {
      * @return true on success, false if buffer has insufficient room
      */
     inline bool DecodeByteArray(uint8_t **bufPtr, size_t *remainingPtr, uint8_t **dstPtr, int32_t *lenPtr) {
+      // length
       if (*remainingPtr < 4)
 	return false;
       memcpy(lenPtr, *bufPtr, 4);
-      if (*remainingPtr < *lenPtr + 4)
+      (*remainingPtr) -= 4;
+      (*bufPtr) += 4;
+      // data
+      if (*remainingPtr < *lenPtr)
 	return false;
-      (*remainingPtr) -= *lenPtr + 4;
-      (*bufPtr) += *lenPtr + 4;
+      *dstPtr = (*bufPtr);
+      (*remainingPtr) -= *lenPtr;
+      (*bufPtr) += *lenPtr;
       return true;
     }
 

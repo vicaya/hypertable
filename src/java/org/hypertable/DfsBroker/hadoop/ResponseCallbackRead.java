@@ -34,21 +34,11 @@ public class ResponseCallbackRead extends ResponseCallback {
     }
 
     int response(long offset, int nread, byte [] data) {
-	CommBuf cbuf = new CommBuf(mHeaderBuilder.HeaderLength() + 16);
-	cbuf.PrependInt(nread);
-	cbuf.PrependLong(offset);
-	cbuf.PrependInt(Error.OK);
-	
-	if (nread > 0) {
-	    cbuf.ext = ByteBuffer.allocateDirect(nread);
-	    cbuf.ext.put(data, 0, nread);
-	    cbuf.ext.flip();
-	}
-
-	// Encapsulate with Comm message response header
-	mHeaderBuilder.LoadFromMessage(mEvent.msg);
-	mHeaderBuilder.Encapsulate(cbuf);
-
+	mHeaderBuilder.InitializeFromRequest(mEvent.msg);
+	CommBuf cbuf = new CommBuf(mHeaderBuilder, 16);
+	cbuf.AppendInt(Error.OK);
+	cbuf.AppendLong(offset);
+	cbuf.AppendInt(nread);
 	return mComm.SendResponse(mEvent.addr, cbuf);
     }
 }

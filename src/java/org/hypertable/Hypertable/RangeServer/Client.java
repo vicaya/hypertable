@@ -123,10 +123,8 @@ public class Client {
 
 	if ((error = mComm.SendRequest(mAddr, cbuf, handler)) != Error.OK) {
 	    log.severe("Client.SendRangeServerMessage to " + mAddr + " failed - " + Error.GetText(error));
-	    return 0;
 	}
-
-	return cbuf.id;
+	return error;
     }
  
     private Comm mComm;

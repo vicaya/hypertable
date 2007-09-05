@@ -45,7 +45,7 @@ public abstract class Protocol {
 	if (error == Error.OK)
 	    return Error.GetText(error);
 	else {
-	    String str = CommBuf.DecodeString(event.msg.buf);
+	    String str = Serialization.DecodeString(event.msg.buf);
 
 	    if (str == null)
 		return Error.GetText(error) + " - truncated";
@@ -56,10 +56,10 @@ public abstract class Protocol {
 
     public abstract String CommandText(short command);
 
-    public static CommBuf CreateErrorMessage(int error, String msg, int extraSpace) {
-	CommBuf cbuf = new CommBuf(extraSpace + 4 + CommBuf.EncodedLength(msg));
-	cbuf.PrependString(msg);
-	cbuf.PrependInt(error);
+    public static CommBuf CreateErrorMessage(HeaderBuilder hbuilder, int error, String msg) {
+	CommBuf cbuf = new CommBuf(hbuilder, 4 + Serialization.EncodedLengthString(msg));
+	cbuf.AppendInt(error);
+	cbuf.AppendString(msg);
 	return cbuf;
     }
 

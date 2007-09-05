@@ -39,9 +39,8 @@ import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.ConnectionManager;
 import org.hypertable.AsyncComm.Event;
-import org.hypertable.AsyncComm.MsgId;
 import org.hypertable.AsyncComm.ReactorFactory;
-
+import org.hypertable.AsyncComm.Serialization;
 
 public class Client {
 
@@ -94,9 +93,9 @@ public class Client {
  
    /**
      */
-    public int CreateTable(String tableName, String schema, DispatchHandler handler, MsgId msgId) {
+    public int CreateTable(String tableName, String schema, DispatchHandler handler) {
 	CommBuf cbuf = mProtocol.BuildRequestCreateTable(tableName, schema);
-	return SendMasterMessage(cbuf, handler, msgId);
+	return SendMasterMessage(cbuf, handler);
     }
 
     /**
@@ -104,8 +103,7 @@ public class Client {
     public int CreateTable(String tableName, String schema) throws InterruptedException {
 	DispatchHandlerSynchronizer handler = new DispatchHandlerSynchronizer(mTimeout);
 	CommBuf cbuf = mProtocol.BuildRequestCreateTable(tableName, schema);
-	MsgId msgId = new MsgId();
-	int error = SendMasterMessage(cbuf, handler, msgId);
+	int error = SendMasterMessage(cbuf, handler);
 	if (error == Error.OK) {
 	    Event event = handler.WaitForEvent();
 	    if (event == null)
@@ -121,9 +119,9 @@ public class Client {
    /**
     * Get schema, non-blocking
     */
-    public int GetSchema(String tableName, StringBuilder schema, DispatchHandler handler, MsgId msgId) {
+    public int GetSchema(String tableName, StringBuilder schema, DispatchHandler handler) {
 	CommBuf cbuf = mProtocol.BuildRequestGetSchema(tableName);
-	return SendMasterMessage(cbuf, handler, msgId);
+	return SendMasterMessage(cbuf, handler);
     }
 
     /**
@@ -132,8 +130,7 @@ public class Client {
     public int GetSchema(String tableName, StringBuilder schema) throws InterruptedException {
 	DispatchHandlerSynchronizer handler = new DispatchHandlerSynchronizer(mTimeout);
 	CommBuf cbuf = mProtocol.BuildRequestGetSchema(tableName);
-	MsgId msgId = new MsgId();
-	int error = SendMasterMessage(cbuf, handler, msgId);
+	int error = SendMasterMessage(cbuf, handler);
 	if (error == Error.OK) {
 	    Event event = handler.WaitForEvent();
 	    if (event == null)
@@ -144,7 +141,7 @@ public class Client {
 	    else {
 		event.msg.RewindToProtocolHeader();
 		event.msg.buf.getInt();   // skip error
-		String schemaString = CommBuf.DecodeString(event.msg.buf);
+		String schemaString = Serialization.DecodeString(event.msg.buf);
 		if (schemaString == null) {
 		    log.severe("GetSchema failure - problem decoding response packet");
 		    return Error.PROTOCOL_ERROR;
@@ -158,22 +155,21 @@ public class Client {
 
    /**
     */
-    public int BadCommand(short command, DispatchHandler handler, MsgId msgId) {
+    public int BadCommand(short command, DispatchHandler handler) {
 	CommBuf cbuf = mProtocol.BuildRequestBadCommand(command);
-	return SendMasterMessage(cbuf, handler, msgId);
+	return SendMasterMessage(cbuf, handler);
     }
 
 
     /**
      * 
      */
-    private int SendMasterMessage(CommBuf cbuf, DispatchHandler handler, MsgId msgId) {
+    private int SendMasterMessage(CommBuf cbuf, DispatchHandler handler) {
 	int error;
 	if ((error = mComm.SendRequest(mAddr, cbuf, handler)) != Error.OK) {
 	    log.severe("Client.SendMasterMessage to " + mAddr + " failed - " + Error.GetText(error));
 	    return error;
 	}
-	msgId.set(cbuf.id);
 	return Error.OK;
     }
  

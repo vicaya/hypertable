@@ -26,106 +26,86 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 public class CommBuf {
-    public CommBuf(int dataLen) {
-	data = ByteBuffer.allocate(dataLen);
+
+    public CommBuf(HeaderBuilder hbuilder, int len) {
+	len += hbuilder.HeaderLength();
+	data = ByteBuffer.allocate(len);
 	data.order(ByteOrder.LITTLE_ENDIAN);
-	data.position(data.limit());
-    }
-    public void PrependData(byte [] dataBytes) {
-	data.position(data.position()-dataBytes.length);
-	data.mark();
-	data.put(dataBytes);
-	data.reset();
-    }
-    public void PrependData(ByteBuffer buf) {
-	data.position(data.position()-buf.remaining());
-	data.mark();
-	data.put(buf);
-	data.reset();
-    }
-    public void PrependByte(byte b) {
-	data.position(data.position()-1);
-	data.put(b);
-	data.position(data.position()-1);
-    }
-    public void PrependShort(short s) {
-	data.position(data.position()-2);
-	data.putShort(s);
-	data.position(data.position()-2);
-    }
-    public void PrependInt(int i) {
-	data.position(data.position()-4);
-	data.putInt(i);
-	data.position(data.position()-4);
-    }
-    public void PrependLong(long l) {
-	data.position(data.position()-8);
-	data.putLong(l);
-	data.position(data.position()-8);
+	hbuilder.SetTotalLen(len);
+	hbuilder.Encode(data);
     }
 
-    public void PrependByteArray(byte [] dataBytes) {
-	if (dataBytes != null) {
-	    data.position(data.position()-(dataBytes.length+4));
-	    data.mark();
-	    data.putInt(dataBytes.length);
-	    data.put(dataBytes);
-	    data.reset();
+    public CommBuf(HeaderBuilder hbuilder, int len, byte [] extBytes, int extBytesLen) {
+	len += hbuilder.HeaderLength();
+	data = ByteBuffer.allocate(len);
+	data.order(ByteOrder.LITTLE_ENDIAN);
+	if (extBytesLen > 0) {
+	    ext = ByteBuffer.allocate(extBytesLen);
+	    ext.order(ByteOrder.LITTLE_ENDIAN);
+	    ext.put(extBytes, 0, extBytesLen);
 	}
-	else
-	    PrependInt(0);
+	hbuilder.SetTotalLen(len+extBytesLen);
+	hbuilder.Encode(data);
     }
 
-    public void PrependString(String str) {
-	try {
-	    if (str == null) {
-		data.position(data.position()-3);
-		data.put((byte)0);
-		data.put((byte)0);
-		data.put((byte)0);
-		data.position(data.position()-3);
-	    }
-	    else {
-		byte [] strBytes = str.getBytes("UTF-8");
-		data.position(data.position()-(strBytes.length+3));
-		data.putShort((short)strBytes.length);
-		data.put(strBytes);
-		data.put((byte)0);
-		data.position(data.position()-(strBytes.length+3));
-	    }
-	}
-	catch (UnsupportedEncodingException e) {
-	}
+    /**
+     * Resets the primary and extended data pointers to point to the
+     * beginning of their respective buffers.  The AsyncComm layer
+     * uses these pointers to track how much data has been sent and
+     * what is remaining to be sent.
+     */
+    public void ResetDataPointers() {
+	data.flip();
+	if (ext != null)
+	    ext.flip();
     }
 
-    public static int EncodedLength(String str) {
-	try {
-	    return (str == null) ? 3 : str.getBytes("UTF-8").length + 3;
-	}
-	catch (UnsupportedEncodingException e) {
-	}
-	return 0;
-    }
+    /**
+     * Append a byte of data to the primary buffer
+     */
+    public void AppendByte(byte bval) { data.put(bval); }
 
-    public static String DecodeString(ByteBuffer buf) {
-	try {
-	    if (buf.remaining() < 2)
-		return null;
-	    short len = buf.getShort();
-	    if (buf.remaining() < len+1)
-		return null;
-	    byte [] strBytes = new byte [ len ];
-	    buf.get(strBytes);
-	    buf.get(); // skip trailing '\0'
-	    return new String(strBytes, "UTF-8");
-	}
-	catch (UnsupportedEncodingException e) {
-	}
-	return null;
-    }
+    /**
+     * Appends a byte buffer to the primary buffer.
+     */
+    public void AppendBytes(ByteBuffer buf) { data.put(buf); }
 
-    public ByteBuffer data;
-    public ByteBuffer ext;
-    public int id;
+    /**
+     * Appends a short integer (16 bit) to the the primary buffer,
+     * advancing the primary buffer pointer
+     */
+    public void AppendShort(short sval) { data.putShort(sval); }
+    
+    /**
+     * Appends an integer (32 bit) to the the primary buffer,
+     * advancing the primary buffer pointer
+     */
+    public void AppendInt(int ival) { data.putInt(ival); }
+
+    /**
+     * Appends a long integer (64 bit) to the the primary buffer,
+     * advancing the primary buffer pointer
+     */
+    public void AppendLong(long lval) { data.putLong(lval); }
+
+    /**
+     * Appends a byte array to the primary buffer.  A byte array
+     * is encoded as a length followd by the data.
+     *
+     * @see Serialization::EncodeByteArray
+     */
+    public void AppendByteArray(byte [] bytes, int len) { Serialization.EncodeByteArray(data, bytes, len); }
+    
+    /**
+     * Appends a string to the primary buffer.  A string is
+     * encoded as a length, followed by the characters, followed by
+     * a terminating '\\0'.
+     *
+     * @see Serialization::EncodeString
+     */
+    public void AppendString(String str) { Serialization.EncodeString(data, str); }
+
+    public ByteBuffer data = null;
+    public ByteBuffer ext = null;
 }
 

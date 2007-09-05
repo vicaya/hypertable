@@ -28,6 +28,7 @@ import org.xml.sax.SAXException;
 
 import org.hypertable.Common.FileUtils;
 import org.hypertable.AsyncComm.CommBuf;
+import org.hypertable.AsyncComm.Serialization;
 import org.hypertable.Hypertable.Schema;
 
 
@@ -65,14 +66,14 @@ public class RangeSpecification {
     }
 
     public int SerializedLength() {
-	return 4 + CommBuf.EncodedLength(tableName) + CommBuf.EncodedLength(startRow) + CommBuf.EncodedLength(endRow);
+	return 4 + Serialization.EncodedLengthString(tableName) + Serialization.EncodedLengthString(startRow) + Serialization.EncodedLengthString(endRow);
     }
 
-    public void Prepend(CommBuf cbuf) {
-	cbuf.PrependString(endRow);
-	cbuf.PrependString(startRow);
-	cbuf.PrependString(tableName);
-	cbuf.PrependInt(generation);
+    public void Append(CommBuf cbuf) {
+	cbuf.AppendInt(generation);
+	cbuf.AppendString(tableName);
+	cbuf.AppendString(startRow);
+	cbuf.AppendString(endRow);
     }
 
     public String toString() {

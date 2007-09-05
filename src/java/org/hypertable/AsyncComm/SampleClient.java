@@ -173,7 +173,7 @@ public class SampleClient {
 	if (!respHandler.WaitForConnection())
 	    System.exit(1);
 
-	HeaderBuilder hbuilder = new HeaderBuilder();
+	HeaderBuilder hbuilder = new HeaderBuilder(Message.PROTOCOL_NONE, 0);
 
 	int retries;
 	int outstanding = 0;
@@ -183,10 +183,9 @@ public class SampleClient {
 	CommBuf cbuf;
 
 	while ((str = in.readLine()) != null) {
-	    hbuilder.Reset(Message.PROTOCOL_NONE);
-	    cbuf = new CommBuf(CommBuf.EncodedLength(str) + Message.HEADER_LENGTH);
-	    cbuf.PrependString(str);
-	    hbuilder.Encapsulate(cbuf);
+	    hbuilder.AssignUniqueId();
+	    cbuf = new CommBuf(hbuilder, Serialization.EncodedLengthString(str));
+	    cbuf.AppendString(str);
 	    retries = 0;
 	    if (msShutdown == true)
 		System.exit(1);
@@ -215,7 +214,7 @@ public class SampleClient {
 		if ((event = respHandler.GetResponse()) == null)
 		    break;
 		event.msg.RewindToProtocolHeader();
-		str = CommBuf.DecodeString(event.msg.buf);
+		str = Serialization.DecodeString(event.msg.buf);
 		System.out.println("ECHO: '" + str + "'");
 		outstanding--;
 	    }
@@ -223,7 +222,7 @@ public class SampleClient {
 
 	while (outstanding > 0 && (event = respHandler.GetResponse()) != null) {
 	    event.msg.RewindToProtocolHeader();
-	    str = CommBuf.DecodeString(event.msg.buf);
+	    str = Serialization.DecodeString(event.msg.buf);
 	    System.out.println("ECHO: '" + str + "'");
 	    outstanding--;
 	}

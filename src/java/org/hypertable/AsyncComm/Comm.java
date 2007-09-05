@@ -77,6 +77,8 @@ public class Comm {
 	if (handler == null)
 	    return Error.COMM_NOT_CONNECTED;
 
+	cbuf.ResetDataPointers();
+
 	// Set the REQUEST flag
 	ByteBuffer headerBuf = (cbuf.data != null) ? cbuf.data : cbuf.ext;
 	headerBuf.mark();
@@ -101,6 +103,8 @@ public class Comm {
 	IOHandlerData handler = (IOHandlerData)mConnMap.Get(addr);
 	if (handler == null)
 	    return Error.COMM_NOT_CONNECTED;
+
+	cbuf.ResetDataPointers();
 
 	// Clear the REQUEST flag
 	ByteBuffer headerBuf = (cbuf.data != null) ? cbuf.data : cbuf.ext;

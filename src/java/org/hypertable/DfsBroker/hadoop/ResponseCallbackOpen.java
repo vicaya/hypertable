@@ -33,14 +33,10 @@ public class ResponseCallbackOpen extends ResponseCallback {
     }
 
     int response(int fd) {
-	CommBuf cbuf = new CommBuf(mHeaderBuilder.HeaderLength() + 8);
-	cbuf.PrependInt(fd);
-	cbuf.PrependInt(Error.OK);
-
-	// Encapsulate with Comm message response header
-	mHeaderBuilder.LoadFromMessage(mEvent.msg);
-	mHeaderBuilder.Encapsulate(cbuf);
-
+	mHeaderBuilder.InitializeFromRequest(mEvent.msg);
+	CommBuf cbuf = new CommBuf(mHeaderBuilder, 8);
+	cbuf.AppendInt(Error.OK);
+	cbuf.AppendInt(fd);
 	return mComm.SendResponse(mEvent.addr, cbuf);
     }
 }

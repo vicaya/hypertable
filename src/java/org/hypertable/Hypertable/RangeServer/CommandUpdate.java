@@ -75,15 +75,19 @@ class CommandUpdate extends Command {
 	    boolean outstanding = false;
 	    Event event = null;
 	    byte [] bytes = null;
+	    int nadded = 0;
 
 	    while (true) {
 
 		int totalLen = 0;
 		while ((bytes = testSource.Next()) != null) {
-		    if (bytes.length <= sendBuf.remaining())
+		    if (bytes.length <= sendBuf.remaining()) {
 			sendBuf.put(bytes);
-		    else
+			nadded++;
+		    }
+		    else {
 			break;
+		    }
 		}
 
 		if (outstanding) {

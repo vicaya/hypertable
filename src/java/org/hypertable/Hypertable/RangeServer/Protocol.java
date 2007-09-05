@@ -33,13 +33,10 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
      * Builds a LOAD RANGE request
      */
     public CommBuf BuildRequestLoadRange(RangeSpecification rangeSpec) {
-	HeaderBuilder hbuilder = new HeaderBuilder();
-	CommBuf cbuf = new CommBuf(hbuilder.HeaderLength() + 2 + rangeSpec.SerializedLength());
-
-	rangeSpec.Prepend(cbuf);
-	cbuf.PrependShort(COMMAND_LOAD_RANGE);
-	hbuilder.Reset(Message.PROTOCOL_HYPERTABLE_RANGESERVER);
-	hbuilder.Encapsulate(cbuf);
+	HeaderBuilder hbuilder = new HeaderBuilder(Message.PROTOCOL_HYPERTABLE_RANGESERVER, 0);
+	CommBuf cbuf = new CommBuf(hbuilder, 2 + rangeSpec.SerializedLength());
+	cbuf.AppendShort(COMMAND_LOAD_RANGE);
+	rangeSpec.Append(cbuf);
 	return cbuf;
     }
 
@@ -47,14 +44,11 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
      * Builds an UPDATE request
      */
     public CommBuf BuildRequestUpdate(RangeSpecification rangeSpec, byte [] mods) {
-	HeaderBuilder hbuilder = new HeaderBuilder();
-	CommBuf cbuf = new CommBuf(hbuilder.HeaderLength() + 2 + rangeSpec.SerializedLength() + 4 + mods.length);
-
-	cbuf.PrependByteArray(mods);
-	rangeSpec.Prepend(cbuf);
-	cbuf.PrependShort(COMMAND_UPDATE);
-	hbuilder.Reset(Message.PROTOCOL_HYPERTABLE_RANGESERVER);
-	hbuilder.Encapsulate(cbuf);
+	HeaderBuilder hbuilder = new HeaderBuilder(Message.PROTOCOL_HYPERTABLE_RANGESERVER, 0);
+	CommBuf cbuf = new CommBuf(hbuilder, 2 + rangeSpec.SerializedLength() + 4 + mods.length);
+	cbuf.AppendShort(COMMAND_UPDATE);
+	rangeSpec.Append(cbuf);
+	cbuf.AppendByteArray(mods, mods.length);
 	return cbuf;
     }
 
@@ -62,14 +56,11 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
      * Builds a CREATE SCANNER request
      */
     public CommBuf BuildRequestCreateScanner(RangeSpecification rangeSpec, ScanSpecification scanSpec) {
-	HeaderBuilder hbuilder = new HeaderBuilder();
-	CommBuf cbuf = new CommBuf(hbuilder.HeaderLength() + 2 + rangeSpec.SerializedLength() + scanSpec.SerializedLength());
-
-	scanSpec.Prepend(cbuf);
-	rangeSpec.Prepend(cbuf);
-	cbuf.PrependShort(COMMAND_CREATE_SCANNER);
-	hbuilder.Reset(Message.PROTOCOL_HYPERTABLE_RANGESERVER);
-	hbuilder.Encapsulate(cbuf);
+	HeaderBuilder hbuilder = new HeaderBuilder(Message.PROTOCOL_HYPERTABLE_RANGESERVER, 0);
+	CommBuf cbuf = new CommBuf(hbuilder, 2 + rangeSpec.SerializedLength() + scanSpec.SerializedLength());
+	cbuf.AppendShort(COMMAND_CREATE_SCANNER);
+	rangeSpec.Append(cbuf);
+	scanSpec.Append(cbuf);
 	return cbuf;
     }
 
@@ -78,12 +69,10 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
      * Builds a FETCH SCANBLOCK request
      */
     public CommBuf BuildRequestFetchScanblock(int scannerId) {
-	HeaderBuilder hbuilder = new HeaderBuilder();
-	CommBuf cbuf = new CommBuf(hbuilder.HeaderLength() + 6);
-	cbuf.PrependInt(scannerId);
-	cbuf.PrependShort(COMMAND_FETCH_SCANBLOCK);
-	hbuilder.Reset(Message.PROTOCOL_HYPERTABLE_RANGESERVER);
-	hbuilder.Encapsulate(cbuf);
+	HeaderBuilder hbuilder = new HeaderBuilder(Message.PROTOCOL_HYPERTABLE_RANGESERVER, 0);
+	CommBuf cbuf = new CommBuf(hbuilder, 6);
+	cbuf.AppendShort(COMMAND_FETCH_SCANBLOCK);
+	cbuf.AppendInt(scannerId);
 	return cbuf;
     }
 
@@ -92,23 +81,18 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
      * Builds a COMPACT request
      */
     public CommBuf BuildRequestCompact(RangeSpecification rangeSpec, boolean major) {
-	HeaderBuilder hbuilder = new HeaderBuilder();
-	CommBuf cbuf = new CommBuf(hbuilder.HeaderLength() + 2 + rangeSpec.SerializedLength() + 1);
-
-	cbuf.PrependByte(major ? (byte)1 : (byte)0);
-	rangeSpec.Prepend(cbuf);
-	cbuf.PrependShort(COMMAND_COMPACT);
-	hbuilder.Reset(Message.PROTOCOL_HYPERTABLE_RANGESERVER);
-	hbuilder.Encapsulate(cbuf);
+	HeaderBuilder hbuilder = new HeaderBuilder(Message.PROTOCOL_HYPERTABLE_RANGESERVER, 0);
+	CommBuf cbuf = new CommBuf(hbuilder, 2 + rangeSpec.SerializedLength() + 1);
+	cbuf.AppendShort(COMMAND_COMPACT);
+	rangeSpec.Append(cbuf);
+	cbuf.AppendByte(major ? (byte)1 : (byte)0);
 	return cbuf;
     }
 
     public CommBuf BuildRequestBadCommand(short command) {
-	HeaderBuilder hbuilder = new HeaderBuilder();
-	CommBuf cbuf = new CommBuf(hbuilder.HeaderLength() + 2);
-	cbuf.PrependShort(command);
-	hbuilder.Reset(Message.PROTOCOL_HYPERTABLE_RANGESERVER);
-	hbuilder.Encapsulate(cbuf);
+	HeaderBuilder hbuilder = new HeaderBuilder(Message.PROTOCOL_HYPERTABLE_RANGESERVER, 0);
+	CommBuf cbuf = new CommBuf(hbuilder, 2);
+	cbuf.AppendShort(command);
 	return cbuf;
     }
 

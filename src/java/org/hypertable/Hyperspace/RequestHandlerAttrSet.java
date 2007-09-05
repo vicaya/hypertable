@@ -24,7 +24,7 @@ import java.net.ProtocolException;
 import java.util.logging.Logger;
 import org.hypertable.AsyncComm.ApplicationHandler;
 import org.hypertable.AsyncComm.Comm;
-import org.hypertable.AsyncComm.CommBuf;
+import org.hypertable.AsyncComm.Serialization;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.ResponseCallback;
 import org.hypertable.Common.Error;
@@ -45,13 +45,13 @@ public class RequestHandlerAttrSet extends ApplicationHandler {
 
 	try {
 
-	    if ((fileName = CommBuf.DecodeString(mEvent.msg.buf)) == null)
+	    if ((fileName = Serialization.DecodeString(mEvent.msg.buf)) == null)
 		throw new ProtocolException("Filename not properly encoded in request packet");
 
-	    if ((attrName = CommBuf.DecodeString(mEvent.msg.buf)) == null)
+	    if ((attrName = Serialization.DecodeString(mEvent.msg.buf)) == null)
 		throw new ProtocolException("Attribute name not properly encoded in request packet");
 
-	    if ((attrValue = CommBuf.DecodeString(mEvent.msg.buf)) == null)
+	    if ((attrValue = Serialization.DecodeString(mEvent.msg.buf)) == null)
 		throw new ProtocolException("Attribute value not properly encoded in request packet");
 
 	    mHyperspace.AttrSet(cb, fileName, attrName, attrValue);

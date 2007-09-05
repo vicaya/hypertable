@@ -50,7 +50,7 @@ namespace {
 /**
  * Constructor
  */
-RangeServer::RangeServer(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mMutex() {
+RangeServer::RangeServer(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mMutex(), mVerbose(false) {
   const char *metadataFile = 0;
 
   Global::rangeMaxBytes           = propsPtr->getPropertyInt64("Hypertable.RangeServer.Range.MaxBytes", 200000000LL);
@@ -76,6 +76,8 @@ RangeServer::RangeServer(ConnectionManager *connManager, PropertiesPtr &propsPtr
 
   metadataFile = propsPtr->getProperty("metadata");
   assert(metadataFile != 0);
+
+  mVerbose = propsPtr->getPropertyBool("verbose", false);
 
   if (Global::verbose) {
     cout << "Hypertable.RangeServer.logDirRoot=" << Global::logDirRoot << endl;

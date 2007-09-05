@@ -81,8 +81,10 @@ namespace hypertable {
     while (ptr < endptr && *ptr != 0)
       ptr++;
     ptr++;
-    if (ptr >= endptr)
+    if (ptr >= endptr) {
+      cerr << "row decode overrun" << endl;
       return false;
+    }
 
     columnFamily = *ptr++;
     columnQualifier = (const char *)ptr;
@@ -90,11 +92,15 @@ namespace hypertable {
     while (ptr < endptr && *ptr != 0)
       ptr++;
     ptr++;
-    if (ptr >= endptr)
+    if (ptr >= endptr) {
+      cerr << "qualifier decode overrun" << endl;
       return false;
+    }
 
-    if ((endptr - ptr) != 9)
+    if ((endptr - ptr) != 9) {
+      cerr << "timestamp decode overrun " << (endptr-ptr) << endl;
       return false;
+    }
 
     flag = *ptr++;
     memcpy(&timestamp, ptr, sizeof(uint64_t));

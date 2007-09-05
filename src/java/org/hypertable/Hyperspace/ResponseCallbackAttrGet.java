@@ -25,6 +25,7 @@ import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.ResponseCallback;
+import org.hypertable.AsyncComm.Serialization;
 import org.hypertable.Common.Error;
 
 public class ResponseCallbackAttrGet extends ResponseCallback {
@@ -34,15 +35,10 @@ public class ResponseCallbackAttrGet extends ResponseCallback {
     }
 
     int response(String attrValue) {
-	CommBuf cbuf = new CommBuf(mHeaderBuilder.HeaderLength() + 4 + CommBuf.EncodedLength(attrValue));
-
-	cbuf.PrependString(attrValue);
-	cbuf.PrependInt(Error.OK);
-
-	// Encapsulate with Comm message response header
-	mHeaderBuilder.LoadFromMessage(mEvent.msg);
-	mHeaderBuilder.Encapsulate(cbuf);
-
+	mHeaderBuilder.InitializeFromRequest(mEvent.msg);
+	CommBuf cbuf = new CommBuf(mHeaderBuilder, 4 + Serialization.EncodedLengthString(attrValue));
+	cbuf.AppendInt(Error.OK);
+	cbuf.AppendString(attrValue);
 	return mComm.SendResponse(mEvent.addr, cbuf);
     }
 }

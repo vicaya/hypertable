@@ -46,7 +46,7 @@ class CommTestThreadFunction implements Runnable {
     public void run() {
 	CommBuf cbuf;
 	Event event;
-	HeaderBuilder hbuilder = new HeaderBuilder();
+	HeaderBuilder hbuilder = new HeaderBuilder(Message.PROTOCOL_NONE, 0);
 	ResponseHandler respHandler = new ResponseHandler();
 	String str;
 	int error;
@@ -59,10 +59,9 @@ class CommTestThreadFunction implements Runnable {
 	    BufferedWriter outfile = new BufferedWriter(new FileWriter(mOutputFile));
 
 	    while ((str = infile.readLine()) != null) {
-		hbuilder.Reset(Message.PROTOCOL_NONE);
-		cbuf = new CommBuf(CommBuf.EncodedLength(str) + Message.HEADER_LENGTH);
-		cbuf.PrependString(str);
-		hbuilder.Encapsulate(cbuf);
+		hbuilder.AssignUniqueId();
+		cbuf = new CommBuf(hbuilder, Serialization.EncodedLengthString(str));
+		cbuf.AppendString(str);
 		retries = 0;
 		while ((error = mComm.SendRequest(mAddr, cbuf, respHandler)) != Error.OK) {
 		    if (error == Error.COMM_NOT_CONNECTED) {
@@ -87,7 +86,7 @@ class CommTestThreadFunction implements Runnable {
 		    if ((event = respHandler.GetResponse()) == null)
 			break;
 		    event.msg.RewindToProtocolHeader();
-		    str = CommBuf.DecodeString(event.msg.buf);
+		    str = Serialization.DecodeString(event.msg.buf);
 		    outfile.write(str);
 		    outfile.write("\n");
 		    outstanding--;
@@ -96,7 +95,7 @@ class CommTestThreadFunction implements Runnable {
 
 	    while (outstanding > 0 && (event = respHandler.GetResponse()) != null) {
 		event.msg.RewindToProtocolHeader();
-		str = CommBuf.DecodeString(event.msg.buf);
+		str = Serialization.DecodeString(event.msg.buf);
 		outfile.write(str);
 		outfile.write("\n");
 		outstanding--;

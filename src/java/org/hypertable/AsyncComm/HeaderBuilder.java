@@ -27,46 +27,40 @@ public class HeaderBuilder {
 
     protected static AtomicInteger msNextId = new AtomicInteger();
 
-    public void Reset(byte protocol) {
-	mId = msNextId.incrementAndGet();
-	mGroupId = 0;
-	mProtocol = protocol;
+    public HeaderBuilder() {
+	return;
     }
 
-    public void Reset(byte protocol, byte flags) {
-	mId = msNextId.incrementAndGet();
-	mGroupId = 0;
+    public HeaderBuilder(byte protocol, int gid) {
+	mGroupId = gid;
 	mProtocol = protocol;
-	mFlags = flags;
+	return;
     }
 
-    public void LoadFromMessage(Message msg) {
+    public void InitializeFromRequest(Message msg) {
 	mId = msg.id;
 	mGroupId = msg.gid;
 	mProtocol = msg.protocol;
 	mFlags = msg.flags;
+	mTotalLen = 0;
     }
 
     public int HeaderLength() {
 	return Message.HEADER_LENGTH;
     }
 
-    public void Encapsulate(CommBuf cbuf) {
-	cbuf.data.position(cbuf.data.position()-HeaderLength());
-	int totalLen = cbuf.data.remaining();
-	if (cbuf.ext != null)
-	    totalLen += cbuf.ext.remaining();
-	cbuf.data.mark();
-	cbuf.data.put(Message.VERSION);
-	cbuf.data.put(mProtocol);
-	cbuf.data.put(mFlags);
-	cbuf.data.put(Message.HEADER_LENGTH);
-	cbuf.data.putInt(mId);
-	cbuf.data.putInt(mGroupId);
-	cbuf.data.putInt(totalLen);
-	cbuf.data.reset();
-	cbuf.id = mId;
+    public void Encode(ByteBuffer buf) {
+	buf.put(Message.VERSION);
+	buf.put(mProtocol);
+	buf.put(mFlags);
+	buf.put(Message.HEADER_LENGTH);
+	buf.putInt(mId);
+	buf.putInt(mGroupId);
+	buf.putInt(mTotalLen);
     }
+
+
+    public int AssignUniqueId() { mId = msNextId.incrementAndGet(); return mId; }
 
     public void SetFlags(byte flags) { mFlags = flags; }
 
@@ -76,9 +70,12 @@ public class HeaderBuilder {
 
     public void SetGroupId(int gid) { mGroupId = gid; }
 
-    protected int mId;
-    protected int mGroupId;
-    protected byte mProtocol;
-    protected byte mFlags;
+    public void SetTotalLen(int totalLen) { mTotalLen = totalLen; }
+
+    protected int mId = 0;
+    protected int mGroupId = 0;
+    protected int mTotalLen = 0;
+    protected byte mProtocol = 0;
+    protected byte mFlags = 0;
 }
 

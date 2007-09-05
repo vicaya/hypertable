@@ -24,8 +24,6 @@ package org.hypertable.Hypertable;
 
 import org.hypertable.Common.Error;
 
-import org.hypertable.AsyncComm.MsgId;
-
 public class TableMutator {
 
     public TableMutator() {

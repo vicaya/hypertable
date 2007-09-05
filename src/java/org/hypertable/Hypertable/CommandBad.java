@@ -28,7 +28,6 @@ import org.hypertable.Common.FileUtils;
 
 import org.hypertable.AsyncComm.DispatchHandlerSynchronizer;
 import org.hypertable.AsyncComm.Event;
-import org.hypertable.AsyncComm.MsgId;
 
 class CommandBad extends Command {
 
@@ -49,9 +48,8 @@ class CommandBad extends Command {
 
 	    try {
 		short command = (short)mArgs.elementAt(0).nval;
-		MsgId msgId = new MsgId();
 
-		int error = Global.master.BadCommand(command, syncHandler, msgId);
+		int error = Global.master.BadCommand(command, syncHandler);
 		if (error == Error.OK) {
 		    Event event = syncHandler.WaitForEvent();
 		    if (event == null)

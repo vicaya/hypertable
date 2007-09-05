@@ -38,19 +38,15 @@ public class ResponseCallback {
     }
 
     public int error(int error, String msg) {
-	// Build protocol message
-	CommBuf cbuf = Protocol.CreateErrorMessage(error, msg, mHeaderBuilder.HeaderLength());
-	// Encapsulate with Comm message response header
-	mHeaderBuilder.LoadFromMessage(mEvent.msg);
-	mHeaderBuilder.Encapsulate(cbuf);
+	mHeaderBuilder.InitializeFromRequest(mEvent.msg);
+	CommBuf cbuf = Protocol.CreateErrorMessage(mHeaderBuilder, error, msg);
 	return mComm.SendResponse(mEvent.addr, cbuf);
     }
 
     public int response_ok() {
-	CommBuf cbuf = new CommBuf( mHeaderBuilder.HeaderLength() + 4 );
-	cbuf.PrependInt(Error.OK);
-	mHeaderBuilder.LoadFromMessage(mEvent.msg);
-	mHeaderBuilder.Encapsulate(cbuf);
+	mHeaderBuilder.InitializeFromRequest(mEvent.msg);
+	CommBuf cbuf = new CommBuf(mHeaderBuilder, 4);
+	cbuf.AppendInt(Error.OK);
 	return mComm.SendResponse(mEvent.addr, cbuf);
     }
 

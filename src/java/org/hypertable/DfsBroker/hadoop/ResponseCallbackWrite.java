@@ -33,15 +33,11 @@ public class ResponseCallbackWrite extends ResponseCallback {
     }
 
     int response(long offset, int amount) {
-	CommBuf cbuf = new CommBuf(mHeaderBuilder.HeaderLength() + 16);
-	cbuf.PrependInt(amount);
-	cbuf.PrependLong(offset);
-	cbuf.PrependInt(Error.OK);
-
-	// Encapsulate with Comm message response header
-	mHeaderBuilder.LoadFromMessage(mEvent.msg);
-	mHeaderBuilder.Encapsulate(cbuf);
-
+	mHeaderBuilder.InitializeFromRequest(mEvent.msg);
+	CommBuf cbuf = new CommBuf(mHeaderBuilder, 16);
+	cbuf.AppendInt(Error.OK);
+	cbuf.AppendLong(offset);
+	cbuf.AppendInt(amount);
 	return mComm.SendResponse(mEvent.addr, cbuf);
     }
 }
