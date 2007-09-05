@@ -53,6 +53,8 @@ if [ ! -d $HYPERTABLE_HOME/log ] ; then
     mkdir $HYPERTABLE_HOME/log
 fi
 
+VALGRIND=
+
 while [ "$1" != "${1##[-+]}" ]; do
     case $1 in
 	'')    
@@ -60,6 +62,10 @@ while [ "$1" != "${1##[-+]}" ]; do
 	    exit 1;;
 	--initialize)
 	    DO_INITIALIZATION="true"
+	    shift
+	    ;;
+	--valgrind)
+	    VALGRIND="valgrind -v --log-file=vg "
 	    shift
 	    ;;
 	*)     
@@ -88,10 +94,9 @@ if [ $? != 0 ] ; then
   if [ "$1" == "hadoop" ] ; then
       nohup $HYPERTABLE_HOME/bin/jrun --pidfile $PIDFILE org.hypertable.DfsBroker.hadoop.main --verbose 1>& $LOGFILE &
   elif [ "$1" == "kosmos" ] ; then
-      echo "Kosmos DfsBroke not implemented!"
-      exit 1
+      $VALGRIND $HYPERTABLE_HOME/bin/kosmosBroker --pidfile=$PIDFILE --verbose 1>& $LOGFILE &   
   elif [ "$1" == "local" ] ; then
-      $HYPERTABLE_HOME/bin/localBroker --pidfile=$PIDFILE --verbose 1>& $LOGFILE &    
+      $VALGRIND $HYPERTABLE_HOME/bin/localBroker --pidfile=$PIDFILE --verbose 1>& $LOGFILE &    
   else
       echo $"$0: Usage: stat-servers.sh [--initialize] [local|hadoop|kosmos]"      
       exit 1
