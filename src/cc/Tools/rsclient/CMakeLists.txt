@@ -19,6 +19,8 @@
 set (rsclient_SRCS
 rsclient.cc
 CommandLoadRange.cc
+FetchSchema.cc
+ParseRangeSpec.cc
 )
 
 # rsclient - Range Server client command interpreter

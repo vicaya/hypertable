@@ -18,33 +18,35 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_COMMANDLOADRANGE_H
-#define HYPERTABLE_COMMANDLOADRANGE_H
+#include "Common/DynamicBuffer.h"
+#include "Common/Error.h"
+#include "Common/Logger.h"
 
-#include "Common/InteractiveCommand.h"
-
-#include "Hypertable/Lib/MasterClient.h"
-#include "Hypertable/Lib/RangeServerClient.h"
 #include "Hyperspace/HyperspaceClient.h"
+
+#include "FetchSchema.h"
 
 namespace hypertable {
 
-  class CommandLoadRange : public InteractiveCommand {
-  public:
-    CommandLoadRange(MasterClient *masterClient, RangeServerClient *rsClient, HyperspaceClient *hyperspace, struct sockaddr_in &addr) : mMaster(masterClient), mRangeServer(rsClient), mHyperspace(hyperspace), mAddr(addr) { return; }
-    virtual const char *CommandText() { return "load range"; }
-    virtual const char **Usage() { return msUsage; }
-    virtual int run();
+  int FetchSchema(std::string &tableName, HyperspaceClient *hyperspace, SchemaPtr &schemaPtr) {
+    std::string tableFile = (std::string)"/hypertable/tables/" + tableName;
+    DynamicBuffer valueBuf(0);
+    int error;
 
-  private:
-    static const char *msUsage[];
+    if ((error = hyperspace->AttrGet(tableFile.c_str(), "schema", valueBuf)) != Error::OK) {
+      LOG_VA_ERROR("Problem getting 'schema' attribute for '%s'", tableName.c_str());
+      return error;
+    }
 
-    MasterClient      *mMaster;
-    RangeServerClient *mRangeServer;
-    HyperspaceClient  *mHyperspace;
-    struct sockaddr_in mAddr;
-  };
+    Schema *schema = Schema::NewInstance((const char *)valueBuf.buf, valueBuf.fill(), true);
+    if (!schema->IsValid()) {
+      LOG_VA_ERROR("Schema Parse Error: %s", schema->GetErrorString());
+      delete schema;
+      return Error::RANGESERVER_SCHEMA_PARSE_ERROR;
+    }
+    schemaPtr.reset(schema);
+
+    return Error::OK;
+  }
 
 }
-
-#endif // HYPERTABLE_COMMANDLOADRANGE_H

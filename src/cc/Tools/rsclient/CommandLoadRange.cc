@@ -24,6 +24,8 @@
 #include "Common/Usage.h"
 
 #include "CommandLoadRange.h"
+#include "ParseRangeSpec.h"
+#include "FetchSchema.h"
 
 using namespace hypertable;
 using namespace std;
@@ -39,6 +41,11 @@ int CommandLoadRange::run() {
   off_t len;
   const char *schema = 0;
   int error;
+  std::string tableName;
+  std::string startRow;
+  std::string endRow;
+  RangeSpecificationT rangeSpec;
+  SchemaPtr schemaPtr;
 
   if (mArgs.size() != 1) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
@@ -48,17 +55,25 @@ int CommandLoadRange::run() {
   if (mArgs[0].second != "")
     Usage::DumpAndExit(msUsage);
 
-  cerr << "arg = " << mArgs[0].first << endl;
-
-  /**
-  if ((schema = FileUtils::FileToBuffer(mArgs[1].first.c_str(), &len)) == 0)
-    return -1;
-
-  if ((error = mManager->LoadRange(mArgs[0].first, schema)) != Error::OK) {
-    cerr << "Problem creating table '" << mArgs[0].first << "' - " << Error::GetText(error) << endl;
-    return error;
+  if (!ParseRangeSpec(mArgs[0].first, tableName, startRow, endRow)) {
+    cerr << "error:  Invalid range specification." << endl;
   }
-  **/
+
+  if ((error = FetchSchema(tableName, mHyperspace, schemaPtr)) != Error::OK)
+    return error;
+
+  cout << "Generation = " << schemaPtr->GetGeneration() << endl;
+  cout << "TableName  = " << tableName << endl;
+  cout << "StartRow   = " << startRow << endl;
+  cout << "EndRow     = " << endRow << endl;
+
+  rangeSpec.tableName = tableName.c_str();
+  rangeSpec.startRow = startRow.c_str();
+  rangeSpec.endRow = endRow.c_str();
+  rangeSpec.generation = schemaPtr->GetGeneration();
+
+  if ((error = mRangeServer->LoadRange(mAddr, rangeSpec)) != Error::OK)
+    return error;
 
   return Error::OK;
 }

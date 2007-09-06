@@ -38,6 +38,7 @@ extern "C" {
 
 #include "Hypertable/Lib/Manager.h"
 #include "Hypertable/Lib/RangeServerClient.h"
+#include "Hyperspace/HyperspaceClient.h"
 
 #include "CommandLoadRange.h"
 
@@ -183,6 +184,7 @@ int main(int argc, char **argv) {
   PropertiesPtr propsPtr;
   RangeServerClient *rsClient;
   MasterClient *masterClient;
+  HyperspaceClient *hyperspace;
 
   System::Initialize(argv[0]);
   ReactorFactory::Initialize((uint16_t)System::GetProcessorCount());
@@ -218,8 +220,13 @@ int main(int argc, char **argv) {
   masterClient = new MasterClient(connManager, propsPtr);
   if (!masterClient->WaitForConnection(15))
     cerr << "Timed out waiting for for connection to Master.  Exiting ..." << endl;
+
+  // Connect to Hyperspace
+  hyperspace = new HyperspaceClient(connManager, propsPtr.get());
+  if (!hyperspace->WaitForConnection(30))
+    exit(1);
   
-  commands.push_back( new CommandLoadRange(masterClient, rsClient) );
+  commands.push_back( new CommandLoadRange(masterClient, rsClient, hyperspace, addr) );
 
   /**
   commands.push_back( new CommandGetSchema(manager) );
