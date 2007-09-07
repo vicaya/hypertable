@@ -20,6 +20,7 @@ set (rsclient_SRCS
 rsclient.cc
 CommandLoadRange.cc
 FetchSchema.cc
+Global.cc
 ParseRangeSpec.cc
 )
 

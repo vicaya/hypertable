@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -27,10 +27,12 @@ extern "C" {
 #include <sys/time.h>
 }
 
-#include "Common/FileUtils.h"
+#include "Common/Error.h"
+#include "Common/System.h"
 #include "Common/TestHarness.h"
 #include "Common/Usage.h"
 
+#include "Hypertable/Lib/Manager.h"
 #include "Hypertable/Lib/Schema.h"
 
 #include "TestData.h"
@@ -43,19 +45,17 @@ namespace {
   const char *usage[] = {
     "usage: generateTestData <schemaFile>",
     "",
-    "Generates test data to stdout, one line at a time, that is consumable by",
-    "com.zvents.placer.Bigtable.RangeServer.TestSource.java",
+    "Generates test data to stdout, one line at a time.",
     0
   };
 }
-
-
 
 
 int main(int argc, char **argv) {
   TestHarness harness("/tmp/generateTestData");
   TestData tdata(harness);
   Schema *schema;
+  std::string schemaSpec;
   const char *buf;
   off_t len;
   struct timeval tval;
@@ -69,14 +69,43 @@ int main(int argc, char **argv) {
   size_t cfMax;
   vector<std::string> cfNames;
   int modValue;
-  
-  if (argc != 2)
+  std::string configFile = "";
+  Manager *manager;
+  int error;
+  std::string tableName = "";
+  unsigned int seed = 1234;
+
+  System::Initialize(argv[0]);
+  ReactorFactory::Initialize((uint16_t)System::GetProcessorCount());
+
+  for (int i=1; i<argc; i++) {
+    if (!strncmp(argv[i], "--config=", 9))
+      configFile = &argv[i][9];
+    else if (!strncmp(argv[i], "--seed=", 7)) {
+      seed = atoi(&argv[i][7]);
+    }
+    else if (tableName == "")
+      tableName = argv[i];
+    else
+      Usage::DumpAndExit(usage);
+  }
+
+  if (tableName == "")
     Usage::DumpAndExit(usage);
 
-  if ((buf = FileUtils::FileToBuffer(argv[1], &len)) == 0)
-    exit(1);
+  if (configFile == "")
+    configFile = System::installDir + "/conf/hypertable.cfg";
 
-  schema = Schema::NewInstance(buf, len, true);
+  tdata.Load(System::installDir + "/demo");
+
+  manager = new Manager(configFile);
+
+  if ((error = manager->GetSchema(tableName, schemaSpec)) != Error::OK) {
+    LOG_VA_ERROR("Problem getting schema for table '%s' - %s", argv[1], Error::GetText(error));
+    return error;
+  }
+
+  schema = Schema::NewInstance(schemaSpec.c_str(), strlen(schemaSpec.c_str()), true);
   if (!schema->IsValid()) {
     LOG_VA_ERROR("Schema Parse Error: %s", schema->GetErrorString());
     exit(1);
@@ -92,7 +121,7 @@ int main(int argc, char **argv) {
       cfNames[(*cfIter)->id] = (*cfIter)->name;
   }
 
-  srand(1234);
+  srand(seed);
 
   while (true) {
 

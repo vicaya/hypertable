@@ -33,21 +33,18 @@
 #include "DfsBroker/Lib/Client.h"
 
 #include "Hypertable/Lib/Schema.h"
+#include "Hypertable/Lib/TestSource.h"
+
 #include "Hypertable/RangeServer/CellCache.h"
 #include "Hypertable/RangeServer/CellCacheScanner.h"
-#include "Hypertable/RangeServer/MergeScanner.h"
 #include "Hypertable/RangeServer/CellStoreScannerV0.h"
 #include "Hypertable/RangeServer/CellStoreV0.h"
-
-#include "TestSource.h"
-
 #include "Hypertable/RangeServer/FileBlockCache.h"
 #include "Hypertable/RangeServer/Global.h"
-
+#include "Hypertable/RangeServer/MergeScanner.h"
 
 using namespace hypertable;
 using namespace std;
-
 
 namespace {
   const uint16_t DEFAULT_HDFSBROKER_PORT = 38546;

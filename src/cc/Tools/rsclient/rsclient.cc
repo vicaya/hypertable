@@ -41,6 +41,7 @@ extern "C" {
 #include "Hyperspace/HyperspaceClient.h"
 
 #include "CommandLoadRange.h"
+#include "Global.h"
 
 using namespace hypertable;
 using namespace std;
@@ -182,9 +183,6 @@ int main(int argc, char **argv) {
   Comm *comm;
   ConnectionManager *connManager;
   PropertiesPtr propsPtr;
-  RangeServerClient *rsClient;
-  MasterClient *masterClient;
-  HyperspaceClient *hyperspace;
 
   System::Initialize(argv[0]);
   ReactorFactory::Initialize((uint16_t)System::GetProcessorCount());
@@ -209,7 +207,7 @@ int main(int argc, char **argv) {
   connManager = new ConnectionManager(comm);
 
   // Create Range Server client object
-  rsClient = new RangeServerClient(connManager);
+  Global::rangeServer = new RangeServerClient(connManager);
 
   // Connect to Range Server
   connManager->Add(addr, 30, "Range Server");
@@ -217,16 +215,16 @@ int main(int argc, char **argv) {
     cerr << "Timed out waiting for for connection to Range Server.  Exiting ..." << endl;
 
   // Connect to Master
-  masterClient = new MasterClient(connManager, propsPtr);
-  if (!masterClient->WaitForConnection(15))
+  Global::master = new MasterClient(connManager, propsPtr);
+  if (!Global::master->WaitForConnection(15))
     cerr << "Timed out waiting for for connection to Master.  Exiting ..." << endl;
 
   // Connect to Hyperspace
-  hyperspace = new HyperspaceClient(connManager, propsPtr.get());
-  if (!hyperspace->WaitForConnection(30))
+  Global::hyperspace = new HyperspaceClient(connManager, propsPtr.get());
+  if (!Global::hyperspace->WaitForConnection(30))
     exit(1);
   
-  commands.push_back( new CommandLoadRange(masterClient, rsClient, hyperspace, addr) );
+  commands.push_back( new CommandLoadRange(addr) );
 
   /**
   commands.push_back( new CommandGetSchema(manager) );

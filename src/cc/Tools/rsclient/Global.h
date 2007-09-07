@@ -17,31 +17,33 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+#ifndef HYPERTABLE_RSCLIENT_GLOBAL_H
+#define HYPERTABLE_RSCLIENT_GLOBAL_H
 
-#ifndef HYPERTABLE_COMMANDLOADRANGE_H
-#define HYPERTABLE_COMMANDLOADRANGE_H
+#include <ext/hash_map>
 
-#include "Common/InteractiveCommand.h"
+#include "Common/StringExt.h"
 
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/RangeServerClient.h"
+#include "Hypertable/Lib/Schema.h"
 #include "Hyperspace/HyperspaceClient.h"
 
 namespace hypertable {
 
-  class CommandLoadRange : public InteractiveCommand {
+  class Global {
   public:
-    CommandLoadRange(struct sockaddr_in &addr) : mAddr(addr) { return; }
-    virtual const char *CommandText() { return "load range"; }
-    virtual const char **Usage() { return msUsage; }
-    virtual int run();
+    static HyperspaceClient *hyperspace;
+    static RangeServerClient *rangeServer;
+    static MasterClient *master;
 
-  private:
-    static const char *msUsage[];
+    typedef __gnu_cxx::hash_map<std::string, SchemaPtr> TableSchemaMapT;
 
-    struct sockaddr_in mAddr;
+    static TableSchemaMapT schemaMap;
+
   };
-
 }
 
-#endif // HYPERTABLE_COMMANDLOADRANGE_H
+
+#endif // HYPERTABLE_RSCLIENT_GLOBAL_H
+

@@ -53,7 +53,7 @@ extern "C" {
 #include "Hypertable/RangeServer/Global.h"
 #include "Hypertable/RangeServer/Key.h"
 
-#include "TestData.h"
+#include "Hypertable/Lib/TestData.h"
 
 
 using namespace hypertable;
@@ -95,6 +95,8 @@ int main(int argc, char **argv) {
     else
       Usage::DumpAndExit(usage);
   }
+
+  tdata.Load("tests");
 
   logStream << "Content count = " << tdata.content.size() << endl;
   logStream << "Word count = " << tdata.words.size() << endl;

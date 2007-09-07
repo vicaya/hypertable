@@ -73,16 +73,12 @@ add_executable (cellStoreDump Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc B
 target_link_libraries (cellStoreDump pthread ${BOOST_LIB} DfsBroker AsyncComm Common log4cpp ${ZLIB_LIBRARIES})
 
 # cellStoreTest
-add_executable (cellStoreTest Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc tests/cellStoreTest.cc CellStoreScannerV0.cc CellCache.cc CellCacheScanner.cc Key.cc tests/TestSource.cc FileBlockCache.cc Global.cc CellStore.cc ScanContext.cc ${TEST_DEPENDENCIES})
+add_executable (cellStoreTest Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc tests/cellStoreTest.cc CellStoreScannerV0.cc CellCache.cc CellCacheScanner.cc Key.cc FileBlockCache.cc Global.cc CellStore.cc ScanContext.cc ${TEST_DEPENDENCIES})
 target_link_libraries (cellStoreTest pthread ${BOOST_LIB} DfsBroker AsyncComm Common log4cpp ${ZLIB_LIBRARIES})
 
 # cellStoreTest2
-add_executable (cellStoreTest2 Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc tests/cellStoreTest2.cc CellStoreScannerV0.cc CellCache.cc CellCacheScanner.cc Key.cc tests/TestSource.cc MergeScanner.cc FileBlockCache.cc Global.cc CellStore.cc ScanContext.cc ${TEST_DEPENDENCIES})
+add_executable (cellStoreTest2 Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc tests/cellStoreTest2.cc CellStoreScannerV0.cc CellCache.cc CellCacheScanner.cc Key.cc MergeScanner.cc FileBlockCache.cc Global.cc CellStore.cc ScanContext.cc ${TEST_DEPENDENCIES})
 target_link_libraries (cellStoreTest2 pthread ${BOOST_LIB} Hypertable DfsBroker AsyncComm Common log4cpp ${ZLIB_LIBRARIES} expat)
-
-# generateTestData
-add_executable (generateTestData tests/generateTestData.cc)
-target_link_libraries (generateTestData Hypertable pthread ${BOOST_LIB} Common log4cpp expat)
 
 # commitLogReaderTest
 add_executable (commitLogReaderTest CommitLogReaderLocal.cc tests/commitLogReaderTest.cc)
@@ -111,5 +107,7 @@ add_test (CellStoreTest cellStoreTest)
 add_test (CellStoreTest2 cellStoreTest2)
 add_test (CellCacheTest cellCacheTest)
 
-install (TARGETS Hypertable.RangeServer cellStoreDump generateTestData
+install (TARGETS Hypertable.RangeServer cellStoreDump
 	 RUNTIME DESTINATION bin)
+install (FILES tests/urls.txt.gz tests/words.gz tests/shakespeare.txt.gz DESTINATION demo)
+

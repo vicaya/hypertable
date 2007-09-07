@@ -26,6 +26,7 @@
 #include "CommandLoadRange.h"
 #include "ParseRangeSpec.h"
 #include "FetchSchema.h"
+#include "Global.h"
 
 using namespace hypertable;
 using namespace std;
@@ -59,8 +60,13 @@ int CommandLoadRange::run() {
     cerr << "error:  Invalid range specification." << endl;
   }
 
-  if ((error = FetchSchema(tableName, mHyperspace, schemaPtr)) != Error::OK)
-    return error;
+  schemaPtr = Global::schemaMap[tableName];
+
+  if (!schemaPtr) {
+    if ((error = FetchSchema(tableName, Global::hyperspace, schemaPtr)) != Error::OK)
+      return error;
+    Global::schemaMap[tableName] = schemaPtr;    
+  }
 
   cout << "Generation = " << schemaPtr->GetGeneration() << endl;
   cout << "TableName  = " << tableName << endl;
@@ -72,7 +78,7 @@ int CommandLoadRange::run() {
   rangeSpec.endRow = endRow.c_str();
   rangeSpec.generation = schemaPtr->GetGeneration();
 
-  if ((error = mRangeServer->LoadRange(mAddr, rangeSpec)) != Error::OK)
+  if ((error = Global::rangeServer->LoadRange(mAddr, rangeSpec)) != Error::OK)
     return error;
 
   return Error::OK;

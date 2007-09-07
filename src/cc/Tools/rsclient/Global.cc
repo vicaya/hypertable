@@ -18,30 +18,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_COMMANDLOADRANGE_H
-#define HYPERTABLE_COMMANDLOADRANGE_H
+#include "Global.h"
 
-#include "Common/InteractiveCommand.h"
+using namespace hypertable;
 
-#include "Hypertable/Lib/MasterClient.h"
-#include "Hypertable/Lib/RangeServerClient.h"
-#include "Hyperspace/HyperspaceClient.h"
+HyperspaceClient        *Global::hyperspace = 0;
+RangeServerClient       *Global::rangeServer = 0;
+MasterClient            *Global::master = 0;
+Global::TableSchemaMapT  Global::schemaMap;
 
-namespace hypertable {
-
-  class CommandLoadRange : public InteractiveCommand {
-  public:
-    CommandLoadRange(struct sockaddr_in &addr) : mAddr(addr) { return; }
-    virtual const char *CommandText() { return "load range"; }
-    virtual const char **Usage() { return msUsage; }
-    virtual int run();
-
-  private:
-    static const char *msUsage[];
-
-    struct sockaddr_in mAddr;
-  };
-
-}
-
-#endif // HYPERTABLE_COMMANDLOADRANGE_H
