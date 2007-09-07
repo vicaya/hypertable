@@ -43,9 +43,31 @@ using namespace std;
 
 namespace {
   const char *usage[] = {
-    "usage: generateTestData <schemaFile>",
+    "usage: generateTestData [OPTIONS] <tableName>",
     "",
-    "Generates test data to stdout, one line at a time.",
+    "OPTINS:",
+    "  --config=<fname>  Read configuration properties from <fname>",
+    "  --seed=<n>        Seed the randon number generator with <n>",
+    "",
+    "This program generates random test data to stdout.  It",
+    "contacts the master server and fetches the schema for",
+    "the given table <tableName> and creates random test",
+    "data for the table.  It requires the following input",
+    "files to be located under ../demo relative to the",
+    "location of the generateTestData binary:",
+    "",
+    "shakespeare.txt.gz",
+    "urls.txt.gz",
+    "words.gz",
+    "",
+    "Approximately 1 out of 50 lines will be row deletes and",
+    "1 out of 30 lines will be cell deletes.  The rest are normal",
+    "inserts.  Each emitted line has one of the following",
+    "formats:",
+    "",
+    "<timestamp> '\\t' <rowKey> '\\t' <qualifiedColumn> '\\t' <value>",
+    "<timestamp> '\\t' <rowKey> '\\t' <qualifiedColumn> '\\t' DELETE",
+    "<timestamp> '\\t' DELETE",
     0
   };
 }
