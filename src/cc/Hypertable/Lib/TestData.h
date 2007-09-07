@@ -27,9 +27,7 @@ typedef boost::shared_array<const char> CharPtr;
 
 class TestData {
  public:
-  TestData(TestHarness &harness) : mHarness(harness) { return; }
-
-  void Load(std::string dataDir) {
+  bool Load(std::string dataDir) {
     struct stat statbuf;
     char *contentData, *wordData, *urlData;
     char *base, *ptr, *last, *str;
@@ -48,20 +46,20 @@ class TestData {
     if (stat(shakespeareFile.c_str(), &statbuf) != 0) {
       if (stat(shakespeareFileGz.c_str(), &statbuf) != 0) {
 	LOG_VA_ERROR("Unable to stat file 'shakespeare.txt.gz' : %s", strerror(errno));
-	mHarness.DisplayErrorAndExit();
+	return false;
       }
       systemCommand = "gzcat " + shakespeareFileGz + " > " + shakespeareFile;
       if (system(systemCommand.c_str())) {
 	LOG_VA_ERROR("Unable to decompress file '%s'", shakespeareFileGz.c_str());
-	mHarness.DisplayErrorAndExit();
+	return false;
       }
       if (stat(shakespeareFile.c_str(), &statbuf) != 0) {
 	LOG_VA_ERROR("Unable to stat file '%s' : %s", shakespeareFile.c_str(), strerror(errno));
-	mHarness.DisplayErrorAndExit();
+	return false;
       }
     }
     if ((contentData = FileUtils::FileToBuffer(shakespeareFile.c_str(), &len)) == 0)
-      mHarness.DisplayErrorAndExit();
+      return false;
     base = contentData;
     while ((ptr = strstr(base, "\n\n")) != 0) {
       *ptr++ = 0;
@@ -79,20 +77,20 @@ class TestData {
     if (stat(wordsFile.c_str(), &statbuf) != 0) {
       if (stat(wordsFileGz.c_str(), &statbuf) != 0) {
 	LOG_VA_ERROR("Unable to stat file '%s' : %s", wordsFileGz.c_str(), strerror(errno));
-	mHarness.DisplayErrorAndExit();
+	return false;
       }
       systemCommand = "gzcat " + wordsFileGz + " > " + wordsFile;
       if (system(systemCommand.c_str())) {
 	LOG_VA_ERROR("Unable to decompress file '%s'", wordsFileGz.c_str());
-	mHarness.DisplayErrorAndExit();
+	return false;
       }
       if (stat(wordsFile.c_str(), &statbuf) != 0) {
 	LOG_VA_ERROR("Unable to stat file '%s' : %s", wordsFile.c_str(), strerror(errno));
-	mHarness.DisplayErrorAndExit();
+	return false;
       }
     }
     if ((wordData = FileUtils::FileToBuffer(wordsFile.c_str(), &len)) == 0)
-      mHarness.DisplayErrorAndExit();
+      return false;
     base = strtok_r(wordData, "\n\r", &last);
     while (base) {
       str = new char [ strlen(base) + 1 ];
@@ -109,20 +107,20 @@ class TestData {
     if (stat(urlsFile.c_str(), &statbuf) != 0) {
       if (stat(urlsFileGz.c_str(), &statbuf) != 0) {
 	LOG_VA_ERROR("Unable to stat file 'urls.txt.gz' : %s", strerror(errno));
-	mHarness.DisplayErrorAndExit();
+	return false;
       }
       systemCommand = "gzcat " + urlsFileGz + " > " + urlsFile;
       if (system(systemCommand.c_str())) {
 	LOG_VA_ERROR("Unable to decompress file '%s'", urlsFileGz.c_str());
-	mHarness.DisplayErrorAndExit();
+	return false;
       }
       if (stat(urlsFile.c_str(), &statbuf) != 0) {
 	LOG_VA_ERROR("Unable to stat file '%s' : %s", urlsFile.c_str(), strerror(errno));
-	mHarness.DisplayErrorAndExit();
+	return false;
       }
     }
     if ((urlData = FileUtils::FileToBuffer(urlsFile.c_str(), &len)) == 0)
-      mHarness.DisplayErrorAndExit();
+      return false;
     base = strtok_r(urlData, "\n\r", &last);
     while (base) {
       str = new char [ strlen(base) + 1 ];
@@ -131,9 +129,9 @@ class TestData {
       base = strtok_r(0, "\n\r", &last);
     }
 
+    return true;
   }
 
-  TestHarness &mHarness;
   vector<CharPtr> content;
   vector<CharPtr> words;
   vector<CharPtr> urls;

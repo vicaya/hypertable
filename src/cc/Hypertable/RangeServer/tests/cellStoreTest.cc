@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
 
   TestHarness harness("/tmp/cellStoreTest");
   std::ostream &logStream = harness.GetLogStream();
-  TestData tdata(harness);
+  TestData tdata;
   NumberStream randstr("tests/random.dat");
 
   if (argc > 1) {
@@ -96,7 +96,8 @@ int main(int argc, char **argv) {
       Usage::DumpAndExit(usage);
   }
 
-  tdata.Load("tests");
+  if (!tdata.Load("tests"))
+    harness.DisplayErrorAndExit();
 
   logStream << "Content count = " << tdata.content.size() << endl;
   logStream << "Word count = " << tdata.words.size() << endl;

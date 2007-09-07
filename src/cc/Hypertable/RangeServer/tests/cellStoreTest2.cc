@@ -18,6 +18,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+extern "C" {
+#include <sys/types.h>
+#include <sys/stat.h>
+}
+
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ConnectionManager.h"
 #include "AsyncComm/ReactorFactory.h"
@@ -55,7 +60,7 @@ namespace {
     "output file 'cellStoreTest2.golden' will be generated",
     0
   };
-  bool RunMergeTest(Comm *comm, DfsBroker::Client *client, bool suppressDeleted);
+  bool RunMergeTest(Comm *comm, DfsBroker::Client *client, bool returnDeletes);
 }
 
 
@@ -99,7 +104,7 @@ int main(int argc, char **argv) {
   if (!client->WaitForConnection(10))
     harness.DisplayErrorAndExit();
 
-  if (!RunMergeTest(comm, client, true))
+  if (!RunMergeTest(comm, client, false))
     harness.DisplayErrorAndExit();
 
   return 0;
@@ -109,7 +114,7 @@ int main(int argc, char **argv) {
 
 namespace {
 
-  bool RunMergeTest(Comm *comm, DfsBroker::Client *client, bool suppressDeleted) {
+  bool RunMergeTest(Comm *comm, DfsBroker::Client *client, bool returnDeletes) {
     const char *schemaData;
     off_t len;
     Schema *schema;
@@ -117,7 +122,7 @@ namespace {
     ByteString32T *value;
     CellStorePtr cellStorePtr[4];
     CellCachePtr cellCachePtr;
-    //vector<string> files;
+    struct stat statbuf;
     MergeScanner *mscanner, *mscannerA, *mscannerB;
 
     ScanContextPtr scanContextPtr( new ScanContext(ScanContext::END_OF_TIME, 0) ); 
@@ -147,6 +152,25 @@ namespace {
 
     cellCachePtr = new CellCache();
 
+    /**
+     * Uncompress input file
+     */
+    if (stat("tests/testdata.txt", &statbuf) != 0) {
+      if (stat("tests/testdata.txt.gz", &statbuf) != 0) {
+	LOG_VA_ERROR("Unable to stat file 'tests/testdata.txt.gz' : %s", strerror(errno));
+	return false;
+      }
+      if (system("gzcat tests/testdata.txt.gz > tests/testdata.txt")) {
+	LOG_ERROR("Unable to decompress file 'tests/testdata.txt.gz");
+	return false;
+      }
+      if (stat("tests/testdata.txt", &statbuf) != 0) {
+	LOG_VA_ERROR("Unable to stat file 'tests/testdata.txt' : %s", strerror(errno));
+	return false;
+      }
+    }
+
+
     std::string inputFile = "tests/testdata.txt";
 
     TestSource *inputSource = new TestSource(inputFile, schema);
@@ -171,16 +195,9 @@ namespace {
 
       cellCachePtr->Add((*iter).first, (*iter).second);
 
-      if (keyComps.flag == FLAG_INSERT) {
-	if (cellStorePtr[i%4]->Add((*iter).first, (*iter).second) != Error::OK)
-	  return false;
-      }
-      else {
-	for (size_t j=0; j<4; j++) {
-	  if (cellStorePtr[j]->Add((*iter).first, (*iter).second) != Error::OK)
-	    return false;
-	}
-      }
+      if (cellStorePtr[i%4]->Add((*iter).first, (*iter).second) != Error::OK)
+	return false;
+
       i++;
     }
 
@@ -191,7 +208,7 @@ namespace {
     sprintf(outfileA, "/tmp/cellStoreTest1-cellCache-%d", getpid());
     ofstream outstreamA(outfileA);
 
-    mscanner = new MergeScanner(scanContextPtr, !suppressDeleted);
+    mscanner = new MergeScanner(scanContextPtr, false);
     mscanner->AddScanner( cellCachePtr->CreateScanner(scanContextPtr) );
 
     while (mscanner->Get(&key, &value)) {
@@ -203,14 +220,14 @@ namespace {
     sprintf(outfileB, "/tmp/cellStoreTest1-merge-%d", getpid());
     ofstream outstreamB(outfileB);
 
-    mscanner = new MergeScanner(scanContextPtr, !suppressDeleted);
+    mscanner = new MergeScanner(scanContextPtr, returnDeletes);
 
-    mscannerA = new MergeScanner(scanContextPtr, !suppressDeleted);
+    mscannerA = new MergeScanner(scanContextPtr, true);
     mscannerA->AddScanner( cellStorePtr[0]->CreateScanner(scanContextPtr) );
     mscannerA->AddScanner( cellStorePtr[1]->CreateScanner(scanContextPtr) );
     mscanner->AddScanner(mscannerA);
 
-    mscannerB = new MergeScanner(scanContextPtr, !suppressDeleted);
+    mscannerB = new MergeScanner(scanContextPtr, true);
     mscannerB->AddScanner( cellStorePtr[2]->CreateScanner(scanContextPtr) );
     mscannerB->AddScanner( cellStorePtr[3]->CreateScanner(scanContextPtr) );
     mscanner->AddScanner(mscannerB);

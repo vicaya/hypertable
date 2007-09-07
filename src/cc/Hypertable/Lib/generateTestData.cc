@@ -74,8 +74,7 @@ namespace {
 
 
 int main(int argc, char **argv) {
-  TestHarness harness("/tmp/generateTestData");
-  TestData tdata(harness);
+  TestData tdata;
   Schema *schema;
   std::string schemaSpec;
   const char *buf;
@@ -118,7 +117,8 @@ int main(int argc, char **argv) {
   if (configFile == "")
     configFile = System::installDir + "/conf/hypertable.cfg";
 
-  tdata.Load(System::installDir + "/demo");
+  if (!tdata.Load(System::installDir + "/demo"))
+    exit(1);
 
   manager = new Manager(configFile);
 
