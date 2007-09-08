@@ -48,7 +48,7 @@ class TestData {
 	LOG_VA_ERROR("Unable to stat file 'shakespeare.txt.gz' : %s", strerror(errno));
 	return false;
       }
-      systemCommand = "gzcat " + shakespeareFileGz + " > " + shakespeareFile;
+      systemCommand = "zcat " + shakespeareFileGz + " > " + shakespeareFile;
       if (system(systemCommand.c_str())) {
 	LOG_VA_ERROR("Unable to decompress file '%s'", shakespeareFileGz.c_str());
 	return false;
@@ -79,7 +79,7 @@ class TestData {
 	LOG_VA_ERROR("Unable to stat file '%s' : %s", wordsFileGz.c_str(), strerror(errno));
 	return false;
       }
-      systemCommand = "gzcat " + wordsFileGz + " > " + wordsFile;
+      systemCommand = "zcat " + wordsFileGz + " > " + wordsFile;
       if (system(systemCommand.c_str())) {
 	LOG_VA_ERROR("Unable to decompress file '%s'", wordsFileGz.c_str());
 	return false;
@@ -109,7 +109,7 @@ class TestData {
 	LOG_VA_ERROR("Unable to stat file 'urls.txt.gz' : %s", strerror(errno));
 	return false;
       }
-      systemCommand = "gzcat " + urlsFileGz + " > " + urlsFile;
+      systemCommand = "zcat " + urlsFileGz + " > " + urlsFile;
       if (system(systemCommand.c_str())) {
 	LOG_VA_ERROR("Unable to decompress file '%s'", urlsFileGz.c_str());
 	return false;
