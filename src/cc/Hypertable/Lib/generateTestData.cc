@@ -77,7 +77,6 @@ int main(int argc, char **argv) {
   TestData tdata;
   Schema *schema;
   std::string schemaSpec;
-  const char *buf;
   off_t len;
   struct timeval tval;
   uint64_t timestamp;
@@ -132,7 +131,6 @@ int main(int argc, char **argv) {
     LOG_VA_ERROR("Schema Parse Error: %s", schema->GetErrorString());
     exit(1);
   }
-  delete [] buf;
 
   cfMax = schema->GetMaxColumnFamilyId();
   cfNames.resize(cfMax+1);
