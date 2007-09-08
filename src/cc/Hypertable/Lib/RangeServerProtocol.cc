@@ -52,10 +52,11 @@ namespace hypertable {
   CommBuf *RangeServerProtocol::CreateRequestUpdate(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, uint8_t *data, size_t len) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
     hbuilder.AssignUniqueId();
-    CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthRangeSpecification(rangeSpec) + len);
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthRangeSpecification(rangeSpec) + 
+				Serialization::EncodedLengthByteArray(len));
     cbuf->AppendShort(COMMAND_UPDATE);
     EncodeRangeSpecification(cbuf->GetDataPtrAddress(), rangeSpec);
-    memcpy(cbuf->GetDataPtr(), data, len);
+    Serialization::EncodeByteArray(cbuf->GetDataPtrAddress(), data, len);
     return cbuf;
   }
 

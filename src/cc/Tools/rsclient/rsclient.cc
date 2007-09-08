@@ -41,6 +41,7 @@ extern "C" {
 #include "Hyperspace/HyperspaceClient.h"
 
 #include "CommandLoadRange.h"
+#include "CommandUpdate.h"
 #include "Global.h"
 
 using namespace hypertable;
@@ -225,10 +226,7 @@ int main(int argc, char **argv) {
     exit(1);
   
   commands.push_back( new CommandLoadRange(addr) );
-
-  /**
-  commands.push_back( new CommandGetSchema(manager) );
-  **/
+  commands.push_back( new CommandUpdate(addr) );
 
   cout << "Welcome to the Range Server command interpreter." << endl;
   cout << "Type 'help' for a description of commands." << endl;

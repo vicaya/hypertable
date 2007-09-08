@@ -180,7 +180,7 @@ bool TestSource::CreateColumnDelete(const char *row, const char *column, uint64_
 
 bool TestSource::CreateInsert(const char *row, const char *column, uint64_t timestamp, const char *value, ByteString32T **keyp, ByteString32T **valuep) {
   int32_t keyLen = 0;
-  int32_t valueLen = strlen(value) + 1;
+  int32_t valueLen = strlen(value);
   string columnFamily;
   const char *qualifier;
   const char *ptr = strchr(column, ':');

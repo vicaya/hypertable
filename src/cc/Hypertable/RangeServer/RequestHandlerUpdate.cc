@@ -45,8 +45,6 @@ void RequestHandlerUpdate::run() {
   if (!DecodeRangeSpecification(&msgPtr, &remaining, &rangeSpec))
     goto abort;
 
-  cerr << "Succesfully decoded range spec." << endl;
-
   // Modifications
   if (!Serialization::DecodeByteArray(&msgPtr, &remaining, &mods.buf, &mods.len))
     goto abort;

@@ -28,25 +28,28 @@
 
 using namespace hypertable;
 
-class TestSource {
-  
- public:
-  TestSource(std::string &fname, Schema *schema) : mSchema(schema), mFin(fname.c_str()), mCurLine(0), mKeyBuffer(0), mValueBuffer(0) {
-    return;
-  }
+namespace hypertable {
 
-  bool Next(ByteString32T **keyp, ByteString32T **valuep);
+  class TestSource {
 
- private:
-  bool CreateRowDelete(const char *row, uint64_t timestamp, ByteString32T **keyp, ByteString32T **valuep);
-  bool CreateColumnDelete(const char *row, const char *column, uint64_t timestamp, ByteString32T **keyp, ByteString32T **valuep);
-  bool CreateInsert(const char *row, const char *column, uint64_t timestamp, const char *value, ByteString32T **keyp, ByteString32T **valuep);
+  public:
+    TestSource(std::string &fname, Schema *schema) : mSchema(schema), mFin(fname.c_str()), mCurLine(0), mKeyBuffer(0), mValueBuffer(0) {
+      return;
+    }
 
-  Schema *mSchema;
-  ifstream mFin;
-  long mCurLine;
-  DynamicBuffer mKeyBuffer;
-  DynamicBuffer mValueBuffer;
-};
+    bool Next(ByteString32T **keyp, ByteString32T **valuep);
 
+  private:
+    bool CreateRowDelete(const char *row, uint64_t timestamp, ByteString32T **keyp, ByteString32T **valuep);
+    bool CreateColumnDelete(const char *row, const char *column, uint64_t timestamp, ByteString32T **keyp, ByteString32T **valuep);
+    bool CreateInsert(const char *row, const char *column, uint64_t timestamp, const char *value, ByteString32T **keyp, ByteString32T **valuep);
+
+    Schema *mSchema;
+    ifstream mFin;
+    long mCurLine;
+    DynamicBuffer mKeyBuffer;
+    DynamicBuffer mValueBuffer;
+  };
+
+}
 
