@@ -29,7 +29,7 @@ extern "C" {
 #include "Common/ByteOrder.h"
 #include "Common/DynamicBuffer.h"
 
-#include "Hypertable/RangeServer/Key.h"
+#include "Key.h"
 
 #include "TestSource.h"
 

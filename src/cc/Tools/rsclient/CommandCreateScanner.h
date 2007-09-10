@@ -18,13 +18,30 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "Global.h"
+#ifndef HYPERTABLE_COMMANDCREATESCANNER_H
+#define HYPERTABLE_COMMANDCREATESCANNER_H
 
-using namespace hypertable;
+#include "Common/InteractiveCommand.h"
 
-HyperspaceClient        *Global::hyperspace = 0;
-RangeServerClient       *Global::rangeServer = 0;
-MasterClient            *Global::master = 0;
-int32_t                  Global::outstandingScannerId = -1;
-Global::TableSchemaMapT  Global::schemaMap;
+#include "Hypertable/Lib/MasterClient.h"
+#include "Hypertable/Lib/RangeServerClient.h"
+#include "Hyperspace/HyperspaceClient.h"
 
+namespace hypertable {
+
+  class CommandCreateScanner : public InteractiveCommand {
+  public:
+    CommandCreateScanner(struct sockaddr_in &addr) : mAddr(addr) { return; }
+    virtual const char *CommandText() { return "create scanner"; }
+    virtual const char **Usage() { return msUsage; }
+    virtual int run();
+
+  private:
+    static const char *msUsage[];
+
+    struct sockaddr_in mAddr;
+  };
+
+}
+
+#endif // HYPERTABLE_COMMANDCREATESCANNER_H

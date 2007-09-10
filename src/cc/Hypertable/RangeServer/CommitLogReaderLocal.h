@@ -29,9 +29,10 @@ extern "C" {
 
 #include <boost/thread/mutex.hpp>
 
+#include "Hypertable/Lib/Key.h"
+
 #include "CommitLog.h"
 #include "CommitLogReader.h"
-#include "Key.h"
 
 using namespace hypertable;
 

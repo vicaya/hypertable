@@ -40,7 +40,6 @@ Constants.cc
 FileBlockCache.cc
 FillScanBlock.cc
 Global.cc
-Key.cc
 MaintenanceThread.cc
 MergeScanner.cc
 Range.cc
@@ -65,19 +64,19 @@ add_executable (Hypertable.RangeServer ${RangeServer_SRCS})
 target_link_libraries (Hypertable.RangeServer pthread ${BOOST_LIB} Hypertable Hyperspace DfsBroker AsyncComm Common log4cpp expat ${ZLIB_LIBRARIES})
 
 # cellCacheTest
-add_executable (cellCacheTest CellCache.cc CellCacheScanner.cc tests/cellCacheTest.cc Key.cc ScanContext.cc ${TEST_DEPENDENCIES})
-target_link_libraries (cellCacheTest pthread ${BOOST_LIB} AsyncComm Common log4cpp)
+add_executable (cellCacheTest CellCache.cc CellCacheScanner.cc tests/cellCacheTest.cc ScanContext.cc ${TEST_DEPENDENCIES})
+target_link_libraries (cellCacheTest pthread ${BOOST_LIB} Hypertable AsyncComm Common log4cpp)
 
 # cellStoreDump
-add_executable (cellStoreDump Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc cellStoreDump.cc CellStoreScannerV0.cc Key.cc FileBlockCache.cc Global.cc ScanContext.cc)
-target_link_libraries (cellStoreDump pthread ${BOOST_LIB} DfsBroker AsyncComm Common log4cpp ${ZLIB_LIBRARIES})
+add_executable (cellStoreDump Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc cellStoreDump.cc CellStoreScannerV0.cc FileBlockCache.cc Global.cc ScanContext.cc)
+target_link_libraries (cellStoreDump pthread ${BOOST_LIB} Hypertable DfsBroker AsyncComm Common log4cpp ${ZLIB_LIBRARIES})
 
 # cellStoreTest
-add_executable (cellStoreTest Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc tests/cellStoreTest.cc CellStoreScannerV0.cc CellCache.cc CellCacheScanner.cc Key.cc FileBlockCache.cc Global.cc CellStore.cc ScanContext.cc ${TEST_DEPENDENCIES})
-target_link_libraries (cellStoreTest pthread ${BOOST_LIB} DfsBroker AsyncComm Common log4cpp ${ZLIB_LIBRARIES})
+add_executable (cellStoreTest Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc tests/cellStoreTest.cc CellStoreScannerV0.cc CellCache.cc CellCacheScanner.cc FileBlockCache.cc Global.cc CellStore.cc ScanContext.cc ${TEST_DEPENDENCIES})
+target_link_libraries (cellStoreTest pthread ${BOOST_LIB} Hypertable DfsBroker AsyncComm Common log4cpp ${ZLIB_LIBRARIES})
 
 # cellStoreTest2
-add_executable (cellStoreTest2 Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc tests/cellStoreTest2.cc CellStoreScannerV0.cc CellCache.cc CellCacheScanner.cc Key.cc MergeScanner.cc FileBlockCache.cc Global.cc CellStore.cc ScanContext.cc ${TEST_DEPENDENCIES})
+add_executable (cellStoreTest2 Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc tests/cellStoreTest2.cc CellStoreScannerV0.cc CellCache.cc CellCacheScanner.cc MergeScanner.cc FileBlockCache.cc Global.cc CellStore.cc ScanContext.cc ${TEST_DEPENDENCIES})
 target_link_libraries (cellStoreTest2 pthread ${BOOST_LIB} Hypertable DfsBroker AsyncComm Common log4cpp ${ZLIB_LIBRARIES} expat)
 
 # commitLogReaderTest

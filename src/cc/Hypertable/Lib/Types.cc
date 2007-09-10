@@ -121,6 +121,20 @@ namespace hypertable {
     return true;
   }
 
+  bool DecodeScanResult(uint8_t **bufPtr, size_t *remainingPtr, ScanResultT *scanResult) {
+    if (!(Serialization::DecodeInt(bufPtr, remainingPtr, (uint32_t *)&scanResult->error)))
+      return false;
+    if (!(Serialization::DecodeShort(bufPtr, remainingPtr, &scanResult->flags)))
+      return false;
+    if (!(Serialization::DecodeInt(bufPtr, remainingPtr, (uint32_t *)&scanResult->id)))
+      return false;
+    if (!(Serialization::DecodeInt(bufPtr, remainingPtr, &scanResult->dataLen)))
+      return false;
+    scanResult->data = *bufPtr;
+    return true;
+  }
+
+
   std::ostream &operator<<(std::ostream &os, const RangeSpecificationT &rangeSpec) {
     os << "TableName  = " << rangeSpec.tableName << endl;
     os << "Generation = " << rangeSpec.generation << endl;

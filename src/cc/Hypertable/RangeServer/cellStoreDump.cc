@@ -32,10 +32,11 @@
 
 #include "DfsBroker/Lib/Client.h"
 
-#include "Hypertable/RangeServer/CellStoreV0.h"
-#include "Hypertable/RangeServer/CellStoreScannerV0.h"
-#include "Hypertable/RangeServer/Global.h"
-#include "Hypertable/RangeServer/Key.h"
+#include "Hypertable/Lib/Key.h"
+
+#include "CellStoreV0.h"
+#include "CellStoreScannerV0.h"
+#include "Global.h"
 
 using namespace hypertable;
 using namespace std;

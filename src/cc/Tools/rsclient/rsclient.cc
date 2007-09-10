@@ -40,6 +40,7 @@ extern "C" {
 #include "Hypertable/Lib/RangeServerClient.h"
 #include "Hyperspace/HyperspaceClient.h"
 
+#include "CommandCreateScanner.h"
 #include "CommandLoadRange.h"
 #include "CommandUpdate.h"
 #include "Global.h"
@@ -224,7 +225,8 @@ int main(int argc, char **argv) {
   Global::hyperspace = new HyperspaceClient(connManager, propsPtr.get());
   if (!Global::hyperspace->WaitForConnection(30))
     exit(1);
-  
+
+  commands.push_back( new CommandCreateScanner(addr) );  
   commands.push_back( new CommandLoadRange(addr) );
   commands.push_back( new CommandUpdate(addr) );
 

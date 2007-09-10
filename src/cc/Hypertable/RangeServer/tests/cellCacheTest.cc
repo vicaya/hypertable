@@ -34,9 +34,10 @@ extern "C" {
 #include "Common/TestHarness.h"
 #include "Common/Usage.h"
 
+#include "Hypertable/Lib/Key.h"
+
 #include "Hypertable/RangeServer/CellCache.h"
 #include "Hypertable/RangeServer/CellCacheScanner.h"
-#include "Hypertable/RangeServer/Key.h"
 
 using namespace hypertable;
 using namespace std;

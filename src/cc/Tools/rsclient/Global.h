@@ -36,6 +36,7 @@ namespace hypertable {
     static HyperspaceClient *hyperspace;
     static RangeServerClient *rangeServer;
     static MasterClient *master;
+    static int32_t outstandingScannerId;
 
     typedef __gnu_cxx::hash_map<std::string, SchemaPtr> TableSchemaMapT;
 

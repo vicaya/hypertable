@@ -18,13 +18,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "Global.h"
+#ifndef HYPERTABLE_DISPLAYSCANDATA_H
+#define HYPERTABLE_DISPLAYSCANDATA_H
 
-using namespace hypertable;
+#include "Common/ByteString.h"
+#include "Hypertable/Lib/Schema.h"
 
-HyperspaceClient        *Global::hyperspace = 0;
-RangeServerClient       *Global::rangeServer = 0;
-MasterClient            *Global::master = 0;
-int32_t                  Global::outstandingScannerId = -1;
-Global::TableSchemaMapT  Global::schemaMap;
+namespace hypertable {
 
+  void DisplayScanData(ByteString32T *key, ByteString32T *value, SchemaPtr &schemaPtr);
+
+}
+
+#endif // HYPERTABLE_DISPLAYSCANDATA_H

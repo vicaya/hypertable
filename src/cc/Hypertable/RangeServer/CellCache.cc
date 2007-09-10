@@ -23,9 +23,10 @@
 
 #include "Common/Logger.h"
 
+#include "Hypertable/Lib/Key.h"
+
 #include "CellCache.h"
 #include "CellCacheScanner.h"
-#include "Key.h"
 
 using namespace hypertable;
 using namespace std;

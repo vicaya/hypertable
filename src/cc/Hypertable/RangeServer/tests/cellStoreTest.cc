@@ -51,8 +51,8 @@ extern "C" {
 #include "Hypertable/RangeServer/CellCacheScanner.h"
 #include "Hypertable/RangeServer/FileBlockCache.h"
 #include "Hypertable/RangeServer/Global.h"
-#include "Hypertable/RangeServer/Key.h"
 
+#include "Hypertable/Lib/Key.h"
 #include "Hypertable/Lib/TestData.h"
 
 

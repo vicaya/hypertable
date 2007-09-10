@@ -22,7 +22,8 @@
 
 #include "Common/Logger.h"
 
-#include "Key.h"
+#include "Hypertable/Lib/Key.h"
+
 #include "CellCacheScanner.h"
 
 

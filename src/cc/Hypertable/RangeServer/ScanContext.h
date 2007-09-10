@@ -28,10 +28,9 @@
 #include "Common/ByteString.h"
 #include "Common/Error.h"
 
+#include "Hypertable/Lib/Key.h"
 #include "Hypertable/Lib/Schema.h"
 #include "Hypertable/Lib/Types.h"
-
-#include "Key.h"
 
 namespace hypertable {
 

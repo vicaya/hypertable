@@ -56,6 +56,14 @@ namespace hypertable {
   } ScanSpecificationT;
 
   typedef struct {
+    int error;
+    uint16_t flags;
+    int id;
+    uint32_t dataLen;
+    uint8_t *data;
+  } ScanResultT;
+
+  typedef struct {
     uint8_t *buf;
     int32_t len;
   } BufferT;
@@ -69,6 +77,9 @@ namespace hypertable {
   size_t EncodedLengthScanSpecification(ScanSpecificationT &scanSpec);
   void EncodeScanSpecification(uint8_t **bufPtr, ScanSpecificationT &scanSpec);
   bool DecodeScanSpecification(uint8_t **bufPtr, size_t *remainingPtr, ScanSpecificationT *scanSpec);
+
+  /** Serialization methods for ScanResultT **/
+  bool DecodeScanResult(uint8_t **bufPtr, size_t *remainingPtr, ScanResultT *scanResult);
 
   std::ostream &operator<<(std::ostream &os, const RangeSpecificationT &rangeSpec);
 

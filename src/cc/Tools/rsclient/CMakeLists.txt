@@ -18,8 +18,10 @@
 
 set (rsclient_SRCS
 rsclient.cc
+CommandCreateScanner.cc
 CommandLoadRange.cc
 CommandUpdate.cc
+DisplayScanData.cc
 FetchSchema.cc
 Global.cc
 ParseRangeSpec.cc
