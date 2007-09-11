@@ -31,7 +31,7 @@ using namespace hypertable;
 /**
  * 
  */
-MergeScanner::MergeScanner(ScanContextPtr &scanContextPtr, bool returnDeletes) : CellListScanner(scanContextPtr), mDone(false), mInitialized(false), mScanners(), mQueue(), mDeletePresent(false), mDeletedRow(0), mDeletedCell(0), mReturnDeletes(returnDeletes), mRowCount(0), mRowLimit(0), mPrevKey(0) {
+MergeScanner::MergeScanner(ScanContextPtr &scanContextPtr, bool returnDeletes) : CellListScanner(scanContextPtr), mDone(false), mInitialized(false), mScanners(), mQueue(), mDeletePresent(false), mDeletedRow(0), mDeletedCell(0), mReturnDeletes(returnDeletes), mRowCount(0), mRowLimit(0), mCellCount(0), mCellLimit(0), mCellCutoff(0), mPrevKey(0) {
   if (scanContextPtr->spec != 0)
     mRowLimit = scanContextPtr->spec->rowLimit;
 }
@@ -151,21 +151,36 @@ void MergeScanner::Forward() {
 	    mDone = true;
 	    return;
 	  }
-	  mPrevKey.clear();
-	  mPrevKey.add(sstate.key->data, sstate.key->len);
+	  mPrevKey.set(sstate.key->data, sstate.key->len);
+	  mCellLimit = mScanContextPtr->familyInfo[keyComps.columnFamily].cellLimit;
+	  mCellCutoff = mScanContextPtr->familyInfo[keyComps.columnFamily].cutoffTime;
+	  mCellCount = 0;
 	  return;
 	}
       }
 
-      // if (curCell == lastCell) {
-      //   cellCount++;
-      //   if (cellCount == cellLimit) {
-      //     while (curCell == lastCell)
-      //       Forward;
-      //   }
-      // }
-      // else
-      //   cellCount = 0;
+      if (sstate.key->len == mPrevKey.fill() && sstate.key->len > 9 &&
+	  !memcmp(sstate.key->data, mPrevKey.buf, sstate.key->len-9)) {
+	if (mCellLimit) {
+	  mCellCount++;
+	  mPrevKey.set(sstate.key->data, sstate.key->len);
+	  if (mCellCount >= mCellLimit)
+	    continue;
+	}
+      }
+      else {
+	mPrevKey.set(sstate.key->data, sstate.key->len);
+	mCellLimit = mScanContextPtr->familyInfo[keyComps.columnFamily].cellLimit;
+	mCellCutoff = mScanContextPtr->familyInfo[keyComps.columnFamily].cutoffTime;
+	mCellCount = 0;
+      }
+
+    }
+    else {
+      mPrevKey.set(sstate.key->data, sstate.key->len);
+      mCellLimit = mScanContextPtr->familyInfo[keyComps.columnFamily].cellLimit;
+      mCellCutoff = mScanContextPtr->familyInfo[keyComps.columnFamily].cutoffTime;
+      mCellCount = 0;
     }
 
     break;
@@ -232,13 +247,13 @@ void MergeScanner::Initialize() {
       if (!mReturnDeletes)
 	Forward();
     }
-    else
+    else {
       mDeletePresent = false;
-  }
-
-  if (!mQueue.empty()) {
-    const ScannerStateT &sstate = mQueue.top();
-    mPrevKey.add(sstate.key->data, sstate.key->len);
+      mPrevKey.set(sstate.key->data, sstate.key->len);
+      mCellLimit = mScanContextPtr->familyInfo[keyComps.columnFamily].cellLimit;
+      mCellCutoff = mScanContextPtr->familyInfo[keyComps.columnFamily].cutoffTime;
+      mCellCount = 0;
+    }
   }
 
   mInitialized = true;

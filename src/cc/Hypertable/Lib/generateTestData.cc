@@ -47,8 +47,11 @@ namespace {
     "",
     "OPTINS:",
     "  --config=<fname>  Read configuration properties from <fname>",
+    "  --limit=<n>       Only output <n> lines of testdata",
     "  --seed=<n>        Seed the randon number generator with <n>",
     "  --timestamps      Generate timestamps",
+    "  --qualifier-limit=<n>  Limit the pool of qualifiers to <n>",
+    "  --row-limit=<n>   Limit the pool of row keys to <n>",
     "",
     "This program generates random test data to stdout.  It",
     "contacts the master server and fetches the schema for",
@@ -101,6 +104,10 @@ int main(int argc, char **argv) {
   std::string tableName = "";
   unsigned int seed = 1234;
   bool generateTimestamps = false;
+  uint32_t qualifierLimit = 0;
+  uint32_t rowLimit = 0;
+  uint32_t limit = 0;
+  uint32_t emitted = 0;
 
   System::Initialize(argv[0]);
   ReactorFactory::Initialize((uint16_t)System::GetProcessorCount());
@@ -110,6 +117,15 @@ int main(int argc, char **argv) {
       configFile = &argv[i][9];
     else if (!strncmp(argv[i], "--seed=", 7)) {
       seed = atoi(&argv[i][7]);
+    }
+    else if (!strncmp(argv[i], "--qualifier-limit=", 18)) {
+      qualifierLimit = atoi(&argv[i][18]);
+    }
+    else if (!strncmp(argv[i], "--row-limit=", 12)) {
+      rowLimit = atoi(&argv[i][12]);
+    }
+    else if (!strncmp(argv[i], "--limit=", 8)) {
+      limit = atoi(&argv[i][8]);
     }
     else if (!strcmp(argv[i], "--timestamps")) {
       generateTimestamps = true;
@@ -151,9 +167,23 @@ int main(int argc, char **argv) {
       cfNames[(*cfIter)->id] = (*cfIter)->name;
   }
 
+  if (qualifierLimit == 0)
+    qualifierLimit = tdata.urls.size();
+  else if (tdata.urls.size() < qualifierLimit)
+    qualifierLimit = tdata.urls.size();
+
+  if (rowLimit == 0)
+    rowLimit = tdata.words.size();
+  else if (tdata.words.size() < rowLimit)
+    rowLimit = tdata.words.size();
+
   srand(seed);
 
   while (true) {
+
+    if (limit && emitted >= limit)
+      break;
+    emitted++;
 
     if (generateTimestamps) {
       // timestamp
@@ -162,7 +192,7 @@ int main(int argc, char **argv) {
     }
 
     // row key
-    index = rand() % tdata.words.size();
+    index = rand() % rowLimit;
     rowKey = tdata.words[index].get();
 
     index = rand();
@@ -178,7 +208,7 @@ int main(int argc, char **argv) {
     index = rand();
     family = (index % cfMax) + 1;
     
-    index = rand() % tdata.urls.size();
+    index = rand() % qualifierLimit;
     qualifier = tdata.urls[index].get();
 
     index = rand();

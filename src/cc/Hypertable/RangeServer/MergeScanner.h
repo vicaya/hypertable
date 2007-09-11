@@ -71,6 +71,9 @@ namespace hypertable {
     bool          mReturnDeletes;
     uint32_t      mRowCount;
     uint32_t      mRowLimit;
+    uint32_t      mCellCount;
+    uint32_t      mCellLimit;
+    uint64_t      mCellCutoff;
     DynamicBuffer mPrevKey;
   };
 }
