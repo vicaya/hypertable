@@ -59,6 +59,7 @@ namespace hypertable {
 
     void Initialize();
 
+    bool          mDone;
     bool          mInitialized;
     std::vector<CellListScanner *>  mScanners;
     std::priority_queue<ScannerStateT, std::vector<ScannerStateT>, ltScannerState> mQueue;
@@ -68,6 +69,9 @@ namespace hypertable {
     DynamicBuffer mDeletedCell;
     uint64_t      mDeletedCellTimestamp;
     bool          mReturnDeletes;
+    uint32_t      mRowCount;
+    uint32_t      mRowLimit;
+    DynamicBuffer mPrevKey;
   };
 }
 
