@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
   schema->OpenColumnFamily();
   schema->SetColumnFamilyParameter("Name", "default");
   schema->SetColumnFamilyParameter("ExpireDays", "30.0");
-  schema->SetColumnFamilyParameter("KeepCopies", "3");
+  schema->SetColumnFamilyParameter("CellLimit", "3");
   schema->CloseColumnFamily();
   schema->CloseAccessGroup();
 

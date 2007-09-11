@@ -2,7 +2,7 @@
   <AccessGroup name="default">
     <ColumnFamily>
       <Name>content</Name>
-      <KeepCopies>1</KeepCopies>
+      <CellLimit>1</CellLimit>
     </ColumnFamily>
     <ColumnFamily>
       <Name>language</Name>
@@ -11,7 +11,7 @@
   </AccessGroup>
   <ColumnFamily>
     <Name>bad</Name>
-    <KeepCopies>1</KeepCopies>
+    <CellLimit>1</CellLimit>
   </ColumnFamily>
 </Schema>
 

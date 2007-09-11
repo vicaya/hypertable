@@ -2,7 +2,7 @@
   <AccessGroup name="default">
     <ColumnFamily>
       <Name>content</Name>
-      <KeepCopies>3</KeepCopies>
+      <CellLimit>3</CellLimit>
     </ColumnFamily>
     <ColumnFamily>
       <Name>language</Name>
@@ -12,7 +12,7 @@
   <AccessGroup name="volatile" inMemory="true">
     <ColumnFamily>
       <Name>location</Name>
-      <KeepCopies>1</KeepCopies>
+      <CellLimit>1</CellLimit>
     </ColumnFamily>
   </AccessGroup>
 </Schema>

@@ -2,7 +2,7 @@
   <AccessGroup name="default">
     <ColumnFamily>
       <Name>content</Name>
-      <KeepCopies>1</KeepCopies>
+      <CellLimit>1</CellLimit>
       <BogusElement>1</BogusElement>
     </ColumnFamily>
     <ColumnFamily>

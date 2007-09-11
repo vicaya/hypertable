@@ -2,7 +2,7 @@
   <AccessGroup name="default" foo="bar">
     <ColumnFamily>
       <Name>content</Name>
-      <KeepCopies>1</KeepCopies>
+      <CellLimit>1</CellLimit>
     </ColumnFamily>
     <ColumnFamily>
       <Name>language</Name>
