@@ -17,35 +17,31 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#ifndef HYPERTABLE_RSCLIENT_GLOBAL_H
-#define HYPERTABLE_RSCLIENT_GLOBAL_H
 
-#include <ext/hash_map>
+#ifndef HYPERTABLE_COMMANDFETCHSCANBLOCK_H
+#define HYPERTABLE_COMMANDFETCHSCANBLOCK_H
 
-#include "Common/StringExt.h"
+#include "Common/InteractiveCommand.h"
 
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/RangeServerClient.h"
-#include "Hypertable/Lib/Schema.h"
 #include "Hyperspace/HyperspaceClient.h"
 
 namespace hypertable {
 
-  class Global {
+  class CommandFetchScanblock : public InteractiveCommand {
   public:
-    static HyperspaceClient *hyperspace;
-    static RangeServerClient *rangeServer;
-    static MasterClient *master;
-    static int32_t outstandingScannerId;
-    static SchemaPtr outstandingSchemaPtr;
+    CommandFetchScanblock(struct sockaddr_in &addr) : mAddr(addr) { return; }
+    virtual const char *CommandText() { return "create scanner"; }
+    virtual const char **Usage() { return msUsage; }
+    virtual int run();
 
-    typedef __gnu_cxx::hash_map<std::string, SchemaPtr> TableSchemaMapT;
+  private:
+    static const char *msUsage[];
 
-    static TableSchemaMapT schemaMap;
-
+    struct sockaddr_in mAddr;
   };
+
 }
 
-
-#endif // HYPERTABLE_RSCLIENT_GLOBAL_H
-
+#endif // HYPERTABLE_COMMANDFETCHSCANBLOCK_H

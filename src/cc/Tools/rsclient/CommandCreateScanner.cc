@@ -57,14 +57,12 @@ const char *CommandCreateScanner::msUsage[] = {
 
 int CommandCreateScanner::run() {
   off_t len;
-  const char *schema = 0;
   int error;
   std::string tableName;
   std::string startRow;
   std::string endRow;
   RangeSpecificationT rangeSpec;
   ScanSpecificationT scanSpec;
-  SchemaPtr schemaPtr;
   char *last;
   const char *columnStr;
   DispatchHandlerSynchronizer syncHandler;
@@ -85,15 +83,15 @@ int CommandCreateScanner::run() {
     return -1;
   }
 
-  schemaPtr = Global::schemaMap[tableName];
+  Global::outstandingSchemaPtr = Global::schemaMap[tableName];
 
-  if (!schemaPtr) {
-    if ((error = FetchSchema(tableName, Global::hyperspace, schemaPtr)) != Error::OK)
+  if (!Global::outstandingSchemaPtr) {
+    if ((error = FetchSchema(tableName, Global::hyperspace, Global::outstandingSchemaPtr)) != Error::OK)
       return error;
-    Global::schemaMap[tableName] = schemaPtr;    
+    Global::schemaMap[tableName] = Global::outstandingSchemaPtr;    
   }
 
-  cout << "Generation = " << schemaPtr->GetGeneration() << endl;
+  cout << "Generation = " << Global::outstandingSchemaPtr->GetGeneration() << endl;
   cout << "TableName  = " << tableName << endl;
   cout << "StartRow   = " << startRow << endl;
   cout << "EndRow     = " << endRow << endl;
@@ -101,7 +99,7 @@ int CommandCreateScanner::run() {
   rangeSpec.tableName = tableName.c_str();
   rangeSpec.startRow = startRow.c_str();
   rangeSpec.endRow = endRow.c_str();
-  rangeSpec.generation = schemaPtr->GetGeneration();
+  rangeSpec.generation = Global::outstandingSchemaPtr->GetGeneration();
 
   /**
    * Create Scan specification
@@ -159,6 +157,8 @@ int CommandCreateScanner::run() {
     return -1;
   }
 
+  Global::outstandingScannerId = scanResult.id;
+
   msgPtr = scanResult.data;
   endPtr = scanResult.data + scanResult.dataLen;
   
@@ -167,9 +167,11 @@ int CommandCreateScanner::run() {
     msgPtr += 4 + key->len;
     value = (ByteString32T *)msgPtr;
     msgPtr += 4 + value->len;
-    //cout << "keyLen=" << key->len << " valueLen=" << value->len << endl;
-    DisplayScanData(key, value, schemaPtr);
+    DisplayScanData(key, value, Global::outstandingSchemaPtr);
   }
+
+  if ((scanResult.flags & END_OF_SCAN) == END_OF_SCAN)
+    Global::outstandingScannerId = -1;
 
   return Error::OK;
 }

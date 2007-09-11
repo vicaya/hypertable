@@ -33,6 +33,8 @@ extern "C" {
 
 namespace hypertable {
 
+  extern const uint16_t END_OF_SCAN;
+
   /**
    *
    */

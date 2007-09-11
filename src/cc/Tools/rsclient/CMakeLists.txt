@@ -19,6 +19,7 @@
 set (rsclient_SRCS
 rsclient.cc
 CommandCreateScanner.cc
+CommandFetchScanblock.cc
 CommandLoadRange.cc
 CommandUpdate.cc
 DisplayScanData.cc

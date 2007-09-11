@@ -41,6 +41,7 @@ extern "C" {
 #include "Hyperspace/HyperspaceClient.h"
 
 #include "CommandCreateScanner.h"
+#include "CommandFetchScanblock.h"
 #include "CommandLoadRange.h"
 #include "CommandUpdate.h"
 #include "Global.h"
@@ -185,6 +186,7 @@ int main(int argc, char **argv) {
   Comm *comm;
   ConnectionManager *connManager;
   PropertiesPtr propsPtr;
+  CommandFetchScanblock *fetchScanblock;
 
   System::Initialize(argv[0]);
   ReactorFactory::Initialize((uint16_t)System::GetProcessorCount());
@@ -227,6 +229,8 @@ int main(int argc, char **argv) {
     exit(1);
 
   commands.push_back( new CommandCreateScanner(addr) );  
+  fetchScanblock = new CommandFetchScanblock(addr);
+  commands.push_back( fetchScanblock );
   commands.push_back( new CommandLoadRange(addr) );
   commands.push_back( new CommandUpdate(addr) );
 
@@ -238,8 +242,13 @@ int main(int argc, char **argv) {
   while ((line = rl_gets()) != 0) {
     size_t i;
 
-    if (*line == 0)
+    if (*line == 0) {
+      if (Global::outstandingScannerId != -1) {
+	fetchScanblock->ClearArgs();
+	fetchScanblock->run();
+      }
       continue;
+    }
 
     for (i=0; i<commands.size(); i++) {
       if (commands[i]->Matches(line)) {

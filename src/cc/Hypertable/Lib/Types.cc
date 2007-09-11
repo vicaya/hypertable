@@ -30,6 +30,8 @@ using namespace std;
 
 namespace hypertable {
 
+  const uint16_t END_OF_SCAN = 0x0001;
+
   /**
    * 
    */
