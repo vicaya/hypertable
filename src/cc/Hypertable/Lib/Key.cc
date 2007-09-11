@@ -103,6 +103,7 @@ namespace hypertable {
     }
 
     flag = *ptr++;
+    timestampPtr = (uint8_t *)ptr;
     memcpy(&timestamp, ptr, sizeof(uint64_t));
     endPtr = ptr + sizeof(uint64_t);
 
@@ -111,6 +112,14 @@ namespace hypertable {
 
     return true;
   }
+
+  void Key::updateTimestamp(uint64_t ts) {
+    timestamp = ts;
+    ts = ByteOrderSwapInt64(ts);
+    ts = ~ts;
+    memcpy(timestampPtr, &ts, sizeof(int64_t));
+  }
+
 
 
   std::ostream &operator<<(std::ostream &os, const Key &keyComps) {

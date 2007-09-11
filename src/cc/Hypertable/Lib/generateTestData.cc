@@ -48,6 +48,7 @@ namespace {
     "OPTINS:",
     "  --config=<fname>  Read configuration properties from <fname>",
     "  --seed=<n>        Seed the randon number generator with <n>",
+    "  --timestamps      Generate timestamps",
     "",
     "This program generates random test data to stdout.  It",
     "contacts the master server and fetches the schema for",
@@ -68,6 +69,11 @@ namespace {
     "<timestamp> '\\t' <rowKey> '\\t' <qualifiedColumn> '\\t' <value>",
     "<timestamp> '\\t' <rowKey> '\\t' <qualifiedColumn> '\\t' DELETE",
     "<timestamp> '\\t' DELETE",
+    "",
+    "The <timestamp> field will contain the word AUTO unless the",
+    "--timestamp argument was supplied, in which case it will contain",
+    "the number of microseconds since the epoch that have elapsed at",
+    "the time the line was emitted.",
     0
   };
 }
@@ -94,6 +100,7 @@ int main(int argc, char **argv) {
   int error;
   std::string tableName = "";
   unsigned int seed = 1234;
+  bool generateTimestamps = false;
 
   System::Initialize(argv[0]);
   ReactorFactory::Initialize((uint16_t)System::GetProcessorCount());
@@ -103,6 +110,9 @@ int main(int argc, char **argv) {
       configFile = &argv[i][9];
     else if (!strncmp(argv[i], "--seed=", 7)) {
       seed = atoi(&argv[i][7]);
+    }
+    else if (!strcmp(argv[i], "--timestamps")) {
+      generateTimestamps = true;
     }
     else if (tableName == "")
       tableName = argv[i];
@@ -145,9 +155,11 @@ int main(int argc, char **argv) {
 
   while (true) {
 
-    // timestamp
-    gettimeofday(&tval, 0);
-    timestamp = ((uint64_t)tval.tv_sec * 1000000LL) + tval.tv_usec;
+    if (generateTimestamps) {
+      // timestamp
+      gettimeofday(&tval, 0);
+      timestamp = ((uint64_t)tval.tv_sec * 1000000LL) + tval.tv_usec;
+    }
 
     // row key
     index = rand() % tdata.words.size();
@@ -156,7 +168,10 @@ int main(int argc, char **argv) {
     index = rand();
     modValue = rand() % 49;
     if ((index % 49) == (size_t)modValue) {
-      cout << timestamp << "\t" << rowKey << "\tDELETE" << endl;
+      if (generateTimestamps)
+	cout << timestamp << "\t" << rowKey << "\tDELETE" << endl;
+      else
+	cout << "AUTO\t" << rowKey << "\tDELETE" << endl;	
       continue;
     }
 
@@ -169,7 +184,10 @@ int main(int argc, char **argv) {
     index = rand();
     modValue = rand() % 29;
     if ((index % 29) == 0) {
-      cout << timestamp << "\t" << rowKey << "\t" << cfNames[family] << ":" << qualifier << "\tDELETE" << endl;
+      if (generateTimestamps)
+	cout << timestamp << "\t" << rowKey << "\t" << cfNames[family] << ":" << qualifier << "\tDELETE" << endl;
+      else
+	cout << "AUTO\t" << rowKey << "\t" << cfNames[family] << ":" << qualifier << "\tDELETE" << endl;
       continue;
     }
 
@@ -181,8 +199,10 @@ int main(int argc, char **argv) {
     else
       value = content;
 
-    cout << timestamp << "\t" << rowKey << "\t" << cfNames[family] << ":" << qualifier << "\t" << value << endl;    
-
+    if (generateTimestamps)
+      cout << timestamp << "\t" << rowKey << "\t" << cfNames[family] << ":" << qualifier << "\t" << value << endl;    
+    else
+      cout << "AUTO\t" << rowKey << "\t" << cfNames[family] << ":" << qualifier << "\t" << value << endl;    
   }
 
   return 0;

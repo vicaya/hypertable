@@ -18,12 +18,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <cerrno>
+#include <cstring>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/shared_array.hpp>
 
 extern "C" {
-#include <errno.h>
-#include <string.h>
+#include <strings.h>
 }
 
 #include "Common/ByteOrder.h"
@@ -58,11 +60,15 @@ bool TestSource::Next(ByteString32T **keyp, ByteString32T **valuep) {
       continue;
     }
 
-    timestamp = strtoll(ptr, 0, 0);
-
-    if (timestamp == 0 && errno == EINVAL) {
-      cerr << "Invalid timestamp (" << ptr << ") on line " << (mCurLine-1) << endl;
-      continue;
+    if (!strcasecmp(ptr, "AUTO")) {
+      timestamp = (uint64_t)-1;
+    }
+    else {
+      timestamp = strtoll(ptr, 0, 0);
+      if (timestamp == 0 && errno == EINVAL) {
+	cerr << "Invalid timestamp (" << ptr << ") on line " << (mCurLine-1) << endl;
+	continue;
+      }
     }
 
     if ((rowKey = strtok_r(0, "\t", &last)) == 0) {

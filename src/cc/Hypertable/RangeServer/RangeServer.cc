@@ -563,6 +563,7 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, RangeSpecificationT *rangeS
   size_t stopSize = 0;
   size_t splitSize = 0;
   Key keyComps;
+  uint64_t nextTimestamp = 0;
   uint64_t updateTimestamp = 0;
   uint64_t clientTimestamp = 0;
   ByteString32Ptr splitKeyPtr;
@@ -570,6 +571,7 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, RangeSpecificationT *rangeS
   uint64_t splitStartTime;
   std::string  splitRow;
   bool needDecrement = false;
+  struct timeval tval;
 
   /**
   if (Global::verbose)
@@ -604,6 +606,10 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, RangeSpecificationT *rangeS
     goto abort;
   }
 
+  // timestamp
+  gettimeofday(&tval, 0);
+  nextTimestamp = ((uint64_t)tval.tv_sec * 1000000LL) + tval.tv_usec;
+
   /** Increment update count (block if maintenance in progress) **/
   rangePtr->IncrementUpdateCounter();
   needDecrement = true;
@@ -627,6 +633,10 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, RangeSpecificationT *rangeS
       errMsg = "Problem de-serializing key/value pair";
       goto abort;
     }
+
+    if (keyComps.timestamp == -1LL)
+      keyComps.updateTimestamp(nextTimestamp++);
+
     if (clientTimestamp < keyComps.timestamp)
       clientTimestamp = keyComps.timestamp;
 

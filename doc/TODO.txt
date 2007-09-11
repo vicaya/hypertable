@@ -5,7 +5,6 @@ TODO:
 - Make sure NULL endkey lookups work in RangeServer
 - Add support for LZO and BZIP2 compression
 - Implement 'InMemory' locality groups
-- Add support for auto-assigned timestamps
 - Figure out why poll drops out of RangeServer/main.cc when gdb detaches from process
 - Writes to the commit log should be asynchronous (or concurrent)
 - In AccessGroup::RunCompaction, on major compaction check if the oldest
@@ -29,6 +28,7 @@ TODO CLEANUP:
 
 
 DONE:
+- Add support for auto-assigned timestamps
 - Remove msgId return parameter from CallbackHandlerSynchronizer and all of the client APIs
 - Add RangeServerClient
 - Clean up CommBuf, get rid of Prepend* methods in CommBuf for normal forward serialization methods

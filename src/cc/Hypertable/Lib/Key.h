@@ -44,7 +44,7 @@ namespace hypertable {
     /**
      * Constructor (for implicit construction).
      */
-    Key() { return; }
+    Key() { timestampPtr = 0; return; }
 
     /**
      * Constructor that takes an opaque key as an argument.  load is called to
@@ -62,12 +62,21 @@ namespace hypertable {
      */
     bool load(const ByteString32T *key);
 
+    /**
+     * Updates the timestamp of a previously loaded key by writing the
+     * key back into the serialized key.
+     *
+     * @param timestamp new timestamp 
+     */
+    void updateTimestamp(uint64_t timestamp);
+
     const char    *rowKey;
     const char    *columnQualifier;
     const uint8_t *endPtr;
     uint64_t    timestamp;
     uint8_t     columnFamily;
     uint8_t     flag;
+    uint8_t    *timestampPtr;
   };
 
 

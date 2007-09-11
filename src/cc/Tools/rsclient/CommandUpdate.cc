@@ -55,6 +55,10 @@ const char *CommandUpdate::msUsage[] = {
   "  <timestamp> '\t' <rowKey> '\t' <qualifiedColumn> '\t' DELETE",
   "  <timestamp> '\t' DELETE",
   "",
+  "  The <timestamp> field can either contain a timestamp that is microseconds",
+  "  since the epoch, or it can contain the word AUTO which will cause the",
+  "  system to automatically assign a timestamp to each update.",
+  "",
   (const char *)0
 };
 
