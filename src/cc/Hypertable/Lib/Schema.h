@@ -42,11 +42,11 @@ namespace hypertable {
 
     class ColumnFamily {
     public:
-      ColumnFamily() : name(), lg(), id(0), keepCopies(0), expireTime(0) { return; }
+      ColumnFamily() : name(), lg(), id(0), cellLimit(0), expireTime(0) { return; }
       string   name;
       string   lg;
       uint32_t id;
-      uint32_t keepCopies;
+      uint32_t cellLimit;
       time_t   expireTime;
     };
 

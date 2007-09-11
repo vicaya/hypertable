@@ -36,7 +36,7 @@ namespace hypertable {
 
   typedef struct {
     uint64_t cutoffTime;
-    uint32_t keepCopies;
+    uint32_t cellLimit;
   } CellFilterInfoT;
 
   /**

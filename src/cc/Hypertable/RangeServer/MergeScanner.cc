@@ -149,6 +149,7 @@ bool MergeScanner::Get(ByteString32T **keyp, ByteString32T **valuep) {
 
   if (!mQueue.empty()) {
     const ScannerStateT &sstate = mQueue.top();
+    // check for row or cell limit
     *keyp = sstate.key;
     *valuep = sstate.value;
     return true;

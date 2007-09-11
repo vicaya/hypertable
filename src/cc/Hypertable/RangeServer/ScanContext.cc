@@ -54,7 +54,7 @@ void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp)
 	  familyInfo[columnFamily->id].cutoffTime == 0;
 	else
 	  familyInfo[columnFamily->id].cutoffTime == timestamp - (columnFamily->expireTime * 1000000);
-	familyInfo[columnFamily->id].keepCopies = columnFamily->keepCopies;
+	familyInfo[columnFamily->id].cellLimit = columnFamily->cellLimit;
       }
     }
     else {
@@ -72,7 +72,7 @@ void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp)
 	    familyInfo[(*cfIter)->id].cutoffTime == 0;
 	  else
 	    familyInfo[(*cfIter)->id].cutoffTime == timestamp - ((*cfIter)->expireTime * 1000000);
-	  familyInfo[(*cfIter)->id].keepCopies = (*cfIter)->keepCopies;
+	  familyInfo[(*cfIter)->id].cellLimit = (*cfIter)->cellLimit;
 	}
       }
     }

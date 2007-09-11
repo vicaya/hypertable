@@ -23,6 +23,6 @@ public class ColumnFamily {
     public String   name;
     public String   ag;
     public int      id;
-    public int      keepCopies;
+    public int      cellLimit;
     public long     expireTime;
 }

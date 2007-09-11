@@ -2,7 +2,7 @@
   <AccessGroup name="default">
     <ColumnFamily>
       <Name>apple</Name>
-        <KeepCopies>1</KeepCopies>
+        <CellLimit>1</CellLimit>
     </ColumnFamily>
     <ColumnFamily>
       <Name>banana</Name>
@@ -12,31 +12,31 @@
   <AccessGroup name="marsha">
     <ColumnFamily>
       <Name>onion</Name>
-        <KeepCopies>1</KeepCopies>
+        <CellLimit>1</CellLimit>
     </ColumnFamily>
     <ColumnFamily>
       <Name>cassis</Name>
-        <KeepCopies>5</KeepCopies>
+        <CellLimit>5</CellLimit>
     </ColumnFamily>
   </AccessGroup>
   <AccessGroup name="jan" inMemory="true">
     <ColumnFamily>
       <Name>cherry</Name>
-        <KeepCopies>3</KeepCopies>
+        <CellLimit>3</CellLimit>
     </ColumnFamily>
   </AccessGroup>
   <AccessGroup name="cindy">
     <ColumnFamily>
       <Name>yam</Name>
-        <KeepCopies>1</KeepCopies>
+        <CellLimit>1</CellLimit>
     </ColumnFamily>
     <ColumnFamily>
       <Name>plum</Name>
-        <KeepCopies>1</KeepCopies>
+        <CellLimit>1</CellLimit>
     </ColumnFamily>
     <ColumnFamily>
       <Name>broccoli</Name>
-        <KeepCopies>1</KeepCopies>
+        <CellLimit>1</CellLimit>
     </ColumnFamily>
   </AccessGroup>
 </Schema>

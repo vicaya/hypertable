@@ -117,7 +117,7 @@ void Schema::StartElementHandler(void *userData,
       msSchema->SetColumnFamilyParameter(atts[i], atts[i+1]);
     }
   }
-  else if (!strcmp(name, "KeepCopies") || !strcmp(name, "ExpireDays") || !strcmp(name, "Name"))
+  else if (!strcmp(name, "CellLimit") || !strcmp(name, "ExpireDays") || !strcmp(name, "Name"))
     msCollectedText = "";
   else
     msSchema->SetErrorString((string)"Unrecognized element - '" + name + "'");
@@ -131,7 +131,7 @@ void Schema::EndElementHandler(void *userData, const XML_Char *name) {
     msSchema->CloseAccessGroup();
   else if (!strcmp(name, "ColumnFamily"))
     msSchema->CloseColumnFamily();
-  else if (!strcmp(name, "KeepCopies") || !strcmp(name, "ExpireDays") || !strcmp(name, "Name")) {
+  else if (!strcmp(name, "CellLimit") || !strcmp(name, "ExpireDays") || !strcmp(name, "Name")) {
     boost::trim(msCollectedText);
     msSchema->SetColumnFamilyParameter(name, msCollectedText.c_str());
   }
@@ -184,7 +184,7 @@ void Schema::OpenColumnFamily() {
     else {
       mOpenColumnFamily = new ColumnFamily();
       mOpenColumnFamily->id = 0;
-      mOpenColumnFamily->keepCopies = 0;
+      mOpenColumnFamily->cellLimit = 0;
       mOpenColumnFamily->expireTime = 0;
       mOpenColumnFamily->lg = mOpenAccessGroup->name;
     }
@@ -257,10 +257,10 @@ void Schema::SetColumnFamilyParameter(const char *param, const char *value) {
 	mOpenColumnFamily->expireTime = (time_t)fval;
       }
     }
-    else if (!strcasecmp(param, "KeepCopies")) {
-      mOpenColumnFamily->keepCopies = atoi(value);
-      if (mOpenColumnFamily->keepCopies == 0)
-	SetErrorString((string)"Invalid value (" + value + ") for KeepCopies");
+    else if (!strcasecmp(param, "CellLimit")) {
+      mOpenColumnFamily->cellLimit = atoi(value);
+      if (mOpenColumnFamily->cellLimit == 0)
+	SetErrorString((string)"Invalid value (" + value + ") for CellLimit");
     }
     else if (mReadIds && !strcasecmp(param, "id")) {
       mOpenColumnFamily->id = atoi(value);
@@ -317,9 +317,9 @@ void Schema::Render(std::string &output) {
       }
       output += ">\n";
       output += (string)"      <Name>" + (*cfiter)->name + "</Name>\n";
-      if ((*cfiter)->keepCopies != 0) {
-	sprintf(buf, "%d", (*cfiter)->keepCopies);
-	output += (string)"        <KeepCopies>" + buf + "</KeepCopies>\n";
+      if ((*cfiter)->cellLimit != 0) {
+	sprintf(buf, "%d", (*cfiter)->cellLimit);
+	output += (string)"        <CellLimit>" + buf + "</CellLimit>\n";
       }
       if ((*cfiter)->expireTime != 0) {
 	float fdays = (float)(*cfiter)->expireTime / 86400.0;

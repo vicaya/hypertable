@@ -1,6 +1,7 @@
 
 TODO:
-- Change KeepCopies attribute of column family to CellLimit
+- Add support for RowLimit
+- Add support for CellLimit
 - Change EventPtr to intrusive_ptr
 - Make sure NULL endkey lookups work in RangeServer
 - Add support for LZO and BZIP2 compression
@@ -28,6 +29,7 @@ TODO CLEANUP:
 
 
 DONE:
+- Change KeepCopies attribute of column family to CellLimit
 - Add support for auto-assigned timestamps
 - Remove msgId return parameter from CallbackHandlerSynchronizer and all of the client APIs
 - Add RangeServerClient

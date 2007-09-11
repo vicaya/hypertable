@@ -96,8 +96,8 @@ public class Schema {
 			    else if (node.getNodeName().equalsIgnoreCase("ExpireDays")) {
 				cf.expireTime = (long)(Double.parseDouble(node.getTextContent().trim()) * 86400.0);
 			    }
-			    else if (node.getNodeName().equalsIgnoreCase("KeepCopies")) {
-				cf.keepCopies = Integer.parseInt(node.getTextContent().trim());
+			    else if (node.getNodeName().equalsIgnoreCase("CellLimit")) {
+				cf.cellLimit = Integer.parseInt(node.getTextContent().trim());
 			    }
 			}
 		    }
