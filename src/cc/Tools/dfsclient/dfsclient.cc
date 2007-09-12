@@ -54,7 +54,7 @@ namespace {
     }
 
     /* Get a line from the user. */
-    line_read = readline ("dfstool> ");
+    line_read = readline ("dfsclient> ");
 
     /* If the line has any text in it, save it on the history. */
     if (line_read && *line_read)
@@ -64,7 +64,7 @@ namespace {
   }
 
   const char *usage[] = {
-    "usage: dfstool [OPTIONS]",
+    "usage: dfsclient [OPTIONS]",
     "",
     "OPTIONS:",
     "  --config=<file>  Read configuration from <file>.  The default config file is",
