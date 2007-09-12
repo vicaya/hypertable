@@ -44,42 +44,11 @@ popd >& /dev/null
 
 
 #
-# Stop DfsBroker.local
+# Stop servers
 #
-if [ -f  $HYPERTABLE_HOME/run/DfsBroker.local.pid ] ; then
-    kill -9 `cat  $HYPERTABLE_HOME/run/DfsBroker.local.pid`
-    rm $HYPERTABLE_HOME/run/DfsBroker.local.pid
-fi
-
-#
-# Stop DfsBroker.hadoop
-#
-if [ -f  $HYPERTABLE_HOME/run/DfsBroker.hadoop.pid ] ; then
-    kill -9 `cat  $HYPERTABLE_HOME/run/DfsBroker.hadoop.pid`
-    rm $HYPERTABLE_HOME/run/DfsBroker.hadoop.pid
-fi
-
-#
-# Stop DfsBroker.kosmos
-#
-if [ -f  $HYPERTABLE_HOME/run/DfsBroker.kosmos.pid ] ; then
-    kill -9 `cat  $HYPERTABLE_HOME/run/DfsBroker.kosmos.pid`
-    rm $HYPERTABLE_HOME/run/DfsBroker.kosmos.pid
-fi
-
-#
-# Stop Hyperspace
-#
-if [ -f  $HYPERTABLE_HOME/run/Hyperspace.pid ] ; then
-    kill -9 `cat  $HYPERTABLE_HOME/run/Hyperspace.pid`
-    rm $HYPERTABLE_HOME/run/Hyperspace.pid
-fi
-
-#
-# Stop Hypertable.Master
-#
-if [ -f  $HYPERTABLE_HOME/run/Hypertable.Master.pid ] ; then
-    kill -9 `cat  $HYPERTABLE_HOME/run/Hypertable.Master.pid`
-    rm $HYPERTABLE_HOME/run/Hypertable.Master.pid
-fi
-
+for pidfile in $HYPERTABLE_HOME/run/*.pid ; do
+    if [ "$pidfile" != "$HYPERTABLE_HOME/run/*.pid" ] ; then
+	kill -9 `cat $pidfile`
+	rm $pidfile
+    fi
+done

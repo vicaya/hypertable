@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
   else if (!strcmp(command, "attrdel"))
     error = CommandAttrDel(hyperspaceClient, args);
   else if (!strcmp(command, "exists"))
-    error = CommandExists(hyperspaceClient, args);
+    return CommandExists(hyperspaceClient, args);
   else {
     LOG_VA_ERROR("Unrecognized command '%s'", command);
     exit(1);
@@ -149,6 +149,6 @@ int main(int argc, char **argv) {
   delete hyperspaceClient;
   delete comm;
   delete props;
-  return 0;
+  return error;
 }
 

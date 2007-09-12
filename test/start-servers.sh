@@ -144,15 +144,16 @@ fi
 
 
 #
-# If --initialize flag supplied, then run Hypertable.Master --initialize
+# If it looks like the master was not initialized, then go ahead and do it.
 #
-if [ "$1" == "--initialize" ] ; then
+$HYPERTABLE_HOME/bin/hsClient exists /hypertable/meta
+if [ $? != 0 ] ; then
     $HYPERTABLE_HOME/bin/Hypertable.Master --initialize --verbose
-    if [ $? == 0 ] ; then
-        echo "Successfully initialized."
-        exit 0
+    if [ $? != 0 ] ; then
+        echo "Problem initializing master."
+	exit 1
     fi
-    exit 1
+    echo "Successfully initialized master."
 fi
 
 
@@ -179,3 +180,27 @@ if [ $? != 0 ] ; then
 	fi
     fi
 fi
+
+
+#
+# If the tables have not been created, then create them
+#
+for table in Test1 ; do
+    $HYPERTABLE_HOME/bin/hsClient exists /hypertable/tables/$table
+    if [ $? != 0 ] ; then
+	CMDFILE=/tmp/hypertable.tests.$$
+	echo "create table $table $HYPERTABLE_HOME/test/$table.xml" > $CMDFILE
+	echo "quit" >> $CMDFILE
+	$HYPERTABLE_HOME/bin/hypertable < $CMDFILE >& /dev/null
+	if [ $? != 0 ] ; then
+	    for pidfile in $HYPERTABLE_HOME/run/*.pid ; do
+		kill -9 `cat $pidfile`
+		rm $pidfile
+	    done
+	else
+	    echo "Successfully created table $table."
+	fi
+	rm $CMDFILE
+    fi
+done
+

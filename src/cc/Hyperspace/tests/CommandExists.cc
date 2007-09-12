@@ -59,6 +59,6 @@ int hypertable::CommandExists(HyperspaceClient *client, vector<const char *> &ar
   else
     return error;
 
-  return Error::OK;
+  return error;
 }
 

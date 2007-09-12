@@ -26,6 +26,7 @@ extern "C" {
 #include <readline/history.h>
 }
 
+#include "Common/Error.h"
 #include "Common/InteractiveCommand.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
@@ -83,6 +84,7 @@ int main(int argc, char **argv) {
   string configFile = "";
   vector<InteractiveCommand *>  commands;
   Manager *manager = 0;
+  int error;
 
   System::Initialize(argv[0]);
   ReactorFactory::Initialize((uint16_t)System::GetProcessorCount());
@@ -115,7 +117,8 @@ int main(int argc, char **argv) {
     for (i=0; i<commands.size(); i++) {
       if (commands[i]->Matches(line)) {
 	commands[i]->ParseCommandLine(line);
-	commands[i]->run();
+	if ((error = commands[i]->run()) != Error::OK)
+	  return error;
 	break;
       }
     }
