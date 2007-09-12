@@ -1,7 +1,6 @@
 
 TODO:
-- Re-write RangeServer regression tests to use rsclient against a real RangeServer
-- Clean up hyperspace tool
+- Add recursive delete to dfsclient and then modify start-servers.sh to use this to cleanup
 - Change EventPtr to intrusive_ptr
 - Make sure NULL endkey lookups work in RangeServer
 - Add support for LZO and BZIP2 compression
@@ -29,6 +28,8 @@ TODO CLEANUP:
 
 
 DONE:
+- Re-write RangeServer regression tests to use rsclient against a real RangeServer
+- Clean up hyperspace tool
 - Add support for RowLimit
 - Add support for CellLimit
 - Change KeepCopies attribute of column family to CellLimit

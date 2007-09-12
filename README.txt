@@ -60,22 +60,25 @@ HOW TO BUILD
 
    NOTE: These instructions assume the installation directory is ~/hypertable
 
-2. Initialize Hypertable directory layout
+2. Stop the servers
+
+  NOTE: This must be performed before running the regression tests each time
 
   cd ~/hypertable
-  ./bin/initialize.sh
-
-  [Sample output]
-  CPU count = 2
-  Hypertable.Master.port=38548
-  Hypertable.Master.workers=20
-  Hypertable.Master.reactors=2
-  Successfully initialized.
+  ./test/stop-servers.sh
 
 3. Start the servers using the 'local' DFS
 
+  NOTE: This must be performed before running the regression tests each time
+
   cd ~/hypertable
-  ./bin/start-servers.sh local
+  ./test/start-servers.sh local
+
+  [ Expected output ... ]
+  Successfully started DFSBroker (local)
+  Successfully started Hyperspace
+  Successfully started Hypertable.Master
+  Successfully started Hypertable.RangeServer
 
 4. Run the regression tests
 

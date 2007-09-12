@@ -194,7 +194,7 @@ int main(int argc, char **argv) {
   for (int i=1; i<argc; i++) {
     if (!strncmp(argv[i], "--config=", 9))
       configFile = &argv[i][9];
-    if (!strncmp(argv[i], "--server=", 9))
+    else if (!strncmp(argv[i], "--server=", 9))
       ParseServerArgument(&argv[i][9], host, &port);
     else
       Usage::DumpAndExit(usage);
