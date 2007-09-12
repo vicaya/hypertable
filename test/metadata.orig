@@ -11,4 +11,10 @@
     <EndRow></EndRow>
     <LogDir></LogDir>
   </RangeInfo>
+  <RangeInfo>
+    <TableName>Test3</TableName>
+    <StartRow></StartRow>
+    <EndRow></EndRow>
+    <LogDir></LogDir>
+  </RangeInfo>
 </Metadata>

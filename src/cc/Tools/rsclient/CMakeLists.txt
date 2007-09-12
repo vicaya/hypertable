@@ -55,7 +55,9 @@ add_custom_command (SOURCE ${SRC_DIR}/tests/Test2-data.txt.gz
 configure_file(${HYPERTABLE_SOURCE_DIR}/conf/hypertable.cfg  ${DST_DIR}/hypertable.cfg)
 configure_file(${SRC_DIR}/tests/Test1.golden ${DST_DIR}/Test1.golden)
 configure_file(${SRC_DIR}/tests/Test2.golden ${DST_DIR}/Test2.golden)
+configure_file(${SRC_DIR}/tests/Test3.golden ${DST_DIR}/Test3.golden)
 configure_file(${SRC_DIR}/tests/Test1.cmd ${DST_DIR}/Test1.cmd)
 configure_file(${SRC_DIR}/tests/Test2.cmd ${DST_DIR}/Test2.cmd)
+configure_file(${SRC_DIR}/tests/Test3.cmd ${DST_DIR}/Test3.cmd)
 
 add_test (RangeServer rsTest)

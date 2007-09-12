@@ -45,6 +45,7 @@ namespace {
     "./Test2-data.txt",
     "./Test2.cmd",
     "./Test2.golden",
+    "./Test3.cmd",
     0
   };
 }
@@ -81,6 +82,18 @@ int main(int argc, char **argv) {
     return 1;
 
   commandStr = (std::string)"diff Test2.output Test2.golden";
+  if (system(commandStr.c_str()) != 0)
+    return 1;
+
+  /**
+   *  Test3
+   */
+
+  commandStr = (std::string)"./rsclient --config=hypertable.cfg < Test3.cmd > Test3.output";
+  if (system(commandStr.c_str()) != 0)
+    return 1;
+
+  commandStr = (std::string)"diff Test3.output Test3.golden";
   if (system(commandStr.c_str()) != 0)
     return 1;
 

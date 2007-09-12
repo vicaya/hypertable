@@ -86,4 +86,5 @@ install (FILES test/stop-servers.sh
 	 DESTINATION test)
 install (FILES test/Test1.xml DESTINATION test)
 install (FILES test/Test2.xml DESTINATION test)
+install (FILES test/Test3.xml DESTINATION test)
 install (FILES test/metadata.orig DESTINATION test)
