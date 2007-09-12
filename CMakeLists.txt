@@ -56,6 +56,7 @@ add_subdirectory (src/cc/Hyperspace)
 add_subdirectory (src/cc/Hypertable/Master)
 add_subdirectory (src/cc/Hypertable/RangeServer)
 add_subdirectory (src/cc/Hypertable/Lib)
+add_subdirectory (src/cc/Tools/hyperspace)
 add_subdirectory (src/cc/Tools/hypertable)
 add_subdirectory (src/cc/Tools/rsclient)
 add_subdirectory (src/cc/Tools/serverup)
@@ -81,9 +82,6 @@ install (FILES test/start-servers.sh
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 	 DESTINATION test)
 install (FILES test/stop-servers.sh
-         PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-	 DESTINATION test)
-install (FILES test/initialize.sh
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 	 DESTINATION test)
 install (FILES test/Test1.xml DESTINATION test)

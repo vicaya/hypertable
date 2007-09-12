@@ -35,8 +35,8 @@ extern "C" {
 #include "Common/System.h"
 #include "Common/Usage.h"
 
-#include "../HyperspaceClient.h"
-#include "../HyperspaceProtocol.h"
+#include "Hyperspace/HyperspaceClient.h"
+#include "Hyperspace/HyperspaceProtocol.h"
 #include "CommandCreate.h"
 #include "CommandDelete.h"
 #include "CommandMkdirs.h"
@@ -57,7 +57,7 @@ namespace {
     "",
     "OPTIONS:",
     "  --config=<fname>  Specifies the name of the config file.  [default",
-    "                    is ../conf/placer.cfg relative to the executable]",
+    "                    is ../conf/hypertable.cfg relative to the executable]",
     "",
     "commands:",
     "  mkdirs <dir>",

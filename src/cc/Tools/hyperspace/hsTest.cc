@@ -36,8 +36,8 @@ extern "C" {
 #include "Common/TestHarness.h"
 #include "Common/Usage.h"
 
-#include "../HyperspaceClient.h"
-#include "../HyperspaceProtocol.h"
+#include "Hyperspace/HyperspaceClient.h"
+#include "Hyperspace/HyperspaceProtocol.h"
 #include "CommandCreate.h"
 #include "CommandMkdirs.h"
 #include "CommandAttrSet.h"
