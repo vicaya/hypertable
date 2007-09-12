@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
 
-set (dfstool_SRCS
+set (dfsclient_SRCS
 CommandCopyFromLocal.cc
 CommandCopyToLocal.cc
 CommandLength.cc
@@ -25,15 +25,15 @@ CommandRemove.cc
 CommandShutdown.cc
 )
 
-# dfstool - command interpreter
-add_executable (dfstool dfstool.cc ${dfstool_SRCS})
-target_link_libraries (dfstool pthread ${BOOST_LIB} DfsBroker AsyncComm Hyperspace Common log4cpp expat readline curses)
+# dfsclient - command interpreter
+add_executable (dfsclient dfsclient.cc ${dfsclient_SRCS})
+target_link_libraries (dfsclient pthread ${BOOST_LIB} DfsBroker AsyncComm Hyperspace Common log4cpp expat readline curses)
 
 # dfsTest
-add_executable (dfsTest dfsTest.cc dfsTestThreadFunction.cc ${dfstool_SRCS})
+add_executable (dfsTest dfsTest.cc dfsTestThreadFunction.cc ${dfsclient_SRCS})
 target_link_libraries (dfsTest pthread ${BOOST_LIB} DfsBroker AsyncComm Common log4cpp)
 
 add_test (DfsBroker dfsTest)
 
-install (TARGETS dfstool RUNTIME DESTINATION bin)
+install (TARGETS dfsclient RUNTIME DESTINATION bin)
 
