@@ -79,14 +79,17 @@ if [ "$#" -eq 0 ]; then
     exit 1
 fi
 
-
-PIDFILE=$HYPERTABLE_HOME/run/DfsBroker.$1.pid
-LOGFILE=$HYPERTABLE_HOME/log/DfsBroker.$1.log
+#
+# Reset state
+#
+cp $HYPERTABLE_HOME/test/metadata.orig $HYPERTABLE_HOME/test/metadata
 
 
 #
 # Start DfsBroker.hadoop
 #
+PIDFILE=$HYPERTABLE_HOME/run/DfsBroker.$1.pid
+LOGFILE=$HYPERTABLE_HOME/log/DfsBroker.$1.log
 
 $HYPERTABLE_HOME/bin/serverup dfsbroker
 if [ $? != 0 ] ; then
@@ -116,6 +119,7 @@ if [ $? != 0 ] ; then
       fi
   fi
 fi
+echo "Successfully started DFSBroker ($1)"
 
 
 #
@@ -141,7 +145,7 @@ if [ $? != 0 ] ; then
 	fi
     fi
 fi
-
+echo "Successfully started Hyperspace"
 
 #
 # If it looks like the master was not initialized, then go ahead and do it.
@@ -150,10 +154,10 @@ $HYPERTABLE_HOME/bin/hyperspace exists /hypertable/meta >& /dev/null
 if [ $? != 0 ] ; then
     $HYPERTABLE_HOME/bin/Hypertable.Master --initialize
     if [ $? != 0 ] ; then
-        echo "Problem initializing master."
+        echo "Problem initializing Hypertable.Master"
 	exit 1
     fi
-    echo "Successfully initialized master."
+    echo "Successfully initialized Hypertable.Master"
 fi
 
 
@@ -180,6 +184,7 @@ if [ $? != 0 ] ; then
 	fi
     fi
 fi
+echo "Successfully started Hypertable.Master"
 
 
 #
@@ -204,3 +209,28 @@ for table in Test1 ; do
     fi
 done
 
+
+#
+# Start Hypertable.RangeServer
+#
+PIDFILE=$HYPERTABLE_HOME/run/Hypertable.RangeServer.pid
+LOGFILE=$HYPERTABLE_HOME/log/Hypertable.RangeServer.log
+
+$HYPERTABLE_HOME/bin/serverup rangeserver
+if [ $? != 0 ] ; then
+    nohup $HYPERTABLE_HOME/bin/Hypertable.RangeServer --pidfile=$PIDFILE --metadata=$HYPERTABLE_HOME/test/metadata --verbose 1>& $LOGFILE &
+    sleep 1
+    $HYPERTABLE_HOME/bin/serverup rangeserver
+    if [ $? != 0 ] ; then
+	echo -n "Hypertable.RangeServer hasn't come up yet, trying again in 5 seconds ..."
+	sleep 5
+	echo ""
+	$HYPERTABLE_HOME/bin/serverup rangeserver
+	if [ $? != 0 ] ; then
+	    tail -100 $LOGFILE
+	    echo "Problem statring Hypertable.RangeServer";
+	    exit 1
+	fi
+    fi
+fi
+echo "Successfully started Hypertable.RangeServer"

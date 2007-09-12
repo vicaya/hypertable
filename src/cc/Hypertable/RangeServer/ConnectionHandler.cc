@@ -32,6 +32,7 @@
 #include "RequestHandlerUpdate.h"
 #include "RequestHandlerCreateScanner.h"
 #include "RequestHandlerFetchScanblock.h"
+#include "RequestHandlerStatus.h"
 
 using namespace hypertable;
 
@@ -81,6 +82,9 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
 	break;
       case RangeServerProtocol::COMMAND_FETCH_SCANBLOCK:
 	requestHandler = new RequestHandlerFetchScanblock(mComm, mRangeServer, eventPtr);
+	break;
+      case RangeServerProtocol::COMMAND_STATUS:
+	requestHandler = new RequestHandlerStatus(mComm, mRangeServer, eventPtr);
 	break;
       default:
 	std::string message = (string)"Command code " + command + " not implemented";

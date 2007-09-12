@@ -35,7 +35,7 @@ namespace hypertable {
     static const short COMMAND_FETCH_SCANBLOCK  = 3;
     static const short COMMAND_COMPACT          = 4;
     static const short COMMAND_STATUS           = 5;
-    static const short COMMAND_MAX              = 5;
+    static const short COMMAND_MAX              = 6;
 
     static const char *mCommandStrings[];
 

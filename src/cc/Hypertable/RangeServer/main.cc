@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <iostream>
+#include <fstream>
 #include <string>
 
 extern "C" {
@@ -50,6 +52,7 @@ namespace {
     "  --config=<file>  Read configuration from <file>.  The default config file is",
     "                   \"conf/hypertable.cfg\" relative to the toplevel install directory",
     "  --help             Display this help text and exit",
+    "  --pidfile=<fname>  Write the process ID to <fname> upon successful startup",
     "  --verbose,-v       Generate verbose output",
     ""
     "This program is the Hypertable range server.",
@@ -82,6 +85,7 @@ private:
  */
 int main(int argc, char **argv) {
   string configFile = "";
+  string pidFile = "";
   string metadataFile = "";
   int port, reactorCount, workerCount;
   Comm *comm = 0;
@@ -96,6 +100,8 @@ int main(int argc, char **argv) {
     for (int i=1; i<argc; i++) {
       if (!strncmp(argv[i], "--config=", 9))
 	configFile = &argv[i][9];
+      else if (!strncmp(argv[i], "--pidfile=", 10))
+	pidFile = &argv[i][10];
       else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
 	Global::verbose = true;
       else if (!strncmp(argv[i], "--metadata=", 11)) {
@@ -138,6 +144,12 @@ int main(int argc, char **argv) {
   rangeServer = new RangeServer (connManager, propsPtr);
   Global::appQueue = new ApplicationQueue(workerCount);
   comm->Listen(port, new HandlerFactory(comm, Global::appQueue, rangeServer));
+
+  if (pidFile != "") {
+    fstream filestr (pidFile.c_str(), fstream::out);
+    filestr << getpid() << endl;
+    filestr.close();
+  }
 
   poll(0, 0, -1);
 

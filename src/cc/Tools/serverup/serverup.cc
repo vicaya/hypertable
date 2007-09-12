@@ -39,6 +39,7 @@ extern "C" {
 
 #include "Hyperspace/HyperspaceClient.h"
 #include "Hypertable/Lib/MasterClient.h"
+#include "Hypertable/Lib/RangeServerClient.h"
 
 using namespace hypertable;
 using namespace std;
@@ -69,6 +70,7 @@ namespace {
     "  dfsbroker",
     "  hyperspace",
     "  master",
+    "  rangeserver",
     "",
     (const char *)0
   };
@@ -92,6 +94,7 @@ int main(int argc, char **argv) {
   DfsBroker::Client *client;
   HyperspaceClient *hyperspaceClient;
   MasterClient *master;
+  RangeServerClient *rangeServer;
   Comm *comm = 0;
   ConnectionManager *connManager;
   int error;
@@ -129,13 +132,18 @@ int main(int argc, char **argv) {
     hostProperty = "Hypertable.Master.host";
     portProperty = "Hypertable.Master.port";
   }
+  else if (serverName == "rangeserver") {
+    if (hostName == "")
+      hostName = "localhost";
+    portProperty = "Hypertable.RangeServer.port";
+  }
   else
     Usage::DumpAndExit(usage);
 
   {
     if (hostName == "")
       hostName = propsPtr->getProperty(hostProperty, "localhost");
-    else
+    else if (serverName != "rangeserver")
       propsPtr->setProperty(hostProperty, hostName.c_str());
 
     if (portStr != 0)
@@ -183,6 +191,14 @@ int main(int argc, char **argv) {
     if (!master->WaitForConnection(2))
       exit(1);
     if ((error = master->Status()) != Error::OK)
+      exit(1);
+  }
+  else if (serverName == "rangeserver") {
+    connManager->Add(addr, 30, "Range Server");
+    if (!connManager->WaitForConnection(addr, 2))
+      exit(1);
+    rangeServer = new RangeServerClient(connManager);
+    if ((error = rangeServer->Status(addr)) != Error::OK)
       exit(1);
   }
 

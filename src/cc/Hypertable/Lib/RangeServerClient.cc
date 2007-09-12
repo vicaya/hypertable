@@ -119,6 +119,21 @@ int RangeServerClient::FetchScanblock(struct sockaddr_in &addr, int scannerId) {
   return error;
 }
 
+int RangeServerClient::Status(struct sockaddr_in &addr) {
+  DispatchHandlerSynchronizer syncHandler;
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( RangeServerProtocol::CreateRequestStatus() );
+  int error = SendMessage(addr, cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("RangeServer 'status' error : %s", Protocol::StringFormatMessage(eventPtr).c_str());
+      error = (int)Protocol::ResponseCode(eventPtr);
+    }
+  }
+  return error;
+}
+
+
 int RangeServerClient::SendMessage(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *handler) {
   int error;
 

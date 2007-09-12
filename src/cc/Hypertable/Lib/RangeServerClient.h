@@ -54,6 +54,8 @@ namespace hypertable {
     int FetchScanblock(struct sockaddr_in &addr, int scannerId, DispatchHandler *handler);
     int FetchScanblock(struct sockaddr_in &addr, int scannerId);
 
+    int Status(struct sockaddr_in &addr);
+
   private:
 
     int SendMessage(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *handler);
