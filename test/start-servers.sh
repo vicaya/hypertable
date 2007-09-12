@@ -146,9 +146,9 @@ fi
 #
 # If it looks like the master was not initialized, then go ahead and do it.
 #
-$HYPERTABLE_HOME/bin/hsClient exists /hypertable/meta
+$HYPERTABLE_HOME/bin/hyperspace exists /hypertable/meta >& /dev/null
 if [ $? != 0 ] ; then
-    $HYPERTABLE_HOME/bin/Hypertable.Master --initialize --verbose
+    $HYPERTABLE_HOME/bin/Hypertable.Master --initialize
     if [ $? != 0 ] ; then
         echo "Problem initializing master."
 	exit 1
@@ -186,7 +186,7 @@ fi
 # If the tables have not been created, then create them
 #
 for table in Test1 ; do
-    $HYPERTABLE_HOME/bin/hsClient exists /hypertable/tables/$table
+    $HYPERTABLE_HOME/bin/hyperspace exists /hypertable/tables/$table >& /dev/null
     if [ $? != 0 ] ; then
 	CMDFILE=/tmp/hypertable.tests.$$
 	echo "create table $table $HYPERTABLE_HOME/test/$table.xml" > $CMDFILE
