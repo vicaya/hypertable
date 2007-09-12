@@ -29,6 +29,7 @@ extern "C" {
 
 #include <boost/algorithm/string.hpp>
 
+#include "Common/Error.h"
 #include "Common/InteractiveCommand.h"
 #include "Common/Properties.h"
 #include "Common/System.h"
@@ -150,7 +151,8 @@ int main(int argc, char **argv) {
       for (i=0; i<commands.size(); i++) {
 	if (commands[i]->Matches(commandStr.c_str())) {
 	  commands[i]->ParseCommandLine(commandStr.c_str());
-	  commands[i]->run();
+	  if (commands[i]->run() != Error::OK)
+	    return 1;
 	  break;
 	}
       }

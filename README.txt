@@ -62,14 +62,16 @@ HOW TO BUILD
 
 2. Stop the servers
 
-  NOTE: This must be performed before running the regression tests each time
+  *** Must be performed prior to running the regression tests each time **
 
   cd ~/hypertable
   ./test/stop-servers.sh
 
-3. Start the servers using the 'local' DFS
+3. Start the servers.  The following example illustrates the use of the 'local'
+   DFS broker, but can be changed to use any DFS broker (e.g. hadoop, kosmos, etc.)
+   by replacing the 'local' keyword with the name of the broker you want to use.
 
-  NOTE: This must be performed before running the regression tests each time
+  *** Must be performed prior to running the regression tests each time **
 
   cd ~/hypertable
   ./test/start-servers.sh local

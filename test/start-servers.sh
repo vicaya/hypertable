@@ -80,14 +80,6 @@ if [ "$#" -eq 0 ]; then
 fi
 
 #
-# Reset state
-#
-cp $HYPERTABLE_HOME/test/metadata.orig $HYPERTABLE_HOME/test/metadata
-rm -rf $HYPERTABLE_HOME/log/hypertable/*
-#fixme!!!
-rm -rf $HYPERTABLE_HOME/fs/local/hypertable
-
-#
 # Start DfsBroker.hadoop
 #
 PIDFILE=$HYPERTABLE_HOME/run/DfsBroker.$1.pid
@@ -122,6 +114,14 @@ if [ $? != 0 ] ; then
   fi
 fi
 echo "Successfully started DFSBroker ($1)"
+
+
+#
+# Reset state
+#
+cp $HYPERTABLE_HOME/test/metadata.orig $HYPERTABLE_HOME/test/metadata
+rm -rf $HYPERTABLE_HOME/log/hypertable/*
+$HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable"
 
 
 #
