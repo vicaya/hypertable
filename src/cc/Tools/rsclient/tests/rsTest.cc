@@ -20,7 +20,6 @@
 
 #include <cstdlib>
 #include <iostream>
-#include <fstream>
 #include <string>
 
 extern "C" {
@@ -30,21 +29,18 @@ extern "C" {
 
 #include "Common/FileUtils.h"
 #include "Common/Logger.h"
+#include "Common/System.h"
 
 using namespace hypertable;
 using namespace std;
 
 int main(int argc, char **argv) {
-  char tmpfile[64];
   std::string commandStr;
+
+  System::Initialize(argv[0]);
 
   if (!FileUtils::Exists("./rsclient")) {
     LOG_ERROR("Unable to find ./rsclient");
-    return 1;
-  }
-
-  if (!FileUtils::Exists("./testdata.txt")) {
-    LOG_ERROR("Unable to find ./testdata.txt");
     return 1;
   }
 
@@ -53,25 +49,42 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  sprintf(tmpfile, "/tmp/rsTest%d", getpid());
-  fstream filestr (tmpfile, fstream::out);
-  filestr << "load range Test1[:kerchoo]" << endl;
-  filestr << "update Test1[:kerchoo] testdata.txt" << endl;
-  filestr << "create scanner Test1[:kerchoo]" << endl;
-  filestr << "quit" << endl;
-  filestr.close();
-
-  commandStr = (std::string)"./rsclient --config=./hypertable.cfg < " + tmpfile + " > rsTest.output";
-  if (system(commandStr.c_str()) != 0) {
-    unlink(tmpfile);
+  if (!FileUtils::Exists("./testdata.txt")) {
+    LOG_ERROR("Unable to find ./testdata.txt");
     return 1;
   }
 
-  unlink(tmpfile);
+  if (!FileUtils::Exists("./Test1.cmd")) {
+    LOG_ERROR("Unable to find ./Test1.cmd");
+    return 1;
+  }
+
+  commandStr = (std::string)"./rsclient --config=hypertable.cfg < Test1.cmd > rsTest.output";
+  if (system(commandStr.c_str()) != 0)
+    return 1;
 
   commandStr = (std::string)"diff rsTest.output rsTest.golden";
   if (system(commandStr.c_str()) != 0)
     return 1;
+
+  if (!FileUtils::Exists("./Test2-data.txt")) {
+    LOG_ERROR("Unable to find ./Test2-data.txt");
+    return 1;
+  }
+
+  if (!FileUtils::Exists("./Test2.cmd")) {
+    LOG_ERROR("Unable to find ./Test2.cmd");
+    return 1;
+  }
+
+  commandStr = (std::string)"./rsclient --config=hypertable.cfg < Test2.cmd > Test2.output";
+  if (system(commandStr.c_str()) != 0)
+    return 1;
+
+  commandStr = (std::string)"diff Test2.output Test2.golden";
+  if (system(commandStr.c_str()) != 0)
+    return 1;
+
 
   return 0;
 }

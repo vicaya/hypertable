@@ -493,4 +493,11 @@ EndRow     = kerchoo
 1181153477549526 Agrauleum apple:http://www.schiedamsemolens.nl/schiedamsemolens/
 1181153478381429 Agrilus cassis:http://www1.dorsetcc.gov.uk/LIVING/FACTS/Census2001.nsf/6cadf4da179fc19500256663004afece/1f3a12dba044faa680256ec5004eec98?OpenDocument
 1181153478310808 Agrilus plum:http://www.town.asahi.yamagata.jp/
+rsclient> create scanner Test1[:kerchoo] start=Agamemnon end=Agamemnon
+Generation = 1
+TableName  = Test1
+StartRow   = 
+EndRow     = kerchoo
+1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
+1181153478609060 Agamemnon plum:http://maps.google.com/maps?ll=43.297884,-91.989187&spn=0.11,0.18&t=h
 rsclient> quit
