@@ -5,4 +5,10 @@
     <EndRow>kerchoo</EndRow>
     <LogDir></LogDir>
   </RangeInfo>
+  <RangeInfo>
+    <TableName>Test2</TableName>
+    <StartRow></StartRow>
+    <EndRow></EndRow>
+    <LogDir></LogDir>
+  </RangeInfo>
 </Metadata>

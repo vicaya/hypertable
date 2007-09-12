@@ -34,48 +34,47 @@ extern "C" {
 using namespace hypertable;
 using namespace std;
 
+
+namespace {
+  const char *requiredFiles[] = {
+    "./rsclient",
+    "./hypertable.cfg",
+    "./Test1-data.txt",
+    "./Test1.cmd",
+    "./Test1.golden",
+    "./Test2-data.txt",
+    "./Test2.cmd",
+    "./Test2.golden",
+    0
+  };
+}
+
 int main(int argc, char **argv) {
   std::string commandStr;
 
   System::Initialize(argv[0]);
 
-  if (!FileUtils::Exists("./rsclient")) {
-    LOG_ERROR("Unable to find ./rsclient");
-    return 1;
+  for (int i=0; requiredFiles[i]; i++) {
+    if (!FileUtils::Exists(requiredFiles[i])) {
+      LOG_VA_ERROR("Unable to find '%s'", requiredFiles[i]);
+      return 1;
+    }
   }
 
-  if (!FileUtils::Exists("./hypertable.cfg")) {
-    LOG_ERROR("Unable to find ./hypertable.cfg");
-    return 1;
-  }
-
-  if (!FileUtils::Exists("./testdata.txt")) {
-    LOG_ERROR("Unable to find ./testdata.txt");
-    return 1;
-  }
-
-  if (!FileUtils::Exists("./Test1.cmd")) {
-    LOG_ERROR("Unable to find ./Test1.cmd");
-    return 1;
-  }
-
-  commandStr = (std::string)"./rsclient --config=hypertable.cfg < Test1.cmd > rsTest.output";
+  /**
+   *  Test1
+   */
+  commandStr = (std::string)"./rsclient --config=hypertable.cfg < Test1.cmd > Test1.output";
   if (system(commandStr.c_str()) != 0)
     return 1;
 
-  commandStr = (std::string)"diff rsTest.output rsTest.golden";
+  commandStr = (std::string)"diff Test1.output Test1.golden";
   if (system(commandStr.c_str()) != 0)
     return 1;
 
-  if (!FileUtils::Exists("./Test2-data.txt")) {
-    LOG_ERROR("Unable to find ./Test2-data.txt");
-    return 1;
-  }
-
-  if (!FileUtils::Exists("./Test2.cmd")) {
-    LOG_ERROR("Unable to find ./Test2.cmd");
-    return 1;
-  }
+  /**
+   *  Test2
+   */
 
   commandStr = (std::string)"./rsclient --config=hypertable.cfg < Test2.cmd > Test2.output";
   if (system(commandStr.c_str()) != 0)
@@ -84,7 +83,6 @@ int main(int argc, char **argv) {
   commandStr = (std::string)"diff Test2.output Test2.golden";
   if (system(commandStr.c_str()) != 0)
     return 1;
-
 
   return 0;
 }

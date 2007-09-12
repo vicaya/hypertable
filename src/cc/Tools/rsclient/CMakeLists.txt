@@ -19,7 +19,7 @@
 set ( SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Tools/rsclient" )
 set ( DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Tools/rsclient" )
 
-set ( TEST_DEPENDENCIES ${DST_DIR}/testdata.txt )
+set ( TEST_DEPENDENCIES ${DST_DIR}/Test1-data.txt ${DST_DIR}/Test2-data.txt )
 
 set (rsclient_SRCS
 rsclient.cc
@@ -43,12 +43,19 @@ target_link_libraries (rsTest pthread ${BOOST_LIB} Common log4cpp)
 
 install (TARGETS rsclient RUNTIME DESTINATION bin)
 
-add_custom_command (SOURCE ${SRC_DIR}/tests/testdata.txt.gz
-                    COMMAND cp ARGS ${SRC_DIR}/tests/testdata.txt.gz ${DST_DIR}
-                    COMMAND gunzip ARGS ${DST_DIR}/testdata.txt.gz
-                    OUTPUT ${DST_DIR}/testdata.txt)
+add_custom_command (SOURCE ${SRC_DIR}/tests/Test1-data.txt.gz
+                    COMMAND cp ARGS ${SRC_DIR}/tests/Test1-data.txt.gz ${DST_DIR}
+                    COMMAND gunzip ARGS ${DST_DIR}/Test1-data.txt.gz
+                    OUTPUT ${DST_DIR}/Test1-data.txt)
+add_custom_command (SOURCE ${SRC_DIR}/tests/Test2-data.txt.gz
+                    COMMAND cp ARGS ${SRC_DIR}/tests/Test2-data.txt.gz ${DST_DIR}
+                    COMMAND gunzip ARGS ${DST_DIR}/Test2-data.txt.gz
+                    OUTPUT ${DST_DIR}/Test2-data.txt)
 
 configure_file(${HYPERTABLE_SOURCE_DIR}/conf/hypertable.cfg  ${DST_DIR}/hypertable.cfg)
-configure_file(${SRC_DIR}/tests/rsTest.golden ${DST_DIR}/rsTest.golden)
+configure_file(${SRC_DIR}/tests/Test1.golden ${DST_DIR}/Test1.golden)
+configure_file(${SRC_DIR}/tests/Test2.golden ${DST_DIR}/Test2.golden)
+configure_file(${SRC_DIR}/tests/Test1.cmd ${DST_DIR}/Test1.cmd)
+configure_file(${SRC_DIR}/tests/Test2.cmd ${DST_DIR}/Test2.cmd)
 
 add_test (RangeServer rsTest)

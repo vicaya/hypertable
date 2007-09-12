@@ -85,4 +85,5 @@ install (FILES test/stop-servers.sh
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 	 DESTINATION test)
 install (FILES test/Test1.xml DESTINATION test)
+install (FILES test/Test2.xml DESTINATION test)
 install (FILES test/metadata.orig DESTINATION test)
