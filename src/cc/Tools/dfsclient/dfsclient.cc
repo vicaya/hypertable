@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <cstring>
 #include <iostream>
 #include <vector>
 
@@ -25,6 +26,8 @@ extern "C" {
 #include <readline/readline.h>
 #include <readline/history.h>
 }
+
+#include <boost/algorithm/string.hpp>
 
 #include "Common/InteractiveCommand.h"
 #include "Common/Properties.h"
@@ -37,6 +40,7 @@ extern "C" {
 #include "CommandLength.h"
 #include "CommandMkdirs.h"
 #include "CommandRemove.h"
+#include "CommandRmdir.h"
 #include "CommandShutdown.h"
 
 using namespace hypertable;
@@ -69,7 +73,9 @@ namespace {
     "OPTIONS:",
     "  --config=<file>  Read configuration from <file>.  The default config file is",
     "                   \"conf/hypertable.cfg\" relative to the toplevel install directory",
-    "  --help             Display this help text and exit",
+    "  --eval <cmds>    Evaluates the commands in the string <cmds>.  Several commands can",
+    "                   be supplied in <cmds> by separating them with semicolons",
+    "  --help           Display this help text and exit",
     ""
     "This is a command line interface to the DFS broker.",
     (const char *)0
@@ -83,6 +89,7 @@ namespace {
  */
 int main(int argc, char **argv) {
   const char *line;
+  char *eval = 0;
   size_t i;
   string configFile = "";
   vector<InteractiveCommand *>  commands;
@@ -97,6 +104,12 @@ int main(int argc, char **argv) {
   for (int i=1; i<argc; i++) {
     if (!strncmp(argv[i], "--config=", 9))
       configFile = &argv[i][9];
+    else if (!strcmp(argv[i], "--eval")) {
+      i++;
+      if (i == argc)
+	Usage::DumpAndExit(usage);
+      eval = argv[i];
+    }
     else
       Usage::DumpAndExit(usage);
   }
@@ -121,7 +134,34 @@ int main(int argc, char **argv) {
   commands.push_back( new CommandLength(client) );
   commands.push_back( new CommandMkdirs(client) );
   commands.push_back( new CommandRemove(client) );
+  commands.push_back( new CommandRmdir(client) );
   commands.push_back( new CommandShutdown(client) );
+
+  /**
+   * Non-interactive mode
+   */
+  if (eval != 0) {
+    const char *str;
+    std::string commandStr;
+    str = strtok(eval, ";");
+    while (str) {
+      commandStr = str;
+      boost::trim(commandStr);
+      for (i=0; i<commands.size(); i++) {
+	if (commands[i]->Matches(commandStr.c_str())) {
+	  commands[i]->ParseCommandLine(commandStr.c_str());
+	  commands[i]->run();
+	  break;
+	}
+      }
+      if (i == commands.size()) {
+	LOG_VA_ERROR("Unrecognized command : %s", commandStr.c_str());
+	return 1;
+      }
+      str = strtok(0, ";");      
+    }
+    return 0;
+  }
 
   cout << "Welcome to dsftool, a command-line interface to the DFS broker." << endl;
   cout << "Type 'help' for a description of commands." << endl;

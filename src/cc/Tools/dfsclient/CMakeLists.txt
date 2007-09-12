@@ -22,6 +22,7 @@ CommandCopyToLocal.cc
 CommandLength.cc
 CommandMkdirs.cc
 CommandRemove.cc
+CommandRmdir.cc
 CommandShutdown.cc
 )
 

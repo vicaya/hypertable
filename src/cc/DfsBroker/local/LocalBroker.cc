@@ -19,6 +19,7 @@
  */
 
 #include <cerrno>
+#include <cstdlib>
 #include <cstring>
 
 extern "C" {
@@ -380,6 +381,7 @@ void LocalBroker::Mkdirs(ResponseCallback *cb, const char *dirName) {
  */
 void LocalBroker::Rmdir(ResponseCallback *cb, const char *dirName) {
   std::string absDirName;
+  std::string commandStr;
   
   if (mVerbose) {
     LOG_VA_INFO("rmdir dir='%s'", dirName);
@@ -390,11 +392,20 @@ void LocalBroker::Rmdir(ResponseCallback *cb, const char *dirName) {
   else
     absDirName = mRootdir + "/" + dirName;
 
+  commandStr = (std::string)"/bin/rm -rf " + absDirName;
+  if (system(commandStr.c_str()) != 0) {
+    LOG_VA_ERROR("%s failed.", commandStr.c_str());
+    cb->error(Error::DFSBROKER_IO_ERROR, commandStr);
+    return;
+  }
+  
+#if 0
   if (rmdir(absDirName.c_str()) != 0) {
     LOG_VA_ERROR("rmdir failed: dirName='%s' - %s", absDirName.c_str(), strerror(errno));
     ReportError(cb);
     return;
   }
+#endif
 
   cb->response_ok();
 }

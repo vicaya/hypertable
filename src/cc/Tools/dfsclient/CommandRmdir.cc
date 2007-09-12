@@ -18,28 +18,27 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package org.hypertable.DfsBroker.hadoop;
+#include "Common/Error.h"
 
-import java.nio.ByteBuffer;
-import org.hypertable.AsyncComm.Comm;
-import org.hypertable.AsyncComm.CommBuf;
-import org.hypertable.AsyncComm.Event;
-import org.hypertable.AsyncComm.ResponseCallback;
-import org.hypertable.Common.Error;
+#include "CommandRmdir.h"
 
-public class ResponseCallbackRead extends ResponseCallback {
+using namespace hypertable;
 
-    ResponseCallbackRead(Comm comm, Event event) {
-	super(comm, event);
-    }
+const char *CommandRmdir::msUsage[] = {
+  "rmdir <dir>",
+  "",
+  "  This command sends a RMDIR request for the DFS directory <dir>",
+  "  to the DfsBroker.  The RMDIR DfsBroker request is recursive.",
+  (const char *)0
+};
 
-    int response(long offset, int nread, byte [] data) {
-	mHeaderBuilder.InitializeFromRequest(mEvent.msg);
-	CommBuf cbuf = new CommBuf(mHeaderBuilder, 16, data, data.length);
-	cbuf.AppendInt(Error.OK);
-	cbuf.AppendLong(offset);
-	cbuf.AppendInt(nread);
-	return mComm.SendResponse(mEvent.addr, cbuf);
-    }
+
+int CommandRmdir::run() {
+  if (mArgs.size() < 1) {
+    cerr << "Error:  no filename supplied." << endl;
+    return -1;
+  }
+
+  return mClient->Rmdir(mArgs[0].first);
 }
 

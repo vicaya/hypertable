@@ -18,28 +18,29 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package org.hypertable.DfsBroker.hadoop;
+#ifndef HYPERTABLE_COMMANDRMDIR_H
+#define HYPERTABLE_COMMANDRMDIR_H
 
-import java.nio.ByteBuffer;
-import org.hypertable.AsyncComm.Comm;
-import org.hypertable.AsyncComm.CommBuf;
-import org.hypertable.AsyncComm.Event;
-import org.hypertable.AsyncComm.ResponseCallback;
-import org.hypertable.Common.Error;
+#include <vector>
 
-public class ResponseCallbackRead extends ResponseCallback {
+#include "Common/InteractiveCommand.h"
 
-    ResponseCallbackRead(Comm comm, Event event) {
-	super(comm, event);
-    }
+#include "DfsBroker/Lib/Client.h"
 
-    int response(long offset, int nread, byte [] data) {
-	mHeaderBuilder.InitializeFromRequest(mEvent.msg);
-	CommBuf cbuf = new CommBuf(mHeaderBuilder, 16, data, data.length);
-	cbuf.AppendInt(Error.OK);
-	cbuf.AppendLong(offset);
-	cbuf.AppendInt(nread);
-	return mComm.SendResponse(mEvent.addr, cbuf);
-    }
+namespace hypertable {
+
+  class CommandRmdir : public InteractiveCommand {
+  public:
+    CommandRmdir(DfsBroker::Client *client) : mClient(client) { return; }
+    virtual const char *CommandText() { return "rmdir"; }
+    virtual const char **Usage() { return msUsage; }
+    virtual int run();
+
+  private:
+    static const char *msUsage[];
+
+    DfsBroker::Client *mClient;
+  };
 }
 
+#endif // HYPERTABLE_COMMANDRMDIR_H
