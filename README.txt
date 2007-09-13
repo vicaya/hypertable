@@ -36,23 +36,15 @@ HOW TO BUILD
 
     mkdir -p ~/build/hypertable
 
-  8. Configure the build.  Edit the file ~/code/hypertable/CMakeLists.txt
-  and modify the following line:
-
-    set (CMAKE_INSTALL_PREFIX "/Users/doug/hypertable")
-
-  Change it to point to where you want the binaries to get installed.  Then
-  configure the build as follows:
+  8. Configure the build. 
 
     cd ~/build/hypertable
-    cmake -D CMAKE_BUILD_TYPE="Debug" ~/code/hypertable
+    cmake -DCMAKE_BUILD_TYPE="Debug" -DCMAKE_INSTALL_PREFIX= ~/code/hypertable
 
   9. Build the software.
 
     make
-    make install
-  
-
+    make install DESTDIR=<your_install_dir>
 
 === HOW TO RUN REGRESSION TESTS ===
 

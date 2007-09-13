@@ -18,8 +18,6 @@
 
 project (HYPERTABLE)
 
-set (CMAKE_INSTALL_PREFIX "/Users/doug/hypertable")
-
 # CMAKE_CXX_FLAGS
 #set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-variadic-macros -Wall")
 
@@ -29,12 +27,15 @@ enable_testing()
 # Uncomment the following to build dynamic libraries
 # set (BUILD_SHARED_LIBS ON)
 
-# Locate zlib
+# Locate required packages
+set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 find_package(ZLIB REQUIRED)
 find_package(Boost REQUIRED)
+find_package(Log4cpp REQUIRED)
+find_package(EXPAT REQUIRED)
 
 # include directories
-include_directories( ${Boost_INCLUDE_DIRS} src/cc )
+include_directories(${Boost_INCLUDE_DIRS} ${Log4cpp_INCLUDE_DIR} src/cc)
 
 # link directories
 link_directories(${Boost_LIBRARY_DIRS})
@@ -88,3 +89,4 @@ install (FILES test/Test1.xml DESTINATION test)
 install (FILES test/Test2.xml DESTINATION test)
 install (FILES test/Test3.xml DESTINATION test)
 install (FILES test/metadata.orig DESTINATION test)
+
