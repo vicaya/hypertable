@@ -43,6 +43,8 @@ namespace hypertable {
     static const int COMM_CONNECT_ERROR     = 0x00010003;
     static const int COMM_ALREADY_CONNECTED = 0x00010004;
     static const int COMM_REQUEST_TIMEOUT   = 0x00010005;
+    static const int COMM_SEND_ERROR        = 0x00010006;
+    static const int COMM_RECEIVE_ERROR     = 0x00010007;
 
     static const int DFSBROKER_BAD_FILE_HANDLE   = 0x00020001;
     static const int DFSBROKER_IO_ERROR          = 0x00020002;

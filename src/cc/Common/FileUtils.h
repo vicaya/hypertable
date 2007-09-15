@@ -22,6 +22,7 @@
 
 extern "C" {
 #include <fcntl.h>
+#include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 }
@@ -35,6 +36,8 @@ namespace hypertable {
     static ssize_t Pread(int fd, void *vptr, size_t n, off_t offset);
     static ssize_t Write(int fd, const void *vptr, size_t n);
     static ssize_t Writev(int fd, const struct iovec *vector, int count);
+    static ssize_t Sendto(int fd, const void *vptr, size_t n, const struct sockaddr *to, socklen_t tolen);
+    static ssize_t Recvfrom(int fd, void *vptr, size_t n, struct sockaddr *from, socklen_t *fromlen);
     static void SetFlags(int fd, int flags);
     static char *FileToBuffer(const char *fname, off_t *lenp);
     static bool Mkdirs(const char *dirname);

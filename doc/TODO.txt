@@ -1,6 +1,7 @@
 
 TODO:
-- Add recursive delete to dfsclient and then modify start-servers.sh to use this to cleanup
+- Add support for ExpireTime column garbage collection as well as time
+  interval support for scanners
 - Change EventPtr to intrusive_ptr
 - Make sure NULL endkey lookups work in RangeServer
 - Add support for LZO and BZIP2 compression
@@ -28,6 +29,7 @@ TODO CLEANUP:
 
 
 DONE:
+- Add recursive delete to dfsclient and then modify start-servers.sh to use this to cleanup
 - Re-write RangeServer regression tests to use rsclient against a real RangeServer
 - Clean up hyperspace tool
 - Add support for RowLimit
