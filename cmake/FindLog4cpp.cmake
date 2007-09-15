@@ -11,7 +11,7 @@ IF (Log4cpp_INCLUDE_DIR)
   SET(Log4cpp_FIND_QUIETLY TRUE)
 ENDIF (Log4cpp_INCLUDE_DIR)
 
-FIND_PATH(Log4cpp_INCLUDE_DIR Log4cpp/Category.hh
+FIND_PATH(Log4cpp_INCLUDE_DIR log4cpp/Category.hh
   /opt/local/include
   /usr/local/include
   /usr/include
