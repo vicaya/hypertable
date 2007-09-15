@@ -50,92 +50,30 @@ bool IOHandlerDatagram::HandleEvent(struct epoll_event *event) {
   //DisplayEvent(event);
 
   if (mShutdown) {
-    DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
+    DeliverEvent( new Event(Event::DISCONNECT, 0, mAddr, Error::OK) );
     return true;
   }
 
   if (event->events & EPOLLOUT) {
     if (HandleWriteReadiness()) {
-      DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
+      DeliverEvent( new Event(Event::DISCONNECT, 0, mAddr, Error::OK) );
       return true;
     }
   }
 
   if (event->events & EPOLLIN) {
-    size_t nread, totalRead = 0;
-    while (true) {
-      if (!mGotHeader) {
-	uint8_t *ptr = ((uint8_t *)&mMessageHeader) + (sizeof(Header::HeaderT) - mMessageHeaderRemaining);
-	nread = FileUtils::Read(mSd, ptr, mMessageHeaderRemaining);
-	if (nread == (size_t)-1) {
-	  if (errno != ECONNREFUSED) {
-	    LOG_VA_ERROR("FileUtils::Read(%d, len=%d) failure : %s", mSd, mMessageHeaderRemaining, strerror(errno));
-	  }
-	  int error = (errno == ECONNREFUSED) ? Error::COMM_CONNECT_ERROR : Error::OK;
-	  DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, error ) );
-	  return true;
-	}
-	else if (nread == 0 && totalRead == 0) {
-	  // eof
-	  DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
-	  return true;
-	}
-	else if (nread < mMessageHeaderRemaining) {
-	  mMessageHeaderRemaining -= nread;
-	  return false;
-	}
-	else {
-	  mGotHeader = true;
-	  mMessageHeaderRemaining = 0;
-	  mMessage = new uint8_t [ mMessageHeader.totalLen ];
-	  memcpy(mMessage, &mMessageHeader, sizeof(Header::HeaderT));
-	  mMessagePtr = mMessage + sizeof(Header::HeaderT);
-	  mMessageRemaining = (mMessageHeader.totalLen) - sizeof(Header::HeaderT);
-	  totalRead += nread;
-	}
-      }
-      if (mGotHeader) {
-	nread = FileUtils::Read(mSd, mMessagePtr, mMessageRemaining);
-	if (nread < 0) {
-	  LOG_VA_ERROR("FileUtils::Read(%d, len=%d) failure : %s", mSd, mMessageHeaderRemaining, strerror(errno));
-	  DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
-	  return true;
-	}
-	else if (nread == 0 && totalRead == 0) {
-	  // eof
-	  DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
-	  return true;
-	}
-	else if (nread < mMessageRemaining) {
-	  mMessagePtr += nread;
-	  mMessageRemaining -= nread;
-	}
-	else {
-	  DispatchHandler *dh = 0;
-	  uint32_t id = ((Header::HeaderT *)mMessage)->id;
-	  if ((((Header::HeaderT *)mMessage)->flags & Header::FLAGS_MASK_REQUEST) == 0 &&
-	      (dh = mReactor->RemoveRequest(id)) == 0) {
-	    LOG_VA_WARN("Received response for non-pending event (id=%d,version=%d,totalLen=%d)",
-			id, ((Header::HeaderT *)mMessage)->version, ((Header::HeaderT *)mMessage)->totalLen);
-	  }
-	  else
-	    DeliverEvent( new Event(Event::MESSAGE, mId, mAddr, Error::OK, (Header::HeaderT *)mMessage), dh );
-	  ResetIncomingMessageState();
-	}
-	totalRead += nread;
-      }
-    }
+    // Implement me!
   }
 
   if (event->events & EPOLLERR) {
     LOG_VA_WARN("Received EPOLLERR on descriptor %d (%s:%d)", mSd, inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port));
-    DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
+    DeliverEvent( new Event(Event::DISCONNECT, 0, mAddr, Error::OK) );
     return true;
   }
 
   if (event->events & EPOLLHUP) {
     LOG_VA_WARN("Received EPOLLHUP on descriptor %d (%s:%d)", mSd, inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port));
-    DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
+    DeliverEvent( new Event(Event::DISCONNECT, 0, mAddr, Error::OK) );
     return true;
   }
 
