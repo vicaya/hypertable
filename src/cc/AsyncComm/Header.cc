@@ -24,7 +24,7 @@ namespace hypertable {
   const char *Header::protocolStrings[PROTOCOL_MAX] = {
     "none",
     "dfs broker",
-    "pfs",
+    "hyperspace",
     "bigtable master",
     "bigtable tablet server"
   };

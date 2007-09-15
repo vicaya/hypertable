@@ -30,6 +30,7 @@
 
 #include "IOHandlerAccept.h"
 #include "IOHandlerData.h"
+#include "IOHandlerDatagram.h"
 
 namespace hypertable {
 
@@ -79,6 +80,20 @@ namespace hypertable {
       mAcceptMap.erase(iter);
     }
 
+    void InsertDatagramHandler(uint16_t port, IOHandlerDatagramPtr &ioHandlerDatagramPtr) {
+      boost::mutex::scoped_lock lock(mMutex);
+      mDatagramMap[port] = ioHandlerDatagramPtr;
+    }
+
+    bool LookupDatagramHandler(uint16_t port, IOHandlerDatagramPtr &ioHandlerDatagramPtr) {
+      boost::mutex::scoped_lock lock(mMutex);
+      __gnu_cxx::hash_map<uint16_t, IOHandlerDatagramPtr>::iterator iter = mDatagramMap.find(port);
+      if (iter == mDatagramMap.end())
+	return false;
+      ioHandlerDatagramPtr = (*iter).second;
+      return true;
+    }
+
     bool RemoveHandler(struct sockaddr_in &addr) {
       boost::mutex::scoped_lock lock(mMutex);
       SockAddrMapT<IOHandlerAcceptPtr>::iterator aIter;
@@ -100,12 +115,16 @@ namespace hypertable {
 
       for (SockAddrMapT<IOHandlerAcceptPtr>::iterator aIter = mAcceptMap.begin(); aIter != mAcceptMap.end(); aIter++)
 	(*aIter).second->Shutdown();
+
+      for (__gnu_cxx::hash_map<uint16_t, IOHandlerDatagramPtr>::iterator dgIter = mDatagramMap.begin(); dgIter != mDatagramMap.end(); dgIter++)
+	(*dgIter).second->Shutdown();
     }
 
   private:
     boost::mutex                      mMutex;
     SockAddrMapT<IOHandlerDataPtr>    mDataMap;
     SockAddrMapT<IOHandlerAcceptPtr>  mAcceptMap;
+    __gnu_cxx::hash_map<uint16_t, IOHandlerDatagramPtr>  mDatagramMap;
   };
 
 }

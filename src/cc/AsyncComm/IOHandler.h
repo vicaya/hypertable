@@ -54,6 +54,7 @@ namespace hypertable {
       mReactor = ReactorFactory::GetReactor();
       mPollInterest = 0;
       mShutdown = false;
+      mPort = ntohs(addr.sin_port);
     }
 
 #if defined(__APPLE__)
@@ -68,6 +69,7 @@ namespace hypertable {
 
     void DeliverEvent(Event *event, DispatchHandler *dh=0) {
       DispatchHandler *handler = (dh == 0) ? mDispatchHandler : dh;
+      event->receivePort = mPort;
       if (handler == 0) {
 	LOG_VA_INFO("%s", event->toString().c_str());
 	delete event;
@@ -130,6 +132,7 @@ namespace hypertable {
     }
 
     struct sockaddr_in  mAddr;
+    uint16_t            mPort;
     int                 mSd;
     DispatchHandler    *mDispatchHandler;
     HandlerMap         &mHandlerMap;

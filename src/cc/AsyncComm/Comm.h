@@ -55,6 +55,10 @@ namespace hypertable {
 
     int SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr);
 
+    int OpenDatagramReceivePort(uint16_t port, DispatchHandler *handler);
+
+    int SendDatagram(struct sockaddr_in &addr, uint16_t sendPort, CommBufPtr &cbufPtr);
+
   private:
     boost::mutex  mMutex;
     std::string   mAppName;

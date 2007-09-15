@@ -66,6 +66,7 @@ namespace hypertable {
 
     Type                type;
     struct sockaddr_in  addr;
+    uint16_t            receivePort;
     int                 connId;
     int                 error;
     Header::HeaderT    *header;

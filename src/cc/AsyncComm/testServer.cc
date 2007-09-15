@@ -64,6 +64,7 @@ namespace {
     "  --app-queue     Use an application queue for handling requests",
     "  --reactors=<n>  Specifies the number of reactors (default=1)",
     "  --delay=<ms>    Specifies milliseconds to wait before echoing message (default=0)",
+    "  --udp           Operate in UDP mode instead of TCP",
     "  --verbose,-v    Generate verbose output",
     ""
     "This is a sample program to test the AsyncComm library.  It establishes",
@@ -156,14 +157,44 @@ private:
 };
 
 
+class UdpDispatcher : public DispatchHandler {
+public:
+
+  UdpDispatcher(Comm *comm) : mComm(comm) { return; }
+
+  virtual void handle(EventPtr &eventPtr) {
+    if (eventPtr->type == Event::MESSAGE) {
+      mHeaderBuilder.InitializeFromRequest(eventPtr->header);
+      CommBufPtr cbufPtr( new CommBuf(mHeaderBuilder, eventPtr->messageLen) );
+      cbufPtr->AppendBytes((uint8_t *)eventPtr->message, eventPtr->messageLen);
+      int error = mComm->SendDatagram(eventPtr->addr, eventPtr->receivePort, cbufPtr);
+      if (error != Error::OK) {
+	LOG_VA_ERROR("Comm::SendResponse returned %s", Error::GetText(error));
+      }
+      eventPtr.reset();
+    }
+    else {
+      LOG_VA_ERROR("Error : %s", eventPtr->toString().c_str());
+    }
+  }
+
+private:
+  Comm           *mComm;
+  HeaderBuilder   mHeaderBuilder;
+};
+
+
 
 int main(int argc, char **argv) {
   Comm *comm;
-  int rval;
+  int rval, error;
   uint16_t port = DEFAULT_PORT;
   int reactorCount = 2;
   HandlerFactory *hfactory = 0;
   ApplicationQueue *appQueue = 0;
+  bool udp = false;
+  Dispatcher *dispatcher = 0;
+  UdpDispatcher *udpDispatcher = 0;
 
   for (int i=1; i<argc; i++) {
     if (!strcmp(argv[i], "--help"))
@@ -183,6 +214,8 @@ int main(int argc, char **argv) {
       reactorCount = atoi(&argv[i][11]);
     else if (!strncmp(argv[i], "--delay=", 8))
       gDelay = atoi(&argv[i][8]);
+    else if (!strcmp(argv[i], "--udp"))
+      udp = true;
     else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
       gVerbose = true;
     else
@@ -194,19 +227,31 @@ int main(int argc, char **argv) {
 
   comm = new Comm();
 
-  Dispatcher *dispatcher = new Dispatcher(comm, appQueue);
-
-  hfactory = new HandlerFactory(dispatcher);
-
   if (gVerbose)
     cout << "Listening on port " << port << endl;
 
-  comm->Listen(port, hfactory, dispatcher);
+  if (!udp) {
+
+    dispatcher = new Dispatcher(comm, appQueue);
+
+    hfactory = new HandlerFactory(dispatcher);
+
+    error = comm->Listen(port, hfactory, dispatcher);
+
+  }
+  else {
+
+    udpDispatcher = new UdpDispatcher(comm);
+
+    error = comm->OpenDatagramReceivePort(port, udpDispatcher);
+    
+  }
 
   poll(0, 0, -1);
 
   delete hfactory;
   delete dispatcher;
+  delete udpDispatcher;
   delete comm;
   return 0;
 }  

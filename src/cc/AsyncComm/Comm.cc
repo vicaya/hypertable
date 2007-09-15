@@ -211,3 +211,92 @@ int Comm::SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr) {
 
   return error;
 }
+
+
+
+/**
+ * 
+ */
+int Comm::OpenDatagramReceivePort(uint16_t port, DispatchHandler *handler) {
+  struct sockaddr_in addr;
+  int one = 1;
+  int sd;
+
+  if ((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    LOG_VA_ERROR("socket() failure: %s", strerror(errno));
+    exit(1);
+  }
+
+  // Set to non-blocking
+  FileUtils::SetFlags(sd, O_NONBLOCK);
+
+  int bufsize = 4*32768;
+  if (setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize, sizeof(bufsize)) < 0) {
+    LOG_VA_ERROR("setsockopt(SO_SNDBUF) failed - %s", strerror(errno));
+  }
+  if (setsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char *)&bufsize, sizeof(bufsize)) < 0) {
+    LOG_VA_ERROR("setsockopt(SO_RCVBUF) failed - %s", strerror(errno));
+  }
+
+#if defined(__linux__)
+  if (setsockopt(sd, SOL_TCP, TCP_NODELAY, &one, sizeof(one)) < 0) {
+    LOG_VA_WARN("setsockopt(TCP_NODELAY) failure: %s", strerror(errno));
+  }
+#elif defined(__APPLE__)
+  /**
+  if (setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one)) < 0) {
+    LOG_VA_WARN("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
+  }
+  */
+#endif
+
+  if (setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0) {
+    LOG_VA_WARN("setsockopt(SO_REUSEADDR) failure: %s", strerror(errno));
+  }
+
+  // create address structure to bind to - any available port - any address
+  memset(&addr, 0 , sizeof(sockaddr_in));
+  addr.sin_family = AF_INET;
+  addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  addr.sin_port = htons(port);
+
+  // bind socket
+  if ((bind(sd, (const sockaddr *)&addr, sizeof(sockaddr_in))) < 0) {
+    LOG_VA_ERROR("bind() failure: %s", strerror(errno));
+    exit(1);
+  }
+
+  IOHandlerDatagramPtr datagramHandlerPtr( new IOHandlerDatagram(sd, addr, handler, mHandlerMap) );
+  mHandlerMap.InsertDatagramHandler( port, datagramHandlerPtr );
+  datagramHandlerPtr->StartPolling();
+
+  return 0;
+}
+
+
+
+/**
+ * 
+ */
+int Comm::SendDatagram(struct sockaddr_in &addr, uint16_t sendPort, CommBufPtr &cbufPtr) {
+  boost::mutex::scoped_lock lock(mMutex);
+  IOHandlerDatagramPtr datagramHandlerPtr;
+  Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
+  int error = Error::OK;
+
+  cbufPtr->ResetDataPointers();
+
+  if (!mHandlerMap.LookupDatagramHandler(sendPort, datagramHandlerPtr)) {
+    LOG_VA_ERROR("Datagram send port %d not registered", sendPort);
+    DUMP_CORE;
+  }
+
+  mheader->flags &= Header::FLAGS_MASK_RESPONSE;
+
+  if ((error = datagramHandlerPtr->SendMessage(addr, cbufPtr)) != Error::OK)
+    datagramHandlerPtr->Shutdown();
+
+  return error;
+}
+
+

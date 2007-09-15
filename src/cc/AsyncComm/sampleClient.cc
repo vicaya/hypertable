@@ -40,6 +40,7 @@ extern "C" {
 #include <boost/thread/thread.hpp>
 
 #include "Common/Error.h"
+#include "Common/Logger.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
 
@@ -61,8 +62,9 @@ namespace {
     "OPTIONS:",
     "  --host=<name>   Specifies the host to connect to (default = localhost)",
     "  --port=<n>      Specifies the port to connect to (default = 11255)",
-    "  --timeout=<t>   Specifies the connection timeout in seconds (default=10)",
     "  --reactors=<n>  Specifies the number of reactors (default=1)",
+    "  --timeout=<t>   Specifies the connection timeout in seconds (default=10)",
+    "  --udp           Operate in UDP mode instead of TCP",
     "",
     "This is a sample program to test the AsyncComm library.  It establishes",
     "a connection with the sampleServer and sends each line of the input file",
@@ -72,6 +74,12 @@ namespace {
 }
 
 
+
+/**
+ * This is the dispatch handler that gets installed as the default
+ * handler for the TCP connection.  It queues up responses
+ * that can be
+ */
 class ResponseHandler : public DispatchHandler {
 
 public:
@@ -133,6 +141,38 @@ private:
 };
 
 
+/**
+ * This is the dispatch handler that gets installed on the
+ * UDP receive port
+ */
+class UdpResponseHandler : public DispatchHandler {
+
+public:
+
+  UdpResponseHandler() { return; }
+  
+  virtual void handle(EventPtr &eventPtr) {
+    const char *str;
+
+    if (eventPtr->type == Event::MESSAGE) {
+      if (!Serialization::DecodeString(&eventPtr->message, &eventPtr->messageLen, &str))
+	cout << "ERROR: deserialization problem." << endl;
+      else {
+	if (*str != 0)
+	  cout << "ECHO: " << str << endl;
+	else
+	  cout << "[NULL]" << endl;
+      }
+    }
+    else {
+      LOG_VA_INFO("%s", eventPtr->toString().c_str());
+    }
+  }
+
+};
+
+
+
 
 int main(int argc, char **argv) {
   Comm *comm;
@@ -146,9 +186,16 @@ int main(int argc, char **argv) {
   HeaderBuilder hbuilder;
   int error;
   EventPtr eventPtr;
+  ResponseHandler *respHandler;
+  UdpResponseHandler *udpRespHandler;
+  bool udp = false;
+  string line;
   
   if (argc == 1)
     Usage::DumpAndExit(usage);
+
+  System::Initialize(argv[0]);
+  ReactorFactory::Initialize(1);
 
   for (int i=1; i<argc; i++) {
     if (!strncmp(argv[i], "--host=", 7))
@@ -163,6 +210,8 @@ int main(int argc, char **argv) {
     }
     else if (!strncmp(argv[i], "--timeout=", 10))
       timeout = (time_t)atoi(&argv[i][10]);
+    else if (!strcmp(argv[i], "--udp"))
+      udp = true;
     else if (!strncmp(argv[i], "--reactors=", 11))
       reactorCount = atoi(&argv[i][11]);
     else if (inputFile == 0)
@@ -186,28 +235,57 @@ int main(int argc, char **argv) {
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port);
 
-  System::Initialize(argv[0]);
-  ReactorFactory::Initialize(1);
-
   comm = new Comm();
 
-  ResponseHandler *respHandler = new ResponseHandler();
+  ifstream myfile(inputFile);
 
-  if ((error = comm->Connect(addr, timeout, respHandler)) != Error::OK) {
-    LOG_VA_ERROR("Comm::Connect error - %s", Error::GetText(error));
-    exit(1);
+  if (!myfile.is_open()) {
+    LOG_VA_ERROR("Unable to open file '%s' : %s", inputFile, strerror(errno));
+    return 0;
   }
 
-  if (!respHandler->WaitForConnection())
-    exit(1);
+  if (udp) {
 
-  int outstanding = 0;
-  int maxOutstanding = 50;
-  string line;
-  ifstream myfile(inputFile);
-  const char *str;
+    udpRespHandler = new UdpResponseHandler();
 
-  if (myfile.is_open()) {
+    port++;
+
+    if ((error = comm->OpenDatagramReceivePort(port, udpRespHandler)) != Error::OK) {
+      LOG_VA_ERROR("Problem creating UDP receive port - %s", Error::GetText(error));
+      exit(1);
+    }
+
+    while (!myfile.eof() ) {
+      getline (myfile,line);
+      if (line.length() > 0) {
+	//LOG_VA_INFO("Sending '%s'", line.c_str());
+	hbuilder.AssignUniqueId();
+	CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::EncodedLengthString(line)) );
+	cbufPtr->AppendString(line);
+	if ((error = comm->SendDatagram(addr, port, cbufPtr)) != Error::OK) {
+	  LOG_VA_ERROR("Problem sending datagram - %s", Error::GetText(error));
+	  return 1;
+	}
+      }
+    }
+
+    poll(0, 0, -1);
+
+  }
+  else {  // !udp
+
+    respHandler = new ResponseHandler();
+    if ((error = comm->Connect(addr, timeout, respHandler)) != Error::OK) {
+      LOG_VA_ERROR("Comm::Connect error - %s", Error::GetText(error));
+      exit(1);
+    }
+    if (!respHandler->WaitForConnection())
+      exit(1);
+
+    int outstanding = 0;
+    int maxOutstanding = 50;
+    const char *str;
+
     while (!myfile.eof() ) {
       getline (myfile,line);
       if (line.length() > 0) {
@@ -247,26 +325,23 @@ int main(int argc, char **argv) {
 	}
       }
     }
-    myfile.close();
-  }
-  else {
-    LOG_VA_ERROR("Unable to open file '%s' : %s", inputFile, strerror(errno));
-    return 0;
+
+    while (outstanding > 0 && respHandler->GetResponse(eventPtr)) {
+      if (!Serialization::DecodeString(&eventPtr->message, &eventPtr->messageLen, &str))
+	cout << "ERROR: deserialization problem." << endl;
+      else {
+	if (str != 0)
+	  cout << "ECHO: " << str << endl;
+	else
+	  cout << "[NULL]" << endl;
+      }
+      //cout << "out = " << outstanding << endl;
+      eventPtr.reset();
+      outstanding--;
+    }
   }
 
-  while (outstanding > 0 && respHandler->GetResponse(eventPtr)) {
-    if (!Serialization::DecodeString(&eventPtr->message, &eventPtr->messageLen, &str))
-      cout << "ERROR: deserialization problem." << endl;
-    else {
-      if (str != 0)
-	cout << "ECHO: " << str << endl;
-      else
-	cout << "[NULL]" << endl;
-    }
-    //cout << "out = " << outstanding << endl;
-    eventPtr.reset();
-    outstanding--;
-  }
+  myfile.close();
 
   delete comm;
   return 0;
