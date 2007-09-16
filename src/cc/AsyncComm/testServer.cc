@@ -74,6 +74,11 @@ namespace {
   };
 }
 
+/**
+ * This is the request handler class that is used when the server
+ * is run with an application queue (--app-queue).  It just echos
+ * back the message
+ */
 class RequestHandler : public ApplicationHandler {
 public:
 
@@ -94,6 +99,11 @@ private:
   HeaderBuilder mHeaderBuilder;
 };
 
+
+/**
+ * This is the dispatch handler that is used when
+ * the server is in TCP mode (default).
+ */
 class Dispatcher : public DispatchHandler {
 
 public:
@@ -142,21 +152,9 @@ private:
 
 
 /**
- *
+ * This is the dispatch handler that is used when
+ * the server is in UDP mode.
  */
-class HandlerFactory : public ConnectionHandlerFactory {
-public:
-  HandlerFactory(DispatchHandler *dh) {
-    mDispatchHandler = dh;
-  }
-  virtual DispatchHandler *newInstance() {
-    return mDispatchHandler;
-  }
-private:
-  DispatchHandler *mDispatchHandler;
-};
-
-
 class UdpDispatcher : public DispatchHandler {
 public:
 
@@ -185,6 +183,27 @@ private:
 
 
 
+/**
+ * This handler factory gets passed into Comm::Listen.  It
+ * gets constructed with a pointer to a DispatchHandler.
+ */
+class HandlerFactory : public ConnectionHandlerFactory {
+public:
+  HandlerFactory(DispatchHandler *dh) {
+    mDispatchHandler = dh;
+  }
+  virtual DispatchHandler *newInstance() {
+    return mDispatchHandler;
+  }
+private:
+  DispatchHandler *mDispatchHandler;
+};
+
+
+
+/**
+ * main function
+ */
 int main(int argc, char **argv) {
   Comm *comm;
   int rval, error;

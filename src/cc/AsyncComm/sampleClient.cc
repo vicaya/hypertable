@@ -76,15 +76,38 @@ namespace {
 
 
 /**
- * This is the dispatch handler that gets installed as the default
- * handler for the TCP connection.  It queues up responses
- * that can be
+ * (somewhat) Abstract base class for response handlers;  Defines
+ * the message queue and the mutex and condition variable to
+ * protect it.
  */
 class ResponseHandler : public DispatchHandler {
 
 public:
 
-  ResponseHandler() : mQueue(), mMutex(), mCond(), mConnected(false) { return; }
+  ResponseHandler() : mQueue(), mMutex(), mCond() { return; }
+  virtual ~ResponseHandler() { return; }
+  
+  virtual bool GetResponse(EventPtr &eventPtr) = 0;
+
+protected:
+  queue<EventPtr>   mQueue;
+  boost::mutex      mMutex;
+  boost::condition  mCond;
+};
+
+
+
+/**
+ * This is the dispatch handler that gets installed as the default
+ * handler for the TCP connection.  It queues up responses
+ * that can be fetched by the application via a call to GetResponse()
+ * GetResponse() returns false when the connection is disconnected.
+ */
+class ResponseHandlerTCP : public ResponseHandler {
+
+public:
+
+  ResponseHandlerTCP() : ResponseHandler(), mConnected(false) { return; }
   
   virtual void handle(EventPtr &eventPtr) {
     boost::mutex::scoped_lock lock(mMutex);
@@ -121,12 +144,12 @@ public:
     return mConnected;
   }
 
-  bool GetResponse(EventPtr &eventPtr) {
+  virtual bool GetResponse(EventPtr &eventPtr) {
     boost::mutex::scoped_lock lock(mMutex);
     while (mQueue.empty()) {
-      mCond.wait(lock);
       if (mConnected == false)
 	return false;
+      mCond.wait(lock);
     }
     eventPtr = mQueue.front();
     mQueue.pop();
@@ -134,46 +157,53 @@ public:
   }
 
 private:
-  queue<EventPtr>   mQueue;
-  boost::mutex      mMutex;
-  boost::condition  mCond;
-  bool              mConnected;
+  bool mConnected;
 };
+
+
 
 
 /**
- * This is the dispatch handler that gets installed on the
- * UDP receive port
+ * This is the dispatch handler that gets installed as the default
+ * handler for UDP mode.  It queues up the responses which can be
+ * fetched by the application via a call to GetResponse()
  */
-class UdpResponseHandler : public DispatchHandler {
+class ResponseHandlerUDP : public ResponseHandler {
 
 public:
 
-  UdpResponseHandler() { return; }
+  ResponseHandlerUDP() : ResponseHandler() { return; }
   
   virtual void handle(EventPtr &eventPtr) {
-    const char *str;
-
+    boost::mutex::scoped_lock lock(mMutex);
     if (eventPtr->type == Event::MESSAGE) {
-      if (!Serialization::DecodeString(&eventPtr->message, &eventPtr->messageLen, &str))
-	cout << "ERROR: deserialization problem." << endl;
-      else {
-	if (*str != 0)
-	  cout << "ECHO: " << str << endl;
-	else
-	  cout << "[NULL]" << endl;
-      }
+      mQueue.push(eventPtr);
+      mCond.notify_one();
     }
     else {
       LOG_VA_INFO("%s", eventPtr->toString().c_str());
+      //exit(1);
     }
   }
 
+  virtual bool GetResponse(EventPtr &eventPtr) {
+    boost::mutex::scoped_lock lock(mMutex);
+    while (mQueue.empty()) {
+      mCond.wait(lock);
+    }
+    eventPtr = mQueue.front();
+    mQueue.pop();
+    return true;
+  }
 };
 
 
 
 
+
+/**
+ * main function
+ */
 int main(int argc, char **argv) {
   Comm *comm;
   int rval;
@@ -187,9 +217,11 @@ int main(int argc, char **argv) {
   int error;
   EventPtr eventPtr;
   ResponseHandler *respHandler;
-  UdpResponseHandler *udpRespHandler;
-  bool udp = false;
+  bool udpMode = false;
   string line;
+  int outstanding = 0;
+  int maxOutstanding = 50;
+  const char *str;
   
   if (argc == 1)
     Usage::DumpAndExit(usage);
@@ -211,7 +243,7 @@ int main(int argc, char **argv) {
     else if (!strncmp(argv[i], "--timeout=", 10))
       timeout = (time_t)atoi(&argv[i][10]);
     else if (!strcmp(argv[i], "--udp"))
-      udp = true;
+      udpMode = true;
     else if (!strncmp(argv[i], "--reactors=", 11))
       reactorCount = atoi(&argv[i][11]);
     else if (inputFile == 0)
@@ -244,55 +276,40 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  if (udp) {
-
-    udpRespHandler = new UdpResponseHandler();
-
-    port++;
-
-    if ((error = comm->OpenDatagramReceivePort(port, udpRespHandler)) != Error::OK) {
+  if (udpMode) {
+    respHandler = new ResponseHandlerUDP();
+    port++;    
+    if ((error = comm->OpenDatagramReceivePort(port, respHandler)) != Error::OK) {
       LOG_VA_ERROR("Problem creating UDP receive port - %s", Error::GetText(error));
       exit(1);
     }
+  }
+  else {
+    respHandler = new ResponseHandlerTCP();
+    if ((error = comm->Connect(addr, timeout, respHandler)) != Error::OK) {
+      LOG_VA_ERROR("Comm::Connect error - %s", Error::GetText(error));
+      exit(1);
+    }
+    if (!((ResponseHandlerTCP *)respHandler)->WaitForConnection())
+      exit(1);
 
-    while (!myfile.eof() ) {
-      getline (myfile,line);
-      if (line.length() > 0) {
-	//LOG_VA_INFO("Sending '%s'", line.c_str());
-	hbuilder.AssignUniqueId();
-	CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::EncodedLengthString(line)) );
-	cbufPtr->AppendString(line);
+  }
+
+  while (!myfile.eof() ) {
+    getline (myfile,line);
+    if (line.length() > 0) {
+      hbuilder.AssignUniqueId();
+      CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::EncodedLengthString(line)) );
+      cbufPtr->AppendString(line);
+      int retries = 0;
+
+      if (udpMode) {
 	if ((error = comm->SendDatagram(addr, port, cbufPtr)) != Error::OK) {
 	  LOG_VA_ERROR("Problem sending datagram - %s", Error::GetText(error));
 	  return 1;
 	}
       }
-    }
-
-    poll(0, 0, -1);
-
-  }
-  else {  // !udp
-
-    respHandler = new ResponseHandler();
-    if ((error = comm->Connect(addr, timeout, respHandler)) != Error::OK) {
-      LOG_VA_ERROR("Comm::Connect error - %s", Error::GetText(error));
-      exit(1);
-    }
-    if (!respHandler->WaitForConnection())
-      exit(1);
-
-    int outstanding = 0;
-    int maxOutstanding = 50;
-    const char *str;
-
-    while (!myfile.eof() ) {
-      getline (myfile,line);
-      if (line.length() > 0) {
-	hbuilder.AssignUniqueId();
-	CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::EncodedLengthString(line)) );
-	cbufPtr->AppendString(line);
-	int retries = 0;
+      else {
 	while ((error = comm->SendRequest(addr, cbufPtr, respHandler)) != Error::OK) {
 	  if (error == Error::COMM_NOT_CONNECTED) {
 	    if (retries == 5) {
@@ -307,39 +324,40 @@ int main(int argc, char **argv) {
 	    return 1;
 	  }
 	}
-	outstanding++;
+      }
+      outstanding++;
 
-	if (outstanding  > maxOutstanding) {
-	  if (!respHandler->GetResponse(eventPtr))
-	    break;
-	  if (!Serialization::DecodeString(&eventPtr->message, &eventPtr->messageLen, &str))
-	    cout << "ERROR: deserialization problem." << endl;
-	  else {
-	    if (*str != 0)
-	      cout << "ECHO: " << str << endl;
-	    else
-	      cout << "[NULL]" << endl;
-	  }
-	  eventPtr.reset();
-	  outstanding--;
+      if (outstanding  > maxOutstanding) {
+	if (!respHandler->GetResponse(eventPtr))
+	  break;
+	if (!Serialization::DecodeString(&eventPtr->message, &eventPtr->messageLen, &str))
+	  cout << "ERROR: deserialization problem." << endl;
+	else {
+	  if (*str != 0)
+	    cout << "ECHO: " << str << endl;
+	  else
+	    cout << "[NULL]" << endl;
 	}
+	eventPtr.reset();
+	outstanding--;
       }
-    }
-
-    while (outstanding > 0 && respHandler->GetResponse(eventPtr)) {
-      if (!Serialization::DecodeString(&eventPtr->message, &eventPtr->messageLen, &str))
-	cout << "ERROR: deserialization problem." << endl;
-      else {
-	if (str != 0)
-	  cout << "ECHO: " << str << endl;
-	else
-	  cout << "[NULL]" << endl;
-      }
-      //cout << "out = " << outstanding << endl;
-      eventPtr.reset();
-      outstanding--;
     }
   }
+
+  while (outstanding > 0 && respHandler->GetResponse(eventPtr)) {
+    if (!Serialization::DecodeString(&eventPtr->message, &eventPtr->messageLen, &str))
+      cout << "ERROR: deserialization problem." << endl;
+    else {
+      if (str != 0)
+	cout << "ECHO: " << str << endl;
+      else
+	cout << "[NULL]" << endl;
+    }
+    //cout << "out = " << outstanding << endl;
+    eventPtr.reset();
+    outstanding--;
+  }
+
 
   myfile.close();
 
