@@ -109,7 +109,7 @@ bool IOHandlerDatagram::HandleEvent(struct kevent *event) {
 
   if (event->filter == EVFILT_WRITE) {
     if ((error = HandleWriteReadiness()) != Error::OK) {
-      DeliverEvent( new Event(Event::ERROR, mId, mAddr, error) );
+      DeliverEvent( new Event(Event::ERROR, 0, mAddr, error) );
       return true;
     }
   }
