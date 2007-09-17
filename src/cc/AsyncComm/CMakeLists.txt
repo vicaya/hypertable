@@ -49,7 +49,12 @@ target_link_libraries (testServer pthread ${BOOST_LIB} AsyncComm Common log4cpp)
 add_executable (commTest tests/commTest.cc tests/CommTestThreadFunction.cc)
 target_link_libraries (commTest pthread ${BOOST_LIB} AsyncComm Common log4cpp expat)
 
+# commTest
+add_executable (commTestDatagram tests/commTestDatagram.cc tests/CommTestDatagramThreadFunction.cc)
+target_link_libraries (commTestDatagram pthread ${BOOST_LIB} AsyncComm Common log4cpp expat)
+
 add_test (AsyncComm commTest)
+add_test (AsyncComm-datagram commTestDatagram)
 
 install (TARGETS AsyncComm
          RUNTIME DESTINATION bin
