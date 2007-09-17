@@ -101,7 +101,8 @@ void CommTestDatagramThreadFunction::operator()() {
   ifstream infile(mInputFile);
   ofstream outfile(mOutputFile);
   const char *str;
-  uint32_t gid = (uint32_t)this;
+  uint64_t gid64 = (uint64_t)this;
+  uint32_t gid = (uint32_t)(gid64 & 0x00000000FFFFFFFFLL);
   ResponseHandler respHandler;
 
   if (error = mComm->OpenDatagramReceivePort(mPort, &respHandler)) {
