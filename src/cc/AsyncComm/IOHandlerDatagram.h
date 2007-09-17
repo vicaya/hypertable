@@ -62,7 +62,7 @@ namespace hypertable {
     ImplementMe;
 #endif
 
-    bool HandleWriteReadiness();
+    int HandleWriteReadiness();
 
   private:
 

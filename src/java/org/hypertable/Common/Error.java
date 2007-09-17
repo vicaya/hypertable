@@ -39,6 +39,7 @@ public class Error {
     static public final int COMM_REQUEST_TIMEOUT    = 0x00010005;
     static public final int COMM_SEND_ERROR         = 0x00010006;
     static public final int COMM_RECEIVE_ERROR      = 0x00010007;
+    static public final int COMM_POLL_ERROR         = 0x00010008;
 
     static public final int DFSBROKER_BAD_FILE_HANDLE   = 0x00020001;
     static public final int DFSBROKER_IO_ERROR          = 0x00020002;
@@ -87,6 +88,7 @@ public class Error {
 	mTextMap.put(COMM_REQUEST_TIMEOUT,       "COMM request timeout");
 	mTextMap.put(COMM_SEND_ERROR,            "COMM send error");
 	mTextMap.put(COMM_RECEIVE_ERROR,         "COMM receive error");
+	mTextMap.put(COMM_POLL_ERROR,            "COMM poll error");
 	mTextMap.put(DFSBROKER_BAD_FILE_HANDLE,  "DFS BROKER bad file handle");
 	mTextMap.put(DFSBROKER_IO_ERROR,         "DFS BROKER i/o error");
 	mTextMap.put(DFSBROKER_FILE_NOT_FOUND,   "DFS BROKER file not found");

@@ -238,18 +238,6 @@ int Comm::OpenDatagramReceivePort(uint16_t port, DispatchHandler *handler) {
     LOG_VA_ERROR("setsockopt(SO_RCVBUF) failed - %s", strerror(errno));
   }
 
-#if defined(__linux__)
-  if (setsockopt(sd, SOL_TCP, TCP_NODELAY, &one, sizeof(one)) < 0) {
-    LOG_VA_WARN("setsockopt(TCP_NODELAY) failure: %s", strerror(errno));
-  }
-#elif defined(__APPLE__)
-  /**
-  if (setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one)) < 0) {
-    LOG_VA_WARN("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
-  }
-  */
-#endif
-
   if (setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0) {
     LOG_VA_WARN("setsockopt(SO_REUSEADDR) failure: %s", strerror(errno));
   }

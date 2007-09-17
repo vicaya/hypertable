@@ -45,6 +45,7 @@ namespace {
     { Error::COMM_REQUEST_TIMEOUT,        "COMM request timeout" },
     { Error::COMM_SEND_ERROR,             "COMM send error" },
     { Error::COMM_RECEIVE_ERROR,          "COMM receive error" },
+    { Error::COMM_POLL_ERROR,             "COMM poll error" },
     { Error::DFSBROKER_BAD_FILE_HANDLE,   "DFS BROKER bad file handle" },
     { Error::DFSBROKER_IO_ERROR,          "DFS BROKER i/o error" },
     { Error::DFSBROKER_FILE_NOT_FOUND,    "DFS BROKER file not found" },
@@ -98,6 +99,7 @@ const int Error::COMM_ALREADY_CONNECTED;
 const int Error::COMM_REQUEST_TIMEOUT;
 const int Error::COMM_SEND_ERROR;
 const int Error::COMM_RECEIVE_ERROR;
+const int Error::COMM_POLL_ERROR;
 
 const int Error::DFSBROKER_BAD_FILE_HANDLE;
 const int Error::DFSBROKER_IO_ERROR;

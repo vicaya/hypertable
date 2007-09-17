@@ -46,34 +46,43 @@ using namespace hypertable;
 #if defined(__linux__)
 
 bool IOHandlerDatagram::HandleEvent(struct epoll_event *event) {
+  int error;
 
   //DisplayEvent(event);
 
-  if (mShutdown) {
-    DeliverEvent( new Event(Event::DISCONNECT, 0, mAddr, Error::OK) );
+  if (mShutdown)
     return true;
-  }
 
   if (event->events & EPOLLOUT) {
-    if (HandleWriteReadiness()) {
-      DeliverEvent( new Event(Event::DISCONNECT, 0, mAddr, Error::OK) );
+    if ((error = HandleWriteReadiness()) != Error::OK) {
+      DeliverEvent( new Event(Event::ERROR, 0, mAddr, error) );
       return true;
     }
   }
 
   if (event->events & EPOLLIN) {
-    // Implement me!
+    ssize_t nread;
+    uint8_t *rmsg;
+    struct sockaddr_in addr;
+    socklen_t fromlen = sizeof(struct sockaddr_in);
+
+    if ((nread = FileUtils::Recvfrom(mSd, mMessage, 65536, (struct sockaddr *)&addr, &fromlen)) == (ssize_t)-1) {
+      LOG_VA_ERROR("FileUtils::Recvfrom(%d) failure : %s", mSd, strerror(errno));
+      DeliverEvent( new Event(Event::ERROR, mSd, addr, Error::COMM_RECEIVE_ERROR) );
+      return true;
+    }
+
+    rmsg = new uint8_t [ nread ];
+    memcpy(rmsg, mMessage, nread);
+
+    DeliverEvent( new Event(Event::MESSAGE, 0, addr, Error::OK, (Header::HeaderT *)rmsg) );
+
+    return false;
   }
 
   if (event->events & EPOLLERR) {
     LOG_VA_WARN("Received EPOLLERR on descriptor %d (%s:%d)", mSd, inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port));
-    DeliverEvent( new Event(Event::DISCONNECT, 0, mAddr, Error::OK) );
-    return true;
-  }
-
-  if (event->events & EPOLLHUP) {
-    LOG_VA_WARN("Received EPOLLHUP on descriptor %d (%s:%d)", mSd, inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port));
-    DeliverEvent( new Event(Event::DISCONNECT, 0, mAddr, Error::OK) );
+    DeliverEvent( new Event(Event::ERROR, 0, mAddr, Error::COMM_POLL_ERROR) );
     return true;
   }
 
@@ -86,11 +95,11 @@ bool IOHandlerDatagram::HandleEvent(struct epoll_event *event) {
  *
  */
 bool IOHandlerDatagram::HandleEvent(struct kevent *event) {
+  int error;
 
   //DisplayEvent(event);
 
   if (mShutdown) {
-    //DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
     return true;
   }
 
@@ -99,8 +108,8 @@ bool IOHandlerDatagram::HandleEvent(struct kevent *event) {
   assert((event->flags & EV_EOF) == 0);
 
   if (event->filter == EVFILT_WRITE) {
-    if (HandleWriteReadiness()) {
-      //DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
+    if ((error = HandleWriteReadiness()) != Error::OK) {
+      DeliverEvent( new Event(Event::ERROR, mId, mAddr, error) );
       return true;
     }
   }
@@ -118,8 +127,6 @@ bool IOHandlerDatagram::HandleEvent(struct kevent *event) {
       return true;
     }
 
-    //LOG_VA_INFO("Received message from  %s:%d", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
-
     rmsg = new uint8_t [ nread ];
     memcpy(rmsg, mMessage, nread);
 
@@ -134,17 +141,18 @@ ImplementMe;
 #endif
 
 
-bool IOHandlerDatagram::HandleWriteReadiness() {
+int IOHandlerDatagram::HandleWriteReadiness() {
   boost::mutex::scoped_lock lock(mMutex);
+  int error;
 
-  if (FlushSendQueue() != Error::OK)
-    return true;
+  if ((error = FlushSendQueue()) != Error::OK)
+    return error;
 
   // is this necessary?
   if (mSendQueue.empty())
     RemovePollInterest(Reactor::WRITE_READY);
 
-  return false;
+  return Error::OK;
 }
 
 
