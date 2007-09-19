@@ -130,6 +130,8 @@ public:
 	mHeaderBuilder.InitializeFromRequest(eventPtr->header);
 	CommBufPtr cbufPtr( new CommBuf(mHeaderBuilder, eventPtr->messageLen) );
 	cbufPtr->AppendBytes((uint8_t *)eventPtr->message, eventPtr->messageLen);
+	if (gDelay > 0)
+	  poll(0, 0, gDelay);
 	int error = mComm->SendResponse(eventPtr->addr, cbufPtr);
 	if (error != Error::OK) {
 	  LOG_VA_ERROR("Comm::SendResponse returned %s", Error::GetText(error));
@@ -165,6 +167,8 @@ public:
       mHeaderBuilder.InitializeFromRequest(eventPtr->header);
       CommBufPtr cbufPtr( new CommBuf(mHeaderBuilder, eventPtr->messageLen) );
       cbufPtr->AppendBytes((uint8_t *)eventPtr->message, eventPtr->messageLen);
+      if (gDelay > 0)
+	poll(0, 0, gDelay);
       int error = mComm->SendDatagram(eventPtr->addr, eventPtr->receivePort, cbufPtr);
       if (error != Error::OK) {
 	LOG_VA_ERROR("Comm::SendResponse returned %s", Error::GetText(error));
@@ -246,8 +250,11 @@ int main(int argc, char **argv) {
 
   comm = new Comm();
 
-  if (gVerbose)
+  if (gVerbose) {
     cout << "Listening on port " << port << endl;
+    if (gDelay)
+      cout << "Delay = " << gDelay << endl;
+  }
 
   if (!udp) {
 

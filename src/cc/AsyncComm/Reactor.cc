@@ -101,6 +101,7 @@ Reactor::Reactor() : mMutex(), mInterruptInProgress(false) {
   }
 #endif
 
+  memset(&mNextWakeup, 0, sizeof(mNextWakeup));
 }
 
 
@@ -116,10 +117,14 @@ void Reactor::HandleTimeouts(PollTimeout &nextTimeout) {
     handler->DeliverEvent( new Event(Event::ERROR, 0, ((IOHandlerData *)handler)->GetAddress(), Error::COMM_REQUEST_TIMEOUT), dh );
   }
 
-  if (nextRequestTimeout.sec != 0)
+  if (nextRequestTimeout.sec != 0) {
     nextTimeout.Set(now, nextRequestTimeout);
-  else
+    memcpy(&mNextWakeup, &nextRequestTimeout, sizeof(mNextWakeup));
+  }
+  else {
     nextTimeout.SetIndefinite();
+    memset(&mNextWakeup, 0, sizeof(mNextWakeup));
+  }
 
   if (!mTimerHeap.empty()) {
     struct TimerT timer;
@@ -128,8 +133,10 @@ void Reactor::HandleTimeouts(PollTimeout &nextTimeout) {
     while (!mTimerHeap.empty()) {
       timer = mTimerHeap.top();
       if (xtime_cmp(timer.expireTime, now) > 0) {
-	if (nextRequestTimeout.sec == 0 || xtime_cmp(timer.expireTime, nextRequestTimeout) < 0)
+	if (nextRequestTimeout.sec == 0 || xtime_cmp(timer.expireTime, nextRequestTimeout) < 0) {
 	  nextTimeout.Set(now, timer.expireTime);
+	  memcpy(&mNextWakeup, &timer.expireTime, sizeof(mNextWakeup));
+	}
 	break;
       }
       eventPtr.reset( new Event(Event::TIMER, Error::OK) );
@@ -137,8 +144,9 @@ void Reactor::HandleTimeouts(PollTimeout &nextTimeout) {
       mTimerHeap.pop();
     }
 
-    PollLoopContinue();
   }
+
+  PollLoopContinue();
 }
 
 
@@ -167,7 +175,7 @@ void Reactor::PollLoopInterrupt() {
 #elif defined(__APPLE__)
   struct kevent event;
 
-  EV_SET(&event, mInterruptSd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, this);
+  EV_SET(&event, mInterruptSd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, 0);
 
   if (kevent(kQueue, &event, 1, 0, 0, 0) == -1) {
     LOG_VA_ERROR("kevent(sd=%d) : %s", mInterruptSd, strerror(errno));

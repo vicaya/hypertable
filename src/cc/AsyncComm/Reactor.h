@@ -46,7 +46,11 @@ namespace hypertable {
 
     void AddRequest(uint32_t id, IOHandler *handler, DispatchHandler *dh, boost::xtime &expire) {
       boost::mutex::scoped_lock lock(mMutex);
+      boost::xtime now;
       mRequestCache.Insert(id, handler, dh, expire);
+      boost::xtime_get(&now, boost::TIME_UTC);
+      if (mNextWakeup.sec == 0 || xtime_cmp(expire, mNextWakeup) < 0)
+	PollLoopInterrupt();	
     }
 
     DispatchHandler *RemoveRequest(uint32_t id) {
@@ -84,6 +88,7 @@ namespace hypertable {
     std::priority_queue<TimerT, std::vector<TimerT>, ltTimer> mTimerHeap;
     int             mInterruptSd;
     bool            mInterruptInProgress;
+    boost::xtime    mNextWakeup;
   };
 
 }
