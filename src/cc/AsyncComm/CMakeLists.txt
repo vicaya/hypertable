@@ -57,13 +57,19 @@ target_link_libraries (commTestDatagram pthread ${BOOST_LIB} AsyncComm Common lo
 add_executable (commTestTimeout tests/commTestTimeout.cc)
 target_link_libraries (commTestTimeout pthread ${BOOST_LIB} AsyncComm Common log4cpp expat)
 
+# commTestTimer
+add_executable (commTestTimer tests/commTestTimer.cc)
+target_link_libraries (commTestTimer pthread ${BOOST_LIB} AsyncComm Common log4cpp expat)
+
 set (SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/AsyncComm/tests")
 set (DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/AsyncComm")
 configure_file(${SRC_DIR}/commTestTimeout.golden ${DST_DIR}/commTestTimeout.golden)
+configure_file(${SRC_DIR}/commTestTimer.golden ${DST_DIR}/commTestTimer.golden)
 
 add_test (AsyncComm commTest)
 add_test (AsyncComm-datagram commTestDatagram)
 add_test (AsyncComm-timeout commTestTimeout)
+add_test (AsyncComm-timer commTestTimer)
 
 install (TARGETS AsyncComm
          RUNTIME DESTINATION bin

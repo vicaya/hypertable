@@ -55,6 +55,8 @@ namespace hypertable {
       dstr += " headerLen=" + header->headerLen;
       dstr += " totalLen=" + header->totalLen;
     }
+    else if (type == TIMER)
+      dstr += "TIMER";
     else if (type == ERROR)
       dstr += "ERROR";
     else
