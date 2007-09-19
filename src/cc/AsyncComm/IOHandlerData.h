@@ -84,6 +84,10 @@ namespace hypertable {
 
     int ConnectionId() { return mId; }
 
+    void GetLocalAddress(struct sockaddr_in *addrPtr) {
+      memcpy(addrPtr, &mLocalAddr, sizeof(struct sockaddr_in));
+    }
+
   private:
 
     static atomic_t msNextConnectionId;
@@ -100,6 +104,7 @@ namespace hypertable {
     time_t              mTimeout;
     list<CommBufPtr>    mSendQueue;
     int                 mId;
+    struct sockaddr_in  mLocalAddr;
   };
 
   typedef boost::shared_ptr<IOHandlerData> IOHandlerDataPtr;

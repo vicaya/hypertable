@@ -257,12 +257,19 @@ bool IOHandlerData::HandleWriteReadiness() {
   boost::mutex::scoped_lock lock(mMutex);
 
   if (mConnected == false) {
+    socklen_t nameLen = sizeof(mLocalAddr);
+
     int bufsize = 4*32768;
     if (setsockopt(mSd, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize, sizeof(bufsize)) < 0) {
       LOG_VA_ERROR("setsockopt(SO_SNDBUF) failed - %s", strerror(errno));
     }
     if (setsockopt(mSd, SOL_SOCKET, SO_RCVBUF, (char *)&bufsize, sizeof(bufsize)) < 0) {
       LOG_VA_ERROR("setsockopt(SO_RCVBUF) failed - %s", strerror(errno));
+    }
+
+    if (getsockname(mSd, (struct sockaddr *)&mLocalAddr, &nameLen) < 0) {
+      LOG_VA_ERROR("getsockname(%d) failed - %s", mSd, strerror(errno));
+      exit(1);
     }
     //clog << "Connection established." << endl;
     mConnected = true;

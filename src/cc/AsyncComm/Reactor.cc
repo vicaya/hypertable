@@ -106,47 +106,72 @@ Reactor::Reactor() : mMutex(), mInterruptInProgress(false) {
 
 
 void Reactor::HandleTimeouts(PollTimeout &nextTimeout) {
-  boost::mutex::scoped_lock lock(mMutex);
+  vector<struct TimerT> expiredTimers;
+  EventPtr eventPtr;
   boost::xtime     now, nextRequestTimeout;
-  IOHandler       *handler;
-  DispatchHandler *dh;
+  struct TimerT timer;
 
-  boost::xtime_get(&now, boost::TIME_UTC);
+  {
+    boost::mutex::scoped_lock lock(mMutex);
+    IOHandler       *handler;
+    DispatchHandler *dh;
 
-  while ((dh = mRequestCache.GetNextTimeout(now, handler, &nextRequestTimeout)) != 0) {
-    handler->DeliverEvent( new Event(Event::ERROR, 0, ((IOHandlerData *)handler)->GetAddress(), Error::COMM_REQUEST_TIMEOUT), dh );
-  }
+    boost::xtime_get(&now, boost::TIME_UTC);
 
-  if (nextRequestTimeout.sec != 0) {
-    nextTimeout.Set(now, nextRequestTimeout);
-    memcpy(&mNextWakeup, &nextRequestTimeout, sizeof(mNextWakeup));
-  }
-  else {
-    nextTimeout.SetIndefinite();
-    memset(&mNextWakeup, 0, sizeof(mNextWakeup));
-  }
-
-  if (!mTimerHeap.empty()) {
-    struct TimerT timer;
-    EventPtr eventPtr;
-
-    while (!mTimerHeap.empty()) {
-      timer = mTimerHeap.top();
-      if (xtime_cmp(timer.expireTime, now) > 0) {
-	if (nextRequestTimeout.sec == 0 || xtime_cmp(timer.expireTime, nextRequestTimeout) < 0) {
-	  nextTimeout.Set(now, timer.expireTime);
-	  memcpy(&mNextWakeup, &timer.expireTime, sizeof(mNextWakeup));
-	}
-	break;
-      }
-      eventPtr.reset( new Event(Event::TIMER, Error::OK) );
-      timer.handler->handle(eventPtr);
-      mTimerHeap.pop();
+    while ((dh = mRequestCache.GetNextTimeout(now, handler, &nextRequestTimeout)) != 0) {
+      handler->DeliverEvent( new Event(Event::ERROR, 0, ((IOHandlerData *)handler)->GetAddress(), Error::COMM_REQUEST_TIMEOUT), dh );
     }
 
+    if (nextRequestTimeout.sec != 0) {
+      nextTimeout.Set(now, nextRequestTimeout);
+      memcpy(&mNextWakeup, &nextRequestTimeout, sizeof(mNextWakeup));
+    }
+    else {
+      nextTimeout.SetIndefinite();
+      memset(&mNextWakeup, 0, sizeof(mNextWakeup));
+    }
+
+    if (!mTimerHeap.empty()) {
+      struct TimerT timer;
+
+      while (!mTimerHeap.empty()) {
+	timer = mTimerHeap.top();
+	if (xtime_cmp(timer.expireTime, now) > 0) {
+	  if (nextRequestTimeout.sec == 0 || xtime_cmp(timer.expireTime, nextRequestTimeout) < 0) {
+	    nextTimeout.Set(now, timer.expireTime);
+	    memcpy(&mNextWakeup, &timer.expireTime, sizeof(mNextWakeup));
+	  }
+	  break;
+	}
+	expiredTimers.push_back(timer);
+	mTimerHeap.pop();
+      }
+
+    }
   }
 
-  PollLoopContinue();
+  /**
+   * Deliver timer events
+   */
+  for (size_t i=0; i<expiredTimers.size(); i++) {
+    eventPtr.reset( new Event(Event::TIMER, Error::OK) );
+    expiredTimers[i].handler->handle(eventPtr);
+  }
+
+  {
+    boost::mutex::scoped_lock lock(mMutex);
+
+    if (!mTimerHeap.empty()) {
+      timer = mTimerHeap.top();
+      if (nextRequestTimeout.sec == 0 || xtime_cmp(timer.expireTime, nextRequestTimeout) < 0) {
+	nextTimeout.Set(now, timer.expireTime);
+	memcpy(&mNextWakeup, &timer.expireTime, sizeof(mNextWakeup));
+      }
+    }
+
+    PollLoopContinue();
+  }
+
 }
 
 

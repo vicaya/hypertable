@@ -56,6 +56,8 @@ namespace hypertable {
 
     int SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr);
 
+    int GetLocalAddress(struct sockaddr_in addr, struct sockaddr_in *localAddr);
+
     int OpenDatagramReceivePort(uint16_t port, DispatchHandler *handler);
 
     int SendDatagram(struct sockaddr_in &addr, uint16_t sendPort, CommBufPtr &cbufPtr);

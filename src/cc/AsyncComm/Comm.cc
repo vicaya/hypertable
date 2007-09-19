@@ -319,6 +319,18 @@ int Comm::SetTimerAbsolute(boost::xtime expireTime, DispatchHandler *handler) {
   timer.handler = handler;
   mTimerReactor->AddTimer(timer);
   return Error::OK;
-  
 }
 
+int Comm::GetLocalAddress(struct sockaddr_in addr, struct sockaddr_in *localAddr) {
+  boost::mutex::scoped_lock lock(mMutex);
+  IOHandlerDataPtr dataHandlerPtr;
+
+  if (!mHandlerMap.LookupDataHandler(addr, dataHandlerPtr)) {
+    LOG_VA_ERROR("No connection for %s:%d", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+    return Error::COMM_NOT_CONNECTED;
+  }
+
+  dataHandlerPtr->GetLocalAddress(localAddr);
+
+  return Error::OK;
+}
