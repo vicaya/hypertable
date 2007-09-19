@@ -18,13 +18,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 #ifndef HYPERTABLE_REACTOR_H
 #define HYPERTABLE_REACTOR_H
 
+#include <queue>
+
 #include <boost/thread/thread.hpp>
 
+#include "PollTimeout.h"
 #include "RequestCache.h"
+#include "Timer.h"
 
 namespace hypertable {
 
@@ -42,19 +45,27 @@ namespace hypertable {
     void operator()();
 
     void AddRequest(uint32_t id, IOHandler *handler, DispatchHandler *dh, time_t expire) {
+      boost::mutex::scoped_lock lock(mMutex);
       mRequestCache.Insert(id, handler, dh, expire);
     }
 
     DispatchHandler *RemoveRequest(uint32_t id) {
+      boost::mutex::scoped_lock lock(mMutex);
       return mRequestCache.Remove(id);
     }
 
-    void HandleTimeouts();
-
     void CancelRequests(IOHandler *handler) {
+      boost::mutex::scoped_lock lock(mMutex);
       mRequestCache.PurgeRequests(handler);
     }
 
+    void AddTimer(struct TimerT &timer) {
+      boost::mutex::scoped_lock lock(mMutex);
+      mTimerHeap.push(timer);
+      PollLoopInterrupt();
+    }
+
+    void HandleTimeouts(PollTimeout &nextTimeout);
 
 #if defined(__linux__)    
     int pollFd;
@@ -63,8 +74,16 @@ namespace hypertable {
 #endif
 
   protected:
-    boost::thread     *threadPtr;
-    RequestCache      mRequestCache;
+
+    void PollLoopInterrupt();
+    void PollLoopContinue();
+
+    boost::mutex    mMutex;
+    boost::thread   *threadPtr;
+    RequestCache    mRequestCache;
+    std::priority_queue<TimerT, std::vector<TimerT>, ltTimer> mTimerHeap;
+    int             mInterruptSd;
+    bool            mInterruptInProgress;
   };
 
 }

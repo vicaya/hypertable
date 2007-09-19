@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 extern "C" {
 #include <errno.h>
 #include <stdlib.h>
@@ -41,9 +40,6 @@ extern "C" {
 #include "ReactorRunner.h"
 using namespace hypertable;
 
-#define EVENT_LOOP_TIMEOUT_S   5
-#define EVENT_LOOP_TIMEOUT_MS  5000
-
 
 /**
  * 
@@ -52,17 +48,18 @@ void ReactorRunner::operator()() {
   int n;
   IOHandler *handler;
   set<void *> removedHandlers;
+  PollTimeout timeout;
 
 #if defined(__linux__)
   struct epoll_event events[256];
 
-  while ((n = epoll_wait(mReactor->pollFd, events, 256, EVENT_LOOP_TIMEOUT_MS)) >= 0 || errno == EINTR) {
+  while ((n = epoll_wait(mReactor->pollFd, events, 256, timeout.GetMillis())) >= 0 || errno == EINTR) {
     removedHandlers.clear();
     LOG_VA_DEBUG("epoll_wait returned %d events", n);
     for (int i=0; i<n; i++) {
       if (removedHandlers.count(events[i].data.ptr) == 0) {
 	handler = (IOHandler *)events[i].data.ptr;
-	if (handler->HandleEvent(&events[i])) {
+	if (handler && handler->HandleEvent(&events[i])) {
 	  UnregisterHandler(handler);
 	  removedHandlers.insert(handler);
 	}
@@ -73,24 +70,20 @@ void ReactorRunner::operator()() {
 	mReactor->CancelRequests((IOHandler*)(*iter));
       }
     }
-    mReactor->HandleTimeouts();
+    mReactor->HandleTimeouts(timeout);
   }
 
   LOG_VA_ERROR("epoll_wait(%d) failed : %s", mReactor->pollFd, strerror(errno));
 
 #elif defined(__APPLE__)
   struct kevent events[32];
-  struct timespec maxWait;
 
-  maxWait.tv_sec = EVENT_LOOP_TIMEOUT_S;
-  maxWait.tv_nsec = 0;
-
-  while ((n = kevent(mReactor->kQueue, NULL, 0, events, 32, &maxWait)) >= 0 || errno == EINTR) {
+  while ((n = kevent(mReactor->kQueue, NULL, 0, events, 32, timeout.GetTimespec())) >= 0 || errno == EINTR) {
     removedHandlers.clear();
     for (int i=0; i<n; i++) {
       handler = (IOHandler *)events[i].udata;
       if (removedHandlers.count(handler) == 0) {
-	if (handler->HandleEvent(&events[i])) {
+	if (handler && handler->HandleEvent(&events[i])) {
 	  UnregisterHandler(handler);
 	  removedHandlers.insert(handler);
 	}
@@ -101,7 +94,7 @@ void ReactorRunner::operator()() {
 	mReactor->CancelRequests((IOHandler*)(*iter));
       }
     }
-    mReactor->HandleTimeouts();
+    mReactor->HandleTimeouts(timeout);
   }
 
   LOG_VA_ERROR("kevent(%d) failed : %s", mReactor->kQueue, strerror(errno));

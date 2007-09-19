@@ -25,6 +25,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/xtime.hpp>
 
 extern "C" {
 #include <stdint.h>
@@ -59,10 +60,15 @@ namespace hypertable {
 
     int SendDatagram(struct sockaddr_in &addr, uint16_t sendPort, CommBufPtr &cbufPtr);
 
+    int SetTimer(uint64_t durationMillis, DispatchHandler *handler);
+
+    int SetTimerAbsolute(boost::xtime expireTime, DispatchHandler *handler);
+
   private:
     boost::mutex  mMutex;
     std::string   mAppName;
     HandlerMap    mHandlerMap;
+    Reactor      *mTimerReactor;
   };
 
   typedef boost::shared_ptr<Comm> CommPtr;

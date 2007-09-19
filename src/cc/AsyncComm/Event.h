@@ -41,7 +41,7 @@ namespace hypertable {
 
   public:
 
-    enum Type { CONNECTION_ESTABLISHED, DISCONNECT, MESSAGE, ERROR };
+    enum Type { CONNECTION_ESTABLISHED, DISCONNECT, MESSAGE, ERROR, TIMER };
 
     Event(Type ct, int cid, struct sockaddr_in &a, int err=0, Header::HeaderT *h=0) 
       : type(ct), addr(a), connId(cid), error(err), header(h) {
@@ -59,6 +59,15 @@ namespace hypertable {
 	threadGroup = 0;
       }
     }
+
+    Event(Type ct, int err=0) : type(ct), error(err) {
+      header = 0;
+      message = 0;
+      messageLen = 0;
+      threadGroup = 0;
+      connId = 0;
+    }
+
 
     ~Event() {
       delete [] header;

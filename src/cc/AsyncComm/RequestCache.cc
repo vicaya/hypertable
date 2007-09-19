@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 #include <cassert>
 using namespace std;
 
@@ -30,8 +29,6 @@ using namespace std;
 using namespace hypertable;
 
 void RequestCache::Insert(uint32_t id, IOHandler *handler, DispatchHandler *dh, time_t expire) {
-  boost::mutex::scoped_lock lock(mMutex);
-
   CacheNodeT *node = new CacheNodeT;
 
   LOG_VA_DEBUG("Adding id %d", id);
@@ -57,7 +54,6 @@ void RequestCache::Insert(uint32_t id, IOHandler *handler, DispatchHandler *dh, 
 
 
 DispatchHandler *RequestCache::Remove(uint32_t id) {
-  boost::mutex::scoped_lock lock(mMutex);
 
   LOG_VA_DEBUG("Removing id %d", id);
 
@@ -94,7 +90,6 @@ DispatchHandler *RequestCache::Remove(uint32_t id) {
 
 
 DispatchHandler *RequestCache::GetNextTimeout(time_t now, IOHandler *&handlerp)  {
-  boost::mutex::scoped_lock lock(mMutex);
 
   while (mHead && mHead->expire < now) {
     IdHandlerMapT::iterator iter = mIdMap.find(mHead->id);
@@ -123,7 +118,6 @@ DispatchHandler *RequestCache::GetNextTimeout(time_t now, IOHandler *&handlerp) 
 
 
 void RequestCache::PurgeRequests(IOHandler *handler) {
-  boost::mutex::scoped_lock lock(mMutex);
   for (CacheNodeT *node = mTail; node != 0; node = node->next) {
     if (node->handler == handler) {
       LOG_VA_DEBUG("Purging request id %d", node->id);

@@ -45,7 +45,7 @@ namespace hypertable {
     typedef __gnu_cxx::hash_map<uint32_t, CacheNodeT *> IdHandlerMapT;
 
   public:
-    RequestCache() : mIdMap(), mHead(0), mTail(0), mMutex() { return; }
+    RequestCache() : mIdMap(), mHead(0), mTail(0) { return; }
 
     void Insert(uint32_t id, IOHandler *handler, DispatchHandler *dh, time_t expire);
 
@@ -58,7 +58,6 @@ namespace hypertable {
   private:
     IdHandlerMapT  mIdMap;
     CacheNodeT    *mHead, *mTail;
-    boost::mutex   mMutex;
   };
 }
 

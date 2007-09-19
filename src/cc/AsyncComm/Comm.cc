@@ -48,6 +48,8 @@ extern "C" {
 #include "Comm.h"
 #include "IOHandlerAccept.h"
 #include "IOHandlerData.h"
+#include "Timer.h"
+
 using namespace hypertable;
 
 
@@ -58,6 +60,7 @@ Comm::Comm() {
     LOG_ERROR("ReactorFactory::Initialize must be called before creating AsyncComm::Comm object");
     DUMP_CORE;
   }
+  mTimerReactor = ReactorFactory::GetReactor();
 }
 
 
@@ -76,6 +79,7 @@ Comm::~Comm() {
 int Comm::Connect(struct sockaddr_in &addr, time_t timeout, DispatchHandler *defaultHandler) {
   int sd;
   IOHandlerDataPtr dataHandlerPtr;
+  int one = 1;
 
   if (mHandlerMap.LookupDataHandler(addr, dataHandlerPtr))
     return Error::COMM_ALREADY_CONNECTED;
@@ -88,8 +92,10 @@ int Comm::Connect(struct sockaddr_in &addr, time_t timeout, DispatchHandler *def
   // Set to non-blocking
   FileUtils::SetFlags(sd, O_NONBLOCK);
 
-#if defined(__APPLE__)
-  int one = 1;
+#if defined(__linux__)
+  if (setsockopt(sd, SOL_TCP, TCP_NODELAY, &one, sizeof(one)) < 0)
+    cerr << "setsockopt(TCP_NODELAY) failure: " << strerror(errno) << endl;
+#elif defined(__APPLE__)
   if (setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one)) < 0)
     LOG_VA_WARN("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
 #endif
@@ -287,4 +293,30 @@ int Comm::SendDatagram(struct sockaddr_in &addr, uint16_t sendPort, CommBufPtr &
   return error;
 }
 
+
+
+/**
+ *
+ */
+int Comm::SetTimer(uint64_t durationMillis, DispatchHandler *handler) {
+  struct TimerT timer;
+
+  boost::xtime_get(&timer.expireTime, boost::TIME_UTC);
+  timer.expireTime.sec += durationMillis / 1000LL;
+  timer.expireTime.nsec += (durationMillis % 1000LL) * 1000000LL;
+  timer.handler = handler;
+
+  mTimerReactor->AddTimer(timer);
+
+  return Error::OK;
+}
+
+
+
+/**
+ *
+ */
+int Comm::SetTimerAbsolute(boost::xtime expireTime, DispatchHandler *handler) {
+  
+}
 
