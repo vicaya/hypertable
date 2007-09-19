@@ -44,7 +44,7 @@ namespace hypertable {
 
     void operator()();
 
-    void AddRequest(uint32_t id, IOHandler *handler, DispatchHandler *dh, time_t expire) {
+    void AddRequest(uint32_t id, IOHandler *handler, DispatchHandler *dh, boost::xtime &expire) {
       boost::mutex::scoped_lock lock(mMutex);
       mRequestCache.Insert(id, handler, dh, expire);
     }

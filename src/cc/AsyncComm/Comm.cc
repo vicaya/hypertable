@@ -300,14 +300,11 @@ int Comm::SendDatagram(struct sockaddr_in &addr, uint16_t sendPort, CommBufPtr &
  */
 int Comm::SetTimer(uint64_t durationMillis, DispatchHandler *handler) {
   struct TimerT timer;
-
   boost::xtime_get(&timer.expireTime, boost::TIME_UTC);
   timer.expireTime.sec += durationMillis / 1000LL;
   timer.expireTime.nsec += (durationMillis % 1000LL) * 1000000LL;
   timer.handler = handler;
-
   mTimerReactor->AddTimer(timer);
-
   return Error::OK;
 }
 
@@ -317,6 +314,11 @@ int Comm::SetTimer(uint64_t durationMillis, DispatchHandler *handler) {
  *
  */
 int Comm::SetTimerAbsolute(boost::xtime expireTime, DispatchHandler *handler) {
+  struct TimerT timer;  
+  memcpy(&timer.expireTime, &expireTime, sizeof(boost::xtime));
+  timer.handler = handler;
+  mTimerReactor->AddTimer(timer);
+  return Error::OK;
   
 }
 

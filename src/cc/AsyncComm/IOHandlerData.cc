@@ -282,20 +282,18 @@ bool IOHandlerData::HandleWriteReadiness() {
 int IOHandlerData::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *dispatchHandler) {
   boost::mutex::scoped_lock lock(mMutex);
   int error;
-  struct timeval tv;
+  boost::xtime expireTime;
   bool initiallyEmpty = mSendQueue.empty() ? true : false;
   Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
 
   LOG_ENTER;
 
-  if (gettimeofday(&tv, 0) < 0) {
-    LOG_VA_ERROR("gettimeofday() failed : %s", strerror(errno));
-    exit(1);
-  }
-
+  boost::xtime_get(&expireTime, boost::TIME_UTC);
+  expireTime.sec += mTimeout;
+  
   // If request, Add message ID to request cache
   if (dispatchHandler != 0 && mheader->flags & Header::FLAGS_MASK_REQUEST)
-    mReactor->AddRequest(mheader->id, this, dispatchHandler, tv.tv_sec + mTimeout);
+    mReactor->AddRequest(mheader->id, this, dispatchHandler, expireTime);
 
   mSendQueue.push_back(cbufPtr);
 

@@ -106,34 +106,30 @@ Reactor::Reactor() : mMutex(), mInterruptInProgress(false) {
 
 void Reactor::HandleTimeouts(PollTimeout &nextTimeout) {
   boost::mutex::scoped_lock lock(mMutex);
-
-  struct timeval tval;
-
-  if (gettimeofday(&tval, 0) < 0) {
-    LOG_VA_ERROR("gettimeofday() failed : %s", strerror(errno));
-    return;
-  }
-  
+  boost::xtime     now, nextRequestTimeout;
   IOHandler       *handler;
   DispatchHandler *dh;
 
-  while ((dh = mRequestCache.GetNextTimeout(tval.tv_sec, handler)) != 0) {
+  boost::xtime_get(&now, boost::TIME_UTC);
+
+  while ((dh = mRequestCache.GetNextTimeout(now, handler, &nextRequestTimeout)) != 0) {
     handler->DeliverEvent( new Event(Event::ERROR, 0, ((IOHandlerData *)handler)->GetAddress(), Error::COMM_REQUEST_TIMEOUT), dh );
   }
 
-  nextTimeout.SetIndefinite();
+  if (nextRequestTimeout.sec != 0)
+    nextTimeout.Set(now, nextRequestTimeout);
+  else
+    nextTimeout.SetIndefinite();
 
   if (!mTimerHeap.empty()) {
     struct TimerT timer;
-    boost::xtime now;
     EventPtr eventPtr;
-
-    boost::xtime_get(&now, boost::TIME_UTC);
 
     while (!mTimerHeap.empty()) {
       timer = mTimerHeap.top();
       if (xtime_cmp(timer.expireTime, now) > 0) {
-	nextTimeout.Set(now, timer.expireTime);
+	if (nextRequestTimeout.sec == 0 || xtime_cmp(timer.expireTime, nextRequestTimeout) < 0)
+	  nextTimeout.Set(now, timer.expireTime);
 	break;
       }
       eventPtr.reset( new Event(Event::TIMER, Error::OK) );
@@ -177,8 +173,8 @@ void Reactor::PollLoopInterrupt() {
     LOG_VA_ERROR("kevent(sd=%d) : %s", mInterruptSd, strerror(errno));
     exit(1);
   }
-}
 #endif
+
 }
 
 

@@ -23,6 +23,7 @@
 #define HYPERTABLE_REQUESTCACHE_H
 
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/xtime.hpp>
 
 #include <ext/hash_map>
 
@@ -36,7 +37,7 @@ namespace hypertable {
 
     typedef struct cache_node {
       struct cache_node *prev, *next;
-      time_t             expire;
+      boost::xtime       expire;
       uint32_t           id;
       IOHandler         *handler;
       DispatchHandler   *dh;
@@ -45,13 +46,14 @@ namespace hypertable {
     typedef __gnu_cxx::hash_map<uint32_t, CacheNodeT *> IdHandlerMapT;
 
   public:
+
     RequestCache() : mIdMap(), mHead(0), mTail(0) { return; }
 
-    void Insert(uint32_t id, IOHandler *handler, DispatchHandler *dh, time_t expire);
+    void Insert(uint32_t id, IOHandler *handler, DispatchHandler *dh, boost::xtime &expire);
 
     DispatchHandler *Remove(uint32_t id);
 
-    DispatchHandler *GetNextTimeout(time_t now, IOHandler *&handlerp);
+    DispatchHandler *GetNextTimeout(boost::xtime &now, IOHandler *&handlerp, boost::xtime *nextTimeout);
 
     void PurgeRequests(IOHandler *handler);
 
