@@ -22,6 +22,8 @@ extern "C" {
 #include <netinet/in.h>
 }
 
+#define MAX_MESSAGES 50000
+
 /**
  *  Forward declarations
  */

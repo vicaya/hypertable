@@ -104,6 +104,7 @@ void CommTestDatagramThreadFunction::operator()() {
   uint64_t gid64 = (uint64_t)this;
   uint32_t gid = (uint32_t)(gid64 & 0x00000000FFFFFFFFLL);
   ResponseHandler respHandler;
+  int nsent = 0;
 
   if (error = mComm->OpenDatagramReceivePort(mPort, &respHandler)) {
     LOG_VA_ERROR("Problem opening datagram receive port %d - %s", mPort, Error::GetText(error));
@@ -111,7 +112,7 @@ void CommTestDatagramThreadFunction::operator()() {
   }
 
   if (infile.is_open()) {
-    while (!infile.eof() ) {
+    while (!infile.eof() && nsent < MAX_MESSAGES) {
       getline (infile,line);
       if (line.length() > 0) {
 	hbuilder.AssignUniqueId();
@@ -138,6 +139,7 @@ void CommTestDatagramThreadFunction::operator()() {
 	  outstanding--;
 	}
       }
+      nsent++;
     }
     infile.close();
   }

@@ -101,11 +101,12 @@ void CommTestThreadFunction::operator()() {
   ifstream infile(mInputFile);
   ofstream outfile(mOutputFile);
   const char *str;
+  int nsent = 0;
 
   ResponseHandler *respHandler = new ResponseHandler();
 
   if (infile.is_open()) {
-    while (!infile.eof() ) {
+    while (!infile.eof() && nsent < MAX_MESSAGES) {
       getline (infile,line);
       if (line.length() > 0) {
 	hbuilder.AssignUniqueId();
@@ -143,6 +144,7 @@ void CommTestThreadFunction::operator()() {
 	  outstanding--;
 	}
       }
+      nsent++;
     }
     infile.close();
   }

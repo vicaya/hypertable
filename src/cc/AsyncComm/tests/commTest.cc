@@ -32,6 +32,7 @@ extern "C" {
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/TestHarness.h"
+#include "Common/StringExt.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
 
@@ -121,7 +122,14 @@ int main(int argc, char **argv) {
   thread1->join();
   thread2->join();
 
-  if (system("diff /usr/share/dict/words commTest.output.1"))
+  std::string tmpFile = (std::string)"/tmp/commTest" + (int)getpid();
+  std::string commandStr = (std::string)"head -" + (int)MAX_MESSAGES + " /usr/share/dict/words > " + tmpFile  + " ; diff " + tmpFile + " commTest.output.1";
+
+  if (system(commandStr.c_str()))
+    return 1;
+
+  commandStr = (std::string)"unlink " + tmpFile;
+  if (system(commandStr.c_str()))
     return 1;
 
   if (system("diff commTest.output.1 commTest.output.2"))
