@@ -70,7 +70,24 @@ Comm::Comm() {
  *
  */
 Comm::~Comm() {
-  mHandlerMap.UnregisterAll();
+  struct TimerT timer;
+
+  set<IOHandler *> handlers;
+  mHandlerMap.DecomissionAll(handlers);
+  for (set<IOHandler *>::iterator iter = handlers.begin(); iter != handlers.end(); ++iter)
+    (*iter)->Shutdown();
+
+  boost::xtime_get(&timer.expireTime, boost::TIME_UTC);
+  timer.expireTime.nsec += 200000000LL;
+  timer.handler = 0;
+
+  // wake up all reactors
+  for (size_t i=0; i<ReactorFactory::msReactors.size(); i++)
+    ReactorFactory::msReactors[i]->AddTimer(timer);
+
+  // wait for all decomissioned handlers to get purged by Reactor
+  mHandlerMap.WaitForEmpty();
+
 }
 
 

@@ -1,5 +1,6 @@
 
 TODO:
+- Add ReactorFactory::Destroy
 - Get rid of connection ID from Event structure
 - Implement single-server Hyperspace
 - Add support for ExpireTime column garbage collection as well as time

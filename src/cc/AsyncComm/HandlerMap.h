@@ -23,6 +23,7 @@
 
 //#define DISABLE_LOG_DEBUG
 
+#include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
 
 #include "Common/Logger.h"
@@ -119,21 +120,33 @@ namespace hypertable {
       boost::mutex::scoped_lock lock(mMutex);
       IOHandlerPtr handlerPtr = handler;
       mDecomissionedHandlers.erase(handlerPtr);
+      if (mDecomissionedHandlers.empty())
+	mCond.notify_all();
     }
 
-    void UnregisterAll() {
-#if 0      
+    void DecomissionAll(set<IOHandler *> &handlers) {
       boost::mutex::scoped_lock lock(mMutex);
+      SockAddrMapT<IOHandlerPtr>::iterator iter;
       
-      for (SockAddrMapT<IOHandlerDataPtr>::iterator dIter = mDataMap.begin(); dIter != mDataMap.end(); dIter++)
-	(*dIter).second->Shutdown();
+      // TCP handlers
+      for (iter = mHandlerMap.begin(); iter != mHandlerMap.end(); iter++) {
+	mDecomissionedHandlers.insert((*iter).second);
+	handlers.insert((*iter).second.get());
+      }
+      mHandlerMap.clear();
 
-      for (SockAddrMapT<IOHandlerAcceptPtr>::iterator aIter = mAcceptMap.begin(); aIter != mAcceptMap.end(); aIter++)
-	(*aIter).second->Shutdown();
+      // UDP handlers
+      for (iter = mDatagramHandlerMap.begin(); iter != mDatagramHandlerMap.end(); iter++) {
+	mDecomissionedHandlers.insert((*iter).second);
+	handlers.insert((*iter).second.get());
+      }
+      mDatagramHandlerMap.clear();
+    }
 
-      for (__gnu_cxx::hash_map<uint16_t, IOHandlerDatagramPtr>::iterator dgIter = mDatagramMap.begin(); dgIter != mDatagramMap.end(); dgIter++)
-	(*dgIter).second->Shutdown();
-#endif
+    void WaitForEmpty() {
+      boost::mutex::scoped_lock lock(mMutex);
+      if (!mDecomissionedHandlers.empty())
+	mCond.wait(lock);
     }
 
   private:
@@ -146,6 +159,7 @@ namespace hypertable {
     }
 
     boost::mutex                mMutex;
+    boost::condition            mCond;
     SockAddrMapT<IOHandlerPtr>  mHandlerMap;
     SockAddrMapT<IOHandlerPtr>  mDatagramHandlerMap;
     set<IOHandlerPtr, ltiohp>   mDecomissionedHandlers;

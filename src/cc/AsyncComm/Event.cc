@@ -65,8 +65,10 @@ namespace hypertable {
     if (error != Error::OK)
       dstr += (std::string)" \"" + Error::GetText(error) + "\"";
 
-    dstr += " from=";
-    dstr += (std::string)inet_ntoa(addr.sin_addr) + ":" + (int)ntohs(addr.sin_port);
+    if (type != TIMER) {
+      dstr += " from=";
+      dstr += (std::string)inet_ntoa(addr.sin_addr) + ":" + (int)ntohs(addr.sin_port);
+    }
 
     return dstr;
   }

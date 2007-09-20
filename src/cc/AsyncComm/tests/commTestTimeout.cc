@@ -166,14 +166,15 @@ int main(int argc, char **argv) {
     }
 
     poll(0, 0, 8000);
+
+    delete comm;
+
   }
 
   if (!golden)
     harness.ValidateAndExit("commTestTimeout.golden");
 
   harness.RegenerateGoldenFile("commTestTimeout.golden");
-
-  delete comm;
 
   return 0;
 }
