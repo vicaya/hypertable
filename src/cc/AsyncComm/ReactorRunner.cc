@@ -57,7 +57,7 @@ void ReactorRunner::operator()() {
     mReactor->GetRemovedHandlers(removedHandlers);
     LOG_VA_DEBUG("epoll_wait returned %d events", n);
     for (int i=0; i<n; i++) {
-      if (removedHandlers.count(events[i].data.ptr) == 0) {
+      if (removedHandlers.count((IOHandler *)events[i].data.ptr) == 0) {
 	handler = (IOHandler *)events[i].data.ptr;
 	if (handler && handler->HandleEvent(&events[i])) {
 	  HandlerMap &handlerMap = handler->GetHandlerMap();
