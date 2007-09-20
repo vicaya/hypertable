@@ -36,7 +36,6 @@ extern "C" {
 #include "Common/Logger.h"
 #include "Common/Properties.h"
 
-#include "ClientSessionHandler.h"
 #include "Session.h"
 #include "Master.h"
 
