@@ -154,7 +154,7 @@ void Reactor::HandleTimeouts(PollTimeout &nextTimeout) {
    * Deliver timer events
    */
   for (size_t i=0; i<expiredTimers.size(); i++) {
-    eventPtr.reset( new Event(Event::TIMER, Error::OK) );
+    eventPtr = new Event(Event::TIMER, Error::OK);
     expiredTimers[i].handler->handle(eventPtr);
   }
 

@@ -92,7 +92,6 @@ public:
     if (error != Error::OK) {
       LOG_VA_ERROR("Comm::SendResponse returned %s", Error::GetText(error));
     }
-    mEventPtr.reset();
   }
 private:
   Comm *mComm;
@@ -136,7 +135,6 @@ public:
 	if (error != Error::OK) {
 	  LOG_VA_ERROR("Comm::SendResponse returned %s", Error::GetText(error));
 	}
-	eventPtr.reset();
       }
       else {
 	ApplicationHandlerPtr appHandlerPtr( new RequestHandler(mComm, eventPtr) );
@@ -173,7 +171,6 @@ public:
       if (error != Error::OK) {
 	LOG_VA_ERROR("Comm::SendResponse returned %s", Error::GetText(error));
       }
-      eventPtr.reset();
     }
     else {
       LOG_VA_ERROR("Error : %s", eventPtr->toString().c_str());

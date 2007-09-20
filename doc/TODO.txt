@@ -3,7 +3,6 @@ TODO:
 - Implement single-server Hyperspace
 - Add support for ExpireTime column garbage collection as well as time
   interval support for scanners
-- Change EventPtr to intrusive_ptr
 - Make sure NULL endkey lookups work in RangeServer
 - Add support for LZO and BZIP2 compression
 - Implement 'InMemory' locality groups
@@ -26,11 +25,9 @@ TODO:
 - Add access control
 - Add better split key computation logic (exponential backoff sampler)
 
-TODO CLEANUP:
-- 
-
 
 DONE:
+- Change EventPtr to intrusive_ptr
 - Add recursive delete to dfsclient and then modify start-servers.sh to use this to cleanup
 - Re-write RangeServer regression tests to use rsclient against a real RangeServer
 - Clean up hyperspace tool

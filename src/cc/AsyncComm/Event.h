@@ -24,12 +24,12 @@
 #include <iostream>
 #include <string>
 
-#include <boost/shared_ptr.hpp>
-
 extern "C" {
 #include <stdint.h>
 #include <netinet/in.h>
 }
+
+#include "Common/ReferenceCount.h"
 
 using namespace std;
 
@@ -37,7 +37,7 @@ using namespace std;
 
 namespace hypertable {
 
-  class Event {
+  class Event : public ReferenceCount {
 
   public:
 
@@ -87,7 +87,7 @@ namespace hypertable {
     void Display() { cerr << toString() << endl; }
   };
 
-  typedef boost::shared_ptr<Event> EventPtr;
+  typedef boost::intrusive_ptr<Event> EventPtr;
 
 }
 

@@ -140,7 +140,6 @@ void CommTestThreadFunction::operator()() {
 	    else
 	      outfile << "[NULL]" << endl;
 	  }
-	  eventPtr.reset();
 	  outstanding--;
 	}
       }
@@ -163,7 +162,6 @@ void CommTestThreadFunction::operator()() {
 	outfile << "[NULL]" << endl;
     }
     //cout << "out = " << outstanding << endl;
-    eventPtr.reset();
     outstanding--;
   }
   delete respHandler;

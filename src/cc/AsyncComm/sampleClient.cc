@@ -338,7 +338,6 @@ int main(int argc, char **argv) {
 	  else
 	    cout << "[NULL]" << endl;
 	}
-	eventPtr.reset();
 	outstanding--;
       }
     }
@@ -354,7 +353,6 @@ int main(int argc, char **argv) {
 	cout << "[NULL]" << endl;
     }
     //cout << "out = " << outstanding << endl;
-    eventPtr.reset();
     outstanding--;
   }
 

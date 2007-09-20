@@ -135,7 +135,6 @@ void CommTestDatagramThreadFunction::operator()() {
 	    else
 	      outfile << "[NULL]" << endl;
 	  }
-	  eventPtr.reset();
 	  outstanding--;
 	}
       }
@@ -158,7 +157,6 @@ void CommTestDatagramThreadFunction::operator()() {
 	outfile << "[NULL]" << endl;
     }
     //cout << "out = " << outstanding << endl;
-    eventPtr.reset();
     outstanding--;
   }
 }
