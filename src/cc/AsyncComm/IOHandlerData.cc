@@ -254,7 +254,6 @@ bool IOHandlerData::HandleEvent(struct kevent *event) {
 
 
 bool IOHandlerData::HandleWriteReadiness() {
-  boost::mutex::scoped_lock lock(mMutex);
 
   if (mConnected == false) {
     socklen_t nameLen = sizeof(mLocalAddr);
@@ -276,11 +275,12 @@ bool IOHandlerData::HandleWriteReadiness() {
     DeliverEvent( new Event(Event::CONNECTION_ESTABLISHED, mId, mAddr, Error::OK) );
   }
   else {
+    boost::mutex::scoped_lock lock(mMutex);
     if (FlushSendQueue() != Error::OK)
       return true;
+    if (mSendQueue.empty())
+      RemovePollInterest(Reactor::WRITE_READY);	
   }
-  if (mSendQueue.empty())
-    RemovePollInterest(Reactor::WRITE_READY);	
   return false;
 }
 

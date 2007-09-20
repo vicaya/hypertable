@@ -50,10 +50,10 @@ namespace hypertable {
 	dstr += Header::protocolStrings[header->protocol];
       else
 	dstr += "unknown";
-      dstr += " id=" + header->id;
-      dstr += " gid=" + header->gid;
-      dstr += " headerLen=" + header->headerLen;
-      dstr += " totalLen=" + header->totalLen;
+      dstr += (std::string)" id=" + (int)header->id;
+      dstr += (std::string)" gid=" + (int)header->gid;
+      dstr += (std::string)" headerLen=" + (int)header->headerLen;
+      dstr += (std::string)" totalLen=" + (int)header->totalLen;
     }
     else if (type == TIMER)
       dstr += "TIMER";
