@@ -34,8 +34,9 @@ using namespace hypertable;
 /**
  * 
  */    
-ClientSessionHandler::ClientSessionHandler(Comm *comm, PropertiesPtr &propsPtr, Hyperspace::Session *session) : mComm(comm), mSession(session), mConnected(false), mConnectionAttemptOutstanding(false), mSessionId(0) {
+ClientSessionHandler::ClientSessionHandler(Comm *comm, PropertiesPtr &propsPtr, Hyperspace::Session *session) : mComm(comm), mSession(session), mConnected(false), mState(STATE_CANCELLED), mSessionId(0) {
   int error;
+  uint16_t sendPort, masterPort;
 
   mVerbose = propsPtr->getPropertyBool("verbose", false);
 
@@ -43,34 +44,34 @@ ClientSessionHandler::ClientSessionHandler(Comm *comm, PropertiesPtr &propsPtr, 
 
   mKeepAliveInterval = (uint32_t)propsPtr->getPropertyInt("Hyperspace.KeepAlive.Interval", Master::DEFAULT_KEEPALIVE_INTERVAL);
 
-  mDatagramSendPort = (uint16_t)propsPtr->getPropertyInt("Hyperspace.Client.port", Session::DEFAULT_CLIENT_PORT);
+  sendPort = (uint16_t)propsPtr->getPropertyInt("Hyperspace.Client.port", Session::DEFAULT_CLIENT_PORT);
+  InetAddr::Initialize(&mDatagramSendAddr, INADDR_ANY, sendPort);
 
   const char *host = propsPtr->getProperty("Hyperspace.Master.host", "localhost");
-
-  uint16_t port = (uint16_t)propsPtr->getPropertyInt("Hyperspace.Master.port", Master::DEFAULT_MASTER_PORT);
-
-  if (!InetAddr::Initialize(&mMasterAddr, host, port))
+  masterPort = (uint16_t)propsPtr->getPropertyInt("Hyperspace.Master.port", Master::DEFAULT_MASTER_PORT);
+  if (!InetAddr::Initialize(&mMasterAddr, host, masterPort))
     exit(1);
 
   if (mVerbose) {
-    cout << "Hyperspace.Client.port=" << mDatagramSendPort << endl;
+    cout << "Hyperspace.Client.port=" << sendPort << endl;
     cout << "Hyperspace.KeepAlive.Interval=" << mKeepAliveInterval << endl;
     cout << "Hyperspace.Lease.Interval=" << mLeaseInterval << endl;
     cout << "Hyperspace.Master.host=" << host << endl;
-    cout << "Hyperspace.Master.port=" << port << endl;
+    cout << "Hyperspace.Master.port=" << masterPort << endl;
   }
 
   boost::xtime_get(&mLastKeepAliveSendTime, boost::TIME_UTC);
 
   // !!! fix me (should pass addr in) !!!
-  if ((error = mComm->OpenDatagramReceivePort(mDatagramSendPort, this)) != Error::OK) {
-    LOG_VA_ERROR("Unable to open datagram receive port %d - %s", mDatagramSendPort, Error::GetText(error));
+  if ((error = mComm->CreateDatagramReceiveSocket(mDatagramSendAddr, this)) != Error::OK) {
+    std::string str;
+    LOG_VA_ERROR("Unable to create datagram receive socket %s - %s", InetAddr::StringFormat(str, mDatagramSendAddr), Error::GetText(error));
     exit(1);
   }
 
   CommBufPtr commBufPtr( Hyperspace::Protocol::CreateKeepAliveRequest(0) );
 
-  if ((error = mComm->SendDatagram(mMasterAddr, mDatagramSendPort, commBufPtr) != Error::OK)) {
+  if ((error = mComm->SendDatagram(mMasterAddr, mDatagramSendAddr, commBufPtr) != Error::OK)) {
     LOG_VA_ERROR("Unable to send datagram - %s", Error::GetText(error));
     exit(1);
   }
@@ -101,7 +102,7 @@ void ClientSessionHandler::handle(EventPtr &eventPtr) {
 
       if (!Serialization::DecodeShort(&msgPtr, &remaining, &command)) {
 	std::string message = "Truncated Request";
-	throw new ProtocolException(message);
+	throw ProtocolException(message);
       }
 
       // sanity check command code
@@ -117,16 +118,17 @@ void ClientSessionHandler::handle(EventPtr &eventPtr) {
 
 	  if (!Serialization::DecodeInt(&msgPtr, &remaining, &sessionId)) {
 	    std::string message = "Truncated Request";
-	    throw new ProtocolException(message);
+	    cerr << "Message len = " << eventPtr->messageLen << endl;
+	    throw ProtocolException(message);
 	  }
 
-	  if (!mConnected && !mConnectionAttemptOutstanding) {
+	  if (mState == STATE_CANCELLED) {
+	    mState = STATE_CONNECTING;
 	    if ((error = mComm->Connect(mMasterAddr, mLeaseInterval, this)) != Error::OK) {
 	      std::string str;
 	      LOG_VA_ERROR("Problem establishing TCP connection with Hyperspace.Master at %s", InetAddr::StringFormat(str, mMasterAddr));
 	      exit(1);
 	    }
-	    mConnectionAttemptOutstanding = true;
 	  }
 
 	  if (mSessionId == 0)
@@ -135,6 +137,10 @@ void ClientSessionHandler::handle(EventPtr &eventPtr) {
 	  assert(mSessionId == sessionId);
 
 	}
+	break;
+      case Protocol::COMMAND_HANDSHAKE:
+	mState = STATE_READY;
+	mSession->SetState(Session::STATE_SAFE);
 	break;
       default:
 	std::string message = (string)"Command code " + command + " not implemented";
@@ -149,50 +155,28 @@ void ClientSessionHandler::handle(EventPtr &eventPtr) {
   else if (eventPtr->type == Event::DISCONNECT) {
     LOG_VA_WARN("%s", eventPtr->toString().c_str());
     mConnected = false;
-    mConnectionAttemptOutstanding = false;
+    mState = STATE_CANCELLED;
+    mSession->SetState(Session::STATE_JEOPARDY);
   }
   else if (eventPtr->type == Event::CONNECTION_ESTABLISHED) {
 
     mConnected = true;
-    mConnectionAttemptOutstanding = false;
+    mState = STATE_HANDSHAKING;
 
-    mSession->SetState(Session::STATE_SAFE);
+    CommBufPtr commBufPtr( Hyperspace::Protocol::CreateHandshakeRequest(mSessionId) );
 
-#if 0
-    struct sockaddr_in addr;
-
-    boost::xtime_get(&mLastKeepAliveSendTime, boost::TIME_UTC);
-
-    mComm->GetLocalAddress(eventPtr->addr, &addr);
-
-    LOG_VA_INFO("Local address of new connection = %s:%d", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
-
-    mDatagramSendPort = ntohs(addr.sin_port);
-
-    // !!! fix me (should pass addr in) !!!
-    if ((error = mComm->OpenDatagramReceivePort(ntohs(addr.sin_port), this)) != Error::OK) {
-      LOG_VA_ERROR("Unable to open datagram receive port %d - %s", mDatagramSendPort, Error::GetText(error));
+    if ((error = mComm->SendRequest(eventPtr->addr, commBufPtr, this)) != Error::OK) {
+      LOG_VA_ERROR("Unable to send handshake request - %s", Error::GetText(error));
+      // we should probably just change states here ...
       exit(1);
     }
 
-    CommBufPtr commBufPtr( Hyperspace::Protocol::CreateKeepAliveRequest() );
-
-    if ((error = mComm->SendDatagram(eventPtr->addr, mDatagramSendPort, commBufPtr) != Error::OK)) {
-      LOG_VA_ERROR("Unable to send datagram - %s", Error::GetText(error));
-      exit(1);
-    }
-
-    if ((error = mComm->SetTimer(mKeepAliveInterval*1000, this)) != Error::OK) {
-      LOG_VA_ERROR("Problem setting timer - %s", Error::GetText(error));
-      exit(1);
-    }
-#endif
   }
   else if (eventPtr->type == Event::TIMER) {
 
     CommBufPtr commBufPtr( Hyperspace::Protocol::CreateKeepAliveRequest(mSessionId) );
     
-    if ((error = mComm->SendDatagram(mMasterAddr, mDatagramSendPort, commBufPtr) != Error::OK)) {
+    if ((error = mComm->SendDatagram(mMasterAddr, mDatagramSendAddr, commBufPtr) != Error::OK)) {
       LOG_VA_ERROR("Unable to send datagram - %s", Error::GetText(error));
       exit(1);
     }

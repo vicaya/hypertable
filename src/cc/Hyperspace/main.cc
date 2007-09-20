@@ -29,6 +29,7 @@ extern "C" {
 }
 
 #include "Common/Error.h"
+#include "Common/InetAddr.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
 
@@ -99,6 +100,7 @@ int main(int argc, char **argv) {
   DatagramDispatchHandler *datagramHandler;
   ConnectionManager *connManager;
   int error;
+  struct sockaddr_in localAddr;
 
   System::Initialize(argv[0]);
   
@@ -139,14 +141,18 @@ int main(int argc, char **argv) {
     cout << "Hyperspace.Master.reactors=" << reactorCount << endl;
   }
 
+  InetAddr::Initialize(&localAddr, INADDR_ANY, port);
+
   master = new Master(connManager, propsPtr);
   appQueue = new ApplicationQueue(workerCount);
-  comm->Listen(port, new HandlerFactory(comm, appQueue, master));
+  comm->Listen(localAddr, new HandlerFactory(comm, appQueue, master));
 
   datagramHandler = new DatagramDispatchHandler(comm, master);
 
-  if ((error = comm->OpenDatagramReceivePort(port, datagramHandler)) != Error::OK) {
-    LOG_VA_ERROR("Unable to open datagram receive port - %s", Error::GetText(error));
+  if ((error = comm->CreateDatagramReceiveSocket(localAddr, datagramHandler)) != Error::OK) {
+    std::string str;
+    LOG_VA_ERROR("Unable to create datagram receive socket %s - %s", 
+		 InetAddr::StringFormat(str, localAddr), Error::GetText(error));
     exit(1);
   }
 

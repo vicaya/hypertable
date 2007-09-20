@@ -40,6 +40,7 @@ extern "C" {
 #include <boost/thread/thread.hpp>
 
 #include "Common/Error.h"
+#include "Common/InetAddr.h"
 #include "Common/Logger.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
@@ -222,6 +223,7 @@ int main(int argc, char **argv) {
   int outstanding = 0;
   int maxOutstanding = 50;
   const char *str;
+  struct sockaddr_in localAddr;
   
   if (argc == 1)
     Usage::DumpAndExit(usage);
@@ -278,9 +280,11 @@ int main(int argc, char **argv) {
 
   if (udpMode) {
     respHandler = new ResponseHandlerUDP();
-    port++;    
-    if ((error = comm->OpenDatagramReceivePort(port, respHandler)) != Error::OK) {
-      LOG_VA_ERROR("Problem creating UDP receive port - %s", Error::GetText(error));
+    port++;
+    InetAddr::Initialize(&localAddr, INADDR_ANY, port);
+    if ((error = comm->CreateDatagramReceiveSocket(localAddr, respHandler)) != Error::OK) {
+      std::string str;
+      LOG_VA_ERROR("Problem creating UDP receive socket %s - %s", InetAddr::StringFormat(str, localAddr), Error::GetText(error));
       exit(1);
     }
   }
@@ -304,7 +308,7 @@ int main(int argc, char **argv) {
       int retries = 0;
 
       if (udpMode) {
-	if ((error = comm->SendDatagram(addr, port, cbufPtr)) != Error::OK) {
+	if ((error = comm->SendDatagram(addr, localAddr, cbufPtr)) != Error::OK) {
 	  LOG_VA_ERROR("Problem sending datagram - %s", Error::GetText(error));
 	  return 1;
 	}

@@ -84,7 +84,7 @@ void DatagramDispatchHandler::handle(EventPtr &eventPtr) {
 
 	  mHeaderBuilder.InitializeFromRequest(eventPtr->header);
 	  CommBufPtr cbufPtr( Protocol::CreateKeepAliveRequest(sessionId) );
-	  if ((error = mComm->SendDatagram(eventPtr->addr, eventPtr->receivePort, cbufPtr)) != Error::OK) {
+	  if ((error = mComm->SendDatagram(eventPtr->addr, eventPtr->localAddr, cbufPtr)) != Error::OK) {
 	    LOG_VA_ERROR("Comm::SendDatagram returned %s", Error::GetText(error));
 	  }
 	}

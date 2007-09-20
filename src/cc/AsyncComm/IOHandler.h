@@ -35,6 +35,7 @@ extern "C" {
 }
 
 #include "Common/Logger.h"
+#include "Common/ReferenceCount.h"
 
 #include "DispatchHandler.h"
 #include "ReactorFactory.h"
@@ -46,7 +47,7 @@ namespace hypertable {
   /**
    *
    */
-  class IOHandler {
+  class IOHandler : public ReferenceCount {
 
   public:
 
@@ -54,7 +55,8 @@ namespace hypertable {
       mReactor = ReactorFactory::GetReactor();
       mPollInterest = 0;
       mShutdown = false;
-      mPort = ntohs(addr.sin_port);
+      socklen_t namelen = sizeof(mLocalAddr);
+      getsockname(mSd, (sockaddr *)&mLocalAddr, &namelen);
     }
 
 #if defined(__APPLE__)
@@ -69,7 +71,7 @@ namespace hypertable {
 
     void DeliverEvent(Event *event, DispatchHandler *dh=0) {
       DispatchHandler *handler = (dh == 0) ? mDispatchHandler : dh;
-      event->receivePort = mPort;
+      memcpy(&event->localAddr, &mLocalAddr, sizeof(mLocalAddr));
       if (handler == 0) {
 	LOG_VA_INFO("%s", event->toString().c_str());
 	delete event;
@@ -103,6 +105,11 @@ namespace hypertable {
 
     struct sockaddr_in &GetAddress() { return mAddr; }
 
+    // fix me !!!
+    void GetLocalAddress(struct sockaddr_in *addrPtr) {
+      memcpy(addrPtr, &mLocalAddr, sizeof(struct sockaddr_in));
+    }
+
     int GetSd() { return mSd; }
 
     Reactor *GetReactor() { return mReactor; }
@@ -110,9 +117,7 @@ namespace hypertable {
     HandlerMap &GetHandlerMap() { return mHandlerMap; }
 
     void Shutdown() { 
-      mShutdown = true;
-      StopPolling();
-      close(mSd);
+      mReactor->ScheduleRemoval(this);
     }
 
   protected:
@@ -132,7 +137,7 @@ namespace hypertable {
     }
 
     struct sockaddr_in  mAddr;
-    uint16_t            mPort;
+    struct sockaddr_in  mLocalAddr;
     int                 mSd;
     DispatchHandler    *mDispatchHandler;
     HandlerMap         &mHandlerMap;
@@ -145,6 +150,13 @@ namespace hypertable {
 #elif defined(__linux__)
     void DisplayEvent(struct epoll_event *event);
 #endif
+  };
+  typedef boost::intrusive_ptr<IOHandler> IOHandlerPtr;
+
+  struct ltiohp {
+    bool operator()(const IOHandlerPtr &p1, const IOHandlerPtr &p2) const {
+      return p1.get() < p2.get();
+    }
   };
 
 }

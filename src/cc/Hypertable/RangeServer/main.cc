@@ -26,6 +26,7 @@ extern "C" {
 #include <poll.h>
 }
 
+#include "Common/InetAddr.h"
 #include "Common/Logger.h"
 #include "Common/Properties.h"
 #include "Common/System.h"
@@ -92,6 +93,7 @@ int main(int argc, char **argv) {
   ConnectionManager *connManager;
   PropertiesPtr propsPtr;
   RangeServer *rangeServer = 0;
+  struct sockaddr_in listenAddr;
 
   System::Initialize(argv[0]);
   Global::verbose = false;
@@ -141,9 +143,11 @@ int main(int argc, char **argv) {
     cout << "Hypertable.RangeServer.reactors=" << reactorCount << endl;
   }
 
+  InetAddr::Initialize(&listenAddr, INADDR_ANY, port);
+
   rangeServer = new RangeServer (connManager, propsPtr);
   Global::appQueue = new ApplicationQueue(workerCount);
-  comm->Listen(port, new HandlerFactory(comm, Global::appQueue, rangeServer));
+  comm->Listen(listenAddr, new HandlerFactory(comm, Global::appQueue, rangeServer));
 
   if (pidFile != "") {
     fstream filestr (pidFile.c_str(), fstream::out);

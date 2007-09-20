@@ -54,6 +54,17 @@ bool InetAddr::Initialize(struct sockaddr_in *addr, const char *host, uint16_t p
 /**
  *
  */
+bool InetAddr::Initialize(struct sockaddr_in *addr, uint32_t haddr, uint16_t port) {
+  memset(addr, 0 , sizeof(sockaddr_in));
+  addr->sin_family = AF_INET;
+  addr->sin_addr.s_addr = htonl(haddr);
+  addr->sin_port = htons(port);
+  return true;
+}
+
+/**
+ *
+ */
 const char *InetAddr::StringFormat(std::string &addrStr, struct sockaddr_in &addr) {
   addrStr = (std::string)inet_ntoa(addr.sin_addr) + ":" + ntohs(addr.sin_port);
   return addrStr.c_str();

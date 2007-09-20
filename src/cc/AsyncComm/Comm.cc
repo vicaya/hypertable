@@ -41,6 +41,7 @@ extern "C" {
 }
 
 #include "Common/Error.h"
+#include "Common/InetAddr.h"
 #include "Common/FileUtils.h"
 #include "Common/System.h"
 
@@ -78,10 +79,11 @@ Comm::~Comm() {
  */
 int Comm::Connect(struct sockaddr_in &addr, time_t timeout, DispatchHandler *defaultHandler) {
   int sd;
-  IOHandlerDataPtr dataHandlerPtr;
+  IOHandlerPtr handlerPtr;
+  IOHandlerData *dataHandler;
   int one = 1;
 
-  if (mHandlerMap.LookupDataHandler(addr, dataHandlerPtr))
+  if (mHandlerMap.ContainsHandler(addr))
     return Error::COMM_ALREADY_CONNECTED;
 
   if ((sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
@@ -100,9 +102,9 @@ int Comm::Connect(struct sockaddr_in &addr, time_t timeout, DispatchHandler *def
     LOG_VA_WARN("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
 #endif
 
-  dataHandlerPtr.reset( new IOHandlerData(sd, addr, defaultHandler, mHandlerMap) );
-  mHandlerMap.InsertDataHandler(dataHandlerPtr);
-  dataHandlerPtr->SetTimeout(timeout);
+  handlerPtr = dataHandler = new IOHandlerData(sd, addr, defaultHandler, mHandlerMap);
+  mHandlerMap.InsertHandler(dataHandler);
+  dataHandler->SetTimeout(timeout);
 
   while (connect(sd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) < 0) {
     if (errno == EINTR) {
@@ -110,29 +112,29 @@ int Comm::Connect(struct sockaddr_in &addr, time_t timeout, DispatchHandler *def
       continue;
     }
     else if (errno == EINPROGRESS) {
-      dataHandlerPtr->StartPolling();
-      dataHandlerPtr->AddPollInterest(Reactor::READ_READY|Reactor::WRITE_READY);
+      dataHandler->StartPolling();
+      dataHandler->AddPollInterest(Reactor::READ_READY|Reactor::WRITE_READY);
       return Error::OK;
     }
     LOG_VA_ERROR("connect() failure : %s", strerror(errno));
     exit(1);
   }
 
-  dataHandlerPtr->StartPolling();
+  dataHandler->StartPolling();
 
   return Error::OK;
 }
 
 
+
 /**
  *
  */
-int Comm::Listen(uint16_t port, ConnectionHandlerFactory *hfactory, DispatchHandler *defaultHandler) {
-  struct sockaddr_in addr;
+int Comm::Listen(struct sockaddr_in &addr, ConnectionHandlerFactory *hfactory, DispatchHandler *defaultHandler) {
+  IOHandlerPtr handlerPtr;
+  IOHandlerAccept *acceptHandler;
   int one = 1;
   int sd;
-
-  port = htons(port);
 
   if ((sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
     cerr << "socket() failure: " << strerror(errno) << endl;
@@ -150,12 +152,6 @@ int Comm::Listen(uint16_t port, ConnectionHandlerFactory *hfactory, DispatchHand
   if (setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0)
     cerr << "setsockopt(SO_REUSEADDR) failure: " << strerror(errno) << endl;
 
-  // create address structure to bind to - any available port - any address
-  memset(&addr, 0 , sizeof(sockaddr_in));
-  addr.sin_family = AF_INET;
-  addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  addr.sin_port = port;
-
   // bind socket
   if ((bind(sd, (const sockaddr *)&addr, sizeof(sockaddr_in))) < 0) {
     cerr << "bind() failure: " << strerror(errno) << endl;
@@ -167,12 +163,13 @@ int Comm::Listen(uint16_t port, ConnectionHandlerFactory *hfactory, DispatchHand
     exit(1);
   }
 
-  IOHandlerAcceptPtr acceptHandlerPtr( new IOHandlerAccept(sd, addr, defaultHandler, mHandlerMap, hfactory) );
-  mHandlerMap.InsertAcceptHandler(acceptHandlerPtr);
-  acceptHandlerPtr->StartPolling();
+  handlerPtr = acceptHandler = new IOHandlerAccept(sd, addr, defaultHandler, mHandlerMap, hfactory);
+  mHandlerMap.InsertHandler(acceptHandler);
+  acceptHandler->StartPolling();
 
-  return 0;
+  return Error::OK;
 }
+
 
 
 int Comm::SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *responseHandler) {
@@ -223,8 +220,9 @@ int Comm::SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr) {
 /**
  * 
  */
-int Comm::OpenDatagramReceivePort(uint16_t port, DispatchHandler *handler) {
-  struct sockaddr_in addr;
+int Comm::CreateDatagramReceiveSocket(struct sockaddr_in &addr, DispatchHandler *handler) {
+  IOHandlerPtr handlerPtr;
+  IOHandlerDatagram *datagramHandler;
   int one = 1;
   int sd;
 
@@ -248,31 +246,24 @@ int Comm::OpenDatagramReceivePort(uint16_t port, DispatchHandler *handler) {
     LOG_VA_WARN("setsockopt(SO_REUSEADDR) failure: %s", strerror(errno));
   }
 
-  // create address structure to bind to - any available port - any address
-  memset(&addr, 0 , sizeof(sockaddr_in));
-  addr.sin_family = AF_INET;
-  addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  addr.sin_port = htons(port);
-
   // bind socket
   if ((bind(sd, (const sockaddr *)&addr, sizeof(sockaddr_in))) < 0) {
     LOG_VA_ERROR("bind() failure: %s", strerror(errno));
     exit(1);
   }
 
-  IOHandlerDatagramPtr datagramHandlerPtr( new IOHandlerDatagram(sd, addr, handler, mHandlerMap) );
-  mHandlerMap.InsertDatagramHandler( port, datagramHandlerPtr );
-  datagramHandlerPtr->StartPolling();
+  handlerPtr = datagramHandler = new IOHandlerDatagram(sd, addr, handler, mHandlerMap);
+  mHandlerMap.InsertDatagramHandler(datagramHandler);
+  datagramHandler->StartPolling();
 
-  return 0;
+  return Error::OK;
 }
-
 
 
 /**
  * 
  */
-int Comm::SendDatagram(struct sockaddr_in &addr, uint16_t sendPort, CommBufPtr &cbufPtr) {
+int Comm::SendDatagram(struct sockaddr_in &addr, struct sockaddr_in &sendAddr, CommBufPtr &cbufPtr) {
   boost::mutex::scoped_lock lock(mMutex);
   IOHandlerDatagramPtr datagramHandlerPtr;
   Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
@@ -280,8 +271,9 @@ int Comm::SendDatagram(struct sockaddr_in &addr, uint16_t sendPort, CommBufPtr &
 
   cbufPtr->ResetDataPointers();
 
-  if (!mHandlerMap.LookupDatagramHandler(sendPort, datagramHandlerPtr)) {
-    LOG_VA_ERROR("Datagram send port %d not registered", sendPort);
+  if (!mHandlerMap.LookupDatagramHandler(sendAddr, datagramHandlerPtr)) {
+    std::string str;
+    LOG_VA_ERROR("Datagram send address %s not registered", InetAddr::StringFormat(str, sendAddr));
     DUMP_CORE;
   }
 
@@ -321,6 +313,9 @@ int Comm::SetTimerAbsolute(boost::xtime expireTime, DispatchHandler *handler) {
   return Error::OK;
 }
 
+/**
+ *
+ */
 int Comm::GetLocalAddress(struct sockaddr_in addr, struct sockaddr_in *localAddr) {
   boost::mutex::scoped_lock lock(mMutex);
   IOHandlerDataPtr dataHandlerPtr;
@@ -334,3 +329,20 @@ int Comm::GetLocalAddress(struct sockaddr_in addr, struct sockaddr_in *localAddr
 
   return Error::OK;
 }
+
+
+/**
+ * 
+ */
+int Comm::CloseSocket(struct sockaddr_in &addr) {
+  IOHandlerPtr handlerPtr;
+
+  if (!mHandlerMap.DecomissionHandler(addr, handlerPtr))
+    return Error::COMM_NOT_CONNECTED;
+
+  handlerPtr->Shutdown();
+
+  return Error::OK;
+}
+
+

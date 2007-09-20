@@ -22,6 +22,7 @@
 #define HYPERTABLE_REACTOR_H
 
 #include <queue>
+#include <set>
 
 #include <boost/thread/thread.hpp>
 
@@ -69,6 +70,17 @@ namespace hypertable {
       PollLoopInterrupt();
     }
 
+    void ScheduleRemoval(IOHandler *handler) {
+      boost::mutex::scoped_lock lock(mMutex);
+      mRemovedHandlers.insert(handler);
+    }
+
+    void GetRemovedHandlers(set<IOHandler *> &dst) {
+      boost::mutex::scoped_lock lock(mMutex);
+      dst = mRemovedHandlers;
+      mRemovedHandlers.clear();
+    }
+
     void HandleTimeouts(PollTimeout &nextTimeout);
 
 #if defined(__linux__)    
@@ -89,6 +101,7 @@ namespace hypertable {
     int             mInterruptSd;
     bool            mInterruptInProgress;
     boost::xtime    mNextWakeup;
+    set<IOHandler *> mRemovedHandlers;
   };
 
 }

@@ -41,6 +41,7 @@ extern "C" {
 #include "AsyncComm/HeaderBuilder.h"
 
 #include "Common/Error.h"
+#include "Common/InetAddr.h"
 #include "Common/System.h"
 #include "Common/SockAddrMap.h"
 #include "Common/Usage.h"
@@ -167,7 +168,7 @@ public:
       cbufPtr->AppendBytes((uint8_t *)eventPtr->message, eventPtr->messageLen);
       if (gDelay > 0)
 	poll(0, 0, gDelay);
-      int error = mComm->SendDatagram(eventPtr->addr, eventPtr->receivePort, cbufPtr);
+      int error = mComm->SendDatagram(eventPtr->addr, eventPtr->localAddr, cbufPtr);
       if (error != Error::OK) {
 	LOG_VA_ERROR("Comm::SendResponse returned %s", Error::GetText(error));
       }
@@ -215,6 +216,7 @@ int main(int argc, char **argv) {
   bool udp = false;
   Dispatcher *dispatcher = 0;
   UdpDispatcher *udpDispatcher = 0;
+  struct sockaddr_in localAddr;
 
   for (int i=1; i<argc; i++) {
     if (!strcmp(argv[i], "--help"))
@@ -253,20 +255,22 @@ int main(int argc, char **argv) {
       cout << "Delay = " << gDelay << endl;
   }
 
+  InetAddr::Initialize(&localAddr, INADDR_ANY, port);
+
   if (!udp) {
 
     dispatcher = new Dispatcher(comm, appQueue);
 
     hfactory = new HandlerFactory(dispatcher);
 
-    error = comm->Listen(port, hfactory, dispatcher);
+    error = comm->Listen(localAddr, hfactory, dispatcher);
 
   }
   else {
 
     udpDispatcher = new UdpDispatcher(comm);
 
-    error = comm->OpenDatagramReceivePort(port, udpDispatcher);
+    error = comm->CreateDatagramReceiveSocket(localAddr, udpDispatcher);
     
   }
 

@@ -29,6 +29,7 @@ extern "C" {
 }
 
 #include "Common/FileUtils.h"
+#include "Common/InetAddr.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
 
@@ -74,6 +75,7 @@ int main(int argc, char **argv) {
   Comm *comm;
   LocalBroker *broker = 0;
   ApplicationQueue *appQueue = 0;
+  struct sockaddr_in listenAddr;
 
   System::Initialize(argv[0]);
   
@@ -117,9 +119,11 @@ int main(int argc, char **argv) {
     cout << "DfsBroker.local.workers=" << workerCount << endl;
   }
 
+  InetAddr::Initialize(&listenAddr, INADDR_ANY, port);
+
   broker = new LocalBroker(propsPtr);
   appQueue = new ApplicationQueue(workerCount);
-  comm->Listen(port, new DfsBroker::ConnectionHandlerFactory(comm, appQueue, broker));
+  comm->Listen(listenAddr, new DfsBroker::ConnectionHandlerFactory(comm, appQueue, broker));
 
   if (pidFile != "") {
     fstream filestr (pidFile.c_str(), fstream::out);

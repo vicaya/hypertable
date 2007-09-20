@@ -81,6 +81,13 @@ void Session::SetState(int newState) {
   mState = newState;
   if (oldState == STATE_EXPIRED && newState == STATE_SAFE)
     mCond.notify_all();
+
+  if (newState == STATE_EXPIRED)
+    cerr << "Transitioning to Session::STATE_EXPIRED" << endl;
+  else if (newState == STATE_SAFE)
+    cerr << "Transitioning to Session::STATE_SAFE" << endl;
+  else
+    cerr << "Transitioning to Session::STATE_JEOPARDY" << endl;
 }
 
 

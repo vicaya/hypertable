@@ -69,6 +69,7 @@ bool IOHandlerAccept::HandleIncomingConnection() {
   struct sockaddr_in addr;
   socklen_t addrLen = sizeof(sockaddr_in);
   int one = 1;
+  IOHandlerData *dataHandler;
 
   if ((sd = accept(mSd, (struct sockaddr *)&addr, &addrLen)) < 0) {
     LOG_VA_ERROR("accept() failure: %s", strerror(errno));
@@ -97,11 +98,13 @@ bool IOHandlerAccept::HandleIncomingConnection() {
     LOG_VA_WARN("setsockopt(SO_RCVBUF) failed - %s", strerror(errno));
   }
 
-  IOHandlerDataPtr dataHandlerPtr( new IOHandlerData(sd, addr, mHandlerFactory->newInstance(), mHandlerMap) );
-  mHandlerMap.InsertDataHandler(dataHandlerPtr);
-  dataHandlerPtr->StartPolling();
+  dataHandler = new IOHandlerData(sd, addr, mHandlerFactory->newInstance(), mHandlerMap);
 
-  DeliverEvent( new Event(Event::CONNECTION_ESTABLISHED, dataHandlerPtr->ConnectionId(), addr, Error::OK) );
+  IOHandlerPtr handlerPtr( dataHandler );
+  mHandlerMap.InsertHandler(dataHandler);
+  dataHandler->StartPolling();
+
+  DeliverEvent( new Event(Event::CONNECTION_ESTABLISHED, dataHandler->ConnectionId(), addr, Error::OK) );
 
   return false;
  }

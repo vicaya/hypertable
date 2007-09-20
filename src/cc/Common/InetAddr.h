@@ -33,6 +33,7 @@ namespace hypertable {
 
   public:
     static bool Initialize(struct sockaddr_in *addr, const char *host, uint16_t port);
+    static bool Initialize(struct sockaddr_in *addr, uint32_t haddr, uint16_t port);
     static const char *StringFormat(std::string &addrStr, struct sockaddr_in &addr);
   };
 

@@ -28,6 +28,7 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include "Common/InetAddr.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
 
@@ -96,6 +97,7 @@ int main(int argc, char **argv) {
   Comm *comm;
   ApplicationQueue *appQueue = 0;
   ConnectionManager *connManager;
+  struct sockaddr_in listenAddr;
 
   System::Initialize(argv[0]);
   
@@ -143,9 +145,11 @@ int main(int argc, char **argv) {
     return 0;
   }
 
+  InetAddr::Initialize(&listenAddr, INADDR_ANY, port);
+
   master = new Master(connManager, propsPtr);
   appQueue = new ApplicationQueue(workerCount);
-  comm->Listen(port, new HandlerFactory(comm, appQueue, master));
+  comm->Listen(listenAddr, new HandlerFactory(comm, appQueue, master));
 
   if (pidFile != "") {
     fstream filestr (pidFile.c_str(), fstream::out);

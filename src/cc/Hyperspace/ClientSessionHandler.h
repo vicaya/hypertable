@@ -40,13 +40,16 @@ namespace Hyperspace {
     virtual void handle(EventPtr &eventPtr);
 
   private:
+
+    enum { STATE_CANCELLED, STATE_CONNECTING, STATE_HANDSHAKING, STATE_READY };
+
     boost::mutex       mMutex;
     boost::xtime       mLastKeepAliveSendTime;
     Comm *mComm;
     Hyperspace::Session *mSession;
-    bool mConnectionAttemptOutstanding;
     bool mConnected;
-    uint16_t           mDatagramSendPort;
+    int  mState;
+    struct sockaddr_in mDatagramSendAddr;
     uint32_t mLeaseInterval;
     uint32_t mKeepAliveInterval;
     struct sockaddr_in mMasterAddr;

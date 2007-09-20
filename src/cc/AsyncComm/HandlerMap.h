@@ -38,76 +38,91 @@ namespace hypertable {
 
   public:
 
+    void InsertHandler(IOHandler *handler) {
+      boost::mutex::scoped_lock lock(mMutex);
+      mHandlerMap[handler->GetAddress()] = handler;
+    }
+
+    bool ContainsHandler(struct sockaddr_in &addr) {
+      boost::mutex::scoped_lock lock(mMutex);
+      return LookupHandler(addr);
+    }
+
     bool LookupDataHandler(struct sockaddr_in &addr, IOHandlerDataPtr &ioHandlerDataPtr) {
       boost::mutex::scoped_lock lock(mMutex);
-      SockAddrMapT<IOHandlerDataPtr>::iterator iter = mDataMap.find(addr);
-      if (iter == mDataMap.end())
-	return false;
-      ioHandlerDataPtr = (*iter).second;
-      return true;
-    }
-
-    void InsertDataHandler(IOHandlerDataPtr &ioHandlerDataPtr) {
-      boost::mutex::scoped_lock lock(mMutex);
-      mDataMap[ioHandlerDataPtr->GetAddress()] = ioHandlerDataPtr;
-    }
-
-    void RemoveDataHandler(struct sockaddr_in &addr) {
-      boost::mutex::scoped_lock lock(mMutex);
-      SockAddrMapT<IOHandlerDataPtr>::iterator iter = mDataMap.find(addr);
-      assert(iter != mDataMap.end());
-      mDataMap.erase(iter);
+      IOHandler *handler = LookupHandler(addr);
+      if (handler) {
+	ioHandlerDataPtr = dynamic_cast<IOHandlerData *>(handler);
+	if (ioHandlerDataPtr)
+	  return true;
+      }
+      return false;
     }
 
     bool LookupAcceptHandler(struct sockaddr_in &addr, IOHandlerAcceptPtr &ioHandlerAcceptPtr) {
       boost::mutex::scoped_lock lock(mMutex);
-      SockAddrMapT<IOHandlerAcceptPtr>::iterator iter = mAcceptMap.find(addr);
-      if (iter == mAcceptMap.end())
+      IOHandler *handler = LookupHandler(addr);
+      if (handler) {
+	ioHandlerAcceptPtr = dynamic_cast<IOHandlerAccept *>(handler);
+	if (ioHandlerAcceptPtr)
+	  return true;
+      }
+      return false;
+    }
+
+    void InsertDatagramHandler(IOHandler *handler) {
+      boost::mutex::scoped_lock lock(mMutex);
+      mDatagramHandlerMap[handler->GetAddress()] = handler;
+    }
+
+    bool LookupDatagramHandler(struct sockaddr_in &addr, IOHandlerDatagramPtr &ioHandlerDatagramPtr) {
+      boost::mutex::scoped_lock lock(mMutex);
+      SockAddrMapT<IOHandlerPtr>::iterator iter = mDatagramHandlerMap.find(addr);
+      if (iter == mHandlerMap.end())
 	return false;
-      ioHandlerAcceptPtr = (*iter).second;
+      ioHandlerDatagramPtr = (IOHandlerDatagram *)(*iter).second.get();
       return true;
     }
 
-    void InsertAcceptHandler(IOHandlerAcceptPtr &ioHandlerAcceptPtr) {
-      boost::mutex::scoped_lock lock(mMutex);
-      mAcceptMap[ioHandlerAcceptPtr->GetAddress()] = ioHandlerAcceptPtr;
-    }
-
-    void RemoveAcceptHandler(struct sockaddr_in &addr) {
-      boost::mutex::scoped_lock lock(mMutex);
-      SockAddrMapT<IOHandlerAcceptPtr>::iterator iter = mAcceptMap.find(addr);
-      assert(iter != mAcceptMap.end());
-      mAcceptMap.erase(iter);
-    }
-
-    void InsertDatagramHandler(uint16_t port, IOHandlerDatagramPtr &ioHandlerDatagramPtr) {
-      boost::mutex::scoped_lock lock(mMutex);
-      mDatagramMap[port] = ioHandlerDatagramPtr;
-    }
-
-    bool LookupDatagramHandler(uint16_t port, IOHandlerDatagramPtr &ioHandlerDatagramPtr) {
-      boost::mutex::scoped_lock lock(mMutex);
-      __gnu_cxx::hash_map<uint16_t, IOHandlerDatagramPtr>::iterator iter = mDatagramMap.find(port);
-      if (iter == mDatagramMap.end())
-	return false;
-      ioHandlerDatagramPtr = (*iter).second;
-      return true;
-    }
-
-    bool RemoveHandler(struct sockaddr_in &addr) {
-      boost::mutex::scoped_lock lock(mMutex);
-      SockAddrMapT<IOHandlerAcceptPtr>::iterator aIter;
-      SockAddrMapT<IOHandlerDataPtr>::iterator dIter;
-      if ((dIter = mDataMap.find(addr)) != mDataMap.end())
-	mDataMap.erase(dIter);
-      else if ((aIter = mAcceptMap.find(addr)) != mAcceptMap.end())
-	mAcceptMap.erase(aIter);
+    // fix me!!!!
+    bool RemoveHandler(struct sockaddr_in &addr, IOHandlerPtr &handlerPtr) {
+      SockAddrMapT<IOHandlerPtr>::iterator iter;
+      if ((iter = mHandlerMap.find(addr)) != mHandlerMap.end()) {
+	handlerPtr = (*iter).second;
+	mHandlerMap.erase(iter);
+      }
+      else if ((iter = mDatagramHandlerMap.find(addr)) != mDatagramHandlerMap.end()) {
+	handlerPtr = (*iter).second;
+	mDatagramHandlerMap.erase(iter);
+      }
       else
 	return false;
       return true;
     }
 
+    bool DecomissionHandler(struct sockaddr_in &addr, IOHandlerPtr &handlerPtr) {
+      boost::mutex::scoped_lock lock(mMutex);
+
+      if (RemoveHandler(addr, handlerPtr)) {
+	mDecomissionedHandlers.insert(handlerPtr);
+	return true;
+      }
+      return false;
+    }
+
+    bool DecomissionHandler(struct sockaddr_in &addr) {
+      IOHandlerPtr handlerPtr;
+      return DecomissionHandler(addr, handlerPtr);
+    }
+
+    void PurgeHandler(IOHandler *handler) {
+      boost::mutex::scoped_lock lock(mMutex);
+      IOHandlerPtr handlerPtr = handler;
+      mDecomissionedHandlers.erase(handlerPtr);
+    }
+
     void UnregisterAll() {
+#if 0      
       boost::mutex::scoped_lock lock(mMutex);
       
       for (SockAddrMapT<IOHandlerDataPtr>::iterator dIter = mDataMap.begin(); dIter != mDataMap.end(); dIter++)
@@ -118,13 +133,22 @@ namespace hypertable {
 
       for (__gnu_cxx::hash_map<uint16_t, IOHandlerDatagramPtr>::iterator dgIter = mDatagramMap.begin(); dgIter != mDatagramMap.end(); dgIter++)
 	(*dgIter).second->Shutdown();
+#endif
     }
 
   private:
-    boost::mutex                      mMutex;
-    SockAddrMapT<IOHandlerDataPtr>    mDataMap;
-    SockAddrMapT<IOHandlerAcceptPtr>  mAcceptMap;
-    __gnu_cxx::hash_map<uint16_t, IOHandlerDatagramPtr>  mDatagramMap;
+
+    IOHandler *LookupHandler(struct sockaddr_in &addr) {
+      SockAddrMapT<IOHandlerPtr>::iterator iter = mHandlerMap.find(addr);
+      if (iter == mHandlerMap.end())
+	return 0;
+      return (*iter).second.get();
+    }
+
+    boost::mutex                mMutex;
+    SockAddrMapT<IOHandlerPtr>  mHandlerMap;
+    SockAddrMapT<IOHandlerPtr>  mDatagramHandlerMap;
+    set<IOHandlerPtr, ltiohp>   mDecomissionedHandlers;
   };
 
 }

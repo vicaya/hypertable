@@ -30,12 +30,31 @@
 using namespace hypertable;
 using namespace std;
 
+
 const char *Hyperspace::Protocol::commandStrings[COMMAND_MAX] = {
-  "keepalive"
+  "keepalive",
+  "open",
+  "cancel",
+  "close",
+  "poison",
+  "mkdir",
+  "attrset",
+  "attrget",
+  "attrdel",
+  "exists",
+  "delete",
+  "readdir",
+  "acquire",
+  "tryacquire",
+  "release",
+  "checksequencer",
+  "status",
+  0
 };
 
 
 /**
+ *
  */
 const char *Hyperspace::Protocol::CommandText(short command) {
   if (command < 0 || command >= COMMAND_MAX)
@@ -54,6 +73,21 @@ CommBuf *Hyperspace::Protocol::CreateKeepAliveRequest(uint32_t sessionId) {
   cbuf->AppendInt(sessionId);
   return cbuf;
 }
+
+
+/**
+ *
+ */
+CommBuf *Hyperspace::Protocol::CreateHandshakeRequest(uint32_t sessionId) {
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
+  hbuilder.AssignUniqueId();
+  CommBuf *cbuf = new CommBuf(hbuilder, 6);
+  cbuf->AppendShort(COMMAND_HANDSHAKE);
+  cbuf->AppendInt(sessionId);
+  return cbuf;
+}
+
+
 
 #if 0
 

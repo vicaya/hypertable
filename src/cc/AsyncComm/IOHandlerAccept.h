@@ -22,8 +22,6 @@
 #ifndef HYPERTABLE_IOHANDLERACCEPT_H
 #define HYPERTABLE_IOHANDLERACCEPT_H
 
-#include <boost/shared_ptr.hpp>
-
 #include "IOHandler.h"
 #include "ConnectionHandlerFactory.h"
 
@@ -63,8 +61,7 @@ namespace hypertable {
     ConnectionHandlerFactory *mHandlerFactory;
   };
 
-  typedef boost::shared_ptr<IOHandlerAccept> IOHandlerAcceptPtr;
-
+  typedef boost::intrusive_ptr<IOHandlerAccept> IOHandlerAcceptPtr;
 
 }
 

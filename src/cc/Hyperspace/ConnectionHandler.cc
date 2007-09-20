@@ -41,20 +41,46 @@ using namespace Hyperspace;
  *
  */
 void ConnectionHandler::handle(EventPtr &eventPtr) {
-  short command = -1;
+  uint16_t command = (uint16_t)-1;
+  int error;
 
   if (eventPtr->type == Event::MESSAGE) {
     ApplicationHandler *requestHandler = 0;
-
-    //eventPtr->Display()
+    uint8_t *msgPtr = eventPtr->message;
+    size_t remaining = eventPtr->messageLen;
 
     try {
-      if (eventPtr->messageLen < sizeof(int16_t)) {
+
+      if (!Serialization::DecodeShort(&msgPtr, &remaining, &command)) {
 	std::string message = "Truncated Request";
 	throw new ProtocolException(message);
       }
-      memcpy(&command, eventPtr->message, sizeof(int16_t));
 
+      // sanity check command code
+      if (command >= Protocol::COMMAND_MAX) {
+	std::string message = (std::string)"Invalid command (" + command + ")";
+	throw ProtocolException(message);
+      }
+
+      switch (command) {
+      case Protocol::COMMAND_HANDSHAKE:
+	{
+	  ResponseCallback cb(mComm, eventPtr);
+	  if (!Serialization::DecodeInt(&msgPtr, &remaining, &mSessionId)) {
+	    std::string message = "Truncated Request";
+	    throw new ProtocolException(message);
+	  }
+	  if (mSessionId == 0) {
+	    std::string message = "Bad Session ID: 0";
+	    throw new ProtocolException(message);
+	  }
+	  cb.response_ok();
+	}
+	break;
+      default:
+	std::string message = (string)"Command code " + command + " not implemented";
+	throw ProtocolException(message);
+      }
     }
     catch (ProtocolException &e) {
       ResponseCallback cb(mComm, eventPtr);

@@ -24,8 +24,6 @@
 #include <list>
 #include <utility>
 
-#include <boost/shared_ptr.hpp>
-
 extern "C" {
 #include <netdb.h>
 #include <stdint.h>
@@ -73,7 +71,7 @@ namespace hypertable {
     list<SendRecT> mSendQueue;
   };
 
-  typedef boost::shared_ptr<IOHandlerDatagram> IOHandlerDatagramPtr;
+  typedef boost::intrusive_ptr<IOHandlerDatagram> IOHandlerDatagramPtr;
 }
 
 #endif // HYPERTABLE_IOHANDLERDATAGRAM_H

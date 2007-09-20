@@ -31,6 +31,7 @@ extern "C" {
 #include <boost/thread/thread.hpp>
 
 #include "Common/Error.h"
+#include "Common/InetAddr.h"
 
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/DispatchHandler.h"
@@ -105,8 +106,11 @@ void CommTestDatagramThreadFunction::operator()() {
   uint32_t gid = (uint32_t)(gid64 & 0x00000000FFFFFFFFLL);
   ResponseHandler respHandler;
   int nsent = 0;
+  struct sockaddr_in localAddr;
 
-  if (error = mComm->OpenDatagramReceivePort(mPort, &respHandler)) {
+  InetAddr::Initialize(&localAddr, INADDR_ANY, mPort);
+
+  if (error = mComm->CreateDatagramReceiveSocket(localAddr, &respHandler)) {
     LOG_VA_ERROR("Problem opening datagram receive port %d - %s", mPort, Error::GetText(error));
     return;
   }
@@ -118,7 +122,7 @@ void CommTestDatagramThreadFunction::operator()() {
 	hbuilder.AssignUniqueId();
 	CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::EncodedLengthString(line)) );
 	cbufPtr->AppendString(line);
-	if ((error = mComm->SendDatagram(mAddr, mPort, cbufPtr)) != Error::OK) {
+	if ((error = mComm->SendDatagram(mAddr, localAddr, cbufPtr)) != Error::OK) {
 	  LOG_VA_ERROR("Problem sending datagram - %s", Error::GetText(error));
 	  return;
 	}

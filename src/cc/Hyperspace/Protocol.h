@@ -37,6 +37,7 @@ namespace Hyperspace {
     virtual const char *CommandText(short command);
 
     static hypertable::CommBuf *CreateKeepAliveRequest(uint32_t sessionId);
+    static hypertable::CommBuf *CreateHandshakeRequest(uint32_t sessionId);
 
     /**
     CommBuf *CreateMkdirsRequest(const char *fname);
@@ -49,8 +50,25 @@ namespace Hyperspace {
     CommBuf *CreateStatusRequest();
     */
 
-    static const uint16_t COMMAND_KEEPALIVE = 0;
-    static const uint16_t COMMAND_MAX       = 1;
+    static const uint16_t COMMAND_KEEPALIVE      = 0;
+    static const uint16_t COMMAND_HANDSHAKE      = 1; 
+    static const uint16_t COMMAND_OPEN           = 2;
+    static const uint16_t COMMAND_CANCEL         = 3;
+    static const uint16_t COMMAND_CLOSE          = 4;
+    static const uint16_t COMMAND_POISON         = 5;
+    static const uint16_t COMMAND_MKDIR          = 6;
+    static const uint16_t COMMAND_ATTRSET        = 7;
+    static const uint16_t COMMAND_ATTRGET        = 8;
+    static const uint16_t COMMAND_ATTRDEL        = 9;
+    static const uint16_t COMMAND_EXISTS         = 10;
+    static const uint16_t COMMAND_DELETE         = 11;
+    static const uint16_t COMMAND_READDIR        = 12;
+    static const uint16_t COMMAND_ACQUIRE        = 13;
+    static const uint16_t COMMAND_TRYACQUIRE     = 14;
+    static const uint16_t COMMAND_RELEASE        = 15;
+    static const uint16_t COMMAND_CHECKSEQUENCER = 16;
+    static const uint16_t COMMAND_STATUS         = 17;
+    static const uint16_t COMMAND_MAX            = 18;
 
     static const char * commandStrings[COMMAND_MAX];
 

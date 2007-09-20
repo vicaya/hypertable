@@ -32,7 +32,7 @@ namespace hypertable {
     void operator()();
     void SetReactor(Reactor *reactor) { mReactor = reactor; }
   private:
-    void UnregisterHandler(IOHandler *handler);
+    void CleanupAndRemoveHandlers(set<IOHandler *> &handlers);
     Reactor *mReactor;
   };
 
