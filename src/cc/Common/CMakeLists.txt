@@ -19,6 +19,7 @@
 set (Common_SRCS
 Error.cc
 FileUtils.cc
+InetAddr.cc
 Init.cc
 InteractiveCommand.cc
 Logger.cc

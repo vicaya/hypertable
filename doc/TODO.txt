@@ -1,5 +1,6 @@
 
 TODO:
+- Implement single-server Hyperspace
 - Add support for ExpireTime column garbage collection as well as time
   interval support for scanners
 - Change EventPtr to intrusive_ptr
@@ -16,6 +17,7 @@ TODO:
 - Fatten up HdfsBroker test
 - Rename RangeServer/Global::localityGroup member names
 - Add ReactorFactory::Shutdown
+- Add Connection canceling logic to AsyncComm
 - Add "Scan Cache"
 - Add Bloom filter
 - Add user supplied block size to LocalityGroup

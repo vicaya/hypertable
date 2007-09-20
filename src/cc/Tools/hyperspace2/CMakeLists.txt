@@ -18,23 +18,19 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
 
-set ( Master_SRCS
-ConnectionHandler.cc
-DatagramDispatchHandler.cc
-Master.cc
-Protocol.cc
-#RequestHandlerCreateTable.cc
-#RequestHandlerGetSchema.cc
-#RequestHandlerStatus.cc
-#ResponseCallbackGetSchema.cc
-main.cc
-)
+set ( SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc" )
+set ( DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Tools/hyperspace" )
 
-# Hyperspace.Master
-add_executable (Hyperspace.Master ${Master_SRCS})
-target_link_libraries (Hyperspace.Master pthread ${BOOST_LIB} DfsBroker AsyncComm Common log4cpp)
+# hyperspace2 - Hyperspace client program
+add_executable (hyperspace2 hyperspace.cc )
+target_link_libraries (hyperspace2 pthread ${BOOST_LIB} Hyperspace AsyncComm Common log4cpp)
 
-add_library (Hyperspace HyperspaceClient.cc HyperspaceProtocol.cc Session.cc ClientSessionHandler.cc Protocol.cc)
+# hsTest
+#add_executable (hsTest hsTest.cc)
+#target_link_libraries (hsTest pthread ${BOOST_LIB} Hyperspace AsyncComm Common log4cpp)
 
-install (TARGETS Hyperspace.Master RUNTIME DESTINATION bin)
+#configure_file(${SRC_DIR}/Tools/hyperspace/hsTest.golden ${DST_DIR}/hsTest.golden)
 
+install (TARGETS hyperspace2 RUNTIME DESTINATION bin)
+
+#add_test (Hyperspace hsTest)

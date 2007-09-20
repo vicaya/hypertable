@@ -285,7 +285,7 @@ int Comm::SendDatagram(struct sockaddr_in &addr, uint16_t sendPort, CommBufPtr &
     DUMP_CORE;
   }
 
-  mheader->flags &= Header::FLAGS_MASK_RESPONSE;
+  mheader->flags &= Header::FLAGS_MASK_REQUEST;
 
   if ((error = datagramHandlerPtr->SendMessage(addr, cbufPtr)) != Error::OK)
     datagramHandlerPtr->Shutdown();
