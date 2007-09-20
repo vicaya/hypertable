@@ -31,7 +31,8 @@
 
 #include "Common/DynamicBuffer.h"
 
-#include "ClientSessionHandler.h"
+#include "ClientKeepaliveHandler.h"
+#include "ClientSessionState.h"
 #include "Protocol.h"
 
 using namespace hypertable;
@@ -142,8 +143,6 @@ namespace Hyperspace {
 
   public:
 
-    enum { STATE_EXPIRED, STATE_SAFE, STATE_JEOPARDY };
-
     Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback);
 
     int Open(std::string name, int flags, int eventMask, HandleCallback *callback, uint64_t *handlep);
@@ -165,8 +164,6 @@ namespace Hyperspace {
 
     bool WaitForConnection(long maxWaitSecs);
 
-    void SetState(int newState);
-
     static const uint32_t DEFAULT_CLIENT_PORT = 38550;
 
   private:
@@ -175,10 +172,9 @@ namespace Hyperspace {
     Comm *mComm;
     bool mVerbose;
     struct sockaddr_in mAddr;
-    ClientSessionHandler *mClientHandler;
-    SessionCallback      *mSessionCallback;
-    int mState;
-
+    ClientKeepaliveHandler *mKeepaliveHandler;
+    ClientSessionStatePtr   mSessionStatePtr;
+    SessionCallback        *mSessionCallback;
   };
 
 }

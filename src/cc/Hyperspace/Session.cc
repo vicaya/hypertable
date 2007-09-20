@@ -48,12 +48,10 @@ const uint32_t Session::DEFAULT_CLIENT_PORT;
 /**
  * 
  */
-Session::Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback) : mComm(comm), mVerbose(false), mSessionCallback(callback), mState(STATE_EXPIRED) {
-
+Session::Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback) : mComm(comm), mVerbose(false), mSessionCallback(callback) {
+  mSessionStatePtr = new ClientSessionState();
   mVerbose = propsPtr->getPropertyBool("verbose", false);
-
-  mClientHandler = new ClientSessionHandler(comm, propsPtr, this);
-
+  mKeepaliveHandler = new ClientKeepaliveHandler(comm, propsPtr, callback, mSessionStatePtr);
 }
 
 
@@ -65,7 +63,7 @@ bool Session::WaitForConnection(long maxWaitSecs) {
   boost::xtime_get(&dropTime, boost::TIME_UTC);
   dropTime.sec += maxWaitSecs;
 
-  while (mState != STATE_SAFE) {
+  while (mSessionStatePtr->Get() != ClientSessionState::SAFE) {
     mCond.timed_wait(lock, dropTime);
     boost::xtime_get(&now, boost::TIME_UTC);
     if (xtime_cmp(now, dropTime) >= 0)
@@ -74,21 +72,6 @@ bool Session::WaitForConnection(long maxWaitSecs) {
   return true;
 }
 
-
-void Session::SetState(int newState) {
-  boost::mutex::scoped_lock lock(mMutex);
-  int oldState = mState;
-  mState = newState;
-  if (oldState == STATE_EXPIRED && newState == STATE_SAFE)
-    mCond.notify_all();
-
-  if (newState == STATE_EXPIRED)
-    cerr << "Transitioning to Session::STATE_EXPIRED" << endl;
-  else if (newState == STATE_SAFE)
-    cerr << "Transitioning to Session::STATE_SAFE" << endl;
-  else
-    cerr << "Transitioning to Session::STATE_JEOPARDY" << endl;
-}
 
 
 

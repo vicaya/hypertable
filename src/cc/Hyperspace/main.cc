@@ -37,8 +37,8 @@ extern "C" {
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ConnectionHandlerFactory.h"
 
-#include "ConnectionHandler.h"
-#include "DatagramDispatchHandler.h"
+#include "ServerConnectionHandler.h"
+#include "ServerKeepaliveHandler.h"
 #include "Master.h"
 
 using namespace Hyperspace;
@@ -74,7 +74,7 @@ class HandlerFactory : public ConnectionHandlerFactory {
 public:
   HandlerFactory(Comm *comm, ApplicationQueue *appQueue, Master *master) : mComm(comm), mAppQueue(appQueue), mMaster(master) { return; }
   DispatchHandler *newInstance() {
-    return new ConnectionHandler(mComm, mAppQueue, mMaster);
+    return new ServerConnectionHandler(mComm, mAppQueue, mMaster);
   }
 
 private:
@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
   int port, reactorCount, workerCount;
   Comm *comm;
   ApplicationQueue *appQueue = 0;
-  DatagramDispatchHandler *datagramHandler;
+  ServerKeepaliveHandler *keepaliveHandler;
   ConnectionManager *connManager;
   int error;
   struct sockaddr_in localAddr;
@@ -147,9 +147,9 @@ int main(int argc, char **argv) {
   appQueue = new ApplicationQueue(workerCount);
   comm->Listen(localAddr, new HandlerFactory(comm, appQueue, master));
 
-  datagramHandler = new DatagramDispatchHandler(comm, master);
+  keepaliveHandler = new ServerKeepaliveHandler(comm, master);
 
-  if ((error = comm->CreateDatagramReceiveSocket(localAddr, datagramHandler)) != Error::OK) {
+  if ((error = comm->CreateDatagramReceiveSocket(localAddr, keepaliveHandler)) != Error::OK) {
     std::string str;
     LOG_VA_ERROR("Unable to create datagram receive socket %s - %s", 
 		 InetAddr::StringFormat(str, localAddr), Error::GetText(error));

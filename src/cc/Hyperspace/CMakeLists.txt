@@ -18,23 +18,32 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
 
-set ( Master_SRCS
-ConnectionHandler.cc
-DatagramDispatchHandler.cc
-Master.cc
+set ( Hyperspace_SRCS
+ClientKeepaliveHandler.cc
+ClientConnectionHandler.cc
+HyperspaceClient.cc
+HyperspaceProtocol.cc
 Protocol.cc
+Session.cc
+)
+
+# Hyperspace library
+add_library (Hyperspace ${Hyperspace_SRCS})
+
+set ( Master_SRCS
+Master.cc
+ServerConnectionHandler.cc
+ServerKeepaliveHandler.cc
+main.cc
 #RequestHandlerCreateTable.cc
 #RequestHandlerGetSchema.cc
 #RequestHandlerStatus.cc
 #ResponseCallbackGetSchema.cc
-main.cc
 )
 
 # Hyperspace.Master
 add_executable (Hyperspace.Master ${Master_SRCS})
-target_link_libraries (Hyperspace.Master pthread ${BOOST_LIB} DfsBroker AsyncComm Common log4cpp)
-
-add_library (Hyperspace HyperspaceClient.cc HyperspaceProtocol.cc Session.cc ClientSessionHandler.cc Protocol.cc)
+target_link_libraries (Hyperspace.Master pthread ${BOOST_LIB} Hyperspace DfsBroker AsyncComm Common log4cpp)
 
 install (TARGETS Hyperspace.Master RUNTIME DESTINATION bin)
 
