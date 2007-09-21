@@ -34,7 +34,7 @@
 #include "AsyncComm/Event.h"
 #include "AsyncComm/ResponseCallback.h"
 
-#include "SessionState.h"
+#include "SessionData.h"
 
 using namespace hypertable;
 
@@ -46,8 +46,8 @@ namespace Hyperspace {
     Master(ConnectionManager *connManager, PropertiesPtr &propsPtr);
     ~Master();
     
-    void CreateSession(struct sockaddr_in &addr, SessionStatePtr &sessionPtr);
-    bool GetSession(uint32_t sessionId, SessionStatePtr &sessionPtr);
+    void CreateSession(struct sockaddr_in &addr, SessionDataPtr &sessionPtr);
+    bool GetSession(uint32_t sessionId, SessionDataPtr &sessionPtr);
     uint32_t GetLeaseInterval() { return mLeaseInterval; }
 
     /**
@@ -63,7 +63,7 @@ namespace Hyperspace {
 
   private:
 
-    typedef __gnu_cxx::hash_map<uint32_t, SessionStatePtr> SessionMapT;
+    typedef __gnu_cxx::hash_map<uint32_t, SessionDataPtr> SessionMapT;
 
     boost::mutex        mMutex;
     bool mVerbose;

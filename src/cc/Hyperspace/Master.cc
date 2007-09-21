@@ -22,6 +22,7 @@
 #include "Hypertable/Lib/Schema.h"
 
 #include "Master.h"
+#include "SessionData.h"
 
 using namespace hypertable;
 using namespace Hyperspace;
@@ -54,16 +55,16 @@ Master::~Master() {
 }
 
 
-void Master::CreateSession(struct sockaddr_in &addr, SessionStatePtr &sessionPtr) {
+void Master::CreateSession(struct sockaddr_in &addr, SessionDataPtr &sessionPtr) {
   boost::mutex::scoped_lock lock(mMutex);
   uint32_t sessionId = atomic_inc_return(&msNextSessionId);
-  sessionPtr = new SessionState(addr, mLeaseInterval, sessionId);
+  sessionPtr = new SessionData(addr, mLeaseInterval, sessionId);
   mSessionMap[sessionId] = sessionPtr;
   return;
 }
 
 
-bool Master::GetSession(uint32_t sessionId, SessionStatePtr &sessionPtr) {
+bool Master::GetSession(uint32_t sessionId, SessionDataPtr &sessionPtr) {
   boost::mutex::scoped_lock lock(mMutex);
   SessionMapT::iterator iter = mSessionMap.find(sessionId);
   if (iter == mSessionMap.end())

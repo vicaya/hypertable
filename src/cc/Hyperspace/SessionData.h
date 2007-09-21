@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_SESSIONSTATE_H
-#define HYPERSPACE_SESSIONSTATE_H
+#ifndef HYPERSPACE_SESSIONDATA_H
+#define HYPERSPACE_SESSIONDATA_H
 
 #include <boost/thread/xtime.hpp>
 
@@ -29,9 +29,9 @@ using namespace hypertable;
 
 namespace Hyperspace {
 
-  class SessionState : public ReferenceCount {
+  class SessionData : public ReferenceCount {
   public:
-    SessionState(struct sockaddr_in &_addr, uint32_t leaseInterval, uint32_t id) : addr(_addr), mLeaseInterval(leaseInterval), mId(id) {
+    SessionData(struct sockaddr_in &_addr, uint32_t leaseInterval, uint32_t id) : addr(_addr), mLeaseInterval(leaseInterval), mId(id) {
       boost::xtime_get(&mExpireTime, boost::TIME_UTC);      
       mExpireTime.sec + leaseInterval;
       return;
@@ -51,8 +51,8 @@ namespace Hyperspace {
     boost::xtime mExpireTime;
   };
 
-  typedef boost::intrusive_ptr<SessionState> SessionStatePtr;
+  typedef boost::intrusive_ptr<SessionData> SessionDataPtr;
 
 }
 
-#endif // HYPERSPACE_SESSIONSTATE_H
+#endif // HYPERSPACE_SESSIONDATA_H

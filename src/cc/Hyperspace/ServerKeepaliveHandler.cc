@@ -24,7 +24,7 @@
 
 #include "ServerKeepaliveHandler.h"
 #include "Protocol.h"
-#include "SessionState.h"
+#include "SessionData.h"
 
 using namespace hypertable;
 using namespace Hyperspace;
@@ -63,13 +63,13 @@ void ServerKeepaliveHandler::handle(EventPtr &eventPtr) {
 	    throw new ProtocolException(message);
 	  }
 
-	  SessionStatePtr sessionStatePtr;
-	  if (mMaster->GetSession(sessionId, sessionStatePtr)) {
-	    sessionStatePtr->RenewLease();
+	  SessionDataPtr sessionDataPtr;
+	  if (mMaster->GetSession(sessionId, sessionDataPtr)) {
+	    sessionDataPtr->RenewLease();
 	  }
 	  else {
-	    mMaster->CreateSession(eventPtr->addr, sessionStatePtr);
-	    sessionId = sessionStatePtr->GetId();
+	    mMaster->CreateSession(eventPtr->addr, sessionDataPtr);
+	    sessionId = sessionDataPtr->GetId();
 	  }
 
 	  CommBufPtr cbufPtr( Protocol::CreateKeepAliveRequest(sessionId) );

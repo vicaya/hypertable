@@ -24,10 +24,10 @@
 #include "Common/StringExt.h"
 
 #include "ClientKeepaliveHandler.h"
+#include "ClientSessionState.h"
 #include "Master.h"
 #include "Protocol.h"
 #include "Session.h"
-#include "SessionState.h"
 
 using namespace hypertable;
 using namespace Hyperspace;
