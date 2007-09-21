@@ -57,18 +57,7 @@ Session::Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback)
 
 bool Session::WaitForConnection(long maxWaitSecs) {
   boost::mutex::scoped_lock lock(mMutex);
-  boost::xtime dropTime, now;
-
-  boost::xtime_get(&dropTime, boost::TIME_UTC);
-  dropTime.sec += maxWaitSecs;
-
-  while (mSessionStatePtr->Get() != ClientSessionState::SAFE) {
-    mCond.timed_wait(lock, dropTime);
-    boost::xtime_get(&now, boost::TIME_UTC);
-    if (xtime_cmp(now, dropTime) >= 0)
-      return false;
-  }
-  return true;
+  return mSessionStatePtr->WaitForSafe(maxWaitSecs);
 }
 
 
