@@ -25,6 +25,10 @@ extern "C" {
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/uio.h>
+#include <sys/xattr.h>
+#if defined(__linux__)
+#include <attr/xattr.h>
+#endif
 }
 
 namespace hypertable {
@@ -43,6 +47,8 @@ namespace hypertable {
     static bool Mkdirs(const char *dirname);
     static bool Exists(const char *fname);
     static off_t Length(const char *fname);
+    static int Getxattr(const char *path, const char *name, void *value, size_t size);
+    static int Setxattr(const char *path, const char *name, const void *value, size_t size, int flags);
   };
 
 }

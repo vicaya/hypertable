@@ -28,6 +28,7 @@ extern "C" {
 }
 
 #include "Common/Error.h"
+#include "Common/FileUtils.h"
 #include "Common/System.h"
 
 #include "DfsBroker/Lib/Client.h"
@@ -93,11 +94,11 @@ Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mMutex
   /**
    * Increment generation number and save
    */
-  if ((xattrLen = getxattr(mBaseDir.c_str(), "generation", &mGeneration, sizeof(uint32_t), 0, 0)) < 0) {
+  if ((xattrLen = FileUtils::Getxattr(mBaseDir.c_str(), "generation", &mGeneration, sizeof(uint32_t))) < 0) {
     if (errno == ENOATTR) {
       cerr << "'generation' attribute not found on base dir, creating ..." << endl;
       mGeneration = 1;
-      if (setxattr(mBaseDir.c_str(), "generation", &mGeneration, sizeof(uint32_t), 0, XATTR_CREATE) == -1) {
+      if (FileUtils::Setxattr(mBaseDir.c_str(), "generation", &mGeneration, sizeof(uint32_t), XATTR_CREATE) == -1) {
 	LOG_VA_ERROR("Problem creating extended attribute 'generation' on base dir '%s' - %s", mBaseDir.c_str(), strerror(errno));
 	exit(1);
       }
@@ -109,7 +110,7 @@ Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mMutex
   }
   else {
     mGeneration++;
-    if (setxattr(mBaseDir.c_str(), "generation", &mGeneration, sizeof(uint32_t), 0, XATTR_REPLACE) == -1) {
+    if (FileUtils::Setxattr(mBaseDir.c_str(), "generation", &mGeneration, sizeof(uint32_t), XATTR_REPLACE) == -1) {
       LOG_VA_ERROR("Problem creating extended attribute 'generation' on base dir '%s' - %s", mBaseDir.c_str(), strerror(errno));
       exit(1);
     }

@@ -27,4 +27,4 @@ namespace Global {
   extern std::string cwd;
 }
 
-#endif HYPERSPACE_GLOBAL_H
+#endif // HYPERSPACE_GLOBAL_H

@@ -282,3 +282,25 @@ off_t FileUtils::Length(const char *fname) {
     return (off_t)-1;
   return statbuf.st_size;
 }
+
+
+int FileUtils::Getxattr(const char *path, const char *name, void *value, size_t size) {
+#if defined(__linux__)
+  return getxattr(path, name, value, size);
+#elif defined(__APPLE__)
+  return getxattr(path, name, value, size, 0, 0);
+#else
+  ImplementMe;
+#endif
+}
+
+
+int FileUtils::Setxattr(const char *path, const char *name, const void *value, size_t size, int flags) {
+#if defined(__linux__)
+  return setxattr(path, name, value, size, flags);
+#elif defined(__APPLE__)
+  return setxattr(path, name, value, size, 0, flags);
+#else
+  ImplementMe;
+#endif
+}
