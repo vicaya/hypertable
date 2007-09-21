@@ -33,7 +33,9 @@ using namespace std;
 
 const char *Hyperspace::Protocol::commandStrings[COMMAND_MAX] = {
   "keepalive",
+  "handshake",
   "open",
+  "stat",
   "cancel",
   "close",
   "poison",
@@ -48,8 +50,7 @@ const char *Hyperspace::Protocol::commandStrings[COMMAND_MAX] = {
   "tryacquire",
   "release",
   "checksequencer",
-  "status",
-  0
+  "status"
 };
 
 
@@ -85,6 +86,16 @@ CommBuf *Hyperspace::Protocol::CreateHandshakeRequest(uint32_t sessionId) {
   cbuf->AppendShort(COMMAND_HANDSHAKE);
   cbuf->AppendInt(sessionId);
   return cbuf;
+}
+
+CommBuf *Hyperspace::Protocol::CreateMkdirRequest(std::string name) {
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, fileNameToGroupId(name));
+  hbuilder.AssignUniqueId();
+  CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::EncodedLengthString(name));
+  cbuf->AppendShort(COMMAND_MKDIR);
+  cbuf->AppendString(name);
+  return cbuf;
+  return 0;
 }
 
 

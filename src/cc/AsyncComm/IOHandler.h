@@ -105,7 +105,6 @@ namespace hypertable {
 
     struct sockaddr_in &GetAddress() { return mAddr; }
 
-    // fix me !!!
     void GetLocalAddress(struct sockaddr_in *addrPtr) {
       memcpy(addrPtr, &mLocalAddr, sizeof(struct sockaddr_in));
     }

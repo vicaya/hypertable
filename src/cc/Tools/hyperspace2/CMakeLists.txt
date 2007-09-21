@@ -21,9 +21,15 @@
 set ( SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc" )
 set ( DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Tools/hyperspace" )
 
+set ( hyperspace_SRCS
+CommandMkdir.cc
+hyperspace.cc
+Global.cc
+)
+
 # hyperspace2 - Hyperspace client program
-add_executable (hyperspace2 hyperspace.cc )
-target_link_libraries (hyperspace2 pthread ${BOOST_LIB} Hyperspace AsyncComm Common log4cpp)
+add_executable (hyperspace2 ${hyperspace_SRCS} )
+target_link_libraries (hyperspace2 pthread ${BOOST_LIB} Hyperspace AsyncComm Common log4cpp readline curses)
 
 # hsTest
 #add_executable (hsTest hsTest.cc)

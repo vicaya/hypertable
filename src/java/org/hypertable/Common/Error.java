@@ -48,11 +48,13 @@ public class Error {
     static public final int DFSBROKER_PERMISSION_DENIED = 0x00020005;
     static public final int DFSBROKER_INVALID_ARGUMENT  = 0x00020006;
 
-    static public final int HYPERSPACE_IO_ERROR       = 0x00030001;
-    static public final int HYPERSPACE_CREATE_FAILED  = 0x00030002;
-    static public final int HYPERSPACE_FILE_NOT_FOUND = 0x00030003;
-    static public final int HYPERSPACE_ATTR_NOT_FOUND = 0x00030004;
-    static public final int HYPERSPACE_DELETE_ERROR   = 0x00030005;
+    static public final int HYPERSPACE_IO_ERROR          = 0x00030001;
+    static public final int HYPERSPACE_CREATE_FAILED     = 0x00030002;
+    static public final int HYPERSPACE_FILE_NOT_FOUND    = 0x00030003;
+    static public final int HYPERSPACE_ATTR_NOT_FOUND    = 0x00030004;
+    static public final int HYPERSPACE_DELETE_ERROR      = 0x00030005;
+    static public final int HYPERSPACE_BAD_PATHNAME      = 0x00030006;
+    static public final int HYPERSPACE_PERMISSION_DENIED = 0x00030007;
 
     static public final int MASTER_TABLE_EXISTS  = 0x00040001;
     static public final int MASTER_BAD_SCHEMA    = 0x00040002;
@@ -95,10 +97,13 @@ public class Error {
 	mTextMap.put(DFSBROKER_BAD_FILENAME,     "DFS BROKER bad filename");
 	mTextMap.put(DFSBROKER_PERMISSION_DENIED,"DFS BROKER permission denied");
 	mTextMap.put(DFSBROKER_INVALID_ARGUMENT, "DFS BROKER invalid argument");
-	mTextMap.put(HYPERSPACE_IO_ERROR,        "HYPERTABLE FS i/o error");
-	mTextMap.put(HYPERSPACE_CREATE_FAILED,   "HYPERTABLE FS create failed");
-	mTextMap.put(HYPERSPACE_FILE_NOT_FOUND,  "HYPERTABLE FS file not found");
-	mTextMap.put(HYPERSPACE_ATTR_NOT_FOUND,  "HYPERTABLE FS attribute not found");
+	mTextMap.put(HYPERSPACE_IO_ERROR,        "HYPERSPACE i/o error");
+	mTextMap.put(HYPERSPACE_CREATE_FAILED,   "HYPERSPACE create failed");
+	mTextMap.put(HYPERSPACE_FILE_NOT_FOUND,  "HYPERSPACE file not found");
+	mTextMap.put(HYPERSPACE_ATTR_NOT_FOUND,  "HYPERSPACE attribute not found");
+	mTextMap.put(HYPERSPACE_DELETE_ERROR,    "HYPERSPACE delete error");
+	mTextMap.put(HYPERSPACE_BAD_PATHNAME,    "HYPERSPACE bad pathname");
+	mTextMap.put(HYPERSPACE_PERMISSION_DENIED, "HYPERSPACE permission denied");
 	mTextMap.put(MASTER_TABLE_EXISTS,        "HYPERTABLE MASTER table exists");
 	mTextMap.put(MASTER_TABLE_EXISTS,        "HYPERTABLE MASTER bad schema");
 	mTextMap.put(RANGESERVER_GENERATION_MISMATCH,  "RANGE SERVER generation mismatch");

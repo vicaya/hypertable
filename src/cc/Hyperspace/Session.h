@@ -27,7 +27,9 @@
 #include <boost/thread/mutex.hpp>
 
 #include "AsyncComm/Comm.h"
+#include "AsyncComm/CommBuf.h"
 #include "AsyncComm/ConnectionManager.h"
+#include "AsyncComm/DispatchHandler.h"
 
 #include "Common/DynamicBuffer.h"
 
@@ -126,12 +128,16 @@ namespace Hyperspace {
    */
   class HandleCallback {
   public:
+    HandleCallback(int eventMask) : mEventMask(eventMask) { return; }
     virtual void AttrModified(std::string name) = 0;
     virtual void ChildNodeChange() = 0;
     virtual void LockAcquired() = 0;
     virtual void MasterFailover() = 0;
     virtual void HandleInvalidated() = 0;
     virtual void ConflictingLockRequest() = 0;
+    int GetEventMask() { return mEventMask; }
+  protected:
+    int mEventMask;
   };
 
 
@@ -145,7 +151,7 @@ namespace Hyperspace {
 
     Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback);
 
-    int Open(std::string name, int flags, int eventMask, HandleCallback *callback, uint64_t *handlep);
+    int Open(std::string name, int flags, HandleCallback *callback, uint64_t *handlep);
     int Cancel(uint64_t handle);
     int Close(uint64_t handle);
     int Poison(uint64_t handle);
@@ -167,11 +173,14 @@ namespace Hyperspace {
     static const uint32_t DEFAULT_CLIENT_PORT = 38550;
 
   private:
+
+    int SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler);
+
     boost::mutex       mMutex;
     boost::condition   mCond;
     Comm *mComm;
     bool mVerbose;
-    struct sockaddr_in mAddr;
+    struct sockaddr_in mMasterAddr;
     ClientKeepaliveHandler *mKeepaliveHandler;
     ClientSessionStatePtr   mSessionStatePtr;
     SessionCallback        *mSessionCallback;

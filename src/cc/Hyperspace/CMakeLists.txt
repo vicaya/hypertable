@@ -32,13 +32,10 @@ add_library (Hyperspace ${Hyperspace_SRCS})
 
 set ( Master_SRCS
 Master.cc
+RequestHandlerMkdir.cc
 ServerConnectionHandler.cc
 ServerKeepaliveHandler.cc
 main.cc
-#RequestHandlerCreateTable.cc
-#RequestHandlerGetSchema.cc
-#RequestHandlerStatus.cc
-#ResponseCallbackGetSchema.cc
 )
 
 # Hyperspace.Master

@@ -43,7 +43,7 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsP
   mLeaseInterval = (uint32_t)propsPtr->getPropertyInt("Hyperspace.Lease.Interval", Master::DEFAULT_LEASE_INTERVAL);
   mKeepAliveInterval = (uint32_t)propsPtr->getPropertyInt("Hyperspace.KeepAlive.Interval", Master::DEFAULT_KEEPALIVE_INTERVAL);
   sendPort = (uint16_t)propsPtr->getPropertyInt("Hyperspace.Client.port", Session::DEFAULT_CLIENT_PORT);
-
+  
   if (!InetAddr::Initialize(&mMasterAddr, masterHost, masterPort))
     exit(1);
 
@@ -126,11 +126,14 @@ void ClientKeepaliveHandler::handle(EventPtr &eventPtr) {
 	    mSessionId = sessionId;
 	    if (mConnHandler == 0) {
 	      mConnHandler = new ClientConnectionHandler(mComm, mSessionCallback, mSessionStatePtr);
+	      mConnHandler->SetVerboseMode(mVerbose);
 	      mConnHandler->SetSessionId(mSessionId);
 	    }
 	  }
 
-	  LOG_VA_INFO("sessionId = %d", mSessionId);
+	  if (mVerbose) {
+	    LOG_VA_INFO("sessionId = %d", mSessionId);
+	  }
 
 	  if (mConnHandler->Disconnected())
 	    mConnHandler->InitiateConnection(mMasterAddr, mLeaseInterval);

@@ -64,6 +64,8 @@ namespace Hyperspace {
       return error;
     }
 
+    void SetVerboseMode(bool verbose) { mVerbose = verbose; }
+
   private:
     boost::mutex       mMutex;
     Comm *mComm;
@@ -71,6 +73,7 @@ namespace Hyperspace {
     ClientSessionStatePtr mSessionStatePtr;
     uint32_t mSessionId;
     int mState;
+    bool mVerbose;
   };
 
 }

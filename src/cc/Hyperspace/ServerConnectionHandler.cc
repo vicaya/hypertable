@@ -24,13 +24,8 @@
 
 #include "AsyncComm/ApplicationQueue.h"
 
-/**
-#include "RequestHandlerCreateTable.h"
-#include "RequestHandlerGetSchema.h"
-#include "RequestHandlerStatus.h"
-**/
-
 #include "Protocol.h"
+#include "RequestHandlerMkdir.h"
 #include "ServerConnectionHandler.h"
 
 using namespace hypertable;
@@ -78,11 +73,16 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
 	  }
 	  cb.response_ok();
 	}
+	return;
+      case Protocol::COMMAND_MKDIR:
+	requestHandler = new RequestHandlerMkdir(mComm, mMaster, eventPtr);
 	break;
       default:
 	std::string message = (string)"Command code " + command + " not implemented";
 	throw ProtocolException(message);
       }
+      ApplicationHandlerPtr appHandlerPtr(requestHandler);
+      mAppQueue->Add(appHandlerPtr);
     }
     catch (ProtocolException &e) {
       ResponseCallback cb(mComm, eventPtr);

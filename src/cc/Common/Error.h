@@ -54,11 +54,13 @@ namespace hypertable {
     static const int DFSBROKER_PERMISSION_DENIED = 0x00020005;
     static const int DFSBROKER_INVALID_ARGUMENT  = 0x00020006;
 
-    static const int HYPERSPACE_IO_ERROR       = 0x00030001;
-    static const int HYPERSPACE_CREATE_FAILED  = 0x00030002;
-    static const int HYPERSPACE_FILE_NOT_FOUND = 0x00030003;
-    static const int HYPERSPACE_ATTR_NOT_FOUND = 0x00030004;
-    static const int HYPERSPACE_DELETE_ERROR   = 0x00030005;
+    static const int HYPERSPACE_IO_ERROR          = 0x00030001;
+    static const int HYPERSPACE_CREATE_FAILED     = 0x00030002;
+    static const int HYPERSPACE_FILE_NOT_FOUND    = 0x00030003;
+    static const int HYPERSPACE_ATTR_NOT_FOUND    = 0x00030004;
+    static const int HYPERSPACE_DELETE_ERROR      = 0x00030005;
+    static const int HYPERSPACE_BAD_PATHNAME      = 0x00030006;
+    static const int HYPERSPACE_PERMISSION_DENIED = 0x00030007;
 
     static const int MASTER_TABLE_EXISTS   = 0x00040001;
     static const int MASTER_BAD_SCHEMA     = 0x00040002;

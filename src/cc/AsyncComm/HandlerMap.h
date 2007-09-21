@@ -85,7 +85,6 @@ namespace hypertable {
       return true;
     }
 
-    // fix me!!!!
     bool RemoveHandler(struct sockaddr_in &addr, IOHandlerPtr &handlerPtr) {
       SockAddrMapT<IOHandlerPtr>::iterator iter;
       if ((iter = mHandlerMap.find(addr)) != mHandlerMap.end()) {

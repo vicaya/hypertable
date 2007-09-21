@@ -39,6 +39,8 @@ namespace Hyperspace {
     static hypertable::CommBuf *CreateKeepAliveRequest(uint32_t sessionId);
     static hypertable::CommBuf *CreateHandshakeRequest(uint32_t sessionId);
 
+    static hypertable::CommBuf *CreateMkdirRequest(std::string name);
+
     /**
     CommBuf *CreateMkdirsRequest(const char *fname);
     CommBuf *CreateCreateRequest(const char *fname);
@@ -53,32 +55,39 @@ namespace Hyperspace {
     static const uint16_t COMMAND_KEEPALIVE      = 0;
     static const uint16_t COMMAND_HANDSHAKE      = 1; 
     static const uint16_t COMMAND_OPEN           = 2;
-    static const uint16_t COMMAND_CANCEL         = 3;
-    static const uint16_t COMMAND_CLOSE          = 4;
-    static const uint16_t COMMAND_POISON         = 5;
-    static const uint16_t COMMAND_MKDIR          = 6;
-    static const uint16_t COMMAND_ATTRSET        = 7;
-    static const uint16_t COMMAND_ATTRGET        = 8;
-    static const uint16_t COMMAND_ATTRDEL        = 9;
-    static const uint16_t COMMAND_EXISTS         = 10;
-    static const uint16_t COMMAND_DELETE         = 11;
-    static const uint16_t COMMAND_READDIR        = 12;
-    static const uint16_t COMMAND_ACQUIRE        = 13;
-    static const uint16_t COMMAND_TRYACQUIRE     = 14;
-    static const uint16_t COMMAND_RELEASE        = 15;
-    static const uint16_t COMMAND_CHECKSEQUENCER = 16;
-    static const uint16_t COMMAND_STATUS         = 17;
-    static const uint16_t COMMAND_MAX            = 18;
+    static const uint16_t COMMAND_STAT           = 3; 
+    static const uint16_t COMMAND_CANCEL         = 4;
+    static const uint16_t COMMAND_CLOSE          = 5;
+    static const uint16_t COMMAND_POISON         = 6;
+    static const uint16_t COMMAND_MKDIR          = 7;
+    static const uint16_t COMMAND_ATTRSET        = 8;
+    static const uint16_t COMMAND_ATTRGET        = 9;
+    static const uint16_t COMMAND_ATTRDEL        = 10;
+    static const uint16_t COMMAND_EXISTS         = 11;
+    static const uint16_t COMMAND_DELETE         = 12;
+    static const uint16_t COMMAND_READDIR        = 13;
+    static const uint16_t COMMAND_ACQUIRE        = 14;
+    static const uint16_t COMMAND_TRYACQUIRE     = 15;
+    static const uint16_t COMMAND_RELEASE        = 16;
+    static const uint16_t COMMAND_CHECKSEQUENCER = 17;
+    static const uint16_t COMMAND_STATUS         = 18;
+    static const uint16_t COMMAND_MAX            = 19;
 
     static const char * commandStrings[COMMAND_MAX];
 
   private:
 
-    uint32_t fileNameToGroupId(const char *fname) {
+    static uint32_t fileNameToGroupId(const char *fname) {
       uint32_t gid = 0;
+      if (fname[0] != '/')
+	gid += (uint32_t)'/';
       for (const char *ptr=fname; *ptr; ++ptr)
 	gid += (uint32_t)*ptr;
       return gid;
+    }
+
+    static uint32_t fileNameToGroupId(std::string &name) {
+      return fileNameToGroupId(name.c_str());
     }
 
   };

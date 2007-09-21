@@ -50,10 +50,7 @@ namespace Hyperspace {
     bool GetSession(uint32_t sessionId, SessionDataPtr &sessionPtr);
     uint32_t GetLeaseInterval() { return mLeaseInterval; }
 
-    /**
-       void GetSchema(ResponseCallbackGetSchema *cb, const char *tableName);
-       bool CreateDirectoryLayout();
-    */
+    void Mkdir(ResponseCallback *cb, const char *name);
 
     static const uint32_t DEFAULT_MASTER_PORT        = 38551;
     static const uint32_t DEFAULT_LEASE_INTERVAL     = 12;
@@ -63,6 +60,8 @@ namespace Hyperspace {
 
   private:
 
+    void ReportError(ResponseCallback *cb);
+
     typedef __gnu_cxx::hash_map<uint32_t, SessionDataPtr> SessionMapT;
 
     boost::mutex        mMutex;
@@ -70,6 +69,9 @@ namespace Hyperspace {
     uint32_t mLeaseInterval;
     uint32_t mKeepAliveInterval;
     SessionMapT mSessionMap;
+    std::string mBaseDir;
+    int mBaseFd;
+    uint32_t mGeneration;
   };
 
 }
