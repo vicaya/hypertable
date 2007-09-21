@@ -285,10 +285,15 @@ off_t FileUtils::Length(const char *fname) {
 
 
 int FileUtils::Getxattr(const char *path, const char *name, void *value, size_t size) {
+  std::string canonicalName;
+  if (!strncmp(name, "user.", 5))
+    canonicalName = name;
+  else
+    canonicalName = (std::string)"user." + name;
 #if defined(__linux__)
-  return getxattr(path, name, value, size);
+  return getxattr(path, canonicalName.c_str(), value, size);
 #elif defined(__APPLE__)
-  return getxattr(path, name, value, size, 0, 0);
+  return getxattr(path, canonicalName.c_str(), value, size, 0, 0);
 #else
   ImplementMe;
 #endif
@@ -296,10 +301,15 @@ int FileUtils::Getxattr(const char *path, const char *name, void *value, size_t 
 
 
 int FileUtils::Setxattr(const char *path, const char *name, const void *value, size_t size, int flags) {
+  std::string canonicalName;
+  if (!strncmp(name, "user.", 5))
+    canonicalName = name;
+  else
+    canonicalName = (std::string)"user." + name;
 #if defined(__linux__)
-  return setxattr(path, name, value, size, flags);
+  return setxattr(path, canonicalName.c_str(), value, size, flags);
 #elif defined(__APPLE__)
-  return setxattr(path, name, value, size, 0, flags);
+  return setxattr(path, canonicalName.c_str(), value, size, 0, flags);
 #else
   ImplementMe;
 #endif
