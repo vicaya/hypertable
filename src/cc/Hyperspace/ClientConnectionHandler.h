@@ -43,7 +43,7 @@ namespace Hyperspace {
     ClientConnectionHandler(Comm *comm, Hyperspace::SessionCallback *sessionCallback, ClientSessionStatePtr &sessionStatePtr);
     virtual void handle(EventPtr &eventPtr);
 
-    void SetSessionId(uint32_t id) { mSessionId = id; }
+    void SetSessionId(uint64_t id) { mSessionId = id; }
 
     bool Disconnected() { 
       boost::mutex::scoped_lock lock(mMutex);
@@ -71,7 +71,7 @@ namespace Hyperspace {
     Comm *mComm;
     Hyperspace::SessionCallback *mSessionCallback;
     ClientSessionStatePtr mSessionStatePtr;
-    uint32_t mSessionId;
+    uint64_t mSessionId;
     int mState;
     bool mVerbose;
   };

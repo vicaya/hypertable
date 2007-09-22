@@ -31,7 +31,7 @@ namespace Hyperspace {
 
   class SessionData : public ReferenceCount {
   public:
-    SessionData(struct sockaddr_in &_addr, uint32_t leaseInterval, uint32_t id) : addr(_addr), mLeaseInterval(leaseInterval), mId(id) {
+    SessionData(struct sockaddr_in &_addr, uint32_t leaseInterval, uint64_t id) : addr(_addr), mLeaseInterval(leaseInterval), mId(id) {
       boost::xtime_get(&mExpireTime, boost::TIME_UTC);      
       mExpireTime.sec + leaseInterval;
       return;
@@ -42,12 +42,12 @@ namespace Hyperspace {
       mExpireTime.sec + mLeaseInterval;
     }
 
-    uint32_t GetId() { return mId; }
+    uint64_t GetId() { return mId; }
 
   private:
     struct sockaddr_in addr;
     uint32_t mLeaseInterval;
-    uint32_t mId;
+    uint64_t mId;
     boost::xtime mExpireTime;
   };
 

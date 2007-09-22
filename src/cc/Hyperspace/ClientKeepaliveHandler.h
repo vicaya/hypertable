@@ -62,15 +62,18 @@ namespace Hyperspace {
   private:
     boost::mutex       mMutex;
     boost::xtime       mLastKeepAliveSendTime;
+    boost::xtime       mJeopardyTime;
+    boost::xtime       mExpireTime;
     Comm *mComm;
     Hyperspace::SessionCallback *mSessionCallback;
     uint32_t mLeaseInterval;
     uint32_t mKeepAliveInterval;
+    uint32_t mGracePeriod;
     struct sockaddr_in mMasterAddr;
     struct sockaddr_in mLocalAddr;
     bool mVerbose;
     ClientSessionStatePtr mSessionStatePtr;
-    uint32_t mSessionId;
+    uint64_t mSessionId;
     ClientConnectionHandler *mConnHandler;
 
     typedef __gnu_cxx::hash_map<uint64_t, HandleCallbackPtr> HandleMapT;

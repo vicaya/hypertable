@@ -47,9 +47,7 @@ const uint32_t Master::DEFAULT_MASTER_PORT;
 const uint32_t Master::DEFAULT_LEASE_INTERVAL;
 const uint32_t Master::DEFAULT_KEEPALIVE_INTERVAL;
 
-atomic_t Master::msNextSessionId = ATOMIC_INIT(1);
-
-Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mVerbose(false), mNextHandleNumber(1) {
+Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mVerbose(false), mNextHandleNumber(1), mNextSessionId(1) {
   const char *dirname;
   std::string str;
   ssize_t xattrLen;
@@ -136,14 +134,14 @@ Master::~Master() {
 
 void Master::CreateSession(struct sockaddr_in &addr, SessionDataPtr &sessionPtr) {
   boost::mutex::scoped_lock lock(mSessionMapMutex);
-  uint32_t sessionId = atomic_inc_return(&msNextSessionId);
+  uint64_t sessionId = mNextSessionId++;
   sessionPtr = new SessionData(addr, mLeaseInterval, sessionId);
   mSessionMap[sessionId] = sessionPtr;
   return;
 }
 
 
-bool Master::GetSession(uint32_t sessionId, SessionDataPtr &sessionPtr) {
+bool Master::GetSession(uint64_t sessionId, SessionDataPtr &sessionPtr) {
   boost::mutex::scoped_lock lock(mSessionMapMutex);
   SessionMapT::iterator iter = mSessionMap.find(sessionId);
   if (iter == mSessionMap.end())
@@ -171,7 +169,7 @@ void Master::CreateHandle(uint64_t *handlep, HandleDataPtr &handlePtr) {
 /**
  * Mkdir
  */
-void Master::Mkdir(ResponseCallback *cb, uint32_t sessionId, const char *name) {
+void Master::Mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name) {
   std::string normalName;
   std::string absName;
   
@@ -196,7 +194,7 @@ void Master::Mkdir(ResponseCallback *cb, uint32_t sessionId, const char *name) {
 /**
  * Open
  */
-void Master::Open(ResponseCallbackOpen *cb, uint32_t sessionId, const char *name, uint32_t flags, uint32_t eventMask) {
+void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name, uint32_t flags, uint32_t eventMask) {
   std::string normalName;
   std::string absName;
   SessionDataPtr sessionPtr;

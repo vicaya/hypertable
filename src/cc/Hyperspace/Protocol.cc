@@ -67,12 +67,12 @@ const char *Hyperspace::Protocol::CommandText(short command) {
 /**
  *
  */
-CommBuf *Hyperspace::Protocol::CreateKeepAliveRequest(uint32_t sessionId) {
+CommBuf *Hyperspace::Protocol::CreateKeepAliveRequest(uint64_t sessionId) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
   hbuilder.AssignUniqueId();
-  CommBuf *cbuf = new CommBuf(hbuilder, 6);
+  CommBuf *cbuf = new CommBuf(hbuilder, 10);
   cbuf->AppendShort(COMMAND_KEEPALIVE);
-  cbuf->AppendInt(sessionId);
+  cbuf->AppendLong(sessionId);
   return cbuf;
 }
 
@@ -80,12 +80,12 @@ CommBuf *Hyperspace::Protocol::CreateKeepAliveRequest(uint32_t sessionId) {
 /**
  *
  */
-CommBuf *Hyperspace::Protocol::CreateHandshakeRequest(uint32_t sessionId) {
+CommBuf *Hyperspace::Protocol::CreateHandshakeRequest(uint64_t sessionId) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
   hbuilder.AssignUniqueId();
-  CommBuf *cbuf = new CommBuf(hbuilder, 6);
+  CommBuf *cbuf = new CommBuf(hbuilder, 10);
   cbuf->AppendShort(COMMAND_HANDSHAKE);
-  cbuf->AppendInt(sessionId);
+  cbuf->AppendLong(sessionId);
   return cbuf;
 }
 

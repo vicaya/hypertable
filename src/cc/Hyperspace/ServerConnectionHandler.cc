@@ -64,7 +64,7 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
       case Protocol::COMMAND_HANDSHAKE:
 	{
 	  ResponseCallback cb(mComm, eventPtr);
-	  if (!Serialization::DecodeInt(&msgPtr, &remaining, &mSessionId)) {
+	  if (!Serialization::DecodeLong(&msgPtr, &remaining, &mSessionId)) {
 	    std::string message = "Truncated Request";
 	    throw new ProtocolException(message);
 	  }

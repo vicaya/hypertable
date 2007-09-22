@@ -56,9 +56,9 @@ void ServerKeepaliveHandler::handle(EventPtr &eventPtr) {
       switch (command) {
       case Protocol::COMMAND_KEEPALIVE:
 	{
-	  uint32_t      sessionId;
+	  uint64_t      sessionId;
 
-	  if (!Serialization::DecodeInt(&msgPtr, &remaining, &sessionId)) {
+	  if (!Serialization::DecodeLong(&msgPtr, &remaining, &sessionId)) {
 	    std::string message = "Truncated Request";
 	    throw new ProtocolException(message);
 	  }

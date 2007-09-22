@@ -35,7 +35,7 @@ namespace Hyperspace {
 
     enum { EXPIRED, JEOPARDY, SAFE };
 
-    ClientSessionState() : mState(EXPIRED) { return; }
+    ClientSessionState() : mState(JEOPARDY) { return; }
 
     int Transition(int state) {
       boost::mutex::scoped_lock lock(mMutex);

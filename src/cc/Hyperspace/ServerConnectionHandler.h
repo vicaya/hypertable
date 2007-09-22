@@ -44,7 +44,7 @@ namespace Hyperspace {
     Comm              *mComm;
     ApplicationQueue  *mAppQueue;
     Master            *mMaster;
-    uint32_t           mSessionId;
+    uint64_t           mSessionId;
   };
 
 }

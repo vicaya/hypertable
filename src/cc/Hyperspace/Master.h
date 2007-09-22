@@ -51,20 +51,18 @@ namespace Hyperspace {
     ~Master();
     
     void CreateSession(struct sockaddr_in &addr, SessionDataPtr &sessionPtr);
-    bool GetSession(uint32_t sessionId, SessionDataPtr &sessionPtr);
-
+    bool GetSession(uint64_t sessionId, SessionDataPtr &sessionPtr);
     void CreateHandle(uint64_t *handlep, HandleDataPtr &handlePtr);
 
     uint32_t GetLeaseInterval() { return mLeaseInterval; }
 
-    void Mkdir(ResponseCallback *cb, uint32_t sessionId, const char *name);
-    void Open(ResponseCallbackOpen *cb, uint32_t sessionId, const char *name, uint32_t flags, uint32_t eventMask);
+    void Mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name);
+    void Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name, uint32_t flags, uint32_t eventMask);
 
     static const uint32_t DEFAULT_MASTER_PORT        = 38551;
     static const uint32_t DEFAULT_LEASE_INTERVAL     = 12;
     static const uint32_t DEFAULT_KEEPALIVE_INTERVAL = 7;
-
-    static atomic_t msNextSessionId;
+    static const uint32_t DEFAULT_GRACEPERIOD        = 45;
 
   private:
 
@@ -73,7 +71,7 @@ namespace Hyperspace {
 
     typedef __gnu_cxx::hash_map<std::string, NodeDataPtr> NodeMapT;
     typedef __gnu_cxx::hash_map<uint64_t, HandleDataPtr>  HandleMapT;
-    typedef __gnu_cxx::hash_map<uint32_t, SessionDataPtr> SessionMapT;
+    typedef __gnu_cxx::hash_map<uint64_t, SessionDataPtr> SessionMapT;
 
     bool          mVerbose;
     uint32_t      mLeaseInterval;
@@ -88,6 +86,7 @@ namespace Hyperspace {
     int           mBaseFd;
     uint32_t      mGeneration;
     uint64_t      mNextHandleNumber;
+    uint64_t      mNextSessionId;
   };
 
 }

@@ -40,8 +40,8 @@ namespace Hyperspace {
 
     virtual const char *CommandText(short command);
 
-    static CommBuf *CreateKeepAliveRequest(uint32_t sessionId);
-    static CommBuf *CreateHandshakeRequest(uint32_t sessionId);
+    static CommBuf *CreateKeepAliveRequest(uint64_t sessionId);
+    static CommBuf *CreateHandshakeRequest(uint64_t sessionId);
 
     static CommBuf *CreateOpenRequest(std::string &name, uint32_t flags, HandleCallbackPtr &callbackPtr);
     static CommBuf *CreateMkdirRequest(std::string &name);

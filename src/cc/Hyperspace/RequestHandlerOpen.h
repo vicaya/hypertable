@@ -35,7 +35,7 @@ namespace Hyperspace {
 
   class RequestHandlerOpen : public ApplicationHandler {
   public:
-    RequestHandlerOpen(Comm *comm, Master *master, uint32_t sessionId, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mComm(comm), mMaster(master), mSessionId(sessionId) {
+    RequestHandlerOpen(Comm *comm, Master *master, uint64_t sessionId, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mComm(comm), mMaster(master), mSessionId(sessionId) {
       return;
     }
 
@@ -44,7 +44,7 @@ namespace Hyperspace {
   private:
     Comm        *mComm;
     Master      *mMaster;
-    uint32_t     mSessionId;
+    uint64_t     mSessionId;
   };
 }
 
