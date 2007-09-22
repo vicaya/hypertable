@@ -81,6 +81,9 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
       case Protocol::COMMAND_MKDIR:
 	requestHandler = new RequestHandlerMkdir(mComm, mMaster, mSessionId, eventPtr);
 	break;
+      case Protocol::COMMAND_ATTRSET:
+	requestHandler = new RequestHandlerMkdir(mComm, mMaster, mSessionId, eventPtr);
+	break;
       default:
 	std::string message = (string)"Command code " + command + " not implemented";
 	throw ProtocolException(message);

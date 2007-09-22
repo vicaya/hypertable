@@ -141,7 +141,7 @@ void Master::CreateSession(struct sockaddr_in &addr, SessionDataPtr &sessionPtr)
 }
 
 
-bool Master::GetSession(uint64_t sessionId, SessionDataPtr &sessionPtr) {
+bool Master::GetSessionData(uint64_t sessionId, SessionDataPtr &sessionPtr) {
   boost::mutex::scoped_lock lock(mSessionMapMutex);
   SessionMapT::iterator iter = mSessionMap.find(sessionId);
   if (iter == mSessionMap.end())
@@ -156,12 +156,21 @@ bool Master::GetSession(uint64_t sessionId, SessionDataPtr &sessionPtr) {
  */
 void Master::CreateHandle(uint64_t *handlep, HandleDataPtr &handlePtr) {
   boost::mutex::scoped_lock lock(mHandleMapMutex);
-
   *handlep = ++mNextHandleNumber;
-
   handlePtr = new HandleData();
-
   mHandleMap[*handlep] = handlePtr;
+}
+
+/**
+ *
+ */
+bool Master::GetHandleData(uint64_t handle, HandleDataPtr &handlePtr) {
+  boost::mutex::scoped_lock lock(mHandleMapMutex);
+  HandleMapT::iterator iter = mHandleMap.find(handle);
+  if (iter == mHandleMap.end())
+    return false;
+  handlePtr = (*iter).second;
+  return true;
 }
 
 
@@ -174,7 +183,7 @@ void Master::Mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name) {
   std::string absName;
   
   if (mVerbose) {
-    LOG_VA_INFO("mkdir %s", name);
+    LOG_VA_INFO("mkdir(sessionId=%lld, name=%s)", sessionId, name);
   }
 
   NormalizeName(name, normalName);
@@ -208,14 +217,14 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
   int oflags = 0;
 
   if (mVerbose) {
-    LOG_VA_INFO("open(%s, flags=0x%x, eventMask=0x%x)", name, flags, eventMask);
+    LOG_VA_INFO("open(sessionId=%lld, fname=%s, flags=0x%x, eventMask=0x%x)", sessionId, name, flags, eventMask);
   }
 
   NormalizeName(name, normalName);
 
   absName = mBaseDir + normalName;
 
-  if (!GetSession(sessionId, sessionPtr)) {
+  if (!GetSessionData(sessionId, sessionPtr)) {
     cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
     return;
   }
@@ -285,6 +294,46 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
   cb->response(handle, created);
   
 }
+
+
+
+/**
+ *
+ */
+void Master::AttrSet(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, const char *name, const void *value, size_t valueLen) {
+  SessionDataPtr sessionPtr;
+  NodeDataPtr nodePtr;
+  HandleDataPtr handlePtr;
+
+  if (mVerbose) {
+    LOG_VA_INFO("attrset(session=%lld, handle=%lld, name=%s, valueLen=%d", sessionId, handle, name, valueLen);
+  }
+
+  if (!GetSessionData(sessionId, sessionPtr)) {
+    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
+    return;
+  }
+
+  if (!GetHandleData(handle, handlePtr)) {
+    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
+    return;
+  }
+
+  if (!(handlePtr->openFlags & OPEN_FLAG_WRITE)) {
+    cb->error(Error::HYPERSPACE_PERMISSION_DENIED, "");
+    return;
+  }
+
+  if (FileUtils::Fsetxattr(handlePtr->nodePtr->fd, name, value, valueLen, 0) == -1) {
+    LOG_VA_ERROR("Problem creating extended attribute '%s' on file '%s' - %s",
+		 name, handlePtr->nodePtr->name.c_str(), strerror(errno));
+    exit(1);
+  }
+
+  // TBD: Send AttrModified and ChildNodeChanged events
+
+}
+
 
 
 

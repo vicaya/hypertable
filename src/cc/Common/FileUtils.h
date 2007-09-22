@@ -48,7 +48,9 @@ namespace hypertable {
     static bool Exists(const char *fname);
     static off_t Length(const char *fname);
     static int Getxattr(const char *path, const char *name, void *value, size_t size);
+    static int Fgetxattr(int fd, const char *name, void *value, size_t size);
     static int Setxattr(const char *path, const char *name, const void *value, size_t size, int flags);
+    static int Fsetxattr(int fd, const char *name, const void *value, size_t size, int flags);
   };
 
 }

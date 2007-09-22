@@ -314,3 +314,35 @@ int FileUtils::Setxattr(const char *path, const char *name, const void *value, s
   ImplementMe;
 #endif
 }
+
+
+int FileUtils::Fgetxattr(int fd, const char *name, void *value, size_t size) {
+  std::string canonicalName;
+  if (!strncmp(name, "user.", 5))
+    canonicalName = name;
+  else
+    canonicalName = (std::string)"user." + name;
+#if defined(__linux__)
+  return fgetxattr(fd, canonicalName.c_str(), value, size);
+#elif defined(__APPLE__)
+  return fgetxattr(fd, canonicalName.c_str(), value, size, 0, 0);
+#else
+  ImplementMe;
+#endif
+}
+
+
+int FileUtils::Fsetxattr(int fd, const char *name, const void *value, size_t size, int flags) {
+  std::string canonicalName;
+  if (!strncmp(name, "user.", 5))
+    canonicalName = name;
+  else
+    canonicalName = (std::string)"user." + name;
+#if defined(__linux__)
+  return fsetxattr(fd, canonicalName.c_str(), value, size, flags);
+#elif defined(__APPLE__)
+  return fsetxattr(fd, canonicalName.c_str(), value, size, 0, flags);
+#else
+  ImplementMe;
+#endif
+}

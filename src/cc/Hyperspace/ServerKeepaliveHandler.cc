@@ -64,7 +64,7 @@ void ServerKeepaliveHandler::handle(EventPtr &eventPtr) {
 	  }
 
 	  SessionDataPtr sessionDataPtr;
-	  if (mMaster->GetSession(sessionId, sessionDataPtr)) {
+	  if (mMaster->GetSessionData(sessionId, sessionDataPtr)) {
 	    sessionDataPtr->RenewLease();
 	  }
 	  else {

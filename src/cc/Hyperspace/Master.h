@@ -51,13 +51,15 @@ namespace Hyperspace {
     ~Master();
     
     void CreateSession(struct sockaddr_in &addr, SessionDataPtr &sessionPtr);
-    bool GetSession(uint64_t sessionId, SessionDataPtr &sessionPtr);
+    bool GetSessionData(uint64_t sessionId, SessionDataPtr &sessionPtr);
     void CreateHandle(uint64_t *handlep, HandleDataPtr &handlePtr);
+    bool GetHandleData(uint64_t sessionId, HandleDataPtr &handlePtr);
 
     uint32_t GetLeaseInterval() { return mLeaseInterval; }
 
     void Mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name);
     void Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name, uint32_t flags, uint32_t eventMask);
+    void AttrSet(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, const char *name, const void *value, size_t valueLen);
 
     static const uint32_t DEFAULT_MASTER_PORT        = 38551;
     static const uint32_t DEFAULT_LEASE_INTERVAL     = 12;

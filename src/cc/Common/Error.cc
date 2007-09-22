@@ -62,6 +62,7 @@ namespace {
     { Error::HYPERSPACE_EXPIRED_SESSION,  "HYPERSPACE expired session" },
     { Error::HYPERSPACE_FILE_EXISTS,      "HYPERSPACE file exists" },
     { Error::HYPERSPACE_IS_DIRECTORY,     "HYPERSPACE is directory" },
+    { Error::HYPERSPACE_INVALID_HANDLE,   "HYPERSPACE invalid handle" },
     { Error::MASTER_TABLE_EXISTS,         "HYPERTABLE MASTER table exists" },
     { Error::MASTER_BAD_SCHEMA,           "HYPERTABLE MASTER bad schema" },
     { Error::RANGESERVER_GENERATION_MISMATCH,  "RANGE SERVER generation mismatch" },
@@ -123,6 +124,7 @@ const int Error::HYPERSPACE_PERMISSION_DENIED;
 const int Error::HYPERSPACE_EXPIRED_SESSION;
 const int Error::HYPERSPACE_FILE_EXISTS;
 const int Error::HYPERSPACE_IS_DIRECTORY;
+const int Error::HYPERSPACE_INVALID_HANDLE;
 
 const int Error::MASTER_TABLE_EXISTS;
 const int Error::MASTER_BAD_SCHEMA;

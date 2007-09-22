@@ -58,6 +58,7 @@ public class Error {
     static public final int HYPERSPACE_EXPIRED_SESSION   = 0x00030008;
     static public final int HYPERSPACE_FILE_EXISTS       = 0x00030009;
     static public final int HYPERSPACE_IS_DIRECTORY      = 0x0003000A;
+    static public final int HYPERSPACE_INVALID_HANDLE    = 0x0003000B;
 
     static public final int MASTER_TABLE_EXISTS  = 0x00040001;
     static public final int MASTER_BAD_SCHEMA    = 0x00040002;
@@ -110,6 +111,7 @@ public class Error {
 	mTextMap.put(HYPERSPACE_EXPIRED_SESSION, "HYPERSPACE expired session");
 	mTextMap.put(HYPERSPACE_FILE_EXISTS,     "HYPERSPACE file exists");
 	mTextMap.put(HYPERSPACE_IS_DIRECTORY,    "HYPERSPACE is directory");
+	mTextMap.put(HYPERSPACE_INVALID_HANDLE,  "HYPERSPACE invalid handle");
 	mTextMap.put(MASTER_TABLE_EXISTS,        "HYPERTABLE MASTER table exists");
 	mTextMap.put(MASTER_TABLE_EXISTS,        "HYPERTABLE MASTER bad schema");
 	mTextMap.put(RANGESERVER_GENERATION_MISMATCH,  "RANGE SERVER generation mismatch");

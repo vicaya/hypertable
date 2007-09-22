@@ -34,6 +34,7 @@ set ( Master_SRCS
 Master.cc
 RequestHandlerMkdir.cc
 RequestHandlerOpen.cc
+RequestHandlerAttrSet.cc
 ResponseCallbackOpen.cc
 ServerConnectionHandler.cc
 ServerKeepaliveHandler.cc
