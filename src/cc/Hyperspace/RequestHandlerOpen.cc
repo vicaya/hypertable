@@ -27,7 +27,7 @@
 #include "Hypertable/Lib/Types.h"
 
 #include "Master.h"
-#include "RequestHandlerMkdir.h"
+#include "RequestHandlerOpen.h"
 
 using namespace Hyperspace;
 using namespace hypertable;
@@ -35,21 +35,31 @@ using namespace hypertable;
 /**
  *
  */
-void RequestHandlerMkdir::run() {
-  ResponseCallback cb(mComm, mEventPtr);
+void RequestHandlerOpen::run() {
+  ResponseCallbackOpen cb(mComm, mEventPtr);
   const char *name;
+  uint32_t flags;
+  uint32_t eventMask;
   size_t remaining = mEventPtr->messageLen - 2;
   uint8_t *msgPtr = mEventPtr->message + 2;
+
+  // flags
+  if (!Serialization::DecodeInt(&msgPtr, &remaining, &flags))
+    goto abort;
+
+  // event mask
+  if (!Serialization::DecodeInt(&msgPtr, &remaining, &eventMask))
+    goto abort;
 
   // directory name
   if (!Serialization::DecodeString(&msgPtr, &remaining, &name))
     goto abort;
 
-  mMaster->Mkdir(&cb, mSessionId, name);
+  mMaster->Open(&cb, mSessionId, name, flags, eventMask);
 
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with MKDIR message");
-  cb.error(Error::PROTOCOL_ERROR, "Encoding problem with MKDIR message");
+  LOG_ERROR("Encoding problem with OPEN message");
+  cb.error(Error::PROTOCOL_ERROR, "Encoding problem with OPEN message");
 }

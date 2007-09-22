@@ -35,7 +35,7 @@ namespace Hyperspace {
 
   class RequestHandlerMkdir : public ApplicationHandler {
   public:
-    RequestHandlerMkdir(Comm *comm, Master *master, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mComm(comm), mMaster(master) {
+    RequestHandlerMkdir(Comm *comm, Master *master, uint32_t sessionId, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mComm(comm), mMaster(master), mSessionId(sessionId) {
       return;
     }
 
@@ -44,6 +44,7 @@ namespace Hyperspace {
   private:
     Comm        *mComm;
     Master      *mMaster;
+    uint32_t     mSessionId;
   };
 
 }

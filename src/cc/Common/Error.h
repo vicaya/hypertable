@@ -61,6 +61,9 @@ namespace hypertable {
     static const int HYPERSPACE_DELETE_ERROR      = 0x00030005;
     static const int HYPERSPACE_BAD_PATHNAME      = 0x00030006;
     static const int HYPERSPACE_PERMISSION_DENIED = 0x00030007;
+    static const int HYPERSPACE_EXPIRED_SESSION   = 0x00030008;
+    static const int HYPERSPACE_FILE_EXISTS       = 0x00030009;
+    static const int HYPERSPACE_IS_DIRECTORY      = 0x0003000A;
 
     static const int MASTER_TABLE_EXISTS   = 0x00040001;
     static const int MASTER_BAD_SCHEMA     = 0x00040002;

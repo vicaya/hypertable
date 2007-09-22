@@ -18,7 +18,29 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#ifndef HYPERTABLE_COMMANDOPEN_H
+#define HYPERTABLE_COMMANDOPEN_H
+
+#include "Common/InteractiveCommand.h"
+
+#include "Hyperspace/Session.h"
+
 #include "Global.h"
 
-std::string Global::cwd = "/";
-Global::FileMapT Global::fileMap;
+namespace Hyperspace {
+
+  class CommandOpen : public InteractiveCommand {
+  public:
+    CommandOpen(Session *session) : mSession(session) { return; }
+    virtual const char *CommandText() { return "open"; }
+    virtual const char **Usage() { return msUsage; }
+    virtual int run();
+
+  private:
+    static const char *msUsage[];
+    Session *mSession;
+  };
+
+}
+
+#endif // HYPERTABLE_COMMANDOPEN_H

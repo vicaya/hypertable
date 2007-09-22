@@ -23,8 +23,12 @@
 
 #include <string>
 
+#include "Common/StringExt.h"
+
 namespace Global {
   extern std::string cwd;
+  typedef __gnu_cxx::hash_map<std::string, uint64_t> FileMapT;
+  extern FileMapT fileMap;
 }
 
 #endif // HYPERSPACE_GLOBAL_H

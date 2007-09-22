@@ -29,17 +29,9 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 
-#include "ApplicationHandler.h"
+#include "Common/StringExt.h"
 
-#if defined(__APPLE__)
-namespace __gnu_cxx {
-  template<> struct hash< uint64_t > {
-    size_t operator()( const uint64_t val ) const {
-      return size_t(val);
-    }
-  };
-}
-#endif
+#include "ApplicationHandler.h"
 
 namespace hypertable {
 

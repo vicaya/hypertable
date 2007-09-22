@@ -26,6 +26,7 @@
 
 #include "Protocol.h"
 #include "RequestHandlerMkdir.h"
+#include "RequestHandlerOpen.h"
 #include "ServerConnectionHandler.h"
 
 using namespace hypertable;
@@ -74,8 +75,11 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
 	  cb.response_ok();
 	}
 	return;
+      case Protocol::COMMAND_OPEN:
+	requestHandler = new RequestHandlerOpen(mComm, mMaster, mSessionId, eventPtr);
+	break;
       case Protocol::COMMAND_MKDIR:
-	requestHandler = new RequestHandlerMkdir(mComm, mMaster, eventPtr);
+	requestHandler = new RequestHandlerMkdir(mComm, mMaster, mSessionId, eventPtr);
 	break;
       default:
 	std::string message = (string)"Command code " + command + " not implemented";

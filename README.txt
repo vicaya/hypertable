@@ -79,4 +79,13 @@ HOW TO BUILD
   cd ~/build/hypertable
   make test
 
-  
+[ not necessary now, but will be soon ... ]
+
+To set extended attributes, you should add the user_xattr property to the relevant
+file systems in your /etc/fstab file. For example:
+
+/dev/hda3     /home     ext3     defaults,user_xattr     1 2
+
+You can then remount the affected partitions as follows:
+
+# mount -o remount /home

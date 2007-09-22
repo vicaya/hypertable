@@ -18,7 +18,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "Global.h"
+#include "Common/Error.h"
 
-std::string Global::cwd = "/";
-Global::FileMapT Global::fileMap;
+#include "AsyncComm/CommBuf.h"
+
+#include "ResponseCallbackOpen.h"
+
+using namespace Hyperspace;
+using namespace hypertable;
+
+int ResponseCallbackOpen::response(uint64_t handle, bool created) {
+  hbuilder_.InitializeFromRequest(mEventPtr->header);
+  CommBufPtr cbufPtr( new CommBuf(hbuilder_, 13 ) );
+  cbufPtr->AppendInt(Error::OK);
+  cbufPtr->AppendLong(handle);
+  cbufPtr->AppendByte((uint8_t)created);
+  return mComm->SendResponse(mEventPtr->addr, cbufPtr);
+}

@@ -27,6 +27,7 @@
 
 #include "Protocol.h"
 
+using namespace Hyperspace;
 using namespace hypertable;
 using namespace std;
 
@@ -88,16 +89,38 @@ CommBuf *Hyperspace::Protocol::CreateHandshakeRequest(uint32_t sessionId) {
   return cbuf;
 }
 
-CommBuf *Hyperspace::Protocol::CreateMkdirRequest(std::string name) {
+CommBuf *Hyperspace::Protocol::CreateOpenRequest(std::string &name, uint32_t flags, HandleCallbackPtr &callbackPtr) {
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, fileNameToGroupId(name));
+  hbuilder.AssignUniqueId();
+  CommBuf *cbuf = new CommBuf(hbuilder, 10 + Serialization::EncodedLengthString(name));
+  cbuf->AppendShort(COMMAND_OPEN);
+  cbuf->AppendInt(flags);
+  cbuf->AppendInt(callbackPtr->GetEventMask());
+  cbuf->AppendString(name);
+  return cbuf;
+}
+
+
+CommBuf *Hyperspace::Protocol::CreateMkdirRequest(std::string &name) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, fileNameToGroupId(name));
   hbuilder.AssignUniqueId();
   CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::EncodedLengthString(name));
   cbuf->AppendShort(COMMAND_MKDIR);
   cbuf->AppendString(name);
   return cbuf;
-  return 0;
 }
 
+
+CommBuf *Hyperspace::Protocol::CreateAttrSetRequest(uint64_t handle, std::string &name, const void *value, size_t valueLen) {
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
+  hbuilder.AssignUniqueId();
+  CommBuf *cbuf = new CommBuf(hbuilder, 10 + Serialization::EncodedLengthString(name) + Serialization::EncodedLengthByteArray(valueLen));
+  cbuf->AppendShort(COMMAND_MKDIR);
+  cbuf->AppendLong(handle);
+  cbuf->AppendString(name);
+  cbuf->AppendByteArray(value, valueLen);
+  return cbuf;
+}
 
 
 #if 0

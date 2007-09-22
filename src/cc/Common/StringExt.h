@@ -34,6 +34,13 @@ namespace __gnu_cxx {
       return hash< const char* >()( x.c_str() );
     }
   };
+#if defined(__APPLE__)
+  template<> struct hash< uint64_t > {
+    size_t operator()( const uint64_t val ) const {
+      return size_t(val);
+    }
+  };
+#endif
 }
 
 inline std::string operator+( const std::string& s1, short sval ) {

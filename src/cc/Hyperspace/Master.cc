@@ -21,6 +21,7 @@
 #include <cstring>
 
 extern "C" {
+#include <fcntl.h>
 #include <sys/file.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -35,6 +36,7 @@ extern "C" {
 #include "Hypertable/Lib/Schema.h"
 
 #include "Master.h"
+#include "Session.h"
 #include "SessionData.h"
 
 using namespace hypertable;
@@ -47,7 +49,7 @@ const uint32_t Master::DEFAULT_KEEPALIVE_INTERVAL;
 
 atomic_t Master::msNextSessionId = ATOMIC_INIT(1);
 
-Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mMutex(), mVerbose(false) {
+Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mVerbose(false), mNextHandleNumber(1) {
   const char *dirname;
   std::string str;
   ssize_t xattrLen;
@@ -133,7 +135,7 @@ Master::~Master() {
 
 
 void Master::CreateSession(struct sockaddr_in &addr, SessionDataPtr &sessionPtr) {
-  boost::mutex::scoped_lock lock(mMutex);
+  boost::mutex::scoped_lock lock(mSessionMapMutex);
   uint32_t sessionId = atomic_inc_return(&msNextSessionId);
   sessionPtr = new SessionData(addr, mLeaseInterval, sessionId);
   mSessionMap[sessionId] = sessionPtr;
@@ -142,7 +144,7 @@ void Master::CreateSession(struct sockaddr_in &addr, SessionDataPtr &sessionPtr)
 
 
 bool Master::GetSession(uint32_t sessionId, SessionDataPtr &sessionPtr) {
-  boost::mutex::scoped_lock lock(mMutex);
+  boost::mutex::scoped_lock lock(mSessionMapMutex);
   SessionMapT::iterator iter = mSessionMap.find(sessionId);
   if (iter == mSessionMap.end())
     return false;
@@ -150,17 +152,36 @@ bool Master::GetSession(uint32_t sessionId, SessionDataPtr &sessionPtr) {
   return true;
 }
 
-void Master::Mkdir(ResponseCallback *cb, const char *name) {
+
+/**
+ *
+ */
+void Master::CreateHandle(uint64_t *handlep, HandleDataPtr &handlePtr) {
+  boost::mutex::scoped_lock lock(mHandleMapMutex);
+
+  *handlep = ++mNextHandleNumber;
+
+  handlePtr = new HandleData();
+
+  mHandleMap[*handlep] = handlePtr;
+}
+
+
+
+/**
+ * Mkdir
+ */
+void Master::Mkdir(ResponseCallback *cb, uint32_t sessionId, const char *name) {
+  std::string normalName;
   std::string absName;
   
   if (mVerbose) {
     LOG_VA_INFO("mkdir %s", name);
   }
 
-  if (name[0] == '/')
-    absName = mBaseDir + name;
-  else
-    absName = mBaseDir + "/" + name;
+  NormalizeName(name, normalName);
+
+  absName = mBaseDir + normalName;
 
   if (mkdir(absName.c_str(), 0755) < 0)
     ReportError(cb);
@@ -168,8 +189,105 @@ void Master::Mkdir(ResponseCallback *cb, const char *name) {
     cb->response_ok();
 
   return;
-    
 }
+
+
+
+/**
+ * Open
+ */
+void Master::Open(ResponseCallbackOpen *cb, uint32_t sessionId, const char *name, uint32_t flags, uint32_t eventMask) {
+  std::string normalName;
+  std::string absName;
+  SessionDataPtr sessionPtr;
+  NodeDataPtr nodePtr;
+  HandleDataPtr handlePtr;
+  int error;
+  bool created = false;
+  bool existed;
+  uint64_t handle;
+  struct stat statbuf;
+  int oflags = 0;
+
+  if (mVerbose) {
+    LOG_VA_INFO("open(%s, flags=0x%x, eventMask=0x%x)", name, flags, eventMask);
+  }
+
+  NormalizeName(name, normalName);
+
+  absName = mBaseDir + normalName;
+
+  if (!GetSession(sessionId, sessionPtr)) {
+    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
+    return;
+  }
+
+  {
+    boost::mutex::scoped_lock lock(mNodeMapMutex);
+    int fd;
+
+    NodeMapT::iterator iter = mNodeMap.find(normalName);
+    if (iter != mNodeMap.end()) {
+      if ((flags & OPEN_FLAG_CREATE) && (flags & OPEN_FLAG_EXCL)) {
+	cb->error(Error::HYPERSPACE_FILE_EXISTS, "mode=CREATE|EXCL");
+	return;
+      }
+      nodePtr = (*iter).second;
+    }
+
+    if (stat(absName.c_str(), &statbuf) != 0) {
+      if (errno == ENOENT)
+	existed = false;
+      else {
+	ReportError(cb);
+	return;
+      }
+    }
+    else {
+      existed = true;
+      if (statbuf.st_mode & S_IFDIR) {
+	if (flags & OPEN_FLAG_WRITE) {
+	  cb->error(Error::HYPERSPACE_IS_DIRECTORY, "");
+	  return;
+	}
+	oflags = O_RDONLY;
+      }
+      else
+	oflags = O_RDWR;
+    }
+
+    if (!nodePtr || nodePtr->fd < 0) {
+      if (flags & OPEN_FLAG_CREATE)
+	oflags |= O_CREAT;
+      if (flags & OPEN_FLAG_EXCL)
+	oflags |= O_EXCL;
+      fd = open(absName.c_str(), oflags, 0644);
+      if (fd < 0) {
+	ReportError(cb);
+	return;
+      }
+      if (!nodePtr) {
+	nodePtr = new NodeData();
+	nodePtr->name = normalName;
+	mNodeMap[normalName] = nodePtr;
+      }
+      nodePtr->fd = fd;
+      if (!existed)
+	created = true;
+    }
+
+    CreateHandle(&handle, handlePtr);
+
+    handlePtr->nodePtr = nodePtr;
+    handlePtr->openFlags = flags;
+    handlePtr->eventMask = eventMask;
+
+  }
+
+  cb->response(handle, created);
+  
+}
+
 
 
 /**
@@ -183,6 +301,24 @@ void Master::ReportError(ResponseCallback *cb) {
     cb->error(Error::HYPERSPACE_BAD_PATHNAME, errbuf);
   else if (errno == EACCES || errno == EPERM)
     cb->error(Error::HYPERSPACE_PERMISSION_DENIED, errbuf);
+  else if (errno == EEXIST)
+    cb->error(Error::HYPERSPACE_FILE_EXISTS, errbuf);
   else
     cb->error(Error::HYPERSPACE_IO_ERROR, errbuf);
+}
+
+
+
+/**
+ *
+ */
+void Master::NormalizeName(std::string name, std::string &normal) {
+  normal = "";
+  if (name[0] != '/')
+    normal += "/";
+
+  if (name.find('/', name.length()-1) == string::npos)
+    normal += name;
+  else
+    normal += name.substr(0, name.length()-1);
 }

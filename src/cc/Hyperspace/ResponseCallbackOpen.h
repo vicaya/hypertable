@@ -18,7 +18,22 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "Global.h"
+#ifndef HYPERSPACE_RESPONSECALLBACKOPEN_H
+#define HYPERSPACE_RESPONSECALLBACKOPEN_H
 
-std::string Global::cwd = "/";
-Global::FileMapT Global::fileMap;
+#include "Common/Error.h"
+
+#include "AsyncComm/CommBuf.h"
+#include "AsyncComm/ResponseCallback.h"
+
+namespace Hyperspace {
+
+  class ResponseCallbackOpen : public hypertable::ResponseCallback {
+  public:
+    ResponseCallbackOpen(hypertable::Comm *comm, hypertable::EventPtr &eventPtr) : hypertable::ResponseCallback(comm, eventPtr) { return; }
+    int response(uint64_t handle, bool created);
+  };
+
+}
+
+#endif // HYPERSPACE_RESPONSECALLBACKOPEN_H

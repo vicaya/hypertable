@@ -23,6 +23,7 @@ set ( DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Tools/hyperspace" )
 
 set ( hyperspace_SRCS
 CommandMkdir.cc
+CommandOpen.cc
 hyperspace.cc
 Global.cc
 )

@@ -21,15 +21,20 @@
 #ifndef HYPERSPACE_CLIENTKEEPALIVEHANDLER_H
 #define HYPERSPACE_CLIENTKEEPALIVEHANDLER_H
 
+#include <cassert>
+#include <ext/hash_map>
+
 #include <boost/thread/mutex.hpp>
 
 #include "Common/Properties.h"
+#include "Common/StringExt.h"
 
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/DispatchHandler.h"
 
 #include "ClientSessionState.h"
 #include "ClientConnectionHandler.h"
+#include "HandleCallback.h"
 
 namespace Hyperspace {
 
@@ -44,6 +49,16 @@ namespace Hyperspace {
     ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsPtr, Hyperspace::SessionCallback *sessionCallback, ClientSessionStatePtr &sessionStatePtr);
     virtual void handle(EventPtr &eventPtr);
 
+    void RegisterHandle(uint64_t handle, HandleCallbackPtr &callbackPtr) {
+      HandleMapT::iterator iter = mHandleMap.find(handle);
+      assert(iter == mHandleMap.end());
+      mHandleMap[handle] = callbackPtr;
+    }
+
+    void UnregisterHandle(uint64_t handle) {
+      mHandleMap.erase(handle);
+    }
+
   private:
     boost::mutex       mMutex;
     boost::xtime       mLastKeepAliveSendTime;
@@ -57,6 +72,9 @@ namespace Hyperspace {
     ClientSessionStatePtr mSessionStatePtr;
     uint32_t mSessionId;
     ClientConnectionHandler *mConnHandler;
+
+    typedef __gnu_cxx::hash_map<uint64_t, HandleCallbackPtr> HandleMapT;
+    HandleMapT  mHandleMap;
   };
 
 }

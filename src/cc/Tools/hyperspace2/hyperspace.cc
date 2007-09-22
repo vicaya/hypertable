@@ -38,22 +38,11 @@ extern "C" {
 #include "Common/System.h"
 #include "Common/Usage.h"
 
-/**
-#include "Hyperspace/HyperspaceClient.h"
-#include "Hyperspace/HyperspaceProtocol.h"
-#include "CommandCreate.h"
-#include "CommandDelete.h"
-#include "CommandMkdirs.h"
-#include "CommandAttrSet.h"
-#include "CommandAttrGet.h"
-#include "CommandAttrDel.h"
-#include "CommandExists.h"
-**/
-
 #include "Global.h"
 #include "Hyperspace/Session.h"
 
 #include "CommandMkdir.h"
+#include "CommandOpen.h"
 
 using namespace hypertable;
 using namespace std;
@@ -100,16 +89,13 @@ namespace {
 
   const char *helpTrailer[] = {
     "help",
-    "",
     "  Display this help text.",
     "",
     "quit",
-    "",
     "  Exit the program.",
     "",
     (const char *)0
   };
-
 }
 
 
@@ -177,15 +163,7 @@ int main(int argc, char **argv) {
   }
 
   commands.push_back( new CommandMkdir(session) );
-
-  /**
-  commands.push_back( new CommandCopyToLocal(client) );
-  commands.push_back( new CommandLength(client) );
-  commands.push_back( new CommandMkdirs(client) );
-  commands.push_back( new CommandRemove(client) );
-  commands.push_back( new CommandRmdir(client) );
-  commands.push_back( new CommandShutdown(client) );
-  **/
+  commands.push_back( new CommandOpen(session) );
 
   /**
    * Non-interactive mode

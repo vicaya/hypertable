@@ -18,7 +18,23 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "Global.h"
+#ifndef HYPERSPACE_NODEDATA_H
+#define HYPERSPACE_NODEDATA_H
 
-std::string Global::cwd = "/";
-Global::FileMapT Global::fileMap;
+#include <string>
+
+#include "Common/ReferenceCount.h"
+
+namespace Hyperspace {
+
+  class NodeData : public hypertable::ReferenceCount {
+  public:
+    NodeData() : fd(-1) { return; }
+    std::string name;
+    int         fd;
+  };
+  typedef boost::intrusive_ptr<NodeData> NodeDataPtr;
+
+}
+
+#endif // HYPERSPACE_NODEDATA_H

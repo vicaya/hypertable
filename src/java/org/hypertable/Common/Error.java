@@ -55,6 +55,9 @@ public class Error {
     static public final int HYPERSPACE_DELETE_ERROR      = 0x00030005;
     static public final int HYPERSPACE_BAD_PATHNAME      = 0x00030006;
     static public final int HYPERSPACE_PERMISSION_DENIED = 0x00030007;
+    static public final int HYPERSPACE_EXPIRED_SESSION   = 0x00030008;
+    static public final int HYPERSPACE_FILE_EXISTS       = 0x00030009;
+    static public final int HYPERSPACE_IS_DIRECTORY      = 0x0003000A;
 
     static public final int MASTER_TABLE_EXISTS  = 0x00040001;
     static public final int MASTER_BAD_SCHEMA    = 0x00040002;
@@ -104,6 +107,9 @@ public class Error {
 	mTextMap.put(HYPERSPACE_DELETE_ERROR,    "HYPERSPACE delete error");
 	mTextMap.put(HYPERSPACE_BAD_PATHNAME,    "HYPERSPACE bad pathname");
 	mTextMap.put(HYPERSPACE_PERMISSION_DENIED, "HYPERSPACE permission denied");
+	mTextMap.put(HYPERSPACE_EXPIRED_SESSION, "HYPERSPACE expired session");
+	mTextMap.put(HYPERSPACE_FILE_EXISTS,     "HYPERSPACE file exists");
+	mTextMap.put(HYPERSPACE_IS_DIRECTORY,    "HYPERSPACE is directory");
 	mTextMap.put(MASTER_TABLE_EXISTS,        "HYPERTABLE MASTER table exists");
 	mTextMap.put(MASTER_TABLE_EXISTS,        "HYPERTABLE MASTER bad schema");
 	mTextMap.put(RANGESERVER_GENERATION_MISMATCH,  "RANGE SERVER generation mismatch");

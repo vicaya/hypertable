@@ -35,6 +35,7 @@
 
 #include "ClientKeepaliveHandler.h"
 #include "ClientSessionState.h"
+#include "HandleCallback.h"
 #include "Protocol.h"
 
 using namespace hypertable;
@@ -51,24 +52,8 @@ namespace Hyperspace {
     OPEN_FLAG_WRITE  = 0x00002, // open file for writing (modifications)                                                                                 
     OPEN_FLAG_LOCK   = 0x00004, // open file for locking                                                                                                 
     OPEN_FLAG_CREATE = 0x00008, // create file if it does not exist                                                                                      
-    OPEN_FLAG_TEMP   = 0x00010  // used in conjunction with CREATE to create an ephemeral file
-  };
-
-  /**
-   * The following event masks are ORed together and
-   * passed in as the eventMask argument to Open()
-   * to indicate which events should be reported to
-   * the application for the opened handle.
-   */
-  enum {
-    EVENT_MASK_ATTR_MODIFIED      = 0x0001,
-    EVENT_MASK_CHILD_NODE_CHANGE  = 0x0002,
-    EVENT_MASK_LOCK_ACQUIRED      = 0x0004,
-    EVENT_MASK_MASTER_FAILOVER    = 0x0008,
-    EVENT_MASK_HANDLE_INVALIDATED = 0x0010,
-    EVENT_MASK_CONFLICTING_LOCK   = 0x0020,
-    EVENT_MASK_REQUEST_COMPLETE   = 0x0040,
-    EVENT_MASK_REQUEST_ERROR      = 0x0080
+    OPEN_FLAG_EXCL   = 0x00010, // error if create and file exists
+    OPEN_FLAG_TEMP   = 0x00020  // used in conjunction with CREATE to create an ephemeral file
   };
 
   /**
@@ -90,7 +75,6 @@ namespace Hyperspace {
     std::string   name;
     struct NodeMetadataT metadata;
   };
-
 
   /**
    * Lock sequencer.  This object gets created with
@@ -120,27 +104,6 @@ namespace Hyperspace {
     virtual void Jeopardy() = 0;
   };
 
-
-  /**
-   * A callback object derived from this class gets passed
-   * into each Open() call.  Node state changes get reported
-   * to the application via this callback.
-   */
-  class HandleCallback {
-  public:
-    HandleCallback(int eventMask) : mEventMask(eventMask) { return; }
-    virtual void AttrModified(std::string name) = 0;
-    virtual void ChildNodeChange() = 0;
-    virtual void LockAcquired() = 0;
-    virtual void MasterFailover() = 0;
-    virtual void HandleInvalidated() = 0;
-    virtual void ConflictingLockRequest() = 0;
-    int GetEventMask() { return mEventMask; }
-  protected:
-    int mEventMask;
-  };
-
-
   /**
    * This class encapsulates a Hyperspace session and
    * provides the Hyperspace API.
@@ -151,12 +114,12 @@ namespace Hyperspace {
 
     Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback);
 
-    int Open(std::string name, int flags, HandleCallback *callback, uint64_t *handlep);
+    int Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, uint64_t *handlep, bool *createdp);
     int Cancel(uint64_t handle);
     int Close(uint64_t handle);
     int Poison(uint64_t handle);
     int Mkdir(std::string name);
-    int AttrSet(uint64_t handle, std::string name, uint8_t *value, size_t valueLen);
+    int AttrSet(uint64_t handle, std::string name, const void *value, size_t valueLen);
     int AttrGet(uint64_t handle, std::string name, DynamicBuffer &value);
     int AttrDel(uint64_t handle, std::string name);
     int Exists(std::string name);

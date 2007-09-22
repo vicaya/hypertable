@@ -65,10 +65,40 @@ Session::Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback)
 }
 
 
+/**
+ * Waits for session state to change to SAFE
+ */
 bool Session::WaitForConnection(long maxWaitSecs) {
   boost::mutex::scoped_lock lock(mMutex);
   return mSessionStatePtr->WaitForSafe(maxWaitSecs);
 }
+
+int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, uint64_t *handlep, bool *createdp) {
+  DispatchHandlerSynchronizer syncHandler;
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( Protocol::CreateOpenRequest(name, flags, callbackPtr) );
+  int error = SendMessage(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("Hyperspace 'open' error, name=%s flags=0x%x events=0x%x : %s", name.c_str(), 
+		   flags, callbackPtr->GetEventMask(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
+      error = (int)Protocol::ResponseCode(eventPtr.get());
+    }
+    else {
+      uint8_t *ptr = eventPtr->message + 4;
+      size_t remaining = eventPtr->messageLen - 4;
+      uint8_t cbyte;
+      if (!Serialization::DecodeLong(&ptr, &remaining, handlep))
+	return Error::RESPONSE_TRUNCATED;
+      if (!Serialization::DecodeByte(&ptr, &remaining, &cbyte))
+	return Error::RESPONSE_TRUNCATED;
+      *createdp = cbyte ? true : false;
+      mKeepaliveHandler->RegisterHandle(*handlep, callbackPtr);
+    }
+  }
+  return error;
+}
+
 
 /**
  * Submit 'mkdir' request
@@ -86,6 +116,25 @@ int Session::Mkdir(std::string name) {
   }
   return error;
 }
+
+
+/**
+ *  Blocking 'attrset' request
+ */
+int Session::AttrSet(uint64_t handle, std::string name, const void *value, size_t valueLen) {
+  DispatchHandlerSynchronizer syncHandler;
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( Protocol::CreateAttrSetRequest(handle, name, value, valueLen) );
+  int error = SendMessage(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("Hyperspace 'attrset' error, name=%s : %s", name.c_str(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
+      error = (int)Protocol::ResponseCode(eventPtr.get());
+    }
+  }
+  return error;
+}
+
 
 
 int Session::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler) {

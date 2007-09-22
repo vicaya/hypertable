@@ -28,12 +28,16 @@
 #include "Common/atomic.h"
 #include "Common/Properties.h"
 #include "Common/SockAddrMap.h"
+#include "Common/StringExt.h"
 
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ConnectionManager.h"
 #include "AsyncComm/Event.h"
 #include "AsyncComm/ResponseCallback.h"
 
+#include "NodeData.h"
+#include "HandleData.h"
+#include "ResponseCallbackOpen.h"
 #include "SessionData.h"
 
 using namespace hypertable;
@@ -48,9 +52,13 @@ namespace Hyperspace {
     
     void CreateSession(struct sockaddr_in &addr, SessionDataPtr &sessionPtr);
     bool GetSession(uint32_t sessionId, SessionDataPtr &sessionPtr);
+
+    void CreateHandle(uint64_t *handlep, HandleDataPtr &handlePtr);
+
     uint32_t GetLeaseInterval() { return mLeaseInterval; }
 
-    void Mkdir(ResponseCallback *cb, const char *name);
+    void Mkdir(ResponseCallback *cb, uint32_t sessionId, const char *name);
+    void Open(ResponseCallbackOpen *cb, uint32_t sessionId, const char *name, uint32_t flags, uint32_t eventMask);
 
     static const uint32_t DEFAULT_MASTER_PORT        = 38551;
     static const uint32_t DEFAULT_LEASE_INTERVAL     = 12;
@@ -61,17 +69,25 @@ namespace Hyperspace {
   private:
 
     void ReportError(ResponseCallback *cb);
+    void NormalizeName(std::string name, std::string &normal);
 
+    typedef __gnu_cxx::hash_map<std::string, NodeDataPtr> NodeMapT;
+    typedef __gnu_cxx::hash_map<uint64_t, HandleDataPtr>  HandleMapT;
     typedef __gnu_cxx::hash_map<uint32_t, SessionDataPtr> SessionMapT;
 
-    boost::mutex        mMutex;
-    bool mVerbose;
-    uint32_t mLeaseInterval;
-    uint32_t mKeepAliveInterval;
-    SessionMapT mSessionMap;
-    std::string mBaseDir;
-    int mBaseFd;
-    uint32_t mGeneration;
+    bool          mVerbose;
+    uint32_t      mLeaseInterval;
+    uint32_t      mKeepAliveInterval;
+    NodeMapT      mNodeMap;
+    HandleMapT    mHandleMap;
+    SessionMapT   mSessionMap;
+    boost::mutex  mNodeMapMutex;
+    boost::mutex  mHandleMapMutex;
+    boost::mutex  mSessionMapMutex;
+    std::string   mBaseDir;
+    int           mBaseFd;
+    uint32_t      mGeneration;
+    uint64_t      mNextHandleNumber;
   };
 
 }

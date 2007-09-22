@@ -28,6 +28,10 @@ extern "C" {
 #include "AsyncComm/CommBuf.h"
 #include "AsyncComm/Protocol.h"
 
+#include "HandleCallback.h"
+
+using namespace hypertable;
+
 namespace Hyperspace {
 
   class Protocol : public hypertable::Protocol {
@@ -36,10 +40,13 @@ namespace Hyperspace {
 
     virtual const char *CommandText(short command);
 
-    static hypertable::CommBuf *CreateKeepAliveRequest(uint32_t sessionId);
-    static hypertable::CommBuf *CreateHandshakeRequest(uint32_t sessionId);
+    static CommBuf *CreateKeepAliveRequest(uint32_t sessionId);
+    static CommBuf *CreateHandshakeRequest(uint32_t sessionId);
 
-    static hypertable::CommBuf *CreateMkdirRequest(std::string name);
+    static CommBuf *CreateOpenRequest(std::string &name, uint32_t flags, HandleCallbackPtr &callbackPtr);
+    static CommBuf *CreateMkdirRequest(std::string &name);
+    static CommBuf *CreateAttrSetRequest(uint64_t handle, std::string &name, const void *value, size_t valueLen);
+
 
     /**
     CommBuf *CreateMkdirsRequest(const char *fname);
@@ -78,11 +85,16 @@ namespace Hyperspace {
   private:
 
     static uint32_t fileNameToGroupId(const char *fname) {
+      const char *ptr;
       uint32_t gid = 0;
+      // add initial '/' if it's not there
       if (fname[0] != '/')
 	gid += (uint32_t)'/';
-      for (const char *ptr=fname; *ptr; ++ptr)
+      for (ptr=fname; *ptr; ++ptr)
 	gid += (uint32_t)*ptr;
+      // remove trailing slash
+      if (*(ptr-1) == '/')
+	gid -= (uint32_t)'/';
       return gid;
     }
 

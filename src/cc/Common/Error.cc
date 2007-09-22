@@ -59,6 +59,9 @@ namespace {
     { Error::HYPERSPACE_DELETE_ERROR,     "HYPERSPACE delete error" },
     { Error::HYPERSPACE_BAD_PATHNAME,     "HYPERSPACE bad pathname" },
     { Error::HYPERSPACE_PERMISSION_DENIED,"HYPERSPACE permission denied" },
+    { Error::HYPERSPACE_EXPIRED_SESSION,  "HYPERSPACE expired session" },
+    { Error::HYPERSPACE_FILE_EXISTS,      "HYPERSPACE file exists" },
+    { Error::HYPERSPACE_IS_DIRECTORY,     "HYPERSPACE is directory" },
     { Error::MASTER_TABLE_EXISTS,         "HYPERTABLE MASTER table exists" },
     { Error::MASTER_BAD_SCHEMA,           "HYPERTABLE MASTER bad schema" },
     { Error::RANGESERVER_GENERATION_MISMATCH,  "RANGE SERVER generation mismatch" },
@@ -117,6 +120,9 @@ const int Error::HYPERSPACE_ATTR_NOT_FOUND;
 const int Error::HYPERSPACE_DELETE_ERROR;
 const int Error::HYPERSPACE_BAD_PATHNAME;
 const int Error::HYPERSPACE_PERMISSION_DENIED;
+const int Error::HYPERSPACE_EXPIRED_SESSION;
+const int Error::HYPERSPACE_FILE_EXISTS;
+const int Error::HYPERSPACE_IS_DIRECTORY;
 
 const int Error::MASTER_TABLE_EXISTS;
 const int Error::MASTER_BAD_SCHEMA;

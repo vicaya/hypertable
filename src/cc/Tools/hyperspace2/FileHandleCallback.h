@@ -18,7 +18,23 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "Global.h"
+#ifndef HYPERSPACE_FILEHANDLECALLBACK_H
+#define HYPERSPACE_FILEHANDLECALLBACK_H
 
-std::string Global::cwd = "/";
-Global::FileMapT Global::fileMap;
+#include "Hyperspace/HandleCallback.h"
+
+namespace Hyperspace {
+
+  class FileHandleCallback : public HandleCallback {
+  public:
+    FileHandleCallback(uint32_t eventMask) : HandleCallback(eventMask) { return; }
+    virtual void AttrModified(std::string name) { cout << endl << "ATTR MODIFIED " << name; }
+    virtual void ChildNodeChange() { cout << endl << "CHILD NODE CHANGED"; }
+    virtual void LockAcquired() { cout << endl << "LOCK ACQUIRED"; }
+    virtual void HandleInvalidated() { cout << endl << "HANDLE INVALIDATED"; }
+    virtual void ConflictingLockRequest() { cout << endl << "CONFLICTING LOCK REQUEST"; }
+  };
+
+}
+
+#endif // HYPERSPACE_FILEHANDLECALLBACK_H
