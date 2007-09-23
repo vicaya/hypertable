@@ -32,13 +32,12 @@
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/DispatchHandler.h"
 
-#include "ClientSessionState.h"
 #include "ClientConnectionHandler.h"
 #include "HandleCallback.h"
 
 namespace Hyperspace {
 
-  class SessionCallback;
+  class Session;
 
   /**
    * 
@@ -46,7 +45,7 @@ namespace Hyperspace {
   class ClientKeepaliveHandler : public DispatchHandler {
 
   public:
-    ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsPtr, Hyperspace::SessionCallback *sessionCallback, ClientSessionStatePtr &sessionStatePtr);
+    ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsPtr, Session *session);
     virtual void handle(EventPtr &eventPtr);
 
     void RegisterHandle(uint64_t handle, HandleCallbackPtr &callbackPtr) {
@@ -63,16 +62,13 @@ namespace Hyperspace {
     boost::mutex       mMutex;
     boost::xtime       mLastKeepAliveSendTime;
     boost::xtime       mJeopardyTime;
-    boost::xtime       mExpireTime;
     Comm *mComm;
-    Hyperspace::SessionCallback *mSessionCallback;
     uint32_t mLeaseInterval;
     uint32_t mKeepAliveInterval;
-    uint32_t mGracePeriod;
     struct sockaddr_in mMasterAddr;
     struct sockaddr_in mLocalAddr;
     bool mVerbose;
-    ClientSessionStatePtr mSessionStatePtr;
+    Session *mSession;
     uint64_t mSessionId;
     ClientConnectionHandler *mConnHandler;
     uint64_t mLastKnownEvent;

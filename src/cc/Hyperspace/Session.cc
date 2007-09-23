@@ -49,29 +49,28 @@ const uint32_t Session::DEFAULT_CLIENT_PORT;
 /**
  * 
  */
-Session::Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback) : mComm(comm), mVerbose(false), mSessionCallback(callback) {
+Session::Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback) : mComm(comm), mVerbose(false), mState(STATE_JEOPARDY), mSessionCallback(callback) {
   uint16_t masterPort;
   const char *masterHost;
 
+  mVerbose = propsPtr->getPropertyBool("verbose", false);
   masterHost = propsPtr->getProperty("Hyperspace.Master.host", "localhost");
   masterPort = (uint16_t)propsPtr->getPropertyInt("Hyperspace.Master.port", Master::DEFAULT_MASTER_PORT);
+  mGracePeriod = (uint32_t)propsPtr->getPropertyInt("Hyperspace.GracePeriod", Master::DEFAULT_GRACEPERIOD);
 
   if (!InetAddr::Initialize(&mMasterAddr, masterHost, masterPort))
     exit(1);
 
-  mSessionStatePtr = new ClientSessionState();
-  mVerbose = propsPtr->getPropertyBool("verbose", false);
-  mKeepaliveHandler = new ClientKeepaliveHandler(comm, propsPtr, callback, mSessionStatePtr);
+  boost::xtime_get(&mExpireTime, boost::TIME_UTC);
+  mExpireTime.sec += mGracePeriod;
+
+  if (mVerbose) {
+    cout << "Hyperspace.GracePeriod=" << mGracePeriod << endl;
+  }
+
+  mKeepaliveHandler = new ClientKeepaliveHandler(comm, propsPtr, this);
 }
 
-
-/**
- * Waits for session state to change to SAFE
- */
-bool Session::WaitForConnection(long maxWaitSecs) {
-  boost::mutex::scoped_lock lock(mMutex);
-  return mSessionStatePtr->WaitForSafe(maxWaitSecs);
-}
 
 int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, uint64_t *handlep, bool *createdp) {
   DispatchHandlerSynchronizer syncHandler;
@@ -149,6 +148,75 @@ int Session::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler) {
 }
 
 
+
+/**
+ * Transition session state
+ */
+int Session::StateTransition(int state) {
+  boost::mutex::scoped_lock lock(mMutex);
+  int oldState = mState;
+  mState = state;
+  if (mState == STATE_SAFE) {
+    mCond.notify_all();
+    if (oldState == STATE_JEOPARDY)
+      mSessionCallback->Safe();
+  }
+  else if (mState == STATE_JEOPARDY) {
+    if (oldState == STATE_SAFE) {
+      mSessionCallback->Jeopardy();
+      boost::xtime_get(&mExpireTime, boost::TIME_UTC);
+      mExpireTime.sec += mGracePeriod;
+    }
+  }
+  else if (mState == STATE_EXPIRED) {
+    if (oldState != STATE_EXPIRED)
+      mSessionCallback->Expired();
+  }
+  return oldState;
+}
+
+
+
+/**
+ * Return Sesion state
+ */
+int Session::GetState() {
+  boost::mutex::scoped_lock lock(mMutex);
+  return mState;
+}
+
+
+/**
+ * Return true if session expired
+ */
+bool Session::Expired() {
+  boost::mutex::scoped_lock lock(mMutex);
+  boost::xtime now;
+  boost::xtime_get(&now, boost::TIME_UTC);
+  if (xtime_cmp(mExpireTime, now) < 0)
+    return true;
+  return false;
+}
+
+
+/**
+ * Waits for session state to change to SAFE
+ */
+bool Session::WaitForConnection(long maxWaitSecs) {
+  boost::mutex::scoped_lock lock(mMutex);
+  boost::xtime dropTime, now;
+
+  boost::xtime_get(&dropTime, boost::TIME_UTC);
+  dropTime.sec += maxWaitSecs;
+
+  while (mState != STATE_SAFE) {
+    mCond.timed_wait(lock, dropTime);
+    boost::xtime_get(&now, boost::TIME_UTC);
+    if (xtime_cmp(now, dropTime) >= 0)
+      return false;
+  }
+  return true;
+}
 
 
 #if 0

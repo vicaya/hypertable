@@ -34,7 +34,7 @@ using namespace hypertable;
 /**
  * 
  */    
-ClientConnectionHandler::ClientConnectionHandler(Comm *comm, Hyperspace::SessionCallback *sessionCallback, ClientSessionStatePtr &sessionStatePtr) : mComm(comm), mSessionCallback(sessionCallback), mSessionStatePtr(sessionStatePtr), mState(DISCONNECTED), mSessionId(0), mVerbose(false) {
+ClientConnectionHandler::ClientConnectionHandler(Comm *comm, Session *session) : mComm(comm), mSession(session), mState(DISCONNECTED), mSessionId(0), mVerbose(false) {
   return;
 }
 
@@ -56,9 +56,7 @@ void ClientConnectionHandler::handle(EventPtr &eventPtr) {
       return;
     }
 
-    // Notify application of transition to SAFE mode
-    if (mSessionStatePtr->Transition(ClientSessionState::SAFE) == ClientSessionState::JEOPARDY)
-      mSessionCallback->Safe();
+    mSession->StateTransition(Session::STATE_SAFE);
 
     mState = CONNECTED;
   }
@@ -68,12 +66,9 @@ void ClientConnectionHandler::handle(EventPtr &eventPtr) {
       LOG_VA_WARN("%s", eventPtr->toString().c_str());
     }
 
-    // Notify application of transition to JEOPARDY mode
-    if (mSessionStatePtr->Transition(ClientSessionState::JEOPARDY) == ClientSessionState::SAFE)
-      mSessionCallback->Jeopardy();
+    mSession->StateTransition(Session::STATE_JEOPARDY);
 
     mState = DISCONNECTED;
-
   }
   else if (eventPtr->type == Event::CONNECTION_ESTABLISHED) {
 

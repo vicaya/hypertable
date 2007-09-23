@@ -27,20 +27,18 @@
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/DispatchHandler.h"
 
-#include "ClientSessionState.h"
-
 using namespace hypertable;
 
 namespace Hyperspace {
 
-  class SessionCallback;
+  class Session;
 
   class ClientConnectionHandler : public DispatchHandler {
   public:
 
     enum { DISCONNECTED, CONNECTING, HANDSHAKING, CONNECTED };
 
-    ClientConnectionHandler(Comm *comm, Hyperspace::SessionCallback *sessionCallback, ClientSessionStatePtr &sessionStatePtr);
+    ClientConnectionHandler(Comm *comm, Session *session);
     virtual void handle(EventPtr &eventPtr);
 
     void SetSessionId(uint64_t id) { mSessionId = id; }
@@ -69,8 +67,7 @@ namespace Hyperspace {
   private:
     boost::mutex       mMutex;
     Comm *mComm;
-    Hyperspace::SessionCallback *mSessionCallback;
-    ClientSessionStatePtr mSessionStatePtr;
+    Session *mSession;
     uint64_t mSessionId;
     int mState;
     bool mVerbose;

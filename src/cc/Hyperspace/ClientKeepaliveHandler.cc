@@ -24,7 +24,6 @@
 #include "Common/StringExt.h"
 
 #include "ClientKeepaliveHandler.h"
-#include "ClientSessionState.h"
 #include "Master.h"
 #include "Protocol.h"
 #include "Session.h"
@@ -32,7 +31,7 @@
 using namespace hypertable;
 using namespace Hyperspace;
 
-ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsPtr, Hyperspace::SessionCallback *sessionCallback, ClientSessionStatePtr &sessionStatePtr) : mComm(comm), mSessionCallback(sessionCallback), mSessionStatePtr(sessionStatePtr), mSessionId(0), mConnHandler(0), mLastKnownEvent(0) {
+ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsPtr, Session *session) : mComm(comm), mSession(session), mSessionId(0), mConnHandler(0), mLastKnownEvent(0) {
   int error;
   uint16_t sendPort, masterPort;
   const char *masterHost;
@@ -42,7 +41,6 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsP
   masterPort = (uint16_t)propsPtr->getPropertyInt("Hyperspace.Master.port", Master::DEFAULT_MASTER_PORT);
   mLeaseInterval = (uint32_t)propsPtr->getPropertyInt("Hyperspace.Lease.Interval", Master::DEFAULT_LEASE_INTERVAL);
   mKeepAliveInterval = (uint32_t)propsPtr->getPropertyInt("Hyperspace.KeepAlive.Interval", Master::DEFAULT_KEEPALIVE_INTERVAL);
-  mGracePeriod = (uint32_t)propsPtr->getPropertyInt("Hyperspace.GracePeriod", Master::DEFAULT_GRACEPERIOD);
   sendPort = (uint16_t)propsPtr->getPropertyInt("Hyperspace.Client.port", Session::DEFAULT_CLIENT_PORT);
   
   if (!InetAddr::Initialize(&mMasterAddr, masterHost, masterPort))
@@ -50,7 +48,6 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsP
 
   if (mVerbose) {
     cout << "Hyperspace.Client.port=" << sendPort << endl;
-    cout << "Hyperspace.GracePeriod=" << mGracePeriod << endl;
     cout << "Hyperspace.KeepAlive.Interval=" << mKeepAliveInterval << endl;
     cout << "Hyperspace.Lease.Interval=" << mLeaseInterval << endl;
     cout << "Hyperspace.Master.host=" << masterHost << endl;
@@ -59,7 +56,7 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsP
 
   boost::xtime_get(&mLastKeepAliveSendTime, boost::TIME_UTC);
   boost::xtime_get(&mJeopardyTime, boost::TIME_UTC);
-  mJeopardyTime.sec += mGracePeriod;
+  mJeopardyTime.sec += mLeaseInterval;
 
   InetAddr::Initialize(&mLocalAddr, INADDR_ANY, sendPort);
 
@@ -121,12 +118,10 @@ void ClientKeepaliveHandler::handle(EventPtr &eventPtr) {
 	  uint64_t sessionId;
 	  int state;
 
-	  if (mSessionStatePtr->Get() == ClientSessionState::EXPIRED)
+	  if (mSession->GetState() == Session::STATE_EXPIRED)
 	    return;
 
-	  state = mSessionStatePtr->Transition(ClientSessionState::SAFE);
-	  if (state == ClientSessionState::JEOPARDY)
-	    mSessionCallback->Safe();
+	  state = mSession->StateTransition(Session::STATE_SAFE);
 
 	  // update jeopardy time
 	  memcpy(&mJeopardyTime, &mLastKeepAliveSendTime, sizeof(boost::xtime));
@@ -141,7 +136,7 @@ void ClientKeepaliveHandler::handle(EventPtr &eventPtr) {
 	  if (mSessionId == 0) {
 	    mSessionId = sessionId;
 	    if (mConnHandler == 0) {
-	      mConnHandler = new ClientConnectionHandler(mComm, mSessionCallback, mSessionStatePtr);
+	      mConnHandler = new ClientConnectionHandler(mComm, mSession);
 	      mConnHandler->SetVerboseMode(mVerbose);
 	      mConnHandler->SetSessionId(mSessionId);
 	    }
@@ -174,27 +169,19 @@ void ClientKeepaliveHandler::handle(EventPtr &eventPtr) {
     
     // !!! fix - what about re-ordered packets?
 
-    state = mSessionStatePtr->Get();
-
-    if (state == ClientSessionState::EXPIRED)
+    if ((state = mSession->GetState()) == Session::STATE_EXPIRED)
       return;
 
     boost::xtime_get(&now, boost::TIME_UTC);
 
-    if (state == ClientSessionState::SAFE) {
+    if (state == Session::STATE_SAFE) {
       if (xtime_cmp(mJeopardyTime, now) < 0) {
-	mSessionStatePtr->Transition(ClientSessionState::JEOPARDY);
-	mSessionCallback->Jeopardy();
-	memcpy(&mExpireTime, &now, sizeof(boost::xtime));	  
-	mExpireTime.sec += mGracePeriod;
+	mSession->StateTransition(Session::STATE_JEOPARDY);
       }
     }
-    else {
-      if (xtime_cmp(mExpireTime, now) < 0) {
-	mSessionStatePtr->Transition(ClientSessionState::EXPIRED);
-	mSessionCallback->Expired();
-	return;
-      }
+    else if (mSession->Expired()) {
+      mSession->StateTransition(Session::STATE_EXPIRED);
+      return;
     }
 
     CommBufPtr commBufPtr( Hyperspace::Protocol::CreateClientKeepaliveRequest(mSessionId, mLastKnownEvent) );

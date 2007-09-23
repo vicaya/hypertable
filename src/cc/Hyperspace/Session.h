@@ -34,7 +34,6 @@
 #include "Common/DynamicBuffer.h"
 
 #include "ClientKeepaliveHandler.h"
-#include "ClientSessionState.h"
 #include "HandleCallback.h"
 #include "Protocol.h"
 
@@ -112,6 +111,8 @@ namespace Hyperspace {
 
   public:
 
+    enum { STATE_EXPIRED, STATE_JEOPARDY, STATE_SAFE };
+
     Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback);
 
     int Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, uint64_t *handlep, bool *createdp);
@@ -131,6 +132,10 @@ namespace Hyperspace {
     int CheckSequencer(struct LockSequencerT &sequencer);
     int Status();
 
+    // Session state methods
+    int StateTransition(int state);
+    int GetState();
+    bool Expired();
     bool WaitForConnection(long maxWaitSecs);
 
     static const uint32_t DEFAULT_CLIENT_PORT = 38550;
@@ -143,9 +148,11 @@ namespace Hyperspace {
     boost::condition   mCond;
     Comm *mComm;
     bool mVerbose;
+    int  mState;
+    uint32_t mGracePeriod;
+    boost::xtime mExpireTime;
     struct sockaddr_in mMasterAddr;
     ClientKeepaliveHandler *mKeepaliveHandler;
-    ClientSessionStatePtr   mSessionStatePtr;
     SessionCallback        *mSessionCallback;
   };
 
