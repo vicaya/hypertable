@@ -178,8 +178,10 @@ int main(int argc, char **argv) {
       for (i=0; i<commands.size(); i++) {
 	if (commands[i]->Matches(commandStr.c_str())) {
 	  commands[i]->ParseCommandLine(commandStr.c_str());
-	  if (commands[i]->run() != Error::OK)
+	  if ((error = commands[i]->run()) != Error::OK) {
+	    cerr << Error::GetText(error) << endl;
 	    return 1;
+	  }
 	  break;
 	}
       }
@@ -206,7 +208,10 @@ int main(int argc, char **argv) {
     for (i=0; i<commands.size(); i++) {
       if (commands[i]->Matches(line)) {
 	commands[i]->ParseCommandLine(line);
-	commands[i]->run();
+	if ((error = commands[i]->run()) != Error::OK) {
+	  cerr << Error::GetText(error) << endl;
+	  return 1;
+	}
 	break;
       }
     }
