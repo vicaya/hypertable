@@ -18,6 +18,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+extern "C" {
+#include <poll.h>
+}
+
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/Exception.h"
@@ -131,6 +135,20 @@ void ClientKeepaliveHandler::handle(EventPtr &eventPtr) {
 	    throw ProtocolException(message);
 	  }
 
+	  if (!Serialization::DecodeInt(&msgPtr, &remaining, (uint32_t *)&error)) {
+	    std::string message = "Truncated Request";
+	    cerr << "Message len = " << eventPtr->messageLen << endl;
+	    throw ProtocolException(message);
+	  }
+
+	  if (error != Error::OK) {
+	    if (error != Error::HYPERSPACE_EXPIRED_SESSION) {
+	      LOG_VA_ERROR("Master session error - %s", Error::GetText(error));
+	    }
+	    ExpireSession();
+	    return;
+	  }
+
 	  if (mSessionId == 0) {
 	    mSessionId = sessionId;
 	    if (mConnHandler == 0) {
@@ -180,7 +198,7 @@ void ClientKeepaliveHandler::handle(EventPtr &eventPtr) {
       }
     }
     else if (mSession->Expired()) {
-      mSession->StateTransition(Session::STATE_EXPIRED);
+      ExpireSession();
       return;
     }
 
@@ -203,3 +221,14 @@ void ClientKeepaliveHandler::handle(EventPtr &eventPtr) {
   }
 }
 
+
+
+void ClientKeepaliveHandler::ExpireSession() {
+  mSession->StateTransition(Session::STATE_EXPIRED);
+  if (mConnHandler)
+    mConnHandler->Close();
+  poll(0,0,2000);
+  delete mConnHandler;
+  mConnHandler = 0;
+  return;
+}

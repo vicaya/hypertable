@@ -64,6 +64,12 @@ namespace Hyperspace {
 
     void SetVerboseMode(bool verbose) { mVerbose = verbose; }
 
+    void Close() {
+      boost::mutex::scoped_lock lock(mMutex);
+      mComm->CloseSocket(mMasterAddr);
+      mState = DISCONNECTED;
+    }
+
   private:
     boost::mutex       mMutex;
     Comm *mComm;
@@ -71,6 +77,7 @@ namespace Hyperspace {
     uint64_t mSessionId;
     int mState;
     bool mVerbose;
+    struct sockaddr_in mMasterAddr;
   };
 
 }

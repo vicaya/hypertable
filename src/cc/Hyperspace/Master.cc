@@ -132,12 +132,14 @@ Master::~Master() {
 }
 
 
-void Master::CreateSession(struct sockaddr_in &addr, SessionDataPtr &sessionPtr) {
+uint64_t Master::CreateSession(struct sockaddr_in &addr) {
   boost::mutex::scoped_lock lock(mSessionMapMutex);
+  SessionDataPtr sessionPtr;
   uint64_t sessionId = mNextSessionId++;
   sessionPtr = new SessionData(addr, mLeaseInterval, sessionId);
   mSessionMap[sessionId] = sessionPtr;
-  return;
+  mSessionHeap.push_back(sessionPtr);
+  return sessionId;
 }
 
 
@@ -148,6 +150,26 @@ bool Master::GetSessionData(uint64_t sessionId, SessionDataPtr &sessionPtr) {
     return false;
   sessionPtr = (*iter).second;
   return true;
+}
+
+
+int Master::RenewSessionLease(uint64_t sessionId) {
+  boost::mutex::scoped_lock lock(mSessionMapMutex);  
+  boost::xtime now;
+
+  SessionMapT::iterator iter = mSessionMap.find(sessionId);
+  if (iter == mSessionMap.end())
+    return Error::HYPERSPACE_EXPIRED_SESSION;
+
+  boost::xtime_get(&now, boost::TIME_UTC);
+
+  if (xtime_cmp((*iter).second->expireTime, now) < 0)
+    return Error::HYPERSPACE_EXPIRED_SESSION;
+
+  memcpy(&(*iter).second->expireTime, &now, sizeof(boost::xtime));
+  (*iter).second->expireTime.sec += mLeaseInterval;
+
+  return Error::OK;
 }
 
 

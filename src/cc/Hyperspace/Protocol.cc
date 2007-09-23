@@ -81,12 +81,13 @@ CommBuf *Hyperspace::Protocol::CreateClientKeepaliveRequest(uint64_t sessionId, 
 /**
  *
  */
-CommBuf *Hyperspace::Protocol::CreateServerKeepaliveRequest(uint64_t sessionId) {
+CommBuf *Hyperspace::Protocol::CreateServerKeepaliveRequest(uint64_t sessionId, int error) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
   hbuilder.AssignUniqueId();
-  CommBuf *cbuf = new CommBuf(hbuilder, 10);
+  CommBuf *cbuf = new CommBuf(hbuilder, 14);
   cbuf->AppendShort(COMMAND_KEEPALIVE);
   cbuf->AppendLong(sessionId);
+  cbuf->AppendInt(error);
   return cbuf;
 }
 

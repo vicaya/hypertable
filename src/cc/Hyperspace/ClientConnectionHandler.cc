@@ -35,6 +35,7 @@ using namespace hypertable;
  * 
  */    
 ClientConnectionHandler::ClientConnectionHandler(Comm *comm, Session *session) : mComm(comm), mSession(session), mState(DISCONNECTED), mSessionId(0), mVerbose(false) {
+  memset(&mMasterAddr, 0, sizeof(struct sockaddr_in));
   return;
 }
 
@@ -73,6 +74,8 @@ void ClientConnectionHandler::handle(EventPtr &eventPtr) {
   else if (eventPtr->type == Event::CONNECTION_ESTABLISHED) {
 
     mState = HANDSHAKING;
+
+    memcpy(&mMasterAddr, &eventPtr->addr, sizeof(struct sockaddr_in));
 
     CommBufPtr commBufPtr( Hyperspace::Protocol::CreateHandshakeRequest(mSessionId) );
 

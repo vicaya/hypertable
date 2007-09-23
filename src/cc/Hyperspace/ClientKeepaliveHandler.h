@@ -58,6 +58,8 @@ namespace Hyperspace {
       mHandleMap.erase(handle);
     }
 
+    void ExpireSession();
+
   private:
     boost::mutex       mMutex;
     boost::xtime       mLastKeepAliveSendTime;

@@ -32,23 +32,22 @@ namespace Hyperspace {
   class SessionData : public ReferenceCount {
   public:
     SessionData(struct sockaddr_in &_addr, uint32_t leaseInterval, uint64_t id) : addr(_addr), mLeaseInterval(leaseInterval), mId(id) {
-      boost::xtime_get(&mExpireTime, boost::TIME_UTC);      
-      mExpireTime.sec + leaseInterval;
+      boost::xtime_get(&expireTime, boost::TIME_UTC);
+      expireTime.sec += leaseInterval;
       return;
     }
 
     void RenewLease() {
-      boost::xtime_get(&mExpireTime, boost::TIME_UTC);      
-      mExpireTime.sec + mLeaseInterval;
+      boost::xtime_get(&expireTime, boost::TIME_UTC);      
+      expireTime.sec + mLeaseInterval;
     }
 
     uint64_t GetId() { return mId; }
 
-  private:
     struct sockaddr_in addr;
     uint32_t mLeaseInterval;
     uint64_t mId;
-    boost::xtime mExpireTime;
+    boost::xtime expireTime;
   };
 
   typedef boost::intrusive_ptr<SessionData> SessionDataPtr;

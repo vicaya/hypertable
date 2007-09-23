@@ -21,6 +21,8 @@
 #ifndef HYPERSPACE_MASTER_H
 #define HYPERSPACE_MASTER_H
 
+#include <queue>
+#include <vector>
 #include <ext/hash_map>
 
 #include <boost/thread/mutex.hpp>
@@ -50,8 +52,9 @@ namespace Hyperspace {
     Master(ConnectionManager *connManager, PropertiesPtr &propsPtr);
     ~Master();
     
-    void CreateSession(struct sockaddr_in &addr, SessionDataPtr &sessionPtr);
+    uint64_t CreateSession(struct sockaddr_in &addr);
     bool GetSessionData(uint64_t sessionId, SessionDataPtr &sessionPtr);
+    int RenewSessionLease(uint64_t sessionId);
     void CreateHandle(uint64_t *handlep, HandleDataPtr &handlePtr);
     bool GetHandleData(uint64_t sessionId, HandleDataPtr &handlePtr);
 
@@ -89,6 +92,15 @@ namespace Hyperspace {
     uint32_t      mGeneration;
     uint64_t      mNextHandleNumber;
     uint64_t      mNextSessionId;
+
+    struct ltSessionData {
+      bool operator()(const SessionDataPtr &sd1, const SessionDataPtr &sd2) const {
+	return xtime_cmp(sd1->expireTime, sd2->expireTime) >= 0;
+      }
+    };
+
+    std::vector<SessionDataPtr> mSessionHeap;
+
   };
 
 }

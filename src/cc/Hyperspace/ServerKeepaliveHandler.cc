@@ -65,16 +65,19 @@ void ServerKeepaliveHandler::handle(EventPtr &eventPtr) {
 	    throw new ProtocolException(message);
 	  }
 
-	  SessionDataPtr sessionDataPtr;
-	  if (mMaster->GetSessionData(sessionId, sessionDataPtr)) {
-	    sessionDataPtr->RenewLease();
+	  if (sessionId == 0) {
+	    sessionId = mMaster->CreateSession(eventPtr->addr);
+	    LOG_VA_INFO("Session handle %lld created", sessionId);
+	    error = Error::OK;
 	  }
-	  else {
-	    mMaster->CreateSession(eventPtr->addr, sessionDataPtr);
-	    sessionId = sessionDataPtr->GetId();
+	  else
+	    error = mMaster->RenewSessionLease(sessionId);
+
+	  if (error == Error::HYPERSPACE_EXPIRED_SESSION) {
+	    LOG_VA_INFO("Session handle %lld expired", sessionId);
 	  }
 
-	  CommBufPtr cbufPtr( Protocol::CreateServerKeepaliveRequest(sessionId) );
+	  CommBufPtr cbufPtr( Protocol::CreateServerKeepaliveRequest(sessionId, error) );
 	  if ((error = mComm->SendDatagram(eventPtr->addr, eventPtr->localAddr, cbufPtr)) != Error::OK) {
 	    LOG_VA_ERROR("Comm::SendDatagram returned %s", Error::GetText(error));
 	  }
