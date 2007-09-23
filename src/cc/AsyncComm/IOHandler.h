@@ -39,6 +39,7 @@ extern "C" {
 
 #include "DispatchHandler.h"
 #include "ReactorFactory.h"
+#include "Timer.h"
 
 namespace hypertable {
 
@@ -115,7 +116,12 @@ namespace hypertable {
     HandlerMap &GetHandlerMap() { return mHandlerMap; }
 
     void Shutdown() { 
+      struct TimerT timer;
       mReactor->ScheduleRemoval(this);
+      boost::xtime_get(&timer.expireTime, boost::TIME_UTC);
+      timer.expireTime.nsec += 200000000LL;
+      timer.handler = 0;
+      mReactor->AddTimer(timer);
     }
 
   protected:
