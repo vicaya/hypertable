@@ -45,8 +45,6 @@ using namespace hypertable;
 #if defined(__APPLE__)
 bool IOHandlerAccept::HandleEvent(struct kevent *event) {
   //DisplayEvent(event);
-  if (mShutdown)
-    return true;
   if (event->filter == EVFILT_READ)  
     return HandleIncomingConnection();
   return true;
@@ -54,8 +52,6 @@ bool IOHandlerAccept::HandleEvent(struct kevent *event) {
 #elif defined(__linux__)
 bool IOHandlerAccept::HandleEvent(struct epoll_event *event) {
   //DisplayEvent(event);
-  if (mShutdown)
-    return true;
   return HandleIncomingConnection();
 }
 #else

@@ -51,11 +51,6 @@ bool IOHandlerData::HandleEvent(struct epoll_event *event) {
 
   //DisplayEvent(event);
 
-  if (mShutdown) {
-    DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
-    return true;
-  }
-
   if (event->events & EPOLLOUT) {
     if (HandleWriteReadiness()) {
       DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
@@ -152,11 +147,6 @@ bool IOHandlerData::HandleEvent(struct epoll_event *event) {
 bool IOHandlerData::HandleEvent(struct kevent *event) {
 
   //DisplayEvent(event);
-
-  if (mShutdown) {
-    DeliverEvent( new Event(Event::DISCONNECT, mId, mAddr, Error::OK) );
-    return true;
-  }
 
   assert(mSd == (int)event->ident);
 

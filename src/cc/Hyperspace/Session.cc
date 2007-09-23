@@ -73,9 +73,17 @@ Session::Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback)
 
 
 int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, uint64_t *handlep, bool *createdp) {
+  boost::mutex::scoped_lock lock(mMutex);
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( Protocol::CreateOpenRequest(name, flags, callbackPtr) );
+
+  while (mState != STATE_SAFE) {
+    if (mState == STATE_EXPIRED)
+      return Error::HYPERSPACE_EXPIRED_SESSION;
+    mCond.wait(lock);
+  }
+  
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
@@ -103,9 +111,17 @@ int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackP
  * Submit 'mkdir' request
  */
 int Session::Mkdir(std::string name) {
+  boost::mutex::scoped_lock lock(mMutex);
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( Protocol::CreateMkdirRequest(name) );
+
+  while (mState != STATE_SAFE) {
+    if (mState == STATE_EXPIRED)
+      return Error::HYPERSPACE_EXPIRED_SESSION;
+    mCond.wait(lock);
+  }
+  
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
@@ -121,9 +137,17 @@ int Session::Mkdir(std::string name) {
  *  Blocking 'attrset' request
  */
 int Session::AttrSet(uint64_t handle, std::string name, const void *value, size_t valueLen) {
+  boost::mutex::scoped_lock lock(mMutex);
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( Protocol::CreateAttrSetRequest(handle, name, value, valueLen) );
+
+  while (mState != STATE_SAFE) {
+    if (mState == STATE_EXPIRED)
+      return Error::HYPERSPACE_EXPIRED_SESSION;
+    mCond.wait(lock);
+  }
+
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
@@ -171,6 +195,7 @@ int Session::StateTransition(int state) {
   else if (mState == STATE_EXPIRED) {
     if (oldState != STATE_EXPIRED)
       mSessionCallback->Expired();
+    mCond.notify_all();
   }
   return oldState;
 }

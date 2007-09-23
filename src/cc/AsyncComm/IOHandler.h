@@ -54,7 +54,6 @@ namespace hypertable {
     IOHandler(int sd, struct sockaddr_in &addr, DispatchHandler *dh, HandlerMap &hmap) : mAddr(addr), mSd(sd), mDispatchHandler(dh), mHandlerMap(hmap) {
       mReactor = ReactorFactory::GetReactor();
       mPollInterest = 0;
-      mShutdown = false;
       socklen_t namelen = sizeof(mLocalAddr);
       getsockname(mSd, (sockaddr *)&mLocalAddr, &namelen);
     }
@@ -142,7 +141,6 @@ namespace hypertable {
     HandlerMap         &mHandlerMap;
     Reactor            *mReactor;
     int                 mPollInterest;
-    bool                mShutdown;
 
 #if defined(__APPLE__)
     void DisplayEvent(struct kevent *event);

@@ -121,7 +121,7 @@ void ClientKeepaliveHandler::handle(EventPtr &eventPtr) {
 	  if (mSession->GetState() == Session::STATE_EXPIRED)
 	    return;
 
-	  state = mSession->StateTransition(Session::STATE_SAFE);
+	  //state = mSession->StateTransition(Session::STATE_SAFE);
 
 	  // update jeopardy time
 	  memcpy(&mJeopardyTime, &mLastKeepAliveSendTime, sizeof(boost::xtime));

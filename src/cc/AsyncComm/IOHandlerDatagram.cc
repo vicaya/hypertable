@@ -50,9 +50,6 @@ bool IOHandlerDatagram::HandleEvent(struct epoll_event *event) {
 
   //DisplayEvent(event);
 
-  if (mShutdown)
-    return true;
-
   if (event->events & EPOLLOUT) {
     if ((error = HandleWriteReadiness()) != Error::OK) {
       DeliverEvent( new Event(Event::ERROR, 0, mAddr, error) );
@@ -98,10 +95,6 @@ bool IOHandlerDatagram::HandleEvent(struct kevent *event) {
   int error;
 
   //DisplayEvent(event);
-
-  if (mShutdown) {
-    return true;
-  }
 
   assert(mSd == (int)event->ident);
 
