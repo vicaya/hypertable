@@ -84,6 +84,8 @@ void ClientConnectionHandler::handle(EventPtr &eventPtr) {
   }
   else {
     LOG_VA_INFO("%s", eventPtr->toString().c_str());
+    mComm->CloseSocket(eventPtr->addr);
+    mState = DISCONNECTED;
   }
 
 }
