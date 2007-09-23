@@ -32,7 +32,7 @@
 using namespace hypertable;
 using namespace Hyperspace;
 
-ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsPtr, Hyperspace::SessionCallback *sessionCallback, ClientSessionStatePtr &sessionStatePtr) : mComm(comm), mSessionCallback(sessionCallback), mSessionStatePtr(sessionStatePtr), mSessionId(0), mConnHandler(0) {
+ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsPtr, Hyperspace::SessionCallback *sessionCallback, ClientSessionStatePtr &sessionStatePtr) : mComm(comm), mSessionCallback(sessionCallback), mSessionStatePtr(sessionStatePtr), mSessionId(0), mConnHandler(0), mLastKnownEvent(0) {
   int error;
   uint16_t sendPort, masterPort;
   const char *masterHost;
@@ -69,7 +69,7 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsP
     exit(1);
   }
 
-  CommBufPtr commBufPtr( Hyperspace::Protocol::CreateKeepAliveRequest(0) );
+  CommBufPtr commBufPtr( Hyperspace::Protocol::CreateClientKeepaliveRequest(mSessionId, mLastKnownEvent) );
 
   if ((error = mComm->SendDatagram(mMasterAddr, mLocalAddr, commBufPtr) != Error::OK)) {
     LOG_VA_ERROR("Unable to send datagram - %s", Error::GetText(error));
@@ -197,7 +197,7 @@ void ClientKeepaliveHandler::handle(EventPtr &eventPtr) {
       }
     }
 
-    CommBufPtr commBufPtr( Hyperspace::Protocol::CreateKeepAliveRequest(mSessionId) );
+    CommBufPtr commBufPtr( Hyperspace::Protocol::CreateClientKeepaliveRequest(mSessionId, mLastKnownEvent) );
 
     boost::xtime_get(&mLastKeepAliveSendTime, boost::TIME_UTC);
     

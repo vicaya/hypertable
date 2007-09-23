@@ -56,9 +56,11 @@ void ServerKeepaliveHandler::handle(EventPtr &eventPtr) {
       switch (command) {
       case Protocol::COMMAND_KEEPALIVE:
 	{
-	  uint64_t      sessionId;
+	  uint64_t sessionId;
+	  uint64_t lastKnownEvent;
 
-	  if (!Serialization::DecodeLong(&msgPtr, &remaining, &sessionId)) {
+	  if (!Serialization::DecodeLong(&msgPtr, &remaining, &sessionId) ||
+	      !Serialization::DecodeLong(&msgPtr, &remaining, &lastKnownEvent)) {
 	    std::string message = "Truncated Request";
 	    throw new ProtocolException(message);
 	  }
@@ -72,7 +74,7 @@ void ServerKeepaliveHandler::handle(EventPtr &eventPtr) {
 	    sessionId = sessionDataPtr->GetId();
 	  }
 
-	  CommBufPtr cbufPtr( Protocol::CreateKeepAliveRequest(sessionId) );
+	  CommBufPtr cbufPtr( Protocol::CreateServerKeepaliveRequest(sessionId) );
 	  if ((error = mComm->SendDatagram(eventPtr->addr, eventPtr->localAddr, cbufPtr)) != Error::OK) {
 	    LOG_VA_ERROR("Comm::SendDatagram returned %s", Error::GetText(error));
 	  }

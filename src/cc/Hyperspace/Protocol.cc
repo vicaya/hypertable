@@ -67,7 +67,21 @@ const char *Hyperspace::Protocol::CommandText(short command) {
 /**
  *
  */
-CommBuf *Hyperspace::Protocol::CreateKeepAliveRequest(uint64_t sessionId) {
+CommBuf *Hyperspace::Protocol::CreateClientKeepaliveRequest(uint64_t sessionId, uint64_t lastKnownEvent) {
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
+  hbuilder.AssignUniqueId();
+  CommBuf *cbuf = new CommBuf(hbuilder, 18);
+  cbuf->AppendShort(COMMAND_KEEPALIVE);
+  cbuf->AppendLong(sessionId);
+  cbuf->AppendLong(lastKnownEvent);
+  return cbuf;
+}
+
+
+/**
+ *
+ */
+CommBuf *Hyperspace::Protocol::CreateServerKeepaliveRequest(uint64_t sessionId) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
   hbuilder.AssignUniqueId();
   CommBuf *cbuf = new CommBuf(hbuilder, 10);
@@ -75,6 +89,7 @@ CommBuf *Hyperspace::Protocol::CreateKeepAliveRequest(uint64_t sessionId) {
   cbuf->AppendLong(sessionId);
   return cbuf;
 }
+
 
 
 /**

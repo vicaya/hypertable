@@ -75,6 +75,7 @@ namespace Hyperspace {
     ClientSessionStatePtr mSessionStatePtr;
     uint64_t mSessionId;
     ClientConnectionHandler *mConnHandler;
+    uint64_t mLastKnownEvent;
 
     typedef __gnu_cxx::hash_map<uint64_t, HandleCallbackPtr> HandleMapT;
     HandleMapT  mHandleMap;
