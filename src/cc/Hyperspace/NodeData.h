@@ -25,6 +25,8 @@
 
 #include "Common/ReferenceCount.h"
 
+#include "HandleData.h"
+
 namespace Hyperspace {
 
   class NodeData : public hypertable::ReferenceCount {
@@ -32,6 +34,8 @@ namespace Hyperspace {
     NodeData() : fd(-1) { return; }
     std::string name;
     int         fd;
+    typedef __gnu_cxx::hash_map<uint64_t, HandleDataPtr>  HandleMapT;
+    HandleMapT handleMap;
   };
   typedef boost::intrusive_ptr<NodeData> NodeDataPtr;
 

@@ -21,24 +21,34 @@
 #ifndef HYPERSPACE_SERVERKEEPALIVEHANDLER_H
 #define HYPERSPACE_SERVERKEEPALIVEHANDLER_H
 
+#include <boost/shared_ptr.hpp>
+
+#include "AsyncComm/Comm.h"
 #include "AsyncComm/DispatchHandler.h"
 
-#include "Master.h"
+#include "Event.h"
+#include "HandleData.h"
+
+using namespace hypertable;
 
 namespace Hyperspace {
+
+  class Master;
 
   /**
    */
   class ServerKeepaliveHandler : public DispatchHandler {
   public:
-    ServerKeepaliveHandler(Comm *comm, Master *master) : mComm(comm), mMaster(master) { return; }
+    ServerKeepaliveHandler(Comm *comm, Master *master);
     virtual void handle(EventPtr &eventPtr);
+    void DeliverEventNotifications(uint64_t sessionId);
 
   private:
     Comm              *mComm;
     Master            *mMaster;
+    struct sockaddr_in mSendAddr;
   };
-
+  typedef boost::shared_ptr<ServerKeepaliveHandler> ServerKeepaliveHandlerPtr;
 }
 
 #endif // HYPERSPACE_SERVERKEEPALIVEHANDLER_H

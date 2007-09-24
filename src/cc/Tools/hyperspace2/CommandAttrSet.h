@@ -18,24 +18,29 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_FILEHANDLECALLBACK_H
-#define HYPERSPACE_FILEHANDLECALLBACK_H
+#ifndef HYPERTABLE_COMMANDATTRSET_H
+#define HYPERTABLE_COMMANDATTRSET_H
 
-#include "Hyperspace/HandleCallback.h"
+#include "Common/InteractiveCommand.h"
+
+#include "Hyperspace/Session.h"
+
+#include "Global.h"
 
 namespace Hyperspace {
 
-  class FileHandleCallback : public HandleCallback {
+  class CommandAttrSet : public InteractiveCommand {
   public:
-    FileHandleCallback(uint32_t eventMask) : HandleCallback(eventMask) { return; }
-    virtual void AttrSet(std::string name) { cout << endl << "ATTR SET " << name; }
-    virtual void AttrDel(std::string name) { cout << endl << "ATTR DEL " << name; }
-    virtual void ChildNodeAdded(std::string name) { cout << endl << "CHILD NODE ADDED " << name; }
-    virtual void ChildNodeRemoved(std::string name) { cout << endl << "CHILD NODE REMOVED " << name; }
-    virtual void LockAcquired() { cout << endl << "LOCK ACQUIRED"; }
-    virtual void LockReleased() { cout << endl << "LOCK RELEASED"; }
+    CommandAttrSet(Session *session) : mSession(session) { return; }
+    virtual const char *CommandText() { return "attrset"; }
+    virtual const char **Usage() { return msUsage; }
+    virtual int run();
+
+  private:
+    static const char *msUsage[];
+    Session *mSession;
   };
 
 }
 
-#endif // HYPERSPACE_FILEHANDLECALLBACK_H
+#endif // HYPERTABLE_COMMANDATTRSET_H

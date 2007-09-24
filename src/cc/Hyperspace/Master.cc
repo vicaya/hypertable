@@ -35,6 +35,8 @@ extern "C" {
 #include "DfsBroker/Lib/Client.h"
 #include "Hypertable/Lib/Schema.h"
 
+#include "Event.h"
+#include "Notification.h"
 #include "Master.h"
 #include "Session.h"
 #include "SessionData.h"
@@ -47,10 +49,11 @@ const uint32_t Master::DEFAULT_MASTER_PORT;
 const uint32_t Master::DEFAULT_LEASE_INTERVAL;
 const uint32_t Master::DEFAULT_KEEPALIVE_INTERVAL;
 
-Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mVerbose(false), mNextHandleNumber(1), mNextSessionId(1) {
+Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr, ServerKeepaliveHandlerPtr &keepaliveHandlerPtr) : mVerbose(false), mNextHandleNumber(1), mNextSessionId(1), mNextEventId(1) {
   const char *dirname;
   std::string str;
   ssize_t xattrLen;
+  uint16_t port;
 
   mVerbose = propsPtr->getPropertyBool("verbose", false);
 
@@ -115,6 +118,12 @@ Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mVerbo
       exit(1);
     }
   }
+
+  port = propsPtr->getPropertyInt("Hyperspace.Master.port", DEFAULT_MASTER_PORT);
+  InetAddr::Initialize(&mLocalAddr, INADDR_ANY, port);
+
+  mKeepaliveHandlerPtr.reset( new ServerKeepaliveHandler(connManager->GetComm(), this) );
+  keepaliveHandlerPtr = mKeepaliveHandlerPtr;
 
   if (mVerbose) {
     cout << "Hyperspace.Lease.Interval=" << mLeaseInterval << endl;
@@ -307,9 +316,14 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
 
     CreateHandle(&handle, handlePtr);
 
-    handlePtr->nodePtr = nodePtr;
+    handlePtr->id = handle;
+    handlePtr->node = nodePtr.get();
     handlePtr->openFlags = flags;
     handlePtr->eventMask = eventMask;
+    handlePtr->sessionPtr = sessionPtr;
+    
+
+    handlePtr->node->handleMap[handle] = handlePtr;
 
   }
 
@@ -326,6 +340,9 @@ void Master::AttrSet(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, 
   SessionDataPtr sessionPtr;
   NodeDataPtr nodePtr;
   HandleDataPtr handlePtr;
+  Hyperspace::Event *event = 0;
+  int notifications = 0;
+  int error;
 
   if (mVerbose) {
     LOG_VA_INFO("attrset(session=%lld, handle=%lld, name=%s, valueLen=%d", sessionId, handle, name, valueLen);
@@ -346,14 +363,39 @@ void Master::AttrSet(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, 
     return;
   }
 
-  if (FileUtils::Fsetxattr(handlePtr->nodePtr->fd, name, value, valueLen, 0) == -1) {
-    LOG_VA_ERROR("Problem creating extended attribute '%s' on file '%s' - %s",
-		 name, handlePtr->nodePtr->name.c_str(), strerror(errno));
-    exit(1);
+  {
+    boost::mutex::scoped_lock lock(mNodeMapMutex);  // is this necessary?
+    Notification *notification;
+
+    event = new Hyperspace::Event(mNextEventId++, EVENT_MASK_ATTR_SET, name);
+
+    if (FileUtils::Fsetxattr(handlePtr->node->fd, name, value, valueLen, 0) == -1) {
+      LOG_VA_ERROR("Problem creating extended attribute '%s' on file '%s' - %s",
+		   name, handlePtr->node->name.c_str(), strerror(errno));
+      exit(1);
+    }
+
+    // log event
+
+    for (HandleMapT::iterator iter = handlePtr->node->handleMap.begin(); iter != handlePtr->node->handleMap.end(); iter++) {
+      if ((*iter).second->eventMask & EVENT_MASK_ATTR_SET) {
+	event->IncrementNotificationCount();
+	(*iter).second->sessionPtr->AddNotification( new Notification(handlePtr->id, event) );
+	mKeepaliveHandlerPtr->DeliverEventNotifications((*iter).second->sessionPtr->id);
+	notifications++;
+      }
+    }
+
   }
 
-  // TBD: Send AttrModified and ChildNodeChanged events
+  if (notifications)
+    event->WaitForNotifications();
 
+  if ((error = cb->response_ok()) != Error::OK) {
+    LOG_VA_ERROR("Problem sending back response - %s", Error::GetText(error));
+  }
+
+  delete event;
 }
 
 

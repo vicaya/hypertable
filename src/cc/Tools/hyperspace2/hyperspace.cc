@@ -43,6 +43,7 @@ extern "C" {
 
 #include "CommandMkdir.h"
 #include "CommandOpen.h"
+#include "CommandAttrSet.h"
 
 using namespace hypertable;
 using namespace std;
@@ -164,6 +165,7 @@ int main(int argc, char **argv) {
 
   commands.push_back( new CommandMkdir(session) );
   commands.push_back( new CommandOpen(session) );
+  commands.push_back( new CommandAttrSet(session) );
 
   /**
    * Non-interactive mode

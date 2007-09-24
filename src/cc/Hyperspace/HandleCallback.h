@@ -32,11 +32,12 @@ namespace Hyperspace {
    * the application for the opened handle.
    */
   enum {
-    EVENT_MASK_ATTR_MODIFIED      = 0x0001,
-    EVENT_MASK_CHILD_NODE_CHANGE  = 0x0002,
-    EVENT_MASK_LOCK_ACQUIRED      = 0x0004,
-    EVENT_MASK_HANDLE_INVALIDATED = 0x0008,
-    EVENT_MASK_CONFLICTING_LOCK   = 0x0010,
+    EVENT_MASK_ATTR_SET           = 0x0001,
+    EVENT_MASK_ATTR_DEL           = 0x0002,
+    EVENT_MASK_CHILD_NODE_ADDED   = 0x0004,
+    EVENT_MASK_CHILD_NODE_REMOVED = 0x0008,
+    EVENT_MASK_LOCK_ACQUIRED      = 0x0010,
+    EVENT_MASK_LOCK_RELEASED      = 0x0020
   };
 
   /**
@@ -47,11 +48,12 @@ namespace Hyperspace {
   class HandleCallback : public hypertable::ReferenceCount {
   public:
     HandleCallback(uint32_t eventMask) : mEventMask(eventMask) { return; }
-    virtual void AttrModified(std::string name) = 0;
-    virtual void ChildNodeChange() = 0;
+    virtual void AttrSet(std::string name) = 0;
+    virtual void AttrDel(std::string name) = 0;
+    virtual void ChildNodeAdded(std::string name) = 0;
+    virtual void ChildNodeRemoved(std::string name) = 0;
     virtual void LockAcquired() = 0;
-    virtual void HandleInvalidated() = 0;
-    virtual void ConflictingLockRequest() = 0;
+    virtual void LockReleased() = 0;
     int GetEventMask() { return mEventMask; }
   protected:
     uint32_t mEventMask;

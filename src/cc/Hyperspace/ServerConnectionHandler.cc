@@ -25,6 +25,7 @@
 #include "AsyncComm/ApplicationQueue.h"
 
 #include "Protocol.h"
+#include "RequestHandlerAttrSet.h"
 #include "RequestHandlerMkdir.h"
 #include "RequestHandlerOpen.h"
 #include "ServerConnectionHandler.h"
@@ -42,7 +43,7 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
 
   LOG_VA_INFO("%s", eventPtr->toString().c_str());
 
-  if (eventPtr->type == Event::MESSAGE) {
+  if (eventPtr->type == hypertable::Event::MESSAGE) {
     ApplicationHandler *requestHandler = 0;
     uint8_t *msgPtr = eventPtr->message;
     size_t remaining = eventPtr->messageLen;
@@ -58,6 +59,14 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
       if (command >= Protocol::COMMAND_MAX) {
 	std::string message = (std::string)"Invalid command (" + command + ")";
 	throw ProtocolException(message);
+      }
+
+      if (command != Protocol::COMMAND_HANDSHAKE && 
+	  (error = mMaster->RenewSessionLease(mSessionId)) != Error::OK) {
+	ResponseCallback cb(mComm, eventPtr);
+	LOG_VA_INFO("Session handle %lld expired", mSessionId);
+	cb.error(error, "");
+	return;
       }
 
       switch (command) {
@@ -82,7 +91,7 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
 	requestHandler = new RequestHandlerMkdir(mComm, mMaster, mSessionId, eventPtr);
 	break;
       case Protocol::COMMAND_ATTRSET:
-	requestHandler = new RequestHandlerMkdir(mComm, mMaster, mSessionId, eventPtr);
+	requestHandler = new RequestHandlerAttrSet(mComm, mMaster, mSessionId, eventPtr);
 	break;
       default:
 	std::string message = (string)"Command code " + command + " not implemented";
@@ -98,10 +107,10 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
       cb.error(Error::PROTOCOL_ERROR, errMsg);
     }
   }
-  else if (eventPtr->type == Event::CONNECTION_ESTABLISHED) {
+  else if (eventPtr->type == hypertable::Event::CONNECTION_ESTABLISHED) {
     LOG_VA_INFO("%s", eventPtr->toString().c_str());    
   }
-  else if (eventPtr->type == Event::DISCONNECT) {
+  else if (eventPtr->type == hypertable::Event::DISCONNECT) {
     // do something here!!!
     LOG_VA_INFO("%s : Closing all open handles", eventPtr->toString().c_str());
   }

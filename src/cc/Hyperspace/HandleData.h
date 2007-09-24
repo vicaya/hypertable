@@ -25,16 +25,20 @@
 
 #include "Common/ReferenceCount.h"
 
-#include "NodeData.h"
+#include "SessionData.h"
 
 namespace Hyperspace {
+
+  class NodeData;
 
   class HandleData : public hypertable::ReferenceCount {
   public:
     std::string  name;
+    uint64_t     id;
     uint32_t     openFlags;
     uint32_t     eventMask;
-    NodeDataPtr  nodePtr;
+    NodeData    *node;
+    SessionDataPtr sessionPtr;
   };
   typedef boost::intrusive_ptr<HandleData> HandleDataPtr;
 

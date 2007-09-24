@@ -40,6 +40,7 @@
 #include "NodeData.h"
 #include "HandleData.h"
 #include "ResponseCallbackOpen.h"
+#include "ServerKeepaliveHandler.h"
 #include "SessionData.h"
 
 using namespace hypertable;
@@ -49,7 +50,7 @@ namespace Hyperspace {
   class Master {
   public:
 
-    Master(ConnectionManager *connManager, PropertiesPtr &propsPtr);
+    Master(ConnectionManager *connManager, PropertiesPtr &propsPtr, ServerKeepaliveHandlerPtr &keepaliveHandlerPtr);
     ~Master();
     
     uint64_t CreateSession(struct sockaddr_in &addr);
@@ -57,6 +58,8 @@ namespace Hyperspace {
     int RenewSessionLease(uint64_t sessionId);
     void CreateHandle(uint64_t *handlep, HandleDataPtr &handlePtr);
     bool GetHandleData(uint64_t sessionId, HandleDataPtr &handlePtr);
+
+    void GetDatagramSendAddress(struct sockaddr_in *addr) { memcpy(addr, &mLocalAddr, sizeof(mLocalAddr)); }
 
     uint32_t GetLeaseInterval() { return mLeaseInterval; }
 
@@ -92,6 +95,9 @@ namespace Hyperspace {
     uint32_t      mGeneration;
     uint64_t      mNextHandleNumber;
     uint64_t      mNextSessionId;
+    uint64_t      mNextEventId;
+    ServerKeepaliveHandlerPtr mKeepaliveHandlerPtr;
+    struct sockaddr_in mLocalAddr;
 
     struct ltSessionData {
       bool operator()(const SessionDataPtr &sd1, const SessionDataPtr &sd2) const {

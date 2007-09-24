@@ -18,24 +18,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_FILEHANDLECALLBACK_H
-#define HYPERSPACE_FILEHANDLECALLBACK_H
+#ifndef HYPERSPACE_NOTIFICATION_H
+#define HYPERSPACE_NOTIFICATION_H
 
-#include "Hyperspace/HandleCallback.h"
+#include "Event.h"
 
 namespace Hyperspace {
 
-  class FileHandleCallback : public HandleCallback {
+  class Notification {
   public:
-    FileHandleCallback(uint32_t eventMask) : HandleCallback(eventMask) { return; }
-    virtual void AttrSet(std::string name) { cout << endl << "ATTR SET " << name; }
-    virtual void AttrDel(std::string name) { cout << endl << "ATTR DEL " << name; }
-    virtual void ChildNodeAdded(std::string name) { cout << endl << "CHILD NODE ADDED " << name; }
-    virtual void ChildNodeRemoved(std::string name) { cout << endl << "CHILD NODE REMOVED " << name; }
-    virtual void LockAcquired() { cout << endl << "LOCK ACQUIRED"; }
-    virtual void LockReleased() { cout << endl << "LOCK RELEASED"; }
+    Notification(uint64_t h, Hyperspace::Event *e) : handle(h), event(e) { return; }
+    uint64_t handle;
+    Hyperspace::Event *event;
   };
 
 }
 
-#endif // HYPERSPACE_FILEHANDLECALLBACK_H
+#endif // HYPERSPACE_NOTIFICATION_H
+

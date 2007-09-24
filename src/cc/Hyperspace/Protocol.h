@@ -29,6 +29,8 @@ extern "C" {
 #include "AsyncComm/Protocol.h"
 
 #include "HandleCallback.h"
+#include "Notification.h"
+#include "SessionData.h"
 
 using namespace hypertable;
 
@@ -42,11 +44,14 @@ namespace Hyperspace {
 
     static CommBuf *CreateClientKeepaliveRequest(uint64_t sessionId, uint64_t lastKnownEvent);
     static CommBuf *CreateServerKeepaliveRequest(uint64_t sessionId, int error); 
+    static CommBuf *CreateServerKeepaliveRequest(SessionDataPtr &sessionPtr);
     static CommBuf *CreateHandshakeRequest(uint64_t sessionId);
 
     static CommBuf *CreateOpenRequest(std::string &name, uint32_t flags, HandleCallbackPtr &callbackPtr);
     static CommBuf *CreateMkdirRequest(std::string &name);
     static CommBuf *CreateAttrSetRequest(uint64_t handle, std::string &name, const void *value, size_t valueLen);
+
+    static CommBuf *CreateEventNotification(uint64_t handle, std::string &name, const void *value, size_t valueLen);
 
 
     /**

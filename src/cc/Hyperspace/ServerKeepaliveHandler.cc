@@ -20,14 +20,36 @@
 
 #include "Common/Error.h"
 #include "Common/Exception.h"
+#include "Common/InetAddr.h"
 #include "Common/StringExt.h"
+#include "Common/System.h"
 
 #include "ServerKeepaliveHandler.h"
+#include "Master.h"
 #include "Protocol.h"
 #include "SessionData.h"
 
 using namespace hypertable;
 using namespace Hyperspace;
+
+
+/**
+ *
+ */
+ServerKeepaliveHandler::ServerKeepaliveHandler(Comm *comm, Master *master) : mComm(comm), mMaster(master) { 
+  int error; 
+
+  mMaster->GetDatagramSendAddress(&mSendAddr);
+
+  if ((error = mComm->SetTimer(1000, this)) != Error::OK) {
+    LOG_VA_ERROR("Problem setting timer - %s", Error::GetText(error));
+    exit(1);
+  }
+  
+  return; 
+}
+
+
 
 /**
  *
@@ -36,7 +58,7 @@ void ServerKeepaliveHandler::handle(EventPtr &eventPtr) {
   uint16_t command = (uint16_t)-1;
   int error;
 
-  if (eventPtr->type == Event::MESSAGE) {
+  if (eventPtr->type == hypertable::Event::MESSAGE) {
     uint8_t *msgPtr = eventPtr->message;
     size_t remaining = eventPtr->messageLen;
 
@@ -57,6 +79,7 @@ void ServerKeepaliveHandler::handle(EventPtr &eventPtr) {
       case Protocol::COMMAND_KEEPALIVE:
 	{
 	  uint64_t sessionId;
+	  SessionDataPtr sessionPtr;
 	  uint64_t lastKnownEvent;
 
 	  if (!Serialization::DecodeLong(&msgPtr, &remaining, &sessionId) ||
@@ -77,8 +100,22 @@ void ServerKeepaliveHandler::handle(EventPtr &eventPtr) {
 	    LOG_VA_INFO("Session handle %lld expired", sessionId);
 	  }
 
-	  CommBufPtr cbufPtr( Protocol::CreateServerKeepaliveRequest(sessionId, error) );
-	  if ((error = mComm->SendDatagram(eventPtr->addr, eventPtr->localAddr, cbufPtr)) != Error::OK) {
+	  if (!mMaster->GetSessionData(sessionId, sessionPtr)) {
+	    LOG_VA_ERROR("Unable to find data for session %lld", sessionId);
+	    DUMP_CORE;
+	  }
+
+	  sessionPtr->PurgeNotifications(lastKnownEvent);
+
+	  /**
+	  {
+	    std::string str;
+	    LOG_VA_INFO("Sending Keepalive request to %s (lastKnownEvent=%lld)", InetAddr::StringFormat(str, eventPtr->addr), lastKnownEvent);
+	  }
+	  **/
+
+	  CommBufPtr cbufPtr( Protocol::CreateServerKeepaliveRequest(sessionPtr) );
+	  if ((error = mComm->SendDatagram(eventPtr->addr, mSendAddr, cbufPtr)) != Error::OK) {
 	    LOG_VA_ERROR("Comm::SendDatagram returned %s", Error::GetText(error));
 	  }
 	}
@@ -93,8 +130,46 @@ void ServerKeepaliveHandler::handle(EventPtr &eventPtr) {
       LOG_VA_ERROR("Protocol error '%s'", e.what());
     }
   }
+  else if (eventPtr->type == hypertable::Event::TIMER) {
+
+    // Deliver event notification timeouts ...
+
+    if ((error = mComm->SetTimer(1000, this)) != Error::OK) {
+      LOG_VA_ERROR("Problem setting timer - %s", Error::GetText(error));
+      exit(1);
+    }
+
+  }
   else {
     LOG_VA_INFO("%s", eventPtr->toString().c_str());
   }
 }
 
+
+/**
+ *
+ */
+void ServerKeepaliveHandler::DeliverEventNotifications(uint64_t sessionId) {
+  int error = 0;
+  SessionDataPtr sessionPtr;
+
+  //LOG_VA_INFO("Delivering event notifications for session %lld", sessionId);
+
+  if (!mMaster->GetSessionData(sessionId, sessionPtr)) {
+    LOG_VA_ERROR("Unable to find data for session %lld", sessionId);
+    DUMP_CORE;
+  }
+
+  /**
+  {
+    std::string str;
+    LOG_VA_INFO("Sending Keepalive request to %s", InetAddr::StringFormat(str, sessionPtr->addr));
+  }
+  **/
+
+  CommBufPtr cbufPtr( Protocol::CreateServerKeepaliveRequest(sessionPtr) );
+  if ((error = mComm->SendDatagram(sessionPtr->addr, mSendAddr, cbufPtr)) != Error::OK) {
+    LOG_VA_ERROR("Comm::SendDatagram returned %s", Error::GetText(error));
+  }
+
+}

@@ -36,8 +36,8 @@ const char *CommandOpen::msUsage[] = {
   "open <fname> flags=[READ|WRITE|LOCK|CREATE|EXCL|TEMP] [event-mask=<mask>]",
   "  This command issues an OPEN request to Hyperspace.  The optional",
   "  parameter event-mask may take a value that is the combination of",
-  "  the following strings:  ATTR_MODIFIED|CHILD_NODE_CHANGE|LOCK_ACQUIRED|",
-  "  HANDLE_INVALIDATED|CONFLICTING_LOCK.",
+  "  the following strings:",
+  "    ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED",
   (const char *)0
 };
 
@@ -72,16 +72,18 @@ int CommandOpen::run() {
     else if (mArgs[i].first == "event-mask") {
       str = strtok_r((char *)mArgs[i].second.c_str(), " \t|", &last);
       while (str) {
-	if (!strcmp(str, "ATTR_MODIFIED"))
-	  eventMask |= EVENT_MASK_ATTR_MODIFIED;
-	else if (!strcmp(str, "CHILD_NODE_CHANGE"))
-	  eventMask |= EVENT_MASK_CHILD_NODE_CHANGE;
+	if (!strcmp(str, "ATTR_SET"))
+	  eventMask |= EVENT_MASK_ATTR_SET;
+	else if (!strcmp(str, "ATTR_DEL"))
+	  eventMask |= EVENT_MASK_ATTR_DEL;
+	else if (!strcmp(str, "CHILD_NODE_ADDED"))
+	  eventMask |= EVENT_MASK_CHILD_NODE_ADDED;
+	else if (!strcmp(str, "CHILD_NODE_REMOVED"))
+	  eventMask |= EVENT_MASK_CHILD_NODE_REMOVED;
 	else if (!strcmp(str, "LOCK_ACQUIRED"))
 	  eventMask |= EVENT_MASK_LOCK_ACQUIRED;
-	else if (!strcmp(str, "HANDLE_INVALIDATED"))
-	  eventMask |= EVENT_MASK_HANDLE_INVALIDATED;
-	else if (!strcmp(str, "CONFLICTING_LOCK"))
-	  eventMask |= EVENT_MASK_CONFLICTING_LOCK;
+	else if (!strcmp(str, "LOCK_RELEASED"))
+	  eventMask |= EVENT_MASK_LOCK_RELEASED;
 	str = strtok_r(0, " \t|", &last);
       }
     }

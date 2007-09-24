@@ -37,7 +37,7 @@ using namespace Hyperspace;
 
 ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsPtr, Session *session) : mComm(comm), mSession(session), mSessionId(0), mConnHandler(0), mLastKnownEvent(0) {
   int error;
-  uint16_t sendPort, masterPort;
+  uint16_t masterPort;
   const char *masterHost;
 
   mVerbose = propsPtr->getPropertyBool("verbose", false);
@@ -45,13 +45,11 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsP
   masterPort = (uint16_t)propsPtr->getPropertyInt("Hyperspace.Master.port", Master::DEFAULT_MASTER_PORT);
   mLeaseInterval = (uint32_t)propsPtr->getPropertyInt("Hyperspace.Lease.Interval", Master::DEFAULT_LEASE_INTERVAL);
   mKeepAliveInterval = (uint32_t)propsPtr->getPropertyInt("Hyperspace.KeepAlive.Interval", Master::DEFAULT_KEEPALIVE_INTERVAL);
-  sendPort = (uint16_t)propsPtr->getPropertyInt("Hyperspace.Client.port", Session::DEFAULT_CLIENT_PORT);
   
   if (!InetAddr::Initialize(&mMasterAddr, masterHost, masterPort))
     exit(1);
 
   if (mVerbose) {
-    cout << "Hyperspace.Client.port=" << sendPort << endl;
     cout << "Hyperspace.KeepAlive.Interval=" << mKeepAliveInterval << endl;
     cout << "Hyperspace.Lease.Interval=" << mLeaseInterval << endl;
     cout << "Hyperspace.Master.host=" << masterHost << endl;
@@ -62,9 +60,9 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsP
   boost::xtime_get(&mJeopardyTime, boost::TIME_UTC);
   mJeopardyTime.sec += mLeaseInterval;
 
-  InetAddr::Initialize(&mLocalAddr, INADDR_ANY, sendPort);
+  InetAddr::Initialize(&mLocalAddr, INADDR_ANY, 0);
 
-  if ((error = mComm->CreateDatagramReceiveSocket(mLocalAddr, this)) != Error::OK) {
+  if ((error = mComm->CreateDatagramReceiveSocket(&mLocalAddr, this)) != Error::OK) {
     std::string str;
     LOG_VA_ERROR("Unable to create datagram receive socket %s - %s", InetAddr::StringFormat(str, mLocalAddr), Error::GetText(error));
     exit(1);
@@ -99,7 +97,7 @@ void ClientKeepaliveHandler::handle(EventPtr &eventPtr) {
     LOG_VA_INFO("%s", eventPtr->toString().c_str());
   }
 
-  if (eventPtr->type == Event::MESSAGE) {
+  if (eventPtr->type == hypertable::Event::MESSAGE) {
     uint8_t *msgPtr = eventPtr->message;
     size_t remaining = eventPtr->messageLen;
 
@@ -121,6 +119,10 @@ void ClientKeepaliveHandler::handle(EventPtr &eventPtr) {
 	{
 	  uint64_t sessionId;
 	  int state;
+	  uint32_t notificationCount;
+	  uint64_t handle, eventId;
+	  uint32_t eventMask;
+	  const char *name;
 
 	  if (mSession->GetState() == Session::STATE_EXPIRED)
 	    return;
@@ -158,6 +160,31 @@ void ClientKeepaliveHandler::handle(EventPtr &eventPtr) {
 	    }
 	  }
 
+	  if (!Serialization::DecodeInt(&msgPtr, &remaining, &notificationCount)) {
+	    std::string message = "Truncated Request";
+	    cerr << "Message len = " << eventPtr->messageLen << endl;
+	    throw ProtocolException(message);
+	  }
+
+	  for (uint32_t i=0; i<notificationCount; i++) {
+
+	    if (!Serialization::DecodeLong(&msgPtr, &remaining, &handle) ||
+		!Serialization::DecodeLong(&msgPtr, &remaining, &eventId) ||
+		!Serialization::DecodeInt(&msgPtr, &remaining, &eventMask) ||
+		!Serialization::DecodeString(&msgPtr, &remaining, &name)) {
+	      std::string message = "Truncated Request";
+	      cerr << "Message len = " << eventPtr->messageLen << endl;
+	      throw ProtocolException(message);
+	    }
+
+	    LOG_VA_INFO("Event notification (handle=%lld, event=0x%x, name=%s)", handle, eventMask, name);
+
+	    // tbd...
+
+	    if (eventId > mLastKnownEvent)
+	      mLastKnownEvent = eventId;
+	  }
+
 	  if (mVerbose) {
 	    LOG_VA_INFO("sessionId = %lld", mSessionId);
 	  }
@@ -167,8 +194,16 @@ void ClientKeepaliveHandler::handle(EventPtr &eventPtr) {
 	  else
 	    state = mSession->StateTransition(Session::STATE_SAFE);
 
+	  if (notificationCount > 0) {
+	    CommBufPtr commBufPtr( Hyperspace::Protocol::CreateClientKeepaliveRequest(mSessionId, mLastKnownEvent) );
+	    boost::xtime_get(&mLastKeepAliveSendTime, boost::TIME_UTC);
+	    if ((error = mComm->SendDatagram(mMasterAddr, mLocalAddr, commBufPtr) != Error::OK)) {
+	      LOG_VA_ERROR("Unable to send datagram - %s", Error::GetText(error));
+	      exit(1);
+	    }
+	  }
+
 	  assert(mSessionId == sessionId);
-	  
 	}
 	break;
       default:
@@ -181,7 +216,7 @@ void ClientKeepaliveHandler::handle(EventPtr &eventPtr) {
       LOG_VA_ERROR("Protocol error '%s'", e.what());
     }
   }
-  else if (eventPtr->type == Event::TIMER) {
+  else if (eventPtr->type == hypertable::Event::TIMER) {
     boost::xtime now;
     int state;
     

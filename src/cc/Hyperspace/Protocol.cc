@@ -69,7 +69,6 @@ const char *Hyperspace::Protocol::CommandText(short command) {
  */
 CommBuf *Hyperspace::Protocol::CreateClientKeepaliveRequest(uint64_t sessionId, uint64_t lastKnownEvent) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
-  hbuilder.AssignUniqueId();
   CommBuf *cbuf = new CommBuf(hbuilder, 18);
   cbuf->AppendShort(COMMAND_KEEPALIVE);
   cbuf->AppendLong(sessionId);
@@ -83,14 +82,44 @@ CommBuf *Hyperspace::Protocol::CreateClientKeepaliveRequest(uint64_t sessionId, 
  */
 CommBuf *Hyperspace::Protocol::CreateServerKeepaliveRequest(uint64_t sessionId, int error) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
-  hbuilder.AssignUniqueId();
   CommBuf *cbuf = new CommBuf(hbuilder, 14);
   cbuf->AppendShort(COMMAND_KEEPALIVE);
   cbuf->AppendLong(sessionId);
   cbuf->AppendInt(error);
+  cbuf->AppendInt(0);
   return cbuf;
 }
 
+
+/**
+ *
+ */
+CommBuf *Hyperspace::Protocol::CreateServerKeepaliveRequest(SessionDataPtr &sessionPtr) {
+  boost::mutex::scoped_lock lock(sessionPtr->mutex);
+  CommBuf *cbuf = 0;
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
+  uint32_t len = 18;
+  list<Notification *>::iterator iter;
+
+  for (iter = sessionPtr->notifications.begin(); iter != sessionPtr->notifications.end(); iter++) {
+    len += 20;
+    len += Serialization::EncodedLengthString((*iter)->event->GetName());
+  }
+
+  cbuf = new CommBuf(hbuilder, len);
+  cbuf->AppendShort(COMMAND_KEEPALIVE);
+  cbuf->AppendLong(sessionPtr->id);
+  cbuf->AppendInt(Error::OK);
+  cbuf->AppendInt(sessionPtr->notifications.size());
+  for (iter = sessionPtr->notifications.begin(); iter != sessionPtr->notifications.end(); iter++) {
+    cbuf->AppendLong((*iter)->handle);
+    cbuf->AppendLong((*iter)->event->GetId());
+    cbuf->AppendInt((*iter)->event->GetType());
+    cbuf->AppendString((*iter)->event->GetName());
+  }
+
+  return cbuf;
+}
 
 
 /**
@@ -131,7 +160,7 @@ CommBuf *Hyperspace::Protocol::CreateAttrSetRequest(uint64_t handle, std::string
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
   hbuilder.AssignUniqueId();
   CommBuf *cbuf = new CommBuf(hbuilder, 10 + Serialization::EncodedLengthString(name) + Serialization::EncodedLengthByteArray(valueLen));
-  cbuf->AppendShort(COMMAND_MKDIR);
+  cbuf->AppendShort(COMMAND_ATTRSET);
   cbuf->AppendLong(handle);
   cbuf->AppendString(name);
   cbuf->AppendByteArray(value, valueLen);

@@ -73,15 +73,18 @@ Session::Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback)
 
 
 int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, uint64_t *handlep, bool *createdp) {
-  boost::mutex::scoped_lock lock(mMutex);
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( Protocol::CreateOpenRequest(name, flags, callbackPtr) );
 
-  while (mState != STATE_SAFE) {
-    if (mState == STATE_EXPIRED)
-      return Error::HYPERSPACE_EXPIRED_SESSION;
-    mCond.wait(lock);
+ try_again:
+  {
+    boost::mutex::scoped_lock lock(mMutex);
+    while (mState != STATE_SAFE) {
+      if (mState == STATE_EXPIRED)
+	return Error::HYPERSPACE_EXPIRED_SESSION;
+      mCond.wait(lock);
+    }
   }
   
   int error = SendMessage(cbufPtr, &syncHandler);
@@ -103,6 +106,11 @@ int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackP
       mKeepaliveHandler->RegisterHandle(*handlep, callbackPtr);
     }
   }
+  else {
+    StateTransition(Session::STATE_JEOPARDY);
+    goto try_again;
+  }
+
   return error;
 }
 
@@ -111,15 +119,18 @@ int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackP
  * Submit 'mkdir' request
  */
 int Session::Mkdir(std::string name) {
-  boost::mutex::scoped_lock lock(mMutex);
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( Protocol::CreateMkdirRequest(name) );
 
-  while (mState != STATE_SAFE) {
-    if (mState == STATE_EXPIRED)
-      return Error::HYPERSPACE_EXPIRED_SESSION;
-    mCond.wait(lock);
+ try_again:
+  {
+    boost::mutex::scoped_lock lock(mMutex);
+    while (mState != STATE_SAFE) {
+      if (mState == STATE_EXPIRED)
+	return Error::HYPERSPACE_EXPIRED_SESSION;
+      mCond.wait(lock);
+    }
   }
   
   int error = SendMessage(cbufPtr, &syncHandler);
@@ -129,6 +140,11 @@ int Session::Mkdir(std::string name) {
       error = (int)Protocol::ResponseCode(eventPtr.get());
     }
   }
+  else {
+    StateTransition(Session::STATE_JEOPARDY);
+    goto try_again;
+  }
+
   return error;
 }
 
@@ -137,15 +153,18 @@ int Session::Mkdir(std::string name) {
  *  Blocking 'attrset' request
  */
 int Session::AttrSet(uint64_t handle, std::string name, const void *value, size_t valueLen) {
-  boost::mutex::scoped_lock lock(mMutex);
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( Protocol::CreateAttrSetRequest(handle, name, value, valueLen) );
 
-  while (mState != STATE_SAFE) {
-    if (mState == STATE_EXPIRED)
-      return Error::HYPERSPACE_EXPIRED_SESSION;
-    mCond.wait(lock);
+ try_again:
+  {
+    boost::mutex::scoped_lock lock(mMutex);
+    while (mState != STATE_SAFE) {
+      if (mState == STATE_EXPIRED)
+	return Error::HYPERSPACE_EXPIRED_SESSION;
+      mCond.wait(lock);
+    }
   }
 
   int error = SendMessage(cbufPtr, &syncHandler);
@@ -155,6 +174,11 @@ int Session::AttrSet(uint64_t handle, std::string name, const void *value, size_
       error = (int)Protocol::ResponseCode(eventPtr.get());
     }
   }
+  else {
+    StateTransition(Session::STATE_JEOPARDY);
+    goto try_again;
+  }
+
   return error;
 }
 

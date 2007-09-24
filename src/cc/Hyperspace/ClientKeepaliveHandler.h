@@ -49,12 +49,14 @@ namespace Hyperspace {
     virtual void handle(EventPtr &eventPtr);
 
     void RegisterHandle(uint64_t handle, HandleCallbackPtr &callbackPtr) {
+      boost::mutex::scoped_lock lock(mMutex);
       HandleMapT::iterator iter = mHandleMap.find(handle);
       assert(iter == mHandleMap.end());
       mHandleMap[handle] = callbackPtr;
     }
 
     void UnregisterHandle(uint64_t handle) {
+      boost::mutex::scoped_lock lock(mMutex);
       mHandleMap.erase(handle);
     }
 

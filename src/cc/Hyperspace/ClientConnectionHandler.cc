@@ -48,7 +48,7 @@ void ClientConnectionHandler::handle(EventPtr &eventPtr) {
     LOG_VA_INFO("%s", eventPtr->toString().c_str());
   }
 
-  if (eventPtr->type == Event::MESSAGE) {
+  if (eventPtr->type == hypertable::Event::MESSAGE) {
 
     if (Protocol::ResponseCode(eventPtr.get()) != Error::OK) {
       LOG_VA_ERROR("Connection handshake error: %s", Protocol::StringFormatMessage(eventPtr.get()).c_str());
@@ -61,7 +61,7 @@ void ClientConnectionHandler::handle(EventPtr &eventPtr) {
 
     mState = CONNECTED;
   }
-  else if (eventPtr->type == Event::DISCONNECT) {
+  else if (eventPtr->type == hypertable::Event::DISCONNECT) {
 
     if (mVerbose) {
       LOG_VA_WARN("%s", eventPtr->toString().c_str());
@@ -71,7 +71,7 @@ void ClientConnectionHandler::handle(EventPtr &eventPtr) {
 
     mState = DISCONNECTED;
   }
-  else if (eventPtr->type == Event::CONNECTION_ESTABLISHED) {
+  else if (eventPtr->type == hypertable::Event::CONNECTION_ESTABLISHED) {
 
     mState = HANDSHAKING;
 

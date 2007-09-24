@@ -60,7 +60,6 @@ namespace {
     "This program is the Hyperspace master server.",
     (const char *)0
   };
-  const int DEFAULT_PORT              = 38547;
   const int DEFAULT_WORKERS           = 20;
 }
 
@@ -97,7 +96,7 @@ int main(int argc, char **argv) {
   int port, reactorCount, workerCount;
   Comm *comm;
   ApplicationQueue *appQueue = 0;
-  ServerKeepaliveHandler *keepaliveHandler;
+  ServerKeepaliveHandlerPtr keepaliveHandlerPtr;
   ConnectionManager *connManager;
   int error;
   struct sockaddr_in localAddr;
@@ -124,7 +123,7 @@ int main(int argc, char **argv) {
   if (verbose)
     propsPtr->setProperty("verbose", "true");
 
-  port         = propsPtr->getPropertyInt("Hyperspace.Master.port", DEFAULT_PORT);
+  port         = propsPtr->getPropertyInt("Hyperspace.Master.port", Master::DEFAULT_MASTER_PORT);
   reactorCount = propsPtr->getPropertyInt("Hyperspace.Master.reactors", System::GetProcessorCount());
   workerCount  = propsPtr->getPropertyInt("Hyperspace.Master.workers", DEFAULT_WORKERS);
 
@@ -143,13 +142,11 @@ int main(int argc, char **argv) {
 
   InetAddr::Initialize(&localAddr, INADDR_ANY, port);
 
-  master = new Master(connManager, propsPtr);
+  master = new Master(connManager, propsPtr, keepaliveHandlerPtr);
   appQueue = new ApplicationQueue(workerCount);
   comm->Listen(localAddr, new HandlerFactory(comm, appQueue, master));
 
-  keepaliveHandler = new ServerKeepaliveHandler(comm, master);
-
-  if ((error = comm->CreateDatagramReceiveSocket(localAddr, keepaliveHandler)) != Error::OK) {
+  if ((error = comm->CreateDatagramReceiveSocket(&localAddr, keepaliveHandlerPtr.get())) != Error::OK) {
     std::string str;
     LOG_VA_ERROR("Unable to create datagram receive socket %s - %s", 
 		 InetAddr::StringFormat(str, localAddr), Error::GetText(error));
