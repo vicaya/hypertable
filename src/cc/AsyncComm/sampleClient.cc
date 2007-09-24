@@ -282,7 +282,7 @@ int main(int argc, char **argv) {
     respHandler = new ResponseHandlerUDP();
     port++;
     InetAddr::Initialize(&localAddr, INADDR_ANY, port);
-    if ((error = comm->CreateDatagramReceiveSocket(localAddr, respHandler)) != Error::OK) {
+    if ((error = comm->CreateDatagramReceiveSocket(&localAddr, respHandler)) != Error::OK) {
       std::string str;
       LOG_VA_ERROR("Problem creating UDP receive socket %s - %s", InetAddr::StringFormat(str, localAddr), Error::GetText(error));
       exit(1);

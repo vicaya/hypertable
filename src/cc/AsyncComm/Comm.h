@@ -58,7 +58,7 @@ namespace hypertable {
 
     int GetLocalAddress(struct sockaddr_in addr, struct sockaddr_in *localAddr);
 
-    int CreateDatagramReceiveSocket(struct sockaddr_in &addr, DispatchHandler *handler);
+    int CreateDatagramReceiveSocket(struct sockaddr_in *addr, DispatchHandler *handler);
 
     int SendDatagram(struct sockaddr_in &addr, struct sockaddr_in &sendAddr, CommBufPtr &cbufPtr);
 

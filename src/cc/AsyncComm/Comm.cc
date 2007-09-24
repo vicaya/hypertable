@@ -226,7 +226,7 @@ int Comm::SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr) {
 /**
  * 
  */
-int Comm::CreateDatagramReceiveSocket(struct sockaddr_in &addr, DispatchHandler *handler) {
+int Comm::CreateDatagramReceiveSocket(struct sockaddr_in *addr, DispatchHandler *handler) {
   IOHandlerPtr handlerPtr;
   IOHandlerDatagram *datagramHandler;
   int one = 1;
@@ -253,12 +253,15 @@ int Comm::CreateDatagramReceiveSocket(struct sockaddr_in &addr, DispatchHandler 
   }
 
   // bind socket
-  if ((bind(sd, (const sockaddr *)&addr, sizeof(sockaddr_in))) < 0) {
+  if ((bind(sd, (const sockaddr *)addr, sizeof(sockaddr_in))) < 0) {
     LOG_VA_ERROR("bind() failure: %s", strerror(errno));
     exit(1);
   }
 
-  handlerPtr = datagramHandler = new IOHandlerDatagram(sd, addr, handler, mHandlerMap);
+  handlerPtr = datagramHandler = new IOHandlerDatagram(sd, *addr, handler, mHandlerMap);
+
+  handlerPtr->GetLocalAddress(addr);
+
   mHandlerMap.InsertDatagramHandler(datagramHandler);
   datagramHandler->StartPolling();
 

@@ -110,7 +110,7 @@ void CommTestDatagramThreadFunction::operator()() {
 
   InetAddr::Initialize(&localAddr, INADDR_ANY, mPort);
 
-  if (error = mComm->CreateDatagramReceiveSocket(localAddr, &respHandler)) {
+  if (error = mComm->CreateDatagramReceiveSocket(&localAddr, &respHandler)) {
     LOG_VA_ERROR("Problem opening datagram receive port %d - %s", mPort, Error::GetText(error));
     return;
   }

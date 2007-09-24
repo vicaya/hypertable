@@ -270,7 +270,7 @@ int main(int argc, char **argv) {
 
     udpDispatcher = new UdpDispatcher(comm);
 
-    error = comm->CreateDatagramReceiveSocket(localAddr, udpDispatcher);
+    error = comm->CreateDatagramReceiveSocket(&localAddr, udpDispatcher);
     
   }
 

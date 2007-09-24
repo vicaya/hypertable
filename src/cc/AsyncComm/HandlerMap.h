@@ -73,7 +73,7 @@ namespace hypertable {
 
     void InsertDatagramHandler(IOHandler *handler) {
       boost::mutex::scoped_lock lock(mMutex);
-      mDatagramHandlerMap[handler->GetAddress()] = handler;
+      mDatagramHandlerMap[handler->GetLocalAddress()] = handler;
     }
 
     bool LookupDatagramHandler(struct sockaddr_in &addr, IOHandlerDatagramPtr &ioHandlerDatagramPtr) {
