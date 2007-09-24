@@ -38,6 +38,7 @@ extern "C" {
 
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
+#include "Common/InetAddr.h"
 
 #include "IOHandlerData.h"
 #include "HandlerMap.h"
@@ -110,10 +111,12 @@ bool IOHandlerData::HandleEvent(struct epoll_event *event) {
 	else {
 	  DispatchHandler *dh = 0;
 	  uint32_t id = ((Header::HeaderT *)mMessage)->id;
-	  if ((((Header::HeaderT *)mMessage)->flags & Header::FLAGS_MASK_REQUEST) == 0 &&
+	  if (id != 0 &&
+	      (((Header::HeaderT *)mMessage)->flags & Header::FLAGS_MASK_REQUEST) == 0 &&
 	      (dh = mReactor->RemoveRequest(id)) == 0) {
 	    LOG_VA_WARN("Received response for non-pending event (id=%d,version=%d,totalLen=%d)",
 			id, ((Header::HeaderT *)mMessage)->version, ((Header::HeaderT *)mMessage)->totalLen);
+	    delete [] mMessage;
 	  }
 	  else
 	    DeliverEvent( new Event(Event::MESSAGE, mId, mAddr, Error::OK, (Header::HeaderT *)mMessage), dh );
@@ -212,9 +215,11 @@ bool IOHandlerData::HandleEvent(struct kevent *event) {
 
 	  DispatchHandler *dh = 0;
 	  uint32_t id = ((Header::HeaderT *)mMessage)->id;
-	  if ((((Header::HeaderT *)mMessage)->flags & Header::FLAGS_MASK_REQUEST) == 0 &&
+	  if (id != 0 && 
+	      (((Header::HeaderT *)mMessage)->flags & Header::FLAGS_MASK_REQUEST) == 0 &&
 	      (dh = mReactor->RemoveRequest(id)) == 0) {
 	    LOG_VA_WARN("Received response for non-pending event (id=%d)", id);
+	    delete [] mMessage;
 	  }
 	  else
 	    DeliverEvent( new Event(Event::MESSAGE, mId, mAddr, Error::OK, (Header::HeaderT *)mMessage), dh );
@@ -289,7 +294,7 @@ int IOHandlerData::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *dispatchHan
   expireTime.sec += mTimeout;
   
   // If request, Add message ID to request cache
-  if (dispatchHandler != 0 && mheader->flags & Header::FLAGS_MASK_REQUEST)
+  if (mheader->id != 0 && dispatchHandler != 0 && mheader->flags & Header::FLAGS_MASK_REQUEST)
     mReactor->AddRequest(mheader->id, this, dispatchHandler, expireTime);
 
   mSendQueue.push_back(cbufPtr);

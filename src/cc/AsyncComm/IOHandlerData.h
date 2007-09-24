@@ -51,15 +51,15 @@ namespace hypertable {
       : IOHandler(sd, addr, dh, hmap), mRequestCache(), mTimeout(0), mSendQueue() {
       mConnected = false;
       ResetIncomingMessageState();
-      mMessage = 0;
-      mMessagePtr = 0;
-      mMessageRemaining = 0;
       mId = atomic_inc_return(&msNextConnectionId);
     }
 
     void ResetIncomingMessageState() {
       mGotHeader = false;
       mMessageHeaderRemaining = sizeof(Header::HeaderT);
+      mMessage = 0;
+      mMessagePtr = 0;
+      mMessageRemaining = 0;
     }
 
     void SetTimeout(time_t timeout) {

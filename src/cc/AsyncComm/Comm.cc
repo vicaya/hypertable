@@ -184,6 +184,8 @@ int Comm::SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHan
   Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
   int error = Error::OK;
 
+  assert((responseHandler != 0 && mheader->id != 0) || responseHandler == 0);
+
   cbufPtr->ResetDataPointers();
 
   if (!mHandlerMap.LookupDataHandler(addr, dataHandlerPtr)) {
