@@ -26,6 +26,7 @@
 
 #include "Protocol.h"
 #include "RequestHandlerAttrSet.h"
+#include "RequestHandlerAttrDel.h"
 #include "RequestHandlerMkdir.h"
 #include "RequestHandlerDelete.h"
 #include "RequestHandlerOpen.h"
@@ -96,6 +97,9 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
 	break;
       case Protocol::COMMAND_ATTRSET:
 	requestHandler = new RequestHandlerAttrSet(mComm, mMaster, mSessionId, eventPtr);
+	break;
+      case Protocol::COMMAND_ATTRDEL:
+	requestHandler = new RequestHandlerAttrDel(mComm, mMaster, mSessionId, eventPtr);
 	break;
       default:
 	std::string message = (string)"Command code " + command + " not implemented";

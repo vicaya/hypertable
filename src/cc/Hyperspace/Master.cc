@@ -418,7 +418,7 @@ void Master::AttrSet(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, 
   int error;
 
   if (mVerbose) {
-    LOG_VA_INFO("attrset(session=%lld, handle=%lld, name=%s, valueLen=%d", sessionId, handle, name, valueLen);
+    LOG_VA_INFO("attrset(session=%lld, handle=%lld, name=%s, valueLen=%d)", sessionId, handle, name, valueLen);
   }
 
   if (!GetSessionData(sessionId, sessionPtr)) {
@@ -431,10 +431,12 @@ void Master::AttrSet(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, 
     return;
   }
 
+  /**
   if (!(handlePtr->openFlags & OPEN_FLAG_WRITE)) {
     cb->error(Error::HYPERSPACE_PERMISSION_DENIED, "");
     return;
   }
+  **/
 
   if (FileUtils::Fsetxattr(handlePtr->node->fd, name, value, valueLen, 0) == -1) {
     LOG_VA_ERROR("Problem creating extended attribute '%s' on file '%s' - %s",
@@ -443,6 +445,51 @@ void Master::AttrSet(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, 
   }
 
   DeliverEventNotifications(handlePtr->node, EVENT_MASK_ATTR_SET, name);
+
+  if ((error = cb->response_ok()) != Error::OK) {
+    LOG_VA_ERROR("Problem sending back response - %s", Error::GetText(error));
+  }
+
+}
+
+
+
+void Master::AttrDel(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, const char *name) {
+  SessionDataPtr sessionPtr;
+  NodeDataPtr nodePtr;
+  HandleDataPtr handlePtr;
+  Hyperspace::Event *event = 0;
+  int notifications = 0;
+  int error;
+
+  if (mVerbose) {
+    LOG_VA_INFO("attrdel(session=%lld, handle=%lld, name=%s)", sessionId, handle, name);
+  }
+
+  if (!GetSessionData(sessionId, sessionPtr)) {
+    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
+    return;
+  }
+
+  if (!GetHandleData(handle, handlePtr)) {
+    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
+    return;
+  }
+
+  /**
+  if (!(handlePtr->openFlags & OPEN_FLAG_WRITE)) {
+    cb->error(Error::HYPERSPACE_PERMISSION_DENIED, "");
+    return;
+  }
+  **/
+
+  if (FileUtils::Fremovexattr(handlePtr->node->fd, name) == -1) {
+    LOG_VA_ERROR("Problem removing extended attribute '%s' on file '%s' - %s",
+		 name, handlePtr->node->name.c_str(), strerror(errno));
+    exit(1);
+  }
+
+  DeliverEventNotifications(handlePtr->node, EVENT_MASK_ATTR_DEL, name);
 
   if ((error = cb->response_ok()) != Error::OK) {
     LOG_VA_ERROR("Problem sending back response - %s", Error::GetText(error));

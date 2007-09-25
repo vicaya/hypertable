@@ -26,6 +26,7 @@ CommandMkdir.cc
 CommandDelete.cc
 CommandOpen.cc
 CommandAttrSet.cc
+CommandAttrDel.cc
 hyperspace.cc
 Global.cc
 )

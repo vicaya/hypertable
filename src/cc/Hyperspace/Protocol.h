@@ -51,20 +51,9 @@ namespace Hyperspace {
     static CommBuf *CreateMkdirRequest(std::string &name);
     static CommBuf *CreateDeleteRequest(std::string &name);
     static CommBuf *CreateAttrSetRequest(uint64_t handle, std::string &name, const void *value, size_t valueLen);
+    static CommBuf *CreateAttrDelRequest(uint64_t handle, std::string &name);
 
     static CommBuf *CreateEventNotification(uint64_t handle, std::string &name, const void *value, size_t valueLen);
-
-
-    /**
-    CommBuf *CreateMkdirsRequest(const char *fname);
-    CommBuf *CreateCreateRequest(const char *fname);
-    CommBuf *CreateAttrSetRequest(const char *fname, const char *aname, const char *avalue);
-    CommBuf *CreateAttrGetRequest(const char *fname, const char *aname);
-    CommBuf *CreateAttrDelRequest(const char *fname, const char *aname);
-    CommBuf *CreateExistsRequest(const char *fname);
-    CommBuf *CreateDeleteRequest(const char *fname);
-    CommBuf *CreateStatusRequest();
-    */
 
     static const uint16_t COMMAND_KEEPALIVE      = 0;
     static const uint16_t COMMAND_HANDSHAKE      = 1; 

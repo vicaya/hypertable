@@ -45,6 +45,7 @@ extern "C" {
 #include "CommandDelete.h"
 #include "CommandOpen.h"
 #include "CommandAttrSet.h"
+#include "CommandAttrDel.h"
 
 using namespace hypertable;
 using namespace std;
@@ -168,6 +169,7 @@ int main(int argc, char **argv) {
   commands.push_back( new CommandDelete(session) );
   commands.push_back( new CommandOpen(session) );
   commands.push_back( new CommandAttrSet(session) );
+  commands.push_back( new CommandAttrDel(session) );
 
   /**
    * Non-interactive mode

@@ -51,6 +51,8 @@ namespace hypertable {
     static int Fgetxattr(int fd, const char *name, void *value, size_t size);
     static int Setxattr(const char *path, const char *name, const void *value, size_t size, int flags);
     static int Fsetxattr(int fd, const char *name, const void *value, size_t size, int flags);
+    static int Removexattr(const char *path, const char *name);
+    static int Fremovexattr(int fd, const char *name);
   };
 
 }

@@ -36,6 +36,7 @@ RequestHandlerMkdir.cc
 RequestHandlerDelete.cc
 RequestHandlerOpen.cc
 RequestHandlerAttrSet.cc
+RequestHandlerAttrDel.cc
 ResponseCallbackOpen.cc
 ServerConnectionHandler.cc
 ServerKeepaliveHandler.cc

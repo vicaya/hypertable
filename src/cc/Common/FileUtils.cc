@@ -346,3 +346,35 @@ int FileUtils::Fsetxattr(int fd, const char *name, const void *value, size_t siz
   ImplementMe;
 #endif
 }
+
+
+int FileUtils::Removexattr(const char *path, const char *name) {
+  std::string canonicalName;
+  if (!strncmp(name, "user.", 5))
+    canonicalName = name;
+  else
+    canonicalName = (std::string)"user." + name;
+#if defined(__linux__)
+  return removexattr(path, canonicalName.c_str());
+#elif defined(__APPLE__)
+  return removexattr(path, canonicalName.c_str(), 0);
+#else
+  ImplementMe;
+#endif
+}
+
+int FileUtils::Fremovexattr(int fd, const char *name) {
+  std::string canonicalName;
+  if (!strncmp(name, "user.", 5))
+    canonicalName = name;
+  else
+    canonicalName = (std::string)"user." + name;
+#if defined(__linux__)
+  return fremovexattr(fd, canonicalName.c_str());
+#elif defined(__APPLE__)
+  return fremovexattr(fd, canonicalName.c_str(), 0);
+#else
+  ImplementMe;
+#endif
+
+}

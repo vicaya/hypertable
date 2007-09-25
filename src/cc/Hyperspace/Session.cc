@@ -192,6 +192,34 @@ int Session::AttrSet(uint64_t handle, std::string name, const void *value, size_
 
 
 /**
+ *
+ */
+int Session::AttrDel(uint64_t handle, std::string name) {
+  DispatchHandlerSynchronizer syncHandler;
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( Protocol::CreateAttrDelRequest(handle, name) );
+
+ try_again:
+  if (!WaitForSafe())
+    return Error::HYPERSPACE_EXPIRED_SESSION;
+
+  int error = SendMessage(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("Hyperspace 'attrdel' error, name=%s : %s", name.c_str(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
+      error = (int)Protocol::ResponseCode(eventPtr.get());
+    }
+  }
+  else {
+    StateTransition(Session::STATE_JEOPARDY);
+    goto try_again;
+  }
+
+  return error;
+}
+
+
+/**
  * Transition session state
  */
 int Session::StateTransition(int state) {
