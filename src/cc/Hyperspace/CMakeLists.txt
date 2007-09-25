@@ -38,7 +38,9 @@ RequestHandlerOpen.cc
 RequestHandlerClose.cc
 RequestHandlerAttrSet.cc
 RequestHandlerAttrDel.cc
+RequestHandlerExists.cc
 ResponseCallbackOpen.cc
+ResponseCallbackExists.cc
 ServerConnectionHandler.cc
 ServerKeepaliveHandler.cc
 main.cc

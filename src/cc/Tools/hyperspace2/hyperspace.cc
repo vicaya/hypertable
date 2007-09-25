@@ -47,6 +47,7 @@ extern "C" {
 #include "CommandClose.h"
 #include "CommandAttrSet.h"
 #include "CommandAttrDel.h"
+#include "CommandExists.h"
 
 using namespace hypertable;
 using namespace std;
@@ -172,6 +173,7 @@ int main(int argc, char **argv) {
   commands.push_back( new CommandClose(session) );
   commands.push_back( new CommandAttrSet(session) );
   commands.push_back( new CommandAttrDel(session) );
+  commands.push_back( new CommandExists(session) );
 
   /**
    * Non-interactive mode

@@ -191,6 +191,39 @@ int Session::Delete(std::string name) {
 }
 
 
+int Session::Exists(std::string name, bool *existsp) {
+  DispatchHandlerSynchronizer syncHandler;
+  hypertable::EventPtr eventPtr;
+  CommBufPtr cbufPtr( Protocol::CreateExistsRequest(name) );
+
+ try_again:
+  if (!WaitForSafe())
+    return Error::HYPERSPACE_EXPIRED_SESSION;
+  
+  int error = SendMessage(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("Hyperspace 'exists' error, name=%s : %s", name.c_str(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
+      error = (int)Protocol::ResponseCode(eventPtr.get());
+    }
+    else {
+      uint8_t *ptr = eventPtr->message + 4;
+      size_t remaining = eventPtr->messageLen - 4;
+      uint8_t bval;
+      if (!Serialization::DecodeByte(&ptr, &remaining, &bval))
+	assert(!"problem decoding return packet");
+      *existsp = (bval == 0) ? false : true;
+    }
+  }
+  else {
+    StateTransition(Session::STATE_JEOPARDY);
+    goto try_again;
+  }
+
+  return error;
+}
+
+
 
 /**
  *  Blocking 'attrset' request

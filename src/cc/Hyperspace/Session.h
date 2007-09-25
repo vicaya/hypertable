@@ -123,7 +123,7 @@ namespace Hyperspace {
     int AttrSet(uint64_t handle, std::string name, const void *value, size_t valueLen);
     int AttrGet(uint64_t handle, std::string name, DynamicBuffer &value);
     int AttrDel(uint64_t handle, std::string name);
-    int Exists(std::string name);
+    int Exists(std::string name, bool *existsp);
     int Delete(std::string name);
     int Readdir(uint64_t handle, std::string name, std::vector<struct DirListingT> &listing);
     int Acquire(uint64_t handle, int mode, struct LockSequencerT &sequencer);

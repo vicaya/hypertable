@@ -558,6 +558,24 @@ void Master::AttrDel(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, 
 }
 
 
+void Master::Exists(ResponseCallbackExists *cb, uint64_t sessionId, const char *name) {
+  std::string normalName;
+  std::string absName;
+  int error;
+
+  if (mVerbose) {
+    LOG_VA_INFO("exists(sessionId=%lld, name=%s)", sessionId, name);
+  }
+
+  NormalizeName(name, normalName);
+
+  absName = mBaseDir + normalName;
+
+  if ((error = cb->response( FileUtils::Exists(absName.c_str()) )) != Error::OK) {
+    LOG_VA_ERROR("Problem sending back response - %s", Error::GetText(error));
+  }
+}
+
 
 
 /**

@@ -196,3 +196,13 @@ CommBuf *Hyperspace::Protocol::CreateAttrDelRequest(uint64_t handle, std::string
   cbuf->AppendString(name);
   return cbuf;
 }
+
+
+CommBuf *Hyperspace::Protocol::CreateExistsRequest(std::string &name) {
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, fileNameToGroupId(name));
+  hbuilder.AssignUniqueId();
+  CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::EncodedLengthString(name));
+  cbuf->AppendShort(COMMAND_EXISTS);
+  cbuf->AppendString(name);
+  return cbuf;
+}

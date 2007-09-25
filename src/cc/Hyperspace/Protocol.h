@@ -53,6 +53,7 @@ namespace Hyperspace {
     static CommBuf *CreateDeleteRequest(std::string &name);
     static CommBuf *CreateAttrSetRequest(uint64_t handle, std::string &name, const void *value, size_t valueLen);
     static CommBuf *CreateAttrDelRequest(uint64_t handle, std::string &name);
+    static CommBuf *CreateExistsRequest(std::string &name);
 
     static CommBuf *CreateEventNotification(uint64_t handle, std::string &name, const void *value, size_t valueLen);
 
