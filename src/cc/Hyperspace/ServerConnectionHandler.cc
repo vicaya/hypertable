@@ -27,6 +27,7 @@
 #include "Protocol.h"
 #include "RequestHandlerAttrSet.h"
 #include "RequestHandlerMkdir.h"
+#include "RequestHandlerDelete.h"
 #include "RequestHandlerOpen.h"
 #include "ServerConnectionHandler.h"
 
@@ -89,6 +90,9 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
 	break;
       case Protocol::COMMAND_MKDIR:
 	requestHandler = new RequestHandlerMkdir(mComm, mMaster, mSessionId, eventPtr);
+	break;
+      case Protocol::COMMAND_DELETE:
+	requestHandler = new RequestHandlerDelete(mComm, mMaster, mSessionId, eventPtr);
 	break;
       case Protocol::COMMAND_ATTRSET:
 	requestHandler = new RequestHandlerAttrSet(mComm, mMaster, mSessionId, eventPtr);

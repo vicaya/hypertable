@@ -156,6 +156,16 @@ CommBuf *Hyperspace::Protocol::CreateMkdirRequest(std::string &name) {
 }
 
 
+CommBuf *Hyperspace::Protocol::CreateDeleteRequest(std::string &name) {
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, fileNameToGroupId(name));
+  hbuilder.AssignUniqueId();
+  CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::EncodedLengthString(name));
+  cbuf->AppendShort(COMMAND_DELETE);
+  cbuf->AppendString(name);
+  return cbuf;
+}
+
+
 CommBuf *Hyperspace::Protocol::CreateAttrSetRequest(uint64_t handle, std::string &name, const void *value, size_t valueLen) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
   hbuilder.AssignUniqueId();
@@ -166,117 +176,3 @@ CommBuf *Hyperspace::Protocol::CreateAttrSetRequest(uint64_t handle, std::string
   cbuf->AppendByteArray(value, valueLen);
   return cbuf;
 }
-
-
-#if 0
-
-/**
- *
- */
-CommBuf *Protocol::CreateMkdirsRequest(const char *fname) {
-  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, fileNameToGroupId(fname));
-  hbuilder.AssignUniqueId();
-  CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::EncodedLengthString(fname));
-  cbuf->AppendShort(COMMAND_MKDIRS);
-  cbuf->AppendString(fname);
-  return cbuf;
-}
-
-
-/**
- *
- */
-CommBuf *Protocol::CreateCreateRequest(const char *fname) {
-  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, fileNameToGroupId(fname));
-  hbuilder.AssignUniqueId();
-  CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::EncodedLengthString(fname));
-  cbuf->AppendShort(COMMAND_CREATE);
-  cbuf->AppendString(fname);
-  return cbuf;
-}
-
-
-/**
- */
-CommBuf *Protocol::CreateAttrSetRequest(const char *fname, const char *aname, const char *avalue) {
-  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, fileNameToGroupId(fname));
-  hbuilder.AssignUniqueId();
-  CommBuf *cbuf = new CommBuf(hbuilder, + 2 + 
-			      Serialization::EncodedLengthString(fname) + 
-			      Serialization::EncodedLengthString(aname) + 
-			      Serialization::EncodedLengthString(avalue));
-  cbuf->AppendShort(COMMAND_ATTRSET);
-  cbuf->AppendString(fname);
-  cbuf->AppendString(aname);
-  cbuf->AppendString(avalue);
-  return cbuf;
-}
-
-
-/**
- */
-CommBuf *Protocol::CreateAttrGetRequest(const char *fname, const char *aname) {
-  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, fileNameToGroupId(fname));
-  hbuilder.AssignUniqueId();
-  CommBuf *cbuf = new CommBuf(hbuilder, 2 + 
-			      Serialization::EncodedLengthString(fname) +
-			      Serialization::EncodedLengthString(aname));
-  cbuf->AppendShort(COMMAND_ATTRGET);
-  cbuf->AppendString(fname);
-  cbuf->AppendString(aname);
-  return cbuf;
-}
-
-
-/**
- */
-CommBuf *Protocol::CreateAttrDelRequest(const char *fname, const char *aname) {
-  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, fileNameToGroupId(fname));
-  hbuilder.AssignUniqueId();
-  CommBuf *cbuf = new CommBuf(hbuilder, 2 + 
-			      Serialization::EncodedLengthString(fname) +
-			      Serialization::EncodedLengthString(aname));
-  cbuf->AppendShort(COMMAND_ATTRDEL);
-  cbuf->AppendString(fname);
-  cbuf->AppendString(aname);
-  return cbuf;
-}
-
-
-/**
- *
- */
-CommBuf *Protocol::CreateExistsRequest(const char *fname) {
-  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, fileNameToGroupId(fname));
-  hbuilder.AssignUniqueId();
-  CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::EncodedLengthString(fname));
-  cbuf->AppendShort(COMMAND_EXISTS);
-  cbuf->AppendString(fname);
-  return cbuf;
-}
-
-
-/**
- *
- */
-CommBuf *Protocol::CreateDeleteRequest(const char *fname) {
-  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, fileNameToGroupId(fname));
-  hbuilder.AssignUniqueId();
-  CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::EncodedLengthString(fname));
-  cbuf->AppendShort(COMMAND_DELETE);
-  cbuf->AppendString(fname);
-  return cbuf;
-}
-
-/**
- *
- */
-CommBuf *Protocol::CreateStatusRequest() {
-  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
-  hbuilder.AssignUniqueId();
-  CommBuf *cbuf = new CommBuf(hbuilder, 2);
-  cbuf->AppendShort(COMMAND_STATUS);
-  return cbuf;
-}
-
-#endif

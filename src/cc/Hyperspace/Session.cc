@@ -149,6 +149,38 @@ int Session::Mkdir(std::string name) {
 }
 
 
+int Session::Delete(std::string name) {
+  DispatchHandlerSynchronizer syncHandler;
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( Protocol::CreateDeleteRequest(name) );
+
+ try_again:
+  {
+    boost::mutex::scoped_lock lock(mMutex);
+    while (mState != STATE_SAFE) {
+      if (mState == STATE_EXPIRED)
+	return Error::HYPERSPACE_EXPIRED_SESSION;
+      mCond.wait(lock);
+    }
+  }
+  
+  int error = SendMessage(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("Hyperspace 'delete' error, name=%s : %s", name.c_str(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
+      error = (int)Protocol::ResponseCode(eventPtr.get());
+    }
+  }
+  else {
+    StateTransition(Session::STATE_JEOPARDY);
+    goto try_again;
+  }
+
+  return error;
+}
+
+
+
 /**
  *  Blocking 'attrset' request
  */

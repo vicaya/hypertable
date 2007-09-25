@@ -49,6 +49,7 @@ namespace Hyperspace {
 
     static CommBuf *CreateOpenRequest(std::string &name, uint32_t flags, HandleCallbackPtr &callbackPtr);
     static CommBuf *CreateMkdirRequest(std::string &name);
+    static CommBuf *CreateDeleteRequest(std::string &name);
     static CommBuf *CreateAttrSetRequest(uint64_t handle, std::string &name, const void *value, size_t valueLen);
 
     static CommBuf *CreateEventNotification(uint64_t handle, std::string &name, const void *value, size_t valueLen);

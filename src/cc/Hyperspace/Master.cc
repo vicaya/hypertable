@@ -27,6 +27,7 @@ extern "C" {
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/xattr.h>
+#include <unistd.h>
 }
 
 #include "Common/Error.h"
@@ -251,6 +252,50 @@ void Master::Mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name) {
   }
 
   return;
+}
+
+
+/**
+ * Delete
+ */
+void Master::Delete(ResponseCallback *cb, uint64_t sessionId, const char *name) {
+  std::string normalName;
+  std::string absName;
+  std::string nodeName;
+  NodeDataPtr nodePtr;
+  struct stat statbuf;
+
+  if (mVerbose) {
+    LOG_VA_INFO("delete(sessionId=%lld, name=%s)", sessionId, name);
+  }
+
+  NormalizeName(name, normalName);
+
+  absName = mBaseDir + normalName;
+
+  if (stat(absName.c_str(), &statbuf) < 0) {
+    ReportError(cb);
+    return;
+  }
+  else {
+    if (statbuf.st_mode & S_IFDIR) {
+      if (rmdir(absName.c_str()) < 0) {
+	ReportError(cb);
+	return;
+      }
+    }
+    else {
+      if (unlink(absName.c_str()) < 0) {
+	ReportError(cb);
+	return;
+      }
+    }
+  }
+
+  if (FindParentNode(normalName, nodePtr, nodeName))
+    DeliverEventNotifications(nodePtr.get(), EVENT_MASK_CHILD_NODE_REMOVED, nodeName);
+
+  cb->response_ok();
 }
 
 

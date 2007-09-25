@@ -42,6 +42,7 @@ extern "C" {
 #include "Hyperspace/Session.h"
 
 #include "CommandMkdir.h"
+#include "CommandDelete.h"
 #include "CommandOpen.h"
 #include "CommandAttrSet.h"
 
@@ -164,6 +165,7 @@ int main(int argc, char **argv) {
   }
 
   commands.push_back( new CommandMkdir(session) );
+  commands.push_back( new CommandDelete(session) );
   commands.push_back( new CommandOpen(session) );
   commands.push_back( new CommandAttrSet(session) );
 
