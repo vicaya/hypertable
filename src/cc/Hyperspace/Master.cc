@@ -265,6 +265,7 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
   uint64_t handle;
   struct stat statbuf;
   int oflags = 0;
+  NodeMapT::iterator nodeIter;
 
   if (mVerbose) {
     LOG_VA_INFO("open(sessionId=%lld, fname=%s, flags=0x%x, eventMask=0x%x)", sessionId, name, flags, eventMask);
@@ -283,13 +284,13 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
     boost::mutex::scoped_lock lock(mNodeMapMutex);
     int fd;
 
-    NodeMapT::iterator iter = mNodeMap.find(normalName);
-    if (iter != mNodeMap.end()) {
+    nodeIter = mNodeMap.find(normalName);
+    if (nodeIter != mNodeMap.end()) {
       if ((flags & OPEN_FLAG_CREATE) && (flags & OPEN_FLAG_EXCL)) {
 	cb->error(Error::HYPERSPACE_FILE_EXISTS, "mode=CREATE|EXCL");
 	return;
       }
-      nodePtr = (*iter).second;
+      nodePtr = (*nodeIter).second;
     }
 
     if (stat(absName.c_str(), &statbuf) != 0) {
@@ -340,7 +341,22 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
     handlePtr->openFlags = flags;
     handlePtr->eventMask = eventMask;
     handlePtr->sessionPtr = sessionPtr;
-    
+
+    if (created) {
+      int notifications = 0;
+      Hyperspace::Event *event = 0;
+      unsigned int lastSlash = normalName.rfind("/", normalName.length());
+      std::string parentName;
+
+      nodePtr = 0;
+
+      if (lastSlash > 0) {
+	parentName = normalName.substr(0, lastSlash);
+	nodeIter = mNodeMap.find(parentName);
+	if (nodeIter != mNodeMap.end())
+	  DeliverEventNotifications((*nodeIter).second.get(), EVENT_MASK_CHILD_NODE_ADDED, normalName);
+      }
+    }
 
     handlePtr->node->handleMap[handle] = handlePtr;
 
@@ -382,39 +398,18 @@ void Master::AttrSet(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, 
     return;
   }
 
-  {
-    boost::mutex::scoped_lock lock(mNodeMapMutex);  // is this necessary?
-    Notification *notification;
-
-    event = new Hyperspace::Event(mNextEventId++, EVENT_MASK_ATTR_SET, name);
-
-    if (FileUtils::Fsetxattr(handlePtr->node->fd, name, value, valueLen, 0) == -1) {
-      LOG_VA_ERROR("Problem creating extended attribute '%s' on file '%s' - %s",
-		   name, handlePtr->node->name.c_str(), strerror(errno));
-      exit(1);
-    }
-
-    // log event
-
-    for (HandleMapT::iterator iter = handlePtr->node->handleMap.begin(); iter != handlePtr->node->handleMap.end(); iter++) {
-      if ((*iter).second->eventMask & EVENT_MASK_ATTR_SET) {
-	event->IncrementNotificationCount();
-	(*iter).second->sessionPtr->AddNotification( new Notification(handlePtr->id, event) );
-	mKeepaliveHandlerPtr->DeliverEventNotifications((*iter).second->sessionPtr->id);
-	notifications++;
-      }
-    }
-
+  if (FileUtils::Fsetxattr(handlePtr->node->fd, name, value, valueLen, 0) == -1) {
+    LOG_VA_ERROR("Problem creating extended attribute '%s' on file '%s' - %s",
+		 name, handlePtr->node->name.c_str(), strerror(errno));
+    exit(1);
   }
 
-  if (notifications)
-    event->WaitForNotifications();
+  DeliverEventNotifications(handlePtr->node, EVENT_MASK_ATTR_SET, name);
 
   if ((error = cb->response_ok()) != Error::OK) {
     LOG_VA_ERROR("Problem sending back response - %s", Error::GetText(error));
   }
 
-  delete event;
 }
 
 
@@ -451,4 +446,30 @@ void Master::NormalizeName(std::string name, std::string &normal) {
     normal += name;
   else
     normal += name.substr(0, name.length()-1);
+}
+
+
+/**
+ *
+ */
+void Master::DeliverEventNotifications(NodeData *node, int eventMask, std::string name) {
+  Hyperspace::Event *event = 0;
+  int notifications = 0;
+
+  event = new Hyperspace::Event(mNextEventId++, eventMask, name);
+
+  // log event
+
+  for (HandleMapT::iterator iter = node->handleMap.begin(); iter != node->handleMap.end(); iter++) {
+    if ((*iter).second->eventMask & eventMask) {
+      event->IncrementNotificationCount();
+      (*iter).second->sessionPtr->AddNotification( new Notification((*iter).first, event) );
+      mKeepaliveHandlerPtr->DeliverEventNotifications((*iter).second->sessionPtr->id);
+      notifications++;
+    }
+  }
+
+  if (notifications)
+    event->WaitForNotifications();
+  delete event;      
 }
