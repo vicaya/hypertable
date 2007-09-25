@@ -44,7 +44,7 @@ namespace hypertable {
       return;
     }
 
-    HeaderBuilder(uint8_t protocol, uint32_t gid=0) : mGroupId(gid), mTotalLen(0), mProtocol(protocol), mFlags(0) {
+    HeaderBuilder(uint8_t protocol, uint32_t gid=0) : mId(0), mGroupId(gid), mTotalLen(0), mProtocol(protocol), mFlags(0) {
       return;
     }
 
