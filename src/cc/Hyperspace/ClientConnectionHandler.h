@@ -39,7 +39,7 @@ namespace Hyperspace {
     enum { DISCONNECTED, CONNECTING, HANDSHAKING, CONNECTED };
 
     ClientConnectionHandler(Comm *comm, Session *session);
-    virtual void handle(EventPtr &eventPtr);
+    virtual void handle(hypertable::EventPtr &eventPtr);
 
     void SetSessionId(uint64_t id) { mSessionId = id; }
 

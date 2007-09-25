@@ -36,7 +36,6 @@ namespace Hyperspace {
   class NodeData : public hypertable::ReferenceCount {
   public:
     NodeData() : fd(-1), ephemeral(false) { 
-      cerr << "CREATING NodeDAta" << endl;
       return;
     }
     void AddHandle(uint64_t handle, HandleDataPtr &handlePtr) {
@@ -59,11 +58,6 @@ namespace Hyperspace {
     int Close() {
       boost::mutex::scoped_lock lock(mutex);
       return close(fd);
-    }
-    int Unlink(std::string baseDir) {
-      boost::mutex::scoped_lock lock(mutex);
-      baseDir += name;
-      return unlink(baseDir.c_str());
     }
 
     boost::mutex mutex;

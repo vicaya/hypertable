@@ -201,23 +201,26 @@ void Master::RemoveExpiredSessions() {
   SessionDataPtr sessionPtr;
   
   while (NextExpiredSession(sessionPtr)) {
-    LOG_VA_INFO("Expiring session %lld", mSessionHeap[0]->id);
-    mSessionHeap[0]->Expire();
+    if (mVerbose) {
+      LOG_VA_INFO("Expiring session %lld", sessionPtr->id);
+    }
+    sessionPtr->Expire();
 
     {
-      boost::mutex::scoped_lock slock(mSessionHeap[0]->mutex);
+      boost::mutex::scoped_lock slock(sessionPtr->mutex);
       HandleDataPtr handlePtr;
-      for (set<uint64_t>::iterator iter = mSessionHeap[0]->handles.begin(); iter != mSessionHeap[0]->handles.end(); iter++) {
-	LOG_VA_INFO("Destroying handle %lld", *iter);
+      for (set<uint64_t>::iterator iter = sessionPtr->handles.begin(); iter != sessionPtr->handles.end(); iter++) {
+	if (mVerbose) {
+	  LOG_VA_INFO("Destroying handle %lld", *iter);
+	}
 	if (!RemoveHandleData(*iter, handlePtr)) {
 	  LOG_VA_ERROR("Expired session handle %lld invalid", *iter);
 	}
-	else if (!DestroyHandle(handlePtr)) {
+	else if (!DestroyHandle(handlePtr, false)) {
 	  LOG_VA_ERROR("Problem destroying handle %lld of expired session - %s", *iter, strerror(errno));
 	}
       }
     }
-    LOG_INFO("Leaving Expiring session");
   }
 
 }
@@ -416,8 +419,10 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
       }
       if (!nodePtr) {
 	nodePtr = new NodeData();
-	if (flags & OPEN_FLAG_TEMP)
+	if (flags & OPEN_FLAG_TEMP) {
 	  nodePtr->ephemeral = true;
+	  unlink(absName.c_str());
+	}
 	nodePtr->name = normalName;
 	mNodeMap[normalName] = nodePtr;
       }
@@ -592,26 +597,25 @@ void Master::NormalizeName(std::string name, std::string &normal) {
 /**
  *
  */
-void Master::DeliverEventNotifications(NodeData *node, int eventMask, std::string name) {
-  Hyperspace::Event *event = 0;
+void Master::DeliverEventNotifications(NodeData *node, int eventMask, std::string name, bool waitForNotify) {
+  HyperspaceEventPtr eventPtr;
   int notifications = 0;
 
-  event = new Hyperspace::Event(mNextEventId++, eventMask, name);
+  eventPtr = new Hyperspace::Event(mNextEventId++, eventMask, name);
 
   // log event
 
   for (HandleMapT::iterator iter = node->handleMap.begin(); iter != node->handleMap.end(); iter++) {
     if ((*iter).second->eventMask & eventMask) {
-      event->IncrementNotificationCount();
-      (*iter).second->sessionPtr->AddNotification( new Notification((*iter).first, event) );
+      eventPtr->IncrementNotificationCount();
+      (*iter).second->sessionPtr->AddNotification( new Notification((*iter).first, eventPtr) );
       mKeepaliveHandlerPtr->DeliverEventNotifications((*iter).second->sessionPtr->id);
       notifications++;
     }
   }
 
-  if (notifications)
-    event->WaitForNotifications();
-  delete event;      
+  if (waitForNotify && notifications)
+    eventPtr->WaitForNotifications();
 }
 
 
@@ -638,7 +642,7 @@ bool Master::FindParentNode(std::string &normalName, NodeDataPtr &nodePtr, std::
 }
 
 
-bool Master::DestroyHandle(HandleDataPtr &handlePtr) {
+bool Master::DestroyHandle(HandleDataPtr &handlePtr, bool waitForNotify) {
   NodeDataPtr nodePtr;
 
   handlePtr->node->RemoveHandle(handlePtr->id);
@@ -647,7 +651,6 @@ bool Master::DestroyHandle(HandleDataPtr &handlePtr) {
     boost::mutex::scoped_lock lock(mNodeMapMutex);
 
     if (handlePtr->node->ReferenceCount() == 0) {
-      LOG_INFO("Ref count == 0");
 
       if (handlePtr->node->Close() != 0)
 	return false;
@@ -655,13 +658,8 @@ bool Master::DestroyHandle(HandleDataPtr &handlePtr) {
       if (handlePtr->node->ephemeral) {
 	std::string nodeName;
 
-	LOG_INFO("Ephemeral");
-
-	if (handlePtr->node->Unlink(mBaseDir) != 0)
-	  return false;
-
 	if (FindParentNode(handlePtr->node->name, nodePtr, nodeName))
-	  DeliverEventNotifications(nodePtr.get(), EVENT_MASK_CHILD_NODE_REMOVED, nodeName);
+	  DeliverEventNotifications(nodePtr.get(), EVENT_MASK_CHILD_NODE_REMOVED, nodeName, waitForNotify);
 
 	// remove node
 	NodeMapT::iterator nodeIter = mNodeMap.find(handlePtr->node->name);

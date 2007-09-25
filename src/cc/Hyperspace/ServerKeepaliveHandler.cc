@@ -54,7 +54,7 @@ ServerKeepaliveHandler::ServerKeepaliveHandler(Comm *comm, Master *master) : mCo
 /**
  *
  */
-void ServerKeepaliveHandler::handle(EventPtr &eventPtr) {
+void ServerKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
   uint16_t command = (uint16_t)-1;
   int error;
 

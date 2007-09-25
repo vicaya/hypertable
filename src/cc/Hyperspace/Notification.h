@@ -27,9 +27,9 @@ namespace Hyperspace {
 
   class Notification {
   public:
-    Notification(uint64_t h, Hyperspace::Event *e) : handle(h), event(e) { return; }
+    Notification(uint64_t h, HyperspaceEventPtr &eptr) : handle(h), eventPtr(eptr) { return; }
     uint64_t handle;
-    Hyperspace::Event *event;
+    HyperspaceEventPtr eventPtr;
   };
 
 }

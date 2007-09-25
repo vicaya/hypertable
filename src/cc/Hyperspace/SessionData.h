@@ -46,7 +46,7 @@ namespace Hyperspace {
     void AddNotification(Notification *notification) {
       boost::mutex::scoped_lock slock(mutex);
       if (expired) {
-	notification->event->DecrementNotificationCount();
+	notification->eventPtr->DecrementNotificationCount();
 	delete notification;
       }
       else
@@ -57,8 +57,8 @@ namespace Hyperspace {
       boost::mutex::scoped_lock slock(mutex);
       list<Notification *>::iterator iter = notifications.begin();
       while (iter != notifications.end()) {
-	if ((*iter)->event->GetId() <= eventId) {
-	  (*iter)->event->DecrementNotificationCount();
+	if ((*iter)->eventPtr->GetId() <= eventId) {
+	  (*iter)->eventPtr->DecrementNotificationCount();
 	  delete *iter;
 	  iter = notifications.erase(iter);
 	}
@@ -75,7 +75,7 @@ namespace Hyperspace {
 	expired = true;
 	list<Notification *>::iterator iter = notifications.begin();
 	while (iter != notifications.end()) {
-	  (*iter)->event->DecrementNotificationCount();
+	  (*iter)->eventPtr->DecrementNotificationCount();
 	  delete *iter;
 	  iter = notifications.erase(iter);
 	}
@@ -95,7 +95,7 @@ namespace Hyperspace {
       expired = true;
       list<Notification *>::iterator iter = notifications.begin();
       while (iter != notifications.end()) {
-	(*iter)->event->DecrementNotificationCount();
+	(*iter)->eventPtr->DecrementNotificationCount();
 	delete *iter;
 	iter = notifications.erase(iter);
       }

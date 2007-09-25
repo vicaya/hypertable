@@ -27,11 +27,13 @@
 #include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
 
+#include "Common/ReferenceCount.h"
+
 #include "HandleCallback.h"
 
 namespace Hyperspace {
 
-  class Event {
+  class Event : public hypertable::ReferenceCount {
   public:
     Event(uint64_t id, int type, std::string name) : mId(id), mType(type), mName(name), mNotificationCount(0) { return; }
     uint64_t GetId() { return mId; }
@@ -61,6 +63,7 @@ namespace Hyperspace {
     std::string mName;
     uint32_t mNotificationCount;
   };
+  typedef boost::intrusive_ptr<Event> HyperspaceEventPtr;
 
 }
 

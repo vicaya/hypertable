@@ -74,7 +74,7 @@ Session::Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback)
 
 int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, uint64_t *handlep, bool *createdp) {
   DispatchHandlerSynchronizer syncHandler;
-  EventPtr eventPtr;
+  hypertable::EventPtr eventPtr;
   CommBufPtr cbufPtr( Protocol::CreateOpenRequest(name, flags, callbackPtr) );
 
  try_again:
@@ -114,7 +114,7 @@ int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackP
  */
 int Session::Close(uint64_t handle) {
   DispatchHandlerSynchronizer syncHandler;
-  EventPtr eventPtr;
+  hypertable::EventPtr eventPtr;
   CommBufPtr cbufPtr( Protocol::CreateCloseRequest(handle) );
 
  try_again:
@@ -143,7 +143,7 @@ int Session::Close(uint64_t handle) {
  */
 int Session::Mkdir(std::string name) {
   DispatchHandlerSynchronizer syncHandler;
-  EventPtr eventPtr;
+  hypertable::EventPtr eventPtr;
   CommBufPtr cbufPtr( Protocol::CreateMkdirRequest(name) );
 
  try_again:
@@ -168,7 +168,7 @@ int Session::Mkdir(std::string name) {
 
 int Session::Delete(std::string name) {
   DispatchHandlerSynchronizer syncHandler;
-  EventPtr eventPtr;
+  hypertable::EventPtr eventPtr;
   CommBufPtr cbufPtr( Protocol::CreateDeleteRequest(name) );
 
  try_again:
@@ -197,7 +197,7 @@ int Session::Delete(std::string name) {
  */
 int Session::AttrSet(uint64_t handle, std::string name, const void *value, size_t valueLen) {
   DispatchHandlerSynchronizer syncHandler;
-  EventPtr eventPtr;
+  hypertable::EventPtr eventPtr;
   CommBufPtr cbufPtr( Protocol::CreateAttrSetRequest(handle, name, value, valueLen) );
 
  try_again:
@@ -225,7 +225,7 @@ int Session::AttrSet(uint64_t handle, std::string name, const void *value, size_
  */
 int Session::AttrDel(uint64_t handle, std::string name) {
   DispatchHandlerSynchronizer syncHandler;
-  EventPtr eventPtr;
+  hypertable::EventPtr eventPtr;
   CommBufPtr cbufPtr( Protocol::CreateAttrDelRequest(handle, name) );
 
  try_again:
@@ -353,7 +353,7 @@ int Session::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler) {
  */
 int Session::AttrGet(const char *fname, const char *aname, DynamicBuffer &out) {
   DispatchHandlerSynchronizer syncHandler;
-  EventPtr eventPtr;
+  hypertable::EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateAttrGetRequest(fname, aname) );
   out.clear();
   int error = SendMessage(cbufPtr, &syncHandler);

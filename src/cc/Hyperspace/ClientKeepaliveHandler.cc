@@ -88,7 +88,7 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsP
 /**
  *
  */
-void ClientKeepaliveHandler::handle(EventPtr &eventPtr) {
+void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
   boost::mutex::scoped_lock lock(mMutex);
   int error;
   uint16_t command = (uint16_t)-1;

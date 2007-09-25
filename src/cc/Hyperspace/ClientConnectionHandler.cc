@@ -40,7 +40,7 @@ ClientConnectionHandler::ClientConnectionHandler(Comm *comm, Session *session) :
 }
 
 
-void ClientConnectionHandler::handle(EventPtr &eventPtr) {
+void ClientConnectionHandler::handle(hypertable::EventPtr &eventPtr) {
   boost::mutex::scoped_lock lock(mMutex);
   int error;
 

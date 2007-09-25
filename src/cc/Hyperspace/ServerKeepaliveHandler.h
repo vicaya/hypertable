@@ -40,7 +40,7 @@ namespace Hyperspace {
   class ServerKeepaliveHandler : public DispatchHandler {
   public:
     ServerKeepaliveHandler(Comm *comm, Master *master);
-    virtual void handle(EventPtr &eventPtr);
+    virtual void handle(hypertable::EventPtr &eventPtr);
     void DeliverEventNotifications(uint64_t sessionId);
 
   private:

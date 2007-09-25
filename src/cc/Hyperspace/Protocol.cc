@@ -103,7 +103,7 @@ CommBuf *Hyperspace::Protocol::CreateServerKeepaliveRequest(SessionDataPtr &sess
 
   for (iter = sessionPtr->notifications.begin(); iter != sessionPtr->notifications.end(); iter++) {
     len += 20;
-    len += Serialization::EncodedLengthString((*iter)->event->GetName());
+    len += Serialization::EncodedLengthString((*iter)->eventPtr->GetName());
   }
 
   cbuf = new CommBuf(hbuilder, len);
@@ -113,9 +113,9 @@ CommBuf *Hyperspace::Protocol::CreateServerKeepaliveRequest(SessionDataPtr &sess
   cbuf->AppendInt(sessionPtr->notifications.size());
   for (iter = sessionPtr->notifications.begin(); iter != sessionPtr->notifications.end(); iter++) {
     cbuf->AppendLong((*iter)->handle);
-    cbuf->AppendLong((*iter)->event->GetId());
-    cbuf->AppendInt((*iter)->event->GetType());
-    cbuf->AppendString((*iter)->event->GetName());
+    cbuf->AppendLong((*iter)->eventPtr->GetId());
+    cbuf->AppendInt((*iter)->eventPtr->GetType());
+    cbuf->AppendString((*iter)->eventPtr->GetName());
   }
 
   return cbuf;

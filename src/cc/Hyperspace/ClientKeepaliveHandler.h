@@ -46,7 +46,7 @@ namespace Hyperspace {
 
   public:
     ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsPtr, Session *session);
-    virtual void handle(EventPtr &eventPtr);
+    virtual void handle(hypertable::EventPtr &eventPtr);
 
     void RegisterHandle(uint64_t handle, HandleCallbackPtr &callbackPtr) {
       boost::mutex::scoped_lock lock(mMutex);
