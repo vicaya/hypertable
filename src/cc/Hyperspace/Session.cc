@@ -78,14 +78,8 @@ int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackP
   CommBufPtr cbufPtr( Protocol::CreateOpenRequest(name, flags, callbackPtr) );
 
  try_again:
-  {
-    boost::mutex::scoped_lock lock(mMutex);
-    while (mState != STATE_SAFE) {
-      if (mState == STATE_EXPIRED)
-	return Error::HYPERSPACE_EXPIRED_SESSION;
-      mCond.wait(lock);
-    }
-  }
+  if (!WaitForSafe())
+    return Error::HYPERSPACE_EXPIRED_SESSION;
   
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
@@ -124,14 +118,8 @@ int Session::Mkdir(std::string name) {
   CommBufPtr cbufPtr( Protocol::CreateMkdirRequest(name) );
 
  try_again:
-  {
-    boost::mutex::scoped_lock lock(mMutex);
-    while (mState != STATE_SAFE) {
-      if (mState == STATE_EXPIRED)
-	return Error::HYPERSPACE_EXPIRED_SESSION;
-      mCond.wait(lock);
-    }
-  }
+  if (!WaitForSafe())
+    return Error::HYPERSPACE_EXPIRED_SESSION;
   
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
@@ -155,14 +143,8 @@ int Session::Delete(std::string name) {
   CommBufPtr cbufPtr( Protocol::CreateDeleteRequest(name) );
 
  try_again:
-  {
-    boost::mutex::scoped_lock lock(mMutex);
-    while (mState != STATE_SAFE) {
-      if (mState == STATE_EXPIRED)
-	return Error::HYPERSPACE_EXPIRED_SESSION;
-      mCond.wait(lock);
-    }
-  }
+  if (!WaitForSafe())
+    return Error::HYPERSPACE_EXPIRED_SESSION;
   
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
@@ -190,14 +172,8 @@ int Session::AttrSet(uint64_t handle, std::string name, const void *value, size_
   CommBufPtr cbufPtr( Protocol::CreateAttrSetRequest(handle, name, value, valueLen) );
 
  try_again:
-  {
-    boost::mutex::scoped_lock lock(mMutex);
-    while (mState != STATE_SAFE) {
-      if (mState == STATE_EXPIRED)
-	return Error::HYPERSPACE_EXPIRED_SESSION;
-      mCond.wait(lock);
-    }
-  }
+  if (!WaitForSafe())
+    return Error::HYPERSPACE_EXPIRED_SESSION;
 
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
@@ -213,20 +189,6 @@ int Session::AttrSet(uint64_t handle, std::string name, const void *value, size_
 
   return error;
 }
-
-
-
-int Session::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler) {
-  int error;
-
-  if ((error = mComm->SendRequest(mMasterAddr, cbufPtr, handler)) != Error::OK) {
-    std::string str;
-    LOG_VA_WARN("Comm::SendRequest to Hypertable.Master at %s failed - %s",
-		InetAddr::StringFormat(str, mMasterAddr), Error::GetText(error));
-  }
-  return error;
-}
-
 
 
 /**
@@ -298,6 +260,33 @@ bool Session::WaitForConnection(long maxWaitSecs) {
   }
   return true;
 }
+
+
+
+bool Session::WaitForSafe() {
+  boost::mutex::scoped_lock lock(mMutex);
+  while (mState != STATE_SAFE) {
+    if (mState == STATE_EXPIRED)
+      return false;
+    mCond.wait(lock);
+  }
+  return true;
+}
+
+int Session::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler) {
+  int error;
+
+  if ((error = mComm->SendRequest(mMasterAddr, cbufPtr, handler)) != Error::OK) {
+    std::string str;
+    LOG_VA_WARN("Comm::SendRequest to Hypertable.Master at %s failed - %s",
+		InetAddr::StringFormat(str, mMasterAddr), Error::GetText(error));
+  }
+  return error;
+}
+
+
+
+
 
 
 #if 0

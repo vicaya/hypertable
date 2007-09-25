@@ -142,6 +142,7 @@ namespace Hyperspace {
 
   private:
 
+    bool WaitForSafe();
     int SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler);
 
     boost::mutex       mMutex;
