@@ -256,6 +256,45 @@ int Session::AttrSet(uint64_t handle, std::string name, const void *value, size_
 /**
  *
  */
+int Session::AttrGet(uint64_t handle, std::string name, DynamicBuffer &value) {
+  DispatchHandlerSynchronizer syncHandler;
+  hypertable::EventPtr eventPtr;
+  CommBufPtr cbufPtr( Protocol::CreateAttrGetRequest(handle, name) );
+
+ try_again:
+  if (!WaitForSafe())
+    return Error::HYPERSPACE_EXPIRED_SESSION;
+
+  int error = SendMessage(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("Hyperspace 'attrget' error, name=%s : %s", name.c_str(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
+      error = (int)Protocol::ResponseCode(eventPtr.get());
+    }
+    else {
+      uint8_t *attrValue;
+      int32_t attrValueLen;
+      uint8_t *ptr = eventPtr->message + 4;
+      size_t remaining = eventPtr->messageLen - 4;
+      if (!Serialization::DecodeByteArray(&ptr, &remaining, &attrValue, &attrValueLen)) {
+	assert(!"problem decoding return packet");
+      }
+      value.clear();
+      value.add(attrValue, attrValueLen);
+    }
+  }
+  else {
+    StateTransition(Session::STATE_JEOPARDY);
+    goto try_again;
+  }
+
+  return error;
+}
+
+
+/**
+ *
+ */
 int Session::AttrDel(uint64_t handle, std::string name) {
   DispatchHandlerSynchronizer syncHandler;
   hypertable::EventPtr eventPtr;

@@ -37,10 +37,12 @@ RequestHandlerDelete.cc
 RequestHandlerOpen.cc
 RequestHandlerClose.cc
 RequestHandlerAttrSet.cc
+RequestHandlerAttrGet.cc
 RequestHandlerAttrDel.cc
 RequestHandlerExists.cc
 ResponseCallbackOpen.cc
 ResponseCallbackExists.cc
+ResponseCallbackAttrGet.cc
 ServerConnectionHandler.cc
 ServerKeepaliveHandler.cc
 main.cc

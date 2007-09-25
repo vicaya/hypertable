@@ -27,6 +27,7 @@ CommandDelete.cc
 CommandOpen.cc
 CommandClose.cc
 CommandAttrSet.cc
+CommandAttrGet.cc
 CommandAttrDel.cc
 CommandExists.cc
 hyperspace.cc

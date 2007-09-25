@@ -187,6 +187,17 @@ CommBuf *Hyperspace::Protocol::CreateAttrSetRequest(uint64_t handle, std::string
 }
 
 
+CommBuf *Hyperspace::Protocol::CreateAttrGetRequest(uint64_t handle, std::string &name) {
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
+  hbuilder.AssignUniqueId();
+  CommBuf *cbuf = new CommBuf(hbuilder, 10 + Serialization::EncodedLengthString(name));
+  cbuf->AppendShort(COMMAND_ATTRGET);
+  cbuf->AppendLong(handle);
+  cbuf->AppendString(name);
+  return cbuf;
+}
+
+
 CommBuf *Hyperspace::Protocol::CreateAttrDelRequest(uint64_t handle, std::string &name) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
   hbuilder.AssignUniqueId();

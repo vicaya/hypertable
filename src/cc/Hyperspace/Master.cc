@@ -521,6 +521,54 @@ void Master::AttrSet(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, 
 }
 
 
+/**
+ * 
+ */
+void Master::AttrGet(ResponseCallbackAttrGet *cb, uint64_t sessionId, uint64_t handle, const char *name) {
+  SessionDataPtr sessionPtr;
+  NodeDataPtr nodePtr;
+  HandleDataPtr handlePtr;
+  int error;
+  int alen;
+  uint8_t *buf;
+
+  if (mVerbose) {
+    LOG_VA_INFO("attrget(session=%lld, handle=%lld, name=%s)", sessionId, handle, name);
+  }
+
+  if (!GetSessionData(sessionId, sessionPtr)) {
+    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
+    return;
+  }
+
+  if (!GetHandleData(handle, handlePtr)) {
+    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
+    return;
+  }
+
+  if ((alen = FileUtils::Fgetxattr(handlePtr->node->fd, name, 0, 0)) < 0) {
+    ReportError(cb);
+    LOG_VA_ERROR("Problem determining size of extended attribute '%s' on file '%s' - %s",
+		 name, handlePtr->node->name.c_str(), strerror(errno));
+    return;
+  }
+
+  buf = new uint8_t [ alen + 8 ];
+
+  if ((alen = FileUtils::Fgetxattr(handlePtr->node->fd, name, buf, alen)) < 0) {
+    ReportError(cb);
+    LOG_VA_ERROR("Problem determining size of extended attribute '%s' on file '%s' - %s",
+		 name, handlePtr->node->name.c_str(), strerror(errno));
+    return;
+  }
+
+  if ((error = cb->response(buf, (uint32_t)alen)) != Error::OK) {
+    LOG_VA_ERROR("Problem sending back response - %s", Error::GetText(error));
+  }
+  
+}
+
+
 
 void Master::AttrDel(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, const char *name) {
   SessionDataPtr sessionPtr;
@@ -543,9 +591,9 @@ void Master::AttrDel(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, 
   }
 
   if (FileUtils::Fremovexattr(handlePtr->node->fd, name) == -1) {
+    ReportError(cb);
     LOG_VA_ERROR("Problem removing extended attribute '%s' on file '%s' - %s",
 		 name, handlePtr->node->name.c_str(), strerror(errno));
-    ReportError(cb);
     return;
   }
 
@@ -591,6 +639,8 @@ void Master::ReportError(ResponseCallback *cb) {
     cb->error(Error::HYPERSPACE_PERMISSION_DENIED, errbuf);
   else if (errno == EEXIST)
     cb->error(Error::HYPERSPACE_FILE_EXISTS, errbuf);
+  else if (errno == ENOATTR)
+    cb->error(Error::HYPERSPACE_ATTR_NOT_FOUND, errbuf);
   else
     cb->error(Error::HYPERSPACE_IO_ERROR, errbuf);
 }
