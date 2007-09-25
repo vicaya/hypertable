@@ -56,6 +56,8 @@ namespace Hyperspace {
     uint64_t CreateSession(struct sockaddr_in &addr);
     bool GetSessionData(uint64_t sessionId, SessionDataPtr &sessionPtr);
     int RenewSessionLease(uint64_t sessionId);
+    void RemoveExpiredSessions();
+
     void CreateHandle(uint64_t *handlep, HandleDataPtr &handlePtr);
     bool GetHandleData(uint64_t sessionId, HandleDataPtr &handlePtr);
 

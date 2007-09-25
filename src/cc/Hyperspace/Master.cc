@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <algorithm>
 #include <cstring>
 
 extern "C" {
@@ -170,15 +171,33 @@ int Master::RenewSessionLease(uint64_t sessionId) {
   if (iter == mSessionMap.end())
     return Error::HYPERSPACE_EXPIRED_SESSION;
 
-  boost::xtime_get(&now, boost::TIME_UTC);
-
-  if (xtime_cmp((*iter).second->expireTime, now) < 0)
+  if (!(*iter).second->RenewLease())
     return Error::HYPERSPACE_EXPIRED_SESSION;
 
-  memcpy(&(*iter).second->expireTime, &now, sizeof(boost::xtime));
-  (*iter).second->expireTime.sec += mLeaseInterval;
-
   return Error::OK;
+}
+
+void Master::RemoveExpiredSessions() {
+  boost::mutex::scoped_lock lock(mSessionMapMutex);
+  struct ltSessionData compFunc;
+  boost::xtime now;
+
+  boost::xtime_get(&now, boost::TIME_UTC);
+
+  while (mSessionHeap.size() > 0) {
+
+    std::make_heap(mSessionHeap.begin(), mSessionHeap.end(), compFunc);
+
+    if (mSessionHeap[0]->IsExpired(now)) {
+      LOG_VA_INFO("Expiring session %lld", mSessionHeap[0]->id);
+      mSessionHeap[0]->Expire();
+      std::pop_heap(mSessionHeap.begin(), mSessionHeap.end(), compFunc);
+      mSessionHeap.resize(mSessionHeap.size()-1);
+    }
+    else
+      break;
+  }
+  
 }
 
 

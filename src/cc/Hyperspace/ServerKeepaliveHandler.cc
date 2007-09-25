@@ -98,6 +98,11 @@ void ServerKeepaliveHandler::handle(EventPtr &eventPtr) {
 
 	  if (error == Error::HYPERSPACE_EXPIRED_SESSION) {
 	    LOG_VA_INFO("Session handle %lld expired", sessionId);
+	    CommBufPtr cbufPtr( Protocol::CreateServerKeepaliveRequest(sessionId, Error::HYPERSPACE_EXPIRED_SESSION) );
+	    if ((error = mComm->SendDatagram(eventPtr->addr, mSendAddr, cbufPtr)) != Error::OK) {
+	      LOG_VA_ERROR("Comm::SendDatagram returned %s", Error::GetText(error));
+	    }
+	    return;
 	  }
 
 	  if (!mMaster->GetSessionData(sessionId, sessionPtr)) {
@@ -132,7 +137,7 @@ void ServerKeepaliveHandler::handle(EventPtr &eventPtr) {
   }
   else if (eventPtr->type == hypertable::Event::TIMER) {
 
-    // Deliver event notification timeouts ...
+    mMaster->RemoveExpiredSessions();
 
     if ((error = mComm->SetTimer(1000, this)) != Error::OK) {
       LOG_VA_ERROR("Problem setting timer - %s", Error::GetText(error));
