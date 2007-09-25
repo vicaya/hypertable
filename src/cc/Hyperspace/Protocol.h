@@ -48,6 +48,7 @@ namespace Hyperspace {
     static CommBuf *CreateHandshakeRequest(uint64_t sessionId);
 
     static CommBuf *CreateOpenRequest(std::string &name, uint32_t flags, HandleCallbackPtr &callbackPtr);
+    static CommBuf *CreateCloseRequest(uint64_t handle);
     static CommBuf *CreateMkdirRequest(std::string &name);
     static CommBuf *CreateDeleteRequest(std::string &name);
     static CommBuf *CreateAttrSetRequest(uint64_t handle, std::string &name, const void *value, size_t valueLen);

@@ -101,6 +101,11 @@ namespace Hyperspace {
       }
     }
 
+    void AddHandle(uint64_t handle) {
+      boost::mutex::scoped_lock slock(mutex);
+      handles.insert(handle);
+    }
+
     boost::mutex mutex;
     struct sockaddr_in addr;
     uint32_t mLeaseInterval;

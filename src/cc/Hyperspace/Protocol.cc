@@ -146,6 +146,15 @@ CommBuf *Hyperspace::Protocol::CreateOpenRequest(std::string &name, uint32_t fla
 }
 
 
+CommBuf *Hyperspace::Protocol::CreateCloseRequest(uint64_t handle) {
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
+  hbuilder.AssignUniqueId();
+  CommBuf *cbuf = new CommBuf(hbuilder, 10);
+  cbuf->AppendShort(COMMAND_CLOSE);
+  cbuf->AppendLong(handle);
+  return cbuf;
+}
+
 CommBuf *Hyperspace::Protocol::CreateMkdirRequest(std::string &name) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, fileNameToGroupId(name));
   hbuilder.AssignUniqueId();

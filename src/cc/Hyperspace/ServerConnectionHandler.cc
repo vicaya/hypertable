@@ -30,6 +30,7 @@
 #include "RequestHandlerMkdir.h"
 #include "RequestHandlerDelete.h"
 #include "RequestHandlerOpen.h"
+#include "RequestHandlerClose.h"
 #include "ServerConnectionHandler.h"
 
 using namespace hypertable;
@@ -88,6 +89,9 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
 	return;
       case Protocol::COMMAND_OPEN:
 	requestHandler = new RequestHandlerOpen(mComm, mMaster, mSessionId, eventPtr);
+	break;
+      case Protocol::COMMAND_CLOSE:
+	requestHandler = new RequestHandlerClose(mComm, mMaster, mSessionId, eventPtr);
 	break;
       case Protocol::COMMAND_MKDIR:
 	requestHandler = new RequestHandlerMkdir(mComm, mMaster, mSessionId, eventPtr);

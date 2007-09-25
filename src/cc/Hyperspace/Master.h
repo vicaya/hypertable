@@ -56,10 +56,12 @@ namespace Hyperspace {
     uint64_t CreateSession(struct sockaddr_in &addr);
     bool GetSessionData(uint64_t sessionId, SessionDataPtr &sessionPtr);
     int RenewSessionLease(uint64_t sessionId);
+    bool NextExpiredSession(SessionDataPtr &sessionPtr);
     void RemoveExpiredSessions();
 
     void CreateHandle(uint64_t *handlep, HandleDataPtr &handlePtr);
     bool GetHandleData(uint64_t sessionId, HandleDataPtr &handlePtr);
+    bool RemoveHandleData(uint64_t sessionId, HandleDataPtr &handlePtr);
 
     void GetDatagramSendAddress(struct sockaddr_in *addr) { memcpy(addr, &mLocalAddr, sizeof(mLocalAddr)); }
 
@@ -68,6 +70,7 @@ namespace Hyperspace {
     void Mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name);
     void Delete(ResponseCallback *cb, uint64_t sessionId, const char *name);
     void Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name, uint32_t flags, uint32_t eventMask);
+    void Close(ResponseCallback *cb, uint64_t sessionId, uint64_t handle);
     void AttrSet(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, const char *name, const void *value, size_t valueLen);
     void AttrDel(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, const char *name);
 
@@ -82,6 +85,7 @@ namespace Hyperspace {
     void NormalizeName(std::string name, std::string &normal);
     void DeliverEventNotifications(NodeData *node, int eventMask, std::string name);
     bool FindParentNode(std::string &normalName, NodeDataPtr &nodePtr, std::string &nodeName);
+    bool DestroyHandle(HandleDataPtr &handlePtr);
 
     typedef __gnu_cxx::hash_map<std::string, NodeDataPtr> NodeMapT;
     typedef __gnu_cxx::hash_map<uint64_t, HandleDataPtr>  HandleMapT;

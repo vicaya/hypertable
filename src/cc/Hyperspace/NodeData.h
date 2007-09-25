@@ -21,7 +21,11 @@
 #ifndef HYPERSPACE_NODEDATA_H
 #define HYPERSPACE_NODEDATA_H
 
+#include <iostream>
+
 #include <string>
+
+#include <boost/thread/mutex.hpp>
 
 #include "Common/ReferenceCount.h"
 
@@ -31,10 +35,42 @@ namespace Hyperspace {
 
   class NodeData : public hypertable::ReferenceCount {
   public:
-    NodeData() : fd(-1) { return; }
+    NodeData() : fd(-1), ephemeral(false) { 
+      cerr << "CREATING NodeDAta" << endl;
+      return;
+    }
+    void AddHandle(uint64_t handle, HandleDataPtr &handlePtr) {
+      boost::mutex::scoped_lock lock(mutex);
+      handleMap[handle] = handlePtr;
+    }
+    bool RemoveHandle(uint64_t handle) {
+      boost::mutex::scoped_lock lock(mutex);
+      HandleMapT::iterator iter = handleMap.find(handle);
+      if (iter != handleMap.end()) {
+	handleMap.erase(iter);
+	return true;
+      }
+      return false;
+    }
+    unsigned int ReferenceCount() {
+      boost::mutex::scoped_lock lock(mutex);
+      return handleMap.size();
+    }
+    int Close() {
+      boost::mutex::scoped_lock lock(mutex);
+      return close(fd);
+    }
+    int Unlink(std::string baseDir) {
+      boost::mutex::scoped_lock lock(mutex);
+      baseDir += name;
+      return unlink(baseDir.c_str());
+    }
+
+    boost::mutex mutex;
     std::string name;
     int         fd;
-    typedef __gnu_cxx::hash_map<uint64_t, HandleDataPtr>  HandleMapT;
+    bool        ephemeral;
+    typedef __gnu_cxx::hash_map<uint64_t, HandleDataPtr> HandleMapT;
     HandleMapT handleMap;
   };
   typedef boost::intrusive_ptr<NodeData> NodeDataPtr;

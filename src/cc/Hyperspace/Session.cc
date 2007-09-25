@@ -110,6 +110,35 @@ int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackP
 
 
 /**
+ *
+ */
+int Session::Close(uint64_t handle) {
+  DispatchHandlerSynchronizer syncHandler;
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( Protocol::CreateCloseRequest(handle) );
+
+ try_again:
+  if (!WaitForSafe())
+    return Error::HYPERSPACE_EXPIRED_SESSION;
+
+  int error = SendMessage(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("Hyperspace 'close' error : %s", Protocol::StringFormatMessage(eventPtr.get()).c_str());
+      error = (int)Protocol::ResponseCode(eventPtr.get());
+    }
+  }
+  else {
+    StateTransition(Session::STATE_JEOPARDY);
+    goto try_again;
+  }
+
+  return error;
+}
+
+
+
+/**
  * Submit 'mkdir' request
  */
 int Session::Mkdir(std::string name) {
