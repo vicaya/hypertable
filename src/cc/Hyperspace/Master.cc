@@ -231,7 +231,8 @@ bool Master::GetHandleData(uint64_t handle, HandleDataPtr &handlePtr) {
 void Master::Mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name) {
   std::string normalName;
   std::string absName;
-  
+  std::string nodeName;
+
   if (mVerbose) {
     LOG_VA_INFO("mkdir(sessionId=%lld, name=%s)", sessionId, name);
   }
@@ -242,8 +243,12 @@ void Master::Mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name) {
 
   if (mkdir(absName.c_str(), 0755) < 0)
     ReportError(cb);
-  else
+  else {
+    NodeDataPtr nodePtr;
+    if (FindParentNode(normalName, nodePtr, nodeName))
+      DeliverEventNotifications(nodePtr.get(), EVENT_MASK_CHILD_NODE_ADDED, nodeName);
     cb->response_ok();
+  }
 
   return;
 }
@@ -256,6 +261,7 @@ void Master::Mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name) {
 void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name, uint32_t flags, uint32_t eventMask) {
   std::string normalName;
   std::string absName;
+  std::string nodeName;
   SessionDataPtr sessionPtr;
   NodeDataPtr nodePtr;
   HandleDataPtr handlePtr;
@@ -342,21 +348,8 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
     handlePtr->eventMask = eventMask;
     handlePtr->sessionPtr = sessionPtr;
 
-    if (created) {
-      int notifications = 0;
-      Hyperspace::Event *event = 0;
-      unsigned int lastSlash = normalName.rfind("/", normalName.length());
-      std::string parentName;
-
-      nodePtr = 0;
-
-      if (lastSlash > 0) {
-	parentName = normalName.substr(0, lastSlash);
-	nodeIter = mNodeMap.find(parentName);
-	if (nodeIter != mNodeMap.end())
-	  DeliverEventNotifications((*nodeIter).second.get(), EVENT_MASK_CHILD_NODE_ADDED, normalName);
-      }
-    }
+    if (created && FindParentNode(normalName, nodePtr, nodeName))
+      DeliverEventNotifications(nodePtr.get(), EVENT_MASK_CHILD_NODE_ADDED, nodeName);
 
     handlePtr->node->handleMap[handle] = handlePtr;
 
@@ -472,4 +465,27 @@ void Master::DeliverEventNotifications(NodeData *node, int eventMask, std::strin
   if (notifications)
     event->WaitForNotifications();
   delete event;      
+}
+
+
+
+/**
+ *
+ */
+bool Master::FindParentNode(std::string &normalName, NodeDataPtr &nodePtr, std::string &nodeName) {
+  NodeMapT::iterator nodeIter;
+  unsigned int lastSlash = normalName.rfind("/", normalName.length());
+  std::string parentName;
+
+  if (lastSlash > 0) {
+    parentName = normalName.substr(0, lastSlash);
+    nodeName = normalName.substr(lastSlash+1);
+    nodeIter = mNodeMap.find(parentName);
+    if (nodeIter != mNodeMap.end()) {
+      nodePtr = (*nodeIter).second;
+      return true;
+    }
+  }
+
+  return false;
 }

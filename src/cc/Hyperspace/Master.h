@@ -79,6 +79,7 @@ namespace Hyperspace {
     void ReportError(ResponseCallback *cb);
     void NormalizeName(std::string name, std::string &normal);
     void DeliverEventNotifications(NodeData *node, int eventMask, std::string name);
+    bool FindParentNode(std::string &normalName, NodeDataPtr &nodePtr, std::string &nodeName);
 
     typedef __gnu_cxx::hash_map<std::string, NodeDataPtr> NodeMapT;
     typedef __gnu_cxx::hash_map<uint64_t, HandleDataPtr>  HandleMapT;
