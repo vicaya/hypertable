@@ -393,10 +393,10 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
     else {
       existed = true;
       if (statbuf.st_mode & S_IFDIR) {
-	if (flags & OPEN_FLAG_WRITE) {
-	  cb->error(Error::HYPERSPACE_IS_DIRECTORY, "");
-	  return;
-	}
+	/** if (flags & OPEN_FLAG_WRITE) {
+	    cb->error(Error::HYPERSPACE_IS_DIRECTORY, "");
+	    return;
+	    } **/
 	oflags = O_RDONLY;
       }
       else
@@ -418,12 +418,34 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
 	return;
       }
       if (!nodePtr) {
+	ssize_t len;
 	nodePtr = new NodeData();
+	nodePtr->name = normalName;
+	len = FileUtils::Fgetxattr(fd, "lock.generation", &nodePtr->lockGeneration, sizeof(uint64_t));
+	if (len < 0) {
+	  if (errno == ENOATTR) {
+	    nodePtr->lockGeneration = 1;
+	    if (FileUtils::Fsetxattr(fd, "lock.generation", &nodePtr->lockGeneration, sizeof(uint64_t), 0) == -1) {
+	      ReportError(cb);
+	      LOG_VA_ERROR("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
+			   normalName.c_str(), strerror(errno));
+	      return;
+	    }
+	  }
+	  else {
+	    ReportError(cb);
+	    LOG_VA_ERROR("Problem reading extended attribute 'lock.generation' on file '%s' - %s",
+			 normalName.c_str(), strerror(errno));
+	    return;
+	  }
+	  len = sizeof(int64_t);
+	}
+	assert(len == sizeof(int64_t));
+
 	if (flags & OPEN_FLAG_TEMP) {
 	  nodePtr->ephemeral = true;
 	  unlink(absName.c_str());
 	}
-	nodePtr->name = normalName;
 	mNodeMap[normalName] = nodePtr;
       }
       nodePtr->fd = fd;
@@ -642,6 +664,16 @@ void Master::Lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle,
     return;
   }
 
+  if (!(handlePtr->openFlags & OPEN_FLAG_LOCK)) {
+    cb->error(Error::HYPERSPACE_MODE_RESTRICTION, "handle not open for locking");
+    return;
+  }
+
+  if (!(handlePtr->openFlags & OPEN_FLAG_WRITE)) {
+    cb->error(Error::HYPERSPACE_MODE_RESTRICTION, "handle not open for writing");
+    return;
+  }
+
   {
     boost::mutex::scoped_lock lock(handlePtr->node->mutex);
 
@@ -680,7 +712,7 @@ void Master::Lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle,
 		     handlePtr->node->name.c_str(), strerror(errno));
 	exit(1);
       }
-      handlePtr->node->currentLockMode == mode;
+      handlePtr->node->currentLockMode = mode;
       if (mode == LOCK_MODE_SHARED)
 	handlePtr->node->sharedLockHandles.insert(handle);
       else {

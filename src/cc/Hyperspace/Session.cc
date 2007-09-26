@@ -335,6 +335,7 @@ int Session::Lock(uint64_t handle, uint32_t mode, struct LockSequencerT *sequenc
   hypertable::EventPtr eventPtr;
   CommBufPtr cbufPtr( Protocol::CreateLockRequest(handle, mode, false) );
   ClientHandleStatePtr handleStatePtr;
+  uint32_t status = 0;
 
   if (!mKeepaliveHandler->GetHandleState(handle, handleStatePtr))
     return Error::HYPERSPACE_INVALID_HANDLE;
@@ -342,6 +343,9 @@ int Session::Lock(uint64_t handle, uint32_t mode, struct LockSequencerT *sequenc
  try_again:
   if (!WaitForSafe())
     return Error::HYPERSPACE_EXPIRED_SESSION;
+
+  sequencerp->mode = mode;
+  sequencerp->name = handleStatePtr->normalName;
 
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
@@ -351,7 +355,25 @@ int Session::Lock(uint64_t handle, uint32_t mode, struct LockSequencerT *sequenc
       error = (int)Protocol::ResponseCode(eventPtr.get());
     }
     else {
-      // TBD
+      boost::mutex::scoped_lock lock(handleStatePtr->mutex);
+      uint8_t *ptr = eventPtr->message + 4;
+      size_t remaining = eventPtr->messageLen - 4;
+      if (!Serialization::DecodeInt(&ptr, &remaining, &status))
+	assert(!"problem decoding return packet");
+      if (status == LOCK_STATUS_GRANTED) {
+	if (!Serialization::DecodeLong(&ptr, &remaining, &sequencerp->generation))
+	  assert(!"problem decoding return packet");
+	handleStatePtr->lockStatus = LOCK_STATUS_GRANTED;
+      }
+      else {
+	assert(status == LOCK_STATUS_PENDING);
+	handleStatePtr->lockStatus = LOCK_STATUS_PENDING;
+	while (handleStatePtr->lockStatus == LOCK_STATUS_PENDING)
+	  handleStatePtr->cond.wait(lock);
+	if (handleStatePtr->lockStatus == LOCK_STATUS_CANCELLED)
+	  return Error::HYPERSPACE_REQUEST_CANCELLED;
+	assert(handleStatePtr->lockStatus == LOCK_STATUS_GRANTED);
+      }
     }
   }
   else {
@@ -385,6 +407,7 @@ int Session::TryLock(uint64_t handle, uint32_t mode, uint32_t *statusp, struct L
       error = (int)Protocol::ResponseCode(eventPtr.get());
     }
     else {
+      boost::mutex::scoped_lock lock(handleStatePtr->mutex);
       uint8_t *ptr = eventPtr->message + 4;
       size_t remaining = eventPtr->messageLen - 4;
       if (!Serialization::DecodeInt(&ptr, &remaining, statusp))
@@ -394,6 +417,7 @@ int Session::TryLock(uint64_t handle, uint32_t mode, uint32_t *statusp, struct L
 	  assert(!"problem decoding return packet");
 	sequencerp->mode = mode;
 	sequencerp->name = handleStatePtr->normalName;
+	handleStatePtr->lockStatus = LOCK_STATUS_GRANTED;
       }
     }
   }
@@ -404,6 +428,12 @@ int Session::TryLock(uint64_t handle, uint32_t mode, uint32_t *statusp, struct L
 
   return error;
 }
+
+
+int Session::Release(uint64_t handle) {
+  return -1;
+}
+
 
 
 

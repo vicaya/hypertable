@@ -43,7 +43,7 @@ namespace Hyperspace {
 
   class NodeData : public hypertable::ReferenceCount {
   public:
-    NodeData() : fd(-1), ephemeral(false) { 
+    NodeData() : fd(-1), ephemeral(false), currentLockMode(0), lockGeneration(0) { 
       return;
     }
     void AddHandle(uint64_t handle, HandleDataPtr &handlePtr) {

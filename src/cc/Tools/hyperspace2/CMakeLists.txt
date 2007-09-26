@@ -30,6 +30,9 @@ CommandAttrSet.cc
 CommandAttrGet.cc
 CommandAttrDel.cc
 CommandExists.cc
+CommandLock.cc
+CommandTryLock.cc
+CommandRelease.cc
 hyperspace.cc
 Global.cc
 )

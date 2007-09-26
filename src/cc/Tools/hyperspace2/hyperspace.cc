@@ -49,6 +49,9 @@ extern "C" {
 #include "CommandAttrGet.h"
 #include "CommandAttrDel.h"
 #include "CommandExists.h"
+#include "CommandLock.h"
+#include "CommandTryLock.h"
+#include "CommandRelease.h"
 
 using namespace hypertable;
 using namespace std;
@@ -176,6 +179,9 @@ int main(int argc, char **argv) {
   commands.push_back( new CommandAttrGet(session) );
   commands.push_back( new CommandAttrDel(session) );
   commands.push_back( new CommandExists(session) );
+  commands.push_back( new CommandLock(session) );
+  commands.push_back( new CommandTryLock(session) );
+  commands.push_back( new CommandRelease(session) );
 
   /**
    * Non-interactive mode
@@ -220,10 +226,8 @@ int main(int argc, char **argv) {
     for (i=0; i<commands.size(); i++) {
       if (commands[i]->Matches(line)) {
 	commands[i]->ParseCommandLine(line);
-	if ((error = commands[i]->run()) != Error::OK) {
+	if ((error = commands[i]->run()) != Error::OK && error != -1)
 	  cerr << Error::GetText(error) << endl;
-	  return 1;
-	}
 	break;
       }
     }
