@@ -33,6 +33,7 @@
 #include "AsyncComm/DispatchHandler.h"
 
 #include "ClientConnectionHandler.h"
+#include "ClientHandleState.h"
 #include "HandleCallback.h"
 
 namespace Hyperspace {
@@ -48,16 +49,25 @@ namespace Hyperspace {
     ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsPtr, Session *session);
     virtual void handle(hypertable::EventPtr &eventPtr);
 
-    void RegisterHandle(uint64_t handle, HandleCallbackPtr &callbackPtr) {
+    void RegisterHandle(ClientHandleStatePtr &handleStatePtr) {
       boost::mutex::scoped_lock lock(mMutex);
-      HandleMapT::iterator iter = mHandleMap.find(handle);
+      HandleMapT::iterator iter = mHandleMap.find(handleStatePtr->handle);
       assert(iter == mHandleMap.end());
-      mHandleMap[handle] = callbackPtr;
+      mHandleMap[handleStatePtr->handle] = handleStatePtr;
     }
 
     void UnregisterHandle(uint64_t handle) {
       boost::mutex::scoped_lock lock(mMutex);
       mHandleMap.erase(handle);
+    }
+
+    bool GetHandleState(uint64_t handle, ClientHandleStatePtr &handleStatePtr) {
+      boost::mutex::scoped_lock lock(mMutex);
+      HandleMapT::iterator iter = mHandleMap.find(handle);
+      if (iter == mHandleMap.end())
+	return false;
+      handleStatePtr = (*iter).second;
+      return true;
     }
 
     void ExpireSession();
@@ -77,7 +87,7 @@ namespace Hyperspace {
     ClientConnectionHandler *mConnHandler;
     uint64_t mLastKnownEvent;
 
-    typedef __gnu_cxx::hash_map<uint64_t, HandleCallbackPtr> HandleMapT;
+    typedef __gnu_cxx::hash_map<uint64_t, ClientHandleStatePtr> HandleMapT;
     HandleMapT  mHandleMap;
   };
 

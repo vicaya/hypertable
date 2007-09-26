@@ -40,9 +40,11 @@ RequestHandlerAttrSet.cc
 RequestHandlerAttrGet.cc
 RequestHandlerAttrDel.cc
 RequestHandlerExists.cc
+RequestHandlerLock.cc
 ResponseCallbackOpen.cc
 ResponseCallbackExists.cc
 ResponseCallbackAttrGet.cc
+ResponseCallbackLock.cc
 ServerConnectionHandler.cc
 ServerKeepaliveHandler.cc
 main.cc

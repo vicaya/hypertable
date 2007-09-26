@@ -56,6 +56,8 @@ namespace Hyperspace {
     static CommBuf *CreateAttrDelRequest(uint64_t handle, std::string &name);
     static CommBuf *CreateExistsRequest(std::string &name);
 
+    static CommBuf *CreateLockRequest(uint64_t handle, uint32_t mode, bool tryAcquire);
+
     static CommBuf *CreateEventNotification(uint64_t handle, std::string &name, const void *value, size_t valueLen);
 
     static const uint16_t COMMAND_KEEPALIVE      = 0;
@@ -72,12 +74,11 @@ namespace Hyperspace {
     static const uint16_t COMMAND_EXISTS         = 11;
     static const uint16_t COMMAND_DELETE         = 12;
     static const uint16_t COMMAND_READDIR        = 13;
-    static const uint16_t COMMAND_ACQUIRE        = 14;
-    static const uint16_t COMMAND_TRYACQUIRE     = 15;
-    static const uint16_t COMMAND_RELEASE        = 16;
-    static const uint16_t COMMAND_CHECKSEQUENCER = 17;
-    static const uint16_t COMMAND_STATUS         = 18;
-    static const uint16_t COMMAND_MAX            = 19;
+    static const uint16_t COMMAND_LOCK           = 14;
+    static const uint16_t COMMAND_RELEASE        = 15;
+    static const uint16_t COMMAND_CHECKSEQUENCER = 16;
+    static const uint16_t COMMAND_STATUS         = 17;
+    static const uint16_t COMMAND_MAX            = 18;
 
     static const char * commandStrings[COMMAND_MAX];
 

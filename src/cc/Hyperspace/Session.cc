@@ -37,6 +37,7 @@ extern "C" {
 #include "Common/Logger.h"
 #include "Common/Properties.h"
 
+#include "ClientHandleState.h"
 #include "Master.h"
 #include "Protocol.h"
 #include "Session.h"
@@ -76,6 +77,14 @@ int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackP
   DispatchHandlerSynchronizer syncHandler;
   hypertable::EventPtr eventPtr;
   CommBufPtr cbufPtr( Protocol::CreateOpenRequest(name, flags, callbackPtr) );
+  ClientHandleStatePtr handleStatePtr( new ClientHandleState() );
+
+  handleStatePtr->handle = 0;
+  handleStatePtr->openFlags = flags;
+  handleStatePtr->callbackPtr = callbackPtr;
+  NormalizeName(name, handleStatePtr->normalName);
+  handleStatePtr->sequencer = 0;
+  handleStatePtr->lockStatus = 0;
 
  try_again:
   if (!WaitForSafe())
@@ -97,7 +106,8 @@ int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackP
       if (!Serialization::DecodeByte(&ptr, &remaining, &cbyte))
 	return Error::RESPONSE_TRUNCATED;
       *createdp = cbyte ? true : false;
-      mKeepaliveHandler->RegisterHandle(*handlep, callbackPtr);
+      handleStatePtr->handle = *handlep;
+      mKeepaliveHandler->RegisterHandle(handleStatePtr);
     }
   }
   else {
@@ -320,6 +330,84 @@ int Session::AttrDel(uint64_t handle, std::string name) {
 }
 
 
+int Session::Lock(uint64_t handle, uint32_t mode, struct LockSequencerT *sequencerp) {
+  DispatchHandlerSynchronizer syncHandler;
+  hypertable::EventPtr eventPtr;
+  CommBufPtr cbufPtr( Protocol::CreateLockRequest(handle, mode, false) );
+  ClientHandleStatePtr handleStatePtr;
+
+  if (!mKeepaliveHandler->GetHandleState(handle, handleStatePtr))
+    return Error::HYPERSPACE_INVALID_HANDLE;
+
+ try_again:
+  if (!WaitForSafe())
+    return Error::HYPERSPACE_EXPIRED_SESSION;
+
+  int error = SendMessage(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("Hyperspace 'lock' error, handle=%lld name='%s': %s",
+		   handle, handleStatePtr->normalName.c_str(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
+      error = (int)Protocol::ResponseCode(eventPtr.get());
+    }
+    else {
+      // TBD
+    }
+  }
+  else {
+    StateTransition(Session::STATE_JEOPARDY);
+    goto try_again;
+  }
+
+  return error;
+}
+
+
+
+int Session::TryLock(uint64_t handle, uint32_t mode, uint32_t *statusp, struct LockSequencerT *sequencerp) {
+  DispatchHandlerSynchronizer syncHandler;
+  hypertable::EventPtr eventPtr;
+  CommBufPtr cbufPtr( Protocol::CreateLockRequest(handle, mode, true) );
+  ClientHandleStatePtr handleStatePtr;
+
+  if (!mKeepaliveHandler->GetHandleState(handle, handleStatePtr))
+    return Error::HYPERSPACE_INVALID_HANDLE;
+
+ try_again:
+  if (!WaitForSafe())
+    return Error::HYPERSPACE_EXPIRED_SESSION;
+
+  int error = SendMessage(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("Hyperspace 'trylock' error, handle=%lld name='%s': %s",
+		   handle, handleStatePtr->normalName.c_str(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
+      error = (int)Protocol::ResponseCode(eventPtr.get());
+    }
+    else {
+      uint8_t *ptr = eventPtr->message + 4;
+      size_t remaining = eventPtr->messageLen - 4;
+      if (!Serialization::DecodeInt(&ptr, &remaining, statusp))
+	assert(!"problem decoding return packet");
+      if (*statusp == LOCK_STATUS_GRANTED) {
+	if (!Serialization::DecodeLong(&ptr, &remaining, &sequencerp->generation))
+	  assert(!"problem decoding return packet");
+	sequencerp->mode = mode;
+	sequencerp->name = handleStatePtr->normalName;
+      }
+    }
+  }
+  else {
+    StateTransition(Session::STATE_JEOPARDY);
+    goto try_again;
+  }
+
+  return error;
+}
+
+
+
+
 /**
  * Transition session state
  */
@@ -414,6 +502,21 @@ int Session::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler) {
 }
 
 
+/**
+ *
+ */
+void Session::NormalizeName(std::string name, std::string &normal) {
+  normal = "";
+  if (name[0] != '/')
+    normal += "/";
+
+  if (name.find('/', name.length()-1) == string::npos)
+    normal += name;
+  else
+    normal += name.substr(0, name.length()-1);
+}
+
+
 
 
 
@@ -440,7 +543,6 @@ int Session::AttrGet(const char *fname, const char *aname, DynamicBuffer &out) {
 	error = Error::PROTOCOL_ERROR;
       }
       else {
-	const char *avalue;
 	uint8_t *ptr = eventPtr->message + 4;
 	size_t remaining = eventPtr->messageLen - 4;
 	if (!Serialization::DecodeString(&ptr, &remaining, &avalue))

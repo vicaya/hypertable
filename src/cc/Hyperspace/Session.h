@@ -35,6 +35,7 @@
 
 #include "ClientKeepaliveHandler.h"
 #include "HandleCallback.h"
+#include "LockSequencer.h"
 #include "Protocol.h"
 
 using namespace hypertable;
@@ -62,6 +63,7 @@ namespace Hyperspace {
     uint64_t generation;
     uint64_t lockGeneration;
     uint64_t mtime;
+    bool isDirectory;
   };
 
   /**
@@ -73,21 +75,6 @@ namespace Hyperspace {
   struct DirListingT {
     std::string   name;
     struct NodeMetadataT metadata;
-  };
-
-  /**
-   * Lock sequencer.  This object gets created with
-   * each lock acquisition and gets passed to each
-   * service that expects to be protected by the
-   * lock.  The service will check the validity
-   * of this sequencer with a call to CheckSequencer
-   * and will reject requests if the sequencer is no
-   * longer valid.
-   */
-  struct LockSequencerT {
-    std::string name;
-    uint32_t mode;
-    uint32_t generation;
   };
 
   /**
@@ -126,8 +113,8 @@ namespace Hyperspace {
     int Exists(std::string name, bool *existsp);
     int Delete(std::string name);
     int Readdir(uint64_t handle, std::string name, std::vector<struct DirListingT> &listing);
-    int Acquire(uint64_t handle, int mode, struct LockSequencerT &sequencer);
-    int TryAcquire(uint64_t handle, int mode, struct LockSequencerT &sequencer);
+    int Lock(uint64_t handle, uint32_t mode, struct LockSequencerT *sequencerp);
+    int TryLock(uint64_t handle, uint32_t mode, uint32_t *statusp, struct LockSequencerT *sequencerp);
     int Release(uint64_t handle);
     int CheckSequencer(struct LockSequencerT &sequencer);
     int Status();
@@ -144,6 +131,7 @@ namespace Hyperspace {
 
     bool WaitForSafe();
     int SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler);
+    void NormalizeName(std::string name, std::string &normal);
 
     boost::mutex       mMutex;
     boost::condition   mCond;

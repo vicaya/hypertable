@@ -488,7 +488,6 @@ void Master::Close(ResponseCallback *cb, uint64_t sessionId, uint64_t handle) {
  */
 void Master::AttrSet(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, const char *name, const void *value, size_t valueLen) {
   SessionDataPtr sessionPtr;
-  NodeDataPtr nodePtr;
   HandleDataPtr handlePtr;
   int error;
 
@@ -526,7 +525,6 @@ void Master::AttrSet(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, 
  */
 void Master::AttrGet(ResponseCallbackAttrGet *cb, uint64_t sessionId, uint64_t handle, const char *name) {
   SessionDataPtr sessionPtr;
-  NodeDataPtr nodePtr;
   HandleDataPtr handlePtr;
   int error;
   int alen;
@@ -572,7 +570,6 @@ void Master::AttrGet(ResponseCallbackAttrGet *cb, uint64_t sessionId, uint64_t h
 
 void Master::AttrDel(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, const char *name) {
   SessionDataPtr sessionPtr;
-  NodeDataPtr nodePtr;
   HandleDataPtr handlePtr;
   int error;
 
@@ -621,6 +618,78 @@ void Master::Exists(ResponseCallbackExists *cb, uint64_t sessionId, const char *
 
   if ((error = cb->response( FileUtils::Exists(absName.c_str()) )) != Error::OK) {
     LOG_VA_ERROR("Problem sending back response - %s", Error::GetText(error));
+  }
+}
+
+
+void Master::Lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle, uint32_t mode, bool tryAcquire) {
+  SessionDataPtr sessionPtr;
+  NodeDataPtr nodePtr;
+  HandleDataPtr handlePtr;
+  int error;
+
+  if (mVerbose) {
+    LOG_VA_INFO("lock(session=%lld, handle=%lld, mode=0x%x, tryAcquire=%d)", sessionId, handle, mode, tryAcquire);
+  }
+
+  if (!GetSessionData(sessionId, sessionPtr)) {
+    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
+    return;
+  }
+
+  if (!GetHandleData(handle, handlePtr)) {
+    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
+    return;
+  }
+
+  {
+    boost::mutex::scoped_lock lock(handlePtr->node->mutex);
+
+    if (handlePtr->node->currentLockMode == LOCK_MODE_EXCLUSIVE) {
+      if (mode == LOCK_MODE_SHARED) {
+	if (tryAcquire) {
+	  cb->response(LOCK_STATUS_BUSY);
+	  return;
+	}
+	else {
+	  assert(mode == LOCK_MODE_EXCLUSIVE);
+	  handlePtr->node->pendingLockRequests.push_back( LockRequest(handle, mode) );
+	  cb->response(LOCK_STATUS_PENDING);
+	  return;
+	}
+      }
+    }
+    else if (handlePtr->node->currentLockMode == LOCK_MODE_SHARED) {
+      if (mode == LOCK_MODE_SHARED) {
+	if (!handlePtr->node->pendingLockRequests.empty()) {
+	  handlePtr->node->pendingLockRequests.push_back( LockRequest(handle, mode) );
+	  cb->response(LOCK_STATUS_PENDING);
+	}
+	else {
+	  handlePtr->node->sharedLockHandles.insert(handle);
+	  // mark the handle?
+	  cb->response(LOCK_STATUS_GRANTED, handlePtr->node->lockGeneration);
+	}
+      }
+    }
+    else {
+      assert(handlePtr->node->currentLockMode == 0);
+      handlePtr->node->lockGeneration++;
+      if (FileUtils::Fsetxattr(handlePtr->node->fd, "lock.generation", &handlePtr->node->lockGeneration, sizeof(uint64_t), 0) == -1) {
+	LOG_VA_ERROR("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
+		     handlePtr->node->name.c_str(), strerror(errno));
+	exit(1);
+      }
+      handlePtr->node->currentLockMode == mode;
+      if (mode == LOCK_MODE_SHARED)
+	handlePtr->node->sharedLockHandles.insert(handle);
+      else {
+	assert(mode == LOCK_MODE_EXCLUSIVE);
+	handlePtr->node->exclusiveLockHandle = handle;
+      }
+      // mark this handle?
+      cb->response(LOCK_STATUS_GRANTED, handlePtr->node->lockGeneration);
+    }
   }
 }
 

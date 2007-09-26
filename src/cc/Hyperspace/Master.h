@@ -42,6 +42,7 @@
 #include "ResponseCallbackOpen.h"
 #include "ResponseCallbackExists.h"
 #include "ResponseCallbackAttrGet.h"
+#include "ResponseCallbackLock.h"
 #include "ServerKeepaliveHandler.h"
 #include "SessionData.h"
 
@@ -77,6 +78,7 @@ namespace Hyperspace {
     void AttrGet(ResponseCallbackAttrGet *cb, uint64_t sessionId, uint64_t handle, const char *name);
     void AttrDel(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, const char *name);
     void Exists(ResponseCallbackExists *cb, uint64_t sessionId, const char *name);
+    void Lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle, uint32_t mode, bool tryAcquire);
 
     static const uint32_t DEFAULT_MASTER_PORT        = 38551;
     static const uint32_t DEFAULT_LEASE_INTERVAL     = 12;

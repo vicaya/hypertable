@@ -178,7 +178,6 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 	    }
 
 	    LOG_VA_INFO("Event notification (handle=%lld, event=0x%x, name=%s)", handle, eventMask, name);
-
 	    // tbd...
 
 	    if (eventId > mLastKnownEvent)

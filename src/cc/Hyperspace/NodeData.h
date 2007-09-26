@@ -22,6 +22,7 @@
 #define HYPERSPACE_NODEDATA_H
 
 #include <iostream>
+#include <list>
 
 #include <string>
 
@@ -32,6 +33,13 @@
 #include "HandleData.h"
 
 namespace Hyperspace {
+
+  class LockRequest {
+  public:
+    LockRequest(uint64_t h, int m) : handle(h), mode(m) { return; }
+    uint64_t handle;
+    int mode;
+  };
 
   class NodeData : public hypertable::ReferenceCount {
   public:
@@ -66,6 +74,11 @@ namespace Hyperspace {
     bool        ephemeral;
     typedef __gnu_cxx::hash_map<uint64_t, HandleDataPtr> HandleMapT;
     HandleMapT handleMap;
+    uint32_t currentLockMode;
+    uint64_t lockGeneration;
+    set<uint64_t> sharedLockHandles;
+    uint64_t exclusiveLockHandle;
+    list<LockRequest> pendingLockRequests;
   };
   typedef boost::intrusive_ptr<NodeData> NodeDataPtr;
 

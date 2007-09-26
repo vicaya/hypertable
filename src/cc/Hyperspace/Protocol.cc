@@ -47,8 +47,7 @@ const char *Hyperspace::Protocol::commandStrings[COMMAND_MAX] = {
   "exists",
   "delete",
   "readdir",
-  "acquire",
-  "tryacquire",
+  "lock",
   "release",
   "checksequencer",
   "status"
@@ -215,5 +214,17 @@ CommBuf *Hyperspace::Protocol::CreateExistsRequest(std::string &name) {
   CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::EncodedLengthString(name));
   cbuf->AppendShort(COMMAND_EXISTS);
   cbuf->AppendString(name);
+  return cbuf;
+}
+
+
+CommBuf *Hyperspace::Protocol::CreateLockRequest(uint64_t handle, uint32_t mode, bool tryAcquire) {
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
+  hbuilder.AssignUniqueId();
+  CommBuf *cbuf = new CommBuf(hbuilder, 15);
+  cbuf->AppendShort(COMMAND_LOCK);
+  cbuf->AppendLong(handle);
+  cbuf->AppendInt(mode);
+  cbuf->AppendByte(tryAcquire);
   return cbuf;
 }

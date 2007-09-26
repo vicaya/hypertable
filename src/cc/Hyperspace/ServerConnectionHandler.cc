@@ -33,6 +33,7 @@
 #include "RequestHandlerOpen.h"
 #include "RequestHandlerClose.h"
 #include "RequestHandlerExists.h"
+#include "RequestHandlerLock.h"
 #include "ServerConnectionHandler.h"
 
 using namespace hypertable;
@@ -112,6 +113,9 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
 	break;
       case Protocol::COMMAND_EXISTS:
 	requestHandler = new RequestHandlerExists(mComm, mMaster, mSessionId, eventPtr);
+	break;
+      case Protocol::COMMAND_LOCK:
+	requestHandler = new RequestHandlerLock(mComm, mMaster, mSessionId, eventPtr);
 	break;
       default:
 	std::string message = (string)"Command code " + command + " not implemented";
