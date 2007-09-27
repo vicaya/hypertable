@@ -25,6 +25,7 @@
 
 #include "CommandRelease.h"
 #include "Global.h"
+#include "NormalizePathname.h"
 
 using namespace hypertable;
 using namespace Hyperspace;
@@ -42,6 +43,7 @@ int CommandRelease::run() {
   int error;
   uint32_t mode = 0;
   struct LockSequencerT lockseq;
+  std::string normalName;
 
   if (mArgs.size() != 1) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
@@ -53,9 +55,11 @@ int CommandRelease::run() {
     return -1;
   }
 
-  Global::FileMapT::iterator iter = Global::fileMap.find(mArgs[0].first);
+  NormalizePathname(mArgs[0].first, normalName);
+
+  Global::FileMapT::iterator iter = Global::fileMap.find(normalName);
   if (iter == Global::fileMap.end()) {
-    LOG_VA_ERROR("Unable to find '%s' in open file map", mArgs[0].first.c_str());
+    LOG_VA_ERROR("Unable to find '%s' in open file map", normalName.c_str());
     return -1;
   }
   handle = (*iter).second;

@@ -51,6 +51,9 @@ const uint32_t Master::DEFAULT_MASTER_PORT;
 const uint32_t Master::DEFAULT_LEASE_INTERVAL;
 const uint32_t Master::DEFAULT_KEEPALIVE_INTERVAL;
 
+/**
+ *
+ */
 Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr, ServerKeepaliveHandlerPtr &keepaliveHandlerPtr) : mVerbose(false), mNextHandleNumber(1), mNextSessionId(1), mNextEventId(1) {
   const char *dirname;
   std::string str;
@@ -269,16 +272,15 @@ bool Master::RemoveHandleData(uint64_t handle, HandleDataPtr &handlePtr) {
  * Mkdir
  */
 void Master::Mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name) {
-  std::string normalName;
   std::string absName;
 
   if (mVerbose) {
     LOG_VA_INFO("mkdir(sessionId=%lld, name=%s)", sessionId, name);
   }
 
-  NormalizeName(name, normalName);
+  assert(name[0] == '/' && name[strlen(name)-1] != '/');
 
-  absName = mBaseDir + normalName;
+  absName = mBaseDir + name;
 
   if (mkdir(absName.c_str(), 0755) < 0)
     ReportError(cb);
@@ -286,7 +288,7 @@ void Master::Mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name) {
     NodeDataPtr parentNodePtr;
     std::string childName;
 
-    if (FindParentNode(normalName, parentNodePtr, childName)) {
+    if (FindParentNode(name, parentNodePtr, childName)) {
       HyperspaceEventPtr eventPtr( new EventNamed(mNextEventId++, EVENT_MASK_CHILD_NODE_ADDED, childName) );
       DeliverEventNotifications(parentNodePtr.get(), eventPtr);
     }
@@ -301,7 +303,6 @@ void Master::Mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name) {
  * Delete
  */
 void Master::Delete(ResponseCallback *cb, uint64_t sessionId, const char *name) {
-  std::string normalName;
   std::string absName;
   struct stat statbuf;
 
@@ -309,9 +310,9 @@ void Master::Delete(ResponseCallback *cb, uint64_t sessionId, const char *name) 
     LOG_VA_INFO("delete(sessionId=%lld, name=%s)", sessionId, name);
   }
 
-  NormalizeName(name, normalName);
+  assert(name[0] == '/' && name[strlen(name)-1] != '/');
 
-  absName = mBaseDir + normalName;
+  absName = mBaseDir + name;
 
   if (stat(absName.c_str(), &statbuf) < 0) {
     ReportError(cb);
@@ -337,7 +338,7 @@ void Master::Delete(ResponseCallback *cb, uint64_t sessionId, const char *name) 
     std::string childName;
     NodeDataPtr parentNodePtr;
 
-    if (FindParentNode(normalName, parentNodePtr, childName)) {
+    if (FindParentNode(name, parentNodePtr, childName)) {
       HyperspaceEventPtr eventPtr( new EventNamed(mNextEventId++, EVENT_MASK_CHILD_NODE_REMOVED, childName) );
       DeliverEventNotifications(parentNodePtr.get(), eventPtr);
     }
@@ -352,7 +353,6 @@ void Master::Delete(ResponseCallback *cb, uint64_t sessionId, const char *name) 
  * Open
  */
 void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name, uint32_t flags, uint32_t eventMask) {
-  std::string normalName;
   std::string absName;
   SessionDataPtr sessionPtr;
   NodeDataPtr nodePtr;
@@ -369,9 +369,9 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
     LOG_VA_INFO("open(sessionId=%lld, fname=%s, flags=0x%x, eventMask=0x%x)", sessionId, name, flags, eventMask);
   }
 
-  NormalizeName(name, normalName);
+  assert(name[0] == '/' && name[strlen(name)-1] != '/');
 
-  absName = mBaseDir + normalName;
+  absName = mBaseDir + name;
 
   if (!GetSessionData(sessionId, sessionPtr)) {
     cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
@@ -382,7 +382,7 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
     boost::mutex::scoped_lock lock(mNodeMapMutex);
     int fd;
 
-    nodeIter = mNodeMap.find(normalName);
+    nodeIter = mNodeMap.find(name);
     if (nodeIter != mNodeMap.end()) {
       if ((flags & OPEN_FLAG_CREATE) && (flags & OPEN_FLAG_EXCL)) {
 	cb->error(Error::HYPERSPACE_FILE_EXISTS, "mode=CREATE|EXCL");
@@ -429,7 +429,7 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
       if (!nodePtr) {
 	ssize_t len;
 	nodePtr = new NodeData();
-	nodePtr->name = normalName;
+	nodePtr->name = name;
 	len = FileUtils::Fgetxattr(fd, "lock.generation", &nodePtr->lockGeneration, sizeof(uint64_t));
 	if (len < 0) {
 	  if (errno == ENOATTR) {
@@ -437,14 +437,14 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
 	    if (FileUtils::Fsetxattr(fd, "lock.generation", &nodePtr->lockGeneration, sizeof(uint64_t), 0) == -1) {
 	      ReportError(cb);
 	      LOG_VA_ERROR("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
-			   normalName.c_str(), strerror(errno));
+			   name, strerror(errno));
 	      return;
 	    }
 	  }
 	  else {
 	    ReportError(cb);
 	    LOG_VA_ERROR("Problem reading extended attribute 'lock.generation' on file '%s' - %s",
-			 normalName.c_str(), strerror(errno));
+			 name, strerror(errno));
 	    return;
 	  }
 	  len = sizeof(int64_t);
@@ -455,7 +455,7 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
 	  nodePtr->ephemeral = true;
 	  unlink(absName.c_str());
 	}
-	mNodeMap[normalName] = nodePtr;
+	mNodeMap[name] = nodePtr;
       }
       nodePtr->fd = fd;
       if (!existed)
@@ -474,7 +474,7 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
     {
       std::string childName;
 
-      if (created && FindParentNode(normalName, nodePtr, childName)) {
+      if (created && FindParentNode(name, nodePtr, childName)) {
 	HyperspaceEventPtr eventPtr( new EventNamed(mNextEventId++, EVENT_MASK_CHILD_NODE_ADDED, childName) );
 	DeliverEventNotifications(nodePtr.get(), eventPtr);
       }
@@ -646,7 +646,6 @@ void Master::AttrDel(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, 
 
 
 void Master::Exists(ResponseCallbackExists *cb, uint64_t sessionId, const char *name) {
-  std::string normalName;
   std::string absName;
   int error;
 
@@ -654,9 +653,9 @@ void Master::Exists(ResponseCallbackExists *cb, uint64_t sessionId, const char *
     LOG_VA_INFO("exists(sessionId=%lld, name=%s)", sessionId, name);
   }
 
-  NormalizeName(name, normalName);
+  assert(name[0] == '/' && name[strlen(name)-1] != '/');
 
-  absName = mBaseDir + normalName;
+  absName = mBaseDir + name;
 
   if ((error = cb->response( FileUtils::Exists(absName.c_str()) )) != Error::OK) {
     LOG_VA_ERROR("Problem sending back response - %s", Error::GetText(error));
@@ -966,7 +965,7 @@ void Master::DeliverEventNotification(HandleDataPtr &handlePtr, HyperspaceEventP
 /**
  *
  */
-bool Master::FindParentNode(std::string &normalName, NodeDataPtr &parentNodePtr, std::string &childName) {
+bool Master::FindParentNode(std::string normalName, NodeDataPtr &parentNodePtr, std::string &childName) {
   NodeMapT::iterator nodeIter;
   unsigned int lastSlash = normalName.rfind("/", normalName.length());
   std::string parentName;

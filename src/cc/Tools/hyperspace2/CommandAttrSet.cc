@@ -25,6 +25,7 @@
 
 #include "CommandAttrSet.h"
 #include "Global.h"
+#include "NormalizePathname.h"
 
 using namespace hypertable;
 using namespace Hyperspace;
@@ -40,6 +41,7 @@ int CommandAttrSet::run() {
   uint64_t handle;
   const char *value;
   int error;
+  std::string normalName;
 
   if (mArgs.size() != 2) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
@@ -51,9 +53,11 @@ int CommandAttrSet::run() {
     return -1;
   }
 
-  Global::FileMapT::iterator iter = Global::fileMap.find(mArgs[0].first);
+  NormalizePathname(mArgs[0].first, normalName);
+
+  Global::FileMapT::iterator iter = Global::fileMap.find(normalName);
   if (iter == Global::fileMap.end()) {
-    LOG_VA_ERROR("Unable to find '%s' in open file map", mArgs[0].first.c_str());
+    LOG_VA_ERROR("Unable to find '%s' in open file map", normalName.c_str());
     return -1;
   }
   handle = (*iter).second;

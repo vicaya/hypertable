@@ -92,7 +92,7 @@ namespace Hyperspace {
     void NormalizeName(std::string name, std::string &normal);
     void DeliverEventNotifications(NodeData *node, HyperspaceEventPtr &eventPtr, bool waitForNotify=true);
     void DeliverEventNotification(HandleDataPtr &handlePtr, HyperspaceEventPtr &eventPtr, bool waitForNotify=true);
-    bool FindParentNode(std::string &normalName, NodeDataPtr &nodePtr, std::string &nodeName);
+    bool FindParentNode(std::string normalName, NodeDataPtr &nodePtr, std::string &nodeName);
     bool DestroyHandle(HandleDataPtr &handlePtr, bool waitForNotify=true);
     void ReleaseLock(HandleDataPtr &handlePtr, bool waitForNotify=true);
     void LockHandle(HandleDataPtr &handlePtr, uint32_t mode, bool waitForNotify=true);

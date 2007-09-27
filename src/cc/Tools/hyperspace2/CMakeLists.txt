@@ -35,6 +35,7 @@ CommandTryLock.cc
 CommandRelease.cc
 hyperspace.cc
 Global.cc
+NormalizePathname.cc	
 )
 
 # hyperspace2 - Hyperspace client program

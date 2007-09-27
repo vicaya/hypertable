@@ -76,7 +76,6 @@ Session::Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback)
 int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, uint64_t *handlep, bool *createdp) {
   DispatchHandlerSynchronizer syncHandler;
   hypertable::EventPtr eventPtr;
-  CommBufPtr cbufPtr( Protocol::CreateOpenRequest(name, flags, callbackPtr) );
   ClientHandleStatePtr handleStatePtr( new ClientHandleState() );
 
   handleStatePtr->handle = 0;
@@ -86,6 +85,8 @@ int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackP
   handleStatePtr->sequencer = 0;
   handleStatePtr->lockStatus = 0;
 
+  CommBufPtr cbufPtr( Protocol::CreateOpenRequest(handleStatePtr->normalName, flags, callbackPtr) );
+
  try_again:
   if (!WaitForSafe())
     return Error::HYPERSPACE_EXPIRED_SESSION;
@@ -93,7 +94,7 @@ int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackP
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hyperspace 'open' error, name=%s flags=0x%x events=0x%x : %s", name.c_str(), 
+      LOG_VA_ERROR("Hyperspace 'open' error, name=%s flags=0x%x events=0x%x : %s", handleStatePtr->normalName.c_str(), 
 		   flags, callbackPtr->GetEventMask(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
       error = (int)Protocol::ResponseCode(eventPtr.get());
     }
@@ -154,7 +155,11 @@ int Session::Close(uint64_t handle) {
 int Session::Mkdir(std::string name) {
   DispatchHandlerSynchronizer syncHandler;
   hypertable::EventPtr eventPtr;
-  CommBufPtr cbufPtr( Protocol::CreateMkdirRequest(name) );
+  std::string normalName;
+
+  NormalizeName(name, normalName);
+
+  CommBufPtr cbufPtr( Protocol::CreateMkdirRequest(normalName) );
 
  try_again:
   if (!WaitForSafe())
@@ -163,7 +168,7 @@ int Session::Mkdir(std::string name) {
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hyperspace 'mkdir' error, name=%s : %s", name.c_str(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
+      LOG_VA_ERROR("Hyperspace 'mkdir' error, name=%s : %s", normalName.c_str(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
       error = (int)Protocol::ResponseCode(eventPtr.get());
     }
   }
@@ -179,7 +184,11 @@ int Session::Mkdir(std::string name) {
 int Session::Delete(std::string name) {
   DispatchHandlerSynchronizer syncHandler;
   hypertable::EventPtr eventPtr;
-  CommBufPtr cbufPtr( Protocol::CreateDeleteRequest(name) );
+  std::string normalName;
+
+  NormalizeName(name, normalName);
+
+  CommBufPtr cbufPtr( Protocol::CreateDeleteRequest(normalName) );
 
  try_again:
   if (!WaitForSafe())
@@ -188,7 +197,7 @@ int Session::Delete(std::string name) {
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hyperspace 'delete' error, name=%s : %s", name.c_str(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
+      LOG_VA_ERROR("Hyperspace 'delete' error, name=%s : %s", normalName.c_str(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
       error = (int)Protocol::ResponseCode(eventPtr.get());
     }
   }
@@ -204,7 +213,11 @@ int Session::Delete(std::string name) {
 int Session::Exists(std::string name, bool *existsp) {
   DispatchHandlerSynchronizer syncHandler;
   hypertable::EventPtr eventPtr;
-  CommBufPtr cbufPtr( Protocol::CreateExistsRequest(name) );
+  std::string normalName;
+
+  NormalizeName(name, normalName);
+
+  CommBufPtr cbufPtr( Protocol::CreateExistsRequest(normalName) );
 
  try_again:
   if (!WaitForSafe())
@@ -213,7 +226,7 @@ int Session::Exists(std::string name, bool *existsp) {
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hyperspace 'exists' error, name=%s : %s", name.c_str(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
+      LOG_VA_ERROR("Hyperspace 'exists' error, name=%s : %s", normalName.c_str(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
       error = (int)Protocol::ResponseCode(eventPtr.get());
     }
     else {
@@ -578,47 +591,3 @@ void Session::NormalizeName(std::string name, std::string &normal) {
   else
     normal += name.substr(0, name.length()-1);
 }
-
-
-
-
-
-
-#if 0
-
-/**
- * Blocking 'attrget' method
- */
-int Session::AttrGet(const char *fname, const char *aname, DynamicBuffer &out) {
-  DispatchHandlerSynchronizer syncHandler;
-  hypertable::EventPtr eventPtr;
-  CommBufPtr cbufPtr( mProtocol->CreateAttrGetRequest(fname, aname) );
-  out.clear();
-  int error = SendMessage(cbufPtr, &syncHandler);
-  if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_WARN("Hyperspace 'attrget' error, fname=%s aname=%s : %s", fname, aname, mProtocol->StringFormatMessage(eventPtr).c_str());
-      error = (int)mProtocol->ResponseCode(eventPtr);
-    }
-    else {
-      if (eventPtr->messageLen < 7) {
-	LOG_VA_ERROR("Hyperspace 'attrget' error, fname=%s aname=%s : short response", fname, aname);
-	error = Error::PROTOCOL_ERROR;
-      }
-      else {
-	uint8_t *ptr = eventPtr->message + 4;
-	size_t remaining = eventPtr->messageLen - 4;
-	if (!Serialization::DecodeString(&ptr, &remaining, &avalue))
-	  assert(!"problem decoding return packet");
-	if (*avalue != 0) {
-	  out.reserve(strlen(avalue)+1);
-	  out.addNoCheck(avalue, strlen(avalue));
-	  *out.ptr = 0;
-	}
-      }
-    }
-  }
-  return error;
-}
-
-#endif
