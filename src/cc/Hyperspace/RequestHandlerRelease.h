@@ -18,31 +18,34 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_HANDLEDATA_H
-#define HYPERSPACE_HANDLEDATA_H
+#ifndef HYPERSPACE_REQUESTHANDLERRELEASE_H
+#define HYPERSPACE_REQUESTHANDLERRELEASE_H
 
-#include <string>
+#include "Common/Runnable.h"
 
-#include "Common/ReferenceCount.h"
+#include "AsyncComm/ApplicationHandler.h"
+#include "AsyncComm/Comm.h"
+#include "AsyncComm/Event.h"
 
-#include "SessionData.h"
+using namespace hypertable;
 
 namespace Hyperspace {
 
-  class NodeData;
+  class Master;
 
-  class HandleData : public hypertable::ReferenceCount {
+  class RequestHandlerRelease : public ApplicationHandler {
   public:
-    std::string  name;
-    uint64_t     id;
-    uint32_t     openFlags;
-    uint32_t     eventMask;
-    NodeData    *node;
-    SessionDataPtr sessionPtr;
-    uint32_t     lockStatus;
-  };
-  typedef boost::intrusive_ptr<HandleData> HandleDataPtr;
+    RequestHandlerRelease(Comm *comm, Master *master, uint64_t sessionId, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mComm(comm), mMaster(master), mSessionId(sessionId) {
+      return;
+    }
 
+    virtual void run();
+
+  private:
+    Comm        *mComm;
+    Master      *mMaster;
+    uint64_t     mSessionId;
+  };
 }
 
-#endif // HYPERSPACE_HANDLEDATA_H
+#endif // HYPERSPACE_REQUESTHANDLERRELEASE_H

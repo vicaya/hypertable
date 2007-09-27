@@ -57,6 +57,7 @@ namespace Hyperspace {
     static CommBuf *CreateExistsRequest(std::string &name);
 
     static CommBuf *CreateLockRequest(uint64_t handle, uint32_t mode, bool tryAcquire);
+    static CommBuf *CreateReleaseRequest(uint64_t handle);
 
     static CommBuf *CreateEventNotification(uint64_t handle, std::string &name, const void *value, size_t valueLen);
 

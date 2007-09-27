@@ -101,8 +101,8 @@ CommBuf *Hyperspace::Protocol::CreateServerKeepaliveRequest(SessionDataPtr &sess
   list<Notification *>::iterator iter;
 
   for (iter = sessionPtr->notifications.begin(); iter != sessionPtr->notifications.end(); iter++) {
-    len += 20;
-    len += Serialization::EncodedLengthString((*iter)->eventPtr->GetName());
+    len += 8;  // handle
+    len += (*iter)->eventPtr->EncodedLength();
   }
 
   cbuf = new CommBuf(hbuilder, len);
@@ -112,9 +112,7 @@ CommBuf *Hyperspace::Protocol::CreateServerKeepaliveRequest(SessionDataPtr &sess
   cbuf->AppendInt(sessionPtr->notifications.size());
   for (iter = sessionPtr->notifications.begin(); iter != sessionPtr->notifications.end(); iter++) {
     cbuf->AppendLong((*iter)->handle);
-    cbuf->AppendLong((*iter)->eventPtr->GetId());
-    cbuf->AppendInt((*iter)->eventPtr->GetType());
-    cbuf->AppendString((*iter)->eventPtr->GetName());
+    (*iter)->eventPtr->Encode(cbuf);
   }
 
   return cbuf;
@@ -226,5 +224,15 @@ CommBuf *Hyperspace::Protocol::CreateLockRequest(uint64_t handle, uint32_t mode,
   cbuf->AppendLong(handle);
   cbuf->AppendInt(mode);
   cbuf->AppendByte(tryAcquire);
+  return cbuf;
+}
+
+
+CommBuf *Hyperspace::Protocol::CreateReleaseRequest(uint64_t handle) {
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
+  hbuilder.AssignUniqueId();
+  CommBuf *cbuf = new CommBuf(hbuilder, 10);
+  cbuf->AppendShort(COMMAND_RELEASE);
+  cbuf->AppendLong(handle);
   return cbuf;
 }

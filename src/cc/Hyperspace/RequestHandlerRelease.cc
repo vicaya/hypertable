@@ -18,31 +18,36 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_HANDLEDATA_H
-#define HYPERSPACE_HANDLEDATA_H
+#include "Common/Error.h"
+#include "Common/Logger.h"
 
-#include <string>
+#include "AsyncComm/ResponseCallback.h"
+#include "AsyncComm/Serialization.h"
 
-#include "Common/ReferenceCount.h"
+#include "Master.h"
+#include "RequestHandlerRelease.h"
 
-#include "SessionData.h"
+using namespace Hyperspace;
+using namespace hypertable;
 
-namespace Hyperspace {
+/**
+ *
+ */
+void RequestHandlerRelease::run() {
+  ResponseCallback cb(mComm, mEventPtr);
+  size_t remaining = mEventPtr->messageLen - 2;
+  uint8_t *msgPtr = mEventPtr->message + 2;
+  uint64_t handle;
 
-  class NodeData;
+  // handle
+  if (!Serialization::DecodeLong(&msgPtr, &remaining, &handle))
+    goto abort;
 
-  class HandleData : public hypertable::ReferenceCount {
-  public:
-    std::string  name;
-    uint64_t     id;
-    uint32_t     openFlags;
-    uint32_t     eventMask;
-    NodeData    *node;
-    SessionDataPtr sessionPtr;
-    uint32_t     lockStatus;
-  };
-  typedef boost::intrusive_ptr<HandleData> HandleDataPtr;
+  mMaster->Release(&cb, mSessionId, handle);
 
+  return;
+
+ abort:
+  LOG_ERROR("Encoding problem with RELEASE message");
+  cb.error(Error::PROTOCOL_ERROR, "Encoding problem with RELEASE message");
 }
-
-#endif // HYPERSPACE_HANDLEDATA_H

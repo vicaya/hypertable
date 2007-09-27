@@ -234,6 +234,7 @@ void Master::CreateHandle(uint64_t *handlep, HandleDataPtr &handlePtr) {
   *handlep = ++mNextHandleNumber;
   handlePtr = new HandleData();
   handlePtr->id = *handlep;
+  handlePtr->lockStatus = 0;
   mHandleMap[*handlep] = handlePtr;
 }
 
@@ -270,7 +271,6 @@ bool Master::RemoveHandleData(uint64_t handle, HandleDataPtr &handlePtr) {
 void Master::Mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name) {
   std::string normalName;
   std::string absName;
-  std::string nodeName;
 
   if (mVerbose) {
     LOG_VA_INFO("mkdir(sessionId=%lld, name=%s)", sessionId, name);
@@ -283,9 +283,13 @@ void Master::Mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name) {
   if (mkdir(absName.c_str(), 0755) < 0)
     ReportError(cb);
   else {
-    NodeDataPtr nodePtr;
-    if (FindParentNode(normalName, nodePtr, nodeName))
-      DeliverEventNotifications(nodePtr.get(), EVENT_MASK_CHILD_NODE_ADDED, nodeName);
+    NodeDataPtr parentNodePtr;
+    std::string childName;
+
+    if (FindParentNode(normalName, parentNodePtr, childName)) {
+      HyperspaceEventPtr eventPtr( new EventNamed(mNextEventId++, EVENT_MASK_CHILD_NODE_ADDED, childName) );
+      DeliverEventNotifications(parentNodePtr.get(), eventPtr);
+    }
     cb->response_ok();
   }
 
@@ -299,8 +303,6 @@ void Master::Mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name) {
 void Master::Delete(ResponseCallback *cb, uint64_t sessionId, const char *name) {
   std::string normalName;
   std::string absName;
-  std::string nodeName;
-  NodeDataPtr nodePtr;
   struct stat statbuf;
 
   if (mVerbose) {
@@ -330,8 +332,16 @@ void Master::Delete(ResponseCallback *cb, uint64_t sessionId, const char *name) 
     }
   }
 
-  if (FindParentNode(normalName, nodePtr, nodeName))
-    DeliverEventNotifications(nodePtr.get(), EVENT_MASK_CHILD_NODE_REMOVED, nodeName);
+  // deliver notifications
+  {
+    std::string childName;
+    NodeDataPtr parentNodePtr;
+
+    if (FindParentNode(normalName, parentNodePtr, childName)) {
+      HyperspaceEventPtr eventPtr( new EventNamed(mNextEventId++, EVENT_MASK_CHILD_NODE_REMOVED, childName) );
+      DeliverEventNotifications(parentNodePtr.get(), eventPtr);
+    }
+  }
 
   cb->response_ok();
 }
@@ -344,7 +354,6 @@ void Master::Delete(ResponseCallback *cb, uint64_t sessionId, const char *name) 
 void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name, uint32_t flags, uint32_t eventMask) {
   std::string normalName;
   std::string absName;
-  std::string nodeName;
   SessionDataPtr sessionPtr;
   NodeDataPtr nodePtr;
   HandleDataPtr handlePtr;
@@ -462,11 +471,16 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
 
     sessionPtr->AddHandle(handle);
 
-    if (created && FindParentNode(normalName, nodePtr, nodeName))
-      DeliverEventNotifications(nodePtr.get(), EVENT_MASK_CHILD_NODE_ADDED, nodeName);
+    {
+      std::string childName;
+
+      if (created && FindParentNode(normalName, nodePtr, childName)) {
+	HyperspaceEventPtr eventPtr( new EventNamed(mNextEventId++, EVENT_MASK_CHILD_NODE_ADDED, childName) );
+	DeliverEventNotifications(nodePtr.get(), eventPtr);
+      }
+    }
 
     handlePtr->node->AddHandle(handle, handlePtr);
-
   }
 
   cb->response(handle, created);
@@ -533,7 +547,10 @@ void Master::AttrSet(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, 
     exit(1);
   }
 
-  DeliverEventNotifications(handlePtr->node, EVENT_MASK_ATTR_SET, name);
+  {
+    HyperspaceEventPtr eventPtr( new EventNamed(mNextEventId++, EVENT_MASK_ATTR_SET, name) );
+    DeliverEventNotifications(handlePtr->node, eventPtr);
+  }
 
   if ((error = cb->response_ok()) != Error::OK) {
     LOG_VA_ERROR("Problem sending back response - %s", Error::GetText(error));
@@ -616,7 +633,10 @@ void Master::AttrDel(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, 
     return;
   }
 
-  DeliverEventNotifications(handlePtr->node, EVENT_MASK_ATTR_DEL, name);
+  {
+    HyperspaceEventPtr eventPtr( new EventNamed(mNextEventId++, EVENT_MASK_ATTR_DEL, name) );
+    DeliverEventNotifications(handlePtr->node, eventPtr);
+  }
 
   if ((error = cb->response_ok()) != Error::OK) {
     LOG_VA_ERROR("Problem sending back response - %s", Error::GetText(error));
@@ -699,7 +719,7 @@ void Master::Lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle,
 	}
 	else {
 	  handlePtr->node->sharedLockHandles.insert(handle);
-	  // mark the handle?
+	  handlePtr->lockStatus = LOCK_STATUS_GRANTED;
 	  cb->response(LOCK_STATUS_GRANTED, handlePtr->node->lockGeneration);
 	}
       }
@@ -719,10 +739,84 @@ void Master::Lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle,
 	assert(mode == LOCK_MODE_EXCLUSIVE);
 	handlePtr->node->exclusiveLockHandle = handle;
       }
-      // mark this handle?
+      handlePtr->lockStatus = LOCK_STATUS_GRANTED;
       cb->response(LOCK_STATUS_GRANTED, handlePtr->node->lockGeneration);
     }
   }
+}
+
+
+
+/**
+ * 
+ */
+void Master::Release(ResponseCallback *cb, uint64_t sessionId, uint64_t handle) {
+  SessionDataPtr sessionPtr;
+  NodeDataPtr nodePtr;
+  HandleDataPtr handlePtr;
+  int error;
+
+  if (mVerbose) {
+    LOG_VA_INFO("release(session=%lld, handle=%lld)", sessionId, handle);
+  }
+
+  if (!GetSessionData(sessionId, sessionPtr)) {
+    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
+    return;
+  }
+
+  if (!GetHandleData(handle, handlePtr)) {
+    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
+    return;
+  }
+
+  {
+    boost::mutex::scoped_lock lock(handlePtr->node->mutex);
+
+    if (handlePtr->lockStatus == EVENT_MASK_LOCK_GRANTED) {
+      if (handlePtr->node->exclusiveLockHandle != 0) {
+	assert(handle == handlePtr->node->exclusiveLockHandle);
+	handlePtr->node->exclusiveLockHandle = 0;
+      }
+      else {
+	unsigned int count = handlePtr->node->sharedLockHandles.erase(handle);
+	assert(count);
+      }
+      handlePtr->lockStatus = 0;
+    }
+    else {
+      cb->response_ok();
+      return;
+    }
+  }
+
+  /**
+  DeliverEventNotifications(handlePtr->node, EVENT_MASK_LOCK_RELEASED, "");
+
+  if ((error = cb->response_ok()) != Error::OK) {
+    LOG_VA_ERROR("Problem sending back response - %s", Error::GetText(error));
+  }
+
+  {
+    boost::mutex::scoped_lock lock(handlePtr->node->mutex);
+
+    if (!handlePtr->node->pendingLockRequests.empty()) {
+
+    }
+
+  }
+  */
+  
+  // If there are pending lock requests, create a lock request event
+
+  // for either the 1st writer, or the front string of readers in the queue.
+  // Lock the node (pull pending requests off pending queue, set lock handler info,
+  // update handle state to indicate locked).
+
+  // send LOCK_GRANTED notifications to all of the above handles sessions
+
+  // wait for deliver (or timeouts)
+
 }
 
 
@@ -765,7 +859,6 @@ void Master::NormalizeName(std::string name, std::string &normal) {
 
 /**
  *
- */
 void Master::DeliverEventNotifications(NodeData *node, int eventMask, std::string name, bool waitForNotify) {
   HyperspaceEventPtr eventPtr;
   int notifications = 0;
@@ -786,23 +879,43 @@ void Master::DeliverEventNotifications(NodeData *node, int eventMask, std::strin
   if (waitForNotify && notifications)
     eventPtr->WaitForNotifications();
 }
+ */
+
+void Master::DeliverEventNotifications(NodeData *node, HyperspaceEventPtr &eventPtr, bool waitForNotify) {
+  int notifications = 0;
+
+  // log event
+
+  for (HandleMapT::iterator iter = node->handleMap.begin(); iter != node->handleMap.end(); iter++) {
+    if ((*iter).second->eventMask & eventPtr->GetMask()) {
+      eventPtr->IncrementNotificationCount();
+      (*iter).second->sessionPtr->AddNotification( new Notification((*iter).first, eventPtr) );
+      mKeepaliveHandlerPtr->DeliverEventNotifications((*iter).second->sessionPtr->id);
+      notifications++;
+    }
+  }
+
+  if (waitForNotify && notifications)
+    eventPtr->WaitForNotifications();
+}
+
 
 
 
 /**
  *
  */
-bool Master::FindParentNode(std::string &normalName, NodeDataPtr &nodePtr, std::string &nodeName) {
+bool Master::FindParentNode(std::string &normalName, NodeDataPtr &parentNodePtr, std::string &childName) {
   NodeMapT::iterator nodeIter;
   unsigned int lastSlash = normalName.rfind("/", normalName.length());
   std::string parentName;
 
   if (lastSlash > 0) {
     parentName = normalName.substr(0, lastSlash);
-    nodeName = normalName.substr(lastSlash+1);
+    childName = normalName.substr(lastSlash+1);
     nodeIter = mNodeMap.find(parentName);
     if (nodeIter != mNodeMap.end()) {
-      nodePtr = (*nodeIter).second;
+      parentNodePtr = (*nodeIter).second;
       return true;
     }
   }
@@ -811,8 +924,10 @@ bool Master::FindParentNode(std::string &normalName, NodeDataPtr &nodePtr, std::
 }
 
 
+/**
+ * TODO: Destory locks
+ */
 bool Master::DestroyHandle(HandleDataPtr &handlePtr, bool waitForNotify) {
-  NodeDataPtr nodePtr;
 
   handlePtr->node->RemoveHandle(handlePtr->id);
 
@@ -825,10 +940,13 @@ bool Master::DestroyHandle(HandleDataPtr &handlePtr, bool waitForNotify) {
 	return false;
 
       if (handlePtr->node->ephemeral) {
-	std::string nodeName;
+	std::string childName;
+	NodeDataPtr parentNodePtr;
 
-	if (FindParentNode(handlePtr->node->name, nodePtr, nodeName))
-	  DeliverEventNotifications(nodePtr.get(), EVENT_MASK_CHILD_NODE_REMOVED, nodeName, waitForNotify);
+	if (FindParentNode(handlePtr->node->name, parentNodePtr, childName)) {
+	  HyperspaceEventPtr eventPtr( new EventNamed(mNextEventId++, EVENT_MASK_CHILD_NODE_REMOVED, childName) );
+	  DeliverEventNotifications(parentNodePtr.get(), eventPtr, waitForNotify);
+	}
 
 	// remove node
 	NodeMapT::iterator nodeIter = mNodeMap.find(handlePtr->node->name);

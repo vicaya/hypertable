@@ -170,15 +170,32 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 
 	    if (!Serialization::DecodeLong(&msgPtr, &remaining, &handle) ||
 		!Serialization::DecodeLong(&msgPtr, &remaining, &eventId) ||
-		!Serialization::DecodeInt(&msgPtr, &remaining, &eventMask) ||
-		!Serialization::DecodeString(&msgPtr, &remaining, &name)) {
+		!Serialization::DecodeInt(&msgPtr, &remaining, &eventMask)) {
 	      std::string message = "Truncated Request";
-	      cerr << "Message len = " << eventPtr->messageLen << endl;
 	      throw ProtocolException(message);
 	    }
 
-	    LOG_VA_INFO("Event notification (handle=%lld, event=0x%x, name=%s)", handle, eventMask, name);
-	    // tbd...
+	    if (eventMask == EVENT_MASK_ATTR_SET || eventMask == EVENT_MASK_ATTR_DEL ||
+		eventMask == EVENT_MASK_CHILD_NODE_ADDED || eventMask == EVENT_MASK_CHILD_NODE_REMOVED) {
+	      if (!Serialization::DecodeString(&msgPtr, &remaining, &name)) {
+		std::string message = "Truncated Request";
+		throw ProtocolException(message);
+	      }
+	      cerr << EventMaskToString(eventMask) << " name=" << name << " (handle=" << handle << ", id=" << eventId << ")" << endl;
+	    }
+	    else if (eventMask == EVENT_MASK_LOCK_ACQUIRED || eventMask == EVENT_MASK_LOCK_RELEASED) {
+	      cerr << EventMaskToString(eventMask) << "(handle=" << handle << ", id=" << eventId << ")" << endl;
+	    }
+	    else if (eventMask == EVENT_MASK_LOCK_GRANTED) {
+	      uint32_t mode;
+	      uint64_t generation;
+	      if (!Serialization::DecodeInt(&msgPtr, &remaining, &mode) ||
+		  !Serialization::DecodeLong(&msgPtr, &remaining, &generation)) {
+		std::string message = "Truncated Request";
+		throw ProtocolException(message);
+	      }
+	      cerr << EventMaskToString(eventMask) << " mode=" << mode << " generation=" << generation << " (handle=" << handle << ", id=" << eventId << ")" << endl;
+	    }
 
 	    if (eventId > mLastKnownEvent)
 	      mLastKnownEvent = eventId;

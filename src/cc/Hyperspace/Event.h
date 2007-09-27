@@ -28,6 +28,8 @@
 #include <boost/thread/mutex.hpp>
 
 #include "Common/ReferenceCount.h"
+#include "AsyncComm/CommBuf.h"
+#include "AsyncComm/Serialization.h"
 
 #include "HandleCallback.h"
 
@@ -35,10 +37,13 @@ namespace Hyperspace {
 
   class Event : public hypertable::ReferenceCount {
   public:
-    Event(uint64_t id, int type, std::string name) : mId(id), mType(type), mName(name), mNotificationCount(0) { return; }
+    Event(uint64_t id, uint32_t mask) : mId(id), mMask(mask), mNotificationCount(0) { return; }
+    virtual ~Event() { return; }
+
     uint64_t GetId() { return mId; }
-    int GetType() { return mType; }
-    std::string &GetName() { return mName; }
+
+    uint32_t GetMask() { return mMask; }
+
     void IncrementNotificationCount() {
       boost::mutex::scoped_lock lock(mMutex);
       mNotificationCount++;
@@ -55,16 +60,84 @@ namespace Hyperspace {
 	mCond.wait(lock);
     }
 
-  private:
+    virtual uint32_t EncodedLength() = 0;
+    virtual void Encode(hypertable::CommBuf *cbuf) = 0;
+
+  protected:
     boost::mutex      mMutex;
     boost::condition  mCond;
     uint64_t mId;
-    int mType;
-    std::string mName;
+    uint32_t mMask;
     uint32_t mNotificationCount;
   };
+
   typedef boost::intrusive_ptr<Event> HyperspaceEventPtr;
 
+
+  /**
+   * EventNamed class.  Encapsulates named events (e.g. ATTR_SET,
+   * ATTR_DEL, CHILD_NODE_ADDED, CHILD_NODE_REMOVED)
+   */
+  class EventNamed : public Event {
+  public:
+    EventNamed(uint64_t id, uint32_t mask, std::string name) : Event(id, mask), mName(name) { return; }
+    virtual uint32_t EncodedLength() { return 12 + hypertable::Serialization::EncodedLengthString(mName); }
+    virtual void Encode(hypertable::CommBuf *cbuf) { 
+      cbuf->AppendLong(mId);
+      cbuf->AppendInt(mMask);
+      cbuf->AppendString(mName);
+    }
+  private:
+    std::string mName;
+  };
+
+
+  /**
+   * EventLockAcquired class.  Used to notify handles when a lock is acquired
+   * on the node it points to.
+   */
+  class EventLockAcquired : public Event {
+  public:
+    EventLockAcquired(uint64_t id) : Event(id, EVENT_MASK_LOCK_ACQUIRED) { return; }
+    virtual uint32_t EncodedLength() { return 12; }
+    virtual void Encode(hypertable::CommBuf *cbuf) { 
+      cbuf->AppendLong(mId);
+      cbuf->AppendInt(mMask);
+    }
+  };
+
+  /**
+   * EventLockReleased class.  Used to notify handles when a lock is released
+   * on the node it points to.
+   */
+  class EventLockReleased : public Event {
+  public:
+    EventLockReleased(uint64_t id) : Event(id, EVENT_MASK_LOCK_RELEASED) { return; }
+    virtual uint32_t EncodedLength() { return 12; }
+    virtual void Encode(hypertable::CommBuf *cbuf) { 
+      cbuf->AppendLong(mId);
+      cbuf->AppendInt(mMask);
+    }
+  };
+
+  /**
+   * EventLockGranted class.  Used to notify handles that a prior lock request
+   * been granted.
+   */
+  class EventLockGranted : public Event {
+  public:
+    EventLockGranted(uint64_t id, uint32_t mode, uint64_t generation) : Event(id, EVENT_MASK_LOCK_GRANTED), mMode(mode), mGeneration(generation) { return; }
+    virtual uint32_t EncodedLength() { return 24; }
+    virtual void Encode(hypertable::CommBuf *cbuf) { 
+      cbuf->AppendLong(mId);
+      cbuf->AppendInt(mMask);
+      cbuf->AppendInt(mMode);
+      cbuf->AppendLong(mGeneration);
+    }
+  private:
+    uint32_t mMode;
+    uint64_t mGeneration;
+  };
 }
 
 #endif // HYPERSPACE_EVENT_H

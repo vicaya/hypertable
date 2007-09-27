@@ -431,7 +431,34 @@ int Session::TryLock(uint64_t handle, uint32_t mode, uint32_t *statusp, struct L
 
 
 int Session::Release(uint64_t handle) {
-  return -1;
+  DispatchHandlerSynchronizer syncHandler;
+  hypertable::EventPtr eventPtr;
+  CommBufPtr cbufPtr( Protocol::CreateCloseRequest(handle) );
+  ClientHandleStatePtr handleStatePtr;
+
+  if (!mKeepaliveHandler->GetHandleState(handle, handleStatePtr))
+    return Error::HYPERSPACE_INVALID_HANDLE;
+
+ try_again:
+  if (!WaitForSafe())
+    return Error::HYPERSPACE_EXPIRED_SESSION;
+
+  int error = SendMessage(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    boost::mutex::scoped_lock lock(handleStatePtr->mutex);
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("Hyperspace 'release' error : %s", Protocol::StringFormatMessage(eventPtr.get()).c_str());
+      error = (int)Protocol::ResponseCode(eventPtr.get());
+    }
+    handleStatePtr->lockStatus = 0;
+    handleStatePtr->cond.notify_all();
+  }
+  else {
+    StateTransition(Session::STATE_JEOPARDY);
+    goto try_again;
+  }
+
+  return error;
 }
 
 

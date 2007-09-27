@@ -37,8 +37,11 @@ namespace Hyperspace {
     EVENT_MASK_CHILD_NODE_ADDED   = 0x0004,
     EVENT_MASK_CHILD_NODE_REMOVED = 0x0008,
     EVENT_MASK_LOCK_ACQUIRED      = 0x0010,
-    EVENT_MASK_LOCK_RELEASED      = 0x0020
+    EVENT_MASK_LOCK_RELEASED      = 0x0020,
+    EVENT_MASK_LOCK_GRANTED       = 0x0040
   };
+
+  const char *EventMaskToString(uint32_t mask);
 
   /**
    * A callback object derived from this class gets passed

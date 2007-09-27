@@ -79,6 +79,7 @@ namespace Hyperspace {
     void AttrDel(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, const char *name);
     void Exists(ResponseCallbackExists *cb, uint64_t sessionId, const char *name);
     void Lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle, uint32_t mode, bool tryAcquire);
+    void Release(ResponseCallback *cb, uint64_t sessionId, uint64_t handle);
 
     static const uint32_t DEFAULT_MASTER_PORT        = 38551;
     static const uint32_t DEFAULT_LEASE_INTERVAL     = 12;
@@ -89,7 +90,7 @@ namespace Hyperspace {
 
     void ReportError(ResponseCallback *cb);
     void NormalizeName(std::string name, std::string &normal);
-    void DeliverEventNotifications(NodeData *node, int eventMask, std::string name, bool waitForNotify=true);
+    void DeliverEventNotifications(NodeData *node, HyperspaceEventPtr &eventPtr, bool waitForNotify=true);
     bool FindParentNode(std::string &normalName, NodeDataPtr &nodePtr, std::string &nodeName);
     bool DestroyHandle(HandleDataPtr &handlePtr, bool waitForNotify=true);
 

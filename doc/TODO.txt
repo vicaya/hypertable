@@ -1,4 +1,8 @@
 
+Hyperspace:
+- Add checkpointing and commit log
+- Add consistent gid to requests
+
 TODO:
 - Add ReactorFactory::Destroy
 - Get rid of connection ID from Event structure
