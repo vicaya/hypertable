@@ -98,12 +98,15 @@ namespace Hyperspace {
    */
   class EventLockAcquired : public Event {
   public:
-    EventLockAcquired(uint64_t id) : Event(id, EVENT_MASK_LOCK_ACQUIRED) { return; }
-    virtual uint32_t EncodedLength() { return 12; }
+    EventLockAcquired(uint64_t id, uint32_t mode) : Event(id, EVENT_MASK_LOCK_ACQUIRED), mMode(mode) { return; }
+    virtual uint32_t EncodedLength() { return 16; }
     virtual void Encode(hypertable::CommBuf *cbuf) { 
       cbuf->AppendLong(mId);
       cbuf->AppendInt(mMask);
+      cbuf->AppendInt(mMode);
     }
+  private:
+    uint32_t mMode;
   };
 
   /**

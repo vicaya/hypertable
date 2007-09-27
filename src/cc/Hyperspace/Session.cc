@@ -340,6 +340,9 @@ int Session::Lock(uint64_t handle, uint32_t mode, struct LockSequencerT *sequenc
   if (!mKeepaliveHandler->GetHandleState(handle, handleStatePtr))
     return Error::HYPERSPACE_INVALID_HANDLE;
 
+  if (handleStatePtr->lockStatus != 0)
+    return Error::HYPERSPACE_ALREADY_LOCKED;
+
  try_again:
   if (!WaitForSafe())
     return Error::HYPERSPACE_EXPIRED_SESSION;
@@ -395,6 +398,9 @@ int Session::TryLock(uint64_t handle, uint32_t mode, uint32_t *statusp, struct L
   if (!mKeepaliveHandler->GetHandleState(handle, handleStatePtr))
     return Error::HYPERSPACE_INVALID_HANDLE;
 
+  if (handleStatePtr->lockStatus != 0)
+    return Error::HYPERSPACE_ALREADY_LOCKED;
+
  try_again:
   if (!WaitForSafe())
     return Error::HYPERSPACE_EXPIRED_SESSION;
@@ -433,7 +439,7 @@ int Session::TryLock(uint64_t handle, uint32_t mode, uint32_t *statusp, struct L
 int Session::Release(uint64_t handle) {
   DispatchHandlerSynchronizer syncHandler;
   hypertable::EventPtr eventPtr;
-  CommBufPtr cbufPtr( Protocol::CreateCloseRequest(handle) );
+  CommBufPtr cbufPtr( Protocol::CreateReleaseRequest(handle) );
   ClientHandleStatePtr handleStatePtr;
 
   if (!mKeepaliveHandler->GetHandleState(handle, handleStatePtr))

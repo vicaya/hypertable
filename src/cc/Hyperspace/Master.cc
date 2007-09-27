@@ -234,7 +234,7 @@ void Master::CreateHandle(uint64_t *handlep, HandleDataPtr &handlePtr) {
   *handlep = ++mNextHandleNumber;
   handlePtr = new HandleData();
   handlePtr->id = *handlep;
-  handlePtr->lockStatus = 0;
+  handlePtr->locked = false;
   mHandleMap[*handlep] = handlePtr;
 }
 
@@ -666,9 +666,9 @@ void Master::Exists(ResponseCallbackExists *cb, uint64_t sessionId, const char *
 
 void Master::Lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle, uint32_t mode, bool tryAcquire) {
   SessionDataPtr sessionPtr;
-  NodeDataPtr nodePtr;
   HandleDataPtr handlePtr;
   int error;
+  bool notify = true;
 
   if (mVerbose) {
     LOG_VA_INFO("lock(session=%lld, handle=%lld, mode=0x%x, tryAcquire=%d)", sessionId, handle, mode, tryAcquire);
@@ -698,51 +698,85 @@ void Master::Lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle,
     boost::mutex::scoped_lock lock(handlePtr->node->mutex);
 
     if (handlePtr->node->currentLockMode == LOCK_MODE_EXCLUSIVE) {
-      if (mode == LOCK_MODE_SHARED) {
-	if (tryAcquire) {
-	  cb->response(LOCK_STATUS_BUSY);
-	  return;
-	}
-	else {
-	  assert(mode == LOCK_MODE_EXCLUSIVE);
-	  handlePtr->node->pendingLockRequests.push_back( LockRequest(handle, mode) );
-	  cb->response(LOCK_STATUS_PENDING);
-	  return;
-	}
+      if (tryAcquire)
+	cb->response(LOCK_STATUS_BUSY);
+      else {
+	handlePtr->node->pendingLockRequests.push_back( LockRequest(handle, mode) );
+	cb->response(LOCK_STATUS_PENDING);
       }
+      return;
     }
     else if (handlePtr->node->currentLockMode == LOCK_MODE_SHARED) {
-      if (mode == LOCK_MODE_SHARED) {
-	if (!handlePtr->node->pendingLockRequests.empty()) {
+      if (mode == LOCK_MODE_EXCLUSIVE) {
+	if (tryAcquire)
+	  cb->response(LOCK_STATUS_BUSY);
+	else {
 	  handlePtr->node->pendingLockRequests.push_back( LockRequest(handle, mode) );
 	  cb->response(LOCK_STATUS_PENDING);
 	}
-	else {
-	  handlePtr->node->sharedLockHandles.insert(handle);
-	  handlePtr->lockStatus = LOCK_STATUS_GRANTED;
-	  cb->response(LOCK_STATUS_GRANTED, handlePtr->node->lockGeneration);
-	}
+	return;
+      }
+
+      assert(mode == LOCK_MODE_SHARED);
+
+      if (!handlePtr->node->pendingLockRequests.empty()) {
+	handlePtr->node->pendingLockRequests.push_back( LockRequest(handle, mode) );
+	cb->response(LOCK_STATUS_PENDING);
+	return;
       }
     }
-    else {
-      assert(handlePtr->node->currentLockMode == 0);
-      handlePtr->node->lockGeneration++;
-      if (FileUtils::Fsetxattr(handlePtr->node->fd, "lock.generation", &handlePtr->node->lockGeneration, sizeof(uint64_t), 0) == -1) {
-	LOG_VA_ERROR("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
-		     handlePtr->node->name.c_str(), strerror(errno));
-	exit(1);
-      }
-      handlePtr->node->currentLockMode = mode;
-      if (mode == LOCK_MODE_SHARED)
-	handlePtr->node->sharedLockHandles.insert(handle);
-      else {
-	assert(mode == LOCK_MODE_EXCLUSIVE);
-	handlePtr->node->exclusiveLockHandle = handle;
-      }
-      handlePtr->lockStatus = LOCK_STATUS_GRANTED;
-      cb->response(LOCK_STATUS_GRANTED, handlePtr->node->lockGeneration);
+
+    // at this point we're OK to acquire the lock
+
+    if (mode == LOCK_MODE_SHARED && !handlePtr->node->sharedLockHandles.empty())
+      notify = false;
+
+    handlePtr->node->lockGeneration++;
+    if (FileUtils::Fsetxattr(handlePtr->node->fd, "lock.generation", &handlePtr->node->lockGeneration, sizeof(uint64_t), 0) == -1) {
+      LOG_VA_ERROR("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
+		   handlePtr->node->name.c_str(), strerror(errno));
+      exit(1);
     }
+    handlePtr->node->currentLockMode = mode;
+
+    LockHandle(handlePtr, mode);
+
+    // deliver notification to handles to this same node
+    if (notify) {
+      HyperspaceEventPtr eventPtr( new EventLockAcquired(mNextEventId++, mode) );
+      DeliverEventNotifications(handlePtr->node, eventPtr);
+    }
+
+    cb->response(LOCK_STATUS_GRANTED, handlePtr->node->lockGeneration);
   }
+}
+
+/**
+ * Assumes node is locked.
+ */
+void Master::LockHandle(HandleDataPtr &handlePtr, uint32_t mode, bool waitForNotify) {
+  if (mode == LOCK_MODE_SHARED)
+    handlePtr->node->sharedLockHandles.insert(handlePtr->id);
+  else {
+    assert(mode == LOCK_MODE_EXCLUSIVE);
+    handlePtr->node->exclusiveLockHandle = handlePtr->id;
+  }
+  handlePtr->locked = true;
+}
+
+/**
+ * Assumes node is locked.
+ */
+void Master::LockHandleWithNotification(HandleDataPtr &handlePtr, uint32_t mode, bool waitForNotify) {
+
+  LockHandle(handlePtr, mode, waitForNotify);
+
+  // deliver notification to handles to this same node
+  {
+    HyperspaceEventPtr eventPtr( new EventLockGranted(mNextEventId++, mode, handlePtr->node->lockGeneration) );
+    DeliverEventNotification(handlePtr, eventPtr, waitForNotify);
+  }
+
 }
 
 
@@ -752,9 +786,7 @@ void Master::Lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle,
  */
 void Master::Release(ResponseCallback *cb, uint64_t sessionId, uint64_t handle) {
   SessionDataPtr sessionPtr;
-  NodeDataPtr nodePtr;
   HandleDataPtr handlePtr;
-  int error;
 
   if (mVerbose) {
     LOG_VA_INFO("release(session=%lld, handle=%lld)", sessionId, handle);
@@ -770,55 +802,88 @@ void Master::Release(ResponseCallback *cb, uint64_t sessionId, uint64_t handle) 
     return;
   }
 
-  {
-    boost::mutex::scoped_lock lock(handlePtr->node->mutex);
+  ReleaseLock(handlePtr);
 
-    if (handlePtr->lockStatus == EVENT_MASK_LOCK_GRANTED) {
-      if (handlePtr->node->exclusiveLockHandle != 0) {
-	assert(handle == handlePtr->node->exclusiveLockHandle);
-	handlePtr->node->exclusiveLockHandle = 0;
-      }
-      else {
-	unsigned int count = handlePtr->node->sharedLockHandles.erase(handle);
-	assert(count);
-      }
-      handlePtr->lockStatus = 0;
-    }
-    else {
-      cb->response_ok();
-      return;
-    }
-  }
-
-  /**
-  DeliverEventNotifications(handlePtr->node, EVENT_MASK_LOCK_RELEASED, "");
-
-  if ((error = cb->response_ok()) != Error::OK) {
-    LOG_VA_ERROR("Problem sending back response - %s", Error::GetText(error));
-  }
-
-  {
-    boost::mutex::scoped_lock lock(handlePtr->node->mutex);
-
-    if (!handlePtr->node->pendingLockRequests.empty()) {
-
-    }
-
-  }
-  */
-  
-  // If there are pending lock requests, create a lock request event
-
-  // for either the 1st writer, or the front string of readers in the queue.
-  // Lock the node (pull pending requests off pending queue, set lock handler info,
-  // update handle state to indicate locked).
-
-  // send LOCK_GRANTED notifications to all of the above handles sessions
-
-  // wait for deliver (or timeouts)
+  cb->response_ok();
 
 }
 
+
+void Master::ReleaseLock(HandleDataPtr &handlePtr, bool waitForNotify) {
+  boost::mutex::scoped_lock lock(handlePtr->node->mutex);
+  vector<HandleDataPtr> nextLockHandles;
+  int nextMode = 0;
+
+  if (handlePtr->locked) {
+    if (handlePtr->node->exclusiveLockHandle != 0) {
+      assert(handlePtr->id == handlePtr->node->exclusiveLockHandle);
+      handlePtr->node->exclusiveLockHandle = 0;
+    }
+    else {
+      unsigned int count = handlePtr->node->sharedLockHandles.erase(handlePtr->id);
+      assert(count);
+    }
+    handlePtr->locked = false;
+  }
+  else
+    return;
+
+  // deliver LOCK_RELEASED notifications if no more locks held on node
+  if (handlePtr->node->sharedLockHandles.empty()) {
+    HyperspaceEventPtr eventPtr( new EventLockReleased(mNextEventId++) );
+    DeliverEventNotifications(handlePtr->node, eventPtr, waitForNotify);
+  }
+
+  handlePtr->node->currentLockMode = 0;
+
+  if (!handlePtr->node->pendingLockRequests.empty()) {
+    HandleDataPtr nextHandlePtr;
+    const LockRequest &frontLockReq = handlePtr->node->pendingLockRequests.front();
+    if (frontLockReq.mode == LOCK_MODE_EXCLUSIVE) {
+      nextMode = LOCK_MODE_EXCLUSIVE;
+      if (GetHandleData(frontLockReq.handle, nextHandlePtr))
+	nextLockHandles.push_back(nextHandlePtr);
+      handlePtr->node->pendingLockRequests.pop_front();
+    }
+    else {
+      nextMode = LOCK_MODE_SHARED;
+      do {
+	const LockRequest &lockreq = handlePtr->node->pendingLockRequests.front();
+	if (lockreq.mode != LOCK_MODE_SHARED)
+	  break;
+	if (GetHandleData(lockreq.handle, nextHandlePtr))
+	  nextLockHandles.push_back(nextHandlePtr);
+	handlePtr->node->pendingLockRequests.pop_front();
+      } while (!handlePtr->node->pendingLockRequests.empty());
+    }
+
+    if (!nextLockHandles.empty()) {
+
+      handlePtr->node->lockGeneration++;
+      if (FileUtils::Fsetxattr(handlePtr->node->fd, "lock.generation", &handlePtr->node->lockGeneration, sizeof(uint64_t), 0) == -1) {
+	LOG_VA_ERROR("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
+		     handlePtr->node->name.c_str(), strerror(errno));
+	exit(1);
+      }
+
+      handlePtr->node->currentLockMode = nextMode;
+
+      for (size_t i=0; i<nextLockHandles.size(); i++) {
+	assert(handlePtr->id != nextLockHandles[i]->id);
+	LockHandleWithNotification(nextLockHandles[i], nextMode, waitForNotify);
+      }
+
+      // deliver notification to handles to this same node
+      {
+	HyperspaceEventPtr eventPtr( new EventLockAcquired(mNextEventId++, nextMode) );
+	DeliverEventNotifications(handlePtr->node, eventPtr, waitForNotify);
+      }
+
+    }
+
+  }
+  
+}
 
 
 /**
@@ -858,17 +923,16 @@ void Master::NormalizeName(std::string name, std::string &normal) {
 
 
 /**
- *
-void Master::DeliverEventNotifications(NodeData *node, int eventMask, std::string name, bool waitForNotify) {
-  HyperspaceEventPtr eventPtr;
+ * Assumes node is locked.
+ */
+void Master::DeliverEventNotifications(NodeData *node, HyperspaceEventPtr &eventPtr, bool waitForNotify) {
   int notifications = 0;
-
-  eventPtr = new Hyperspace::Event(mNextEventId++, eventMask, name);
 
   // log event
 
   for (HandleMapT::iterator iter = node->handleMap.begin(); iter != node->handleMap.end(); iter++) {
-    if ((*iter).second->eventMask & eventMask) {
+    //LOG_VA_INFO("Delivering notification (%d == %d)", (*iter).second->eventMask, eventPtr->GetMask());
+    if ((*iter).second->eventMask & eventPtr->GetMask()) {
       eventPtr->IncrementNotificationCount();
       (*iter).second->sessionPtr->AddNotification( new Notification((*iter).first, eventPtr) );
       mKeepaliveHandlerPtr->DeliverEventNotifications((*iter).second->sessionPtr->id);
@@ -879,23 +943,20 @@ void Master::DeliverEventNotifications(NodeData *node, int eventMask, std::strin
   if (waitForNotify && notifications)
     eventPtr->WaitForNotifications();
 }
- */
 
-void Master::DeliverEventNotifications(NodeData *node, HyperspaceEventPtr &eventPtr, bool waitForNotify) {
+
+/**
+ * Assumes node is locked.
+ */
+void Master::DeliverEventNotification(HandleDataPtr &handlePtr, HyperspaceEventPtr &eventPtr, bool waitForNotify) {
   int notifications = 0;
 
   // log event
 
-  for (HandleMapT::iterator iter = node->handleMap.begin(); iter != node->handleMap.end(); iter++) {
-    if ((*iter).second->eventMask & eventPtr->GetMask()) {
-      eventPtr->IncrementNotificationCount();
-      (*iter).second->sessionPtr->AddNotification( new Notification((*iter).first, eventPtr) );
-      mKeepaliveHandlerPtr->DeliverEventNotifications((*iter).second->sessionPtr->id);
-      notifications++;
-    }
-  }
+  handlePtr->sessionPtr->AddNotification( new Notification(handlePtr->id, eventPtr) );
+  mKeepaliveHandlerPtr->DeliverEventNotifications(handlePtr->sessionPtr->id);
 
-  if (waitForNotify && notifications)
+  if (waitForNotify)
     eventPtr->WaitForNotifications();
 }
 

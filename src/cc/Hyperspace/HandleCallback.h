@@ -55,7 +55,7 @@ namespace Hyperspace {
     virtual void AttrDel(std::string name) = 0;
     virtual void ChildNodeAdded(std::string name) = 0;
     virtual void ChildNodeRemoved(std::string name) = 0;
-    virtual void LockAcquired() = 0;
+    virtual void LockAcquired(uint32_t mode) = 0;
     virtual void LockReleased() = 0;
     int GetEventMask() { return mEventMask; }
   protected:

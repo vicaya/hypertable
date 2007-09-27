@@ -39,7 +39,7 @@ namespace Hyperspace {
     uint32_t     eventMask;
     NodeData    *node;
     SessionDataPtr sessionPtr;
-    uint32_t     lockStatus;
+    bool         locked;
   };
   typedef boost::intrusive_ptr<HandleData> HandleDataPtr;
 

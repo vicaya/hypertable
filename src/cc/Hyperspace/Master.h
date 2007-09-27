@@ -91,8 +91,12 @@ namespace Hyperspace {
     void ReportError(ResponseCallback *cb);
     void NormalizeName(std::string name, std::string &normal);
     void DeliverEventNotifications(NodeData *node, HyperspaceEventPtr &eventPtr, bool waitForNotify=true);
+    void DeliverEventNotification(HandleDataPtr &handlePtr, HyperspaceEventPtr &eventPtr, bool waitForNotify=true);
     bool FindParentNode(std::string &normalName, NodeDataPtr &nodePtr, std::string &nodeName);
     bool DestroyHandle(HandleDataPtr &handlePtr, bool waitForNotify=true);
+    void ReleaseLock(HandleDataPtr &handlePtr, bool waitForNotify=true);
+    void LockHandle(HandleDataPtr &handlePtr, uint32_t mode, bool waitForNotify=true);
+    void LockHandleWithNotification(HandleDataPtr &handlePtr, uint32_t mode, bool waitForNotify=true);
 
     typedef __gnu_cxx::hash_map<std::string, NodeDataPtr> NodeMapT;
     typedef __gnu_cxx::hash_map<uint64_t, HandleDataPtr>  HandleMapT;

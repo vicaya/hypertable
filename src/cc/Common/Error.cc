@@ -65,6 +65,7 @@ namespace {
     { Error::HYPERSPACE_INVALID_HANDLE,   "HYPERSPACE invalid handle" },
     { Error::HYPERSPACE_REQUEST_CANCELLED,"HYPERSPACE request cancelled" },
     { Error::HYPERSPACE_MODE_RESTRICTION, "HYPERSPACE mode restriction" },
+    { Error::HYPERSPACE_ALREADY_LOCKED,   "HYPERSPACE already locked" },
     { Error::MASTER_TABLE_EXISTS,         "HYPERTABLE MASTER table exists" },
     { Error::MASTER_BAD_SCHEMA,           "HYPERTABLE MASTER bad schema" },
     { Error::RANGESERVER_GENERATION_MISMATCH,  "RANGE SERVER generation mismatch" },
@@ -128,6 +129,7 @@ const int Error::HYPERSPACE_FILE_EXISTS;
 const int Error::HYPERSPACE_IS_DIRECTORY;
 const int Error::HYPERSPACE_INVALID_HANDLE;
 const int Error::HYPERSPACE_MODE_RESTRICTION;
+const int Error::HYPERSPACE_ALREADY_LOCKED;
 
 const int Error::MASTER_TABLE_EXISTS;
 const int Error::MASTER_BAD_SCHEMA;

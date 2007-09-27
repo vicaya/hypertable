@@ -28,7 +28,7 @@ namespace hypertable {
 
   class ProtocolException : public std::runtime_error {
   public:
-    ProtocolException(std::string &msg) : std::runtime_error(msg) { return; }
+    ProtocolException(std::string msg) : std::runtime_error(msg) { return; }
   };
 
 }
