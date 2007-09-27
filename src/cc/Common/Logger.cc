@@ -30,6 +30,8 @@
 using namespace hypertable;
 
 log4cpp::Category *Logger::logger = 0;
+bool Logger::msShowLineNumbers = true;
+
 
 void Logger::Initialize(const char *name, log4cpp::Priority::Value priority) {
   log4cpp::Appender* appender = 
@@ -45,4 +47,8 @@ void Logger::Initialize(const char *name, log4cpp::Priority::Value priority) {
 
 void Logger::SetLevel(log4cpp::Priority::Value priority) {
   logger->setPriority(priority);
+}
+
+void Logger::SuppressLineNumbers() {
+  msShowLineNumbers = false;
 }

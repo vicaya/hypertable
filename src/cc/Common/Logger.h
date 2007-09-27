@@ -31,6 +31,8 @@ namespace hypertable {
     static log4cpp::Category *logger;
     static void Initialize(const char *name, log4cpp::Priority::Value priority=log4cpp::Priority::DEBUG);
     static void SetLevel(log4cpp::Priority::Value priority);
+    static void SuppressLineNumbers();
+    static bool msShowLineNumbers;
   };
 }
 
@@ -39,14 +41,29 @@ namespace hypertable {
 #ifndef DISABLE_LOG_DEBUG
 
 #define LOG_ENTER \
-  Logger::logger->debug("(%s:%d) %s() ENTER", __FILE__, __LINE__, __func__);
+   { \
+    if (Logger::msShowLineNumbers) \
+      Logger::logger->debug("(%s:%d) %s() ENTER", __FILE__, __LINE__, __func__); \
+    else \
+      Logger::logger->debug("%s() ENTER", __func__); \
+  }
 
 #define LOG_EXIT \
-  Logger::logger->debug("(%s:%d) %s() EXIT", __FILE__, __LINE__, __func__);
+   { \
+    if (Logger::msShowLineNumbers) \
+      Logger::logger->debug("(%s:%d) %s() EXIT", __FILE__, __LINE__, __func__); \
+    else \
+      Logger::logger->debug("%s() EXIT", __func__); \
+  }
 
 #define LOG_DEBUG(msg) Logger::logger->debug("(%s:%d) " msg, __FILE__, __LINE__);
 #define LOG_VA_DEBUG(msg, ...) \
-  Logger::logger->debug("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  
+   { \
+    if (Logger::msShowLineNumbers) \
+      Logger::logger->debug("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
+    else \
+      Logger::logger->debug(msg, __VA_ARGS__);  \
+   }
 #else
 #define LOG_ENTER
 #define LOG_EXIT
@@ -57,7 +74,12 @@ namespace hypertable {
 #ifndef DISABLE_LOG_INFO
 #define LOG_INFO(msg) Logger::logger->info("(%s:%d) " msg, __FILE__, __LINE__);
 #define LOG_VA_INFO(msg, ...) \
-  Logger::logger->info("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  
+   { \
+    if (Logger::msShowLineNumbers) \
+      Logger::logger->info("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
+    else \
+      Logger::logger->info(msg, __VA_ARGS__);  \
+   }
 #else
 #define LOG_INFO(msg)
 #define LOG_VA_INFO(msg, ...)
@@ -66,7 +88,12 @@ namespace hypertable {
 #ifndef DISABLE_LOG_NOTICE
 #define LOG_NOTICE(msg) Logger::logger->notice("(%s:%d) " msg, __FILE__, __LINE__);
 #define LOG_VA_NOTICE(msg, ...) \
-  Logger::logger->notice("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);
+   { \
+    if (Logger::msShowLineNumbers) \
+      Logger::logger->notice("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
+    else \
+      Logger::logger->notice(msg, __VA_ARGS__);  \
+   }
 #else
 #define LOG_NOTICE(msg)
 #define LOG_VA_NOTICE(msg, ...)
@@ -75,7 +102,12 @@ namespace hypertable {
 #ifndef DISABLE_LOG_WARN
 #define LOG_WARN(msg) Logger::logger->warn("(%s:%d) " msg, __FILE__, __LINE__);
 #define LOG_VA_WARN(msg, ...) \
-  Logger::logger->warn("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);
+   { \
+    if (Logger::msShowLineNumbers) \
+      Logger::logger->warn("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
+    else \
+      Logger::logger->warn(msg, __VA_ARGS__);  \
+   }
 #else
 #define LOG_WARN(msg)
 #define LOG_VA_WARN(msg, ...)
@@ -84,7 +116,12 @@ namespace hypertable {
 #ifndef DISABLE_LOG_ERROR
 #define LOG_ERROR(msg) Logger::logger->error("(%s:%d) " msg, __FILE__, __LINE__);
 #define LOG_VA_ERROR(msg, ...) \
-  Logger::logger->error("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  
+   { \
+    if (Logger::msShowLineNumbers) \
+      Logger::logger->error("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
+    else \
+      Logger::logger->error(msg, __VA_ARGS__);  \
+   }
 #else
 #define LOG_ERROR(msg)
 #define LOG_VA_ERROR(msg, ...)
@@ -93,7 +130,12 @@ namespace hypertable {
 #ifndef DISABLE_LOG_CRIT
 #define LOG_CRIT(msg) Logger::logger->crit("(%s:%d) " msg, __FILE__, __LINE__);
 #define LOG_VA_CRIT(msg, ...) \
-  Logger::logger->crit("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  
+   { \
+    if (Logger::msShowLineNumbers) \
+      Logger::logger->crit("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
+    else \
+      Logger::logger->crit(msg, __VA_ARGS__);  \
+   }
 #else
 #define LOG_CRIT(msg)
 #define LOG_VA_CRIT(msg, ...)
@@ -102,7 +144,12 @@ namespace hypertable {
 #ifndef DISABLE_LOG_ALERT
 #define LOG_ALERT(msg) Logger::logger->alert("(%s:%d) " msg, __FILE__, __LINE__);
 #define LOG_VA_ALERT(msg, ...) \
-  Logger::logger->alert("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  
+   { \
+    if (Logger::msShowLineNumbers) \
+      Logger::logger->alert("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
+    else \
+      Logger::logger->alert(msg, __VA_ARGS__);  \
+   }
 #else
 #define LOG_ALERT(msg)
 #define LOG_VA_ALERT(msg, ...)
@@ -111,7 +158,12 @@ namespace hypertable {
 #ifndef DISABLE_LOG_EMERG
 #define LOG_EMERG(msg) Logger::logger->emerg("(%s:%d) " msg, __FILE__, __LINE__);
 #define LOG_VA_EMERG(msg, ...) \
-  Logger::logger->emerg("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  
+   { \
+    if (Logger::msShowLineNumbers) \
+      Logger::logger->emerg("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
+    else \
+      Logger::logger->emerg(msg, __VA_ARGS__);  \
+   }
 #else
 #define LOG_EMERG(msg)
 #define LOG_VA_EMERG(msg, ...)
@@ -120,7 +172,12 @@ namespace hypertable {
 #ifndef DISABLE_LOG_FATAL
 #define LOG_FATAL(msg) Logger::logger->fatal("(%s:%d) " msg, __FILE__, __LINE__);
 #define LOG_VA_FATAL(msg, ...) \
-  Logger::logger->fatal("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  
+   { \
+    if (Logger::msShowLineNumbers) \
+      Logger::logger->fatal("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
+    else \
+      Logger::logger->fatal(msg, __VA_ARGS__);  \
+   }
 #else
 #define LOG_FATAL(msg)
 #define LOG_VA_FATAL(msg, ...)
