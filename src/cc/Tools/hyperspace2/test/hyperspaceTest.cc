@@ -151,6 +151,7 @@ int main(int argc, char **argv) {
 
   {
     ServerLauncher master("../../Hyperspace/Hyperspace.Master", (char * const *)&masterArgs[0]);
+    poll(0, 0, 1000);
     ServerLauncher client1("./hyperspace2", (char * const *)&clientArgs[0], "client1.out");
     ServerLauncher client2("./hyperspace2", (char * const *)&clientArgs[0], "client2.out");
     ServerLauncher client3("./hyperspace2", (char * const *)&clientArgs[0], "client3.out");

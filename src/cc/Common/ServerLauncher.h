@@ -24,6 +24,7 @@
 #include <iostream>
 
 extern "C" {
+#include <signal.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <poll.h>

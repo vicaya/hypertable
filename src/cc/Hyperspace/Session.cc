@@ -97,9 +97,11 @@ int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackP
       int eventMask = 0;
       if (handleStatePtr->callbackPtr)
 	eventMask = callbackPtr->GetEventMask();
-      LOG_VA_ERROR("Hyperspace 'open' error, name=%s flags=0x%x events=0x%x : %s", handleStatePtr->normalName.c_str(), 
-		   flags, eventMask, Protocol::StringFormatMessage(eventPtr.get()).c_str());
       error = (int)Protocol::ResponseCode(eventPtr.get());
+      LOG_VA_ERROR("Hyperspace 'open' error, name=%s flags=0x%x events=0x%x : %s",
+		   handleStatePtr->normalName.c_str(), flags, eventMask, Error::GetText(error));
+      if (mVerbose)
+	LOG_VA_ERROR("%s", Protocol::StringFormatMessage(eventPtr.get()).c_str());
     }
     else {
       uint8_t *ptr = eventPtr->message + 4;
@@ -139,8 +141,10 @@ int Session::Close(uint64_t handle) {
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hyperspace 'close' error : %s", Protocol::StringFormatMessage(eventPtr.get()).c_str());
       error = (int)Protocol::ResponseCode(eventPtr.get());
+      LOG_VA_ERROR("Hyperspace 'close' error : %s", Error::GetText(error));
+      if (mVerbose)
+	LOG_VA_ERROR("%s", Protocol::StringFormatMessage(eventPtr.get()).c_str());
     }
   }
   else {
@@ -172,8 +176,10 @@ int Session::Mkdir(std::string name) {
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hyperspace 'mkdir' error, name=%s : %s", normalName.c_str(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
       error = (int)Protocol::ResponseCode(eventPtr.get());
+      LOG_VA_ERROR("Hyperspace 'mkdir' error, name=%s : %s", normalName.c_str(), Error::GetText(error));
+      if (mVerbose)
+	LOG_VA_ERROR("%s", Protocol::StringFormatMessage(eventPtr.get()).c_str());
     }
   }
   else {
@@ -201,8 +207,10 @@ int Session::Delete(std::string name) {
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hyperspace 'delete' error, name=%s : %s", normalName.c_str(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
       error = (int)Protocol::ResponseCode(eventPtr.get());
+      LOG_VA_ERROR("Hyperspace 'delete' error, name=%s : %s", normalName.c_str(), Error::GetText(error));
+      if (mVerbose)
+	LOG_VA_ERROR("%s", Protocol::StringFormatMessage(eventPtr.get()).c_str());
     }
   }
   else {
@@ -230,8 +238,10 @@ int Session::Exists(std::string name, bool *existsp) {
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hyperspace 'exists' error, name=%s : %s", normalName.c_str(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
       error = (int)Protocol::ResponseCode(eventPtr.get());
+      LOG_VA_ERROR("Hyperspace 'exists' error, name=%s : %s", normalName.c_str(), Error::GetText(error));
+      if (mVerbose)
+	LOG_VA_ERROR("%s", Protocol::StringFormatMessage(eventPtr.get()).c_str());
     }
     else {
       uint8_t *ptr = eventPtr->message + 4;
@@ -267,8 +277,10 @@ int Session::AttrSet(uint64_t handle, std::string name, const void *value, size_
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hyperspace 'attrset' error, name=%s : %s", name.c_str(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
       error = (int)Protocol::ResponseCode(eventPtr.get());
+      LOG_VA_ERROR("Hyperspace 'attrset' error, name=%s : %s", name.c_str(), Error::GetText(error));
+      if (mVerbose)
+	LOG_VA_ERROR("%s", Protocol::StringFormatMessage(eventPtr.get()).c_str());
     }
   }
   else {
@@ -295,8 +307,10 @@ int Session::AttrGet(uint64_t handle, std::string name, DynamicBuffer &value) {
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hyperspace 'attrget' error, name=%s : %s", name.c_str(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
       error = (int)Protocol::ResponseCode(eventPtr.get());
+      LOG_VA_ERROR("Hyperspace 'attrget' error, name=%s : %s", name.c_str(), Error::GetText(error));
+      if (mVerbose)
+	LOG_VA_ERROR("%s", Protocol::StringFormatMessage(eventPtr.get()).c_str());
     }
     else {
       uint8_t *attrValue;
@@ -334,8 +348,10 @@ int Session::AttrDel(uint64_t handle, std::string name) {
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hyperspace 'attrdel' error, name=%s : %s", name.c_str(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
       error = (int)Protocol::ResponseCode(eventPtr.get());
+      LOG_VA_ERROR("Hyperspace 'attrdel' error, name=%s : %s", name.c_str(), Error::GetText(error));
+      if (mVerbose)
+	LOG_VA_ERROR("%s", Protocol::StringFormatMessage(eventPtr.get()).c_str());
     }
   }
   else {
@@ -374,9 +390,10 @@ int Session::Lock(uint64_t handle, uint32_t mode, struct LockSequencerT *sequenc
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hyperspace 'lock' error, handle=%lld name='%s': %s",
-		   handle, handleStatePtr->normalName.c_str(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
       error = (int)Protocol::ResponseCode(eventPtr.get());
+      LOG_VA_ERROR("Hyperspace 'lock' error, handle=%lld name='%s' : %s", handle, handleStatePtr->normalName.c_str(), Error::GetText(error));
+      if (mVerbose)
+	LOG_VA_ERROR("%s", Protocol::StringFormatMessage(eventPtr.get()).c_str());
     }
     else {
       boost::mutex::scoped_lock lock(handleStatePtr->mutex);
@@ -429,9 +446,10 @@ int Session::TryLock(uint64_t handle, uint32_t mode, uint32_t *statusp, struct L
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hyperspace 'trylock' error, handle=%lld name='%s': %s",
-		   handle, handleStatePtr->normalName.c_str(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
       error = (int)Protocol::ResponseCode(eventPtr.get());
+      LOG_VA_ERROR("Hyperspace 'trylock' error, handle=%lld name='%s' : %s", handle, handleStatePtr->normalName.c_str(), Error::GetText(error));
+      if (mVerbose)
+	LOG_VA_ERROR("%s", Protocol::StringFormatMessage(eventPtr.get()).c_str());
     }
     else {
       boost::mutex::scoped_lock lock(handleStatePtr->mutex);
@@ -476,8 +494,10 @@ int Session::Release(uint64_t handle) {
   if (error == Error::OK) {
     boost::mutex::scoped_lock lock(handleStatePtr->mutex);
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Hyperspace 'release' error : %s", Protocol::StringFormatMessage(eventPtr.get()).c_str());
       error = (int)Protocol::ResponseCode(eventPtr.get());
+      LOG_VA_ERROR("Hyperspace 'release' error : %s", Error::GetText(error));
+      if (mVerbose)
+	LOG_VA_ERROR("%s", Protocol::StringFormatMessage(eventPtr.get()).c_str());
     }
     handleStatePtr->lockStatus = 0;
     handleStatePtr->cond.notify_all();
@@ -502,7 +522,9 @@ int Session::Status() {
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
       error = (int)Protocol::ResponseCode(eventPtr);
-      LOG_VA_ERROR("Hyperspace 'status' error : %s", Protocol::StringFormatMessage(eventPtr).c_str());
+      LOG_VA_ERROR("Hyperspace 'status' error : %s", Error::GetText(error));
+      if (mVerbose)
+	LOG_VA_ERROR("%s", Protocol::StringFormatMessage(eventPtr.get()).c_str());
     }
   }
   return error;
