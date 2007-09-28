@@ -22,7 +22,8 @@
 #include "Common/Logger.h"
 #include "Common/Properties.h"
 #include "AsyncComm/Comm.h"
-#include "Hyperspace/HyperspaceClient.h"
+
+#include "Hyperspace/Session.h"
 
 #include "CreateDirectoryLayout.h"
 
@@ -32,70 +33,77 @@ extern "C" {
 
 using namespace hypertable;
 
-bool hypertable::CreateDirectoryLayout(ConnectionManager *connManager, Properties *props) {
-  HyperspaceClient *hyperspace;
-  int error;
 
-  hyperspace = new HyperspaceClient(connManager, props);
+namespace {
+
+  bool CreateDirectory(Hyperspace::Session *hyperspace, std::string dir) {
+    int error;
+    bool exists;
+
+    /**
+     * Check for existence
+     */
+    if ((error = hyperspace->Exists(dir, &exists)) != Error::OK) {
+      LOG_VA_ERROR("Problem checking for existence of directory '%s' - %s", dir.c_str(), Error::GetText(error));
+      return false;
+    }
+
+    if (exists)
+      return true;
+
+    if ((error = hyperspace->Mkdir(dir)) != Error::OK) {
+      LOG_VA_ERROR("Problem creating directory '%s' - %s", dir.c_str(), Error::GetText(error));
+      return false;
+    }
+
+    return true;
+  }
+
+}
+
+
+bool hypertable::CreateDirectoryLayout(ConnectionManager *connManager, PropertiesPtr &propsPtr) {
+  int error;
+  uint64_t handle;
+  uint32_t tableId = 0;
+  HandleCallbackPtr nullHandleCallback;
+  Hyperspace::Session *hyperspace;
+
+  hyperspace = new Hyperspace::Session(connManager->GetComm(), propsPtr, 0);
 
   if (!hyperspace->WaitForConnection(30)) {
     LOG_ERROR("Unable to connect to hyperspace, exiting...");
     exit(1);
   }
 
-  /**
-   * Create /hypertable/servers directory
-   */
-  error = hyperspace->Exists("/hypertable/servers");
-  if (error == Error::HYPERSPACE_FILE_NOT_FOUND) {
-    if ((error = hyperspace->Mkdirs("/hypertable/servers")) != Error::OK) {
-      LOG_VA_ERROR("Problem creating hyperspace directory '/hypertable/servers' - %s", Error::GetText(error));
-      return false;
-    }
+  if (!CreateDirectory(hyperspace, "/hypertable"))
+    return false;
+
+  if (!CreateDirectory(hyperspace, "/hypertable/servers"))
+    return false;
+
+  if (!CreateDirectory(hyperspace, "/hypertable/tables"))
+    return false;
+
+  if (!CreateDirectory(hyperspace, "/hypertable/master"))
+    return false;
+
+  if (!CreateDirectory(hyperspace, "/hypertable/meta"))
+    return false;
+
+  if ((error = hyperspace->Open("/hypertable/meta", OPEN_FLAG_READ|OPEN_FLAG_WRITE, nullHandleCallback, &handle)) != Error::OK) {
+    LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/meta' (%s)", Error::GetText(error));
+    return false;
   }
-  else if (error != Error::OK)
+
+  tableId = 0;
+  if ((error = hyperspace->AttrSet(handle, "last_table_id", &tableId, sizeof(int32_t))) != Error::OK) {
+    LOG_VA_ERROR("Problem setting attribute 'last_table_id' of file /hypertable/meta - %s", Error::GetText(error));
+    hyperspace->Close(handle);
     return false;
-
-
-  /**
-   * Create /hypertable/tables directory
-   */
-  error = hyperspace->Exists("/hypertable/tables");
-  if (error == Error::HYPERSPACE_FILE_NOT_FOUND) {
-    if (hyperspace->Mkdirs("/hypertable/tables") != Error::OK)
-      return false;
   }
-  else if (error != Error::OK)
-    return false;
 
-
-  /**
-   * Create /hypertable/master directory
-   */
-  error = hyperspace->Exists("/hypertable/master");
-  if (error == Error::HYPERSPACE_FILE_NOT_FOUND) {
-    if (hyperspace->Mkdirs("/hypertable/master") != Error::OK)
-      return false;
-  }
-  else if (error != Error::OK)
-    return false;
-
-  /**
-   * Create /hypertable/meta directory
-   */
-  error = hyperspace->Exists("/hypertable/meta");
-  if (error == Error::HYPERSPACE_FILE_NOT_FOUND) {
-    if (hyperspace->Mkdirs("/hypertable/meta") != Error::OK)
-      return false;
-  }
-  else if (error != Error::OK)
-    return false;
-
-  /**
-   * 
-   */
-  if ((error = hyperspace->AttrSet("/hypertable/meta", "last_table_id", "0")) != Error::OK)
-    return false;
+  hyperspace->Close(handle);
 
   return true;
 }

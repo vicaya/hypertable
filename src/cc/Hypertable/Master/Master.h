@@ -44,12 +44,8 @@ namespace hypertable {
     ~Master();
     void CreateTable(ResponseCallback *cb, const char *tableName, const char *schemaString);
     void GetSchema(ResponseCallbackGetSchema *cb, const char *tableName);
-    bool CreateDirectoryLayout();
 
   private:
-
-    bool CreateDirectory(std::string dir);
-
     bool mVerbose;
     Hyperspace::Session *mHyperspace;
     Filesystem *mDfsClient;

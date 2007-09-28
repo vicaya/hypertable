@@ -140,7 +140,7 @@ int main(int argc, char **argv) {
   }
 
   if (initialize) {
-    if (!CreateDirectoryLayout(connManager, propsPtr.get()))
+    if (!CreateDirectoryLayout(connManager, propsPtr))
       return 1;
     return 0;
   }

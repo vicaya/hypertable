@@ -24,7 +24,7 @@
 namespace hypertable {
   class Properties;
   class ConnectionManager;
-  bool CreateDirectoryLayout(ConnectionManager *connManager, Properties *props);
+  bool CreateDirectoryLayout(ConnectionManager *connManager, PropertiesPtr &propsPtr);
 }
 
 #endif // HYPERTABLE_CREATEDIRECTORYLAYOUT_H
