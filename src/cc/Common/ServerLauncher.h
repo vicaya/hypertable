@@ -21,7 +21,7 @@
 #ifndef HYPERTABLE_SERVERLAUNCHER_H
 #define HYPERTABLE_SERVERLAUNCHER_H
 
-#include <istream>
+#include <iostream>
 
 extern "C" {
 #include <sys/types.h>
@@ -58,13 +58,17 @@ namespace hypertable {
       mWriteFd = fd[1];
       poll(0,0,2000);
     }
+
     ~ServerLauncher() {
+      std::cerr << "Killing '" << mPath << "' pid=" << mChildPid << std::endl << std::flush;
       if (kill(mChildPid, 9) == -1)
 	perror("kill");
-      //poll(0,0,1000);
     }
+
     int GetWriteDescriptor() { return mWriteFd; }
+
     pid_t GetPid() { return mChildPid; }
+
   private:
     const char *mPath;
     pid_t mChildPid;

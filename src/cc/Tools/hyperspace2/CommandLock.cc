@@ -25,7 +25,7 @@
 
 #include "CommandLock.h"
 #include "Global.h"
-#include "NormalizePathname.h"
+#include "Util.h"
 
 using namespace hypertable;
 using namespace Hyperspace;
@@ -43,7 +43,6 @@ int CommandLock::run() {
   int error;
   uint32_t mode = 0;
   struct LockSequencerT lockseq;
-  std::string normalName;
 
   if (mArgs.size() != 2) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
@@ -55,8 +54,6 @@ int CommandLock::run() {
     return -1;
   }
 
-  NormalizePathname(mArgs[0].first, normalName);
-
   if (mArgs[1].first == "SHARED")
     mode = LOCK_MODE_SHARED;
   else if (mArgs[1].first == "EXCLUSIVE")
@@ -66,16 +63,11 @@ int CommandLock::run() {
     return -1;
   }
 
-  Global::FileMapT::iterator iter = Global::fileMap.find(normalName);
-  if (iter == Global::fileMap.end()) {
-    LOG_VA_ERROR("Unable to find '%s' in open file map", normalName.c_str());
+  if (!Util::GetHandle(mArgs[0].first, &handle))
     return -1;
-  }
-  handle = (*iter).second;
 
-  if ((error = mSession->Lock(handle, mode, &lockseq)) != Error::OK) {
-    LOG_VA_ERROR("Error executing LOCK request - %s", Error::GetText(error));
-  }
+  if ((error = mSession->Lock(handle, mode, &lockseq)) == Error::OK)
+    cout << "SEQUENCER name=" << lockseq.name << " mode=" << lockseq.mode << " generation=" << lockseq.generation << endl << flush;
 
   return error;
 }

@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <cstdlib>
 #include <cstring>
 
 extern "C" {
@@ -41,7 +42,8 @@ bool InetAddr::Initialize(struct sockaddr_in *addr, const char *host, uint16_t p
   {
     struct hostent *he = gethostbyname(host);
     if (he == 0) {
-      herror("gethostbyname()");
+      std::string errMsg = (std::string)"gethostbyname(\"" + host + "\")";
+      herror(errMsg.c_str());
       return false;
     }
     memcpy(&addr->sin_addr.s_addr, he->h_addr_list[0], sizeof(uint32_t));
@@ -49,6 +51,20 @@ bool InetAddr::Initialize(struct sockaddr_in *addr, const char *host, uint16_t p
   addr->sin_family = AF_INET;
   addr->sin_port = htons(port);
   return true;
+}
+
+bool InetAddr::Initialize(struct sockaddr_in *addr, const char *addrStr) {
+  const char *colon = strchr(addrStr, ':');
+  uint16_t port;
+  std::string host;
+
+  if (colon) {
+    host = std::string(addrStr, colon-addrStr);
+    port = (uint16_t)atoi(colon+1);
+    return Initialize(addr, host.c_str(), port);
+  }
+  
+  return Initialize(addr, "localhost", (uint16_t)atoi(addrStr));
 }
 
 /**

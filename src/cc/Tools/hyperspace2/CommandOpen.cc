@@ -27,7 +27,7 @@
 #include "CommandOpen.h"
 #include "FileHandleCallback.h"
 #include "Global.h"
-#include "NormalizePathname.h"
+#include "Util.h"
 
 using namespace hypertable;
 using namespace Hyperspace;
@@ -111,11 +111,8 @@ int CommandOpen::run() {
 
   if ((error = mSession->Open(fname, flags, callbackPtr, &handle, &created)) == Error::OK) {
     std::string normalName;
-    NormalizePathname(fname, normalName);
+    Util::NormalizePathname(fname, normalName);
     Global::fileMap[normalName] = handle;
-  }
-  else {
-    LOG_VA_ERROR("%s", Error::GetText(error));
   }
   return error;
 }

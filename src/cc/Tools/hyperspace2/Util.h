@@ -18,35 +18,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_CLIENTHANDLESTATE_H
-#define HYPERSPACE_CLIENTHANDLESTATE_H
-
-#include <string>
-
-#include <boost/thread/condition.hpp>
-#include <boost/thread/mutex.hpp>
-
-#include "Common/ReferenceCount.h"
-
-#include "HandleCallback.h"
-#include "LockSequencer.h"
+#ifndef HYPERTABLE_UTIL_H
+#define HYPERTABLE_UTIL_H
 
 namespace Hyperspace {
 
-  class ClientHandleState : public hypertable::ReferenceCount {
-  public:
-    uint64_t     handle;
-    uint32_t     openFlags;
-    std::string  normalName;
-    HandleCallbackPtr callbackPtr;
-    struct LockSequencerT *sequencer;
-    int lockStatus;
-    uint64_t lockGeneration;
-    boost::mutex       mutex;
-    boost::condition   cond;
-  };
-  typedef boost::intrusive_ptr<ClientHandleState> ClientHandleStatePtr;
+  namespace Util {
+
+    extern void NormalizePathname(std::string name, std::string &normalName);
+    extern bool GetHandle(std::string name, uint64_t *handlep);
+  }
 
 }
 
-#endif // HYPERSPACE_CLIENTHANDLESTATE_H
+#endif // HYPERTABLE_UTIL_H

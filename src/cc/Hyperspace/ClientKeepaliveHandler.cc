@@ -177,7 +177,6 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 		handleStatePtr->callbackPtr->ChildNodeAdded(name);
 	      else
 		handleStatePtr->callbackPtr->ChildNodeRemoved(name);
-	      //cerr << EventMaskToString(eventMask) << " name=" << name << " (handle=" << handle << ", id=" << eventId << ")" << endl;
 	    }
 	    else if (eventMask == EVENT_MASK_LOCK_ACQUIRED) {
 	      uint32_t mode;
@@ -187,17 +186,16 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 	    }
 	    else if (eventMask == EVENT_MASK_LOCK_RELEASED) {
 	      handleStatePtr->callbackPtr->LockReleased();
-	      //cerr << EventMaskToString(eventMask) << " (handle=" << handle << ", id=" << eventId << ")" << endl;
 	    }
 	    else if (eventMask == EVENT_MASK_LOCK_GRANTED) {
 	      uint32_t mode;
-	      uint64_t generation;
 	      if (!Serialization::DecodeInt(&msgPtr, &remaining, &mode) ||
-		  !Serialization::DecodeLong(&msgPtr, &remaining, &generation))
+		  !Serialization::DecodeLong(&msgPtr, &remaining, &handleStatePtr->lockGeneration))
 		throw ProtocolException("Truncated Request");
 	      handleStatePtr->lockStatus = LOCK_STATUS_GRANTED;
+	      handleStatePtr->sequencer->generation = handleStatePtr->lockGeneration;
+	      handleStatePtr->sequencer->mode = mode;
 	      handleStatePtr->cond.notify_all();
-	      //cerr << EventMaskToString(eventMask) << " mode=" << mode << " generation=" << generation << " (handle=" << handle << ", id=" << eventId << ")" << endl;
 	    }
 
 	    if (eventId > mLastKnownEvent)

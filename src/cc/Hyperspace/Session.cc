@@ -360,8 +360,12 @@ int Session::Lock(uint64_t handle, uint32_t mode, struct LockSequencerT *sequenc
   if (!WaitForSafe())
     return Error::HYPERSPACE_EXPIRED_SESSION;
 
-  sequencerp->mode = mode;
-  sequencerp->name = handleStatePtr->normalName;
+  {
+    boost::mutex::scoped_lock lock(handleStatePtr->mutex);
+    sequencerp->mode = mode;
+    sequencerp->name = handleStatePtr->normalName;
+    handleStatePtr->sequencer = sequencerp;
+  }
 
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
@@ -437,6 +441,8 @@ int Session::TryLock(uint64_t handle, uint32_t mode, uint32_t *statusp, struct L
 	sequencerp->mode = mode;
 	sequencerp->name = handleStatePtr->normalName;
 	handleStatePtr->lockStatus = LOCK_STATUS_GRANTED;
+	handleStatePtr->lockGeneration = sequencerp->generation;
+	handleStatePtr->sequencer = 0;
       }
     }
   }

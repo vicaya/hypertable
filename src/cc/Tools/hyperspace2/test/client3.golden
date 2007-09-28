@@ -7,25 +7,13 @@ distributed systems.  Type 'help' for a description of commands.
 << BasicTest >>
 
 << NotificationTest >>
-mkdir dir1/foo
-delete dir1/foo
-open dir1 flags=READ|WRITE|LOCK
-attrset dir1 fox="Hello, World!"
-attrget dir1 fox
-Hello, World!
-attrdel dir1 fox
-lock dir1 EXCLUSIVE
-SEQUENCER name=/dir1 mode=2 generation=2
-release dir1
-close dir1
-delete dir1
 
 << LockTest >>
 open lockfile flags=READ|WRITE|LOCK
 lock lockfile EXCLUSIVE
-SEQUENCER name=/lockfile mode=2 generation=2
+SEQUENCER name=/lockfile mode=2 generation=3
 release lockfile
 lock lockfile SHARED
-SEQUENCER name=/lockfile mode=1 generation=4
+SEQUENCER name=/lockfile mode=1 generation=5
 release lockfile
 quit

@@ -32,7 +32,10 @@ extern "C" {
 }
 
 #include "AsyncComm/Comm.h"
+#include "AsyncComm/CommBuf.h"
+#include "AsyncComm/HeaderBuilder.h"
 #include "Common/Error.h"
+#include "Common/InetAddr.h"
 #include "Common/InteractiveCommand.h"
 #include "Common/Logger.h"
 #include "Common/Properties.h"
@@ -68,9 +71,11 @@ namespace {
   char *rl_gets () {
 
     if (gTestMode) {
-      getline(cin, gInputStr);
+      if (!getline(cin, gInputStr))
+	return 0;
       boost::trim(gInputStr);
-      cout << gInputStr << endl;
+      if (gInputStr.find("echo", 0) != 0)
+	cout << gInputStr << endl;
       return (char *)gInputStr.c_str();
     }
     else {
@@ -102,6 +107,8 @@ namespace {
     "                   commands can be supplied in <cmds> by separating them with",
     "                   semicolons",
     "  --no-prompt      Don't display a command prompt",
+    "  --notification-address=[<host>:]<port>  Send notification datagram to this",
+    "                   address after each command.",
     "  --help           Display this help text and exit",
     "  --test-mode      Suppress file line number information from error messages to",
     "                   simplify diff'ing test output.",
@@ -112,6 +119,9 @@ namespace {
   };
 
   const char *helpTrailer[] = {
+    "echo <str>",
+    "  Display <str> to stdout.",
+    "",
     "help",
     "  Display this help text.",
     "",
@@ -121,6 +131,50 @@ namespace {
     (const char *)0
   };
 }
+
+/**
+ *
+ */
+class Notifier {
+
+public:
+
+  Notifier(const char *addressStr) {
+    int error;
+    mComm = new Comm();
+    if (!InetAddr::Initialize(&mAddr, addressStr)) {
+      exit(1);
+    }
+    InetAddr::Initialize(&mSendAddr, INADDR_ANY, 0);
+    if ((error = mComm->CreateDatagramReceiveSocket(&mSendAddr, 0)) != Error::OK) {
+      std::string str;
+      LOG_VA_ERROR("Problem creating UDP receive socket %s - %s", InetAddr::StringFormat(str, mSendAddr), Error::GetText(error));
+      exit(1);
+    }
+  }
+
+  Notifier() : mComm(0) {
+    return;
+  }
+
+  void notify() {
+    if (mComm) {
+      int error;
+      CommBufPtr cbufPtr( new CommBuf(mBuilder, 2) );
+      cbufPtr->AppendShort(0);
+      if ((error = mComm->SendDatagram(mAddr, mSendAddr, cbufPtr)) != Error::OK) {
+	LOG_VA_ERROR("Problem sending datagram - %s", Error::GetText(error));
+	exit(1);
+      }
+    }
+  }
+
+private:
+  Comm *mComm;
+  struct sockaddr_in mAddr;
+  struct sockaddr_in mSendAddr;
+  HeaderBuilder mBuilder;
+};
 
 
 /**
@@ -151,6 +205,7 @@ int main(int argc, char **argv, char **envp) {
   SessionHandler sessionHandler;
   bool verbose = false;
   int error;
+  Notifier *notifier = 0;
 
   System::Initialize(argv[0]);
   ReactorFactory::Initialize((uint16_t)System::GetProcessorCount());
@@ -172,9 +227,14 @@ int main(int argc, char **argv, char **envp) {
       Logger::SetTestMode("hyperspace");
       gTestMode = true;
     }
+    else if (!strncmp(argv[i], "--notification-address=", 23))
+      notifier = new Notifier(&argv[i][23]);
     else
       Usage::DumpAndExit(usage);
   }
+
+  if (notifier == 0)
+    notifier = new Notifier();
 
   propsPtr.reset( new Properties( configFile ) );
 
@@ -247,15 +307,27 @@ int main(int argc, char **argv, char **envp) {
 	commands[i]->ParseCommandLine(line);
 	if ((error = commands[i]->run()) != Error::OK && error != -1)
 	  cout << Error::GetText(error) << endl;
+	notifier->notify();
 	break;
       }
     }
 
     if (i == commands.size()) {
-      if (!strcmp(line, "quit") || !strcmp(line, "exit"))
+      if (!strcmp(line, "quit") || !strcmp(line, "exit")) {
+	notifier->notify();
 	exit(0);
-      else if (!strcmp(line, "pwd"))
+      }
+      else if (!strncmp(line, "echo", 4)) {
+	std::string echoStr = std::string(line);
+	echoStr = echoStr.substr(4);
+	boost::trim_if(echoStr, boost::is_any_of("\" \t"));
+	cout << echoStr << endl;
+	notifier->notify();
+      }
+      else if (!strcmp(line, "pwd")) {
 	cout << Global::cwd << endl;
+	notifier->notify();
+      }
       else if (!strcmp(line, "help")) {
 	cout << endl;
 	for (i=0; i<commands.size(); i++) {
@@ -263,6 +335,7 @@ int main(int argc, char **argv, char **envp) {
 	  cout << endl;
 	}
 	Usage::Dump(helpTrailer);
+	notifier->notify();
       }
       else
 	cout << "Unrecognized command." << endl;

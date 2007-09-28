@@ -25,7 +25,7 @@
 
 #include "CommandAttrDel.h"
 #include "Global.h"
-#include "NormalizePathname.h"
+#include "Util.h"
 
 using namespace hypertable;
 using namespace Hyperspace;
@@ -39,8 +39,6 @@ const char *CommandAttrDel::msUsage[] = {
 
 int CommandAttrDel::run() {
   uint64_t handle;
-  int error;
-  std::string normalName;
 
   if (mArgs.size() != 2) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
@@ -52,18 +50,8 @@ int CommandAttrDel::run() {
     return -1;
   }
 
-  NormalizePathname(mArgs[0].first, normalName);
-
-  Global::FileMapT::iterator iter = Global::fileMap.find(normalName);
-  if (iter == Global::fileMap.end()) {
-    LOG_VA_ERROR("Unable to find '%s' in open file map", normalName.c_str());
+  if (!Util::GetHandle(mArgs[0].first, &handle))
     return -1;
-  }
-  handle = (*iter).second;
 
-  if ((error = mSession->AttrDel(handle, mArgs[1].first)) != Error::OK) {
-    LOG_VA_ERROR("Error executing ATTRDEL request - %s", Error::GetText(error));
-  }
-
-  return error;
+  return mSession->AttrDel(handle, mArgs[1].first);
 }

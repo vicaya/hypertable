@@ -47,11 +47,10 @@ namespace Hyperspace {
       return;
     }
     void AddHandle(uint64_t handle, HandleDataPtr &handlePtr) {
-      boost::mutex::scoped_lock lock(mutex);
       handleMap[handle] = handlePtr;
     }
+
     bool RemoveHandle(uint64_t handle) {
-      boost::mutex::scoped_lock lock(mutex);
       HandleMapT::iterator iter = handleMap.find(handle);
       if (iter != handleMap.end()) {
 	handleMap.erase(iter);
@@ -59,13 +58,16 @@ namespace Hyperspace {
       }
       return false;
     }
+
     unsigned int ReferenceCount() {
-      boost::mutex::scoped_lock lock(mutex);
       return handleMap.size();
     }
-    int Close() {
-      boost::mutex::scoped_lock lock(mutex);
-      return close(fd);
+
+    void Close() {
+      if (fd != -1) {
+	close(fd);
+	fd = -1;
+      }
     }
 
     boost::mutex mutex;

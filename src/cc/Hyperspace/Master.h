@@ -129,7 +129,7 @@ namespace Hyperspace {
      * @param 
      */
     bool FindParentNode(std::string normalName, NodeDataPtr &nodePtr, std::string &nodeName);
-    bool DestroyHandle(HandleDataPtr &handlePtr, bool waitForNotify=true);
+    bool DestroyHandle(uint64_t handle, int *errorp, std::string &errMsg, bool waitForNotify=true);
     void ReleaseLock(HandleDataPtr &handlePtr, bool waitForNotify=true);
     void LockHandle(HandleDataPtr &handlePtr, uint32_t mode, bool waitForNotify=true);
     void LockHandleWithNotification(HandleDataPtr &handlePtr, uint32_t mode, bool waitForNotify=true);

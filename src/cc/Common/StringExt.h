@@ -55,6 +55,18 @@ inline std::string operator+( const std::string& s1, int ival ) {
   return s1 + cbuf;
 }
 
+inline std::string operator+( const std::string& s1, long long llval ) {
+  char cbuf[32];
+  sprintf(cbuf, "%lld", llval);
+  return s1 + cbuf;
+}
+
+inline std::string operator+( const std::string& s1, uint64_t llval ) {
+  char cbuf[32];
+  sprintf(cbuf, "%lld", llval);
+  return s1 + cbuf;
+}
+
 
 
 #endif // HYPERTABLE_STRINGEXT_H

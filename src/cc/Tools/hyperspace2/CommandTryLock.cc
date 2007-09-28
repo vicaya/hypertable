@@ -25,7 +25,7 @@
 
 #include "CommandTryLock.h"
 #include "Global.h"
-#include "NormalizePathname.h"
+#include "Util.h"
 
 using namespace hypertable;
 using namespace Hyperspace;
@@ -44,7 +44,6 @@ int CommandTryLock::run() {
   uint32_t mode = 0;
   struct LockSequencerT lockseq;
   uint32_t status;
-  std::string normalName;
 
   if (mArgs.size() != 2) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
@@ -56,8 +55,6 @@ int CommandTryLock::run() {
     return -1;
   }
 
-  NormalizePathname(mArgs[0].first, normalName);
-
   if (mArgs[1].first == "SHARED")
     mode = LOCK_MODE_SHARED;
   else if (mArgs[1].first == "EXCLUSIVE")
@@ -67,24 +64,18 @@ int CommandTryLock::run() {
     return -1;
   }
 
-  Global::FileMapT::iterator iter = Global::fileMap.find(normalName);
-  if (iter == Global::fileMap.end()) {
-    LOG_VA_ERROR("Unable to find '%s' in open file map", normalName.c_str());
+  if (!Util::GetHandle(mArgs[0].first, &handle))
     return -1;
+
+  if ((error = mSession->TryLock(handle, mode, &status, &lockseq)) == Error::OK) {
+    if (status == LOCK_STATUS_GRANTED)
+      cout << "SEQUENCER name=" << lockseq.name << " mode=" << lockseq.mode << " generation=" << lockseq.generation << endl << flush;
+    else if (status == LOCK_STATUS_BUSY)
+      cout << "busy" << endl;    
+    else
+      cout << "Unknown status: " << status << endl;
   }
-  handle = (*iter).second;
 
-  if ((error = mSession->TryLock(handle, mode, &status, &lockseq)) != Error::OK) {
-    LOG_VA_ERROR("Error executing TRYLOCK request - %s", Error::GetText(error));
-    return error;
-  }
 
-  if (status == LOCK_STATUS_GRANTED)
-    cout << "granted" << endl;
-  else if (status == LOCK_STATUS_BUSY)
-    cout << "busy" << endl;    
-  else
-    cout << "Unknown status: " << status << endl;
-
-  return Error::OK;
+  return error;
 }

@@ -35,7 +35,7 @@ CommandTryLock.cc
 CommandRelease.cc
 hyperspace.cc
 Global.cc
-NormalizePathname.cc	
+Util.cc
 )
 
 # hyperspace2 - Hyperspace client program
@@ -44,11 +44,12 @@ target_link_libraries (hyperspace2 pthread ${BOOST_LIB} Hyperspace AsyncComm Com
 
 # hyperspaceTest
 add_executable (hyperspaceTest test/hyperspaceTest.cc)
-target_link_libraries (hyperspaceTest pthread ${BOOST_LIB} Common log4cpp)
+target_link_libraries (hyperspaceTest pthread ${BOOST_LIB} AsyncComm Common log4cpp)
 
 configure_file(${SRC_DIR}/test/hyperspaceTest.cfg ${DST_DIR}/hyperspaceTest.cfg)
 configure_file(${SRC_DIR}/test/client1.golden ${DST_DIR}/client1.golden COPYONLY)
 configure_file(${SRC_DIR}/test/client2.golden ${DST_DIR}/client2.golden COPYONLY)
+configure_file(${SRC_DIR}/test/client3.golden ${DST_DIR}/client3.golden COPYONLY)
 
 install (TARGETS hyperspace2 RUNTIME DESTINATION bin)
 

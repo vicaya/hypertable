@@ -19,42 +19,32 @@
  */
 
 #include <iostream>
+#include <string>
 
-#include "Common/Error.h"
-#include "Common/Usage.h"
-
-#include "CommandRelease.h"
 #include "Global.h"
 #include "Util.h"
 
-using namespace hypertable;
-using namespace Hyperspace;
-using namespace std;
+void Hyperspace::Util::NormalizePathname(std::string name, std::string &normalName) {
+  normalName = "";
+  if (name[0] != '/')
+    normalName += "/";
 
-const char *CommandRelease::msUsage[] = {
-  "release <file>",
-  "  This command issues a RELEASE request to Hyperspace which causes any",
-  "  lock held by this handle to be released.",
-  (const char *)0
-};
+  if (name.find('/', name.length()-1) == std::string::npos)
+    normalName += name;
+  else
+    normalName += name.substr(0, name.length()-1);
+}
 
-int CommandRelease::run() {
-  uint64_t handle;
-  uint32_t mode = 0;
-  struct LockSequencerT lockseq;
+bool Hyperspace::Util::GetHandle(std::string name, uint64_t *handlep) {
+  std::string normalName;
 
-  if (mArgs.size() != 1) {
-    cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
-    return -1;
+  NormalizePathname(name, normalName);
+
+  Global::FileMapT::iterator iter = Global::fileMap.find(normalName);
+  if (iter == Global::fileMap.end()) {
+    std::cerr << "Unable to find '" << normalName << "' in open file map" << std::endl;
+    return false;
   }
-
-  if (mArgs[0].second != "") {
-    cerr << "Invalid character '=' in argument." << endl;
-    return -1;
-  }
-
-  if (!Util::GetHandle(mArgs[0].first, &handle))
-    return -1;
-
-  return mSession->Release(handle);
+  *handlep = (*iter).second;
+  return true;
 }

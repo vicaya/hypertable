@@ -32,6 +32,7 @@ extern "C" {
 
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
+#include "Common/StringExt.h"
 #include "Common/System.h"
 
 #include "DfsBroker/Lib/Client.h"
@@ -210,6 +211,8 @@ bool Master::NextExpiredSession(SessionDataPtr &sessionPtr) {
  */
 void Master::RemoveExpiredSessions() {
   SessionDataPtr sessionPtr;
+  int error;
+  std::string errMsg;
   
   while (NextExpiredSession(sessionPtr)) {
 
@@ -226,11 +229,8 @@ void Master::RemoveExpiredSessions() {
 	if (mVerbose) {
 	  LOG_VA_INFO("Destroying handle %lld", *iter);
 	}
-	if (!RemoveHandleData(*iter, handlePtr)) {
-	  LOG_VA_ERROR("Expired session handle %lld invalid", *iter);
-	}
-	else if (!DestroyHandle(handlePtr, false)) {
-	  LOG_VA_ERROR("Problem destroying handle %lld of expired session - %s", *iter, strerror(errno));
+	if (!DestroyHandle(*iter, &error, errMsg, false)) {
+	  LOG_VA_ERROR("Problem destroying handle - %s (%s)", Error::GetText(error), errMsg.c_str());
 	}
       }
     }
@@ -494,7 +494,10 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
     }
   }
 
-  handlePtr->node->AddHandle(handle, handlePtr);
+  {
+    boost::mutex::scoped_lock lock(handlePtr->node->mutex);    
+    handlePtr->node->AddHandle(handle, handlePtr);
+  }
 
   cb->response(handle, created);
 }
@@ -505,8 +508,8 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
  */
 void Master::Close(ResponseCallback *cb, uint64_t sessionId, uint64_t handle) {
   SessionDataPtr sessionPtr;
-  HandleDataPtr handlePtr;
   int error;
+  std::string errMsg;
 
   if (mVerbose) {
     LOG_VA_INFO("close(session=%lld, handle=%lld)", sessionId, handle);
@@ -517,13 +520,8 @@ void Master::Close(ResponseCallback *cb, uint64_t sessionId, uint64_t handle) {
     return;
   }
 
-  if (!RemoveHandleData(handle, handlePtr)) {
-    cb->error(Error::HYPERSPACE_INVALID_HANDLE, "");
-    return;
-  }
-
-  if (!DestroyHandle(handlePtr)) {
-    ReportError(cb);
+  if (!DestroyHandle(handle, &error, errMsg)) {
+    cb->error(error, errMsg);
     return;
   }
 
@@ -552,7 +550,7 @@ void Master::AttrSet(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, 
   }
 
   if (!GetHandleData(handle, handlePtr)) {
-    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
+    cb->error(Error::HYPERSPACE_INVALID_HANDLE, std::string("handle=") + handle);
     return;
   }
 
@@ -596,7 +594,7 @@ void Master::AttrGet(ResponseCallbackAttrGet *cb, uint64_t sessionId, uint64_t h
   }
 
   if (!GetHandleData(handle, handlePtr)) {
-    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
+    cb->error(Error::HYPERSPACE_INVALID_HANDLE, std::string("handle=") + handle);
     return;
   }
 
@@ -606,7 +604,7 @@ void Master::AttrGet(ResponseCallbackAttrGet *cb, uint64_t sessionId, uint64_t h
     if ((alen = FileUtils::Fgetxattr(handlePtr->node->fd, name, 0, 0)) < 0) {
       LOG_VA_ERROR("Problem determining size of extended attribute '%s' on file '%s' - %s",
 		   name, handlePtr->node->name.c_str(), strerror(errno));
-      cb->error(Error::HYPERSPACE_ATTR_NOT_FOUND, name);
+      ReportError(cb);
       return;
     }
 
@@ -642,7 +640,7 @@ void Master::AttrDel(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, 
   }
 
   if (!GetHandleData(handle, handlePtr)) {
-    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
+    cb->error(Error::HYPERSPACE_INVALID_HANDLE, std::string("handle=") + handle);
     return;
   }
 
@@ -652,7 +650,8 @@ void Master::AttrDel(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, 
     if (FileUtils::Fremovexattr(handlePtr->node->fd, name) == -1) {
       LOG_VA_ERROR("Problem removing extended attribute '%s' on file '%s' - %s",
 		   name, handlePtr->node->name.c_str(), strerror(errno));
-      DUMP_CORE;
+      ReportError(cb);
+      return;
     }
 
     HyperspaceEventPtr eventPtr( new EventNamed(mNextEventId++, EVENT_MASK_ATTR_DEL, name) );
@@ -700,7 +699,7 @@ void Master::Lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle,
   }
 
   if (!GetHandleData(handle, handlePtr)) {
-    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
+    cb->error(Error::HYPERSPACE_INVALID_HANDLE, std::string("handle=") + handle);
     return;
   }
 
@@ -818,7 +817,7 @@ void Master::Release(ResponseCallback *cb, uint64_t sessionId, uint64_t handle) 
   }
 
   if (!GetHandleData(handle, handlePtr)) {
-    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
+    cb->error(Error::HYPERSPACE_INVALID_HANDLE, std::string("handle=") + handle);
     return;
   }
 
@@ -1006,17 +1005,23 @@ bool Master::FindParentNode(std::string normalName, NodeDataPtr &parentNodePtr, 
 /**
  * TODO: Destory locks
  */
-bool Master::DestroyHandle(HandleDataPtr &handlePtr, bool waitForNotify) {
+bool Master::DestroyHandle(uint64_t handle, int *errorp, std::string &errMsg, bool waitForNotify) {
+  HandleDataPtr handlePtr;
 
-  handlePtr->node->RemoveHandle(handlePtr->id);
+  if (!RemoveHandleData(handle, handlePtr)) {
+    *errorp = Error::HYPERSPACE_INVALID_HANDLE;
+    errMsg = std::string("handle=") + handle;
+    return false;
+  }
 
   {
     boost::mutex::scoped_lock lock(handlePtr->node->mutex);
 
+    handlePtr->node->RemoveHandle(handlePtr->id);
+
     if (handlePtr->node->ReferenceCount() == 0) {
 
-      if (handlePtr->node->Close() != 0)
-	return false;
+      handlePtr->node->Close();
 
       if (handlePtr->node->ephemeral) {
 	std::string childName;
