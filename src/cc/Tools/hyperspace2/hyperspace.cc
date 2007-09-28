@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <cstdio>
 #include <string>
 #include <vector>
 
@@ -61,21 +62,32 @@ namespace {
 
   char *line_read = 0;
 
+  bool gTestMode = false;
+  std::string gInputStr;
+
   char *rl_gets () {
 
-    if (line_read) {
-      free (line_read);
-      line_read = (char *)NULL;
+    if (gTestMode) {
+      getline(cin, gInputStr);
+      boost::trim(gInputStr);
+      cout << gInputStr << endl;
+      return (char *)gInputStr.c_str();
     }
+    else {
+      if (line_read) {
+	free (line_read);
+	line_read = (char *)NULL;
+      }
 
-    /* Get a line from the user. */
-    line_read = readline ("hyperspace> ");
+      /* Get a line from the user. */
+      line_read = readline("hyperspace> ");
 
-    /* If the line has any text in it, save it on the history. */
-    if (line_read && *line_read)
-      add_history (line_read);
+      /* If the line has any text in it, save it on the history. */
+      if (line_read && *line_read)
+	add_history (line_read);
 
-    return line_read;
+      return line_read;
+    }
   }
 
   const char *usage[] = {
@@ -89,7 +101,10 @@ namespace {
     "  --eval <cmds>    Evaluates the commands in the string <cmds>.  Several",
     "                   commands can be supplied in <cmds> by separating them with",
     "                   semicolons",
+    "  --no-prompt      Don't display a command prompt",
     "  --help           Display this help text and exit",
+    "  --test-mode      Suppress file line number information from error messages to",
+    "                   simplify diff'ing test output.",
     "",
     "This is a command interpreter for Hyperspace, a global namespace and lock service",
     "for loosely-coupled distributed systems.",
@@ -113,9 +128,9 @@ namespace {
  */
 class SessionHandler : public SessionCallback {
 public:
-  virtual void Jeopardy() { cerr << "SESSION CALLBACK: Jeopardy" << endl; }
-  virtual void Safe() { cerr << "SESSION CALLBACK: Safe" << endl; }
-  virtual void Expired() { cerr << "SESSION CALLBACK: Expired" << endl; }
+  virtual void Jeopardy() { cout << "SESSION CALLBACK: Jeopardy" << endl << flush; }
+  virtual void Safe() { cout << "SESSION CALLBACK: Safe" << endl << flush; }
+  virtual void Expired() { cout << "SESSION CALLBACK: Expired" << endl << flush; }
 };
 
 
@@ -123,7 +138,7 @@ public:
 /**
  *  main
  */
-int main(int argc, char **argv) {
+int main(int argc, char **argv, char **envp) {
   const char *line;
   char *eval = 0;
   size_t i;
@@ -152,6 +167,10 @@ int main(int argc, char **argv) {
       if (i == argc)
 	Usage::DumpAndExit(usage);
       eval = argv[i];
+    }
+    else if (!strcmp(argv[i], "--test-mode")) {
+      Logger::SetTestMode("hyperspace");
+      gTestMode = true;
     }
     else
       Usage::DumpAndExit(usage);
@@ -227,7 +246,7 @@ int main(int argc, char **argv) {
       if (commands[i]->Matches(line)) {
 	commands[i]->ParseCommandLine(line);
 	if ((error = commands[i]->run()) != Error::OK && error != -1)
-	  cerr << Error::GetText(error) << endl;
+	  cout << Error::GetText(error) << endl;
 	break;
       }
     }

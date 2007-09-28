@@ -1,0 +1,16 @@
+SESSION CALLBACK: Safe
+Welcome to the Hyperspace command interpreter.  Hyperspace
+is a global namespace and lock service for loosely-coupled
+distributed systems.  Type 'help' for a description of commands.
+
+open foo flags=READ
+mkdir foo/bar
+delete foo/bar
+attrset foo fox="Hello, World!"
+attrget foo fox
+Hello, World!
+attrdel foo fox
+attrget foo fox
+ERROR hyperspace2 : Hyperspace 'attrget' error, name=fox : HYPERSPACE attribute not found : fox
+HYPERSPACE attribute not found
+quit

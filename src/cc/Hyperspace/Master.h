@@ -53,22 +53,13 @@ namespace Hyperspace {
   class Master {
   public:
 
+    static const uint32_t DEFAULT_MASTER_PORT        = 38551;
+    static const uint32_t DEFAULT_LEASE_INTERVAL     = 12;
+    static const uint32_t DEFAULT_KEEPALIVE_INTERVAL = 7;
+    static const uint32_t DEFAULT_GRACEPERIOD        = 45;
+
     Master(ConnectionManager *connManager, PropertiesPtr &propsPtr, ServerKeepaliveHandlerPtr &keepaliveHandlerPtr);
     ~Master();
-    
-    uint64_t CreateSession(struct sockaddr_in &addr);
-    bool GetSessionData(uint64_t sessionId, SessionDataPtr &sessionPtr);
-    int RenewSessionLease(uint64_t sessionId);
-    bool NextExpiredSession(SessionDataPtr &sessionPtr);
-    void RemoveExpiredSessions();
-
-    void CreateHandle(uint64_t *handlep, HandleDataPtr &handlePtr);
-    bool GetHandleData(uint64_t sessionId, HandleDataPtr &handlePtr);
-    bool RemoveHandleData(uint64_t sessionId, HandleDataPtr &handlePtr);
-
-    void GetDatagramSendAddress(struct sockaddr_in *addr) { memcpy(addr, &mLocalAddr, sizeof(mLocalAddr)); }
-
-    uint32_t GetLeaseInterval() { return mLeaseInterval; }
 
     void Mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name);
     void Delete(ResponseCallback *cb, uint64_t sessionId, const char *name);
@@ -81,10 +72,43 @@ namespace Hyperspace {
     void Lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle, uint32_t mode, bool tryAcquire);
     void Release(ResponseCallback *cb, uint64_t sessionId, uint64_t handle);
 
-    static const uint32_t DEFAULT_MASTER_PORT        = 38551;
-    static const uint32_t DEFAULT_LEASE_INTERVAL     = 12;
-    static const uint32_t DEFAULT_KEEPALIVE_INTERVAL = 7;
-    static const uint32_t DEFAULT_GRACEPERIOD        = 45;
+    /**
+     * Creates a new session by allocating a new SessionData object, obtaining a
+     * new session ID and inserting the object into the Session map.
+     *
+     * @param addr Address from which the UDP client is sending
+     * @return the new session ID
+     */
+    uint64_t CreateSession(struct sockaddr_in &addr);
+
+    /**
+     * Obtains the SessionData object for the given id from the session map.
+     *
+     * @param sessionId Session ID to lookup
+     * @param sessionPtr Reference to SessionData smart pointer
+     * @return true if found, false otherwise
+     */
+    bool GetSession(uint64_t sessionId, SessionDataPtr &sessionPtr);
+
+    /**
+     * Attempts to renew the session lease for session with the given ID.  If
+     * the session cannot be found or if it is expired, the method returns
+     * Error::HYPERSPACE_EXPIRED_SESSION otherwise, it renews the session
+     * lease by invoking the RenewLease method of the SessionData object.
+     *
+     * @param sessionId Session ID to renew
+     * @return Error::OK if successful
+     */
+    int RenewSessionLease(uint64_t sessionId);
+
+    bool NextExpiredSession(SessionDataPtr &sessionPtr);
+    void RemoveExpiredSessions();
+
+    void CreateHandle(uint64_t *handlep, HandleDataPtr &handlePtr);
+    bool GetHandleData(uint64_t sessionId, HandleDataPtr &handlePtr);
+    bool RemoveHandleData(uint64_t sessionId, HandleDataPtr &handlePtr);
+
+    void GetDatagramSendAddress(struct sockaddr_in *addr) { memcpy(addr, &mLocalAddr, sizeof(mLocalAddr)); }
 
   private:
 
@@ -92,11 +116,42 @@ namespace Hyperspace {
     void NormalizeName(std::string name, std::string &normal);
     void DeliverEventNotifications(NodeData *node, HyperspaceEventPtr &eventPtr, bool waitForNotify=true);
     void DeliverEventNotification(HandleDataPtr &handlePtr, HyperspaceEventPtr &eventPtr, bool waitForNotify=true);
+
+    /**
+     * Locates the parent 'node' of the given pathname.  It determines the name of the parent
+     * node by stripping off the characters incuding and after the last '/' character.  It then
+     * looks up the name in the mNodeMap and sets the pointer reference 'parentNodePtr' to it.
+     * As a side effect, it also saves the child name (e.g. characters after the last '/' character
+     * to the string reference childName.  NOTE: This method locks the mNodeMapMutex.
+     *
+     * @param normalName Normalized (e.g. no trailing '/') name of path to find parent of
+     * @param parentNodePtr pointer reference to hold return pointer
+     * @param 
+     */
     bool FindParentNode(std::string normalName, NodeDataPtr &nodePtr, std::string &nodeName);
     bool DestroyHandle(HandleDataPtr &handlePtr, bool waitForNotify=true);
     void ReleaseLock(HandleDataPtr &handlePtr, bool waitForNotify=true);
     void LockHandle(HandleDataPtr &handlePtr, uint32_t mode, bool waitForNotify=true);
     void LockHandleWithNotification(HandleDataPtr &handlePtr, uint32_t mode, bool waitForNotify=true);
+
+    /**
+     * Safely obtains the node with the given pathname from the NodeMap,
+     * creating one and inserting it into the map if it is not found.
+     *
+     * @param name pathname of node
+     * @param nodePtr Reference of node smart pointer to hold return node
+     */
+    void GetNode(std::string name, NodeDataPtr &nodePtr) {
+      boost::mutex::scoped_lock lock(mNodeMapMutex);
+      NodeMapT::iterator iter = mNodeMap.find(name);
+      if (iter != mNodeMap.end()) {
+	nodePtr = (*iter).second;
+	return;
+      }
+      nodePtr = new NodeData();
+      nodePtr->name = name;
+      mNodeMap[name] = nodePtr;
+    }
 
     typedef __gnu_cxx::hash_map<std::string, NodeDataPtr> NodeMapT;
     typedef __gnu_cxx::hash_map<uint64_t, HandleDataPtr>  HandleMapT;
@@ -119,13 +174,6 @@ namespace Hyperspace {
     uint64_t      mNextEventId;
     ServerKeepaliveHandlerPtr mKeepaliveHandlerPtr;
     struct sockaddr_in mLocalAddr;
-
-    struct ltSessionData {
-      bool operator()(const SessionDataPtr &sd1, const SessionDataPtr &sd2) const {
-	return xtime_cmp(sd1->expireTime, sd2->expireTime) >= 0;
-      }
-    };
-
     std::vector<SessionDataPtr> mSessionHeap;
 
   };

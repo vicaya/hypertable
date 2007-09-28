@@ -105,7 +105,7 @@ void ServerKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 	    return;
 	  }
 
-	  if (!mMaster->GetSessionData(sessionId, sessionPtr)) {
+	  if (!mMaster->GetSession(sessionId, sessionPtr)) {
 	    LOG_VA_ERROR("Unable to find data for session %lld", sessionId);
 	    DUMP_CORE;
 	  }
@@ -160,7 +160,7 @@ void ServerKeepaliveHandler::DeliverEventNotifications(uint64_t sessionId) {
 
   //LOG_VA_INFO("Delivering event notifications for session %lld", sessionId);
 
-  if (!mMaster->GetSessionData(sessionId, sessionPtr)) {
+  if (!mMaster->GetSession(sessionId, sessionPtr)) {
     LOG_VA_ERROR("Unable to find data for session %lld", sessionId);
     DUMP_CORE;
   }

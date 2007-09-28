@@ -44,7 +44,7 @@ namespace Hyperspace {
     }
 
     void AddNotification(Notification *notification) {
-      boost::mutex::scoped_lock slock(mutex);
+      boost::mutex::scoped_lock lock(mutex);
       if (expired) {
 	notification->eventPtr->DecrementNotificationCount();
 	delete notification;
@@ -54,7 +54,7 @@ namespace Hyperspace {
     }
 
     void PurgeNotifications(uint64_t eventId) {
-      boost::mutex::scoped_lock slock(mutex);
+      boost::mutex::scoped_lock lock(mutex);
       list<Notification *>::iterator iter = notifications.begin();
       while (iter != notifications.end()) {
 	if ((*iter)->eventPtr->GetId() <= eventId) {
@@ -68,7 +68,7 @@ namespace Hyperspace {
     }
 
     bool RenewLease() {
-      boost::mutex::scoped_lock slock(mutex);
+      boost::mutex::scoped_lock lock(mutex);
       boost::xtime now;
       boost::xtime_get(&now, boost::TIME_UTC);
       if (xtime_cmp(expireTime, now) < 0) {
@@ -87,11 +87,12 @@ namespace Hyperspace {
     }
 
     bool IsExpired(boost::xtime &now) {
-      boost::mutex::scoped_lock slock(mutex);
+      boost::mutex::scoped_lock lock(mutex);
       return (xtime_cmp(expireTime, now) < 0) ? true : false;
     }
 
     void Expire() {
+      boost::mutex::scoped_lock lock(mutex);
       expired = true;
       list<Notification *>::iterator iter = notifications.begin();
       while (iter != notifications.end()) {
@@ -102,7 +103,7 @@ namespace Hyperspace {
     }
 
     void AddHandle(uint64_t handle) {
-      boost::mutex::scoped_lock slock(mutex);
+      boost::mutex::scoped_lock lock(mutex);
       handles.insert(handle);
     }
 
@@ -117,6 +118,12 @@ namespace Hyperspace {
   };
 
   typedef boost::intrusive_ptr<SessionData> SessionDataPtr;
+
+  struct ltSessionData {
+    bool operator()(const SessionDataPtr &sd1, const SessionDataPtr &sd2) const {
+      return xtime_cmp(sd1->expireTime, sd2->expireTime) >= 0;
+    }
+  };
 
 }
 

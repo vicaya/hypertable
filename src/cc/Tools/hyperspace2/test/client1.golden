@@ -1,0 +1,12 @@
+SESSION CALLBACK: Safe
+Welcome to the Hyperspace command interpreter.  Hyperspace
+is a global namespace and lock service for loosely-coupled
+distributed systems.  Type 'help' for a description of commands.
+
+mkdir foo
+open foo flags=READ|CREATE|WRITE event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED
+CHILD NODE ADDED bar
+CHILD NODE REMOVED bar
+ATTR SET fox
+ATTR DEL fox
+quit

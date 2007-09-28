@@ -22,12 +22,33 @@
 
 #include <log4cpp/Appender.hh>
 #include <log4cpp/BasicLayout.hh>
+#include <log4cpp/FileAppender.hh>
 #include <log4cpp/Layout.hh>
 #include <log4cpp/NDC.hh>
 #include <log4cpp/OstreamAppender.hh>
 #include <log4cpp/Priority.hh>
 
 using namespace hypertable;
+
+namespace {
+
+  /**
+   * NoTimeLayout
+   **/
+  class  NoTimeLayout : public log4cpp::Layout {
+  public:
+    NoTimeLayout() { }
+    virtual ~NoTimeLayout() { }
+    virtual std::string format(const log4cpp::LoggingEvent& event) {
+      std::ostringstream message;
+      const std::string& priorityName = log4cpp::Priority::getPriorityName(event.priority);
+      message << priorityName << " " << event.categoryName << " " << event.ndc << ": " << event.message << std::endl;
+      return message.str();
+    }
+  };
+
+}
+
 
 log4cpp::Category *Logger::logger = 0;
 bool Logger::msShowLineNumbers = true;
@@ -51,4 +72,16 @@ void Logger::SetLevel(log4cpp::Priority::Value priority) {
 
 void Logger::SuppressLineNumbers() {
   msShowLineNumbers = false;
+}
+
+
+void Logger::SetTestMode(const char *name) {
+  log4cpp::FileAppender *appender;
+
+  msShowLineNumbers = false;
+
+  logger->removeAllAppenders();
+  appender = new log4cpp::FileAppender((std::string)name, 1);
+  appender->setLayout(new NoTimeLayout());
+  logger->setAppender(appender);
 }

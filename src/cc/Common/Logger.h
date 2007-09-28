@@ -31,6 +31,7 @@ namespace hypertable {
     static log4cpp::Category *logger;
     static void Initialize(const char *name, log4cpp::Priority::Value priority=log4cpp::Priority::DEBUG);
     static void SetLevel(log4cpp::Priority::Value priority);
+    static void SetTestMode(const char *name);
     static void SuppressLineNumbers();
     static bool msShowLineNumbers;
   };

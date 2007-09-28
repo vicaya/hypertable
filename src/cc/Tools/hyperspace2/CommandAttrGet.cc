@@ -64,10 +64,7 @@ int CommandAttrGet::run() {
   }
   handle = (*iter).second;
 
-  if ((error = mSession->AttrGet(handle, mArgs[1].first, value)) != Error::OK) {
-    LOG_VA_ERROR("Error executing ATTRGET request - %s", Error::GetText(error));
-  }
-  else {
+  if ((error = mSession->AttrGet(handle, mArgs[1].first, value)) == Error::OK) {
     std::string valStr = std::string((const char *)value.buf, value.fill());
     cout << valStr << endl;
   }

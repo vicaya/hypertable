@@ -1,4 +1,4 @@
-/**
+/** -*- C++ -*-
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
@@ -21,6 +21,8 @@
 #ifndef HYPERTABLE_SERVERLAUNCHER_H
 #define HYPERTABLE_SERVERLAUNCHER_H
 
+#include <istream>
+
 extern "C" {
 #include <sys/types.h>
 #include <unistd.h>
@@ -31,13 +33,22 @@ namespace hypertable {
 
   class ServerLauncher {
   public:
-    ServerLauncher(const char *path, char *const argv[]) {
+    ServerLauncher(const char *path, char *const argv[], const char *outputFile=0) {
       int fd[2];
+      mPath = path;
       if (pipe(fd) < 0) {
 	perror("pipe");
 	exit(1);
       }
       if ((mChildPid = fork()) == 0) {
+	if (outputFile) {
+	  int outfd = open(outputFile, O_CREAT|O_TRUNC|O_WRONLY, 0644);
+	  if (outfd < 0) {
+	    perror("open");
+	    exit(1);
+	  }
+	  dup2(outfd, 1);
+	}
 	close(fd[1]);
 	dup2(fd[0], 0);
 	close(fd[0]);
@@ -50,12 +61,14 @@ namespace hypertable {
     ~ServerLauncher() {
       if (kill(mChildPid, 9) == -1)
 	perror("kill");
+      //poll(0,0,1000);
     }
     int GetWriteDescriptor() { return mWriteFd; }
     pid_t GetPid() { return mChildPid; }
-    private:
-      pid_t mChildPid;
-      int   mWriteFd;
+  private:
+    const char *mPath;
+    pid_t mChildPid;
+    int   mWriteFd;
   };
 
 }
