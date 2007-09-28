@@ -270,6 +270,7 @@ int main(int argc, char **argv, char **envp) {
     std::string commandStr;
     str = strtok(eval, ";");
     while (str) {
+      Global::exitStatus = 0;
       commandStr = str;
       boost::trim(commandStr);
       for (i=0; i<commands.size(); i++) {
@@ -288,7 +289,7 @@ int main(int argc, char **argv, char **envp) {
       }
       str = strtok(0, ";");      
     }
-    return 0;
+    return Global::exitStatus;
   }
 
   cout << "Welcome to the Hyperspace command interpreter.  Hyperspace" << endl;
@@ -298,6 +299,8 @@ int main(int argc, char **argv, char **envp) {
 
   using_history();
   while ((line = rl_gets()) != 0) {
+
+    Global::exitStatus = 0;
 
     if (*line == 0)
       continue;
@@ -342,12 +345,10 @@ int main(int argc, char **argv, char **envp) {
 	notifier->notify();
       }
     }
-
   }
 
- done:
   delete session;
   delete comm;
-  return error;
+  return Global::exitStatus;
 }
 

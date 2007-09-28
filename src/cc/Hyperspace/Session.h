@@ -102,7 +102,7 @@ namespace Hyperspace {
 
     Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback);
 
-    int Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, uint64_t *handlep, bool *createdp);
+    int Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, uint64_t *handlep, bool *createdp=0);
     int Cancel(uint64_t handle);
     int Close(uint64_t handle);
     int Poison(uint64_t handle);

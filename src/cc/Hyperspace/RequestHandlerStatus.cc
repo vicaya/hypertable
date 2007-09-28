@@ -18,8 +18,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "Global.h"
+#include "AsyncComm/ResponseCallback.h"
 
-int Global::exitStatus = 0;
-std::string Global::cwd = "/";
-Global::FileMapT Global::fileMap;
+#include "RequestHandlerStatus.h"
+
+using namespace Hyperspace;
+using namespace hypertable;
+
+/**
+ *
+ */
+void RequestHandlerStatus::run() {
+  ResponseCallback cb(mComm, mEventPtr);
+  cb.response_ok();
+}

@@ -27,10 +27,11 @@
 #include "AsyncComm/Event.h"
 #include "AsyncComm/ResponseCallback.h"
 
-#include "Hyperspace/HyperspaceClient.h"
+#include "Hyperspace/Session.h"
 
 #include "Hypertable/Lib/Filesystem.h"
 
+#include "HyperspaceSessionHandler.h"
 #include "ResponseCallbackGetSchema.h"
 
 using namespace hypertable;
@@ -46,10 +47,14 @@ namespace hypertable {
     bool CreateDirectoryLayout();
 
   private:
+
+    bool CreateDirectory(std::string dir);
+
     bool mVerbose;
-    HyperspaceClient *mHyperspace;
+    Hyperspace::Session *mHyperspace;
     Filesystem *mDfsClient;
     atomic_t mLastTableId;
+    HyperspaceSessionHandler mHyperspaceSessionHandler;
   };
 
 }

@@ -37,7 +37,7 @@ extern "C" {
 
 #include "DfsBroker/Lib/Client.h"
 
-#include "Hyperspace/HyperspaceClient.h"
+#include "Hyperspace/Session.h"
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/RangeServerClient.h"
 
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
   const char *portProperty = 0;
   const char *portStr = 0;
   DfsBroker::Client *client;
-  HyperspaceClient *hyperspaceClient;
+  Hyperspace::Session *hyperspace;
   MasterClient *master;
   RangeServerClient *rangeServer;
   Comm *comm = 0;
@@ -125,8 +125,8 @@ int main(int argc, char **argv) {
     portProperty = "DfsBroker.port";
   }
   else if (serverName == "hyperspace") {
-    hostProperty = "Hyperspace.host";
-    portProperty = "Hyperspace.port";
+    hostProperty = "Hyperspace.Master.host";
+    portProperty = "Hyperspace.Master.port";
   }
   else if (serverName == "master") {
     hostProperty = "Hypertable.Master.host";
@@ -180,10 +180,10 @@ int main(int argc, char **argv) {
       exit(1);
   }
   else if (serverName == "hyperspace") {
-    hyperspaceClient = new HyperspaceClient(connManager, addr, 30);
-    if (!hyperspaceClient->WaitForConnection(2))
+    hyperspace = new Hyperspace::Session(connManager->GetComm(), propsPtr, 0);
+    if (!hyperspace->WaitForConnection(2))
       exit(1);
-    if ((error = hyperspaceClient->Status()) != Error::OK)
+    if ((error = hyperspace->Status()) != Error::OK)
       exit(1);
   }
   else if (serverName == "master") {

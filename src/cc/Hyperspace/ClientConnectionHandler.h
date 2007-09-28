@@ -23,6 +23,7 @@
 
 #include <boost/thread/mutex.hpp>
 
+#include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/DispatchHandler.h"

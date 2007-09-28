@@ -43,6 +43,7 @@ RequestHandlerAttrDel.cc
 RequestHandlerExists.cc
 RequestHandlerLock.cc
 RequestHandlerRelease.cc
+RequestHandlerStatus.cc
 ResponseCallbackOpen.cc
 ResponseCallbackExists.cc
 ResponseCallbackAttrGet.cc

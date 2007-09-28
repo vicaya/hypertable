@@ -35,6 +35,7 @@
 #include "RequestHandlerExists.h"
 #include "RequestHandlerLock.h"
 #include "RequestHandlerRelease.h"
+#include "RequestHandlerStatus.h"
 #include "ServerConnectionHandler.h"
 
 using namespace hypertable;
@@ -121,6 +122,9 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
       case Protocol::COMMAND_RELEASE:
 	requestHandler = new RequestHandlerRelease(mComm, mMaster, mSessionId, eventPtr);
 	break;
+      case Protocol::COMMAND_STATUS:
+	requestHandler = new RequestHandlerStatus(mComm, mMaster, mSessionId, eventPtr);
+	break;
       default:
 	std::string message = (string)"Command code " + command + " not implemented";
 	throw ProtocolException(message);
@@ -139,8 +143,7 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
     LOG_VA_INFO("%s", eventPtr->toString().c_str());    
   }
   else if (eventPtr->type == hypertable::Event::DISCONNECT) {
-    // do something here!!!
-    LOG_VA_INFO("%s : Closing all open handles", eventPtr->toString().c_str());
+    // do we need to do something here?
   }
   else {
     LOG_VA_INFO("%s", eventPtr->toString().c_str());

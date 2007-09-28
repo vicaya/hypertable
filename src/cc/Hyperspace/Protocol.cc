@@ -137,7 +137,10 @@ CommBuf *Hyperspace::Protocol::CreateOpenRequest(std::string &name, uint32_t fla
   CommBuf *cbuf = new CommBuf(hbuilder, 10 + Serialization::EncodedLengthString(name));
   cbuf->AppendShort(COMMAND_OPEN);
   cbuf->AppendInt(flags);
-  cbuf->AppendInt(callbackPtr->GetEventMask());
+  if (callbackPtr)
+    cbuf->AppendInt(callbackPtr->GetEventMask());
+  else
+    cbuf->AppendInt(0);
   cbuf->AppendString(name);
   return cbuf;
 }
@@ -234,5 +237,17 @@ CommBuf *Hyperspace::Protocol::CreateReleaseRequest(uint64_t handle) {
   CommBuf *cbuf = new CommBuf(hbuilder, 10);
   cbuf->AppendShort(COMMAND_RELEASE);
   cbuf->AppendLong(handle);
+  return cbuf;
+}
+
+
+/**
+ *
+ */
+CommBuf *Hyperspace::Protocol::CreateStatusRequest() {
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
+  hbuilder.AssignUniqueId();
+  CommBuf *cbuf = new CommBuf(hbuilder, 2);
+  cbuf->AppendShort(COMMAND_STATUS);
   return cbuf;
 }

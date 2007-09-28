@@ -61,6 +61,8 @@ namespace Hyperspace {
 
     static CommBuf *CreateEventNotification(uint64_t handle, std::string &name, const void *value, size_t valueLen);
 
+    static CommBuf *CreateStatusRequest();
+
     static const uint16_t COMMAND_KEEPALIVE      = 0;
     static const uint16_t COMMAND_HANDSHAKE      = 1; 
     static const uint16_t COMMAND_OPEN           = 2;

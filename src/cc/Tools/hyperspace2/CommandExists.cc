@@ -53,8 +53,10 @@ int CommandExists::run() {
   if ((error = mSession->Exists(mArgs[0].first, &exists)) == Error::OK) {
     if (exists)
       cout << "true" << endl;
-    else
+    else {
       cout << "false" << endl;
+      Global::exitStatus = 1;
+    }
   }
 
   return error;

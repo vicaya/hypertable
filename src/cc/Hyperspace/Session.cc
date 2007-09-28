@@ -94,8 +94,11 @@ int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackP
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
+      int eventMask = 0;
+      if (handleStatePtr->callbackPtr)
+	eventMask = callbackPtr->GetEventMask();
       LOG_VA_ERROR("Hyperspace 'open' error, name=%s flags=0x%x events=0x%x : %s", handleStatePtr->normalName.c_str(), 
-		   flags, callbackPtr->GetEventMask(), Protocol::StringFormatMessage(eventPtr.get()).c_str());
+		   flags, eventMask, Protocol::StringFormatMessage(eventPtr.get()).c_str());
       error = (int)Protocol::ResponseCode(eventPtr.get());
     }
     else {
@@ -106,7 +109,8 @@ int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackP
 	return Error::RESPONSE_TRUNCATED;
       if (!Serialization::DecodeByte(&ptr, &remaining, &cbyte))
 	return Error::RESPONSE_TRUNCATED;
-      *createdp = cbyte ? true : false;
+      if (createdp)
+	*createdp = cbyte ? true : false;
       handleStatePtr->handle = *handlep;
       mKeepaliveHandler->RegisterHandle(handleStatePtr);
     }
@@ -487,6 +491,24 @@ int Session::Release(uint64_t handle) {
 }
 
 
+/**
+ * Blocking 'status' method
+ */
+int Session::Status() {
+  DispatchHandlerSynchronizer syncHandler;
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( Protocol::CreateStatusRequest() );
+  int error = SendMessage(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      error = (int)Protocol::ResponseCode(eventPtr);
+      LOG_VA_ERROR("Hyperspace 'status' error : %s", Protocol::StringFormatMessage(eventPtr).c_str());
+    }
+  }
+  return error;
+}
+
+
 
 
 
@@ -499,18 +521,18 @@ int Session::StateTransition(int state) {
   mState = state;
   if (mState == STATE_SAFE) {
     mCond.notify_all();
-    if (oldState == STATE_JEOPARDY)
+    if (mSessionCallback && oldState == STATE_JEOPARDY)
       mSessionCallback->Safe();
   }
   else if (mState == STATE_JEOPARDY) {
-    if (oldState == STATE_SAFE) {
+    if (mSessionCallback && oldState == STATE_SAFE) {
       mSessionCallback->Jeopardy();
       boost::xtime_get(&mExpireTime, boost::TIME_UTC);
       mExpireTime.sec += mGracePeriod;
     }
   }
   else if (mState == STATE_EXPIRED) {
-    if (oldState != STATE_EXPIRED)
+    if (mSessionCallback && oldState != STATE_EXPIRED)
       mSessionCallback->Expired();
     mCond.notify_all();
   }

@@ -169,23 +169,27 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 		eventMask == EVENT_MASK_CHILD_NODE_ADDED || eventMask == EVENT_MASK_CHILD_NODE_REMOVED) {
 	      if (!Serialization::DecodeString(&msgPtr, &remaining, &name))
 		throw ProtocolException("Truncated Request");
-	      if (eventMask == EVENT_MASK_ATTR_SET)
-		handleStatePtr->callbackPtr->AttrSet(name);
-	      else if (eventMask == EVENT_MASK_ATTR_DEL)
-		handleStatePtr->callbackPtr->AttrDel(name);
-	      else if (eventMask == EVENT_MASK_CHILD_NODE_ADDED)
-		handleStatePtr->callbackPtr->ChildNodeAdded(name);
-	      else
-		handleStatePtr->callbackPtr->ChildNodeRemoved(name);
+	      if (handleStatePtr->callbackPtr) {
+		if (eventMask == EVENT_MASK_ATTR_SET)
+		  handleStatePtr->callbackPtr->AttrSet(name);
+		else if (eventMask == EVENT_MASK_ATTR_DEL)
+		  handleStatePtr->callbackPtr->AttrDel(name);
+		else if (eventMask == EVENT_MASK_CHILD_NODE_ADDED)
+		  handleStatePtr->callbackPtr->ChildNodeAdded(name);
+		else
+		  handleStatePtr->callbackPtr->ChildNodeRemoved(name);
+	      }
 	    }
 	    else if (eventMask == EVENT_MASK_LOCK_ACQUIRED) {
 	      uint32_t mode;
 	      if (!Serialization::DecodeInt(&msgPtr, &remaining, &mode))
 		throw ProtocolException("Truncated Request");
-	      handleStatePtr->callbackPtr->LockAcquired(mode);
+	      if (handleStatePtr->callbackPtr)
+		handleStatePtr->callbackPtr->LockAcquired(mode);
 	    }
 	    else if (eventMask == EVENT_MASK_LOCK_RELEASED) {
-	      handleStatePtr->callbackPtr->LockReleased();
+	      if (handleStatePtr->callbackPtr)
+		handleStatePtr->callbackPtr->LockReleased();
 	    }
 	    else if (eventMask == EVENT_MASK_LOCK_GRANTED) {
 	      uint32_t mode;

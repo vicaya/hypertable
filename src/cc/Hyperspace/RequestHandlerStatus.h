@@ -18,21 +18,35 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include <string>
+#ifndef HYPERSPACE_REQUESTHANDLERSTATUS_H
+#define HYPERSPACE_REQUESTHANDLERSTATUS_H
 
-using namespace std;
+#include "Common/Runnable.h"
+
+#include "AsyncComm/ApplicationHandler.h"
+#include "AsyncComm/Comm.h"
+#include "AsyncComm/Event.h"
+
+using namespace hypertable;
 
 namespace Hyperspace {
 
-  void NormalizePathname(std::string name, std::string &normalName) {
-    normalName = "";
-    if (name[0] != '/')
-      normalName += "/";
+  class Master;
 
-    if (name.find('/', name.length()-1) == string::npos)
-      normalName += name;
-    else
-      normalName += name.substr(0, name.length()-1);
-  }
+  class RequestHandlerStatus : public ApplicationHandler {
+  public:
+    RequestHandlerStatus(Comm *comm, Master *master, uint64_t sessionId, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mComm(comm), mMaster(master), mSessionId(sessionId) {
+      return;
+    }
+
+    virtual void run();
+
+  private:
+    Comm        *mComm;
+    Master      *mMaster;
+    uint64_t     mSessionId;
+  };
 
 }
+
+#endif // HYPERSPACE_REQUESTHANDLERSTATUS_H

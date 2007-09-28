@@ -62,6 +62,7 @@ namespace Hyperspace {
     uint32_t mEventMask;
   };
   typedef boost::intrusive_ptr<HandleCallback> HandleCallbackPtr;
+
 }
 
 #endif // HYPERSPACE_HANDLECALLBACK_H
