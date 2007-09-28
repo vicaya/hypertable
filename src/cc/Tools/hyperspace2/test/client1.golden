@@ -62,6 +62,24 @@ LOCK ACQUIRED exclusive
 LOCK RELEASED
 LOCK ACQUIRED shared
 LOCK RELEASED
+LOCK ACQUIRED exclusive
+LOCK RELEASED
 close lockfile
 delete lockfile
+
+<< EphemeralFileTest >>
+mkdir dir1
+open dir1 flags=READ|CREATE|WRITE event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED
+CHILD NODE ADDED foo
+CHILD NODE REMOVED foo
+close dir1
+delete dir1
+
+<< SessionExpirationTest >>
+mkdir dir1
+open dir1 flags=READ|CREATE|WRITE event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED
+CHILD NODE ADDED foo
+CHILD NODE REMOVED foo
+close dir1
+delete dir1
 quit

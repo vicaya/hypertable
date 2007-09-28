@@ -32,7 +32,7 @@ namespace Hyperspace {
   class CommandTryLock : public InteractiveCommand {
   public:
     CommandTryLock(Session *session) : mSession(session) { return; }
-    virtual const char *CommandText() { return "lock"; }
+    virtual const char *CommandText() { return "trylock"; }
     virtual const char **Usage() { return msUsage; }
     virtual int run();
 

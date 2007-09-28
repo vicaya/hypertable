@@ -337,8 +337,10 @@ int main(int argc, char **argv, char **envp) {
 	Usage::Dump(helpTrailer);
 	notifier->notify();
       }
-      else
+      else {
 	cout << "Unrecognized command." << endl;
+	notifier->notify();
+      }
     }
 
   }

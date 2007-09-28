@@ -16,4 +16,11 @@ release lockfile
 lock lockfile SHARED
 SEQUENCER name=/lockfile mode=1 generation=5
 release lockfile
+trylock lockfile EXCLUSIVE
+busy
+close lockfile
+
+<< EphemeralFileTest >>
+
+<< SessionExpirationTest >>
 quit

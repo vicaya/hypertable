@@ -28,4 +28,15 @@ release lockfile
 lock lockfile SHARED
 SEQUENCER name=/lockfile mode=1 generation=4
 release lockfile
-quit
+trylock lockfile EXCLUSIVE
+SEQUENCER name=/lockfile mode=2 generation=6
+release lockfile
+release lockfile
+close lockfile
+
+<< EphemeralFileTest >>
+open dir1/foo flags=READ|CREATE|WRITE|TEMP
+close dir1/foo
+
+<< SessionExpirationTest >>
+open dir1/foo flags=READ|CREATE|WRITE|TEMP

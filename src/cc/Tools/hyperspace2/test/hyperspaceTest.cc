@@ -98,11 +98,14 @@ namespace {
   }
 
   int gFd1, gFd2, gFd3;
+  pid_t gPid1, gPid2, gPid3;
 
   void OutputTestHeader(const char *name);
   void BasicTest();
   void NotificationTest();
   void LockTest();
+  void EphemeralFileTest();
+  void SessionExpirationTest();
 
 }
 
@@ -155,14 +158,21 @@ int main(int argc, char **argv) {
     gFd1 = client1.GetWriteDescriptor();
     gFd2 = client2.GetWriteDescriptor();
     gFd3 = client3.GetWriteDescriptor();
+
+    gPid1 = client1.GetPid();
+    gPid2 = client2.GetPid();
+    gPid3 = client3.GetPid();
     
     BasicTest();
     NotificationTest();
     LockTest();
+    EphemeralFileTest();
+    SessionExpirationTest();
 
-    IssueCommand(gFd1, "quit");
-    IssueCommand(gFd2, "quit");
-    IssueCommand(gFd3, "quit");
+    IssueCommandNoWait(gFd1, "quit");
+    IssueCommandNoWait(gFd2, "quit");
+    IssueCommandNoWait(gFd3, "quit");
+    poll(0, 0, 1000);
   }
 
   if (system("diff ./client1.out ./client1.golden"))
@@ -214,7 +224,6 @@ namespace {
     OutputTestHeader("<< NotificationTest >>");
     IssueCommand(gFd1, "mkdir dir1");
     IssueCommand(gFd1, "open dir1 flags=READ|CREATE|WRITE event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED");
-
     IssueCommand(gFd2, "mkdir dir1/foo");
     IssueCommand(gFd2, "delete dir1/foo");
     IssueCommand(gFd2, "open dir1 flags=READ|WRITE|LOCK");
@@ -223,7 +232,6 @@ namespace {
     IssueCommand(gFd2, "attrdel dir1 fox");
     IssueCommand(gFd2, "lock dir1 EXCLUSIVE");
     IssueCommand(gFd2, "release dir1");
-
     IssueCommand(gFd1, "close dir1");
     IssueCommand(gFd2, "close dir1");
     IssueCommand(gFd2, "delete dir1");
@@ -231,7 +239,6 @@ namespace {
 
   void LockTest() {
     OutputTestHeader("<< LockTest >>");
-
     IssueCommand(gFd1, "open lockfile flags=READ|CREATE|WRITE event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED");
     IssueCommand(gFd2, "open lockfile flags=READ|WRITE|LOCK");
     IssueCommand(gFd3, "open lockfile flags=READ|WRITE|LOCK");
@@ -245,8 +252,37 @@ namespace {
     IssueCommand(gFd3, "lock lockfile SHARED");
     IssueCommand(gFd2, "release lockfile");
     IssueCommand(gFd3, "release lockfile");
+    IssueCommand(gFd2, "trylock lockfile EXCLUSIVE");
+    IssueCommand(gFd3, "trylock lockfile EXCLUSIVE");
+    IssueCommand(gFd2, "release lockfile");    
+    IssueCommand(gFd2, "release lockfile");    
     IssueCommand(gFd1, "close lockfile");
+    IssueCommand(gFd2, "close lockfile");
+    IssueCommand(gFd3, "close lockfile");
     IssueCommand(gFd1, "delete lockfile");
+  }
+
+  void EphemeralFileTest() {
+    OutputTestHeader("<< EphemeralFileTest >>");
+    IssueCommand(gFd1, "mkdir dir1");
+    IssueCommand(gFd1, "open dir1 flags=READ|CREATE|WRITE event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED");
+    IssueCommand(gFd2, "open dir1/foo flags=READ|CREATE|WRITE|TEMP");
+    IssueCommand(gFd2, "close dir1/foo");
+    IssueCommand(gFd1, "close dir1");
+    IssueCommand(gFd1, "delete dir1");
+  }
+
+  void SessionExpirationTest() {
+    OutputTestHeader("<< SessionExpirationTest >>");
+    IssueCommand(gFd1, "mkdir dir1");
+    IssueCommand(gFd1, "open dir1 flags=READ|CREATE|WRITE event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED");
+    IssueCommand(gFd2, "open dir1/foo flags=READ|CREATE|WRITE|TEMP");
+    if (kill(gPid2, 17) == -1)
+      perror("kill");
+    poll(0, 0, 9000);
+    // IssueCommand(gFd2, "close dir1/foo");
+    IssueCommand(gFd1, "close dir1");
+    IssueCommand(gFd1, "delete dir1");
   }
 
 }
