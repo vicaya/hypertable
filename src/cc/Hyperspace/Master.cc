@@ -371,6 +371,7 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
   HandleDataPtr handlePtr;
   int error;
   bool created = false;
+  bool isDirectory = false;
   bool existed;
   uint64_t handle;
   struct stat statbuf;
@@ -409,6 +410,7 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
 	    cb->error(Error::HYPERSPACE_IS_DIRECTORY, "");
 	    return;
 	    } **/
+	isDirectory = true;
 	oflags = O_RDONLY;
 #if defined(__linux__)
 	oflags |= O_DIRECTORY;
@@ -416,7 +418,7 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
       }
     }
 
-    if (oflags == 0)
+    if (!isDirectory)
       oflags = O_RDWR;
 
     if (existed && (flags & OPEN_FLAG_CREATE) && (flags & OPEN_FLAG_EXCL)) {

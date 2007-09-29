@@ -82,4 +82,3 @@ CHILD NODE ADDED foo
 CHILD NODE REMOVED foo
 close dir1
 delete dir1
-quit
