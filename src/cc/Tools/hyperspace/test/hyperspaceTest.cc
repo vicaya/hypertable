@@ -172,12 +172,10 @@ int main(int argc, char **argv) {
     gPid2 = client2.GetPid();
     gPid3 = client3.GetPid();
 
-    /**
     BasicTest();
     NotificationTest();
     LockTest();
     EphemeralFileTest();
-    **/
     SessionExpirationTest();
 
     IssueCommandNoWait(gFd1, "quit");

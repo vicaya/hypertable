@@ -7,20 +7,20 @@ distributed systems.  Type 'help' for a description of commands.
 << BasicTest >>
 mkdir dir1
 mkdir how/now/brown/cow
-ERROR hyperspace2 : Hyperspace 'mkdir' error, name=/how/now/brown/cow : HYPERSPACE bad pathname
+ERROR hyperspace : Hyperspace 'mkdir' error, name=/how/now/brown/cow : HYPERSPACE bad pathname
 HYPERSPACE bad pathname
 delete foo
-ERROR hyperspace2 : Hyperspace 'delete' error, name=/foo : HYPERSPACE bad pathname
+ERROR hyperspace : Hyperspace 'delete' error, name=/foo : HYPERSPACE bad pathname
 HYPERSPACE bad pathname
 open foo flags=READ
-ERROR hyperspace2 : Hyperspace 'open' error, name=/foo flags=0x1 events=0x0 : HYPERSPACE bad pathname
+ERROR hyperspace : Hyperspace 'open' error, name=/foo flags=0x1 events=0x0 : HYPERSPACE bad pathname
 HYPERSPACE bad pathname
 open foo flags=READ|CREATE
 open foo flags=READ|CREATE|EXCL
-ERROR hyperspace2 : Hyperspace 'open' error, name=/foo flags=0x19 events=0x0 : HYPERSPACE file exists
+ERROR hyperspace : Hyperspace 'open' error, name=/foo flags=0x19 events=0x0 : HYPERSPACE file exists
 HYPERSPACE file exists
 lock foo EXCLUSIVE
-ERROR hyperspace2 : Hyperspace 'lock' error, handle=2 name='/foo' : HYPERSPACE mode restriction
+ERROR hyperspace : Hyperspace 'lock' error, handle=2 name='/foo' : HYPERSPACE mode restriction
 HYPERSPACE mode restriction
 exists dir1
 true
@@ -29,18 +29,18 @@ true
 exists bar
 false
 attrget foo testattr
-ERROR hyperspace2 : Hyperspace 'attrget' error, name=testattr : HYPERSPACE attribute not found
+ERROR hyperspace : Hyperspace 'attrget' error, name=testattr : HYPERSPACE attribute not found
 HYPERSPACE attribute not found
 delete dir1
 close foo
 attrset foo testattr="Hello, World!"
-ERROR hyperspace2 : Hyperspace 'attrset' error, name=testattr : HYPERSPACE invalid handle
+ERROR hyperspace : Hyperspace 'attrset' error, name=testattr : HYPERSPACE invalid handle
 HYPERSPACE invalid handle
 attrget foo testattr
-ERROR hyperspace2 : Hyperspace 'attrget' error, name=testattr : HYPERSPACE invalid handle
+ERROR hyperspace : Hyperspace 'attrget' error, name=testattr : HYPERSPACE invalid handle
 HYPERSPACE invalid handle
 attrdel foo testattr
-ERROR hyperspace2 : Hyperspace 'attrdel' error, name=testattr : HYPERSPACE invalid handle
+ERROR hyperspace : Hyperspace 'attrdel' error, name=testattr : HYPERSPACE invalid handle
 HYPERSPACE invalid handle
 
 << NotificationTest >>
@@ -81,5 +81,6 @@ open dir1 flags=READ|CREATE|WRITE event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|
 CHILD NODE ADDED foo
 LOCK ACQUIRED exclusive
 CHILD NODE REMOVED foo
+LOCK RELEASED
 close dir1
 delete dir1

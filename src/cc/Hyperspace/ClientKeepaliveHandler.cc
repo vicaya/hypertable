@@ -161,11 +161,9 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 		!Serialization::DecodeInt(&msgPtr, &remaining, &eventMask))
 	      throw ProtocolException("Truncated Request");
 
-	    if (eventId <= mLastKnownEvent)
-	      continue;
-
 	    HandleMapT::iterator iter = mHandleMap.find(handle);
-	    LOG_VA_INFO("handle=%lldm, eventId=%lld, eventMask=%d", handle, eventId, eventMask);
+	    //LOG_VA_INFO("LastKnownEvent=%lld, eventId=%lld eventMask=%d", mLastKnownEvent, eventId, eventMask);
+	    //LOG_VA_INFO("handle=%lldm, eventId=%lld, eventMask=%d", handle, eventId, eventMask);
 	    assert (iter != mHandleMap.end());
 	    ClientHandleStatePtr handleStatePtr = (*iter).second;
 
@@ -173,6 +171,8 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 		eventMask == EVENT_MASK_CHILD_NODE_ADDED || eventMask == EVENT_MASK_CHILD_NODE_REMOVED) {
 	      if (!Serialization::DecodeString(&msgPtr, &remaining, &name))
 		throw ProtocolException("Truncated Request");
+	      if (eventId <= mLastKnownEvent)
+		continue;
 	      if (handleStatePtr->callbackPtr) {
 		if (eventMask == EVENT_MASK_ATTR_SET)
 		  handleStatePtr->callbackPtr->AttrSet(name);
@@ -188,10 +188,14 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 	      uint32_t mode;
 	      if (!Serialization::DecodeInt(&msgPtr, &remaining, &mode))
 		throw ProtocolException("Truncated Request");
+	      if (eventId <= mLastKnownEvent)
+		continue;
 	      if (handleStatePtr->callbackPtr)
 		handleStatePtr->callbackPtr->LockAcquired(mode);
 	    }
 	    else if (eventMask == EVENT_MASK_LOCK_RELEASED) {
+	      if (eventId <= mLastKnownEvent)
+		continue;
 	      if (handleStatePtr->callbackPtr)
 		handleStatePtr->callbackPtr->LockReleased();
 	    }
@@ -200,6 +204,8 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 	      if (!Serialization::DecodeInt(&msgPtr, &remaining, &mode) ||
 		  !Serialization::DecodeLong(&msgPtr, &remaining, &handleStatePtr->lockGeneration))
 		throw ProtocolException("Truncated Request");
+	      if (eventId <= mLastKnownEvent)
+		continue;
 	      handleStatePtr->lockStatus = LOCK_STATUS_GRANTED;
 	      handleStatePtr->sequencer->generation = handleStatePtr->lockGeneration;
 	      handleStatePtr->sequencer->mode = mode;
