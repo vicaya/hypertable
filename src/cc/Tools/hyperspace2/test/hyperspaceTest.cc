@@ -286,6 +286,8 @@ namespace {
     IssueCommand(gFd1, "mkdir dir1");
     IssueCommand(gFd1, "open dir1 flags=READ|CREATE|WRITE event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED");
     IssueCommand(gFd2, "open dir1/foo flags=READ|CREATE|WRITE|TEMP");
+    IssueCommand(gFd2, "open dir1 flags=READ|WRITE|LOCK");
+    IssueCommand(gFd2, "lock dir1 EXCLUSIVE");
     if (kill(gPid2, SIGSTOP) == -1)
       perror("kill");
     poll(0, 0, 9000);

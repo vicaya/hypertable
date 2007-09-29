@@ -161,7 +161,13 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 		!Serialization::DecodeInt(&msgPtr, &remaining, &eventMask))
 	      throw ProtocolException("Truncated Request");
 
+	    if (eventId <= mLastKnownEvent)
+	      continue;
+
 	    HandleMapT::iterator iter = mHandleMap.find(handle);
+	    if (iter == mHandleMap.end()) {
+	      LOG_VA_INFO("handle=%lldm, eventId=%lld, eventMask=%d", handle, eventId, eventMask);
+	    }
 	    assert (iter != mHandleMap.end());
 	    ClientHandleStatePtr handleStatePtr = (*iter).second;
 
@@ -202,8 +208,7 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 	      handleStatePtr->cond.notify_all();
 	    }
 
-	    if (eventId > mLastKnownEvent)
-	      mLastKnownEvent = eventId;
+	    mLastKnownEvent = eventId;
 	  }
 
 	  if (mVerbose) {

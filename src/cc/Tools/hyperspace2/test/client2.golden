@@ -40,3 +40,6 @@ close dir1/foo
 
 << SessionExpirationTest >>
 open dir1/foo flags=READ|CREATE|WRITE|TEMP
+open dir1 flags=READ|WRITE|LOCK
+lock dir1 EXCLUSIVE
+SEQUENCER name=/dir1 mode=2 generation=2

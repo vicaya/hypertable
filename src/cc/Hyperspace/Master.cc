@@ -1028,6 +1028,9 @@ bool Master::DestroyHandle(uint64_t handle, int *errorp, std::string &errMsg, bo
     return false;
   }
 
+  // this needs to get fixed!!!!
+  //ReleaseLock(handlePtr, waitForNotify);
+
   {
     boost::mutex::scoped_lock lock(handlePtr->node->mutex);
 
