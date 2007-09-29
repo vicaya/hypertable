@@ -22,8 +22,6 @@ set ( Hyperspace_SRCS
 ClientKeepaliveHandler.cc
 ClientConnectionHandler.cc
 HandleCallback.cc
-HyperspaceClient.cc
-HyperspaceProtocol.cc
 Protocol.cc
 Session.cc
 )
