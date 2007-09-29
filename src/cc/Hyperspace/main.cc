@@ -53,6 +53,7 @@ namespace {
     "OPTIONS:",
     "  --config=<file>   Read configuration from <file>.  The default config file is",
     "                    \"conf/hypertable.cfg\" relative to the toplevel install directory",
+    "  --install-dir=<dir> Set the installation directory to <dir>",
     "  --pidfile=<fname> Write the process ID to <fname> upon successful startup",
     "  --help            Display this help text and exit",
     "  --verbose,-v      Generate verbose output",
@@ -107,6 +108,11 @@ int main(int argc, char **argv) {
     for (int i=1; i<argc; i++) {
       if (!strncmp(argv[i], "--config=", 9))
 	configFile = &argv[i][9];
+      else if (!strncmp(argv[i], "--install-dir=", 14)) {
+	System::installDir = &argv[i][14];
+	if (System::installDir.find('/',  System::installDir.length()-1) != string::npos)
+	  System::installDir = System::installDir.substr(0, System::installDir.length()-1);
+      }
       else if (!strncmp(argv[i], "--pidfile=", 10))
 	pidFile = &argv[i][10];
       else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))

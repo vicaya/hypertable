@@ -23,6 +23,10 @@
 #include <cstring>
 #include <vector>
 
+extern "C" {
+#include <unistd.h>
+}
+
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
@@ -116,6 +120,7 @@ int main(int argc, char **argv) {
   int error;
   Comm *comm;
   struct sockaddr_in addr;
+  char masterInstallDir[2048];
 
   System::Initialize(argv[0]);
   ReactorFactory::Initialize(1);
@@ -138,9 +143,12 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
+  sprintf(masterInstallDir, "--install-dir=%s", getenv("PWD"));
+
   masterArgs.push_back("Hyperspace.Master");
   masterArgs.push_back("--config=./hyperspaceTest.cfg");
   masterArgs.push_back("--verbose");
+  masterArgs.push_back(masterInstallDir);
   masterArgs.push_back((const char *)0);
 
   clientArgs.push_back("hyperspace2");
@@ -149,9 +157,9 @@ int main(int argc, char **argv) {
   clientArgs.push_back("--notification-address=23451");
   clientArgs.push_back((const char *)0);
 
+
   {
     ServerLauncher master("../../Hyperspace/Hyperspace.Master", (char * const *)&masterArgs[0]);
-    poll(0, 0, 1000);
     ServerLauncher client1("./hyperspace2", (char * const *)&clientArgs[0], "client1.out");
     ServerLauncher client2("./hyperspace2", (char * const *)&clientArgs[0], "client2.out");
     ServerLauncher client3("./hyperspace2", (char * const *)&clientArgs[0], "client3.out");
