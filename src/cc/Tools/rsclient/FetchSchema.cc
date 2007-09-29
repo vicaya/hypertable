@@ -22,21 +22,30 @@
 #include "Common/Error.h"
 #include "Common/Logger.h"
 
-#include "Hyperspace/HyperspaceClient.h"
+#include "Hyperspace/Session.h"
 
 #include "FetchSchema.h"
 
 namespace hypertable {
 
-  int FetchSchema(std::string &tableName, HyperspaceClient *hyperspace, SchemaPtr &schemaPtr) {
+  int FetchSchema(std::string &tableName, Hyperspace::Session *hyperspace, SchemaPtr &schemaPtr) {
     std::string tableFile = (std::string)"/hypertable/tables/" + tableName;
     DynamicBuffer valueBuf(0);
     int error;
+    HandleCallbackPtr nullHandleCallback;
+    uint64_t handle;
 
-    if ((error = hyperspace->AttrGet(tableFile.c_str(), "schema", valueBuf)) != Error::OK) {
+    if ((error = hyperspace->Open(tableFile.c_str(), OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
+      LOG_VA_ERROR("Unable to open Hyperspace file '%s' (%s)", tableFile.c_str(), Error::GetText(error));
+      exit(1);
+    }
+
+    if ((error = hyperspace->AttrGet(handle, "schema", valueBuf)) != Error::OK) {
       LOG_VA_ERROR("Problem getting 'schema' attribute for '%s'", tableName.c_str());
       return error;
     }
+
+    hyperspace->Close(handle);
 
     Schema *schema = Schema::NewInstance((const char *)valueBuf.buf, valueBuf.fill(), true);
     if (!schema->IsValid()) {

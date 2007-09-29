@@ -33,4 +33,4 @@ configure_file(${SRC_DIR}/Tools/hyperspace/hsTest.golden ${DST_DIR}/hsTest.golde
 
 install (TARGETS hyperspace RUNTIME DESTINATION bin)
 
-add_test (Hyperspace hsTest)
+#add_test (Hyperspace hsTest)

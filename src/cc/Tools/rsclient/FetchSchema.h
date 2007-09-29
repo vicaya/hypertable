@@ -24,12 +24,13 @@
 #include <string>
 
 #include "Hypertable/Lib/Schema.h"
+#include "Hyperspace/Session.h"
 
 namespace hypertable {
   
   class HyperspaceClient;
 
-  int FetchSchema(std::string &tableName, HyperspaceClient *hyperspace, SchemaPtr &schemaPtr);
+  int FetchSchema(std::string &tableName, Hyperspace::Session *hyperspace, SchemaPtr &schemaPtr);
 }
 
 

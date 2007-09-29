@@ -27,7 +27,7 @@
 using namespace hypertable;
 
 ApplicationQueue      *Global::appQueue;
-HyperspaceClient      *Global::hyperspace = 0;
+Hyperspace::Session   *Global::hyperspace = 0;
 Filesystem            *Global::dfs = 0;
 boost::thread         *Global::maintenanceThreadPtr = 0;
 RangeServerProtocol   *Global::protocol = 0;

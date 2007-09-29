@@ -96,12 +96,12 @@ RangeServer::RangeServer(ConnectionManager *connManager, PropertiesPtr &propsPtr
 
   Global::protocol = new hypertable::RangeServerProtocol();
 
-  /**
-   * Create HYPERSPACE Client connection
-   */
-  Global::hyperspace = new HyperspaceClient(connManager, propsPtr.get());
-  if (!Global::hyperspace->WaitForConnection(30))
+  Global::hyperspace = new Hyperspace::Session(connManager->GetComm(), propsPtr, 0);
+
+  if (!Global::hyperspace->WaitForConnection(30)) {
+    LOG_ERROR("Unable to connect to hyperspace, exiting...");
     exit(1);
+  }
 
   DfsBroker::Client *dfsClient = new DfsBroker::Client(connManager, propsPtr);
 
@@ -140,6 +140,7 @@ int RangeServer::DirectoryInitialize(Properties *props) {
   char ipStr[32];
   int error;
   struct timeval tval;
+  bool exists;
 
   if (gethostname(hostname, 256) != 0) {
     LOG_VA_ERROR("gethostname() failed - %s", strerror(errno));
@@ -157,13 +158,13 @@ int RangeServer::DirectoryInitialize(Properties *props) {
   /**
    * Create /hypertable/servers directory
    */
-  error = Global::hyperspace->Exists("/hypertable/servers");
-  if (error == Error::HYPERSPACE_FILE_NOT_FOUND) {
-    LOG_ERROR("Hypertablefs directory '/hypertable/servers' does not exist, try running 'Hypertable.Master --initialize' first");
+  if ((error = Global::hyperspace->Exists("/hypertable/servers", &exists)) != Error::OK) {
+    LOG_VA_ERROR("Problem checking existence of '/hypertable/servers' hypertablefs directory - %s", Error::GetText(error));
     return error;
   }
-  else if (error != Error::OK) {
-    LOG_VA_ERROR("Problem checking existence of '/hypertable/servers' hypertablefs directory - %s", Error::GetText(error));
+
+  if (!exists) {
+    LOG_ERROR("Hypertablefs directory '/hypertable/servers' does not exist, try running 'Hypertable.Master --initialize' first");
     return error;
   }
 
@@ -176,17 +177,15 @@ int RangeServer::DirectoryInitialize(Properties *props) {
   /**
    * Create /hypertable/servers/X.X.X.X_nnnnn directory
    */
-  error = Global::hyperspace->Exists(topDir);
-  if (error == Error::HYPERSPACE_FILE_NOT_FOUND) {
-    error = Global::hyperspace->Mkdirs(topDir);
-    if (error != Error::OK) {
+  if ((error = Global::hyperspace->Exists(topDir, &exists)) != Error::OK) {
+    LOG_VA_ERROR("Problem checking existence of '%s' hypertablefs directory - %s", topDir, Error::GetText(error));
+    return error;
+  }
+  else if (!exists) {
+    if ((error = Global::hyperspace->Mkdir(topDir)) != Error::OK) {
       LOG_VA_ERROR("Problem creating hypertablefs directory '%s' - %s", topDir, Error::GetText(error));
       return error;
     }
-  }
-  else if (error != Error::OK) {
-    LOG_VA_ERROR("Problem checking existence of '%s' hypertablefs directory - %s", topDir, Error::GetText(error));
-    return error;
   }
   else {
     LOG_VA_ERROR("Hypertablefs directory '%s' already exists.", topDir);

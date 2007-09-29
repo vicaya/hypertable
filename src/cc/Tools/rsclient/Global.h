@@ -27,13 +27,13 @@
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/RangeServerClient.h"
 #include "Hypertable/Lib/Schema.h"
-#include "Hyperspace/HyperspaceClient.h"
+#include "Hyperspace/Session.h"
 
 namespace hypertable {
 
   class Global {
   public:
-    static HyperspaceClient *hyperspace;
+    static Hyperspace::Session *hyperspace;
     static RangeServerClient *rangeServer;
     static MasterClient *master;
     static int32_t outstandingScannerId;

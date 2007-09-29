@@ -38,7 +38,7 @@ extern "C" {
 
 #include "Hypertable/Lib/Manager.h"
 #include "Hypertable/Lib/RangeServerClient.h"
-#include "Hyperspace/HyperspaceClient.h"
+#include "Hyperspace/Session.h"
 
 #include "CommandCreateScanner.h"
 #include "CommandFetchScanblock.h"
@@ -224,7 +224,7 @@ int main(int argc, char **argv) {
     cerr << "Timed out waiting for for connection to Master.  Exiting ..." << endl;
 
   // Connect to Hyperspace
-  Global::hyperspace = new HyperspaceClient(connManager, propsPtr.get());
+  Global::hyperspace = new Hyperspace::Session(connManager->GetComm(), propsPtr, 0);
   if (!Global::hyperspace->WaitForConnection(30))
     exit(1);
 

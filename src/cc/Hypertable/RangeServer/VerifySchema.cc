@@ -30,15 +30,24 @@ namespace hypertable {
   int VerifySchema(TableInfoPtr &tableInfoPtr, int generation, std::string &errMsg) {
     std::string tableFile = (std::string)"/hypertable/tables/" + tableInfoPtr->GetName();
     DynamicBuffer valueBuf(0);
+    HandleCallbackPtr nullHandleCallback;
     int error;
+    uint64_t handle;
     SchemaPtr schemaPtr = tableInfoPtr->GetSchema();
 
     if (schemaPtr.get() == 0 || schemaPtr->GetGeneration() < generation) {
 
-      if ((error = Global::hyperspace->AttrGet(tableFile.c_str(), "schema", valueBuf)) != Error::OK) {
+      if ((error = Global::hyperspace->Open(tableFile.c_str(), OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
+	LOG_VA_ERROR("Unable to open Hyperspace file '%s' (%s)", tableFile.c_str(), Error::GetText(error));
+	exit(1);
+      }
+
+      if ((error = Global::hyperspace->AttrGet(handle, "schema", valueBuf)) != Error::OK) {
 	errMsg = (std::string)"Problem getting 'schema' attribute for '" + tableFile + "'";
 	return error;
       }
+
+      Global::hyperspace->Close(handle);
 
       schemaPtr.reset( Schema::NewInstance((const char *)valueBuf.buf, valueBuf.fill(), true) );
       if (!schemaPtr->IsValid()) {

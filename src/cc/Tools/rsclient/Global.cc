@@ -22,7 +22,7 @@
 
 using namespace hypertable;
 
-HyperspaceClient        *Global::hyperspace = 0;
+Hyperspace::Session     *Global::hyperspace = 0;
 RangeServerClient       *Global::rangeServer = 0;
 MasterClient            *Global::master = 0;
 int32_t                  Global::outstandingScannerId = -1;

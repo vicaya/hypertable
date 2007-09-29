@@ -168,7 +168,7 @@ void Master::CreateTable(ResponseCallback *cb, const char *tableName, const char
   /**
    * Write schema attribute
    */
-  if ((error = mHyperspace->AttrSet(handle, "schema", finalSchema.c_str(), sizeof(finalSchema.c_str()))) != Error::OK) {
+  if ((error = mHyperspace->AttrSet(handle, "schema", finalSchema.c_str(), strlen(finalSchema.c_str()))) != Error::OK) {
     errMsg = (std::string)"Problem creating attribute 'schema' for table file '" + tableFile + "'";
     goto abort;
   }

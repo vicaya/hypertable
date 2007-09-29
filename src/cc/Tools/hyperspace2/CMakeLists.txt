@@ -53,4 +53,4 @@ configure_file(${SRC_DIR}/test/client3.golden ${DST_DIR}/client3.golden COPYONLY
 
 install (TARGETS hyperspace2 RUNTIME DESTINATION bin)
 
-add_test (Hyperspace2 hyperspaceTest)
+#add_test (Hyperspace2 hyperspaceTest)

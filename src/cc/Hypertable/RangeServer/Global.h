@@ -27,7 +27,7 @@
 
 #include "Common/Properties.h"
 #include "AsyncComm/Comm.h"
-#include "Hyperspace/HyperspaceClient.h"
+#include "Hyperspace/Session.h"
 #include "Hypertable/Lib/Metadata.h"
 #include "Hypertable/Lib/RangeServerProtocol.h"
 #include "Hypertable/Lib/Schema.h"
@@ -45,7 +45,7 @@ namespace hypertable {
   class Global {
   public:
     static hypertable::ApplicationQueue *appQueue;
-    static hypertable::HyperspaceClient *hyperspace;
+    static Hyperspace::Session *hyperspace;
     static hypertable::Filesystem *dfs;
     static boost::thread *maintenanceThreadPtr;
     static hypertable::RangeServerProtocol *protocol;

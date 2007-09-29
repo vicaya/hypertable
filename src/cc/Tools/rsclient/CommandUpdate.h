@@ -25,7 +25,6 @@
 
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/RangeServerClient.h"
-#include "Hyperspace/HyperspaceClient.h"
 
 namespace hypertable {
 

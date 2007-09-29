@@ -26,7 +26,7 @@
 #include "AsyncComm/Event.h"
 #include "AsyncComm/ResponseCallback.h"
 
-#include "Hyperspace/HyperspaceClient.h"
+#include "Hyperspace/Session.h"
 
 #include "Hypertable/Lib/Types.h"
 
@@ -68,7 +68,6 @@ namespace hypertable {
 
     boost::mutex   mMutex;
     bool mVerbose;
-    HyperspaceClient *mHyperspace;
     TableInfoMapT mTableInfoMap;
   };
 
