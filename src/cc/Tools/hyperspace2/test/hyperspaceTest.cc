@@ -278,7 +278,7 @@ namespace {
     IssueCommand(gFd1, "mkdir dir1");
     IssueCommand(gFd1, "open dir1 flags=READ|CREATE|WRITE event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED");
     IssueCommand(gFd2, "open dir1/foo flags=READ|CREATE|WRITE|TEMP");
-    if (kill(gPid2, 17) == -1)
+    if (kill(gPid2, SIGSTOP) == -1)
       perror("kill");
     poll(0, 0, 9000);
     // IssueCommand(gFd2, "close dir1/foo");
