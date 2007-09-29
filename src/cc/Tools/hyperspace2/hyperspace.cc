@@ -74,7 +74,7 @@ namespace {
       if (!getline(cin, gInputStr))
 	return 0;
       boost::trim(gInputStr);
-      if (gInputStr.find("echo", 0) != 0)
+      if (gInputStr.find("echo", 0) != 0 && gInputStr.find("quit", 0) != 0)
 	cout << gInputStr << endl;
       return (char *)gInputStr.c_str();
     }

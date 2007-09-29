@@ -23,7 +23,9 @@
 
 extern "C" {
 #include <fcntl.h>
+#include <poll.h>
 #include <sys/file.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/xattr.h>
@@ -408,10 +410,14 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
 	    return;
 	    } **/
 	oflags = O_RDONLY;
+#if defined(__linux__)
+	oflags |= O_DIRECTORY;
+#endif
       }
-      else
-	oflags = O_RDWR;
     }
+
+    if (oflags == 0)
+      oflags = O_RDWR;
 
     if (existed && (flags & OPEN_FLAG_CREATE) && (flags & OPEN_FLAG_EXCL)) {
       cb->error(Error::HYPERSPACE_FILE_EXISTS, "mode=CREATE|EXCL");
@@ -425,12 +431,15 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
 	return;
       }
 
-      if (flags & OPEN_FLAG_CREATE)
-	oflags |= O_CREAT;
-      if (flags & OPEN_FLAG_EXCL)
-	oflags |= O_EXCL;
+      if (!existed) {
+	if (flags & OPEN_FLAG_CREATE)
+	  oflags |= O_CREAT;
+	if (flags & OPEN_FLAG_EXCL)
+	  oflags |= O_EXCL;
+      }
       nodePtr->fd = open(absName.c_str(), oflags, 0644);
       if (nodePtr->fd < 0) {
+	LOG_VA_ERROR("open(%s, 0x%x, 0644) failed (errno=%d) - %s", absName.c_str(), oflags, errno, strerror(errno));
 	ReportError(cb);
 	return;
       }
@@ -824,7 +833,6 @@ void Master::Release(ResponseCallback *cb, uint64_t sessionId, uint64_t handle) 
   ReleaseLock(handlePtr);
 
   cb->response_ok();
-
 }
 
 
@@ -920,8 +928,12 @@ void Master::ReportError(ResponseCallback *cb) {
     cb->error(Error::HYPERSPACE_FILE_EXISTS, errbuf);
   else if (errno == ENOATTR)
     cb->error(Error::HYPERSPACE_ATTR_NOT_FOUND, errbuf);
-  else
+  else if (errno = EISDIR)
+    cb->error(Error::HYPERSPACE_IS_DIRECTORY, errbuf);
+  else {
+    LOG_VA_ERROR("Unknown error, errno = %d", errno);
     cb->error(Error::HYPERSPACE_IO_ERROR, errbuf);
+  }
 }
 
 
@@ -952,7 +964,6 @@ void Master::DeliverEventNotifications(NodeData *node, HyperspaceEventPtr &event
   for (HandleMapT::iterator iter = node->handleMap.begin(); iter != node->handleMap.end(); iter++) {
     //LOG_VA_INFO("Delivering notification (%d == %d)", (*iter).second->eventMask, eventPtr->GetMask());
     if ((*iter).second->eventMask & eventPtr->GetMask()) {
-      eventPtr->IncrementNotificationCount();
       (*iter).second->sessionPtr->AddNotification( new Notification((*iter).first, eventPtr) );
       mKeepaliveHandlerPtr->DeliverEventNotifications((*iter).second->sessionPtr->id);
       notifications++;
@@ -977,6 +988,7 @@ void Master::DeliverEventNotification(HandleDataPtr &handlePtr, HyperspaceEventP
 
   if (waitForNotify)
     eventPtr->WaitForNotifications();
+
 }
 
 
