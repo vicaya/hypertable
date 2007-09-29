@@ -859,8 +859,10 @@ void Master::ReleaseLock(HandleDataPtr &handlePtr, bool waitForNotify) {
 
   // deliver LOCK_RELEASED notifications if no more locks held on node
   if (handlePtr->node->sharedLockHandles.empty()) {
+    LOG_INFO("About to deliver lock released notifications");
     HyperspaceEventPtr eventPtr( new EventLockReleased(mNextEventId++) );
     DeliverEventNotifications(handlePtr->node, eventPtr, waitForNotify);
+    LOG_INFO("Finished delivering lock released notifications");
   }
 
   handlePtr->node->currentLockMode = 0;
@@ -1029,7 +1031,7 @@ bool Master::DestroyHandle(uint64_t handle, int *errorp, std::string &errMsg, bo
   }
 
   // this needs to get fixed!!!!
-  //ReleaseLock(handlePtr, waitForNotify);
+  ReleaseLock(handlePtr, waitForNotify);
 
   {
     boost::mutex::scoped_lock lock(handlePtr->node->mutex);

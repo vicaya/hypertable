@@ -152,7 +152,7 @@ echo "Successfully started Hyperspace"
 #
 # If it looks like the master was not initialized, then go ahead and do it.
 #
-$HYPERTABLE_HOME/bin/hyperspace2 --eval "exists /hypertable/meta" >& /dev/null
+$HYPERTABLE_HOME/bin/hyperspace --eval "exists /hypertable/meta" >& /dev/null
 if [ $? != 0 ] ; then
     $HYPERTABLE_HOME/bin/Hypertable.Master --initialize
     if [ $? != 0 ] ; then
@@ -193,7 +193,7 @@ echo "Successfully started Hypertable.Master"
 # If the tables have not been created, then create them
 #
 for table in Test1 Test2 Test3 ; do
-    $HYPERTABLE_HOME/bin/hyperspace2 --eval "exists /hypertable/tables/$table" >& /dev/null
+    $HYPERTABLE_HOME/bin/hyperspace --eval "exists /hypertable/tables/$table" >& /dev/null
     if [ $? != 0 ] ; then
 	CMDFILE=/tmp/hypertable.tests.$$
 	echo "create table $table $HYPERTABLE_HOME/test/$table.xml" > $CMDFILE

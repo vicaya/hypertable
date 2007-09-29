@@ -113,6 +113,10 @@ CommBuf *Hyperspace::Protocol::CreateServerKeepaliveRequest(SessionDataPtr &sess
   for (iter = sessionPtr->notifications.begin(); iter != sessionPtr->notifications.end(); iter++) {
     cbuf->AppendLong((*iter)->handle);
     (*iter)->eventPtr->Encode(cbuf);
+    /**
+    LOG_VA_ERROR("Encoding session=%lld handle=%lld eventMask=%d eventId=%lld",
+		 sessionPtr->id, (*iter)->handle, (*iter)->eventPtr->GetMask(), (*iter)->eventPtr->GetId());
+    **/
   }
 
   return cbuf;

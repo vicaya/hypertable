@@ -136,10 +136,10 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  system("/bin/rm -rf ./hyperspace");
+  system("/bin/rm -rf ./hsroot");
 
-  if (system("mkdir ./hyperspace") != 0) {
-    LOG_ERROR("Unable to create ./hyperspace directory");
+  if (system("mkdir ./hsroot") != 0) {
+    LOG_ERROR("Unable to create ./hsroot directory");
     exit(1);
   }
 
@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
   masterArgs.push_back(masterInstallDir);
   masterArgs.push_back((const char *)0);
 
-  clientArgs.push_back("hyperspace2");
+  clientArgs.push_back("hyperspace");
   clientArgs.push_back("--config=./hyperspaceTest.cfg");
   clientArgs.push_back("--test-mode");
   clientArgs.push_back("--notification-address=23451");
@@ -160,9 +160,9 @@ int main(int argc, char **argv) {
 
   {
     ServerLauncher master("../../Hyperspace/Hyperspace.Master", (char * const *)&masterArgs[0]);
-    ServerLauncher client1("./hyperspace2", (char * const *)&clientArgs[0], "client1.out");
-    ServerLauncher client2("./hyperspace2", (char * const *)&clientArgs[0], "client2.out");
-    ServerLauncher client3("./hyperspace2", (char * const *)&clientArgs[0], "client3.out");
+    ServerLauncher client1("./hyperspace", (char * const *)&clientArgs[0], "client1.out");
+    ServerLauncher client2("./hyperspace", (char * const *)&clientArgs[0], "client2.out");
+    ServerLauncher client3("./hyperspace", (char * const *)&clientArgs[0], "client3.out");
 
     gFd1 = client1.GetWriteDescriptor();
     gFd2 = client2.GetWriteDescriptor();
@@ -171,11 +171,13 @@ int main(int argc, char **argv) {
     gPid1 = client1.GetPid();
     gPid2 = client2.GetPid();
     gPid3 = client3.GetPid();
-    
+
+    /**
     BasicTest();
     NotificationTest();
     LockTest();
     EphemeralFileTest();
+    **/
     SessionExpirationTest();
 
     IssueCommandNoWait(gFd1, "quit");

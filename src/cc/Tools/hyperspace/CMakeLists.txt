@@ -18,8 +18,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
 
-set ( SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Tools/hyperspace2" )
-set ( DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Tools/hyperspace2" )
+set ( SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Tools/hyperspace" )
+set ( DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Tools/hyperspace" )
 
 set ( hyperspace_SRCS
 CommandMkdir.cc
@@ -38,9 +38,9 @@ Global.cc
 Util.cc
 )
 
-# hyperspace2 - Hyperspace client program
-add_executable (hyperspace2 ${hyperspace_SRCS} )
-target_link_libraries (hyperspace2 pthread ${BOOST_LIB} Hyperspace AsyncComm Common log4cpp readline curses)
+# hyperspace - Hyperspace client program
+add_executable (hyperspace ${hyperspace_SRCS} )
+target_link_libraries (hyperspace pthread ${BOOST_LIB} Hyperspace AsyncComm Common log4cpp readline curses)
 
 # hyperspaceTest
 add_executable (hyperspaceTest test/hyperspaceTest.cc)
@@ -51,6 +51,6 @@ configure_file(${SRC_DIR}/test/client1.golden ${DST_DIR}/client1.golden COPYONLY
 configure_file(${SRC_DIR}/test/client2.golden ${DST_DIR}/client2.golden COPYONLY)
 configure_file(${SRC_DIR}/test/client3.golden ${DST_DIR}/client3.golden COPYONLY)
 
-install (TARGETS hyperspace2 RUNTIME DESTINATION bin)
+install (TARGETS hyperspace RUNTIME DESTINATION bin)
 
-#add_test (Hyperspace2 hyperspaceTest)
+add_test (Hyperspace hyperspaceTest)
