@@ -235,6 +235,7 @@ void Master::RemoveExpiredSessions() {
 	  LOG_VA_ERROR("Problem destroying handle - %s (%s)", Error::GetText(error), errMsg.c_str());
 	}
       }
+      sessionPtr->handles.clear();
     }
   }
 
@@ -1023,6 +1024,7 @@ bool Master::FindParentNode(std::string normalName, NodeDataPtr &parentNodePtr, 
  */
 bool Master::DestroyHandle(uint64_t handle, int *errorp, std::string &errMsg, bool waitForNotify) {
   HandleDataPtr handlePtr;
+  unsigned int refCount = 0;
 
   if (!RemoveHandleData(handle, handlePtr)) {
     *errorp = Error::HYPERSPACE_INVALID_HANDLE;
@@ -1030,7 +1032,6 @@ bool Master::DestroyHandle(uint64_t handle, int *errorp, std::string &errMsg, bo
     return false;
   }
 
-  // this needs to get fixed!!!!
   ReleaseLock(handlePtr, waitForNotify);
 
   {
@@ -1038,24 +1039,26 @@ bool Master::DestroyHandle(uint64_t handle, int *errorp, std::string &errMsg, bo
 
     handlePtr->node->RemoveHandle(handlePtr->id);
 
-    if (handlePtr->node->ReferenceCount() == 0) {
+    refCount = handlePtr->node->ReferenceCount();
+  }
 
-      handlePtr->node->Close();
+  if (refCount == 0) {
 
-      if (handlePtr->node->ephemeral) {
-	std::string childName;
-	NodeDataPtr parentNodePtr;
+    handlePtr->node->Close();
 
-	if (FindParentNode(handlePtr->node->name, parentNodePtr, childName)) {
-	  HyperspaceEventPtr eventPtr( new EventNamed(mNextEventId++, EVENT_MASK_CHILD_NODE_REMOVED, childName) );
-	  DeliverEventNotifications(parentNodePtr.get(), eventPtr, waitForNotify);
-	}
+    if (handlePtr->node->ephemeral) {
+      std::string childName;
+      NodeDataPtr parentNodePtr;
 
-	// remove node
-	NodeMapT::iterator nodeIter = mNodeMap.find(handlePtr->node->name);
-	if (nodeIter != mNodeMap.end())
-	  mNodeMap.erase(nodeIter);
+      if (FindParentNode(handlePtr->node->name, parentNodePtr, childName)) {
+	HyperspaceEventPtr eventPtr( new EventNamed(mNextEventId++, EVENT_MASK_CHILD_NODE_REMOVED, childName) );
+	DeliverEventNotifications(parentNodePtr.get(), eventPtr, waitForNotify);
       }
+
+      // remove node
+      NodeMapT::iterator nodeIter = mNodeMap.find(handlePtr->node->name);
+      if (nodeIter != mNodeMap.end())
+	mNodeMap.erase(nodeIter);
     }
   }
 
