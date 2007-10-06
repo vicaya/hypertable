@@ -37,7 +37,11 @@ namespace Hyperspace {
 
   class Event : public hypertable::ReferenceCount {
   public:
-    Event(uint64_t id, uint32_t mask) : mId(id), mMask(mask), mNotificationCount(0) { return; }
+    Event(uint32_t mask) : mMask(mask), mNotificationCount(0) { 
+      boost::mutex::scoped_lock lock(msNextEventIdMutex);
+      mId = msNextEventId++;
+      return; 
+    }
     virtual ~Event() { return; }
 
     uint64_t GetId() { return mId; }
@@ -64,6 +68,10 @@ namespace Hyperspace {
     virtual void Encode(hypertable::CommBuf *cbuf) = 0;
 
   protected:
+
+    static boost::mutex  msNextEventIdMutex;
+    static uint64_t      msNextEventId;
+
     boost::mutex      mMutex;
     boost::condition  mCond;
     uint64_t mId;
@@ -80,7 +88,7 @@ namespace Hyperspace {
    */
   class EventNamed : public Event {
   public:
-    EventNamed(uint64_t id, uint32_t mask, std::string name) : Event(id, mask), mName(name) { return; }
+    EventNamed(uint32_t mask, std::string name) : Event(mask), mName(name) { return; }
     virtual uint32_t EncodedLength() { return 12 + hypertable::Serialization::EncodedLengthString(mName); }
     virtual void Encode(hypertable::CommBuf *cbuf) { 
       cbuf->AppendLong(mId);
@@ -98,7 +106,7 @@ namespace Hyperspace {
    */
   class EventLockAcquired : public Event {
   public:
-    EventLockAcquired(uint64_t id, uint32_t mode) : Event(id, EVENT_MASK_LOCK_ACQUIRED), mMode(mode) { return; }
+    EventLockAcquired(uint32_t mode) : Event(EVENT_MASK_LOCK_ACQUIRED), mMode(mode) { return; }
     virtual uint32_t EncodedLength() { return 16; }
     virtual void Encode(hypertable::CommBuf *cbuf) { 
       cbuf->AppendLong(mId);
@@ -115,7 +123,7 @@ namespace Hyperspace {
    */
   class EventLockReleased : public Event {
   public:
-    EventLockReleased(uint64_t id) : Event(id, EVENT_MASK_LOCK_RELEASED) { return; }
+    EventLockReleased() : Event(EVENT_MASK_LOCK_RELEASED) { return; }
     virtual uint32_t EncodedLength() { return 12; }
     virtual void Encode(hypertable::CommBuf *cbuf) { 
       cbuf->AppendLong(mId);
@@ -129,7 +137,7 @@ namespace Hyperspace {
    */
   class EventLockGranted : public Event {
   public:
-    EventLockGranted(uint64_t id, uint32_t mode, uint64_t generation) : Event(id, EVENT_MASK_LOCK_GRANTED), mMode(mode), mGeneration(generation) { return; }
+    EventLockGranted(uint32_t mode, uint64_t generation) : Event(EVENT_MASK_LOCK_GRANTED), mMode(mode), mGeneration(generation) { return; }
     virtual uint32_t EncodedLength() { return 24; }
     virtual void Encode(hypertable::CommBuf *cbuf) { 
       cbuf->AppendLong(mId);

@@ -171,7 +171,6 @@ namespace Hyperspace {
     uint32_t      mGeneration;
     uint64_t      mNextHandleNumber;
     uint64_t      mNextSessionId;
-    uint64_t      mNextEventId;
     ServerKeepaliveHandlerPtr mKeepaliveHandlerPtr;
     struct sockaddr_in mLocalAddr;
     std::vector<SessionDataPtr> mSessionHeap;

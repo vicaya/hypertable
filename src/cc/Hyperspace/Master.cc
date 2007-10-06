@@ -61,7 +61,7 @@ const uint32_t Master::DEFAULT_KEEPALIVE_INTERVAL;
  * prevent concurrent masters and then reads/increments/writes the 32-bit integer extended
  * attribute 'generation'.  It also creates the server Keepalive handler.
  */
-Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr, ServerKeepaliveHandlerPtr &keepaliveHandlerPtr) : mVerbose(false), mNextHandleNumber(1), mNextSessionId(1), mNextEventId(1) {
+Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr, ServerKeepaliveHandlerPtr &keepaliveHandlerPtr) : mVerbose(false), mNextHandleNumber(1), mNextSessionId(1) {
   const char *dirname;
   std::string str;
   ssize_t xattrLen;
@@ -302,7 +302,7 @@ void Master::Mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name) {
     std::string childName;
 
     if (FindParentNode(name, parentNodePtr, childName)) {
-      HyperspaceEventPtr eventPtr( new EventNamed(mNextEventId++, EVENT_MASK_CHILD_NODE_ADDED, childName) );
+      HyperspaceEventPtr eventPtr( new EventNamed(EVENT_MASK_CHILD_NODE_ADDED, childName) );
       DeliverEventNotifications(parentNodePtr.get(), eventPtr);
     }
     cb->response_ok();
@@ -352,7 +352,7 @@ void Master::Delete(ResponseCallback *cb, uint64_t sessionId, const char *name) 
     NodeDataPtr parentNodePtr;
 
     if (FindParentNode(name, parentNodePtr, childName)) {
-      HyperspaceEventPtr eventPtr( new EventNamed(mNextEventId++, EVENT_MASK_CHILD_NODE_REMOVED, childName) );
+      HyperspaceEventPtr eventPtr( new EventNamed(EVENT_MASK_CHILD_NODE_REMOVED, childName) );
       DeliverEventNotifications(parentNodePtr.get(), eventPtr);
     }
   }
@@ -501,7 +501,7 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
   {
     std::string childName;
     if (created && FindParentNode(name, nodePtr, childName)) {
-      HyperspaceEventPtr eventPtr( new EventNamed(mNextEventId++, EVENT_MASK_CHILD_NODE_ADDED, childName) );
+      HyperspaceEventPtr eventPtr( new EventNamed(EVENT_MASK_CHILD_NODE_ADDED, childName) );
       DeliverEventNotifications(nodePtr.get(), eventPtr);
     }
   }
@@ -575,7 +575,7 @@ void Master::AttrSet(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, 
       DUMP_CORE;
     }
 
-    HyperspaceEventPtr eventPtr( new EventNamed(mNextEventId++, EVENT_MASK_ATTR_SET, name) );
+    HyperspaceEventPtr eventPtr( new EventNamed(EVENT_MASK_ATTR_SET, name) );
     DeliverEventNotifications(handlePtr->node, eventPtr);
   }
 
@@ -666,7 +666,7 @@ void Master::AttrDel(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, 
       return;
     }
 
-    HyperspaceEventPtr eventPtr( new EventNamed(mNextEventId++, EVENT_MASK_ATTR_DEL, name) );
+    HyperspaceEventPtr eventPtr( new EventNamed(EVENT_MASK_ATTR_DEL, name) );
     DeliverEventNotifications(handlePtr->node, eventPtr);
   }
 
@@ -774,7 +774,7 @@ void Master::Lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle,
 
     // deliver notification to handles to this same node
     if (notify) {
-      HyperspaceEventPtr eventPtr( new EventLockAcquired(mNextEventId++, mode) );
+      HyperspaceEventPtr eventPtr( new EventLockAcquired(mode) );
       DeliverEventNotifications(handlePtr->node, eventPtr);
     }
 
@@ -804,7 +804,7 @@ void Master::LockHandleWithNotification(HandleDataPtr &handlePtr, uint32_t mode,
 
   // deliver notification to handles to this same node
   {
-    HyperspaceEventPtr eventPtr( new EventLockGranted(mNextEventId++, mode, handlePtr->node->lockGeneration) );
+    HyperspaceEventPtr eventPtr( new EventLockGranted(mode, handlePtr->node->lockGeneration) );
     DeliverEventNotification(handlePtr, eventPtr, waitForNotify);
   }
 
@@ -861,7 +861,7 @@ void Master::ReleaseLock(HandleDataPtr &handlePtr, bool waitForNotify) {
   // deliver LOCK_RELEASED notifications if no more locks held on node
   if (handlePtr->node->sharedLockHandles.empty()) {
     LOG_INFO("About to deliver lock released notifications");
-    HyperspaceEventPtr eventPtr( new EventLockReleased(mNextEventId++) );
+    HyperspaceEventPtr eventPtr( new EventLockReleased() );
     DeliverEventNotifications(handlePtr->node, eventPtr, waitForNotify);
     LOG_INFO("Finished delivering lock released notifications");
   }
@@ -907,7 +907,7 @@ void Master::ReleaseLock(HandleDataPtr &handlePtr, bool waitForNotify) {
 
       // deliver notification to handles to this same node
       {
-	HyperspaceEventPtr eventPtr( new EventLockAcquired(mNextEventId++, nextMode) );
+	HyperspaceEventPtr eventPtr( new EventLockAcquired(nextMode) );
 	DeliverEventNotifications(handlePtr->node, eventPtr, waitForNotify);
       }
 
@@ -1051,7 +1051,7 @@ bool Master::DestroyHandle(uint64_t handle, int *errorp, std::string &errMsg, bo
       NodeDataPtr parentNodePtr;
 
       if (FindParentNode(handlePtr->node->name, parentNodePtr, childName)) {
-	HyperspaceEventPtr eventPtr( new EventNamed(mNextEventId++, EVENT_MASK_CHILD_NODE_REMOVED, childName) );
+	HyperspaceEventPtr eventPtr( new EventNamed(EVENT_MASK_CHILD_NODE_REMOVED, childName) );
 	DeliverEventNotifications(parentNodePtr.get(), eventPtr, waitForNotify);
       }
 

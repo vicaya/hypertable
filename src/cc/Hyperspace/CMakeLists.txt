@@ -30,6 +30,7 @@ Session.cc
 add_library (Hyperspace ${Hyperspace_SRCS})
 
 set ( Master_SRCS
+Event.cc
 Master.cc
 RequestHandlerMkdir.cc
 RequestHandlerDelete.cc
