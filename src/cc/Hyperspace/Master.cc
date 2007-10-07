@@ -131,6 +131,10 @@ Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr, ServerKe
     }
   }
 
+  NodeDataPtr rootNodePtr = new NodeData();
+  rootNodePtr->name = "/";
+  mNodeMap["/"] = rootNodePtr;
+
   port = propsPtr->getPropertyInt("Hyperspace.Master.port", DEFAULT_MASTER_PORT);
   InetAddr::Initialize(&mLocalAddr, INADDR_ANY, port);
 
@@ -282,34 +286,43 @@ bool Master::RemoveHandleData(uint64_t handle, HandleDataPtr &handlePtr) {
 
 
 /**
- * Mkdir
+ * This method creates a directory with absolute path 'name'.  It locks the parent
+ * node to prevent concurrent modifications.
  */
 void Master::Mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name) {
   std::string absName;
+  NodeDataPtr parentNodePtr;
+  std::string childName;
 
   if (mVerbose) {
     LOG_VA_INFO("mkdir(sessionId=%lld, name=%s)", sessionId, name);
   }
 
+  if (!FindParentNode(name, parentNodePtr, childName)) {
+    cb->error(Error::HYPERSPACE_FILE_EXISTS, "directory '/' exists");
+    return;
+  }
+
   assert(name[0] == '/' && name[strlen(name)-1] != '/');
 
-  absName = mBaseDir + name;
+  {
+    boost::mutex::scoped_lock nodeLock(parentNodePtr->mutex);
 
-  if (mkdir(absName.c_str(), 0755) < 0)
-    ReportError(cb);
-  else {
-    NodeDataPtr parentNodePtr;
-    std::string childName;
-
-    if (FindParentNode(name, parentNodePtr, childName)) {
+    absName = mBaseDir + name;
+    
+    if (mkdir(absName.c_str(), 0755) < 0) {
+      ReportError(cb);
+      return;
+    }
+    else {
       HyperspaceEventPtr eventPtr( new EventNamed(EVENT_MASK_CHILD_NODE_ADDED, childName) );
       DeliverEventNotifications(parentNodePtr.get(), eventPtr);
     }
-    cb->response_ok();
   }
 
-  return;
+  cb->response_ok();
 }
+
 
 
 /**
@@ -318,43 +331,55 @@ void Master::Mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name) {
 void Master::Delete(ResponseCallback *cb, uint64_t sessionId, const char *name) {
   std::string absName;
   struct stat statbuf;
+  std::string childName;
+  NodeDataPtr parentNodePtr;
 
   if (mVerbose) {
     LOG_VA_INFO("delete(sessionId=%lld, name=%s)", sessionId, name);
   }
 
-  assert(name[0] == '/' && name[strlen(name)-1] != '/');
-
-  absName = mBaseDir + name;
-
-  if (stat(absName.c_str(), &statbuf) < 0) {
-    ReportError(cb);
+  if (!strcmp(name, "/")) {
+    cb->error(Error::HYPERSPACE_PERMISSION_DENIED, "Cannot remove '/' directory");
     return;
   }
-  else {
-    if (statbuf.st_mode & S_IFDIR) {
-      if (rmdir(absName.c_str()) < 0) {
-	ReportError(cb);
-	return;
-      }
-    }
-    else {
-      if (unlink(absName.c_str()) < 0) {
-	ReportError(cb);
-	return;
-      }
-    }
+
+  if (!FindParentNode(name, parentNodePtr, childName)) {
+    cb->error(Error::HYPERSPACE_BAD_PATHNAME, name);
+    return;
   }
 
-  // deliver notifications
-  {
-    std::string childName;
-    NodeDataPtr parentNodePtr;
+  assert(name[0] == '/' && name[strlen(name)-1] != '/');
 
-    if (FindParentNode(name, parentNodePtr, childName)) {
+  {
+    boost::mutex::scoped_lock nodeLock(parentNodePtr->mutex);
+
+    absName = mBaseDir + name;
+
+    if (stat(absName.c_str(), &statbuf) < 0) {
+      ReportError(cb);
+      return;
+    }
+    else {
+      if (statbuf.st_mode & S_IFDIR) {
+	if (rmdir(absName.c_str()) < 0) {
+	  ReportError(cb);
+	  return;
+	}
+      }
+      else {
+	if (unlink(absName.c_str()) < 0) {
+	  ReportError(cb);
+	  return;
+	}
+      }
+    }
+
+    // deliver event notifications
+    {
       HyperspaceEventPtr eventPtr( new EventNamed(EVENT_MASK_CHILD_NODE_REMOVED, childName) );
       DeliverEventNotifications(parentNodePtr.get(), eventPtr);
     }
+
   }
 
   cb->response_ok();
@@ -998,7 +1023,9 @@ void Master::DeliverEventNotification(HandleDataPtr &handlePtr, HyperspaceEventP
 
 
 
-
+/**
+ *
+ */
 bool Master::FindParentNode(std::string normalName, NodeDataPtr &parentNodePtr, std::string &childName) {
   NodeMapT::iterator nodeIter;
   unsigned int lastSlash = normalName.rfind("/", normalName.length());
@@ -1009,10 +1036,23 @@ bool Master::FindParentNode(std::string normalName, NodeDataPtr &parentNodePtr, 
     parentName = normalName.substr(0, lastSlash);
     childName = normalName.substr(lastSlash+1);
     nodeIter = mNodeMap.find(parentName);
-    if (nodeIter != mNodeMap.end()) {
+    if (nodeIter != mNodeMap.end())
       parentNodePtr = (*nodeIter).second;
-      return true;
+    else {
+      parentNodePtr = new NodeData();
+      parentNodePtr->name = parentName;
+      mNodeMap[parentName] = parentNodePtr;
     }
+    return true;
+  }
+  else if (lastSlash == 0) {
+    boost::mutex::scoped_lock lock(mNodeMapMutex);
+    parentName = "/";
+    nodeIter = mNodeMap.find(parentName);
+    assert (nodeIter != mNodeMap.end());
+    childName = normalName.substr(1);
+    parentNodePtr = (*nodeIter).second;
+    return true;
   }
 
   return false;
@@ -1020,7 +1060,7 @@ bool Master::FindParentNode(std::string normalName, NodeDataPtr &parentNodePtr, 
 
 
 /**
- * TODO: Destory locks
+ *
  */
 bool Master::DestroyHandle(uint64_t handle, int *errorp, std::string &errMsg, bool waitForNotify) {
   HandleDataPtr handlePtr;
