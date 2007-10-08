@@ -392,8 +392,10 @@ void Master::Delete(ResponseCallback *cb, uint64_t sessionId, const char *name) 
  */
 void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name, uint32_t flags, uint32_t eventMask) {
   std::string absName;
+  std::string childName;
   SessionDataPtr sessionPtr;
   NodeDataPtr nodePtr;
+  NodeDataPtr parentNodePtr;
   HandleDataPtr handlePtr;
   int error;
   bool created = false;
@@ -402,6 +404,7 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
   uint64_t handle;
   struct stat statbuf;
   int oflags = 0;
+  ssize_t len;
 
   if (mVerbose) {
     LOG_VA_INFO("open(sessionId=%lld, fname=%s, flags=0x%x, eventMask=0x%x)", sessionId, name, flags, eventMask);
@@ -416,9 +419,15 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
     return;
   }
 
+  if (!FindParentNode(name, parentNodePtr, childName)) {
+    cb->error(Error::HYPERSPACE_BAD_PATHNAME, name);
+    return;
+  }
+
   GetNode(name, nodePtr);
 
   {
+    boost::mutex::scoped_lock parentLock(parentNodePtr->mutex);
     boost::mutex::scoped_lock nodeLock(nodePtr->mutex);
     
     if (stat(absName.c_str(), &statbuf) != 0) {
@@ -473,29 +482,26 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
       }
 
       // Read/create 'lock.generation' attribute
-      {
-	boost::mutex::scoped_lock mapLock(mNodeMapMutex);
-	ssize_t len;
 
-	len = FileUtils::Fgetxattr(nodePtr->fd, "lock.generation", &nodePtr->lockGeneration, sizeof(uint64_t));
-	if (len < 0) {
-	  if (errno == ENOATTR) {
-	    nodePtr->lockGeneration = 1;
-	    if (FileUtils::Fsetxattr(nodePtr->fd, "lock.generation", &nodePtr->lockGeneration, sizeof(uint64_t), 0) == -1) {
-	      LOG_VA_ERROR("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
-			   name, strerror(errno));
-	      DUMP_CORE;
-	    }
-	  }
-	  else {
-	    LOG_VA_ERROR("Problem reading extended attribute 'lock.generation' on file '%s' - %s",
+      len = FileUtils::Fgetxattr(nodePtr->fd, "lock.generation", &nodePtr->lockGeneration, sizeof(uint64_t));
+      if (len < 0) {
+	if (errno == ENOATTR) {
+	  nodePtr->lockGeneration = 1;
+	  if (FileUtils::Fsetxattr(nodePtr->fd, "lock.generation", &nodePtr->lockGeneration, sizeof(uint64_t), 0) == -1) {
+	    LOG_VA_ERROR("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
 			 name, strerror(errno));
 	    DUMP_CORE;
 	  }
-	  len = sizeof(int64_t);
 	}
-	assert(len == sizeof(int64_t));
+	else {
+	  LOG_VA_ERROR("Problem reading extended attribute 'lock.generation' on file '%s' - %s",
+		       name, strerror(errno));
+	  DUMP_CORE;
+	}
+	len = sizeof(int64_t);
       }
+
+      assert(len == sizeof(int64_t));
 
       if (flags & OPEN_FLAG_TEMP) {
 	nodePtr->ephemeral = true;
@@ -512,27 +518,21 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
 
     if (!existed)
       created = true;
-  }
 
-  CreateHandle(&handle, handlePtr);
+    CreateHandle(&handle, handlePtr);
 
-  handlePtr->node = nodePtr.get();
-  handlePtr->openFlags = flags;
-  handlePtr->eventMask = eventMask;
-  handlePtr->sessionPtr = sessionPtr;
+    handlePtr->node = nodePtr.get();
+    handlePtr->openFlags = flags;
+    handlePtr->eventMask = eventMask;
+    handlePtr->sessionPtr = sessionPtr;
 
-  sessionPtr->AddHandle(handle);
+    sessionPtr->AddHandle(handle);
 
-  {
-    std::string childName;
-    if (created && FindParentNode(name, nodePtr, childName)) {
+    if (created) {
       HyperspaceEventPtr eventPtr( new EventNamed(EVENT_MASK_CHILD_NODE_ADDED, childName) );
-      DeliverEventNotifications(nodePtr.get(), eventPtr);
+      DeliverEventNotifications(parentNodePtr.get(), eventPtr);
     }
-  }
 
-  {
-    boost::mutex::scoped_lock lock(handlePtr->node->mutex);    
     handlePtr->node->AddHandle(handle, handlePtr);
   }
 
