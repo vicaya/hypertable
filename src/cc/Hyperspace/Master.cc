@@ -22,6 +22,7 @@
 #include <cstring>
 
 extern "C" {
+#include <dirent.h>
 #include <fcntl.h>
 #include <poll.h>
 #include <sys/file.h>
@@ -718,6 +719,74 @@ void Master::Exists(ResponseCallbackExists *cb, uint64_t sessionId, const char *
     LOG_VA_ERROR("Problem sending back response - %s", Error::GetText(error));
   }
 }
+
+
+void Master::Readdir(ResponseCallbackReaddir *cb, uint64_t sessionId, uint64_t handle) {
+  std::string absName;
+  SessionDataPtr sessionPtr;
+  HandleDataPtr handlePtr;
+  struct DirEntryT dentry;
+  std::vector<struct DirEntryT> listing;
+
+  if (mVerbose) {
+    LOG_VA_INFO("readdir(session=%lld, handle=%lld)", sessionId, handle);
+  }
+
+  if (!GetSession(sessionId, sessionPtr)) {
+    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
+    return;
+  }
+
+  if (!GetHandleData(handle, handlePtr)) {
+    cb->error(Error::HYPERSPACE_INVALID_HANDLE, std::string("handle=") + handle);
+    return;
+  }
+
+  {
+    boost::mutex::scoped_lock lock(handlePtr->node->mutex);
+
+    absName = mBaseDir + handlePtr->node->name;
+
+    DIR *dirp = opendir(absName.c_str());
+
+    if (dirp == 0) {
+      ReportError(cb);
+      LOG_VA_ERROR("opendir('%s') failed - %s", absName.c_str(), strerror(errno));
+      return;
+    }
+
+    struct dirent dent;
+    struct dirent *dp;
+
+    if (readdir_r(dirp, &dent, &dp) != 0) {
+      ReportError(cb);
+      LOG_VA_ERROR("readdir('%s') failed - %s", absName.c_str(), strerror(errno));
+      (void)closedir(dirp);
+      return;
+    }
+
+    while (dp != 0) {
+
+      if (dp->d_name[0] != 0 && strcmp(dp->d_name, ".") && strcmp(dp->d_name, "..")) {
+	dentry.isDirectory = (dp->d_type == DT_DIR);
+	dentry.name = dp->d_name;
+	listing.push_back(dentry);
+      }
+
+      if (readdir_r(dirp, &dent, &dp) != 0) {
+	ReportError(cb);
+	LOG_VA_ERROR("readdir('%s') failed - %s", absName.c_str(), strerror(errno));
+	(void)closedir(dirp);
+	return;
+      }
+    }
+    (void)closedir(dirp);
+
+  }
+
+  cb->response(listing);
+}
+
 
 
 void Master::Lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle, uint32_t mode, bool tryAcquire) {

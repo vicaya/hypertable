@@ -63,18 +63,6 @@ namespace Hyperspace {
     uint64_t generation;
     uint64_t lockGeneration;
     uint64_t mtime;
-    bool isDirectory;
-  };
-
-  /**
-   * Listing information for each node within a
-   * directory.  A vector of these objects gets
-   * passed back to the application via a call to
-   * Readdir()
-   */
-  struct DirListingT {
-    std::string   name;
-    struct NodeMetadataT metadata;
   };
 
   /**
@@ -112,7 +100,7 @@ namespace Hyperspace {
     int AttrDel(uint64_t handle, std::string name);
     int Exists(std::string name, bool *existsp);
     int Delete(std::string name);
-    int Readdir(uint64_t handle, std::string name, std::vector<struct DirListingT> &listing);
+    int Readdir(uint64_t handle, std::vector<struct DirEntryT> &listing);
     int Lock(uint64_t handle, uint32_t mode, struct LockSequencerT *sequencerp);
     int TryLock(uint64_t handle, uint32_t mode, uint32_t *statusp, struct LockSequencerT *sequencerp);
     int Release(uint64_t handle);

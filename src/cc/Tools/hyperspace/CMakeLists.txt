@@ -30,6 +30,7 @@ CommandAttrSet.cc
 CommandAttrGet.cc
 CommandAttrDel.cc
 CommandExists.cc
+CommandReaddir.cc
 CommandLock.cc
 CommandTryLock.cc
 CommandRelease.cc

@@ -54,6 +54,7 @@ namespace Hyperspace {
     static CommBuf *CreateAttrSetRequest(uint64_t handle, std::string &name, const void *value, size_t valueLen);
     static CommBuf *CreateAttrGetRequest(uint64_t handle, std::string &name);
     static CommBuf *CreateAttrDelRequest(uint64_t handle, std::string &name);
+    static CommBuf *CreateReaddirRequest(uint64_t handle);
     static CommBuf *CreateExistsRequest(std::string &name);
 
     static CommBuf *CreateLockRequest(uint64_t handle, uint32_t mode, bool tryAcquire);

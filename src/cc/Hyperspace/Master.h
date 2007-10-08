@@ -43,6 +43,7 @@
 #include "ResponseCallbackExists.h"
 #include "ResponseCallbackAttrGet.h"
 #include "ResponseCallbackLock.h"
+#include "ResponseCallbackReaddir.h"
 #include "ServerKeepaliveHandler.h"
 #include "SessionData.h"
 
@@ -69,6 +70,7 @@ namespace Hyperspace {
     void AttrGet(ResponseCallbackAttrGet *cb, uint64_t sessionId, uint64_t handle, const char *name);
     void AttrDel(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, const char *name);
     void Exists(ResponseCallbackExists *cb, uint64_t sessionId, const char *name);
+    void Readdir(ResponseCallbackReaddir *cb, uint64_t sessionId, uint64_t handle);
     void Lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle, uint32_t mode, bool tryAcquire);
     void Release(ResponseCallback *cb, uint64_t sessionId, uint64_t handle);
 

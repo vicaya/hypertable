@@ -213,6 +213,16 @@ CommBuf *Hyperspace::Protocol::CreateAttrDelRequest(uint64_t handle, std::string
 }
 
 
+CommBuf *Hyperspace::Protocol::CreateReaddirRequest(uint64_t handle) {
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
+  hbuilder.AssignUniqueId();
+  CommBuf *cbuf = new CommBuf(hbuilder, 10);
+  cbuf->AppendShort(COMMAND_READDIR);
+  cbuf->AppendLong(handle);
+  return cbuf;
+}
+
+
 CommBuf *Hyperspace::Protocol::CreateExistsRequest(std::string &name) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, fileNameToGroupId(name));
   hbuilder.AssignUniqueId();

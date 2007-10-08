@@ -53,6 +53,7 @@ extern "C" {
 #include "CommandAttrGet.h"
 #include "CommandAttrDel.h"
 #include "CommandExists.h"
+#include "CommandReaddir.h"
 #include "CommandLock.h"
 #include "CommandTryLock.h"
 #include "CommandRelease.h"
@@ -258,6 +259,7 @@ int main(int argc, char **argv, char **envp) {
   commands.push_back( new CommandAttrGet(session) );
   commands.push_back( new CommandAttrDel(session) );
   commands.push_back( new CommandExists(session) );
+  commands.push_back( new CommandReaddir(session) );
   commands.push_back( new CommandLock(session) );
   commands.push_back( new CommandTryLock(session) );
   commands.push_back( new CommandRelease(session) );

@@ -21,6 +21,7 @@
 set ( Hyperspace_SRCS
 ClientKeepaliveHandler.cc
 ClientConnectionHandler.cc
+DirEntry.cc
 HandleCallback.cc
 Protocol.cc
 Session.cc
@@ -40,6 +41,7 @@ RequestHandlerAttrSet.cc
 RequestHandlerAttrGet.cc
 RequestHandlerAttrDel.cc
 RequestHandlerExists.cc
+RequestHandlerReaddir.cc
 RequestHandlerLock.cc
 RequestHandlerRelease.cc
 RequestHandlerStatus.cc
@@ -47,6 +49,7 @@ ResponseCallbackOpen.cc
 ResponseCallbackExists.cc
 ResponseCallbackAttrGet.cc
 ResponseCallbackLock.cc
+ResponseCallbackReaddir.cc
 ServerConnectionHandler.cc
 ServerKeepaliveHandler.cc
 main.cc

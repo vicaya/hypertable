@@ -363,6 +363,52 @@ int Session::AttrDel(uint64_t handle, std::string name) {
 }
 
 
+int Session::Readdir(uint64_t handle, std::vector<struct DirEntryT> &listing) {
+  DispatchHandlerSynchronizer syncHandler;
+  hypertable::EventPtr eventPtr;
+  CommBufPtr cbufPtr( Protocol::CreateReaddirRequest(handle) );
+
+ try_again:
+  if (!WaitForSafe())
+    return Error::HYPERSPACE_EXPIRED_SESSION;
+
+  int error = SendMessage(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      error = (int)Protocol::ResponseCode(eventPtr.get());
+      LOG_VA_ERROR("Hyperspace 'readdir' error : %s", Error::GetText(error));
+      if (mVerbose)
+	LOG_VA_ERROR("%s", Protocol::StringFormatMessage(eventPtr.get()).c_str());
+    }
+    else {
+      uint8_t *ptr = eventPtr->message + 4;
+      size_t remaining = eventPtr->messageLen - 4;
+      uint32_t entryCount;
+      struct DirEntryT dentry;
+      if (!Serialization::DecodeInt(&ptr, &remaining, &entryCount)) {
+	LOG_ERROR("Problem decoding READDIR return packet");
+	return Error::PROTOCOL_ERROR;
+      }
+      listing.clear();
+      for (uint32_t i=0; i<entryCount; i++) {
+	if (!Hyperspace::DecodeRangeDirEntry(&ptr, &remaining, dentry)) {
+	  LOG_VA_ERROR("Problem decoding entry %d of READDIR return packet", i);
+	  return Error::PROTOCOL_ERROR;
+	}
+	listing.push_back(dentry);
+      }
+    }
+  }
+  else {
+    StateTransition(Session::STATE_JEOPARDY);
+    goto try_again;
+  }
+
+  return error;
+}
+
+
+
 int Session::Lock(uint64_t handle, uint32_t mode, struct LockSequencerT *sequencerp) {
   DispatchHandlerSynchronizer syncHandler;
   hypertable::EventPtr eventPtr;
@@ -509,6 +555,17 @@ int Session::Release(uint64_t handle) {
 
   return error;
 }
+
+
+
+/**
+ * CheckSequencer - just return OK for now
+ */
+int Session::CheckSequencer(struct LockSequencerT &sequencer) {
+  LOG_WARN("CheckSequencer not implemented.");
+  return Error::OK;
+}
+
 
 
 /**
