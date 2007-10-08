@@ -689,6 +689,12 @@ int Session::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler) {
  *
  */
 void Session::NormalizeName(std::string name, std::string &normal) {
+
+  if (name == "/") {
+    normal = name;
+    return;
+  }
+
   normal = "";
   if (name[0] != '/')
     normal += "/";

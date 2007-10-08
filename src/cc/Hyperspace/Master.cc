@@ -411,7 +411,7 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
     LOG_VA_INFO("open(sessionId=%lld, fname=%s, flags=0x%x, eventMask=0x%x)", sessionId, name, flags, eventMask);
   }
 
-  assert(name[0] == '/' && name[strlen(name)-1] != '/');
+  assert(name[0] == '/');
 
   absName = mBaseDir + name;
 
@@ -424,6 +424,12 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
     cb->error(Error::HYPERSPACE_BAD_PATHNAME, name);
     return;
   }
+
+  // If path name to open is "/", then create a dummy NodeData object for
+  // the parent because the previous call will return the node itself as
+  // the parent, causing the second of the following two mutex locks to hang
+  if (!strcmp(name, "/"))
+    parentNodePtr = new NodeData();
 
   GetNode(name, nodePtr);
 
