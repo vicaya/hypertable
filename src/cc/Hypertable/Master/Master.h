@@ -51,8 +51,10 @@ namespace hypertable {
     Filesystem *mDfsClient;
     atomic_t mLastTableId;
     HyperspaceSessionHandler mHyperspaceSessionHandler;
+    uint64_t mMasterFileHandle;
+    struct LockSequencerT mMasterFileSequencer;
   };
-
 }
 
 #endif // HYPERTABLE_MASTER_H
+

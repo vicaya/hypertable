@@ -69,6 +69,8 @@ namespace hypertable {
     boost::mutex   mMutex;
     bool mVerbose;
     TableInfoMapT mTableInfoMap;
+    uint64_t      mExistenceFileHandle;
+    struct LockSequencerT mExistenceFileSequencer;
   };
 
 }

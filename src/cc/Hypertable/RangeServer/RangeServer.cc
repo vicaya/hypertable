@@ -175,21 +175,20 @@ int RangeServer::DirectoryInitialize(Properties *props) {
   sprintf(topDir, "/hypertable/servers/%s_%ld", ipStr, tval.tv_sec);
 
   /**
-   * Create /hypertable/servers/X.X.X.X_nnnnn directory
+   * Create "server existence" file in Hyperspace and obtain an exclusive lock on it
    */
-  if ((error = Global::hyperspace->Exists(topDir, &exists)) != Error::OK) {
-    LOG_VA_ERROR("Problem checking existence of '%s' hypertablefs directory - %s", topDir, Error::GetText(error));
-    return error;
+
+  uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_EXCL | OPEN_FLAG_LOCK;
+  HandleCallbackPtr nullCallbackPtr;
+
+  if ((error = Global::hyperspace->Open(topDir, oflags, nullCallbackPtr, &mExistenceFileHandle)) != Error::OK) {
+    LOG_VA_ERROR("Problem creating Hyperspace server existance file '%s' - %s", topDir, Error::GetText(error));
+    exit(1);
   }
-  else if (!exists) {
-    if ((error = Global::hyperspace->Mkdir(topDir)) != Error::OK) {
-      LOG_VA_ERROR("Problem creating hypertablefs directory '%s' - %s", topDir, Error::GetText(error));
-      return error;
-    }
-  }
-  else {
-    LOG_VA_ERROR("Hypertablefs directory '%s' already exists.", topDir);
-    return -1;
+
+  if ((error = Global::hyperspace->Lock(mExistenceFileHandle, LOCK_MODE_EXCLUSIVE, &mExistenceFileSequencer)) != Error::OK) {
+    LOG_VA_ERROR("Problem obtaining exclusive lock on server existance file '%s' - %s", topDir, Error::GetText(error));
+    exit(1);
   }
 
   Global::logDir = (string)topDir + "/commit/primary";

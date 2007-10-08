@@ -61,22 +61,31 @@ Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mVerbo
   {
     DynamicBuffer valueBuf(0);
     HandleCallbackPtr nullHandleCallback;
-    uint64_t handle;
     int error;
     int ival;
+    uint32_t lockStatus;
+    uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
 
-    if ((error = mHyperspace->Open("/hypertable/meta", OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
-      LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/meta' (%s)  Try re-running with --initialize",
+    if ((error = mHyperspace->Open("/hypertable/master", oflags, nullHandleCallback, &mMasterFileHandle)) != Error::OK) {
+      LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/master' (%s)  Try re-running with --initialize",
 		   Error::GetText(error));
       exit(1);
     }
 
-    if ((error = mHyperspace->AttrGet(handle, "last_table_id", valueBuf)) != Error::OK) {
-      LOG_VA_ERROR("Problem getting attribute 'last_table_id' from file /hypertable/meta - %s", Error::GetText(error));
+    if ((error = mHyperspace->TryLock(mMasterFileHandle, LOCK_MODE_EXCLUSIVE, &lockStatus, &mMasterFileSequencer)) != Error::OK) {
+      LOG_VA_ERROR("Problem obtaining exclusive lock on master Hyperspace file '/hypertable/master' - %s", Error::GetText(error));
       exit(1);
     }
 
-    mHyperspace->Close(handle);
+    if (lockStatus != LOCK_STATUS_GRANTED) {
+      LOG_ERROR("Unable to obtain lock on '/hypertable/master' - conflict");
+      exit(1);
+    }
+
+    if ((error = mHyperspace->AttrGet(mMasterFileHandle, "last_table_id", valueBuf)) != Error::OK) {
+      LOG_VA_ERROR("Problem getting attribute 'last_table_id' from file /hypertable/master - %s", Error::GetText(error));
+      exit(1);
+    }
 
     assert(valueBuf.fill() == sizeof(int32_t));
 
@@ -140,23 +149,15 @@ void Master::CreateTable(ResponseCallback *cb, const char *tableName, const char
   }
 
   /**
-   * Write 'table_id' attribute of table file and 'last_table_id' attribute of /hypertable/meta
+   * Write 'table_id' attribute of table file and 'last_table_id' attribute of /hypertable/master
    */
   {
-    uint64_t metaHandle;
     uint32_t tableId = (uint32_t)atomic_inc_return(&mLastTableId);
 
-    if ((error = mHyperspace->Open("/hypertable/meta", OPEN_FLAG_READ|OPEN_FLAG_WRITE, nullHandleCallback, &metaHandle)) != Error::OK) {
-      errMsg = (std::string)"Unable to open Hyperspace file '/hypertable/meta' (" + Error::GetText(error) + ")";
+    if ((error = mHyperspace->AttrSet(mMasterFileHandle, "last_table_id", &tableId, sizeof(int32_t))) != Error::OK) {
+      errMsg = (std::string)"Problem setting attribute 'last_table_id' of file /hypertable/master - " + Error::GetText(error);
       goto abort;
     }
-
-    if ((error = mHyperspace->AttrSet(metaHandle, "last_table_id", &tableId, sizeof(int32_t))) != Error::OK) {
-      errMsg = (std::string)"Problem setting attribute 'last_table_id' of file /hypertable/meta - " + Error::GetText(error);
-      goto abort;
-    }
-
-    mHyperspace->Close(metaHandle);
 
     if ((error = mHyperspace->AttrSet(handle, "table_id", &tableId, sizeof(int32_t))) != Error::OK) {
       errMsg = (std::string)"Problem setting attribute 'table_id' of file " + tableFile + " - " + Error::GetText(error);
