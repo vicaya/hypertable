@@ -31,7 +31,10 @@ release lockfile
 trylock lockfile EXCLUSIVE
 SEQUENCER name=/lockfile mode=2 generation=6
 release lockfile
-release lockfile
+close lockfile
+open lockfile flags=READ|WRITE|LOCK_EXCLUSIVE
+close lockfile
+open lockfile flags=READ|WRITE|LOCK_SHARED
 close lockfile
 
 << EphemeralFileTest >>

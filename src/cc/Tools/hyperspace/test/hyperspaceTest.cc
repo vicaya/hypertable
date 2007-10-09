@@ -225,6 +225,9 @@ namespace {
     IssueCommand(gFd1, "exists foo");
     IssueCommand(gFd1, "exists bar");
     IssueCommand(gFd1, "attrget foo testattr");
+    IssueCommand(gFd1, "open flags=READ /");
+    IssueCommand(gFd1, "readdir /");
+    IssueCommand(gFd1, "close /");
     IssueCommand(gFd1, "delete dir1");
     IssueCommand(gFd1, "close foo");    
     IssueCommand(gFd1, "attrset foo testattr=\"Hello, World!\"");
@@ -267,10 +270,17 @@ namespace {
     IssueCommand(gFd2, "trylock lockfile EXCLUSIVE");
     IssueCommand(gFd3, "trylock lockfile EXCLUSIVE");
     IssueCommand(gFd2, "release lockfile");    
-    IssueCommand(gFd2, "release lockfile");    
-    IssueCommand(gFd1, "close lockfile");
+    IssueCommand(gFd3, "release lockfile");
     IssueCommand(gFd2, "close lockfile");
     IssueCommand(gFd3, "close lockfile");
+    IssueCommand(gFd2, "open lockfile flags=READ|WRITE|LOCK_EXCLUSIVE");
+    IssueCommand(gFd3, "open lockfile flags=READ|WRITE|LOCK_EXCLUSIVE");
+    IssueCommand(gFd2, "close lockfile");
+    IssueCommand(gFd2, "open lockfile flags=READ|WRITE|LOCK_SHARED");
+    IssueCommand(gFd3, "open lockfile flags=READ|WRITE|LOCK_SHARED");
+    IssueCommand(gFd2, "close lockfile");
+    IssueCommand(gFd3, "close lockfile");
+    IssueCommand(gFd1, "close lockfile");
     IssueCommand(gFd1, "delete lockfile");
   }
 

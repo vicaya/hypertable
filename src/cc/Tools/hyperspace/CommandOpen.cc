@@ -34,7 +34,7 @@ using namespace Hyperspace;
 using namespace std;
 
 const char *CommandOpen::msUsage[] = {
-  "open <fname> flags=[READ|WRITE|LOCK|CREATE|EXCL|TEMP] [event-mask=<mask>]",
+  "open <fname> flags=[READ|WRITE|LOCK|CREATE|EXCL|TEMP|LOCK_SHARED|LOCK_EXCLUSIVE] [event-mask=<mask>]",
   "  This command issues an OPEN request to Hyperspace.  The optional",
   "  parameter event-mask may take a value that is the combination of",
   "  the following strings:",
@@ -67,6 +67,10 @@ int CommandOpen::run() {
 	  flags |= OPEN_FLAG_EXCL;
 	else if (!strcmp(str, "TEMP"))
 	  flags |= OPEN_FLAG_TEMP;
+	else if (!strcmp(str, "LOCK_SHARED"))
+	  flags |= OPEN_FLAG_LOCK_SHARED;
+	else if (!strcmp(str, "LOCK_EXCLUSIVE"))
+	  flags |= OPEN_FLAG_LOCK_EXCLUSIVE;
 	str = strtok_r(0, " \t|", &last);
       }
     }

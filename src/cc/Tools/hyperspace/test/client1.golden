@@ -31,6 +31,11 @@ false
 attrget foo testattr
 ERROR hyperspace : Hyperspace 'attrget' error, name=testattr : HYPERSPACE attribute not found
 HYPERSPACE attribute not found
+open flags=READ /
+readdir /
+(dir) dir1
+      foo
+close /
 delete dir1
 close foo
 attrset foo testattr="Hello, World!"
@@ -63,6 +68,10 @@ LOCK RELEASED
 LOCK ACQUIRED shared
 LOCK RELEASED
 LOCK ACQUIRED exclusive
+LOCK RELEASED
+LOCK ACQUIRED exclusive
+LOCK RELEASED
+LOCK ACQUIRED shared
 LOCK RELEASED
 close lockfile
 delete lockfile
