@@ -24,6 +24,8 @@ RequestHandlerCreateTable.cc
 RequestHandlerGetSchema.cc
 RequestHandlerStatus.cc
 ResponseCallbackGetSchema.cc
+ServerLockFileHandler.cc
+ServersDirectoryHandler.cc
 main.cc
 )
 

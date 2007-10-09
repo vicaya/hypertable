@@ -18,16 +18,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+extern "C" {
+#include <poll.h>
+}
+
 #include "DfsBroker/Lib/Client.h"
 #include "Hypertable/Lib/Schema.h"
+#include "Hyperspace/DirEntry.h"
 
 #include "Master.h"
+#include "ServersDirectoryHandler.h"
+#include "ServerLockFileHandler.h"
+#include "RangeServerState.h"
 
+using namespace Hyperspace;
 using namespace hypertable;
 using namespace hypertable::DfsBroker;
 using namespace std;
 
-Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mVerbose(false), mHyperspace(0), mDfsClient(0) {
+Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr, ApplicationQueue *appQueue) : mAppQueue(appQueue), mVerbose(false), mHyperspace(0), mDfsClient(0) {
+  int error;
   Client *dfsClient;
 
   mHyperspace = new Hyperspace::Session(connManager->GetComm(), propsPtr, &mHyperspaceSessionHandler);
@@ -61,7 +71,6 @@ Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mVerbo
   {
     DynamicBuffer valueBuf(0);
     HandleCallbackPtr nullHandleCallback;
-    int error;
     int ival;
     uint32_t lockStatus;
     uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
@@ -95,6 +104,78 @@ Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mVerbo
     if (mVerbose)
       cout << "Last Table ID: " << ival << endl;
   }
+
+  /**
+   * Locate tablet servers
+   */
+  ScanServersDirectory();
+
+}
+
+
+
+/**
+ * 
+ */
+void Master::ScanServersDirectory() {
+  boost::mutex::scoped_lock lock(mMutex);
+  int error;
+  HandleCallbackPtr lockFileHandler;
+  std::vector<struct DirEntryT> listing;
+  uint32_t lockStatus;
+  struct LockSequencerT lockSequencer;
+  RangeServerStatePtr statePtr;
+  uint32_t oflags;
+
+  /**
+   * Open /hyperspace/servers directory and scan for range servers
+   */
+  mServersDirCallbackPtr = new ServersDirectoryHandler(mAppQueue);
+
+  if ((error = mHyperspace->Open("/hypertable/servers", OPEN_FLAG_READ, mServersDirCallbackPtr, &mServersDirHandle)) != Error::OK) {
+    LOG_VA_ERROR("Unable to open Hyperspace directory '/hypertable/servers' (%s)  Try re-running with --initialize",
+		 Error::GetText(error));
+    exit(1);
+  }
+
+  if ((error = mHyperspace->Readdir(mServersDirHandle, listing)) != Error::OK) {
+    LOG_VA_ERROR("Problem scanning Hyperspace directory '/hypertable/servers' - %s", Error::GetText(error));
+    exit(1);
+  }
+
+  poll(0, 0, 1000);  // hack to wait for servers to obtain locks since we don't have an atomic open/lock command.
+
+  oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
+
+  for (size_t i=0; i<listing.size(); i++) {
+
+    statePtr = new RangeServerState();
+    statePtr->hyperspaceFileName = "/hypertable/servers/" + listing[i].name;
+
+    lockFileHandler = new ServerLockFileHandler(mAppQueue);
+
+    if ((error = mHyperspace->Open(statePtr->hyperspaceFileName, oflags, lockFileHandler, &statePtr->hyperspaceHandle)) != Error::OK) {
+      LOG_VA_ERROR("Problem opening discovered server file %s - %s", statePtr->hyperspaceFileName.c_str(), Error::GetText(error));
+      continue;
+    }
+
+    if ((error = mHyperspace->TryLock(statePtr->hyperspaceHandle, LOCK_MODE_EXCLUSIVE, &lockStatus, &lockSequencer)) != Error::OK) {
+      LOG_VA_ERROR("Problem obtaining exclusive lock on master Hyperspace file '/hypertable/master' - %s", Error::GetText(error));
+      continue;
+    }
+
+    if (lockStatus == LOCK_STATUS_GRANTED) {
+      LOG_VA_INFO("Obtained lock on servers file %s, removing...", statePtr->hyperspaceFileName.c_str());
+      if ((error = mHyperspace->Delete(statePtr->hyperspaceFileName)) != Error::OK)
+	LOG_VA_INFO("Problem deleting Hyperspace file %s", statePtr->hyperspaceFileName.c_str());
+      if ((error = mHyperspace->Close(statePtr->hyperspaceHandle)) != Error::OK)
+	LOG_VA_INFO("Problem closing handle on deleting Hyperspace file %s", statePtr->hyperspaceFileName.c_str());
+    }
+    else {
+      mServerMap[statePtr->hyperspaceFileName] = statePtr;
+    }
+  }
+
 }
 
 Master::~Master() {

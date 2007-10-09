@@ -147,8 +147,8 @@ int main(int argc, char **argv) {
 
   InetAddr::Initialize(&listenAddr, INADDR_ANY, port);
 
-  master = new Master(connManager, propsPtr);
   appQueue = new ApplicationQueue(workerCount);
+  master = new Master(connManager, propsPtr, appQueue);
   comm->Listen(listenAddr, new HandlerFactory(comm, appQueue, master));
 
   if (pidFile != "") {

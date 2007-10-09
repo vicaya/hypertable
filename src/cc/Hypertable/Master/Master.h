@@ -21,7 +21,13 @@
 #ifndef HYPERTABLE_MASTER_H
 #define HYPERTABLE_MASTER_H
 
+#include <ext/hash_map>
+
+#include <boost/thread/mutex.hpp>
+
 #include "Common/Properties.h"
+#include "Common/StringExt.h"
+#include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ConnectionManager.h"
 #include "AsyncComm/Event.h"
@@ -32,6 +38,7 @@
 #include "Hypertable/Lib/Filesystem.h"
 
 #include "HyperspaceSessionHandler.h"
+#include "RangeServerState.h"
 #include "ResponseCallbackGetSchema.h"
 
 using namespace hypertable;
@@ -40,19 +47,31 @@ namespace hypertable {
 
   class Master {
   public:
-    Master(ConnectionManager *connManager, PropertiesPtr &propsPtr);
+    Master(ConnectionManager *connManager, PropertiesPtr &propsPtr, ApplicationQueue *appQueue);
     ~Master();
     void CreateTable(ResponseCallback *cb, const char *tableName, const char *schemaString);
     void GetSchema(ResponseCallbackGetSchema *cb, const char *tableName);
 
   private:
+
+    void ScanServersDirectory();
+
+    boost::mutex mMutex;
+    ApplicationQueue *mAppQueue;
     bool mVerbose;
     Hyperspace::Session *mHyperspace;
     Filesystem *mDfsClient;
     atomic_t mLastTableId;
     HyperspaceSessionHandler mHyperspaceSessionHandler;
     uint64_t mMasterFileHandle;
+    uint64_t mServersDirHandle;
     struct LockSequencerT mMasterFileSequencer;
+    HandleCallbackPtr mServersDirCallbackPtr;
+
+    typedef __gnu_cxx::hash_map<std::string, RangeServerStatePtr> ServerMapT;
+
+    ServerMapT  mServerMap;
+
   };
 }
 
