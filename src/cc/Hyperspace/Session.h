@@ -48,12 +48,14 @@ namespace Hyperspace {
    * and passed in as the flags argument to Open().
    */
   enum {
-    OPEN_FLAG_READ   = 0x00001, // open file for reading                                                                                                 
-    OPEN_FLAG_WRITE  = 0x00002, // open file for writing (modifications)                                                                                 
-    OPEN_FLAG_LOCK   = 0x00004, // open file for locking                                                                                                 
-    OPEN_FLAG_CREATE = 0x00008, // create file if it does not exist                                                                                      
-    OPEN_FLAG_EXCL   = 0x00010, // error if create and file exists
-    OPEN_FLAG_TEMP   = 0x00020  // used in conjunction with CREATE to create an ephemeral file
+    OPEN_FLAG_READ           = 0x00001, // open file for reading
+    OPEN_FLAG_WRITE          = 0x00002, // open file for writing (modifications)
+    OPEN_FLAG_LOCK           = 0x00004, // open file for locking
+    OPEN_FLAG_CREATE         = 0x00008, // create file if it does not exist
+    OPEN_FLAG_EXCL           = 0x00010, // error if create and file exists
+    OPEN_FLAG_TEMP           = 0x00020, // used in conjunction with CREATE to create an ephemeral file
+    OPEN_FLAG_LOCK_SHARED    = 0x00044, // atomically open and lock file shared, fail if can't
+    OPEN_FLAG_LOCK_EXCLUSIVE = 0x00084  // atomically open and lock file exclusive, fail if can't
   };
 
   /**

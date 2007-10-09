@@ -406,6 +406,8 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
   struct stat statbuf;
   int oflags = 0;
   ssize_t len;
+  bool lockNotify = false;
+  uint32_t lockMode = 0;
 
   if (mVerbose) {
     LOG_VA_INFO("open(sessionId=%lld, fname=%s, flags=0x%x, eventMask=0x%x)", sessionId, name, flags, eventMask);
@@ -436,7 +438,25 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
   {
     boost::mutex::scoped_lock parentLock(parentNodePtr->mutex);
     boost::mutex::scoped_lock nodeLock(nodePtr->mutex);
-    
+
+    if ((flags & OPEN_FLAG_LOCK_SHARED) == OPEN_FLAG_LOCK_SHARED) {
+      if (nodePtr->exclusiveLockHandle != 0) {
+	cb->error(Error::HYPERSPACE_LOCK_CONFLICT, "");
+	return;
+      }
+      lockMode = LOCK_MODE_SHARED;
+      if (nodePtr->sharedLockHandles.empty())
+	lockNotify = true;
+    }
+    else if ((flags & OPEN_FLAG_LOCK_EXCLUSIVE) == OPEN_FLAG_LOCK_EXCLUSIVE) {
+      if (nodePtr->exclusiveLockHandle != 0 || !nodePtr->sharedLockHandles.empty()) {
+	cb->error(Error::HYPERSPACE_LOCK_CONFLICT, "");
+	return;
+      }
+      lockMode = LOCK_MODE_EXCLUSIVE;
+      lockNotify = true;
+    }
+
     if (stat(absName.c_str(), &statbuf) != 0) {
       if (errno == ENOENT)
 	existed = false;
@@ -540,7 +560,29 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
       DeliverEventNotifications(parentNodePtr.get(), eventPtr);
     }
 
+    /**
+     * If open flags LOCK_SHARED or LOCK_EXCLUSIVE, then obtain lock
+     */
+    if (lockMode != 0) {
+      handlePtr->node->lockGeneration++;
+      if (FileUtils::Fsetxattr(handlePtr->node->fd, "lock.generation", &handlePtr->node->lockGeneration, sizeof(uint64_t), 0) == -1) {
+	LOG_VA_ERROR("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
+		     handlePtr->node->name.c_str(), strerror(errno));
+	exit(1);
+      }
+      handlePtr->node->currentLockMode = lockMode;
+
+      LockHandle(handlePtr, lockMode);
+
+      // deliver notification to handles to this same node
+      if (lockNotify) {
+	HyperspaceEventPtr eventPtr( new EventLockAcquired(lockMode) );
+	DeliverEventNotifications(handlePtr->node, eventPtr);
+      }
+    }
+
     handlePtr->node->AddHandle(handle, handlePtr);
+
   }
 
   cb->response(handle, created);
@@ -885,7 +927,7 @@ void Master::Lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle,
 /**
  * Assumes node is locked.
  */
-void Master::LockHandle(HandleDataPtr &handlePtr, uint32_t mode, bool waitForNotify) {
+void Master::LockHandle(HandleDataPtr &handlePtr, uint32_t mode) {
   if (mode == LOCK_MODE_SHARED)
     handlePtr->node->sharedLockHandles.insert(handlePtr->id);
   else {
@@ -900,7 +942,7 @@ void Master::LockHandle(HandleDataPtr &handlePtr, uint32_t mode, bool waitForNot
  */
 void Master::LockHandleWithNotification(HandleDataPtr &handlePtr, uint32_t mode, bool waitForNotify) {
 
-  LockHandle(handlePtr, mode, waitForNotify);
+  LockHandle(handlePtr, mode);
 
   // deliver notification to handles to this same node
   {
