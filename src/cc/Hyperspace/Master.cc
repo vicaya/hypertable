@@ -1147,8 +1147,6 @@ bool Master::DestroyHandle(uint64_t handle, int *errorp, std::string &errMsg, bo
     return false;
   }
 
-  ReleaseLock(handlePtr, waitForNotify);
-
   {
     boost::mutex::scoped_lock lock(handlePtr->node->mutex);
 
@@ -1156,6 +1154,8 @@ bool Master::DestroyHandle(uint64_t handle, int *errorp, std::string &errMsg, bo
 
     refCount = handlePtr->node->ReferenceCount();
   }
+
+  ReleaseLock(handlePtr, waitForNotify);
 
   if (refCount == 0) {
 
