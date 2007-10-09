@@ -18,59 +18,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "EventHandlerServerJoined.h"
-#include "ServersDirectoryHandler.h"
 #include "Master.h"
+#include "EventHandlerServerJoined.h"
 
 using namespace hypertable;
 
-
 /**
  *
  */
-void ServersDirectoryHandler::AttrSet(std::string name) {
-  return;
+void EventHandlerServerJoined::run() {
+  mMaster->ServerJoined(mFilename);
 }
-
-
-/**
- *
- */
-void ServersDirectoryHandler::AttrDel(std::string name) {
-  return;
-}
-
-/**
- *
- */
-void ServersDirectoryHandler::ChildNodeAdded(std::string name) {
-  EventPtr nullEvent;
-  EventHandlerServerJoined *handler = new EventHandlerServerJoined(mMaster, "/hypertable/servers/" + name, nullEvent);
-  ApplicationHandlerPtr appHandlerPtr(handler);
-  mAppQueue->Add( appHandlerPtr );
-  return;
-}
-
-
-/**
- *
- */
-void ServersDirectoryHandler::ChildNodeRemoved(std::string name) {
-  return;
-}
-
-/**
- *
- */
-void ServersDirectoryHandler::LockAcquired(uint32_t mode) {
-  return;
-}
-
-/**
- *
- */
-void ServersDirectoryHandler::LockReleased() {
-  return;
-}
-
-

@@ -19,6 +19,7 @@
 set ( Master_SRCS
 ConnectionHandler.cc
 CreateDirectoryLayout.cc
+EventHandlerServerJoined.cc
 Master.cc
 RequestHandlerCreateTable.cc
 RequestHandlerGetSchema.cc

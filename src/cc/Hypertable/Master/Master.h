@@ -52,6 +52,9 @@ namespace hypertable {
     void CreateTable(ResponseCallback *cb, const char *tableName, const char *schemaString);
     void GetSchema(ResponseCallbackGetSchema *cb, const char *tableName);
 
+    void ServerJoined(std::string &hyperspaceFilename);
+    void ServerLeft(std::string &hyperspaceFilename);
+
   private:
 
     void ScanServersDirectory();

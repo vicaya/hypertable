@@ -6,7 +6,6 @@ Hyperspace:
 TODO:
 - Add ReactorFactory::Destroy
 - Get rid of connection ID from Event structure
-- Implement single-server Hyperspace
 - Add support for ExpireTime column garbage collection as well as time
   interval support for scanners
 - Make sure NULL endkey lookups work in RangeServer
@@ -33,6 +32,8 @@ TODO:
 
 
 DONE:
+- Added atomic open/lock commands to Hyperspace
+- Implement single-server Hyperspace
 - Change EventPtr to intrusive_ptr
 - Add recursive delete to dfsclient and then modify start-servers.sh to use this to cleanup
 - Re-write RangeServer regression tests to use rsclient against a real RangeServer

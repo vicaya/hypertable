@@ -29,18 +29,21 @@ using namespace Hyperspace;
 
 namespace hypertable {
 
+  class Master;
+
   /**
    * 
    */
   class ServersDirectoryHandler : public HandleCallback {
   public:
-    ServersDirectoryHandler(ApplicationQueue *appQueue) : HandleCallback(EVENT_MASK_CHILD_NODE_ADDED|EVENT_MASK_CHILD_NODE_REMOVED), mAppQueue(appQueue) { return; }
+    ServersDirectoryHandler(Master *master, ApplicationQueue *appQueue) : HandleCallback(EVENT_MASK_CHILD_NODE_ADDED|EVENT_MASK_CHILD_NODE_REMOVED), mMaster(master), mAppQueue(appQueue) { return; }
     virtual void AttrSet(std::string name);
     virtual void AttrDel(std::string name);
     virtual void ChildNodeAdded(std::string name);
     virtual void ChildNodeRemoved(std::string name);
     virtual void LockAcquired(uint32_t mode);
     virtual void LockReleased();
+    Master *mMaster;
     ApplicationQueue *mAppQueue;
   };
 }

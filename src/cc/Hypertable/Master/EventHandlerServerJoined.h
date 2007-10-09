@@ -18,29 +18,35 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_APPLICATIONHANDLER_H
-#define HYPERTABLE_APPLICATIONHANDLER_H
+#ifndef HYPERTABLE_EVENTHANDLERSERVERJOINED_H
+#define HYPERTABLE_EVENTHANDLERSERVERJOINED_H
 
-#include <boost/shared_ptr.hpp>
+#include "Common/Runnable.h"
 
-#include "Event.h"
+#include "AsyncComm/ApplicationHandler.h"
+#include "AsyncComm/Event.h"
+
+#include "Master.h"
+
+using namespace hypertable;
 
 namespace hypertable {
 
-  class ApplicationHandler {
+  class Master;
 
+  class EventHandlerServerJoined : public ApplicationHandler {
   public:
-    ApplicationHandler(EventPtr &eventPtr) : mEventPtr(eventPtr) { return; }
-    virtual ~ApplicationHandler() { return; }
-    virtual void run() = 0;
-    uint64_t GetThreadGroup() { return (mEventPtr) ? mEventPtr->threadGroup : 0; }
+    EventHandlerServerJoined(Master *master, std::string hyperspaceFilename, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mMaster(master), mFilename(hyperspaceFilename) {
+      return;
+    }
 
-  protected:
-    EventPtr mEventPtr;
+    virtual void run();
+
+  private:
+    Master      *mMaster;
+    std::string  mFilename;
   };
 
-  typedef boost::shared_ptr<ApplicationHandler> ApplicationHandlerPtr;
-  
 }
 
-#endif // HYPERTABLE_APPLICATIONHANDLER_H
+#endif // HYPERTABLE_EVENTHANDLERSERVERJOINED_H

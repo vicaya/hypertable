@@ -68,6 +68,7 @@ namespace hypertable {
     static const int HYPERSPACE_REQUEST_CANCELLED = 0x0003000C;
     static const int HYPERSPACE_MODE_RESTRICTION  = 0x0003000D;
     static const int HYPERSPACE_ALREADY_LOCKED    = 0x0003000E;
+    static const int HYPERSPACE_LOCK_CONFLICT     = 0x0003000F;
 
     static const int MASTER_TABLE_EXISTS   = 0x00040001;
     static const int MASTER_BAD_SCHEMA     = 0x00040002;
