@@ -27,11 +27,12 @@
 using namespace Hyperspace;
 using namespace hypertable;
 
-int ResponseCallbackOpen::response(uint64_t handle, bool created) {
+int ResponseCallbackOpen::response(uint64_t handle, bool created, uint64_t lockGeneration) {
   hbuilder_.InitializeFromRequest(mEventPtr->header);
-  CommBufPtr cbufPtr( new CommBuf(hbuilder_, 13 ) );
+  CommBufPtr cbufPtr( new CommBuf(hbuilder_, 21 ) );
   cbufPtr->AppendInt(Error::OK);
   cbufPtr->AppendLong(handle);
   cbufPtr->AppendByte((uint8_t)created);
+  cbufPtr->AppendLong(lockGeneration);
   return mComm->SendResponse(mEventPtr->addr, cbufPtr);
 }

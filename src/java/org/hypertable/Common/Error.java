@@ -63,6 +63,7 @@ public class Error {
     static public final int HYPERSPACE_MODE_RESTRICTION  = 0x0003000D;
     static public final int HYPERSPACE_ALREADY_LOCKED    = 0x0003000E;
     static public final int HYPERSPACE_LOCK_CONFLICT     = 0x0003000F;
+    static public final int HYPERSPACE_NOT_LOCKED        = 0x00030010;
 
     static public final int MASTER_TABLE_EXISTS  = 0x00040001;
     static public final int MASTER_BAD_SCHEMA    = 0x00040002;
@@ -120,6 +121,7 @@ public class Error {
 	mTextMap.put(HYPERSPACE_MODE_RESTRICTION,"HYPERSPACE mode restriction");
 	mTextMap.put(HYPERSPACE_ALREADY_LOCKED,  "HYPERSPACE already locked");
 	mTextMap.put(HYPERSPACE_LOCK_CONFLICT,   "HYPERSPACE lock conflict");
+	mTextMap.put(HYPERSPACE_NOT_LOCKED,      "HYPERSPACE not locked");
 	mTextMap.put(MASTER_TABLE_EXISTS,        "HYPERTABLE MASTER table exists");
 	mTextMap.put(MASTER_TABLE_EXISTS,        "HYPERTABLE MASTER bad schema");
 	mTextMap.put(RANGESERVER_GENERATION_MISMATCH,  "RANGE SERVER generation mismatch");

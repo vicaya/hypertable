@@ -57,6 +57,7 @@ extern "C" {
 #include "CommandLock.h"
 #include "CommandTryLock.h"
 #include "CommandRelease.h"
+#include "CommandGetSequencer.h"
 
 using namespace hypertable;
 using namespace std;
@@ -263,6 +264,7 @@ int main(int argc, char **argv, char **envp) {
   commands.push_back( new CommandLock(session) );
   commands.push_back( new CommandTryLock(session) );
   commands.push_back( new CommandRelease(session) );
+  commands.push_back( new CommandGetSequencer(session) );
 
   /**
    * Non-interactive mode

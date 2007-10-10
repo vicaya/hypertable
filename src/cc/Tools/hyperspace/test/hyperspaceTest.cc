@@ -275,9 +275,11 @@ namespace {
     IssueCommand(gFd3, "close lockfile");
     IssueCommand(gFd2, "open lockfile flags=READ|WRITE|LOCK_EXCLUSIVE");
     IssueCommand(gFd3, "open lockfile flags=READ|WRITE|LOCK_EXCLUSIVE");
+    IssueCommand(gFd2, "getseq lockfile");
     IssueCommand(gFd2, "close lockfile");
     IssueCommand(gFd2, "open lockfile flags=READ|WRITE|LOCK_SHARED");
     IssueCommand(gFd3, "open lockfile flags=READ|WRITE|LOCK_SHARED");
+    IssueCommand(gFd2, "getseq lockfile");
     IssueCommand(gFd2, "close lockfile");
     IssueCommand(gFd3, "close lockfile");
     IssueCommand(gFd1, "close lockfile");

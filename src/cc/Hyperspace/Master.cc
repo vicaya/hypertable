@@ -408,6 +408,7 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
   ssize_t len;
   bool lockNotify = false;
   uint32_t lockMode = 0;
+  uint64_t lockGeneration = 0;
 
   if (mVerbose) {
     LOG_VA_INFO("open(sessionId=%lld, fname=%s, flags=0x%x, eventMask=0x%x)", sessionId, name, flags, eventMask);
@@ -570,6 +571,7 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
 		     handlePtr->node->name.c_str(), strerror(errno));
 	exit(1);
       }
+      lockGeneration = handlePtr->node->lockGeneration;
       handlePtr->node->currentLockMode = lockMode;
 
       LockHandle(handlePtr, lockMode);
@@ -585,7 +587,7 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
 
   }
 
-  cb->response(handle, created);
+  cb->response(handle, created, lockGeneration);
 }
 
 

@@ -41,6 +41,7 @@ namespace Hyperspace {
     HandleCallbackPtr callbackPtr;
     struct LockSequencerT *sequencer;
     int lockStatus;
+    uint32_t lockMode;
     uint64_t lockGeneration;
     boost::mutex       mutex;
     boost::condition   cond;

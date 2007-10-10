@@ -18,22 +18,29 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_RESPONSECALLBACKOPEN_H
-#define HYPERSPACE_RESPONSECALLBACKOPEN_H
+#ifndef HYPERTABLE_COMMANDGETSEQUENCER_H
+#define HYPERTABLE_COMMANDGETSEQUENCER_H
 
-#include "Common/Error.h"
+#include "Common/InteractiveCommand.h"
 
-#include "AsyncComm/CommBuf.h"
-#include "AsyncComm/ResponseCallback.h"
+#include "Hyperspace/Session.h"
+
+#include "Global.h"
 
 namespace Hyperspace {
 
-  class ResponseCallbackOpen : public hypertable::ResponseCallback {
+  class CommandGetSequencer : public InteractiveCommand {
   public:
-    ResponseCallbackOpen(hypertable::Comm *comm, hypertable::EventPtr &eventPtr) : hypertable::ResponseCallback(comm, eventPtr) { return; }
-    int response(uint64_t handle, bool created, uint64_t lockGeneration);
+    CommandGetSequencer(Session *session) : mSession(session) { return; }
+    virtual const char *CommandText() { return "getseq"; }
+    virtual const char **Usage() { return msUsage; }
+    virtual int run();
+
+  private:
+    static const char *msUsage[];
+    Session *mSession;
   };
 
 }
 
-#endif // HYPERSPACE_RESPONSECALLBACKOPEN_H
+#endif // HYPERTABLE_COMMANDGETSEQUENCER_H

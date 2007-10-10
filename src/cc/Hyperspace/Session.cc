@@ -85,6 +85,13 @@ int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackP
   handleStatePtr->sequencer = 0;
   handleStatePtr->lockStatus = 0;
 
+  if ((flags & OPEN_FLAG_LOCK_SHARED) == OPEN_FLAG_LOCK_SHARED)
+    handleStatePtr->lockMode = LOCK_MODE_SHARED;
+  else if ((flags & OPEN_FLAG_LOCK_EXCLUSIVE) == OPEN_FLAG_LOCK_EXCLUSIVE)
+    handleStatePtr->lockMode = LOCK_MODE_EXCLUSIVE;
+  else
+    handleStatePtr->lockMode = 0;
+
   CommBufPtr cbufPtr( Protocol::CreateOpenRequest(handleStatePtr->normalName, flags, callbackPtr) );
 
  try_again:
@@ -110,6 +117,8 @@ int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackP
       if (!Serialization::DecodeLong(&ptr, &remaining, handlep))
 	return Error::RESPONSE_TRUNCATED;
       if (!Serialization::DecodeByte(&ptr, &remaining, &cbyte))
+	return Error::RESPONSE_TRUNCATED;
+      if (!Serialization::DecodeLong(&ptr, &remaining, &handleStatePtr->lockGeneration))
 	return Error::RESPONSE_TRUNCATED;
       if (createdp)
 	*createdp = cbyte ? true : false;
@@ -445,11 +454,13 @@ int Session::Lock(uint64_t handle, uint32_t mode, struct LockSequencerT *sequenc
       boost::mutex::scoped_lock lock(handleStatePtr->mutex);
       uint8_t *ptr = eventPtr->message + 4;
       size_t remaining = eventPtr->messageLen - 4;
+      handleStatePtr->lockMode = mode;
       if (!Serialization::DecodeInt(&ptr, &remaining, &status))
 	assert(!"problem decoding return packet");
       if (status == LOCK_STATUS_GRANTED) {
 	if (!Serialization::DecodeLong(&ptr, &remaining, &sequencerp->generation))
 	  assert(!"problem decoding return packet");
+	handleStatePtr->lockGeneration = sequencerp->generation;
 	handleStatePtr->lockStatus = LOCK_STATUS_GRANTED;
       }
       else {
@@ -508,6 +519,7 @@ int Session::TryLock(uint64_t handle, uint32_t mode, uint32_t *statusp, struct L
 	  assert(!"problem decoding return packet");
 	sequencerp->mode = mode;
 	sequencerp->name = handleStatePtr->normalName;
+	handleStatePtr->lockMode = mode;
 	handleStatePtr->lockStatus = LOCK_STATUS_GRANTED;
 	handleStatePtr->lockGeneration = sequencerp->generation;
 	handleStatePtr->sequencer = 0;
@@ -556,6 +568,23 @@ int Session::Release(uint64_t handle) {
   return error;
 }
 
+
+
+int Session::GetSequencer(uint64_t handle, struct LockSequencerT *sequencerp) {
+  ClientHandleStatePtr handleStatePtr;
+
+  if (!mKeepaliveHandler->GetHandleState(handle, handleStatePtr))
+    return Error::HYPERSPACE_INVALID_HANDLE;
+
+  if (handleStatePtr->lockGeneration == 0)
+    return Error::HYPERSPACE_NOT_LOCKED;
+
+  sequencerp->name = handleStatePtr->normalName;
+  sequencerp->mode = handleStatePtr->lockMode;
+  sequencerp->generation = handleStatePtr->lockGeneration;
+
+  return Error::OK;
+}
 
 
 /**

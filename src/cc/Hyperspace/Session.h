@@ -106,6 +106,7 @@ namespace Hyperspace {
     int Lock(uint64_t handle, uint32_t mode, struct LockSequencerT *sequencerp);
     int TryLock(uint64_t handle, uint32_t mode, uint32_t *statusp, struct LockSequencerT *sequencerp);
     int Release(uint64_t handle);
+    int GetSequencer(uint64_t handle, struct LockSequencerT *sequencerp);
     int CheckSequencer(struct LockSequencerT &sequencer);
     int Status();
 

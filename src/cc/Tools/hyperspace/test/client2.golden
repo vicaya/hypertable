@@ -33,8 +33,12 @@ SEQUENCER name=/lockfile mode=2 generation=6
 release lockfile
 close lockfile
 open lockfile flags=READ|WRITE|LOCK_EXCLUSIVE
+getseq lockfile
+SEQUENCER name=/lockfile mode=2 generation=7
 close lockfile
 open lockfile flags=READ|WRITE|LOCK_SHARED
+getseq lockfile
+SEQUENCER name=/lockfile mode=1 generation=8
 close lockfile
 
 << EphemeralFileTest >>

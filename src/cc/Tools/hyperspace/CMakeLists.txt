@@ -34,6 +34,7 @@ CommandReaddir.cc
 CommandLock.cc
 CommandTryLock.cc
 CommandRelease.cc
+CommandGetSequencer.cc
 hyperspace.cc
 Global.cc
 Util.cc

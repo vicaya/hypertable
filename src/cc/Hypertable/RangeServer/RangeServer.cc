@@ -178,7 +178,7 @@ int RangeServer::DirectoryInitialize(Properties *props) {
    * Create "server existence" file in Hyperspace and obtain an exclusive lock on it
    */
 
-  uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_EXCL | OPEN_FLAG_LOCK;
+  uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_EXCL | OPEN_FLAG_LOCK_EXCLUSIVE;
   HandleCallbackPtr nullCallbackPtr;
 
   if ((error = Global::hyperspace->Open(topDir, oflags, nullCallbackPtr, &mExistenceFileHandle)) != Error::OK) {
@@ -186,8 +186,8 @@ int RangeServer::DirectoryInitialize(Properties *props) {
     exit(1);
   }
 
-  if ((error = Global::hyperspace->Lock(mExistenceFileHandle, LOCK_MODE_EXCLUSIVE, &mExistenceFileSequencer)) != Error::OK) {
-    LOG_VA_ERROR("Problem obtaining exclusive lock on server existance file '%s' - %s", topDir, Error::GetText(error));
+  if ((error = Global::hyperspace->GetSequencer(mExistenceFileHandle, &mExistenceFileSequencer)) != Error::OK) {
+    LOG_VA_ERROR("Problem obtaining lock sequencer for file '%s' - %s", topDir, Error::GetText(error));
     exit(1);
   }
 
