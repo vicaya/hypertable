@@ -18,10 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-extern "C" {
-#include <poll.h>
-}
-
 #include "DfsBroker/Lib/Client.h"
 #include "Hypertable/Lib/Schema.h"
 #include "Hyperspace/DirEntry.h"
@@ -143,8 +139,6 @@ void Master::ScanServersDirectory() {
     exit(1);
   }
 
-  poll(0, 0, 1000);  // hack to wait for servers to obtain locks since we don't have an atomic open/lock command.
-
   oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
 
   for (size_t i=0; i<listing.size(); i++) {
@@ -152,7 +146,7 @@ void Master::ScanServersDirectory() {
     statePtr = new RangeServerState();
     statePtr->hyperspaceFileName = "/hypertable/servers/" + listing[i].name;
 
-    lockFileHandler = new ServerLockFileHandler(mAppQueue);
+    lockFileHandler = new ServerLockFileHandler(statePtr, this, mAppQueue);
 
     if ((error = mHyperspace->Open(statePtr->hyperspaceFileName, oflags, lockFileHandler, &statePtr->hyperspaceHandle)) != Error::OK) {
       LOG_VA_ERROR("Problem opening discovered server file %s - %s", statePtr->hyperspaceFileName.c_str(), Error::GetText(error));
@@ -199,7 +193,7 @@ void Master::ServerJoined(std::string &hyperspaceFilename) {
 
   statePtr->hyperspaceFileName = hyperspaceFilename;
 
-  lockFileHandler = new ServerLockFileHandler(mAppQueue);
+  lockFileHandler = new ServerLockFileHandler(statePtr, this, mAppQueue);
 
   if ((error = mHyperspace->Open(statePtr->hyperspaceFileName, oflags, lockFileHandler, &statePtr->hyperspaceHandle)) != Error::OK) {
     LOG_VA_ERROR("Problem opening discovered server file %s - %s", statePtr->hyperspaceFileName.c_str(), Error::GetText(error));
@@ -207,7 +201,8 @@ void Master::ServerJoined(std::string &hyperspaceFilename) {
   }
 
   if ((error = mHyperspace->TryLock(statePtr->hyperspaceHandle, LOCK_MODE_EXCLUSIVE, &lockStatus, &lockSequencer)) != Error::OK) {
-    LOG_VA_ERROR("Problem obtaining exclusive lock on master Hyperspace file '/hypertable/master' - %s", Error::GetText(error));
+    LOG_VA_ERROR("Problem attempting to obtain exclusive lock on server Hyperspace file '%s' - %s",
+		 statePtr->hyperspaceFileName.c_str(), Error::GetText(error));
     return;
   }
 
@@ -222,6 +217,7 @@ void Master::ServerJoined(std::string &hyperspaceFilename) {
     boost::mutex::scoped_lock lock(mMutex);
     mServerMap[statePtr->hyperspaceFileName] = statePtr;  
   }
+  cout << flush;
 }
 
 
@@ -231,10 +227,36 @@ void Master::ServerJoined(std::string &hyperspaceFilename) {
  */
 void Master::ServerLeft(std::string &hyperspaceFilename) {
   boost::mutex::scoped_lock lock(mMutex);
+  int error;
+  uint32_t lockStatus;
+  struct LockSequencerT lockSequencer;
   ServerMapT::iterator iter = mServerMap.find(hyperspaceFilename);
-  LOG_VA_INFO("Server Left (%s)", hyperspaceFilename.c_str());
-  if (iter != mServerMap.end())
-    mServerMap.erase(iter);
+
+  if (iter == mServerMap.end()) {
+    LOG_VA_WARN("Server (%s) not found in map", hyperspaceFilename.c_str());
+    return;
+  }
+
+  if ((error = mHyperspace->TryLock((*iter).second->hyperspaceHandle, LOCK_MODE_EXCLUSIVE, &lockStatus, &lockSequencer)) != Error::OK) {
+    LOG_VA_ERROR("Problem obtaining exclusive lock on master Hyperspace file '/hypertable/master' - %s", Error::GetText(error));
+    return;
+  }
+
+  if (lockStatus != LOCK_STATUS_GRANTED) {
+    LOG_VA_INFO("Unable to obtain lock on server file %s, ignoring...", hyperspaceFilename.c_str());
+    return;
+  }
+
+  mHyperspace->Delete(hyperspaceFilename);
+  mHyperspace->Close((*iter).second->hyperspaceHandle);
+  mServerMap.erase(iter);
+
+  LOG_VA_INFO("RangeServer lost it's lock on file %s, deleting ...", hyperspaceFilename.c_str());
+  cout << flush;
+
+  /**
+   *  Do (or schedule) tablet re-assignment here
+   */
 }
 
 

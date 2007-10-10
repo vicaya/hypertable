@@ -19,26 +19,11 @@
  */
 
 #include "EventHandlerServerJoined.h"
+#include "EventHandlerServerLeft.h"
 #include "ServersDirectoryHandler.h"
 #include "Master.h"
 
 using namespace hypertable;
-
-
-/**
- *
- */
-void ServersDirectoryHandler::AttrSet(std::string name) {
-  return;
-}
-
-
-/**
- *
- */
-void ServersDirectoryHandler::AttrDel(std::string name) {
-  return;
-}
 
 /**
  *
@@ -50,27 +35,3 @@ void ServersDirectoryHandler::ChildNodeAdded(std::string name) {
   mAppQueue->Add( appHandlerPtr );
   return;
 }
-
-
-/**
- *
- */
-void ServersDirectoryHandler::ChildNodeRemoved(std::string name) {
-  return;
-}
-
-/**
- *
- */
-void ServersDirectoryHandler::LockAcquired(uint32_t mode) {
-  return;
-}
-
-/**
- *
- */
-void ServersDirectoryHandler::LockReleased() {
-  return;
-}
-
-

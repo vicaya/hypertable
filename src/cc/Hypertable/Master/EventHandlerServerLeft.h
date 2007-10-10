@@ -18,60 +18,35 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "AsyncComm/ApplicationQueue.h"
+#ifndef HYPERTABLE_EVENTHANDLERSERVERLEFT_H
+#define HYPERTABLE_EVENTHANDLERSERVERLEFT_H
+
+#include "Common/Runnable.h"
+
+#include "AsyncComm/ApplicationHandler.h"
 #include "AsyncComm/Event.h"
 
 #include "Master.h"
-#include "ServerLockFileHandler.h"
-#include "EventHandlerServerLeft.h"
 
 using namespace hypertable;
 
-/**
- *
- */
-void ServerLockFileHandler::AttrSet(std::string name) {
-  return;
+namespace hypertable {
+
+  class Master;
+
+  class EventHandlerServerLeft : public ApplicationHandler {
+  public:
+    EventHandlerServerLeft(Master *master, std::string hyperspaceFilename, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mMaster(master), mFilename(hyperspaceFilename) {
+      return;
+    }
+
+    virtual void run();
+
+  private:
+    Master      *mMaster;
+    std::string  mFilename;
+  };
+
 }
 
-
-/**
- *
- */
-void ServerLockFileHandler::AttrDel(std::string name) {
-  return;
-}
-
-/**
- *
- */
-void ServerLockFileHandler::ChildNodeAdded(std::string name) {
-  return;
-}
-
-
-/**
- *
- */
-void ServerLockFileHandler::ChildNodeRemoved(std::string name) {
-  return;
-}
-
-/**
- *
- */
-void ServerLockFileHandler::LockAcquired(uint32_t mode) {
-  return;
-}
-
-/**
- *
- */
-void ServerLockFileHandler::LockReleased() {
-  EventPtr nullEvent;
-  EventHandlerServerLeft *handler = new EventHandlerServerLeft(mMaster, mStatePtr->hyperspaceFileName, nullEvent);
-  ApplicationHandlerPtr appHandlerPtr(handler);
-  mAppQueue->Add( appHandlerPtr );
-}
-
-
+#endif // HYPERTABLE_EVENTHANDLERSERVERLEFT_H

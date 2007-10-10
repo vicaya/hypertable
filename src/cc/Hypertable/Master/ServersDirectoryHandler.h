@@ -36,13 +36,13 @@ namespace hypertable {
    */
   class ServersDirectoryHandler : public HandleCallback {
   public:
-    ServersDirectoryHandler(Master *master, ApplicationQueue *appQueue) : HandleCallback(EVENT_MASK_CHILD_NODE_ADDED|EVENT_MASK_CHILD_NODE_REMOVED), mMaster(master), mAppQueue(appQueue) { return; }
-    virtual void AttrSet(std::string name);
-    virtual void AttrDel(std::string name);
+    ServersDirectoryHandler(Master *master, ApplicationQueue *appQueue) : HandleCallback(EVENT_MASK_CHILD_NODE_ADDED), mMaster(master), mAppQueue(appQueue) { return; }
     virtual void ChildNodeAdded(std::string name);
-    virtual void ChildNodeRemoved(std::string name);
-    virtual void LockAcquired(uint32_t mode);
-    virtual void LockReleased();
+    virtual void AttrSet(std::string name)  { return; }
+    virtual void AttrDel(std::string name) { return; }
+    virtual void ChildNodeRemoved(std::string name) { return; }
+    virtual void LockAcquired(uint32_t mode) { return; }
+    virtual void LockReleased() { return; }
     Master *mMaster;
     ApplicationQueue *mAppQueue;
   };

@@ -148,6 +148,7 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
   }
   else if (eventPtr->type == hypertable::Event::DISCONNECT) {
     // do we need to do something here?
+    cout << endl << flush;
   }
   else {
     LOG_VA_INFO("%s", eventPtr->toString().c_str());

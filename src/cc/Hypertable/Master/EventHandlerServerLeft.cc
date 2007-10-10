@@ -18,11 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "AsyncComm/ApplicationQueue.h"
-#include "AsyncComm/Event.h"
-
 #include "Master.h"
-#include "ServerLockFileHandler.h"
 #include "EventHandlerServerLeft.h"
 
 using namespace hypertable;
@@ -30,48 +26,6 @@ using namespace hypertable;
 /**
  *
  */
-void ServerLockFileHandler::AttrSet(std::string name) {
-  return;
+void EventHandlerServerLeft::run() {
+  mMaster->ServerLeft(mFilename);
 }
-
-
-/**
- *
- */
-void ServerLockFileHandler::AttrDel(std::string name) {
-  return;
-}
-
-/**
- *
- */
-void ServerLockFileHandler::ChildNodeAdded(std::string name) {
-  return;
-}
-
-
-/**
- *
- */
-void ServerLockFileHandler::ChildNodeRemoved(std::string name) {
-  return;
-}
-
-/**
- *
- */
-void ServerLockFileHandler::LockAcquired(uint32_t mode) {
-  return;
-}
-
-/**
- *
- */
-void ServerLockFileHandler::LockReleased() {
-  EventPtr nullEvent;
-  EventHandlerServerLeft *handler = new EventHandlerServerLeft(mMaster, mStatePtr->hyperspaceFileName, nullEvent);
-  ApplicationHandlerPtr appHandlerPtr(handler);
-  mAppQueue->Add( appHandlerPtr );
-}
-
-
