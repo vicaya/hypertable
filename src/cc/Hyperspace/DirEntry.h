@@ -35,6 +35,14 @@ namespace Hyperspace {
     bool isDirectory;
   };
 
+  struct ltDirEntry {
+    bool operator()(const struct DirEntryT &de1, const struct DirEntryT &de2) const {
+      if (de1.name == de2.name)
+	return (int)de1.isDirectory < (int)de2.isDirectory;
+      return de1.name < de2.name;
+    }
+  };
+
   size_t EncodedLengthDirEntry(DirEntryT &dirEntry);
   void EncodeDirEntry(uint8_t **bufPtr, DirEntryT &dirEntry);
   bool DecodeRangeDirEntry(uint8_t **bufPtr, size_t *remainingPtr, DirEntryT &dirEntry);

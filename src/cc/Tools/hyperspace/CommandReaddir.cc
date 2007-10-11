@@ -59,6 +59,8 @@ int CommandReaddir::run() {
     return -1;
 
   if ((error = mSession->Readdir(handle, listing)) == Error::OK) {
+    struct ltDirEntry deComp;
+    sort(listing.begin(), listing.end(), deComp);
     for (size_t i=0; i<listing.size(); i++) {
       if (listing[i].isDirectory)
 	cout << "(dir) ";
