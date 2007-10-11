@@ -45,6 +45,10 @@ namespace hypertable {
     return (bs == 0) ? sizeof(int32_t) : bs->len + sizeof(bs->len);
   }
 
+  inline const ByteString32T *Skip(const ByteString32T *bs) {
+    return (const ByteString32T *)(((const uint8_t *)bs) + Length(bs));
+  }
+
   inline ByteString32T *CreateCopy(const ByteString32T *bs) {
     size_t len = (bs == 0) ? sizeof(int32_t) : Length(bs);
     ByteString32T *newBs = (ByteString32T *)new uint8_t [ len  ];

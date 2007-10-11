@@ -57,16 +57,17 @@ int RangeServerClient::LoadRange(struct sockaddr_in &addr, RangeSpecificationT &
   return error;
 }
 
-int RangeServerClient::Update(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, uint8_t *data, size_t len, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( RangeServerProtocol::CreateRequestUpdate(addr, rangeSpec, data, len) );
+
+int RangeServerClient::Update(struct sockaddr_in &addr, std::string tableName, uint32_t generation, uint8_t *data, size_t len, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( RangeServerProtocol::CreateRequestUpdate(addr, tableName, generation, data, len) );
   return SendMessage(addr, cbufPtr, handler);
 }
 
 
-int RangeServerClient::Update(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, uint8_t *data, size_t len) {
+int RangeServerClient::Update(struct sockaddr_in &addr, std::string tableName, uint32_t generation, uint8_t *data, size_t len) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( RangeServerProtocol::CreateRequestUpdate(addr, rangeSpec, data, len) );
+  CommBufPtr cbufPtr( RangeServerProtocol::CreateRequestUpdate(addr, tableName, generation, data, len) );
   int error = SendMessage(addr, cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {

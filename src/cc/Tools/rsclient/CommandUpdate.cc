@@ -45,7 +45,7 @@ using namespace hypertable;
 using namespace std;
 
 const char *CommandUpdate::msUsage[] = {
-  "update <range> <datafile>",
+  "update <table> <datafile>",
   "",
   "  This command issues an UPDATE command to the range server.  The data",
   "  to load is contained, one update per line, in <datafile>.  Lines can",
@@ -69,9 +69,7 @@ int CommandUpdate::run() {
   const char *schema = 0;
   int error;
   std::string tableName;
-  std::string startRow;
-  std::string endRow;
-  RangeSpecificationT rangeSpec;
+  uint32_t generation;
   SchemaPtr schemaPtr;
   TestData tdata;
   TestSource  *tsource = 0;
@@ -87,9 +85,7 @@ int CommandUpdate::run() {
   if (mArgs[0].second != "" || mArgs[1].second != "")
     Usage::DumpAndExit(msUsage);
 
-  if (!ParseRangeSpec(mArgs[0].first, tableName, startRow, endRow)) {
-    cerr << "error:  Invalid range specification." << endl;
-  }
+  tableName = mArgs[0].first;
 
   schemaPtr = Global::schemaMap[tableName];
 
@@ -98,10 +94,7 @@ int CommandUpdate::run() {
     return Error::OK;
   }
 
-  rangeSpec.tableName = tableName.c_str();
-  rangeSpec.startRow = startRow.c_str();
-  rangeSpec.endRow = endRow.c_str();
-  rangeSpec.generation = schemaPtr->GetGeneration();
+  generation = schemaPtr->GetGeneration();
 
   // verify data file
   if (stat(mArgs[1].first.c_str(), &statbuf) != 0) {
@@ -117,6 +110,7 @@ int CommandUpdate::run() {
   int pendingAmount;
   ByteString32T *key, *value;
   EventPtr eventPtr;
+  std::vector<ByteString32T *> keys;
 
   while (true) {
 
@@ -132,12 +126,33 @@ int CommandUpdate::run() {
 	  endPtr = buf + pendingAmount;
 	}
 	memcpy(ptr, key, Length(key));
+	keys.push_back((ByteString32T *)ptr);
 	ptr += Length(key);
 	memcpy(ptr, value, Length(value));
 	ptr += Length(value);
       }
       else
 	break;
+    }
+
+    /**
+     * Sort the keys
+     */
+    if (ptr > buf) {
+      struct ltByteString32 ltbs32;
+      uint8_t *newBuf;
+      size_t len;
+      std::sort(keys.begin(), keys.end(), ltbs32);
+
+      newBuf = new uint8_t [ ptr-buf ];
+      ptr = newBuf;
+      for (size_t i=0; i<keys.size(); i++) {
+	len = Length(keys[i]) + Length(Skip(keys[i]));
+	memcpy(ptr, keys[i], len);
+	ptr += len;
+      }
+      delete [] buf;
+      buf = newBuf;
     }
 
     if (outstanding) {
@@ -157,10 +172,11 @@ int CommandUpdate::run() {
     outstanding = false;
 
     if (ptr > buf) {
-      if ((error = Global::rangeServer->Update(mAddr, rangeSpec, buf, ptr-buf, &syncHandler)) != Error::OK) {
+      if ((error = Global::rangeServer->Update(mAddr, tableName, generation, buf, ptr-buf, &syncHandler)) != Error::OK) {
 	LOG_VA_ERROR("Problem sending updates - %s", Error::GetText(error));
 	return error;
       }
+      keys.clear();
       outstanding = true;
       if (pendingAmount > 0) {
 	if (pendingAmount > BUFFER_SIZE) {
@@ -172,6 +188,7 @@ int CommandUpdate::run() {
 	  endPtr = buf + BUFFER_SIZE;
 	}
 	memcpy(ptr, key, Length(key));
+	keys.push_back((ByteString32T *)ptr);
 	ptr += Length(key);
 	memcpy(ptr, value, Length(value));
 	ptr += Length(value);

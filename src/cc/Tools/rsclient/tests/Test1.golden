@@ -6,7 +6,7 @@ Generation = 1
 TableName  = Test1
 StartRow   = 
 EndRow     = kerchoo
-rsclient> update Test1[:kerchoo] Test1-data.txt
+rsclient> update Test1 Test1-data.txt
 partial update
 partial update
 partial update

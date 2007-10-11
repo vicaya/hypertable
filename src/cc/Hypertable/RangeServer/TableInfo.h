@@ -52,9 +52,21 @@ namespace hypertable {
     }
     bool GetRange(RangeSpecificationT *rangeSpec, RangePtr &rangePtr);
     void AddRange(RangeInfoPtr &rangeInfoPtr);
+    bool FindContainingRange(std::string row, RangePtr &rangePtr);
 
   private:
-    typedef std::map<std::string, RangePtr> RangeMapT;
+
+    struct ltEndRow {
+      bool operator()(const std::string &s1, const std::string &s2) const {
+	if (s1 == "")
+	  return false;
+	if (s2 == "")
+	  return true;
+	return s1 < s2;
+      }
+    };
+
+    typedef std::map<std::string, RangePtr, ltEndRow> RangeMapT;
 
     boost::mutex   mMutex;
     std::string    mName;

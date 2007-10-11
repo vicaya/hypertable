@@ -47,7 +47,7 @@ namespace hypertable {
     void CreateScanner(ResponseCallbackCreateScanner *cb, RangeSpecificationT *rangeSpec, ScanSpecificationT *spec);
     void FetchScanblock(ResponseCallbackFetchScanblock *cb, uint32_t scannerId);
     void LoadRange(ResponseCallback *cb, RangeSpecificationT *rangeSpec);
-    void Update(ResponseCallbackUpdate *cb, RangeSpecificationT *rangeSpec, BufferT &buffer);
+    void Update(ResponseCallbackUpdate *cb, const char *tableName, uint32_t generation, BufferT &buffer);
 
   private:
     int DirectoryInitialize(Properties *props);

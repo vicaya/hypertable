@@ -36,20 +36,25 @@ using namespace hypertable;
  */
 void RequestHandlerUpdate::run() {
   ResponseCallbackUpdate cb(mComm, mEventPtr);
-  RangeSpecificationT rangeSpec;
+  const char *tableName;
+  uint32_t generation;
   size_t remaining = mEventPtr->messageLen - 2;
   uint8_t *msgPtr = mEventPtr->message + 2;
   BufferT mods;
 
-  // Range Specification
-  if (!DecodeRangeSpecification(&msgPtr, &remaining, &rangeSpec))
+  // Table generation
+  if (!Serialization::DecodeInt(&msgPtr, &remaining, &generation))
+    goto abort;
+
+  // Table name
+  if (!Serialization::DecodeString(&msgPtr, &remaining, &tableName))
     goto abort;
 
   // Modifications
   if (!Serialization::DecodeByteArray(&msgPtr, &remaining, &mods.buf, &mods.len))
     goto abort;
 
-  mRangeServer->Update(&cb, &rangeSpec, mods);
+  mRangeServer->Update(&cb, tableName, generation, mods);
 
   return;
 

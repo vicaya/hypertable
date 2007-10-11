@@ -49,13 +49,14 @@ namespace hypertable {
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::CreateRequestUpdate(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, uint8_t *data, size_t len) {
+  CommBuf *RangeServerProtocol::CreateRequestUpdate(struct sockaddr_in &addr, std::string &tableName, uint32_t generation, uint8_t *data, size_t len) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
     hbuilder.AssignUniqueId();
-    CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthRangeSpecification(rangeSpec) + 
+    CommBuf *cbuf = new CommBuf(hbuilder, 6 + Serialization::EncodedLengthString(tableName) + 
 				Serialization::EncodedLengthByteArray(len));
     cbuf->AppendShort(COMMAND_UPDATE);
-    EncodeRangeSpecification(cbuf->GetDataPtrAddress(), rangeSpec);
+    cbuf->AppendInt(generation);
+    cbuf->AppendString(tableName);
     Serialization::EncodeByteArray(cbuf->GetDataPtrAddress(), data, len);
     return cbuf;
   }

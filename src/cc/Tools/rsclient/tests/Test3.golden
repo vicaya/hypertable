@@ -6,7 +6,7 @@ Generation = 1
 TableName  = Test3
 StartRow   = 
 EndRow     = 
-rsclient> update Test3[:] Test2-data.txt
+rsclient> update Test3 Test2-data.txt
 success
 success
 success

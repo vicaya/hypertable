@@ -543,33 +543,30 @@ namespace {
 /**
  * Update
  */
-void RangeServer::Update(ResponseCallbackUpdate *cb, RangeSpecificationT *rangeSpec, BufferT &buffer) {
+void RangeServer::Update(ResponseCallbackUpdate *cb, const char *tableName, uint32_t generation, BufferT &buffer) {
   const uint8_t *modPtr;
   const uint8_t *modEnd;
   string errMsg;
   int error = Error::OK;
-  string tableFile;
   TableInfoPtr tableInfoPtr;
-  TableInfo *tableInfo = 0;
-  string rowkey;
-  vector<UpdateRecT> goMods;
-  vector<UpdateRecT> stopMods;
-  vector<UpdateRecT> splitMods;
-  RangePtr rangePtr;
-  UpdateRecT update;
-  size_t goSize = 0;
-  size_t stopSize = 0;
-  size_t splitSize = 0;
-  Key keyComps;
   uint64_t nextTimestamp = 0;
   uint64_t updateTimestamp = 0;
   uint64_t clientTimestamp = 0;
+  struct timeval tval;
+  const char *row;
+  const char *splitRow;
+  vector<UpdateRecT> goMods;
+  vector<UpdateRecT> splitMods;
+  vector<UpdateRecT> stopMods;
+  UpdateRecT update;
   ByteString32Ptr splitKeyPtr;
   CommitLogPtr splitLogPtr;
   uint64_t splitStartTime;
-  std::string  splitRow;
-  bool needDecrement = false;
-  struct timeval tval;
+  size_t goSize = 0;
+  size_t stopSize = 0;
+  size_t splitSize = 0;
+  std::string endRow;
+  RangePtr rangePtr;
 
   /**
   if (Global::verbose)
@@ -581,70 +578,68 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, RangeSpecificationT *rangeS
   /**
    * Fetch table info
    */
-  if (GetTableInfo(rangeSpec->tableName, tableInfoPtr))
-    tableInfo = tableInfoPtr.get();
-  else {
+  if (!GetTableInfo(tableName, tableInfoPtr)) {
     ExtBufferT ext;
     ext.buf = new uint8_t [ buffer.len ];
     memcpy(ext.buf, buffer.buf, buffer.len);
     ext.len = buffer.len;
-    LOG_VA_ERROR("Unable to find table info for table '%s'", rangeSpec->tableName);
+    LOG_VA_ERROR("Unable to find table info for table '%s'", tableName);
     if ((error = cb->response(ext)) != Error::OK) {
       LOG_VA_ERROR("Problem sending OK response - %s", Error::GetText(error));
     }
     return;
   }
 
-  /**
-   * Fetch range
-   */
-  if (!tableInfoPtr->GetRange(rangeSpec, rangePtr)) {
-    error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errMsg = (std::string)rangeSpec->tableName + "[" + rangeSpec->startRow + ":" + rangeSpec->endRow + "]";
+  // verify schema
+  if ((error = VerifySchema(tableInfoPtr, generation, errMsg)) != Error::OK)
     goto abort;
-  }
+
+  modEnd = buffer.buf + buffer.len;
+  modPtr = buffer.buf;
 
   // timestamp
   gettimeofday(&tval, 0);
   nextTimestamp = ((uint64_t)tval.tv_sec * 1000000LL) + tval.tv_usec;
 
-  /** Increment update count (block if maintenance in progress) **/
-  rangePtr->IncrementUpdateCounter();
-  needDecrement = true;
-
-  /** Obtain "update timestamp" **/
-  updateTimestamp = Global::log->GetTimestamp();
-
-  /** Fetch range split information **/
-  if (rangePtr->GetSplitInfo(splitKeyPtr, splitLogPtr, &splitStartTime)) {
-    splitRow = (const char *)(splitKeyPtr.get())->data;
-  }
-
-  /**
-   * Figure out destination for each mutations
-   */
-  modEnd = buffer.buf + buffer.len;
-  modPtr = buffer.buf;
   while (modPtr < modEnd) {
-    if (!keyComps.load((ByteString32T *)modPtr)) {
-      error = Error::PROTOCOL_ERROR;
-      errMsg = "Problem de-serializing key/value pair";
-      goto abort;
+
+    row = (const char *)((ByteString32T *)modPtr)->data;
+
+    if (!tableInfoPtr->FindContainingRange(row, rangePtr)) {
+      update.base = modPtr;
+      modPtr += Length((const ByteString32T *)modPtr); // skip key
+      modPtr += Length((const ByteString32T *)modPtr); // skip value
+      update.len = modPtr - update.base;
+      stopMods.push_back(update);
+      stopSize += update.len;
+      continue;
     }
 
-    if (keyComps.timestamp == -1LL)
-      keyComps.updateTimestamp(nextTimestamp++);
+    /** Increment update count (block if maintenance in progress) **/
+    rangePtr->IncrementUpdateCounter();
 
-    if (clientTimestamp < keyComps.timestamp)
-      clientTimestamp = keyComps.timestamp;
+    /** Obtain "update timestamp" **/
+    updateTimestamp = Global::log->GetTimestamp();
 
-    rowkey = keyComps.rowKey;
-    update.base = modPtr;
-    modPtr = keyComps.endPtr + Length((const ByteString32T *)keyComps.endPtr);
-    update.len = modPtr - update.base;
+    endRow = rangePtr->EndRow();
 
-    if (rowkey > rangePtr->StartRow() && (rangePtr->EndRow() == "" || rowkey <= rangePtr->EndRow())) {
-      if (splitStartTime != 0 && updateTimestamp > splitStartTime && rowkey <= splitRow) {
+    /** Fetch range split information **/
+    if (rangePtr->GetSplitInfo(splitKeyPtr, splitLogPtr, &splitStartTime))
+      splitRow = (const char *)(splitKeyPtr.get())->data;
+    else
+      splitRow = 0;
+
+    splitMods.clear();
+    splitSize = 0;
+    goMods.clear();
+    goSize = 0;
+
+    while (modPtr < modEnd && (endRow == "" || (strcmp(row, endRow.c_str()) < 0))) {
+      update.base = modPtr;
+      modPtr += Length((const ByteString32T *)modPtr); // skip key
+      modPtr += Length((const ByteString32T *)modPtr); // skip value
+      update.len = modPtr - update.base;
+      if (splitStartTime != 0 && updateTimestamp > splitStartTime && strcmp(row, splitRow) <= 0) {
 	splitMods.push_back(update);
 	splitSize += update.len;
       }
@@ -652,74 +647,78 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, RangeSpecificationT *rangeS
 	goMods.push_back(update);
 	goSize += update.len;
       }
+      row = (const char *)((ByteString32T *)modPtr)->data;
     }
-    else {
-      stopMods.push_back(update);
-      stopSize += update.len;
-    }
-  }
 
-  /**
-     cout << "goMods.size() = " << goMods.size() << endl;
-     cout << "stopMods.size() = " << stopMods.size() << endl;
-  **/
-
-  if (splitSize > 0) {
-    boost::shared_array<uint8_t> bufPtr( new uint8_t [ splitSize ] );
-    uint8_t *base = bufPtr.get();
-    uint8_t *ptr = base;
+    if (splitSize > 0) {
+      boost::shared_array<uint8_t> bufPtr( new uint8_t [ splitSize ] );
+      uint8_t *base = bufPtr.get();
+      uint8_t *ptr = base;
       
-    for (size_t i=0; i<splitMods.size(); i++) {
-      memcpy(ptr, splitMods[i].base, splitMods[i].len);
-      ptr += splitMods[i].len;
+      for (size_t i=0; i<splitMods.size(); i++) {
+	memcpy(ptr, splitMods[i].base, splitMods[i].len);
+	ptr += splitMods[i].len;
+      }
+
+      if ((error = splitLogPtr->Write(tableName, base, ptr-base, clientTimestamp)) != Error::OK) {
+	errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to split log";
+	rangePtr->DecrementUpdateCounter();
+	goto abort;
+      }
     }
 
-    if ((error = splitLogPtr->Write(rangeSpec->tableName, base, ptr-base, clientTimestamp)) != Error::OK) {
-      errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to split log";
-      goto abort;
+    /**
+     * Commit mutations that are destined for this range
+     */
+    if (goSize > 0) {
+      boost::shared_array<uint8_t> bufPtr( new uint8_t [ goSize ] );
+      uint8_t *base = bufPtr.get();
+      uint8_t *ptr = base;
+
+      for (size_t i=0; i<goMods.size(); i++) {
+	memcpy(ptr, goMods[i].base, goMods[i].len);
+	ptr += goMods[i].len;
+      }
+      if ((error = Global::log->Write(tableName, base, ptr-base, clientTimestamp)) != Error::OK) {
+	errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to commit log";
+	rangePtr->DecrementUpdateCounter();
+	goto abort;
+      }
     }
-  }
 
-  /**
-   * Commit mutations that are destined for this range server
-   */
-  if (goSize > 0) {
-    boost::shared_array<uint8_t> bufPtr( new uint8_t [ goSize ] );
-    uint8_t *base = bufPtr.get();
-    uint8_t *ptr = base;
-
+    /**
+     * Apply the modifications
+     */
+    rangePtr->Lock();
+    /** Apply the GO mods **/
     for (size_t i=0; i<goMods.size(); i++) {
-      memcpy(ptr, goMods[i].base, goMods[i].len);
-      ptr += goMods[i].len;
+      ByteString32T *key = (ByteString32T *)goMods[i].base;
+      ByteString32T *value = (ByteString32T *)(goMods[i].base + Length(key));
+      rangePtr->Add(key, value);
     }
-    if ((error = Global::log->Write(rangeSpec->tableName, base, ptr-base, clientTimestamp)) != Error::OK) {
-      errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to commit log";
-      goto abort;
+    /** Apply the SPLIT mods **/
+    for (size_t i=0; i<splitMods.size(); i++) {
+      ByteString32T *key = (ByteString32T *)splitMods[i].base;
+      ByteString32T *value = (ByteString32T *)(splitMods[i].base + Length(key));
+      rangePtr->Add(key, value);
+    }
+    rangePtr->Unlock();
+
+    /**
+     * Split and Compaction processing
+     */
+    rangePtr->ScheduleMaintenance();
+
+    rangePtr->DecrementUpdateCounter();
+
+    if (Global::verbose) {
+      LOG_VA_INFO("Added %d (%d split off) updates to '%s'", goMods.size()+splitMods.size(), splitMods.size(), tableName);
     }
   }
 
-  /**
-   * Apply the modifications
-   */
-  rangePtr->Lock();
-  /** Apply the GO mods **/
-  for (size_t i=0; i<goMods.size(); i++) {
-    ByteString32T *key = (ByteString32T *)goMods[i].base;
-    ByteString32T *value = (ByteString32T *)(goMods[i].base + Length(key));
-    rangePtr->Add(key, value);
+  if (Global::verbose) {
+    LOG_VA_INFO("Dropped %d updates since they didn't lie within any of this server's ranges", stopMods.size());
   }
-  /** Apply the SPLIT mods **/
-  for (size_t i=0; i<splitMods.size(); i++) {
-    ByteString32T *key = (ByteString32T *)splitMods[i].base;
-    ByteString32T *value = (ByteString32T *)(splitMods[i].base + Length(key));
-    rangePtr->Add(key, value);
-  }
-  rangePtr->Unlock();
-
-  /**
-   * Split and Compaction processing
-   */
-  rangePtr->ScheduleMaintenance();
 
   /**
    * Send back response
@@ -743,29 +742,9 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, RangeSpecificationT *rangeS
     }
   }
 
-  // Get table info
-  // For each K/V pair
-  //  - Get range
-  //  - If OK, add to goBuf
-  //  - If no range, add to stopBuf
-  // If goBuf non-empty, add goBuf to commit log
-  // If stopBuf non-empty, return Error::PARTIAL_UPDATE with stopBuf
-  // otherwise, return Error::OK
-  // Add goBuf K/V pairs to CellCaches
-  // If range size exceeds threshold, schedule split
-  // else if CellCache exceeds threshold, schedule compaction
-
-  if (Global::verbose) {
-    LOG_VA_INFO("Added %d (%d split off) and dropped %d updates to '%s'",
-		goMods.size() + splitMods.size(), splitMods.size(), stopMods.size(), rangeSpec->tableName);
-  }
-
   error = Error::OK;
 
  abort:
-
-  if (needDecrement)
-    rangePtr->DecrementUpdateCounter();
 
   if (error != Error::OK) {
     LOG_VA_ERROR("%s '%s'", Error::GetText(error), errMsg.c_str());
@@ -774,6 +753,7 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, RangeSpecificationT *rangeS
     }
   }
 }
+
 
 
 /**

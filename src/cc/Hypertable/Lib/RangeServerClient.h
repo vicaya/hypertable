@@ -45,8 +45,8 @@ namespace hypertable {
     int LoadRange(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, DispatchHandler *handler);
     int LoadRange(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec);
 
-    int Update(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, uint8_t *data, size_t len, DispatchHandler *handler);
-    int Update(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, uint8_t *data, size_t len);
+    int Update(struct sockaddr_in &addr, std::string tableName, uint32_t generation, uint8_t *data, size_t len, DispatchHandler *handler);
+    int Update(struct sockaddr_in &addr, std::string tableName, uint32_t generation, uint8_t *data, size_t len);
 
     int CreateScanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &spec, DispatchHandler *handler);
     int CreateScanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &spec);

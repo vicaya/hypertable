@@ -40,7 +40,7 @@ namespace hypertable {
     static const char *mCommandStrings[];
 
     static CommBuf *CreateRequestLoadRange(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec);
-    static CommBuf *CreateRequestUpdate(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, uint8_t *data, size_t len);
+    static CommBuf *CreateRequestUpdate(struct sockaddr_in &addr, std::string &tableName, uint32_t generation, uint8_t *data, size_t len);
     static CommBuf *CreateRequestCreateScanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &scanSpec);
     static CommBuf *CreateRequestFetchScanblock(struct sockaddr_in &addr, int scannerId);
     static CommBuf *CreateRequestStatus();

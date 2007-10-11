@@ -65,3 +65,22 @@ void TableInfo::AddRange(RangeInfoPtr &rangeInfoPtr) {
   mRangeMap[rangeEndRow] = rangePtr;
 }
 
+
+/**
+ * 
+ */
+bool TableInfo::FindContainingRange(std::string row, RangePtr &rangePtr) {
+  boost::mutex::scoped_lock lock(mMutex);
+
+  RangeMapT::iterator iter = mRangeMap.lower_bound(row);
+
+  if (iter == mRangeMap.end())
+    return false;
+
+  if (row <= (*iter).second->StartRow())
+    return false;
+
+  rangePtr = (*iter).second;
+
+  return true;
+}
