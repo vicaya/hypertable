@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include "Common/InetAddr.h"
+
 #include "DfsBroker/Lib/Client.h"
 #include "Hypertable/Lib/Schema.h"
 #include "Hyperspace/DirEntry.h"
@@ -35,6 +37,7 @@ using namespace std;
 Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr, ApplicationQueue *appQueue) : mAppQueue(appQueue), mVerbose(false), mHyperspace(0), mDfsClient(0) {
   int error;
   Client *dfsClient;
+  uint16_t port;
 
   mHyperspace = new Hyperspace::Session(connManager->GetComm(), propsPtr, &mHyperspaceSessionHandler);
 
@@ -44,6 +47,11 @@ Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr, Applicat
   }
 
   mVerbose = propsPtr->getPropertyBool("verbose", false);
+
+  if ((port = (uint16_t)propsPtr->getPropertyInt("Hypertable.Master.port", 0)) == 0) {
+    LOG_ERROR("Hypertable.Master.port property not found in config file, exiting...");
+    exit(1);
+  }
 
   /**
    * Create DFS Client connection
@@ -90,6 +98,17 @@ Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr, Applicat
     if ((error = mHyperspace->AttrGet(mMasterFileHandle, "last_table_id", valueBuf)) != Error::OK) {
       LOG_VA_ERROR("Problem getting attribute 'last_table_id' from file /hypertable/master - %s", Error::GetText(error));
       exit(1);
+    }
+
+    // Write master location
+    {
+      std::string addrStr;
+      InetAddr::GetHostname(addrStr);
+      addrStr = addrStr + ":" + (int)port;
+      if ((error = mHyperspace->AttrSet(mMasterFileHandle, "address", addrStr.c_str(), strlen(addrStr.c_str()))) != Error::OK) {
+	LOG_VA_ERROR("Problem setting attribute 'address' of hyperspace file /hypertable/master - %s", Error::GetText(error));
+	exit(1);
+      }
     }
 
     assert(valueBuf.fill() == sizeof(int32_t));

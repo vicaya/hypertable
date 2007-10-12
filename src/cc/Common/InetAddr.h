@@ -36,6 +36,7 @@ namespace hypertable {
     static bool Initialize(struct sockaddr_in *addr, const char *addrStr);
     static bool Initialize(struct sockaddr_in *addr, uint32_t haddr, uint16_t port);
     static const char *StringFormat(std::string &addrStr, struct sockaddr_in &addr);
+    static void GetHostname(std::string &hostname);
   };
 
 }

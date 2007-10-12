@@ -27,6 +27,7 @@ extern "C" {
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/utsname.h>
 }
 
 #include "InetAddr.h"
@@ -84,4 +85,14 @@ bool InetAddr::Initialize(struct sockaddr_in *addr, uint32_t haddr, uint16_t por
 const char *InetAddr::StringFormat(std::string &addrStr, struct sockaddr_in &addr) {
   addrStr = (std::string)inet_ntoa(addr.sin_addr) + ":" + ntohs(addr.sin_port);
   return addrStr.c_str();
+}
+
+
+/**
+ *
+ */
+void InetAddr::GetHostname(std::string &hostname) {
+  struct utsname u;
+  uname(&u);
+  hostname = u.nodename;
 }
