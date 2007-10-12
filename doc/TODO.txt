@@ -4,6 +4,7 @@ Hyperspace:
 - Add consistent gid to requests
 
 TODO:
+- Add Create command to Hyperspace that allows caller to supply initial attributes
 - Add ReactorFactory::Destroy
 - Get rid of connection ID from Event structure
 - Add support for ExpireTime column garbage collection as well as time
@@ -32,7 +33,9 @@ TODO:
 
 
 DONE:
+- Modified RangeServer UPDATE command to accept updates for any/all of the server's ranges instead of just a single range
 - Added atomic open/lock commands to Hyperspace
+- Got RangeServer birth/death discovery logic working in Master
 - Implement single-server Hyperspace
 - Change EventPtr to intrusive_ptr
 - Add recursive delete to dfsclient and then modify start-servers.sh to use this to cleanup

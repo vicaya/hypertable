@@ -48,7 +48,6 @@ int CommandOpen::run() {
   int eventMask = 0;
   char *str, *last;
   uint64_t handle;
-  bool created;
   int error;
 
   for (size_t i=0; i<mArgs.size(); i++) {
@@ -113,7 +112,7 @@ int CommandOpen::run() {
 
   HandleCallbackPtr callbackPtr = new FileHandleCallback(eventMask);
 
-  if ((error = mSession->Open(fname, flags, callbackPtr, &handle, &created)) == Error::OK) {
+  if ((error = mSession->Open(fname, flags, callbackPtr, &handle)) == Error::OK) {
     std::string normalName;
     Util::NormalizePathname(fname, normalName);
     Global::fileMap[normalName] = handle;

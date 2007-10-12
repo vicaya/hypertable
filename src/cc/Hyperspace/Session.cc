@@ -73,26 +73,20 @@ Session::Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback)
 }
 
 
-int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, uint64_t *handlep, bool *createdp) {
+int Session::Open(ClientHandleStatePtr &handleStatePtr, CommBufPtr &cbufPtr, uint64_t *handlep) {
   DispatchHandlerSynchronizer syncHandler;
   hypertable::EventPtr eventPtr;
-  ClientHandleStatePtr handleStatePtr( new ClientHandleState() );
 
   handleStatePtr->handle = 0;
-  handleStatePtr->openFlags = flags;
-  handleStatePtr->callbackPtr = callbackPtr;
-  NormalizeName(name, handleStatePtr->normalName);
   handleStatePtr->sequencer = 0;
   handleStatePtr->lockStatus = 0;
 
-  if ((flags & OPEN_FLAG_LOCK_SHARED) == OPEN_FLAG_LOCK_SHARED)
+  if ((handleStatePtr->openFlags & OPEN_FLAG_LOCK_SHARED) == OPEN_FLAG_LOCK_SHARED)
     handleStatePtr->lockMode = LOCK_MODE_SHARED;
-  else if ((flags & OPEN_FLAG_LOCK_EXCLUSIVE) == OPEN_FLAG_LOCK_EXCLUSIVE)
+  else if ((handleStatePtr->openFlags & OPEN_FLAG_LOCK_EXCLUSIVE) == OPEN_FLAG_LOCK_EXCLUSIVE)
     handleStatePtr->lockMode = LOCK_MODE_EXCLUSIVE;
   else
     handleStatePtr->lockMode = 0;
-
-  CommBufPtr cbufPtr( Protocol::CreateOpenRequest(handleStatePtr->normalName, flags, callbackPtr) );
 
  try_again:
   if (!WaitForSafe())
@@ -101,12 +95,10 @@ int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackP
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      int eventMask = 0;
-      if (handleStatePtr->callbackPtr)
-	eventMask = callbackPtr->GetEventMask();
       error = (int)Protocol::ResponseCode(eventPtr.get());
       LOG_VA_ERROR("Hyperspace 'open' error, name=%s flags=0x%x events=0x%x : %s",
-		   handleStatePtr->normalName.c_str(), flags, eventMask, Error::GetText(error));
+		   handleStatePtr->normalName.c_str(), handleStatePtr->openFlags,
+		   handleStatePtr->eventMask, Error::GetText(error));
       if (mVerbose)
 	LOG_VA_ERROR("%s", Protocol::StringFormatMessage(eventPtr.get()).c_str());
     }
@@ -120,8 +112,7 @@ int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackP
 	return Error::RESPONSE_TRUNCATED;
       if (!Serialization::DecodeLong(&ptr, &remaining, &handleStatePtr->lockGeneration))
 	return Error::RESPONSE_TRUNCATED;
-      if (createdp)
-	*createdp = cbyte ? true : false;
+      /** if (createdp) *createdp = cbyte ? true : false; **/
       handleStatePtr->handle = *handlep;
       mKeepaliveHandler->RegisterHandle(handleStatePtr);
     }
@@ -133,6 +124,28 @@ int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackP
 
   return error;
 }
+
+
+
+int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, uint64_t *handlep) {
+  ClientHandleStatePtr handleStatePtr( new ClientHandleState() );
+
+  handleStatePtr->openFlags = flags;
+  handleStatePtr->eventMask = (callbackPtr) ? callbackPtr->GetEventMask() : 0;
+  handleStatePtr->callbackPtr = callbackPtr;
+  NormalizeName(name, handleStatePtr->normalName);
+
+  CommBufPtr cbufPtr( Protocol::CreateOpenRequest(handleStatePtr->normalName, flags, callbackPtr) );
+
+  return Open(handleStatePtr, cbufPtr, handlep);
+
+}
+
+
+int Create(string name, uint32_t flags, HandleCallbackPtr &callbackPtr, vector< pair<string, string> > &initAttrs, uint64_t *handlep) {
+  return Error::OK;
+}
+
 
 
 /**

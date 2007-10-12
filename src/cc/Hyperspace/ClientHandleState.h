@@ -37,6 +37,7 @@ namespace Hyperspace {
   public:
     uint64_t     handle;
     uint32_t     openFlags;
+    uint32_t     eventMask;
     std::string  normalName;
     HandleCallbackPtr callbackPtr;
     struct LockSequencerT *sequencer;
