@@ -5,6 +5,10 @@ distributed systems.  Type 'help' for a description of commands.
 
 
 << BasicTest >>
+open foo flags=READ
+attrget foo msg1
+Hello, World!
+close foo
 
 << NotificationTest >>
 mkdir dir1/foo

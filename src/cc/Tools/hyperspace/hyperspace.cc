@@ -48,6 +48,7 @@ extern "C" {
 #include "CommandMkdir.h"
 #include "CommandDelete.h"
 #include "CommandOpen.h"
+#include "CommandCreate.h"
 #include "CommandClose.h"
 #include "CommandAttrSet.h"
 #include "CommandAttrGet.h"
@@ -255,6 +256,7 @@ int main(int argc, char **argv, char **envp) {
   commands.push_back( new CommandMkdir(session) );
   commands.push_back( new CommandDelete(session) );
   commands.push_back( new CommandOpen(session) );
+  commands.push_back( new CommandCreate(session) );
   commands.push_back( new CommandClose(session) );
   commands.push_back( new CommandAttrSet(session) );
   commands.push_back( new CommandAttrGet(session) );

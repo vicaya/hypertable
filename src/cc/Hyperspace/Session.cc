@@ -158,7 +158,7 @@ int Session::Create(std::string name, uint32_t flags, HandleCallbackPtr &callbac
   handleStatePtr->callbackPtr = callbackPtr;
   NormalizeName(name, handleStatePtr->normalName);
 
-  CommBufPtr cbufPtr( Protocol::CreateOpenRequest(handleStatePtr->normalName, flags, callbackPtr, initAttrs) );
+  CommBufPtr cbufPtr( Protocol::CreateOpenRequest(handleStatePtr->normalName, handleStatePtr->openFlags, callbackPtr, initAttrs) );
 
   return Open(handleStatePtr, cbufPtr, handlep);
 }

@@ -47,6 +47,10 @@ HYPERSPACE invalid handle
 attrdel foo testattr
 ERROR hyperspace : Hyperspace 'attrdel' error, name=testattr : HYPERSPACE invalid handle
 HYPERSPACE invalid handle
+delete foo
+create foo flags=READ|WRITE attr:msg1="Hello, World!" attr:msg2="How now brown cow"
+close foo
+delete foo
 
 << NotificationTest >>
 mkdir dir1

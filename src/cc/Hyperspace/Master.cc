@@ -528,8 +528,18 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
 	}
 	len = sizeof(int64_t);
       }
-
       assert(len == sizeof(int64_t));
+
+      /**
+       * Set the initial attributes
+       */
+      for (size_t i=0; i<initAttrs.size(); i++) {
+	if (FileUtils::Fsetxattr(nodePtr->fd, initAttrs[i].name, initAttrs[i].value, initAttrs[i].valueLen, 0) == -1) {
+	  LOG_VA_ERROR("Problem creating extended attribute '%s' on file '%s' - %s",
+		       initAttrs[i].name, name, strerror(errno));
+	  DUMP_CORE;
+	}
+      }
 
       if (flags & OPEN_FLAG_TEMP) {
 	nodePtr->ephemeral = true;

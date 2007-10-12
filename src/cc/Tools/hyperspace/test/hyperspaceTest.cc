@@ -229,10 +229,20 @@ namespace {
     IssueCommand(gFd1, "readdir /");
     IssueCommand(gFd1, "close /");
     IssueCommand(gFd1, "delete dir1");
-    IssueCommand(gFd1, "close foo");    
+    IssueCommand(gFd1, "close foo");
     IssueCommand(gFd1, "attrset foo testattr=\"Hello, World!\"");
     IssueCommand(gFd1, "attrget foo testattr");
     IssueCommand(gFd1, "attrdel foo testattr");
+    IssueCommand(gFd1, "delete foo");
+    IssueCommand(gFd1, "create foo flags=READ|WRITE attr:msg1=\"Hello, World!\" attr:msg2=\"How now brown cow\"");
+    IssueCommand(gFd2, "open foo flags=READ");
+    IssueCommand(gFd3, "open foo flags=READ");
+    IssueCommand(gFd2, "attrget foo msg1");
+    IssueCommand(gFd3, "attrget foo msg2");
+    IssueCommand(gFd1, "close foo");
+    IssueCommand(gFd2, "close foo");
+    IssueCommand(gFd3, "close foo");
+    IssueCommand(gFd1, "delete foo");
   }
 
   void NotificationTest() {

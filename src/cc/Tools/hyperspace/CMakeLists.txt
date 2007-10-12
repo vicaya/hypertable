@@ -25,6 +25,7 @@ set ( hyperspace_SRCS
 CommandMkdir.cc
 CommandDelete.cc
 CommandOpen.cc
+CommandCreate.cc
 CommandClose.cc
 CommandAttrSet.cc
 CommandAttrGet.cc
