@@ -20,6 +20,8 @@
 #ifndef HYPERSPACE_PROTOCOL_H
 #define HYPERSPACE_PROTOCOL_H
 
+#include <vector>
+
 extern "C" {
 #include <stdint.h>
 #include <string.h>
@@ -36,6 +38,15 @@ using namespace hypertable;
 
 namespace Hyperspace {
 
+  /**
+   * Structure to hold attribute and value
+   */
+  typedef struct {
+    const char *name;
+    const void *value;
+    int32_t valueLen;
+  } AttributeT;
+
   class Protocol : public hypertable::Protocol {
 
   public:
@@ -47,7 +58,7 @@ namespace Hyperspace {
     static CommBuf *CreateServerKeepaliveRequest(SessionDataPtr &sessionPtr);
     static CommBuf *CreateHandshakeRequest(uint64_t sessionId);
 
-    static CommBuf *CreateOpenRequest(std::string &name, uint32_t flags, HandleCallbackPtr &callbackPtr);
+    static CommBuf *CreateOpenRequest(std::string &name, uint32_t flags, HandleCallbackPtr &callbackPtr, std::vector<AttributeT> &initAttrs);
     static CommBuf *CreateCloseRequest(uint64_t handle);
     static CommBuf *CreateMkdirRequest(std::string &name);
     static CommBuf *CreateDeleteRequest(std::string &name);

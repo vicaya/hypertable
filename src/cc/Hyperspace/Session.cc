@@ -127,23 +127,40 @@ int Session::Open(ClientHandleStatePtr &handleStatePtr, CommBufPtr &cbufPtr, uin
 
 
 
+/**
+ *
+ */
 int Session::Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, uint64_t *handlep) {
   ClientHandleStatePtr handleStatePtr( new ClientHandleState() );
+  std::vector<AttributeT> emptyAttrs;
 
   handleStatePtr->openFlags = flags;
   handleStatePtr->eventMask = (callbackPtr) ? callbackPtr->GetEventMask() : 0;
   handleStatePtr->callbackPtr = callbackPtr;
   NormalizeName(name, handleStatePtr->normalName);
 
-  CommBufPtr cbufPtr( Protocol::CreateOpenRequest(handleStatePtr->normalName, flags, callbackPtr) );
+  CommBufPtr cbufPtr( Protocol::CreateOpenRequest(handleStatePtr->normalName, flags, callbackPtr, emptyAttrs) );
 
   return Open(handleStatePtr, cbufPtr, handlep);
 
 }
 
 
-int Create(string name, uint32_t flags, HandleCallbackPtr &callbackPtr, vector< pair<string, string> > &initAttrs, uint64_t *handlep) {
-  return Error::OK;
+
+/**
+ *
+ */
+int Session::Create(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, std::vector<AttributeT> &initAttrs, uint64_t *handlep) {
+  ClientHandleStatePtr handleStatePtr( new ClientHandleState() );
+
+  handleStatePtr->openFlags = flags | OPEN_FLAG_CREATE | OPEN_FLAG_EXCL;
+  handleStatePtr->eventMask = (callbackPtr) ? callbackPtr->GetEventMask() : 0;
+  handleStatePtr->callbackPtr = callbackPtr;
+  NormalizeName(name, handleStatePtr->normalName);
+
+  CommBufPtr cbufPtr( Protocol::CreateOpenRequest(handleStatePtr->normalName, flags, callbackPtr, initAttrs) );
+
+  return Open(handleStatePtr, cbufPtr, handlep);
 }
 
 

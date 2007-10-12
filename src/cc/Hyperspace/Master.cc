@@ -391,7 +391,7 @@ void Master::Delete(ResponseCallback *cb, uint64_t sessionId, const char *name) 
 /**
  * Open
  */
-void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name, uint32_t flags, uint32_t eventMask) {
+void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name, uint32_t flags, uint32_t eventMask, std::vector<AttributeT> &initAttrs) {
   std::string absName;
   std::string childName;
   SessionDataPtr sessionPtr;

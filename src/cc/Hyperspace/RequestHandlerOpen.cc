@@ -27,6 +27,7 @@
 #include "Hypertable/Lib/Types.h"
 
 #include "Master.h"
+#include "Protocol.h"
 #include "RequestHandlerOpen.h"
 
 using namespace Hyperspace;
@@ -39,9 +40,12 @@ void RequestHandlerOpen::run() {
   ResponseCallbackOpen cb(mComm, mEventPtr);
   const char *name;
   uint32_t flags;
-  uint32_t eventMask;
+  uint32_t eventMask;  
   size_t remaining = mEventPtr->messageLen - 2;
   uint8_t *msgPtr = mEventPtr->message + 2;
+  uint32_t attrCount;
+  AttributeT attr;
+  std::vector<AttributeT> initAttrs;
 
   // flags
   if (!Serialization::DecodeInt(&msgPtr, &remaining, &flags))
@@ -55,7 +59,20 @@ void RequestHandlerOpen::run() {
   if (!Serialization::DecodeString(&msgPtr, &remaining, &name))
     goto abort;
 
-  mMaster->Open(&cb, mSessionId, name, flags, eventMask);
+  // initial attribute count
+  if (!Serialization::DecodeInt(&msgPtr, &remaining, &attrCount))
+    goto abort;
+
+  // 
+  for (uint32_t i=0; i<attrCount; i++) {
+    if (!Serialization::DecodeString(&msgPtr, &remaining, &attr.name))
+      goto abort;
+    if (!Serialization::DecodeByteArray(&msgPtr, &remaining, (uint8_t **)&attr.value, &attr.valueLen))
+      goto abort;
+    initAttrs.push_back(attr);
+  }
+
+  mMaster->Open(&cb, mSessionId, name, flags, eventMask, initAttrs);
 
   return;
 

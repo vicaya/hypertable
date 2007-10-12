@@ -135,10 +135,19 @@ CommBuf *Hyperspace::Protocol::CreateHandshakeRequest(uint64_t sessionId) {
   return cbuf;
 }
 
-CommBuf *Hyperspace::Protocol::CreateOpenRequest(std::string &name, uint32_t flags, HandleCallbackPtr &callbackPtr) {
+
+/**
+ *
+ */
+CommBuf *Hyperspace::Protocol::CreateOpenRequest(std::string &name, uint32_t flags, HandleCallbackPtr &callbackPtr, std::vector<AttributeT> &initAttrs) {
+  size_t len = 14 + Serialization::EncodedLengthString(name);
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, fileNameToGroupId(name));
   hbuilder.AssignUniqueId();
-  CommBuf *cbuf = new CommBuf(hbuilder, 10 + Serialization::EncodedLengthString(name));
+  for (size_t i=0; i<initAttrs.size(); i++)
+    len += Serialization::EncodedLengthString(name) + Serialization::EncodedLengthByteArray(initAttrs[i].valueLen);
+
+  CommBuf *cbuf = new CommBuf(hbuilder, len);
+
   cbuf->AppendShort(COMMAND_OPEN);
   cbuf->AppendInt(flags);
   if (callbackPtr)
@@ -146,6 +155,14 @@ CommBuf *Hyperspace::Protocol::CreateOpenRequest(std::string &name, uint32_t fla
   else
     cbuf->AppendInt(0);
   cbuf->AppendString(name);
+
+  // append initial attributes
+  cbuf->AppendInt(initAttrs.size());
+  for (size_t i=0; i<initAttrs.size(); i++) {
+    cbuf->AppendString(initAttrs[i].name);
+    cbuf->AppendByteArray(initAttrs[i].value, initAttrs[i].valueLen);
+  }
+
   return cbuf;
 }
 

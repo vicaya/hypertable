@@ -40,7 +40,6 @@
 
 using namespace hypertable;
 using namespace Hyperspace;
-using namespace std;
 
 namespace Hyperspace {
 
@@ -57,15 +56,6 @@ namespace Hyperspace {
     OPEN_FLAG_TEMP           = 0x00020, // used in conjunction with CREATE to create an ephemeral file
     OPEN_FLAG_LOCK_SHARED    = 0x00044, // atomically open and lock file shared, fail if can't
     OPEN_FLAG_LOCK_EXCLUSIVE = 0x00084  // atomically open and lock file exclusive, fail if can't
-  };
-
-  /**
-   * Node metadata
-   */
-  struct NodeMetadataT {
-    uint64_t generation;
-    uint64_t lockGeneration;
-    uint64_t mtime;
   };
 
   /**
@@ -93,17 +83,17 @@ namespace Hyperspace {
 
     Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback);
 
-    int Open(string name, uint32_t flags, HandleCallbackPtr &callbackPtr, uint64_t *handlep);
-    int Create(string name, uint32_t flags, HandleCallbackPtr &callbackPtr, vector< pair<string, string> > &initAttrs, uint64_t *handlep);
+    int Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, uint64_t *handlep);
+    int Create(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, std::vector<AttributeT> &initAttrs, uint64_t *handlep);
     int Cancel(uint64_t handle);
     int Close(uint64_t handle);
     int Poison(uint64_t handle);
-    int Mkdir(string name);
-    int AttrSet(uint64_t handle, string name, const void *value, size_t valueLen);
-    int AttrGet(uint64_t handle, string name, DynamicBuffer &value);
-    int AttrDel(uint64_t handle, string name);
-    int Exists(string name, bool *existsp);
-    int Delete(string name);
+    int Mkdir(std::string name);
+    int AttrSet(uint64_t handle, std::string name, const void *value, size_t valueLen);
+    int AttrGet(uint64_t handle, std::string name, DynamicBuffer &value);
+    int AttrDel(uint64_t handle, std::string name);
+    int Exists(std::string name, bool *existsp);
+    int Delete(std::string name);
     int Readdir(uint64_t handle, vector<struct DirEntryT> &listing);
     int Lock(uint64_t handle, uint32_t mode, struct LockSequencerT *sequencerp);
     int TryLock(uint64_t handle, uint32_t mode, uint32_t *statusp, struct LockSequencerT *sequencerp);
@@ -124,7 +114,7 @@ namespace Hyperspace {
 
     bool WaitForSafe();
     int SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler);
-    void NormalizeName(string name, string &normal);
+    void NormalizeName(std::string name, std::string &normal);
     int Open(ClientHandleStatePtr &handleStatePtr, CommBufPtr &cbufPtr, uint64_t *handlep);
 
     boost::mutex       mMutex;
