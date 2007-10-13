@@ -79,7 +79,8 @@ HOW TO BUILD
   cd ~/build/hypertable
   make test
 
-[ not necessary now, but will be soon ... ]
+
+LATER:
 
 To set extended attributes, you should add the user_xattr property to the relevant
 file systems in your /etc/fstab file. For example:
