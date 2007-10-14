@@ -130,6 +130,10 @@ $HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable"
 PIDFILE=$HYPERTABLE_HOME/run/Hyperspace.pid
 LOGFILE=$HYPERTABLE_HOME/log/Hyperspace.log
 
+if [ ! -d $HYPERTABLE_HOME/hyperspace ] ; then
+    mkdir $HYPERTABLE_HOME/hyperspace
+fi
+
 $HYPERTABLE_HOME/bin/serverup hyperspace
 if [ $? != 0 ] ; then
     nohup $HYPERTABLE_HOME/bin/Hyperspace.Master --pidfile=$PIDFILE --verbose 1>& $LOGFILE &
