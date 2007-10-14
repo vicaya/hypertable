@@ -34,7 +34,7 @@ namespace __gnu_cxx {
       return hash< const char* >()( x.c_str() );
     }
   };
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__i386__)
   template<> struct hash< uint64_t > {
     size_t operator()( const uint64_t val ) const {
       return size_t(val);
