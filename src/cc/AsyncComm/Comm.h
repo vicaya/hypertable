@@ -50,6 +50,8 @@ namespace hypertable {
 
     int Connect(struct sockaddr_in &addr, time_t timeout, DispatchHandler *defaultHandler);
 
+    int Connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, DispatchHandler *defaultHandler);
+
     int Listen(struct sockaddr_in &addr, ConnectionHandlerFactory *hfactory, DispatchHandler *defaultHandler=0);
 
     int SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *responseHandler);
@@ -69,6 +71,9 @@ namespace hypertable {
     int CloseSocket(struct sockaddr_in &addr);
 
   private:
+
+    int ConnectSocket(int sd, struct sockaddr_in &addr, time_t timeout, DispatchHandler *defaultHandler);
+
     boost::mutex  mMutex;
     std::string   mAppName;
     HandlerMap    mHandlerMap;

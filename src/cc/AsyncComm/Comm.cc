@@ -85,9 +85,6 @@ Comm::~Comm() {
  */
 int Comm::Connect(struct sockaddr_in &addr, time_t timeout, DispatchHandler *defaultHandler) {
   int sd;
-  IOHandlerPtr handlerPtr;
-  IOHandlerData *dataHandler;
-  int one = 1;
 
   if (mHandlerMap.ContainsHandler(addr))
     return Error::COMM_ALREADY_CONNECTED;
@@ -97,38 +94,32 @@ int Comm::Connect(struct sockaddr_in &addr, time_t timeout, DispatchHandler *def
     exit(1);
   }
 
-  // Set to non-blocking
-  FileUtils::SetFlags(sd, O_NONBLOCK);
+  return ConnectSocket(sd, addr, timeout, defaultHandler);
+}
 
-#if defined(__linux__)
-  if (setsockopt(sd, SOL_TCP, TCP_NODELAY, &one, sizeof(one)) < 0)
-    cerr << "setsockopt(TCP_NODELAY) failure: " << strerror(errno) << endl;
-#elif defined(__APPLE__)
-  if (setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one)) < 0)
-    LOG_VA_WARN("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
-#endif
 
-  handlerPtr = dataHandler = new IOHandlerData(sd, addr, defaultHandler, mHandlerMap);
-  mHandlerMap.InsertHandler(dataHandler);
-  dataHandler->SetTimeout(timeout);
 
-  while (connect(sd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) < 0) {
-    if (errno == EINTR) {
-      poll(0, 0, 1000);
-      continue;
-    }
-    else if (errno == EINPROGRESS) {
-      dataHandler->StartPolling();
-      dataHandler->AddPollInterest(Reactor::READ_READY|Reactor::WRITE_READY);
-      return Error::OK;
-    }
-    LOG_VA_ERROR("connect() failure : %s", strerror(errno));
+
+/**
+ */
+int Comm::Connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, DispatchHandler *defaultHandler) {
+  int sd;
+
+  if (mHandlerMap.ContainsHandler(addr))
+    return Error::COMM_ALREADY_CONNECTED;
+
+  if ((sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+    LOG_VA_ERROR("socket() failure: %s", strerror(errno));
     exit(1);
   }
 
-  dataHandler->StartPolling();
+  // bind socket to local address
+  if ((bind(sd, (const sockaddr *)&localAddr, sizeof(sockaddr_in))) < 0) {
+    LOG_VA_ERROR("bind() failure: %s", strerror(errno));
+    exit(1);
+  }
 
-  return Error::OK;
+  return ConnectSocket(sd, addr, timeout, defaultHandler);
 }
 
 
@@ -357,3 +348,49 @@ int Comm::CloseSocket(struct sockaddr_in &addr) {
 }
 
 
+/**
+ *  ----- Private methods -----
+ */
+
+
+/**
+ *
+ */
+int Comm::ConnectSocket(int sd, struct sockaddr_in &addr, time_t timeout, DispatchHandler *defaultHandler) {
+  IOHandlerPtr handlerPtr;
+  IOHandlerData *dataHandler;
+  int one = 1;
+
+  // Set to non-blocking
+  FileUtils::SetFlags(sd, O_NONBLOCK);
+
+#if defined(__linux__)
+  if (setsockopt(sd, SOL_TCP, TCP_NODELAY, &one, sizeof(one)) < 0)
+    cerr << "setsockopt(TCP_NODELAY) failure: " << strerror(errno) << endl;
+#elif defined(__APPLE__)
+  if (setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one)) < 0)
+    LOG_VA_WARN("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
+#endif
+
+  handlerPtr = dataHandler = new IOHandlerData(sd, addr, defaultHandler, mHandlerMap);
+  mHandlerMap.InsertHandler(dataHandler);
+  dataHandler->SetTimeout(timeout);
+
+  while (connect(sd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) < 0) {
+    if (errno == EINTR) {
+      poll(0, 0, 1000);
+      continue;
+    }
+    else if (errno == EINPROGRESS) {
+      dataHandler->StartPolling();
+      dataHandler->AddPollInterest(Reactor::READ_READY|Reactor::WRITE_READY);
+      return Error::OK;
+    }
+    LOG_VA_ERROR("connect() failure : %s", strerror(errno));
+    exit(1);
+  }
+
+  dataHandler->StartPolling();
+
+  return Error::OK;
+}
