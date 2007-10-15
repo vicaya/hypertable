@@ -218,10 +218,12 @@ int main(int argc, char **argv) {
   if (!connManager->WaitForConnection(addr, 15))
     cerr << "Timed out waiting for for connection to Range Server.  Exiting ..." << endl;
 
+#if 0
   // Connect to Master
   Global::master = new MasterClient(connManager, propsPtr);
   if (!Global::master->WaitForConnection(15))
     cerr << "Timed out waiting for for connection to Master.  Exiting ..." << endl;
+#endif
 
   // Connect to Hyperspace
   Global::hyperspace = new Hyperspace::Session(connManager->GetComm(), propsPtr, 0);

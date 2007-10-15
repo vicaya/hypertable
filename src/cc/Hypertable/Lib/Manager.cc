@@ -21,6 +21,7 @@
 #include <cassert>
 
 #include "Common/Error.h"
+#include "Common/InetAddr.h"
 #include "Common/Logger.h"
 #include "Common/Properties.h"
 #include "Common/System.h"
@@ -34,6 +35,9 @@
  *
  */
 Manager::Manager(std::string configFile) {
+  uint16_t masterPort;
+  const char *masterHost;
+  struct sockaddr_in addr;
   PropertiesPtr propsPtr( new Properties(configFile) );
 
   mInstPtr.reset( new InstanceData() );
@@ -42,14 +46,35 @@ Manager::Manager(std::string configFile) {
   mInstPtr->connectionManager = new ConnectionManager(mInstPtr->comm);
 
   /**
-   *  Create Master
+   *  Establish connection to Master
    */
-  mInstPtr->masterPtr.reset( new MasterClient(mInstPtr->connectionManager, propsPtr) );
+  {
+    if ((masterPort = (uint16_t)propsPtr->getPropertyInt("Hypertable.Master.port", 0)) == 0) {
+      LOG_ERROR("Hypertable.Master.port property not specified.");
+      exit(1);
+    }
 
-  if (!mInstPtr->masterPtr->WaitForConnection(60)) {
+    if ((masterHost = propsPtr->getProperty("Hypertable.Master.host", (const char *)0)) == 0) {
+      LOG_ERROR("Hypertable.Master.host property not specified.");
+      exit(1);
+    }
+
+    if (!InetAddr::Initialize(&addr, masterHost, masterPort))
+      exit(1);
+  }
+
+  mInstPtr->connectionManager->Add(addr, 30, "Master");
+
+  // connect to master
+  if (!mInstPtr->connectionManager->WaitForConnection(addr, 30)) {
     cerr << "Unable to connect to Master, exiting..." << endl;
     exit(1);
   }
+
+  /**
+   *  Create Master client object
+   */
+  mInstPtr->masterPtr.reset( new MasterClient(mInstPtr->comm, addr) );
 
 }
 

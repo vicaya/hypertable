@@ -25,51 +25,13 @@
 #include "MasterClient.h"
 
 
-MasterClient::MasterClient(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mConnectionManager(connManager) {
-  uint16_t masterPort = 0;
-  const char *masterHost = 0;
-
-  mComm = mConnectionManager->GetComm();
-
-  /**
-   *  Establish connection to Master
-   */
-  {
-    if ((masterPort = (uint16_t)propsPtr->getPropertyInt("Hypertable.Master.port", 0)) == 0) {
-      LOG_ERROR("Hypertable.Master.port property not specified.");
-      exit(1);
-    }
-
-    if ((masterHost = propsPtr->getProperty("Hypertable.Master.host", (const char *)0)) == 0) {
-      LOG_ERROR("Hypertable.Master.host property not specified.");
-      exit(1);
-    }
-
-    memset(&mAddr, 0, sizeof(struct sockaddr_in));
-    {
-      struct hostent *he = gethostbyname(masterHost);
-      if (he == 0) {
-	herror("gethostbyname()");
-	exit(1);
-      }
-      memcpy(&mAddr.sin_addr.s_addr, he->h_addr_list[0], sizeof(uint32_t));
-    }
-    mAddr.sin_family = AF_INET;
-    mAddr.sin_port = htons(masterPort);
-
-  }
-
-  mConnectionManager->Add(mAddr, 30, "Master");
-
+MasterClient::MasterClient(Comm *comm, struct sockaddr_in &addr) : mComm(comm), mAddr(addr) {
   mProtocol = new MasterProtocol();
-  
 }
 
 
 MasterClient::~MasterClient() {
-  // TODO:  implement me!
-  delete mConnectionManager;
-  return;
+  delete mProtocol;
 }
 
 

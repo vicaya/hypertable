@@ -26,6 +26,7 @@ extern "C" {
 }
 
 #include "Common/Error.h"
+#include "Common/InetAddr.h"
 #include "Common/Logger.h"
 #include "Common/Properties.h"
 #include "Common/System.h"
@@ -155,17 +156,8 @@ int main(int argc, char **argv) {
       exit(1);
     }
 
-    memset(&addr, 0, sizeof(struct sockaddr_in));
-    {
-      struct hostent *he = gethostbyname(hostName.c_str());
-      if (he == 0) {
-	herror("gethostbyname()");
-	exit(1);
-      }
-      memcpy(&addr.sin_addr.s_addr, he->h_addr_list[0], sizeof(uint32_t));
-    }
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
+    if (!InetAddr::Initialize(&addr, hostName.c_str(), (uint16_t)port))
+      exit(1);
   }
 
   comm = new Comm();
@@ -187,9 +179,14 @@ int main(int argc, char **argv) {
       exit(1);
   }
   else if (serverName == "master") {
-    master = new MasterClient(connManager, propsPtr);
-    if (!master->WaitForConnection(2))
+
+    connManager->Add(addr, 30, "Master");
+
+    if (!connManager->WaitForConnection(addr, 2))
       exit(1);
+
+    master = new MasterClient(comm, addr);
+
     if ((error = master->Status()) != Error::OK)
       exit(1);
   }

@@ -35,7 +35,6 @@ namespace hypertable {
   public:
     static Hyperspace::Session *hyperspace;
     static RangeServerClient *rangeServer;
-    static MasterClient *master;
     static int32_t outstandingScannerId;
     static SchemaPtr outstandingSchemaPtr;
 
