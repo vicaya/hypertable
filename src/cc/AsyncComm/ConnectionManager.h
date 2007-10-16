@@ -59,7 +59,9 @@ namespace hypertable {
     public:
       bool                connected;
       struct sockaddr_in  addr;
+      struct sockaddr_in  localAddr;
       time_t              timeout;
+      DispatchHandler    *handler;
       boost::mutex        mutex;
       boost::condition    cond;
       boost::xtime        nextRetry;
@@ -121,8 +123,35 @@ namespace hypertable {
      * @param addr The IP address to maintain a connection to
      * @param timeout The timeout value (in seconds) that gets passed into Comm::Connect and also used as the waiting period betweeen connection attempts
      * @param serviceName The name of the serivce at the other end of the connection used for descriptive log messages
+     * @param handler This is the default handler to install on the connection.  All events get changed through to this handler.
      */
-    void Add(struct sockaddr_in &addr, time_t timeout, const char *serviceName);
+    void Add(struct sockaddr_in &addr, time_t timeout, const char *serviceName, DispatchHandler *handler=0);
+
+    /**
+     * Adds a connection to the connection manager with a specific local address.
+     * The address structure addr holds an address that the connection manager should
+     * maintain a connection to.  This method first checks to see if the address is
+     * already registered with the connection manager and returns immediately if it is.
+     * Otherwise, it adds the address to an internal connection map, attempts to
+     * establish a connection to the address, and then returns.  From here on out,
+     * the internal manager thread will maintian the connection by continually
+     * re-establishing the connection if it ever gets broken.
+     *
+     * @param addr The IP address to maintain a connection to
+     * @param localAddr The local address to bind to
+     * @param timeout The timeout value (in seconds) that gets passed into Comm::Connect and also used as the waiting period betweeen connection attempts
+     * @param serviceName The name of the serivce at the other end of the connection used for descriptive log messages
+     * @param handler This is the default handler to install on the connection.  All events get changed through to this handler.
+     */
+    void Add(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, const char *serviceName, DispatchHandler *handler=0);
+
+    /**
+     * Removes a connection from the connection manager
+     * 
+     * @param addr remote address of connection to remove
+     * @return Error code (Error::OK on success)
+     */
+    int Remove(struct sockaddr_in &addr);
 
     /**
      * This method blocks until the connection to the given address is established.

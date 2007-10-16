@@ -47,8 +47,9 @@ using namespace std;
  * @param addr         The address to connect to
  * @param timeout      The timeout passed down into AsyncComm, also used as the retry timeout
  * @param serviceName  The name of the service we're connnecting to (used for better log messages)
+ * @param handler      This is the default handler to install on the connection.  All events get changed through to this handler.
  */
-void ConnectionManager::Add(struct sockaddr_in &addr, time_t timeout, const char *serviceName) {
+void ConnectionManager::Add(struct sockaddr_in &addr, time_t timeout, const char *serviceName, DispatchHandler *handler) {
   boost::mutex::scoped_lock lock(mImpl->mutex);
   SockAddrMapT<ConnectionStatePtr> iter;
   ConnectionState *connState;
@@ -60,7 +61,47 @@ void ConnectionManager::Add(struct sockaddr_in &addr, time_t timeout, const char
   connState = new ConnectionState();
   connState->connected = false;
   connState->addr = addr;
+  memset(&connState->localAddr, 0, sizeof(struct sockaddr_in));
   connState->timeout = timeout;
+  connState->handler = handler;
+  connState->serviceName = (serviceName) ? serviceName : "";
+  boost::xtime_get(&connState->nextRetry, boost::TIME_UTC);
+
+  mImpl->connMap[addr] = ConnectionStatePtr(connState);
+
+  {
+    boost::mutex::scoped_lock connLock(connState->mutex);
+    SendConnectRequest(connState);
+  }
+}
+
+
+/**
+ * This method adds a connection to the connection manager if it is not already added.
+ * It first allocates a ConnectionStateT structure for the connection and initializes
+ * it to the non-connected state.  It then attempts to establish the connection.
+ *
+ * @param addr         The address to connect to
+ * @param localAddr    The local address to bind to
+ * @param timeout      The timeout passed down into AsyncComm, also used as the retry timeout
+ * @param serviceName  The name of the service we're connnecting to (used for better log messages)
+ * @param handler      This is the default handler to install on the connection.  All events get changed through to this handler.
+ */
+void ConnectionManager::Add(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, const char *serviceName, DispatchHandler *handler) {
+  boost::mutex::scoped_lock lock(mImpl->mutex);
+  SockAddrMapT<ConnectionStatePtr> iter;
+  ConnectionState *connState;
+  int error;
+
+  if (mImpl->connMap.find(addr) != mImpl->connMap.end())
+    return;
+
+  connState = new ConnectionState();
+  connState->connected = false;
+  connState->addr = addr;
+  connState->localAddr = localAddr;
+  connState->timeout = timeout;
+  connState->handler = handler;
   connState->serviceName = (serviceName) ? serviceName : "";
   boost::xtime_get(&connState->nextRetry, boost::TIME_UTC);
 
@@ -114,7 +155,10 @@ bool ConnectionManager::WaitForConnection(struct sockaddr_in &addr, long maxWait
 void ConnectionManager::SendConnectRequest(ConnectionState *connState) {
   int error;
 
-  error = mImpl->comm->Connect(connState->addr, connState->timeout, this);
+  if (connState->localAddr.sin_port != 0)
+    error = mImpl->comm->Connect(connState->addr, connState->localAddr, connState->timeout, this);
+  else
+    error = mImpl->comm->Connect(connState->addr, connState->timeout, this);
 
   if (error == Error::COMM_ALREADY_CONNECTED) {
     connState->connected = true;
@@ -141,6 +185,35 @@ void ConnectionManager::SendConnectRequest(ConnectionState *connState) {
     mImpl->retryCond.notify_one();
   }
 
+}
+
+
+
+/**
+ *
+ */
+int ConnectionManager::Remove(struct sockaddr_in &addr) {
+  bool doClose = false;
+  int error = Error::OK;
+
+  {
+    boost::mutex::scoped_lock lock(mImpl->mutex);
+    SockAddrMapT<ConnectionStatePtr>::iterator iter = mImpl->connMap.find(addr);
+
+    if (iter != mImpl->connMap.end()) {
+      boost::mutex::scoped_lock connLock((*iter).second->mutex);
+      if ((*iter).second->connected)
+	doClose = true;
+      else
+	(*iter).second->connected = true;  // will prevent further connection attempts
+      mImpl->connMap.erase(iter);
+    }
+  }
+
+  if (doClose)
+    error = mImpl->comm->CloseSocket(addr);
+
+  return error;
 }
 
 
@@ -182,9 +255,13 @@ void ConnectionManager::handle(EventPtr &eventPtr) {
       mImpl->retryQueue.push(connState);
       mImpl->retryCond.notify_one();
     }
+    
+    // Chain event to application supplied handler
+    if (connState->handler)
+      connState->handler->handle(eventPtr);
   }
   else {
-    LOG_VA_ERROR("Unable to find connection for %s:%d in map.", inet_ntoa(eventPtr->addr.sin_addr), ntohs(eventPtr->addr.sin_port));
+    LOG_VA_WARN("Unable to find connection for %s:%d in map.", inet_ntoa(eventPtr->addr.sin_addr), ntohs(eventPtr->addr.sin_port));
   }
 }
 
