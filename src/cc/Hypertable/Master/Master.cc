@@ -393,12 +393,21 @@ void Master::GetSchema(ResponseCallbackGetSchema *cb, const char *tableName) {
   DynamicBuffer schemaBuf(0);
   uint64_t handle;
   bool exists;
+  HandleCallbackPtr nullHandleCallback;
 
   /**
    * Check for table existence
    */
   if ((error = mHyperspace->Exists(tableFile, &exists)) != Error::OK) {
     errMsg = (std::string)"Problem checking for existence of table '" + tableName + "' - " + Error::GetText(error);
+    goto abort;
+  }
+
+  /**
+   * Open table file
+   */
+  if ((error = mHyperspace->Open(tableFile, OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
+    errMsg = "Unable to open Hyperspace table file '" + tableFile + "' (" + Error::GetText(error) + ")";
     goto abort;
   }
 

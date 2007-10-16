@@ -93,9 +93,11 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
   int error;
   uint16_t command = (uint16_t)-1;
 
+  /**
   if (mVerbose) {
     LOG_VA_INFO("%s", eventPtr->toString().c_str());
   }
+  **/
 
   if (eventPtr->type == hypertable::Event::MESSAGE) {
     uint8_t *msgPtr = eventPtr->message;
@@ -214,10 +216,12 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 
 	    mLastKnownEvent = eventId;
 	  }
-
+	  
+	  /**
 	  if (mVerbose) {
 	    LOG_VA_INFO("sessionId = %lld", mSessionId);
 	  }
+	  **/
 
 	  if (mConnHandler->Disconnected())
 	    mConnHandler->InitiateConnection(mMasterAddr, mLeaseInterval);

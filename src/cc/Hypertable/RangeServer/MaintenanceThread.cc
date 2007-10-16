@@ -26,7 +26,7 @@
 
 using namespace hypertable;
 
-std::queue<MaintenanceThread::CompactionInfoT> MaintenanceThread::msInputQueue;
+std::priority_queue<MaintenanceThread::WorkInfoT, std::vector<MaintenanceThread::WorkInfoT>, MaintenanceThread::ltWorkInfo> MaintenanceThread::msInputQueue;
 
 boost::mutex      MaintenanceThread::msMutex;
 boost::condition  MaintenanceThread::msCond;
@@ -34,9 +34,10 @@ boost::condition  MaintenanceThread::msCond;
 
 void MaintenanceThread::ScheduleMaintenance(Range *range) {
   boost::mutex::scoped_lock lock(msMutex);
-  CompactionInfoT workInfo;
+  WorkInfoT workInfo;
   workInfo.type = MAINTENANCE;
   workInfo.range = range;
+  boost::xtime_get(&workInfo.startTime, boost::TIME_UTC);
   msInputQueue.push(workInfo);
   msCond.notify_one();
 }
@@ -44,9 +45,10 @@ void MaintenanceThread::ScheduleMaintenance(Range *range) {
 
 void MaintenanceThread::ScheduleCompaction(Range *range, WorkType wtype) {
   boost::mutex::scoped_lock lock(msMutex);
-  CompactionInfoT workInfo;
+  WorkInfoT workInfo;
   workInfo.type = wtype;
   workInfo.range = range;
+  boost::xtime_get(&workInfo.startTime, boost::TIME_UTC);
   msInputQueue.push(workInfo);
   msCond.notify_one();
 }
@@ -56,19 +58,28 @@ void MaintenanceThread::ScheduleCompaction(Range *range, WorkType wtype) {
  *
  */
 void MaintenanceThread::operator()() {
-  CompactionInfoT workInfo;
-  AccessGroup *lg;
+  WorkInfoT workInfo;
+  boost::xtime now, nextWork;
 
   while (true) {
 
-    // protect msInputQueue with the mutex
+    // while the queue is empty or the top of the queue is not ready, wait
     {
       boost::mutex::scoped_lock lock(msMutex);
 
-      while (msInputQueue.empty())
-	msCond.wait(lock);
+      boost::xtime_get(&now, boost::TIME_UTC);
 
-      workInfo  = msInputQueue.front();
+      while (msInputQueue.empty() || xtime_cmp((msInputQueue.top()).startTime, now) > 0) {
+	if (msInputQueue.empty())
+	  msCond.wait(lock);
+	else {
+	  nextWork = (msInputQueue.top()).startTime;
+	  msCond.timed_wait(lock, nextWork);
+	}
+	boost::xtime_get(&now, boost::TIME_UTC);
+      }
+
+      workInfo = msInputQueue.top();
     }
 
     if (workInfo.type == COMPACTION_MAJOR || workInfo.type == COMPACTION_MINOR) {

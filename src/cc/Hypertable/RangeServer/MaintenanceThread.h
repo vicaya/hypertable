@@ -20,11 +20,12 @@
 #ifndef HYPERTABLE_MAINTENANCETHREAD_H
 #define HYPERTABLE_MAINTENANCETHREAD_H
 
-#include <boost/thread/condition.hpp>
-#include <boost/thread/mutex.hpp>
-
 #include <queue>
 #include <string>
+
+#include <boost/thread/condition.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/xtime.hpp>
 
 #include "AccessGroup.h"
 #include "Range.h"
@@ -37,11 +38,18 @@ namespace hypertable {
     enum WorkType { MAINTENANCE, SPLIT, MERGE, COMPACTION_MAJOR, COMPACTION_MINOR };
 
     typedef struct {
-      WorkType   type;
-      Range     *range;
-    } CompactionInfoT;
+      WorkType      type;
+      boost::xtime  startTime;
+      Range        *range;
+    } WorkInfoT;
 
-    static std::queue<CompactionInfoT> msInputQueue;
+    struct ltWorkInfo {
+      bool operator()(const WorkInfoT &wi1, const WorkInfoT &wi2) const {
+	return xtime_cmp(wi1.startTime, wi1.startTime) >= 0;
+      }
+    };
+
+    static std::priority_queue<WorkInfoT, std::vector<WorkInfoT>, ltWorkInfo> msInputQueue;
 
     static boost::mutex     msMutex;
     static boost::condition msCond;

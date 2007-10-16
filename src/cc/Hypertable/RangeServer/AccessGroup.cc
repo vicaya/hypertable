@@ -114,7 +114,6 @@ void AccessGroup::AddCellStore(CellStorePtr &cellStorePtr, uint32_t id) {
 }
 
 
-
 namespace {
   struct ltCellStore {
     bool operator()(const CellStorePtr &csPtr1, const CellStorePtr &csPtr2) const {
@@ -234,9 +233,9 @@ void AccessGroup::RunCompaction(uint64_t timestamp, bool major) {
   /**
    *  Update METADATA with new cellStore information
    */
-  if ((error = Global::metadata->GetRangeInfo(mTableName, mStartRow, mEndRow, rangeInfoPtr)) != Error::OK) {
-    LOG_VA_ERROR("Unable to find tablet (table='%s' startRow='%s' endRow='%s') in metadata - %s",
-		 mTableName.c_str(), mStartRow.c_str(), mEndRow.c_str(), Error::GetText(error));
+  if ((error = Global::metadata->GetRangeInfo(mTableName, mEndRow, rangeInfoPtr)) != Error::OK) {
+    LOG_VA_ERROR("Unable to find tablet (table='%s' endRow='%s') in metadata - %s",
+		 mTableName.c_str(), mEndRow.c_str(), Error::GetText(error));
     exit(1);
   }
   for (vector<string>::iterator iter = replacedFiles.begin(); iter != replacedFiles.end(); iter++)

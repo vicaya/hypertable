@@ -462,9 +462,17 @@ void RangeServer::LoadRange(ResponseCallback *cb, RangeSpecificationT *rangeSpec
   /**
    * 1. Read METADATA entry for this range and make sure it exists
    */
-  if ((error = Global::metadata->GetRangeInfo(rangeSpec->tableName, rangeSpec->startRow, rangeSpec->endRow, rangeInfoPtr)) != Error::OK) {
-    errMsg = (std::string)"Unable to locate range" + rangeSpec->tableName + "[" + rangeSpec->startRow + ":" + rangeSpec->endRow + "] in METADATA table";
+  if ((error = Global::metadata->GetRangeInfo(rangeSpec->tableName, rangeSpec->endRow, rangeInfoPtr)) != Error::OK) {
+    errMsg = (std::string)"Unable to locate range of table '" + rangeSpec->tableName + "' with end row '" + rangeSpec->endRow + "' in METADATA table";
     goto abort;
+  }
+  else {
+    std::string startRow;
+    rangeInfoPtr->GetStartRow(startRow);
+    if (startRow != (std::string)rangeSpec->startRow) {
+      errMsg = (std::string)"Unable to locate range " + rangeSpec->tableName + "[" + rangeSpec->startRow + ":" + rangeSpec->endRow + "] in METADATA table";
+      goto abort;
+    }
   }
 
   if (!GetTableInfo(rangeSpec->tableName, tableInfoPtr)) {

@@ -27,7 +27,8 @@ while [ -h "$this" ]; do
   fi
 done
 
-# convert relative path to absolute path                                                                                                                                   
+# convert relative path to absolute path
+
 bin=`dirname "$this"`
 script=`basename "$this"`
 bin=`cd "$bin"; pwd`
@@ -43,6 +44,7 @@ cd $HYPERTABLE_HOME
 export HYPERTABLE_HOME=`pwd`
 popd >& /dev/null
 
+
 #
 # Make sure log and run directories exist
 #
@@ -54,6 +56,7 @@ if [ ! -d $HYPERTABLE_HOME/log ] ; then
 fi
 
 VALGRIND=
+START_RANGESERVER="true"
 
 while [ "$1" != "${1##[-+]}" ]; do
     case $1 in
@@ -66,6 +69,10 @@ while [ "$1" != "${1##[-+]}" ]; do
 	    ;;
 	--valgrind)
 	    VALGRIND="valgrind -v --log-file=vg "
+	    shift
+	    ;;
+	--no-range-server)
+	    START_RANGESERVER="false"
 	    shift
 	    ;;
 	*)     
@@ -219,24 +226,27 @@ done
 #
 # Start Hypertable.RangeServer
 #
-PIDFILE=$HYPERTABLE_HOME/run/Hypertable.RangeServer.pid
-LOGFILE=$HYPERTABLE_HOME/log/Hypertable.RangeServer.log
+if [ "$START_RANGESERVER" == "true" ] ; then
 
-$HYPERTABLE_HOME/bin/serverup rangeserver
-if [ $? != 0 ] ; then
-    nohup $HYPERTABLE_HOME/bin/Hypertable.RangeServer --pidfile=$PIDFILE --metadata=$HYPERTABLE_HOME/test/metadata --verbose 1>& $LOGFILE &
-    sleep 1
+    PIDFILE=$HYPERTABLE_HOME/run/Hypertable.RangeServer.pid
+    LOGFILE=$HYPERTABLE_HOME/log/Hypertable.RangeServer.log
+
     $HYPERTABLE_HOME/bin/serverup rangeserver
     if [ $? != 0 ] ; then
-	echo -n "Hypertable.RangeServer hasn't come up yet, trying again in 5 seconds ..."
-	sleep 5
-	echo ""
+	nohup $HYPERTABLE_HOME/bin/Hypertable.RangeServer --pidfile=$PIDFILE --metadata=$HYPERTABLE_HOME/test/metadata --verbose 1>& $LOGFILE &
+	sleep 1
 	$HYPERTABLE_HOME/bin/serverup rangeserver
 	if [ $? != 0 ] ; then
-	    tail -100 $LOGFILE
-	    echo "Problem statring Hypertable.RangeServer";
-	    exit 1
+	    echo -n "Hypertable.RangeServer hasn't come up yet, trying again in 5 seconds ..."
+	    sleep 5
+	    echo ""
+	    $HYPERTABLE_HOME/bin/serverup rangeserver
+	    if [ $? != 0 ] ; then
+		tail -100 $LOGFILE
+		echo "Problem statring Hypertable.RangeServer";
+		exit 1
+	    fi
 	fi
     fi
+    echo "Successfully started Hypertable.RangeServer"
 fi
-echo "Successfully started Hypertable.RangeServer"

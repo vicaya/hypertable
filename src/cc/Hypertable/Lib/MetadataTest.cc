@@ -59,9 +59,9 @@ int main(int argc, char **argv) {
   string startRow = "juggernaut";
   string endRow = "";
   
-  if ((error = metadata->GetRangeInfo(tableName, startRow, endRow, rangeInfoPtr)) != Error::OK) {
-    LOG_VA_ERROR("Problem locating range (table='%s' startRow='%s' endRow='%s') - %s",
-		 tableName.c_str(), startRow.c_str(), endRow.c_str(), Error::GetText(error));
+  if ((error = metadata->GetRangeInfo(tableName, endRow, rangeInfoPtr)) != Error::OK) {
+    LOG_VA_ERROR("Problem locating range (table='%s' endRow='%s') - %s",
+		 tableName.c_str(), endRow.c_str(), Error::GetText(error));
     exit(1);
   }
 

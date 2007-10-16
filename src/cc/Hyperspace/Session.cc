@@ -360,7 +360,10 @@ int Session::AttrGet(uint64_t handle, std::string name, DynamicBuffer &value) {
 	assert(!"problem decoding return packet");
       }
       value.clear();
-      value.add(attrValue, attrValueLen);
+      value.ensure(attrValueLen+1);
+      value.addNoCheck(attrValue, attrValueLen);
+      // nul-terminate to make caller's lives easier
+      *value.ptr = 0;
     }
   }
   else {

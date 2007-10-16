@@ -188,7 +188,7 @@ void Metadata::CharacterDataHandler(void *userData, const XML_Char *s, int len) 
 }
 
 
-int Metadata::GetRangeInfo(std::string &tableName, std::string &startRow, std::string &endRow, RangeInfoPtr &rangeInfoPtr) {
+int Metadata::GetRangeInfo(std::string &tableName, std::string &endRow, RangeInfoPtr &rangeInfoPtr) {
   TableMapT::iterator tmIter = mTableMap.find(tableName);
   if (tmIter == mTableMap.end())
     return Error::RANGESERVER_RANGE_NOT_FOUND;
@@ -196,12 +196,6 @@ int Metadata::GetRangeInfo(std::string &tableName, std::string &startRow, std::s
   RangeInfoMapT::iterator iter = (*tmIter).second.find(endRow);
   if (iter == (*tmIter).second.end())
     return Error::RANGESERVER_RANGE_NOT_FOUND;
-
-  std::string rangeStartRow;
-
-  (*iter).second->GetStartRow(rangeStartRow);
-  if (rangeStartRow != startRow)
-    return Error::RANGESERVER_RANGE_MISMATCH;
 
   rangeInfoPtr = (*iter).second;
   return Error::OK;

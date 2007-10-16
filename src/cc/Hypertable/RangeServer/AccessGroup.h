@@ -68,6 +68,8 @@ namespace hypertable {
     void RunCompaction(uint64_t timestamp, bool major);
     uint64_t GetLogCutoffTime() { return mLogCutoffTime; }
 
+    void Shrink(std::string &newStartRow);
+
   private:
     boost::mutex         mMutex;
     boost::mutex::scoped_lock  mLock;

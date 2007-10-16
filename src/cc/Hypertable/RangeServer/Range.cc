@@ -301,9 +301,9 @@ void Range::DoMaintenance() {
     /**
      *  Update METADATA with split information
      */
-    if ((error = Global::metadata->GetRangeInfo(mTableName, mStartRow, mEndRow, rangeInfoPtr)) != Error::OK) {
-      LOG_VA_ERROR("Unable to find range (table='%s' startRow='%s' endRow='%s') in metadata - %s",
-		   mTableName.c_str(), mStartRow.c_str(), mEndRow.c_str(), Error::GetText(error));
+    if ((error = Global::metadata->GetRangeInfo(mTableName, mEndRow, rangeInfoPtr)) != Error::OK) {
+      LOG_VA_ERROR("Unable to find range (table='%s' endRow='%s') in metadata - %s",
+		   mTableName.c_str(), mEndRow.c_str(), Error::GetText(error));
       exit(1);
     }
     rangeInfoPtr->SetSplitPoint(splitPoint);
