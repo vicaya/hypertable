@@ -218,6 +218,7 @@ int main(int argc, char **argv) {
   int error;
   EventPtr eventPtr;
   ResponseHandler *respHandler;
+  DispatchHandlerPtr dhp;
   bool udpMode = false;
   string line;
   int outstanding = 0;
@@ -280,9 +281,10 @@ int main(int argc, char **argv) {
 
   if (udpMode) {
     respHandler = new ResponseHandlerUDP();
+    dhp = respHandler;
     port++;
     InetAddr::Initialize(&localAddr, INADDR_ANY, port);
-    if ((error = comm->CreateDatagramReceiveSocket(&localAddr, respHandler)) != Error::OK) {
+    if ((error = comm->CreateDatagramReceiveSocket(&localAddr, dhp)) != Error::OK) {
       std::string str;
       LOG_VA_ERROR("Problem creating UDP receive socket %s - %s", InetAddr::StringFormat(str, localAddr), Error::GetText(error));
       exit(1);
@@ -290,7 +292,8 @@ int main(int argc, char **argv) {
   }
   else {
     respHandler = new ResponseHandlerTCP();
-    if ((error = comm->Connect(addr, timeout, respHandler)) != Error::OK) {
+    dhp = respHandler;
+    if ((error = comm->Connect(addr, timeout, dhp)) != Error::OK) {
       LOG_VA_ERROR("Comm::Connect error - %s", Error::GetText(error));
       exit(1);
     }
@@ -314,7 +317,7 @@ int main(int argc, char **argv) {
 	}
       }
       else {
-	while ((error = comm->SendRequest(addr, cbufPtr, respHandler)) != Error::OK) {
+	while ((error = comm->SendRequest(addr, cbufPtr, dhp)) != Error::OK) {
 	  if (error == Error::COMM_NOT_CONNECTED) {
 	    if (retries == 5) {
 	      LOG_ERROR("Connection timeout.");

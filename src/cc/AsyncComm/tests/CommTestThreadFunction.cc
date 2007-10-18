@@ -102,8 +102,8 @@ void CommTestThreadFunction::operator()() {
   ofstream outfile(mOutputFile);
   const char *str;
   int nsent = 0;
-
   ResponseHandler *respHandler = new ResponseHandler();
+  DispatchHandlerPtr dispatchHandlerPtr(respHandler);
 
   if (infile.is_open()) {
     while (!infile.eof() && nsent < MAX_MESSAGES) {
@@ -113,7 +113,7 @@ void CommTestThreadFunction::operator()() {
 	CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::EncodedLengthString(line)) );
 	cbufPtr->AppendString(line);
 	int retries = 0;
-	while ((error = mComm->SendRequest(mAddr, cbufPtr, respHandler)) != Error::OK) {
+	while ((error = mComm->SendRequest(mAddr, cbufPtr, dispatchHandlerPtr)) != Error::OK) {
 	  if (error == Error::COMM_NOT_CONNECTED) {
 	    if (retries == 5) {
 	      LOG_ERROR("Connection timeout.");
@@ -164,5 +164,4 @@ void CommTestThreadFunction::operator()() {
     //cout << "out = " << outstanding << endl;
     outstanding--;
   }
-  delete respHandler;
 }

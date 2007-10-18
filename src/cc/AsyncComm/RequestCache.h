@@ -40,7 +40,7 @@ namespace hypertable {
       boost::xtime       expire;
       uint32_t           id;
       IOHandler         *handler;
-      DispatchHandler   *dh;
+      DispatchHandlerPtr dhp;
     } CacheNodeT;
 
     typedef __gnu_cxx::hash_map<uint32_t, CacheNodeT *> IdHandlerMapT;
@@ -49,11 +49,11 @@ namespace hypertable {
 
     RequestCache() : mIdMap(), mHead(0), mTail(0) { return; }
 
-    void Insert(uint32_t id, IOHandler *handler, DispatchHandler *dh, boost::xtime &expire);
+    void Insert(uint32_t id, IOHandler *handler, DispatchHandlerPtr &dhp, boost::xtime &expire);
 
-    DispatchHandler *Remove(uint32_t id);
+    bool Remove(uint32_t id, DispatchHandlerPtr &dhp);
 
-    DispatchHandler *GetNextTimeout(boost::xtime &now, IOHandler *&handlerp, boost::xtime *nextTimeout);
+    bool GetNextTimeout(boost::xtime &now, IOHandler *&handlerp, boost::xtime *nextTimeout, DispatchHandlerPtr &dhp);
 
     void PurgeRequests(IOHandler *handler);
 

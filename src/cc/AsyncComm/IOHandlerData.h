@@ -47,8 +47,8 @@ namespace hypertable {
 
   public:
 
-    IOHandlerData(int sd, struct sockaddr_in &addr, DispatchHandler *dh, HandlerMap &hmap) 
-      : IOHandler(sd, addr, dh, hmap), mRequestCache(), mTimeout(0), mSendQueue() {
+    IOHandlerData(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp, HandlerMap &hmap) 
+      : IOHandler(sd, addr, dhp, hmap), mRequestCache(), mTimeout(0), mSendQueue() {
       mConnected = false;
       ResetIncomingMessageState();
       mId = atomic_inc_return(&msNextConnectionId);
@@ -66,7 +66,7 @@ namespace hypertable {
       mTimeout = timeout;
     }
 
-    int SendMessage(CommBufPtr &cbufPtr, DispatchHandler *dispatchHandler=0);
+    int SendMessage(CommBufPtr &cbufPtr, DispatchHandlerPtr &dispatchHandlerPtr);
 
     int FlushSendQueue();
 

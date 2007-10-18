@@ -114,12 +114,12 @@ void Reactor::HandleTimeouts(PollTimeout &nextTimeout) {
   {
     boost::mutex::scoped_lock lock(mMutex);
     IOHandler       *handler;
-    DispatchHandler *dh;
+    DispatchHandlerPtr dhp;
 
     boost::xtime_get(&now, boost::TIME_UTC);
 
-    while ((dh = mRequestCache.GetNextTimeout(now, handler, &nextRequestTimeout)) != 0) {
-      handler->DeliverEvent( new Event(Event::ERROR, 0, ((IOHandlerData *)handler)->GetAddress(), Error::COMM_REQUEST_TIMEOUT), dh );
+    while (mRequestCache.GetNextTimeout(now, handler, &nextRequestTimeout, dhp)) {
+      handler->DeliverEvent( new Event(Event::ERROR, 0, ((IOHandlerData *)handler)->GetAddress(), Error::COMM_REQUEST_TIMEOUT), dhp );
     }
 
     if (nextRequestTimeout.sec != 0) {
@@ -155,8 +155,8 @@ void Reactor::HandleTimeouts(PollTimeout &nextTimeout) {
    */
   for (size_t i=0; i<expiredTimers.size(); i++) {
     eventPtr = new Event(Event::TIMER, Error::OK);
-    if (expiredTimers[i].handler)
-      expiredTimers[i].handler->handle(eventPtr);
+    if (expiredTimers[i].dhp)
+      expiredTimers[i].dhp->handle(eventPtr);
   }
 
   {

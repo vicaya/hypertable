@@ -83,7 +83,7 @@ Comm::~Comm() {
 
 /**
  */
-int Comm::Connect(struct sockaddr_in &addr, time_t timeout, DispatchHandler *defaultHandler) {
+int Comm::Connect(struct sockaddr_in &addr, time_t timeout, DispatchHandlerPtr &defaultHandlerPtr) {
   int sd;
 
   if (mHandlerMap.ContainsHandler(addr))
@@ -94,7 +94,7 @@ int Comm::Connect(struct sockaddr_in &addr, time_t timeout, DispatchHandler *def
     exit(1);
   }
 
-  return ConnectSocket(sd, addr, timeout, defaultHandler);
+  return ConnectSocket(sd, addr, timeout, defaultHandlerPtr);
 }
 
 
@@ -102,7 +102,7 @@ int Comm::Connect(struct sockaddr_in &addr, time_t timeout, DispatchHandler *def
 
 /**
  */
-int Comm::Connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, DispatchHandler *defaultHandler) {
+int Comm::Connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, DispatchHandlerPtr &defaultHandlerPtr) {
   int sd;
 
   if (mHandlerMap.ContainsHandler(addr))
@@ -119,7 +119,7 @@ int Comm::Connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_
     exit(1);
   }
 
-  return ConnectSocket(sd, addr, timeout, defaultHandler);
+  return ConnectSocket(sd, addr, timeout, defaultHandlerPtr);
 }
 
 
@@ -127,7 +127,7 @@ int Comm::Connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_
 /**
  *
  */
-int Comm::Listen(struct sockaddr_in &addr, ConnectionHandlerFactory *hfactory, DispatchHandler *defaultHandler) {
+int Comm::Listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chfPtr, DispatchHandlerPtr &defaultHandlerPtr) {
   IOHandlerPtr handlerPtr;
   IOHandlerAccept *acceptHandler;
   int one = 1;
@@ -160,7 +160,7 @@ int Comm::Listen(struct sockaddr_in &addr, ConnectionHandlerFactory *hfactory, D
     exit(1);
   }
 
-  handlerPtr = acceptHandler = new IOHandlerAccept(sd, addr, defaultHandler, mHandlerMap, hfactory);
+  handlerPtr = acceptHandler = new IOHandlerAccept(sd, addr, defaultHandlerPtr, mHandlerMap, chfPtr);
   mHandlerMap.InsertHandler(acceptHandler);
   acceptHandler->StartPolling();
 
@@ -169,13 +169,13 @@ int Comm::Listen(struct sockaddr_in &addr, ConnectionHandlerFactory *hfactory, D
 
 
 
-int Comm::SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *responseHandler) {
+int Comm::SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandlerPtr &responseHandlerPtr) {
   boost::mutex::scoped_lock lock(mMutex);
   IOHandlerDataPtr dataHandlerPtr;
   Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
   int error = Error::OK;
 
-  assert((responseHandler != 0 && mheader->id != 0) || responseHandler == 0);
+  assert((responseHandlerPtr && mheader->id != 0) || !responseHandlerPtr);
 
   cbufPtr->ResetDataPointers();
 
@@ -186,7 +186,7 @@ int Comm::SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHan
 
   mheader->flags |= Header::FLAGS_MASK_REQUEST;
 
-  if ((error = dataHandlerPtr->SendMessage(cbufPtr, responseHandler)) != Error::OK)
+  if ((error = dataHandlerPtr->SendMessage(cbufPtr, responseHandlerPtr)) != Error::OK)
     dataHandlerPtr->Shutdown();
 
   return error;
@@ -198,6 +198,7 @@ int Comm::SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr) {
   IOHandlerDataPtr dataHandlerPtr;
   Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
   int error = Error::OK;
+  DispatchHandlerPtr nullDispatchHandler;
 
   cbufPtr->ResetDataPointers();
 
@@ -208,7 +209,7 @@ int Comm::SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr) {
 
   mheader->flags &= Header::FLAGS_MASK_RESPONSE;
 
-  if ((error = dataHandlerPtr->SendMessage(cbufPtr)) != Error::OK)
+  if ((error = dataHandlerPtr->SendMessage(cbufPtr, nullDispatchHandler)) != Error::OK)
     dataHandlerPtr->Shutdown();
 
   return error;
@@ -219,7 +220,7 @@ int Comm::SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr) {
 /**
  * 
  */
-int Comm::CreateDatagramReceiveSocket(struct sockaddr_in *addr, DispatchHandler *handler) {
+int Comm::CreateDatagramReceiveSocket(struct sockaddr_in *addr, DispatchHandlerPtr &dispatchHandlerPtr) {
   IOHandlerPtr handlerPtr;
   IOHandlerDatagram *datagramHandler;
   int one = 1;
@@ -251,7 +252,7 @@ int Comm::CreateDatagramReceiveSocket(struct sockaddr_in *addr, DispatchHandler 
     exit(1);
   }
 
-  handlerPtr = datagramHandler = new IOHandlerDatagram(sd, *addr, handler, mHandlerMap);
+  handlerPtr = datagramHandler = new IOHandlerDatagram(sd, *addr, dispatchHandlerPtr, mHandlerMap);
 
   handlerPtr->GetLocalAddress(addr);
 
@@ -292,12 +293,12 @@ int Comm::SendDatagram(struct sockaddr_in &addr, struct sockaddr_in &sendAddr, C
 /**
  *
  */
-int Comm::SetTimer(uint64_t durationMillis, DispatchHandler *handler) {
+int Comm::SetTimer(uint64_t durationMillis, DispatchHandlerPtr &dispatchHandlerPtr) {
   struct TimerT timer;
   boost::xtime_get(&timer.expireTime, boost::TIME_UTC);
   timer.expireTime.sec += durationMillis / 1000LL;
   timer.expireTime.nsec += (durationMillis % 1000LL) * 1000000LL;
-  timer.handler = handler;
+  timer.dhp = dispatchHandlerPtr;
   mTimerReactor->AddTimer(timer);
   return Error::OK;
 }
@@ -307,10 +308,10 @@ int Comm::SetTimer(uint64_t durationMillis, DispatchHandler *handler) {
 /**
  *
  */
-int Comm::SetTimerAbsolute(boost::xtime expireTime, DispatchHandler *handler) {
+int Comm::SetTimerAbsolute(boost::xtime expireTime, DispatchHandlerPtr &dispatchHandlerPtr) {
   struct TimerT timer;  
   memcpy(&timer.expireTime, &expireTime, sizeof(boost::xtime));
-  timer.handler = handler;
+  timer.dhp = dispatchHandlerPtr;
   mTimerReactor->AddTimer(timer);
   return Error::OK;
 }
@@ -356,7 +357,7 @@ int Comm::CloseSocket(struct sockaddr_in &addr) {
 /**
  *
  */
-int Comm::ConnectSocket(int sd, struct sockaddr_in &addr, time_t timeout, DispatchHandler *defaultHandler) {
+int Comm::ConnectSocket(int sd, struct sockaddr_in &addr, time_t timeout, DispatchHandlerPtr &defaultHandlerPtr) {
   IOHandlerPtr handlerPtr;
   IOHandlerData *dataHandler;
   int one = 1;
@@ -372,7 +373,7 @@ int Comm::ConnectSocket(int sd, struct sockaddr_in &addr, time_t timeout, Dispat
     LOG_VA_WARN("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
 #endif
 
-  handlerPtr = dataHandler = new IOHandlerData(sd, addr, defaultHandler, mHandlerMap);
+  handlerPtr = dataHandler = new IOHandlerData(sd, addr, defaultHandlerPtr, mHandlerMap);
   mHandlerMap.InsertHandler(dataHandler);
   dataHandler->SetTimeout(timeout);
 

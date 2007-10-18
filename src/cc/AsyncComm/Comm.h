@@ -48,31 +48,33 @@ namespace hypertable {
 
     ~Comm();
 
-    int Connect(struct sockaddr_in &addr, time_t timeout, DispatchHandler *defaultHandler);
+    int Connect(struct sockaddr_in &addr, time_t timeout, DispatchHandlerPtr &defaultHandlerPtr);
 
-    int Connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, DispatchHandler *defaultHandler);
+    int Connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, DispatchHandlerPtr &defaultHandlerPtr);
 
-    int Listen(struct sockaddr_in &addr, ConnectionHandlerFactory *hfactory, DispatchHandler *defaultHandler=0);
+    int Listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chfPtr);
 
-    int SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *responseHandler);
+    int Listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chfPtr, DispatchHandlerPtr &defaultHandlerPtr);
+
+    int SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandlerPtr &responseHandlerPtr);
 
     int SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr);
 
     int GetLocalAddress(struct sockaddr_in addr, struct sockaddr_in *localAddr);
 
-    int CreateDatagramReceiveSocket(struct sockaddr_in *addr, DispatchHandler *handler);
+    int CreateDatagramReceiveSocket(struct sockaddr_in *addr, DispatchHandlerPtr &handlerPtr);
 
     int SendDatagram(struct sockaddr_in &addr, struct sockaddr_in &sendAddr, CommBufPtr &cbufPtr);
 
-    int SetTimer(uint64_t durationMillis, DispatchHandler *handler);
+    int SetTimer(uint64_t durationMillis, DispatchHandlerPtr &handlerPtr);
 
-    int SetTimerAbsolute(boost::xtime expireTime, DispatchHandler *handler);
+    int SetTimerAbsolute(boost::xtime expireTime, DispatchHandlerPtr &handlerPtr);
 
     int CloseSocket(struct sockaddr_in &addr);
 
   private:
 
-    int ConnectSocket(int sd, struct sockaddr_in &addr, time_t timeout, DispatchHandler *defaultHandler);
+    int ConnectSocket(int sd, struct sockaddr_in &addr, time_t timeout, DispatchHandlerPtr &defaultHandlerPtr);
 
     boost::mutex  mMutex;
     std::string   mAppName;

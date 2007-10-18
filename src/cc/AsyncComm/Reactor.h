@@ -45,18 +45,18 @@ namespace hypertable {
 
     void operator()();
 
-    void AddRequest(uint32_t id, IOHandler *handler, DispatchHandler *dh, boost::xtime &expire) {
+    void AddRequest(uint32_t id, IOHandler *handler, DispatchHandlerPtr &dhp, boost::xtime &expire) {
       boost::mutex::scoped_lock lock(mMutex);
       boost::xtime now;
-      mRequestCache.Insert(id, handler, dh, expire);
+      mRequestCache.Insert(id, handler, dhp, expire);
       boost::xtime_get(&now, boost::TIME_UTC);
       if (mNextWakeup.sec == 0 || xtime_cmp(expire, mNextWakeup) < 0)
 	PollLoopInterrupt();	
     }
 
-    DispatchHandler *RemoveRequest(uint32_t id) {
+    bool RemoveRequest(uint32_t id, DispatchHandlerPtr &dhp) {
       boost::mutex::scoped_lock lock(mMutex);
-      return mRequestCache.Remove(id);
+      return mRequestCache.Remove(id, dhp);
     }
 
     void CancelRequests(IOHandler *handler) {

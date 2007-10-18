@@ -213,16 +213,16 @@ bool IOHandlerData::HandleEvent(struct kevent *event) {
 	  assert(nread == mMessageRemaining);
 	  available -= nread;
 
-	  DispatchHandler *dh = 0;
+	  DispatchHandlerPtr dhp;
 	  uint32_t id = ((Header::HeaderT *)mMessage)->id;
 	  if (id != 0 && 
 	      (((Header::HeaderT *)mMessage)->flags & Header::FLAGS_MASK_REQUEST) == 0 &&
-	      (dh = mReactor->RemoveRequest(id)) == 0) {
+	      !mReactor->RemoveRequest(id, dhp)) {
 	    LOG_VA_WARN("Received response for non-pending event (id=%d)", id);
 	    delete [] mMessage;
 	  }
 	  else
-	    DeliverEvent( new Event(Event::MESSAGE, mId, mAddr, Error::OK, (Header::HeaderT *)mMessage), dh );
+	    DeliverEvent( new Event(Event::MESSAGE, mId, mAddr, Error::OK, (Header::HeaderT *)mMessage), dhp );
 	  ResetIncomingMessageState();
 	}
 	else {
@@ -281,7 +281,7 @@ bool IOHandlerData::HandleWriteReadiness() {
 
 
 
-int IOHandlerData::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *dispatchHandler) {
+int IOHandlerData::SendMessage(CommBufPtr &cbufPtr, DispatchHandlerPtr &dispatchHandlerPtr) {
   boost::mutex::scoped_lock lock(mMutex);
   int error;
   boost::xtime expireTime;
@@ -294,8 +294,8 @@ int IOHandlerData::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *dispatchHan
   expireTime.sec += mTimeout;
   
   // If request, Add message ID to request cache
-  if (mheader->id != 0 && dispatchHandler != 0 && mheader->flags & Header::FLAGS_MASK_REQUEST)
-    mReactor->AddRequest(mheader->id, this, dispatchHandler, expireTime);
+  if (mheader->id != 0 && dispatchHandlerPtr && (mheader->flags & Header::FLAGS_MASK_REQUEST))
+    mReactor->AddRequest(mheader->id, this, dispatchHandlerPtr, expireTime);
 
   mSendQueue.push_back(cbufPtr);
 

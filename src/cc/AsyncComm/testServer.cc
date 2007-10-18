@@ -191,14 +191,14 @@ private:
  */
 class HandlerFactory : public ConnectionHandlerFactory {
 public:
-  HandlerFactory(DispatchHandler *dh) {
-    mDispatchHandler = dh;
+  HandlerFactory(DispatchHandlerPtr &dhp) {
+    mDispatchHandlerPtr = dhp;
   }
-  virtual DispatchHandler *newInstance() {
-    return mDispatchHandler;
+  virtual void newInstance(DispatchHandlerPtr &dhp) {
+    dhp = mDispatchHandlerPtr;
   }
 private:
-  DispatchHandler *mDispatchHandler;
+  DispatchHandlerPtr mDispatchHandlerPtr;
 };
 
 
@@ -211,11 +211,10 @@ int main(int argc, char **argv) {
   int rval, error;
   uint16_t port = DEFAULT_PORT;
   int reactorCount = 2;
-  HandlerFactory *hfactory = 0;
+  ConnectionHandlerFactoryPtr chfPtr;
   ApplicationQueue *appQueue = 0;
   bool udp = false;
-  Dispatcher *dispatcher = 0;
-  UdpDispatcher *udpDispatcher = 0;
+  DispatchHandlerPtr dhp;
   struct sockaddr_in localAddr;
 
   for (int i=1; i<argc; i++) {
@@ -258,27 +257,17 @@ int main(int argc, char **argv) {
   InetAddr::Initialize(&localAddr, INADDR_ANY, port);
 
   if (!udp) {
-
-    dispatcher = new Dispatcher(comm, appQueue);
-
-    hfactory = new HandlerFactory(dispatcher);
-
-    error = comm->Listen(localAddr, hfactory, dispatcher);
-
+    dhp = new Dispatcher(comm, appQueue);
+    chfPtr = new HandlerFactory(dhp);
+    error = comm->Listen(localAddr, chfPtr, dhp);
   }
   else {
-
-    udpDispatcher = new UdpDispatcher(comm);
-
-    error = comm->CreateDatagramReceiveSocket(&localAddr, udpDispatcher);
-    
+    dhp = new UdpDispatcher(comm);
+    error = comm->CreateDatagramReceiveSocket(&localAddr, dhp);
   }
 
   poll(0, 0, -1);
 
-  delete hfactory;
-  delete dispatcher;
-  delete udpDispatcher;
   delete comm;
   return 0;
 }  

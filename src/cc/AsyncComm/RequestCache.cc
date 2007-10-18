@@ -28,14 +28,14 @@ using namespace std;
 #include "RequestCache.h"
 using namespace hypertable;
 
-void RequestCache::Insert(uint32_t id, IOHandler *handler, DispatchHandler *dh, boost::xtime &expire) {
+void RequestCache::Insert(uint32_t id, IOHandler *handler, DispatchHandlerPtr &dhp, boost::xtime &expire) {
   CacheNodeT *node = new CacheNodeT;
 
   LOG_VA_DEBUG("Adding id %d", id);
 
   node->id = id;
   node->handler = handler;
-  node->dh = dh;
+  node->dhp = dhp;
   memcpy(&node->expire, &expire, sizeof(expire));
 
   if (mHead == 0) {
@@ -53,7 +53,7 @@ void RequestCache::Insert(uint32_t id, IOHandler *handler, DispatchHandler *dh, 
 }
 
 
-DispatchHandler *RequestCache::Remove(uint32_t id) {
+bool RequestCache::Remove(uint32_t id, DispatchHandlerPtr &dhp) {
 
   LOG_VA_DEBUG("Removing id %d", id);
 
@@ -79,17 +79,17 @@ DispatchHandler *RequestCache::Remove(uint32_t id) {
   mIdMap.erase(iter);
 
   if (node->handler != 0) {
-    DispatchHandler *dh = node->dh;
+    dhp = node->dhp;
     delete node;
-    return dh;
+    return true;
   }
   delete node;
-  return 0;
+  return false;
 }
 
 
 
-DispatchHandler *RequestCache::GetNextTimeout(boost::xtime &now, IOHandler *&handlerp, boost::xtime *nextTimeout) {
+bool RequestCache::GetNextTimeout(boost::xtime &now, IOHandler *&handlerp, boost::xtime *nextTimeout, DispatchHandlerPtr &dhp) {
 
   while (mHead && xtime_cmp(mHead->expire, now) <= 0) {
 
@@ -107,9 +107,9 @@ DispatchHandler *RequestCache::GetNextTimeout(boost::xtime &now, IOHandler *&han
 
     if (node->handler != 0) {
       handlerp = node->handler;
-      DispatchHandler *dh = node->dh;
+      dhp = node->dhp;
       delete node;
-      return dh;
+      return true;
     }
     delete node;
   }
@@ -119,7 +119,7 @@ DispatchHandler *RequestCache::GetNextTimeout(boost::xtime &now, IOHandler *&han
   else
     memset(nextTimeout, 0, sizeof(boost::xtime));
 
-  return 0;
+  return false;
 }
 
 
