@@ -18,20 +18,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 #ifndef HYPERTABLE_DISPATCHHANDLER_H
 #define HYPERTABLE_DISPATCHHANDLER_H
+
+#include <boost/intrusive_ptr.hpp>
+
+#include "Common/ReferenceCount.h"
 
 #include "Event.h"
 
 namespace hypertable {
 
-  class DispatchHandler {
+  class DispatchHandler : public ReferenceCount {
   public:
     virtual void handle(EventPtr &eventPtr) = 0;
 
     virtual ~DispatchHandler() { return; }
   };
+  typedef boost::intrusive_ptr<DispatchHandler> DispatchHandlerPtr;
+
 
 }
 

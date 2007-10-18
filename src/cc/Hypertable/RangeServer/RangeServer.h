@@ -71,6 +71,9 @@ namespace hypertable {
     TableInfoMapT mTableInfoMap;
     uint64_t      mExistenceFileHandle;
     struct LockSequencerT mExistenceFileSequencer;
+    std::string mMasterAddress;
+    uint64_t mMasterFileHandle;
+    DispatchHandler *mMasterFileDispatchHandler;
   };
 
 }

@@ -37,10 +37,12 @@ CommitLogLocal.cc
 CommitLogReaderLocal.cc
 ConnectionHandler.cc
 Constants.cc
+EventHandlerNewMaster.cc
 FileBlockCache.cc
 FillScanBlock.cc
 Global.cc
 MaintenanceThread.cc
+MasterFileHandler.cc
 MergeScanner.cc
 Range.cc
 RangeServer.cc

@@ -18,6 +18,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+extern "C" {
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+}
+
 #include "Common/InetAddr.h"
 
 #include "DfsBroker/Lib/Client.h"
@@ -100,11 +108,13 @@ Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr, Applicat
       exit(1);
     }
 
-    // Write master location
+    // Write master location in 'address' attribute, format is IP:port
     {
-      std::string addrStr;
-      InetAddr::GetHostname(addrStr);
-      addrStr = addrStr + ":" + (int)port;
+      std::string hostStr, addrStr;
+      struct hostent *he;
+      InetAddr::GetHostname(hostStr);
+      he = gethostbyname(hostStr.c_str());
+      addrStr = std::string(inet_ntoa(*(struct in_addr *)*he->h_addr_list)) + ":" + (int)port;
       if ((error = mHyperspace->AttrSet(mMasterFileHandle, "address", addrStr.c_str(), strlen(addrStr.c_str()))) != Error::OK) {
 	LOG_VA_ERROR("Problem setting attribute 'address' of hyperspace file /hypertable/master - %s", Error::GetText(error));
 	exit(1);

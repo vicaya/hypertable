@@ -103,6 +103,8 @@ RangeServer::RangeServer(ConnectionManager *connManager, PropertiesPtr &propsPtr
     exit(1);
   }
 
+  
+
   DfsBroker::Client *dfsClient = new DfsBroker::Client(connManager, propsPtr);
 
   if (mVerbose) {
