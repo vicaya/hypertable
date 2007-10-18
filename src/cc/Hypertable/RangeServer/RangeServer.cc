@@ -351,6 +351,8 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, RangeSpecific
   more = FillScanBlock(scannerPtr, kvBuffer+sizeof(int32_t), DEFAULT_SCANBUF_SIZE, kvLenp);
   if (more)
     id = Global::scannerMap.Put(scannerPtr, rangePtr);
+  else
+    id = 0;
 
   if (Global::verbose) {
     LOG_VA_INFO("Successfully created scanner on table '%s'", rangeSpec->tableName);
