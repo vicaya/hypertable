@@ -55,7 +55,9 @@ if [ ! -d $HYPERTABLE_HOME/log ] ; then
     mkdir $HYPERTABLE_HOME/log
 fi
 
-VALGRIND=
+VALGRIND_RANGESERVER=
+VALGRIND_MASTER=
+
 START_RANGESERVER="true"
 
 while [ "$1" != "${1##[-+]}" ]; do
@@ -67,8 +69,12 @@ while [ "$1" != "${1##[-+]}" ]; do
 	    DO_INITIALIZATION="true"
 	    shift
 	    ;;
-	--valgrind)
-	    VALGRIND="valgrind -v --log-file=vg "
+	--valgrind-range-server)
+	    VALGRIND_RANGESERVER="valgrind -v --log-file=vg "
+	    shift
+	    ;;
+	--valgrind-master)
+	    VALGRIND_MASTER="valgrind -v --log-file=vg "
 	    shift
 	    ;;
 	--no-range-server)
@@ -98,9 +104,9 @@ if [ $? != 0 ] ; then
   if [ "$1" == "hadoop" ] ; then
       nohup $HYPERTABLE_HOME/bin/jrun --pidfile $PIDFILE org.hypertable.DfsBroker.hadoop.main --verbose 1>& $LOGFILE &
   elif [ "$1" == "kosmos" ] ; then
-      $VALGRIND $HYPERTABLE_HOME/bin/kosmosBroker --pidfile=$PIDFILE --verbose 1>& $LOGFILE &   
+      $HYPERTABLE_HOME/bin/kosmosBroker --pidfile=$PIDFILE --verbose 1>& $LOGFILE &   
   elif [ "$1" == "local" ] ; then
-      $VALGRIND $HYPERTABLE_HOME/bin/localBroker --pidfile=$PIDFILE --verbose 1>& $LOGFILE &    
+      $HYPERTABLE_HOME/bin/localBroker --pidfile=$PIDFILE --verbose 1>& $LOGFILE &    
   else
       echo $"$0: Usage: stat-servers.sh [--initialize] [local|hadoop|kosmos]"      
       exit 1
@@ -182,7 +188,7 @@ LOGFILE=$HYPERTABLE_HOME/log/Hypertable.Master.log
 
 $HYPERTABLE_HOME/bin/serverup master
 if [ $? != 0 ] ; then
-    nohup $HYPERTABLE_HOME/bin/Hypertable.Master --pidfile=$PIDFILE --verbose 1>& $LOGFILE &
+    $VALGRIND_MASTER $HYPERTABLE_HOME/bin/Hypertable.Master --pidfile=$PIDFILE --verbose 1>& $LOGFILE &
     sleep 1
     $HYPERTABLE_HOME/bin/serverup master
     if [ $? != 0 ] ; then
@@ -233,7 +239,7 @@ if [ "$START_RANGESERVER" == "true" ] ; then
 
     $HYPERTABLE_HOME/bin/serverup rangeserver
     if [ $? != 0 ] ; then
-	nohup $HYPERTABLE_HOME/bin/Hypertable.RangeServer --pidfile=$PIDFILE --metadata=$HYPERTABLE_HOME/test/metadata --verbose 1>& $LOGFILE &
+	$VALGRIND_RANGESERVER  $HYPERTABLE_HOME/bin/Hypertable.RangeServer --pidfile=$PIDFILE --metadata=$HYPERTABLE_HOME/test/metadata --verbose 1>& $LOGFILE &
 	sleep 1
 	$HYPERTABLE_HOME/bin/serverup rangeserver
 	if [ $? != 0 ] ; then
