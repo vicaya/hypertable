@@ -80,6 +80,7 @@ void MaintenanceThread::operator()() {
       }
 
       workInfo = msInputQueue.top();
+      msInputQueue.pop();
     }
 
     if (workInfo.type == COMPACTION_MAJOR || workInfo.type == COMPACTION_MINOR) {
@@ -93,11 +94,6 @@ void MaintenanceThread::operator()() {
       assert(!"WorkType not implemented");
     }
 
-    // protect msInputQueue with the mutex
-    {
-      boost::mutex::scoped_lock lock(msMutex);
-      msInputQueue.pop();
-    }
   }
   
 }

@@ -57,6 +57,7 @@ namespace hypertable {
 
     string &StartRow() { return mStartRow; }
     string &EndRow() { return mEndRow; }
+    string &TableName() { return mTableName; }
 
     uint64_t GetTimestamp() {
       boost::mutex::scoped_lock lock(mMutex);
