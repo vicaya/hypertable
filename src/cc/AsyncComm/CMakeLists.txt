@@ -69,6 +69,7 @@ set (SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/AsyncComm/tests")
 set (DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/AsyncComm")
 configure_file(${SRC_DIR}/commTestTimeout.golden ${DST_DIR}/commTestTimeout.golden)
 configure_file(${SRC_DIR}/commTestTimer.golden ${DST_DIR}/commTestTimer.golden)
+configure_file(${SRC_DIR}/datafile.txt ${DST_DIR}/datafile.txt)
 configure_file(${SRC_DIR}/commTestReverseRequest.golden ${DST_DIR}/commTestReverseRequest.golden)
 
 add_test (AsyncComm commTest)
