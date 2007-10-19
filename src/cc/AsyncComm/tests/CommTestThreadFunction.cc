@@ -113,7 +113,7 @@ void CommTestThreadFunction::operator()() {
 	CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::EncodedLengthString(line)) );
 	cbufPtr->AppendString(line);
 	int retries = 0;
-	while ((error = mComm->SendRequest(mAddr, cbufPtr, respHandler)) != Error::OK) {
+	while ((error = mComm->SendRequest(mAddr, 30, cbufPtr, respHandler)) != Error::OK) {
 	  if (error == Error::COMM_NOT_CONNECTED) {
 	    if (retries == 5) {
 	      LOG_ERROR("Connection timeout.");

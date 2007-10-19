@@ -74,7 +74,7 @@ Manager::Manager(std::string configFile) {
   /**
    *  Create Master client object
    */
-  mInstPtr->masterPtr.reset( new MasterClient(mInstPtr->comm, addr) );
+  mInstPtr->masterPtr.reset( new MasterClient(mInstPtr->comm, addr, 30) );
 
 }
 

@@ -211,7 +211,7 @@ int main(int argc, char **argv) {
   connManager = new ConnectionManager(comm);
 
   // Create Range Server client object
-  Global::rangeServer = new RangeServerClient(connManager);
+  Global::rangeServer = new RangeServerClient(connManager, 30);
 
   // Connect to Range Server
   connManager->Add(addr, 30, "Range Server");

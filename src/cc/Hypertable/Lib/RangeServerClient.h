@@ -39,7 +39,7 @@ namespace hypertable {
   class RangeServerClient {
   public:
 
-    RangeServerClient(ConnectionManager *connManager);
+    RangeServerClient(ConnectionManager *connManager, time_t timeout);
     ~RangeServerClient();
 
     int LoadRange(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, DispatchHandler *handler);
@@ -62,6 +62,7 @@ namespace hypertable {
   
     Comm                *mComm;
     ConnectionManager   *mConnectionManager;
+    time_t               mTimeout;
   };
 
   typedef boost::shared_ptr<RangeServerClient> RangeServerClientPtr;

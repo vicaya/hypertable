@@ -123,6 +123,7 @@ namespace Hyperspace {
     bool mVerbose;
     int  mState;
     uint32_t mGracePeriod;
+    uint32_t mLeaseInterval;
     boost::xtime mExpireTime;
     struct sockaddr_in mMasterAddr;
     ClientKeepaliveHandler *mKeepaliveHandler;

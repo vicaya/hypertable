@@ -25,7 +25,7 @@
 #include "MasterClient.h"
 
 
-MasterClient::MasterClient(Comm *comm, struct sockaddr_in &addr) : mComm(comm), mAddr(addr) {
+MasterClient::MasterClient(Comm *comm, struct sockaddr_in &addr, time_t timeout) : mComm(comm), mAddr(addr), mTimeout(timeout) {
   mProtocol = new MasterProtocol();
 }
 
@@ -110,7 +110,7 @@ int MasterClient::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler, uin
   if (msgIdp)
     *msgIdp = ((Header::HeaderT *)cbufPtr->data)->id;
 
-  if ((error = mComm->SendRequest(mAddr, cbufPtr, handler)) != Error::OK) {
+  if ((error = mComm->SendRequest(mAddr, mTimeout, cbufPtr, handler)) != Error::OK) {
     LOG_VA_WARN("Comm::SendRequest to %s:%d failed - %s",
 		inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port), Error::GetText(error));
   }

@@ -45,7 +45,7 @@ using namespace std;
  * it to the non-connected state.  It then attempts to establish the connection.
  *
  * @param addr         The address to connect to
- * @param timeout      The timeout passed down into AsyncComm, also used as the retry timeout
+ * @param timeout      When connection dies, wait this many seconds before attempting to reestablish
  * @param serviceName  The name of the service we're connnecting to (used for better log messages)
  * @param handler      This is the default handler to install on the connection.  All events get changed through to this handler.
  */
@@ -83,7 +83,7 @@ void ConnectionManager::Add(struct sockaddr_in &addr, time_t timeout, const char
  *
  * @param addr         The address to connect to
  * @param localAddr    The local address to bind to
- * @param timeout      The timeout passed down into AsyncComm, also used as the retry timeout
+ * @param timeout      When connection dies, wait this many seconds before attempting to reestablish
  * @param serviceName  The name of the service we're connnecting to (used for better log messages)
  * @param handler      This is the default handler to install on the connection.  All events get changed through to this handler.
  */
@@ -156,9 +156,9 @@ void ConnectionManager::SendConnectRequest(ConnectionState *connState) {
   int error;
 
   if (connState->localAddr.sin_port != 0)
-    error = mImpl->comm->Connect(connState->addr, connState->localAddr, connState->timeout, this);
+    error = mImpl->comm->Connect(connState->addr, connState->localAddr, this);
   else
-    error = mImpl->comm->Connect(connState->addr, connState->timeout, this);
+    error = mImpl->comm->Connect(connState->addr, this);
 
   if (error == Error::COMM_ALREADY_CONNECTED) {
     connState->connected = true;

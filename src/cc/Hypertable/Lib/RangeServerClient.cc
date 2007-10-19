@@ -26,7 +26,7 @@
 using namespace hypertable;
 
 
-RangeServerClient::RangeServerClient(ConnectionManager *connManager) : mConnectionManager(connManager) {
+RangeServerClient::RangeServerClient(ConnectionManager *connManager, time_t timeout) : mConnectionManager(connManager), mTimeout(timeout) {
   mComm = mConnectionManager->GetComm();
 }
 
@@ -138,7 +138,7 @@ int RangeServerClient::Status(struct sockaddr_in &addr) {
 int RangeServerClient::SendMessage(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *handler) {
   int error;
 
-  if ((error = mComm->SendRequest(addr, cbufPtr, handler)) != Error::OK) {
+  if ((error = mComm->SendRequest(addr, mTimeout, cbufPtr, handler)) != Error::OK) {
     LOG_VA_WARN("Comm::SendRequest to %s:%d failed - %s",
 		inet_ntoa(addr.sin_addr), ntohs(addr.sin_port), Error::GetText(error));
   }

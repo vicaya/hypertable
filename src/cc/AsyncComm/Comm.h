@@ -48,13 +48,13 @@ namespace hypertable {
 
     ~Comm();
 
-    int Connect(struct sockaddr_in &addr, time_t timeout, DispatchHandler *defaultHandler);
+    int Connect(struct sockaddr_in &addr, DispatchHandler *defaultHandler);
 
-    int Connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, DispatchHandler *defaultHandler);
+    int Connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, DispatchHandler *defaultHandler);
 
     int Listen(struct sockaddr_in &addr, ConnectionHandlerFactory *hfactory, DispatchHandler *defaultHandler=0);
 
-    int SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *responseHandler);
+    int SendRequest(struct sockaddr_in &addr, time_t timeout, CommBufPtr &cbufPtr, DispatchHandler *responseHandler);
 
     int SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr);
 
@@ -72,7 +72,7 @@ namespace hypertable {
 
   private:
 
-    int ConnectSocket(int sd, struct sockaddr_in &addr, time_t timeout, DispatchHandler *defaultHandler);
+    int ConnectSocket(int sd, struct sockaddr_in &addr, DispatchHandler *defaultHandler);
 
     boost::mutex  mMutex;
     std::string   mAppName;

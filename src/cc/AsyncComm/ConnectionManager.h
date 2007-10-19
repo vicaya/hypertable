@@ -121,7 +121,7 @@ namespace hypertable {
      * it ever gets broken.
      *
      * @param addr The IP address to maintain a connection to
-     * @param timeout The timeout value (in seconds) that gets passed into Comm::Connect and also used as the waiting period betweeen connection attempts
+     * @param timeout When connection dies, wait this many seconds before attempting to reestablish
      * @param serviceName The name of the serivce at the other end of the connection used for descriptive log messages
      * @param handler This is the default handler to install on the connection.  All events get changed through to this handler.
      */
@@ -139,7 +139,7 @@ namespace hypertable {
      *
      * @param addr The IP address to maintain a connection to
      * @param localAddr The local address to bind to
-     * @param timeout The timeout value (in seconds) that gets passed into Comm::Connect and also used as the waiting period betweeen connection attempts
+     * @param timeout When connection dies, wait this many seconds before attempting to reestablish
      * @param serviceName The name of the serivce at the other end of the connection used for descriptive log messages
      * @param handler This is the default handler to install on the connection.  All events get changed through to this handler.
      */

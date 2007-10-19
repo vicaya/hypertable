@@ -185,7 +185,7 @@ int main(int argc, char **argv) {
     if (!connManager->WaitForConnection(addr, 2))
       exit(1);
 
-    master = new MasterClient(comm, addr);
+    master = new MasterClient(comm, addr, 30);
 
     if ((error = master->Status()) != Error::OK)
       exit(1);
@@ -194,7 +194,7 @@ int main(int argc, char **argv) {
     connManager->Add(addr, 30, "Range Server");
     if (!connManager->WaitForConnection(addr, 2))
       exit(1);
-    rangeServer = new RangeServerClient(connManager);
+    rangeServer = new RangeServerClient(connManager, 30);
     if ((error = rangeServer->Status(addr)) != Error::OK)
       exit(1);
   }

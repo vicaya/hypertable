@@ -83,7 +83,7 @@ Comm::~Comm() {
 
 /**
  */
-int Comm::Connect(struct sockaddr_in &addr, time_t timeout, DispatchHandler *defaultHandler) {
+int Comm::Connect(struct sockaddr_in &addr, DispatchHandler *defaultHandler) {
   int sd;
 
   if (mHandlerMap.ContainsHandler(addr))
@@ -94,7 +94,7 @@ int Comm::Connect(struct sockaddr_in &addr, time_t timeout, DispatchHandler *def
     exit(1);
   }
 
-  return ConnectSocket(sd, addr, timeout, defaultHandler);
+  return ConnectSocket(sd, addr, defaultHandler);
 }
 
 
@@ -102,7 +102,7 @@ int Comm::Connect(struct sockaddr_in &addr, time_t timeout, DispatchHandler *def
 
 /**
  */
-int Comm::Connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, DispatchHandler *defaultHandler) {
+int Comm::Connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, DispatchHandler *defaultHandler) {
   int sd;
 
   if (mHandlerMap.ContainsHandler(addr))
@@ -119,7 +119,7 @@ int Comm::Connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_
     exit(1);
   }
 
-  return ConnectSocket(sd, addr, timeout, defaultHandler);
+  return ConnectSocket(sd, addr, defaultHandler);
 }
 
 
@@ -169,7 +169,7 @@ int Comm::Listen(struct sockaddr_in &addr, ConnectionHandlerFactory *hfactory, D
 
 
 
-int Comm::SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *responseHandler) {
+int Comm::SendRequest(struct sockaddr_in &addr, time_t timeout, CommBufPtr &cbufPtr, DispatchHandler *responseHandler) {
   boost::mutex::scoped_lock lock(mMutex);
   IOHandlerDataPtr dataHandlerPtr;
   Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
@@ -186,7 +186,7 @@ int Comm::SendRequest(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHan
 
   mheader->flags |= Header::FLAGS_MASK_REQUEST;
 
-  if ((error = dataHandlerPtr->SendMessage(cbufPtr, responseHandler)) != Error::OK)
+  if ((error = dataHandlerPtr->SendMessage(cbufPtr, timeout, responseHandler)) != Error::OK)
     dataHandlerPtr->Shutdown();
 
   return error;
@@ -356,7 +356,7 @@ int Comm::CloseSocket(struct sockaddr_in &addr) {
 /**
  *
  */
-int Comm::ConnectSocket(int sd, struct sockaddr_in &addr, time_t timeout, DispatchHandler *defaultHandler) {
+int Comm::ConnectSocket(int sd, struct sockaddr_in &addr, DispatchHandler *defaultHandler) {
   IOHandlerPtr handlerPtr;
   IOHandlerData *dataHandler;
   int one = 1;
@@ -374,7 +374,6 @@ int Comm::ConnectSocket(int sd, struct sockaddr_in &addr, time_t timeout, Dispat
 
   handlerPtr = dataHandler = new IOHandlerData(sd, addr, defaultHandler, mHandlerMap);
   mHandlerMap.InsertHandler(dataHandler);
-  dataHandler->SetTimeout(timeout);
 
   while (connect(sd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) < 0) {
     if (errno == EINTR) {

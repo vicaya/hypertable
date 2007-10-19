@@ -395,7 +395,7 @@ int Client::Rmdir(std::string &name) {
 int Client::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler) {
   int error;
 
-  if ((error = mComm->SendRequest(mAddr, cbufPtr, handler)) != Error::OK) {
+  if ((error = mComm->SendRequest(mAddr, mTimeout, cbufPtr, handler)) != Error::OK) {
     LOG_VA_WARN("Comm::SendRequest to %s:%d failed - %s",
 		inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port), Error::GetText(error));
   }

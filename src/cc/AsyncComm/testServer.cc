@@ -60,6 +60,7 @@ namespace {
     "usage: sampleServer [OPTIONS]",
     "",
     "OPTIONS:",
+    "  --connect-to=<addr>  Connect to a client listening on <addr> (TCP only)."
     "  --help          Display this help text and exit",
     "  --port=<n>      Specifies the port to listen on (default=11255)",
     "  --app-queue     Use an application queue for handling requests",
@@ -217,12 +218,19 @@ int main(int argc, char **argv) {
   Dispatcher *dispatcher = 0;
   UdpDispatcher *udpDispatcher = 0;
   struct sockaddr_in localAddr;
+  struct sockaddr_in clientAddr;
+
+  memset(&clientAddr, 0, sizeof(clientAddr));
 
   for (int i=1; i<argc; i++) {
     if (!strcmp(argv[i], "--help"))
       Usage::DumpAndExit(usage);
     else if (!strcmp(argv[i], "--app-queue")) {
       appQueue = new ApplicationQueue(5);
+    }
+    else if (!strncmp(argv[i], "--connect-to=", 13)) {
+      if (!InetAddr::Initialize(&clientAddr, &argv[i][13]))
+	DUMP_CORE;
     }
     else if (!strncmp(argv[i], "--port=", 7)) {
       rval = atoi(&argv[i][7]);
@@ -255,23 +263,29 @@ int main(int argc, char **argv) {
       cout << "Delay = " << gDelay << endl;
   }
 
-  InetAddr::Initialize(&localAddr, INADDR_ANY, port);
+  InetAddr::Initialize(&localAddr, "localhost", port);
 
   if (!udp) {
-
     dispatcher = new Dispatcher(comm, appQueue);
-
-    hfactory = new HandlerFactory(dispatcher);
-
-    error = comm->Listen(localAddr, hfactory, dispatcher);
-
+    
+    if (clientAddr.sin_port != 0) {
+      if ((error = comm->Connect(clientAddr, localAddr, dispatcher)) != Error::OK) {
+	LOG_VA_ERROR("Comm::Connect error - %s", Error::GetText(error));
+	exit(1);
+      }
+    }
+    else {
+      hfactory = new HandlerFactory(dispatcher);
+      if ((error = comm->Listen(localAddr, hfactory, dispatcher)) != Error::OK) {
+	LOG_VA_ERROR("Comm::Listen error - %s", Error::GetText(error));
+	exit(1);
+      }
+    }
   }
   else {
-
+    assert(clientAddr.sin_port == 0);
     udpDispatcher = new UdpDispatcher(comm);
-
     error = comm->CreateDatagramReceiveSocket(&localAddr, udpDispatcher);
-    
   }
 
   poll(0, 0, -1);

@@ -38,7 +38,7 @@ namespace hypertable {
   class MasterClient {
   public:
 
-    MasterClient(Comm *comm, struct sockaddr_in &addr);
+    MasterClient(Comm *comm, struct sockaddr_in &addr, time_t timeout);
     ~MasterClient();
 
     int CreateTable(const char *tableName, const char *schemaString, DispatchHandler *handler, uint32_t *msgIdp);
@@ -61,6 +61,7 @@ namespace hypertable {
     Comm              *mComm;
     struct sockaddr_in mAddr;
     MasterProtocol    *mProtocol;
+    time_t             mTimeout;
   };
 
   typedef boost::shared_ptr<MasterClient> MasterClientPtr;

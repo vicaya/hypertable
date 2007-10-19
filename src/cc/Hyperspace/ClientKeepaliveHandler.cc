@@ -146,7 +146,7 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 	  if (mSessionId == 0) {
 	    mSessionId = sessionId;
 	    if (mConnHandler == 0) {
-	      mConnHandler = new ClientConnectionHandler(mComm, mSession);
+	      mConnHandler = new ClientConnectionHandler(mComm, mSession, mLeaseInterval);
 	      mConnHandler->SetVerboseMode(mVerbose);
 	      mConnHandler->SetSessionId(mSessionId);
 	    }
@@ -224,7 +224,7 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 	  **/
 
 	  if (mConnHandler->Disconnected())
-	    mConnHandler->InitiateConnection(mMasterAddr, mLeaseInterval);
+	    mConnHandler->InitiateConnection(mMasterAddr);
 	  else
 	    state = mSession->StateTransition(Session::STATE_SAFE);
 

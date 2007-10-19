@@ -281,21 +281,21 @@ bool IOHandlerData::HandleWriteReadiness() {
 
 
 
-int IOHandlerData::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *dispatchHandler) {
+int IOHandlerData::SendMessage(CommBufPtr &cbufPtr, time_t timeout, DispatchHandler *dispatchHandler) {
   boost::mutex::scoped_lock lock(mMutex);
   int error;
-  boost::xtime expireTime;
   bool initiallyEmpty = mSendQueue.empty() ? true : false;
   Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
 
   LOG_ENTER;
-
-  boost::xtime_get(&expireTime, boost::TIME_UTC);
-  expireTime.sec += mTimeout;
   
   // If request, Add message ID to request cache
-  if (mheader->id != 0 && dispatchHandler != 0 && mheader->flags & Header::FLAGS_MASK_REQUEST)
+  if (mheader->id != 0 && dispatchHandler != 0 && mheader->flags & Header::FLAGS_MASK_REQUEST) {
+    boost::xtime expireTime;
+    boost::xtime_get(&expireTime, boost::TIME_UTC);
+    expireTime.sec += timeout;
     mReactor->AddRequest(mheader->id, this, dispatchHandler, expireTime);
+  }
 
   mSendQueue.push_back(cbufPtr);
 

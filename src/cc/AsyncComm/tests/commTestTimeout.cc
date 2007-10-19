@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
 
     comm = new Comm();
 
-    if ((error = comm->Connect(addr, 5, &respHandler)) != Error::OK)
+    if ((error = comm->Connect(addr, &respHandler)) != Error::OK)
       return 1;
 
     respHandler.WaitForConnection();
@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
     hbuilder.AssignUniqueId();
     CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::EncodedLengthString(msg)) );
     cbufPtr->AppendString(msg);
-    if ((error = comm->SendRequest(addr, cbufPtr, &respHandler)) != Error::OK) {
+    if ((error = comm->SendRequest(addr, 5, cbufPtr, &respHandler)) != Error::OK) {
       LOG_VA_ERROR("Problem sending request - %s", Error::GetText(error));
       return 1;
     }
@@ -160,7 +160,7 @@ int main(int argc, char **argv) {
     hbuilder.AssignUniqueId();
     cbufPtr.reset (new CommBuf(hbuilder, Serialization::EncodedLengthString(msg)) );
     cbufPtr->AppendString(msg);
-    if ((error = comm->SendRequest(addr, cbufPtr, &respHandler)) != Error::OK) {
+    if ((error = comm->SendRequest(addr, 5, cbufPtr, &respHandler)) != Error::OK) {
       LOG_VA_ERROR("Problem sending request - %s", Error::GetText(error));
       return 1;
     }

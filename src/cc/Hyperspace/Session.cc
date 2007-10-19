@@ -58,6 +58,7 @@ Session::Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback)
   masterHost = propsPtr->getProperty("Hyperspace.Master.host", "localhost");
   masterPort = (uint16_t)propsPtr->getPropertyInt("Hyperspace.Master.port", Master::DEFAULT_MASTER_PORT);
   mGracePeriod = (uint32_t)propsPtr->getPropertyInt("Hyperspace.GracePeriod", Master::DEFAULT_GRACEPERIOD);
+  mLeaseInterval = (uint32_t)propsPtr->getPropertyInt("Hyperspace.Lease.Interval", Master::DEFAULT_LEASE_INTERVAL);
 
   if (!InetAddr::Initialize(&mMasterAddr, masterHost, masterPort))
     exit(1);
@@ -738,7 +739,7 @@ bool Session::WaitForSafe() {
 int Session::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler) {
   int error;
 
-  if ((error = mComm->SendRequest(mMasterAddr, cbufPtr, handler)) != Error::OK) {
+  if ((error = mComm->SendRequest(mMasterAddr, mLeaseInterval, cbufPtr, handler)) != Error::OK) {
     std::string str;
     LOG_VA_WARN("Comm::SendRequest to Hypertable.Master at %s failed - %s",
 		InetAddr::StringFormat(str, mMasterAddr), Error::GetText(error));

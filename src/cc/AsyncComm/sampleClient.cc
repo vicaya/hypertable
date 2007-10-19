@@ -64,6 +64,11 @@ namespace {
     "  --host=<name>   Specifies the host to connect to (default = localhost)",
     "  --port=<n>      Specifies the port to connect to (default = 11255)",
     "  --reactors=<n>  Specifies the number of reactors (default=1)",
+    "  --recv-addr=<addr>  Let the server connect to us by listening for",
+    "                  connection request on <addr> (host:port).  The address",
+    "                  that the server is connecting from should be the same",
+    "                  as what's specified with --host and --port or the defaults.",
+    "                  (TCP only)",
     "  --timeout=<t>   Specifies the connection timeout in seconds (default=10)",
     "  --udp           Operate in UDP mode instead of TCP",
     "",
@@ -87,7 +92,9 @@ public:
 
   ResponseHandler() : mQueue(), mMutex(), mCond() { return; }
   virtual ~ResponseHandler() { return; }
-  
+
+  virtual void handle(EventPtr &eventPtr) = 0;
+
   virtual bool GetResponse(EventPtr &eventPtr) = 0;
 
 protected:
@@ -95,6 +102,8 @@ protected:
   boost::mutex      mMutex;
   boost::condition  mCond;
 };
+
+
 
 
 
@@ -113,7 +122,7 @@ public:
   virtual void handle(EventPtr &eventPtr) {
     boost::mutex::scoped_lock lock(mMutex);
     if (eventPtr->type == Event::CONNECTION_ESTABLISHED) {
-      LOG_INFO("Connection Established.");
+      LOG_VA_INFO("Connection Established - %s", eventPtr->toString().c_str());
       mConnected = true;
       mCond.notify_one();
     }
@@ -159,6 +168,24 @@ public:
 
 private:
   bool mConnected;
+};
+
+
+
+/**
+ * This handler factory gets passed into Comm::Listen.  It
+ * gets constructed with a pointer to a DispatchHandler.
+ */
+class HandlerFactory : public ConnectionHandlerFactory {
+public:
+  HandlerFactory(DispatchHandler *dh) {
+    mDispatchHandler = dh;
+  }
+  virtual DispatchHandler *newInstance() {
+    return mDispatchHandler;
+  }
+private:
+  DispatchHandler *mDispatchHandler;
 };
 
 
@@ -218,12 +245,15 @@ int main(int argc, char **argv) {
   int error;
   EventPtr eventPtr;
   ResponseHandler *respHandler;
+  HandlerFactory *hfactory = 0;
   bool udpMode = false;
   string line;
   int outstanding = 0;
   int maxOutstanding = 50;
   const char *str;
   struct sockaddr_in localAddr;
+
+  memset(&localAddr, 0, sizeof(localAddr));
   
   if (argc == 1)
     Usage::DumpAndExit(usage);
@@ -248,6 +278,10 @@ int main(int argc, char **argv) {
       udpMode = true;
     else if (!strncmp(argv[i], "--reactors=", 11))
       reactorCount = atoi(&argv[i][11]);
+    else if (!strncmp(argv[i], "--recv-addr=", 12)) {
+      if (!InetAddr::Initialize(&localAddr, &argv[i][12]))
+	DUMP_CORE;
+    }
     else if (inputFile == 0)
       inputFile = argv[i];
     else
@@ -257,17 +291,8 @@ int main(int argc, char **argv) {
   if (inputFile == 0)
     Usage::DumpAndExit(usage);
 
-  memset(&addr, 0, sizeof(struct sockaddr_in));
-  {
-    struct hostent *he = gethostbyname(host);
-    if (he == 0) {
-      herror("gethostbyname()");
-      exit(1);
-    }
-    memcpy(&addr.sin_addr.s_addr, he->h_addr_list[0], sizeof(uint32_t));
-  }
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(port);
+  if (!InetAddr::Initialize(&addr, host, port))
+    exit(1);
 
   comm = new Comm();
 
@@ -279,6 +304,7 @@ int main(int argc, char **argv) {
   }
 
   if (udpMode) {
+    assert(localAddr.sin_port == 0);
     respHandler = new ResponseHandlerUDP();
     port++;
     InetAddr::Initialize(&localAddr, INADDR_ANY, port);
@@ -290,9 +316,19 @@ int main(int argc, char **argv) {
   }
   else {
     respHandler = new ResponseHandlerTCP();
-    if ((error = comm->Connect(addr, timeout, respHandler)) != Error::OK) {
-      LOG_VA_ERROR("Comm::Connect error - %s", Error::GetText(error));
-      exit(1);
+
+    if (localAddr.sin_port == 0) {
+      if ((error = comm->Connect(addr, respHandler)) != Error::OK) {
+	LOG_VA_ERROR("Comm::Connect error - %s", Error::GetText(error));
+	exit(1);
+      }
+    }
+    else {
+      hfactory = new HandlerFactory(respHandler);
+      if ((error = comm->Listen(localAddr, hfactory, respHandler)) != Error::OK) {
+	LOG_VA_ERROR("Comm::Listen error - %s", Error::GetText(error));
+	exit(1);
+      }
     }
     if (!((ResponseHandlerTCP *)respHandler)->WaitForConnection())
       exit(1);
@@ -314,7 +350,7 @@ int main(int argc, char **argv) {
 	}
       }
       else {
-	while ((error = comm->SendRequest(addr, cbufPtr, respHandler)) != Error::OK) {
+	while ((error = comm->SendRequest(addr, timeout, cbufPtr, respHandler)) != Error::OK) {
 	  if (error == Error::COMM_NOT_CONNECTED) {
 	    if (retries == 5) {
 	      LOG_ERROR("Connection timeout.");
