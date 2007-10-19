@@ -70,6 +70,7 @@ namespace {
     "                  as what's specified with --host and --port or the defaults.",
     "                  (TCP only)",
     "  --timeout=<t>   Specifies the connection timeout in seconds (default=10)",
+    "  --verbose       Generate verbose output",
     "  --udp           Operate in UDP mode instead of TCP",
     "",
     "This is a sample program to test the AsyncComm library.  It establishes",
@@ -77,6 +78,7 @@ namespace {
     "to the server.  Each reply from the server is echoed to stdout.",
     (const char *)0
   };
+  bool gVerbose = false;
 }
 
 
@@ -122,7 +124,8 @@ public:
   virtual void handle(EventPtr &eventPtr) {
     boost::mutex::scoped_lock lock(mMutex);
     if (eventPtr->type == Event::CONNECTION_ESTABLISHED) {
-      LOG_VA_INFO("Connection Established - %s", eventPtr->toString().c_str());
+      if (gVerbose)
+	LOG_VA_INFO("Connection Established - %s", eventPtr->toString().c_str());
       mConnected = true;
       mCond.notify_one();
     }
@@ -281,6 +284,9 @@ int main(int argc, char **argv) {
     else if (!strncmp(argv[i], "--recv-addr=", 12)) {
       if (!InetAddr::Initialize(&localAddr, &argv[i][12]))
 	DUMP_CORE;
+    }
+    else if (!strcmp(argv[i], "--verbose")) {
+      gVerbose = true;
     }
     else if (inputFile == 0)
       inputFile = argv[i];
