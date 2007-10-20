@@ -23,6 +23,7 @@
 #include "Common/StringExt.h"
 
 #include "AsyncComm/ApplicationQueue.h"
+#include "AsyncComm/ResponseCallback.h"
 
 #include "ConnectionHandler.h"
 #include "Hypertable/Lib/RangeServerProtocol.h"

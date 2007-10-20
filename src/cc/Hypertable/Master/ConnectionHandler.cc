@@ -81,10 +81,6 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
       cb.error(Error::PROTOCOL_ERROR, errMsg);
     }
   }
-  else if (eventPtr->type == Event::DISCONNECT) {
-    // do something here!!!
-    LOG_VA_INFO("%s : Closing all open handles", eventPtr->toString().c_str());
-  }
   else {
     LOG_VA_INFO("%s", eventPtr->toString().c_str());
   }

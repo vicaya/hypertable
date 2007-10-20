@@ -22,6 +22,8 @@
 #define HYPERTABLE_RANGESERVER_H
 
 #include "Common/Properties.h"
+
+#include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/Event.h"
 #include "AsyncComm/ResponseCallback.h"
@@ -30,6 +32,8 @@
 
 #include "Hypertable/Lib/Types.h"
 
+#include "HandlerFactory.h"
+#include "MasterFileHandler.h"
 #include "ResponseCallbackCreateScanner.h"
 #include "ResponseCallbackFetchScanblock.h"
 #include "ResponseCallbackUpdate.h"
@@ -41,13 +45,16 @@ namespace hypertable {
 
   class RangeServer {
   public:
-    RangeServer(ConnectionManager *connManager, PropertiesPtr &propsPtr);
+    RangeServer(Comm *comm, PropertiesPtr &propsPtr);
+    virtual ~RangeServer();
 
     void Compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, uint8_t compactionType);
     void CreateScanner(ResponseCallbackCreateScanner *cb, RangeSpecificationT *rangeSpec, ScanSpecificationT *spec);
     void FetchScanblock(ResponseCallbackFetchScanblock *cb, uint32_t scannerId);
     void LoadRange(ResponseCallback *cb, RangeSpecificationT *rangeSpec);
     void Update(ResponseCallbackUpdate *cb, const char *tableName, uint32_t generation, BufferT &buffer);
+
+    void MasterChange();
 
   private:
     int DirectoryInitialize(Properties *props);
@@ -66,14 +73,19 @@ namespace hypertable {
 
     typedef __gnu_cxx::hash_map<string, TableInfoPtr> TableInfoMapT;
 
-    boost::mutex   mMutex;
+    boost::mutex mMutex;
     bool mVerbose;
-    TableInfoMapT mTableInfoMap;
-    uint64_t      mExistenceFileHandle;
+    HandlerFactory    *mHandlerFactory;
+    TableInfoMapT      mTableInfoMap;
+    ApplicationQueue  *mAppQueue;
+    ConnectionManager *mConnManager;
+    uint64_t mExistenceFileHandle;
     struct LockSequencerT mExistenceFileSequencer;
-    std::string mMasterAddress;
-    uint64_t mMasterFileHandle;
-    DispatchHandler *mMasterFileDispatchHandler;
+    struct sockaddr_in mLocalAddr;
+    struct sockaddr_in mMasterAddr;
+    std::string        mMasterAddrString;
+    uint64_t           mMasterFileHandle;
+    HandleCallbackPtr  mMasterFileCallbackPtr;
   };
 
 }

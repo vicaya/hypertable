@@ -18,33 +18,30 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
-#define HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
+#ifndef HYPERTABLE_HYPERSPACESESSIONHANDLER_H
+#define HYPERTABLE_HYPERSPACESESSIONHANDLER_H
 
-#include "AsyncComm/DispatchHandler.h"
+#include "Hyperspace/Session.h"
+
+using namespace Hyperspace;
 
 namespace hypertable {
 
-  class Comm;
-  class ApplicationQueue;
   class RangeServer;
 
   /**
+   *
    */
-  class ConnectionHandler : public DispatchHandler {
+  class HyperspaceSessionHandler : public SessionCallback {
   public:
-
-    ConnectionHandler(Comm *comm, ApplicationQueue *appQueue, RangeServer *rangeServer);
-
-    virtual void handle(EventPtr &eventPtr);
-
+    HyperspaceSessionHandler(RangeServer *rangeServer) : mRangeServer(rangeServer) { return; }
+    virtual void Safe();
+    virtual void Expired();
+    virtual void Jeopardy();
   private:
-    Comm             *mComm;
-    ApplicationQueue *mAppQueue;
-    RangeServer      *mRangeServer;
+    RangeServer *mRangeServer;
   };
 
 }
 
-#endif // HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
-
+#endif // HYPERTABLE_HYPERSPACESESSIONHANDLER_H

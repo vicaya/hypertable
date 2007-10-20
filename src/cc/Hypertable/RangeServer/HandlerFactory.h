@@ -18,10 +18,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
-#define HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
+#ifndef HYPERTABLE_HANDLERFACTORY_H
+#define HYPERTABLE_HANDLERFACTORY_H
 
-#include "AsyncComm/DispatchHandler.h"
+#include "ConnectionHandler.h"
 
 namespace hypertable {
 
@@ -30,21 +30,20 @@ namespace hypertable {
   class RangeServer;
 
   /**
+   *
    */
-  class ConnectionHandler : public DispatchHandler {
+  class HandlerFactory : public ConnectionHandlerFactory {
   public:
-
-    ConnectionHandler(Comm *comm, ApplicationQueue *appQueue, RangeServer *rangeServer);
-
-    virtual void handle(EventPtr &eventPtr);
-
+    HandlerFactory(Comm *comm, ApplicationQueue *appQueue, RangeServer *rangeServer) : mComm(comm), mAppQueue(appQueue), mRangeServer(rangeServer) { return; }
+    DispatchHandler *newInstance() {
+      return new ConnectionHandler(mComm, mAppQueue, mRangeServer);
+    }
   private:
-    Comm             *mComm;
-    ApplicationQueue *mAppQueue;
-    RangeServer      *mRangeServer;
+    Comm        *mComm;
+    ApplicationQueue   *mAppQueue;
+    RangeServer *mRangeServer;
   };
 
 }
 
-#endif // HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
-
+#endif // HYPERTABLE_HANDLERFACTORY_H

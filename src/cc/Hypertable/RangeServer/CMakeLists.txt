@@ -41,6 +41,7 @@ EventHandlerNewMaster.cc
 FileBlockCache.cc
 FillScanBlock.cc
 Global.cc
+HyperspaceSessionHandler.cc
 MaintenanceThread.cc
 MasterFileHandler.cc
 MergeScanner.cc
@@ -52,14 +53,14 @@ RequestHandlerFetchScanblock.cc
 RequestHandlerLoadRange.cc
 RequestHandlerStatus.cc
 RequestHandlerUpdate.cc
-ScannerMap.cc
-ScanContext.cc
-TableInfo.cc
-VerifySchema.cc
-main.cc
 ResponseCallbackCreateScanner.cc
 ResponseCallbackFetchScanblock.cc
 ResponseCallbackUpdate.cc
+ScanContext.cc
+ScannerMap.cc
+TableInfo.cc
+VerifySchema.cc
+main.cc
 )
 
 # RangeServer

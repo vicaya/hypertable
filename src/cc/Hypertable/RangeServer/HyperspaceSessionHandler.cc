@@ -18,33 +18,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
-#define HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
+#include "HyperspaceSessionHandler.h"
 
-#include "AsyncComm/DispatchHandler.h"
+using namespace Hyperspace;
 
-namespace hypertable {
-
-  class Comm;
-  class ApplicationQueue;
-  class RangeServer;
-
-  /**
-   */
-  class ConnectionHandler : public DispatchHandler {
-  public:
-
-    ConnectionHandler(Comm *comm, ApplicationQueue *appQueue, RangeServer *rangeServer);
-
-    virtual void handle(EventPtr &eventPtr);
-
-  private:
-    Comm             *mComm;
-    ApplicationQueue *mAppQueue;
-    RangeServer      *mRangeServer;
-  };
-
+/**
+ *
+ */
+void HyperspaceSessionHandler::Safe() {
+  LOG_INFO("Hyperspace session state change:  SAFE");
 }
 
-#endif // HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
+/**
+ *
+ */
+void HyperspaceSessionHandler::Jeopardy() {
+  LOG_INFO("Hyperspace session state change:  JEOPARDY");
+}
 
+/**
+ *
+ */
+void HyperspaceSessionHandler::Expired() {
+  LOG_ERROR("Hyperspace session expired.  Exiting...");
+  exit(1);
+}

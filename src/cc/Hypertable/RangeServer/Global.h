@@ -44,7 +44,6 @@ namespace hypertable {
 
   class Global {
   public:
-    static hypertable::ApplicationQueue *appQueue;
     static Hyperspace::Session *hyperspace;
     static hypertable::Filesystem *dfs;
     static boost::thread *maintenanceThreadPtr;

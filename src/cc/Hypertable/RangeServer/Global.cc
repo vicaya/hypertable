@@ -26,7 +26,6 @@
 
 using namespace hypertable;
 
-ApplicationQueue      *Global::appQueue;
 Hyperspace::Session   *Global::hyperspace = 0;
 Filesystem            *Global::dfs = 0;
 boost::thread         *Global::maintenanceThreadPtr = 0;

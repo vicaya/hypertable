@@ -27,9 +27,11 @@ using namespace hypertable;
  *
  */
 void MasterFileHandler::AttrSet(std::string name) {
-  EventPtr nullEvent;
-  EventHandlerNewMaster *handler = new EventHandlerNewMaster(mRangeServer, nullEvent);
-  ApplicationHandlerPtr appHandlerPtr(handler);
-  mAppQueue->Add( appHandlerPtr );
+  if (name == "address") {
+    EventPtr nullEvent;
+    EventHandlerNewMaster *handler = new EventHandlerNewMaster(mRangeServer, nullEvent);
+    ApplicationHandlerPtr appHandlerPtr(handler);
+    mAppQueue->Add( appHandlerPtr );
+  }
   return;
 }

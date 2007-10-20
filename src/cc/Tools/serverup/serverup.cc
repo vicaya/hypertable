@@ -57,6 +57,7 @@ namespace {
     "    --host=<name>    Connect to the server running on host <name>",
     "    --port=<n>       Connect to the server running on port <n>",
     "    --help           Display this help text and exit",
+    "    --verbose,-v     Display 'true' if up, 'false' otherwise",
     "",
     "  This program check checks to see if the server, specified by <servername>,",
     "  is up.  It does this by determining the host and port that the server is",
@@ -99,6 +100,7 @@ int main(int argc, char **argv) {
   Comm *comm = 0;
   ConnectionManager *connManager;
   int error;
+  bool verbose = false;
 
   System::Initialize(argv[0]);
   ReactorFactory::Initialize((uint16_t)System::GetProcessorCount());
@@ -110,6 +112,8 @@ int main(int argc, char **argv) {
       hostName = &argv[i][7];
     else if (!strncmp(argv[i], "--port=", 7))
       portStr = &argv[i][7];
+    else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
+      verbose = true;
     else if (argv[i][0] == '-' || serverName != "")
       Usage::DumpAndExit(usage);
     else
@@ -166,38 +170,64 @@ int main(int argc, char **argv) {
 
   if (serverName == "dfsbroker") {
     client = new DfsBroker::Client(connManager, addr, 30);
-    if (!client->WaitForConnection(2))
+    if (!client->WaitForConnection(2)) {
+      if (verbose)
+	cout << "false" << endl;
       exit(1);
-    if ((error = client->Status()) != Error::OK)
+    }
+    if ((error = client->Status()) != Error::OK) {
+      if (verbose)
+	cout << "false" << endl;
       exit(1);
+    }
   }
   else if (serverName == "hyperspace") {
     hyperspace = new Hyperspace::Session(connManager->GetComm(), propsPtr, 0);
-    if (!hyperspace->WaitForConnection(2))
+    if (!hyperspace->WaitForConnection(2)) {
+      if (verbose)
+	cout << "false" << endl;
       exit(1);
-    if ((error = hyperspace->Status()) != Error::OK)
+    }
+    if ((error = hyperspace->Status()) != Error::OK) {
+      if (verbose)
+	cout << "false" << endl;
       exit(1);
+    }
   }
   else if (serverName == "master") {
 
     connManager->Add(addr, 30, "Master");
 
-    if (!connManager->WaitForConnection(addr, 2))
+    if (!connManager->WaitForConnection(addr, 2)) {
+      if (verbose)
+	cout << "false" << endl;
       exit(1);
+    }
 
     master = new MasterClient(comm, addr, 30);
 
-    if ((error = master->Status()) != Error::OK)
+    if ((error = master->Status()) != Error::OK) {
+      if (verbose)
+	cout << "false" << endl;
       exit(1);
+    }
   }
   else if (serverName == "rangeserver") {
     connManager->Add(addr, 30, "Range Server");
-    if (!connManager->WaitForConnection(addr, 2))
+    if (!connManager->WaitForConnection(addr, 2)) {
+      if (verbose)
+	cout << "false" << endl;
       exit(1);
+    }
     rangeServer = new RangeServerClient(connManager, 30);
-    if ((error = rangeServer->Status(addr)) != Error::OK)
+    if ((error = rangeServer->Status(addr)) != Error::OK) {
+      if (verbose)
+	cout << "false" << endl;
       exit(1);
+    }
   }
 
+  if (verbose)
+    cout << "true" << endl;
   return 0;
 }

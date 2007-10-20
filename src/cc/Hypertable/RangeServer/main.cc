@@ -18,12 +18,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <string>
 
 extern "C" {
 #include <poll.h>
+#include <sys/types.h>
+#include <unistd.h>
 }
 
 #include "Common/InetAddr.h"
@@ -32,10 +35,8 @@ extern "C" {
 #include "Common/System.h"
 #include "Common/Usage.h"
 
-#include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ConnectionManager.h"
-#include "AsyncComm/ConnectionHandlerFactory.h"
 
 #include "ConnectionHandler.h"
 #include "Global.h"
@@ -59,26 +60,7 @@ namespace {
     "This program is the Hypertable range server.",
     (const char *)0
   };
-  const int DEFAULT_PORT    = 38549;
-  const int DEFAULT_WORKERS = 20;
 }
-
-
-/**
- *
- */
-class HandlerFactory : public ConnectionHandlerFactory {
-public:
-  HandlerFactory(Comm *comm, ApplicationQueue *appQueue, RangeServer *rangeServer) : mComm(comm), mAppQueue(appQueue), mRangeServer(rangeServer) { return; }
-  DispatchHandler *newInstance() {
-    return new ConnectionHandler(mComm, mAppQueue, mRangeServer);
-  }
-private:
-  Comm        *mComm;
-  ApplicationQueue   *mAppQueue;
-  RangeServer *mRangeServer;
-};
-
 
 
 /**
@@ -88,12 +70,10 @@ int main(int argc, char **argv) {
   string configFile = "";
   string pidFile = "";
   string metadataFile = "";
-  int port, reactorCount, workerCount;
+  int port, reactorCount;
   Comm *comm = 0;
-  ConnectionManager *connManager;
   PropertiesPtr propsPtr;
   RangeServer *rangeServer = 0;
-  struct sockaddr_in listenAddr;
 
   System::Initialize(argv[0]);
   Global::verbose = false;
@@ -114,6 +94,11 @@ int main(int argc, char **argv) {
     }
   }
 
+  /**
+   * Seed random number generator with PID
+   */
+  srand((unsigned)getpid());
+
   if (configFile == "")
     configFile = System::installDir + "/conf/hypertable.cfg";
 
@@ -127,27 +112,16 @@ int main(int argc, char **argv) {
   }
   propsPtr->setProperty("metadata", metadataFile.c_str());
 
-  port         = propsPtr->getPropertyInt("Hypertable.RangeServer.port", DEFAULT_PORT);
   reactorCount = propsPtr->getPropertyInt("Hypertable.RangeServer.reactors", System::GetProcessorCount());
-  workerCount  = propsPtr->getPropertyInt("Hypertable.RangeServer.workers", DEFAULT_WORKERS);
-
   ReactorFactory::Initialize(reactorCount);
-
   comm = new Comm();
-  connManager = new ConnectionManager(comm);
 
   if (Global::verbose) {
     cout << "CPU count = " << System::GetProcessorCount() << endl;
-    cout << "Hypertable.RangeServer.port=" << port << endl;
-    cout << "Hypertable.RangeServer.workers=" << workerCount << endl;
     cout << "Hypertable.RangeServer.reactors=" << reactorCount << endl;
   }
 
-  InetAddr::Initialize(&listenAddr, INADDR_ANY, port);
-
-  rangeServer = new RangeServer (connManager, propsPtr);
-  Global::appQueue = new ApplicationQueue(workerCount);
-  comm->Listen(listenAddr, new HandlerFactory(comm, Global::appQueue, rangeServer));
+  rangeServer = new RangeServer(comm, propsPtr);
 
   if (pidFile != "") {
     fstream filestr (pidFile.c_str(), fstream::out);
@@ -157,9 +131,6 @@ int main(int argc, char **argv) {
 
   poll(0, 0, -1);
 
-  Global::appQueue->Shutdown();
-
-  delete Global::appQueue;
   delete rangeServer;
   delete comm;
   return 0;

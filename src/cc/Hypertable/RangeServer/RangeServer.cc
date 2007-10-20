@@ -34,7 +34,9 @@
 #include "CommitLogLocal.h"
 #include "FillScanBlock.h"
 #include "Global.h"
+#include "HyperspaceSessionHandler.h"
 #include "MaintenanceThread.h"
+#include "MasterFileHandler.h"
 #include "RangeServer.h"
 #include "ScanContext.h"
 #include "VerifySchema.h"
@@ -44,19 +46,26 @@ using namespace std;
 
 namespace {
   const int DEFAULT_SCANBUF_SIZE = 32768;
+  const int DEFAULT_WORKERS = 20;
+  const int DEFAULT_PORT    = 38549;
 }
 
 
 /**
  * Constructor
  */
-RangeServer::RangeServer(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mMutex(), mVerbose(false) {
+RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbose(false) {
   const char *metadataFile = 0;
+  int workerCount;
+  int error;
+  uint16_t port;
 
   Global::rangeMaxBytes           = propsPtr->getPropertyInt64("Hypertable.RangeServer.Range.MaxBytes", 200000000LL);
   Global::localityGroupMaxFiles   = propsPtr->getPropertyInt("Hypertable.RangeServer.AccessGroup.MaxFiles", 10);
   Global::localityGroupMergeFiles = propsPtr->getPropertyInt("Hypertable.RangeServer.AccessGroup.MergeFiles", 4);
   Global::localityGroupMaxMemory  = propsPtr->getPropertyInt("Hypertable.RangeServer.AccessGroup.MaxMemory", 4000000);
+  workerCount                     = propsPtr->getPropertyInt("Hypertable.RangeServer.workers", DEFAULT_WORKERS);
+  port                            = propsPtr->getPropertyInt("Hypertable.RangeServer.port", DEFAULT_PORT);
 
   uint64_t blockCacheMemory = propsPtr->getPropertyInt64("Hypertable.RangeServer.BlockCache.MaxMemory", 200000000LL);
   Global::blockCache = new FileBlockCache(blockCacheMemory);
@@ -80,14 +89,20 @@ RangeServer::RangeServer(ConnectionManager *connManager, PropertiesPtr &propsPtr
   mVerbose = propsPtr->getPropertyBool("verbose", false);
 
   if (Global::verbose) {
-    cout << "Hypertable.RangeServer.logDirRoot=" << Global::logDirRoot << endl;
-    cout << "Hypertable.RangeServer.Range.MaxBytes=" << Global::rangeMaxBytes << endl;
     cout << "Hypertable.RangeServer.AccessGroup.MaxFiles=" << Global::localityGroupMaxFiles << endl;
-    cout << "Hypertable.RangeServer.AccessGroup.MergeFiles=" << Global::localityGroupMergeFiles << endl;
     cout << "Hypertable.RangeServer.AccessGroup.MaxMemory=" << Global::localityGroupMaxMemory << endl;
+    cout << "Hypertable.RangeServer.AccessGroup.MergeFiles=" << Global::localityGroupMergeFiles << endl;
     cout << "Hypertable.RangeServer.BlockCache.MaxMemory=" << blockCacheMemory << endl;
+    cout << "Hypertable.RangeServer.Range.MaxBytes=" << Global::rangeMaxBytes << endl;
+    cout << "Hypertable.RangeServer.logDirRoot=" << Global::logDirRoot << endl;
+    cout << "Hypertable.RangeServer.port=" << port << endl;
+    cout << "Hypertable.RangeServer.workers=" << workerCount << endl;
     cout << "METADATA file = '" << metadataFile << "'" << endl;
   }
+
+  mConnManager = new ConnectionManager(comm);
+  mAppQueue = new ApplicationQueue(workerCount);
+  mHandlerFactory = new HandlerFactory(comm, mAppQueue, this);
 
   /**
    * Load METADATA simulation data
@@ -96,16 +111,28 @@ RangeServer::RangeServer(ConnectionManager *connManager, PropertiesPtr &propsPtr
 
   Global::protocol = new hypertable::RangeServerProtocol();
 
-  Global::hyperspace = new Hyperspace::Session(connManager->GetComm(), propsPtr, 0);
-
+  /**
+   * Connect to Hyperspace
+   */
+  Global::hyperspace = new Hyperspace::Session(comm, propsPtr, new HyperspaceSessionHandler(this));
   if (!Global::hyperspace->WaitForConnection(30)) {
     LOG_ERROR("Unable to connect to hyperspace, exiting...");
     exit(1);
   }
 
-  
+  /**
+   * Open /hypertable/master Hyperspace file to discover the master.  Then initiate connection to master.
+   */
+  mMasterFileCallbackPtr = new MasterFileHandler(this, mAppQueue);
+  if ((error = Global::hyperspace->Open("/hypertable/master", OPEN_FLAG_READ, mMasterFileCallbackPtr, &mMasterFileHandle)) != Error::OK) {
+    LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/master' (%s)  Try re-running with --initialize",
+		 Error::GetText(error));
+    exit(1);
+  }
+  memset(&mMasterAddr, 0, sizeof(mMasterAddr));
+  MasterChange();
 
-  DfsBroker::Client *dfsClient = new DfsBroker::Client(connManager, propsPtr);
+  DfsBroker::Client *dfsClient = new DfsBroker::Client(mConnManager, propsPtr);
 
   if (mVerbose) {
     cout << "DfsBroker.host=" << propsPtr->getProperty("DfsBroker.host", "") << endl;
@@ -129,7 +156,39 @@ RangeServer::RangeServer(ConnectionManager *connManager, PropertiesPtr &propsPtr
     Global::maintenanceThreadPtr = new boost::thread(maintenanceThread);
   }
 
+  /**
+   * Set up listen address and start listening for connections
+   */
+  {
+    std::string hostStr;
+    struct sockaddr_in addr;
+
+    InetAddr::GetHostname(hostStr);
+    InetAddr::Initialize(&mLocalAddr, hostStr.c_str(), port);
+
+    InetAddr::Initialize(&addr, INADDR_ANY, port);  // Listen on any interface
+
+    if ((error = comm->Listen(addr, mHandlerFactory)) != Error::OK) {
+      LOG_VA_ERROR("Listen error address=%s:%d - %s", inet_ntoa(addr.sin_addr), port, Error::GetText(error));
+      exit(1);
+    }
+    if (mVerbose)
+      cout << "Local (listen) address = " << inet_ntoa(mLocalAddr.sin_addr) << ":" << port << endl;
+  }
+
+
 }
+
+
+/**
+ *
+ */
+RangeServer::~RangeServer() {
+  mAppQueue->Shutdown();
+  delete mAppQueue;
+  delete mConnManager;
+}
+
 
 
 /**
@@ -218,6 +277,43 @@ int RangeServer::DirectoryInitialize(Properties *props) {
    */
 
   return Error::OK;
+}
+
+
+
+/**
+ * 
+ */
+void RangeServer::MasterChange() {
+  int error;
+  DynamicBuffer value(0);
+  std::string addrStr;
+
+  if ((error = Global::hyperspace->AttrGet(mMasterFileHandle, "address", value)) != Error::OK) {
+    LOG_VA_ERROR("Problem reading 'address' attribute of Hyperspace file /hypertable/master - %s", Error::GetText(error));
+    exit(1);
+  }
+
+  addrStr = (const char *)value.buf;
+
+  if (addrStr != mMasterAddrString) {
+
+    if (mMasterAddr.sin_port != 0) {
+      if ((error = mConnManager->Remove(mMasterAddr)) != Error::OK) {
+	LOG_VA_WARN("Problem removing connection to Master - %s", Error::GetText(error));
+      }
+      LOG_VA_INFO("Connecting to new Master (old=%s, new=%s)", mMasterAddrString.c_str(), addrStr.c_str());
+    }
+
+    mMasterAddrString = addrStr;
+
+    InetAddr::Initialize(&mMasterAddr, mMasterAddrString.c_str());
+
+    cout << "MasterChange address = " << inet_ntoa(mLocalAddr.sin_addr) << ":" << ntohs(mLocalAddr.sin_port) << endl;
+
+    mConnManager->Add(mMasterAddr, mLocalAddr, 15, "Master", mHandlerFactory->newInstance());
+  }
+  
 }
 
 

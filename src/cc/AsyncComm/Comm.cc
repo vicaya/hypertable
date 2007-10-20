@@ -99,8 +99,8 @@ int Comm::Connect(struct sockaddr_in &addr, DispatchHandler *defaultHandler) {
 
 
 
-
 /**
+ *
  */
 int Comm::Connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, DispatchHandler *defaultHandler) {
   int sd;

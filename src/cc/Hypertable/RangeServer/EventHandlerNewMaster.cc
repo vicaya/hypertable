@@ -18,6 +18,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+extern "C" {
+#include <poll.h>
+}
+
 #include "RangeServer.h"
 #include "EventHandlerNewMaster.h"
 
@@ -27,5 +31,10 @@ using namespace hypertable;
  *
  */
 void EventHandlerNewMaster::run() {
+  // Randomly wait between 0 and 3 seconds
+  poll(0, 0, rand() % 3000);
+  
+  
+
   //mMaster->NewMaster(mFilename);
 }

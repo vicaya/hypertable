@@ -169,7 +169,7 @@ echo "Successfully started Hyperspace"
 #
 # If it looks like the master was not initialized, then go ahead and do it.
 #
-$HYPERTABLE_HOME/bin/hyperspace --eval "exists /hypertable/meta" >& /dev/null
+$HYPERTABLE_HOME/bin/hyperspace --eval "exists /hypertable/master" >& /dev/null
 if [ $? != 0 ] ; then
     $HYPERTABLE_HOME/bin/Hypertable.Master --initialize
     if [ $? != 0 ] ; then
