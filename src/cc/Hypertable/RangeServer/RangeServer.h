@@ -74,11 +74,14 @@ namespace hypertable {
       SetTableInfo(nameStr, info);
     }
 
+    int VerifySchema(TableInfoPtr &tableInfoPtr, int generation, std::string &errMsg);
+
     typedef __gnu_cxx::hash_map<string, TableInfoPtr> TableInfoMapT;
 
     boost::mutex       mMutex;
     bool               mVerbose;
     Comm              *mComm;
+    Hyperspace::Session *mHyperspace;
     HandlerFactory    *mHandlerFactory;
     TableInfoMapT      mTableInfoMap;
     ApplicationQueue  *mAppQueue;

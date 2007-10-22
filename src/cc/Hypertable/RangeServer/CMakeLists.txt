@@ -60,7 +60,6 @@ ResponseCallbackUpdate.cc
 ScanContext.cc
 ScannerMap.cc
 TableInfo.cc
-VerifySchema.cc
 main.cc
 )
 

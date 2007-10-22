@@ -40,7 +40,6 @@
 #include "MasterFileHandler.h"
 #include "RangeServer.h"
 #include "ScanContext.h"
-#include "VerifySchema.h"
 
 using namespace hypertable;
 using namespace std;
@@ -115,8 +114,8 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
   /**
    * Connect to Hyperspace
    */
-  Global::hyperspace = new Hyperspace::Session(comm, propsPtr, new HyperspaceSessionHandler(this));
-  if (!Global::hyperspace->WaitForConnection(30)) {
+  mHyperspace = new Hyperspace::Session(comm, propsPtr, new HyperspaceSessionHandler(this));
+  if (!mHyperspace->WaitForConnection(30)) {
     LOG_ERROR("Unable to connect to hyperspace, exiting...");
     exit(1);
   }
@@ -125,7 +124,7 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
    * Open /hypertable/master Hyperspace file to discover the master.  Then initiate connection to master.
    */
   mMasterFileCallbackPtr = new MasterFileHandler(this, mAppQueue);
-  if ((error = Global::hyperspace->Open("/hypertable/master", OPEN_FLAG_READ, mMasterFileCallbackPtr, &mMasterFileHandle)) != Error::OK) {
+  if ((error = mHyperspace->Open("/hypertable/master", OPEN_FLAG_READ, mMasterFileCallbackPtr, &mMasterFileHandle)) != Error::OK) {
     LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/master' (%s)  Try re-running with --initialize",
 		 Error::GetText(error));
     exit(1);
@@ -196,6 +195,7 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
 RangeServer::~RangeServer() {
   mAppQueue->Shutdown();
   delete mAppQueue;
+  delete mHyperspace;
   delete mConnManager;
 }
 
@@ -214,7 +214,7 @@ int RangeServer::DirectoryInitialize(Properties *props) {
   /**
    * Create /hypertable/servers directory
    */
-  if ((error = Global::hyperspace->Exists("/hypertable/servers", &exists)) != Error::OK) {
+  if ((error = mHyperspace->Exists("/hypertable/servers", &exists)) != Error::OK) {
     LOG_VA_ERROR("Problem checking existence of '/hypertable/servers' Hyperspace directory - %s", Error::GetText(error));
     return error;
   }
@@ -233,12 +233,12 @@ int RangeServer::DirectoryInitialize(Properties *props) {
   uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_EXCL | OPEN_FLAG_LOCK_EXCLUSIVE;
   HandleCallbackPtr nullCallbackPtr;
 
-  if ((error = Global::hyperspace->Open(topDir.c_str(), oflags, nullCallbackPtr, &mExistenceFileHandle)) != Error::OK) {
+  if ((error = mHyperspace->Open(topDir.c_str(), oflags, nullCallbackPtr, &mExistenceFileHandle)) != Error::OK) {
     LOG_VA_ERROR("Problem creating Hyperspace server existance file '%s' - %s", topDir.c_str(), Error::GetText(error));
     exit(1);
   }
 
-  if ((error = Global::hyperspace->GetSequencer(mExistenceFileHandle, &mExistenceFileSequencer)) != Error::OK) {
+  if ((error = mHyperspace->GetSequencer(mExistenceFileHandle, &mExistenceFileSequencer)) != Error::OK) {
     LOG_VA_ERROR("Problem obtaining lock sequencer for file '%s' - %s", topDir.c_str(), Error::GetText(error));
     exit(1);
   }
@@ -280,7 +280,7 @@ void RangeServer::MasterChange() {
   DynamicBuffer value(0);
   std::string addrStr;
 
-  if ((error = Global::hyperspace->AttrGet(mMasterFileHandle, "address", value)) != Error::OK) {
+  if ((error = mHyperspace->AttrGet(mMasterFileHandle, "address", value)) != Error::OK) {
     LOG_VA_ERROR("Problem reading 'address' attribute of Hyperspace file /hypertable/master - %s", Error::GetText(error));
     exit(1);
   }
@@ -885,3 +885,44 @@ void RangeServer::SetTableInfo(string &name, TableInfoPtr &info) {
   mTableInfoMap[name] = info;
 }
 
+
+
+int RangeServer::VerifySchema(TableInfoPtr &tableInfoPtr, int generation, std::string &errMsg) {
+  std::string tableFile = (std::string)"/hypertable/tables/" + tableInfoPtr->GetName();
+  DynamicBuffer valueBuf(0);
+  HandleCallbackPtr nullHandleCallback;
+  int error;
+  uint64_t handle;
+  SchemaPtr schemaPtr = tableInfoPtr->GetSchema();
+
+  if (schemaPtr.get() == 0 || schemaPtr->GetGeneration() < generation) {
+
+    if ((error = mHyperspace->Open(tableFile.c_str(), OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
+      LOG_VA_ERROR("Unable to open Hyperspace file '%s' (%s)", tableFile.c_str(), Error::GetText(error));
+      exit(1);
+    }
+
+    if ((error = mHyperspace->AttrGet(handle, "schema", valueBuf)) != Error::OK) {
+      errMsg = (std::string)"Problem getting 'schema' attribute for '" + tableFile + "'";
+      return error;
+    }
+
+    mHyperspace->Close(handle);
+
+    schemaPtr.reset( Schema::NewInstance((const char *)valueBuf.buf, valueBuf.fill(), true) );
+    if (!schemaPtr->IsValid()) {
+      errMsg = "Schema Parse Error for table '" + tableInfoPtr->GetName() + "' : " + schemaPtr->GetErrorString();
+      return Error::RANGESERVER_SCHEMA_PARSE_ERROR;
+    }
+
+    tableInfoPtr->UpdateSchema(schemaPtr);
+
+    // Generation check ...
+    if ( schemaPtr->GetGeneration() < generation ) {
+      errMsg = "Fetched Schema generation for table '" + tableInfoPtr->GetName() + "' is " + schemaPtr->GetGeneration() + " but supplied is " + generation;
+      return Error::RANGESERVER_GENERATION_MISMATCH;
+    }
+  }
+  
+  return Error::OK;
+}
