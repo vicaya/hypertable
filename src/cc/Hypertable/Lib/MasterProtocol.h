@@ -34,18 +34,21 @@ namespace hypertable {
 
   public:
 
-    static const short COMMAND_CREATE_TABLE = 0;
-    static const short COMMAND_GET_SCHEMA   = 1;
-    static const short COMMAND_STATUS       = 2;
-    static const short COMMAND_MAX          = 3;
+    static const short COMMAND_CREATE_TABLE    = 0;
+    static const short COMMAND_GET_SCHEMA      = 1;
+    static const short COMMAND_STATUS          = 2;
+    static const short COMMAND_REGISTER_SERVER = 3;
+    static const short COMMAND_MAX             = 4;
 
     static const char *mCommandStrings[];
 
-    CommBuf *CreateCreateTableRequest(const char *tableName, const char *schemaString);
+    static CommBuf *CreateCreateTableRequest(const char *tableName, const char *schemaString);
 
-    CommBuf *CreateGetSchemaRequest(const char *tableName);
+    static CommBuf *CreateGetSchemaRequest(const char *tableName);
 
-    CommBuf *CreateStatusRequest();
+    static CommBuf *CreateStatusRequest();
+
+    static CommBuf *CreateRegisterServerRequest(std::string &serverIdStr);
 
     virtual const char *CommandText(short command);
     

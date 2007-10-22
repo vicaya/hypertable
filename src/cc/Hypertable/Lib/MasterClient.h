@@ -49,6 +49,9 @@ namespace hypertable {
 
     int Status();
 
+    int RegisterServer(std::string &serverIdStr, DispatchHandler *handler, uint32_t *msgIdp);
+    int RegisterServer(std::string &serverIdStr);
+
     /**
     int ReportSplit(const char *name, DispatchHandler *handler, uint32_t *msgIdp);
     int ReportSplit(const char *name, int32_t *fdp);

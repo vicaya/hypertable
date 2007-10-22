@@ -30,6 +30,7 @@
 
 #include "Hyperspace/Session.h"
 
+#include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/Types.h"
 
 #include "HandlerFactory.h"
@@ -54,6 +55,8 @@ namespace hypertable {
     void LoadRange(ResponseCallback *cb, RangeSpecificationT *rangeSpec);
     void Update(ResponseCallbackUpdate *cb, const char *tableName, uint32_t generation, BufferT &buffer);
 
+    std::string &ServerIdStr() { return mServerIdStr; }
+
     void MasterChange();
 
   private:
@@ -73,19 +76,23 @@ namespace hypertable {
 
     typedef __gnu_cxx::hash_map<string, TableInfoPtr> TableInfoMapT;
 
-    boost::mutex mMutex;
-    bool mVerbose;
+    boost::mutex       mMutex;
+    bool               mVerbose;
+    Comm              *mComm;
     HandlerFactory    *mHandlerFactory;
     TableInfoMapT      mTableInfoMap;
     ApplicationQueue  *mAppQueue;
     ConnectionManager *mConnManager;
-    uint64_t mExistenceFileHandle;
+    uint64_t           mExistenceFileHandle;
     struct LockSequencerT mExistenceFileSequencer;
+    std::string        mServerIdStr;
     struct sockaddr_in mLocalAddr;
     struct sockaddr_in mMasterAddr;
     std::string        mMasterAddrString;
     uint64_t           mMasterFileHandle;
     HandleCallbackPtr  mMasterFileCallbackPtr;
+    ConnectionHandler *mMasterConnectionHandler;
+    MasterClient      *mMasterClient;
   };
 
 }

@@ -17,36 +17,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+#include <iostream>
 
-#ifndef HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
-#define HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
+#include "Common/Error.h"
+#include "Common/Logger.h"
 
-#include "AsyncComm/DispatchHandler.h"
+#include "Hypertable/Lib/MasterClient.h"
 
-namespace hypertable {
+#include "EventHandlerMasterConnection.h"
 
-  class Comm;
-  class ApplicationQueue;
-  class RangeServer;
-  class MasterClient;
+using namespace hypertable;
 
-  /**
-   */
-  class ConnectionHandler : public DispatchHandler {
-  public:
+/**
+ *
+ */
+void EventHandlerMasterConnection::run() {
+  int error;
 
-    ConnectionHandler(Comm *comm, ApplicationQueue *appQueue, RangeServer *rangeServer, MasterClient *masterClient=0);
+  cerr << "About to register with server" << endl << flush;
+  if ((error = mMasterClient->RegisterServer( mServerIdStr )) != Error::OK) {
+    LOG_VA_ERROR("Problem registering ourselves (%s) with the Master - %s", mServerIdStr.c_str(), Error::GetText(error));
+  }
+  cerr << "Just registered with server" << endl << flush;
 
-    virtual void handle(EventPtr &eventPtr);
-
-  private:
-    Comm             *mComm;
-    ApplicationQueue *mAppQueue;
-    RangeServer      *mRangeServer;
-    MasterClient     *mMasterClient;
-  };
-
+  return;
 }
-
-#endif // HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
-

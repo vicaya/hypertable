@@ -103,6 +103,27 @@ int MasterClient::Status() {
 }
 
 
+int MasterClient::RegisterServer(std::string &serverIdStr, DispatchHandler *handler, uint32_t *msgIdp) {
+  CommBufPtr cbufPtr( mProtocol->CreateRegisterServerRequest(serverIdStr) );
+  return SendMessage(cbufPtr, handler, msgIdp);
+}
+
+
+int MasterClient::RegisterServer(std::string &serverIdStr) {
+  DispatchHandlerSynchronizer syncHandler;
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( mProtocol->CreateRegisterServerRequest(serverIdStr) );
+  int error = SendMessage(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("Master 'register server' error : %s", mProtocol->StringFormatMessage(eventPtr).c_str());
+      error = (int)mProtocol->ResponseCode(eventPtr);
+    }
+  }
+  return error;
+}
+
+
 
 int MasterClient::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler, uint32_t *msgIdp) {
   int error;

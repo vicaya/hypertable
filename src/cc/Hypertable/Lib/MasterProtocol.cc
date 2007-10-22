@@ -55,10 +55,20 @@ namespace hypertable {
     return cbuf;
   }
 
+  CommBuf *MasterProtocol::CreateRegisterServerRequest(std::string &serverIdStr) {
+    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
+    hbuilder.AssignUniqueId();
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::EncodedLengthString(serverIdStr));
+    cbuf->AppendShort(COMMAND_REGISTER_SERVER);
+    cbuf->AppendString(serverIdStr);
+    return cbuf;
+  }
+
   const char *MasterProtocol::mCommandStrings[] = {
     "create table",
     "get schema",
-    "status"
+    "status",
+    "register server"
   };
 
   const char *MasterProtocol::CommandText(short command) {

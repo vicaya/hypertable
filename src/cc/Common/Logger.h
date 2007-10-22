@@ -20,6 +20,8 @@
 #ifndef HYPERTABLE_LOGGER_H
 #define HYPERTABLE_LOGGER_H
 
+#include <iostream>
+
 #include <log4cpp/Category.hh>
 #include <log4cpp/Priority.hh>
 
@@ -47,6 +49,7 @@ namespace hypertable {
       Logger::logger->debug("(%s:%d) %s() ENTER", __FILE__, __LINE__, __func__); \
     else \
       Logger::logger->debug("%s() ENTER", __func__); \
+    std::cout << std::flush; \
   }
 
 #define LOG_EXIT \
@@ -55,6 +58,7 @@ namespace hypertable {
       Logger::logger->debug("(%s:%d) %s() EXIT", __FILE__, __LINE__, __func__); \
     else \
       Logger::logger->debug("%s() EXIT", __func__); \
+    std::cout << std::flush; \
   }
 
 #define LOG_DEBUG(msg) Logger::logger->debug("(%s:%d) " msg, __FILE__, __LINE__);
@@ -64,6 +68,7 @@ namespace hypertable {
       Logger::logger->debug("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
     else \
       Logger::logger->debug(msg, __VA_ARGS__);  \
+    std::cout << std::flush; \
    }
 #else
 #define LOG_ENTER
@@ -108,6 +113,7 @@ namespace hypertable {
       Logger::logger->warn("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
     else \
       Logger::logger->warn(msg, __VA_ARGS__);  \
+    std::cout << std::flush; \
    }
 #else
 #define LOG_WARN(msg)
@@ -122,6 +128,7 @@ namespace hypertable {
       Logger::logger->error("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
     else \
       Logger::logger->error(msg, __VA_ARGS__);  \
+    std::cout << std::flush; \
    }
 #else
 #define LOG_ERROR(msg)
@@ -136,6 +143,7 @@ namespace hypertable {
       Logger::logger->crit("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
     else \
       Logger::logger->crit(msg, __VA_ARGS__);  \
+    std::cout << std::flush; \
    }
 #else
 #define LOG_CRIT(msg)
@@ -150,6 +158,7 @@ namespace hypertable {
       Logger::logger->alert("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
     else \
       Logger::logger->alert(msg, __VA_ARGS__);  \
+    std::cout << std::flush; \
    }
 #else
 #define LOG_ALERT(msg)
@@ -164,6 +173,7 @@ namespace hypertable {
       Logger::logger->emerg("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
     else \
       Logger::logger->emerg(msg, __VA_ARGS__);  \
+    std::cout << std::flush; \
    }
 #else
 #define LOG_EMERG(msg)
@@ -178,6 +188,7 @@ namespace hypertable {
       Logger::logger->fatal("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
     else \
       Logger::logger->fatal(msg, __VA_ARGS__);  \
+    std::cout << std::flush; \
    }
 #else
 #define LOG_FATAL(msg)

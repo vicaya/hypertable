@@ -17,6 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+#include <iostream>
 
 #include "Common/Error.h"
 #include "Common/Exception.h"
@@ -25,7 +26,7 @@
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/ResponseCallback.h"
 
-#include "ConnectionHandler.h"
+#include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/RangeServerProtocol.h"
 
 #include "RequestHandlerCompact.h"
@@ -35,14 +36,20 @@
 #include "RequestHandlerFetchScanblock.h"
 #include "RequestHandlerStatus.h"
 
+#include "ConnectionHandler.h"
+#include "EventHandlerMasterConnection.h"
+#include "RangeServer.h"
+
+
 using namespace hypertable;
 
 /**
  *
  */
-ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueue *appQueue, RangeServer *rangeServer) : mComm(comm), mAppQueue(appQueue), mRangeServer(rangeServer) {
+ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueue *appQueue, RangeServer *rangeServer, MasterClient *masterClient) : mComm(comm), mAppQueue(appQueue), mRangeServer(rangeServer), mMasterClient(masterClient) {
   return;
 }
+
 
 /**
  *
@@ -101,9 +108,19 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
       cb.error(Error::PROTOCOL_ERROR, errMsg);
     }
   }
-  else if (eventPtr->type == Event::DISCONNECT) {
-    // do something here!!!
-    //LOG_VA_INFO("%s : Closing all open handles", eventPtr->toString().c_str());
+  else if (eventPtr->type == Event::CONNECTION_ESTABLISHED) {
+
+    LOG_VA_INFO("%s", eventPtr->toString().c_str());
+
+    /**
+     * If this is the connection to the Master, then we need to register ourselves
+     * with the master
+     */
+    if (mMasterClient) {
+      ApplicationHandlerPtr appHandlerPtr( new EventHandlerMasterConnection(mMasterClient, mRangeServer->ServerIdStr(), eventPtr) );
+      mAppQueue->Add(appHandlerPtr);
+    }
+    
   }
   else {
     LOG_VA_INFO("%s", eventPtr->toString().c_str());

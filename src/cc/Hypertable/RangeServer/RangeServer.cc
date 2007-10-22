@@ -25,6 +25,7 @@
 
 #include "Common/FileUtils.h"
 #include "Common/md5.h"
+#include "Common/StringExt.h"
 #include "Common/System.h"
 
 #include "Hypertable/Lib/RangeServerProtocol.h"
@@ -54,7 +55,7 @@ namespace {
 /**
  * Constructor
  */
-RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbose(false) {
+RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbose(false), mComm(comm), mMasterClient(0) {
   const char *metadataFile = 0;
   int workerCount;
   int error;
@@ -130,7 +131,6 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
     exit(1);
   }
   memset(&mMasterAddr, 0, sizeof(mMasterAddr));
-  MasterChange();
 
   DfsBroker::Client *dfsClient = new DfsBroker::Client(mConnManager, propsPtr);
 
@@ -147,6 +147,22 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
 
   Global::dfs = dfsClient;
 
+  /**
+   * 
+   */
+  {
+    struct sockaddr_in localAddr;
+    struct timeval tval;
+    std::string hostStr;
+
+    InetAddr::GetHostname(hostStr);
+    InetAddr::Initialize(&localAddr, hostStr.c_str(), port);
+
+    gettimeofday(&tval, 0);
+
+    mServerIdStr = (std::string)inet_ntoa(localAddr.sin_addr) + ":" + (int)port + "_" + (uint32_t)tval.tv_sec;
+  }
+
   if (DirectoryInitialize(propsPtr.get()) != Error::OK)
     exit(1);
 
@@ -156,24 +172,18 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
     Global::maintenanceThreadPtr = new boost::thread(maintenanceThread);
   }
 
+  MasterChange();
+
   /**
-   * Set up listen address and start listening for connections
+   * Listen for incoming connections
    */
   {
-    std::string hostStr;
     struct sockaddr_in addr;
-
-    InetAddr::GetHostname(hostStr);
-    InetAddr::Initialize(&mLocalAddr, hostStr.c_str(), port);
-
     InetAddr::Initialize(&addr, INADDR_ANY, port);  // Listen on any interface
-
     if ((error = comm->Listen(addr, mHandlerFactory)) != Error::OK) {
       LOG_VA_ERROR("Listen error address=%s:%d - %s", inet_ntoa(addr.sin_addr), port, Error::GetText(error));
       exit(1);
     }
-    if (mVerbose)
-      cout << "Local (listen) address = " << inet_ntoa(mLocalAddr.sin_addr) << ":" << port << endl;
   }
 
 
@@ -197,43 +207,24 @@ RangeServer::~RangeServer() {
  * - Open the commit log
  */
 int RangeServer::DirectoryInitialize(Properties *props) {
-  char hostname[256];
-  char ipStr[32];
   int error;
-  struct timeval tval;
   bool exists;
-
-  if (gethostname(hostname, 256) != 0) {
-    LOG_VA_ERROR("gethostname() failed - %s", strerror(errno));
-    exit(1);
-  }
-
-  struct hostent *he = gethostbyname(hostname);
-  if (he == 0) {
-    herror("gethostbyname()");
-    exit(1);
-  }
-
-  strcpy(ipStr, inet_ntoa(*(struct in_addr *)he->h_addr_list[0]));
+  std::string topDir;
 
   /**
    * Create /hypertable/servers directory
    */
   if ((error = Global::hyperspace->Exists("/hypertable/servers", &exists)) != Error::OK) {
-    LOG_VA_ERROR("Problem checking existence of '/hypertable/servers' hypertablefs directory - %s", Error::GetText(error));
+    LOG_VA_ERROR("Problem checking existence of '/hypertable/servers' Hyperspace directory - %s", Error::GetText(error));
     return error;
   }
 
   if (!exists) {
-    LOG_ERROR("Hypertablefs directory '/hypertable/servers' does not exist, try running 'Hypertable.Master --initialize' first");
+    LOG_ERROR("Hyperspace directory '/hypertable/servers' does not exist, try running 'Hypertable.Master --initialize' first");
     return error;
   }
 
-  gettimeofday(&tval, 0);
-
-  boost::shared_array<char> topDirPtr( new char [ 64 + strlen(ipStr) ] );
-  char *topDir = topDirPtr.get();
-  sprintf(topDir, "/hypertable/servers/%s_%ld", ipStr, tval.tv_sec);
+  topDir = (std::string)"/hypertable/servers/" + mServerIdStr;
 
   /**
    * Create "server existence" file in Hyperspace and obtain an exclusive lock on it
@@ -242,17 +233,17 @@ int RangeServer::DirectoryInitialize(Properties *props) {
   uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_EXCL | OPEN_FLAG_LOCK_EXCLUSIVE;
   HandleCallbackPtr nullCallbackPtr;
 
-  if ((error = Global::hyperspace->Open(topDir, oflags, nullCallbackPtr, &mExistenceFileHandle)) != Error::OK) {
-    LOG_VA_ERROR("Problem creating Hyperspace server existance file '%s' - %s", topDir, Error::GetText(error));
+  if ((error = Global::hyperspace->Open(topDir.c_str(), oflags, nullCallbackPtr, &mExistenceFileHandle)) != Error::OK) {
+    LOG_VA_ERROR("Problem creating Hyperspace server existance file '%s' - %s", topDir.c_str(), Error::GetText(error));
     exit(1);
   }
 
   if ((error = Global::hyperspace->GetSequencer(mExistenceFileHandle, &mExistenceFileSequencer)) != Error::OK) {
-    LOG_VA_ERROR("Problem obtaining lock sequencer for file '%s' - %s", topDir, Error::GetText(error));
+    LOG_VA_ERROR("Problem obtaining lock sequencer for file '%s' - %s", topDir.c_str(), Error::GetText(error));
     exit(1);
   }
 
-  Global::logDir = (string)topDir + "/commit/primary";
+  Global::logDir = (string)topDir.c_str() + "/commit/primary";
 
   /**
    * Create /hypertable/servers/X.X.X.X_nnnnn/commit/primary directory
@@ -309,9 +300,14 @@ void RangeServer::MasterChange() {
 
     InetAddr::Initialize(&mMasterAddr, mMasterAddrString.c_str());
 
-    cout << "MasterChange address = " << inet_ntoa(mLocalAddr.sin_addr) << ":" << ntohs(mLocalAddr.sin_port) << endl;
+    delete mMasterClient;
+    mMasterClient = new MasterClient(mComm, mMasterAddr, 20);
 
-    mConnManager->Add(mMasterAddr, mLocalAddr, 15, "Master", mHandlerFactory->newInstance());
+    mMasterConnectionHandler = new ConnectionHandler(mComm, mAppQueue, this, mMasterClient);
+
+    mConnManager->Add(mMasterAddr, 15, "Master", mMasterConnectionHandler);
+
+
   }
   
 }

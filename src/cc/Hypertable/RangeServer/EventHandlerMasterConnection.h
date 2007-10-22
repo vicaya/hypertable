@@ -18,35 +18,31 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
-#define HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
+#ifndef HYPERTABLE_EVENTHANDLERMASTERCONNECTION_H
+#define HYPERTABLE_EVENTHANDLERMASTERCONNECTION_H
 
-#include "AsyncComm/DispatchHandler.h"
+#include "AsyncComm/ApplicationHandler.h"
+
+using namespace hypertable;
 
 namespace hypertable {
 
-  class Comm;
-  class ApplicationQueue;
-  class RangeServer;
   class MasterClient;
 
-  /**
-   */
-  class ConnectionHandler : public DispatchHandler {
+  class EventHandlerMasterConnection : public ApplicationHandler {
   public:
+    EventHandlerMasterConnection(MasterClient *masterClient, std::string &serverIdStr, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mMasterClient(masterClient), mServerIdStr(serverIdStr) {
+      return;
+    }
 
-    ConnectionHandler(Comm *comm, ApplicationQueue *appQueue, RangeServer *rangeServer, MasterClient *masterClient=0);
-
-    virtual void handle(EventPtr &eventPtr);
+    virtual void run();
 
   private:
-    Comm             *mComm;
-    ApplicationQueue *mAppQueue;
-    RangeServer      *mRangeServer;
-    MasterClient     *mMasterClient;
+    MasterClient *mMasterClient;
+    std::string   mServerIdStr;
   };
 
 }
 
-#endif // HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
+#endif // HYPERTABLE_EVENTHANDLERMASTERCONNECTION_H
 
