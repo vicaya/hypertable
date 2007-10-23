@@ -27,8 +27,9 @@ namespace hypertable {
 
   class RangeServerState : public ReferenceCount {
   public:
-    std::string hyperspaceFileName;
-    uint64_t    hyperspaceHandle;
+    std::string         serverIdStr;
+    uint64_t            hyperspaceHandle;
+    struct sockaddr_in  addr;
   };
 
   typedef boost::intrusive_ptr<RangeServerState> RangeServerStatePtr;

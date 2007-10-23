@@ -25,6 +25,7 @@ Master.cc
 RequestHandlerCreateTable.cc
 RequestHandlerGetSchema.cc
 RequestHandlerStatus.cc
+RequestHandlerRegisterServer.cc
 ResponseCallbackGetSchema.cc
 ServerLockFileHandler.cc
 ServersDirectoryHandler.cc

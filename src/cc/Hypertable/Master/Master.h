@@ -51,6 +51,7 @@ namespace hypertable {
     ~Master();
     void CreateTable(ResponseCallback *cb, const char *tableName, const char *schemaString);
     void GetSchema(ResponseCallbackGetSchema *cb, const char *tableName);
+    void RegisterServer(ResponseCallback *cb, const char *serverIdStr, struct sockaddr_in &addr);
 
     void ServerJoined(std::string &hyperspaceFilename);
     void ServerLeft(std::string &hyperspaceFilename);

@@ -27,5 +27,5 @@ using namespace hypertable;
  *
  */
 void EventHandlerServerJoined::run() {
-  mMaster->ServerJoined(mFilename);
+  mMaster->ServerJoined(mServerIdStr);
 }

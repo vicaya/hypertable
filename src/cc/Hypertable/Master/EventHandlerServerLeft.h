@@ -36,7 +36,7 @@ namespace hypertable {
 
   class EventHandlerServerLeft : public ApplicationHandler {
   public:
-    EventHandlerServerLeft(Master *master, std::string hyperspaceFilename, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mMaster(master), mFilename(hyperspaceFilename) {
+    EventHandlerServerLeft(Master *master, std::string serverIdStr, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mMaster(master), mServerIdStr(serverIdStr) {
       return;
     }
 
@@ -44,7 +44,7 @@ namespace hypertable {
 
   private:
     Master      *mMaster;
-    std::string  mFilename;
+    std::string  mServerIdStr;
   };
 
 }

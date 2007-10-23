@@ -30,6 +30,7 @@
 #include "RequestHandlerCreateTable.h"
 #include "RequestHandlerGetSchema.h"
 #include "RequestHandlerStatus.h"
+#include "RequestHandlerRegisterServer.h"
 
 using namespace hypertable;
 
@@ -66,6 +67,9 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
 	break;
       case MasterProtocol::COMMAND_STATUS:
 	requestHandler = new RequestHandlerStatus(mComm, mMaster, eventPtr);
+	break;
+      case MasterProtocol::COMMAND_REGISTER_SERVER:
+	requestHandler = new RequestHandlerRegisterServer(mComm, mMaster, eventPtr);
 	break;
       default:
 	std::string message = (string)"Command code " + command + " not implemented";

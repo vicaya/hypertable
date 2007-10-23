@@ -18,20 +18,34 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "EventHandlerServerJoined.h"
-#include "EventHandlerServerLeft.h"
-#include "ServersDirectoryHandler.h"
-#include "Master.h"
+#ifndef HYPERTABLE_REQUESTHANDLERREGISTERSERVER_H
+#define HYPERTABLE_REQUESTHANDLERREGISTERSERVER_H
+
+#include "Common/Runnable.h"
+
+#include "AsyncComm/ApplicationHandler.h"
+#include "AsyncComm/Comm.h"
+#include "AsyncComm/Event.h"
 
 using namespace hypertable;
 
-/**
- *
- */
-void ServersDirectoryHandler::ChildNodeAdded(std::string name) {
-  EventPtr nullEvent;
-  EventHandlerServerJoined *handler = new EventHandlerServerJoined(mMaster, name, nullEvent);
-  ApplicationHandlerPtr appHandlerPtr(handler);
-  mAppQueue->Add( appHandlerPtr );
-  return;
+namespace hypertable {
+
+  class Master;
+
+  class RequestHandlerRegisterServer : public ApplicationHandler {
+  public:
+    RequestHandlerRegisterServer(Comm *comm, Master *master, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mComm(comm), mMaster(master) {
+      return;
+    }
+
+    virtual void run();
+
+  private:
+    Comm     *mComm;
+    Master   *mMaster;
+  };
+
 }
+
+#endif // HYPERTABLE_REQUESTHANDLERREGISTERSERVER_H

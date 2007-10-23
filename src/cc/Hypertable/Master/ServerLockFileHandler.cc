@@ -69,7 +69,7 @@ void ServerLockFileHandler::LockAcquired(uint32_t mode) {
  */
 void ServerLockFileHandler::LockReleased() {
   EventPtr nullEvent;
-  EventHandlerServerLeft *handler = new EventHandlerServerLeft(mMaster, mStatePtr->hyperspaceFileName, nullEvent);
+  EventHandlerServerLeft *handler = new EventHandlerServerLeft(mMaster, mStatePtr->serverIdStr, nullEvent);
   ApplicationHandlerPtr appHandlerPtr(handler);
   mAppQueue->Add( appHandlerPtr );
 }

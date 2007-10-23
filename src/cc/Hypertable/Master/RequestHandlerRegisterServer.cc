@@ -18,20 +18,36 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "EventHandlerServerJoined.h"
-#include "EventHandlerServerLeft.h"
-#include "ServersDirectoryHandler.h"
+#include "Common/Error.h"
+#include "Common/Logger.h"
+
+#include "AsyncComm/ResponseCallback.h"
+#include "AsyncComm/Serialization.h"
+
 #include "Master.h"
+#include "RequestHandlerRegisterServer.h"
 
 using namespace hypertable;
 
 /**
  *
  */
-void ServersDirectoryHandler::ChildNodeAdded(std::string name) {
-  EventPtr nullEvent;
-  EventHandlerServerJoined *handler = new EventHandlerServerJoined(mMaster, name, nullEvent);
-  ApplicationHandlerPtr appHandlerPtr(handler);
-  mAppQueue->Add( appHandlerPtr );
+void RequestHandlerRegisterServer::run() {
+  ResponseCallback cb(mComm, mEventPtr);
+  const char *serverIdStr;
+  size_t remaining = mEventPtr->messageLen - 2;
+  uint8_t *msgPtr = mEventPtr->message + 2;
+
+  // Server ID string
+  if (!Serialization::DecodeString(&msgPtr, &remaining, &serverIdStr))
+    goto abort;
+
+  mMaster->RegisterServer(&cb, serverIdStr, mEventPtr->addr);
+
+  return;
+
+ abort:
+  LOG_ERROR("Encoding problem with Register Server message");
+  cb.error(Error::PROTOCOL_ERROR, "Encoding problem with Register Server message");
   return;
 }
