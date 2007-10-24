@@ -26,7 +26,6 @@
 #include "Common/Properties.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/CommBuf.h"
-#include "AsyncComm/ConnectionManager.h"
 #include "AsyncComm/DispatchHandler.h"
 
 #include "RangeServerProtocol.h"
@@ -39,7 +38,7 @@ namespace hypertable {
   class RangeServerClient {
   public:
 
-    RangeServerClient(ConnectionManager *connManager, time_t timeout);
+    RangeServerClient(Comm *comm, time_t timeout);
     ~RangeServerClient();
 
     int LoadRange(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, DispatchHandler *handler);
@@ -61,7 +60,6 @@ namespace hypertable {
     int SendMessage(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *handler);
   
     Comm                *mComm;
-    ConnectionManager   *mConnectionManager;
     time_t               mTimeout;
   };
 

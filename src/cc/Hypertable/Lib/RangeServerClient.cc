@@ -26,14 +26,11 @@
 using namespace hypertable;
 
 
-RangeServerClient::RangeServerClient(ConnectionManager *connManager, time_t timeout) : mConnectionManager(connManager), mTimeout(timeout) {
-  mComm = mConnectionManager->GetComm();
+RangeServerClient::RangeServerClient(Comm *comm, time_t timeout) : mComm(comm), mTimeout(timeout) {
 }
 
 
 RangeServerClient::~RangeServerClient() {
-  // TODO:  implement me!
-  delete mConnectionManager;
   return;
 }
 
@@ -134,7 +131,9 @@ int RangeServerClient::Status(struct sockaddr_in &addr) {
   return error;
 }
 
-
+/**
+ *
+ */
 int RangeServerClient::SendMessage(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *handler) {
   int error;
 

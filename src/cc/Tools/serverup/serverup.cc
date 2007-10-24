@@ -219,7 +219,7 @@ int main(int argc, char **argv) {
 	cout << "false" << endl;
       exit(1);
     }
-    rangeServer = new RangeServerClient(connManager, 30);
+    rangeServer = new RangeServerClient(comm, 30);
     if ((error = rangeServer->Status(addr)) != Error::OK) {
       if (verbose)
 	cout << "false" << endl;
