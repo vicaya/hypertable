@@ -296,7 +296,7 @@ void ConnectionManager::operator()() {
 	     }
 	  */
 	  SendConnectRequest(connStatePtr.get());
-	  return;
+	  continue;
 	}
       }
       mImpl->retryCond.timed_wait(lock, connStatePtr->nextRetry);

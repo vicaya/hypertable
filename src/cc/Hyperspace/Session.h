@@ -81,7 +81,7 @@ namespace Hyperspace {
 
     enum { STATE_EXPIRED, STATE_JEOPARDY, STATE_SAFE };
 
-    Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback);
+    Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback=0);
 
     int Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, uint64_t *handlep);
     int Create(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, std::vector<AttributeT> &initAttrs, uint64_t *handlep);

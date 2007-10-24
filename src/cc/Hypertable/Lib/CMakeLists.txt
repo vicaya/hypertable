@@ -17,10 +17,12 @@
 # 
 
 set ( Hypertable_SRCS
+Client.cc
+EventHandlerMasterChange.cc
 Key.cc
 LocationCache.cc
-Manager.cc
 MasterClient.cc
+MasterFileHandler.cc
 MasterProtocol.cc
 Metadata.cc
 Mutator.cc
@@ -36,7 +38,7 @@ add_library (Hypertable ${Hypertable_SRCS})
 
 # generateTestData
 add_executable (generateTestData generateTestData.cc)
-target_link_libraries (generateTestData Hypertable pthread ${BOOST_LIB} AsyncComm Common log4cpp expat)
+target_link_libraries (generateTestData Hypertable Hyperspace pthread ${BOOST_LIB} AsyncComm Common log4cpp expat)
 
 # MetadataTest
 add_executable (MetadataTest MetadataTest.cc)

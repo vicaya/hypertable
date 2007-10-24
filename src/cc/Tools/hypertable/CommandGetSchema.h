@@ -23,13 +23,13 @@
 
 #include "Common/InteractiveCommand.h"
 
-#include "Hypertable/Lib/Manager.h"
-
 namespace hypertable {
+
+  class Client;
 
   class CommandGetSchema : public InteractiveCommand {
   public:
-    CommandGetSchema(Manager *manager) : mManager(manager) { return; }
+    CommandGetSchema(Client *client) : mClient(client) { return; }
     virtual const char *CommandText() { return "get schema"; }
     virtual const char **Usage() { return msUsage; }
     virtual int run();
@@ -37,7 +37,7 @@ namespace hypertable {
   private:
     static const char *msUsage[];
 
-    Manager *mManager;
+    Client *mClient;
   };
 
 }

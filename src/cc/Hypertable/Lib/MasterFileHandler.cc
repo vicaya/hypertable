@@ -18,7 +18,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "EventHandlerNewMaster.h"
+#include "AsyncComm/ApplicationQueue.h"
+
+#include "EventHandlerMasterChange.h"
 #include "MasterFileHandler.h"
 
 using namespace hypertable;
@@ -29,9 +31,8 @@ using namespace hypertable;
 void MasterFileHandler::AttrSet(std::string name) {
   if (name == "address") {
     EventPtr nullEvent;
-    EventHandlerNewMaster *handler = new EventHandlerNewMaster(mRangeServer, nullEvent);
+    EventHandlerMasterChange *handler = new EventHandlerMasterChange(mMasterClient, nullEvent);
     ApplicationHandlerPtr appHandlerPtr(handler);
     mAppQueue->Add( appHandlerPtr );
   }
-  return;
 }

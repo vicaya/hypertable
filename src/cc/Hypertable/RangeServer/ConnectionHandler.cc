@@ -120,7 +120,6 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
       ApplicationHandlerPtr appHandlerPtr( new EventHandlerMasterConnection(mMasterClient, mRangeServer->ServerIdStr(), eventPtr) );
       mAppQueue->Add(appHandlerPtr);
     }
-    
   }
   else {
     LOG_VA_INFO("%s", eventPtr->toString().c_str());

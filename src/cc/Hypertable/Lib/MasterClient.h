@@ -21,35 +21,48 @@
 #ifndef HYPERTABLE_MASTERCLIENT_H
 #define HYPERTABLE_MASTERCLIENT_H
 
-#include <boost/shared_ptr.hpp>
+#include <boost/thread/mutex.hpp>
 
-#include "Common/Properties.h"
-#include "AsyncComm/Comm.h"
 #include "AsyncComm/CommBuf.h"
-#include "AsyncComm/ConnectionManager.h"
 #include "AsyncComm/DispatchHandler.h"
 
-#include "MasterProtocol.h"
+#include "Common/ReferenceCount.h"
+
+#include "Hyperspace/HandleCallback.h"
 
 using namespace hypertable;
+using namespace Hyperspace;
+
+namespace Hyperspace {
+  class Session;
+}
 
 namespace hypertable {
 
-  class MasterClient {
+  class ApplicationQueue;
+  class Comm;
+  class CommBuf;
+  class ConnectionManager;
+
+  class MasterClient : public ReferenceCount {
   public:
 
-    MasterClient(Comm *comm, struct sockaddr_in &addr, time_t timeout);
+    MasterClient(ConnectionManager *connManager, Hyperspace::Session *hyperspace, time_t timeout, ApplicationQueue *appQueue);
     ~MasterClient();
 
-    int CreateTable(const char *tableName, const char *schemaString, DispatchHandler *handler, uint32_t *msgIdp);
+    void InitiateConnection(DispatchHandlerPtr dispatchHandlerPtr);
+
+    bool WaitForConnection(long maxWaitSecs);
+
+    int CreateTable(const char *tableName, const char *schemaString, DispatchHandler *handler);
     int CreateTable(const char *tableName, const char *schemaString);
 
-    int GetSchema(const char *tableName, DispatchHandler *handler, uint32_t *msgIdp);
+    int GetSchema(const char *tableName, DispatchHandler *handler);
     int GetSchema(const char *tableName, std::string &schema);
 
     int Status();
 
-    int RegisterServer(std::string &serverIdStr, DispatchHandler *handler, uint32_t *msgIdp);
+    int RegisterServer(std::string &serverIdStr, DispatchHandler *handler);
     int RegisterServer(std::string &serverIdStr);
 
     /**
@@ -57,17 +70,28 @@ namespace hypertable {
     int ReportSplit(const char *name, int32_t *fdp);
     **/
 
+    int ReloadMaster();
+
+
   private:
 
-    int SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler, uint32_t *msgIdp=0);
-  
-    Comm              *mComm;
-    struct sockaddr_in mAddr;
-    MasterProtocol    *mProtocol;
-    time_t             mTimeout;
+    int SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler);
+
+    boost::mutex         mMutex;
+    ConnectionManager   *mConnManager;
+    Comm                *mComm;
+    Hyperspace::Session *mHyperspace;
+    time_t               mTimeout;
+    ApplicationQueue    *mAppQueue;
+    bool                 mInitiated;
+    uint64_t             mMasterFileHandle;
+    HandleCallbackPtr    mMasterFileCallbackPtr;
+    struct sockaddr_in   mMasterAddr;
+    std::string          mMasterAddrString;
+    DispatchHandlerPtr   mDispatcherHandlerPtr;
   };
 
-  typedef boost::shared_ptr<MasterClient> MasterClientPtr;
+  typedef boost::intrusive_ptr<MasterClient> MasterClientPtr;
   
 
 }

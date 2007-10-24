@@ -18,32 +18,47 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_EVENTHANDLERNEWMASTER_H
-#define HYPERTABLE_EVENTHANDLERNEWMASTER_H
+#ifndef HYPERTABLE_CLIENT_H
+#define HYPERTABLE_CLIENT_H
 
-#include "Common/Runnable.h"
+#include <string>
 
-#include "AsyncComm/ApplicationHandler.h"
-#include "AsyncComm/Event.h"
+#include "Table.h"
 
-using namespace hypertable;
+namespace Hyperspace {
+  class Session;
+}
 
 namespace hypertable {
 
-  class RangeServer;
+  class ApplicationQueue;
+  class Comm;
+  class ConnectionManager;
+  class MasterClient;
 
-  class EventHandlerNewMaster : public ApplicationHandler {
+  class Client {
+
   public:
-    EventHandlerNewMaster(RangeServer *rangeServer, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mRangeServer(rangeServer) {
-      return;
-    }
 
-    virtual void run();
+    Client(std::string configFile);
+
+    int CreateTable(std::string name, std::string schema);
+    int OpenTable(std::string name, TablePtr &tablePtr);
+    int GetSchema(std::string tableName, std::string &schema);
+
+    //Table OpenTable();
+    //void DeleteTable();
+    // String [] ListTables();
 
   private:
-    RangeServer *mRangeServer;
+    ApplicationQueue     *mAppQueue;
+    Comm                 *mComm;
+    ConnectionManager    *mConnManager;
+    Hyperspace::Session  *mHyperspace;
+    MasterClient         *mMasterClient;
   };
 
 }
 
-#endif // HYPERTABLE_EVENTHANDLERNEWMASTER_H
+#endif // HYPERTABLE_CLIENT_H
+

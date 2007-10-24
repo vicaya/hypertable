@@ -492,5 +492,6 @@ void Master::RegisterServer(ResponseCallback *cb, const char *serverIdStr, struc
     LOG_VA_INFO("Server Registered %s -> %s", serverIdStr, InetAddr::StringFormat(addrStr, addr));
     cout << flush;
   }
-  
+
+  cb->response_ok();
 }

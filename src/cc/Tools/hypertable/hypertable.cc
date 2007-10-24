@@ -26,12 +26,14 @@ extern "C" {
 #include <readline/history.h>
 }
 
+#include "AsyncComm/Comm.h"
+
 #include "Common/Error.h"
 #include "Common/InteractiveCommand.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
 
-#include "Hypertable/Lib/Manager.h"
+#include "Hypertable/Lib/Client.h"
 
 #include "CommandCreateTable.h"
 #include "CommandGetSchema.h"
@@ -83,7 +85,7 @@ int main(int argc, char **argv) {
   size_t i;
   string configFile = "";
   vector<InteractiveCommand *>  commands;
-  Manager *manager = 0;
+  Client *client = 0;
   int error;
 
   System::Initialize(argv[0]);
@@ -99,10 +101,10 @@ int main(int argc, char **argv) {
   if (configFile == "")
     configFile = System::installDir + "/conf/hypertable.cfg";
 
-  manager = new Manager(configFile);
+  client = new Client(configFile);
 
-  commands.push_back( new CommandCreateTable(manager) );
-  commands.push_back( new CommandGetSchema(manager) );
+  commands.push_back( new CommandCreateTable(client) );
+  commands.push_back( new CommandGetSchema(client) );
 
   cout << "Welcome to the Hypertable command interpreter." << endl;
   cout << "Type 'help' for a description of commands." << endl;

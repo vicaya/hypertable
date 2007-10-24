@@ -27,7 +27,8 @@
 /**
  *
  */
-Table::Table(InstanceDataPtr &instPtr, std::string &name) : mInstPtr(instPtr) {
+Table::Table(ConnectionManager *connManager, std::string &name) : mConnManager(connManager) {
+#if 0
   int error;
   std::string schemaStr;
 
@@ -40,10 +41,11 @@ Table::Table(InstanceDataPtr &instPtr, std::string &name) : mInstPtr(instPtr) {
     LOG_VA_ERROR("Schema Parse Error: %s", mSchemaPtr->GetErrorString());
     throw Exception(Error::MASTER_BAD_SCHEMA);
   }
+#endif
 
 }
 
 
 int Table::CreateMutator(MutatorPtr &mutatorPtr) {
-  
+  return 0;
 }

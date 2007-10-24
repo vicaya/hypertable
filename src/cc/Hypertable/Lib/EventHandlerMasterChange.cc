@@ -18,27 +18,27 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_INSTANCEDATA_H
-#define HYPERTABLE_INSTANCEDATA_H
-
-#include <boost/shared_ptr.hpp>
-
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/ConnectionManager.h"
-
-#include "MasterClient.h"
-
-namespace hypertable {
-
-  class InstanceData {
-  public:
-    Comm *comm;
-    ConnectionManager *connectionManager;
-    MasterClientPtr masterPtr;
-  };
-
-  typedef boost::shared_ptr<InstanceData> InstanceDataPtr;
+extern "C" {
+#include <poll.h>
 }
 
+#include "Common/Error.h"
 
-#endif // HYPERTABLE_INSTANCEDATA_H
+#include "MasterClient.h"
+#include "EventHandlerMasterChange.h"
+
+using namespace hypertable;
+
+/**
+ *
+ */
+void EventHandlerMasterChange::run() {
+  int error;
+
+  poll(0, 0, rand() % 3000);  // Randomly wait between 0 and 3 seconds
+
+  if ((error = mMasterClient->ReloadMaster()) != Error::OK) {
+    LOG_VA_ERROR("Problem reloading master connection - %s", Error::GetText(error));
+  }
+
+}

@@ -24,6 +24,8 @@
 #include "Common/FileUtils.h"
 #include "Common/Usage.h"
 
+#include "Hypertable/Lib/Client.h"
+
 #include "CommandCreateTable.h"
 
 using namespace hypertable;
@@ -53,7 +55,7 @@ int CommandCreateTable::run() {
   if ((schema = FileUtils::FileToBuffer(mArgs[1].first.c_str(), &len)) == 0)
     return -1;
 
-  if ((error = mManager->CreateTable(mArgs[0].first, schema)) != Error::OK) {
+  if ((error = mClient->CreateTable(mArgs[0].first, schema)) != Error::OK) {
     cerr << "Problem creating table '" << mArgs[0].first << "' - " << Error::GetText(error) << endl;
     return error;
   }

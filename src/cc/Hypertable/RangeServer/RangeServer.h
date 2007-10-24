@@ -34,7 +34,6 @@
 #include "Hypertable/Lib/Types.h"
 
 #include "HandlerFactory.h"
-#include "MasterFileHandler.h"
 #include "ResponseCallbackCreateScanner.h"
 #include "ResponseCallbackFetchScanblock.h"
 #include "ResponseCallbackUpdate.h"
@@ -89,11 +88,6 @@ namespace hypertable {
     uint64_t           mExistenceFileHandle;
     struct LockSequencerT mExistenceFileSequencer;
     std::string        mServerIdStr;
-    struct sockaddr_in mLocalAddr;
-    struct sockaddr_in mMasterAddr;
-    std::string        mMasterAddrString;
-    uint64_t           mMasterFileHandle;
-    HandleCallbackPtr  mMasterFileCallbackPtr;
     ConnectionHandler *mMasterConnectionHandler;
     MasterClient      *mMasterClient;
   };

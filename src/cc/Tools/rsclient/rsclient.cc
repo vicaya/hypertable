@@ -36,7 +36,6 @@ extern "C" {
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ConnectionManager.h"
 
-#include "Hypertable/Lib/Manager.h"
 #include "Hypertable/Lib/RangeServerClient.h"
 #include "Hyperspace/Session.h"
 

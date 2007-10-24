@@ -24,16 +24,17 @@
 #include "Common/ReferenceCount.h"
 
 #include "CellKey.h"
-#include "InstanceData.h"
 #include "MutationResult.h"
 #include "Schema.h"
 
 namespace hypertable {
 
+  class ConnectionManager;
+
   class Mutator : public ReferenceCount {
 
   public:
-    Mutator(InstanceDataPtr &instPtr, SchemaPtr &schemaPtr);
+    Mutator(ConnectionManager *connManager, SchemaPtr &schemaPtr);
     virtual ~Mutator() { return; }
 
     void Set(CellKey &key, uint8_t *value, uint32_t valueLen);
@@ -43,7 +44,7 @@ namespace hypertable {
     uint64_t MemoryUsed();
 
   private:
-    InstanceDataPtr mInstPtr;
+    ConnectionManager *mConnManager;
     SchemaPtr mSchemaPtr;
   };
   typedef boost::intrusive_ptr<Mutator> MutatorPtr;

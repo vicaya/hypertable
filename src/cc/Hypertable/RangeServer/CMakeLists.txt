@@ -38,13 +38,11 @@ CommitLogReaderLocal.cc
 ConnectionHandler.cc
 Constants.cc
 EventHandlerMasterConnection.cc
-EventHandlerNewMaster.cc
 FileBlockCache.cc
 FillScanBlock.cc
 Global.cc
 HyperspaceSessionHandler.cc
 MaintenanceThread.cc
-MasterFileHandler.cc
 MergeScanner.cc
 Range.cc
 RangeServer.cc

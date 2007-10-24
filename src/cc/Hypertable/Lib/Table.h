@@ -23,23 +23,24 @@
 
 #include "Common/ReferenceCount.h"
 
-#include "InstanceData.h"
 #include "Mutator.h"
 #include "Schema.h"
 
 namespace hypertable {
 
+  class ConnectionManager;
+
   class Table : public ReferenceCount {
 
   public:
-    Table(InstanceDataPtr &instPtr, std::string &name);
+    Table(ConnectionManager *connManager, std::string &name);
     virtual ~Table() { return; }
 
     int CreateMutator(MutatorPtr &mutatorPtr);
 
   private:
-    InstanceDataPtr mInstPtr;
-    SchemaPtr mSchemaPtr;
+    ConnectionManager *mConnManager;
+    SchemaPtr          mSchemaPtr;
   };
   typedef boost::intrusive_ptr<Table> TablePtr;
 

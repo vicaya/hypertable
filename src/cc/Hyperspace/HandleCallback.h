@@ -21,6 +21,8 @@
 #ifndef HYPERSPACE_HANDLECALLBACK_H
 #define HYPERSPACE_HANDLECALLBACK_H
 
+#include <string>
+
 #include "Common/ReferenceCount.h"
 
 namespace Hyperspace {
@@ -51,12 +53,12 @@ namespace Hyperspace {
   class HandleCallback : public hypertable::ReferenceCount {
   public:
     HandleCallback(uint32_t eventMask) : mEventMask(eventMask) { return; }
-    virtual void AttrSet(std::string name) = 0;
-    virtual void AttrDel(std::string name) = 0;
-    virtual void ChildNodeAdded(std::string name) = 0;
-    virtual void ChildNodeRemoved(std::string name) = 0;
-    virtual void LockAcquired(uint32_t mode) = 0;
-    virtual void LockReleased() = 0;
+    virtual void AttrSet(std::string name) { return; }
+    virtual void AttrDel(std::string name) { return; }
+    virtual void ChildNodeAdded(std::string name) { return; }
+    virtual void ChildNodeRemoved(std::string name) { return; }
+    virtual void LockAcquired(uint32_t mode) { return; }
+    virtual void LockReleased() { return; }
     int GetEventMask() { return mEventMask; }
   protected:
     uint32_t mEventMask;

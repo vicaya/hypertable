@@ -32,6 +32,7 @@ extern "C" {
 #include "Common/System.h"
 #include "Common/Usage.h"
 
+#include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ConnectionManager.h"
 #include "AsyncComm/ReactorFactory.h"
@@ -95,7 +96,6 @@ int main(int argc, char **argv) {
   const char *portStr = 0;
   DfsBroker::Client *client;
   Hyperspace::Session *hyperspace;
-  MasterClient *master;
   RangeServerClient *rangeServer;
   Comm *comm = 0;
   ConnectionManager *connManager;
@@ -157,11 +157,11 @@ int main(int argc, char **argv) {
     port = propsPtr->getPropertyInt(portProperty, 0);
     if (port == 0 || port < 1024 || port >= 65536) {
       LOG_VA_ERROR("%s not specified or out of range : %d", portProperty, port);
-      exit(1);
+      return 1;
     }
 
     if (!InetAddr::Initialize(&addr, hostName.c_str(), (uint16_t)port))
-      exit(1);
+      return 1;
   }
 
   comm = new Comm();
@@ -173,12 +173,12 @@ int main(int argc, char **argv) {
     if (!client->WaitForConnection(2)) {
       if (verbose)
 	cout << "false" << endl;
-      exit(1);
+      return 1;
     }
     if ((error = client->Status()) != Error::OK) {
       if (verbose)
 	cout << "false" << endl;
-      exit(1);
+      return 1;
     }
   }
   else if (serverName == "hyperspace") {
@@ -186,30 +186,37 @@ int main(int argc, char **argv) {
     if (!hyperspace->WaitForConnection(2)) {
       if (verbose)
 	cout << "false" << endl;
-      exit(1);
+      return 1;
     }
     if ((error = hyperspace->Status()) != Error::OK) {
       if (verbose)
 	cout << "false" << endl;
-      exit(1);
+      return 1;
     }
   }
   else if (serverName == "master") {
+    MasterClientPtr  masterPtr;
 
-    connManager->Add(addr, 30, "Master");
+    hyperspace = new Hyperspace::Session(connManager->GetComm(), propsPtr, 0);
 
-    if (!connManager->WaitForConnection(addr, 2)) {
+    if (!hyperspace->WaitForConnection(2)) {
       if (verbose)
 	cout << "false" << endl;
-      exit(1);
+      return 1;
     }
 
-    master = new MasterClient(comm, addr, 30);
-
-    if ((error = master->Status()) != Error::OK) {
+    masterPtr = new MasterClient(connManager, hyperspace, 30, new ApplicationQueue(1));
+    masterPtr->InitiateConnection(0);
+    if (!masterPtr->WaitForConnection(2)) {
       if (verbose)
 	cout << "false" << endl;
-      exit(1);
+      return 1;
+    }
+
+    if ((error = masterPtr->Status()) != Error::OK) {
+      if (verbose)
+	cout << "false" << endl;
+      return 1;
     }
   }
   else if (serverName == "rangeserver") {
@@ -217,13 +224,13 @@ int main(int argc, char **argv) {
     if (!connManager->WaitForConnection(addr, 2)) {
       if (verbose)
 	cout << "false" << endl;
-      exit(1);
+      return 1;
     }
     rangeServer = new RangeServerClient(comm, 30);
     if ((error = rangeServer->Status(addr)) != Error::OK) {
       if (verbose)
 	cout << "false" << endl;
-      exit(1);
+      return 1;
     }
   }
 

@@ -24,6 +24,8 @@
 #include "Common/FileUtils.h"
 #include "Common/Usage.h"
 
+#include "Hypertable/Lib/Client.h"
+
 #include "CommandGetSchema.h"
 
 using namespace hypertable;
@@ -49,7 +51,7 @@ int CommandGetSchema::run() {
   if (mArgs[0].second != "")
     Usage::DumpAndExit(msUsage);
 
-  if ((error = mManager->GetSchema(mArgs[0].first, schema)) != Error::OK) {
+  if ((error = mClient->GetSchema(mArgs[0].first, schema)) != Error::OK) {
     cerr << "Problem getting schema for table '" << mArgs[0].first << "' - " << Error::GetText(error) << endl;
     return error;
   }

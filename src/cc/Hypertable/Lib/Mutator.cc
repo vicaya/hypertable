@@ -20,10 +20,11 @@
 
 #include "Mutator.h"
 
+
 /**
  * 
  */
-Mutator::Mutator(InstanceDataPtr &instPtr, SchemaPtr &schemaPtr) : mInstPtr(instPtr), mSchemaPtr(schemaPtr) {
+Mutator::Mutator(ConnectionManager *connManager, SchemaPtr &schemaPtr) : mConnManager(connManager), mSchemaPtr(schemaPtr) {
   return;
 }
 
@@ -52,7 +53,5 @@ void Mutator::Flush(MutationResultPtr &resultPtr) {
   // Sweep through the set of per-range queues, sending UPDATE requests to their range servers
 
   // Increment useCount variable in callback, once for each request that went out
-
-  // 
 
 }

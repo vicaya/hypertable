@@ -32,7 +32,9 @@ extern "C" {
 #include "Common/TestHarness.h"
 #include "Common/Usage.h"
 
-#include "Hypertable/Lib/Manager.h"
+#include "AsyncComm/Comm.h"
+
+#include "Hypertable/Lib/Client.h"
 #include "Hypertable/Lib/Schema.h"
 
 #include "TestData.h"
@@ -99,7 +101,7 @@ int main(int argc, char **argv) {
   vector<std::string> cfNames;
   int modValue;
   std::string configFile = "";
-  Manager *manager;
+  Client *client;
   int error;
   std::string tableName = "";
   unsigned int seed = 1234;
@@ -145,9 +147,9 @@ int main(int argc, char **argv) {
   if (!tdata.Load(System::installDir + "/demo"))
     exit(1);
 
-  manager = new Manager(configFile);
+  client = new Client(configFile);
 
-  if ((error = manager->GetSchema(tableName, schemaSpec)) != Error::OK) {
+  if ((error = client->GetSchema(tableName, schemaSpec)) != Error::OK) {
     LOG_VA_ERROR("Problem getting schema for table '%s' - %s", argv[1], Error::GetText(error));
     return error;
   }

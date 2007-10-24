@@ -37,7 +37,6 @@
 #include "Global.h"
 #include "HyperspaceSessionHandler.h"
 #include "MaintenanceThread.h"
-#include "MasterFileHandler.h"
 #include "RangeServer.h"
 #include "ScanContext.h"
 
@@ -120,17 +119,6 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
     exit(1);
   }
 
-  /**
-   * Open /hypertable/master Hyperspace file to discover the master.  Then initiate connection to master.
-   */
-  mMasterFileCallbackPtr = new MasterFileHandler(this, mAppQueue);
-  if ((error = mHyperspace->Open("/hypertable/master", OPEN_FLAG_READ, mMasterFileCallbackPtr, &mMasterFileHandle)) != Error::OK) {
-    LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/master' (%s)  Try re-running with --initialize",
-		 Error::GetText(error));
-    exit(1);
-  }
-  memset(&mMasterAddr, 0, sizeof(mMasterAddr));
-
   DfsBroker::Client *dfsClient = new DfsBroker::Client(mConnManager, propsPtr);
 
   if (mVerbose) {
@@ -171,7 +159,6 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
     Global::maintenanceThreadPtr = new boost::thread(maintenanceThread);
   }
 
-  MasterChange();
 
   /**
    * Listen for incoming connections
@@ -185,6 +172,12 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
     }
   }
 
+  /**
+   * Create Master client
+   */
+  mMasterClient = new MasterClient(mConnManager, mHyperspace, 20, mAppQueue);
+  mMasterConnectionHandler = new ConnectionHandler(mComm, mAppQueue, this, mMasterClient);
+  mMasterClient->InitiateConnection(mMasterConnectionHandler);
 
 }
 
@@ -268,48 +261,6 @@ int RangeServer::DirectoryInitialize(Properties *props) {
    */
 
   return Error::OK;
-}
-
-
-
-/**
- * 
- */
-void RangeServer::MasterChange() {
-  int error;
-  DynamicBuffer value(0);
-  std::string addrStr;
-
-  if ((error = mHyperspace->AttrGet(mMasterFileHandle, "address", value)) != Error::OK) {
-    LOG_VA_ERROR("Problem reading 'address' attribute of Hyperspace file /hypertable/master - %s", Error::GetText(error));
-    exit(1);
-  }
-
-  addrStr = (const char *)value.buf;
-
-  if (addrStr != mMasterAddrString) {
-
-    if (mMasterAddr.sin_port != 0) {
-      if ((error = mConnManager->Remove(mMasterAddr)) != Error::OK) {
-	LOG_VA_WARN("Problem removing connection to Master - %s", Error::GetText(error));
-      }
-      LOG_VA_INFO("Connecting to new Master (old=%s, new=%s)", mMasterAddrString.c_str(), addrStr.c_str());
-    }
-
-    mMasterAddrString = addrStr;
-
-    InetAddr::Initialize(&mMasterAddr, mMasterAddrString.c_str());
-
-    delete mMasterClient;
-    mMasterClient = new MasterClient(mComm, mMasterAddr, 20);
-
-    mMasterConnectionHandler = new ConnectionHandler(mComm, mAppQueue, this, mMasterClient);
-
-    mConnManager->Add(mMasterAddr, 15, "Master", mMasterConnectionHandler);
-
-
-  }
-  
 }
 
 

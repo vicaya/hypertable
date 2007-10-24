@@ -68,8 +68,9 @@ namespace {
     { Error::HYPERSPACE_ALREADY_LOCKED,   "HYPERSPACE already locked" },
     { Error::HYPERSPACE_LOCK_CONFLICT,    "HYPERSPACE lock conflict" },
     { Error::HYPERSPACE_NOT_LOCKED,       "HYPERSPACE not locked" },
-    { Error::MASTER_TABLE_EXISTS,         "HYPERTABLE MASTER table exists" },
-    { Error::MASTER_BAD_SCHEMA,           "HYPERTABLE MASTER bad schema" },
+    { Error::MASTER_TABLE_EXISTS,         "MASTER table exists" },
+    { Error::MASTER_BAD_SCHEMA,           "MASTER bad schema" },
+    { Error::MASTER_NOT_RUNNING,          "MASTER not running" },
     { Error::RANGESERVER_GENERATION_MISMATCH,  "RANGE SERVER generation mismatch" },
     { Error::RANGESERVER_RANGE_ALREADY_LOADED, "RANGE SERVER range already loaded" },
     { Error::RANGESERVER_RANGE_MISMATCH,       "RANGE SERVER range mismatch" },
@@ -137,6 +138,7 @@ const int Error::HYPERSPACE_NOT_LOCKED;
 
 const int Error::MASTER_TABLE_EXISTS;
 const int Error::MASTER_BAD_SCHEMA;
+const int Error::MASTER_NOT_RUNNING;
 
 const int Error::RANGESERVER_GENERATION_MISMATCH;
 const int Error::RANGESERVER_RANGE_ALREADY_LOADED;

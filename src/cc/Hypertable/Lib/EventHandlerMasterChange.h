@@ -18,50 +18,32 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MANAGER_H
-#define HYPERTABLE_MANAGER_H
+#ifndef HYPERTABLE_EVENTHANDLERMASTERCHANGE_H
+#define HYPERTABLE_EVENTHANDLERMASTERCHANGE_H
 
-#include <string>
+#include "Common/Runnable.h"
 
-#include "Common/Properties.h"
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/ConnectionManager.h"
+#include "AsyncComm/ApplicationHandler.h"
+#include "AsyncComm/Event.h"
 
-#include "InstanceData.h"
-#include "Table.h"
+using namespace hypertable;
 
 namespace hypertable {
 
+  class MasterClient;
 
-  class Manager {
-
+  class EventHandlerMasterChange : public ApplicationHandler {
   public:
+    EventHandlerMasterChange(MasterClient *masterClient, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mMasterClient(masterClient) {
+      return;
+    }
 
-    Manager(std::string configFile);
-
-    int CreateTable(std::string name, std::string schema);
-    int OpenTable(std::string name, TablePtr &tablePtr);
-    int GetSchema(std::string tableName, std::string &schema);
-
-    //Table OpenTable();
-    //void DeleteTable();
-    // String [] ListTables();
-
-    friend class Table;
-
-  protected:
-
-    /**
-     *  Constructor.
-     */
-    Manager(PropertiesPtr &propsPtr);
+    virtual void run();
 
   private:
-    InstanceDataPtr mInstPtr;
-
+    MasterClient *mMasterClient;
   };
 
 }
 
-#endif // HYPERTABLE_MANAGER_H
-
+#endif // HYPERTABLE_EVENTHANDLERMASTERCHANGE_H

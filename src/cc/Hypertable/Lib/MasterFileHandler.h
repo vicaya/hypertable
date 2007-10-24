@@ -21,30 +21,29 @@
 #ifndef HYPERTABLE_MASTERFILEHANDLER_H
 #define HYPERTABLE_MASTERFILEHANDLER_H
 
-#include "AsyncComm/ApplicationQueue.h"
-
 #include "Hyperspace/HandleCallback.h"
 
 using namespace Hyperspace;
 
 namespace hypertable {
 
-  class RangeServer;
+  class ApplicationQueue;
+  class MasterClient;
 
   /**
    * 
    */
   class MasterFileHandler : public HandleCallback {
   public:
-    MasterFileHandler(RangeServer *rangeServer, ApplicationQueue *appQueue) : HandleCallback(EVENT_MASK_CHILD_NODE_ADDED), mRangeServer(rangeServer), mAppQueue(appQueue) { return; }
+    MasterFileHandler(MasterClient *masterClient, ApplicationQueue *appQueue) : HandleCallback(EVENT_MASK_ATTR_SET), mMasterClient(masterClient), mAppQueue(appQueue) { return; }
     virtual void ChildNodeAdded(std::string name) { return; }
     virtual void AttrSet(std::string name);
     virtual void AttrDel(std::string name) { return; }
     virtual void ChildNodeRemoved(std::string name) { return; }
     virtual void LockAcquired(uint32_t mode) { return; }
     virtual void LockReleased() { return; }
-    RangeServer *mRangeServer;
-    ApplicationQueue *mAppQueue;
+    MasterClient      *mMasterClient;
+    ApplicationQueue  *mAppQueue;
   };
 }
 

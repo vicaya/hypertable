@@ -21,12 +21,6 @@
 #ifndef HYPERTABLE_CELLKEY_H
 #define HYPERTABLE_CELLKEY_H
 
-#include "Common/ReferenceCount.h"
-
-#include "InstanceData.h"
-#include "Mutator.h"
-#include "Schema.h"
-
 namespace hypertable {
 
   class CellKey {
