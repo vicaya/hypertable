@@ -83,7 +83,9 @@ void LocationCache::Insert(uint32_t tableId, const char *startRow, const char *e
  */
 LocationCache::~LocationCache() {
   for (std::set<const char *, lt_cstr>::iterator iter = mServerIdStrings.begin(); iter != mServerIdStrings.end(); iter++)
-    delete *iter;
+    delete [] *iter;
+  for (LocationMapT::iterator lmIter = mLocationMap.begin(); lmIter != mLocationMap.end(); lmIter++)
+    delete (*lmIter).second;
 }
 
 
