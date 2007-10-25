@@ -73,6 +73,6 @@ configure_file(${SRC_DIR}/schemaTest.golden ${DST_DIR}/schemaTest.golden)
 configure_file(${SRC_DIR}/locationCacheTest.golden ${DST_DIR}/locationCacheTest.golden)
 
 add_test (Schema schemaTest)
-#add_test (LocationCache locationCacheTest)
+add_test (LocationCache locationCacheTest)
 
 install (TARGETS generateTestData RUNTIME DESTINATION bin)

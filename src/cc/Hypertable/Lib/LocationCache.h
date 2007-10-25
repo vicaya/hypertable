@@ -50,11 +50,10 @@ namespace hypertable {
   inline bool operator<(const LocationCacheKeyT &k1, const LocationCacheKeyT &k2) {
     if (k1.tableId != k2.tableId)
       return k1.tableId < k2.tableId;
-    if (*k2.endRow == 0) {
-      if (*k1.endRow == 0)
-	return false;
-      return true;
-    }
+    if (k2.endRow == 0)
+      return (k1.endRow == 0) ? false : true;
+    else if (k1.endRow == 0)
+      return false;
     return strcmp(k1.endRow, k2.endRow) < 0;
   }
 
@@ -62,9 +61,13 @@ namespace hypertable {
    * Equality operator for LocationCacheKeyT
    */
   inline bool operator==(const LocationCacheKeyT &k1, const LocationCacheKeyT &k2) {
-    if (k1.tableId == k2.tableId)
-      return !strcmp(k1.endRow, k2.endRow);
-    return false;
+    if (k1.tableId != k2.tableId)
+      return false;
+    if (k1.endRow == 0)
+      return (k2.endRow == 0) ? true : false;
+    else if (k2.endRow == 0)
+      return false;
+    return !strcmp(k1.endRow, k2.endRow);
   }
 
   /**

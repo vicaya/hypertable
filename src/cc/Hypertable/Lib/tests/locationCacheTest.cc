@@ -216,7 +216,7 @@ int main(int argc, char **argv) {
   TestLookup(cache, 0, "kite");
   TestLookup(cache, 0, "kited");
 
-  for (size_t i=0; i<200; i++) {
+  for (size_t i=0; i<2000; i++) {
     if ((randstr.getInt() % 3) == 0)
       TestLookup(cache, randstr.getInt() % 4, words[randstr.getInt() % MAX_WORDS]);
     else {

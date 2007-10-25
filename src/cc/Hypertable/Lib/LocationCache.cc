@@ -19,10 +19,12 @@
  */
 #include <cassert>
 #include <cstring>
+#include <iostream>
 
 #include "LocationCache.h"
 
 using namespace hypertable;
+using namespace std;
 
 /**
  * Insert
@@ -30,18 +32,19 @@ using namespace hypertable;
 void LocationCache::Insert(uint32_t tableId, const char *startRow, const char *endRow, const char *serverId) {
   boost::mutex::scoped_lock lock(mMutex);
   ValueT *newValue = new ValueT;
-  ValueT *oldValue;
   LocationMapT::iterator iter;
   LocationCacheKeyT key;
 
+  //cout << tableId << " start=" << startRow << " end=" << endRow << " serverId=" << serverId << endl << flush;
+
   serverId = GetConstantServerId(serverId);
 
-  newValue->startRow = startRow;
-  newValue->endRow   = endRow;
+  newValue->startRow = (startRow) ? startRow : "";
+  newValue->endRow   = (endRow) ? endRow : "";
   newValue->serverId = serverId;
 
   key.tableId = tableId;
-  key.endRow = newValue->endRow.c_str();
+  key.endRow = (endRow) ? newValue->endRow.c_str() : 0;
 
   // remove old entry
   if ((iter = mLocationMap.find(key)) != mLocationMap.end())
@@ -92,6 +95,8 @@ bool LocationCache::Lookup(uint32_t tableId, const char *rowKey, const char **se
   LocationMapT::iterator iter;
   LocationCacheKeyT key;
 
+  //cout << tableId << " row=" << rowKey << endl << flush;
+
   key.tableId = tableId;
   key.endRow = rowKey;
 
@@ -138,17 +143,23 @@ void LocationCache::MoveToHead(ValueT *cacheValue) {
  * Remove
  */
 void LocationCache::Remove(ValueT *cacheValue) {
+  assert(cacheValue);
   if (mTail == cacheValue) {
     mTail = cacheValue->next;
     if (mTail)
       mTail->prev = 0;
-    else
+    else {
+      assert (mHead == cacheValue);
       mHead = 0;
+    }
   }
   else if (mHead == cacheValue) {
     mHead = mHead->prev;
-    if (mHead)
-      mHead->next = 0;
+    mHead->next = 0;
+  }
+  else {
+    cacheValue->next->prev = cacheValue->prev;
+    cacheValue->prev->next = cacheValue->next;
   }
   mLocationMap.erase(cacheValue->mapIter);  
   delete cacheValue;
