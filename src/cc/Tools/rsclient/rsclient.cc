@@ -214,7 +214,7 @@ int main(int argc, char **argv) {
 
   // Connect to Range Server
   connManager->Add(addr, 30, "Range Server");
-  if (!connManager->WaitForConnection(addr, 15))
+  if (!connManager->WaitForConnection(addr, 30))
     cerr << "Timed out waiting for for connection to Range Server.  Exiting ..." << endl;
 
 #if 0
