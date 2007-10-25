@@ -26,6 +26,10 @@
 #include "Mutator.h"
 #include "Schema.h"
 
+namespace Hyperspace {
+  class Session;
+}
+
 namespace hypertable {
 
   class ConnectionManager;
@@ -33,14 +37,15 @@ namespace hypertable {
   class Table : public ReferenceCount {
 
   public:
-    Table(ConnectionManager *connManager, std::string &name);
+    Table(ConnectionManager *connManager, Hyperspace::Session *hyperspace, std::string &name);
     virtual ~Table() { return; }
 
     int CreateMutator(MutatorPtr &mutatorPtr);
 
   private:
-    ConnectionManager *mConnManager;
-    SchemaPtr          mSchemaPtr;
+    ConnectionManager   *mConnManager;
+    Hyperspace::Session *mHyperspace;
+    SchemaPtr            mSchemaPtr;
   };
   typedef boost::intrusive_ptr<Table> TablePtr;
 

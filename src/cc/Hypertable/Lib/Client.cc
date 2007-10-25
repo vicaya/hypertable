@@ -76,7 +76,7 @@ int Client::CreateTable(std::string name, std::string schema) {
 int Client::OpenTable(std::string name, TablePtr &tablePtr) {
   Table *table;
   try {
-    table = new Table(mConnManager, name);
+    table = new Table(mConnManager, mHyperspace, name);
   }
   catch (Exception &e) {
     LOG_VA_ERROR("Problem opening table '%s' - %s", name.c_str(), e.what());

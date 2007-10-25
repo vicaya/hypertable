@@ -1,0 +1,29 @@
+<Schema>
+  <AccessGroup name="default">
+    <ColumnFamily>
+      <Name>LogDir</Name>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>SplitLogDir</Name>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>SplitPoint</Name>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>Files</Name>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="location" inMemory="true">
+    <ColumnFamily>
+      <Name>StartRow</Name>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>ServerIdString</Name>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="logging">
+    <ColumnFamily>
+      <Name>event</Name>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>

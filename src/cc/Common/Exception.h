@@ -31,6 +31,11 @@ namespace hypertable {
     ProtocolException(std::string msg) : std::runtime_error(msg) { return; }
   };
 
+  class RuntimeException : public std::runtime_error {
+  public:
+    RuntimeException(std::string msg) : std::runtime_error(msg) { return; }
+  };
+
 }
 
 #endif // HYPERTABLE_EXCEPTION_H

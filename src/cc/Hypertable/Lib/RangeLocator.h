@@ -18,45 +18,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "Mutator.h"
+#ifndef HYPERTABLE_RANGELOCATOR_H
+#define HYPERTABLE_RANGELOCATOR_H
 
-
-/**
- * 
- */
-Mutator::Mutator(ConnectionManager *connManager, SchemaPtr &schemaPtr) : mConnManager(connManager), mSchemaPtr(schemaPtr) {
-  return;
+namespace Hyperspace {
+  class Session;
 }
 
+namespace hypertable {
 
-/**
- *
- */
-void Mutator::Set(CellKey &key, uint8_t *value, uint32_t valueLen) {
+  class RangeLocator {
 
-  
+  public:
+    RangeLocator(Hyperspace::Session *hyperspace);
+    int Find(const char *tableName, const char *rowKey, const char **serverIdPtr);
 
-    void Set(CellKey &key, uint8_t *value, uint32_t valueLen);
+  private:
+    Hyperspace::Session *mHyperspace;
 
-
-  // Location Cache lookup
-
-  // If failed, Lookup range and Load cache
-
-  // Insert mod into per-range queue
-
-  // Update memory used
+  };
 
 }
 
-
-/**
- *
- */
-void Mutator::Flush(MutationResultPtr &resultPtr) {
-
-  // Sweep through the set of per-range queues, sending UPDATE requests to their range servers
-
-  // Increment useCount variable in callback, once for each request that went out
-
-}
+#endif // HYPERTABLE_RANGELOCATOR_H

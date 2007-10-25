@@ -43,6 +43,12 @@ namespace __gnu_cxx {
 #endif
 }
 
+struct lt_cstr {
+  bool operator()(const char* s1, const char* s2) const {
+    return strcmp(s1, s2) < 0;
+  }
+};
+
 inline std::string operator+( const std::string& s1, short sval ) {
   char cbuf[8];
   sprintf(cbuf, "%d", sval);

@@ -48,6 +48,10 @@ target_link_libraries (MetadataTest pthread ${BOOST_LIB} Hypertable AsyncComm Co
 add_executable (schemaTest tests/schemaTest.cc)
 target_link_libraries (schemaTest Hypertable pthread ${BOOST_LIB} Common log4cpp expat)
 
+# locationCacheTest
+add_executable (locationCacheTest tests/locationCacheTest.cc)
+target_link_libraries (locationCacheTest Hypertable ${BOOST_LIB} Common log4cpp)
+
 #
 # Copy test files
 #
@@ -63,8 +67,12 @@ configure_file(${SRC_DIR}/bad-schema-7.xml ${DST_DIR}/bad-schema-7.xml COPYONLY)
 configure_file(${SRC_DIR}/bad-schema-8.xml ${DST_DIR}/bad-schema-8.xml COPYONLY)
 configure_file(${SRC_DIR}/bad-schema-9.xml ${DST_DIR}/bad-schema-9.xml COPYONLY)
 configure_file(${SRC_DIR}/good-schema-1.xml ${DST_DIR}/good-schema-1.xml COPYONLY)
+
+configure_file(${HYPERTABLE_SOURCE_DIR}/test/random.dat ${DST_DIR}/random.dat COPYONLY)
 configure_file(${SRC_DIR}/schemaTest.golden ${DST_DIR}/schemaTest.golden)
+configure_file(${SRC_DIR}/locationCacheTest.golden ${DST_DIR}/locationCacheTest.golden)
 
 add_test (Schema schemaTest)
+#add_test (LocationCache locationCacheTest)
 
 install (TARGETS generateTestData RUNTIME DESTINATION bin)

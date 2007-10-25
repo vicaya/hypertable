@@ -24,6 +24,7 @@
 #include <cstdio>
 
 extern "C" {
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 }
