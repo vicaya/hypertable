@@ -38,6 +38,9 @@ namespace hypertable {
     void SetRootStale() { mRootStale=true; }
 
   private:
+
+    int ReadRootLocation();
+
     Hyperspace::Session *mHyperspace;
     LocationCache        mCache;
     uint64_t             mRootFileHandle;

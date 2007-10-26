@@ -36,6 +36,9 @@ namespace hypertable {
     virtual int run();
 
   private:
+
+    bool DecodeRowRangeSpec(std::string &specStr, ScanSpecificationT &scanSpec);
+
     static const char *msUsage[];
 
     struct sockaddr_in mAddr;

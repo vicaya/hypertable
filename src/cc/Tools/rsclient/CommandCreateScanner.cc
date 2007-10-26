@@ -18,9 +18,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <cctype>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+
+extern "C" {
+#include <regex.h>
+}
 
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "AsyncComm/Event.h"
@@ -45,6 +50,7 @@ const char *CommandCreateScanner::msUsage[] = {
   "  cell-limit=<n>  Limit the number of cell versions returned to <n>",
   "  start=<row>     Start scan at row <row>",
   "  end=<row>       End scan at row <row>, non inclusive",
+  "  row-range=<rng> Row range of form '('|'[' start, end ']'|')'",
   "  columns=<column1>[,<column2>...]  Only return these columns",
   "  start-time=<t>  Only return cells whose timestamp is >= <t>",
   "  end-time=<t>    Only return cells whose timestamp is < <t>",
@@ -108,7 +114,9 @@ int CommandCreateScanner::run() {
   scanSpec.cellLimit = 0;
   scanSpec.columns.clear();
   scanSpec.startRow = 0;
+  scanSpec.startRowInclusive = true;
   scanSpec.endRow = 0;
+  scanSpec.endRowInclusive = true;
   scanSpec.interval.first = 0;
   scanSpec.interval.second = 0;
 
@@ -125,6 +133,10 @@ int CommandCreateScanner::run() {
       scanSpec.startRow = mArgs[i].second.c_str();
     else if (mArgs[i].first == "end")
       scanSpec.endRow = mArgs[i].second.c_str();
+    else if (mArgs[i].first == "row-range") {
+      if (!DecodeRowRangeSpec(mArgs[i].second, scanSpec))
+	return -1;
+    }
     else if (mArgs[i].first == "start-time")
       scanSpec.interval.first = strtoll(mArgs[i].second.c_str(), 0, 10);
     else if (mArgs[i].first == "end-time")
@@ -174,4 +186,89 @@ int CommandCreateScanner::run() {
     Global::outstandingScannerId = -1;
 
   return Error::OK;
+}
+
+
+/**
+ *
+ */
+bool CommandCreateScanner::DecodeRowRangeSpec(std::string &specStr, ScanSpecificationT &scanSpec) {
+  regex_t reg;
+  regmatch_t pmatch[5];
+  int error;
+  char errBuf[256];
+  char *base = (char *)specStr.c_str();
+  const char *ptr;
+
+  errBuf[0] = 0;
+
+  error = regcomp(&reg, "\\([([]\\)\\([^,]*\\),\\([^)]*\\)\\([])]\\)", REG_BASIC);
+  if (error != 0) {
+    regerror(error, &reg, errBuf, 256);
+    goto abort;
+  }
+
+  error = regexec(&reg, base, 5, pmatch, 0);
+  if (error != 0) {
+    regerror(error, &reg, errBuf, 256);
+    goto abort;
+  }
+
+  for (size_t i=0; i<5; i++) {
+    if (pmatch[i].rm_so == -1)
+      goto abort;
+  }
+
+  if (base[pmatch[1].rm_so] == '(')
+    scanSpec.startRowInclusive = false;
+  else
+    scanSpec.startRowInclusive = true;
+
+  if (base[pmatch[4].rm_so] == ')')
+    scanSpec.endRowInclusive = false;
+  else
+    scanSpec.endRowInclusive = true;
+
+  /**
+   * Start Row
+   */
+  while (pmatch[2].rm_so < pmatch[2].rm_eo && isspace(base[pmatch[2].rm_so]))
+    pmatch[2].rm_so++;
+
+  while (pmatch[2].rm_so < pmatch[2].rm_eo && isspace(base[pmatch[2].rm_eo-1]))
+    pmatch[2].rm_eo--;
+
+  if (pmatch[2].rm_so < pmatch[2].rm_eo) {
+    scanSpec.startRow = &base[pmatch[2].rm_so];
+    base[pmatch[2].rm_eo] = 0;
+  }
+  else
+    scanSpec.startRow = 0;
+
+  /**
+   * End Row
+   */
+  while (pmatch[3].rm_so < pmatch[3].rm_eo && isspace(base[pmatch[3].rm_so]))
+    pmatch[3].rm_so++;
+
+  while (pmatch[3].rm_so < pmatch[3].rm_eo && isspace(base[pmatch[3].rm_eo-1]))
+    pmatch[3].rm_eo--;
+
+  if (pmatch[3].rm_so < pmatch[3].rm_eo) {
+    scanSpec.endRow = &base[pmatch[3].rm_so];
+    base[pmatch[3].rm_eo] = 0;
+  }
+  else
+    scanSpec.endRow = 0;
+
+  regfree(&reg);
+
+  return true;
+
+ abort:
+  if (errBuf[0] == 0)
+    cerr << "Invalid row range specification." << endl;
+  else
+    cerr << "regex: " << errBuf << endl;
+  return false;
 }

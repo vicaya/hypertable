@@ -74,7 +74,7 @@ namespace hypertable {
    *
    */
   size_t EncodedLengthScanSpecification(ScanSpecificationT &scanSpec) {
-    size_t len = 26;
+    size_t len = 28;
     len += Serialization::EncodedLengthString(scanSpec.startRow);
     len += Serialization::EncodedLengthString(scanSpec.endRow);
     for (int i=0; i<scanSpec.columns.size(); i++)
@@ -87,7 +87,9 @@ namespace hypertable {
     Serialization::EncodeInt(bufPtr, scanSpec.rowLimit);
     Serialization::EncodeInt(bufPtr, scanSpec.cellLimit);
     Serialization::EncodeString(bufPtr, scanSpec.startRow);
+    *(*bufPtr)++ = (uint8_t)scanSpec.startRowInclusive;
     Serialization::EncodeString(bufPtr, scanSpec.endRow);
+    *(*bufPtr)++ = (uint8_t)scanSpec.endRowInclusive;
     Serialization::EncodeShort(bufPtr, (short)scanSpec.columns.size());
     for (int i=0; i<scanSpec.columns.size(); i++)
       Serialization::EncodeString(bufPtr, scanSpec.columns[i]);
@@ -99,6 +101,7 @@ namespace hypertable {
   bool DecodeScanSpecification(uint8_t **bufPtr, size_t *remainingPtr, ScanSpecificationT *scanSpec) {
     uint16_t columnCount;
     const char *column;
+    uint8_t inclusiveByte;
 
     if (!Serialization::DecodeInt(bufPtr, remainingPtr, &scanSpec->rowLimit))
       return false;
@@ -106,8 +109,14 @@ namespace hypertable {
       return false;
     if (!Serialization::DecodeString(bufPtr, remainingPtr, &scanSpec->startRow))
       return false;
+    if (!Serialization::DecodeByte(bufPtr, remainingPtr, &inclusiveByte))
+      return false;
+    scanSpec->startRowInclusive = inclusiveByte ? true : false;
     if (!Serialization::DecodeString(bufPtr, remainingPtr, &scanSpec->endRow))
       return false;
+    if (!Serialization::DecodeByte(bufPtr, remainingPtr, &inclusiveByte))
+      return false;
+    scanSpec->endRowInclusive = inclusiveByte ? true : false;
     if (!Serialization::DecodeShort(bufPtr, remainingPtr, &columnCount))
       return false;
     for (short i=0; i<columnCount; i++) {
@@ -158,8 +167,16 @@ namespace hypertable {
     for (std::vector<const char *>::const_iterator iter = scanSpec.columns.begin(); iter != scanSpec.columns.end(); iter++)
       os << *iter << " ";
     os << endl;
-    os << "StartRow  = " << scanSpec.startRow << endl;
-    os << "EndRow    = " << scanSpec.endRow << endl;
+    if (scanSpec.startRow)
+      os << "StartRow  = " << scanSpec.startRow << endl;
+    else
+      os << "StartRow  = " << endl;
+    os << "StartRowInclusive = " << scanSpec.startRowInclusive << endl;
+    if (scanSpec.endRow)
+      os << "EndRow    = " << scanSpec.endRow << endl;
+    else
+      os << "EndRow  = " << endl;
+    os << "EndRowInclusive = " << scanSpec.endRowInclusive << endl;
     os << "MinTime   = " << scanSpec.interval.first << endl;
     os << "MaxTime   = " << scanSpec.interval.second << endl;
     return os;

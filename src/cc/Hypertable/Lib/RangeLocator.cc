@@ -51,10 +51,39 @@ RangeLocator::~RangeLocator() {
  *
  */
 int RangeLocator::Find(uint32_t tableId, const char *rowKey, const char **serverIdPtr) {
+  int error;
+
+  if (mRootStale) {
+    if ((error = ReadRootLocation()) != Error::OK)
+      return error;
+  }
 
   if (mCache.Lookup(tableId, rowKey, serverIdPtr))
     return Error::OK;
 
   // fix me !!!!
+
+  if (tableId == 0) {
+
+  }
+
   return Error::OK;
+}
+
+
+/**
+ * 
+ */
+int RangeLocator::ReadRootLocation() {
+  int error;
+  DynamicBuffer value(0);
+  std::string addrStr;
+
+  if ((error = mHyperspace->AttrGet(mRootFileHandle, "location", value)) != Error::OK) {
+    LOG_VA_ERROR("Problem reading 'address' attribute of Hyperspace file /hypertable/root - %s", Error::GetText(error));
+    return error;
+  }
+
+  mCache.Insert(0, 0, "1:", (const char *)value.buf);
+  
 }

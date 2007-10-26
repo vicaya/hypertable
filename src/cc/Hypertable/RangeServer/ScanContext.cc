@@ -101,10 +101,15 @@ void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp)
    * Create Start Key and End Key
    */
   if (spec) {
-    if (*spec->startRow != 0)
-      startKeyPtr = CreateKey(FLAG_INSERT, spec->startRow, 0, 0, 0LL);
-    if (*spec->endRow != 0)
-      endKeyPtr = CreateKey(FLAG_INSERT, spec->endRow, 0xFF, 0, 0LL);
+    uint8_t family;
+    if (*spec->startRow != 0) {
+      family = spec->startRowInclusive ? 0 : 0xFF;
+      startKeyPtr = CreateKey(FLAG_INSERT, spec->startRow, family, 0, 0LL);
+    }
+    if (*spec->endRow != 0) {
+      family = spec->endRowInclusive ? 0xFF : 0;
+      endKeyPtr = CreateKey(FLAG_INSERT, spec->endRow, family, 0, 0LL);
+    }
   }
 
 }

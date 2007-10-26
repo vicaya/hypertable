@@ -53,7 +53,9 @@ namespace hypertable {
     uint32_t cellLimit;
     std::vector<const char *> columns;
     const char *startRow;
+    bool startRowInclusive;
     const char *endRow;
+    bool endRowInclusive;
     std::pair<uint64_t,uint64_t> interval;
   } ScanSpecificationT;
 
