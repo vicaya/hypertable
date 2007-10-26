@@ -513,4 +513,41 @@ EndRow     = kerchoo
 1181153477854957 Agao onion:http://creativecommons.org/licenses/by-sa/1.0/
 1181153478158634 Agao onion:http://www.newadvent.org/cathen/14146a.htm
 1181153477596685 Agapetidae banana:http://www.archives.gov/federal_register/electoral_college/2004_certificates/ascertainment_georgia_01.html
+rsclient> create scanner Test1[:kerchoo] row-range=[Agamemnon,Agamemnon]
+Generation = 1
+TableName  = Test1
+StartRow   = 
+EndRow     = kerchoo
+1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
+1181153478609060 Agamemnon plum:http://maps.google.com/maps?ll=43.297884,-91.989187&spn=0.11,0.18&t=h
+rsclient> create scanner Test1[:kerchoo] row-range=[Agamemnon,Aganice]
+Generation = 1
+TableName  = Test1
+StartRow   = 
+EndRow     = kerchoo
+1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
+1181153478609060 Agamemnon plum:http://maps.google.com/maps?ll=43.297884,-91.989187&spn=0.11,0.18&t=h
+1181153477562141 Agamidae onion:http://www.dtic.mil/jcs
+1181153478134435 Aganice broccoli:http://geonames.usgs.gov/pls/gnis/web_query.gnis_web_query_form
+rsclient> create scanner Test1[:kerchoo] row-range=(Agamemnon,Aganice]
+Generation = 1
+TableName  = Test1
+StartRow   = 
+EndRow     = kerchoo
+1181153477562141 Agamidae onion:http://www.dtic.mil/jcs
+1181153478134435 Aganice broccoli:http://geonames.usgs.gov/pls/gnis/web_query.gnis_web_query_form
+rsclient> create scanner Test1[:kerchoo] row-range=[Agamemnon,Aganice)
+Generation = 1
+TableName  = Test1
+StartRow   = 
+EndRow     = kerchoo
+1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
+1181153478609060 Agamemnon plum:http://maps.google.com/maps?ll=43.297884,-91.989187&spn=0.11,0.18&t=h
+1181153477562141 Agamidae onion:http://www.dtic.mil/jcs
+rsclient> create scanner Test1[:kerchoo] row-range=(Agamemnon,Aganice)
+Generation = 1
+TableName  = Test1
+StartRow   = 
+EndRow     = kerchoo
+1181153477562141 Agamidae onion:http://www.dtic.mil/jcs
 rsclient> quit
