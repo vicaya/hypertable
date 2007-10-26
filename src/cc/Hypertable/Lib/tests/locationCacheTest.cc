@@ -191,7 +191,7 @@ namespace {
   void TestLookup(LocationCache &cache, uint32_t tableId, const char *rowKey) {
     const char *serverId;
     outfile << "LOOKUP(" << tableId << ", " << rowKey << ") -> ";
-    if (cache.Lookup(0, rowKey, &serverId))
+    if (cache.Lookup(tableId, rowKey, &serverId))
       outfile << serverId << endl;
     else
       outfile << "[NULL]" << endl;
@@ -204,6 +204,9 @@ int main(int argc, char **argv) {
   LocationCache cache(68);
   NumberStream randstr("./random.dat");
   uint32_t rangei;
+  uint32_t tableId;
+  uint32_t serveri;
+  const char *start, *end;
 
   outfile.open("./locationCacheTest.output");
 
@@ -221,9 +224,16 @@ int main(int argc, char **argv) {
       TestLookup(cache, randstr.getInt() % 4, words[randstr.getInt() % MAX_WORDS]);
     else {
       rangei = randstr.getInt() % MAX_RANGES;
-      cache.Insert(randstr.getInt() % 4, ranges[rangei].first, ranges[rangei].second, serverIds[randstr.getInt() % MAX_SERVERIDS]);
+      tableId = randstr.getInt() % 4;
+      serveri = randstr.getInt() % MAX_SERVERIDS;
+      start = (ranges[rangei].first == 0) ? "[NULL]" : ranges[rangei].first;
+      end = (ranges[rangei].second == 0) ? "[NULL]" : ranges[rangei].second;
+      outfile << "INSERT(" << tableId << ", " << start << ", " << end << ", " << serverIds[serveri] << endl << flush;
+      cache.Insert(tableId, ranges[rangei].first, ranges[rangei].second, serverIds[serveri]);
     }
   }
+
+  cache.Display(outfile);
 
   outfile.close();
 

@@ -19,6 +19,7 @@
  */
 #include <cassert>
 #include <cstring>
+#include <fstream>
 #include <iostream>
 
 #include "LocationCache.h"
@@ -111,12 +112,20 @@ bool LocationCache::Lookup(uint32_t tableId, const char *rowKey, const char **se
   if (strcmp(rowKey, (*iter).second->startRow.c_str()) <= 0)
     return false;
 
+  cout << "Moving to head '" << (*iter).second->endRow << "'" << endl;
   MoveToHead((*iter).second);
 
   *serverIdPtr = (*iter).second->serverId;
 
   return true;
 }
+
+
+void LocationCache::Display(ofstream &outfile) {
+  for (ValueT *value = mHead; value; value = value->prev)
+    outfile << "DUMP: end=" << value->endRow << " start=" << value->startRow << endl;
+}
+
 
 
 /**

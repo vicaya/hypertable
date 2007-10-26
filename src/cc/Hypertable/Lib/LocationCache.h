@@ -22,6 +22,7 @@
 #define HYPERTABLE_LOCATIONCACHE_H
 
 #include <cstring>
+#include <fstream>
 #include <map>
 #include <set>
 
@@ -102,6 +103,8 @@ namespace hypertable {
 
     void Insert(uint32_t tableId, const char *startRow, const char *endRow, const char *serverId);
     bool Lookup(uint32_t tableId, const char *rowKey, const char **serverIdPtr);
+
+    void Display(std::ofstream &outfile);
 
   private:
 
