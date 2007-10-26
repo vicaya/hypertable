@@ -18,33 +18,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RANGELOCATOR_H
-#define HYPERTABLE_RANGELOCATOR_H
+#ifndef HYPERTABLE_ROOTFILEHANDLER_H
+#define HYPERTABLE_ROOTFILEHANDLER_H
 
-#include "LocationCache.h"
+#include "Hyperspace/HandleCallback.h"
 
-namespace Hyperspace {
-  class Session;
-}
+using namespace Hyperspace;
 
 namespace hypertable {
 
-  class RangeLocator {
+  class RootFileHandler;
+  class RangeLocator;
 
+  /**
+   * 
+   */
+  class RootFileHandler : public HandleCallback {
   public:
-    RangeLocator(Hyperspace::Session *hyperspace);
-    ~RangeLocator();
-    int Find(uint32_t tableId, const char *rowKey, const char **serverIdPtr);
-    void SetRootStale() { mRootStale=true; }
-
-  private:
-    Hyperspace::Session *mHyperspace;
-    LocationCache        mCache;
-    uint64_t             mRootFileHandle;
-    HandleCallbackPtr    mRootHandlerPtr;
-    bool                 mRootStale;
+    RootFileHandler(RangeLocator *rangeLocator) : HandleCallback(EVENT_MASK_ATTR_SET), mRangeLocator(rangeLocator) { return; }
+    virtual void AttrSet(std::string name);
+    RangeLocator    *mRangeLocator;
+    RootFileHandler *mRootHandler;
   };
-
 }
 
-#endif // HYPERTABLE_RANGELOCATOR_H
+#endif // HYPERTABLE_ROOTFILEHANDLER_H

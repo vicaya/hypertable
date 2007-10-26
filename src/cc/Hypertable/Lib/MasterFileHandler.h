@@ -36,12 +36,7 @@ namespace hypertable {
   class MasterFileHandler : public HandleCallback {
   public:
     MasterFileHandler(MasterClient *masterClient, ApplicationQueue *appQueue) : HandleCallback(EVENT_MASK_ATTR_SET), mMasterClient(masterClient), mAppQueue(appQueue) { return; }
-    virtual void ChildNodeAdded(std::string name) { return; }
     virtual void AttrSet(std::string name);
-    virtual void AttrDel(std::string name) { return; }
-    virtual void ChildNodeRemoved(std::string name) { return; }
-    virtual void LockAcquired(uint32_t mode) { return; }
-    virtual void LockReleased() { return; }
     MasterClient      *mMasterClient;
     ApplicationQueue  *mAppQueue;
   };

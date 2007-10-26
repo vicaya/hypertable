@@ -85,18 +85,28 @@ bool hypertable::CreateDirectoryLayout(ConnectionManager *connManager, Propertie
   if (!CreateDirectory(hyperspace, "/hypertable/tables"))
     return false;
 
+  /**
+   * Create /hypertable/master
+   */
   if ((error = hyperspace->Open("/hypertable/master", OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, nullHandleCallback, &handle)) != Error::OK) {
     LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/master' (%s)", Error::GetText(error));
     return false;
   }
-
   tableId = 0;
   if ((error = hyperspace->AttrSet(handle, "last_table_id", &tableId, sizeof(int32_t))) != Error::OK) {
     LOG_VA_ERROR("Problem setting attribute 'last_table_id' of file /hypertable/master - %s", Error::GetText(error));
     hyperspace->Close(handle);
     return false;
   }
+  hyperspace->Close(handle);
 
+  /**
+   *  Create /hypertable/root
+   */
+  if ((error = hyperspace->Open("/hypertable/root", OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, nullHandleCallback, &handle)) != Error::OK) {
+    LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/root' (%s)", Error::GetText(error));
+    return false;
+  }
   hyperspace->Close(handle);
 
   return true;

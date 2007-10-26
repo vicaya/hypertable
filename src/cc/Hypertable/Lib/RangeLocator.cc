@@ -18,22 +18,43 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include "Common/Error.h"
+
 #include "Hyperspace/Session.h"
 
+#include "RootFileHandler.h"
 #include "RangeLocator.h"
 
 
 /**
  * 
  */
-RangeLocator::RangeLocator(Hyperspace::Session *hyperspace) : mHyperspace(hyperspace) {
-  
+RangeLocator::RangeLocator(Hyperspace::Session *hyperspace) : mHyperspace(hyperspace), mCache(1000), mRootStale(true) {
+  int error;
+
+  mRootHandlerPtr = new RootFileHandler(this);
+
+  if ((error = mHyperspace->Open("/hypertable/root", OPEN_FLAG_READ, mRootHandlerPtr, &mRootFileHandle)) != Error::OK) {
+    LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/root' (%s)", Error::GetText(error));
+    throw Exception(error);
+  }
+
 }
+
+RangeLocator::~RangeLocator() {
+  mHyperspace->Close(mRootFileHandle);
+}
+
 
 
 /**
  *
  */
 int RangeLocator::Find(uint32_t tableId, const char *rowKey, const char **serverIdPtr) {
-  
+
+  if (mCache.Lookup(tableId, rowKey, serverIdPtr))
+    return Error::OK;
+
+  // fix me !!!!
+  return Error::OK;
 }
