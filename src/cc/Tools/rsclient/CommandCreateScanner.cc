@@ -202,7 +202,7 @@ bool CommandCreateScanner::DecodeRowRangeSpec(std::string &specStr, ScanSpecific
 
   errBuf[0] = 0;
 
-  error = regcomp(&reg, "\\([([]\\)\\([^,]*\\),\\([^)]*\\)\\([])]\\)", REG_BASIC);
+  error = regcomp(&reg, "\\([([]\\)\\([^,]*\\),\\([^)]*\\)\\([])]\\)", 0);
   if (error != 0) {
     regerror(error, &reg, errBuf, 256);
     goto abort;
