@@ -313,108 +313,18 @@ void Master::ServerLeft(std::string &serverIdStr) {
  * 
  */
 void Master::CreateTable(ResponseCallback *cb, const char *tableName, const char *schemaString) {
-  int error = Error::OK;
-  std::string finalSchema = "";
-  std::string tableFile = (std::string)"/hypertable/tables/" + tableName;
+  int error;
   std::string errMsg;
-  string tableBaseDir;
-  string lgDir;
-  Schema *schema = 0;
-  list<Schema::AccessGroup *> *lgList;
-  bool exists;
-  HandleCallbackPtr nullHandleCallback;
-  uint64_t handle;
-
-  /**
-   * Check for table existence
-   */
-  if ((error = mHyperspace->Exists(tableFile, &exists)) != Error::OK) {
-    errMsg = (std::string)"Problem checking for existence of table file '" + tableFile + "'";
-    goto abort;
-  }
-  if (exists) {
-    errMsg = tableName;
-    error = Error::MASTER_TABLE_EXISTS;
-    goto abort;
-  }
-
-  /**
-   *  Parse Schema and assign Generation number and Column ids
-   */
-  schema = Schema::NewInstance(schemaString, strlen(schemaString));
-  if (!schema->IsValid()) {
-    errMsg = schema->GetErrorString();
-    error = Error::MASTER_BAD_SCHEMA;
-    return;
-  }
-  schema->AssignIds();
-  schema->Render(finalSchema);
-
-  /**
-   * Create table file
-   */
-  if ((error = mHyperspace->Open(tableFile, OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, nullHandleCallback, &handle)) != Error::OK) {
-    errMsg = "Unable to create Hyperspace table file '" + tableFile + "' (" + Error::GetText(error) + ")";
-    goto abort;
-  }
-
-  /**
-   * Write 'table_id' attribute of table file and 'last_table_id' attribute of /hypertable/master
-   */
-  {
-    uint32_t tableId = (uint32_t)atomic_inc_return(&mLastTableId);
-
-    if ((error = mHyperspace->AttrSet(mMasterFileHandle, "last_table_id", &tableId, sizeof(int32_t))) != Error::OK) {
-      errMsg = (std::string)"Problem setting attribute 'last_table_id' of file /hypertable/master - " + Error::GetText(error);
-      goto abort;
-    }
-
-    if ((error = mHyperspace->AttrSet(handle, "table_id", &tableId, sizeof(int32_t))) != Error::OK) {
-      errMsg = (std::string)"Problem setting attribute 'table_id' of file " + tableFile + " - " + Error::GetText(error);
-      goto abort;
-    }
-  }
-
-
-  /**
-   * Write schema attribute
-   */
-  if ((error = mHyperspace->AttrSet(handle, "schema", finalSchema.c_str(), strlen(finalSchema.c_str()))) != Error::OK) {
-    errMsg = (std::string)"Problem creating attribute 'schema' for table file '" + tableFile + "'";
-    goto abort;
-  }
-
-  mHyperspace->Close(handle);
-
-  /**
-   * Create /hypertable/tables/<table>/<accessGroup> directories for this table in HDFS
-   */
-  tableBaseDir = (string)"/hypertable/tables/" + tableName + "/";
-  lgList = schema->GetAccessGroupList();
-  for (list<Schema::AccessGroup *>::iterator lgIter = lgList->begin(); lgIter != lgList->end(); lgIter++) {
-    lgDir = tableBaseDir + (*lgIter)->name;
-    if ((error = mDfsClient->Mkdirs(lgDir)) != Error::OK) {
-      errMsg = (string)"Problem creating table directory '" + lgDir + "'";
-      goto abort;
-    }
-  }
-
-  cb->response_ok();
-
-  if (mVerbose) {
-    LOG_VA_INFO("Successfully created table '%s'", tableName);
-  }
-
- abort:
-  delete schema;
-  if (error != Error::OK) {
-    if (mVerbose) {
-      LOG_VA_ERROR("%s '%s'", Error::GetText(error), errMsg.c_str());
-    }
+  if ((error = CreateTable(tableName, schemaString, errMsg)) != Error::OK)
     cb->error(error, errMsg);
-  }
+  else
+    cb->response_ok();
 }
 
+
+/**
+ *
+ */
 void Master::GetSchema(ResponseCallbackGetSchema *cb, const char *tableName) {
   int error = Error::OK;
   std::string tableFile = (std::string)"/hypertable/tables/" + tableName;
@@ -494,4 +404,105 @@ void Master::RegisterServer(ResponseCallback *cb, const char *serverIdStr, struc
   }
 
   cb->response_ok();
+}
+
+
+int Master::CreateTable(const char *tableName, const char *schemaString, std::string &errMsg) {
+  int error = Error::OK;
+  std::string finalSchema = "";
+  std::string tableFile = (std::string)"/hypertable/tables/" + tableName;
+  string tableBaseDir;
+  string lgDir;
+  Schema *schema = 0;
+  list<Schema::AccessGroup *> *lgList;
+  bool exists;
+  HandleCallbackPtr nullHandleCallback;
+  uint64_t handle;
+
+  /**
+   * Check for table existence
+   */
+  if ((error = mHyperspace->Exists(tableFile, &exists)) != Error::OK) {
+    errMsg = (std::string)"Problem checking for existence of table file '" + tableFile + "'";
+    goto abort;
+  }
+  if (exists) {
+    errMsg = tableName;
+    error = Error::MASTER_TABLE_EXISTS;
+    goto abort;
+  }
+
+  /**
+   *  Parse Schema and assign Generation number and Column ids
+   */
+  schema = Schema::NewInstance(schemaString, strlen(schemaString));
+  if (!schema->IsValid()) {
+    errMsg = schema->GetErrorString();
+    error = Error::MASTER_BAD_SCHEMA;
+    goto abort;
+  }
+  schema->AssignIds();
+  schema->Render(finalSchema);
+
+  /**
+   * Create table file
+   */
+  if ((error = mHyperspace->Open(tableFile, OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, nullHandleCallback, &handle)) != Error::OK) {
+    errMsg = "Unable to create Hyperspace table file '" + tableFile + "' (" + Error::GetText(error) + ")";
+    goto abort;
+  }
+
+  /**
+   * Write 'table_id' attribute of table file and 'last_table_id' attribute of /hypertable/master
+   */
+  {
+    uint32_t tableId = (uint32_t)atomic_inc_return(&mLastTableId);
+
+    if ((error = mHyperspace->AttrSet(mMasterFileHandle, "last_table_id", &tableId, sizeof(int32_t))) != Error::OK) {
+      errMsg = (std::string)"Problem setting attribute 'last_table_id' of file /hypertable/master - " + Error::GetText(error);
+      goto abort;
+    }
+
+    if ((error = mHyperspace->AttrSet(handle, "table_id", &tableId, sizeof(int32_t))) != Error::OK) {
+      errMsg = (std::string)"Problem setting attribute 'table_id' of file " + tableFile + " - " + Error::GetText(error);
+      goto abort;
+    }
+  }
+
+
+  /**
+   * Write schema attribute
+   */
+  if ((error = mHyperspace->AttrSet(handle, "schema", finalSchema.c_str(), strlen(finalSchema.c_str()))) != Error::OK) {
+    errMsg = (std::string)"Problem creating attribute 'schema' for table file '" + tableFile + "'";
+    goto abort;
+  }
+
+  mHyperspace->Close(handle);
+
+  /**
+   * Create /hypertable/tables/<table>/<accessGroup> directories for this table in HDFS
+   */
+  tableBaseDir = (string)"/hypertable/tables/" + tableName + "/";
+  lgList = schema->GetAccessGroupList();
+  for (list<Schema::AccessGroup *>::iterator lgIter = lgList->begin(); lgIter != lgList->end(); lgIter++) {
+    lgDir = tableBaseDir + (*lgIter)->name;
+    if ((error = mDfsClient->Mkdirs(lgDir)) != Error::OK) {
+      errMsg = (string)"Problem creating table directory '" + lgDir + "'";
+      goto abort;
+    }
+  }
+
+  if (mVerbose) {
+    LOG_VA_INFO("Successfully created table '%s'", tableName);
+  }
+
+ abort:
+  delete schema;
+  if (error != Error::OK) {
+    if (mVerbose) {
+      LOG_VA_ERROR("%s '%s'", Error::GetText(error), errMsg.c_str());
+    }
+  }
+  return error;
 }

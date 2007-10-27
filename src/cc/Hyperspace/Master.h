@@ -93,6 +93,8 @@ namespace Hyperspace {
      */
     bool GetSession(uint64_t sessionId, SessionDataPtr &sessionPtr);
 
+    void DestroySession(uint64_t sessionId);
+
     /**
      * Attempts to renew the session lease for session with the given ID.  If
      * the session cannot be found or if it is expired, the method returns

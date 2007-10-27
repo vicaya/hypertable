@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
   const char *portProperty = 0;
   const char *portStr = 0;
   DfsBroker::Client *client;
-  Hyperspace::Session *hyperspace;
+  Hyperspace::Session *hyperspace = 0;
   RangeServerClient *rangeServer;
   Comm *comm = 0;
   ConnectionManager *connManager;
@@ -161,7 +161,7 @@ int main(int argc, char **argv) {
     }
 
     if (!InetAddr::Initialize(&addr, hostName.c_str(), (uint16_t)port))
-      return 1;
+      goto abort;
   }
 
   comm = new Comm();
@@ -170,71 +170,54 @@ int main(int argc, char **argv) {
 
   if (serverName == "dfsbroker") {
     client = new DfsBroker::Client(connManager, addr, 30);
-    if (!client->WaitForConnection(2)) {
-      if (verbose)
-	cout << "false" << endl;
-      return 1;
-    }
-    if ((error = client->Status()) != Error::OK) {
-      if (verbose)
-	cout << "false" << endl;
-      return 1;
-    }
+    if (!client->WaitForConnection(2))
+      goto abort;
+    if ((error = client->Status()) != Error::OK)
+      goto abort;
   }
   else if (serverName == "hyperspace") {
     hyperspace = new Hyperspace::Session(connManager->GetComm(), propsPtr, 0);
-    if (!hyperspace->WaitForConnection(2)) {
-      if (verbose)
-	cout << "false" << endl;
-      return 1;
-    }
-    if ((error = hyperspace->Status()) != Error::OK) {
-      if (verbose)
-	cout << "false" << endl;
-      return 1;
-    }
+    if (!hyperspace->WaitForConnection(2))
+      goto abort;
+    if ((error = hyperspace->Status()) != Error::OK)
+      goto abort;
   }
   else if (serverName == "master") {
     MasterClientPtr  masterPtr;
 
     hyperspace = new Hyperspace::Session(connManager->GetComm(), propsPtr, 0);
 
-    if (!hyperspace->WaitForConnection(2)) {
-      if (verbose)
-	cout << "false" << endl;
-      return 1;
-    }
+    if (!hyperspace->WaitForConnection(2))
+      goto abort;
 
     masterPtr = new MasterClient(connManager, hyperspace, 30, new ApplicationQueue(1));
-    masterPtr->InitiateConnection(0);
-    if (!masterPtr->WaitForConnection(2)) {
-      if (verbose)
-	cout << "false" << endl;
-      return 1;
-    }
+    masterPtr->SetVerboseFlag(false);
+    if (masterPtr->InitiateConnection(0) != Error::OK)
+      goto abort;
 
-    if ((error = masterPtr->Status()) != Error::OK) {
-      if (verbose)
-	cout << "false" << endl;
-      return 1;
-    }
+    if (!masterPtr->WaitForConnection(2))
+      goto abort;
+
+    if ((error = masterPtr->Status()) != Error::OK)
+      goto abort;
   }
   else if (serverName == "rangeserver") {
     connManager->Add(addr, 30, "Range Server");
-    if (!connManager->WaitForConnection(addr, 2)) {
-      if (verbose)
-	cout << "false" << endl;
-      return 1;
-    }
+    if (!connManager->WaitForConnection(addr, 2))
+      goto abort;
     rangeServer = new RangeServerClient(comm, 30);
-    if ((error = rangeServer->Status(addr)) != Error::OK) {
-      if (verbose)
-	cout << "false" << endl;
-      return 1;
-    }
+    if ((error = rangeServer->Status(addr)) != Error::OK)
+      goto abort;
   }
 
+  delete hyperspace;
   if (verbose)
     cout << "true" << endl;
   return 0;
+
+ abort:
+  delete hyperspace;
+  if (verbose)
+    cout << "false" << endl;
+  return 1;
 }

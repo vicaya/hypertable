@@ -50,7 +50,7 @@ namespace hypertable {
     MasterClient(ConnectionManager *connManager, Hyperspace::Session *hyperspace, time_t timeout, ApplicationQueue *appQueue);
     ~MasterClient();
 
-    void InitiateConnection(DispatchHandlerPtr dispatchHandlerPtr);
+    int InitiateConnection(DispatchHandlerPtr dispatchHandlerPtr);
 
     bool WaitForConnection(long maxWaitSecs);
 
@@ -72,12 +72,14 @@ namespace hypertable {
 
     int ReloadMaster();
 
+    void SetVerboseFlag(bool verbose) { mVerbose = verbose; }
 
   private:
 
     int SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler);
 
     boost::mutex         mMutex;
+    bool                 mVerbose;
     ConnectionManager   *mConnManager;
     Comm                *mComm;
     Hyperspace::Session *mHyperspace;

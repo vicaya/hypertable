@@ -147,8 +147,8 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
     LOG_VA_INFO("%s", eventPtr->toString().c_str());    
   }
   else if (eventPtr->type == hypertable::Event::DISCONNECT) {
-    // do we need to do something here?
-    cout << endl << flush;
+    mMaster->DestroySession(mSessionId);
+    cout << flush;
   }
   else {
     LOG_VA_INFO("%s", eventPtr->toString().c_str());

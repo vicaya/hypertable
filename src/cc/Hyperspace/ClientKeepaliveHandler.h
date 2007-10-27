@@ -47,6 +47,8 @@ namespace Hyperspace {
 
   public:
     ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsPtr, Session *session);
+    virtual ~ClientKeepaliveHandler();
+
     virtual void handle(hypertable::EventPtr &eventPtr);
 
     void RegisterHandle(ClientHandleStatePtr &handleStatePtr) {

@@ -215,18 +215,23 @@ for table in Test1 Test2 Test3 ; do
 	CMDFILE=/tmp/hypertable.tests.$$
 	echo "create table $table $HYPERTABLE_HOME/test/$table.xml" > $CMDFILE
 	echo "quit" >> $CMDFILE
-	$HYPERTABLE_HOME/bin/hypertable < $CMDFILE >& /dev/null
+	$HYPERTABLE_HOME/bin/hypertable < $CMDFILE >& /tmp/foo.$$
 	if [ $? != 0 ] ; then
+	    echo "Problem creating table $table, killing servers...";
 	    for pidfile in $HYPERTABLE_HOME/run/*.pid ; do
 		kill -9 `cat $pidfile`
 		rm $pidfile
 	    done
+	    cat /tmp/foo.$$
+	    rm /tmp/foo.$$
+	    exit 1
 	else
 	    echo "Successfully created table $table."
 	fi
 	rm $CMDFILE
     fi
 done
+rm /tmp/foo.$$
 
 
 #

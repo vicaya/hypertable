@@ -93,6 +93,8 @@ namespace Hyperspace {
 
     void Expire() {
       boost::mutex::scoped_lock lock(mutex);
+      if (expired)
+	return;
       expired = true;
       list<Notification *>::iterator iter = notifications.begin();
       while (iter != notifications.end()) {

@@ -31,6 +31,7 @@ public class Error {
     static public final int RESPONSE_TRUNCATED = 3;
     static public final int REQUEST_TIMEOUT    = 4;
     static public final int LOCAL_IO_ERROR     = 5;
+    static public final int BAD_ROOT_SERVERID  = 6;
 
     static public final int COMM_NOT_CONNECTED      = 0x00010001;
     static public final int COMM_BROKEN_CONNECTION  = 0x00010002;
@@ -93,6 +94,7 @@ public class Error {
 	mTextMap.put(RESPONSE_TRUNCATED,         "HYPERTABLE response truncated");
 	mTextMap.put(REQUEST_TIMEOUT,            "HYPERTABLE request timeout");
 	mTextMap.put(LOCAL_IO_ERROR,             "HYPERTABLE local i/o error");
+	mTextMap.put(BAD_ROOT_SERVERID,          "HYPERTABLE bad root server ID");
 	mTextMap.put(COMM_NOT_CONNECTED,         "COMM not connected");
 	mTextMap.put(COMM_BROKEN_CONNECTION,     "COMM broken connection");
 	mTextMap.put(COMM_CONNECT_ERROR,         "COMM connect error");

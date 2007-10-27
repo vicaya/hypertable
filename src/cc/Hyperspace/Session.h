@@ -82,6 +82,7 @@ namespace Hyperspace {
     enum { STATE_EXPIRED, STATE_JEOPARDY, STATE_SAFE };
 
     Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback=0);
+    virtual ~Session();
 
     int Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, uint64_t *handlep);
     int Create(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, std::vector<AttributeT> &initAttrs, uint64_t *handlep);
@@ -107,6 +108,7 @@ namespace Hyperspace {
     int GetState();
     bool Expired();
     bool WaitForConnection(long maxWaitSecs);
+    void SetVerboseFlag(bool verbose) { mVerbose = verbose; }
 
     static const uint32_t DEFAULT_CLIENT_PORT = 38550;
 
@@ -124,6 +126,7 @@ namespace Hyperspace {
     int  mState;
     uint32_t mGracePeriod;
     uint32_t mLeaseInterval;
+    uint32_t mTimeout;
     boost::xtime mExpireTime;
     struct sockaddr_in mMasterAddr;
     ClientKeepaliveHandler *mKeepaliveHandler;

@@ -32,7 +32,10 @@
 #include "MasterProtocol.h"
 
 
-MasterClient::MasterClient(ConnectionManager *connManager, Hyperspace::Session *hyperspace, time_t timeout, ApplicationQueue *appQueue) : mConnManager(connManager), mHyperspace(hyperspace), mTimeout(timeout), mAppQueue(appQueue), mInitiated(false) {
+/**
+ * 
+ */
+MasterClient::MasterClient(ConnectionManager *connManager, Hyperspace::Session *hyperspace, time_t timeout, ApplicationQueue *appQueue) : mVerbose(true), mConnManager(connManager), mHyperspace(hyperspace), mTimeout(timeout), mAppQueue(appQueue), mInitiated(false) {
   int error;
 
   mComm = mConnManager->GetComm();
@@ -60,9 +63,9 @@ MasterClient::~MasterClient() {
 /**
  *
  */
-void MasterClient::InitiateConnection(DispatchHandlerPtr dispatchHandlerPtr) {
+int MasterClient::InitiateConnection(DispatchHandlerPtr dispatchHandlerPtr) {
   mDispatcherHandlerPtr = dispatchHandlerPtr;
-  ReloadMaster();
+  return ReloadMaster();
 }
 
 
@@ -81,7 +84,8 @@ int MasterClient::CreateTable(const char *tableName, const char *schemaString) {
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Master 'create table' error, tableName=%s : %s", tableName, MasterProtocol::StringFormatMessage(eventPtr).c_str());
+      if (mVerbose)
+	LOG_VA_ERROR("Master 'create table' error, tableName=%s : %s", tableName, MasterProtocol::StringFormatMessage(eventPtr).c_str());
       error = (int)MasterProtocol::ResponseCode(eventPtr);
     }
   }
@@ -102,7 +106,8 @@ int MasterClient::GetSchema(const char *tableName, std::string &schema) {
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Master 'get schema' error, tableName=%s : %s", tableName, MasterProtocol::StringFormatMessage(eventPtr).c_str());
+      if (mVerbose)
+	LOG_VA_ERROR("Master 'get schema' error, tableName=%s : %s", tableName, MasterProtocol::StringFormatMessage(eventPtr).c_str());
       error = (int)MasterProtocol::ResponseCode(eventPtr);
     }
     else {
@@ -110,7 +115,8 @@ int MasterClient::GetSchema(const char *tableName, std::string &schema) {
       size_t remaining = eventPtr->messageLen - sizeof(int32_t);
       const char *schemaStr;
       if (!Serialization::DecodeString(&ptr, &remaining, &schemaStr)) {
-	LOG_VA_ERROR("Problem decoding response to 'get schema' command for table '%s'", tableName);
+	if (mVerbose)
+	  LOG_VA_ERROR("Problem decoding response to 'get schema' command for table '%s'", tableName);
 	return Error::PROTOCOL_ERROR;
       }
       schema = schemaStr;
@@ -127,7 +133,8 @@ int MasterClient::Status() {
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Master 'status' error : %s", MasterProtocol::StringFormatMessage(eventPtr).c_str());
+      if (mVerbose)
+	LOG_VA_ERROR("Master 'status' error : %s", MasterProtocol::StringFormatMessage(eventPtr).c_str());
       error = (int)MasterProtocol::ResponseCode(eventPtr);
     }
   }
@@ -148,7 +155,8 @@ int MasterClient::RegisterServer(std::string &serverIdStr) {
   int error = SendMessage(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Master 'register server' error : %s", MasterProtocol::StringFormatMessage(eventPtr).c_str());
+      if (mVerbose)
+	LOG_VA_ERROR("Master 'register server' error : %s", MasterProtocol::StringFormatMessage(eventPtr).c_str());
       error = (int)MasterProtocol::ResponseCode(eventPtr);
     }
   }
@@ -163,7 +171,8 @@ int MasterClient::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler) {
 
   if ((error = mComm->SendRequest(mMasterAddr, mTimeout, cbufPtr, handler)) != Error::OK) {
     std::string addrStr;
-    LOG_VA_WARN("Comm::SendRequest to %s failed - %s", InetAddr::StringFormat(addrStr, mMasterAddr), Error::GetText(error));
+    if (mVerbose)
+      LOG_VA_WARN("Comm::SendRequest to %s failed - %s", InetAddr::StringFormat(addrStr, mMasterAddr), Error::GetText(error));
   }
 
   return error;
@@ -180,7 +189,8 @@ int MasterClient::ReloadMaster() {
   std::string addrStr;
 
   if ((error = mHyperspace->AttrGet(mMasterFileHandle, "address", value)) != Error::OK) {
-    LOG_VA_ERROR("Problem reading 'address' attribute of Hyperspace file /hypertable/master - %s", Error::GetText(error));
+    if (mVerbose)
+      LOG_VA_ERROR("Problem reading 'address' attribute of Hyperspace file /hypertable/master - %s", Error::GetText(error));
     return Error::MASTER_NOT_RUNNING;
   }
 
@@ -190,9 +200,11 @@ int MasterClient::ReloadMaster() {
 
     if (mMasterAddr.sin_port != 0) {
       if ((error = mConnManager->Remove(mMasterAddr)) != Error::OK) {
-	LOG_VA_WARN("Problem removing connection to Master - %s", Error::GetText(error));
+	if (mVerbose)
+	  LOG_VA_WARN("Problem removing connection to Master - %s", Error::GetText(error));
       }
-      LOG_VA_INFO("Connecting to new Master (old=%s, new=%s)", mMasterAddrString.c_str(), addrStr.c_str());
+      if (mVerbose)
+	LOG_VA_INFO("Connecting to new Master (old=%s, new=%s)", mMasterAddrString.c_str(), addrStr.c_str());
     }
 
     mMasterAddrString = addrStr;
@@ -200,8 +212,9 @@ int MasterClient::ReloadMaster() {
     InetAddr::Initialize(&mMasterAddr, mMasterAddrString.c_str());
 
     mConnManager->Add(mMasterAddr, 15, "Master", mDispatcherHandlerPtr.get());
-
   }
+
+  return Error::OK;
 }
 
 

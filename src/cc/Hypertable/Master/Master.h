@@ -56,6 +56,9 @@ namespace hypertable {
     void ServerJoined(std::string &hyperspaceFilename);
     void ServerLeft(std::string &hyperspaceFilename);
 
+  protected:
+    int CreateTable(const char *tableName, const char *schemaString, std::string &errMsg);
+
   private:
 
     void ScanServersDirectory();

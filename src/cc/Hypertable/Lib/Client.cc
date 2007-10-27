@@ -59,6 +59,10 @@ Client::Client(std::string configFile) {
   mAppQueue = new ApplicationQueue(1);
 
   mMasterClient = new MasterClient(mConnManager, mHyperspace, 20, mAppQueue);
+  if (mMasterClient->InitiateConnection(0) != Error::OK) {
+    LOG_ERROR("Unable to establish connection with Master, exiting...");
+    exit(1);
+  }
 }
 
 

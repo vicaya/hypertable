@@ -38,6 +38,7 @@ namespace {
     { Error::RESPONSE_TRUNCATED,          "HYPERTABLE response truncated" },
     { Error::REQUEST_TIMEOUT,             "HYPERTABLE request timeout" },
     { Error::LOCAL_IO_ERROR,              "HYPERTABLE local i/o error" },
+    { Error::BAD_ROOT_SERVERID,           "HYPERTABLE bad root server ID" },
     { Error::COMM_NOT_CONNECTED,          "COMM not connected" },
     { Error::COMM_BROKEN_CONNECTION,      "COMM broken connection" },
     { Error::COMM_CONNECT_ERROR,          "COMM connect error" },
@@ -103,6 +104,7 @@ const int Error::REQUEST_TRUNCATED;
 const int Error::RESPONSE_TRUNCATED;
 const int Error::REQUEST_TIMEOUT;
 const int Error::LOCAL_IO_ERROR;
+const int Error::BAD_ROOT_SERVERID;
 
 const int Error::COMM_NOT_CONNECTED;
 const int Error::COMM_BROKEN_CONNECTION;

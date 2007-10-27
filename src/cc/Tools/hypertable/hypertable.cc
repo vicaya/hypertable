@@ -141,5 +141,7 @@ int main(int argc, char **argv) {
 
   }
 
+  delete client;
+
   return 0;
 }

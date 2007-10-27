@@ -121,7 +121,8 @@ bool ConnectionManager::WaitForConnection(struct sockaddr_in &addr, long maxWait
   {
     boost::mutex::scoped_lock lock(mImpl->mutex);
     SockAddrMapT<ConnectionStatePtr>::iterator iter = mImpl->connMap.find(addr);
-    assert(iter != mImpl->connMap.end());
+    if (iter == mImpl->connMap.end())
+      return false;
     connStatePtr = (*iter).second;
   }
 

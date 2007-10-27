@@ -40,6 +40,15 @@ ClientConnectionHandler::ClientConnectionHandler(Comm *comm, Session *session, t
 }
 
 
+/**
+ *
+ */
+ClientConnectionHandler::~ClientConnectionHandler() {
+  if (mMasterAddr.sin_port != 0)
+    mComm->CloseSocket(mMasterAddr);
+}
+
+
 void ClientConnectionHandler::handle(hypertable::EventPtr &eventPtr) {
   boost::mutex::scoped_lock lock(mMutex);
   int error;

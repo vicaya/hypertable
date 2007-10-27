@@ -178,6 +178,19 @@ bool Master::GetSession(uint64_t sessionId, SessionDataPtr &sessionPtr) {
   return true;
 }
 
+void Master::DestroySession(uint64_t sessionId) {
+  boost::mutex::scoped_lock lock(mSessionMapMutex);
+  SessionDataPtr sessionPtr;
+  SessionMapT::iterator iter = mSessionMap.find(sessionId);
+  if (iter == mSessionMap.end())
+    return;
+  sessionPtr = (*iter).second;
+  mSessionMap.erase(sessionId);
+  sessionPtr->Expire();
+  // force it to top of expiration heap
+  boost::xtime_get(&sessionPtr->expireTime, boost::TIME_UTC);
+}
+
 
 int Master::RenewSessionLease(uint64_t sessionId) {
   boost::mutex::scoped_lock lock(mSessionMapMutex);  
@@ -206,6 +219,7 @@ bool Master::NextExpiredSession(SessionDataPtr &sessionPtr) {
       sessionPtr = mSessionHeap[0];
       std::pop_heap(mSessionHeap.begin(), mSessionHeap.end(), compFunc);
       mSessionHeap.resize(mSessionHeap.size()-1);
+      mSessionMap.erase(sessionPtr->id);
       return true;
     }    
   }
@@ -618,9 +632,15 @@ void Master::Close(ResponseCallback *cb, uint64_t sessionId, uint64_t handle) {
     return;
   }
 
-  if (!DestroyHandle(handle, &error, errMsg)) {
-    cb->error(error, errMsg);
-    return;
+  {
+    boost::mutex::scoped_lock slock(sessionPtr->mutex);
+    size_t n = sessionPtr->handles.erase(handle);
+    if (n) {
+      if (!DestroyHandle(handle, &error, errMsg)) {
+	cb->error(error, errMsg);
+	return;
+      }
+    }
   }
 
   if ((error = cb->response_ok()) != Error::OK) {

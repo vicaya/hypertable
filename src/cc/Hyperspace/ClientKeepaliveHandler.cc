@@ -83,6 +83,14 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsP
   return;
 }
 
+/**
+ *
+ */
+ClientKeepaliveHandler::~ClientKeepaliveHandler() {
+  mComm->CloseSocket(mLocalAddr);
+  delete mConnHandler;
+}
+
 
 
 /**
