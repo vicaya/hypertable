@@ -223,7 +223,7 @@ for table in Test1 Test2 Test3 ; do
 		rm $pidfile
 	    done
 	    cat /tmp/foo.$$
-	    rm /tmp/foo.$$
+	    rm -f /tmp/foo.$$
 	    exit 1
 	else
 	    echo "Successfully created table $table."
@@ -231,7 +231,7 @@ for table in Test1 Test2 Test3 ; do
 	rm $CMDFILE
     fi
 done
-rm /tmp/foo.$$
+rm -f /tmp/foo.$$
 
 
 #

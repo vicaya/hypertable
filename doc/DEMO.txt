@@ -4,7 +4,7 @@ DEMO #1
 make
 make install
 cd ~/hypertable
-./bin/start-servers.sh
+#./test/start-servers.sh hadoop
 cd demo
 rm -rf ../log/hypertable/servers/*; cp metadata-test.xml metadata; hadoop dfs -rmr /hypertable/tables/Test
 
@@ -13,32 +13,32 @@ rm -rf ../log/hypertable/servers/*; cp metadata-test.xml metadata; hadoop dfs -r
 ../bin/jrun org.hypertable.Hypertable.RangeServer.Client
 
 more Test.xml
-
 more testdata.txt
 
+../bin/hypertable
+create table Test Test-schema.xml
+
+../bin/rsclient
 load range Test[:kerchoo]
+update Test testdata.txt
+create scanner Test[:kerchoo]
 
-update Test[:kerchoo] testdata.txt
+hadoop dfs -ls /hypertable/tables/Test/cindy/CB2CFDF7D46EC23ADC62694C
 
-scan Test[:kerchoo]
-
-./bin/hadoop dfs -ls /hypertable/tables/Test/cindy/CB2CFDF7D46EC23ADC62694C
+# Log replay test
 
 ^C
 
 ../bin/Hypertable.RangeServer --verbose --metadata=metadata
 
 load range Test[:kerchoo]
+create scanner Test[:kerchoo]
 
-scan Test[:kerchoo]
-
-./bin/hadoop dfs -ls /hypertable/tables/Test/cindy/CB2CFDF7D46EC23ADC62694C
-
+hadoop dfs -ls /hypertable/tables/Test/cindy/CB2CFDF7D46EC23ADC62694C
 compact Test[:kerchoo]
-
 scan Test[:kerchoo]
 
-scan Test[:kerchoo] columns=cherry
+create scanner Test[:kerchoo] columns=cherry
 
 DEMO #2
 

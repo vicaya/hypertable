@@ -689,7 +689,7 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, const char *tableName, uint
     goMods.clear();
     goSize = 0;
 
-    while (modPtr < modEnd && (endRow == "" || (strcmp(row, endRow.c_str()) < 0))) {
+    while (modPtr < modEnd && (endRow == "" || (strcmp(row, endRow.c_str()) <= 0))) {
       update.base = modPtr;
       modPtr += Length((const ByteString32T *)modPtr); // skip key
       modPtr += Length((const ByteString32T *)modPtr); // skip value
