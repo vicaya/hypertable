@@ -51,8 +51,6 @@ namespace {
     "OPTIONS:",
     "  --config=<file>   Read configuration from <file>.  The default config file is",
     "                    \"conf/hypertable.cfg\" relative to the toplevel install directory",
-    "  --initialize      Create directories and files required for Master operation in",
-    "                    hyperspace",
     "  --pidfile=<fname> Write the process ID to <fname> upon successful startup",
     "  --help            Display this help text and exit",
     "  --verbose,-v      Generate verbose output",
@@ -91,7 +89,6 @@ int main(int argc, char **argv) {
   string pidFile = "";
   PropertiesPtr propsPtr;
   bool verbose = false;
-  bool initialize = false;
   Master *master = 0;
   int port, reactorCount, workerCount;
   Comm *comm;
@@ -107,8 +104,6 @@ int main(int argc, char **argv) {
 	configFile = &argv[i][9];
       if (!strncmp(argv[i], "--pidfile=", 10))
 	pidFile = &argv[i][10];
-      else if (!strcmp(argv[i], "--initialize"))
-	initialize = true;
       else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
 	verbose = true;
       else
@@ -139,16 +134,10 @@ int main(int argc, char **argv) {
     cout << "Hypertable.Master.reactors=" << reactorCount << endl;
   }
 
-  if (initialize) {
-    if (!CreateDirectoryLayout(connManager, propsPtr))
-      return 1;
-    return 0;
-  }
-
-  InetAddr::Initialize(&listenAddr, INADDR_ANY, port);
-
   appQueue = new ApplicationQueue(workerCount);
   master = new Master(connManager, propsPtr, appQueue);
+
+  InetAddr::Initialize(&listenAddr, INADDR_ANY, port);
   comm->Listen(listenAddr, new HandlerFactory(comm, appQueue, master));
 
   if (pidFile != "") {

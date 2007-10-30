@@ -18,7 +18,6 @@
 
 set ( Master_SRCS
 ConnectionHandler.cc
-CreateDirectoryLayout.cc
 EventHandlerServerJoined.cc
 EventHandlerServerLeft.cc
 Master.cc

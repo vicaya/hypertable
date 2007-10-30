@@ -49,6 +49,7 @@ namespace hypertable {
   public:
     Master(ConnectionManager *connManager, PropertiesPtr &propsPtr, ApplicationQueue *appQueue);
     ~Master();
+
     void CreateTable(ResponseCallback *cb, const char *tableName, const char *schemaString);
     void GetSchema(ResponseCallbackGetSchema *cb, const char *tableName);
     void RegisterServer(ResponseCallback *cb, const char *serverIdStr, struct sockaddr_in &addr);
@@ -61,9 +62,12 @@ namespace hypertable {
 
   private:
 
+    bool Initialize();
     void ScanServersDirectory();
+    bool CreateHyperspaceDir(std::string dir);
 
     boost::mutex mMutex;
+    ConnectionManager *mConnManager;
     ApplicationQueue *mAppQueue;
     bool mVerbose;
     Hyperspace::Session *mHyperspace;

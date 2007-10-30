@@ -46,10 +46,12 @@ MasterClient::MasterClient(ConnectionManager *connManager, Hyperspace::Session *
    */
   mMasterFileCallbackPtr = new MasterFileHandler(this, mAppQueue);
   if ((error = mHyperspace->Open("/hypertable/master", OPEN_FLAG_READ, mMasterFileCallbackPtr, &mMasterFileHandle)) != Error::OK) {
-    LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/master' (%s)  Try re-running with --initialize", Error::GetText(error));
-    exit(1);
+    if (error != Error::HYPERSPACE_FILE_NOT_FOUND && error != Error::HYPERSPACE_BAD_PATHNAME) {
+      LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/master' - %s", Error::GetText(error));
+      exit(1);
+    }
+    mMasterFileHandle = 0;
   }
-
 }
 
 
@@ -65,6 +67,8 @@ MasterClient::~MasterClient() {
  */
 int MasterClient::InitiateConnection(DispatchHandlerPtr dispatchHandlerPtr) {
   mDispatcherHandlerPtr = dispatchHandlerPtr;
+  if (mMasterFileHandle == 0)
+    return Error::MASTER_NOT_RUNNING;
   return ReloadMaster();
 }
 

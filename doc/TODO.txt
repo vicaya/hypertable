@@ -4,6 +4,7 @@ Hyperspace:
 - Add consistent gid to requests
 
 TODO:
+- Make serverup quiet when checking for un-initialized Master
 - Add Create command to Hyperspace that allows caller to supply initial attributes
 - Add ReactorFactory::Destroy
 - Get rid of connection ID from Event structure
@@ -22,7 +23,6 @@ TODO:
 - Fatten up HdfsBroker test
 - Rename RangeServer/Global::localityGroup member names
 - Add ReactorFactory::Shutdown
-- Add Connection canceling logic to AsyncComm
 - Add "Scan Cache"
 - Add Bloom filter
 - Add user supplied block size to LocalityGroup
@@ -33,6 +33,7 @@ TODO:
 
 
 DONE:
+- Add Connection canceling logic to AsyncComm
 - Modified RangeServer UPDATE command to accept updates for any/all of the server's ranges instead of just a single range
 - Added atomic open/lock commands to Hyperspace
 - Got RangeServer birth/death discovery logic working in Master

@@ -19,8 +19,11 @@
  */
 
 #include "Common/Error.h"
+#include "Common/FileUtils.h"
 #include "Common/Logger.h"
 #include "Common/Properties.h"
+#include "Common/System.h"
+
 #include "AsyncComm/Comm.h"
 
 #include "Hyperspace/Session.h"
@@ -92,6 +95,17 @@ bool hypertable::CreateDirectoryLayout(ConnectionManager *connManager, Propertie
     LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/master' (%s)", Error::GetText(error));
     return false;
   }
+
+  /**
+   * Create METADATA table
+   */
+  {
+    metadataSchemaFile = System::installDir + "/conf/METADATA.xml";
+    off_t schemaLen;
+    const char *schemaStr = FileUtils::FileToBuffer(metadataSchemaFile.c_str(), &schemaLen);
+    
+  }
+
   tableId = 0;
   if ((error = hyperspace->AttrSet(handle, "last_table_id", &tableId, sizeof(int32_t))) != Error::OK) {
     LOG_VA_ERROR("Problem setting attribute 'last_table_id' of file /hypertable/master - %s", Error::GetText(error));

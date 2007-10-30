@@ -167,20 +167,6 @@ fi
 echo "Successfully started Hyperspace"
 
 #
-# If it looks like the master was not initialized, then go ahead and do it.
-#
-$HYPERTABLE_HOME/bin/hyperspace --eval "exists /hypertable/master" >& /dev/null
-if [ $? != 0 ] ; then
-    $HYPERTABLE_HOME/bin/Hypertable.Master --initialize
-    if [ $? != 0 ] ; then
-        echo "Problem initializing Hypertable.Master"
-	exit 1
-    fi
-    echo "Successfully initialized Hypertable.Master"
-fi
-
-
-#
 # Start Hypertable.Master
 #
 PIDFILE=$HYPERTABLE_HOME/run/Hypertable.Master.pid
