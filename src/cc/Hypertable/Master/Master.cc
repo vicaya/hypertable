@@ -28,7 +28,9 @@ extern "C" {
 #include <sys/types.h>
 }
 
+#include "Common/FileUtils.h"
 #include "Common/InetAddr.h"
+#include "Common/System.h"
 
 #include "DfsBroker/Lib/Client.h"
 #include "Hypertable/Lib/Schema.h"
@@ -108,11 +110,6 @@ Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr, Applicat
       exit(1);
     }
 
-    if ((error = mHyperspace->AttrGet(mMasterFileHandle, "last_table_id", valueBuf)) != Error::OK) {
-      LOG_VA_ERROR("Problem getting attribute 'last_table_id' from file /hypertable/master - %s", Error::GetText(error));
-      exit(1);
-    }
-
     // Write master location in 'address' attribute, format is IP:port
     {
       std::string hostStr, addrStr;
@@ -124,6 +121,11 @@ Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr, Applicat
 	LOG_VA_ERROR("Problem setting attribute 'address' of hyperspace file /hypertable/master - %s", Error::GetText(error));
 	exit(1);
       }
+    }
+
+    if ((error = mHyperspace->AttrGet(mMasterFileHandle, "last_table_id", valueBuf)) != Error::OK) {
+      LOG_VA_ERROR("Problem getting attribute 'last_table_id' from file /hypertable/master - %s", Error::GetText(error));
+      exit(1);
     }
 
     assert(valueBuf.fill() == sizeof(int32_t));
@@ -357,6 +359,7 @@ int Master::CreateTable(const char *tableName, const char *schemaString, std::st
   bool exists;
   HandleCallbackPtr nullHandleCallback;
   uint64_t handle;
+  uint32_t tableId;
 
   /**
    * Check for table existence
@@ -395,7 +398,7 @@ int Master::CreateTable(const char *tableName, const char *schemaString, std::st
    * Write 'table_id' attribute of table file and 'last_table_id' attribute of /hypertable/master
    */
   {
-    uint32_t tableId = (uint32_t)atomic_inc_return(&mLastTableId);
+    tableId = (uint32_t)atomic_inc_return(&mLastTableId);
 
     if ((error = mHyperspace->AttrSet(mMasterFileHandle, "last_table_id", &tableId, sizeof(int32_t))) != Error::OK) {
       errMsg = (std::string)"Problem setting attribute 'last_table_id' of file /hypertable/master - " + Error::GetText(error);
@@ -433,7 +436,7 @@ int Master::CreateTable(const char *tableName, const char *schemaString, std::st
   }
 
   if (mVerbose) {
-    LOG_VA_INFO("Successfully created table '%s'", tableName);
+    LOG_VA_INFO("Successfully created table '%s' ID=%d", tableName, tableId);
   }
 
  abort:
@@ -478,24 +481,27 @@ bool Master::Initialize() {
     LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/master' (%s)", Error::GetText(error));
     return false;
   }
+  mMasterFileHandle = handle;
+
+  atomic_set(&mLastTableId, -1);
 
   /**
    * Create METADATA table
+   */
   {
-    metadataSchemaFile = System::installDir + "/conf/METADATA.xml";
+    std::string errMsg;
+    std::string metadataSchemaFile = System::installDir + "/conf/METADATA.xml";
     off_t schemaLen;
     const char *schemaStr = FileUtils::FileToBuffer(metadataSchemaFile.c_str(), &schemaLen);
-    // TBD
-  }
-  */
 
-  tableId = 0;
-  if ((error = mHyperspace->AttrSet(handle, "last_table_id", &tableId, sizeof(int32_t))) != Error::OK) {
-    LOG_VA_ERROR("Problem setting attribute 'last_table_id' of file /hypertable/master - %s", Error::GetText(error));
-    mHyperspace->Close(handle);
-    return false;
+    if ((error = CreateTable("METADATA", schemaStr, errMsg)) != Error::OK) {
+      LOG_VA_ERROR("Problem creating METADATA table - %s", Error::GetText(error));
+      return false;
+    }
   }
+
   mHyperspace->Close(handle);
+  mMasterFileHandle = 0;
 
   /**
    *  Create /hypertable/root

@@ -37,7 +37,6 @@ extern "C" {
 #include "AsyncComm/ConnectionHandlerFactory.h"
 
 #include "ConnectionHandler.h"
-#include "CreateDirectoryLayout.h"
 #include "Master.h"
 
 using namespace hypertable;
