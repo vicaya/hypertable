@@ -22,6 +22,7 @@
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 
 #include "RangeServerClient.h"
+#include "ScanResult.h"
 
 using namespace hypertable;
 
@@ -82,7 +83,7 @@ int RangeServerClient::CreateScanner(struct sockaddr_in &addr, RangeSpecificatio
 }
 
 
-int RangeServerClient::CreateScanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &scanSpec) {
+int RangeServerClient::CreateScanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &scanSpec, ScanResult &result) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( RangeServerProtocol::CreateRequestCreateScanner(addr, rangeSpec, scanSpec) );
@@ -92,6 +93,8 @@ int RangeServerClient::CreateScanner(struct sockaddr_in &addr, RangeSpecificatio
       LOG_VA_ERROR("RangeServer 'create scanner' error : %s", Protocol::StringFormatMessage(eventPtr).c_str());
       error = (int)Protocol::ResponseCode(eventPtr);
     }
+    else
+      error = result.Load(eventPtr);
   }
   return error;
 }
@@ -103,7 +106,7 @@ int RangeServerClient::FetchScanblock(struct sockaddr_in &addr, int scannerId, D
 }
 
 
-int RangeServerClient::FetchScanblock(struct sockaddr_in &addr, int scannerId) {
+int RangeServerClient::FetchScanblock(struct sockaddr_in &addr, int scannerId, ScanResult &result) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( RangeServerProtocol::CreateRequestFetchScanblock(addr, scannerId) );
@@ -113,6 +116,8 @@ int RangeServerClient::FetchScanblock(struct sockaddr_in &addr, int scannerId) {
       LOG_VA_ERROR("RangeServer 'fetch scanblock' error : %s", Protocol::StringFormatMessage(eventPtr).c_str());
       error = (int)Protocol::ResponseCode(eventPtr);
     }
+    else
+      error = result.Load(eventPtr);
   }
   return error;
 }

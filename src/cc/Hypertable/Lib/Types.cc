@@ -30,8 +30,6 @@ using namespace std;
 
 namespace hypertable {
 
-  const uint16_t END_OF_SCAN = 0x0001;
-
   /**
    * 
    */
@@ -129,19 +127,6 @@ namespace hypertable {
     if (!Serialization::DecodeLong(bufPtr, remainingPtr, &scanSpec->interval.second))
       return false;
   
-    return true;
-  }
-
-  bool DecodeScanResult(uint8_t **bufPtr, size_t *remainingPtr, ScanResultT *scanResult) {
-    if (!(Serialization::DecodeInt(bufPtr, remainingPtr, (uint32_t *)&scanResult->error)))
-      return false;
-    if (!(Serialization::DecodeShort(bufPtr, remainingPtr, &scanResult->flags)))
-      return false;
-    if (!(Serialization::DecodeInt(bufPtr, remainingPtr, (uint32_t *)&scanResult->id)))
-      return false;
-    if (!(Serialization::DecodeInt(bufPtr, remainingPtr, &scanResult->dataLen)))
-      return false;
-    scanResult->data = *bufPtr;
     return true;
   }
 

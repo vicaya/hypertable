@@ -35,6 +35,8 @@ using namespace hypertable;
 
 namespace hypertable {
 
+  class ScanResult;
+
   class RangeServerClient {
   public:
 
@@ -48,10 +50,10 @@ namespace hypertable {
     int Update(struct sockaddr_in &addr, std::string tableName, uint32_t generation, uint8_t *data, size_t len);
 
     int CreateScanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &spec, DispatchHandler *handler);
-    int CreateScanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &spec);
+    int CreateScanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &spec, ScanResult &result);
 
     int FetchScanblock(struct sockaddr_in &addr, int scannerId, DispatchHandler *handler);
-    int FetchScanblock(struct sockaddr_in &addr, int scannerId);
+    int FetchScanblock(struct sockaddr_in &addr, int scannerId, ScanResult &result);
 
     int Status(struct sockaddr_in &addr);
 

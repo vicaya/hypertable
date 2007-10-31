@@ -66,8 +66,12 @@ int RangeLocator::Find(uint32_t tableId, const char *rowKey, const char **server
   // fix me !!!!
 
   if (tableId == 0) {
+    assert(strcmp(rowKey, "0:"));
 
-    
+    /**
+    mRangeServer;
+    RangeServerClient    
+    */
   }
 
   return Error::OK;

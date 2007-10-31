@@ -29,6 +29,7 @@ Mutator.cc
 RangeLocator.cc
 RangeServerClient.cc
 RangeServerProtocol.cc
+ScanResult.cc
 Schema.cc
 Table.cc
 TestSource.cc

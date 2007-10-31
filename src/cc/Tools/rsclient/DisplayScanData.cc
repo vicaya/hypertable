@@ -25,7 +25,7 @@
 
 namespace hypertable {
 
-  void DisplayScanData(ByteString32T *key, ByteString32T *value, SchemaPtr &schemaPtr) {
+  void DisplayScanData(const ByteString32T *key, const ByteString32T *value, SchemaPtr &schemaPtr) {
     Key keyComps(key);
     Schema::ColumnFamily *cf;
 

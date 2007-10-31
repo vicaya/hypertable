@@ -33,6 +33,8 @@ extern "C" {
 #include "Common/Error.h"
 #include "Common/Usage.h"
 
+#include "Hypertable/Lib/ScanResult.h"
+
 #include "CommandCreateScanner.h"
 #include "DisplayScanData.h"
 #include "ParseRangeSpec.h"
@@ -71,13 +73,8 @@ int CommandCreateScanner::run() {
   ScanSpecificationT scanSpec;
   char *last;
   const char *columnStr;
-  DispatchHandlerSynchronizer syncHandler;
-  EventPtr eventPtr;
-  uint8_t *msgPtr, *endPtr;
   uint32_t ilen;
-  size_t remaining;
-  ScanResultT scanResult;
-  ByteString32T *key, *value;
+  ScanResult result;
 
   if (mArgs.size() == 0) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
@@ -153,36 +150,17 @@ int CommandCreateScanner::run() {
   /**
    * 
    */
-  if ((error = Global::rangeServer->CreateScanner(mAddr, rangeSpec, scanSpec, &syncHandler)) != Error::OK)
+  if ((error = Global::rangeServer->CreateScanner(mAddr, rangeSpec, scanSpec, result)) != Error::OK)
     return error;
 
-  if (!syncHandler.WaitForReply(eventPtr)) {
-    LOG_VA_ERROR("Problem creating scanner - %s", (Protocol::StringFormatMessage(eventPtr)).c_str());
-    return -1;
-  }
+  Global::outstandingScannerId = result.GetId();
 
-  msgPtr = eventPtr->message;
-  remaining = eventPtr->messageLen;
+  ScanResult::VectorT &rvec = result.GetVector();
 
-  if (!DecodeScanResult(&msgPtr, &remaining, &scanResult)) {
-    LOG_ERROR("Problem decoding result - truncated.");
-    return -1;
-  }
+  for (size_t i=0; i<rvec.size(); i++)
+    DisplayScanData(rvec[i].first, rvec[i].second, Global::outstandingSchemaPtr);
 
-  Global::outstandingScannerId = scanResult.id;
-
-  msgPtr = scanResult.data;
-  endPtr = scanResult.data + scanResult.dataLen;
-  
-  while (msgPtr < endPtr) {
-    key = (ByteString32T *)msgPtr;
-    msgPtr += 4 + key->len;
-    value = (ByteString32T *)msgPtr;
-    msgPtr += 4 + value->len;
-    DisplayScanData(key, value, Global::outstandingSchemaPtr);
-  }
-
-  if ((scanResult.flags & END_OF_SCAN) == END_OF_SCAN)
+  if (result.Eos())
     Global::outstandingScannerId = -1;
 
   return Error::OK;

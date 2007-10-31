@@ -18,16 +18,33 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_DISPLAYSCANDATA_H
-#define HYPERTABLE_DISPLAYSCANDATA_H
+#ifndef HYPERTABLE_SCANRESULT_H
+#define HYPERTABLE_SCANRESULT_H
 
+#include <vector>
+
+#include "AsyncComm/Event.h"
 #include "Common/ByteString.h"
-#include "Hypertable/Lib/Schema.h"
 
 namespace hypertable {
 
-  void DisplayScanData(const ByteString32T *key, const ByteString32T *value, SchemaPtr &schemaPtr);
+  class ScanResult {
+  public:
 
+    typedef std::vector< std::pair<const ByteString32T *, const ByteString32T *> > VectorT;
+
+    int Load(EventPtr &eventPtr);
+    VectorT &GetVector() { return mVec; }
+    bool Eos() { return ((mFlags & 0x0001) == 0x0001); }
+    int GetId() { return mId; }
+    
+  private:
+    int       mError;
+    uint16_t  mFlags;
+    int       mId;
+    VectorT   mVec;
+    EventPtr  mEventPtr;
+  };
 }
 
-#endif // HYPERTABLE_DISPLAYSCANDATA_H
+#endif // HYPERTABLE_SCANRESULT_H
