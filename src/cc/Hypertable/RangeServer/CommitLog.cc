@@ -21,6 +21,7 @@
 #include <boost/shared_array.hpp>
 
 #include "Common/Error.h"
+#include "Common/StringExt.h"
 
 #include "Global.h"
 #include "CommitLog.h"
@@ -31,20 +32,19 @@ using namespace hypertable;
 /**
  *
  */
-CommitLog::CommitLog(std::string &logDirRoot, std::string &logDir, int64_t logFileSize) : mLogDir(), mLogFile(), mMaxFileSize(logFileSize), mCurLogLength(0), mCurLogNum(0), mMutex(), mFileInfoQueue() {
-  char buf[32];
-
-  if (logDirRoot.find('/', logDirRoot.length()-1) == string::npos)
-    mLogDir = logDirRoot + logDir;
-  else
-    mLogDir = logDirRoot.substr(0, logDirRoot.length()-1) + logDir;
+CommitLog::CommitLog(Filesystem *fs, std::string &logDir, int64_t logFileSize) : mFs(fs), mLogDir(logDir), mLogFile(), mMaxFileSize(logFileSize), mCurLogLength(0), mCurLogNum(0), mMutex(), mFileInfoQueue() {
+  int error;
 
   if (mLogDir.find('/', mLogDir.length()-1) == string::npos)
     mLogDir += "/";
 
-  sprintf(buf, "%d", mCurLogNum);
-  
-  mLogFile = mLogDir + buf;
+  mLogFile = mLogDir + mCurLogNum;
+
+  if ((error = mFs->Create(mLogFile, true, 8192, 3, 67108864, &mFd)) != Error::OK) {
+    LOG_VA_ERROR("Problem creating commit log file '%s' - %s", mLogFile.c_str(), Error::GetText(error));
+    exit(1);
+  }
+
 }
 
 
@@ -54,8 +54,7 @@ CommitLog::CommitLog(std::string &logDirRoot, std::string &logDir, int64_t logFi
  */
 int CommitLog::Write(const char *tableName, uint8_t *data, uint32_t len, uint64_t timestamp) {
   uint32_t totalLen = sizeof(CommitLogHeaderT) + strlen(tableName) + 1 + len;
-  boost::shared_array<uint8_t> blockPtr(new uint8_t [ totalLen ]);
-  uint8_t *block = blockPtr.get();
+  uint8_t *block = new uint8_t [ totalLen ];
   CommitLogHeaderT *header = (CommitLogHeaderT *)block;
   uint8_t *ptr, *endptr;
   uint16_t checksum = 0;
@@ -86,10 +85,10 @@ int CommitLog::Write(const char *tableName, uint8_t *data, uint32_t len, uint64_
     checksum += *ptr;
   header->checksum = checksum;
 
-  if ((error = this->write(mFd, block, totalLen)) != Error::OK)
+  if ((error = mFs->Append(mFd, block, totalLen)) != Error::OK)
     return error;
 
-  if ((error = this->sync(mFd)) != Error::OK)
+  if ((error = mFs->Flush(mFd)) != Error::OK)
     return error;
 
   mCurLogLength += totalLen;
@@ -104,6 +103,7 @@ int CommitLog::Write(const char *tableName, uint8_t *data, uint32_t len, uint64_
      *  Write trailing empty block
      */
     checksum = 0;
+    header = new CommitLogHeaderT[1];
     header->checksum = 0;
     header->length = sizeof(CommitLogHeaderT);
     endptr = (uint8_t *)&header[1];
@@ -111,14 +111,20 @@ int CommitLog::Write(const char *tableName, uint8_t *data, uint32_t len, uint64_
       checksum += *ptr;
     header->checksum = checksum;
 
-    if ((error = this->write(mFd, header, sizeof(CommitLogHeaderT))) != Error::OK)
+    if ((error = mFs->Append(mFd, header, sizeof(CommitLogHeaderT))) != Error::OK) {
+      LOG_VA_ERROR("Problem appending %d bytes to commit log file '%s' - %s", sizeof(CommitLogHeaderT), mLogFile.c_str(), Error::GetText(error));
       return error;
+    }
 
-    if ((error = this->sync(mFd)) != Error::OK)
+    if ((error = mFs->Flush(mFd)) != Error::OK) {
+      LOG_VA_ERROR("Problem flushing commit log file '%s' - %s", mLogFile.c_str(), Error::GetText(error));
       return error;
+    }
 
-    if ((error = this->close(mFd)) != Error::OK)
+    if ((error = mFs->Close(mFd)) != Error::OK) {
+      LOG_VA_ERROR("Problem closing commit log file '%s' - %s", mLogFile.c_str(), Error::GetText(error));
       return error;
+    }
 
     fileInfo.timestamp = timestamp;
     fileInfo.fname = mLogFile;
@@ -128,10 +134,13 @@ int CommitLog::Write(const char *tableName, uint8_t *data, uint32_t len, uint64_
     sprintf(buf, "%d", mCurLogNum);
     mLogFile = mLogDir + buf;
 
-    if ((error = this->create(mLogFile, &mFd)) != Error::OK)
-      return error;
-
     mCurLogLength = 0;
+
+    if ((error = mFs->Create(mLogFile, true, 8192, 3, 67108864, &mFd)) != Error::OK) {
+      LOG_VA_ERROR("Problem creating commit log file '%s' - %s", mLogFile.c_str(), Error::GetText(error));
+      return error;
+    }
+
   }
 
   return Error::OK;
@@ -143,21 +152,27 @@ int CommitLog::Write(const char *tableName, uint8_t *data, uint32_t len, uint64_
  * 
  */
 int CommitLog::Close(uint64_t timestamp) {
-  CommitLogHeaderT header;
+  CommitLogHeaderT *header = new CommitLogHeaderT[1];
   int error = Error::OK;
-  memcpy(header.marker, "-BLOCK--", 8);
-  header.timestamp = timestamp;
-  header.checksum = 0;
-  header.length = sizeof(CommitLogHeaderT);
+  memcpy(header->marker, "-BLOCK--", 8);
+  header->timestamp = timestamp;
+  header->checksum = 0;
+  header->length = sizeof(CommitLogHeaderT);
 
-  if ((error = this->write(mFd, &header, sizeof(CommitLogHeaderT))) != Error::OK)
-    return error;
+  if ((error = mFs->Append(mFd, header, sizeof(CommitLogHeaderT))) != Error::OK) {
+    LOG_VA_ERROR("Problem appending %d bytes to commit log file '%s' - %s", sizeof(CommitLogHeaderT), mLogFile.c_str(), Error::GetText(error));
+      return error;
+  }
 
-  if ((error = this->sync(mFd)) != Error::OK)
+  if ((error = mFs->Flush(mFd)) != Error::OK) {
+    LOG_VA_ERROR("Problem flushing commit log file '%s' - %s", mLogFile.c_str(), Error::GetText(error));
     return error;
+  }
 
-  if ((error = this->close(mFd)) != Error::OK)
+  if ((error = mFs->Close(mFd)) != Error::OK) {
+    LOG_VA_ERROR("Problem closing commit log file '%s' - %s", mLogFile.c_str(), Error::GetText(error));
     return error;
+  }
 
   return Error::OK;
 }
@@ -175,7 +190,7 @@ int CommitLog::Purge(uint64_t timestamp) {
     fileInfo = mFileInfoQueue.front();
     if (fileInfo.timestamp < timestamp) {
       // should do something on error, but for now, just move on
-      if ((error = this->unlink(fileInfo.fname)) == Error::OK)
+      if ((error = mFs->Remove(fileInfo.fname)) == Error::OK)
 	mFileInfoQueue.pop();
     }
     else

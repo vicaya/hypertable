@@ -47,7 +47,7 @@ namespace hypertable {
 
       CommBuf *CreateReadRequest(int32_t fd, uint32_t amount);
 
-      CommBuf *CreateAppendRequest(int32_t fd, uint8_t *buf, uint32_t amount);
+      CommBuf *CreateAppendRequest(int32_t fd, const void *buf, uint32_t amount);
 
       CommBuf *CreateSeekRequest(int32_t fd, uint64_t offset);
 

@@ -31,8 +31,8 @@ extern "C" {
 #include "Common/md5.h"
 
 #include "CellStoreV0.h"
-#include "CommitLogLocal.h"
-#include "CommitLogReaderLocal.h"
+#include "CommitLog.h"
+//#include "CommitLogReader.h"
 #include "Global.h"
 #include "MaintenanceThread.h"
 #include "MergeScanner.h"
@@ -114,11 +114,12 @@ Range::Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), mMu
 
   /**
    * Replay commit log
-   */
+
   string logDir;
   rangeInfoPtr->GetLogDir(logDir);
   if (logDir != "")
     ReplayCommitLog(logDir, minLogCutoff);
+  */
 
   return;
 }
@@ -328,7 +329,7 @@ void Range::DoMaintenance() {
       }
 
       mSplitKeyPtr.reset( CreateCopy(key) );
-      mSplitLogPtr.reset( new CommitLogLocal(Global::logDirRoot, splitLogDir, 0x100000000LL) );
+      mSplitLogPtr.reset( new CommitLog(Global::dfs, splitLogDir, 0x100000000LL) );
 
       /** unblock updates **/
       mHoldUpdates = false;
@@ -462,6 +463,8 @@ void Range::Unlock() {
 }
 
 
+#if 0
+
 /**
  * This whole thing needs to be optimized.  Instead of having each range load
  * read the entire log file, the following should happen:
@@ -562,6 +565,8 @@ void Range::ReplayCommitLog(string &logDir, uint64_t minLogCutoff) {
   LOG_VA_INFO("LOAD RANGE replayed %d updates (%d blocks) from commit log '%s'", count, nblocks, logDir.c_str());
 
 }
+
+#endif
 
 
 /**

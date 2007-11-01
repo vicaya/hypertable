@@ -184,14 +184,14 @@ int Client::Read(int32_t fd, uint32_t amount, uint8_t *dst, uint32_t *nreadp) {
 
 
 
-int Client::Append(int32_t fd, uint8_t *buf, uint32_t amount, DispatchHandler *handler) {
+int Client::Append(int32_t fd, const void *buf, uint32_t amount, DispatchHandler *handler) {
   CommBufPtr cbufPtr( mProtocol->CreateAppendRequest(fd, buf, amount) );
   return SendMessage(cbufPtr, handler);
 }
 
 
 
-int Client::Append(int32_t fd, uint8_t *buf, uint32_t amount) {
+int Client::Append(int32_t fd, const void *buf, uint32_t amount) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateAppendRequest(fd, buf, amount) );

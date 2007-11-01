@@ -118,7 +118,7 @@ namespace hypertable {
     }
 
 
-    CommBuf *Protocol::CreateAppendRequest(int32_t fd, uint8_t *buf, uint32_t amount) {
+    CommBuf *Protocol::CreateAppendRequest(int32_t fd, const void *buf, uint32_t amount) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER, fd);
       hbuilder.AssignUniqueId();
       CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderAppendT), buf, amount);

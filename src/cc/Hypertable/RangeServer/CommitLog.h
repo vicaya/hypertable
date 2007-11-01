@@ -31,6 +31,8 @@ extern "C" {
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/mutex.hpp>
 
+#include "Hypertable/Lib/Filesystem.h"
+
 namespace hypertable {
 
   typedef struct {
@@ -62,7 +64,7 @@ namespace hypertable {
    */
   class CommitLog {
   public:
-    CommitLog(std::string &logDirRoot, std::string &logDir, int64_t logFileSize);
+    CommitLog(Filesystem *fs, std::string &logDir, int64_t logFileSize);
     virtual ~CommitLog() { return; }
     int Write(const char *tableName, uint8_t *data, uint32_t len, uint64_t timestamp);
     int Close(uint64_t timestamp);
@@ -76,19 +78,15 @@ namespace hypertable {
       return ((uint64_t)tval.tv_sec * 1000000LL) + (uint64_t)tval.tv_usec;
     }
 
-  protected:
-    virtual int create(std::string &name, int32_t *fdp) = 0;
-    virtual int write(int32_t fd, const void *buf, uint32_t amount) = 0;
-    virtual int close(int32_t fd) = 0;
-    virtual int sync(int32_t fd) = 0;
-    virtual int unlink(std::string &name) = 0;
-
+  private:
+    
+    Filesystem                *mFs;
     std::string                mLogDir;
     std::string                mLogFile;
     int64_t                    mMaxFileSize;
     int64_t                    mCurLogLength;
     uint32_t                   mCurLogNum;
-    int                        mFd;
+    int32_t                    mFd;
     boost::mutex               mMutex;
     std::queue<CommitLogFileInfoT>   mFileInfoQueue;
   };

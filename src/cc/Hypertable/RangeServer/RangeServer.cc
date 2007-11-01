@@ -32,7 +32,7 @@
 
 #include "DfsBroker/Lib/Client.h"
 
-#include "CommitLogLocal.h"
+#include "CommitLog.h"
 #include "FillScanBlock.h"
 #include "Global.h"
 #include "HyperspaceSessionHandler.h"
@@ -71,6 +71,7 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
 
   assert(Global::localityGroupMergeFiles <= Global::localityGroupMaxFiles);
 
+  /**
   const char *dir = propsPtr->getProperty("Hypertable.RangeServer.logDirRoot", 0);
   if (dir == 0) {
     cerr << "Hypertable.RangeServer.logDirRoot property not specified." << endl;
@@ -81,6 +82,7 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
     Global::logDirRoot += string(dir, strlen(dir)-1);
   else
     Global::logDirRoot += dir;
+  */
 
   metadataFile = propsPtr->getProperty("metadata");
   assert(metadataFile != 0);
@@ -93,7 +95,7 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
     cout << "Hypertable.RangeServer.AccessGroup.MergeFiles=" << Global::localityGroupMergeFiles << endl;
     cout << "Hypertable.RangeServer.BlockCache.MaxMemory=" << blockCacheMemory << endl;
     cout << "Hypertable.RangeServer.Range.MaxBytes=" << Global::rangeMaxBytes << endl;
-    cout << "Hypertable.RangeServer.logDirRoot=" << Global::logDirRoot << endl;
+    //cout << "Hypertable.RangeServer.logDirRoot=" << Global::logDirRoot << endl;
     cout << "Hypertable.RangeServer.port=" << port << endl;
     cout << "Hypertable.RangeServer.workers=" << workerCount << endl;
     cout << "METADATA file = '" << metadataFile << "'" << endl;
@@ -239,13 +241,11 @@ int RangeServer::DirectoryInitialize(Properties *props) {
   Global::logDir = (string)topDir.c_str() + "/commit/primary";
 
   /**
-   * Create /hypertable/servers/X.X.X.X_nnnnn/commit/primary directory
+   * Create /hypertable/servers/X.X.X.X:p_nnnnn/commit/primary directory
    */
-  string logDir = Global::logDirRoot + Global::logDir;
-
-  if (!FileUtils::Mkdirs(logDir.c_str())) {
-    LOG_VA_ERROR("Problem creating local log directory '%s'", logDir.c_str());
-    return -1;
+  if ((error = Global::dfs->Mkdirs(Global::logDir)) != Error::OK) {
+    LOG_VA_ERROR("Problem creating local log directory '%s'", Global::logDir.c_str());
+    return error;
   }
 
   int64_t logFileSize = props->getPropertyInt64("Hypertable.RangeServer.logFileSize", 0x100000000LL);
@@ -254,7 +254,7 @@ int RangeServer::DirectoryInitialize(Properties *props) {
     cout << "logDir=" << Global::logDir << endl;
   }
 
-  Global::log = new CommitLogLocal(Global::logDirRoot, Global::logDir, logFileSize);    
+  Global::log = new CommitLog(Global::dfs, Global::logDir, logFileSize);    
 
   /**
    *  Register with Master

@@ -73,8 +73,8 @@ namespace hypertable {
       virtual int Read(int32_t fd, uint32_t amount, DispatchHandler *handler);
       virtual int Read(int32_t fd, uint32_t amount, uint8_t *dst, uint32_t *nreadp);
 
-      virtual int Append(int32_t fd, uint8_t *buf, uint32_t amount, DispatchHandler *handler);
-      virtual int Append(int32_t fd, uint8_t *buf, uint32_t amount);
+      virtual int Append(int32_t fd, const void *buf, uint32_t amount, DispatchHandler *handler);
+      virtual int Append(int32_t fd, const void *buf, uint32_t amount);
 
       virtual int Seek(int32_t fd, uint64_t offset, DispatchHandler *handler);
       virtual int Seek(int32_t fd, uint64_t offset);

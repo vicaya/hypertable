@@ -85,11 +85,11 @@ namespace hypertable {
      * @param _ex pointer to the extended buffer (this object takes ownership)
      * @param _exLen the length of the extended buffer
      */
-    CommBuf(HeaderBuilder &hbuilder, uint32_t len, const uint8_t *_ex=0, uint32_t _exLen=0) {
+    CommBuf(HeaderBuilder &hbuilder, uint32_t len, const void *_ex=0, uint32_t _exLen=0) {
       len += hbuilder.HeaderLength();
       data = dataPtr = new uint8_t [ len ];
       dataLen = len;
-      ext = extPtr = _ex;
+      ext = extPtr = (const uint8_t *)_ex;
       extLen = _exLen;
       hbuilder.SetTotalLen(len+extLen);
       hbuilder.Encode(&dataPtr);
