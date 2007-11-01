@@ -481,6 +481,47 @@ public class HdfsBroker {
     }
 
 
+    /**
+     *
+     */
+    public void Readdir(ResponseCallbackReaddir cb, String dirName) {
+	int error = Error.OK;
+	String pathStr;
+
+	try {
+
+	    if (mVerbose)
+		log.info("Readdir('" + dirName + "')");
+
+	    Path [] paths = mFilesystem.listPaths(new Path(dirName));
+
+	    String [] listing = new String [ paths.length ];
+	    for (int i=0; i<paths.length; i++) {
+		pathStr = paths[i].toString();
+		int lastSlash = pathStr.lastIndexOf('/');
+		if (lastSlash == -1)
+		    listing[i] = pathStr;
+		else
+		    listing[i] = pathStr.substring(lastSlash+1);
+	    }
+
+	    error = cb.response(listing);
+	    
+	}
+	catch (FileNotFoundException e) {
+	    log.info("File not found: " + dirName);
+	    error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
+	}
+	catch (IOException e) {
+	    log.info("I/O exception while reading directory '" + dirName + "' - " + e.getMessage());
+	    error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
+	}
+
+	if (error != Error.OK)
+	    log.severe("Problem sending response to 'readdir' command - " + Error.GetText(error));
+    }
+
+
 
     private Configuration mConf = new Configuration();
     private FileSystem    mFilesystem;

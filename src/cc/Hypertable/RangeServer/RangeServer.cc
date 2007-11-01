@@ -149,7 +149,7 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
 
     gettimeofday(&tval, 0);
 
-    mServerIdStr = (std::string)inet_ntoa(localAddr.sin_addr) + ":" + (int)port + "_" + (uint32_t)tval.tv_sec;
+    mServerIdStr = (std::string)inet_ntoa(localAddr.sin_addr) + "_" + (int)port + "_" + (uint32_t)tval.tv_sec;
   }
 
   if (DirectoryInitialize(propsPtr.get()) != Error::OK)
