@@ -49,7 +49,8 @@ namespace hypertable {
       "mkdirs",
       "status",
       "flush",
-      "rmdir"
+      "rmdir",
+      "readdir"
     };
 
 
@@ -249,6 +250,20 @@ namespace hypertable {
       RequestHeaderRmdirT *removeHeader = (RequestHeaderRmdirT *)cbuf->GetDataPtr();
       removeHeader->hdr.command = COMMAND_RMDIR;
       cbuf->AdvanceDataPtr(sizeof(RequestHeaderRmdirT));
+      cbuf->AppendString(fname);
+      return cbuf;
+    }
+
+    /**
+     *
+     */
+    CommBuf *Protocol::CreateReaddirRequest(std::string &fname) {
+      HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
+      hbuilder.AssignUniqueId();
+      CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderReaddirT) + Serialization::EncodedLengthString(fname));
+      RequestHeaderReaddirT *readdirHeader = (RequestHeaderReaddirT *)cbuf->GetDataPtr();
+      readdirHeader->hdr.command = COMMAND_READDIR;
+      cbuf->AdvanceDataPtr(sizeof(RequestHeaderReaddirT));
       cbuf->AppendString(fname);
       return cbuf;
     }

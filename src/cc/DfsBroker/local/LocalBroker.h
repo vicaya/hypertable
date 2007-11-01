@@ -81,6 +81,7 @@ namespace hypertable {
     virtual void Pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset, uint32_t amount);
     virtual void Mkdirs(ResponseCallback *cb, const char *dirName);
     virtual void Rmdir(ResponseCallback *cb, const char *dirName);
+    virtual void Readdir(ResponseCallbackReaddir *cb, const char *dirName);
     virtual void Flush(ResponseCallback *cb, uint32_t fd);
     virtual void Status(ResponseCallback *cb);
     virtual void Shutdown(ResponseCallback *cb);

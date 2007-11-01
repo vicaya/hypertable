@@ -39,6 +39,7 @@
 #include "RequestHandlerFlush.h"
 #include "RequestHandlerStatus.h"
 #include "RequestHandlerRmdir.h"
+#include "RequestHandlerReaddir.h"
 
 using namespace hypertable;
 using namespace hypertable::DfsBroker;
@@ -103,6 +104,9 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
 	break;
       case Protocol::COMMAND_RMDIR:
 	requestHandler = new RequestHandlerRmdir(mComm, mBroker, eventPtr);
+	break;
+      case Protocol::COMMAND_READDIR:
+	requestHandler = new RequestHandlerReaddir(mComm, mBroker, eventPtr);
 	break;
       case Protocol::COMMAND_STATUS:
 	requestHandler = new RequestHandlerStatus(mComm, mBroker, eventPtr);

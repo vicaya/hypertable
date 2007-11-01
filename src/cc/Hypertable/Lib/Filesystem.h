@@ -63,6 +63,9 @@ namespace hypertable {
     virtual int Rmdir(std::string &name, DispatchHandler *handler) = 0;
     virtual int Rmdir(std::string &name) = 0;
 
+    virtual int Readdir(std::string &name, DispatchHandler *handler) = 0;
+    virtual int Readdir(std::string &name, std::vector<std::string> &listing) = 0;
+
     virtual int Flush(int32_t fd, DispatchHandler *handler) = 0;
     virtual int Flush(int32_t fd) = 0;
 

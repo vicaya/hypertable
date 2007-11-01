@@ -22,6 +22,7 @@
 
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/HeaderBuilder.h"
+#include "AsyncComm/Serialization.h"
 
 #include "Common/Error.h"
 #include "Common/Logger.h"
@@ -390,6 +391,50 @@ int Client::Rmdir(std::string &name) {
   }
   return error;
 }
+
+
+
+/**
+ *
+ */
+int Client::Readdir(std::string &name, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( mProtocol->CreateReaddirRequest(name) );
+  return SendMessage(cbufPtr, handler);
+}
+
+
+
+/**
+ *
+ */
+int Client::Readdir(std::string &name, std::vector<std::string> &listing) {
+  DispatchHandlerSynchronizer syncHandler;
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( mProtocol->CreateReaddirRequest(name) );
+  int error = SendMessage(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.WaitForReply(eventPtr)) {
+      LOG_VA_ERROR("Dfs 'readdir' error, name=%s : %s", name.c_str(), mProtocol->StringFormatMessage(eventPtr).c_str());
+      error = (int)mProtocol->ResponseCode(eventPtr);
+    }
+    else {
+      uint8_t *msgPtr = eventPtr->message + 4;
+      size_t remaining = eventPtr->messageLen - 4;
+      uint32_t len;
+      const char *str;
+      listing.clear();
+      if (!Serialization::DecodeInt(&msgPtr, &remaining, &len))
+	return Error::RESPONSE_TRUNCATED;
+      for (uint32_t i=0; i<len; i++) {
+	if (!Serialization::DecodeString(&msgPtr, &remaining, &str))
+	  return Error::RESPONSE_TRUNCATED;
+	listing.push_back((std::string)str);
+      }
+    }
+  }
+  return error;
+}
+
 
 
 int Client::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler) {

@@ -61,6 +61,8 @@ namespace hypertable {
 
       CommBuf *CreateRmdirRequest(std::string &fname);
 
+      CommBuf *CreateReaddirRequest(std::string &fname);
+
       CommBuf *CreateFlushRequest(int32_t fd);
 
       CommBuf *CreateStatusRequest();
@@ -121,6 +123,8 @@ namespace hypertable {
 
       typedef RequestHeaderRemoveT RequestHeaderRmdirT;
 
+      typedef RequestHeaderRemoveT RequestHeaderReaddirT;
+
       typedef struct {
 	RequestHeaderT hdr;
 	int32_t        fd;
@@ -170,7 +174,8 @@ namespace hypertable {
       static const uint16_t COMMAND_STATUS   = 11;
       static const uint16_t COMMAND_FLUSH    = 12;
       static const uint16_t COMMAND_RMDIR    = 13;
-      static const uint16_t COMMAND_MAX      = 14;
+      static const uint16_t COMMAND_READDIR  = 14;
+      static const uint16_t COMMAND_MAX      = 15;
 
       static const uint16_t SHUTDOWN_FLAG_IMMEDIATE = 0x0001;
 

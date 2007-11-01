@@ -21,9 +21,13 @@
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
+#include <string>
+#include <vector>
 
 extern "C" {
+#include <dirent.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <poll.h>
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -408,6 +412,59 @@ void LocalBroker::Rmdir(ResponseCallback *cb, const char *dirName) {
 #endif
 
   cb->response_ok();
+}
+
+/**
+ * Readdir
+ */
+void LocalBroker::Readdir(ResponseCallbackReaddir *cb, const char *dirName) {
+  std::vector<std::string> listing;
+  std::string absDirName;
+
+  if (mVerbose) {
+    LOG_VA_INFO("Readdir dir='%s'", dirName);
+    cout << flush;
+  }
+
+  if (dirName[0] == '/')
+    absDirName = mRootdir + dirName;
+  else
+    absDirName = mRootdir + "/" + dirName;
+
+  DIR *dirp = opendir(absDirName.c_str());
+  if (dirp == 0) {
+    LOG_VA_ERROR("opendir('%s') failed - %s", absDirName.c_str(), strerror(errno));
+    ReportError(cb);
+    return;
+  }
+
+  struct dirent dent;
+  struct dirent *dp;
+
+  if (readdir_r(dirp, &dent, &dp) != 0) {
+    LOG_VA_ERROR("readdir('%s') failed - %s", absDirName.c_str(), strerror(errno));
+    (void)closedir(dirp);
+    ReportError(cb);
+    return;
+  }
+    
+  while (dp != 0) {
+
+    if (dp->d_name[0] != '.' && dp->d_name[0] != 0)
+      listing.push_back((std::string)dp->d_name);
+
+    if (readdir_r(dirp, &dent, &dp) != 0) {
+      LOG_VA_ERROR("readdir('%s') failed - %s", absDirName.c_str(), strerror(errno));
+      ReportError(cb);
+      return;
+    }
+  }
+  (void)closedir(dirp);
+
+  LOG_VA_INFO("Sending back %d listings", listing.size());
+  cout << flush;
+
+  cb->response(listing);
 }
 
 

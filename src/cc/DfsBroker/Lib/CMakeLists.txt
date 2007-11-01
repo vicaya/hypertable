@@ -33,10 +33,12 @@ RequestHandlerMkdirs.cc
 RequestHandlerFlush.cc
 RequestHandlerStatus.cc
 RequestHandlerRmdir.cc
+RequestHandlerReaddir.cc
 ResponseCallbackOpen.cc
 ResponseCallbackRead.cc
 ResponseCallbackAppend.cc
 ResponseCallbackLength.cc
+ResponseCallbackReaddir.cc
 )
 
 add_library (DfsBroker ${DfsBroker_SRCS})

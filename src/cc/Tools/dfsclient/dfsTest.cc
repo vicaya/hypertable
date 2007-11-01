@@ -18,6 +18,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <algorithm>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <vector>
+
 extern "C" {
 #include <poll.h>
 #include <signal.h>
@@ -43,6 +49,7 @@ extern "C" {
 #include "dfsTestThreadFunction.h"
 
 using namespace hypertable;
+using namespace std;
 
 namespace {
   const short DEFAULT_PORT = 38546;
@@ -68,6 +75,8 @@ int main(int argc, char **argv) {
   char buf[32];
   std::string testDir, outfileA, outfileB;
   int error;
+
+  fstream filestr ("dfsTest.out", fstream::out);
 
   if (argc != 1)
     Usage::DumpAndExit(usage);
@@ -117,6 +126,28 @@ int main(int argc, char **argv) {
 
   thread1->join();
   thread2->join();
+
+  /**
+   * Readdir test
+   */
+  {
+    vector<string> listing;
+    
+    if ((error = client->Readdir(testDir, listing)) != Error::OK) {
+      LOG_VA_ERROR("Problem listing DFS test directory '%s' - %s", testDir.c_str(), Error::GetText(error));
+      return 1;
+    }
+
+    sort(listing.begin(), listing.end());
+
+    for (size_t i=0; i<listing.size(); i++)
+      filestr << listing[i] << endl;
+  }
+
+  filestr.close();
+
+  if (system("diff dfsTest.out dfsTest.golden"))
+    return 1;
 
   if ((error = client->Rmdir(testDir)) != Error::OK) {
     LOG_VA_ERROR("Problem removing DFS test directory '%s' - %s", testDir.c_str(), Error::GetText(error));

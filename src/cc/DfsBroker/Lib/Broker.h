@@ -27,6 +27,7 @@
 #include "ResponseCallbackRead.h"
 #include "ResponseCallbackAppend.h"
 #include "ResponseCallbackLength.h"
+#include "ResponseCallbackReaddir.h"
 
 using namespace hypertable;
 
@@ -49,6 +50,7 @@ namespace hypertable {
       virtual void Pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset, uint32_t amount) = 0;
       virtual void Mkdirs(ResponseCallback *cb, const char *dirName) = 0;
       virtual void Rmdir(ResponseCallback *cb, const char *dirName) = 0;
+      virtual void Readdir(ResponseCallbackReaddir *cb, const char *dirName) = 0;
       virtual void Flush(ResponseCallback *cb, uint32_t fd) = 0;
       virtual void Status(ResponseCallback *cb) = 0;
       virtual void Shutdown(ResponseCallback *cb) = 0;

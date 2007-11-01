@@ -16,6 +16,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
 
+set ( SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Tools/dfsclient" )
+set ( DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Tools/dfsclient" )
+
+
 set (dfsclient_SRCS
 CommandCopyFromLocal.cc
 CommandCopyToLocal.cc
@@ -33,6 +37,8 @@ target_link_libraries (dfsclient pthread ${BOOST_LIB} DfsBroker AsyncComm Hypers
 # dfsTest
 add_executable (dfsTest dfsTest.cc dfsTestThreadFunction.cc ${dfsclient_SRCS})
 target_link_libraries (dfsTest pthread ${BOOST_LIB} DfsBroker AsyncComm Common log4cpp)
+
+configure_file(${SRC_DIR}/dfsTest.golden ${DST_DIR}/dfsTest.golden COPYONLY)
 
 add_test (DfsBroker dfsTest)
 

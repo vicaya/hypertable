@@ -75,7 +75,9 @@ void dfsTestThreadFunction::operator()() {
     exit(1);
   }
 
+  /**
   cmdRemove.PushArg(mDfsFile, "");
   if (cmdRemove.run() != 0)
     exit(1);
+  **/
 }
