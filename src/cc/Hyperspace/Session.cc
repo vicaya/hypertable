@@ -45,7 +45,6 @@ extern "C" {
 using namespace hypertable;
 using namespace Hyperspace;
 
-const uint32_t Session::DEFAULT_CLIENT_PORT;
 
 /**
  * 

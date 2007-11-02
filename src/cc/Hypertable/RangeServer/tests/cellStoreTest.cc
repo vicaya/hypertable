@@ -34,6 +34,7 @@ extern "C" {
 
 #include "Common/ByteString.h"
 #include "Common/FileUtils.h"
+#include "Common/InetAddr.h"
 #include "Common/Logger.h"
 #include "Common/NumberStream.h"
 #include "Common/System.h"
@@ -60,7 +61,7 @@ using namespace hypertable;
 using namespace std;
 
 namespace {
-  const uint16_t DEFAULT_HDFSBROKER_PORT = 38546;
+  const uint16_t DEFAULT_DFSBROKER_PORT = 38030;
 
   const char *usage[] = {
     "usage: cellStoreTest [--golden]",
@@ -144,17 +145,7 @@ int main(int argc, char **argv) {
    *  Write/Scan test
    */
 
-  memset(&addr, 0, sizeof(struct sockaddr_in));
-  {
-    struct hostent *he = gethostbyname("localhost");
-    if (he == 0) {
-      herror("gethostbyname()");
-      exit(1);
-    }
-    memcpy(&addr.sin_addr.s_addr, he->h_addr_list[0], sizeof(uint32_t));
-  }
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(DEFAULT_HDFSBROKER_PORT);
+  InetAddr::Initialize(&addr, "localhost", DEFAULT_DFSBROKER_PORT);
 
   comm = new Comm();
   connManager = new ConnectionManager(comm);

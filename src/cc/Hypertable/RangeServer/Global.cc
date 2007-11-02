@@ -27,6 +27,7 @@
 using namespace hypertable;
 
 Filesystem            *Global::dfs = 0;
+Filesystem            *Global::logDfs = 0;
 boost::thread         *Global::maintenanceThreadPtr = 0;
 RangeServerProtocol   *Global::protocol = 0;
 bool                   Global::verbose = false;

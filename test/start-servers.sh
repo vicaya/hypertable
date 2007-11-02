@@ -92,6 +92,9 @@ if [ "$#" -eq 0 ]; then
     exit 1
 fi
 
+START_COMMITLOG_BROKER=no
+RANGESERVER_OPTS=
+
 #
 # Start DfsBroker.hadoop
 #
@@ -103,6 +106,7 @@ if [ $? != 0 ] ; then
 
   if [ "$1" == "hadoop" ] ; then
       nohup $HYPERTABLE_HOME/bin/jrun --pidfile $PIDFILE org.hypertable.DfsBroker.hadoop.main --verbose 1>& $LOGFILE &
+      START_COMMITLOG_BROKER=yes
   elif [ "$1" == "kosmos" ] ; then
       $HYPERTABLE_HOME/bin/kosmosBroker --pidfile=$PIDFILE --verbose 1>& $LOGFILE &   
   elif [ "$1" == "local" ] ; then
@@ -127,6 +131,31 @@ if [ $? != 0 ] ; then
   fi
 fi
 echo "Successfully started DFSBroker ($1)"
+
+
+#
+# 
+#
+$HYPERTABLE_HOME/bin/serverup --host=localhost --port=38031 dfsbroker
+if [ "$START_COMMITLOG_BROKER" == "yes" ] ; then
+      $HYPERTABLE_HOME/bin/localBroker --listen-port=38031 --pidfile=$HYPERTABLE_HOME/run/CommitLog.DfsBroker.$1.pid --verbose 1>& $HYPERTABLE_HOME/log/CommitLog.DfsBroker.$1.log &
+      RANGESERVER_OPTS=--log-broker=localhost:38031
+
+  sleep 1
+  $HYPERTABLE_HOME/bin/serverup --host=localhost --port=38031 dfsbroker
+  if [ $? != 0 ] ; then
+      echo -n "DfsBroker (local) hasn't come up yet, trying again in 5 seconds ..."
+      sleep 5
+      echo ""
+      $HYPERTABLE_HOME/bin/serverup --host=localhost --port=38031 dfsbroker
+      if [ $? != 0 ] ; then
+	  tail -100 $LOGFILE
+	  echo "Problem statring Commit Log DfsBroker (local)";
+	  exit 1
+      fi
+  fi
+  echo "Successfully started Commit Log DFSBroker (local)"
+fi
 
 
 #
@@ -230,7 +259,7 @@ if [ "$START_RANGESERVER" == "true" ] ; then
 
     $HYPERTABLE_HOME/bin/serverup rangeserver
     if [ $? != 0 ] ; then
-	$VALGRIND_RANGESERVER  $HYPERTABLE_HOME/bin/Hypertable.RangeServer --pidfile=$PIDFILE --metadata=$HYPERTABLE_HOME/test/metadata --verbose 1>& $LOGFILE &
+	$VALGRIND_RANGESERVER  $HYPERTABLE_HOME/bin/Hypertable.RangeServer $RANGESERVER_OPTS --pidfile=$PIDFILE --metadata=$HYPERTABLE_HOME/test/metadata --verbose 1>& $LOGFILE &
 	sleep 1
 	$HYPERTABLE_HOME/bin/serverup rangeserver
 	if [ $? != 0 ] ; then

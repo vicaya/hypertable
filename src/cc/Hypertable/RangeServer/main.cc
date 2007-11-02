@@ -19,6 +19,7 @@
  */
 
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -51,11 +52,13 @@ namespace {
     "usage: Hypertable.RangeServer --metadata=<file> [OPTIONS]",
     "",
     "OPTIONS:",
-    "  --config=<file>  Read configuration from <file>.  The default config file is",
-    "                   \"conf/hypertable.cfg\" relative to the toplevel install directory",
-    "  --help             Display this help text and exit",
-    "  --pidfile=<fname>  Write the process ID to <fname> upon successful startup",
-    "  --verbose,-v       Generate verbose output",
+    "  --config=<file>      Read configuration from <file>.  The default config file is",
+    "                       \"conf/hypertable.cfg\" relative to the toplevel install directory",
+    "  --help               Display this help text and exit",
+    "  --log-broker=<addr>  Use the DFS broker located at <addr> for the commit log.",
+    "                       <addr> is of the format <host>:<port>",
+    "  --pidfile=<fname>    Write the process ID to <fname> upon successful startup",
+    "  --verbose,-v         Generate verbose output",
     ""
     "This program is the Hypertable range server.",
     (const char *)0
@@ -71,6 +74,7 @@ int main(int argc, char **argv) {
   string pidFile = "";
   string metadataFile = "";
   int port, reactorCount;
+  char *logBroker = 0;
   Comm *comm = 0;
   PropertiesPtr propsPtr;
   RangeServer *rangeServer = 0;
@@ -82,6 +86,8 @@ int main(int argc, char **argv) {
     for (int i=1; i<argc; i++) {
       if (!strncmp(argv[i], "--config=", 9))
 	configFile = &argv[i][9];
+      else if (!strncmp(argv[i], "--log-broker=", 13))
+	logBroker = &argv[i][13];
       else if (!strncmp(argv[i], "--pidfile=", 10))
 	pidFile = &argv[i][10];
       else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
@@ -105,6 +111,17 @@ int main(int argc, char **argv) {
   propsPtr.reset( new Properties(configFile) );
   if (Global::verbose)
     propsPtr->setProperty("verbose", "true");
+
+  if (logBroker != 0) {
+    char *portStr = strchr(logBroker, ':');
+    if (portStr == 0) {
+      LOG_ERROR("Invalid address format for --log-broker, must be <host>:<port>");
+      exit(1);
+    }
+    *portStr++ = 0;
+    propsPtr->setProperty("Hypertable.RangeServer.CommitLog.DfsBroker.host", logBroker);
+    propsPtr->setProperty("Hypertable.RangeServer.CommitLog.DfsBroker.port", portStr);
+  }
 
   if (metadataFile == "") {
     LOG_ERROR("--metadata argument not specified.");

@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -48,16 +49,18 @@ namespace {
     "usage: localBroker [OPTIONS]",
     "",
     "OPTIONS:",
-    "  --config=<file>   Read configuration from <file>.  The default config file is",
-    "                    \"conf/hypertable.cfg\" relative to the toplevel install directory",
-    "  --pidfile=<fname> Write the process ID to <fname> upon successful startup",
-    "  --help            Display this help text and exit",
-    "  --verbose,-v      Generate verbose output",
-    ""
-    "This program is the local DFS broker.",
+    "  --config=<file>       Read configuration from <file>.  The default config",
+    "                        file is \"conf/hypertable.cfg\" relative to the toplevel",
+    "                        install directory",
+    "  --listen-port=<port>  Listen for connections on port <port>",
+    "  --pidfile=<fname>     Write the process ID to <fname> upon successful startup",
+    "  --help                Display this help text and exit",
+    "  --verbose,-v          Generate verbose output",
+    "",
+    "This program is the local DFS broker server.",
     (const char *)0
   };
-  const int DEFAULT_PORT    = 38546;
+  const int DEFAULT_PORT    = 38030;
   const int DEFAULT_WORKERS = 20;
 }
 
@@ -71,7 +74,8 @@ int main(int argc, char **argv) {
   string pidFile = "";
   PropertiesPtr propsPtr;
   bool verbose = false;
-  int port, reactorCount, workerCount;
+  int reactorCount, workerCount;
+  uint16_t port = 0;
   Comm *comm;
   LocalBroker *broker = 0;
   ApplicationQueue *appQueue = 0;
@@ -83,7 +87,9 @@ int main(int argc, char **argv) {
     for (int i=1; i<argc; i++) {
       if (!strncmp(argv[i], "--config=", 9))
 	configFile = &argv[i][9];
-      if (!strncmp(argv[i], "--pidfile=", 10))
+      else if (!strncmp(argv[i], "--listen-port=", 14))
+	port = (uint16_t)atoi(&argv[i][14]);
+      else if (!strncmp(argv[i], "--pidfile=", 10))
 	pidFile = &argv[i][10];
       else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
 	verbose = true;
@@ -104,7 +110,8 @@ int main(int argc, char **argv) {
   if (verbose)
     propsPtr->setProperty("verbose", "true");
 
-  port         = propsPtr->getPropertyInt("DfsBroker.local.port",     DEFAULT_PORT);
+  if (port == 0)
+    port         = propsPtr->getPropertyInt("DfsBroker.local.port",     DEFAULT_PORT);
   reactorCount = propsPtr->getPropertyInt("DfsBroker.local.reactors", System::GetProcessorCount());
   workerCount  = propsPtr->getPropertyInt("DfsBroker.local.workers",  DEFAULT_WORKERS);
 

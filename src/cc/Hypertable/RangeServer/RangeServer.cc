@@ -46,7 +46,7 @@ using namespace std;
 namespace {
   const int DEFAULT_SCANBUF_SIZE = 32768;
   const int DEFAULT_WORKERS = 20;
-  const int DEFAULT_PORT    = 38549;
+  const int DEFAULT_PORT    = 38060;
 }
 
 
@@ -71,19 +71,6 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
 
   assert(Global::localityGroupMergeFiles <= Global::localityGroupMaxFiles);
 
-  /**
-  const char *dir = propsPtr->getProperty("Hypertable.RangeServer.logDirRoot", 0);
-  if (dir == 0) {
-    cerr << "Hypertable.RangeServer.logDirRoot property not specified." << endl;
-    exit(1);
-  }
-  Global::logDirRoot = (dir[0] == '/') ? "" : System::installDir + "/";
-  if (dir[strlen(dir)-1] == '/')
-    Global::logDirRoot += string(dir, strlen(dir)-1);
-  else
-    Global::logDirRoot += dir;
-  */
-
   metadataFile = propsPtr->getProperty("metadata");
   assert(metadataFile != 0);
 
@@ -95,7 +82,6 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
     cout << "Hypertable.RangeServer.AccessGroup.MergeFiles=" << Global::localityGroupMergeFiles << endl;
     cout << "Hypertable.RangeServer.BlockCache.MaxMemory=" << blockCacheMemory << endl;
     cout << "Hypertable.RangeServer.Range.MaxBytes=" << Global::rangeMaxBytes << endl;
-    //cout << "Hypertable.RangeServer.logDirRoot=" << Global::logDirRoot << endl;
     cout << "Hypertable.RangeServer.port=" << port << endl;
     cout << "Hypertable.RangeServer.workers=" << workerCount << endl;
     cout << "METADATA file = '" << metadataFile << "'" << endl;
@@ -135,6 +121,27 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
   }
 
   Global::dfs = dfsClient;
+
+  /**
+   * Check for and connect to commit log DFS broker
+   */
+  {
+    const char *logHost = propsPtr->getProperty("Hypertable.RangeServer.CommitLog.DfsBroker.host", 0);
+    uint16_t logPort    = propsPtr->getPropertyInt("Hypertable.RangeServer.CommitLog.DfsBroker.port", 0);
+    struct sockaddr_in addr;
+    if (logHost != 0) {
+      InetAddr::Initialize(&addr, logHost, logPort);
+      dfsClient = new DfsBroker::Client(mConnManager, addr, 30);
+      if (!dfsClient->WaitForConnection(30)) {
+	LOG_ERROR("Unable to connect to DFS Broker, exiting...");
+	exit(1);
+      }
+      Global::logDfs = dfsClient;
+    }
+    else {
+      Global::logDfs = Global::dfs;
+    }
+  }
 
   /**
    * 
@@ -241,9 +248,9 @@ int RangeServer::DirectoryInitialize(Properties *props) {
   Global::logDir = (string)topDir.c_str() + "/commit/primary";
 
   /**
-   * Create /hypertable/servers/X.X.X.X:p_nnnnn/commit/primary directory
+   * Create /hypertable/servers/X.X.X.X_port_nnnnn/commit/primary directory
    */
-  if ((error = Global::dfs->Mkdirs(Global::logDir)) != Error::OK) {
+  if ((error = Global::logDfs->Mkdirs(Global::logDir)) != Error::OK) {
     LOG_VA_ERROR("Problem creating local log directory '%s'", Global::logDir.c_str());
     return error;
   }
@@ -254,7 +261,7 @@ int RangeServer::DirectoryInitialize(Properties *props) {
     cout << "logDir=" << Global::logDir << endl;
   }
 
-  Global::log = new CommitLog(Global::dfs, Global::logDir, logFileSize);    
+  Global::log = new CommitLog(Global::logDfs, Global::logDir, logFileSize);    
 
   /**
    *  Register with Master

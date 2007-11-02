@@ -57,7 +57,7 @@ namespace {
     "This program is the Hypertable master server.",
     (const char *)0
   };
-  const int DEFAULT_PORT              = 38548;
+  const int DEFAULT_PORT              = 38050;
   const int DEFAULT_WORKERS           = 20;
 }
 

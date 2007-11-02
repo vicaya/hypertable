@@ -25,6 +25,7 @@
 #include "AsyncComm/Serialization.h"
 
 #include "Common/Error.h"
+#include "Common/InetAddr.h"
 #include "Common/Logger.h"
 
 #include "Client.h"
@@ -62,17 +63,7 @@ Client::Client(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mConne
 
     mTimeout = propsPtr->getPropertyInt("DfsBroker.timeout", 30);
 
-    memset(&mAddr, 0, sizeof(struct sockaddr_in));
-    {
-      struct hostent *he = gethostbyname(host);
-      if (he == 0) {
-	herror("gethostbyname()");
-	exit(1);
-      }
-      memcpy(&mAddr.sin_addr.s_addr, he->h_addr_list[0], sizeof(uint32_t));
-    }
-    mAddr.sin_family = AF_INET;
-    mAddr.sin_port = htons(port);
+    InetAddr::Initialize(&mAddr, host, port);
   }
 
   mConnectionManager->Add(mAddr, mTimeout, "DFS Broker");

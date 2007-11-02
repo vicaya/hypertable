@@ -45,6 +45,7 @@ namespace hypertable {
   class Global {
   public:
     static hypertable::Filesystem *dfs;
+    static hypertable::Filesystem *logDfs;
     static boost::thread *maintenanceThreadPtr;
     static hypertable::RangeServerProtocol *protocol;
     static bool           verbose;

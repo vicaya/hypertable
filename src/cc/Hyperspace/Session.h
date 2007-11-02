@@ -110,8 +110,6 @@ namespace Hyperspace {
     bool WaitForConnection(long maxWaitSecs);
     void SetVerboseFlag(bool verbose) { mVerbose = verbose; }
 
-    static const uint32_t DEFAULT_CLIENT_PORT = 38550;
-
   private:
 
     bool WaitForSafe();

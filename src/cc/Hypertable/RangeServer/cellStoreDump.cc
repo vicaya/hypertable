@@ -26,6 +26,7 @@
 #include "AsyncComm/ReactorFactory.h"
 
 #include "Common/ByteString.h"
+#include "Common/InetAddr.h"
 #include "Common/Logger.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
@@ -42,7 +43,7 @@ using namespace hypertable;
 using namespace std;
 
 namespace {
-  const uint16_t DEFAULT_HDFSBROKER_PORT = 38546;
+  const uint16_t DEFAULT_DFSBROKER_PORT = 38030;
 
   const char *usage[] = {
     "usage: cellStoreDump [OPTIONS] <fname>",
@@ -50,7 +51,7 @@ namespace {
     "OPTIONS:",
     "  --trailer-only  - Dump out the trailer information only",
     "",
-    "Dumps the contents of the CellStore contained in the HDFS file <fname>.",
+    "Dumps the contents of the CellStore contained in the DFS file <fname>.",
     0
   };
 }
@@ -86,21 +87,8 @@ int main(int argc, char **argv) {
   if (fname == "")
       Usage::DumpAndExit(usage);
 
-  /**
-   *  Setup
-   */
-  memset(&addr, 0, sizeof(struct sockaddr_in));
-  {
-    struct hostent *he = gethostbyname("localhost");
-    if (he == 0) {
-      herror("gethostbyname()");
-      exit(1);
-    }
-    memcpy(&addr.sin_addr.s_addr, he->h_addr_list[0], sizeof(uint32_t));
-  }
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(DEFAULT_HDFSBROKER_PORT);
-
+  InetAddr::Initialize(&addr, "localhost", DEFAULT_DFSBROKER_PORT);
+  
   comm = new Comm();
   connManager = new ConnectionManager(comm);
 
