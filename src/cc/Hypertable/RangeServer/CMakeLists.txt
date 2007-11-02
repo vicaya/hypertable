@@ -33,8 +33,7 @@ CellStore.cc
 CellStoreScannerV0.cc
 CellStoreV0.cc
 CommitLog.cc
-#CommitLogLocal.cc
-#CommitLogReaderLocal.cc
+CommitLogReader.cc
 ConnectionHandler.cc
 Constants.cc
 EventHandlerMasterConnection.cc

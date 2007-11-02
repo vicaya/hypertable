@@ -116,6 +116,8 @@ int Client::OpenBuffered(std::string &name, uint32_t bufSize, int32_t *fdp) {
     assert(mBufferedReaderMap.find(*fdp) == mBufferedReaderMap.end());
     mBufferedReaderMap[*fdp] = new ClientBufferedReaderHandler(this, *fdp, bufSize);
   }
+
+  return Error::OK;
   
 }
 

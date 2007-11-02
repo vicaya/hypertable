@@ -30,6 +30,7 @@ namespace hypertable {
 
     virtual int Open(std::string &name, DispatchHandler *handler) = 0;
     virtual int Open(std::string &name, int32_t *fdp) = 0;
+    virtual int OpenBuffered(std::string &name, uint32_t bufSize, int32_t *fdp) = 0;
 
     virtual int Create(std::string &name, bool overwrite, int32_t bufferSize,
 		       int32_t replication, int64_t blockSize, DispatchHandler *handler) = 0;

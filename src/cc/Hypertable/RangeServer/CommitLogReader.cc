@@ -32,6 +32,7 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include "Common/Error.h"
 #include "Common/Logger.h"
 
 #include "CommitLog.h"
@@ -40,22 +41,28 @@ extern "C" {
 using namespace hypertable;
 using namespace std;
 
+namespace {
+  const uint32_t READAHEAD_BUFFER_SIZE = 131072;
+}
+
 /**
  *
  */
-CommitLogReader::CommitLogReader(Filesystem *fs, std::string &logDir) : mFs(fs), mLogDir(logDir), mBlockBuffer(sizeof(CommitLogHeaderT)) {
+CommitLogReader::CommitLogReader(Filesystem *fs, std::string &logDir) : mFs(fs), mLogDir(logDir), mFd(-1), mBlockBuffer(sizeof(CommitLogHeaderT)) {
   LogFileInfoT fileInfo;
-  struct stat statbuf;
-  int fd;
+  int error;
+  int32_t fd;
   CommitLogHeaderT  header;
   vector<string> listing;
+  int64_t flen;
+  uint32_t nread;
 
   LOG_VA_INFO("LogDir = %s", logDir.c_str());
 
   if (mLogDir.find('/', mLogDir.length()-1) == string::npos)
     mLogDir += "/";
 
-  if ((error = mFs->Readdir(mLogDir.c_str(), listing)) != Error::OK) {
+  if ((error = mFs->Readdir(mLogDir, listing)) != Error::OK) {
     LOG_VA_ERROR("Problem reading directory '%s' - %s", mLogDir.c_str(), Error::GetText(error));
     exit(1);
   }
@@ -81,25 +88,29 @@ CommitLogReader::CommitLogReader(Filesystem *fs, std::string &logDir) : mFs(fs),
 
     mLogFileInfo[i].timestamp = 0;
 
-    if (stat(mLogFileInfo[i].fname.c_str(), &statbuf) != 0) {
-      LOG_VA_ERROR("Problem trying to stat commit log file '%s' - %s", mLogFileInfo[i].fname.c_str(), strerror(errno));
+    if ((error = mFs->Length(mLogFileInfo[i].fname, &flen)) != Error::OK) {
+      LOG_VA_ERROR("Problem trying to determine length of commit log file '%s' - %s", mLogFileInfo[i].fname.c_str(), strerror(errno));
       exit(1);
     }
 
-    if (statbuf.st_size < (off_t)sizeof(CommitLogHeaderT))
+    if (flen < sizeof(CommitLogHeaderT))
       continue;
 
-    if ((fd = open(mLogFileInfo[i].fname.c_str(), O_RDONLY)) == -1) {
-      LOG_VA_ERROR("Problem trying to open commit log file '%s' - %s", mLogFileInfo[i].fname.c_str(), strerror(errno));
+    if ((error = mFs->Open(mLogFileInfo[i].fname, &fd)) != Error::OK) {
+      LOG_VA_ERROR("Problem opening commit log file '%s' - %s", mLogFileInfo[i].fname.c_str(), strerror(errno));
       exit(1);
     }
 
-    if (pread(fd, &header, sizeof(CommitLogHeaderT), statbuf.st_size-sizeof(CommitLogHeaderT)) != sizeof(CommitLogHeaderT)) {
+    if ((error = mFs->Pread(fd, flen-sizeof(CommitLogHeaderT), sizeof(CommitLogHeaderT), (uint8_t *)&header, &nread)) != Error::OK ||
+	nread != sizeof(CommitLogHeaderT)) {
       LOG_VA_ERROR("Problem reading trailing header in commit log file '%s' - %s", mLogFileInfo[i].fname.c_str(), strerror(errno));
       exit(1);
     }
 
-    close(fd);
+    if ((error = mFs->Close(fd)) != Error::OK) {
+      LOG_VA_ERROR("Problem closing commit log file '%s' - %s", mLogFileInfo[i].fname.c_str(), strerror(errno));
+      exit(1);
+    }
 
     if (!strncmp(header.marker, "-BLOCK--", 8))
       mLogFileInfo[i].timestamp = header.timestamp;
@@ -114,7 +125,7 @@ CommitLogReader::CommitLogReader(Filesystem *fs, std::string &logDir) : mFs(fs),
 void CommitLogReader::InitializeRead(uint64_t timestamp) {
   mCutoffTime = timestamp;
   mCurLogOffset = 0;
-  mFp = 0;
+  mFd = -1;
 }
 
 
@@ -122,10 +133,12 @@ void CommitLogReader::InitializeRead(uint64_t timestamp) {
 bool CommitLogReader::NextBlock(CommitLogHeaderT **blockp) {
   bool done = false;
   size_t toread;
+  uint32_t nread;
+  int error;
 
   while (!done) {
 
-    if (mFp == 0) {
+    if (mFd == -1) {
 
       while (mCurLogOffset < mLogFileInfo.size()) {
 	if (mLogFileInfo[mCurLogOffset].timestamp == 0 ||
@@ -137,46 +150,48 @@ bool CommitLogReader::NextBlock(CommitLogHeaderT **blockp) {
       if (mCurLogOffset == mLogFileInfo.size())
 	return false;
 
-      if ((mFp = fopen(mLogFileInfo[mCurLogOffset].fname.c_str(), "r")) == 0) {
-	LOG_VA_ERROR("Problem trying to open commit log file '%s' - %s", mLogFileInfo[mCurLogOffset].fname.c_str(), strerror(errno));
+      if ((error = mFs->OpenBuffered(mLogFileInfo[mCurLogOffset].fname, READAHEAD_BUFFER_SIZE, &mFd)) != Error::OK) {
+	LOG_VA_ERROR("Problem trying to open commit log file '%s' - %s", mLogFileInfo[mCurLogOffset].fname.c_str(), Error::GetText(error));
 	return false;
       }
     }
 
     mBlockBuffer.ptr = mBlockBuffer.buf;
+
+    if ((error = mFs->Read(mFd, sizeof(CommitLogHeaderT), mBlockBuffer.ptr, &nread)) != Error::OK) {
+      LOG_VA_ERROR("Problem reading header from commit log file '%s' - %s", mLogFileInfo[mCurLogOffset].fname.c_str(), Error::GetText(error));
+      return false;
+    }
     
-    if (fread(mBlockBuffer.ptr, 1, sizeof(CommitLogHeaderT), mFp) != sizeof(CommitLogHeaderT)) {
-      if (feof(mFp)) {
-	fclose(mFp);
-	mFp = 0;
-	mCurLogOffset++;
-      }
-      else {
-	int error = ferror(mFp);
-	LOG_VA_ERROR("Problem trying to read commit log file '%s' - %s", mLogFileInfo[mCurLogOffset].fname.c_str(), strerror(error));
-	fclose(mFp);
-	mFp = 0;
+    if (nread != sizeof(CommitLogHeaderT)) {
+      if ((error = mFs->Close(mFd)) != Error::OK) {
+	LOG_VA_ERROR("Problem closing commit log file '%s' - %s", mLogFileInfo[mCurLogOffset].fname.c_str(), Error::GetText(error));
 	return false;
       }
+      mFd = -1;
+      mCurLogOffset++;
     }
     else {
       CommitLogHeaderT *header = (CommitLogHeaderT *)mBlockBuffer.buf;
-      if (header->length == sizeof(CommitLogHeaderT)) {
-	if (feof(mFp)) {
-	  fclose(mFp);
-	  mFp = 0;
-	  mCurLogOffset++;
-	}
+      if (header->length == sizeof(CommitLogHeaderT))
 	continue;
-      }
       mBlockBuffer.ptr += sizeof(CommitLogHeaderT);
       // TODO: sanity check this header
       toread = header->length-sizeof(CommitLogHeaderT);
-      mBlockBuffer.ensure(toread);
-      if (fread(mBlockBuffer.ptr, 1, toread, mFp) != toread) {
+      mBlockBuffer.ensure(toread+sizeof(CommitLogHeaderT));
+
+      if ((error = mFs->Read(mFd, toread, mBlockBuffer.ptr, &nread)) != Error::OK) {
+	LOG_VA_ERROR("Problem reading commit block from commit log file '%s' - %s", mLogFileInfo[mCurLogOffset].fname.c_str(), Error::GetText(error));
+	return false;
+      }
+      
+      if (nread != toread) {
 	LOG_VA_ERROR("Short read of commit log block '%s'", mLogFileInfo[mCurLogOffset].fname.c_str());
-	fclose(mFp);
-	mFp = 0;
+	if ((error = mFs->Close(mFd)) != Error::OK) {
+	  LOG_VA_ERROR("Problem closing commit log file '%s' - %s", mLogFileInfo[mCurLogOffset].fname.c_str(), Error::GetText(error));
+	  return false;
+	}
+	mFd = -1;
 	return false;
       }
       *blockp = (CommitLogHeaderT *)mBlockBuffer.buf;

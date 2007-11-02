@@ -23,10 +23,6 @@
 #include <string>
 #include <vector>
 
-extern "C" {
-#include <stdio.h>
-}
-
 #include <boost/thread/mutex.hpp>
 
 #include "Hypertable/Lib/Filesystem.h"
@@ -62,7 +58,7 @@ namespace hypertable {
     std::vector<LogFileInfoT> mLogFileInfo;
     uint64_t                  mCutoffTime;
     size_t                    mCurLogOffset;
-    FILE                     *mFp;
+    int32_t                   mFd;
     DynamicBuffer             mBlockBuffer;
   };
 }
