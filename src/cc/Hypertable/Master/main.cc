@@ -69,8 +69,8 @@ namespace {
 class HandlerFactory : public ConnectionHandlerFactory {
 public:
   HandlerFactory(Comm *comm, ApplicationQueue *appQueue, Master *master) : mComm(comm), mAppQueue(appQueue), mMaster(master) { return; }
-  DispatchHandler *newInstance() {
-    return new ConnectionHandler(mComm, mAppQueue, mMaster);
+  virtual void newInstance(DispatchHandlerPtr &dhp) {
+    dhp = new ConnectionHandler(mComm, mAppQueue, mMaster);
   }
 private:
   Comm              *mComm;
@@ -137,7 +137,8 @@ int main(int argc, char **argv) {
   master = new Master(connManager, propsPtr, appQueue);
 
   InetAddr::Initialize(&listenAddr, INADDR_ANY, port);
-  comm->Listen(listenAddr, new HandlerFactory(comm, appQueue, master));
+  ConnectionHandlerFactoryPtr chfPtr(new HandlerFactory(comm, appQueue, master));
+  comm->Listen(listenAddr, chfPtr);
 
   if (pidFile != "") {
     fstream filestr (pidFile.c_str(), fstream::out);

@@ -29,6 +29,7 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/InetAddr.h"
 #include "Common/System.h"
@@ -80,6 +81,7 @@ int main(int argc, char **argv) {
   LocalBroker *broker = 0;
   ApplicationQueue *appQueue = 0;
   struct sockaddr_in listenAddr;
+  int error;
 
   System::Initialize(argv[0]);
   
@@ -130,7 +132,12 @@ int main(int argc, char **argv) {
 
   broker = new LocalBroker(propsPtr);
   appQueue = new ApplicationQueue(workerCount);
-  comm->Listen(listenAddr, new DfsBroker::ConnectionHandlerFactory(comm, appQueue, broker));
+  ConnectionHandlerFactoryPtr chfPtr(new DfsBroker::ConnectionHandlerFactory(comm, appQueue, broker));
+  if ((error = comm->Listen(listenAddr, chfPtr)) != Error::OK) {
+    std::string addrStr;
+    LOG_VA_ERROR("Problem listening for connections on %s - %s", InetAddr::StringFormat(addrStr, listenAddr), Error::GetText(error));
+    return 1;
+  }
 
   if (pidFile != "") {
     fstream filestr (pidFile.c_str(), fstream::out);

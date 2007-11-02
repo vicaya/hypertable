@@ -44,7 +44,7 @@ namespace hypertable {
 
   public:
 
-    IOHandlerDatagram(int sd, struct sockaddr_in &addr, DispatchHandler *dh, HandlerMap &hmap) : IOHandler(sd, addr, dh, hmap), mSendQueue() {
+    IOHandlerDatagram(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp, HandlerMap &hmap) : IOHandler(sd, addr, dhp, hmap), mSendQueue() {
       mMessage = new uint8_t [ 65536 ];
     }
 

@@ -62,7 +62,8 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsP
 
   InetAddr::Initialize(&mLocalAddr, INADDR_ANY, 0);
 
-  if ((error = mComm->CreateDatagramReceiveSocket(&mLocalAddr, this)) != Error::OK) {
+  DispatchHandlerPtr dhp(this);
+  if ((error = mComm->CreateDatagramReceiveSocket(&mLocalAddr, dhp)) != Error::OK) {
     std::string str;
     LOG_VA_ERROR("Unable to create datagram receive socket %s - %s", InetAddr::StringFormat(str, mLocalAddr), Error::GetText(error));
     exit(1);

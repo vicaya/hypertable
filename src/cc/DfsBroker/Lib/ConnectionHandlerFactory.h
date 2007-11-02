@@ -56,8 +56,8 @@ namespace hypertable {
       /**
        * Returns a newly constructed DfsBroker::ConnectionHandler object
        */
-      DispatchHandler *newInstance() {
-	return new ConnectionHandler(mComm, mAppQueue, mBroker);
+      virtual void newInstance(DispatchHandlerPtr &dhp) {
+	dhp = new ConnectionHandler(mComm, mAppQueue, mBroker);
       }
 
     private:

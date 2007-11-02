@@ -215,7 +215,7 @@ int MasterClient::ReloadMaster() {
 
     InetAddr::Initialize(&mMasterAddr, mMasterAddrString.c_str());
 
-    mConnManager->Add(mMasterAddr, 15, "Master", mDispatcherHandlerPtr.get());
+    mConnManager->Add(mMasterAddr, 15, "Master", mDispatcherHandlerPtr);
   }
 
   return Error::OK;

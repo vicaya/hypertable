@@ -53,9 +53,10 @@ namespace Hyperspace {
 
     int InitiateConnection(struct sockaddr_in &addr) {
       boost::mutex::scoped_lock lock(mMutex);
+      DispatchHandlerPtr dhp(this);
       int error;
       mState = CONNECTING;
-      if ((error = mComm->Connect(addr, this)) != Error::OK) {
+      if ((error = mComm->Connect(addr, dhp)) != Error::OK) {
 	std::string str;
 	LOG_VA_ERROR("Problem establishing TCP connection with Hyperspace.Master at %s - %s",
 		     InetAddr::StringFormat(str, addr), Error::GetText(error));

@@ -52,7 +52,7 @@ namespace hypertable {
 
   public:
 
-    IOHandler(int sd, struct sockaddr_in &addr, DispatchHandler *dh, HandlerMap &hmap) : mAddr(addr), mSd(sd), mDispatchHandler(dh), mHandlerMap(hmap) {
+    IOHandler(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp, HandlerMap &hmap) : mAddr(addr), mSd(sd), mDispatchHandlerPtr(dhp), mHandlerMap(hmap) {
       mReactor = ReactorFactory::GetReactor();
       mPollInterest = 0;
       socklen_t namelen = sizeof(mLocalAddr);
@@ -69,16 +69,33 @@ namespace hypertable {
 
     virtual ~IOHandler() { return; }
 
-    void DeliverEvent(Event *event, DispatchHandler *dh=0) {
-      DispatchHandler *handler = (dh == 0) ? mDispatchHandler : dh;
+    void DeliverEvent(Event *event) {
       memcpy(&event->localAddr, &mLocalAddr, sizeof(mLocalAddr));
-      if (handler == 0) {
+      if (!mDispatchHandlerPtr) {
 	LOG_VA_INFO("%s", event->toString().c_str());
 	delete event;
       }
       else {
 	EventPtr eventPtr(event);
-	handler->handle(eventPtr);
+	mDispatchHandlerPtr->handle(eventPtr);
+      }
+    }
+
+    void DeliverEvent(Event *event, DispatchHandler *dh) {
+      memcpy(&event->localAddr, &mLocalAddr, sizeof(mLocalAddr));
+      if (!dh) {
+	if (!mDispatchHandlerPtr) {
+	  LOG_VA_INFO("%s", event->toString().c_str());
+	  delete event;
+	}
+	else {
+	  EventPtr eventPtr(event);
+	  mDispatchHandlerPtr->handle(eventPtr);
+	}
+      }
+      else {
+	EventPtr eventPtr(event);
+	dh->handle(eventPtr);
       }
     }
 
@@ -145,7 +162,7 @@ namespace hypertable {
     struct sockaddr_in  mAddr;
     struct sockaddr_in  mLocalAddr;
     int                 mSd;
-    DispatchHandler    *mDispatchHandler;
+    DispatchHandlerPtr  mDispatchHandlerPtr;
     HandlerMap         &mHandlerMap;
     Reactor            *mReactor;
     int                 mPollInterest;

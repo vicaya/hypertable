@@ -48,11 +48,13 @@ namespace hypertable {
 
     ~Comm();
 
-    int Connect(struct sockaddr_in &addr, DispatchHandler *defaultHandler);
+    int Connect(struct sockaddr_in &addr, DispatchHandlerPtr &defaultHandlerPtr);
 
-    int Connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, DispatchHandler *defaultHandler);
+    int Connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, DispatchHandlerPtr &defaultHandlerPtr);
 
-    int Listen(struct sockaddr_in &addr, ConnectionHandlerFactory *hfactory, DispatchHandler *defaultHandler=0);
+    int Listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chfPtr);
+
+    int Listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chfPtr, DispatchHandlerPtr &defaultHandlerPtr);
 
     int SendRequest(struct sockaddr_in &addr, time_t timeout, CommBufPtr &cbufPtr, DispatchHandler *responseHandler);
 
@@ -60,7 +62,7 @@ namespace hypertable {
 
     int GetLocalAddress(struct sockaddr_in addr, struct sockaddr_in *localAddr);
 
-    int CreateDatagramReceiveSocket(struct sockaddr_in *addr, DispatchHandler *handler);
+    int CreateDatagramReceiveSocket(struct sockaddr_in *addr, DispatchHandlerPtr &handlerPtr);
 
     int SendDatagram(struct sockaddr_in &addr, struct sockaddr_in &sendAddr, CommBufPtr &cbufPtr);
 
@@ -72,7 +74,7 @@ namespace hypertable {
 
   private:
 
-    int ConnectSocket(int sd, struct sockaddr_in &addr, DispatchHandler *defaultHandler);
+    int ConnectSocket(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &defaultHandlerPtr);
 
     boost::mutex  mMutex;
     std::string   mAppName;

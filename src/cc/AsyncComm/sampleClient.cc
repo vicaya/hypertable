@@ -181,14 +181,14 @@ private:
  */
 class HandlerFactory : public ConnectionHandlerFactory {
 public:
-  HandlerFactory(DispatchHandler *dh) {
-    mDispatchHandler = dh;
+  HandlerFactory(DispatchHandlerPtr &dhp) {
+    mDispatchHandlerPtr = dhp;
   }
-  virtual DispatchHandler *newInstance() {
-    return mDispatchHandler;
+  virtual void newInstance(DispatchHandlerPtr &dhp) {
+    dhp = mDispatchHandlerPtr;
   }
 private:
-  DispatchHandler *mDispatchHandler;
+  DispatchHandlerPtr mDispatchHandlerPtr;
 };
 
 
@@ -247,8 +247,9 @@ int main(int argc, char **argv) {
   HeaderBuilder hbuilder;
   int error;
   EventPtr eventPtr;
+  ConnectionHandlerFactoryPtr chfPtr;
+  DispatchHandlerPtr dhp;
   ResponseHandler *respHandler;
-  HandlerFactory *hfactory = 0;
   bool udpMode = false;
   string line;
   int outstanding = 0;
@@ -312,9 +313,10 @@ int main(int argc, char **argv) {
   if (udpMode) {
     assert(localAddr.sin_port == 0);
     respHandler = new ResponseHandlerUDP();
+    dhp = respHandler;
     port++;
     InetAddr::Initialize(&localAddr, INADDR_ANY, port);
-    if ((error = comm->CreateDatagramReceiveSocket(&localAddr, respHandler)) != Error::OK) {
+    if ((error = comm->CreateDatagramReceiveSocket(&localAddr, dhp)) != Error::OK) {
       std::string str;
       LOG_VA_ERROR("Problem creating UDP receive socket %s - %s", InetAddr::StringFormat(str, localAddr), Error::GetText(error));
       exit(1);
@@ -322,16 +324,17 @@ int main(int argc, char **argv) {
   }
   else {
     respHandler = new ResponseHandlerTCP();
+    dhp = respHandler;
 
     if (localAddr.sin_port == 0) {
-      if ((error = comm->Connect(addr, respHandler)) != Error::OK) {
+      if ((error = comm->Connect(addr, dhp)) != Error::OK) {
 	LOG_VA_ERROR("Comm::Connect error - %s", Error::GetText(error));
 	exit(1);
       }
     }
     else {
-      hfactory = new HandlerFactory(respHandler);
-      if ((error = comm->Listen(localAddr, hfactory, respHandler)) != Error::OK) {
+      chfPtr = new HandlerFactory(dhp);
+      if ((error = comm->Listen(localAddr, chfPtr, dhp)) != Error::OK) {
 	LOG_VA_ERROR("Comm::Listen error - %s", Error::GetText(error));
 	exit(1);
       }

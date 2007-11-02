@@ -102,8 +102,8 @@ void CommTestThreadFunction::operator()() {
   ofstream outfile(mOutputFile);
   const char *str;
   int nsent = 0;
-
   ResponseHandler *respHandler = new ResponseHandler();
+  DispatchHandlerPtr dispatchHandlerPtr(respHandler);
 
   if (infile.is_open()) {
     while (!infile.eof() && nsent < MAX_MESSAGES) {
@@ -164,5 +164,4 @@ void CommTestThreadFunction::operator()() {
     //cout << "out = " << outstanding << endl;
     outstanding--;
   }
-  delete respHandler;
 }

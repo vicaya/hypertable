@@ -47,9 +47,9 @@ using namespace std;
  * @param addr         The address to connect to
  * @param timeout      When connection dies, wait this many seconds before attempting to reestablish
  * @param serviceName  The name of the service we're connnecting to (used for better log messages)
- * @param handler      This is the default handler to install on the connection.  All events get changed through to this handler.
+ * @param handlerPtr   This is the default handler to install on the connection.  All events get changed through to this handler.
  */
-void ConnectionManager::Add(struct sockaddr_in &addr, time_t timeout, const char *serviceName, DispatchHandler *handler) {
+void ConnectionManager::Add(struct sockaddr_in &addr, time_t timeout, const char *serviceName, DispatchHandlerPtr &handlerPtr) {
   boost::mutex::scoped_lock lock(mImpl->mutex);
   SockAddrMapT<ConnectionStatePtr> iter;
   ConnectionState *connState;
@@ -63,7 +63,7 @@ void ConnectionManager::Add(struct sockaddr_in &addr, time_t timeout, const char
   connState->addr = addr;
   memset(&connState->localAddr, 0, sizeof(struct sockaddr_in));
   connState->timeout = timeout;
-  connState->handler = handler;
+  connState->handlerPtr = handlerPtr;
   connState->serviceName = (serviceName) ? serviceName : "";
   boost::xtime_get(&connState->nextRetry, boost::TIME_UTC);
 
@@ -75,6 +75,15 @@ void ConnectionManager::Add(struct sockaddr_in &addr, time_t timeout, const char
   }
 }
 
+/**
+ *
+ */
+void ConnectionManager::Add(struct sockaddr_in &addr, time_t timeout, const char *serviceName) {
+  DispatchHandlerPtr nullDispatchHandler;
+  Add(addr, timeout, serviceName, nullDispatchHandler);
+}
+
+
 
 /**
  * This method adds a connection to the connection manager if it is not already added.
@@ -85,9 +94,9 @@ void ConnectionManager::Add(struct sockaddr_in &addr, time_t timeout, const char
  * @param localAddr    The local address to bind to
  * @param timeout      When connection dies, wait this many seconds before attempting to reestablish
  * @param serviceName  The name of the service we're connnecting to (used for better log messages)
- * @param handler      This is the default handler to install on the connection.  All events get changed through to this handler.
+ * @param handlerPtr   This is the default handler to install on the connection.  All events get changed through to this handler.
  */
-void ConnectionManager::Add(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, const char *serviceName, DispatchHandler *handler) {
+void ConnectionManager::Add(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, const char *serviceName, DispatchHandlerPtr &handlerPtr) {
   boost::mutex::scoped_lock lock(mImpl->mutex);
   SockAddrMapT<ConnectionStatePtr> iter;
   ConnectionState *connState;
@@ -101,7 +110,7 @@ void ConnectionManager::Add(struct sockaddr_in &addr, struct sockaddr_in &localA
   connState->addr = addr;
   connState->localAddr = localAddr;
   connState->timeout = timeout;
-  connState->handler = handler;
+  connState->handlerPtr = handlerPtr;
   connState->serviceName = (serviceName) ? serviceName : "";
   boost::xtime_get(&connState->nextRetry, boost::TIME_UTC);
 
@@ -112,6 +121,16 @@ void ConnectionManager::Add(struct sockaddr_in &addr, struct sockaddr_in &localA
     SendConnectRequest(connState);
   }
 }
+
+
+/**
+ *
+ */
+void ConnectionManager::Add(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, const char *serviceName) {
+  DispatchHandlerPtr nullDispatchHandler;
+  Add(addr, localAddr, timeout, serviceName, nullDispatchHandler);
+}
+
 
 
 
@@ -155,11 +174,12 @@ bool ConnectionManager::WaitForConnection(struct sockaddr_in &addr, long maxWait
  */
 void ConnectionManager::SendConnectRequest(ConnectionState *connState) {
   int error;
+  DispatchHandlerPtr handlerPtr(this);
 
   if (connState->localAddr.sin_port != 0)
-    error = mImpl->comm->Connect(connState->addr, connState->localAddr, this);
+    error = mImpl->comm->Connect(connState->addr, connState->localAddr, handlerPtr);
   else
-    error = mImpl->comm->Connect(connState->addr, this);
+    error = mImpl->comm->Connect(connState->addr, handlerPtr);
 
   if (error == Error::COMM_ALREADY_CONNECTED) {
     connState->connected = true;
@@ -258,8 +278,8 @@ void ConnectionManager::handle(EventPtr &eventPtr) {
     }
     
     // Chain event to application supplied handler
-    if (connState->handler)
-      connState->handler->handle(eventPtr);
+    if (connState->handlerPtr)
+      connState->handlerPtr->handle(eventPtr);
   }
   else {
     LOG_VA_WARN("Unable to find connection for %s:%d in map.", inet_ntoa(eventPtr->addr.sin_addr), ntohs(eventPtr->addr.sin_port));

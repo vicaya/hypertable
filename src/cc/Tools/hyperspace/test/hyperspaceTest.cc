@@ -82,7 +82,7 @@ namespace {
     bool mPending;
   };
 
-  NotificationHandler gNotifyHandler;
+  NotificationHandler *gNotifyHandler = 0;
 
   void IssueCommandNoWait(int fd, const char *command) {
     if (write(fd, command, strlen(command)) != strlen(command)) {
@@ -96,9 +96,9 @@ namespace {
   }
 
   void IssueCommand(int fd, const char *command) {
-    gNotifyHandler.SetPending();
+    gNotifyHandler->SetPending();
     IssueCommandNoWait(fd, command);
-    gNotifyHandler.WaitForNotification();
+    gNotifyHandler->WaitForNotification();
   }
 
   int gFd1, gFd2, gFd3;
@@ -121,6 +121,11 @@ int main(int argc, char **argv) {
   Comm *comm;
   struct sockaddr_in addr;
   char masterInstallDir[2048];
+  DispatchHandlerPtr dhp;
+
+  gNotifyHandler = new NotificationHandler();
+
+  dhp = gNotifyHandler;
 
   System::Initialize(argv[0]);
   ReactorFactory::Initialize(1);
@@ -130,7 +135,7 @@ int main(int argc, char **argv) {
   if (!InetAddr::Initialize(&addr, "23451"))
     exit(1);
 
-  if ((error = comm->CreateDatagramReceiveSocket(&addr, &gNotifyHandler)) != Error::OK) {
+  if ((error = comm->CreateDatagramReceiveSocket(&addr, dhp)) != Error::OK) {
     std::string str;
     LOG_VA_ERROR("Problem creating UDP receive socket %s - %s", InetAddr::StringFormat(str, addr), Error::GetText(error));
     exit(1);

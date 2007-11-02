@@ -31,6 +31,7 @@ extern "C" {
 
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
+#include "Common/InetAddr.h"
 #include "Common/TestHarness.h"
 #include "Common/StringExt.h"
 #include "Common/System.h"
@@ -90,17 +91,7 @@ int main(int argc, char **argv) {
   System::Initialize(argv[0]);
   ReactorFactory::Initialize(1);
 
-  memset(&addr, 0, sizeof(struct sockaddr_in));
-  {
-    struct hostent *he = gethostbyname("localhost");
-    if (he == 0) {
-      herror("gethostbyname()");
-      return 1;
-    }
-    memcpy(&addr.sin_addr.s_addr, he->h_addr_list[0], sizeof(uint32_t));
-  }
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(DEFAULT_PORT);
+  InetAddr::Initialize(&addr, "localhost", DEFAULT_PORT);
 
   comm = new Comm();
 

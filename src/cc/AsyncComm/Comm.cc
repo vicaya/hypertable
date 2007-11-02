@@ -83,7 +83,7 @@ Comm::~Comm() {
 
 /**
  */
-int Comm::Connect(struct sockaddr_in &addr, DispatchHandler *defaultHandler) {
+int Comm::Connect(struct sockaddr_in &addr, DispatchHandlerPtr &defaultHandlerPtr) {
   int sd;
 
   if (mHandlerMap.ContainsHandler(addr))
@@ -94,7 +94,7 @@ int Comm::Connect(struct sockaddr_in &addr, DispatchHandler *defaultHandler) {
     exit(1);
   }
 
-  return ConnectSocket(sd, addr, defaultHandler);
+  return ConnectSocket(sd, addr, defaultHandlerPtr);
 }
 
 
@@ -102,7 +102,7 @@ int Comm::Connect(struct sockaddr_in &addr, DispatchHandler *defaultHandler) {
 /**
  *
  */
-int Comm::Connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, DispatchHandler *defaultHandler) {
+int Comm::Connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, DispatchHandlerPtr &defaultHandlerPtr) {
   int sd;
 
   if (mHandlerMap.ContainsHandler(addr))
@@ -119,15 +119,23 @@ int Comm::Connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, Dispa
     exit(1);
   }
 
-  return ConnectSocket(sd, addr, defaultHandler);
+  return ConnectSocket(sd, addr, defaultHandlerPtr);
 }
-
 
 
 /**
  *
  */
-int Comm::Listen(struct sockaddr_in &addr, ConnectionHandlerFactory *hfactory, DispatchHandler *defaultHandler) {
+int Comm::Listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chfPtr) {
+  DispatchHandlerPtr nullHandlerPtr(0);
+  return Listen(addr, chfPtr, nullHandlerPtr);
+}
+
+
+/**
+ *
+ */
+int Comm::Listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chfPtr, DispatchHandlerPtr &defaultHandlerPtr) {
   IOHandlerPtr handlerPtr;
   IOHandlerAccept *acceptHandler;
   int one = 1;
@@ -160,7 +168,7 @@ int Comm::Listen(struct sockaddr_in &addr, ConnectionHandlerFactory *hfactory, D
     exit(1);
   }
 
-  handlerPtr = acceptHandler = new IOHandlerAccept(sd, addr, defaultHandler, mHandlerMap, hfactory);
+  handlerPtr = acceptHandler = new IOHandlerAccept(sd, addr, defaultHandlerPtr, mHandlerMap, chfPtr);
   mHandlerMap.InsertHandler(acceptHandler);
   acceptHandler->StartPolling();
 
@@ -174,8 +182,6 @@ int Comm::SendRequest(struct sockaddr_in &addr, time_t timeout, CommBufPtr &cbuf
   IOHandlerDataPtr dataHandlerPtr;
   Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
   int error = Error::OK;
-
-  assert((responseHandler != 0 && mheader->id != 0) || responseHandler == 0);
 
   cbufPtr->ResetDataPointers();
 
@@ -219,7 +225,7 @@ int Comm::SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr) {
 /**
  * 
  */
-int Comm::CreateDatagramReceiveSocket(struct sockaddr_in *addr, DispatchHandler *handler) {
+int Comm::CreateDatagramReceiveSocket(struct sockaddr_in *addr, DispatchHandlerPtr &dispatchHandlerPtr) {
   IOHandlerPtr handlerPtr;
   IOHandlerDatagram *datagramHandler;
   int one = 1;
@@ -251,7 +257,7 @@ int Comm::CreateDatagramReceiveSocket(struct sockaddr_in *addr, DispatchHandler 
     exit(1);
   }
 
-  handlerPtr = datagramHandler = new IOHandlerDatagram(sd, *addr, handler, mHandlerMap);
+  handlerPtr = datagramHandler = new IOHandlerDatagram(sd, *addr, dispatchHandlerPtr, mHandlerMap);
 
   handlerPtr->GetLocalAddress(addr);
 
@@ -356,7 +362,7 @@ int Comm::CloseSocket(struct sockaddr_in &addr) {
 /**
  *
  */
-int Comm::ConnectSocket(int sd, struct sockaddr_in &addr, DispatchHandler *defaultHandler) {
+int Comm::ConnectSocket(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &defaultHandlerPtr) {
   IOHandlerPtr handlerPtr;
   IOHandlerData *dataHandler;
   int one = 1;
@@ -372,7 +378,7 @@ int Comm::ConnectSocket(int sd, struct sockaddr_in &addr, DispatchHandler *defau
     LOG_VA_WARN("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
 #endif
 
-  handlerPtr = dataHandler = new IOHandlerData(sd, addr, defaultHandler, mHandlerMap);
+  handlerPtr = dataHandler = new IOHandlerData(sd, addr, defaultHandlerPtr, mHandlerMap);
   mHandlerMap.InsertHandler(dataHandler);
 
   while (connect(sd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) < 0) {

@@ -143,13 +143,14 @@ class Notifier {
 public:
 
   Notifier(const char *addressStr) {
+    DispatchHandlerPtr nullHandler(0);
     int error;
     mComm = new Comm();
     if (!InetAddr::Initialize(&mAddr, addressStr)) {
       exit(1);
     }
     InetAddr::Initialize(&mSendAddr, INADDR_ANY, 0);
-    if ((error = mComm->CreateDatagramReceiveSocket(&mSendAddr, 0)) != Error::OK) {
+    if ((error = mComm->CreateDatagramReceiveSocket(&mSendAddr, nullHandler)) != Error::OK) {
       std::string str;
       LOG_VA_ERROR("Problem creating UDP receive socket %s - %s", InetAddr::StringFormat(str, mSendAddr), Error::GetText(error));
       exit(1);

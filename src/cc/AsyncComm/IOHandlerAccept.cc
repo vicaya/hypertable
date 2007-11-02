@@ -94,7 +94,10 @@ bool IOHandlerAccept::HandleIncomingConnection() {
     LOG_VA_WARN("setsockopt(SO_RCVBUF) failed - %s", strerror(errno));
   }
 
-  dataHandler = new IOHandlerData(sd, addr, mHandlerFactory->newInstance(), mHandlerMap);
+  DispatchHandlerPtr dhp;
+  mHandlerFactoryPtr->newInstance(dhp);
+
+  dataHandler = new IOHandlerData(sd, addr, dhp, mHandlerMap);
 
   IOHandlerPtr handlerPtr( dataHandler );
   mHandlerMap.InsertHandler(dataHandler);

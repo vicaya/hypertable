@@ -35,8 +35,8 @@ namespace hypertable {
   class HandlerFactory : public ConnectionHandlerFactory {
   public:
     HandlerFactory(Comm *comm, ApplicationQueue *appQueue, RangeServer *rangeServer) : mComm(comm), mAppQueue(appQueue), mRangeServer(rangeServer) { return; }
-    DispatchHandler *newInstance() {
-      return new ConnectionHandler(mComm, mAppQueue, mRangeServer);
+    virtual void newInstance(DispatchHandlerPtr &dhp) {
+      dhp = new ConnectionHandler(mComm, mAppQueue, mRangeServer);
     }
   private:
     Comm        *mComm;

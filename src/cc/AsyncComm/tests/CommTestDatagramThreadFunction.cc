@@ -104,13 +104,14 @@ void CommTestDatagramThreadFunction::operator()() {
   const char *str;
   uint64_t gid64 = (uint64_t)this;
   uint32_t gid = (uint32_t)(gid64 & 0x00000000FFFFFFFFLL);
-  ResponseHandler respHandler;
   int nsent = 0;
   struct sockaddr_in localAddr;
+  ResponseHandler *respHandler = new ResponseHandler();
+  DispatchHandlerPtr dispatchHandlerPtr(respHandler);
 
   InetAddr::Initialize(&localAddr, INADDR_ANY, mPort);
 
-  if (error = mComm->CreateDatagramReceiveSocket(&localAddr, &respHandler)) {
+  if (error = mComm->CreateDatagramReceiveSocket(&localAddr, dispatchHandlerPtr)) {
     LOG_VA_ERROR("Problem opening datagram receive port %d - %s", mPort, Error::GetText(error));
     return;
   }
@@ -129,7 +130,7 @@ void CommTestDatagramThreadFunction::operator()() {
 	outstanding++;
 
 	if (outstanding  > maxOutstanding) {
-	  if (!respHandler.GetResponse(eventPtr))
+	  if (!respHandler->GetResponse(eventPtr))
 	    break;
 	  if (!Serialization::DecodeString(&eventPtr->message, &eventPtr->messageLen, &str))
 	    outfile << "ERROR: deserialization problem." << endl;
@@ -151,7 +152,7 @@ void CommTestDatagramThreadFunction::operator()() {
     return;
   }
 
-  while (outstanding > 0 && respHandler.GetResponse(eventPtr)) {
+  while (outstanding > 0 && respHandler->GetResponse(eventPtr)) {
     if (!Serialization::DecodeString(&eventPtr->message, &eventPtr->messageLen, &str))
       outfile << "ERROR: deserialization problem." << endl;
     else {

@@ -38,8 +38,7 @@ namespace hypertable {
 
   public:
 
-    IOHandlerAccept(int sd, struct sockaddr_in &addr, DispatchHandler *dh, HandlerMap &hmap, ConnectionHandlerFactory *hfactory) : IOHandler(sd, addr, dh, hmap) {
-      mHandlerFactory = hfactory;
+    IOHandlerAccept(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp, HandlerMap &hmap, ConnectionHandlerFactoryPtr &chfPtr) : IOHandler(sd, addr, dhp, hmap), mHandlerFactoryPtr(chfPtr) {
       return;
     }
 
@@ -58,7 +57,7 @@ namespace hypertable {
     bool HandleIncomingConnection();
 
   private:
-    ConnectionHandlerFactory *mHandlerFactory;
+    ConnectionHandlerFactoryPtr mHandlerFactoryPtr;
   };
 
   typedef boost::intrusive_ptr<IOHandlerAccept> IOHandlerAcceptPtr;

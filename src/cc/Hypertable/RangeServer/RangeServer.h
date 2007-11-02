@@ -33,7 +33,7 @@
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/Types.h"
 
-#include "HandlerFactory.h"
+#include "ConnectionHandler.h"
 #include "ResponseCallbackCreateScanner.h"
 #include "ResponseCallbackFetchScanblock.h"
 #include "ResponseCallbackUpdate.h"
@@ -81,7 +81,6 @@ namespace hypertable {
     bool               mVerbose;
     Comm              *mComm;
     Hyperspace::Session *mHyperspace;
-    HandlerFactory    *mHandlerFactory;
     TableInfoMapT      mTableInfoMap;
     ApplicationQueue  *mAppQueue;
     ConnectionManager *mConnManager;

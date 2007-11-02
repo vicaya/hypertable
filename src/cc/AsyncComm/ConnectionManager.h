@@ -61,7 +61,7 @@ namespace hypertable {
       struct sockaddr_in  addr;
       struct sockaddr_in  localAddr;
       time_t              timeout;
-      DispatchHandler    *handler;
+      DispatchHandlerPtr  handlerPtr;
       boost::mutex        mutex;
       boost::condition    cond;
       boost::xtime        nextRetry;
@@ -123,9 +123,18 @@ namespace hypertable {
      * @param addr The IP address to maintain a connection to
      * @param timeout When connection dies, wait this many seconds before attempting to reestablish
      * @param serviceName The name of the serivce at the other end of the connection used for descriptive log messages
+     */
+    void Add(struct sockaddr_in &addr, time_t timeout, const char *serviceName);
+
+    /**
+     * Same as above method except installs a dispatch handler on the connection
+     *
+     * @param addr The IP address to maintain a connection to
+     * @param timeout The timeout value (in seconds) that gets passed into Comm::Connect and also used as the waiting period betweeen connection attempts
+     * @param serviceName The name of the serivce at the other end of the connection used for descriptive log messages
      * @param handler This is the default handler to install on the connection.  All events get changed through to this handler.
      */
-    void Add(struct sockaddr_in &addr, time_t timeout, const char *serviceName, DispatchHandler *handler=0);
+    void Add(struct sockaddr_in &addr, time_t timeout, const char *serviceName, DispatchHandlerPtr &handlerPtr);
 
     /**
      * Adds a connection to the connection manager with a specific local address.
@@ -141,9 +150,19 @@ namespace hypertable {
      * @param localAddr The local address to bind to
      * @param timeout When connection dies, wait this many seconds before attempting to reestablish
      * @param serviceName The name of the serivce at the other end of the connection used for descriptive log messages
+     */
+    void Add(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, const char *serviceName);
+
+    /**
+     * Same as above method except installs a dispatch handler on the connection
+     *
+     * @param addr The IP address to maintain a connection to
+     * @param localAddr The local address to bind to
+     * @param timeout The timeout value (in seconds) that gets passed into Comm::Connect and also used as the waiting period betweeen connection attempts
+     * @param serviceName The name of the serivce at the other end of the connection used for descriptive log messages
      * @param handler This is the default handler to install on the connection.  All events get changed through to this handler.
      */
-    void Add(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, const char *serviceName, DispatchHandler *handler=0);
+    void Add(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, const char *serviceName, DispatchHandlerPtr &handlerPtr);
 
     /**
      * Removes a connection from the connection manager

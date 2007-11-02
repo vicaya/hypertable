@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
   int error;
   TestHarness harness("commTestTimer");
   bool golden = false;
-  TimerHandler *handler;
+  TimerHandler *timerHandler;
   int waitTime = 0;
   ostream &out = harness.GetLogStream();
 
@@ -112,8 +112,8 @@ int main(int argc, char **argv) {
   comm = new Comm();
 
   for (int i=0; history[i].msg; i++) {
-    handler = new TimerHandler(history[i].msg, out);
-    if ((error = comm->SetTimer(history[i].delay*1000, handler)) != Error::OK) {
+    timerHandler = new TimerHandler(history[i].msg, out);
+    if ((error = comm->SetTimer(history[i].delay*1000, timerHandler)) != Error::OK) {
       LOG_VA_ERROR("Problem setting timer - %s", Error::GetText(error));
       exit(1);
     }

@@ -21,8 +21,6 @@
 #ifndef HYPERTABLE_DISPATCHHANDLER_H
 #define HYPERTABLE_DISPATCHHANDLER_H
 
-#include <boost/intrusive_ptr.hpp>
-
 #include "Common/ReferenceCount.h"
 
 #include "Event.h"
@@ -36,7 +34,6 @@ namespace hypertable {
     virtual ~DispatchHandler() { return; }
   };
   typedef boost::intrusive_ptr<DispatchHandler> DispatchHandlerPtr;
-
 
 }
 

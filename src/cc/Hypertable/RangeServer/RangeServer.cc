@@ -35,6 +35,7 @@
 #include "CommitLog.h"
 #include "FillScanBlock.h"
 #include "Global.h"
+#include "HandlerFactory.h"
 #include "HyperspaceSessionHandler.h"
 #include "MaintenanceThread.h"
 #include "RangeServer.h"
@@ -89,7 +90,6 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
 
   mConnManager = new ConnectionManager(comm);
   mAppQueue = new ApplicationQueue(workerCount);
-  mHandlerFactory = new HandlerFactory(comm, mAppQueue, this);
 
   /**
    * Load METADATA simulation data
@@ -173,9 +173,10 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
    * Listen for incoming connections
    */
   {
+    ConnectionHandlerFactoryPtr chfPtr(new HandlerFactory(comm, mAppQueue, this));
     struct sockaddr_in addr;
     InetAddr::Initialize(&addr, INADDR_ANY, port);  // Listen on any interface
-    if ((error = comm->Listen(addr, mHandlerFactory)) != Error::OK) {
+    if ((error = comm->Listen(addr, chfPtr)) != Error::OK) {
       LOG_VA_ERROR("Listen error address=%s:%d - %s", inet_ntoa(addr.sin_addr), port, Error::GetText(error));
       exit(1);
     }

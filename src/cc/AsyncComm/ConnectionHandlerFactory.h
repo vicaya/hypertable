@@ -22,16 +22,18 @@
 #ifndef HYPERTABLE_CONNECTIONHANDLERFACTORY_H
 #define HYPERTABLE_CONNECTIONHANDLERFACTORY_H
 
+#include "Common/ReferenceCount.h"
+
 #include "DispatchHandler.h"
 
 namespace hypertable {
 
-  class ConnectionHandlerFactory {
+  class ConnectionHandlerFactory : public ReferenceCount {
   public:
     virtual ~ConnectionHandlerFactory() { }
-    virtual DispatchHandler *newInstance() = 0;
+    virtual void newInstance(DispatchHandlerPtr &dhp) = 0;
   };
-
+  typedef boost::intrusive_ptr<ConnectionHandlerFactory> ConnectionHandlerFactoryPtr;
 }
 
 #endif // HYPERTABLE_CONNECTIONHANDLERFACTORY_H
