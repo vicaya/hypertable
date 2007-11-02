@@ -18,6 +18,7 @@
 
 set ( DfsBroker_SRCS
 Client.cc
+ClientBufferedReaderHandler.cc
 ConnectionHandler.cc
 Protocol.cc
 RequestHandlerClose.cc

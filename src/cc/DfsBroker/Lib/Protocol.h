@@ -38,36 +38,36 @@ namespace hypertable {
 
     public:
 
-      CommBuf *CreateOpenRequest(std::string &fname, uint32_t bufferSize=0);
+      static CommBuf *CreateOpenRequest(std::string &fname, uint32_t bufferSize=0);
 
-      CommBuf *CreateCreateRequest(std::string &fname, bool overwrite, int32_t bufferSize,
+      static CommBuf *CreateCreateRequest(std::string &fname, bool overwrite, int32_t bufferSize,
 				   int32_t replication, int64_t blockSize);
 
-      CommBuf *CreateCloseRequest(int32_t fd);
+      static CommBuf *CreateCloseRequest(int32_t fd);
 
-      CommBuf *CreateReadRequest(int32_t fd, uint32_t amount);
+      static CommBuf *CreateReadRequest(int32_t fd, uint32_t amount);
 
-      CommBuf *CreateAppendRequest(int32_t fd, const void *buf, uint32_t amount);
+      static CommBuf *CreateAppendRequest(int32_t fd, const void *buf, uint32_t amount);
 
-      CommBuf *CreateSeekRequest(int32_t fd, uint64_t offset);
+      static CommBuf *CreateSeekRequest(int32_t fd, uint64_t offset);
 
-      CommBuf *CreateRemoveRequest(std::string &fname);
+      static CommBuf *CreateRemoveRequest(std::string &fname);
 
-      CommBuf *CreateLengthRequest(std::string &fname);
+      static CommBuf *CreateLengthRequest(std::string &fname);
 
-      CommBuf *CreatePositionReadRequest(int32_t fd, uint64_t offset, uint32_t amount);
+      static CommBuf *CreatePositionReadRequest(int32_t fd, uint64_t offset, uint32_t amount);
 
-      CommBuf *CreateMkdirsRequest(std::string &fname);
+      static CommBuf *CreateMkdirsRequest(std::string &fname);
 
-      CommBuf *CreateRmdirRequest(std::string &fname);
+      static CommBuf *CreateRmdirRequest(std::string &fname);
 
-      CommBuf *CreateReaddirRequest(std::string &fname);
+      static CommBuf *CreateReaddirRequest(std::string &fname);
 
-      CommBuf *CreateFlushRequest(int32_t fd);
+      static CommBuf *CreateFlushRequest(int32_t fd);
 
-      CommBuf *CreateStatusRequest();
+      static CommBuf *CreateStatusRequest();
 
-      CommBuf *CreateShutdownRequest(uint16_t flags);
+      static CommBuf *CreateShutdownRequest(uint16_t flags);
 
       virtual const char *CommandText(short command);
 

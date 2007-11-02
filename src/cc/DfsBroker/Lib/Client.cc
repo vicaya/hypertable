@@ -105,6 +105,21 @@ int Client::Open(std::string &name, int32_t *fdp) {
 }
 
 
+int Client::OpenBuffered(std::string &name, uint32_t bufSize, int32_t *fdp) {
+  int error;
+
+  if ((error = Open(name, fdp)) != Error::OK)
+    return error;
+
+  {
+    boost::mutex::scoped_lock lock(mMutex);
+    assert(mBufferedReaderMap.find(*fdp) == mBufferedReaderMap.end());
+    mBufferedReaderMap[*fdp] = new ClientBufferedReaderHandler(this, *fdp, bufSize);
+  }
+  
+}
+
+
 int Client::Create(std::string &name, bool overwrite, int32_t bufferSize,
 		   int32_t replication, int64_t blockSize, DispatchHandler *handler) {
   CommBufPtr cbufPtr( mProtocol->CreateCreateRequest(name, overwrite, bufferSize, replication, blockSize) );
@@ -133,13 +148,28 @@ int Client::Create(std::string &name, bool overwrite, int32_t bufferSize,
 
 
 int Client::Close(int32_t fd, DispatchHandler *handler) {
+  ClientBufferedReaderHandler *brHandler = 0;
+  int error;
   CommBufPtr cbufPtr( mProtocol->CreateCloseRequest(fd) );
-  return SendMessage(cbufPtr, handler);
+  error = SendMessage(cbufPtr, handler);
+
+  {
+    boost::mutex::scoped_lock lock(mMutex);
+    BufferedReaderMapT::iterator iter = mBufferedReaderMap.find(fd);
+    if (iter != mBufferedReaderMap.end()) {
+      brHandler = (*iter).second;
+      mBufferedReaderMap.erase(iter);
+    }
+  }
+  delete brHandler;
+
+  return error;
 }
 
 
 
 int Client::Close(int32_t fd) {
+  ClientBufferedReaderHandler *brHandler = 0;
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateCloseRequest(fd) );
@@ -150,6 +180,17 @@ int Client::Close(int32_t fd) {
       error = (int)mProtocol->ResponseCode(eventPtr);
     }
   }
+
+  {
+    boost::mutex::scoped_lock lock(mMutex);
+    BufferedReaderMapT::iterator iter = mBufferedReaderMap.find(fd);
+    if (iter != mBufferedReaderMap.end()) {
+      brHandler = (*iter).second;
+      mBufferedReaderMap.erase(iter);
+    }
+  }
+  delete brHandler;
+
   return error;
 }
 
@@ -163,6 +204,18 @@ int Client::Read(int32_t fd, uint32_t amount, DispatchHandler *handler) {
 
 
 int Client::Read(int32_t fd, uint32_t amount, uint8_t *dst, uint32_t *nreadp) {
+  ClientBufferedReaderHandler *brHandler = 0;
+  
+  {
+    boost::mutex::scoped_lock lock(mMutex);
+    BufferedReaderMapT::iterator iter = mBufferedReaderMap.find(fd);
+    if (iter != mBufferedReaderMap.end())
+      brHandler = (*iter).second;
+  }
+
+  if (brHandler)
+    return brHandler->Read(dst, amount, nreadp);
+
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( mProtocol->CreateReadRequest(fd, amount) );

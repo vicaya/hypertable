@@ -21,11 +21,17 @@
 #ifndef HYPERTABLE_DFSBROKER_CLIENT_H
 #define HYPERTABLE_DFSBROKER_CLIENT_H
 
+#include <ext/hash_map>
+
+#include <boost/thread/mutex.hpp>
+
 #include "Common/Properties.h"
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "AsyncComm/ConnectionManager.h"
 
 #include "Hypertable/Lib/Filesystem.h"
+
+#include "ClientBufferedReaderHandler.h"
 
 /**
  * Forward declarations
@@ -61,6 +67,7 @@ namespace hypertable {
 
       virtual int Open(std::string &name, DispatchHandler *handler);
       virtual int Open(std::string &name, int32_t *fdp);
+      virtual int OpenBuffered(std::string &name, uint32_t bufSize, int32_t *fdp);
 
       virtual int Create(std::string &name, bool overwrite, int32_t bufferSize,
 			 int32_t replication, int64_t blockSize, DispatchHandler *handler);
@@ -105,17 +112,23 @@ namespace hypertable {
       int Shutdown(uint16_t flags, DispatchHandler *handler);
 
       Protocol *GetProtocolObject() { return mProtocol; }
+
+      time_t GetTimeout() { return mTimeout; }
     
     private:
 
       int SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler);
 
+      typedef __gnu_cxx::hash_map<uint32_t, ClientBufferedReaderHandler *> BufferedReaderMapT;
+
+      boost::mutex          mMutex;
       Comm                 *mComm;
       struct sockaddr_in    mAddr;
       time_t                mTimeout;
       MessageBuilderSimple *mMessageBuilder;
       Protocol             *mProtocol;
       ConnectionManager    *mConnectionManager;
+      BufferedReaderMapT    mBufferedReaderMap;
     };
 
   }

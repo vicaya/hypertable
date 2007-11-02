@@ -18,6 +18,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <string>
+#include <vector>
+
 extern "C" {
 #include <dirent.h>
 #include <errno.h>
@@ -40,53 +43,37 @@ using namespace std;
 /**
  *
  */
-CommitLogReader::CommitLogReader(Filesystem *fs, std::string &logDir) : mFs(fs), mLogDir(logDir), mLogFileInfo(), mBlockBuffer(sizeof(CommitLogHeaderT)) {
+CommitLogReader::CommitLogReader(Filesystem *fs, std::string &logDir) : mFs(fs), mLogDir(logDir), mBlockBuffer(sizeof(CommitLogHeaderT)) {
   LogFileInfoT fileInfo;
   struct stat statbuf;
   int fd;
   CommitLogHeaderT  header;
+  vector<string> listing;
 
   LOG_VA_INFO("LogDir = %s", logDir.c_str());
 
   if (mLogDir.find('/', mLogDir.length()-1) == string::npos)
     mLogDir += "/";
 
-  DIR *dirp = opendir(mLogDir.c_str());
-  if (dirp == 0) {
-    LOG_VA_ERROR("opendir('%s') failed - %s", mLogDir.c_str(), strerror(errno));
-    return;
+  if ((error = mFs->Readdir(mLogDir.c_str(), listing)) != Error::OK) {
+    LOG_VA_ERROR("Problem reading directory '%s' - %s", mLogDir.c_str(), Error::GetText(error));
+    exit(1);
   }
-  struct dirent dent;
-  struct dirent *dp;
 
-  if (readdir_r(dirp, &dent, &dp) != 0) {
-    LOG_VA_ERROR("readdir('%s') failed - %s", mLogDir.c_str(), strerror(errno));
-    (void)closedir(dirp);
-    return;
-  }
-    
-  while (dp != 0) {
+  mLogFileInfo.clear();
 
-    if (dp->d_name[0] != '.' && dp->d_name[0] != 0) {
-
-      char *endptr;
-      long num = strtol(dp->d_name, &endptr, 10);
-      if (*endptr != 0) {
-	LOG_VA_WARN("Invalid file '%s' found in commit log directory '%s'", dp->d_name, mLogDir.c_str());
-      }
-      else {
-	fileInfo.num = (uint32_t)num;
-	fileInfo.fname = mLogDir + dp->d_name;
-	mLogFileInfo.push_back(fileInfo);
-      }
+  for (size_t i=0; i<listing.size(); i++) {
+    char *endptr;
+    long num = strtol(listing[i].c_str(), &endptr, 10);
+    if (*endptr != 0) {
+      LOG_VA_WARN("Invalid file '%s' found in commit log directory '%s'", listing[i].c_str(), mLogDir.c_str());
     }
-
-    if (readdir_r(dirp, &dent, &dp) != 0) {
-      LOG_VA_ERROR("readdir('%s') failed - %s", mLogDir.c_str(), strerror(errno));
-      exit(1);
+    else {
+      fileInfo.num = (uint32_t)num;
+      fileInfo.fname = mLogDir + listing[i];
+      mLogFileInfo.push_back(fileInfo);
     }
   }
-  (void)closedir(dirp);
 
   sort(mLogFileInfo.begin(), mLogFileInfo.end());
 
