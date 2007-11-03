@@ -86,12 +86,14 @@ namespace Hyperspace {
     bool mVerbose;
     Session *mSession;
     uint64_t mSessionId;
-    ClientConnectionHandler *mConnHandler;
+    ClientConnectionHandlerPtr mConnHandlerPtr;
     uint64_t mLastKnownEvent;
 
     typedef __gnu_cxx::hash_map<uint64_t, ClientHandleStatePtr> HandleMapT;
     HandleMapT  mHandleMap;
   };
+  typedef boost::intrusive_ptr<ClientKeepaliveHandler> ClientKeepaliveHandlerPtr;
+  
 
 }
 

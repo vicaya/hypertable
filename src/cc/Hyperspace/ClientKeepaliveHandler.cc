@@ -35,7 +35,7 @@ extern "C" {
 using namespace hypertable;
 using namespace Hyperspace;
 
-ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsPtr, Session *session) : mComm(comm), mSession(session), mSessionId(0), mConnHandler(0), mLastKnownEvent(0) {
+ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsPtr, Session *session) : mComm(comm), mSession(session), mSessionId(0), mLastKnownEvent(0) {
   int error;
   uint16_t masterPort;
   const char *masterHost;
@@ -89,7 +89,6 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsP
  */
 ClientKeepaliveHandler::~ClientKeepaliveHandler() {
   mComm->CloseSocket(mLocalAddr);
-  delete mConnHandler;
 }
 
 
@@ -154,10 +153,10 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 
 	  if (mSessionId == 0) {
 	    mSessionId = sessionId;
-	    if (mConnHandler == 0) {
-	      mConnHandler = new ClientConnectionHandler(mComm, mSession, mLeaseInterval);
-	      mConnHandler->SetVerboseMode(mVerbose);
-	      mConnHandler->SetSessionId(mSessionId);
+	    if (!mConnHandlerPtr) {
+	      mConnHandlerPtr = new ClientConnectionHandler(mComm, mSession, mLeaseInterval);
+	      mConnHandlerPtr->SetVerboseMode(mVerbose);
+	      mConnHandlerPtr->SetSessionId(mSessionId);
 	    }
 	  }
 
@@ -232,8 +231,8 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 	  }
 	  **/
 
-	  if (mConnHandler->Disconnected())
-	    mConnHandler->InitiateConnection(mMasterAddr);
+	  if (mConnHandlerPtr->Disconnected())
+	    mConnHandlerPtr->InitiateConnection(mMasterAddr);
 	  else
 	    state = mSession->StateTransition(Session::STATE_SAFE);
 
@@ -302,10 +301,9 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 
 void ClientKeepaliveHandler::ExpireSession() {
   mSession->StateTransition(Session::STATE_EXPIRED);
-  if (mConnHandler)
-    mConnHandler->Close();
+  if (mConnHandlerPtr)
+    mConnHandlerPtr->Close();
   poll(0,0,2000);
-  delete mConnHandler;
-  mConnHandler = 0;
+  mConnHandlerPtr = 0;
   return;
 }

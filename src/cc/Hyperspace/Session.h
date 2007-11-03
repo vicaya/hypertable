@@ -128,8 +128,8 @@ namespace Hyperspace {
     uint32_t mTimeout;
     boost::xtime mExpireTime;
     struct sockaddr_in mMasterAddr;
-    ClientKeepaliveHandler *mKeepaliveHandler;
-    SessionCallback        *mSessionCallback;
+    ClientKeepaliveHandlerPtr  mKeepaliveHandlerPtr;
+    SessionCallback           *mSessionCallback;
   };
   typedef boost::intrusive_ptr<Session> SessionPtr;
   

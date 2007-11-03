@@ -70,11 +70,10 @@ Session::Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback)
     cout << "Hyperspace.GracePeriod=" << mGracePeriod << endl;
   }
 
-  mKeepaliveHandler = new ClientKeepaliveHandler(comm, propsPtr, this);
+  mKeepaliveHandlerPtr = new ClientKeepaliveHandler(comm, propsPtr, this);
 }
 
 Session::~Session() {
-  delete mKeepaliveHandler;
 }
 
 
@@ -119,7 +118,7 @@ int Session::Open(ClientHandleStatePtr &handleStatePtr, CommBufPtr &cbufPtr, uin
 	return Error::RESPONSE_TRUNCATED;
       /** if (createdp) *createdp = cbyte ? true : false; **/
       handleStatePtr->handle = *handlep;
-      mKeepaliveHandler->RegisterHandle(handleStatePtr);
+      mKeepaliveHandlerPtr->RegisterHandle(handleStatePtr);
     }
   }
   else {
@@ -463,7 +462,7 @@ int Session::Lock(uint64_t handle, uint32_t mode, struct LockSequencerT *sequenc
   ClientHandleStatePtr handleStatePtr;
   uint32_t status = 0;
 
-  if (!mKeepaliveHandler->GetHandleState(handle, handleStatePtr))
+  if (!mKeepaliveHandlerPtr->GetHandleState(handle, handleStatePtr))
     return Error::HYPERSPACE_INVALID_HANDLE;
 
   if (handleStatePtr->lockStatus != 0)
@@ -528,7 +527,7 @@ int Session::TryLock(uint64_t handle, uint32_t mode, uint32_t *statusp, struct L
   CommBufPtr cbufPtr( Protocol::CreateLockRequest(handle, mode, true) );
   ClientHandleStatePtr handleStatePtr;
 
-  if (!mKeepaliveHandler->GetHandleState(handle, handleStatePtr))
+  if (!mKeepaliveHandlerPtr->GetHandleState(handle, handleStatePtr))
     return Error::HYPERSPACE_INVALID_HANDLE;
 
   if (handleStatePtr->lockStatus != 0)
@@ -579,7 +578,7 @@ int Session::Release(uint64_t handle) {
   CommBufPtr cbufPtr( Protocol::CreateReleaseRequest(handle) );
   ClientHandleStatePtr handleStatePtr;
 
-  if (!mKeepaliveHandler->GetHandleState(handle, handleStatePtr))
+  if (!mKeepaliveHandlerPtr->GetHandleState(handle, handleStatePtr))
     return Error::HYPERSPACE_INVALID_HANDLE;
 
  try_again:
@@ -611,7 +610,7 @@ int Session::Release(uint64_t handle) {
 int Session::GetSequencer(uint64_t handle, struct LockSequencerT *sequencerp) {
   ClientHandleStatePtr handleStatePtr;
 
-  if (!mKeepaliveHandler->GetHandleState(handle, handleStatePtr))
+  if (!mKeepaliveHandlerPtr->GetHandleState(handle, handleStatePtr))
     return Error::HYPERSPACE_INVALID_HANDLE;
 
   if (handleStatePtr->lockGeneration == 0)

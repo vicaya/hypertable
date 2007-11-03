@@ -84,6 +84,8 @@ namespace Hyperspace {
     struct sockaddr_in mMasterAddr;
     time_t mTimeout;
   };
+  typedef boost::intrusive_ptr<ClientConnectionHandler> ClientConnectionHandlerPtr;
+  
 
 }
 
