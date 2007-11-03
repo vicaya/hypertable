@@ -78,8 +78,8 @@ int main(int argc, char **argv) {
   int reactorCount, workerCount;
   uint16_t port = 0;
   Comm *comm;
-  LocalBroker *broker = 0;
-  ApplicationQueue *appQueue = 0;
+  BrokerPtr brokerPtr;
+  ApplicationQueuePtr appQueuePtr;
   struct sockaddr_in listenAddr;
   int error;
 
@@ -130,9 +130,9 @@ int main(int argc, char **argv) {
 
   InetAddr::Initialize(&listenAddr, INADDR_ANY, port);
 
-  broker = new LocalBroker(propsPtr);
-  appQueue = new ApplicationQueue(workerCount);
-  ConnectionHandlerFactoryPtr chfPtr(new DfsBroker::ConnectionHandlerFactory(comm, appQueue, broker));
+  brokerPtr = new LocalBroker(propsPtr);
+  appQueuePtr = new ApplicationQueue(workerCount);
+  ConnectionHandlerFactoryPtr chfPtr(new DfsBroker::ConnectionHandlerFactory(comm, appQueuePtr, brokerPtr));
   if ((error = comm->Listen(listenAddr, chfPtr)) != Error::OK) {
     std::string addrStr;
     LOG_VA_ERROR("Problem listening for connections on %s - %s", InetAddr::StringFormat(addrStr, listenAddr), Error::GetText(error));
@@ -145,12 +145,8 @@ int main(int argc, char **argv) {
     filestr.close();
   }
 
-  poll(0, 0, -1);
+  appQueuePtr->Join();
 
-  appQueue->Shutdown();
-
-  delete appQueue;
-  delete broker;
   delete comm;
   return 0;
 }

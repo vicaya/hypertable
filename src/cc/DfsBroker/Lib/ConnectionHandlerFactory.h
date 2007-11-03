@@ -21,6 +21,7 @@
 #ifndef HYPERTABLE_DFSBROKER_CONNECTIONHANDLERFACTORY_H
 #define HYPERTABLE_DFSBROKER_CONNECTIONHANDLERFACTORY_H
 
+#include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/ConnectionHandlerFactory.h"
 #include "AsyncComm/DispatchHandler.h"
 
@@ -30,7 +31,6 @@
 namespace hypertable {
 
   class Comm;
-  class ApplicationQueue;
 
   namespace DfsBroker {
 
@@ -51,19 +51,19 @@ namespace hypertable {
        * @param appQueue pointer to the application work queue
        * @param broker abstract pointer to the broker object
        */
-      ConnectionHandlerFactory(Comm *comm, ApplicationQueue *appQueue, Broker *broker) : mComm(comm), mAppQueue(appQueue), mBroker(broker) { return; }
+      ConnectionHandlerFactory(Comm *comm, ApplicationQueuePtr &appQueuePtr, BrokerPtr &brokerPtr) : mComm(comm), mAppQueuePtr(appQueuePtr), mBrokerPtr(brokerPtr) { return; }
 
       /**
        * Returns a newly constructed DfsBroker::ConnectionHandler object
        */
       virtual void newInstance(DispatchHandlerPtr &dhp) {
-	dhp = new ConnectionHandler(mComm, mAppQueue, mBroker);
+	dhp = new ConnectionHandler(mComm, mAppQueuePtr, mBrokerPtr);
       }
 
     private:
-      Comm              *mComm;
-      ApplicationQueue  *mAppQueue;
-      Broker            *mBroker;
+      Comm                *mComm;
+      ApplicationQueuePtr  mAppQueuePtr;
+      BrokerPtr            mBrokerPtr;
     };
 
   }

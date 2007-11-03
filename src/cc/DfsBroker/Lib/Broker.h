@@ -21,6 +21,8 @@
 #ifndef HYPERTABLE_DFSBROKER_BROKER_H
 #define HYPERTABLE_DFSBROKER_BROKER_H
 
+#include "Common/ReferenceCount.h"
+
 #include "DfsBroker/Lib/OpenFileMap.h"
 
 #include "ResponseCallbackOpen.h"
@@ -35,7 +37,7 @@ namespace hypertable {
 
   namespace DfsBroker {
 
-    class Broker {
+    class Broker : public ReferenceCount {
     public:
       virtual ~Broker() { return; }
       virtual void Open(ResponseCallbackOpen *cb, const char *fieName, uint32_t bufferSize) = 0;
@@ -60,6 +62,8 @@ namespace hypertable {
     protected:
       OpenFileMap mOpenFileMap;
     };
+    typedef boost::intrusive_ptr<Broker> BrokerPtr;
+    
   }
 }
 

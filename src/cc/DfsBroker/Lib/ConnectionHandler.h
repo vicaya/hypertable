@@ -21,13 +21,12 @@
 #ifndef HYPERTABLE_CONNECTIONHANDLER_H
 #define HYPERTABLE_CONNECTIONHANDLER_H
 
+#include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/DispatchHandler.h"
 
 #include "Broker.h"
 
 namespace hypertable {
-
-  class ApplicationQueue;
 
   namespace DfsBroker {
 
@@ -35,13 +34,13 @@ namespace hypertable {
      */
     class ConnectionHandler : public DispatchHandler {
     public:
-      ConnectionHandler(Comm *comm, ApplicationQueue *appQueue, Broker *broker) : mComm(comm), mAppQueue(appQueue), mBroker(broker) { return; }
+      ConnectionHandler(Comm *comm, ApplicationQueuePtr &appQueuePtr, BrokerPtr &brokerPtr) : mComm(comm), mAppQueuePtr(appQueuePtr), mBrokerPtr(brokerPtr) { return; }
       virtual void handle(EventPtr &eventPtr);
 
     private:
-      Comm             *mComm;
-      ApplicationQueue *mAppQueue;
-      Broker           *mBroker;
+      Comm               *mComm;
+      ApplicationQueuePtr mAppQueuePtr;
+      BrokerPtr           mBrokerPtr;
     };
   }
 

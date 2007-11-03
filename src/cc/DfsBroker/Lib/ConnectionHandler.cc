@@ -70,46 +70,46 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
 
       switch (command) {
       case Protocol::COMMAND_OPEN:
-	requestHandler = new RequestHandlerOpen(mComm, mBroker, eventPtr);
+	requestHandler = new RequestHandlerOpen(mComm, mBrokerPtr.get(), eventPtr);
 	break;
       case Protocol::COMMAND_CREATE:
-	requestHandler = new RequestHandlerCreate(mComm, mBroker, eventPtr);
+	requestHandler = new RequestHandlerCreate(mComm, mBrokerPtr.get(), eventPtr);
 	break;
       case Protocol::COMMAND_CLOSE:
-	requestHandler = new RequestHandlerClose(mComm, mBroker, eventPtr);
+	requestHandler = new RequestHandlerClose(mComm, mBrokerPtr.get(), eventPtr);
 	break;
       case Protocol::COMMAND_READ:
-	requestHandler = new RequestHandlerRead(mComm, mBroker, eventPtr);
+	requestHandler = new RequestHandlerRead(mComm, mBrokerPtr.get(), eventPtr);
 	break;
       case Protocol::COMMAND_APPEND:
-	requestHandler = new RequestHandlerAppend(mComm, mBroker, eventPtr);
+	requestHandler = new RequestHandlerAppend(mComm, mBrokerPtr.get(), eventPtr);
 	break;
       case Protocol::COMMAND_SEEK:
-	requestHandler = new RequestHandlerSeek(mComm, mBroker, eventPtr);
+	requestHandler = new RequestHandlerSeek(mComm, mBrokerPtr.get(), eventPtr);
 	break;
       case Protocol::COMMAND_REMOVE:
-	requestHandler = new RequestHandlerRemove(mComm, mBroker, eventPtr);
+	requestHandler = new RequestHandlerRemove(mComm, mBrokerPtr.get(), eventPtr);
 	break;
       case Protocol::COMMAND_LENGTH:
-	requestHandler = new RequestHandlerLength(mComm, mBroker, eventPtr);
+	requestHandler = new RequestHandlerLength(mComm, mBrokerPtr.get(), eventPtr);
 	break;
       case Protocol::COMMAND_PREAD:
-	requestHandler = new RequestHandlerPread(mComm, mBroker, eventPtr);
+	requestHandler = new RequestHandlerPread(mComm, mBrokerPtr.get(), eventPtr);
 	break;
       case Protocol::COMMAND_MKDIRS:
-	requestHandler = new RequestHandlerMkdirs(mComm, mBroker, eventPtr);
+	requestHandler = new RequestHandlerMkdirs(mComm, mBrokerPtr.get(), eventPtr);
 	break;
       case Protocol::COMMAND_FLUSH:
-	requestHandler = new RequestHandlerFlush(mComm, mBroker, eventPtr);
+	requestHandler = new RequestHandlerFlush(mComm, mBrokerPtr.get(), eventPtr);
 	break;
       case Protocol::COMMAND_RMDIR:
-	requestHandler = new RequestHandlerRmdir(mComm, mBroker, eventPtr);
+	requestHandler = new RequestHandlerRmdir(mComm, mBrokerPtr.get(), eventPtr);
 	break;
       case Protocol::COMMAND_READDIR:
-	requestHandler = new RequestHandlerReaddir(mComm, mBroker, eventPtr);
+	requestHandler = new RequestHandlerReaddir(mComm, mBrokerPtr.get(), eventPtr);
 	break;
       case Protocol::COMMAND_STATUS:
-	requestHandler = new RequestHandlerStatus(mComm, mBroker, eventPtr);
+	requestHandler = new RequestHandlerStatus(mComm, mBrokerPtr.get(), eventPtr);
 	break;
       case Protocol::COMMAND_SHUTDOWN:
 	{
@@ -118,8 +118,8 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
 	  if (eventPtr->messageLen >= 4)
 	    memcpy(&flags, &eventPtr->message[2], 2);
 	  if ((flags & Protocol::SHUTDOWN_FLAG_IMMEDIATE) != 0)
-	    mAppQueue->Shutdown();
-	  mBroker->Shutdown(&cb);
+	    mAppQueuePtr->Shutdown();
+	  mBrokerPtr->Shutdown(&cb);
 	  exit(0);
 	}
 	break;
@@ -127,7 +127,7 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
 	std::string message = (string)"Command code " + command + " not implemented";
 	throw ProtocolException(message);
       }
-      mAppQueue->Add( requestHandler );
+      mAppQueuePtr->Add( requestHandler );
     }
     catch (ProtocolException &e) {
       ResponseCallback cb(mComm, eventPtr);
@@ -139,7 +139,7 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
   else if (eventPtr->type == Event::DISCONNECT) {
     LOG_VA_INFO("%s : Closing all open handles from %s:%d", eventPtr->toString().c_str(),
 		inet_ntoa(eventPtr->addr.sin_addr), ntohs(eventPtr->addr.sin_port));
-    OpenFileMap &ofMap = mBroker->GetOpenFileMap();
+    OpenFileMap &ofMap = mBrokerPtr->GetOpenFileMap();
     ofMap.RemoveAll(eventPtr->addr);
   }
   else {

@@ -146,6 +146,9 @@ namespace hypertable {
     void Shutdown() {
       mState.shutdown = true;
       mState.cond.notify_all();
+    }
+
+    void Join() {
       mThreads.join_all();
     }
 
