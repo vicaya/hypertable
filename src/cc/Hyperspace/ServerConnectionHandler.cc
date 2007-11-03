@@ -71,7 +71,7 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
       }
 
       if (command != Protocol::COMMAND_HANDSHAKE && 
-	  (error = mMaster->RenewSessionLease(mSessionId)) != Error::OK) {
+	  (error = mMasterPtr->RenewSessionLease(mSessionId)) != Error::OK) {
 	ResponseCallback cb(mComm, eventPtr);
 	LOG_VA_INFO("Session handle %lld expired", mSessionId);
 	cb.error(error, "");
@@ -94,47 +94,46 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
 	}
 	return;
       case Protocol::COMMAND_OPEN:
-	requestHandler = new RequestHandlerOpen(mComm, mMaster, mSessionId, eventPtr);
+	requestHandler = new RequestHandlerOpen(mComm, mMasterPtr.get(), mSessionId, eventPtr);
 	break;
       case Protocol::COMMAND_CLOSE:
-	requestHandler = new RequestHandlerClose(mComm, mMaster, mSessionId, eventPtr);
+	requestHandler = new RequestHandlerClose(mComm, mMasterPtr.get(), mSessionId, eventPtr);
 	break;
       case Protocol::COMMAND_MKDIR:
-	requestHandler = new RequestHandlerMkdir(mComm, mMaster, mSessionId, eventPtr);
+	requestHandler = new RequestHandlerMkdir(mComm, mMasterPtr.get(), mSessionId, eventPtr);
 	break;
       case Protocol::COMMAND_DELETE:
-	requestHandler = new RequestHandlerDelete(mComm, mMaster, mSessionId, eventPtr);
+	requestHandler = new RequestHandlerDelete(mComm, mMasterPtr.get(), mSessionId, eventPtr);
 	break;
       case Protocol::COMMAND_ATTRSET:
-	requestHandler = new RequestHandlerAttrSet(mComm, mMaster, mSessionId, eventPtr);
+	requestHandler = new RequestHandlerAttrSet(mComm, mMasterPtr.get(), mSessionId, eventPtr);
 	break;
       case Protocol::COMMAND_ATTRGET:
-	requestHandler = new RequestHandlerAttrGet(mComm, mMaster, mSessionId, eventPtr);
+	requestHandler = new RequestHandlerAttrGet(mComm, mMasterPtr.get(), mSessionId, eventPtr);
 	break;
       case Protocol::COMMAND_ATTRDEL:
-	requestHandler = new RequestHandlerAttrDel(mComm, mMaster, mSessionId, eventPtr);
+	requestHandler = new RequestHandlerAttrDel(mComm, mMasterPtr.get(), mSessionId, eventPtr);
 	break;
       case Protocol::COMMAND_EXISTS:
-	requestHandler = new RequestHandlerExists(mComm, mMaster, mSessionId, eventPtr);
+	requestHandler = new RequestHandlerExists(mComm, mMasterPtr.get(), mSessionId, eventPtr);
 	break;
       case Protocol::COMMAND_READDIR:
-	requestHandler = new RequestHandlerReaddir(mComm, mMaster, mSessionId, eventPtr);
+	requestHandler = new RequestHandlerReaddir(mComm, mMasterPtr.get(), mSessionId, eventPtr);
 	break;
       case Protocol::COMMAND_LOCK:
-	requestHandler = new RequestHandlerLock(mComm, mMaster, mSessionId, eventPtr);
+	requestHandler = new RequestHandlerLock(mComm, mMasterPtr.get(), mSessionId, eventPtr);
 	break;
       case Protocol::COMMAND_RELEASE:
-	requestHandler = new RequestHandlerRelease(mComm, mMaster, mSessionId, eventPtr);
+	requestHandler = new RequestHandlerRelease(mComm, mMasterPtr.get(), mSessionId, eventPtr);
 	break;
       case Protocol::COMMAND_STATUS:
-	requestHandler = new RequestHandlerStatus(mComm, mMaster, mSessionId, eventPtr);
+	requestHandler = new RequestHandlerStatus(mComm, mMasterPtr.get(), mSessionId, eventPtr);
 	break;
       default:
 	std::string message = (string)"Command code " + command + " not implemented";
 	throw ProtocolException(message);
       }
-      ApplicationHandlerPtr appHandlerPtr(requestHandler);
-      mAppQueue->Add(appHandlerPtr);
+      mAppQueuePtr->Add(requestHandler);
     }
     catch (ProtocolException &e) {
       ResponseCallback cb(mComm, eventPtr);
@@ -147,7 +146,7 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
     LOG_VA_INFO("%s", eventPtr->toString().c_str());    
   }
   else if (eventPtr->type == hypertable::Event::DISCONNECT) {
-    mMaster->DestroySession(mSessionId);
+    mMasterPtr->DestroySession(mSessionId);
     cout << flush;
   }
   else {

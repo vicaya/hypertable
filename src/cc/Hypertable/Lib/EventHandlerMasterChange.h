@@ -26,22 +26,22 @@
 #include "AsyncComm/ApplicationHandler.h"
 #include "AsyncComm/Event.h"
 
+#include "MasterClient.h"
+
 using namespace hypertable;
 
 namespace hypertable {
 
-  class MasterClient;
-
   class EventHandlerMasterChange : public ApplicationHandler {
   public:
-    EventHandlerMasterChange(MasterClient *masterClient, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mMasterClient(masterClient) {
+    EventHandlerMasterChange(MasterClientPtr &masterClientPtr, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mMasterClientPtr(masterClientPtr) {
       return;
     }
 
     virtual void run();
 
   private:
-    MasterClient *mMasterClient;
+    MasterClientPtr mMasterClientPtr;
   };
 
 }

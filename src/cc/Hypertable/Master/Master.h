@@ -26,7 +26,9 @@
 #include <boost/thread/mutex.hpp>
 
 #include "Common/Properties.h"
+#include "Common/ReferenceCount.h"
 #include "Common/StringExt.h"
+
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ConnectionManager.h"
@@ -45,9 +47,9 @@ using namespace hypertable;
 
 namespace hypertable {
 
-  class Master {
+  class Master : public ReferenceCount {
   public:
-    Master(ConnectionManager *connManager, PropertiesPtr &propsPtr, ApplicationQueue *appQueue);
+    Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, ApplicationQueuePtr &appQueuePtr);
     ~Master();
 
     void CreateTable(ResponseCallback *cb, const char *tableName, const char *schemaString);
@@ -67,10 +69,10 @@ namespace hypertable {
     bool CreateHyperspaceDir(std::string dir);
 
     boost::mutex mMutex;
-    ConnectionManager *mConnManager;
-    ApplicationQueue *mAppQueue;
+    ConnectionManagerPtr mConnManagerPtr;
+    ApplicationQueuePtr mAppQueuePtr;
     bool mVerbose;
-    Hyperspace::Session *mHyperspace;
+    Hyperspace::SessionPtr mHyperspacePtr;
     Filesystem *mDfsClient;
     atomic_t mLastTableId;
     HyperspaceSessionHandler mHyperspaceSessionHandler;
@@ -84,6 +86,8 @@ namespace hypertable {
     ServerMapT  mServerMap;
 
   };
+  typedef boost::intrusive_ptr<Master> MasterPtr;
+
 }
 
 #endif // HYPERTABLE_MASTER_H

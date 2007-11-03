@@ -37,7 +37,7 @@ void EventHandlerMasterChange::run() {
 
   poll(0, 0, rand() % 3000);  // Randomly wait between 0 and 3 seconds
 
-  if ((error = mMasterClient->ReloadMaster()) != Error::OK) {
+  if ((error = mMasterClientPtr->ReloadMaster()) != Error::OK) {
     LOG_VA_ERROR("Problem reloading master connection - %s", Error::GetText(error));
   }
 

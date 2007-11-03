@@ -22,6 +22,7 @@
 #define HYPERTABLE_RANGESERVER_H
 
 #include "Common/Properties.h"
+#include "Common/ReferenceCount.h"
 
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/Comm.h"
@@ -33,7 +34,6 @@
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/Types.h"
 
-#include "ConnectionHandler.h"
 #include "ResponseCallbackCreateScanner.h"
 #include "ResponseCallbackFetchScanblock.h"
 #include "ResponseCallbackUpdate.h"
@@ -43,7 +43,9 @@ using namespace hypertable;
 
 namespace hypertable {
 
-  class RangeServer {
+  class ConnectionHandler;
+
+  class RangeServer : public ReferenceCount {
   public:
     RangeServer(Comm *comm, PropertiesPtr &propsPtr);
     virtual ~RangeServer();
@@ -77,19 +79,21 @@ namespace hypertable {
 
     typedef __gnu_cxx::hash_map<string, TableInfoPtr> TableInfoMapT;
 
-    boost::mutex       mMutex;
-    bool               mVerbose;
-    Comm              *mComm;
-    Hyperspace::Session *mHyperspace;
-    TableInfoMapT      mTableInfoMap;
-    ApplicationQueue  *mAppQueue;
-    ConnectionManager *mConnManager;
-    uint64_t           mExistenceFileHandle;
-    struct LockSequencerT mExistenceFileSequencer;
-    std::string        mServerIdStr;
-    ConnectionHandler *mMasterConnectionHandler;
-    MasterClient      *mMasterClient;
+    boost::mutex           mMutex;
+    bool                   mVerbose;
+    Comm                  *mComm;
+    Hyperspace::SessionPtr mHyperspacePtr;
+    TableInfoMapT          mTableInfoMap;
+    ApplicationQueuePtr    mAppQueuePtr;
+    ConnectionManagerPtr   mConnManagerPtr;
+    uint64_t               mExistenceFileHandle;
+    struct LockSequencerT  mExistenceFileSequencer;
+    std::string            mServerIdStr;
+    ConnectionHandler     *mMasterConnectionHandler;
+    MasterClientPtr        mMasterClientPtr;
   };
+  typedef boost::intrusive_ptr<RangeServer> RangeServerPtr;
+  
 
 }
 

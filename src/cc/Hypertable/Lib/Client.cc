@@ -20,9 +20,7 @@
 
 #include <cassert>
 
-#include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/Comm.h"
-#include "AsyncComm/ConnectionManager.h"
 
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
@@ -30,11 +28,7 @@
 #include "Common/Properties.h"
 #include "Common/System.h"
 
-#include "Hyperspace/Session.h"
-
 #include "Client.h"
-#include "MasterClient.h"
-#include "Table.h"
 
 using namespace Hyperspace;
 
@@ -48,18 +42,18 @@ Client::Client(std::string configFile) {
   PropertiesPtr propsPtr( new Properties(configFile) );
 
   mComm = new Comm();
-  mConnManager = new ConnectionManager(mComm);
+  mConnManagerPtr = new ConnectionManager(mComm);
 
-  mHyperspace = new Hyperspace::Session(mComm, propsPtr);
-  if (!mHyperspace->WaitForConnection(30)) {
+  mHyperspacePtr = new Hyperspace::Session(mComm, propsPtr);
+  if (!mHyperspacePtr->WaitForConnection(30)) {
     LOG_ERROR("Unable to connect to hyperspace, exiting...");
     exit(1);
   }
 
-  mAppQueue = new ApplicationQueue(1);
+  mAppQueuePtr = new ApplicationQueue(1);
 
-  mMasterClient = new MasterClient(mConnManager, mHyperspace, 20, mAppQueue);
-  if (mMasterClient->InitiateConnection(0) != Error::OK) {
+  mMasterClientPtr = new MasterClient(mConnManagerPtr, mHyperspacePtr, 20, mAppQueuePtr);
+  if (mMasterClientPtr->InitiateConnection(0) != Error::OK) {
     LOG_ERROR("Unable to establish connection with Master, exiting...");
     exit(1);
   }
@@ -70,7 +64,7 @@ Client::Client(std::string configFile) {
  * 
  */
 int Client::CreateTable(std::string name, std::string schema) {
-  return mMasterClient->CreateTable(name.c_str(), schema.c_str());
+  return mMasterClientPtr->CreateTable(name.c_str(), schema.c_str());
 }
 
 
@@ -80,7 +74,7 @@ int Client::CreateTable(std::string name, std::string schema) {
 int Client::OpenTable(std::string name, TablePtr &tablePtr) {
   Table *table;
   try {
-    table = new Table(mConnManager, mHyperspace, name);
+    table = new Table(mConnManagerPtr, mHyperspacePtr, name);
   }
   catch (Exception &e) {
     LOG_VA_ERROR("Problem opening table '%s' - %s", name.c_str(), e.what());
@@ -96,6 +90,6 @@ int Client::OpenTable(std::string name, TablePtr &tablePtr) {
  * 
  */
 int Client::GetSchema(std::string tableName, std::string &schema) {
-  return mMasterClient->GetSchema(tableName.c_str(), schema);
+  return mMasterClientPtr->GetSchema(tableName.c_str(), schema);
 }
 

@@ -35,17 +35,17 @@
 /**
  * 
  */
-MasterClient::MasterClient(ConnectionManager *connManager, Hyperspace::Session *hyperspace, time_t timeout, ApplicationQueue *appQueue) : mVerbose(true), mConnManager(connManager), mHyperspace(hyperspace), mTimeout(timeout), mAppQueue(appQueue), mInitiated(false) {
+MasterClient::MasterClient(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr, time_t timeout, ApplicationQueuePtr &appQueuePtr) : mVerbose(true), mConnManagerPtr(connManagerPtr), mHyperspacePtr(hyperspacePtr), mTimeout(timeout), mAppQueuePtr(appQueuePtr), mInitiated(false) {
   int error;
 
-  mComm = mConnManager->GetComm();
+  mComm = mConnManagerPtr->GetComm();
   memset(&mMasterAddr, 0, sizeof(mMasterAddr));
 
   /**
    * Open /hypertable/master Hyperspace file to discover the master.
    */
-  mMasterFileCallbackPtr = new MasterFileHandler(this, mAppQueue);
-  if ((error = mHyperspace->Open("/hypertable/master", OPEN_FLAG_READ, mMasterFileCallbackPtr, &mMasterFileHandle)) != Error::OK) {
+  mMasterFileCallbackPtr = new MasterFileHandler(this, mAppQueuePtr);
+  if ((error = mHyperspacePtr->Open("/hypertable/master", OPEN_FLAG_READ, mMasterFileCallbackPtr, &mMasterFileHandle)) != Error::OK) {
     if (error != Error::HYPERSPACE_FILE_NOT_FOUND && error != Error::HYPERSPACE_BAD_PATHNAME) {
       LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/master' - %s", Error::GetText(error));
       exit(1);
@@ -57,7 +57,7 @@ MasterClient::MasterClient(ConnectionManager *connManager, Hyperspace::Session *
 
 
 MasterClient::~MasterClient() {
-  mHyperspace->Close(mMasterFileHandle);
+  mHyperspacePtr->Close(mMasterFileHandle);
 }
 
 
@@ -192,7 +192,7 @@ int MasterClient::ReloadMaster() {
   DynamicBuffer value(0);
   std::string addrStr;
 
-  if ((error = mHyperspace->AttrGet(mMasterFileHandle, "address", value)) != Error::OK) {
+  if ((error = mHyperspacePtr->AttrGet(mMasterFileHandle, "address", value)) != Error::OK) {
     if (mVerbose)
       LOG_VA_ERROR("Problem reading 'address' attribute of Hyperspace file /hypertable/master - %s", Error::GetText(error));
     return Error::MASTER_NOT_RUNNING;
@@ -203,7 +203,7 @@ int MasterClient::ReloadMaster() {
   if (addrStr != mMasterAddrString) {
 
     if (mMasterAddr.sin_port != 0) {
-      if ((error = mConnManager->Remove(mMasterAddr)) != Error::OK) {
+      if ((error = mConnManagerPtr->Remove(mMasterAddr)) != Error::OK) {
 	if (mVerbose)
 	  LOG_VA_WARN("Problem removing connection to Master - %s", Error::GetText(error));
       }
@@ -215,7 +215,7 @@ int MasterClient::ReloadMaster() {
 
     InetAddr::Initialize(&mMasterAddr, mMasterAddrString.c_str());
 
-    mConnManager->Add(mMasterAddr, 15, "Master", mDispatcherHandlerPtr);
+    mConnManagerPtr->Add(mMasterAddr, 15, "Master", mDispatcherHandlerPtr);
   }
 
   return Error::OK;
@@ -223,5 +223,5 @@ int MasterClient::ReloadMaster() {
 
 
 bool MasterClient::WaitForConnection(long maxWaitSecs) {
-  return mConnManager->WaitForConnection(mMasterAddr, maxWaitSecs);
+  return mConnManagerPtr->WaitForConnection(mMasterAddr, maxWaitSecs);
 }

@@ -21,27 +21,29 @@
 #ifndef HYPERTABLE_HANDLERFACTORY_H
 #define HYPERTABLE_HANDLERFACTORY_H
 
+#include "AsyncComm/ApplicationQueue.h"
+
 #include "ConnectionHandler.h"
+#include "RangeServer.h"
+
 
 namespace hypertable {
 
   class Comm;
-  class ApplicationQueue;
-  class RangeServer;
 
   /**
    *
    */
   class HandlerFactory : public ConnectionHandlerFactory {
   public:
-    HandlerFactory(Comm *comm, ApplicationQueue *appQueue, RangeServer *rangeServer) : mComm(comm), mAppQueue(appQueue), mRangeServer(rangeServer) { return; }
+    HandlerFactory(Comm *comm, ApplicationQueuePtr &appQueuePtr, RangeServerPtr rangeServerPtr) : mComm(comm), mAppQueuePtr(appQueuePtr), mRangeServerPtr(rangeServerPtr) { return; }
     virtual void newInstance(DispatchHandlerPtr &dhp) {
-      dhp = new ConnectionHandler(mComm, mAppQueue, mRangeServer);
+      dhp = new ConnectionHandler(mComm, mAppQueuePtr, mRangeServerPtr);
     }
   private:
-    Comm        *mComm;
-    ApplicationQueue   *mAppQueue;
-    RangeServer *mRangeServer;
+    Comm                *mComm;
+    ApplicationQueuePtr  mAppQueuePtr;
+    RangeServerPtr       mRangeServerPtr;
   };
 
 }

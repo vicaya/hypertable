@@ -219,6 +219,7 @@ namespace hypertable {
     SharedImplT *mImpl;
 
   };
+  typedef boost::intrusive_ptr<ConnectionManager> ConnectionManagerPtr;
 
 }
 

@@ -38,8 +38,6 @@ namespace hypertable {
   protected:
     EventPtr mEventPtr;
   };
-
-  typedef boost::shared_ptr<ApplicationHandler> ApplicationHandlerPtr;
   
 }
 

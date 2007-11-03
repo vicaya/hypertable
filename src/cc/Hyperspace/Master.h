@@ -29,6 +29,7 @@
 
 #include "Common/atomic.h"
 #include "Common/Properties.h"
+#include "Common/ReferenceCount.h"
 #include "Common/SockAddrMap.h"
 #include "Common/StringExt.h"
 
@@ -52,7 +53,7 @@ using namespace hypertable;
 
 namespace Hyperspace {
 
-  class Master {
+  class Master : public ReferenceCount {
   public:
 
     static const uint32_t DEFAULT_MASTER_PORT        = 38040;
@@ -60,7 +61,7 @@ namespace Hyperspace {
     static const uint32_t DEFAULT_KEEPALIVE_INTERVAL = 7;
     static const uint32_t DEFAULT_GRACEPERIOD        = 45;
 
-    Master(ConnectionManager *connManager, PropertiesPtr &propsPtr, ServerKeepaliveHandlerPtr &keepaliveHandlerPtr);
+    Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, ServerKeepaliveHandlerPtr &keepaliveHandlerPtr);
     ~Master();
 
     void Mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name);
@@ -181,6 +182,7 @@ namespace Hyperspace {
     std::vector<SessionDataPtr> mSessionHeap;
 
   };
+  typedef boost::intrusive_ptr<Master> MasterPtr;
 
 }
 

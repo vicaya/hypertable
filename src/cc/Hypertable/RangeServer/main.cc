@@ -37,7 +37,6 @@ extern "C" {
 #include "Common/Usage.h"
 
 #include "AsyncComm/Comm.h"
-#include "AsyncComm/ConnectionManager.h"
 
 #include "ConnectionHandler.h"
 #include "Global.h"

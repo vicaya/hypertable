@@ -21,24 +21,25 @@
 #ifndef HYPERTABLE_MASTERFILEHANDLER_H
 #define HYPERTABLE_MASTERFILEHANDLER_H
 
+#include "AsyncComm/ApplicationQueue.h"
+
 #include "Hyperspace/HandleCallback.h"
+
+#include "MasterClient.h"
 
 using namespace Hyperspace;
 
 namespace hypertable {
-
-  class ApplicationQueue;
-  class MasterClient;
 
   /**
    * 
    */
   class MasterFileHandler : public HandleCallback {
   public:
-    MasterFileHandler(MasterClient *masterClient, ApplicationQueue *appQueue) : HandleCallback(EVENT_MASK_ATTR_SET), mMasterClient(masterClient), mAppQueue(appQueue) { return; }
+    MasterFileHandler(MasterClientPtr masterClientPtr, ApplicationQueuePtr &appQueuePtr) : HandleCallback(EVENT_MASK_ATTR_SET), mMasterClientPtr(masterClientPtr), mAppQueuePtr(appQueuePtr) { return; }
     virtual void AttrSet(std::string name);
-    MasterClient      *mMasterClient;
-    ApplicationQueue  *mAppQueue;
+    MasterClientPtr      mMasterClientPtr;
+    ApplicationQueuePtr  mAppQueuePtr;
   };
 }
 

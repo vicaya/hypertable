@@ -30,38 +30,7 @@ using namespace hypertable;
 /**
  *
  */
-void ServerLockFileHandler::AttrSet(std::string name) {
-  return;
-}
-
-
-/**
- *
- */
-void ServerLockFileHandler::AttrDel(std::string name) {
-  return;
-}
-
-/**
- *
- */
-void ServerLockFileHandler::ChildNodeAdded(std::string name) {
-  return;
-}
-
-
-/**
- *
- */
-void ServerLockFileHandler::ChildNodeRemoved(std::string name) {
-  return;
-}
-
-/**
- *
- */
 void ServerLockFileHandler::LockAcquired(uint32_t mode) {
-  return;
 }
 
 /**
@@ -69,9 +38,7 @@ void ServerLockFileHandler::LockAcquired(uint32_t mode) {
  */
 void ServerLockFileHandler::LockReleased() {
   EventPtr nullEvent;
-  EventHandlerServerLeft *handler = new EventHandlerServerLeft(mMaster, mStatePtr->serverIdStr, nullEvent);
-  ApplicationHandlerPtr appHandlerPtr(handler);
-  mAppQueue->Add( appHandlerPtr );
+  mAppQueuePtr->Add( new EventHandlerServerLeft(mMasterPtr, mStatePtr->serverIdStr, nullEvent) );
 }
 
 

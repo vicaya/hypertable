@@ -138,10 +138,8 @@ public:
 	  LOG_VA_ERROR("Comm::SendResponse returned %s", Error::GetText(error));
 	}
       }
-      else {
-	ApplicationHandlerPtr appHandlerPtr( new RequestHandler(mComm, eventPtr) );
-	mAppQueue->Add(appHandlerPtr);
-      }
+      else
+	mAppQueue->Add( new RequestHandler(mComm, eventPtr) );
     }
   }
 

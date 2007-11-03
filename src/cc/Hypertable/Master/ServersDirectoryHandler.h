@@ -25,26 +25,21 @@
 
 #include "Hyperspace/HandleCallback.h"
 
+#include "Master.h"
+
 using namespace Hyperspace;
 
 namespace hypertable {
-
-  class Master;
 
   /**
    * 
    */
   class ServersDirectoryHandler : public HandleCallback {
   public:
-    ServersDirectoryHandler(Master *master, ApplicationQueue *appQueue) : HandleCallback(EVENT_MASK_CHILD_NODE_ADDED), mMaster(master), mAppQueue(appQueue) { return; }
+    ServersDirectoryHandler(MasterPtr masterPtr, ApplicationQueuePtr &appQueuePtr) : HandleCallback(EVENT_MASK_CHILD_NODE_ADDED), mMasterPtr(masterPtr), mAppQueuePtr(appQueuePtr) { return; }
     virtual void ChildNodeAdded(std::string name);
-    virtual void AttrSet(std::string name)  { return; }
-    virtual void AttrDel(std::string name) { return; }
-    virtual void ChildNodeRemoved(std::string name) { return; }
-    virtual void LockAcquired(uint32_t mode) { return; }
-    virtual void LockReleased() { return; }
-    Master *mMaster;
-    ApplicationQueue *mAppQueue;
+    MasterPtr           mMasterPtr;
+    ApplicationQueuePtr mAppQueuePtr;
   };
 }
 

@@ -31,8 +31,6 @@ using namespace hypertable;
 void MasterFileHandler::AttrSet(std::string name) {
   if (name == "address") {
     EventPtr nullEvent;
-    EventHandlerMasterChange *handler = new EventHandlerMasterChange(mMasterClient, nullEvent);
-    ApplicationHandlerPtr appHandlerPtr(handler);
-    mAppQueue->Add( appHandlerPtr );
+    mAppQueuePtr->Add( new EventHandlerMasterChange(mMasterClientPtr, nullEvent) );
   }
 }

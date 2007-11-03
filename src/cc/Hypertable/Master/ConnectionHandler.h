@@ -21,25 +21,24 @@
 #ifndef HYPERTABLE_CONNECTIONHANDLER_H
 #define HYPERTABLE_CONNECTIONHANDLER_H
 
+#include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/DispatchHandler.h"
 
 #include "Master.h"
 
 namespace hypertable {
 
-  class ApplicationQueue;
-
   /**
    */
   class ConnectionHandler : public DispatchHandler {
   public:
-    ConnectionHandler(Comm *comm, ApplicationQueue *appQueue, Master *master) : mComm(comm), mAppQueue(appQueue), mMaster(master) { return; }
+    ConnectionHandler(Comm *comm, ApplicationQueuePtr &appQueuePtr, MasterPtr &masterPtr) : mComm(comm), mAppQueuePtr(appQueuePtr), mMasterPtr(masterPtr) { return; }
     virtual void handle(EventPtr &eventPtr);
 
   private:
-    Comm              *mComm;
-    ApplicationQueue  *mAppQueue;
-    Master            *mMaster;
+    Comm                *mComm;
+    ApplicationQueuePtr  mAppQueuePtr;
+    MasterPtr            mMasterPtr;
   };
 
 }

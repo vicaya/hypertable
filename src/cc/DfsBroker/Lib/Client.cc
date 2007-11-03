@@ -34,19 +34,19 @@ using namespace hypertable;
 using namespace hypertable::DfsBroker;
 
 
-Client::Client(ConnectionManager *connManager, struct sockaddr_in &addr, time_t timeout) : mConnectionManager(connManager), mAddr(addr), mTimeout(timeout) {
-  mComm = mConnectionManager->GetComm();
+Client::Client(ConnectionManagerPtr &connManagerPtr, struct sockaddr_in &addr, time_t timeout) : mConnManagerPtr(connManagerPtr), mAddr(addr), mTimeout(timeout) {
+  mComm = mConnManagerPtr->GetComm();
   mProtocol = new Protocol();
-  mConnectionManager->Add(mAddr, mTimeout, "DFS Broker");
+  mConnManagerPtr->Add(mAddr, mTimeout, "DFS Broker");
 }
 
 
 
-Client::Client(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mConnectionManager(connManager) {
+Client::Client(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr) : mConnManagerPtr(connManagerPtr) {
   const char *host;
   uint16_t port;
 
-  mComm = mConnectionManager->GetComm();
+  mComm = mConnManagerPtr->GetComm();
 
   mProtocol = new Protocol();
 
@@ -66,7 +66,7 @@ Client::Client(ConnectionManager *connManager, PropertiesPtr &propsPtr) : mConne
     InetAddr::Initialize(&mAddr, host, port);
   }
 
-  mConnectionManager->Add(mAddr, mTimeout, "DFS Broker");
+  mConnManagerPtr->Add(mAddr, mTimeout, "DFS Broker");
   
 }
 

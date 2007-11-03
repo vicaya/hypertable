@@ -68,14 +68,14 @@ namespace {
  */
 class HandlerFactory : public ConnectionHandlerFactory {
 public:
-  HandlerFactory(Comm *comm, ApplicationQueue *appQueue, Master *master) : mComm(comm), mAppQueue(appQueue), mMaster(master) { return; }
+  HandlerFactory(Comm *comm, ApplicationQueuePtr &appQueuePtr, MasterPtr &masterPtr) : mComm(comm), mAppQueuePtr(appQueuePtr), mMasterPtr(masterPtr) { return; }
   virtual void newInstance(DispatchHandlerPtr &dhp) {
-    dhp = new ConnectionHandler(mComm, mAppQueue, mMaster);
+    dhp = new ConnectionHandler(mComm, mAppQueuePtr, mMasterPtr);
   }
 private:
-  Comm              *mComm;
-  ApplicationQueue  *mAppQueue;
-  Master            *mMaster;
+  Comm                *mComm;
+  ApplicationQueuePtr  mAppQueuePtr;
+  MasterPtr            mMasterPtr;
 };
 
 
@@ -88,11 +88,11 @@ int main(int argc, char **argv) {
   string pidFile = "";
   PropertiesPtr propsPtr;
   bool verbose = false;
-  Master *master = 0;
+  MasterPtr masterPtr;
   int port, reactorCount, workerCount;
   Comm *comm;
-  ApplicationQueue *appQueue = 0;
-  ConnectionManager *connManager;
+  ApplicationQueuePtr appQueuePtr;
+  ConnectionManagerPtr connManagerPtr;
   struct sockaddr_in listenAddr;
 
   System::Initialize(argv[0]);
@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
   ReactorFactory::Initialize(reactorCount);
 
   comm = new Comm();
-  connManager = new ConnectionManager(comm);
+  connManagerPtr = new ConnectionManager(comm);
 
   if (verbose) {
     cout << "CPU count = " << System::GetProcessorCount() << endl;
@@ -133,11 +133,11 @@ int main(int argc, char **argv) {
     cout << "Hypertable.Master.reactors=" << reactorCount << endl;
   }
 
-  appQueue = new ApplicationQueue(workerCount);
-  master = new Master(connManager, propsPtr, appQueue);
+  appQueuePtr = new ApplicationQueue(workerCount);
+  masterPtr = new Master(connManagerPtr, propsPtr, appQueuePtr);
 
   InetAddr::Initialize(&listenAddr, INADDR_ANY, port);
-  ConnectionHandlerFactoryPtr chfPtr(new HandlerFactory(comm, appQueue, master));
+  ConnectionHandlerFactoryPtr chfPtr(new HandlerFactory(comm, appQueuePtr, masterPtr));
   comm->Listen(listenAddr, chfPtr);
 
   if (pidFile != "") {
@@ -148,11 +148,8 @@ int main(int argc, char **argv) {
 
   poll(0, 0, -1);
 
-  appQueue->Shutdown();
+  appQueuePtr->Shutdown();
 
-  delete appQueue;
-  delete master;
-  delete connManager;
   delete comm;
   return 0;
 }

@@ -46,7 +46,14 @@ using namespace hypertable;
 /**
  *
  */
-ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueue *appQueue, RangeServer *rangeServer, MasterClient *masterClient) : mComm(comm), mAppQueue(appQueue), mRangeServer(rangeServer), mMasterClient(masterClient) {
+ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &appQueuePtr, RangeServerPtr rangeServerPtr, MasterClientPtr &masterClientPtr) : mComm(comm), mAppQueuePtr(appQueuePtr), mRangeServerPtr(rangeServerPtr), mMasterClientPtr(masterClientPtr) {
+  return;
+}
+
+/**
+ *
+ */
+ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &appQueuePtr, RangeServerPtr rangeServerPtr) : mComm(comm), mAppQueuePtr(appQueuePtr), mRangeServerPtr(rangeServerPtr) {
   return;
 }
 
@@ -77,29 +84,28 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
 
       switch (command) {
       case RangeServerProtocol::COMMAND_COMPACT:
-	requestHandler = new RequestHandlerCompact(mComm, mRangeServer, eventPtr);
+	requestHandler = new RequestHandlerCompact(mComm, mRangeServerPtr.get(), eventPtr);
 	break;
       case RangeServerProtocol::COMMAND_LOAD_RANGE:
-	requestHandler = new RequestHandlerLoadRange(mComm, mRangeServer, eventPtr);
+	requestHandler = new RequestHandlerLoadRange(mComm, mRangeServerPtr.get(), eventPtr);
 	break;
       case RangeServerProtocol::COMMAND_UPDATE:
-	requestHandler = new RequestHandlerUpdate(mComm, mRangeServer, eventPtr);
+	requestHandler = new RequestHandlerUpdate(mComm, mRangeServerPtr.get(), eventPtr);
 	break;
       case RangeServerProtocol::COMMAND_CREATE_SCANNER:
-	requestHandler = new RequestHandlerCreateScanner(mComm, mRangeServer, eventPtr);
+	requestHandler = new RequestHandlerCreateScanner(mComm, mRangeServerPtr.get(), eventPtr);
 	break;
       case RangeServerProtocol::COMMAND_FETCH_SCANBLOCK:
-	requestHandler = new RequestHandlerFetchScanblock(mComm, mRangeServer, eventPtr);
+	requestHandler = new RequestHandlerFetchScanblock(mComm, mRangeServerPtr.get(), eventPtr);
 	break;
       case RangeServerProtocol::COMMAND_STATUS:
-	requestHandler = new RequestHandlerStatus(mComm, mRangeServer, eventPtr);
+	requestHandler = new RequestHandlerStatus(mComm, mRangeServerPtr.get(), eventPtr);
 	break;
       default:
 	std::string message = (string)"Command code " + command + " not implemented";
 	throw ProtocolException(message);
       }
-      ApplicationHandlerPtr appHandlerPtr(requestHandler);
-      mAppQueue->Add(appHandlerPtr);
+      mAppQueuePtr->Add( requestHandler );
     }
     catch (ProtocolException &e) {
       ResponseCallback cb(mComm, eventPtr);
@@ -116,10 +122,8 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
      * If this is the connection to the Master, then we need to register ourselves
      * with the master
      */
-    if (mMasterClient) {
-      ApplicationHandlerPtr appHandlerPtr( new EventHandlerMasterConnection(mMasterClient, mRangeServer->ServerIdStr(), eventPtr) );
-      mAppQueue->Add(appHandlerPtr);
-    }
+    if (mMasterClientPtr)
+      mAppQueuePtr->Add( new EventHandlerMasterConnection(mMasterClientPtr, mRangeServerPtr->ServerIdStr(), eventPtr) );
   }
   else {
     LOG_VA_INFO("%s", eventPtr->toString().c_str());

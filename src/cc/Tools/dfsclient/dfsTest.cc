@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
   boost::thread  *thread1, *thread2;
   struct sockaddr_in addr;
   Comm *comm;
-  ConnectionManager *connManager;
+  ConnectionManagerPtr connManagerPtr;
   DfsBroker::Client *client;
   char buf[32];
   std::string testDir, outfileA, outfileB;
@@ -88,8 +88,8 @@ int main(int argc, char **argv) {
   InetAddr::Initialize(&addr, "localhost", DEFAULT_DFSBROKER_PORT);
 
   comm = new Comm();
-  connManager = new ConnectionManager(comm);
-  client = new DfsBroker::Client(connManager, addr, 15);
+  connManagerPtr = new ConnectionManager(comm);
+  client = new DfsBroker::Client(connManagerPtr, addr, 15);
 
   if (!client->WaitForConnection(15)) {
     LOG_ERROR("Unable to connect to DFS");

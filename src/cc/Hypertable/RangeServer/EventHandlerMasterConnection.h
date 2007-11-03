@@ -31,15 +31,15 @@ namespace hypertable {
 
   class EventHandlerMasterConnection : public ApplicationHandler {
   public:
-    EventHandlerMasterConnection(MasterClient *masterClient, std::string &serverIdStr, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mMasterClient(masterClient), mServerIdStr(serverIdStr) {
+    EventHandlerMasterConnection(MasterClientPtr &masterClientPtr, std::string &serverIdStr, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mMasterClientPtr(masterClientPtr), mServerIdStr(serverIdStr) {
       return;
     }
 
     virtual void run();
 
   private:
-    MasterClient *mMasterClient;
-    std::string   mServerIdStr;
+    MasterClientPtr mMasterClientPtr;
+    std::string     mServerIdStr;
   };
 
 }

@@ -23,31 +23,26 @@
 
 #include <boost/thread/mutex.hpp>
 
+#include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/CommBuf.h"
+#include "AsyncComm/ConnectionManager.h"
 #include "AsyncComm/DispatchHandler.h"
 
 #include "Common/ReferenceCount.h"
 
 #include "Hyperspace/HandleCallback.h"
+#include "Hyperspace/Session.h"
 
 using namespace hypertable;
-using namespace Hyperspace;
-
-namespace Hyperspace {
-  class Session;
-}
 
 namespace hypertable {
 
-  class ApplicationQueue;
   class Comm;
-  class CommBuf;
-  class ConnectionManager;
 
   class MasterClient : public ReferenceCount {
   public:
 
-    MasterClient(ConnectionManager *connManager, Hyperspace::Session *hyperspace, time_t timeout, ApplicationQueue *appQueue);
+    MasterClient(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr, time_t timeout, ApplicationQueuePtr &appQueuePtr);
     ~MasterClient();
 
     int InitiateConnection(DispatchHandlerPtr dispatchHandlerPtr);
@@ -78,19 +73,19 @@ namespace hypertable {
 
     int SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler);
 
-    boost::mutex         mMutex;
-    bool                 mVerbose;
-    ConnectionManager   *mConnManager;
-    Comm                *mComm;
-    Hyperspace::Session *mHyperspace;
-    time_t               mTimeout;
-    ApplicationQueue    *mAppQueue;
-    bool                 mInitiated;
-    uint64_t             mMasterFileHandle;
-    HandleCallbackPtr    mMasterFileCallbackPtr;
-    struct sockaddr_in   mMasterAddr;
-    std::string          mMasterAddrString;
-    DispatchHandlerPtr   mDispatcherHandlerPtr;
+    boost::mutex           mMutex;
+    bool                   mVerbose;
+    Comm                  *mComm;
+    ConnectionManagerPtr   mConnManagerPtr;
+    Hyperspace::SessionPtr mHyperspacePtr;
+    ApplicationQueuePtr    mAppQueuePtr;
+    time_t                 mTimeout;
+    bool                   mInitiated;
+    uint64_t               mMasterFileHandle;
+    HandleCallbackPtr      mMasterFileCallbackPtr;
+    struct sockaddr_in     mMasterAddr;
+    std::string            mMasterAddrString;
+    DispatchHandlerPtr     mDispatcherHandlerPtr;
   };
 
   typedef boost::intrusive_ptr<MasterClient> MasterClientPtr;

@@ -32,18 +32,16 @@ using namespace hypertable;
 
 namespace hypertable {
 
-  class Master;
-
   class EventHandlerServerJoined : public ApplicationHandler {
   public:
-    EventHandlerServerJoined(Master *master, std::string &serverIdStr, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mMaster(master), mServerIdStr(serverIdStr) {
+    EventHandlerServerJoined(MasterPtr &masterPtr, std::string &serverIdStr, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mMasterPtr(masterPtr), mServerIdStr(serverIdStr) {
       return;
     }
 
     virtual void run();
 
   private:
-    Master      *mMaster;
+    MasterPtr    mMasterPtr;
     std::string  mServerIdStr;
   };
 

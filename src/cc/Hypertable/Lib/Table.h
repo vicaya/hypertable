@@ -37,15 +37,15 @@ namespace hypertable {
   class Table : public ReferenceCount {
 
   public:
-    Table(ConnectionManager *connManager, Hyperspace::Session *hyperspace, std::string &name);
+    Table(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr, std::string &name);
     virtual ~Table() { return; }
 
     int CreateMutator(MutatorPtr &mutatorPtr);
 
   private:
-    ConnectionManager   *mConnManager;
-    Hyperspace::Session *mHyperspace;
-    SchemaPtr            mSchemaPtr;
+    ConnectionManagerPtr    mConnManagerPtr;
+    Hyperspace::SessionPtr  mHyperspacePtr;
+    SchemaPtr               mSchemaPtr;
   };
   typedef boost::intrusive_ptr<Table> TablePtr;
 

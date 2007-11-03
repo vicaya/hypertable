@@ -62,7 +62,7 @@ const uint32_t Master::DEFAULT_KEEPALIVE_INTERVAL;
  * prevent concurrent masters and then reads/increments/writes the 32-bit integer extended
  * attribute 'generation'.  It also creates the server Keepalive handler.
  */
-Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr, ServerKeepaliveHandlerPtr &keepaliveHandlerPtr) : mVerbose(false), mNextHandleNumber(1), mNextSessionId(1) {
+Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, ServerKeepaliveHandlerPtr &keepaliveHandlerPtr) : mVerbose(false), mNextHandleNumber(1), mNextSessionId(1) {
   const char *dirname;
   std::string str;
   ssize_t xattrLen;
@@ -139,7 +139,7 @@ Master::Master(ConnectionManager *connManager, PropertiesPtr &propsPtr, ServerKe
   port = propsPtr->getPropertyInt("Hyperspace.Master.port", DEFAULT_MASTER_PORT);
   InetAddr::Initialize(&mLocalAddr, INADDR_ANY, port);
 
-  mKeepaliveHandlerPtr.reset( new ServerKeepaliveHandler(connManager->GetComm(), this) );
+  mKeepaliveHandlerPtr.reset( new ServerKeepaliveHandler(connManagerPtr->GetComm(), this) );
   keepaliveHandlerPtr = mKeepaliveHandlerPtr;
 
   if (mVerbose) {

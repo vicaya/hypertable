@@ -61,7 +61,7 @@ namespace {
 
 int main(int argc, char **argv) {
   Comm *comm;
-  ConnectionManager *connManager;
+  ConnectionManagerPtr connManagerPtr;
   DfsBroker::Client *client;
   std::string fname = "";
   struct sockaddr_in addr;
@@ -90,9 +90,9 @@ int main(int argc, char **argv) {
   InetAddr::Initialize(&addr, "localhost", DEFAULT_DFSBROKER_PORT);
   
   comm = new Comm();
-  connManager = new ConnectionManager(comm);
+  connManagerPtr = new ConnectionManager(comm);
 
-  client = new DfsBroker::Client(connManager, addr, 20);
+  client = new DfsBroker::Client(connManagerPtr, addr, 20);
   if (!client->WaitForConnection(15)) {
     cerr << "error: timed out waiting for DFS broker" << endl;
     exit(1);

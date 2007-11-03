@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
   struct sockaddr_in addr;
   ServerLauncher slauncher;
   Comm *comm;
-  ConnectionManager *connManager;
+  ConnectionManagerPtr connManagerPtr;
 
   if (argc != 1)
     Usage::DumpAndExit(usage);
@@ -95,9 +95,9 @@ int main(int argc, char **argv) {
 
   comm = new Comm();
 
-  connManager = new ConnectionManager(comm);
-  connManager->Add(addr, 5, "testServer");
-  if (!connManager->WaitForConnection(addr, 30)) {
+  connManagerPtr = new ConnectionManager(comm);
+  connManagerPtr->Add(addr, 5, "testServer");
+  if (!connManagerPtr->WaitForConnection(addr, 30)) {
     LOG_ERROR("Connect error");
     return 1;
   }
@@ -126,7 +126,6 @@ int main(int argc, char **argv) {
   if (system("diff commTest.output.1 commTest.output.2"))
     return 1;
 
-  delete connManager;
   delete comm;
   delete thread1;
   delete thread2;

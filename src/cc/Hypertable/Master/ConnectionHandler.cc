@@ -60,23 +60,22 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
 
       switch (command) {
       case MasterProtocol::COMMAND_CREATE_TABLE:
-	requestHandler = new RequestHandlerCreateTable(mComm, mMaster, eventPtr);
+	requestHandler = new RequestHandlerCreateTable(mComm, mMasterPtr.get(), eventPtr);
 	break;
       case MasterProtocol::COMMAND_GET_SCHEMA:
-	requestHandler = new RequestHandlerGetSchema(mComm, mMaster, eventPtr);
+	requestHandler = new RequestHandlerGetSchema(mComm, mMasterPtr.get(), eventPtr);
 	break;
       case MasterProtocol::COMMAND_STATUS:
-	requestHandler = new RequestHandlerStatus(mComm, mMaster, eventPtr);
+	requestHandler = new RequestHandlerStatus(mComm, mMasterPtr.get(), eventPtr);
 	break;
       case MasterProtocol::COMMAND_REGISTER_SERVER:
-	requestHandler = new RequestHandlerRegisterServer(mComm, mMaster, eventPtr);
+	requestHandler = new RequestHandlerRegisterServer(mComm, mMasterPtr.get(), eventPtr);
 	break;
       default:
 	std::string message = (string)"Command code " + command + " not implemented";
 	throw ProtocolException(message);
       }
-      ApplicationHandlerPtr  appHandlerPtr( requestHandler );
-      mAppQueue->Add( appHandlerPtr );
+      mAppQueuePtr->Add( requestHandler );
     }
     catch (ProtocolException &e) {
       ResponseCallback cb(mComm, eventPtr);

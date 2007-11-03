@@ -127,8 +127,7 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
 	std::string message = (string)"Command code " + command + " not implemented";
 	throw ProtocolException(message);
       }
-      ApplicationHandlerPtr  appHandlerPtr( requestHandler );
-      mAppQueue->Add( appHandlerPtr );
+      mAppQueue->Add( requestHandler );
     }
     catch (ProtocolException &e) {
       ResponseCallback cb(mComm, eventPtr);

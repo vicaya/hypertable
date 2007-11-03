@@ -54,7 +54,7 @@ namespace {
 /**
  * Constructor
  */
-RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbose(false), mComm(comm), mMasterClient(0) {
+RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbose(false), mComm(comm) {
   const char *metadataFile = 0;
   int workerCount;
   int error;
@@ -88,8 +88,8 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
     cout << "METADATA file = '" << metadataFile << "'" << endl;
   }
 
-  mConnManager = new ConnectionManager(comm);
-  mAppQueue = new ApplicationQueue(workerCount);
+  mConnManagerPtr = new ConnectionManager(comm);
+  mAppQueuePtr = new ApplicationQueue(workerCount);
 
   /**
    * Load METADATA simulation data
@@ -101,13 +101,13 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
   /**
    * Connect to Hyperspace
    */
-  mHyperspace = new Hyperspace::Session(comm, propsPtr, new HyperspaceSessionHandler(this));
-  if (!mHyperspace->WaitForConnection(30)) {
+  mHyperspacePtr = new Hyperspace::Session(comm, propsPtr, new HyperspaceSessionHandler(this));
+  if (!mHyperspacePtr->WaitForConnection(30)) {
     LOG_ERROR("Unable to connect to hyperspace, exiting...");
     exit(1);
   }
 
-  DfsBroker::Client *dfsClient = new DfsBroker::Client(mConnManager, propsPtr);
+  DfsBroker::Client *dfsClient = new DfsBroker::Client(mConnManagerPtr, propsPtr);
 
   if (mVerbose) {
     cout << "DfsBroker.host=" << propsPtr->getProperty("DfsBroker.host", "") << endl;
@@ -131,7 +131,7 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
     struct sockaddr_in addr;
     if (logHost != 0) {
       InetAddr::Initialize(&addr, logHost, logPort);
-      dfsClient = new DfsBroker::Client(mConnManager, addr, 30);
+      dfsClient = new DfsBroker::Client(mConnManagerPtr, addr, 30);
       if (!dfsClient->WaitForConnection(30)) {
 	LOG_ERROR("Unable to connect to DFS Broker, exiting...");
 	exit(1);
@@ -173,7 +173,7 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
    * Listen for incoming connections
    */
   {
-    ConnectionHandlerFactoryPtr chfPtr(new HandlerFactory(comm, mAppQueue, this));
+    ConnectionHandlerFactoryPtr chfPtr(new HandlerFactory(comm, mAppQueuePtr, this));
     struct sockaddr_in addr;
     InetAddr::Initialize(&addr, INADDR_ANY, port);  // Listen on any interface
     if ((error = comm->Listen(addr, chfPtr)) != Error::OK) {
@@ -185,9 +185,9 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
   /**
    * Create Master client
    */
-  mMasterClient = new MasterClient(mConnManager, mHyperspace, 20, mAppQueue);
-  mMasterConnectionHandler = new ConnectionHandler(mComm, mAppQueue, this, mMasterClient);
-  mMasterClient->InitiateConnection(mMasterConnectionHandler);
+  mMasterClientPtr = new MasterClient(mConnManagerPtr, mHyperspacePtr, 20, mAppQueuePtr);
+  mMasterConnectionHandler = new ConnectionHandler(mComm, mAppQueuePtr, this, mMasterClientPtr);
+  mMasterClientPtr->InitiateConnection(mMasterConnectionHandler);
 
 }
 
@@ -196,10 +196,7 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
  *
  */
 RangeServer::~RangeServer() {
-  mAppQueue->Shutdown();
-  delete mAppQueue;
-  delete mHyperspace;
-  delete mConnManager;
+  mAppQueuePtr->Shutdown();
 }
 
 
@@ -217,7 +214,7 @@ int RangeServer::DirectoryInitialize(Properties *props) {
   /**
    * Create /hypertable/servers directory
    */
-  if ((error = mHyperspace->Exists("/hypertable/servers", &exists)) != Error::OK) {
+  if ((error = mHyperspacePtr->Exists("/hypertable/servers", &exists)) != Error::OK) {
     LOG_VA_ERROR("Problem checking existence of '/hypertable/servers' Hyperspace directory - %s", Error::GetText(error));
     return error;
   }
@@ -236,12 +233,12 @@ int RangeServer::DirectoryInitialize(Properties *props) {
   uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_EXCL | OPEN_FLAG_LOCK_EXCLUSIVE;
   HandleCallbackPtr nullCallbackPtr;
 
-  if ((error = mHyperspace->Open(topDir.c_str(), oflags, nullCallbackPtr, &mExistenceFileHandle)) != Error::OK) {
+  if ((error = mHyperspacePtr->Open(topDir.c_str(), oflags, nullCallbackPtr, &mExistenceFileHandle)) != Error::OK) {
     LOG_VA_ERROR("Problem creating Hyperspace server existance file '%s' - %s", topDir.c_str(), Error::GetText(error));
     exit(1);
   }
 
-  if ((error = mHyperspace->GetSequencer(mExistenceFileHandle, &mExistenceFileSequencer)) != Error::OK) {
+  if ((error = mHyperspacePtr->GetSequencer(mExistenceFileHandle, &mExistenceFileSequencer)) != Error::OK) {
     LOG_VA_ERROR("Problem obtaining lock sequencer for file '%s' - %s", topDir.c_str(), Error::GetText(error));
     exit(1);
   }
@@ -856,17 +853,17 @@ int RangeServer::VerifySchema(TableInfoPtr &tableInfoPtr, int generation, std::s
 
   if (schemaPtr.get() == 0 || schemaPtr->GetGeneration() < generation) {
 
-    if ((error = mHyperspace->Open(tableFile.c_str(), OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
+    if ((error = mHyperspacePtr->Open(tableFile.c_str(), OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
       LOG_VA_ERROR("Unable to open Hyperspace file '%s' (%s)", tableFile.c_str(), Error::GetText(error));
       exit(1);
     }
 
-    if ((error = mHyperspace->AttrGet(handle, "schema", valueBuf)) != Error::OK) {
+    if ((error = mHyperspacePtr->AttrGet(handle, "schema", valueBuf)) != Error::OK) {
       errMsg = (std::string)"Problem getting 'schema' attribute for '" + tableFile + "'";
       return error;
     }
 
-    mHyperspace->Close(handle);
+    mHyperspacePtr->Close(handle);
 
     schemaPtr.reset( Schema::NewInstance((const char *)valueBuf.buf, valueBuf.fill(), true) );
     if (!schemaPtr->IsValid()) {

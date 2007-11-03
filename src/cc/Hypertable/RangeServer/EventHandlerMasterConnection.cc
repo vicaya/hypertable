@@ -34,11 +34,9 @@ using namespace hypertable;
 void EventHandlerMasterConnection::run() {
   int error;
 
-  cerr << "About to register with server" << endl << flush;
-  if ((error = mMasterClient->RegisterServer( mServerIdStr )) != Error::OK) {
+  if ((error = mMasterClientPtr->RegisterServer( mServerIdStr )) != Error::OK) {
     LOG_VA_ERROR("Problem registering ourselves (%s) with the Master - %s", mServerIdStr.c_str(), Error::GetText(error));
   }
-  cerr << "Just registered with server" << endl << flush;
 
   return;
 }

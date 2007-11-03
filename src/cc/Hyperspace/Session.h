@@ -32,6 +32,7 @@
 #include "AsyncComm/DispatchHandler.h"
 
 #include "Common/DynamicBuffer.h"
+#include "Common/ReferenceCount.h"
 
 #include "ClientKeepaliveHandler.h"
 #include "HandleCallback.h"
@@ -75,7 +76,7 @@ namespace Hyperspace {
    * This class encapsulates a Hyperspace session and
    * provides the Hyperspace API.
    */
-  class Session {
+  class Session : public ReferenceCount {
 
   public:
 
@@ -130,6 +131,8 @@ namespace Hyperspace {
     ClientKeepaliveHandler *mKeepaliveHandler;
     SessionCallback        *mSessionCallback;
   };
+  typedef boost::intrusive_ptr<Session> SessionPtr;
+  
 
 }
 

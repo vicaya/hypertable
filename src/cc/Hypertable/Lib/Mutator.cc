@@ -24,7 +24,7 @@
 /**
  * 
  */
-Mutator::Mutator(ConnectionManager *connManager, SchemaPtr &schemaPtr) : mConnManager(connManager), mSchemaPtr(schemaPtr) {
+Mutator::Mutator(ConnectionManagerPtr &connManagerPtr, SchemaPtr &schemaPtr) : mConnManagerPtr(connManagerPtr), mSchemaPtr(schemaPtr) {
   return;
 }
 

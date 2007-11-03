@@ -29,13 +29,14 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 
+#include "Common/ReferenceCount.h"
 #include "Common/StringExt.h"
 
 #include "ApplicationHandler.h"
 
 namespace hypertable {
 
-  class ApplicationQueue {
+  class ApplicationQueue : public ReferenceCount {
 
     class UsageRec {
     public:
@@ -49,8 +50,9 @@ namespace hypertable {
 
     class WorkRec {
     public:
-      WorkRec(ApplicationHandlerPtr &ahPtr) : appHandlerPtr(ahPtr), usage(0) { return; }
-      ApplicationHandlerPtr appHandlerPtr;
+      WorkRec(ApplicationHandler *ah) : handler(ah), usage(0) { return; }
+      ~WorkRec() { delete handler; }
+      ApplicationHandler   *handler;
       UsageRec             *usage;
     };
 
@@ -107,7 +109,7 @@ namespace hypertable {
 	  }
 		    
 	  if (rec) {
-	    rec->appHandlerPtr->run();
+	    rec->handler->run();
 	    if (rec->usage) {
 	      boost::mutex::scoped_lock ulock(mState.usageMutex);
 	      rec->usage->running = false;
@@ -147,10 +149,10 @@ namespace hypertable {
       mThreads.join_all();
     }
 
-    void Add(ApplicationHandlerPtr &appHandlerPtr) {
+    void Add(ApplicationHandler *appHandler) {
       UsageRecMapT::iterator uiter;
-      uint64_t threadGroup = appHandlerPtr->GetThreadGroup();
-      WorkRec *rec = new WorkRec(appHandlerPtr);
+      uint64_t threadGroup = appHandler->GetThreadGroup();
+      WorkRec *rec = new WorkRec(appHandler);
       rec->usage = 0;
 
       if (threadGroup != 0) {
@@ -173,6 +175,7 @@ namespace hypertable {
       }
     }
   };
+  typedef boost::intrusive_ptr<ApplicationQueue> ApplicationQueuePtr;
 
 }
 

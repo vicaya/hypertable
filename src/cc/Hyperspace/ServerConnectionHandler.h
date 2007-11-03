@@ -21,13 +21,10 @@
 #ifndef HYPERSPACE_SERVERCONNECTIONHANDLER_H
 #define HYPERSPACE_SERVERCONNECTIONHANDLER_H
 
+#include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/DispatchHandler.h"
 
 #include "Master.h"
-
-namespace hypertable {
-  class ApplicationQueue;
-}
 
 namespace Hyperspace {
 
@@ -36,18 +33,17 @@ namespace Hyperspace {
    */
   class ServerConnectionHandler : public DispatchHandler {
   public:
-    ServerConnectionHandler(Comm *comm, ApplicationQueue *appQueue, Master *master) 
-      : mComm(comm), mAppQueue(appQueue), mMaster(master), mSessionId(0) { return; }
+    ServerConnectionHandler(Comm *comm, ApplicationQueuePtr &appQueuePtr, MasterPtr &masterPtr)
+      : mComm(comm), mAppQueuePtr(appQueuePtr), mMasterPtr(masterPtr), mSessionId(0) { return; }
     virtual void handle(EventPtr &eventPtr);
 
   private:
-    Comm              *mComm;
-    ApplicationQueue  *mAppQueue;
-    Master            *mMaster;
-    uint64_t           mSessionId;
+    Comm                *mComm;
+    ApplicationQueuePtr  mAppQueuePtr;
+    MasterPtr            mMasterPtr;
+    uint64_t             mSessionId;
   };
 
 }
 
 #endif // HYPERSPACE_SERVERCONNECTIONHANDLER_H
-

@@ -23,18 +23,17 @@
 
 #include <string>
 
+#include "AsyncComm/ApplicationQueue.h"
+#include "AsyncComm/ConnectionManager.h"
+#include "Hyperspace/Session.h"
+
+#include "MasterClient.h"
 #include "Table.h"
 
-namespace Hyperspace {
-  class Session;
-}
 
 namespace hypertable {
 
-  class ApplicationQueue;
   class Comm;
-  class ConnectionManager;
-  class MasterClient;
 
   class Client {
 
@@ -51,11 +50,11 @@ namespace hypertable {
     // String [] ListTables();
 
   private:
-    ApplicationQueue     *mAppQueue;
-    Comm                 *mComm;
-    ConnectionManager    *mConnManager;
-    Hyperspace::Session  *mHyperspace;
-    MasterClient         *mMasterClient;
+    Comm                   *mComm;
+    ConnectionManagerPtr    mConnManagerPtr;
+    ApplicationQueuePtr     mAppQueuePtr;
+    Hyperspace::SessionPtr  mHyperspacePtr;
+    MasterClientPtr         mMasterClientPtr;
   };
 
 }

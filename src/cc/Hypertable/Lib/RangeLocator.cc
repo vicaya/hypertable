@@ -31,12 +31,12 @@
 /**
  * 
  */
-RangeLocator::RangeLocator(ConnectionManager *connManager, Hyperspace::Session *hyperspace) : mConnManager(connManager), mHyperspace(hyperspace), mCache(1000), mRootStale(true), mRangeServer(connManager->GetComm(), 30) {
+RangeLocator::RangeLocator(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr) : mConnManagerPtr(connManagerPtr), mHyperspacePtr(hyperspacePtr), mCache(1000), mRootStale(true), mRangeServer(connManagerPtr->GetComm(), 30) {
   int error;
   
   mRootHandlerPtr = new RootFileHandler(this);
 
-  if ((error = mHyperspace->Open("/hypertable/root", OPEN_FLAG_READ, mRootHandlerPtr, &mRootFileHandle)) != Error::OK) {
+  if ((error = mHyperspacePtr->Open("/hypertable/root", OPEN_FLAG_READ, mRootHandlerPtr, &mRootFileHandle)) != Error::OK) {
     LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/root' (%s)", Error::GetText(error));
     throw Exception(error);
   }
@@ -44,7 +44,7 @@ RangeLocator::RangeLocator(ConnectionManager *connManager, Hyperspace::Session *
 }
 
 RangeLocator::~RangeLocator() {
-  mHyperspace->Close(mRootFileHandle);
+  mHyperspacePtr->Close(mRootFileHandle);
 }
 
 
@@ -87,7 +87,7 @@ int RangeLocator::ReadRootLocation() {
   std::string addrStr;
   char *ptr;
 
-  if ((error = mHyperspace->AttrGet(mRootFileHandle, "location", value)) != Error::OK) {
+  if ((error = mHyperspacePtr->AttrGet(mRootFileHandle, "location", value)) != Error::OK) {
     LOG_VA_ERROR("Problem reading 'location' attribute of Hyperspace file /hypertable/root - %s", Error::GetText(error));
     return error;
   }
@@ -102,9 +102,9 @@ int RangeLocator::ReadRootLocation() {
     return Error::BAD_ROOT_SERVERID;
   }
 
-  mConnManager->Add(mRootAddr, 30, "Root RangeServer");
+  mConnManagerPtr->Add(mRootAddr, 30, "Root RangeServer");
 
-  if (!mConnManager->WaitForConnection(mRootAddr, 20)) {
+  if (!mConnManagerPtr->WaitForConnection(mRootAddr, 20)) {
     LOG_VA_ERROR("Timeout (20s) waiting for root RangeServer connection - %s", (const char *)value.buf);
   }
 

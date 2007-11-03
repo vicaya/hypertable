@@ -21,29 +21,32 @@
 #ifndef HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
 #define HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
 
+#include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/DispatchHandler.h"
+
+#include "Hypertable/Lib/MasterClient.h"
+
+#include "RangeServer.h"
 
 namespace hypertable {
 
   class Comm;
-  class ApplicationQueue;
-  class RangeServer;
-  class MasterClient;
 
   /**
    */
   class ConnectionHandler : public DispatchHandler {
   public:
 
-    ConnectionHandler(Comm *comm, ApplicationQueue *appQueue, RangeServer *rangeServer, MasterClient *masterClient=0);
+    ConnectionHandler(Comm *comm, ApplicationQueuePtr &appQueue, RangeServerPtr rangeServerPtr, MasterClientPtr &masterClientPtr);
+    ConnectionHandler(Comm *comm, ApplicationQueuePtr &appQueue, RangeServerPtr rangeServerPtr);
 
     virtual void handle(EventPtr &eventPtr);
 
   private:
-    Comm             *mComm;
-    ApplicationQueue *mAppQueue;
-    RangeServer      *mRangeServer;
-    MasterClient     *mMasterClient;
+    Comm                *mComm;
+    ApplicationQueuePtr  mAppQueuePtr;
+    RangeServerPtr       mRangeServerPtr;
+    MasterClientPtr      mMasterClientPtr;
   };
 
 }

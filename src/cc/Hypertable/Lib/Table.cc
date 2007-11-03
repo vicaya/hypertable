@@ -36,7 +36,7 @@ using namespace Hyperspace;
 /**
  * 
  */
-Table::Table(ConnectionManager *connManager, Hyperspace::Session *hyperspace, std::string &name) : mConnManager(connManager), mHyperspace(hyperspace) {
+Table::Table(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr, std::string &name) : mConnManagerPtr(connManagerPtr), mHyperspacePtr(hyperspacePtr) {
   int error;
   std::string tableFile = (std::string)"/hypertable/tables/" + name;
   DynamicBuffer schemaBuf(0);
@@ -47,7 +47,7 @@ Table::Table(ConnectionManager *connManager, Hyperspace::Session *hyperspace, st
   /**
    * Open table file
    */
-  if ((error = mHyperspace->Open(tableFile, OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
+  if ((error = mHyperspacePtr->Open(tableFile, OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
     LOG_VA_ERROR("Unable to open Hyperspace table file '%s' - %s", tableFile.c_str(), Error::GetText(error));
     throw Exception(error);
   }
@@ -55,12 +55,12 @@ Table::Table(ConnectionManager *connManager, Hyperspace::Session *hyperspace, st
   /**
    * Get schema attribute
    */
-  if ((error = mHyperspace->AttrGet(handle, "schema", schemaBuf)) != Error::OK) {
+  if ((error = mHyperspacePtr->AttrGet(handle, "schema", schemaBuf)) != Error::OK) {
     LOG_VA_ERROR("Problem getting attribute 'schema' for table file '%s' - %s", tableFile.c_str(), Error::GetText(error));
     throw Exception(error);
   }
 
-  mHyperspace->Close(handle);
+  mHyperspacePtr->Close(handle);
 
   mSchemaPtr.reset( Schema::NewInstance((const char *)schemaBuf.buf, strlen((const char *)schemaBuf.buf), true) );
 
@@ -73,6 +73,6 @@ Table::Table(ConnectionManager *connManager, Hyperspace::Session *hyperspace, st
 
 
 int Table::CreateMutator(MutatorPtr &mutatorPtr) {
-  mutatorPtr = new Mutator(mConnManager, mSchemaPtr);
+  mutatorPtr = new Mutator(mConnManagerPtr, mSchemaPtr);
   return Error::OK;
 }

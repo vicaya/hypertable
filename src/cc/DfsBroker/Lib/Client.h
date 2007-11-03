@@ -57,12 +57,12 @@ namespace hypertable {
     class Client : public Filesystem {
     public:
 
-      Client(ConnectionManager *connManager, struct sockaddr_in &addr, time_t timeout);
+      Client(ConnectionManagerPtr &connManagerPtr, struct sockaddr_in &addr, time_t timeout);
 
-      Client(ConnectionManager *connManager, PropertiesPtr &propsPtr);
+      Client(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr);
 
       bool WaitForConnection(long maxWaitSecs) {
-	return mConnectionManager->WaitForConnection(mAddr, maxWaitSecs);
+	return mConnManagerPtr->WaitForConnection(mAddr, maxWaitSecs);
       }
 
       virtual int Open(std::string &name, DispatchHandler *handler);
@@ -123,11 +123,11 @@ namespace hypertable {
 
       boost::mutex          mMutex;
       Comm                 *mComm;
+      ConnectionManagerPtr  mConnManagerPtr;
       struct sockaddr_in    mAddr;
       time_t                mTimeout;
       MessageBuilderSimple *mMessageBuilder;
       Protocol             *mProtocol;
-      ConnectionManager    *mConnectionManager;
       BufferedReaderMapT    mBufferedReaderMap;
     };
 

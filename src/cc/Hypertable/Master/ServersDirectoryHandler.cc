@@ -30,8 +30,6 @@ using namespace hypertable;
  */
 void ServersDirectoryHandler::ChildNodeAdded(std::string name) {
   EventPtr nullEvent;
-  EventHandlerServerJoined *handler = new EventHandlerServerJoined(mMaster, name, nullEvent);
-  ApplicationHandlerPtr appHandlerPtr(handler);
-  mAppQueue->Add( appHandlerPtr );
+  mAppQueuePtr->Add( new EventHandlerServerJoined(mMasterPtr, name, nullEvent) );
   return;
 }

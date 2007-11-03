@@ -94,11 +94,12 @@ int main(int argc, char **argv) {
   const char *hostProperty = 0;
   const char *portProperty = 0;
   const char *portStr = 0;
-  DfsBroker::Client *client;
-  Hyperspace::Session *hyperspace = 0;
-  RangeServerClient *rangeServer;
   Comm *comm = 0;
-  ConnectionManager *connManager;
+  ConnectionManagerPtr connManagerPtr;
+  DfsBroker::Client *client;
+  Hyperspace::SessionPtr hyperspacePtr;
+  RangeServerClient *rangeServer;
+  ApplicationQueuePtr appQueuePtr;
   int error;
   bool verbose = false;
 
@@ -165,32 +166,33 @@ int main(int argc, char **argv) {
   }
 
   comm = new Comm();
-  connManager = new ConnectionManager(comm);
-  connManager->SetQuietMode(true);
+  connManagerPtr = new ConnectionManager(comm);
+  connManagerPtr->SetQuietMode(true);
 
   if (serverName == "dfsbroker") {
-    client = new DfsBroker::Client(connManager, addr, 30);
+    client = new DfsBroker::Client(connManagerPtr, addr, 30);
     if (!client->WaitForConnection(2))
       goto abort;
     if ((error = client->Status()) != Error::OK)
       goto abort;
   }
   else if (serverName == "hyperspace") {
-    hyperspace = new Hyperspace::Session(connManager->GetComm(), propsPtr, 0);
-    if (!hyperspace->WaitForConnection(2))
+    hyperspacePtr = new Hyperspace::Session(connManagerPtr->GetComm(), propsPtr, 0);
+    if (!hyperspacePtr->WaitForConnection(2))
       goto abort;
-    if ((error = hyperspace->Status()) != Error::OK)
+    if ((error = hyperspacePtr->Status()) != Error::OK)
       goto abort;
   }
   else if (serverName == "master") {
     MasterClientPtr  masterPtr;
 
-    hyperspace = new Hyperspace::Session(connManager->GetComm(), propsPtr, 0);
+    hyperspacePtr = new Hyperspace::Session(connManagerPtr->GetComm(), propsPtr, 0);
 
-    if (!hyperspace->WaitForConnection(2))
+    if (!hyperspacePtr->WaitForConnection(2))
       goto abort;
 
-    masterPtr = new MasterClient(connManager, hyperspace, 30, new ApplicationQueue(1));
+    appQueuePtr = new ApplicationQueue(1);
+    masterPtr = new MasterClient(connManagerPtr, hyperspacePtr, 30, appQueuePtr);
     masterPtr->SetVerboseFlag(false);
     if (masterPtr->InitiateConnection(0) != Error::OK)
       goto abort;
@@ -202,21 +204,19 @@ int main(int argc, char **argv) {
       goto abort;
   }
   else if (serverName == "rangeserver") {
-    connManager->Add(addr, 30, "Range Server");
-    if (!connManager->WaitForConnection(addr, 2))
+    connManagerPtr->Add(addr, 30, "Range Server");
+    if (!connManagerPtr->WaitForConnection(addr, 2))
       goto abort;
     rangeServer = new RangeServerClient(comm, 30);
     if ((error = rangeServer->Status(addr)) != Error::OK)
       goto abort;
   }
 
-  delete hyperspace;
   if (verbose)
     cout << "true" << endl;
   return 0;
 
  abort:
-  delete hyperspace;
   if (verbose)
     cout << "false" << endl;
   return 1;

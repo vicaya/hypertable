@@ -72,15 +72,17 @@ namespace {
 class HandlerFactory : public ConnectionHandlerFactory {
 
 public:
-  HandlerFactory(Comm *comm, ApplicationQueue *appQueue, Master *master) : mComm(comm), mAppQueue(appQueue), mMaster(master) { return; }
+  HandlerFactory(Comm *comm, ApplicationQueuePtr &appQueuePtr, MasterPtr &masterPtr) : mComm(comm), mAppQueuePtr(appQueuePtr), mMasterPtr(masterPtr) {
+    return;
+  }
   virtual void newInstance(DispatchHandlerPtr &dhp) {
-    dhp = new ServerConnectionHandler(mComm, mAppQueue, mMaster);
+    dhp = new ServerConnectionHandler(mComm, mAppQueuePtr, mMasterPtr);
   }
 
 private:
-  Comm             *mComm;
-  ApplicationQueue *mAppQueue;
-  Master           *mMaster;
+  Comm                 *mComm;
+  ApplicationQueuePtr   mAppQueuePtr;
+  MasterPtr             mMasterPtr;
 };
 
 
@@ -93,12 +95,12 @@ int main(int argc, char **argv) {
   string pidFile = "";
   PropertiesPtr propsPtr;
   bool verbose = false;
-  Master *master = 0;
+  MasterPtr masterPtr;
   int port, reactorCount, workerCount;
   Comm *comm;
-  ApplicationQueue *appQueue = 0;
+  ApplicationQueuePtr appQueuePtr;
   ServerKeepaliveHandlerPtr keepaliveHandlerPtr;
-  ConnectionManager *connManager;
+  ConnectionManagerPtr connManagerPtr;
   int error;
   struct sockaddr_in localAddr;
 
@@ -139,7 +141,7 @@ int main(int argc, char **argv) {
 
   comm = new Comm();
 
-  connManager = new ConnectionManager(comm);
+  connManagerPtr = new ConnectionManager(comm);
 
   if (verbose) {
     cout << "CPU count = " << System::GetProcessorCount() << endl;
@@ -150,10 +152,10 @@ int main(int argc, char **argv) {
 
   InetAddr::Initialize(&localAddr, INADDR_ANY, port);
 
-  master = new Master(connManager, propsPtr, keepaliveHandlerPtr);
-  appQueue = new ApplicationQueue(workerCount);
+  masterPtr = new Master(connManagerPtr, propsPtr, keepaliveHandlerPtr);
+  appQueuePtr = new ApplicationQueue(workerCount);
 
-  ConnectionHandlerFactoryPtr chfPtr( new HandlerFactory(comm, appQueue, master) );
+  ConnectionHandlerFactoryPtr chfPtr( new HandlerFactory(comm, appQueuePtr, masterPtr) );
   if ((error = comm->Listen(localAddr, chfPtr)) != Error::OK) {
     std::string str;
     LOG_VA_ERROR("Unable to listen for connections on %s - %s", 
@@ -178,11 +180,8 @@ int main(int argc, char **argv) {
 
   poll(0, 0, -1);
 
-  appQueue->Shutdown();
+  appQueuePtr->Shutdown();
 
-  delete appQueue;
-  delete master;
-  delete connManager;
   delete comm;
   return 0;
 }
