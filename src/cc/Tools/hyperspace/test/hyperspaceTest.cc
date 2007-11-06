@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
   strcpy(masterInstallDir, "--install-dir=");
   getcwd(masterInstallDir+strlen("--install-dir="), 2000);
 
-  masterArgs.push_back("Hyperspace.master");
+  masterArgs.push_back("Hyperspace.Master");
   masterArgs.push_back("--config=./hyperspaceTest.cfg");
   masterArgs.push_back("--verbose");
   masterArgs.push_back(masterInstallDir);
@@ -163,11 +163,11 @@ int main(int argc, char **argv) {
   clientArgs.push_back("--notification-address=23451");
   clientArgs.push_back((const char *)0);
 
-  unlink("./Hyperspace.master");
-  link("../../Hyperspace/Hyperspace.master", "./Hyperspace.master");
+  unlink("./Hyperspace.Master");
+  link("../../Hyperspace/Hyperspace.Master", "./Hyperspace.Master");
 
   {
-    ServerLauncher master("./Hyperspace.master", (char * const *)&masterArgs[0]);
+    ServerLauncher master("./Hyperspace.Master", (char * const *)&masterArgs[0]);
     ServerLauncher client1("./hyperspace", (char * const *)&clientArgs[0], "client1.out");
     ServerLauncher client2("./hyperspace", (char * const *)&clientArgs[0], "client2.out");
     ServerLauncher client3("./hyperspace", (char * const *)&clientArgs[0], "client3.out");

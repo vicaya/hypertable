@@ -28,11 +28,11 @@ namespace Hyperspace {
   class FileHandleCallback : public HandleCallback {
   public:
     FileHandleCallback(uint32_t eventMask) : HandleCallback(eventMask) { return; }
-    virtual void AttrSet(std::string name) { cout << "ATTR SET " << name << endl << flush; }
-    virtual void AttrDel(std::string name) { cout <<  "ATTR DEL " << name << endl << flush; }
-    virtual void ChildNodeAdded(std::string name) { cout << "CHILD NODE ADDED " << name << endl << flush; }
-    virtual void ChildNodeRemoved(std::string name) { cout << "CHILD NODE REMOVED " << name << endl << flush; }
-    virtual void LockAcquired(uint32_t mode) { 
+    virtual void attr_set(std::string name) { cout << "ATTR SET " << name << endl << flush; }
+    virtual void attr_del(std::string name) { cout <<  "ATTR DEL " << name << endl << flush; }
+    virtual void child_node_added(std::string name) { cout << "CHILD NODE ADDED " << name << endl << flush; }
+    virtual void child_node_removed(std::string name) { cout << "CHILD NODE REMOVED " << name << endl << flush; }
+    virtual void lock_acquired(uint32_t mode) { 
       if (mode == LOCK_MODE_SHARED)
 	cout << "LOCK ACQUIRED shared" << endl << flush;
       else if (mode == LOCK_MODE_EXCLUSIVE)
@@ -40,7 +40,7 @@ namespace Hyperspace {
       else
 	cout << "LOCK ACQUIRED " << mode << endl << flush;
     }
-    virtual void LockReleased() { cout << "LOCK RELEASED" << endl << flush; }
+    virtual void lock_released() { cout << "LOCK RELEASED" << endl << flush; }
   };
 
 }
