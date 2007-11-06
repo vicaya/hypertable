@@ -98,7 +98,7 @@ namespace {
       host = userSuppliedHost;
 
     if (userSuppliedPort == 0)
-      port = (uint16_t)propsPtr->getPropertyInt("Hypertable.range_server.port", 38549);
+      port = (uint16_t)propsPtr->getPropertyInt("Hypertable.RangeServer.port", 38060);
     else
       port = userSuppliedPort;
 
@@ -126,7 +126,7 @@ namespace {
     "     directory",
     "",
     "  --server=<host>[:<port>]  Connect to Range server at machine <host>",
-    "     and port <port>.  By default it connects to localhost:38549.",
+    "     and port <port>.  By default it connects to localhost:38060.",
     "",
     "  --help  Display this help text and exit.",
     "",
