@@ -48,20 +48,20 @@ namespace hypertable {
 	exit(1);
       }
       
-      if ((mFp = fopen(fname, "r")) == 0) {
+      if ((m_fp = fopen(fname, "r")) == 0) {
 	LOG_VA_ERROR("Unable to open number stream file '%s'", fname);
 	exit(1);
       }
     }
     ~NumberStream() {
-      fclose(mFp);
+      fclose(m_fp);
     }
     uint32_t getInt() {
       uint32_t number;
 
-      if (fread(&number, sizeof(int32_t), 1, mFp) == 0) {
-	fseek(mFp, 0L, SEEK_SET);
-	if (fread(&number, sizeof(int32_t), 1, mFp) == 0) {
+      if (fread(&number, sizeof(int32_t), 1, m_fp) == 0) {
+	fseek(m_fp, 0L, SEEK_SET);
+	if (fread(&number, sizeof(int32_t), 1, m_fp) == 0) {
 	  LOG_ERROR("Problem reading integer from number stream, exiting...");
 	  exit(1);
 	}
@@ -71,7 +71,7 @@ namespace hypertable {
     }
 
   private:
-    FILE *mFp;
+    FILE *m_fp;
   };
 
 }

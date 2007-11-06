@@ -37,42 +37,42 @@ using namespace hypertable;
  *
  */
 void RequestHandlerOpen::run() {
-  ResponseCallbackOpen cb(mComm, mEventPtr);
+  ResponseCallbackOpen cb(m_comm, m_event_ptr);
   const char *name;
   uint32_t flags;
   uint32_t eventMask;  
-  size_t remaining = mEventPtr->messageLen - 2;
-  uint8_t *msgPtr = mEventPtr->message + 2;
+  size_t remaining = m_event_ptr->messageLen - 2;
+  uint8_t *msgPtr = m_event_ptr->message + 2;
   uint32_t attrCount;
   AttributeT attr;
   std::vector<AttributeT> initAttrs;
 
   // flags
-  if (!Serialization::DecodeInt(&msgPtr, &remaining, &flags))
+  if (!Serialization::decode_int(&msgPtr, &remaining, &flags))
     goto abort;
 
   // event mask
-  if (!Serialization::DecodeInt(&msgPtr, &remaining, &eventMask))
+  if (!Serialization::decode_int(&msgPtr, &remaining, &eventMask))
     goto abort;
 
   // directory name
-  if (!Serialization::DecodeString(&msgPtr, &remaining, &name))
+  if (!Serialization::decode_string(&msgPtr, &remaining, &name))
     goto abort;
 
   // initial attribute count
-  if (!Serialization::DecodeInt(&msgPtr, &remaining, &attrCount))
+  if (!Serialization::decode_int(&msgPtr, &remaining, &attrCount))
     goto abort;
 
   // 
   for (uint32_t i=0; i<attrCount; i++) {
-    if (!Serialization::DecodeString(&msgPtr, &remaining, &attr.name))
+    if (!Serialization::decode_string(&msgPtr, &remaining, &attr.name))
       goto abort;
-    if (!Serialization::DecodeByteArray(&msgPtr, &remaining, (uint8_t **)&attr.value, &attr.valueLen))
+    if (!Serialization::decode_byte_array(&msgPtr, &remaining, (uint8_t **)&attr.value, &attr.valueLen))
       goto abort;
     initAttrs.push_back(attr);
   }
 
-  mMaster->Open(&cb, mSessionId, name, flags, eventMask, initAttrs);
+  m_master->open(&cb, m_session_id, name, flags, eventMask, initAttrs);
 
   return;
 

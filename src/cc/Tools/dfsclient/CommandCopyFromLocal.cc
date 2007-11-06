@@ -34,7 +34,7 @@ namespace {
 }
 
 
-const char *CommandCopyFromLocal::msUsage[] = {
+const char *CommandCopyFromLocal::ms_usage[] = {
   "copyFromLocal <src> <dst>",
   "",
   "  This program copies the local file <src> to the remote",
@@ -54,17 +54,17 @@ int CommandCopyFromLocal::run() {
   int srcArg = 0;
   uint8_t *buf;
 
-  if (mArgs.size() != 2) {
+  if (m_args.size() != 2) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
     return -1;
   }
 
-  if ((fp = fopen(mArgs[srcArg].first.c_str(), "r")) == 0) {
-    perror(mArgs[srcArg].first.c_str());
+  if ((fp = fopen(m_args[srcArg].first.c_str(), "r")) == 0) {
+    perror(m_args[srcArg].first.c_str());
     goto abort;
   }
 
-  if ((error = mClient->Create(mArgs[srcArg+1].first, true, -1, -1, -1, &fd)) != Error::OK)
+  if ((error = m_client->create(m_args[srcArg+1].first, true, -1, -1, -1, &fd)) != Error::OK)
     goto abort;
 
   // send 3 appends
@@ -72,13 +72,13 @@ int CommandCopyFromLocal::run() {
     buf = new uint8_t [ BUFFER_SIZE ];
     if ((nread = fread(buf, 1, BUFFER_SIZE, fp)) == 0)
       goto done;
-    if ((error = mClient->Append(fd, buf, nread, &syncHandler)) != Error::OK)
+    if ((error = m_client->append(fd, buf, nread, &syncHandler)) != Error::OK)
       goto done;
   }
 
   while (true) {
 
-    if (!syncHandler.WaitForReply(eventPtr)) {
+    if (!syncHandler.wait_for_reply(eventPtr)) {
       LOG_VA_ERROR("%s", eventPtr->toString().c_str());
       goto abort;
     }
@@ -90,19 +90,19 @@ int CommandCopyFromLocal::run() {
     buf = new uint8_t [ BUFFER_SIZE ];
     if ((nread = fread(buf, 1, BUFFER_SIZE, fp)) == 0)
       break;
-    if ((error = mClient->Append(fd, buf, nread, &syncHandler)) != Error::OK)
+    if ((error = m_client->append(fd, buf, nread, &syncHandler)) != Error::OK)
       goto abort;
   }
 
  done:
 
-  if ((error = mClient->Close(fd)) != Error::OK)
+  if ((error = m_client->close(fd)) != Error::OK)
     goto abort;
     
   abort:
   if (fp)
     fclose(fp);
   if (error != 0)
-    cerr << Error::GetText(error) << endl;
+    cerr << Error::get_text(error) << endl;
   return error;
 }

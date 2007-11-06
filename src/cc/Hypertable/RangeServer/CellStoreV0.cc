@@ -40,118 +40,118 @@ extern "C" {
 
 using namespace hypertable;
 
-CellStoreV0::CellStoreV0(Filesystem *filesys) : mFilesys(filesys), mFilename(), mFd(-1), mIndex(),
-  mBuffer(0), mFixIndexBuffer(0), mVarIndexBuffer(0), mBlockSize(Constants::DEFAULT_BLOCKSIZE),
-  mOutstandingAppends(0), mOffset(0), mLastKey(0), mFileLength(0),
-  mDiskUsage(0), mSplitKey(0), mFileId(0), mStartKeyPtr(0), mEndKeyPtr(0) {
-  mBlockDeflater = new BlockDeflaterZlib();
-  mFileId = FileBlockCache::GetNextFileId();
+CellStoreV0::CellStoreV0(Filesystem *filesys) : m_filesys(filesys), m_filename(), m_fd(-1), m_index(),
+  m_buffer(0), m_fix_index_buffer(0), m_var_index_buffer(0), m_block_size(Constants::DEFAULT_BLOCKSIZE),
+  m_outstanding_appends(0), m_offset(0), m_last_key(0), m_file_length(0),
+  m_disk_usage(0), m_split_key(0), m_file_id(0), m_start_key_ptr(0), m_end_key_ptr(0) {
+  m_block_deflater = new BlockDeflaterZlib();
+  m_file_id = FileBlockCache::get_next_file_id();
 }
 
 
 
 CellStoreV0::~CellStoreV0() {
   int error;
-  delete mBlockDeflater;
-  if (mFd != -1) {
-    if ((error = mFilesys->Close(mFd)) != Error::OK) {
-      LOG_VA_ERROR("Problem closing HDFS client - %s", Error::GetText(error));
+  delete m_block_deflater;
+  if (m_fd != -1) {
+    if ((error = m_filesys->close(m_fd)) != Error::OK) {
+      LOG_VA_ERROR("Problem closing HDFS client - %s", Error::get_text(error));
     }
   }
 }
 
 
 
-uint64_t CellStoreV0::GetLogCutoffTime() {
-  return mTrailer.timestamp;
+uint64_t CellStoreV0::get_log_cutoff_time() {
+  return m_trailer.timestamp;
 }
 
 
 
-uint16_t CellStoreV0::GetFlags() {
-  return mTrailer.flags;
+uint16_t CellStoreV0::get_flags() {
+  return m_trailer.flags;
 }
 
-ByteString32T *CellStoreV0::GetSplitKey() {
-  return mSplitKey.get();
+ByteString32T *CellStoreV0::get_split_key() {
+  return m_split_key.get();
 }
 
 
-CellListScanner *CellStoreV0::CreateScanner(ScanContextPtr &scanContextPtr) {
+CellListScanner *CellStoreV0::create_scanner(ScanContextPtr &scanContextPtr) {
   CellStorePtr cellStorePtr(this);
   return new CellStoreScannerV0(cellStorePtr, scanContextPtr);
 }
 
 
-int CellStoreV0::Create(const char *fname, size_t blockSize) {
+int CellStoreV0::create(const char *fname, size_t blockSize) {
 
-  mBlockSize = blockSize;
-  mBuffer.reserve(mBlockSize*2);
+  m_block_size = blockSize;
+  m_buffer.reserve(m_block_size*2);
 
-  mFd = -1;
-  mOffset = 0;
-  mLastKey = 0;
-  mFixIndexBuffer.reserve(mBlockSize);
-  mVarIndexBuffer.reserve(mBlockSize);
+  m_fd = -1;
+  m_offset = 0;
+  m_last_key = 0;
+  m_fix_index_buffer.reserve(m_block_size);
+  m_var_index_buffer.reserve(m_block_size);
 
-  memset(&mTrailer, 0, sizeof(mTrailer));
+  memset(&m_trailer, 0, sizeof(m_trailer));
 
-  mFilename = fname;
+  m_filename = fname;
 
-  return mFilesys->Create(mFilename, true, -1, -1, -1, &mFd);
+  return m_filesys->create(m_filename, true, -1, -1, -1, &m_fd);
 
 }
 
 
-int CellStoreV0::Add(const ByteString32T *key, const ByteString32T *value) {
+int CellStoreV0::add(const ByteString32T *key, const ByteString32T *value) {
   int error;
   EventPtr eventPtr;
   DynamicBuffer zBuffer(0);
 
-  if (mBuffer.fill() > mBlockSize) {
+  if (m_buffer.fill() > m_block_size) {
 
-    AddIndexEntry(mLastKey, mOffset);
+    add_index_entry(m_last_key, m_offset);
 
-    mBlockDeflater->deflate(mBuffer, zBuffer, Constants::DATA_BLOCK_MAGIC);
-    mBuffer.clear();
+    m_block_deflater->deflate(m_buffer, zBuffer, Constants::DATA_BLOCK_MAGIC);
+    m_buffer.clear();
 
-    if (mOutstandingAppends > 0) {
-      if (!mSyncHandler.WaitForReply(eventPtr)) {
-	LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), hypertable::Protocol::StringFormatMessage(eventPtr).c_str());
+    if (m_outstanding_appends > 0) {
+      if (!m_sync_handler.wait_for_reply(eventPtr)) {
+	LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", m_filename.c_str(), hypertable::Protocol::string_format_message(eventPtr).c_str());
 	return -1;
       }
-      mOutstandingAppends--;
+      m_outstanding_appends--;
     }
 
     size_t  zlen;
     uint8_t *zbuf = zBuffer.release(&zlen);
 
-    if ((error = mFilesys->Append(mFd, zbuf, zlen, &mSyncHandler)) != Error::OK) {
-      LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), Error::GetText(error));
+    if ((error = m_filesys->append(m_fd, zbuf, zlen, &m_sync_handler)) != Error::OK) {
+      LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", m_filename.c_str(), Error::get_text(error));
       return -1;
     }
-    mOutstandingAppends++;
-    mOffset += zlen;
+    m_outstanding_appends++;
+    m_offset += zlen;
   }
 
   size_t keyLen = sizeof(int32_t) + key->len;
   size_t valueLen = sizeof(int32_t) + value->len;
 
-  mBuffer.ensure( keyLen + valueLen );
+  m_buffer.ensure( keyLen + valueLen );
 
-  memcpy(mBuffer.ptr, key, keyLen);
-  mLastKey = (ByteString32T *)mBuffer.ptr;
-  mBuffer.ptr += keyLen;
+  memcpy(m_buffer.ptr, key, keyLen);
+  m_last_key = (ByteString32T *)m_buffer.ptr;
+  m_buffer.ptr += keyLen;
 
-  memcpy(mBuffer.ptr, value, valueLen);
-  mBuffer.ptr += valueLen;
+  memcpy(m_buffer.ptr, value, valueLen);
+  m_buffer.ptr += valueLen;
 
   return 0;
 }
 
 
 
-int CellStoreV0::Finalize(uint64_t timestamp) {
+int CellStoreV0::finalize(uint64_t timestamp) {
   EventPtr eventPtr;
   int error = -1;
   uint8_t *zbuf;
@@ -160,129 +160,129 @@ int CellStoreV0::Finalize(uint64_t timestamp) {
   size_t len;
   uint8_t *base;
 
-  if (mBuffer.fill() > 0) {
+  if (m_buffer.fill() > 0) {
 
-    AddIndexEntry(mLastKey, mOffset);
+    add_index_entry(m_last_key, m_offset);
 
-    mBlockDeflater->deflate(mBuffer, zBuffer, Constants::DATA_BLOCK_MAGIC);
+    m_block_deflater->deflate(m_buffer, zBuffer, Constants::DATA_BLOCK_MAGIC);
     zbuf = zBuffer.release(&zlen);
 
-    if (mOutstandingAppends > 0) {
-      if (!mSyncHandler.WaitForReply(eventPtr)) {
-	LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), Protocol::StringFormatMessage(eventPtr).c_str());
+    if (m_outstanding_appends > 0) {
+      if (!m_sync_handler.wait_for_reply(eventPtr)) {
+	LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", m_filename.c_str(), Protocol::string_format_message(eventPtr).c_str());
 	goto abort;
       }
-      mOutstandingAppends--;
+      m_outstanding_appends--;
     }
 
-    if ((error = mFilesys->Append(mFd, zbuf, zlen, &mSyncHandler)) != Error::OK) {
-      LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), Protocol::StringFormatMessage(eventPtr).c_str());
+    if ((error = m_filesys->append(m_fd, zbuf, zlen, &m_sync_handler)) != Error::OK) {
+      LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", m_filename.c_str(), Protocol::string_format_message(eventPtr).c_str());
       goto abort;
     }
-    mOutstandingAppends++;
-    mOffset += zlen;
+    m_outstanding_appends++;
+    m_offset += zlen;
   }
 
-  mTrailer.fixIndexOffset = mOffset;
-  mTrailer.timestamp = timestamp;
-  mTrailer.flags = 0;
-  mTrailer.compressionType = Constants::COMPRESSION_TYPE_ZLIB;
-  mTrailer.version = 1;
+  m_trailer.fixIndexOffset = m_offset;
+  m_trailer.timestamp = timestamp;
+  m_trailer.flags = 0;
+  m_trailer.compressionType = Constants::COMPRESSION_TYPE_ZLIB;
+  m_trailer.version = 1;
 
   /**
    * Chop the Index buffers down to the exact length
    */
-  base = mFixIndexBuffer.release(&len);
-  mFixIndexBuffer.reserve(len);
-  mFixIndexBuffer.addNoCheck(base, len);
+  base = m_fix_index_buffer.release(&len);
+  m_fix_index_buffer.reserve(len);
+  m_fix_index_buffer.addNoCheck(base, len);
   delete [] base;
-  base = mVarIndexBuffer.release(&len);
-  mVarIndexBuffer.reserve(len);
-  mVarIndexBuffer.addNoCheck(base, len);
+  base = m_var_index_buffer.release(&len);
+  m_var_index_buffer.reserve(len);
+  m_var_index_buffer.addNoCheck(base, len);
   delete [] base;
 
   /**
    * Write fixed index
    */
-  mBlockDeflater->deflate(mFixIndexBuffer, zBuffer, Constants::INDEX_FIXED_BLOCK_MAGIC);
+  m_block_deflater->deflate(m_fix_index_buffer, zBuffer, Constants::INDEX_FIXED_BLOCK_MAGIC);
   zbuf = zBuffer.release(&zlen);
 
   /**
    * wait for last Client op
    */
-  if (mOutstandingAppends > 0) {
-    if (!mSyncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", mFilename.c_str(), Protocol::StringFormatMessage(eventPtr).c_str());
+  if (m_outstanding_appends > 0) {
+    if (!m_sync_handler.wait_for_reply(eventPtr)) {
+      LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", m_filename.c_str(), Protocol::string_format_message(eventPtr).c_str());
       goto abort;
     }
-    mOutstandingAppends--;
+    m_outstanding_appends--;
   }
 
-  if (mFilesys->Append(mFd, zbuf, zlen, &mSyncHandler) != Error::OK)
+  if (m_filesys->append(m_fd, zbuf, zlen, &m_sync_handler) != Error::OK)
     goto abort;
-  mOutstandingAppends++;
-  mOffset += zlen;
+  m_outstanding_appends++;
+  m_offset += zlen;
 
   /**
    * Write variable index + trailer
    */
-  mTrailer.varIndexOffset = mOffset;
-  mBlockDeflater->deflate(mVarIndexBuffer, zBuffer, Constants::INDEX_VARIABLE_BLOCK_MAGIC, sizeof(mTrailer));
+  m_trailer.varIndexOffset = m_offset;
+  m_block_deflater->deflate(m_var_index_buffer, zBuffer, Constants::INDEX_VARIABLE_BLOCK_MAGIC, sizeof(m_trailer));
 
   // wait for fixed index write
-  if (mOutstandingAppends > 0) {
-    if (!mSyncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Problem writing fixed index to HDFS file '%s' : %s", mFilename.c_str(), Protocol::StringFormatMessage(eventPtr).c_str());
+  if (m_outstanding_appends > 0) {
+    if (!m_sync_handler.wait_for_reply(eventPtr)) {
+      LOG_VA_ERROR("Problem writing fixed index to HDFS file '%s' : %s", m_filename.c_str(), Protocol::string_format_message(eventPtr).c_str());
       goto abort;
     }
-    mOutstandingAppends--;
+    m_outstanding_appends--;
   }
 
   /**
-   * Set up mIndex map
+   * Set up m_index map
    */
   uint32_t offset;
   ByteString32T *key;
-  mFixIndexBuffer.ptr = mFixIndexBuffer.buf;
-  mVarIndexBuffer.ptr = mVarIndexBuffer.buf;
-  for (size_t i=0; i<mTrailer.indexEntries; i++) {
+  m_fix_index_buffer.ptr = m_fix_index_buffer.buf;
+  m_var_index_buffer.ptr = m_var_index_buffer.buf;
+  for (size_t i=0; i<m_trailer.indexEntries; i++) {
     // variable portion
-    key = (ByteString32T *)mVarIndexBuffer.ptr;
-    mVarIndexBuffer.ptr += sizeof(int32_t) + key->len;
+    key = (ByteString32T *)m_var_index_buffer.ptr;
+    m_var_index_buffer.ptr += sizeof(int32_t) + key->len;
     // fixed portion (e.g. offset)
-    memcpy(&offset, mFixIndexBuffer.ptr, sizeof(offset));
-    mFixIndexBuffer.ptr += sizeof(offset);
-    mIndex.insert(mIndex.end(), IndexMapT::value_type(key, offset));
-    if (i == mTrailer.indexEntries/2) {
-      mTrailer.splitKeyOffset = mVarIndexBuffer.ptr - mVarIndexBuffer.buf;
-      RecordSplitKey(mVarIndexBuffer.ptr);
+    memcpy(&offset, m_fix_index_buffer.ptr, sizeof(offset));
+    m_fix_index_buffer.ptr += sizeof(offset);
+    m_index.insert(m_index.end(), IndexMapT::value_type(key, offset));
+    if (i == m_trailer.indexEntries/2) {
+      m_trailer.splitKeyOffset = m_var_index_buffer.ptr - m_var_index_buffer.buf;
+      record_split_key(m_var_index_buffer.ptr);
     }
   }
 
   // deallocate fix index data
-  delete [] mFixIndexBuffer.release();
+  delete [] m_fix_index_buffer.release();
 
-  zBuffer.add(&mTrailer, sizeof(mTrailer));
+  zBuffer.add(&m_trailer, sizeof(m_trailer));
 
   zbuf = zBuffer.release(&zlen);
 
-  if (mFilesys->Append(mFd, zbuf, zlen) != Error::OK)
+  if (m_filesys->append(m_fd, zbuf, zlen) != Error::OK)
     goto abort;
-  mOutstandingAppends++;
-  mOffset += zlen;
+  m_outstanding_appends++;
+  m_offset += zlen;
 
   /** close file for writing **/
-  if (mFilesys->Close(mFd) != Error::OK)
+  if (m_filesys->close(m_fd) != Error::OK)
     goto abort;
 
   /** Set file length **/
-  mFileLength = mOffset;
+  m_file_length = m_offset;
 
   /** Re-open file for reading **/
-  if ((error = mFilesys->Open(mFilename, &mFd)) != Error::OK)
+  if ((error = m_filesys->open(m_filename, &m_fd)) != Error::OK)
     goto abort;
 
-  mDiskUsage = (uint32_t)mFileLength;
+  m_disk_usage = (uint32_t)m_file_length;
 
   error = 0;
 
@@ -295,19 +295,19 @@ int CellStoreV0::Finalize(uint64_t timestamp) {
 /**
  *
  */
-void CellStoreV0::AddIndexEntry(const ByteString32T *key, uint32_t offset) {
+void CellStoreV0::add_index_entry(const ByteString32T *key, uint32_t offset) {
 
   size_t keyLen = sizeof(int32_t) + key->len;
-  mVarIndexBuffer.ensure( keyLen );
-  memcpy(mVarIndexBuffer.ptr, key, keyLen);
-  mVarIndexBuffer.ptr += keyLen;
+  m_var_index_buffer.ensure( keyLen );
+  memcpy(m_var_index_buffer.ptr, key, keyLen);
+  m_var_index_buffer.ptr += keyLen;
 
   // Serialize offset into fix index buffer
-  mFixIndexBuffer.ensure(sizeof(offset));
-  memcpy(mFixIndexBuffer.ptr, &offset, sizeof(offset));
-  mFixIndexBuffer.ptr += sizeof(offset);
+  m_fix_index_buffer.ensure(sizeof(offset));
+  memcpy(m_fix_index_buffer.ptr, &offset, sizeof(offset));
+  m_fix_index_buffer.ptr += sizeof(offset);
 
-  mTrailer.indexEntries++;
+  m_trailer.indexEntries++;
 }
 
 
@@ -315,70 +315,70 @@ void CellStoreV0::AddIndexEntry(const ByteString32T *key, uint32_t offset) {
 /**
  *
  */
-int CellStoreV0::Open(const char *fname, const ByteString32T *startKey, const ByteString32T *endKey) {
+int CellStoreV0::open(const char *fname, const ByteString32T *startKey, const ByteString32T *endKey) {
   int error = 0;
 
   if (startKey != 0)
-    mStartKeyPtr.reset( CreateCopy(startKey) );
+    m_start_key_ptr.reset( CreateCopy(startKey) );
 
   if (endKey != 0)
-    mEndKeyPtr.reset( CreateCopy(endKey) );
+    m_end_key_ptr.reset( CreateCopy(endKey) );
 
-  mFd = -1;
+  m_fd = -1;
 
-  mFilename = fname;
+  m_filename = fname;
 
   /** Get the file length **/
-  if ((error = mFilesys->Length(mFilename, (int64_t *)&mFileLength)) != Error::OK)
+  if ((error = m_filesys->length(m_filename, (int64_t *)&m_file_length)) != Error::OK)
     goto abort;
 
-  if (mFileLength < sizeof(StoreTrailerT)) {
-    LOG_VA_ERROR("Bad length of CellStore file '%s' - %lld", mFilename.c_str(), mFileLength);
+  if (m_file_length < sizeof(StoreTrailerT)) {
+    LOG_VA_ERROR("Bad length of CellStore file '%s' - %lld", m_filename.c_str(), m_file_length);
     goto abort;
   }
 
   /** Open the HDFS file **/
-  if ((error = mFilesys->Open(mFilename, &mFd)) != Error::OK)
+  if ((error = m_filesys->open(m_filename, &m_fd)) != Error::OK)
     goto abort;
 
   /** Read trailer **/
   uint32_t len;
-  if ((error = mFilesys->Pread(mFd, mFileLength-sizeof(StoreTrailerT), sizeof(StoreTrailerT), (uint8_t *)&mTrailer, &len)) != Error::OK)
+  if ((error = m_filesys->pread(m_fd, m_file_length-sizeof(StoreTrailerT), sizeof(StoreTrailerT), (uint8_t *)&m_trailer, &len)) != Error::OK)
     goto abort;
 
   if (len != sizeof(StoreTrailerT)) {
-    LOG_VA_ERROR("Problem reading trailer for CellStore file '%s' - only read %d of %d bytes", mFilename.c_str(), len, sizeof(StoreTrailerT));
+    LOG_VA_ERROR("Problem reading trailer for CellStore file '%s' - only read %d of %d bytes", m_filename.c_str(), len, sizeof(StoreTrailerT));
     goto abort;
   }
 
   /** Sanity check trailer **/
-  if (mTrailer.version != 1) {
-    LOG_VA_ERROR("Unsupported CellStore version (%d) for file '%s'", mTrailer.version, fname);
+  if (m_trailer.version != 1) {
+    LOG_VA_ERROR("Unsupported CellStore version (%d) for file '%s'", m_trailer.version, fname);
     goto abort;
   }
-  if (mTrailer.compressionType != Constants::COMPRESSION_TYPE_ZLIB) {
-    LOG_VA_ERROR("Unsupported CellStore compression type (%d) for file '%s'", mTrailer.compressionType, fname);
+  if (m_trailer.compressionType != Constants::COMPRESSION_TYPE_ZLIB) {
+    LOG_VA_ERROR("Unsupported CellStore compression type (%d) for file '%s'", m_trailer.compressionType, fname);
     goto abort;
   }
-  if (!(mTrailer.fixIndexOffset < mTrailer.varIndexOffset &&
-	mTrailer.varIndexOffset < mFileLength)) {
+  if (!(m_trailer.fixIndexOffset < m_trailer.varIndexOffset &&
+	m_trailer.varIndexOffset < m_file_length)) {
     LOG_VA_ERROR("Bad index offsets in CellStore trailer fix=%lld, var=%lld, length=%lld, file='%s'",
-		 mTrailer.fixIndexOffset, mTrailer.varIndexOffset, mFileLength, fname);
+		 m_trailer.fixIndexOffset, m_trailer.varIndexOffset, m_file_length, fname);
     goto abort;
   }
 
 #if 0
-  cout << "mIndex.size() = " << mIndex.size() << endl;
-  cout << "Fixed Index Offset: " << mTrailer.fixIndexOffset << endl;
-  cout << "Variable Index Offset: " << mTrailer.varIndexOffset << endl;
-  cout << "Replaced Files Offset: " << mTrailer.replacedFilesOffset << endl;
-  cout << "Replaced Files Count: " << mTrailer.replacedFilesCount << endl;
-  cout << "Number of Index Entries: " << mTrailer.indexEntries << endl;
-  cout << "Flags: " << mTrailer.flags << endl;
-  cout << "Compression Type: " << mTrailer.compressionType << endl;
-  cout << "Version: " << mTrailer.version << endl;
-  for (size_t i=0; i<mReplacedFiles.size(); i++)
-    cout << "Replaced File: '" << mReplacedFiles[i] << "'" << endl;
+  cout << "m_index.size() = " << m_index.size() << endl;
+  cout << "Fixed Index Offset: " << m_trailer.fixIndexOffset << endl;
+  cout << "Variable Index Offset: " << m_trailer.varIndexOffset << endl;
+  cout << "Replaced Files Offset: " << m_trailer.replacedFilesOffset << endl;
+  cout << "Replaced Files Count: " << m_trailer.replacedFilesCount << endl;
+  cout << "Number of Index Entries: " << m_trailer.indexEntries << endl;
+  cout << "Flags: " << m_trailer.flags << endl;
+  cout << "Compression Type: " << m_trailer.compressionType << endl;
+  cout << "Version: " << m_trailer.version << endl;
+  for (size_t i=0; i<m_replaced_files.size(); i++)
+    cout << "Replaced File: '" << m_replaced_files[i] << "'" << endl;
 #endif
 
   return Error::OK;
@@ -388,7 +388,7 @@ int CellStoreV0::Open(const char *fname, const ByteString32T *startKey, const By
 }
 
 
-int CellStoreV0::LoadIndex() {
+int CellStoreV0::load_index() {
   int error = -1;
   uint8_t *buf = 0;
   uint32_t amount;
@@ -398,54 +398,54 @@ int CellStoreV0::LoadIndex() {
   uint32_t len;
   BlockInflaterZlib *inflater = new BlockInflaterZlib();
 
-  amount = (mFileLength-sizeof(StoreTrailerT)) - mTrailer.fixIndexOffset;
+  amount = (m_file_length-sizeof(StoreTrailerT)) - m_trailer.fixIndexOffset;
   buf = new uint8_t [ amount ];
 
   /** Read index data **/
-  if ((error = mFilesys->Pread(mFd, mTrailer.fixIndexOffset, amount, buf, &len)) != Error::OK)
+  if ((error = m_filesys->pread(m_fd, m_trailer.fixIndexOffset, amount, buf, &len)) != Error::OK)
     goto abort;
 
   if (len != amount) {
-    LOG_VA_ERROR("Problem loading index for CellStore '%s' : tried to read %d but only got %d", mFilename.c_str(), amount, len);
+    LOG_VA_ERROR("Problem loading index for CellStore '%s' : tried to read %d but only got %d", m_filename.c_str(), amount, len);
     goto abort;
   }
 
   /** inflate fixed index **/
-  if (!inflater->inflate(buf, mTrailer.varIndexOffset-mTrailer.fixIndexOffset, Constants::INDEX_FIXED_BLOCK_MAGIC, mFixIndexBuffer))
+  if (!inflater->inflate(buf, m_trailer.varIndexOffset-m_trailer.fixIndexOffset, Constants::INDEX_FIXED_BLOCK_MAGIC, m_fix_index_buffer))
     goto abort;
 
-  vbuf = buf + (mTrailer.varIndexOffset-mTrailer.fixIndexOffset);
-  amount = (mFileLength-sizeof(StoreTrailerT)) - mTrailer.varIndexOffset;
+  vbuf = buf + (m_trailer.varIndexOffset-m_trailer.fixIndexOffset);
+  amount = (m_file_length-sizeof(StoreTrailerT)) - m_trailer.varIndexOffset;
 
   /** inflate variable index **/
-  if (!inflater->inflate(vbuf, amount, Constants::INDEX_VARIABLE_BLOCK_MAGIC, mVarIndexBuffer))
+  if (!inflater->inflate(vbuf, amount, Constants::INDEX_VARIABLE_BLOCK_MAGIC, m_var_index_buffer))
     goto abort;
 
-  mIndex.clear();
+  m_index.clear();
 
   ByteString32T *key;
   uint32_t offset;
 
   // record end offsets for sanity checking and reset ptr
-  fEnd = mFixIndexBuffer.ptr;
-  mFixIndexBuffer.ptr = mFixIndexBuffer.buf;
-  vEnd = mVarIndexBuffer.ptr;
-  mVarIndexBuffer.ptr = mVarIndexBuffer.buf;
+  fEnd = m_fix_index_buffer.ptr;
+  m_fix_index_buffer.ptr = m_fix_index_buffer.buf;
+  vEnd = m_var_index_buffer.ptr;
+  m_var_index_buffer.ptr = m_var_index_buffer.buf;
 
-  for (size_t i=0; i< mTrailer.indexEntries; i++) {
+  for (size_t i=0; i< m_trailer.indexEntries; i++) {
 
-    assert(mFixIndexBuffer.ptr < fEnd);
-    assert(mVarIndexBuffer.ptr < vEnd);
+    assert(m_fix_index_buffer.ptr < fEnd);
+    assert(m_var_index_buffer.ptr < vEnd);
 
     // Deserialized cell key (variable portion)
-    key = (ByteString32T *)mVarIndexBuffer.ptr;
-    mVarIndexBuffer.ptr += sizeof(int32_t) + key->len;
+    key = (ByteString32T *)m_var_index_buffer.ptr;
+    m_var_index_buffer.ptr += sizeof(int32_t) + key->len;
 
     // Deserialize offset
-    memcpy(&offset, mFixIndexBuffer.ptr, sizeof(offset));
-    mFixIndexBuffer.ptr += sizeof(offset);
+    memcpy(&offset, m_fix_index_buffer.ptr, sizeof(offset));
+    m_fix_index_buffer.ptr += sizeof(offset);
 
-    mIndex.insert(mIndex.end(), IndexMapT::value_type(key, offset));
+    m_index.insert(m_index.end(), IndexMapT::value_type(key, offset));
 
   }
 
@@ -454,38 +454,38 @@ int CellStoreV0::LoadIndex() {
    */
   {
     uint32_t start = 0;
-    uint32_t end = (uint32_t)mFileLength;
+    uint32_t end = (uint32_t)m_file_length;
     CellStoreV0::IndexMapT::iterator iter;
-    if (mStartKeyPtr.get() != 0) {
-      iter = mIndex.upper_bound(mStartKeyPtr.get());
+    if (m_start_key_ptr.get() != 0) {
+      iter = m_index.upper_bound(m_start_key_ptr.get());
       iter--;
       start = (*iter).second;
     }
-    if (mEndKeyPtr.get() != 0) {
-      iter = mIndex.lower_bound(mEndKeyPtr.get());
+    if (m_end_key_ptr.get() != 0) {
+      iter = m_index.lower_bound(m_end_key_ptr.get());
       end = (*iter).second;
     }
-    mDiskUsage = end - start;
+    m_disk_usage = end - start;
   }
 
-  RecordSplitKey(mVarIndexBuffer.buf + mTrailer.splitKeyOffset);
+  record_split_key(m_var_index_buffer.buf + m_trailer.splitKeyOffset);
 
 #if 0
-  cout << "mIndex.size() = " << mIndex.size() << endl;
-  cout << "Fixed Index Offset: " << mTrailer.fixIndexOffset << endl;
-  cout << "Variable Index Offset: " << mTrailer.varIndexOffset << endl;
-  cerr << "Split Key Offset: " << mTrailer.splitKeyOffset << endl;
-  cout << "Number of Index Entries: " << mTrailer.indexEntries << endl;
-  cout << "Flags: " << mTrailer.flags << endl;
-  cout << "Compression Type: " << mTrailer.compressionType << endl;
-  cout << "Version: " << mTrailer.version << endl;
+  cout << "m_index.size() = " << m_index.size() << endl;
+  cout << "Fixed Index Offset: " << m_trailer.fixIndexOffset << endl;
+  cout << "Variable Index Offset: " << m_trailer.varIndexOffset << endl;
+  cerr << "Split Key Offset: " << m_trailer.splitKeyOffset << endl;
+  cout << "Number of Index Entries: " << m_trailer.indexEntries << endl;
+  cout << "Flags: " << m_trailer.flags << endl;
+  cout << "Compression Type: " << m_trailer.compressionType << endl;
+  cout << "Version: " << m_trailer.version << endl;
 #endif
 
   error = 0;
 
  abort:
   delete inflater;
-  delete [] mFixIndexBuffer.release();
+  delete [] m_fix_index_buffer.release();
   delete [] buf;
   return error;
 }
@@ -493,11 +493,11 @@ int CellStoreV0::LoadIndex() {
 /**
  * 
 
-CellListScanner *CellStoreV0::CreateScanner(bool suppressDeleted) {
+CellListScanner *CellStoreV0::create_scanner(bool suppressDeleted) {
   return new CellStoreScannerV0(this);
 }
  */
 
-void CellStoreV0::RecordSplitKey(const uint8_t *keyBytes) {
-  mSplitKey.reset( CreateCopy((ByteString32T *)keyBytes) );
+void CellStoreV0::record_split_key(const uint8_t *keyBytes) {
+  m_split_key.reset( CreateCopy((ByteString32T *)keyBytes) );
 }

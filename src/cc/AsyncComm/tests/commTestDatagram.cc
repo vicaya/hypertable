@@ -64,17 +64,17 @@ namespace {
   class ServerLauncher {
   public:
     ServerLauncher() {
-      if ((mChildPid = fork()) == 0) {
+      if ((m_child_pid = fork()) == 0) {
 	execl("./testServer", "./testServer", DEFAULT_PORT_ARG, "--app-queue", "--udp", (char *)0);
       }
       poll(0,0,2000);
     }
     ~ServerLauncher() {
-      if (kill(mChildPid, 9) == -1)
+      if (kill(m_child_pid, 9) == -1)
 	perror("kill");
     }
     private:
-      pid_t mChildPid;
+      pid_t m_child_pid;
   };
 
 }
@@ -87,12 +87,12 @@ int main(int argc, char **argv) {
   Comm *comm;
 
   if (argc != 1)
-    Usage::DumpAndExit(usage);
+    Usage::dump_and_exit(usage);
 
   srand(8876);
 
-  System::Initialize(argv[0]);
-  ReactorFactory::Initialize(1);
+  System::initialize(argv[0]);
+  ReactorFactory::initialize(1);
 
   memset(&addr, 0, sizeof(struct sockaddr_in));
   {
@@ -112,12 +112,12 @@ int main(int argc, char **argv) {
 
   CommTestDatagramThreadFunction threadFunc(comm, addr, "/usr/share/dict/words");
 
-  threadFunc.SetOutputFile("commTestDatagram.output.1");
-  threadFunc.SetReceivePort(DEFAULT_PORT + 1);
+  threadFunc.set_output_file("commTestDatagram.output.1");
+  threadFunc.set_receive_port(DEFAULT_PORT + 1);
   thread1 = new boost::thread(threadFunc);
 
-  threadFunc.SetOutputFile("commTestDatagram.output.2");
-  threadFunc.SetReceivePort(DEFAULT_PORT + 2);
+  threadFunc.set_output_file("commTestDatagram.output.2");
+  threadFunc.set_receive_port(DEFAULT_PORT + 2);
   thread2 = new boost::thread(threadFunc);
 
   thread1->join();

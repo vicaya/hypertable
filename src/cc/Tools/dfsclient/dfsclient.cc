@@ -99,8 +99,8 @@ int main(int argc, char **argv) {
   DfsBroker::Client *client;
   PropertiesPtr propsPtr;
 
-  System::Initialize(argv[0]);
-  ReactorFactory::Initialize((uint16_t)System::GetProcessorCount());
+  System::initialize(argv[0]);
+  ReactorFactory::initialize((uint16_t)System::get_processor_count());
 
   for (int i=1; i<argc; i++) {
     if (!strncmp(argv[i], "--config=", 9))
@@ -108,11 +108,11 @@ int main(int argc, char **argv) {
     else if (!strcmp(argv[i], "--eval")) {
       i++;
       if (i == argc)
-	Usage::DumpAndExit(usage);
+	Usage::dump_and_exit(usage);
       eval = argv[i];
     }
     else
-      Usage::DumpAndExit(usage);
+      Usage::dump_and_exit(usage);
   }
 
   if (configFile == "")
@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
 
   client = new DfsBroker::Client(connManagerPtr, propsPtr);
 
-  if (!client->WaitForConnection(15)) {
+  if (!client->wait_for_connection(15)) {
     LOG_ERROR("Error:  Timed out waiting for DFS broker.");
     exit(1);
   }
@@ -149,8 +149,8 @@ int main(int argc, char **argv) {
       commandStr = str;
       boost::trim(commandStr);
       for (i=0; i<commands.size(); i++) {
-	if (commands[i]->Matches(commandStr.c_str())) {
-	  commands[i]->ParseCommandLine(commandStr.c_str());
+	if (commands[i]->matches(commandStr.c_str())) {
+	  commands[i]->parse_command_line(commandStr.c_str());
 	  if (commands[i]->run() != Error::OK)
 	    return 1;
 	  break;
@@ -176,8 +176,8 @@ int main(int argc, char **argv) {
       continue;
 
     for (i=0; i<commands.size(); i++) {
-      if (commands[i]->Matches(line)) {
-	commands[i]->ParseCommandLine(line);
+      if (commands[i]->matches(line)) {
+	commands[i]->parse_command_line(line);
 	commands[i]->run();
 	break;
       }
@@ -189,7 +189,7 @@ int main(int argc, char **argv) {
       else if (!strcmp(line, "help")) {
 	cout << endl;
 	for (i=0; i<commands.size(); i++) {
-	  Usage::Dump(commands[i]->Usage());
+	  Usage::dump(commands[i]->usage());
 	  cout << endl;
 	}
       }

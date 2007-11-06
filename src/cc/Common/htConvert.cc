@@ -73,31 +73,74 @@ int main(int argc, char **argv) {
 namespace {
 
   pair<const char *, const char *> exchangeStrings[] = {
-#if 0
-    std::make_pair("com.zvents.placer", "org.hypertable"),
-    std::make_pair("TABLETSERVER", "RANGESERVER"),
-    std::make_pair("PLACER", "HYPERTABLE"),
-    std::make_pair("Bigtable", "Hypertable"),
-    std::make_pair("namespace Placer", "namespace hypertable"),
-    std::make_pair("namespace Bigtable", "namespace hypertable"),
-    std::make_pair("namespace Hdfs", "namespace hypertable"),
-    std::make_pair("Bigtable/", "Hypertable/"),
-    std::make_pair("BIGTABLE", "HYPERTABLE"),
-    std::make_pair("Bigtable::", "hypertable::"),
-    std::make_pair("Placer::", "hypertable::"),
-    std::make_pair("Placerfs::", "hypertable::"),
-    std::make_pair("Memtable", "CellCache"),
-    std::make_pair("TabletServer", "RangeServer"),
-    std::make_pair("SSTable", "CellStore"),
-    std::make_pair("SSTABLE", "CELLSTORE"),
-    std::make_pair("Version0", "V0"),
-    std::make_pair("Version1", "V1"),
-    std::make_pair("LocalityGroup", "AccessGroup"),
-    std::make_pair("PersistentTable", "CellStore"),
-    std::make_pair("TabletInfo", "RangeInfo"),
-    std::make_pair("TableScanner", "CellSequenceScanner"),
+    std::make_pair("Add(", "add("),
+    std::make_pair("AdvanceDataPtr", "advance_data_ptr"),
+    std::make_pair("AppendByte", "append_byte"),
+    std::make_pair("AppendByteArray", "append_byte_array"),
+    std::make_pair("AppendBytes", "append_bytes"),
+    std::make_pair("AppendInt", "append_int"),
+    std::make_pair("AppendLong", "append_long"),
+    std::make_pair("AppendShort", "append_short"),
+    std::make_pair("AppendString", "append_string"),
+    std::make_pair("CloseSocket(", "close_socket("),
+    std::make_pair("Connect(", "connect("),
+    std::make_pair("ConnectSocket(", "connect_socket("),
+    std::make_pair("ContainsHandler(", "contains_handler("),
+    std::make_pair("CreateDatagramReceiveSocket(", "create_datagram_receive_socket("),
+    std::make_pair("DecomissionAll(", "decomission_all("),
+    std::make_pair("DecomissionHandler(", "decomission_handler("),
+    std::make_pair("GetComm(", "get_comm("),
+    std::make_pair("GetDataPtr(", "get_data_ptr("),
+    std::make_pair("GetDataPtrAddress(", "get_data_ptr_address("),
+    std::make_pair("GetLocalAddress(", "get_local_address("),
+    std::make_pair("GetThreadGroup", "get_thread_group"),
+    std::make_pair("InsertDatagramHandler(", "insert_datagram_handler("),
+    std::make_pair("Join(", "join("),
+    std::make_pair("Listen(", "listen("),
+    std::make_pair("LookupAcceptHandler(", "lookup_accept_handler("),
+    std::make_pair("LookupDataHandler(", "lookup_data_handler("),
+    std::make_pair("LookupDatagramHandler(", "lookup_datagram_handler("),
+    std::make_pair("PurgeHandler(", "purge_handler("),
+    std::make_pair("Remove(", "remove("),
+    std::make_pair("RemoveHandler(", "remove_handler("),
+    std::make_pair("ResetDataPointers", "reset_data_pointers"),
+    std::make_pair("SendDatagram(", "send_datagram("),
+    std::make_pair("SendRequest(", "send_request("),
+    std::make_pair("SendResponse(", "send_response("),
+    std::make_pair("SetQuietMode", "set_quiet_mode"),
+    std::make_pair("SetTimer(", "set_timer("),
+    std::make_pair("SetTimerAbsolute(", "set_timer_absolute("),
+    std::make_pair("Shutdown(", "shutdown("),
+    std::make_pair("WaitForConnection(", "wait_for_connection("),
+    std::make_pair("WaitForEmpty(", "wait_for_empty("),
+    std::make_pair("WaitForReply(", "wait_for_reply("),
+    std::make_pair("m_app_name", "m_app_name"),
+    std::make_pair("m_cond", "m_cond"),
+    std::make_pair("m_datagram_handler_map", "m_datagram_handler_map"),
+    std::make_pair("m_decomissioned_handlers", "m_decomissioned_handlers"),
+    std::make_pair("m_event_ptr", "m_event_ptr"),
+    std::make_pair("m_handler_map", "m_handler_map"),
+    std::make_pair("m_impl", "m_impl"),
+    std::make_pair("m_mutex", "m_mutex"),
+    std::make_pair("m_receive_queue", "m_receive_queue"),
+    std::make_pair("m_timer_reactor", "m_timer_reactor"),
+    std::make_pair("newInstance(", "get_instance("),
+    std::make_pair("toString(", "to_string("),
+    std::make_pair("InitializeFromRequest(", "initialize_from_request("),
+    std::make_pair("HeaderLength(", "header_length("),
+    std::make_pair("Encode(", "encode("),
+    std::make_pair("AssignUniqueId(", "assign_unique_id("),
+    std::make_pair("SetFlags(", "set_flags("),
+    std::make_pair("AddFlag(", "add_flag("),
+    std::make_pair("SetProtocol(", "set_protocol("),
+    std::make_pair("SetGroupId(", "set_group_id("),
+    std::make_pair("SetTotalLen(", "set_total_len("),
+    std::make_pair("m_id", "m_id"),
+    std::make_pair("m_group_id", "m_group_id"),
+    std::make_pair("m_total_len", "m_total_len"),
+    std::make_pair("m_protocol", "m_protocol"),
+    std::make_pair("m_flags", "m_flags"),
     std::make_pair((const char *)0, (const char *)0)
-#endif
   };
 
   typedef struct {
@@ -135,7 +178,7 @@ namespace {
 
   bool ConvertFile(const char *fname, string &convertedContents) {
     off_t lastOffset, flen;
-    char  *fcontents = FileUtils::FileToBuffer(fname, &flen);
+    char  *fcontents = FileUtils::file_to_buffer(fname, &flen);
     char *ptr = fcontents;
     char *codeStart, *base;
     ReplaceInfoT rinfo;
@@ -146,6 +189,7 @@ namespace {
     if (fcontents == 0)
       return false;
 
+#if 0
     while (*ptr && isspace(*ptr))
       ptr++;
 
@@ -160,6 +204,9 @@ namespace {
     }
 
     codeStart = ptr + 2;
+#endif
+
+    codeStart = ptr;
 
     for (size_t i=0; exchangeStrings[i].first != 0; i++) {
       base = codeStart;

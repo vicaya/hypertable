@@ -36,14 +36,14 @@ namespace hypertable {
    */
   class HandlerFactory : public ConnectionHandlerFactory {
   public:
-    HandlerFactory(Comm *comm, ApplicationQueuePtr &appQueuePtr, RangeServerPtr rangeServerPtr) : mComm(comm), mAppQueuePtr(appQueuePtr), mRangeServerPtr(rangeServerPtr) { return; }
-    virtual void newInstance(DispatchHandlerPtr &dhp) {
-      dhp = new ConnectionHandler(mComm, mAppQueuePtr, mRangeServerPtr);
+    HandlerFactory(Comm *comm, ApplicationQueuePtr &appQueuePtr, RangeServerPtr rangeServerPtr) : m_comm(comm), m_app_queue_ptr(appQueuePtr), m_range_server_ptr(rangeServerPtr) { return; }
+    virtual void get_instance(DispatchHandlerPtr &dhp) {
+      dhp = new ConnectionHandler(m_comm, m_app_queue_ptr, m_range_server_ptr);
     }
   private:
-    Comm                *mComm;
-    ApplicationQueuePtr  mAppQueuePtr;
-    RangeServerPtr       mRangeServerPtr;
+    Comm                *m_comm;
+    ApplicationQueuePtr  m_app_queue_ptr;
+    RangeServerPtr       m_range_server_ptr;
   };
 
 }

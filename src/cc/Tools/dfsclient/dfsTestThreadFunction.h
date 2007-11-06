@@ -31,21 +31,21 @@ namespace hypertable {
 
 class dfsTestThreadFunction {
  public:
-  dfsTestThreadFunction(DfsBroker::Client *client, std::string input) : mClient(client) {
-    mInputFile = input;
+  dfsTestThreadFunction(DfsBroker::Client *client, std::string input) : m_client(client) {
+    m_input_file = input;
   }
-  void SetDfsFile(std::string dfsFile) { 
-    mDfsFile = dfsFile;
+  void set_dfs_file(std::string dfsFile) { 
+    m_dfs_file = dfsFile;
   }
-  void SetOutputFile(std::string output) { 
-    mOutputFile = output;
+  void set_output_file(std::string output) { 
+    m_output_file = output;
   }
   void operator()();
 
  private:
-  DfsBroker::Client *mClient;
-  std::string mInputFile;
-  std::string mOutputFile;
-  std::string mDfsFile;
+  DfsBroker::Client *m_client;
+  std::string m_input_file;
+  std::string m_output_file;
+  std::string m_dfs_file;
 };
 

@@ -41,19 +41,19 @@ Client::Client(std::string configFile) {
   struct sockaddr_in addr;
   PropertiesPtr propsPtr( new Properties(configFile) );
 
-  mComm = new Comm();
-  mConnManagerPtr = new ConnectionManager(mComm);
+  m_comm = new Comm();
+  m_conn_manager_ptr = new ConnectionManager(m_comm);
 
-  mHyperspacePtr = new Hyperspace::Session(mComm, propsPtr);
-  if (!mHyperspacePtr->WaitForConnection(30)) {
+  m_hyperspace_ptr = new Hyperspace::Session(m_comm, propsPtr);
+  if (!m_hyperspace_ptr->wait_for_connection(30)) {
     LOG_ERROR("Unable to connect to hyperspace, exiting...");
     exit(1);
   }
 
-  mAppQueuePtr = new ApplicationQueue(1);
+  m_app_queue_ptr = new ApplicationQueue(1);
 
-  mMasterClientPtr = new MasterClient(mConnManagerPtr, mHyperspacePtr, 20, mAppQueuePtr);
-  if (mMasterClientPtr->InitiateConnection(0) != Error::OK) {
+  m_master_client_ptr = new MasterClient(m_conn_manager_ptr, m_hyperspace_ptr, 20, m_app_queue_ptr);
+  if (m_master_client_ptr->initiate_connection(0) != Error::OK) {
     LOG_ERROR("Unable to establish connection with Master, exiting...");
     exit(1);
   }
@@ -63,18 +63,18 @@ Client::Client(std::string configFile) {
 /**
  * 
  */
-int Client::CreateTable(std::string name, std::string schema) {
-  return mMasterClientPtr->CreateTable(name.c_str(), schema.c_str());
+int Client::create_table(std::string name, std::string schema) {
+  return m_master_client_ptr->create_table(name.c_str(), schema.c_str());
 }
 
 
 /**
  *
  */
-int Client::OpenTable(std::string name, TablePtr &tablePtr) {
+int Client::open_table(std::string name, TablePtr &tablePtr) {
   Table *table;
   try {
-    table = new Table(mConnManagerPtr, mHyperspacePtr, name);
+    table = new Table(m_conn_manager_ptr, m_hyperspace_ptr, name);
   }
   catch (Exception &e) {
     LOG_VA_ERROR("Problem opening table '%s' - %s", name.c_str(), e.what());
@@ -89,7 +89,7 @@ int Client::OpenTable(std::string name, TablePtr &tablePtr) {
 /**
  * 
  */
-int Client::GetSchema(std::string tableName, std::string &schema) {
-  return mMasterClientPtr->GetSchema(tableName.c_str(), schema);
+int Client::get_schema(std::string tableName, std::string &schema) {
+  return m_master_client_ptr->get_schema(tableName.c_str(), schema);
 }
 

@@ -52,38 +52,38 @@ namespace hypertable {
     Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, ApplicationQueuePtr &appQueuePtr);
     ~Master();
 
-    void CreateTable(ResponseCallback *cb, const char *tableName, const char *schemaString);
-    void GetSchema(ResponseCallbackGetSchema *cb, const char *tableName);
-    void RegisterServer(ResponseCallback *cb, const char *serverIdStr, struct sockaddr_in &addr);
+    void create_table(ResponseCallback *cb, const char *tableName, const char *schemaString);
+    void get_schema(ResponseCallbackGetSchema *cb, const char *tableName);
+    void register_server(ResponseCallback *cb, const char *serverIdStr, struct sockaddr_in &addr);
 
-    void ServerJoined(std::string &hyperspaceFilename);
-    void ServerLeft(std::string &hyperspaceFilename);
+    void server_joined(std::string &hyperspaceFilename);
+    void server_left(std::string &hyperspaceFilename);
 
   protected:
-    int CreateTable(const char *tableName, const char *schemaString, std::string &errMsg);
+    int create_table(const char *tableName, const char *schemaString, std::string &errMsg);
 
   private:
 
-    bool Initialize();
-    void ScanServersDirectory();
-    bool CreateHyperspaceDir(std::string dir);
+    bool initialize();
+    void scan_servers_directory();
+    bool create_hyperspace_dir(std::string dir);
 
-    boost::mutex mMutex;
-    ConnectionManagerPtr mConnManagerPtr;
-    ApplicationQueuePtr mAppQueuePtr;
-    bool mVerbose;
-    Hyperspace::SessionPtr mHyperspacePtr;
-    Filesystem *mDfsClient;
-    atomic_t mLastTableId;
-    HyperspaceSessionHandler mHyperspaceSessionHandler;
-    uint64_t mMasterFileHandle;
-    uint64_t mServersDirHandle;
-    struct LockSequencerT mMasterFileSequencer;
-    HandleCallbackPtr mServersDirCallbackPtr;
+    boost::mutex m_mutex;
+    ConnectionManagerPtr m_conn_manager_ptr;
+    ApplicationQueuePtr m_app_queue_ptr;
+    bool m_verbose;
+    Hyperspace::SessionPtr m_hyperspace_ptr;
+    Filesystem *m_dfs_client;
+    atomic_t m_last_table_id;
+    HyperspaceSessionHandler m_hyperspace_session_handler;
+    uint64_t m_master_file_handle;
+    uint64_t m_servers_dir_handle;
+    struct LockSequencerT m_master_file_sequencer;
+    HandleCallbackPtr m_servers_dir_callback_ptr;
 
     typedef __gnu_cxx::hash_map<std::string, RangeServerStatePtr> ServerMapT;
 
-    ServerMapT  mServerMap;
+    ServerMapT  m_server_map;
 
   };
   typedef boost::intrusive_ptr<Master> MasterPtr;

@@ -98,7 +98,7 @@ namespace {
       host = userSuppliedHost;
 
     if (userSuppliedPort == 0)
-      port = (uint16_t)propsPtr->getPropertyInt("Hypertable.RangeServer.port", 38549);
+      port = (uint16_t)propsPtr->getPropertyInt("Hypertable.range_server.port", 38549);
     else
       port = userSuppliedPort;
 
@@ -187,8 +187,8 @@ int main(int argc, char **argv) {
   PropertiesPtr propsPtr;
   CommandFetchScanblock *fetchScanblock;
 
-  System::Initialize(argv[0]);
-  ReactorFactory::Initialize((uint16_t)System::GetProcessorCount());
+  System::initialize(argv[0]);
+  ReactorFactory::initialize((uint16_t)System::get_processor_count());
 
   for (int i=1; i<argc; i++) {
     if (!strncmp(argv[i], "--config=", 9))
@@ -196,7 +196,7 @@ int main(int argc, char **argv) {
     else if (!strncmp(argv[i], "--server=", 9))
       ParseServerArgument(&argv[i][9], host, &port);
     else
-      Usage::DumpAndExit(usage);
+      Usage::dump_and_exit(usage);
   }
 
   if (configFile == "")
@@ -213,20 +213,20 @@ int main(int argc, char **argv) {
   Global::rangeServer = new RangeServerClient(comm, 30);
 
   // Connect to Range Server
-  connManager->Add(addr, 30, "Range Server");
-  if (!connManager->WaitForConnection(addr, 30))
+  connManager->add(addr, 30, "Range Server");
+  if (!connManager->wait_for_connection(addr, 30))
     cerr << "Timed out waiting for for connection to Range Server.  Exiting ..." << endl;
 
 #if 0
   // Connect to Master
   Global::master = new MasterClient(connManager, propsPtr);
-  if (!Global::master->WaitForConnection(15))
+  if (!Global::master->wait_for_connection(15))
     cerr << "Timed out waiting for for connection to Master.  Exiting ..." << endl;
 #endif
 
   // Connect to Hyperspace
-  Global::hyperspace = new Hyperspace::Session(connManager->GetComm(), propsPtr, 0);
-  if (!Global::hyperspace->WaitForConnection(30))
+  Global::hyperspace = new Hyperspace::Session(connManager->get_comm(), propsPtr, 0);
+  if (!Global::hyperspace->wait_for_connection(30))
     exit(1);
 
   commands.push_back( new CommandCreateScanner(addr) );  
@@ -245,15 +245,15 @@ int main(int argc, char **argv) {
 
     if (*line == 0) {
       if (Global::outstandingScannerId != -1) {
-	fetchScanblock->ClearArgs();
+	fetchScanblock->clear_args();
 	fetchScanblock->run();
       }
       continue;
     }
 
     for (i=0; i<commands.size(); i++) {
-      if (commands[i]->Matches(line)) {
-	commands[i]->ParseCommandLine(line);
+      if (commands[i]->matches(line)) {
+	commands[i]->parse_command_line(line);
 	commands[i]->run();
 	break;
       }
@@ -263,12 +263,12 @@ int main(int argc, char **argv) {
       if (!strcmp(line, "quit") || !strcmp(line, "exit"))
 	exit(0);
       else if (!strcmp(line, "help")) {
-	Usage::Dump(helpHeader);
+	Usage::dump(helpHeader);
 	for (i=0; i<commands.size(); i++) {
-	  Usage::Dump(commands[i]->Usage());
+	  Usage::dump(commands[i]->usage());
 	  cout << endl;
 	}
-	Usage::Dump(helpTrailer);
+	Usage::dump(helpTrailer);
       }
       else
 	cout << "Unrecognized command." << endl;

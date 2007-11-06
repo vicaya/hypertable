@@ -34,21 +34,21 @@ using namespace hypertable;
  *
  */
 void RequestHandlerAttrDel::run() {
-  ResponseCallback cb(mComm, mEventPtr);
-  size_t remaining = mEventPtr->messageLen - 2;
-  uint8_t *msgPtr = mEventPtr->message + 2;
+  ResponseCallback cb(m_comm, m_event_ptr);
+  size_t remaining = m_event_ptr->messageLen - 2;
+  uint8_t *msgPtr = m_event_ptr->message + 2;
   const char *name;
   uint64_t handle;
 
   // handle
-  if (!Serialization::DecodeLong(&msgPtr, &remaining, &handle))
+  if (!Serialization::decode_long(&msgPtr, &remaining, &handle))
     goto abort;
 
   // name
-  if (!Serialization::DecodeString(&msgPtr, &remaining, &name))
+  if (!Serialization::decode_string(&msgPtr, &remaining, &name))
     goto abort;
 
-  mMaster->AttrDel(&cb, mSessionId, handle, name);
+  m_master->attr_del(&cb, m_session_id, handle, name);
 
   return;
 

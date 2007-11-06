@@ -42,23 +42,23 @@ namespace hypertable {
 
     virtual void handle(EventPtr &eventPtr);
 
-    int Read(uint8_t *buf, uint32_t len, uint32_t *nreadp);
+    int read(uint8_t *buf, uint32_t len, uint32_t *nreadp);
 
   private:
 
-    void ReadAhead();
+    void read_ahead();
 
-    boost::mutex         mMutex;
-    boost::condition     mCond;
-    std::queue<EventPtr> mQueue;
-    DfsBroker::Client   *mClient;
-    uint32_t             mFd;
-    uint32_t             mMaxOutstanding;
-    uint32_t             mOutstanding;
-    bool                 mEof;
-    int                  mError;
-    uint8_t             *mPtr;
-    uint8_t             *mEndPtr;
+    boost::mutex         m_mutex;
+    boost::condition     m_cond;
+    std::queue<EventPtr> m_queue;
+    DfsBroker::Client   *m_client;
+    uint32_t             m_fd;
+    uint32_t             m_max_outstanding;
+    uint32_t             m_outstanding;
+    bool                 m_eof;
+    int                  m_error;
+    uint8_t             *m_ptr;
+    uint8_t             *m_end_ptr;
   };
 
 }

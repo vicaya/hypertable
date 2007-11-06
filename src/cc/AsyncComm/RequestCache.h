@@ -47,19 +47,19 @@ namespace hypertable {
 
   public:
 
-    RequestCache() : mIdMap(), mHead(0), mTail(0) { return; }
+    RequestCache() : m_id_map(), m_head(0), m_tail(0) { return; }
 
-    void Insert(uint32_t id, IOHandler *handler, DispatchHandler *dh, boost::xtime &expire);
+    void insert(uint32_t id, IOHandler *handler, DispatchHandler *dh, boost::xtime &expire);
 
-    DispatchHandler *Remove(uint32_t id);
+    DispatchHandler *remove(uint32_t id);
 
-    DispatchHandler *GetNextTimeout(boost::xtime &now, IOHandler *&handlerp, boost::xtime *nextTimeout);
+    DispatchHandler *get_next_timeout(boost::xtime &now, IOHandler *&handlerp, boost::xtime *nextTimeout);
 
-    void PurgeRequests(IOHandler *handler);
+    void purge_requests(IOHandler *handler);
 
   private:
-    IdHandlerMapT  mIdMap;
-    CacheNodeT    *mHead, *mTail;
+    IdHandlerMapT  m_id_map;
+    CacheNodeT    *m_head, *m_tail;
   };
 }
 

@@ -30,7 +30,7 @@ using namespace hypertable;
 /**
  *
  */
-DispatchHandlerSynchronizer::DispatchHandlerSynchronizer() : mReceiveQueue(), mMutex(), mCond() {
+DispatchHandlerSynchronizer::DispatchHandlerSynchronizer() : m_receive_queue(), m_mutex(), m_cond() {
   return;
 }
 
@@ -40,9 +40,9 @@ DispatchHandlerSynchronizer::DispatchHandlerSynchronizer() : mReceiveQueue(), mM
  *
  */
 void DispatchHandlerSynchronizer::handle(EventPtr &eventPtr) {
-  boost::mutex::scoped_lock lock(mMutex);
-  mReceiveQueue.push(eventPtr);
-  mCond.notify_one();    
+  boost::mutex::scoped_lock lock(m_mutex);
+  m_receive_queue.push(eventPtr);
+  m_cond.notify_one();    
 }
 
 
@@ -50,16 +50,16 @@ void DispatchHandlerSynchronizer::handle(EventPtr &eventPtr) {
 /**
  * 
  */
-bool DispatchHandlerSynchronizer::WaitForReply(EventPtr &eventPtr) {
-  boost::mutex::scoped_lock lock(mMutex);
+bool DispatchHandlerSynchronizer::wait_for_reply(EventPtr &eventPtr) {
+  boost::mutex::scoped_lock lock(m_mutex);
 
-  while (mReceiveQueue.empty())
-    mCond.wait(lock);
+  while (m_receive_queue.empty())
+    m_cond.wait(lock);
 
-  eventPtr = mReceiveQueue.front();
-  mReceiveQueue.pop();
+  eventPtr = m_receive_queue.front();
+  m_receive_queue.pop();
 
-  if (eventPtr->type == Event::MESSAGE && Protocol::ResponseCode(eventPtr.get()) == Error::OK)
+  if (eventPtr->type == Event::MESSAGE && Protocol::response_code(eventPtr.get()) == Error::OK)
     return true;
 
   return false;

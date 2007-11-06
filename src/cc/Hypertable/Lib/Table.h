@@ -40,12 +40,12 @@ namespace hypertable {
     Table(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr, std::string &name);
     virtual ~Table() { return; }
 
-    int CreateMutator(MutatorPtr &mutatorPtr);
+    int create_mutator(MutatorPtr &mutatorPtr);
 
   private:
-    ConnectionManagerPtr    mConnManagerPtr;
-    Hyperspace::SessionPtr  mHyperspacePtr;
-    SchemaPtr               mSchemaPtr;
+    ConnectionManagerPtr    m_conn_manager_ptr;
+    Hyperspace::SessionPtr  m_hyperspace_ptr;
+    SchemaPtr               m_schema_ptr;
   };
   typedef boost::intrusive_ptr<Table> TablePtr;
 

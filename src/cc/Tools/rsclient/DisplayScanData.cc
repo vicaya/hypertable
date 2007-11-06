@@ -34,7 +34,7 @@ namespace hypertable {
     }
     else {
       if (keyComps.columnFamily > 0) {
-	cf = schemaPtr->GetColumnFamily(keyComps.columnFamily);
+	cf = schemaPtr->get_column_family(keyComps.columnFamily);
 	if (keyComps.flag == FLAG_DELETE_CELL)
 	  cout << keyComps.timestamp << " " << keyComps.rowKey << " " << cf->name << ":" << keyComps.columnQualifier << " DELETE" << endl;
 	else

@@ -49,13 +49,13 @@ using namespace std;
  * @param serviceName  The name of the service we're connnecting to (used for better log messages)
  * @param handlerPtr   This is the default handler to install on the connection.  All events get changed through to this handler.
  */
-void ConnectionManager::Add(struct sockaddr_in &addr, time_t timeout, const char *serviceName, DispatchHandlerPtr &handlerPtr) {
-  boost::mutex::scoped_lock lock(mImpl->mutex);
+void ConnectionManager::add(struct sockaddr_in &addr, time_t timeout, const char *serviceName, DispatchHandlerPtr &handlerPtr) {
+  boost::mutex::scoped_lock lock(m_impl->mutex);
   SockAddrMapT<ConnectionStatePtr> iter;
   ConnectionState *connState;
   int error;
 
-  if (mImpl->connMap.find(addr) != mImpl->connMap.end())
+  if (m_impl->connMap.find(addr) != m_impl->connMap.end())
     return;
 
   connState = new ConnectionState();
@@ -67,20 +67,20 @@ void ConnectionManager::Add(struct sockaddr_in &addr, time_t timeout, const char
   connState->serviceName = (serviceName) ? serviceName : "";
   boost::xtime_get(&connState->nextRetry, boost::TIME_UTC);
 
-  mImpl->connMap[addr] = ConnectionStatePtr(connState);
+  m_impl->connMap[addr] = ConnectionStatePtr(connState);
 
   {
     boost::mutex::scoped_lock connLock(connState->mutex);
-    SendConnectRequest(connState);
+    send_connect_request(connState);
   }
 }
 
 /**
  *
  */
-void ConnectionManager::Add(struct sockaddr_in &addr, time_t timeout, const char *serviceName) {
+void ConnectionManager::add(struct sockaddr_in &addr, time_t timeout, const char *serviceName) {
   DispatchHandlerPtr nullDispatchHandler;
-  Add(addr, timeout, serviceName, nullDispatchHandler);
+  add(addr, timeout, serviceName, nullDispatchHandler);
 }
 
 
@@ -96,13 +96,13 @@ void ConnectionManager::Add(struct sockaddr_in &addr, time_t timeout, const char
  * @param serviceName  The name of the service we're connnecting to (used for better log messages)
  * @param handlerPtr   This is the default handler to install on the connection.  All events get changed through to this handler.
  */
-void ConnectionManager::Add(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, const char *serviceName, DispatchHandlerPtr &handlerPtr) {
-  boost::mutex::scoped_lock lock(mImpl->mutex);
+void ConnectionManager::add(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, const char *serviceName, DispatchHandlerPtr &handlerPtr) {
+  boost::mutex::scoped_lock lock(m_impl->mutex);
   SockAddrMapT<ConnectionStatePtr> iter;
   ConnectionState *connState;
   int error;
 
-  if (mImpl->connMap.find(addr) != mImpl->connMap.end())
+  if (m_impl->connMap.find(addr) != m_impl->connMap.end())
     return;
 
   connState = new ConnectionState();
@@ -114,11 +114,11 @@ void ConnectionManager::Add(struct sockaddr_in &addr, struct sockaddr_in &localA
   connState->serviceName = (serviceName) ? serviceName : "";
   boost::xtime_get(&connState->nextRetry, boost::TIME_UTC);
 
-  mImpl->connMap[addr] = ConnectionStatePtr(connState);
+  m_impl->connMap[addr] = ConnectionStatePtr(connState);
 
   {
     boost::mutex::scoped_lock connLock(connState->mutex);
-    SendConnectRequest(connState);
+    send_connect_request(connState);
   }
 }
 
@@ -126,21 +126,21 @@ void ConnectionManager::Add(struct sockaddr_in &addr, struct sockaddr_in &localA
 /**
  *
  */
-void ConnectionManager::Add(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, const char *serviceName) {
+void ConnectionManager::add(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, const char *serviceName) {
   DispatchHandlerPtr nullDispatchHandler;
-  Add(addr, localAddr, timeout, serviceName, nullDispatchHandler);
+  add(addr, localAddr, timeout, serviceName, nullDispatchHandler);
 }
 
 
 
 
-bool ConnectionManager::WaitForConnection(struct sockaddr_in &addr, long maxWaitSecs) {
+bool ConnectionManager::wait_for_connection(struct sockaddr_in &addr, long maxWaitSecs) {
   ConnectionStatePtr connStatePtr;
 
   {
-    boost::mutex::scoped_lock lock(mImpl->mutex);
-    SockAddrMapT<ConnectionStatePtr>::iterator iter = mImpl->connMap.find(addr);
-    if (iter == mImpl->connMap.end())
+    boost::mutex::scoped_lock lock(m_impl->mutex);
+    SockAddrMapT<ConnectionStatePtr>::iterator iter = m_impl->connMap.find(addr);
+    if (iter == m_impl->connMap.end())
       return false;
     connStatePtr = (*iter).second;
   }
@@ -172,14 +172,14 @@ bool ConnectionManager::WaitForConnection(struct sockaddr_in &addr, long maxWait
  *
  * @param connState The connection state record
  */
-void ConnectionManager::SendConnectRequest(ConnectionState *connState) {
+void ConnectionManager::send_connect_request(ConnectionState *connState) {
   int error;
   DispatchHandlerPtr handlerPtr(this);
 
   if (connState->localAddr.sin_port != 0)
-    error = mImpl->comm->Connect(connState->addr, connState->localAddr, handlerPtr);
+    error = m_impl->comm->connect(connState->addr, connState->localAddr, handlerPtr);
   else
-    error = mImpl->comm->Connect(connState->addr, handlerPtr);
+    error = m_impl->comm->connect(connState->addr, handlerPtr);
 
   if (error == Error::COMM_ALREADY_CONNECTED) {
     connState->connected = true;
@@ -189,12 +189,12 @@ void ConnectionManager::SendConnectRequest(ConnectionState *connState) {
     if (connState->serviceName != "") {
       LOG_VA_ERROR("Connection attempt to %s at %s:%d failed - %s.  Will retry again in %d seconds...", 
 		   connState->serviceName.c_str(), inet_ntoa(connState->addr.sin_addr), ntohs(connState->addr.sin_port),
-		   Error::GetText(error), connState->timeout);
+		   Error::get_text(error), connState->timeout);
     }
     else {
       LOG_VA_ERROR("Connection attempt to service at %s:%d failed - %s.  Will retry again in %d seconds...",
 		   inet_ntoa(connState->addr.sin_addr), ntohs(connState->addr.sin_port),
-		   Error::GetText(error), connState->timeout);
+		   Error::get_text(error), connState->timeout);
     }
 
     // reschedule
@@ -202,8 +202,8 @@ void ConnectionManager::SendConnectRequest(ConnectionState *connState) {
     connState->nextRetry.sec += connState->timeout;
 
     // add to retry heap
-    mImpl->retryQueue.push(connState);
-    mImpl->retryCond.notify_one();
+    m_impl->retryQueue.push(connState);
+    m_impl->retryCond.notify_one();
   }
 
 }
@@ -213,26 +213,26 @@ void ConnectionManager::SendConnectRequest(ConnectionState *connState) {
 /**
  *
  */
-int ConnectionManager::Remove(struct sockaddr_in &addr) {
+int ConnectionManager::remove(struct sockaddr_in &addr) {
   bool doClose = false;
   int error = Error::OK;
 
   {
-    boost::mutex::scoped_lock lock(mImpl->mutex);
-    SockAddrMapT<ConnectionStatePtr>::iterator iter = mImpl->connMap.find(addr);
+    boost::mutex::scoped_lock lock(m_impl->mutex);
+    SockAddrMapT<ConnectionStatePtr>::iterator iter = m_impl->connMap.find(addr);
 
-    if (iter != mImpl->connMap.end()) {
+    if (iter != m_impl->connMap.end()) {
       boost::mutex::scoped_lock connLock((*iter).second->mutex);
       if ((*iter).second->connected)
 	doClose = true;
       else
 	(*iter).second->connected = true;  // will prevent further connection attempts
-      mImpl->connMap.erase(iter);
+      m_impl->connMap.erase(iter);
     }
   }
 
   if (doClose)
-    error = mImpl->comm->CloseSocket(addr);
+    error = m_impl->comm->close_socket(addr);
 
   return error;
 }
@@ -249,10 +249,10 @@ int ConnectionManager::Remove(struct sockaddr_in &addr) {
  * @param eventPtr shared pointer to event object
  */
 void ConnectionManager::handle(EventPtr &eventPtr) {
-  boost::mutex::scoped_lock lock(mImpl->mutex);
-  SockAddrMapT<ConnectionStatePtr>::iterator iter = mImpl->connMap.find(eventPtr->addr);
+  boost::mutex::scoped_lock lock(m_impl->mutex);
+  SockAddrMapT<ConnectionStatePtr>::iterator iter = m_impl->connMap.find(eventPtr->addr);
 
-  if (iter != mImpl->connMap.end()) {
+  if (iter != m_impl->connMap.end()) {
     boost::mutex::scoped_lock connLock((*iter).second->mutex);
     ConnectionState *connState = (*iter).second.get();
 
@@ -261,7 +261,7 @@ void ConnectionManager::handle(EventPtr &eventPtr) {
       connState->cond.notify_all();
     }
     else {
-      if (!mImpl->quietMode) {
+      if (!m_impl->quietMode) {
 	LOG_VA_INFO("%s; Problem connecting to %s, will retry in %d seconds...",
 		    eventPtr->toString().c_str(), connState->serviceName.c_str(), connState->timeout);
       }
@@ -273,8 +273,8 @@ void ConnectionManager::handle(EventPtr &eventPtr) {
       boost::xtime_get(&connState->nextRetry, boost::TIME_UTC);
       connState->nextRetry.sec += connState->timeout;
       // add to retry heap
-      mImpl->retryQueue.push(connState);
-      mImpl->retryCond.notify_one();
+      m_impl->retryQueue.push(connState);
+      m_impl->retryCond.notify_one();
     }
     
     // Chain event to application supplied handler
@@ -292,15 +292,15 @@ void ConnectionManager::handle(EventPtr &eventPtr) {
  * This is the boost::thread run method.
  */
 void ConnectionManager::operator()() {
-  boost::mutex::scoped_lock lock(mImpl->mutex);
+  boost::mutex::scoped_lock lock(m_impl->mutex);
   ConnectionStatePtr connStatePtr;
 
   while (true) {
 
-    while (mImpl->retryQueue.empty())
-      mImpl->retryCond.wait(lock);
+    while (m_impl->retryQueue.empty())
+      m_impl->retryCond.wait(lock);
 
-    connStatePtr = mImpl->retryQueue.top();
+    connStatePtr = m_impl->retryQueue.top();
 
     if (!connStatePtr->connected) {
       {
@@ -309,21 +309,21 @@ void ConnectionManager::operator()() {
 	boost::xtime_get(&now, boost::TIME_UTC);
 
 	if (xtime_cmp(connStatePtr->nextRetry, now) <= 0) {
-	  mImpl->retryQueue.pop();
+	  m_impl->retryQueue.pop();
 	  /**
-	     if (!mImpl->quietMode) {
+	     if (!m_impl->quietMode) {
 	     LOG_VA_INFO("Attempting to re-establish connection to %s at %s:%d...",
 	     connStatePtr->serviceName.c_str(), inet_ntoa(connStatePtr->addr.sin_addr), ntohs(connStatePtr->addr.sin_port));
 	     }
 	  */
-	  SendConnectRequest(connStatePtr.get());
+	  send_connect_request(connStatePtr.get());
 	  continue;
 	}
       }
-      mImpl->retryCond.timed_wait(lock, connStatePtr->nextRetry);
+      m_impl->retryCond.timed_wait(lock, connStatePtr->nextRetry);
     }
     else
-      mImpl->retryQueue.pop();
+      m_impl->retryQueue.pop();
   }
 }
 

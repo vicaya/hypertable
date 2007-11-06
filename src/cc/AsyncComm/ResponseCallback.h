@@ -32,15 +32,15 @@ namespace hypertable {
   class ResponseCallback {
 
   public:
-    ResponseCallback(Comm *comm, EventPtr &eventPtr) : mComm(comm), mEventPtr(eventPtr) { return; }
+    ResponseCallback(Comm *comm, EventPtr &eventPtr) : m_comm(comm), m_event_ptr(eventPtr) { return; }
     virtual ~ResponseCallback() { return; }
     int error(int error, std::string msg);
     int response_ok();
-    void get_address(struct sockaddr_in &addr) { memcpy(&addr, &mEventPtr->addr, sizeof(addr)); }
+    void get_address(struct sockaddr_in &addr) { memcpy(&addr, &m_event_ptr->addr, sizeof(addr)); }
 
   protected:
-    Comm          *mComm;
-    EventPtr       mEventPtr;
+    Comm          *m_comm;
+    EventPtr       m_event_ptr;
     HeaderBuilder  hbuilder_;
   };
 

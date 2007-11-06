@@ -60,17 +60,17 @@ namespace {
   class ServerLauncher {
   public:
     ServerLauncher() {
-      if ((mChildPid = fork()) == 0) {
+      if ((m_child_pid = fork()) == 0) {
 	execl("./testServer", "./testServer", DEFAULT_PORT_ARG, "--app-queue", (char *)0);
       }
       poll(0,0,2000);
     }
     ~ServerLauncher() {
-      if (kill(mChildPid, 9) == -1)
+      if (kill(m_child_pid, 9) == -1)
 	perror("kill");
     }
     private:
-      pid_t mChildPid;
+      pid_t m_child_pid;
   };
 
 }
@@ -84,30 +84,30 @@ int main(int argc, char **argv) {
   ConnectionManagerPtr connManagerPtr;
 
   if (argc != 1)
-    Usage::DumpAndExit(usage);
+    Usage::dump_and_exit(usage);
 
   srand(8876);
 
-  System::Initialize(argv[0]);
-  ReactorFactory::Initialize(1);
+  System::initialize(argv[0]);
+  ReactorFactory::initialize(1);
 
-  InetAddr::Initialize(&addr, "localhost", DEFAULT_PORT);
+  InetAddr::initialize(&addr, "localhost", DEFAULT_PORT);
 
   comm = new Comm();
 
   connManagerPtr = new ConnectionManager(comm);
-  connManagerPtr->Add(addr, 5, "testServer");
-  if (!connManagerPtr->WaitForConnection(addr, 30)) {
+  connManagerPtr->add(addr, 5, "testServer");
+  if (!connManagerPtr->wait_for_connection(addr, 30)) {
     LOG_ERROR("Connect error");
     return 1;
   }
 
   CommTestThreadFunction threadFunc(comm, addr, "/usr/share/dict/words");
 
-  threadFunc.SetOutputFile("commTest.output.1");
+  threadFunc.set_output_file("commTest.output.1");
   thread1 = new boost::thread(threadFunc);
 
-  threadFunc.SetOutputFile("commTest.output.2");
+  threadFunc.set_output_file("commTest.output.2");
   thread2 = new boost::thread(threadFunc);
 
   thread1->join();

@@ -28,7 +28,7 @@ namespace Hyperspace {
   class Notification {
   public:
     Notification(uint64_t h, HyperspaceEventPtr &eptr) : handle(h), eventPtr(eptr) { 
-      eventPtr->IncrementNotificationCount();      
+      eventPtr->increment_notification_count();      
       return; 
     }
     uint64_t handle;

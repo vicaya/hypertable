@@ -36,10 +36,10 @@ namespace hypertable {
    */
   class ServersDirectoryHandler : public HandleCallback {
   public:
-    ServersDirectoryHandler(MasterPtr masterPtr, ApplicationQueuePtr &appQueuePtr) : HandleCallback(EVENT_MASK_CHILD_NODE_ADDED), mMasterPtr(masterPtr), mAppQueuePtr(appQueuePtr) { return; }
-    virtual void ChildNodeAdded(std::string name);
-    MasterPtr           mMasterPtr;
-    ApplicationQueuePtr mAppQueuePtr;
+    ServersDirectoryHandler(MasterPtr masterPtr, ApplicationQueuePtr &appQueuePtr) : HandleCallback(EVENT_MASK_CHILD_NODE_ADDED), m_master_ptr(masterPtr), m_app_queue_ptr(appQueuePtr) { return; }
+    virtual void child_node_added(std::string name);
+    MasterPtr           m_master_ptr;
+    ApplicationQueuePtr m_app_queue_ptr;
   };
 }
 

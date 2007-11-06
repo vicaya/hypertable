@@ -31,7 +31,7 @@ using namespace hypertable;
 using namespace Hyperspace;
 using namespace std;
 
-const char *CommandClose::msUsage[] = {
+const char *CommandClose::ms_usage[] = {
   "close <file>",
   "  This command issues a CLOSE request to Hyperspace.",
   (const char *)0
@@ -41,21 +41,21 @@ int CommandClose::run() {
   uint64_t handle;
   int error;
 
-  if (mArgs.size() != 1) {
+  if (m_args.size() != 1) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
     return -1;
   }
 
-  if (mArgs[0].second != "") {
+  if (m_args[0].second != "") {
     cerr << "Invalid character '=' in argument." << endl;
     return -1;
   }
 
-  if (!Util::GetHandle(mArgs[0].first, &handle))
+  if (!Util::get_handle(m_args[0].first, &handle))
     return -1;
 
-  if ((error = mSession->Close(handle)) != Error::OK) {
-    LOG_VA_ERROR("Error executing CLOSE request - %s", Error::GetText(error));
+  if ((error = m_session->close(handle)) != Error::OK) {
+    LOG_VA_ERROR("Error executing CLOSE request - %s", Error::get_text(error));
   }
 
   return error;

@@ -28,47 +28,47 @@ namespace hypertable {
   class Filesystem {
   public:
 
-    virtual int Open(std::string &name, DispatchHandler *handler) = 0;
-    virtual int Open(std::string &name, int32_t *fdp) = 0;
-    virtual int OpenBuffered(std::string &name, uint32_t bufSize, int32_t *fdp) = 0;
+    virtual int open(std::string &name, DispatchHandler *handler) = 0;
+    virtual int open(std::string &name, int32_t *fdp) = 0;
+    virtual int open_buffered(std::string &name, uint32_t bufSize, int32_t *fdp) = 0;
 
-    virtual int Create(std::string &name, bool overwrite, int32_t bufferSize,
+    virtual int create(std::string &name, bool overwrite, int32_t bufferSize,
 		       int32_t replication, int64_t blockSize, DispatchHandler *handler) = 0;
-    virtual int Create(std::string &name, bool overwrite, int32_t bufferSize,
+    virtual int create(std::string &name, bool overwrite, int32_t bufferSize,
 		       int32_t replication, int64_t blockSize, int32_t *fdp) = 0;
 
-    virtual int Close(int32_t fd, DispatchHandler *handler) = 0;
-    virtual int Close(int32_t fd) = 0;
+    virtual int close(int32_t fd, DispatchHandler *handler) = 0;
+    virtual int close(int32_t fd) = 0;
 
-    virtual int Read(int32_t fd, uint32_t amount, DispatchHandler *handler) = 0;
-    virtual int Read(int32_t fd, uint32_t amount, uint8_t *dst, uint32_t *nreadp) = 0;
+    virtual int read(int32_t fd, uint32_t amount, DispatchHandler *handler) = 0;
+    virtual int read(int32_t fd, uint32_t amount, uint8_t *dst, uint32_t *nreadp) = 0;
 
-    virtual int Append(int32_t fd, const void *buf, uint32_t amount, DispatchHandler *handler) = 0;
-    virtual int Append(int32_t fd, const void *buf, uint32_t amount) = 0;
+    virtual int append(int32_t fd, const void *buf, uint32_t amount, DispatchHandler *handler) = 0;
+    virtual int append(int32_t fd, const void *buf, uint32_t amount) = 0;
 
-    virtual int Seek(int32_t fd, uint64_t offset, DispatchHandler *handler) = 0;
-    virtual int Seek(int32_t fd, uint64_t offset) = 0;
+    virtual int seek(int32_t fd, uint64_t offset, DispatchHandler *handler) = 0;
+    virtual int seek(int32_t fd, uint64_t offset) = 0;
 
-    virtual int Remove(std::string &name, DispatchHandler *handler) = 0;
-    virtual int Remove(std::string &name) = 0;
+    virtual int remove(std::string &name, DispatchHandler *handler) = 0;
+    virtual int remove(std::string &name) = 0;
 
-    virtual int Length(std::string &name, DispatchHandler *handler) = 0;
-    virtual int Length(std::string &name, int64_t *lenp) = 0;
+    virtual int length(std::string &name, DispatchHandler *handler) = 0;
+    virtual int length(std::string &name, int64_t *lenp) = 0;
 
-    virtual int Pread(int32_t fd, uint64_t offset, uint32_t amount, DispatchHandler *handler) = 0;
-    virtual int Pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst, uint32_t *nreadp) = 0;
+    virtual int pread(int32_t fd, uint64_t offset, uint32_t amount, DispatchHandler *handler) = 0;
+    virtual int pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst, uint32_t *nreadp) = 0;
 
-    virtual int Mkdirs(std::string &name, DispatchHandler *handler) = 0;
-    virtual int Mkdirs(std::string &name) = 0;
+    virtual int mkdirs(std::string &name, DispatchHandler *handler) = 0;
+    virtual int mkdirs(std::string &name) = 0;
 
-    virtual int Rmdir(std::string &name, DispatchHandler *handler) = 0;
-    virtual int Rmdir(std::string &name) = 0;
+    virtual int rmdir(std::string &name, DispatchHandler *handler) = 0;
+    virtual int rmdir(std::string &name) = 0;
 
-    virtual int Readdir(std::string &name, DispatchHandler *handler) = 0;
-    virtual int Readdir(std::string &name, std::vector<std::string> &listing) = 0;
+    virtual int readdir(std::string &name, DispatchHandler *handler) = 0;
+    virtual int readdir(std::string &name, std::vector<std::string> &listing) = 0;
 
-    virtual int Flush(int32_t fd, DispatchHandler *handler) = 0;
-    virtual int Flush(int32_t fd) = 0;
+    virtual int flush(int32_t fd, DispatchHandler *handler) = 0;
+    virtual int flush(int32_t fd) = 0;
 
   };
 

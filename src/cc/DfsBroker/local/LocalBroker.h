@@ -69,29 +69,29 @@ namespace hypertable {
     LocalBroker(PropertiesPtr &propsPtr);
     virtual ~LocalBroker();
 
-    virtual void Open(ResponseCallbackOpen *cb, const char *fileName, uint32_t bufferSize);
-    virtual void Create(ResponseCallbackOpen *cb, const char *fileName, bool overwrite,
+    virtual void open(ResponseCallbackOpen *cb, const char *fileName, uint32_t bufferSize);
+    virtual void create(ResponseCallbackOpen *cb, const char *fileName, bool overwrite,
 			uint32_t bufferSize, uint16_t replication, uint64_t blockSize);
-    virtual void Close(ResponseCallback *cb, uint32_t fd);
-    virtual void Read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount);
-    virtual void Append(ResponseCallbackAppend *cb, uint32_t fd, uint32_t amount, uint8_t *data);
-    virtual void Seek(ResponseCallback *cb, uint32_t fd, uint64_t offset);
-    virtual void Remove(ResponseCallback *cb, const char *fileName);
-    virtual void Length(ResponseCallbackLength *cb, const char *fileName);
-    virtual void Pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset, uint32_t amount);
-    virtual void Mkdirs(ResponseCallback *cb, const char *dirName);
-    virtual void Rmdir(ResponseCallback *cb, const char *dirName);
-    virtual void Readdir(ResponseCallbackReaddir *cb, const char *dirName);
-    virtual void Flush(ResponseCallback *cb, uint32_t fd);
-    virtual void Status(ResponseCallback *cb);
-    virtual void Shutdown(ResponseCallback *cb);
+    virtual void close(ResponseCallback *cb, uint32_t fd);
+    virtual void read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount);
+    virtual void append(ResponseCallbackAppend *cb, uint32_t fd, uint32_t amount, uint8_t *data);
+    virtual void seek(ResponseCallback *cb, uint32_t fd, uint64_t offset);
+    virtual void remove(ResponseCallback *cb, const char *fileName);
+    virtual void length(ResponseCallbackLength *cb, const char *fileName);
+    virtual void pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset, uint32_t amount);
+    virtual void mkdirs(ResponseCallback *cb, const char *dirName);
+    virtual void rmdir(ResponseCallback *cb, const char *dirName);
+    virtual void readdir(ResponseCallbackReaddir *cb, const char *dirName);
+    virtual void flush(ResponseCallback *cb, uint32_t fd);
+    virtual void status(ResponseCallback *cb);
+    virtual void shutdown(ResponseCallback *cb);
 
   private:
 
-    virtual void ReportError(ResponseCallback *cb);
+    virtual void report_error(ResponseCallback *cb);
 
-    bool         mVerbose;
-    std::string  mRootdir;
+    bool         m_verbose;
+    std::string  m_rootdir;
   };
 
 }

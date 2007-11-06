@@ -24,7 +24,7 @@
 
 using namespace hypertable;
 
-const char *CommandRemove::msUsage[] = {
+const char *CommandRemove::ms_usage[] = {
   "remove <file>",
   "",
   "  This command sends a remove request for the DFS file <file>",
@@ -34,11 +34,11 @@ const char *CommandRemove::msUsage[] = {
 
 
 int CommandRemove::run() {
-  if (mArgs.size() < 1) {
+  if (m_args.size() < 1) {
     cerr << "Error:  no filename supplied." << endl;
     return -1;
   }
 
-  return mClient->Remove(mArgs[0].first);
+  return m_client->remove(m_args[0].first);
 }
 

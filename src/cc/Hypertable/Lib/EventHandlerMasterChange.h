@@ -34,14 +34,14 @@ namespace hypertable {
 
   class EventHandlerMasterChange : public ApplicationHandler {
   public:
-    EventHandlerMasterChange(MasterClientPtr &masterClientPtr, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mMasterClientPtr(masterClientPtr) {
+    EventHandlerMasterChange(MasterClientPtr &masterClientPtr, EventPtr &eventPtr) : ApplicationHandler(eventPtr), m_master_client_ptr(masterClientPtr) {
       return;
     }
 
     virtual void run();
 
   private:
-    MasterClientPtr mMasterClientPtr;
+    MasterClientPtr m_master_client_ptr;
   };
 
 }

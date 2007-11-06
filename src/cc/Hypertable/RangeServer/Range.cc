@@ -43,7 +43,7 @@ using namespace std;
 
 
 
-Range::Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), mMutex(), mSchema(schemaPtr), mAccessGroupMap(), mAccessGroupVector(), mColumnFamilyVector(), mMaintenanceInProgress(false), mLatestTimestamp(0), mSplitStartTime(0), mSplitKeyPtr(), mSplitLogPtr(), mMaintenanceMutex(), mMaintenanceFinishedCond(), mUpdateQuiesceCond(), mHoldUpdates(false), mUpdateCounter(0) {
+Range::Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), m_mutex(), m_schema(schemaPtr), m_access_group_map(), m_access_group_vector(), m_column_family_vector(), m_maintenance_in_progress(false), m_latest_timestamp(0), m_split_start_time(0), m_split_key_ptr(), m_split_log_ptr(), m_maintenance_mutex(), m_maintenance_finished_cond(), m_update_quiesce_cond(), m_hold_updates(false), m_update_counter(0) {
   CellStorePtr cellStorePtr;
   std::string accessGroupName;
   AccessGroup *ag;
@@ -52,63 +52,63 @@ Range::Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), mMu
   ByteString32T *startKey=0, *endKey=0;
   int32_t len;
 
-  rangeInfoPtr->GetTableName(mTableName);
-  rangeInfoPtr->GetStartRow(mStartRow);
-  rangeInfoPtr->GetEndRow(mEndRow);
+  rangeInfoPtr->get_table_name(m_table_name);
+  rangeInfoPtr->get_start_row(m_start_row);
+  rangeInfoPtr->get_end_row(m_end_row);
 
   // set up start key
-  if (mStartRow != "") {
-    len = strlen(mStartRow.c_str()) + 1;
+  if (m_start_row != "") {
+    len = strlen(m_start_row.c_str()) + 1;
     startKey = (ByteString32T *)new uint8_t [ sizeof(int32_t) + len ];
-    strcpy((char *)startKey->data, mStartRow.c_str());
+    strcpy((char *)startKey->data, m_start_row.c_str());
     startKey->len = len;
-    mStartKeyPtr.reset(startKey);
+    m_start_key_ptr.reset(startKey);
   }
 
   // set up end key
-  if (mEndRow != "") {
-    len = strlen(mEndRow.c_str()) + 1;
+  if (m_end_row != "") {
+    len = strlen(m_end_row.c_str()) + 1;
     endKey = (ByteString32T *)new uint8_t [ sizeof(int32_t) + len ];
-    strcpy((char *)endKey->data, mEndRow.c_str());
+    strcpy((char *)endKey->data, m_end_row.c_str());
     endKey->len = len;
-    mEndKeyPtr.reset(endKey);
+    m_end_key_ptr.reset(endKey);
   }
 
-  mColumnFamilyVector.resize( mSchema->GetMaxColumnFamilyId() + 1 );
+  m_column_family_vector.resize( m_schema->get_max_column_family_id() + 1 );
 
-  list<Schema::AccessGroup *> *agList = mSchema->GetAccessGroupList();
+  list<Schema::AccessGroup *> *agList = m_schema->get_access_group_list();
 
   for (list<Schema::AccessGroup *>::iterator agIter = agList->begin(); agIter != agList->end(); agIter++) {
-    ag = new AccessGroup(mSchema, (*agIter), rangeInfoPtr);
-    mAccessGroupMap[(*agIter)->name] = ag;
-    mAccessGroupVector.push_back(ag);
+    ag = new AccessGroup(m_schema, (*agIter), rangeInfoPtr);
+    m_access_group_map[(*agIter)->name] = ag;
+    m_access_group_vector.push_back(ag);
     for (list<Schema::ColumnFamily *>::iterator cfIter = (*agIter)->columns.begin(); cfIter != (*agIter)->columns.end(); cfIter++)
-      mColumnFamilyVector[(*cfIter)->id] = ag;
+      m_column_family_vector[(*cfIter)->id] = ag;
   }
 
   /**
    * Load CellStores
    */
   vector<string> cellStoreVector;
-  rangeInfoPtr->GetTables(cellStoreVector);
+  rangeInfoPtr->get_tables(cellStoreVector);
   for (size_t i=0; i<cellStoreVector.size(); i++) {
     cellStorePtr = new CellStoreV0(Global::dfs);
-    if (!ExtractAccessGroupFromPath(cellStoreVector[i], accessGroupName, &storeId)) {
+    if (!extract_access_group_from_path(cellStoreVector[i], accessGroupName, &storeId)) {
       LOG_VA_ERROR("Unable to extract locality group name from path '%s'", cellStoreVector[i].c_str());
       continue;
     }
-    if (cellStorePtr->Open(cellStoreVector[i].c_str(), startKey, endKey) != Error::OK)
+    if (cellStorePtr->open(cellStoreVector[i].c_str(), startKey, endKey) != Error::OK)
       continue;
-    if (cellStorePtr->LoadIndex() != Error::OK)
+    if (cellStorePtr->load_index() != Error::OK)
       continue;
-    ag = mAccessGroupMap[accessGroupName];
+    ag = m_access_group_map[accessGroupName];
     if (ag == 0) {
       LOG_VA_ERROR("Unrecognized locality group name '%s' in path '%s'", accessGroupName.c_str(), cellStoreVector[i].c_str());
       continue;
     }
-    if (minLogCutoff == 0 || cellStorePtr->GetLogCutoffTime() < minLogCutoff)
-      minLogCutoff = cellStorePtr->GetLogCutoffTime();
-    ag->AddCellStore(cellStorePtr, storeId);
+    if (minLogCutoff == 0 || cellStorePtr->get_log_cutoff_time() < minLogCutoff)
+      minLogCutoff = cellStorePtr->get_log_cutoff_time();
+    ag->add_cell_store(cellStorePtr, storeId);
     //cout << "Just added " << cellStorePtrVector[i].c_str() << endl;
   }
 
@@ -116,21 +116,21 @@ Range::Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), mMu
    * Replay commit log
    */
   string logDir;
-  rangeInfoPtr->GetLogDir(logDir);
+  rangeInfoPtr->get_log_dir(logDir);
   if (logDir != "")
-    ReplayCommitLog(logDir, minLogCutoff);
+    replay_commit_log(logDir, minLogCutoff);
 
   return;
 }
 
-bool Range::ExtractAccessGroupFromPath(std::string &path, std::string &name, uint32_t *storeIdp) {
-  const char *base = strstr(path.c_str(), mTableName.c_str());
+bool Range::extract_access_group_from_path(std::string &path, std::string &name, uint32_t *storeIdp) {
+  const char *base = strstr(path.c_str(), m_table_name.c_str());
   const char *endptr;
 
   if (base == 0)
     return false;
 
-  base += strlen(mTableName.c_str());
+  base += strlen(m_table_name.c_str());
   if (*base++ != '/')
     return false;
   endptr = strchr(base, '/');
@@ -150,7 +150,7 @@ bool Range::ExtractAccessGroupFromPath(std::string &path, std::string &name, uin
 /**
  * TODO: Make this more robust
  */
-int Range::Add(const ByteString32T *key, const ByteString32T *value) {
+int Range::add(const ByteString32T *key, const ByteString32T *value) {
   Key keyComps;
 
   if (!keyComps.load(key)) {
@@ -158,21 +158,21 @@ int Range::Add(const ByteString32T *key, const ByteString32T *value) {
     return 0;
   }
 
-  if (keyComps.columnFamily >= mColumnFamilyVector.size()) {
+  if (keyComps.columnFamily >= m_column_family_vector.size()) {
     LOG_VA_ERROR("Bad column family (%d)", keyComps.columnFamily);
     return 0;
   }
 
-  if (keyComps.timestamp > mLatestTimestamp)
-    mLatestTimestamp = keyComps.timestamp;
+  if (keyComps.timestamp > m_latest_timestamp)
+    m_latest_timestamp = keyComps.timestamp;
 
   if (keyComps.flag == FLAG_DELETE_ROW) {
-    for (AccessGroupMapT::iterator iter = mAccessGroupMap.begin(); iter != mAccessGroupMap.end(); iter++) {
-      (*iter).second->Add(key, value);
+    for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++) {
+      (*iter).second->add(key, value);
     }
   }
   else if (keyComps.flag == FLAG_DELETE_CELL || keyComps.flag == FLAG_INSERT) {
-    mColumnFamilyVector[keyComps.columnFamily]->Add(key, value);
+    m_column_family_vector[keyComps.columnFamily]->add(key, value);
   }
   else {
     LOG_VA_ERROR("Bad flag value (%d)", keyComps.flag);
@@ -181,20 +181,20 @@ int Range::Add(const ByteString32T *key, const ByteString32T *value) {
 }
 
 
-CellListScanner *Range::CreateScanner(ScanContextPtr &scanContextPtr) {
+CellListScanner *Range::create_scanner(ScanContextPtr &scanContextPtr) {
   CellListScanner *lastScanner = 0;
   MergeScanner *mscanner = 0;
-  for (AccessGroupMapT::iterator iter = mAccessGroupMap.begin(); iter != mAccessGroupMap.end(); iter++) {
-    if ((*iter).second->IncludeInScan(scanContextPtr)) {
+  for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++) {
+    if ((*iter).second->include_in_scan(scanContextPtr)) {
       if (mscanner != 0)
-	mscanner->AddScanner((*iter).second->CreateScanner(scanContextPtr));
+	mscanner->add_scanner((*iter).second->create_scanner(scanContextPtr));
       else {
 	if (lastScanner == 0)
-	  lastScanner = (*iter).second->CreateScanner(scanContextPtr);
+	  lastScanner = (*iter).second->create_scanner(scanContextPtr);
 	else {
 	  mscanner = new MergeScanner(scanContextPtr, false);
-	  mscanner->AddScanner(lastScanner);
-	  mscanner->AddScanner((*iter).second->CreateScanner(scanContextPtr));
+	  mscanner->add_scanner(lastScanner);
+	  mscanner->add_scanner((*iter).second->create_scanner(scanContextPtr));
 	}
       }
     }
@@ -207,19 +207,19 @@ CellListScanner *Range::CreateScanner(ScanContextPtr &scanContextPtr) {
 }
 
 
-uint64_t Range::DiskUsage() {
+uint64_t Range::disk_usage() {
   uint64_t usage = 0;
-  for (size_t i=0; i<mAccessGroupVector.size(); i++)
-    usage += mAccessGroupVector[i]->DiskUsage();
+  for (size_t i=0; i<m_access_group_vector.size(); i++)
+    usage += m_access_group_vector[i]->disk_usage();
   return usage;
 }
 
-ByteString32T *Range::GetSplitKey() {
+ByteString32T *Range::get_split_key() {
   AccessGroup::SplitKeyQueueT splitKeyHeap;
   ltByteString32 sortObj;
   vector<ByteString32T *> splitKeys;
-  for (size_t i=0; i<mAccessGroupVector.size(); i++)
-    mAccessGroupVector[i]->GetSplitKeys(splitKeyHeap);
+  for (size_t i=0; i<m_access_group_vector.size(); i++)
+    m_access_group_vector[i]->get_split_keys(splitKeyHeap);
   for (int32_t i=0; i<Global::localityGroupMaxFiles && !splitKeyHeap.empty(); i++) {
     const AccessGroup::SplitKeyInfoT  &splitKeyInfo = splitKeyHeap.top();
     splitKeys.push_back( splitKeyInfo.key );
@@ -230,11 +230,11 @@ ByteString32T *Range::GetSplitKey() {
 }
 
 
-uint64_t Range::GetLogCutoffTime() {
-  uint64_t cutoffTime = mAccessGroupVector[0]->GetLogCutoffTime();
-  for (size_t i=1; i<mAccessGroupVector.size(); i++) {
-    if (mAccessGroupVector[i]->GetLogCutoffTime() < cutoffTime)
-      cutoffTime = mAccessGroupVector[i]->GetLogCutoffTime();
+uint64_t Range::get_log_cutoff_time() {
+  uint64_t cutoffTime = m_access_group_vector[0]->get_log_cutoff_time();
+  for (size_t i=1; i<m_access_group_vector.size(); i++) {
+    if (m_access_group_vector[i]->get_log_cutoff_time() < cutoffTime)
+      cutoffTime = m_access_group_vector[i]->get_log_cutoff_time();
   }
   return cutoffTime;
 }
@@ -243,23 +243,23 @@ uint64_t Range::GetLogCutoffTime() {
 /**
  * 
  */
-void Range::ScheduleMaintenance() {
-  boost::mutex::scoped_lock lock(mMutex);
+void Range::schedule_maintenance() {
+  boost::mutex::scoped_lock lock(m_mutex);
 
-  if (mMaintenanceInProgress)
+  if (m_maintenance_in_progress)
     return;
 
   // Need split?
-  if (DiskUsage() > Global::rangeMaxBytes) {
-    mMaintenanceInProgress = true;
-    MaintenanceThread::ScheduleMaintenance(this);
+  if (disk_usage() > Global::rangeMaxBytes) {
+    m_maintenance_in_progress = true;
+    MaintenanceThread::schedule_maintenance(this);
   }
   else {
     // Need compaction?
-    for (size_t i=0; i<mAccessGroupVector.size(); i++) {
-      if (mAccessGroupVector[i]->NeedsCompaction()) {
-	mMaintenanceInProgress = true;
-	MaintenanceThread::ScheduleMaintenance(this);
+    for (size_t i=0; i<m_access_group_vector.size(); i++) {
+      if (m_access_group_vector[i]->needs_compaction()) {
+	m_maintenance_in_progress = true;
+	MaintenanceThread::schedule_maintenance(this);
 	break;
       }
     }
@@ -267,9 +267,9 @@ void Range::ScheduleMaintenance() {
 }
 
 
-void Range::DoMaintenance() {
-  assert(mMaintenanceInProgress);
-  if (DiskUsage() > Global::rangeMaxBytes) {
+void Range::do_maintenance() {
+  assert(m_maintenance_in_progress);
+  if (disk_usage() > Global::rangeMaxBytes) {
     ByteString32T *key;
     std::string splitPoint;
     std::string splitLogDir;
@@ -277,7 +277,7 @@ void Range::DoMaintenance() {
     RangeInfoPtr rangeInfoPtr;
     int error;
 
-    key = GetSplitKey();
+    key = get_split_key();
     assert(key);
 
     splitPoint = (const char *)key->data;
@@ -293,7 +293,7 @@ void Range::DoMaintenance() {
 
     // Create split log dir
     string logDir = Global::logDirRoot + splitLogDir;
-    if (!FileUtils::Mkdirs(logDir.c_str())) {
+    if (!FileUtils::mkdirs(logDir.c_str())) {
       LOG_VA_ERROR("Problem creating local log directory '%s'", logDir.c_str());
       exit(1);
     }
@@ -301,45 +301,45 @@ void Range::DoMaintenance() {
     /**
      *  Update METADATA with split information
      */
-    if ((error = Global::metadata->GetRangeInfo(mTableName, mEndRow, rangeInfoPtr)) != Error::OK) {
+    if ((error = Global::metadata->get_range_info(m_table_name, m_end_row, rangeInfoPtr)) != Error::OK) {
       LOG_VA_ERROR("Unable to find range (table='%s' endRow='%s') in metadata - %s",
-		   mTableName.c_str(), mEndRow.c_str(), Error::GetText(error));
+		   m_table_name.c_str(), m_end_row.c_str(), Error::get_text(error));
       exit(1);
     }
-    rangeInfoPtr->SetSplitPoint(splitPoint);
-    rangeInfoPtr->SetSplitLogDir(splitLogDir);
-    Global::metadata->Sync();
+    rangeInfoPtr->set_split_point(splitPoint);
+    rangeInfoPtr->set_split_log_dir(splitLogDir);
+    Global::metadata->sync();
 
 
     /**
      * Atomically obtain timestamp and install split log
      */
     {
-      boost::mutex::scoped_lock lock(mMaintenanceMutex);
+      boost::mutex::scoped_lock lock(m_maintenance_mutex);
 
       /** block updates **/
-      mHoldUpdates = true;
-      while (mUpdateCounter > 0)
-	mUpdateQuiesceCond.wait(lock);
+      m_hold_updates = true;
+      while (m_update_counter > 0)
+	m_update_quiesce_cond.wait(lock);
 
       {
-	boost::mutex::scoped_lock lock(mMutex);
-	mSplitStartTime = mLatestTimestamp;
+	boost::mutex::scoped_lock lock(m_mutex);
+	m_split_start_time = m_latest_timestamp;
       }
 
-      mSplitKeyPtr.reset( CreateCopy(key) );
-      mSplitLogPtr.reset( new CommitLog(Global::dfs, splitLogDir, 0x100000000LL) );
+      m_split_key_ptr.reset( CreateCopy(key) );
+      m_split_log_ptr.reset( new CommitLog(Global::dfs, splitLogDir, 0x100000000LL) );
 
       /** unblock updates **/
-      mHoldUpdates = false;
-      mMaintenanceFinishedCond.notify_all();
+      m_hold_updates = false;
+      m_maintenance_finished_cond.notify_all();
     }
 
     /**
      * Perform major compaction
      */
-    for (size_t i=0; i<mAccessGroupVector.size(); i++) {
-      mAccessGroupVector[i]->RunCompaction(mSplitStartTime, true);  // verify the timestamp
+    for (size_t i=0; i<m_access_group_vector.size(); i++) {
+      m_access_group_vector[i]->run_compaction(m_split_start_time, true);  // verify the timestamp
     }
 
     /**
@@ -348,59 +348,59 @@ void Range::DoMaintenance() {
     {
       std::vector<std::string> stores;
       RangeInfoPtr newRangePtr( new RangeInfo() );
-      newRangePtr->SetTableName(mTableName);
-      newRangePtr->SetStartRow(mStartRow);
-      newRangePtr->SetEndRow(splitPoint);
-      newRangePtr->SetSplitLogDir(splitLogDir);
-      rangeInfoPtr->GetTables(stores);
+      newRangePtr->set_table_name(m_table_name);
+      newRangePtr->set_start_row(m_start_row);
+      newRangePtr->set_end_row(splitPoint);
+      newRangePtr->set_split_log_dir(splitLogDir);
+      rangeInfoPtr->get_tables(stores);
       for (std::vector<std::string>::iterator iter = stores.begin(); iter != stores.end(); iter++)
-	newRangePtr->AddCellStore(*iter);
-      Global::metadata->AddRangeInfo(newRangePtr);
-      Global::metadata->Sync();
+	newRangePtr->add_cell_store(*iter);
+      Global::metadata->add_range_info(newRangePtr);
+      Global::metadata->sync();
     }
 
     /**
      *  Shrink range and remove pending split info from METADATA for existing range
      */
     {
-      boost::mutex::scoped_lock lock(mMutex);      
-      mStartRow = splitPoint;
+      boost::mutex::scoped_lock lock(m_mutex);      
+      m_start_row = splitPoint;
       splitLogDir = "";
-      rangeInfoPtr->SetStartRow(mStartRow);
-      rangeInfoPtr->SetSplitLogDir(splitLogDir);
-      Global::metadata->Sync();
+      rangeInfoPtr->set_start_row(m_start_row);
+      rangeInfoPtr->set_split_log_dir(splitLogDir);
+      Global::metadata->sync();
     }
 
     /**
      *  Do the split
      */
     {
-      boost::mutex::scoped_lock lock(mMaintenanceMutex);
+      boost::mutex::scoped_lock lock(m_maintenance_mutex);
 
       {
-	boost::mutex::scoped_lock lock(mMutex);
-	mSplitStartTime = 0;
-	mSplitKeyPtr.reset(0);
+	boost::mutex::scoped_lock lock(m_mutex);
+	m_split_start_time = 0;
+	m_split_key_ptr.reset(0);
       }
 
       /** block updates **/
-      mHoldUpdates = true;
-      while (mUpdateCounter > 0)
-	mUpdateQuiesceCond.wait(lock);
+      m_hold_updates = true;
+      while (m_update_counter > 0)
+	m_update_quiesce_cond.wait(lock);
 
       // at this point, there are no running updates
 
       // TBD: Do the actual split
 
       /** unblock updates **/
-      mHoldUpdates = false;
-      mMaintenanceFinishedCond.notify_all();
+      m_hold_updates = false;
+      m_maintenance_finished_cond.notify_all();
     }
 
-    if ((error = mSplitLogPtr->Close(Global::log->GetTimestamp())) != Error::OK) {
-      LOG_VA_ERROR("Problem closing split log '%s' - %s", mSplitLogPtr->GetLogDir().c_str(), Error::GetText(error));
+    if ((error = m_split_log_ptr->close(Global::log->get_timestamp())) != Error::OK) {
+      LOG_VA_ERROR("Problem closing split log '%s' - %s", m_split_log_ptr->get_log_dir().c_str(), Error::get_text(error));
     }
-    mSplitLogPtr.reset();
+    m_split_log_ptr.reset();
 
     /**
      *  TBD:  Notify Master of split
@@ -409,56 +409,56 @@ void Range::DoMaintenance() {
 
   }
   else
-    RunCompaction(false);
+    run_compaction(false);
 
-  mMaintenanceInProgress = false;
+  m_maintenance_in_progress = false;
 }
 
 
-void Range::DoCompaction(bool major) {
-  RunCompaction(major);
-  mMaintenanceInProgress = false;
+void Range::do_compaction(bool major) {
+  run_compaction(major);
+  m_maintenance_in_progress = false;
 }
 
 
-uint64_t Range::RunCompaction(bool major) {
+uint64_t Range::run_compaction(bool major) {
   uint64_t timestamp;
   
   {
-    boost::mutex::scoped_lock lock(mMaintenanceMutex);
+    boost::mutex::scoped_lock lock(m_maintenance_mutex);
 
     /** block updates **/
-    mHoldUpdates = true;
-    while (mUpdateCounter > 0)
-      mUpdateQuiesceCond.wait(lock);
+    m_hold_updates = true;
+    while (m_update_counter > 0)
+      m_update_quiesce_cond.wait(lock);
 
     {
-      boost::mutex::scoped_lock lock(mMutex);
-      timestamp = mLatestTimestamp;
+      boost::mutex::scoped_lock lock(m_mutex);
+      timestamp = m_latest_timestamp;
     }
 
     /** unblock updates **/
-    mHoldUpdates = false;
-    mMaintenanceFinishedCond.notify_all();
+    m_hold_updates = false;
+    m_maintenance_finished_cond.notify_all();
   }
 
-  for (size_t i=0; i<mAccessGroupVector.size(); i++)
-    mAccessGroupVector[i]->RunCompaction(timestamp, major);
+  for (size_t i=0; i<m_access_group_vector.size(); i++)
+    m_access_group_vector[i]->run_compaction(timestamp, major);
 
   return timestamp;
 }
 
 
 
-void Range::Lock() {
-  for (AccessGroupMapT::iterator iter = mAccessGroupMap.begin(); iter != mAccessGroupMap.end(); iter++)
-    (*iter).second->Lock();
+void Range::lock() {
+  for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++)
+    (*iter).second->lock();
 }
 
 
-void Range::Unlock() {
-  for (AccessGroupMapT::iterator iter = mAccessGroupMap.begin(); iter != mAccessGroupMap.end(); iter++)
-    (*iter).second->Unlock();
+void Range::unlock() {
+  for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++)
+    (*iter).second->unlock();
 }
 
 
@@ -477,7 +477,7 @@ void Range::Unlock() {
  *
  * FIX ME!!!!
  */
-void Range::ReplayCommitLog(string &logDir, uint64_t minLogCutoff) {
+void Range::replay_commit_log(string &logDir, uint64_t minLogCutoff) {
   CommitLogReader *clogReader = new CommitLogReader(Global::dfs, logDir);
   CommitLogHeaderT *header;  
   string tableName;
@@ -495,13 +495,13 @@ void Range::ReplayCommitLog(string &logDir, uint64_t minLogCutoff) {
   Key keyComps;
   uint64_t cutoffTime;
   
-  clogReader->InitializeRead(0);
+  clogReader->initialize_read(0);
 
-  while (clogReader->NextBlock(&header)) {
+  while (clogReader->next_block(&header)) {
     tableName = (const char *)&header[1];
     nblocks++;
 
-    if (mTableName == tableName) {
+    if (m_table_name == tableName) {
       modPtr = (uint8_t *)&header[1] + strlen((const char *)&header[1]) + 1;
       modEnd = (uint8_t *)header + header->length;
     
@@ -518,20 +518,20 @@ void Range::ReplayCommitLog(string &logDir, uint64_t minLogCutoff) {
 	modPtr += sizeof(int32_t) + valueLen;
 
 	// TODO: Check for valid column family!!!
-	if (keyComps.columnFamily == 0 || keyComps.columnFamily >= mColumnFamilyVector.size())
+	if (keyComps.columnFamily == 0 || keyComps.columnFamily >= m_column_family_vector.size())
 	  cutoffTime = minLogCutoff;
 	else
-	  cutoffTime = mColumnFamilyVector[keyComps.columnFamily]->GetLogCutoffTime();
+	  cutoffTime = m_column_family_vector[keyComps.columnFamily]->get_log_cutoff_time();
 
-	if (rowkey < mEndRow && mStartRow <= rowkey && keyComps.timestamp > cutoffTime) {
+	if (rowkey < m_end_row && m_start_row <= rowkey && keyComps.timestamp > cutoffTime) {
 	  len = modPtr - modBase;
 	  if (len > (size_t)(goEnd-goNext)) {
 	    // Commit them to current log
-	    if (Global::log->Write(mTableName.c_str(), goBuffer.buf, goNext-goBuffer.buf, header->timestamp) != Error::OK)
+	    if (Global::log->write(m_table_name.c_str(), goBuffer.buf, goNext-goBuffer.buf, header->timestamp) != Error::OK)
 	      return;
 	    // Replay them into memory
 	    while (!insertQueue.empty()) {
-	      Add(insertQueue.front().first, insertQueue.front().second);
+	      add(insertQueue.front().first, insertQueue.front().second);
 	      insertQueue.pop();
 	    }
 	    goNext = goBuffer.buf;
@@ -549,11 +549,11 @@ void Range::ReplayCommitLog(string &logDir, uint64_t minLogCutoff) {
   }
 
   if (goNext > goBuffer.buf) {
-    if (Global::log->Write(mTableName.c_str(), goBuffer.buf, goNext-goBuffer.buf, header->timestamp) != Error::OK)
+    if (Global::log->write(m_table_name.c_str(), goBuffer.buf, goNext-goBuffer.buf, header->timestamp) != Error::OK)
       return;
     // Replay them into memory
     while (!insertQueue.empty()) {
-      Add(insertQueue.front().first, insertQueue.front().second);
+      add(insertQueue.front().first, insertQueue.front().second);
       insertQueue.pop();
     }
   }
@@ -566,21 +566,21 @@ void Range::ReplayCommitLog(string &logDir, uint64_t minLogCutoff) {
 /**
  *
  */
-void Range::IncrementUpdateCounter() {
-  boost::mutex::scoped_lock lock(mMaintenanceMutex);
-  while (mHoldUpdates)
-    mMaintenanceFinishedCond.wait(lock);
-  mUpdateCounter++;
+void Range::increment_update_counter() {
+  boost::mutex::scoped_lock lock(m_maintenance_mutex);
+  while (m_hold_updates)
+    m_maintenance_finished_cond.wait(lock);
+  m_update_counter++;
 }
 
 
 /**
  *
  */
-void Range::DecrementUpdateCounter() {
-  boost::mutex::scoped_lock lock(mMaintenanceMutex);
-  mUpdateCounter--;
-  if (mHoldUpdates && mUpdateCounter == 0)
-    mUpdateQuiesceCond.notify_one();
+void Range::decrement_update_counter() {
+  boost::mutex::scoped_lock lock(m_maintenance_mutex);
+  m_update_counter--;
+  if (m_hold_updates && m_update_counter == 0)
+    m_update_quiesce_cond.notify_one();
 }
 

@@ -37,16 +37,16 @@ using namespace hypertable;
  *
  */
 void RequestHandlerExists::run() {
-  ResponseCallbackExists cb(mComm, mEventPtr);
+  ResponseCallbackExists cb(m_comm, m_event_ptr);
   const char *name;
-  size_t remaining = mEventPtr->messageLen - 2;
-  uint8_t *msgPtr = mEventPtr->message + 2;
+  size_t remaining = m_event_ptr->messageLen - 2;
+  uint8_t *msgPtr = m_event_ptr->message + 2;
 
   // file name
-  if (!Serialization::DecodeString(&msgPtr, &remaining, &name))
+  if (!Serialization::decode_string(&msgPtr, &remaining, &name))
     goto abort;
 
-  mMaster->Exists(&cb, mSessionId, name);
+  m_master->exists(&cb, m_session_id, name);
 
   return;
 

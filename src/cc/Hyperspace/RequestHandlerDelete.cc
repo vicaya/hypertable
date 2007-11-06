@@ -36,16 +36,16 @@ using namespace hypertable;
  *
  */
 void RequestHandlerDelete::run() {
-  ResponseCallback cb(mComm, mEventPtr);
+  ResponseCallback cb(m_comm, m_event_ptr);
   const char *name;
-  size_t remaining = mEventPtr->messageLen - 2;
-  uint8_t *msgPtr = mEventPtr->message + 2;
+  size_t remaining = m_event_ptr->messageLen - 2;
+  uint8_t *msgPtr = m_event_ptr->message + 2;
 
   // directory name
-  if (!Serialization::DecodeString(&msgPtr, &remaining, &name))
+  if (!Serialization::decode_string(&msgPtr, &remaining, &name))
     goto abort;
 
-  mMaster->Delete(&cb, mSessionId, name);
+  m_master->unlink(&cb, m_session_id, name);
 
   return;
 

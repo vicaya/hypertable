@@ -31,14 +31,14 @@ namespace Hyperspace {
 
   class CommandAttrGet : public InteractiveCommand {
   public:
-    CommandAttrGet(Session *session) : mSession(session) { return; }
-    virtual const char *CommandText() { return "attrget"; }
-    virtual const char **Usage() { return msUsage; }
+    CommandAttrGet(Session *session) : m_session(session) { return; }
+    virtual const char *command_text() { return "attrget"; }
+    virtual const char **usage() { return ms_usage; }
     virtual int run();
 
   private:
-    static const char *msUsage[];
-    Session *mSession;
+    static const char *ms_usage[];
+    Session *m_session;
   };
 
 }

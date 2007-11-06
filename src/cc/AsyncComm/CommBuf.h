@@ -51,21 +51,21 @@ namespace hypertable {
    *
    * <pre>
    *   HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
-   *   hbuilder.AssignUniqueId();
+   *   hbuilder.assign_unique_id();
    *   CommBuf *cbuf = new CommBuf(hbuilder, 2);
-   *   cbuf->AppendShort(COMMAND_STATUS); </pre>
+   *   cbuf->append_short(COMMAND_STATUS); </pre>
    *
    * The following is a real world
    * example of a CommBuf being used to send back a response from
    * a read request.
    *
    * <pre>
-   *   hbuilder.InitializeFromRequest(mEventPtr->header);
+   *   hbuilder.initialize_from_request(m_event_ptr->header);
    *   CommBufPtr cbufPtr( new CommBuf(hbuilder, 16, data, nread) );
-   *   cbufPtr->AppendInt(Error::OK);
-   *   cbufPtr->AppendLong(offset);
-   *   cbufPtr->AppendInt(nread);
-   *   error = mComm->SendResponse(mEventPtr->addr, cbufPtr); </pre>
+   *   cbufPtr->append_int(Error::OK);
+   *   cbufPtr->append_long(offset);
+   *   cbufPtr->append_int(nread);
+   *   error = m_comm->send_response(m_event_ptr->addr, cbufPtr); </pre>
    *
    */
   class CommBuf {
@@ -86,13 +86,13 @@ namespace hypertable {
      * @param _exLen the length of the extended buffer
      */
     CommBuf(HeaderBuilder &hbuilder, uint32_t len, const void *_ex=0, uint32_t _exLen=0) {
-      len += hbuilder.HeaderLength();
+      len += hbuilder.header_length();
       data = dataPtr = new uint8_t [ len ];
       dataLen = len;
       ext = extPtr = (const uint8_t *)_ex;
       extLen = _exLen;
-      hbuilder.SetTotalLen(len+extLen);
-      hbuilder.Encode(&dataPtr);
+      hbuilder.set_total_len(len+extLen);
+      hbuilder.encode(&dataPtr);
     }
 
     /**
@@ -109,7 +109,7 @@ namespace hypertable {
      * uses these pointers to track how much data has been sent and
      * what is remaining to be sent.
      */
-    void ResetDataPointers() {
+    void reset_data_pointers() {
       dataPtr = (uint8_t *)data;
       extPtr = ext;
     }
@@ -117,75 +117,75 @@ namespace hypertable {
     /**
      * Returns the primary buffer pointer.
      */
-    void *GetDataPtr() { return dataPtr; }
+    void *get_data_ptr() { return dataPtr; }
 
     /**
      * Returns address of the primary buffer pointer.
      */
-    uint8_t **GetDataPtrAddress() { return &dataPtr; }
+    uint8_t **get_data_ptr_address() { return &dataPtr; }
 
     /**
      * Advance the primary buffer pointer by len bytes
      *
      * @param len the number of bytes to advance the pointer by
      */
-    void *AdvanceDataPtr(size_t len) { dataPtr += len; }
+    void *advance_data_ptr(size_t len) { dataPtr += len; }
 
     /**
      * Append a byte of data to the primary buffer, advancing the
      * primary buffer pointer by 1
      */
-    void AppendByte(uint8_t bval) { *dataPtr++ = bval; }
+    void append_byte(uint8_t bval) { *dataPtr++ = bval; }
 
     /**
      * Appends a sequence of bytes to the primary buffer, advancing
      * the primary buffer pointer by the number of bytes appended
      */
-    void AppendBytes(uint8_t *bytes, uint32_t len) { memcpy(dataPtr, bytes, len); dataPtr += len; }
+    void append_bytes(uint8_t *bytes, uint32_t len) { memcpy(dataPtr, bytes, len); dataPtr += len; }
 
     /**
      * Appends a short integer (16 bit) to the the primary buffer,
      * advancing the primary buffer pointer
      */
-    void AppendShort(uint16_t sval) { Serialization::EncodeShort(&dataPtr, sval); }
+    void append_short(uint16_t sval) { Serialization::encode_short(&dataPtr, sval); }
     
     /**
      * Appends an integer (32 bit) to the the primary buffer,
      * advancing the primary buffer pointer
      */
-    void AppendInt(uint32_t ival) { Serialization::EncodeInt(&dataPtr, ival); }
+    void append_int(uint32_t ival) { Serialization::encode_int(&dataPtr, ival); }
 
     /**
      * Appends a long integer (64 bit) to the the primary buffer,
      * advancing the primary buffer pointer
      */
-    void AppendLong(uint64_t lval) { Serialization::EncodeLong(&dataPtr, lval); }
+    void append_long(uint64_t lval) { Serialization::encode_long(&dataPtr, lval); }
 
     /**
      * Appends a byte array to the primary buffer.  A byte array
      * is encoded as a length followd by the data.
      *
-     * @see Serialization::EncodeByteArray
+     * @see Serialization::encode_byte_array
      */
-    void AppendByteArray(const void *data, int32_t len) { Serialization::EncodeByteArray(&dataPtr, data, len); }
+    void append_byte_array(const void *data, int32_t len) { Serialization::encode_byte_array(&dataPtr, data, len); }
     
     /**
      * Appends a c-style string to the primary buffer.  A string is
      * encoded as a length, followed by the characters, followed by
      * a terminating '\\0'.
      *
-     * @see Serialization::EncodeString
+     * @see Serialization::encode_string
      */
-    void AppendString(const char *str) { Serialization::EncodeString(&dataPtr, str); }
+    void append_string(const char *str) { Serialization::encode_string(&dataPtr, str); }
 
     /**
      * Appends a std::string to the primary buffer.  A string is
      * encoded as a length, followed by the characters, followed by
      * a terminating '\\0'.
      *
-     * @see Serialization::EncodeString
+     * @see Serialization::encode_string
      */
-    void AppendString(const std::string &str) { Serialization::EncodeString(&dataPtr, str.c_str()); }
+    void append_string(const std::string &str) { Serialization::encode_string(&dataPtr, str.c_str()); }
 
     friend class IOHandlerData;
 

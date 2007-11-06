@@ -37,7 +37,7 @@ namespace hypertable {
     virtual bool inflate(uint8_t *zbuf, uint32_t zlen, const char magic[12], hypertable::DynamicBuffer &outbuf);
 
   private:
-    z_stream  mStream;
+    z_stream  m_stream;
   };
 }
 

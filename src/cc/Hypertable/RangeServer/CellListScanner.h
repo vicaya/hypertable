@@ -33,13 +33,13 @@ namespace hypertable {
 
   class CellListScanner {
   public:
-    CellListScanner(ScanContextPtr &scanContextPtr) : mScanContextPtr(scanContextPtr) { return; }
+    CellListScanner(ScanContextPtr &scanContextPtr) : m_scan_context_ptr(scanContextPtr) { return; }
     virtual ~CellListScanner() { return; }
-    virtual void Forward() = 0;
-    virtual bool Get(ByteString32T **keyp, ByteString32T **valuep) = 0;
+    virtual void forward() = 0;
+    virtual bool get(ByteString32T **keyp, ByteString32T **valuep) = 0;
 
   protected:
-    ScanContextPtr mScanContextPtr;
+    ScanContextPtr m_scan_context_ptr;
   };
 
   typedef boost::shared_ptr<CellListScanner> CellListScannerPtr;

@@ -44,14 +44,14 @@ int main(int argc, char **argv) {
   int error;
   string str;
 
-  System::Initialize(argv[0]);
+  System::initialize(argv[0]);
 
   if (argc < 2)
-    Usage::DumpAndExit(usage);
+    Usage::dump_and_exit(usage);
 
-  metadata = Metadata::NewInstance(argv[1]);
+  metadata = Metadata::new_instance(argv[1]);
 
-  //metadata->Display();
+  //metadata->display();
 
   RangeInfoPtr rangeInfoPtr;
 
@@ -59,40 +59,40 @@ int main(int argc, char **argv) {
   string startRow = "juggernaut";
   string endRow = "";
   
-  if ((error = metadata->GetRangeInfo(tableName, endRow, rangeInfoPtr)) != Error::OK) {
+  if ((error = metadata->get_range_info(tableName, endRow, rangeInfoPtr)) != Error::OK) {
     LOG_VA_ERROR("Problem locating range (table='%s' endRow='%s') - %s",
-		 tableName.c_str(), endRow.c_str(), Error::GetText(error));
+		 tableName.c_str(), endRow.c_str(), Error::get_text(error));
     exit(1);
   }
 
   str = "palomar";
-  rangeInfoPtr->SetEndRow(str);
+  rangeInfoPtr->set_end_row(str);
 
-  metadata->AddRangeInfo(rangeInfoPtr);
+  metadata->add_range_info(rangeInfoPtr);
 
   rangeInfoPtr.reset(new RangeInfo());
   RangeInfo *newRange = rangeInfoPtr.get();
 
   str = "UserSession";
-  newRange->SetTableName(str);
+  newRange->set_table_name(str);
 
   str = "palomar";
-  newRange->SetStartRow(str);
+  newRange->set_start_row(str);
 
   str = "";
-  newRange->SetEndRow(str);
+  newRange->set_end_row(str);
 
   str = "/bigtable/tables/UserSession/default/abcdef0123abcdef0123abcd/ss2349";
-  newRange->AddCellStore(str);
+  newRange->add_cell_store(str);
   
   str = "/bigtable/tables/UserSession/default/abcdef0123abcdef0123abcd/ss2350";
-  newRange->AddCellStore(str);
+  newRange->add_cell_store(str);
 
-  metadata->AddRangeInfo(rangeInfoPtr);
+  metadata->add_range_info(rangeInfoPtr);
 
-  metadata->Sync("/tmp/metadata.xml");
+  metadata->sync("/tmp/metadata.xml");
 
-  metadata->Display();
+  metadata->display();
 
   delete metadata;
 

@@ -36,12 +36,12 @@ namespace hypertable {
    */
   class ServerLockFileHandler : public HandleCallback {
   public:
-    ServerLockFileHandler(RangeServerStatePtr &statePtr, MasterPtr masterPtr, ApplicationQueuePtr &appQueuePtr) : HandleCallback(EVENT_MASK_LOCK_ACQUIRED|EVENT_MASK_LOCK_RELEASED), mStatePtr(statePtr), mMasterPtr(masterPtr), mAppQueuePtr(appQueuePtr) { return; }
-    virtual void LockAcquired(uint32_t mode);
-    virtual void LockReleased();
-    RangeServerStatePtr mStatePtr;
-    MasterPtr           mMasterPtr;
-    ApplicationQueuePtr mAppQueuePtr;
+    ServerLockFileHandler(RangeServerStatePtr &statePtr, MasterPtr masterPtr, ApplicationQueuePtr &appQueuePtr) : HandleCallback(EVENT_MASK_LOCK_ACQUIRED|EVENT_MASK_LOCK_RELEASED), m_state_ptr(statePtr), m_master_ptr(masterPtr), m_app_queue_ptr(appQueuePtr) { return; }
+    virtual void lock_acquired(uint32_t mode);
+    virtual void lock_released();
+    RangeServerStatePtr m_state_ptr;
+    MasterPtr           m_master_ptr;
+    ApplicationQueuePtr m_app_queue_ptr;
   };
 
 }

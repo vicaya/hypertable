@@ -31,87 +31,87 @@ namespace hypertable {
 
   class RangeInfo {
   public:
-    RangeInfo() : mMutex(), mTableName(""), mStartRow(""), mEndRow(""), mLogDir(""), cellStores(), mSplitLogDir(""), mSplitPoint("") {
+    RangeInfo() : m_mutex(), m_table_name(""), m_start_row(""), m_end_row(""), m_log_dir(""), cellStores(), m_split_log_dir(""), m_split_point("") {
       return;
     }
 
-    void GetTableName(std::string &tableName) {
-      boost::mutex::scoped_lock lock(mMutex);
-      tableName = mTableName;
+    void get_table_name(std::string &tableName) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      tableName = m_table_name;
     }
-    void SetTableName(std::string &tableName) {
-      boost::mutex::scoped_lock lock(mMutex);
-      mTableName = tableName;
-    }
-
-    void GetStartRow(std::string &startRow) {
-      boost::mutex::scoped_lock lock(mMutex);
-      startRow = mStartRow;
-    }
-    void SetStartRow(std::string &startRow) {
-      boost::mutex::scoped_lock lock(mMutex);
-      mStartRow = startRow;
+    void set_table_name(std::string &tableName) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      m_table_name = tableName;
     }
 
-    void GetEndRow(std::string &endRow) {
-      boost::mutex::scoped_lock lock(mMutex);
-      endRow = mEndRow;
+    void get_start_row(std::string &startRow) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      startRow = m_start_row;
     }
-    void SetEndRow(std::string &endRow) {
-      boost::mutex::scoped_lock lock(mMutex);
-      mEndRow = endRow;
-    }
-
-    void GetLogDir(std::string &logDir) {
-      boost::mutex::scoped_lock lock(mMutex);
-      logDir = mLogDir;
-    }
-    void SetLogDir(std::string &logDir) {
-      boost::mutex::scoped_lock lock(mMutex);
-      mLogDir = logDir;
+    void set_start_row(std::string &startRow) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      m_start_row = startRow;
     }
 
-    void AddCellStore(std::string &cellStore) {
-      boost::mutex::scoped_lock lock(mMutex);
+    void get_end_row(std::string &endRow) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      endRow = m_end_row;
+    }
+    void set_end_row(std::string &endRow) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      m_end_row = endRow;
+    }
+
+    void get_log_dir(std::string &logDir) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      logDir = m_log_dir;
+    }
+    void set_log_dir(std::string &logDir) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      m_log_dir = logDir;
+    }
+
+    void add_cell_store(std::string &cellStore) {
+      boost::mutex::scoped_lock lock(m_mutex);
       cellStores.insert(cellStore);
     }
-    void RemoveCellStore(std::string &cellStore) {
-      boost::mutex::scoped_lock lock(mMutex);
+    void remove_cell_store(std::string &cellStore) {
+      boost::mutex::scoped_lock lock(m_mutex);
       cellStores.erase(cellStore);
     }
-    void GetTables(std::vector<std::string> &tableVec) {
-      boost::mutex::scoped_lock lock(mMutex);
+    void get_tables(std::vector<std::string> &tableVec) {
+      boost::mutex::scoped_lock lock(m_mutex);
       for (std::set<std::string>::iterator iter = cellStores.begin(); iter != cellStores.end(); iter++)
 	tableVec.push_back(*iter);
     }
 
-    void GetSplitLogDir(std::string &splitLogDir) {
-      boost::mutex::scoped_lock lock(mMutex);
-      splitLogDir = mSplitLogDir;
+    void get_split_log_dir(std::string &splitLogDir) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      splitLogDir = m_split_log_dir;
     }
-    void SetSplitLogDir(std::string &splitLogDir) {
-      boost::mutex::scoped_lock lock(mMutex);
-      mSplitLogDir = splitLogDir;
+    void set_split_log_dir(std::string &splitLogDir) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      m_split_log_dir = splitLogDir;
     }
 
-    void GetSplitPoint(std::string &splitPoint) {
-      boost::mutex::scoped_lock lock(mMutex);
-      splitPoint = mSplitPoint;
+    void get_split_point(std::string &splitPoint) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      splitPoint = m_split_point;
     }
-    void SetSplitPoint(std::string &splitPoint) {
-      boost::mutex::scoped_lock lock(mMutex);
-      mSplitPoint = splitPoint;
+    void set_split_point(std::string &splitPoint) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      m_split_point = splitPoint;
     }
 
   private:
-    boost::mutex mMutex;
-    std::string mTableName;
-    std::string mStartRow;
-    std::string mEndRow;
-    std::string mLogDir;
+    boost::mutex m_mutex;
+    std::string m_table_name;
+    std::string m_start_row;
+    std::string m_end_row;
+    std::string m_log_dir;
     std::set<std::string> cellStores;
-    std::string mSplitLogDir;
-    std::string mSplitPoint;
+    std::string m_split_log_dir;
+    std::string m_split_point;
   };
 
   typedef boost::shared_ptr<RangeInfo> RangeInfoPtr;

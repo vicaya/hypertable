@@ -66,29 +66,29 @@ namespace hypertable {
   public:
     CommitLog(Filesystem *fs, std::string &logDir, int64_t logFileSize);
     virtual ~CommitLog() { return; }
-    int Write(const char *tableName, uint8_t *data, uint32_t len, uint64_t timestamp);
-    int Close(uint64_t timestamp);
-    int Purge(uint64_t timestamp);
-    std::string &GetLogDir() { return mLogDir; }
+    int write(const char *tableName, uint8_t *data, uint32_t len, uint64_t timestamp);
+    int close(uint64_t timestamp);
+    int purge(uint64_t timestamp);
+    std::string &get_log_dir() { return m_log_dir; }
 
-    uint64_t GetTimestamp() { 
+    uint64_t get_timestamp() { 
       struct timeval tval;
-      boost::mutex::scoped_lock lock(mMutex);
+      boost::mutex::scoped_lock lock(m_mutex);
       gettimeofday(&tval, 0);
       return ((uint64_t)tval.tv_sec * 1000000LL) + (uint64_t)tval.tv_usec;
     }
 
   private:
     
-    Filesystem                *mFs;
-    std::string                mLogDir;
-    std::string                mLogFile;
-    int64_t                    mMaxFileSize;
-    int64_t                    mCurLogLength;
-    uint32_t                   mCurLogNum;
-    int32_t                    mFd;
-    boost::mutex               mMutex;
-    std::queue<CommitLogFileInfoT>   mFileInfoQueue;
+    Filesystem                *m_fs;
+    std::string                m_log_dir;
+    std::string                m_log_file;
+    int64_t                    m_max_file_size;
+    int64_t                    m_cur_log_length;
+    uint32_t                   m_cur_log_num;
+    int32_t                    m_fd;
+    boost::mutex               m_mutex;
+    std::queue<CommitLogFileInfoT>   m_file_info_queue;
   };
 
   typedef boost::shared_ptr<CommitLog> CommitLogPtr;

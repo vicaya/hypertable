@@ -30,15 +30,15 @@ namespace hypertable {
 
   class CommandFetchScanblock : public InteractiveCommand {
   public:
-    CommandFetchScanblock(struct sockaddr_in &addr) : mAddr(addr) { return; }
-    virtual const char *CommandText() { return "create scanner"; }
-    virtual const char **Usage() { return msUsage; }
+    CommandFetchScanblock(struct sockaddr_in &addr) : m_addr(addr) { return; }
+    virtual const char *command_text() { return "create scanner"; }
+    virtual const char **usage() { return ms_usage; }
     virtual int run();
 
   private:
-    static const char *msUsage[];
+    static const char *ms_usage[];
 
-    struct sockaddr_in mAddr;
+    struct sockaddr_in m_addr;
   };
 
 }

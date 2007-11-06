@@ -33,10 +33,10 @@ using namespace hypertable::DfsBroker;
  *
  */
 void RequestHandlerCreate::run() {
-  ResponseCallbackOpen cb(mComm, mEventPtr);
+  ResponseCallbackOpen cb(m_comm, m_event_ptr);
   const char *fileName;
-  size_t remaining = mEventPtr->messageLen - 2;
-  uint8_t *msgPtr = mEventPtr->message + 2;
+  size_t remaining = m_event_ptr->messageLen - 2;
+  uint8_t *msgPtr = m_event_ptr->message + 2;
   uint16_t sval, replication;
   uint32_t ival, bufferSize;
   uint64_t blockSize;
@@ -46,21 +46,21 @@ void RequestHandlerCreate::run() {
     goto abort;
 
   // overwrite flag
-  Serialization::DecodeShort(&msgPtr, &remaining, &sval);
+  Serialization::decode_short(&msgPtr, &remaining, &sval);
   overwrite = (sval == 0) ? false : true;
 
   // replication
-  Serialization::DecodeInt(&msgPtr, &remaining, &ival);
+  Serialization::decode_int(&msgPtr, &remaining, &ival);
   replication = (short)ival;
 
   // buffer size
-  Serialization::DecodeInt(&msgPtr, &remaining, &bufferSize);
+  Serialization::decode_int(&msgPtr, &remaining, &bufferSize);
 
   // block size
-  Serialization::DecodeLong(&msgPtr, &remaining, &blockSize);
+  Serialization::decode_long(&msgPtr, &remaining, &blockSize);
 
   // file name
-  if (!Serialization::DecodeString(&msgPtr, &remaining, &fileName))
+  if (!Serialization::decode_string(&msgPtr, &remaining, &fileName))
     goto abort;
 
   // validate filename
@@ -70,7 +70,7 @@ void RequestHandlerCreate::run() {
     return;
   }
 
-  mBroker->Create(&cb, fileName, overwrite, bufferSize, replication, blockSize);
+  m_broker->create(&cb, fileName, overwrite, bufferSize, replication, blockSize);
 
   return;
 

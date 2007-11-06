@@ -31,15 +31,15 @@ namespace hypertable {
 
   class CommandCopyToLocal : public InteractiveCommand {
   public:
-    CommandCopyToLocal(DfsBroker::Client *client) : mClient(client) { return; }
-    virtual const char *CommandText() { return "copyToLocal"; }
-    virtual const char **Usage() { return msUsage; }
+    CommandCopyToLocal(DfsBroker::Client *client) : m_client(client) { return; }
+    virtual const char *command_text() { return "copyToLocal"; }
+    virtual const char **usage() { return ms_usage; }
     virtual int run();
 
   private:
-    static const char *msUsage[];
+    static const char *ms_usage[];
 
-    DfsBroker::Client *mClient;
+    DfsBroker::Client *m_client;
   };
 
 }

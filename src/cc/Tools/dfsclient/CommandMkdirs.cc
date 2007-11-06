@@ -24,7 +24,7 @@
 
 using namespace hypertable;
 
-const char *CommandMkdirs::msUsage[] = {
+const char *CommandMkdirs::ms_usage[] = {
   "mkdirs <dir>",
   "",
   "  This command sends a mkdirs request for the DFS directory <dir>",
@@ -34,10 +34,10 @@ const char *CommandMkdirs::msUsage[] = {
 
 
 int CommandMkdirs::run() {
-  if (mArgs.size() < 1) {
+  if (m_args.size() < 1) {
     cerr << "Error:  No directory name supplied." << endl;
     return -1;
   }
-  return mClient->Mkdirs(mArgs[0].first);
+  return m_client->mkdirs(m_args[0].first);
 }
 

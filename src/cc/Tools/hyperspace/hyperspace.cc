@@ -145,39 +145,39 @@ public:
   Notifier(const char *addressStr) {
     DispatchHandlerPtr nullHandler(0);
     int error;
-    mComm = new Comm();
-    if (!InetAddr::Initialize(&mAddr, addressStr)) {
+    m_comm = new Comm();
+    if (!InetAddr::initialize(&m_addr, addressStr)) {
       exit(1);
     }
-    InetAddr::Initialize(&mSendAddr, INADDR_ANY, 0);
-    if ((error = mComm->CreateDatagramReceiveSocket(&mSendAddr, nullHandler)) != Error::OK) {
+    InetAddr::initialize(&m_send_addr, INADDR_ANY, 0);
+    if ((error = m_comm->create_datagram_receive_socket(&m_send_addr, nullHandler)) != Error::OK) {
       std::string str;
-      LOG_VA_ERROR("Problem creating UDP receive socket %s - %s", InetAddr::StringFormat(str, mSendAddr), Error::GetText(error));
+      LOG_VA_ERROR("Problem creating UDP receive socket %s - %s", InetAddr::string_format(str, m_send_addr), Error::get_text(error));
       exit(1);
     }
   }
 
-  Notifier() : mComm(0) {
+  Notifier() : m_comm(0) {
     return;
   }
 
   void notify() {
-    if (mComm) {
+    if (m_comm) {
       int error;
-      CommBufPtr cbufPtr( new CommBuf(mBuilder, 2) );
-      cbufPtr->AppendShort(0);
-      if ((error = mComm->SendDatagram(mAddr, mSendAddr, cbufPtr)) != Error::OK) {
-	LOG_VA_ERROR("Problem sending datagram - %s", Error::GetText(error));
+      CommBufPtr cbufPtr( new CommBuf(m_builder, 2) );
+      cbufPtr->append_short(0);
+      if ((error = m_comm->send_datagram(m_addr, m_send_addr, cbufPtr)) != Error::OK) {
+	LOG_VA_ERROR("Problem sending datagram - %s", Error::get_text(error));
 	exit(1);
       }
     }
   }
 
 private:
-  Comm *mComm;
-  struct sockaddr_in mAddr;
-  struct sockaddr_in mSendAddr;
-  HeaderBuilder mBuilder;
+  Comm *m_comm;
+  struct sockaddr_in m_addr;
+  struct sockaddr_in m_send_addr;
+  HeaderBuilder m_builder;
 };
 
 
@@ -186,9 +186,9 @@ private:
  */
 class SessionHandler : public SessionCallback {
 public:
-  virtual void Jeopardy() { cout << "SESSION CALLBACK: Jeopardy" << endl << flush; }
-  virtual void Safe() { cout << "SESSION CALLBACK: Safe" << endl << flush; }
-  virtual void Expired() { cout << "SESSION CALLBACK: Expired" << endl << flush; }
+  virtual void jeopardy() { cout << "SESSION CALLBACK: Jeopardy" << endl << flush; }
+  virtual void safe() { cout << "SESSION CALLBACK: Safe" << endl << flush; }
+  virtual void expired() { cout << "SESSION CALLBACK: Expired" << endl << flush; }
 };
 
 
@@ -211,8 +211,8 @@ int main(int argc, char **argv, char **envp) {
   int error;
   Notifier *notifier = 0;
 
-  System::Initialize(argv[0]);
-  ReactorFactory::Initialize((uint16_t)System::GetProcessorCount());
+  System::initialize(argv[0]);
+  ReactorFactory::initialize((uint16_t)System::get_processor_count());
 
   configFile = System::installDir + "/conf/hypertable.cfg";
 
@@ -224,17 +224,17 @@ int main(int argc, char **argv, char **envp) {
     else if (!strcmp(argv[i], "--eval")) {
       i++;
       if (i == argc)
-	Usage::DumpAndExit(usage);
+	Usage::dump_and_exit(usage);
       eval = argv[i];
     }
     else if (!strcmp(argv[i], "--test-mode")) {
-      Logger::SetTestMode("hyperspace");
+      Logger::set_test_mode("hyperspace");
       gTestMode = true;
     }
     else if (!strncmp(argv[i], "--notification-address=", 23))
       notifier = new Notifier(&argv[i][23]);
     else
-      Usage::DumpAndExit(usage);
+      Usage::dump_and_exit(usage);
   }
 
   if (notifier == 0)
@@ -249,7 +249,7 @@ int main(int argc, char **argv, char **envp) {
 
   session = new Session(comm, propsPtr, &sessionHandler);
 
-  if (!session->WaitForConnection(30)) {
+  if (!session->wait_for_connection(30)) {
     cerr << "Unable to establish session with Hyerspace, exiting..." << endl;
     exit(1);
   }
@@ -281,10 +281,10 @@ int main(int argc, char **argv, char **envp) {
       commandStr = str;
       boost::trim(commandStr);
       for (i=0; i<commands.size(); i++) {
-	if (commands[i]->Matches(commandStr.c_str())) {
-	  commands[i]->ParseCommandLine(commandStr.c_str());
+	if (commands[i]->matches(commandStr.c_str())) {
+	  commands[i]->parse_command_line(commandStr.c_str());
 	  if ((error = commands[i]->run()) != Error::OK) {
-	    cerr << Error::GetText(error) << endl;
+	    cerr << Error::get_text(error) << endl;
 	    return 1;
 	  }
 	  break;
@@ -313,10 +313,10 @@ int main(int argc, char **argv, char **envp) {
       continue;
 
     for (i=0; i<commands.size(); i++) {
-      if (commands[i]->Matches(line)) {
-	commands[i]->ParseCommandLine(line);
+      if (commands[i]->matches(line)) {
+	commands[i]->parse_command_line(line);
 	if ((error = commands[i]->run()) != Error::OK && error != -1)
-	  cout << Error::GetText(error) << endl;
+	  cout << Error::get_text(error) << endl;
 	notifier->notify();
 	break;
       }
@@ -341,10 +341,10 @@ int main(int argc, char **argv, char **envp) {
       else if (!strcmp(line, "help")) {
 	cout << endl;
 	for (i=0; i<commands.size(); i++) {
-	  Usage::Dump(commands[i]->Usage());
+	  Usage::dump(commands[i]->usage());
 	  cout << endl;
 	}
-	Usage::Dump(helpTrailer);
+	Usage::dump(helpTrailer);
 	notifier->notify();
       }
       else {

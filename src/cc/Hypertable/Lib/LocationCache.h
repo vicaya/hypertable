@@ -98,29 +98,29 @@ namespace hypertable {
       const char *serverId;
     } ValueT;
 
-    LocationCache(uint32_t maxEntries) : mMutex(), mLocationMap(), mHead(0), mTail(0), mMaxEntries(maxEntries) { return; }
+    LocationCache(uint32_t maxEntries) : m_mutex(), m_location_map(), m_head(0), m_tail(0), m_max_entries(maxEntries) { return; }
     ~LocationCache();
 
-    void Insert(uint32_t tableId, const char *startRow, const char *endRow, const char *serverId);
-    bool Lookup(uint32_t tableId, const char *rowKey, const char **serverIdPtr);
+    void insert(uint32_t tableId, const char *startRow, const char *endRow, const char *serverId);
+    bool lookup(uint32_t tableId, const char *rowKey, const char **serverIdPtr);
 
-    void Display(std::ofstream &outfile);
+    void display(std::ofstream &outfile);
 
   private:
 
-    void MoveToHead(ValueT *cacheValue);
-    void Remove(ValueT *cacheValue);
+    void move_to_head(ValueT *cacheValue);
+    void remove(ValueT *cacheValue);
 
-    const char *GetConstantServerId(const char *serverId);
+    const char *get_constant_server_id(const char *serverId);
 
     typedef std::map<LocationCacheKeyT, ValueT *> LocationMapT;
 
-    boost::mutex   mMutex;
-    LocationMapT   mLocationMap;
-    std::set<const char *, lt_cstr>  mServerIdStrings;
-    ValueT        *mHead;
-    ValueT        *mTail;
-    uint32_t       mMaxEntries;
+    boost::mutex   m_mutex;
+    LocationMapT   m_location_map;
+    std::set<const char *, lt_cstr>  m_server_id_strings;
+    ValueT        *m_head;
+    ValueT        *m_tail;
+    uint32_t       m_max_entries;
   };
 
 }

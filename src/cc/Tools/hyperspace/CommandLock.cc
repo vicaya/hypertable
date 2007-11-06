@@ -31,7 +31,7 @@ using namespace hypertable;
 using namespace Hyperspace;
 using namespace std;
 
-const char *CommandLock::msUsage[] = {
+const char *CommandLock::ms_usage[] = {
   "lock <file> <mode>",
   "  This command issues a LOCK request to Hyperspace.  The <mode> argument",
   "  may be either SHARED or EXCLUSIVE.",
@@ -44,29 +44,29 @@ int CommandLock::run() {
   uint32_t mode = 0;
   struct LockSequencerT lockseq;
 
-  if (mArgs.size() != 2) {
+  if (m_args.size() != 2) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
     return -1;
   }
 
-  if (mArgs[0].second != "" || mArgs[1].second != "") {
+  if (m_args[0].second != "" || m_args[1].second != "") {
     cerr << "Invalid character '=' in argument." << endl;
     return -1;
   }
 
-  if (mArgs[1].first == "SHARED")
+  if (m_args[1].first == "SHARED")
     mode = LOCK_MODE_SHARED;
-  else if (mArgs[1].first == "EXCLUSIVE")
+  else if (m_args[1].first == "EXCLUSIVE")
     mode = LOCK_MODE_EXCLUSIVE;
   else {
-    cerr << "Invalid mode value (" << mArgs[1].second << ")" << endl;
+    cerr << "Invalid mode value (" << m_args[1].second << ")" << endl;
     return -1;
   }
 
-  if (!Util::GetHandle(mArgs[0].first, &handle))
+  if (!Util::get_handle(m_args[0].first, &handle))
     return -1;
 
-  if ((error = mSession->Lock(handle, mode, &lockseq)) == Error::OK)
+  if ((error = m_session->lock(handle, mode, &lockseq)) == Error::OK)
     cout << "SEQUENCER name=" << lockseq.name << " mode=" << lockseq.mode << " generation=" << lockseq.generation << endl << flush;
 
   return error;

@@ -33,16 +33,16 @@ using namespace hypertable::DfsBroker;
  *
  */
 void RequestHandlerMkdirs::run() {
-  ResponseCallback cb(mComm, mEventPtr);
+  ResponseCallback cb(m_comm, m_event_ptr);
   const char *dirName;
-  size_t remaining = mEventPtr->messageLen - 2;
-  uint8_t *msgPtr = mEventPtr->message + 2;
+  size_t remaining = m_event_ptr->messageLen - 2;
+  uint8_t *msgPtr = m_event_ptr->message + 2;
 
   // directory name
-  if (!Serialization::DecodeString(&msgPtr, &remaining, &dirName))
+  if (!Serialization::decode_string(&msgPtr, &remaining, &dirName))
     goto abort;
 
-  mBroker->Mkdirs(&cb, dirName);
+  m_broker->mkdirs(&cb, dirName);
 
   return;
 

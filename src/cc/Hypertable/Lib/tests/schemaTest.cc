@@ -72,15 +72,15 @@ int main(int argc, char **argv) {
     if (!strcmp(argv[1], "--golden"))
       golden = true;
     else
-      Usage::DumpAndExit(usage);
+      Usage::dump_and_exit(usage);
   }
 
   for (int i=0; badSchemas[i] != 0; ++i) {
-    if ((buf = FileUtils::FileToBuffer(badSchemas[i], &len)) == 0)
-      harness.DisplayErrorAndExit();
-    schema = Schema::NewInstance(buf, len);
-    if (!schema->IsValid()) {
-      LOG_VA_ERROR("Schema Parse Error: %s", schema->GetErrorString());      
+    if ((buf = FileUtils::file_to_buffer(badSchemas[i], &len)) == 0)
+      harness.display_error_and_exit();
+    schema = Schema::new_instance(buf, len);
+    if (!schema->is_valid()) {
+      LOG_VA_ERROR("Schema Parse Error: %s", schema->get_error_string());      
     }
     delete schema;
     delete [] buf;
@@ -88,40 +88,40 @@ int main(int argc, char **argv) {
 
   schema = new Schema();
 
-  schema->OpenAccessGroup();
-  schema->SetAccessGroupParameter("name", "default");
-  schema->OpenColumnFamily();
-  schema->SetColumnFamilyParameter("Name", "default");
-  schema->SetColumnFamilyParameter("ExpireDays", "30.0");
-  schema->SetColumnFamilyParameter("CellLimit", "3");
-  schema->CloseColumnFamily();
-  schema->CloseAccessGroup();
+  schema->open_access_group();
+  schema->set_access_group_parameter("name", "default");
+  schema->open_column_family();
+  schema->set_column_family_parameter("Name", "default");
+  schema->set_column_family_parameter("ExpireDays", "30.0");
+  schema->set_column_family_parameter("CellLimit", "3");
+  schema->close_column_family();
+  schema->close_access_group();
 
-  schema->OpenAccessGroup();
-  schema->SetAccessGroupParameter("name", "meta");
-  schema->OpenColumnFamily();
-  schema->SetColumnFamilyParameter("Name", "language");
-  schema->CloseColumnFamily();
-  schema->OpenColumnFamily();
-  schema->SetColumnFamilyParameter("Name", "checksum");
-  schema->CloseColumnFamily();
-  schema->CloseAccessGroup();
+  schema->open_access_group();
+  schema->set_access_group_parameter("name", "meta");
+  schema->open_column_family();
+  schema->set_column_family_parameter("Name", "language");
+  schema->close_column_family();
+  schema->open_column_family();
+  schema->set_column_family_parameter("Name", "checksum");
+  schema->close_column_family();
+  schema->close_access_group();
 
   std::string schemaStr;
-  schema->Render(schemaStr);
-  FileUtils::Write(harness.GetLogFileDescriptor(), schemaStr.c_str(), strlen(schemaStr.c_str()));
+  schema->render(schemaStr);
+  FileUtils::write(harness.get_log_file_descriptor(), schemaStr.c_str(), strlen(schemaStr.c_str()));
 
   schemaStr = "";
-  schema->AssignIds();
-  schema->Render(schemaStr);
-  FileUtils::Write(harness.GetLogFileDescriptor(), schemaStr.c_str(), strlen(schemaStr.c_str()));
+  schema->assign_ids();
+  schema->render(schemaStr);
+  FileUtils::write(harness.get_log_file_descriptor(), schemaStr.c_str(), strlen(schemaStr.c_str()));
 
   delete schema;
 
   if (!golden)
-    harness.ValidateAndExit("schemaTest.golden");
+    harness.validate_and_exit("schemaTest.golden");
 
-  harness.RegenerateGoldenFile("schemaTest.golden");
+  harness.regenerate_golden_file("schemaTest.golden");
 
   return 0;
 }

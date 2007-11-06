@@ -30,12 +30,12 @@ namespace hypertable {
   class System {
     
   public:
-    static void Initialize(const char *argv0);
+    static void initialize(const char *argv0);
 
     static std::string installDir;
     static std::string executableName;
     
-    static int GetProcessorCount();
+    static int get_processor_count();
 
   };
 

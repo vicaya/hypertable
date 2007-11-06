@@ -34,21 +34,21 @@ using namespace hypertable;
 using namespace hypertable::DfsBroker;
 
 
-Client::Client(ConnectionManagerPtr &connManagerPtr, struct sockaddr_in &addr, time_t timeout) : mConnManagerPtr(connManagerPtr), mAddr(addr), mTimeout(timeout) {
-  mComm = mConnManagerPtr->GetComm();
-  mProtocol = new Protocol();
-  mConnManagerPtr->Add(mAddr, mTimeout, "DFS Broker");
+Client::Client(ConnectionManagerPtr &connManagerPtr, struct sockaddr_in &addr, time_t timeout) : m_conn_manager_ptr(connManagerPtr), m_addr(addr), m_timeout(timeout) {
+  m_comm = m_conn_manager_ptr->get_comm();
+  m_protocol = new Protocol();
+  m_conn_manager_ptr->add(m_addr, m_timeout, "DFS Broker");
 }
 
 
 
-Client::Client(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr) : mConnManagerPtr(connManagerPtr) {
+Client::Client(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr) : m_conn_manager_ptr(connManagerPtr) {
   const char *host;
   uint16_t port;
 
-  mComm = mConnManagerPtr->GetComm();
+  m_comm = m_conn_manager_ptr->get_comm();
 
-  mProtocol = new Protocol();
+  m_protocol = new Protocol();
 
   {
     if ((port = (uint16_t)propsPtr->getPropertyInt("DfsBroker.port", 0)) == 0) {
@@ -61,33 +61,33 @@ Client::Client(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr) : 
       exit(1);
     }
 
-    mTimeout = propsPtr->getPropertyInt("DfsBroker.timeout", 30);
+    m_timeout = propsPtr->getPropertyInt("DfsBroker.timeout", 30);
 
-    InetAddr::Initialize(&mAddr, host, port);
+    InetAddr::initialize(&m_addr, host, port);
   }
 
-  mConnManagerPtr->Add(mAddr, mTimeout, "DFS Broker");
+  m_conn_manager_ptr->add(m_addr, m_timeout, "DFS Broker");
   
 }
 
 
-int Client::Open(std::string &name, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( mProtocol->CreateOpenRequest(name, 0) );
-  return SendMessage(cbufPtr, handler);
+int Client::open(std::string &name, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( m_protocol->create_open_request(name, 0) );
+  return send_message(cbufPtr, handler);
 }
 
 
 
-int Client::Open(std::string &name, int32_t *fdp) {
+int Client::open(std::string &name, int32_t *fdp) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   *fdp = -1;
-  CommBufPtr cbufPtr( mProtocol->CreateOpenRequest(name, 0) );
-  int error = SendMessage(cbufPtr, &syncHandler);
+  CommBufPtr cbufPtr( m_protocol->create_open_request(name, 0) );
+  int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'open' error, name=%s : %s", name.c_str(), mProtocol->StringFormatMessage(eventPtr).c_str());
-      error = (int)mProtocol->ResponseCode(eventPtr);
+    if (!syncHandler.wait_for_reply(eventPtr)) {
+      LOG_VA_ERROR("Dfs 'open' error, name=%s : %s", name.c_str(), m_protocol->string_format_message(eventPtr).c_str());
+      error = (int)m_protocol->response_code(eventPtr);
     }
     else
       *fdp = ((Protocol::ResponseHeaderOpenT *)eventPtr->message)->handle;
@@ -96,16 +96,16 @@ int Client::Open(std::string &name, int32_t *fdp) {
 }
 
 
-int Client::OpenBuffered(std::string &name, uint32_t bufSize, int32_t *fdp) {
+int Client::open_buffered(std::string &name, uint32_t bufSize, int32_t *fdp) {
   int error;
 
-  if ((error = Open(name, fdp)) != Error::OK)
+  if ((error = open(name, fdp)) != Error::OK)
     return error;
 
   {
-    boost::mutex::scoped_lock lock(mMutex);
-    assert(mBufferedReaderMap.find(*fdp) == mBufferedReaderMap.end());
-    mBufferedReaderMap[*fdp] = new ClientBufferedReaderHandler(this, *fdp, bufSize);
+    boost::mutex::scoped_lock lock(m_mutex);
+    assert(m_buffered_reader_map.find(*fdp) == m_buffered_reader_map.end());
+    m_buffered_reader_map[*fdp] = new ClientBufferedReaderHandler(this, *fdp, bufSize);
   }
 
   return Error::OK;
@@ -113,24 +113,24 @@ int Client::OpenBuffered(std::string &name, uint32_t bufSize, int32_t *fdp) {
 }
 
 
-int Client::Create(std::string &name, bool overwrite, int32_t bufferSize,
+int Client::create(std::string &name, bool overwrite, int32_t bufferSize,
 		   int32_t replication, int64_t blockSize, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( mProtocol->CreateCreateRequest(name, overwrite, bufferSize, replication, blockSize) );
-  return SendMessage(cbufPtr, handler);
+  CommBufPtr cbufPtr( m_protocol->create_create_request(name, overwrite, bufferSize, replication, blockSize) );
+  return send_message(cbufPtr, handler);
 }
 
 
-int Client::Create(std::string &name, bool overwrite, int32_t bufferSize,
+int Client::create(std::string &name, bool overwrite, int32_t bufferSize,
 		   int32_t replication, int64_t blockSize, int32_t *fdp) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   *fdp = -1;
-  CommBufPtr cbufPtr( mProtocol->CreateCreateRequest(name, overwrite, bufferSize, replication, blockSize) );
-  int error = SendMessage(cbufPtr, &syncHandler);
+  CommBufPtr cbufPtr( m_protocol->create_create_request(name, overwrite, bufferSize, replication, blockSize) );
+  int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'create' error, name=%s : %s", name.c_str(), mProtocol->StringFormatMessage(eventPtr).c_str());
-      error = (int)mProtocol->ResponseCode(eventPtr);
+    if (!syncHandler.wait_for_reply(eventPtr)) {
+      LOG_VA_ERROR("Dfs 'create' error, name=%s : %s", name.c_str(), m_protocol->string_format_message(eventPtr).c_str());
+      error = (int)m_protocol->response_code(eventPtr);
     }
     else
       *fdp = ((Protocol::ResponseHeaderCreateT *)eventPtr->message)->handle;
@@ -140,18 +140,18 @@ int Client::Create(std::string &name, bool overwrite, int32_t bufferSize,
 
 
 
-int Client::Close(int32_t fd, DispatchHandler *handler) {
+int Client::close(int32_t fd, DispatchHandler *handler) {
   ClientBufferedReaderHandler *brHandler = 0;
   int error;
-  CommBufPtr cbufPtr( mProtocol->CreateCloseRequest(fd) );
-  error = SendMessage(cbufPtr, handler);
+  CommBufPtr cbufPtr( m_protocol->create_close_request(fd) );
+  error = send_message(cbufPtr, handler);
 
   {
-    boost::mutex::scoped_lock lock(mMutex);
-    BufferedReaderMapT::iterator iter = mBufferedReaderMap.find(fd);
-    if (iter != mBufferedReaderMap.end()) {
+    boost::mutex::scoped_lock lock(m_mutex);
+    BufferedReaderMapT::iterator iter = m_buffered_reader_map.find(fd);
+    if (iter != m_buffered_reader_map.end()) {
       brHandler = (*iter).second;
-      mBufferedReaderMap.erase(iter);
+      m_buffered_reader_map.erase(iter);
     }
   }
   delete brHandler;
@@ -161,25 +161,25 @@ int Client::Close(int32_t fd, DispatchHandler *handler) {
 
 
 
-int Client::Close(int32_t fd) {
+int Client::close(int32_t fd) {
   ClientBufferedReaderHandler *brHandler = 0;
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( mProtocol->CreateCloseRequest(fd) );
-  int error = SendMessage(cbufPtr, &syncHandler);
+  CommBufPtr cbufPtr( m_protocol->create_close_request(fd) );
+  int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'close' error, fd=%d : %s", fd, mProtocol->StringFormatMessage(eventPtr).c_str());
-      error = (int)mProtocol->ResponseCode(eventPtr);
+    if (!syncHandler.wait_for_reply(eventPtr)) {
+      LOG_VA_ERROR("Dfs 'close' error, fd=%d : %s", fd, m_protocol->string_format_message(eventPtr).c_str());
+      error = (int)m_protocol->response_code(eventPtr);
     }
   }
 
   {
-    boost::mutex::scoped_lock lock(mMutex);
-    BufferedReaderMapT::iterator iter = mBufferedReaderMap.find(fd);
-    if (iter != mBufferedReaderMap.end()) {
+    boost::mutex::scoped_lock lock(m_mutex);
+    BufferedReaderMapT::iterator iter = m_buffered_reader_map.find(fd);
+    if (iter != m_buffered_reader_map.end()) {
       brHandler = (*iter).second;
-      mBufferedReaderMap.erase(iter);
+      m_buffered_reader_map.erase(iter);
     }
   }
   delete brHandler;
@@ -189,36 +189,36 @@ int Client::Close(int32_t fd) {
 
 
 
-int Client::Read(int32_t fd, uint32_t amount, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( mProtocol->CreateReadRequest(fd, amount) );
-  return SendMessage(cbufPtr, handler);
+int Client::read(int32_t fd, uint32_t amount, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( m_protocol->create_read_request(fd, amount) );
+  return send_message(cbufPtr, handler);
 }
 
 
 
-int Client::Read(int32_t fd, uint32_t amount, uint8_t *dst, uint32_t *nreadp) {
+int Client::read(int32_t fd, uint32_t amount, uint8_t *dst, uint32_t *nreadp) {
   ClientBufferedReaderHandler *brHandler = 0;
   
   {
-    boost::mutex::scoped_lock lock(mMutex);
-    BufferedReaderMapT::iterator iter = mBufferedReaderMap.find(fd);
-    if (iter != mBufferedReaderMap.end())
+    boost::mutex::scoped_lock lock(m_mutex);
+    BufferedReaderMapT::iterator iter = m_buffered_reader_map.find(fd);
+    if (iter != m_buffered_reader_map.end())
       brHandler = (*iter).second;
   }
 
   if (brHandler)
-    return brHandler->Read(dst, amount, nreadp);
+    return brHandler->read(dst, amount, nreadp);
 
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( mProtocol->CreateReadRequest(fd, amount) );
-  int error = SendMessage(cbufPtr, &syncHandler);
+  CommBufPtr cbufPtr( m_protocol->create_read_request(fd, amount) );
+  int error = send_message(cbufPtr, &syncHandler);
   *nreadp = 0;
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(eventPtr)) {
+    if (!syncHandler.wait_for_reply(eventPtr)) {
       LOG_VA_ERROR("Dfs 'read' error (amount=%d, fd=%d) : %s",
-		   amount, fd, mProtocol->StringFormatMessage(eventPtr).c_str());
-      error = (int)mProtocol->ResponseCode(eventPtr);
+		   amount, fd, m_protocol->string_format_message(eventPtr).c_str());
+      error = (int)m_protocol->response_code(eventPtr);
     }
     else {
       Protocol::ResponseHeaderReadT *readHeader = (Protocol::ResponseHeaderReadT *)eventPtr->message;
@@ -231,22 +231,22 @@ int Client::Read(int32_t fd, uint32_t amount, uint8_t *dst, uint32_t *nreadp) {
 
 
 
-int Client::Append(int32_t fd, const void *buf, uint32_t amount, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( mProtocol->CreateAppendRequest(fd, buf, amount) );
-  return SendMessage(cbufPtr, handler);
+int Client::append(int32_t fd, const void *buf, uint32_t amount, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( m_protocol->create_append_request(fd, buf, amount) );
+  return send_message(cbufPtr, handler);
 }
 
 
 
-int Client::Append(int32_t fd, const void *buf, uint32_t amount) {
+int Client::append(int32_t fd, const void *buf, uint32_t amount) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( mProtocol->CreateAppendRequest(fd, buf, amount) );
-  int error = SendMessage(cbufPtr, &syncHandler);
+  CommBufPtr cbufPtr( m_protocol->create_append_request(fd, buf, amount) );
+  int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'append' error, fd=%d, amount=%d : %s", fd, amount, mProtocol->StringFormatMessage(eventPtr).c_str());
-      error = (int)mProtocol->ResponseCode(eventPtr);
+    if (!syncHandler.wait_for_reply(eventPtr)) {
+      LOG_VA_ERROR("Dfs 'append' error, fd=%d, amount=%d : %s", fd, amount, m_protocol->string_format_message(eventPtr).c_str());
+      error = (int)m_protocol->response_code(eventPtr);
     }
     else if (((Protocol::ResponseHeaderAppendT *)eventPtr->message)->amount != (int32_t)amount) {
       LOG_VA_ERROR("Short DFS file append fd=%d : tried to append %d but only got %d", fd, amount,
@@ -258,42 +258,42 @@ int Client::Append(int32_t fd, const void *buf, uint32_t amount) {
 }
 
 
-int Client::Seek(int32_t fd, uint64_t offset, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( mProtocol->CreateSeekRequest(fd, offset) );
-  return SendMessage(cbufPtr, handler);
+int Client::seek(int32_t fd, uint64_t offset, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( m_protocol->create_seek_request(fd, offset) );
+  return send_message(cbufPtr, handler);
 }
 
 
-int Client::Seek(int32_t fd, uint64_t offset) {
+int Client::seek(int32_t fd, uint64_t offset) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( mProtocol->CreateSeekRequest(fd, offset) );
-  int error = SendMessage(cbufPtr, &syncHandler);
+  CommBufPtr cbufPtr( m_protocol->create_seek_request(fd, offset) );
+  int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'seek' error, fd=%d, offset=%lld : %s", fd, offset, mProtocol->StringFormatMessage(eventPtr).c_str());
-      error = (int)mProtocol->ResponseCode(eventPtr);
+    if (!syncHandler.wait_for_reply(eventPtr)) {
+      LOG_VA_ERROR("Dfs 'seek' error, fd=%d, offset=%lld : %s", fd, offset, m_protocol->string_format_message(eventPtr).c_str());
+      error = (int)m_protocol->response_code(eventPtr);
     }
   }
   return error;
 }
 
 
-int Client::Remove(std::string &name, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( mProtocol->CreateRemoveRequest(name) );
-  return SendMessage(cbufPtr, handler);
+int Client::remove(std::string &name, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( m_protocol->create_remove_request(name) );
+  return send_message(cbufPtr, handler);
 }
 
 
-int Client::Remove(std::string &name) {
+int Client::remove(std::string &name) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( mProtocol->CreateRemoveRequest(name) );
-  int error = SendMessage(cbufPtr, &syncHandler);
+  CommBufPtr cbufPtr( m_protocol->create_remove_request(name) );
+  int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'remove' error, name=%s : %s", name.c_str(), mProtocol->StringFormatMessage(eventPtr).c_str());
-      error = (int)mProtocol->ResponseCode(eventPtr);
+    if (!syncHandler.wait_for_reply(eventPtr)) {
+      LOG_VA_ERROR("Dfs 'remove' error, name=%s : %s", name.c_str(), m_protocol->string_format_message(eventPtr).c_str());
+      error = (int)m_protocol->response_code(eventPtr);
     }
   }
   return error;
@@ -301,43 +301,43 @@ int Client::Remove(std::string &name) {
 
 
 
-int Client::Shutdown(uint16_t flags, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( mProtocol->CreateShutdownRequest(flags) );
-  return SendMessage(cbufPtr, handler);
+int Client::shutdown(uint16_t flags, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( m_protocol->create_shutdown_request(flags) );
+  return send_message(cbufPtr, handler);
 }
 
 
-int Client::Status() {
+int Client::status() {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( mProtocol->CreateStatusRequest() );
-  int error = SendMessage(cbufPtr, &syncHandler);
+  CommBufPtr cbufPtr( m_protocol->create_status_request() );
+  int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR(" 'status' error : %s", mProtocol->StringFormatMessage(eventPtr).c_str());
-      error = (int)mProtocol->ResponseCode(eventPtr);
+    if (!syncHandler.wait_for_reply(eventPtr)) {
+      LOG_VA_ERROR(" 'status' error : %s", m_protocol->string_format_message(eventPtr).c_str());
+      error = (int)m_protocol->response_code(eventPtr);
     }
   }
   return error;
 }
 
 
-int Client::Length(std::string &name, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( mProtocol->CreateLengthRequest(name) );
-  return SendMessage(cbufPtr, handler);
+int Client::length(std::string &name, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( m_protocol->create_length_request(name) );
+  return send_message(cbufPtr, handler);
 }
 
 
 
-int Client::Length(std::string &name, int64_t *lenp) {
+int Client::length(std::string &name, int64_t *lenp) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( mProtocol->CreateLengthRequest(name) );
-  int error = SendMessage(cbufPtr, &syncHandler);
+  CommBufPtr cbufPtr( m_protocol->create_length_request(name) );
+  int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'length' error, name=%s : %s", name.c_str(), mProtocol->StringFormatMessage(eventPtr).c_str());
-      error = (int)mProtocol->ResponseCode(eventPtr);
+    if (!syncHandler.wait_for_reply(eventPtr)) {
+      LOG_VA_ERROR("Dfs 'length' error, name=%s : %s", name.c_str(), m_protocol->string_format_message(eventPtr).c_str());
+      error = (int)m_protocol->response_code(eventPtr);
     }
     else
       *lenp = ((Protocol::ResponseHeaderLengthT *)eventPtr->message)->length;
@@ -347,24 +347,24 @@ int Client::Length(std::string &name, int64_t *lenp) {
 
 
 
-int Client::Pread(int32_t fd, uint64_t offset, uint32_t amount, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( mProtocol->CreatePositionReadRequest(fd, offset, amount) );
-  return SendMessage(cbufPtr, handler);
+int Client::pread(int32_t fd, uint64_t offset, uint32_t amount, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( m_protocol->create_position_read_request(fd, offset, amount) );
+  return send_message(cbufPtr, handler);
 }
 
 
 
-int Client::Pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst, uint32_t *nreadp) {
+int Client::pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst, uint32_t *nreadp) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( mProtocol->CreatePositionReadRequest(fd, offset, amount) );
-  int error = SendMessage(cbufPtr, &syncHandler);
+  CommBufPtr cbufPtr( m_protocol->create_position_read_request(fd, offset, amount) );
+  int error = send_message(cbufPtr, &syncHandler);
   *nreadp = 0;
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(eventPtr)) {
+    if (!syncHandler.wait_for_reply(eventPtr)) {
       LOG_VA_ERROR("Dfs 'pread' error (offset=%lld, amount=%d, fd=%d) : %s",
-		   offset, amount, fd, mProtocol->StringFormatMessage(eventPtr).c_str());
-      error = (int)mProtocol->ResponseCode(eventPtr);
+		   offset, amount, fd, m_protocol->string_format_message(eventPtr).c_str());
+      error = (int)m_protocol->response_code(eventPtr);
     }
     else {
       Protocol::ResponseHeaderReadT *readHeader = (Protocol::ResponseHeaderReadT *)eventPtr->message;
@@ -376,63 +376,63 @@ int Client::Pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst, ui
 }
 
 
-int Client::Mkdirs(std::string &name, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( mProtocol->CreateMkdirsRequest(name) );
-  return SendMessage(cbufPtr, handler);
+int Client::mkdirs(std::string &name, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( m_protocol->create_mkdirs_request(name) );
+  return send_message(cbufPtr, handler);
 }
 
 
-int Client::Mkdirs(std::string &name) {
+int Client::mkdirs(std::string &name) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( mProtocol->CreateMkdirsRequest(name) );
-  int error = SendMessage(cbufPtr, &syncHandler);
+  CommBufPtr cbufPtr( m_protocol->create_mkdirs_request(name) );
+  int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'mkdirs' error, name=%s : %s", name.c_str(), mProtocol->StringFormatMessage(eventPtr).c_str());
-      error = (int)mProtocol->ResponseCode(eventPtr);
+    if (!syncHandler.wait_for_reply(eventPtr)) {
+      LOG_VA_ERROR("Dfs 'mkdirs' error, name=%s : %s", name.c_str(), m_protocol->string_format_message(eventPtr).c_str());
+      error = (int)m_protocol->response_code(eventPtr);
     }
   }
   return error;
 }
 
 
-int Client::Flush(int32_t fd, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( mProtocol->CreateFlushRequest(fd) );
-  return SendMessage(cbufPtr, handler);
+int Client::flush(int32_t fd, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( m_protocol->create_flush_request(fd) );
+  return send_message(cbufPtr, handler);
 }
 
 
-int Client::Flush(int32_t fd) {
+int Client::flush(int32_t fd) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( mProtocol->CreateFlushRequest(fd) );
-  int error = SendMessage(cbufPtr, &syncHandler);
+  CommBufPtr cbufPtr( m_protocol->create_flush_request(fd) );
+  int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'flush' error, fd=%d : %s", fd, mProtocol->StringFormatMessage(eventPtr).c_str());
-      error = (int)mProtocol->ResponseCode(eventPtr);
+    if (!syncHandler.wait_for_reply(eventPtr)) {
+      LOG_VA_ERROR("Dfs 'flush' error, fd=%d : %s", fd, m_protocol->string_format_message(eventPtr).c_str());
+      error = (int)m_protocol->response_code(eventPtr);
     }
   }
   return error;
 }
 
 
-int Client::Rmdir(std::string &name, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( mProtocol->CreateRmdirRequest(name) );
-  return SendMessage(cbufPtr, handler);
+int Client::rmdir(std::string &name, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( m_protocol->create_rmdir_request(name) );
+  return send_message(cbufPtr, handler);
 }
 
 
-int Client::Rmdir(std::string &name) {
+int Client::rmdir(std::string &name) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( mProtocol->CreateRmdirRequest(name) );
-  int error = SendMessage(cbufPtr, &syncHandler);
+  CommBufPtr cbufPtr( m_protocol->create_rmdir_request(name) );
+  int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'rmdir' error, name=%s : %s", name.c_str(), mProtocol->StringFormatMessage(eventPtr).c_str());
-      error = (int)mProtocol->ResponseCode(eventPtr);
+    if (!syncHandler.wait_for_reply(eventPtr)) {
+      LOG_VA_ERROR("Dfs 'rmdir' error, name=%s : %s", name.c_str(), m_protocol->string_format_message(eventPtr).c_str());
+      error = (int)m_protocol->response_code(eventPtr);
     }
   }
   return error;
@@ -443,9 +443,9 @@ int Client::Rmdir(std::string &name) {
 /**
  *
  */
-int Client::Readdir(std::string &name, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( mProtocol->CreateReaddirRequest(name) );
-  return SendMessage(cbufPtr, handler);
+int Client::readdir(std::string &name, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( m_protocol->create_readdir_request(name) );
+  return send_message(cbufPtr, handler);
 }
 
 
@@ -453,15 +453,15 @@ int Client::Readdir(std::string &name, DispatchHandler *handler) {
 /**
  *
  */
-int Client::Readdir(std::string &name, std::vector<std::string> &listing) {
+int Client::readdir(std::string &name, std::vector<std::string> &listing) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( mProtocol->CreateReaddirRequest(name) );
-  int error = SendMessage(cbufPtr, &syncHandler);
+  CommBufPtr cbufPtr( m_protocol->create_readdir_request(name) );
+  int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'readdir' error, name=%s : %s", name.c_str(), mProtocol->StringFormatMessage(eventPtr).c_str());
-      error = (int)mProtocol->ResponseCode(eventPtr);
+    if (!syncHandler.wait_for_reply(eventPtr)) {
+      LOG_VA_ERROR("Dfs 'readdir' error, name=%s : %s", name.c_str(), m_protocol->string_format_message(eventPtr).c_str());
+      error = (int)m_protocol->response_code(eventPtr);
     }
     else {
       uint8_t *msgPtr = eventPtr->message + 4;
@@ -469,10 +469,10 @@ int Client::Readdir(std::string &name, std::vector<std::string> &listing) {
       uint32_t len;
       const char *str;
       listing.clear();
-      if (!Serialization::DecodeInt(&msgPtr, &remaining, &len))
+      if (!Serialization::decode_int(&msgPtr, &remaining, &len))
 	return Error::RESPONSE_TRUNCATED;
       for (uint32_t i=0; i<len; i++) {
-	if (!Serialization::DecodeString(&msgPtr, &remaining, &str))
+	if (!Serialization::decode_string(&msgPtr, &remaining, &str))
 	  return Error::RESPONSE_TRUNCATED;
 	listing.push_back((std::string)str);
       }
@@ -483,12 +483,12 @@ int Client::Readdir(std::string &name, std::vector<std::string> &listing) {
 
 
 
-int Client::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler) {
+int Client::send_message(CommBufPtr &cbufPtr, DispatchHandler *handler) {
   int error;
 
-  if ((error = mComm->SendRequest(mAddr, mTimeout, cbufPtr, handler)) != Error::OK) {
-    LOG_VA_WARN("Comm::SendRequest to %s:%d failed - %s",
-		inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port), Error::GetText(error));
+  if ((error = m_comm->send_request(m_addr, m_timeout, cbufPtr, handler)) != Error::OK) {
+    LOG_VA_WARN("Comm::send_request to %s:%d failed - %s",
+		inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port), Error::get_text(error));
   }
   return error;
 }

@@ -33,16 +33,16 @@ using namespace hypertable::DfsBroker;
  *
  */
 void RequestHandlerFlush::run() {
-  ResponseCallback cb(mComm, mEventPtr);
+  ResponseCallback cb(m_comm, m_event_ptr);
   uint32_t fd;
-  size_t remaining = mEventPtr->messageLen - 2;
-  uint8_t *msgPtr = mEventPtr->message + 2;
+  size_t remaining = m_event_ptr->messageLen - 2;
+  uint8_t *msgPtr = m_event_ptr->message + 2;
 
   // fd
-  if (!Serialization::DecodeInt(&msgPtr, &remaining, &fd))
+  if (!Serialization::decode_int(&msgPtr, &remaining, &fd))
     goto abort;
 
-  mBroker->Flush(&cb, fd);
+  m_broker->flush(&cb, fd);
 
   return;
 

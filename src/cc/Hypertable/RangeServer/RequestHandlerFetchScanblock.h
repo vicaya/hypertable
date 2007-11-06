@@ -35,15 +35,15 @@ namespace hypertable {
 
   class RequestHandlerFetchScanblock : public ApplicationHandler {
   public:
-    RequestHandlerFetchScanblock(Comm *comm, RangeServer *rangeServer, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mComm(comm), mRangeServer(rangeServer) {
+    RequestHandlerFetchScanblock(Comm *comm, RangeServer *rangeServer, EventPtr &eventPtr) : ApplicationHandler(eventPtr), m_comm(comm), m_range_server(rangeServer) {
       return;
     }
 
     virtual void run();
 
   private:
-    Comm        *mComm;
-    RangeServer *mRangeServer;
+    Comm        *m_comm;
+    RangeServer *m_range_server;
   };
 
 }

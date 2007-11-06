@@ -48,7 +48,7 @@ using namespace std;
 
 namespace {
   const char *usage[] = {
-    "usage: Hypertable.RangeServer --metadata=<file> [OPTIONS]",
+    "usage: Hypertable.range_server --metadata=<file> [OPTIONS]",
     "",
     "OPTIONS:",
     "  --config=<file>      Read configuration from <file>.  The default config file is",
@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
   PropertiesPtr propsPtr;
   RangeServer *rangeServer = 0;
 
-  System::Initialize(argv[0]);
+  System::initialize(argv[0]);
   Global::verbose = false;
   
   if (argc > 1) {
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
 	metadataFile = &argv[i][11];
       }
       else
-	Usage::DumpAndExit(usage);
+	Usage::dump_and_exit(usage);
     }
   }
 
@@ -128,13 +128,13 @@ int main(int argc, char **argv) {
   }
   propsPtr->setProperty("metadata", metadataFile.c_str());
 
-  reactorCount = propsPtr->getPropertyInt("Hypertable.RangeServer.reactors", System::GetProcessorCount());
-  ReactorFactory::Initialize(reactorCount);
+  reactorCount = propsPtr->getPropertyInt("Hypertable.range_server.reactors", System::get_processor_count());
+  ReactorFactory::initialize(reactorCount);
   comm = new Comm();
 
   if (Global::verbose) {
-    cout << "CPU count = " << System::GetProcessorCount() << endl;
-    cout << "Hypertable.RangeServer.reactors=" << reactorCount << endl;
+    cout << "CPU count = " << System::get_processor_count() << endl;
+    cout << "Hypertable.range_server.reactors=" << reactorCount << endl;
   }
 
   rangeServer = new RangeServer(comm, propsPtr);

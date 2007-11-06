@@ -62,24 +62,24 @@ namespace {
 
     NotificationHandler() : DispatchHandler() { return; }
 
-    void SetPending() { mPending = true; }
+    void set_pending() { m_pending = true; }
   
     virtual void handle(EventPtr &eventPtr) {
-      boost::mutex::scoped_lock lock(mMutex);
-      mPending = false;
-      mCond.notify_all();
+      boost::mutex::scoped_lock lock(m_mutex);
+      m_pending = false;
+      m_cond.notify_all();
     }
 
-    void WaitForNotification() {
-      boost::mutex::scoped_lock lock(mMutex);
-      while (mPending)
-	mCond.wait(lock);
+    void wait_for_notification() {
+      boost::mutex::scoped_lock lock(m_mutex);
+      while (m_pending)
+	m_cond.wait(lock);
     }
 
   private:
-    boost::mutex      mMutex;
-    boost::condition  mCond;
-    bool mPending;
+    boost::mutex      m_mutex;
+    boost::condition  m_cond;
+    bool m_pending;
   };
 
   NotificationHandler *gNotifyHandler = 0;
@@ -96,9 +96,9 @@ namespace {
   }
 
   void IssueCommand(int fd, const char *command) {
-    gNotifyHandler->SetPending();
+    gNotifyHandler->set_pending();
     IssueCommandNoWait(fd, command);
-    gNotifyHandler->WaitForNotification();
+    gNotifyHandler->wait_for_notification();
   }
 
   int gFd1, gFd2, gFd3;
@@ -127,17 +127,17 @@ int main(int argc, char **argv) {
 
   dhp = gNotifyHandler;
 
-  System::Initialize(argv[0]);
-  ReactorFactory::Initialize(1);
+  System::initialize(argv[0]);
+  ReactorFactory::initialize(1);
 
   comm = new Comm();
 
-  if (!InetAddr::Initialize(&addr, "23451"))
+  if (!InetAddr::initialize(&addr, "23451"))
     exit(1);
 
-  if ((error = comm->CreateDatagramReceiveSocket(&addr, dhp)) != Error::OK) {
+  if ((error = comm->create_datagram_receive_socket(&addr, dhp)) != Error::OK) {
     std::string str;
-    LOG_VA_ERROR("Problem creating UDP receive socket %s - %s", InetAddr::StringFormat(str, addr), Error::GetText(error));
+    LOG_VA_ERROR("Problem creating UDP receive socket %s - %s", InetAddr::string_format(str, addr), Error::get_text(error));
     exit(1);
   }
 
@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
   strcpy(masterInstallDir, "--install-dir=");
   getcwd(masterInstallDir+strlen("--install-dir="), 2000);
 
-  masterArgs.push_back("Hyperspace.Master");
+  masterArgs.push_back("Hyperspace.master");
   masterArgs.push_back("--config=./hyperspaceTest.cfg");
   masterArgs.push_back("--verbose");
   masterArgs.push_back(masterInstallDir);
@@ -163,22 +163,22 @@ int main(int argc, char **argv) {
   clientArgs.push_back("--notification-address=23451");
   clientArgs.push_back((const char *)0);
 
-  unlink("./Hyperspace.Master");
-  link("../../Hyperspace/Hyperspace.Master", "./Hyperspace.Master");
+  unlink("./Hyperspace.master");
+  link("../../Hyperspace/Hyperspace.master", "./Hyperspace.master");
 
   {
-    ServerLauncher master("./Hyperspace.Master", (char * const *)&masterArgs[0]);
+    ServerLauncher master("./Hyperspace.master", (char * const *)&masterArgs[0]);
     ServerLauncher client1("./hyperspace", (char * const *)&clientArgs[0], "client1.out");
     ServerLauncher client2("./hyperspace", (char * const *)&clientArgs[0], "client2.out");
     ServerLauncher client3("./hyperspace", (char * const *)&clientArgs[0], "client3.out");
 
-    gFd1 = client1.GetWriteDescriptor();
-    gFd2 = client2.GetWriteDescriptor();
-    gFd3 = client3.GetWriteDescriptor();
+    gFd1 = client1.get_write_descriptor();
+    gFd2 = client2.get_write_descriptor();
+    gFd3 = client3.get_write_descriptor();
 
-    gPid1 = client1.GetPid();
-    gPid2 = client2.GetPid();
-    gPid3 = client3.GetPid();
+    gPid1 = client1.get_pid();
+    gPid2 = client2.get_pid();
+    gPid3 = client3.get_pid();
 
     BasicTest();
     NotificationTest();

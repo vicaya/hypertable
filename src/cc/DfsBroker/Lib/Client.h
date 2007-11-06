@@ -61,74 +61,74 @@ namespace hypertable {
 
       Client(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr);
 
-      bool WaitForConnection(long maxWaitSecs) {
-	return mConnManagerPtr->WaitForConnection(mAddr, maxWaitSecs);
+      bool wait_for_connection(long maxWaitSecs) {
+	return m_conn_manager_ptr->wait_for_connection(m_addr, maxWaitSecs);
       }
 
-      virtual int Open(std::string &name, DispatchHandler *handler);
-      virtual int Open(std::string &name, int32_t *fdp);
-      virtual int OpenBuffered(std::string &name, uint32_t bufSize, int32_t *fdp);
+      virtual int open(std::string &name, DispatchHandler *handler);
+      virtual int open(std::string &name, int32_t *fdp);
+      virtual int open_buffered(std::string &name, uint32_t bufSize, int32_t *fdp);
 
-      virtual int Create(std::string &name, bool overwrite, int32_t bufferSize,
+      virtual int create(std::string &name, bool overwrite, int32_t bufferSize,
 			 int32_t replication, int64_t blockSize, DispatchHandler *handler);
-      virtual int Create(std::string &name, bool overwrite, int32_t bufferSize,
+      virtual int create(std::string &name, bool overwrite, int32_t bufferSize,
 			 int32_t replication, int64_t blockSize, int32_t *fdp);
 
-      virtual int Close(int32_t fd, DispatchHandler *handler);
-      virtual int Close(int32_t fd);
+      virtual int close(int32_t fd, DispatchHandler *handler);
+      virtual int close(int32_t fd);
 
-      virtual int Read(int32_t fd, uint32_t amount, DispatchHandler *handler);
-      virtual int Read(int32_t fd, uint32_t amount, uint8_t *dst, uint32_t *nreadp);
+      virtual int read(int32_t fd, uint32_t amount, DispatchHandler *handler);
+      virtual int read(int32_t fd, uint32_t amount, uint8_t *dst, uint32_t *nreadp);
 
-      virtual int Append(int32_t fd, const void *buf, uint32_t amount, DispatchHandler *handler);
-      virtual int Append(int32_t fd, const void *buf, uint32_t amount);
+      virtual int append(int32_t fd, const void *buf, uint32_t amount, DispatchHandler *handler);
+      virtual int append(int32_t fd, const void *buf, uint32_t amount);
 
-      virtual int Seek(int32_t fd, uint64_t offset, DispatchHandler *handler);
-      virtual int Seek(int32_t fd, uint64_t offset);
+      virtual int seek(int32_t fd, uint64_t offset, DispatchHandler *handler);
+      virtual int seek(int32_t fd, uint64_t offset);
 
-      virtual int Remove(std::string &name, DispatchHandler *handler);
-      virtual int Remove(std::string &name);
+      virtual int remove(std::string &name, DispatchHandler *handler);
+      virtual int remove(std::string &name);
 
-      virtual int Length(std::string &name, DispatchHandler *handler);
-      virtual int Length(std::string &name, int64_t *lenp);
+      virtual int length(std::string &name, DispatchHandler *handler);
+      virtual int length(std::string &name, int64_t *lenp);
 
-      virtual int Pread(int32_t fd, uint64_t offset, uint32_t amount, DispatchHandler *handler);
-      virtual int Pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst, uint32_t *nreadp);
+      virtual int pread(int32_t fd, uint64_t offset, uint32_t amount, DispatchHandler *handler);
+      virtual int pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst, uint32_t *nreadp);
 
-      virtual int Mkdirs(std::string &name, DispatchHandler *handler);
-      virtual int Mkdirs(std::string &name);
+      virtual int mkdirs(std::string &name, DispatchHandler *handler);
+      virtual int mkdirs(std::string &name);
 
-      virtual int Flush(int32_t fd, DispatchHandler *handler);
-      virtual int Flush(int32_t fd);
+      virtual int flush(int32_t fd, DispatchHandler *handler);
+      virtual int flush(int32_t fd);
 
-      virtual int Rmdir(std::string &name, DispatchHandler *handler);
-      virtual int Rmdir(std::string &name);
+      virtual int rmdir(std::string &name, DispatchHandler *handler);
+      virtual int rmdir(std::string &name);
 
-      virtual int Readdir(std::string &name, DispatchHandler *handler);
-      virtual int Readdir(std::string &name, std::vector<std::string> &listing);
+      virtual int readdir(std::string &name, DispatchHandler *handler);
+      virtual int readdir(std::string &name, std::vector<std::string> &listing);
 
-      int Status();
+      int status();
 
-      int Shutdown(uint16_t flags, DispatchHandler *handler);
+      int shutdown(uint16_t flags, DispatchHandler *handler);
 
-      Protocol *GetProtocolObject() { return mProtocol; }
+      Protocol *get_protocol_object() { return m_protocol; }
 
-      time_t GetTimeout() { return mTimeout; }
+      time_t get_timeout() { return m_timeout; }
     
     private:
 
-      int SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler);
+      int send_message(CommBufPtr &cbufPtr, DispatchHandler *handler);
 
       typedef __gnu_cxx::hash_map<uint32_t, ClientBufferedReaderHandler *> BufferedReaderMapT;
 
-      boost::mutex          mMutex;
-      Comm                 *mComm;
-      ConnectionManagerPtr  mConnManagerPtr;
-      struct sockaddr_in    mAddr;
-      time_t                mTimeout;
-      MessageBuilderSimple *mMessageBuilder;
-      Protocol             *mProtocol;
-      BufferedReaderMapT    mBufferedReaderMap;
+      boost::mutex          m_mutex;
+      Comm                 *m_comm;
+      ConnectionManagerPtr  m_conn_manager_ptr;
+      struct sockaddr_in    m_addr;
+      time_t                m_timeout;
+      MessageBuilderSimple *m_message_builder;
+      Protocol             *m_protocol;
+      BufferedReaderMapT    m_buffered_reader_map;
     };
 
   }

@@ -39,7 +39,7 @@
 using namespace hypertable;
 using namespace std;
 
-const char *CommandFetchScanblock::msUsage[] = {
+const char *CommandFetchScanblock::ms_usage[] = {
   "fetch scanblock <scanner-id>",
   "",
   "  This command issues a FETCH SCANBLOCK command to the range server.  If no",
@@ -55,17 +55,17 @@ int CommandFetchScanblock::run() {
   ScanResult result;
   int32_t scannerId = -1;
 
-  if (mArgs.size() > 1) {
+  if (m_args.size() > 1) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
     return -1;
   }
 
-  if (mArgs.size() > 0) {
-    if (mArgs[0].second != "") {
+  if (m_args.size() > 0) {
+    if (m_args[0].second != "") {
       cerr << "Invalid scanner ID." << endl;
       return -1;
     }
-    scannerId = atoi(mArgs[0].first.c_str());
+    scannerId = atoi(m_args[0].first.c_str());
   }
   else
     scannerId = Global::outstandingScannerId;
@@ -73,17 +73,17 @@ int CommandFetchScanblock::run() {
   /**
    * 
    */
-  if ((error = Global::rangeServer->FetchScanblock(mAddr, scannerId, result)) != Error::OK)
+  if ((error = Global::rangeServer->fetch_scanblock(m_addr, scannerId, result)) != Error::OK)
     return error;
 
-  Global::outstandingScannerId = result.GetId();
+  Global::outstandingScannerId = result.get_id();
 
-  ScanResult::VectorT &rvec = result.GetVector();
+  ScanResult::VectorT &rvec = result.get_vector();
 
   for (size_t i=0; i<rvec.size(); i++)
     DisplayScanData(rvec[i].first, rvec[i].second, Global::outstandingSchemaPtr);
 
-  if (result.Eos())
+  if (result.eos())
     Global::outstandingScannerId = -1;
 
   return Error::OK;

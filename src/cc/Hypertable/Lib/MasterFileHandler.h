@@ -36,10 +36,10 @@ namespace hypertable {
    */
   class MasterFileHandler : public HandleCallback {
   public:
-    MasterFileHandler(MasterClientPtr masterClientPtr, ApplicationQueuePtr &appQueuePtr) : HandleCallback(EVENT_MASK_ATTR_SET), mMasterClientPtr(masterClientPtr), mAppQueuePtr(appQueuePtr) { return; }
-    virtual void AttrSet(std::string name);
-    MasterClientPtr      mMasterClientPtr;
-    ApplicationQueuePtr  mAppQueuePtr;
+    MasterFileHandler(MasterClientPtr masterClientPtr, ApplicationQueuePtr &appQueuePtr) : HandleCallback(EVENT_MASK_ATTR_SET), m_master_client_ptr(masterClientPtr), m_app_queue_ptr(appQueuePtr) { return; }
+    virtual void attr_set(std::string name);
+    MasterClientPtr      m_master_client_ptr;
+    ApplicationQueuePtr  m_app_queue_ptr;
   };
 }
 

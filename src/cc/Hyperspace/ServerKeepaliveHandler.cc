@@ -36,13 +36,13 @@ using namespace Hyperspace;
 /**
  *
  */
-ServerKeepaliveHandler::ServerKeepaliveHandler(Comm *comm, Master *master) : mComm(comm), mMaster(master) { 
+ServerKeepaliveHandler::ServerKeepaliveHandler(Comm *comm, Master *master) : m_comm(comm), m_master(master) { 
   int error; 
 
-  mMaster->GetDatagramSendAddress(&mSendAddr);
+  m_master->get_datagram_send_address(&m_send_addr);
 
-  if ((error = mComm->SetTimer(1000, this)) != Error::OK) {
-    LOG_VA_ERROR("Problem setting timer - %s", Error::GetText(error));
+  if ((error = m_comm->set_timer(1000, this)) != Error::OK) {
+    LOG_VA_ERROR("Problem setting timer - %s", Error::get_text(error));
     exit(1);
   }
   
@@ -64,7 +64,7 @@ void ServerKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 
     try {
 
-      if (!Serialization::DecodeShort(&msgPtr, &remaining, &command)) {
+      if (!Serialization::decode_short(&msgPtr, &remaining, &command)) {
 	std::string message = "Truncated Request";
 	throw new ProtocolException(message);
       }
@@ -82,46 +82,46 @@ void ServerKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 	  SessionDataPtr sessionPtr;
 	  uint64_t lastKnownEvent;
 
-	  if (!Serialization::DecodeLong(&msgPtr, &remaining, &sessionId) ||
-	      !Serialization::DecodeLong(&msgPtr, &remaining, &lastKnownEvent)) {
+	  if (!Serialization::decode_long(&msgPtr, &remaining, &sessionId) ||
+	      !Serialization::decode_long(&msgPtr, &remaining, &lastKnownEvent)) {
 	    std::string message = "Truncated Request";
 	    throw new ProtocolException(message);
 	  }
 
 	  if (sessionId == 0) {
-	    sessionId = mMaster->CreateSession(eventPtr->addr);
+	    sessionId = m_master->create_session(eventPtr->addr);
 	    LOG_VA_INFO("Session handle %lld created", sessionId);
 	    error = Error::OK;
 	  }
 	  else
-	    error = mMaster->RenewSessionLease(sessionId);
+	    error = m_master->renew_session_lease(sessionId);
 
 	  if (error == Error::HYPERSPACE_EXPIRED_SESSION) {
 	    LOG_VA_INFO("Session handle %lld expired", sessionId);
-	    CommBufPtr cbufPtr( Protocol::CreateServerKeepaliveRequest(sessionId, Error::HYPERSPACE_EXPIRED_SESSION) );
-	    if ((error = mComm->SendDatagram(eventPtr->addr, mSendAddr, cbufPtr)) != Error::OK) {
-	      LOG_VA_ERROR("Comm::SendDatagram returned %s", Error::GetText(error));
+	    CommBufPtr cbufPtr( Protocol::create_server_keepalive_request(sessionId, Error::HYPERSPACE_EXPIRED_SESSION) );
+	    if ((error = m_comm->send_datagram(eventPtr->addr, m_send_addr, cbufPtr)) != Error::OK) {
+	      LOG_VA_ERROR("Comm::send_datagram returned %s", Error::get_text(error));
 	    }
 	    return;
 	  }
 
-	  if (!mMaster->GetSession(sessionId, sessionPtr)) {
+	  if (!m_master->get_session(sessionId, sessionPtr)) {
 	    LOG_VA_ERROR("Unable to find data for session %lld", sessionId);
 	    return;
 	  }
 
-	  sessionPtr->PurgeNotifications(lastKnownEvent);
+	  sessionPtr->purge_notifications(lastKnownEvent);
 
 	  /**
 	  {
 	    std::string str;
-	    LOG_VA_INFO("Sending Keepalive request to %s (lastKnownEvent=%lld)", InetAddr::StringFormat(str, eventPtr->addr), lastKnownEvent);
+	    LOG_VA_INFO("Sending Keepalive request to %s (lastKnownEvent=%lld)", InetAddr::string_format(str, eventPtr->addr), lastKnownEvent);
 	  }
 	  **/
 
-	  CommBufPtr cbufPtr( Protocol::CreateServerKeepaliveRequest(sessionPtr) );
-	  if ((error = mComm->SendDatagram(eventPtr->addr, mSendAddr, cbufPtr)) != Error::OK) {
-	    LOG_VA_ERROR("Comm::SendDatagram returned %s", Error::GetText(error));
+	  CommBufPtr cbufPtr( Protocol::create_server_keepalive_request(sessionPtr) );
+	  if ((error = m_comm->send_datagram(eventPtr->addr, m_send_addr, cbufPtr)) != Error::OK) {
+	    LOG_VA_ERROR("Comm::send_datagram returned %s", Error::get_text(error));
 	  }
 	}
 	break;
@@ -137,10 +137,10 @@ void ServerKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
   }
   else if (eventPtr->type == hypertable::Event::TIMER) {
 
-    mMaster->RemoveExpiredSessions();
+    m_master->remove_expired_sessions();
 
-    if ((error = mComm->SetTimer(1000, this)) != Error::OK) {
-      LOG_VA_ERROR("Problem setting timer - %s", Error::GetText(error));
+    if ((error = m_comm->set_timer(1000, this)) != Error::OK) {
+      LOG_VA_ERROR("Problem setting timer - %s", Error::get_text(error));
       exit(1);
     }
 
@@ -154,13 +154,13 @@ void ServerKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 /**
  *
  */
-void ServerKeepaliveHandler::DeliverEventNotifications(uint64_t sessionId) {
+void ServerKeepaliveHandler::deliver_event_notifications(uint64_t sessionId) {
   int error = 0;
   SessionDataPtr sessionPtr;
 
   //LOG_VA_INFO("Delivering event notifications for session %lld", sessionId);
 
-  if (!mMaster->GetSession(sessionId, sessionPtr)) {
+  if (!m_master->get_session(sessionId, sessionPtr)) {
     LOG_VA_ERROR("Unable to find data for session %lld", sessionId);
     return;
   }
@@ -168,13 +168,13 @@ void ServerKeepaliveHandler::DeliverEventNotifications(uint64_t sessionId) {
   /**
   {
     std::string str;
-    LOG_VA_INFO("Sending Keepalive request to %s", InetAddr::StringFormat(str, sessionPtr->addr));
+    LOG_VA_INFO("Sending Keepalive request to %s", InetAddr::string_format(str, sessionPtr->addr));
   }
   **/
 
-  CommBufPtr cbufPtr( Protocol::CreateServerKeepaliveRequest(sessionPtr) );
-  if ((error = mComm->SendDatagram(sessionPtr->addr, mSendAddr, cbufPtr)) != Error::OK) {
-    LOG_VA_ERROR("Comm::SendDatagram returned %s", Error::GetText(error));
+  CommBufPtr cbufPtr( Protocol::create_server_keepalive_request(sessionPtr) );
+  if ((error = m_comm->send_datagram(sessionPtr->addr, m_send_addr, cbufPtr)) != Error::OK) {
+    LOG_VA_ERROR("Comm::send_datagram returned %s", Error::get_text(error));
   }
 
 }

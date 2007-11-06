@@ -20,6 +20,6 @@
 
 #include "Event.h"
 
-boost::mutex Hyperspace::Event::msNextEventIdMutex;
-uint64_t     Hyperspace::Event::msNextEventId = 1;
+boost::mutex Hyperspace::Event::ms_next_event_id_mutex;
+uint64_t     Hyperspace::Event::ms_next_event_id = 1;
 

@@ -33,16 +33,16 @@ using namespace hypertable::DfsBroker;
  *
  */
 void RequestHandlerRemove::run() {
-  ResponseCallback cb(mComm, mEventPtr);
+  ResponseCallback cb(m_comm, m_event_ptr);
   const char *fileName;
-  size_t remaining = mEventPtr->messageLen - 2;
-  uint8_t *msgPtr = mEventPtr->message + 2;
+  size_t remaining = m_event_ptr->messageLen - 2;
+  uint8_t *msgPtr = m_event_ptr->message + 2;
 
   // file name
-  if (!Serialization::DecodeString(&msgPtr, &remaining, &fileName))
+  if (!Serialization::decode_string(&msgPtr, &remaining, &fileName))
     goto abort;
 
-  mBroker->Remove(&cb, fileName);
+  m_broker->remove(&cb, fileName);
 
   return;
 

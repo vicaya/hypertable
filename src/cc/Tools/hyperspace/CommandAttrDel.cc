@@ -31,7 +31,7 @@ using namespace hypertable;
 using namespace Hyperspace;
 using namespace std;
 
-const char *CommandAttrDel::msUsage[] = {
+const char *CommandAttrDel::ms_usage[] = {
   "attrdel <file> <name>",
   "  This command issues a ATTRDEL request to Hyperspace.",
   (const char *)0
@@ -40,18 +40,18 @@ const char *CommandAttrDel::msUsage[] = {
 int CommandAttrDel::run() {
   uint64_t handle;
 
-  if (mArgs.size() != 2) {
+  if (m_args.size() != 2) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
     return -1;
   }
 
-  if (mArgs[0].second != "" || mArgs[1].second != "") {
+  if (m_args[0].second != "" || m_args[1].second != "") {
     cerr << "Invalid character '=' in argument." << endl;
     return -1;
   }
 
-  if (!Util::GetHandle(mArgs[0].first, &handle))
+  if (!Util::get_handle(m_args[0].first, &handle))
     return -1;
 
-  return mSession->AttrDel(handle, mArgs[1].first);
+  return m_session->attr_del(handle, m_args[1].first);
 }

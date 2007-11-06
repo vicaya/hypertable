@@ -38,7 +38,7 @@ using namespace hypertable;
 /**
  *
  */
-bool InetAddr::Initialize(struct sockaddr_in *addr, const char *host, uint16_t port) {
+bool InetAddr::initialize(struct sockaddr_in *addr, const char *host, uint16_t port) {
   memset(addr, 0, sizeof(struct sockaddr_in));
   {
     struct hostent *he = gethostbyname(host);
@@ -54,7 +54,7 @@ bool InetAddr::Initialize(struct sockaddr_in *addr, const char *host, uint16_t p
   return true;
 }
 
-bool InetAddr::Initialize(struct sockaddr_in *addr, const char *addrStr) {
+bool InetAddr::initialize(struct sockaddr_in *addr, const char *addrStr) {
   const char *colon = strchr(addrStr, ':');
   uint16_t port;
   std::string host;
@@ -62,16 +62,16 @@ bool InetAddr::Initialize(struct sockaddr_in *addr, const char *addrStr) {
   if (colon) {
     host = std::string(addrStr, colon-addrStr);
     port = (uint16_t)atoi(colon+1);
-    return Initialize(addr, host.c_str(), port);
+    return initialize(addr, host.c_str(), port);
   }
   
-  return Initialize(addr, "localhost", (uint16_t)atoi(addrStr));
+  return initialize(addr, "localhost", (uint16_t)atoi(addrStr));
 }
 
 /**
  *
  */
-bool InetAddr::Initialize(struct sockaddr_in *addr, uint32_t haddr, uint16_t port) {
+bool InetAddr::initialize(struct sockaddr_in *addr, uint32_t haddr, uint16_t port) {
   memset(addr, 0 , sizeof(sockaddr_in));
   addr->sin_family = AF_INET;
   addr->sin_addr.s_addr = htonl(haddr);
@@ -82,7 +82,7 @@ bool InetAddr::Initialize(struct sockaddr_in *addr, uint32_t haddr, uint16_t por
 /**
  *
  */
-const char *InetAddr::StringFormat(std::string &addrStr, struct sockaddr_in &addr) {
+const char *InetAddr::string_format(std::string &addrStr, struct sockaddr_in &addr) {
   addrStr = (std::string)inet_ntoa(addr.sin_addr) + ":" + ntohs(addr.sin_port);
   return addrStr.c_str();
 }
@@ -91,7 +91,7 @@ const char *InetAddr::StringFormat(std::string &addrStr, struct sockaddr_in &add
 /**
  *
  */
-void InetAddr::GetHostname(std::string &hostname) {
+void InetAddr::get_hostname(std::string &hostname) {
   struct utsname u;
   uname(&u);
   hostname = u.nodename;

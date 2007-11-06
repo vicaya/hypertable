@@ -37,7 +37,7 @@ extern "C" {
 
 using namespace std;
 
-bool TestSource::Next(ByteString32T **keyp, ByteString32T **valuep) {
+bool TestSource::next(ByteString32T **keyp, ByteString32T **valuep) {
   string line;
   boost::shared_array<char> linePtr;
   char *base, *ptr, *last;
@@ -46,8 +46,8 @@ bool TestSource::Next(ByteString32T **keyp, ByteString32T **valuep) {
   char *value;
   uint64_t timestamp;
 
-  while (getline(mFin, line)) {
-    mCurLine++;
+  while (getline(m_fin, line)) {
+    m_cur_line++;
 
     boost::trim(line);
 
@@ -56,7 +56,7 @@ bool TestSource::Next(ByteString32T **keyp, ByteString32T **valuep) {
     strcpy(base, line.c_str());
 
     if ((ptr = strtok_r(base, "\t", &last)) == 0) {
-      cerr << "Mal-formed input on line " << (mCurLine-1) << endl;
+      cerr << "Mal-formed input on line " << (m_cur_line-1) << endl;
       continue;
     }
 
@@ -66,44 +66,44 @@ bool TestSource::Next(ByteString32T **keyp, ByteString32T **valuep) {
     else {
       timestamp = strtoll(ptr, 0, 0);
       if (timestamp == 0 && errno == EINVAL) {
-	cerr << "Invalid timestamp (" << ptr << ") on line " << (mCurLine-1) << endl;
+	cerr << "Invalid timestamp (" << ptr << ") on line " << (m_cur_line-1) << endl;
 	continue;
       }
     }
 
     if ((rowKey = strtok_r(0, "\t", &last)) == 0) {
-      cerr << "Mal-formed input on line " << (mCurLine-1) << endl;
+      cerr << "Mal-formed input on line " << (m_cur_line-1) << endl;
       continue;
     }
 
     if ((column = strtok_r(0, "\t", &last)) == 0) {
-      cerr << "Mal-formed input on line " << (mCurLine-1) << endl;
+      cerr << "Mal-formed input on line " << (m_cur_line-1) << endl;
       continue;
     }
 
     if (!strcmp(column, "DELETE")) {
-      if (!CreateRowDelete(rowKey, timestamp, keyp, valuep)) {
-	cerr << "Mal-formed input on line " << (mCurLine-1) << endl;
+      if (!create_row_delete(rowKey, timestamp, keyp, valuep)) {
+	cerr << "Mal-formed input on line " << (m_cur_line-1) << endl;
 	continue;
       }
       return true;
     }
 
     if ((value = strtok_r(0, "\t", &last)) == 0) {
-      cerr << "Mal-formed input on line " << (mCurLine-1) << endl;
+      cerr << "Mal-formed input on line " << (m_cur_line-1) << endl;
       continue;
     }
 
     if (!strcmp(value, "DELETE")) {
-      if (!CreateColumnDelete(rowKey, column, timestamp, keyp, valuep)) {
-	cerr << "Mal-formed input on line " << (mCurLine-1) << endl;
+      if (!create_column_delete(rowKey, column, timestamp, keyp, valuep)) {
+	cerr << "Mal-formed input on line " << (m_cur_line-1) << endl;
 	continue;
       }
       return true;
     }
 
-    if (!CreateInsert(rowKey, column, timestamp, value, keyp, valuep)) {
-      cerr << "Mal-formed input on line " << (mCurLine-1) << endl;
+    if (!create_insert(rowKey, column, timestamp, value, keyp, valuep)) {
+      cerr << "Mal-formed input on line " << (m_cur_line-1) << endl;
       continue;
     }
 
@@ -114,33 +114,33 @@ bool TestSource::Next(ByteString32T **keyp, ByteString32T **valuep) {
 }
 
 
-bool TestSource::CreateRowDelete(const char *row, uint64_t timestamp, ByteString32T **keyp, ByteString32T **valuep) {
+bool TestSource::create_row_delete(const char *row, uint64_t timestamp, ByteString32T **keyp, ByteString32T **valuep) {
   int32_t keyLen = strlen(row) + 12;
   int32_t valueLen = 0;
 
-  mKeyBuffer.clear();
-  mKeyBuffer.ensure(sizeof(int32_t)+keyLen);
+  m_key_buffer.clear();
+  m_key_buffer.ensure(sizeof(int32_t)+keyLen);
 
-  mKeyBuffer.addNoCheck(&keyLen, sizeof(int32_t));
-  mKeyBuffer.addNoCheck(row, strlen(row)+1);
-  *mKeyBuffer.ptr++ = 0;
-  *mKeyBuffer.ptr++ = 0;
-  *mKeyBuffer.ptr++ = FLAG_DELETE_ROW;
+  m_key_buffer.addNoCheck(&keyLen, sizeof(int32_t));
+  m_key_buffer.addNoCheck(row, strlen(row)+1);
+  *m_key_buffer.ptr++ = 0;
+  *m_key_buffer.ptr++ = 0;
+  *m_key_buffer.ptr++ = FLAG_DELETE_ROW;
 
   timestamp = ByteOrderSwapInt64(timestamp);
   timestamp = ~timestamp;
-  mKeyBuffer.addNoCheck(&timestamp, sizeof(timestamp));
-  *keyp = (ByteString32T *)mKeyBuffer.buf;
+  m_key_buffer.addNoCheck(&timestamp, sizeof(timestamp));
+  *keyp = (ByteString32T *)m_key_buffer.buf;
 
-  mValueBuffer.clear();
-  mValueBuffer.ensure(sizeof(int32_t));
-  mValueBuffer.addNoCheck(&valueLen, sizeof(int32_t));  
-  *valuep = (ByteString32T *)mValueBuffer.buf;
+  m_value_buffer.clear();
+  m_value_buffer.ensure(sizeof(int32_t));
+  m_value_buffer.addNoCheck(&valueLen, sizeof(int32_t));  
+  *valuep = (ByteString32T *)m_value_buffer.buf;
   return true;
 }
 
 
-bool TestSource::CreateColumnDelete(const char *row, const char *column, uint64_t timestamp, ByteString32T **keyp, ByteString32T **valuep) {
+bool TestSource::create_column_delete(const char *row, const char *column, uint64_t timestamp, ByteString32T **keyp, ByteString32T **valuep) {
   int32_t keyLen = 0;
   int32_t valueLen = 0;
   string columnFamily;
@@ -155,36 +155,36 @@ bool TestSource::CreateColumnDelete(const char *row, const char *column, uint64_
   columnFamily = string(column, ptr-column);
   qualifier = ptr+1;
 
-  Schema::ColumnFamily *cf = mSchema->GetColumnFamily(columnFamily);
+  Schema::ColumnFamily *cf = m_schema->get_column_family(columnFamily);
   if (cf == 0) {
     cerr << "Column family '" << columnFamily << "' not found in schema" << endl;
     return false;
   }
 
-  mKeyBuffer.clear();
+  m_key_buffer.clear();
   keyLen = strlen(row) + strlen(qualifier) + 12;
-  mKeyBuffer.ensure(sizeof(int32_t)+keyLen);
+  m_key_buffer.ensure(sizeof(int32_t)+keyLen);
 
-  mKeyBuffer.addNoCheck(&keyLen, sizeof(int32_t));
-  mKeyBuffer.addNoCheck(row, strlen(row)+1);
-  *mKeyBuffer.ptr++ = cf->id;
-  mKeyBuffer.addNoCheck(qualifier, strlen(qualifier)+1);
-  *mKeyBuffer.ptr++ = FLAG_DELETE_CELL;
+  m_key_buffer.addNoCheck(&keyLen, sizeof(int32_t));
+  m_key_buffer.addNoCheck(row, strlen(row)+1);
+  *m_key_buffer.ptr++ = cf->id;
+  m_key_buffer.addNoCheck(qualifier, strlen(qualifier)+1);
+  *m_key_buffer.ptr++ = FLAG_DELETE_CELL;
 
   timestamp = ByteOrderSwapInt64(timestamp);
   timestamp = ~timestamp;
-  mKeyBuffer.addNoCheck(&timestamp, sizeof(timestamp));
-  *keyp = (ByteString32T *)mKeyBuffer.buf;
+  m_key_buffer.addNoCheck(&timestamp, sizeof(timestamp));
+  *keyp = (ByteString32T *)m_key_buffer.buf;
 
-  mValueBuffer.clear();
-  mValueBuffer.ensure(sizeof(int32_t));
-  mValueBuffer.addNoCheck(&valueLen, sizeof(int32_t));  
-  *valuep = (ByteString32T *)mValueBuffer.buf;
+  m_value_buffer.clear();
+  m_value_buffer.ensure(sizeof(int32_t));
+  m_value_buffer.addNoCheck(&valueLen, sizeof(int32_t));  
+  *valuep = (ByteString32T *)m_value_buffer.buf;
   return true;
 }
 
 
-bool TestSource::CreateInsert(const char *row, const char *column, uint64_t timestamp, const char *value, ByteString32T **keyp, ByteString32T **valuep) {
+bool TestSource::create_insert(const char *row, const char *column, uint64_t timestamp, const char *value, ByteString32T **keyp, ByteString32T **valuep) {
   int32_t keyLen = 0;
   int32_t valueLen = strlen(value);
   string columnFamily;
@@ -199,32 +199,32 @@ bool TestSource::CreateInsert(const char *row, const char *column, uint64_t time
   columnFamily = string(column, ptr-column);
   qualifier = ptr+1;
 
-  Schema::ColumnFamily *cf = mSchema->GetColumnFamily(columnFamily);
+  Schema::ColumnFamily *cf = m_schema->get_column_family(columnFamily);
   if (cf == 0) {
     cerr << "Column family '" << columnFamily << "' not found in schema" << endl;
     return false;
   }
 
-  mKeyBuffer.clear();
+  m_key_buffer.clear();
   keyLen = strlen(row) + strlen(qualifier) + 12;
-  mKeyBuffer.ensure(keyLen+sizeof(int32_t));
+  m_key_buffer.ensure(keyLen+sizeof(int32_t));
 
-  mKeyBuffer.addNoCheck(&keyLen, sizeof(int32_t));
-  mKeyBuffer.addNoCheck(row, strlen(row)+1);
-  *mKeyBuffer.ptr++ = cf->id;
-  mKeyBuffer.addNoCheck(qualifier, strlen(qualifier)+1);
-  *mKeyBuffer.ptr++ = FLAG_INSERT;
+  m_key_buffer.addNoCheck(&keyLen, sizeof(int32_t));
+  m_key_buffer.addNoCheck(row, strlen(row)+1);
+  *m_key_buffer.ptr++ = cf->id;
+  m_key_buffer.addNoCheck(qualifier, strlen(qualifier)+1);
+  *m_key_buffer.ptr++ = FLAG_INSERT;
 
   timestamp = ByteOrderSwapInt64(timestamp);
   timestamp = ~timestamp;
-  mKeyBuffer.addNoCheck(&timestamp, sizeof(timestamp));
-  *keyp = (ByteString32T *)mKeyBuffer.buf;
+  m_key_buffer.addNoCheck(&timestamp, sizeof(timestamp));
+  *keyp = (ByteString32T *)m_key_buffer.buf;
 
-  mValueBuffer.clear();
-  mValueBuffer.ensure(sizeof(int32_t) + valueLen);
-  mValueBuffer.addNoCheck(&valueLen, sizeof(int32_t));  
-  mValueBuffer.addNoCheck(value, valueLen);
-  *valuep = (ByteString32T *)mValueBuffer.buf;
+  m_value_buffer.clear();
+  m_value_buffer.ensure(sizeof(int32_t) + valueLen);
+  m_value_buffer.addNoCheck(&valueLen, sizeof(int32_t));  
+  m_value_buffer.addNoCheck(value, valueLen);
+  *valuep = (ByteString32T *)m_value_buffer.buf;
   return true;
 }
 

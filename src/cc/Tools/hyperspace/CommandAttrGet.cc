@@ -32,7 +32,7 @@ using namespace hypertable;
 using namespace Hyperspace;
 using namespace std;
 
-const char *CommandAttrGet::msUsage[] = {
+const char *CommandAttrGet::ms_usage[] = {
   "attrget <file> <name>",
   "  This command issues a ATTRGET request to Hyperspace.",
   (const char *)0
@@ -44,20 +44,20 @@ int CommandAttrGet::run() {
   int error;
   DynamicBuffer value(0);
 
-  if (mArgs.size() != 2) {
+  if (m_args.size() != 2) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
     return -1;
   }
 
-  if (mArgs[0].second != "" || mArgs[1].second != "") {
+  if (m_args[0].second != "" || m_args[1].second != "") {
     cerr << "Invalid character '=' in argument." << endl;
     return -1;
   }
 
-  if (!Util::GetHandle(mArgs[0].first, &handle))
+  if (!Util::get_handle(m_args[0].first, &handle))
     return -1;
 
-  if ((error = mSession->AttrGet(handle, mArgs[1].first, value)) == Error::OK) {
+  if ((error = m_session->attr_get(handle, m_args[1].first, value)) == Error::OK) {
     std::string valStr = std::string((const char *)value.buf, value.fill());
     cout << valStr << endl;
   }

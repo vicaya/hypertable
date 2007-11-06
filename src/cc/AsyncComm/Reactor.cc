@@ -53,7 +53,7 @@ const int Reactor::WRITE_READY  = 0x02;
 /**
  * 
  */
-Reactor::Reactor() : mMutex(), mInterruptInProgress(false) {
+Reactor::Reactor() : m_mutex(), m_interrupt_in_progress(false) {
   struct sockaddr_in addr;
 
 #if defined(__linux__)
@@ -70,13 +70,13 @@ Reactor::Reactor() : mMutex(), mInterruptInProgress(false) {
    * interrupt epoll_wait so that it can reset its timeout
    * value
    */
-  if ((mInterruptSd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+  if ((m_interrupt_sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
     LOG_VA_ERROR("socket() failure: %s", strerror(errno));
     exit(1);
   }
 
   // Set to non-blocking
-  FileUtils::SetFlags(mInterruptSd, O_NONBLOCK);
+  FileUtils::set_flags(m_interrupt_sd, O_NONBLOCK);
 
   // create address structure to bind to - any available port - any address
   memset(&addr, 0 , sizeof(sockaddr_in));
@@ -85,7 +85,7 @@ Reactor::Reactor() : mMutex(), mInterruptInProgress(false) {
   addr.sin_port = 0;
 
   // bind socket
-  if ((bind(mInterruptSd, (const sockaddr *)&addr, sizeof(sockaddr_in))) < 0) {
+  if ((bind(m_interrupt_sd, (const sockaddr *)&addr, sizeof(sockaddr_in))) < 0) {
     LOG_VA_ERROR("bind() failure: %s", strerror(errno));
     exit(1);
   }
@@ -94,57 +94,57 @@ Reactor::Reactor() : mMutex(), mInterruptInProgress(false) {
   struct epoll_event event;
   memset(&event, 0, sizeof(struct epoll_event));
   event.events = EPOLLERR | EPOLLHUP;
-  if (epoll_ctl(pollFd, EPOLL_CTL_ADD, mInterruptSd, &event) < 0) {
+  if (epoll_ctl(pollFd, EPOLL_CTL_ADD, m_interrupt_sd, &event) < 0) {
     LOG_VA_ERROR("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLERR|EPOLLHUP) failed : %s",
-		 pollFd, mInterruptSd, strerror(errno));
+		 pollFd, m_interrupt_sd, strerror(errno));
     exit(1);
   }
 #endif
 
-  memset(&mNextWakeup, 0, sizeof(mNextWakeup));
+  memset(&m_next_wakeup, 0, sizeof(m_next_wakeup));
 }
 
 
-void Reactor::HandleTimeouts(PollTimeout &nextTimeout) {
+void Reactor::handle_timeouts(PollTimeout &nextTimeout) {
   vector<struct TimerT> expiredTimers;
   EventPtr eventPtr;
   boost::xtime     now, nextRequestTimeout;
   struct TimerT timer;
 
   {
-    boost::mutex::scoped_lock lock(mMutex);
+    boost::mutex::scoped_lock lock(m_mutex);
     IOHandler       *handler;
     DispatchHandler *dh;
 
     boost::xtime_get(&now, boost::TIME_UTC);
 
-    while ((dh = mRequestCache.GetNextTimeout(now, handler, &nextRequestTimeout)) != 0) {
-      handler->DeliverEvent( new Event(Event::ERROR, 0, ((IOHandlerData *)handler)->GetAddress(), Error::COMM_REQUEST_TIMEOUT), dh );
+    while ((dh = m_request_cache.get_next_timeout(now, handler, &nextRequestTimeout)) != 0) {
+      handler->deliver_event( new Event(Event::ERROR, 0, ((IOHandlerData *)handler)->get_address(), Error::COMM_REQUEST_TIMEOUT), dh );
     }
 
     if (nextRequestTimeout.sec != 0) {
-      nextTimeout.Set(now, nextRequestTimeout);
-      memcpy(&mNextWakeup, &nextRequestTimeout, sizeof(mNextWakeup));
+      nextTimeout.set(now, nextRequestTimeout);
+      memcpy(&m_next_wakeup, &nextRequestTimeout, sizeof(m_next_wakeup));
     }
     else {
-      nextTimeout.SetIndefinite();
-      memset(&mNextWakeup, 0, sizeof(mNextWakeup));
+      nextTimeout.set_indefinite();
+      memset(&m_next_wakeup, 0, sizeof(m_next_wakeup));
     }
 
-    if (!mTimerHeap.empty()) {
+    if (!m_timer_heap.empty()) {
       struct TimerT timer;
 
-      while (!mTimerHeap.empty()) {
-	timer = mTimerHeap.top();
+      while (!m_timer_heap.empty()) {
+	timer = m_timer_heap.top();
 	if (xtime_cmp(timer.expireTime, now) > 0) {
 	  if (nextRequestTimeout.sec == 0 || xtime_cmp(timer.expireTime, nextRequestTimeout) < 0) {
-	    nextTimeout.Set(now, timer.expireTime);
-	    memcpy(&mNextWakeup, &timer.expireTime, sizeof(mNextWakeup));
+	    nextTimeout.set(now, timer.expireTime);
+	    memcpy(&m_next_wakeup, &timer.expireTime, sizeof(m_next_wakeup));
 	  }
 	  break;
 	}
 	expiredTimers.push_back(timer);
-	mTimerHeap.pop();
+	m_timer_heap.pop();
       }
 
     }
@@ -160,17 +160,17 @@ void Reactor::HandleTimeouts(PollTimeout &nextTimeout) {
   }
 
   {
-    boost::mutex::scoped_lock lock(mMutex);
+    boost::mutex::scoped_lock lock(m_mutex);
 
-    if (!mTimerHeap.empty()) {
-      timer = mTimerHeap.top();
+    if (!m_timer_heap.empty()) {
+      timer = m_timer_heap.top();
       if (nextRequestTimeout.sec == 0 || xtime_cmp(timer.expireTime, nextRequestTimeout) < 0) {
-	nextTimeout.Set(now, timer.expireTime);
-	memcpy(&mNextWakeup, &timer.expireTime, sizeof(mNextWakeup));
+	nextTimeout.set(now, timer.expireTime);
+	memcpy(&m_next_wakeup, &timer.expireTime, sizeof(m_next_wakeup));
       }
     }
 
-    PollLoopContinue();
+    poll_loop_continue();
   }
 
 }
@@ -180,9 +180,9 @@ void Reactor::HandleTimeouts(PollTimeout &nextTimeout) {
 /**
  * 
  */
-void Reactor::PollLoopInterrupt() {
+void Reactor::poll_loop_interrupt() {
 
-  mInterruptInProgress = true;
+  m_interrupt_in_progress = true;
 
 #if defined(__linux__)
   struct epoll_event event;
@@ -190,10 +190,10 @@ void Reactor::PollLoopInterrupt() {
   memset(&event, 0, sizeof(struct epoll_event));
   event.events = EPOLLOUT | EPOLLERR | EPOLLHUP;
 
-  if (epoll_ctl(pollFd, EPOLL_CTL_MOD, mInterruptSd, &event) < 0) {
+  if (epoll_ctl(pollFd, EPOLL_CTL_MOD, m_interrupt_sd, &event) < 0) {
     /**
     LOG_VA_ERROR("epoll_ctl(%d, EPOLL_CTL_MOD, sd=%d) : %s", 
-                 pollFd, mInterruptSd, strerror(errno));
+                 pollFd, m_interrupt_sd, strerror(errno));
     DUMP_CORE;
     **/
   }
@@ -201,10 +201,10 @@ void Reactor::PollLoopInterrupt() {
 #elif defined(__APPLE__)
   struct kevent event;
 
-  EV_SET(&event, mInterruptSd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, 0);
+  EV_SET(&event, m_interrupt_sd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, 0);
 
   if (kevent(kQueue, &event, 1, 0, 0, 0) == -1) {
-    LOG_VA_ERROR("kevent(sd=%d) : %s", mInterruptSd, strerror(errno));
+    LOG_VA_ERROR("kevent(sd=%d) : %s", m_interrupt_sd, strerror(errno));
     exit(1);
   }
 #endif
@@ -216,9 +216,9 @@ void Reactor::PollLoopInterrupt() {
 /**
  * 
  */
-void Reactor::PollLoopContinue() {
+void Reactor::poll_loop_continue() {
 
-  if (!mInterruptInProgress)
+  if (!m_interrupt_in_progress)
     return;
 
 #if defined(__linux__)
@@ -227,20 +227,20 @@ void Reactor::PollLoopContinue() {
   memset(&event, 0, sizeof(struct epoll_event));
   event.events = EPOLLERR | EPOLLHUP;
 
-  if (epoll_ctl(pollFd, EPOLL_CTL_MOD, mInterruptSd, &event) < 0) {
-    LOG_VA_ERROR("epoll_ctl(EPOLL_CTL_MOD, sd=%d) : %s", mInterruptSd, strerror(errno));
+  if (epoll_ctl(pollFd, EPOLL_CTL_MOD, m_interrupt_sd, &event) < 0) {
+    LOG_VA_ERROR("epoll_ctl(EPOLL_CTL_MOD, sd=%d) : %s", m_interrupt_sd, strerror(errno));
     exit(1);
   }
 #elif defined(__APPLE__)
   struct kevent devent;
 
-  EV_SET(&devent, mInterruptSd, EVFILT_WRITE, EV_DELETE, 0, 0, 0);
+  EV_SET(&devent, m_interrupt_sd, EVFILT_WRITE, EV_DELETE, 0, 0, 0);
 
   if (kevent(kQueue, &devent, 1, 0, 0, 0) == -1 && errno != ENOENT) {
-    LOG_VA_ERROR("kevent(sd=%d) : %s", mInterruptSd, strerror(errno));
+    LOG_VA_ERROR("kevent(sd=%d) : %s", m_interrupt_sd, strerror(errno));
     exit(1);
   }
 #endif
-  mInterruptInProgress = false;
+  m_interrupt_in_progress = false;
 }
 

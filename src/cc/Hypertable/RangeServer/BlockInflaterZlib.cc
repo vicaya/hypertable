@@ -38,13 +38,13 @@ using namespace hypertable;
  *
  */
 BlockInflaterZlib::BlockInflaterZlib() : BlockInflater() {
-  memset(&mStream, 0, sizeof(mStream));
-  mStream.zalloc = Z_NULL;
-  mStream.zfree = Z_NULL;
-  mStream.opaque = Z_NULL;
-  mStream.avail_in = 0;
-  mStream.next_in = Z_NULL;
-  int ret = inflateInit(&mStream);
+  memset(&m_stream, 0, sizeof(m_stream));
+  m_stream.zalloc = Z_NULL;
+  m_stream.zfree = Z_NULL;
+  m_stream.opaque = Z_NULL;
+  m_stream.avail_in = 0;
+  m_stream.next_in = Z_NULL;
+  int ret = inflateInit(&m_stream);
   assert(ret == Z_OK);
 }
 
@@ -54,7 +54,7 @@ BlockInflaterZlib::BlockInflaterZlib() : BlockInflater() {
  *
  */
 BlockInflaterZlib::~BlockInflaterZlib() {
-  inflateEnd(&mStream);
+  inflateEnd(&m_stream);
 }
 
 
@@ -94,31 +94,31 @@ bool BlockInflaterZlib::inflate(uint8_t *zbuf, uint32_t zlen, const char magic[1
     goto abort;
   }
 
-  mStream.avail_in = header->zlength;
-  mStream.next_in = (uint8_t *)&header[1];
+  m_stream.avail_in = header->zlength;
+  m_stream.next_in = (uint8_t *)&header[1];
 
   outbuf.reserve(header->length);
-  mStream.avail_out = header->length;
-  mStream.next_out = outbuf.buf;
+  m_stream.avail_out = header->length;
+  m_stream.next_out = outbuf.buf;
 
-  ret = ::inflate(&mStream, Z_NO_FLUSH);
+  ret = ::inflate(&m_stream, Z_NO_FLUSH);
   if (ret != Z_STREAM_END) {
     LOG_VA_ERROR("Compressed block inflate error (return value = %d)", ret);
     goto abort;
   }
 
-  if (mStream.avail_out != 0) {
-    LOG_VA_ERROR("Compressed block inflate error, expected %d but only inflated to %d bytes", header->length, header->length-mStream.avail_out);
+  if (m_stream.avail_out != 0) {
+    LOG_VA_ERROR("Compressed block inflate error, expected %d but only inflated to %d bytes", header->length, header->length-m_stream.avail_out);
     goto abort;
   }
 
   outbuf.ptr = outbuf.buf + header->length;
 
-  ::inflateReset(&mStream);  
+  ::inflateReset(&m_stream);  
   return true;
 
  abort:
-  ::inflateReset(&mStream);
+  ::inflateReset(&m_stream);
   outbuf.free();
   return false;
 }

@@ -44,7 +44,7 @@ extern "C" {
 using namespace hypertable;
 using namespace std;
 
-const char *CommandUpdate::msUsage[] = {
+const char *CommandUpdate::ms_usage[] = {
   "update <table> <datafile>",
   "",
   "  This command issues an UPDATE command to the range server.  The data",
@@ -77,15 +77,15 @@ int CommandUpdate::run() {
   bool outstanding = false;
   struct stat statbuf;
 
-  if (mArgs.size() != 2) {
+  if (m_args.size() != 2) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
     return -1;
   }
 
-  if (mArgs[0].second != "" || mArgs[1].second != "")
-    Usage::DumpAndExit(msUsage);
+  if (m_args[0].second != "" || m_args[1].second != "")
+    Usage::dump_and_exit(ms_usage);
 
-  tableName = mArgs[0].first;
+  tableName = m_args[0].first;
 
   schemaPtr = Global::schemaMap[tableName];
 
@@ -94,15 +94,15 @@ int CommandUpdate::run() {
     return Error::OK;
   }
 
-  generation = schemaPtr->GetGeneration();
+  generation = schemaPtr->get_generation();
 
   // verify data file
-  if (stat(mArgs[1].first.c_str(), &statbuf) != 0) {
-    LOG_VA_ERROR("Unable to stat data file '%s' : %s", mArgs[1].second.c_str(), strerror(errno));
+  if (stat(m_args[1].first.c_str(), &statbuf) != 0) {
+    LOG_VA_ERROR("Unable to stat data file '%s' : %s", m_args[1].second.c_str(), strerror(errno));
     return false;
   }
 
-  tsource = new TestSource(mArgs[1].first, schemaPtr.get());
+  tsource = new TestSource(m_args[1].first, schemaPtr.get());
 
   uint8_t *buf = new uint8_t [ BUFFER_SIZE ];
   uint8_t *ptr = buf;
@@ -116,7 +116,7 @@ int CommandUpdate::run() {
 
     pendingAmount = 0;
 
-    while (tsource->Next(&key, &value)) {
+    while (tsource->next(&key, &value)) {
       pendingAmount = Length(key) + Length(value);
       if (pendingAmount <= endPtr-ptr || ptr == buf) {
 	if (pendingAmount > endPtr-ptr) {
@@ -156,12 +156,12 @@ int CommandUpdate::run() {
     }
 
     if (outstanding) {
-      if (!syncHandler.WaitForReply(eventPtr)) {
-	error = Protocol::ResponseCode(eventPtr);
+      if (!syncHandler.wait_for_reply(eventPtr)) {
+	error = Protocol::response_code(eventPtr);
 	if (error == Error::RANGESERVER_PARTIAL_UPDATE)
 	  cout << "partial update" << endl;
 	else {
-	  LOG_VA_ERROR("update error : %s", (Protocol::StringFormatMessage(eventPtr)).c_str());
+	  LOG_VA_ERROR("update error : %s", (Protocol::string_format_message(eventPtr)).c_str());
 	  return error;
 	}
       }
@@ -172,8 +172,8 @@ int CommandUpdate::run() {
     outstanding = false;
 
     if (ptr > buf) {
-      if ((error = Global::rangeServer->Update(mAddr, tableName, generation, buf, ptr-buf, &syncHandler)) != Error::OK) {
-	LOG_VA_ERROR("Problem sending updates - %s", Error::GetText(error));
+      if ((error = Global::rangeServer->update(m_addr, tableName, generation, buf, ptr-buf, &syncHandler)) != Error::OK) {
+	LOG_VA_ERROR("Problem sending updates - %s", Error::get_text(error));
 	return error;
       }
       keys.clear();
@@ -201,12 +201,12 @@ int CommandUpdate::run() {
   }
 
   if (outstanding) {
-    if (!syncHandler.WaitForReply(eventPtr)) {
-      error = Protocol::ResponseCode(eventPtr);
+    if (!syncHandler.wait_for_reply(eventPtr)) {
+      error = Protocol::response_code(eventPtr);
       if (error == Error::RANGESERVER_PARTIAL_UPDATE)
 	cout << "partial update" << endl;
       else {
-	LOG_VA_ERROR("update error : %s", (Protocol::StringFormatMessage(eventPtr)).c_str());
+	LOG_VA_ERROR("update error : %s", (Protocol::string_format_message(eventPtr)).c_str());
 	return error;
       }
     }

@@ -35,15 +35,15 @@ namespace hypertable {
 
   class RequestHandlerStatus : public ApplicationHandler {
   public:
-    RequestHandlerStatus(Comm *comm, Master *master, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mComm(comm), mMaster(master) {
+    RequestHandlerStatus(Comm *comm, Master *master, EventPtr &eventPtr) : ApplicationHandler(eventPtr), m_comm(comm), m_master(master) {
       return;
     }
 
     virtual void run();
 
   private:
-    Comm     *mComm;
-    Master   *mMaster;
+    Comm     *m_comm;
+    Master   *m_master;
   };
 }
 

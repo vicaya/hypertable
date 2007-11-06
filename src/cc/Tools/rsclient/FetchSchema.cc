@@ -35,21 +35,21 @@ namespace hypertable {
     HandleCallbackPtr nullHandleCallback;
     uint64_t handle;
 
-    if ((error = hyperspace->Open(tableFile.c_str(), OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
-      LOG_VA_ERROR("Unable to open Hyperspace file '%s' (%s)", tableFile.c_str(), Error::GetText(error));
+    if ((error = hyperspace->open(tableFile.c_str(), OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
+      LOG_VA_ERROR("Unable to open Hyperspace file '%s' (%s)", tableFile.c_str(), Error::get_text(error));
       exit(1);
     }
 
-    if ((error = hyperspace->AttrGet(handle, "schema", valueBuf)) != Error::OK) {
+    if ((error = hyperspace->attr_get(handle, "schema", valueBuf)) != Error::OK) {
       LOG_VA_ERROR("Problem getting 'schema' attribute for '%s'", tableName.c_str());
       return error;
     }
 
-    hyperspace->Close(handle);
+    hyperspace->close(handle);
 
-    Schema *schema = Schema::NewInstance((const char *)valueBuf.buf, valueBuf.fill(), true);
-    if (!schema->IsValid()) {
-      LOG_VA_ERROR("Schema Parse Error: %s", schema->GetErrorString());
+    Schema *schema = Schema::new_instance((const char *)valueBuf.buf, valueBuf.fill(), true);
+    if (!schema->is_valid()) {
+      LOG_VA_ERROR("Schema Parse Error: %s", schema->get_error_string());
       delete schema;
       return Error::RANGESERVER_SCHEMA_PARSE_ERROR;
     }

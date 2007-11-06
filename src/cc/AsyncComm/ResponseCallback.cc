@@ -27,15 +27,15 @@
 using namespace hypertable;
 
 int ResponseCallback::error(int error, std::string msg) {
-  hbuilder_.InitializeFromRequest(mEventPtr->header);
-  CommBufPtr cbufPtr( Protocol::CreateErrorMessage(hbuilder_, error, msg.c_str()) );
-  return mComm->SendResponse(mEventPtr->addr, cbufPtr);
+  hbuilder_.initialize_from_request(m_event_ptr->header);
+  CommBufPtr cbufPtr( Protocol::create_error_message(hbuilder_, error, msg.c_str()) );
+  return m_comm->send_response(m_event_ptr->addr, cbufPtr);
 }
 
 int ResponseCallback::response_ok() {
-  hbuilder_.InitializeFromRequest(mEventPtr->header);
+  hbuilder_.initialize_from_request(m_event_ptr->header);
   CommBufPtr cbufPtr( new CommBuf(hbuilder_, 4) );
-  cbufPtr->AppendInt(Error::OK);
-  return mComm->SendResponse(mEventPtr->addr, cbufPtr);
+  cbufPtr->append_int(Error::OK);
+  return m_comm->send_response(m_event_ptr->addr, cbufPtr);
 }
 

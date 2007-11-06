@@ -30,38 +30,38 @@ using namespace hypertable;
 /**
  *
  */
-int ScanResult::Load(EventPtr &eventPtr) {
+int ScanResult::load(EventPtr &eventPtr) {
   uint8_t *msgPtr = eventPtr->message + 4;
   uint8_t *endPtr;
   size_t remaining = eventPtr->messageLen - 4;
   uint32_t len;
   ByteString32T *key, *value;
 
-  mEventPtr = eventPtr;
+  m_event_ptr = eventPtr;
 
-  if ((mError = (int)Protocol::ResponseCode(eventPtr)) != Error::OK)
-    return mError;
+  if ((m_error = (int)Protocol::response_code(eventPtr)) != Error::OK)
+    return m_error;
 
-  if (!(Serialization::DecodeShort(&msgPtr, &remaining, &mFlags)))
+  if (!(Serialization::decode_short(&msgPtr, &remaining, &m_flags)))
     return false;
 
-  if (!(Serialization::DecodeInt(&msgPtr, &remaining, (uint32_t *)&mId)))
+  if (!(Serialization::decode_int(&msgPtr, &remaining, (uint32_t *)&m_id)))
     return false;
 
-  if (!(Serialization::DecodeInt(&msgPtr, &remaining, &len)))
+  if (!(Serialization::decode_int(&msgPtr, &remaining, &len)))
     return false;
 
   endPtr = msgPtr + len;
 
-  mVec.clear();
+  m_vec.clear();
 
   while (msgPtr < endPtr) {
     key = (ByteString32T *)msgPtr;
     msgPtr += 4 + key->len;
     value = (ByteString32T *)msgPtr;
     msgPtr += 4 + value->len;
-    mVec.push_back(std::make_pair(key, value));
+    m_vec.push_back(std::make_pair(key, value));
   }
   
-  return mError;
+  return m_error;
 }

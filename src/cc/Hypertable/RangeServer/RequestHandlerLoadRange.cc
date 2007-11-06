@@ -35,16 +35,16 @@ using namespace hypertable;
  *
  */
 void RequestHandlerLoadRange::run() {
-  ResponseCallback cb(mComm, mEventPtr);
+  ResponseCallback cb(m_comm, m_event_ptr);
   RangeSpecificationT rangeSpec;
-  size_t remaining = mEventPtr->messageLen - 2;
-  uint8_t *msgPtr = mEventPtr->message + 2;
+  size_t remaining = m_event_ptr->messageLen - 2;
+  uint8_t *msgPtr = m_event_ptr->message + 2;
 
   // Range Specification
   if (!DecodeRangeSpecification(&msgPtr, &remaining, &rangeSpec))
     goto abort;
 
-  mRangeServer->LoadRange(&cb, &rangeSpec);
+  m_range_server->load_range(&cb, &rangeSpec);
 
   return;
 

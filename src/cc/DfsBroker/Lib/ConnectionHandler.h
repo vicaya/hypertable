@@ -34,13 +34,13 @@ namespace hypertable {
      */
     class ConnectionHandler : public DispatchHandler {
     public:
-      ConnectionHandler(Comm *comm, ApplicationQueuePtr &appQueuePtr, BrokerPtr &brokerPtr) : mComm(comm), mAppQueuePtr(appQueuePtr), mBrokerPtr(brokerPtr) { return; }
+      ConnectionHandler(Comm *comm, ApplicationQueuePtr &appQueuePtr, BrokerPtr &brokerPtr) : m_comm(comm), m_app_queue_ptr(appQueuePtr), m_broker_ptr(brokerPtr) { return; }
       virtual void handle(EventPtr &eventPtr);
 
     private:
-      Comm               *mComm;
-      ApplicationQueuePtr mAppQueuePtr;
-      BrokerPtr           mBrokerPtr;
+      Comm               *m_comm;
+      ApplicationQueuePtr m_app_queue_ptr;
+      BrokerPtr           m_broker_ptr;
     };
   }
 

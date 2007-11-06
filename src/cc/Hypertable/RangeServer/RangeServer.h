@@ -50,47 +50,47 @@ namespace hypertable {
     RangeServer(Comm *comm, PropertiesPtr &propsPtr);
     virtual ~RangeServer();
 
-    void Compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, uint8_t compactionType);
-    void CreateScanner(ResponseCallbackCreateScanner *cb, RangeSpecificationT *rangeSpec, ScanSpecificationT *spec);
-    void FetchScanblock(ResponseCallbackFetchScanblock *cb, uint32_t scannerId);
-    void LoadRange(ResponseCallback *cb, RangeSpecificationT *rangeSpec);
-    void Update(ResponseCallbackUpdate *cb, const char *tableName, uint32_t generation, BufferT &buffer);
+    void compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, uint8_t compactionType);
+    void create_scanner(ResponseCallbackCreateScanner *cb, RangeSpecificationT *rangeSpec, ScanSpecificationT *spec);
+    void fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t scannerId);
+    void load_range(ResponseCallback *cb, RangeSpecificationT *rangeSpec);
+    void update(ResponseCallbackUpdate *cb, const char *tableName, uint32_t generation, BufferT &buffer);
 
-    std::string &ServerIdStr() { return mServerIdStr; }
+    std::string &server_id_str() { return m_server_id_str; }
 
-    void MasterChange();
+    void master_change();
 
   private:
-    int DirectoryInitialize(Properties *props);
+    int directory_initialize(Properties *props);
 
-    bool GetTableInfo(std::string &name, TableInfoPtr &info);
-    bool GetTableInfo(const char *name, TableInfoPtr &info) {
+    bool get_table_info(std::string &name, TableInfoPtr &info);
+    bool get_table_info(const char *name, TableInfoPtr &info) {
       std::string nameStr = name;
-      return GetTableInfo(nameStr, info);
+      return get_table_info(nameStr, info);
     }
 
-    void SetTableInfo(std::string &name, TableInfoPtr &info);
-    void SetTableInfo(const char *name, TableInfoPtr &info) {
+    void set_table_info(std::string &name, TableInfoPtr &info);
+    void set_table_info(const char *name, TableInfoPtr &info) {
       std::string nameStr = name;
-      SetTableInfo(nameStr, info);
+      set_table_info(nameStr, info);
     }
 
-    int VerifySchema(TableInfoPtr &tableInfoPtr, int generation, std::string &errMsg);
+    int verify_schema(TableInfoPtr &tableInfoPtr, int generation, std::string &errMsg);
 
     typedef __gnu_cxx::hash_map<string, TableInfoPtr> TableInfoMapT;
 
-    boost::mutex           mMutex;
-    bool                   mVerbose;
-    Comm                  *mComm;
-    Hyperspace::SessionPtr mHyperspacePtr;
-    TableInfoMapT          mTableInfoMap;
-    ApplicationQueuePtr    mAppQueuePtr;
-    ConnectionManagerPtr   mConnManagerPtr;
-    uint64_t               mExistenceFileHandle;
-    struct LockSequencerT  mExistenceFileSequencer;
-    std::string            mServerIdStr;
-    ConnectionHandler     *mMasterConnectionHandler;
-    MasterClientPtr        mMasterClientPtr;
+    boost::mutex           m_mutex;
+    bool                   m_verbose;
+    Comm                  *m_comm;
+    Hyperspace::SessionPtr m_hyperspace_ptr;
+    TableInfoMapT          m_table_info_map;
+    ApplicationQueuePtr    m_app_queue_ptr;
+    ConnectionManagerPtr   m_conn_manager_ptr;
+    uint64_t               m_existence_file_handle;
+    struct LockSequencerT  m_existence_file_sequencer;
+    std::string            m_server_id_str;
+    ConnectionHandler     *m_master_connection_handler;
+    MasterClientPtr        m_master_client_ptr;
   };
   typedef boost::intrusive_ptr<RangeServer> RangeServerPtr;
   

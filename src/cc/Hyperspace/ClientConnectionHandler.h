@@ -44,45 +44,45 @@ namespace Hyperspace {
 
     virtual void handle(hypertable::EventPtr &eventPtr);
 
-    void SetSessionId(uint64_t id) { mSessionId = id; }
+    void set_session_id(uint64_t id) { m_session_id = id; }
 
-    bool Disconnected() { 
-      boost::mutex::scoped_lock lock(mMutex);
-      return mState == DISCONNECTED;
+    bool disconnected() { 
+      boost::mutex::scoped_lock lock(m_mutex);
+      return m_state == DISCONNECTED;
     }
 
-    int InitiateConnection(struct sockaddr_in &addr) {
-      boost::mutex::scoped_lock lock(mMutex);
+    int initiate_connection(struct sockaddr_in &addr) {
+      boost::mutex::scoped_lock lock(m_mutex);
       DispatchHandlerPtr dhp(this);
       int error;
-      mState = CONNECTING;
-      if ((error = mComm->Connect(addr, dhp)) != Error::OK) {
+      m_state = CONNECTING;
+      if ((error = m_comm->connect(addr, dhp)) != Error::OK) {
 	std::string str;
 	LOG_VA_ERROR("Problem establishing TCP connection with Hyperspace.Master at %s - %s",
-		     InetAddr::StringFormat(str, addr), Error::GetText(error));
-	mComm->CloseSocket(addr);
-	mState = DISCONNECTED;
+		     InetAddr::string_format(str, addr), Error::get_text(error));
+	m_comm->close_socket(addr);
+	m_state = DISCONNECTED;
       }
       return error;
     }
 
-    void SetVerboseMode(bool verbose) { mVerbose = verbose; }
+    void set_verbose_mode(bool verbose) { m_verbose = verbose; }
 
-    void Close() {
-      boost::mutex::scoped_lock lock(mMutex);
-      mComm->CloseSocket(mMasterAddr);
-      mState = DISCONNECTED;
+    void close() {
+      boost::mutex::scoped_lock lock(m_mutex);
+      m_comm->close_socket(m_master_addr);
+      m_state = DISCONNECTED;
     }
 
   private:
-    boost::mutex       mMutex;
-    Comm *mComm;
-    Session *mSession;
-    uint64_t mSessionId;
-    int mState;
-    bool mVerbose;
-    struct sockaddr_in mMasterAddr;
-    time_t mTimeout;
+    boost::mutex m_mutex;
+    Comm *m_comm;
+    Session *m_session;
+    uint64_t m_session_id;
+    int m_state;
+    bool m_verbose;
+    struct sockaddr_in m_master_addr;
+    time_t m_timeout;
   };
   typedef boost::intrusive_ptr<ClientConnectionHandler> ClientConnectionHandlerPtr;
   

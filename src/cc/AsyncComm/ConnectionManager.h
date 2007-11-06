@@ -92,17 +92,17 @@ namespace hypertable {
      * @param comm Pointer to the comm object
      */
     ConnectionManager(Comm *comm) {
-      mImpl = new SharedImplT;
-      mImpl->comm = comm;
-      mImpl->thread = new boost::thread(*this);
-      mImpl->quietMode = false;
+      m_impl = new SharedImplT;
+      m_impl->comm = comm;
+      m_impl->thread = new boost::thread(*this);
+      m_impl->quietMode = false;
     }
 
     /**
      * Copy Constructor.  Shares the implementation with object being copied.
      */
     ConnectionManager(const ConnectionManager &cm) {
-      mImpl = cm.mImpl;
+      m_impl = cm.m_impl;
     }
 
     /**
@@ -124,17 +124,17 @@ namespace hypertable {
      * @param timeout When connection dies, wait this many seconds before attempting to reestablish
      * @param serviceName The name of the serivce at the other end of the connection used for descriptive log messages
      */
-    void Add(struct sockaddr_in &addr, time_t timeout, const char *serviceName);
+    void add(struct sockaddr_in &addr, time_t timeout, const char *serviceName);
 
     /**
      * Same as above method except installs a dispatch handler on the connection
      *
      * @param addr The IP address to maintain a connection to
-     * @param timeout The timeout value (in seconds) that gets passed into Comm::Connect and also used as the waiting period betweeen connection attempts
+     * @param timeout The timeout value (in seconds) that gets passed into Comm::connect and also used as the waiting period betweeen connection attempts
      * @param serviceName The name of the serivce at the other end of the connection used for descriptive log messages
      * @param handler This is the default handler to install on the connection.  All events get changed through to this handler.
      */
-    void Add(struct sockaddr_in &addr, time_t timeout, const char *serviceName, DispatchHandlerPtr &handlerPtr);
+    void add(struct sockaddr_in &addr, time_t timeout, const char *serviceName, DispatchHandlerPtr &handlerPtr);
 
     /**
      * Adds a connection to the connection manager with a specific local address.
@@ -151,18 +151,18 @@ namespace hypertable {
      * @param timeout When connection dies, wait this many seconds before attempting to reestablish
      * @param serviceName The name of the serivce at the other end of the connection used for descriptive log messages
      */
-    void Add(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, const char *serviceName);
+    void add(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, const char *serviceName);
 
     /**
      * Same as above method except installs a dispatch handler on the connection
      *
      * @param addr The IP address to maintain a connection to
      * @param localAddr The local address to bind to
-     * @param timeout The timeout value (in seconds) that gets passed into Comm::Connect and also used as the waiting period betweeen connection attempts
+     * @param timeout The timeout value (in seconds) that gets passed into Comm::connect and also used as the waiting period betweeen connection attempts
      * @param serviceName The name of the serivce at the other end of the connection used for descriptive log messages
      * @param handler This is the default handler to install on the connection.  All events get changed through to this handler.
      */
-    void Add(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, const char *serviceName, DispatchHandlerPtr &handlerPtr);
+    void add(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, const char *serviceName, DispatchHandlerPtr &handlerPtr);
 
     /**
      * Removes a connection from the connection manager
@@ -170,7 +170,7 @@ namespace hypertable {
      * @param addr remote address of connection to remove
      * @return Error code (Error::OK on success)
      */
-    int Remove(struct sockaddr_in &addr);
+    int remove(struct sockaddr_in &addr);
 
     /**
      * This method blocks until the connection to the given address is established.
@@ -182,14 +182,14 @@ namespace hypertable {
      * @param maxWaitSecs The maximum time to wait for the connection before returning
      * @return true if connected, false otherwise
      */
-    bool WaitForConnection(struct sockaddr_in &addr, long maxWaitSecs);
+    bool wait_for_connection(struct sockaddr_in &addr, long maxWaitSecs);
 
     /**
      * Returns the Comm object associated with this connection manager
      *
      * @return the assocated comm object
      */
-    Comm *GetComm() { return mImpl->comm; }
+    Comm *get_comm() { return m_impl->comm; }
 
     /**
      * This method sets a 'quietMode' flag which can disable the generation
@@ -198,7 +198,7 @@ namespace hypertable {
      *
      * @param mode The new value for the quietMode flag
      */
-    void SetQuietMode(bool mode) { mImpl->quietMode = mode; }
+    void set_quiet_mode(bool mode) { m_impl->quietMode = mode; }
 
     /**
      * This is the comm layer dispatch callback method.  It should only get
@@ -214,9 +214,9 @@ namespace hypertable {
 
   private:
 
-    void SendConnectRequest(ConnectionState *connState);
+    void send_connect_request(ConnectionState *connState);
 
-    SharedImplT *mImpl;
+    SharedImplT *m_impl;
 
   };
   typedef boost::intrusive_ptr<ConnectionManager> ConnectionManagerPtr;

@@ -45,47 +45,47 @@ namespace hypertable {
     MasterClient(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr, time_t timeout, ApplicationQueuePtr &appQueuePtr);
     ~MasterClient();
 
-    int InitiateConnection(DispatchHandlerPtr dispatchHandlerPtr);
+    int initiate_connection(DispatchHandlerPtr dispatchHandlerPtr);
 
-    bool WaitForConnection(long maxWaitSecs);
+    bool wait_for_connection(long maxWaitSecs);
 
-    int CreateTable(const char *tableName, const char *schemaString, DispatchHandler *handler);
-    int CreateTable(const char *tableName, const char *schemaString);
+    int create_table(const char *tableName, const char *schemaString, DispatchHandler *handler);
+    int create_table(const char *tableName, const char *schemaString);
 
-    int GetSchema(const char *tableName, DispatchHandler *handler);
-    int GetSchema(const char *tableName, std::string &schema);
+    int get_schema(const char *tableName, DispatchHandler *handler);
+    int get_schema(const char *tableName, std::string &schema);
 
-    int Status();
+    int status();
 
-    int RegisterServer(std::string &serverIdStr, DispatchHandler *handler);
-    int RegisterServer(std::string &serverIdStr);
+    int register_server(std::string &serverIdStr, DispatchHandler *handler);
+    int register_server(std::string &serverIdStr);
 
     /**
     int ReportSplit(const char *name, DispatchHandler *handler, uint32_t *msgIdp);
     int ReportSplit(const char *name, int32_t *fdp);
     **/
 
-    int ReloadMaster();
+    int reload_master();
 
-    void SetVerboseFlag(bool verbose) { mVerbose = verbose; }
+    void set_verbose_flag(bool verbose) { m_verbose = verbose; }
 
   private:
 
-    int SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler);
+    int send_message(CommBufPtr &cbufPtr, DispatchHandler *handler);
 
-    boost::mutex           mMutex;
-    bool                   mVerbose;
-    Comm                  *mComm;
-    ConnectionManagerPtr   mConnManagerPtr;
-    Hyperspace::SessionPtr mHyperspacePtr;
-    ApplicationQueuePtr    mAppQueuePtr;
-    time_t                 mTimeout;
-    bool                   mInitiated;
-    uint64_t               mMasterFileHandle;
-    HandleCallbackPtr      mMasterFileCallbackPtr;
-    struct sockaddr_in     mMasterAddr;
-    std::string            mMasterAddrString;
-    DispatchHandlerPtr     mDispatcherHandlerPtr;
+    boost::mutex           m_mutex;
+    bool                   m_verbose;
+    Comm                  *m_comm;
+    ConnectionManagerPtr   m_conn_manager_ptr;
+    Hyperspace::SessionPtr m_hyperspace_ptr;
+    ApplicationQueuePtr    m_app_queue_ptr;
+    time_t                 m_timeout;
+    bool                   m_initiated;
+    uint64_t               m_master_file_handle;
+    HandleCallbackPtr      m_master_file_callback_ptr;
+    struct sockaddr_in     m_master_addr;
+    std::string            m_master_addr_string;
+    DispatchHandlerPtr     m_dispatcher_handler_ptr;
   };
 
   typedef boost::intrusive_ptr<MasterClient> MasterClientPtr;

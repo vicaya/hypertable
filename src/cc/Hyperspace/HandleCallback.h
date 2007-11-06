@@ -43,7 +43,7 @@ namespace Hyperspace {
     EVENT_MASK_LOCK_GRANTED       = 0x0040
   };
 
-  const char *EventMaskToString(uint32_t mask);
+  const char *event_mask_to_string(uint32_t mask);
 
   /**
    * A callback object derived from this class gets passed
@@ -52,16 +52,16 @@ namespace Hyperspace {
    */
   class HandleCallback : public hypertable::ReferenceCount {
   public:
-    HandleCallback(uint32_t eventMask) : mEventMask(eventMask) { return; }
-    virtual void AttrSet(std::string name) { return; }
-    virtual void AttrDel(std::string name) { return; }
-    virtual void ChildNodeAdded(std::string name) { return; }
-    virtual void ChildNodeRemoved(std::string name) { return; }
-    virtual void LockAcquired(uint32_t mode) { return; }
-    virtual void LockReleased() { return; }
-    int GetEventMask() { return mEventMask; }
+    HandleCallback(uint32_t eventMask) : m_event_mask(eventMask) { return; }
+    virtual void attr_set(std::string name) { return; }
+    virtual void attr_del(std::string name) { return; }
+    virtual void child_node_added(std::string name) { return; }
+    virtual void child_node_removed(std::string name) { return; }
+    virtual void lock_acquired(uint32_t mode) { return; }
+    virtual void lock_released() { return; }
+    int get_event_mask() { return m_event_mask; }
   protected:
-    uint32_t mEventMask;
+    uint32_t m_event_mask;
   };
   typedef boost::intrusive_ptr<HandleCallback> HandleCallbackPtr;
 

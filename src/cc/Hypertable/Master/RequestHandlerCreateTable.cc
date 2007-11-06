@@ -33,21 +33,21 @@ using namespace hypertable;
  *
  */
 void RequestHandlerCreateTable::run() {
-  ResponseCallback cb(mComm, mEventPtr);
+  ResponseCallback cb(m_comm, m_event_ptr);
   const char *tableName;
   const char *schemaString;
-  size_t remaining = mEventPtr->messageLen - 2;
-  uint8_t *msgPtr = mEventPtr->message + 2;
+  size_t remaining = m_event_ptr->messageLen - 2;
+  uint8_t *msgPtr = m_event_ptr->message + 2;
 
   // table name
-  if (!Serialization::DecodeString(&msgPtr, &remaining, &tableName))
+  if (!Serialization::decode_string(&msgPtr, &remaining, &tableName))
     goto abort;
 
   // schema string
-  if (!Serialization::DecodeString(&msgPtr, &remaining, &schemaString))
+  if (!Serialization::decode_string(&msgPtr, &remaining, &schemaString))
     goto abort;
 
-  mMaster->CreateTable(&cb, tableName, schemaString);
+  m_master->create_table(&cb, tableName, schemaString);
 
   return;
 

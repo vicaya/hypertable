@@ -28,9 +28,9 @@ using namespace hypertable;
 using namespace hypertable::DfsBroker;
 
 int ResponseCallbackLength::response(uint64_t offset) {
-  hbuilder_.InitializeFromRequest(mEventPtr->header);
+  hbuilder_.initialize_from_request(m_event_ptr->header);
   CommBufPtr cbufPtr( new CommBuf(hbuilder_, 12 ) );
-  cbufPtr->AppendInt(Error::OK);
-  cbufPtr->AppendLong(offset);
-  return mComm->SendResponse(mEventPtr->addr, cbufPtr);
+  cbufPtr->append_int(Error::OK);
+  cbufPtr->append_long(offset);
+  return m_comm->send_response(m_event_ptr->addr, cbufPtr);
 }

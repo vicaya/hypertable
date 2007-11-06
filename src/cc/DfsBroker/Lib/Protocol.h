@@ -38,38 +38,38 @@ namespace hypertable {
 
     public:
 
-      static CommBuf *CreateOpenRequest(std::string &fname, uint32_t bufferSize=0);
+      static CommBuf *create_open_request(std::string &fname, uint32_t bufferSize=0);
 
-      static CommBuf *CreateCreateRequest(std::string &fname, bool overwrite, int32_t bufferSize,
+      static CommBuf *create_create_request(std::string &fname, bool overwrite, int32_t bufferSize,
 				   int32_t replication, int64_t blockSize);
 
-      static CommBuf *CreateCloseRequest(int32_t fd);
+      static CommBuf *create_close_request(int32_t fd);
 
-      static CommBuf *CreateReadRequest(int32_t fd, uint32_t amount);
+      static CommBuf *create_read_request(int32_t fd, uint32_t amount);
 
-      static CommBuf *CreateAppendRequest(int32_t fd, const void *buf, uint32_t amount);
+      static CommBuf *create_append_request(int32_t fd, const void *buf, uint32_t amount);
 
-      static CommBuf *CreateSeekRequest(int32_t fd, uint64_t offset);
+      static CommBuf *create_seek_request(int32_t fd, uint64_t offset);
 
-      static CommBuf *CreateRemoveRequest(std::string &fname);
+      static CommBuf *create_remove_request(std::string &fname);
 
-      static CommBuf *CreateLengthRequest(std::string &fname);
+      static CommBuf *create_length_request(std::string &fname);
 
-      static CommBuf *CreatePositionReadRequest(int32_t fd, uint64_t offset, uint32_t amount);
+      static CommBuf *create_position_read_request(int32_t fd, uint64_t offset, uint32_t amount);
 
-      static CommBuf *CreateMkdirsRequest(std::string &fname);
+      static CommBuf *create_mkdirs_request(std::string &fname);
 
-      static CommBuf *CreateRmdirRequest(std::string &fname);
+      static CommBuf *create_rmdir_request(std::string &fname);
 
-      static CommBuf *CreateReaddirRequest(std::string &fname);
+      static CommBuf *create_readdir_request(std::string &fname);
 
-      static CommBuf *CreateFlushRequest(int32_t fd);
+      static CommBuf *create_flush_request(int32_t fd);
 
-      static CommBuf *CreateStatusRequest();
+      static CommBuf *create_status_request();
 
-      static CommBuf *CreateShutdownRequest(uint16_t flags);
+      static CommBuf *create_shutdown_request(uint16_t flags);
 
-      virtual const char *CommandText(short command);
+      virtual const char *command_text(short command);
 
       /**
        * Request Headers
@@ -179,7 +179,7 @@ namespace hypertable {
 
       static const uint16_t SHUTDOWN_FLAG_IMMEDIATE = 0x0001;
 
-      static const char * msCommandStrings[COMMAND_MAX];
+      static const char * ms_command_strings[COMMAND_MAX];
 
     };
 

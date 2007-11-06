@@ -44,31 +44,31 @@ namespace hypertable {
 
   public:
 
-    IOHandlerDatagram(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp, HandlerMap &hmap) : IOHandler(sd, addr, dhp, hmap), mSendQueue() {
-      mMessage = new uint8_t [ 65536 ];
+    IOHandlerDatagram(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp, HandlerMap &hmap) : IOHandler(sd, addr, dhp, hmap), m_send_queue() {
+      m_message = new uint8_t [ 65536 ];
     }
 
-    int SendMessage(struct sockaddr_in &addr, CommBufPtr &cbufPtr);
+    int send_message(struct sockaddr_in &addr, CommBufPtr &cbufPtr);
 
-    int FlushSendQueue();
+    int flush_send_queue();
 
 #if defined(__APPLE__)
-    virtual bool HandleEvent(struct kevent *event);
+    virtual bool handle_event(struct kevent *event);
 #elif defined(__linux__)
-    virtual bool HandleEvent(struct epoll_event *event);
+    virtual bool handle_event(struct epoll_event *event);
 #else
     ImplementMe;
 #endif
 
-    int HandleWriteReadiness();
+    int handle_write_readiness();
 
   private:
 
     typedef std::pair<struct sockaddr_in, CommBufPtr> SendRecT;
 
-    boost::mutex        mMutex;
-    uint8_t            *mMessage;
-    list<SendRecT> mSendQueue;
+    boost::mutex    m_mutex;
+    uint8_t        *m_message;
+    list<SendRecT>  m_send_queue;
   };
 
   typedef boost::intrusive_ptr<IOHandlerDatagram> IOHandlerDatagramPtr;

@@ -43,7 +43,7 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
   if (eventPtr->type == Event::MESSAGE) {
     ApplicationHandler *requestHandler = 0;
 
-    //eventPtr->Display()
+    //eventPtr->display()
 
     try {
       if (eventPtr->messageLen < sizeof(int16_t)) {
@@ -60,25 +60,25 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
 
       switch (command) {
       case MasterProtocol::COMMAND_CREATE_TABLE:
-	requestHandler = new RequestHandlerCreateTable(mComm, mMasterPtr.get(), eventPtr);
+	requestHandler = new RequestHandlerCreateTable(m_comm, m_master_ptr.get(), eventPtr);
 	break;
       case MasterProtocol::COMMAND_GET_SCHEMA:
-	requestHandler = new RequestHandlerGetSchema(mComm, mMasterPtr.get(), eventPtr);
+	requestHandler = new RequestHandlerGetSchema(m_comm, m_master_ptr.get(), eventPtr);
 	break;
       case MasterProtocol::COMMAND_STATUS:
-	requestHandler = new RequestHandlerStatus(mComm, mMasterPtr.get(), eventPtr);
+	requestHandler = new RequestHandlerStatus(m_comm, m_master_ptr.get(), eventPtr);
 	break;
       case MasterProtocol::COMMAND_REGISTER_SERVER:
-	requestHandler = new RequestHandlerRegisterServer(mComm, mMasterPtr.get(), eventPtr);
+	requestHandler = new RequestHandlerRegisterServer(m_comm, m_master_ptr.get(), eventPtr);
 	break;
       default:
 	std::string message = (string)"Command code " + command + " not implemented";
 	throw ProtocolException(message);
       }
-      mAppQueuePtr->Add( requestHandler );
+      m_app_queue_ptr->add( requestHandler );
     }
     catch (ProtocolException &e) {
-      ResponseCallback cb(mComm, eventPtr);
+      ResponseCallback cb(m_comm, eventPtr);
       std::string errMsg = e.what();
       LOG_VA_ERROR("Protocol error '%s'", e.what());
       cb.error(Error::PROTOCOL_ERROR, errMsg);

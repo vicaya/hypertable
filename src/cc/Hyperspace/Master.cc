@@ -57,22 +57,22 @@ const uint32_t Master::DEFAULT_KEEPALIVE_INTERVAL;
 
 /**
  * This constructor reads the properties file and pulls out some relevant properties.  It
- * also sets up the mBaseDir variable to be the absolute path of the root of the
+ * also sets up the m_base_dir variable to be the absolute path of the root of the
  * Hyperspace directory (with no trailing slash).  It locks this root directory to
  * prevent concurrent masters and then reads/increments/writes the 32-bit integer extended
  * attribute 'generation'.  It also creates the server Keepalive handler.
  */
-Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, ServerKeepaliveHandlerPtr &keepaliveHandlerPtr) : mVerbose(false), mNextHandleNumber(1), mNextSessionId(1) {
+Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, ServerKeepaliveHandlerPtr &keepaliveHandlerPtr) : m_verbose(false), m_next_handle_number(1), m_next_session_id(1) {
   const char *dirname;
   std::string str;
   ssize_t xattrLen;
   uint16_t port;
 
-  mVerbose = propsPtr->getPropertyBool("verbose", false);
+  m_verbose = propsPtr->getPropertyBool("verbose", false);
 
-  mLeaseInterval = (uint32_t)propsPtr->getPropertyInt("Hyperspace.Lease.Interval", DEFAULT_LEASE_INTERVAL);
+  m_lease_interval = (uint32_t)propsPtr->getPropertyInt("Hyperspace.Lease.Interval", DEFAULT_LEASE_INTERVAL);
 
-  mKeepAliveInterval = (uint32_t)propsPtr->getPropertyInt("Hyperspace.KeepAlive.Interval", DEFAULT_KEEPALIVE_INTERVAL);
+  m_keep_alive_interval = (uint32_t)propsPtr->getPropertyInt("Hyperspace.KeepAlive.Interval", DEFAULT_KEEPALIVE_INTERVAL);
 
   if ((dirname = propsPtr->getProperty("Hyperspace.Master.dir", 0)) == 0) {
     LOG_ERROR("Property 'Hyperspace.Master.dir' not found.");
@@ -85,24 +85,24 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, Se
     str = dirname;
 
   if (dirname[0] == '/')
-    mBaseDir = str;
+    m_base_dir = str;
   else
-    mBaseDir = System::installDir + "/" + str;
+    m_base_dir = System::installDir + "/" + str;
 
-  if ((mBaseFd = open(mBaseDir.c_str(), O_RDONLY)) < 0) {
-    LOG_VA_ERROR("Unable to open base directory %s - %s", mBaseDir.c_str(), strerror(errno));
+  if ((m_base_fd = ::open(m_base_dir.c_str(), O_RDONLY)) < 0) {
+    LOG_VA_ERROR("Unable to open base directory %s - %s", m_base_dir.c_str(), strerror(errno));
     exit(1);
   }
 
   /**
    * Lock the base directory to prevent concurrent masters
    */
-  if (flock(mBaseFd, LOCK_EX | LOCK_NB) != 0) {
+  if (flock(m_base_fd, LOCK_EX | LOCK_NB) != 0) {
     if (errno == EWOULDBLOCK) {
-      LOG_VA_ERROR("Base directory '%s' is locked by another process.", mBaseDir.c_str());
+      LOG_VA_ERROR("Base directory '%s' is locked by another process.", m_base_dir.c_str());
     }
     else {
-      LOG_VA_ERROR("Unable to lock base directory '%s' - %s", mBaseDir.c_str(), strerror(errno));
+      LOG_VA_ERROR("Unable to lock base directory '%s' - %s", m_base_dir.c_str(), strerror(errno));
     }
     exit(1);
   }
@@ -110,116 +110,116 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, Se
   /**
    * Increment generation number and save
    */
-  if ((xattrLen = FileUtils::Getxattr(mBaseDir.c_str(), "generation", &mGeneration, sizeof(uint32_t))) < 0) {
+  if ((xattrLen = FileUtils::getxattr(m_base_dir.c_str(), "generation", &m_generation, sizeof(uint32_t))) < 0) {
     if (errno == ENOATTR) {
       cerr << "'generation' attribute not found on base dir, creating ..." << endl;
-      mGeneration = 1;
-      if (FileUtils::Setxattr(mBaseDir.c_str(), "generation", &mGeneration, sizeof(uint32_t), XATTR_CREATE) == -1) {
-	LOG_VA_ERROR("Problem creating extended attribute 'generation' on base dir '%s' - %s", mBaseDir.c_str(), strerror(errno));
+      m_generation = 1;
+      if (FileUtils::setxattr(m_base_dir.c_str(), "generation", &m_generation, sizeof(uint32_t), XATTR_CREATE) == -1) {
+	LOG_VA_ERROR("Problem creating extended attribute 'generation' on base dir '%s' - %s", m_base_dir.c_str(), strerror(errno));
 	exit(1);
       }
     }
     else {
-      LOG_VA_ERROR("Unable to read extended attribute 'generation' on base dir '%s' - %s", mBaseDir.c_str(), strerror(errno));
+      LOG_VA_ERROR("Unable to read extended attribute 'generation' on base dir '%s' - %s", m_base_dir.c_str(), strerror(errno));
       exit(1);
     }
   }
   else {
-    mGeneration++;
-    if (FileUtils::Setxattr(mBaseDir.c_str(), "generation", &mGeneration, sizeof(uint32_t), XATTR_REPLACE) == -1) {
-      LOG_VA_ERROR("Problem creating extended attribute 'generation' on base dir '%s' - %s", mBaseDir.c_str(), strerror(errno));
+    m_generation++;
+    if (FileUtils::setxattr(m_base_dir.c_str(), "generation", &m_generation, sizeof(uint32_t), XATTR_REPLACE) == -1) {
+      LOG_VA_ERROR("Problem creating extended attribute 'generation' on base dir '%s' - %s", m_base_dir.c_str(), strerror(errno));
       exit(1);
     }
   }
 
   NodeDataPtr rootNodePtr = new NodeData();
   rootNodePtr->name = "/";
-  mNodeMap["/"] = rootNodePtr;
+  m_node_map["/"] = rootNodePtr;
 
   port = propsPtr->getPropertyInt("Hyperspace.Master.port", DEFAULT_MASTER_PORT);
-  InetAddr::Initialize(&mLocalAddr, INADDR_ANY, port);
+  InetAddr::initialize(&m_local_addr, INADDR_ANY, port);
 
-  mKeepaliveHandlerPtr.reset( new ServerKeepaliveHandler(connManagerPtr->GetComm(), this) );
-  keepaliveHandlerPtr = mKeepaliveHandlerPtr;
+  m_keepalive_handler_ptr.reset( new ServerKeepaliveHandler(connManagerPtr->get_comm(), this) );
+  keepaliveHandlerPtr = m_keepalive_handler_ptr;
 
-  if (mVerbose) {
-    cout << "Hyperspace.Lease.Interval=" << mLeaseInterval << endl;
-    cout << "Hyperspace.KeepAlive.Interval=" << mKeepAliveInterval << endl;
-    cout << "Hyperspace.Master.dir=" << mBaseDir << endl;
-    cout << "Generation=" << mGeneration << endl;
+  if (m_verbose) {
+    cout << "Hyperspace.Lease.Interval=" << m_lease_interval << endl;
+    cout << "Hyperspace.KeepAlive.Interval=" << m_keep_alive_interval << endl;
+    cout << "Hyperspace.Master.dir=" << m_base_dir << endl;
+    cout << "Generation=" << m_generation << endl;
   }
 
 }
 
 
 Master::~Master() {
-  close(mBaseFd);
+  ::close(m_base_fd);
   return;
 }
 
 
-uint64_t Master::CreateSession(struct sockaddr_in &addr) {
-  boost::mutex::scoped_lock lock(mSessionMapMutex);
+uint64_t Master::create_session(struct sockaddr_in &addr) {
+  boost::mutex::scoped_lock lock(m_session_map_mutex);
   SessionDataPtr sessionPtr;
-  uint64_t sessionId = mNextSessionId++;
-  sessionPtr = new SessionData(addr, mLeaseInterval, sessionId);
-  mSessionMap[sessionId] = sessionPtr;
-  mSessionHeap.push_back(sessionPtr);
+  uint64_t sessionId = m_next_session_id++;
+  sessionPtr = new SessionData(addr, m_lease_interval, sessionId);
+  m_session_map[sessionId] = sessionPtr;
+  m_session_heap.push_back(sessionPtr);
   return sessionId;
 }
 
 
-bool Master::GetSession(uint64_t sessionId, SessionDataPtr &sessionPtr) {
-  boost::mutex::scoped_lock lock(mSessionMapMutex);
-  SessionMapT::iterator iter = mSessionMap.find(sessionId);
-  if (iter == mSessionMap.end())
+bool Master::get_session(uint64_t sessionId, SessionDataPtr &sessionPtr) {
+  boost::mutex::scoped_lock lock(m_session_map_mutex);
+  SessionMapT::iterator iter = m_session_map.find(sessionId);
+  if (iter == m_session_map.end())
     return false;
   sessionPtr = (*iter).second;
   return true;
 }
 
-void Master::DestroySession(uint64_t sessionId) {
-  boost::mutex::scoped_lock lock(mSessionMapMutex);
+void Master::destroy_session(uint64_t sessionId) {
+  boost::mutex::scoped_lock lock(m_session_map_mutex);
   SessionDataPtr sessionPtr;
-  SessionMapT::iterator iter = mSessionMap.find(sessionId);
-  if (iter == mSessionMap.end())
+  SessionMapT::iterator iter = m_session_map.find(sessionId);
+  if (iter == m_session_map.end())
     return;
   sessionPtr = (*iter).second;
-  mSessionMap.erase(sessionId);
-  sessionPtr->Expire();
+  m_session_map.erase(sessionId);
+  sessionPtr->expire();
   // force it to top of expiration heap
   boost::xtime_get(&sessionPtr->expireTime, boost::TIME_UTC);
 }
 
 
-int Master::RenewSessionLease(uint64_t sessionId) {
-  boost::mutex::scoped_lock lock(mSessionMapMutex);  
+int Master::renew_session_lease(uint64_t sessionId) {
+  boost::mutex::scoped_lock lock(m_session_map_mutex);  
   boost::xtime now;
 
-  SessionMapT::iterator iter = mSessionMap.find(sessionId);
-  if (iter == mSessionMap.end())
+  SessionMapT::iterator iter = m_session_map.find(sessionId);
+  if (iter == m_session_map.end())
     return Error::HYPERSPACE_EXPIRED_SESSION;
 
-  if (!(*iter).second->RenewLease())
+  if (!(*iter).second->renew_lease())
     return Error::HYPERSPACE_EXPIRED_SESSION;
 
   return Error::OK;
 }
 
-bool Master::NextExpiredSession(SessionDataPtr &sessionPtr) {
-  boost::mutex::scoped_lock lock(mSessionMapMutex);
+bool Master::next_expired_session(SessionDataPtr &sessionPtr) {
+  boost::mutex::scoped_lock lock(m_session_map_mutex);
   struct ltSessionData compFunc;
   boost::xtime now;
 
   boost::xtime_get(&now, boost::TIME_UTC);
 
-  if (mSessionHeap.size() > 0) {
-    std::make_heap(mSessionHeap.begin(), mSessionHeap.end(), compFunc);
-    if (mSessionHeap[0]->IsExpired(now)) {
-      sessionPtr = mSessionHeap[0];
-      std::pop_heap(mSessionHeap.begin(), mSessionHeap.end(), compFunc);
-      mSessionHeap.resize(mSessionHeap.size()-1);
-      mSessionMap.erase(sessionPtr->id);
+  if (m_session_heap.size() > 0) {
+    std::make_heap(m_session_heap.begin(), m_session_heap.end(), compFunc);
+    if (m_session_heap[0]->is_expired(now)) {
+      sessionPtr = m_session_heap[0];
+      std::pop_heap(m_session_heap.begin(), m_session_heap.end(), compFunc);
+      m_session_heap.resize(m_session_heap.size()-1);
+      m_session_map.erase(sessionPtr->id);
       return true;
     }    
   }
@@ -230,28 +230,28 @@ bool Master::NextExpiredSession(SessionDataPtr &sessionPtr) {
 /**
  * 
  */
-void Master::RemoveExpiredSessions() {
+void Master::remove_expired_sessions() {
   SessionDataPtr sessionPtr;
   int error;
   std::string errMsg;
   
-  while (NextExpiredSession(sessionPtr)) {
+  while (next_expired_session(sessionPtr)) {
 
-    if (mVerbose) {
+    if (m_verbose) {
       LOG_VA_INFO("Expiring session %lld", sessionPtr->id);
     }
 
-    sessionPtr->Expire();
+    sessionPtr->expire();
 
     {
       boost::mutex::scoped_lock slock(sessionPtr->mutex);
       HandleDataPtr handlePtr;
       for (set<uint64_t>::iterator iter = sessionPtr->handles.begin(); iter != sessionPtr->handles.end(); iter++) {
-	if (mVerbose) {
+	if (m_verbose) {
 	  LOG_VA_INFO("Destroying handle %lld", *iter);
 	}
-	if (!DestroyHandle(*iter, &error, errMsg, false)) {
-	  LOG_VA_ERROR("Problem destroying handle - %s (%s)", Error::GetText(error), errMsg.c_str());
+	if (!destroy_handle(*iter, &error, errMsg, false)) {
+	  LOG_VA_ERROR("Problem destroying handle - %s (%s)", Error::get_text(error), errMsg.c_str());
 	}
       }
       sessionPtr->handles.clear();
@@ -264,22 +264,22 @@ void Master::RemoveExpiredSessions() {
 /**
  *
  */
-void Master::CreateHandle(uint64_t *handlep, HandleDataPtr &handlePtr) {
-  boost::mutex::scoped_lock lock(mHandleMapMutex);
-  *handlep = ++mNextHandleNumber;
+void Master::create_handle(uint64_t *handlep, HandleDataPtr &handlePtr) {
+  boost::mutex::scoped_lock lock(m_handle_map_mutex);
+  *handlep = ++m_next_handle_number;
   handlePtr = new HandleData();
   handlePtr->id = *handlep;
   handlePtr->locked = false;
-  mHandleMap[*handlep] = handlePtr;
+  m_handle_map[*handlep] = handlePtr;
 }
 
 /**
  *
  */
-bool Master::GetHandleData(uint64_t handle, HandleDataPtr &handlePtr) {
-  boost::mutex::scoped_lock lock(mHandleMapMutex);
-  HandleMapT::iterator iter = mHandleMap.find(handle);
-  if (iter == mHandleMap.end())
+bool Master::get_handle_data(uint64_t handle, HandleDataPtr &handlePtr) {
+  boost::mutex::scoped_lock lock(m_handle_map_mutex);
+  HandleMapT::iterator iter = m_handle_map.find(handle);
+  if (iter == m_handle_map.end())
     return false;
   handlePtr = (*iter).second;
   return true;
@@ -288,13 +288,13 @@ bool Master::GetHandleData(uint64_t handle, HandleDataPtr &handlePtr) {
 /**
  *
  */
-bool Master::RemoveHandleData(uint64_t handle, HandleDataPtr &handlePtr) {
-  boost::mutex::scoped_lock lock(mHandleMapMutex);
-  HandleMapT::iterator iter = mHandleMap.find(handle);
-  if (iter == mHandleMap.end())
+bool Master::remove_handle_data(uint64_t handle, HandleDataPtr &handlePtr) {
+  boost::mutex::scoped_lock lock(m_handle_map_mutex);
+  HandleMapT::iterator iter = m_handle_map.find(handle);
+  if (iter == m_handle_map.end())
     return false;
   handlePtr = (*iter).second;
-  mHandleMap.erase(iter);
+  m_handle_map.erase(iter);
   return true;
 }
 
@@ -304,16 +304,16 @@ bool Master::RemoveHandleData(uint64_t handle, HandleDataPtr &handlePtr) {
  * This method creates a directory with absolute path 'name'.  It locks the parent
  * node to prevent concurrent modifications.
  */
-void Master::Mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name) {
+void Master::mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name) {
   std::string absName;
   NodeDataPtr parentNodePtr;
   std::string childName;
 
-  if (mVerbose) {
+  if (m_verbose) {
     LOG_VA_INFO("mkdir(sessionId=%lld, name=%s)", sessionId, name);
   }
 
-  if (!FindParentNode(name, parentNodePtr, childName)) {
+  if (!find_parent_node(name, parentNodePtr, childName)) {
     cb->error(Error::HYPERSPACE_FILE_EXISTS, "directory '/' exists");
     return;
   }
@@ -323,15 +323,15 @@ void Master::Mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name) {
   {
     boost::mutex::scoped_lock nodeLock(parentNodePtr->mutex);
 
-    absName = mBaseDir + name;
+    absName = m_base_dir + name;
     
-    if (mkdir(absName.c_str(), 0755) < 0) {
-      ReportError(cb);
+    if (::mkdir(absName.c_str(), 0755) < 0) {
+      report_error(cb);
       return;
     }
     else {
       HyperspaceEventPtr eventPtr( new EventNamed(EVENT_MASK_CHILD_NODE_ADDED, childName) );
-      DeliverEventNotifications(parentNodePtr.get(), eventPtr);
+      deliver_event_notifications(parentNodePtr.get(), eventPtr);
     }
   }
 
@@ -343,14 +343,14 @@ void Master::Mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name) {
 /**
  * Delete
  */
-void Master::Delete(ResponseCallback *cb, uint64_t sessionId, const char *name) {
+void Master::unlink(ResponseCallback *cb, uint64_t sessionId, const char *name) {
   std::string absName;
   struct stat statbuf;
   std::string childName;
   NodeDataPtr parentNodePtr;
 
-  if (mVerbose) {
-    LOG_VA_INFO("delete(sessionId=%lld, name=%s)", sessionId, name);
+  if (m_verbose) {
+    LOG_VA_INFO("unlink(sessionId=%lld, name=%s)", sessionId, name);
   }
 
   if (!strcmp(name, "/")) {
@@ -358,7 +358,7 @@ void Master::Delete(ResponseCallback *cb, uint64_t sessionId, const char *name) 
     return;
   }
 
-  if (!FindParentNode(name, parentNodePtr, childName)) {
+  if (!find_parent_node(name, parentNodePtr, childName)) {
     cb->error(Error::HYPERSPACE_BAD_PATHNAME, name);
     return;
   }
@@ -368,22 +368,22 @@ void Master::Delete(ResponseCallback *cb, uint64_t sessionId, const char *name) 
   {
     boost::mutex::scoped_lock nodeLock(parentNodePtr->mutex);
 
-    absName = mBaseDir + name;
+    absName = m_base_dir + name;
 
     if (stat(absName.c_str(), &statbuf) < 0) {
-      ReportError(cb);
+      report_error(cb);
       return;
     }
     else {
       if (statbuf.st_mode & S_IFDIR) {
 	if (rmdir(absName.c_str()) < 0) {
-	  ReportError(cb);
+	  report_error(cb);
 	  return;
 	}
       }
       else {
-	if (unlink(absName.c_str()) < 0) {
-	  ReportError(cb);
+	if (::unlink(absName.c_str()) < 0) {
+	  report_error(cb);
 	  return;
 	}
       }
@@ -392,7 +392,7 @@ void Master::Delete(ResponseCallback *cb, uint64_t sessionId, const char *name) 
     // deliver event notifications
     {
       HyperspaceEventPtr eventPtr( new EventNamed(EVENT_MASK_CHILD_NODE_REMOVED, childName) );
-      DeliverEventNotifications(parentNodePtr.get(), eventPtr);
+      deliver_event_notifications(parentNodePtr.get(), eventPtr);
     }
 
   }
@@ -405,7 +405,7 @@ void Master::Delete(ResponseCallback *cb, uint64_t sessionId, const char *name) 
 /**
  * Open
  */
-void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name, uint32_t flags, uint32_t eventMask, std::vector<AttributeT> &initAttrs) {
+void Master::open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name, uint32_t flags, uint32_t eventMask, std::vector<AttributeT> &initAttrs) {
   std::string absName;
   std::string childName;
   SessionDataPtr sessionPtr;
@@ -424,20 +424,20 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
   uint32_t lockMode = 0;
   uint64_t lockGeneration = 0;
 
-  if (mVerbose) {
+  if (m_verbose) {
     LOG_VA_INFO("open(sessionId=%lld, fname=%s, flags=0x%x, eventMask=0x%x)", sessionId, name, flags, eventMask);
   }
 
   assert(name[0] == '/');
 
-  absName = mBaseDir + name;
+  absName = m_base_dir + name;
 
-  if (!GetSession(sessionId, sessionPtr)) {
+  if (!get_session(sessionId, sessionPtr)) {
     cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
     return;
   }
 
-  if (!FindParentNode(name, parentNodePtr, childName)) {
+  if (!find_parent_node(name, parentNodePtr, childName)) {
     cb->error(Error::HYPERSPACE_BAD_PATHNAME, name);
     return;
   }
@@ -448,7 +448,7 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
   if (!strcmp(name, "/"))
     parentNodePtr = new NodeData();
 
-  GetNode(name, nodePtr);
+  get_node(name, nodePtr);
 
   {
     boost::mutex::scoped_lock parentLock(parentNodePtr->mutex);
@@ -476,7 +476,7 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
       if (errno == ENOENT)
 	existed = false;
       else {
-	ReportError(cb);
+	report_error(cb);
 	return;
       }
     }
@@ -516,20 +516,20 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
 	if (flags & OPEN_FLAG_EXCL)
 	  oflags |= O_EXCL;
       }
-      nodePtr->fd = open(absName.c_str(), oflags, 0644);
+      nodePtr->fd = ::open(absName.c_str(), oflags, 0644);
       if (nodePtr->fd < 0) {
 	LOG_VA_ERROR("open(%s, 0x%x, 0644) failed (errno=%d) - %s", absName.c_str(), oflags, errno, strerror(errno));
-	ReportError(cb);
+	report_error(cb);
 	return;
       }
 
       // Read/create 'lock.generation' attribute
 
-      len = FileUtils::Fgetxattr(nodePtr->fd, "lock.generation", &nodePtr->lockGeneration, sizeof(uint64_t));
+      len = FileUtils::fgetxattr(nodePtr->fd, "lock.generation", &nodePtr->lockGeneration, sizeof(uint64_t));
       if (len < 0) {
 	if (errno == ENOATTR) {
 	  nodePtr->lockGeneration = 1;
-	  if (FileUtils::Fsetxattr(nodePtr->fd, "lock.generation", &nodePtr->lockGeneration, sizeof(uint64_t), 0) == -1) {
+	  if (FileUtils::fsetxattr(nodePtr->fd, "lock.generation", &nodePtr->lockGeneration, sizeof(uint64_t), 0) == -1) {
 	    LOG_VA_ERROR("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
 			 name, strerror(errno));
 	    DUMP_CORE;
@@ -548,7 +548,7 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
        * Set the initial attributes
        */
       for (size_t i=0; i<initAttrs.size(); i++) {
-	if (FileUtils::Fsetxattr(nodePtr->fd, initAttrs[i].name, initAttrs[i].value, initAttrs[i].valueLen, 0) == -1) {
+	if (FileUtils::fsetxattr(nodePtr->fd, initAttrs[i].name, initAttrs[i].value, initAttrs[i].valueLen, 0) == -1) {
 	  LOG_VA_ERROR("Problem creating extended attribute '%s' on file '%s' - %s",
 		       initAttrs[i].name, name, strerror(errno));
 	  DUMP_CORE;
@@ -557,7 +557,7 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
 
       if (flags & OPEN_FLAG_TEMP) {
 	nodePtr->ephemeral = true;
-	unlink(absName.c_str());
+	::unlink(absName.c_str());
       }
 
     }
@@ -571,18 +571,18 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
     if (!existed)
       created = true;
 
-    CreateHandle(&handle, handlePtr);
+    create_handle(&handle, handlePtr);
 
     handlePtr->node = nodePtr.get();
     handlePtr->openFlags = flags;
     handlePtr->eventMask = eventMask;
     handlePtr->sessionPtr = sessionPtr;
 
-    sessionPtr->AddHandle(handle);
+    sessionPtr->add_handle(handle);
 
     if (created) {
       HyperspaceEventPtr eventPtr( new EventNamed(EVENT_MASK_CHILD_NODE_ADDED, childName) );
-      DeliverEventNotifications(parentNodePtr.get(), eventPtr);
+      deliver_event_notifications(parentNodePtr.get(), eventPtr);
     }
 
     /**
@@ -590,7 +590,7 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
      */
     if (lockMode != 0) {
       handlePtr->node->lockGeneration++;
-      if (FileUtils::Fsetxattr(handlePtr->node->fd, "lock.generation", &handlePtr->node->lockGeneration, sizeof(uint64_t), 0) == -1) {
+      if (FileUtils::fsetxattr(handlePtr->node->fd, "lock.generation", &handlePtr->node->lockGeneration, sizeof(uint64_t), 0) == -1) {
 	LOG_VA_ERROR("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
 		     handlePtr->node->name.c_str(), strerror(errno));
 	exit(1);
@@ -598,16 +598,16 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
       lockGeneration = handlePtr->node->lockGeneration;
       handlePtr->node->currentLockMode = lockMode;
 
-      LockHandle(handlePtr, lockMode);
+      lock_handle(handlePtr, lockMode);
 
       // deliver notification to handles to this same node
       if (lockNotify) {
 	HyperspaceEventPtr eventPtr( new EventLockAcquired(lockMode) );
-	DeliverEventNotifications(handlePtr->node, eventPtr);
+	deliver_event_notifications(handlePtr->node, eventPtr);
       }
     }
 
-    handlePtr->node->AddHandle(handle, handlePtr);
+    handlePtr->node->add_handle(handle, handlePtr);
 
   }
 
@@ -618,16 +618,16 @@ void Master::Open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
 /**
  *
  */
-void Master::Close(ResponseCallback *cb, uint64_t sessionId, uint64_t handle) {
+void Master::close(ResponseCallback *cb, uint64_t sessionId, uint64_t handle) {
   SessionDataPtr sessionPtr;
   int error;
   std::string errMsg;
 
-  if (mVerbose) {
+  if (m_verbose) {
     LOG_VA_INFO("close(session=%lld, handle=%lld)", sessionId, handle);
   }
 
-  if (!GetSession(sessionId, sessionPtr)) {
+  if (!get_session(sessionId, sessionPtr)) {
     cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
     return;
   }
@@ -636,7 +636,7 @@ void Master::Close(ResponseCallback *cb, uint64_t sessionId, uint64_t handle) {
     boost::mutex::scoped_lock slock(sessionPtr->mutex);
     size_t n = sessionPtr->handles.erase(handle);
     if (n) {
-      if (!DestroyHandle(handle, &error, errMsg)) {
+      if (!destroy_handle(handle, &error, errMsg)) {
 	cb->error(error, errMsg);
 	return;
       }
@@ -644,7 +644,7 @@ void Master::Close(ResponseCallback *cb, uint64_t sessionId, uint64_t handle) {
   }
 
   if ((error = cb->response_ok()) != Error::OK) {
-    LOG_VA_ERROR("Problem sending back response - %s", Error::GetText(error));
+    LOG_VA_ERROR("Problem sending back response - %s", Error::get_text(error));
   }
 }
 
@@ -653,21 +653,21 @@ void Master::Close(ResponseCallback *cb, uint64_t sessionId, uint64_t handle) {
 /**
  *
  */
-void Master::AttrSet(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, const char *name, const void *value, size_t valueLen) {
+void Master::attr_set(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, const char *name, const void *value, size_t valueLen) {
   SessionDataPtr sessionPtr;
   HandleDataPtr handlePtr;
   int error;
 
-  if (mVerbose) {
+  if (m_verbose) {
     LOG_VA_INFO("attrset(session=%lld, handle=%lld, name=%s, valueLen=%d)", sessionId, handle, name, valueLen);
   }
 
-  if (!GetSession(sessionId, sessionPtr)) {
+  if (!get_session(sessionId, sessionPtr)) {
     cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
     return;
   }
 
-  if (!GetHandleData(handle, handlePtr)) {
+  if (!get_handle_data(handle, handlePtr)) {
     cb->error(Error::HYPERSPACE_INVALID_HANDLE, std::string("handle=") + handle);
     return;
   }
@@ -675,18 +675,18 @@ void Master::AttrSet(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, 
   {
     boost::mutex::scoped_lock nodeLock(handlePtr->node->mutex);
 
-    if (FileUtils::Fsetxattr(handlePtr->node->fd, name, value, valueLen, 0) == -1) {
+    if (FileUtils::fsetxattr(handlePtr->node->fd, name, value, valueLen, 0) == -1) {
       LOG_VA_ERROR("Problem creating extended attribute '%s' on file '%s' - %s",
 		   name, handlePtr->node->name.c_str(), strerror(errno));
       DUMP_CORE;
     }
 
     HyperspaceEventPtr eventPtr( new EventNamed(EVENT_MASK_ATTR_SET, name) );
-    DeliverEventNotifications(handlePtr->node, eventPtr);
+    deliver_event_notifications(handlePtr->node, eventPtr);
   }
 
   if ((error = cb->response_ok()) != Error::OK) {
-    LOG_VA_ERROR("Problem sending back response - %s", Error::GetText(error));
+    LOG_VA_ERROR("Problem sending back response - %s", Error::get_text(error));
   }
 
 }
@@ -695,23 +695,23 @@ void Master::AttrSet(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, 
 /**
  * 
  */
-void Master::AttrGet(ResponseCallbackAttrGet *cb, uint64_t sessionId, uint64_t handle, const char *name) {
+void Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t sessionId, uint64_t handle, const char *name) {
   SessionDataPtr sessionPtr;
   HandleDataPtr handlePtr;
   int error;
   int alen;
   uint8_t *buf;
 
-  if (mVerbose) {
+  if (m_verbose) {
     LOG_VA_INFO("attrget(session=%lld, handle=%lld, name=%s)", sessionId, handle, name);
   }
 
-  if (!GetSession(sessionId, sessionPtr)) {
+  if (!get_session(sessionId, sessionPtr)) {
     cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
     return;
   }
 
-  if (!GetHandleData(handle, handlePtr)) {
+  if (!get_handle_data(handle, handlePtr)) {
     cb->error(Error::HYPERSPACE_INVALID_HANDLE, std::string("handle=") + handle);
     return;
   }
@@ -719,16 +719,16 @@ void Master::AttrGet(ResponseCallbackAttrGet *cb, uint64_t sessionId, uint64_t h
   {
     boost::mutex::scoped_lock nodeLock(handlePtr->node->mutex);
 
-    if ((alen = FileUtils::Fgetxattr(handlePtr->node->fd, name, 0, 0)) < 0) {
+    if ((alen = FileUtils::fgetxattr(handlePtr->node->fd, name, 0, 0)) < 0) {
       LOG_VA_ERROR("Problem determining size of extended attribute '%s' on file '%s' - %s",
 		   name, handlePtr->node->name.c_str(), strerror(errno));
-      ReportError(cb);
+      report_error(cb);
       return;
     }
 
     buf = new uint8_t [ alen + 8 ];
 
-    if ((alen = FileUtils::Fgetxattr(handlePtr->node->fd, name, buf, alen)) < 0) {
+    if ((alen = FileUtils::fgetxattr(handlePtr->node->fd, name, buf, alen)) < 0) {
       LOG_VA_ERROR("Problem determining size of extended attribute '%s' on file '%s' - %s",
 		   name, handlePtr->node->name.c_str(), strerror(errno));
       DUMP_CORE;
@@ -736,28 +736,28 @@ void Master::AttrGet(ResponseCallbackAttrGet *cb, uint64_t sessionId, uint64_t h
   }
 
   if ((error = cb->response(buf, (uint32_t)alen)) != Error::OK) {
-    LOG_VA_ERROR("Problem sending back response - %s", Error::GetText(error));
+    LOG_VA_ERROR("Problem sending back response - %s", Error::get_text(error));
   }
   
 }
 
 
 
-void Master::AttrDel(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, const char *name) {
+void Master::attr_del(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, const char *name) {
   SessionDataPtr sessionPtr;
   HandleDataPtr handlePtr;
   int error;
 
-  if (mVerbose) {
+  if (m_verbose) {
     LOG_VA_INFO("attrdel(session=%lld, handle=%lld, name=%s)", sessionId, handle, name);
   }
 
-  if (!GetSession(sessionId, sessionPtr)) {
+  if (!get_session(sessionId, sessionPtr)) {
     cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
     return;
   }
 
-  if (!GetHandleData(handle, handlePtr)) {
+  if (!get_handle_data(handle, handlePtr)) {
     cb->error(Error::HYPERSPACE_INVALID_HANDLE, std::string("handle=") + handle);
     return;
   }
@@ -765,59 +765,59 @@ void Master::AttrDel(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, 
   {
     boost::mutex::scoped_lock nodeLock(handlePtr->node->mutex);
 
-    if (FileUtils::Fremovexattr(handlePtr->node->fd, name) == -1) {
+    if (FileUtils::fremovexattr(handlePtr->node->fd, name) == -1) {
       LOG_VA_ERROR("Problem removing extended attribute '%s' on file '%s' - %s",
 		   name, handlePtr->node->name.c_str(), strerror(errno));
-      ReportError(cb);
+      report_error(cb);
       return;
     }
 
     HyperspaceEventPtr eventPtr( new EventNamed(EVENT_MASK_ATTR_DEL, name) );
-    DeliverEventNotifications(handlePtr->node, eventPtr);
+    deliver_event_notifications(handlePtr->node, eventPtr);
   }
 
   if ((error = cb->response_ok()) != Error::OK) {
-    LOG_VA_ERROR("Problem sending back response - %s", Error::GetText(error));
+    LOG_VA_ERROR("Problem sending back response - %s", Error::get_text(error));
   }
 
 }
 
 
-void Master::Exists(ResponseCallbackExists *cb, uint64_t sessionId, const char *name) {
+void Master::exists(ResponseCallbackExists *cb, uint64_t sessionId, const char *name) {
   std::string absName;
   int error;
 
-  if (mVerbose) {
+  if (m_verbose) {
     LOG_VA_INFO("exists(sessionId=%lld, name=%s)", sessionId, name);
   }
 
   assert(name[0] == '/' && name[strlen(name)-1] != '/');
 
-  absName = mBaseDir + name;
+  absName = m_base_dir + name;
 
-  if ((error = cb->response( FileUtils::Exists(absName.c_str()) )) != Error::OK) {
-    LOG_VA_ERROR("Problem sending back response - %s", Error::GetText(error));
+  if ((error = cb->response( FileUtils::exists(absName.c_str()) )) != Error::OK) {
+    LOG_VA_ERROR("Problem sending back response - %s", Error::get_text(error));
   }
 }
 
 
-void Master::Readdir(ResponseCallbackReaddir *cb, uint64_t sessionId, uint64_t handle) {
+void Master::readdir(ResponseCallbackReaddir *cb, uint64_t sessionId, uint64_t handle) {
   std::string absName;
   SessionDataPtr sessionPtr;
   HandleDataPtr handlePtr;
   struct DirEntryT dentry;
   std::vector<struct DirEntryT> listing;
 
-  if (mVerbose) {
+  if (m_verbose) {
     LOG_VA_INFO("readdir(session=%lld, handle=%lld)", sessionId, handle);
   }
 
-  if (!GetSession(sessionId, sessionPtr)) {
+  if (!get_session(sessionId, sessionPtr)) {
     cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
     return;
   }
 
-  if (!GetHandleData(handle, handlePtr)) {
+  if (!get_handle_data(handle, handlePtr)) {
     cb->error(Error::HYPERSPACE_INVALID_HANDLE, std::string("handle=") + handle);
     return;
   }
@@ -825,12 +825,12 @@ void Master::Readdir(ResponseCallbackReaddir *cb, uint64_t sessionId, uint64_t h
   {
     boost::mutex::scoped_lock lock(handlePtr->node->mutex);
 
-    absName = mBaseDir + handlePtr->node->name;
+    absName = m_base_dir + handlePtr->node->name;
 
     DIR *dirp = opendir(absName.c_str());
 
     if (dirp == 0) {
-      ReportError(cb);
+      report_error(cb);
       LOG_VA_ERROR("opendir('%s') failed - %s", absName.c_str(), strerror(errno));
       return;
     }
@@ -839,7 +839,7 @@ void Master::Readdir(ResponseCallbackReaddir *cb, uint64_t sessionId, uint64_t h
     struct dirent *dp;
 
     if (readdir_r(dirp, &dent, &dp) != 0) {
-      ReportError(cb);
+      report_error(cb);
       LOG_VA_ERROR("readdir('%s') failed - %s", absName.c_str(), strerror(errno));
       (void)closedir(dirp);
       return;
@@ -854,7 +854,7 @@ void Master::Readdir(ResponseCallbackReaddir *cb, uint64_t sessionId, uint64_t h
       }
 
       if (readdir_r(dirp, &dent, &dp) != 0) {
-	ReportError(cb);
+	report_error(cb);
 	LOG_VA_ERROR("readdir('%s') failed - %s", absName.c_str(), strerror(errno));
 	(void)closedir(dirp);
 	return;
@@ -869,22 +869,22 @@ void Master::Readdir(ResponseCallbackReaddir *cb, uint64_t sessionId, uint64_t h
 
 
 
-void Master::Lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle, uint32_t mode, bool tryAcquire) {
+void Master::lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle, uint32_t mode, bool tryAcquire) {
   SessionDataPtr sessionPtr;
   HandleDataPtr handlePtr;
   int error;
   bool notify = true;
 
-  if (mVerbose) {
+  if (m_verbose) {
     LOG_VA_INFO("lock(session=%lld, handle=%lld, mode=0x%x, tryAcquire=%d)", sessionId, handle, mode, tryAcquire);
   }
 
-  if (!GetSession(sessionId, sessionPtr)) {
+  if (!get_session(sessionId, sessionPtr)) {
     cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
     return;
   }
 
-  if (!GetHandleData(handle, handlePtr)) {
+  if (!get_handle_data(handle, handlePtr)) {
     cb->error(Error::HYPERSPACE_INVALID_HANDLE, std::string("handle=") + handle);
     return;
   }
@@ -937,19 +937,19 @@ void Master::Lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle,
       notify = false;
 
     handlePtr->node->lockGeneration++;
-    if (FileUtils::Fsetxattr(handlePtr->node->fd, "lock.generation", &handlePtr->node->lockGeneration, sizeof(uint64_t), 0) == -1) {
+    if (FileUtils::fsetxattr(handlePtr->node->fd, "lock.generation", &handlePtr->node->lockGeneration, sizeof(uint64_t), 0) == -1) {
       LOG_VA_ERROR("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
 		   handlePtr->node->name.c_str(), strerror(errno));
       exit(1);
     }
     handlePtr->node->currentLockMode = mode;
 
-    LockHandle(handlePtr, mode);
+    lock_handle(handlePtr, mode);
 
     // deliver notification to handles to this same node
     if (notify) {
       HyperspaceEventPtr eventPtr( new EventLockAcquired(mode) );
-      DeliverEventNotifications(handlePtr->node, eventPtr);
+      deliver_event_notifications(handlePtr->node, eventPtr);
     }
 
     cb->response(LOCK_STATUS_GRANTED, handlePtr->node->lockGeneration);
@@ -959,7 +959,7 @@ void Master::Lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle,
 /**
  * Assumes node is locked.
  */
-void Master::LockHandle(HandleDataPtr &handlePtr, uint32_t mode) {
+void Master::lock_handle(HandleDataPtr &handlePtr, uint32_t mode) {
   if (mode == LOCK_MODE_SHARED)
     handlePtr->node->sharedLockHandles.insert(handlePtr->id);
   else {
@@ -972,14 +972,14 @@ void Master::LockHandle(HandleDataPtr &handlePtr, uint32_t mode) {
 /**
  * Assumes node is locked.
  */
-void Master::LockHandleWithNotification(HandleDataPtr &handlePtr, uint32_t mode, bool waitForNotify) {
+void Master::lock_handle_with_notification(HandleDataPtr &handlePtr, uint32_t mode, bool waitForNotify) {
 
-  LockHandle(handlePtr, mode);
+  lock_handle(handlePtr, mode);
 
   // deliver notification to handles to this same node
   {
     HyperspaceEventPtr eventPtr( new EventLockGranted(mode, handlePtr->node->lockGeneration) );
-    DeliverEventNotification(handlePtr, eventPtr, waitForNotify);
+    deliver_event_notification(handlePtr, eventPtr, waitForNotify);
   }
 
 }
@@ -989,31 +989,31 @@ void Master::LockHandleWithNotification(HandleDataPtr &handlePtr, uint32_t mode,
 /**
  * 
  */
-void Master::Release(ResponseCallback *cb, uint64_t sessionId, uint64_t handle) {
+void Master::release(ResponseCallback *cb, uint64_t sessionId, uint64_t handle) {
   SessionDataPtr sessionPtr;
   HandleDataPtr handlePtr;
 
-  if (mVerbose) {
+  if (m_verbose) {
     LOG_VA_INFO("release(session=%lld, handle=%lld)", sessionId, handle);
   }
 
-  if (!GetSession(sessionId, sessionPtr)) {
+  if (!get_session(sessionId, sessionPtr)) {
     cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
     return;
   }
 
-  if (!GetHandleData(handle, handlePtr)) {
+  if (!get_handle_data(handle, handlePtr)) {
     cb->error(Error::HYPERSPACE_INVALID_HANDLE, std::string("handle=") + handle);
     return;
   }
 
-  ReleaseLock(handlePtr);
+  release_lock(handlePtr);
 
   cb->response_ok();
 }
 
 
-void Master::ReleaseLock(HandleDataPtr &handlePtr, bool waitForNotify) {
+void Master::release_lock(HandleDataPtr &handlePtr, bool waitForNotify) {
   boost::mutex::scoped_lock lock(handlePtr->node->mutex);
   vector<HandleDataPtr> nextLockHandles;
   int nextMode = 0;
@@ -1036,7 +1036,7 @@ void Master::ReleaseLock(HandleDataPtr &handlePtr, bool waitForNotify) {
   if (handlePtr->node->sharedLockHandles.empty()) {
     LOG_INFO("About to deliver lock released notifications");
     HyperspaceEventPtr eventPtr( new EventLockReleased() );
-    DeliverEventNotifications(handlePtr->node, eventPtr, waitForNotify);
+    deliver_event_notifications(handlePtr->node, eventPtr, waitForNotify);
     LOG_INFO("Finished delivering lock released notifications");
   }
 
@@ -1047,7 +1047,7 @@ void Master::ReleaseLock(HandleDataPtr &handlePtr, bool waitForNotify) {
     const LockRequest &frontLockReq = handlePtr->node->pendingLockRequests.front();
     if (frontLockReq.mode == LOCK_MODE_EXCLUSIVE) {
       nextMode = LOCK_MODE_EXCLUSIVE;
-      if (GetHandleData(frontLockReq.handle, nextHandlePtr))
+      if (get_handle_data(frontLockReq.handle, nextHandlePtr))
 	nextLockHandles.push_back(nextHandlePtr);
       handlePtr->node->pendingLockRequests.pop_front();
     }
@@ -1057,7 +1057,7 @@ void Master::ReleaseLock(HandleDataPtr &handlePtr, bool waitForNotify) {
 	const LockRequest &lockreq = handlePtr->node->pendingLockRequests.front();
 	if (lockreq.mode != LOCK_MODE_SHARED)
 	  break;
-	if (GetHandleData(lockreq.handle, nextHandlePtr))
+	if (get_handle_data(lockreq.handle, nextHandlePtr))
 	  nextLockHandles.push_back(nextHandlePtr);
 	handlePtr->node->pendingLockRequests.pop_front();
       } while (!handlePtr->node->pendingLockRequests.empty());
@@ -1066,7 +1066,7 @@ void Master::ReleaseLock(HandleDataPtr &handlePtr, bool waitForNotify) {
     if (!nextLockHandles.empty()) {
 
       handlePtr->node->lockGeneration++;
-      if (FileUtils::Fsetxattr(handlePtr->node->fd, "lock.generation", &handlePtr->node->lockGeneration, sizeof(uint64_t), 0) == -1) {
+      if (FileUtils::fsetxattr(handlePtr->node->fd, "lock.generation", &handlePtr->node->lockGeneration, sizeof(uint64_t), 0) == -1) {
 	LOG_VA_ERROR("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
 		     handlePtr->node->name.c_str(), strerror(errno));
 	exit(1);
@@ -1076,13 +1076,13 @@ void Master::ReleaseLock(HandleDataPtr &handlePtr, bool waitForNotify) {
 
       for (size_t i=0; i<nextLockHandles.size(); i++) {
 	assert(handlePtr->id != nextLockHandles[i]->id);
-	LockHandleWithNotification(nextLockHandles[i], nextMode, waitForNotify);
+	lock_handle_with_notification(nextLockHandles[i], nextMode, waitForNotify);
       }
 
       // deliver notification to handles to this same node
       {
 	HyperspaceEventPtr eventPtr( new EventLockAcquired(nextMode) );
-	DeliverEventNotifications(handlePtr->node, eventPtr, waitForNotify);
+	deliver_event_notifications(handlePtr->node, eventPtr, waitForNotify);
       }
 
     }
@@ -1093,9 +1093,9 @@ void Master::ReleaseLock(HandleDataPtr &handlePtr, bool waitForNotify) {
 
 
 /**
- * ReportError
+ * report_error
  */
-void Master::ReportError(ResponseCallback *cb) {
+void Master::report_error(ResponseCallback *cb) {
   char errbuf[128];
   errbuf[0] = 0;
   strerror_r(errno, errbuf, 128);
@@ -1120,7 +1120,7 @@ void Master::ReportError(ResponseCallback *cb) {
 /**
  *
  */
-void Master::NormalizeName(std::string name, std::string &normal) {
+void Master::normalize_name(std::string name, std::string &normal) {
   normal = "";
   if (name[0] != '/')
     normal += "/";
@@ -1135,38 +1135,38 @@ void Master::NormalizeName(std::string name, std::string &normal) {
 /**
  * Assumes node is locked.
  */
-void Master::DeliverEventNotifications(NodeData *node, HyperspaceEventPtr &eventPtr, bool waitForNotify) {
+void Master::deliver_event_notifications(NodeData *node, HyperspaceEventPtr &eventPtr, bool waitForNotify) {
   int notifications = 0;
 
   // log event
 
   for (HandleMapT::iterator iter = node->handleMap.begin(); iter != node->handleMap.end(); iter++) {
-    //LOG_VA_INFO("Delivering notification (%d == %d)", (*iter).second->eventMask, eventPtr->GetMask());
-    if ((*iter).second->eventMask & eventPtr->GetMask()) {
-      (*iter).second->sessionPtr->AddNotification( new Notification((*iter).first, eventPtr) );
-      mKeepaliveHandlerPtr->DeliverEventNotifications((*iter).second->sessionPtr->id);
+    //LOG_VA_INFO("Delivering notification (%d == %d)", (*iter).second->eventMask, eventPtr->get_mask());
+    if ((*iter).second->eventMask & eventPtr->get_mask()) {
+      (*iter).second->sessionPtr->add_notification( new Notification((*iter).first, eventPtr) );
+      m_keepalive_handler_ptr->deliver_event_notifications((*iter).second->sessionPtr->id);
       notifications++;
     }
   }
 
   if (waitForNotify && notifications)
-    eventPtr->WaitForNotifications();
+    eventPtr->wait_for_notifications();
 }
 
 
 /**
  * Assumes node is locked.
  */
-void Master::DeliverEventNotification(HandleDataPtr &handlePtr, HyperspaceEventPtr &eventPtr, bool waitForNotify) {
+void Master::deliver_event_notification(HandleDataPtr &handlePtr, HyperspaceEventPtr &eventPtr, bool waitForNotify) {
   int notifications = 0;
 
   // log event
 
-  handlePtr->sessionPtr->AddNotification( new Notification(handlePtr->id, eventPtr) );
-  mKeepaliveHandlerPtr->DeliverEventNotifications(handlePtr->sessionPtr->id);
+  handlePtr->sessionPtr->add_notification( new Notification(handlePtr->id, eventPtr) );
+  m_keepalive_handler_ptr->deliver_event_notifications(handlePtr->sessionPtr->id);
 
   if (waitForNotify)
-    eventPtr->WaitForNotifications();
+    eventPtr->wait_for_notifications();
 
 }
 
@@ -1175,30 +1175,30 @@ void Master::DeliverEventNotification(HandleDataPtr &handlePtr, HyperspaceEventP
 /**
  *
  */
-bool Master::FindParentNode(std::string normalName, NodeDataPtr &parentNodePtr, std::string &childName) {
+bool Master::find_parent_node(std::string normalName, NodeDataPtr &parentNodePtr, std::string &childName) {
   NodeMapT::iterator nodeIter;
   unsigned int lastSlash = normalName.rfind("/", normalName.length());
   std::string parentName;
 
   if (lastSlash > 0) {
-    boost::mutex::scoped_lock lock(mNodeMapMutex);
+    boost::mutex::scoped_lock lock(m_node_map_mutex);
     parentName = normalName.substr(0, lastSlash);
     childName = normalName.substr(lastSlash+1);
-    nodeIter = mNodeMap.find(parentName);
-    if (nodeIter != mNodeMap.end())
+    nodeIter = m_node_map.find(parentName);
+    if (nodeIter != m_node_map.end())
       parentNodePtr = (*nodeIter).second;
     else {
       parentNodePtr = new NodeData();
       parentNodePtr->name = parentName;
-      mNodeMap[parentName] = parentNodePtr;
+      m_node_map[parentName] = parentNodePtr;
     }
     return true;
   }
   else if (lastSlash == 0) {
-    boost::mutex::scoped_lock lock(mNodeMapMutex);
+    boost::mutex::scoped_lock lock(m_node_map_mutex);
     parentName = "/";
-    nodeIter = mNodeMap.find(parentName);
-    assert (nodeIter != mNodeMap.end());
+    nodeIter = m_node_map.find(parentName);
+    assert (nodeIter != m_node_map.end());
     childName = normalName.substr(1);
     parentNodePtr = (*nodeIter).second;
     return true;
@@ -1211,11 +1211,11 @@ bool Master::FindParentNode(std::string normalName, NodeDataPtr &parentNodePtr, 
 /**
  *
  */
-bool Master::DestroyHandle(uint64_t handle, int *errorp, std::string &errMsg, bool waitForNotify) {
+bool Master::destroy_handle(uint64_t handle, int *errorp, std::string &errMsg, bool waitForNotify) {
   HandleDataPtr handlePtr;
   unsigned int refCount = 0;
 
-  if (!RemoveHandleData(handle, handlePtr)) {
+  if (!remove_handle_data(handle, handlePtr)) {
     *errorp = Error::HYPERSPACE_INVALID_HANDLE;
     errMsg = std::string("handle=") + handle;
     return false;
@@ -1224,30 +1224,30 @@ bool Master::DestroyHandle(uint64_t handle, int *errorp, std::string &errMsg, bo
   {
     boost::mutex::scoped_lock lock(handlePtr->node->mutex);
 
-    handlePtr->node->RemoveHandle(handlePtr->id);
+    handlePtr->node->remove_handle(handlePtr->id);
 
-    refCount = handlePtr->node->ReferenceCount();
+    refCount = handlePtr->node->reference_count();
   }
 
-  ReleaseLock(handlePtr, waitForNotify);
+  release_lock(handlePtr, waitForNotify);
 
   if (refCount == 0) {
 
-    handlePtr->node->Close();
+    handlePtr->node->close();
 
     if (handlePtr->node->ephemeral) {
       std::string childName;
       NodeDataPtr parentNodePtr;
 
-      if (FindParentNode(handlePtr->node->name, parentNodePtr, childName)) {
+      if (find_parent_node(handlePtr->node->name, parentNodePtr, childName)) {
 	HyperspaceEventPtr eventPtr( new EventNamed(EVENT_MASK_CHILD_NODE_REMOVED, childName) );
-	DeliverEventNotifications(parentNodePtr.get(), eventPtr, waitForNotify);
+	deliver_event_notifications(parentNodePtr.get(), eventPtr, waitForNotify);
       }
 
       // remove node
-      NodeMapT::iterator nodeIter = mNodeMap.find(handlePtr->node->name);
-      if (nodeIter != mNodeMap.end())
-	mNodeMap.erase(nodeIter);
+      NodeMapT::iterator nodeIter = m_node_map.find(handlePtr->node->name);
+      if (nodeIter != m_node_map.end())
+	m_node_map.erase(nodeIter);
     }
   }
 

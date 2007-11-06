@@ -32,6 +32,6 @@ using namespace hypertable::DfsBroker;
  *
  */
 void RequestHandlerStatus::run() {
-  ResponseCallback cb(mComm, mEventPtr);
-  mBroker->Status(&cb);
+  ResponseCallback cb(m_comm, m_event_ptr);
+  m_broker->status(&cb);
 }

@@ -111,8 +111,8 @@ int main(int argc, char **argv) {
   uint32_t limit = 0;
   uint32_t emitted = 0;
 
-  System::Initialize(argv[0]);
-  ReactorFactory::Initialize((uint16_t)System::GetProcessorCount());
+  System::initialize(argv[0]);
+  ReactorFactory::initialize((uint16_t)System::get_processor_count());
 
   for (int i=1; i<argc; i++) {
     if (!strncmp(argv[i], "--config=", 9))
@@ -135,35 +135,35 @@ int main(int argc, char **argv) {
     else if (tableName == "")
       tableName = argv[i];
     else
-      Usage::DumpAndExit(usage);
+      Usage::dump_and_exit(usage);
   }
 
   if (tableName == "")
-    Usage::DumpAndExit(usage);
+    Usage::dump_and_exit(usage);
 
   if (configFile == "")
     configFile = System::installDir + "/conf/hypertable.cfg";
 
-  if (!tdata.Load(System::installDir + "/demo"))
+  if (!tdata.load(System::installDir + "/demo"))
     exit(1);
 
   client = new Client(configFile);
 
-  if ((error = client->GetSchema(tableName, schemaSpec)) != Error::OK) {
-    LOG_VA_ERROR("Problem getting schema for table '%s' - %s", argv[1], Error::GetText(error));
+  if ((error = client->get_schema(tableName, schemaSpec)) != Error::OK) {
+    LOG_VA_ERROR("Problem getting schema for table '%s' - %s", argv[1], Error::get_text(error));
     return error;
   }
 
-  schema = Schema::NewInstance(schemaSpec.c_str(), strlen(schemaSpec.c_str()), true);
-  if (!schema->IsValid()) {
-    LOG_VA_ERROR("Schema Parse Error: %s", schema->GetErrorString());
+  schema = Schema::new_instance(schemaSpec.c_str(), strlen(schemaSpec.c_str()), true);
+  if (!schema->is_valid()) {
+    LOG_VA_ERROR("Schema Parse Error: %s", schema->get_error_string());
     exit(1);
   }
 
-  cfMax = schema->GetMaxColumnFamilyId();
+  cfMax = schema->get_max_column_family_id();
   cfNames.resize(cfMax+1);
 
-  list<Schema::AccessGroup *> *lgList = schema->GetAccessGroupList();
+  list<Schema::AccessGroup *> *lgList = schema->get_access_group_list();
   for (list<Schema::AccessGroup *>::iterator iter = lgList->begin(); iter != lgList->end(); iter++) {
     for (list<Schema::ColumnFamily *>::iterator cfIter = (*iter)->columns.begin(); cfIter != (*iter)->columns.end(); cfIter++)
       cfNames[(*cfIter)->id] = (*cfIter)->name;

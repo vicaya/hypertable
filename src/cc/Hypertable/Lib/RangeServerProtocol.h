@@ -37,15 +37,15 @@ namespace hypertable {
     static const short COMMAND_STATUS           = 5;
     static const short COMMAND_MAX              = 6;
 
-    static const char *mCommandStrings[];
+    static const char *m_command_strings[];
 
-    static CommBuf *CreateRequestLoadRange(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec);
-    static CommBuf *CreateRequestUpdate(struct sockaddr_in &addr, std::string &tableName, uint32_t generation, uint8_t *data, size_t len);
-    static CommBuf *CreateRequestCreateScanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &scanSpec);
-    static CommBuf *CreateRequestFetchScanblock(struct sockaddr_in &addr, int scannerId);
-    static CommBuf *CreateRequestStatus();
+    static CommBuf *create_request_load_range(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec);
+    static CommBuf *create_request_update(struct sockaddr_in &addr, std::string &tableName, uint32_t generation, uint8_t *data, size_t len);
+    static CommBuf *create_request_create_scanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &scanSpec);
+    static CommBuf *create_request_fetch_scanblock(struct sockaddr_in &addr, int scannerId);
+    static CommBuf *create_request_status();
 
-    virtual const char *CommandText(short command);
+    virtual const char *command_text(short command);
   };
 
 }

@@ -33,7 +33,7 @@ using namespace hypertable;
 using namespace Hyperspace;
 using namespace std;
 
-const char *CommandReaddir::msUsage[] = {
+const char *CommandReaddir::ms_usage[] = {
   "readdir <dir>",
   "  This command issues a READDIR request to Hyperspace.",
   (const char *)0
@@ -45,20 +45,20 @@ int CommandReaddir::run() {
   int error;
   std::vector<struct DirEntryT> listing;
 
-  if (mArgs.size() != 1) {
+  if (m_args.size() != 1) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
     return -1;
   }
 
-  if (mArgs[0].second != "") {
+  if (m_args[0].second != "") {
     cerr << "Invalid character '=' in argument." << endl;
     return -1;
   }
 
-  if (!Util::GetHandle(mArgs[0].first, &handle))
+  if (!Util::get_handle(m_args[0].first, &handle))
     return -1;
 
-  if ((error = mSession->Readdir(handle, listing)) == Error::OK) {
+  if ((error = m_session->readdir(handle, listing)) == Error::OK) {
     struct ltDirEntry deComp;
     sort(listing.begin(), listing.end(), deComp);
     for (size_t i=0; i<listing.size(); i++) {

@@ -35,29 +35,29 @@
 /**
  * 
  */
-MasterClient::MasterClient(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr, time_t timeout, ApplicationQueuePtr &appQueuePtr) : mVerbose(true), mConnManagerPtr(connManagerPtr), mHyperspacePtr(hyperspacePtr), mTimeout(timeout), mAppQueuePtr(appQueuePtr), mInitiated(false) {
+MasterClient::MasterClient(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr, time_t timeout, ApplicationQueuePtr &appQueuePtr) : m_verbose(true), m_conn_manager_ptr(connManagerPtr), m_hyperspace_ptr(hyperspacePtr), m_timeout(timeout), m_app_queue_ptr(appQueuePtr), m_initiated(false) {
   int error;
 
-  mComm = mConnManagerPtr->GetComm();
-  memset(&mMasterAddr, 0, sizeof(mMasterAddr));
+  m_comm = m_conn_manager_ptr->get_comm();
+  memset(&m_master_addr, 0, sizeof(m_master_addr));
 
   /**
    * Open /hypertable/master Hyperspace file to discover the master.
    */
-  mMasterFileCallbackPtr = new MasterFileHandler(this, mAppQueuePtr);
-  if ((error = mHyperspacePtr->Open("/hypertable/master", OPEN_FLAG_READ, mMasterFileCallbackPtr, &mMasterFileHandle)) != Error::OK) {
+  m_master_file_callback_ptr = new MasterFileHandler(this, m_app_queue_ptr);
+  if ((error = m_hyperspace_ptr->open("/hypertable/master", OPEN_FLAG_READ, m_master_file_callback_ptr, &m_master_file_handle)) != Error::OK) {
     if (error != Error::HYPERSPACE_FILE_NOT_FOUND && error != Error::HYPERSPACE_BAD_PATHNAME) {
-      LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/master' - %s", Error::GetText(error));
+      LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/master' - %s", Error::get_text(error));
       exit(1);
     }
-    mMasterFileHandle = 0;
+    m_master_file_handle = 0;
   }
 }
 
 
 
 MasterClient::~MasterClient() {
-  mHyperspacePtr->Close(mMasterFileHandle);
+  m_hyperspace_ptr->close(m_master_file_handle);
 }
 
 
@@ -65,61 +65,61 @@ MasterClient::~MasterClient() {
 /**
  *
  */
-int MasterClient::InitiateConnection(DispatchHandlerPtr dispatchHandlerPtr) {
-  mDispatcherHandlerPtr = dispatchHandlerPtr;
-  if (mMasterFileHandle == 0)
+int MasterClient::initiate_connection(DispatchHandlerPtr dispatchHandlerPtr) {
+  m_dispatcher_handler_ptr = dispatchHandlerPtr;
+  if (m_master_file_handle == 0)
     return Error::MASTER_NOT_RUNNING;
-  return ReloadMaster();
+  return reload_master();
 }
 
 
 
-int MasterClient::CreateTable(const char *tableName, const char *schemaString, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( MasterProtocol::CreateCreateTableRequest(tableName, schemaString) );
-  return SendMessage(cbufPtr, handler);
+int MasterClient::create_table(const char *tableName, const char *schemaString, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( MasterProtocol::create_create_table_request(tableName, schemaString) );
+  return send_message(cbufPtr, handler);
 }
 
 
 
-int MasterClient::CreateTable(const char *tableName, const char *schemaString) {
+int MasterClient::create_table(const char *tableName, const char *schemaString) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( MasterProtocol::CreateCreateTableRequest(tableName, schemaString) );
-  int error = SendMessage(cbufPtr, &syncHandler);
+  CommBufPtr cbufPtr( MasterProtocol::create_create_table_request(tableName, schemaString) );
+  int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(eventPtr)) {
-      if (mVerbose)
-	LOG_VA_ERROR("Master 'create table' error, tableName=%s : %s", tableName, MasterProtocol::StringFormatMessage(eventPtr).c_str());
-      error = (int)MasterProtocol::ResponseCode(eventPtr);
+    if (!syncHandler.wait_for_reply(eventPtr)) {
+      if (m_verbose)
+	LOG_VA_ERROR("Master 'create table' error, tableName=%s : %s", tableName, MasterProtocol::string_format_message(eventPtr).c_str());
+      error = (int)MasterProtocol::response_code(eventPtr);
     }
   }
   return error;
 }
 
 
-int MasterClient::GetSchema(const char *tableName, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( MasterProtocol::CreateGetSchemaRequest(tableName) );
-  return SendMessage(cbufPtr, handler);
+int MasterClient::get_schema(const char *tableName, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( MasterProtocol::create_get_schema_request(tableName) );
+  return send_message(cbufPtr, handler);
 }
 
 
-int MasterClient::GetSchema(const char *tableName, std::string &schema) {
+int MasterClient::get_schema(const char *tableName, std::string &schema) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( MasterProtocol::CreateGetSchemaRequest(tableName) );
-  int error = SendMessage(cbufPtr, &syncHandler);
+  CommBufPtr cbufPtr( MasterProtocol::create_get_schema_request(tableName) );
+  int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(eventPtr)) {
-      if (mVerbose)
-	LOG_VA_ERROR("Master 'get schema' error, tableName=%s : %s", tableName, MasterProtocol::StringFormatMessage(eventPtr).c_str());
-      error = (int)MasterProtocol::ResponseCode(eventPtr);
+    if (!syncHandler.wait_for_reply(eventPtr)) {
+      if (m_verbose)
+	LOG_VA_ERROR("Master 'get schema' error, tableName=%s : %s", tableName, MasterProtocol::string_format_message(eventPtr).c_str());
+      error = (int)MasterProtocol::response_code(eventPtr);
     }
     else {
       uint8_t *ptr = eventPtr->message + sizeof(int32_t);
       size_t remaining = eventPtr->messageLen - sizeof(int32_t);
       const char *schemaStr;
-      if (!Serialization::DecodeString(&ptr, &remaining, &schemaStr)) {
-	if (mVerbose)
+      if (!Serialization::decode_string(&ptr, &remaining, &schemaStr)) {
+	if (m_verbose)
 	  LOG_VA_ERROR("Problem decoding response to 'get schema' command for table '%s'", tableName);
 	return Error::PROTOCOL_ERROR;
       }
@@ -130,38 +130,38 @@ int MasterClient::GetSchema(const char *tableName, std::string &schema) {
 }
 
 
-int MasterClient::Status() {
+int MasterClient::status() {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( MasterProtocol::CreateStatusRequest() );
-  int error = SendMessage(cbufPtr, &syncHandler);
+  CommBufPtr cbufPtr( MasterProtocol::create_status_request() );
+  int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(eventPtr)) {
-      if (mVerbose)
-	LOG_VA_ERROR("Master 'status' error : %s", MasterProtocol::StringFormatMessage(eventPtr).c_str());
-      error = (int)MasterProtocol::ResponseCode(eventPtr);
+    if (!syncHandler.wait_for_reply(eventPtr)) {
+      if (m_verbose)
+	LOG_VA_ERROR("Master 'status' error : %s", MasterProtocol::string_format_message(eventPtr).c_str());
+      error = (int)MasterProtocol::response_code(eventPtr);
     }
   }
   return error;
 }
 
 
-int MasterClient::RegisterServer(std::string &serverIdStr, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( MasterProtocol::CreateRegisterServerRequest(serverIdStr) );
-  return SendMessage(cbufPtr, handler);
+int MasterClient::register_server(std::string &serverIdStr, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( MasterProtocol::create_register_server_request(serverIdStr) );
+  return send_message(cbufPtr, handler);
 }
 
 
-int MasterClient::RegisterServer(std::string &serverIdStr) {
+int MasterClient::register_server(std::string &serverIdStr) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( MasterProtocol::CreateRegisterServerRequest(serverIdStr) );
-  int error = SendMessage(cbufPtr, &syncHandler);
+  CommBufPtr cbufPtr( MasterProtocol::create_register_server_request(serverIdStr) );
+  int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
-    if (!syncHandler.WaitForReply(eventPtr)) {
-      if (mVerbose)
-	LOG_VA_ERROR("Master 'register server' error : %s", MasterProtocol::StringFormatMessage(eventPtr).c_str());
-      error = (int)MasterProtocol::ResponseCode(eventPtr);
+    if (!syncHandler.wait_for_reply(eventPtr)) {
+      if (m_verbose)
+	LOG_VA_ERROR("Master 'register server' error : %s", MasterProtocol::string_format_message(eventPtr).c_str());
+      error = (int)MasterProtocol::response_code(eventPtr);
     }
   }
   return error;
@@ -169,14 +169,14 @@ int MasterClient::RegisterServer(std::string &serverIdStr) {
 
 
 
-int MasterClient::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler) {
-  boost::mutex::scoped_lock lock(mMutex);
+int MasterClient::send_message(CommBufPtr &cbufPtr, DispatchHandler *handler) {
+  boost::mutex::scoped_lock lock(m_mutex);
   int error;
 
-  if ((error = mComm->SendRequest(mMasterAddr, mTimeout, cbufPtr, handler)) != Error::OK) {
+  if ((error = m_comm->send_request(m_master_addr, m_timeout, cbufPtr, handler)) != Error::OK) {
     std::string addrStr;
-    if (mVerbose)
-      LOG_VA_WARN("Comm::SendRequest to %s failed - %s", InetAddr::StringFormat(addrStr, mMasterAddr), Error::GetText(error));
+    if (m_verbose)
+      LOG_VA_WARN("Comm::send_request to %s failed - %s", InetAddr::string_format(addrStr, m_master_addr), Error::get_text(error));
   }
 
   return error;
@@ -186,42 +186,42 @@ int MasterClient::SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler) {
 /**
  * 
  */
-int MasterClient::ReloadMaster() {
-  boost::mutex::scoped_lock lock(mMutex);
+int MasterClient::reload_master() {
+  boost::mutex::scoped_lock lock(m_mutex);
   int error;
   DynamicBuffer value(0);
   std::string addrStr;
 
-  if ((error = mHyperspacePtr->AttrGet(mMasterFileHandle, "address", value)) != Error::OK) {
-    if (mVerbose)
-      LOG_VA_ERROR("Problem reading 'address' attribute of Hyperspace file /hypertable/master - %s", Error::GetText(error));
+  if ((error = m_hyperspace_ptr->attr_get(m_master_file_handle, "address", value)) != Error::OK) {
+    if (m_verbose)
+      LOG_VA_ERROR("Problem reading 'address' attribute of Hyperspace file /hypertable/master - %s", Error::get_text(error));
     return Error::MASTER_NOT_RUNNING;
   }
 
   addrStr = (const char *)value.buf;
 
-  if (addrStr != mMasterAddrString) {
+  if (addrStr != m_master_addr_string) {
 
-    if (mMasterAddr.sin_port != 0) {
-      if ((error = mConnManagerPtr->Remove(mMasterAddr)) != Error::OK) {
-	if (mVerbose)
-	  LOG_VA_WARN("Problem removing connection to Master - %s", Error::GetText(error));
+    if (m_master_addr.sin_port != 0) {
+      if ((error = m_conn_manager_ptr->remove(m_master_addr)) != Error::OK) {
+	if (m_verbose)
+	  LOG_VA_WARN("Problem removing connection to Master - %s", Error::get_text(error));
       }
-      if (mVerbose)
-	LOG_VA_INFO("Connecting to new Master (old=%s, new=%s)", mMasterAddrString.c_str(), addrStr.c_str());
+      if (m_verbose)
+	LOG_VA_INFO("Connecting to new Master (old=%s, new=%s)", m_master_addr_string.c_str(), addrStr.c_str());
     }
 
-    mMasterAddrString = addrStr;
+    m_master_addr_string = addrStr;
 
-    InetAddr::Initialize(&mMasterAddr, mMasterAddrString.c_str());
+    InetAddr::initialize(&m_master_addr, m_master_addr_string.c_str());
 
-    mConnManagerPtr->Add(mMasterAddr, 15, "Master", mDispatcherHandlerPtr);
+    m_conn_manager_ptr->add(m_master_addr, 15, "Master", m_dispatcher_handler_ptr);
   }
 
   return Error::OK;
 }
 
 
-bool MasterClient::WaitForConnection(long maxWaitSecs) {
-  return mConnManagerPtr->WaitForConnection(mMasterAddr, maxWaitSecs);
+bool MasterClient::wait_for_connection(long maxWaitSecs) {
+  return m_conn_manager_ptr->wait_for_connection(m_master_addr, maxWaitSecs);
 }

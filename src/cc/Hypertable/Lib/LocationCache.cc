@@ -30,15 +30,15 @@ using namespace std;
 /**
  * Insert
  */
-void LocationCache::Insert(uint32_t tableId, const char *startRow, const char *endRow, const char *serverId) {
-  boost::mutex::scoped_lock lock(mMutex);
+void LocationCache::insert(uint32_t tableId, const char *startRow, const char *endRow, const char *serverId) {
+  boost::mutex::scoped_lock lock(m_mutex);
   ValueT *newValue = new ValueT;
   LocationMapT::iterator iter;
   LocationCacheKeyT key;
 
   //cout << tableId << " start=" << startRow << " end=" << endRow << " serverId=" << serverId << endl << flush;
 
-  serverId = GetConstantServerId(serverId);
+  serverId = get_constant_server_id(serverId);
 
   newValue->startRow = (startRow) ? startRow : "";
   newValue->endRow   = (endRow) ? endRow : "";
@@ -48,31 +48,31 @@ void LocationCache::Insert(uint32_t tableId, const char *startRow, const char *e
   key.endRow = (endRow) ? newValue->endRow.c_str() : 0;
 
   // remove old entry
-  if ((iter = mLocationMap.find(key)) != mLocationMap.end())
-    Remove((*iter).second);
+  if ((iter = m_location_map.find(key)) != m_location_map.end())
+    remove((*iter).second);
 
   // make room for the new entry
-  while (mLocationMap.size() >= mMaxEntries)
-    Remove(mTail);
+  while (m_location_map.size() >= m_max_entries)
+    remove(m_tail);
 
   // add to head
-  if (mHead == 0) {
-    assert(mTail == 0);
+  if (m_head == 0) {
+    assert(m_tail == 0);
     newValue->next = newValue->prev = 0;
-    mHead = mTail = newValue;
+    m_head = m_tail = newValue;
   }
   else {
-    mHead->next = newValue;
-    newValue->prev = mHead;
+    m_head->next = newValue;
+    newValue->prev = m_head;
     newValue->next = 0;
-    mHead = newValue;
+    m_head = newValue;
   }
 
   // Insert the new entry into the map, recording an iterator to the entry in the map
   {
     std::pair<LocationMapT::iterator, bool> old_entry;
     LocationMapT::value_type map_value(key, newValue);
-    old_entry = mLocationMap.insert(map_value);
+    old_entry = m_location_map.insert(map_value);
     assert(old_entry.second);
     newValue->mapIter = old_entry.first;
   }
@@ -83,9 +83,9 @@ void LocationCache::Insert(uint32_t tableId, const char *startRow, const char *e
  *
  */
 LocationCache::~LocationCache() {
-  for (std::set<const char *, lt_cstr>::iterator iter = mServerIdStrings.begin(); iter != mServerIdStrings.end(); iter++)
+  for (std::set<const char *, lt_cstr>::iterator iter = m_server_id_strings.begin(); iter != m_server_id_strings.end(); iter++)
     delete [] *iter;
-  for (LocationMapT::iterator lmIter = mLocationMap.begin(); lmIter != mLocationMap.end(); lmIter++)
+  for (LocationMapT::iterator lmIter = m_location_map.begin(); lmIter != m_location_map.end(); lmIter++)
     delete (*lmIter).second;
 }
 
@@ -93,8 +93,8 @@ LocationCache::~LocationCache() {
 /**
  * Lookup
  */
-bool LocationCache::Lookup(uint32_t tableId, const char *rowKey, const char **serverIdPtr) {
-  boost::mutex::scoped_lock lock(mMutex);
+bool LocationCache::lookup(uint32_t tableId, const char *rowKey, const char **serverIdPtr) {
+  boost::mutex::scoped_lock lock(m_mutex);
   LocationMapT::iterator iter;
   LocationCacheKeyT key;
 
@@ -103,7 +103,7 @@ bool LocationCache::Lookup(uint32_t tableId, const char *rowKey, const char **se
   key.tableId = tableId;
   key.endRow = rowKey;
 
-  if ((iter = mLocationMap.lower_bound(key)) == mLocationMap.end())
+  if ((iter = m_location_map.lower_bound(key)) == m_location_map.end())
     return false;
 
   if ((*iter).first.tableId != tableId)
@@ -113,7 +113,7 @@ bool LocationCache::Lookup(uint32_t tableId, const char *rowKey, const char **se
     return false;
 
   cout << "Moving to head '" << (*iter).second->endRow << "'" << endl;
-  MoveToHead((*iter).second);
+  move_to_head((*iter).second);
 
   *serverIdPtr = (*iter).second->serverId;
 
@@ -121,8 +121,8 @@ bool LocationCache::Lookup(uint32_t tableId, const char *rowKey, const char **se
 }
 
 
-void LocationCache::Display(ofstream &outfile) {
-  for (ValueT *value = mHead; value; value = value->prev)
+void LocationCache::display(ofstream &outfile) {
+  for (ValueT *value = m_head; value; value = value->prev)
     outfile << "DUMP: end=" << value->endRow << " start=" << value->startRow << endl;
 }
 
@@ -131,61 +131,61 @@ void LocationCache::Display(ofstream &outfile) {
 /**
  * MoveToHead
  */
-void LocationCache::MoveToHead(ValueT *cacheValue) {
+void LocationCache::move_to_head(ValueT *cacheValue) {
 
-  if (mHead == cacheValue)
+  if (m_head == cacheValue)
     return;
 
   // unstich entry from cache
   cacheValue->next->prev = cacheValue->prev;
   if (cacheValue->prev == 0)
-    mTail = cacheValue->next;
+    m_tail = cacheValue->next;
   else
     cacheValue->prev->next = cacheValue->next;
 
   cacheValue->next = 0;
-  cacheValue->prev = mHead;
-  mHead->next = cacheValue;
-  mHead = cacheValue;
+  cacheValue->prev = m_head;
+  m_head->next = cacheValue;
+  m_head = cacheValue;
 }
 
 
 /**
- * Remove
+ * remove
  */
-void LocationCache::Remove(ValueT *cacheValue) {
+void LocationCache::remove(ValueT *cacheValue) {
   assert(cacheValue);
-  if (mTail == cacheValue) {
-    mTail = cacheValue->next;
-    if (mTail)
-      mTail->prev = 0;
+  if (m_tail == cacheValue) {
+    m_tail = cacheValue->next;
+    if (m_tail)
+      m_tail->prev = 0;
     else {
-      assert (mHead == cacheValue);
-      mHead = 0;
+      assert (m_head == cacheValue);
+      m_head = 0;
     }
   }
-  else if (mHead == cacheValue) {
-    mHead = mHead->prev;
-    mHead->next = 0;
+  else if (m_head == cacheValue) {
+    m_head = m_head->prev;
+    m_head->next = 0;
   }
   else {
     cacheValue->next->prev = cacheValue->prev;
     cacheValue->prev->next = cacheValue->next;
   }
-  mLocationMap.erase(cacheValue->mapIter);  
+  m_location_map.erase(cacheValue->mapIter);  
   delete cacheValue;
 }
 
 
 
-const char *LocationCache::GetConstantServerId(const char *serverId) {
-  std::set<const char *, lt_cstr>::iterator iter = mServerIdStrings.find(serverId);
+const char *LocationCache::get_constant_server_id(const char *serverId) {
+  std::set<const char *, lt_cstr>::iterator iter = m_server_id_strings.find(serverId);
 
-  if (iter != mServerIdStrings.end())
+  if (iter != m_server_id_strings.end())
     return *iter;
 
   char *constantId = new char [ strlen(serverId) + 1 ];
   strcpy(constantId, serverId);
-  mServerIdStrings.insert(constantId);
+  m_server_id_strings.insert(constantId);
   return constantId;
 }

@@ -43,26 +43,26 @@ namespace hypertable {
     RangeServerClient(Comm *comm, time_t timeout);
     ~RangeServerClient();
 
-    int LoadRange(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, DispatchHandler *handler);
-    int LoadRange(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec);
+    int load_range(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, DispatchHandler *handler);
+    int load_range(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec);
 
-    int Update(struct sockaddr_in &addr, std::string tableName, uint32_t generation, uint8_t *data, size_t len, DispatchHandler *handler);
-    int Update(struct sockaddr_in &addr, std::string tableName, uint32_t generation, uint8_t *data, size_t len);
+    int update(struct sockaddr_in &addr, std::string tableName, uint32_t generation, uint8_t *data, size_t len, DispatchHandler *handler);
+    int update(struct sockaddr_in &addr, std::string tableName, uint32_t generation, uint8_t *data, size_t len);
 
-    int CreateScanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &spec, DispatchHandler *handler);
-    int CreateScanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &spec, ScanResult &result);
+    int create_scanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &spec, DispatchHandler *handler);
+    int create_scanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &spec, ScanResult &result);
 
-    int FetchScanblock(struct sockaddr_in &addr, int scannerId, DispatchHandler *handler);
-    int FetchScanblock(struct sockaddr_in &addr, int scannerId, ScanResult &result);
+    int fetch_scanblock(struct sockaddr_in &addr, int scannerId, DispatchHandler *handler);
+    int fetch_scanblock(struct sockaddr_in &addr, int scannerId, ScanResult &result);
 
-    int Status(struct sockaddr_in &addr);
+    int status(struct sockaddr_in &addr);
 
   private:
 
-    int SendMessage(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *handler);
+    int send_message(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *handler);
   
-    Comm                *mComm;
-    time_t               mTimeout;
+    Comm                *m_comm;
+    time_t               m_timeout;
   };
 
   typedef boost::shared_ptr<RangeServerClient> RangeServerClientPtr;

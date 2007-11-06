@@ -46,11 +46,11 @@ namespace Hyperspace {
     NodeData() : fd(-1), ephemeral(false), currentLockMode(0), lockGeneration(0), exclusiveLockHandle(0) { 
       return;
     }
-    void AddHandle(uint64_t handle, HandleDataPtr &handlePtr) {
+    void add_handle(uint64_t handle, HandleDataPtr &handlePtr) {
       handleMap[handle] = handlePtr;
     }
 
-    bool RemoveHandle(uint64_t handle) {
+    bool remove_handle(uint64_t handle) {
       HandleMapT::iterator iter = handleMap.find(handle);
       if (iter != handleMap.end()) {
 	handleMap.erase(iter);
@@ -59,13 +59,13 @@ namespace Hyperspace {
       return false;
     }
 
-    unsigned int ReferenceCount() {
+    unsigned int reference_count() {
       return handleMap.size();
     }
 
-    void Close() {
+    void close() {
       if (fd != -1) {
-	close(fd);
+	::close(fd);
 	fd = -1;
       }
     }

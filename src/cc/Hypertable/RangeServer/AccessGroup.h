@@ -53,37 +53,37 @@ namespace hypertable {
     
     AccessGroup(SchemaPtr &schemaPtr, Schema::AccessGroup *lg, RangeInfoPtr &tabletInfoPtr);
     virtual ~AccessGroup();
-    virtual int Add(const ByteString32T *key, const ByteString32T *value);
-    virtual void GetSplitKeys(SplitKeyQueueT &keyHeap);
+    virtual int add(const ByteString32T *key, const ByteString32T *value);
+    virtual void get_split_keys(SplitKeyQueueT &keyHeap);
 
-    void Lock() { mLock.lock(); mCellCachePtr->Lock(); }
-    void Unlock() { mCellCachePtr->Unlock(); mLock.unlock(); }
+    void lock() { m_lock.lock(); m_cell_cache_ptr->lock(); }
+    void unlock() { m_cell_cache_ptr->unlock(); m_lock.unlock(); }
 
-    CellListScanner *CreateScanner(ScanContextPtr &scanContextPtr);
+    CellListScanner *create_scanner(ScanContextPtr &scanContextPtr);
 
-    bool IncludeInScan(ScanContextPtr &scanContextPtr);
-    uint64_t DiskUsage();
-    void AddCellStore(CellStorePtr &cellStorePtr, uint32_t id);
-    bool NeedsCompaction();
-    void RunCompaction(uint64_t timestamp, bool major);
-    uint64_t GetLogCutoffTime() { return mLogCutoffTime; }
+    bool include_in_scan(ScanContextPtr &scanContextPtr);
+    uint64_t disk_usage();
+    void add_cell_store(CellStorePtr &cellStorePtr, uint32_t id);
+    bool needs_compaction();
+    void run_compaction(uint64_t timestamp, bool major);
+    uint64_t get_log_cutoff_time() { return m_log_cutoff_time; }
 
-    void Shrink(std::string &newStartRow);
+    void shrink(std::string &newStartRow);
 
   private:
-    boost::mutex         mMutex;
-    boost::mutex::scoped_lock  mLock;
-    SchemaPtr            mSchemaPtr;
-    std::set<uint8_t>    mColumnFamilies;
-    std::string          mName;
-    std::string          mTableName;
-    std::string          mStartRow;
-    std::string          mEndRow;
-    std::vector<CellStorePtr> mStores;
-    CellCachePtr         mCellCachePtr;
-    uint32_t             mNextTableId;
-    uint64_t             mLogCutoffTime;
-    uint64_t             mDiskUsage;
+    boost::mutex         m_mutex;
+    boost::mutex::scoped_lock  m_lock;
+    SchemaPtr            m_schema_ptr;
+    std::set<uint8_t>    m_column_families;
+    std::string          m_name;
+    std::string          m_table_name;
+    std::string          m_start_row;
+    std::string          m_end_row;
+    std::vector<CellStorePtr> m_stores;
+    CellCachePtr         m_cell_cache_ptr;
+    uint32_t             m_next_table_id;
+    uint64_t             m_log_cutoff_time;
+    uint64_t             m_disk_usage;
   };
 
 }

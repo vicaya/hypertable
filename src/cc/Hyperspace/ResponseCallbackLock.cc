@@ -31,11 +31,11 @@ using namespace hypertable;
  * 
  */
 int ResponseCallbackLock::response(uint32_t status, uint64_t lockGeneration) {
-  hbuilder_.InitializeFromRequest(mEventPtr->header);
+  hbuilder_.initialize_from_request(m_event_ptr->header);
   CommBufPtr cbufPtr( new CommBuf(hbuilder_, 16) );
-  cbufPtr->AppendInt(Error::OK);
-  cbufPtr->AppendInt(status);
-  cbufPtr->AppendLong(lockGeneration);
-  return mComm->SendResponse(mEventPtr->addr, cbufPtr);
+  cbufPtr->append_int(Error::OK);
+  cbufPtr->append_int(status);
+  cbufPtr->append_long(lockGeneration);
+  return m_comm->send_response(m_event_ptr->addr, cbufPtr);
 }
 

@@ -41,12 +41,12 @@ namespace Hyperspace {
   public:
     ServerKeepaliveHandler(Comm *comm, Master *master);
     virtual void handle(hypertable::EventPtr &eventPtr);
-    void DeliverEventNotifications(uint64_t sessionId);
+    void deliver_event_notifications(uint64_t sessionId);
 
   private:
-    Comm              *mComm;
-    Master            *mMaster;
-    struct sockaddr_in mSendAddr;
+    Comm              *m_comm;
+    Master            *m_master;
+    struct sockaddr_in m_send_addr;
   };
   typedef boost::shared_ptr<ServerKeepaliveHandler> ServerKeepaliveHandlerPtr;
 }

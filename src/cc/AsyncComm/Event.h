@@ -84,7 +84,7 @@ namespace hypertable {
     uint64_t            threadGroup;
 
     std::string toString();
-    void Display() { cerr << toString() << endl; }
+    void display() { cerr << toString() << endl; }
   };
 
   typedef boost::intrusive_ptr<Event> EventPtr;

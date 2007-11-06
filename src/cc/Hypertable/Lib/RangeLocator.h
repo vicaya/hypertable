@@ -37,21 +37,21 @@ namespace hypertable {
   public:
     RangeLocator(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr);
     ~RangeLocator();
-    int Find(uint32_t tableId, const char *rowKey, const char **serverIdPtr);
-    void SetRootStale() { mRootStale=true; }
+    int find(uint32_t tableId, const char *rowKey, const char **serverIdPtr);
+    void set_root_stale() { m_root_stale=true; }
 
   private:
 
-    int ReadRootLocation();
+    int read_root_location();
 
-    ConnectionManagerPtr   mConnManagerPtr;
-    Hyperspace::SessionPtr mHyperspacePtr;
-    LocationCache          mCache;
-    uint64_t               mRootFileHandle;
-    HandleCallbackPtr      mRootHandlerPtr;
-    bool                   mRootStale;
-    struct sockaddr_in     mRootAddr;
-    RangeServerClient      mRangeServer;
+    ConnectionManagerPtr   m_conn_manager_ptr;
+    Hyperspace::SessionPtr m_hyperspace_ptr;
+    LocationCache          m_cache;
+    uint64_t               m_root_file_handle;
+    HandleCallbackPtr      m_root_handler_ptr;
+    bool                   m_root_stale;
+    struct sockaddr_in     m_root_addr;
+    RangeServerClient      m_range_server;
   };
 
 }

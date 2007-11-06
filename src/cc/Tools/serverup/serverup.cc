@@ -103,8 +103,8 @@ int main(int argc, char **argv) {
   int error;
   bool verbose = false;
 
-  System::Initialize(argv[0]);
-  ReactorFactory::Initialize((uint16_t)System::GetProcessorCount());
+  System::initialize(argv[0]);
+  ReactorFactory::initialize((uint16_t)System::get_processor_count());
 
   for (int i=1; i<argc; i++) {
     if (!strncmp(argv[i], "--config=", 9))
@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
     else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
       verbose = true;
     else if (argv[i][0] == '-' || serverName != "")
-      Usage::DumpAndExit(usage);
+      Usage::dump_and_exit(usage);
     else
       serverName = argv[i];
   }
@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
     portProperty = "Hypertable.RangeServer.port";
   }
   else
-    Usage::DumpAndExit(usage);
+    Usage::dump_and_exit(usage);
 
   {
     if (hostName == "")
@@ -161,54 +161,54 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    if (!InetAddr::Initialize(&addr, hostName.c_str(), (uint16_t)port))
+    if (!InetAddr::initialize(&addr, hostName.c_str(), (uint16_t)port))
       goto abort;
   }
 
   comm = new Comm();
   connManagerPtr = new ConnectionManager(comm);
-  connManagerPtr->SetQuietMode(true);
+  connManagerPtr->set_quiet_mode(true);
 
   if (serverName == "dfsbroker") {
     client = new DfsBroker::Client(connManagerPtr, addr, 30);
-    if (!client->WaitForConnection(2))
+    if (!client->wait_for_connection(2))
       goto abort;
-    if ((error = client->Status()) != Error::OK)
+    if ((error = client->status()) != Error::OK)
       goto abort;
   }
   else if (serverName == "hyperspace") {
-    hyperspacePtr = new Hyperspace::Session(connManagerPtr->GetComm(), propsPtr, 0);
-    if (!hyperspacePtr->WaitForConnection(2))
+    hyperspacePtr = new Hyperspace::Session(connManagerPtr->get_comm(), propsPtr, 0);
+    if (!hyperspacePtr->wait_for_connection(2))
       goto abort;
-    if ((error = hyperspacePtr->Status()) != Error::OK)
+    if ((error = hyperspacePtr->status()) != Error::OK)
       goto abort;
   }
   else if (serverName == "master") {
     MasterClientPtr  masterPtr;
 
-    hyperspacePtr = new Hyperspace::Session(connManagerPtr->GetComm(), propsPtr, 0);
+    hyperspacePtr = new Hyperspace::Session(connManagerPtr->get_comm(), propsPtr, 0);
 
-    if (!hyperspacePtr->WaitForConnection(2))
+    if (!hyperspacePtr->wait_for_connection(2))
       goto abort;
 
     appQueuePtr = new ApplicationQueue(1);
     masterPtr = new MasterClient(connManagerPtr, hyperspacePtr, 30, appQueuePtr);
-    masterPtr->SetVerboseFlag(false);
-    if (masterPtr->InitiateConnection(0) != Error::OK)
+    masterPtr->set_verbose_flag(false);
+    if (masterPtr->initiate_connection(0) != Error::OK)
       goto abort;
 
-    if (!masterPtr->WaitForConnection(2))
+    if (!masterPtr->wait_for_connection(2))
       goto abort;
 
-    if ((error = masterPtr->Status()) != Error::OK)
+    if ((error = masterPtr->status()) != Error::OK)
       goto abort;
   }
   else if (serverName == "rangeserver") {
-    connManagerPtr->Add(addr, 30, "Range Server");
-    if (!connManagerPtr->WaitForConnection(addr, 2))
+    connManagerPtr->add(addr, 30, "Range Server");
+    if (!connManagerPtr->wait_for_connection(addr, 2))
       goto abort;
     rangeServer = new RangeServerClient(comm, 30);
-    if ((error = rangeServer->Status(addr)) != Error::OK)
+    if ((error = rangeServer->status(addr)) != Error::OK)
       goto abort;
   }
 

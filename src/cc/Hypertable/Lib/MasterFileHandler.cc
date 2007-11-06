@@ -28,9 +28,9 @@ using namespace hypertable;
 /**
  *
  */
-void MasterFileHandler::AttrSet(std::string name) {
+void MasterFileHandler::attr_set(std::string name) {
   if (name == "address") {
     EventPtr nullEvent;
-    mAppQueuePtr->Add( new EventHandlerMasterChange(mMasterClientPtr, nullEvent) );
+    m_app_queue_ptr->add( new EventHandlerMasterChange(m_master_client_ptr, nullEvent) );
   }
 }

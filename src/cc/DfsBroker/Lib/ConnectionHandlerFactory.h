@@ -38,32 +38,32 @@ namespace hypertable {
      * This class serves as the connection handler factory.  An object of this
      * class is registered with the AsyncComm system by passing it as a parameter
      * to the Listen method.  When a connection request arrives, the newInstance
-     * method of this class is called which creates an DfsBroker::ConnectionHandler
+     * method of this class is called which creates an DfsBroker::connection_handler
      * that will be used to service the connection.
      */
     class ConnectionHandlerFactory : public hypertable::ConnectionHandlerFactory {
     public:
       /**
        * Constructor.  Saves a copy of the pointers to the Comm, ApplicationQueue, and Broker 
-       * objects which are required in the DfsBroker::ConnectionHandler constructor.
+       * objects which are required in the DfsBroker::connection_handler constructor.
        *
        * @param comm pointer to the AsyncComm object
        * @param appQueue pointer to the application work queue
        * @param broker abstract pointer to the broker object
        */
-      ConnectionHandlerFactory(Comm *comm, ApplicationQueuePtr &appQueuePtr, BrokerPtr &brokerPtr) : mComm(comm), mAppQueuePtr(appQueuePtr), mBrokerPtr(brokerPtr) { return; }
+      ConnectionHandlerFactory(Comm *comm, ApplicationQueuePtr &appQueuePtr, BrokerPtr &brokerPtr) : m_comm(comm), m_app_queue_ptr(appQueuePtr), m_broker_ptr(brokerPtr) { return; }
 
       /**
-       * Returns a newly constructed DfsBroker::ConnectionHandler object
+       * Returns a newly constructed DfsBroker::connection_handler object
        */
-      virtual void newInstance(DispatchHandlerPtr &dhp) {
-	dhp = new ConnectionHandler(mComm, mAppQueuePtr, mBrokerPtr);
+      virtual void get_instance(DispatchHandlerPtr &dhp) {
+	dhp = new ConnectionHandler(m_comm, m_app_queue_ptr, m_broker_ptr);
       }
 
     private:
-      Comm                *mComm;
-      ApplicationQueuePtr  mAppQueuePtr;
-      BrokerPtr            mBrokerPtr;
+      Comm                *m_comm;
+      ApplicationQueuePtr  m_app_queue_ptr;
+      BrokerPtr            m_broker_ptr;
     };
 
   }

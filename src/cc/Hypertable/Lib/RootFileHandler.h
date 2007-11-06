@@ -35,10 +35,10 @@ namespace hypertable {
    */
   class RootFileHandler : public HandleCallback {
   public:
-    RootFileHandler(RangeLocator *rangeLocator) : HandleCallback(EVENT_MASK_ATTR_SET), mRangeLocator(rangeLocator) { return; }
+    RootFileHandler(RangeLocator *rangeLocator) : HandleCallback(EVENT_MASK_ATTR_SET), m_range_locator(rangeLocator) { return; }
     virtual void AttrSet(std::string name);
-    RangeLocator    *mRangeLocator;
-    RootFileHandler *mRootHandler;
+    RangeLocator    *m_range_locator;
+    RootFileHandler *m_root_handler;
   };
 }
 

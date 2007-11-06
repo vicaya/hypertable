@@ -29,15 +29,15 @@ namespace hypertable {
 
   class CommandCreateTable : public InteractiveCommand {
   public:
-    CommandCreateTable(Client *client) : mClient(client) { return; }
-    virtual const char *CommandText() { return "create table"; }
-    virtual const char **Usage() { return msUsage; }
+    CommandCreateTable(Client *client) : m_client(client) { return; }
+    virtual const char *command_text() { return "create table"; }
+    virtual const char **usage() { return ms_usage; }
     virtual int run();
 
   private:
-    static const char *msUsage[];
+    static const char *ms_usage[];
 
-    Client *mClient;
+    Client *m_client;
   };
 
 }

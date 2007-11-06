@@ -28,8 +28,8 @@ using namespace hypertable;
 /**
  *
  */
-void ServersDirectoryHandler::ChildNodeAdded(std::string name) {
+void ServersDirectoryHandler::child_node_added(std::string name) {
   EventPtr nullEvent;
-  mAppQueuePtr->Add( new EventHandlerServerJoined(mMasterPtr, name, nullEvent) );
+  m_app_queue_ptr->add( new EventHandlerServerJoined(m_master_ptr, name, nullEvent) );
   return;
 }

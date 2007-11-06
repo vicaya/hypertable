@@ -38,7 +38,7 @@ namespace hypertable {
   class CellCache : public CellList {
 
   public:
-    CellCache() : CellList(), mMutex(), mLock(mMutex,false), mMemoryUsed(0) { return; }
+    CellCache() : CellList(), m_mutex(), m_lock(m_mutex,false), m_memory_used(0) { return; }
     virtual ~CellCache();
 
     /**
@@ -50,16 +50,16 @@ namespace hypertable {
      * @param value value to inserted
      * @return zero
      */
-    virtual int Add(const ByteString32T *key, const ByteString32T *value);
+    virtual int add(const ByteString32T *key, const ByteString32T *value);
 
     /**
      * Creates a CellCacheScanner object that contains an shared pointer (intrusive_ptr)
      * to this CellCache.
      */
-    virtual CellListScanner *CreateScanner(ScanContextPtr &scanContextPtr);
+    virtual CellListScanner *create_scanner(ScanContextPtr &scanContextPtr);
 
-    void Lock()   { mLock.lock(); }
-    void Unlock() { mLock.unlock(); }
+    void lock()   { m_lock.lock(); }
+    void unlock() { m_lock.unlock(); }
 
     /**
      * Makes a copy of this CellCache, but only includes the key/value
@@ -70,15 +70,15 @@ namespace hypertable {
      * @param timestamp cutoff timestamp
      * @return The new "sliced" copy of the cell cache
      */
-    CellCache *SliceCopy(uint64_t timestamp);
+    CellCache *slice_copy(uint64_t timestamp);
 
     /**
      * Returns the amount of memory used by the CellCache.  This is the summation
      * of the lengths of all the keys and values in the map.
      */
-    uint64_t MemoryUsed() {
-      boost::mutex::scoped_lock lock(mMutex);
-      return mMemoryUsed;
+    uint64_t memory_used() {
+      boost::mutex::scoped_lock lock(m_mutex);
+      return m_memory_used;
     }
 
     friend class CellCacheScanner;
@@ -86,10 +86,10 @@ namespace hypertable {
   protected:
     typedef std::map<const ByteString32T *, const ByteString32T *, ltByteString32> CellMapT;
 
-    boost::mutex               mMutex;
-    boost::mutex::scoped_lock  mLock;
-    CellMapT                   mCellMap;
-    uint64_t                   mMemoryUsed;
+    boost::mutex               m_mutex;
+    boost::mutex::scoped_lock  m_lock;
+    CellMapT                   m_cell_map;
+    uint64_t                   m_memory_used;
   };
 
   typedef boost::intrusive_ptr<CellCache> CellCachePtr;

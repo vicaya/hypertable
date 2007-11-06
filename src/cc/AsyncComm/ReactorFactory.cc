@@ -28,8 +28,8 @@ extern "C" {
 #include <signal.h>
 }
 
-vector<Reactor *> ReactorFactory::msReactors;
-atomic_t ReactorFactory::msNextReactor = ATOMIC_INIT(0);
+vector<Reactor *> ReactorFactory::ms_reactors;
+atomic_t ReactorFactory::ms_next_reactor = ATOMIC_INIT(0);
 
 
 
@@ -38,15 +38,15 @@ atomic_t ReactorFactory::msNextReactor = ATOMIC_INIT(0);
  *
  * @param reactorCount number of reactors to initialize
  */
-void ReactorFactory::Initialize(uint16_t reactorCount) {
+void ReactorFactory::initialize(uint16_t reactorCount) {
   Reactor *reactor;
   ReactorRunner rrunner;
   signal(SIGPIPE, SIG_IGN);
   assert(reactorCount > 0);
   for (uint16_t i=0; i<reactorCount; i++) {
     reactor = new Reactor();
-    msReactors.push_back(reactor);
-    rrunner.SetReactor(reactor);
+    ms_reactors.push_back(reactor);
+    rrunner.set_reactor(reactor);
     reactor->threadPtr = new boost::thread(rrunner);
   }
 }

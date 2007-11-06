@@ -31,7 +31,7 @@ using namespace hypertable;
 using namespace Hyperspace;
 using namespace std;
 
-const char *CommandAttrSet::msUsage[] = {
+const char *CommandAttrSet::ms_usage[] = {
   "attrset <file> <name>=<value>",
   "  This command issues a ATTRSET request to Hyperspace.",
   (const char *)0
@@ -41,20 +41,20 @@ int CommandAttrSet::run() {
   uint64_t handle;
   const char *value;
 
-  if (mArgs.size() != 2) {
+  if (m_args.size() != 2) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
     return -1;
   }
 
-  if (mArgs[0].second != "") {
-    cerr << "Invalid argument - " << mArgs[0].second << endl;
+  if (m_args[0].second != "") {
+    cerr << "Invalid argument - " << m_args[0].second << endl;
     return -1;
   }
 
-  if (!Util::GetHandle(mArgs[0].first, &handle))
+  if (!Util::get_handle(m_args[0].first, &handle))
     return -1;
 
-  value = mArgs[1].second.c_str();
+  value = m_args[1].second.c_str();
 
-  return mSession->AttrSet(handle, mArgs[1].first, value, strlen(value));
+  return m_session->attr_set(handle, m_args[1].first, value, strlen(value));
 }

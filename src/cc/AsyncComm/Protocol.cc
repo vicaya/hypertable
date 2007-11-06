@@ -36,7 +36,7 @@ using namespace std;
 /**
  *
  */
-int32_t Protocol::ResponseCode(Event *event) {
+int32_t Protocol::response_code(Event *event) {
   if (event->type == Event::ERROR)
     return event->error;
   if (event->messageLen < sizeof(int32_t))
@@ -51,7 +51,7 @@ int32_t Protocol::ResponseCode(Event *event) {
 /**
  *
  */
-std::string Protocol::StringFormatMessage(Event *event) {
+std::string Protocol::string_format_message(Event *event) {
   int error = 0;
   uint8_t *msgPtr = event->message;
   size_t len = event->messageLen;
@@ -70,14 +70,14 @@ std::string Protocol::StringFormatMessage(Event *event) {
   len -= sizeof(int32_t);
 
   if (error == Error::OK)
-    return (std::string)Error::GetText(error);
+    return (std::string)Error::get_text(error);
   else {
     const char *str;
 
-    if (!Serialization::DecodeString(&msgPtr, &len, &str))
-      return (std::string)Error::GetText(error) + " - truncated";
+    if (!Serialization::decode_string(&msgPtr, &len, &str))
+      return (std::string)Error::get_text(error) + " - truncated";
 
-    return (std::string)Error::GetText(error) + " : " + str;
+    return (std::string)Error::get_text(error) + " : " + str;
   }
 }
 
@@ -86,10 +86,10 @@ std::string Protocol::StringFormatMessage(Event *event) {
 /**
  *
  */
-CommBuf *Protocol::CreateErrorMessage(HeaderBuilder &hbuilder, int error, const char *msg) {
-  CommBuf *cbuf = new CommBuf(hbuilder, 4 + Serialization::EncodedLengthString(msg));
-  cbuf->AppendInt(error);
-  cbuf->AppendString(msg);
+CommBuf *Protocol::create_error_message(HeaderBuilder &hbuilder, int error, const char *msg) {
+  CommBuf *cbuf = new CommBuf(hbuilder, 4 + Serialization::encoded_length_string(msg));
+  cbuf->append_int(error);
+  cbuf->append_string(msg);
   return cbuf;
 }
 

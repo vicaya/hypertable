@@ -45,14 +45,14 @@ using namespace hypertable;
 
 #if defined(__linux__)
 
-bool IOHandlerDatagram::HandleEvent(struct epoll_event *event) {
+bool IOHandlerDatagram::handle_event(struct epoll_event *event) {
   int error;
 
   //DisplayEvent(event);
 
   if (event->events & EPOLLOUT) {
-    if ((error = HandleWriteReadiness()) != Error::OK) {
-      DeliverEvent( new Event(Event::ERROR, 0, mAddr, error) );
+    if ((error = handle_write_readiness()) != Error::OK) {
+      deliver_event( new Event(Event::ERROR, 0, m_addr, error) );
       return true;
     }
   }
@@ -63,23 +63,23 @@ bool IOHandlerDatagram::HandleEvent(struct epoll_event *event) {
     struct sockaddr_in addr;
     socklen_t fromlen = sizeof(struct sockaddr_in);
 
-    if ((nread = FileUtils::Recvfrom(mSd, mMessage, 65536, (struct sockaddr *)&addr, &fromlen)) == (ssize_t)-1) {
-      LOG_VA_ERROR("FileUtils::Recvfrom(%d) failure : %s", mSd, strerror(errno));
-      DeliverEvent( new Event(Event::ERROR, mSd, addr, Error::COMM_RECEIVE_ERROR) );
+    if ((nread = FileUtils::recvfrom(m_sd, m_message, 65536, (struct sockaddr *)&addr, &fromlen)) == (ssize_t)-1) {
+      LOG_VA_ERROR("FileUtils::recvfrom(%d) failure : %s", m_sd, strerror(errno));
+      deliver_event( new Event(Event::ERROR, m_sd, addr, Error::COMM_RECEIVE_ERROR) );
       return true;
     }
 
     rmsg = new uint8_t [ nread ];
-    memcpy(rmsg, mMessage, nread);
+    memcpy(rmsg, m_message, nread);
 
-    DeliverEvent( new Event(Event::MESSAGE, 0, addr, Error::OK, (Header::HeaderT *)rmsg) );
+    deliver_event( new Event(Event::MESSAGE, 0, addr, Error::OK, (Header::HeaderT *)rmsg) );
 
     return false;
   }
 
   if (event->events & EPOLLERR) {
-    LOG_VA_WARN("Received EPOLLERR on descriptor %d (%s:%d)", mSd, inet_ntoa(mAddr.sin_addr), ntohs(mAddr.sin_port));
-    DeliverEvent( new Event(Event::ERROR, 0, mAddr, Error::COMM_POLL_ERROR) );
+    LOG_VA_WARN("Received EPOLLERR on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+    deliver_event( new Event(Event::ERROR, 0, m_addr, Error::COMM_POLL_ERROR) );
     return true;
   }
 
@@ -91,18 +91,18 @@ bool IOHandlerDatagram::HandleEvent(struct epoll_event *event) {
 /**
  *
  */
-bool IOHandlerDatagram::HandleEvent(struct kevent *event) {
+bool IOHandlerDatagram::handle_event(struct kevent *event) {
   int error;
 
   //DisplayEvent(event);
 
-  assert(mSd == (int)event->ident);
+  assert(m_sd == (int)event->ident);
 
   assert((event->flags & EV_EOF) == 0);
 
   if (event->filter == EVFILT_WRITE) {
-    if ((error = HandleWriteReadiness()) != Error::OK) {
-      DeliverEvent( new Event(Event::ERROR, 0, mAddr, error) );
+    if ((error = handle_write_readiness()) != Error::OK) {
+      deliver_event( new Event(Event::ERROR, 0, m_addr, error) );
       return true;
     }
   }
@@ -114,16 +114,16 @@ bool IOHandlerDatagram::HandleEvent(struct kevent *event) {
     struct sockaddr_in addr;
     socklen_t fromlen = sizeof(struct sockaddr_in);
 
-    if ((nread = FileUtils::Recvfrom(mSd, mMessage, 65536, (struct sockaddr *)&addr, &fromlen)) == (ssize_t)-1) {
-      LOG_VA_ERROR("FileUtils::Recvfrom(%d, len=%d) failure : %s", mSd, available, strerror(errno));
-      DeliverEvent( new Event(Event::ERROR, mSd, addr, Error::COMM_RECEIVE_ERROR) );
+    if ((nread = FileUtils::recvfrom(m_sd, m_message, 65536, (struct sockaddr *)&addr, &fromlen)) == (ssize_t)-1) {
+      LOG_VA_ERROR("FileUtils::recvfrom(%d, len=%d) failure : %s", m_sd, available, strerror(errno));
+      deliver_event( new Event(Event::ERROR, m_sd, addr, Error::COMM_RECEIVE_ERROR) );
       return true;
     }
 
     rmsg = new uint8_t [ nread ];
-    memcpy(rmsg, mMessage, nread);
+    memcpy(rmsg, m_message, nread);
 
-    DeliverEvent( new Event(Event::MESSAGE, 0, addr, Error::OK, (Header::HeaderT *)rmsg) );
+    deliver_event( new Event(Event::MESSAGE, 0, addr, Error::OK, (Header::HeaderT *)rmsg) );
 
     return false;
   }
@@ -134,43 +134,43 @@ ImplementMe;
 #endif
 
 
-int IOHandlerDatagram::HandleWriteReadiness() {
-  boost::mutex::scoped_lock lock(mMutex);
+int IOHandlerDatagram::handle_write_readiness() {
+  boost::mutex::scoped_lock lock(m_mutex);
   int error;
 
-  if ((error = FlushSendQueue()) != Error::OK)
+  if ((error = flush_send_queue()) != Error::OK)
     return error;
 
   // is this necessary?
-  if (mSendQueue.empty())
-    RemovePollInterest(Reactor::WRITE_READY);
+  if (m_send_queue.empty())
+    remove_poll_interest(Reactor::WRITE_READY);
 
   return Error::OK;
 }
 
 
 
-int IOHandlerDatagram::SendMessage(struct sockaddr_in &addr, CommBufPtr &cbufPtr) {
-  boost::mutex::scoped_lock lock(mMutex);
+int IOHandlerDatagram::send_message(struct sockaddr_in &addr, CommBufPtr &cbufPtr) {
+  boost::mutex::scoped_lock lock(m_mutex);
   int error;
-  bool initiallyEmpty = mSendQueue.empty() ? true : false;
+  bool initiallyEmpty = m_send_queue.empty() ? true : false;
 
   LOG_ENTER;
 
   //LOG_VA_INFO("Pushing message destined for %s:%d onto send queue", 
   //inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
 
-  mSendQueue.push_back(SendRecT(addr, cbufPtr));
+  m_send_queue.push_back(SendRecT(addr, cbufPtr));
 
-  if ((error = FlushSendQueue()) != Error::OK)
+  if ((error = flush_send_queue()) != Error::OK)
     return error;
 
-  if (initiallyEmpty && !mSendQueue.empty()) {
-    AddPollInterest(Reactor::WRITE_READY);
+  if (initiallyEmpty && !m_send_queue.empty()) {
+    add_poll_interest(Reactor::WRITE_READY);
     //LOG_INFO("Adding Write interest");
   }
-  else if (!initiallyEmpty && mSendQueue.empty()) {
-    RemovePollInterest(Reactor::WRITE_READY);
+  else if (!initiallyEmpty && m_send_queue.empty()) {
+    remove_poll_interest(Reactor::WRITE_READY);
     //LOG_INFO("Removing Write interest");
   }
 
@@ -179,21 +179,21 @@ int IOHandlerDatagram::SendMessage(struct sockaddr_in &addr, CommBufPtr &cbufPtr
 
 
 
-int IOHandlerDatagram::FlushSendQueue() {
+int IOHandlerDatagram::flush_send_queue() {
   ssize_t nsent;
 
-  while (!mSendQueue.empty()) {
+  while (!m_send_queue.empty()) {
 
-    SendRecT &sendRec = mSendQueue.front();
+    SendRecT &sendRec = m_send_queue.front();
 
     assert(sendRec.second->dataLen > 0);
     assert(sendRec.second->ext == 0);
 
-    nsent = FileUtils::Sendto(mSd, sendRec.second->data, sendRec.second->dataLen,
+    nsent = FileUtils::sendto(m_sd, sendRec.second->data, sendRec.second->dataLen,
 			      (const sockaddr*)&sendRec.first, sizeof(struct sockaddr_in));
 
     if (nsent == (ssize_t)-1) {
-      LOG_VA_WARN("FileUtils::Sendto(%d, len=%d, addr=%s:%d) failed : %s", mSd, sendRec.second->dataLen,
+      LOG_VA_WARN("FileUtils::sendto(%d, len=%d, addr=%s:%d) failed : %s", m_sd, sendRec.second->dataLen,
 		  inet_ntoa(sendRec.first.sin_addr), ntohs(sendRec.first.sin_port), strerror(errno));
       return Error::COMM_SEND_ERROR;
     }
@@ -209,7 +209,7 @@ int IOHandlerDatagram::FlushSendQueue() {
     //LOG_VA_INFO("Successfully sent message to %s:%d", inet_ntoa(sendRec.first.sin_addr), ntohs(sendRec.first.sin_port));
 
     // buffer written successfully, now remove from queue (which will destroy buffer)
-    mSendQueue.pop_front();
+    m_send_queue.pop_front();
   }
 
   return Error::OK;

@@ -43,9 +43,9 @@ namespace Hyperspace {
     }
   };
 
-  size_t EncodedLengthDirEntry(DirEntryT &dirEntry);
-  void EncodeDirEntry(uint8_t **bufPtr, DirEntryT &dirEntry);
-  bool DecodeRangeDirEntry(uint8_t **bufPtr, size_t *remainingPtr, DirEntryT &dirEntry);
+  size_t encoded_length_dir_entry(DirEntryT &dirEntry);
+  void encode_dir_entry(uint8_t **bufPtr, DirEntryT &dirEntry);
+  bool decode_range_dir_entry(uint8_t **bufPtr, size_t *remainingPtr, DirEntryT &dirEntry);
   
 }
 

@@ -41,23 +41,23 @@ extern "C" {
 using namespace hypertable;
 using namespace std;
 
-Metadata    *Metadata::msMetadata = 0;
-RangeInfo  *Metadata::msRange = 0;
-std::string  Metadata::msCollectedText = "";
+Metadata    *Metadata::ms_metadata = 0;
+RangeInfo  *Metadata::ms_range = 0;
+std::string  Metadata::ms_collected_text = "";
 
-Metadata *Metadata::NewInstance(const char *fname) {
+Metadata *Metadata::new_instance(const char *fname) {
   char *data = 0;
   off_t len;
 
   XML_Parser parser = XML_ParserCreate("US-ASCII");
 
-  XML_SetElementHandler(parser, &StartElementHandler, &EndElementHandler);
-  XML_SetCharacterDataHandler(parser, &CharacterDataHandler);
+  XML_SetElementHandler(parser, &start_element_handler, &end_element_handler);
+  XML_SetCharacterDataHandler(parser, &character_data_handler);
 
-  if ((data = FileUtils::FileToBuffer(fname, &len)) == 0)
+  if ((data = FileUtils::file_to_buffer(fname, &len)) == 0)
     exit(1);
 
-  msMetadata = new Metadata(fname);
+  ms_metadata = new Metadata(fname);
 
   if (XML_Parse(parser, data, len, 1) == 0) {
     std::string errStr = (std::string)"Metadata Parse Error: " + (const char *)XML_ErrorString(XML_GetErrorCode(parser)) + " line " + (int)XML_GetCurrentLineNumber(parser) + ", offset " + (int)XML_GetCurrentByteIndex(parser);
@@ -69,46 +69,46 @@ Metadata *Metadata::NewInstance(const char *fname) {
 
   delete [] data;
 
-  return msMetadata;
+  return ms_metadata;
 }
 
 
 
-Metadata::Metadata(const char *fname) : mTableMap(), mFilename(fname) {
+Metadata::Metadata(const char *fname) : m_table_map(), m_filename(fname) {
 }
 
 
 
 /**
  */
-void Metadata::StartElementHandler(void *userData, const XML_Char *name, const XML_Char **atts) {
+void Metadata::start_element_handler(void *userData, const XML_Char *name, const XML_Char **atts) {
 
   if (!strcmp(name, "Metadata")) {
   }
   else if (!strcmp(name, "RangeInfo")) {
-    assert(msRange == 0);
-    msRange = new RangeInfo;
+    assert(ms_range == 0);
+    ms_range = new RangeInfo;
   }
   else if (!strcmp(name, "TableName")) {
-    msCollectedText = "";
+    ms_collected_text = "";
   }
   else if (!strcmp(name, "StartRow")) {
-    msCollectedText = "";
+    ms_collected_text = "";
   }
   else if (!strcmp(name, "EndRow")) {
-    msCollectedText = "";
+    ms_collected_text = "";
   }
   else if (!strcmp(name, "CellStore")) {
-    msCollectedText = "";
+    ms_collected_text = "";
   }
   else if (!strcmp(name, "LogDir")) {
-    msCollectedText = "";
+    ms_collected_text = "";
   }
   else if (!strcmp(name, "SplitLogDir")) {
-    msCollectedText = "";
+    ms_collected_text = "";
   }
   else if (!strcmp(name, "SplitPoint")) {
-    msCollectedText = "";
+    ms_collected_text = "";
   }
   else {
     cerr << "Unrecognized element : " << name << endl;
@@ -120,77 +120,77 @@ void Metadata::StartElementHandler(void *userData, const XML_Char *name, const X
 
 
 
-void Metadata::EndElementHandler(void *userData, const XML_Char *name) {
+void Metadata::end_element_handler(void *userData, const XML_Char *name) {
 
   if (!strcmp(name, "Metadata")) {
   }
   else if (!strcmp(name, "RangeInfo")) {
-    assert(msRange != 0);
-    RangeInfoPtr tmpPtr(msRange);
-    msMetadata->AddRangeInfo(tmpPtr);
-    msRange = 0;
+    assert(ms_range != 0);
+    RangeInfoPtr tmpPtr(ms_range);
+    ms_metadata->add_range_info(tmpPtr);
+    ms_range = 0;
   }
   else if (!strcmp(name, "TableName")) {
-    assert(msRange != 0);
-    boost::trim(msCollectedText);
-    assert(msCollectedText.length() > 0);
-    msRange->SetTableName(msCollectedText);
+    assert(ms_range != 0);
+    boost::trim(ms_collected_text);
+    assert(ms_collected_text.length() > 0);
+    ms_range->set_table_name(ms_collected_text);
   }
   else if (!strcmp(name, "StartRow")) {
     string startRow;
-    assert(msRange != 0);
-    msRange->GetStartRow(startRow);
+    assert(ms_range != 0);
+    ms_range->get_start_row(startRow);
     assert(startRow == "");
-    boost::trim(msCollectedText);
-    if (msCollectedText.length() > 0)
-      msRange->SetStartRow(msCollectedText);
+    boost::trim(ms_collected_text);
+    if (ms_collected_text.length() > 0)
+      ms_range->set_start_row(ms_collected_text);
   }
   else if (!strcmp(name, "EndRow")) {
     string endRow;
-    assert(msRange != 0);
-    msRange->GetEndRow(endRow);
+    assert(ms_range != 0);
+    ms_range->get_end_row(endRow);
     assert(endRow == "");
-    boost::trim(msCollectedText);
-    if (msCollectedText.length() > 0)
-      msRange->SetEndRow(msCollectedText);
+    boost::trim(ms_collected_text);
+    if (ms_collected_text.length() > 0)
+      ms_range->set_end_row(ms_collected_text);
   }
   else if (!strcmp(name, "CellStore")) {
-    assert(msRange != 0);
-    boost::trim(msCollectedText);
-    msRange->AddCellStore(msCollectedText);
+    assert(ms_range != 0);
+    boost::trim(ms_collected_text);
+    ms_range->add_cell_store(ms_collected_text);
   }
   else if (!strcmp(name, "LogDir")) {
-    assert(msRange != 0);
-    boost::trim(msCollectedText);
-    msRange->SetLogDir(msCollectedText);
+    assert(ms_range != 0);
+    boost::trim(ms_collected_text);
+    ms_range->set_log_dir(ms_collected_text);
   }
   else if (!strcmp(name, "SplitLogDir")) {
-    assert(msRange != 0);
-    boost::trim(msCollectedText);
-    msRange->SetSplitLogDir(msCollectedText);
+    assert(ms_range != 0);
+    boost::trim(ms_collected_text);
+    ms_range->set_split_log_dir(ms_collected_text);
   }
   else if (!strcmp(name, "SplitPoint")) {
-    assert(msRange != 0);
-    boost::trim(msCollectedText);
-    msRange->SetSplitPoint(msCollectedText);
+    assert(ms_range != 0);
+    boost::trim(ms_collected_text);
+    ms_range->set_split_point(ms_collected_text);
   }
   else {
     cerr << "Unrecognized element : " << name << endl;
     exit(1);
   }
-  msCollectedText = "";
+  ms_collected_text = "";
 }
 
 
 
-void Metadata::CharacterDataHandler(void *userData, const XML_Char *s, int len) {
-  msCollectedText.assign(s, len);
+void Metadata::character_data_handler(void *userData, const XML_Char *s, int len) {
+  ms_collected_text.assign(s, len);
 }
 
 
-int Metadata::GetRangeInfo(std::string &tableName, std::string &endRow, RangeInfoPtr &rangeInfoPtr) {
-  TableMapT::iterator tmIter = mTableMap.find(tableName);
-  if (tmIter == mTableMap.end())
+int Metadata::get_range_info(std::string &tableName, std::string &endRow, RangeInfoPtr &rangeInfoPtr) {
+  TableMapT::iterator tmIter = m_table_map.find(tableName);
+  if (tmIter == m_table_map.end())
     return Error::RANGESERVER_RANGE_NOT_FOUND;
 
   RangeInfoMapT::iterator iter = (*tmIter).second.find(endRow);
@@ -202,22 +202,22 @@ int Metadata::GetRangeInfo(std::string &tableName, std::string &endRow, RangeInf
 }
 
 
-void Metadata::AddRangeInfo(RangeInfoPtr &rangePtr) {
+void Metadata::add_range_info(RangeInfoPtr &rangePtr) {
   string tableName, endRow;
-  rangePtr->GetTableName(tableName);
-  rangePtr->GetEndRow(endRow);
+  rangePtr->get_table_name(tableName);
+  rangePtr->get_end_row(endRow);
   assert(tableName != "");
-  TableMapT::iterator iter = mTableMap.find(tableName);
-  if (iter == mTableMap.end()) {
-    mTableMap[tableName] = RangeInfoMapT();
-    iter = mTableMap.find(tableName);
+  TableMapT::iterator iter = m_table_map.find(tableName);
+  if (iter == m_table_map.end()) {
+    m_table_map[tableName] = RangeInfoMapT();
+    iter = m_table_map.find(tableName);
   }
   (*iter).second[endRow] = rangePtr;
 }
 
 
-void Metadata::Sync(const char *fname) {
-  string tmpFile = (fname == 0) ? mFilename + ".tmp" : (string)fname + ".tmp";
+void Metadata::sync(const char *fname) {
+  string tmpFile = (fname == 0) ? m_filename + ".tmp" : (string)fname + ".tmp";
   ofstream outfile(tmpFile.c_str());
   string tableName;
   string startRow;
@@ -228,19 +228,19 @@ void Metadata::Sync(const char *fname) {
   vector<string> cellStoreVector;
 
   outfile << "<Metadata>" << endl;
-  for (TableMapT::iterator tmIter = mTableMap.begin(); tmIter != mTableMap.end(); tmIter++) {
+  for (TableMapT::iterator tmIter = m_table_map.begin(); tmIter != m_table_map.end(); tmIter++) {
 
     for (RangeInfoMapT::iterator iter = (*tmIter).second.begin(); iter != (*tmIter).second.end(); iter++) {
       RangeInfoPtr rangePtr = (*iter).second;
 
-      rangePtr->GetTableName(tableName);
-      rangePtr->GetStartRow(startRow);
-      rangePtr->GetEndRow(endRow);
-      rangePtr->GetLogDir(logDir);
-      rangePtr->GetSplitLogDir(splitLogDir);
-      rangePtr->GetSplitPoint(splitPoint);
+      rangePtr->get_table_name(tableName);
+      rangePtr->get_start_row(startRow);
+      rangePtr->get_end_row(endRow);
+      rangePtr->get_log_dir(logDir);
+      rangePtr->get_split_log_dir(splitLogDir);
+      rangePtr->get_split_point(splitPoint);
       cellStoreVector.clear();
-      rangePtr->GetTables(cellStoreVector);
+      rangePtr->get_tables(cellStoreVector);
 
       outfile << "  <RangeInfo>" << endl;
       outfile << "    <TableName>" << tableName << "</TableName>" << endl;
@@ -259,12 +259,12 @@ void Metadata::Sync(const char *fname) {
   outfile.close();
 
   if (fname != 0)
-    mFilename = fname;
+    m_filename = fname;
   
-  unlink(mFilename.c_str());
+  unlink(m_filename.c_str());
 
-  if (rename(tmpFile.c_str(), mFilename.c_str()) != 0) {
-    std::string errMsg = (const char *)"rename('" + tmpFile + "', '" + mFilename + "') failed";
+  if (rename(tmpFile.c_str(), m_filename.c_str()) != 0) {
+    std::string errMsg = (const char *)"rename('" + tmpFile + "', '" + m_filename + "') failed";
     perror(errMsg.c_str());
     exit(1);
   }
@@ -272,7 +272,7 @@ void Metadata::Sync(const char *fname) {
 }
 
 
-void Metadata::Display() {
+void Metadata::display() {
   string tableName;
   string startRow;
   string endRow;
@@ -281,7 +281,7 @@ void Metadata::Display() {
   string splitPoint;
   vector<string> cellStoreVector;
 
-  for (TableMapT::iterator tmIter = mTableMap.begin(); tmIter != mTableMap.end(); tmIter++) {
+  for (TableMapT::iterator tmIter = m_table_map.begin(); tmIter != m_table_map.end(); tmIter++) {
 
     cout << endl;
     cout << "Ranges for table '" << (*tmIter).first << "'" << endl;
@@ -290,13 +290,13 @@ void Metadata::Display() {
 
       RangeInfoPtr rangePtr = (*iter).second;
 
-      rangePtr->GetTableName(tableName);
-      rangePtr->GetStartRow(startRow);
-      rangePtr->GetEndRow(endRow);
-      rangePtr->GetLogDir(logDir);
-      rangePtr->GetSplitLogDir(splitLogDir);
-      rangePtr->GetSplitPoint(splitPoint);
-      rangePtr->GetTables(cellStoreVector);
+      rangePtr->get_table_name(tableName);
+      rangePtr->get_start_row(startRow);
+      rangePtr->get_end_row(endRow);
+      rangePtr->get_log_dir(logDir);
+      rangePtr->get_split_log_dir(splitLogDir);
+      rangePtr->get_split_point(splitPoint);
+      rangePtr->get_tables(cellStoreVector);
 
       cout << "StartRow = \"" << startRow << "\"" << endl;
       cout << "EndRow = \"" << endRow << "\"" << endl;

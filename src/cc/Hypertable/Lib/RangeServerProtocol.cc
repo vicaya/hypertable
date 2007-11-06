@@ -25,7 +25,7 @@
 
 namespace hypertable {
 
-  const char *RangeServerProtocol::mCommandStrings[] = {
+  const char *RangeServerProtocol::m_command_strings[] = {
     "load range",
     "update",
     "create scanner",
@@ -34,57 +34,57 @@ namespace hypertable {
     "status"
   };
 
-  const char *RangeServerProtocol::CommandText(short command) {
+  const char *RangeServerProtocol::command_text(short command) {
     if (command < 0 || command >= COMMAND_MAX)
       return "UNKNOWN";
-    return mCommandStrings[command];
+    return m_command_strings[command];
   }
 
-  CommBuf *RangeServerProtocol::CreateRequestLoadRange(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec) {
+  CommBuf *RangeServerProtocol::create_request_load_range(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
-    hbuilder.AssignUniqueId();
+    hbuilder.assign_unique_id();
     CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthRangeSpecification(rangeSpec));
-    cbuf->AppendShort(COMMAND_LOAD_RANGE);
-    EncodeRangeSpecification(cbuf->GetDataPtrAddress(), rangeSpec);
+    cbuf->append_short(COMMAND_LOAD_RANGE);
+    EncodeRangeSpecification(cbuf->get_data_ptr_address(), rangeSpec);
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::CreateRequestUpdate(struct sockaddr_in &addr, std::string &tableName, uint32_t generation, uint8_t *data, size_t len) {
+  CommBuf *RangeServerProtocol::create_request_update(struct sockaddr_in &addr, std::string &tableName, uint32_t generation, uint8_t *data, size_t len) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
-    hbuilder.AssignUniqueId();
-    CommBuf *cbuf = new CommBuf(hbuilder, 6 + Serialization::EncodedLengthString(tableName) + 
-				Serialization::EncodedLengthByteArray(len));
-    cbuf->AppendShort(COMMAND_UPDATE);
-    cbuf->AppendInt(generation);
-    cbuf->AppendString(tableName);
-    Serialization::EncodeByteArray(cbuf->GetDataPtrAddress(), data, len);
+    hbuilder.assign_unique_id();
+    CommBuf *cbuf = new CommBuf(hbuilder, 6 + Serialization::encoded_length_string(tableName) + 
+				Serialization::encoded_length_byte_array(len));
+    cbuf->append_short(COMMAND_UPDATE);
+    cbuf->append_int(generation);
+    cbuf->append_string(tableName);
+    Serialization::encode_byte_array(cbuf->get_data_ptr_address(), data, len);
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::CreateRequestCreateScanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &scanSpec) {
+  CommBuf *RangeServerProtocol::create_request_create_scanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &scanSpec) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
-    hbuilder.AssignUniqueId();
+    hbuilder.assign_unique_id();
     CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthRangeSpecification(rangeSpec) + EncodedLengthScanSpecification(scanSpec));
-    cbuf->AppendShort(COMMAND_CREATE_SCANNER);
-    EncodeRangeSpecification(cbuf->GetDataPtrAddress(), rangeSpec);
-    EncodeScanSpecification(cbuf->GetDataPtrAddress(), scanSpec);
+    cbuf->append_short(COMMAND_CREATE_SCANNER);
+    EncodeRangeSpecification(cbuf->get_data_ptr_address(), rangeSpec);
+    EncodeScanSpecification(cbuf->get_data_ptr_address(), scanSpec);
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::CreateRequestFetchScanblock(struct sockaddr_in &addr, int scannerId) {
+  CommBuf *RangeServerProtocol::create_request_fetch_scanblock(struct sockaddr_in &addr, int scannerId) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
-    hbuilder.AssignUniqueId();
+    hbuilder.assign_unique_id();
     CommBuf *cbuf = new CommBuf(hbuilder, 6);
-    cbuf->AppendShort(COMMAND_FETCH_SCANBLOCK);
-    cbuf->AppendInt(scannerId);
+    cbuf->append_short(COMMAND_FETCH_SCANBLOCK);
+    cbuf->append_int(scannerId);
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::CreateRequestStatus() {
+  CommBuf *RangeServerProtocol::create_request_status() {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
-    hbuilder.AssignUniqueId();
+    hbuilder.assign_unique_id();
     CommBuf *cbuf = new CommBuf(hbuilder, 2);
-    cbuf->AppendShort(COMMAND_STATUS);
+    cbuf->append_short(COMMAND_STATUS);
     return cbuf;
   }
 

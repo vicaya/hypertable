@@ -24,7 +24,7 @@
 /**
  * 
  */
-Mutator::Mutator(ConnectionManagerPtr &connManagerPtr, SchemaPtr &schemaPtr) : mConnManagerPtr(connManagerPtr), mSchemaPtr(schemaPtr) {
+Mutator::Mutator(ConnectionManagerPtr &connManagerPtr, SchemaPtr &schemaPtr) : m_conn_manager_ptr(connManagerPtr), m_schema_ptr(schemaPtr) {
   return;
 }
 
@@ -32,7 +32,7 @@ Mutator::Mutator(ConnectionManagerPtr &connManagerPtr, SchemaPtr &schemaPtr) : m
 /**
  *
  */
-void Mutator::Set(CellKey &key, uint8_t *value, uint32_t valueLen) {
+void Mutator::set(CellKey &key, uint8_t *value, uint32_t valueLen) {
 
   
 
@@ -53,7 +53,7 @@ void Mutator::Set(CellKey &key, uint8_t *value, uint32_t valueLen) {
 /**
  *
  */
-void Mutator::Flush(MutationResultPtr &resultPtr) {
+void Mutator::flush(MutationResultPtr &resultPtr) {
 
   // Sweep through the set of per-range queues, sending UPDATE requests to their range servers
 

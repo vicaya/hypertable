@@ -24,7 +24,7 @@
 
 using namespace hypertable;
 
-const char *CommandRmdir::msUsage[] = {
+const char *CommandRmdir::ms_usage[] = {
   "rmdir <dir>",
   "",
   "  This command sends a RMDIR request for the DFS directory <dir>",
@@ -34,11 +34,11 @@ const char *CommandRmdir::msUsage[] = {
 
 
 int CommandRmdir::run() {
-  if (mArgs.size() < 1) {
+  if (m_args.size() < 1) {
     cerr << "Error:  no filename supplied." << endl;
     return -1;
   }
 
-  return mClient->Rmdir(mArgs[0].first);
+  return m_client->rmdir(m_args[0].first);
 }
 

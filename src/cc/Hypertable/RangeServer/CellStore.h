@@ -36,15 +36,15 @@ namespace hypertable {
     static const uint16_t FLAG_SHARED;
 
     virtual ~CellStore() { return; }
-    virtual int Create(const char *fname, size_t blockSize=Constants::DEFAULT_BLOCKSIZE) = 0;
-    virtual int Finalize(uint64_t timestamp) = 0;
-    virtual int Open(const char *fname, const ByteString32T *startKey, const ByteString32T *endKey) = 0;
-    virtual int LoadIndex() = 0;
-    virtual uint64_t GetLogCutoffTime() = 0;
-    virtual uint64_t DiskUsage() = 0;
-    virtual std::string &GetFilename() = 0;
-    virtual uint16_t GetFlags() = 0;
-    virtual ByteString32T *GetSplitKey() = 0;
+    virtual int create(const char *fname, size_t blockSize=Constants::DEFAULT_BLOCKSIZE) = 0;
+    virtual int finalize(uint64_t timestamp) = 0;
+    virtual int open(const char *fname, const ByteString32T *startKey, const ByteString32T *endKey) = 0;
+    virtual int load_index() = 0;
+    virtual uint64_t get_log_cutoff_time() = 0;
+    virtual uint64_t disk_usage() = 0;
+    virtual std::string &get_filename() = 0;
+    virtual uint16_t get_flags() = 0;
+    virtual ByteString32T *get_split_key() = 0;
 
   };
 

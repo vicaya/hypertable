@@ -28,54 +28,54 @@ namespace hypertable {
   /**
    *
    */
-  CommBuf *MasterProtocol::CreateCreateTableRequest(const char *tableName, const char *schemaString) {
+  CommBuf *MasterProtocol::create_create_table_request(const char *tableName, const char *schemaString) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
-    hbuilder.AssignUniqueId();
-    CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::EncodedLengthString(tableName) + Serialization::EncodedLengthString(schemaString));
-    cbuf->AppendShort(COMMAND_CREATE_TABLE);
-    cbuf->AppendString(tableName);
-    cbuf->AppendString(schemaString);
+    hbuilder.assign_unique_id();
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::encoded_length_string(tableName) + Serialization::encoded_length_string(schemaString));
+    cbuf->append_short(COMMAND_CREATE_TABLE);
+    cbuf->append_string(tableName);
+    cbuf->append_string(schemaString);
     return cbuf;
   }
 
-  CommBuf *MasterProtocol::CreateGetSchemaRequest(const char *tableName) {
+  CommBuf *MasterProtocol::create_get_schema_request(const char *tableName) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
-    hbuilder.AssignUniqueId();
-    CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::EncodedLengthString(tableName));
-    cbuf->AppendShort(COMMAND_GET_SCHEMA);
-    cbuf->AppendString(tableName);
+    hbuilder.assign_unique_id();
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::encoded_length_string(tableName));
+    cbuf->append_short(COMMAND_GET_SCHEMA);
+    cbuf->append_string(tableName);
     return cbuf;
   }
 
-  CommBuf *MasterProtocol::CreateStatusRequest() {
+  CommBuf *MasterProtocol::create_status_request() {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
-    hbuilder.AssignUniqueId();
+    hbuilder.assign_unique_id();
     CommBuf *cbuf = new CommBuf(hbuilder, 2);
-    cbuf->AppendShort(COMMAND_STATUS);
+    cbuf->append_short(COMMAND_STATUS);
     return cbuf;
   }
 
-  CommBuf *MasterProtocol::CreateRegisterServerRequest(std::string &serverIdStr) {
+  CommBuf *MasterProtocol::create_register_server_request(std::string &serverIdStr) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
-    hbuilder.AssignUniqueId();
-    CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::EncodedLengthString(serverIdStr));
-    cbuf->AppendShort(COMMAND_REGISTER_SERVER);
-    cbuf->AppendString(serverIdStr);
+    hbuilder.assign_unique_id();
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::encoded_length_string(serverIdStr));
+    cbuf->append_short(COMMAND_REGISTER_SERVER);
+    cbuf->append_string(serverIdStr);
     return cbuf;
   }
 
-  const char *MasterProtocol::mCommandStrings[] = {
+  const char *MasterProtocol::m_command_strings[] = {
     "create table",
     "get schema",
     "status",
     "register server"
   };
 
-  const char *MasterProtocol::CommandText(short command) {
+  const char *MasterProtocol::command_text(short command) {
     if (command < 0 || command >= COMMAND_MAX)
       return "UNKNOWN";
-    return mCommandStrings[command];
+    return m_command_strings[command];
   }
-
+  
 }
 

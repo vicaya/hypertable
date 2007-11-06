@@ -54,7 +54,7 @@ namespace {
 /**
  * Constructor
  */
-RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbose(false), mComm(comm) {
+RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : m_mutex(), m_verbose(false), m_comm(comm) {
   const char *metadataFile = 0;
   int workerCount;
   int error;
@@ -75,7 +75,7 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
   metadataFile = propsPtr->getProperty("metadata");
   assert(metadataFile != 0);
 
-  mVerbose = propsPtr->getPropertyBool("verbose", false);
+  m_verbose = propsPtr->getPropertyBool("verbose", false);
 
   if (Global::verbose) {
     cout << "Hypertable.RangeServer.AccessGroup.MaxFiles=" << Global::localityGroupMaxFiles << endl;
@@ -88,34 +88,34 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
     cout << "METADATA file = '" << metadataFile << "'" << endl;
   }
 
-  mConnManagerPtr = new ConnectionManager(comm);
-  mAppQueuePtr = new ApplicationQueue(workerCount);
+  m_conn_manager_ptr = new ConnectionManager(comm);
+  m_app_queue_ptr = new ApplicationQueue(workerCount);
 
   /**
    * Load METADATA simulation data
    */
-  Global::metadata = Metadata::NewInstance(metadataFile);
+  Global::metadata = Metadata::new_instance(metadataFile);
 
   Global::protocol = new hypertable::RangeServerProtocol();
 
   /**
    * Connect to Hyperspace
    */
-  mHyperspacePtr = new Hyperspace::Session(comm, propsPtr, new HyperspaceSessionHandler(this));
-  if (!mHyperspacePtr->WaitForConnection(30)) {
+  m_hyperspace_ptr = new Hyperspace::Session(comm, propsPtr, new HyperspaceSessionHandler(this));
+  if (!m_hyperspace_ptr->wait_for_connection(30)) {
     LOG_ERROR("Unable to connect to hyperspace, exiting...");
     exit(1);
   }
 
-  DfsBroker::Client *dfsClient = new DfsBroker::Client(mConnManagerPtr, propsPtr);
+  DfsBroker::Client *dfsClient = new DfsBroker::Client(m_conn_manager_ptr, propsPtr);
 
-  if (mVerbose) {
+  if (m_verbose) {
     cout << "DfsBroker.host=" << propsPtr->getProperty("DfsBroker.host", "") << endl;
     cout << "DfsBroker.port=" << propsPtr->getProperty("DfsBroker.port", "") << endl;
     cout << "DfsBroker.timeout=" << propsPtr->getProperty("DfsBroker.timeout", "") << endl;
   }
 
-  if (!dfsClient->WaitForConnection(30)) {
+  if (!dfsClient->wait_for_connection(30)) {
     LOG_ERROR("Unable to connect to DFS Broker, exiting...");
     exit(1);
   }
@@ -126,13 +126,13 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
    * Check for and connect to commit log DFS broker
    */
   {
-    const char *logHost = propsPtr->getProperty("Hypertable.RangeServer.CommitLog.DfsBroker.host", 0);
-    uint16_t logPort    = propsPtr->getPropertyInt("Hypertable.RangeServer.CommitLog.DfsBroker.port", 0);
+    const char *logHost = propsPtr->getProperty("Hypertable.RangeServer.commit_log.dfs_broker.host", 0);
+    uint16_t logPort    = propsPtr->getPropertyInt("Hypertable.RangeServer.commit_log.dfs_broker.port", 0);
     struct sockaddr_in addr;
     if (logHost != 0) {
-      InetAddr::Initialize(&addr, logHost, logPort);
-      dfsClient = new DfsBroker::Client(mConnManagerPtr, addr, 30);
-      if (!dfsClient->WaitForConnection(30)) {
+      InetAddr::initialize(&addr, logHost, logPort);
+      dfsClient = new DfsBroker::Client(m_conn_manager_ptr, addr, 30);
+      if (!dfsClient->wait_for_connection(30)) {
 	LOG_ERROR("Unable to connect to DFS Broker, exiting...");
 	exit(1);
       }
@@ -151,15 +151,15 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
     struct timeval tval;
     std::string hostStr;
 
-    InetAddr::GetHostname(hostStr);
-    InetAddr::Initialize(&localAddr, hostStr.c_str(), port);
+    InetAddr::get_hostname(hostStr);
+    InetAddr::initialize(&localAddr, hostStr.c_str(), port);
 
     gettimeofday(&tval, 0);
 
-    mServerIdStr = (std::string)inet_ntoa(localAddr.sin_addr) + "_" + (int)port + "_" + (uint32_t)tval.tv_sec;
+    m_server_id_str = (std::string)inet_ntoa(localAddr.sin_addr) + "_" + (int)port + "_" + (uint32_t)tval.tv_sec;
   }
 
-  if (DirectoryInitialize(propsPtr.get()) != Error::OK)
+  if (directory_initialize(propsPtr.get()) != Error::OK)
     exit(1);
 
   // start commpaction thread
@@ -173,11 +173,11 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
    * Listen for incoming connections
    */
   {
-    ConnectionHandlerFactoryPtr chfPtr(new HandlerFactory(comm, mAppQueuePtr, this));
+    ConnectionHandlerFactoryPtr chfPtr(new HandlerFactory(comm, m_app_queue_ptr, this));
     struct sockaddr_in addr;
-    InetAddr::Initialize(&addr, INADDR_ANY, port);  // Listen on any interface
-    if ((error = comm->Listen(addr, chfPtr)) != Error::OK) {
-      LOG_VA_ERROR("Listen error address=%s:%d - %s", inet_ntoa(addr.sin_addr), port, Error::GetText(error));
+    InetAddr::initialize(&addr, INADDR_ANY, port);  // Listen on any interface
+    if ((error = comm->listen(addr, chfPtr)) != Error::OK) {
+      LOG_VA_ERROR("Listen error address=%s:%d - %s", inet_ntoa(addr.sin_addr), port, Error::get_text(error));
       exit(1);
     }
   }
@@ -185,9 +185,9 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
   /**
    * Create Master client
    */
-  mMasterClientPtr = new MasterClient(mConnManagerPtr, mHyperspacePtr, 20, mAppQueuePtr);
-  mMasterConnectionHandler = new ConnectionHandler(mComm, mAppQueuePtr, this, mMasterClientPtr);
-  mMasterClientPtr->InitiateConnection(mMasterConnectionHandler);
+  m_master_client_ptr = new MasterClient(m_conn_manager_ptr, m_hyperspace_ptr, 20, m_app_queue_ptr);
+  m_master_connection_handler = new ConnectionHandler(m_comm, m_app_queue_ptr, this, m_master_client_ptr);
+  m_master_client_ptr->initiate_connection(m_master_connection_handler);
 
 }
 
@@ -196,7 +196,7 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : mMutex(), mVerbo
  *
  */
 RangeServer::~RangeServer() {
-  mAppQueuePtr->Shutdown();
+  m_app_queue_ptr->shutdown();
 }
 
 
@@ -206,7 +206,7 @@ RangeServer::~RangeServer() {
  * - Clear any Range server state (including any partially created commit logs)
  * - Open the commit log
  */
-int RangeServer::DirectoryInitialize(Properties *props) {
+int RangeServer::directory_initialize(Properties *props) {
   int error;
   bool exists;
   std::string topDir;
@@ -214,17 +214,17 @@ int RangeServer::DirectoryInitialize(Properties *props) {
   /**
    * Create /hypertable/servers directory
    */
-  if ((error = mHyperspacePtr->Exists("/hypertable/servers", &exists)) != Error::OK) {
-    LOG_VA_ERROR("Problem checking existence of '/hypertable/servers' Hyperspace directory - %s", Error::GetText(error));
+  if ((error = m_hyperspace_ptr->exists("/hypertable/servers", &exists)) != Error::OK) {
+    LOG_VA_ERROR("Problem checking existence of '/hypertable/servers' Hyperspace directory - %s", Error::get_text(error));
     return error;
   }
 
   if (!exists) {
-    LOG_ERROR("Hyperspace directory '/hypertable/servers' does not exist, try running 'Hypertable.Master --initialize' first");
+    LOG_ERROR("Hyperspace directory '/hypertable/servers' does not exist, try running 'Hypertable.master --initialize' first");
     return error;
   }
 
-  topDir = (std::string)"/hypertable/servers/" + mServerIdStr;
+  topDir = (std::string)"/hypertable/servers/" + m_server_id_str;
 
   /**
    * Create "server existence" file in Hyperspace and obtain an exclusive lock on it
@@ -233,13 +233,13 @@ int RangeServer::DirectoryInitialize(Properties *props) {
   uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_EXCL | OPEN_FLAG_LOCK_EXCLUSIVE;
   HandleCallbackPtr nullCallbackPtr;
 
-  if ((error = mHyperspacePtr->Open(topDir.c_str(), oflags, nullCallbackPtr, &mExistenceFileHandle)) != Error::OK) {
-    LOG_VA_ERROR("Problem creating Hyperspace server existance file '%s' - %s", topDir.c_str(), Error::GetText(error));
+  if ((error = m_hyperspace_ptr->open(topDir.c_str(), oflags, nullCallbackPtr, &m_existence_file_handle)) != Error::OK) {
+    LOG_VA_ERROR("Problem creating Hyperspace server existance file '%s' - %s", topDir.c_str(), Error::get_text(error));
     exit(1);
   }
 
-  if ((error = mHyperspacePtr->GetSequencer(mExistenceFileHandle, &mExistenceFileSequencer)) != Error::OK) {
-    LOG_VA_ERROR("Problem obtaining lock sequencer for file '%s' - %s", topDir.c_str(), Error::GetText(error));
+  if ((error = m_hyperspace_ptr->get_sequencer(m_existence_file_handle, &m_existence_file_sequencer)) != Error::OK) {
+    LOG_VA_ERROR("Problem obtaining lock sequencer for file '%s' - %s", topDir.c_str(), Error::get_text(error));
     exit(1);
   }
 
@@ -248,7 +248,7 @@ int RangeServer::DirectoryInitialize(Properties *props) {
   /**
    * Create /hypertable/servers/X.X.X.X_port_nnnnn/commit/primary directory
    */
-  if ((error = Global::logDfs->Mkdirs(Global::logDir)) != Error::OK) {
+  if ((error = Global::logDfs->mkdirs(Global::logDir)) != Error::OK) {
     LOG_VA_ERROR("Problem creating local log directory '%s'", Global::logDir.c_str());
     return error;
   }
@@ -273,7 +273,7 @@ int RangeServer::DirectoryInitialize(Properties *props) {
 /**
  * Compact
  */
-void RangeServer::Compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, uint8_t compactionType) {
+void RangeServer::compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, uint8_t compactionType) {
   int error = Error::OK;
   std::string errMsg;
   TableInfoPtr tableInfoPtr;
@@ -295,7 +295,7 @@ void RangeServer::Compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, 
   /**
    * Fetch table info
    */
-  if (!GetTableInfo(rangeSpec->tableName, tableInfoPtr)) {
+  if (!get_table_info(rangeSpec->tableName, tableInfoPtr)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
     errMsg = "No ranges loaded for table '" + (std::string)rangeSpec->tableName + "'";
     goto abort;
@@ -304,16 +304,16 @@ void RangeServer::Compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, 
   /**
    * Fetch range info
    */
-  if (!tableInfoPtr->GetRange(rangeSpec, rangePtr)) {
+  if (!tableInfoPtr->get_range(rangeSpec, rangePtr)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
     errMsg = (std::string)rangeSpec->tableName + "[" + rangeSpec->startRow + ":" + rangeSpec->endRow + "]";
     goto abort;
   }
 
-  MaintenanceThread::ScheduleCompaction(rangePtr.get(), workType);
+  MaintenanceThread::schedule_compaction(rangePtr.get(), workType);
 
   if ((error = cb->response_ok()) != Error::OK) {
-    LOG_VA_ERROR("Problem sending OK response - %s", Error::GetText(error));
+    LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
   }
 
   if (Global::verbose) {
@@ -325,9 +325,9 @@ void RangeServer::Compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, 
 
  abort:
   if (error != Error::OK) {
-    LOG_VA_ERROR("%s '%s'", Error::GetText(error), errMsg.c_str());
+    LOG_VA_ERROR("%s '%s'", Error::get_text(error), errMsg.c_str());
     if ((error = cb->error(error, errMsg)) != Error::OK) {
-      LOG_VA_ERROR("Problem sending error response - %s", Error::GetText(error));
+      LOG_VA_ERROR("Problem sending error response - %s", Error::get_text(error));
     }
   }
 }
@@ -337,7 +337,7 @@ void RangeServer::Compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, 
 /** 
  *  CreateScanner
  */
-void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, RangeSpecificationT *rangeSpec, ScanSpecificationT *scanSpec) {
+void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, RangeSpecificationT *rangeSpec, ScanSpecificationT *scanSpec) {
   uint8_t *kvBuffer = 0;
   uint32_t *kvLenp = 0;
   int error = Error::OK;
@@ -357,27 +357,27 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, RangeSpecific
     cout << *scanSpec << endl;
   }
 
-  if (!GetTableInfo(rangeSpec->tableName, tableInfoPtr)) {
+  if (!get_table_info(rangeSpec->tableName, tableInfoPtr)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
     errMsg = (std::string)rangeSpec->tableName + "[" + rangeSpec->startRow + ":" + rangeSpec->endRow + "]";
     goto abort;
   }
 
-  if (!tableInfoPtr->GetRange(rangeSpec, rangePtr)) {
+  if (!tableInfoPtr->get_range(rangeSpec, rangePtr)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
     errMsg = (std::string)rangeSpec->tableName + "[" + rangeSpec->startRow + ":" + rangeSpec->endRow + "]";
     goto abort;
   }
 
-  scanTimestamp = rangePtr->GetTimestamp();
+  scanTimestamp = rangePtr->get_timestamp();
 
-  schemaPtr = tableInfoPtr->GetSchema();
+  schemaPtr = tableInfoPtr->get_schema();
 
   /**
    * Load column families set
    */
   for (std::vector<const char *>::const_iterator iter = scanSpec->columns.begin(); iter != scanSpec->columns.end(); iter++) {
-    Schema::ColumnFamily *cf = schemaPtr->GetColumnFamily(*iter);
+    Schema::ColumnFamily *cf = schemaPtr->get_column_family(*iter);
     if (cf == 0) {
       error = Error::RANGESERVER_INVALID_COLUMNFAMILY;
       errMsg = (std::string)*iter;
@@ -396,11 +396,11 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, RangeSpecific
     goto abort;
   }
  
-  scannerPtr.reset( rangePtr->CreateScanner(scanContextPtr));
+  scannerPtr.reset( rangePtr->create_scanner(scanContextPtr));
 
   more = FillScanBlock(scannerPtr, kvBuffer+sizeof(int32_t), DEFAULT_SCANBUF_SIZE, kvLenp);
   if (more)
-    id = Global::scannerMap.Put(scannerPtr, rangePtr);
+    id = Global::scannerMap.put(scannerPtr, rangePtr);
   else
     id = 0;
 
@@ -417,7 +417,7 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, RangeSpecific
     ext.buf = kvBuffer;
     ext.len = sizeof(int32_t) + *kvLenp;
     if ((error = cb->response(moreFlag, id, ext)) != Error::OK) {
-      LOG_VA_ERROR("Problem sending OK response - %s", Error::GetText(error));
+      LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
     }
   }
 
@@ -425,15 +425,15 @@ void RangeServer::CreateScanner(ResponseCallbackCreateScanner *cb, RangeSpecific
 
  abort:
   if (error != Error::OK) {
-    LOG_VA_ERROR("%s '%s'", Error::GetText(error), errMsg.c_str());
+    LOG_VA_ERROR("%s '%s'", Error::get_text(error), errMsg.c_str());
     if ((error = cb->error(error, errMsg)) != Error::OK) {
-      LOG_VA_ERROR("Problem sending error response - %s", Error::GetText(error));
+      LOG_VA_ERROR("Problem sending error response - %s", Error::get_text(error));
     }
   }
 }
 
 
-void RangeServer::FetchScanblock(ResponseCallbackFetchScanblock *cb, uint32_t scannerId) {
+void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t scannerId) {
   string errMsg;
   int error = Error::OK;
   CellListScannerPtr scannerPtr;
@@ -443,7 +443,7 @@ void RangeServer::FetchScanblock(ResponseCallbackFetchScanblock *cb, uint32_t sc
   uint32_t *kvLenp = 0;
   uint32_t bytesFetched = 0;
 
-  if (!Global::scannerMap.Get(scannerId, scannerPtr, rangePtr)) {
+  if (!Global::scannerMap.get(scannerId, scannerPtr, rangePtr)) {
     error = Error::RANGESERVER_INVALID_SCANNER_ID;
     char tbuf[32];
     sprintf(tbuf, "%d", scannerId);
@@ -460,7 +460,7 @@ void RangeServer::FetchScanblock(ResponseCallbackFetchScanblock *cb, uint32_t sc
 
   more = FillScanBlock(scannerPtr, kvBuffer+sizeof(int32_t), DEFAULT_SCANBUF_SIZE, kvLenp);
   if (!more)
-    Global::scannerMap.Remove(scannerId);
+    Global::scannerMap.remove(scannerId);
   bytesFetched = *kvLenp;
 
   /**
@@ -472,7 +472,7 @@ void RangeServer::FetchScanblock(ResponseCallbackFetchScanblock *cb, uint32_t sc
     ext.buf = kvBuffer;
     ext.len = sizeof(int32_t) + *kvLenp;
     if ((error = cb->response(moreFlag, scannerId, ext)) != Error::OK) {
-      LOG_VA_ERROR("Problem sending OK response - %s", Error::GetText(error));
+      LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
     }
   }
 
@@ -484,9 +484,9 @@ void RangeServer::FetchScanblock(ResponseCallbackFetchScanblock *cb, uint32_t sc
 
  abort:
   if (error != Error::OK) {
-    LOG_VA_ERROR("%s '%s'", Error::GetText(error), errMsg.c_str());
+    LOG_VA_ERROR("%s '%s'", Error::get_text(error), errMsg.c_str());
     if ((error = cb->error(error, errMsg)) != Error::OK) {
-      LOG_VA_ERROR("Problem sending error response - %s", Error::GetText(error));
+      LOG_VA_ERROR("Problem sending error response - %s", Error::get_text(error));
     }
   }
 }
@@ -495,7 +495,7 @@ void RangeServer::FetchScanblock(ResponseCallbackFetchScanblock *cb, uint32_t sc
 /**
  * LoadRange
  */
-void RangeServer::LoadRange(ResponseCallback *cb, RangeSpecificationT *rangeSpec) {
+void RangeServer::load_range(ResponseCallback *cb, RangeSpecificationT *rangeSpec) {
   DynamicBuffer endRowBuffer(0);
   std::string errMsg;
   int error = Error::OK;
@@ -514,31 +514,31 @@ void RangeServer::LoadRange(ResponseCallback *cb, RangeSpecificationT *rangeSpec
   /**
    * 1. Read METADATA entry for this range and make sure it exists
    */
-  if ((error = Global::metadata->GetRangeInfo(rangeSpec->tableName, rangeSpec->endRow, rangeInfoPtr)) != Error::OK) {
+  if ((error = Global::metadata->get_range_info(rangeSpec->tableName, rangeSpec->endRow, rangeInfoPtr)) != Error::OK) {
     errMsg = (std::string)"Unable to locate range of table '" + rangeSpec->tableName + "' with end row '" + rangeSpec->endRow + "' in METADATA table";
     goto abort;
   }
   else {
     std::string startRow;
-    rangeInfoPtr->GetStartRow(startRow);
+    rangeInfoPtr->get_start_row(startRow);
     if (startRow != (std::string)rangeSpec->startRow) {
       errMsg = (std::string)"Unable to locate range " + rangeSpec->tableName + "[" + rangeSpec->startRow + ":" + rangeSpec->endRow + "] in METADATA table";
       goto abort;
     }
   }
 
-  if (!GetTableInfo(rangeSpec->tableName, tableInfoPtr)) {
+  if (!get_table_info(rangeSpec->tableName, tableInfoPtr)) {
     tableInfoPtr.reset( new TableInfo(rangeSpec->tableName, schemaPtr) );
     registerTable = true;
   }
 
-  if ((error = VerifySchema(tableInfoPtr, rangeSpec->generation, errMsg)) != Error::OK)
+  if ((error = verify_schema(tableInfoPtr, rangeSpec->generation, errMsg)) != Error::OK)
     goto abort;
 
   if (registerTable)
-    SetTableInfo(rangeSpec->tableName, tableInfoPtr);
+    set_table_info(rangeSpec->tableName, tableInfoPtr);
 
-  schemaPtr = tableInfoPtr->GetSchema();
+  schemaPtr = tableInfoPtr->get_schema();
 
   /**
    * Check for existence of and create, if necessary, range directory (md5 of endrow)
@@ -551,39 +551,39 @@ void RangeServer::LoadRange(ResponseCallback *cb, RangeSpecificationT *rangeSpec
       md5_string(rangeSpec->endRow, md5DigestStr);
     md5DigestStr[24] = 0;
     tableHdfsDir = (string)"/hypertable/tables/" + (string)rangeSpec->tableName;
-    list<Schema::AccessGroup *> *lgList = schemaPtr->GetAccessGroupList();
+    list<Schema::AccessGroup *> *lgList = schemaPtr->get_access_group_list();
     for (list<Schema::AccessGroup *>::iterator lgIter = lgList->begin(); lgIter != lgList->end(); lgIter++) {
       // notice the below variables are different "range" vs. "table"
       rangeHdfsDir = tableHdfsDir + "/" + (*lgIter)->name + "/" + md5DigestStr;
-      if ((error = Global::dfs->Mkdirs(rangeHdfsDir)) != Error::OK) {
+      if ((error = Global::dfs->mkdirs(rangeHdfsDir)) != Error::OK) {
 	errMsg = (string)"Problem creating range directory '" + rangeHdfsDir + "'";
 	goto abort;
       }
     }
   }
 
-  if (tableInfoPtr->GetRange(rangeSpec, rangePtr)) {
+  if (tableInfoPtr->get_range(rangeSpec, rangePtr)) {
     error = Error::RANGESERVER_RANGE_ALREADY_LOADED;
     errMsg = (std::string)rangeSpec->tableName + "[" + rangeSpec->startRow + ":" + rangeSpec->endRow + "]";
     goto abort;
   }
 
-  tableInfoPtr->AddRange(rangeInfoPtr);
+  tableInfoPtr->add_range(rangeInfoPtr);
 
-  rangeInfoPtr->SetLogDir(Global::log->GetLogDir());
-  Global::metadata->Sync();
+  rangeInfoPtr->set_log_dir(Global::log->get_log_dir());
+  Global::metadata->sync();
 
   if ((error = cb->response_ok()) != Error::OK) {
-    LOG_VA_ERROR("Problem sending OK response - %s", Error::GetText(error));
+    LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
   }
 
   error = Error::OK;
 
  abort:
   if (error != Error::OK) {
-    LOG_VA_ERROR("%s '%s'", Error::GetText(error), errMsg.c_str());
+    LOG_VA_ERROR("%s '%s'", Error::get_text(error), errMsg.c_str());
     if ((error = cb->error(error, errMsg)) != Error::OK) {
-      LOG_VA_ERROR("Problem sending error response - %s", Error::GetText(error));
+      LOG_VA_ERROR("Problem sending error response - %s", Error::get_text(error));
     }
   }
 }
@@ -603,7 +603,7 @@ namespace {
 /**
  * Update
  */
-void RangeServer::Update(ResponseCallbackUpdate *cb, const char *tableName, uint32_t generation, BufferT &buffer) {
+void RangeServer::update(ResponseCallbackUpdate *cb, const char *tableName, uint32_t generation, BufferT &buffer) {
   const uint8_t *modPtr;
   const uint8_t *modEnd;
   string errMsg;
@@ -638,20 +638,20 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, const char *tableName, uint
   /**
    * Fetch table info
    */
-  if (!GetTableInfo(tableName, tableInfoPtr)) {
+  if (!get_table_info(tableName, tableInfoPtr)) {
     ExtBufferT ext;
     ext.buf = new uint8_t [ buffer.len ];
     memcpy(ext.buf, buffer.buf, buffer.len);
     ext.len = buffer.len;
     LOG_VA_ERROR("Unable to find table info for table '%s'", tableName);
     if ((error = cb->response(ext)) != Error::OK) {
-      LOG_VA_ERROR("Problem sending OK response - %s", Error::GetText(error));
+      LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
     }
     return;
   }
 
   // verify schema
-  if ((error = VerifySchema(tableInfoPtr, generation, errMsg)) != Error::OK)
+  if ((error = verify_schema(tableInfoPtr, generation, errMsg)) != Error::OK)
     goto abort;
 
   modEnd = buffer.buf + buffer.len;
@@ -665,7 +665,7 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, const char *tableName, uint
 
     row = (const char *)((ByteString32T *)modPtr)->data;
 
-    if (!tableInfoPtr->FindContainingRange(row, rangePtr)) {
+    if (!tableInfoPtr->find_containing_range(row, rangePtr)) {
       update.base = modPtr;
       modPtr += Length((const ByteString32T *)modPtr); // skip key
       modPtr += Length((const ByteString32T *)modPtr); // skip value
@@ -676,15 +676,15 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, const char *tableName, uint
     }
 
     /** Increment update count (block if maintenance in progress) **/
-    rangePtr->IncrementUpdateCounter();
+    rangePtr->increment_update_counter();
 
     /** Obtain "update timestamp" **/
-    updateTimestamp = Global::log->GetTimestamp();
+    updateTimestamp = Global::log->get_timestamp();
 
-    endRow = rangePtr->EndRow();
+    endRow = rangePtr->end_row();
 
     /** Fetch range split information **/
-    if (rangePtr->GetSplitInfo(splitKeyPtr, splitLogPtr, &splitStartTime))
+    if (rangePtr->get_split_info(splitKeyPtr, splitLogPtr, &splitStartTime))
       splitRow = (const char *)(splitKeyPtr.get())->data;
     else
       splitRow = 0;
@@ -720,9 +720,9 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, const char *tableName, uint
 	ptr += splitMods[i].len;
       }
 
-      if ((error = splitLogPtr->Write(tableName, base, ptr-base, clientTimestamp)) != Error::OK) {
+      if ((error = splitLogPtr->write(tableName, base, ptr-base, clientTimestamp)) != Error::OK) {
 	errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to split log";
-	rangePtr->DecrementUpdateCounter();
+	rangePtr->decrement_update_counter();
 	goto abort;
       }
     }
@@ -739,9 +739,9 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, const char *tableName, uint
 	memcpy(ptr, goMods[i].base, goMods[i].len);
 	ptr += goMods[i].len;
       }
-      if ((error = Global::log->Write(tableName, base, ptr-base, clientTimestamp)) != Error::OK) {
+      if ((error = Global::log->write(tableName, base, ptr-base, clientTimestamp)) != Error::OK) {
 	errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to commit log";
-	rangePtr->DecrementUpdateCounter();
+	rangePtr->decrement_update_counter();
 	goto abort;
       }
     }
@@ -749,27 +749,27 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, const char *tableName, uint
     /**
      * Apply the modifications
      */
-    rangePtr->Lock();
+    rangePtr->lock();
     /** Apply the GO mods **/
     for (size_t i=0; i<goMods.size(); i++) {
       ByteString32T *key = (ByteString32T *)goMods[i].base;
       ByteString32T *value = (ByteString32T *)(goMods[i].base + Length(key));
-      rangePtr->Add(key, value);
+      rangePtr->add(key, value);
     }
     /** Apply the SPLIT mods **/
     for (size_t i=0; i<splitMods.size(); i++) {
       ByteString32T *key = (ByteString32T *)splitMods[i].base;
       ByteString32T *value = (ByteString32T *)(splitMods[i].base + Length(key));
-      rangePtr->Add(key, value);
+      rangePtr->add(key, value);
     }
-    rangePtr->Unlock();
+    rangePtr->unlock();
 
     /**
      * Split and Compaction processing
      */
-    rangePtr->ScheduleMaintenance();
+    rangePtr->schedule_maintenance();
 
-    rangePtr->DecrementUpdateCounter();
+    rangePtr->decrement_update_counter();
 
     if (Global::verbose) {
       LOG_VA_INFO("Added %d (%d split off) updates to '%s'", goMods.size()+splitMods.size(), splitMods.size(), tableName);
@@ -793,12 +793,12 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, const char *tableName, uint
     }
     ext.len = ptr - ext.buf;
     if ((error = cb->response(ext)) != Error::OK) {
-      LOG_VA_ERROR("Problem sending OK response - %s", Error::GetText(error));
+      LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
     }
   }
   else {
     if ((error = cb->response_ok()) != Error::OK) {
-      LOG_VA_ERROR("Problem sending OK response - %s", Error::GetText(error));
+      LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
     }
   }
 
@@ -807,9 +807,9 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, const char *tableName, uint
  abort:
 
   if (error != Error::OK) {
-    LOG_VA_ERROR("%s '%s'", Error::GetText(error), errMsg.c_str());
+    LOG_VA_ERROR("%s '%s'", Error::get_text(error), errMsg.c_str());
     if ((error = cb->error(error, errMsg)) != Error::OK) {
-      LOG_VA_ERROR("Problem sending error response - %s", Error::GetText(error));
+      LOG_VA_ERROR("Problem sending error response - %s", Error::get_text(error));
     }
   }
 }
@@ -819,10 +819,10 @@ void RangeServer::Update(ResponseCallbackUpdate *cb, const char *tableName, uint
 /**
  *
  */
-bool RangeServer::GetTableInfo(string &name, TableInfoPtr &info) {
-  boost::mutex::scoped_lock lock(mMutex);
-  TableInfoMapT::iterator iter = mTableInfoMap.find(name);
-  if (iter == mTableInfoMap.end())
+bool RangeServer::get_table_info(string &name, TableInfoPtr &info) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  TableInfoMapT::iterator iter = m_table_info_map.find(name);
+  if (iter == m_table_info_map.end())
     return false;
   info = (*iter).second;
   return true;
@@ -833,49 +833,49 @@ bool RangeServer::GetTableInfo(string &name, TableInfoPtr &info) {
 /**
  *
  */
-void RangeServer::SetTableInfo(string &name, TableInfoPtr &info) {
-  boost::mutex::scoped_lock lock(mMutex);
-  TableInfoMapT::iterator iter = mTableInfoMap.find(name);
-  if (iter != mTableInfoMap.end())
-    mTableInfoMap.erase(iter);
-  mTableInfoMap[name] = info;
+void RangeServer::set_table_info(string &name, TableInfoPtr &info) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  TableInfoMapT::iterator iter = m_table_info_map.find(name);
+  if (iter != m_table_info_map.end())
+    m_table_info_map.erase(iter);
+  m_table_info_map[name] = info;
 }
 
 
 
-int RangeServer::VerifySchema(TableInfoPtr &tableInfoPtr, int generation, std::string &errMsg) {
-  std::string tableFile = (std::string)"/hypertable/tables/" + tableInfoPtr->GetName();
+int RangeServer::verify_schema(TableInfoPtr &tableInfoPtr, int generation, std::string &errMsg) {
+  std::string tableFile = (std::string)"/hypertable/tables/" + tableInfoPtr->get_name();
   DynamicBuffer valueBuf(0);
   HandleCallbackPtr nullHandleCallback;
   int error;
   uint64_t handle;
-  SchemaPtr schemaPtr = tableInfoPtr->GetSchema();
+  SchemaPtr schemaPtr = tableInfoPtr->get_schema();
 
-  if (schemaPtr.get() == 0 || schemaPtr->GetGeneration() < generation) {
+  if (schemaPtr.get() == 0 || schemaPtr->get_generation() < generation) {
 
-    if ((error = mHyperspacePtr->Open(tableFile.c_str(), OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
-      LOG_VA_ERROR("Unable to open Hyperspace file '%s' (%s)", tableFile.c_str(), Error::GetText(error));
+    if ((error = m_hyperspace_ptr->open(tableFile.c_str(), OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
+      LOG_VA_ERROR("Unable to open Hyperspace file '%s' (%s)", tableFile.c_str(), Error::get_text(error));
       exit(1);
     }
 
-    if ((error = mHyperspacePtr->AttrGet(handle, "schema", valueBuf)) != Error::OK) {
+    if ((error = m_hyperspace_ptr->attr_get(handle, "schema", valueBuf)) != Error::OK) {
       errMsg = (std::string)"Problem getting 'schema' attribute for '" + tableFile + "'";
       return error;
     }
 
-    mHyperspacePtr->Close(handle);
+    m_hyperspace_ptr->close(handle);
 
-    schemaPtr.reset( Schema::NewInstance((const char *)valueBuf.buf, valueBuf.fill(), true) );
-    if (!schemaPtr->IsValid()) {
-      errMsg = "Schema Parse Error for table '" + tableInfoPtr->GetName() + "' : " + schemaPtr->GetErrorString();
+    schemaPtr.reset( Schema::new_instance((const char *)valueBuf.buf, valueBuf.fill(), true) );
+    if (!schemaPtr->is_valid()) {
+      errMsg = "Schema Parse Error for table '" + tableInfoPtr->get_name() + "' : " + schemaPtr->get_error_string();
       return Error::RANGESERVER_SCHEMA_PARSE_ERROR;
     }
 
-    tableInfoPtr->UpdateSchema(schemaPtr);
+    tableInfoPtr->update_schema(schemaPtr);
 
     // Generation check ...
-    if ( schemaPtr->GetGeneration() < generation ) {
-      errMsg = "Fetched Schema generation for table '" + tableInfoPtr->GetName() + "' is " + schemaPtr->GetGeneration() + " but supplied is " + generation;
+    if ( schemaPtr->get_generation() < generation ) {
+      errMsg = "Fetched Schema generation for table '" + tableInfoPtr->get_name() + "' is " + schemaPtr->get_generation() + " but supplied is " + generation;
       return Error::RANGESERVER_GENERATION_MISMATCH;
     }
   }

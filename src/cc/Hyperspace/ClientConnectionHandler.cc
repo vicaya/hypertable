@@ -34,8 +34,8 @@ using namespace hypertable;
 /**
  *
  */
-ClientConnectionHandler::ClientConnectionHandler(Comm *comm, Session *session, time_t timeout) : mComm(comm), mSession(session), mState(DISCONNECTED), mSessionId(0), mVerbose(false), mTimeout(timeout) {
-  memset(&mMasterAddr, 0, sizeof(struct sockaddr_in));
+ClientConnectionHandler::ClientConnectionHandler(Comm *comm, Session *session, time_t timeout) : m_comm(comm), m_session(session), m_state(DISCONNECTED), m_session_id(0), m_verbose(false), m_timeout(timeout) {
+  memset(&m_master_addr, 0, sizeof(struct sockaddr_in));
   return;
 }
 
@@ -44,60 +44,60 @@ ClientConnectionHandler::ClientConnectionHandler(Comm *comm, Session *session, t
  *
  */
 ClientConnectionHandler::~ClientConnectionHandler() {
-  if (mMasterAddr.sin_port != 0)
-    mComm->CloseSocket(mMasterAddr);
+  if (m_master_addr.sin_port != 0)
+    m_comm->close_socket(m_master_addr);
 }
 
 
 void ClientConnectionHandler::handle(hypertable::EventPtr &eventPtr) {
-  boost::mutex::scoped_lock lock(mMutex);
+  boost::mutex::scoped_lock lock(m_mutex);
   int error;
 
-  if (mVerbose) {
+  if (m_verbose) {
     LOG_VA_INFO("%s", eventPtr->toString().c_str());
   }
 
   if (eventPtr->type == hypertable::Event::MESSAGE) {
 
-    if (Protocol::ResponseCode(eventPtr.get()) != Error::OK) {
-      LOG_VA_ERROR("Connection handshake error: %s", Protocol::StringFormatMessage(eventPtr.get()).c_str());
-      mComm->CloseSocket(eventPtr->addr);
-      mState = DISCONNECTED;
+    if (Protocol::response_code(eventPtr.get()) != Error::OK) {
+      LOG_VA_ERROR("Connection handshake error: %s", Protocol::string_format_message(eventPtr.get()).c_str());
+      m_comm->close_socket(eventPtr->addr);
+      m_state = DISCONNECTED;
       return;
     }
 
-    mSession->StateTransition(Session::STATE_SAFE);
+    m_session->state_transition(Session::STATE_SAFE);
 
-    mState = CONNECTED;
+    m_state = CONNECTED;
   }
   else if (eventPtr->type == hypertable::Event::DISCONNECT) {
 
-    if (mVerbose) {
+    if (m_verbose) {
       LOG_VA_WARN("%s", eventPtr->toString().c_str());
     }
 
-    mSession->StateTransition(Session::STATE_JEOPARDY);
+    m_session->state_transition(Session::STATE_JEOPARDY);
 
-    mState = DISCONNECTED;
+    m_state = DISCONNECTED;
   }
   else if (eventPtr->type == hypertable::Event::CONNECTION_ESTABLISHED) {
 
-    mState = HANDSHAKING;
+    m_state = HANDSHAKING;
 
-    memcpy(&mMasterAddr, &eventPtr->addr, sizeof(struct sockaddr_in));
+    memcpy(&m_master_addr, &eventPtr->addr, sizeof(struct sockaddr_in));
 
-    CommBufPtr commBufPtr( Hyperspace::Protocol::CreateHandshakeRequest(mSessionId) );
+    CommBufPtr commBufPtr( Hyperspace::Protocol::create_handshake_request(m_session_id) );
 
-    if ((error = mComm->SendRequest(eventPtr->addr, mTimeout, commBufPtr, this)) != Error::OK) {
-      LOG_VA_ERROR("Problem sending handshake request - %s", Error::GetText(error));
-      mComm->CloseSocket(eventPtr->addr);
-      mState = DISCONNECTED;
+    if ((error = m_comm->send_request(eventPtr->addr, m_timeout, commBufPtr, this)) != Error::OK) {
+      LOG_VA_ERROR("Problem sending handshake request - %s", Error::get_text(error));
+      m_comm->close_socket(eventPtr->addr);
+      m_state = DISCONNECTED;
     }
   }
   else {
     LOG_VA_INFO("%s", eventPtr->toString().c_str());
-    mComm->CloseSocket(eventPtr->addr);
-    mState = DISCONNECTED;
+    m_comm->close_socket(eventPtr->addr);
+    m_state = DISCONNECTED;
   }
 
 }

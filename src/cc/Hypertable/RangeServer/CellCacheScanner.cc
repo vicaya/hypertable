@@ -30,56 +30,56 @@
 /**
  * 
  */
-CellCacheScanner::CellCacheScanner(CellCachePtr &cellCachePtr, ScanContextPtr &scanContextPtr) : CellListScanner(scanContextPtr), mCellCachePtr(cellCachePtr), mCellCacheMutex(cellCachePtr->mMutex), mCurKey(0), mCurValue(0), mEos(false) {
+CellCacheScanner::CellCacheScanner(CellCachePtr &cellCachePtr, ScanContextPtr &scanContextPtr) : CellListScanner(scanContextPtr), m_cell_cache_ptr(cellCachePtr), m_cell_cache_mutex(cellCachePtr->m_mutex), m_cur_key(0), m_cur_value(0), m_eos(false) {
 
   /** set start iterator **/
   if (!scanContextPtr->startKeyPtr || (scanContextPtr->startKeyPtr)->len == 0)
-    mStartIter = mCellCachePtr->mCellMap.begin();
+    m_start_iter = m_cell_cache_ptr->m_cell_map.begin();
   else
-    mStartIter = mCellCachePtr->mCellMap.lower_bound(scanContextPtr->startKeyPtr.get());
+    m_start_iter = m_cell_cache_ptr->m_cell_map.lower_bound(scanContextPtr->startKeyPtr.get());
 
   /** set end iterator **/
   if (!scanContextPtr->endKeyPtr || scanContextPtr->endKeyPtr->len == 0)
-    mEndIter = mCellCachePtr->mCellMap.end();
+    m_end_iter = m_cell_cache_ptr->m_cell_map.end();
   else
-    mEndIter = mCellCachePtr->mCellMap.lower_bound(scanContextPtr->endKeyPtr.get());
+    m_end_iter = m_cell_cache_ptr->m_cell_map.lower_bound(scanContextPtr->endKeyPtr.get());
 
-  mCurIter = mStartIter;
+  m_cur_iter = m_start_iter;
 
-  if (mCurIter != mEndIter) {
-    mCurKey = (*mCurIter).first;
-    mCurValue = (*mCurIter).second;
-    mEos = false;
+  if (m_cur_iter != m_end_iter) {
+    m_cur_key = (*m_cur_iter).first;
+    m_cur_value = (*m_cur_iter).second;
+    m_eos = false;
   }
   else
-    mEos = true;
+    m_eos = true;
 }
 
 
-bool CellCacheScanner::Get(ByteString32T **keyp, ByteString32T **valuep) {
-  if (!mEos) {
-    *keyp = (ByteString32T *)mCurKey;
-    *valuep = (ByteString32T *)mCurValue;
+bool CellCacheScanner::get(ByteString32T **keyp, ByteString32T **valuep) {
+  if (!m_eos) {
+    *keyp = (ByteString32T *)m_cur_key;
+    *valuep = (ByteString32T *)m_cur_value;
     return true;
   }
   return false;
 }
 
-void CellCacheScanner::Forward() {
-  boost::mutex::scoped_lock lock(mCellCacheMutex);
+void CellCacheScanner::forward() {
+  boost::mutex::scoped_lock lock(m_cell_cache_mutex);
   Key keyComps;
 
-  mCurIter++;
-  while (mCurIter != mEndIter) {
-    if (!keyComps.load((*mCurIter).first)) {
+  m_cur_iter++;
+  while (m_cur_iter != m_end_iter) {
+    if (!keyComps.load((*m_cur_iter).first)) {
       LOG_ERROR("Problem parsing key!");
     }
-    else if (mScanContextPtr->familyMask[keyComps.columnFamily]) {
-      mCurKey = (*mCurIter).first;
-      mCurValue = (*mCurIter).second;
+    else if (m_scan_context_ptr->familyMask[keyComps.columnFamily]) {
+      m_cur_key = (*m_cur_iter).first;
+      m_cur_value = (*m_cur_iter).second;
       return;
     }
-    mCurIter++;
+    m_cur_iter++;
   }
-  mEos = true;
+  m_eos = true;
 }

@@ -34,22 +34,22 @@ namespace hypertable {
   class ScannerMap {
 
   public:
-    ScannerMap() : mMutex() { return; }
-    uint32_t Put(CellListScannerPtr &scannerPtr, RangePtr &rangePtr);
-    bool Get(uint32_t id, CellListScannerPtr &scannerPtr, RangePtr &rangePtr);
-    bool Remove(uint32_t id);
+    ScannerMap() : m_mutex() { return; }
+    uint32_t put(CellListScannerPtr &scannerPtr, RangePtr &rangePtr);
+    bool get(uint32_t id, CellListScannerPtr &scannerPtr, RangePtr &rangePtr);
+    bool remove(uint32_t id);
 
   private:
-    static atomic_t msNextId;
+    static atomic_t ms_next_id;
 
-    boost::mutex   mMutex;
+    boost::mutex   m_mutex;
     typedef struct {
       CellListScannerPtr scannerPtr;
       RangePtr rangePtr;
     } ScanInfoT;
     typedef __gnu_cxx::hash_map<uint32_t, ScanInfoT> CellListScannerMapT;
 
-    CellListScannerMapT mScannerMap;
+    CellListScannerMapT m_scanner_map;
 
   };
 

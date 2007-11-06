@@ -32,22 +32,22 @@ namespace hypertable {
 
   public:
 
-    void ParseCommandLine(const char *line);
-    bool Matches(const char *line) { return !strncmp(line, CommandText(), strlen(CommandText())); }
+    void parse_command_line(const char *line);
+    bool matches(const char *line) { return !strncmp(line, command_text(), strlen(command_text())); }
 
-    virtual const char *CommandText() = 0;
-    virtual const char **Usage() = 0;
+    virtual const char *command_text() = 0;
+    virtual const char **usage() = 0;
     virtual int run() = 0;
 
-    void ClearArgs() { mArgs.clear(); }
-    void PushArg(std::string key, std::string value) { 
-      mArgs.push_back( std::pair<std::string, std::string>(key, value) );
+    void clear_args() { m_args.clear(); }
+    void push_arg(std::string key, std::string value) { 
+      m_args.push_back( std::pair<std::string, std::string>(key, value) );
     }
 
   protected:
-    std::vector< std::pair<std::string, std::string> >  mArgs;
+    std::vector< std::pair<std::string, std::string> >  m_args;
 
-    bool ParseStringLiteral(const char *str, std::string &text, const char **endptr);
+    bool parse_string_literal(const char *str, std::string &text, const char **endptr);
   };
 
 }

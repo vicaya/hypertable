@@ -35,16 +35,16 @@ using namespace hypertable;
  *
  */
 void RequestHandlerFetchScanblock::run() {
-  ResponseCallbackFetchScanblock cb(mComm, mEventPtr);
+  ResponseCallbackFetchScanblock cb(m_comm, m_event_ptr);
   uint32_t scannerId;
-  size_t remaining = mEventPtr->messageLen - 2;
-  uint8_t *msgPtr = mEventPtr->message + 2;
+  size_t remaining = m_event_ptr->messageLen - 2;
+  uint8_t *msgPtr = m_event_ptr->message + 2;
 
   // Scanner ID
-  if (!Serialization::DecodeInt(&msgPtr, &remaining, &scannerId))
+  if (!Serialization::decode_int(&msgPtr, &remaining, &scannerId))
     goto abort;
 
-  mRangeServer->FetchScanblock(&cb, scannerId);
+  m_range_server->fetch_scanblock(&cb, scannerId);
   return;
 
  abort:

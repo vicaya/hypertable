@@ -84,20 +84,20 @@ namespace {
 class RequestHandler : public ApplicationHandler {
 public:
 
-  RequestHandler(Comm *comm, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mComm(comm) { return; }
+  RequestHandler(Comm *comm, EventPtr &eventPtr) : ApplicationHandler(eventPtr), m_comm(comm) { return; }
 
   virtual void run() {
-    mHeaderBuilder.InitializeFromRequest(mEventPtr->header);
-    CommBufPtr cbufPtr( new CommBuf(mHeaderBuilder, mEventPtr->messageLen) );
-    cbufPtr->AppendBytes((uint8_t *)mEventPtr->message, mEventPtr->messageLen);
-    int error = mComm->SendResponse(mEventPtr->addr, cbufPtr);
+    m_header_builder.initialize_from_request(m_event_ptr->header);
+    CommBufPtr cbufPtr( new CommBuf(m_header_builder, m_event_ptr->messageLen) );
+    cbufPtr->append_bytes((uint8_t *)m_event_ptr->message, m_event_ptr->messageLen);
+    int error = m_comm->send_response(m_event_ptr->addr, cbufPtr);
     if (error != Error::OK) {
-      LOG_VA_ERROR("Comm::SendResponse returned %s", Error::GetText(error));
+      LOG_VA_ERROR("Comm::send_response returned %s", Error::get_text(error));
     }
   }
 private:
-  Comm *mComm;
-  HeaderBuilder mHeaderBuilder;
+  Comm *m_comm;
+  HeaderBuilder m_header_builder;
 };
 
 
@@ -109,7 +109,7 @@ class Dispatcher : public DispatchHandler {
 
 public:
 
-  Dispatcher(Comm *comm, ApplicationQueue *appQueue) : mComm(comm), mAppQueue(appQueue) { return; }
+  Dispatcher(Comm *comm, ApplicationQueue *appQueue) : m_comm(comm), m_app_queue(appQueue) { return; }
   
   virtual void handle(EventPtr &eventPtr) {
     if (gVerbose && eventPtr->type == Event::CONNECTION_ESTABLISHED) {
@@ -117,36 +117,36 @@ public:
     }
     else if (gVerbose && eventPtr->type == Event::DISCONNECT) {
       if (eventPtr->error != 0) {
-	LOG_VA_INFO("Disconnect : %s", Error::GetText(eventPtr->error));
+	LOG_VA_INFO("Disconnect : %s", Error::get_text(eventPtr->error));
       }
       else {
 	LOG_INFO("Disconnect.");
       }
     }
     else if (eventPtr->type == Event::ERROR) {
-      LOG_VA_WARN("Error : %s", Error::GetText(eventPtr->error));
+      LOG_VA_WARN("Error : %s", Error::get_text(eventPtr->error));
     }
     else if (eventPtr->type == Event::MESSAGE) {
-      if (mAppQueue == 0) {
-	mHeaderBuilder.InitializeFromRequest(eventPtr->header);
-	CommBufPtr cbufPtr( new CommBuf(mHeaderBuilder, eventPtr->messageLen) );
-	cbufPtr->AppendBytes((uint8_t *)eventPtr->message, eventPtr->messageLen);
+      if (m_app_queue == 0) {
+	m_header_builder.initialize_from_request(eventPtr->header);
+	CommBufPtr cbufPtr( new CommBuf(m_header_builder, eventPtr->messageLen) );
+	cbufPtr->append_bytes((uint8_t *)eventPtr->message, eventPtr->messageLen);
 	if (gDelay > 0)
 	  poll(0, 0, gDelay);
-	int error = mComm->SendResponse(eventPtr->addr, cbufPtr);
+	int error = m_comm->send_response(eventPtr->addr, cbufPtr);
 	if (error != Error::OK) {
-	  LOG_VA_ERROR("Comm::SendResponse returned %s", Error::GetText(error));
+	  LOG_VA_ERROR("Comm::send_response returned %s", Error::get_text(error));
 	}
       }
       else
-	mAppQueue->Add( new RequestHandler(mComm, eventPtr) );
+	m_app_queue->add( new RequestHandler(m_comm, eventPtr) );
     }
   }
 
 private:
-  Comm             *mComm;
-  ApplicationQueue *mAppQueue;
-  HeaderBuilder     mHeaderBuilder;
+  Comm             *m_comm;
+  ApplicationQueue *m_app_queue;
+  HeaderBuilder     m_header_builder;
 };
 
 
@@ -158,18 +158,18 @@ private:
 class UdpDispatcher : public DispatchHandler {
 public:
 
-  UdpDispatcher(Comm *comm) : mComm(comm) { return; }
+  UdpDispatcher(Comm *comm) : m_comm(comm) { return; }
 
   virtual void handle(EventPtr &eventPtr) {
     if (eventPtr->type == Event::MESSAGE) {
-      mHeaderBuilder.InitializeFromRequest(eventPtr->header);
-      CommBufPtr cbufPtr( new CommBuf(mHeaderBuilder, eventPtr->messageLen) );
-      cbufPtr->AppendBytes((uint8_t *)eventPtr->message, eventPtr->messageLen);
+      m_header_builder.initialize_from_request(eventPtr->header);
+      CommBufPtr cbufPtr( new CommBuf(m_header_builder, eventPtr->messageLen) );
+      cbufPtr->append_bytes((uint8_t *)eventPtr->message, eventPtr->messageLen);
       if (gDelay > 0)
 	poll(0, 0, gDelay);
-      int error = mComm->SendDatagram(eventPtr->addr, eventPtr->localAddr, cbufPtr);
+      int error = m_comm->send_datagram(eventPtr->addr, eventPtr->localAddr, cbufPtr);
       if (error != Error::OK) {
-	LOG_VA_ERROR("Comm::SendResponse returned %s", Error::GetText(error));
+	LOG_VA_ERROR("Comm::send_response returned %s", Error::get_text(error));
       }
     }
     else {
@@ -178,26 +178,26 @@ public:
   }
 
 private:
-  Comm           *mComm;
-  HeaderBuilder   mHeaderBuilder;
+  Comm           *m_comm;
+  HeaderBuilder   m_header_builder;
 };
 
 
 
 /**
- * This handler factory gets passed into Comm::Listen.  It
+ * This handler factory gets passed into Comm::listen.  It
  * gets constructed with a pointer to a DispatchHandler.
  */
 class HandlerFactory : public ConnectionHandlerFactory {
 public:
   HandlerFactory(DispatchHandlerPtr &dhp) {
-    mDispatchHandlerPtr = dhp;
+    m_dispatch_handler_ptr = dhp;
   }
-  virtual void newInstance(DispatchHandlerPtr &dhp) {
-    dhp = mDispatchHandlerPtr;
+  virtual void get_instance(DispatchHandlerPtr &dhp) {
+    dhp = m_dispatch_handler_ptr;
   }
 private:
-  DispatchHandlerPtr mDispatchHandlerPtr;
+  DispatchHandlerPtr m_dispatch_handler_ptr;
 };
 
 
@@ -221,12 +221,12 @@ int main(int argc, char **argv) {
 
   for (int i=1; i<argc; i++) {
     if (!strcmp(argv[i], "--help"))
-      Usage::DumpAndExit(usage);
+      Usage::dump_and_exit(usage);
     else if (!strcmp(argv[i], "--app-queue")) {
       appQueue = new ApplicationQueue(5);
     }
     else if (!strncmp(argv[i], "--connect-to=", 13)) {
-      if (!InetAddr::Initialize(&clientAddr, &argv[i][13]))
+      if (!InetAddr::initialize(&clientAddr, &argv[i][13]))
 	DUMP_CORE;
     }
     else if (!strncmp(argv[i], "--port=", 7)) {
@@ -246,11 +246,11 @@ int main(int argc, char **argv) {
     else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
       gVerbose = true;
     else
-      Usage::DumpAndExit(usage);
+      Usage::dump_and_exit(usage);
   }
 
-  System::Initialize(argv[0]);
-  ReactorFactory::Initialize(reactorCount);
+  System::initialize(argv[0]);
+  ReactorFactory::initialize(reactorCount);
 
   comm = new Comm();
 
@@ -260,21 +260,21 @@ int main(int argc, char **argv) {
       cout << "Delay = " << gDelay << endl;
   }
 
-  InetAddr::Initialize(&localAddr, "localhost", port);
+  InetAddr::initialize(&localAddr, "localhost", port);
 
   if (!udp) {
     dhp = new Dispatcher(comm, appQueue);
     
     if (clientAddr.sin_port != 0) {
-      if ((error = comm->Connect(clientAddr, localAddr, dhp)) != Error::OK) {
-	LOG_VA_ERROR("Comm::Connect error - %s", Error::GetText(error));
+      if ((error = comm->connect(clientAddr, localAddr, dhp)) != Error::OK) {
+	LOG_VA_ERROR("Comm::connect error - %s", Error::get_text(error));
 	exit(1);
       }
     }
     else {
       chfPtr = new HandlerFactory(dhp);
-      if ((error = comm->Listen(localAddr, chfPtr, dhp)) != Error::OK) {
-	LOG_VA_ERROR("Comm::Listen error - %s", Error::GetText(error));
+      if ((error = comm->listen(localAddr, chfPtr, dhp)) != Error::OK) {
+	LOG_VA_ERROR("Comm::listen error - %s", Error::get_text(error));
 	exit(1);
       }
     }
@@ -282,7 +282,7 @@ int main(int argc, char **argv) {
   else {
     assert(clientAddr.sin_port == 0);
     dhp = new UdpDispatcher(comm);
-    error = comm->CreateDatagramReceiveSocket(&localAddr, dhp);
+    error = comm->create_datagram_receive_socket(&localAddr, dhp);
   }
 
   poll(0, 0, -1);

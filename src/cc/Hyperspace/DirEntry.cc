@@ -26,21 +26,21 @@ using namespace hypertable;
 
 namespace Hyperspace {
 
-  size_t EncodedLengthDirEntry(DirEntryT &dirEntry) {
-    return 1 + Serialization::EncodedLengthString(dirEntry.name);
+  size_t encoded_length_dir_entry(DirEntryT &dirEntry) {
+    return 1 + Serialization::encoded_length_string(dirEntry.name);
   }
 
-  void EncodeDirEntry(uint8_t **bufPtr, DirEntryT &dirEntry) {
+  void encode_dir_entry(uint8_t **bufPtr, DirEntryT &dirEntry) {
     uint8_t bval = (dirEntry.isDirectory) ? 1 : 0;
     *(*bufPtr)++ = bval;
-    Serialization::EncodeString(bufPtr, dirEntry.name);
+    Serialization::encode_string(bufPtr, dirEntry.name);
   }
 
-  bool DecodeRangeDirEntry(uint8_t **bufPtr, size_t *remainingPtr, DirEntryT &dirEntry) {
+  bool decode_range_dir_entry(uint8_t **bufPtr, size_t *remainingPtr, DirEntryT &dirEntry) {
     uint8_t bval;
-    if (!Serialization::DecodeByte(bufPtr, remainingPtr, &bval))
+    if (!Serialization::decode_byte(bufPtr, remainingPtr, &bval))
       return false;
     dirEntry.isDirectory = (bval == 0) ? false : true;
-    return Serialization::DecodeString(bufPtr, remainingPtr, dirEntry.name);
+    return Serialization::decode_string(bufPtr, remainingPtr, dirEntry.name);
   }
 }

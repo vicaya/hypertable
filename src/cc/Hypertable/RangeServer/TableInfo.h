@@ -39,20 +39,20 @@ namespace hypertable {
   class TableInfo {
 
   public:
-    TableInfo(std::string &name, SchemaPtr &schemaPtr) : mMutex(), mName(name), mSchema(schemaPtr) { return; }
-    TableInfo(const char *name, SchemaPtr &schemaPtr) : mMutex(), mName(name), mSchema(schemaPtr) { return; }
-    std::string &GetName() { return mName; }
-    SchemaPtr &GetSchema() { 
-      boost::mutex::scoped_lock lock(mMutex);
-      return mSchema; 
+    TableInfo(std::string &name, SchemaPtr &schemaPtr) : m_mutex(), m_name(name), m_schema(schemaPtr) { return; }
+    TableInfo(const char *name, SchemaPtr &schemaPtr) : m_mutex(), m_name(name), m_schema(schemaPtr) { return; }
+    std::string &get_name() { return m_name; }
+    SchemaPtr &get_schema() { 
+      boost::mutex::scoped_lock lock(m_mutex);
+      return m_schema; 
     }
-    void UpdateSchema(SchemaPtr &schemaPtr) { 
-      boost::mutex::scoped_lock lock(mMutex);
-      mSchema = schemaPtr;
+    void update_schema(SchemaPtr &schemaPtr) { 
+      boost::mutex::scoped_lock lock(m_mutex);
+      m_schema = schemaPtr;
     }
-    bool GetRange(RangeSpecificationT *rangeSpec, RangePtr &rangePtr);
-    void AddRange(RangeInfoPtr &rangeInfoPtr);
-    bool FindContainingRange(std::string row, RangePtr &rangePtr);
+    bool get_range(RangeSpecificationT *rangeSpec, RangePtr &rangePtr);
+    void add_range(RangeInfoPtr &rangeInfoPtr);
+    bool find_containing_range(std::string row, RangePtr &rangePtr);
 
   private:
 
@@ -68,10 +68,10 @@ namespace hypertable {
 
     typedef std::map<std::string, RangePtr, ltEndRow> RangeMapT;
 
-    boost::mutex   mMutex;
-    std::string    mName;
-    SchemaPtr      mSchema;
-    RangeMapT      mRangeMap;
+    boost::mutex   m_mutex;
+    std::string    m_name;
+    SchemaPtr      m_schema;
+    RangeMapT      m_range_map;
   };
 
   typedef boost::shared_ptr<TableInfo> TableInfoPtr;

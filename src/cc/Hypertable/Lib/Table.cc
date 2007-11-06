@@ -36,7 +36,7 @@ using namespace Hyperspace;
 /**
  * 
  */
-Table::Table(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr, std::string &name) : mConnManagerPtr(connManagerPtr), mHyperspacePtr(hyperspacePtr) {
+Table::Table(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr, std::string &name) : m_conn_manager_ptr(connManagerPtr), m_hyperspace_ptr(hyperspacePtr) {
   int error;
   std::string tableFile = (std::string)"/hypertable/tables/" + name;
   DynamicBuffer schemaBuf(0);
@@ -47,32 +47,32 @@ Table::Table(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyper
   /**
    * Open table file
    */
-  if ((error = mHyperspacePtr->Open(tableFile, OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
-    LOG_VA_ERROR("Unable to open Hyperspace table file '%s' - %s", tableFile.c_str(), Error::GetText(error));
+  if ((error = m_hyperspace_ptr->open(tableFile, OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
+    LOG_VA_ERROR("Unable to open Hyperspace table file '%s' - %s", tableFile.c_str(), Error::get_text(error));
     throw Exception(error);
   }
 
   /**
    * Get schema attribute
    */
-  if ((error = mHyperspacePtr->AttrGet(handle, "schema", schemaBuf)) != Error::OK) {
-    LOG_VA_ERROR("Problem getting attribute 'schema' for table file '%s' - %s", tableFile.c_str(), Error::GetText(error));
+  if ((error = m_hyperspace_ptr->attr_get(handle, "schema", schemaBuf)) != Error::OK) {
+    LOG_VA_ERROR("Problem getting attribute 'schema' for table file '%s' - %s", tableFile.c_str(), Error::get_text(error));
     throw Exception(error);
   }
 
-  mHyperspacePtr->Close(handle);
+  m_hyperspace_ptr->close(handle);
 
-  mSchemaPtr.reset( Schema::NewInstance((const char *)schemaBuf.buf, strlen((const char *)schemaBuf.buf), true) );
+  m_schema_ptr.reset( Schema::new_instance((const char *)schemaBuf.buf, strlen((const char *)schemaBuf.buf), true) );
 
-  if (!mSchemaPtr->IsValid()) {
-    LOG_VA_ERROR("Schema Parse Error: %s", mSchemaPtr->GetErrorString());
+  if (!m_schema_ptr->is_valid()) {
+    LOG_VA_ERROR("Schema Parse Error: %s", m_schema_ptr->get_error_string());
     throw Exception(Error::MASTER_BAD_SCHEMA);
   }
 
 }
 
 
-int Table::CreateMutator(MutatorPtr &mutatorPtr) {
-  mutatorPtr = new Mutator(mConnManagerPtr, mSchemaPtr);
+int Table::create_mutator(MutatorPtr &mutatorPtr) {
+  mutatorPtr = new Mutator(m_conn_manager_ptr, m_schema_ptr);
   return Error::OK;
 }

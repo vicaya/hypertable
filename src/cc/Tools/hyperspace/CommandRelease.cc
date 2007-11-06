@@ -31,7 +31,7 @@ using namespace hypertable;
 using namespace Hyperspace;
 using namespace std;
 
-const char *CommandRelease::msUsage[] = {
+const char *CommandRelease::ms_usage[] = {
   "release <file>",
   "  This command issues a RELEASE request to Hyperspace which causes any",
   "  lock held by this handle to be released.",
@@ -43,18 +43,18 @@ int CommandRelease::run() {
   uint32_t mode = 0;
   struct LockSequencerT lockseq;
 
-  if (mArgs.size() != 1) {
+  if (m_args.size() != 1) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
     return -1;
   }
 
-  if (mArgs[0].second != "") {
+  if (m_args[0].second != "") {
     cerr << "Invalid character '=' in argument." << endl;
     return -1;
   }
 
-  if (!Util::GetHandle(mArgs[0].first, &handle))
+  if (!Util::get_handle(m_args[0].first, &handle))
     return -1;
 
-  return mSession->Release(handle);
+  return m_session->release(handle);
 }

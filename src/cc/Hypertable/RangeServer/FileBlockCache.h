@@ -44,22 +44,22 @@ namespace hypertable {
       uint32_t refCount;
     } CacheValueT;
 
-    static atomic_t msNextFileId;
+    static atomic_t ms_next_file_id;
 
   public:
 
-    FileBlockCache(uint64_t maxMemory) : mMutex(), mBlockMap(), mHead(0), mTail(0) { return; }
-    bool Checkout(int fileId, uint32_t offset, uint8_t **blockp, uint32_t *lengthp);
-    void Checkin(int fileId, uint32_t offset);
-    bool InsertAndCheckout(int fileId, uint32_t offset, uint8_t *block, uint32_t length);
+    FileBlockCache(uint64_t maxMemory) : m_mutex(), m_block_map(), m_head(0), m_tail(0) { return; }
+    bool checkout(int fileId, uint32_t offset, uint8_t **blockp, uint32_t *lengthp);
+    void checkin(int fileId, uint32_t offset);
+    bool insert_and_checkout(int fileId, uint32_t offset, uint8_t *block, uint32_t length);
 
-    static int GetNextFileId() {
-      return atomic_inc_return(&msNextFileId);
+    static int get_next_file_id() {
+      return atomic_inc_return(&ms_next_file_id);
     }
 
   private:
 
-    void MoveToHead(CacheValueT *cacheValue);
+    void move_to_head(CacheValueT *cacheValue);
 
     struct hashCacheKey {
       size_t operator()( const CacheKeyT &key ) const {
@@ -75,10 +75,10 @@ namespace hypertable {
 
     typedef __gnu_cxx::hash_map<CacheKeyT, CacheValueT *, hashCacheKey, eqCacheKey> BlockMapT;
 
-    boost::mutex  mMutex;
-    BlockMapT     mBlockMap;
-    CacheValueT  *mHead;
-    CacheValueT  *mTail;
+    boost::mutex  m_mutex;
+    BlockMapT     m_block_map;
+    CacheValueT  *m_head;
+    CacheValueT  *m_tail;
   };
 
 }

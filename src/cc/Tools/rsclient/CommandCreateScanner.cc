@@ -44,7 +44,7 @@ extern "C" {
 using namespace hypertable;
 using namespace std;
 
-const char *CommandCreateScanner::msUsage[] = {
+const char *CommandCreateScanner::ms_usage[] = {
   "create scanner <range> [OPTIONS]",
   "",
   "  OPTIONS:",
@@ -76,12 +76,12 @@ int CommandCreateScanner::run() {
   uint32_t ilen;
   ScanResult result;
 
-  if (mArgs.size() == 0) {
+  if (m_args.size() == 0) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
     return -1;
   }
 
-  if (mArgs[0].second != "" || !ParseRangeSpec(mArgs[0].first, tableName, startRow, endRow)) {
+  if (m_args[0].second != "" || !ParseRangeSpec(m_args[0].first, tableName, startRow, endRow)) {
     cerr << "Invalid range specification." << endl;
     return -1;
   }
@@ -94,7 +94,7 @@ int CommandCreateScanner::run() {
     Global::schemaMap[tableName] = Global::outstandingSchemaPtr;    
   }
 
-  cout << "Generation = " << Global::outstandingSchemaPtr->GetGeneration() << endl;
+  cout << "Generation = " << Global::outstandingSchemaPtr->get_generation() << endl;
   cout << "TableName  = " << tableName << endl;
   cout << "StartRow   = " << startRow << endl;
   cout << "EndRow     = " << endRow << endl;
@@ -102,7 +102,7 @@ int CommandCreateScanner::run() {
   rangeSpec.tableName = tableName.c_str();
   rangeSpec.startRow = startRow.c_str();
   rangeSpec.endRow = endRow.c_str();
-  rangeSpec.generation = Global::outstandingSchemaPtr->GetGeneration();
+  rangeSpec.generation = Global::outstandingSchemaPtr->get_generation();
 
   /**
    * Create Scan specification
@@ -117,29 +117,29 @@ int CommandCreateScanner::run() {
   scanSpec.interval.first = 0;
   scanSpec.interval.second = 0;
 
-  for (size_t i=1; i<mArgs.size(); i++) {
-    if (mArgs[i].second == "") {
-      cerr << "No value supplied for '" << mArgs[i].first << "'" << endl;
+  for (size_t i=1; i<m_args.size(); i++) {
+    if (m_args[i].second == "") {
+      cerr << "No value supplied for '" << m_args[i].first << "'" << endl;
       return -1;
     }
-    if (mArgs[i].first == "row-limit")
-      scanSpec.rowLimit = atoi(mArgs[i].second.c_str());
-    else if (mArgs[i].first == "cell-limit")
-      scanSpec.cellLimit = atoi(mArgs[i].second.c_str());
-    else if (mArgs[i].first == "start")
-      scanSpec.startRow = mArgs[i].second.c_str();
-    else if (mArgs[i].first == "end")
-      scanSpec.endRow = mArgs[i].second.c_str();
-    else if (mArgs[i].first == "row-range") {
-      if (!DecodeRowRangeSpec(mArgs[i].second, scanSpec))
+    if (m_args[i].first == "row-limit")
+      scanSpec.rowLimit = atoi(m_args[i].second.c_str());
+    else if (m_args[i].first == "cell-limit")
+      scanSpec.cellLimit = atoi(m_args[i].second.c_str());
+    else if (m_args[i].first == "start")
+      scanSpec.startRow = m_args[i].second.c_str();
+    else if (m_args[i].first == "end")
+      scanSpec.endRow = m_args[i].second.c_str();
+    else if (m_args[i].first == "row-range") {
+      if (!decode_row_range_spec(m_args[i].second, scanSpec))
 	return -1;
     }
-    else if (mArgs[i].first == "start-time")
-      scanSpec.interval.first = strtoll(mArgs[i].second.c_str(), 0, 10);
-    else if (mArgs[i].first == "end-time")
-      scanSpec.interval.second = strtoll(mArgs[i].second.c_str(), 0, 10);
-    else if (mArgs[i].first == "columns") {
-      columnStr = strtok_r((char *)mArgs[i].second.c_str(), ",", &last);
+    else if (m_args[i].first == "start-time")
+      scanSpec.interval.first = strtoll(m_args[i].second.c_str(), 0, 10);
+    else if (m_args[i].first == "end-time")
+      scanSpec.interval.second = strtoll(m_args[i].second.c_str(), 0, 10);
+    else if (m_args[i].first == "columns") {
+      columnStr = strtok_r((char *)m_args[i].second.c_str(), ",", &last);
       while (columnStr) {
 	scanSpec.columns.push_back(columnStr);
 	columnStr = strtok_r(0, ",", &last);
@@ -150,17 +150,17 @@ int CommandCreateScanner::run() {
   /**
    * 
    */
-  if ((error = Global::rangeServer->CreateScanner(mAddr, rangeSpec, scanSpec, result)) != Error::OK)
+  if ((error = Global::rangeServer->create_scanner(m_addr, rangeSpec, scanSpec, result)) != Error::OK)
     return error;
 
-  Global::outstandingScannerId = result.GetId();
+  Global::outstandingScannerId = result.get_id();
 
-  ScanResult::VectorT &rvec = result.GetVector();
+  ScanResult::VectorT &rvec = result.get_vector();
 
   for (size_t i=0; i<rvec.size(); i++)
     DisplayScanData(rvec[i].first, rvec[i].second, Global::outstandingSchemaPtr);
 
-  if (result.Eos())
+  if (result.eos())
     Global::outstandingScannerId = -1;
 
   return Error::OK;
@@ -170,7 +170,7 @@ int CommandCreateScanner::run() {
 /**
  *
  */
-bool CommandCreateScanner::DecodeRowRangeSpec(std::string &specStr, ScanSpecificationT &scanSpec) {
+bool CommandCreateScanner::decode_row_range_spec(std::string &specStr, ScanSpecificationT &scanSpec) {
   regex_t reg;
   regmatch_t pmatch[5];
   int error;

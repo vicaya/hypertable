@@ -32,11 +32,11 @@ namespace hypertable {
   class InetAddr {
 
   public:
-    static bool Initialize(struct sockaddr_in *addr, const char *host, uint16_t port);
-    static bool Initialize(struct sockaddr_in *addr, const char *addrStr);
-    static bool Initialize(struct sockaddr_in *addr, uint32_t haddr, uint16_t port);
-    static const char *StringFormat(std::string &addrStr, struct sockaddr_in &addr);
-    static void GetHostname(std::string &hostname);
+    static bool initialize(struct sockaddr_in *addr, const char *host, uint16_t port);
+    static bool initialize(struct sockaddr_in *addr, const char *addrStr);
+    static bool initialize(struct sockaddr_in *addr, uint32_t haddr, uint16_t port);
+    static const char *string_format(std::string &addrStr, struct sockaddr_in &addr);
+    static void get_hostname(std::string &hostname);
   };
 
 }

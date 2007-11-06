@@ -29,15 +29,15 @@ namespace hypertable {
 
   class CommandGetSchema : public InteractiveCommand {
   public:
-    CommandGetSchema(Client *client) : mClient(client) { return; }
-    virtual const char *CommandText() { return "get schema"; }
-    virtual const char **Usage() { return msUsage; }
+    CommandGetSchema(Client *client) : m_client(client) { return; }
+    virtual const char *command_text() { return "get schema"; }
+    virtual const char **usage() { return ms_usage; }
     virtual int run();
 
   private:
-    static const char *msUsage[];
+    static const char *ms_usage[];
 
-    Client *mClient;
+    Client *m_client;
   };
 
 }

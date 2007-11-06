@@ -33,21 +33,21 @@ namespace hypertable {
 
 class CommTestDatagramThreadFunction {
  public:
-  CommTestDatagramThreadFunction(hypertable::Comm *comm, struct sockaddr_in &addr, const char *input) : mComm(comm), mAddr(addr) {
-    mInputFile = input;
-    mPort = 0;
+  CommTestDatagramThreadFunction(hypertable::Comm *comm, struct sockaddr_in &addr, const char *input) : m_comm(comm), m_addr(addr) {
+    m_input_file = input;
+    m_port = 0;
   }
-  void SetOutputFile(const char *output) { 
-    mOutputFile = output;
+  void set_output_file(const char *output) { 
+    m_output_file = output;
   }
-  void SetReceivePort(uint16_t port) { mPort = port; }
+  void set_receive_port(uint16_t port) { m_port = port; }
   void operator()();
 
  private:
-  hypertable::Comm *mComm;
-  struct sockaddr_in mAddr;
-  const char *mInputFile;
-  const char *mOutputFile;
-  uint16_t mPort;
+  hypertable::Comm *m_comm;
+  struct sockaddr_in m_addr;
+  const char *m_input_file;
+  const char *m_output_file;
+  uint16_t m_port;
 };
 

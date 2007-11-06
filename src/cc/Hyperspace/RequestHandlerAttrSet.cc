@@ -34,27 +34,27 @@ using namespace hypertable;
  *
  */
 void RequestHandlerAttrSet::run() {
-  ResponseCallback cb(mComm, mEventPtr);
-  size_t remaining = mEventPtr->messageLen - 2;
-  uint8_t *msgPtr = mEventPtr->message + 2;
+  ResponseCallback cb(m_comm, m_event_ptr);
+  size_t remaining = m_event_ptr->messageLen - 2;
+  uint8_t *msgPtr = m_event_ptr->message + 2;
   const char *name;
   uint64_t handle;
   uint8_t *value;
   int32_t valueLen;
 
   // handle
-  if (!Serialization::DecodeLong(&msgPtr, &remaining, &handle))
+  if (!Serialization::decode_long(&msgPtr, &remaining, &handle))
     goto abort;
 
   // name
-  if (!Serialization::DecodeString(&msgPtr, &remaining, &name))
+  if (!Serialization::decode_string(&msgPtr, &remaining, &name))
     goto abort;
 
   // value
-  if (!Serialization::DecodeByteArray(&msgPtr, &remaining, &value, &valueLen))
+  if (!Serialization::decode_byte_array(&msgPtr, &remaining, &value, &valueLen))
     goto abort;
 
-  mMaster->AttrSet(&cb, mSessionId, handle, name, value, valueLen);
+  m_master->attr_set(&cb, m_session_id, handle, name, value, valueLen);
 
   return;
 

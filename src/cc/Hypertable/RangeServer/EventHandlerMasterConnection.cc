@@ -34,8 +34,8 @@ using namespace hypertable;
 void EventHandlerMasterConnection::run() {
   int error;
 
-  if ((error = mMasterClientPtr->RegisterServer( mServerIdStr )) != Error::OK) {
-    LOG_VA_ERROR("Problem registering ourselves (%s) with the Master - %s", mServerIdStr.c_str(), Error::GetText(error));
+  if ((error = m_master_client_ptr->register_server( m_server_id_str )) != Error::OK) {
+    LOG_VA_ERROR("Problem registering ourselves (%s) with the Master - %s", m_server_id_str.c_str(), Error::get_text(error));
   }
 
   return;

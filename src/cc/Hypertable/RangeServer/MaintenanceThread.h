@@ -49,13 +49,13 @@ namespace hypertable {
       }
     };
 
-    static std::priority_queue<WorkInfoT, std::vector<WorkInfoT>, ltWorkInfo> msInputQueue;
+    static std::priority_queue<WorkInfoT, std::vector<WorkInfoT>, ltWorkInfo> ms_input_queue;
 
-    static boost::mutex     msMutex;
-    static boost::condition msCond;
+    static boost::mutex     ms_mutex;
+    static boost::condition ms_cond;
 
-    static void ScheduleMaintenance(Range *rangen);
-    static void ScheduleCompaction(Range *range, WorkType wtype);
+    static void schedule_maintenance(Range *rangen);
+    static void schedule_compaction(Range *range, WorkType wtype);
 
     void operator()();
 

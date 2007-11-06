@@ -31,7 +31,7 @@
 using namespace hypertable;
 using namespace std;
 
-const char *CommandGetSchema::msUsage[] = {
+const char *CommandGetSchema::ms_usage[] = {
   "get schema <tableName>",
   "",
   "  This command fetches the schema for table <tableName> and displays it to stdout.",
@@ -43,16 +43,16 @@ int CommandGetSchema::run() {
   std::string schema;
   int error;
 
-  if (mArgs.size() != 1) {
+  if (m_args.size() != 1) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
     return -1;
   }
 
-  if (mArgs[0].second != "")
-    Usage::DumpAndExit(msUsage);
+  if (m_args[0].second != "")
+    Usage::dump_and_exit(ms_usage);
 
-  if ((error = mClient->GetSchema(mArgs[0].first, schema)) != Error::OK) {
-    cerr << "Problem getting schema for table '" << mArgs[0].first << "' - " << Error::GetText(error) << endl;
+  if ((error = m_client->get_schema(m_args[0].first, schema)) != Error::OK) {
+    cerr << "Problem getting schema for table '" << m_args[0].first << "' - " << Error::get_text(error) << endl;
     return error;
   }
 

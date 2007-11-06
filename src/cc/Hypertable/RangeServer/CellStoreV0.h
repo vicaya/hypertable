@@ -51,30 +51,30 @@ namespace hypertable {
     CellStoreV0(Filesystem *filesys);
     virtual ~CellStoreV0();
 
-    virtual int Create(const char *fname, size_t blockSize=Constants::DEFAULT_BLOCKSIZE);
-    virtual int Add(const ByteString32T *key, const ByteString32T *value);
-    virtual int Finalize(uint64_t timestamp);
+    virtual int create(const char *fname, size_t blockSize=Constants::DEFAULT_BLOCKSIZE);
+    virtual int add(const ByteString32T *key, const ByteString32T *value);
+    virtual int finalize(uint64_t timestamp);
 
-    virtual int Open(const char *fname, const ByteString32T *startKey, const ByteString32T *endKey);
-    virtual int LoadIndex();
-    virtual uint64_t GetLogCutoffTime();
-    virtual uint64_t DiskUsage() { return mDiskUsage; }
-    virtual ByteString32T *GetSplitKey();
-    virtual std::string &GetFilename() { return mFilename; }
-    virtual uint16_t GetFlags();
+    virtual int open(const char *fname, const ByteString32T *startKey, const ByteString32T *endKey);
+    virtual int load_index();
+    virtual uint64_t get_log_cutoff_time();
+    virtual uint64_t disk_usage() { return m_disk_usage; }
+    virtual ByteString32T *get_split_key();
+    virtual std::string &get_filename() { return m_filename; }
+    virtual uint16_t get_flags();
 
     /**
      * Creates a CellStoreScannerV0 object that contains an shared pointer (intrusive_ptr)
      * to this CellStore;
      */
-    virtual CellListScanner *CreateScanner(ScanContextPtr &scanContextPtr);
+    virtual CellListScanner *create_scanner(ScanContextPtr &scanContextPtr);
 
     friend class CellStoreScannerV0;
 
   protected:
 
-    void AddIndexEntry(const ByteString32T *key, uint32_t offset);
-    void RecordSplitKey(const uint8_t *keyBytes);
+    void add_index_entry(const ByteString32T *key, uint32_t offset);
+    void record_split_key(const uint8_t *keyBytes);
 
     typedef struct {
       uint32_t  fixIndexOffset;
@@ -89,26 +89,26 @@ namespace hypertable {
 
     typedef map<ByteString32T *, uint32_t, ltByteString32> IndexMapT;
 
-    Filesystem            *mFilesys;
-    std::string            mFilename;
-    int32_t                mFd;
-    IndexMapT              mIndex;
-    StoreTrailerT          mTrailer;
-    BlockDeflater         *mBlockDeflater;
-    DynamicBuffer          mBuffer;
-    DynamicBuffer          mFixIndexBuffer;
-    DynamicBuffer          mVarIndexBuffer;
-    size_t                 mBlockSize;
-    DispatchHandlerSynchronizer  mSyncHandler;
-    uint32_t               mOutstandingAppends;
-    uint32_t               mOffset;
-    ByteString32T         *mLastKey;
-    uint64_t               mFileLength;
-    uint32_t               mDiskUsage;
-    ByteString32Ptr        mSplitKey;
-    int                    mFileId;
-    ByteString32Ptr        mStartKeyPtr;
-    ByteString32Ptr        mEndKeyPtr;
+    Filesystem            *m_filesys;
+    std::string            m_filename;
+    int32_t                m_fd;
+    IndexMapT              m_index;
+    StoreTrailerT          m_trailer;
+    BlockDeflater         *m_block_deflater;
+    DynamicBuffer          m_buffer;
+    DynamicBuffer          m_fix_index_buffer;
+    DynamicBuffer          m_var_index_buffer;
+    size_t                 m_block_size;
+    DispatchHandlerSynchronizer  m_sync_handler;
+    uint32_t               m_outstanding_appends;
+    uint32_t               m_offset;
+    ByteString32T         *m_last_key;
+    uint64_t               m_file_length;
+    uint32_t               m_disk_usage;
+    ByteString32Ptr        m_split_key;
+    int                    m_file_id;
+    ByteString32Ptr        m_start_key_ptr;
+    ByteString32Ptr        m_end_key_ptr;
   };
 
 }

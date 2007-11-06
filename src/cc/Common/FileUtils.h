@@ -36,23 +36,23 @@ namespace hypertable {
   class FileUtils {
 
   public:
-    static ssize_t Read(int fd, void *vptr, size_t n);
-    static ssize_t Pread(int fd, void *vptr, size_t n, off_t offset);
-    static ssize_t Write(int fd, const void *vptr, size_t n);
-    static ssize_t Writev(int fd, const struct iovec *vector, int count);
-    static ssize_t Sendto(int fd, const void *vptr, size_t n, const struct sockaddr *to, socklen_t tolen);
-    static ssize_t Recvfrom(int fd, void *vptr, size_t n, struct sockaddr *from, socklen_t *fromlen);
-    static void SetFlags(int fd, int flags);
-    static char *FileToBuffer(const char *fname, off_t *lenp);
-    static bool Mkdirs(const char *dirname);
-    static bool Exists(const char *fname);
-    static off_t Length(const char *fname);
-    static int Getxattr(const char *path, const char *name, void *value, size_t size);
-    static int Fgetxattr(int fd, const char *name, void *value, size_t size);
-    static int Setxattr(const char *path, const char *name, const void *value, size_t size, int flags);
-    static int Fsetxattr(int fd, const char *name, const void *value, size_t size, int flags);
-    static int Removexattr(const char *path, const char *name);
-    static int Fremovexattr(int fd, const char *name);
+    static ssize_t read(int fd, void *vptr, size_t n);
+    static ssize_t pread(int fd, void *vptr, size_t n, off_t offset);
+    static ssize_t write(int fd, const void *vptr, size_t n);
+    static ssize_t writev(int fd, const struct iovec *vector, int count);
+    static ssize_t sendto(int fd, const void *vptr, size_t n, const struct sockaddr *to, socklen_t tolen);
+    static ssize_t recvfrom(int fd, void *vptr, size_t n, struct sockaddr *from, socklen_t *fromlen);
+    static void set_flags(int fd, int flags);
+    static char *file_to_buffer(const char *fname, off_t *lenp);
+    static bool mkdirs(const char *dirname);
+    static bool exists(const char *fname);
+    static off_t length(const char *fname);
+    static int getxattr(const char *path, const char *name, void *value, size_t size);
+    static int fgetxattr(int fd, const char *name, void *value, size_t size);
+    static int setxattr(const char *path, const char *name, const void *value, size_t size, int flags);
+    static int fsetxattr(int fd, const char *name, const void *value, size_t size, int flags);
+    static int removexattr(const char *path, const char *name);
+    static int fremovexattr(int fd, const char *name);
   };
 
 }

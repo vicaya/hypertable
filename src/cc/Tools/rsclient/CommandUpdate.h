@@ -30,15 +30,15 @@ namespace hypertable {
 
   class CommandUpdate : public InteractiveCommand {
   public:
-    CommandUpdate(struct sockaddr_in &addr) : mAddr(addr) { return; }
-    virtual const char *CommandText() { return "update"; }
-    virtual const char **Usage() { return msUsage; }
+    CommandUpdate(struct sockaddr_in &addr) : m_addr(addr) { return; }
+    virtual const char *command_text() { return "update"; }
+    virtual const char **usage() { return ms_usage; }
     virtual int run();
 
   private:
-    static const char *msUsage[];
+    static const char *ms_usage[];
 
-    struct sockaddr_in mAddr;
+    struct sockaddr_in m_addr;
   };
 
 }

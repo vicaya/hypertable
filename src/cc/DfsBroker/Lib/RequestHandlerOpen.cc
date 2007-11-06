@@ -35,18 +35,18 @@ using namespace hypertable::DfsBroker;
  *
  */
 void RequestHandlerOpen::run() {
-  ResponseCallbackOpen cb(mComm, mEventPtr);
+  ResponseCallbackOpen cb(m_comm, m_event_ptr);
   const char *fileName;
   uint32_t bufferSize;
-  size_t remaining = mEventPtr->messageLen - sizeof(int16_t);
-  uint8_t *msgPtr = mEventPtr->message + sizeof(int16_t);
+  size_t remaining = m_event_ptr->messageLen - sizeof(int16_t);
+  uint8_t *msgPtr = m_event_ptr->message + sizeof(int16_t);
 
   // buffer size
-  if (!Serialization::DecodeInt(&msgPtr, &remaining, &bufferSize))
+  if (!Serialization::decode_int(&msgPtr, &remaining, &bufferSize))
     goto abort;
 
   // file name
-  if (!Serialization::DecodeString(&msgPtr, &remaining, &fileName))
+  if (!Serialization::decode_string(&msgPtr, &remaining, &fileName))
     goto abort;
 
   // validate filename
@@ -56,7 +56,7 @@ void RequestHandlerOpen::run() {
     return;
   }
 
-  mBroker->Open(&cb, fileName, bufferSize);
+  m_broker->open(&cb, fileName, bufferSize);
 
   return;
 

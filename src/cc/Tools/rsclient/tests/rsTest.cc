@@ -53,10 +53,10 @@ namespace {
 int main(int argc, char **argv) {
   std::string commandStr;
 
-  System::Initialize(argv[0]);
+  System::initialize(argv[0]);
 
   for (int i=0; requiredFiles[i]; i++) {
-    if (!FileUtils::Exists(requiredFiles[i])) {
+    if (!FileUtils::exists(requiredFiles[i])) {
       LOG_VA_ERROR("Unable to find '%s'", requiredFiles[i]);
       return 1;
     }

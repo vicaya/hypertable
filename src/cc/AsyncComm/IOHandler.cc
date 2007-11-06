@@ -38,24 +38,24 @@ using namespace hypertable;
 
 #if defined(__linux__)
 
-void IOHandler::AddPollInterest(int mode) {
+void IOHandler::add_poll_interest(int mode) {
   struct epoll_event event;
 
-  mPollInterest |= mode;
+  m_poll_interest |= mode;
 
   memset(&event, 0, sizeof(struct epoll_event));
   event.data.ptr = this;
   event.events = EPOLLERR | EPOLLHUP;
 
-  if (mPollInterest & Reactor::READ_READY)
+  if (m_poll_interest & Reactor::READ_READY)
     event.events |= EPOLLIN;
-  if (mPollInterest & Reactor::WRITE_READY)
+  if (m_poll_interest & Reactor::WRITE_READY)
     event.events |= EPOLLOUT;
 
-  if (epoll_ctl(mReactor->pollFd, EPOLL_CTL_MOD, mSd, &event) < 0) {
+  if (epoll_ctl(m_reactor->pollFd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
     /**
     LOG_VA_ERROR("epoll_ctl(%d, EPOLL_CTL_MOD, sd=%d) (mode=%x) : %s", 
-		 mReactor->pollFd, mSd, mode, strerror(errno));
+		 m_reactor->pollFd, m_sd, mode, strerror(errno));
     *((int *)0) = 1;
     **/
   }
@@ -63,29 +63,29 @@ void IOHandler::AddPollInterest(int mode) {
 
 
 
-void IOHandler::RemovePollInterest(int mode) {
+void IOHandler::remove_poll_interest(int mode) {
   struct epoll_event event;
 
-  mPollInterest &= ~mode;
+  m_poll_interest &= ~mode;
 
   memset(&event, 0, sizeof(struct epoll_event));
   event.data.ptr = this;
   event.events = EPOLLERR | EPOLLHUP;
 
-  if (mPollInterest & Reactor::READ_READY)
+  if (m_poll_interest & Reactor::READ_READY)
     event.events |= EPOLLIN;
-  if (mPollInterest & Reactor::WRITE_READY)
+  if (m_poll_interest & Reactor::WRITE_READY)
     event.events |= EPOLLOUT;
 
-  if (epoll_ctl(mReactor->pollFd, EPOLL_CTL_MOD, mSd, &event) < 0) {
-    LOG_VA_ERROR("epoll_ctl(EPOLL_CTL_MOD, sd=%d) (mode=%x) : %s", mSd, mode, strerror(errno));
+  if (epoll_ctl(m_reactor->pollFd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
+    LOG_VA_ERROR("epoll_ctl(EPOLL_CTL_MOD, sd=%d) (mode=%x) : %s", m_sd, mode, strerror(errno));
     exit(1);
   }
 }
 
 
 
-void IOHandler::DisplayEvent(struct epoll_event *event) {
+void IOHandler::display_event(struct epoll_event *event) {
   char buf[128];
 
   buf[0] = 0;
@@ -116,42 +116,42 @@ void IOHandler::DisplayEvent(struct epoll_event *event) {
 
 #elif defined(__APPLE__)
 
-void IOHandler::AddPollInterest(int mode) {
+void IOHandler::add_poll_interest(int mode) {
   struct kevent events[2];
   int count=0;
   if (mode & Reactor::READ_READY) {
-    EV_SET(&events[count], mSd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, this);
+    EV_SET(&events[count], m_sd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, this);
     count++;
   }
   if (mode & Reactor::WRITE_READY) {
-    EV_SET(&events[count], mSd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, this);
+    EV_SET(&events[count], m_sd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, this);
     count++;
   }
   assert(count > 0);
     
-  if (kevent(mReactor->kQueue, events, count, 0, 0, 0) == -1) {
-    LOG_VA_ERROR("kevent(sd=%d) (mode=%x) : %s", mSd, mode, strerror(errno));
+  if (kevent(m_reactor->kQueue, events, count, 0, 0, 0) == -1) {
+    LOG_VA_ERROR("kevent(sd=%d) (mode=%x) : %s", m_sd, mode, strerror(errno));
     exit(1);
   }
-  mPollInterest |= mode;
+  m_poll_interest |= mode;
 }
 
-void IOHandler::RemovePollInterest(int mode) {
+void IOHandler::remove_poll_interest(int mode) {
   struct kevent devents[2];
   int count = 0;
 
   if (mode & Reactor::READ_READY) {
-    EV_SET(&devents[count], mSd, EVFILT_READ, EV_DELETE, 0, 0, 0);
+    EV_SET(&devents[count], m_sd, EVFILT_READ, EV_DELETE, 0, 0, 0);
     count++;
   }
 
   if (mode & Reactor::WRITE_READY) {
-    EV_SET(&devents[count], mSd, EVFILT_WRITE, EV_DELETE, 0, 0, 0);
+    EV_SET(&devents[count], m_sd, EVFILT_WRITE, EV_DELETE, 0, 0, 0);
     count++;
   }
 
-  if (kevent(mReactor->kQueue, devents, count, 0, 0, 0) == -1 && errno != ENOENT) {
-    LOG_VA_ERROR("kevent(sd=%d) (mode=%x) : %s", mSd, mode, strerror(errno));
+  if (kevent(m_reactor->kQueue, devents, count, 0, 0, 0) == -1 && errno != ENOENT) {
+    LOG_VA_ERROR("kevent(sd=%d) (mode=%x) : %s", m_sd, mode, strerror(errno));
     exit(1);
   }
 }
@@ -160,7 +160,7 @@ void IOHandler::RemovePollInterest(int mode) {
 /**
  *
  */
-void IOHandler::DisplayEvent(struct kevent *event) {
+void IOHandler::display_event(struct kevent *event) {
 
   clog << "kevent: ident=" << hex << (long)event->ident;
 

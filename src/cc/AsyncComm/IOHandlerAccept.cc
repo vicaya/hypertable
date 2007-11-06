@@ -43,16 +43,16 @@ using namespace hypertable;
  *
  */
 #if defined(__APPLE__)
-bool IOHandlerAccept::HandleEvent(struct kevent *event) {
+bool IOHandlerAccept::handle_event(struct kevent *event) {
   //DisplayEvent(event);
   if (event->filter == EVFILT_READ)  
-    return HandleIncomingConnection();
+    return handle_incoming_connection();
   return true;
 }
 #elif defined(__linux__)
-bool IOHandlerAccept::HandleEvent(struct epoll_event *event) {
+bool IOHandlerAccept::handle_event(struct epoll_event *event) {
   //DisplayEvent(event);
-  return HandleIncomingConnection();
+  return handle_incoming_connection();
 }
 #else
   ImplementMe;
@@ -60,22 +60,22 @@ bool IOHandlerAccept::HandleEvent(struct epoll_event *event) {
 
 
 
-bool IOHandlerAccept::HandleIncomingConnection() {
+bool IOHandlerAccept::handle_incoming_connection() {
   int sd;
   struct sockaddr_in addr;
   socklen_t addrLen = sizeof(sockaddr_in);
   int one = 1;
   IOHandlerData *dataHandler;
 
-  if ((sd = accept(mSd, (struct sockaddr *)&addr, &addrLen)) < 0) {
+  if ((sd = accept(m_sd, (struct sockaddr *)&addr, &addrLen)) < 0) {
     LOG_VA_ERROR("accept() failure: %s", strerror(errno));
     return false;
   }
 
-  LOG_VA_DEBUG("Just accepted incoming connection, fd=%d (%s:%d)", mSd, inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+  LOG_VA_DEBUG("Just accepted incoming connection, fd=%d (%s:%d)", m_sd, inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
 
   // Set to non-blocking
-  FileUtils::SetFlags(sd, O_NONBLOCK);
+  FileUtils::set_flags(sd, O_NONBLOCK);
 
 #if defined(__linux__)
   if (setsockopt(sd, SOL_TCP, TCP_NODELAY, &one, sizeof(one)) < 0)
@@ -95,15 +95,15 @@ bool IOHandlerAccept::HandleIncomingConnection() {
   }
 
   DispatchHandlerPtr dhp;
-  mHandlerFactoryPtr->newInstance(dhp);
+  m_handler_factory_ptr->get_instance(dhp);
 
-  dataHandler = new IOHandlerData(sd, addr, dhp, mHandlerMap);
+  dataHandler = new IOHandlerData(sd, addr, dhp, m_handler_map);
 
   IOHandlerPtr handlerPtr( dataHandler );
-  mHandlerMap.InsertHandler(dataHandler);
-  dataHandler->StartPolling();
+  m_handler_map.insert_handler(dataHandler);
+  dataHandler->start_polling();
 
-  DeliverEvent( new Event(Event::CONNECTION_ESTABLISHED, dataHandler->ConnectionId(), addr, Error::OK) );
+  deliver_event( new Event(Event::CONNECTION_ESTABLISHED, dataHandler->connection_id(), addr, Error::OK) );
 
   return false;
  }

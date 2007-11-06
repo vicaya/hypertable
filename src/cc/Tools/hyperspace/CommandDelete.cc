@@ -30,7 +30,7 @@ using namespace hypertable;
 using namespace Hyperspace;
 using namespace std;
 
-const char *CommandDelete::msUsage[] = {
+const char *CommandDelete::ms_usage[] = {
   "delete <dir>",
   "  This command issues a DELETE request to Hyperspace.",
   (const char *)0
@@ -38,15 +38,15 @@ const char *CommandDelete::msUsage[] = {
 
 int CommandDelete::run() {
 
-  if (mArgs.size() != 1) {
+  if (m_args.size() != 1) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
     return -1;
   }
 
-  if (mArgs[0].second != "") {
-    cerr << "Invalid argument - " << mArgs[0].second << endl;
+  if (m_args[0].second != "") {
+    cerr << "Invalid argument - " << m_args[0].second << endl;
     return -1;
   }
 
-  return mSession->Delete(mArgs[0].first);
+  return m_session->unlink(m_args[0].first);
 }

@@ -36,12 +36,12 @@ namespace hypertable {
   public:
     ServerLauncher(const char *path, char *const argv[], const char *outputFile=0) {
       int fd[2];
-      mPath = path;
+      m_path = path;
       if (pipe(fd) < 0) {
 	perror("pipe");
 	exit(1);
       }
-      if ((mChildPid = fork()) == 0) {
+      if ((m_child_pid = fork()) == 0) {
 	if (outputFile) {
 	  int outfd = open(outputFile, O_CREAT|O_TRUNC|O_WRONLY, 0644);
 	  if (outfd < 0) {
@@ -56,24 +56,24 @@ namespace hypertable {
 	execv(path, argv);
       }
       close(fd[0]);
-      mWriteFd = fd[1];
+      m_write_fd = fd[1];
       poll(0,0,2000);
     }
 
     ~ServerLauncher() {
-      std::cerr << "Killing '" << mPath << "' pid=" << mChildPid << std::endl << std::flush;
-      if (kill(mChildPid, 9) == -1)
+      std::cerr << "Killing '" << m_path << "' pid=" << m_child_pid << std::endl << std::flush;
+      if (kill(m_child_pid, 9) == -1)
 	perror("kill");
     }
 
-    int GetWriteDescriptor() { return mWriteFd; }
+    int get_write_descriptor() { return m_write_fd; }
 
-    pid_t GetPid() { return mChildPid; }
+    pid_t get_pid() { return m_child_pid; }
 
   private:
-    const char *mPath;
-    pid_t mChildPid;
-    int   mWriteFd;
+    const char *m_path;
+    pid_t m_child_pid;
+    int   m_write_fd;
   };
 
 }

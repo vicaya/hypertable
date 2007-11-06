@@ -29,13 +29,13 @@ namespace hypertable {
 
   class HyperspaceSessionHandler : public Hyperspace::SessionCallback {
   public:
-    virtual void Safe() {
+    virtual void safe() {
       cout << "Hyperspace session state = SAFE" << endl << flush;
     }
-    virtual void Expired() {
+    virtual void expired() {
       cout << "Hyperspace session state = EXPIRED" << endl << flush;
     }
-    virtual void Jeopardy() {
+    virtual void jeopardy() {
       cout << "Hyperspace session state = JEOPARDY" << endl << flush;
     }
   };

@@ -35,15 +35,15 @@ namespace hypertable {
 
   class RequestHandlerCreateScanner : public ApplicationHandler {
   public:
-    RequestHandlerCreateScanner(Comm *comm, RangeServer *rangeServer, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mComm(comm), mRangeServer(rangeServer) {
+    RequestHandlerCreateScanner(Comm *comm, RangeServer *rangeServer, EventPtr &eventPtr) : ApplicationHandler(eventPtr), m_comm(comm), m_range_server(rangeServer) {
       return;
     }
 
     virtual void run();
 
   private:
-    Comm        *mComm;
-    RangeServer *mRangeServer;
+    Comm        *m_comm;
+    RangeServer *m_range_server;
   };
 
 }

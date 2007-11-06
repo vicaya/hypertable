@@ -58,13 +58,13 @@ namespace {
    */
   class TimerHandler : public DispatchHandler {
   public:
-    TimerHandler(const char *msg, ostream &out) : mMsg(msg), mOut(out) { return; }
+    TimerHandler(const char *msg, ostream &out) : m_msg(msg), m_out(out) { return; }
     virtual void handle(EventPtr &eventPtr) {
-      mOut << eventPtr->toString().c_str() << " (" << mMsg << ")" << endl;
+      m_out << eventPtr->toString().c_str() << " (" << m_msg << ")" << endl;
     }
   private:
-    const char *mMsg;
-    ostream    &mOut;
+    const char *m_msg;
+    ostream    &m_out;
   };
 
   struct TimerRec {
@@ -95,26 +95,26 @@ int main(int argc, char **argv) {
   bool golden = false;
   TimerHandler *timerHandler;
   int waitTime = 0;
-  ostream &out = harness.GetLogStream();
+  ostream &out = harness.get_log_stream();
 
   if (argc > 1) {
     if (!strcmp(argv[1], "--golden"))
       golden = true;
     else
-      Usage::DumpAndExit(usage);
+      Usage::dump_and_exit(usage);
   }
 
   srand(8876);
 
-  System::Initialize(argv[0]);
-  ReactorFactory::Initialize(1);
+  System::initialize(argv[0]);
+  ReactorFactory::initialize(1);
 
   comm = new Comm();
 
   for (int i=0; history[i].msg; i++) {
     timerHandler = new TimerHandler(history[i].msg, out);
-    if ((error = comm->SetTimer(history[i].delay*1000, timerHandler)) != Error::OK) {
-      LOG_VA_ERROR("Problem setting timer - %s", Error::GetText(error));
+    if ((error = comm->set_timer(history[i].delay*1000, timerHandler)) != Error::OK) {
+      LOG_VA_ERROR("Problem setting timer - %s", Error::get_text(error));
       exit(1);
     }
     if (history[i].delay > waitTime)
@@ -124,9 +124,9 @@ int main(int argc, char **argv) {
   poll(0, 0, (waitTime+1)*1000);
 
   if (!golden)
-    harness.ValidateAndExit("commTestTimer.golden");
+    harness.validate_and_exit("commTestTimer.golden");
 
-  harness.RegenerateGoldenFile("commTestTimer.golden");
+  harness.regenerate_golden_file("commTestTimer.golden");
 
   delete comm;
 

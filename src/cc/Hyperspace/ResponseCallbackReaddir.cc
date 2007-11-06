@@ -31,19 +31,19 @@ using namespace hypertable;
  *
  */
 int ResponseCallbackReaddir::response(std::vector<struct DirEntryT> &listing) {
-  hbuilder_.InitializeFromRequest(mEventPtr->header);
+  hbuilder_.initialize_from_request(m_event_ptr->header);
   uint32_t len = 8;
 
   for (size_t i=0; i<listing.size(); i++)
-    len += EncodedLengthDirEntry(listing[i]);
+    len += encoded_length_dir_entry(listing[i]);
 
   CommBufPtr cbufPtr( new CommBuf(hbuilder_, len) );
 
-  cbufPtr->AppendInt(Error::OK);
-  cbufPtr->AppendInt(listing.size());
+  cbufPtr->append_int(Error::OK);
+  cbufPtr->append_int(listing.size());
   
   for (size_t i=0; i<listing.size(); i++)
-    EncodeDirEntry(cbufPtr->GetDataPtrAddress(), listing[i]);
-  return mComm->SendResponse(mEventPtr->addr, cbufPtr);
+    encode_dir_entry(cbufPtr->get_data_ptr_address(), listing[i]);
+  return m_comm->send_response(m_event_ptr->addr, cbufPtr);
 }
 

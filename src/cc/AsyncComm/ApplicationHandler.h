@@ -30,13 +30,13 @@ namespace hypertable {
   class ApplicationHandler {
 
   public:
-    ApplicationHandler(EventPtr &eventPtr) : mEventPtr(eventPtr) { return; }
+    ApplicationHandler(EventPtr &eventPtr) : m_event_ptr(eventPtr) { return; }
     virtual ~ApplicationHandler() { return; }
     virtual void run() = 0;
-    uint64_t GetThreadGroup() { return (mEventPtr) ? mEventPtr->threadGroup : 0; }
+    uint64_t get_thread_group() { return (m_event_ptr) ? m_event_ptr->threadGroup : 0; }
 
   protected:
-    EventPtr mEventPtr;
+    EventPtr m_event_ptr;
   };
   
 }

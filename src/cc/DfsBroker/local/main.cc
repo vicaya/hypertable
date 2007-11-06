@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
   struct sockaddr_in listenAddr;
   int error;
 
-  System::Initialize(argv[0]);
+  System::initialize(argv[0]);
   
   if (argc > 1) {
     for (int i=1; i<argc; i++) {
@@ -96,14 +96,14 @@ int main(int argc, char **argv) {
       else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
 	verbose = true;
       else
-	Usage::DumpAndExit(usage);
+	Usage::dump_and_exit(usage);
     }
   }
 
   if (configFile == "")
     configFile = System::installDir + "/conf/hypertable.cfg";
 
-  if (!FileUtils::Exists(configFile.c_str())) {
+  if (!FileUtils::exists(configFile.c_str())) {
     cerr << "Error: Unable to open config file '" << configFile << "'" << endl;
     exit(0);
   }
@@ -114,28 +114,28 @@ int main(int argc, char **argv) {
 
   if (port == 0)
     port         = propsPtr->getPropertyInt("DfsBroker.local.port",     DEFAULT_PORT);
-  reactorCount = propsPtr->getPropertyInt("DfsBroker.local.reactors", System::GetProcessorCount());
+  reactorCount = propsPtr->getPropertyInt("DfsBroker.local.reactors", System::get_processor_count());
   workerCount  = propsPtr->getPropertyInt("DfsBroker.local.workers",  DEFAULT_WORKERS);
 
-  ReactorFactory::Initialize(reactorCount);
+  ReactorFactory::initialize(reactorCount);
 
   comm = new Comm();
 
   if (verbose) {
-    cout << "CPU count = " << System::GetProcessorCount() << endl;
+    cout << "CPU count = " << System::get_processor_count() << endl;
     cout << "DfsBroker.local.port=" << port << endl;
     cout << "DfsBroker.local.reactors=" << reactorCount << endl;
     cout << "DfsBroker.local.workers=" << workerCount << endl;
   }
 
-  InetAddr::Initialize(&listenAddr, INADDR_ANY, port);
+  InetAddr::initialize(&listenAddr, INADDR_ANY, port);
 
   brokerPtr = new LocalBroker(propsPtr);
   appQueuePtr = new ApplicationQueue(workerCount);
   ConnectionHandlerFactoryPtr chfPtr(new DfsBroker::ConnectionHandlerFactory(comm, appQueuePtr, brokerPtr));
-  if ((error = comm->Listen(listenAddr, chfPtr)) != Error::OK) {
+  if ((error = comm->listen(listenAddr, chfPtr)) != Error::OK) {
     std::string addrStr;
-    LOG_VA_ERROR("Problem listening for connections on %s - %s", InetAddr::StringFormat(addrStr, listenAddr), Error::GetText(error));
+    LOG_VA_ERROR("Problem listening for connections on %s - %s", InetAddr::string_format(addrStr, listenAddr), Error::get_text(error));
     return 1;
   }
 
@@ -145,7 +145,7 @@ int main(int argc, char **argv) {
     filestr.close();
   }
 
-  appQueuePtr->Join();
+  appQueuePtr->join();
 
   delete comm;
   return 0;

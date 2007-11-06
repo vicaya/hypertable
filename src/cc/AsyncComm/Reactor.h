@@ -45,43 +45,43 @@ namespace hypertable {
 
     void operator()();
 
-    void AddRequest(uint32_t id, IOHandler *handler, DispatchHandler *dh, boost::xtime &expire) {
-      boost::mutex::scoped_lock lock(mMutex);
+    void add_request(uint32_t id, IOHandler *handler, DispatchHandler *dh, boost::xtime &expire) {
+      boost::mutex::scoped_lock lock(m_mutex);
       boost::xtime now;
-      mRequestCache.Insert(id, handler, dh, expire);
+      m_request_cache.insert(id, handler, dh, expire);
       boost::xtime_get(&now, boost::TIME_UTC);
-      if (mNextWakeup.sec == 0 || xtime_cmp(expire, mNextWakeup) < 0)
-	PollLoopInterrupt();	
+      if (m_next_wakeup.sec == 0 || xtime_cmp(expire, m_next_wakeup) < 0)
+	poll_loop_interrupt();	
     }
 
-    DispatchHandler *RemoveRequest(uint32_t id) {
-      boost::mutex::scoped_lock lock(mMutex);
-      return mRequestCache.Remove(id);
+    DispatchHandler *remove_request(uint32_t id) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      return m_request_cache.remove(id);
     }
 
-    void CancelRequests(IOHandler *handler) {
-      boost::mutex::scoped_lock lock(mMutex);
-      mRequestCache.PurgeRequests(handler);
+    void cancel_requests(IOHandler *handler) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      m_request_cache.purge_requests(handler);
     }
 
-    void AddTimer(struct TimerT &timer) {
-      boost::mutex::scoped_lock lock(mMutex);
-      mTimerHeap.push(timer);
-      PollLoopInterrupt();
+    void add_timer(struct TimerT &timer) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      m_timer_heap.push(timer);
+      poll_loop_interrupt();
     }
 
-    void ScheduleRemoval(IOHandler *handler) {
-      boost::mutex::scoped_lock lock(mMutex);
-      mRemovedHandlers.insert(handler);
+    void schedule_removal(IOHandler *handler) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      m_removed_handlers.insert(handler);
     }
 
-    void GetRemovedHandlers(set<IOHandler *> &dst) {
-      boost::mutex::scoped_lock lock(mMutex);
-      dst = mRemovedHandlers;
-      mRemovedHandlers.clear();
+    void get_removed_handlers(set<IOHandler *> &dst) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      dst = m_removed_handlers;
+      m_removed_handlers.clear();
     }
 
-    void HandleTimeouts(PollTimeout &nextTimeout);
+    void handle_timeouts(PollTimeout &nextTimeout);
 
 #if defined(__linux__)    
     int pollFd;
@@ -91,17 +91,17 @@ namespace hypertable {
 
   protected:
 
-    void PollLoopInterrupt();
-    void PollLoopContinue();
+    void poll_loop_interrupt();
+    void poll_loop_continue();
 
-    boost::mutex    mMutex;
+    boost::mutex    m_mutex;
     boost::thread   *threadPtr;
-    RequestCache    mRequestCache;
-    std::priority_queue<TimerT, std::vector<TimerT>, ltTimer> mTimerHeap;
-    int             mInterruptSd;
-    bool            mInterruptInProgress;
-    boost::xtime    mNextWakeup;
-    set<IOHandler *> mRemovedHandlers;
+    RequestCache    m_request_cache;
+    std::priority_queue<TimerT, std::vector<TimerT>, ltTimer> m_timer_heap;
+    int             m_interrupt_sd;
+    bool            m_interrupt_in_progress;
+    boost::xtime    m_next_wakeup;
+    set<IOHandler *> m_removed_handlers;
   };
 
 }

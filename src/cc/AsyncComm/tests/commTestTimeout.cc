@@ -59,17 +59,17 @@ namespace {
   class ServerLauncher {
   public:
     ServerLauncher() {
-      if ((mChildPid = fork()) == 0) {
+      if ((m_child_pid = fork()) == 0) {
 	execl("./testServer", "./testServer", DEFAULT_PORT_ARG, "--delay=120000", (char *)0);
       }
       poll(0,0,2000);
     }
     ~ServerLauncher() {
-      if (kill(mChildPid, 9) == -1)
+      if (kill(m_child_pid, 9) == -1)
 	perror("kill");
     }
     private:
-      pid_t mChildPid;
+      pid_t m_child_pid;
   };
 
   /**
@@ -77,24 +77,24 @@ namespace {
    */
   class ResponseHandler : public DispatchHandler {
   public:
-    ResponseHandler() : mMutex(), mCond() { return; }
+    ResponseHandler() : m_mutex(), m_cond() { return; }
 
     virtual void handle(EventPtr &eventPtr) {
-      boost::mutex::scoped_lock lock(mMutex);
+      boost::mutex::scoped_lock lock(m_mutex);
       if (eventPtr->type == Event::ERROR) {
 	LOG_VA_INFO("%s", eventPtr->toString().c_str());
       }
-      mCond.notify_one();
+      m_cond.notify_one();
     }
 
-    void WaitForConnection() {
-      boost::mutex::scoped_lock lock(mMutex);
-      mCond.wait(lock);
+    void wait_for_connection() {
+      boost::mutex::scoped_lock lock(m_mutex);
+      m_cond.wait(lock);
     }
 
   private:
-    boost::mutex      mMutex;
-    boost::condition  mCond;
+    boost::mutex      m_mutex;
+    boost::condition  m_cond;
   };
 
 }
@@ -118,13 +118,13 @@ int main(int argc, char **argv) {
       if (!strcmp(argv[1], "--golden"))
 	golden = true;
       else
-	Usage::DumpAndExit(usage);
+	Usage::dump_and_exit(usage);
     }
 
     srand(8876);
 
-    System::Initialize(argv[0]);
-    ReactorFactory::Initialize(1);
+    System::initialize(argv[0]);
+    ReactorFactory::initialize(1);
 
     memset(&addr, 0, sizeof(struct sockaddr_in));
     {
@@ -140,29 +140,29 @@ int main(int argc, char **argv) {
 
     comm = new Comm();
 
-    if ((error = comm->Connect(addr, dispatchHandlerPtr)) != Error::OK)
+    if ((error = comm->connect(addr, dispatchHandlerPtr)) != Error::OK)
       return 1;
 
-    respHandler->WaitForConnection();
+    respHandler->wait_for_connection();
 
     HeaderBuilder hbuilder(Header::PROTOCOL_NONE, rand());
     std::string msg;
 
     msg = "foo";
-    hbuilder.AssignUniqueId();
-    CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::EncodedLengthString(msg)) );
-    cbufPtr->AppendString(msg);
-    if ((error = comm->SendRequest(addr, 5, cbufPtr, respHandler)) != Error::OK) {
-      LOG_VA_ERROR("Problem sending request - %s", Error::GetText(error));
+    hbuilder.assign_unique_id();
+    CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::encoded_length_string(msg)) );
+    cbufPtr->append_string(msg);
+    if ((error = comm->send_request(addr, 5, cbufPtr, respHandler)) != Error::OK) {
+      LOG_VA_ERROR("Problem sending request - %s", Error::get_text(error));
       return 1;
     }
 
     msg = "bar";
-    hbuilder.AssignUniqueId();
-    cbufPtr.reset (new CommBuf(hbuilder, Serialization::EncodedLengthString(msg)) );
-    cbufPtr->AppendString(msg);
-    if ((error = comm->SendRequest(addr, 5, cbufPtr, respHandler)) != Error::OK) {
-      LOG_VA_ERROR("Problem sending request - %s", Error::GetText(error));
+    hbuilder.assign_unique_id();
+    cbufPtr.reset (new CommBuf(hbuilder, Serialization::encoded_length_string(msg)) );
+    cbufPtr->append_string(msg);
+    if ((error = comm->send_request(addr, 5, cbufPtr, respHandler)) != Error::OK) {
+      LOG_VA_ERROR("Problem sending request - %s", Error::get_text(error));
       return 1;
     }
 
@@ -173,9 +173,9 @@ int main(int argc, char **argv) {
   }
 
   if (!golden)
-    harness.ValidateAndExit("commTestTimeout.golden");
+    harness.validate_and_exit("commTestTimeout.golden");
 
-  harness.RegenerateGoldenFile("commTestTimeout.golden");
+  harness.regenerate_golden_file("commTestTimeout.golden");
 
   return 0;
 }

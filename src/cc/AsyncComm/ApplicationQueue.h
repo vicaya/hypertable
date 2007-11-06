@@ -71,7 +71,7 @@ namespace hypertable {
 
     public:
 
-      Worker(ApplicationQueueState &qstate) : mState(qstate) {
+      Worker(ApplicationQueueState &qstate) : m_state(qstate) {
 	return;
       }
 
@@ -82,25 +82,25 @@ namespace hypertable {
 	while (true) {
 
 	  {  // !!! maybe ditch this block specifier
-	    boost::mutex::scoped_lock lock(mState.queueMutex);
+	    boost::mutex::scoped_lock lock(m_state.queueMutex);
 
-	    while (mState.queue.empty()) {
-	      if (mState.shutdown) {
+	    while (m_state.queue.empty()) {
+	      if (m_state.shutdown) {
 		cerr << "shutdown!!!" << endl;
 		return;
 	      }
-	      mState.cond.wait(lock);
+	      m_state.cond.wait(lock);
 	    }
 
 	    {
-	      boost::mutex::scoped_lock ulock(mState.usageMutex);
+	      boost::mutex::scoped_lock ulock(m_state.usageMutex);
 
-	      for (iter = mState.queue.begin(); iter != mState.queue.end(); iter++) {
+	      for (iter = m_state.queue.begin(); iter != m_state.queue.end(); iter++) {
 		rec = (*iter);
 		if (rec->usage == 0 || !rec->usage->running) {
 		  if (rec->usage)
 		    rec->usage->running = true;
-		  mState.queue.erase(iter);
+		  m_state.queue.erase(iter);
 		  break;
 		}
 		rec = 0;
@@ -111,11 +111,11 @@ namespace hypertable {
 	  if (rec) {
 	    rec->handler->run();
 	    if (rec->usage) {
-	      boost::mutex::scoped_lock ulock(mState.usageMutex);
+	      boost::mutex::scoped_lock ulock(m_state.usageMutex);
 	      rec->usage->running = false;
 	      rec->usage->outstanding--;
 	      if (rec->usage->outstanding == 0) {
-		mState.usageMap.erase(rec->usage->threadGroup);
+		m_state.usageMap.erase(rec->usage->threadGroup);
 		delete rec->usage;
 	      }
 	    }
@@ -127,54 +127,54 @@ namespace hypertable {
       }
 
     private:
-      ApplicationQueueState &mState;
+      ApplicationQueueState &m_state;
     };
 
-    ApplicationQueueState  mState;
-    boost::thread_group    mThreads;
+    ApplicationQueueState  m_state;
+    boost::thread_group    m_threads;
 
   public:
 
     ApplicationQueue(int WorkerCount) {
-      Worker Worker(mState);
+      Worker Worker(m_state);
       assert (WorkerCount > 0);
       for (int i=0; i<WorkerCount; ++i)
-	mThreads.create_thread(Worker);
+	m_threads.create_thread(Worker);
       //threads
     }
 
-    void Shutdown() {
-      mState.shutdown = true;
-      mState.cond.notify_all();
+    void shutdown() {
+      m_state.shutdown = true;
+      m_state.cond.notify_all();
     }
 
-    void Join() {
-      mThreads.join_all();
+    void join() {
+      m_threads.join_all();
     }
 
-    void Add(ApplicationHandler *appHandler) {
+    void add(ApplicationHandler *appHandler) {
       UsageRecMapT::iterator uiter;
-      uint64_t threadGroup = appHandler->GetThreadGroup();
+      uint64_t threadGroup = appHandler->get_thread_group();
       WorkRec *rec = new WorkRec(appHandler);
       rec->usage = 0;
 
       if (threadGroup != 0) {
-	boost::mutex::scoped_lock ulock(mState.usageMutex);
-	if ((uiter = mState.usageMap.find(threadGroup)) != mState.usageMap.end()) {
+	boost::mutex::scoped_lock ulock(m_state.usageMutex);
+	if ((uiter = m_state.usageMap.find(threadGroup)) != m_state.usageMap.end()) {
 	  rec->usage = (*uiter).second;
 	  rec->usage->outstanding++;
 	}
 	else {
 	  rec->usage = new UsageRec();
 	  rec->usage->threadGroup = threadGroup;
-	  mState.usageMap[threadGroup] = rec->usage;
+	  m_state.usageMap[threadGroup] = rec->usage;
 	}
       }
 
       {
-	boost::mutex::scoped_lock lock(mState.queueMutex);
-	mState.queue.push_back(rec);
-	mState.cond.notify_one();
+	boost::mutex::scoped_lock lock(m_state.queueMutex);
+	m_state.queue.push_back(rec);
+	m_state.cond.notify_one();
       }
     }
   };

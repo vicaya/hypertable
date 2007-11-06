@@ -35,7 +35,7 @@ namespace {
 }
 
 
-const char *CommandCopyToLocal::msUsage[] = {
+const char *CommandCopyToLocal::ms_usage[] = {
   "copyToLocal [--seek=<n>] <src> <dst>",
   "",
   "  This program copies the file <src> from the DFS to the file",
@@ -55,41 +55,41 @@ int CommandCopyToLocal::run() {
   uint64_t startOffset = 0;
   int srcArg = 0;
 
-  if (mArgs.size() < 2) {
+  if (m_args.size() < 2) {
     cerr << "Insufficient number of arguments" << endl;
     return -1;
   }
 
-  if (!strcmp(mArgs[0].first.c_str(), "--seek") && mArgs[0].second != "") {
-    startOffset = strtol(mArgs[0].second.c_str(), 0, 10);
+  if (!strcmp(m_args[0].first.c_str(), "--seek") && m_args[0].second != "") {
+    startOffset = strtol(m_args[0].second.c_str(), 0, 10);
     srcArg = 1;
   }
 
-  if ((fp = fopen(mArgs[srcArg+1].first.c_str(), "w+")) == 0) {
-    perror(mArgs[srcArg+1].first.c_str());
+  if ((fp = fopen(m_args[srcArg+1].first.c_str(), "w+")) == 0) {
+    perror(m_args[srcArg+1].first.c_str());
     goto abort;
   }
 
-  if ((error = mClient->Open(mArgs[srcArg].first, &fd)) != Error::OK)
+  if ((error = m_client->open(m_args[srcArg].first, &fd)) != Error::OK)
     goto abort;
 
   if (startOffset > 0) {
-    if ((error = mClient->Seek(fd, startOffset)) != Error::OK)
+    if ((error = m_client->seek(fd, startOffset)) != Error::OK)
       goto abort;
   }
 
-  if ((error = mClient->Read(fd, BUFFER_SIZE, &syncHandler)) != Error::OK)
+  if ((error = m_client->read(fd, BUFFER_SIZE, &syncHandler)) != Error::OK)
     goto abort;
 
-  if ((error = mClient->Read(fd, BUFFER_SIZE, &syncHandler)) != Error::OK)
+  if ((error = m_client->read(fd, BUFFER_SIZE, &syncHandler)) != Error::OK)
     goto abort;
 
-  if ((error = mClient->Read(fd, BUFFER_SIZE, &syncHandler)) != Error::OK)
+  if ((error = m_client->read(fd, BUFFER_SIZE, &syncHandler)) != Error::OK)
     goto abort;
 
-  while (syncHandler.WaitForReply(eventPtr)) {
+  while (syncHandler.wait_for_reply(eventPtr)) {
 
-    if ((error = Protocol::ResponseCode(eventPtr)) != Error::OK)
+    if ((error = Protocol::response_code(eventPtr)) != Error::OK)
       goto abort;
 
     readHeader = (DfsBroker::Protocol::ResponseHeaderReadT *)eventPtr->message;
@@ -102,22 +102,22 @@ int CommandCopyToLocal::run() {
     }
 
     if (readHeader->amount < BUFFER_SIZE) {
-      syncHandler.WaitForReply(eventPtr);
+      syncHandler.wait_for_reply(eventPtr);
       break;
     }
 
-    if ((error = mClient->Read(fd, BUFFER_SIZE, &syncHandler)) != Error::OK)
+    if ((error = m_client->read(fd, BUFFER_SIZE, &syncHandler)) != Error::OK)
       goto abort;
   }
 
-  if ((error = mClient->Close(fd)) != Error::OK)
+  if ((error = m_client->close(fd)) != Error::OK)
     goto abort;
 
   abort:
   if (fp)
     fclose(fp);
   if (error != 0)
-    cerr << Error::GetText(error) << endl;
+    cerr << Error::get_text(error) << endl;
   return error;
 }
 

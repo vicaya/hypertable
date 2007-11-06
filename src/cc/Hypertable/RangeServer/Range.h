@@ -45,73 +45,73 @@ namespace hypertable {
   public:
     Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr);
     virtual ~Range() { return; }
-    virtual int Add(const ByteString32T *key, const ByteString32T *value);
-    virtual void Lock();
-    virtual void Unlock();
-    virtual ByteString32T *GetSplitKey();
+    virtual int add(const ByteString32T *key, const ByteString32T *value);
+    virtual void lock();
+    virtual void unlock();
+    virtual ByteString32T *get_split_key();
 
-    uint64_t GetLogCutoffTime();
-    uint64_t DiskUsage();
+    uint64_t get_log_cutoff_time();
+    uint64_t disk_usage();
 
-    CellListScanner *CreateScanner(ScanContextPtr &scanContextPtr);
+    CellListScanner *create_scanner(ScanContextPtr &scanContextPtr);
 
-    string &StartRow() { return mStartRow; }
-    string &EndRow() { return mEndRow; }
-    string &TableName() { return mTableName; }
+    string &start_row() { return m_start_row; }
+    string &end_row() { return m_end_row; }
+    string &table_name() { return m_table_name; }
 
-    uint64_t GetTimestamp() {
-      boost::mutex::scoped_lock lock(mMutex);
-      return mLatestTimestamp;
+    uint64_t get_timestamp() {
+      boost::mutex::scoped_lock lock(m_mutex);
+      return m_latest_timestamp;
     }
 
-    void ScheduleMaintenance();
-    void DoMaintenance();
-    void DoCompaction(bool major=false);
+    void schedule_maintenance();
+    void do_maintenance();
+    void do_compaction(bool major=false);
 
-    void IncrementUpdateCounter();
-    void DecrementUpdateCounter();
+    void increment_update_counter();
+    void decrement_update_counter();
 
-    bool GetSplitInfo(ByteString32Ptr &splitKeyPtr, CommitLogPtr &splitLogPtr, uint64_t *splitStartTime) {
-      boost::mutex::scoped_lock lock(mMutex);
-      *splitStartTime = mSplitStartTime;
-      if (mSplitStartTime == 0)
+    bool get_split_info(ByteString32Ptr &splitKeyPtr, CommitLogPtr &splitLogPtr, uint64_t *splitStartTime) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      *splitStartTime = m_split_start_time;
+      if (m_split_start_time == 0)
 	return false;
-      splitKeyPtr = mSplitKeyPtr;
-      splitLogPtr = mSplitLogPtr;
+      splitKeyPtr = m_split_key_ptr;
+      splitLogPtr = m_split_log_ptr;
       return true;
     }
 
-    std::vector<AccessGroup *> &AccessGroupVector() { return mAccessGroupVector; }
-    AccessGroup *GetAccessGroup(string &lgName) { return mAccessGroupMap[lgName]; }
+    std::vector<AccessGroup *> &access_group_vector() { return m_access_group_vector; }
+    AccessGroup *get_access_group(string &lgName) { return m_access_group_map[lgName]; }
 
   private:
-    void ReplayCommitLog(string &logDir, uint64_t minLogCutoff);
-    bool ExtractAccessGroupFromPath(std::string &path, std::string &name, uint32_t *tableIdp);
+    void replay_commit_log(string &logDir, uint64_t minLogCutoff);
+    bool extract_access_group_from_path(std::string &path, std::string &name, uint32_t *tableIdp);
 
-    uint64_t RunCompaction(bool major=false);
+    uint64_t run_compaction(bool major=false);
 
-    boost::mutex     mMutex;
-    std::string      mTableName;
-    SchemaPtr        mSchema;
-    std::string      mStartRow;
-    std::string      mEndRow;
-    ByteString32Ptr  mStartKeyPtr;
-    ByteString32Ptr  mEndKeyPtr;
-    AccessGroupMapT        mAccessGroupMap;
-    std::vector<AccessGroup *>  mAccessGroupVector;
-    ColumnFamilyVectorT      mColumnFamilyVector;
-    bool       mMaintenanceInProgress;
+    boost::mutex     m_mutex;
+    std::string      m_table_name;
+    SchemaPtr        m_schema;
+    std::string      m_start_row;
+    std::string      m_end_row;
+    ByteString32Ptr  m_start_key_ptr;
+    ByteString32Ptr  m_end_key_ptr;
+    AccessGroupMapT        m_access_group_map;
+    std::vector<AccessGroup *>  m_access_group_vector;
+    ColumnFamilyVectorT      m_column_family_vector;
+    bool       m_maintenance_in_progress;
 
-    uint64_t         mLatestTimestamp;
-    uint64_t         mSplitStartTime;
-    ByteString32Ptr  mSplitKeyPtr;
-    CommitLogPtr     mSplitLogPtr;
+    uint64_t         m_latest_timestamp;
+    uint64_t         m_split_start_time;
+    ByteString32Ptr  m_split_key_ptr;
+    CommitLogPtr     m_split_log_ptr;
 
-    boost::mutex     mMaintenanceMutex;
-    boost::condition mMaintenanceFinishedCond;
-    boost::condition mUpdateQuiesceCond;
-    bool             mHoldUpdates;
-    uint32_t         mUpdateCounter;
+    boost::mutex     m_maintenance_mutex;
+    boost::condition m_maintenance_finished_cond;
+    boost::condition m_update_quiesce_cond;
+    bool             m_hold_updates;
+    uint32_t         m_update_counter;
   };
 
   typedef boost::shared_ptr<Range> RangePtr;

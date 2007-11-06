@@ -51,10 +51,10 @@ namespace {
 
 
 log4cpp::Category *Logger::logger = 0;
-bool Logger::msShowLineNumbers = true;
+bool Logger::ms_show_line_numbers = true;
 
 
-void Logger::Initialize(const char *name, log4cpp::Priority::Value priority) {
+void Logger::initialize(const char *name, log4cpp::Priority::Value priority) {
   log4cpp::Appender* appender = 
     new log4cpp::OstreamAppender("default", &std::cout);
   log4cpp::Layout* layout = new log4cpp::BasicLayout();
@@ -66,19 +66,19 @@ void Logger::Initialize(const char *name, log4cpp::Priority::Value priority) {
 }
 
 
-void Logger::SetLevel(log4cpp::Priority::Value priority) {
+void Logger::set_level(log4cpp::Priority::Value priority) {
   logger->setPriority(priority);
 }
 
-void Logger::SuppressLineNumbers() {
-  msShowLineNumbers = false;
+void Logger::suppress_line_numbers() {
+  ms_show_line_numbers = false;
 }
 
 
-void Logger::SetTestMode(const char *name) {
+void Logger::set_test_mode(const char *name) {
   log4cpp::FileAppender *appender;
 
-  msShowLineNumbers = false;
+  ms_show_line_numbers = false;
 
   logger->removeAllAppenders();
   appender = new log4cpp::FileAppender((std::string)name, 1);

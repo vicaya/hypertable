@@ -56,13 +56,13 @@ namespace {
 
   public:
 
-    ResponseHandler() : mQueue(), mMutex(), mCond() { return; }
+    ResponseHandler() : m_queue(), m_mutex(), m_cond() { return; }
   
     virtual void handle(EventPtr &eventPtr) {
-      boost::mutex::scoped_lock lock(mMutex);
+      boost::mutex::scoped_lock lock(m_mutex);
       if (eventPtr->type == Event::MESSAGE) {
-	mQueue.push(eventPtr);
-	mCond.notify_one();
+	m_queue.push(eventPtr);
+	m_cond.notify_one();
       }
       else {
 	LOG_VA_INFO("%s", eventPtr->toString().c_str());
@@ -70,20 +70,20 @@ namespace {
       }
     }
 
-    virtual bool GetResponse(EventPtr &eventPtr) {
-      boost::mutex::scoped_lock lock(mMutex);
-      while (mQueue.empty()) {
-	mCond.wait(lock);
+    virtual bool get_response(EventPtr &eventPtr) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      while (m_queue.empty()) {
+	m_cond.wait(lock);
       }
-      eventPtr = mQueue.front();
-      mQueue.pop();
+      eventPtr = m_queue.front();
+      m_queue.pop();
       return true;
     }
 
   private:
-    queue<EventPtr>   mQueue;
-    boost::mutex      mMutex;
-    boost::condition  mCond;
+    queue<EventPtr>   m_queue;
+    boost::mutex      m_mutex;
+    boost::condition  m_cond;
   };
 
 }
@@ -99,8 +99,8 @@ void CommTestDatagramThreadFunction::operator()() {
   int outstanding = 0;
   int maxOutstanding = 50;
   string line;
-  ifstream infile(mInputFile);
-  ofstream outfile(mOutputFile);
+  ifstream infile(m_input_file);
+  ofstream outfile(m_output_file);
   const char *str;
   uint64_t gid64 = (uint64_t)this;
   uint32_t gid = (uint32_t)(gid64 & 0x00000000FFFFFFFFLL);
@@ -109,10 +109,10 @@ void CommTestDatagramThreadFunction::operator()() {
   ResponseHandler *respHandler = new ResponseHandler();
   DispatchHandlerPtr dispatchHandlerPtr(respHandler);
 
-  InetAddr::Initialize(&localAddr, INADDR_ANY, mPort);
+  InetAddr::initialize(&localAddr, INADDR_ANY, m_port);
 
-  if (error = mComm->CreateDatagramReceiveSocket(&localAddr, dispatchHandlerPtr)) {
-    LOG_VA_ERROR("Problem opening datagram receive port %d - %s", mPort, Error::GetText(error));
+  if (error = m_comm->create_datagram_receive_socket(&localAddr, dispatchHandlerPtr)) {
+    LOG_VA_ERROR("Problem opening datagram receive port %d - %s", m_port, Error::get_text(error));
     return;
   }
 
@@ -120,19 +120,19 @@ void CommTestDatagramThreadFunction::operator()() {
     while (!infile.eof() && nsent < MAX_MESSAGES) {
       getline (infile,line);
       if (line.length() > 0) {
-	hbuilder.AssignUniqueId();
-	CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::EncodedLengthString(line)) );
-	cbufPtr->AppendString(line);
-	if ((error = mComm->SendDatagram(mAddr, localAddr, cbufPtr)) != Error::OK) {
-	  LOG_VA_ERROR("Problem sending datagram - %s", Error::GetText(error));
+	hbuilder.assign_unique_id();
+	CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::encoded_length_string(line)) );
+	cbufPtr->append_string(line);
+	if ((error = m_comm->send_datagram(m_addr, localAddr, cbufPtr)) != Error::OK) {
+	  LOG_VA_ERROR("Problem sending datagram - %s", Error::get_text(error));
 	  return;
 	}
 	outstanding++;
 
 	if (outstanding  > maxOutstanding) {
-	  if (!respHandler->GetResponse(eventPtr))
+	  if (!respHandler->get_response(eventPtr))
 	    break;
-	  if (!Serialization::DecodeString(&eventPtr->message, &eventPtr->messageLen, &str))
+	  if (!Serialization::decode_string(&eventPtr->message, &eventPtr->messageLen, &str))
 	    outfile << "ERROR: deserialization problem." << endl;
 	  else {
 	    if (*str != 0)
@@ -148,12 +148,12 @@ void CommTestDatagramThreadFunction::operator()() {
     infile.close();
   }
   else {
-    LOG_VA_ERROR("Unable to open file '%s' : %s", mInputFile, strerror(errno));
+    LOG_VA_ERROR("Unable to open file '%s' : %s", m_input_file, strerror(errno));
     return;
   }
 
-  while (outstanding > 0 && respHandler->GetResponse(eventPtr)) {
-    if (!Serialization::DecodeString(&eventPtr->message, &eventPtr->messageLen, &str))
+  while (outstanding > 0 && respHandler->get_response(eventPtr)) {
+    if (!Serialization::decode_string(&eventPtr->message, &eventPtr->messageLen, &str))
       outfile << "ERROR: deserialization problem." << endl;
     else {
       if (*str != 0)

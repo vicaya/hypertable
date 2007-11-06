@@ -35,7 +35,7 @@ namespace hypertable {
 
   namespace DfsBroker {
 
-    const char *Protocol::msCommandStrings[COMMAND_MAX] = {
+    const char *Protocol::ms_command_strings[COMMAND_MAX] = {
       "open",
       "create",
       "close",
@@ -57,36 +57,36 @@ namespace hypertable {
     /**
      *
      */
-    CommBuf *Protocol::CreateOpenRequest(std::string &fname, uint32_t bufferSize) {
+    CommBuf *Protocol::create_open_request(std::string &fname, uint32_t bufferSize) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
-      hbuilder.AssignUniqueId();
-      CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderOpenT) + Serialization::EncodedLengthString(fname));
+      hbuilder.assign_unique_id();
+      CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderOpenT) + Serialization::encoded_length_string(fname));
 
-      RequestHeaderOpenT *openHeader = (RequestHeaderOpenT *)cbuf->GetDataPtr();
+      RequestHeaderOpenT *openHeader = (RequestHeaderOpenT *)cbuf->get_data_ptr();
       openHeader->hdr.command = COMMAND_OPEN;
       openHeader->bufferSize = bufferSize;
-      cbuf->AdvanceDataPtr(sizeof(RequestHeaderOpenT));
-      cbuf->AppendString(fname);
+      cbuf->advance_data_ptr(sizeof(RequestHeaderOpenT));
+      cbuf->append_string(fname);
       return cbuf;
     }
 
 
     /**
      */
-    CommBuf *Protocol::CreateCreateRequest(std::string &fname, bool overwrite, int32_t bufferSize,
+    CommBuf *Protocol::create_create_request(std::string &fname, bool overwrite, int32_t bufferSize,
 					   int32_t replication, int64_t blockSize) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
-      hbuilder.AssignUniqueId();
-      CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderCreateT) + Serialization::EncodedLengthString(fname));
+      hbuilder.assign_unique_id();
+      CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderCreateT) + Serialization::encoded_length_string(fname));
 
-      RequestHeaderCreateT *createHeader = (RequestHeaderCreateT *)cbuf->GetDataPtr();
+      RequestHeaderCreateT *createHeader = (RequestHeaderCreateT *)cbuf->get_data_ptr();
       createHeader->hdr.command = COMMAND_CREATE;
       createHeader->overwrite = (overwrite) ? 1 : 0;
       createHeader->replication = replication;
       createHeader->bufferSize = bufferSize;
       createHeader->blockSize = blockSize;
-      cbuf->AdvanceDataPtr(sizeof(RequestHeaderCreateT));
-      cbuf->AppendString(fname);
+      cbuf->advance_data_ptr(sizeof(RequestHeaderCreateT));
+      cbuf->append_string(fname);
       return cbuf;
     }
 
@@ -95,11 +95,11 @@ namespace hypertable {
     /**
      *
      */
-    CommBuf *Protocol::CreateCloseRequest(int32_t fd) {
+    CommBuf *Protocol::create_close_request(int32_t fd) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER, fd);
-      hbuilder.AssignUniqueId();
+      hbuilder.assign_unique_id();
       CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderCloseT));
-      RequestHeaderCloseT *closeHeader = (RequestHeaderCloseT *)cbuf->GetDataPtr();
+      RequestHeaderCloseT *closeHeader = (RequestHeaderCloseT *)cbuf->get_data_ptr();
       closeHeader->hdr.command = COMMAND_CLOSE;
       closeHeader->fd = fd;
       return cbuf;
@@ -107,11 +107,11 @@ namespace hypertable {
 
 
 
-    CommBuf *Protocol::CreateReadRequest(int32_t fd, uint32_t amount) {
+    CommBuf *Protocol::create_read_request(int32_t fd, uint32_t amount) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER, fd);
-      hbuilder.AssignUniqueId();
+      hbuilder.assign_unique_id();
       CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderReadT));
-      RequestHeaderReadT *readHeader = (RequestHeaderReadT *)cbuf->GetDataPtr();
+      RequestHeaderReadT *readHeader = (RequestHeaderReadT *)cbuf->get_data_ptr();
       readHeader->hdr.command = COMMAND_READ;
       readHeader->fd = fd;
       readHeader->amount = amount;
@@ -119,11 +119,11 @@ namespace hypertable {
     }
 
 
-    CommBuf *Protocol::CreateAppendRequest(int32_t fd, const void *buf, uint32_t amount) {
+    CommBuf *Protocol::create_append_request(int32_t fd, const void *buf, uint32_t amount) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER, fd);
-      hbuilder.AssignUniqueId();
+      hbuilder.assign_unique_id();
       CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderAppendT), buf, amount);
-      RequestHeaderAppendT *appendHeader = (RequestHeaderAppendT *)cbuf->GetDataPtr();
+      RequestHeaderAppendT *appendHeader = (RequestHeaderAppendT *)cbuf->get_data_ptr();
       appendHeader->hdr.command = COMMAND_APPEND;
       appendHeader->fd = fd;
       appendHeader->amount = amount;
@@ -131,11 +131,11 @@ namespace hypertable {
     }
 
 
-    CommBuf *Protocol::CreateSeekRequest(int32_t fd, uint64_t offset) {
+    CommBuf *Protocol::create_seek_request(int32_t fd, uint64_t offset) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER, fd);
-      hbuilder.AssignUniqueId();
+      hbuilder.assign_unique_id();
       CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderSeekT));
-      RequestHeaderSeekT *seekHeader = (RequestHeaderSeekT *)cbuf->GetDataPtr();
+      RequestHeaderSeekT *seekHeader = (RequestHeaderSeekT *)cbuf->get_data_ptr();
       seekHeader->hdr.command = COMMAND_SEEK;
       seekHeader->fd = fd;
       seekHeader->offset = offset;
@@ -145,15 +145,15 @@ namespace hypertable {
     /**
      *
      */
-    CommBuf *Protocol::CreateRemoveRequest(std::string &fname) {
+    CommBuf *Protocol::create_remove_request(std::string &fname) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
-      hbuilder.AssignUniqueId();
-      CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderRemoveT) + Serialization::EncodedLengthString(fname));
+      hbuilder.assign_unique_id();
+      CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderRemoveT) + Serialization::encoded_length_string(fname));
 
-      RequestHeaderRemoveT *removeHeader = (RequestHeaderRemoveT *)cbuf->GetDataPtr();
+      RequestHeaderRemoveT *removeHeader = (RequestHeaderRemoveT *)cbuf->get_data_ptr();
       removeHeader->hdr.command = COMMAND_REMOVE;
-      cbuf->AdvanceDataPtr(sizeof(RequestHeaderRemoveT));
-      cbuf->AppendString(fname);
+      cbuf->advance_data_ptr(sizeof(RequestHeaderRemoveT));
+      cbuf->append_string(fname);
       return cbuf;
     }
 
@@ -161,12 +161,12 @@ namespace hypertable {
     /**
      *
      */
-    CommBuf *Protocol::CreateShutdownRequest(uint16_t flags) {
+    CommBuf *Protocol::create_shutdown_request(uint16_t flags) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
-      hbuilder.AssignUniqueId();
+      hbuilder.assign_unique_id();
       CommBuf *cbuf = new CommBuf(hbuilder, 4);
-      cbuf->AppendShort(COMMAND_SHUTDOWN);
-      cbuf->AppendShort(flags);
+      cbuf->append_short(COMMAND_SHUTDOWN);
+      cbuf->append_short(flags);
       return cbuf;
     }
 
@@ -174,11 +174,11 @@ namespace hypertable {
     /**
      *
      */
-    CommBuf *Protocol::CreateStatusRequest() {
+    CommBuf *Protocol::create_status_request() {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
-      hbuilder.AssignUniqueId();
+      hbuilder.assign_unique_id();
       CommBuf *cbuf = new CommBuf(hbuilder, 2);
-      cbuf->AppendShort(COMMAND_STATUS);
+      cbuf->append_short(COMMAND_STATUS);
       return cbuf;
     }
 
@@ -186,14 +186,14 @@ namespace hypertable {
     /**
      * 
      */
-    CommBuf *Protocol::CreateLengthRequest(std::string &fname) {
+    CommBuf *Protocol::create_length_request(std::string &fname) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
-      hbuilder.AssignUniqueId();
-      CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderLengthT) + Serialization::EncodedLengthString(fname));
-      RequestHeaderLengthT *lengthHeader = (RequestHeaderLengthT *)cbuf->GetDataPtr();
+      hbuilder.assign_unique_id();
+      CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderLengthT) + Serialization::encoded_length_string(fname));
+      RequestHeaderLengthT *lengthHeader = (RequestHeaderLengthT *)cbuf->get_data_ptr();
       lengthHeader->hdr.command = COMMAND_LENGTH;
-      cbuf->AdvanceDataPtr(sizeof(RequestHeaderLengthT));
-      cbuf->AppendString(fname);
+      cbuf->advance_data_ptr(sizeof(RequestHeaderLengthT));
+      cbuf->append_string(fname);
       return cbuf;
     }
 
@@ -201,11 +201,11 @@ namespace hypertable {
     /**
      * 
      */
-    CommBuf *Protocol::CreatePositionReadRequest(int32_t fd, uint64_t offset, uint32_t amount) {
+    CommBuf *Protocol::create_position_read_request(int32_t fd, uint64_t offset, uint32_t amount) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER, fd);
-      hbuilder.AssignUniqueId();
+      hbuilder.assign_unique_id();
       CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderPositionReadT));
-      RequestHeaderPositionReadT *preadHeader = (RequestHeaderPositionReadT *)cbuf->GetDataPtr();
+      RequestHeaderPositionReadT *preadHeader = (RequestHeaderPositionReadT *)cbuf->get_data_ptr();
       preadHeader->hdr.command = COMMAND_PREAD;
       preadHeader->fd = fd;
       preadHeader->offset = offset;
@@ -216,25 +216,25 @@ namespace hypertable {
     /**
      *
      */
-    CommBuf *Protocol::CreateMkdirsRequest(std::string &fname) {
+    CommBuf *Protocol::create_mkdirs_request(std::string &fname) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
-      hbuilder.AssignUniqueId();
-      CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderMkdirsT) + Serialization::EncodedLengthString(fname));
-      RequestHeaderMkdirsT *removeHeader = (RequestHeaderMkdirsT *)cbuf->GetDataPtr();
+      hbuilder.assign_unique_id();
+      CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderMkdirsT) + Serialization::encoded_length_string(fname));
+      RequestHeaderMkdirsT *removeHeader = (RequestHeaderMkdirsT *)cbuf->get_data_ptr();
       removeHeader->hdr.command = COMMAND_MKDIRS;
-      cbuf->AdvanceDataPtr(sizeof(RequestHeaderMkdirsT));
-      cbuf->AppendString(fname);
+      cbuf->advance_data_ptr(sizeof(RequestHeaderMkdirsT));
+      cbuf->append_string(fname);
       return cbuf;
     }
 
     /**
      *
      */
-    CommBuf *Protocol::CreateFlushRequest(int32_t fd) {
+    CommBuf *Protocol::create_flush_request(int32_t fd) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER, fd);
-      hbuilder.AssignUniqueId();
+      hbuilder.assign_unique_id();
       CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderFlushT));
-      RequestHeaderFlushT *flushHeader = (RequestHeaderFlushT *)cbuf->GetDataPtr();
+      RequestHeaderFlushT *flushHeader = (RequestHeaderFlushT *)cbuf->get_data_ptr();
       flushHeader->hdr.command = COMMAND_FLUSH;
       flushHeader->fd = fd;
       return cbuf;
@@ -243,36 +243,36 @@ namespace hypertable {
     /**
      *
      */
-    CommBuf *Protocol::CreateRmdirRequest(std::string &fname) {
+    CommBuf *Protocol::create_rmdir_request(std::string &fname) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
-      hbuilder.AssignUniqueId();
-      CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderRmdirT) + Serialization::EncodedLengthString(fname));
-      RequestHeaderRmdirT *removeHeader = (RequestHeaderRmdirT *)cbuf->GetDataPtr();
+      hbuilder.assign_unique_id();
+      CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderRmdirT) + Serialization::encoded_length_string(fname));
+      RequestHeaderRmdirT *removeHeader = (RequestHeaderRmdirT *)cbuf->get_data_ptr();
       removeHeader->hdr.command = COMMAND_RMDIR;
-      cbuf->AdvanceDataPtr(sizeof(RequestHeaderRmdirT));
-      cbuf->AppendString(fname);
+      cbuf->advance_data_ptr(sizeof(RequestHeaderRmdirT));
+      cbuf->append_string(fname);
       return cbuf;
     }
 
     /**
      *
      */
-    CommBuf *Protocol::CreateReaddirRequest(std::string &fname) {
+    CommBuf *Protocol::create_readdir_request(std::string &fname) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
-      hbuilder.AssignUniqueId();
-      CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderReaddirT) + Serialization::EncodedLengthString(fname));
-      RequestHeaderReaddirT *readdirHeader = (RequestHeaderReaddirT *)cbuf->GetDataPtr();
+      hbuilder.assign_unique_id();
+      CommBuf *cbuf = new CommBuf(hbuilder, sizeof(RequestHeaderReaddirT) + Serialization::encoded_length_string(fname));
+      RequestHeaderReaddirT *readdirHeader = (RequestHeaderReaddirT *)cbuf->get_data_ptr();
       readdirHeader->hdr.command = COMMAND_READDIR;
-      cbuf->AdvanceDataPtr(sizeof(RequestHeaderReaddirT));
-      cbuf->AppendString(fname);
+      cbuf->advance_data_ptr(sizeof(RequestHeaderReaddirT));
+      cbuf->append_string(fname);
       return cbuf;
     }
 
 
-    const char *Protocol::CommandText(short command) {
+    const char *Protocol::command_text(short command) {
       if (command < 0 || command >= COMMAND_MAX)
 	return "UNKNOWN";
-      return msCommandStrings[command];
+      return ms_command_strings[command];
     }
 
   }

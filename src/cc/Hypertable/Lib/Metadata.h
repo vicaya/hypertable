@@ -45,35 +45,35 @@ namespace hypertable {
 
     Metadata(const char *fname=0);
 
-    int GetRangeInfo(std::string &tableName, std::string &endRow, RangeInfoPtr &rangeInfoPtr);
+    int get_range_info(std::string &tableName, std::string &endRow, RangeInfoPtr &rangeInfoPtr);
 
-    int GetRangeInfo(const char *tableName, const char *endRow, RangeInfoPtr &rangeInfoPtr) {
+    int get_range_info(const char *tableName, const char *endRow, RangeInfoPtr &rangeInfoPtr) {
       std::string tableNameStr = tableName;
       std::string endRowStr    = endRow;
-      return GetRangeInfo(tableNameStr, endRowStr, rangeInfoPtr);
+      return get_range_info(tableNameStr, endRowStr, rangeInfoPtr);
     }
 
-    void AddRangeInfo(RangeInfoPtr &rangePtr);
+    void add_range_info(RangeInfoPtr &rangePtr);
 
-    void Sync(const char *fname=0);
-    void Display();
+    void sync(const char *fname=0);
+    void display();
 
-    static Metadata *NewInstance(const char *fname);
-    friend Metadata *NewInstance(const char *fname);
+    static Metadata *new_instance(const char *fname);
+    friend Metadata *new_instance(const char *fname);
 
-    TableMapT     mTableMap;
+    TableMapT     m_table_map;
 
   private:
 
-    std::string   mFilename;
+    std::string   m_filename;
 
-    static Metadata     *msMetadata;
-    static RangeInfo    *msRange;
-    static std::string   msCollectedText;
+    static Metadata     *ms_metadata;
+    static RangeInfo    *ms_range;
+    static std::string   ms_collected_text;
 
-    static void StartElementHandler(void *userData, const XML_Char *name, const XML_Char **atts);
-    static void EndElementHandler(void *userData, const XML_Char *name);
-    static void CharacterDataHandler(void *userData, const XML_Char *s, int len);
+    static void start_element_handler(void *userData, const XML_Char *name, const XML_Char **atts);
+    static void end_element_handler(void *userData, const XML_Char *name);
+    static void character_data_handler(void *userData, const XML_Char *s, int len);
 
   };
 

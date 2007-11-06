@@ -33,18 +33,18 @@ namespace hypertable {
 
 class CommTestThreadFunction {
  public:
-  CommTestThreadFunction(hypertable::Comm *comm, struct sockaddr_in &addr, const char *input) : mComm(comm), mAddr(addr) {
-    mInputFile = input;
+  CommTestThreadFunction(hypertable::Comm *comm, struct sockaddr_in &addr, const char *input) : m_comm(comm), m_addr(addr) {
+    m_input_file = input;
   }
-  void SetOutputFile(const char *output) { 
-    mOutputFile = output;
+  void set_output_file(const char *output) { 
+    m_output_file = output;
   }
   void operator()();
 
  private:
-  hypertable::Comm *mComm;
-  struct sockaddr_in mAddr;
-  const char *mInputFile;
-  const char *mOutputFile;
+  hypertable::Comm *m_comm;
+  struct sockaddr_in m_addr;
+  const char *m_input_file;
+  const char *m_output_file;
 };
 

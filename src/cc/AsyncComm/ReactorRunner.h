@@ -30,10 +30,10 @@ namespace hypertable {
   class ReactorRunner {
   public:
     void operator()();
-    void SetReactor(Reactor *reactor) { mReactor = reactor; }
+    void set_reactor(Reactor *reactor) { m_reactor = reactor; }
   private:
-    void CleanupAndRemoveHandlers(set<IOHandler *> &handlers);
-    Reactor *mReactor;
+    void cleanup_and_remove_handlers(set<IOHandler *> &handlers);
+    Reactor *m_reactor;
   };
 
 }

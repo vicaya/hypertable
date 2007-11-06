@@ -33,7 +33,7 @@ using namespace hypertable;
 using namespace Hyperspace;
 using namespace std;
 
-const char *CommandOpen::msUsage[] = {
+const char *CommandOpen::ms_usage[] = {
   "open <fname> flags=[READ|WRITE|LOCK|CREATE|EXCL|TEMP|LOCK_SHARED|LOCK_EXCLUSIVE] [event-mask=<mask>]",
   "  This command issues an OPEN request to Hyperspace.  The optional",
   "  parameter event-mask may take a value that is the combination of",
@@ -50,9 +50,9 @@ int CommandOpen::run() {
   uint64_t handle;
   int error;
 
-  for (size_t i=0; i<mArgs.size(); i++) {
-    if (mArgs[i].first == "flags") {
-      str = strtok_r((char *)mArgs[i].second.c_str(), " \t|", &last);
+  for (size_t i=0; i<m_args.size(); i++) {
+    if (m_args[i].first == "flags") {
+      str = strtok_r((char *)m_args[i].second.c_str(), " \t|", &last);
       while (str) {
 	if (!strcmp(str, "READ"))
 	  flags |= OPEN_FLAG_READ;
@@ -73,8 +73,8 @@ int CommandOpen::run() {
 	str = strtok_r(0, " \t|", &last);
       }
     }
-    else if (mArgs[i].first == "event-mask") {
-      str = strtok_r((char *)mArgs[i].second.c_str(), " \t|", &last);
+    else if (m_args[i].first == "event-mask") {
+      str = strtok_r((char *)m_args[i].second.c_str(), " \t|", &last);
       while (str) {
 	if (!strcmp(str, "ATTR_SET"))
 	  eventMask |= EVENT_MASK_ATTR_SET;
@@ -91,12 +91,12 @@ int CommandOpen::run() {
 	str = strtok_r(0, " \t|", &last);
       }
     }
-    else if (fname != "" || mArgs[i].second != "") {
+    else if (fname != "" || m_args[i].second != "") {
       cerr << "Invalid arguments.  Type 'help' for usage." << endl;
       return -1;
     }
     else
-      fname = mArgs[i].first;
+      fname = m_args[i].first;
   }
 
   if (flags == 0) {
@@ -112,9 +112,9 @@ int CommandOpen::run() {
 
   HandleCallbackPtr callbackPtr = new FileHandleCallback(eventMask);
 
-  if ((error = mSession->Open(fname, flags, callbackPtr, &handle)) == Error::OK) {
+  if ((error = m_session->open(fname, flags, callbackPtr, &handle)) == Error::OK) {
     std::string normalName;
-    Util::NormalizePathname(fname, normalName);
+    Util::normalize_pathname(fname, normalName);
     Global::fileMap[normalName] = handle;
   }
   return error;

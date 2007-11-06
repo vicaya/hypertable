@@ -30,15 +30,15 @@ using namespace hypertable;
 /**
  *
  */
-void ServerLockFileHandler::LockAcquired(uint32_t mode) {
+void ServerLockFileHandler::lock_acquired(uint32_t mode) {
 }
 
 /**
  *
  */
-void ServerLockFileHandler::LockReleased() {
+void ServerLockFileHandler::lock_released() {
   EventPtr nullEvent;
-  mAppQueuePtr->Add( new EventHandlerServerLeft(mMasterPtr, mStatePtr->serverIdStr, nullEvent) );
+  m_app_queue_ptr->add( new EventHandlerServerLeft(m_master_ptr, m_state_ptr->serverIdStr, nullEvent) );
 }
 
 

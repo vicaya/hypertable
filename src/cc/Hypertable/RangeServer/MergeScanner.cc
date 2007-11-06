@@ -31,35 +31,35 @@ using namespace hypertable;
 /**
  * 
  */
-MergeScanner::MergeScanner(ScanContextPtr &scanContextPtr, bool returnDeletes) : CellListScanner(scanContextPtr), mDone(false), mInitialized(false), mScanners(), mQueue(), mDeletePresent(false), mDeletedRow(0), mDeletedCell(0), mReturnDeletes(returnDeletes), mRowCount(0), mRowLimit(0), mCellCount(0), mCellLimit(0), mCellCutoff(0), mPrevKey(0) {
+MergeScanner::MergeScanner(ScanContextPtr &scanContextPtr, bool returnDeletes) : CellListScanner(scanContextPtr), m_done(false), m_initialized(false), m_scanners(), m_queue(), m_delete_present(false), m_deleted_row(0), m_deleted_cell(0), m_return_deletes(returnDeletes), m_row_count(0), m_row_limit(0), m_cell_count(0), m_cell_limit(0), m_cell_cutoff(0), m_prev_key(0) {
   if (scanContextPtr->spec != 0)
-    mRowLimit = scanContextPtr->spec->rowLimit;
+    m_row_limit = scanContextPtr->spec->rowLimit;
 }
 
 
 
-void MergeScanner::AddScanner(CellListScanner *scanner) {
-  mScanners.push_back(scanner);
+void MergeScanner::add_scanner(CellListScanner *scanner) {
+  m_scanners.push_back(scanner);
 }
 
 
 
 MergeScanner::~MergeScanner() {
-  for (size_t i=0; i<mScanners.size(); i++)
-    delete mScanners[i];
+  for (size_t i=0; i<m_scanners.size(); i++)
+    delete m_scanners[i];
 }
 
 
 
-void MergeScanner::Forward() {
+void MergeScanner::forward() {
   ScannerStateT sstate;
   Key keyComps;
   size_t len;
 
-  if (mQueue.empty())
+  if (m_queue.empty())
     return;
 
-  sstate = mQueue.top();
+  sstate = m_queue.top();
 
   /**
    * Pop the top element, forward it, re-insert it back into the queue;
@@ -69,118 +69,118 @@ void MergeScanner::Forward() {
 
     while (true) {
 
-      mQueue.pop();
-      sstate.scanner->Forward();
-      if (sstate.scanner->Get(&sstate.key, &sstate.value))
-	mQueue.push(sstate);
+      m_queue.pop();
+      sstate.scanner->forward();
+      if (sstate.scanner->get(&sstate.key, &sstate.value))
+	m_queue.push(sstate);
 
-      if (mQueue.empty())
+      if (m_queue.empty())
 	return;
 
-      sstate = mQueue.top();
+      sstate = m_queue.top();
 
       if (!keyComps.load(sstate.key)) {
 	LOG_ERROR("Problem decoding key!");
       }
       else if (keyComps.flag == FLAG_DELETE_ROW) {
 	len = strlen(keyComps.rowKey) + 1;
-	if (mDeletePresent && mDeletedRow.fill() == len && !memcmp(mDeletedRow.buf, keyComps.rowKey, len)) {
-	  if (mDeletedRowTimestamp < keyComps.timestamp)
-	    mDeletedRowTimestamp = keyComps.timestamp;
+	if (m_delete_present && m_deleted_row.fill() == len && !memcmp(m_deleted_row.buf, keyComps.rowKey, len)) {
+	  if (m_deleted_row_timestamp < keyComps.timestamp)
+	    m_deleted_row_timestamp = keyComps.timestamp;
 	}
 	else {
-	  mDeletedRow.clear();
-	  mDeletedRow.ensure(len);
-	  memcpy(mDeletedRow.buf, keyComps.rowKey, len);
-	  mDeletedRow.ptr = mDeletedRow.buf + len;
-	  mDeletedRowTimestamp = keyComps.timestamp;
-	  mDeletePresent = true;
+	  m_deleted_row.clear();
+	  m_deleted_row.ensure(len);
+	  memcpy(m_deleted_row.buf, keyComps.rowKey, len);
+	  m_deleted_row.ptr = m_deleted_row.buf + len;
+	  m_deleted_row_timestamp = keyComps.timestamp;
+	  m_delete_present = true;
 	}
-	if (mReturnDeletes)
+	if (m_return_deletes)
 	  break;
       }
       else if (keyComps.flag == FLAG_DELETE_CELL) {
 	len = (keyComps.columnQualifier - keyComps.rowKey) + strlen(keyComps.columnQualifier) + 1;
-	if (mDeletePresent && mDeletedCell.fill() == len && !memcmp(mDeletedCell.buf, keyComps.rowKey, len)) {
-	  if (mDeletedCellTimestamp < keyComps.timestamp)
-	    mDeletedCellTimestamp = keyComps.timestamp;
+	if (m_delete_present && m_deleted_cell.fill() == len && !memcmp(m_deleted_cell.buf, keyComps.rowKey, len)) {
+	  if (m_deleted_cell_timestamp < keyComps.timestamp)
+	    m_deleted_cell_timestamp = keyComps.timestamp;
 	}
 	else {
-	  mDeletedCell.clear();
-	  mDeletedCell.ensure(len);
-	  memcpy(mDeletedCell.buf, sstate.key->data, len);
-	  mDeletedCell.ptr = mDeletedCell.buf + len;
-	  mDeletedCellTimestamp = keyComps.timestamp;
-	  mDeletePresent = true;
+	  m_deleted_cell.clear();
+	  m_deleted_cell.ensure(len);
+	  memcpy(m_deleted_cell.buf, sstate.key->data, len);
+	  m_deleted_cell.ptr = m_deleted_cell.buf + len;
+	  m_deleted_cell_timestamp = keyComps.timestamp;
+	  m_delete_present = true;
 	}
-	if (mReturnDeletes)
+	if (m_return_deletes)
 	  break;
       }
       else {
-	if (mDeletePresent) {
-	  if (mDeletedCell.fill() > 0) {
+	if (m_delete_present) {
+	  if (m_deleted_cell.fill() > 0) {
 	    len = (keyComps.columnQualifier - keyComps.rowKey) + strlen(keyComps.columnQualifier) + 1;
-	    if (mDeletedCell.fill() == len && !memcmp(mDeletedCell.buf, keyComps.rowKey, len)) {
-	      if (keyComps.timestamp < mDeletedCellTimestamp)
+	    if (m_deleted_cell.fill() == len && !memcmp(m_deleted_cell.buf, keyComps.rowKey, len)) {
+	      if (keyComps.timestamp < m_deleted_cell_timestamp)
 		continue;
 	      break;
 	    }
-	    mDeletedCell.clear();
+	    m_deleted_cell.clear();
 	  }
-	  if (mDeletedRow.fill() > 0) {
+	  if (m_deleted_row.fill() > 0) {
 	    len = strlen(keyComps.rowKey) + 1;
-	    if (mDeletedRow.fill() == len && !memcmp(mDeletedRow.buf, keyComps.rowKey, len)) {
-	      if (keyComps.timestamp < mDeletedRowTimestamp)
+	    if (m_deleted_row.fill() == len && !memcmp(m_deleted_row.buf, keyComps.rowKey, len)) {
+	      if (keyComps.timestamp < m_deleted_row_timestamp)
 		continue;
 	      break;
 	    }
-	    mDeletedRow.clear();
+	    m_deleted_row.clear();
 	  }
-	  mDeletePresent = false;
+	  m_delete_present = false;
 	}
 	break;
       }
     }
 
-    if (mPrevKey.fill() != 0) {
+    if (m_prev_key.fill() != 0) {
 
-      if (mRowLimit) {
-	if (strcmp(keyComps.rowKey, (const char *)mPrevKey.buf)) {
-	  mRowCount++;
-	  if (mRowCount >= mRowLimit) {
-	    mDone = true;
+      if (m_row_limit) {
+	if (strcmp(keyComps.rowKey, (const char *)m_prev_key.buf)) {
+	  m_row_count++;
+	  if (m_row_count >= m_row_limit) {
+	    m_done = true;
 	    return;
 	  }
-	  mPrevKey.set(sstate.key->data, sstate.key->len);
-	  mCellLimit = mScanContextPtr->familyInfo[keyComps.columnFamily].cellLimit;
-	  mCellCutoff = mScanContextPtr->familyInfo[keyComps.columnFamily].cutoffTime;
-	  mCellCount = 0;
+	  m_prev_key.set(sstate.key->data, sstate.key->len);
+	  m_cell_limit = m_scan_context_ptr->familyInfo[keyComps.columnFamily].cellLimit;
+	  m_cell_cutoff = m_scan_context_ptr->familyInfo[keyComps.columnFamily].cutoffTime;
+	  m_cell_count = 0;
 	  return;
 	}
       }
 
-      if (sstate.key->len == mPrevKey.fill() && sstate.key->len > 9 &&
-	  !memcmp(sstate.key->data, mPrevKey.buf, sstate.key->len-9)) {
-	if (mCellLimit) {
-	  mCellCount++;
-	  mPrevKey.set(sstate.key->data, sstate.key->len);
-	  if (mCellCount >= mCellLimit)
+      if (sstate.key->len == m_prev_key.fill() && sstate.key->len > 9 &&
+	  !memcmp(sstate.key->data, m_prev_key.buf, sstate.key->len-9)) {
+	if (m_cell_limit) {
+	  m_cell_count++;
+	  m_prev_key.set(sstate.key->data, sstate.key->len);
+	  if (m_cell_count >= m_cell_limit)
 	    continue;
 	}
       }
       else {
-	mPrevKey.set(sstate.key->data, sstate.key->len);
-	mCellLimit = mScanContextPtr->familyInfo[keyComps.columnFamily].cellLimit;
-	mCellCutoff = mScanContextPtr->familyInfo[keyComps.columnFamily].cutoffTime;
-	mCellCount = 0;
+	m_prev_key.set(sstate.key->data, sstate.key->len);
+	m_cell_limit = m_scan_context_ptr->familyInfo[keyComps.columnFamily].cellLimit;
+	m_cell_cutoff = m_scan_context_ptr->familyInfo[keyComps.columnFamily].cutoffTime;
+	m_cell_count = 0;
       }
 
     }
     else {
-      mPrevKey.set(sstate.key->data, sstate.key->len);
-      mCellLimit = mScanContextPtr->familyInfo[keyComps.columnFamily].cellLimit;
-      mCellCutoff = mScanContextPtr->familyInfo[keyComps.columnFamily].cutoffTime;
-      mCellCount = 0;
+      m_prev_key.set(sstate.key->data, sstate.key->len);
+      m_cell_limit = m_scan_context_ptr->familyInfo[keyComps.columnFamily].cellLimit;
+      m_cell_cutoff = m_scan_context_ptr->familyInfo[keyComps.columnFamily].cutoffTime;
+      m_cell_count = 0;
     }
 
     break;
@@ -191,13 +191,13 @@ void MergeScanner::Forward() {
 
 
 
-bool MergeScanner::Get(ByteString32T **keyp, ByteString32T **valuep) {
+bool MergeScanner::get(ByteString32T **keyp, ByteString32T **valuep) {
 
-  if (!mInitialized)
-    Initialize();
+  if (!m_initialized)
+    initialize();
 
-  if (!mQueue.empty() && !mDone) {
-    const ScannerStateT &sstate = mQueue.top();
+  if (!m_queue.empty() && !m_done) {
+    const ScannerStateT &sstate = m_queue.top();
     // check for row or cell limit
     *keyp = sstate.key;
     *valuep = sstate.value;
@@ -208,54 +208,54 @@ bool MergeScanner::Get(ByteString32T **keyp, ByteString32T **valuep) {
 
 
 
-void MergeScanner::Initialize() {
+void MergeScanner::initialize() {
   ScannerStateT sstate;
-  while (!mQueue.empty())
-    mQueue.pop();
-  for (size_t i=0; i<mScanners.size(); i++) {
-    if (mScanners[i]->Get(&sstate.key, &sstate.value)) {
-      sstate.scanner = mScanners[i];
-      mQueue.push(sstate);
+  while (!m_queue.empty())
+    m_queue.pop();
+  for (size_t i=0; i<m_scanners.size(); i++) {
+    if (m_scanners[i]->get(&sstate.key, &sstate.value)) {
+      sstate.scanner = m_scanners[i];
+      m_queue.push(sstate);
     }
   }
-  if (!mQueue.empty()) {
-    const ScannerStateT &sstate = mQueue.top();
+  if (!m_queue.empty()) {
+    const ScannerStateT &sstate = m_queue.top();
     Key keyComps;
     if (!keyComps.load(sstate.key)) {
-      assert(!"MergeScanner::Initialize() - Problem decoding key!");
+      assert(!"MergeScanner::initialize() - Problem decoding key!");
     }
 
     if (keyComps.flag == FLAG_DELETE_ROW) {
       size_t len = strlen(keyComps.rowKey) + 1;
-      mDeletedRow.clear();
-      mDeletedRow.ensure(len);
-      memcpy(mDeletedRow.buf, keyComps.rowKey, len);
-      mDeletedRow.ptr = mDeletedRow.buf + len;
-      mDeletedRowTimestamp = keyComps.timestamp;
-      mDeletePresent = true;
-      if (!mReturnDeletes)
-	Forward();
+      m_deleted_row.clear();
+      m_deleted_row.ensure(len);
+      memcpy(m_deleted_row.buf, keyComps.rowKey, len);
+      m_deleted_row.ptr = m_deleted_row.buf + len;
+      m_deleted_row_timestamp = keyComps.timestamp;
+      m_delete_present = true;
+      if (!m_return_deletes)
+	forward();
     }
     else if (keyComps.flag == FLAG_DELETE_CELL) {
       size_t len = (keyComps.columnQualifier - keyComps.rowKey) + strlen(keyComps.columnQualifier) + 1;
-      mDeletedCell.clear();
-      mDeletedCell.ensure(len);
-      memcpy(mDeletedCell.buf, sstate.key->data, len);
-      mDeletedCell.ptr = mDeletedCell.buf + len;
-      mDeletedCellTimestamp = keyComps.timestamp;
-      mDeletePresent = true;
-      if (!mReturnDeletes)
-	Forward();
+      m_deleted_cell.clear();
+      m_deleted_cell.ensure(len);
+      memcpy(m_deleted_cell.buf, sstate.key->data, len);
+      m_deleted_cell.ptr = m_deleted_cell.buf + len;
+      m_deleted_cell_timestamp = keyComps.timestamp;
+      m_delete_present = true;
+      if (!m_return_deletes)
+	forward();
     }
     else {
-      mDeletePresent = false;
-      mPrevKey.set(sstate.key->data, sstate.key->len);
-      mCellLimit = mScanContextPtr->familyInfo[keyComps.columnFamily].cellLimit;
-      mCellCutoff = mScanContextPtr->familyInfo[keyComps.columnFamily].cutoffTime;
-      mCellCount = 0;
+      m_delete_present = false;
+      m_prev_key.set(sstate.key->data, sstate.key->len);
+      m_cell_limit = m_scan_context_ptr->familyInfo[keyComps.columnFamily].cellLimit;
+      m_cell_cutoff = m_scan_context_ptr->familyInfo[keyComps.columnFamily].cutoffTime;
+      m_cell_count = 0;
     }
   }
 
-  mInitialized = true;
+  m_initialized = true;
 }
 

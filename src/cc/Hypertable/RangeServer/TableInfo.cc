@@ -28,19 +28,19 @@ using namespace hypertable;
 /**
  * 
  */
-bool TableInfo::GetRange(RangeSpecificationT *rangeSpec, RangePtr &rangePtr) {
-  boost::mutex::scoped_lock lock(mMutex);
+bool TableInfo::get_range(RangeSpecificationT *rangeSpec, RangePtr &rangePtr) {
+  boost::mutex::scoped_lock lock(m_mutex);
   string startRow = rangeSpec->startRow;
   string endRow = rangeSpec->endRow;
 
-  RangeMapT::iterator iter = mRangeMap.find(endRow);
+  RangeMapT::iterator iter = m_range_map.find(endRow);
 
-  if (iter == mRangeMap.end())
+  if (iter == m_range_map.end())
     return false;
 
   rangePtr = (*iter).second;
 
-  if (rangePtr->StartRow() != startRow)
+  if (rangePtr->start_row() != startRow)
     return false;
 
   return true;
@@ -51,33 +51,33 @@ bool TableInfo::GetRange(RangeSpecificationT *rangeSpec, RangePtr &rangePtr) {
 /**
  * 
  */
-void TableInfo::AddRange(RangeInfoPtr &rangeInfoPtr) {
-  boost::mutex::scoped_lock lock(mMutex);
+void TableInfo::add_range(RangeInfoPtr &rangeInfoPtr) {
+  boost::mutex::scoped_lock lock(m_mutex);
   std::string rangeEndRow;
 
-  rangeInfoPtr->GetEndRow(rangeEndRow);
+  rangeInfoPtr->get_end_row(rangeEndRow);
 
-  RangeMapT::iterator iter = mRangeMap.find(rangeEndRow);
-  assert(iter == mRangeMap.end());
+  RangeMapT::iterator iter = m_range_map.find(rangeEndRow);
+  assert(iter == m_range_map.end());
 
-  RangePtr rangePtr( new Range(mSchema, rangeInfoPtr) );
+  RangePtr rangePtr( new Range(m_schema, rangeInfoPtr) );
 
-  mRangeMap[rangeEndRow] = rangePtr;
+  m_range_map[rangeEndRow] = rangePtr;
 }
 
 
 /**
  * 
  */
-bool TableInfo::FindContainingRange(std::string row, RangePtr &rangePtr) {
-  boost::mutex::scoped_lock lock(mMutex);
+bool TableInfo::find_containing_range(std::string row, RangePtr &rangePtr) {
+  boost::mutex::scoped_lock lock(m_mutex);
 
-  RangeMapT::iterator iter = mRangeMap.lower_bound(row);
+  RangeMapT::iterator iter = m_range_map.lower_bound(row);
 
-  if (iter == mRangeMap.end())
+  if (iter == m_range_map.end())
     return false;
 
-  if (row <= (*iter).second->StartRow())
+  if (row <= (*iter).second->start_row())
     return false;
 
   rangePtr = (*iter).second;

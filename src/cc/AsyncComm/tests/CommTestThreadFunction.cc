@@ -52,38 +52,38 @@ namespace {
 
   public:
 
-    ResponseHandler() : mQueue(), mMutex(), mCond(), mConnected(true) { return; }
+    ResponseHandler() : m_queue(), m_mutex(), m_cond(), m_connected(true) { return; }
   
     virtual void handle(EventPtr &eventPtr) {
-      boost::mutex::scoped_lock lock(mMutex);
+      boost::mutex::scoped_lock lock(m_mutex);
       if (eventPtr->type == Event::MESSAGE) {
-	mQueue.push(eventPtr);
-	mCond.notify_one();
+	m_queue.push(eventPtr);
+	m_cond.notify_one();
       }
       else {
-	eventPtr->Display();
-	mConnected = false;
-	mCond.notify_one();
+	eventPtr->display();
+	m_connected = false;
+	m_cond.notify_one();
       }
     }
 
-    bool GetResponse(EventPtr &eventPtr) {
-      boost::mutex::scoped_lock lock(mMutex);
-      while (mQueue.empty()) {
-	mCond.wait(lock);
-	if (mConnected == false)
+    bool get_response(EventPtr &eventPtr) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      while (m_queue.empty()) {
+	m_cond.wait(lock);
+	if (m_connected == false)
 	  return false;
       }
-      eventPtr = mQueue.front();
-      mQueue.pop();
+      eventPtr = m_queue.front();
+      m_queue.pop();
       return true;
     }
 
   private:
-    queue<EventPtr>   mQueue;
-    boost::mutex      mMutex;
-    boost::condition  mCond;
-    bool              mConnected;
+    queue<EventPtr>   m_queue;
+    boost::mutex      m_mutex;
+    boost::condition  m_cond;
+    bool              m_connected;
   };
 }
 
@@ -98,8 +98,8 @@ void CommTestThreadFunction::operator()() {
   int outstanding = 0;
   int maxOutstanding = 50;
   string line;
-  ifstream infile(mInputFile);
-  ofstream outfile(mOutputFile);
+  ifstream infile(m_input_file);
+  ofstream outfile(m_output_file);
   const char *str;
   int nsent = 0;
   ResponseHandler *respHandler = new ResponseHandler();
@@ -109,11 +109,11 @@ void CommTestThreadFunction::operator()() {
     while (!infile.eof() && nsent < MAX_MESSAGES) {
       getline (infile,line);
       if (line.length() > 0) {
-	hbuilder.AssignUniqueId();
-	CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::EncodedLengthString(line)) );
-	cbufPtr->AppendString(line);
+	hbuilder.assign_unique_id();
+	CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::encoded_length_string(line)) );
+	cbufPtr->append_string(line);
 	int retries = 0;
-	while ((error = mComm->SendRequest(mAddr, 30, cbufPtr, respHandler)) != Error::OK) {
+	while ((error = m_comm->send_request(m_addr, 30, cbufPtr, respHandler)) != Error::OK) {
 	  if (error == Error::COMM_NOT_CONNECTED) {
 	    if (retries == 5) {
 	      LOG_ERROR("Connection timeout.");
@@ -123,16 +123,16 @@ void CommTestThreadFunction::operator()() {
 	    retries++;
 	  }
 	  else {
-	    LOG_VA_ERROR("CommEngine::SendMessage returned '%s'", Error::GetText(error));
+	    LOG_VA_ERROR("CommEngine::send_message returned '%s'", Error::get_text(error));
 	    return;
 	  }
 	}
 	outstanding++;
 
 	if (outstanding  > maxOutstanding) {
-	  if (!respHandler->GetResponse(eventPtr))
+	  if (!respHandler->get_response(eventPtr))
 	    break;
-	  if (!Serialization::DecodeString(&eventPtr->message, &eventPtr->messageLen, &str))
+	  if (!Serialization::decode_string(&eventPtr->message, &eventPtr->messageLen, &str))
 	    outfile << "ERROR: deserialization problem." << endl;
 	  else {
 	    if (*str != 0)
@@ -148,12 +148,12 @@ void CommTestThreadFunction::operator()() {
     infile.close();
   }
   else {
-    LOG_VA_ERROR("Unable to open file '%s' : %s", mInputFile, strerror(errno));
+    LOG_VA_ERROR("Unable to open file '%s' : %s", m_input_file, strerror(errno));
     return;
   }
 
-  while (outstanding > 0 && respHandler->GetResponse(eventPtr)) {
-    if (!Serialization::DecodeString(&eventPtr->message, &eventPtr->messageLen, &str))
+  while (outstanding > 0 && respHandler->get_response(eventPtr)) {
+    if (!Serialization::decode_string(&eventPtr->message, &eventPtr->messageLen, &str))
       outfile << "ERROR: deserialization problem." << endl;
     else {
       if (*str != 0)

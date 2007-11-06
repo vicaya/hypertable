@@ -47,13 +47,13 @@ namespace hypertable {
    *   DispatchHandlerSynchronizer syncHandler;
    *   EventPtr eventPtr;
    *   CommBufPtr cbufPtr( ... create protocol message here ...  );
-   *   if ((error = mComm->SendRequest(mAddr, cbufPtr, &syncHandler)) != Error::OK) {
+   *   if ((error = m_comm->send_request(m_addr, cbufPtr, &syncHandler)) != Error::OK) {
    *      // log error message here ...
    *      return error;
    *   }
-   *   if (!syncHandler.WaitForReply(eventPtr))
+   *   if (!syncHandler.wait_for_reply(eventPtr))
    *       // log error message here ...
-   *   error = (int)Protocol::ResponseCode(eventPtr);
+   *   error = (int)Protocol::response_code(eventPtr);
    *   return error;
    * } </pre>
    *
@@ -89,12 +89,12 @@ namespace hypertable {
      * @param eventPtr shared pointer to event object
      * @return true if next returned event is type MESSAGE and contains status Error::OK, false otherwise
      */
-    bool WaitForReply(EventPtr &eventPtr);
+    bool wait_for_reply(EventPtr &eventPtr);
 
   private:
-    queue<EventPtr>   mReceiveQueue;
-    boost::mutex      mMutex;
-    boost::condition  mCond;
+    queue<EventPtr>   m_receive_queue;
+    boost::mutex      m_mutex;
+    boost::condition  m_cond;
   };
 }
 

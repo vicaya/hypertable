@@ -35,27 +35,27 @@ using namespace hypertable;
  *
  */
 void RequestHandlerLock::run() {
-  ResponseCallbackLock cb(mComm, mEventPtr);
-  size_t remaining = mEventPtr->messageLen - 2;
-  uint8_t *msgPtr = mEventPtr->message + 2;
+  ResponseCallbackLock cb(m_comm, m_event_ptr);
+  size_t remaining = m_event_ptr->messageLen - 2;
+  uint8_t *msgPtr = m_event_ptr->message + 2;
   const char *name;
   uint64_t handle;
   uint32_t mode;
   uint8_t tryAcquire;
 
   // handle
-  if (!Serialization::DecodeLong(&msgPtr, &remaining, &handle))
+  if (!Serialization::decode_long(&msgPtr, &remaining, &handle))
     goto abort;
 
   // mode
-  if (!Serialization::DecodeInt(&msgPtr, &remaining, &mode))
+  if (!Serialization::decode_int(&msgPtr, &remaining, &mode))
     goto abort;
 
   // tryAcquire
-  if (!Serialization::DecodeByte(&msgPtr, &remaining, &tryAcquire))
+  if (!Serialization::decode_byte(&msgPtr, &remaining, &tryAcquire))
     goto abort;
 
-  mMaster->Lock(&cb, mSessionId, handle, mode, (bool)tryAcquire);
+  m_master->lock(&cb, m_session_id, handle, mode, (bool)tryAcquire);
 
   return;
 

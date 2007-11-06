@@ -36,15 +36,15 @@ namespace hypertable {
 
     virtual ~Protocol() { return; }
 
-    static int32_t ResponseCode(Event *event);
-    static int32_t ResponseCode(EventPtr &eventPtr) { return ResponseCode(eventPtr.get()); }
+    static int32_t response_code(Event *event);
+    static int32_t response_code(EventPtr &eventPtr) { return response_code(eventPtr.get()); }
 
-    static std::string StringFormatMessage(Event *event);
-    static std::string StringFormatMessage(EventPtr &eventPtr) { return StringFormatMessage(eventPtr.get()); }
+    static std::string string_format_message(Event *event);
+    static std::string string_format_message(EventPtr &eventPtr) { return string_format_message(eventPtr.get()); }
 
-    static CommBuf *CreateErrorMessage(HeaderBuilder &hbuilder, int error, const char *msg);
+    static CommBuf *create_error_message(HeaderBuilder &hbuilder, int error, const char *msg);
 
-    virtual const char *CommandText(short command) = 0;
+    virtual const char *command_text(short command) = 0;
 
   };
 

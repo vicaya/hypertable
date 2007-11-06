@@ -32,15 +32,15 @@ using namespace std;
 /**
  *
  */
-void InteractiveCommand::ParseCommandLine(const char *line) {
-  size_t commandLen = strlen(this->CommandText());
+void InteractiveCommand::parse_command_line(const char *line) {
+  size_t commandLen = strlen(this->command_text());
   const char *base, *ptr;
   int lastchar = 0;
   string key, value;
 
-  assert(!strncmp(line, CommandText(), commandLen));
+  assert(!strncmp(line, command_text(), commandLen));
 
-  mArgs.clear();
+  m_args.clear();
 
   ptr = line + commandLen;
 
@@ -56,7 +56,7 @@ void InteractiveCommand::ParseCommandLine(const char *line) {
       break;
 
     if (*ptr == '\"') {
-      if (!ParseStringLiteral(ptr, key, &ptr))
+      if (!parse_string_literal(ptr, key, &ptr))
 	exit(1);
     }
     else {
@@ -66,7 +66,7 @@ void InteractiveCommand::ParseCommandLine(const char *line) {
 	  key = string(base, ptr-base);
 	  base = ++ptr;
 	  if (*base == '\"') {
-	    if (!ParseStringLiteral(base, value, &ptr))
+	    if (!parse_string_literal(base, value, &ptr))
 	      exit(1);
 	    break;
 	  }
@@ -84,14 +84,14 @@ void InteractiveCommand::ParseCommandLine(const char *line) {
 	ptr++;
       }
     }
-    mArgs.push_back( pair<string, string>(key, value) );
+    m_args.push_back( pair<string, string>(key, value) );
   }
 
 }
 
 
 
-bool InteractiveCommand::ParseStringLiteral(const char *str, std::string &text, const char **endptr) {
+bool InteractiveCommand::parse_string_literal(const char *str, std::string &text, const char **endptr) {
   int lastchar = *str;
   const char *ptr, *base;
 

@@ -33,22 +33,22 @@ namespace hypertable {
   class TestSource {
 
   public:
-    TestSource(std::string &fname, Schema *schema) : mSchema(schema), mFin(fname.c_str()), mCurLine(0), mKeyBuffer(0), mValueBuffer(0) {
+    TestSource(std::string &fname, Schema *schema) : m_schema(schema), m_fin(fname.c_str()), m_cur_line(0), m_key_buffer(0), m_value_buffer(0) {
       return;
     }
 
-    bool Next(ByteString32T **keyp, ByteString32T **valuep);
+    bool next(ByteString32T **keyp, ByteString32T **valuep);
 
   private:
-    bool CreateRowDelete(const char *row, uint64_t timestamp, ByteString32T **keyp, ByteString32T **valuep);
-    bool CreateColumnDelete(const char *row, const char *column, uint64_t timestamp, ByteString32T **keyp, ByteString32T **valuep);
-    bool CreateInsert(const char *row, const char *column, uint64_t timestamp, const char *value, ByteString32T **keyp, ByteString32T **valuep);
+    bool create_row_delete(const char *row, uint64_t timestamp, ByteString32T **keyp, ByteString32T **valuep);
+    bool create_column_delete(const char *row, const char *column, uint64_t timestamp, ByteString32T **keyp, ByteString32T **valuep);
+    bool create_insert(const char *row, const char *column, uint64_t timestamp, const char *value, ByteString32T **keyp, ByteString32T **valuep);
 
-    Schema *mSchema;
-    ifstream mFin;
-    long mCurLine;
-    DynamicBuffer mKeyBuffer;
-    DynamicBuffer mValueBuffer;
+    Schema *m_schema;
+    ifstream m_fin;
+    long m_cur_line;
+    DynamicBuffer m_key_buffer;
+    DynamicBuffer m_value_buffer;
   };
 
 }

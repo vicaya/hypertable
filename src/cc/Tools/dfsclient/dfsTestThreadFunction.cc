@@ -45,30 +45,30 @@ using namespace std;
 void dfsTestThreadFunction::operator()() {
   vector<const char *> args;
   int64_t origSize, dfsSize;
-  CommandCopyFromLocal cmdCopyFromLocal(mClient);
-  CommandCopyToLocal cmdCopyToLocal(mClient);
-  CommandRemove cmdRemove(mClient);
+  CommandCopyFromLocal cmdCopyFromLocal(m_client);
+  CommandCopyToLocal cmdCopyToLocal(m_client);
+  CommandRemove cmdRemove(m_client);
 
-  cmdCopyFromLocal.PushArg(mInputFile, "");
-  cmdCopyFromLocal.PushArg(mDfsFile, "");
+  cmdCopyFromLocal.push_arg(m_input_file, "");
+  cmdCopyFromLocal.push_arg(m_dfs_file, "");
   if (cmdCopyFromLocal.run() != 0)
     exit(1);
 
-  cmdCopyToLocal.PushArg(mDfsFile, "");
-  cmdCopyToLocal.PushArg(mOutputFile, "");
+  cmdCopyToLocal.push_arg(m_dfs_file, "");
+  cmdCopyToLocal.push_arg(m_output_file, "");
   if (cmdCopyToLocal.run() != 0)
     exit(1);
 
   // Determine original file size
   struct stat statbuf;
-  if (stat(mInputFile.c_str(), &statbuf) != 0) {
-    cerr << "Unable to stat file '" << mInputFile << "' - " << strerror(errno) << endl;
+  if (stat(m_input_file.c_str(), &statbuf) != 0) {
+    cerr << "Unable to stat file '" << m_input_file << "' - " << strerror(errno) << endl;
     exit(1);
   }
   origSize = statbuf.st_size;
 
   // Determine DFS file size
-  mClient->Length(mDfsFile, &dfsSize);
+  m_client->length(m_dfs_file, &dfsSize);
 
   if (origSize != dfsSize) {
     LOG_VA_ERROR("Length mismatch: %ld != %ld", origSize, dfsSize);
@@ -76,7 +76,7 @@ void dfsTestThreadFunction::operator()() {
   }
 
   /**
-  cmdRemove.PushArg(mDfsFile, "");
+  cmdRemove.push_arg(m_dfs_file, "");
   if (cmdRemove.run() != 0)
     exit(1);
   **/

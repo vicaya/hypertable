@@ -38,59 +38,59 @@ namespace hypertable {
 
   public:
 
-    static atomic_t msNextMessageId;
+    static atomic_t ms_next_message_id;
 
-    HeaderBuilder() : mId(0), mGroupId(0), mTotalLen(0), mProtocol(0), mFlags(0) {
+    HeaderBuilder() : m_id(0), m_group_id(0), m_total_len(0), m_protocol(0), m_flags(0) {
       return;
     }
 
-    HeaderBuilder(uint8_t protocol, uint32_t gid=0) : mId(0), mGroupId(gid), mTotalLen(0), mProtocol(protocol), mFlags(0) {
+    HeaderBuilder(uint8_t protocol, uint32_t gid=0) : m_id(0), m_group_id(gid), m_total_len(0), m_protocol(protocol), m_flags(0) {
       return;
     }
 
-    void InitializeFromRequest(Header::HeaderT *header) {
-      mId        = header->id;
-      mGroupId   = header->gid;
-      mProtocol  = header->protocol;
-      mFlags     = header->flags;
-      mTotalLen  = 0;
+    void initialize_from_request(Header::HeaderT *header) {
+      m_id        = header->id;
+      m_group_id  = header->gid;
+      m_protocol  = header->protocol;
+      m_flags     = header->flags;
+      m_total_len = 0;
     }
 
-    size_t HeaderLength() {
+    size_t header_length() {
       return sizeof(Header::HeaderT);
     }
 
-    void Encode(uint8_t **bufPtr) {
+    void encode(uint8_t **bufPtr) {
       Header::HeaderT *mheader;
       mheader = (Header::HeaderT *)*bufPtr;
       mheader->version = Header::VERSION;
-      mheader->protocol = mProtocol;
-      mheader->flags = mFlags;
+      mheader->protocol = m_protocol;
+      mheader->flags = m_flags;
       mheader->headerLen = sizeof(Header::HeaderT);
-      mheader->id = mId;
-      mheader->gid = mGroupId;
-      mheader->totalLen = mTotalLen;
+      mheader->id = m_id;
+      mheader->gid = m_group_id;
+      mheader->totalLen = m_total_len;
       (*bufPtr) += sizeof(Header::HeaderT);
     }
 
-    uint32_t AssignUniqueId() { mId = atomic_inc_return(&msNextMessageId); return mId; }
+    uint32_t assign_unique_id() { m_id = atomic_inc_return(&ms_next_message_id); return m_id; }
 
-    void SetFlags(uint8_t flags) { mFlags = flags; }
+    void set_flags(uint8_t flags) { m_flags = flags; }
 
-    void AddFlag(uint8_t flag) { mFlags |= flag; }
+    void add_flag(uint8_t flag) { m_flags |= flag; }
 
-    void SetProtocol(uint8_t protocol) { mProtocol = protocol; }
+    void set_protocol(uint8_t protocol) { m_protocol = protocol; }
 
-    void SetGroupId(uint32_t groupId) { mGroupId = groupId; }
+    void set_group_id(uint32_t groupId) { m_group_id = groupId; }
 
-    void SetTotalLen(uint32_t totalLen) { mTotalLen = totalLen; }
+    void set_total_len(uint32_t totalLen) { m_total_len = totalLen; }
 
   protected:
-    uint32_t  mId;
-    uint32_t  mGroupId;
-    uint32_t  mTotalLen;
-    uint8_t   mProtocol;
-    uint8_t   mFlags;
+    uint32_t  m_id;
+    uint32_t  m_group_id;
+    uint32_t  m_total_len;
+    uint8_t   m_protocol;
+    uint8_t   m_flags;
   };
 
 }

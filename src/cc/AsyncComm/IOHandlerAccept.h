@@ -38,7 +38,7 @@ namespace hypertable {
 
   public:
 
-    IOHandlerAccept(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp, HandlerMap &hmap, ConnectionHandlerFactoryPtr &chfPtr) : IOHandler(sd, addr, dhp, hmap), mHandlerFactoryPtr(chfPtr) {
+    IOHandlerAccept(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp, HandlerMap &hmap, ConnectionHandlerFactoryPtr &chfPtr) : IOHandler(sd, addr, dhp, hmap), m_handler_factory_ptr(chfPtr) {
       return;
     }
 
@@ -47,17 +47,17 @@ namespace hypertable {
     }
 
 #if defined(__APPLE__)
-    virtual bool HandleEvent(struct kevent *event);
+    virtual bool handle_event(struct kevent *event);
 #elif defined(__linux__)
-    virtual bool HandleEvent(struct epoll_event *event);
+    virtual bool handle_event(struct epoll_event *event);
 #else
     ImplementMe;
 #endif
 
-    bool HandleIncomingConnection();
+    bool handle_incoming_connection();
 
   private:
-    ConnectionHandlerFactoryPtr mHandlerFactoryPtr;
+    ConnectionHandlerFactoryPtr m_handler_factory_ptr;
   };
 
   typedef boost::intrusive_ptr<IOHandlerAccept> IOHandlerAcceptPtr;

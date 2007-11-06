@@ -30,15 +30,15 @@ using namespace hypertable;
 using namespace std;
 
 
-void Usage::Dump(const char **usage) {
+void Usage::dump(const char **usage) {
   for (int i=0; usage[i] != 0; i++)
     cout << usage[i] << endl;
 }
 
 
-void Usage::DumpAndExit(const char **usage, int rcode) {
+void Usage::dump_and_exit(const char **usage, int rcode) {
   cout << endl;
-  Dump(usage);
+  dump(usage);
   cout << endl;
   exit(1);
 }

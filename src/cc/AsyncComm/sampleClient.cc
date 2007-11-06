@@ -92,17 +92,17 @@ class ResponseHandler : public DispatchHandler {
 
 public:
 
-  ResponseHandler() : mQueue(), mMutex(), mCond() { return; }
+  ResponseHandler() : m_queue(), m_mutex(), m_cond() { return; }
   virtual ~ResponseHandler() { return; }
 
   virtual void handle(EventPtr &eventPtr) = 0;
 
-  virtual bool GetResponse(EventPtr &eventPtr) = 0;
+  virtual bool get_response(EventPtr &eventPtr) = 0;
 
 protected:
-  queue<EventPtr>   mQueue;
-  boost::mutex      mMutex;
-  boost::condition  mCond;
+  queue<EventPtr>   m_queue;
+  boost::mutex      m_mutex;
+  boost::condition  m_cond;
 };
 
 
@@ -119,76 +119,76 @@ class ResponseHandlerTCP : public ResponseHandler {
 
 public:
 
-  ResponseHandlerTCP() : ResponseHandler(), mConnected(false) { return; }
+  ResponseHandlerTCP() : ResponseHandler(), m_connected(false) { return; }
   
   virtual void handle(EventPtr &eventPtr) {
-    boost::mutex::scoped_lock lock(mMutex);
+    boost::mutex::scoped_lock lock(m_mutex);
     if (eventPtr->type == Event::CONNECTION_ESTABLISHED) {
       if (gVerbose)
 	LOG_VA_INFO("Connection Established - %s", eventPtr->toString().c_str());
-      mConnected = true;
-      mCond.notify_one();
+      m_connected = true;
+      m_cond.notify_one();
     }
     else if (eventPtr->type == Event::DISCONNECT) {
       if (eventPtr->error != 0) {
-	LOG_VA_INFO("Disconnect : %s", Error::GetText(eventPtr->error));
+	LOG_VA_INFO("Disconnect : %s", Error::get_text(eventPtr->error));
       }
       else {
 	LOG_INFO("Disconnect.");
       }
-      mConnected = false;
-      mCond.notify_one();
+      m_connected = false;
+      m_cond.notify_one();
     }
     else if (eventPtr->type == Event::ERROR) {
-      LOG_VA_INFO("Error : %s", Error::GetText(eventPtr->error));
+      LOG_VA_INFO("Error : %s", Error::get_text(eventPtr->error));
       //exit(1);
     }
     else if (eventPtr->type == Event::MESSAGE) {
-      mQueue.push(eventPtr);
-      mCond.notify_one();
+      m_queue.push(eventPtr);
+      m_cond.notify_one();
     }
   }
 
-  bool WaitForConnection() {
-    boost::mutex::scoped_lock lock(mMutex);
-    if (mConnected)
+  bool wait_for_connection() {
+    boost::mutex::scoped_lock lock(m_mutex);
+    if (m_connected)
       return true;
-    mCond.wait(lock);
-    return mConnected;
+    m_cond.wait(lock);
+    return m_connected;
   }
 
-  virtual bool GetResponse(EventPtr &eventPtr) {
-    boost::mutex::scoped_lock lock(mMutex);
-    while (mQueue.empty()) {
-      if (mConnected == false)
+  virtual bool get_response(EventPtr &eventPtr) {
+    boost::mutex::scoped_lock lock(m_mutex);
+    while (m_queue.empty()) {
+      if (m_connected == false)
 	return false;
-      mCond.wait(lock);
+      m_cond.wait(lock);
     }
-    eventPtr = mQueue.front();
-    mQueue.pop();
+    eventPtr = m_queue.front();
+    m_queue.pop();
     return true;
   }
 
 private:
-  bool mConnected;
+  bool m_connected;
 };
 
 
 
 /**
- * This handler factory gets passed into Comm::Listen.  It
+ * This handler factory gets passed into Comm::listen.  It
  * gets constructed with a pointer to a DispatchHandler.
  */
 class HandlerFactory : public ConnectionHandlerFactory {
 public:
   HandlerFactory(DispatchHandlerPtr &dhp) {
-    mDispatchHandlerPtr = dhp;
+    m_dispatch_handler_ptr = dhp;
   }
-  virtual void newInstance(DispatchHandlerPtr &dhp) {
-    dhp = mDispatchHandlerPtr;
+  virtual void get_instance(DispatchHandlerPtr &dhp) {
+    dhp = m_dispatch_handler_ptr;
   }
 private:
-  DispatchHandlerPtr mDispatchHandlerPtr;
+  DispatchHandlerPtr m_dispatch_handler_ptr;
 };
 
 
@@ -206,10 +206,10 @@ public:
   ResponseHandlerUDP() : ResponseHandler() { return; }
   
   virtual void handle(EventPtr &eventPtr) {
-    boost::mutex::scoped_lock lock(mMutex);
+    boost::mutex::scoped_lock lock(m_mutex);
     if (eventPtr->type == Event::MESSAGE) {
-      mQueue.push(eventPtr);
-      mCond.notify_one();
+      m_queue.push(eventPtr);
+      m_cond.notify_one();
     }
     else {
       LOG_VA_INFO("%s", eventPtr->toString().c_str());
@@ -217,13 +217,13 @@ public:
     }
   }
 
-  virtual bool GetResponse(EventPtr &eventPtr) {
-    boost::mutex::scoped_lock lock(mMutex);
-    while (mQueue.empty()) {
-      mCond.wait(lock);
+  virtual bool get_response(EventPtr &eventPtr) {
+    boost::mutex::scoped_lock lock(m_mutex);
+    while (m_queue.empty()) {
+      m_cond.wait(lock);
     }
-    eventPtr = mQueue.front();
-    mQueue.pop();
+    eventPtr = m_queue.front();
+    m_queue.pop();
     return true;
   }
 };
@@ -260,10 +260,10 @@ int main(int argc, char **argv) {
   memset(&localAddr, 0, sizeof(localAddr));
   
   if (argc == 1)
-    Usage::DumpAndExit(usage);
+    Usage::dump_and_exit(usage);
 
-  System::Initialize(argv[0]);
-  ReactorFactory::Initialize(1);
+  System::initialize(argv[0]);
+  ReactorFactory::initialize(1);
 
   for (int i=1; i<argc; i++) {
     if (!strncmp(argv[i], "--host=", 7))
@@ -283,7 +283,7 @@ int main(int argc, char **argv) {
     else if (!strncmp(argv[i], "--reactors=", 11))
       reactorCount = atoi(&argv[i][11]);
     else if (!strncmp(argv[i], "--recv-addr=", 12)) {
-      if (!InetAddr::Initialize(&localAddr, &argv[i][12]))
+      if (!InetAddr::initialize(&localAddr, &argv[i][12]))
 	DUMP_CORE;
     }
     else if (!strcmp(argv[i], "--verbose")) {
@@ -292,13 +292,13 @@ int main(int argc, char **argv) {
     else if (inputFile == 0)
       inputFile = argv[i];
     else
-      Usage::DumpAndExit(usage);
+      Usage::dump_and_exit(usage);
   }
 
   if (inputFile == 0)
-    Usage::DumpAndExit(usage);
+    Usage::dump_and_exit(usage);
 
-  if (!InetAddr::Initialize(&addr, host, port))
+  if (!InetAddr::initialize(&addr, host, port))
     exit(1);
 
   comm = new Comm();
@@ -315,10 +315,10 @@ int main(int argc, char **argv) {
     respHandler = new ResponseHandlerUDP();
     dhp = respHandler;
     port++;
-    InetAddr::Initialize(&localAddr, INADDR_ANY, port);
-    if ((error = comm->CreateDatagramReceiveSocket(&localAddr, dhp)) != Error::OK) {
+    InetAddr::initialize(&localAddr, INADDR_ANY, port);
+    if ((error = comm->create_datagram_receive_socket(&localAddr, dhp)) != Error::OK) {
       std::string str;
-      LOG_VA_ERROR("Problem creating UDP receive socket %s - %s", InetAddr::StringFormat(str, localAddr), Error::GetText(error));
+      LOG_VA_ERROR("Problem creating UDP receive socket %s - %s", InetAddr::string_format(str, localAddr), Error::get_text(error));
       exit(1);
     }
   }
@@ -327,19 +327,19 @@ int main(int argc, char **argv) {
     dhp = respHandler;
 
     if (localAddr.sin_port == 0) {
-      if ((error = comm->Connect(addr, dhp)) != Error::OK) {
-	LOG_VA_ERROR("Comm::Connect error - %s", Error::GetText(error));
+      if ((error = comm->connect(addr, dhp)) != Error::OK) {
+	LOG_VA_ERROR("Comm::connect error - %s", Error::get_text(error));
 	exit(1);
       }
     }
     else {
       chfPtr = new HandlerFactory(dhp);
-      if ((error = comm->Listen(localAddr, chfPtr, dhp)) != Error::OK) {
-	LOG_VA_ERROR("Comm::Listen error - %s", Error::GetText(error));
+      if ((error = comm->listen(localAddr, chfPtr, dhp)) != Error::OK) {
+	LOG_VA_ERROR("Comm::listen error - %s", Error::get_text(error));
 	exit(1);
       }
     }
-    if (!((ResponseHandlerTCP *)respHandler)->WaitForConnection())
+    if (!((ResponseHandlerTCP *)respHandler)->wait_for_connection())
       exit(1);
 
   }
@@ -347,19 +347,19 @@ int main(int argc, char **argv) {
   while (!myfile.eof() ) {
     getline (myfile,line);
     if (line.length() > 0) {
-      hbuilder.AssignUniqueId();
-      CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::EncodedLengthString(line)) );
-      cbufPtr->AppendString(line);
+      hbuilder.assign_unique_id();
+      CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::encoded_length_string(line)) );
+      cbufPtr->append_string(line);
       int retries = 0;
 
       if (udpMode) {
-	if ((error = comm->SendDatagram(addr, localAddr, cbufPtr)) != Error::OK) {
-	  LOG_VA_ERROR("Problem sending datagram - %s", Error::GetText(error));
+	if ((error = comm->send_datagram(addr, localAddr, cbufPtr)) != Error::OK) {
+	  LOG_VA_ERROR("Problem sending datagram - %s", Error::get_text(error));
 	  return 1;
 	}
       }
       else {
-	while ((error = comm->SendRequest(addr, timeout, cbufPtr, respHandler)) != Error::OK) {
+	while ((error = comm->send_request(addr, timeout, cbufPtr, respHandler)) != Error::OK) {
 	  if (error == Error::COMM_NOT_CONNECTED) {
 	    if (retries == 5) {
 	      LOG_ERROR("Connection timeout.");
@@ -369,7 +369,7 @@ int main(int argc, char **argv) {
 	    retries++;
 	  }
 	  else {
-	    LOG_VA_ERROR("CommEngine::SendMessage returned '%s'", Error::GetText(error));
+	    LOG_VA_ERROR("CommEngine::send_message returned '%s'", Error::get_text(error));
 	    return 1;
 	  }
 	}
@@ -377,9 +377,9 @@ int main(int argc, char **argv) {
       outstanding++;
 
       if (outstanding  > maxOutstanding) {
-	if (!respHandler->GetResponse(eventPtr))
+	if (!respHandler->get_response(eventPtr))
 	  break;
-	if (!Serialization::DecodeString(&eventPtr->message, &eventPtr->messageLen, &str))
+	if (!Serialization::decode_string(&eventPtr->message, &eventPtr->messageLen, &str))
 	  cout << "ERROR: deserialization problem." << endl;
 	else {
 	  if (*str != 0)
@@ -392,8 +392,8 @@ int main(int argc, char **argv) {
     }
   }
 
-  while (outstanding > 0 && respHandler->GetResponse(eventPtr)) {
-    if (!Serialization::DecodeString(&eventPtr->message, &eventPtr->messageLen, &str))
+  while (outstanding > 0 && respHandler->get_response(eventPtr)) {
+    if (!Serialization::decode_string(&eventPtr->message, &eventPtr->messageLen, &str))
       cout << "ERROR: deserialization problem." << endl;
     else {
       if (str != 0)

@@ -51,30 +51,30 @@ namespace hypertable {
 
     MergeScanner(ScanContextPtr &scanContextPtr, bool returnDeletes=true);
     virtual ~MergeScanner();
-    virtual void Forward();
-    virtual bool Get(ByteString32T **keyp, ByteString32T **valuep);
-    void AddScanner(CellListScanner *scanner);
+    virtual void forward();
+    virtual bool get(ByteString32T **keyp, ByteString32T **valuep);
+    void add_scanner(CellListScanner *scanner);
 
   private:
 
-    void Initialize();
+    void initialize();
 
-    bool          mDone;
-    bool          mInitialized;
-    std::vector<CellListScanner *>  mScanners;
-    std::priority_queue<ScannerStateT, std::vector<ScannerStateT>, ltScannerState> mQueue;
-    bool          mDeletePresent;
-    DynamicBuffer mDeletedRow;
-    uint64_t      mDeletedRowTimestamp;
-    DynamicBuffer mDeletedCell;
-    uint64_t      mDeletedCellTimestamp;
-    bool          mReturnDeletes;
-    uint32_t      mRowCount;
-    uint32_t      mRowLimit;
-    uint32_t      mCellCount;
-    uint32_t      mCellLimit;
-    uint64_t      mCellCutoff;
-    DynamicBuffer mPrevKey;
+    bool          m_done;
+    bool          m_initialized;
+    std::vector<CellListScanner *>  m_scanners;
+    std::priority_queue<ScannerStateT, std::vector<ScannerStateT>, ltScannerState> m_queue;
+    bool          m_delete_present;
+    DynamicBuffer m_deleted_row;
+    uint64_t      m_deleted_row_timestamp;
+    DynamicBuffer m_deleted_cell;
+    uint64_t      m_deleted_cell_timestamp;
+    bool          m_return_deletes;
+    uint32_t      m_row_count;
+    uint32_t      m_row_limit;
+    uint32_t      m_cell_count;
+    uint32_t      m_cell_limit;
+    uint64_t      m_cell_cutoff;
+    DynamicBuffer m_prev_key;
   };
 }
 

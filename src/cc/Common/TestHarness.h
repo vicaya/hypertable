@@ -57,75 +57,75 @@ namespace hypertable {
   public:
     TestHarness(const char *name) {
 
-      mName = name;
+      m_name = name;
 
-      Logger::Initialize(name);
+      Logger::initialize(name);
 
       // open temporary output file
-      sprintf(mOutputFile, "%s%d", name, getpid());
+      sprintf(m_output_file, "%s%d", name, getpid());
 
-      if ((mFd = open(mOutputFile, O_CREAT | O_TRUNC | O_WRONLY, 0644)) < 0) {
-	LOG_VA_ERROR("open(%s) failed - %s", mOutputFile, strerror(errno));
+      if ((m_fd = open(m_output_file, O_CREAT | O_TRUNC | O_WRONLY, 0644)) < 0) {
+	LOG_VA_ERROR("open(%s) failed - %s", m_output_file, strerror(errno));
 	exit(1);
       }
 
-      mLogStream.open(mOutputFile);
+      m_log_stream.open(m_output_file);
 
       Logger::logger->removeAllAppenders();
-      mAppender = new log4cpp::FileAppender((string)name, mFd);
-      mAppender->setLayout(new NoTimeLayout());
-      Logger::logger->setAppender(mAppender);
+      m_appender = new log4cpp::FileAppender((string)name, m_fd);
+      m_appender->setLayout(new NoTimeLayout());
+      Logger::logger->setAppender(m_appender);
     }
     ~TestHarness() {
-      unlink(mOutputFile);
+      unlink(m_output_file);
     }
 
-    int GetLogFileDescriptor() { return mFd; }
+    int get_log_file_descriptor() { return m_fd; }
 
-    ostream &GetLogStream() { return mLogStream; }
+    ostream &get_log_stream() { return m_log_stream; }
 
-    void ValidateAndExit(const char *goldenFile) {
+    void validate_and_exit(const char *goldenFile) {
       int exitVal = 0;
-      mLogStream << flush;
-      string command = (string)"diff " + mOutputFile + " " + goldenFile;
+      m_log_stream << flush;
+      string command = (string)"diff " + m_output_file + " " + goldenFile;
       if (system(command.c_str()))
 	exitVal = 1;
       if (exitVal == 0)
-	unlink(mOutputFile);
+	unlink(m_output_file);
       else
 	cerr << "Diff Error:  " << command << endl;
       exit(exitVal);
     }
 
-    void RegenerateGoldenFile(const char *goldenFile) {
-      string command = (string)"cp " + mOutputFile + " " + goldenFile;      
+    void regenerate_golden_file(const char *goldenFile) {
+      string command = (string)"cp " + m_output_file + " " + goldenFile;      
       system(command.c_str());
     }
 
-    void ClearOutput() {
-      if (!mAppender->reopen()) {
-	LOG_VA_ERROR("Problem re-opening logging output file %s", mOutputFile);
-	DisplayErrorAndExit();
+    void clear_output() {
+      if (!m_appender->reopen()) {
+	LOG_VA_ERROR("Problem re-opening logging output file %s", m_output_file);
+	display_error_and_exit();
       }
     }
 
-    void DisplayErrorAndExit() {
-      mLogStream << flush;
-      cerr << "Error, see '" << mOutputFile << "'" << endl;
+    void display_error_and_exit() {
+      m_log_stream << flush;
+      cerr << "Error, see '" << m_output_file << "'" << endl;
       /*
-      string command = (string)"cat " + mOutputFile;
+      string command = (string)"cat " + m_output_file;
       system(command.c_str());
-      unlink(mOutputFile);
+      unlink(m_output_file);
       */
       exit(1);
     }
 
   private:
-    char mOutputFile[128];
-    log4cpp::FileAppender *mAppender;
-    const char *mName;
-    int mFd;
-    ofstream mLogStream;
+    char m_output_file[128];
+    log4cpp::FileAppender *m_appender;
+    const char *m_name;
+    int m_fd;
+    ofstream m_log_stream;
   };
   
 }

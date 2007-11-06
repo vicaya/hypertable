@@ -67,9 +67,9 @@ namespace Hyperspace {
    */
   class SessionCallback {
   public:
-    virtual void Safe() = 0;
-    virtual void Expired() = 0;
-    virtual void Jeopardy() = 0;
+    virtual void safe() = 0;
+    virtual void expired() = 0;
+    virtual void jeopardy() = 0;
   };
 
   /**
@@ -85,51 +85,51 @@ namespace Hyperspace {
     Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback=0);
     virtual ~Session();
 
-    int Open(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, uint64_t *handlep);
-    int Create(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, std::vector<AttributeT> &initAttrs, uint64_t *handlep);
-    int Cancel(uint64_t handle);
-    int Close(uint64_t handle);
-    int Poison(uint64_t handle);
-    int Mkdir(std::string name);
-    int AttrSet(uint64_t handle, std::string name, const void *value, size_t valueLen);
-    int AttrGet(uint64_t handle, std::string name, DynamicBuffer &value);
-    int AttrDel(uint64_t handle, std::string name);
-    int Exists(std::string name, bool *existsp);
-    int Delete(std::string name);
-    int Readdir(uint64_t handle, vector<struct DirEntryT> &listing);
-    int Lock(uint64_t handle, uint32_t mode, struct LockSequencerT *sequencerp);
-    int TryLock(uint64_t handle, uint32_t mode, uint32_t *statusp, struct LockSequencerT *sequencerp);
-    int Release(uint64_t handle);
-    int GetSequencer(uint64_t handle, struct LockSequencerT *sequencerp);
-    int CheckSequencer(struct LockSequencerT &sequencer);
-    int Status();
+    int open(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, uint64_t *handlep);
+    int create(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, std::vector<AttributeT> &initAttrs, uint64_t *handlep);
+    int cancel(uint64_t handle);
+    int close(uint64_t handle);
+    int poison(uint64_t handle);
+    int mkdir(std::string name);
+    int attr_set(uint64_t handle, std::string name, const void *value, size_t valueLen);
+    int attr_get(uint64_t handle, std::string name, DynamicBuffer &value);
+    int attr_del(uint64_t handle, std::string name);
+    int exists(std::string name, bool *existsp);
+    int unlink(std::string name);
+    int readdir(uint64_t handle, vector<struct DirEntryT> &listing);
+    int lock(uint64_t handle, uint32_t mode, struct LockSequencerT *sequencerp);
+    int try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp, struct LockSequencerT *sequencerp);
+    int release(uint64_t handle);
+    int get_sequencer(uint64_t handle, struct LockSequencerT *sequencerp);
+    int check_sequencer(struct LockSequencerT &sequencer);
+    int status();
 
     // Session state methods
-    int StateTransition(int state);
-    int GetState();
-    bool Expired();
-    bool WaitForConnection(long maxWaitSecs);
-    void SetVerboseFlag(bool verbose) { mVerbose = verbose; }
+    int state_transition(int state);
+    int get_state();
+    bool expired();
+    bool wait_for_connection(long maxWaitSecs);
+    void set_verbose_flag(bool verbose) { m_verbose = verbose; }
 
   private:
 
-    bool WaitForSafe();
-    int SendMessage(CommBufPtr &cbufPtr, DispatchHandler *handler);
-    void NormalizeName(std::string name, std::string &normal);
-    int Open(ClientHandleStatePtr &handleStatePtr, CommBufPtr &cbufPtr, uint64_t *handlep);
+    bool wait_for_safe();
+    int send_message(CommBufPtr &cbufPtr, DispatchHandler *handler);
+    void normalize_name(std::string name, std::string &normal);
+    int open(ClientHandleStatePtr &handleStatePtr, CommBufPtr &cbufPtr, uint64_t *handlep);
 
-    boost::mutex       mMutex;
-    boost::condition   mCond;
-    Comm *mComm;
-    bool mVerbose;
-    int  mState;
-    uint32_t mGracePeriod;
-    uint32_t mLeaseInterval;
-    uint32_t mTimeout;
-    boost::xtime mExpireTime;
-    struct sockaddr_in mMasterAddr;
-    ClientKeepaliveHandlerPtr  mKeepaliveHandlerPtr;
-    SessionCallback           *mSessionCallback;
+    boost::mutex       m_mutex;
+    boost::condition   m_cond;
+    Comm *m_comm;
+    bool m_verbose;
+    int  m_state;
+    uint32_t m_grace_period;
+    uint32_t m_lease_interval;
+    uint32_t m_timeout;
+    boost::xtime m_expire_time;
+    struct sockaddr_in m_master_addr;
+    ClientKeepaliveHandlerPtr  m_keepalive_handler_ptr;
+    SessionCallback           *m_session_callback;
   };
   typedef boost::intrusive_ptr<Session> SessionPtr;
   

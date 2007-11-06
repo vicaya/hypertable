@@ -48,7 +48,7 @@ using namespace std;
 
 namespace {
   const char *usage[] = {
-    "usage: Hyperspace.Master [OPTIONS]",
+    "usage: Hyperspace.master [OPTIONS]",
     "",
     "OPTIONS:",
     "  --config=<file>   Read configuration from <file>.  The default config file is",
@@ -72,17 +72,17 @@ namespace {
 class HandlerFactory : public ConnectionHandlerFactory {
 
 public:
-  HandlerFactory(Comm *comm, ApplicationQueuePtr &appQueuePtr, MasterPtr &masterPtr) : mComm(comm), mAppQueuePtr(appQueuePtr), mMasterPtr(masterPtr) {
+  HandlerFactory(Comm *comm, ApplicationQueuePtr &appQueuePtr, MasterPtr &masterPtr) : m_comm(comm), m_app_queue_ptr(appQueuePtr), m_master_ptr(masterPtr) {
     return;
   }
-  virtual void newInstance(DispatchHandlerPtr &dhp) {
-    dhp = new ServerConnectionHandler(mComm, mAppQueuePtr, mMasterPtr);
+  virtual void get_instance(DispatchHandlerPtr &dhp) {
+    dhp = new ServerConnectionHandler(m_comm, m_app_queue_ptr, m_master_ptr);
   }
 
 private:
-  Comm                 *mComm;
-  ApplicationQueuePtr   mAppQueuePtr;
-  MasterPtr             mMasterPtr;
+  Comm                 *m_comm;
+  ApplicationQueuePtr   m_app_queue_ptr;
+  MasterPtr             m_master_ptr;
 };
 
 
@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
   int error;
   struct sockaddr_in localAddr;
 
-  System::Initialize(argv[0]);
+  System::initialize(argv[0]);
   
   if (argc > 1) {
     for (int i=1; i<argc; i++) {
@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
       else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
 	verbose = true;
       else {
-	cerr << "Hyperspace.Master: Unrecognized argument '" << argv[i] << "'" << endl;
+	cerr << "Hyperspace.master: Unrecognized argument '" << argv[i] << "'" << endl;
 	exit(1);
       }
     }
@@ -134,41 +134,41 @@ int main(int argc, char **argv) {
     propsPtr->setProperty("verbose", "true");
 
   port         = propsPtr->getPropertyInt("Hyperspace.Master.port", Master::DEFAULT_MASTER_PORT);
-  reactorCount = propsPtr->getPropertyInt("Hyperspace.Master.reactors", System::GetProcessorCount());
+  reactorCount = propsPtr->getPropertyInt("Hyperspace.Master.reactors", System::get_processor_count());
   workerCount  = propsPtr->getPropertyInt("Hyperspace.Master.workers", DEFAULT_WORKERS);
 
-  ReactorFactory::Initialize(reactorCount);
+  ReactorFactory::initialize(reactorCount);
 
   comm = new Comm();
 
   connManagerPtr = new ConnectionManager(comm);
 
   if (verbose) {
-    cout << "CPU count = " << System::GetProcessorCount() << endl;
+    cout << "CPU count = " << System::get_processor_count() << endl;
     cout << "Hyperspace.Master.port=" << port << endl;
     cout << "Hyperspace.Master.workers=" << workerCount << endl;
     cout << "Hyperspace.Master.reactors=" << reactorCount << endl;
   }
 
-  InetAddr::Initialize(&localAddr, INADDR_ANY, port);
+  InetAddr::initialize(&localAddr, INADDR_ANY, port);
 
   masterPtr = new Master(connManagerPtr, propsPtr, keepaliveHandlerPtr);
   appQueuePtr = new ApplicationQueue(workerCount);
 
   ConnectionHandlerFactoryPtr chfPtr( new HandlerFactory(comm, appQueuePtr, masterPtr) );
-  if ((error = comm->Listen(localAddr, chfPtr)) != Error::OK) {
+  if ((error = comm->listen(localAddr, chfPtr)) != Error::OK) {
     std::string str;
     LOG_VA_ERROR("Unable to listen for connections on %s - %s", 
-		 InetAddr::StringFormat(str, localAddr), Error::GetText(error));
+		 InetAddr::string_format(str, localAddr), Error::get_text(error));
     exit(1);
   }
 
   DispatchHandlerPtr dhp(keepaliveHandlerPtr.get());
 
-  if ((error = comm->CreateDatagramReceiveSocket(&localAddr, dhp)) != Error::OK) {
+  if ((error = comm->create_datagram_receive_socket(&localAddr, dhp)) != Error::OK) {
     std::string str;
     LOG_VA_ERROR("Unable to create datagram receive socket %s - %s", 
-		 InetAddr::StringFormat(str, localAddr), Error::GetText(error));
+		 InetAddr::string_format(str, localAddr), Error::get_text(error));
     exit(1);
   }
 
@@ -180,7 +180,7 @@ int main(int argc, char **argv) {
 
   poll(0, 0, -1);
 
-  appQueuePtr->Shutdown();
+  appQueuePtr->shutdown();
 
   delete comm;
   return 0;

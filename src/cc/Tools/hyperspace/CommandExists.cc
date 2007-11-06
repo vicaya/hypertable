@@ -30,7 +30,7 @@ using namespace hypertable;
 using namespace Hyperspace;
 using namespace std;
 
-const char *CommandExists::msUsage[] = {
+const char *CommandExists::ms_usage[] = {
   "exists <name>",
   "  This command issues a EXISTS request to Hyperspace.",
   (const char *)0
@@ -40,17 +40,17 @@ int CommandExists::run() {
   int error;
   bool exists;
 
-  if (mArgs.size() != 1) {
+  if (m_args.size() != 1) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
     return -1;
   }
 
-  if (mArgs[0].second != "") {
-    cerr << "Invalid argument - " << mArgs[0].second << endl;
+  if (m_args[0].second != "") {
+    cerr << "Invalid argument - " << m_args[0].second << endl;
     return -1;
   }
 
-  if ((error = mSession->Exists(mArgs[0].first, &exists)) == Error::OK) {
+  if ((error = m_session->exists(m_args[0].first, &exists)) == Error::OK) {
     if (exists)
       cout << "true" << endl;
     else {

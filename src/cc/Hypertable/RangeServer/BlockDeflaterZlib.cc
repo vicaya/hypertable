@@ -32,11 +32,11 @@
  *
  */
 BlockDeflaterZlib::BlockDeflaterZlib() : BlockDeflater() {
-  memset(&mStream, 0, sizeof(mStream));
-  mStream.zalloc = Z_NULL;
-  mStream.zfree = Z_NULL;
-  mStream.opaque = Z_NULL;
-  int ret = deflateInit(&mStream, Z_BEST_COMPRESSION);
+  memset(&m_stream, 0, sizeof(m_stream));
+  m_stream.zalloc = Z_NULL;
+  m_stream.zfree = Z_NULL;
+  m_stream.opaque = Z_NULL;
+  int ret = deflateInit(&m_stream, Z_BEST_COMPRESSION);
   assert(ret == Z_OK);
 }
 
@@ -46,7 +46,7 @@ BlockDeflaterZlib::BlockDeflaterZlib() : BlockDeflater() {
  *
  */
 BlockDeflaterZlib::~BlockDeflaterZlib() {
-  deflateEnd(&mStream);
+  deflateEnd(&m_stream);
 }
 
 
@@ -62,17 +62,17 @@ void BlockDeflaterZlib::deflate(hypertable::DynamicBuffer &inbuf, hypertable::Dy
 
   Constants::BlockHeaderT *header = (Constants::BlockHeaderT *)outbuf.buf;
 
-  mStream.avail_in = inbuf.fill();
-  mStream.next_in = inbuf.buf;
+  m_stream.avail_in = inbuf.fill();
+  m_stream.next_in = inbuf.buf;
 
-  mStream.avail_out = avail_out;
-  mStream.next_out = outbuf.buf + sizeof(Constants::BlockHeaderT);
+  m_stream.avail_out = avail_out;
+  m_stream.next_out = outbuf.buf + sizeof(Constants::BlockHeaderT);
 
-  int ret = ::deflate(&mStream, Z_FINISH); 
+  int ret = ::deflate(&m_stream, Z_FINISH); 
   assert(ret == Z_STREAM_END);
 
   memcpy(header->magic, magic, 12);
-  header->zlength = (avail_out - mStream.avail_out);
+  header->zlength = (avail_out - m_stream.avail_out);
   header->length = inbuf.fill();
 
   // compute checksum
@@ -84,7 +84,7 @@ void BlockDeflaterZlib::deflate(hypertable::DynamicBuffer &inbuf, hypertable::Dy
   for (size_t i=0; i<header->zlength; i++)
     header->checksum += checkptr[i];
 
-  deflateReset(&mStream);
+  deflateReset(&m_stream);
 
   outbuf.ptr = outbuf.buf + sizeof(Constants::BlockHeaderT) + header->zlength;
 }

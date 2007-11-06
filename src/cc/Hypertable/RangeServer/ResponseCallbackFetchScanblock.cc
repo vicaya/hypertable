@@ -23,11 +23,11 @@
 using namespace hypertable;
 
 int ResponseCallbackFetchScanblock::response(short moreFlag, int32_t id, ExtBufferT &ext) {
-  hbuilder_.InitializeFromRequest(mEventPtr->header);
+  hbuilder_.initialize_from_request(m_event_ptr->header);
   CommBufPtr cbufPtr( new CommBuf(hbuilder_, 10, ext.buf, ext.len) );
-  cbufPtr->AppendInt(Error::OK);
-  cbufPtr->AppendShort(moreFlag);
-  cbufPtr->AppendInt(id);   // scanner ID
-  return mComm->SendResponse(mEventPtr->addr, cbufPtr);
+  cbufPtr->append_int(Error::OK);
+  cbufPtr->append_short(moreFlag);
+  cbufPtr->append_int(id);   // scanner ID
+  return m_comm->send_response(m_event_ptr->addr, cbufPtr);
 }
 

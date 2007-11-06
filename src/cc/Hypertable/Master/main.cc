@@ -68,14 +68,14 @@ namespace {
  */
 class HandlerFactory : public ConnectionHandlerFactory {
 public:
-  HandlerFactory(Comm *comm, ApplicationQueuePtr &appQueuePtr, MasterPtr &masterPtr) : mComm(comm), mAppQueuePtr(appQueuePtr), mMasterPtr(masterPtr) { return; }
-  virtual void newInstance(DispatchHandlerPtr &dhp) {
-    dhp = new ConnectionHandler(mComm, mAppQueuePtr, mMasterPtr);
+  HandlerFactory(Comm *comm, ApplicationQueuePtr &appQueuePtr, MasterPtr &masterPtr) : m_comm(comm), m_app_queue_ptr(appQueuePtr), m_master_ptr(masterPtr) { return; }
+  virtual void get_instance(DispatchHandlerPtr &dhp) {
+    dhp = new ConnectionHandler(m_comm, m_app_queue_ptr, m_master_ptr);
   }
 private:
-  Comm                *mComm;
-  ApplicationQueuePtr  mAppQueuePtr;
-  MasterPtr            mMasterPtr;
+  Comm                *m_comm;
+  ApplicationQueuePtr  m_app_queue_ptr;
+  MasterPtr            m_master_ptr;
 };
 
 
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
   ConnectionManagerPtr connManagerPtr;
   struct sockaddr_in listenAddr;
 
-  System::Initialize(argv[0]);
+  System::initialize(argv[0]);
   
   if (argc > 1) {
     for (int i=1; i<argc; i++) {
@@ -106,7 +106,7 @@ int main(int argc, char **argv) {
       else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
 	verbose = true;
       else
-	Usage::DumpAndExit(usage);
+	Usage::dump_and_exit(usage);
     }
   }
 
@@ -118,16 +118,16 @@ int main(int argc, char **argv) {
     propsPtr->setProperty("verbose", "true");
 
   port         = propsPtr->getPropertyInt("Hypertable.Master.port", DEFAULT_PORT);
-  reactorCount = propsPtr->getPropertyInt("Hypertable.Master.reactors", System::GetProcessorCount());
+  reactorCount = propsPtr->getPropertyInt("Hypertable.Master.reactors", System::get_processor_count());
   workerCount  = propsPtr->getPropertyInt("Hypertable.Master.workers", DEFAULT_WORKERS);
 
-  ReactorFactory::Initialize(reactorCount);
+  ReactorFactory::initialize(reactorCount);
 
   comm = new Comm();
   connManagerPtr = new ConnectionManager(comm);
 
   if (verbose) {
-    cout << "CPU count = " << System::GetProcessorCount() << endl;
+    cout << "CPU count = " << System::get_processor_count() << endl;
     cout << "Hypertable.Master.port=" << port << endl;
     cout << "Hypertable.Master.workers=" << workerCount << endl;
     cout << "Hypertable.Master.reactors=" << reactorCount << endl;
@@ -136,9 +136,9 @@ int main(int argc, char **argv) {
   appQueuePtr = new ApplicationQueue(workerCount);
   masterPtr = new Master(connManagerPtr, propsPtr, appQueuePtr);
 
-  InetAddr::Initialize(&listenAddr, INADDR_ANY, port);
+  InetAddr::initialize(&listenAddr, INADDR_ANY, port);
   ConnectionHandlerFactoryPtr chfPtr(new HandlerFactory(comm, appQueuePtr, masterPtr));
-  comm->Listen(listenAddr, chfPtr);
+  comm->listen(listenAddr, chfPtr);
 
   if (pidFile != "") {
     fstream filestr (pidFile.c_str(), fstream::out);
@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
 
   poll(0, 0, -1);
 
-  appQueuePtr->Shutdown();
+  appQueuePtr->shutdown();
 
   delete comm;
   return 0;

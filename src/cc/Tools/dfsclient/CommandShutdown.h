@@ -31,15 +31,15 @@ namespace hypertable {
 
   class CommandShutdown : public InteractiveCommand {
   public:
-    CommandShutdown(DfsBroker::Client *client) : mClient(client) { return; }
-    virtual const char *CommandText() { return "shutdown"; }
-    virtual const char **Usage() { return msUsage; }
+    CommandShutdown(DfsBroker::Client *client) : m_client(client) { return; }
+    virtual const char *command_text() { return "shutdown"; }
+    virtual const char **usage() { return ms_usage; }
     virtual int run();
 
   private:
-    static const char *msUsage[];
+    static const char *ms_usage[];
 
-    DfsBroker::Client *mClient;
+    DfsBroker::Client *m_client;
   };
 }
 

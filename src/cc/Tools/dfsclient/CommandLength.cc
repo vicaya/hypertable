@@ -24,7 +24,7 @@
 
 using namespace hypertable;
 
-const char *CommandLength::msUsage[] = {
+const char *CommandLength::ms_usage[] = {
   "length <file>",
   "",
   "  This command sends a length request for the DFS file <file>",
@@ -36,12 +36,12 @@ const char *CommandLength::msUsage[] = {
 int CommandLength::run() {
   int64_t length = -1;
 
-  if (mArgs.size() < 1) {
+  if (m_args.size() < 1) {
     cerr << "Error: no filename supplied" << endl;
     return -1;
   }
 
-  mClient->Length(mArgs[0].first, &length);
+  m_client->length(m_args[0].first, &length);
 
   cout << length << endl;
   

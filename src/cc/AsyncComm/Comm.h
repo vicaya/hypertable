@@ -48,38 +48,38 @@ namespace hypertable {
 
     ~Comm();
 
-    int Connect(struct sockaddr_in &addr, DispatchHandlerPtr &defaultHandlerPtr);
+    int connect(struct sockaddr_in &addr, DispatchHandlerPtr &defaultHandlerPtr);
 
-    int Connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, DispatchHandlerPtr &defaultHandlerPtr);
+    int connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, DispatchHandlerPtr &defaultHandlerPtr);
 
-    int Listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chfPtr);
+    int listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chfPtr);
 
-    int Listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chfPtr, DispatchHandlerPtr &defaultHandlerPtr);
+    int listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chfPtr, DispatchHandlerPtr &defaultHandlerPtr);
 
-    int SendRequest(struct sockaddr_in &addr, time_t timeout, CommBufPtr &cbufPtr, DispatchHandler *responseHandler);
+    int send_request(struct sockaddr_in &addr, time_t timeout, CommBufPtr &cbufPtr, DispatchHandler *responseHandler);
 
-    int SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr);
+    int send_response(struct sockaddr_in &addr, CommBufPtr &cbufPtr);
 
-    int GetLocalAddress(struct sockaddr_in addr, struct sockaddr_in *localAddr);
+    int get_local_address(struct sockaddr_in addr, struct sockaddr_in *localAddr);
 
-    int CreateDatagramReceiveSocket(struct sockaddr_in *addr, DispatchHandlerPtr &handlerPtr);
+    int create_datagram_receive_socket(struct sockaddr_in *addr, DispatchHandlerPtr &handlerPtr);
 
-    int SendDatagram(struct sockaddr_in &addr, struct sockaddr_in &sendAddr, CommBufPtr &cbufPtr);
+    int send_datagram(struct sockaddr_in &addr, struct sockaddr_in &sendAddr, CommBufPtr &cbufPtr);
 
-    int SetTimer(uint64_t durationMillis, DispatchHandler *handler);
+    int set_timer(uint64_t durationMillis, DispatchHandler *handler);
 
-    int SetTimerAbsolute(boost::xtime expireTime, DispatchHandler *handler);
+    int set_timer_absolute(boost::xtime expireTime, DispatchHandler *handler);
 
-    int CloseSocket(struct sockaddr_in &addr);
+    int close_socket(struct sockaddr_in &addr);
 
   private:
 
-    int ConnectSocket(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &defaultHandlerPtr);
+    int connect_socket(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &defaultHandlerPtr);
 
-    boost::mutex  mMutex;
-    std::string   mAppName;
-    HandlerMap    mHandlerMap;
-    Reactor      *mTimerReactor;
+    boost::mutex  m_mutex;
+    std::string   m_app_name;
+    HandlerMap    m_handler_map;
+    Reactor      *m_timer_reactor;
   };
 
   typedef boost::shared_ptr<Comm> CommPtr;

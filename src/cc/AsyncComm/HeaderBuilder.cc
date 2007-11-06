@@ -22,7 +22,7 @@
 
 namespace hypertable {
 
-  atomic_t HeaderBuilder::msNextMessageId = ATOMIC_INIT(1);
+  atomic_t HeaderBuilder::ms_next_message_id = ATOMIC_INIT(1);
 
 }
 

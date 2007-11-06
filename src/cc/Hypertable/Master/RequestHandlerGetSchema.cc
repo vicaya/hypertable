@@ -34,17 +34,17 @@ using namespace hypertable;
  *
  */
 void RequestHandlerGetSchema::run() {
-  ResponseCallbackGetSchema cb(mComm, mEventPtr);
+  ResponseCallbackGetSchema cb(m_comm, m_event_ptr);
   const char *tableName;
-  size_t remaining = mEventPtr->messageLen - 2;
-  uint8_t *msgPtr = mEventPtr->message + 2;
+  size_t remaining = m_event_ptr->messageLen - 2;
+  uint8_t *msgPtr = m_event_ptr->message + 2;
 
   // table name
-  if (!Serialization::DecodeString(&msgPtr, &remaining, &tableName)) {
+  if (!Serialization::decode_string(&msgPtr, &remaining, &tableName)) {
     LOG_ERROR("Encoding problem with Create Table message");
     cb.error(Error::PROTOCOL_ERROR, "Encoding problem with Create Table message");
     return;
   }
 
-  mMaster->GetSchema(&cb, tableName);
+  m_master->get_schema(&cb, tableName);
 }

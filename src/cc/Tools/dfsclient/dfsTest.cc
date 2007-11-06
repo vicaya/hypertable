@@ -80,26 +80,26 @@ int main(int argc, char **argv) {
   fstream filestr ("dfsTest.out", fstream::out);
 
   if (argc != 1)
-    Usage::DumpAndExit(usage);
+    Usage::dump_and_exit(usage);
 
-  System::Initialize(argv[0]);
-  ReactorFactory::Initialize(1);
+  System::initialize(argv[0]);
+  ReactorFactory::initialize(1);
 
-  InetAddr::Initialize(&addr, "localhost", DEFAULT_DFSBROKER_PORT);
+  InetAddr::initialize(&addr, "localhost", DEFAULT_DFSBROKER_PORT);
 
   comm = new Comm();
   connManagerPtr = new ConnectionManager(comm);
   client = new DfsBroker::Client(connManagerPtr, addr, 15);
 
-  if (!client->WaitForConnection(15)) {
+  if (!client->wait_for_connection(15)) {
     LOG_ERROR("Unable to connect to DFS");
     return 1;
   }
 
   sprintf(buf, "/dfsTest%d", getpid());
   testDir = buf;
-  if ((error = client->Mkdirs(testDir)) != Error::OK) {
-    LOG_VA_ERROR("Problem making DFS directory '%s' - %s", testDir.c_str(), Error::GetText(error));
+  if ((error = client->mkdirs(testDir)) != Error::OK) {
+    LOG_VA_ERROR("Problem making DFS directory '%s' - %s", testDir.c_str(), Error::get_text(error));
     exit(1);
   }
   outfileA = testDir + "/output.a";
@@ -107,12 +107,12 @@ int main(int argc, char **argv) {
 
   dfsTestThreadFunction threadFunc(client, "/usr/share/dict/words");
 
-  threadFunc.SetDfsFile(outfileA);
-  threadFunc.SetOutputFile("output.a");
+  threadFunc.set_dfs_file(outfileA);
+  threadFunc.set_output_file("output.a");
   thread1 = new boost::thread(threadFunc);
 
-  threadFunc.SetDfsFile(outfileB);
-  threadFunc.SetOutputFile("output.b");
+  threadFunc.set_dfs_file(outfileB);
+  threadFunc.set_output_file("output.b");
   thread2 = new boost::thread(threadFunc);
 
   thread1->join();
@@ -124,8 +124,8 @@ int main(int argc, char **argv) {
   {
     vector<string> listing;
     
-    if ((error = client->Readdir(testDir, listing)) != Error::OK) {
-      LOG_VA_ERROR("Problem listing DFS test directory '%s' - %s", testDir.c_str(), Error::GetText(error));
+    if ((error = client->readdir(testDir, listing)) != Error::OK) {
+      LOG_VA_ERROR("Problem listing DFS test directory '%s' - %s", testDir.c_str(), Error::get_text(error));
       return 1;
     }
 
@@ -140,8 +140,8 @@ int main(int argc, char **argv) {
   if (system("diff dfsTest.out dfsTest.golden"))
     return 1;
 
-  if ((error = client->Rmdir(testDir)) != Error::OK) {
-    LOG_VA_ERROR("Problem removing DFS test directory '%s' - %s", testDir.c_str(), Error::GetText(error));
+  if ((error = client->rmdir(testDir)) != Error::OK) {
+    LOG_VA_ERROR("Problem removing DFS test directory '%s' - %s", testDir.c_str(), Error::get_text(error));
     return 1;
   }
 

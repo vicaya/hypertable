@@ -36,18 +36,18 @@ namespace hypertable {
   public:
     CellCacheScanner(CellCachePtr &cellCachePtr, ScanContextPtr &scanContextPtr);
     virtual ~CellCacheScanner() { return; }
-    virtual void Forward();
-    virtual bool Get(ByteString32T **keyp, ByteString32T **valuep);
+    virtual void forward();
+    virtual bool get(ByteString32T **keyp, ByteString32T **valuep);
 
   private:
-    CellCache::CellMapT::iterator  mStartIter;
-    CellCache::CellMapT::iterator  mEndIter;
-    CellCache::CellMapT::iterator  mCurIter;
-    CellCachePtr                   mCellCachePtr;
-    boost::mutex                  &mCellCacheMutex;
-    const ByteString32T           *mCurKey;
-    const ByteString32T           *mCurValue;
-    bool                           mEos;
+    CellCache::CellMapT::iterator  m_start_iter;
+    CellCache::CellMapT::iterator  m_end_iter;
+    CellCache::CellMapT::iterator  m_cur_iter;
+    CellCachePtr                   m_cell_cache_ptr;
+    boost::mutex                  &m_cell_cache_mutex;
+    const ByteString32T           *m_cur_key;
+    const ByteString32T           *m_cur_value;
+    bool                           m_eos;
 
   };
 }

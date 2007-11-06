@@ -31,7 +31,7 @@ namespace hypertable {
   class ConnectionHandlerFactory : public ReferenceCount {
   public:
     virtual ~ConnectionHandlerFactory() { }
-    virtual void newInstance(DispatchHandlerPtr &dhp) = 0;
+    virtual void get_instance(DispatchHandlerPtr &dhp) = 0;
   };
   typedef boost::intrusive_ptr<ConnectionHandlerFactory> ConnectionHandlerFactoryPtr;
 }

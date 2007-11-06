@@ -33,7 +33,7 @@ using namespace std;
 
 
 CellCache::~CellCache() {
-  for (CellMapT::iterator iter = mCellMap.begin(); iter != mCellMap.end(); iter++)
+  for (CellMapT::iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++)
     delete [] (*iter).first;
 }
 
@@ -41,7 +41,7 @@ CellCache::~CellCache() {
 /**
  * 
  */
-int CellCache::Add(const ByteString32T *key, const ByteString32T *value) {
+int CellCache::add(const ByteString32T *key, const ByteString32T *value) {
   size_t kvLen = key->len + (2*sizeof(int32_t));
   ByteString32T *newKey;
   ByteString32T *newValue;
@@ -60,33 +60,33 @@ int CellCache::Add(const ByteString32T *key, const ByteString32T *value) {
     newValue->len = 0;
   }
 
-  CellMapT::iterator iter = mCellMap.lower_bound(key);
+  CellMapT::iterator iter = m_cell_map.lower_bound(key);
 
-  mCellMap.insert(iter, CellMapT::value_type(newKey, newValue));
+  m_cell_map.insert(iter, CellMapT::value_type(newKey, newValue));
 
-  mMemoryUsed += sizeof(CellMapT::value_type) + kvLen;
+  m_memory_used += sizeof(CellMapT::value_type) + kvLen;
 
   return 0;
 }
 
 
 
-CellListScanner *CellCache::CreateScanner(ScanContextPtr &scanContextPtr) {
+CellListScanner *CellCache::create_scanner(ScanContextPtr &scanContextPtr) {
   CellCachePtr cellCachePtr(this);
   return new CellCacheScanner(cellCachePtr, scanContextPtr);
 }
 
 
 
-CellCache *CellCache::SliceCopy(uint64_t timestamp) {
-  boost::mutex::scoped_lock lock(mMutex);
+CellCache *CellCache::slice_copy(uint64_t timestamp) {
+  boost::mutex::scoped_lock lock(m_mutex);
   CellCache *cache = new CellCache();
   Key keyComps;
   ByteString32T *key;
   ByteString32T *value;
   size_t kvLen;
 
-  for (CellMapT::iterator iter = mCellMap.begin(); iter != mCellMap.end(); iter++) {
+  for (CellMapT::iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++) {
 
     if (!keyComps.load((*iter).first)) {
       LOG_ERROR("Problem deserializing key/value pair");
@@ -98,7 +98,7 @@ CellCache *CellCache::SliceCopy(uint64_t timestamp) {
       key = (ByteString32T *) new uint8_t [ kvLen ];
       memcpy(key, (*iter).first, kvLen);
       value = (ByteString32T *)(key->data + key->len);
-      cache->Add(key, value);
+      cache->add(key, value);
     }
 
   }

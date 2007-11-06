@@ -38,7 +38,7 @@ namespace hypertable {
      * @param remainingPtr address of variable containing number of bytes remaining in buffer
      * @return true on success, false if buffer has insufficient room
      */
-    inline bool DecodeByte(uint8_t **bufPtr, size_t *remainingPtr, uint8_t *bytePtr) {
+    inline bool decode_byte(uint8_t **bufPtr, size_t *remainingPtr, uint8_t *bytePtr) {
       if (*remainingPtr == 0)
 	return false;
       *bytePtr = *(*bufPtr)++;
@@ -54,7 +54,7 @@ namespace hypertable {
      * @param bufPtr address of destinatin buffer
      * @param sval the short value to encode
      */
-    inline void EncodeShort(uint8_t **bufPtr, uint16_t sval) {
+    inline void encode_short(uint8_t **bufPtr, uint16_t sval) {
       memcpy(*bufPtr, &sval, 2);
       (*bufPtr) += 2;
     }
@@ -68,7 +68,7 @@ namespace hypertable {
      * @param remainingPtr address of variable containing number of bytes remaining in buffer
      * @return true on success, false if buffer has insufficient room
      */
-    inline bool DecodeShort(uint8_t **bufPtr, size_t *remainingPtr, uint16_t *shortPtr) {
+    inline bool decode_short(uint8_t **bufPtr, size_t *remainingPtr, uint16_t *shortPtr) {
       if (*remainingPtr < 2)
 	return false;
       memcpy(shortPtr, *bufPtr, 2);
@@ -85,7 +85,7 @@ namespace hypertable {
      * @param bufPtr address of destinatin buffer
      * @param ival the int value to encode
      */
-    inline void EncodeInt(uint8_t **bufPtr, uint32_t ival) {
+    inline void encode_int(uint8_t **bufPtr, uint32_t ival) {
       memcpy(*bufPtr, &ival, 4);
       *bufPtr += 4;
     }
@@ -99,7 +99,7 @@ namespace hypertable {
      * @param remainingPtr address of variable containing number of bytes remaining in buffer
      * @return true on success, false if buffer has insufficient room
      */
-    inline bool DecodeInt(uint8_t **bufPtr, size_t *remainingPtr, uint32_t *intPtr) {
+    inline bool decode_int(uint8_t **bufPtr, size_t *remainingPtr, uint32_t *intPtr) {
       if (*remainingPtr < 4)
 	return false;
       memcpy(intPtr, *bufPtr, 4);
@@ -116,7 +116,7 @@ namespace hypertable {
      * @param bufPtr address of destinatin buffer
      * @param ival the long value to encode
      */
-    inline void EncodeLong(uint8_t **bufPtr, uint64_t lval) {
+    inline void encode_long(uint8_t **bufPtr, uint64_t lval) {
       memcpy(*bufPtr, &lval, 8);
       *bufPtr += 8;
     }
@@ -130,7 +130,7 @@ namespace hypertable {
      * @param remainingPtr address of variable containing number of bytes remaining in buffer
      * @return true on success, false if buffer has insufficient room
      */
-    inline bool DecodeLong(uint8_t **bufPtr, size_t *remainingPtr, uint64_t *longPtr) {
+    inline bool decode_long(uint8_t **bufPtr, size_t *remainingPtr, uint64_t *longPtr) {
       if (*remainingPtr < 8)
 	return false;
       memcpy(longPtr, *bufPtr, 8);
@@ -145,7 +145,7 @@ namespace hypertable {
      * @param len length of the byte array to be encoded
      * @return the encoded length of a byte array of length len
      */
-    inline size_t EncodedLengthByteArray(int32_t len) {
+    inline size_t encoded_length_byte_array(int32_t len) {
       return len + 4;
     }
 
@@ -159,7 +159,7 @@ namespace hypertable {
      * @param data pointer to array of bytes
      * @param len the length of the byte array
      */
-    inline void EncodeByteArray(uint8_t **bufPtr, const void *data, int32_t len) {
+    inline void encode_byte_array(uint8_t **bufPtr, const void *data, int32_t len) {
       memcpy(*bufPtr, &len, 4);
       memcpy((*bufPtr)+4, (uint8_t *)data, len);
       *bufPtr += len + 4;
@@ -175,7 +175,7 @@ namespace hypertable {
      * @param remainingPtr address of variable containing number of bytes remaining in buffer
      * @return true on success, false if buffer has insufficient room
      */
-    inline bool DecodeByteArray(uint8_t **bufPtr, size_t *remainingPtr, uint8_t **dstPtr, int32_t *lenPtr) {
+    inline bool decode_byte_array(uint8_t **bufPtr, size_t *remainingPtr, uint8_t **dstPtr, int32_t *lenPtr) {
       // length
       if (*remainingPtr < 4)
 	return false;
@@ -203,7 +203,7 @@ namespace hypertable {
      * @param bs32Ptr address of ByteString32T pointer which points into buffer on success
      * @return true on success, false if buffer has insufficient room
      */
-    inline bool DecodeByteString32(const uint8_t **bufPtr, size_t *remainingPtr, ByteString32T **bs32Ptr) {
+    inline bool decode_byte_string32(const uint8_t **bufPtr, size_t *remainingPtr, ByteString32T **bs32Ptr) {
       if (*remainingPtr < 4)
 	return false;
       *bs32Ptr = (ByteString32T *)*bufPtr;
@@ -221,7 +221,7 @@ namespace hypertable {
      * @param str pointer to the the c-style string
      * @return the encoded length of str
      */
-    inline size_t EncodedLengthString(const char *str) {
+    inline size_t encoded_length_string(const char *str) {
       return 2 + ((str == 0) ? 0 : strlen(str)) + 1;
     }
 
@@ -232,8 +232,8 @@ namespace hypertable {
      * @param str reference to string object
      * @return the encoded length of str
      */
-    inline size_t EncodedLengthString(const std::string &str) {
-      return EncodedLengthString(str.c_str());
+    inline size_t encoded_length_string(const std::string &str) {
+      return encoded_length_string(str.c_str());
     }
 
 
@@ -247,7 +247,7 @@ namespace hypertable {
      * @param bufPtr address of destinatin buffer
      * @param str the c-style string to encode
      */
-    inline void EncodeString(uint8_t **bufPtr, const char *str) {
+    inline void encode_string(uint8_t **bufPtr, const char *str) {
       uint16_t len = (str == 0) ? 0 : strlen(str);
 
       // 2-byte length
@@ -275,8 +275,8 @@ namespace hypertable {
      * @param bufPtr address of destinatin buffer
      * @param str the std::string to encode
      */
-    inline void EncodeString(uint8_t **bufPtr, const std::string &str) {
-      EncodeString(bufPtr, str.c_str());
+    inline void encode_string(uint8_t **bufPtr, const std::string &str) {
+      encode_string(bufPtr, str.c_str());
     }
 
 
@@ -292,7 +292,7 @@ namespace hypertable {
      * @param strPtr address of string pointer, points back into encoding buffer on success
      * @return true on success, false if buffer has insufficient room
      */
-    inline bool DecodeString(uint8_t **bufPtr, size_t *remainingPtr, const char **strPtr) {
+    inline bool decode_string(uint8_t **bufPtr, size_t *remainingPtr, const char **strPtr) {
       uint16_t len;
       *strPtr = 0;
       if (*remainingPtr < 3)
@@ -317,9 +317,9 @@ namespace hypertable {
      * @param str reference to std::string to hold result
      * @return true on success, false if buffer has insufficient room
      */
-    inline bool DecodeString(uint8_t **bufPtr, size_t *remainingPtr, std::string &str) {
+    inline bool decode_string(uint8_t **bufPtr, size_t *remainingPtr, std::string &str) {
       const char *cstr;
-      if (!DecodeString(bufPtr, remainingPtr, &cstr))
+      if (!decode_string(bufPtr, remainingPtr, &cstr))
 	return false;
       str = cstr;
       return true;

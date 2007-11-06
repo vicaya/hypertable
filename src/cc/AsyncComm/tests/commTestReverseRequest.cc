@@ -63,12 +63,12 @@ int main(int argc, char **argv) {
   std::vector<const char *> serverArgs;
 
   if (argc != 1)
-    Usage::DumpAndExit(usage);
+    Usage::dump_and_exit(usage);
 
   srand(8876);
 
-  System::Initialize(argv[0]);
-  ReactorFactory::Initialize(1);
+  System::initialize(argv[0]);
+  ReactorFactory::initialize(1);
 
   clientArgs.push_back("sampleClient");
   clientArgs.push_back("--recv-addr=localhost:12789");

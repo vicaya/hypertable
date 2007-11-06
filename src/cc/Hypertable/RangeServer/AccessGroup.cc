@@ -35,13 +35,13 @@
 #include "MergeScanner.h"
 
 
-AccessGroup::AccessGroup(SchemaPtr &schemaPtr, Schema::AccessGroup *lg, RangeInfoPtr &rangeInfoPtr) : CellList(), mMutex(), mLock(mMutex,false), mSchemaPtr(schemaPtr), mName(lg->name), mStores(), mCellCachePtr(), mNextTableId(0), mLogCutoffTime(0), mDiskUsage(0) {
-  rangeInfoPtr->GetTableName(mTableName);
-  rangeInfoPtr->GetStartRow(mStartRow);
-  rangeInfoPtr->GetEndRow(mEndRow);
-  mCellCachePtr = new CellCache();
+AccessGroup::AccessGroup(SchemaPtr &schemaPtr, Schema::AccessGroup *lg, RangeInfoPtr &rangeInfoPtr) : CellList(), m_mutex(), m_lock(m_mutex,false), m_schema_ptr(schemaPtr), m_name(lg->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_log_cutoff_time(0), m_disk_usage(0) {
+  rangeInfoPtr->get_table_name(m_table_name);
+  rangeInfoPtr->get_start_row(m_start_row);
+  rangeInfoPtr->get_end_row(m_end_row);
+  m_cell_cache_ptr = new CellCache();
   for (list<Schema::ColumnFamily *>::iterator iter = lg->columns.begin(); iter != lg->columns.end(); iter++) {
-    mColumnFamilies.insert((uint8_t)(*iter)->id);
+    m_column_families.insert((uint8_t)(*iter)->id);
   }
 }
 
@@ -52,26 +52,26 @@ AccessGroup::~AccessGroup() {
 
 /**
  * This should be called with the CellCache locked
- * Also, at the end of compaction processing, when mCellCachePtr gets reset to a new value,
+ * Also, at the end of compaction processing, when m_cell_cache_ptr gets reset to a new value,
  * the CellCache should be locked as well.
  */
-int AccessGroup::Add(const ByteString32T *key, const ByteString32T *value) {
-  return mCellCachePtr->Add(key, value);
+int AccessGroup::add(const ByteString32T *key, const ByteString32T *value) {
+  return m_cell_cache_ptr->add(key, value);
 }
 
 
-CellListScanner *AccessGroup::CreateScanner(ScanContextPtr &scanContextPtr) {
-  boost::mutex::scoped_lock lock(mMutex);
+CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scanContextPtr) {
+  boost::mutex::scoped_lock lock(m_mutex);
   MergeScanner *scanner = new MergeScanner(scanContextPtr);
-  scanner->AddScanner( mCellCachePtr->CreateScanner(scanContextPtr) );
-  for (size_t i=0; i<mStores.size(); i++)
-    scanner->AddScanner( mStores[i]->CreateScanner(scanContextPtr) );
+  scanner->add_scanner( m_cell_cache_ptr->create_scanner(scanContextPtr) );
+  for (size_t i=0; i<m_stores.size(); i++)
+    scanner->add_scanner( m_stores[i]->create_scanner(scanContextPtr) );
   return scanner;
 }
 
-bool AccessGroup::IncludeInScan(ScanContextPtr &scanContextPtr) {
-  boost::mutex::scoped_lock lock(mMutex);
-  for (std::set<uint8_t>::iterator iter = mColumnFamilies.begin(); iter != mColumnFamilies.end(); iter++) {
+bool AccessGroup::include_in_scan(ScanContextPtr &scanContextPtr) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  for (std::set<uint8_t>::iterator iter = m_column_families.begin(); iter != m_column_families.end(); iter++) {
     if (scanContextPtr->familyMask[*iter])
       return true;
   }
@@ -79,51 +79,51 @@ bool AccessGroup::IncludeInScan(ScanContextPtr &scanContextPtr) {
 }
 
 
-void AccessGroup::GetSplitKeys(SplitKeyQueueT &keyHeap) {
-  boost::mutex::scoped_lock lock(mMutex);
+void AccessGroup::get_split_keys(SplitKeyQueueT &keyHeap) {
+  boost::mutex::scoped_lock lock(m_mutex);
   SplitKeyInfoT ski;
-  for (size_t i=0; i<mStores.size(); i++) {
-    ski.timestamp = mStores[i]->GetLogCutoffTime();
-    ski.key = mStores[i]->GetSplitKey();
+  for (size_t i=0; i<m_stores.size(); i++) {
+    ski.timestamp = m_stores[i]->get_log_cutoff_time();
+    ski.key = m_stores[i]->get_split_key();
     keyHeap.push(ski);
   }
 }
 
 
-uint64_t AccessGroup::DiskUsage() {
-  boost::mutex::scoped_lock lock(mMutex);
-  return mDiskUsage + mCellCachePtr->MemoryUsed();
+uint64_t AccessGroup::disk_usage() {
+  boost::mutex::scoped_lock lock(m_mutex);
+  return m_disk_usage + m_cell_cache_ptr->memory_used();
 }
 
-bool AccessGroup::NeedsCompaction() {
-  boost::mutex::scoped_lock lock(mMutex);
-  if (mCellCachePtr->MemoryUsed() >= (uint32_t)Global::localityGroupMaxMemory)
+bool AccessGroup::needs_compaction() {
+  boost::mutex::scoped_lock lock(m_mutex);
+  if (m_cell_cache_ptr->memory_used() >= (uint32_t)Global::localityGroupMaxMemory)
     return true;
   return false;
 }
 
 
-void AccessGroup::AddCellStore(CellStorePtr &cellStorePtr, uint32_t id) {
-  boost::mutex::scoped_lock lock(mMutex);
-  if (id >= mNextTableId) 
-    mNextTableId = id+1;
-  if (cellStorePtr->GetLogCutoffTime() > mLogCutoffTime)
-    mLogCutoffTime = cellStorePtr->GetLogCutoffTime();
-  mStores.push_back(cellStorePtr);
-  mDiskUsage += cellStorePtr->DiskUsage();
+void AccessGroup::add_cell_store(CellStorePtr &cellStorePtr, uint32_t id) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  if (id >= m_next_table_id) 
+    m_next_table_id = id+1;
+  if (cellStorePtr->get_log_cutoff_time() > m_log_cutoff_time)
+    m_log_cutoff_time = cellStorePtr->get_log_cutoff_time();
+  m_stores.push_back(cellStorePtr);
+  m_disk_usage += cellStorePtr->disk_usage();
 }
 
 
 namespace {
   struct ltCellStore {
     bool operator()(const CellStorePtr &csPtr1, const CellStorePtr &csPtr2) const {
-      return !(csPtr1->DiskUsage() < csPtr2->DiskUsage());
+      return !(csPtr1->disk_usage() < csPtr2->disk_usage());
     }
   };
 }
 
 
-void AccessGroup::RunCompaction(uint64_t timestamp, bool major) {
+void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
   std::string cellStoreFile;
   char md5DigestStr[33];
   char filename[16];
@@ -138,42 +138,42 @@ void AccessGroup::RunCompaction(uint64_t timestamp, bool major) {
   vector<string> replacedFiles;
 
   {
-    boost::mutex::scoped_lock lock(mMutex);
+    boost::mutex::scoped_lock lock(m_mutex);
     if (major) {
       // TODO: if the oldest CellCache entry is newer than timestamp, then return
-      if (mCellCachePtr->MemoryUsed() == 0 && mStores.size() <= (size_t)1)
+      if (m_cell_cache_ptr->memory_used() == 0 && m_stores.size() <= (size_t)1)
 	return;
       tableIndex = 0;
       LOG_INFO("Starting Major Compaction");
     }
     else {
-      if (mCellCachePtr->MemoryUsed() < (uint32_t)Global::localityGroupMaxMemory)
+      if (m_cell_cache_ptr->memory_used() < (uint32_t)Global::localityGroupMaxMemory)
 	return;
 
-      if (mStores.size() > (size_t)Global::localityGroupMaxFiles) {
+      if (m_stores.size() > (size_t)Global::localityGroupMaxFiles) {
 	ltCellStore sortObj;
-	sort(mStores.begin(), mStores.end(), sortObj);
-	tableIndex = mStores.size() - Global::localityGroupMergeFiles;
+	sort(m_stores.begin(), m_stores.end(), sortObj);
+	tableIndex = m_stores.size() - Global::localityGroupMergeFiles;
 	LOG_INFO("Starting Merging Compaction");
       }
       else {
-	tableIndex = mStores.size();
+	tableIndex = m_stores.size();
 	LOG_INFO("Starting Minor Compaction");
       }
     }
   }
 
-  if (mEndRow == "")
+  if (m_end_row == "")
     memset(md5DigestStr, '0', 24);
   else
-    md5_string(mEndRow.c_str(), md5DigestStr);
+    md5_string(m_end_row.c_str(), md5DigestStr);
   md5DigestStr[24] = 0;
-  sprintf(filename, "cs%d", mNextTableId++);
-  cellStoreFile = (string)"/hypertable/tables/" + mTableName + "/" + mName + "/" + md5DigestStr + "/" + filename;
+  sprintf(filename, "cs%d", m_next_table_id++);
+  cellStoreFile = (string)"/hypertable/tables/" + m_table_name + "/" + m_name + "/" + md5DigestStr + "/" + filename;
 
   cellStorePtr = new CellStoreV0(Global::dfs);
 
-  if (cellStorePtr->Create(cellStoreFile.c_str()) != 0) {
+  if (cellStorePtr->create(cellStoreFile.c_str()) != 0) {
     LOG_VA_ERROR("Problem compacting locality group to file '%s'", cellStoreFile.c_str());
     return;
   }
@@ -181,20 +181,20 @@ void AccessGroup::RunCompaction(uint64_t timestamp, bool major) {
   {
     ScanContextPtr scanContextPtr;
 
-    scanContextPtr.reset( new ScanContext(timestamp, 0, mSchemaPtr) );
+    scanContextPtr.reset( new ScanContext(timestamp, 0, m_schema_ptr) );
 
-    if (major || tableIndex < mStores.size()) {
+    if (major || tableIndex < m_stores.size()) {
       MergeScanner *mscanner = new MergeScanner(scanContextPtr, !major);
-      mscanner->AddScanner( mCellCachePtr->CreateScanner(scanContextPtr) );
-      for (size_t i=tableIndex; i<mStores.size(); i++)
-	mscanner->AddScanner( mStores[i]->CreateScanner(scanContextPtr) );
+      mscanner->add_scanner( m_cell_cache_ptr->create_scanner(scanContextPtr) );
+      for (size_t i=tableIndex; i<m_stores.size(); i++)
+	mscanner->add_scanner( m_stores[i]->create_scanner(scanContextPtr) );
       scannerPtr.reset(mscanner);
     }
     else
-      scannerPtr.reset( mCellCachePtr->CreateScanner(scanContextPtr) );
+      scannerPtr.reset( m_cell_cache_ptr->create_scanner(scanContextPtr) );
   }
 
-  while (scannerPtr->Get(&key, &value)) {
+  while (scannerPtr->get(&key, &value)) {
     if (!keyComps.load(key)) {
       LOG_ERROR("Problem deserializing key/value pair");
       return;
@@ -202,30 +202,30 @@ void AccessGroup::RunCompaction(uint64_t timestamp, bool major) {
     // this assumes that the timestamp of the oldest entry in all CellStores is less than timestamp
     // this should be asserted somewhere.
     if (keyComps.timestamp <= timestamp)
-      cellStorePtr->Add(key, value);
-    scannerPtr->Forward();
+      cellStorePtr->add(key, value);
+    scannerPtr->forward();
   }
 
   {
-    boost::mutex::scoped_lock lock(mMutex);
+    boost::mutex::scoped_lock lock(m_mutex);
     string fname;
-    for (size_t i=tableIndex; i<mStores.size(); i++) {
-      fname = mStores[i]->GetFilename();
+    for (size_t i=tableIndex; i<m_stores.size(); i++) {
+      fname = m_stores[i]->get_filename();
       replacedFiles.push_back(fname);  // hack: fix me!
     }
   }
     
-  if (cellStorePtr->Finalize(timestamp) != 0) {
+  if (cellStorePtr->finalize(timestamp) != 0) {
     LOG_VA_ERROR("Problem finalizing CellStore '%s'", cellStoreFile.c_str());
     return;
   }
 
   /**
    * HACK: Delete underlying files -- fix me!!!
-  for (size_t i=tableIndex; i<mStores.size(); i++) {
-    if ((mStores[i]->GetFlags() & CellStore::FLAG_SHARED) == 0) {
-      std::string &fname = mStores[i]->GetFilename();
-      Global::hdfsClient->Remove(fname.c_str());
+  for (size_t i=tableIndex; i<m_stores.size(); i++) {
+    if ((m_stores[i]->get_flags() & CellStore::FLAG_SHARED) == 0) {
+      std::string &fname = m_stores[i]->get_filename();
+      Global::hdfsClient->remove(fname.c_str());
     }
   }
   */
@@ -233,36 +233,36 @@ void AccessGroup::RunCompaction(uint64_t timestamp, bool major) {
   /**
    *  Update METADATA with new cellStore information
    */
-  if ((error = Global::metadata->GetRangeInfo(mTableName, mEndRow, rangeInfoPtr)) != Error::OK) {
+  if ((error = Global::metadata->get_range_info(m_table_name, m_end_row, rangeInfoPtr)) != Error::OK) {
     LOG_VA_ERROR("Unable to find tablet (table='%s' endRow='%s') in metadata - %s",
-		 mTableName.c_str(), mEndRow.c_str(), Error::GetText(error));
+		 m_table_name.c_str(), m_end_row.c_str(), Error::get_text(error));
     exit(1);
   }
   for (vector<string>::iterator iter = replacedFiles.begin(); iter != replacedFiles.end(); iter++)
-    rangeInfoPtr->RemoveCellStore(*iter);
-  rangeInfoPtr->AddCellStore(cellStoreFile);
-  Global::metadata->Sync();
+    rangeInfoPtr->remove_cell_store(*iter);
+  rangeInfoPtr->add_cell_store(cellStoreFile);
+  Global::metadata->sync();
 
   /**
    * Install new CellCache and CellStore
    */
   {
-    boost::mutex::scoped_lock lock(mMutex);
+    boost::mutex::scoped_lock lock(m_mutex);
 
     /** Slice and install new CellCache **/
-    mCellCachePtr = mCellCachePtr->SliceCopy(timestamp);
+    m_cell_cache_ptr = m_cell_cache_ptr->slice_copy(timestamp);
 
     /** Drop the compacted tables from the table vector **/
-    if (tableIndex < mStores.size())
-      mStores.resize(tableIndex);
+    if (tableIndex < m_stores.size())
+      m_stores.resize(tableIndex);
 
     /** Add the new table to the table vector **/
-    mStores.push_back(cellStorePtr);
+    m_stores.push_back(cellStorePtr);
 
     /** Re-compute disk usage **/
-    mDiskUsage = 0;
-    for (size_t i=0; i<mStores.size(); i++)
-      mDiskUsage += mStores[i]->DiskUsage();
+    m_disk_usage = 0;
+    for (size_t i=0; i<m_stores.size(); i++)
+      m_disk_usage += m_stores[i]->disk_usage();
   }
 
   // Compaction thread function should re-shuffle the heap of locality groups and purge the commit log

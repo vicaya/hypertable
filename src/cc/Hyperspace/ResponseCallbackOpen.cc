@@ -28,11 +28,11 @@ using namespace Hyperspace;
 using namespace hypertable;
 
 int ResponseCallbackOpen::response(uint64_t handle, bool created, uint64_t lockGeneration) {
-  hbuilder_.InitializeFromRequest(mEventPtr->header);
+  hbuilder_.initialize_from_request(m_event_ptr->header);
   CommBufPtr cbufPtr( new CommBuf(hbuilder_, 21 ) );
-  cbufPtr->AppendInt(Error::OK);
-  cbufPtr->AppendLong(handle);
-  cbufPtr->AppendByte((uint8_t)created);
-  cbufPtr->AppendLong(lockGeneration);
-  return mComm->SendResponse(mEventPtr->addr, cbufPtr);
+  cbufPtr->append_int(Error::OK);
+  cbufPtr->append_long(handle);
+  cbufPtr->append_byte((uint8_t)created);
+  cbufPtr->append_long(lockGeneration);
+  return m_comm->send_response(m_event_ptr->addr, cbufPtr);
 }

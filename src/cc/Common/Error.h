@@ -87,8 +87,8 @@ namespace hypertable {
     static const int RANGESERVER_SCHEMA_INVALID_CFID  = 0x00050009;
     static const int RANGESERVER_INVALID_COLUMNFAMILY = 0x0005000A;
 
-    static const char *GetText(int error);
-    static std::string GetTextString(int error) { return GetText(error); }
+    static const char *get_text(int error);
+    static std::string get_text_string(int error) { return get_text(error); }
 
   };
 
@@ -98,10 +98,10 @@ namespace hypertable {
    */
   class Exception : public std::runtime_error {
   public:
-    Exception(int error) : std::runtime_error(Error::GetTextString(error)), mError(error) { return; }
-    int code() { return mError; }
+    Exception(int error) : std::runtime_error(Error::get_text_string(error)), m_error(error) { return; }
+    int code() { return m_error; }
   private:
-    int mError;
+    int m_error;
   };
 }
 

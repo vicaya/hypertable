@@ -49,17 +49,17 @@ namespace hypertable {
   public:
     CommitLogReader(Filesystem *fs, std::string &logDir);
     virtual ~CommitLogReader() { return; }
-    virtual void InitializeRead(uint64_t timestamp);
-    virtual bool NextBlock(CommitLogHeaderT **blockp);
+    virtual void initialize_read(uint64_t timestamp);
+    virtual bool next_block(CommitLogHeaderT **blockp);
 
   private:
-    Filesystem               *mFs;
-    std::string               mLogDir;
-    std::vector<LogFileInfoT> mLogFileInfo;
-    uint64_t                  mCutoffTime;
-    size_t                    mCurLogOffset;
-    int32_t                   mFd;
-    DynamicBuffer             mBlockBuffer;
+    Filesystem               *m_fs;
+    std::string               m_log_dir;
+    std::vector<LogFileInfoT> m_log_file_info;
+    uint64_t                  m_cutoff_time;
+    size_t                    m_cur_log_offset;
+    int32_t                   m_fd;
+    DynamicBuffer             m_block_buffer;
   };
 }
 

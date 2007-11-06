@@ -40,7 +40,7 @@ using namespace std;
 
 /**
  */
-ssize_t FileUtils::Read(int fd, void *vptr, size_t n) {
+ssize_t FileUtils::read(int fd, void *vptr, size_t n) {
   size_t nleft;
   ssize_t nread;
   char *ptr;
@@ -48,7 +48,7 @@ ssize_t FileUtils::Read(int fd, void *vptr, size_t n) {
   ptr = (char *)vptr;
   nleft = n;
   while (nleft > 0) {
-    if ( (nread = read(fd, ptr, nleft)) < 0) {
+    if ( (nread = ::read(fd, ptr, nleft)) < 0) {
       if (errno == EINTR)
 	nread = 0;/* and call read() again */
       else if (errno == EAGAIN)
@@ -66,7 +66,7 @@ ssize_t FileUtils::Read(int fd, void *vptr, size_t n) {
 
 /**
  */
-ssize_t FileUtils::Pread(int fd, void *vptr, size_t n, off_t offset) {
+ssize_t FileUtils::pread(int fd, void *vptr, size_t n, off_t offset) {
   size_t nleft;
   ssize_t nread;
   char *ptr;
@@ -74,7 +74,7 @@ ssize_t FileUtils::Pread(int fd, void *vptr, size_t n, off_t offset) {
   ptr = (char *)vptr;
   nleft = n;
   while (nleft > 0) {
-    if ( (nread = pread(fd, ptr, nleft, offset)) < 0) {
+    if ( (nread = ::pread(fd, ptr, nleft, offset)) < 0) {
       if (errno == EINTR)
 	nread = 0;/* and call read() again */
       else if (errno == EAGAIN)
@@ -93,7 +93,7 @@ ssize_t FileUtils::Pread(int fd, void *vptr, size_t n, off_t offset) {
 
 /**
  */
-ssize_t FileUtils::Write(int fd, const void *vptr, size_t n) {
+ssize_t FileUtils::write(int fd, const void *vptr, size_t n) {
   size_t nleft;
   ssize_t nwritten;
   const char *ptr;
@@ -101,7 +101,7 @@ ssize_t FileUtils::Write(int fd, const void *vptr, size_t n) {
   ptr = (const char *)vptr;
   nleft = n;
   while (nleft > 0) {
-    if ((nwritten = write(fd, ptr, nleft)) <= 0) {
+    if ((nwritten = ::write(fd, ptr, nleft)) <= 0) {
       if (errno == EINTR)
 	nwritten = 0; /* and call write() again */
       if (errno == EAGAIN)
@@ -116,9 +116,9 @@ ssize_t FileUtils::Write(int fd, const void *vptr, size_t n) {
   return n - nleft;
 }
 
-ssize_t FileUtils::Writev(int fd, const struct iovec *vector, int count) {
+ssize_t FileUtils::writev(int fd, const struct iovec *vector, int count) {
   ssize_t nwritten;
-  while ((nwritten = writev(fd, vector, count)) <= 0) {
+  while ((nwritten = ::writev(fd, vector, count)) <= 0) {
     if (errno == EINTR)
       nwritten = 0; /* and call write() again */
     if (errno == EAGAIN) {
@@ -132,7 +132,7 @@ ssize_t FileUtils::Writev(int fd, const struct iovec *vector, int count) {
 }
 
 
-ssize_t FileUtils::Sendto(int fd, const void *vptr, size_t n, const struct sockaddr *to, socklen_t tolen) {
+ssize_t FileUtils::sendto(int fd, const void *vptr, size_t n, const struct sockaddr *to, socklen_t tolen) {
   size_t nleft;
   ssize_t nsent;
   const char *ptr;
@@ -140,7 +140,7 @@ ssize_t FileUtils::Sendto(int fd, const void *vptr, size_t n, const struct socka
   ptr = (const char *)vptr;
   nleft = n;
   while (nleft > 0) {
-    if ((nsent = sendto(fd, ptr, nleft, 0, to, tolen)) <= 0) {
+    if ((nsent = ::sendto(fd, ptr, nleft, 0, to, tolen)) <= 0) {
       if (errno == EINTR)
 	nsent = 0; /* and call sendto() again */
       if (errno == EAGAIN || errno == ENOBUFS)
@@ -155,10 +155,10 @@ ssize_t FileUtils::Sendto(int fd, const void *vptr, size_t n, const struct socka
   return n - nleft;
 }
 
-ssize_t FileUtils::Recvfrom(int fd, void *vptr, size_t n, struct sockaddr *from, socklen_t *fromlen) {
+ssize_t FileUtils::recvfrom(int fd, void *vptr, size_t n, struct sockaddr *from, socklen_t *fromlen) {
   ssize_t nread;
   while (true) {
-    if ( (nread = recvfrom(fd, vptr, n, 0, from, fromlen)) < 0) {
+    if ( (nread = ::recvfrom(fd, vptr, n, 0, from, fromlen)) < 0) {
       if (errno != EINTR)
 	break;
     }
@@ -170,7 +170,7 @@ ssize_t FileUtils::Recvfrom(int fd, void *vptr, size_t n, struct sockaddr *from,
 
 
 /* flags are file status flags to turn on */
-void FileUtils::SetFlags(int fd, int flags) {
+void FileUtils::set_flags(int fd, int flags) {
   int val;
 
   if ( (val = fcntl(fd, F_GETFL, 0)) < 0)
@@ -186,7 +186,7 @@ void FileUtils::SetFlags(int fd, int flags) {
 
 /**
  */
-char *FileUtils::FileToBuffer(const char *fname, off_t *lenp) {
+char *FileUtils::file_to_buffer(const char *fname, off_t *lenp) {
   struct stat statbuf;
   int fd;
 
@@ -206,7 +206,7 @@ char *FileUtils::FileToBuffer(const char *fname, off_t *lenp) {
 
   char *rbuf = new char [ *lenp + 1 ];
 
-  ssize_t nread = Read(fd, rbuf, *lenp);
+  ssize_t nread = FileUtils::read(fd, rbuf, *lenp);
 
   if (nread == (ssize_t)-1) {
     LOG_VA_ERROR("read(\"%s\") failure - %s", fname,  strerror(errno));
@@ -226,7 +226,7 @@ char *FileUtils::FileToBuffer(const char *fname, off_t *lenp) {
 }
 
 
-bool FileUtils::Mkdirs(const char *dirname) {
+bool FileUtils::mkdirs(const char *dirname) {
   struct stat statbuf;
   boost::shared_array<char> tmpDirPtr(new char [ strlen(dirname) + 1 ]);
   char *tmpDir = tmpDirPtr.get();
@@ -268,7 +268,7 @@ bool FileUtils::Mkdirs(const char *dirname) {
 }
 
 
-bool FileUtils::Exists(const char *fname) {
+bool FileUtils::exists(const char *fname) {
   struct stat statbuf;
   if (stat(fname, &statbuf) != 0)
     return false;
@@ -276,7 +276,7 @@ bool FileUtils::Exists(const char *fname) {
 }
 
 
-off_t FileUtils::Length(const char *fname) {
+off_t FileUtils::length(const char *fname) {
   struct stat statbuf;
   if (stat(fname, &statbuf) != 0)
     return (off_t)-1;
@@ -284,95 +284,95 @@ off_t FileUtils::Length(const char *fname) {
 }
 
 
-int FileUtils::Getxattr(const char *path, const char *name, void *value, size_t size) {
+int FileUtils::getxattr(const char *path, const char *name, void *value, size_t size) {
   std::string canonicalName;
   if (!strncmp(name, "user.", 5))
     canonicalName = name;
   else
     canonicalName = (std::string)"user." + name;
 #if defined(__linux__)
-  return getxattr(path, canonicalName.c_str(), value, size);
+  return ::getxattr(path, canonicalName.c_str(), value, size);
 #elif defined(__APPLE__)
-  return getxattr(path, canonicalName.c_str(), value, size, 0, 0);
+  return ::getxattr(path, canonicalName.c_str(), value, size, 0, 0);
 #else
   ImplementMe;
 #endif
 }
 
 
-int FileUtils::Setxattr(const char *path, const char *name, const void *value, size_t size, int flags) {
+int FileUtils::setxattr(const char *path, const char *name, const void *value, size_t size, int flags) {
   std::string canonicalName;
   if (!strncmp(name, "user.", 5))
     canonicalName = name;
   else
     canonicalName = (std::string)"user." + name;
 #if defined(__linux__)
-  return setxattr(path, canonicalName.c_str(), value, size, flags);
+  return ::setxattr(path, canonicalName.c_str(), value, size, flags);
 #elif defined(__APPLE__)
-  return setxattr(path, canonicalName.c_str(), value, size, 0, flags);
+  return ::setxattr(path, canonicalName.c_str(), value, size, 0, flags);
 #else
   ImplementMe;
 #endif
 }
 
 
-int FileUtils::Fgetxattr(int fd, const char *name, void *value, size_t size) {
+int FileUtils::fgetxattr(int fd, const char *name, void *value, size_t size) {
   std::string canonicalName;
   if (!strncmp(name, "user.", 5))
     canonicalName = name;
   else
     canonicalName = (std::string)"user." + name;
 #if defined(__linux__)
-  return fgetxattr(fd, canonicalName.c_str(), value, size);
+  return ::fgetxattr(fd, canonicalName.c_str(), value, size);
 #elif defined(__APPLE__)
-  return fgetxattr(fd, canonicalName.c_str(), value, size, 0, 0);
+  return ::fgetxattr(fd, canonicalName.c_str(), value, size, 0, 0);
 #else
   ImplementMe;
 #endif
 }
 
 
-int FileUtils::Fsetxattr(int fd, const char *name, const void *value, size_t size, int flags) {
+int FileUtils::fsetxattr(int fd, const char *name, const void *value, size_t size, int flags) {
   std::string canonicalName;
   if (!strncmp(name, "user.", 5))
     canonicalName = name;
   else
     canonicalName = (std::string)"user." + name;
 #if defined(__linux__)
-  return fsetxattr(fd, canonicalName.c_str(), value, size, flags);
+  return ::fsetxattr(fd, canonicalName.c_str(), value, size, flags);
 #elif defined(__APPLE__)
-  return fsetxattr(fd, canonicalName.c_str(), value, size, 0, flags);
+  return ::fsetxattr(fd, canonicalName.c_str(), value, size, 0, flags);
 #else
   ImplementMe;
 #endif
 }
 
 
-int FileUtils::Removexattr(const char *path, const char *name) {
+int FileUtils::removexattr(const char *path, const char *name) {
   std::string canonicalName;
   if (!strncmp(name, "user.", 5))
     canonicalName = name;
   else
     canonicalName = (std::string)"user." + name;
 #if defined(__linux__)
-  return removexattr(path, canonicalName.c_str());
+  return ::removexattr(path, canonicalName.c_str());
 #elif defined(__APPLE__)
-  return removexattr(path, canonicalName.c_str(), 0);
+  return ::removexattr(path, canonicalName.c_str(), 0);
 #else
   ImplementMe;
 #endif
 }
 
-int FileUtils::Fremovexattr(int fd, const char *name) {
+int FileUtils::fremovexattr(int fd, const char *name) {
   std::string canonicalName;
   if (!strncmp(name, "user.", 5))
     canonicalName = name;
   else
     canonicalName = (std::string)"user." + name;
 #if defined(__linux__)
-  return fremovexattr(fd, canonicalName.c_str());
+  return ::fremovexattr(fd, canonicalName.c_str());
 #elif defined(__APPLE__)
-  return fremovexattr(fd, canonicalName.c_str(), 0);
+  return ::fremovexattr(fd, canonicalName.c_str(), 0);
 #else
   ImplementMe;
 #endif

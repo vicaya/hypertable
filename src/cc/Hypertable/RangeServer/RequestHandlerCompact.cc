@@ -35,21 +35,21 @@ using namespace hypertable;
  *
  */
 void RequestHandlerCompact::run() {
-  ResponseCallback cb(mComm, mEventPtr);
+  ResponseCallback cb(m_comm, m_event_ptr);
   RangeSpecificationT rangeSpec;
   uint8_t compactionType = 0;
-  size_t remaining = mEventPtr->messageLen - 2;
-  uint8_t *msgPtr = mEventPtr->message + 2;
+  size_t remaining = m_event_ptr->messageLen - 2;
+  uint8_t *msgPtr = m_event_ptr->message + 2;
 
   // Range Specification
   if (!DecodeRangeSpecification(&msgPtr, &remaining, &rangeSpec))
     goto abort;
 
   // Compaction Type
-  if (!Serialization::DecodeByte(&msgPtr, &remaining, &compactionType))
+  if (!Serialization::decode_byte(&msgPtr, &remaining, &compactionType))
     goto abort;
 
-  mRangeServer->Compact(&cb, &rangeSpec, compactionType);
+  m_range_server->compact(&cb, &rangeSpec, compactionType);
 
   return;
 

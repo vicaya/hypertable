@@ -33,7 +33,7 @@ using namespace hypertable;
 using namespace Hyperspace;
 using namespace std;
 
-const char *CommandCreate::msUsage[] = {
+const char *CommandCreate::ms_usage[] = {
   "create <fname> flags=[READ|WRITE|LOCK|TEMP|LOCK_SHARED|LOCK_EXCLUSIVE] [OPTIONS]",
   "OPTIONS:",
   "  attr:<name>=<value>  This can be used to specify extended attributes that should",
@@ -55,9 +55,9 @@ int CommandCreate::run() {
   std::vector<AttributeT> initAttrs;
   AttributeT attr;
 
-  for (size_t i=0; i<mArgs.size(); i++) {
-    if (mArgs[i].first == "flags") {
-      str = strtok_r((char *)mArgs[i].second.c_str(), " \t|", &last);
+  for (size_t i=0; i<m_args.size(); i++) {
+    if (m_args[i].first == "flags") {
+      str = strtok_r((char *)m_args[i].second.c_str(), " \t|", &last);
       while (str) {
 	if (!strcmp(str, "READ"))
 	  flags |= OPEN_FLAG_READ;
@@ -74,8 +74,8 @@ int CommandCreate::run() {
 	str = strtok_r(0, " \t|", &last);
       }
     }
-    else if (mArgs[i].first == "event-mask") {
-      str = strtok_r((char *)mArgs[i].second.c_str(), " \t|", &last);
+    else if (m_args[i].first == "event-mask") {
+      str = strtok_r((char *)m_args[i].second.c_str(), " \t|", &last);
       while (str) {
 	if (!strcmp(str, "ATTR_SET"))
 	  eventMask |= EVENT_MASK_ATTR_SET;
@@ -88,18 +88,18 @@ int CommandCreate::run() {
 	str = strtok_r(0, " \t|", &last);
       }
     }
-    else if (mArgs[i].first.find("attr:", 0) == 0) {
-      attr.name = mArgs[i].first.c_str() + 5;
-      attr.value = mArgs[i].second.c_str();
+    else if (m_args[i].first.find("attr:", 0) == 0) {
+      attr.name = m_args[i].first.c_str() + 5;
+      attr.value = m_args[i].second.c_str();
       attr.valueLen = strlen((const char *)attr.value);
       initAttrs.push_back(attr);
     }
-    else if (fname != "" || mArgs[i].second != "") {
+    else if (fname != "" || m_args[i].second != "") {
       cerr << "Invalid arguments.  Type 'help' for usage." << endl;
       return -1;
     }
     else
-      fname = mArgs[i].first;
+      fname = m_args[i].first;
   }
 
   if (flags == 0) {
@@ -115,9 +115,9 @@ int CommandCreate::run() {
 
   HandleCallbackPtr callbackPtr = new FileHandleCallback(eventMask);
 
-  if ((error = mSession->Create(fname, flags, callbackPtr, initAttrs, &handle)) == Error::OK) {
+  if ((error = m_session->create(fname, flags, callbackPtr, initAttrs, &handle)) == Error::OK) {
     std::string normalName;
-    Util::NormalizePathname(fname, normalName);
+    Util::normalize_pathname(fname, normalName);
     Global::fileMap[normalName] = handle;
   }
   return error;

@@ -43,10 +43,10 @@ namespace hypertable {
     virtual void handle(EventPtr &eventPtr);
 
   private:
-    Comm                *mComm;
-    ApplicationQueuePtr  mAppQueuePtr;
-    RangeServerPtr       mRangeServerPtr;
-    MasterClientPtr      mMasterClientPtr;
+    Comm                *m_comm;
+    ApplicationQueuePtr  m_app_queue_ptr;
+    RangeServerPtr       m_range_server_ptr;
+    MasterClientPtr      m_master_client_ptr;
   };
 
 }

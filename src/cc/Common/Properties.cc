@@ -100,22 +100,22 @@ void Properties::load(const char *fname) throw(std::invalid_argument) {
 
 	valueStr = value;
 
-	mMap[name] = valueStr;
+	m_map[name] = valueStr;
       }
     }
   }
 }
 
 const char *Properties::getProperty(const char *str) {
-  PropertyMapT::iterator iter =  mMap.find(str);
-  if (iter == mMap.end())
+  PropertyMapT::iterator iter =  m_map.find(str);
+  if (iter == m_map.end())
     return 0;
   return ((*iter).second.c_str());
 }
 
 const char *Properties::getProperty(const char *str, const char *defaultValue) {
-  PropertyMapT::iterator iter =  mMap.find(str);
-  if (iter == mMap.end())
+  PropertyMapT::iterator iter =  m_map.find(str);
+  if (iter == m_map.end())
     return defaultValue;
   return ((*iter).second.c_str());
 }
@@ -128,8 +128,8 @@ const char *Properties::getProperty(const char *str, const char *defaultValue) {
 int64_t Properties::getPropertyInt64(const char *str, int64_t defaultValue) {
   const char *ptr;
 
-  PropertyMapT::iterator iter = mMap.find(str);
-  if (iter == mMap.end())
+  PropertyMapT::iterator iter = m_map.find(str);
+  if (iter == m_map.end())
     return defaultValue;
 
   for (ptr = (*iter).second.c_str(); isdigit(*ptr); ptr++)
@@ -166,8 +166,8 @@ int Properties::getPropertyInt(const char *str, int defaultValue) {
 }
 
 bool Properties::getPropertyBool(const char *str, bool defaultValue) {
-  PropertyMapT::iterator iter = mMap.find(str);
-  if (iter == mMap.end())
+  PropertyMapT::iterator iter = m_map.find(str);
+  if (iter == m_map.end())
     return defaultValue;
 
   if (!strcasecmp((*iter).second.c_str(), "true") || !strcmp((*iter).second.c_str(), "1"))
@@ -185,11 +185,11 @@ bool Properties::getPropertyBool(const char *str, bool defaultValue) {
 std::string Properties::setProperty(const char *key, const char *value) {
   std::string oldValue;
 
-  PropertyMapT::iterator iter = mMap.find(key);
-  if (iter != mMap.end())
+  PropertyMapT::iterator iter = m_map.find(key);
+  if (iter != m_map.end())
     oldValue = (*iter).second;
 
-  mMap[key] = value;
+  m_map[key] = value;
 
   return oldValue;
 }

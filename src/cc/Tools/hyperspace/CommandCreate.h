@@ -31,14 +31,14 @@ namespace Hyperspace {
 
   class CommandCreate : public InteractiveCommand {
   public:
-    CommandCreate(Session *session) : mSession(session) { return; }
-    virtual const char *CommandText() { return "create"; }
-    virtual const char **Usage() { return msUsage; }
+    CommandCreate(Session *session) : m_session(session) { return; }
+    virtual const char *command_text() { return "create"; }
+    virtual const char **usage() { return ms_usage; }
     virtual int run();
 
   private:
-    static const char *msUsage[];
-    Session *mSession;
+    static const char *ms_usage[];
+    Session *m_session;
   };
 
 }

@@ -33,16 +33,16 @@ using namespace hypertable;
  *
  */
 void RequestHandlerRegisterServer::run() {
-  ResponseCallback cb(mComm, mEventPtr);
+  ResponseCallback cb(m_comm, m_event_ptr);
   const char *serverIdStr;
-  size_t remaining = mEventPtr->messageLen - 2;
-  uint8_t *msgPtr = mEventPtr->message + 2;
+  size_t remaining = m_event_ptr->messageLen - 2;
+  uint8_t *msgPtr = m_event_ptr->message + 2;
 
   // Server ID string
-  if (!Serialization::DecodeString(&msgPtr, &remaining, &serverIdStr))
+  if (!Serialization::decode_string(&msgPtr, &remaining, &serverIdStr))
     goto abort;
 
-  mMaster->RegisterServer(&cb, serverIdStr, mEventPtr->addr);
+  m_master->register_server(&cb, serverIdStr, m_event_ptr->addr);
 
   return;
 

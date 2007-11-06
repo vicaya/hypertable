@@ -35,7 +35,7 @@ namespace hypertable {
 
     PollTimeout() : ts_ptr(0), duration_millis(-1) { return; }
 
-    void Set(boost::xtime &now, boost::xtime &expire) {
+    void set(boost::xtime &now, boost::xtime &expire) {
       assert((xtime_cmp(now , expire) <= 0));
       if (now.sec == expire.sec) {
 	duration_ts.tv_sec = 0;
@@ -51,14 +51,14 @@ namespace hypertable {
       assert(duration_millis >= 0);
     }
 
-    void SetIndefinite() {
+    void set_indefinite() {
       ts_ptr = 0;
       duration_millis = -1;
     }
 
-    int GetMillis() { return duration_millis; }
+    int get_millis() { return duration_millis; }
 
-    struct timespec *GetTimespec() { return ts_ptr; }
+    struct timespec *get_timespec() { return ts_ptr; }
 
   private:
 

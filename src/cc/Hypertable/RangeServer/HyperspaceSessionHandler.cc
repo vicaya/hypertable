@@ -25,21 +25,21 @@ using namespace Hyperspace;
 /**
  *
  */
-void HyperspaceSessionHandler::Safe() {
+void HyperspaceSessionHandler::safe() {
   LOG_INFO("Hyperspace session state change:  SAFE");
 }
 
 /**
  *
  */
-void HyperspaceSessionHandler::Jeopardy() {
+void HyperspaceSessionHandler::jeopardy() {
   LOG_INFO("Hyperspace session state change:  JEOPARDY");
 }
 
 /**
  *
  */
-void HyperspaceSessionHandler::Expired() {
+void HyperspaceSessionHandler::expired() {
   LOG_ERROR("Hyperspace session expired.  Exiting...");
   exit(1);
 }

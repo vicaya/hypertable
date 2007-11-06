@@ -26,31 +26,31 @@
 
 using namespace hypertable;
 
-std::priority_queue<MaintenanceThread::WorkInfoT, std::vector<MaintenanceThread::WorkInfoT>, MaintenanceThread::ltWorkInfo> MaintenanceThread::msInputQueue;
+std::priority_queue<MaintenanceThread::WorkInfoT, std::vector<MaintenanceThread::WorkInfoT>, MaintenanceThread::ltWorkInfo> MaintenanceThread::ms_input_queue;
 
-boost::mutex      MaintenanceThread::msMutex;
-boost::condition  MaintenanceThread::msCond;
+boost::mutex      MaintenanceThread::ms_mutex;
+boost::condition  MaintenanceThread::ms_cond;
 
 
-void MaintenanceThread::ScheduleMaintenance(Range *range) {
-  boost::mutex::scoped_lock lock(msMutex);
+void MaintenanceThread::schedule_maintenance(Range *range) {
+  boost::mutex::scoped_lock lock(ms_mutex);
   WorkInfoT workInfo;
   workInfo.type = MAINTENANCE;
   workInfo.range = range;
   boost::xtime_get(&workInfo.startTime, boost::TIME_UTC);
-  msInputQueue.push(workInfo);
-  msCond.notify_one();
+  ms_input_queue.push(workInfo);
+  ms_cond.notify_one();
 }
 
 
-void MaintenanceThread::ScheduleCompaction(Range *range, WorkType wtype) {
-  boost::mutex::scoped_lock lock(msMutex);
+void MaintenanceThread::schedule_compaction(Range *range, WorkType wtype) {
+  boost::mutex::scoped_lock lock(ms_mutex);
   WorkInfoT workInfo;
   workInfo.type = wtype;
   workInfo.range = range;
   boost::xtime_get(&workInfo.startTime, boost::TIME_UTC);
-  msInputQueue.push(workInfo);
-  msCond.notify_one();
+  ms_input_queue.push(workInfo);
+  ms_cond.notify_one();
 }
 
 
@@ -65,30 +65,30 @@ void MaintenanceThread::operator()() {
 
     // while the queue is empty or the top of the queue is not ready, wait
     {
-      boost::mutex::scoped_lock lock(msMutex);
+      boost::mutex::scoped_lock lock(ms_mutex);
 
       boost::xtime_get(&now, boost::TIME_UTC);
 
-      while (msInputQueue.empty() || xtime_cmp((msInputQueue.top()).startTime, now) > 0) {
-	if (msInputQueue.empty())
-	  msCond.wait(lock);
+      while (ms_input_queue.empty() || xtime_cmp((ms_input_queue.top()).startTime, now) > 0) {
+	if (ms_input_queue.empty())
+	  ms_cond.wait(lock);
 	else {
-	  nextWork = (msInputQueue.top()).startTime;
-	  msCond.timed_wait(lock, nextWork);
+	  nextWork = (ms_input_queue.top()).startTime;
+	  ms_cond.timed_wait(lock, nextWork);
 	}
 	boost::xtime_get(&now, boost::TIME_UTC);
       }
 
-      workInfo = msInputQueue.top();
-      msInputQueue.pop();
+      workInfo = ms_input_queue.top();
+      ms_input_queue.pop();
     }
 
     if (workInfo.type == COMPACTION_MAJOR || workInfo.type == COMPACTION_MINOR) {
       bool majorCompaction = (workInfo.type == COMPACTION_MAJOR) ? true : false;
-      workInfo.range->DoCompaction(majorCompaction);
+      workInfo.range->do_compaction(majorCompaction);
     }
     else if (workInfo.type == MAINTENANCE) {
-      workInfo.range->DoMaintenance();
+      workInfo.range->do_maintenance();
     }
     else {
       assert(!"WorkType not implemented");

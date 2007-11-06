@@ -70,30 +70,30 @@ int main(int argc, char **argv) {
   bool trailer_only = false;
   CellStorePtr cellStorePtr;
 
-  ReactorFactory::Initialize(1);
-  System::Initialize(argv[0]);
+  ReactorFactory::initialize(1);
+  System::initialize(argv[0]);
 
   for (int i=1; i<argc; i++) {
     if (!strcmp(argv[i], "--trailer-only"))
       trailer_only = true;
     else if (!strcmp(argv[i], "--help"))
-      Usage::DumpAndExit(usage);
+      Usage::dump_and_exit(usage);
     else if (fname == "")
       fname = argv[i];
     else
-      Usage::DumpAndExit(usage);
+      Usage::dump_and_exit(usage);
   }
 
   if (fname == "")
-      Usage::DumpAndExit(usage);
+      Usage::dump_and_exit(usage);
 
-  InetAddr::Initialize(&addr, "localhost", DEFAULT_DFSBROKER_PORT);
+  InetAddr::initialize(&addr, "localhost", DEFAULT_DFSBROKER_PORT);
   
   comm = new Comm();
   connManagerPtr = new ConnectionManager(comm);
 
   client = new DfsBroker::Client(connManagerPtr, addr, 20);
-  if (!client->WaitForConnection(15)) {
+  if (!client->wait_for_connection(15)) {
     cerr << "error: timed out waiting for DFS broker" << endl;
     exit(1);
   }
@@ -106,10 +106,10 @@ int main(int argc, char **argv) {
   cellStorePtr = new CellStoreV0(client);
   CellListScanner *scanner = 0;
 
-  if (cellStorePtr->Open(fname.c_str(), 0, 0) != 0)
+  if (cellStorePtr->open(fname.c_str(), 0, 0) != 0)
     return 1;
 
-  if (cellStorePtr->LoadIndex() != 0)
+  if (cellStorePtr->load_index() != 0)
     return 1;
 
   /**
@@ -118,10 +118,10 @@ int main(int argc, char **argv) {
   if (!trailer_only) {
     ScanContextPtr scanContextPtr( new ScanContext(ScanContext::END_OF_TIME, 0) );
 
-    scanner = cellStorePtr->CreateScanner(scanContextPtr);
-    while (scanner->Get(&key, &value)) {
+    scanner = cellStorePtr->create_scanner(scanContextPtr);
+    while (scanner->get(&key, &value)) {
       cout << Key(key) << endl;
-      scanner->Forward();
+      scanner->forward();
     }
     delete scanner;
   }
@@ -129,8 +129,8 @@ int main(int argc, char **argv) {
   /**
    * Dump trailer
    */
-  cout << "timestamp " << cellStorePtr->GetLogCutoffTime() << endl;
-  ByteString32T *splitKey = cellStorePtr->GetSplitKey();
+  cout << "timestamp " << cellStorePtr->get_log_cutoff_time() << endl;
+  ByteString32T *splitKey = cellStorePtr->get_split_key();
   cout << "split key '" << *splitKey << "'" << endl;
 
   return 0;

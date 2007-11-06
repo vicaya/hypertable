@@ -40,18 +40,18 @@ namespace hypertable {
 
   public:
 
-    static void Initialize(uint16_t reactorCount);
+    static void initialize(uint16_t reactorCount);
 
-    static Reactor *GetReactor() {
-      assert(msReactors.size() > 0);
-      return msReactors[atomic_inc_return(&msNextReactor) % msReactors.size()];
+    static Reactor *get_reactor() {
+      assert(ms_reactors.size() > 0);
+      return ms_reactors[atomic_inc_return(&ms_next_reactor) % ms_reactors.size()];
     }
 
-    static vector<Reactor *> msReactors;
+    static vector<Reactor *> ms_reactors;
 
   private:
 
-    static atomic_t msNextReactor;
+    static atomic_t ms_next_reactor;
 
   };
 

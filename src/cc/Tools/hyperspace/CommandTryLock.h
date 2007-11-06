@@ -31,14 +31,14 @@ namespace Hyperspace {
 
   class CommandTryLock : public InteractiveCommand {
   public:
-    CommandTryLock(Session *session) : mSession(session) { return; }
-    virtual const char *CommandText() { return "trylock"; }
-    virtual const char **Usage() { return msUsage; }
+    CommandTryLock(Session *session) : m_session(session) { return; }
+    virtual const char *command_text() { return "trylock"; }
+    virtual const char **usage() { return ms_usage; }
     virtual int run();
 
   private:
-    static const char *msUsage[];
-    Session *mSession;
+    static const char *ms_usage[];
+    Session *m_session;
   };
 
 }

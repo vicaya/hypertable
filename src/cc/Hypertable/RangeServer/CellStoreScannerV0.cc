@@ -29,75 +29,75 @@
 
 using namespace hypertable;
 
-CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPtr &scanContextPtr) : CellListScanner(scanContextPtr), mCellStorePtr(cellStorePtr), mCurKey(0), mCurValue(0), mCheckForRangeEnd(false), mEndKeyPtr() {
+CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPtr &scanContextPtr) : CellListScanner(scanContextPtr), m_cell_store_ptr(cellStorePtr), m_cur_key(0), m_cur_value(0), m_check_for_range_end(false), m_end_key_ptr() {
   ByteString32T  *tmpKey, *startKey, *endKey;
 
-  mCellStoreV0 = dynamic_cast< CellStoreV0*>(mCellStorePtr.get());
-  assert(mCellStoreV0);
+  m_cell_store_v0 = dynamic_cast< CellStoreV0*>(m_cell_store_ptr.get());
+  assert(m_cell_store_v0);
 
-  mIndex = mCellStoreV0->mIndex;
-  mFileId = mCellStoreV0->mFileId;
-  mBlockInflater = new BlockInflaterZlib();
-  memset(&mBlock, 0, sizeof(mBlock));
+  m_index = m_cell_store_v0->m_index;
+  m_file_id = m_cell_store_v0->m_file_id;
+  m_block_inflater = new BlockInflaterZlib();
+  memset(&m_block, 0, sizeof(m_block));
 
   // compute startKey
-  tmpKey = mCellStoreV0->mStartKeyPtr.get();
+  tmpKey = m_cell_store_v0->m_start_key_ptr.get();
   if (scanContextPtr->startKeyPtr)
     startKey = (tmpKey != 0 && *scanContextPtr->startKeyPtr.get() < *tmpKey) ? tmpKey : scanContextPtr->startKeyPtr.get();
   else
     startKey = tmpKey;
 
-  // compute mEndKeyPtr
+  // compute m_end_key_ptr
   if (scanContextPtr->endKeyPtr) {
-    if (!mCellStoreV0->mEndKeyPtr || *scanContextPtr->endKeyPtr.get() < *mCellStoreV0->mEndKeyPtr.get())
-      mEndKeyPtr = scanContextPtr->endKeyPtr;
+    if (!m_cell_store_v0->m_end_key_ptr || *scanContextPtr->endKeyPtr.get() < *m_cell_store_v0->m_end_key_ptr.get())
+      m_end_key_ptr = scanContextPtr->endKeyPtr;
     else
-      mEndKeyPtr = mCellStoreV0->mEndKeyPtr;
+      m_end_key_ptr = m_cell_store_v0->m_end_key_ptr;
   }
   else
-    mEndKeyPtr = mCellStoreV0->mEndKeyPtr;
+    m_end_key_ptr = m_cell_store_v0->m_end_key_ptr;
 
-  if (mBlock.base != 0)
-    Global::blockCache->Checkin(mFileId, mBlock.offset);
-  memset(&mBlock, 0, sizeof(mBlock));
+  if (m_block.base != 0)
+    Global::blockCache->checkin(m_file_id, m_block.offset);
+  memset(&m_block, 0, sizeof(m_block));
 
-  mCheckForRangeEnd = false;
+  m_check_for_range_end = false;
 
   if (startKey != 0)
-    mIter = mIndex.lower_bound(startKey);
+    m_iter = m_index.lower_bound(startKey);
   else
-    mIter = mIndex.begin();
+    m_iter = m_index.begin();
 
-  mCurKey = 0;
+  m_cur_key = 0;
 
-  if (!FetchNextBlock()) {
-    mIter = mIndex.end();
+  if (!fetch_next_block()) {
+    m_iter = m_index.end();
     return;
   }
 
   /**
    * Seek to start of range in block
    */
-  mCurKey = (ByteString32T *)mBlock.ptr;
-  mCurValue = (ByteString32T *)(mBlock.ptr + Length(mCurKey));
+  m_cur_key = (ByteString32T *)m_block.ptr;
+  m_cur_value = (ByteString32T *)(m_block.ptr + Length(m_cur_key));
   if (startKey != 0) {
-    while (*mCurKey < *startKey) {
-      mBlock.ptr = ((uint8_t *)mCurValue) + Length(mCurValue);
-      if (mBlock.ptr >= mBlock.end) {
-	mIter = mIndex.end();
+    while (*m_cur_key < *startKey) {
+      m_block.ptr = ((uint8_t *)m_cur_value) + Length(m_cur_value);
+      if (m_block.ptr >= m_block.end) {
+	m_iter = m_index.end();
 	return;
       }
-      mCurKey = (ByteString32T *)mBlock.ptr;
-      mCurValue = (ByteString32T *)(mBlock.ptr + Length(mCurKey));
+      m_cur_key = (ByteString32T *)m_block.ptr;
+      m_cur_value = (ByteString32T *)(m_block.ptr + Length(m_cur_key));
     }
   }
 
   /**
    * End of range check
    */
-  if (mCheckForRangeEnd) {
-    if (!(*mCurKey < *mEndKeyPtr.get())) {
-      mIter = mIndex.end();
+  if (m_check_for_range_end) {
+    if (!(*m_cur_key < *m_end_key_ptr.get())) {
+      m_iter = m_index.end();
       return;
     }
   }
@@ -106,46 +106,46 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPt
 
 
 CellStoreScannerV0::~CellStoreScannerV0() {
-  if (mBlock.base != 0)
-    Global::blockCache->Checkin(mFileId, mBlock.offset);
-  delete mBlockInflater;
+  if (m_block.base != 0)
+    Global::blockCache->checkin(m_file_id, m_block.offset);
+  delete m_block_inflater;
 }
 
 
-bool CellStoreScannerV0::Get(ByteString32T **keyp, ByteString32T **valuep) {
+bool CellStoreScannerV0::get(ByteString32T **keyp, ByteString32T **valuep) {
 
-  if (mIter == mIndex.end())
+  if (m_iter == m_index.end())
     return false;
 
-  *keyp = mCurKey;
-  *valuep = mCurValue;
+  *keyp = m_cur_key;
+  *valuep = m_cur_value;
 
   return true;
 }
 
 
 
-void CellStoreScannerV0::Forward() {
+void CellStoreScannerV0::forward() {
   Key keyComps;
 
   while (true) {
 
-    if (mIter == mIndex.end())
+    if (m_iter == m_index.end())
       return;
 
-    mBlock.ptr = ((uint8_t *)mCurValue) + Length(mCurValue);    
+    m_block.ptr = ((uint8_t *)m_cur_value) + Length(m_cur_value);    
 
-    if (mBlock.ptr >= mBlock.end) {
-      if (!FetchNextBlock())
+    if (m_block.ptr >= m_block.end) {
+      if (!fetch_next_block())
 	return;
     }
 
-    mCurKey = (ByteString32T *)mBlock.ptr;
-    mCurValue = (ByteString32T *)(mBlock.ptr + Length(mCurKey));
+    m_cur_key = (ByteString32T *)m_block.ptr;
+    m_cur_value = (ByteString32T *)(m_block.ptr + Length(m_cur_key));
 
-    if (mCheckForRangeEnd) {
-      if (!(*mCurKey < *mEndKeyPtr.get())) {
-	mIter = mIndex.end();
+    if (m_check_for_range_end) {
+      if (!(*m_cur_key < *m_end_key_ptr.get())) {
+	m_iter = m_index.end();
 	break;
       }
     }
@@ -153,11 +153,11 @@ void CellStoreScannerV0::Forward() {
     /**
      * Column family check
      */
-    if (!keyComps.load(mCurKey)) {
+    if (!keyComps.load(m_cur_key)) {
       LOG_ERROR("Problem parsing key!");
       break;
     }
-    if (mScanContextPtr->familyMask[keyComps.columnFamily])
+    if (m_scan_context_ptr->familyMask[keyComps.columnFamily])
       break;
   }
 }
@@ -169,73 +169,73 @@ void CellStoreScannerV0::Forward() {
  * the underlying CellStore.
  *
  * Preconditions required to call this method:
- *  1. mBlock is cleared and mIter points to the mIndex entry of the first block to fetch
+ *  1. m_block is cleared and m_iter points to the m_index entry of the first block to fetch
  *    'or'
- *  2. mBlock is loaded with the current block and mIter points to the mIndex entry of
+ *  2. m_block is loaded with the current block and m_iter points to the m_index entry of
  *     the current block
  *
  * @return true if next block successfully fetched, false if no next block
  */
-bool CellStoreScannerV0::FetchNextBlock() {
+bool CellStoreScannerV0::fetch_next_block() {
   uint8_t *buf = 0;
   bool rval = false;
 
   // If we're at the end of the current block, deallocate and move to next
-  if (mBlock.base != 0 && mBlock.ptr >= mBlock.end) {
-    Global::blockCache->Checkin(mFileId, mBlock.offset);
-    memset(&mBlock, 0, sizeof(mBlock));
-    mIter++;
+  if (m_block.base != 0 && m_block.ptr >= m_block.end) {
+    Global::blockCache->checkin(m_file_id, m_block.offset);
+    memset(&m_block, 0, sizeof(m_block));
+    m_iter++;
   }
 
-  if (mBlock.base == 0 && mIter != mIndex.end()) {
+  if (m_block.base == 0 && m_iter != m_index.end()) {
     DynamicBuffer expandBuffer(0);
     uint32_t len;
 
-    mBlock.offset = (*mIter).second;
+    m_block.offset = (*m_iter).second;
 
-    CellStoreV0::IndexMapT::iterator iterNext = mIter;
+    CellStoreV0::IndexMapT::iterator iterNext = m_iter;
     iterNext++;
-    if (iterNext == mIndex.end()) {
-      mBlock.zlength = mCellStoreV0->mTrailer.fixIndexOffset - mBlock.offset;
-      if (mEndKeyPtr.get() != 0)
-	mCheckForRangeEnd = true;
+    if (iterNext == m_index.end()) {
+      m_block.zlength = m_cell_store_v0->m_trailer.fixIndexOffset - m_block.offset;
+      if (m_end_key_ptr.get() != 0)
+	m_check_for_range_end = true;
     }
     else {
-      if (mEndKeyPtr.get() != 0 && !(*((*iterNext).first) < *mEndKeyPtr.get()))
-	mCheckForRangeEnd = true;
-      mBlock.zlength = (*iterNext).second - mBlock.offset;
+      if (m_end_key_ptr.get() != 0 && !(*((*iterNext).first) < *m_end_key_ptr.get()))
+	m_check_for_range_end = true;
+      m_block.zlength = (*iterNext).second - m_block.offset;
     }
 
     /**
      * Cache lookup / block read
      */
-    if (!Global::blockCache->Checkout(mFileId, (uint32_t)mBlock.offset, &mBlock.base, &len)) {
+    if (!Global::blockCache->checkout(m_file_id, (uint32_t)m_block.offset, &m_block.base, &len)) {
       /** Read compressed block **/
-      buf = new uint8_t [ mBlock.zlength ];
+      buf = new uint8_t [ m_block.zlength ];
       uint32_t nread;
-      if (mCellStoreV0->mFilesys->Pread(mCellStoreV0->mFd, mBlock.offset, mBlock.zlength, buf, &nread) != Error::OK)
+      if (m_cell_store_v0->m_filesys->pread(m_cell_store_v0->m_fd, m_block.offset, m_block.zlength, buf, &nread) != Error::OK)
 	goto abort;
 
       /** inflate compressed block **/
-      if (!mBlockInflater->inflate(buf, mBlock.zlength, Constants::DATA_BLOCK_MAGIC, expandBuffer))
+      if (!m_block_inflater->inflate(buf, m_block.zlength, Constants::DATA_BLOCK_MAGIC, expandBuffer))
 	goto abort;
 
       /** take ownership of inflate buffer **/
       size_t fill;
-      mBlock.base = expandBuffer.release(&fill);
+      m_block.base = expandBuffer.release(&fill);
       len = fill;
 
       /** Insert block into cache  **/
-      if (!Global::blockCache->InsertAndCheckout(mFileId, (uint32_t)mBlock.offset, mBlock.base, len)) {
-	delete [] mBlock.base;
-	if (!Global::blockCache->Checkout(mFileId, (uint32_t)mBlock.offset, &mBlock.base, &len)) {
-	  LOG_VA_ERROR("Problem checking out block from cache fileId=%d, offset=%ld", mFileId, (uint32_t)mBlock.offset);
+      if (!Global::blockCache->insert_and_checkout(m_file_id, (uint32_t)m_block.offset, m_block.base, len)) {
+	delete [] m_block.base;
+	if (!Global::blockCache->checkout(m_file_id, (uint32_t)m_block.offset, &m_block.base, &len)) {
+	  LOG_VA_ERROR("Problem checking out block from cache fileId=%d, offset=%ld", m_file_id, (uint32_t)m_block.offset);
 	  DUMP_CORE;
 	}
       }
     }
-    mBlock.ptr = mBlock.base;
-    mBlock.end = mBlock.base + len;
+    m_block.ptr = m_block.base;
+    m_block.end = m_block.base + len;
 
     rval = true;
   }

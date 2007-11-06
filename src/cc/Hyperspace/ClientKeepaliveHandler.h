@@ -51,46 +51,46 @@ namespace Hyperspace {
 
     virtual void handle(hypertable::EventPtr &eventPtr);
 
-    void RegisterHandle(ClientHandleStatePtr &handleStatePtr) {
-      boost::mutex::scoped_lock lock(mMutex);
-      HandleMapT::iterator iter = mHandleMap.find(handleStatePtr->handle);
-      assert(iter == mHandleMap.end());
-      mHandleMap[handleStatePtr->handle] = handleStatePtr;
+    void register_handle(ClientHandleStatePtr &handleStatePtr) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      HandleMapT::iterator iter = m_handle_map.find(handleStatePtr->handle);
+      assert(iter == m_handle_map.end());
+      m_handle_map[handleStatePtr->handle] = handleStatePtr;
     }
 
-    void UnregisterHandle(uint64_t handle) {
-      boost::mutex::scoped_lock lock(mMutex);
-      mHandleMap.erase(handle);
+    void unregister_handle(uint64_t handle) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      m_handle_map.erase(handle);
     }
 
-    bool GetHandleState(uint64_t handle, ClientHandleStatePtr &handleStatePtr) {
-      boost::mutex::scoped_lock lock(mMutex);
-      HandleMapT::iterator iter = mHandleMap.find(handle);
-      if (iter == mHandleMap.end())
+    bool get_handle_state(uint64_t handle, ClientHandleStatePtr &handleStatePtr) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      HandleMapT::iterator iter = m_handle_map.find(handle);
+      if (iter == m_handle_map.end())
 	return false;
       handleStatePtr = (*iter).second;
       return true;
     }
 
-    void ExpireSession();
+    void expire_session();
 
   private:
-    boost::mutex       mMutex;
-    boost::xtime       mLastKeepAliveSendTime;
-    boost::xtime       mJeopardyTime;
-    Comm *mComm;
-    uint32_t mLeaseInterval;
-    uint32_t mKeepAliveInterval;
-    struct sockaddr_in mMasterAddr;
-    struct sockaddr_in mLocalAddr;
-    bool mVerbose;
-    Session *mSession;
-    uint64_t mSessionId;
-    ClientConnectionHandlerPtr mConnHandlerPtr;
-    uint64_t mLastKnownEvent;
+    boost::mutex       m_mutex;
+    boost::xtime       m_last_keep_alive_send_time;
+    boost::xtime       m_jeopardy_time;
+    Comm *m_comm;
+    uint32_t m_lease_interval;
+    uint32_t m_keep_alive_interval;
+    struct sockaddr_in m_master_addr;
+    struct sockaddr_in m_local_addr;
+    bool m_verbose;
+    Session *m_session;
+    uint64_t m_session_id;
+    ClientConnectionHandlerPtr m_conn_handler_ptr;
+    uint64_t m_last_known_event;
 
     typedef __gnu_cxx::hash_map<uint64_t, ClientHandleStatePtr> HandleMapT;
-    HandleMapT  mHandleMap;
+    HandleMapT  m_handle_map;
   };
   typedef boost::intrusive_ptr<ClientKeepaliveHandler> ClientKeepaliveHandlerPtr;
   

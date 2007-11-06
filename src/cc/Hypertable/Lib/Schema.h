@@ -60,41 +60,41 @@ namespace hypertable {
 
     Schema(bool readIds=false);
 
-    static Schema *NewInstance(const char *buf, int len, bool readIds=false);
-    friend Schema *NewInstance(const char *buf, int len, bool readIds=false);
+    static Schema *new_instance(const char *buf, int len, bool readIds=false);
+    friend Schema *new_instance(const char *buf, int len, bool readIds=false);
 
-    void OpenAccessGroup();
-    void CloseAccessGroup();
-    void OpenColumnFamily();
-    void CloseColumnFamily();
-    void SetAccessGroupParameter(const char *param, const char *value);
-    void SetColumnFamilyParameter(const char *param, const char *value);
+    void open_access_group();
+    void close_access_group();
+    void open_column_family();
+    void close_column_family();
+    void set_access_group_parameter(const char *param, const char *value);
+    void set_column_family_parameter(const char *param, const char *value);
 
-    void AssignIds();
+    void assign_ids();
 
-    void Render(std::string &output);
+    void render(std::string &output);
 
-    bool IsValid();
+    bool is_valid();
 
-    const char *GetErrorString() { 
-      return (mErrorString.length() == 0) ? 0 : mErrorString.c_str();
+    const char *get_error_string() { 
+      return (m_error_string.length() == 0) ? 0 : m_error_string.c_str();
     }
 
-    void SetErrorString(std::string errStr) {
-      if (mErrorString.length() == 0)
-	mErrorString = errStr;
+    void set_error_string(std::string errStr) {
+      if (m_error_string.length() == 0)
+	m_error_string = errStr;
     }
 
-    void SetGeneration(const char *generation);
-    int32_t GetGeneration() { return mGeneration; }
+    void set_generation(const char *generation);
+    int32_t get_generation() { return m_generation; }
 
-    size_t GetMaxColumnFamilyId() { return mMaxColumnFamilyId; }
+    size_t get_max_column_family_id() { return m_max_column_family_id; }
 
-    list<AccessGroup *> *GetAccessGroupList() { return &mAccessGroups; }
+    list<AccessGroup *> *get_access_group_list() { return &m_access_groups; }
 
-    ColumnFamily *GetColumnFamily(string name) { return mColumnFamilyMap[name]; }
+    ColumnFamily *get_column_family(string name) { return m_column_family_map[name]; }
 
-    ColumnFamily *GetColumnFamily(uint32_t id) { return mColumnFamilyIdMap[id]; }
+    ColumnFamily *get_column_family(uint32_t id) { return m_column_family_id_map[id]; }
 
   private:
 
@@ -102,26 +102,26 @@ namespace hypertable {
     typedef __gnu_cxx::hash_map<uint32_t, ColumnFamily *> ColumnFamilyIdMapT;
     typedef __gnu_cxx::hash_map<string, AccessGroup *> AccessGroupMapT;
 
-    std::string mErrorString;
-    int    mNextColumnId;
-    AccessGroupMapT mAccessGroupMap;
-    ColumnFamilyMapT mColumnFamilyMap;
-    ColumnFamilyIdMapT mColumnFamilyIdMap;
-    int32_t mGeneration;
-    list<AccessGroup *> mAccessGroups;
-    AccessGroup *mOpenAccessGroup;
-    ColumnFamily  *mOpenColumnFamily;
-    bool           mReadIds;
-    bool           mOutputIds;
-    size_t         mMaxColumnFamilyId;
+    std::string m_error_string;
+    int    m_next_column_id;
+    AccessGroupMapT m_access_group_map;
+    ColumnFamilyMapT m_column_family_map;
+    ColumnFamilyIdMapT m_column_family_id_map;
+    int32_t m_generation;
+    list<AccessGroup *> m_access_groups;
+    AccessGroup *m_open_access_group;
+    ColumnFamily  *m_open_column_family;
+    bool           m_read_ids;
+    bool           m_output_ids;
+    size_t         m_max_column_family_id;
 
-    static void StartElementHandler(void *userData, const XML_Char *name, const XML_Char **atts);
-    static void EndElementHandler(void *userData, const XML_Char *name);
-    static void CharacterDataHandler(void *userData, const XML_Char *s, int len);
+    static void start_element_handler(void *userData, const XML_Char *name, const XML_Char **atts);
+    static void end_element_handler(void *userData, const XML_Char *name);
+    static void character_data_handler(void *userData, const XML_Char *s, int len);
 
-    static Schema        *msSchema;
-    static std::string    msCollectedText;
-    static boost::mutex  msMutex;
+    static Schema        *ms_schema;
+    static std::string    ms_collected_text;
+    static boost::mutex  ms_mutex;
   };
 
   typedef boost::shared_ptr<Schema> SchemaPtr;

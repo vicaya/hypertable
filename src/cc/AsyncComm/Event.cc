@@ -63,7 +63,7 @@ namespace hypertable {
       dstr += (int)type;
 
     if (error != Error::OK)
-      dstr += (std::string)" \"" + Error::GetText(error) + "\"";
+      dstr += (std::string)" \"" + Error::get_text(error) + "\"";
 
     if (type != TIMER) {
       dstr += " from=";

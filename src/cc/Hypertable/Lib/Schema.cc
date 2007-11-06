@@ -47,46 +47,46 @@ using namespace hypertable;
 using namespace hypertable;
 using namespace std;
 
-Schema *Schema::msSchema = 0;
-std::string Schema::msCollectedText = "";
-boost::mutex Schema::msMutex;
+Schema *Schema::ms_schema = 0;
+std::string Schema::ms_collected_text = "";
+boost::mutex Schema::ms_mutex;
 
 
 /**
  */
-Schema::Schema(bool readIds) : mErrorString(), mNextColumnId(0), mAccessGroupMap(), mColumnFamilyMap(), mGeneration(1), mAccessGroups(), mOpenAccessGroup(0), mOpenColumnFamily(0), mReadIds(readIds), mOutputIds(false), mMaxColumnFamilyId(0) {
+Schema::Schema(bool readIds) : m_error_string(), m_next_column_id(0), m_access_group_map(), m_column_family_map(), m_generation(1), m_access_groups(), m_open_access_group(0), m_open_column_family(0), m_read_ids(readIds), m_output_ids(false), m_max_column_family_id(0) {
   if (Logger::logger == 0) {
-    cerr << "Logger::Initialize must be called before using Schema class" << endl;
+    cerr << "Logger::initialize must be called before using Schema class" << endl;
     exit(1);
   }
 }
 
 
-Schema *Schema::NewInstance(const char *buf, int len, bool readIds) {
-  boost::mutex::scoped_lock lock(msMutex);
+Schema *Schema::new_instance(const char *buf, int len, bool readIds) {
+  boost::mutex::scoped_lock lock(ms_mutex);
   XML_Parser parser = XML_ParserCreate("US-ASCII");
 
-  XML_SetElementHandler(parser, &StartElementHandler, &EndElementHandler);
-  XML_SetCharacterDataHandler(parser, &CharacterDataHandler);
+  XML_SetElementHandler(parser, &start_element_handler, &end_element_handler);
+  XML_SetCharacterDataHandler(parser, &character_data_handler);
 
-  msSchema = new Schema(readIds);
+  ms_schema = new Schema(readIds);
 
   if (XML_Parse(parser, buf, len, 1) == 0) {
     std::string errStr = (std::string)"Schema Parse Error: " + (const char *)XML_ErrorString(XML_GetErrorCode(parser)) + " line " + (int)XML_GetCurrentLineNumber(parser) + ", offset " + (int)XML_GetCurrentByteIndex(parser);
-    msSchema->SetErrorString(errStr);
+    ms_schema->set_error_string(errStr);
   }
 
   XML_ParserFree(parser);  
 
-  Schema *schema = msSchema;
-  msSchema = 0;
+  Schema *schema = ms_schema;
+  ms_schema = 0;
   return schema;
 }
 
 
 /**
  */
-void Schema::StartElementHandler(void *userData,
+void Schema::start_element_handler(void *userData,
 			 const XML_Char *name,
 			 const XML_Char **atts) {
   int i;
@@ -95,222 +95,222 @@ void Schema::StartElementHandler(void *userData,
     for (i=0; atts[i] != 0; i+=2) {
       if (atts[i+1] == 0)
 	return;
-      if (msSchema->mReadIds && !strcmp(atts[i], "generation"))
-	msSchema->SetGeneration(atts[i+1]);
+      if (ms_schema->m_read_ids && !strcmp(atts[i], "generation"))
+	ms_schema->set_generation(atts[i+1]);
       else
-	msSchema->SetErrorString((string)"Unrecognized 'Schema' attribute : " + atts[i]);
+	ms_schema->set_error_string((string)"Unrecognized 'Schema' attribute : " + atts[i]);
     }
   }
   else if (!strcmp(name, "AccessGroup")) {
-    msSchema->OpenAccessGroup();    
+    ms_schema->open_access_group();    
     for (i=0; atts[i] != 0; i+=2) {
       if (atts[i+1] == 0)
 	return;
-      msSchema->SetAccessGroupParameter(atts[i], atts[i+1]);
+      ms_schema->set_access_group_parameter(atts[i], atts[i+1]);
     }
   }
   else if (!strcmp(name, "ColumnFamily")) {
-    msSchema->OpenColumnFamily();
+    ms_schema->open_column_family();
     for (i=0; atts[i] != 0; i+=2) {
       if (atts[i+1] == 0)
 	return;
-      msSchema->SetColumnFamilyParameter(atts[i], atts[i+1]);
+      ms_schema->set_column_family_parameter(atts[i], atts[i+1]);
     }
   }
   else if (!strcmp(name, "CellLimit") || !strcmp(name, "ExpireDays") || !strcmp(name, "Name"))
-    msCollectedText = "";
+    ms_collected_text = "";
   else
-    msSchema->SetErrorString((string)"Unrecognized element - '" + name + "'");
+    ms_schema->set_error_string((string)"Unrecognized element - '" + name + "'");
 
   return;
 }
 
 
-void Schema::EndElementHandler(void *userData, const XML_Char *name) {
+void Schema::end_element_handler(void *userData, const XML_Char *name) {
   if (!strcmp(name, "AccessGroup"))
-    msSchema->CloseAccessGroup();
+    ms_schema->close_access_group();
   else if (!strcmp(name, "ColumnFamily"))
-    msSchema->CloseColumnFamily();
+    ms_schema->close_column_family();
   else if (!strcmp(name, "CellLimit") || !strcmp(name, "ExpireDays") || !strcmp(name, "Name")) {
-    boost::trim(msCollectedText);
-    msSchema->SetColumnFamilyParameter(name, msCollectedText.c_str());
+    boost::trim(ms_collected_text);
+    ms_schema->set_column_family_parameter(name, ms_collected_text.c_str());
   }
 }
 
 
 
-void Schema::CharacterDataHandler(void *userData, const XML_Char *s, int len) {
-  msCollectedText.assign(s, len);
+void Schema::character_data_handler(void *userData, const XML_Char *s, int len) {
+  ms_collected_text.assign(s, len);
 }
 
 
 
-void Schema::OpenAccessGroup() {
-  if (mOpenAccessGroup != 0)
-    SetErrorString((string)"Nested AccessGroup elements not allowed");
+void Schema::open_access_group() {
+  if (m_open_access_group != 0)
+    set_error_string((string)"Nested AccessGroup elements not allowed");
   else {
-    mOpenAccessGroup = new AccessGroup();
+    m_open_access_group = new AccessGroup();
   }
 }
 
 
 
-void Schema::CloseAccessGroup() {
-  if (mOpenAccessGroup == 0)
-    SetErrorString((string)"Unable to close locality group, not open");
+void Schema::close_access_group() {
+  if (m_open_access_group == 0)
+    set_error_string((string)"Unable to close locality group, not open");
   else {
-    if (mOpenAccessGroup->name == "")
-      SetErrorString((string)"Name attribute required for all AccessGroup elements");
+    if (m_open_access_group->name == "")
+      set_error_string((string)"Name attribute required for all AccessGroup elements");
     else {
-      if (mAccessGroupMap.find(mOpenAccessGroup->name) != mAccessGroupMap.end())
-	SetErrorString((string)"Multiply defined locality group  '" + mOpenAccessGroup->name + "'");
+      if (m_access_group_map.find(m_open_access_group->name) != m_access_group_map.end())
+	set_error_string((string)"Multiply defined locality group  '" + m_open_access_group->name + "'");
       else {
-	mAccessGroupMap[mOpenAccessGroup->name] = mOpenAccessGroup;
-	mAccessGroups.push_back(mOpenAccessGroup);
+	m_access_group_map[m_open_access_group->name] = m_open_access_group;
+	m_access_groups.push_back(m_open_access_group);
       }
     }
-    mOpenAccessGroup = 0;
+    m_open_access_group = 0;
   }
 }
 
 
 
-void Schema::OpenColumnFamily() {
-  if (mOpenAccessGroup == 0)
-    SetErrorString((string)"ColumnFamily defined outside of AccessGroup");
+void Schema::open_column_family() {
+  if (m_open_access_group == 0)
+    set_error_string((string)"ColumnFamily defined outside of AccessGroup");
   else {
-    if (mOpenColumnFamily != 0)
-      SetErrorString((string)"Nested ColumnFamily elements not allowed");
+    if (m_open_column_family != 0)
+      set_error_string((string)"Nested ColumnFamily elements not allowed");
     else {
-      mOpenColumnFamily = new ColumnFamily();
-      mOpenColumnFamily->id = 0;
-      mOpenColumnFamily->cellLimit = 0;
-      mOpenColumnFamily->expireTime = 0;
-      mOpenColumnFamily->lg = mOpenAccessGroup->name;
+      m_open_column_family = new ColumnFamily();
+      m_open_column_family->id = 0;
+      m_open_column_family->cellLimit = 0;
+      m_open_column_family->expireTime = 0;
+      m_open_column_family->lg = m_open_access_group->name;
     }
   }
 }
 
 
 
-void Schema::CloseColumnFamily() {
-  if (mOpenAccessGroup == 0)
-    SetErrorString((string)"ColumnFamily defined outside of AccessGroup");
-  else if (mOpenColumnFamily == 0)
-    SetErrorString((string)"Unable to close column family, not open");
+void Schema::close_column_family() {
+  if (m_open_access_group == 0)
+    set_error_string((string)"ColumnFamily defined outside of AccessGroup");
+  else if (m_open_column_family == 0)
+    set_error_string((string)"Unable to close column family, not open");
   else {
-    if (mOpenColumnFamily->name == "")
-      SetErrorString((string)"ColumnFamily must have Name child element");
-    else if (mReadIds && mOpenColumnFamily->id == 0) {
-      SetErrorString((string)"No id specifid for ColumnFamily '" + mOpenColumnFamily->name + "'");
+    if (m_open_column_family->name == "")
+      set_error_string((string)"ColumnFamily must have Name child element");
+    else if (m_read_ids && m_open_column_family->id == 0) {
+      set_error_string((string)"No id specifid for ColumnFamily '" + m_open_column_family->name + "'");
     }
     else {
-      if (mColumnFamilyMap.find(mOpenColumnFamily->name) != mColumnFamilyMap.end())
-	SetErrorString((string)"Multiply defined column families '" + mOpenColumnFamily->name + "'");
+      if (m_column_family_map.find(m_open_column_family->name) != m_column_family_map.end())
+	set_error_string((string)"Multiply defined column families '" + m_open_column_family->name + "'");
       else {
-	mColumnFamilyMap[mOpenColumnFamily->name] = mOpenColumnFamily;
-	if (mReadIds)
-	  mColumnFamilyIdMap[mOpenColumnFamily->id] = mOpenColumnFamily;
-	mOpenAccessGroup->columns.push_back(mOpenColumnFamily);
+	m_column_family_map[m_open_column_family->name] = m_open_column_family;
+	if (m_read_ids)
+	  m_column_family_id_map[m_open_column_family->id] = m_open_column_family;
+	m_open_access_group->columns.push_back(m_open_column_family);
       }
-      mOpenColumnFamily = 0;
+      m_open_column_family = 0;
     }
   }
 }
 
 
 
-void Schema::SetAccessGroupParameter(const char *param, const char *value) {
-  if (mOpenAccessGroup == 0)
-    SetErrorString((string)"Unable to set AccessGroup attribute '" + param + "', locality group not open");
+void Schema::set_access_group_parameter(const char *param, const char *value) {
+  if (m_open_access_group == 0)
+    set_error_string((string)"Unable to set AccessGroup attribute '" + param + "', locality group not open");
   else {
     if (!strcasecmp(param, "name"))
-      mOpenAccessGroup->name = value;
+      m_open_access_group->name = value;
     else if (!strcasecmp(param, "inMemory")) {
       if (!strcasecmp(value, "true") || !strcmp(value, "1"))
-	mOpenAccessGroup->inMemory = true;
+	m_open_access_group->inMemory = true;
       else if (!strcasecmp(value, "false") || !strcmp(value, "0"))
-	mOpenAccessGroup->inMemory = false;
+	m_open_access_group->inMemory = false;
       else
-	SetErrorString((string)"Invalid value (" + value + ") for AccessGroup attribute '" + param + "'");
+	set_error_string((string)"Invalid value (" + value + ") for AccessGroup attribute '" + param + "'");
     }
     else
-      SetErrorString((string)"Invalid AccessGroup attribute '" + param + "'");
+      set_error_string((string)"Invalid AccessGroup attribute '" + param + "'");
   }
 }
 
 
 
-void Schema::SetColumnFamilyParameter(const char *param, const char *value) {
-  if (mOpenColumnFamily == 0)
-    SetErrorString((string)"Unable to set ColumnFamily parameter '" + param + "', column family not open");
+void Schema::set_column_family_parameter(const char *param, const char *value) {
+  if (m_open_column_family == 0)
+    set_error_string((string)"Unable to set ColumnFamily parameter '" + param + "', column family not open");
   else {
     if (!strcasecmp(param, "Name"))
-      mOpenColumnFamily->name = value;
+      m_open_column_family->name = value;
     else if (!strcasecmp(param, "ExpireDays")) {
       float fval = strtof(value, 0);
       if (fval == 0.0) {
-	SetErrorString((string)"Invalid value (" + value + ") for ExpireDays");
+	set_error_string((string)"Invalid value (" + value + ") for ExpireDays");
       }
       else {
 	fval *= 86400.0;
-	mOpenColumnFamily->expireTime = (time_t)fval;
+	m_open_column_family->expireTime = (time_t)fval;
       }
     }
     else if (!strcasecmp(param, "CellLimit")) {
-      mOpenColumnFamily->cellLimit = atoi(value);
-      if (mOpenColumnFamily->cellLimit == 0)
-	SetErrorString((string)"Invalid value (" + value + ") for CellLimit");
+      m_open_column_family->cellLimit = atoi(value);
+      if (m_open_column_family->cellLimit == 0)
+	set_error_string((string)"Invalid value (" + value + ") for CellLimit");
     }
-    else if (mReadIds && !strcasecmp(param, "id")) {
-      mOpenColumnFamily->id = atoi(value);
-      if (mOpenColumnFamily->id == 0)
-	SetErrorString((string)"Invalid value (" + value + ") for ColumnFamily id attribute");
-      if (mOpenColumnFamily->id > mMaxColumnFamilyId)
-	mMaxColumnFamilyId = mOpenColumnFamily->id;
+    else if (m_read_ids && !strcasecmp(param, "id")) {
+      m_open_column_family->id = atoi(value);
+      if (m_open_column_family->id == 0)
+	set_error_string((string)"Invalid value (" + value + ") for ColumnFamily id attribute");
+      if (m_open_column_family->id > m_max_column_family_id)
+	m_max_column_family_id = m_open_column_family->id;
     }
     else
-      SetErrorString((string)"Invalid ColumnFamily parameter '" + param + "'");
+      set_error_string((string)"Invalid ColumnFamily parameter '" + param + "'");
   }
 }
 
 
-void Schema::AssignIds() {
-  mMaxColumnFamilyId = 0;
-  for (list<AccessGroup *>::iterator lgIter = mAccessGroups.begin(); lgIter != mAccessGroups.end(); lgIter++) {
+void Schema::assign_ids() {
+  m_max_column_family_id = 0;
+  for (list<AccessGroup *>::iterator lgIter = m_access_groups.begin(); lgIter != m_access_groups.end(); lgIter++) {
     for (list<ColumnFamily *>::iterator cfIter = (*lgIter)->columns.begin(); cfIter != (*lgIter)->columns.end(); cfIter++) {
-      (*cfIter)->id = ++mMaxColumnFamilyId;
+      (*cfIter)->id = ++m_max_column_family_id;
     }
   }
-  mGeneration = 1;
-  mOutputIds=true;
+  m_generation = 1;
+  m_output_ids=true;
 }
 
 
-void Schema::Render(std::string &output) {
+void Schema::render(std::string &output) {
   char buf[64];
 
-  if (!IsValid()) {
-    output = mErrorString;
+  if (!is_valid()) {
+    output = m_error_string;
     return;
   }
 
   output += "<Schema";
-  if (mOutputIds) {
+  if (m_output_ids) {
     output += " generation=\"";
-    sprintf(buf, "%d", mGeneration);
+    sprintf(buf, "%d", m_generation);
     output += (string)buf + "\"";
   }
   output += ">\n";
 
-  for (list<AccessGroup *>::iterator iter = mAccessGroups.begin(); iter != mAccessGroups.end(); iter++) {
+  for (list<AccessGroup *>::iterator iter = m_access_groups.begin(); iter != m_access_groups.end(); iter++) {
     output += (string)"  <AccessGroup name=\"" + (*iter)->name + "\"";
     if ((*iter)->inMemory)
       output += " inMemory=\"true\"";
     output += ">\n";
     for (list<ColumnFamily *>::iterator cfiter = (*iter)->columns.begin(); cfiter != (*iter)->columns.end(); cfiter++) {
       output += (string)"    <ColumnFamily";
-      if (mOutputIds) {
+      if (m_output_ids) {
 	output += " id=\"";
 	sprintf(buf, "%d", (*cfiter)->id);
 	output += (string)buf + "\"";
@@ -340,8 +340,8 @@ void Schema::Render(std::string &output) {
  * Protected methods
  */
 
-bool Schema::IsValid() {
-  if (GetErrorString() != 0)
+bool Schema::is_valid() {
+  if (get_error_string() != 0)
     return false;
   return true;
 }
@@ -349,10 +349,10 @@ bool Schema::IsValid() {
 /**
  *
  */
-void Schema::SetGeneration(const char *generation) {
+void Schema::set_generation(const char *generation) {
   int genNum = atoi(generation);
   if (genNum <= 0)
-    SetErrorString((string)"Invalid Table 'generation' value (" + generation + ")");
-  mGeneration = genNum;
+    set_error_string((string)"Invalid Table 'generation' value (" + generation + ")");
+  m_generation = genNum;
 }
 

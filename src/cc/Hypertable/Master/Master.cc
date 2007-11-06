@@ -46,19 +46,19 @@ using namespace hypertable;
 using namespace hypertable::DfsBroker;
 using namespace std;
 
-Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, ApplicationQueuePtr &appQueuePtr) : mConnManagerPtr(connManagerPtr), mAppQueuePtr(appQueuePtr), mVerbose(false), mDfsClient(0) {
+Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, ApplicationQueuePtr &appQueuePtr) : m_conn_manager_ptr(connManagerPtr), m_app_queue_ptr(appQueuePtr), m_verbose(false), m_dfs_client(0) {
   int error;
   Client *dfsClient;
   uint16_t port;
 
-  mHyperspacePtr = new Hyperspace::Session(connManagerPtr->GetComm(), propsPtr, &mHyperspaceSessionHandler);
+  m_hyperspace_ptr = new Hyperspace::Session(connManagerPtr->get_comm(), propsPtr, &m_hyperspace_session_handler);
 
-  if (!mHyperspacePtr->WaitForConnection(30)) {
+  if (!m_hyperspace_ptr->wait_for_connection(30)) {
     LOG_ERROR("Unable to connect to hyperspace, exiting...");
     exit(1);
   }
 
-  mVerbose = propsPtr->getPropertyBool("verbose", false);
+  m_verbose = propsPtr->getPropertyBool("verbose", false);
 
   if ((port = (uint16_t)propsPtr->getPropertyInt("Hypertable.Master.port", 0)) == 0) {
     LOG_ERROR("Hypertable.Master.port property not found in config file, exiting...");
@@ -70,20 +70,20 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, Ap
    */
   dfsClient = new Client(connManagerPtr, propsPtr);
 
-  if (mVerbose) {
+  if (m_verbose) {
     cout << "DfsBroker.host=" << propsPtr->getProperty("DfsBroker.host", "") << endl;
     cout << "DfsBroker.port=" << propsPtr->getProperty("DfsBroker.port", "") << endl;
     cout << "DfsBroker.timeout=" << propsPtr->getProperty("DfsBroker.timeout", "") << endl;
   }
 
-  if (!dfsClient->WaitForConnection(30)) {
+  if (!dfsClient->wait_for_connection(30)) {
     LOG_ERROR("Unable to connect to DFS Broker, exiting...");
     exit(1);
   }
 
-  mDfsClient = dfsClient;
+  m_dfs_client = dfsClient;
 
-  if (!Initialize())
+  if (!initialize())
     exit(1);
 
   /* Read Last Table ID */
@@ -94,14 +94,14 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, Ap
     uint32_t lockStatus;
     uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
 
-    if ((error = mHyperspacePtr->Open("/hypertable/master", oflags, nullHandleCallback, &mMasterFileHandle)) != Error::OK) {
+    if ((error = m_hyperspace_ptr->open("/hypertable/master", oflags, nullHandleCallback, &m_master_file_handle)) != Error::OK) {
       LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/master' (%s)  Try re-running with --initialize",
-		   Error::GetText(error));
+		   Error::get_text(error));
       exit(1);
     }
 
-    if ((error = mHyperspacePtr->TryLock(mMasterFileHandle, LOCK_MODE_EXCLUSIVE, &lockStatus, &mMasterFileSequencer)) != Error::OK) {
-      LOG_VA_ERROR("Problem obtaining exclusive lock on master Hyperspace file '/hypertable/master' - %s", Error::GetText(error));
+    if ((error = m_hyperspace_ptr->try_lock(m_master_file_handle, LOCK_MODE_EXCLUSIVE, &lockStatus, &m_master_file_sequencer)) != Error::OK) {
+      LOG_VA_ERROR("Problem obtaining exclusive lock on master Hyperspace file '/hypertable/master' - %s", Error::get_text(error));
       exit(1);
     }
     
@@ -114,17 +114,17 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, Ap
     {
       std::string hostStr, addrStr;
       struct hostent *he;
-      InetAddr::GetHostname(hostStr);
+      InetAddr::get_hostname(hostStr);
       he = gethostbyname(hostStr.c_str());
       addrStr = std::string(inet_ntoa(*(struct in_addr *)*he->h_addr_list)) + ":" + (int)port;
-      if ((error = mHyperspacePtr->AttrSet(mMasterFileHandle, "address", addrStr.c_str(), strlen(addrStr.c_str()))) != Error::OK) {
-	LOG_VA_ERROR("Problem setting attribute 'address' of hyperspace file /hypertable/master - %s", Error::GetText(error));
+      if ((error = m_hyperspace_ptr->attr_set(m_master_file_handle, "address", addrStr.c_str(), strlen(addrStr.c_str()))) != Error::OK) {
+	LOG_VA_ERROR("Problem setting attribute 'address' of hyperspace file /hypertable/master - %s", Error::get_text(error));
 	exit(1);
       }
     }
 
-    if ((error = mHyperspacePtr->AttrGet(mMasterFileHandle, "last_table_id", valueBuf)) != Error::OK) {
-      LOG_VA_ERROR("Problem getting attribute 'last_table_id' from file /hypertable/master - %s", Error::GetText(error));
+    if ((error = m_hyperspace_ptr->attr_get(m_master_file_handle, "last_table_id", valueBuf)) != Error::OK) {
+      LOG_VA_ERROR("Problem getting attribute 'last_table_id' from file /hypertable/master - %s", Error::get_text(error));
       exit(1);
     }
 
@@ -132,22 +132,22 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, Ap
 
     memcpy(&ival, valueBuf.buf, sizeof(int32_t));
 
-    atomic_set(&mLastTableId, ival);
-    if (mVerbose)
+    atomic_set(&m_last_table_id, ival);
+    if (m_verbose)
       cout << "Last Table ID: " << ival << endl;
   }
 
   /**
    * Locate tablet servers
    */
-  ScanServersDirectory();
+  scan_servers_directory();
 
 }
 
 
 
 Master::~Master() {
-  delete mDfsClient;
+  delete m_dfs_client;
 }
 
 
@@ -155,7 +155,7 @@ Master::~Master() {
 /**
  *
  */
-void Master::ServerJoined(std::string &serverIdStr) {
+void Master::server_joined(std::string &serverIdStr) {
   int error;
   RangeServerStatePtr statePtr;
   uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
@@ -166,8 +166,8 @@ void Master::ServerJoined(std::string &serverIdStr) {
   std::string hsFilename;
   
   {
-    boost::mutex::scoped_lock lock(mMutex);
-    if ((iter = mServerMap.find(serverIdStr)) != mServerMap.end())
+    boost::mutex::scoped_lock lock(m_mutex);
+    if ((iter = m_server_map.find(serverIdStr)) != m_server_map.end())
       statePtr = (*iter).second;
     else {
       statePtr = new RangeServerState();
@@ -179,29 +179,29 @@ void Master::ServerJoined(std::string &serverIdStr) {
 
   hsFilename = (std::string)"/hypertable/servers/" + serverIdStr;
 
-  lockFileHandler = new ServerLockFileHandler(statePtr, this, mAppQueuePtr);
+  lockFileHandler = new ServerLockFileHandler(statePtr, this, m_app_queue_ptr);
 
-  if ((error = mHyperspacePtr->Open(hsFilename, oflags, lockFileHandler, &statePtr->hyperspaceHandle)) != Error::OK) {
-    LOG_VA_ERROR("Problem opening discovered server file %s - %s", hsFilename.c_str(), Error::GetText(error));
+  if ((error = m_hyperspace_ptr->open(hsFilename, oflags, lockFileHandler, &statePtr->hyperspaceHandle)) != Error::OK) {
+    LOG_VA_ERROR("Problem opening discovered server file %s - %s", hsFilename.c_str(), Error::get_text(error));
     return;
   }
 
-  if ((error = mHyperspacePtr->TryLock(statePtr->hyperspaceHandle, LOCK_MODE_EXCLUSIVE, &lockStatus, &lockSequencer)) != Error::OK) {
+  if ((error = m_hyperspace_ptr->try_lock(statePtr->hyperspaceHandle, LOCK_MODE_EXCLUSIVE, &lockStatus, &lockSequencer)) != Error::OK) {
     LOG_VA_ERROR("Problem attempting to obtain exclusive lock on server Hyperspace file '%s' - %s",
-		 hsFilename.c_str(), Error::GetText(error));
+		 hsFilename.c_str(), Error::get_text(error));
     return;
   }
 
   if (lockStatus == LOCK_STATUS_GRANTED) {
     LOG_VA_INFO("Obtained lock on servers file %s, removing...", hsFilename.c_str());
-    if ((error = mHyperspacePtr->Delete(hsFilename)) != Error::OK)
+    if ((error = m_hyperspace_ptr->unlink(hsFilename)) != Error::OK)
       LOG_VA_INFO("Problem deleting Hyperspace file %s", hsFilename.c_str());
-    if ((error = mHyperspacePtr->Close(statePtr->hyperspaceHandle)) != Error::OK)
+    if ((error = m_hyperspace_ptr->close(statePtr->hyperspaceHandle)) != Error::OK)
       LOG_VA_INFO("Problem closing handle on deleting Hyperspace file %s", hsFilename.c_str());
   }
   else {
-    boost::mutex::scoped_lock lock(mMutex);
-    mServerMap[statePtr->serverIdStr] = statePtr;  
+    boost::mutex::scoped_lock lock(m_mutex);
+    m_server_map[statePtr->serverIdStr] = statePtr;  
   }
   cout << flush;
 }
@@ -211,22 +211,22 @@ void Master::ServerJoined(std::string &serverIdStr) {
 /**
  *
  */
-void Master::ServerLeft(std::string &serverIdStr) {
-  boost::mutex::scoped_lock lock(mMutex);
+void Master::server_left(std::string &serverIdStr) {
+  boost::mutex::scoped_lock lock(m_mutex);
   int error;
   uint32_t lockStatus;
   struct LockSequencerT lockSequencer;
-  ServerMapT::iterator iter = mServerMap.find(serverIdStr);
+  ServerMapT::iterator iter = m_server_map.find(serverIdStr);
   std::string hsFilename = (std::string)"/hypertable/servers/" + serverIdStr;
 
 
-  if (iter == mServerMap.end()) {
+  if (iter == m_server_map.end()) {
     LOG_VA_WARN("Server (%s) not found in map", serverIdStr.c_str());
     return;
   }
 
-  if ((error = mHyperspacePtr->TryLock((*iter).second->hyperspaceHandle, LOCK_MODE_EXCLUSIVE, &lockStatus, &lockSequencer)) != Error::OK) {
-    LOG_VA_ERROR("Problem obtaining exclusive lock on master Hyperspace file '/hypertable/master' - %s", Error::GetText(error));
+  if ((error = m_hyperspace_ptr->try_lock((*iter).second->hyperspaceHandle, LOCK_MODE_EXCLUSIVE, &lockStatus, &lockSequencer)) != Error::OK) {
+    LOG_VA_ERROR("Problem obtaining exclusive lock on master Hyperspace file '/hypertable/master' - %s", Error::get_text(error));
     return;
   }
 
@@ -235,9 +235,9 @@ void Master::ServerLeft(std::string &serverIdStr) {
     return;
   }
 
-  mHyperspacePtr->Delete(hsFilename);
-  mHyperspacePtr->Close((*iter).second->hyperspaceHandle);
-  mServerMap.erase(iter);
+  m_hyperspace_ptr->unlink(hsFilename);
+  m_hyperspace_ptr->close((*iter).second->hyperspaceHandle);
+  m_server_map.erase(iter);
 
   LOG_VA_INFO("RangeServer lost it's lock on file %s, deleting ...", hsFilename.c_str());
   cout << flush;
@@ -252,10 +252,10 @@ void Master::ServerLeft(std::string &serverIdStr) {
 /**
  * 
  */
-void Master::CreateTable(ResponseCallback *cb, const char *tableName, const char *schemaString) {
+void Master::create_table(ResponseCallback *cb, const char *tableName, const char *schemaString) {
   int error;
   std::string errMsg;
-  if ((error = CreateTable(tableName, schemaString, errMsg)) != Error::OK)
+  if ((error = create_table(tableName, schemaString, errMsg)) != Error::OK)
     cb->error(error, errMsg);
   else
     cb->response_ok();
@@ -265,7 +265,7 @@ void Master::CreateTable(ResponseCallback *cb, const char *tableName, const char
 /**
  *
  */
-void Master::GetSchema(ResponseCallbackGetSchema *cb, const char *tableName) {
+void Master::get_schema(ResponseCallbackGetSchema *cb, const char *tableName) {
   int error = Error::OK;
   std::string tableFile = (std::string)"/hypertable/tables/" + tableName;
   std::string errMsg;
@@ -277,39 +277,39 @@ void Master::GetSchema(ResponseCallbackGetSchema *cb, const char *tableName) {
   /**
    * Check for table existence
    */
-  if ((error = mHyperspacePtr->Exists(tableFile, &exists)) != Error::OK) {
-    errMsg = (std::string)"Problem checking for existence of table '" + tableName + "' - " + Error::GetText(error);
+  if ((error = m_hyperspace_ptr->exists(tableFile, &exists)) != Error::OK) {
+    errMsg = (std::string)"Problem checking for existence of table '" + tableName + "' - " + Error::get_text(error);
     goto abort;
   }
 
   /**
    * Open table file
    */
-  if ((error = mHyperspacePtr->Open(tableFile, OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
-    errMsg = "Unable to open Hyperspace table file '" + tableFile + "' (" + Error::GetText(error) + ")";
+  if ((error = m_hyperspace_ptr->open(tableFile, OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
+    errMsg = "Unable to open Hyperspace table file '" + tableFile + "' (" + Error::get_text(error) + ")";
     goto abort;
   }
 
   /**
    * Get schema attribute
    */
-  if ((error = mHyperspacePtr->AttrGet(handle, "schema", schemaBuf)) != Error::OK) {
+  if ((error = m_hyperspace_ptr->attr_get(handle, "schema", schemaBuf)) != Error::OK) {
     errMsg = "Problem getting attribute 'schema' for table file '" + tableFile + "'";
     goto abort;
   }
 
-  mHyperspacePtr->Close(handle);
+  m_hyperspace_ptr->close(handle);
   
   cb->response((char *)schemaBuf.buf);
 
-  if (mVerbose) {
+  if (m_verbose) {
     LOG_VA_INFO("Successfully fetched schema (length=%d) for table '%s'", strlen((char *)schemaBuf.buf), tableName);
   }
 
  abort:
   if (error != Error::OK) {
-    if (mVerbose) {
-      LOG_VA_ERROR("%s '%s'", Error::GetText(error), errMsg.c_str());
+    if (m_verbose) {
+      LOG_VA_ERROR("%s '%s'", Error::get_text(error), errMsg.c_str());
     }
     cb->error(error, errMsg);
   }
@@ -321,25 +321,25 @@ void Master::GetSchema(ResponseCallbackGetSchema *cb, const char *tableName) {
 /**
  * 
  */
-void Master::RegisterServer(ResponseCallback *cb, const char *serverIdStr, struct sockaddr_in &addr) {
-  boost::mutex::scoped_lock lock(mMutex);
+void Master::register_server(ResponseCallback *cb, const char *serverIdStr, struct sockaddr_in &addr) {
+  boost::mutex::scoped_lock lock(m_mutex);
   RangeServerStatePtr statePtr;
   std::string idStr = serverIdStr;
-  ServerMapT::iterator iter = mServerMap.find(idStr);
+  ServerMapT::iterator iter = m_server_map.find(idStr);
 
-  if ((iter = mServerMap.find(serverIdStr)) != mServerMap.end())
+  if ((iter = m_server_map.find(serverIdStr)) != m_server_map.end())
     statePtr = (*iter).second;
   else {
     statePtr = new RangeServerState();
     statePtr->serverIdStr = serverIdStr;
-    mServerMap[statePtr->serverIdStr] = statePtr;
+    m_server_map[statePtr->serverIdStr] = statePtr;
   }
 
   statePtr->addr = addr;
 
   {
     std::string addrStr;
-    LOG_VA_INFO("Server Registered %s -> %s", serverIdStr, InetAddr::StringFormat(addrStr, addr));
+    LOG_VA_INFO("Server Registered %s -> %s", serverIdStr, InetAddr::string_format(addrStr, addr));
     cout << flush;
   }
 
@@ -347,7 +347,7 @@ void Master::RegisterServer(ResponseCallback *cb, const char *serverIdStr, struc
 }
 
 
-int Master::CreateTable(const char *tableName, const char *schemaString, std::string &errMsg) {
+int Master::create_table(const char *tableName, const char *schemaString, std::string &errMsg) {
   int error = Error::OK;
   std::string finalSchema = "";
   std::string tableFile = (std::string)"/hypertable/tables/" + tableName;
@@ -363,7 +363,7 @@ int Master::CreateTable(const char *tableName, const char *schemaString, std::st
   /**
    * Check for table existence
    */
-  if ((error = mHyperspacePtr->Exists(tableFile, &exists)) != Error::OK) {
+  if ((error = m_hyperspace_ptr->exists(tableFile, &exists)) != Error::OK) {
     errMsg = (std::string)"Problem checking for existence of table file '" + tableFile + "'";
     goto abort;
   }
@@ -376,20 +376,20 @@ int Master::CreateTable(const char *tableName, const char *schemaString, std::st
   /**
    *  Parse Schema and assign Generation number and Column ids
    */
-  schema = Schema::NewInstance(schemaString, strlen(schemaString));
-  if (!schema->IsValid()) {
-    errMsg = schema->GetErrorString();
+  schema = Schema::new_instance(schemaString, strlen(schemaString));
+  if (!schema->is_valid()) {
+    errMsg = schema->get_error_string();
     error = Error::MASTER_BAD_SCHEMA;
     goto abort;
   }
-  schema->AssignIds();
-  schema->Render(finalSchema);
+  schema->assign_ids();
+  schema->render(finalSchema);
 
   /**
    * Create table file
    */
-  if ((error = mHyperspacePtr->Open(tableFile, OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, nullHandleCallback, &handle)) != Error::OK) {
-    errMsg = "Unable to create Hyperspace table file '" + tableFile + "' (" + Error::GetText(error) + ")";
+  if ((error = m_hyperspace_ptr->open(tableFile, OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, nullHandleCallback, &handle)) != Error::OK) {
+    errMsg = "Unable to create Hyperspace table file '" + tableFile + "' (" + Error::get_text(error) + ")";
     goto abort;
   }
 
@@ -397,15 +397,15 @@ int Master::CreateTable(const char *tableName, const char *schemaString, std::st
    * Write 'table_id' attribute of table file and 'last_table_id' attribute of /hypertable/master
    */
   {
-    tableId = (uint32_t)atomic_inc_return(&mLastTableId);
+    tableId = (uint32_t)atomic_inc_return(&m_last_table_id);
 
-    if ((error = mHyperspacePtr->AttrSet(mMasterFileHandle, "last_table_id", &tableId, sizeof(int32_t))) != Error::OK) {
-      errMsg = (std::string)"Problem setting attribute 'last_table_id' of file /hypertable/master - " + Error::GetText(error);
+    if ((error = m_hyperspace_ptr->attr_set(m_master_file_handle, "last_table_id", &tableId, sizeof(int32_t))) != Error::OK) {
+      errMsg = (std::string)"Problem setting attribute 'last_table_id' of file /hypertable/master - " + Error::get_text(error);
       goto abort;
     }
 
-    if ((error = mHyperspacePtr->AttrSet(handle, "table_id", &tableId, sizeof(int32_t))) != Error::OK) {
-      errMsg = (std::string)"Problem setting attribute 'table_id' of file " + tableFile + " - " + Error::GetText(error);
+    if ((error = m_hyperspace_ptr->attr_set(handle, "table_id", &tableId, sizeof(int32_t))) != Error::OK) {
+      errMsg = (std::string)"Problem setting attribute 'table_id' of file " + tableFile + " - " + Error::get_text(error);
       goto abort;
     }
   }
@@ -414,35 +414,35 @@ int Master::CreateTable(const char *tableName, const char *schemaString, std::st
   /**
    * Write schema attribute
    */
-  if ((error = mHyperspacePtr->AttrSet(handle, "schema", finalSchema.c_str(), strlen(finalSchema.c_str()))) != Error::OK) {
+  if ((error = m_hyperspace_ptr->attr_set(handle, "schema", finalSchema.c_str(), strlen(finalSchema.c_str()))) != Error::OK) {
     errMsg = (std::string)"Problem creating attribute 'schema' for table file '" + tableFile + "'";
     goto abort;
   }
 
-  mHyperspacePtr->Close(handle);
+  m_hyperspace_ptr->close(handle);
 
   /**
    * Create /hypertable/tables/<table>/<accessGroup> directories for this table in HDFS
    */
   tableBaseDir = (string)"/hypertable/tables/" + tableName + "/";
-  lgList = schema->GetAccessGroupList();
+  lgList = schema->get_access_group_list();
   for (list<Schema::AccessGroup *>::iterator lgIter = lgList->begin(); lgIter != lgList->end(); lgIter++) {
     lgDir = tableBaseDir + (*lgIter)->name;
-    if ((error = mDfsClient->Mkdirs(lgDir)) != Error::OK) {
+    if ((error = m_dfs_client->mkdirs(lgDir)) != Error::OK) {
       errMsg = (string)"Problem creating table directory '" + lgDir + "'";
       goto abort;
     }
   }
 
-  if (mVerbose) {
+  if (m_verbose) {
     LOG_VA_INFO("Successfully created table '%s' ID=%d", tableName, tableId);
   }
 
  abort:
   delete schema;
   if (error != Error::OK) {
-    if (mVerbose) {
-      LOG_VA_ERROR("%s '%s'", Error::GetText(error), errMsg.c_str());
+    if (m_verbose) {
+      LOG_VA_ERROR("%s '%s'", Error::get_text(error), errMsg.c_str());
     }
   }
   return error;
@@ -453,36 +453,36 @@ int Master::CreateTable(const char *tableName, const char *schemaString, std::st
  * PRIVATE Methods
  */
 
-bool Master::Initialize() {
+bool Master::initialize() {
   int error;
   bool exists;
   uint64_t handle;
   uint32_t tableId = 0;
   HandleCallbackPtr nullHandleCallback;
 
-  if ((error = mHyperspacePtr->Exists("/hypertable/master", &exists)) == Error::OK && exists &&
-      (error = mHyperspacePtr->Exists("/hypertable/servers", &exists)) == Error::OK && exists)
+  if ((error = m_hyperspace_ptr->exists("/hypertable/master", &exists)) == Error::OK && exists &&
+      (error = m_hyperspace_ptr->exists("/hypertable/servers", &exists)) == Error::OK && exists)
     return true;
 
-  if (!CreateHyperspaceDir("/hypertable"))
+  if (!create_hyperspace_dir("/hypertable"))
     return false;
 
-  if (!CreateHyperspaceDir("/hypertable/servers"))
+  if (!create_hyperspace_dir("/hypertable/servers"))
     return false;
 
-  if (!CreateHyperspaceDir("/hypertable/tables"))
+  if (!create_hyperspace_dir("/hypertable/tables"))
     return false;
 
   /**
    * Create /hypertable/master
    */
-  if ((error = mHyperspacePtr->Open("/hypertable/master", OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, nullHandleCallback, &handle)) != Error::OK) {
-    LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/master' (%s)", Error::GetText(error));
+  if ((error = m_hyperspace_ptr->open("/hypertable/master", OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, nullHandleCallback, &handle)) != Error::OK) {
+    LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/master' (%s)", Error::get_text(error));
     return false;
   }
-  mMasterFileHandle = handle;
+  m_master_file_handle = handle;
 
-  atomic_set(&mLastTableId, -1);
+  atomic_set(&m_last_table_id, -1);
 
   /**
    * Create METADATA table
@@ -491,25 +491,25 @@ bool Master::Initialize() {
     std::string errMsg;
     std::string metadataSchemaFile = System::installDir + "/conf/METADATA.xml";
     off_t schemaLen;
-    const char *schemaStr = FileUtils::FileToBuffer(metadataSchemaFile.c_str(), &schemaLen);
+    const char *schemaStr = FileUtils::file_to_buffer(metadataSchemaFile.c_str(), &schemaLen);
 
-    if ((error = CreateTable("METADATA", schemaStr, errMsg)) != Error::OK) {
-      LOG_VA_ERROR("Problem creating METADATA table - %s", Error::GetText(error));
+    if ((error = create_table("METADATA", schemaStr, errMsg)) != Error::OK) {
+      LOG_VA_ERROR("Problem creating METADATA table - %s", Error::get_text(error));
       return false;
     }
   }
 
-  mHyperspacePtr->Close(handle);
-  mMasterFileHandle = 0;
+  m_hyperspace_ptr->close(handle);
+  m_master_file_handle = 0;
 
   /**
    *  Create /hypertable/root
    */
-  if ((error = mHyperspacePtr->Open("/hypertable/root", OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, nullHandleCallback, &handle)) != Error::OK) {
-    LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/root' (%s)", Error::GetText(error));
+  if ((error = m_hyperspace_ptr->open("/hypertable/root", OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, nullHandleCallback, &handle)) != Error::OK) {
+    LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/root' (%s)", Error::get_text(error));
     return false;
   }
-  mHyperspacePtr->Close(handle);
+  m_hyperspace_ptr->close(handle);
 
   LOG_INFO("Successfully Initialized Hypertable.");
 
@@ -520,8 +520,8 @@ bool Master::Initialize() {
 /**
  * 
  */
-void Master::ScanServersDirectory() {
-  boost::mutex::scoped_lock lock(mMutex);
+void Master::scan_servers_directory() {
+  boost::mutex::scoped_lock lock(m_mutex);
   int error;
   HandleCallbackPtr lockFileHandler;
   std::vector<struct DirEntryT> listing;
@@ -534,16 +534,16 @@ void Master::ScanServersDirectory() {
   /**
    * Open /hyperspace/servers directory and scan for range servers
    */
-  mServersDirCallbackPtr = new ServersDirectoryHandler(this, mAppQueuePtr);
+  m_servers_dir_callback_ptr = new ServersDirectoryHandler(this, m_app_queue_ptr);
 
-  if ((error = mHyperspacePtr->Open("/hypertable/servers", OPEN_FLAG_READ, mServersDirCallbackPtr, &mServersDirHandle)) != Error::OK) {
+  if ((error = m_hyperspace_ptr->open("/hypertable/servers", OPEN_FLAG_READ, m_servers_dir_callback_ptr, &m_servers_dir_handle)) != Error::OK) {
     LOG_VA_ERROR("Unable to open Hyperspace directory '/hypertable/servers' (%s)  Try re-running with --initialize",
-		 Error::GetText(error));
+		 Error::get_text(error));
     exit(1);
   }
 
-  if ((error = mHyperspacePtr->Readdir(mServersDirHandle, listing)) != Error::OK) {
-    LOG_VA_ERROR("Problem scanning Hyperspace directory '/hypertable/servers' - %s", Error::GetText(error));
+  if ((error = m_hyperspace_ptr->readdir(m_servers_dir_handle, listing)) != Error::OK) {
+    LOG_VA_ERROR("Problem scanning Hyperspace directory '/hypertable/servers' - %s", Error::get_text(error));
     exit(1);
   }
 
@@ -556,27 +556,27 @@ void Master::ScanServersDirectory() {
 
     hsFilename = (std::string)"/hypertable/servers/" + listing[i].name;
 
-    lockFileHandler = new ServerLockFileHandler(statePtr, this, mAppQueuePtr);
+    lockFileHandler = new ServerLockFileHandler(statePtr, this, m_app_queue_ptr);
 
-    if ((error = mHyperspacePtr->Open(hsFilename, oflags, lockFileHandler, &statePtr->hyperspaceHandle)) != Error::OK) {
-      LOG_VA_ERROR("Problem opening discovered server file %s - %s", hsFilename.c_str(), Error::GetText(error));
+    if ((error = m_hyperspace_ptr->open(hsFilename, oflags, lockFileHandler, &statePtr->hyperspaceHandle)) != Error::OK) {
+      LOG_VA_ERROR("Problem opening discovered server file %s - %s", hsFilename.c_str(), Error::get_text(error));
       continue;
     }
 
-    if ((error = mHyperspacePtr->TryLock(statePtr->hyperspaceHandle, LOCK_MODE_EXCLUSIVE, &lockStatus, &lockSequencer)) != Error::OK) {
-      LOG_VA_ERROR("Problem obtaining exclusive lock on master Hyperspace file '/hypertable/master' - %s", Error::GetText(error));
+    if ((error = m_hyperspace_ptr->try_lock(statePtr->hyperspaceHandle, LOCK_MODE_EXCLUSIVE, &lockStatus, &lockSequencer)) != Error::OK) {
+      LOG_VA_ERROR("Problem obtaining exclusive lock on master Hyperspace file '/hypertable/master' - %s", Error::get_text(error));
       continue;
     }
 
     if (lockStatus == LOCK_STATUS_GRANTED) {
       LOG_VA_INFO("Obtained lock on servers file %s, removing...", hsFilename.c_str());
-      if ((error = mHyperspacePtr->Delete(hsFilename)) != Error::OK)
+      if ((error = m_hyperspace_ptr->unlink(hsFilename)) != Error::OK)
 	LOG_VA_INFO("Problem deleting Hyperspace file %s", hsFilename.c_str());
-      if ((error = mHyperspacePtr->Close(statePtr->hyperspaceHandle)) != Error::OK)
+      if ((error = m_hyperspace_ptr->close(statePtr->hyperspaceHandle)) != Error::OK)
 	LOG_VA_INFO("Problem closing handle on deleting Hyperspace file %s", hsFilename.c_str());
     }
     else {
-      mServerMap[statePtr->serverIdStr] = statePtr;
+      m_server_map[statePtr->serverIdStr] = statePtr;
     }
   }
 
@@ -586,23 +586,23 @@ void Master::ScanServersDirectory() {
 /**
  *
  */
-bool Master::CreateHyperspaceDir(std::string dir) {
+bool Master::create_hyperspace_dir(std::string dir) {
   int error;
   bool exists;
 
   /**
    * Check for existence
    */
-  if ((error = mHyperspacePtr->Exists(dir, &exists)) != Error::OK) {
-    LOG_VA_ERROR("Problem checking for existence of directory '%s' - %s", dir.c_str(), Error::GetText(error));
+  if ((error = m_hyperspace_ptr->exists(dir, &exists)) != Error::OK) {
+    LOG_VA_ERROR("Problem checking for existence of directory '%s' - %s", dir.c_str(), Error::get_text(error));
     return false;
   }
 
   if (exists)
     return true;
 
-  if ((error = mHyperspacePtr->Mkdir(dir)) != Error::OK) {
-    LOG_VA_ERROR("Problem creating directory '%s' - %s", dir.c_str(), Error::GetText(error));
+  if ((error = m_hyperspace_ptr->mkdir(dir)) != Error::OK) {
+    LOG_VA_ERROR("Problem creating directory '%s' - %s", dir.c_str(), Error::get_text(error));
     return false;
   }
 

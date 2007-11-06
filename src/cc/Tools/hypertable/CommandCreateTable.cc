@@ -31,7 +31,7 @@
 using namespace hypertable;
 using namespace std;
 
-const char *CommandCreateTable::msUsage[] = {
+const char *CommandCreateTable::ms_usage[] = {
   "create table <name> <schemaFile>",
   "",
   "  This command creates a table called <name> with the schema found",
@@ -44,19 +44,19 @@ int CommandCreateTable::run() {
   const char *schema = 0;
   int error;
 
-  if (mArgs.size() != 2) {
+  if (m_args.size() != 2) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
     return -1;
   }
 
-  if (mArgs[0].second != "" || mArgs[1].second != "")
-    Usage::DumpAndExit(msUsage);
+  if (m_args[0].second != "" || m_args[1].second != "")
+    Usage::dump_and_exit(ms_usage);
 
-  if ((schema = FileUtils::FileToBuffer(mArgs[1].first.c_str(), &len)) == 0)
+  if ((schema = FileUtils::file_to_buffer(m_args[1].first.c_str(), &len)) == 0)
     return -1;
 
-  if ((error = mClient->CreateTable(mArgs[0].first, schema)) != Error::OK) {
-    cerr << "Problem creating table '" << mArgs[0].first << "' - " << Error::GetText(error) << endl;
+  if ((error = m_client->create_table(m_args[0].first, schema)) != Error::OK) {
+    cerr << "Problem creating table '" << m_args[0].first << "' - " << Error::get_text(error) << endl;
     return error;
   }
 

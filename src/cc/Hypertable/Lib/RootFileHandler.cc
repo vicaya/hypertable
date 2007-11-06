@@ -25,7 +25,7 @@ using namespace hypertable;
 /**
  *
  */
-void RootFileHandler::AttrSet(std::string name) {
+void RootFileHandler::attr_set(std::string name) {
   if (name == "server")
-    mRangeLocator->SetRootStale();
+    m_range_locator->set_root_stale();
 }

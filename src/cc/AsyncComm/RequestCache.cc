@@ -28,7 +28,7 @@ using namespace std;
 #include "RequestCache.h"
 using namespace hypertable;
 
-void RequestCache::Insert(uint32_t id, IOHandler *handler, DispatchHandler *dh, boost::xtime &expire) {
+void RequestCache::insert(uint32_t id, IOHandler *handler, DispatchHandler *dh, boost::xtime &expire) {
   CacheNodeT *node = new CacheNodeT;
 
   LOG_VA_DEBUG("Adding id %d", id);
@@ -38,28 +38,28 @@ void RequestCache::Insert(uint32_t id, IOHandler *handler, DispatchHandler *dh, 
   node->dh = dh;
   memcpy(&node->expire, &expire, sizeof(expire));
 
-  if (mHead == 0) {
+  if (m_head == 0) {
     node->next = node->prev = 0;
-    mHead = mTail = node;
+    m_head = m_tail = node;
   }
   else {
-    node->next = mTail;
+    node->next = m_tail;
     node->next->prev = node;
     node->prev = 0;
-    mTail = node;
+    m_tail = node;
   }
 
-  mIdMap[id] = node;
+  m_id_map[id] = node;
 }
 
 
-DispatchHandler *RequestCache::Remove(uint32_t id) {
+DispatchHandler *RequestCache::remove(uint32_t id) {
 
   LOG_VA_DEBUG("Removing id %d", id);
 
-  IdHandlerMapT::iterator iter = mIdMap.find(id);
+  IdHandlerMapT::iterator iter = m_id_map.find(id);
 
-  if (iter == mIdMap.end()) {
+  if (iter == m_id_map.end()) {
     LOG_VA_DEBUG("ID %d not found in request cache", id);
     return 0;
   }
@@ -67,16 +67,16 @@ DispatchHandler *RequestCache::Remove(uint32_t id) {
   CacheNodeT *node = (*iter).second;
 
   if (node->prev == 0)
-    mTail = node->next;
+    m_tail = node->next;
   else
     node->prev->next = node->next;
 
   if (node->next == 0)
-    mHead = node->prev;
+    m_head = node->prev;
   else
     node->next->prev = node->prev;
 
-  mIdMap.erase(iter);
+  m_id_map.erase(iter);
 
   if (node->handler != 0) {
     DispatchHandler *dh = node->dh;
@@ -89,21 +89,21 @@ DispatchHandler *RequestCache::Remove(uint32_t id) {
 
 
 
-DispatchHandler *RequestCache::GetNextTimeout(boost::xtime &now, IOHandler *&handlerp, boost::xtime *nextTimeout) {
+DispatchHandler *RequestCache::get_next_timeout(boost::xtime &now, IOHandler *&handlerp, boost::xtime *nextTimeout) {
 
-  while (mHead && xtime_cmp(mHead->expire, now) <= 0) {
+  while (m_head && xtime_cmp(m_head->expire, now) <= 0) {
 
-    IdHandlerMapT::iterator iter = mIdMap.find(mHead->id);
-    assert (iter != mIdMap.end());
-    CacheNodeT *node = mHead;
-    if (mHead->prev) {
-      mHead = mHead->prev;
-      mHead->next = 0;
+    IdHandlerMapT::iterator iter = m_id_map.find(m_head->id);
+    assert (iter != m_id_map.end());
+    CacheNodeT *node = m_head;
+    if (m_head->prev) {
+      m_head = m_head->prev;
+      m_head->next = 0;
     }
     else
-      mHead = mTail = 0;
+      m_head = m_tail = 0;
 
-    mIdMap.erase(iter);
+    m_id_map.erase(iter);
 
     if (node->handler != 0) {
       handlerp = node->handler;
@@ -114,8 +114,8 @@ DispatchHandler *RequestCache::GetNextTimeout(boost::xtime &now, IOHandler *&han
     delete node;
   }
 
-  if (mHead)
-    memcpy(nextTimeout, &mHead->expire, sizeof(boost::xtime));
+  if (m_head)
+    memcpy(nextTimeout, &m_head->expire, sizeof(boost::xtime));
   else
     memset(nextTimeout, 0, sizeof(boost::xtime));
 
@@ -124,8 +124,8 @@ DispatchHandler *RequestCache::GetNextTimeout(boost::xtime &now, IOHandler *&han
 
 
 
-void RequestCache::PurgeRequests(IOHandler *handler) {
-  for (CacheNodeT *node = mTail; node != 0; node = node->next) {
+void RequestCache::purge_requests(IOHandler *handler) {
+  for (CacheNodeT *node = m_tail; node != 0; node = node->next) {
     if (node->handler == handler) {
       LOG_VA_DEBUG("Purging request id %d", node->id);
       node->handler = 0;  // mark for deletion

@@ -51,7 +51,7 @@ void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp)
   schemaPtr = sp;
   if (spec && spec->columns.size() > 0) {
     for (std::vector<const char *>::const_iterator iter = spec->columns.begin(); iter != spec->columns.end(); iter++) {
-      columnFamily = schemaPtr->GetColumnFamily(*iter);
+      columnFamily = schemaPtr->get_column_family(*iter);
       assert(columnFamily);
 
       familyMask[columnFamily->id] = true;
@@ -70,7 +70,7 @@ void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp)
     }
   }
   else {
-    list<Schema::AccessGroup *> *agList = schemaPtr->GetAccessGroupList();
+    list<Schema::AccessGroup *> *agList = schemaPtr->get_access_group_list();
 
     familyMask[0] = true;  // ROW_DELETE records have 0 column family, so this allows them to pass through
     for (list<Schema::AccessGroup *>::iterator agIter = agList->begin(); agIter != agList->end(); agIter++) {

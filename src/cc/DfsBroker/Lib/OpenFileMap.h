@@ -49,68 +49,68 @@ namespace hypertable {
 
   public:
 
-    void Create(int fd, struct sockaddr_in &addr, OpenFileDataPtr &dataPtr) {
-      boost::mutex::scoped_lock lock(mMutex);
+    void create(int fd, struct sockaddr_in &addr, OpenFileDataPtr &dataPtr) {
+      boost::mutex::scoped_lock lock(m_mutex);
       dataPtr->addr = addr;
-      mFileMap[fd] = dataPtr;
+      m_file_map[fd] = dataPtr;
     }
 
-    bool Get(int fd, OpenFileDataPtr &dataPtr) {
-      boost::mutex::scoped_lock lock(mMutex);
-      OpenFileMapT::iterator iter = mFileMap.find(fd);
-      if (iter != mFileMap.end()) {
+    bool get(int fd, OpenFileDataPtr &dataPtr) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      OpenFileMapT::iterator iter = m_file_map.find(fd);
+      if (iter != m_file_map.end()) {
 	dataPtr = (*iter).second;
 	return true;
       }
       return false;
     }
 
-    bool Remove(int fd, OpenFileDataPtr &dataPtr) {
-      boost::mutex::scoped_lock lock(mMutex);
-      OpenFileMapT::iterator iter = mFileMap.find(fd);
-      if (iter != mFileMap.end()) {
+    bool remove(int fd, OpenFileDataPtr &dataPtr) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      OpenFileMapT::iterator iter = m_file_map.find(fd);
+      if (iter != m_file_map.end()) {
 	dataPtr = (*iter).second;
-	mFileMap.erase(iter);
+	m_file_map.erase(iter);
 	return true;
       }
       return false;
     }
 
-    void Remove(int fd) {
-      boost::mutex::scoped_lock lock(mMutex);
-      OpenFileMapT::iterator iter = mFileMap.find(fd);
-      if (iter != mFileMap.end())
-	mFileMap.erase(iter);
+    void remove(int fd) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      OpenFileMapT::iterator iter = m_file_map.find(fd);
+      if (iter != m_file_map.end())
+	m_file_map.erase(iter);
     }
 
-    void RemoveAll(struct sockaddr_in &addr) {
-      boost::mutex::scoped_lock lock(mMutex);
-      OpenFileMapT::iterator iter = mFileMap.begin();
+    void remove_all(struct sockaddr_in &addr) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      OpenFileMapT::iterator iter = m_file_map.begin();
 
-      while (iter != mFileMap.end()) {
+      while (iter != m_file_map.end()) {
 	if ((*iter).second->addr.sin_family == addr.sin_family &&
 	    (*iter).second->addr.sin_port == addr.sin_port &&
 	    (*iter).second->addr.sin_addr.s_addr == addr.sin_addr.s_addr) {
 	  OpenFileMapT::iterator delIter = iter;
 	  LOG_VA_ERROR("Removing handle %d from open file map because of lost owning client connection", (*iter).first);
 	  iter++;
-	  mFileMap.erase(delIter);
+	  m_file_map.erase(delIter);
 	}
 	else
 	  iter++;
       }
     }
 
-    void RemoveAll() {
-      boost::mutex::scoped_lock lock(mMutex);
-      mFileMap.clear();
+    void remove_all() {
+      boost::mutex::scoped_lock lock(m_mutex);
+      m_file_map.clear();
     }
 
   private:
 
     typedef __gnu_cxx::hash_map<int, OpenFileDataPtr> OpenFileMapT;
 
-    boost::mutex  mMutex;
-    OpenFileMapT  mFileMap;
+    boost::mutex  m_mutex;
+    OpenFileMapT  m_file_map;
   };
 }

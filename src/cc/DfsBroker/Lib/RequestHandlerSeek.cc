@@ -33,22 +33,22 @@ using namespace hypertable::DfsBroker;
  *
  */
 void RequestHandlerSeek::run() {
-  ResponseCallback cb(mComm, mEventPtr);
+  ResponseCallback cb(m_comm, m_event_ptr);
   uint32_t fd;
   uint64_t offset;
-  size_t remaining = mEventPtr->messageLen - sizeof(int16_t);
-  uint8_t *msgPtr = mEventPtr->message + sizeof(int16_t);
+  size_t remaining = m_event_ptr->messageLen - sizeof(int16_t);
+  uint8_t *msgPtr = m_event_ptr->message + sizeof(int16_t);
 
   if (remaining < 12)
     goto abort;
 
   // fd
-  Serialization::DecodeInt(&msgPtr, &remaining, &fd);
+  Serialization::decode_int(&msgPtr, &remaining, &fd);
 
   // offset
-  Serialization::DecodeLong(&msgPtr, &remaining, &offset);
+  Serialization::decode_long(&msgPtr, &remaining, &offset);
 
-  mBroker->Seek(&cb, fd, offset);
+  m_broker->seek(&cb, fd, offset);
 
   return;
 

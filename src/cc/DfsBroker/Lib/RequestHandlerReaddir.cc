@@ -34,16 +34,16 @@ using namespace hypertable::DfsBroker;
  *
  */
 void RequestHandlerReaddir::run() {
-  ResponseCallbackReaddir cb(mComm, mEventPtr);
+  ResponseCallbackReaddir cb(m_comm, m_event_ptr);
   const char *dirName;
-  size_t remaining = mEventPtr->messageLen - sizeof(int16_t);
-  uint8_t *msgPtr = mEventPtr->message + sizeof(int16_t);
+  size_t remaining = m_event_ptr->messageLen - sizeof(int16_t);
+  uint8_t *msgPtr = m_event_ptr->message + sizeof(int16_t);
 
   // directory name
-  if (!Serialization::DecodeString(&msgPtr, &remaining, &dirName))
+  if (!Serialization::decode_string(&msgPtr, &remaining, &dirName))
     goto abort;
 
-  mBroker->Readdir(&cb, dirName);
+  m_broker->readdir(&cb, dirName);
 
   return;
 

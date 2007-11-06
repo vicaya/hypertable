@@ -33,16 +33,16 @@ using namespace hypertable::DfsBroker;
  *
  */
 void RequestHandlerLength::run() {
-  ResponseCallbackLength cb(mComm, mEventPtr);
+  ResponseCallbackLength cb(m_comm, m_event_ptr);
   const char *fileName;
-  size_t remaining = mEventPtr->messageLen - 2;
-  uint8_t *msgPtr = mEventPtr->message + 2;
+  size_t remaining = m_event_ptr->messageLen - 2;
+  uint8_t *msgPtr = m_event_ptr->message + 2;
 
   // file name
-  if (!Serialization::DecodeString(&msgPtr, &remaining, &fileName))
+  if (!Serialization::decode_string(&msgPtr, &remaining, &fileName))
     goto abort;
 
-  mBroker->Length(&cb, fileName);
+  m_broker->length(&cb, fileName);
 
   return;
 

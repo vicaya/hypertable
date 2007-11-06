@@ -27,7 +27,7 @@
 
 using namespace hypertable;
 
-const char *CommandShutdown::msUsage[] = {
+const char *CommandShutdown::ms_usage[] = {
   "shutdown [now]",
   "",
   "  This command sends a shutdown request to the DfsBroker",
@@ -44,18 +44,18 @@ int CommandShutdown::run() {
   uint16_t flags = 0;
   EventPtr eventPtr;
 
-  if (mArgs.size() > 0) {
-    if (mArgs[0].first == "now")
+  if (m_args.size() > 0) {
+    if (m_args[0].first == "now")
       flags |= DfsBroker::Protocol::SHUTDOWN_FLAG_IMMEDIATE;
     else {
-      Usage::Dump(msUsage);
+      Usage::dump(ms_usage);
       return -1;
     }
   }
 
-  mClient->Shutdown(flags, &syncHandler);
+  m_client->shutdown(flags, &syncHandler);
 
-  syncHandler.WaitForReply(eventPtr);
+  syncHandler.wait_for_reply(eventPtr);
 
   return Error::OK;
 }

@@ -32,16 +32,16 @@ using namespace hypertable;
 /**
  *
  */
-CommitLog::CommitLog(Filesystem *fs, std::string &logDir, int64_t logFileSize) : mFs(fs), mLogDir(logDir), mLogFile(), mMaxFileSize(logFileSize), mCurLogLength(0), mCurLogNum(0), mMutex(), mFileInfoQueue() {
+CommitLog::CommitLog(Filesystem *fs, std::string &logDir, int64_t logFileSize) : m_fs(fs), m_log_dir(logDir), m_log_file(), m_max_file_size(logFileSize), m_cur_log_length(0), m_cur_log_num(0), m_mutex(), m_file_info_queue() {
   int error;
 
-  if (mLogDir.find('/', mLogDir.length()-1) == string::npos)
-    mLogDir += "/";
+  if (m_log_dir.find('/', m_log_dir.length()-1) == string::npos)
+    m_log_dir += "/";
 
-  mLogFile = mLogDir + mCurLogNum;
+  m_log_file = m_log_dir + m_cur_log_num;
 
-  if ((error = mFs->Create(mLogFile, true, 8192, 3, 67108864, &mFd)) != Error::OK) {
-    LOG_VA_ERROR("Problem creating commit log file '%s' - %s", mLogFile.c_str(), Error::GetText(error));
+  if ((error = m_fs->create(m_log_file, true, 8192, 3, 67108864, &m_fd)) != Error::OK) {
+    LOG_VA_ERROR("Problem creating commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
     exit(1);
   }
 
@@ -52,7 +52,7 @@ CommitLog::CommitLog(Filesystem *fs, std::string &logDir, int64_t logFileSize) :
 /**
  * 
  */
-int CommitLog::Write(const char *tableName, uint8_t *data, uint32_t len, uint64_t timestamp) {
+int CommitLog::write(const char *tableName, uint8_t *data, uint32_t len, uint64_t timestamp) {
   uint32_t totalLen = sizeof(CommitLogHeaderT) + strlen(tableName) + 1 + len;
   uint8_t *block = new uint8_t [ totalLen ];
   CommitLogHeaderT *header = (CommitLogHeaderT *)block;
@@ -85,18 +85,18 @@ int CommitLog::Write(const char *tableName, uint8_t *data, uint32_t len, uint64_
     checksum += *ptr;
   header->checksum = checksum;
 
-  if ((error = mFs->Append(mFd, block, totalLen)) != Error::OK)
+  if ((error = m_fs->append(m_fd, block, totalLen)) != Error::OK)
     return error;
 
-  if ((error = mFs->Flush(mFd)) != Error::OK)
+  if ((error = m_fs->flush(m_fd)) != Error::OK)
     return error;
 
-  mCurLogLength += totalLen;
+  m_cur_log_length += totalLen;
 
   /**
    * Roll the log
    */
-  if (mCurLogLength > mMaxFileSize) {
+  if (m_cur_log_length > m_max_file_size) {
     char buf[32];
 
     /**
@@ -111,33 +111,33 @@ int CommitLog::Write(const char *tableName, uint8_t *data, uint32_t len, uint64_
       checksum += *ptr;
     header->checksum = checksum;
 
-    if ((error = mFs->Append(mFd, header, sizeof(CommitLogHeaderT))) != Error::OK) {
-      LOG_VA_ERROR("Problem appending %d bytes to commit log file '%s' - %s", sizeof(CommitLogHeaderT), mLogFile.c_str(), Error::GetText(error));
+    if ((error = m_fs->append(m_fd, header, sizeof(CommitLogHeaderT))) != Error::OK) {
+      LOG_VA_ERROR("Problem appending %d bytes to commit log file '%s' - %s", sizeof(CommitLogHeaderT), m_log_file.c_str(), Error::get_text(error));
       return error;
     }
 
-    if ((error = mFs->Flush(mFd)) != Error::OK) {
-      LOG_VA_ERROR("Problem flushing commit log file '%s' - %s", mLogFile.c_str(), Error::GetText(error));
+    if ((error = m_fs->flush(m_fd)) != Error::OK) {
+      LOG_VA_ERROR("Problem flushing commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
       return error;
     }
 
-    if ((error = mFs->Close(mFd)) != Error::OK) {
-      LOG_VA_ERROR("Problem closing commit log file '%s' - %s", mLogFile.c_str(), Error::GetText(error));
+    if ((error = m_fs->close(m_fd)) != Error::OK) {
+      LOG_VA_ERROR("Problem closing commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
       return error;
     }
 
     fileInfo.timestamp = timestamp;
-    fileInfo.fname = mLogFile;
-    mFileInfoQueue.push(fileInfo);
+    fileInfo.fname = m_log_file;
+    m_file_info_queue.push(fileInfo);
 
-    mCurLogNum++;
-    sprintf(buf, "%d", mCurLogNum);
-    mLogFile = mLogDir + buf;
+    m_cur_log_num++;
+    sprintf(buf, "%d", m_cur_log_num);
+    m_log_file = m_log_dir + buf;
 
-    mCurLogLength = 0;
+    m_cur_log_length = 0;
 
-    if ((error = mFs->Create(mLogFile, true, 8192, 3, 67108864, &mFd)) != Error::OK) {
-      LOG_VA_ERROR("Problem creating commit log file '%s' - %s", mLogFile.c_str(), Error::GetText(error));
+    if ((error = m_fs->create(m_log_file, true, 8192, 3, 67108864, &m_fd)) != Error::OK) {
+      LOG_VA_ERROR("Problem creating commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
       return error;
     }
 
@@ -151,7 +151,7 @@ int CommitLog::Write(const char *tableName, uint8_t *data, uint32_t len, uint64_
 /**
  * 
  */
-int CommitLog::Close(uint64_t timestamp) {
+int CommitLog::close(uint64_t timestamp) {
   CommitLogHeaderT *header = new CommitLogHeaderT[1];
   int error = Error::OK;
   memcpy(header->marker, "-BLOCK--", 8);
@@ -159,18 +159,18 @@ int CommitLog::Close(uint64_t timestamp) {
   header->checksum = 0;
   header->length = sizeof(CommitLogHeaderT);
 
-  if ((error = mFs->Append(mFd, header, sizeof(CommitLogHeaderT))) != Error::OK) {
-    LOG_VA_ERROR("Problem appending %d bytes to commit log file '%s' - %s", sizeof(CommitLogHeaderT), mLogFile.c_str(), Error::GetText(error));
+  if ((error = m_fs->append(m_fd, header, sizeof(CommitLogHeaderT))) != Error::OK) {
+    LOG_VA_ERROR("Problem appending %d bytes to commit log file '%s' - %s", sizeof(CommitLogHeaderT), m_log_file.c_str(), Error::get_text(error));
       return error;
   }
 
-  if ((error = mFs->Flush(mFd)) != Error::OK) {
-    LOG_VA_ERROR("Problem flushing commit log file '%s' - %s", mLogFile.c_str(), Error::GetText(error));
+  if ((error = m_fs->flush(m_fd)) != Error::OK) {
+    LOG_VA_ERROR("Problem flushing commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
     return error;
   }
 
-  if ((error = mFs->Close(mFd)) != Error::OK) {
-    LOG_VA_ERROR("Problem closing commit log file '%s' - %s", mLogFile.c_str(), Error::GetText(error));
+  if ((error = m_fs->close(m_fd)) != Error::OK) {
+    LOG_VA_ERROR("Problem closing commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
     return error;
   }
 
@@ -182,16 +182,16 @@ int CommitLog::Close(uint64_t timestamp) {
 /**
  * 
  */
-int CommitLog::Purge(uint64_t timestamp) {
+int CommitLog::purge(uint64_t timestamp) {
   CommitLogFileInfoT fileInfo;
   int error = Error::OK;
 
-  while (!mFileInfoQueue.empty()) {
-    fileInfo = mFileInfoQueue.front();
+  while (!m_file_info_queue.empty()) {
+    fileInfo = m_file_info_queue.front();
     if (fileInfo.timestamp < timestamp) {
       // should do something on error, but for now, just move on
-      if ((error = mFs->Remove(fileInfo.fname)) == Error::OK)
-	mFileInfoQueue.pop();
+      if ((error = m_fs->remove(fileInfo.fname)) == Error::OK)
+	m_file_info_queue.pop();
     }
     else
       break;

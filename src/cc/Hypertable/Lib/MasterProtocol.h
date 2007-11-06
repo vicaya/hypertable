@@ -40,17 +40,17 @@ namespace hypertable {
     static const short COMMAND_REGISTER_SERVER = 3;
     static const short COMMAND_MAX             = 4;
 
-    static const char *mCommandStrings[];
+    static const char *m_command_strings[];
 
-    static CommBuf *CreateCreateTableRequest(const char *tableName, const char *schemaString);
+    static CommBuf *create_create_table_request(const char *tableName, const char *schemaString);
 
-    static CommBuf *CreateGetSchemaRequest(const char *tableName);
+    static CommBuf *create_get_schema_request(const char *tableName);
 
-    static CommBuf *CreateStatusRequest();
+    static CommBuf *create_status_request();
 
-    static CommBuf *CreateRegisterServerRequest(std::string &serverIdStr);
+    static CommBuf *create_register_server_request(std::string &serverIdStr);
 
-    virtual const char *CommandText(short command);
+    virtual const char *command_text(short command);
     
   };
 

@@ -56,11 +56,11 @@ using namespace hypertable;
 /**
  */
 Comm::Comm() {
-  if (ReactorFactory::msReactors.size() == 0) {
-    LOG_ERROR("ReactorFactory::Initialize must be called before creating AsyncComm::Comm object");
+  if (ReactorFactory::ms_reactors.size() == 0) {
+    LOG_ERROR("ReactorFactory::initialize must be called before creating AsyncComm::comm object");
     DUMP_CORE;
   }
-  mTimerReactor = ReactorFactory::GetReactor();
+  m_timer_reactor = ReactorFactory::get_reactor();
 }
 
 
@@ -71,22 +71,22 @@ Comm::Comm() {
 Comm::~Comm() {
 
   set<IOHandler *> handlers;
-  mHandlerMap.DecomissionAll(handlers);
+  m_handler_map.decomission_all(handlers);
   for (set<IOHandler *>::iterator iter = handlers.begin(); iter != handlers.end(); ++iter)
-    (*iter)->Shutdown();
+    (*iter)->shutdown();
 
   // wait for all decomissioned handlers to get purged by Reactor
-  mHandlerMap.WaitForEmpty();
+  m_handler_map.wait_for_empty();
 }
 
 
 
 /**
  */
-int Comm::Connect(struct sockaddr_in &addr, DispatchHandlerPtr &defaultHandlerPtr) {
+int Comm::connect(struct sockaddr_in &addr, DispatchHandlerPtr &defaultHandlerPtr) {
   int sd;
 
-  if (mHandlerMap.ContainsHandler(addr))
+  if (m_handler_map.contains_handler(addr))
     return Error::COMM_ALREADY_CONNECTED;
 
   if ((sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
@@ -94,7 +94,7 @@ int Comm::Connect(struct sockaddr_in &addr, DispatchHandlerPtr &defaultHandlerPt
     exit(1);
   }
 
-  return ConnectSocket(sd, addr, defaultHandlerPtr);
+  return connect_socket(sd, addr, defaultHandlerPtr);
 }
 
 
@@ -102,10 +102,10 @@ int Comm::Connect(struct sockaddr_in &addr, DispatchHandlerPtr &defaultHandlerPt
 /**
  *
  */
-int Comm::Connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, DispatchHandlerPtr &defaultHandlerPtr) {
+int Comm::connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, DispatchHandlerPtr &defaultHandlerPtr) {
   int sd;
 
-  if (mHandlerMap.ContainsHandler(addr))
+  if (m_handler_map.contains_handler(addr))
     return Error::COMM_ALREADY_CONNECTED;
 
   if ((sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
@@ -119,23 +119,23 @@ int Comm::Connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, Dispa
     exit(1);
   }
 
-  return ConnectSocket(sd, addr, defaultHandlerPtr);
+  return connect_socket(sd, addr, defaultHandlerPtr);
 }
 
 
 /**
  *
  */
-int Comm::Listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chfPtr) {
+int Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chfPtr) {
   DispatchHandlerPtr nullHandlerPtr(0);
-  return Listen(addr, chfPtr, nullHandlerPtr);
+  return listen(addr, chfPtr, nullHandlerPtr);
 }
 
 
 /**
  *
  */
-int Comm::Listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chfPtr, DispatchHandlerPtr &defaultHandlerPtr) {
+int Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chfPtr, DispatchHandlerPtr &defaultHandlerPtr) {
   IOHandlerPtr handlerPtr;
   IOHandlerAccept *acceptHandler;
   int one = 1;
@@ -163,59 +163,59 @@ int Comm::Listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chfPtr, 
     exit(1);
   }
 
-  if (listen(sd, 64) < 0) {
+  if (::listen(sd, 64) < 0) {
     cerr << "listen() failure: " << strerror(errno) << endl;
     exit(1);
   }
 
-  handlerPtr = acceptHandler = new IOHandlerAccept(sd, addr, defaultHandlerPtr, mHandlerMap, chfPtr);
-  mHandlerMap.InsertHandler(acceptHandler);
-  acceptHandler->StartPolling();
+  handlerPtr = acceptHandler = new IOHandlerAccept(sd, addr, defaultHandlerPtr, m_handler_map, chfPtr);
+  m_handler_map.insert_handler(acceptHandler);
+  acceptHandler->start_polling();
 
   return Error::OK;
 }
 
 
 
-int Comm::SendRequest(struct sockaddr_in &addr, time_t timeout, CommBufPtr &cbufPtr, DispatchHandler *responseHandler) {
-  boost::mutex::scoped_lock lock(mMutex);
+int Comm::send_request(struct sockaddr_in &addr, time_t timeout, CommBufPtr &cbufPtr, DispatchHandler *responseHandler) {
+  boost::mutex::scoped_lock lock(m_mutex);
   IOHandlerDataPtr dataHandlerPtr;
   Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
   int error = Error::OK;
 
-  cbufPtr->ResetDataPointers();
+  cbufPtr->reset_data_pointers();
 
-  if (!mHandlerMap.LookupDataHandler(addr, dataHandlerPtr)) {
+  if (!m_handler_map.lookup_data_handler(addr, dataHandlerPtr)) {
     LOG_VA_ERROR("No connection for %s:%d", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
     return Error::COMM_NOT_CONNECTED;
   }
 
   mheader->flags |= Header::FLAGS_MASK_REQUEST;
 
-  if ((error = dataHandlerPtr->SendMessage(cbufPtr, timeout, responseHandler)) != Error::OK)
-    dataHandlerPtr->Shutdown();
+  if ((error = dataHandlerPtr->send_message(cbufPtr, timeout, responseHandler)) != Error::OK)
+    dataHandlerPtr->shutdown();
 
   return error;
 }
 
 
-int Comm::SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr) {
-  boost::mutex::scoped_lock lock(mMutex);
+int Comm::send_response(struct sockaddr_in &addr, CommBufPtr &cbufPtr) {
+  boost::mutex::scoped_lock lock(m_mutex);
   IOHandlerDataPtr dataHandlerPtr;
   Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
   int error = Error::OK;
 
-  cbufPtr->ResetDataPointers();
+  cbufPtr->reset_data_pointers();
 
-  if (!mHandlerMap.LookupDataHandler(addr, dataHandlerPtr)) {
+  if (!m_handler_map.lookup_data_handler(addr, dataHandlerPtr)) {
     LOG_VA_ERROR("No connection for %s:%d", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
     return Error::COMM_NOT_CONNECTED;
   }
 
   mheader->flags &= Header::FLAGS_MASK_RESPONSE;
 
-  if ((error = dataHandlerPtr->SendMessage(cbufPtr)) != Error::OK)
-    dataHandlerPtr->Shutdown();
+  if ((error = dataHandlerPtr->send_message(cbufPtr)) != Error::OK)
+    dataHandlerPtr->shutdown();
 
   return error;
 }
@@ -225,7 +225,7 @@ int Comm::SendResponse(struct sockaddr_in &addr, CommBufPtr &cbufPtr) {
 /**
  * 
  */
-int Comm::CreateDatagramReceiveSocket(struct sockaddr_in *addr, DispatchHandlerPtr &dispatchHandlerPtr) {
+int Comm::create_datagram_receive_socket(struct sockaddr_in *addr, DispatchHandlerPtr &dispatchHandlerPtr) {
   IOHandlerPtr handlerPtr;
   IOHandlerDatagram *datagramHandler;
   int one = 1;
@@ -237,7 +237,7 @@ int Comm::CreateDatagramReceiveSocket(struct sockaddr_in *addr, DispatchHandlerP
   }
 
   // Set to non-blocking
-  FileUtils::SetFlags(sd, O_NONBLOCK);
+  FileUtils::set_flags(sd, O_NONBLOCK);
 
   int bufsize = 4*32768;
   if (setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize, sizeof(bufsize)) < 0) {
@@ -257,12 +257,12 @@ int Comm::CreateDatagramReceiveSocket(struct sockaddr_in *addr, DispatchHandlerP
     exit(1);
   }
 
-  handlerPtr = datagramHandler = new IOHandlerDatagram(sd, *addr, dispatchHandlerPtr, mHandlerMap);
+  handlerPtr = datagramHandler = new IOHandlerDatagram(sd, *addr, dispatchHandlerPtr, m_handler_map);
 
-  handlerPtr->GetLocalAddress(addr);
+  handlerPtr->get_local_address(addr);
 
-  mHandlerMap.InsertDatagramHandler(datagramHandler);
-  datagramHandler->StartPolling();
+  m_handler_map.insert_datagram_handler(datagramHandler);
+  datagramHandler->start_polling();
 
   return Error::OK;
 }
@@ -271,24 +271,24 @@ int Comm::CreateDatagramReceiveSocket(struct sockaddr_in *addr, DispatchHandlerP
 /**
  * 
  */
-int Comm::SendDatagram(struct sockaddr_in &addr, struct sockaddr_in &sendAddr, CommBufPtr &cbufPtr) {
-  boost::mutex::scoped_lock lock(mMutex);
+int Comm::send_datagram(struct sockaddr_in &addr, struct sockaddr_in &sendAddr, CommBufPtr &cbufPtr) {
+  boost::mutex::scoped_lock lock(m_mutex);
   IOHandlerDatagramPtr datagramHandlerPtr;
   Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
   int error = Error::OK;
 
-  cbufPtr->ResetDataPointers();
+  cbufPtr->reset_data_pointers();
 
-  if (!mHandlerMap.LookupDatagramHandler(sendAddr, datagramHandlerPtr)) {
+  if (!m_handler_map.lookup_datagram_handler(sendAddr, datagramHandlerPtr)) {
     std::string str;
-    LOG_VA_ERROR("Datagram send address %s not registered", InetAddr::StringFormat(str, sendAddr));
+    LOG_VA_ERROR("Datagram send address %s not registered", InetAddr::string_format(str, sendAddr));
     DUMP_CORE;
   }
 
   mheader->flags &= Header::FLAGS_MASK_REQUEST;
 
-  if ((error = datagramHandlerPtr->SendMessage(addr, cbufPtr)) != Error::OK)
-    datagramHandlerPtr->Shutdown();
+  if ((error = datagramHandlerPtr->send_message(addr, cbufPtr)) != Error::OK)
+    datagramHandlerPtr->shutdown();
 
   return error;
 }
@@ -298,13 +298,13 @@ int Comm::SendDatagram(struct sockaddr_in &addr, struct sockaddr_in &sendAddr, C
 /**
  *
  */
-int Comm::SetTimer(uint64_t durationMillis, DispatchHandler *handler) {
+int Comm::set_timer(uint64_t durationMillis, DispatchHandler *handler) {
   struct TimerT timer;
   boost::xtime_get(&timer.expireTime, boost::TIME_UTC);
   timer.expireTime.sec += durationMillis / 1000LL;
   timer.expireTime.nsec += (durationMillis % 1000LL) * 1000000LL;
   timer.handler = handler;
-  mTimerReactor->AddTimer(timer);
+  m_timer_reactor->add_timer(timer);
   return Error::OK;
 }
 
@@ -313,27 +313,27 @@ int Comm::SetTimer(uint64_t durationMillis, DispatchHandler *handler) {
 /**
  *
  */
-int Comm::SetTimerAbsolute(boost::xtime expireTime, DispatchHandler *handler) {
+int Comm::set_timer_absolute(boost::xtime expireTime, DispatchHandler *handler) {
   struct TimerT timer;  
   memcpy(&timer.expireTime, &expireTime, sizeof(boost::xtime));
   timer.handler = handler;
-  mTimerReactor->AddTimer(timer);
+  m_timer_reactor->add_timer(timer);
   return Error::OK;
 }
 
 /**
  *
  */
-int Comm::GetLocalAddress(struct sockaddr_in addr, struct sockaddr_in *localAddr) {
-  boost::mutex::scoped_lock lock(mMutex);
+int Comm::get_local_address(struct sockaddr_in addr, struct sockaddr_in *localAddr) {
+  boost::mutex::scoped_lock lock(m_mutex);
   IOHandlerDataPtr dataHandlerPtr;
 
-  if (!mHandlerMap.LookupDataHandler(addr, dataHandlerPtr)) {
+  if (!m_handler_map.lookup_data_handler(addr, dataHandlerPtr)) {
     LOG_VA_ERROR("No connection for %s:%d", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
     return Error::COMM_NOT_CONNECTED;
   }
 
-  dataHandlerPtr->GetLocalAddress(localAddr);
+  dataHandlerPtr->get_local_address(localAddr);
 
   return Error::OK;
 }
@@ -342,13 +342,13 @@ int Comm::GetLocalAddress(struct sockaddr_in addr, struct sockaddr_in *localAddr
 /**
  * 
  */
-int Comm::CloseSocket(struct sockaddr_in &addr) {
+int Comm::close_socket(struct sockaddr_in &addr) {
   IOHandlerPtr handlerPtr;
 
-  if (!mHandlerMap.DecomissionHandler(addr, handlerPtr))
+  if (!m_handler_map.decomission_handler(addr, handlerPtr))
     return Error::COMM_NOT_CONNECTED;
 
-  handlerPtr->Shutdown();
+  handlerPtr->shutdown();
 
   return Error::OK;
 }
@@ -362,13 +362,13 @@ int Comm::CloseSocket(struct sockaddr_in &addr) {
 /**
  *
  */
-int Comm::ConnectSocket(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &defaultHandlerPtr) {
+int Comm::connect_socket(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &defaultHandlerPtr) {
   IOHandlerPtr handlerPtr;
   IOHandlerData *dataHandler;
   int one = 1;
 
   // Set to non-blocking
-  FileUtils::SetFlags(sd, O_NONBLOCK);
+  FileUtils::set_flags(sd, O_NONBLOCK);
 
 #if defined(__linux__)
   if (setsockopt(sd, SOL_TCP, TCP_NODELAY, &one, sizeof(one)) < 0)
@@ -378,24 +378,24 @@ int Comm::ConnectSocket(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &de
     LOG_VA_WARN("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
 #endif
 
-  handlerPtr = dataHandler = new IOHandlerData(sd, addr, defaultHandlerPtr, mHandlerMap);
-  mHandlerMap.InsertHandler(dataHandler);
+  handlerPtr = dataHandler = new IOHandlerData(sd, addr, defaultHandlerPtr, m_handler_map);
+  m_handler_map.insert_handler(dataHandler);
 
-  while (connect(sd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) < 0) {
+  while (::connect(sd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) < 0) {
     if (errno == EINTR) {
       poll(0, 0, 1000);
       continue;
     }
     else if (errno == EINPROGRESS) {
-      dataHandler->StartPolling();
-      dataHandler->AddPollInterest(Reactor::READ_READY|Reactor::WRITE_READY);
+      dataHandler->start_polling();
+      dataHandler->add_poll_interest(Reactor::READ_READY|Reactor::WRITE_READY);
       return Error::OK;
     }
     LOG_VA_ERROR("connect() failure : %s", strerror(errno));
     exit(1);
   }
 
-  dataHandler->StartPolling();
+  dataHandler->start_polling();
 
   return Error::OK;
 }

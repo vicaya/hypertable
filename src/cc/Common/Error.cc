@@ -152,7 +152,7 @@ const int Error::RANGESERVER_INVALID_SCANNER_ID;
 const int Error::RANGESERVER_SCHEMA_PARSE_ERROR;
 const int Error::RANGESERVER_SCHEMA_INVALID_CFID;
 
-const char *Error::GetText(int error) {
+const char *Error::get_text(int error) {
   const char *text = textMap[error];
   if (text == 0)
     return "ERROR NOT REGISTERED";

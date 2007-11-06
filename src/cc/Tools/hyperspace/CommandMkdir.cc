@@ -30,7 +30,7 @@ using namespace hypertable;
 using namespace Hyperspace;
 using namespace std;
 
-const char *CommandMkdir::msUsage[] = {
+const char *CommandMkdir::ms_usage[] = {
   "mkdir <dir>",
   "  This command issues a MKDIR request to Hyperspace.",
   (const char *)0
@@ -38,15 +38,15 @@ const char *CommandMkdir::msUsage[] = {
 
 int CommandMkdir::run() {
 
-  if (mArgs.size() != 1) {
+  if (m_args.size() != 1) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
     return -1;
   }
 
-  if (mArgs[0].second != "") {
-    cerr << "Invalid argument - " << mArgs[0].second << endl;
+  if (m_args[0].second != "") {
+    cerr << "Invalid argument - " << m_args[0].second << endl;
     return -1;
   }
 
-  return mSession->Mkdir(mArgs[0].first);
+  return m_session->mkdir(m_args[0].first);
 }

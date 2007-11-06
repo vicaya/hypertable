@@ -35,49 +35,49 @@ extern "C" {
 using namespace hypertable;
 using namespace Hyperspace;
 
-ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsPtr, Session *session) : mComm(comm), mSession(session), mSessionId(0), mLastKnownEvent(0) {
+ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsPtr, Session *session) : m_comm(comm), m_session(session), m_session_id(0), m_last_known_event(0) {
   int error;
   uint16_t masterPort;
   const char *masterHost;
 
-  mVerbose = propsPtr->getPropertyBool("verbose", false);
+  m_verbose = propsPtr->getPropertyBool("verbose", false);
   masterHost = propsPtr->getProperty("Hyperspace.Master.host", "localhost");
   masterPort = (uint16_t)propsPtr->getPropertyInt("Hyperspace.Master.port", Master::DEFAULT_MASTER_PORT);
-  mLeaseInterval = (uint32_t)propsPtr->getPropertyInt("Hyperspace.Lease.Interval", Master::DEFAULT_LEASE_INTERVAL);
-  mKeepAliveInterval = (uint32_t)propsPtr->getPropertyInt("Hyperspace.KeepAlive.Interval", Master::DEFAULT_KEEPALIVE_INTERVAL);
+  m_lease_interval = (uint32_t)propsPtr->getPropertyInt("Hyperspace.Lease.Interval", Master::DEFAULT_LEASE_INTERVAL);
+  m_keep_alive_interval = (uint32_t)propsPtr->getPropertyInt("Hyperspace.KeepAlive.Interval", Master::DEFAULT_KEEPALIVE_INTERVAL);
   
-  if (!InetAddr::Initialize(&mMasterAddr, masterHost, masterPort))
+  if (!InetAddr::initialize(&m_master_addr, masterHost, masterPort))
     exit(1);
 
-  if (mVerbose) {
-    cout << "Hyperspace.KeepAlive.Interval=" << mKeepAliveInterval << endl;
-    cout << "Hyperspace.Lease.Interval=" << mLeaseInterval << endl;
+  if (m_verbose) {
+    cout << "Hyperspace.KeepAlive.Interval=" << m_keep_alive_interval << endl;
+    cout << "Hyperspace.Lease.Interval=" << m_lease_interval << endl;
     cout << "Hyperspace.Master.host=" << masterHost << endl;
     cout << "Hyperspace.Master.port=" << masterPort << endl;
   }
 
-  boost::xtime_get(&mLastKeepAliveSendTime, boost::TIME_UTC);
-  boost::xtime_get(&mJeopardyTime, boost::TIME_UTC);
-  mJeopardyTime.sec += mLeaseInterval;
+  boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC);
+  boost::xtime_get(&m_jeopardy_time, boost::TIME_UTC);
+  m_jeopardy_time.sec += m_lease_interval;
 
-  InetAddr::Initialize(&mLocalAddr, INADDR_ANY, 0);
+  InetAddr::initialize(&m_local_addr, INADDR_ANY, 0);
 
   DispatchHandlerPtr dhp(this);
-  if ((error = mComm->CreateDatagramReceiveSocket(&mLocalAddr, dhp)) != Error::OK) {
+  if ((error = m_comm->create_datagram_receive_socket(&m_local_addr, dhp)) != Error::OK) {
     std::string str;
-    LOG_VA_ERROR("Unable to create datagram receive socket %s - %s", InetAddr::StringFormat(str, mLocalAddr), Error::GetText(error));
+    LOG_VA_ERROR("Unable to create datagram receive socket %s - %s", InetAddr::string_format(str, m_local_addr), Error::get_text(error));
     exit(1);
   }
 
-  CommBufPtr commBufPtr( Hyperspace::Protocol::CreateClientKeepaliveRequest(mSessionId, mLastKnownEvent) );
+  CommBufPtr commBufPtr( Hyperspace::Protocol::create_client_keepalive_request(m_session_id, m_last_known_event) );
 
-  if ((error = mComm->SendDatagram(mMasterAddr, mLocalAddr, commBufPtr) != Error::OK)) {
-    LOG_VA_ERROR("Unable to send datagram - %s", Error::GetText(error));
+  if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, commBufPtr) != Error::OK)) {
+    LOG_VA_ERROR("Unable to send datagram - %s", Error::get_text(error));
     exit(1);
   }
 
-  if ((error = mComm->SetTimer(mKeepAliveInterval*1000, this)) != Error::OK) {
-    LOG_VA_ERROR("Problem setting timer - %s", Error::GetText(error));
+  if ((error = m_comm->set_timer(m_keep_alive_interval*1000, this)) != Error::OK) {
+    LOG_VA_ERROR("Problem setting timer - %s", Error::get_text(error));
     exit(1);
   }
 
@@ -88,7 +88,7 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsP
  *
  */
 ClientKeepaliveHandler::~ClientKeepaliveHandler() {
-  mComm->CloseSocket(mLocalAddr);
+  m_comm->close_socket(m_local_addr);
 }
 
 
@@ -97,12 +97,12 @@ ClientKeepaliveHandler::~ClientKeepaliveHandler() {
  *
  */
 void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
-  boost::mutex::scoped_lock lock(mMutex);
+  boost::mutex::scoped_lock lock(m_mutex);
   int error;
   uint16_t command = (uint16_t)-1;
 
   /**
-  if (mVerbose) {
+  if (m_verbose) {
     LOG_VA_INFO("%s", eventPtr->toString().c_str());
   }
   **/
@@ -113,7 +113,7 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 
     try {
 
-      if (!Serialization::DecodeShort(&msgPtr, &remaining, &command))
+      if (!Serialization::decode_short(&msgPtr, &remaining, &command))
 	throw ProtocolException("Truncated Request");
 
       // sanity check command code
@@ -130,91 +130,91 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 	  uint32_t eventMask;
 	  const char *name;
 
-	  if (mSession->GetState() == Session::STATE_EXPIRED)
+	  if (m_session->get_state() == Session::STATE_EXPIRED)
 	    return;
 
 	  // update jeopardy time
-	  memcpy(&mJeopardyTime, &mLastKeepAliveSendTime, sizeof(boost::xtime));
-	  mJeopardyTime.sec += mLeaseInterval;
+	  memcpy(&m_jeopardy_time, &m_last_keep_alive_send_time, sizeof(boost::xtime));
+	  m_jeopardy_time.sec += m_lease_interval;
 
-	  if (!Serialization::DecodeLong(&msgPtr, &remaining, &sessionId))
+	  if (!Serialization::decode_long(&msgPtr, &remaining, &sessionId))
 	    throw ProtocolException("Truncated Request");
 
-	  if (!Serialization::DecodeInt(&msgPtr, &remaining, (uint32_t *)&error))
+	  if (!Serialization::decode_int(&msgPtr, &remaining, (uint32_t *)&error))
 	    throw ProtocolException("Truncated Request");
 
 	  if (error != Error::OK) {
 	    if (error != Error::HYPERSPACE_EXPIRED_SESSION) {
-	      LOG_VA_ERROR("Master session error - %s", Error::GetText(error));
+	      LOG_VA_ERROR("Master session error - %s", Error::get_text(error));
 	    }
-	    ExpireSession();
+	    expire_session();
 	    return;
 	  }
 
-	  if (mSessionId == 0) {
-	    mSessionId = sessionId;
-	    if (!mConnHandlerPtr) {
-	      mConnHandlerPtr = new ClientConnectionHandler(mComm, mSession, mLeaseInterval);
-	      mConnHandlerPtr->SetVerboseMode(mVerbose);
-	      mConnHandlerPtr->SetSessionId(mSessionId);
+	  if (m_session_id == 0) {
+	    m_session_id = sessionId;
+	    if (!m_conn_handler_ptr) {
+	      m_conn_handler_ptr = new ClientConnectionHandler(m_comm, m_session, m_lease_interval);
+	      m_conn_handler_ptr->set_verbose_mode(m_verbose);
+	      m_conn_handler_ptr->set_session_id(m_session_id);
 	    }
 	  }
 
-	  if (!Serialization::DecodeInt(&msgPtr, &remaining, &notificationCount)) {
+	  if (!Serialization::decode_int(&msgPtr, &remaining, &notificationCount)) {
 	    throw ProtocolException("Truncated Request");
 	  }
 
 	  for (uint32_t i=0; i<notificationCount; i++) {
 
-	    if (!Serialization::DecodeLong(&msgPtr, &remaining, &handle) ||
-		!Serialization::DecodeLong(&msgPtr, &remaining, &eventId) ||
-		!Serialization::DecodeInt(&msgPtr, &remaining, &eventMask))
+	    if (!Serialization::decode_long(&msgPtr, &remaining, &handle) ||
+		!Serialization::decode_long(&msgPtr, &remaining, &eventId) ||
+		!Serialization::decode_int(&msgPtr, &remaining, &eventMask))
 	      throw ProtocolException("Truncated Request");
 
-	    HandleMapT::iterator iter = mHandleMap.find(handle);
-	    //LOG_VA_INFO("LastKnownEvent=%lld, eventId=%lld eventMask=%d", mLastKnownEvent, eventId, eventMask);
+	    HandleMapT::iterator iter = m_handle_map.find(handle);
+	    //LOG_VA_INFO("LastKnownEvent=%lld, eventId=%lld eventMask=%d", m_last_known_event, eventId, eventMask);
 	    //LOG_VA_INFO("handle=%lldm, eventId=%lld, eventMask=%d", handle, eventId, eventMask);
-	    assert (iter != mHandleMap.end());
+	    assert (iter != m_handle_map.end());
 	    ClientHandleStatePtr handleStatePtr = (*iter).second;
 
 	    if (eventMask == EVENT_MASK_ATTR_SET || eventMask == EVENT_MASK_ATTR_DEL ||
 		eventMask == EVENT_MASK_CHILD_NODE_ADDED || eventMask == EVENT_MASK_CHILD_NODE_REMOVED) {
-	      if (!Serialization::DecodeString(&msgPtr, &remaining, &name))
+	      if (!Serialization::decode_string(&msgPtr, &remaining, &name))
 		throw ProtocolException("Truncated Request");
-	      if (eventId <= mLastKnownEvent)
+	      if (eventId <= m_last_known_event)
 		continue;
 	      if (handleStatePtr->callbackPtr) {
 		if (eventMask == EVENT_MASK_ATTR_SET)
-		  handleStatePtr->callbackPtr->AttrSet(name);
+		  handleStatePtr->callbackPtr->attr_set(name);
 		else if (eventMask == EVENT_MASK_ATTR_DEL)
-		  handleStatePtr->callbackPtr->AttrDel(name);
+		  handleStatePtr->callbackPtr->attr_del(name);
 		else if (eventMask == EVENT_MASK_CHILD_NODE_ADDED)
-		  handleStatePtr->callbackPtr->ChildNodeAdded(name);
+		  handleStatePtr->callbackPtr->child_node_added(name);
 		else
-		  handleStatePtr->callbackPtr->ChildNodeRemoved(name);
+		  handleStatePtr->callbackPtr->child_node_removed(name);
 	      }
 	    }
 	    else if (eventMask == EVENT_MASK_LOCK_ACQUIRED) {
 	      uint32_t mode;
-	      if (!Serialization::DecodeInt(&msgPtr, &remaining, &mode))
+	      if (!Serialization::decode_int(&msgPtr, &remaining, &mode))
 		throw ProtocolException("Truncated Request");
-	      if (eventId <= mLastKnownEvent)
+	      if (eventId <= m_last_known_event)
 		continue;
 	      if (handleStatePtr->callbackPtr)
-		handleStatePtr->callbackPtr->LockAcquired(mode);
+		handleStatePtr->callbackPtr->lock_acquired(mode);
 	    }
 	    else if (eventMask == EVENT_MASK_LOCK_RELEASED) {
-	      if (eventId <= mLastKnownEvent)
+	      if (eventId <= m_last_known_event)
 		continue;
 	      if (handleStatePtr->callbackPtr)
-		handleStatePtr->callbackPtr->LockReleased();
+		handleStatePtr->callbackPtr->lock_released();
 	    }
 	    else if (eventMask == EVENT_MASK_LOCK_GRANTED) {
 	      uint32_t mode;
-	      if (!Serialization::DecodeInt(&msgPtr, &remaining, &mode) ||
-		  !Serialization::DecodeLong(&msgPtr, &remaining, &handleStatePtr->lockGeneration))
+	      if (!Serialization::decode_int(&msgPtr, &remaining, &mode) ||
+		  !Serialization::decode_long(&msgPtr, &remaining, &handleStatePtr->lockGeneration))
 		throw ProtocolException("Truncated Request");
-	      if (eventId <= mLastKnownEvent)
+	      if (eventId <= m_last_known_event)
 		continue;
 	      handleStatePtr->lockStatus = LOCK_STATUS_GRANTED;
 	      handleStatePtr->sequencer->generation = handleStatePtr->lockGeneration;
@@ -222,30 +222,30 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 	      handleStatePtr->cond.notify_all();
 	    }
 
-	    mLastKnownEvent = eventId;
+	    m_last_known_event = eventId;
 	  }
 	  
 	  /**
-	  if (mVerbose) {
-	    LOG_VA_INFO("sessionId = %lld", mSessionId);
+	  if (m_verbose) {
+	    LOG_VA_INFO("sessionId = %lld", m_session_id);
 	  }
 	  **/
 
-	  if (mConnHandlerPtr->Disconnected())
-	    mConnHandlerPtr->InitiateConnection(mMasterAddr);
+	  if (m_conn_handler_ptr->disconnected())
+	    m_conn_handler_ptr->initiate_connection(m_master_addr);
 	  else
-	    state = mSession->StateTransition(Session::STATE_SAFE);
+	    state = m_session->state_transition(Session::STATE_SAFE);
 
 	  if (notificationCount > 0) {
-	    CommBufPtr commBufPtr( Hyperspace::Protocol::CreateClientKeepaliveRequest(mSessionId, mLastKnownEvent) );
-	    boost::xtime_get(&mLastKeepAliveSendTime, boost::TIME_UTC);
-	    if ((error = mComm->SendDatagram(mMasterAddr, mLocalAddr, commBufPtr) != Error::OK)) {
-	      LOG_VA_ERROR("Unable to send datagram - %s", Error::GetText(error));
+	    CommBufPtr commBufPtr( Hyperspace::Protocol::create_client_keepalive_request(m_session_id, m_last_known_event) );
+	    boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC);
+	    if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, commBufPtr) != Error::OK)) {
+	      LOG_VA_ERROR("Unable to send datagram - %s", Error::get_text(error));
 	      exit(1);
 	    }
 	  }
 
-	  assert(mSessionId == sessionId);
+	  assert(m_session_id == sessionId);
 	}
 	break;
       default:
@@ -263,32 +263,32 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
     
     // !!! fix - what about re-ordered packets?
 
-    if ((state = mSession->GetState()) == Session::STATE_EXPIRED)
+    if ((state = m_session->get_state()) == Session::STATE_EXPIRED)
       return;
 
     boost::xtime_get(&now, boost::TIME_UTC);
 
     if (state == Session::STATE_SAFE) {
-      if (xtime_cmp(mJeopardyTime, now) < 0) {
-	mSession->StateTransition(Session::STATE_JEOPARDY);
+      if (xtime_cmp(m_jeopardy_time, now) < 0) {
+	m_session->state_transition(Session::STATE_JEOPARDY);
       }
     }
-    else if (mSession->Expired()) {
-      ExpireSession();
+    else if (m_session->expired()) {
+      expire_session();
       return;
     }
 
-    CommBufPtr commBufPtr( Hyperspace::Protocol::CreateClientKeepaliveRequest(mSessionId, mLastKnownEvent) );
+    CommBufPtr commBufPtr( Hyperspace::Protocol::create_client_keepalive_request(m_session_id, m_last_known_event) );
 
-    boost::xtime_get(&mLastKeepAliveSendTime, boost::TIME_UTC);
+    boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC);
     
-    if ((error = mComm->SendDatagram(mMasterAddr, mLocalAddr, commBufPtr) != Error::OK)) {
-      LOG_VA_ERROR("Unable to send datagram - %s", Error::GetText(error));
+    if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, commBufPtr) != Error::OK)) {
+      LOG_VA_ERROR("Unable to send datagram - %s", Error::get_text(error));
       exit(1);
     }
 
-    if ((error = mComm->SetTimer(mKeepAliveInterval*1000, this)) != Error::OK) {
-      LOG_VA_ERROR("Problem setting timer - %s", Error::GetText(error));
+    if ((error = m_comm->set_timer(m_keep_alive_interval*1000, this)) != Error::OK) {
+      LOG_VA_ERROR("Problem setting timer - %s", Error::get_text(error));
       exit(1);
     }
   }
@@ -299,11 +299,11 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
 
 
 
-void ClientKeepaliveHandler::ExpireSession() {
-  mSession->StateTransition(Session::STATE_EXPIRED);
-  if (mConnHandlerPtr)
-    mConnHandlerPtr->Close();
+void ClientKeepaliveHandler::expire_session() {
+  m_session->state_transition(Session::STATE_EXPIRED);
+  if (m_conn_handler_ptr)
+    m_conn_handler_ptr->close();
   poll(0,0,2000);
-  mConnHandlerPtr = 0;
+  m_conn_handler_ptr = 0;
   return;
 }

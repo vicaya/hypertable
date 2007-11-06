@@ -37,46 +37,46 @@ namespace Hyperspace {
 
   class Event : public hypertable::ReferenceCount {
   public:
-    Event(uint32_t mask) : mMask(mask), mNotificationCount(0) { 
-      boost::mutex::scoped_lock lock(msNextEventIdMutex);
-      mId = msNextEventId++;
+    Event(uint32_t mask) : m_mask(mask), m_notification_count(0) { 
+      boost::mutex::scoped_lock lock(ms_next_event_id_mutex);
+      m_id = ms_next_event_id++;
       return; 
     }
     virtual ~Event() { return; }
 
-    uint64_t GetId() { return mId; }
+    uint64_t get_id() { return m_id; }
 
-    uint32_t GetMask() { return mMask; }
+    uint32_t get_mask() { return m_mask; }
 
-    void IncrementNotificationCount() {
-      boost::mutex::scoped_lock lock(mMutex);
-      mNotificationCount++;
+    void increment_notification_count() {
+      boost::mutex::scoped_lock lock(m_mutex);
+      m_notification_count++;
     }
-    void DecrementNotificationCount() {
-      boost::mutex::scoped_lock lock(mMutex);
-      mNotificationCount--;
-      if (mNotificationCount == 0)
-	mCond.notify_all();
+    void decrement_notification_count() {
+      boost::mutex::scoped_lock lock(m_mutex);
+      m_notification_count--;
+      if (m_notification_count == 0)
+	m_cond.notify_all();
     }
-    void WaitForNotifications() {
-      boost::mutex::scoped_lock lock(mMutex);
-      if (mNotificationCount != 0)
-	mCond.wait(lock);
+    void wait_for_notifications() {
+      boost::mutex::scoped_lock lock(m_mutex);
+      if (m_notification_count != 0)
+	m_cond.wait(lock);
     }
 
-    virtual uint32_t EncodedLength() = 0;
-    virtual void Encode(hypertable::CommBuf *cbuf) = 0;
+    virtual uint32_t encoded_length() = 0;
+    virtual void encode(hypertable::CommBuf *cbuf) = 0;
 
   protected:
 
-    static boost::mutex  msNextEventIdMutex;
-    static uint64_t      msNextEventId;
+    static boost::mutex  ms_next_event_id_mutex;
+    static uint64_t      ms_next_event_id;
 
-    boost::mutex      mMutex;
-    boost::condition  mCond;
-    uint64_t mId;
-    uint32_t mMask;
-    uint32_t mNotificationCount;
+    boost::mutex      m_mutex;
+    boost::condition  m_cond;
+    uint64_t m_id;
+    uint32_t m_mask;
+    uint32_t m_notification_count;
   };
 
   typedef boost::intrusive_ptr<Event> HyperspaceEventPtr;
@@ -88,15 +88,15 @@ namespace Hyperspace {
    */
   class EventNamed : public Event {
   public:
-    EventNamed(uint32_t mask, std::string name) : Event(mask), mName(name) { return; }
-    virtual uint32_t EncodedLength() { return 12 + hypertable::Serialization::EncodedLengthString(mName); }
-    virtual void Encode(hypertable::CommBuf *cbuf) { 
-      cbuf->AppendLong(mId);
-      cbuf->AppendInt(mMask);
-      cbuf->AppendString(mName);
+    EventNamed(uint32_t mask, std::string name) : Event(mask), m_name(name) { return; }
+    virtual uint32_t encoded_length() { return 12 + hypertable::Serialization::encoded_length_string(m_name); }
+    virtual void encode(hypertable::CommBuf *cbuf) { 
+      cbuf->append_long(m_id);
+      cbuf->append_int(m_mask);
+      cbuf->append_string(m_name);
     }
   private:
-    std::string mName;
+    std::string m_name;
   };
 
 
@@ -106,15 +106,15 @@ namespace Hyperspace {
    */
   class EventLockAcquired : public Event {
   public:
-    EventLockAcquired(uint32_t mode) : Event(EVENT_MASK_LOCK_ACQUIRED), mMode(mode) { return; }
-    virtual uint32_t EncodedLength() { return 16; }
-    virtual void Encode(hypertable::CommBuf *cbuf) { 
-      cbuf->AppendLong(mId);
-      cbuf->AppendInt(mMask);
-      cbuf->AppendInt(mMode);
+    EventLockAcquired(uint32_t mode) : Event(EVENT_MASK_LOCK_ACQUIRED), m_mode(mode) { return; }
+    virtual uint32_t encoded_length() { return 16; }
+    virtual void encode(hypertable::CommBuf *cbuf) { 
+      cbuf->append_long(m_id);
+      cbuf->append_int(m_mask);
+      cbuf->append_int(m_mode);
     }
   private:
-    uint32_t mMode;
+    uint32_t m_mode;
   };
 
   /**
@@ -124,10 +124,10 @@ namespace Hyperspace {
   class EventLockReleased : public Event {
   public:
     EventLockReleased() : Event(EVENT_MASK_LOCK_RELEASED) { return; }
-    virtual uint32_t EncodedLength() { return 12; }
-    virtual void Encode(hypertable::CommBuf *cbuf) { 
-      cbuf->AppendLong(mId);
-      cbuf->AppendInt(mMask);
+    virtual uint32_t encoded_length() { return 12; }
+    virtual void encode(hypertable::CommBuf *cbuf) { 
+      cbuf->append_long(m_id);
+      cbuf->append_int(m_mask);
     }
   };
 
@@ -137,17 +137,17 @@ namespace Hyperspace {
    */
   class EventLockGranted : public Event {
   public:
-    EventLockGranted(uint32_t mode, uint64_t generation) : Event(EVENT_MASK_LOCK_GRANTED), mMode(mode), mGeneration(generation) { return; }
-    virtual uint32_t EncodedLength() { return 24; }
-    virtual void Encode(hypertable::CommBuf *cbuf) { 
-      cbuf->AppendLong(mId);
-      cbuf->AppendInt(mMask);
-      cbuf->AppendInt(mMode);
-      cbuf->AppendLong(mGeneration);
+    EventLockGranted(uint32_t mode, uint64_t generation) : Event(EVENT_MASK_LOCK_GRANTED), m_mode(mode), m_generation(generation) { return; }
+    virtual uint32_t encoded_length() { return 24; }
+    virtual void encode(hypertable::CommBuf *cbuf) { 
+      cbuf->append_long(m_id);
+      cbuf->append_int(m_mask);
+      cbuf->append_int(m_mode);
+      cbuf->append_long(m_generation);
     }
   private:
-    uint32_t mMode;
-    uint64_t mGeneration;
+    uint32_t m_mode;
+    uint64_t m_generation;
   };
 }
 

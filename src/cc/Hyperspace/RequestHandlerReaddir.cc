@@ -35,16 +35,16 @@ using namespace hypertable;
  *
  */
 void RequestHandlerReaddir::run() {
-  ResponseCallbackReaddir cb(mComm, mEventPtr);
-  size_t remaining = mEventPtr->messageLen - 2;
-  uint8_t *msgPtr = mEventPtr->message + 2;
+  ResponseCallbackReaddir cb(m_comm, m_event_ptr);
+  size_t remaining = m_event_ptr->messageLen - 2;
+  uint8_t *msgPtr = m_event_ptr->message + 2;
   uint64_t handle;
 
   // handle
-  if (!Serialization::DecodeLong(&msgPtr, &remaining, &handle))
+  if (!Serialization::decode_long(&msgPtr, &remaining, &handle))
     goto abort;
 
-  mMaster->Readdir(&cb, mSessionId, handle);
+  m_master->readdir(&cb, m_session_id, handle);
 
   return;
 

@@ -35,15 +35,15 @@ namespace hypertable {
 
   class RequestHandlerGetSchema : public ApplicationHandler {
   public:
-    RequestHandlerGetSchema(Comm *comm, Master *master, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mComm(comm), mMaster(master) {
+    RequestHandlerGetSchema(Comm *comm, Master *master, EventPtr &eventPtr) : ApplicationHandler(eventPtr), m_comm(comm), m_master(master) {
       return;
     }
 
     virtual void run();
 
   private:
-    Comm     *mComm;
-    Master   *mMaster;
+    Comm     *m_comm;
+    Master   *m_master;
   };
 }
 

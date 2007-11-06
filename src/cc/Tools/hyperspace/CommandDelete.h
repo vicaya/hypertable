@@ -31,14 +31,14 @@ namespace Hyperspace {
 
   class CommandDelete : public InteractiveCommand {
   public:
-    CommandDelete(Session *session) : mSession(session) { return; }
-    virtual const char *CommandText() { return "delete"; }
-    virtual const char **Usage() { return msUsage; }
+    CommandDelete(Session *session) : m_session(session) { return; }
+    virtual const char *command_text() { return "delete"; }
+    virtual const char **usage() { return ms_usage; }
     virtual int run();
 
   private:
-    static const char *msUsage[];
-    Session *mSession;
+    static const char *ms_usage[];
+    Session *m_session;
   };
 
 }

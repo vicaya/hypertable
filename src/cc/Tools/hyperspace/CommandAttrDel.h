@@ -31,14 +31,14 @@ namespace Hyperspace {
 
   class CommandAttrDel : public InteractiveCommand {
   public:
-    CommandAttrDel(Session *session) : mSession(session) { return; }
-    virtual const char *CommandText() { return "attrdel"; }
-    virtual const char **Usage() { return msUsage; }
+    CommandAttrDel(Session *session) : m_session(session) { return; }
+    virtual const char *command_text() { return "attrdel"; }
+    virtual const char **usage() { return ms_usage; }
     virtual int run();
 
   private:
-    static const char *msUsage[];
-    Session *mSession;
+    static const char *ms_usage[];
+    Session *m_session;
   };
 
 }

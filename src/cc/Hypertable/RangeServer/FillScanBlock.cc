@@ -33,13 +33,13 @@ namespace hypertable {
     ByteString32T *value;
     bool more = true;
 
-    while ((more = scannerPtr->Get(&key, &value))) {
+    while ((more = scannerPtr->get(&key, &value))) {
       if ((size_t)(end-ptr) >= Length(key) + Length(value)) {
 	memcpy(ptr, key, Length(key));
 	ptr += Length(key);
 	memcpy(ptr, value, Length(value));
 	ptr += Length(value);
-	scannerPtr->Forward();
+	scannerPtr->forward();
       }
       else
 	break;

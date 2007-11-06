@@ -35,11 +35,11 @@ using namespace hypertable;
  *
  */
 void RequestHandlerCreateScanner::run() {
-  ResponseCallbackCreateScanner cb(mComm, mEventPtr);
+  ResponseCallbackCreateScanner cb(m_comm, m_event_ptr);
   RangeSpecificationT rangeSpec;
   ScanSpecificationT scanSpec;
-  size_t remaining = mEventPtr->messageLen - 2;
-  uint8_t *msgPtr = mEventPtr->message + 2;
+  size_t remaining = m_event_ptr->messageLen - 2;
+  uint8_t *msgPtr = m_event_ptr->message + 2;
 
   // Range Specification
   if (!DecodeRangeSpecification(&msgPtr, &remaining, &rangeSpec))
@@ -49,7 +49,7 @@ void RequestHandlerCreateScanner::run() {
   if (!DecodeScanSpecification(&msgPtr, &remaining, &scanSpec))
     goto abort;
 
-  mRangeServer->CreateScanner(&cb, &rangeSpec, &scanSpec);
+  m_range_server->create_scanner(&cb, &rangeSpec, &scanSpec);
   return;
 
  abort:

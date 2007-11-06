@@ -41,20 +41,20 @@ namespace hypertable {
 
     Client(std::string configFile);
 
-    int CreateTable(std::string name, std::string schema);
-    int OpenTable(std::string name, TablePtr &tablePtr);
-    int GetSchema(std::string tableName, std::string &schema);
+    int create_table(std::string name, std::string schema);
+    int open_table(std::string name, TablePtr &tablePtr);
+    int get_schema(std::string tableName, std::string &schema);
 
     //Table OpenTable();
     //void DeleteTable();
     // String [] ListTables();
 
   private:
-    Comm                   *mComm;
-    ConnectionManagerPtr    mConnManagerPtr;
-    ApplicationQueuePtr     mAppQueuePtr;
-    Hyperspace::SessionPtr  mHyperspacePtr;
-    MasterClientPtr         mMasterClientPtr;
+    Comm                   *m_comm;
+    ConnectionManagerPtr    m_conn_manager_ptr;
+    ApplicationQueuePtr     m_app_queue_ptr;
+    Hyperspace::SessionPtr  m_hyperspace_ptr;
+    MasterClientPtr         m_master_client_ptr;
   };
 
 }

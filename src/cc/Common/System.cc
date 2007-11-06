@@ -41,7 +41,7 @@ string System::installDir;
 string System::executableName;
 
 
-void System::Initialize(const char *argv0) {
+void System::initialize(const char *argv0) {
   const char *execPath = getenv("_");
   char cwd[1024];
   int offset;
@@ -60,7 +60,7 @@ void System::Initialize(const char *argv0) {
     ptr = strtok_r(path, ":", &last);
     while (ptr) {
       fname = (std::string)ptr + "/" + executableName;
-      if (FileUtils::Exists(fname.c_str())) {
+      if (FileUtils::exists(fname.c_str())) {
 	execPath = fname.c_str();
 	break;
       }
@@ -102,11 +102,11 @@ void System::Initialize(const char *argv0) {
   else
     installDir.erase(pos);
 
-  Logger::Initialize(executableName.c_str());
+  Logger::initialize(executableName.c_str());
 }
 
 
-int System::GetProcessorCount() {
+int System::get_processor_count() {
 #if defined(__APPLE__)
   int mib[2], ncpus;
   size_t len;

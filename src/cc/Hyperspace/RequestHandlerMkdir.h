@@ -35,16 +35,16 @@ namespace Hyperspace {
 
   class RequestHandlerMkdir : public ApplicationHandler {
   public:
-    RequestHandlerMkdir(Comm *comm, Master *master, uint64_t sessionId, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mComm(comm), mMaster(master), mSessionId(sessionId) {
+    RequestHandlerMkdir(Comm *comm, Master *master, uint64_t sessionId, EventPtr &eventPtr) : ApplicationHandler(eventPtr), m_comm(comm), m_master(master), m_session_id(sessionId) {
       return;
     }
 
     virtual void run();
 
   private:
-    Comm        *mComm;
-    Master      *mMaster;
-    uint64_t     mSessionId;
+    Comm        *m_comm;
+    Master      *m_master;
+    uint64_t     m_session_id;
   };
 
 }

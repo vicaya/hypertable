@@ -31,15 +31,15 @@ namespace hypertable {
 
   class CommandMkdirs : public InteractiveCommand {
   public:
-    CommandMkdirs(DfsBroker::Client *client) : mClient(client) { return; }
-    virtual const char *CommandText() { return "mkdirs"; }
-    virtual const char **Usage() { return msUsage; }
+    CommandMkdirs(DfsBroker::Client *client) : m_client(client) { return; }
+    virtual const char *command_text() { return "mkdirs"; }
+    virtual const char **usage() { return ms_usage; }
     virtual int run();
 
   private:
-    static const char *msUsage[];
+    static const char *ms_usage[];
 
-    DfsBroker::Client *mClient;
+    DfsBroker::Client *m_client;
   };
 }
 

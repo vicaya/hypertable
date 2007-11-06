@@ -37,28 +37,28 @@ namespace Hyperspace {
 
   class SessionData : public ReferenceCount {
   public:
-    SessionData(struct sockaddr_in &_addr, uint32_t leaseInterval, uint64_t _id) : addr(_addr), mLeaseInterval(leaseInterval), id(_id), expired(false) {
+    SessionData(struct sockaddr_in &_addr, uint32_t leaseInterval, uint64_t _id) : addr(_addr), m_lease_interval(leaseInterval), id(_id), expired(false) {
       boost::xtime_get(&expireTime, boost::TIME_UTC);
       expireTime.sec += leaseInterval;
       return;
     }
 
-    void AddNotification(Notification *notification) {
+    void add_notification(Notification *notification) {
       boost::mutex::scoped_lock lock(mutex);
       if (expired) {
-	notification->eventPtr->DecrementNotificationCount();
+	notification->eventPtr->decrement_notification_count();
 	delete notification;
       }
       else
 	notifications.push_back(notification);
     }
 
-    void PurgeNotifications(uint64_t eventId) {
+    void purge_notifications(uint64_t eventId) {
       boost::mutex::scoped_lock lock(mutex);
       list<Notification *>::iterator iter = notifications.begin();
       while (iter != notifications.end()) {
-	if ((*iter)->eventPtr->GetId() <= eventId) {
-	  (*iter)->eventPtr->DecrementNotificationCount();
+	if ((*iter)->eventPtr->get_id() <= eventId) {
+	  (*iter)->eventPtr->decrement_notification_count();
 	  delete *iter;
 	  iter = notifications.erase(iter);
 	}
@@ -67,7 +67,7 @@ namespace Hyperspace {
       }
     }
 
-    bool RenewLease() {
+    bool renew_lease() {
       boost::mutex::scoped_lock lock(mutex);
       boost::xtime now;
       boost::xtime_get(&now, boost::TIME_UTC);
@@ -75,43 +75,43 @@ namespace Hyperspace {
 	expired = true;
 	list<Notification *>::iterator iter = notifications.begin();
 	while (iter != notifications.end()) {
-	  (*iter)->eventPtr->DecrementNotificationCount();
+	  (*iter)->eventPtr->decrement_notification_count();
 	  delete *iter;
 	  iter = notifications.erase(iter);
 	}
 	return false;
       }
       memcpy(&expireTime, &now, sizeof(boost::xtime));
-      expireTime.sec += mLeaseInterval;
+      expireTime.sec += m_lease_interval;
       return true;
     }
 
-    bool IsExpired(boost::xtime &now) {
+    bool is_expired(boost::xtime &now) {
       boost::mutex::scoped_lock lock(mutex);
       return (xtime_cmp(expireTime, now) < 0) ? true : false;
     }
 
-    void Expire() {
+    void expire() {
       boost::mutex::scoped_lock lock(mutex);
       if (expired)
 	return;
       expired = true;
       list<Notification *>::iterator iter = notifications.begin();
       while (iter != notifications.end()) {
-	(*iter)->eventPtr->DecrementNotificationCount();
+	(*iter)->eventPtr->decrement_notification_count();
 	delete *iter;
 	iter = notifications.erase(iter);
       }
     }
 
-    void AddHandle(uint64_t handle) {
+    void add_handle(uint64_t handle) {
       boost::mutex::scoped_lock lock(mutex);
       handles.insert(handle);
     }
 
     boost::mutex mutex;
     struct sockaddr_in addr;
-    uint32_t mLeaseInterval;
+    uint32_t m_lease_interval;
     uint64_t id;
     bool expired;
     boost::xtime expireTime;

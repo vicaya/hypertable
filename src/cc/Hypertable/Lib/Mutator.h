@@ -37,15 +37,15 @@ namespace hypertable {
     Mutator(ConnectionManagerPtr &connManagerPtr, SchemaPtr &schemaPtr);
     virtual ~Mutator() { return; }
 
-    void Set(CellKey &key, uint8_t *value, uint32_t valueLen);
+    void set(CellKey &key, uint8_t *value, uint32_t valueLen);
 
-    void Flush(MutationResultPtr &resultPtr);
+    void flush(MutationResultPtr &resultPtr);
 
-    uint64_t MemoryUsed();
+    uint64_t memory_used();
 
   private:
-    ConnectionManagerPtr mConnManagerPtr;
-    SchemaPtr mSchemaPtr;
+    ConnectionManagerPtr m_conn_manager_ptr;
+    SchemaPtr m_schema_ptr;
   };
   typedef boost::intrusive_ptr<Mutator> MutatorPtr;
 

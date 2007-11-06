@@ -38,7 +38,7 @@ namespace hypertable {
 			 const char magic[12], size_t reserve=0);
 
   private:
-    z_stream  mStream;
+    z_stream  m_stream;
   };
 }
 

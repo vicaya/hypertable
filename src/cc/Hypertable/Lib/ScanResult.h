@@ -33,17 +33,17 @@ namespace hypertable {
 
     typedef std::vector< std::pair<const ByteString32T *, const ByteString32T *> > VectorT;
 
-    int Load(EventPtr &eventPtr);
-    VectorT &GetVector() { return mVec; }
-    bool Eos() { return ((mFlags & 0x0001) == 0x0001); }
-    int GetId() { return mId; }
+    int load(EventPtr &eventPtr);
+    VectorT &get_vector() { return m_vec; }
+    bool eos() { return ((m_flags & 0x0001) == 0x0001); }
+    int get_id() { return m_id; }
     
   private:
-    int       mError;
-    uint16_t  mFlags;
-    int       mId;
-    VectorT   mVec;
-    EventPtr  mEventPtr;
+    int       m_error;
+    uint16_t  m_flags;
+    int       m_id;
+    VectorT   m_vec;
+    EventPtr  m_event_ptr;
   };
 }
 

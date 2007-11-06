@@ -34,12 +34,12 @@ namespace hypertable {
    */
   class HyperspaceSessionHandler : public SessionCallback {
   public:
-    HyperspaceSessionHandler(RangeServer *rangeServer) : mRangeServer(rangeServer) { return; }
-    virtual void Safe();
-    virtual void Expired();
-    virtual void Jeopardy();
+    HyperspaceSessionHandler(RangeServer *rangeServer) : m_range_server(rangeServer) { return; }
+    virtual void safe();
+    virtual void expired();
+    virtual void jeopardy();
   private:
-    RangeServer *mRangeServer;
+    RangeServer *m_range_server;
   };
 
 }

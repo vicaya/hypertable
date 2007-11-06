@@ -88,14 +88,14 @@ int main(int argc, char **argv) {
   Client *client = 0;
   int error;
 
-  System::Initialize(argv[0]);
-  ReactorFactory::Initialize((uint16_t)System::GetProcessorCount());
+  System::initialize(argv[0]);
+  ReactorFactory::initialize((uint16_t)System::get_processor_count());
 
   for (int i=1; i<argc; i++) {
     if (!strncmp(argv[i], "--config=", 9))
       configFile = &argv[i][9];
     else
-      Usage::DumpAndExit(usage);
+      Usage::dump_and_exit(usage);
   }
 
   if (configFile == "")
@@ -117,8 +117,8 @@ int main(int argc, char **argv) {
       continue;
 
     for (i=0; i<commands.size(); i++) {
-      if (commands[i]->Matches(line)) {
-	commands[i]->ParseCommandLine(line);
+      if (commands[i]->matches(line)) {
+	commands[i]->parse_command_line(line);
 	if ((error = commands[i]->run()) != Error::OK)
 	  return error;
 	break;
@@ -131,7 +131,7 @@ int main(int argc, char **argv) {
       else if (!strcmp(line, "help")) {
 	cout << endl;
 	for (i=0; i<commands.size(); i++) {
-	  Usage::Dump(commands[i]->Usage());
+	  Usage::dump(commands[i]->usage());
 	  cout << endl;
 	}
       }

@@ -33,25 +33,25 @@ using namespace hypertable::DfsBroker;
  *
  */
 void RequestHandlerPread::run() {
-  ResponseCallbackRead cb(mComm, mEventPtr);
+  ResponseCallbackRead cb(m_comm, m_event_ptr);
   uint32_t fd, amount;
   uint64_t offset;
-  size_t remaining = mEventPtr->messageLen - 2;
-  uint8_t *msgPtr = mEventPtr->message + 2;
+  size_t remaining = m_event_ptr->messageLen - 2;
+  uint8_t *msgPtr = m_event_ptr->message + 2;
 
   if (remaining < 16)
     goto abort;
 
   // fd
-  Serialization::DecodeInt(&msgPtr, &remaining, &fd);
+  Serialization::decode_int(&msgPtr, &remaining, &fd);
 
   // offset
-  Serialization::DecodeLong(&msgPtr, &remaining, &offset);
+  Serialization::decode_long(&msgPtr, &remaining, &offset);
 
   // amount
-  Serialization::DecodeInt(&msgPtr, &remaining, &amount);
+  Serialization::decode_int(&msgPtr, &remaining, &amount);
 
-  mBroker->Pread(&cb, fd, offset, amount);
+  m_broker->pread(&cb, fd, offset, amount);
 
   return;
 

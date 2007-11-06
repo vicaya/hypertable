@@ -31,20 +31,20 @@
 /**
  * 
  */
-RangeLocator::RangeLocator(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr) : mConnManagerPtr(connManagerPtr), mHyperspacePtr(hyperspacePtr), mCache(1000), mRootStale(true), mRangeServer(connManagerPtr->GetComm(), 30) {
+RangeLocator::RangeLocator(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr) : m_conn_manager_ptr(connManagerPtr), m_hyperspace_ptr(hyperspacePtr), m_cache(1000), m_root_stale(true), m_range_server(connManagerPtr->get_comm(), 30) {
   int error;
   
-  mRootHandlerPtr = new RootFileHandler(this);
+  m_root_handler_ptr = new RootFileHandler(this);
 
-  if ((error = mHyperspacePtr->Open("/hypertable/root", OPEN_FLAG_READ, mRootHandlerPtr, &mRootFileHandle)) != Error::OK) {
-    LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/root' (%s)", Error::GetText(error));
+  if ((error = m_hyperspace_ptr->open("/hypertable/root", OPEN_FLAG_READ, m_root_handler_ptr, &m_root_file_handle)) != Error::OK) {
+    LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/root' (%s)", Error::get_text(error));
     throw Exception(error);
   }
 
 }
 
 RangeLocator::~RangeLocator() {
-  mHyperspacePtr->Close(mRootFileHandle);
+  m_hyperspace_ptr->close(m_root_file_handle);
 }
 
 
@@ -52,15 +52,15 @@ RangeLocator::~RangeLocator() {
 /**
  *
  */
-int RangeLocator::Find(uint32_t tableId, const char *rowKey, const char **serverIdPtr) {
+int RangeLocator::find(uint32_t tableId, const char *rowKey, const char **serverIdPtr) {
   int error;
 
-  if (mRootStale) {
-    if ((error = ReadRootLocation()) != Error::OK)
+  if (m_root_stale) {
+    if ((error = read_root_location()) != Error::OK)
       return error;
   }
 
-  if (mCache.Lookup(tableId, rowKey, serverIdPtr))
+  if (m_cache.lookup(tableId, rowKey, serverIdPtr))
     return Error::OK;
 
   // fix me !!!!
@@ -69,7 +69,7 @@ int RangeLocator::Find(uint32_t tableId, const char *rowKey, const char **server
     assert(strcmp(rowKey, "0:"));
 
     /**
-    mRangeServer;
+    m_range_server;
     RangeServerClient    
     */
   }
@@ -81,34 +81,34 @@ int RangeLocator::Find(uint32_t tableId, const char *rowKey, const char **server
 /**
  * 
  */
-int RangeLocator::ReadRootLocation() {
+int RangeLocator::read_root_location() {
   int error;
   DynamicBuffer value(0);
   std::string addrStr;
   char *ptr;
 
-  if ((error = mHyperspacePtr->AttrGet(mRootFileHandle, "location", value)) != Error::OK) {
-    LOG_VA_ERROR("Problem reading 'location' attribute of Hyperspace file /hypertable/root - %s", Error::GetText(error));
+  if ((error = m_hyperspace_ptr->attr_get(m_root_file_handle, "location", value)) != Error::OK) {
+    LOG_VA_ERROR("Problem reading 'location' attribute of Hyperspace file /hypertable/root - %s", Error::get_text(error));
     return error;
   }
 
-  mCache.Insert(0, 0, "1:", (const char *)value.buf);
+  m_cache.insert(0, 0, "1:", (const char *)value.buf);
 
   if ((ptr = strchr((const char *)value.buf, '_')) != 0)
     *ptr = 0;
 
-  if (!InetAddr::Initialize(&mRootAddr, (const char *)value.buf)) {
+  if (!InetAddr::initialize(&m_root_addr, (const char *)value.buf)) {
     LOG_ERROR("Unable to extract address from /hypertable/root Hyperspace file");
     return Error::BAD_ROOT_SERVERID;
   }
 
-  mConnManagerPtr->Add(mRootAddr, 30, "Root RangeServer");
+  m_conn_manager_ptr->add(m_root_addr, 30, "Root RangeServer");
 
-  if (!mConnManagerPtr->WaitForConnection(mRootAddr, 20)) {
+  if (!m_conn_manager_ptr->wait_for_connection(m_root_addr, 20)) {
     LOG_VA_ERROR("Timeout (20s) waiting for root RangeServer connection - %s", (const char *)value.buf);
   }
 
-  mRootStale = false;
+  m_root_stale = false;
 
   return Error::OK;
 }

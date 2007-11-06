@@ -31,7 +31,7 @@
 using namespace hypertable;
 using namespace std;
 
-const char *CommandLoadRange::msUsage[] = {
+const char *CommandLoadRange::ms_usage[] = {
   "load range <range>",
   "",
   "  This command issues a LOAD RANGE command to the range server.",
@@ -48,15 +48,15 @@ int CommandLoadRange::run() {
   RangeSpecificationT rangeSpec;
   SchemaPtr schemaPtr;
 
-  if (mArgs.size() != 1) {
+  if (m_args.size() != 1) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
     return -1;
   }
 
-  if (mArgs[0].second != "")
-    Usage::DumpAndExit(msUsage);
+  if (m_args[0].second != "")
+    Usage::dump_and_exit(ms_usage);
 
-  if (!ParseRangeSpec(mArgs[0].first, tableName, startRow, endRow)) {
+  if (!ParseRangeSpec(m_args[0].first, tableName, startRow, endRow)) {
     cerr << "error:  Invalid range specification." << endl;
   }
 
@@ -68,7 +68,7 @@ int CommandLoadRange::run() {
     Global::schemaMap[tableName] = schemaPtr;    
   }
 
-  cout << "Generation = " << schemaPtr->GetGeneration() << endl;
+  cout << "Generation = " << schemaPtr->get_generation() << endl;
   cout << "TableName  = " << tableName << endl;
   cout << "StartRow   = " << startRow << endl;
   cout << "EndRow     = " << endRow << endl;
@@ -76,9 +76,9 @@ int CommandLoadRange::run() {
   rangeSpec.tableName = tableName.c_str();
   rangeSpec.startRow = startRow.c_str();
   rangeSpec.endRow = endRow.c_str();
-  rangeSpec.generation = schemaPtr->GetGeneration();
+  rangeSpec.generation = schemaPtr->get_generation();
 
-  if ((error = Global::rangeServer->LoadRange(mAddr, rangeSpec)) != Error::OK)
+  if ((error = Global::rangeServer->load_range(m_addr, rangeSpec)) != Error::OK)
     return error;
 
   return Error::OK;

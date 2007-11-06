@@ -29,14 +29,14 @@ using namespace hypertable;
 using namespace hypertable::DfsBroker;
 
 int ResponseCallbackReaddir::response(std::vector<std::string> &listing) {
-  hbuilder_.InitializeFromRequest(mEventPtr->header);
+  hbuilder_.initialize_from_request(m_event_ptr->header);
   uint32_t len = 8;
   for (size_t i=0; i<listing.size(); i++)
-    len += Serialization::EncodedLengthString(listing[i]);
+    len += Serialization::encoded_length_string(listing[i]);
   CommBufPtr cbufPtr( new CommBuf(hbuilder_, len) );
-  cbufPtr->AppendInt(Error::OK);
-  cbufPtr->AppendInt(listing.size());
+  cbufPtr->append_int(Error::OK);
+  cbufPtr->append_int(listing.size());
   for (size_t i=0; i<listing.size(); i++)
-    cbufPtr->AppendString(listing[i]);
-  return mComm->SendResponse(mEventPtr->addr, cbufPtr);
+    cbufPtr->append_string(listing[i]);
+  return m_comm->send_response(m_event_ptr->addr, cbufPtr);
 }

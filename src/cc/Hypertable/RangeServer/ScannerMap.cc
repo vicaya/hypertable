@@ -22,18 +22,18 @@
 
 using namespace hypertable;
 
-atomic_t ScannerMap::msNextId = ATOMIC_INIT(0);
+atomic_t ScannerMap::ms_next_id = ATOMIC_INIT(0);
 
 /**
  *
  */
-uint32_t ScannerMap::Put(CellListScannerPtr &scannerPtr, RangePtr &rangePtr) {
-  boost::mutex::scoped_lock lock(mMutex);
+uint32_t ScannerMap::put(CellListScannerPtr &scannerPtr, RangePtr &rangePtr) {
+  boost::mutex::scoped_lock lock(m_mutex);
   ScanInfoT scanInfo;
   scanInfo.scannerPtr = scannerPtr;
   scanInfo.rangePtr = rangePtr;
-  uint32_t id = atomic_inc_return(&msNextId);
-  mScannerMap[id] = scanInfo;
+  uint32_t id = atomic_inc_return(&ms_next_id);
+  m_scanner_map[id] = scanInfo;
   return id;
 }
 
@@ -42,10 +42,10 @@ uint32_t ScannerMap::Put(CellListScannerPtr &scannerPtr, RangePtr &rangePtr) {
 /**
  *
  */
-bool ScannerMap::Get(uint32_t id, CellListScannerPtr &scannerPtr, RangePtr &rangePtr) {
-  boost::mutex::scoped_lock lock(mMutex);
-  CellListScannerMapT::iterator iter = mScannerMap.find(id);
-  if (iter == mScannerMap.end())
+bool ScannerMap::get(uint32_t id, CellListScannerPtr &scannerPtr, RangePtr &rangePtr) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  CellListScannerMapT::iterator iter = m_scanner_map.find(id);
+  if (iter == m_scanner_map.end())
     return false;
   scannerPtr = (*iter).second.scannerPtr;
   rangePtr = (*iter).second.rangePtr;
@@ -57,7 +57,7 @@ bool ScannerMap::Get(uint32_t id, CellListScannerPtr &scannerPtr, RangePtr &rang
 /**
  * 
  */
-bool ScannerMap::Remove(uint32_t id) {
-  boost::mutex::scoped_lock lock(mMutex);
-  return (mScannerMap.erase(id) == 0) ? false : true;
+bool ScannerMap::remove(uint32_t id) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  return (m_scanner_map.erase(id) == 0) ? false : true;
 }

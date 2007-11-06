@@ -34,8 +34,8 @@ namespace hypertable {
   public:
     CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPtr &scanContextPtr);
     virtual ~CellStoreScannerV0();
-    virtual void Forward();
-    virtual bool Get(ByteString32T **keyp, ByteString32T **valuep);
+    virtual void forward();
+    virtual bool get(ByteString32T **keyp, ByteString32T **valuep);
 
   private:
 
@@ -47,23 +47,22 @@ namespace hypertable {
       uint8_t *end;
     } BlockInfoT;
 
-    bool FetchNextBlock();
+    bool fetch_next_block();
+    bool initialize();
 
-    bool Initialize();
+    CellStorePtr            m_cell_store_ptr;
+    CellStoreV0            *m_cell_store_v0;
+    CellStoreV0::IndexMapT  m_index;
 
-    CellStorePtr            mCellStorePtr;
-    CellStoreV0            *mCellStoreV0;
-    CellStoreV0::IndexMapT  mIndex;
+    CellStoreV0::IndexMapT::iterator m_iter;
 
-    CellStoreV0::IndexMapT::iterator mIter;
-
-    BlockInfoT            mBlock;
-    ByteString32T        *mCurKey;
-    ByteString32T        *mCurValue;
-    BlockInflater        *mBlockInflater;
-    bool                  mCheckForRangeEnd;
-    int                   mFileId;
-    ByteString32Ptr       mEndKeyPtr;
+    BlockInfoT            m_block;
+    ByteString32T        *m_cur_key;
+    ByteString32T        *m_cur_value;
+    BlockInflater        *m_block_inflater;
+    bool                  m_check_for_range_end;
+    int                   m_file_id;
+    ByteString32Ptr       m_end_key_ptr;
   };
 
 }

@@ -30,7 +30,7 @@ namespace hypertable {
 
   class TestData {
   public:
-    bool Load(std::string dataDir) {
+    bool load(std::string dataDir) {
       struct stat statbuf;
       char *contentData, *wordData, *urlData;
       char *base, *ptr, *last, *str;
@@ -61,7 +61,7 @@ namespace hypertable {
 	  return false;
 	}
       }
-      if ((contentData = FileUtils::FileToBuffer(shakespeareFile.c_str(), &len)) == 0)
+      if ((contentData = FileUtils::file_to_buffer(shakespeareFile.c_str(), &len)) == 0)
 	return false;
       base = contentData;
       while ((ptr = strstr(base, "\n\n")) != 0) {
@@ -92,7 +92,7 @@ namespace hypertable {
 	  return false;
 	}
       }
-      if ((wordData = FileUtils::FileToBuffer(wordsFile.c_str(), &len)) == 0)
+      if ((wordData = FileUtils::file_to_buffer(wordsFile.c_str(), &len)) == 0)
 	return false;
       base = strtok_r(wordData, "\n\r", &last);
       while (base) {
@@ -122,7 +122,7 @@ namespace hypertable {
 	  return false;
 	}
       }
-      if ((urlData = FileUtils::FileToBuffer(urlsFile.c_str(), &len)) == 0)
+      if ((urlData = FileUtils::file_to_buffer(urlsFile.c_str(), &len)) == 0)
 	return false;
       base = strtok_r(urlData, "\n\r", &last);
       while (base) {

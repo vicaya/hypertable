@@ -37,15 +37,15 @@ namespace hypertable {
 
     class RequestHandlerOpen : public ApplicationHandler {
     public:
-      RequestHandlerOpen(Comm *comm, Broker *broker, EventPtr &eventPtr) : ApplicationHandler(eventPtr), mComm(comm), mBroker(broker) {
+      RequestHandlerOpen(Comm *comm, Broker *broker, EventPtr &eventPtr) : ApplicationHandler(eventPtr), m_comm(comm), m_broker(broker) {
 	return;
       }
 
       virtual void run();
 
     private:
-      Comm   *mComm;
-      Broker *mBroker;
+      Comm   *m_comm;
+      Broker *m_broker;
     };
 
   }

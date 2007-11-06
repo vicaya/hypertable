@@ -34,24 +34,24 @@ using namespace hypertable::DfsBroker;
  *
  */
 void RequestHandlerAppend::run() {
-  ResponseCallbackAppend cb(mComm, mEventPtr);
+  ResponseCallbackAppend cb(m_comm, m_event_ptr);
   uint32_t fd, amount;
-  size_t remaining = mEventPtr->messageLen - 2;
-  uint8_t *msgPtr = mEventPtr->message + 2;
+  size_t remaining = m_event_ptr->messageLen - 2;
+  uint8_t *msgPtr = m_event_ptr->message + 2;
 
   if (remaining < 8)
     goto abort;
 
   // fd
-  Serialization::DecodeInt(&msgPtr, &remaining, &fd);
+  Serialization::decode_int(&msgPtr, &remaining, &fd);
 
   // amount
-  Serialization::DecodeInt(&msgPtr, &remaining, &amount);
+  Serialization::decode_int(&msgPtr, &remaining, &amount);
 
   if (remaining < amount)
     goto abort;
 
-  mBroker->Append(&cb, fd, amount, msgPtr);
+  m_broker->append(&cb, fd, amount, msgPtr);
 
   return;
 

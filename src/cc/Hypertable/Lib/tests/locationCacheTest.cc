@@ -191,7 +191,7 @@ namespace {
   void TestLookup(LocationCache &cache, uint32_t tableId, const char *rowKey) {
     const char *serverId;
     outfile << "LOOKUP(" << tableId << ", " << rowKey << ") -> ";
-    if (cache.Lookup(tableId, rowKey, &serverId))
+    if (cache.lookup(tableId, rowKey, &serverId))
       outfile << serverId << endl;
     else
       outfile << "[NULL]" << endl;
@@ -211,8 +211,8 @@ int main(int argc, char **argv) {
   outfile.open("./locationCacheTest.output");
 
   // test ...
-  cache.Insert(0, "bar", "kite", "234345");
-  cache.Insert(0, "foo", "kite", "234345");
+  cache.insert(0, "bar", "kite", "234345");
+  cache.insert(0, "foo", "kite", "234345");
 
   TestLookup(cache, 0, "foo");
   TestLookup(cache, 0, "food");
@@ -229,11 +229,11 @@ int main(int argc, char **argv) {
       start = (ranges[rangei].first == 0) ? "[NULL]" : ranges[rangei].first;
       end = (ranges[rangei].second == 0) ? "[NULL]" : ranges[rangei].second;
       outfile << "INSERT(" << tableId << ", " << start << ", " << end << ", " << serverIds[serveri] << endl << flush;
-      cache.Insert(tableId, ranges[rangei].first, ranges[rangei].second, serverIds[serveri]);
+      cache.insert(tableId, ranges[rangei].first, ranges[rangei].second, serverIds[serveri]);
     }
   }
 
-  cache.Display(outfile);
+  cache.display(outfile);
 
   outfile.close();
 

@@ -24,7 +24,7 @@
 #include "Global.h"
 #include "Util.h"
 
-void Hyperspace::Util::NormalizePathname(std::string name, std::string &normalName) {
+void Hyperspace::Util::normalize_pathname(std::string name, std::string &normalName) {
   normalName = "";
   if (name[0] != '/')
     normalName += "/";
@@ -35,10 +35,10 @@ void Hyperspace::Util::NormalizePathname(std::string name, std::string &normalNa
     normalName += name.substr(0, name.length()-1);
 }
 
-bool Hyperspace::Util::GetHandle(std::string name, uint64_t *handlep) {
+bool Hyperspace::Util::get_handle(std::string name, uint64_t *handlep) {
   std::string normalName;
 
-  NormalizePathname(name, normalName);
+  normalize_pathname(name, normalName);
 
   Global::FileMapT::iterator iter = Global::fileMap.find(normalName);
   if (iter == Global::fileMap.end()) {
