@@ -31,6 +31,7 @@ extern "C" {
 
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
+#include "Common/InetAddr.h"
 #include "Common/Logger.h"
 #include "Common/TestHarness.h"
 #include "Common/System.h"
@@ -77,24 +78,34 @@ namespace {
    */
   class ResponseHandler : public DispatchHandler {
   public:
-    ResponseHandler() : m_mutex(), m_cond() { return; }
+    ResponseHandler() : m_mutex(), m_cond(), m_connected(false) { return; }
 
     virtual void handle(EventPtr &eventPtr) {
       boost::mutex::scoped_lock lock(m_mutex);
-      if (eventPtr->type == Event::ERROR) {
+      if (eventPtr->type == Event::CONNECTION_ESTABLISHED) {
+	m_connected = true;
+	m_cond.notify_one();
+      }
+      else if (eventPtr->type == Event::ERROR) {
 	LOG_VA_INFO("%s", eventPtr->toString().c_str());
       }
-      m_cond.notify_one();
+      else {
+	LOG_VA_INFO("%s", eventPtr->toString().c_str());
+	m_connected = true;
+	m_cond.notify_one();
+      }
     }
 
     void wait_for_connection() {
       boost::mutex::scoped_lock lock(m_mutex);
-      m_cond.wait(lock);
+      while (!m_connected)
+	m_cond.wait(lock);
     }
 
   private:
     boost::mutex      m_mutex;
     boost::condition  m_cond;
+    bool              m_connected;
   };
 
 }
@@ -126,17 +137,7 @@ int main(int argc, char **argv) {
     System::initialize(argv[0]);
     ReactorFactory::initialize(1);
 
-    memset(&addr, 0, sizeof(struct sockaddr_in));
-    {
-      struct hostent *he = gethostbyname("localhost");
-      if (he == 0) {
-	herror("gethostbyname()");
-	return 1;
-      }
-      memcpy(&addr.sin_addr.s_addr, he->h_addr_list[0], sizeof(uint32_t));
-    }
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(DEFAULT_PORT);
+    InetAddr::initialize(&addr, "localhost", DEFAULT_PORT);
 
     comm = new Comm();
 

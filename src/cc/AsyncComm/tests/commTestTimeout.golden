@@ -1,2 +1,2 @@
-INFO commTestTimeout : (${SRC_DIR}/commTestTimeout.cc:85) Event: type=ERROR "COMM request timeout" from=127.0.0.1:32998
-INFO commTestTimeout : (${SRC_DIR}/commTestTimeout.cc:85) Event: type=ERROR "COMM request timeout" from=127.0.0.1:32998
+INFO commTestTimeout : (/home/doug/src/hypertable/src/cc/AsyncComm/tests/commTestTimeout.cc:90) Event: type=ERROR "COMM request timeout" from=127.0.0.1:32998
+INFO commTestTimeout : (/home/doug/src/hypertable/src/cc/AsyncComm/tests/commTestTimeout.cc:90) Event: type=ERROR "COMM request timeout" from=127.0.0.1:32998
