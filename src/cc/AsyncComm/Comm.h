@@ -167,7 +167,7 @@ namespace hypertable {
      * Sends a datagram to a remote address.  The remote address is specified by the addr
      * argument and the local socket address to send it from is specified by the send_addr
      * argument.  The send_addr argument must refer to a socket that was created with a call
-     * to<a href="#create_datagram_receive_socket">create_datagram_receive_socket</a>.
+     * to <a href="#create_datagram_receive_socket">create_datagram_receive_socket</a>.
      *
      * @param addr remote address to send datagram to
      * @param send_addr local socket address to send from

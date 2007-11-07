@@ -37,12 +37,18 @@ using namespace std;
 
 namespace hypertable {
 
+  /**
+   * Objects of the is class represent communication events.  They get passed up to
+   * the application through dispatch handlers (see DispatchHandler).
+   */
   class Event : public ReferenceCount {
 
   public:
 
     enum Type { CONNECTION_ESTABLISHED, DISCONNECT, MESSAGE, ERROR, TIMER };
 
+    /** Initializes the event object with message data.
+     */
     Event(Type ct, int cid, struct sockaddr_in &a, int err=0, Header::HeaderT *h=0) 
       : type(ct), addr(a), connId(cid), error(err), header(h) {
       if (h != 0) {
@@ -60,6 +66,8 @@ namespace hypertable {
       }
     }
 
+    /** Initializes the event object with no message data.
+     */
     Event(Type ct, int err=0) : type(ct), error(err) {
       header = 0;
       message = 0;
@@ -68,22 +76,57 @@ namespace hypertable {
       connId = 0;
     }
 
-
+    /** Destroys event.  Deallocates message data
+     */
     ~Event() {
       delete [] header;
     }
 
-    Type                type;
+    /** Type of event.  Can take one of values CONNECTION_ESTABLISHED,
+     * DISCONNECT, MESSAGE, ERROR, or TIMER
+     */
+    Type type;
+
+    /** Remote address from which event was generated. */
     struct sockaddr_in  addr;
+
+    /** Local address to which event was delivered. */
     struct sockaddr_in  localAddr;
+
+    /** Connection ID on which this event occurred. */
     int                 connId;
+
+    /** Error code associated with this event.  DISCONNECT and
+     * ERROR events set this value
+     */
     int                 error;
+
+    /** Points to the beginning of the message header.
+     */
     Header::HeaderT    *header;
+
+    /** Points to the beginning of the message, immediately following the  header.
+     */
     uint8_t            *message;
+
+    /** Length of the message without the header.
+     */
     size_t              messageLen;
+
+    /** Thread group to which this message belongs.  Used to serialize
+     * messages destined for the same object.
+     */
     uint64_t            threadGroup;
 
+    /** Generates a one-line string representation of the event.  For example:
+     * <pre>
+     *   Event: type=MESSAGE protocol=hyperspace id=2 gid=0 headerLen=16 totalLen=20 from=127.0.0.1:38040
+     * </pre>
+     */
     std::string toString();
+
+    /** Displays a one-line string representation of the event to stdout.  See <a href="#toString">toString</a>.
+     */
     void display() { cerr << toString() << endl; }
   };
 

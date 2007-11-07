@@ -53,11 +53,11 @@ namespace hypertable {
    *   HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
    *   hbuilder.assign_unique_id();
    *   CommBuf *cbuf = new CommBuf(hbuilder, 2);
-   *   cbuf->append_short(COMMAND_STATUS); </pre>
+   *   cbuf->append_short(COMMAND_STATUS);
+   * </pre>
    *
-   * The following is a real world
-   * example of a CommBuf being used to send back a response from
-   * a read request.
+   * The following is a real world example of a CommBuf being used
+   * to send back a response from a read request.
    *
    * <pre>
    *   hbuilder.initialize_from_request(m_event_ptr->header);
@@ -65,7 +65,8 @@ namespace hypertable {
    *   cbufPtr->append_int(Error::OK);
    *   cbufPtr->append_long(offset);
    *   cbufPtr->append_int(nread);
-   *   error = m_comm->send_response(m_event_ptr->addr, cbufPtr); </pre>
+   *   error = m_comm->send_response(m_event_ptr->addr, cbufPtr);
+   * </pre>
    *
    */
   class CommBuf {
@@ -134,30 +135,41 @@ namespace hypertable {
     /**
      * Append a byte of data to the primary buffer, advancing the
      * primary buffer pointer by 1
+     * 
+     * @param bval byte value to append into buffer
      */
     void append_byte(uint8_t bval) { *dataPtr++ = bval; }
 
     /**
      * Appends a sequence of bytes to the primary buffer, advancing
      * the primary buffer pointer by the number of bytes appended
+     * 
+     * @param bytes starting address of byte sequence
+     * @param len number of bytes in sequence
      */
     void append_bytes(uint8_t *bytes, uint32_t len) { memcpy(dataPtr, bytes, len); dataPtr += len; }
 
     /**
      * Appends a short integer (16 bit) to the the primary buffer,
      * advancing the primary buffer pointer
+     *
+     * @param sval two byte short value to append into buffer
      */
     void append_short(uint16_t sval) { Serialization::encode_short(&dataPtr, sval); }
     
     /**
      * Appends an integer (32 bit) to the the primary buffer,
      * advancing the primary buffer pointer
+     *
+     * @param ival 4 byte integer value to append into buffer
      */
     void append_int(uint32_t ival) { Serialization::encode_int(&dataPtr, ival); }
 
     /**
      * Appends a long integer (64 bit) to the the primary buffer,
      * advancing the primary buffer pointer
+     *
+     * @param lval 8 byte long integer value to append into buffer
      */
     void append_long(uint64_t lval) { Serialization::encode_long(&dataPtr, lval); }
 
@@ -165,6 +177,8 @@ namespace hypertable {
      * Appends a byte array to the primary buffer.  A byte array
      * is encoded as a length followd by the data.
      *
+     * @param data starting address of byte array to append
+     * @param len length of byte array to append
      * @see Serialization::encode_byte_array
      */
     void append_byte_array(const void *data, int32_t len) { Serialization::encode_byte_array(&dataPtr, data, len); }
@@ -174,6 +188,7 @@ namespace hypertable {
      * encoded as a length, followed by the characters, followed by
      * a terminating '\\0'.
      *
+     * @param str c-style string to append
      * @see Serialization::encode_string
      */
     void append_string(const char *str) { Serialization::encode_string(&dataPtr, str); }
@@ -183,6 +198,7 @@ namespace hypertable {
      * encoded as a length, followed by the characters, followed by
      * a terminating '\\0'.
      *
+     * @param str std string to append
      * @see Serialization::encode_string
      */
     void append_string(const std::string &str) { Serialization::encode_string(&dataPtr, str.c_str()); }
