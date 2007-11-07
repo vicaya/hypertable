@@ -83,7 +83,7 @@ Comm::~Comm() {
 
 /**
  */
-int Comm::connect(struct sockaddr_in &addr, DispatchHandlerPtr &defaultHandlerPtr) {
+int Comm::connect(struct sockaddr_in &addr, DispatchHandlerPtr &default_handler_ptr) {
   int sd;
 
   if (m_handler_map.contains_handler(addr))
@@ -94,7 +94,7 @@ int Comm::connect(struct sockaddr_in &addr, DispatchHandlerPtr &defaultHandlerPt
     exit(1);
   }
 
-  return connect_socket(sd, addr, defaultHandlerPtr);
+  return connect_socket(sd, addr, default_handler_ptr);
 }
 
 
@@ -102,7 +102,7 @@ int Comm::connect(struct sockaddr_in &addr, DispatchHandlerPtr &defaultHandlerPt
 /**
  *
  */
-int Comm::connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, DispatchHandlerPtr &defaultHandlerPtr) {
+int Comm::connect(struct sockaddr_in &addr, struct sockaddr_in &local_addr, DispatchHandlerPtr &default_handler_ptr) {
   int sd;
 
   if (m_handler_map.contains_handler(addr))
@@ -114,28 +114,28 @@ int Comm::connect(struct sockaddr_in &addr, struct sockaddr_in &localAddr, Dispa
   }
 
   // bind socket to local address
-  if ((bind(sd, (const sockaddr *)&localAddr, sizeof(sockaddr_in))) < 0) {
+  if ((bind(sd, (const sockaddr *)&local_addr, sizeof(sockaddr_in))) < 0) {
     LOG_VA_ERROR("bind() failure: %s", strerror(errno));
     exit(1);
   }
 
-  return connect_socket(sd, addr, defaultHandlerPtr);
+  return connect_socket(sd, addr, default_handler_ptr);
 }
 
 
 /**
  *
  */
-int Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chfPtr) {
+int Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chf_ptr) {
   DispatchHandlerPtr nullHandlerPtr(0);
-  return listen(addr, chfPtr, nullHandlerPtr);
+  return listen(addr, chf_ptr, nullHandlerPtr);
 }
 
 
 /**
  *
  */
-int Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chfPtr, DispatchHandlerPtr &defaultHandlerPtr) {
+int Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chf_ptr, DispatchHandlerPtr &default_handler_ptr) {
   IOHandlerPtr handlerPtr;
   IOHandlerAccept *acceptHandler;
   int one = 1;
@@ -168,7 +168,7 @@ int Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chfPtr, 
     exit(1);
   }
 
-  handlerPtr = acceptHandler = new IOHandlerAccept(sd, addr, defaultHandlerPtr, m_handler_map, chfPtr);
+  handlerPtr = acceptHandler = new IOHandlerAccept(sd, addr, default_handler_ptr, m_handler_map, chf_ptr);
   m_handler_map.insert_handler(acceptHandler);
   acceptHandler->start_polling();
 
@@ -177,13 +177,13 @@ int Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chfPtr, 
 
 
 
-int Comm::send_request(struct sockaddr_in &addr, time_t timeout, CommBufPtr &cbufPtr, DispatchHandler *responseHandler) {
+int Comm::send_request(struct sockaddr_in &addr, time_t timeout, CommBufPtr &cbuf_ptr, DispatchHandler *responseHandler) {
   boost::mutex::scoped_lock lock(m_mutex);
   IOHandlerDataPtr dataHandlerPtr;
-  Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
+  Header::HeaderT *mheader = (Header::HeaderT *)cbuf_ptr->data;
   int error = Error::OK;
 
-  cbufPtr->reset_data_pointers();
+  cbuf_ptr->reset_data_pointers();
 
   if (!m_handler_map.lookup_data_handler(addr, dataHandlerPtr)) {
     LOG_VA_ERROR("No connection for %s:%d", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
@@ -192,20 +192,20 @@ int Comm::send_request(struct sockaddr_in &addr, time_t timeout, CommBufPtr &cbu
 
   mheader->flags |= Header::FLAGS_MASK_REQUEST;
 
-  if ((error = dataHandlerPtr->send_message(cbufPtr, timeout, responseHandler)) != Error::OK)
+  if ((error = dataHandlerPtr->send_message(cbuf_ptr, timeout, responseHandler)) != Error::OK)
     dataHandlerPtr->shutdown();
 
   return error;
 }
 
 
-int Comm::send_response(struct sockaddr_in &addr, CommBufPtr &cbufPtr) {
+int Comm::send_response(struct sockaddr_in &addr, CommBufPtr &cbuf_ptr) {
   boost::mutex::scoped_lock lock(m_mutex);
   IOHandlerDataPtr dataHandlerPtr;
-  Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
+  Header::HeaderT *mheader = (Header::HeaderT *)cbuf_ptr->data;
   int error = Error::OK;
 
-  cbufPtr->reset_data_pointers();
+  cbuf_ptr->reset_data_pointers();
 
   if (!m_handler_map.lookup_data_handler(addr, dataHandlerPtr)) {
     LOG_VA_ERROR("No connection for %s:%d", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
@@ -214,7 +214,7 @@ int Comm::send_response(struct sockaddr_in &addr, CommBufPtr &cbufPtr) {
 
   mheader->flags &= Header::FLAGS_MASK_RESPONSE;
 
-  if ((error = dataHandlerPtr->send_message(cbufPtr)) != Error::OK)
+  if ((error = dataHandlerPtr->send_message(cbuf_ptr)) != Error::OK)
     dataHandlerPtr->shutdown();
 
   return error;
@@ -271,23 +271,23 @@ int Comm::create_datagram_receive_socket(struct sockaddr_in *addr, DispatchHandl
 /**
  * 
  */
-int Comm::send_datagram(struct sockaddr_in &addr, struct sockaddr_in &sendAddr, CommBufPtr &cbufPtr) {
+int Comm::send_datagram(struct sockaddr_in &addr, struct sockaddr_in &send_addr, CommBufPtr &cbuf_ptr) {
   boost::mutex::scoped_lock lock(m_mutex);
   IOHandlerDatagramPtr datagramHandlerPtr;
-  Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
+  Header::HeaderT *mheader = (Header::HeaderT *)cbuf_ptr->data;
   int error = Error::OK;
 
-  cbufPtr->reset_data_pointers();
+  cbuf_ptr->reset_data_pointers();
 
-  if (!m_handler_map.lookup_datagram_handler(sendAddr, datagramHandlerPtr)) {
+  if (!m_handler_map.lookup_datagram_handler(send_addr, datagramHandlerPtr)) {
     std::string str;
-    LOG_VA_ERROR("Datagram send address %s not registered", InetAddr::string_format(str, sendAddr));
+    LOG_VA_ERROR("Datagram send address %s not registered", InetAddr::string_format(str, send_addr));
     DUMP_CORE;
   }
 
   mheader->flags &= Header::FLAGS_MASK_REQUEST;
 
-  if ((error = datagramHandlerPtr->send_message(addr, cbufPtr)) != Error::OK)
+  if ((error = datagramHandlerPtr->send_message(addr, cbuf_ptr)) != Error::OK)
     datagramHandlerPtr->shutdown();
 
   return error;
@@ -298,11 +298,11 @@ int Comm::send_datagram(struct sockaddr_in &addr, struct sockaddr_in &sendAddr, 
 /**
  *
  */
-int Comm::set_timer(uint64_t durationMillis, DispatchHandler *handler) {
+int Comm::set_timer(uint64_t duration_millis, DispatchHandler *handler) {
   struct TimerT timer;
   boost::xtime_get(&timer.expireTime, boost::TIME_UTC);
-  timer.expireTime.sec += durationMillis / 1000LL;
-  timer.expireTime.nsec += (durationMillis % 1000LL) * 1000000LL;
+  timer.expireTime.sec += duration_millis / 1000LL;
+  timer.expireTime.nsec += (duration_millis % 1000LL) * 1000000LL;
   timer.handler = handler;
   m_timer_reactor->add_timer(timer);
   return Error::OK;
@@ -313,9 +313,9 @@ int Comm::set_timer(uint64_t durationMillis, DispatchHandler *handler) {
 /**
  *
  */
-int Comm::set_timer_absolute(boost::xtime expireTime, DispatchHandler *handler) {
+int Comm::set_timer_absolute(boost::xtime expire_time, DispatchHandler *handler) {
   struct TimerT timer;  
-  memcpy(&timer.expireTime, &expireTime, sizeof(boost::xtime));
+  memcpy(&timer.expireTime, &expire_time, sizeof(boost::xtime));
   timer.handler = handler;
   m_timer_reactor->add_timer(timer);
   return Error::OK;
@@ -324,7 +324,7 @@ int Comm::set_timer_absolute(boost::xtime expireTime, DispatchHandler *handler) 
 /**
  *
  */
-int Comm::get_local_address(struct sockaddr_in addr, struct sockaddr_in *localAddr) {
+int Comm::get_local_address(struct sockaddr_in addr, struct sockaddr_in *local_addr) {
   boost::mutex::scoped_lock lock(m_mutex);
   IOHandlerDataPtr dataHandlerPtr;
 
@@ -333,7 +333,7 @@ int Comm::get_local_address(struct sockaddr_in addr, struct sockaddr_in *localAd
     return Error::COMM_NOT_CONNECTED;
   }
 
-  dataHandlerPtr->get_local_address(localAddr);
+  dataHandlerPtr->get_local_address(local_addr);
 
   return Error::OK;
 }
@@ -362,7 +362,7 @@ int Comm::close_socket(struct sockaddr_in &addr) {
 /**
  *
  */
-int Comm::connect_socket(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &defaultHandlerPtr) {
+int Comm::connect_socket(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &default_handler_ptr) {
   IOHandlerPtr handlerPtr;
   IOHandlerData *dataHandler;
   int one = 1;
@@ -378,7 +378,7 @@ int Comm::connect_socket(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &d
     LOG_VA_WARN("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
 #endif
 
-  handlerPtr = dataHandler = new IOHandlerData(sd, addr, defaultHandlerPtr, m_handler_map);
+  handlerPtr = dataHandler = new IOHandlerData(sd, addr, default_handler_ptr, m_handler_map);
   m_handler_map.insert_handler(dataHandler);
 
   while (::connect(sd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) < 0) {
