@@ -52,6 +52,8 @@ extern "C" {
 
 using namespace hypertable;
 
+atomic_t Comm::ms_next_request_id = ATOMIC_INIT(1);
+
 
 /**
  */
@@ -191,6 +193,8 @@ int Comm::send_request(struct sockaddr_in &addr, time_t timeout, CommBufPtr &cbu
   }
 
   mheader->flags |= Header::FLAGS_MASK_REQUEST;
+  if (responseHandler)
+    mheader->id = atomic_inc_return(&ms_next_request_id);
 
   if ((error = dataHandlerPtr->send_message(cbuf_ptr, timeout, responseHandler)) != Error::OK)
     dataHandlerPtr->shutdown();

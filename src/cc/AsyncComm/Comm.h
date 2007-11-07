@@ -119,6 +119,22 @@ namespace hypertable {
      * MESSAGE event or a TIMEOUT event if no response is received within
      * the number of seconds specified by the timeout argument.
      *
+     * <p>If the server at the other end of the connection uses an ApplicationQueue
+     * to carry out requests, then the gid field in the header can be used to
+     * serialize requests that are destined for the same object.  For example,
+     * the following code serializes requests to the same file descriptor:
+     *
+     * <pre>
+     * HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
+     * hbuilder.set_group_id(fd);
+     * CommBuf *cbuf = new CommBuf(hbuilder, 14);
+     * cbuf->AppendShort(COMMAND_READ);
+     * cbuf->AppendInt(fd);
+     * cbuf->AppendLong(amount);
+     * </pre>
+     *
+     * 
+     *
      * @param addr connection identifier (remote address)
      * @param timeout number of seconds to wait before delivering TIMEOUT event
      * @param cbuf_ptr request message to send (must have valid header)
@@ -212,6 +228,8 @@ namespace hypertable {
   private:
 
     int connect_socket(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &default_handler_ptr);
+
+    static atomic_t ms_next_request_id;
 
     boost::mutex  m_mutex;
     HandlerMap    m_handler_map;

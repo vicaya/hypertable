@@ -109,7 +109,6 @@ void CommTestThreadFunction::operator()() {
     while (!infile.eof() && nsent < MAX_MESSAGES) {
       getline (infile,line);
       if (line.length() > 0) {
-	hbuilder.assign_unique_id();
 	CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::encoded_length_string(line)) );
 	cbufPtr->append_string(line);
 	int retries = 0;

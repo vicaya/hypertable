@@ -47,7 +47,20 @@ namespace hypertable {
 
     enum Type { CONNECTION_ESTABLISHED, DISCONNECT, MESSAGE, ERROR, TIMER };
 
-    /** Initializes the event object with message data.
+    /** Initializes the event object with message data.  If a message header is supplied,
+     * then the threadGroup member is initialized as follows:
+     * <pre>
+     * threadGroup = ((uint64_t)connId << 32) | header->gid;
+     * </pre>
+     * otherwise it is set to 0.  The thread group is used to serialize requests
+     * destined for the same application object.
+     *
+     * @param ct type of event
+     * @param cid connection ID
+     * @param a remote address of connection on which this event was generated
+     * @param err error code associated with this event
+     * @param h pointer to message data for MESSAGE events (<b>NOTE:</b> this object
+     * takes ownership of this data and deallocates it when it gets destroyed)
      */
     Event(Type ct, int cid, struct sockaddr_in &a, int err=0, Header::HeaderT *h=0) 
       : type(ct), addr(a), connId(cid), error(err), header(h) {
@@ -67,6 +80,9 @@ namespace hypertable {
     }
 
     /** Initializes the event object with no message data.
+     *
+     * @param ct type of event
+     * @param err error code associated with this event
      */
     Event(Type ct, int err=0) : type(ct), error(err) {
       header = 0;
@@ -88,35 +104,37 @@ namespace hypertable {
     Type type;
 
     /** Remote address from which event was generated. */
-    struct sockaddr_in  addr;
+    struct sockaddr_in addr;
 
     /** Local address to which event was delivered. */
-    struct sockaddr_in  localAddr;
+    struct sockaddr_in localAddr;
 
     /** Connection ID on which this event occurred. */
-    int                 connId;
+    int connId;
 
     /** Error code associated with this event.  DISCONNECT and
      * ERROR events set this value
      */
-    int                 error;
+    int error;
 
-    /** Points to the beginning of the message header.
-     */
-    Header::HeaderT    *header;
+    /** Points to the beginning of the message header. */
+    Header::HeaderT *header;
 
-    /** Points to the beginning of the message, immediately following the  header.
-     */
-    uint8_t            *message;
+    /** Points to the beginning of the message, immediately following the header. */
+    uint8_t *message;
 
-    /** Length of the message without the header.
-     */
-    size_t              messageLen;
+    /** Length of the message without the header. */
+    size_t messageLen;
 
     /** Thread group to which this message belongs.  Used to serialize
-     * messages destined for the same object.
+     * messages destined for the same object.  This value is created in
+     * the constructor and is the combination of the connection ID and the
+     * gid field in the message header:
+     * <pre>
+     * threadGroup = ((uint64_t)connId << 32) | header->gid;
+     * </pre>
      */
-    uint64_t            threadGroup;
+    uint64_t threadGroup;
 
     /** Generates a one-line string representation of the event.  For example:
      * <pre>

@@ -27,8 +27,22 @@
 
 namespace hypertable {
 
+  /**
+   * Abstract base class that is the main callback class of the Comm layer.  An objects
+   * of this class gets installed for each connection that is established to handle
+   * connection related events.  An object of this class is also supplied when
+   * sending a request message and is the mechanism by which the application is notified
+   * of the response or a timeout.
+   */
   class DispatchHandler : public ReferenceCount {
   public:
+
+    /** Callback method.  When the Comm layer needs to deliver an event
+     * to the application, this method is called to do so.  The set of event
+     * types include, CONNECTION_ESTABLISHED, DISCONNECT, MESSAGE, ERROR, and TIMER.
+     *
+     * @param eventPtr smart pointer to Event object
+     */
     virtual void handle(EventPtr &eventPtr) = 0;
 
     virtual ~DispatchHandler() { return; }

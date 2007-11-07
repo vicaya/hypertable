@@ -22,7 +22,18 @@
 
 namespace hypertable {
 
-  atomic_t HeaderBuilder::ms_next_message_id = ATOMIC_INIT(1);
+  void HeaderBuilder::encode(uint8_t **bufPtr) {
+    Header::HeaderT *mheader;
+    mheader = (Header::HeaderT *)*bufPtr;
+    mheader->version = Header::VERSION;
+    mheader->protocol = m_protocol;
+    mheader->flags = m_flags;
+    mheader->headerLen = sizeof(Header::HeaderT);
+    mheader->id = m_id;
+    mheader->gid = m_group_id;
+    mheader->totalLen = m_total_len;
+    (*bufPtr) += sizeof(Header::HeaderT);
+  }
 
 }
 

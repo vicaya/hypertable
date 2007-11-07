@@ -36,17 +36,31 @@ using namespace std;
 
 namespace hypertable {
 
+  /** This class is a static class that is used to setup and manage I/O reactors.
+   * Since the I/O reactor threads are a process-wide resource, the methods of
+   * this class are static.
+   */
   class ReactorFactory {
 
   public:
 
-    static void initialize(uint16_t reactorCount);
+    /** This method creates and initializes the I/O reactor threads and must be
+     * called once by an application prior to creating the Comm object.
+     *
+     * @param reactor_count number of reactor threads to create
+     */
+    static void initialize(uint16_t reactor_count);
 
+    /** This method returns the 'next' reactor.  It returns pointers to reactors
+     * in round-robin fashion and is used by the Comm subsystem to evenly distribute
+     * descriptors across all of the reactors.
+     */
     static Reactor *get_reactor() {
       assert(ms_reactors.size() > 0);
       return ms_reactors[atomic_inc_return(&ms_next_reactor) % ms_reactors.size()];
     }
 
+    /** vector of reactors */
     static vector<Reactor *> ms_reactors;
 
   private:

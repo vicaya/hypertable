@@ -128,7 +128,6 @@ CommBuf *Hyperspace::Protocol::create_server_keepalive_request(SessionDataPtr &s
  */
 CommBuf *Hyperspace::Protocol::create_handshake_request(uint64_t sessionId) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
-  hbuilder.assign_unique_id();
   CommBuf *cbuf = new CommBuf(hbuilder, 10);
   cbuf->append_short(COMMAND_HANDSHAKE);
   cbuf->append_long(sessionId);
@@ -142,7 +141,6 @@ CommBuf *Hyperspace::Protocol::create_handshake_request(uint64_t sessionId) {
 CommBuf *Hyperspace::Protocol::create_open_request(std::string &name, uint32_t flags, HandleCallbackPtr &callbackPtr, std::vector<AttributeT> &initAttrs) {
   size_t len = 14 + Serialization::encoded_length_string(name);
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, fileNameToGroupId(name));
-  hbuilder.assign_unique_id();
   for (size_t i=0; i<initAttrs.size(); i++)
     len += Serialization::encoded_length_string(name) + Serialization::encoded_length_byte_array(initAttrs[i].valueLen);
 
@@ -169,7 +167,6 @@ CommBuf *Hyperspace::Protocol::create_open_request(std::string &name, uint32_t f
 
 CommBuf *Hyperspace::Protocol::create_close_request(uint64_t handle) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
-  hbuilder.assign_unique_id();
   CommBuf *cbuf = new CommBuf(hbuilder, 10);
   cbuf->append_short(COMMAND_CLOSE);
   cbuf->append_long(handle);
@@ -178,7 +175,6 @@ CommBuf *Hyperspace::Protocol::create_close_request(uint64_t handle) {
 
 CommBuf *Hyperspace::Protocol::create_mkdir_request(std::string &name) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, fileNameToGroupId(name));
-  hbuilder.assign_unique_id();
   CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::encoded_length_string(name));
   cbuf->append_short(COMMAND_MKDIR);
   cbuf->append_string(name);
@@ -188,7 +184,6 @@ CommBuf *Hyperspace::Protocol::create_mkdir_request(std::string &name) {
 
 CommBuf *Hyperspace::Protocol::create_delete_request(std::string &name) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, fileNameToGroupId(name));
-  hbuilder.assign_unique_id();
   CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::encoded_length_string(name));
   cbuf->append_short(COMMAND_DELETE);
   cbuf->append_string(name);
@@ -198,7 +193,6 @@ CommBuf *Hyperspace::Protocol::create_delete_request(std::string &name) {
 
 CommBuf *Hyperspace::Protocol::create_attr_set_request(uint64_t handle, std::string &name, const void *value, size_t valueLen) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
-  hbuilder.assign_unique_id();
   CommBuf *cbuf = new CommBuf(hbuilder, 10 + Serialization::encoded_length_string(name) + Serialization::encoded_length_byte_array(valueLen));
   cbuf->append_short(COMMAND_ATTRSET);
   cbuf->append_long(handle);
@@ -210,7 +204,6 @@ CommBuf *Hyperspace::Protocol::create_attr_set_request(uint64_t handle, std::str
 
 CommBuf *Hyperspace::Protocol::create_attr_get_request(uint64_t handle, std::string &name) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
-  hbuilder.assign_unique_id();
   CommBuf *cbuf = new CommBuf(hbuilder, 10 + Serialization::encoded_length_string(name));
   cbuf->append_short(COMMAND_ATTRGET);
   cbuf->append_long(handle);
@@ -221,7 +214,6 @@ CommBuf *Hyperspace::Protocol::create_attr_get_request(uint64_t handle, std::str
 
 CommBuf *Hyperspace::Protocol::create_attr_del_request(uint64_t handle, std::string &name) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
-  hbuilder.assign_unique_id();
   CommBuf *cbuf = new CommBuf(hbuilder, 10 + Serialization::encoded_length_string(name));
   cbuf->append_short(COMMAND_ATTRDEL);
   cbuf->append_long(handle);
@@ -232,7 +224,6 @@ CommBuf *Hyperspace::Protocol::create_attr_del_request(uint64_t handle, std::str
 
 CommBuf *Hyperspace::Protocol::create_readdir_request(uint64_t handle) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
-  hbuilder.assign_unique_id();
   CommBuf *cbuf = new CommBuf(hbuilder, 10);
   cbuf->append_short(COMMAND_READDIR);
   cbuf->append_long(handle);
@@ -242,7 +233,6 @@ CommBuf *Hyperspace::Protocol::create_readdir_request(uint64_t handle) {
 
 CommBuf *Hyperspace::Protocol::create_exists_request(std::string &name) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, fileNameToGroupId(name));
-  hbuilder.assign_unique_id();
   CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::encoded_length_string(name));
   cbuf->append_short(COMMAND_EXISTS);
   cbuf->append_string(name);
@@ -252,7 +242,6 @@ CommBuf *Hyperspace::Protocol::create_exists_request(std::string &name) {
 
 CommBuf *Hyperspace::Protocol::create_lock_request(uint64_t handle, uint32_t mode, bool tryAcquire) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
-  hbuilder.assign_unique_id();
   CommBuf *cbuf = new CommBuf(hbuilder, 15);
   cbuf->append_short(COMMAND_LOCK);
   cbuf->append_long(handle);
@@ -264,7 +253,6 @@ CommBuf *Hyperspace::Protocol::create_lock_request(uint64_t handle, uint32_t mod
 
 CommBuf *Hyperspace::Protocol::create_release_request(uint64_t handle) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
-  hbuilder.assign_unique_id();
   CommBuf *cbuf = new CommBuf(hbuilder, 10);
   cbuf->append_short(COMMAND_RELEASE);
   cbuf->append_long(handle);
@@ -277,7 +265,6 @@ CommBuf *Hyperspace::Protocol::create_release_request(uint64_t handle) {
  */
 CommBuf *Hyperspace::Protocol::create_status_request() {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
-  hbuilder.assign_unique_id();
   CommBuf *cbuf = new CommBuf(hbuilder, 2);
   cbuf->append_short(COMMAND_STATUS);
   return cbuf;

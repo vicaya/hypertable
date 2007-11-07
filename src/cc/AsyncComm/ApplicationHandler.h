@@ -27,12 +27,39 @@
 
 namespace hypertable {
 
+  /** Abstract base clase for application request handlers.  Objects of this
+   * type are what get added to an ApplicationQueue.  Most application
+   * requests are generated via MESSAGE events received from the Comm layer.
+   * The application queue supports serialization of requests for specific
+   * application objects.  This is achieved by setting the gid field of
+   * the message to a unique id associated with the application object
+   * (e.g. file handle).  The MESSAGE event object that gets created when
+   * a message arrives will create a 64-bit threadGroup value that is the
+   * combination of the connection ID and the gid field in the message
+   * header.  This thread group value is used by the ApplicationQueue to
+   * serialize requests.
+   */
   class ApplicationHandler {
 
   public:
+    /** Initializes the handler object with the event object that generated
+     * the request.
+     * 
+     * @param eventPtr smart pointer to event object that generated the request
+     */
     ApplicationHandler(EventPtr &eventPtr) : m_event_ptr(eventPtr) { return; }
+
+    /** Destructor */
     virtual ~ApplicationHandler() { return; }
+
+    /** Abstract method to carry out the request.  Called by an ApplicationQueue
+     * worker thread
+     */
     virtual void run() = 0;
+
+    /** Returns the thread group that this request belongs to.  This value is taken
+     * from the associated event object (see Event#threadGroup).
+     */
     uint64_t get_thread_group() { return (m_event_ptr) ? m_event_ptr->threadGroup : 0; }
 
   protected:

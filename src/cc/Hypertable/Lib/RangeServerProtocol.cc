@@ -42,7 +42,6 @@ namespace hypertable {
 
   CommBuf *RangeServerProtocol::create_request_load_range(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
-    hbuilder.assign_unique_id();
     CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthRangeSpecification(rangeSpec));
     cbuf->append_short(COMMAND_LOAD_RANGE);
     EncodeRangeSpecification(cbuf->get_data_ptr_address(), rangeSpec);
@@ -51,7 +50,6 @@ namespace hypertable {
 
   CommBuf *RangeServerProtocol::create_request_update(struct sockaddr_in &addr, std::string &tableName, uint32_t generation, uint8_t *data, size_t len) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
-    hbuilder.assign_unique_id();
     CommBuf *cbuf = new CommBuf(hbuilder, 6 + Serialization::encoded_length_string(tableName) + 
 				Serialization::encoded_length_byte_array(len));
     cbuf->append_short(COMMAND_UPDATE);
@@ -63,7 +61,6 @@ namespace hypertable {
 
   CommBuf *RangeServerProtocol::create_request_create_scanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &scanSpec) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
-    hbuilder.assign_unique_id();
     CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthRangeSpecification(rangeSpec) + EncodedLengthScanSpecification(scanSpec));
     cbuf->append_short(COMMAND_CREATE_SCANNER);
     EncodeRangeSpecification(cbuf->get_data_ptr_address(), rangeSpec);
@@ -73,7 +70,6 @@ namespace hypertable {
 
   CommBuf *RangeServerProtocol::create_request_fetch_scanblock(struct sockaddr_in &addr, int scannerId) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
-    hbuilder.assign_unique_id();
     CommBuf *cbuf = new CommBuf(hbuilder, 6);
     cbuf->append_short(COMMAND_FETCH_SCANBLOCK);
     cbuf->append_int(scannerId);
@@ -82,7 +78,6 @@ namespace hypertable {
 
   CommBuf *RangeServerProtocol::create_request_status() {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
-    hbuilder.assign_unique_id();
     CommBuf *cbuf = new CommBuf(hbuilder, 2);
     cbuf->append_short(COMMAND_STATUS);
     return cbuf;

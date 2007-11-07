@@ -150,7 +150,6 @@ int main(int argc, char **argv) {
     std::string msg;
 
     msg = "foo";
-    hbuilder.assign_unique_id();
     CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::encoded_length_string(msg)) );
     cbufPtr->append_string(msg);
     if ((error = comm->send_request(addr, 5, cbufPtr, respHandler)) != Error::OK) {
@@ -159,7 +158,6 @@ int main(int argc, char **argv) {
     }
 
     msg = "bar";
-    hbuilder.assign_unique_id();
     cbufPtr.reset (new CommBuf(hbuilder, Serialization::encoded_length_string(msg)) );
     cbufPtr->append_string(msg);
     if ((error = comm->send_request(addr, 5, cbufPtr, respHandler)) != Error::OK) {

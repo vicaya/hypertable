@@ -36,6 +36,10 @@
 
 namespace hypertable {
 
+  /**
+   * This class is used to drive and application.  It maintains a queue of requests and a pool
+   * of threads that pull requests off the queue and carry them out.
+   */
   class ApplicationQueue : public ReferenceCount {
 
     class UsageRec {
@@ -135,23 +139,44 @@ namespace hypertable {
 
   public:
 
-    ApplicationQueue(int WorkerCount) {
+    /**
+     * Constructor to set up the application queue.  It creates a number
+     * of worker threads specified by the worker_count argument.
+     *
+     * @param worker_count number of worker threads to create
+     */
+    ApplicationQueue(int worker_count) {
       Worker Worker(m_state);
-      assert (WorkerCount > 0);
-      for (int i=0; i<WorkerCount; ++i)
+      assert (worker_count > 0);
+      for (int i=0; i<worker_count; ++i)
 	m_threads.create_thread(Worker);
       //threads
     }
 
+    /**
+     * Shuts down the application queue.  All outstanding requests are carried
+     * out and then all threads exit.  #join can be called to wait for completion
+     * of the shutdown.
+     */
     void shutdown() {
       m_state.shutdown = true;
       m_state.cond.notify_all();
     }
 
+    /**
+     * Waits for a shutdown to complete.  This method returns when all application
+     * queue threads exit.
+     */
     void join() {
       m_threads.join_all();
     }
 
+    /**
+     * Adds a request (application handler) to the request queue.  The request queue
+     * is designed to support the serialization of related requests.  Requests are
+     * related by the thread group ID value in the ApplicationHandler.  This thread
+     * group ID is constructed in the Event object
+     */
     void add(ApplicationHandler *appHandler) {
       UsageRecMapT::iterator uiter;
       uint64_t threadGroup = appHandler->get_thread_group();
