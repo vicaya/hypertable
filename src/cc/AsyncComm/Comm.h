@@ -113,11 +113,11 @@ namespace hypertable {
      * Sends a request message over a connection, expecting a response.
      * The connection is specified by the addr argument which is the remote
      * end of the connection.  The request message to send is encapsulated
-     * in the cbuf_ptr object and should start with a valid header with the id
-     * set to a unique request id.  The dispatch handler given by the
-     * response_handler argument will get called back with either a response
-     * MESSAGE event or a TIMEOUT event if no response is received within
-     * the number of seconds specified by the timeout argument.
+     * in the cbuf_ptr object (see CommBuf) and should start with a valid header.
+     * The dispatch handler given by the response_handler argument will get
+     * called back with either a response MESSAGE event or a TIMEOUT event if     
+     * no response is received within the number of seconds specified by the
+     * timeout argument.
      *
      * <p>If the server at the other end of the connection uses an ApplicationQueue
      * to carry out requests, then the gid field in the header can be used to
@@ -133,11 +133,9 @@ namespace hypertable {
      * cbuf->AppendLong(amount);
      * </pre>
      *
-     * 
-     *
      * @param addr connection identifier (remote address)
      * @param timeout number of seconds to wait before delivering TIMEOUT event
-     * @param cbuf_ptr request message to send (must have valid header)
+     * @param cbuf_ptr request message to send (see CommBuf)
      * @param response_handler pointer to response handler associated with the request
      * @return Error::OK on success or error code on failure
      */
@@ -148,8 +146,17 @@ namespace hypertable {
      * id field of the header matches the id field of the request for which this
      * is a response to.  The connection is specified by the addr argument which
      * is the remote end of the connection.  The response message to send is
-     * encapsulated in the cbuf_ptr object and should start with a valid header
-     * with the matching request id.
+     * encapsulated in the cbuf_ptr (see CommBuf) object and should start with a
+     * valid header.  The following code snippet illustrates how a simple response
+     * message gets created to send back to a client in response to a request
+     * message:
+     *
+     * <pre>
+     * HeaderBuilder hbuilder;
+     * hbuilder.initialize_from_request(request_event_ptr->header);
+     * CommBufPtr cbufPtr( new CommBuf(hbuilder, 4) );
+     * cbufPtr->append_int(Error::OK);
+     * </pre>
      *
      * @param addr connection identifier (remote address)
      * @param cbuf_ptr response message to send (must have valid header with matching request id)

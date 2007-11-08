@@ -26,21 +26,21 @@ using namespace hypertable;
 
 namespace Hyperspace {
 
-  size_t encoded_length_dir_entry(DirEntryT &dirEntry) {
-    return 1 + Serialization::encoded_length_string(dirEntry.name);
+  size_t encoded_length_dir_entry(DirEntryT &dir_entry) {
+    return 1 + Serialization::encoded_length_string(dir_entry.name);
   }
 
-  void encode_dir_entry(uint8_t **bufPtr, DirEntryT &dirEntry) {
-    uint8_t bval = (dirEntry.isDirectory) ? 1 : 0;
-    *(*bufPtr)++ = bval;
-    Serialization::encode_string(bufPtr, dirEntry.name);
+  void encode_dir_entry(uint8_t **buf_ptr, DirEntryT &dir_entry) {
+    uint8_t bval = (dir_entry.isDirectory) ? 1 : 0;
+    *(*buf_ptr)++ = bval;
+    Serialization::encode_string(buf_ptr, dir_entry.name);
   }
 
-  bool decode_range_dir_entry(uint8_t **bufPtr, size_t *remainingPtr, DirEntryT &dirEntry) {
+  bool decode_range_dir_entry(uint8_t **buf_ptr, size_t *remaining_ptr, DirEntryT &dir_entry) {
     uint8_t bval;
-    if (!Serialization::decode_byte(bufPtr, remainingPtr, &bval))
+    if (!Serialization::decode_byte(buf_ptr, remaining_ptr, &bval))
       return false;
-    dirEntry.isDirectory = (bval == 0) ? false : true;
-    return Serialization::decode_string(bufPtr, remainingPtr, dirEntry.name);
+    dir_entry.isDirectory = (bval == 0) ? false : true;
+    return Serialization::decode_string(buf_ptr, remaining_ptr, dir_entry.name);
   }
 }

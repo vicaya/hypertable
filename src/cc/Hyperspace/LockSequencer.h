@@ -33,20 +33,35 @@ namespace Hyperspace {
    * and will reject requests if the sequencer is no longer valid.
    */
   struct LockSequencerT {
+    /** Pathname of file that is locked */
     std::string name;
+    /** lock mode (LOCK_MODE_SHARED or LOCK_MODE_EXCLUSIVE) */
     uint32_t mode;
+    /* lock generation number */
     uint64_t generation;
   };
 
+  /** Lock mode.  Used to specify the type of lock to acquire.
+   * \anchor LockMode
+   */
   enum {
+    /** Lock in shared mode */
     LOCK_MODE_SHARED    = 1,
+    /** Lock exclusive mode */
     LOCK_MODE_EXCLUSIVE = 2
   };
 
+  /** Lock status.  Used to report the result of a lock attempt
+   * \anchor LockStatus
+   */
   enum {
+    /** Lock successfully granted */
     LOCK_STATUS_GRANTED   = 1,
+    /** Exclusive lock attempt failed because another has it locked */
     LOCK_STATUS_BUSY      = 2,
+    /** Lock attempt pending (internal use only) */
     LOCK_STATUS_PENDING   = 3,
+    /** Lock attempt was cancelled */
     LOCK_STATUS_CANCELLED = 4
   };
 }

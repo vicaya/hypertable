@@ -48,18 +48,66 @@ namespace Hyperspace {
   /**
    * A callback object derived from this class gets passed
    * into each Open() call.  Node state changes get reported
-   * to the application via this callback.
+   * to the application via this callback.  Internally, this
+   * object gets inspected to determine what events should be
+   * delivered back to the application.
    */
   class HandleCallback : public hypertable::ReferenceCount {
   public:
-    HandleCallback(uint32_t eventMask) : m_event_mask(eventMask) { return; }
+    /** Constructor.  Sets the event mask.
+     *
+     * @param event_mask mask of events to register
+     */
+    HandleCallback(uint32_t event_mask) : m_event_mask(event_mask) { return; }
+
+    /** Invoked when an attribute gets set on the file associated
+     * with the registered handle
+     *
+     * @param name the name of the attribute that was set
+     */
     virtual void attr_set(std::string name) { return; }
+
+    /** Invoked when an attribute gets deleted from the file associated
+     * with the registered handle
+     *
+     * @param name the name of the attribute that was deleted
+     */
     virtual void attr_del(std::string name) { return; }
+
+    /** Invoked when a child node gets added to the directory associated
+     * with the registered handle
+     *
+     * @param name the name of the attribute that was deleted
+     */    
     virtual void child_node_added(std::string name) { return; }
+
+    /** Invoked when an attribute gets deleted from the file associated
+     * with the registered handle
+     *
+     * @param name the name of the attribute that was deleted
+     */    
     virtual void child_node_removed(std::string name) { return; }
+
+    /** Invoked when a lock gets acquired on the file associated with
+     * the registered handle
+     *
+     * @param name the name of the attribute that was deleted
+     */    
     virtual void lock_acquired(uint32_t mode) { return; }
+
+    /** Invoked when a lock gets released on the file associated with
+     * the registered handle
+     *
+     * @param name the name of the attribute that was deleted
+     */    
     virtual void lock_released() { return; }
+
+    /** Returns the event mask of this callback object
+     *
+     * @return the event mask
+     */    
     int get_event_mask() { return m_event_mask; }
+
   protected:
     uint32_t m_event_mask;
   };
