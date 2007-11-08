@@ -39,11 +39,14 @@ using namespace hypertable;
 namespace Hyperspace {
 
   /**
-   * Structure to hold attribute and value
+   * Structure to hold extended attribute and value
    */
   typedef struct {
+    /** name of extended attribute */
     const char *name;
+    /** pointer to attribute value */
     const void *value;
+    /** length of attribute value */
     int32_t valueLen;
   } AttributeT;
 

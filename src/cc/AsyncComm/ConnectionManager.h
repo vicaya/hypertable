@@ -46,10 +46,9 @@ namespace hypertable {
   class Event;
 
   /**
-   * This class is designed to create and maintain comm layer connections to
-   * a set of remote IP addresses.  If any of the connections gets broken, then
-   * this class will continuously attempt to re-establish the connection, pausing
-   * for a while in between attempts.
+   * Establishes and maintains a set of TCP connections.  If any of the
+   * connections gets broken, then this class will continuously attempt
+   * to re-establish the connection, pausing for a while in between attempts.
    */
   class ConnectionManager : public DispatchHandler {
 

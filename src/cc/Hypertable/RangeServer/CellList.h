@@ -33,7 +33,7 @@ namespace hypertable {
   void intrusive_ptr_release(CellList *cl);
 
   /**
-   * Abstract base class for all Cell list classes (e.g. CellCache, CellStore, etc.)
+   * Abstract base class for all Cell list classes.
    */
   class CellList {
   public:

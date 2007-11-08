@@ -35,7 +35,7 @@ extern "C" {
 namespace hypertable {
 
   /**
-   * This class is used to build a request or response header for messages sent over the Comm layer.
+   * Builds a response or request header for messages sent over the Comm layer.
    * An object of this type gets passed into the CommBuf constructor and is used to generate
    * the message header.
    *

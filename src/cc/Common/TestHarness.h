@@ -39,7 +39,7 @@ using namespace std;
 namespace hypertable {
 
   /**
-   * NoTimeLayout
+   * Log4cpp layout class that drops timestamp from log messages.
    **/
   class  NoTimeLayout : public log4cpp::Layout {
   public:

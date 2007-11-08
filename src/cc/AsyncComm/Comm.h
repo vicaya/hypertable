@@ -41,8 +41,8 @@ using namespace std;
 namespace hypertable {
 
   /**
-   * Comm is a class that provides communication (message passing) services
-   * to an application.  There should be only one instance of this class per
+   * Provides communication (message passing) services to an application.
+   * There should be only one instance of this class per
    * process and the static method ReactorFactory#initialize must be called
    * prior to constructing this class in order to create the system-wide
    * I/O reactor threads.

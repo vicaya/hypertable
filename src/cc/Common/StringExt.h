@@ -43,6 +43,7 @@ namespace __gnu_cxx {
 #endif
 }
 
+/** STL Strict Weak Ordering for comparing c-style strings. */
 struct lt_cstr {
   bool operator()(const char* s1, const char* s2) const {
     return strcmp(s1, s2) < 0;

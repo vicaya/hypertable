@@ -29,8 +29,7 @@ using namespace hypertable;
 namespace hypertable {
 
   /**
-   * CellCacheScanner is a class that provides a scanning interface to
-   * a CellCache.
+   * Provides a scanning interface to a CellCache.
    */
   class CellCacheScanner : public CellListScanner {
   public:

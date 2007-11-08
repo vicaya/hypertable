@@ -82,16 +82,32 @@ namespace Hyperspace {
   };
 
   /**
-   * This class encapsulates a Hyperspace session and
-   * provides the Hyperspace API.
+   * %Hyperspace session.  Provides the API for %Hyperspace, a namespace and
+   * lock service.
    */
   class Session : public ReferenceCount {
 
   public:
 
-    enum { STATE_EXPIRED, STATE_JEOPARDY, STATE_SAFE };
+    /** %Session state values
+     * \anchor SessionState
+     */
+    enum {
+      /** session has expired */
+      STATE_EXPIRED,
+      /** session is in jeopardy */
+      STATE_JEOPARDY,
+      /** session is OK */
+      STATE_SAFE
+    };
 
-    /** Constructor. 
+    /** Constructor.  Establishes connection to %Hyperspace master and initiates keepalive
+     * pings.  The master is located with the following two properties of the config
+     * file:
+     * <pre>
+     * Hyperspace.Master.host
+     * Hyperspace.Master.port
+     * </pre>
      *
      * @param comm pointer to the Comm object
      * @param props_ptr smart pointer to properties object
@@ -101,7 +117,7 @@ namespace Hyperspace {
 
     virtual ~Session();
 
-    /** Opens the file specified by the name argument.  The open mode
+    /** Opens a file.  The open mode
      * is determined by the bits in the flags argument and the callbackPtr
      * argument is registered as the callback for this handle.  The events
      * that should be reported on this handle are determined by the event
@@ -115,7 +131,7 @@ namespace Hyperspace {
      */
     int open(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, uint64_t *handlep);
 
-    /** Creates the file specified by the name argument.  This method is basically
+    /** Creates a file.  This method is basically
      * the same as the #open method except that it implicitly sets the 
      * OPEN_FLAG_CREATE and OPEN_FLAG_EXCL open flags and supplies a set of
      * initial attributes to be set when the file is created.  The flags argument
@@ -124,7 +140,7 @@ namespace Hyperspace {
      * that should be reported on this handle are determined by the event
      * mask inside callbackPtr (see HandleCallback#get_event_mask).
      *
-     * @param name pathname of file to open
+     * @param name pathname of file to create
      * @param flags OR'ed together set of open flags (see \ref OpenFlags)
      * @param callbackPtr smart pointer to handle callback
      * @param initAttrs vector of attributes to be atomically set when the file is created
@@ -138,14 +154,14 @@ namespace Hyperspace {
     int poison(uint64_t handle);
     */
 
-    /** Closes the given file handle.
+    /** Closes a file handle.
      *
      * @param handle file handle to close
      */
     int close(uint64_t handle);
 
     /**
-     * Creates the directory specified by the name argument.  The name
+     * Creates a directory.  The name
      * argument should be the absolute path to the file.  All of the directories
      * up to, but not including, the last path component must be valid.  Otherwise,
      * Error::HYPERSPACE_BAD_PATHNAME will be returned.
@@ -155,7 +171,7 @@ namespace Hyperspace {
      */
     int mkdir(std::string name);
 
-    /** Sets an extended attribute on the file associated with the given handle.
+    /** Sets an extended attribute of a file.
      *
      * @param handle file handle
      * @param name name of extended attribute
@@ -165,7 +181,7 @@ namespace Hyperspace {
      */
     int attr_set(uint64_t handle, std::string name, const void *value, size_t value_len);
 
-    /** Gets an extended attribute of the file associated with the given handle.
+    /** Gets an extended attribute of a file.
      *
      * @param handle file handle
      * @param name name of extended attribute
@@ -174,7 +190,7 @@ namespace Hyperspace {
      */
     int attr_get(uint64_t handle, std::string name, DynamicBuffer &value);
 
-    /** Deletes an extended attribute of the file associated with the given handle.
+    /** Deletes an extended attribute of a file.
      *
      * @param handle file handle
      * @param name name of extended attribute
@@ -191,7 +207,7 @@ namespace Hyperspace {
      */
     int exists(std::string name, bool *existsp);
 
-    /** Remove a file or directory.  Directory must be empty, otherwise 
+    /** Removes a file or directory.  Directory must be empty, otherwise 
      * Error::HYPERSPACE_IO_ERROR will be returned.
      *
      * @param name absolute path name of file or directory to delete
@@ -199,7 +215,7 @@ namespace Hyperspace {
      */
     int unlink(std::string name);
 
-    /** Get a directory listing.  The listing comes back as a vector of DireEntryT
+    /** Gets a directory listing.  The listing comes back as a vector of DireEntryT
      * structures which contains a name and boolean flag indicating if the entry is an
      * element or not.
      * 
@@ -210,7 +226,7 @@ namespace Hyperspace {
     int readdir(uint64_t handle, vector<struct DirEntryT> &listing);
 
 
-    /** Locks the file associated with the given handle.  The mode argument indicates
+    /** Locks a file.  The mode argument indicates
      * the type of lock to be acquired and takes a value of either LOCK_MODE_SHARED
      * or LOCK_MODE_EXCLUSIVE (see \ref LockMode).  Upon success, the structure
      * pointed to by sequencerp will get filled in with information about the
@@ -227,7 +243,7 @@ namespace Hyperspace {
      */
     int lock(uint64_t handle, uint32_t mode, struct LockSequencerT *sequencerp);
 
-    /** Attempts to lock the file associated with the given handle.  The mode argument
+    /** Attempts to lock a file.  The mode argument
      * indicates the type of lock to be acquired and takes a value of either LOCK_MODE_SHARED
      * or LOCK_MODE_EXCLUSIVE (see \ref LockMode).  The result of the attempt
      * will get returned in the statusp argument and will contain either
@@ -247,7 +263,7 @@ namespace Hyperspace {
      */
     int try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp, struct LockSequencerT *sequencerp);
 
-    /** Releases any lock held on the file associated with the given handle.
+    /** Releases any file handle locks.
      *
      * @param handle locked file or directory handle
      * @return Error::OK on success or error code on failure
@@ -262,7 +278,7 @@ namespace Hyperspace {
      */
     int get_sequencer(uint64_t handle, struct LockSequencerT *sequencerp);
 
-    /** Checks to see if the given sequencer is valid.
+    /** Checks to see if a lock sequencer is valid.
      *
      * <b>NOTE: This method is not yet implemented and always returns Error::OK</b>
      *
@@ -271,17 +287,44 @@ namespace Hyperspace {
      */
     int check_sequencer(struct LockSequencerT &sequencer);
 
-    /** Check the status of the Hyperspace Master server
+    /** Check the status of the Hyperspace master server
      *
      * @return Error::OK on if server is up and ok or error code on failure
      */
     int status();
 
-    int state_transition(int state);
-    int get_state();
-    bool expired();
-    bool wait_for_connection(long maxWaitSecs);
+    /** Waits for session state to change to STATE_SAFE.
+     *
+     * @param max_wait_secs maximum seconds to wait for connection
+     * @return true if connected, false otherwise
+     */
+    bool wait_for_connection(long max_wait_secs);
+
+    /** Sets verbose flag.  Turns on or off (default) verbose logging
+     *
+     * @param verbose value of verbose flag
+     */
     void set_verbose_flag(bool verbose) { m_verbose = verbose; }
+
+    /** Transions state (internal method)
+     *
+     * @param state new state (see \ref SessionState)
+     * @return old state (see \ref SessionState)
+     */
+    int state_transition(int state);
+
+    /** Returns current state (internal method)
+     *
+     * @return current state (see \ref SessionState)
+     */
+    int get_state();
+
+    /**
+     * Checks for session expiration (internal method)
+     *
+     * @return true if expired, false otherwise
+     */
+    bool expired();
 
   private:
 
@@ -290,8 +333,8 @@ namespace Hyperspace {
     void normalize_name(std::string name, std::string &normal);
     int open(ClientHandleStatePtr &handleStatePtr, CommBufPtr &cbufPtr, uint64_t *handlep);
 
-    boost::mutex       m_mutex;
-    boost::condition   m_cond;
+    boost::mutex m_mutex;
+    boost::condition m_cond;
     Comm *m_comm;
     bool m_verbose;
     int  m_state;
@@ -300,8 +343,8 @@ namespace Hyperspace {
     uint32_t m_timeout;
     boost::xtime m_expire_time;
     struct sockaddr_in m_master_addr;
-    ClientKeepaliveHandlerPtr  m_keepalive_handler_ptr;
-    SessionCallback           *m_session_callback;
+    ClientKeepaliveHandlerPtr m_keepalive_handler_ptr;
+    SessionCallback *m_session_callback;
   };
   typedef boost::intrusive_ptr<Session> SessionPtr;
   

@@ -31,9 +31,9 @@
 namespace hypertable {
 
   /**
-   * CellCache is a class that represents a sorted list of key/value
-   * pairs in memory.  All updates get written to the CellCache and later
-   * get "compacted" into a CellStore on disk.
+   * Represents  a sorted list of key/value pairs in memory.
+   * All updates get written to the CellCache and later get "compacted"
+   * into a CellStore on disk.
    */
   class CellCache : public CellList {
 

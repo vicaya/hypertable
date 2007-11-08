@@ -25,11 +25,37 @@
 
 namespace hypertable {
 
+  /**
+   * Abstract base class for filesystems.
+   */
   class Filesystem {
   public:
 
+    /** Asynchronous open.  Issues an open file request and provides a
+     * dispatch handler to be notified when the request completes.
+     *
+     * @param name absolute path name of file to open
+     * @param handler dispatch handler
+     * @return Error::OK on success or error code on failure
+     */
     virtual int open(std::string &name, DispatchHandler *handler) = 0;
+
+    /** Blocking open.  Issues an open file request and waits for it to complete.
+     *
+     * @param name absolute path name of file to open
+     * @param fdp address of variable to hold return file descriptor
+     * @return Error::OK on success or error code on failure
+     */
     virtual int open(std::string &name, int32_t *fdp) = 0;
+
+    /** Blocking buffered open.  Issues an open file request and waits for it to complete.
+     * Turns on readahead mode so that data is prefetched.
+     *
+     * @param name absolute path name of file to open
+     * @param bufSize readahead buffer size
+     * @param fdp address of variable to hold return file descriptor
+     * @return Error::OK on success or error code on failure
+     */
     virtual int open_buffered(std::string &name, uint32_t bufSize, int32_t *fdp) = 0;
 
     virtual int create(std::string &name, bool overwrite, int32_t bufferSize,

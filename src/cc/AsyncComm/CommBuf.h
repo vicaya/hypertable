@@ -40,7 +40,7 @@ extern "C" {
 namespace hypertable {
 
   /**
-   * This class is used to carry buffers to be sent over the network
+   * Message buffer sent over the network
    * by the AsyncComm subsystem.  It consists of a primary
    * buffer and an extended buffer and also contains buffer pointers
    * that keep track of how much data has already been written
@@ -51,7 +51,6 @@ namespace hypertable {
    *
    * <pre>
    *   HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
-   *   hbuilder.assign_unique_id();
    *   CommBuf *cbuf = new CommBuf(hbuilder, 2);
    *   cbuf->append_short(COMMAND_STATUS);
    * </pre>
@@ -78,7 +77,7 @@ namespace hypertable {
      * with the given HeaderBuilder object, hbuilder.  It also sets the
      * extended buffer to _ex and takes ownership of it.  The total
      * length written into the header is len plus _exLen.  The internal
-     * pointer into the primary buffer is position to just after the
+     * pointer into the primary buffer is positioned to just after the
      * header.
      *
      * @param hbuilder the Header builder object used to write the header
@@ -116,17 +115,17 @@ namespace hypertable {
     }
 
     /**
-     * Returns the primary buffer pointer.
+     * Returns the primary buffer internal data pointer
      */
     void *get_data_ptr() { return dataPtr; }
 
     /**
-     * Returns address of the primary buffer pointer.
+     * Returns address of the primary buffer internal data pointer
      */
     uint8_t **get_data_ptr_address() { return &dataPtr; }
 
     /**
-     * Advance the primary buffer pointer by len bytes
+     * Advance the primary buffer internal data pointer by len bytes
      *
      * @param len the number of bytes to advance the pointer by
      */
@@ -134,7 +133,7 @@ namespace hypertable {
 
     /**
      * Append a byte of data to the primary buffer, advancing the
-     * primary buffer pointer by 1
+     * primary buffer internal data pointer by 1
      * 
      * @param bval byte value to append into buffer
      */
@@ -142,7 +141,7 @@ namespace hypertable {
 
     /**
      * Appends a sequence of bytes to the primary buffer, advancing
-     * the primary buffer pointer by the number of bytes appended
+     * the primary buffer internal data pointer by the number of bytes appended
      * 
      * @param bytes starting address of byte sequence
      * @param len number of bytes in sequence
@@ -151,7 +150,7 @@ namespace hypertable {
 
     /**
      * Appends a short integer (16 bit) to the the primary buffer,
-     * advancing the primary buffer pointer
+     * advancing the primary buffer internal data pointer
      *
      * @param sval two byte short value to append into buffer
      */
@@ -159,7 +158,7 @@ namespace hypertable {
     
     /**
      * Appends an integer (32 bit) to the the primary buffer,
-     * advancing the primary buffer pointer
+     * advancing the primary buffer internal data pointer
      *
      * @param ival 4 byte integer value to append into buffer
      */
@@ -167,7 +166,7 @@ namespace hypertable {
 
     /**
      * Appends a long integer (64 bit) to the the primary buffer,
-     * advancing the primary buffer pointer
+     * advancing the primary buffer internal data pointer
      *
      * @param lval 8 byte long integer value to append into buffer
      */

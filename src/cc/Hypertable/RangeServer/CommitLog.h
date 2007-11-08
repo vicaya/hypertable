@@ -48,10 +48,10 @@ namespace hypertable {
   } CommitLogFileInfoT;
 
   /**
-   * The commit log consists of a series of blocks.  Each block contains a series of one
+   * Update commit log.  Consists of a series of blocks.  Each block contains a series of one
    * or more key/value pairs that were commtted together.  Each block begins with a header
    * with the following format:
-   *
+   * <pre>
    * "-BLOCK--"   - 8 bytes
    * timestamp    - 8 bytes
    * length       - 4 bytes
@@ -59,6 +59,7 @@ namespace hypertable {
    * tableName    - variable
    * '\0'         - 1 byte
    * payload      - variable
+   * </pre>
    *
    * The log ends with an empty block containing the timestamp of the last real block.
    */

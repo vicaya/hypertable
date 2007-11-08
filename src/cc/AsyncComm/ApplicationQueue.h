@@ -37,7 +37,7 @@
 namespace hypertable {
 
   /**
-   * This class is used to drive and application.  It maintains a queue of requests and a pool
+   * Provides application work queue and worker threads.  It maintains a queue of requests and a pool
    * of threads that pull requests off the queue and carry them out.
    */
   class ApplicationQueue : public ReferenceCount {

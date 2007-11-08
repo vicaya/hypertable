@@ -306,7 +306,6 @@ int Session::exists(std::string name, bool *existsp) {
 
 
 /**
- *  Blocking 'attrset' request
  */
 int Session::attr_set(uint64_t handle, std::string name, const void *value, size_t valueLen) {
   DispatchHandlerSynchronizer syncHandler;
@@ -625,7 +624,6 @@ int Session::get_sequencer(uint64_t handle, struct LockSequencerT *sequencerp) {
 
 
 /**
- * CheckSequencer - just return OK for now
  */
 int Session::check_sequencer(struct LockSequencerT &sequencer) {
   LOG_WARN("CheckSequencer not implemented.");
@@ -635,7 +633,6 @@ int Session::check_sequencer(struct LockSequencerT &sequencer) {
 
 
 /**
- * Blocking 'status' method
  */
 int Session::status() {
   DispatchHandlerSynchronizer syncHandler;
@@ -658,7 +655,6 @@ int Session::status() {
 
 
 /**
- * Transition session state
  */
 int Session::state_transition(int state) {
   boost::mutex::scoped_lock lock(m_mutex);
@@ -687,7 +683,6 @@ int Session::state_transition(int state) {
 
 
 /**
- * Return Sesion state
  */
 int Session::get_state() {
   boost::mutex::scoped_lock lock(m_mutex);
@@ -696,7 +691,6 @@ int Session::get_state() {
 
 
 /**
- * Return true if session expired
  */
 bool Session::expired() {
   boost::mutex::scoped_lock lock(m_mutex);
@@ -709,14 +703,13 @@ bool Session::expired() {
 
 
 /**
- * Waits for session state to change to SAFE
  */
-bool Session::wait_for_connection(long maxWaitSecs) {
+bool Session::wait_for_connection(long max_wait_secs) {
   boost::mutex::scoped_lock lock(m_mutex);
   boost::xtime dropTime, now;
 
   boost::xtime_get(&dropTime, boost::TIME_UTC);
-  dropTime.sec += maxWaitSecs;
+  dropTime.sec += max_wait_secs;
 
   while (m_state != STATE_SAFE) {
     m_cond.timed_wait(lock, dropTime);
