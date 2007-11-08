@@ -1,12 +1,12 @@
 
-
 CONTENTS
 
   * HOW TO BUILD
   * HOW TO RUN REGRESSION TESTS
+  * HOW TO BUILD SOURCE CODE DOCUMENTATION TREE (Doxygen)
 
 
-HOW TO BUILD
+=== HOW TO BUILD ===
 
   1. Install CMake (http://www.cmake.org/)
 
@@ -78,6 +78,23 @@ HOW TO BUILD
 
   cd ~/build/hypertable
   make test
+
+
+=== HOW TO BUILD SOURCE CODE DOCUMENTATION TREE (Doxygen) ===
+
+If you have doxygen installed on your system, then CMake should detect this and
+add a 'doc' target to the make file.  Building the source code documentation
+tree is just a matter of running the following commands:
+
+  cd ~/build/hypertable
+  make doc
+
+The documentation tree will get generated under ~/build/hypertable/doc.  To view
+the HTML docs, load the following file into a web browser:
+
+  ~/build/hypertable/doc/html/index.html
+
+
 
 
 LATER:

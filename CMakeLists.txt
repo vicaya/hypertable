@@ -33,6 +33,7 @@ find_package(ZLIB REQUIRED)
 find_package(Boost REQUIRED)
 find_package(Log4cpp REQUIRED)
 find_package(EXPAT REQUIRED)
+find_package(Doxygen)
 
 # include directories
 include_directories(${Boost_INCLUDE_DIRS} ${Log4cpp_INCLUDE_DIR} src/cc)
@@ -47,6 +48,11 @@ ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/libboost_thread-mt.a")
 ELSE(EXISTS "${Boost_LIBRARY_DIR}/libboost_thread-gcc41-mt.a")
   set (BOOST_LIB "boost_thread-gcc41-mt")
 ENDIF(EXISTS "${Boost_LIBRARY_DIR}/libboost_thread.a")
+
+IF (DOXYGEN_FOUND)
+   configure_file(${HYPERTABLE_SOURCE_DIR}/doc/Doxyfile ${HYPERTABLE_BINARY_DIR}/Doxyfile)
+   add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${HYPERTABLE_BINARY_DIR}/Doxyfile)
+ENDIF (DOXYGEN_FOUND)
 
 # Recurse into the "Hello" and "Demo" subdirectories.  This does not actually
 # cause another cmake executable to run.  The same process will walk through
