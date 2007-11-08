@@ -26,7 +26,11 @@
 namespace hypertable {
 
   /**
-   * Abstract base class for filesystems.
+   * Abstract base class for a filesystem.  All commands have synchronous and
+   * asynchronous versions.  Commands that operate on the same file descriptor
+   * are serialized by the underlying filesystem.  In other words, if you issue
+   * three asynchronous commands, they will get carried out and their responses
+   * will come back in the same order in which they were issued.
    */
   class Filesystem {
   public:
@@ -91,7 +95,8 @@ namespace hypertable {
 
     /** Closes a file asynchronously.  Issues a close file request.
      * The caller will get notified of successful completion or error via
-     * the given dispatch handler.
+     * the given dispatch handler.  This command will get serialized along
+     * with other commands issued with the same file descriptor.
      *
      * @param fd open file descriptor
      * @param handler dispatch handler
@@ -101,6 +106,8 @@ namespace hypertable {
 
     /** Closes a file.  Issues a close command and waits for it
      * to complete.
+     * This command will get serialized along with other commands
+     * issued with the same file descriptor.
      *
      * @param fd open file descriptor
      * @return Error::OK on success or error code on failure
@@ -111,6 +118,8 @@ namespace hypertable {
      * a read request.  The caller will get notified of successful completion or
      * error via the given dispatch handler.  It's up to the caller to deserialize
      * the returned data in the MESSAGE event object.  EOF is indicated by a short read.
+     * This command will get serialized along with other commands issued with the same
+     * file descriptor.
      *
      * @param fd open file descriptor
      * @param amount amount of data to read
@@ -122,6 +131,8 @@ namespace hypertable {
     /** Reads data from a file at the current position.  Issues a read
      * request and waits for it to complete, returning the read data.
      * EOF is indicated by a short read.
+     * This command will get serialized along with other commands
+     * issued with the same file descriptor.
      *
      * @param fd open file descriptor
      * @param amount amount of data to read
@@ -133,7 +144,8 @@ namespace hypertable {
 
     /** Appends data to a file asynchronously.  Issues an append request.
      * The caller will get notified of successful completion or error via the
-     * given dispatch handler.
+     * given dispatch handler.  This command will get serialized along with
+     * other commands issued with the same file descriptor.
      *
      * @param fd open file descriptor
      * @param buf pointer to data to append
@@ -146,6 +158,8 @@ namespace hypertable {
     /**
      * Appends data to a file.  Issues an append request and waits for it to
      * complete.
+     * This command will get serialized along with other commands
+     * issued with the same file descriptor.
      *
      * @param fd open file descriptor
      * @param buf pointer to data to append
@@ -154,28 +168,169 @@ namespace hypertable {
      */
     virtual int append(int32_t fd, const void *buf, uint32_t amount) = 0;
 
+    /** Seeks current file position asynchronously.  Issues a seek request.
+     * The caller will get notified of successful completion or error via the
+     * given dispatch handler.  This command will get serialized along with
+     * other commands issued with the same file descriptor.
+     *
+     * @param fd open file descriptor
+     * @param offset absolute offset to seek to
+     * @param handler dispatch handler
+     * @return Error::OK on success or error code on failure
+     */
     virtual int seek(int32_t fd, uint64_t offset, DispatchHandler *handler) = 0;
+
+    /** Seeks current file position.  Issues a seek request and waits for it to
+     * complete.
+     * This command will get serialized along with other commands
+     * issued with the same file descriptor.
+     *
+     * @param fd open file descriptor
+     * @param offset absolute offset to seek to
+     * @return Error::OK on success or error code on failure
+     */
     virtual int seek(int32_t fd, uint64_t offset) = 0;
 
+    /** Removes a file asynchronously.  Issues a remove request.
+     * The caller will get notified of successful completion or error via the
+     * given dispatch handler.
+     *
+     * @param name absolute pathname of file to delete
+     * @param handler dispatch handler
+     * @return Error::OK on success or error code on failure
+     */
     virtual int remove(std::string &name, DispatchHandler *handler) = 0;
+
+    /** Removes a file.  Issues a remove request and waits for it to
+     * complete.
+     *
+     * @param name absolute pathname of file to delete
+     * @return Error::OK on success or error code on failure
+     */
     virtual int remove(std::string &name) = 0;
 
+    /** Gets the length of a file asynchronously.  Issues a length request.
+     * The caller will get notified of successful completion or error via the
+     * given dispatch handler.
+     *
+     * @param name absolute pathname of file
+     * @param handler dispatch handler
+     * @return Error::OK on success or error code on failure
+     */
     virtual int length(std::string &name, DispatchHandler *handler) = 0;
+
+    /** Gets the length of a file.  Issues a length request and waits for it
+     * to complete.
+     *
+     * @param name absolute pathname of file
+     * @param lenp address of variable to hold returned length
+     * @return Error::OK on success or error code on failure
+     */
     virtual int length(std::string &name, int64_t *lenp) = 0;
 
+    /** Reads data from a file at the specified position asynchronously.  Issues
+     * a pread request.  The caller will get notified of successful completion or
+     * error via the given dispatch handler.  It's up to the caller to deserialize
+     * the returned data in the MESSAGE event object.  EOF is indicated by a short read.
+     *
+     * @param fd open file descriptor
+     * @param offset starting offset of read
+     * @param amount amount of data to read
+     * @param handler dispatch handler
+     * @return Error::OK on success or error code on failure
+     */
     virtual int pread(int32_t fd, uint64_t offset, uint32_t amount, DispatchHandler *handler) = 0;
+
+    /** Reads data from a file at the specified position.  Issues a pread
+     * request and waits for it to complete, returning the read data.
+     * EOF is indicated by a short read.
+     * This command will get serialized along with other commands
+     * issued with the same file descriptor.
+     *
+     * @param fd open file descriptor
+     * @param offset starting offset of read
+     * @param amount amount of data to read
+     * @param dst destination buffer for read data
+     * @param nreadp address of variable to hold amount of data read.
+     * @return Error::OK on success or error code on failure
+     */
     virtual int pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst, uint32_t *nreadp) = 0;
 
+    /** Creates a directory asynchronously.  Issues a mkdirs request which creates a directory,
+     * including all its missing parents.  The caller will get notified of successful completion
+     * or error via the given dispatch handler.
+     *
+     * @param name absolute pathname of directory to create
+     * @param handler dispatch handler
+     * @return Error::OK on success or error code on failure
+     */
     virtual int mkdirs(std::string &name, DispatchHandler *handler) = 0;
+
+    /** Creates a directory.  Issues a mkdirs request which creates a directory,
+     * including all its missing parents, and waits for it to complete.
+     *
+     * @param name absolute pathname of directory to create
+     * @return Error::OK on success or error code on failure
+     */
     virtual int mkdirs(std::string &name) = 0;
 
+    /** Recursively removes a directory asynchronously.  Issues a rmdir request.
+     * The caller will get notified of successful completion or error via the given
+     * dispatch handler.
+     *
+     * @param name absolute pathname of directory to remove
+     * @param handler dispatch handler
+     * @return Error::OK on success or error code on failure
+     */
     virtual int rmdir(std::string &name, DispatchHandler *handler) = 0;
-    virtual int rmdir(std::string &name) = 0;
 
+    /** Recursively removes a directory.  Issues a rmdir request and waits for
+     * it to complete.
+     *
+     * @param name absolute pathname of directory to remove
+     * @return Error::OK on success or error code on failure
+     */
+    virtual int rmdir(std::string &name) = 0;
+    
+    /** Obtains a listing of all files in a directory asynchronously.  Issues a readdir
+     * request.  The caller will get notified of successful completion or error via the
+     * given dispatch handler.
+     *
+     * @param name absolute pathname of directory
+     * @param handler dispatch handler
+     * @return Error::OK on success or error code on failure
+     */
     virtual int readdir(std::string &name, DispatchHandler *handler) = 0;
+
+    /** Obtains a listing of all files in a directory.  Issues a readdir request
+     * and waits for it to complete.
+     *
+     * @param name absolute pathname of directory
+     * @param listing reference to vector of entry names
+     * @return Error::OK on success or error code on failure
+     */
     virtual int readdir(std::string &name, std::vector<std::string> &listing) = 0;
 
+    /** Flushes a file asynchronously.  Isues a flush command which causes all buffered
+     * writes to get persisted to disk.  The caller will get notified of successful
+     * completion or error via the given dispatch handler.  This command will get
+     * serialized along with other commands issued with the same file descriptor.
+     *
+     * @param fd open file descriptor
+     * @param handler dispatch handler
+     * @return Error::OK on success or error code on failure
+     */
     virtual int flush(int32_t fd, DispatchHandler *handler) = 0;
+
+    /** Flushes a file.  Isues a flush command which causes all buffered
+     * writes to get persisted to disk, and waits for it to complete.
+     * This command will get serialized along with other commands issued
+     * with the same file descriptor.
+     *
+     * @param fd open file descriptor
+     * @param handler dispatch handler
+     * @return Error::OK on success or error code on failure
+     */
     virtual int flush(int32_t fd) = 0;
 
   };

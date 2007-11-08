@@ -54,15 +54,46 @@ namespace hypertable {
 
   namespace DfsBroker {
 
+    /** Proxy class for DFS broker.  As specified in the general contract for
+     * a Filesystem, commands that operate on the same file descriptor
+     * are serialized by the underlying filesystem.  In other words, if you issue
+     * three asynchronous commands, they will get carried out and their responses
+     * will come back in the same order in which they were issued.
+     */
     class Client : public Filesystem {
     public:
 
+      /** Constructor with explicit values.  Connects to the DFS broker at the
+       * address given by the addr argument and uses the timeout argument for
+       * the request timeout values.
+       *
+       * @param connManagerPtr smart pointer to connection manager
+       * @param addr address of DFS broker to connect to
+       * @param timeout timeout value to use in requests
+       */
       Client(ConnectionManagerPtr &connManagerPtr, struct sockaddr_in &addr, time_t timeout);
 
+      /** Constructor with Properties object.  The following properties are read
+       * to determine the location of the broker and the request timeout value:
+       * <pre>
+       * DfsBroker.port
+       * DfsBroker.host
+       * DfsBroker.timeout
+       * </pre>
+       *
+       * @param connManagerPtr smart pointer to connection manager
+       * @param propsPtr smart pointer to properties object
+       */
       Client(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr);
 
-      bool wait_for_connection(long maxWaitSecs) {
-	return m_conn_manager_ptr->wait_for_connection(m_addr, maxWaitSecs);
+      /** Waits up to max_wait_secs for a connection to be established with the DFS
+       * broker.
+       *
+       * @param max_wait_secs maximum amount of time to wait
+       * @return true if connected, false otherwise
+       */
+      bool wait_for_connection(long max_wait_secs) {
+	return m_conn_manager_ptr->wait_for_connection(m_addr, max_wait_secs);
       }
 
       virtual int open(std::string &name, DispatchHandler *handler);
@@ -107,16 +138,41 @@ namespace hypertable {
       virtual int readdir(std::string &name, DispatchHandler *handler);
       virtual int readdir(std::string &name, std::vector<std::string> &listing);
 
+      /** Checks the status of the DFS broker.  Issues a status command and waits
+       * for it to return.
+       *
+       * @return Error::OK if broker is up and OK, otherwise an error code
+       */
       int status();
 
+      /** Shuts down the DFS broker.  Issues a shutdown command to the DFS broker.
+       * If the flag is set to Protocol::SHUTDOWN_FLAG_IMMEDIATE, then the 
+       * broker will call exit(0) directly from the I/O reactor thread.  Otherwise,
+       * a shutdown command will get added to the broker's application queue, allowing
+       * the shutdown to be handled more gracefully.
+       *
+       * @param flags controls how broker gets shut down
+       * @param handler response handler
+       * @return Error::OK if broker is up and OK, otherwise an error code
+       */
       int shutdown(uint16_t flags, DispatchHandler *handler);
 
       Protocol *get_protocol_object() { return m_protocol; }
 
+      /** Gets the configured request timeout value.
+       *
+       * @return timeout value in seconds
+       */
       time_t get_timeout() { return m_timeout; }
     
     private:
 
+      /** Sends a message to the DFS broker.
+       *
+       * @param cbufPtr message to send
+       * @param handler response handler
+       * @return Error::OK on success or error code on failure
+       */
       int send_message(CommBufPtr &cbufPtr, DispatchHandler *handler);
 
       typedef __gnu_cxx::hash_map<uint32_t, ClientBufferedReaderHandler *> BufferedReaderMapT;
