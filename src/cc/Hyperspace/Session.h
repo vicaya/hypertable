@@ -83,7 +83,38 @@ namespace Hyperspace {
 
   /**
    * %Hyperspace session.  Provides the API for %Hyperspace, a namespace and
-   * lock service.
+   * lock service.  This service is modeled after <a href="http://labs.google.com/papers/chubby.html">
+   * Chubby</a>.  Presently it is implemented as just a single server, but ultimately
+   * it will get re-written using a distributed consensus protocol for high availablility.
+   * For now, it provides the same functionality (albeit less available) and the same API.
+   * This allows us to get the system up and running and since the API is the same as the
+   * API for the highly-available version, minimal code changes will be needed when we
+   * swap out this one for the highly available one.
+   * <p>
+   * %Session establishes a session with the master which includes a TCP connection and
+   * the initiation of regular heartbeat UDP messages.  As soon as the master receives the
+   * first heartbeat message from the client %Session object, it creates the session
+   * and grants a lease.  Each heartbeat that the master receives from the client
+   * causes the master to extend the lease.  In this mode of operation, the session 
+   * is in the SAFE state.  If the master does not receive a heartbeat message before
+   * the lease expiration time, then the session transitions to the EXPIRED state and
+   * the master drops the session.
+   * <p>
+   * Whenever the client receives a heartbeat UDP response message, it advances its
+   * conservative estimate of what it thinks the lease expiration time is.  If the
+   * lease expires, then the client will put the session in the JEOPARDY state and will
+   * continue sending heartbeats for a period of time known as the 'grace period'.
+   * During the JEOPARDY state, all %Hyperspace commands are suspended.  If
+   * a heartbeat response message is received during the grace period, then it will switch
+   * back to SAFE mode and allow pending commands to proceed.  Otherwise, the session expires.
+   * <p>
+   * The following set of properties are available to configure the protocol (default
+   * values are shown):
+   * <pre>
+   * Hyperspace.Lease.Interval=12
+   * Hyperspace.KeepAlive.Interval=7
+   * Hyperspace.GracePeriod=45
+   * </pre>
    */
   class Session : public ReferenceCount {
 
@@ -101,13 +132,14 @@ namespace Hyperspace {
       STATE_SAFE
     };
 
-    /** Constructor.  Establishes connection to %Hyperspace master and initiates keepalive
-     * pings.  The master is located with the following two properties of the config
-     * file:
+    /** Constructor.  Establishes a connection to %Hyperspace master and initiates keepalive
+     * pings.  The location of the master is determined by the following two properties of
+     * the config file:
      * <pre>
      * Hyperspace.Master.host
      * Hyperspace.Master.port
      * </pre>
+     * The session callback is used to notify the application of session state changes.
      *
      * @param comm pointer to the Comm object
      * @param props_ptr smart pointer to properties object
