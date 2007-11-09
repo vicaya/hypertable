@@ -29,9 +29,11 @@ Mutator.cc
 RangeLocator.cc
 RangeServerClient.cc
 RangeServerProtocol.cc
+RootFileHandler.cc
 ScanResult.cc
 Schema.cc
 Table.cc
+TableScanner.cc
 TestSource.cc
 Types.cc
 )

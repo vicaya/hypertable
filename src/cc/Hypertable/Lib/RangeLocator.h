@@ -21,6 +21,12 @@
 #ifndef HYPERTABLE_RANGELOCATOR_H
 #define HYPERTABLE_RANGELOCATOR_H
 
+#include "Common/ReferenceCount.h"
+
+#include "AsyncComm/ConnectionManager.h"
+
+#include "Hyperspace/Session.h"
+
 #include "LocationCache.h"
 #include "RangeServerClient.h"
 #include "Schema.h"
@@ -33,7 +39,7 @@ namespace hypertable {
 
   class RangeServerClient;
 
-  class RangeLocator {
+  class RangeLocator : public ReferenceCount {
 
   public:
     RangeLocator(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr);
@@ -57,6 +63,8 @@ namespace hypertable {
     uint8_t                m_startrow_cid;
     uint8_t                m_location_cid;
   };
+  typedef boost::intrusive_ptr<RangeLocator> RangeLocatorPtr;
+
 
 }
 

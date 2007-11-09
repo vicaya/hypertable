@@ -36,7 +36,7 @@ using namespace Hyperspace;
 /**
  * 
  */
-Table::Table(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr, std::string &name) : m_conn_manager_ptr(connManagerPtr), m_hyperspace_ptr(hyperspacePtr) {
+Table::Table(ConnectionManagerPtr &conn_manager_ptr, Hyperspace::SessionPtr &hyperspace_ptr, std::string &name) : m_conn_manager_ptr(conn_manager_ptr), m_hyperspace_ptr(hyperspace_ptr) {
   int error;
   std::string tableFile = (std::string)"/hypertable/tables/" + name;
   DynamicBuffer schemaBuf(0);
@@ -69,10 +69,17 @@ Table::Table(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyper
     throw Exception(Error::MASTER_BAD_SCHEMA);
   }
 
+  m_range_locator_ptr = new RangeLocator(m_conn_manager_ptr, m_hyperspace_ptr);
 }
 
 
-int Table::create_mutator(MutatorPtr &mutatorPtr) {
-  mutatorPtr = new Mutator(m_conn_manager_ptr, m_schema_ptr);
+int Table::create_mutator(MutatorPtr &mutator_ptr) {
+  mutator_ptr = new Mutator(m_conn_manager_ptr, m_schema_ptr);
+  return Error::OK;
+}
+
+
+int Table::create_scanner(ScanSpecificationT &scan_spec, TableScannerPtr &scanner_ptr) {
+  scanner_ptr = new TableScanner(m_schema_ptr, m_range_locator_ptr, scan_spec);
   return Error::OK;
 }

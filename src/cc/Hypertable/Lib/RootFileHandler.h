@@ -27,7 +27,6 @@ using namespace Hyperspace;
 
 namespace hypertable {
 
-  class RootFileHandler;
   class RangeLocator;
 
   /**

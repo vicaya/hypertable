@@ -18,15 +18,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "RangeLocator.h"
-#include "RootFileHandler.h"
+#ifndef HYPERTABLE_CELL_H
+#define HYPERTABLE_CELL_H
 
-using namespace hypertable;
+namespace hypertable {
 
-/**
- *
- */
-void RootFileHandler::attr_set(std::string name) {
-  if (name == "server")
-    m_range_locator->set_root_stale();
+  /** Encapsulates decomposed key and value */
+  typedef struct {
+    const char *row_key;
+    const char *column_family;
+    const char *column_qualifier;
+    uint64_t timestamp;
+    uint8_t *value;
+    uint64_t value_len;
+  } CellT;
+
 }
+
+#endif // HYPERTABLE_CELL_H

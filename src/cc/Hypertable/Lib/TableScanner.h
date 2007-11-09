@@ -18,42 +18,34 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_TABLE_H
-#define HYPERTABLE_TABLE_H
+#ifndef HYPERTABLE_TABLESCANNER_H
+#define HYPERTABLE_TABLESCANNER_H
 
 #include "Common/ReferenceCount.h"
 
-#include "Mutator.h"
-#include "Schema.h"
+#include "Cell.h"
 #include "RangeLocator.h"
+#include "Schema.h"
 #include "TableScanner.h"
 #include "Types.h"
 
-namespace Hyperspace {
-  class Session;
-}
-
 namespace hypertable {
 
-  class ConnectionManager;
-
-  class Table : public ReferenceCount {
+  class TableScanner : public ReferenceCount {
 
   public:
-    Table(ConnectionManagerPtr &conn_manager_ptr, Hyperspace::SessionPtr &hyperspace_ptr, std::string &name);
-    virtual ~Table() { return; }
+    TableScanner(SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpecificationT &scan_spec);
+    virtual ~TableScanner();
 
-    int create_mutator(MutatorPtr &mutatorPtr);
-    int create_scanner(ScanSpecificationT &scanSpec, TableScannerPtr &scannerPtr);
+    bool next(CellT &cell);
 
   private:
-    ConnectionManagerPtr   m_conn_manager_ptr;
-    Hyperspace::SessionPtr m_hyperspace_ptr;
-    SchemaPtr              m_schema_ptr;
-    RangeLocatorPtr        m_range_locator_ptr;
+    SchemaPtr           m_schema_ptr;
+    RangeLocatorPtr     m_range_locator_ptr;
+    ScanSpecificationT  m_scan_spec;
   };
-  typedef boost::intrusive_ptr<Table> TablePtr;
+  typedef boost::intrusive_ptr<TableScanner> TableScannerPtr;
 
 }
 
-#endif // HYPERTABLE_TABLE_H
+#endif // HYPERTABLE_TABLESCANNER_H
