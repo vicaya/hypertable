@@ -865,7 +865,7 @@ int RangeServer::verify_schema(TableInfoPtr &tableInfoPtr, int generation, std::
 
     m_hyperspace_ptr->close(handle);
 
-    schemaPtr.reset( Schema::new_instance((const char *)valueBuf.buf, valueBuf.fill(), true) );
+    schemaPtr = Schema::new_instance((const char *)valueBuf.buf, valueBuf.fill(), true);
     if (!schemaPtr->is_valid()) {
       errMsg = "Schema Parse Error for table '" + tableInfoPtr->get_name() + "' : " + schemaPtr->get_error_string();
       return Error::RANGESERVER_SCHEMA_PARSE_ERROR;

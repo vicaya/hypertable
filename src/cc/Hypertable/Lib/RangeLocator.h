@@ -23,6 +23,7 @@
 
 #include "LocationCache.h"
 #include "RangeServerClient.h"
+#include "Schema.h"
 
 namespace Hyperspace {
   class Session;
@@ -37,7 +38,7 @@ namespace hypertable {
   public:
     RangeLocator(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr);
     ~RangeLocator();
-    int find(uint32_t tableId, const char *rowKey, const char **serverIdPtr);
+    int find(uint32_t tableId, const char *rowKey, const char **location_ptr);
     void set_root_stale() { m_root_stale=true; }
 
   private:
@@ -52,6 +53,9 @@ namespace hypertable {
     bool                   m_root_stale;
     struct sockaddr_in     m_root_addr;
     RangeServerClient      m_range_server;
+    SchemaPtr              m_metadata_schema_ptr;
+    uint8_t                m_startrow_cid;
+    uint8_t                m_location_cid;
   };
 
 }

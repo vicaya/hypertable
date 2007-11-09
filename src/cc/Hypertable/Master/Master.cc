@@ -155,7 +155,7 @@ Master::~Master() {
 /**
  *
  */
-void Master::server_joined(std::string &serverIdStr) {
+void Master::server_joined(std::string &location) {
   int error;
   RangeServerStatePtr statePtr;
   uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
@@ -167,17 +167,17 @@ void Master::server_joined(std::string &serverIdStr) {
   
   {
     boost::mutex::scoped_lock lock(m_mutex);
-    if ((iter = m_server_map.find(serverIdStr)) != m_server_map.end())
+    if ((iter = m_server_map.find(location)) != m_server_map.end())
       statePtr = (*iter).second;
     else {
       statePtr = new RangeServerState();
-      statePtr->serverIdStr = serverIdStr;
+      statePtr->location = location;
     }
   }
 
-  LOG_VA_INFO("Server Joined (%s)", serverIdStr.c_str());
+  LOG_VA_INFO("Server Joined (%s)", location.c_str());
 
-  hsFilename = (std::string)"/hypertable/servers/" + serverIdStr;
+  hsFilename = (std::string)"/hypertable/servers/" + location;
 
   lockFileHandler = new ServerLockFileHandler(statePtr, this, m_app_queue_ptr);
 
@@ -201,7 +201,7 @@ void Master::server_joined(std::string &serverIdStr) {
   }
   else {
     boost::mutex::scoped_lock lock(m_mutex);
-    m_server_map[statePtr->serverIdStr] = statePtr;  
+    m_server_map[statePtr->location] = statePtr;  
   }
   cout << flush;
 }
@@ -211,17 +211,17 @@ void Master::server_joined(std::string &serverIdStr) {
 /**
  *
  */
-void Master::server_left(std::string &serverIdStr) {
+void Master::server_left(std::string &location) {
   boost::mutex::scoped_lock lock(m_mutex);
   int error;
   uint32_t lockStatus;
   struct LockSequencerT lockSequencer;
-  ServerMapT::iterator iter = m_server_map.find(serverIdStr);
-  std::string hsFilename = (std::string)"/hypertable/servers/" + serverIdStr;
+  ServerMapT::iterator iter = m_server_map.find(location);
+  std::string hsFilename = (std::string)"/hypertable/servers/" + location;
 
 
   if (iter == m_server_map.end()) {
-    LOG_VA_WARN("Server (%s) not found in map", serverIdStr.c_str());
+    LOG_VA_WARN("Server (%s) not found in map", location.c_str());
     return;
   }
 
@@ -231,7 +231,7 @@ void Master::server_left(std::string &serverIdStr) {
   }
 
   if (lockStatus != LOCK_STATUS_GRANTED) {
-    LOG_VA_INFO("Unable to obtain lock on server file %s, ignoring...", serverIdStr.c_str());
+    LOG_VA_INFO("Unable to obtain lock on server file %s, ignoring...", location.c_str());
     return;
   }
 
@@ -321,25 +321,25 @@ void Master::get_schema(ResponseCallbackGetSchema *cb, const char *tableName) {
 /**
  * 
  */
-void Master::register_server(ResponseCallback *cb, const char *serverIdStr, struct sockaddr_in &addr) {
+void Master::register_server(ResponseCallback *cb, const char *location, struct sockaddr_in &addr) {
   boost::mutex::scoped_lock lock(m_mutex);
   RangeServerStatePtr statePtr;
-  std::string idStr = serverIdStr;
+  std::string idStr = location;
   ServerMapT::iterator iter = m_server_map.find(idStr);
 
-  if ((iter = m_server_map.find(serverIdStr)) != m_server_map.end())
+  if ((iter = m_server_map.find(location)) != m_server_map.end())
     statePtr = (*iter).second;
   else {
     statePtr = new RangeServerState();
-    statePtr->serverIdStr = serverIdStr;
-    m_server_map[statePtr->serverIdStr] = statePtr;
+    statePtr->location = location;
+    m_server_map[statePtr->location] = statePtr;
   }
 
   statePtr->addr = addr;
 
   {
     std::string addrStr;
-    LOG_VA_INFO("Server Registered %s -> %s", serverIdStr, InetAddr::string_format(addrStr, addr));
+    LOG_VA_INFO("Server Registered %s -> %s", location, InetAddr::string_format(addrStr, addr));
     cout << flush;
   }
 
@@ -552,7 +552,7 @@ void Master::scan_servers_directory() {
   for (size_t i=0; i<listing.size(); i++) {
 
     statePtr = new RangeServerState();
-    statePtr->serverIdStr = listing[i].name;
+    statePtr->location = listing[i].name;
 
     hsFilename = (std::string)"/hypertable/servers/" + listing[i].name;
 
@@ -576,7 +576,7 @@ void Master::scan_servers_directory() {
 	LOG_VA_INFO("Problem closing handle on deleting Hyperspace file %s", hsFilename.c_str());
     }
     else {
-      m_server_map[statePtr->serverIdStr] = statePtr;
+      m_server_map[statePtr->location] = statePtr;
     }
   }
 

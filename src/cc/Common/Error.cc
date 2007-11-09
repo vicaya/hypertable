@@ -38,8 +38,9 @@ namespace {
     { Error::RESPONSE_TRUNCATED,          "HYPERTABLE response truncated" },
     { Error::REQUEST_TIMEOUT,             "HYPERTABLE request timeout" },
     { Error::LOCAL_IO_ERROR,              "HYPERTABLE local i/o error" },
-    { Error::BAD_ROOT_SERVERID,           "HYPERTABLE bad root server ID" },
-    { Error::MASTER_NOT_RUNNING,          "HYPERTABLE master is not running" }, 
+    { Error::BAD_ROOT_LOCATION,           "HYPERTABLE bad root location" },
+    { Error::BAD_SCHEMA,                  "HYPERTABLE bad schema" },
+    { Error::INVALID_METADATA,            "HYPERTABLE invalid metadata" },
     { Error::COMM_NOT_CONNECTED,          "COMM not connected" },
     { Error::COMM_BROKEN_CONNECTION,      "COMM broken connection" },
     { Error::COMM_CONNECT_ERROR,          "COMM connect error" },
@@ -105,7 +106,10 @@ const int Error::REQUEST_TRUNCATED;
 const int Error::RESPONSE_TRUNCATED;
 const int Error::REQUEST_TIMEOUT;
 const int Error::LOCAL_IO_ERROR;
-const int Error::BAD_ROOT_SERVERID;
+const int Error::BAD_ROOT_LOCATION;
+const int Error::BAD_SCHEMA;
+const int Error::INVALID_METADATA;
+
 const int Error::COMM_NOT_CONNECTED;
 const int Error::COMM_BROKEN_CONNECTION;
 const int Error::COMM_CONNECT_ERROR;

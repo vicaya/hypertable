@@ -31,13 +31,14 @@
 #include <expat.h>
 
 #include "Common/Properties.h"
+#include "Common/ReferenceCount.h"
 
 using namespace hypertable;
 using namespace std;
 
 namespace hypertable {
 
-  class Schema {
+  class Schema : public ReferenceCount {
   public:
 
     class ColumnFamily {
@@ -124,7 +125,7 @@ namespace hypertable {
     static boost::mutex  ms_mutex;
   };
 
-  typedef boost::shared_ptr<Schema> SchemaPtr;
+  typedef boost::intrusive_ptr<Schema> SchemaPtr;
 
 }
 

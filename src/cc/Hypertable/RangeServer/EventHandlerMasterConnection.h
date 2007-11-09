@@ -31,7 +31,7 @@ namespace hypertable {
 
   class EventHandlerMasterConnection : public ApplicationHandler {
   public:
-    EventHandlerMasterConnection(MasterClientPtr &masterClientPtr, std::string &serverIdStr, EventPtr &eventPtr) : ApplicationHandler(eventPtr), m_master_client_ptr(masterClientPtr), m_server_id_str(serverIdStr) {
+    EventHandlerMasterConnection(MasterClientPtr &masterClientPtr, std::string &location, EventPtr &eventPtr) : ApplicationHandler(eventPtr), m_master_client_ptr(masterClientPtr), m_location(location) {
       return;
     }
 
@@ -39,7 +39,7 @@ namespace hypertable {
 
   private:
     MasterClientPtr m_master_client_ptr;
-    std::string     m_server_id_str;
+    std::string     m_location;
   };
 
 }

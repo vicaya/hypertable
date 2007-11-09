@@ -27,7 +27,7 @@ namespace hypertable {
 
   class RangeServerState : public ReferenceCount {
   public:
-    std::string         serverIdStr;
+    std::string         location;
     uint64_t            hyperspaceHandle;
     struct sockaddr_in  addr;
   };

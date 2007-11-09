@@ -62,7 +62,7 @@ Table::Table(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyper
 
   m_hyperspace_ptr->close(handle);
 
-  m_schema_ptr.reset( Schema::new_instance((const char *)schemaBuf.buf, strlen((const char *)schemaBuf.buf), true) );
+  m_schema_ptr = Schema::new_instance((const char *)schemaBuf.buf, strlen((const char *)schemaBuf.buf), true);
 
   if (!m_schema_ptr->is_valid()) {
     LOG_VA_ERROR("Schema Parse Error: %s", m_schema_ptr->get_error_string());

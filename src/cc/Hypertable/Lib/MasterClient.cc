@@ -146,16 +146,16 @@ int MasterClient::status() {
 }
 
 
-int MasterClient::register_server(std::string &serverIdStr, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( MasterProtocol::create_register_server_request(serverIdStr) );
+int MasterClient::register_server(std::string &location, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( MasterProtocol::create_register_server_request(location) );
   return send_message(cbufPtr, handler);
 }
 
 
-int MasterClient::register_server(std::string &serverIdStr) {
+int MasterClient::register_server(std::string &location) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( MasterProtocol::create_register_server_request(serverIdStr) );
+  CommBufPtr cbufPtr( MasterProtocol::create_register_server_request(location) );
   int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {

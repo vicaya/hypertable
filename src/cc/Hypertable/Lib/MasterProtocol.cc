@@ -52,11 +52,11 @@ namespace hypertable {
     return cbuf;
   }
 
-  CommBuf *MasterProtocol::create_register_server_request(std::string &serverIdStr) {
+  CommBuf *MasterProtocol::create_register_server_request(std::string &location) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
-    CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::encoded_length_string(serverIdStr));
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::encoded_length_string(location));
     cbuf->append_short(COMMAND_REGISTER_SERVER);
-    cbuf->append_string(serverIdStr);
+    cbuf->append_string(location);
     return cbuf;
   }
 

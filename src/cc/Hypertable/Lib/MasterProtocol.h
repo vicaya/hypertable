@@ -48,7 +48,7 @@ namespace hypertable {
 
     static CommBuf *create_status_request();
 
-    static CommBuf *create_register_server_request(std::string &serverIdStr);
+    static CommBuf *create_register_server_request(std::string &location);
 
     virtual const char *command_text(short command);
     

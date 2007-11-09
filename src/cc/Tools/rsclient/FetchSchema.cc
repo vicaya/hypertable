@@ -53,7 +53,7 @@ namespace hypertable {
       delete schema;
       return Error::RANGESERVER_SCHEMA_PARSE_ERROR;
     }
-    schemaPtr.reset(schema);
+    schemaPtr = schema;
 
     return Error::OK;
   }

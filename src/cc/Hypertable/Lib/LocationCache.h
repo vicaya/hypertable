@@ -95,14 +95,14 @@ namespace hypertable {
       std::map<LocationCacheKeyT, struct cache_value *>::iterator mapIter;
       std::string startRow;
       std::string endRow;
-      const char *serverId;
+      const char *location;
     } ValueT;
 
     LocationCache(uint32_t maxEntries) : m_mutex(), m_location_map(), m_head(0), m_tail(0), m_max_entries(maxEntries) { return; }
     ~LocationCache();
 
-    void insert(uint32_t tableId, const char *startRow, const char *endRow, const char *serverId);
-    bool lookup(uint32_t tableId, const char *rowKey, const char **serverIdPtr);
+    void insert(uint32_t tableId, const char *startRow, const char *endRow, const char *location);
+    bool lookup(uint32_t tableId, const char *rowKey, const char **locationPtr);
 
     void display(std::ofstream &outfile);
 
@@ -111,13 +111,13 @@ namespace hypertable {
     void move_to_head(ValueT *cacheValue);
     void remove(ValueT *cacheValue);
 
-    const char *get_constant_server_id(const char *serverId);
+    const char *get_constant_location_str(const char *location);
 
     typedef std::map<LocationCacheKeyT, ValueT *> LocationMapT;
 
     boost::mutex   m_mutex;
     LocationMapT   m_location_map;
-    std::set<const char *, lt_cstr>  m_server_id_strings;
+    std::set<const char *, lt_cstr>  m_location_strings;
     ValueT        *m_head;
     ValueT        *m_tail;
     uint32_t       m_max_entries;

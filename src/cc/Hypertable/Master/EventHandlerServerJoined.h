@@ -34,7 +34,7 @@ namespace hypertable {
 
   class EventHandlerServerJoined : public ApplicationHandler {
   public:
-    EventHandlerServerJoined(MasterPtr &masterPtr, std::string &serverIdStr, EventPtr &eventPtr) : ApplicationHandler(eventPtr), m_master_ptr(masterPtr), m_server_id_str(serverIdStr) {
+    EventHandlerServerJoined(MasterPtr &masterPtr, std::string &location, EventPtr &eventPtr) : ApplicationHandler(eventPtr), m_master_ptr(masterPtr), m_location(location) {
       return;
     }
 
@@ -42,7 +42,7 @@ namespace hypertable {
 
   private:
     MasterPtr    m_master_ptr;
-    std::string  m_server_id_str;
+    std::string  m_location;
   };
 
 }

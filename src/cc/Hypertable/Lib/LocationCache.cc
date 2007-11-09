@@ -30,19 +30,19 @@ using namespace std;
 /**
  * Insert
  */
-void LocationCache::insert(uint32_t tableId, const char *startRow, const char *endRow, const char *serverId) {
+void LocationCache::insert(uint32_t tableId, const char *startRow, const char *endRow, const char *location) {
   boost::mutex::scoped_lock lock(m_mutex);
   ValueT *newValue = new ValueT;
   LocationMapT::iterator iter;
   LocationCacheKeyT key;
 
-  //cout << tableId << " start=" << startRow << " end=" << endRow << " serverId=" << serverId << endl << flush;
+  //cout << tableId << " start=" << startRow << " end=" << endRow << " location=" << location << endl << flush;
 
-  serverId = get_constant_server_id(serverId);
+  location = get_constant_location_str(location);
 
   newValue->startRow = (startRow) ? startRow : "";
   newValue->endRow   = (endRow) ? endRow : "";
-  newValue->serverId = serverId;
+  newValue->location = location;
 
   key.tableId = tableId;
   key.endRow = (endRow) ? newValue->endRow.c_str() : 0;
@@ -83,7 +83,7 @@ void LocationCache::insert(uint32_t tableId, const char *startRow, const char *e
  *
  */
 LocationCache::~LocationCache() {
-  for (std::set<const char *, lt_cstr>::iterator iter = m_server_id_strings.begin(); iter != m_server_id_strings.end(); iter++)
+  for (std::set<const char *, lt_cstr>::iterator iter = m_location_strings.begin(); iter != m_location_strings.end(); iter++)
     delete [] *iter;
   for (LocationMapT::iterator lmIter = m_location_map.begin(); lmIter != m_location_map.end(); lmIter++)
     delete (*lmIter).second;
@@ -93,7 +93,7 @@ LocationCache::~LocationCache() {
 /**
  * Lookup
  */
-bool LocationCache::lookup(uint32_t tableId, const char *rowKey, const char **serverIdPtr) {
+bool LocationCache::lookup(uint32_t tableId, const char *rowKey, const char **locationPtr) {
   boost::mutex::scoped_lock lock(m_mutex);
   LocationMapT::iterator iter;
   LocationCacheKeyT key;
@@ -115,7 +115,7 @@ bool LocationCache::lookup(uint32_t tableId, const char *rowKey, const char **se
   cout << "Moving to head '" << (*iter).second->endRow << "'" << endl;
   move_to_head((*iter).second);
 
-  *serverIdPtr = (*iter).second->serverId;
+  *locationPtr = (*iter).second->location;
 
   return true;
 }
@@ -178,14 +178,14 @@ void LocationCache::remove(ValueT *cacheValue) {
 
 
 
-const char *LocationCache::get_constant_server_id(const char *serverId) {
-  std::set<const char *, lt_cstr>::iterator iter = m_server_id_strings.find(serverId);
+const char *LocationCache::get_constant_location_str(const char *location) {
+  std::set<const char *, lt_cstr>::iterator iter = m_location_strings.find(location);
 
-  if (iter != m_server_id_strings.end())
+  if (iter != m_location_strings.end())
     return *iter;
 
-  char *constantId = new char [ strlen(serverId) + 1 ];
-  strcpy(constantId, serverId);
-  m_server_id_strings.insert(constantId);
+  char *constantId = new char [ strlen(location) + 1 ];
+  strcpy(constantId, location);
+  m_location_strings.insert(constantId);
   return constantId;
 }

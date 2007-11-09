@@ -37,7 +37,9 @@ namespace hypertable {
     static const int RESPONSE_TRUNCATED = 3;
     static const int REQUEST_TIMEOUT    = 4;
     static const int LOCAL_IO_ERROR     = 5;
-    static const int BAD_ROOT_SERVERID  = 6;
+    static const int BAD_ROOT_LOCATION  = 6;
+    static const int BAD_SCHEMA         = 7;
+    static const int INVALID_METADATA   = 8;
 
     static const int COMM_NOT_CONNECTED     = 0x00010001;
     static const int COMM_BROKEN_CONNECTION = 0x00010002;
