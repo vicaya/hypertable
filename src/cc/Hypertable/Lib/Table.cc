@@ -66,7 +66,7 @@ Table::Table(ConnectionManagerPtr &conn_manager_ptr, Hyperspace::SessionPtr &hyp
 
   if (!m_schema_ptr->is_valid()) {
     LOG_VA_ERROR("Schema Parse Error: %s", m_schema_ptr->get_error_string());
-    throw Exception(Error::MASTER_BAD_SCHEMA);
+    throw Exception(Error::BAD_SCHEMA);
   }
 
   m_range_locator_ptr = new RangeLocator(m_conn_manager_ptr, m_hyperspace_ptr);

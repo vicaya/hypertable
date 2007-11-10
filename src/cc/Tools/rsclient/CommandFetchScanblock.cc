@@ -28,7 +28,7 @@
 #include "Common/Error.h"
 #include "Common/Usage.h"
 
-#include "Hypertable/Lib/ScanResult.h"
+#include "Hypertable/Lib/ScanBlock.h"
 
 #include "CommandFetchScanblock.h"
 #include "DisplayScanData.h"
@@ -52,7 +52,7 @@ const char *CommandFetchScanblock::ms_usage[] = {
 
 int CommandFetchScanblock::run() {
   int error;
-  ScanResult result;
+  ScanBlock scanblock;
   int32_t scannerId = -1;
 
   if (m_args.size() > 1) {
@@ -73,17 +73,17 @@ int CommandFetchScanblock::run() {
   /**
    * 
    */
-  if ((error = Global::rangeServer->fetch_scanblock(m_addr, scannerId, result)) != Error::OK)
+  if ((error = Global::rangeServer->fetch_scanblock(m_addr, scannerId, scanblock)) != Error::OK)
     return error;
 
-  Global::outstandingScannerId = result.get_id();
+  Global::outstandingScannerId = scanblock.get_scanner_id();
 
-  ScanResult::VectorT &rvec = result.get_vector();
+  const ByteString32T *key, *value;
 
-  for (size_t i=0; i<rvec.size(); i++)
-    DisplayScanData(rvec[i].first, rvec[i].second, Global::outstandingSchemaPtr);
+  while (scanblock.next(key, value))
+    DisplayScanData(key, value, Global::outstandingSchemaPtr);
 
-  if (result.eos())
+  if (scanblock.eos())
     Global::outstandingScannerId = -1;
 
   return Error::OK;

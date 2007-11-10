@@ -35,8 +35,9 @@ using namespace hypertable;
 
 namespace hypertable {
 
-  class ScanResult;
+  class ScanBlock;
 
+  /** Client proxy interface to RangeServer. */
   class RangeServerClient {
   public:
 
@@ -50,10 +51,10 @@ namespace hypertable {
     int update(struct sockaddr_in &addr, std::string tableName, uint32_t generation, uint8_t *data, size_t len);
 
     int create_scanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &spec, DispatchHandler *handler);
-    int create_scanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &spec, ScanResult &result);
+    int create_scanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &spec, ScanBlock &scanblock);
 
     int fetch_scanblock(struct sockaddr_in &addr, int scannerId, DispatchHandler *handler);
-    int fetch_scanblock(struct sockaddr_in &addr, int scannerId, ScanResult &result);
+    int fetch_scanblock(struct sockaddr_in &addr, int scannerId, ScanBlock &scanblock);
 
     int status(struct sockaddr_in &addr);
 
@@ -61,8 +62,8 @@ namespace hypertable {
 
     int send_message(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *handler);
   
-    Comm                *m_comm;
-    time_t               m_timeout;
+    Comm *m_comm;
+    time_t m_timeout;
   };
 
   typedef boost::shared_ptr<RangeServerClient> RangeServerClientPtr;

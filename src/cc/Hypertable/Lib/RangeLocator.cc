@@ -27,7 +27,7 @@
 #include "Key.h"
 #include "RootFileHandler.h"
 #include "RangeLocator.h"
-#include "ScanResult.h"
+#include "ScanBlock.h"
 
 
 /**
@@ -101,7 +101,7 @@ RangeLocator::~RangeLocator() {
 int RangeLocator::find(uint32_t table_id, const char *row_key, const char **location_ptr) {
   RangeSpecificationT rangeSpec;
   ScanSpecificationT  scanSpec;
-  ScanResult result;
+  ScanBlock scanblock;
   int error;
   Key keyComps;
 
@@ -132,8 +132,10 @@ int RangeLocator::find(uint32_t table_id, const char *row_key, const char **loca
     scanSpec.endRowInclusive = true;
     // scanSpec.interval = ????;
 
-    if ((error = m_range_server.create_scanner(m_root_addr, rangeSpec, scanSpec, result)) != Error::OK)
+    if ((error = m_range_server.create_scanner(m_root_addr, rangeSpec, scanSpec, scanblock)) != Error::OK)
       return error;
+
+#if 0
 
     ScanResult::VectorT &resultVec = result.get_vector();
 
@@ -159,6 +161,8 @@ int RangeLocator::find(uint32_t table_id, const char *row_key, const char **loca
 	return Error::INVALID_METADATA;
       }
     }
+
+#endif
 
   }
   else {

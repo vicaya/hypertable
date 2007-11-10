@@ -30,7 +30,7 @@ RangeLocator.cc
 RangeServerClient.cc
 RangeServerProtocol.cc
 RootFileHandler.cc
-ScanResult.cc
+ScanBlock.cc
 Schema.cc
 Table.cc
 TableScanner.cc

@@ -25,6 +25,7 @@
 
 #include "Cell.h"
 #include "RangeLocator.h"
+#include "ScanBlock.h"
 #include "Schema.h"
 #include "TableScanner.h"
 #include "Types.h"
@@ -43,9 +44,10 @@ namespace hypertable {
     SchemaPtr           m_schema_ptr;
     RangeLocatorPtr     m_range_locator_ptr;
     ScanSpecificationT  m_scan_spec;
+    bool                m_eos;
+    ScanBlock           m_scanblock;
   };
   typedef boost::intrusive_ptr<TableScanner> TableScannerPtr;
-
 }
 
 #endif // HYPERTABLE_TABLESCANNER_H

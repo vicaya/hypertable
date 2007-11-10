@@ -33,7 +33,7 @@ extern "C" {
 #include "Common/Error.h"
 #include "Common/Usage.h"
 
-#include "Hypertable/Lib/ScanResult.h"
+#include "Hypertable/Lib/ScanBlock.h"
 
 #include "CommandCreateScanner.h"
 #include "DisplayScanData.h"
@@ -74,7 +74,7 @@ int CommandCreateScanner::run() {
   char *last;
   const char *columnStr;
   uint32_t ilen;
-  ScanResult result;
+  ScanBlock scanblock;
 
   if (m_args.size() == 0) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
@@ -150,17 +150,17 @@ int CommandCreateScanner::run() {
   /**
    * 
    */
-  if ((error = Global::rangeServer->create_scanner(m_addr, rangeSpec, scanSpec, result)) != Error::OK)
+  if ((error = Global::rangeServer->create_scanner(m_addr, rangeSpec, scanSpec, scanblock)) != Error::OK)
     return error;
 
-  Global::outstandingScannerId = result.get_id();
+  Global::outstandingScannerId = scanblock.get_scanner_id();
 
-  ScanResult::VectorT &rvec = result.get_vector();
+  const ByteString32T *key, *value;
 
-  for (size_t i=0; i<rvec.size(); i++)
-    DisplayScanData(rvec[i].first, rvec[i].second, Global::outstandingSchemaPtr);
+  while (scanblock.next(key, value))
+    DisplayScanData(key, value, Global::outstandingSchemaPtr);
 
-  if (result.eos())
+  if (scanblock.eos())
     Global::outstandingScannerId = -1;
 
   return Error::OK;
@@ -170,7 +170,7 @@ int CommandCreateScanner::run() {
 /**
  *
  */
-bool CommandCreateScanner::decode_row_range_spec(std::string &specStr, ScanSpecificationT &scanSpec) {
+  bool CommandCreateScanner::decode_row_range_spec(std::string &specStr, ScanSpecificationT &scanSpec) {
   regex_t reg;
   regmatch_t pmatch[5];
   int error;

@@ -75,5 +75,16 @@ TableScanner::~TableScanner() {
 
 
 bool TableScanner::next(CellT &cell) {
+
+  if (m_eos)
+    return false;
+
+  /*  
+
+  1. next k/v pair in current scanblock
+  2. next scanblock
+  3. next tablet
+  */  
+  
   return false;
 }

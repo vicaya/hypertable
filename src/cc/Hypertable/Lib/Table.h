@@ -37,6 +37,8 @@ namespace hypertable {
 
   class ConnectionManager;
 
+  /** Represents an open table.
+   */
   class Table : public ReferenceCount {
 
   public:
