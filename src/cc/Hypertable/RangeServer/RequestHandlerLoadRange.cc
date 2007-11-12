@@ -36,15 +36,20 @@ using namespace hypertable;
  */
 void RequestHandlerLoadRange::run() {
   ResponseCallback cb(m_comm, m_event_ptr);
-  RangeSpecificationT rangeSpec;
+  TableIdentifierT table;
+  RangeT range;
   size_t remaining = m_event_ptr->messageLen - 2;
   uint8_t *msgPtr = m_event_ptr->message + 2;
 
-  // Range Specification
-  if (!DecodeRangeSpecification(&msgPtr, &remaining, &rangeSpec))
+  // Table
+  if (!DecodeTableIdentifier(&msgPtr, &remaining, &table))
     goto abort;
 
-  m_range_server->load_range(&cb, &rangeSpec);
+  // Range
+  if (!DecodeRange(&msgPtr, &remaining, &range))
+    goto abort;
+
+  m_range_server->load_range(&cb, &table, &range);
 
   return;
 

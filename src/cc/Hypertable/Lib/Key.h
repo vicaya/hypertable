@@ -35,8 +35,7 @@ namespace hypertable {
   static const uint32_t FLAG_DELETE_CELL  = 0x01;
   static const uint32_t FLAG_INSERT       = 0xFF;
 
-  /**
-   * Key is a class that is used to access the internal components of an opaque key
+  /** Provides access to internal components of opaque key.
    */
   class Key {
   public:
@@ -44,7 +43,7 @@ namespace hypertable {
     /**
      * Constructor (for implicit construction).
      */
-    Key() { timestampPtr = 0; return; }
+    Key() : timestampPtr(0) { return; }
 
     /**
      * Constructor that takes an opaque key as an argument.  load is called to

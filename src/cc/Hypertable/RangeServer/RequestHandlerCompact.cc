@@ -36,20 +36,25 @@ using namespace hypertable;
  */
 void RequestHandlerCompact::run() {
   ResponseCallback cb(m_comm, m_event_ptr);
-  RangeSpecificationT rangeSpec;
-  uint8_t compactionType = 0;
+  TableIdentifierT table;
+  RangeT range;
+  uint8_t compaction_type = 0;
   size_t remaining = m_event_ptr->messageLen - 2;
   uint8_t *msgPtr = m_event_ptr->message + 2;
 
-  // Range Specification
-  if (!DecodeRangeSpecification(&msgPtr, &remaining, &rangeSpec))
+  // Table
+  if (!DecodeTableIdentifier(&msgPtr, &remaining, &table))
+    goto abort;
+
+  // Range
+  if (!DecodeRange(&msgPtr, &remaining, &range))
     goto abort;
 
   // Compaction Type
-  if (!Serialization::decode_byte(&msgPtr, &remaining, &compactionType))
+  if (!Serialization::decode_byte(&msgPtr, &remaining, &compaction_type))
     goto abort;
 
-  m_range_server->compact(&cb, &rangeSpec, compactionType);
+  m_range_server->compact(&cb, &table, &range, compaction_type);
 
   return;
 

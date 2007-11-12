@@ -44,18 +44,95 @@ namespace hypertable {
     RangeServerClient(Comm *comm, time_t timeout);
     ~RangeServerClient();
 
-    int load_range(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, DispatchHandler *handler);
-    int load_range(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec);
+    /** Issues a "load range" request asynchronously.
+     *
+     * @param addr remote address of RangeServer connection
+     * @param table table identifier
+     * @param range range specification
+     * @param handler response handler
+     * @return Error::OK on success or error code on failure
+     */
+    int load_range(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, DispatchHandler *handler);
 
-    int update(struct sockaddr_in &addr, std::string tableName, uint32_t generation, uint8_t *data, size_t len, DispatchHandler *handler);
-    int update(struct sockaddr_in &addr, std::string tableName, uint32_t generation, uint8_t *data, size_t len);
+    /** Issues a "load range" request.
+     *
+     * @param addr remote address of RangeServer connection
+     * @param table table identifier
+     * @param range range specification
+     * @return Error::OK on success or error code on failure
+     */
+    int load_range(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range);
 
-    int create_scanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &spec, DispatchHandler *handler);
-    int create_scanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &spec, ScanBlock &scanblock);
+    /** Issues an "update" request asynchronously.  The data argument holds a sequence of key/value
+     * pairs.  Each key/value pair is encoded as two variable lenght ByteString32T records
+     * back-to-back.  This method takes ownership of the data buffer.
+     *
+     * @param addr remote address of RangeServer connection
+     * @param table table identifier
+     * @param data buffer holding key/value pairs
+     * @param len length of data buffer
+     * @param handler response handler
+     * @return Error::OK on success or error code on failure
+     */
+    int update(struct sockaddr_in &addr, TableIdentifierT &table, uint8_t *data, size_t len, DispatchHandler *handler);
 
-    int fetch_scanblock(struct sockaddr_in &addr, int scannerId, DispatchHandler *handler);
-    int fetch_scanblock(struct sockaddr_in &addr, int scannerId, ScanBlock &scanblock);
+    /** Issues an "update" request.  The data argument holds a sequence of key/value
+     * pairs.  Each key/value pair is encoded as two variable lenght ByteString32T records
+     * back-to-back.  This method takes ownership of the data buffer.
+     *
+     * @param addr remote address of RangeServer connection
+     * @param table table identifier
+     * @param data buffer holding key/value pairs
+     * @param len length of data buffer
+     * @return Error::OK on success or error code on failure
+     */
+    int update(struct sockaddr_in &addr, TableIdentifierT &table, uint8_t *data, size_t len);
 
+    /** Issues a "create scanner" request asynchronously.
+     *
+     * @param addr remote address of RangeServer connection
+     * @param table table identifier
+     * @param range range specification
+     * @param range scan_spec scan specification
+     * @param handler response handler
+     * @return Error::OK on success or error code on failure
+     */
+    int create_scanner(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, ScanSpecificationT &scan_spec, DispatchHandler *handler);
+
+    /** Issues a "create scanner" request.
+     *
+     * @param addr remote address of RangeServer connection
+     * @param table table identifier
+     * @param range range specification
+     * @param range scan_spec scan specification
+     * @param scan_block block of return key/value pairs
+     * @return Error::OK on success or error code on failure
+     */
+    int create_scanner(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, ScanSpecificationT &scan_spec, ScanBlock &scan_block);
+
+    /** Issues a "fetch scanblock" request asynchronously.
+     *
+     * @param addr remote address of RangeServer connection
+     * @param scanner_id Scanner ID returned from a call to create_scanner.
+     * @param handler response handler
+     * @return Error::OK on success or error code on failure
+     */
+    int fetch_scanblock(struct sockaddr_in &addr, int scanner_id, DispatchHandler *handler);
+
+    /** Issues a "fetch scanblock" request.
+     *
+     * @param addr remote address of RangeServer connection
+     * @param scanner_id scanner ID returned from a call to create_scanner.
+     * @param scan_block block of return key/value pairs
+     * @return Error::OK on success or error code on failure
+     */
+    int fetch_scanblock(struct sockaddr_in &addr, int scanner_id, ScanBlock &scanblock);
+
+    /** Issues a "status" request.  This call blocks until it receives a response from the server.
+     * 
+     * @param addr remote address of RangeServer connection
+     * @return Error::OK if server is up and OK, otherwise an error code if there is a problem
+     */
     int status(struct sockaddr_in &addr);
 
   private:

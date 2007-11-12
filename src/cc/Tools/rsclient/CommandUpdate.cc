@@ -68,8 +68,8 @@ int CommandUpdate::run() {
   off_t len;
   const char *schema = 0;
   int error;
+  TableIdentifierT table;
   std::string tableName;
-  uint32_t generation;
   SchemaPtr schemaPtr;
   TestData tdata;
   TestSource  *tsource = 0;
@@ -94,7 +94,9 @@ int CommandUpdate::run() {
     return Error::OK;
   }
 
-  generation = schemaPtr->get_generation();
+  table.name = tableName.c_str();
+  table.id = 0;
+  table.generation = schemaPtr->get_generation();
 
   // verify data file
   if (stat(m_args[1].first.c_str(), &statbuf) != 0) {
@@ -104,56 +106,53 @@ int CommandUpdate::run() {
 
   tsource = new TestSource(m_args[1].first, schemaPtr.get());
 
-  uint8_t *buf = new uint8_t [ BUFFER_SIZE ];
-  uint8_t *ptr = buf;
-  uint8_t *endPtr = buf + BUFFER_SIZE;
-  int pendingAmount;
+  uint8_t *send_buf = 0;
+  size_t   send_buf_len = 0;
+  DynamicBuffer buf(BUFFER_SIZE);
   ByteString32T *key, *value;
   EventPtr eventPtr;
-  std::vector<ByteString32T *> keys;
 
   while (true) {
 
-    pendingAmount = 0;
-
     while (tsource->next(&key, &value)) {
-      pendingAmount = Length(key) + Length(value);
-      if (pendingAmount <= endPtr-ptr || ptr == buf) {
-	if (pendingAmount > endPtr-ptr) {
-	  delete [] buf;
-	  buf = new uint8_t [ pendingAmount ];
-	  ptr = buf;
-	  endPtr = buf + pendingAmount;
-	}
-	memcpy(ptr, key, Length(key));
-	keys.push_back((ByteString32T *)ptr);
-	ptr += Length(key);
-	memcpy(ptr, value, Length(value));
-	ptr += Length(value);
-      }
-      else
+      buf.ensure(Length(key) + Length(value));
+      buf.addNoCheck(key, Length(key));
+      buf.addNoCheck(value, Length(value));
+      if (buf.fill() > BUFFER_SIZE)
 	break;
     }
 
     /**
      * Sort the keys
      */
-    if (ptr > buf) {
+    if (buf.fill()) {
+      std::vector<ByteString32T *> keys;
       struct ltByteString32 ltbs32;
-      uint8_t *newBuf;
+      uint8_t *ptr;
       size_t len;
+
+      ptr = buf.buf;
+
+      while (ptr < buf.ptr) {
+	key = (ByteString32T *)ptr;
+	keys.push_back(key);
+	ptr += Length(key) + Length(Skip(key));
+      }
+
       std::sort(keys.begin(), keys.end(), ltbs32);
 
-      newBuf = new uint8_t [ ptr-buf ];
-      ptr = newBuf;
+      send_buf = new uint8_t [ buf.fill() ];
+      ptr = send_buf;
       for (size_t i=0; i<keys.size(); i++) {
 	len = Length(keys[i]) + Length(Skip(keys[i]));
 	memcpy(ptr, keys[i], len);
 	ptr += len;
       }
-      delete [] buf;
-      buf = newBuf;
+      send_buf_len = ptr - send_buf;
+      buf.clear();
     }
+    else
+      send_buf_len = 0;
 
     if (outstanding) {
       if (!syncHandler.wait_for_reply(eventPtr)) {
@@ -171,30 +170,12 @@ int CommandUpdate::run() {
 
     outstanding = false;
 
-    if (ptr > buf) {
-      if ((error = Global::rangeServer->update(m_addr, tableName, generation, buf, ptr-buf, &syncHandler)) != Error::OK) {
+    if (send_buf_len > 0) {
+      if ((error = Global::rangeServer->update(m_addr, table, send_buf, send_buf_len, &syncHandler)) != Error::OK) {
 	LOG_VA_ERROR("Problem sending updates - %s", Error::get_text(error));
 	return error;
       }
-      keys.clear();
       outstanding = true;
-      if (pendingAmount > 0) {
-	if (pendingAmount > BUFFER_SIZE) {
-	  ptr = buf = new uint8_t [ pendingAmount ];
-	  endPtr = buf + pendingAmount;
-	}
-	else {
-	  ptr = buf = new uint8_t [ BUFFER_SIZE ];
-	  endPtr = buf + BUFFER_SIZE;
-	}
-	memcpy(ptr, key, Length(key));
-	keys.push_back((ByteString32T *)ptr);
-	ptr += Length(key);
-	memcpy(ptr, value, Length(value));
-	ptr += Length(value);
-      }
-      else
-	break;
     }
     else
       break;

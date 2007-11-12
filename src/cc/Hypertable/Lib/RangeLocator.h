@@ -30,6 +30,7 @@
 #include "LocationCache.h"
 #include "RangeServerClient.h"
 #include "Schema.h"
+#include "Types.h"
 
 namespace Hyperspace {
   class Session;
@@ -44,7 +45,7 @@ namespace hypertable {
   public:
     RangeLocator(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr);
     ~RangeLocator();
-    int find(uint32_t tableId, const char *rowKey, const char **location_ptr);
+    int find(TableIdentifierT *table, const char *rowKey, const char **location_ptr);
     void set_root_stale() { m_root_stale=true; }
 
   private:

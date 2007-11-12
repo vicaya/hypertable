@@ -35,16 +35,15 @@ RangeServerClient::~RangeServerClient() {
   return;
 }
 
-
-int RangeServerClient::load_range(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( RangeServerProtocol::create_request_load_range(addr, rangeSpec) );
+int RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_load_range(table, range) );
   return send_message(addr, cbufPtr, handler);
 }
 
-int RangeServerClient::load_range(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec) {
+int RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( RangeServerProtocol::create_request_load_range(addr, rangeSpec) );
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_load_range(table, range) );
   int error = send_message(addr, cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
@@ -56,16 +55,16 @@ int RangeServerClient::load_range(struct sockaddr_in &addr, RangeSpecificationT 
 }
 
 
-int RangeServerClient::update(struct sockaddr_in &addr, std::string tableName, uint32_t generation, uint8_t *data, size_t len, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( RangeServerProtocol::create_request_update(addr, tableName, generation, data, len) );
+int RangeServerClient::update(struct sockaddr_in &addr, TableIdentifierT &table, uint8_t *data, size_t len, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_update(table, data, len) );
   return send_message(addr, cbufPtr, handler);
 }
 
 
-int RangeServerClient::update(struct sockaddr_in &addr, std::string tableName, uint32_t generation, uint8_t *data, size_t len) {
+int RangeServerClient::update(struct sockaddr_in &addr, TableIdentifierT &table, uint8_t *data, size_t len) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( RangeServerProtocol::create_request_update(addr, tableName, generation, data, len) );
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_update(table, data, len) );
   int error = send_message(addr, cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
@@ -77,16 +76,17 @@ int RangeServerClient::update(struct sockaddr_in &addr, std::string tableName, u
 }
 
 
-int RangeServerClient::create_scanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &scanSpec, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( RangeServerProtocol::create_request_create_scanner(addr, rangeSpec, scanSpec) );
+
+int RangeServerClient::create_scanner(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, ScanSpecificationT &scan_spec, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_create_scanner(table, range, scan_spec) );
   return send_message(addr, cbufPtr, handler);
 }
 
 
-int RangeServerClient::create_scanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &scanSpec, ScanBlock &scanblock) {
+int RangeServerClient::create_scanner(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, ScanSpecificationT &scan_spec, ScanBlock &scan_block) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( RangeServerProtocol::create_request_create_scanner(addr, rangeSpec, scanSpec) );
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_create_scanner(table, range, scan_spec) );
   int error = send_message(addr, cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
@@ -94,22 +94,22 @@ int RangeServerClient::create_scanner(struct sockaddr_in &addr, RangeSpecificati
       error = (int)Protocol::response_code(eventPtr);
     }
     else
-      error = scanblock.load(eventPtr);
+      error = scan_block.load(eventPtr);
   }
   return error;
 }
 
 
-int RangeServerClient::fetch_scanblock(struct sockaddr_in &addr, int scannerId, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( RangeServerProtocol::create_request_fetch_scanblock(addr, scannerId) );
+int RangeServerClient::fetch_scanblock(struct sockaddr_in &addr, int scanner_id, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_fetch_scanblock(scanner_id) );
   return send_message(addr, cbufPtr, handler);
 }
 
 
-int RangeServerClient::fetch_scanblock(struct sockaddr_in &addr, int scannerId, ScanBlock &scanblock) {
+int RangeServerClient::fetch_scanblock(struct sockaddr_in &addr, int scanner_id, ScanBlock &scan_block) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( RangeServerProtocol::create_request_fetch_scanblock(addr, scannerId) );
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_fetch_scanblock(scanner_id) );
   int error = send_message(addr, cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
@@ -117,7 +117,7 @@ int RangeServerClient::fetch_scanblock(struct sockaddr_in &addr, int scannerId, 
       error = (int)Protocol::response_code(eventPtr);
     }
     else
-      error = scanblock.load(eventPtr);
+      error = scan_block.load(eventPtr);
   }
   return error;
 }

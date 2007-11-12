@@ -50,11 +50,11 @@ namespace hypertable {
     RangeServer(Comm *comm, PropertiesPtr &propsPtr);
     virtual ~RangeServer();
 
-    void compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, uint8_t compactionType);
-    void create_scanner(ResponseCallbackCreateScanner *cb, RangeSpecificationT *rangeSpec, ScanSpecificationT *spec);
+    void compact(ResponseCallback *cb, TableIdentifierT *table, RangeT *range, uint8_t compaction_type);
+    void create_scanner(ResponseCallbackCreateScanner *cb, TableIdentifierT *table, RangeT *range, ScanSpecificationT *scan_spec);
     void fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t scannerId);
-    void load_range(ResponseCallback *cb, RangeSpecificationT *rangeSpec);
-    void update(ResponseCallbackUpdate *cb, const char *tableName, uint32_t generation, BufferT &buffer);
+    void load_range(ResponseCallback *cb, TableIdentifierT *table, RangeT *range);
+    void update(ResponseCallbackUpdate *cb, TableIdentifierT *table, BufferT &buffer);
 
     std::string &server_id_str() { return m_server_id_str; }
 

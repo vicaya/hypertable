@@ -360,8 +360,6 @@ success
 success
 success
 success
-success
-success
 rsclient> create scanner Test2[:] start=Abama row-limit=4
 Generation = 1
 TableName  = Test2

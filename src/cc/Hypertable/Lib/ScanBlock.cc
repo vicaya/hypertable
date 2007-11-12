@@ -27,6 +27,11 @@
 
 using namespace hypertable;
 
+ScanBlock::ScanBlock() {
+  m_iter = m_vec.end();
+}
+
+
 /**
  *
  */

@@ -26,6 +26,7 @@
 
 namespace hypertable {
 
+  /** Generates RangeServer protocol request messages */
   class RangeServerProtocol : public Protocol {
 
   public:
@@ -39,10 +40,46 @@ namespace hypertable {
 
     static const char *m_command_strings[];
 
-    static CommBuf *create_request_load_range(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec);
-    static CommBuf *create_request_update(struct sockaddr_in &addr, std::string &tableName, uint32_t generation, uint8_t *data, size_t len);
-    static CommBuf *create_request_create_scanner(struct sockaddr_in &addr, RangeSpecificationT &rangeSpec, ScanSpecificationT &scanSpec);
-    static CommBuf *create_request_fetch_scanblock(struct sockaddr_in &addr, int scannerId);
+    /** Creates a "load range" request message
+     *
+     * @param table table identifier
+     * @param range range specification
+     * @return protocol message
+     */
+    static CommBuf *create_request_load_range(TableIdentifierT &table, RangeT &range);
+
+    /** Creates an "update" request message.  The data argument holds a sequence of key/value
+     * pairs.  Each key/value pair is encoded as two variable lenght ByteString32T records
+     * back-to-back.  This method transfers ownership of the data buffer to the CommBuf that
+     * gets returned.
+     *
+     * @param table table identifier
+     * @param data buffer holding key/value pairs
+     * @param len length of data buffer
+     * @return protocol message
+     */
+    static CommBuf *create_request_update(TableIdentifierT &table, uint8_t *data, size_t len);
+
+    /** Creates a "create scanner" request message.
+     *
+     * @param table table identifier
+     * @param range range specification
+     * @param scan_spec scan specification
+     * @return protocol message
+     */
+    static CommBuf *create_request_create_scanner(TableIdentifierT &table, RangeT &range, ScanSpecificationT &scan_spec);
+
+    /** Creates a "fetch scanblock" request message.
+     *
+     * @param scanner_id scanner ID returned from a "create scanner" request
+     * @return protocol message
+     */
+    static CommBuf *create_request_fetch_scanblock(int scanner_id);
+
+    /** Creates a "status" request message.
+     *
+     * @return protocol message
+     */
     static CommBuf *create_request_status();
 
     virtual const char *command_text(short command);

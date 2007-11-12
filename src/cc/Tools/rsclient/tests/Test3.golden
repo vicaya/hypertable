@@ -360,8 +360,6 @@ success
 success
 success
 success
-success
-success
 rsclient> create scanner Test3[:]
 Generation = 1
 TableName  = Test3

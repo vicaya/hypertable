@@ -41,6 +41,7 @@ namespace {
     { Error::BAD_ROOT_LOCATION,           "HYPERTABLE bad root location" },
     { Error::BAD_SCHEMA,                  "HYPERTABLE bad schema" },
     { Error::INVALID_METADATA,            "HYPERTABLE invalid metadata" },
+    { Error::BAD_KEY,                     "HYPERTABLE bad key" },
     { Error::COMM_NOT_CONNECTED,          "COMM not connected" },
     { Error::COMM_BROKEN_CONNECTION,      "COMM broken connection" },
     { Error::COMM_CONNECT_ERROR,          "COMM connect error" },
@@ -109,6 +110,7 @@ const int Error::LOCAL_IO_ERROR;
 const int Error::BAD_ROOT_LOCATION;
 const int Error::BAD_SCHEMA;
 const int Error::INVALID_METADATA;
+const int Error::BAD_KEY;
 
 const int Error::COMM_NOT_CONNECTED;
 const int Error::COMM_BROKEN_CONNECTION;

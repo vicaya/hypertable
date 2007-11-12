@@ -26,5 +26,6 @@ Hyperspace::Session     *Global::hyperspace = 0;
 RangeServerClient       *Global::rangeServer = 0;
 int32_t                  Global::outstandingScannerId = -1;
 SchemaPtr                Global::outstandingSchemaPtr;
+TableIdentifierT         Global::outstandingTableIdentifier;
 Global::TableSchemaMapT  Global::schemaMap;
 

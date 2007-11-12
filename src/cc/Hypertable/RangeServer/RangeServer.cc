@@ -273,7 +273,7 @@ int RangeServer::directory_initialize(Properties *props) {
 /**
  * Compact
  */
-void RangeServer::compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, uint8_t compactionType) {
+void RangeServer::compact(ResponseCallback *cb, TableIdentifierT *table, RangeT *range, uint8_t compaction_type) {
   int error = Error::OK;
   std::string errMsg;
   TableInfoPtr tableInfoPtr;
@@ -282,31 +282,32 @@ void RangeServer::compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, 
   bool major = false;
 
   // Check for major compaction
-  if (compactionType == 1) {
+  if (compaction_type == 1) {
     major = true;
     workType = MaintenanceThread::COMPACTION_MAJOR;
   }
 
   if (Global::verbose) {
-    cout << *rangeSpec;
+    cout << *table;
+    cout << *range;
     cout << "Compaction type = " << (major ? "major" : "minor") << endl;
   }
 
   /**
    * Fetch table info
    */
-  if (!get_table_info(rangeSpec->tableName, tableInfoPtr)) {
+  if (!get_table_info(table->name, tableInfoPtr)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errMsg = "No ranges loaded for table '" + (std::string)rangeSpec->tableName + "'";
+    errMsg = "No ranges loaded for table '" + (std::string)table->name + "'";
     goto abort;
   }
 
   /**
    * Fetch range info
    */
-  if (!tableInfoPtr->get_range(rangeSpec, rangePtr)) {
+  if (!tableInfoPtr->get_range(range, rangePtr)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errMsg = (std::string)rangeSpec->tableName + "[" + rangeSpec->startRow + ":" + rangeSpec->endRow + "]";
+    errMsg = (std::string)table->name + "[" + range->startRow + ":" + range->endRow + "]";
     goto abort;
   }
 
@@ -318,7 +319,7 @@ void RangeServer::compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, 
 
   if (Global::verbose) {
     LOG_VA_INFO("Compaction (%s) scheduled for table '%s' end row '%s'",
-		(major ? "major" : "minor"), rangeSpec->tableName, rangeSpec->endRow);
+		(major ? "major" : "minor"), table->name, range->endRow);
   }
 
   error = Error::OK;
@@ -337,7 +338,7 @@ void RangeServer::compact(ResponseCallback *cb, RangeSpecificationT *rangeSpec, 
 /** 
  *  CreateScanner
  */
-void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, RangeSpecificationT *rangeSpec, ScanSpecificationT *scanSpec) {
+void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentifierT *table, RangeT *range, ScanSpecificationT *scan_spec) {
   uint8_t *kvBuffer = 0;
   uint32_t *kvLenp = 0;
   int error = Error::OK;
@@ -353,19 +354,20 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, RangeSpecifi
   ScanContextPtr scanContextPtr;
 
   if (Global::verbose) {
-    cout << *rangeSpec << endl;
-    cout << *scanSpec << endl;
+    cout << *table << endl;
+    cout << *range << endl;
+    cout << *scan_spec << endl;
   }
 
-  if (!get_table_info(rangeSpec->tableName, tableInfoPtr)) {
+  if (!get_table_info(table->name, tableInfoPtr)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errMsg = (std::string)rangeSpec->tableName + "[" + rangeSpec->startRow + ":" + rangeSpec->endRow + "]";
+    errMsg = (std::string)table->name + "[" + range->startRow + ":" + range->endRow + "]";
     goto abort;
   }
 
-  if (!tableInfoPtr->get_range(rangeSpec, rangePtr)) {
+  if (!tableInfoPtr->get_range(range, rangePtr)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errMsg = (std::string)rangeSpec->tableName + "[" + rangeSpec->startRow + ":" + rangeSpec->endRow + "]";
+    errMsg = (std::string)table->name + "[" + range->startRow + ":" + range->endRow + "]";
     goto abort;
   }
 
@@ -376,7 +378,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, RangeSpecifi
   /**
    * Load column families set
    */
-  for (std::vector<const char *>::const_iterator iter = scanSpec->columns.begin(); iter != scanSpec->columns.end(); iter++) {
+  for (std::vector<const char *>::const_iterator iter = scan_spec->columns.begin(); iter != scan_spec->columns.end(); iter++) {
     Schema::ColumnFamily *cf = schemaPtr->get_column_family(*iter);
     if (cf == 0) {
       error = Error::RANGESERVER_INVALID_COLUMNFAMILY;
@@ -390,7 +392,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, RangeSpecifi
   kvBuffer = new uint8_t [ sizeof(int32_t) + DEFAULT_SCANBUF_SIZE ];
   kvLenp = (uint32_t *)kvBuffer;
 
-  scanContextPtr.reset( new ScanContext(scanTimestamp, scanSpec, schemaPtr) );
+  scanContextPtr.reset( new ScanContext(scanTimestamp, scan_spec, schemaPtr) );
   if (scanContextPtr->error != Error::OK) {
     errMsg = "Problem initializing scan context";
     goto abort;
@@ -405,7 +407,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, RangeSpecifi
     id = 0;
 
   if (Global::verbose) {
-    LOG_VA_INFO("Successfully created scanner on table '%s'", rangeSpec->tableName);
+    LOG_VA_INFO("Successfully created scanner on table '%s'", table->name);
   }
 
   /**
@@ -495,7 +497,7 @@ void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t s
 /**
  * LoadRange
  */
-void RangeServer::load_range(ResponseCallback *cb, RangeSpecificationT *rangeSpec) {
+void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, RangeT *range) {
   DynamicBuffer endRowBuffer(0);
   std::string errMsg;
   int error = Error::OK;
@@ -509,34 +511,34 @@ void RangeServer::load_range(ResponseCallback *cb, RangeSpecificationT *rangeSpe
   bool registerTable = false;
 
   if (Global::verbose)
-    cout << *rangeSpec << endl;
+    cout << *range << endl;
 
   /**
    * 1. Read METADATA entry for this range and make sure it exists
    */
-  if ((error = Global::metadata->get_range_info(rangeSpec->tableName, rangeSpec->endRow, rangeInfoPtr)) != Error::OK) {
-    errMsg = (std::string)"Unable to locate range of table '" + rangeSpec->tableName + "' with end row '" + rangeSpec->endRow + "' in METADATA table";
+  if ((error = Global::metadata->get_range_info(table->name, range->endRow, rangeInfoPtr)) != Error::OK) {
+    errMsg = (std::string)"Unable to locate range of table '" + table->name + "' with end row '" + range->endRow + "' in METADATA table";
     goto abort;
   }
   else {
     std::string startRow;
     rangeInfoPtr->get_start_row(startRow);
-    if (startRow != (std::string)rangeSpec->startRow) {
-      errMsg = (std::string)"Unable to locate range " + rangeSpec->tableName + "[" + rangeSpec->startRow + ":" + rangeSpec->endRow + "] in METADATA table";
+    if (startRow != (std::string)range->startRow) {
+      errMsg = (std::string)"Unable to locate range " + table->name + "[" + range->startRow + ":" + range->endRow + "] in METADATA table";
       goto abort;
     }
   }
 
-  if (!get_table_info(rangeSpec->tableName, tableInfoPtr)) {
-    tableInfoPtr.reset( new TableInfo(rangeSpec->tableName, schemaPtr) );
+  if (!get_table_info(table->name, tableInfoPtr)) {
+    tableInfoPtr.reset( new TableInfo(table->name, schemaPtr) );
     registerTable = true;
   }
 
-  if ((error = verify_schema(tableInfoPtr, rangeSpec->generation, errMsg)) != Error::OK)
+  if ((error = verify_schema(tableInfoPtr, table->generation, errMsg)) != Error::OK)
     goto abort;
 
   if (registerTable)
-    set_table_info(rangeSpec->tableName, tableInfoPtr);
+    set_table_info(table->name, tableInfoPtr);
 
   schemaPtr = tableInfoPtr->get_schema();
 
@@ -545,12 +547,12 @@ void RangeServer::load_range(ResponseCallback *cb, RangeSpecificationT *rangeSpe
    * under all locality group directories for this table
    */
   {
-    if (*rangeSpec->endRow == 0)
+    if (*range->endRow == 0)
       memset(md5DigestStr, '0', 24);
     else
-      md5_string(rangeSpec->endRow, md5DigestStr);
+      md5_string(range->endRow, md5DigestStr);
     md5DigestStr[24] = 0;
-    tableHdfsDir = (string)"/hypertable/tables/" + (string)rangeSpec->tableName;
+    tableHdfsDir = (string)"/hypertable/tables/" + (string)table->name;
     list<Schema::AccessGroup *> *lgList = schemaPtr->get_access_group_list();
     for (list<Schema::AccessGroup *>::iterator lgIter = lgList->begin(); lgIter != lgList->end(); lgIter++) {
       // notice the below variables are different "range" vs. "table"
@@ -562,9 +564,9 @@ void RangeServer::load_range(ResponseCallback *cb, RangeSpecificationT *rangeSpe
     }
   }
 
-  if (tableInfoPtr->get_range(rangeSpec, rangePtr)) {
+  if (tableInfoPtr->get_range(range, rangePtr)) {
     error = Error::RANGESERVER_RANGE_ALREADY_LOADED;
-    errMsg = (std::string)rangeSpec->tableName + "[" + rangeSpec->startRow + ":" + rangeSpec->endRow + "]";
+    errMsg = (std::string)table->name + "[" + range->startRow + ":" + range->endRow + "]";
     goto abort;
   }
 
@@ -603,7 +605,7 @@ namespace {
 /**
  * Update
  */
-void RangeServer::update(ResponseCallbackUpdate *cb, const char *tableName, uint32_t generation, BufferT &buffer) {
+void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, BufferT &buffer) {
   const uint8_t *modPtr;
   const uint8_t *modEnd;
   string errMsg;
@@ -630,7 +632,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, const char *tableName, uint
 
   /**
   if (Global::verbose)
-    cout << *rangeSpec << endl;
+    cout << *range << endl;
   */
 
   // TODO: Sanity check mod data (checksum validation)
@@ -638,12 +640,12 @@ void RangeServer::update(ResponseCallbackUpdate *cb, const char *tableName, uint
   /**
    * Fetch table info
    */
-  if (!get_table_info(tableName, tableInfoPtr)) {
+  if (!get_table_info(table->name, tableInfoPtr)) {
     ExtBufferT ext;
     ext.buf = new uint8_t [ buffer.len ];
     memcpy(ext.buf, buffer.buf, buffer.len);
     ext.len = buffer.len;
-    LOG_VA_ERROR("Unable to find table info for table '%s'", tableName);
+    LOG_VA_ERROR("Unable to find table info for table '%s'", table->name);
     if ((error = cb->response(ext)) != Error::OK) {
       LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
     }
@@ -651,7 +653,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, const char *tableName, uint
   }
 
   // verify schema
-  if ((error = verify_schema(tableInfoPtr, generation, errMsg)) != Error::OK)
+  if ((error = verify_schema(tableInfoPtr, table->generation, errMsg)) != Error::OK)
     goto abort;
 
   modEnd = buffer.buf + buffer.len;
@@ -720,7 +722,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, const char *tableName, uint
 	ptr += splitMods[i].len;
       }
 
-      if ((error = splitLogPtr->write(tableName, base, ptr-base, clientTimestamp)) != Error::OK) {
+      if ((error = splitLogPtr->write(table->name, base, ptr-base, clientTimestamp)) != Error::OK) {
 	errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to split log";
 	rangePtr->decrement_update_counter();
 	goto abort;
@@ -739,7 +741,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, const char *tableName, uint
 	memcpy(ptr, goMods[i].base, goMods[i].len);
 	ptr += goMods[i].len;
       }
-      if ((error = Global::log->write(tableName, base, ptr-base, clientTimestamp)) != Error::OK) {
+      if ((error = Global::log->write(table->name, base, ptr-base, clientTimestamp)) != Error::OK) {
 	errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to commit log";
 	rangePtr->decrement_update_counter();
 	goto abort;
@@ -772,7 +774,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, const char *tableName, uint
     rangePtr->decrement_update_counter();
 
     if (Global::verbose) {
-      LOG_VA_INFO("Added %d (%d split off) updates to '%s'", goMods.size()+splitMods.size(), splitMods.size(), tableName);
+      LOG_VA_INFO("Added %d (%d split off) updates to '%s'", goMods.size()+splitMods.size(), splitMods.size(), table->name);
     }
   }
 

@@ -69,8 +69,8 @@ int CommandCreateScanner::run() {
   std::string tableName;
   std::string startRow;
   std::string endRow;
-  RangeSpecificationT rangeSpec;
-  ScanSpecificationT scanSpec;
+  RangeT range;
+  ScanSpecificationT scan_spec;
   char *last;
   const char *columnStr;
   uint32_t ilen;
@@ -94,28 +94,30 @@ int CommandCreateScanner::run() {
     Global::schemaMap[tableName] = Global::outstandingSchemaPtr;    
   }
 
+  Global::outstandingTableIdentifier.name = tableName.c_str();
+  Global::outstandingTableIdentifier.id = 0; // fix me !!!
+  Global::outstandingTableIdentifier.generation = Global::outstandingSchemaPtr->get_generation();
+
   cout << "Generation = " << Global::outstandingSchemaPtr->get_generation() << endl;
   cout << "TableName  = " << tableName << endl;
   cout << "StartRow   = " << startRow << endl;
   cout << "EndRow     = " << endRow << endl;
 
-  rangeSpec.tableName = tableName.c_str();
-  rangeSpec.startRow = startRow.c_str();
-  rangeSpec.endRow = endRow.c_str();
-  rangeSpec.generation = Global::outstandingSchemaPtr->get_generation();
+  range.startRow = startRow.c_str();
+  range.endRow = endRow.c_str();
 
   /**
    * Create Scan specification
    */
-  scanSpec.rowLimit = 0;
-  scanSpec.cellLimit = 0;
-  scanSpec.columns.clear();
-  scanSpec.startRow = 0;
-  scanSpec.startRowInclusive = true;
-  scanSpec.endRow = 0;
-  scanSpec.endRowInclusive = true;
-  scanSpec.interval.first = 0;
-  scanSpec.interval.second = 0;
+  scan_spec.rowLimit = 0;
+  scan_spec.cellLimit = 0;
+  scan_spec.columns.clear();
+  scan_spec.startRow = 0;
+  scan_spec.startRowInclusive = true;
+  scan_spec.endRow = 0;
+  scan_spec.endRowInclusive = true;
+  scan_spec.interval.first = 0;
+  scan_spec.interval.second = 0;
 
   for (size_t i=1; i<m_args.size(); i++) {
     if (m_args[i].second == "") {
@@ -123,25 +125,25 @@ int CommandCreateScanner::run() {
       return -1;
     }
     if (m_args[i].first == "row-limit")
-      scanSpec.rowLimit = atoi(m_args[i].second.c_str());
+      scan_spec.rowLimit = atoi(m_args[i].second.c_str());
     else if (m_args[i].first == "cell-limit")
-      scanSpec.cellLimit = atoi(m_args[i].second.c_str());
+      scan_spec.cellLimit = atoi(m_args[i].second.c_str());
     else if (m_args[i].first == "start")
-      scanSpec.startRow = m_args[i].second.c_str();
+      scan_spec.startRow = m_args[i].second.c_str();
     else if (m_args[i].first == "end")
-      scanSpec.endRow = m_args[i].second.c_str();
+      scan_spec.endRow = m_args[i].second.c_str();
     else if (m_args[i].first == "row-range") {
-      if (!decode_row_range_spec(m_args[i].second, scanSpec))
+      if (!decode_row_range_spec(m_args[i].second, scan_spec))
 	return -1;
     }
     else if (m_args[i].first == "start-time")
-      scanSpec.interval.first = strtoll(m_args[i].second.c_str(), 0, 10);
+      scan_spec.interval.first = strtoll(m_args[i].second.c_str(), 0, 10);
     else if (m_args[i].first == "end-time")
-      scanSpec.interval.second = strtoll(m_args[i].second.c_str(), 0, 10);
+      scan_spec.interval.second = strtoll(m_args[i].second.c_str(), 0, 10);
     else if (m_args[i].first == "columns") {
       columnStr = strtok_r((char *)m_args[i].second.c_str(), ",", &last);
       while (columnStr) {
-	scanSpec.columns.push_back(columnStr);
+	scan_spec.columns.push_back(columnStr);
 	columnStr = strtok_r(0, ",", &last);
       }
     }
@@ -150,7 +152,7 @@ int CommandCreateScanner::run() {
   /**
    * 
    */
-  if ((error = Global::rangeServer->create_scanner(m_addr, rangeSpec, scanSpec, scanblock)) != Error::OK)
+  if ((error = Global::rangeServer->create_scanner(m_addr, Global::outstandingTableIdentifier, range, scan_spec, scanblock)) != Error::OK)
     return error;
 
   Global::outstandingScannerId = scanblock.get_scanner_id();
@@ -170,7 +172,7 @@ int CommandCreateScanner::run() {
 /**
  *
  */
-  bool CommandCreateScanner::decode_row_range_spec(std::string &specStr, ScanSpecificationT &scanSpec) {
+  bool CommandCreateScanner::decode_row_range_spec(std::string &specStr, ScanSpecificationT &scan_spec) {
   regex_t reg;
   regmatch_t pmatch[5];
   int error;
@@ -198,14 +200,14 @@ int CommandCreateScanner::run() {
   }
 
   if (base[pmatch[1].rm_so] == '(')
-    scanSpec.startRowInclusive = false;
+    scan_spec.startRowInclusive = false;
   else
-    scanSpec.startRowInclusive = true;
+    scan_spec.startRowInclusive = true;
 
   if (base[pmatch[4].rm_so] == ')')
-    scanSpec.endRowInclusive = false;
+    scan_spec.endRowInclusive = false;
   else
-    scanSpec.endRowInclusive = true;
+    scan_spec.endRowInclusive = true;
 
   /**
    * Start Row
@@ -217,11 +219,11 @@ int CommandCreateScanner::run() {
     pmatch[2].rm_eo--;
 
   if (pmatch[2].rm_so < pmatch[2].rm_eo) {
-    scanSpec.startRow = &base[pmatch[2].rm_so];
+    scan_spec.startRow = &base[pmatch[2].rm_so];
     base[pmatch[2].rm_eo] = 0;
   }
   else
-    scanSpec.startRow = 0;
+    scan_spec.startRow = 0;
 
   /**
    * End Row
@@ -233,11 +235,11 @@ int CommandCreateScanner::run() {
     pmatch[3].rm_eo--;
 
   if (pmatch[3].rm_so < pmatch[3].rm_eo) {
-    scanSpec.endRow = &base[pmatch[3].rm_so];
+    scan_spec.endRow = &base[pmatch[3].rm_so];
     base[pmatch[3].rm_eo] = 0;
   }
   else
-    scanSpec.endRow = 0;
+    scan_spec.endRow = 0;
 
   regfree(&reg);
 

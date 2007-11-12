@@ -28,10 +28,10 @@ using namespace hypertable;
 /**
  * 
  */
-bool TableInfo::get_range(RangeSpecificationT *rangeSpec, RangePtr &rangePtr) {
+bool TableInfo::get_range(RangeT *range, RangePtr &rangePtr) {
   boost::mutex::scoped_lock lock(m_mutex);
-  string startRow = rangeSpec->startRow;
-  string endRow = rangeSpec->endRow;
+  string startRow = range->startRow;
+  string endRow = range->endRow;
 
   RangeMapT::iterator iter = m_range_map.find(endRow);
 

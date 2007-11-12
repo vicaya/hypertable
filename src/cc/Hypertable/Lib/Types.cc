@@ -30,43 +30,52 @@ using namespace std;
 
 namespace hypertable {
 
-  /**
-   * 
+  /** Returns encoded (serialized) length of the given TableIdentifierT.
    */
-  size_t EncodedLengthRangeSpecification(RangeSpecificationT &rangeSpec) {
-    return 4 + Serialization::encoded_length_string(rangeSpec.tableName) + Serialization::encoded_length_string(rangeSpec.startRow) + Serialization::encoded_length_string(rangeSpec.endRow);
+  size_t EncodedLengthTableIdentifier(TableIdentifierT &table_identifier) {
+    return 8 + Serialization::encoded_length_string(table_identifier.name);
   }
 
-
-  /**
-   *
-   */
-  void EncodeRangeSpecification(uint8_t **bufPtr, RangeSpecificationT &rangeSpec) {
-    Serialization::encode_int(bufPtr, rangeSpec.generation);
-    Serialization::encode_string(bufPtr, rangeSpec.tableName);
-    Serialization::encode_string(bufPtr, rangeSpec.startRow);
-    Serialization::encode_string(bufPtr, rangeSpec.endRow);
+  /** Encodes a TableIdentifierT into the given buffer. */
+  void EncodeTableIdentifier(uint8_t **bufPtr, TableIdentifierT &table_identifier) {
+    Serialization::encode_string(bufPtr, table_identifier.name);
+    Serialization::encode_int(bufPtr, table_identifier.id);
+    Serialization::encode_int(bufPtr, table_identifier.generation);
   }
 
-
-  /**
-   *
-   */
-  bool DecodeRangeSpecification(uint8_t **bufPtr, size_t *remainingPtr, RangeSpecificationT *rangeSpec) {
-
-    memset(rangeSpec, 0, sizeof(RangeSpecificationT));
-
-    if (!Serialization::decode_int(bufPtr, remainingPtr, &rangeSpec->generation))
+  /** Decodes a TableIdentifierT from the given buffer */
+  bool DecodeTableIdentifier(uint8_t **bufPtr, size_t *remainingPtr, TableIdentifierT *table_identifier) {
+    memset(table_identifier, 0, sizeof(TableIdentifierT));
+    if (!Serialization::decode_string(bufPtr, remainingPtr, &table_identifier->name))
       return false;
-    if (!Serialization::decode_string(bufPtr, remainingPtr, &rangeSpec->tableName))
+    if (!Serialization::decode_int(bufPtr, remainingPtr, &table_identifier->id))
       return false;
-    if (!Serialization::decode_string(bufPtr, remainingPtr, &rangeSpec->startRow))
+    if (!Serialization::decode_int(bufPtr, remainingPtr, &table_identifier->generation))
       return false;
-    if (!Serialization::decode_string(bufPtr, remainingPtr, &rangeSpec->endRow))
-      return false;
-
     return true;
   }
+
+  /** Returns encoded (serialized) length of a RangeT */
+  size_t EncodedLengthRange(RangeT &range) {
+    return Serialization::encoded_length_string(range.startRow) + Serialization::encoded_length_string(range.endRow);
+  }
+
+  /** Encodes a RangeT into the given buffer. */
+  void EncodeRange(uint8_t **bufPtr, RangeT &range) {
+    Serialization::encode_string(bufPtr, range.startRow);
+    Serialization::encode_string(bufPtr, range.endRow);
+  }
+
+  /** Decodes a RangeT from the given buffer */
+  bool DecodeRange(uint8_t **bufPtr, size_t *remainingPtr, RangeT *range) {
+    memset(range, 0, sizeof(RangeT));
+    if (!Serialization::decode_string(bufPtr, remainingPtr, &range->startRow))
+      return false;
+    if (!Serialization::decode_string(bufPtr, remainingPtr, &range->endRow))
+      return false;
+    return true;
+  }
+
 
   /**
    *
@@ -131,17 +140,21 @@ namespace hypertable {
   }
 
 
-  std::ostream &operator<<(std::ostream &os, const RangeSpecificationT &rangeSpec) {
-    os << "TableName  = " << rangeSpec.tableName << endl;
-    os << "Generation = " << rangeSpec.generation << endl;
-    if (rangeSpec.startRow == 0)
+  std::ostream &operator<<(std::ostream &os, const TableIdentifierT &table_identifier) {
+    os << "Table Name = " << table_identifier.name << endl;
+    os << "Table ID   = " << table_identifier.id << endl;
+    os << "Generation = " << table_identifier.generation << endl;
+  }
+
+  std::ostream &operator<<(std::ostream &os, const RangeT &range) {
+    if (range.startRow == 0)
       os << "StartRow = [NULL]" << endl;
     else
-      os << "StartRow = \"" << rangeSpec.startRow << "\"" << endl;
-    if (rangeSpec.endRow == 0)
+      os << "StartRow = \"" << range.startRow << "\"" << endl;
+    if (range.endRow == 0)
       os << "EndRow   = [NULL]" << endl;
     else
-      os << "EndRow   = \"" << rangeSpec.endRow << "\"" << endl;
+      os << "EndRow   = \"" << range.endRow << "\"" << endl;
     return os;
   }
 

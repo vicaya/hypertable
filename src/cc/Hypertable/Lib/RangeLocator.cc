@@ -98,10 +98,10 @@ RangeLocator::~RangeLocator() {
  * @param location_ptr address of return pointer to server location string
  * @param Error::OK on success or error code on failure
  */
-int RangeLocator::find(uint32_t table_id, const char *row_key, const char **location_ptr) {
-  RangeSpecificationT rangeSpec;
-  ScanSpecificationT  scanSpec;
-  ScanBlock scanblock;
+int RangeLocator::find(TableIdentifierT *table, const char *row_key, const char **location_ptr) {
+  RangeT range;
+  ScanSpecificationT scan_spec;
+  ScanBlock scan_block;
   int error;
   Key keyComps;
 
@@ -110,29 +110,27 @@ int RangeLocator::find(uint32_t table_id, const char *row_key, const char **loca
       return error;
   }
 
-  if (m_cache.lookup(table_id, row_key, location_ptr))
+  if (m_cache.lookup(table->id, row_key, location_ptr))
     return Error::OK;
 
-  if (table_id == 0) {
+  if (table->id == 0) {
 
     assert(strcmp(row_key, "0:"));
 
-    rangeSpec.generation = m_metadata_schema_ptr->get_generation();
-    rangeSpec.tableName = "METADATA";
-    rangeSpec.startRow = 0;
-    rangeSpec.endRow = "1:";
+    range.startRow = 0;
+    range.endRow = "1:";
 
-    scanSpec.rowLimit = 0;
-    scanSpec.cellLimit = 1;
-    scanSpec.columns.push_back("StartRow");
-    scanSpec.columns.push_back("Location");
-    scanSpec.startRow = row_key;
-    scanSpec.startRowInclusive = true;
-    scanSpec.endRow = row_key;
-    scanSpec.endRowInclusive = true;
-    // scanSpec.interval = ????;
+    scan_spec.rowLimit = 0;
+    scan_spec.cellLimit = 1;
+    scan_spec.columns.push_back("StartRow");
+    scan_spec.columns.push_back("Location");
+    scan_spec.startRow = row_key;
+    scan_spec.startRowInclusive = true;
+    scan_spec.endRow = row_key;
+    scan_spec.endRowInclusive = true;
+    // scan_spec.interval = ????;
 
-    if ((error = m_range_server.create_scanner(m_root_addr, rangeSpec, scanSpec, scanblock)) != Error::OK)
+    if ((error = m_range_server.create_scanner(m_root_addr, *table, range, scan_spec, scan_block)) != Error::OK)
       return error;
 
 #if 0

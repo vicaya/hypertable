@@ -40,6 +40,7 @@ namespace hypertable {
     static const int BAD_ROOT_LOCATION  = 6;
     static const int BAD_SCHEMA         = 7;
     static const int INVALID_METADATA   = 8;
+    static const int BAD_KEY            = 9;
 
     static const int COMM_NOT_CONNECTED     = 0x00010001;
     static const int COMM_BROKEN_CONNECTION = 0x00010002;

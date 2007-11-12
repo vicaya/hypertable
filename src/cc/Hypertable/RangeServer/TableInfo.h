@@ -50,7 +50,7 @@ namespace hypertable {
       boost::mutex::scoped_lock lock(m_mutex);
       m_schema = schemaPtr;
     }
-    bool get_range(RangeSpecificationT *rangeSpec, RangePtr &rangePtr);
+    bool get_range(RangeT *range, RangePtr &rangePtr);
     void add_range(RangeInfoPtr &rangeInfoPtr);
     bool find_containing_range(std::string row, RangePtr &rangePtr);
 

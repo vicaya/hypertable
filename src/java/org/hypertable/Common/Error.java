@@ -34,6 +34,7 @@ public class Error {
     static public final int BAD_ROOT_LOCATION  = 6;
     static public final int BAD_SCHEMA         = 7;
     static public final int INVALID_METADATA   = 8;
+    static public final int BAD_KEY            = 9;
 
     static public final int COMM_NOT_CONNECTED      = 0x00010001;
     static public final int COMM_BROKEN_CONNECTION  = 0x00010002;
@@ -99,6 +100,7 @@ public class Error {
 	mTextMap.put(BAD_ROOT_LOCATION,          "HYPERTABLE bad root location");
 	mTextMap.put(BAD_SCHEMA,                 "HYPERTABLE bad schema");
 	mTextMap.put(INVALID_METADATA,           "HYPERTABLE invalid metadata");
+	mTextMap.put(BAD_KEY,                    "HYPERTABLE bad key");
 	mTextMap.put(COMM_NOT_CONNECTED,         "COMM not connected");
 	mTextMap.put(COMM_BROKEN_CONNECTION,     "COMM broken connection");
 	mTextMap.put(COMM_CONNECT_ERROR,         "COMM connect error");

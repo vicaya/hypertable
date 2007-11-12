@@ -45,7 +45,8 @@ int CommandLoadRange::run() {
   std::string tableName;
   std::string startRow;
   std::string endRow;
-  RangeSpecificationT rangeSpec;
+  TableIdentifierT table;
+  RangeT range;
   SchemaPtr schemaPtr;
 
   if (m_args.size() != 1) {
@@ -68,17 +69,19 @@ int CommandLoadRange::run() {
     Global::schemaMap[tableName] = schemaPtr;    
   }
 
+  table.name = tableName.c_str();
+  table.id = 0;
+  table.generation = schemaPtr->get_generation();
+
   cout << "Generation = " << schemaPtr->get_generation() << endl;
   cout << "TableName  = " << tableName << endl;
   cout << "StartRow   = " << startRow << endl;
   cout << "EndRow     = " << endRow << endl;
 
-  rangeSpec.tableName = tableName.c_str();
-  rangeSpec.startRow = startRow.c_str();
-  rangeSpec.endRow = endRow.c_str();
-  rangeSpec.generation = schemaPtr->get_generation();
+  range.startRow = startRow.c_str();
+  range.endRow = endRow.c_str();
 
-  if ((error = Global::rangeServer->load_range(m_addr, rangeSpec)) != Error::OK)
+  if ((error = Global::rangeServer->load_range(m_addr, table, range)) != Error::OK)
     return error;
 
   return Error::OK;

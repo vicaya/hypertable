@@ -29,7 +29,7 @@ namespace hypertable {
     const char *column_family;
     const char *column_qualifier;
     uint64_t timestamp;
-    uint8_t *value;
+    const uint8_t *value;
     uint64_t value_len;
   } CellT;
 

@@ -38,18 +38,21 @@ namespace hypertable {
 
     typedef std::vector< std::pair<const ByteString32T *, const ByteString32T *> > VectorT;
 
-    /** Loads scanblock from event in response to CREATE_SCANNER or FETCH_SCANBLOCK RangeServer command.
+    ScanBlock();
+
+    /** Loads scanblock data returned from RangeServer.  Both the CREATE_SCANNER and
+     * FETCH_SCANBLOCK methods return a block of key/value pairs.
      *
      * @param eventPtr smart pointer to response MESSAGE event
      * @return Error::OK on success or error code on failure
      */
     int load(EventPtr &eventPtr);
 
-    /** Resets iterator to first result */
+    /** Resets iterator to first key/value pair in the scanblock. */
     void reset() { m_iter = m_vec.begin(); }
 
-    /** Returns the next key/value pair in this result.  <b>NOTE:</b> invoking
-     * the #load method invalidates all pointers previously returned from this method
+    /** Returns the next key/value pair in the scanblock.  <b>NOTE:</b> invoking
+     * the #load method invalidates all pointers previously returned from this method.
      *
      * @param key reference to return key pointer
      * @param value reference to return value pointer
@@ -63,7 +66,7 @@ namespace hypertable {
      */
     bool eos() { return ((m_flags & 0x0001) == 0x0001); }
 
-    /** Returns the 32-bit scanner ID.
+    /** Returns scanner ID associated with this scanblock.
      *
      * @return scanner ID
      */

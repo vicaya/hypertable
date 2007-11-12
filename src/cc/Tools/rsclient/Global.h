@@ -27,6 +27,7 @@
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/RangeServerClient.h"
 #include "Hypertable/Lib/Schema.h"
+#include "Hypertable/Lib/Types.h"
 #include "Hyperspace/Session.h"
 
 namespace hypertable {
@@ -36,6 +37,7 @@ namespace hypertable {
     static Hyperspace::Session *hyperspace;
     static RangeServerClient *rangeServer;
     static int32_t outstandingScannerId;
+    static TableIdentifierT outstandingTableIdentifier;
     static SchemaPtr outstandingSchemaPtr;
 
     typedef __gnu_cxx::hash_map<std::string, SchemaPtr> TableSchemaMapT;

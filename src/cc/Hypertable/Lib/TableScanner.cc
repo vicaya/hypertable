@@ -20,6 +20,7 @@
 
 #include <vector>
 
+#include "Key.h"
 #include "TableScanner.h"
 
 using namespace hypertable;
@@ -75,12 +76,32 @@ TableScanner::~TableScanner() {
 
 
 bool TableScanner::next(CellT &cell) {
+  const ByteString32T *key, *value;
+  Key keyComps;
 
   if (m_eos)
     return false;
 
-  /*  
+  if (m_scanblock.next(key, value)) {
+    Schema::ColumnFamily *cf;
+    cell.value = value->data;
+    cell.value_len = value->len;
+    if (!keyComps.load(key))
+      throw Exception(Error::BAD_KEY);
+    cell.row_key = keyComps.rowKey;
+    cell.column_qualifier = keyComps.columnQualifier;
+    if ((cf = m_schema_ptr->get_column_family(keyComps.columnFamily)) == 0) {
+      // LOG ERROR ...
+      throw Exception(Error::BAD_KEY);
+    }
+    cell.timestamp = keyComps.timestamp;
+    return true;
+  }
 
+  
+
+  
+  /*  
   1. next k/v pair in current scanblock
   2. next scanblock
   3. next tablet

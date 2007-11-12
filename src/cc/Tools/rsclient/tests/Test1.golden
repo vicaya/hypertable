@@ -223,8 +223,6 @@ partial update
 partial update
 partial update
 partial update
-partial update
-success
 rsclient> create scanner Test1[:kerchoo]
 Generation = 1
 TableName  = Test1
