@@ -33,7 +33,7 @@ using namespace Hyperspace;
 using namespace std;
 
 const char *CommandAttrGet::ms_usage[] = {
-  "attrget <file> <name>",
+  "attrget <file> <name> [int|short|long]",
   "  This command issues a ATTRGET request to Hyperspace.",
   (const char *)0
 };
@@ -44,7 +44,7 @@ int CommandAttrGet::run() {
   int error;
   DynamicBuffer value(0);
 
-  if (m_args.size() != 2) {
+  if (m_args.size() < 2 || m_args.size() > 3) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
     return -1;
   }
@@ -58,8 +58,39 @@ int CommandAttrGet::run() {
     return -1;
 
   if ((error = m_session->attr_get(handle, m_args[1].first, value)) == Error::OK) {
-    std::string valStr = std::string((const char *)value.buf, value.fill());
-    cout << valStr << endl;
+    if (m_args.size() == 3) {
+      if (m_args[2].first == "short") {
+	if (value.fill() != 2) {
+	  cerr << "Expected 2 byte short, but got " << value.fill() << " bytes" << endl;
+	  return Error::HYPERSPACE_BAD_ATTRIBUTE;
+	}
+	short sval;
+	memcpy(&sval, value.buf, 2);
+	cout << sval << endl;
+      }
+      else if (m_args[2].first == "int") {
+	if (value.fill() != 4) {
+	  cerr << "Expected 4 byte int, but got " << value.fill() << " bytes" << endl;
+	  return Error::HYPERSPACE_BAD_ATTRIBUTE;
+	}
+	uint32_t ival;
+	memcpy(&ival, value.buf, 4);
+	cout << ival << endl;
+      }
+      else if (m_args[2].first == "long") {
+	if (value.fill() != 8) {
+	  cerr << "Expected 8 byte int, but got " << value.fill() << " bytes" << endl;
+	  return Error::HYPERSPACE_BAD_ATTRIBUTE;
+	}
+	uint64_t lval;
+	memcpy(&lval, value.buf, 8);
+	cout << lval << endl;
+      }
+    }
+    else {
+      std::string valStr = std::string((const char *)value.buf, value.fill());
+      cout << valStr << endl;
+    }
   }
 
   return error;

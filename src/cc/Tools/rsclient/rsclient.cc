@@ -43,7 +43,6 @@ extern "C" {
 #include "CommandFetchScanblock.h"
 #include "CommandLoadRange.h"
 #include "CommandUpdate.h"
-#include "Global.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -186,6 +185,8 @@ int main(int argc, char **argv) {
   ConnectionManager *connManager;
   PropertiesPtr propsPtr;
   CommandFetchScanblock *fetchScanblock;
+  Hyperspace::SessionPtr hyperspace_ptr;
+  RangeServerClientPtr range_server_ptr;
 
   System::initialize(argv[0]);
   ReactorFactory::initialize((uint16_t)System::get_processor_count());
@@ -210,30 +211,23 @@ int main(int argc, char **argv) {
   connManager = new ConnectionManager(comm);
 
   // Create Range Server client object
-  Global::rangeServer = new RangeServerClient(comm, 30);
+  range_server_ptr = new RangeServerClient(comm, 30);
 
   // Connect to Range Server
   connManager->add(addr, 30, "Range Server");
   if (!connManager->wait_for_connection(addr, 30))
     cerr << "Timed out waiting for for connection to Range Server.  Exiting ..." << endl;
 
-#if 0
-  // Connect to Master
-  Global::master = new MasterClient(connManager, propsPtr);
-  if (!Global::master->wait_for_connection(15))
-    cerr << "Timed out waiting for for connection to Master.  Exiting ..." << endl;
-#endif
-
   // Connect to Hyperspace
-  Global::hyperspace = new Hyperspace::Session(connManager->get_comm(), propsPtr, 0);
-  if (!Global::hyperspace->wait_for_connection(30))
+  hyperspace_ptr = new Hyperspace::Session(connManager->get_comm(), propsPtr, 0);
+  if (!hyperspace_ptr->wait_for_connection(30))
     exit(1);
 
-  commands.push_back( new CommandCreateScanner(addr) );  
-  fetchScanblock = new CommandFetchScanblock(addr);
+  commands.push_back( new CommandCreateScanner(addr, range_server_ptr, hyperspace_ptr) );  
+  fetchScanblock = new CommandFetchScanblock(addr, range_server_ptr);
   commands.push_back( fetchScanblock );
-  commands.push_back( new CommandLoadRange(addr) );
-  commands.push_back( new CommandUpdate(addr) );
+  commands.push_back( new CommandLoadRange(addr, range_server_ptr, hyperspace_ptr) );
+  commands.push_back( new CommandUpdate(addr, range_server_ptr, hyperspace_ptr) );
 
   cout << "Welcome to the Range Server command interpreter." << endl;
   cout << "Type 'help' for a description of commands." << endl;
@@ -244,7 +238,7 @@ int main(int argc, char **argv) {
     size_t i;
 
     if (*line == 0) {
-      if (Global::outstandingScannerId != -1) {
+      if (CommandCreateScanner::ms_scanner_id != -1) {
 	fetchScanblock->clear_args();
 	fetchScanblock->run();
       }

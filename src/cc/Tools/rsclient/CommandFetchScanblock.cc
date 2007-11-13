@@ -30,11 +30,10 @@
 
 #include "Hypertable/Lib/ScanBlock.h"
 
+#include "CommandCreateScanner.h"
 #include "CommandFetchScanblock.h"
 #include "DisplayScanData.h"
 #include "ParseRangeSpec.h"
-#include "FetchSchema.h"
-#include "Global.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -54,9 +53,15 @@ int CommandFetchScanblock::run() {
   int error;
   ScanBlock scanblock;
   int32_t scannerId = -1;
+  SchemaPtr schema_ptr;
 
   if (m_args.size() > 1) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
+    return -1;
+  }
+
+  if (CommandCreateScanner::ms_table_info == 0) {
+    cerr << "No scanner information found, must run \"create table\" first" << endl;
     return -1;
   }
 
@@ -68,23 +73,25 @@ int CommandFetchScanblock::run() {
     scannerId = atoi(m_args[0].first.c_str());
   }
   else
-    scannerId = Global::outstandingScannerId;
+    scannerId = CommandCreateScanner::ms_scanner_id;
+
+  CommandCreateScanner::ms_table_info->get_schema_ptr(schema_ptr);
 
   /**
    * 
    */
-  if ((error = Global::rangeServer->fetch_scanblock(m_addr, scannerId, scanblock)) != Error::OK)
+  if ((error = m_range_server_ptr->fetch_scanblock(m_addr, scannerId, scanblock)) != Error::OK)
     return error;
 
-  Global::outstandingScannerId = scanblock.get_scanner_id();
+  CommandCreateScanner::ms_scanner_id = scanblock.get_scanner_id();
 
   const ByteString32T *key, *value;
 
   while (scanblock.next(key, value))
-    DisplayScanData(key, value, Global::outstandingSchemaPtr);
+    DisplayScanData(key, value, schema_ptr);
 
   if (scanblock.eos())
-    Global::outstandingScannerId = -1;
+    CommandCreateScanner::ms_scanner_id = -1;
 
   return Error::OK;
 }

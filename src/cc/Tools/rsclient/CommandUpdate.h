@@ -26,11 +26,13 @@
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/RangeServerClient.h"
 
+#include "Hyperspace/Session.h"
+
 namespace Hypertable {
 
   class CommandUpdate : public InteractiveCommand {
   public:
-    CommandUpdate(struct sockaddr_in &addr) : m_addr(addr) { return; }
+    CommandUpdate(struct sockaddr_in &addr, RangeServerClientPtr &range_server_ptr, Hyperspace::SessionPtr &hyperspace_ptr) : m_addr(addr), m_range_server_ptr(range_server_ptr), m_hyperspace_ptr(hyperspace_ptr) { return; }
     virtual const char *command_text() { return "update"; }
     virtual const char **usage() { return ms_usage; }
     virtual int run();
@@ -39,6 +41,8 @@ namespace Hypertable {
     static const char *ms_usage[];
 
     struct sockaddr_in m_addr;
+    RangeServerClientPtr m_range_server_ptr;
+    Hyperspace::SessionPtr m_hyperspace_ptr;
   };
 
 }

@@ -74,6 +74,7 @@ namespace Hypertable {
     static const int HYPERSPACE_ALREADY_LOCKED    = 0x0003000E;
     static const int HYPERSPACE_LOCK_CONFLICT     = 0x0003000F;
     static const int HYPERSPACE_NOT_LOCKED        = 0x00030010;
+    static const int HYPERSPACE_BAD_ATTRIBUTE     = 0x00030011;
 
     static const int MASTER_TABLE_EXISTS   = 0x00040001;
     static const int MASTER_BAD_SCHEMA     = 0x00040002;

@@ -25,8 +25,7 @@
 
 #include "CommandLoadRange.h"
 #include "ParseRangeSpec.h"
-#include "FetchSchema.h"
-#include "Global.h"
+#include "TableInfo.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -45,9 +44,9 @@ int CommandLoadRange::run() {
   std::string tableName;
   std::string startRow;
   std::string endRow;
-  TableIdentifierT table;
+  TableIdentifierT *table;
   RangeT range;
-  SchemaPtr schemaPtr;
+  TableInfo *tableInfo;
 
   if (m_args.size() != 1) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
@@ -61,27 +60,26 @@ int CommandLoadRange::run() {
     cerr << "error:  Invalid range specification." << endl;
   }
 
-  schemaPtr = Global::schemaMap[tableName];
+  tableInfo = TableInfo::map[tableName];
 
-  if (!schemaPtr) {
-    if ((error = FetchSchema(tableName, Global::hyperspace, schemaPtr)) != Error::OK)
+  if (tableInfo == 0) {
+    tableInfo = new TableInfo(tableName);
+    if ((error = tableInfo->load(m_hyperspace_ptr)) != Error::OK)
       return error;
-    Global::schemaMap[tableName] = schemaPtr;    
+    TableInfo::map[tableName] = tableInfo;
   }
+  table = tableInfo->get_table_identifier();
 
-  table.name = tableName.c_str();
-  table.id = 0;
-  table.generation = schemaPtr->get_generation();
-
-  cout << "Generation = " << schemaPtr->get_generation() << endl;
   cout << "TableName  = " << tableName << endl;
+  cout << "TableId    = " << table->id << endl;
+  cout << "Generation = " << table->generation << endl;
   cout << "StartRow   = " << startRow << endl;
   cout << "EndRow     = " << endRow << endl;
 
   range.startRow = startRow.c_str();
   range.endRow = endRow.c_str();
 
-  if ((error = Global::rangeServer->load_range(m_addr, table, range)) != Error::OK)
+  if ((error = m_range_server_ptr->load_range(m_addr, *table, range)) != Error::OK)
     return error;
 
   return Error::OK;

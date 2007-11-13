@@ -25,15 +25,23 @@
 
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/RangeServerClient.h"
+#include "Hypertable/Lib/Schema.h"
+
+#include "Hyperspace/Session.h"
+
+#include "TableInfo.h"
 
 namespace Hypertable {
 
   class CommandCreateScanner : public InteractiveCommand {
   public:
-    CommandCreateScanner(struct sockaddr_in &addr) : m_addr(addr) { return; }
+    CommandCreateScanner(struct sockaddr_in &addr, RangeServerClientPtr &range_server_ptr, Hyperspace::SessionPtr &hyperspace_ptr) : m_addr(addr), m_range_server_ptr(range_server_ptr), m_hyperspace_ptr(hyperspace_ptr) { return; }
     virtual const char *command_text() { return "create scanner"; }
     virtual const char **usage() { return ms_usage; }
     virtual int run();
+
+    static int32_t    ms_scanner_id;
+    static TableInfo *ms_table_info;
 
   private:
 
@@ -42,6 +50,8 @@ namespace Hypertable {
     static const char *ms_usage[];
 
     struct sockaddr_in m_addr;
+    RangeServerClientPtr m_range_server_ptr;
+    Hyperspace::SessionPtr m_hyperspace_ptr;
   };
 
 }

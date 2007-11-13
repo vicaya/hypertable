@@ -28,8 +28,7 @@ CommandFetchScanblock.cc
 CommandLoadRange.cc
 CommandUpdate.cc
 DisplayScanData.cc
-FetchSchema.cc
-Global.cc
+TableInfo.cc
 ParseRangeSpec.cc
 )
 

@@ -17,36 +17,38 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#ifndef HYPERTABLE_RSCLIENT_GLOBAL_H
-#define HYPERTABLE_RSCLIENT_GLOBAL_H
+
+#ifndef HYPERTABLE_RSCLIENT_TABLEINFO_H
+#define HYPERTABLE_RSCLIENT_TABLEINFO_H
+
+#include <string>
 
 #include <ext/hash_map>
 
-#include "Common/StringExt.h"
-
-#include "Hypertable/Lib/MasterClient.h"
-#include "Hypertable/Lib/RangeServerClient.h"
 #include "Hypertable/Lib/Schema.h"
 #include "Hypertable/Lib/Types.h"
+
 #include "Hyperspace/Session.h"
 
 namespace Hypertable {
 
-  class Global {
+  class TableInfo {
   public:
-    static Hyperspace::Session *hyperspace;
-    static RangeServerClient *rangeServer;
-    static int32_t outstandingScannerId;
-    static TableIdentifierT outstandingTableIdentifier;
-    static SchemaPtr outstandingSchemaPtr;
+    TableInfo(std::string &table_name);
 
-    typedef __gnu_cxx::hash_map<std::string, SchemaPtr> TableSchemaMapT;
+    int load(Hyperspace::SessionPtr &hyperspace_ptr);
 
-    static TableSchemaMapT schemaMap;
+    TableIdentifierT *get_table_identifier() { return &m_table; }
+    void get_schema_ptr(SchemaPtr &schema_ptr) { schema_ptr = m_schema_ptr; }
 
+    typedef __gnu_cxx::hash_map<std::string, TableInfo *> MapT;
+
+    static MapT map;
+
+  private:
+    TableIdentifierT  m_table;
+    SchemaPtr         m_schema_ptr;
   };
 }
 
-
-#endif // HYPERTABLE_RSCLIENT_GLOBAL_H
-
+#endif // HYPERTABLE_RSCLIENT_TABLEINFO_H

@@ -2,8 +2,9 @@ Welcome to the Range Server command interpreter.
 Type 'help' for a description of commands.
 
 rsclient> load range Test2[:]
-Generation = 1
 TableName  = Test2
+TableId    = 2
+Generation = 1
 StartRow   = 
 EndRow     = 
 rsclient> update Test2 Test2-data.txt
@@ -361,8 +362,9 @@ success
 success
 success
 rsclient> create scanner Test2[:] start=Abama row-limit=4
-Generation = 1
 TableName  = Test2
+TableId    = 2
+Generation = 1
 StartRow   = 
 EndRow     = 
 1189631333141746 Abama apple:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
@@ -568,8 +570,9 @@ EndRow     =
 1189631332442202 Abarambo broccoli:http://www.nielsenmedia.com/DMAs.html
 1189631333623650 Abarambo broccoli:http://www.sesameworkshop.org/sesamestreet/
 rsclient> create scanner Test2[:] start=Abama row-limit=2 cell-limit=1
-Generation = 1
 TableName  = Test2
+TableId    = 2
+Generation = 1
 StartRow   = 
 EndRow     = 
 1189631333141746 Abama apple:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html

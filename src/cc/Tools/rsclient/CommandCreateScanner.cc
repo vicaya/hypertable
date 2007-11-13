@@ -38,8 +38,6 @@ extern "C" {
 #include "CommandCreateScanner.h"
 #include "DisplayScanData.h"
 #include "ParseRangeSpec.h"
-#include "FetchSchema.h"
-#include "Global.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -61,7 +59,8 @@ const char *CommandCreateScanner::ms_usage[] = {
   (const char *)0
 };
 
-
+int32_t           CommandCreateScanner::ms_scanner_id = -1;
+TableInfo        *CommandCreateScanner::ms_table_info = 0;
 
 int CommandCreateScanner::run() {
   off_t len;
@@ -75,6 +74,8 @@ int CommandCreateScanner::run() {
   const char *columnStr;
   uint32_t ilen;
   ScanBlock scanblock;
+  SchemaPtr schema_ptr;
+  TableIdentifierT *table;
 
   if (m_args.size() == 0) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
@@ -86,20 +87,21 @@ int CommandCreateScanner::run() {
     return -1;
   }
 
-  Global::outstandingSchemaPtr = Global::schemaMap[tableName];
+  ms_table_info = TableInfo::map[tableName];
 
-  if (!Global::outstandingSchemaPtr) {
-    if ((error = FetchSchema(tableName, Global::hyperspace, Global::outstandingSchemaPtr)) != Error::OK)
+  if (ms_table_info == 0) {
+    ms_table_info = new TableInfo(tableName);
+    if ((error = ms_table_info->load(m_hyperspace_ptr)) != Error::OK)
       return error;
-    Global::schemaMap[tableName] = Global::outstandingSchemaPtr;    
+    TableInfo::map[tableName] = ms_table_info;
   }
 
-  Global::outstandingTableIdentifier.name = tableName.c_str();
-  Global::outstandingTableIdentifier.id = 0; // fix me !!!
-  Global::outstandingTableIdentifier.generation = Global::outstandingSchemaPtr->get_generation();
+  table = ms_table_info->get_table_identifier();
+  ms_table_info->get_schema_ptr(schema_ptr);
 
-  cout << "Generation = " << Global::outstandingSchemaPtr->get_generation() << endl;
   cout << "TableName  = " << tableName << endl;
+  cout << "TableId    = " << table->id << endl;
+  cout << "Generation = " << table->generation << endl;
   cout << "StartRow   = " << startRow << endl;
   cout << "EndRow     = " << endRow << endl;
 
@@ -152,18 +154,18 @@ int CommandCreateScanner::run() {
   /**
    * 
    */
-  if ((error = Global::rangeServer->create_scanner(m_addr, Global::outstandingTableIdentifier, range, scan_spec, scanblock)) != Error::OK)
+  if ((error = m_range_server_ptr->create_scanner(m_addr, *table, range, scan_spec, scanblock)) != Error::OK)
     return error;
 
-  Global::outstandingScannerId = scanblock.get_scanner_id();
+  ms_scanner_id = scanblock.get_scanner_id();
 
   const ByteString32T *key, *value;
 
   while (scanblock.next(key, value))
-    DisplayScanData(key, value, Global::outstandingSchemaPtr);
+    DisplayScanData(key, value, schema_ptr);
 
   if (scanblock.eos())
-    Global::outstandingScannerId = -1;
+    ms_scanner_id = -1;
 
   return Error::OK;
 }

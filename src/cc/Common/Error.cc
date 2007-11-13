@@ -72,6 +72,7 @@ namespace {
     { Error::HYPERSPACE_ALREADY_LOCKED,   "HYPERSPACE already locked" },
     { Error::HYPERSPACE_LOCK_CONFLICT,    "HYPERSPACE lock conflict" },
     { Error::HYPERSPACE_NOT_LOCKED,       "HYPERSPACE not locked" },
+    { Error::HYPERSPACE_BAD_ATTRIBUTE,    "HYPERSPACE bad attribute" },
     { Error::MASTER_TABLE_EXISTS,         "MASTER table exists" },
     { Error::MASTER_BAD_SCHEMA,           "MASTER bad schema" },
     { Error::MASTER_NOT_RUNNING,          "MASTER not running" },
@@ -143,6 +144,7 @@ const int Error::HYPERSPACE_MODE_RESTRICTION;
 const int Error::HYPERSPACE_ALREADY_LOCKED;
 const int Error::HYPERSPACE_LOCK_CONFLICT;
 const int Error::HYPERSPACE_NOT_LOCKED;
+const int Error::HYPERSPACE_BAD_ATTRIBUTE;
 
 const int Error::MASTER_TABLE_EXISTS;
 const int Error::MASTER_BAD_SCHEMA;

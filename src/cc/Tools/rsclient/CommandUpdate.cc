@@ -36,8 +36,7 @@ extern "C" {
 
 #include "CommandUpdate.h"
 #include "ParseRangeSpec.h"
-#include "FetchSchema.h"
-#include "Global.h"
+#include "TableInfo.h"
 
 #define BUFFER_SIZE 65536
 
@@ -68,14 +67,15 @@ int CommandUpdate::run() {
   off_t len;
   const char *schema = 0;
   int error;
-  TableIdentifierT table;
+  TableIdentifierT *table;
   std::string tableName;
-  SchemaPtr schemaPtr;
+  SchemaPtr schema_ptr;
   TestData tdata;
   TestSource  *tsource = 0;
   uint8_t *bufs[2];
   bool outstanding = false;
   struct stat statbuf;
+  TableInfo *table_info;
 
   if (m_args.size() != 2) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
@@ -87,16 +87,17 @@ int CommandUpdate::run() {
 
   tableName = m_args[0].first;
 
-  schemaPtr = Global::schemaMap[tableName];
+  table_info = TableInfo::map[tableName];
 
-  if (!schemaPtr) {
-    cerr << "error: Table schema not cached, try loading range first." << endl;
-    return Error::OK;
+  if (table_info == 0) {
+    table_info = new TableInfo(tableName);
+    if ((error = table_info->load(m_hyperspace_ptr)) != Error::OK)
+      return error;
+    TableInfo::map[tableName] = table_info;
   }
 
-  table.name = tableName.c_str();
-  table.id = 0;
-  table.generation = schemaPtr->get_generation();
+  table = table_info->get_table_identifier();
+  table_info->get_schema_ptr(schema_ptr);
 
   // verify data file
   if (stat(m_args[1].first.c_str(), &statbuf) != 0) {
@@ -104,7 +105,7 @@ int CommandUpdate::run() {
     return false;
   }
 
-  tsource = new TestSource(m_args[1].first, schemaPtr.get());
+  tsource = new TestSource(m_args[1].first, schema_ptr.get());
 
   uint8_t *send_buf = 0;
   size_t   send_buf_len = 0;
@@ -171,7 +172,7 @@ int CommandUpdate::run() {
     outstanding = false;
 
     if (send_buf_len > 0) {
-      if ((error = Global::rangeServer->update(m_addr, table, send_buf, send_buf_len, &syncHandler)) != Error::OK) {
+      if ((error = m_range_server_ptr->update(m_addr, *table, send_buf, send_buf_len, &syncHandler)) != Error::OK) {
 	LOG_VA_ERROR("Problem sending updates - %s", Error::get_text(error));
 	return error;
       }

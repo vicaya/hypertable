@@ -30,7 +30,7 @@ namespace Hypertable {
 
   class CommandLoadRange : public InteractiveCommand {
   public:
-    CommandLoadRange(struct sockaddr_in &addr) : m_addr(addr) { return; }
+    CommandLoadRange(struct sockaddr_in &addr, RangeServerClientPtr &range_server_ptr, Hyperspace::SessionPtr &hyperspace_ptr) : m_addr(addr), m_range_server_ptr(range_server_ptr), m_hyperspace_ptr(hyperspace_ptr) { return; }
     virtual const char *command_text() { return "load range"; }
     virtual const char **usage() { return ms_usage; }
     virtual int run();
@@ -39,6 +39,8 @@ namespace Hypertable {
     static const char *ms_usage[];
 
     struct sockaddr_in m_addr;
+    RangeServerClientPtr m_range_server_ptr;
+    Hyperspace::SessionPtr m_hyperspace_ptr;
   };
 
 }

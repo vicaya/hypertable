@@ -24,6 +24,8 @@
 #include <boost/shared_ptr.hpp>
 
 #include "Common/Properties.h"
+#include "Common/ReferenceCount.h"
+
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/CommBuf.h"
 #include "AsyncComm/DispatchHandler.h"
@@ -38,7 +40,7 @@ namespace Hypertable {
   class ScanBlock;
 
   /** Client proxy interface to RangeServer. */
-  class RangeServerClient {
+  class RangeServerClient : public ReferenceCount {
   public:
 
     RangeServerClient(Comm *comm, time_t timeout);
@@ -143,7 +145,7 @@ namespace Hypertable {
     time_t m_timeout;
   };
 
-  typedef boost::shared_ptr<RangeServerClient> RangeServerClientPtr;
+  typedef boost::intrusive_ptr<RangeServerClient> RangeServerClientPtr;
   
 
 }
