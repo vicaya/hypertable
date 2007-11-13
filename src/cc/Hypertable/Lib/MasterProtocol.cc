@@ -23,7 +23,7 @@
 
 #include "MasterProtocol.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   /**
    *

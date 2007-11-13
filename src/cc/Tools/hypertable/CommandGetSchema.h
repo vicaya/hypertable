@@ -23,7 +23,7 @@
 
 #include "Common/InteractiveCommand.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class Client;
 

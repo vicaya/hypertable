@@ -29,7 +29,7 @@
 
 #include "DispatchHandler.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class IOHandler;
 

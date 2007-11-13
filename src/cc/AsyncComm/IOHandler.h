@@ -41,7 +41,7 @@ extern "C" {
 #include "ReactorFactory.h"
 #include "Timer.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class HandlerMap;
 

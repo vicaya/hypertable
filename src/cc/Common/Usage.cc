@@ -26,7 +26,7 @@ extern "C" {
 
 #include "Usage.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 

@@ -24,8 +24,8 @@
 
 #include "ResponseCallbackLength.h"
 
-using namespace hypertable;
-using namespace hypertable::DfsBroker;
+using namespace Hypertable;
+using namespace Hypertable::DfsBroker;
 
 int ResponseCallbackLength::response(uint64_t offset) {
   hbuilder_.initialize_from_request(m_event_ptr->header);

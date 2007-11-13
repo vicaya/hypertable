@@ -36,7 +36,7 @@ extern "C" {
 #include "IOHandlerAccept.h"
 #include "IOHandlerData.h"
 #include "ReactorFactory.h"
-using namespace hypertable;
+using namespace Hypertable;
 
 
 /**

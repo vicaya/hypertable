@@ -25,7 +25,7 @@
 #include <ext/hash_map>
 #include <string>
 
-namespace hypertable {
+namespace Hypertable {
 
   class Error {
 

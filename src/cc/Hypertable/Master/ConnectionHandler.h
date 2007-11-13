@@ -26,7 +26,7 @@
 
 #include "Master.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   /**
    */

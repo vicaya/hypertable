@@ -23,7 +23,7 @@
 
 #include <string>
 
-namespace hypertable {
+namespace Hypertable {
 
   bool ParseRangeSpec(std::string &spec, std::string &tableName, std::string &startRow, std::string &endRow);
 

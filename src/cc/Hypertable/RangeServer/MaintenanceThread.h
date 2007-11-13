@@ -30,7 +30,7 @@
 #include "AccessGroup.h"
 #include "Range.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class MaintenanceThread {
   public:

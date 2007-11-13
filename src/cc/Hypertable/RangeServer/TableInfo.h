@@ -32,7 +32,7 @@
 
 #include "Range.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class Schema;
 

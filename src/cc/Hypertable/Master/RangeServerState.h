@@ -23,7 +23,7 @@
 
 #include "Common/ReferenceCount.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class RangeServerState : public ReferenceCount {
   public:

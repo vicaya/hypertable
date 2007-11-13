@@ -41,7 +41,7 @@ extern "C" {
 
 #include "IOHandlerDatagram.h"
 #include "HandlerMap.h"
-using namespace hypertable;
+using namespace Hypertable;
 
 #if defined(__linux__)
 

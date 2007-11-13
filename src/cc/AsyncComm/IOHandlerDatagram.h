@@ -36,7 +36,7 @@ extern "C" {
 
 using namespace std;
 
-namespace hypertable {
+namespace Hypertable {
 
   /**
    */

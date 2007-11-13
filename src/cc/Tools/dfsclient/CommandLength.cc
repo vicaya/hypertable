@@ -22,7 +22,7 @@
 
 #include "CommandLength.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 const char *CommandLength::ms_usage[] = {
   "length <file>",

@@ -25,7 +25,7 @@
 
 #include "Event.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   /** Abstract base clase for application request handlers.  Objects of this
    * type are what get added to an ApplicationQueue.  Most application

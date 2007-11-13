@@ -38,7 +38,7 @@ extern "C" {
 
 #include "Metadata.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 Metadata    *Metadata::ms_metadata = 0;

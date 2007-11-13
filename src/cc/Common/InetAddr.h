@@ -27,7 +27,7 @@ extern "C" {
 #include <netinet/in.h>
 }
 
-namespace hypertable {
+namespace Hypertable {
 
   class InetAddr {
 

@@ -20,7 +20,7 @@
 
 #include "ResponseCallbackUpdate.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 int ResponseCallbackUpdate::response(ExtBufferT &ext) {
   hbuilder_.initialize_from_request(m_event_ptr->header);

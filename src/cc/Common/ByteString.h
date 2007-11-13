@@ -29,7 +29,7 @@
 
 #include "DynamicBuffer.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   typedef struct {
     uint16_t   len;
@@ -139,8 +139,8 @@ namespace hypertable {
 
 
 namespace __gnu_cxx {
-  template<> struct hash< hypertable::ByteString16T * >  {
-    size_t operator()( const hypertable::ByteString16T *bs ) const {
+  template<> struct hash< Hypertable::ByteString16T * >  {
+    size_t operator()( const Hypertable::ByteString16T *bs ) const {
       if (bs == 0)
 	return size_t(0);
       unsigned long __h = 0;

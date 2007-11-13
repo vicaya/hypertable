@@ -38,7 +38,7 @@ extern "C" {
 #include "CommitLog.h"
 #include "CommitLogReader.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 namespace {

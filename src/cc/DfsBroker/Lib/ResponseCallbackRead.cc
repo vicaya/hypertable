@@ -24,8 +24,8 @@
 
 #include "ResponseCallbackRead.h"
 
-using namespace hypertable;
-using namespace hypertable::DfsBroker;
+using namespace Hypertable;
+using namespace Hypertable::DfsBroker;
 
 int ResponseCallbackRead::response(uint64_t offset, uint32_t nread, uint8_t *data) {
   hbuilder_.initialize_from_request(m_event_ptr->header);

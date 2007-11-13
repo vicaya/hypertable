@@ -39,7 +39,7 @@
 #include "RequestHandlerStatus.h"
 #include "ServerConnectionHandler.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace Hyperspace;
 
 
@@ -52,7 +52,7 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
 
   LOG_VA_INFO("%s", eventPtr->toString().c_str());
 
-  if (eventPtr->type == hypertable::Event::MESSAGE) {
+  if (eventPtr->type == Hypertable::Event::MESSAGE) {
     ApplicationHandler *requestHandler = 0;
     uint8_t *msgPtr = eventPtr->message;
     size_t remaining = eventPtr->messageLen;
@@ -142,10 +142,10 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
       cb.error(Error::PROTOCOL_ERROR, errMsg);
     }
   }
-  else if (eventPtr->type == hypertable::Event::CONNECTION_ESTABLISHED) {
+  else if (eventPtr->type == Hypertable::Event::CONNECTION_ESTABLISHED) {
     LOG_VA_INFO("%s", eventPtr->toString().c_str());    
   }
-  else if (eventPtr->type == hypertable::Event::DISCONNECT) {
+  else if (eventPtr->type == Hypertable::Event::DISCONNECT) {
     m_master_ptr->destroy_session(m_session_id);
     cout << flush;
   }

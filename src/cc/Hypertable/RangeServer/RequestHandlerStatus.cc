@@ -22,7 +22,7 @@
 
 #include "RequestHandlerStatus.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 /**
  *

@@ -41,7 +41,7 @@ extern "C" {
 #include "FetchSchema.h"
 #include "Global.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 const char *CommandCreateScanner::ms_usage[] = {

@@ -27,9 +27,9 @@
 
 #include "Common/ByteString.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
-namespace hypertable {
+namespace Hypertable {
 
   static const uint32_t FLAG_DELETE_ROW   = 0x00;
   static const uint32_t FLAG_DELETE_CELL  = 0x01;

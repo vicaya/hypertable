@@ -33,7 +33,7 @@
 #include "IOHandlerData.h"
 #include "IOHandlerDatagram.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class HandlerMap {
 

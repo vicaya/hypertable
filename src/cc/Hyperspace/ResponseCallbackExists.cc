@@ -25,7 +25,7 @@
 #include "ResponseCallbackExists.h"
 
 using namespace Hyperspace;
-using namespace hypertable;
+using namespace Hypertable;
 
 int ResponseCallbackExists::response(bool exists) {
   hbuilder_.initialize_from_request(m_event_ptr->header);

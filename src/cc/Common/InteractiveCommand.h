@@ -26,7 +26,7 @@
 #include <utility>
 #include <vector>
 
-namespace hypertable {
+namespace Hypertable {
 
   class InteractiveCommand {
 

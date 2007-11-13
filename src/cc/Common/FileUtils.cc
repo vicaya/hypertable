@@ -35,7 +35,7 @@ extern "C" {
 #include "FileUtils.h"
 #include "Logger.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 /**

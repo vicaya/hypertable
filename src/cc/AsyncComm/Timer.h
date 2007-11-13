@@ -25,7 +25,7 @@
 
 #include "DispatchHandler.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   struct TimerT {
     boost::xtime      expireTime;

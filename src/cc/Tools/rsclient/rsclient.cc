@@ -45,7 +45,7 @@ extern "C" {
 #include "CommandUpdate.h"
 #include "Global.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 namespace {

@@ -24,7 +24,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace hypertable {
+namespace Hypertable {
 
   class ProtocolException : public std::runtime_error {
   public:

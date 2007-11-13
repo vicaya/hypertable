@@ -38,7 +38,7 @@ extern "C" {
 
 using namespace std;
 
-namespace hypertable {
+namespace Hypertable {
 
   /**
    * Provides communication (message passing) services to an application.

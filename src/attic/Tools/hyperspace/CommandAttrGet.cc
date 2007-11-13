@@ -34,7 +34,7 @@ extern "C" {
 
 #include "CommandAttrGet.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 
 namespace {
@@ -49,7 +49,7 @@ namespace {
 
 }
 
-int hypertable::CommandAttrGet(HyperspaceClient *client, vector<const char *> &args) {
+int Hypertable::CommandAttrGet(HyperspaceClient *client, vector<const char *> &args) {
   DynamicBuffer valueBuf(0);
 
   if (args.size() != 2)

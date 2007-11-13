@@ -29,7 +29,7 @@
 #include "MutationResult.h"
 #include "Schema.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class Mutator : public ReferenceCount {
 

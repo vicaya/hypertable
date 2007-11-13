@@ -49,7 +49,7 @@ extern "C" {
 #include "Hypertable/RangeServer/Global.h"
 #include "Hypertable/RangeServer/MergeScanner.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 namespace {

@@ -31,7 +31,7 @@ extern "C" {
 #include "BlockInflaterZlib.h"
 #include "Constants.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 
 /**
@@ -62,7 +62,7 @@ BlockInflaterZlib::~BlockInflaterZlib() {
 /**
  *
  */
-bool BlockInflaterZlib::inflate(uint8_t *zbuf, uint32_t zlen, const char magic[12], hypertable::DynamicBuffer &outbuf) {
+bool BlockInflaterZlib::inflate(uint8_t *zbuf, uint32_t zlen, const char magic[12], Hypertable::DynamicBuffer &outbuf) {
   Constants::BlockHeaderT *header = (Constants::BlockHeaderT *)zbuf;
   uint8_t *checkptr = zbuf;
   uint16_t  checksum = 0;

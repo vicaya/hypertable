@@ -25,11 +25,15 @@
 
 #include "Common/StringExt.h"
 
+namespace Hyperspace {
+
 namespace Global {
   extern int exitStatus;
   extern std::string cwd;
   typedef __gnu_cxx::hash_map<std::string, uint64_t> FileMapT;
   extern FileMapT fileMap;
+}
+
 }
 
 #endif // HYPERSPACE_GLOBAL_H

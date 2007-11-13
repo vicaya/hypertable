@@ -38,7 +38,7 @@ extern "C" {
 #include "Properties.h"
 
 using namespace std;
-using namespace hypertable;
+using namespace Hypertable;
 
 
 void Properties::load(const char *fname) throw(std::invalid_argument) {

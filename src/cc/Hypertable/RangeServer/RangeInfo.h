@@ -27,7 +27,7 @@
 
 #include <boost/thread/mutex.hpp>
 
-namespace hypertable {
+namespace Hypertable {
 
   class RangeInfo {
   public:

@@ -22,7 +22,7 @@
 
 #include "ScanContext.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 const uint64_t ScanContext::END_OF_TIME = (uint64_t)-1;
 

@@ -25,7 +25,7 @@
 
 #define DUMP_CORE *((int *)0) = 1;
 
-namespace hypertable {
+namespace Hypertable {
 
   class System {
     

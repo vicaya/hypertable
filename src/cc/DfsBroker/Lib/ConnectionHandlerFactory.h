@@ -28,7 +28,7 @@
 #include "ConnectionHandler.h"
 #include "Broker.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class Comm;
 
@@ -41,7 +41,7 @@ namespace hypertable {
      * method of this class is called which creates an DfsBroker::connection_handler
      * that will be used to service the connection.
      */
-    class ConnectionHandlerFactory : public hypertable::ConnectionHandlerFactory {
+    class ConnectionHandlerFactory : public Hypertable::ConnectionHandlerFactory {
     public:
       /**
        * Constructor.  Saves a copy of the pointers to the Comm, ApplicationQueue, and Broker 

@@ -23,7 +23,7 @@
 #include "EventHandlerMasterChange.h"
 #include "MasterFileHandler.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 /**
  *

@@ -35,7 +35,7 @@ using namespace std;
 
 #include "Header.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   /**
    * Objects of the is class represent communication events.  They get passed up to

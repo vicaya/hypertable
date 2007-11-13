@@ -33,7 +33,7 @@
 
 namespace Hyperspace {
 
-  class ClientHandleState : public hypertable::ReferenceCount {
+  class ClientHandleState : public Hypertable::ReferenceCount {
   public:
     uint64_t     handle;
     uint32_t     openFlags;

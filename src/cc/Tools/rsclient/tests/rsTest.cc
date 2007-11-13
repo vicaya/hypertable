@@ -31,7 +31,7 @@ extern "C" {
 #include "Common/Logger.h"
 #include "Common/System.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 

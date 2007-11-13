@@ -52,7 +52,7 @@ namespace Hyperspace {
    * object gets inspected to determine what events should be
    * delivered back to the application.
    */
-  class HandleCallback : public hypertable::ReferenceCount {
+  class HandleCallback : public Hypertable::ReferenceCount {
   public:
     /** Constructor.  Sets the event mask.
      *

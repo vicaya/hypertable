@@ -24,7 +24,7 @@
 
 #include "MaintenanceThread.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 std::priority_queue<MaintenanceThread::WorkInfoT, std::vector<MaintenanceThread::WorkInfoT>, MaintenanceThread::ltWorkInfo> MaintenanceThread::ms_input_queue;
 

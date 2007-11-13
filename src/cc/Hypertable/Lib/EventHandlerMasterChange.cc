@@ -27,7 +27,7 @@ extern "C" {
 #include "MasterClient.h"
 #include "EventHandlerMasterChange.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 /**
  *

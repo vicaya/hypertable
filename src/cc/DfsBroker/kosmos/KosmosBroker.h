@@ -34,10 +34,10 @@ extern "C" {
 
 #include "libkfsClient/KfsClient.h"
 
-using namespace hypertable;
-using namespace hypertable::DfsBroker;
+using namespace Hypertable;
+using namespace Hypertable::DfsBroker;
 
-namespace hypertable {
+namespace Hypertable {
 
   /**
    *

@@ -36,7 +36,7 @@
 /**
  * Forward declarations
  */
-namespace hypertable {
+namespace Hypertable {
   class DispatchHandler;
   class Comm;
   class CommBuf;
@@ -48,9 +48,9 @@ namespace boost {
 
 #include "Protocol.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
-namespace hypertable {
+namespace Hypertable {
 
   namespace DfsBroker {
 

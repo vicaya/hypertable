@@ -25,10 +25,10 @@
 
 #include "Key.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
-namespace hypertable {
+namespace Hypertable {
 
   ByteString32T *CreateKey(uint8_t flag, const char *rowKey, uint8_t columnFamily, const char *columnQualifier, uint64_t timestamp) {
     size_t len = strlen(rowKey) + 4 + sizeof(int64_t);

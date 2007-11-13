@@ -28,9 +28,9 @@
 
 #include "MasterClient.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
-namespace hypertable {
+namespace Hypertable {
 
   class EventHandlerMasterChange : public ApplicationHandler {
   public:

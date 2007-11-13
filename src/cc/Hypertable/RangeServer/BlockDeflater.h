@@ -25,14 +25,14 @@ extern "C" {
 #include <stdint.h>
 }
 
-namespace hypertable {
+namespace Hypertable {
 
   class DynamicBuffer;
 
   class BlockDeflater {
   public:
     virtual ~BlockDeflater() { return; }
-    virtual void deflate(hypertable::DynamicBuffer &inbuf, hypertable::DynamicBuffer &outbuf,
+    virtual void deflate(Hypertable::DynamicBuffer &inbuf, Hypertable::DynamicBuffer &outbuf,
 			 const char magic[12], size_t reserve=0) = 0;
   };
 

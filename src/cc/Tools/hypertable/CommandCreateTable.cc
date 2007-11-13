@@ -28,7 +28,7 @@
 
 #include "CommandCreateTable.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 const char *CommandCreateTable::ms_usage[] = {

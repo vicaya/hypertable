@@ -36,7 +36,7 @@
 #include "FetchSchema.h"
 #include "Global.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 const char *CommandFetchScanblock::ms_usage[] = {

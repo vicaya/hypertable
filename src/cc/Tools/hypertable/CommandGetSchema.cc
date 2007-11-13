@@ -28,7 +28,7 @@
 
 #include "CommandGetSchema.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 const char *CommandGetSchema::ms_usage[] = {

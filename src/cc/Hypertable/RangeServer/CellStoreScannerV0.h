@@ -25,7 +25,7 @@
 #include "CellStoreV0.h"
 #include "CellListScanner.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class CellStore;
   class BlockInflater;

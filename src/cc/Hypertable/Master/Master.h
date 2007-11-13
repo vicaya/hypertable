@@ -43,9 +43,9 @@
 #include "RangeServerState.h"
 #include "ResponseCallbackGetSchema.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
-namespace hypertable {
+namespace Hypertable {
 
   class Master : public ReferenceCount {
   public:

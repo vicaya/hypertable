@@ -31,7 +31,7 @@ extern "C" {
 
 #include "Logger.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class NumberStream {
     

@@ -29,7 +29,7 @@
 
 using namespace Hyperspace;
 
-namespace hypertable {
+namespace Hypertable {
 
   /**
    * 

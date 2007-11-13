@@ -29,7 +29,7 @@
 #include "CellListScanner.h"
 #include "Range.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class ScannerMap {
 

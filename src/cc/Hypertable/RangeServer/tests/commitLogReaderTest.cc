@@ -28,7 +28,7 @@
 
 #include "../CommitLogReaderLocal.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 namespace {

@@ -24,7 +24,7 @@
 #include "DispatchHandlerSynchronizer.h"
 #include "Protocol.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 
 /**

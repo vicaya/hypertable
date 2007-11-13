@@ -26,15 +26,15 @@ extern "C" {
 
 #include "BlockDeflater.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
-namespace hypertable {
+namespace Hypertable {
 
   class BlockDeflaterZlib : public BlockDeflater {
   public:
     BlockDeflaterZlib();
     virtual ~BlockDeflaterZlib();
-    virtual void deflate(hypertable::DynamicBuffer &inbuf, hypertable::DynamicBuffer &outbuf,
+    virtual void deflate(Hypertable::DynamicBuffer &inbuf, Hypertable::DynamicBuffer &outbuf,
 			 const char magic[12], size_t reserve=0);
 
   private:

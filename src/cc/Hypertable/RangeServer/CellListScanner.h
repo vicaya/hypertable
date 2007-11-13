@@ -27,9 +27,9 @@
 #include "Common/DynamicBuffer.h"
 #include "ScanContext.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
-namespace hypertable {
+namespace Hypertable {
 
   class CellListScanner {
   public:

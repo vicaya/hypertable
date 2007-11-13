@@ -27,7 +27,7 @@
 #include "Event.h"
 #include "HeaderBuilder.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   /**
    * This class is used to deliver responses, corresponding to a request,

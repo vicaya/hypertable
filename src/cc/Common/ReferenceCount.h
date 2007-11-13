@@ -24,7 +24,7 @@
 
 #include "atomic.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class ReferenceCount;
 

@@ -27,7 +27,7 @@
 
 #include "DfsBroker/Lib/Client.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class CommandCopyFromLocal : public InteractiveCommand {
   public:

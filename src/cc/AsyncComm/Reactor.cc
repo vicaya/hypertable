@@ -44,7 +44,7 @@ extern "C" {
 
 #include "IOHandlerData.h"
 #include "Reactor.h"
-using namespace hypertable;
+using namespace Hypertable;
 
 const int Reactor::READ_READY   = 0x01;
 const int Reactor::WRITE_READY  = 0x02;

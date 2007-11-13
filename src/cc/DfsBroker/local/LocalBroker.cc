@@ -39,7 +39,7 @@ extern "C" {
 
 #include "LocalBroker.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 
 LocalBroker::LocalBroker(PropertiesPtr &propsPtr) : m_verbose(false) {

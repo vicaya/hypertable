@@ -28,7 +28,7 @@
 #include "Session.h"
 
 using namespace Hyperspace;
-using namespace hypertable;
+using namespace Hypertable;
 
 
 /**
@@ -49,7 +49,7 @@ ClientConnectionHandler::~ClientConnectionHandler() {
 }
 
 
-void ClientConnectionHandler::handle(hypertable::EventPtr &eventPtr) {
+void ClientConnectionHandler::handle(Hypertable::EventPtr &eventPtr) {
   boost::mutex::scoped_lock lock(m_mutex);
   int error;
 
@@ -57,7 +57,7 @@ void ClientConnectionHandler::handle(hypertable::EventPtr &eventPtr) {
     LOG_VA_INFO("%s", eventPtr->toString().c_str());
   }
 
-  if (eventPtr->type == hypertable::Event::MESSAGE) {
+  if (eventPtr->type == Hypertable::Event::MESSAGE) {
 
     if (Protocol::response_code(eventPtr.get()) != Error::OK) {
       LOG_VA_ERROR("Connection handshake error: %s", Protocol::string_format_message(eventPtr.get()).c_str());
@@ -70,7 +70,7 @@ void ClientConnectionHandler::handle(hypertable::EventPtr &eventPtr) {
 
     m_state = CONNECTED;
   }
-  else if (eventPtr->type == hypertable::Event::DISCONNECT) {
+  else if (eventPtr->type == Hypertable::Event::DISCONNECT) {
 
     if (m_verbose) {
       LOG_VA_WARN("%s", eventPtr->toString().c_str());
@@ -80,7 +80,7 @@ void ClientConnectionHandler::handle(hypertable::EventPtr &eventPtr) {
 
     m_state = DISCONNECTED;
   }
-  else if (eventPtr->type == hypertable::Event::CONNECTION_ESTABLISHED) {
+  else if (eventPtr->type == Hypertable::Event::CONNECTION_ESTABLISHED) {
 
     m_state = HANDSHAKING;
 

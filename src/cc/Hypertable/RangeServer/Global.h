@@ -38,16 +38,16 @@
 #include "ScannerMap.h"
 #include "TableInfo.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class ApplicationQueue;
 
   class Global {
   public:
-    static hypertable::Filesystem *dfs;
-    static hypertable::Filesystem *logDfs;
+    static Hypertable::Filesystem *dfs;
+    static Hypertable::Filesystem *logDfs;
     static boost::thread *maintenanceThreadPtr;
-    static hypertable::RangeServerProtocol *protocol;
+    static Hypertable::RangeServerProtocol *protocol;
     static bool           verbose;
     static Metadata      *metadata;
     static CommitLog     *log;
@@ -58,7 +58,7 @@ namespace hypertable {
     static int32_t        localityGroupMergeFiles;
     static int32_t        localityGroupMaxMemory;
     static ScannerMap     scannerMap;
-    static hypertable::FileBlockCache *blockCache;
+    static Hypertable::FileBlockCache *blockCache;
 
   };
 }

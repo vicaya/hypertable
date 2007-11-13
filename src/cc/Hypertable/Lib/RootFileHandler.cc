@@ -21,7 +21,7 @@
 #include "RangeLocator.h"
 #include "RootFileHandler.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 /**
  *

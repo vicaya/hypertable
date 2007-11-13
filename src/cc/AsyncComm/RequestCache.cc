@@ -26,7 +26,7 @@ using namespace std;
 #include "Common/Logger.h"
 
 #include "RequestCache.h"
-using namespace hypertable;
+using namespace Hypertable;
 
 void RequestCache::insert(uint32_t id, IOHandler *handler, DispatchHandler *dh, boost::xtime &expire) {
   CacheNodeT *node = new CacheNodeT;

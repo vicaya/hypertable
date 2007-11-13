@@ -31,9 +31,9 @@
 #include "CommitLog.h"
 #include "CommitLogReader.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
-namespace hypertable {
+namespace Hypertable {
 
   typedef struct {
     uint32_t     num;

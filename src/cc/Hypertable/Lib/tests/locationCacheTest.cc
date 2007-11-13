@@ -25,7 +25,7 @@
 
 #include "Hypertable/Lib/LocationCache.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 namespace {

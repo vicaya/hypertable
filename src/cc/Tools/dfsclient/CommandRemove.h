@@ -27,7 +27,7 @@
 
 #include "DfsBroker/Lib/Client.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class CommandRemove : public InteractiveCommand {
   public:

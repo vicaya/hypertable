@@ -20,7 +20,7 @@
 
 #include "ScannerMap.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 atomic_t ScannerMap::ms_next_id = ATOMIC_INIT(0);
 

@@ -38,7 +38,7 @@ extern "C" {
 #include "MergeScanner.h"
 #include "Range.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 

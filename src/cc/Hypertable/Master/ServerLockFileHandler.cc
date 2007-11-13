@@ -25,7 +25,7 @@
 #include "ServerLockFileHandler.h"
 #include "EventHandlerServerLeft.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 /**
  *

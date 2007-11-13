@@ -34,7 +34,7 @@ extern "C" {
 
 #include "FileUtils.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 namespace {

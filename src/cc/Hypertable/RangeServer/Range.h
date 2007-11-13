@@ -35,7 +35,7 @@
 #include "CommitLog.h"
 #include "RangeInfo.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class Range : public CellList {
 

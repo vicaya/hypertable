@@ -20,7 +20,7 @@
 
 #include "ParseRangeSpec.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   bool ParseRangeSpec(std::string &spec, std::string &tableName, std::string &startRow, std::string &endRow) {
     const char *base = spec.c_str();

@@ -27,7 +27,7 @@
 #include "Master.h"
 #include "RequestHandlerRegisterServer.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 /**
  *

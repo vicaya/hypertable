@@ -26,7 +26,7 @@
 
 #include "FetchSchema.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   int FetchSchema(std::string &tableName, Hyperspace::Session *hyperspace, SchemaPtr &schemaPtr) {
     std::string tableFile = (std::string)"/hypertable/tables/" + tableName;

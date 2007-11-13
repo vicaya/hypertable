@@ -44,7 +44,7 @@ extern "C" {
 #include "CommandRmdir.h"
 #include "CommandShutdown.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 namespace {

@@ -25,7 +25,7 @@
 
 #include "ScanBlock.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 ScanBlock::ScanBlock() {
   m_iter = m_vec.end();

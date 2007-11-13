@@ -35,7 +35,7 @@ extern "C" {
 #include "Common/ReferenceCount.h"
 #include "Common/StringExt.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   /**
    * Key type for Range location cache

@@ -24,9 +24,9 @@
 #include "CellListScanner.h"
 #include "ScanContext.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
-namespace hypertable {
+namespace Hypertable {
 
   /**
    * Provides a scanning interface to a CellCache.

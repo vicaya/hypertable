@@ -26,7 +26,7 @@
 
 #include "EventHandlerMasterConnection.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 /**
  *

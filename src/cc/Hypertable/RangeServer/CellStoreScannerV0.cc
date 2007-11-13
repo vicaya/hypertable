@@ -27,7 +27,7 @@
 #include "Global.h"
 #include "CellStoreScannerV0.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPtr &scanContextPtr) : CellListScanner(scanContextPtr), m_cell_store_ptr(cellStorePtr), m_cur_key(0), m_cur_value(0), m_check_for_range_end(false), m_end_key_ptr() {
   ByteString32T  *tmpKey, *startKey, *endKey;

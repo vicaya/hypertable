@@ -26,7 +26,7 @@
 
 #include "Broker.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   namespace DfsBroker {
 

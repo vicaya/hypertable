@@ -34,7 +34,7 @@ extern "C" {
 
 #include "Event.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   std::string Event::toString() {
     string dstr;

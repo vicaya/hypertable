@@ -24,7 +24,7 @@
 #include "Common/ByteString.h"
 #include "ScanContext.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class CellList;
   class CellListScanner;

@@ -30,7 +30,7 @@
 #include "RequestCache.h"
 #include "Timer.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class Reactor {
 

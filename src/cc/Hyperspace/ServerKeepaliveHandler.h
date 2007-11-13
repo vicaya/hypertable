@@ -29,7 +29,7 @@
 #include "Event.h"
 #include "HandleData.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 namespace Hyperspace {
 
@@ -40,7 +40,7 @@ namespace Hyperspace {
   class ServerKeepaliveHandler : public DispatchHandler {
   public:
     ServerKeepaliveHandler(Comm *comm, Master *master);
-    virtual void handle(hypertable::EventPtr &eventPtr);
+    virtual void handle(Hypertable::EventPtr &eventPtr);
     void deliver_event_notifications(uint64_t sessionId);
 
   private:

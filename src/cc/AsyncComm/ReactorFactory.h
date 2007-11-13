@@ -34,7 +34,7 @@ using namespace std;
 #include "Reactor.h"
 
 
-namespace hypertable {
+namespace Hypertable {
 
   /** This class is a static class that is used to setup and manage I/O reactors.
    * Since the I/O reactor threads are a process-wide resource, the methods of

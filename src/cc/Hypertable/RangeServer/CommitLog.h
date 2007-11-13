@@ -33,7 +33,7 @@ extern "C" {
 
 #include "Hypertable/Lib/Filesystem.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   typedef struct {
     char      marker[8];

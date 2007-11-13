@@ -31,7 +31,7 @@ extern "C" {
 #endif
 }
 
-namespace hypertable {
+namespace Hypertable {
 
   class FileUtils {
 

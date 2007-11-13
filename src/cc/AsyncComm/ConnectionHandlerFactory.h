@@ -26,7 +26,7 @@
 
 #include "DispatchHandler.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class ConnectionHandlerFactory : public ReferenceCount {
   public:

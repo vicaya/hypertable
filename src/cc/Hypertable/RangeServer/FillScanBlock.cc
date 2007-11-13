@@ -24,7 +24,7 @@ extern "C" {
 
 #include "FillScanBlock.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   bool FillScanBlock(CellListScannerPtr &scannerPtr, uint8_t *dst, size_t dstLen, uint32_t *lenp) {
     uint8_t *ptr = dst;

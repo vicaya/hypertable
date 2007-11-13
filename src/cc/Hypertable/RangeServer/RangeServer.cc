@@ -41,7 +41,7 @@
 #include "RangeServer.h"
 #include "ScanContext.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 namespace {
@@ -96,7 +96,7 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : m_mutex(), m_ver
    */
   Global::metadata = Metadata::new_instance(metadataFile);
 
-  Global::protocol = new hypertable::RangeServerProtocol();
+  Global::protocol = new Hypertable::RangeServerProtocol();
 
   /**
    * Connect to Hyperspace

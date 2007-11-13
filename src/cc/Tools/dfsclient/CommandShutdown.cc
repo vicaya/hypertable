@@ -25,7 +25,7 @@
 
 #include "CommandShutdown.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 const char *CommandShutdown::ms_usage[] = {
   "shutdown [now]",

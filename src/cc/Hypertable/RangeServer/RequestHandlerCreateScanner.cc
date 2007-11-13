@@ -29,7 +29,7 @@
 #include "RangeServer.h"
 #include "RequestHandlerCreateScanner.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 /**
  *

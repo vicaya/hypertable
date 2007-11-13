@@ -20,7 +20,7 @@
 
 #include "Global.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 Hyperspace::Session     *Global::hyperspace = 0;
 RangeServerClient       *Global::rangeServer = 0;

@@ -26,7 +26,7 @@
 #include "Master.h"
 #include "RequestHandlerStatus.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 /**
  *

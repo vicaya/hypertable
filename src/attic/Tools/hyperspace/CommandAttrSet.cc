@@ -29,7 +29,7 @@ extern "C" {
 
 #include "CommandAttrSet.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 namespace {
   const char *usage[] = {
@@ -45,7 +45,7 @@ namespace {
 
 
 
-int hypertable::CommandAttrSet(HyperspaceClient *client, vector<const char *> &args) {
+int Hypertable::CommandAttrSet(HyperspaceClient *client, vector<const char *> &args) {
 
   if (args.size() != 3)
     Usage::DumpAndExit(usage);

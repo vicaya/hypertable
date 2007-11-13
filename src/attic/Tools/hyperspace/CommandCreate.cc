@@ -30,7 +30,7 @@ extern "C" {
 
 #include "CommandCreate.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 namespace {
   const char *usage[] = {
@@ -45,7 +45,7 @@ namespace {
 
 }
 
-int hypertable::CommandCreate(HyperspaceClient *client, vector<const char *> &args) {
+int Hypertable::CommandCreate(HyperspaceClient *client, vector<const char *> &args) {
 
   if (args.size() < 1)
     Usage::DumpAndExit(usage);

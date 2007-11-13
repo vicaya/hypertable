@@ -25,7 +25,7 @@
 
 #include "ResponseCallbackGetSchema.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 int ResponseCallbackGetSchema::response(const char *schema) {
   hbuilder_.initialize_from_request(m_event_ptr->header);

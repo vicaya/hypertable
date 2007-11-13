@@ -29,7 +29,7 @@
 #include "Protocol.h"
 #include "SessionData.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace Hyperspace;
 
 
@@ -54,11 +54,11 @@ ServerKeepaliveHandler::ServerKeepaliveHandler(Comm *comm, Master *master) : m_c
 /**
  *
  */
-void ServerKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
+void ServerKeepaliveHandler::handle(Hypertable::EventPtr &eventPtr) {
   uint16_t command = (uint16_t)-1;
   int error;
 
-  if (eventPtr->type == hypertable::Event::MESSAGE) {
+  if (eventPtr->type == Hypertable::Event::MESSAGE) {
     uint8_t *msgPtr = eventPtr->message;
     size_t remaining = eventPtr->messageLen;
 
@@ -135,7 +135,7 @@ void ServerKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
       LOG_VA_ERROR("Protocol error '%s'", e.what());
     }
   }
-  else if (eventPtr->type == hypertable::Event::TIMER) {
+  else if (eventPtr->type == Hypertable::Event::TIMER) {
 
     m_master->remove_expired_sessions();
 

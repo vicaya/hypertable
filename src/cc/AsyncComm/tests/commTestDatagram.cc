@@ -43,7 +43,7 @@ extern "C" {
 
 #include "CommTestDatagramThreadFunction.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 namespace {
   const char *usage[] = {

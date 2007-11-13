@@ -24,7 +24,7 @@
 
 #include "Global.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 Filesystem            *Global::dfs = 0;
 Filesystem            *Global::logDfs = 0;

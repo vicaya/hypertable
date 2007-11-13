@@ -39,9 +39,9 @@
 #include "ResponseCallbackUpdate.h"
 #include "TableInfo.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
-namespace hypertable {
+namespace Hypertable {
 
   class ConnectionHandler;
 

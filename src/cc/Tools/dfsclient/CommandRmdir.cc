@@ -22,7 +22,7 @@
 
 #include "CommandRmdir.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 const char *CommandRmdir::ms_usage[] = {
   "rmdir <dir>",

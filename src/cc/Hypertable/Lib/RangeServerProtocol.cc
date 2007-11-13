@@ -23,7 +23,7 @@
 
 #include "RangeServerProtocol.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   const char *RangeServerProtocol::m_command_strings[] = {
     "load range",

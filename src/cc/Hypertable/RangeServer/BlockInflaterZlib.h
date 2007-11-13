@@ -26,15 +26,15 @@ extern "C" {
 
 #include "BlockInflater.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
-namespace hypertable {
+namespace Hypertable {
 
   class BlockInflaterZlib : public BlockInflater {
   public:
     BlockInflaterZlib();
     virtual ~BlockInflaterZlib();
-    virtual bool inflate(uint8_t *zbuf, uint32_t zlen, const char magic[12], hypertable::DynamicBuffer &outbuf);
+    virtual bool inflate(uint8_t *zbuf, uint32_t zlen, const char magic[12], Hypertable::DynamicBuffer &outbuf);
 
   private:
     z_stream  m_stream;

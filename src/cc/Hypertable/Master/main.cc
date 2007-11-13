@@ -39,7 +39,7 @@ extern "C" {
 #include "ConnectionHandler.h"
 #include "Master.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 

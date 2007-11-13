@@ -23,7 +23,7 @@
 /**
  *  Forward declarations
  */
-namespace hypertable {
+namespace Hypertable {
   namespace DfsBroker {
     class Client;
   }

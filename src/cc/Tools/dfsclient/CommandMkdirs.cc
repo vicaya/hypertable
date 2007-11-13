@@ -22,7 +22,7 @@
 
 #include "CommandMkdirs.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 const char *CommandMkdirs::ms_usage[] = {
   "mkdirs <dir>",

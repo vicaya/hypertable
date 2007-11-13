@@ -43,8 +43,8 @@ extern "C" {
 
 #include "Schema.h"
 
-using namespace hypertable;
-using namespace hypertable;
+using namespace Hypertable;
+using namespace Hypertable;
 using namespace std;
 
 Schema *Schema::ms_schema = 0;

@@ -35,7 +35,7 @@ extern "C" {
 
 #include "ConnectionManager.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 

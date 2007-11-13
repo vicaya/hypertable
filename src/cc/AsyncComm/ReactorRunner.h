@@ -20,7 +20,7 @@
 
 #include "Reactor.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class IOHandler;
 

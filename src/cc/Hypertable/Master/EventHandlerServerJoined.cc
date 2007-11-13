@@ -21,7 +21,7 @@
 #include "Master.h"
 #include "EventHandlerServerJoined.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 /**
  *

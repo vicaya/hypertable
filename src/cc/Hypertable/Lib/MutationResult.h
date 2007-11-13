@@ -23,7 +23,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace hypertable {
+namespace Hypertable {
 
   class MutationResult {
   };

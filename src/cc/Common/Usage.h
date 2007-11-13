@@ -21,7 +21,7 @@
 #ifndef HYPERTABLE_USAGE_H
 #define HYPERTABLE_USAGE_H
 
-namespace hypertable {
+namespace Hypertable {
 
   class Usage {
   public:

@@ -34,7 +34,7 @@
 
 #include "ApplicationHandler.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   /**
    * Provides application work queue and worker threads.  It maintains a queue of requests and a pool

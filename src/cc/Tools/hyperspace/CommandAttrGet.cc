@@ -28,7 +28,7 @@
 #include "Global.h"
 #include "Util.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace Hyperspace;
 using namespace std;
 

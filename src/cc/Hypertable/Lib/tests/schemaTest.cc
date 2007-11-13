@@ -35,7 +35,7 @@ extern "C" {
 
 #include "Hypertable/Lib/Schema.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 namespace {
   const char *usage[] = {

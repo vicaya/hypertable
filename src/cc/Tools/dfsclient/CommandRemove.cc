@@ -22,7 +22,7 @@
 
 #include "CommandRemove.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 const char *CommandRemove::ms_usage[] = {
   "remove <file>",

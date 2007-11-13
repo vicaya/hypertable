@@ -40,7 +40,7 @@ extern "C" {
 
 #include "DispatchHandler.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class Comm;
   class Event;

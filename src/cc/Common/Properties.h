@@ -27,7 +27,7 @@
 
 #include "StringExt.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class Properties {
 

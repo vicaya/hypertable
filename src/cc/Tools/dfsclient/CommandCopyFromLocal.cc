@@ -27,7 +27,7 @@ extern "C" {
 
 #include "CommandCopyFromLocal.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 namespace {
   const int BUFFER_SIZE = 32768;

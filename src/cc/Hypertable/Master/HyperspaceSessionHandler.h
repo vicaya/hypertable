@@ -25,7 +25,7 @@
 
 #include "Hyperspace/Session.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class HyperspaceSessionHandler : public Hyperspace::SessionCallback {
   public:

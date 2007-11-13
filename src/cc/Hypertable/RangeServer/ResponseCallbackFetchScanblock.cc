@@ -20,7 +20,7 @@
 
 #include "ResponseCallbackFetchScanblock.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 int ResponseCallbackFetchScanblock::response(short moreFlag, int32_t id, ExtBufferT &ext) {
   hbuilder_.initialize_from_request(m_event_ptr->header);

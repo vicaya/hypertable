@@ -36,7 +36,7 @@ extern "C" {
 #include "CommandMkdirs.h"
 #include "dfsTestThreadFunction.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 /**

@@ -27,7 +27,7 @@
 
 #include <cassert>
 
-namespace hypertable {
+namespace Hypertable {
 
   class PollTimeout {
 

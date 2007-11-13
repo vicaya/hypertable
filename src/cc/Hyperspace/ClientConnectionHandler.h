@@ -28,7 +28,7 @@
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/DispatchHandler.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 namespace Hyperspace {
 
@@ -42,7 +42,7 @@ namespace Hyperspace {
     ClientConnectionHandler(Comm *comm, Session *session, time_t timeout);
     virtual ~ClientConnectionHandler();
 
-    virtual void handle(hypertable::EventPtr &eventPtr);
+    virtual void handle(Hypertable::EventPtr &eventPtr);
 
     void set_session_id(uint64_t id) { m_session_id = id; }
 

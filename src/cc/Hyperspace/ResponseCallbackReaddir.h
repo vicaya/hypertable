@@ -30,9 +30,9 @@
 
 namespace Hyperspace {
 
-  class ResponseCallbackReaddir : public hypertable::ResponseCallback {
+  class ResponseCallbackReaddir : public Hypertable::ResponseCallback {
   public:
-    ResponseCallbackReaddir(hypertable::Comm *comm, hypertable::EventPtr &eventPtr) : hypertable::ResponseCallback(comm, eventPtr) { return; }
+    ResponseCallbackReaddir(Hypertable::Comm *comm, Hypertable::EventPtr &eventPtr) : Hypertable::ResponseCallback(comm, eventPtr) { return; }
     int response(std::vector<struct DirEntryT> &listing);
   };
 

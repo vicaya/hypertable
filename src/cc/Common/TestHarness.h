@@ -36,7 +36,7 @@ extern "C" {
 
 using namespace std;
 
-namespace hypertable {
+namespace Hypertable {
 
   /**
    * Log4cpp layout class that drops timestamp from log messages.

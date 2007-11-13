@@ -28,7 +28,7 @@
 
 using namespace std;
 
-namespace hypertable {
+namespace Hypertable {
 
   /** Returns encoded (serialized) length of the given TableIdentifierT.
    */

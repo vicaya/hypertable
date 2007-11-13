@@ -28,7 +28,7 @@
 #include "CellCache.h"
 #include "CellCacheScanner.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 

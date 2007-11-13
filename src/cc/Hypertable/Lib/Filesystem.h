@@ -23,7 +23,7 @@
 
 #include "AsyncComm/DispatchHandler.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   /**
    * Abstract base class for a filesystem.  All commands have synchronous and

@@ -25,10 +25,10 @@
 #include "AsyncComm/Event.h"
 #include "AsyncComm/Protocol.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 
-namespace hypertable {
+namespace Hypertable {
 
   class MasterProtocol : public Protocol {
 

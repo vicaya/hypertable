@@ -23,7 +23,7 @@
 
 #include "DisplayScanData.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   void DisplayScanData(const ByteString32T *key, const ByteString32T *value, SchemaPtr &schemaPtr) {
     Key keyComps(key);

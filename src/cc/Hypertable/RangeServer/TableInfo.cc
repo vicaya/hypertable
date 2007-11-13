@@ -22,7 +22,7 @@
 
 #include "TableInfo.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 
 /**

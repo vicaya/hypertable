@@ -21,7 +21,7 @@
 
 #include <vector>
 
-namespace hypertable {
+namespace Hypertable {
   class HyperspaceClient;
   int CommandCreate(HyperspaceClient *client, std::vector<const char *> &args);
 }

@@ -20,7 +20,7 @@
 
 #include "HeaderBuilder.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   void HeaderBuilder::encode(uint8_t **bufPtr) {
     Header::HeaderT *mheader;

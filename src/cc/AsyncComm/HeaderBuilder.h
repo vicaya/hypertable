@@ -32,7 +32,7 @@ extern "C" {
 
 #include "Header.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   /**
    * Builds a response or request header for messages sent over the Comm layer.

@@ -21,7 +21,7 @@
 
 #include "FileBlockCache.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 atomic_t FileBlockCache::ms_next_file_id = ATOMIC_INIT(0);
 

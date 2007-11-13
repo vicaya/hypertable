@@ -38,7 +38,7 @@ extern "C" {
 #include "Constants.h"
 #include "FileBlockCache.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 CellStoreV0::CellStoreV0(Filesystem *filesys) : m_filesys(filesys), m_filename(), m_fd(-1), m_index(),
   m_buffer(0), m_fix_index_buffer(0), m_var_index_buffer(0), m_block_size(Constants::DEFAULT_BLOCKSIZE),
@@ -117,7 +117,7 @@ int CellStoreV0::add(const ByteString32T *key, const ByteString32T *value) {
 
     if (m_outstanding_appends > 0) {
       if (!m_sync_handler.wait_for_reply(eventPtr)) {
-	LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", m_filename.c_str(), hypertable::Protocol::string_format_message(eventPtr).c_str());
+	LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", m_filename.c_str(), Hypertable::Protocol::string_format_message(eventPtr).c_str());
 	return -1;
       }
       m_outstanding_appends--;

@@ -28,7 +28,7 @@
 #include "Constants.h"
 
 
-namespace hypertable {
+namespace Hypertable {
 
   class CellStore : public CellList {
   public:

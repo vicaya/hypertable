@@ -26,9 +26,9 @@
 #include "AsyncComm/ApplicationHandler.h"
 #include "AsyncComm/Event.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
-namespace hypertable {
+namespace Hypertable {
 
   class Comm;
   class Master;

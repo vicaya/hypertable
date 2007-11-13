@@ -31,7 +31,7 @@ extern "C" {
 
 #include "Common/ByteString.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   /** Identifies a specific table and generation */
   typedef struct {

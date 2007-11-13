@@ -21,7 +21,7 @@
 #ifndef HYPERTABLE_CELLKEY_H
 #define HYPERTABLE_CELLKEY_H
 
-namespace hypertable {
+namespace Hypertable {
 
   class CellKey {
   public:

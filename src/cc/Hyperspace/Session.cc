@@ -42,7 +42,7 @@ extern "C" {
 #include "Protocol.h"
 #include "Session.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace Hyperspace;
 
 
@@ -79,7 +79,7 @@ Session::~Session() {
 
 int Session::open(ClientHandleStatePtr &handle_state_ptr, CommBufPtr &cbuf_ptr, uint64_t *handlep) {
   DispatchHandlerSynchronizer syncHandler;
-  hypertable::EventPtr eventPtr;
+  Hypertable::EventPtr eventPtr;
 
   handle_state_ptr->handle = 0;
   handle_state_ptr->sequencer = 0;
@@ -174,7 +174,7 @@ int Session::create(std::string name, uint32_t flags, HandleCallbackPtr &callbac
  */
 int Session::close(uint64_t handle) {
   DispatchHandlerSynchronizer syncHandler;
-  hypertable::EventPtr eventPtr;
+  Hypertable::EventPtr eventPtr;
   CommBufPtr cbuf_ptr( Protocol::create_close_request(handle) );
 
  try_again:
@@ -205,7 +205,7 @@ int Session::close(uint64_t handle) {
  */
 int Session::mkdir(std::string name) {
   DispatchHandlerSynchronizer syncHandler;
-  hypertable::EventPtr eventPtr;
+  Hypertable::EventPtr eventPtr;
   std::string normalName;
 
   normalize_name(name, normalName);
@@ -236,7 +236,7 @@ int Session::mkdir(std::string name) {
 
 int Session::unlink(std::string name) {
   DispatchHandlerSynchronizer syncHandler;
-  hypertable::EventPtr eventPtr;
+  Hypertable::EventPtr eventPtr;
   std::string normalName;
 
   normalize_name(name, normalName);
@@ -267,7 +267,7 @@ int Session::unlink(std::string name) {
 
 int Session::exists(std::string name, bool *existsp) {
   DispatchHandlerSynchronizer syncHandler;
-  hypertable::EventPtr eventPtr;
+  Hypertable::EventPtr eventPtr;
   std::string normalName;
 
   normalize_name(name, normalName);
@@ -309,7 +309,7 @@ int Session::exists(std::string name, bool *existsp) {
  */
 int Session::attr_set(uint64_t handle, std::string name, const void *value, size_t valueLen) {
   DispatchHandlerSynchronizer syncHandler;
-  hypertable::EventPtr eventPtr;
+  Hypertable::EventPtr eventPtr;
   CommBufPtr cbuf_ptr( Protocol::create_attr_set_request(handle, name, value, valueLen) );
 
  try_again:
@@ -339,7 +339,7 @@ int Session::attr_set(uint64_t handle, std::string name, const void *value, size
  */
 int Session::attr_get(uint64_t handle, std::string name, DynamicBuffer &value) {
   DispatchHandlerSynchronizer syncHandler;
-  hypertable::EventPtr eventPtr;
+  Hypertable::EventPtr eventPtr;
   CommBufPtr cbuf_ptr( Protocol::create_attr_get_request(handle, name) );
 
  try_again:
@@ -383,7 +383,7 @@ int Session::attr_get(uint64_t handle, std::string name, DynamicBuffer &value) {
  */
 int Session::attr_del(uint64_t handle, std::string name) {
   DispatchHandlerSynchronizer syncHandler;
-  hypertable::EventPtr eventPtr;
+  Hypertable::EventPtr eventPtr;
   CommBufPtr cbuf_ptr( Protocol::create_attr_del_request(handle, name) );
 
  try_again:
@@ -410,7 +410,7 @@ int Session::attr_del(uint64_t handle, std::string name) {
 
 int Session::readdir(uint64_t handle, std::vector<struct DirEntryT> &listing) {
   DispatchHandlerSynchronizer syncHandler;
-  hypertable::EventPtr eventPtr;
+  Hypertable::EventPtr eventPtr;
   CommBufPtr cbuf_ptr( Protocol::create_readdir_request(handle) );
 
  try_again:
@@ -456,7 +456,7 @@ int Session::readdir(uint64_t handle, std::vector<struct DirEntryT> &listing) {
 
 int Session::lock(uint64_t handle, uint32_t mode, struct LockSequencerT *sequencerp) {
   DispatchHandlerSynchronizer syncHandler;
-  hypertable::EventPtr eventPtr;
+  Hypertable::EventPtr eventPtr;
   CommBufPtr cbuf_ptr( Protocol::create_lock_request(handle, mode, false) );
   ClientHandleStatePtr handle_state_ptr;
   uint32_t status = 0;
@@ -522,7 +522,7 @@ int Session::lock(uint64_t handle, uint32_t mode, struct LockSequencerT *sequenc
 
 int Session::try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp, struct LockSequencerT *sequencerp) {
   DispatchHandlerSynchronizer syncHandler;
-  hypertable::EventPtr eventPtr;
+  Hypertable::EventPtr eventPtr;
   CommBufPtr cbuf_ptr( Protocol::create_lock_request(handle, mode, true) );
   ClientHandleStatePtr handle_state_ptr;
 
@@ -573,7 +573,7 @@ int Session::try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp, struct 
 
 int Session::release(uint64_t handle) {
   DispatchHandlerSynchronizer syncHandler;
-  hypertable::EventPtr eventPtr;
+  Hypertable::EventPtr eventPtr;
   CommBufPtr cbuf_ptr( Protocol::create_release_request(handle) );
   ClientHandleStatePtr handle_state_ptr;
 

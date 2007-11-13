@@ -23,7 +23,7 @@
 #include "ServersDirectoryHandler.h"
 #include "Master.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 /**
  *

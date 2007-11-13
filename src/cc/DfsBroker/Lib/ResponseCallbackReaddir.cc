@@ -25,8 +25,8 @@
 
 #include "ResponseCallbackReaddir.h"
 
-using namespace hypertable;
-using namespace hypertable::DfsBroker;
+using namespace Hypertable;
+using namespace Hypertable::DfsBroker;
 
 int ResponseCallbackReaddir::response(std::vector<std::string> &listing) {
   hbuilder_.initialize_from_request(m_event_ptr->header);

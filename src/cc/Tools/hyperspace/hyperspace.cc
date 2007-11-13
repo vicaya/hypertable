@@ -60,7 +60,7 @@ extern "C" {
 #include "CommandRelease.h"
 #include "CommandGetSequencer.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 

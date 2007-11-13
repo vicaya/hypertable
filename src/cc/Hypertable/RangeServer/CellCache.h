@@ -28,7 +28,7 @@
 #include "CellListScanner.h"
 #include "CellList.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   /**
    * Represents  a sorted list of key/value pairs in memory.

@@ -26,8 +26,8 @@
 
 #include "RequestHandlerRmdir.h"
 
-using namespace hypertable;
-using namespace hypertable::DfsBroker;
+using namespace Hypertable;
+using namespace Hypertable::DfsBroker;
 
 /**
  *

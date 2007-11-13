@@ -32,10 +32,10 @@ extern "C" {
 
 #include "DfsBroker/Lib/Broker.h"
 
-using namespace hypertable;
-using namespace hypertable::DfsBroker;
+using namespace Hypertable;
+using namespace Hypertable::DfsBroker;
 
-namespace hypertable {
+namespace Hypertable {
 
   /**
    *

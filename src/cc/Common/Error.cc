@@ -23,7 +23,7 @@
 #include "Error.h"
 
 using namespace std;
-using namespace hypertable;
+using namespace Hypertable;
 
 namespace {
   typedef struct {

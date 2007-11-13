@@ -32,7 +32,7 @@
 #include "Hypertable/Lib/Schema.h"
 #include "Hypertable/Lib/Types.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   typedef struct {
     uint64_t cutoffTime;

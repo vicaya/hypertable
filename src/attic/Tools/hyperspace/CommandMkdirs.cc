@@ -29,7 +29,7 @@ extern "C" {
 
 #include "CommandMkdirs.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 
 namespace {
@@ -44,7 +44,7 @@ namespace {
 
 }
 
-int hypertable::CommandMkdirs(HyperspaceClient *client, vector<const char *> &args) {
+int Hypertable::CommandMkdirs(HyperspaceClient *client, vector<const char *> &args) {
 
   if (args.size() < 1)
     Usage::DumpAndExit(usage);

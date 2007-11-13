@@ -28,9 +28,9 @@
 
 namespace Hyperspace {
 
-  class ResponseCallbackAttrGet : public hypertable::ResponseCallback {
+  class ResponseCallbackAttrGet : public Hypertable::ResponseCallback {
   public:
-    ResponseCallbackAttrGet(hypertable::Comm *comm, hypertable::EventPtr &eventPtr) : hypertable::ResponseCallback(comm, eventPtr) { return; }
+    ResponseCallbackAttrGet(Hypertable::Comm *comm, Hypertable::EventPtr &eventPtr) : Hypertable::ResponseCallback(comm, eventPtr) { return; }
     int response(const uint8_t *data, uint32_t len);
   };
 

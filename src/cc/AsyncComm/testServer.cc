@@ -49,7 +49,7 @@ extern "C" {
 #include "DispatchHandler.h"
 #include "Comm.h"
 #include "Event.h"
-using namespace hypertable;
+using namespace Hypertable;
 
 
 namespace {

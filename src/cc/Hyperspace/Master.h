@@ -49,7 +49,7 @@
 #include "ServerKeepaliveHandler.h"
 #include "SessionData.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 namespace Hyperspace {
 

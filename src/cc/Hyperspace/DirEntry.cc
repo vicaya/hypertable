@@ -22,7 +22,7 @@
 
 #include "DirEntry.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 namespace Hyperspace {
 

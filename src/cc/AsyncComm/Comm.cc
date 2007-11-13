@@ -50,7 +50,7 @@ extern "C" {
 #include "IOHandlerAccept.h"
 #include "IOHandlerData.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 atomic_t Comm::ms_next_request_id = ATOMIC_INIT(1);
 

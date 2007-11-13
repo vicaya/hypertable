@@ -41,7 +41,7 @@ extern "C" {
 
 #define BUFFER_SIZE 65536
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 const char *CommandUpdate::ms_usage[] = {

@@ -20,7 +20,7 @@
 
 #include "ResponseCallbackCreateScanner.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 int ResponseCallbackCreateScanner::response(short moreFlag, int32_t id, ExtBufferT &ext) {
   hbuilder_.initialize_from_request(m_event_ptr->header);

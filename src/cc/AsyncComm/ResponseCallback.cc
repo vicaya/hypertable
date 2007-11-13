@@ -24,7 +24,7 @@
 #include "Protocol.h"
 #include "ResponseCallback.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 int ResponseCallback::error(int error, std::string msg) {
   hbuilder_.initialize_from_request(m_event_ptr->header);

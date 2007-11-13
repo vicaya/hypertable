@@ -24,14 +24,14 @@ extern "C" {
 #include <stdint.h>
 }
 
-namespace hypertable {
+namespace Hypertable {
 
   class DynamicBuffer;
 
   class BlockInflater {
   public:
     virtual ~BlockInflater() { return; }
-    virtual bool inflate(uint8_t *zbuf, uint32_t zlen, const char magic[12], hypertable::DynamicBuffer &outbuf) = 0;
+    virtual bool inflate(uint8_t *zbuf, uint32_t zlen, const char magic[12], Hypertable::DynamicBuffer &outbuf) = 0;
   };
 
 }

@@ -28,7 +28,7 @@
 
 #include "RangeServer.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class Comm;
 

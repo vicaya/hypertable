@@ -38,7 +38,7 @@ extern "C" {
 #include "CommandCreateTable.h"
 #include "CommandGetSchema.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 namespace {

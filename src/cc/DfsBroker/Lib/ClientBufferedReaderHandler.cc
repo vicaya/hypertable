@@ -25,7 +25,7 @@
 #include "ClientBufferedReaderHandler.h"
 #include "Client.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 namespace {
   const uint32_t DEFAULT_READ_SIZE = 8192;

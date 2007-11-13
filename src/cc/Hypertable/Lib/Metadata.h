@@ -31,9 +31,9 @@
 
 #include "Hypertable/RangeServer/RangeInfo.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
-namespace hypertable {
+namespace Hypertable {
 
   typedef std::map<std::string, RangeInfoPtr> RangeInfoMapT;
 

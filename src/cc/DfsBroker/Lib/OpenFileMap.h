@@ -32,7 +32,7 @@ extern "C" {
 #include "Common/ReferenceCount.h"
 
 
-namespace hypertable {
+namespace Hypertable {
 
   /**
    *

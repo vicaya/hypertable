@@ -30,8 +30,8 @@
 
 #include "Client.h"
 
-using namespace hypertable;
-using namespace hypertable::DfsBroker;
+using namespace Hypertable;
+using namespace Hypertable::DfsBroker;
 
 
 Client::Client(ConnectionManagerPtr &connManagerPtr, struct sockaddr_in &addr, time_t timeout) : m_conn_manager_ptr(connManagerPtr), m_addr(addr), m_timeout(timeout) {

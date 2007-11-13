@@ -40,7 +40,7 @@ extern "C" {
 #include "AsyncComm/ReactorFactory.h"
 
 
-using namespace hypertable;
+using namespace Hypertable;
 
 namespace {
   const char *usage[] = {

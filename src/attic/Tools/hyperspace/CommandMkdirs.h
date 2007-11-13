@@ -21,7 +21,7 @@
 
 #include <vector>
 
-namespace hypertable {
+namespace Hypertable {
   class HyperspaceClient;
   int CommandMkdirs(HyperspaceClient *client, std::vector<const char *> &args);
 }

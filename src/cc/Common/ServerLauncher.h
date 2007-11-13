@@ -30,7 +30,7 @@ extern "C" {
 #include <poll.h>
 }
 
-namespace hypertable {
+namespace Hypertable {
 
   class ServerLauncher {
   public:

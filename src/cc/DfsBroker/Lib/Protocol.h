@@ -30,11 +30,11 @@ extern "C" {
 #include <string.h>
 }
 
-namespace hypertable {
+namespace Hypertable {
 
   namespace DfsBroker {
 
-    class Protocol : public hypertable::Protocol {
+    class Protocol : public Hypertable::Protocol {
 
     public:
 

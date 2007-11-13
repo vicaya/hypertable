@@ -21,7 +21,7 @@
 #ifndef HYPERTABLE_RUNNABLE_H
 #define HYPERTABLE_RUNNABLE_H
 
-namespace hypertable {
+namespace Hypertable {
 
   class Runnable {
   public:

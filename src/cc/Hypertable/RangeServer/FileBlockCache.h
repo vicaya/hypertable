@@ -26,7 +26,7 @@
 
 #include "Common/atomic.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class FileBlockCache {
 

@@ -24,7 +24,7 @@ extern "C" {
 #include <stdint.h>
 }
 
-namespace hypertable {
+namespace Hypertable {
 
   const uint16_t CellStore::FLAG_SHARED = 0x0001;
 

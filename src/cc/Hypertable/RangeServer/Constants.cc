@@ -19,7 +19,7 @@
  */
 #include "Constants.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 const char Constants::DATA_BLOCK_MAGIC[12]           = { 'D','a','t','a','-','-','-','-','-','-','-','-' };
 const char Constants::INDEX_FIXED_BLOCK_MAGIC[12]    = { 'I','d','x','F','i','x','-','-','-','-','-','-' };

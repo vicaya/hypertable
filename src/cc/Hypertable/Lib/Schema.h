@@ -33,10 +33,10 @@
 #include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
-namespace hypertable {
+namespace Hypertable {
 
   class Schema : public ReferenceCount {
   public:

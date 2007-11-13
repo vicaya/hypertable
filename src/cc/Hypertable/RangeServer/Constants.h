@@ -24,7 +24,7 @@ extern "C" {
 #include <stdint.h>
 }
 
-namespace hypertable {
+namespace Hypertable {
 
   class Constants {
 

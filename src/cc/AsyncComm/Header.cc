@@ -20,7 +20,7 @@
 
 #include "Header.h"
 
-namespace hypertable {
+namespace Hypertable {
   const char *Header::protocolStrings[PROTOCOL_MAX] = {
     "none",
     "dfs broker",

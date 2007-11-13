@@ -32,7 +32,7 @@ extern "C" {
 #include "Protocol.h"
 #include "Session.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace Hyperspace;
 
 ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsPtr, Session *session) : m_comm(comm), m_session(session), m_session_id(0), m_last_known_event(0) {
@@ -96,7 +96,7 @@ ClientKeepaliveHandler::~ClientKeepaliveHandler() {
 /**
  *
  */
-void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
+void ClientKeepaliveHandler::handle(Hypertable::EventPtr &eventPtr) {
   boost::mutex::scoped_lock lock(m_mutex);
   int error;
   uint16_t command = (uint16_t)-1;
@@ -107,7 +107,7 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
   }
   **/
 
-  if (eventPtr->type == hypertable::Event::MESSAGE) {
+  if (eventPtr->type == Hypertable::Event::MESSAGE) {
     uint8_t *msgPtr = eventPtr->message;
     size_t remaining = eventPtr->messageLen;
 
@@ -257,7 +257,7 @@ void ClientKeepaliveHandler::handle(hypertable::EventPtr &eventPtr) {
       LOG_VA_ERROR("Protocol error '%s'", e.what());
     }
   }
-  else if (eventPtr->type == hypertable::Event::TIMER) {
+  else if (eventPtr->type == Hypertable::Event::TIMER) {
     boost::xtime now;
     int state;
     

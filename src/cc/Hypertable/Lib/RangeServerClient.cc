@@ -24,7 +24,7 @@
 #include "RangeServerClient.h"
 #include "ScanBlock.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 
 RangeServerClient::RangeServerClient(Comm *comm, time_t timeout) : m_comm(comm), m_timeout(timeout) {

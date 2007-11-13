@@ -26,9 +26,9 @@
 #include "Common/DynamicBuffer.h"
 #include "Hypertable/Lib/Schema.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
-namespace hypertable {
+namespace Hypertable {
 
   class TestSource {
 

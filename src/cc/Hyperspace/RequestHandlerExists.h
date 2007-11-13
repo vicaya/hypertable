@@ -27,7 +27,7 @@
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/Event.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 namespace Hyperspace {
 

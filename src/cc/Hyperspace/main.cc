@@ -42,7 +42,7 @@ extern "C" {
 #include "Master.h"
 
 using namespace Hyperspace;
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 

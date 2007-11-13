@@ -35,7 +35,7 @@
 
 namespace Hyperspace {
 
-  class Event : public hypertable::ReferenceCount {
+  class Event : public Hypertable::ReferenceCount {
   public:
     Event(uint32_t mask) : m_mask(mask), m_notification_count(0) { 
       boost::mutex::scoped_lock lock(ms_next_event_id_mutex);
@@ -65,7 +65,7 @@ namespace Hyperspace {
     }
 
     virtual uint32_t encoded_length() = 0;
-    virtual void encode(hypertable::CommBuf *cbuf) = 0;
+    virtual void encode(Hypertable::CommBuf *cbuf) = 0;
 
   protected:
 
@@ -89,8 +89,8 @@ namespace Hyperspace {
   class EventNamed : public Event {
   public:
     EventNamed(uint32_t mask, std::string name) : Event(mask), m_name(name) { return; }
-    virtual uint32_t encoded_length() { return 12 + hypertable::Serialization::encoded_length_string(m_name); }
-    virtual void encode(hypertable::CommBuf *cbuf) { 
+    virtual uint32_t encoded_length() { return 12 + Hypertable::Serialization::encoded_length_string(m_name); }
+    virtual void encode(Hypertable::CommBuf *cbuf) { 
       cbuf->append_long(m_id);
       cbuf->append_int(m_mask);
       cbuf->append_string(m_name);
@@ -108,7 +108,7 @@ namespace Hyperspace {
   public:
     EventLockAcquired(uint32_t mode) : Event(EVENT_MASK_LOCK_ACQUIRED), m_mode(mode) { return; }
     virtual uint32_t encoded_length() { return 16; }
-    virtual void encode(hypertable::CommBuf *cbuf) { 
+    virtual void encode(Hypertable::CommBuf *cbuf) { 
       cbuf->append_long(m_id);
       cbuf->append_int(m_mask);
       cbuf->append_int(m_mode);
@@ -125,7 +125,7 @@ namespace Hyperspace {
   public:
     EventLockReleased() : Event(EVENT_MASK_LOCK_RELEASED) { return; }
     virtual uint32_t encoded_length() { return 12; }
-    virtual void encode(hypertable::CommBuf *cbuf) { 
+    virtual void encode(Hypertable::CommBuf *cbuf) { 
       cbuf->append_long(m_id);
       cbuf->append_int(m_mask);
     }
@@ -139,7 +139,7 @@ namespace Hyperspace {
   public:
     EventLockGranted(uint32_t mode, uint64_t generation) : Event(EVENT_MASK_LOCK_GRANTED), m_mode(mode), m_generation(generation) { return; }
     virtual uint32_t encoded_length() { return 24; }
-    virtual void encode(hypertable::CommBuf *cbuf) { 
+    virtual void encode(Hypertable::CommBuf *cbuf) { 
       cbuf->append_long(m_id);
       cbuf->append_int(m_mask);
       cbuf->append_int(m_mode);

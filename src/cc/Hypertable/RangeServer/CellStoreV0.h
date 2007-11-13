@@ -32,17 +32,17 @@
 #include "BlockDeflater.h"
 #include "CellStore.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 /**
  * Forward declarations
  */
-namespace hypertable {
+namespace Hypertable {
   class Client;
   class Protocol;
 }
 
-namespace hypertable {
+namespace Hypertable {
 
   class CellStoreV0 : public CellStore {
 

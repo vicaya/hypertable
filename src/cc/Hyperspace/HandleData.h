@@ -31,7 +31,7 @@ namespace Hyperspace {
 
   class NodeData;
 
-  class HandleData : public hypertable::ReferenceCount {
+  class HandleData : public Hypertable::ReferenceCount {
   public:
     std::string  name;
     uint64_t     id;

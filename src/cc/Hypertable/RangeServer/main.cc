@@ -42,7 +42,7 @@ extern "C" {
 #include "Global.h"
 #include "RangeServer.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 

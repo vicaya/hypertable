@@ -26,7 +26,7 @@
 
 #include "Common/ByteString.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   namespace Serialization {
 

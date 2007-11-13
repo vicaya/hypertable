@@ -33,9 +33,9 @@
 #include "Hyperspace/HandleCallback.h"
 #include "Hyperspace/Session.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
-namespace hypertable {
+namespace Hypertable {
 
   class Comm;
 

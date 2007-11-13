@@ -27,7 +27,7 @@
 
 #include "AsyncComm/DispatchHandler.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   namespace DfsBroker {
     class Client;

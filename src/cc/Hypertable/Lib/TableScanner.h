@@ -30,7 +30,7 @@
 #include "TableScanner.h"
 #include "Types.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class TableScanner : public ReferenceCount {
 

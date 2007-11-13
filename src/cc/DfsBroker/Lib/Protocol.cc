@@ -26,12 +26,12 @@
 
 #include "Protocol.h"
 
-using namespace hypertable;
-using namespace hypertable::DfsBroker;
+using namespace Hypertable;
+using namespace Hypertable::DfsBroker;
 using namespace std;
 
 
-namespace hypertable {
+namespace Hypertable {
 
   namespace DfsBroker {
 

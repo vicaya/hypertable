@@ -20,6 +20,8 @@
 
 #include "Global.h"
 
+namespace Hyperspace {
 int Global::exitStatus = 0;
 std::string Global::cwd = "/";
 Global::FileMapT Global::fileMap;
+}

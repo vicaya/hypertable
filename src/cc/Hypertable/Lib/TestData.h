@@ -24,7 +24,7 @@
 #include "Common/Logger.h"
 #include "Common/TestHarness.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   typedef boost::shared_array<const char> CharPtr;
 

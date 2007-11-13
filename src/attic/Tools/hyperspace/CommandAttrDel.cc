@@ -30,7 +30,7 @@ extern "C" {
 
 #include "CommandAttrDel.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 namespace {
   const char *usage[] = {
@@ -45,7 +45,7 @@ namespace {
 }
 
 
-int hypertable::CommandAttrDel(HyperspaceClient *client, vector<const char *> &args) {
+int Hypertable::CommandAttrDel(HyperspaceClient *client, vector<const char *> &args) {
 
   if (args.size() != 2)
     Usage::DumpAndExit(usage);

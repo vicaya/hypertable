@@ -28,7 +28,7 @@
 #include "AsyncComm/CommBuf.h"
 #include "AsyncComm/ResponseCallback.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   namespace DfsBroker {
 

@@ -20,7 +20,7 @@
 
 #include "ReactorFactory.h"
 #include "ReactorRunner.h"
-using namespace hypertable;
+using namespace Hypertable;
 
 #include <cassert>
 

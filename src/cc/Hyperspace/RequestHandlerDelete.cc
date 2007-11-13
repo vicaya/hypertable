@@ -30,7 +30,7 @@
 #include "RequestHandlerDelete.h"
 
 using namespace Hyperspace;
-using namespace hypertable;
+using namespace Hypertable;
 
 /**
  *

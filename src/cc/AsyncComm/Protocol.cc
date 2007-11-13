@@ -30,7 +30,7 @@
 #include "Protocol.h"
 #include "Serialization.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 /**

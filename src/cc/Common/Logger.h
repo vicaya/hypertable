@@ -27,7 +27,7 @@
 
 #define DUMP_CORE *((int *)0) = 1;
 
-namespace hypertable {
+namespace Hypertable {
   class Logger {
   public:
     static log4cpp::Category *logger;

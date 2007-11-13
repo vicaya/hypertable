@@ -33,7 +33,7 @@ extern "C" {
 #include "InetAddr.h"
 #include "StringExt.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 /**
  *

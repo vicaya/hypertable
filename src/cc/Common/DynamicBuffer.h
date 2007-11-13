@@ -25,7 +25,7 @@ extern "C" {
 #include <string.h>
 }
 
-namespace hypertable {
+namespace Hypertable {
 
   class DynamicBuffer {
 

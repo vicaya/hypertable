@@ -24,8 +24,8 @@
 
 #include "ResponseCallbackAppend.h"
 
-using namespace hypertable;
-using namespace hypertable::DfsBroker;
+using namespace Hypertable;
+using namespace Hypertable::DfsBroker;
 
 int ResponseCallbackAppend::response(uint64_t offset, uint32_t amount) {
   hbuilder_.initialize_from_request(m_event_ptr->header);

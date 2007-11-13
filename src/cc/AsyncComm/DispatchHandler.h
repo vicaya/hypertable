@@ -25,7 +25,7 @@
 
 #include "Event.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   /**
    * Abstract base class that is the main callback class of the Comm layer.  An objects

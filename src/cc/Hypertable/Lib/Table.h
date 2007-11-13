@@ -33,7 +33,7 @@ namespace Hyperspace {
   class Session;
 }
 
-namespace hypertable {
+namespace Hypertable {
 
   class ConnectionManager;
 

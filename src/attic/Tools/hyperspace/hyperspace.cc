@@ -45,7 +45,7 @@ extern "C" {
 #include "CommandAttrDel.h"
 #include "CommandExists.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 

@@ -26,7 +26,7 @@
 #include "Event.h"
 #include "HeaderBuilder.h"
 
-namespace hypertable {
+namespace Hypertable {
   
   class CommBuf;
 

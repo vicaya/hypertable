@@ -26,7 +26,7 @@
 #include "Hypertable/Lib/Schema.h"
 #include "Hyperspace/Session.h"
 
-namespace hypertable {
+namespace Hypertable {
   
   class HyperspaceClient;
 

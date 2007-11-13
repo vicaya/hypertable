@@ -30,7 +30,7 @@
 #include "Hypertable/Lib/Types.h"
 #include "Hyperspace/Session.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class Global {
   public:

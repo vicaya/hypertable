@@ -41,7 +41,7 @@ namespace Hyperspace {
     int mode;
   };
 
-  class NodeData : public hypertable::ReferenceCount {
+  class NodeData : public Hypertable::ReferenceCount {
   public:
     NodeData() : fd(-1), ephemeral(false), currentLockMode(0), lockGeneration(0), exclusiveLockHandle(0) { 
       return;

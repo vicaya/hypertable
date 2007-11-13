@@ -34,7 +34,7 @@ extern "C" {
 #include "Notification.h"
 #include "SessionData.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 namespace Hyperspace {
 
@@ -50,7 +50,7 @@ namespace Hyperspace {
     int32_t valueLen;
   } AttributeT;
 
-  class Protocol : public hypertable::Protocol {
+  class Protocol : public Hypertable::Protocol {
 
   public:
 

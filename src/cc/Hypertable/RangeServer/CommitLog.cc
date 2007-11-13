@@ -26,7 +26,7 @@
 #include "Global.h"
 #include "CommitLog.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 
 /**

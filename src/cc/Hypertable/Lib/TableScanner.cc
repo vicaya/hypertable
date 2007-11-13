@@ -23,7 +23,7 @@
 #include "Key.h"
 #include "TableScanner.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 /** Cons
  */

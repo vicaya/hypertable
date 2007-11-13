@@ -29,7 +29,7 @@
 
 #include "Table.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace Hyperspace;
 
 

@@ -27,13 +27,13 @@ extern "C" {
 /**
  *  Forward declarations
  */
-namespace hypertable {
+namespace Hypertable {
   class Comm;
 }
 
 class CommTestDatagramThreadFunction {
  public:
-  CommTestDatagramThreadFunction(hypertable::Comm *comm, struct sockaddr_in &addr, const char *input) : m_comm(comm), m_addr(addr) {
+  CommTestDatagramThreadFunction(Hypertable::Comm *comm, struct sockaddr_in &addr, const char *input) : m_comm(comm), m_addr(addr) {
     m_input_file = input;
     m_port = 0;
   }
@@ -44,7 +44,7 @@ class CommTestDatagramThreadFunction {
   void operator()();
 
  private:
-  hypertable::Comm *m_comm;
+  Hypertable::Comm *m_comm;
   struct sockaddr_in m_addr;
   const char *m_input_file;
   const char *m_output_file;

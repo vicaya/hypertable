@@ -31,7 +31,7 @@
 #include "Table.h"
 
 
-namespace hypertable {
+namespace Hypertable {
 
   class Comm;
 

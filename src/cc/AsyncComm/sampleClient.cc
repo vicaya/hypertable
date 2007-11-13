@@ -51,7 +51,7 @@ extern "C" {
 #include "HeaderBuilder.h"
 #include "Serialization.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 namespace {
   const char *DEFAULT_HOST = "localhost";

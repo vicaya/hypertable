@@ -35,7 +35,7 @@ extern "C" {
 
 #include "KosmosBroker.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using KFS::KfsClient;
 
 KosmosBroker::KosmosBroker(PropertiesPtr &propsPtr) : mVerbose(false) {

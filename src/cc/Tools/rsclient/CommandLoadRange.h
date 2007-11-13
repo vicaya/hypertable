@@ -26,7 +26,7 @@
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/RangeServerClient.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   class CommandLoadRange : public InteractiveCommand {
   public:

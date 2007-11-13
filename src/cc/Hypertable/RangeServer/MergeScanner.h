@@ -30,9 +30,9 @@
 
 #include "CellListScanner.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
-namespace hypertable {
+namespace Hypertable {
 
   class MergeScanner : public CellListScanner {
   public:

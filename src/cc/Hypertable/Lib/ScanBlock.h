@@ -26,7 +26,7 @@
 #include "AsyncComm/Event.h"
 #include "Common/ByteString.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   /** Encapsulates a block of scan results.  The CREATE_SCANNER and
    * FETCH_SCANBLOCK RangeServer methods return a block of scan results

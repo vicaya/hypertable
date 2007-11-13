@@ -31,9 +31,9 @@
 #include "ResponseCallbackLength.h"
 #include "ResponseCallbackReaddir.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
-namespace hypertable {
+namespace Hypertable {
 
   namespace DfsBroker {
 

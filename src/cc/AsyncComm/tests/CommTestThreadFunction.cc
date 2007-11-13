@@ -40,7 +40,7 @@ extern "C" {
 
 #include "CommTestThreadFunction.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 namespace {

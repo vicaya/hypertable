@@ -39,7 +39,7 @@
 #include "LockSequencer.h"
 #include "Protocol.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace Hyperspace;
 
 namespace Hyperspace {

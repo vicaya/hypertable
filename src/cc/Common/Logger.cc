@@ -28,7 +28,7 @@
 #include <log4cpp/OstreamAppender.hh>
 #include <log4cpp/Priority.hh>
 
-using namespace hypertable;
+using namespace Hypertable;
 
 namespace {
 

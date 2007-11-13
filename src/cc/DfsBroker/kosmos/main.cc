@@ -39,7 +39,7 @@ extern "C" {
 
 #include "KosmosBroker.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 namespace {
@@ -68,7 +68,7 @@ namespace {
 int main(int argc, char **argv) {
   string configFile = "";
   string pidFile = "";
-  hypertable::PropertiesPtr propsPtr;
+  Hypertable::PropertiesPtr propsPtr;
   bool verbose = false;
   int port, reactorCount, workerCount;
   Comm *comm;
@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
     exit(0);
   }
 
-  propsPtr.reset( new hypertable::Properties(configFile) );
+  propsPtr.reset( new Hypertable::Properties(configFile) );
   if (verbose)
     propsPtr->setProperty("verbose", "true");
 

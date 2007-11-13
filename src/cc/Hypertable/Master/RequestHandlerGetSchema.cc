@@ -28,7 +28,7 @@
 #include "RequestHandlerGetSchema.h"
 #include "ResponseCallbackGetSchema.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 
 /**
  *

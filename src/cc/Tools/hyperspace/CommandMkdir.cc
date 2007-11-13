@@ -26,7 +26,7 @@
 #include "CommandMkdir.h"
 #include "Global.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace Hyperspace;
 using namespace std;
 

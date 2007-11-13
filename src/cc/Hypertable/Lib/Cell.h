@@ -21,7 +21,7 @@
 #ifndef HYPERTABLE_CELL_H
 #define HYPERTABLE_CELL_H
 
-namespace hypertable {
+namespace Hypertable {
 
   /** Encapsulates decomposed key and value */
   typedef struct {

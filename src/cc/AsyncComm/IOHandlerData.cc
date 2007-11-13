@@ -42,7 +42,7 @@ extern "C" {
 
 #include "IOHandlerData.h"
 #include "HandlerMap.h"
-using namespace hypertable;
+using namespace Hypertable;
 
 atomic_t IOHandlerData::ms_next_connection_id = ATOMIC_INIT(1);
 

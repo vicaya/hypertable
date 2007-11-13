@@ -24,7 +24,7 @@
 
 #include "Types.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   /** Generates RangeServer protocol request messages */
   class RangeServerProtocol : public Protocol {

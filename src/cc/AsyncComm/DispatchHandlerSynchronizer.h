@@ -31,7 +31,7 @@
 
 using namespace std;
 
-namespace hypertable {
+namespace Hypertable {
 
   /**
    * This class is a DispatchHandler class that can be used

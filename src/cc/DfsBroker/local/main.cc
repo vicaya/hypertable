@@ -42,7 +42,7 @@ extern "C" {
 
 #include "LocalBroker.h"
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 namespace {

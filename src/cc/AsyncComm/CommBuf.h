@@ -37,7 +37,7 @@ extern "C" {
 #include "HeaderBuilder.h"
 #include "Serialization.h"
 
-namespace hypertable {
+namespace Hypertable {
 
   /**
    * Message buffer sent over the network

@@ -34,7 +34,7 @@ extern "C" {
 
 #include "IOHandler.h"
 #include "Reactor.h"
-using namespace hypertable;
+using namespace Hypertable;
 
 #if defined(__linux__)
 

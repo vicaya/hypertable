@@ -40,7 +40,7 @@ extern "C" {
 #include "TestData.h"
 
 
-using namespace hypertable;
+using namespace Hypertable;
 using namespace std;
 
 namespace {
