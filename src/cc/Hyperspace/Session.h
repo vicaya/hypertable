@@ -255,7 +255,7 @@ namespace Hyperspace {
      * @param listing reference to vector of DirEntryT structures to hold result
      * @return Error::OK on success or error code on failure
      */
-    int readdir(uint64_t handle, vector<struct DirEntryT> &listing);
+    int readdir(uint64_t handle, std::vector<struct DirEntryT> &listing);
 
 
     /** Locks a file.  The mode argument indicates

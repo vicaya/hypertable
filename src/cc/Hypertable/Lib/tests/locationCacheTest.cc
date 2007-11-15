@@ -43,7 +43,7 @@ namespace {
   const int MAX_SERVERIDS = 11;
 
   RowRangeT ranges[MAX_RANGES] = {
-    RowRangeT(0,"allogene"),
+    RowRangeT("","allogene"),
     RowRangeT("allogene", "archtreasurer"),
     RowRangeT("archtreasurer", "beerocracy"),
     RowRangeT("beerocracy", "bulblet"),
@@ -75,7 +75,7 @@ namespace {
     RowRangeT("trophic", "undoubtingness"),
     RowRangeT("undoubtingness", "unserrated"),
     RowRangeT("unserrated", "vowellessness"),
-    RowRangeT("vowellessness", 0)
+    RowRangeT("vowellessness", "")
   };
 
   const char *words[MAX_WORDS] = {
@@ -189,10 +189,12 @@ namespace {
   ofstream outfile;
 
   void TestLookup(LocationCache &cache, uint32_t tableId, const char *rowKey) {
+    RangeLocationInfo  range_loc_info;
     const char *serverId;
     outfile << "LOOKUP(" << tableId << ", " << rowKey << ") -> ";
-    if (cache.lookup(tableId, rowKey, &serverId))
-      outfile << serverId << endl;
+
+    if (cache.lookup(tableId, rowKey, &range_loc_info))
+      outfile << range_loc_info.location << endl;
     else
       outfile << "[NULL]" << endl;
   }
@@ -207,12 +209,19 @@ int main(int argc, char **argv) {
   uint32_t tableId;
   uint32_t serveri;
   const char *start, *end;
+  RangeLocationInfo range_loc_info;
 
   outfile.open("./locationCacheTest.output");
 
-  // test ...
-  cache.insert(0, "bar", "kite", "234345");
-  cache.insert(0, "foo", "kite", "234345");
+  range_loc_info.start_row = "bar";
+  range_loc_info.end_row = "kite";
+  range_loc_info.location = "234345";
+  cache.insert(0, range_loc_info);
+
+  range_loc_info.start_row = "foo";
+  range_loc_info.end_row = "kite";
+  range_loc_info.location = "234345";
+  cache.insert(0, range_loc_info);
 
   TestLookup(cache, 0, "foo");
   TestLookup(cache, 0, "food");
@@ -226,10 +235,13 @@ int main(int argc, char **argv) {
       rangei = randstr.getInt() % MAX_RANGES;
       tableId = randstr.getInt() % 4;
       serveri = randstr.getInt() % MAX_SERVERIDS;
-      start = (ranges[rangei].first == 0) ? "[NULL]" : ranges[rangei].first;
-      end = (ranges[rangei].second == 0) ? "[NULL]" : ranges[rangei].second;
+      start = (*ranges[rangei].first == 0) ? "[NULL]" : ranges[rangei].first;
+      end = (*ranges[rangei].second == 0) ? "[NULL]" : ranges[rangei].second;
       outfile << "INSERT(" << tableId << ", " << start << ", " << end << ", " << serverIds[serveri] << endl << flush;
-      cache.insert(tableId, ranges[rangei].first, ranges[rangei].second, serverIds[serveri]);
+      range_loc_info.start_row = ranges[rangei].first;
+      range_loc_info.end_row   = ranges[rangei].second;
+      range_loc_info.location  = serverIds[serveri];
+      cache.insert(tableId, range_loc_info);
     }
   }
 

@@ -91,7 +91,7 @@ namespace Hyperspace {
     /** Invoked when a lock gets acquired on the file associated with
      * the registered handle
      *
-     * @param name the name of the attribute that was deleted
+     * @param mode the mode in which the lock was acquired
      */    
     virtual void lock_acquired(uint32_t mode) { return; }
 

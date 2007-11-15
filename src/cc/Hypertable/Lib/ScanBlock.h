@@ -48,6 +48,12 @@ namespace Hypertable {
      */
     int load(EventPtr &eventPtr);
 
+    /** Returns the number of key/value pairs in the scanblock.
+     * 
+     * @return number of key/value pairs in the scanblock
+     */
+    size_t size() { return m_vec.size(); }
+
     /** Resets iterator to first key/value pair in the scanblock. */
     void reset() { m_iter = m_vec.begin(); }
 

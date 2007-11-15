@@ -35,6 +35,8 @@ extern "C" {
 #include "Common/ReferenceCount.h"
 #include "Common/StringExt.h"
 
+#include "RangeLocationInfo.h"
+
 namespace Hypertable {
 
   /**
@@ -42,7 +44,7 @@ namespace Hypertable {
    */
   typedef struct {
     uint32_t    tableId;
-    const char *endRow;
+    const char *end_row;
   } LocationCacheKeyT;
 
   /**
@@ -51,11 +53,11 @@ namespace Hypertable {
   inline bool operator<(const LocationCacheKeyT &k1, const LocationCacheKeyT &k2) {
     if (k1.tableId != k2.tableId)
       return k1.tableId < k2.tableId;
-    if (k2.endRow == 0)
-      return (k1.endRow == 0) ? false : true;
-    else if (k1.endRow == 0)
+    if (k2.end_row == 0)
+      return (k1.end_row == 0) ? false : true;
+    else if (k1.end_row == 0)
       return false;
-    return strcmp(k1.endRow, k2.endRow) < 0;
+    return strcmp(k1.end_row, k2.end_row) < 0;
   }
 
   /**
@@ -64,11 +66,11 @@ namespace Hypertable {
   inline bool operator==(const LocationCacheKeyT &k1, const LocationCacheKeyT &k2) {
     if (k1.tableId != k2.tableId)
       return false;
-    if (k1.endRow == 0)
-      return (k2.endRow == 0) ? true : false;
-    else if (k2.endRow == 0)
+    if (k1.end_row == 0)
+      return (k2.end_row == 0) ? true : false;
+    else if (k2.end_row == 0)
       return false;
-    return !strcmp(k1.endRow, k2.endRow);
+    return !strcmp(k1.end_row, k2.end_row);
   }
 
   /**
@@ -86,25 +88,27 @@ namespace Hypertable {
 
   public:
 
-    /**
-     * 
+    /** 
      */
     typedef struct cache_value {
       struct cache_value *prev;
       struct cache_value *next;
       std::map<LocationCacheKeyT, struct cache_value *>::iterator mapIter;
-      std::string startRow;
-      std::string endRow;
+      std::string start_row;
+      std::string end_row;
       const char *location;
+      bool pegged;
     } ValueT;
 
     LocationCache(uint32_t maxEntries) : m_mutex(), m_location_map(), m_head(0), m_tail(0), m_max_entries(maxEntries) { return; }
     ~LocationCache();
 
-    void insert(uint32_t tableId, const char *startRow, const char *endRow, const char *location);
-    bool lookup(uint32_t tableId, const char *rowKey, const char **locationPtr);
+    void insert(uint32_t tableId, RangeLocationInfo &range_loc_info, bool pegged=false);
+    bool lookup(uint32_t tableId, const char *rowKey, RangeLocationInfo *range_loc_info_p);
 
     void display(std::ofstream &outfile);
+
+    static bool location_to_addr(const char *location, struct sockaddr_in &addr);
 
   private:
 

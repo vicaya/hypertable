@@ -81,7 +81,7 @@ namespace Hypertable {
    *
    */
   size_t EncodedLengthScanSpecification(ScanSpecificationT &scanSpec) {
-    size_t len = 28;
+    size_t len = 29;
     len += Serialization::encoded_length_string(scanSpec.startRow);
     len += Serialization::encoded_length_string(scanSpec.endRow);
     for (int i=0; i<scanSpec.columns.size(); i++)
@@ -102,6 +102,7 @@ namespace Hypertable {
       Serialization::encode_string(bufPtr, scanSpec.columns[i]);
     Serialization::encode_long(bufPtr, scanSpec.interval.first);
     Serialization::encode_long(bufPtr, scanSpec.interval.second);
+    *(*bufPtr)++ = (uint8_t)scanSpec.metadata;
   }
 
 
@@ -135,6 +136,9 @@ namespace Hypertable {
       return false;
     if (!Serialization::decode_long(bufPtr, remainingPtr, &scanSpec->interval.second))
       return false;
+    if (!Serialization::decode_byte(bufPtr, remainingPtr, &inclusiveByte))
+      return false;
+    scanSpec->metadata = inclusiveByte ? true : false;
   
     return true;
   }
@@ -177,6 +181,7 @@ namespace Hypertable {
     os << "EndRowInclusive = " << scanSpec.endRowInclusive << endl;
     os << "MinTime   = " << scanSpec.interval.first << endl;
     os << "MaxTime   = " << scanSpec.interval.second << endl;
+    os << "Metadata = " << scanSpec.metadata << endl;
     return os;
   }
 

@@ -29,6 +29,7 @@
 
 #include "LocationCache.h"
 #include "RangeServerClient.h"
+#include "RangeLocationInfo.h"
 #include "Schema.h"
 #include "Types.h"
 
@@ -45,11 +46,24 @@ namespace Hypertable {
   public:
     RangeLocator(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr);
     ~RangeLocator();
+
+    /** 
+     * 
+     * 
+     */
+    int find_first(TableIdentifierT *table, ScanSpecificationT &scan_spec, RangeLocationInfo *range_loc_info_p);
+
+    /**
+    int find_next(TableIdentifierT *table, ScanSpecificationT &scan_spec, RangeLocationPtr &range_loc_ptr);
     int find(TableIdentifierT *table, const char *rowKey, const char **location_ptr);
+    **/
+
     void set_root_stale() { m_root_stale=true; }
 
   private:
 
+    const char *build_metadata_start_row_key(char *buf, const char *format, uint32_t table_id, const char *row_key);
+    const char *build_metadata_end_row_key(char *buf, const char *format, uint32_t table_id);
     int read_root_location();
 
     ConnectionManagerPtr   m_conn_manager_ptr;
@@ -63,6 +77,7 @@ namespace Hypertable {
     SchemaPtr              m_metadata_schema_ptr;
     uint8_t                m_startrow_cid;
     uint8_t                m_location_cid;
+    TableIdentifierT       m_metadata_table;
   };
   typedef boost::intrusive_ptr<RangeLocator> RangeLocatorPtr;
 

@@ -25,8 +25,7 @@
 
 using namespace Hypertable;
 
-/** Cons
- */
+/** Constructor  */
 TableScanner::TableScanner(SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpecificationT &scan_spec) : m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr) {
   char *str;
 
@@ -82,6 +81,19 @@ bool TableScanner::next(CellT &cell) {
   if (m_eos)
     return false;
 
+  /** 
+  if (end-of-scanblock) {
+    if (end-of-scan) {
+      if (range-queue-empty) {
+	if (!started) {
+	}
+      }
+    }
+    else
+      fetch-next-scanblock;
+  }
+  */
+
   if (m_scanblock.next(key, value)) {
     Schema::ColumnFamily *cf;
     cell.value = value->data;
@@ -90,6 +102,7 @@ bool TableScanner::next(CellT &cell) {
       throw Exception(Error::BAD_KEY);
     cell.row_key = keyComps.rowKey;
     cell.column_qualifier = keyComps.columnQualifier;
+
     if ((cf = m_schema_ptr->get_column_family(keyComps.columnFamily)) == 0) {
       // LOG ERROR ...
       throw Exception(Error::BAD_KEY);
@@ -97,11 +110,13 @@ bool TableScanner::next(CellT &cell) {
     cell.timestamp = keyComps.timestamp;
     return true;
   }
-
+  else if (!m_scanblock.eos()) {
+    
+    
+    
+  }
   
-
-  
-  /*  
+  /*
   1. next k/v pair in current scanblock
   2. next scanblock
   3. next tablet

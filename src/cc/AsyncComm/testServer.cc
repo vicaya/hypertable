@@ -190,12 +190,12 @@ private:
  */
 class HandlerFactory : public ConnectionHandlerFactory {
 public:
-  HandlerFactory(DispatchHandlerPtr &dhp) {
-    m_dispatch_handler_ptr = dhp;
-  }
+  HandlerFactory(DispatchHandlerPtr &dhp) : m_dispatch_handler_ptr(dhp) { return; }
+
   virtual void get_instance(DispatchHandlerPtr &dhp) {
     dhp = m_dispatch_handler_ptr;
   }
+
 private:
   DispatchHandlerPtr m_dispatch_handler_ptr;
 };

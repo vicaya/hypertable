@@ -22,6 +22,13 @@
 #include <fstream>
 #include <iostream>
 
+extern "C" {
+#include <stdlib.h>
+#include <limits.h>
+}
+
+#include "Common/InetAddr.h"
+
 #include "LocationCache.h"
 
 using namespace Hypertable;
@@ -30,30 +37,33 @@ using namespace std;
 /**
  * Insert
  */
-void LocationCache::insert(uint32_t tableId, const char *startRow, const char *endRow, const char *location) {
+void LocationCache::insert(uint32_t tableId, RangeLocationInfo &range_loc_info, bool pegged) {
   boost::mutex::scoped_lock lock(m_mutex);
   ValueT *newValue = new ValueT;
   LocationMapT::iterator iter;
   LocationCacheKeyT key;
 
-  //cout << tableId << " start=" << startRow << " end=" << endRow << " location=" << location << endl << flush;
+  //cout << tableId << " start=" << start_row << " end=" << end_row << " location=" << location << endl << flush;
 
-  location = get_constant_location_str(location);
-
-  newValue->startRow = (startRow) ? startRow : "";
-  newValue->endRow   = (endRow) ? endRow : "";
-  newValue->location = location;
+  newValue->start_row = range_loc_info.start_row;
+  newValue->end_row   = range_loc_info.end_row;
+  newValue->location  = get_constant_location_str(range_loc_info.location.c_str());
+  newValue->pegged    = pegged;
 
   key.tableId = tableId;
-  key.endRow = (endRow) ? newValue->endRow.c_str() : 0;
+  key.end_row = (range_loc_info.end_row == "") ? 0 : newValue->end_row.c_str();
 
   // remove old entry
   if ((iter = m_location_map.find(key)) != m_location_map.end())
     remove((*iter).second);
 
   // make room for the new entry
-  while (m_location_map.size() >= m_max_entries)
-    remove(m_tail);
+  while (m_location_map.size() >= m_max_entries) {
+    if (m_tail->pegged)
+      move_to_head(m_tail);
+    else
+      remove(m_tail);
+  }
 
   // add to head
   if (m_head == 0) {
@@ -93,7 +103,7 @@ LocationCache::~LocationCache() {
 /**
  * Lookup
  */
-bool LocationCache::lookup(uint32_t tableId, const char *rowKey, const char **locationPtr) {
+bool LocationCache::lookup(uint32_t tableId, const char *rowKey, RangeLocationInfo *range_loc_info_p) {
   boost::mutex::scoped_lock lock(m_mutex);
   LocationMapT::iterator iter;
   LocationCacheKeyT key;
@@ -101,7 +111,7 @@ bool LocationCache::lookup(uint32_t tableId, const char *rowKey, const char **lo
   //cout << tableId << " row=" << rowKey << endl << flush;
 
   key.tableId = tableId;
-  key.endRow = rowKey;
+  key.end_row = rowKey;
 
   if ((iter = m_location_map.lower_bound(key)) == m_location_map.end())
     return false;
@@ -109,21 +119,22 @@ bool LocationCache::lookup(uint32_t tableId, const char *rowKey, const char **lo
   if ((*iter).first.tableId != tableId)
     return false;
 
-  if (strcmp(rowKey, (*iter).second->startRow.c_str()) <= 0)
+  if (strcmp(rowKey, (*iter).second->start_row.c_str()) <= 0)
     return false;
 
-  cout << "Moving to head '" << (*iter).second->endRow << "'" << endl;
   move_to_head((*iter).second);
 
-  *locationPtr = (*iter).second->location;
+  range_loc_info_p->start_row = (*iter).second->start_row;
+  range_loc_info_p->end_row   = (*iter).second->end_row;
+  range_loc_info_p->location  = (*iter).second->location;
 
   return true;
 }
 
 
-void LocationCache::display(ofstream &outfile) {
+void LocationCache::display(std::ofstream &outfile) {
   for (ValueT *value = m_head; value; value = value->prev)
-    outfile << "DUMP: end=" << value->endRow << " start=" << value->startRow << endl;
+    outfile << "DUMP: end=" << value->end_row << " start=" << value->start_row << endl;
 }
 
 
@@ -188,4 +199,29 @@ const char *LocationCache::get_constant_location_str(const char *location) {
   strcpy(constantId, location);
   m_location_strings.insert(constantId);
   return constantId;
+}
+
+
+/** 
+ * 
+ */
+bool LocationCache::location_to_addr(const char *location, struct sockaddr_in &addr) {
+  const char *ptr = location + strlen(location);
+  std::string host;
+  uint16_t port;
+  int us_seen = 0;
+
+  for (--ptr; ptr >= location; --ptr) {
+    if (*ptr == '_') {
+      if (us_seen > 0)
+	break;
+      us_seen++;
+    }
+  }
+
+  port = (uint16_t)strtol(ptr+1, 0, 10);
+
+  host = std::string(location, ptr-location);
+
+  return InetAddr::initialize(&addr, host.c_str(), port);
 }

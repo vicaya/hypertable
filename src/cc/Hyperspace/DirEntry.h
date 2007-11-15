@@ -53,20 +53,20 @@ namespace Hyperspace {
    */
   size_t encoded_length_dir_entry(DirEntryT &dir_entry);
 
-  /** Encodes (serializes) the given directory entry
+  /** Encodes (serializes) the given directory entry to a buffer.
    *
+   * @param buf_ptr address of pointer to buffer to receive encoded directory entry (pointer is advanced passed the encoded entry)
    * @param dir_entry the directory entry to encode
    */
-  void encode_dir_entry(uint8_t **buf_ptr, DirEntryT &dirEntry);
+  void encode_dir_entry(uint8_t **buf_ptr, DirEntryT &dir_entry);
 
   /** Decodes (unserializes) a directory entry from a buffer
    * 
-   * @param buf_ptr address of pointer to buffer containing encoded 
-   *        directory entry (advanced after decode)
-   * @param remaining_ptr address of count variable holding the number
-   *        of bytes remaining in buffer (decremented after decode)
+   * @param buf_ptr address of pointer to buffer containing encoded directory entry (advanced after decode)
+   * @param remaining_ptr address of count variable holding the number of bytes remaining in buffer (decremented after decode)
+   * @param dir_entry the directory entry to encode
    */
-  bool decode_range_dir_entry(uint8_t **buf_ptr, size_t *remaining_ptr, DirEntryT &dirEntry);
+  bool decode_range_dir_entry(uint8_t **buf_ptr, size_t *remaining_ptr, DirEntryT &dir_entry);
   
 }
 

@@ -73,7 +73,6 @@ namespace Hypertable {
     {
       return (ByteString32T *)boost::shared_array<const uint8_t>::get();
     }
-
   };
 
   /**

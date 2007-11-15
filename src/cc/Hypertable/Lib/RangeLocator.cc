@@ -29,6 +29,12 @@
 #include "RangeLocator.h"
 #include "ScanBlock.h"
 
+namespace {
+  const uint32_t METADATA_READAHEAD_COUNT = 10;
+  const char root_end_row[5] = { '0', ':', 0xFF, 0xFF, 0 };
+  const char *METADATA_ROOT_END_ROW = (const char *)root_end_row;
+}
+
 
 /**
  * 
@@ -68,6 +74,10 @@ RangeLocator::RangeLocator(ConnectionManagerPtr &connManagerPtr, Hyperspace::Ses
 
   m_metadata_schema_ptr = schema;
 
+  m_metadata_table.name = "METADATA";
+  m_metadata_table.id = 0;
+  m_metadata_table.generation = schema->get_generation();
+
   Schema::ColumnFamily *cf;
 
   if ((cf = schema->get_column_family("StartRow")) == 0) {
@@ -89,86 +99,153 @@ RangeLocator::~RangeLocator() {
 }
 
 
-
-/** Determines the location of the range server containing the given
- * row key of the given table.
+/**
  *
- * @param table_id table ID of the table containing row key
- * @param row_key row key to lookup
- * @param location_ptr address of return pointer to server location string
- * @param Error::OK on success or error code on failure
  */
-int RangeLocator::find(TableIdentifierT *table, const char *row_key, const char **location_ptr) {
+int RangeLocator::find_first(TableIdentifierT *table, ScanSpecificationT &scan_spec, RangeLocationInfo *range_loc_info_p) {
   RangeT range;
-  ScanSpecificationT scan_spec;
+  ScanSpecificationT meta_scan_spec;
   ScanBlock scan_block;
   int error;
   Key keyComps;
+  const ByteString32T *key;
+  const ByteString32T *value;
+  RangeLocationInfo range_loc_info;
+  std::string start_row;
+  std::string end_row;
+  char prefix_buf[16];
+  char range_end[16];
+  char buf[16];
+  struct sockaddr_in addr;
+  TableIdentifierT *table_ptr;
 
   if (m_root_stale) {
     if ((error = read_root_location()) != Error::OK)
       return error;
   }
 
-  if (m_cache.lookup(table->id, row_key, location_ptr))
+  if (m_cache.lookup(table->id, scan_spec.startRow, range_loc_info_p))
     return Error::OK;
 
-  if (table->id == 0) {
+  range.startRow = 0;
+  range.endRow = METADATA_ROOT_END_ROW;
+  memcpy(&addr, &m_root_addr, sizeof(struct sockaddr_in));
+  table_ptr = &m_metadata_table;
 
-    assert(strcmp(row_key, "0:"));
+  for (size_t level=0; level<2; level++) {
 
-    range.startRow = 0;
-    range.endRow = "1:";
-
-    scan_spec.rowLimit = 0;
-    scan_spec.cellLimit = 1;
-    scan_spec.columns.push_back("StartRow");
-    scan_spec.columns.push_back("Location");
-    scan_spec.startRow = row_key;
-    scan_spec.startRowInclusive = true;
-    scan_spec.endRow = row_key;
-    scan_spec.endRowInclusive = true;
-    // scan_spec.interval = ????;
-
-    if ((error = m_range_server.create_scanner(m_root_addr, *table, range, scan_spec, scan_block)) != Error::OK)
-      return error;
-
-#if 0
-
-    ScanResult::VectorT &resultVec = result.get_vector();
-
-    if (resultVec.size() != 2) {
-      LOG_VA_ERROR("METADATA lookup of '%s' yielded %d results, 2 were expected", row_key, resultVec.size());
-      return Error::INVALID_METADATA;
-    }
-
-    for (size_t i=0; i<resultVec.size(); i++) {
-      if (!keyComps.load(resultVec[i].first)) {
-	LOG_VA_ERROR("METADATA lookup for '%s' returned bad key", row_key);
-	return Error::INVALID_METADATA;
-      }
-      
-      if (keyComps.columnFamily == m_startrow_cid) {
-	/** do something **/	
-      }
-      else if (keyComps.columnFamily == m_location_cid) {
-	/** do something **/	
+    /** Construct the start row and end row of METADATA range that we're interested in */
+    if (level == 0) {
+      if (table->id == 0) {
+	start_row = build_metadata_start_row_key(buf, "%d:", 0, scan_spec.startRow);
+	end_row   = build_metadata_end_row_key(buf, "%d:", 0);
       }
       else {
-	LOG_VA_ERROR("METADATA lookup for '%s' returned incorrect column (id=%d)", row_key, keyComps.columnFamily);
+	start_row = build_metadata_start_row_key(buf, "0:%d:", table->id, scan_spec.startRow);
+	end_row   = build_metadata_end_row_key(buf, "0:%d:", table->id);
+      }
+    }
+    else {
+      assert(table->id != 0);
+      start_row = build_metadata_start_row_key(buf, "%d:", table->id, scan_spec.startRow);
+      end_row   = build_metadata_end_row_key(buf, "%d:", table->id);
+    }
+
+    /** Do a cache lookup for the start row to see if we already have range info for that row */
+    if (m_cache.lookup(0, start_row.c_str(), range_loc_info_p)) {
+      if (table->id == 0 || level == 1)
+	return Error::OK;
+      range.startRow = range_loc_info_p->start_row.c_str();
+      range.endRow   = range_loc_info_p->end_row.c_str();
+      // TODO: set addr to address of range server
+      continue;
+    }
+
+    meta_scan_spec.rowLimit = METADATA_READAHEAD_COUNT;
+    meta_scan_spec.cellLimit = 1;
+    meta_scan_spec.columns.push_back("StartRow");
+    meta_scan_spec.columns.push_back("Location");
+    meta_scan_spec.startRow = start_row.c_str();
+    meta_scan_spec.startRowInclusive = true;
+    meta_scan_spec.endRow = end_row.c_str();
+    meta_scan_spec.endRowInclusive = true;
+    // meta_scan_spec.interval = ????;
+
+    if ((error = m_range_server.create_scanner(addr, *table, range, meta_scan_spec, scan_block)) != Error::OK)
+      return error;
+
+    range_loc_info.start_row = "";
+    range_loc_info.end_row = "";
+    range_loc_info.location = "";
+
+    bool got_start_row = false;
+    bool got_end_row = false;
+    bool got_location = false;
+
+    while (scan_block.next(key, value)) {
+
+      if (!keyComps.load(key)) {
+	LOG_VA_ERROR("METADATA lookup for '%s' returned bad key", (const char *)key->data);
+	// TODO: delete scanner 
 	return Error::INVALID_METADATA;
+      }
+
+      if (got_end_row && strcmp(keyComps.rowKey, range_loc_info.end_row.c_str())) {
+	if (got_start_row && got_location)
+	  m_cache.insert(0, range_loc_info);
+	else {
+	  LOG_VA_ERROR("Incomplete METADATA record found in root tablet under row key '%s'", range_loc_info.end_row.c_str());
+	}
+	range_loc_info.start_row = "";
+	range_loc_info.end_row = "";
+	range_loc_info.location = "";
+	got_start_row = false;
+	got_end_row = false;
+	got_location = false;
+      }
+
+      if (!got_end_row) {
+	range_loc_info.end_row = keyComps.rowKey;
+	got_end_row = true;
+      }
+
+      if (keyComps.columnFamily == m_startrow_cid) {
+	range_loc_info.start_row = std::string((const char *)value->data, value->len);
+	got_start_row = true;
+      }
+      else if (keyComps.columnFamily == m_location_cid) {
+	range_loc_info.location = std::string((const char *)value->data, value->len);
+	got_location = true;
+      }
+      else {
+	LOG_VA_ERROR("METADATA lookup on row '%s' returned incorrect column (id=%d)", (const char *)key->data, keyComps.columnFamily);
       }
     }
 
-#endif
+    if (got_start_row && got_end_row && got_location)
+      m_cache.insert(0, range_loc_info);
+    else if (got_end_row) {
+      LOG_VA_ERROR("Incomplete METADATA record found in root tablet under row key '%s'", range_loc_info.end_row.c_str());
+    }
 
-  }
-  else {
-    /** do something **/
+    if (!scan_block.eos()) {
+      // TODO: m_range_server.destroy_scanner(addr, scan_block.get_scanner_id(), 0);
+    }
+
+    if (!m_cache.lookup(0, start_row.c_str(), range_loc_info_p))
+      return Error::METADATA_NOT_FOUND;
+
+    if (table->id == 0 || level == 1)
+      return Error::OK;
+
+    range.startRow = range_loc_info_p->start_row.c_str();
+    range.endRow   = range_loc_info_p->end_row.c_str();
+    // TODO: set addr to address of range server
   }
 
-  return Error::OK;
+  return Error::METADATA_NOT_FOUND;
 }
+
 
 
 /**
@@ -179,13 +256,19 @@ int RangeLocator::read_root_location() {
   DynamicBuffer value(0);
   std::string addrStr;
   char *ptr;
+  RangeLocationInfo range_loc_info;
+  char buf[8];
 
   if ((error = m_hyperspace_ptr->attr_get(m_root_file_handle, "location", value)) != Error::OK) {
     LOG_VA_ERROR("Problem reading 'location' attribute of Hyperspace file /hypertable/root - %s", Error::get_text(error));
     return error;
   }
 
-  m_cache.insert(0, 0, "1:", (const char *)value.buf);
+  range_loc_info.start_row  = "0:";
+  range_loc_info.end_row    = build_metadata_end_row_key(buf, "%d:", 0);
+  range_loc_info.location   = (const char *)value.buf;
+  
+  m_cache.insert(0, range_loc_info, true);
 
   if ((ptr = strchr((const char *)value.buf, '_')) != 0)
     *ptr = 0;
@@ -205,3 +288,29 @@ int RangeLocator::read_root_location() {
 
   return Error::OK;
 }
+
+
+/**
+ * 
+ */
+const char *RangeLocator::build_metadata_start_row_key(char *buf, const char *format, uint32_t table_id, const char *row_key) {
+  sprintf(buf, format, table_id);
+  if (row_key)
+    strcat(buf, row_key);
+  return buf;
+}
+
+/**
+ * 
+ */
+const char *RangeLocator::build_metadata_end_row_key(char *buf, const char *format, uint32_t table_id) {
+  char *ptr;
+  sprintf(buf, format, table_id);
+  ptr = buf + strlen(buf);
+  *ptr++ = 0xff;
+  *ptr++ = 0xff;
+  *ptr = 0;
+  return buf;
+}
+
+

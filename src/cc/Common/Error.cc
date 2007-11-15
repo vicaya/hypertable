@@ -42,6 +42,7 @@ namespace {
     { Error::BAD_SCHEMA,                  "HYPERTABLE bad schema" },
     { Error::INVALID_METADATA,            "HYPERTABLE invalid metadata" },
     { Error::BAD_KEY,                     "HYPERTABLE bad key" },
+    { Error::METADATA_NOT_FOUND,          "HYPERTABLE metadata not found" },
     { Error::COMM_NOT_CONNECTED,          "COMM not connected" },
     { Error::COMM_BROKEN_CONNECTION,      "COMM broken connection" },
     { Error::COMM_CONNECT_ERROR,          "COMM connect error" },
