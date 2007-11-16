@@ -41,23 +41,36 @@ namespace Hypertable {
 
   class RangeServerClient;
 
+  /** Locates containing range given a key.  This class does the METADATA range searching to
+   * find the location of the range that contains a row key.
+   */
   class RangeLocator : public ReferenceCount {
 
   public:
+
+    /** Constructor.  Loads the METADATA schema and the root range address from Hyperspace.
+     * Installs a RootFileHandler to handle root range location changes.
+     *
+     * @param connManagerPtr smart pointer to connection manager
+     * @param hyperspacePtr smart pointer to Hyperspace session
+     */
     RangeLocator(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr);
+
+    /** Destructor.  Closes the root file in Hyperspace */
     ~RangeLocator();
 
-    /** 
+    /** Locates the range that contains the given row key.
      * 
-     * 
+     * @param table pointer to table identifier structure
+     * @param row_key row key to locate
+     * @param range_loc_info_p address of RangeLocationInfo structure to hold result
+     * @param Error::OK on success or error code on failure
      */
-    int find_first(TableIdentifierT *table, ScanSpecificationT &scan_spec, RangeLocationInfo *range_loc_info_p);
+    int find(TableIdentifierT *table, const char *row_key, RangeLocationInfo *range_loc_info_p);
 
-    /**
-    int find_next(TableIdentifierT *table, ScanSpecificationT &scan_spec, RangeLocationPtr &range_loc_ptr);
-    int find(TableIdentifierT *table, const char *rowKey, const char **location_ptr);
-    **/
-
+    /** Sets the "root stale" flag.  Causes methods to reread the root range location before
+     * doing METADATA scans.
+     */
     void set_root_stale() { m_root_stale=true; }
 
   private:

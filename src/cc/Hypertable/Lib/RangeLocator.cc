@@ -99,10 +99,8 @@ RangeLocator::~RangeLocator() {
 }
 
 
-/**
- *
- */
-int RangeLocator::find_first(TableIdentifierT *table, ScanSpecificationT &scan_spec, RangeLocationInfo *range_loc_info_p) {
+
+int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocationInfo *range_loc_info_p) {
   RangeT range;
   ScanSpecificationT meta_scan_spec;
   ScanBlock scan_block;
@@ -113,8 +111,6 @@ int RangeLocator::find_first(TableIdentifierT *table, ScanSpecificationT &scan_s
   RangeLocationInfo range_loc_info;
   std::string start_row;
   std::string end_row;
-  char prefix_buf[16];
-  char range_end[16];
   char buf[16];
   struct sockaddr_in addr;
   TableIdentifierT *table_ptr;
@@ -124,7 +120,7 @@ int RangeLocator::find_first(TableIdentifierT *table, ScanSpecificationT &scan_s
       return error;
   }
 
-  if (m_cache.lookup(table->id, scan_spec.startRow, range_loc_info_p))
+  if (m_cache.lookup(table->id, row_key, range_loc_info_p))
     return Error::OK;
 
   range.startRow = 0;
@@ -137,17 +133,17 @@ int RangeLocator::find_first(TableIdentifierT *table, ScanSpecificationT &scan_s
     /** Construct the start row and end row of METADATA range that we're interested in */
     if (level == 0) {
       if (table->id == 0) {
-	start_row = build_metadata_start_row_key(buf, "%d:", 0, scan_spec.startRow);
+	start_row = build_metadata_start_row_key(buf, "%d:", 0, row_key);
 	end_row   = build_metadata_end_row_key(buf, "%d:", 0);
       }
       else {
-	start_row = build_metadata_start_row_key(buf, "0:%d:", table->id, scan_spec.startRow);
+	start_row = build_metadata_start_row_key(buf, "0:%d:", table->id, row_key);
 	end_row   = build_metadata_end_row_key(buf, "0:%d:", table->id);
       }
     }
     else {
       assert(table->id != 0);
-      start_row = build_metadata_start_row_key(buf, "%d:", table->id, scan_spec.startRow);
+      start_row = build_metadata_start_row_key(buf, "%d:", table->id, row_key);
       end_row   = build_metadata_end_row_key(buf, "%d:", table->id);
     }
 
@@ -157,7 +153,10 @@ int RangeLocator::find_first(TableIdentifierT *table, ScanSpecificationT &scan_s
 	return Error::OK;
       range.startRow = range_loc_info_p->start_row.c_str();
       range.endRow   = range_loc_info_p->end_row.c_str();
-      // TODO: set addr to address of range server
+      if (!LocationCache::location_to_addr(range_loc_info_p->location.c_str(), addr)) {
+	LOG_VA_ERROR("Invalid location found in METADATA entry for row '%s' - %s", start_row.c_str(), range_loc_info_p->location.c_str());
+	return Error::INVALID_METADATA;
+      }
       continue;
     }
 
@@ -240,12 +239,14 @@ int RangeLocator::find_first(TableIdentifierT *table, ScanSpecificationT &scan_s
 
     range.startRow = range_loc_info_p->start_row.c_str();
     range.endRow   = range_loc_info_p->end_row.c_str();
-    // TODO: set addr to address of range server
+    if (!LocationCache::location_to_addr(range_loc_info_p->location.c_str(), addr)) {
+      LOG_VA_ERROR("Invalid location found in METADATA entry for row '%s' - %s", start_row.c_str(), range_loc_info_p->location.c_str());
+      return Error::INVALID_METADATA;
+    }
   }
 
   return Error::METADATA_NOT_FOUND;
 }
-
 
 
 /**
