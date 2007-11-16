@@ -23,8 +23,11 @@
 
 #include "Common/ReferenceCount.h"
 
+#include "AsyncComm/DispatchHandlerSynchronizer.h"
+
 #include "Cell.h"
 #include "RangeLocator.h"
+#include "RangeServerClient.h"
 #include "ScanBlock.h"
 #include "Schema.h"
 #include "TableScanner.h"
@@ -35,17 +38,32 @@ namespace Hypertable {
   class TableScanner : public ReferenceCount {
 
   public:
-    TableScanner(SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpecificationT &scan_spec);
+    TableScanner(ConnectionManagerPtr &conn_manager_ptr, TableIdentifierT *table_ptr, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpecificationT &scan_spec);
     virtual ~TableScanner();
 
     bool next(CellT &cell);
 
   private:
-    SchemaPtr           m_schema_ptr;
-    RangeLocatorPtr     m_range_locator_ptr;
-    ScanSpecificationT  m_scan_spec;
+
+    void find_range_and_start_scan(const char *row_key);
+    
+    ConnectionManagerPtr m_conn_manager_ptr;
+    TableIdentifierT     m_table;
+    SchemaPtr            m_schema_ptr;
+    RangeLocatorPtr      m_range_locator_ptr;
+    ScanSpecificationT   m_scan_spec;
+    RangeServerClient    m_range_server;
+    bool                m_started;
     bool                m_eos;
     ScanBlock           m_scanblock;
+    std::string         m_cur_row_key;
+    RangeLocationInfo   m_range_info;
+    struct sockaddr_in  m_cur_addr;
+    RangeT              m_cur_range;
+    bool                m_readahead;
+    bool                m_fetch_outstanding;
+    DispatchHandlerSynchronizer  m_sync_handler;
+    EventPtr            m_event_ptr;
   };
   typedef boost::intrusive_ptr<TableScanner> TableScannerPtr;
 }

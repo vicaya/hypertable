@@ -72,6 +72,15 @@ namespace Hypertable {
      */
     bool eos() { return ((m_flags & 0x0001) == 0x0001); }
 
+    /** Indicates whether or not there are more key/value pairs in block
+     *
+     * @return ture if #next will return more key/value pairs, false otherwise
+     */
+    bool more() {  
+      if (m_iter == m_vec.end())
+	return false;
+    }
+
     /** Returns scanner ID associated with this scanblock.
      *
      * @return scanner ID

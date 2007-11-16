@@ -31,7 +31,7 @@ using namespace Hypertable;
 /**
  *
  */
-ScanBlock::ScanBlock() : m_flags(1), m_scanner_id(-1) {
+ScanBlock::ScanBlock() : m_flags(0), m_scanner_id(-1) {
   m_iter = m_vec.end();
 }
 

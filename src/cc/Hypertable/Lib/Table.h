@@ -43,7 +43,7 @@ namespace Hypertable {
 
   public:
     Table(ConnectionManagerPtr &conn_manager_ptr, Hyperspace::SessionPtr &hyperspace_ptr, std::string &name);
-    virtual ~Table() { return; }
+    virtual ~Table();
 
     int create_mutator(MutatorPtr &mutatorPtr);
     int create_scanner(ScanSpecificationT &scanSpec, TableScannerPtr &scannerPtr);
@@ -53,6 +53,7 @@ namespace Hypertable {
     Hyperspace::SessionPtr m_hyperspace_ptr;
     SchemaPtr              m_schema_ptr;
     RangeLocatorPtr        m_range_locator_ptr;
+    TableIdentifierT       m_table;
   };
   typedef boost::intrusive_ptr<Table> TablePtr;
 

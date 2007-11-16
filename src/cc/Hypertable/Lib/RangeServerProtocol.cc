@@ -69,7 +69,7 @@ namespace Hypertable {
   }
 
   CommBuf *RangeServerProtocol::create_request_fetch_scanblock(int scanner_id) {
-    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
+    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER, scanner_id);
     CommBuf *cbuf = new CommBuf(hbuilder, 6);
     cbuf->append_short(COMMAND_FETCH_SCANBLOCK);
     cbuf->append_int(scanner_id);

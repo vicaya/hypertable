@@ -39,7 +39,7 @@ using namespace Hyperspace;
 Table::Table(ConnectionManagerPtr &conn_manager_ptr, Hyperspace::SessionPtr &hyperspace_ptr, std::string &name) : m_conn_manager_ptr(conn_manager_ptr), m_hyperspace_ptr(hyperspace_ptr) {
   int error;
   std::string tableFile = (std::string)"/hypertable/tables/" + name;
-  DynamicBuffer schemaBuf(0);
+  DynamicBuffer value_buf(0);
   uint64_t handle;
   HandleCallbackPtr nullHandleCallback;
   std::string errMsg;
@@ -52,24 +52,51 @@ Table::Table(ConnectionManagerPtr &conn_manager_ptr, Hyperspace::SessionPtr &hyp
     throw Exception(error);
   }
 
+  {
+    char *table_name = new char [ strlen(name.c_str()) + 1 ];
+    strcpy(table_name, name.c_str());
+    m_table.name = table_name;
+  }
+
+  /**
+   * Get table_id attribute
+   */
+  value_buf.clear();
+  if ((error = m_hyperspace_ptr->attr_get(handle, "table_id", value_buf)) != Error::OK) {
+    LOG_VA_ERROR("Problem getting attribute 'table_id' for table file '%s' - %s", tableFile.c_str(), Error::get_text(error));
+    throw Exception(error);
+  }
+
+  assert(value_buf.fill() == sizeof(int32_t));
+
+  // TODO: fix me!
+  memcpy(&m_table.id, value_buf.buf, sizeof(int32_t));
+
   /**
    * Get schema attribute
    */
-  if ((error = m_hyperspace_ptr->attr_get(handle, "schema", schemaBuf)) != Error::OK) {
+  value_buf.clear();
+  if ((error = m_hyperspace_ptr->attr_get(handle, "schema", value_buf)) != Error::OK) {
     LOG_VA_ERROR("Problem getting attribute 'schema' for table file '%s' - %s", tableFile.c_str(), Error::get_text(error));
     throw Exception(error);
   }
 
   m_hyperspace_ptr->close(handle);
 
-  m_schema_ptr = Schema::new_instance((const char *)schemaBuf.buf, strlen((const char *)schemaBuf.buf), true);
+  m_schema_ptr = Schema::new_instance((const char *)value_buf.buf, strlen((const char *)value_buf.buf), true);
 
   if (!m_schema_ptr->is_valid()) {
     LOG_VA_ERROR("Schema Parse Error: %s", m_schema_ptr->get_error_string());
     throw Exception(Error::BAD_SCHEMA);
   }
 
+  m_table.generation = m_schema_ptr->get_generation();
+
   m_range_locator_ptr = new RangeLocator(m_conn_manager_ptr, m_hyperspace_ptr);
+}
+
+Table::~Table() {
+  delete [] m_table.name;
 }
 
 
@@ -80,6 +107,6 @@ int Table::create_mutator(MutatorPtr &mutator_ptr) {
 
 
 int Table::create_scanner(ScanSpecificationT &scan_spec, TableScannerPtr &scanner_ptr) {
-  scanner_ptr = new TableScanner(m_schema_ptr, m_range_locator_ptr, scan_spec);
+  scanner_ptr = new TableScanner(m_conn_manager_ptr, &m_table, m_schema_ptr, m_range_locator_ptr, scan_spec);
   return Error::OK;
 }
