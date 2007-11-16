@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <string>
 #include <vector>
 
 #include "Key.h"
@@ -25,8 +26,16 @@
 
 using namespace Hypertable;
 
+namespace {
+  const char end_row_key[2] = { 0xff, 0xff };
+}
+
+/**
+ * TODO: Asynchronously destroy dangling scanners on EOS
+ */
+
 /** Constructor  */
-TableScanner::TableScanner(ConnectionManagerPtr &conn_manager_ptr, TableIdentifierT *table_ptr, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpecificationT &scan_spec) : m_conn_manager_ptr(conn_manager_ptr), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(conn_manager_ptr->get_comm(), 30), m_started(false), m_eos(false), m_readahead(true), m_fetch_outstanding(false) {
+TableScanner::TableScanner(ConnectionManagerPtr &conn_manager_ptr, TableIdentifierT *table_ptr, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpecificationT &scan_spec) : m_conn_manager_ptr(conn_manager_ptr), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(conn_manager_ptr->get_comm(), 30), m_started(false), m_eos(false), m_readahead(true), m_fetch_outstanding(false), m_rows_seen(0) {
   char *str;
 
   m_scan_spec.rowLimit = scan_spec.rowLimit;
@@ -87,6 +96,7 @@ TableScanner::~TableScanner() {
 }
 
 
+
 bool TableScanner::next(CellT &cell) {
   int error;
   const ByteString32T *key, *value;
@@ -95,10 +105,10 @@ bool TableScanner::next(CellT &cell) {
   if (m_eos)
     return false;
 
-  if (!m_started) {
+  if (!m_started)
     find_range_and_start_scan(m_scan_spec.startRow);
-  }
-  else if (!m_scanblock.more()) {
+
+  while (!m_scanblock.more()) {
     if (m_scanblock.eos()) {
       std::string next_row = m_range_info.end_row;
       next_row.append(1,1);  // construct row key in next range
@@ -128,35 +138,42 @@ bool TableScanner::next(CellT &cell) {
     }
   }
 
-  // TODO: fix me ... scanblock could come back empty!
-  assert(m_scanblock.more());
-
   if (m_scanblock.next(key, value)) {
     Schema::ColumnFamily *cf;
-    cell.value = value->data;
-    cell.value_len = value->len;
     if (!keyComps.load(key))
       throw Exception(Error::BAD_KEY);
+
+    // check for end row
+    if (!strcmp(keyComps.rowKey, end_row_key)) {
+      m_eos = true;
+      return false;
+    }
+
+    // check for row change and row limit
+    if (strcmp(m_cur_row.c_str(), keyComps.rowKey)) {
+      m_rows_seen++;
+      m_cur_row = keyComps.rowKey;
+      if (m_scan_spec.rowLimit > 0 && m_rows_seen > m_scan_spec.rowLimit) {
+	m_eos = true;
+	return false;
+      }
+    }
+
     cell.row_key = keyComps.rowKey;
     cell.column_qualifier = keyComps.columnQualifier;
-
     if ((cf = m_schema_ptr->get_column_family(keyComps.columnFamily)) == 0) {
       // LOG ERROR ...
       throw Exception(Error::BAD_KEY);
     }
     cell.timestamp = keyComps.timestamp;
+    cell.value = value->data;
+    cell.value_len = value->len;
     return true;
   }
-  else if (!m_scanblock.eos()) {    
-    
-  }
-  
-  /*
-  1. next k/v pair in current scanblock
-  2. next scanblock
-  3. next tablet
-  */  
-  
+
+  LOG_ERROR("No end marker found at end of table.");
+
+  m_eos = true;
   return false;
 }
 

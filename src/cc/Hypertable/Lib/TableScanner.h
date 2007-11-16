@@ -56,7 +56,7 @@ namespace Hypertable {
     bool                m_started;
     bool                m_eos;
     ScanBlock           m_scanblock;
-    std::string         m_cur_row_key;
+    std::string         m_cur_row;
     RangeLocationInfo   m_range_info;
     struct sockaddr_in  m_cur_addr;
     RangeT              m_cur_range;
@@ -64,6 +64,7 @@ namespace Hypertable {
     bool                m_fetch_outstanding;
     DispatchHandlerSynchronizer  m_sync_handler;
     EventPtr            m_event_ptr;
+    uint32_t            m_rows_seen;
   };
   typedef boost::intrusive_ptr<TableScanner> TableScannerPtr;
 }
