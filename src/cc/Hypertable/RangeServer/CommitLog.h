@@ -28,8 +28,9 @@ extern "C" {
 #include <sys/time.h>
 }
 
-#include <boost/shared_ptr.hpp>
 #include <boost/thread/mutex.hpp>
+
+#include "Common/ReferenceCount.h"
 
 #include "Hypertable/Lib/Filesystem.h"
 
@@ -63,7 +64,7 @@ namespace Hypertable {
    *
    * The log ends with an empty block containing the timestamp of the last real block.
    */
-  class CommitLog {
+  class CommitLog : public ReferenceCount {
   public:
     CommitLog(Filesystem *fs, std::string &logDir, int64_t logFileSize);
     virtual ~CommitLog() { return; }
@@ -92,7 +93,7 @@ namespace Hypertable {
     std::queue<CommitLogFileInfoT>   m_file_info_queue;
   };
 
-  typedef boost::shared_ptr<CommitLog> CommitLogPtr;
+  typedef boost::intrusive_ptr<CommitLog> CommitLogPtr;
   
 }
 

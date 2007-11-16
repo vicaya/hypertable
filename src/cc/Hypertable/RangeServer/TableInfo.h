@@ -23,10 +23,10 @@
 #include <map>
 #include <string>
 
-#include <boost/shared_ptr.hpp>
 #include <boost/thread/mutex.hpp>
 
 #include "Common/StringExt.h"
+#include "Common/ReferenceCount.h"
 
 #include "Hypertable/Lib/Types.h"
 
@@ -36,7 +36,7 @@ namespace Hypertable {
 
   class Schema;
 
-  class TableInfo {
+  class TableInfo : public ReferenceCount {
 
   public:
     TableInfo(std::string &name, SchemaPtr &schemaPtr) : m_mutex(), m_name(name), m_schema(schemaPtr) { return; }
@@ -74,7 +74,7 @@ namespace Hypertable {
     RangeMapT      m_range_map;
   };
 
-  typedef boost::shared_ptr<TableInfo> TableInfoPtr;
+  typedef boost::intrusive_ptr<TableInfo> TableInfoPtr;
 
 }
 

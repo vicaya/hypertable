@@ -328,7 +328,7 @@ void Range::do_maintenance() {
       }
 
       m_split_key_ptr.reset( CreateCopy(key) );
-      m_split_log_ptr.reset( new CommitLog(Global::dfs, splitLogDir, 0x100000000LL) );
+      m_split_log_ptr = new CommitLog(Global::dfs, splitLogDir, 0x100000000LL);
 
       /** unblock updates **/
       m_hold_updates = false;
@@ -400,7 +400,7 @@ void Range::do_maintenance() {
     if ((error = m_split_log_ptr->close(Global::log->get_timestamp())) != Error::OK) {
       LOG_VA_ERROR("Problem closing split log '%s' - %s", m_split_log_ptr->get_log_dir().c_str(), Error::get_text(error));
     }
-    m_split_log_ptr.reset();
+    m_split_log_ptr = 0;
 
     /**
      *  TBD:  Notify Master of split

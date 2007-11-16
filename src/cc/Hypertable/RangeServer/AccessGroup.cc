@@ -22,8 +22,6 @@
 #include <iterator>
 #include <vector>
 
-#include <boost/shared_ptr.hpp>
-
 #include "Common/Error.h"
 #include "Common/md5.h"
 
@@ -130,7 +128,7 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
   ByteString32T *key = 0;
   ByteString32T *value = 0;
   Key keyComps;
-  boost::shared_ptr<CellListScanner> scannerPtr;
+  CellListScannerPtr scannerPtr;
   RangeInfoPtr rangeInfoPtr;
   size_t tableIndex = 1;
   int error;
@@ -179,19 +177,17 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
   }
 
   {
-    ScanContextPtr scanContextPtr;
-
-    scanContextPtr.reset( new ScanContext(timestamp, 0, m_schema_ptr) );
+    ScanContextPtr scanContextPtr = new ScanContext(timestamp, 0, m_schema_ptr);
 
     if (major || tableIndex < m_stores.size()) {
       MergeScanner *mscanner = new MergeScanner(scanContextPtr, !major);
       mscanner->add_scanner( m_cell_cache_ptr->create_scanner(scanContextPtr) );
       for (size_t i=tableIndex; i<m_stores.size(); i++)
 	mscanner->add_scanner( m_stores[i]->create_scanner(scanContextPtr) );
-      scannerPtr.reset(mscanner);
+      scannerPtr = mscanner;
     }
     else
-      scannerPtr.reset( m_cell_cache_ptr->create_scanner(scanContextPtr) );
+      scannerPtr = m_cell_cache_ptr->create_scanner(scanContextPtr);
   }
 
   while (scannerPtr->get(&key, &value)) {
@@ -265,7 +261,27 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
       m_disk_usage += m_stores[i]->disk_usage();
   }
 
-  // Compaction thread function should re-shuffle the heap of locality groups and purge the commit log
+  // TODO: Compaction thread function should re-shuffle the heap of locality groups and purge the commit log
 
   LOG_INFO("Finished Compaction");
 }
+
+
+/**
+ * 
+ */
+void AccessGroup::shrink(std::string &new_start_row) {
+  boost::mutex::scoped_lock lock(m_mutex);
+#if 0
+  CellCachePtr new_cell_cache_ptr = new CellCache();
+  CellCachePtr new_cell_cache_ptr = new CellCache();
+  ScanContextPtr scanContextPtr = new ScanContext(END_OF_TIME, 0, m_schema_ptr);
+  CellListScanner *cell_cache_scanner;
+
+  m_start_row = new_start_row;
+
+  cell_cache_scanner = m_cell_cache_ptr->create_scanner(scanContextPtr);
+  get_filename()
+#endif
+}
+

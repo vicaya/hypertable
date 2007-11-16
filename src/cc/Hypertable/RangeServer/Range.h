@@ -24,7 +24,6 @@
 #include <string>
 #include <vector>
 
-#include <boost/shared_ptr.hpp>
 #include <boost/thread/condition.hpp>
 
 #include "Hypertable/Lib/Key.h"
@@ -114,7 +113,7 @@ namespace Hypertable {
     uint32_t         m_update_counter;
   };
 
-  typedef boost::shared_ptr<Range> RangePtr;
+  typedef boost::intrusive_ptr<Range> RangePtr;
 
 }
 

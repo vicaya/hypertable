@@ -392,13 +392,13 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
   kvBuffer = new uint8_t [ sizeof(int32_t) + DEFAULT_SCANBUF_SIZE ];
   kvLenp = (uint32_t *)kvBuffer;
 
-  scanContextPtr.reset( new ScanContext(scanTimestamp, scan_spec, schemaPtr) );
+  scanContextPtr = new ScanContext(scanTimestamp, scan_spec, schemaPtr);
   if (scanContextPtr->error != Error::OK) {
     errMsg = "Problem initializing scan context";
     goto abort;
   }
  
-  scannerPtr.reset( rangePtr->create_scanner(scanContextPtr));
+  scannerPtr = rangePtr->create_scanner(scanContextPtr);
 
   more = FillScanBlock(scannerPtr, kvBuffer+sizeof(int32_t), DEFAULT_SCANBUF_SIZE, kvLenp);
   if (more)
@@ -530,7 +530,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
   }
 
   if (!get_table_info(table->name, tableInfoPtr)) {
-    tableInfoPtr.reset( new TableInfo(table->name, schemaPtr) );
+    tableInfoPtr = new TableInfo(table->name, schemaPtr);
     registerTable = true;
   }
 

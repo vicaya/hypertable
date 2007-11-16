@@ -20,18 +20,17 @@
 #ifndef HYPERTABLE_CELLLISTSCANNER_H
 #define HYPERTABLE_CELLLISTSCANNER_H
 
-#include <boost/shared_array.hpp>
-#include <boost/shared_ptr.hpp>
-
 #include "Common/ByteString.h"
 #include "Common/DynamicBuffer.h"
+#include "Common/ReferenceCount.h"
+
 #include "ScanContext.h"
 
 using namespace Hypertable;
 
 namespace Hypertable {
 
-  class CellListScanner {
+  class CellListScanner : public ReferenceCount {
   public:
     CellListScanner(ScanContextPtr &scanContextPtr) : m_scan_context_ptr(scanContextPtr) { return; }
     virtual ~CellListScanner() { return; }
@@ -42,7 +41,7 @@ namespace Hypertable {
     ScanContextPtr m_scan_context_ptr;
   };
 
-  typedef boost::shared_ptr<CellListScanner> CellListScannerPtr;
+  typedef boost::intrusive_ptr<CellListScanner> CellListScannerPtr;
 
 }
 

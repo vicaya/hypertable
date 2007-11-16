@@ -68,7 +68,7 @@ namespace Hypertable {
     void run_compaction(uint64_t timestamp, bool major);
     uint64_t get_log_cutoff_time() { return m_log_cutoff_time; }
 
-    void shrink(std::string &newStartRow);
+    void shrink(std::string &new_start_row);
 
   private:
     boost::mutex         m_mutex;

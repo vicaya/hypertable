@@ -23,10 +23,9 @@
 #include <cassert>
 #include <utility>
 
-#include <boost/shared_ptr.hpp>
-
 #include "Common/ByteString.h"
 #include "Common/Error.h"
+#include "Common/ReferenceCount.h"
 
 #include "Hypertable/Lib/Key.h"
 #include "Hypertable/Lib/Schema.h"
@@ -42,7 +41,7 @@ namespace Hypertable {
   /**
    * Scan context information
    */
-  class ScanContext {
+  class ScanContext : public ReferenceCount {
   public:
 
     static const uint64_t END_OF_TIME;
@@ -96,7 +95,7 @@ namespace Hypertable {
 
   };
 
-  typedef boost::shared_ptr<ScanContext> ScanContextPtr;
+  typedef boost::intrusive_ptr<ScanContext> ScanContextPtr;
 
 
 }

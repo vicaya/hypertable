@@ -27,9 +27,11 @@
 
 #include <boost/thread/mutex.hpp>
 
+#include "Common/ReferenceCount.h"
+
 namespace Hypertable {
 
-  class RangeInfo {
+  class RangeInfo : public ReferenceCount {
   public:
     RangeInfo() : m_mutex(), m_table_name(""), m_start_row(""), m_end_row(""), m_log_dir(""), cellStores(), m_split_log_dir(""), m_split_point("") {
       return;
@@ -114,7 +116,7 @@ namespace Hypertable {
     std::string m_split_point;
   };
 
-  typedef boost::shared_ptr<RangeInfo> RangeInfoPtr;
+  typedef boost::intrusive_ptr<RangeInfo> RangeInfoPtr;
 
 }
 

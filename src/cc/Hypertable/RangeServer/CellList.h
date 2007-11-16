@@ -22,6 +22,8 @@
 
 #include "Common/atomic.h"
 #include "Common/ByteString.h"
+#include "Common/ReferenceCount.h"
+
 #include "ScanContext.h"
 
 namespace Hypertable {
@@ -35,7 +37,7 @@ namespace Hypertable {
   /**
    * Abstract base class for all Cell list classes.
    */
-  class CellList {
+  class CellList : public ReferenceCount {
   public:
     CellList() { atomic_set(&refCount, 0); }
     virtual ~CellList() { return; }
@@ -65,7 +67,9 @@ namespace Hypertable {
   inline void intrusive_ptr_release(CellList *cl) {
     if (atomic_sub_and_test(1, &cl->refCount))
       delete cl;
-  } 
+  }
+
+  typedef boost::intrusive_ptr<CellList> CellListPtr;
 
 }
 

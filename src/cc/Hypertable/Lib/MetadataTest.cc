@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
 
   metadata->add_range_info(rangeInfoPtr);
 
-  rangeInfoPtr.reset(new RangeInfo());
+  rangeInfoPtr = new RangeInfo();
   RangeInfo *newRange = rangeInfoPtr.get();
 
   str = "UserSession";
