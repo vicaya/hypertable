@@ -96,7 +96,7 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPt
    * End of range check
    */
   if (m_check_for_range_end) {
-    if (!(*m_cur_key < *m_end_key_ptr.get())) {
+    if (m_end_key_ptr && !(*m_cur_key < *m_end_key_ptr.get())) {
       m_iter = m_index.end();
       return;
     }
@@ -144,7 +144,7 @@ void CellStoreScannerV0::forward() {
     m_cur_value = (ByteString32T *)(m_block.ptr + Length(m_cur_key));
 
     if (m_check_for_range_end) {
-      if (!(*m_cur_key < *m_end_key_ptr.get())) {
+      if (m_end_key_ptr && !(*m_cur_key < *m_end_key_ptr.get())) {
 	m_iter = m_index.end();
 	break;
       }
@@ -197,11 +197,11 @@ bool CellStoreScannerV0::fetch_next_block() {
     iterNext++;
     if (iterNext == m_index.end()) {
       m_block.zlength = m_cell_store_v0->m_trailer.fixIndexOffset - m_block.offset;
-      if (m_end_key_ptr.get() != 0)
+      if (m_end_key_ptr)
 	m_check_for_range_end = true;
     }
     else {
-      if (m_end_key_ptr.get() != 0 && !(*((*iterNext).first) < *m_end_key_ptr.get()))
+      if (m_end_key_ptr && !(*((*iterNext).first) < *m_end_key_ptr.get()))
 	m_check_for_range_end = true;
       m_block.zlength = (*iterNext).second - m_block.offset;
     }
