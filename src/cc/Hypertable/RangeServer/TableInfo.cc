@@ -26,6 +26,13 @@ using namespace Hypertable;
 
 
 /**
+ *
+ */
+TableInfo::TableInfo(MasterClientPtr &master_client_ptr, std::string name, SchemaPtr &schemaPtr) : m_mutex(), m_master_client_ptr(master_client_ptr), m_name(name), m_schema(schemaPtr) { 
+  return;
+}
+
+/**
  * 
  */
 bool TableInfo::get_range(RangeT *range, RangePtr &rangePtr) {
@@ -60,7 +67,7 @@ void TableInfo::add_range(RangeInfoPtr &rangeInfoPtr) {
   RangeMapT::iterator iter = m_range_map.find(rangeEndRow);
   assert(iter == m_range_map.end());
 
-  RangePtr rangePtr( new Range(m_schema, rangeInfoPtr) );
+  RangePtr rangePtr( new Range(m_master_client_ptr, m_schema, rangeInfoPtr) );
 
   m_range_map[rangeEndRow] = rangePtr;
 }

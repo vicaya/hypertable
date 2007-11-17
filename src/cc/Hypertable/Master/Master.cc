@@ -346,6 +346,14 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
   cb->response_ok();
 }
 
+/**
+ */
+void Master::report_split(ResponseCallback *cb, TableIdentifierT &table, RangeT &range) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  // TBD
+  cb->response_ok();  
+}
+
 
 int Master::create_table(const char *tableName, const char *schemaString, std::string &errMsg) {
   int error = Error::OK;

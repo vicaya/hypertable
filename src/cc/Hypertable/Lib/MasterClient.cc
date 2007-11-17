@@ -168,6 +168,27 @@ int MasterClient::register_server(std::string &location) {
 }
 
 
+int MasterClient::report_split(TableIdentifierT &table, RangeT &range, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( MasterProtocol::create_report_split_request(table, range) );
+  return send_message(cbufPtr, handler);
+}
+
+
+int MasterClient::report_split(TableIdentifierT &table, RangeT &range) {
+  DispatchHandlerSynchronizer syncHandler;
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( MasterProtocol::create_report_split_request(table, range) );
+  int error = send_message(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.wait_for_reply(eventPtr)) {
+      if (m_verbose)
+	LOG_VA_ERROR("Master 'register server' error : %s", MasterProtocol::string_format_message(eventPtr).c_str());
+      error = (int)MasterProtocol::response_code(eventPtr);
+    }
+  }
+  return error;
+}
+
 
 int MasterClient::send_message(CommBufPtr &cbufPtr, DispatchHandler *handler) {
   boost::mutex::scoped_lock lock(m_mutex);

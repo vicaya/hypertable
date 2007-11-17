@@ -31,6 +31,7 @@
 #include "RequestHandlerGetSchema.h"
 #include "RequestHandlerStatus.h"
 #include "RequestHandlerRegisterServer.h"
+#include "RequestHandlerReportSplit.h"
 
 using namespace Hypertable;
 
@@ -70,6 +71,9 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
 	break;
       case MasterProtocol::COMMAND_REGISTER_SERVER:
 	requestHandler = new RequestHandlerRegisterServer(m_comm, m_master_ptr.get(), eventPtr);
+	break;
+      case MasterProtocol::COMMAND_REPORT_SPLIT:
+	requestHandler = new RequestHandlerReportSplit(m_comm, m_master_ptr.get(), eventPtr);
 	break;
       default:
 	std::string message = (string)"Command code " + command + " not implemented";

@@ -38,6 +38,7 @@
 #include "Hyperspace/Session.h"
 
 #include "Hypertable/Lib/Filesystem.h"
+#include "Hypertable/Lib/Types.h"
 
 #include "HyperspaceSessionHandler.h"
 #include "RangeServerState.h"
@@ -55,6 +56,7 @@ namespace Hypertable {
     void create_table(ResponseCallback *cb, const char *tableName, const char *schemaString);
     void get_schema(ResponseCallbackGetSchema *cb, const char *tableName);
     void register_server(ResponseCallback *cb, const char *location, struct sockaddr_in &addr);
+    void report_split(ResponseCallback *cb, TableIdentifierT &table, RangeT &range);
 
     void server_joined(std::string &hyperspaceFilename);
     void server_left(std::string &hyperspaceFilename);

@@ -43,7 +43,7 @@ using namespace std;
 
 
 
-Range::Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), m_mutex(), m_schema(schemaPtr), m_access_group_map(), m_access_group_vector(), m_column_family_vector(), m_maintenance_in_progress(false), m_latest_timestamp(0), m_split_start_time(0), m_split_log_ptr(), m_maintenance_mutex(), m_maintenance_finished_cond(), m_update_quiesce_cond(), m_hold_updates(false), m_update_counter(0) {
+Range::Range(MasterClientPtr &master_client_ptr, SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_schema(schemaPtr), m_maintenance_in_progress(false), m_latest_timestamp(0), m_split_start_time(0), m_hold_updates(false), m_update_counter(0) {
   CellStorePtr cellStorePtr;
   std::string accessGroupName;
   AccessGroup *ag;

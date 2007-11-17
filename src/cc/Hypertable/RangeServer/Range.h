@@ -27,6 +27,7 @@
 #include <boost/thread/condition.hpp>
 
 #include "Hypertable/Lib/Key.h"
+#include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/Schema.h"
 
 #include "AccessGroup.h"
@@ -42,7 +43,7 @@ namespace Hypertable {
     typedef std::vector<AccessGroup *>  ColumnFamilyVectorT;
 
   public:
-    Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr);
+    Range(MasterClientPtr &master_client_ptr, SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr);
     virtual ~Range() { return; }
     virtual int add(const ByteString32T *key, const ByteString32T *value);
     virtual const char *get_split_row();
@@ -92,6 +93,7 @@ namespace Hypertable {
     uint64_t run_compaction(bool major=false);
 
     boost::mutex     m_mutex;
+    MasterClientPtr  m_master_client_ptr;
     std::string      m_table_name;
     SchemaPtr        m_schema;
     std::string      m_start_row;

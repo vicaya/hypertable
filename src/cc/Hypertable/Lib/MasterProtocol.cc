@@ -60,11 +60,21 @@ namespace Hypertable {
     return cbuf;
   }
 
+  CommBuf *MasterProtocol::create_report_split_request(TableIdentifierT &table, RangeT &range) {
+    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthTableIdentifier(table) + EncodedLengthRange(range));
+    cbuf->append_short(COMMAND_REPORT_SPLIT);
+    EncodeTableIdentifier(cbuf->get_data_ptr_address(), table);
+    EncodeRange(cbuf->get_data_ptr_address(), range);
+    return cbuf;
+  }
+
   const char *MasterProtocol::m_command_strings[] = {
     "create table",
     "get schema",
     "status",
-    "register server"
+    "register server",
+    "report split"
   };
 
   const char *MasterProtocol::command_text(short command) {

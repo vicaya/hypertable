@@ -25,8 +25,9 @@
 #include "AsyncComm/Event.h"
 #include "AsyncComm/Protocol.h"
 
-using namespace Hypertable;
+#include "Hypertable/Lib/Types.h"
 
+using namespace Hypertable;
 
 namespace Hypertable {
 
@@ -38,7 +39,8 @@ namespace Hypertable {
     static const short COMMAND_GET_SCHEMA      = 1;
     static const short COMMAND_STATUS          = 2;
     static const short COMMAND_REGISTER_SERVER = 3;
-    static const short COMMAND_MAX             = 4;
+    static const short COMMAND_REPORT_SPLIT    = 4;
+    static const short COMMAND_MAX             = 5;
 
     static const char *m_command_strings[];
 
@@ -49,6 +51,8 @@ namespace Hypertable {
     static CommBuf *create_status_request();
 
     static CommBuf *create_register_server_request(std::string &location);
+
+    static CommBuf *create_report_split_request(TableIdentifierT &table, RangeT &range);
 
     virtual const char *command_text(short command);
     

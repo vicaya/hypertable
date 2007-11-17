@@ -33,6 +33,8 @@
 #include "Hyperspace/HandleCallback.h"
 #include "Hyperspace/Session.h"
 
+#include "Hypertable/Lib/Types.h"
+
 using namespace Hypertable;
 
 namespace Hypertable {
@@ -60,10 +62,8 @@ namespace Hypertable {
     int register_server(std::string &location, DispatchHandler *handler);
     int register_server(std::string &location);
 
-    /**
-    int ReportSplit(const char *name, DispatchHandler *handler, uint32_t *msgIdp);
-    int ReportSplit(const char *name, int32_t *fdp);
-    **/
+    int report_split(TableIdentifierT &table, RangeT &range, DispatchHandler *handler);
+    int report_split(TableIdentifierT &table, RangeT &range);
 
     int reload_master();
 

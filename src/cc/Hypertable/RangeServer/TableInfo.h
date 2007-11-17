@@ -28,6 +28,7 @@
 #include "Common/StringExt.h"
 #include "Common/ReferenceCount.h"
 
+#include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/Types.h"
 
 #include "Range.h"
@@ -39,8 +40,7 @@ namespace Hypertable {
   class TableInfo : public ReferenceCount {
 
   public:
-    TableInfo(std::string &name, SchemaPtr &schemaPtr) : m_mutex(), m_name(name), m_schema(schemaPtr) { return; }
-    TableInfo(const char *name, SchemaPtr &schemaPtr) : m_mutex(), m_name(name), m_schema(schemaPtr) { return; }
+    TableInfo(MasterClientPtr &master_client_ptr, std::string name, SchemaPtr &schemaPtr);
     std::string &get_name() { return m_name; }
     SchemaPtr &get_schema() { 
       boost::mutex::scoped_lock lock(m_mutex);
@@ -68,10 +68,11 @@ namespace Hypertable {
 
     typedef std::map<std::string, RangePtr, ltEndRow> RangeMapT;
 
-    boost::mutex   m_mutex;
-    std::string    m_name;
-    SchemaPtr      m_schema;
-    RangeMapT      m_range_map;
+    boost::mutex    m_mutex;
+    MasterClientPtr m_master_client_ptr;
+    std::string     m_name;
+    SchemaPtr       m_schema;
+    RangeMapT       m_range_map;
   };
 
   typedef boost::intrusive_ptr<TableInfo> TableInfoPtr;

@@ -530,7 +530,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
   }
 
   if (!get_table_info(table->name, tableInfoPtr)) {
-    tableInfoPtr = new TableInfo(table->name, schemaPtr);
+    tableInfoPtr = new TableInfo(m_master_client_ptr, table->name, schemaPtr);
     registerTable = true;
   }
 
