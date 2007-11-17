@@ -57,6 +57,8 @@ namespace Hypertable {
     void run_compaction(uint64_t timestamp, bool major);
     uint64_t get_log_cutoff_time() { return m_log_cutoff_time; }
 
+    const char *get_name() { return m_name.c_str(); }
+
     int shrink(std::string &new_start_row);
 
   private:

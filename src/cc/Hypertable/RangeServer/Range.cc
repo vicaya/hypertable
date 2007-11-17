@@ -191,7 +191,7 @@ const char *Range::get_split_row() {
   /**
   for (size_t i=0; i<split_rows.size(); i++)
     cout << "Range::get_split_row [" << i << "] = " << split_rows[i] << endl;
-  **/
+  */
   if (split_rows.size() > 0) {
     boost::mutex::scoped_lock lock(m_mutex);    
     m_split_row = split_rows[split_rows.size()/2];
@@ -354,7 +354,8 @@ void Range::do_maintenance() {
 
       // at this point, there are no running updates
 
-      // TBD: Do the actual split
+      for (size_t i=0; i<m_access_group_vector.size(); i++)
+	m_access_group_vector[i]->shrink(m_start_row);
 
       /** unblock updates **/
       m_hold_updates = false;

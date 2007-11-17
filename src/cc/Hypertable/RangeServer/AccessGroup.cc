@@ -276,27 +276,28 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
  */
 int AccessGroup::shrink(std::string &new_start_row) {
   boost::mutex::scoped_lock lock(m_mutex);
+  int error;
   CellCachePtr old_cell_cache_ptr = m_cell_cache_ptr;
   ScanContextPtr scanContextPtr = new ScanContext(ScanContext::END_OF_TIME, 0, m_schema_ptr);
-  CellListScanner *cell_cache_scanner;
+  CellListScannerPtr cell_cache_scanner_ptr;
   ByteString32T *key;
   ByteString32T *value;
   std::vector<CellStorePtr> new_stores;
-  CellStorePtr new_cell_store_ptr;
+  CellStore *new_cell_store;
 
   m_start_row = new_start_row;
 
   m_cell_cache_ptr = new CellCache();
 
-  cell_cache_scanner = old_cell_cache_ptr->create_scanner(scanContextPtr);
+  cell_cache_scanner_ptr = old_cell_cache_ptr->create_scanner(scanContextPtr);
 
   /**
    * Shrink the CellCache
    */
-  while (cell_cache_scanner->get(&key, &value)) {
+  while (cell_cache_scanner_ptr->get(&key, &value)) {
     if (strcmp((const char *)key->data, m_start_row.c_str()) > 0)
       add(key, value);
-    cell_cache_scanner->forward();
+    cell_cache_scanner_ptr->forward();
   }
 
   /**
@@ -304,9 +305,22 @@ int AccessGroup::shrink(std::string &new_start_row) {
    */
   for (size_t i=0; i<m_stores.size(); i++) {
     std::string filename = m_stores[i]->get_filename();
-    new_cell_store_ptr = new CellStoreV0(Global::dfs);
-    //new_cell_store_ptr->open(const char *fname, const ByteString32T *startKey, const ByteString32T *endKey);
+    new_cell_store = new CellStoreV0(Global::dfs);
+    if ((error = new_cell_store->open(filename.c_str(), m_start_row.c_str(), m_end_row.c_str())) != Error::OK) {
+      LOG_VA_ERROR("Problem opening cell store '%s' [%s:%s] - %s",
+		   filename.c_str(), m_start_row.c_str(), m_end_row.c_str(), Error::get_text(error));
+      return error;
+    }
+    if ((error = new_cell_store->load_index()) != Error::OK) {
+      LOG_VA_ERROR("Problem loading index of cell store '%s' [%s:%s] - %s",
+		   filename.c_str(), m_start_row.c_str(), m_end_row.c_str(), Error::get_text(error));
+      return error;
+    }
+    new_stores.push_back(new_cell_store);
   }
-  
+
+  m_stores = new_stores;
+
+  return Error::OK;
 }
 

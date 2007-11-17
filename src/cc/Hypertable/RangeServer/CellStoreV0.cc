@@ -59,6 +59,7 @@ CellStoreV0::~CellStoreV0() {
       LOG_VA_ERROR("Problem closing HDFS client - %s", Error::get_text(error));
     }
   }
+  cout << "DELETE CellStoreV0" << endl;
 }
 
 
