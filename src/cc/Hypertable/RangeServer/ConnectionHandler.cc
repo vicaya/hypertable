@@ -123,7 +123,7 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
      * with the master
      */
     if (m_master_client_ptr)
-      m_app_queue_ptr->add( new EventHandlerMasterConnection(m_master_client_ptr, m_range_server_ptr->server_id_str(), eventPtr) );
+      m_app_queue_ptr->add( new EventHandlerMasterConnection(m_master_client_ptr, m_range_server_ptr->get_location(), eventPtr) );
   }
   else {
     LOG_VA_INFO("%s", eventPtr->toString().c_str());

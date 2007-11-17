@@ -156,7 +156,7 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : m_mutex(), m_ver
 
     gettimeofday(&tval, 0);
 
-    m_server_id_str = (std::string)inet_ntoa(localAddr.sin_addr) + "_" + (int)port + "_" + (uint32_t)tval.tv_sec;
+    m_location = (std::string)inet_ntoa(localAddr.sin_addr) + "_" + (int)port + "_" + (uint32_t)tval.tv_sec;
   }
 
   if (directory_initialize(propsPtr.get()) != Error::OK)
@@ -224,7 +224,7 @@ int RangeServer::directory_initialize(Properties *props) {
     return error;
   }
 
-  topDir = (std::string)"/hypertable/servers/" + m_server_id_str;
+  topDir = (std::string)"/hypertable/servers/" + m_location;
 
   /**
    * Create "server existence" file in Hyperspace and obtain an exclusive lock on it

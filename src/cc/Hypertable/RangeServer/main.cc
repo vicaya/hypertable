@@ -76,7 +76,6 @@ int main(int argc, char **argv) {
   char *logBroker = 0;
   Comm *comm = 0;
   PropertiesPtr propsPtr;
-  RangeServer *rangeServer = 0;
 
   System::initialize(argv[0]);
   Global::verbose = false;
@@ -137,7 +136,7 @@ int main(int argc, char **argv) {
     cout << "Hypertable.range_server.reactors=" << reactorCount << endl;
   }
 
-  rangeServer = new RangeServer(comm, propsPtr);
+  RangeServerPtr range_server_ptr = new RangeServer(comm, propsPtr);
 
   if (pidFile != "") {
     fstream filestr (pidFile.c_str(), fstream::out);
@@ -145,9 +144,10 @@ int main(int argc, char **argv) {
     filestr.close();
   }
 
-  poll(0, 0, -1);
+  ApplicationQueuePtr app_queue_ptr = range_server_ptr->get_application_queue_ptr();
 
-  delete rangeServer;
+  app_queue_ptr->join();
+
   delete comm;
   return 0;
 }

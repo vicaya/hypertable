@@ -56,7 +56,9 @@ namespace Hypertable {
     void load_range(ResponseCallback *cb, TableIdentifierT *table, RangeT *range);
     void update(ResponseCallbackUpdate *cb, TableIdentifierT *table, BufferT &buffer);
 
-    std::string &server_id_str() { return m_server_id_str; }
+    ApplicationQueuePtr get_application_queue_ptr() { return m_app_queue_ptr; }
+
+    std::string &get_location() { return m_location; }
 
     void master_change();
 
@@ -88,7 +90,7 @@ namespace Hypertable {
     ConnectionManagerPtr   m_conn_manager_ptr;
     uint64_t               m_existence_file_handle;
     struct LockSequencerT  m_existence_file_sequencer;
-    std::string            m_server_id_str;
+    std::string            m_location;
     ConnectionHandler     *m_master_connection_handler;
     MasterClientPtr        m_master_client_ptr;
   };

@@ -25,8 +25,8 @@ namespace Hypertable {
     "none",
     "dfs broker",
     "hyperspace",
-    "bigtable master",
-    "bigtable tablet server"
+    "hypertable master",
+    "hypertable range server"
   };
 }
 
