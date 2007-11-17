@@ -76,17 +76,21 @@ bool AccessGroup::include_in_scan(ScanContextPtr &scanContextPtr) {
   return false;
 }
 
-
-void AccessGroup::get_split_keys(SplitKeyQueueT &keyHeap) {
-  boost::mutex::scoped_lock lock(m_mutex);
-  SplitKeyInfoT ski;
-  for (size_t i=0; i<m_stores.size(); i++) {
-    ski.timestamp = m_stores[i]->get_log_cutoff_time();
-    ski.key = m_stores[i]->get_split_key();
-    keyHeap.push(ski);
+const char *AccessGroup::get_split_row() {
+  std::vector<std::string> split_rows;
+  get_split_rows(split_rows);
+  if (split_rows.size() > 0) {
+    sort(split_rows.begin(), split_rows.end());
+    return (split_rows[split_rows.size()/2]).c_str();
   }
+  return "";
 }
 
+void AccessGroup::get_split_rows(std::vector<std::string> split_rows) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  for (size_t i=0; i<m_stores.size(); i++)
+    split_rows.push_back(m_stores[i]->get_split_row());
+}
 
 uint64_t AccessGroup::disk_usage() {
   boost::mutex::scoped_lock lock(m_mutex);
@@ -270,18 +274,39 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
 /**
  * 
  */
-void AccessGroup::shrink(std::string &new_start_row) {
+int AccessGroup::shrink(std::string &new_start_row) {
   boost::mutex::scoped_lock lock(m_mutex);
-#if 0
-  CellCachePtr new_cell_cache_ptr = new CellCache();
-  CellCachePtr new_cell_cache_ptr = new CellCache();
-  ScanContextPtr scanContextPtr = new ScanContext(END_OF_TIME, 0, m_schema_ptr);
+  CellCachePtr old_cell_cache_ptr = m_cell_cache_ptr;
+  ScanContextPtr scanContextPtr = new ScanContext(ScanContext::END_OF_TIME, 0, m_schema_ptr);
   CellListScanner *cell_cache_scanner;
+  ByteString32T *key;
+  ByteString32T *value;
+  std::vector<CellStorePtr> new_stores;
+  CellStorePtr new_cell_store_ptr;
 
   m_start_row = new_start_row;
 
-  cell_cache_scanner = m_cell_cache_ptr->create_scanner(scanContextPtr);
-  get_filename()
-#endif
+  m_cell_cache_ptr = new CellCache();
+
+  cell_cache_scanner = old_cell_cache_ptr->create_scanner(scanContextPtr);
+
+  /**
+   * Shrink the CellCache
+   */
+  while (cell_cache_scanner->get(&key, &value)) {
+    if (strcmp((const char *)key->data, m_start_row.c_str()) > 0)
+      add(key, value);
+    cell_cache_scanner->forward();
+  }
+
+  /**
+   * Shrink the CellStores
+   */
+  for (size_t i=0; i<m_stores.size(); i++) {
+    std::string filename = m_stores[i]->get_filename();
+    new_cell_store_ptr = new CellStoreV0(Global::dfs);
+    //new_cell_store_ptr->open(const char *fname, const ByteString32T *startKey, const ByteString32T *endKey);
+  }
+  
 }
 

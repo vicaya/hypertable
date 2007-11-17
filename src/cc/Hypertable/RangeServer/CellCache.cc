@@ -71,6 +71,12 @@ int CellCache::add(const ByteString32T *key, const ByteString32T *value) {
 
 
 
+const char *CellCache::get_split_row() {
+  assert(!"CellCache::get_split_row not implemented!");
+  return 0;
+}
+
+
 CellListScanner *CellCache::create_scanner(ScanContextPtr &scanContextPtr) {
   CellCachePtr cellCachePtr(this);
   return new CellCacheScanner(cellCachePtr, scanContextPtr);

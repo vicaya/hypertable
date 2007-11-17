@@ -130,8 +130,7 @@ int main(int argc, char **argv) {
    * Dump trailer
    */
   cout << "timestamp " << cellStorePtr->get_log_cutoff_time() << endl;
-  ByteString32T *splitKey = cellStorePtr->get_split_key();
-  cout << "split key '" << *splitKey << "'" << endl;
+  cout << "split row '" << cellStorePtr->get_split_row() << "'" << endl;
 
   return 0;
 }

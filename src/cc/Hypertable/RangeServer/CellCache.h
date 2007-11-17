@@ -52,6 +52,8 @@ namespace Hypertable {
      */
     virtual int add(const ByteString32T *key, const ByteString32T *value);
 
+    virtual const char *get_split_row();
+
     /**
      * Creates a CellCacheScanner object that contains an shared pointer (intrusive_ptr)
      * to this CellCache.

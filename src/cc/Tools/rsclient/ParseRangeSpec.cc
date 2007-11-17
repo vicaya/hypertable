@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include "Hypertable/Lib/Key.h"
+
 #include "ParseRangeSpec.h"
 
 namespace Hypertable {
@@ -45,7 +47,7 @@ namespace Hypertable {
 
     ptr = colon+1;
     if (ptr == rightBracket)
-      endRow = "";
+      endRow = Key::END_ROW_MARKER;
     else
       endRow = std::string(ptr, rightBracket-ptr);
 

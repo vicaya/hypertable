@@ -29,8 +29,8 @@
 
 using namespace Hypertable;
 
-CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPtr &scanContextPtr) : CellListScanner(scanContextPtr), m_cell_store_ptr(cellStorePtr), m_cur_key(0), m_cur_value(0), m_check_for_range_end(false), m_end_key_ptr() {
-  ByteString32T  *tmpKey, *startKey, *endKey;
+CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPtr &scanContextPtr) : CellListScanner(scanContextPtr), m_cell_store_ptr(cellStorePtr), m_cur_key(0), m_cur_value(0), m_check_for_range_end(false) {
+  ByteString32T  *key;
 
   m_cell_store_v0 = dynamic_cast< CellStoreV0*>(m_cell_store_ptr.get());
   assert(m_cell_store_v0);
@@ -40,22 +40,15 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPt
   m_block_inflater = new BlockInflaterZlib();
   memset(&m_block, 0, sizeof(m_block));
 
-  // compute startKey
-  tmpKey = m_cell_store_v0->m_start_key_ptr.get();
-  if (scanContextPtr->startKeyPtr)
-    startKey = (tmpKey != 0 && *scanContextPtr->startKeyPtr.get() < *tmpKey) ? tmpKey : scanContextPtr->startKeyPtr.get();
-  else
-    startKey = tmpKey;
+  // compute start row
+  m_start_row = m_cell_store_v0->get_start_row();
+  if (m_start_row < scanContextPtr->start_row)
+    m_start_row = scanContextPtr->start_row;
 
-  // compute m_end_key_ptr
-  if (scanContextPtr->endKeyPtr) {
-    if (!m_cell_store_v0->m_end_key_ptr || *scanContextPtr->endKeyPtr.get() < *m_cell_store_v0->m_end_key_ptr.get())
-      m_end_key_ptr = scanContextPtr->endKeyPtr;
-    else
-      m_end_key_ptr = m_cell_store_v0->m_end_key_ptr;
-  }
-  else
-    m_end_key_ptr = m_cell_store_v0->m_end_key_ptr;
+  // compute end row
+  m_end_row = m_cell_store_v0->get_end_row();
+  if (scanContextPtr->end_row < m_end_row)
+    m_end_row = scanContextPtr->end_row;
 
   if (m_block.base != 0)
     Global::blockCache->checkin(m_file_id, m_block.offset);
@@ -63,10 +56,9 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPt
 
   m_check_for_range_end = false;
 
-  if (startKey != 0)
-    m_iter = m_index.lower_bound(startKey);
-  else
-    m_iter = m_index.begin();
+  key = Create(m_start_row.c_str(), strlen(m_start_row.c_str()));
+  m_iter = m_index.lower_bound(key);
+  Destroy(key);
 
   m_cur_key = 0;
 
@@ -80,23 +72,22 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPt
    */
   m_cur_key = (ByteString32T *)m_block.ptr;
   m_cur_value = (ByteString32T *)(m_block.ptr + Length(m_cur_key));
-  if (startKey != 0) {
-    while (*m_cur_key < *startKey) {
-      m_block.ptr = ((uint8_t *)m_cur_value) + Length(m_cur_value);
-      if (m_block.ptr >= m_block.end) {
-	m_iter = m_index.end();
-	return;
-      }
-      m_cur_key = (ByteString32T *)m_block.ptr;
-      m_cur_value = (ByteString32T *)(m_block.ptr + Length(m_cur_key));
+
+  while (strcmp((const char *)m_cur_key->data, m_start_row.c_str()) < 0) {
+    m_block.ptr = ((uint8_t *)m_cur_value) + Length(m_cur_value);
+    if (m_block.ptr >= m_block.end) {
+      m_iter = m_index.end();
+      return;
     }
+    m_cur_key = (ByteString32T *)m_block.ptr;
+    m_cur_value = (ByteString32T *)(m_block.ptr + Length(m_cur_key));
   }
 
   /**
    * End of range check
    */
   if (m_check_for_range_end) {
-    if (m_end_key_ptr && !(*m_cur_key < *m_end_key_ptr.get())) {
+    if (strcmp((const char *)m_cur_key->data, m_end_row.c_str()) >= 0) {
       m_iter = m_index.end();
       return;
     }
@@ -144,7 +135,7 @@ void CellStoreScannerV0::forward() {
     m_cur_value = (ByteString32T *)(m_block.ptr + Length(m_cur_key));
 
     if (m_check_for_range_end) {
-      if (m_end_key_ptr && !(*m_cur_key < *m_end_key_ptr.get())) {
+      if (strcmp((const char *)m_cur_key->data, m_end_row.c_str()) >= 0) {
 	m_iter = m_index.end();
 	break;
       }
@@ -197,11 +188,11 @@ bool CellStoreScannerV0::fetch_next_block() {
     iterNext++;
     if (iterNext == m_index.end()) {
       m_block.zlength = m_cell_store_v0->m_trailer.fixIndexOffset - m_block.offset;
-      if (m_end_key_ptr)
+      if (m_end_row.c_str()[0] != (char)0xff)
 	m_check_for_range_end = true;
     }
     else {
-      if (m_end_key_ptr && !(*((*iterNext).first) < *m_end_key_ptr.get()))
+      if (strcmp((const char *)((*iterNext).first)->data, m_end_row.c_str()) >= 0)
 	m_check_for_range_end = true;
       m_block.zlength = (*iterNext).second - m_block.offset;
     }

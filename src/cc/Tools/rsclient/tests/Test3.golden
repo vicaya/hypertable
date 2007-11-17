@@ -6,7 +6,7 @@ TableName  = Test3
 TableId    = 3
 Generation = 1
 StartRow   = 
-EndRow     = 
+EndRow     = ÿÿ
 rsclient> update Test3 Test2-data.txt
 success
 success
@@ -366,7 +366,7 @@ TableName  = Test3
 TableId    = 3
 Generation = 1
 StartRow   = 
-EndRow     = 
+EndRow     = ÿÿ
 1189631332262329 A apple:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
 1189631332072375 A apple:http://pbskids.org/sesame/index.html
 1189631332153127 A apple:http://www.freebornhall.com/History/ResidenceHalls/
@@ -655,7 +655,7 @@ TableName  = Test3
 TableId    = 3
 Generation = 1
 StartRow   = 
-EndRow     = 
+EndRow     = ÿÿ
 1189631332262329 A apple:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
 1189631332072375 A apple:http://pbskids.org/sesame/index.html
 1189631332153127 A apple:http://www.freebornhall.com/History/ResidenceHalls/

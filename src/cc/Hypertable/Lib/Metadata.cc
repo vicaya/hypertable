@@ -36,6 +36,7 @@ extern "C" {
 #include "Common/FileUtils.h"
 #include "Common/StringExt.h"
 
+#include "Key.h"
 #include "Metadata.h"
 
 using namespace Hypertable;
@@ -153,6 +154,10 @@ void Metadata::end_element_handler(void *userData, const XML_Char *name) {
     boost::trim(ms_collected_text);
     if (ms_collected_text.length() > 0)
       ms_range->set_end_row(ms_collected_text);
+    else {
+      ms_collected_text = Key::END_ROW_MARKER;
+      ms_range->set_end_row(ms_collected_text);
+    }
   }
   else if (!strcmp(name, "CellStore")) {
     assert(ms_range != 0);

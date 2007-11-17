@@ -62,7 +62,8 @@ namespace Hypertable {
     BlockInflater        *m_block_inflater;
     bool                  m_check_for_range_end;
     int                   m_file_id;
-    ByteString32Ptr       m_end_key_ptr;
+    std::string           m_start_row;
+    std::string           m_end_row;
   };
 
 }

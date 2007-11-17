@@ -55,11 +55,11 @@ namespace Hypertable {
     virtual int add(const ByteString32T *key, const ByteString32T *value);
     virtual int finalize(uint64_t timestamp);
 
-    virtual int open(const char *fname, const ByteString32T *startKey, const ByteString32T *endKey);
+    virtual int open(const char *fname, const char *start_row, const char *end_row);
     virtual int load_index();
     virtual uint64_t get_log_cutoff_time();
     virtual uint64_t disk_usage() { return m_disk_usage; }
-    virtual ByteString32T *get_split_key();
+    virtual const char *get_split_row();
     virtual std::string &get_filename() { return m_filename; }
     virtual uint16_t get_flags();
 
@@ -74,12 +74,11 @@ namespace Hypertable {
   protected:
 
     void add_index_entry(const ByteString32T *key, uint32_t offset);
-    void record_split_key(const uint8_t *keyBytes);
+    void record_split_row(const ByteString32T *key);
 
     typedef struct {
       uint32_t  fixIndexOffset;
       uint32_t  varIndexOffset;
-      uint32_t  splitKeyOffset;
       uint32_t  indexEntries;
       uint64_t  timestamp;
       uint16_t  flags;
@@ -105,10 +104,8 @@ namespace Hypertable {
     ByteString32T         *m_last_key;
     uint64_t               m_file_length;
     uint32_t               m_disk_usage;
-    ByteString32Ptr        m_split_key;
+    std::string            m_split_row;
     int                    m_file_id;
-    ByteString32Ptr        m_start_key_ptr;
-    ByteString32Ptr        m_end_key_ptr;
   };
 
 }

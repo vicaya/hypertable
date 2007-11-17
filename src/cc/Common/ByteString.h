@@ -59,6 +59,19 @@ namespace Hypertable {
     return newBs;
   }
 
+  inline ByteString32T *Create(const void *data, uint32_t len) {
+    ByteString32T *bs = (ByteString32T *)new uint8_t [ sizeof(ByteString32T) + len ];
+    bs->len = len;
+    if (len)
+      memcpy(bs->data, data, len);
+    bs->data[len] = 0;
+    return bs;
+  }
+
+  inline void Destroy(ByteString32T *bs) {
+    delete [] (uint8_t *)bs;
+  }
+
   class ByteString32Ptr : public boost::shared_array<const uint8_t> {
   public:
     ByteString32Ptr() : boost::shared_array<const uint8_t>(0) { return; }

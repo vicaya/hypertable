@@ -34,11 +34,13 @@ namespace Hypertable {
   static const uint32_t FLAG_DELETE_ROW   = 0x00;
   static const uint32_t FLAG_DELETE_CELL  = 0x01;
   static const uint32_t FLAG_INSERT       = 0xFF;
-
+  
   /** Provides access to internal components of opaque key.
    */
   class Key {
   public:
+
+    static const char *END_ROW_MARKER;
 
     /**
      * Constructor (for implicit construction).

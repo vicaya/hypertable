@@ -31,18 +31,17 @@
  * 
  */
 CellCacheScanner::CellCacheScanner(CellCachePtr &cellCachePtr, ScanContextPtr &scanContextPtr) : CellListScanner(scanContextPtr), m_cell_cache_ptr(cellCachePtr), m_cell_cache_mutex(cellCachePtr->m_mutex), m_cur_key(0), m_cur_value(0), m_eos(false) {
+  ByteString32T *bs;
 
   /** set start iterator **/
-  if (!scanContextPtr->startKeyPtr || (scanContextPtr->startKeyPtr)->len == 0)
-    m_start_iter = m_cell_cache_ptr->m_cell_map.begin();
-  else
-    m_start_iter = m_cell_cache_ptr->m_cell_map.lower_bound(scanContextPtr->startKeyPtr.get());
+  bs = Create(scanContextPtr->start_row.c_str(), strlen(scanContextPtr->start_row.c_str()));
+  m_start_iter = m_cell_cache_ptr->m_cell_map.lower_bound(bs);
+  Destroy(bs);
 
   /** set end iterator **/
-  if (!scanContextPtr->endKeyPtr || scanContextPtr->endKeyPtr->len == 0)
-    m_end_iter = m_cell_cache_ptr->m_cell_map.end();
-  else
-    m_end_iter = m_cell_cache_ptr->m_cell_map.lower_bound(scanContextPtr->endKeyPtr.get());
+  bs = Create(scanContextPtr->end_row.c_str(), strlen(scanContextPtr->end_row.c_str()));
+  m_end_iter = m_cell_cache_ptr->m_cell_map.lower_bound(bs);
+  Destroy(bs);
 
   m_cur_iter = m_start_iter;
 

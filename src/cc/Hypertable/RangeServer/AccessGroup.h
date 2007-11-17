@@ -38,23 +38,12 @@ namespace Hypertable {
 
   public:
 
-    typedef struct {
-      ByteString32T *key;
-      uint64_t timestamp;
-    } SplitKeyInfoT;
-
-    struct ltSplitKeyInfo {
-      bool operator()(const SplitKeyInfoT &ski1, const SplitKeyInfoT &ski2) const {
-	return ski1.timestamp < ski2.timestamp;
-      }
-    };
-
-    typedef std::priority_queue<SplitKeyInfoT, vector<SplitKeyInfoT>, ltSplitKeyInfo> SplitKeyQueueT;
-    
     AccessGroup(SchemaPtr &schemaPtr, Schema::AccessGroup *lg, RangeInfoPtr &tabletInfoPtr);
     virtual ~AccessGroup();
     virtual int add(const ByteString32T *key, const ByteString32T *value);
-    virtual void get_split_keys(SplitKeyQueueT &keyHeap);
+
+    virtual const char *get_split_row();
+    virtual void get_split_rows(std::vector<std::string> split_rows);
 
     void lock() { m_lock.lock(); m_cell_cache_ptr->lock(); }
     void unlock() { m_cell_cache_ptr->unlock(); m_lock.unlock(); }
@@ -68,7 +57,7 @@ namespace Hypertable {
     void run_compaction(uint64_t timestamp, bool major);
     uint64_t get_log_cutoff_time() { return m_log_cutoff_time; }
 
-    void shrink(std::string &new_start_row);
+    int shrink(std::string &new_start_row);
 
   private:
     boost::mutex         m_mutex;

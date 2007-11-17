@@ -48,8 +48,8 @@ namespace Hypertable {
 
     SchemaPtr schemaPtr;
     ScanSpecificationT *spec;
-    ByteString32Ptr endKeyPtr;
-    ByteString32Ptr startKeyPtr;
+    std::string start_row;
+    std::string end_row;
     uint64_t timestamp;
     int error;
     bool familyMask[256];
@@ -62,7 +62,7 @@ namespace Hypertable {
      * @param ss scan specification (can be NULL)
      * @param sp shared pointer to schema object
      */
-    ScanContext(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp) : endKeyPtr(), error(Error::OK) {
+    ScanContext(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp) : error(Error::OK) {
       initialize(ts, ss, sp);
     }
 
@@ -72,7 +72,7 @@ namespace Hypertable {
      * @param ts scan timestamp (point in time when scan began)
      * @param ss scan specification (can be NULL)
      */
-    ScanContext(uint64_t ts, ScanSpecificationT *ss) : endKeyPtr(), error(Error::OK) {
+    ScanContext(uint64_t ts, ScanSpecificationT *ss) : error(Error::OK) {
       SchemaPtr schemaPtr;
       initialize(ts, ss, schemaPtr);
     }
@@ -84,7 +84,7 @@ namespace Hypertable {
      * allows for quick lookups to see if a family is included in the scan.  Also sets
      * up familyInfo entries for the column families that are included in the scan
      * which contains cell garbage collection info for each family (e.g. cutoff
-     * timestamp and number of copies to keep).  Also sets up endKeyPtr to be the
+     * timestamp and number of copies to keep).  Also sets up end_row to be the
      * last possible key in spec->endRow.
      *
      * @param ts scan timestamp (point in time when scan began)

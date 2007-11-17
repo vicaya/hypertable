@@ -45,9 +45,9 @@ namespace Hypertable {
     Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr);
     virtual ~Range() { return; }
     virtual int add(const ByteString32T *key, const ByteString32T *value);
+    virtual const char *get_split_row();
     virtual void lock();
     virtual void unlock();
-    virtual ByteString32T *get_split_key();
 
     uint64_t get_log_cutoff_time();
     uint64_t disk_usage();
@@ -70,12 +70,14 @@ namespace Hypertable {
     void increment_update_counter();
     void decrement_update_counter();
 
-    bool get_split_info(ByteString32Ptr &splitKeyPtr, CommitLogPtr &splitLogPtr, uint64_t *splitStartTime) {
+    bool get_split_info(std::string &split_row, CommitLogPtr &splitLogPtr, uint64_t *splitStartTime) {
       boost::mutex::scoped_lock lock(m_mutex);
       *splitStartTime = m_split_start_time;
-      if (m_split_start_time == 0)
+      if (m_split_start_time == 0) {
+	split_row = "";
 	return false;
-      splitKeyPtr = m_split_key_ptr;
+      }
+      split_row = m_split_row;
       splitLogPtr = m_split_log_ptr;
       return true;
     }
@@ -103,7 +105,7 @@ namespace Hypertable {
 
     uint64_t         m_latest_timestamp;
     uint64_t         m_split_start_time;
-    ByteString32Ptr  m_split_key_ptr;
+    std::string      m_split_row;
     CommitLogPtr     m_split_log_ptr;
 
     boost::mutex     m_maintenance_mutex;

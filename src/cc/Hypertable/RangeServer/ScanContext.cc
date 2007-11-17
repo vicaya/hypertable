@@ -20,6 +20,8 @@
 
 #include <cassert>
 
+#include "Hypertable/Lib/Key.h"
+
 #include "ScanContext.h"
 
 using namespace Hypertable;
@@ -101,15 +103,24 @@ void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp)
    * Create Start Key and End Key
    */
   if (spec) {
-    uint8_t family;
-    if (*spec->startRow != 0) {
-      family = spec->startRowInclusive ? 0 : 0xFF;
-      startKeyPtr = CreateKey(FLAG_INSERT, spec->startRow, family, 0, 0LL);
+
+    // start row
+    start_row = spec->startRow;
+    if (!spec->startRowInclusive)
+      start_row.append(1,1);  // bump to next row
+
+    // end row
+    if (spec->endRow[0] == 0)
+      end_row = Key::END_ROW_MARKER;
+    else {
+      end_row = spec->endRow;
+      if (spec->endRowInclusive)
+	end_row.append(1,1);    // bump to next row
     }
-    if (*spec->endRow != 0) {
-      family = spec->endRowInclusive ? 0xFF : 0;
-      endKeyPtr = CreateKey(FLAG_INSERT, spec->endRow, family, 0, 0LL);
-    }
+  }
+  else {
+    start_row = "";
+    end_row = Key::END_ROW_MARKER;
   }
 
 }

@@ -547,10 +547,8 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
    * under all locality group directories for this table
    */
   {
-    if (*range->endRow == 0)
-      memset(md5DigestStr, '0', 24);
-    else
-      md5_string(range->endRow, md5DigestStr);
+    assert(*range->endRow != 0);
+    md5_string(range->endRow, md5DigestStr);
     md5DigestStr[24] = 0;
     tableHdfsDir = (string)"/hypertable/tables/" + (string)table->name;
     list<Schema::AccessGroup *> *lgList = schemaPtr->get_access_group_list();
@@ -616,7 +614,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
   uint64_t clientTimestamp = 0;
   struct timeval tval;
   const char *row;
-  const char *splitRow;
+  std::string split_row;
   vector<UpdateRecT> goMods;
   vector<UpdateRecT> splitMods;
   vector<UpdateRecT> stopMods;
@@ -686,10 +684,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     endRow = rangePtr->end_row();
 
     /** Fetch range split information **/
-    if (rangePtr->get_split_info(splitKeyPtr, splitLogPtr, &splitStartTime))
-      splitRow = (const char *)(splitKeyPtr.get())->data;
-    else
-      splitRow = 0;
+    rangePtr->get_split_info(split_row, splitLogPtr, &splitStartTime);
 
     splitMods.clear();
     splitSize = 0;
@@ -701,7 +696,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
       modPtr += Length((const ByteString32T *)modPtr); // skip key
       modPtr += Length((const ByteString32T *)modPtr); // skip value
       update.len = modPtr - update.base;
-      if (splitStartTime != 0 && updateTimestamp > splitStartTime && strcmp(row, splitRow) <= 0) {
+      if (splitStartTime != 0 && updateTimestamp > splitStartTime && strcmp(row, split_row.c_str()) <= 0) {
 	splitMods.push_back(update);
 	splitSize += update.len;
       }

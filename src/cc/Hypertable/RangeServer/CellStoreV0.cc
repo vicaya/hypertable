@@ -31,6 +31,8 @@ extern "C" {
 
 #include "AsyncComm/Protocol.h"
 
+#include "Hypertable/Lib/Key.h"
+
 #include "BlockDeflaterZlib.h"
 #include "BlockInflaterZlib.h"
 #include "CellStoreScannerV0.h"
@@ -42,8 +44,7 @@ using namespace Hypertable;
 
 CellStoreV0::CellStoreV0(Filesystem *filesys) : m_filesys(filesys), m_filename(), m_fd(-1), m_index(),
   m_buffer(0), m_fix_index_buffer(0), m_var_index_buffer(0), m_block_size(Constants::DEFAULT_BLOCKSIZE),
-  m_outstanding_appends(0), m_offset(0), m_last_key(0), m_file_length(0),
-  m_disk_usage(0), m_split_key(0), m_file_id(0), m_start_key_ptr(0), m_end_key_ptr(0) {
+  m_outstanding_appends(0), m_offset(0), m_last_key(0), m_file_length(0), m_disk_usage(0), m_file_id(0) {
   m_block_deflater = new BlockDeflaterZlib();
   m_file_id = FileBlockCache::get_next_file_id();
 }
@@ -72,8 +73,8 @@ uint16_t CellStoreV0::get_flags() {
   return m_trailer.flags;
 }
 
-ByteString32T *CellStoreV0::get_split_key() {
-  return m_split_key.get();
+const char *CellStoreV0::get_split_row() {
+  return m_split_row.c_str();
 }
 
 
@@ -97,6 +98,9 @@ int CellStoreV0::create(const char *fname, size_t blockSize) {
   memset(&m_trailer, 0, sizeof(m_trailer));
 
   m_filename = fname;
+
+  m_start_row = "";
+  m_end_row = Key::END_ROW_MARKER;
 
   return m_filesys->create(m_filename, true, -1, -1, -1, &m_fd);
 
@@ -254,8 +258,7 @@ int CellStoreV0::finalize(uint64_t timestamp) {
     m_fix_index_buffer.ptr += sizeof(offset);
     m_index.insert(m_index.end(), IndexMapT::value_type(key, offset));
     if (i == m_trailer.indexEntries/2) {
-      m_trailer.splitKeyOffset = m_var_index_buffer.ptr - m_var_index_buffer.buf;
-      record_split_key(m_var_index_buffer.ptr);
+      record_split_row((ByteString32T *)m_var_index_buffer.ptr);
     }
   }
 
@@ -315,14 +318,11 @@ void CellStoreV0::add_index_entry(const ByteString32T *key, uint32_t offset) {
 /**
  *
  */
-int CellStoreV0::open(const char *fname, const ByteString32T *startKey, const ByteString32T *endKey) {
+int CellStoreV0::open(const char *fname, const char *start_row, const char *end_row) {
   int error = 0;
 
-  if (startKey != 0)
-    m_start_key_ptr.reset( CreateCopy(startKey) );
-
-  if (endKey != 0)
-    m_end_key_ptr.reset( CreateCopy(endKey) );
+  m_start_row = (start_row) ? start_row : "";
+  m_end_row = (end_row) ? end_row : Key::END_ROW_MARKER;
 
   m_fd = -1;
 
@@ -455,26 +455,33 @@ int CellStoreV0::load_index() {
   {
     uint32_t start = 0;
     uint32_t end = (uint32_t)m_file_length;
-    CellStoreV0::IndexMapT::iterator iter;
-    if (m_start_key_ptr.get() != 0) {
-      iter = m_index.upper_bound(m_start_key_ptr.get());
-      iter--;
-      start = (*iter).second;
-    }
-    if (m_end_key_ptr.get() != 0) {
-      iter = m_index.lower_bound(m_end_key_ptr.get());
-      end = (*iter).second;
-    }
-    m_disk_usage = end - start;
-  }
+    ByteString32T *start_key = Create(m_start_row.c_str(), strlen(m_start_row.c_str()));
+    ByteString32T *end_key = Create(m_end_row.c_str(), strlen(m_end_row.c_str()));
+    CellStoreV0::IndexMapT::const_iterator iter, mid_iter, end_iter;
 
-  record_split_key(m_var_index_buffer.buf + m_trailer.splitKeyOffset);
+    iter = m_index.upper_bound(start_key);
+    start = (*iter).second;
+
+    end_iter = m_index.lower_bound(end_key);
+    end = (*iter).second;
+
+    m_disk_usage = end - start;
+
+    Destroy(start_key);
+    Destroy(end_key);
+
+    size_t i=0;
+    for (mid_iter=iter; iter!=end_iter; ++iter,++i) {
+      if ((i%2)==0)
+	++mid_iter;
+    }
+    record_split_row((*mid_iter).first);
+  }
 
 #if 0
   cout << "m_index.size() = " << m_index.size() << endl;
   cout << "Fixed Index Offset: " << m_trailer.fixIndexOffset << endl;
   cout << "Variable Index Offset: " << m_trailer.varIndexOffset << endl;
-  cerr << "Split Key Offset: " << m_trailer.splitKeyOffset << endl;
   cout << "Number of Index Entries: " << m_trailer.indexEntries << endl;
   cout << "Flags: " << m_trailer.flags << endl;
   cout << "Compression Type: " << m_trailer.compressionType << endl;
@@ -490,14 +497,7 @@ int CellStoreV0::load_index() {
   return error;
 }
 
-/**
- * 
 
-CellListScanner *CellStoreV0::create_scanner(bool suppressDeleted) {
-  return new CellStoreScannerV0(this);
-}
- */
-
-void CellStoreV0::record_split_key(const uint8_t *keyBytes) {
-  m_split_key.reset( CreateCopy((ByteString32T *)keyBytes) );
+void CellStoreV0::record_split_row(const ByteString32T *key) {
+  m_split_row = (const char *)key->data;
 }

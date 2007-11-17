@@ -36,16 +36,17 @@ namespace Hypertable {
     static const uint16_t FLAG_SHARED;
 
     virtual ~CellStore() { return; }
+    virtual int add(const ByteString32T *key, const ByteString32T *value) = 0;
+    virtual const char *get_split_row() = 0;
+    virtual CellListScanner *create_scanner(ScanContextPtr &scanContextPtr) { return 0; }
     virtual int create(const char *fname, size_t blockSize=Constants::DEFAULT_BLOCKSIZE) = 0;
     virtual int finalize(uint64_t timestamp) = 0;
-    virtual int open(const char *fname, const ByteString32T *startKey, const ByteString32T *endKey) = 0;
+    virtual int open(const char *fname, const char *start_row, const char *end_row) = 0;
     virtual int load_index() = 0;
     virtual uint64_t get_log_cutoff_time() = 0;
     virtual uint64_t disk_usage() = 0;
     virtual std::string &get_filename() = 0;
     virtual uint16_t get_flags() = 0;
-    virtual ByteString32T *get_split_key() = 0;
-
   };
 
   typedef boost::intrusive_ptr<CellStore> CellStorePtr;

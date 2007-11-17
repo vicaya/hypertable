@@ -28,7 +28,14 @@
 using namespace Hypertable;
 using namespace std;
 
+namespace {
+  const char end_row_chars[3] = { 0xff, 0xff, 0 };
+}
+
+
 namespace Hypertable {
+
+  const char *Key::END_ROW_MARKER = (const char *)end_row_chars;
 
   ByteString32T *CreateKey(uint8_t flag, const char *rowKey, uint8_t columnFamily, const char *columnQualifier, uint64_t timestamp) {
     size_t len = strlen(rowKey) + 4 + sizeof(int64_t);

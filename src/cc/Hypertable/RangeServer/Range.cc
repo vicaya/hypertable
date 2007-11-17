@@ -43,36 +43,17 @@ using namespace std;
 
 
 
-Range::Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), m_mutex(), m_schema(schemaPtr), m_access_group_map(), m_access_group_vector(), m_column_family_vector(), m_maintenance_in_progress(false), m_latest_timestamp(0), m_split_start_time(0), m_split_key_ptr(), m_split_log_ptr(), m_maintenance_mutex(), m_maintenance_finished_cond(), m_update_quiesce_cond(), m_hold_updates(false), m_update_counter(0) {
+Range::Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), m_mutex(), m_schema(schemaPtr), m_access_group_map(), m_access_group_vector(), m_column_family_vector(), m_maintenance_in_progress(false), m_latest_timestamp(0), m_split_start_time(0), m_split_log_ptr(), m_maintenance_mutex(), m_maintenance_finished_cond(), m_update_quiesce_cond(), m_hold_updates(false), m_update_counter(0) {
   CellStorePtr cellStorePtr;
   std::string accessGroupName;
   AccessGroup *ag;
   uint64_t minLogCutoff = 0;
   uint32_t storeId;
-  ByteString32T *startKey=0, *endKey=0;
   int32_t len;
 
   rangeInfoPtr->get_table_name(m_table_name);
   rangeInfoPtr->get_start_row(m_start_row);
   rangeInfoPtr->get_end_row(m_end_row);
-
-  // set up start key
-  if (m_start_row != "") {
-    len = strlen(m_start_row.c_str()) + 1;
-    startKey = (ByteString32T *)new uint8_t [ sizeof(int32_t) + len ];
-    strcpy((char *)startKey->data, m_start_row.c_str());
-    startKey->len = len;
-    m_start_key_ptr.reset(startKey);
-  }
-
-  // set up end key
-  if (m_end_row != "") {
-    len = strlen(m_end_row.c_str()) + 1;
-    endKey = (ByteString32T *)new uint8_t [ sizeof(int32_t) + len ];
-    strcpy((char *)endKey->data, m_end_row.c_str());
-    endKey->len = len;
-    m_end_key_ptr.reset(endKey);
-  }
 
   m_column_family_vector.resize( m_schema->get_max_column_family_id() + 1 );
 
@@ -97,7 +78,7 @@ Range::Range(SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), m_m
       LOG_VA_ERROR("Unable to extract locality group name from path '%s'", cellStoreVector[i].c_str());
       continue;
     }
-    if (cellStorePtr->open(cellStoreVector[i].c_str(), startKey, endKey) != Error::OK)
+    if (cellStorePtr->open(cellStoreVector[i].c_str(), m_start_row.c_str(), m_end_row.c_str()) != Error::OK)
       continue;
     if (cellStorePtr->load_index() != Error::OK)
       continue;
@@ -182,28 +163,12 @@ int Range::add(const ByteString32T *key, const ByteString32T *value) {
 
 
 CellListScanner *Range::create_scanner(ScanContextPtr &scanContextPtr) {
-  CellListScanner *lastScanner = 0;
-  MergeScanner *mscanner = 0;
+  MergeScanner *mscanner = new MergeScanner(scanContextPtr, false);
   for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++) {
-    if ((*iter).second->include_in_scan(scanContextPtr)) {
-      if (mscanner != 0)
-	mscanner->add_scanner((*iter).second->create_scanner(scanContextPtr));
-      else {
-	if (lastScanner == 0)
-	  lastScanner = (*iter).second->create_scanner(scanContextPtr);
-	else {
-	  mscanner = new MergeScanner(scanContextPtr, false);
-	  mscanner->add_scanner(lastScanner);
-	  mscanner->add_scanner((*iter).second->create_scanner(scanContextPtr));
-	}
-      }
-    }
+    if ((*iter).second->include_in_scan(scanContextPtr))
+      mscanner->add_scanner((*iter).second->create_scanner(scanContextPtr));
   }
-  if (mscanner)
-    return mscanner;
-  else if (lastScanner)
-    return lastScanner;
-  return new MergeScanner(scanContextPtr, false);
+  return mscanner;
 }
 
 
@@ -214,19 +179,18 @@ uint64_t Range::disk_usage() {
   return usage;
 }
 
-ByteString32T *Range::get_split_key() {
-  AccessGroup::SplitKeyQueueT splitKeyHeap;
-  ltByteString32 sortObj;
-  vector<ByteString32T *> splitKeys;
+
+/**
+ *
+ */
+const char *Range::get_split_row() {
+  std::vector<std::string> split_rows;
   for (size_t i=0; i<m_access_group_vector.size(); i++)
-    m_access_group_vector[i]->get_split_keys(splitKeyHeap);
-  for (int32_t i=0; i<Global::localityGroupMaxFiles && !splitKeyHeap.empty(); i++) {
-    const AccessGroup::SplitKeyInfoT  &splitKeyInfo = splitKeyHeap.top();
-    splitKeys.push_back( splitKeyInfo.key );
-    splitKeyHeap.pop();
-  }
-  sort(splitKeys.begin(), splitKeys.end(), sortObj);
-  return splitKeys[splitKeys.size()/2];
+    m_access_group_vector[i]->get_split_rows(split_rows);
+  sort(split_rows.begin(), split_rows.end());
+  if (split_rows.size() > 0)
+    return (split_rows[split_rows.size()/2]).c_str();
+  return "";
 }
 
 
@@ -270,17 +234,13 @@ void Range::schedule_maintenance() {
 void Range::do_maintenance() {
   assert(m_maintenance_in_progress);
   if (disk_usage() > Global::rangeMaxBytes) {
-    ByteString32T *key;
     std::string splitPoint;
     std::string splitLogDir;
     char md5DigestStr[33];
     RangeInfoPtr rangeInfoPtr;
     int error;
 
-    key = get_split_key();
-    assert(key);
-
-    splitPoint = (const char *)key->data;
+    splitPoint = get_split_row();
 
     /**
      * Create Split LOG
@@ -327,7 +287,7 @@ void Range::do_maintenance() {
 	m_split_start_time = m_latest_timestamp;
       }
 
-      m_split_key_ptr.reset( CreateCopy(key) );
+      m_split_row = splitPoint;
       m_split_log_ptr = new CommitLog(Global::dfs, splitLogDir, 0x100000000LL);
 
       /** unblock updates **/
@@ -380,7 +340,7 @@ void Range::do_maintenance() {
       {
 	boost::mutex::scoped_lock lock(m_mutex);
 	m_split_start_time = 0;
-	m_split_key_ptr.reset(0);
+	m_split_row = "";
       }
 
       /** block updates **/
