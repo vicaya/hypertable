@@ -33,7 +33,6 @@ RangeServerProtocol   *Global::protocol = 0;
 bool                   Global::verbose = false;
 Metadata              *Global::metadata = 0;
 CommitLog             *Global::log = 0;
-std::string            Global::logDirRoot = "";
 std::string            Global::logDir = "";
 uint64_t               Global::rangeMaxBytes = 0;
 int32_t                Global::localityGroupMaxFiles = 0;

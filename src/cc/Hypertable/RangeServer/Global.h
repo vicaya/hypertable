@@ -51,7 +51,6 @@ namespace Hypertable {
     static bool           verbose;
     static Metadata      *metadata;
     static CommitLog     *log;
-    static std::string    logDirRoot;
     static std::string    logDir;
     static uint64_t       rangeMaxBytes;
     static int32_t        localityGroupMaxFiles;

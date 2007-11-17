@@ -188,9 +188,15 @@ const char *Range::get_split_row() {
   for (size_t i=0; i<m_access_group_vector.size(); i++)
     m_access_group_vector[i]->get_split_rows(split_rows);
   sort(split_rows.begin(), split_rows.end());
-  if (split_rows.size() > 0)
-    return (split_rows[split_rows.size()/2]).c_str();
-  return "";
+  /**
+  for (size_t i=0; i<split_rows.size(); i++)
+    cout << "Range::get_split_row [" << i << "] = " << split_rows[i] << endl;
+  **/
+  if (split_rows.size() > 0) {
+    boost::mutex::scoped_lock lock(m_mutex);    
+    m_split_row = split_rows[split_rows.size()/2];
+  }
+  return m_split_row.c_str();
 }
 
 
@@ -234,27 +240,26 @@ void Range::schedule_maintenance() {
 void Range::do_maintenance() {
   assert(m_maintenance_in_progress);
   if (disk_usage() > Global::rangeMaxBytes) {
-    std::string splitPoint;
     std::string splitLogDir;
     char md5DigestStr[33];
     RangeInfoPtr rangeInfoPtr;
     int error;
 
-    splitPoint = get_split_row();
+    // this call sets m_split_row
+    get_split_row();
 
     /**
      * Create Split LOG
      */
-    md5_string(splitPoint.c_str(), md5DigestStr);
+    md5_string(m_split_row.c_str(), md5DigestStr);
     md5DigestStr[24] = 0;
     std::string::size_type pos = Global::logDir.rfind("primary", Global::logDir.length());
     assert (pos != std::string::npos);
     splitLogDir = Global::logDir.substr(0, pos) + md5DigestStr;
 
     // Create split log dir
-    string logDir = Global::logDirRoot + splitLogDir;
-    if (!FileUtils::mkdirs(logDir.c_str())) {
-      LOG_VA_ERROR("Problem creating local log directory '%s'", logDir.c_str());
+    if ((error = Global::logDfs->mkdirs(splitLogDir)) != Error::OK) {
+      LOG_VA_ERROR("Problem creating DFS log directory '%s'", splitLogDir.c_str());
       exit(1);
     }
 
@@ -266,7 +271,7 @@ void Range::do_maintenance() {
 		   m_table_name.c_str(), m_end_row.c_str(), Error::get_text(error));
       exit(1);
     }
-    rangeInfoPtr->set_split_point(splitPoint);
+    rangeInfoPtr->set_split_point(m_split_row);
     rangeInfoPtr->set_split_log_dir(splitLogDir);
     Global::metadata->sync();
 
@@ -287,7 +292,6 @@ void Range::do_maintenance() {
 	m_split_start_time = m_latest_timestamp;
       }
 
-      m_split_row = splitPoint;
       m_split_log_ptr = new CommitLog(Global::dfs, splitLogDir, 0x100000000LL);
 
       /** unblock updates **/
@@ -310,7 +314,7 @@ void Range::do_maintenance() {
       RangeInfoPtr newRangePtr( new RangeInfo() );
       newRangePtr->set_table_name(m_table_name);
       newRangePtr->set_start_row(m_start_row);
-      newRangePtr->set_end_row(splitPoint);
+      newRangePtr->set_end_row(m_split_row);
       newRangePtr->set_split_log_dir(splitLogDir);
       rangeInfoPtr->get_tables(stores);
       for (std::vector<std::string>::iterator iter = stores.begin(); iter != stores.end(); iter++)
@@ -324,7 +328,7 @@ void Range::do_maintenance() {
      */
     {
       boost::mutex::scoped_lock lock(m_mutex);      
-      m_start_row = splitPoint;
+      m_start_row = m_split_row;
       splitLogDir = "";
       rangeInfoPtr->set_start_row(m_start_row);
       rangeInfoPtr->set_split_log_dir(splitLogDir);
@@ -365,7 +369,7 @@ void Range::do_maintenance() {
     /**
      *  TBD:  Notify Master of split
      */
-    LOG_VA_INFO("Split Complete.  New Range endRow=%s", splitPoint.c_str());
+    LOG_VA_INFO("Split Complete.  New Range startRow=%s", m_start_row.c_str());
 
   }
   else

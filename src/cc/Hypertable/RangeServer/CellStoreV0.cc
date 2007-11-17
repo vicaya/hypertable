@@ -462,8 +462,10 @@ int CellStoreV0::load_index() {
     iter = m_index.upper_bound(start_key);
     start = (*iter).second;
 
-    end_iter = m_index.lower_bound(end_key);
-    end = (*iter).second;
+    if ((end_iter = m_index.lower_bound(end_key)) == m_index.end())
+      end = m_file_length;
+    else
+      end = (*iter).second;
 
     m_disk_usage = end - start;
 
@@ -500,4 +502,5 @@ int CellStoreV0::load_index() {
 
 void CellStoreV0::record_split_row(const ByteString32T *key) {
   m_split_row = (const char *)key->data;
+  //cout << "record_split_row = " << m_split_row << endl;
 }
