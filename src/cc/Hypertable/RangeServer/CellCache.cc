@@ -35,7 +35,7 @@ using namespace std;
 CellCache::~CellCache() {
   for (CellMapT::iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++)
     delete [] (*iter).first;
-  cout << "DELETE CellCache" << endl;
+  //cout << "DELETE CellCache" << endl;
 }
 
 

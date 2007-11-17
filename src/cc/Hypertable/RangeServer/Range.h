@@ -43,8 +43,8 @@ namespace Hypertable {
     typedef std::vector<AccessGroup *>  ColumnFamilyVectorT;
 
   public:
-    Range(MasterClientPtr &master_client_ptr, SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr);
-    virtual ~Range() { return; }
+    Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr);
+    virtual ~Range();
     virtual int add(const ByteString32T *key, const ByteString32T *value);
     virtual const char *get_split_row();
     virtual void lock();
@@ -55,9 +55,8 @@ namespace Hypertable {
 
     CellListScanner *create_scanner(ScanContextPtr &scanContextPtr);
 
-    string &start_row() { return m_start_row; }
+    string &start_row() { return m_start_row; }  // TODO: fix me!!!
     string &end_row() { return m_end_row; }
-    string &table_name() { return m_table_name; }
 
     uint64_t get_timestamp() {
       boost::mutex::scoped_lock lock(m_mutex);
@@ -94,7 +93,7 @@ namespace Hypertable {
 
     boost::mutex     m_mutex;
     MasterClientPtr  m_master_client_ptr;
-    std::string      m_table_name;
+    TableIdentifierT m_identifier;
     SchemaPtr        m_schema;
     std::string      m_start_row;
     std::string      m_end_row;

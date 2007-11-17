@@ -530,7 +530,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
   }
 
   if (!get_table_info(table->name, tableInfoPtr)) {
-    tableInfoPtr = new TableInfo(m_master_client_ptr, table->name, schemaPtr);
+    tableInfoPtr = new TableInfo(m_master_client_ptr, table, schemaPtr);
     registerTable = true;
   }
 
@@ -864,7 +864,7 @@ int RangeServer::verify_schema(TableInfoPtr &tableInfoPtr, int generation, std::
 
     schemaPtr = Schema::new_instance((const char *)valueBuf.buf, valueBuf.fill(), true);
     if (!schemaPtr->is_valid()) {
-      errMsg = "Schema Parse Error for table '" + tableInfoPtr->get_name() + "' : " + schemaPtr->get_error_string();
+      errMsg = (std::string)"Schema Parse Error for table '" + tableInfoPtr->get_name() + "' : " + schemaPtr->get_error_string();
       return Error::RANGESERVER_SCHEMA_PARSE_ERROR;
     }
 
@@ -872,7 +872,7 @@ int RangeServer::verify_schema(TableInfoPtr &tableInfoPtr, int generation, std::
 
     // Generation check ...
     if ( schemaPtr->get_generation() < generation ) {
-      errMsg = "Fetched Schema generation for table '" + tableInfoPtr->get_name() + "' is " + schemaPtr->get_generation() + " but supplied is " + generation;
+      errMsg = (std::string)"Fetched Schema generation for table '" + tableInfoPtr->get_name() + "' is " + schemaPtr->get_generation() + " but supplied is " + generation;
       return Error::RANGESERVER_GENERATION_MISMATCH;
     }
   }

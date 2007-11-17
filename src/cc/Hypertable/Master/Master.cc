@@ -33,6 +33,7 @@ extern "C" {
 #include "Common/System.h"
 
 #include "DfsBroker/Lib/Client.h"
+#include "Hypertable/Lib/RangeServerClient.h"
 #include "Hypertable/Lib/Schema.h"
 #include "Hyperspace/DirEntry.h"
 
@@ -347,10 +348,26 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 }
 
 /**
+ * Just turns around and assigns new range to caller
  */
 void Master::report_split(ResponseCallback *cb, TableIdentifierT &table, RangeT &range) {
   boost::mutex::scoped_lock lock(m_mutex);
-  // TBD
+  int error;
+  struct sockaddr_in addr;
+  RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30);
+
+  cb->get_address(addr);
+
+  if ((error = rsc.load_range(addr, table, range)) != Error::OK) {
+    std::string addrStr;
+    LOG_VA_ERROR("Problem issuing 'load range' command for %s[%s:%s] at server %s",
+		 table.name, range.startRow, range.endRow, InetAddr::string_format(addrStr, addr));
+    cb->error(error, "Problem assigning range.");
+    return;
+  }
+
+  LOG_VA_INFO("report_split for %s[%s:%s] successful.", table.name, range.startRow, range.endRow);
+
   cb->response_ok();  
 }
 

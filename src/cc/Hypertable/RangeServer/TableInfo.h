@@ -40,8 +40,9 @@ namespace Hypertable {
   class TableInfo : public ReferenceCount {
 
   public:
-    TableInfo(MasterClientPtr &master_client_ptr, std::string name, SchemaPtr &schemaPtr);
-    std::string &get_name() { return m_name; }
+    TableInfo(MasterClientPtr &master_client_ptr, TableIdentifierT *identifier, SchemaPtr &schemaPtr);
+    virtual ~TableInfo();
+    const char *get_name() { return m_identifier.name; }
     SchemaPtr &get_schema() { 
       boost::mutex::scoped_lock lock(m_mutex);
       return m_schema; 
@@ -56,6 +57,7 @@ namespace Hypertable {
 
   private:
 
+    /**
     struct ltEndRow {
       bool operator()(const std::string &s1, const std::string &s2) const {
 	if (s1 == "")
@@ -67,12 +69,16 @@ namespace Hypertable {
     };
 
     typedef std::map<std::string, RangePtr, ltEndRow> RangeMapT;
+    */
 
-    boost::mutex    m_mutex;
-    MasterClientPtr m_master_client_ptr;
-    std::string     m_name;
-    SchemaPtr       m_schema;
-    RangeMapT       m_range_map;
+    typedef std::map<std::string, RangePtr> RangeMapT;
+
+    boost::mutex     m_mutex;
+    MasterClientPtr  m_master_client_ptr;
+    TableIdentifierT m_identifier;
+    std::string      m_name;
+    SchemaPtr        m_schema;
+    RangeMapT        m_range_map;
   };
 
   typedef boost::intrusive_ptr<TableInfo> TableInfoPtr;

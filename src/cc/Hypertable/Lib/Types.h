@@ -63,6 +63,8 @@ namespace Hypertable {
     int32_t len;
   } BufferT;
 
+  void Copy(TableIdentifierT &src, TableIdentifierT &dst);
+  inline void Free(TableIdentifierT &identifier) { delete [] identifier.name; }
 
   /** Returns encoded (serialized) length of the given TableIdentifierT.
    *

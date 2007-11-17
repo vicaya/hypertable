@@ -30,6 +30,12 @@ using namespace std;
 
 namespace Hypertable {
 
+  void Copy(TableIdentifierT &src, TableIdentifierT &dst) {
+    memcpy(&dst, &src, sizeof(TableIdentifierT));
+    dst.name = new char [ strlen(src.name) + 1 ];
+    strcpy((char *)dst.name, src.name);
+  }
+
   /** Returns encoded (serialized) length of the given TableIdentifierT.
    */
   size_t EncodedLengthTableIdentifier(TableIdentifierT &table_identifier) {

@@ -43,7 +43,7 @@ using namespace std;
 
 
 
-Range::Range(MasterClientPtr &master_client_ptr, SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_schema(schemaPtr), m_maintenance_in_progress(false), m_latest_timestamp(0), m_split_start_time(0), m_hold_updates(false), m_update_counter(0) {
+Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_schema(schemaPtr), m_maintenance_in_progress(false), m_latest_timestamp(0), m_split_start_time(0), m_hold_updates(false), m_update_counter(0) {
   CellStorePtr cellStorePtr;
   std::string accessGroupName;
   AccessGroup *ag;
@@ -51,7 +51,8 @@ Range::Range(MasterClientPtr &master_client_ptr, SchemaPtr &schemaPtr, RangeInfo
   uint32_t storeId;
   int32_t len;
 
-  rangeInfoPtr->get_table_name(m_table_name);
+  Copy(identifier, m_identifier);
+
   rangeInfoPtr->get_start_row(m_start_row);
   rangeInfoPtr->get_end_row(m_end_row);
 
@@ -104,14 +105,24 @@ Range::Range(MasterClientPtr &master_client_ptr, SchemaPtr &schemaPtr, RangeInfo
   return;
 }
 
+
+/**
+ */
+Range::~Range() {
+  Free(m_identifier);
+}
+
+
+/**
+ */
 bool Range::extract_access_group_from_path(std::string &path, std::string &name, uint32_t *storeIdp) {
-  const char *base = strstr(path.c_str(), m_table_name.c_str());
+  const char *base = strstr(path.c_str(), m_identifier.name);
   const char *endptr;
 
   if (base == 0)
     return false;
 
-  base += strlen(m_table_name.c_str());
+  base += strlen(m_identifier.name);
   if (*base++ != '/')
     return false;
   endptr = strchr(base, '/');
@@ -244,6 +255,7 @@ void Range::do_maintenance() {
     char md5DigestStr[33];
     RangeInfoPtr rangeInfoPtr;
     int error;
+    std::string old_start_row;
 
     // this call sets m_split_row
     get_split_row();
@@ -266,9 +278,9 @@ void Range::do_maintenance() {
     /**
      *  Update METADATA with split information
      */
-    if ((error = Global::metadata->get_range_info(m_table_name, m_end_row, rangeInfoPtr)) != Error::OK) {
+    if ((error = Global::metadata->get_range_info(m_identifier.name, m_end_row.c_str(), rangeInfoPtr)) != Error::OK) {
       LOG_VA_ERROR("Unable to find range (table='%s' endRow='%s') in metadata - %s",
-		   m_table_name.c_str(), m_end_row.c_str(), Error::get_text(error));
+		   m_identifier.name, m_end_row.c_str(), Error::get_text(error));
       exit(1);
     }
     rangeInfoPtr->set_split_point(m_split_row);
@@ -311,8 +323,9 @@ void Range::do_maintenance() {
      */
     {
       std::vector<std::string> stores;
+      std::string table_name = m_identifier.name;
       RangeInfoPtr newRangePtr( new RangeInfo() );
-      newRangePtr->set_table_name(m_table_name);
+      newRangePtr->set_table_name(table_name);
       newRangePtr->set_start_row(m_start_row);
       newRangePtr->set_end_row(m_split_row);
       newRangePtr->set_split_log_dir(splitLogDir);
@@ -327,7 +340,8 @@ void Range::do_maintenance() {
      *  Shrink range and remove pending split info from METADATA for existing range
      */
     {
-      boost::mutex::scoped_lock lock(m_mutex);      
+      boost::mutex::scoped_lock lock(m_mutex);
+      old_start_row = m_start_row;
       m_start_row = m_split_row;
       splitLogDir = "";
       rangeInfoPtr->set_start_row(m_start_row);
@@ -370,6 +384,21 @@ void Range::do_maintenance() {
     /**
      *  TBD:  Notify Master of split
      */
+    {
+      RangeT range;
+
+      range.startRow = old_start_row.c_str();
+      range.endRow = m_start_row.c_str();
+
+      // update the latest generation, this should probably be protected
+      m_identifier.generation = m_schema->get_generation();
+
+      if ((error = m_master_client_ptr->report_split(m_identifier, range)) != Error::OK) {
+	LOG_VA_ERROR("Problem reporting split (table=%s, start_row=%s, end_row=%s) to master.",
+		     m_identifier.name, range.startRow, range.endRow);
+      }
+    }
+
     LOG_VA_INFO("Split Complete.  New Range startRow=%s", m_start_row.c_str());
 
   }
@@ -445,6 +474,7 @@ void Range::unlock() {
 void Range::replay_commit_log(string &logDir, uint64_t minLogCutoff) {
   CommitLogReader *clogReader = new CommitLogReader(Global::dfs, logDir);
   CommitLogHeaderT *header;  
+  const char *table_name;
   string tableName;
   const uint8_t *modPtr, *modEnd, *modBase;
   int32_t keyLen, valueLen;
@@ -463,10 +493,10 @@ void Range::replay_commit_log(string &logDir, uint64_t minLogCutoff) {
   clogReader->initialize_read(0);
 
   while (clogReader->next_block(&header)) {
-    tableName = (const char *)&header[1];
+    table_name = (const char *)&header[1];
     nblocks++;
 
-    if (m_table_name == tableName) {
+    if (!strcmp(m_identifier.name, table_name)) {
       modPtr = (uint8_t *)&header[1] + strlen((const char *)&header[1]) + 1;
       modEnd = (uint8_t *)header + header->length;
     
@@ -492,7 +522,7 @@ void Range::replay_commit_log(string &logDir, uint64_t minLogCutoff) {
 	  len = modPtr - modBase;
 	  if (len > (size_t)(goEnd-goNext)) {
 	    // Commit them to current log
-	    if (Global::log->write(m_table_name.c_str(), goBuffer.buf, goNext-goBuffer.buf, header->timestamp) != Error::OK)
+	    if (Global::log->write(m_identifier.name, goBuffer.buf, goNext-goBuffer.buf, header->timestamp) != Error::OK)
 	      return;
 	    // Replay them into memory
 	    while (!insertQueue.empty()) {
@@ -514,7 +544,7 @@ void Range::replay_commit_log(string &logDir, uint64_t minLogCutoff) {
   }
 
   if (goNext > goBuffer.buf) {
-    if (Global::log->write(m_table_name.c_str(), goBuffer.buf, goNext-goBuffer.buf, header->timestamp) != Error::OK)
+    if (Global::log->write(m_identifier.name, goBuffer.buf, goNext-goBuffer.buf, header->timestamp) != Error::OK)
       return;
     // Replay them into memory
     while (!insertQueue.empty()) {
