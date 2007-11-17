@@ -148,6 +148,8 @@ int main(int argc, char **argv) {
 
   app_queue_ptr->join();
 
+  LOG_ERROR("Exiting RangeServer.");
+
   delete comm;
   return 0;
 }

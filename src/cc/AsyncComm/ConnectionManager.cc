@@ -260,7 +260,7 @@ void ConnectionManager::handle(EventPtr &eventPtr) {
       connState->connected = true;
       connState->cond.notify_all();
     }
-    else {
+    else if (eventPtr->type == Event::ERROR || eventPtr->type == Event::DISCONNECT) {
       if (!m_impl->quietMode) {
 	LOG_VA_INFO("%s; Problem connecting to %s, will retry in %d seconds...",
 		    eventPtr->toString().c_str(), connState->serviceName.c_str(), connState->timeout);
