@@ -87,6 +87,7 @@ namespace {
     { Error::RANGESERVER_SCHEMA_PARSE_ERROR,   "RANGE SERVER schema parse error" },
     { Error::RANGESERVER_SCHEMA_INVALID_CFID,  "RANGE SERVER invalid column family id" },
     { Error::RANGESERVER_INVALID_COLUMNFAMILY, "RANGE SERVER invalid column family" },
+    { Error::RANGESERVER_TRUNCATED_COMMIT_LOG, "RANGE SERVER truncated commit log" },
     { 0, 0 }
   };
 
@@ -160,6 +161,7 @@ const int Error::RANGESERVER_RANGE_NOT_FOUND;
 const int Error::RANGESERVER_INVALID_SCANNER_ID;
 const int Error::RANGESERVER_SCHEMA_PARSE_ERROR;
 const int Error::RANGESERVER_SCHEMA_INVALID_CFID;
+const int Error::RANGESERVER_TRUNCATED_COMMIT_LOG;
 
 const char *Error::get_text(int error) {
   const char *text = textMap[error];

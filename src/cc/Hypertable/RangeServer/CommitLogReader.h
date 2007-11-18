@@ -25,6 +25,8 @@
 
 #include <boost/thread/mutex.hpp>
 
+#include "Common/ReferenceCount.h"
+
 #include "Hypertable/Lib/Filesystem.h"
 #include "Hypertable/Lib/Key.h"
 
@@ -38,6 +40,7 @@ namespace Hypertable {
   typedef struct {
     uint32_t     num;
     std::string  fname;
+    int64_t      length;
     uint64_t     timestamp;
   } LogFileInfoT;
 
@@ -45,12 +48,13 @@ namespace Hypertable {
     return lfi1.num < lfi2.num;
   }
 
-  class CommitLogReader {
+  class CommitLogReader : public ReferenceCount {
   public:
     CommitLogReader(Filesystem *fs, std::string &logDir);
     virtual ~CommitLogReader() { return; }
     virtual void initialize_read(uint64_t timestamp);
     virtual bool next_block(CommitLogHeaderT **blockp);
+    virtual int last_error() { return m_error; }
 
   private:
     Filesystem               *m_fs;
@@ -60,7 +64,10 @@ namespace Hypertable {
     size_t                    m_cur_log_offset;
     int32_t                   m_fd;
     DynamicBuffer             m_block_buffer;
+    int                       m_error;
   };
+  typedef boost::intrusive_ptr<CommitLogReader> CommitLogReaderPtr;
+
 }
 
 #endif // HYPERTABLE_COMMITLOGREADER_H

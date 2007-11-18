@@ -41,14 +41,17 @@ ClientBufferedReaderHandler::ClientBufferedReaderHandler(DfsBroker::Client *clie
   if (m_max_outstanding < 2)
     m_max_outstanding = 2;
 
-  for (m_outstanding=0; m_outstanding<m_max_outstanding; m_outstanding++) {
-    if ((m_error = m_client->read(m_fd, DEFAULT_READ_SIZE, this)) != Error::OK) {
-      m_eof = true;
-      break;
-    }
-  }
+  {
+    boost::mutex::scoped_lock lock(m_mutex);
 
-  m_ptr = m_end_ptr = 0;
+    for (m_outstanding=0; m_outstanding<m_max_outstanding; m_outstanding++) {
+      if ((m_error = m_client->read(m_fd, DEFAULT_READ_SIZE, this)) != Error::OK) {
+	m_eof = true;
+	break;
+      }
+    }
+    m_ptr = m_end_ptr = 0;
+  }
 }
 
 
@@ -130,7 +133,15 @@ int ClientBufferedReaderHandler::read(uint8_t *buf, uint32_t len, uint32_t *nrea
 	m_ptr = 0;
 	read_ahead();
       }
-      return Error::OK;
+      break;
+    }
+    else if (available == 0) {
+      if (m_eof && m_queue.size() == 1) {
+	m_queue.pop();
+	m_ptr = m_end_ptr = 0;
+	*nreadp = len - nleft;
+	break;
+      }
     }
 
     memcpy(ptr, m_ptr, available);
@@ -140,6 +151,7 @@ int ClientBufferedReaderHandler::read(uint8_t *buf, uint32_t len, uint32_t *nrea
     m_ptr = 0;
     read_ahead();
   }
+  return Error::OK;
 }
 
 

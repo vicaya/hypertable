@@ -94,16 +94,6 @@ Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, S
     //cout << "Just added " << cellStorePtrVector[i].c_str() << endl;
   }
 
-#if 0
-  /**
-   * Replay split log
-   */
-  string split_log_dir;
-  rangeInfoPtr->get_split_log_dir(split_log_dir);
-  if (split_log_dir != "")
-    replay_split_log(logDir);
-#endif
-
   return;
 }
 
@@ -363,28 +353,30 @@ void Range::do_maintenance() {
 	m_split_row = "";
       }
 
-      /** block updates **/
+      // block updates
       m_hold_updates = true;
       while (m_update_counter > 0)
 	m_update_quiesce_cond.wait(lock);
 
-      // at this point, there are no running updates
+      /*** At this point, there are no running updates ***/
 
+      // Shrink this range's access groups
       for (size_t i=0; i<m_access_group_vector.size(); i++)
 	m_access_group_vector[i]->shrink(m_start_row);
 
-      /** unblock updates **/
+      // unblock updates
       m_hold_updates = false;
       m_maintenance_finished_cond.notify_all();
     }
 
+    // close split log
     if ((error = m_split_log_ptr->close(Global::log->get_timestamp())) != Error::OK) {
       LOG_VA_ERROR("Problem closing split log '%s' - %s", m_split_log_ptr->get_log_dir().c_str(), Error::get_text(error));
     }
     m_split_log_ptr = 0;
 
     /**
-     *  TBD:  Notify Master of split
+     *  Notify Master of split
      */
     {
       RangeT range;
@@ -395,6 +387,8 @@ void Range::do_maintenance() {
       // update the latest generation, this should probably be protected
       m_identifier.generation = m_schema->get_generation();
 
+      LOG_INFO("About to report split");
+      cout << flush;
       if ((error = m_master_client_ptr->report_split(m_identifier, range)) != Error::OK) {
 	LOG_VA_ERROR("Problem reporting split (table=%s, start_row=%s, end_row=%s) to master.",
 		     m_identifier.name, range.startRow, range.endRow);
@@ -457,116 +451,47 @@ void Range::unlock() {
     (*iter).second->unlock();
 }
 
-#if 0
+
 
 /**
- * This whole thing needs to be optimized.  Instead of having each range load
- * read the entire log file, the following should happen:
- * 1. When a range server dies, the master should do the following:
- *   - Determine the new range assignment
- *   - Sort the commit log of the dead range server
- *   - Ask the new range servers to laod the ranges and provide the
- *     the new range servers with the portions of the logs that are
- *     relevant to the range being loaded.
- *
- * TODO: This method should make sure replayed log updates are successfully commited before inserting
- *       them into the memtables
- *
- * FIX ME!!!!
  */
-void Range::replay_split_log(string &log_dir) {
+int Range::replay_split_log(string &log_dir) {
   int error;
-  CommitLogReader *commit_log_reader = new CommitLogReader(Global::dfs, log_dir);
+  CommitLogReaderPtr commit_log_reader_ptr = new CommitLogReader(Global::dfs, log_dir);
   CommitLogHeaderT *header;  
   const uint8_t *base, *ptr, *end;
-
-  const uint8_t *modPtr, *modEnd, *modBase;
-  int32_t keyLen, valueLen;
-  string rowkey;
-  DynamicBuffer goBuffer(65536);
-  uint8_t *goNext = goBuffer.buf;
-  uint8_t *goEnd = goBuffer.buf + 65536;
-  size_t len;
-  size_t count = 0;
+  ByteString32T *key, *value;
   size_t nblocks = 0;
-  pair<ByteString32T *, ByteString32T *>  kvPair;
-  queue< pair<ByteString32T *, ByteString32T *> >  insertQueue;
-  Key keyComps;
-  uint64_t cutoffTime;
+  size_t count = 0;
   
-  commit_log_reader->initialize_read(0);
+  commit_log_reader_ptr->initialize_read(0);
 
-  while (commit_log_reader->next_block(&header)) {
-    table_name = (const char *)&header[1];
-    nblocks++;
+  while (commit_log_reader_ptr->next_block(&header)) {
 
-    base = (uint8_t *)&header[1] + strlen((const char *)&header[1]) + 1;
+    assert(!strcmp(m_identifier.name, (const char *)&header[1]));
+    assert(header->flags == 0);
+
+    ptr = (uint8_t *)&header[1] + strlen((const char *)&header[1]) + 1;
     end = (uint8_t *)header + header->length;
 
-    if ((error = Global::log->write(m_identifier.name, goBuffer.buf, goNext-goBuffer.buf, header->timestamp) != Error::OK))
-      return;
-
-
-      modPtr = 
-      modEnd = 
-    
-      while (modPtr < modEnd) {
-	modBase = modPtr;
-	if (!keyComps.load((ByteString32T *)modBase)) {
-	  LOG_ERROR("Problem deserializing key/value pair from commit log, skipping block...");
-	  break;
-	}
-	memcpy(&keyLen, modPtr, sizeof(int32_t));
-	rowkey = keyComps.rowKey;
-	modPtr += sizeof(int32_t) + keyLen;
-	memcpy(&valueLen, modPtr, sizeof(int32_t));
-	modPtr += sizeof(int32_t) + valueLen;
-
-	// TODO: Check for valid column family!!!
-	if (keyComps.columnFamily == 0 || keyComps.columnFamily >= m_column_family_vector.size())
-	  cutoffTime = min_log_cutoff;
-	else
-	  cutoffTime = m_column_family_vector[keyComps.columnFamily]->get_log_cutoff_time();
-
-	if (rowkey < m_end_row && m_start_row <= rowkey && keyComps.timestamp > cutoffTime) {
-	  len = modPtr - modBase;
-	  if (len > (size_t)(goEnd-goNext)) {
-	    // Commit them to current log
-	    if (Global::log->write(m_identifier.name, goBuffer.buf, goNext-goBuffer.buf, header->timestamp) != Error::OK)
-	      return;
-	    // Replay them into memory
-	    while (!insertQueue.empty()) {
-	      add(insertQueue.front().first, insertQueue.front().second);
-	      insertQueue.pop();
-	    }
-	    goNext = goBuffer.buf;
-	  }
-	  assert(len <= (size_t)(goEnd-goNext));
-	  memcpy(goNext, modBase, len);
-	  kvPair.first = (ByteString32T *)goNext;
-	  kvPair.second = (ByteString32T *)(goNext + sizeof(int32_t) + keyLen);
-	  goNext += len;
-	  insertQueue.push(kvPair);
-	  count++;
-	}
-      }
-
-  }
-
-  if (goNext > goBuffer.buf) {
-    if (Global::log->write(m_identifier.name, goBuffer.buf, goNext-goBuffer.buf, header->timestamp) != Error::OK)
-      return;
-    // Replay them into memory
-    while (!insertQueue.empty()) {
-      add(insertQueue.front().first, insertQueue.front().second);
-      insertQueue.pop();
+    while (ptr < end) {
+      key = (ByteString32T *)ptr;
+      ptr += Length(key);
+      value = (ByteString32T *)ptr;
+      ptr += Length(value);
+      add(key, value);
+      count++;
     }
+    nblocks++;
   }
 
-  LOG_VA_INFO("LOAD RANGE replayed %d updates (%d blocks) from commit log '%s'", count, nblocks, log_dir.c_str());
+  LOG_VA_INFO("Replayed %d updates (%d blocks) from split log '%s'", count, nblocks, log_dir.c_str());
 
+  error = commit_log_reader_ptr->last_error();
+
+  return Error::OK;
 }
-#endif
+
 
 /**
  *

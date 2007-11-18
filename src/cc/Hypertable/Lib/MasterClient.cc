@@ -182,7 +182,7 @@ int MasterClient::report_split(TableIdentifierT &table, RangeT &range) {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       if (m_verbose)
-	LOG_VA_ERROR("Master 'register server' error : %s", MasterProtocol::string_format_message(eventPtr).c_str());
+	LOG_VA_ERROR("Master 'report split' error : %s", MasterProtocol::string_format_message(eventPtr).c_str());
       error = (int)MasterProtocol::response_code(eventPtr);
     }
   }

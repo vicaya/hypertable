@@ -69,7 +69,7 @@ public class Error {
     static public final int HYPERSPACE_ALREADY_LOCKED    = 0x0003000E;
     static public final int HYPERSPACE_LOCK_CONFLICT     = 0x0003000F;
     static public final int HYPERSPACE_NOT_LOCKED        = 0x00030010;
-    static public final int HYPERSPACE_BAD_ATTRIBURTE    = 0x00030011;
+    static public final int HYPERSPACE_BAD_ATTRIBUTE     = 0x00030011;
 
     static public final int MASTER_TABLE_EXISTS  = 0x00040001;
     static public final int MASTER_BAD_SCHEMA    = 0x00040002;
@@ -85,6 +85,8 @@ public class Error {
     static public final int RANGESERVER_SCHEMA_PARSE_ERROR   = 0x00050008;
     static public final int RANGESERVER_SCHEMA_INVALID_CFID  = 0x00050009;
     static public final int RANGESERVER_INVALID_COLUMNFAMILY = 0x0005000A;
+    static public final int RANGESERVER_TRUNCATED_COMMIT_LOG = 0x0005000B;
+
 
     static public String GetText(int lcode) {
 	return mTextMap.get(lcode);
@@ -148,5 +150,6 @@ public class Error {
 	mTextMap.put(RANGESERVER_SCHEMA_PARSE_ERROR,   "RANGE SERVER schema parse error");
 	mTextMap.put(RANGESERVER_SCHEMA_INVALID_CFID,  "RANGE SERVER invalid column family id");
 	mTextMap.put(RANGESERVER_INVALID_COLUMNFAMILY, "RANGE SERVER invalid column family");
+	mTextMap.put(RANGESERVER_TRUNCATED_COMMIT_LOG, "RANGE SERVER truncated commit log");
     }
 }

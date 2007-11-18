@@ -63,6 +63,8 @@ namespace Hypertable {
       return m_latest_timestamp;
     }
 
+    int replay_split_log(string &logDir);
+
     void schedule_maintenance();
     void do_maintenance();
     void do_compaction(bool major=false);
@@ -86,7 +88,7 @@ namespace Hypertable {
     AccessGroup *get_access_group(string &lgName) { return m_access_group_map[lgName]; }
 
   private:
-    //void replay_split_log(string &logDir);
+
     bool extract_access_group_from_path(std::string &path, std::string &name, uint32_t *tableIdp);
 
     uint64_t run_compaction(bool major=false);

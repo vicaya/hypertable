@@ -52,24 +52,10 @@ namespace Hypertable {
       m_schema = schemaPtr;
     }
     bool get_range(RangeT *range, RangePtr &rangePtr);
-    void add_range(RangeInfoPtr &rangeInfoPtr);
+    void add_range(RangeInfoPtr &rangeInfoPtr, RangePtr &rangePtr);
     bool find_containing_range(std::string row, RangePtr &rangePtr);
 
   private:
-
-    /**
-    struct ltEndRow {
-      bool operator()(const std::string &s1, const std::string &s2) const {
-	if (s1 == "")
-	  return false;
-	if (s2 == "")
-	  return true;
-	return s1 < s2;
-      }
-    };
-
-    typedef std::map<std::string, RangePtr, ltEndRow> RangeMapT;
-    */
 
     typedef std::map<std::string, RangePtr> RangeMapT;
 

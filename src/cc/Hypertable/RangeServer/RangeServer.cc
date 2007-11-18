@@ -185,7 +185,7 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : m_mutex(), m_ver
   /**
    * Create Master client
    */
-  m_master_client_ptr = new MasterClient(m_conn_manager_ptr, m_hyperspace_ptr, 20, m_app_queue_ptr);
+  m_master_client_ptr = new MasterClient(m_conn_manager_ptr, m_hyperspace_ptr, 30, m_app_queue_ptr);
   m_master_connection_handler = new ConnectionHandler(m_comm, m_app_queue_ptr, this, m_master_client_ptr);
   m_master_client_ptr->initiate_connection(m_master_connection_handler);
 
@@ -574,7 +574,24 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
     goto abort;
   }
 
-  tableInfoPtr->add_range(rangeInfoPtr);
+  tableInfoPtr->add_range(rangeInfoPtr, rangePtr);
+
+  // TODO: if (flags & RangeServerProtocol::LOAD_RANGE_FLAG_PHANTOM), do the following in 'go live'
+  {
+    std::string split_log_dir;
+    uint64_t timestamp = Global::log->get_timestamp();
+    rangeInfoPtr->get_split_log_dir(split_log_dir);
+    if (split_log_dir != "") {
+      if ((error = Global::log->link_log(table->name, split_log_dir.c_str(), timestamp)) != Error::OK) {
+	errMsg = (string)"Unable to link external log '" + split_log_dir + "' into commit log";
+	goto abort;
+      }
+      if ((error = rangePtr->replay_split_log(split_log_dir)) != Error::OK) {
+	errMsg = (string)"Problem replaying split log '" + split_log_dir + "'";
+	goto abort;
+      }
+    }
+  }
 
   rangeInfoPtr->set_log_dir(Global::log->get_log_dir());
   Global::metadata->sync();
@@ -780,7 +797,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
   }
 
   if (Global::verbose) {
-    LOG_VA_INFO("Dropped %d updates since they didn't lie within any of this server's ranges", stopMods.size());
+    LOG_VA_INFO("Dropped %d updates (out-of-range)", stopMods.size());
   }
 
   /**

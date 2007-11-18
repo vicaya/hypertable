@@ -356,19 +356,18 @@ void Master::report_split(ResponseCallback *cb, TableIdentifierT &table, RangeT 
   struct sockaddr_in addr;
   RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30);
 
+  cb->response_ok();  
+
   cb->get_address(addr);
 
   if ((error = rsc.load_range(addr, table, range, 0)) != Error::OK) {
     std::string addrStr;
     LOG_VA_ERROR("Problem issuing 'load range' command for %s[%s:%s] at server %s",
 		 table.name, range.startRow, range.endRow, InetAddr::string_format(addrStr, addr));
-    cb->error(error, "Problem assigning range.");
-    return;
   }
+  else
+    LOG_VA_INFO("report_split for %s[%s:%s] successful.", table.name, range.startRow, range.endRow);
 
-  LOG_VA_INFO("report_split for %s[%s:%s] successful.", table.name, range.startRow, range.endRow);
-
-  cb->response_ok();  
 }
 
 

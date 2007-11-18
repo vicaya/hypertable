@@ -288,6 +288,11 @@ int CommitLog::link_log(const char *table_name, const char *log_dir, uint64_t ti
     return (int)Protocol::response_code(event_ptr);
   }
 
+  // Add external log to list of files/dirs to be garbage collected
+  fileInfo.timestamp = m_last_timestamp;
+  fileInfo.fname = log_dir;
+  m_file_info_queue.push(fileInfo);
+
   return Error::OK;
 }
 
