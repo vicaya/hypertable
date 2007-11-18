@@ -53,7 +53,7 @@ namespace Hypertable {
     void compact(ResponseCallback *cb, TableIdentifierT *table, RangeT *range, uint8_t compaction_type);
     void create_scanner(ResponseCallbackCreateScanner *cb, TableIdentifierT *table, RangeT *range, ScanSpecificationT *scan_spec);
     void fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t scannerId);
-    void load_range(ResponseCallback *cb, TableIdentifierT *table, RangeT *range);
+    void load_range(ResponseCallback *cb, TableIdentifierT *table, RangeT *range, uint16_t flags);
     void update(ResponseCallbackUpdate *cb, TableIdentifierT *table, BufferT &buffer);
 
     ApplicationQueuePtr get_application_queue_ptr() { return m_app_queue_ptr; }

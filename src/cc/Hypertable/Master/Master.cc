@@ -358,7 +358,7 @@ void Master::report_split(ResponseCallback *cb, TableIdentifierT &table, RangeT 
 
   cb->get_address(addr);
 
-  if ((error = rsc.load_range(addr, table, range)) != Error::OK) {
+  if ((error = rsc.load_range(addr, table, range, 0)) != Error::OK) {
     std::string addrStr;
     LOG_VA_ERROR("Problem issuing 'load range' command for %s[%s:%s] at server %s",
 		 table.name, range.startRow, range.endRow, InetAddr::string_format(addrStr, addr));

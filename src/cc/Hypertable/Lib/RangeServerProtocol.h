@@ -38,15 +38,18 @@ namespace Hypertable {
     static const short COMMAND_STATUS           = 5;
     static const short COMMAND_MAX              = 6;
 
+    static const uint16_t LOAD_RANGE_FLAG_PHANTOM = 0x0001;
+
     static const char *m_command_strings[];
 
     /** Creates a "load range" request message
      *
      * @param table table identifier
      * @param range range specification
+     * @param flags load flags
      * @return protocol message
      */
-    static CommBuf *create_request_load_range(TableIdentifierT &table, RangeT &range);
+    static CommBuf *create_request_load_range(TableIdentifierT &table, RangeT &range, uint16_t flags);
 
     /** Creates an "update" request message.  The data argument holds a sequence of key/value
      * pairs.  Each key/value pair is encoded as two variable lenght ByteString32T records

@@ -497,7 +497,7 @@ void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t s
 /**
  * LoadRange
  */
-void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, RangeT *range) {
+void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, RangeT *range, uint16_t flags) {
   DynamicBuffer endRowBuffer(0);
   std::string errMsg;
   int error = Error::OK;

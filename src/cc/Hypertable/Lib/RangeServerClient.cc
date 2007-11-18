@@ -35,15 +35,15 @@ RangeServerClient::~RangeServerClient() {
   return;
 }
 
-int RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( RangeServerProtocol::create_request_load_range(table, range) );
+int RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, uint16_t flags, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_load_range(table, range, flags) );
   return send_message(addr, cbufPtr, handler);
 }
 
-int RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range) {
+int RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, uint16_t flags) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( RangeServerProtocol::create_request_load_range(table, range) );
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_load_range(table, range, flags) );
   int error = send_message(addr, cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
