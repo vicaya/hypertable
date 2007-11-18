@@ -64,6 +64,15 @@ namespace Hypertable {
       m_end_row = endRow;
     }
 
+    void get_location(std::string &location) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      location = m_location;
+    }
+    void set_location(std::string &location) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      m_location = location;
+    }
+
     void get_log_dir(std::string &logDir) {
       boost::mutex::scoped_lock lock(m_mutex);
       logDir = m_log_dir;
@@ -110,6 +119,7 @@ namespace Hypertable {
     std::string m_table_name;
     std::string m_start_row;
     std::string m_end_row;
+    std::string m_location;
     std::string m_log_dir;
     std::set<std::string> cellStores;
     std::string m_split_log_dir;

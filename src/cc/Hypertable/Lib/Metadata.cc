@@ -99,6 +99,9 @@ void Metadata::start_element_handler(void *userData, const XML_Char *name, const
   else if (!strcmp(name, "EndRow")) {
     ms_collected_text = "";
   }
+  else if (!strcmp(name, "Location")) {
+    ms_collected_text = "";
+  }
   else if (!strcmp(name, "CellStore")) {
     ms_collected_text = "";
   }
@@ -158,6 +161,11 @@ void Metadata::end_element_handler(void *userData, const XML_Char *name) {
       ms_collected_text = Key::END_ROW_MARKER;
       ms_range->set_end_row(ms_collected_text);
     }
+  }
+  else if (!strcmp(name, "Location")) {
+    assert(ms_range != 0);
+    boost::trim(ms_collected_text);
+    ms_range->set_location(ms_collected_text);
   }
   else if (!strcmp(name, "CellStore")) {
     assert(ms_range != 0);
@@ -227,6 +235,7 @@ void Metadata::sync(const char *fname) {
   string tableName;
   string startRow;
   string endRow;
+  string location;
   string logDir;
   string splitLogDir;
   string splitPoint;
@@ -241,6 +250,7 @@ void Metadata::sync(const char *fname) {
       rangePtr->get_table_name(tableName);
       rangePtr->get_start_row(startRow);
       rangePtr->get_end_row(endRow);
+      rangePtr->get_location(location);
       rangePtr->get_log_dir(logDir);
       rangePtr->get_split_log_dir(splitLogDir);
       rangePtr->get_split_point(splitPoint);
@@ -251,6 +261,7 @@ void Metadata::sync(const char *fname) {
       outfile << "    <TableName>" << tableName << "</TableName>" << endl;
       outfile << "    <StartRow>" << startRow << "</StartRow>" << endl;
       outfile << "    <EndRow>" << endRow << "</EndRow>" << endl;
+      outfile << "    <Location>" << location << "</Location>" << endl;
       outfile << "    <LogDir>" << logDir << "</LogDir>" << endl;
       outfile << "    <SplitLogDir>" << splitLogDir << "</SplitLogDir>" << endl;
       outfile << "    <SplitPoint>" << splitPoint << "</SplitPoint>" << endl;
@@ -281,6 +292,7 @@ void Metadata::display() {
   string tableName;
   string startRow;
   string endRow;
+  string location;
   string logDir;
   string splitLogDir;
   string splitPoint;
@@ -298,6 +310,7 @@ void Metadata::display() {
       rangePtr->get_table_name(tableName);
       rangePtr->get_start_row(startRow);
       rangePtr->get_end_row(endRow);
+      rangePtr->get_location(location);
       rangePtr->get_log_dir(logDir);
       rangePtr->get_split_log_dir(splitLogDir);
       rangePtr->get_split_point(splitPoint);
@@ -305,6 +318,7 @@ void Metadata::display() {
 
       cout << "StartRow = \"" << startRow << "\"" << endl;
       cout << "EndRow = \"" << endRow << "\"" << endl;
+      cout << "Location = \"" << location << "\"" << endl;
       cout << "LogDir = \"" << logDir << "\"" << endl;
       cout << "SplitLogDir = \"" << splitLogDir << "\"" << endl;
       cout << "SplitPoint = \"" << splitPoint << "\"" << endl;

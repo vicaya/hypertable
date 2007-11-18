@@ -529,6 +529,12 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
     }
   }
 
+  /**
+   * Take ownership of the range
+   */
+  rangeInfoPtr->set_location(m_location);
+  Global::metadata->sync();
+
   if (!get_table_info(table->name, tableInfoPtr)) {
     tableInfoPtr = new TableInfo(m_master_client_ptr, table, schemaPtr);
     registerTable = true;
