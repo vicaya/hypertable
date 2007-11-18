@@ -1,4 +1,4 @@
 
 TODO:
 - Refactor so that schema can get updated on change
-
+- Get rid of directly written 'packed' commit log header in favor of a serialized one

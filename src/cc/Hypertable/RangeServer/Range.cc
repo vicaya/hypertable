@@ -94,13 +94,15 @@ Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, S
     //cout << "Just added " << cellStorePtrVector[i].c_str() << endl;
   }
 
+#if 0
   /**
-   * Replay commit log
+   * Replay split log
    */
-  string logDir;
-  rangeInfoPtr->get_log_dir(logDir);
-  if (logDir != "")
-    replay_commit_log(logDir, minLogCutoff);
+  string split_log_dir;
+  rangeInfoPtr->get_split_log_dir(split_log_dir);
+  if (split_log_dir != "")
+    replay_split_log(logDir);
+#endif
 
   return;
 }
@@ -455,6 +457,7 @@ void Range::unlock() {
     (*iter).second->unlock();
 }
 
+#if 0
 
 /**
  * This whole thing needs to be optimized.  Instead of having each range load
@@ -471,11 +474,12 @@ void Range::unlock() {
  *
  * FIX ME!!!!
  */
-void Range::replay_commit_log(string &logDir, uint64_t minLogCutoff) {
-  CommitLogReader *clogReader = new CommitLogReader(Global::dfs, logDir);
+void Range::replay_split_log(string &log_dir) {
+  int error;
+  CommitLogReader *commit_log_reader = new CommitLogReader(Global::dfs, log_dir);
   CommitLogHeaderT *header;  
-  const char *table_name;
-  string tableName;
+  const uint8_t *base, *ptr, *end;
+
   const uint8_t *modPtr, *modEnd, *modBase;
   int32_t keyLen, valueLen;
   string rowkey;
@@ -490,15 +494,21 @@ void Range::replay_commit_log(string &logDir, uint64_t minLogCutoff) {
   Key keyComps;
   uint64_t cutoffTime;
   
-  clogReader->initialize_read(0);
+  commit_log_reader->initialize_read(0);
 
-  while (clogReader->next_block(&header)) {
+  while (commit_log_reader->next_block(&header)) {
     table_name = (const char *)&header[1];
     nblocks++;
 
-    if (!strcmp(m_identifier.name, table_name)) {
-      modPtr = (uint8_t *)&header[1] + strlen((const char *)&header[1]) + 1;
-      modEnd = (uint8_t *)header + header->length;
+    base = (uint8_t *)&header[1] + strlen((const char *)&header[1]) + 1;
+    end = (uint8_t *)header + header->length;
+
+    if ((error = Global::log->write(m_identifier.name, goBuffer.buf, goNext-goBuffer.buf, header->timestamp) != Error::OK))
+      return;
+
+
+      modPtr = 
+      modEnd = 
     
       while (modPtr < modEnd) {
 	modBase = modPtr;
@@ -514,7 +524,7 @@ void Range::replay_commit_log(string &logDir, uint64_t minLogCutoff) {
 
 	// TODO: Check for valid column family!!!
 	if (keyComps.columnFamily == 0 || keyComps.columnFamily >= m_column_family_vector.size())
-	  cutoffTime = minLogCutoff;
+	  cutoffTime = min_log_cutoff;
 	else
 	  cutoffTime = m_column_family_vector[keyComps.columnFamily]->get_log_cutoff_time();
 
@@ -540,7 +550,7 @@ void Range::replay_commit_log(string &logDir, uint64_t minLogCutoff) {
 	  count++;
 	}
       }
-    }
+
   }
 
   if (goNext > goBuffer.buf) {
@@ -553,10 +563,10 @@ void Range::replay_commit_log(string &logDir, uint64_t minLogCutoff) {
     }
   }
 
-  LOG_VA_INFO("LOAD RANGE replayed %d updates (%d blocks) from commit log '%s'", count, nblocks, logDir.c_str());
+  LOG_VA_INFO("LOAD RANGE replayed %d updates (%d blocks) from commit log '%s'", count, nblocks, log_dir.c_str());
 
 }
-
+#endif
 
 /**
  *

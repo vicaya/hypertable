@@ -41,6 +41,7 @@ namespace Hypertable {
     uint64_t  timestamp;
     uint32_t  length;
     uint16_t  checksum;
+    uint16_t  flags;
   } __attribute__((packed)) CommitLogHeaderT;
 
   typedef struct {
@@ -49,7 +50,7 @@ namespace Hypertable {
   } CommitLogFileInfoT;
 
   /**
-   * Update commit log.  Consists of a series of blocks.  Each block contains a series of one
+   * Commit log.  Consists of a series of blocks.  Each block contains a series of one
    * or more key/value pairs that were commtted together.  Each block begins with a header
    * with the following format:
    * <pre>
@@ -66,9 +67,23 @@ namespace Hypertable {
    */
   class CommitLog : public ReferenceCount {
   public:
+
+    enum Flag { LINK=0x0001 };
+
     CommitLog(Filesystem *fs, std::string &logDir, int64_t logFileSize);
     virtual ~CommitLog() { return; }
+
     int write(const char *tableName, uint8_t *data, uint32_t len, uint64_t timestamp);
+
+    /** Links an external log into this log.
+     *
+     * @param table_name name of table that the external log applies to
+     * @param log_dir the directory of the external log
+     * @param timestamp current commit log time obtained with a call to #get_timestamp
+     * @return Error::OK on success or error code on failure
+     */
+    int link_log(const char *table_name, const char *log_dir, uint64_t timestamp);
+
     int close(uint64_t timestamp);
     int purge(uint64_t timestamp);
     std::string &get_log_dir() { return m_log_dir; }
@@ -81,7 +96,8 @@ namespace Hypertable {
     }
 
   private:
-    
+
+    boost::mutex               m_mutex;
     Filesystem                *m_fs;
     std::string                m_log_dir;
     std::string                m_log_file;
@@ -89,7 +105,7 @@ namespace Hypertable {
     int64_t                    m_cur_log_length;
     uint32_t                   m_cur_log_num;
     int32_t                    m_fd;
-    boost::mutex               m_mutex;
+    uint64_t                   m_last_timestamp;
     std::queue<CommitLogFileInfoT>   m_file_info_queue;
   };
 

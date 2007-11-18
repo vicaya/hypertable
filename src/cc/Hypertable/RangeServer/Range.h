@@ -86,7 +86,7 @@ namespace Hypertable {
     AccessGroup *get_access_group(string &lgName) { return m_access_group_map[lgName]; }
 
   private:
-    void replay_commit_log(string &logDir, uint64_t minLogCutoff);
+    //void replay_split_log(string &logDir);
     bool extract_access_group_from_path(std::string &path, std::string &name, uint32_t *tableIdp);
 
     uint64_t run_compaction(bool major=false);

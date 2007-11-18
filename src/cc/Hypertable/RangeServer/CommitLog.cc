@@ -23,16 +23,18 @@
 #include "Common/Error.h"
 #include "Common/StringExt.h"
 
+#include "AsyncComm/DispatchHandlerSynchronizer.h"
+#include "AsyncComm/Protocol.h"
+
 #include "Global.h"
 #include "CommitLog.h"
 
 using namespace Hypertable;
 
-
 /**
  *
  */
-CommitLog::CommitLog(Filesystem *fs, std::string &logDir, int64_t logFileSize) : m_fs(fs), m_log_dir(logDir), m_log_file(), m_max_file_size(logFileSize), m_cur_log_length(0), m_cur_log_num(0), m_mutex(), m_file_info_queue() {
+CommitLog::CommitLog(Filesystem *fs, std::string &logDir, int64_t logFileSize) : m_fs(fs), m_log_dir(logDir), m_max_file_size(logFileSize), m_cur_log_length(0), m_cur_log_num(0), m_last_timestamp(0) {
   int error;
 
   if (m_log_dir.find('/', m_log_dir.length()-1) == string::npos)
@@ -53,24 +55,21 @@ CommitLog::CommitLog(Filesystem *fs, std::string &logDir, int64_t logFileSize) :
  * 
  */
 int CommitLog::write(const char *tableName, uint8_t *data, uint32_t len, uint64_t timestamp) {
+  DispatchHandlerSynchronizer sync_handler;
+  EventPtr event_ptr;
   uint32_t totalLen = sizeof(CommitLogHeaderT) + strlen(tableName) + 1 + len;
   uint8_t *block = new uint8_t [ totalLen ];
   CommitLogHeaderT *header = (CommitLogHeaderT *)block;
   uint8_t *ptr, *endptr;
   uint16_t checksum = 0;
-  CommitLogFileInfoT fileInfo;
   int error;
 
   // marker
   memcpy(header->marker, "-BLOCK--", 8);
-
   header->timestamp = timestamp;
-
-  // length
   header->length = totalLen;
-  
-  // checksum (zero for now)
   header->checksum = 0;
+  header->flags = 0;
 
   // '\0' terminated table name
   ptr = block + sizeof(CommitLogHeaderT);
@@ -85,32 +84,126 @@ int CommitLog::write(const char *tableName, uint8_t *data, uint32_t len, uint64_
     checksum += *ptr;
   header->checksum = checksum;
 
-  if ((error = m_fs->append(m_fd, block, totalLen)) != Error::OK)
-    return error;
+  // kick off log write (protected by lock)
+  {
+    boost::mutex::scoped_lock lock(m_mutex);
+    if ((error = m_fs->append(m_fd, block, totalLen, &sync_handler)) != Error::OK)
+      return error;
+    if ((error = m_fs->flush(m_fd, &sync_handler)) != Error::OK)
+      return error;
+    m_last_timestamp = timestamp;
+    m_cur_log_length += totalLen;
+  }
 
-  if ((error = m_fs->flush(m_fd)) != Error::OK)
-    return error;
+  // wait for append to complete
+  if (!sync_handler.wait_for_reply(event_ptr)) {
+    LOG_VA_ERROR("Problem appending to commit log file '%s' - %s",
+		 m_log_file.c_str(), Protocol::string_format_message(event_ptr).c_str());
+    return (int)Protocol::response_code(event_ptr);
+  }
 
-  m_cur_log_length += totalLen;
+  // wait for flush to complete
+  if (!sync_handler.wait_for_reply(event_ptr)) {
+    LOG_VA_ERROR("Problem flushing commit log file '%s' - %s",
+		 m_log_file.c_str(), Protocol::string_format_message(event_ptr).c_str());
+    return (int)Protocol::response_code(event_ptr);
+  }
 
   /**
    * Roll the log
    */
   if (m_cur_log_length > m_max_file_size) {
-    char buf[32];
+    CommitLogFileInfoT fileInfo;
 
     /**
      *  Write trailing empty block
      */
-    checksum = 0;
     header = new CommitLogHeaderT[1];
+    memcpy(header->marker, "-BLOCK--", 8);
     header->checksum = 0;
+    header->timestamp = m_last_timestamp;
     header->length = sizeof(CommitLogHeaderT);
+    header->flags = 0;
+
+    checksum = 0;
     endptr = (uint8_t *)&header[1];
-    for (ptr=block; ptr<endptr; ptr++)
+    for (ptr=(uint8_t *)header; ptr<endptr; ptr++)
       checksum += *ptr;
     header->checksum = checksum;
 
+    {
+      boost::mutex::scoped_lock lock(m_mutex);
+
+      if ((error = m_fs->append(m_fd, header, sizeof(CommitLogHeaderT))) != Error::OK) {
+	LOG_VA_ERROR("Problem appending %d bytes to commit log file '%s' - %s", sizeof(CommitLogHeaderT), m_log_file.c_str(), Error::get_text(error));
+	return error;
+      }
+
+      if ((error = m_fs->flush(m_fd)) != Error::OK) {
+	LOG_VA_ERROR("Problem flushing commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
+	return error;
+      }
+
+      if ((error = m_fs->close(m_fd)) != Error::OK) {
+	LOG_VA_ERROR("Problem closing commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
+	return error;
+      }
+
+      fileInfo.timestamp = m_last_timestamp;
+      fileInfo.fname = m_log_file;
+      m_file_info_queue.push(fileInfo);
+
+      m_last_timestamp = 0;
+      m_cur_log_length = 0;
+
+      m_cur_log_num++;
+      m_log_file = m_log_dir + m_cur_log_num;
+
+      if ((error = m_fs->create(m_log_file, true, 8192, 3, 67108864, &m_fd)) != Error::OK) {
+	LOG_VA_ERROR("Problem creating commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
+	return error;
+      }
+    }
+
+  }
+
+  return Error::OK;
+}
+
+
+/** This method links an external log into this log by first rolling the log.
+ * The current log file is closed and a new one is opened.  The linked to log
+ * directory is written as the first log entry in the newly opened file.  Link
+ * entries have the Type::LINK bit set in the flags field of the header.
+ */
+int CommitLog::link_log(const char *table_name, const char *log_dir, uint64_t timestamp) {
+  uint8_t *ptr, *endptr;
+  uint16_t checksum = 0;
+  int error;
+  CommitLogFileInfoT fileInfo;
+  CommitLogHeaderT *header;
+
+  /**
+   * Roll the log
+   */
+
+  // Write trailing empty block
+  header = new CommitLogHeaderT[1];
+  memcpy(header->marker, "-BLOCK--", 8);
+  header->checksum = 0;
+  header->timestamp = m_last_timestamp;
+  header->length = sizeof(CommitLogHeaderT);
+  header->flags = 0;
+
+  checksum = 0;
+  endptr = (uint8_t *)&header[1];
+  for (ptr=(uint8_t *)header; ptr<endptr; ptr++)
+    checksum += *ptr;
+  header->checksum = checksum;
+
+  {
+    boost::mutex::scoped_lock lock(m_mutex);
+    
     if ((error = m_fs->append(m_fd, header, sizeof(CommitLogHeaderT))) != Error::OK) {
       LOG_VA_ERROR("Problem appending %d bytes to commit log file '%s' - %s", sizeof(CommitLogHeaderT), m_log_file.c_str(), Error::get_text(error));
       return error;
@@ -126,21 +219,73 @@ int CommitLog::write(const char *tableName, uint8_t *data, uint32_t len, uint64_
       return error;
     }
 
-    fileInfo.timestamp = timestamp;
+    fileInfo.timestamp = m_last_timestamp;
     fileInfo.fname = m_log_file;
     m_file_info_queue.push(fileInfo);
 
-    m_cur_log_num++;
-    sprintf(buf, "%d", m_cur_log_num);
-    m_log_file = m_log_dir + buf;
-
+    m_last_timestamp = 0;
     m_cur_log_length = 0;
+
+    m_cur_log_num++;
+    m_log_file = m_log_dir + m_cur_log_num;
 
     if ((error = m_fs->create(m_log_file, true, 8192, 3, 67108864, &m_fd)) != Error::OK) {
       LOG_VA_ERROR("Problem creating commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
       return error;
     }
+  }
 
+  DispatchHandlerSynchronizer sync_handler;
+  EventPtr event_ptr;
+  uint32_t totalLen = sizeof(CommitLogHeaderT) + strlen(table_name) + 1 + strlen(log_dir) + 1;
+  uint8_t *block = new uint8_t [ totalLen ];
+  header = (CommitLogHeaderT *)block;
+
+  // marker
+  memcpy(header->marker, "-BLOCK--", 8);
+  header->timestamp = timestamp;
+  header->length = totalLen;
+  header->checksum = 0;
+  header->flags = LINK;
+
+  // table name
+  ptr = block + sizeof(CommitLogHeaderT);
+  strcpy((char *)ptr, table_name);
+  ptr += strlen((char *)ptr) + 1;
+
+  // external log
+  strcpy((char *)ptr, log_dir);
+  ptr += strlen((char *)ptr) + 1;
+
+  // compute checksum
+  endptr = block + totalLen;
+  for (ptr=block; ptr<endptr; ptr++)
+    checksum += *ptr;
+  header->checksum = checksum;
+
+  // kick off log write (protected by lock)
+  {
+    boost::mutex::scoped_lock lock(m_mutex);
+    if ((error = m_fs->append(m_fd, block, totalLen, &sync_handler)) != Error::OK)
+      return error;
+    if ((error = m_fs->flush(m_fd, &sync_handler)) != Error::OK)
+      return error;
+    m_last_timestamp = timestamp;
+    m_cur_log_length += totalLen;
+  }
+
+  // wait for append to complete
+  if (!sync_handler.wait_for_reply(event_ptr)) {
+    LOG_VA_ERROR("Problem appending to commit log file '%s' - %s",
+		 m_log_file.c_str(), Protocol::string_format_message(event_ptr).c_str());
+    return (int)Protocol::response_code(event_ptr);
+  }
+
+  // wait for flush to complete
+  if (!sync_handler.wait_for_reply(event_ptr)) {
+    LOG_VA_ERROR("Problem flushing commit log file '%s' - %s",
+		 m_log_file.c_str(), Protocol::string_format_message(event_ptr).c_str());
+    return (int)Protocol::response_code(event_ptr);
   }
 
   return Error::OK;
@@ -153,25 +298,41 @@ int CommitLog::write(const char *tableName, uint8_t *data, uint32_t len, uint64_
  */
 int CommitLog::close(uint64_t timestamp) {
   CommitLogHeaderT *header = new CommitLogHeaderT[1];
-  int error = Error::OK;
+  int error;
+  uint8_t *ptr, *endptr;
+  uint16_t checksum = 0;
+
   memcpy(header->marker, "-BLOCK--", 8);
   header->timestamp = timestamp;
-  header->checksum = 0;
   header->length = sizeof(CommitLogHeaderT);
+  header->checksum = 0;
+  header->flags = 0;
 
-  if ((error = m_fs->append(m_fd, header, sizeof(CommitLogHeaderT))) != Error::OK) {
-    LOG_VA_ERROR("Problem appending %d bytes to commit log file '%s' - %s", sizeof(CommitLogHeaderT), m_log_file.c_str(), Error::get_text(error));
+  checksum = 0;
+  endptr = (uint8_t *)&header[1];
+  for (ptr=(uint8_t *)header; ptr<endptr; ptr++)
+    checksum += *ptr;
+  header->checksum = checksum;
+
+  {
+    boost::mutex::scoped_lock lock(m_mutex);
+
+    if ((error = m_fs->append(m_fd, header, sizeof(CommitLogHeaderT))) != Error::OK) {
+      LOG_VA_ERROR("Problem appending %d bytes to commit log file '%s' - %s", sizeof(CommitLogHeaderT), m_log_file.c_str(), Error::get_text(error));
       return error;
-  }
+    }
 
-  if ((error = m_fs->flush(m_fd)) != Error::OK) {
-    LOG_VA_ERROR("Problem flushing commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
-    return error;
-  }
+    if ((error = m_fs->flush(m_fd)) != Error::OK) {
+      LOG_VA_ERROR("Problem flushing commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
+      return error;
+    }
 
-  if ((error = m_fs->close(m_fd)) != Error::OK) {
-    LOG_VA_ERROR("Problem closing commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
-    return error;
+    if ((error = m_fs->close(m_fd)) != Error::OK) {
+      LOG_VA_ERROR("Problem closing commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
+      return error;
+    }
+    
+    m_fd = 0;
   }
 
   return Error::OK;
