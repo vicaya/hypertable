@@ -356,3 +356,37 @@ void Schema::set_generation(const char *generation) {
   m_generation = genNum;
 }
 
+
+void Schema::add_access_group(AccessGroup *ag) {
+  AccessGroupMapT::const_iterator iter = m_access_group_map.find(ag->name);
+
+  if (iter != m_access_group_map.end()) {
+    m_error_string = std::string("Access group '") + ag->name + "' multiply defined";
+    delete ag;
+    return;
+  }
+
+  m_access_group_map[ag->name] = ag;
+}
+
+void Schema::add_column_family(ColumnFamily *cf) {
+  ColumnFamilyMapT::const_iterator cf_iter = m_column_family_map.find(cf->name);
+  
+  if (cf_iter != m_column_family_map.end()) {
+    m_error_string = std::string("Column family '") + cf->name + "' multiply defined";
+    delete cf;
+    return;
+  }
+
+  AccessGroupMapT::const_iterator ag_iter = m_access_group_map.find(cf->lg);
+
+  if (ag_iter == m_access_group_map.end()) {
+    m_error_string = std::string("Invalid access group '") + cf->lg + "' for column family '" + cf->name + "'";
+    delete cf;
+    return;
+  }
+
+  m_column_family_map[cf->name] = cf;
+  (*ag_iter).second->columns.push_back(cf);
+
+}

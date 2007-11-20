@@ -28,6 +28,7 @@
 #include "Common/Properties.h"
 #include "Common/System.h"
 
+#include "CommandInterpreter.h"
 #include "Client.h"
 
 using namespace Hyperspace;
@@ -93,3 +94,7 @@ int Client::get_schema(std::string tableName, std::string &schema) {
   return m_master_client_ptr->get_schema(tableName.c_str(), schema);
 }
 
+
+CommandInterpreter *Client::create_interpreter() {
+  return new CommandInterpreter(this);
+}

@@ -34,6 +34,7 @@
 namespace Hypertable {
 
   class Comm;
+  class CommandInterpreter;
 
   class Client {
 
@@ -45,7 +46,7 @@ namespace Hypertable {
     int open_table(std::string name, TablePtr &tablePtr);
     int get_schema(std::string tableName, std::string &schema);
 
-    //int create_interpreter(CommandInter
+    CommandInterpreter *create_interpreter();
 
     //Table OpenTable();
     //void DeleteTable();

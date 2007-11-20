@@ -42,6 +42,7 @@ namespace Hypertable {
     static const int INVALID_METADATA   = 8;
     static const int BAD_KEY            = 9;
     static const int METADATA_NOT_FOUND = 10;
+    static const int HQL_PARSE_ERROR    = 11;
 
     static const int COMM_NOT_CONNECTED     = 0x00010001;
     static const int COMM_BROKEN_CONNECTION = 0x00010002;
@@ -105,6 +106,7 @@ namespace Hypertable {
   class Exception : public std::runtime_error {
   public:
     Exception(int error) : std::runtime_error(Error::get_text_string(error)), m_error(error) { return; }
+    Exception(int error, std::string msg) : std::runtime_error(msg), m_error(error) { return; }
     int code() { return m_error; }
   private:
     int m_error;
