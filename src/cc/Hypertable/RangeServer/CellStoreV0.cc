@@ -501,6 +501,30 @@ int CellStoreV0::load_index() {
 }
 
 
+/**
+ *
+ */
+void CellStoreV0::display_block_info() {
+  ByteString32T *last_key = 0;
+  uint32_t last_offset = 0;
+  uint32_t block_size;
+  size_t i=0;
+  for (IndexMapT::const_iterator iter = m_index.begin(); iter != m_index.end(); iter++) {
+    if (last_key) {
+      block_size = (*iter).second - last_offset;
+      cout << i << ": size=" << block_size << " row=" << (const char *)last_key->data << endl;
+      i++;
+    }
+    last_offset = (*iter).second;
+    last_key = (*iter).first;
+  }
+  if (last_key) {
+    block_size = m_trailer.fixIndexOffset - last_offset;
+    cout << i << ": size=" << block_size << " row=" << (const char *)last_key->data << endl;
+  }
+}
+
+
 void CellStoreV0::record_split_row(const ByteString32T *key) {
   m_split_row = (const char *)key->data;
   //cout << "record_split_row = " << m_split_row << endl;

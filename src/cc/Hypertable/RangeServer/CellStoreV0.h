@@ -69,6 +69,8 @@ namespace Hypertable {
      */
     virtual CellListScanner *create_scanner(ScanContextPtr &scanContextPtr);
 
+    void display_block_info();
+
     friend class CellStoreScannerV0;
 
   protected:
@@ -107,6 +109,8 @@ namespace Hypertable {
     std::string            m_split_row;
     int                    m_file_id;
   };
+  typedef boost::intrusive_ptr<CellStoreV0> CellStoreV0Ptr;
+
 
 }
 

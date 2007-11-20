@@ -68,9 +68,9 @@ target_link_libraries (Hypertable.RangeServer pthread ${BOOST_LIB} Hypertable Hy
 #add_executable (cellCacheTest CellCache.cc CellCacheScanner.cc tests/cellCacheTest.cc ScanContext.cc ${TEST_DEPENDENCIES})
 #target_link_libraries (cellCacheTest pthread ${BOOST_LIB} Hypertable AsyncComm Common log4cpp)
 
-# cellStoreDump
-add_executable (cellStoreDump Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc cellStoreDump.cc CellStoreScannerV0.cc FileBlockCache.cc Global.cc ScanContext.cc)
-target_link_libraries (cellStoreDump pthread ${BOOST_LIB} Hypertable DfsBroker AsyncComm Common log4cpp ${ZLIB_LIBRARIES})
+# csdump
+add_executable (csdump Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc csdump.cc CellStoreScannerV0.cc FileBlockCache.cc Global.cc ScanContext.cc)
+target_link_libraries (csdump pthread ${BOOST_LIB} Hypertable DfsBroker AsyncComm Common log4cpp ${ZLIB_LIBRARIES})
 
 # cellStoreTest
 #add_executable (cellStoreTest Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc tests/cellStoreTest.cc CellStoreScannerV0.cc CellCache.cc CellCacheScanner.cc FileBlockCache.cc Global.cc CellStore.cc ScanContext.cc ${TEST_DEPENDENCIES})
@@ -107,7 +107,7 @@ add_custom_command (SOURCE ${SRC_DIR}/tests
 #add_test (CellStoreTest2 cellStoreTest2)
 #add_test (CellCacheTest cellCacheTest)
 
-install (TARGETS Hypertable.RangeServer cellStoreDump
+install (TARGETS Hypertable.RangeServer csdump
 	 RUNTIME DESTINATION bin)
 install (FILES tests/urls.txt.gz tests/words.gz tests/shakespeare.txt.gz DESTINATION demo)
 

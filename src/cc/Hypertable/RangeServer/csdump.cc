@@ -50,6 +50,7 @@ namespace {
     "",
     "OPTIONS:",
     "  --trailer-only  - Dump out the trailer information only",
+    "  --block-info    - Dump block information",
     "",
     "Dumps the contents of the CellStore contained in the DFS file <fname>.",
     0
@@ -68,7 +69,8 @@ int main(int argc, char **argv) {
   ByteString32T *key;
   ByteString32T *value;
   bool trailer_only = false;
-  CellStorePtr cellStorePtr;
+  bool block_info = false;
+  CellStoreV0Ptr cellStorePtr;
 
   ReactorFactory::initialize(1);
   System::initialize(argv[0]);
@@ -76,6 +78,8 @@ int main(int argc, char **argv) {
   for (int i=1; i<argc; i++) {
     if (!strcmp(argv[i], "--trailer-only"))
       trailer_only = true;
+    else if (!strcmp(argv[i], "--block-info"))
+      block_info = true;
     else if (!strcmp(argv[i], "--help"))
       Usage::dump_and_exit(usage);
     else if (fname == "")
@@ -111,6 +115,11 @@ int main(int argc, char **argv) {
 
   if (cellStorePtr->load_index() != 0)
     return 1;
+
+  if (block_info) {
+    cellStorePtr->display_block_info();
+    return 0;
+  }
 
   /**
    * Dump keys

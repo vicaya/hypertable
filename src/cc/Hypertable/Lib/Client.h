@@ -45,6 +45,8 @@ namespace Hypertable {
     int open_table(std::string name, TablePtr &tablePtr);
     int get_schema(std::string tableName, std::string &schema);
 
+    //int create_interpreter(CommandInter
+
     //Table OpenTable();
     //void DeleteTable();
     // String [] ListTables();
