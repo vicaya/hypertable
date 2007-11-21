@@ -33,6 +33,7 @@
 
 extern "C" {
 #include <limits.h>
+#include <time.h>
 }
 
 #include "Schema.h"
@@ -40,7 +41,8 @@ extern "C" {
 using namespace std;
 using namespace boost::spirit;
 
-#define display_string(str) // cerr << str << endl
+#define display_string(str) //cerr << str << endl
+#define display_string_with_val(str, val) //cerr << str << " val=" << val << endl
 
 namespace Hypertable {
 
@@ -54,7 +56,9 @@ namespace Hypertable {
 
     class hql_interpreter_scan_state {
     public:
-      hql_interpreter_scan_state() : start_row_inclusive(true), end_row_inclusive(true), limit(0), max_versions(0), start_time(0), end_time(0) { }
+      hql_interpreter_scan_state() : start_row_inclusive(true), end_row_inclusive(true), limit(0), max_versions(0), start_time(0), end_time(0) {
+	memset(&tmval, 0, sizeof(tmval));
+      }
       std::vector<std::string> columns;
       std::string row;
       std::string start_row;
@@ -63,6 +67,7 @@ namespace Hypertable {
       bool end_row_inclusive;
       uint32_t limit;
       uint32_t max_versions;
+      struct tm tmval;
       uint64_t start_time;
       uint64_t end_time;
       std::string outfile;
@@ -229,6 +234,8 @@ namespace Hypertable {
 	display_string("scan_set_row");      
 	if (state.scan.row != "")
 	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT ROW predicate multiply defined."));
+	else if (state.scan.start_row != "" || state.scan.end_row != "")
+	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT conflicting row specifications."));
 	state.scan.row = std::string(str, end-str);
 	trim_if(state.scan.row, boost::is_any_of("'\""));
       }
@@ -236,27 +243,35 @@ namespace Hypertable {
     };
 
     struct scan_set_start_row {
-      scan_set_start_row(hql_interpreter_state &state_) : state(state_) { }
+      scan_set_start_row(hql_interpreter_state &state_, bool inclusive_) : state(state_), inclusive(inclusive_) { }
       void operator()(char const *str, char const *end) const { 
 	display_string("scan_set_start_row");
+	if (state.scan.row != "")
+	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT conflicting row specifications."));
 	if (state.scan.start_row != "")
-	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT START_ROW predicate multiply defined."));
+	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT row range lower bound specified more than once."));
 	state.scan.start_row = std::string(str, end-str);
 	trim_if(state.scan.start_row, boost::is_any_of("'\""));
+	state.scan.start_row_inclusive = inclusive;
       }
       hql_interpreter_state &state;
+      bool inclusive;
     };
 
     struct scan_set_end_row {
-      scan_set_end_row(hql_interpreter_state &state_) : state(state_) { }
+      scan_set_end_row(hql_interpreter_state &state_, bool inclusive_) : state(state_), inclusive(inclusive_) { }
       void operator()(char const *str, char const *end) const { 
 	display_string("scan_set_end_row");
+	if (state.scan.row != "")
+	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT conflicting row specifications."));
 	if (state.scan.end_row != "")
-	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT END_ROW predicate multiply defined."));
+	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT row range upper bound specified more than once."));
 	state.scan.end_row = std::string(str, end-str);
 	trim_if(state.scan.end_row, boost::is_any_of("'\""));
+	state.scan.end_row_inclusive = inclusive;
       }
       hql_interpreter_state &state;
+      bool inclusive;
     };
 
     struct scan_set_max_versions {
@@ -281,6 +296,94 @@ namespace Hypertable {
       hql_interpreter_state &state;
     };
 
+    struct scan_set_outfile {
+      scan_set_outfile(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("scan_set_outfile");
+	if (state.scan.outfile != "")
+	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT INTO FILE multiply defined."));
+	state.scan.outfile = std::string(str, end-str);
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct scan_set_year {
+      scan_set_year(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(const unsigned int &ival) const { 
+	display_string_with_val("scan_set_year", ival);
+	state.scan.tmval.tm_year = ival - 1900;
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct scan_set_month {
+      scan_set_month(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(const unsigned int &ival) const { 
+	display_string_with_val("scan_set_month", ival);
+	state.scan.tmval.tm_mon = ival-1;
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct scan_set_day {
+      scan_set_day(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(const unsigned int &ival) const { 
+	display_string_with_val("scan_set_day", ival);
+	state.scan.tmval.tm_mday = ival;
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct scan_set_seconds {
+      scan_set_seconds(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(const unsigned int &ival) const { 
+	display_string_with_val("scan_set_seconds", ival);
+	state.scan.tmval.tm_sec = ival;
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct scan_set_minutes {
+      scan_set_minutes(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(const unsigned int &ival) const { 
+	display_string_with_val("scan_set_minutes", ival);
+	state.scan.tmval.tm_min = ival;
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct scan_set_hours {
+      scan_set_hours(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(const unsigned int &ival) const { 
+	display_string_with_val("scan_set_hours", ival);
+	state.scan.tmval.tm_hour = ival;
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct scan_set_start_time {
+      scan_set_start_time(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("scan_set_start_time");
+	time_t t = mktime(&state.scan.tmval);
+	if (t == (time_t)-1)
+	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT invalid start time."));
+	state.scan.start_time = (uint64_t)t * 1000000LL;
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct scan_set_end_time {
+      scan_set_end_time(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("scan_set_end_time");
+	time_t t = mktime(&state.scan.tmval);
+	if (t == (time_t)-1)
+	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT invalid end time."));
+	state.scan.end_time = (uint64_t)t * 1000000LL;
+      }
+      hql_interpreter_state &state;
+    };
 
     struct hql_interpreter : public grammar<hql_interpreter> {
       hql_interpreter(hql_interpreter_state &state_) : state(state_) {}
@@ -375,16 +478,20 @@ namespace Hypertable {
 		- (keywords)
 	    ];
 
+	  string_literal 
+	    = single_string_literal
+	    | double_string_literal
+	    ;
+
 	  single_string_literal
 	    = lexeme_d[ chlit<>('\'') >>
 			+( anychar_p-chlit<>('\'') ) >>
 			chlit<>('\'') ];
 
-	  string_literal
+	  double_string_literal
 	    = lexeme_d[ chlit<>('"') >>
 			+( anychar_p-chlit<>('"') ) >>
 			chlit<>('"') ];
-
 
 	  statement
 	    = select_statement[set_command(self.state, COMMAND_SELECT)]
@@ -470,30 +577,27 @@ namespace Hypertable {
 	      >> ( '*' | ( identifier[scan_add_column_family(self.state)] >> *( COMMA >> identifier[scan_add_column_family(self.state)] ) ) ) 
 	      >> FROM >> identifier
 	      >> !where_clause
-	      >> !into_file_clause
-	    ;
-
-	  into_file_clause
-	    = INTO >> FILE >> single_string_literal
-	    | INTO >> FILE >> string_literal
+	      >> *( option_spec )
 	    ;
 
 	  where_clause
-	    = WHERE >> predicate >> *( AND >> predicate )
+	    = WHERE >> row_restriction_clause >> *( AND >> row_restriction_clause )
 	    ;
 
-	  predicate
-	    =  
-	    ROW >> EQUAL >> string_literal[scan_set_row(self.state)]
-	    | ROW >> EQUAL >> single_string_literal[scan_set_row(self.state)]
-	    | START_ROW >> *( INCLUSIVE | EXCLUSIVE ) >> EQUAL >> string_literal[scan_set_start_row(self.state)]
-	    | START_ROW >> *( INCLUSIVE | EXCLUSIVE ) >> EQUAL >> single_string_literal[scan_set_start_row(self.state)]
-	    | END_ROW >> *( INCLUSIVE | EXCLUSIVE ) >> EQUAL >> string_literal[scan_set_end_row(self.state)]
-	    | END_ROW >> *( INCLUSIVE | EXCLUSIVE ) >> EQUAL >> single_string_literal[scan_set_end_row(self.state)]
-	    | START_TIME >> EQUAL >> date_expression 
-	    | END_TIME >> EQUAL >> date_expression
+	  row_restriction_clause
+	    =  ROW >> EQUAL >> string_literal[scan_set_row(self.state)]
+	    | ROW >> GT >> string_literal[scan_set_start_row(self.state, false)]
+	    | ROW >> GE >> string_literal[scan_set_start_row(self.state, true)]
+	    | ROW >> LT >> string_literal[scan_set_end_row(self.state, false)]
+	    | ROW >> LE >> string_literal[scan_set_end_row(self.state, true)]
+	    ;
+
+	  option_spec
+	    = START_TIME >> EQUAL >> date_expression[scan_set_start_time(self.state)]
+	    | END_TIME >> EQUAL >> date_expression[scan_set_end_time(self.state)]
 	    | MAX_VERSIONS >> EQUAL >> uint_p[scan_set_max_versions(self.state)]
 	    | LIMIT >> EQUAL >> uint_p[scan_set_limit(self.state)]
+	    | INTO >> FILE >> string_literal[scan_set_outfile(self.state)]
 	    ;
 
 	  date_expression
@@ -509,21 +613,21 @@ namespace Hypertable {
 
 	  date
 	    = lexeme_d[
-		       limit_d(0u, 9999u)[uint4_p] >> '-'   //  Year
-		       >>  limit_d(1u, 12u)[uint2_p] >> '-' //  Month 01..12
-		       >>  limit_d(1u, 31u)[uint2_p]        //  Day 01..31
+		       limit_d(0u, 9999u)[uint4_p[scan_set_year(self.state)]] >> '-'    //  Year
+		       >>  limit_d(1u, 12u)[uint2_p[scan_set_month(self.state)]] >> '-' //  Month 01..12
+		       >>  limit_d(1u, 31u)[uint2_p[scan_set_day(self.state)]]          //  Day 01..31
 	    ];	  
 	    
 
 	  time 
 	    = lexeme_d[
-		       limit_d(0u, 23u)[uint2_p] >> ':'     //  Hours 00..23
-		       >>  limit_d(0u, 59u)[uint2_p] >> ':' //  Minutes 00..59
-		       >>  limit_d(0u, 59u)[uint2_p]        //  Seconds 00..59
+		       limit_d(0u, 23u)[uint2_p[scan_set_hours(self.state)]] >> ':'     //  Hours 00..23
+		       >>  limit_d(0u, 59u)[uint2_p[scan_set_minutes(self.state)]] >> ':' //  Minutes 00..59
+		       >>  limit_d(0u, 59u)[uint2_p[scan_set_seconds(self.state)]]        //  Seconds 00..59
 	    ];
 
 	  year
-	    = lexeme_d[ limit_d(0u, 9999u)[uint4_p] ]
+	    = lexeme_d[ limit_d(0u, 9999u)[uint4_p[scan_set_year(self.state)]] ]
 	    ;
 
 
@@ -545,6 +649,8 @@ namespace Hypertable {
 	  BOOST_SPIRIT_DEBUG_RULE(max_versions_option);
 	  BOOST_SPIRIT_DEBUG_RULE(statement);
 	  BOOST_SPIRIT_DEBUG_RULE(string_literal);
+	  BOOST_SPIRIT_DEBUG_RULE(single_string_literal);
+	  BOOST_SPIRIT_DEBUG_RULE(double_string_literal);
 	  BOOST_SPIRIT_DEBUG_RULE(ttl_option);
 	  BOOST_SPIRIT_DEBUG_RULE(access_group_definition);
 	  BOOST_SPIRIT_DEBUG_RULE(access_group_option);
@@ -555,8 +661,8 @@ namespace Hypertable {
 	  BOOST_SPIRIT_DEBUG_RULE(show_statement);
 	  BOOST_SPIRIT_DEBUG_RULE(select_statement);
 	  BOOST_SPIRIT_DEBUG_RULE(where_clause);
-	  BOOST_SPIRIT_DEBUG_RULE(into_file_clause);
-	  BOOST_SPIRIT_DEBUG_RULE(predicate);
+	  BOOST_SPIRIT_DEBUG_RULE(row_restriction_clause);
+	  BOOST_SPIRIT_DEBUG_RULE(option_spec);
 	  BOOST_SPIRIT_DEBUG_RULE(date_expression);
 	  BOOST_SPIRIT_DEBUG_RULE(datetime);
 	  BOOST_SPIRIT_DEBUG_RULE(date);
@@ -571,10 +677,12 @@ namespace Hypertable {
 	rule<ScannerT>
 	column_definition, column_option, create_definition, create_definitions,
 	create_table_statement, duration, identifier, max_versions_option,
-        statement, single_string_literal, string_literal, ttl_option, access_group_definition,
+        statement, single_string_literal, double_string_literal, string_literal,
+        ttl_option, access_group_definition,
         access_group_option, in_memory_option, blocksize_option, help_statement,
         describe_table_statement, show_statement, select_statement, where_clause,
-	into_file_clause, predicate, date_expression, datetime, date, time, year;
+        row_restriction_clause, option_spec, date_expression, datetime, date, time,
+        year;
 
       };
 

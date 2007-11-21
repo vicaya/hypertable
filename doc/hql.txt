@@ -2,20 +2,19 @@
 SELECT ( '*' | column_family_name [, column_family_name]* )
     FROM table_name
     [where_clause]
-    [into_file_clause]
+    [options_spec]
 
 where_clause:
-    WHERE predicate [&& predicate]*
+    WHERE 
+    ( ROW = row_key
+      | (ROW > row_key | ROW >= row_key)
+      | (ROW < row_key | ROW <= row_key)
+      | (ROW > row_key | ROW >= row_key) "&&" (ROW < row_key | ROW <= row_key) )
 
-predicate:
-    ROW = row_key |
-    START_ROW [INCLUSIVE|EXCLUSIVE] = row_key |
-    END_ROW [INCLUSIVE|EXCLUSIVE] = row_key |
-    MAX_VERSIONS = version_count |
-    START_TIME = timestamp |
-    END_TIME = timestamp |
-    LIMIT = row_count
-
-into_file_clause:
-    INTO FILE 'file_name'
+options_spec:
+    ( MAX_VERSIONS = version_count
+      | START_TIME = timestamp
+      | END_TIME = timestamp
+      | LIMIT = row_count
+      | INTO FILE 'file_name' )*
 

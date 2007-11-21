@@ -83,6 +83,7 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       cout << schema_str << endl;
     }
     else if (state.command == COMMAND_SELECT) {
+      time_t t;
       cout << "column families = ";
       for (size_t i=0; i<state.scan.columns.size(); i++)
 	cout << state.scan.columns[i] << " ";
@@ -94,6 +95,10 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       cout << "end_row_inclusive = " << state.scan.end_row_inclusive << endl;
       cout << "max_versions = " << state.scan.max_versions << endl;
       cout << "limit = " << state.scan.limit << endl;
+      t = state.scan.start_time / 1000000LL;
+      cout << "start_time = " << ctime(&t) << endl;
+      t = state.scan.end_time / 1000000LL;
+      cout << "end_time = " << ctime(&t) << endl;
     }
   }
   else
