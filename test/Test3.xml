@@ -2,41 +2,41 @@
   <AccessGroup name="default">
     <ColumnFamily>
       <Name>apple</Name>
-        <CellLimit>1</CellLimit>
+        <MaxVersions>1</MaxVersions>
     </ColumnFamily>
     <ColumnFamily>
       <Name>banana</Name>
-        <CellLimit>2</CellLimit>
+        <MaxVersions>2</MaxVersions>
     </ColumnFamily>
   </AccessGroup>
   <AccessGroup name="marsha">
     <ColumnFamily>
       <Name>onion</Name>
-        <CellLimit>3</CellLimit>
+        <MaxVersions>3</MaxVersions>
     </ColumnFamily>
     <ColumnFamily>
       <Name>cassis</Name>
-        <CellLimit>1</CellLimit>
+        <MaxVersions>1</MaxVersions>
     </ColumnFamily>
   </AccessGroup>
   <AccessGroup name="jan" inMemory="true">
     <ColumnFamily>
       <Name>cherry</Name>
-        <CellLimit>2</CellLimit>
+        <MaxVersions>2</MaxVersions>
     </ColumnFamily>
   </AccessGroup>
   <AccessGroup name="cindy">
     <ColumnFamily>
       <Name>yam</Name>
-        <CellLimit>3</CellLimit>
+        <MaxVersions>3</MaxVersions>
     </ColumnFamily>
     <ColumnFamily>
       <Name>plum</Name>
-        <CellLimit>5</CellLimit>
+        <MaxVersions>5</MaxVersions>
     </ColumnFamily>
     <ColumnFamily>
       <Name>broccoli</Name>
-        <CellLimit>1</CellLimit>
+        <MaxVersions>1</MaxVersions>
     </ColumnFamily>
   </AccessGroup>
 </Schema>

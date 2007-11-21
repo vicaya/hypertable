@@ -2,11 +2,11 @@
   <AccessGroup name="default">
     <ColumnFamily>
       <Name>content</Name>
-      <CellLimit>abc</CellLimit>
+      <MaxVersions>abc</MaxVersions>
     </ColumnFamily>
     <ColumnFamily>
       <Name>language</Name>
-      <ExpireDays>7</ExpireDays>
+      <ttl>604800</ttl>
     </ColumnFamily>
   </AccessGroup>
 </Schema>

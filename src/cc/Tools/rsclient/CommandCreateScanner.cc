@@ -47,7 +47,7 @@ const char *CommandCreateScanner::ms_usage[] = {
   "",
   "  OPTIONS:",
   "  row-limit=<n>   Limit the number of rows returned to <n>",
-  "  cell-limit=<n>  Limit the number of cell versions returned to <n>",
+  "  max-versions=<n>  Limit the number of cell versions returned to <n>",
   "  start=<row>     Start scan at row <row>",
   "  end=<row>       End scan at row <row>, non inclusive",
   "  row-range=<rng> Row range of form '('|'[' start, end ']'|')'",
@@ -112,7 +112,7 @@ int CommandCreateScanner::run() {
    * Create Scan specification
    */
   scan_spec.rowLimit = 0;
-  scan_spec.cellLimit = 0;
+  scan_spec.max_versions = 0;
   scan_spec.columns.clear();
   scan_spec.startRow = 0;
   scan_spec.startRowInclusive = true;
@@ -128,8 +128,8 @@ int CommandCreateScanner::run() {
     }
     if (m_args[i].first == "row-limit")
       scan_spec.rowLimit = atoi(m_args[i].second.c_str());
-    else if (m_args[i].first == "cell-limit")
-      scan_spec.cellLimit = atoi(m_args[i].second.c_str());
+    else if (m_args[i].first == "max-versions")
+      scan_spec.max_versions = atoi(m_args[i].second.c_str());
     else if (m_args[i].first == "start")
       scan_spec.startRow = m_args[i].second.c_str();
     else if (m_args[i].first == "end")

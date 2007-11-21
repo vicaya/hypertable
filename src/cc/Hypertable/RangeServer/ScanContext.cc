@@ -34,7 +34,7 @@ const uint64_t ScanContext::END_OF_TIME = (uint64_t)-1;
  */
 void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp) {
   Schema::ColumnFamily *columnFamily;
-  uint32_t cellLimit = 0;
+  uint32_t max_versions = 0;
 
   timestamp = ts;
   spec = ss;
@@ -45,7 +45,7 @@ void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp)
     memset(familyMask, true, 256*sizeof(bool));
   else {
     memset(familyMask, false, 256*sizeof(bool));
-    cellLimit = spec->cellLimit;
+    max_versions = spec->max_versions;
   }
 
   memset(familyInfo, 0, 256*sizeof(CellFilterInfoT));
@@ -57,17 +57,17 @@ void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp)
       assert(columnFamily);
 
       familyMask[columnFamily->id] = true;
-      if (columnFamily->expireTime == 0)
+      if (columnFamily->ttl == 0)
 	familyInfo[columnFamily->id].cutoffTime == 0;
       else
-	familyInfo[columnFamily->id].cutoffTime == timestamp - (columnFamily->expireTime * 1000000);
-      if (cellLimit == 0)
-	familyInfo[columnFamily->id].cellLimit = columnFamily->cellLimit;
+	familyInfo[columnFamily->id].cutoffTime == timestamp - (columnFamily->ttl * 1000000);
+      if (max_versions == 0)
+	familyInfo[columnFamily->id].max_versions = columnFamily->max_versions;
       else {
-	if (columnFamily->cellLimit == 0)
-	  familyInfo[columnFamily->id].cellLimit = cellLimit;
+	if (columnFamily->max_versions == 0)
+	  familyInfo[columnFamily->id].max_versions = max_versions;
 	else
-	  familyInfo[columnFamily->id].cellLimit = (cellLimit < columnFamily->cellLimit) ? cellLimit : columnFamily->cellLimit;
+	  familyInfo[columnFamily->id].max_versions = (max_versions < columnFamily->max_versions) ? max_versions : columnFamily->max_versions;
       }
     }
   }
@@ -82,18 +82,18 @@ void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp)
 	  return;
 	}
 	familyMask[(*cfIter)->id] = true;
-	if ((*cfIter)->expireTime == 0)
+	if ((*cfIter)->ttl == 0)
 	  familyInfo[(*cfIter)->id].cutoffTime == 0;
 	else
-	  familyInfo[(*cfIter)->id].cutoffTime == timestamp - ((*cfIter)->expireTime * 1000000);
+	  familyInfo[(*cfIter)->id].cutoffTime == timestamp - ((*cfIter)->ttl * 1000000);
 
-	if (cellLimit == 0)
-	  familyInfo[(*cfIter)->id].cellLimit = (*cfIter)->cellLimit;
+	if (max_versions == 0)
+	  familyInfo[(*cfIter)->id].max_versions = (*cfIter)->max_versions;
 	else {
-	  if ((*cfIter)->cellLimit == 0)
-	    familyInfo[(*cfIter)->id].cellLimit = cellLimit;
+	  if ((*cfIter)->max_versions == 0)
+	    familyInfo[(*cfIter)->id].max_versions = max_versions;
 	  else
-	    familyInfo[(*cfIter)->id].cellLimit = (cellLimit < (*cfIter)->cellLimit) ? cellLimit : (*cfIter)->cellLimit;
+	    familyInfo[(*cfIter)->id].max_versions = (max_versions < (*cfIter)->max_versions) ? max_versions : (*cfIter)->max_versions;
 	}
       }
     }

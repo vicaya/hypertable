@@ -57,10 +57,6 @@ target_link_libraries (schemaTest Hypertable pthread ${BOOST_LIB} Common log4cpp
 add_executable (locationCacheTest tests/locationCacheTest.cc)
 target_link_libraries (locationCacheTest Hypertable ${BOOST_LIB} Common log4cpp)
 
-# calc_plain
-add_executable (calc_plain calc_plain.cc)
-target_link_libraries (calc_plain Hypertable Hyperspace pthread ${BOOST_LIB} AsyncComm Common log4cpp expat)
-
 
 #
 # Copy test files

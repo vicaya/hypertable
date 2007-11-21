@@ -3,15 +3,14 @@ ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:83) Schema Parse Error: Nested Colu
 ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:83) Schema Parse Error: ColumnFamily defined outside of AccessGroup
 ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:83) Schema Parse Error: Invalid AccessGroup attribute 'foo'
 ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:83) Schema Parse Error: Unrecognized element - 'BogusElement'
-ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:83) Schema Parse Error: Invalid value (abc) for CellLimit
-ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:83) Schema Parse Error: Invalid value (abc) for ExpireDays
+ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:83) Schema Parse Error: Invalid value (abc) for MaxVersions
 ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:83) Schema Parse Error: Invalid value (foo) for AccessGroup attribute 'inMemory'
 <Schema>
   <AccessGroup name="default">
     <ColumnFamily>
       <Name>default</Name>
-        <CellLimit>3</CellLimit>
-        <ExpireDays>30.00</ExpireDays>
+        <MaxVersions>3</MaxVersions>
+        <ttl>2592000</ttl>
     </ColumnFamily>
   </AccessGroup>
   <AccessGroup name="meta">
@@ -27,8 +26,8 @@ ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:83) Schema Parse Error: Invalid val
   <AccessGroup name="default">
     <ColumnFamily id="1">
       <Name>default</Name>
-        <CellLimit>3</CellLimit>
-        <ExpireDays>30.00</ExpireDays>
+        <MaxVersions>3</MaxVersions>
+        <ttl>2592000</ttl>
     </ColumnFamily>
   </AccessGroup>
   <AccessGroup name="meta">

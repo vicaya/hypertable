@@ -92,8 +92,8 @@ int main(int argc, char **argv) {
   schema->set_access_group_parameter("name", "default");
   schema->open_column_family();
   schema->set_column_family_parameter("Name", "default");
-  schema->set_column_family_parameter("ExpireDays", "30.0");
-  schema->set_column_family_parameter("CellLimit", "3");
+  schema->set_column_family_parameter("ttl", "2592000");
+  schema->set_column_family_parameter("MaxVersions", "3");
   schema->close_column_family();
   schema->close_access_group();
 

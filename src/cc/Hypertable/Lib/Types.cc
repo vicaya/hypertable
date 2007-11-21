@@ -98,7 +98,7 @@ namespace Hypertable {
 
   void EncodeScanSpecification(uint8_t **bufPtr, ScanSpecificationT &scanSpec) {
     Serialization::encode_int(bufPtr, scanSpec.rowLimit);
-    Serialization::encode_int(bufPtr, scanSpec.cellLimit);
+    Serialization::encode_int(bufPtr, scanSpec.max_versions);
     Serialization::encode_string(bufPtr, scanSpec.startRow);
     *(*bufPtr)++ = (uint8_t)scanSpec.startRowInclusive;
     Serialization::encode_string(bufPtr, scanSpec.endRow);
@@ -118,7 +118,7 @@ namespace Hypertable {
 
     if (!Serialization::decode_int(bufPtr, remainingPtr, &scanSpec->rowLimit))
       return false;
-    if (!Serialization::decode_int(bufPtr, remainingPtr, &scanSpec->cellLimit))
+    if (!Serialization::decode_int(bufPtr, remainingPtr, &scanSpec->max_versions))
       return false;
     if (!Serialization::decode_string(bufPtr, remainingPtr, &scanSpec->startRow))
       return false;

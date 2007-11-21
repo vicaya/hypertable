@@ -39,6 +39,8 @@ extern "C" {
 using namespace std;
 using namespace boost::spirit;
 
+#define display_string(str) // cerr << str << endl
+
 namespace Hypertable {
 
   namespace HQL {
@@ -57,17 +59,21 @@ namespace Hypertable {
     struct set_command {
       set_command(interpreter_state &state, int cmd)
       { state.command = cmd; }
-      void operator()(char const* /*str*/, char const* /*end*/) const {  }
+      void operator()(char const *, char const *) const { 
+	display_string("set_command");
+      }
     };
 
     struct set_table_name {
       set_table_name(interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const { 
+	display_string("set_table_name");
 	state.table_name = std::string(str, end-str);
       }
       interpreter_state &state;
     };
 
+#if 0
     struct set_test {
       set_test(const char *label_) : label(label_) { }
       void operator()(char const *str, char const *end) const { 
@@ -75,17 +81,18 @@ namespace Hypertable {
       }
       const char *label;
     };
+#endif
 
     struct create_column_family {
       create_column_family(interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const { 
+	display_string("set_column_family");
 	state.cf = new Schema::ColumnFamily();
 	state.cf->name = std::string(str, end-str);
 	Schema::ColumnFamilyMapT::const_iterator iter = state.cf_map.find(state.cf->name);
 	if (iter != state.cf_map.end())
 	  throw Exception(Error::HQL_PARSE_ERROR, std::string("Column family '") + state.cf->name + " multiply defined.");
 	state.cf_map[state.cf->name] = state.cf;
-      	cout << "create_column_family name=" << std::string(str, end-str) << endl;
       }
       interpreter_state &state;
     };
@@ -93,8 +100,8 @@ namespace Hypertable {
     struct set_column_family_max_versions {
       set_column_family_max_versions(interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const { 
-        state.cf->cellLimit = (uint32_t)strtol(str, 0, 10);
-      	cout << "set_column_family_max_versions" << endl;
+	display_string("set_column_family_max_versions");
+        state.cf->max_versions = (uint32_t)strtol(str, 0, 10);
       }
       interpreter_state &state;
     };
@@ -102,23 +109,23 @@ namespace Hypertable {
     struct set_ttl {
       set_ttl(interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const {
+	display_string("set_ttl");
 	char *end_ptr;
 	double ttl = strtod(str, &end_ptr);
 	std::string unit_str = std::string(end_ptr, end-end_ptr);
 	std::transform(unit_str.begin(), unit_str.end(), unit_str.begin(), ::tolower );
 	if (unit_str == "months")
-	  state.cf->expireTime = (time_t)(ttl * 2592000.0);
+	  state.cf->ttl = (time_t)(ttl * 2592000.0);
 	else if (unit_str == "weeks")
-	  state.cf->expireTime = (time_t)(ttl * 604800.0);
+	  state.cf->ttl = (time_t)(ttl * 604800.0);
 	else if (unit_str == "days")
-	  state.cf->expireTime = (time_t)(ttl * 86400.0);
+	  state.cf->ttl = (time_t)(ttl * 86400.0);
 	else if (unit_str == "hours")
-	  state.cf->expireTime = (time_t)(ttl * 3600.0);
+	  state.cf->ttl = (time_t)(ttl * 3600.0);
 	else if (unit_str == "minutes")
-	  state.cf->expireTime = (time_t)(ttl * 60.0);
+	  state.cf->ttl = (time_t)(ttl * 60.0);
 	else 
-	  state.cf->expireTime = (time_t)ttl;
-      	cout << "set_ttl (" << ttl << " " << unit_str << ")" << endl;
+	  state.cf->ttl = (time_t)ttl;
       }
       interpreter_state &state;
     };
@@ -126,6 +133,7 @@ namespace Hypertable {
     struct create_access_group {
       create_access_group(interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const { 
+	display_string("create_access_group");
 	std::string name = std::string(str, end-str);
 	Schema::AccessGroupMapT::const_iterator iter = state.ag_map.find(name);
 	if (iter != state.ag_map.end())
@@ -133,9 +141,42 @@ namespace Hypertable {
 	else {
 	  state.ag = new Schema::AccessGroup();
 	  state.ag->name = name;
-	  state.cf_map[state.cf->name] = state.cf;  
+	  state.ag_map[state.ag->name] = state.ag;
 	}
-      	cout << "create_access_group name=" << std::string(str, end-str) << endl;
+      }
+      interpreter_state &state;
+    };
+
+    struct set_access_group_in_memory {
+      set_access_group_in_memory(interpreter_state &state_) : state(state_) {  }
+      void operator()(char const *, char const *) const { 
+	display_string("set_access_group_in_memory");
+	state.ag->in_memory=true;
+      }
+      interpreter_state &state;
+    };
+
+    struct set_access_group_blocksize {
+      set_access_group_blocksize(interpreter_state &state_) : state(state_) { }
+      void operator()(const unsigned int &blocksize) const { 
+	display_string("set_access_group_blocksize");
+	state.ag->blocksize = blocksize;
+      }
+      interpreter_state &state;
+    };
+
+    struct add_column_family {
+      add_column_family(interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("add_column_family");
+	std::string name = std::string(str, end-str);
+
+	Schema::ColumnFamilyMapT::const_iterator iter = state.cf_map.find(name);
+	if (iter == state.cf_map.end())
+	  throw Exception(Error::HQL_PARSE_ERROR, std::string("Access Group '") + state.ag->name + "' includes unknown column family '" + name + "'");
+	if ((*iter).second->ag != "" && (*iter).second->ag != state.ag->name)
+	  throw Exception(Error::HQL_PARSE_ERROR, std::string("Column family '") + name + "' can belong to only one access group");
+	(*iter).second->ag = state.ag->name;
       }
       interpreter_state &state;
     };
@@ -152,7 +193,7 @@ namespace Hypertable {
 #endif
 
 	  keywords =
-	    "access", "ACCESS", "GROUP", "group";
+	    "access", "ACCESS", "Access", "GROUP", "group", "Group";
 
 	  /**
 	   * OPERATORS
@@ -187,11 +228,17 @@ namespace Hypertable {
 	  token_t MAX_VERSIONS = as_lower_d["max_versions"];
 	  token_t TTL          = as_lower_d["ttl"];
 	  token_t MONTHS       = as_lower_d["months"];
+	  token_t MONTH        = as_lower_d["month"];
 	  token_t WEEKS        = as_lower_d["weeks"];
+	  token_t WEEK         = as_lower_d["week"];
 	  token_t DAYS         = as_lower_d["days"];
+	  token_t DAY          = as_lower_d["day"];
 	  token_t HOURS        = as_lower_d["hours"];
+	  token_t HOUR         = as_lower_d["hour"];
 	  token_t MINUTES      = as_lower_d["minutes"];
+	  token_t MINUTE       = as_lower_d["minute"];
 	  token_t SECONDS      = as_lower_d["seconds"];
+	  token_t SECOND       = as_lower_d["second"];
 	  token_t IN_MEMORY    = as_lower_d["in_memory"];
 	  token_t BLOCKSIZE    = as_lower_d["blocksize"];
 	  token_t ACCESS       = as_lower_d["access"];
@@ -250,16 +297,18 @@ namespace Hypertable {
 
 	  duration
 	    = ureal_p >> 
-	    (  MONTHS | WEEKS | DAYS | HOURS | MINUTES | SECONDS )
+	    (  MONTHS | MONTH | WEEKS | WEEK | DAYS | DAY | HOURS | HOUR | MINUTES | MINUTE | SECONDS | SECOND )
 	    ;
 
 	  access_group_definition
 	    = ACCESS >> GROUP >> identifier[create_access_group(self.state)] 
-		     >> *( access_group_option ) >> !( LPAREN >> identifier >> *( identifier ) >> RPAREN )
+		     >> *( access_group_option ) 
+		     >> !( LPAREN >> identifier[add_column_family(self.state)]
+		     >> *( identifier[add_column_family(self.state)] ) >> RPAREN )
 	    ;
 
 	  access_group_option
-	    = in_memory_option
+	    = in_memory_option[set_access_group_in_memory(self.state)]
 	    | blocksize_option
 	    ;
 
@@ -268,7 +317,7 @@ namespace Hypertable {
 	    ;
 
 	  blocksize_option
-	    = BLOCKSIZE >> EQUAL >> uint_p
+	    = BLOCKSIZE >> EQUAL >> uint_p[set_access_group_blocksize(self.state)]
 	    ;
 
 

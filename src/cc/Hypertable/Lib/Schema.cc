@@ -91,17 +91,17 @@ void Schema::start_element_handler(void *userData,
 			 const XML_Char **atts) {
   int i;
 
-  if (!strcmp(name, "Schema")) {
+  if (!strcasecmp(name, "Schema")) {
     for (i=0; atts[i] != 0; i+=2) {
       if (atts[i+1] == 0)
 	return;
-      if (ms_schema->m_read_ids && !strcmp(atts[i], "generation"))
+      if (ms_schema->m_read_ids && !strcasecmp(atts[i], "generation"))
 	ms_schema->set_generation(atts[i+1]);
       else
 	ms_schema->set_error_string((string)"Unrecognized 'Schema' attribute : " + atts[i]);
     }
   }
-  else if (!strcmp(name, "AccessGroup")) {
+  else if (!strcasecmp(name, "AccessGroup")) {
     ms_schema->open_access_group();    
     for (i=0; atts[i] != 0; i+=2) {
       if (atts[i+1] == 0)
@@ -109,7 +109,7 @@ void Schema::start_element_handler(void *userData,
       ms_schema->set_access_group_parameter(atts[i], atts[i+1]);
     }
   }
-  else if (!strcmp(name, "ColumnFamily")) {
+  else if (!strcasecmp(name, "ColumnFamily")) {
     ms_schema->open_column_family();
     for (i=0; atts[i] != 0; i+=2) {
       if (atts[i+1] == 0)
@@ -117,7 +117,7 @@ void Schema::start_element_handler(void *userData,
       ms_schema->set_column_family_parameter(atts[i], atts[i+1]);
     }
   }
-  else if (!strcmp(name, "CellLimit") || !strcmp(name, "ExpireDays") || !strcmp(name, "Name"))
+  else if (!strcasecmp(name, "MaxVersions") || !strcasecmp(name, "ttl") || !strcasecmp(name, "Name"))
     ms_collected_text = "";
   else
     ms_schema->set_error_string((string)"Unrecognized element - '" + name + "'");
@@ -127,11 +127,11 @@ void Schema::start_element_handler(void *userData,
 
 
 void Schema::end_element_handler(void *userData, const XML_Char *name) {
-  if (!strcmp(name, "AccessGroup"))
+  if (!strcasecmp(name, "AccessGroup"))
     ms_schema->close_access_group();
-  else if (!strcmp(name, "ColumnFamily"))
+  else if (!strcasecmp(name, "ColumnFamily"))
     ms_schema->close_column_family();
-  else if (!strcmp(name, "CellLimit") || !strcmp(name, "ExpireDays") || !strcmp(name, "Name")) {
+  else if (!strcasecmp(name, "MaxVersions") || !strcasecmp(name, "ttl") || !strcasecmp(name, "Name")) {
     boost::trim(ms_collected_text);
     ms_schema->set_column_family_parameter(name, ms_collected_text.c_str());
   }
@@ -184,9 +184,9 @@ void Schema::open_column_family() {
     else {
       m_open_column_family = new ColumnFamily();
       m_open_column_family->id = 0;
-      m_open_column_family->cellLimit = 0;
-      m_open_column_family->expireTime = 0;
-      m_open_column_family->lg = m_open_access_group->name;
+      m_open_column_family->max_versions = 0;
+      m_open_column_family->ttl = 0;
+      m_open_column_family->ag = m_open_access_group->name;
     }
   }
 }
@@ -228,9 +228,9 @@ void Schema::set_access_group_parameter(const char *param, const char *value) {
       m_open_access_group->name = value;
     else if (!strcasecmp(param, "inMemory")) {
       if (!strcasecmp(value, "true") || !strcmp(value, "1"))
-	m_open_access_group->inMemory = true;
+	m_open_access_group->in_memory = true;
       else if (!strcasecmp(value, "false") || !strcmp(value, "0"))
-	m_open_access_group->inMemory = false;
+	m_open_access_group->in_memory = false;
       else
 	set_error_string((string)"Invalid value (" + value + ") for AccessGroup attribute '" + param + "'");
     }
@@ -247,20 +247,14 @@ void Schema::set_column_family_parameter(const char *param, const char *value) {
   else {
     if (!strcasecmp(param, "Name"))
       m_open_column_family->name = value;
-    else if (!strcasecmp(param, "ExpireDays")) {
-      float fval = strtof(value, 0);
-      if (fval == 0.0) {
-	set_error_string((string)"Invalid value (" + value + ") for ExpireDays");
-      }
-      else {
-	fval *= 86400.0;
-	m_open_column_family->expireTime = (time_t)fval;
-      }
+    else if (!strcasecmp(param, "ttl")) {
+      long long secs = strtoll(value, 0, 10);
+      m_open_column_family->ttl = (time_t)secs;
     }
-    else if (!strcasecmp(param, "CellLimit")) {
-      m_open_column_family->cellLimit = atoi(value);
-      if (m_open_column_family->cellLimit == 0)
-	set_error_string((string)"Invalid value (" + value + ") for CellLimit");
+    else if (!strcasecmp(param, "MaxVersions")) {
+      m_open_column_family->max_versions = atoi(value);
+      if (m_open_column_family->max_versions == 0)
+	set_error_string((string)"Invalid value (" + value + ") for MaxVersions");
     }
     else if (m_read_ids && !strcasecmp(param, "id")) {
       m_open_column_family->id = atoi(value);
@@ -277,8 +271,8 @@ void Schema::set_column_family_parameter(const char *param, const char *value) {
 
 void Schema::assign_ids() {
   m_max_column_family_id = 0;
-  for (list<AccessGroup *>::iterator lgIter = m_access_groups.begin(); lgIter != m_access_groups.end(); lgIter++) {
-    for (list<ColumnFamily *>::iterator cfIter = (*lgIter)->columns.begin(); cfIter != (*lgIter)->columns.end(); cfIter++) {
+  for (list<AccessGroup *>::iterator agIter = m_access_groups.begin(); agIter != m_access_groups.end(); agIter++) {
+    for (list<ColumnFamily *>::iterator cfIter = (*agIter)->columns.begin(); cfIter != (*agIter)->columns.end(); cfIter++) {
       (*cfIter)->id = ++m_max_column_family_id;
     }
   }
@@ -305,7 +299,7 @@ void Schema::render(std::string &output) {
 
   for (list<AccessGroup *>::iterator iter = m_access_groups.begin(); iter != m_access_groups.end(); iter++) {
     output += (string)"  <AccessGroup name=\"" + (*iter)->name + "\"";
-    if ((*iter)->inMemory)
+    if ((*iter)->in_memory)
       output += " inMemory=\"true\"";
     output += ">\n";
     for (list<ColumnFamily *>::iterator cfiter = (*iter)->columns.begin(); cfiter != (*iter)->columns.end(); cfiter++) {
@@ -317,15 +311,10 @@ void Schema::render(std::string &output) {
       }
       output += ">\n";
       output += (string)"      <Name>" + (*cfiter)->name + "</Name>\n";
-      if ((*cfiter)->cellLimit != 0) {
-	sprintf(buf, "%d", (*cfiter)->cellLimit);
-	output += (string)"        <CellLimit>" + buf + "</CellLimit>\n";
-      }
-      if ((*cfiter)->expireTime != 0) {
-	float fdays = (float)(*cfiter)->expireTime / 86400.0;
-	sprintf(buf, "%.2f", fdays);
-	output += (string)"        <ExpireDays>" + buf + "</ExpireDays>\n";
-      }
+      if ((*cfiter)->max_versions != 0)
+	output += (string)"        <MaxVersions>" + (*cfiter)->max_versions + "</MaxVersions>\n";
+      if ((*cfiter)->ttl != 0)
+	output += (string)"        <ttl>" + (uint32_t)(*cfiter)->ttl + "</ttl>\n";
       output += (string)"    </ColumnFamily>\n";
     }
     output += (string)"  </AccessGroup>\n";
@@ -367,21 +356,22 @@ void Schema::add_access_group(AccessGroup *ag) {
   }
 
   m_access_group_map[ag->name] = ag;
+  m_access_groups.push_back(ag);
 }
 
 void Schema::add_column_family(ColumnFamily *cf) {
   ColumnFamilyMapT::const_iterator cf_iter = m_column_family_map.find(cf->name);
-  
+
   if (cf_iter != m_column_family_map.end()) {
     m_error_string = std::string("Column family '") + cf->name + "' multiply defined";
     delete cf;
     return;
   }
 
-  AccessGroupMapT::const_iterator ag_iter = m_access_group_map.find(cf->lg);
+  AccessGroupMapT::const_iterator ag_iter = m_access_group_map.find(cf->ag);
 
   if (ag_iter == m_access_group_map.end()) {
-    m_error_string = std::string("Invalid access group '") + cf->lg + "' for column family '" + cf->name + "'";
+    m_error_string = std::string("Invalid access group '") + cf->ag + "' for column family '" + cf->name + "'";
     delete cf;
     return;
   }

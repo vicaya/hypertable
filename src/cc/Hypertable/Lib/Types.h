@@ -49,7 +49,7 @@ namespace Hypertable {
   /** Scan specification */
   typedef struct {
     uint32_t rowLimit;
-    uint32_t cellLimit;
+    uint32_t max_versions;
     std::vector<const char *> columns;
     const char *startRow;
     bool startRowInclusive;

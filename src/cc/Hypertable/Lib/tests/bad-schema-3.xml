@@ -2,16 +2,16 @@
   <AccessGroup name="default">
     <ColumnFamily>
       <Name>content</Name>
-      <CellLimit>1</CellLimit>
+      <MaxVersions>1</MaxVersions>
     </ColumnFamily>
     <ColumnFamily>
       <Name>language</Name>
-      <ExpireDays>7</ExpireDays>
+      <ttl>604800</ttl>
     </ColumnFamily>
   </AccessGroup>
   <ColumnFamily>
     <Name>bad</Name>
-    <CellLimit>1</CellLimit>
+    <MaxVersions>1</MaxVersions>
   </ColumnFamily>
 </Schema>
 

@@ -39,7 +39,7 @@ TableScanner::TableScanner(ConnectionManagerPtr &conn_manager_ptr, TableIdentifi
   char *str;
 
   m_scan_spec.rowLimit = scan_spec.rowLimit;
-  m_scan_spec.cellLimit = scan_spec.cellLimit;
+  m_scan_spec.max_versions = scan_spec.max_versions;
 
   // deep copy columns vector
   for (size_t i=0; i<scan_spec.columns.size(); i++) {

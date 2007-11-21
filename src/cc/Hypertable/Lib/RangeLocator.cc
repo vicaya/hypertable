@@ -161,7 +161,7 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
     }
 
     meta_scan_spec.rowLimit = METADATA_READAHEAD_COUNT;
-    meta_scan_spec.cellLimit = 1;
+    meta_scan_spec.max_versions = 1;
     meta_scan_spec.columns.push_back("StartRow");
     meta_scan_spec.columns.push_back("Location");
     meta_scan_spec.startRow = start_row.c_str();

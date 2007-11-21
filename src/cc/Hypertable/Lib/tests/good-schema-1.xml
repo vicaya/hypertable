@@ -2,17 +2,17 @@
   <AccessGroup name="default">
     <ColumnFamily>
       <Name>content</Name>
-      <CellLimit>3</CellLimit>
+      <MaxVersions>3</MaxVersions>
     </ColumnFamily>
     <ColumnFamily>
       <Name>language</Name>
-      <ExpireDays>1.5</ExpireDays>
+      <ttl>129600</ttl>
     </ColumnFamily>
   </AccessGroup>
   <AccessGroup name="volatile" inMemory="true">
     <ColumnFamily>
       <Name>location</Name>
-      <CellLimit>1</CellLimit>
+      <MaxVersions>1</MaxVersions>
     </ColumnFamily>
   </AccessGroup>
 </Schema>

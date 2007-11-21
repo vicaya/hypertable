@@ -43,19 +43,20 @@ namespace Hypertable {
 
     class ColumnFamily {
     public:
-      ColumnFamily() : name(), lg(), id(0), cellLimit(0), expireTime(0) { return; }
+      ColumnFamily() : name(), ag(), id(0), max_versions(0), ttl(0) { return; }
       string   name;
-      string   lg;
+      string   ag;
       uint32_t id;
-      uint32_t cellLimit;
-      time_t   expireTime;
+      uint32_t max_versions;
+      time_t   ttl;
     };
 
     class AccessGroup {
     public:
-      AccessGroup() : name(), inMemory(false), columns() { return; }
+      AccessGroup() : name(), in_memory(false), blocksize(0), columns() { return; }
       string name;
-      bool   inMemory;
+      bool     in_memory;
+      uint32_t blocksize;
       list<ColumnFamily *> columns;
     };
 

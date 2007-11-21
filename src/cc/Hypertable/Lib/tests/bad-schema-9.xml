@@ -2,11 +2,11 @@
   <AccessGroup name="default" inMemory="foo">
     <ColumnFamily>
       <Name>content</Name>
-      <CellLimit>1</CellLimit>
+      <MaxVersions>1</MaxVersions>
     </ColumnFamily>
     <ColumnFamily>
       <Name>language</Name>
-      <ExpireDays>abc</ExpireDays>
+      <ttl>abc</ttl>
     </ColumnFamily>
   </AccessGroup>
 </Schema>

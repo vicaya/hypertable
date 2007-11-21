@@ -152,7 +152,7 @@ void MergeScanner::forward() {
 	    return;
 	  }
 	  m_prev_key.set(sstate.key->data, sstate.key->len);
-	  m_cell_limit = m_scan_context_ptr->familyInfo[keyComps.columnFamily].cellLimit;
+	  m_cell_limit = m_scan_context_ptr->familyInfo[keyComps.columnFamily].max_versions;
 	  m_cell_cutoff = m_scan_context_ptr->familyInfo[keyComps.columnFamily].cutoffTime;
 	  m_cell_count = 0;
 	  return;
@@ -170,7 +170,7 @@ void MergeScanner::forward() {
       }
       else {
 	m_prev_key.set(sstate.key->data, sstate.key->len);
-	m_cell_limit = m_scan_context_ptr->familyInfo[keyComps.columnFamily].cellLimit;
+	m_cell_limit = m_scan_context_ptr->familyInfo[keyComps.columnFamily].max_versions;
 	m_cell_cutoff = m_scan_context_ptr->familyInfo[keyComps.columnFamily].cutoffTime;
 	m_cell_count = 0;
       }
@@ -178,7 +178,7 @@ void MergeScanner::forward() {
     }
     else {
       m_prev_key.set(sstate.key->data, sstate.key->len);
-      m_cell_limit = m_scan_context_ptr->familyInfo[keyComps.columnFamily].cellLimit;
+      m_cell_limit = m_scan_context_ptr->familyInfo[keyComps.columnFamily].max_versions;
       m_cell_cutoff = m_scan_context_ptr->familyInfo[keyComps.columnFamily].cutoffTime;
       m_cell_count = 0;
     }
@@ -250,7 +250,7 @@ void MergeScanner::initialize() {
     else {
       m_delete_present = false;
       m_prev_key.set(sstate.key->data, sstate.key->len);
-      m_cell_limit = m_scan_context_ptr->familyInfo[keyComps.columnFamily].cellLimit;
+      m_cell_limit = m_scan_context_ptr->familyInfo[keyComps.columnFamily].max_versions;
       m_cell_cutoff = m_scan_context_ptr->familyInfo[keyComps.columnFamily].cutoffTime;
       m_cell_count = 0;
     }

@@ -21,7 +21,7 @@
 #include "Common/Error.h"
 
 #include "Hql.h"
-
+#include "Client.h"
 #include "CommandInterpreter.h"
 
 using namespace Hypertable;
@@ -32,29 +32,32 @@ CommandInterpreter::CommandInterpreter(Client *client) : m_client(client) {
 }
 
 void CommandInterpreter::execute_line(std::string &line) {
+  int error;
   interpreter_state state;
   interpreter interp(state);
+  parse_info<> info;
 
   state.cf = 0;
   state.ag = 0;
 
-  parse_info<> info = parse(line.c_str(), interp, space_p);
+  info = parse(line.c_str(), interp, space_p);
 
   if (info.full) {
-    cout << "-------------------------\n";
-    cout << "Parsing succeeded\n";
-    cout << "Command: " << state.command << endl;
-    cout << "Table: " << state.table_name << endl;
-    {
-      for (Schema::ColumnFamilyMapT::const_iterator iter = state.cf_map.begin(); iter != state.cf_map.end(); iter++) {
-	cout << "  Column Family = " << (*iter).first << endl;
-	cout << "    ttl = " << (*iter).second->expireTime << endl;
-	cout << "    max = " << (*iter).second->cellLimit << endl;
-      }
-    }
-    cout << "-------------------------\n";
+    Schema *schema = new Schema();
+    for (Schema::AccessGroupMapT::const_iterator ag_iter = state.ag_map.begin(); ag_iter != state.ag_map.end(); ag_iter++)
+      schema->add_access_group((*ag_iter).second);
+    for (Schema::ColumnFamilyMapT::const_iterator cf_iter = state.cf_map.begin(); cf_iter != state.cf_map.end(); cf_iter++)
+      schema->add_column_family((*cf_iter).second);
+    const char *error_str = schema->get_error_string();
+    if (error_str)
+      throw Exception(Error::HQL_PARSE_ERROR, error_str);
+    std::string schema_str;
+    schema->render(schema_str);
+
+    if ((error = m_client->create_table(state.table_name, schema_str.c_str())) != Error::OK)
+      throw Exception(error, std::string("Problem creating table '") + state.table_name + "'");
   }
   else
     throw Exception(Error::HQL_PARSE_ERROR, std::string("parse error at: ") + info.stop);
-  
+
 }
