@@ -36,7 +36,7 @@ extern "C" {
 #include "Common/Usage.h"
 
 #include "Hypertable/Lib/Client.h"
-#include "Hypertable/Lib/CommandInterpreter.h"
+#include "Hypertable/Lib/HqlCommandInterpreter.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
   Client *hypertable;
   queue<string> command_queue;
   const char *base, *ptr;
-  CommandInterpreter *interp;
+  HqlCommandInterpreter *interp;
 
   System::initialize(argv[0]);
   ReactorFactory::initialize((uint16_t)System::get_processor_count());
@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
 
   hypertable = new Client(configFile);
 
-  interp = hypertable->create_interpreter();
+  interp = hypertable->create_hql_interpreter();
 
   cout << "Welcome to the HQL command interpreter." << endl;
   cout << "Type 'help' for a description of commands." << endl;

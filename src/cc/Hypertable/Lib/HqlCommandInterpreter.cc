@@ -20,12 +20,12 @@
 
 #include "Common/Error.h"
 
-#include "Hql.h"
 #include "Client.h"
-#include "CommandInterpreter.h"
+#include "HqlCommandInterpreter.h"
+#include "HqlParser.h"
 
 using namespace Hypertable;
-using namespace Hypertable::HQL;
+using namespace Hypertable::HqlParser;
 
 namespace {
   const char *summary_of_commands = 
@@ -34,15 +34,15 @@ namespace {
 }
 
 
-CommandInterpreter::CommandInterpreter(Client *client) : m_client(client) {
+HqlCommandInterpreter::HqlCommandInterpreter(Client *client) : m_client(client) {
   return;
 }
 
-void CommandInterpreter::execute_line(std::string &line) {
+void HqlCommandInterpreter::execute_line(std::string &line) {
   int error;
   std::string schema_str;
-  interpreter_state state;
-  interpreter interp(state);
+  hql_interpreter_state state;
+  hql_interpreter interp(state);
   parse_info<> info;
 
   state.cf = 0;

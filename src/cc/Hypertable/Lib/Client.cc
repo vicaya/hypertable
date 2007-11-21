@@ -32,8 +32,8 @@ extern "C" {
 #include "Common/Properties.h"
 #include "Common/System.h"
 
-#include "CommandInterpreter.h"
 #include "Client.h"
+#include "HqlCommandInterpreter.h"
 
 using namespace Hyperspace;
 
@@ -100,6 +100,6 @@ int Client::get_schema(std::string tableName, std::string &schema) {
 }
 
 
-CommandInterpreter *Client::create_interpreter() {
-  return new CommandInterpreter(this);
+HqlCommandInterpreter *Client::create_hql_interpreter() {
+  return new HqlCommandInterpreter(this);
 }

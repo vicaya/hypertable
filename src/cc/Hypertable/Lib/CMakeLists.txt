@@ -18,8 +18,8 @@
 
 set ( Hypertable_SRCS
 Client.cc
-CommandInterpreter.cc
 EventHandlerMasterChange.cc
+HqlCommandInterpreter.cc
 Key.cc
 LocationCache.cc
 MasterClient.cc

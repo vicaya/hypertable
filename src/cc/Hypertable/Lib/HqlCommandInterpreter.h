@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_COMMANDINTERPRETER_H
-#define HYPERTABLE_COMMANDINTERPRETER_H
+#ifndef HYPERTABLE_HQLCOMMANDINTERPRETER_H
+#define HYPERTABLE_HQLCOMMANDINTERPRETER_H
 
 #include "Common/ReferenceCount.h"
 
@@ -27,9 +27,9 @@ namespace Hypertable {
 
   class Client;
 
-  class CommandInterpreter : public ReferenceCount {
+  class HqlCommandInterpreter : public ReferenceCount {
   public:
-    CommandInterpreter(Client *client);
+    HqlCommandInterpreter(Client *client);
 
     void execute_line(std::string &line);
 
@@ -37,8 +37,8 @@ namespace Hypertable {
     Client *m_client;
 
   };
-  typedef boost::intrusive_ptr<CommandInterpreter> CommandInterpreterPtr;
+  typedef boost::intrusive_ptr<HqlCommandInterpreter> HqlCommandInterpreterPtr;
 
 }
 
-#endif // HYPERTABLE_COMMANDINTERPRETER_H
+#endif // HYPERTABLE_HQLCOMMANDINTERPRETER_H

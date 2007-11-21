@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_HQL_H
-#define HYPERTABLE_HQL_H
+#ifndef HYPERTABLE_HQLPARSER_H
+#define HYPERTABLE_HQLPARSER_H
 
 //#define BOOST_SPIRIT_DEBUG  ///$$$ DEFINE THIS WHEN DEBUGGING $$$///
 #include <boost/spirit/core.hpp>
@@ -43,13 +43,13 @@ using namespace boost::spirit;
 
 namespace Hypertable {
 
-  namespace HQL {
+  namespace HqlParser {
 
     const int COMMAND_HELP           = 1;
     const int COMMAND_CREATE_TABLE   = 2;
     const int COMMAND_DESCRIBE_TABLE = 3;
    
-    struct interpreter_state {
+    struct hql_interpreter_state {
       int command;
       std::string table_name;
       std::string str;
@@ -60,7 +60,7 @@ namespace Hypertable {
     };
 
     struct set_command {
-      set_command(interpreter_state &state, int cmd)
+      set_command(hql_interpreter_state &state, int cmd)
       { state.command = cmd; }
       void operator()(char const *, char const *) const { 
 	display_string("set_command");
@@ -68,12 +68,12 @@ namespace Hypertable {
     };
 
     struct set_table_name {
-      set_table_name(interpreter_state &state_) : state(state_) { }
+      set_table_name(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const { 
 	display_string("set_table_name");
 	state.table_name = std::string(str, end-str);
       }
-      interpreter_state &state;
+      hql_interpreter_state &state;
     };
 
 #if 0
@@ -87,7 +87,7 @@ namespace Hypertable {
 #endif
 
     struct create_column_family {
-      create_column_family(interpreter_state &state_) : state(state_) { }
+      create_column_family(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const { 
 	display_string("set_column_family");
 	state.cf = new Schema::ColumnFamily();
@@ -97,20 +97,20 @@ namespace Hypertable {
 	  throw Exception(Error::HQL_PARSE_ERROR, std::string("Column family '") + state.cf->name + " multiply defined.");
 	state.cf_map[state.cf->name] = state.cf;
       }
-      interpreter_state &state;
+      hql_interpreter_state &state;
     };
 
     struct set_column_family_max_versions {
-      set_column_family_max_versions(interpreter_state &state_) : state(state_) { }
+      set_column_family_max_versions(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const { 
 	display_string("set_column_family_max_versions");
         state.cf->max_versions = (uint32_t)strtol(str, 0, 10);
       }
-      interpreter_state &state;
+      hql_interpreter_state &state;
     };
 
     struct set_ttl {
-      set_ttl(interpreter_state &state_) : state(state_) { }
+      set_ttl(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const {
 	display_string("set_ttl");
 	char *end_ptr;
@@ -130,11 +130,11 @@ namespace Hypertable {
 	else 
 	  state.cf->ttl = (time_t)ttl;
       }
-      interpreter_state &state;
+      hql_interpreter_state &state;
     };
 
     struct create_access_group {
-      create_access_group(interpreter_state &state_) : state(state_) { }
+      create_access_group(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const { 
 	display_string("create_access_group");
 	std::string name = std::string(str, end-str);
@@ -147,29 +147,29 @@ namespace Hypertable {
 	  state.ag_map[state.ag->name] = state.ag;
 	}
       }
-      interpreter_state &state;
+      hql_interpreter_state &state;
     };
 
     struct set_access_group_in_memory {
-      set_access_group_in_memory(interpreter_state &state_) : state(state_) {  }
+      set_access_group_in_memory(hql_interpreter_state &state_) : state(state_) {  }
       void operator()(char const *, char const *) const { 
 	display_string("set_access_group_in_memory");
 	state.ag->in_memory=true;
       }
-      interpreter_state &state;
+      hql_interpreter_state &state;
     };
 
     struct set_access_group_blocksize {
-      set_access_group_blocksize(interpreter_state &state_) : state(state_) { }
+      set_access_group_blocksize(hql_interpreter_state &state_) : state(state_) { }
       void operator()(const unsigned int &blocksize) const { 
 	display_string("set_access_group_blocksize");
 	state.ag->blocksize = blocksize;
       }
-      interpreter_state &state;
+      hql_interpreter_state &state;
     };
 
     struct add_column_family {
-      add_column_family(interpreter_state &state_) : state(state_) { }
+      add_column_family(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const { 
 	display_string("add_column_family");
 	std::string name = std::string(str, end-str);
@@ -181,27 +181,27 @@ namespace Hypertable {
 	  throw Exception(Error::HQL_PARSE_ERROR, std::string("Column family '") + name + "' can belong to only one access group");
 	(*iter).second->ag = state.ag->name;
       }
-      interpreter_state &state;
+      hql_interpreter_state &state;
     };
 
     struct set_help {
-      set_help(interpreter_state &state_) : state(state_) { 
+      set_help(hql_interpreter_state &state_) : state(state_) { 
 	state.command = COMMAND_HELP;
       }
       void operator()(char const *str, char const *end) const { 
 	display_string("set_help");
 	state.str  = std::string(str, end-str);
       }
-      interpreter_state &state;
+      hql_interpreter_state &state;
     };
 
-    struct interpreter : public grammar<interpreter> {
-      interpreter(interpreter_state &state_) : state(state_) {}
+    struct hql_interpreter : public grammar<hql_interpreter> {
+      hql_interpreter(hql_interpreter_state &state_) : state(state_) {}
 
       template <typename ScannerT>
       struct definition {
 
-	definition(interpreter const &self)  {
+	definition(hql_interpreter const &self)  {
 #ifdef BOOST_SPIRIT_DEBUG
 	  debug(); // define the debug names
 #endif
@@ -384,9 +384,9 @@ namespace Hypertable {
         describe_table_statement;
       };
 
-      interpreter_state &state;
+      hql_interpreter_state &state;
     };
   }
 }
 
-#endif // HYPERTABLE_HQL_H
+#endif // HYPERTABLE_HQLPARSER_H
