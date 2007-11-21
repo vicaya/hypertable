@@ -29,6 +29,7 @@ extern "C" {
 }
 
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/classification.hpp>
 #include <boost/thread/exceptions.hpp>
 
 #include "Common/Properties.h"
@@ -86,6 +87,25 @@ namespace {
     (const char *)0
   };
 
+  const char *help_text = 
+  "\n" \
+  "For information about Hypertable, visit:\n" \
+  "  http://www.hypertable.org/\n" \
+  "\n" \
+  "List of all hypertable commands:\n" \
+  "Note that all text commands must be first on line and end with ';'\n" \
+  "?         (\\?) Synonym for `help'.\n" \
+  "clear     (\\c) Clear command.\n" \
+  "exit      (\\q) Exit mysql. Same as quit.\n" \
+  "print     (\\p) Print current command.\n" \
+  "quit      (\\q) Quit mysql.\n" \
+  "status    (\\s) Get status information from the server.\n" \
+  "system    (\\!) Execute a system shell command.\n" \
+  "\n" \
+  "For help with HQL commands and Hypertable administrative commands,\n" \
+  "type 'help contents'\n" \
+  "\n";
+
 }
 
 
@@ -117,7 +137,8 @@ int main(int argc, char **argv) {
   interp = hypertable->create_hql_interpreter();
 
   cout << "Welcome to the HQL command interpreter." << endl;
-  cout << "Type 'help' for a description of commands." << endl;
+  cout << endl;
+  cout << "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer." << endl;
   cout << endl << flush;
 
   try {
@@ -129,6 +150,46 @@ int main(int argc, char **argv) {
 
       if (*line == 0)
 	continue;
+
+      if (!strncasecmp(line, "help", 4) || !strncmp(line, "\\h", 2) || *line == '?') {
+	std::string command = line;
+	std::transform( command.begin(), command.end(), command.begin(), ::tolower );
+	trim_left_if(command, boost::is_any_of(" \t\n\r;"));
+	if (command == "help" || command == "\\h" || command == "?") {
+	  cout << help_text;
+	  continue;
+	}
+	else
+	  interp->execute_line(command);
+	continue;
+      }
+      else if (!strcasecmp(line, "quit") || !strcasecmp(line, "exit") || !strcmp(line, "\\q")) {
+	return 0;
+      }
+      else if (!strcasecmp(line, "print") || !strcmp(line, "\\p")) {
+	cout << g_accum << endl;
+	continue;
+      }
+      else if (!strcasecmp(line, "clear") || !strcmp(line, "\\c")) {
+	g_accum = "";
+	g_cont = false;
+	continue;
+      }
+      else if (!strncasecmp(line, "system", 6) || !strncmp(line, "\\!", 2)) {
+	std::string command = line;
+	size_t offset = command.find_first_of(' ');
+	if (offset != std::string::npos) {
+	  command = command.substr(offset+1);
+	  trim_left_if(command, boost::is_any_of(" \t\n\r;"));
+	  system(command.c_str());
+	}
+	continue;
+      }
+      else if (!strcasecmp(line, "status") || !strcmp(line, "\\s")) {
+	cout << endl << "no status." << endl << endl;
+	continue;
+      }
+
 
       /**
        * Add commands to queue

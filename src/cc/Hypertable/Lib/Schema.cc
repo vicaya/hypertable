@@ -324,6 +324,45 @@ void Schema::render(std::string &output) {
   return;
 }
 
+void Schema::render_hql_create_table(std::string table_name, std::string &output) {
+
+  output += "\n";
+  output += "CREATE TABLE " + table_name + " (\n";
+
+  for (ColumnFamilyMapT::const_iterator cf_iter = m_column_family_map.begin(); cf_iter != m_column_family_map.end(); cf_iter++) {
+    output += (std::string)"  " + (*cf_iter).first;
+    if ((*cf_iter).second->max_versions != 0)
+      output += (std::string)" MAX_VERSIONS=" + (*cf_iter).second->max_versions;
+    if ((*cf_iter).second->ttl != 0)
+      output += (std::string)" TTL=" + (uint32_t)(*cf_iter).second->ttl;
+    output += (std::string)",\n";
+  }
+
+  size_t i=1;
+  for (list<AccessGroup *>::iterator ag_iter = m_access_groups.begin(); ag_iter != m_access_groups.end(); ag_iter++, i++) {
+    output += (std::string)"  ACCESS GROUP " + (*ag_iter)->name;
+    if ((*ag_iter)->in_memory)
+      output += (std::string)" IN_MEMORY";
+    if ((*ag_iter)->blocksize != 0)
+      output += (std::string)" BLOCKSIZE=" + (*ag_iter)->blocksize;
+    if (!(*ag_iter)->columns.empty()) {
+      output += (std::string)" (";
+      for (list<ColumnFamily *>::iterator cfl_iter = (*ag_iter)->columns.begin(); cfl_iter != (*ag_iter)->columns.end(); cfl_iter++) {
+	output += (std::string)" " + (*cfl_iter)->name;
+      }
+      output += (std::string)" )";
+    }
+    if (i == m_access_groups.size())
+      output += (std::string)"\n";
+    else
+      output += (std::string)",\n";
+  }
+
+  output += ")\n";
+  output += "\n";
+  
+}
+
 
 /**
  * Protected methods

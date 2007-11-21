@@ -76,6 +76,8 @@ namespace Hypertable {
 
     void render(std::string &output);
 
+    void render_hql_create_table(std::string table_name, std::string &output);
+
     bool is_valid();
 
     const char *get_error_string() { 

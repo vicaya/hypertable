@@ -22,6 +22,7 @@
 #define HYPERTABLE_HQLPARSER_H
 
 //#define BOOST_SPIRIT_DEBUG  ///$$$ DEFINE THIS WHEN DEBUGGING $$$///
+#include <boost/algorithm/string.hpp>
 #include <boost/spirit/core.hpp>
 #include <boost/spirit/symbols/symbols.hpp>
 
@@ -45,9 +46,10 @@ namespace Hypertable {
 
   namespace HqlParser {
 
-    const int COMMAND_HELP           = 1;
-    const int COMMAND_CREATE_TABLE   = 2;
-    const int COMMAND_DESCRIBE_TABLE = 3;
+    const int COMMAND_HELP              = 1;
+    const int COMMAND_CREATE_TABLE      = 2;
+    const int COMMAND_DESCRIBE_TABLE    = 3;
+    const int COMMAND_SHOW_CREATE_TABLE = 4;
    
     struct hql_interpreter_state {
       int command;
@@ -60,11 +62,13 @@ namespace Hypertable {
     };
 
     struct set_command {
-      set_command(hql_interpreter_state &state, int cmd)
-      { state.command = cmd; }
+      set_command(hql_interpreter_state &state_, int cmd) : state(state_), command(cmd) { }
       void operator()(char const *, char const *) const { 
 	display_string("set_command");
+	state.command = command;
       }
+      hql_interpreter_state &state;
+      int command;
     };
 
     struct set_table_name {
@@ -185,12 +189,17 @@ namespace Hypertable {
     };
 
     struct set_help {
-      set_help(hql_interpreter_state &state_) : state(state_) { 
-	state.command = COMMAND_HELP;
-      }
+      set_help(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const { 
 	display_string("set_help");
-	state.str  = std::string(str, end-str);
+	state.command = COMMAND_HELP;
+	state.str = std::string(str, end-str);
+	size_t offset = state.str.find_first_of(' ');
+	if (offset != std::string::npos) {
+	  state.str = state.str.substr(offset+1);
+	  boost::trim(state.str);
+	  std::transform( state.str.begin(), state.str.end(), state.str.begin(), ::tolower );
+	}
       }
       hql_interpreter_state &state;
     };
@@ -212,6 +221,7 @@ namespace Hypertable {
 	  /**
 	   * OPERATORS
 	   */
+	  chlit<>     QUESTIONMARK('?');
 	  chlit<>     PLUS('+');
 	  chlit<>     MINUS('-');
 	  chlit<>     STAR('*');
@@ -259,6 +269,8 @@ namespace Hypertable {
 	  token_t ACCESS       = as_lower_d["access"];
 	  token_t GROUP        = as_lower_d["group"];
 	  token_t DESCRIBE     = as_lower_d["describe"];
+	  token_t SHOW         = as_lower_d["show"];
+	  token_t ESC_HELP     = as_lower_d["\\h"];
 
 	  /**
 	   * Start grammar definition
@@ -277,11 +289,16 @@ namespace Hypertable {
 	  statement
 	    = create_table_statement[set_command(self.state, COMMAND_CREATE_TABLE)]
 	    | describe_table_statement[set_command(self.state, COMMAND_DESCRIBE_TABLE)]
-	    | help_statement
+	    | show_statement
+	    | help_statement[set_help(self.state)]
+	    ;
+
+	  show_statement
+	    = ( SHOW >> CREATE >> TABLE >> identifier[set_table_name(self.state)] )[set_command(self.state, COMMAND_SHOW_CREATE_TABLE)]
 	    ;
 
 	  help_statement
-	    = HELP[set_help(self.state)] >> *anychar_p
+	    = ( HELP | ESC_HELP | QUESTIONMARK ) >> *anychar_p
 	    ;
 
 	  describe_table_statement
@@ -289,8 +306,9 @@ namespace Hypertable {
 	    ;
 
 	  create_table_statement
-	    = CREATE >> TABLE >> identifier[set_table_name(self.state)]
-		     >> !( create_definitions )
+	    =  CREATE >> TABLE
+		      >> identifier[set_table_name(self.state)]
+		      >> !( create_definitions )
 	    ;
 
 	  create_definitions 
@@ -381,7 +399,7 @@ namespace Hypertable {
 	create_table_statement, duration, identifier, max_versions_option,
         statement, string_literal, ttl_option, access_group_definition,
         access_group_option, in_memory_option, blocksize_option, help_statement,
-        describe_table_statement;
+        describe_table_statement, show_statement;
       };
 
       hql_interpreter_state &state;
