@@ -50,8 +50,27 @@ namespace Hypertable {
     const int COMMAND_CREATE_TABLE      = 2;
     const int COMMAND_DESCRIBE_TABLE    = 3;
     const int COMMAND_SHOW_CREATE_TABLE = 4;
+    const int COMMAND_SELECT            = 5;
+
+    class hql_interpreter_scan_state {
+    public:
+      hql_interpreter_scan_state() : start_row_inclusive(true), end_row_inclusive(true), limit(0), max_versions(0), start_time(0), end_time(0) { }
+      std::vector<std::string> columns;
+      std::string row;
+      std::string start_row;
+      bool start_row_inclusive;
+      std::string end_row;
+      bool end_row_inclusive;
+      uint32_t limit;
+      uint32_t max_versions;
+      uint64_t start_time;
+      uint64_t end_time;
+      std::string outfile;
+    };
    
-    struct hql_interpreter_state {
+    class hql_interpreter_state {
+    public:
+      hql_interpreter_state() : command(0), cf(0), ag(0) { }
       int command;
       std::string table_name;
       std::string str;
@@ -59,6 +78,7 @@ namespace Hypertable {
       Schema::AccessGroup *ag;
       Schema::ColumnFamilyMapT cf_map;
       Schema::AccessGroupMapT ag_map;
+      hql_interpreter_scan_state scan;
     };
 
     struct set_command {
@@ -79,16 +99,6 @@ namespace Hypertable {
       }
       hql_interpreter_state &state;
     };
-
-#if 0
-    struct set_test {
-      set_test(const char *label_) : label(label_) { }
-      void operator()(char const *str, char const *end) const { 
-	cout << label << " " << std::string(str, end-str) << endl;
-      }
-      const char *label;
-    };
-#endif
 
     struct create_column_family {
       create_column_family(hql_interpreter_state &state_) : state(state_) { }
@@ -204,6 +214,74 @@ namespace Hypertable {
       hql_interpreter_state &state;
     };
 
+    struct scan_add_column_family {
+      scan_add_column_family(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("scan_add_column_family");
+	state.scan.columns.push_back(std::string(str, end-str));
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct scan_set_row {
+      scan_set_row(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("scan_set_row");      
+	if (state.scan.row != "")
+	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT ROW predicate multiply defined."));
+	state.scan.row = std::string(str, end-str);
+	trim_if(state.scan.row, boost::is_any_of("'\""));
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct scan_set_start_row {
+      scan_set_start_row(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("scan_set_start_row");
+	if (state.scan.start_row != "")
+	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT START_ROW predicate multiply defined."));
+	state.scan.start_row = std::string(str, end-str);
+	trim_if(state.scan.start_row, boost::is_any_of("'\""));
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct scan_set_end_row {
+      scan_set_end_row(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("scan_set_end_row");
+	if (state.scan.end_row != "")
+	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT END_ROW predicate multiply defined."));
+	state.scan.end_row = std::string(str, end-str);
+	trim_if(state.scan.end_row, boost::is_any_of("'\""));
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct scan_set_max_versions {
+      scan_set_max_versions(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(const unsigned int &ival) const { 
+	display_string("scan_set_max_versions");
+	if (state.scan.max_versions != 0)
+	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT MAX_VERSIONS predicate multiply defined."));
+	state.scan.max_versions = ival;
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct scan_set_limit {
+      scan_set_limit(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(const unsigned int &ival) const { 
+	display_string("scan_set_limit");
+	if (state.scan.limit != 0)
+	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT LIMIT predicate multiply defined."));
+	state.scan.limit = ival;
+      }
+      hql_interpreter_state &state;
+    };
+
+
     struct hql_interpreter : public grammar<hql_interpreter> {
       hql_interpreter(hql_interpreter_state &state_) : state(state_) {}
 
@@ -216,11 +294,13 @@ namespace Hypertable {
 #endif
 
 	  keywords =
-	    "access", "ACCESS", "Access", "GROUP", "group", "Group";
+	    "access", "ACCESS", "Access", "GROUP", "group", "Group",
+	    "from", "FROM", "From";
 
 	  /**
 	   * OPERATORS
 	   */
+	  chlit<>     SINGLEQUOTE('\'');
 	  chlit<>     QUESTIONMARK('?');
 	  chlit<>     PLUS('+');
 	  chlit<>     MINUS('-');
@@ -241,6 +321,7 @@ namespace Hypertable {
 	  chlit<>     POINTER('^');
 	  chlit<>     DOT('.');
 	  strlit<>    DOTDOT("..");
+	  strlit<>    AND("&&");
 
 	  /**
 	   * TOKENS
@@ -250,7 +331,6 @@ namespace Hypertable {
 	  token_t CREATE       = as_lower_d["create"];
 	  token_t HELP         = as_lower_d["help"];
 	  token_t TABLE        = as_lower_d["table"];
-	  token_t MAX_VERSIONS = as_lower_d["max_versions"];
 	  token_t TTL          = as_lower_d["ttl"];
 	  token_t MONTHS       = as_lower_d["months"];
 	  token_t MONTH        = as_lower_d["month"];
@@ -271,6 +351,20 @@ namespace Hypertable {
 	  token_t DESCRIBE     = as_lower_d["describe"];
 	  token_t SHOW         = as_lower_d["show"];
 	  token_t ESC_HELP     = as_lower_d["\\h"];
+	  token_t SELECT       = as_lower_d["select"];
+	  token_t START_TIME   = as_lower_d["start_time"];
+	  token_t END_TIME     = as_lower_d["end_time"];
+	  token_t FROM         = as_lower_d["from"];
+	  token_t WHERE        = as_lower_d["where"];
+	  token_t ROW          = as_lower_d["row"];
+	  token_t START_ROW    = as_lower_d["start_row"];
+	  token_t END_ROW      = as_lower_d["end_row"];
+	  token_t INCLUSIVE    = as_lower_d["inclusive"];
+	  token_t EXCLUSIVE    = as_lower_d["exclusive"];
+	  token_t MAX_VERSIONS = as_lower_d["max_versions"];
+	  token_t LIMIT        = as_lower_d["limit"];
+	  token_t INTO         = as_lower_d["into"];
+	  token_t FILE         = as_lower_d["file"];
 
 	  /**
 	   * Start grammar definition
@@ -281,20 +375,27 @@ namespace Hypertable {
 		- (keywords)
 	    ];
 
-	  string_literal
+	  single_string_literal
 	    = lexeme_d[ chlit<>('\'') >>
-			+( strlit<>("\'\'") | anychar_p-chlit<>('\'') ) >>
+			+( anychar_p-chlit<>('\'') ) >>
 			chlit<>('\'') ];
 
+	  string_literal
+	    = lexeme_d[ chlit<>('"') >>
+			+( anychar_p-chlit<>('"') ) >>
+			chlit<>('"') ];
+
+
 	  statement
-	    = create_table_statement[set_command(self.state, COMMAND_CREATE_TABLE)]
+	    = select_statement[set_command(self.state, COMMAND_SELECT)]
+	    | create_table_statement[set_command(self.state, COMMAND_CREATE_TABLE)]
 	    | describe_table_statement[set_command(self.state, COMMAND_DESCRIBE_TABLE)]
-	    | show_statement
+	    | show_statement[set_command(self.state, COMMAND_SHOW_CREATE_TABLE)]
 	    | help_statement[set_help(self.state)]
 	    ;
 
 	  show_statement
-	    = ( SHOW >> CREATE >> TABLE >> identifier[set_table_name(self.state)] )[set_command(self.state, COMMAND_SHOW_CREATE_TABLE)]
+	    = ( SHOW >> CREATE >> TABLE >> identifier[set_table_name(self.state)] )
 	    ;
 
 	  help_statement
@@ -364,6 +465,67 @@ namespace Hypertable {
 	    = BLOCKSIZE >> EQUAL >> uint_p[set_access_group_blocksize(self.state)]
 	    ;
 
+	  select_statement
+	    = SELECT 
+	      >> ( '*' | ( identifier[scan_add_column_family(self.state)] >> *( COMMA >> identifier[scan_add_column_family(self.state)] ) ) ) 
+	      >> FROM >> identifier
+	      >> !where_clause
+	      >> !into_file_clause
+	    ;
+
+	  into_file_clause
+	    = INTO >> FILE >> single_string_literal
+	    | INTO >> FILE >> string_literal
+	    ;
+
+	  where_clause
+	    = WHERE >> predicate >> *( AND >> predicate )
+	    ;
+
+	  predicate
+	    =  
+	    ROW >> EQUAL >> string_literal[scan_set_row(self.state)]
+	    | ROW >> EQUAL >> single_string_literal[scan_set_row(self.state)]
+	    | START_ROW >> *( INCLUSIVE | EXCLUSIVE ) >> EQUAL >> string_literal[scan_set_start_row(self.state)]
+	    | START_ROW >> *( INCLUSIVE | EXCLUSIVE ) >> EQUAL >> single_string_literal[scan_set_start_row(self.state)]
+	    | END_ROW >> *( INCLUSIVE | EXCLUSIVE ) >> EQUAL >> string_literal[scan_set_end_row(self.state)]
+	    | END_ROW >> *( INCLUSIVE | EXCLUSIVE ) >> EQUAL >> single_string_literal[scan_set_end_row(self.state)]
+	    | START_TIME >> EQUAL >> date_expression 
+	    | END_TIME >> EQUAL >> date_expression
+	    | MAX_VERSIONS >> EQUAL >> uint_p[scan_set_max_versions(self.state)]
+	    | LIMIT >> EQUAL >> uint_p[scan_set_limit(self.state)]
+	    ;
+
+	  date_expression
+	    = SINGLEQUOTE >> ( datetime | date | time | year ) >> SINGLEQUOTE
+	    ;
+
+	  datetime
+	    = date >> time
+	    ;
+
+	  uint_parser<int, 10, 2, 2> uint2_p;
+	  uint_parser<int, 10, 4, 4> uint4_p;
+
+	  date
+	    = lexeme_d[
+		       limit_d(0u, 9999u)[uint4_p] >> '-'   //  Year
+		       >>  limit_d(1u, 12u)[uint2_p] >> '-' //  Month 01..12
+		       >>  limit_d(1u, 31u)[uint2_p]        //  Day 01..31
+	    ];	  
+	    
+
+	  time 
+	    = lexeme_d[
+		       limit_d(0u, 23u)[uint2_p] >> ':'     //  Hours 00..23
+		       >>  limit_d(0u, 59u)[uint2_p] >> ':' //  Minutes 00..59
+		       >>  limit_d(0u, 59u)[uint2_p]        //  Seconds 00..59
+	    ];
+
+	  year
+	    = lexeme_d[ limit_d(0u, 9999u)[uint4_p] ]
+	    ;
+
 
 	  /**
 	   * End grammar definition
@@ -388,6 +550,18 @@ namespace Hypertable {
 	  BOOST_SPIRIT_DEBUG_RULE(access_group_option);
 	  BOOST_SPIRIT_DEBUG_RULE(in_memory_option);
 	  BOOST_SPIRIT_DEBUG_RULE(blocksize_option);
+	  BOOST_SPIRIT_DEBUG_RULE(help_statement);
+	  BOOST_SPIRIT_DEBUG_RULE(describe_table_statement);
+	  BOOST_SPIRIT_DEBUG_RULE(show_statement);
+	  BOOST_SPIRIT_DEBUG_RULE(select_statement);
+	  BOOST_SPIRIT_DEBUG_RULE(where_clause);
+	  BOOST_SPIRIT_DEBUG_RULE(into_file_clause);
+	  BOOST_SPIRIT_DEBUG_RULE(predicate);
+	  BOOST_SPIRIT_DEBUG_RULE(date_expression);
+	  BOOST_SPIRIT_DEBUG_RULE(datetime);
+	  BOOST_SPIRIT_DEBUG_RULE(date);
+	  BOOST_SPIRIT_DEBUG_RULE(time);
+	  BOOST_SPIRIT_DEBUG_RULE(year);
 	}
 #endif
 
@@ -397,9 +571,11 @@ namespace Hypertable {
 	rule<ScannerT>
 	column_definition, column_option, create_definition, create_definitions,
 	create_table_statement, duration, identifier, max_versions_option,
-        statement, string_literal, ttl_option, access_group_definition,
+        statement, single_string_literal, string_literal, ttl_option, access_group_definition,
         access_group_option, in_memory_option, blocksize_option, help_statement,
-        describe_table_statement, show_statement;
+        describe_table_statement, show_statement, select_statement, where_clause,
+	into_file_clause, predicate, date_expression, datetime, date, time, year;
+
       };
 
       hql_interpreter_state &state;

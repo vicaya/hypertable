@@ -44,9 +44,6 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
   parse_info<> info;
   Schema *schema;
 
-  state.cf = 0;
-  state.ag = 0;
-
   info = parse(line.c_str(), interp, space_p);
 
   if (info.full) {
@@ -84,6 +81,19 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       if ((error = m_client->get_schema(state.table_name, schema_str)) != Error::OK)
 	throw Exception(error, std::string("Problem fetching schema for table '") + state.table_name + "' from master");
       cout << schema_str << endl;
+    }
+    else if (state.command == COMMAND_SELECT) {
+      cout << "column families = ";
+      for (size_t i=0; i<state.scan.columns.size(); i++)
+	cout << state.scan.columns[i] << " ";
+      cout << endl;
+      cout << "row = " << state.scan.row << endl;
+      cout << "start_row = " << state.scan.start_row << endl;
+      cout << "start_row_inclusive = " << state.scan.start_row_inclusive << endl;
+      cout << "end_row = " << state.scan.end_row << endl;
+      cout << "end_row_inclusive = " << state.scan.end_row_inclusive << endl;
+      cout << "max_versions = " << state.scan.max_versions << endl;
+      cout << "limit = " << state.scan.limit << endl;
     }
   }
   else

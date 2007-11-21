@@ -116,6 +116,7 @@ int main(int argc, char **argv) {
   queue<string> command_queue;
   const char *base, *ptr;
   HqlCommandInterpreter *interp;
+  std::string history_file = (std::string)getenv("HOME") + "/.hypertable_history";
 
   System::initialize(argv[0]);
   ReactorFactory::initialize((uint16_t)System::get_processor_count());
@@ -135,6 +136,9 @@ int main(int argc, char **argv) {
   hypertable = new Client(configFile);
 
   interp = hypertable->create_hql_interpreter();
+
+  if (!g_batch_mode)
+    read_history(history_file.c_str());
 
   cout << "Welcome to the HQL command interpreter." << endl;
   cout << endl;
@@ -164,6 +168,8 @@ int main(int argc, char **argv) {
 	continue;
       }
       else if (!strcasecmp(line, "quit") || !strcasecmp(line, "exit") || !strcmp(line, "\\q")) {
+	if (!g_batch_mode)
+	  write_history(history_file.c_str());
 	return 0;
       }
       else if (!strcasecmp(line, "print") || !strcmp(line, "\\p")) {
@@ -180,7 +186,7 @@ int main(int argc, char **argv) {
 	size_t offset = command.find_first_of(' ');
 	if (offset != std::string::npos) {
 	  command = command.substr(offset+1);
-	  trim_left_if(command, boost::is_any_of(" \t\n\r;"));
+	  trim_if(command, boost::is_any_of(" \t\n\r;"));
 	  system(command.c_str());
 	}
 	continue;
@@ -214,8 +220,11 @@ int main(int argc, char **argv) {
       g_accum += " ";
 
       while (!command_queue.empty()) {
-	if (command_queue.front() == "quit" || command_queue.front() == "exit")
+	if (command_queue.front() == "quit" || command_queue.front() == "exit") {
+	  if (!g_batch_mode)
+	    write_history(history_file.c_str());
 	  return 0;
+	}
 	interp->execute_line(command_queue.front());
 	command_queue.pop();
       }
@@ -225,8 +234,12 @@ int main(int argc, char **argv) {
   }
   catch (Hypertable::Exception &e) {
     cerr << e.what() << endl;
+    if (!g_batch_mode)
+      write_history(history_file.c_str());
     return 1;
   }
 
+  if (!g_batch_mode)
+    write_history(history_file.c_str());
   return 0;
 }
