@@ -154,7 +154,7 @@ int main(int argc, char **argv) {
       if (!strncasecmp(line, "help", 4) || !strncmp(line, "\\h", 2) || *line == '?') {
 	std::string command = line;
 	std::transform( command.begin(), command.end(), command.begin(), ::tolower );
-	trim_left_if(command, boost::is_any_of(" \t\n\r;"));
+	trim_if(command, boost::is_any_of(" \t\n\r;"));
 	if (command == "help" || command == "\\h" || command == "?") {
 	  cout << help_text;
 	  continue;
