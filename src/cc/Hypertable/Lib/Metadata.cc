@@ -34,6 +34,7 @@ extern "C" {
 
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
+#include "Common/Logger.h"
 #include "Common/StringExt.h"
 
 #include "Key.h"
@@ -155,13 +156,21 @@ void Metadata::end_element_handler(void *userData, const XML_Char *name) {
     ms_range->get_end_row(endRow);
     assert(endRow == "");
     boost::trim(ms_collected_text);
-    if (ms_collected_text.length() > 0)
-      ms_range->set_end_row(ms_collected_text);
-    else {
-      ms_collected_text = Key::END_ROW_MARKER;
+    if (ms_collected_text.length() > 0) {
+      /**
+       * If the row key ends in "??", replace the "??" with 0xff 0xff
+       */
+      size_t len = ms_collected_text.length();
+      if (ms_collected_text.rfind("??", len) == (len-2)) {
+	size_t offset = len - 2;
+	ms_collected_text.replace(offset, 2, 2, (char )0xff);
+      }
       ms_range->set_end_row(ms_collected_text);
     }
-  }
+    else {
+      assert(!"Empty end row in metadata");
+    }
+ }
   else if (!strcmp(name, "Location")) {
     assert(ms_range != 0);
     boost::trim(ms_collected_text);

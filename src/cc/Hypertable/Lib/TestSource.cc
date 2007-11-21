@@ -76,6 +76,17 @@ bool TestSource::next(ByteString32T **keyp, ByteString32T **valuep) {
       continue;
     }
 
+    /**
+     * If the row key ends in "??", replace the "??" with 0xff 0xff
+     */
+    size_t row_key_len = strlen(rowKey);
+    if (row_key_len >= 2) {
+      if (!strcmp(&rowKey[row_key_len-2], "??")) {
+	rowKey[row_key_len-1] = (char )0xff;
+	rowKey[row_key_len-2] = (char )0xff;
+      }
+    }
+
     if ((column = strtok_r(0, "\t", &last)) == 0) {
       cerr << "Mal-formed input on line " << (m_cur_line-1) << endl;
       continue;

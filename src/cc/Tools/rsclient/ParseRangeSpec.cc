@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <boost/algorithm/string.hpp>
+
 #include "Hypertable/Lib/Key.h"
 
 #include "ParseRangeSpec.h"
@@ -26,30 +28,38 @@ namespace Hypertable {
 
   bool ParseRangeSpec(std::string &spec, std::string &tableName, std::string &startRow, std::string &endRow) {
     const char *base = spec.c_str();
-    const char *ptr, *leftBracket, *colon, *rightBracket;
+    const char *ptr, *leftBracket, *dotdot, *rightBracket;
 
     if ((leftBracket = strchr(base, '[')) == 0)
       return false;
 
-    if ((colon = strchr(leftBracket, ':')) == 0)
+    if ((dotdot = strstr(leftBracket, "..")) == 0)
       return false;
 
-    if ((rightBracket = strchr(colon, ']')) == 0)
+    if ((rightBracket = strchr(dotdot, ']')) == 0)
       return false;
 
     tableName = std::string(base, leftBracket-base);
 
     ptr = leftBracket+1;
-    if (ptr == colon)
+    if (ptr == dotdot)
       startRow = "";
-    else
-      startRow = std::string(ptr, colon-ptr);
+    else {
+      startRow = std::string(ptr, dotdot-ptr);
+      boost::trim(startRow);
+      trim_if(startRow, boost::is_any_of("'\""));
+    }
 
-    ptr = colon+1;
     if (ptr == rightBracket)
-      endRow = Key::END_ROW_MARKER;
-    else
-      endRow = std::string(ptr, rightBracket-ptr);
+      return false;
+    ptr = dotdot+2;
+    endRow = std::string(ptr, rightBracket-ptr);
+    boost::trim(endRow);
+    trim_if(endRow, boost::is_any_of("'\""));
+    if (endRow.rfind("??",endRow.length()) == (endRow.length()-2)) {
+      size_t offset = endRow.length() - 2;
+      endRow.replace(offset, 2, 2, (char )0xff);
+    }
 
     return true;
   }

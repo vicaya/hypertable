@@ -9,8 +9,8 @@ ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:83) Schema Parse Error: Invalid val
   <AccessGroup name="default">
     <ColumnFamily>
       <Name>default</Name>
-        <MaxVersions>3</MaxVersions>
-        <ttl>2592000</ttl>
+      <MaxVersions>3</MaxVersions>
+      <ttl>2592000</ttl>
     </ColumnFamily>
   </AccessGroup>
   <AccessGroup name="meta">
@@ -26,8 +26,8 @@ ERROR schemaTest : (${SRC_DIR}/schemaTest.cc:83) Schema Parse Error: Invalid val
   <AccessGroup name="default">
     <ColumnFamily id="1">
       <Name>default</Name>
-        <MaxVersions>3</MaxVersions>
-        <ttl>2592000</ttl>
+      <MaxVersions>3</MaxVersions>
+      <ttl>2592000</ttl>
     </ColumnFamily>
   </AccessGroup>
   <AccessGroup name="meta">

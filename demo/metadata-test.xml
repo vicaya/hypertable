@@ -5,4 +5,16 @@
     <EndRow>kerchoo</EndRow>
     <LogDir></LogDir>
   </RangeInfo>
+  <RangeInfo>
+    <TableName>METADATA</TableName>
+    <StartRow></StartRow>
+    <EndRow>0:??</EndRow>
+    <LogDir></LogDir>
+  </RangeInfo>
+  <RangeInfo>
+    <TableName>METADATA</TableName>
+    <StartRow>1:</StartRow>
+    <EndRow>??</EndRow>
+    <LogDir></LogDir>
+  </RangeInfo>
 </Metadata>

@@ -187,6 +187,7 @@ int main(int argc, char **argv) {
   CommandFetchScanblock *fetchScanblock;
   Hyperspace::SessionPtr hyperspace_ptr;
   RangeServerClientPtr range_server_ptr;
+  std::string history_file = (std::string)getenv("HOME") + "/.rsclient_history";
 
   System::initialize(argv[0]);
   ReactorFactory::initialize((uint16_t)System::get_processor_count());
@@ -205,7 +206,9 @@ int main(int argc, char **argv) {
 
   propsPtr.reset( new Properties(configFile) );
 
-  BuildInetAddress(addr, propsPtr, host, port);  
+  BuildInetAddress(addr, propsPtr, host, port);
+
+  read_history(history_file.c_str());
 
   comm = new Comm();
   connManager = new ConnectionManager(comm);
@@ -254,8 +257,10 @@ int main(int argc, char **argv) {
     }
 
     if (i == commands.size()) {
-      if (!strcmp(line, "quit") || !strcmp(line, "exit"))
+      if (!strcmp(line, "quit") || !strcmp(line, "exit")) {
+	write_history(history_file.c_str());
 	exit(0);
+      }
       else if (!strcmp(line, "help")) {
 	Usage::dump(helpHeader);
 	for (i=0; i<commands.size(); i++) {
@@ -270,5 +275,6 @@ int main(int argc, char **argv) {
 
   }
 
+  write_history(history_file.c_str());
   return 0;
 }

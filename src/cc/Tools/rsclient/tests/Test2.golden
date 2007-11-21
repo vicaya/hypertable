@@ -1,7 +1,7 @@
 Welcome to the Range Server command interpreter.
 Type 'help' for a description of commands.
 
-rsclient> load range Test2[:]
+rsclient> load range Test2[..??]
 TableName  = Test2
 TableId    = 2
 Generation = 1
@@ -361,7 +361,7 @@ success
 success
 success
 success
-rsclient> create scanner Test2[:] start=Abama row-limit=4
+rsclient> create scanner Test2[..??] start=Abama row-limit=4
 TableName  = Test2
 TableId    = 2
 Generation = 1
@@ -532,7 +532,7 @@ EndRow     = ÿÿ
 1189631332950863 Abarambo broccoli:http://www.nielsenmedia.com/DMAs.html
 1189631332442202 Abarambo broccoli:http://www.nielsenmedia.com/DMAs.html
 1189631333623650 Abarambo broccoli:http://www.sesameworkshop.org/sesamestreet/
-rsclient> create scanner Test2[:] start=Abama row-limit=2 max-versions=1
+rsclient> create scanner Test2[..??] start=Abama row-limit=2 max-versions=1
 TableName  = Test2
 TableId    = 2
 Generation = 1

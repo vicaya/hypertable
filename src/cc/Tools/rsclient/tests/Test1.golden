@@ -1,7 +1,7 @@
 Welcome to the Range Server command interpreter.
 Type 'help' for a description of commands.
 
-rsclient> load range Test1[:kerchoo]
+rsclient> load range Test1[..kerchoo]
 TableName  = Test1
 TableId    = 1
 Generation = 1
@@ -224,7 +224,7 @@ partial update
 partial update
 partial update
 partial update
-rsclient> create scanner Test1[:kerchoo]
+rsclient> create scanner Test1[..kerchoo]
 TableName  = Test1
 TableId    = 1
 Generation = 1
@@ -493,7 +493,7 @@ EndRow     = kerchoo
 1181153477549526 Agrauleum apple:http://www.schiedamsemolens.nl/schiedamsemolens/
 1181153478381429 Agrilus cassis:http://www1.dorsetcc.gov.uk/LIVING/FACTS/Census2001.nsf/6cadf4da179fc19500256663004afece/1f3a12dba044faa680256ec5004eec98?OpenDocument
 1181153478310808 Agrilus plum:http://www.town.asahi.yamagata.jp/
-rsclient> create scanner Test1[:kerchoo] start=Agamemnon end=Agamemnon
+rsclient> create scanner Test1[..kerchoo] start=Agamemnon end=Agamemnon
 TableName  = Test1
 TableId    = 1
 Generation = 1
@@ -501,7 +501,7 @@ StartRow   =
 EndRow     = kerchoo
 1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
 1181153478609060 Agamemnon plum:http://maps.google.com/maps?ll=43.297884,-91.989187&spn=0.11,0.18&t=h
-rsclient> create scanner Test1[:kerchoo] start=Agamemnon row-limit=5
+rsclient> create scanner Test1[..kerchoo] start=Agamemnon row-limit=5
 TableName  = Test1
 TableId    = 1
 Generation = 1
@@ -515,7 +515,7 @@ EndRow     = kerchoo
 1181153477854957 Agao onion:http://creativecommons.org/licenses/by-sa/1.0/
 1181153478158634 Agao onion:http://www.newadvent.org/cathen/14146a.htm
 1181153477596685 Agapetidae banana:http://www.archives.gov/federal_register/electoral_college/2004_certificates/ascertainment_georgia_01.html
-rsclient> create scanner Test1[:kerchoo] row-range=[Agamemnon,Agamemnon]
+rsclient> create scanner Test1[..kerchoo] row-range=[Agamemnon,Agamemnon]
 TableName  = Test1
 TableId    = 1
 Generation = 1
@@ -523,7 +523,7 @@ StartRow   =
 EndRow     = kerchoo
 1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
 1181153478609060 Agamemnon plum:http://maps.google.com/maps?ll=43.297884,-91.989187&spn=0.11,0.18&t=h
-rsclient> create scanner Test1[:kerchoo] row-range=[Agamemnon,Aganice]
+rsclient> create scanner Test1[..kerchoo] row-range=[Agamemnon,Aganice]
 TableName  = Test1
 TableId    = 1
 Generation = 1
@@ -533,7 +533,7 @@ EndRow     = kerchoo
 1181153478609060 Agamemnon plum:http://maps.google.com/maps?ll=43.297884,-91.989187&spn=0.11,0.18&t=h
 1181153477562141 Agamidae onion:http://www.dtic.mil/jcs
 1181153478134435 Aganice broccoli:http://geonames.usgs.gov/pls/gnis/web_query.gnis_web_query_form
-rsclient> create scanner Test1[:kerchoo] row-range=(Agamemnon,Aganice]
+rsclient> create scanner Test1[..kerchoo] row-range=(Agamemnon,Aganice]
 TableName  = Test1
 TableId    = 1
 Generation = 1
@@ -541,7 +541,7 @@ StartRow   =
 EndRow     = kerchoo
 1181153477562141 Agamidae onion:http://www.dtic.mil/jcs
 1181153478134435 Aganice broccoli:http://geonames.usgs.gov/pls/gnis/web_query.gnis_web_query_form
-rsclient> create scanner Test1[:kerchoo] row-range=[Agamemnon,Aganice)
+rsclient> create scanner Test1[..kerchoo] row-range=[Agamemnon,Aganice)
 TableName  = Test1
 TableId    = 1
 Generation = 1
@@ -550,7 +550,7 @@ EndRow     = kerchoo
 1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
 1181153478609060 Agamemnon plum:http://maps.google.com/maps?ll=43.297884,-91.989187&spn=0.11,0.18&t=h
 1181153477562141 Agamidae onion:http://www.dtic.mil/jcs
-rsclient> create scanner Test1[:kerchoo] row-range=(Agamemnon,Aganice)
+rsclient> create scanner Test1[..kerchoo] row-range=(Agamemnon,Aganice)
 TableName  = Test1
 TableId    = 1
 Generation = 1

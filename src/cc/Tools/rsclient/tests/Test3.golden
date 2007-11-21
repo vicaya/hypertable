@@ -1,7 +1,7 @@
 Welcome to the Range Server command interpreter.
 Type 'help' for a description of commands.
 
-rsclient> load range Test3[:]
+rsclient> load range Test3[..??]
 TableName  = Test3
 TableId    = 3
 Generation = 1
@@ -361,7 +361,7 @@ success
 success
 success
 success
-rsclient> create scanner Test3[:]
+rsclient> create scanner Test3[..??]
 TableName  = Test3
 TableId    = 3
 Generation = 1
@@ -650,7 +650,7 @@ EndRow     = ÿÿ
 1189631332229556 Aaronitic plum:http://www.sesameworkshop.org/sesamestreet/
 1189631333434222 Aaronitic plum:http://www.sirlinksalot.net/bertandernie.html
 1189631333187075 Aaronitic plum:http://www.victoriacross.net
-rsclient> create scanner Test3[:] max-versions=2
+rsclient> create scanner Test3[..??] max-versions=2
 TableName  = Test3
 TableId    = 3
 Generation = 1
