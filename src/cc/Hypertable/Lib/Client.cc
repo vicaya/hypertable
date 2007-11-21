@@ -20,6 +20,10 @@
 
 #include <cassert>
 
+extern "C" {
+#include <poll.h>
+}
+
 #include "AsyncComm/Comm.h"
 
 #include "Common/Error.h"
@@ -46,9 +50,10 @@ Client::Client(std::string configFile) {
   m_conn_manager_ptr = new ConnectionManager(m_comm);
 
   m_hyperspace_ptr = new Hyperspace::Session(m_comm, propsPtr);
-  if (!m_hyperspace_ptr->wait_for_connection(30)) {
-    LOG_ERROR("Unable to connect to hyperspace, exiting...");
-    exit(1);
+  while (!m_hyperspace_ptr->wait_for_connection(2)) {
+    cout << "Waiting for connection to Hyperspace..." << flush;
+    poll(0, 0, 5000);
+    cout << endl << flush;
   }
 
   m_app_queue_ptr = new ApplicationQueue(1);

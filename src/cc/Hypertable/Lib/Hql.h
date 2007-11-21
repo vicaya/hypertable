@@ -45,11 +45,14 @@ namespace Hypertable {
 
   namespace HQL {
 
-    const int COMMAND_CREATE_TABLE = 1;
+    const int COMMAND_HELP           = 1;
+    const int COMMAND_CREATE_TABLE   = 2;
+    const int COMMAND_DESCRIBE_TABLE = 3;
    
     struct interpreter_state {
       int command;
       std::string table_name;
+      std::string str;
       Schema::ColumnFamily *cf;
       Schema::AccessGroup *ag;
       Schema::ColumnFamilyMapT cf_map;
@@ -114,15 +117,15 @@ namespace Hypertable {
 	double ttl = strtod(str, &end_ptr);
 	std::string unit_str = std::string(end_ptr, end-end_ptr);
 	std::transform(unit_str.begin(), unit_str.end(), unit_str.begin(), ::tolower );
-	if (unit_str == "months")
+	if (unit_str.find_first_of("month") == 0)
 	  state.cf->ttl = (time_t)(ttl * 2592000.0);
-	else if (unit_str == "weeks")
+	else if (unit_str.find_first_of("week") == 0)
 	  state.cf->ttl = (time_t)(ttl * 604800.0);
-	else if (unit_str == "days")
+	else if (unit_str.find_first_of("day") == 0)
 	  state.cf->ttl = (time_t)(ttl * 86400.0);
-	else if (unit_str == "hours")
+	else if (unit_str.find_first_of("hour") == 0)
 	  state.cf->ttl = (time_t)(ttl * 3600.0);
-	else if (unit_str == "minutes")
+	else if (unit_str.find_first_of("minute") == 0)
 	  state.cf->ttl = (time_t)(ttl * 60.0);
 	else 
 	  state.cf->ttl = (time_t)ttl;
@@ -181,6 +184,17 @@ namespace Hypertable {
       interpreter_state &state;
     };
 
+    struct set_help {
+      set_help(interpreter_state &state_) : state(state_) { 
+	state.command = COMMAND_HELP;
+      }
+      void operator()(char const *str, char const *end) const { 
+	display_string("set_help");
+	state.str  = std::string(str, end-str);
+      }
+      interpreter_state &state;
+    };
+
     struct interpreter : public grammar<interpreter> {
       interpreter(interpreter_state &state_) : state(state_) {}
 
@@ -224,6 +238,7 @@ namespace Hypertable {
 	  typedef inhibit_case<strlit<> > token_t;
 
 	  token_t CREATE       = as_lower_d["create"];
+	  token_t HELP         = as_lower_d["help"];
 	  token_t TABLE        = as_lower_d["table"];
 	  token_t MAX_VERSIONS = as_lower_d["max_versions"];
 	  token_t TTL          = as_lower_d["ttl"];
@@ -243,6 +258,7 @@ namespace Hypertable {
 	  token_t BLOCKSIZE    = as_lower_d["blocksize"];
 	  token_t ACCESS       = as_lower_d["access"];
 	  token_t GROUP        = as_lower_d["group"];
+	  token_t DESCRIBE     = as_lower_d["describe"];
 
 	  /**
 	   * Start grammar definition
@@ -260,6 +276,16 @@ namespace Hypertable {
 
 	  statement
 	    = create_table_statement[set_command(self.state, COMMAND_CREATE_TABLE)]
+	    | describe_table_statement[set_command(self.state, COMMAND_DESCRIBE_TABLE)]
+	    | help_statement
+	    ;
+
+	  help_statement
+	    = HELP[set_help(self.state)] >> *anychar_p
+	    ;
+
+	  describe_table_statement
+	    = DESCRIBE >> TABLE >> identifier[set_table_name(self.state)]
 	    ;
 
 	  create_table_statement
@@ -354,7 +380,8 @@ namespace Hypertable {
 	column_definition, column_option, create_definition, create_definitions,
 	create_table_statement, duration, identifier, max_versions_option,
         statement, string_literal, ttl_option, access_group_definition,
-        access_group_option, in_memory_option, blocksize_option;
+        access_group_option, in_memory_option, blocksize_option, help_statement,
+        describe_table_statement;
       };
 
       interpreter_state &state;

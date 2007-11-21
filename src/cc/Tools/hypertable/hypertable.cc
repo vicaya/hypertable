@@ -18,31 +18,34 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <cstdlib>
+#include <cstring>
 #include <iostream>
-#include <vector>
+#include <queue>
 
 extern "C" {
 #include <readline/readline.h>
 #include <readline/history.h>
 }
 
-#include "AsyncComm/Comm.h"
+#include <boost/algorithm/string.hpp>
+#include <boost/thread/exceptions.hpp>
 
-#include "Common/Error.h"
-#include "Common/InteractiveCommand.h"
+#include "Common/Properties.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
 
 #include "Hypertable/Lib/Client.h"
-
-#include "CommandCreateTable.h"
-#include "CommandGetSchema.h"
+#include "Hypertable/Lib/CommandInterpreter.h"
 
 using namespace Hypertable;
 using namespace std;
 
 namespace {
 
+  string g_accum;
+  bool g_batch_mode = false;
+  bool g_cont = false;
   char *line_read = 0;
 
   char *rl_gets () {
@@ -53,46 +56,54 @@ namespace {
     }
 
     /* Get a line from the user. */
-    line_read = readline ("hypertable> ");
+    if (g_batch_mode)
+      line_read = readline(0);
+    else if (!g_cont)
+      line_read = readline("hypertable> ");
+    else
+      line_read = readline("         -> ");
 
     /* If the line has any text in it, save it on the history. */
-    if (line_read && *line_read)
+    if (!g_batch_mode && line_read && *line_read)
       add_history (line_read);
 
     return line_read;
   }
 
   const char *usage[] = {
-    "usage: hypertable [OPTIONS]",
+    "usage: hql [OPTIONS]",
     "",
     "OPTIONS:",
-    "  --config=<file>  Read configuration from <file>.  The default config file is",
-    "                   \"conf/hypertable.cfg\" relative to the toplevel install directory",
-    "  --help             Display this help text and exit",
-    ""
-    "This is a command line interface to a Hypertable cluster.",
+    "",
+    "  -B, --batch    Disable interactive behavior.",
+    "  --config=<f>   Read configuration from <f>.  The default config",
+    "     file is \"conf/hypertable.cfg\" relative to the toplevel install",
+    "     directory",
+    "",
+    "  --help  Display this help text and exit.",
+    "",
+    "This program is the command line interpreter for HQL.",
     (const char *)0
   };
-  
+
 }
 
 
-/**
- *
- */
 int main(int argc, char **argv) {
   const char *line;
-  size_t i;
   string configFile = "";
-  vector<InteractiveCommand *>  commands;
-  Client *client = 0;
-  int error;
+  Client *hypertable;
+  queue<string> command_queue;
+  const char *base, *ptr;
+  CommandInterpreter *interp;
 
   System::initialize(argv[0]);
   ReactorFactory::initialize((uint16_t)System::get_processor_count());
 
   for (int i=1; i<argc; i++) {
-    if (!strncmp(argv[i], "--config=", 9))
+    if (!strcmp(argv[i], "--batch") || !strcmp(argv[i], "-B"))
+      configFile = &argv[i][9];
+    else if (!strncmp(argv[i], "--config=", 9))
       configFile = &argv[i][9];
     else
       Usage::dump_and_exit(usage);
@@ -101,47 +112,60 @@ int main(int argc, char **argv) {
   if (configFile == "")
     configFile = System::installDir + "/conf/hypertable.cfg";
 
-  client = new Client(configFile);
+  hypertable = new Client(configFile);
 
-  commands.push_back( new CommandCreateTable(client) );
-  commands.push_back( new CommandGetSchema(client) );
+  interp = hypertable->create_interpreter();
 
-  cout << "Welcome to the Hypertable command interpreter." << endl;
+  cout << "Welcome to the HQL command interpreter." << endl;
   cout << "Type 'help' for a description of commands." << endl;
   cout << endl << flush;
 
-  using_history();
-  while ((line = rl_gets()) != 0) {
+  try {
 
-    if (*line == 0)
-      continue;
+    g_accum = "";
+    if (!g_batch_mode)
+      using_history();
+    while ((line = rl_gets()) != 0) {
 
-    for (i=0; i<commands.size(); i++) {
-      if (commands[i]->matches(line)) {
-	commands[i]->parse_command_line(line);
-	if ((error = commands[i]->run()) != Error::OK)
-	  return error;
-	break;
-      }
-    }
+      if (*line == 0)
+	continue;
 
-    if (i == commands.size()) {
-      if (!strcmp(line, "quit") || !strcmp(line, "exit"))
-	exit(0);
-      else if (!strcmp(line, "help")) {
-	cout << endl;
-	for (i=0; i<commands.size(); i++) {
-	  Usage::dump(commands[i]->usage());
-	  cout << endl;
+      /**
+       * Add commands to queue
+       */
+      base = line;
+      ptr = strchr(base, ';');
+      while (ptr) {
+	g_accum += string(base, ptr-base);
+	if (g_accum.size() > 0) {
+	  boost::trim(g_accum);
+	  command_queue.push(g_accum);
+	  g_accum = "";
+	  g_cont = false;
 	}
+	base = ptr+1;
+	ptr = strchr(base, ';');
       }
-      else
-	cout << "Unrecognized command." << endl;
+      g_accum += string(base);
+      boost::trim(g_accum);
+      if (g_accum != "")
+	g_cont = true;
+      g_accum += " ";
+
+      while (!command_queue.empty()) {
+	if (command_queue.front() == "quit" || command_queue.front() == "exit")
+	  return 0;
+	interp->execute_line(command_queue.front());
+	command_queue.pop();
+      }
+
     }
 
   }
-
-  delete client;
+  catch (Hypertable::Exception &e) {
+    cerr << e.what() << endl;
+    return 1;
+  }
 
   return 0;
 }

@@ -312,9 +312,9 @@ void Schema::render(std::string &output) {
       output += ">\n";
       output += (string)"      <Name>" + (*cfiter)->name + "</Name>\n";
       if ((*cfiter)->max_versions != 0)
-	output += (string)"        <MaxVersions>" + (*cfiter)->max_versions + "</MaxVersions>\n";
+	output += (string)"      <MaxVersions>" + (*cfiter)->max_versions + "</MaxVersions>\n";
       if ((*cfiter)->ttl != 0)
-	output += (string)"        <ttl>" + (uint32_t)(*cfiter)->ttl + "</ttl>\n";
+	output += (string)"      <ttl>" + (uint32_t)(*cfiter)->ttl + "</ttl>\n";
       output += (string)"    </ColumnFamily>\n";
     }
     output += (string)"  </AccessGroup>\n";
