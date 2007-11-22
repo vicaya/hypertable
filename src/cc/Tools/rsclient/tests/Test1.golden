@@ -3,8 +3,6 @@ Type 'help' for a description of commands.
 
 rsclient> load range Test1[..kerchoo]
 TableName  = Test1
-TableId    = 1
-Generation = 1
 StartRow   = 
 EndRow     = kerchoo
 rsclient> update Test1 Test1-data.txt
@@ -226,8 +224,6 @@ partial update
 partial update
 rsclient> create scanner Test1[..kerchoo]
 TableName  = Test1
-TableId    = 1
-Generation = 1
 StartRow   = 
 EndRow     = kerchoo
 1181153478099511 A apple:http://www.lib.utexas.edu/
@@ -236,16 +232,16 @@ EndRow     = kerchoo
 1181153478514763 Abama yam:http://www.eburg.com/~ghlawson/GeneHLawsonCollection.html
 1181153478338330 Abanic broccoli:http://maps.google.com/maps?ll=39.196952,-94.572108&spn=0.11,0.18
 1181153477622010 Abaris plum:http://www.lettre-ulysses-award.org/
-1181153477869104 Abassin apple:http://www.rbstfacts.org
 1181153478594268 Abassin plum:http://maps.yahoo.com/maps_result?lat=39.903451&lon=-84.488175&mag=4
+1181153477869104 Abassin apple:http://www.rbstfacts.org
 1181153477802978 Abba plum:http://www.winick.com/Properties/Richmond/STATEN%20ISLAND%20MALL.pdf
 1181153477869202 Abbadide plum:http://www.newleftreview.net/NLR26001.shtml
 1181153478057135 Abderite cherry:http://www.szpilman.net/
 1181153478496269 Abdiel apple:http://r0.unctad.org/en/pressref/stdissue.htm
 1181153477717046 Abe cassis:http://maps.google.com/maps?ll=33.061018,-96.313227&spn=0.11,0.18
 1181153477952928 Abel broccoli:http://www.hickoksports.com/biograph/drabekdo.shtml
-1181153478301851 Abelite cassis:http://www.mauryshow.com/
 1181153478243776 Abelite plum:http://www.haaretz.com/hasen/spages/491750.html
+1181153478301851 Abelite cassis:http://www.mauryshow.com/
 1181153478510116 Abelmoschus plum:http://framehosting.dowjonesnews.com/sample/samplestory.asp?StoryID=2004012400040000&Take=1
 1181153478326486 Abhorson apple:http://maps.google.com/maps?ll=34.171631,-86.319967&spn=0.11,0.18&t=h
 1181153478609546 Abie banana:http://terraserver-usa.com/image.aspx?s=14&lon=-97.202762&lat=41.072375&w=2
@@ -261,15 +257,15 @@ EndRow     = kerchoo
 1181153478417408 Abram banana:http://topozone.com/map.asp?lat=45.672393&lon=-121.87354&s=200&size=m&layer=DRG100&datum=nad83
 1181153478504296 Abramis yam:http://topozone.com/map.asp?lat=36.499508&lon=-86.878717&s=200&size=m&layer=DRG100&datum=nad83
 1181153477887403 Abrus yam:http://terraserver-usa.com/image.aspx?s=14&lon=-84.476022&lat=40.740456&w=2
-1181153477608344 Absyrtus banana:http://maps.google.com/maps?ll=35.788218,-87.45589&spn=0.11,0.18
 1181153477662328 Absyrtus broccoli:http://maps.google.com/maps?ll=33.558724,-82.793784&spn=0.11,0.18
+1181153477608344 Absyrtus banana:http://maps.google.com/maps?ll=35.788218,-87.45589&spn=0.11,0.18
 1181153478541173 Acacia cherry:http://maps.yahoo.com/maps_result?lat=42.326694&lon=-75.314863&mag=4
 1181153477955215 Academic broccoli:http://www.seminolecountyfl.gov
 1181153477570933 Acadia onion:http://de.wikipedia.com/wiki.cgi?Deutsche_Mark
 1181153478426705 Acadia cassis:http://www.rosario.gov.ar
 1181153477807501 Acalepha broccoli:http://www.stmariecathedral.org
-1181153478453119 Acalypha apple:http://www.csu.de/home/Display/Fremdsprachen/englisch
 1181153478399483 Acalypha plum:http://www.royalacademy.org.uk/
+1181153478453119 Acalypha apple:http://www.csu.de/home/Display/Fremdsprachen/englisch
 1181153478483682 Acalypterae onion:http://topozone.com/map.asp?lat=38.595802&lon=-83.319725&s=200&size=m&layer=DRG100&datum=nad83
 1181153478264973 Acalyptratae cassis:http://maps.google.com/maps?ll=42.204544,-91.525013&spn=0.11,0.18
 1181153478445528 Acanthaceae cherry:http://www.koloseum-stunts.org/
@@ -277,8 +273,8 @@ EndRow     = kerchoo
 1181153477778510 Acanthocereus banana:http://www.businessweek.com/1997/41/b3548002.htm
 1181153478276720 Acanthodea broccoli:http://www.realcajunrecipes.com/recipes/532.rcr
 1181153478057153 Acanthodidae banana:http://www.musicmavericks.org/features/interview_amirkhanian.html
-1181153478437667 Acanthodini banana:http://terraserver-usa.com/image.aspx?s=14&lon=-82.539882&lat=35.537884&w=2
 1181153477952624 Acanthodini cherry:http://www.encyclopedia-titanica.org/biography.php?id=1349
+1181153478437667 Acanthodini banana:http://terraserver-usa.com/image.aspx?s=14&lon=-82.539882&lat=35.537884&w=2
 1181153477612241 Acantholimon banana:http://www.stadiumforbelfast.com
 1181153478077669 Acanthomeridae broccoli:http://maps.yahoo.com/maps_result?lat=42.093058&lon=-91.870272&mag=4
 1181153477538837 Acanthopanax cassis:http://creativecommons.org/licenses/by/2.0/
@@ -289,18 +285,18 @@ EndRow     = kerchoo
 1181153478610459 Acarida onion:http://maps.google.com/maps?ll=45.670308,-118.798118&spn=0.11,0.18&t=h
 1181153478091731 Acarida cassis:http://intyoga.online.fr/index.htm
 1181153478173506 Acarina plum:http://www.phrozensmoke.com/projects/icewmcp/
-1181153477965893 Acarus cassis:http://www.cleveland.navy.mil/
 1181153477690010 Acarus broccoli:http://www.ca9.uscourts.gov/
-1181153478218202 Accipiter onion:http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=3063
+1181153477965893 Acarus cassis:http://www.cleveland.navy.mil/
 1181153478324273 Accipiter cherry:http://www.kcckp.net/en/periodic/todaykorea/index.php?contents+1803+2006-01+80+36
+1181153478218202 Accipiter onion:http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=3063
 1181153478595204 Accipitres yam:http://www.fldoe.org/schoolmap/flash/schoolreport.asp?id=67
 1181153478083524 Aceldama plum:http://maps.yahoo.com/maps_result?lat=37.398063&lon=-88.375113&mag=4
 1181153478462121 Acemetic banana:http://www2.nvnet.org/nvhs/
 1181153478580299 Acerates cassis:http://www.epolitix.com/EN/MPWebsites/Tim+Boswell/
-1181153478138032 Acerbas onion:http://cfa-www.harvard.edu/iau/lists/NumberedMPs.txt
 1181153477732940 Acerbas broccoli:http://www.diggiloo.net/?1976ch
-1181153478518979 Achaean cassis:http://www.townoforwell-ny.us/
+1181153478138032 Acerbas onion:http://cfa-www.harvard.edu/iau/lists/NumberedMPs.txt
 1181153478221556 Achaean cherry:http://terraserver-usa.com/image.aspx?s=14&lon=-90.051727&lat=36.237974&w=2
+1181153478518979 Achaean cassis:http://www.townoforwell-ny.us/
 1181153478049253 Achaemenid apple:http://terraserver-usa.com/image.aspx?s=14&lon=-97.320716&lat=31.950876&w=2
 1181153478245415 Achaenodon broccoli:http://maps.google.com/maps?ll=34.602067,-120.644109&spn=0.11,0.18&t=h
 1181153478520660 Achagua cherry:http://www.yamasa.org/history/english/index.html
@@ -310,8 +306,8 @@ EndRow     = kerchoo
 1181153478584833 Achernar onion:http://terraserver-usa.com/image.aspx?s=14&lon=-97.13963&lat=32.84679&w=2
 1181153478590495 Achillize apple:http://www.usda.gov/oc/photo/01cs0188.htm
 1181153477668096 Achillize onion:http://www.tamu.edu/ccbn/dewitt/batgon.htm
-1181153478608190 Achlamydeae onion:http://www.imdb.com/name/nm0000047/
 1181153477584885 Achlamydeae cherry:http://terraserver-usa.com/image.aspx?s=14&lon=-90.801077&lat=43.092098&w=2
+1181153478608190 Achlamydeae onion:http://www.imdb.com/name/nm0000047/
 1181153477847915 Achras apple:http://topozone.com/map.asp?lat=40.703146&lon=-80.28342&s=200&size=m&layer=DRG100&datum=nad83
 1181153478595930 Achromatiaceae broccoli:http://library.lds.org/nxt/gateway.dll/Magazines/Ensign/2000.htm/ensign%20august%202000.htm/a%20history%20of%20the%20latterday%20seventy.htm
 1181153477832355 Achromatium yam:http://www.eagle1067fm.com
@@ -324,20 +320,20 @@ EndRow     = kerchoo
 1181153478076043 Acipenseres cassis:http://www.pressrepublican.com/Archive/2004/03_2004/031920043.htm
 1181153477695851 Acipenseroidei apple:http://njdot.nj.gov/
 1181153478174141 Aclemon onion:http://www.ssadb.qc.ca/en/index.htm
-1181153478105866 Acmaeidae cherry:http://www.01net.com/article/252216.html
 1181153477919548 Acmaeidae plum:http://www.google.com/search?q=Dahabiyeh
+1181153478105866 Acmaeidae cherry:http://www.01net.com/article/252216.html
 1181153478005356 Acnida cherry:http://topozone.com/map.asp?lat=41.21425&lon=-94.185618&s=200&size=m&layer=DRG100&datum=nad83
 1181153477622847 Acoela cherry:http://terraserver-usa.com/image.aspx?s=14&lon=-97.472429&lat=48.881014&w=2
 1181153478201601 Acoelomata broccoli:http://www.sabs.co.za/
 1181153478144356 Acoelomi onion:http://enjoyment.independent.co.uk/books/features/article340500.ece
 1181153477748976 Acoemetae onion:http://www.homesteadmuseum.org
-1181153477670319 Acoma cassis:http://www.nist.gov/dads/HTML/balancmrgsrt.html
 1181153477739411 Acoma yam:http://maps.yahoo.com/maps_result?lat=34.153489&lon=-89.631077&mag=4
-1181153477854405 Acontias onion:http://www.fordham.edu/halsall/mod/modsbook34.html
+1181153477670319 Acoma cassis:http://www.nist.gov/dads/HTML/balancmrgsrt.html
 1181153478215832 Acontias cherry:http://maps.google.com/maps?ll=39.519488,-104.765833&spn=0.11,0.18
+1181153477854405 Acontias onion:http://www.fordham.edu/halsall/mod/modsbook34.html
 1181153478365150 Acorus yam:http://www.theage.com.au/articles/2003/09/16/1063625031302.html?from=storyrhs&oneclick=true
-1181153478294195 Acousticon banana:http://www.imdb.com/name/nm1122431/
 1181153478043284 Acousticon broccoli:http://laws.findlaw.com/us/310/586.html
+1181153478294195 Acousticon banana:http://www.imdb.com/name/nm1122431/
 1181153477844619 Acraeinae banana:http://www.imdb.com/name/nm1763201/
 1181153478367901 Acrania plum:http://maps.yahoo.com/maps_result?lat=33.943964&lon=-86.061546&mag=4
 1181153477996477 Acrasiaceae apple:http://pin.primate.wisc.edu/factsheets/links/cercopithecus
@@ -348,18 +344,18 @@ EndRow     = kerchoo
 1181153477996619 Acrocarpi cherry:http://maps.google.com/maps?ll=42.463197,-78.93635&spn=0.11,0.18
 1181153477574903 Acrocomia banana:http://www.cinga.ch/langmaking/DTM/dtm.html
 1181153478590015 Acrodus cherry:http://www.cbrd.co.uk/motorway
-1181153477627110 Acromyodi banana:http://www.johnlabattcentre.com/
 1181153478282346 Acromyodi cherry:http://maps.google.com/maps?ll=35.016181,-81.80424&spn=0.11,0.18&t=h
+1181153477627110 Acromyodi banana:http://www.johnlabattcentre.com/
+1181153477953981 Acronycta broccoli:http://www.amnistiainternacional.org/revista/rev73/articulo12.html
+1181153478244386 Acronycta yam:http://www.eelpie.org/
 1181153478421845 Acronycta banana:http://maps.google.com/maps?ll=36.902285,-98.295015&spn=0.11,0.18
 1181153478540419 Acronycta cassis:http://observer.guardian.co.uk/international/story/0,6903,1020400,00.html
-1181153478244386 Acronycta yam:http://www.eelpie.org/
-1181153477953981 Acronycta broccoli:http://www.amnistiainternacional.org/revista/rev73/articulo12.html
 1181153478609846 Acrosticheae plum:http://www.google.com/search?hl=en&q=Gene+Traxler
 1181153477855537 Acrothoracica yam:http://www.frheritage.org.uk./cgi-bin/wiki.pl?Home_Page
 1181153478035039 Acrotretidae banana:http://www.city.fujisawa.kanagawa.jp/
 1181153478081603 Actiad broccoli:http://www.cnn.com/US/9908/12/kansas.evolution.flap/
-1181153478381630 Actian apple:http://maps.yahoo.com/maps_result?lat=39.315166&lon=-74.524907&mag=4
 1181153478467900 Actian yam:http://www.imdb.com/name/nm0310850/
+1181153478381630 Actian apple:http://maps.yahoo.com/maps_result?lat=39.315166&lon=-74.524907&mag=4
 1181153478564325 Actiniaria onion:http://www.fiawol.demon.co.uk/biblio/
 1181153477719128 Actiniaria onion:http://www.m-w.com/cgi-bin/dictionary?book=Dictionary&va=straight&x=0&y=0
 1181153478169730 Actinidiaceae onion:http://home.netcom.com/~fuffle/dogsleds/
@@ -391,16 +387,16 @@ EndRow     = kerchoo
 1181153478537367 Adeliza yam:http://www.co.guilford.nc.us
 1181153478342863 Adeodatus apple:http://maps.yahoo.com/maps_result?lat=32.905898&lon=-93.699896&mag=4
 1181153478358301 Adeona cassis:http://maps.google.com/maps?ll=35.222539,-93.160408&spn=0.11,0.18
-1181153477710905 Adessenarian cherry:http://maps.yahoo.com/maps_result?lat=45.614153&lon=-123.110827&mag=4
 1181153477922801 Adessenarian plum:http://www.premiumoutlets.com/lighthouseplace
-1181153478165276 Adhara banana:http://www.multimap.com/map/places.cgi?client=public&lang=&advanced=&quicksearch=RM30PE&scale=25000
+1181153477710905 Adessenarian cherry:http://maps.yahoo.com/maps_result?lat=45.614153&lon=-123.110827&mag=4
 1181153478510752 Adhara plum:http://maps.yahoo.com/maps_result?lat=27.935048&lon=-82.810117&mag=4
+1181153478165276 Adhara banana:http://www.multimap.com/map/places.cgi?client=public&lang=&advanced=&quicksearch=RM30PE&scale=25000
 1181153478256601 Adicea broccoli:http://www.fh-reutlingen.de/
 1181153478563086 Adiel apple:http://maps.yahoo.com/maps_result?lat=40.025118&lon=-81.586776&mag=4
 1181153478394713 Adiel onion:http://www.hiarcs.com/
-1181153477646197 Adigranth cassis:http://topozone.com/map.asp?lat=40.7042&lon=-73.468918&s=200&size=m&layer=DRG100&datum=nad83
-1181153477557495 Adigranth cherry:http://www.grh-ev.org/KRENZ/krenz.HTM
 1181153477644399 Adigranth plum:http://www.lib.rpi.edu/dept/library/html/Archives/buildings/1960_map.html
+1181153477557495 Adigranth cherry:http://www.grh-ev.org/KRENZ/krenz.HTM
+1181153477646197 Adigranth cassis:http://topozone.com/map.asp?lat=40.7042&lon=-73.468918&s=200&size=m&layer=DRG100&datum=nad83
 1181153478028248 Adlumia cherry:http://topozone.com/map.asp?lat=39.5731450&lon=-78.8497437&s=200&size=m&layer=DRG100&datum=nad83
 1181153478478183 Adolph cherry:http://wikimediafoundation.org
 1181153478472799 Adolphus banana:http://terraserver-usa.com/image.aspx?s=14&lon=-89.659504&lat=38.007799&w=2
@@ -418,8 +414,8 @@ EndRow     = kerchoo
 1181153477850322 Aegialitis banana:http://www.billboard.com/bbcom/retrieve_chart_history.do?model.chartFormatGroupName=Albums&model.vnuArtistId=315927&model.vnuAlbumId=327241
 1181153477725203 Aegialitis banana:http://www.ceuta.es/informacion/banderayescudo.htm
 1181153478069525 Aeginetan banana:http://www.mimas.ac.uk/~zzalsaw2/pictish.html
-1181153477710125 Aegopodium onion:http://slaght.htmlplanet.com/apac.htm
 1181153478141523 Aegopodium plum:http://www.m-w.com/
+1181153477710125 Aegopodium onion:http://slaght.htmlplanet.com/apac.htm
 1181153478441418 Aeolian plum:http://maps.google.com/maps?ll=47.007768,-122.911074&spn=0.11,0.18
 1181153478253263 Aeolic apple:http://www.city.imabari.ehime.jp/
 1181153478001153 Aeolicism plum:http://plato.stanford.edu/entries/leucippus/
@@ -449,18 +445,18 @@ EndRow     = kerchoo
 1181153477786029 Afrikaans broccoli:http://topozone.com/map.asp?lat=33.360255&lon=-94.253993&s=200&size=m&layer=DRG100&datum=nad83
 1181153478451485 Afrikander apple:http://www.hillnews.com/thehill/export/TheHill/News/Frontpage/102005/news3.html
 1181153478048267 Afrikanderism banana:http://www-nlpir.nist.gov/projects/duc/papers/qa.Roadmap-paper_v2.doc
-1181153477659565 Afrogaea cassis:http://www.nationalregisterofhistoricplaces.com/MA/Plymouth/state.html
 1181153478382223 Afrogaea plum:http://www.bartleby.com/cgi-bin/texis/webinator/65search?query=Used+computers
+1181153477659565 Afrogaea cassis:http://www.nationalregisterofhistoricplaces.com/MA/Plymouth/state.html
 1181153478084604 Afrogaean banana:http://www.usigs.org/library/books/me/Portland1865/Portland024.htm
-1181153477569946 Aftonian yam:http://lunarsight.com/freq.htm
 1181153478567559 Aftonian broccoli:http://terraserver-usa.com/image.aspx?s=14&lon=-101.370435&lat=39.785196&w=2
+1181153477569946 Aftonian yam:http://lunarsight.com/freq.htm
 1181153478284004 Agalenidae apple:http://www.imdb.com/name/nm0000114/
 1181153478603147 Agalenidae cassis:http://www.archives.go.kr/president/
 1181153478297453 Agama apple:http://lwn.net/Articles/24747/
 1181153477858481 Agama apple:http://terraserver-usa.com/image.aspx?s=14&lon=-81.864363&lat=41.01562&w=2
 1181153477970933 Agamae cherry:http://www.quebecpolitique.com/
-1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
 1181153478609060 Agamemnon plum:http://maps.google.com/maps?ll=43.297884,-91.989187&spn=0.11,0.18&t=h
+1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
 1181153477562141 Agamidae onion:http://www.dtic.mil/jcs
 1181153478134435 Aganice broccoli:http://geonames.usgs.gov/pls/gnis/web_query.gnis_web_query_form
 1181153478026342 Agao banana:http://www.newscorp.com/
@@ -475,8 +471,8 @@ EndRow     = kerchoo
 1181153477587755 Agathaea broccoli:http://www.publicbookshelf.com/public_html/Boys_Own_Book_of_Outdoor_Sports/lakepike_gc.html
 1181153478280104 Agathosma onion:http://www.ci.philomath.or.us/
 1181153478101952 Agaz yam:http://maps.yahoo.com/maps_result?lat=40.913358&lon=-81.108094&mag=4
-1181153478457857 Ageratum banana:http://www.biblegateway.com/passage/?search=Titus+1.5-9
 1181153477890435 Ageratum cherry:http://www.astronomical.org/constellations/obs.html
+1181153478457857 Ageratum banana:http://www.biblegateway.com/passage/?search=Titus+1.5-9
 1181153478007007 Aggregata yam:http://maps.google.com/maps?ll=33.937401,-84.368625&spn=0.11,0.18&t=h
 1181153478215154 Aggregatae banana:http://www.franklincountychamberofcommerce.org
 1181153478071540 Aghan plum:http://www.iso.org/iso/en/CatalogueDetailPage.CatalogueDetail?CSNUMBER=12260&ICS1=13&ICS2=60&ICS3=50
@@ -491,24 +487,20 @@ EndRow     = kerchoo
 1181153477842109 Agrapha onion:http://www.cancer.org/docroot/SPC/content/SPC_1_Tanning_the_Sunless_Way.asp/
 1181153477975987 Agrapha cassis:http://www.fechy.ch
 1181153477549526 Agrauleum apple:http://www.schiedamsemolens.nl/schiedamsemolens/
-1181153478381429 Agrilus cassis:http://www1.dorsetcc.gov.uk/LIVING/FACTS/Census2001.nsf/6cadf4da179fc19500256663004afece/1f3a12dba044faa680256ec5004eec98?OpenDocument
 1181153478310808 Agrilus plum:http://www.town.asahi.yamagata.jp/
+1181153478381429 Agrilus cassis:http://www1.dorsetcc.gov.uk/LIVING/FACTS/Census2001.nsf/6cadf4da179fc19500256663004afece/1f3a12dba044faa680256ec5004eec98?OpenDocument
 rsclient> create scanner Test1[..kerchoo] start=Agamemnon end=Agamemnon
 TableName  = Test1
-TableId    = 1
-Generation = 1
 StartRow   = 
 EndRow     = kerchoo
-1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
 1181153478609060 Agamemnon plum:http://maps.google.com/maps?ll=43.297884,-91.989187&spn=0.11,0.18&t=h
+1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
 rsclient> create scanner Test1[..kerchoo] start=Agamemnon row-limit=5
 TableName  = Test1
-TableId    = 1
-Generation = 1
 StartRow   = 
 EndRow     = kerchoo
-1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
 1181153478609060 Agamemnon plum:http://maps.google.com/maps?ll=43.297884,-91.989187&spn=0.11,0.18&t=h
+1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
 1181153477562141 Agamidae onion:http://www.dtic.mil/jcs
 1181153478134435 Aganice broccoli:http://geonames.usgs.gov/pls/gnis/web_query.gnis_web_query_form
 1181153478026342 Agao banana:http://www.newscorp.com/
@@ -517,43 +509,33 @@ EndRow     = kerchoo
 1181153477596685 Agapetidae banana:http://www.archives.gov/federal_register/electoral_college/2004_certificates/ascertainment_georgia_01.html
 rsclient> create scanner Test1[..kerchoo] row-range=[Agamemnon,Agamemnon]
 TableName  = Test1
-TableId    = 1
-Generation = 1
 StartRow   = 
 EndRow     = kerchoo
-1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
 1181153478609060 Agamemnon plum:http://maps.google.com/maps?ll=43.297884,-91.989187&spn=0.11,0.18&t=h
+1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
 rsclient> create scanner Test1[..kerchoo] row-range=[Agamemnon,Aganice]
 TableName  = Test1
-TableId    = 1
-Generation = 1
 StartRow   = 
 EndRow     = kerchoo
-1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
 1181153478609060 Agamemnon plum:http://maps.google.com/maps?ll=43.297884,-91.989187&spn=0.11,0.18&t=h
+1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
 1181153477562141 Agamidae onion:http://www.dtic.mil/jcs
 1181153478134435 Aganice broccoli:http://geonames.usgs.gov/pls/gnis/web_query.gnis_web_query_form
 rsclient> create scanner Test1[..kerchoo] row-range=(Agamemnon,Aganice]
 TableName  = Test1
-TableId    = 1
-Generation = 1
 StartRow   = 
 EndRow     = kerchoo
 1181153477562141 Agamidae onion:http://www.dtic.mil/jcs
 1181153478134435 Aganice broccoli:http://geonames.usgs.gov/pls/gnis/web_query.gnis_web_query_form
 rsclient> create scanner Test1[..kerchoo] row-range=[Agamemnon,Aganice)
 TableName  = Test1
-TableId    = 1
-Generation = 1
 StartRow   = 
 EndRow     = kerchoo
-1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
 1181153478609060 Agamemnon plum:http://maps.google.com/maps?ll=43.297884,-91.989187&spn=0.11,0.18&t=h
+1181153478575727 Agamemnon onion:http://www.usmm.org/men_ships.html
 1181153477562141 Agamidae onion:http://www.dtic.mil/jcs
 rsclient> create scanner Test1[..kerchoo] row-range=(Agamemnon,Aganice)
 TableName  = Test1
-TableId    = 1
-Generation = 1
 StartRow   = 
 EndRow     = kerchoo
 1181153477562141 Agamidae onion:http://www.dtic.mil/jcs

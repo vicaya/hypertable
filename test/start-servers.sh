@@ -227,10 +227,7 @@ echo "Successfully started Hypertable.Master"
 for table in Test1 Test2 Test3 ; do
     $HYPERTABLE_HOME/bin/hyperspace --eval "exists /hypertable/tables/$table" >& /dev/null
     if [ $? != 0 ] ; then
-	CMDFILE=/tmp/hypertable.tests.$$
-	echo "create table $table $HYPERTABLE_HOME/test/$table.xml" > $CMDFILE
-	echo "quit" >> $CMDFILE
-	$HYPERTABLE_HOME/bin/hypertable < $CMDFILE >& /tmp/foo.$$
+	$HYPERTABLE_HOME/bin/hypertable --batch < $HYPERTABLE_HOME/test/$table-create.hql >& /tmp/foo.$$
 	if [ $? != 0 ] ; then
 	    echo "Problem creating table $table, killing servers...";
 	    for pidfile in $HYPERTABLE_HOME/run/*.pid ; do
@@ -243,7 +240,6 @@ for table in Test1 Test2 Test3 ; do
 	else
 	    echo "Successfully created table $table."
 	fi
-	rm $CMDFILE
     fi
 done
 rm -f /tmp/foo.$$

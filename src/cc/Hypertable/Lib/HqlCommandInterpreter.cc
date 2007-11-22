@@ -67,8 +67,16 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       schema = new Schema();
       for (Schema::AccessGroupMapT::const_iterator ag_iter = state.ag_map.begin(); ag_iter != state.ag_map.end(); ag_iter++)
 	schema->add_access_group((*ag_iter).second);
-      for (Schema::ColumnFamilyMapT::const_iterator cf_iter = state.cf_map.begin(); cf_iter != state.cf_map.end(); cf_iter++)
+      if (state.ag_map.find("default") == state.ag_map.end()) {
+	Schema::AccessGroup *ag = new Schema::AccessGroup();
+	ag->name = "default";
+	schema->add_access_group(ag);
+      }
+      for (Schema::ColumnFamilyMapT::const_iterator cf_iter = state.cf_map.begin(); cf_iter != state.cf_map.end(); cf_iter++) {
+	if ((*cf_iter).second->ag == "")
+	  (*cf_iter).second->ag == "default";
 	schema->add_column_family((*cf_iter).second);
+      }
       const char *error_str = schema->get_error_string();
       if (error_str)
 	throw Exception(Error::HQL_PARSE_ERROR, error_str);

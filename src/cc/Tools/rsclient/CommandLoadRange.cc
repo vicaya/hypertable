@@ -71,8 +71,8 @@ int CommandLoadRange::run() {
   table = tableInfo->get_table_identifier();
 
   cout << "TableName  = " << tableName << endl;
-  cout << "TableId    = " << table->id << endl;
-  cout << "Generation = " << table->generation << endl;
+  //cout << "TableId    = " << table->id << endl;
+  //cout << "Generation = " << table->generation << endl;
   cout << "StartRow   = " << startRow << endl;
   cout << "EndRow     = " << endRow << endl;
 

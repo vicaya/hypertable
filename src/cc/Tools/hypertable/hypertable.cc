@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
 
   for (int i=1; i<argc; i++) {
     if (!strcmp(argv[i], "--batch") || !strcmp(argv[i], "-B"))
-      configFile = &argv[i][9];
+      g_batch_mode = true;
     else if (!strncmp(argv[i], "--config=", 9))
       configFile = &argv[i][9];
     else
