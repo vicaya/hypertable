@@ -147,8 +147,17 @@ void Metadata::end_element_handler(void *userData, const XML_Char *name) {
     ms_range->get_start_row(startRow);
     assert(startRow == "");
     boost::trim(ms_collected_text);
-    if (ms_collected_text.length() > 0)
+    if (ms_collected_text.length() > 0) {
+      /**
+       * If the row key ends in "??", replace the "??" with 0xff 0xff
+       */
+      size_t len = ms_collected_text.length();
+      if (ms_collected_text.rfind("??", len) == (len-2)) {
+	size_t offset = len - 2;
+	ms_collected_text.replace(offset, 2, 2, (char )0xff);
+      }
       ms_range->set_start_row(ms_collected_text);
+    }
   }
   else if (!strcmp(name, "EndRow")) {
     string endRow;
@@ -239,6 +248,7 @@ void Metadata::add_range_info(RangeInfoPtr &rangePtr) {
 
 
 void Metadata::sync(const char *fname) {
+  boost::mutex::scoped_lock lock(m_mutex);
   string tmpFile = (fname == 0) ? m_filename + ".tmp" : (string)fname + ".tmp";
   ofstream outfile(tmpFile.c_str());
   string tableName;
@@ -279,15 +289,13 @@ void Metadata::sync(const char *fname) {
       outfile << "  </RangeInfo>" << endl;
     }
   }
-  outfile << "</Metadata>" << endl;
+  outfile << "</Metadata>" << endl << flush;
 
   outfile.close();
 
   if (fname != 0)
     m_filename = fname;
   
-  unlink(m_filename.c_str());
-
   if (rename(tmpFile.c_str(), m_filename.c_str()) != 0) {
     std::string errMsg = (const char *)"rename('" + tmpFile + "', '" + m_filename + "') failed";
     perror(errMsg.c_str());

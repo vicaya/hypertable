@@ -26,6 +26,7 @@
 #include <boost/shared_array.hpp>
 
 #include "Common/ByteString.h"
+#include "Common/DynamicBuffer.h"
 
 using namespace Hypertable;
 
@@ -91,6 +92,8 @@ namespace Hypertable {
   std::ostream &operator<<(std::ostream &os, const Key &key);
 
 
+  void CreateKey(ByteString32T *key, uint8_t flag, const char *rowKey, uint8_t columnFamily, const char *columnQualifier, uint64_t timestamp);
+
   /**
    * Builds an opaque key from a set of key components.  This function allocates
    * memory for the key an then packs the components into the key so that keys can
@@ -106,6 +109,8 @@ namespace Hypertable {
    * @return newly allocated opaque key
    */
   ByteString32T *CreateKey(uint8_t flag, const char *rowKey, uint8_t columnFamily, const char *columnQualifier, uint64_t timestamp);
+
+  void CreateKeyAndAppend(DynamicBuffer &dst_buf, uint8_t flag, const char *rowKey, uint8_t columnFamily, const char *columnQualifier, uint64_t timestamp);
 
 }
 

@@ -256,7 +256,6 @@ int RangeLocator::read_root_location() {
   int error;
   DynamicBuffer value(0);
   std::string addrStr;
-  char *ptr;
   RangeLocationInfo range_loc_info;
   char buf[8];
 
@@ -271,18 +270,17 @@ int RangeLocator::read_root_location() {
   
   m_cache.insert(0, range_loc_info, true);
 
-  if ((ptr = strchr((const char *)value.buf, '_')) != 0)
-    *ptr = 0;
-
-  if (!InetAddr::initialize(&m_root_addr, (const char *)value.buf)) {
-    LOG_ERROR("Unable to extract address from /hypertable/root Hyperspace file");
-    return Error::BAD_ROOT_LOCATION;
+  if (!LocationCache::location_to_addr((const char *)value.buf, m_root_addr)) {
+    LOG_ERROR("Bad format of 'location' attribute of /hypertable/root Hyperspace file");
+    return Error::BAD_ROOT_LOCATION;    
   }
 
   m_conn_manager_ptr->add(m_root_addr, 30, "Root RangeServer");
 
   if (!m_conn_manager_ptr->wait_for_connection(m_root_addr, 20)) {
-    LOG_VA_ERROR("Timeout (20s) waiting for root RangeServer connection - %s", (const char *)value.buf);
+    std::string addr_str;
+    LOG_VA_ERROR("Timeout (20s) waiting for root RangeServer connection - %s",
+		 InetAddr::string_format(addr_str, m_root_addr));
   }
 
   m_root_stale = false;

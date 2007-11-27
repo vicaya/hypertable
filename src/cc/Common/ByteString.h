@@ -59,11 +59,24 @@ namespace Hypertable {
     return newBs;
   }
 
-  inline ByteString32T *Create(const void *data, uint32_t len) {
-    ByteString32T *bs = (ByteString32T *)new uint8_t [ sizeof(ByteString32T) + len ];
+  inline void CreateAndAppend(DynamicBuffer &dst_buf, const char *str) {
+    ByteString32T *bs;
+    dst_buf.ensure(strlen(str) + 6);
+    bs = (ByteString32T *)dst_buf.ptr;
+    bs->len = strlen(str)+1;
+    strcpy((char *)bs->data, str);
+    dst_buf.ptr += Length(bs);
+  }
+
+  inline void Create(ByteString32T *bs, const void *data, uint32_t len) {
     bs->len = len;
     if (len)
       memcpy(bs->data, data, len);
+  }
+
+  inline ByteString32T *Create(const void *data, uint32_t len) {
+    ByteString32T *bs = (ByteString32T *)new uint8_t [ sizeof(ByteString32T) + len ];
+    Create(bs, data, len);
     bs->data[len] = 0;
     return bs;
   }

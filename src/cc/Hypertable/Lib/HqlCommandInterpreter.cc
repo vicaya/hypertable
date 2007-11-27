@@ -26,6 +26,7 @@
 #include "HqlCommandInterpreter.h"
 #include "HqlHelpText.h"
 #include "HqlParser.h"
+#include "Key.h"
 
 using namespace Hypertable;
 using namespace Hypertable::HqlHelpText;
@@ -91,22 +92,43 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       cout << schema_str << endl;
     }
     else if (state.command == COMMAND_SELECT) {
-      time_t t;
-      cout << "column families = ";
+      int error;
+      TablePtr table_ptr;
+      TableScannerPtr scanner_ptr;
+      ScanSpecificationT scan_spec;
+      CellT cell;
+
+      scan_spec.rowLimit = state.scan.limit;
+      scan_spec.max_versions = state.scan.max_versions;
       for (size_t i=0; i<state.scan.columns.size(); i++)
-	cout << state.scan.columns[i] << " ";
-      cout << endl;
-      cout << "row = " << state.scan.row << endl;
-      cout << "start_row = " << state.scan.start_row << endl;
-      cout << "start_row_inclusive = " << state.scan.start_row_inclusive << endl;
-      cout << "end_row = " << state.scan.end_row << endl;
-      cout << "end_row_inclusive = " << state.scan.end_row_inclusive << endl;
-      cout << "max_versions = " << state.scan.max_versions << endl;
-      cout << "limit = " << state.scan.limit << endl;
-      t = state.scan.start_time / 1000000LL;
-      cout << "start_time = " << ctime(&t) << endl;
-      t = state.scan.end_time / 1000000LL;
-      cout << "end_time = " << ctime(&t) << endl;
+	scan_spec.columns.push_back(state.scan.columns[i].c_str());
+      if (state.scan.row != "") {
+	scan_spec.startRow = state.scan.row.c_str();
+	scan_spec.startRowInclusive = true;
+	scan_spec.endRow = state.scan.row.c_str();
+	scan_spec.endRowInclusive = true;
+      }
+      else {
+	scan_spec.startRow = (state.scan.start_row == "") ? 0 : state.scan.start_row.c_str();
+	scan_spec.startRowInclusive = state.scan.start_row_inclusive;
+	scan_spec.endRow = (state.scan.end_row == "") ? Key::END_ROW_MARKER : state.scan.end_row.c_str();
+	scan_spec.endRowInclusive = state.scan.end_row_inclusive;
+      }
+      scan_spec.interval.first  = state.scan.start_time;
+      scan_spec.interval.second = state.scan.end_time;
+
+      if ((error = m_client->open_table(state.table_name, table_ptr)) != Error::OK)
+	throw Exception(error, std::string("Problem opening table '") + state.table_name + "'");
+
+      if ((error = table_ptr->create_scanner(scan_spec, scanner_ptr)) != Error::OK)
+	throw Exception(error, std::string("Problem creating scanner on table '") + state.table_name + "'");
+
+      while (scanner_ptr->next(cell)) {
+	cout << cell.row_key << "\t" << cell.column_family;
+	if (*cell.column_qualifier)
+	  cout  << ":"<< cell.column_qualifier;
+	cout << "\t" << cell.timestamp << endl;
+      }
     }
   }
   else

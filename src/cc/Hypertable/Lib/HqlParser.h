@@ -575,7 +575,7 @@ namespace Hypertable {
 	  select_statement
 	    = SELECT 
 	      >> ( '*' | ( identifier[scan_add_column_family(self.state)] >> *( COMMA >> identifier[scan_add_column_family(self.state)] ) ) ) 
-	      >> FROM >> identifier
+	      >> FROM >> identifier[set_table_name(self.state)]
 	      >> !where_clause
 	      >> *( option_spec )
 	    ;

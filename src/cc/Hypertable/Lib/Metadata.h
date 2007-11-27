@@ -24,6 +24,8 @@
 #include <map>
 #include <string>
 
+#include <boost/thread/mutex.hpp>
+
 #include <expat.h>
 
 #include "Common/ByteString.h"
@@ -64,6 +66,8 @@ namespace Hypertable {
     TableMapT     m_table_map;
 
   private:
+
+    boost::mutex  m_mutex;
 
     std::string   m_filename;
 

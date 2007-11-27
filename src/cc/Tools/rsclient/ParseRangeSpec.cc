@@ -47,7 +47,11 @@ namespace Hypertable {
     else {
       startRow = std::string(ptr, dotdot-ptr);
       boost::trim(startRow);
-      trim_if(startRow, boost::is_any_of("'\""));
+      boost::trim_if(startRow, boost::is_any_of("'\""));
+      if (startRow.rfind("??",startRow.length()) == (startRow.length()-2)) {
+	size_t offset = startRow.length() - 2;
+	startRow.replace(offset, 2, 2, (char )0xff);
+      }
     }
 
     if (ptr == rightBracket)
@@ -55,7 +59,7 @@ namespace Hypertable {
     ptr = dotdot+2;
     endRow = std::string(ptr, rightBracket-ptr);
     boost::trim(endRow);
-    trim_if(endRow, boost::is_any_of("'\""));
+    boost::trim_if(endRow, boost::is_any_of("'\""));
     if (endRow.rfind("??",endRow.length()) == (endRow.length()-2)) {
       size_t offset = endRow.length() - 2;
       endRow.replace(offset, 2, 2, (char )0xff);

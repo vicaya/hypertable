@@ -31,7 +31,6 @@ Filesystem            *Global::logDfs = 0;
 boost::thread         *Global::maintenanceThreadPtr = 0;
 RangeServerProtocol   *Global::protocol = 0;
 bool                   Global::verbose = false;
-Metadata              *Global::metadata = 0;
 CommitLog             *Global::log = 0;
 std::string            Global::logDir = "";
 uint64_t               Global::rangeMaxBytes = 0;
@@ -40,3 +39,18 @@ int32_t                Global::localityGroupMergeFiles = 0;
 int32_t                Global::localityGroupMaxMemory = 0;
 ScannerMap             Global::scannerMap;
 FileBlockCache        *Global::blockCache = 0;
+
+// testing purposes
+Metadata              *Global::metadata = 0;
+#ifdef METADATA_TEST
+TableIdentifierT       Global::metadata_identifier;
+RangeServerClientPtr   Global::metadata_range_server = 0;
+uint8_t                Global::metadata_column_family_LogDir = 0;
+uint8_t                Global::metadata_column_family_SplitLogDir = 0;
+uint8_t                Global::metadata_column_family_SplitPoint = 0;
+uint8_t                Global::metadata_column_family_Files = 0;
+uint8_t                Global::metadata_column_family_StartRow = 0;
+uint8_t                Global::metadata_column_family_Location = 0;
+uint8_t                Global::metadata_column_family_Event = 0;
+struct sockaddr_in     Global::local_addr;
+#endif // METADATA_TEST

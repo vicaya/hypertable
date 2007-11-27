@@ -147,16 +147,15 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : m_mutex(), m_ver
    * 
    */
   {
-    struct sockaddr_in localAddr;
     struct timeval tval;
     std::string hostStr;
 
     InetAddr::get_hostname(hostStr);
-    InetAddr::initialize(&localAddr, hostStr.c_str(), port);
+    InetAddr::initialize(&Global::local_addr, hostStr.c_str(), port);
 
     gettimeofday(&tval, 0);
 
-    m_location = (std::string)inet_ntoa(localAddr.sin_addr) + "_" + (int)port + "_" + (uint32_t)tval.tv_sec;
+    m_location = (std::string)inet_ntoa(Global::local_addr.sin_addr) + "_" + (int)port + "_" + (uint32_t)tval.tv_sec;
   }
 
   if (directory_initialize(propsPtr.get()) != Error::OK)
@@ -509,6 +508,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
   string rangeHdfsDir;
   char md5DigestStr[33];
   bool registerTable = false;
+  const char metadata1_start_row_chars[5] = { '0', ':', 0xff, 0xff, 0 };
 
   if (Global::verbose)
     cout << *range << endl;
@@ -534,6 +534,21 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
    */
   rangeInfoPtr->set_location(m_location);
   Global::metadata->sync();
+
+#ifdef METADATA_TEST
+  if (Global::metadata_range_server) {
+    DynamicBuffer send_buf(0);
+    std::string row_key = std::string("") + (uint32_t)table->id + ":" + range->endRow;
+    CreateKeyAndAppend(send_buf, FLAG_INSERT, row_key.c_str(), Global::metadata_column_family_Location, 0, Global::log->get_timestamp());
+    CreateAndAppend(send_buf, m_location.c_str());
+    if ((error = Global::metadata_range_server->update(Global::local_addr, Global::metadata_identifier, send_buf.buf, send_buf.fill())) != Error::OK) {
+      LOG_VA_ERROR("Problem updating METADATA Location: column - %s", Error::get_text(error));
+      DUMP_CORE;
+    }
+    send_buf.release();
+  }
+#endif
+
 
   if (!get_table_info(table->name, tableInfoPtr)) {
     tableInfoPtr = new TableInfo(m_master_client_ptr, table, schemaPtr);
@@ -596,8 +611,76 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
   rangeInfoPtr->set_log_dir(Global::log->get_log_dir());
   Global::metadata->sync();
 
+#ifdef METADATA_TEST
+  if (Global::metadata_range_server) {
+    DynamicBuffer send_buf(0);
+    std::string row_key = std::string("") + (uint32_t)table->id + ":" + range->endRow;
+    CreateKeyAndAppend(send_buf, FLAG_INSERT, row_key.c_str(), Global::metadata_column_family_LogDir, 0, Global::log->get_timestamp());
+    CreateAndAppend(send_buf, Global::log->get_log_dir().c_str());
+    if ((error = Global::metadata_range_server->update(Global::local_addr, Global::metadata_identifier, send_buf.buf, send_buf.fill())) != Error::OK) {
+      LOG_VA_ERROR("Problem updating METADATA LogDir: column - %s", Error::get_text(error));
+      DUMP_CORE;
+    }
+    send_buf.release();
+  }
+#endif
+
   if ((error = cb->response_ok()) != Error::OK) {
     LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
+  }
+
+#ifdef METADATA_TEST
+  if (!strcmp(table->name, "METADATA") &&
+      !strcmp(range->startRow, metadata1_start_row_chars) &&
+      !strcmp(range->endRow, Key::END_ROW_MARKER)) {
+    LOG_INFO("Loading second-level METADATA range");
+    m_conn_manager_ptr->add(Global::local_addr, 15, "METADATA1");
+    Global::metadata_identifier.id = table->id;
+    Global::metadata_identifier.generation = table->generation;
+    Global::metadata_identifier.name = new char [ strlen(table->name) + 1 ];
+    strcpy((char *)Global::metadata_identifier.name, table->name);
+    Global::metadata_range_server = new RangeServerClient(m_comm, 30);
+    Schema::ColumnFamily *cf;
+
+    cf = schemaPtr->get_column_family("LogDir");
+    Global::metadata_column_family_LogDir = (uint8_t)cf->id;
+    cf = schemaPtr->get_column_family("SplitLogDir");
+    Global::metadata_column_family_SplitLogDir = (uint8_t)cf->id;
+    cf = schemaPtr->get_column_family("SplitPoint");
+    Global::metadata_column_family_SplitPoint = (uint8_t)cf->id;
+    cf = schemaPtr->get_column_family("Files");
+    Global::metadata_column_family_Files = (uint8_t)cf->id;
+    cf = schemaPtr->get_column_family("StartRow");
+    Global::metadata_column_family_StartRow = (uint8_t)cf->id;
+    cf = schemaPtr->get_column_family("Location");
+    Global::metadata_column_family_Location = (uint8_t)cf->id;
+    cf = schemaPtr->get_column_family("Event");
+    Global::metadata_column_family_Event = (uint8_t)cf->id;
+  }
+#endif
+
+  /**
+   *  If this is the root METADATA range, write our location into hyperspace
+   */
+  if (!strcmp(table->name, "METADATA") &&
+      *range->startRow == 0 && !strcmp(range->endRow, metadata1_start_row_chars)) {
+    uint64_t handle;
+    HandleCallbackPtr nullCallbackPtr;
+    uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE;
+
+    LOG_INFO("Loading root METADATA range");
+
+    if ((error = m_hyperspace_ptr->open("/hypertable/root", oflags, nullCallbackPtr, &handle)) != Error::OK) {
+      LOG_VA_ERROR("Problem creating Hyperspace root file '/hypertable/root' - %s", Error::get_text(error));
+      DUMP_CORE;
+    }
+
+    if ((error = m_hyperspace_ptr->attr_set(handle, "location", m_location.c_str(), strlen(m_location.c_str()))) != Error::OK) {
+      LOG_VA_ERROR("Problem creating attribute 'location' on Hyperspace file '/hypertable/root' - %s", Error::get_text(error));
+      DUMP_CORE;
+    }
+
+    m_hyperspace_ptr->close(handle);
   }
 
   error = Error::OK;

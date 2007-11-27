@@ -23,7 +23,7 @@
   </AccessGroup>
   <AccessGroup name="logging">
     <ColumnFamily>
-      <Name>event</Name>
+      <Name>Event</Name>
     </ColumnFamily>
   </AccessGroup>
 </Schema>

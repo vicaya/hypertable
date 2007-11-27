@@ -84,6 +84,8 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, Ap
 
   m_dfs_client = dfsClient;
 
+  atomic_set(&m_last_table_id, 0);
+
   if (!initialize())
     exit(1);
 
@@ -382,7 +384,7 @@ int Master::create_table(const char *tableName, const char *schemaString, std::s
   bool exists;
   HandleCallbackPtr nullHandleCallback;
   uint64_t handle;
-  uint32_t tableId;
+  uint32_t table_id;
 
   /**
    * Check for table existence
@@ -421,14 +423,17 @@ int Master::create_table(const char *tableName, const char *schemaString, std::s
    * Write 'table_id' attribute of table file and 'last_table_id' attribute of /hypertable/master
    */
   {
-    tableId = (uint32_t)atomic_inc_return(&m_last_table_id);
-
-    if ((error = m_hyperspace_ptr->attr_set(m_master_file_handle, "last_table_id", &tableId, sizeof(int32_t))) != Error::OK) {
-      errMsg = (std::string)"Problem setting attribute 'last_table_id' of file /hypertable/master - " + Error::get_text(error);
-      goto abort;
+    if (!strcmp(tableName, "METADATA"))
+      table_id = 0;
+    else {
+      table_id = (uint32_t)atomic_inc_return(&m_last_table_id);
+      if ((error = m_hyperspace_ptr->attr_set(m_master_file_handle, "last_table_id", &table_id, sizeof(int32_t))) != Error::OK) {
+	errMsg = (std::string)"Problem setting attribute 'last_table_id' of file /hypertable/master - " + Error::get_text(error);
+	goto abort;
+      }
     }
 
-    if ((error = m_hyperspace_ptr->attr_set(handle, "table_id", &tableId, sizeof(int32_t))) != Error::OK) {
+    if ((error = m_hyperspace_ptr->attr_set(handle, "table_id", &table_id, sizeof(int32_t))) != Error::OK) {
       errMsg = (std::string)"Problem setting attribute 'table_id' of file " + tableFile + " - " + Error::get_text(error);
       goto abort;
     }
@@ -459,7 +464,7 @@ int Master::create_table(const char *tableName, const char *schemaString, std::s
   }
 
   if (m_verbose) {
-    LOG_VA_INFO("Successfully created table '%s' ID=%d", tableName, tableId);
+    LOG_VA_INFO("Successfully created table '%s' ID=%d", tableName, table_id);
   }
 
  abort:
@@ -481,7 +486,6 @@ bool Master::initialize() {
   int error;
   bool exists;
   uint64_t handle;
-  uint32_t tableId = 0;
   HandleCallbackPtr nullHandleCallback;
 
   if ((error = m_hyperspace_ptr->exists("/hypertable/master", &exists)) == Error::OK && exists &&
@@ -506,7 +510,14 @@ bool Master::initialize() {
   }
   m_master_file_handle = handle;
 
-  atomic_set(&m_last_table_id, -1);
+  /**
+   * Initialize last_table_id to 0
+   */
+  uint32_t table_id = 0;
+  if ((error = m_hyperspace_ptr->attr_set(m_master_file_handle, "last_table_id", &table_id, sizeof(int32_t))) != Error::OK) {
+    LOG_VA_ERROR("Problem setting attribute 'last_table_id' of file /hypertable/master - %s", Error::get_text(error));
+    return false;
+  }
 
   /**
    * Create METADATA table

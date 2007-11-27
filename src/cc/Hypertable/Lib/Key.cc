@@ -37,11 +37,10 @@ namespace Hypertable {
 
   const char *Key::END_ROW_MARKER = (const char *)end_row_chars;
 
-  ByteString32T *CreateKey(uint8_t flag, const char *rowKey, uint8_t columnFamily, const char *columnQualifier, uint64_t timestamp) {
+  void CreateKey(ByteString32T *key, uint8_t flag, const char *rowKey, uint8_t columnFamily, const char *columnQualifier, uint64_t timestamp) {
     size_t len = strlen(rowKey) + 4 + sizeof(int64_t);
     if (columnQualifier != 0)
       len += strlen(columnQualifier);
-    ByteString32T *key = (ByteString32T *)new uint8_t [ len + sizeof(int32_t) ];
     uint8_t *ptr = key->data;
     key->len = len;
     strcpy((char *)ptr, rowKey);
@@ -68,9 +67,25 @@ namespace Hypertable {
       }
     }
     assert((ptr-key->data) == (int32_t)key->len);
+  }
+
+  ByteString32T *CreateKey(uint8_t flag, const char *rowKey, uint8_t columnFamily, const char *columnQualifier, uint64_t timestamp) {
+    size_t len = strlen(rowKey) + 4 + sizeof(int64_t);
+    if (columnQualifier != 0)
+      len += strlen(columnQualifier);
+    ByteString32T *key = (ByteString32T *)new uint8_t [ len + sizeof(int32_t) ];
+    CreateKey(key, flag, rowKey, columnFamily, columnQualifier, timestamp);
     return key;
   }
 
+  void CreateKeyAndAppend(DynamicBuffer &dst_buf, uint8_t flag, const char *rowKey, uint8_t columnFamily, const char *columnQualifier, uint64_t timestamp) {
+    size_t len = strlen(rowKey) + 4 + sizeof(int64_t);
+    if (columnQualifier != 0)
+      len += strlen(columnQualifier);
+    dst_buf.ensure(len + 4);
+    CreateKey((ByteString32T *)dst_buf.ptr, flag, rowKey, columnFamily, columnQualifier, timestamp);    
+    dst_buf.ptr += Length((ByteString32T *)dst_buf.ptr);
+  }
 
   Key::Key(const ByteString32T *key) {
     load(key);

@@ -42,6 +42,7 @@ namespace Hypertable {
 
     static int32_t    ms_scanner_id;
     static TableInfo *ms_table_info;
+    static bool       ms_display_values;
 
   private:
 

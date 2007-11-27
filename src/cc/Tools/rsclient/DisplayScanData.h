@@ -26,7 +26,7 @@
 
 namespace Hypertable {
 
-  void DisplayScanData(const ByteString32T *key, const ByteString32T *value, SchemaPtr &schemaPtr);
+  void DisplayScanData(const ByteString32T *key, const ByteString32T *value, SchemaPtr &schemaPtr, bool display_values);
 
 }
 

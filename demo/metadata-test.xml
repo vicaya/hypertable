@@ -2,7 +2,7 @@
   <RangeInfo>
     <TableName>Test</TableName>
     <StartRow></StartRow>
-    <EndRow>kerchoo</EndRow>
+    <EndRow>??</EndRow>
     <LogDir></LogDir>
   </RangeInfo>
   <RangeInfo>
@@ -13,7 +13,7 @@
   </RangeInfo>
   <RangeInfo>
     <TableName>METADATA</TableName>
-    <StartRow>1:</StartRow>
+    <StartRow>0:??</StartRow>
     <EndRow>??</EndRow>
     <LogDir></LogDir>
   </RangeInfo>

@@ -88,7 +88,7 @@ int CommandFetchScanblock::run() {
   const ByteString32T *key, *value;
 
   while (scanblock.next(key, value))
-    DisplayScanData(key, value, schema_ptr);
+    DisplayScanData(key, value, schema_ptr, CommandCreateScanner::ms_display_values);
 
   if (scanblock.eos())
     CommandCreateScanner::ms_scanner_id = -1;

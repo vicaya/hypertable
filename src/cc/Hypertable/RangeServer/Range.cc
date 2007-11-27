@@ -61,7 +61,7 @@ Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, S
   list<Schema::AccessGroup *> *agList = m_schema->get_access_group_list();
 
   for (list<Schema::AccessGroup *>::iterator agIter = agList->begin(); agIter != agList->end(); agIter++) {
-    ag = new AccessGroup(m_schema, (*agIter), rangeInfoPtr);
+    ag = new AccessGroup(m_identifier, m_schema, (*agIter), rangeInfoPtr);
     m_access_group_map[(*agIter)->name] = ag;
     m_access_group_vector.push_back(ag);
     for (list<Schema::ColumnFamily *>::iterator cfIter = (*agIter)->columns.begin(); cfIter != (*agIter)->columns.end(); cfIter++)
@@ -279,6 +279,21 @@ void Range::do_maintenance() {
     rangeInfoPtr->set_split_log_dir(splitLogDir);
     Global::metadata->sync();
 
+#ifdef METADATA_TEST
+    if (Global::metadata_range_server) {
+      DynamicBuffer send_buf(0);
+      std::string row_key = std::string("") + (uint32_t)m_identifier.id + ":" + m_end_row;
+      CreateKeyAndAppend(send_buf, FLAG_INSERT, row_key.c_str(), Global::metadata_column_family_SplitPoint, 0, Global::log->get_timestamp());
+      CreateAndAppend(send_buf, m_split_row.c_str());
+      CreateKeyAndAppend(send_buf, FLAG_INSERT, row_key.c_str(), Global::metadata_column_family_SplitLogDir, 0, Global::log->get_timestamp());
+      CreateAndAppend(send_buf, splitLogDir.c_str());
+      if ((error = Global::metadata_range_server->update(Global::local_addr, Global::metadata_identifier, send_buf.buf, send_buf.fill())) != Error::OK) {
+	LOG_VA_ERROR("Problem updating METADATA LogDir: column - %s", Error::get_text(error));
+	DUMP_CORE;
+      }
+      send_buf.release();
+    }
+#endif
 
     /**
      * Atomically obtain timestamp and install split log
@@ -326,6 +341,28 @@ void Range::do_maintenance() {
 	newRangePtr->add_cell_store(*iter);
       Global::metadata->add_range_info(newRangePtr);
       Global::metadata->sync();
+
+#ifdef METADATA_TEST
+      if (Global::metadata_range_server) {
+	DynamicBuffer send_buf(0);
+	std::string row_key = std::string("") + (uint32_t)m_identifier.id + ":" + m_split_row;
+	std::string files = "";
+	CreateKeyAndAppend(send_buf, FLAG_INSERT, row_key.c_str(), Global::metadata_column_family_StartRow, 0, Global::log->get_timestamp());
+	CreateAndAppend(send_buf, m_start_row.c_str());
+	CreateKeyAndAppend(send_buf, FLAG_INSERT, row_key.c_str(), Global::metadata_column_family_SplitLogDir, 0, Global::log->get_timestamp());
+	CreateAndAppend(send_buf, splitLogDir.c_str());
+	for (std::vector<std::string>::iterator iter = stores.begin(); iter != stores.end(); iter++)
+	  files += *iter + "\n";
+	CreateKeyAndAppend(send_buf, FLAG_INSERT, row_key.c_str(), Global::metadata_column_family_Files, 0, Global::log->get_timestamp());
+	CreateAndAppend(send_buf, files.c_str());
+	if ((error = Global::metadata_range_server->update(Global::local_addr, Global::metadata_identifier, send_buf.buf, send_buf.fill())) != Error::OK) {
+	  LOG_VA_ERROR("Problem updating METADATA LogDir: column - %s", Error::get_text(error));
+	  DUMP_CORE;
+	}
+	send_buf.release();
+      }
+#endif
+
     }
 
     /**
@@ -339,6 +376,23 @@ void Range::do_maintenance() {
       rangeInfoPtr->set_start_row(m_start_row);
       rangeInfoPtr->set_split_log_dir(splitLogDir);
       Global::metadata->sync();
+
+#ifdef METADATA_TEST
+      if (Global::metadata_range_server) {
+	DynamicBuffer send_buf(0);
+	std::string row_key = std::string("") + (uint32_t)m_identifier.id + ":" + m_end_row;
+	CreateKeyAndAppend(send_buf, FLAG_INSERT, row_key.c_str(), Global::metadata_column_family_StartRow, 0, Global::log->get_timestamp());
+	CreateAndAppend(send_buf, m_start_row.c_str());
+	CreateKeyAndAppend(send_buf, FLAG_INSERT, row_key.c_str(), Global::metadata_column_family_SplitLogDir, 0, Global::log->get_timestamp());
+	CreateAndAppend(send_buf, "");
+	if ((error = Global::metadata_range_server->update(Global::local_addr, Global::metadata_identifier, send_buf.buf, send_buf.fill())) != Error::OK) {
+	  LOG_VA_ERROR("Problem updating METADATA LogDir: column - %s", Error::get_text(error));
+	  DUMP_CORE;
+	}
+	send_buf.release();
+      }
+#endif
+
     }
 
     /**

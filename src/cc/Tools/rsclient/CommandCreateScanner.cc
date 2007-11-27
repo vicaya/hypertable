@@ -54,6 +54,7 @@ const char *CommandCreateScanner::ms_usage[] = {
   "  columns=<column1>[,<column2>...]  Only return these columns",
   "  start-time=<t>  Only return cells whose timestamp is >= <t>",
   "  end-time=<t>    Only return cells whose timestamp is < <t>",
+  "  display-values  Cast values to a (char *) and display",
   "",
   "  This command issues a CREATE SCANNER command to the range server.",
   (const char *)0
@@ -61,6 +62,7 @@ const char *CommandCreateScanner::ms_usage[] = {
 
 int32_t           CommandCreateScanner::ms_scanner_id = -1;
 TableInfo        *CommandCreateScanner::ms_table_info = 0;
+bool              CommandCreateScanner::ms_display_values = false;
 
 int CommandCreateScanner::run() {
   off_t len;
@@ -142,6 +144,8 @@ int CommandCreateScanner::run() {
       scan_spec.interval.first = strtoll(m_args[i].second.c_str(), 0, 10);
     else if (m_args[i].first == "end-time")
       scan_spec.interval.second = strtoll(m_args[i].second.c_str(), 0, 10);
+    else if (m_args[i].first == "display-values")
+      ms_display_values = true;
     else if (m_args[i].first == "columns") {
       columnStr = strtok_r((char *)m_args[i].second.c_str(), ",", &last);
       while (columnStr) {
@@ -162,7 +166,7 @@ int CommandCreateScanner::run() {
   const ByteString32T *key, *value;
 
   while (scanblock.next(key, value))
-    DisplayScanData(key, value, schema_ptr);
+    DisplayScanData(key, value, schema_ptr, ms_display_values);
 
   if (scanblock.eos())
     ms_scanner_id = -1;

@@ -102,12 +102,15 @@ namespace Hypertable {
      */
     ConnectionManager(const ConnectionManager &cm) {
       m_impl = cm.m_impl;
+      intrusive_ptr_add_ref(this);
     }
 
     /**
-     * Destructor.  Implement me!
+     * Destructor.  TBD.
      */
-    virtual ~ConnectionManager() { return; }
+    virtual ~ConnectionManager() { 
+      return;
+    }
 
     /**
      * Adds a connection to the connection manager.  The address structure addr

@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "Hypertable/Lib/Schema.h"
+#include "Hypertable/Lib/Types.h"
 
 #include "CellCache.h"
 #include "CellStore.h"
@@ -38,7 +39,7 @@ namespace Hypertable {
 
   public:
 
-    AccessGroup(SchemaPtr &schemaPtr, Schema::AccessGroup *lg, RangeInfoPtr &tabletInfoPtr);
+    AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *lg, RangeInfoPtr &tabletInfoPtr);
     virtual ~AccessGroup();
     virtual int add(const ByteString32T *key, const ByteString32T *value);
 
@@ -64,6 +65,7 @@ namespace Hypertable {
   private:
     boost::mutex         m_mutex;
     boost::mutex::scoped_lock  m_lock;
+    TableIdentifierT     m_table_identifier;
     SchemaPtr            m_schema_ptr;
     std::set<uint8_t>    m_column_families;
     std::string          m_name;

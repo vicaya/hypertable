@@ -29,14 +29,18 @@
 #include "AsyncComm/Comm.h"
 #include "Hyperspace/Session.h"
 #include "Hypertable/Lib/Metadata.h"
+#include "Hypertable/Lib/RangeServerClient.h"
 #include "Hypertable/Lib/RangeServerProtocol.h"
 #include "Hypertable/Lib/Schema.h"
 #include "Hypertable/Lib/Filesystem.h"
+#include "Hypertable/Lib/Types.h"
 
 #include "CommitLog.h"
 #include "FileBlockCache.h"
 #include "ScannerMap.h"
 #include "TableInfo.h"
+
+#define METADATA_TEST 1
 
 namespace Hypertable {
 
@@ -49,7 +53,6 @@ namespace Hypertable {
     static boost::thread *maintenanceThreadPtr;
     static Hypertable::RangeServerProtocol *protocol;
     static bool           verbose;
-    static Metadata      *metadata;
     static CommitLog     *log;
     static std::string    logDir;
     static uint64_t       rangeMaxBytes;
@@ -59,6 +62,20 @@ namespace Hypertable {
     static ScannerMap     scannerMap;
     static Hypertable::FileBlockCache *blockCache;
 
+    // temporary for testing
+    static Metadata            *metadata;
+#ifdef METADATA_TEST
+    static TableIdentifierT     metadata_identifier;
+    static RangeServerClientPtr metadata_range_server;
+    static uint8_t metadata_column_family_LogDir;
+    static uint8_t metadata_column_family_SplitLogDir;
+    static uint8_t metadata_column_family_SplitPoint;
+    static uint8_t metadata_column_family_Files;
+    static uint8_t metadata_column_family_StartRow;
+    static uint8_t metadata_column_family_Location;
+    static uint8_t metadata_column_family_Event;
+    static struct sockaddr_in local_addr;
+#endif
   };
 }
 

@@ -33,7 +33,7 @@
 #include "MergeScanner.h"
 
 
-AccessGroup::AccessGroup(SchemaPtr &schemaPtr, Schema::AccessGroup *lg, RangeInfoPtr &rangeInfoPtr) : CellList(), m_mutex(), m_lock(m_mutex,false), m_schema_ptr(schemaPtr), m_name(lg->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_log_cutoff_time(0), m_disk_usage(0) {
+AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *lg, RangeInfoPtr &rangeInfoPtr) : CellList(), m_mutex(), m_lock(m_mutex,false), m_schema_ptr(schemaPtr), m_name(lg->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_log_cutoff_time(0), m_disk_usage(0) {
   rangeInfoPtr->get_table_name(m_table_name);
   rangeInfoPtr->get_start_row(m_start_row);
   rangeInfoPtr->get_end_row(m_end_row);
@@ -41,10 +41,12 @@ AccessGroup::AccessGroup(SchemaPtr &schemaPtr, Schema::AccessGroup *lg, RangeInf
   for (list<Schema::ColumnFamily *>::iterator iter = lg->columns.begin(); iter != lg->columns.end(); iter++) {
     m_column_families.insert((uint8_t)(*iter)->id);
   }
+  Copy(table_identifier, m_table_identifier);
 }
 
 
 AccessGroup::~AccessGroup() {
+  Free(m_table_identifier);
   return;
 }
 
@@ -242,6 +244,25 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
     rangeInfoPtr->remove_cell_store(*iter);
   rangeInfoPtr->add_cell_store(cellStoreFile);
   Global::metadata->sync();
+
+#ifdef METADATA_TEST
+  if (Global::metadata_range_server) {
+    DynamicBuffer send_buf(0);
+    std::string row_key = std::string("") + (uint32_t)m_table_identifier.id + ":" + m_end_row;
+    std::string files = "";
+    std::vector<std::string> store_files;
+    rangeInfoPtr->get_tables(store_files);
+    for (std::vector<std::string>::iterator iter = store_files.begin(); iter != store_files.end(); iter++)
+      files += *iter + "\n";
+    CreateKeyAndAppend(send_buf, FLAG_INSERT, row_key.c_str(), Global::metadata_column_family_Files, 0, Global::log->get_timestamp());
+    CreateAndAppend(send_buf, files.c_str());
+    if ((error = Global::metadata_range_server->update(Global::local_addr, Global::metadata_identifier, send_buf.buf, send_buf.fill())) != Error::OK) {
+      LOG_VA_ERROR("Problem updating METADATA Files: column - %s", Error::get_text(error));
+      DUMP_CORE;
+    }
+    send_buf.release();
+  }
+#endif
 
   /**
    * Install new CellCache and CellStore

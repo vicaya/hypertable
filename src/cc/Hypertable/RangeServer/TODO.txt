@@ -4,4 +4,5 @@ TODO:
 - Get rid of directly written 'packed' commit log header in favor of a serialized one
 - Add destroy_scanner method to RangeServer
 - Fix excessive seek problem during major/merging compaction
-
+- Add auto-assigned timestamps
+- Add logic to prevent root METADATA range from splitting

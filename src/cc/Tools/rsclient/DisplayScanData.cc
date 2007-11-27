@@ -25,7 +25,7 @@
 
 namespace Hypertable {
 
-  void DisplayScanData(const ByteString32T *key, const ByteString32T *value, SchemaPtr &schemaPtr) {
+  void DisplayScanData(const ByteString32T *key, const ByteString32T *value, SchemaPtr &schemaPtr, bool display_values) {
     Key keyComps(key);
     Schema::ColumnFamily *cf;
 
@@ -37,11 +37,18 @@ namespace Hypertable {
 	cf = schemaPtr->get_column_family(keyComps.columnFamily);
 	if (keyComps.flag == FLAG_DELETE_CELL)
 	  cout << keyComps.timestamp << " " << keyComps.rowKey << " " << cf->name << ":" << keyComps.columnQualifier << " DELETE" << endl;
-	else
-	  cout << keyComps.timestamp << " " << keyComps.rowKey << " " << cf->name << ":" << keyComps.columnQualifier << endl;
+	else {
+	  cout << keyComps.timestamp << " " << keyComps.rowKey << " " << cf->name << ":" << keyComps.columnQualifier;
+	  if (display_values)
+	    cout << " " << (const char *)value->data;
+	  cout << endl;
+	}
       }
       else {
-	cerr << "Bad column family (" << (int)keyComps.columnFamily << ") for row key " << keyComps.rowKey << endl;
+	cerr << "Bad column family (" << (int)keyComps.columnFamily << ") for row key " << keyComps.rowKey;
+	if (display_values)
+	  cerr << " value=" << (const char *)value->data;
+	cerr << endl;
       }
     }
     

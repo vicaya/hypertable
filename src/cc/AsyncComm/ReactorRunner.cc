@@ -123,8 +123,8 @@ void ReactorRunner::cleanup_and_remove_handlers(set<IOHandler *> &handlers) {
     ImplementMe;
 #endif
     close(handler->get_sd());
-    m_reactor->cancel_requests(handler);
     HandlerMap &handlerMap = handler->get_handler_map();
     handlerMap.purge_handler(handler);
+    m_reactor->cancel_requests(handler);
   }
 }
