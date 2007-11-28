@@ -79,6 +79,7 @@ namespace Hypertable {
     bool more() {  
       if (m_iter == m_vec.end())
 	return false;
+      return true;
     }
 
     /** Returns scanner ID associated with this scanblock.

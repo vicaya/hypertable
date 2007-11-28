@@ -306,7 +306,7 @@ void RangeServer::compact(ResponseCallback *cb, TableIdentifierT *table, RangeT 
    */
   if (!tableInfoPtr->get_range(range, rangePtr)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errMsg = (std::string)table->name + "[" + range->startRow + ":" + range->endRow + "]";
+    errMsg = (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]";
     goto abort;
   }
 
@@ -360,13 +360,13 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
 
   if (!get_table_info(table->name, tableInfoPtr)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errMsg = (std::string)table->name + "[" + range->startRow + ":" + range->endRow + "]";
+    errMsg = (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]";
     goto abort;
   }
 
   if (!tableInfoPtr->get_range(range, rangePtr)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errMsg = (std::string)table->name + "[" + range->startRow + ":" + range->endRow + "]";
+    errMsg = (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]";
     goto abort;
   }
 
@@ -524,7 +524,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
     std::string startRow;
     rangeInfoPtr->get_start_row(startRow);
     if (startRow != (std::string)range->startRow) {
-      errMsg = (std::string)"Unable to locate range " + table->name + "[" + range->startRow + ":" + range->endRow + "] in METADATA table";
+      errMsg = (std::string)"Unable to locate range " + table->name + "[" + range->startRow + ".." + range->endRow + "] in METADATA table";
       goto abort;
     }
   }
@@ -548,7 +548,6 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
     send_buf.release();
   }
 #endif
-
 
   if (!get_table_info(table->name, tableInfoPtr)) {
     tableInfoPtr = new TableInfo(m_master_client_ptr, table, schemaPtr);
@@ -585,7 +584,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
 
   if (tableInfoPtr->get_range(range, rangePtr)) {
     error = Error::RANGESERVER_RANGE_ALREADY_LOADED;
-    errMsg = (std::string)table->name + "[" + range->startRow + ":" + range->endRow + "]";
+    errMsg = (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]";
     goto abort;
   }
 

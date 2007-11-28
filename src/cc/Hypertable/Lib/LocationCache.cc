@@ -103,7 +103,7 @@ LocationCache::~LocationCache() {
 /**
  * Lookup
  */
-bool LocationCache::lookup(uint32_t tableId, const char *rowKey, RangeLocationInfo *range_loc_info_p) {
+bool LocationCache::lookup(uint32_t tableId, const char *rowKey, RangeLocationInfo *range_loc_info_p, bool inclusive) {
   boost::mutex::scoped_lock lock(m_mutex);
   LocationMapT::iterator iter;
   LocationCacheKeyT key;
@@ -119,8 +119,14 @@ bool LocationCache::lookup(uint32_t tableId, const char *rowKey, RangeLocationIn
   if ((*iter).first.tableId != tableId)
     return false;
 
-  if (strcmp(rowKey, (*iter).second->start_row.c_str()) <= 0)
-    return false;
+  if (inclusive) {
+    if (strcmp(rowKey, (*iter).second->start_row.c_str()) < 0)
+      return false;
+  }
+  else {
+    if (strcmp(rowKey, (*iter).second->start_row.c_str()) <= 0)
+      return false;
+  }
 
   move_to_head((*iter).second);
 

@@ -104,7 +104,7 @@ namespace Hypertable {
     ~LocationCache();
 
     void insert(uint32_t tableId, RangeLocationInfo &range_loc_info, bool pegged=false);
-    bool lookup(uint32_t tableId, const char *rowKey, RangeLocationInfo *range_loc_info_p);
+    bool lookup(uint32_t tableId, const char *rowKey, RangeLocationInfo *range_loc_info_p, bool inclusive=false);
 
     void display(std::ofstream &outfile);
 

@@ -63,7 +63,7 @@ namespace Hypertable {
     ByteString32T *bs;
     dst_buf.ensure(strlen(str) + 6);
     bs = (ByteString32T *)dst_buf.ptr;
-    bs->len = strlen(str)+1;
+    bs->len = strlen(str);
     strcpy((char *)bs->data, str);
     dst_buf.ptr += Length(bs);
   }

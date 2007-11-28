@@ -6,3 +6,6 @@ TODO:
 - Fix excessive seek problem during major/merging compaction
 - Add auto-assigned timestamps
 - Add logic to prevent root METADATA range from splitting
+- Add inMemory mode
+- Add blocksize attribute to AccessGroup schema and hook it up with CellStore
+

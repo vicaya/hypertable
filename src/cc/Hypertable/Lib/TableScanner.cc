@@ -110,6 +110,10 @@ bool TableScanner::next(CellT &cell) {
 
   while (!m_scanblock.more()) {
     if (m_scanblock.eos()) {
+      if (m_range_info.end_row == std::string(Key::END_ROW_MARKER)) {
+	m_eos = true;
+	return false;
+      }
       std::string next_row = m_range_info.end_row;
       next_row.append(1,1);  // construct row key in next range
       find_range_and_start_scan(next_row.c_str());
@@ -165,6 +169,7 @@ bool TableScanner::next(CellT &cell) {
       // LOG ERROR ...
       throw Exception(Error::BAD_KEY);
     }
+    cell.column_family = cf->name.c_str();
     cell.timestamp = keyComps.timestamp;
     cell.value = value->data;
     cell.value_len = value->len;
@@ -189,9 +194,9 @@ void TableScanner::find_range_and_start_scan(const char *row_key) {
   m_cur_range.startRow = m_range_info.start_row.c_str();
   m_cur_range.endRow = m_range_info.end_row.c_str();
 
-  if (!InetAddr::initialize(&m_cur_addr, m_range_info.location.c_str())) {
-    LOG_VA_ERROR("Bad location info for table '%s' (id=%d) end row '%s' - %s",
-		 m_table.name, m_table.id, m_range_info.end_row.c_str(), m_range_info.location.c_str());
+  if (!LocationCache::location_to_addr(m_range_info.location.c_str(), m_cur_addr)) {
+    LOG_VA_ERROR("Invalid location found in METADATA entry range [%s..%s] - %s",
+		 m_cur_range.startRow, m_cur_range.endRow, m_range_info.location.c_str());
     throw Exception(Error::INVALID_METADATA);
   }
 

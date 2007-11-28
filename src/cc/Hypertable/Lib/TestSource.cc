@@ -100,10 +100,8 @@ bool TestSource::next(ByteString32T **keyp, ByteString32T **valuep) {
       return true;
     }
 
-    if ((value = strtok_r(0, "\t", &last)) == 0) {
-      cerr << "Mal-formed input on line " << (m_cur_line-1) << endl;
-      continue;
-    }
+    if ((value = strtok_r(0, "\t", &last)) == 0)
+      value = "";
 
     if (!strcmp(value, "DELETE")) {
       if (!create_column_delete(rowKey, column, timestamp, keyp, valuep)) {
@@ -111,6 +109,15 @@ bool TestSource::next(ByteString32T **keyp, ByteString32T **valuep) {
 	continue;
       }
       return true;
+    }
+
+    row_key_len = strlen(value);
+    if (row_key_len >= 2) {
+      if (!strcmp(&value[row_key_len-2], "??")) {
+	value[row_key_len-1] = (char )0xff;
+	value[row_key_len-2] = (char )0xff;
+	cerr << "converting end of value (" << value << ")" << endl;
+      }
     }
 
     if (!create_insert(rowKey, column, timestamp, value, keyp, valuep)) {
