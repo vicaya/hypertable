@@ -25,19 +25,27 @@
 
 #include "Common/ReferenceCount.h"
 
+#include "Cell.h"
 #include "CellKey.h"
 #include "MutationResult.h"
+#include "RangeLocator.h"
+#include "RangeServerClient.h"
 #include "Schema.h"
+#include "Types.h"
 
 namespace Hypertable {
 
   class Mutator : public ReferenceCount {
 
   public:
-    Mutator(ConnectionManagerPtr &connManagerPtr, SchemaPtr &schemaPtr);
+    Mutator(ConnectionManagerPtr &conn_manager_ptr, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
     virtual ~Mutator() { return; }
 
-    void set(CellKey &key, uint8_t *value, uint32_t valueLen);
+    /**
+    void set(uint64_t timestamp, Key &key, uint8_t *value, uint32_t value_len);
+    void delete_row(uint64_t timestamp, const char *row_key);
+    void delete_cell(uint64_t timestamp, const char *row_key);
+    **/
 
     void flush(MutationResultPtr &resultPtr);
 
@@ -45,9 +53,16 @@ namespace Hypertable {
 
   private:
     ConnectionManagerPtr m_conn_manager_ptr;
-    SchemaPtr m_schema_ptr;
+    SchemaPtr            m_schema_ptr;
+    RangeLocatorPtr      m_range_locator_ptr;
+    ScanSpecificationT   m_scan_spec;
+    RangeServerClient    m_range_server;
+    std::string          m_table_name;
+    TableIdentifierT     m_table_identifier;
   };
   typedef boost::intrusive_ptr<Mutator> MutatorPtr;
+
+
 
 }
 

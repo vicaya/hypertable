@@ -53,6 +53,7 @@ namespace Hypertable {
     const int COMMAND_DESCRIBE_TABLE    = 3;
     const int COMMAND_SHOW_CREATE_TABLE = 4;
     const int COMMAND_SELECT            = 5;
+    const int COMMAND_LOAD_DATA         = 6;
 
     class hql_interpreter_scan_state {
     public:
@@ -215,6 +216,15 @@ namespace Hypertable {
 	  boost::trim(state.str);
 	  std::transform( state.str.begin(), state.str.end(), state.str.begin(), ::tolower );
 	}
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct set_str {
+      set_str(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("set_str");
+	state.str = std::string(str, end-str);
       }
       hql_interpreter_state &state;
     };
@@ -468,6 +478,9 @@ namespace Hypertable {
 	  token_t LIMIT        = as_lower_d["limit"];
 	  token_t INTO         = as_lower_d["into"];
 	  token_t FILE         = as_lower_d["file"];
+	  token_t LOAD         = as_lower_d["load"];
+	  token_t DATA         = as_lower_d["data"];
+	  token_t INFILE       = as_lower_d["infile"];
 
 	  /**
 	   * Start grammar definition
@@ -497,6 +510,7 @@ namespace Hypertable {
 	    = select_statement[set_command(self.state, COMMAND_SELECT)]
 	    | create_table_statement[set_command(self.state, COMMAND_CREATE_TABLE)]
 	    | describe_table_statement[set_command(self.state, COMMAND_DESCRIBE_TABLE)]
+	    | load_data_statement[set_command(self.state, COMMAND_LOAD_DATA)]
 	    | show_statement[set_command(self.state, COMMAND_SHOW_CREATE_TABLE)]
 	    | help_statement[set_help(self.state)]
 	    ;
@@ -630,6 +644,13 @@ namespace Hypertable {
 	    = lexeme_d[ limit_d(0u, 9999u)[uint4_p[scan_set_year(self.state)]] ]
 	    ;
 
+	  load_data_statement
+	    = LOAD >> DATA >> INFILE 
+	    >> string_literal[set_str(self.state)] 
+	    >> INTO >> TABLE 
+	    >> identifier[set_table_name(self.state)]
+	    ;
+
 
 	  /**
 	   * End grammar definition
@@ -668,6 +689,7 @@ namespace Hypertable {
 	  BOOST_SPIRIT_DEBUG_RULE(date);
 	  BOOST_SPIRIT_DEBUG_RULE(time);
 	  BOOST_SPIRIT_DEBUG_RULE(year);
+	  BOOST_SPIRIT_DEBUG_RULE(load_data_statement);
 	}
 #endif
 
@@ -682,7 +704,7 @@ namespace Hypertable {
         access_group_option, in_memory_option, blocksize_option, help_statement,
         describe_table_statement, show_statement, select_statement, where_clause,
         row_restriction_clause, option_spec, date_expression, datetime, date, time,
-        year;
+        year, load_data_statement;
 
       };
 

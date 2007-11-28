@@ -101,7 +101,7 @@ Table::~Table() {
 
 
 int Table::create_mutator(MutatorPtr &mutator_ptr) {
-  mutator_ptr = new Mutator(m_conn_manager_ptr, m_schema_ptr);
+  mutator_ptr = new Mutator(m_conn_manager_ptr, &m_table, m_schema_ptr, m_range_locator_ptr);
   return Error::OK;
 }
 

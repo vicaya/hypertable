@@ -35,7 +35,7 @@ namespace {
  */
 
 /** Constructor  */
-TableScanner::TableScanner(ConnectionManagerPtr &conn_manager_ptr, TableIdentifierT *table_ptr, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpecificationT &scan_spec) : m_conn_manager_ptr(conn_manager_ptr), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(conn_manager_ptr->get_comm(), 30), m_started(false), m_eos(false), m_readahead(true), m_fetch_outstanding(false), m_rows_seen(0) {
+TableScanner::TableScanner(ConnectionManagerPtr &conn_manager_ptr, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpecificationT &scan_spec) : m_conn_manager_ptr(conn_manager_ptr), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(conn_manager_ptr->get_comm(), 30), m_table_name(table_identifier->name), m_started(false), m_eos(false), m_readahead(true), m_fetch_outstanding(false), m_rows_seen(0) {
   char *str;
 
   m_scan_spec.rowLimit = scan_spec.rowLimit;
@@ -74,13 +74,10 @@ TableScanner::TableScanner(ConnectionManagerPtr &conn_manager_ptr, TableIdentifi
 
   memcpy(&m_scan_spec.interval, &scan_spec.interval, sizeof(m_scan_spec.interval));
 
-  // deep copy TableIdentifierT
-  {
-    char *name = new char [ strlen(table_ptr->name) + 1 ];
-    memcpy(&m_table, table_ptr, sizeof(TableIdentifierT));
-    strcpy(name, table_ptr->name);
-    m_table.name = name;
-  }
+  // copy TableIdentifierT
+  memcpy(&m_table_identifier, table_identifier, sizeof(TableIdentifierT));
+  m_table_identifier.name = m_table_name.c_str();
+
 }
 
 
@@ -92,7 +89,6 @@ TableScanner::~TableScanner() {
     delete [] m_scan_spec.columns[i];
   delete [] m_scan_spec.startRow;
   delete [] m_scan_spec.endRow;
-  delete [] m_table.name;
 }
 
 
@@ -187,7 +183,7 @@ bool TableScanner::next(CellT &cell) {
 void TableScanner::find_range_and_start_scan(const char *row_key) {
   int error;
 
-  if ((error = m_range_locator_ptr->find(&m_table, row_key, &m_range_info)) != Error::OK)
+  if ((error = m_range_locator_ptr->find(&m_table_identifier, row_key, &m_range_info)) != Error::OK)
     throw Exception(error);
   m_started = true;
 
@@ -200,7 +196,7 @@ void TableScanner::find_range_and_start_scan(const char *row_key) {
     throw Exception(Error::INVALID_METADATA);
   }
 
-  if ((error = m_range_server.create_scanner(m_cur_addr, m_table, m_cur_range, m_scan_spec, m_scanblock)) != Error::OK)
+  if ((error = m_range_server.create_scanner(m_cur_addr, m_table_identifier, m_cur_range, m_scan_spec, m_scanblock)) != Error::OK)
     throw Exception(error);
 
   // maybe kick off readahead

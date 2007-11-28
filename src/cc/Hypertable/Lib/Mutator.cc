@@ -24,17 +24,18 @@
 /**
  * 
  */
-Mutator::Mutator(ConnectionManagerPtr &connManagerPtr, SchemaPtr &schemaPtr) : m_conn_manager_ptr(connManagerPtr), m_schema_ptr(schemaPtr) {
-  return;
+Mutator::Mutator(ConnectionManagerPtr &conn_manager_ptr, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_conn_manager_ptr(conn_manager_ptr), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(conn_manager_ptr->get_comm(), 30), m_table_name(table_identifier->name) {
+  // copy TableIdentifierT
+  memcpy(&m_table_identifier, table_identifier, sizeof(TableIdentifierT));
+  m_table_identifier.name = m_table_name.c_str();
 }
 
 
+#if 0
 /**
  *
  */
 void Mutator::set(CellKey &key, uint8_t *value, uint32_t valueLen) {
-
-  
 
     void Set(CellKey &key, uint8_t *value, uint32_t valueLen);
 
@@ -48,6 +49,7 @@ void Mutator::set(CellKey &key, uint8_t *value, uint32_t valueLen) {
   // Update memory used
 
 }
+#endif
 
 
 /**

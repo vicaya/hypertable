@@ -29,7 +29,6 @@
 #include "Key.h"
 
 using namespace Hypertable;
-using namespace Hypertable::HqlHelpText;
 using namespace Hypertable::HqlParser;
 
 HqlCommandInterpreter::HqlCommandInterpreter(Client *client) : m_client(client) {
@@ -59,8 +58,9 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       cout << out_str << flush;
     }
     else if (state.command == COMMAND_HELP) {
-      if (state.str == "contents")
-	cout << help_text_summary << flush;
+      const char *text = HqlHelpText::Get(state.str);
+      if (text)
+	cout << text << flush;
       else
 	cout << endl << "no help for '" << state.str << "'" << endl << endl;
     }
@@ -130,6 +130,11 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
 	cout << "\t" << cell.timestamp << endl;
       }
     }
+    else if (state.command == COMMAND_LOAD_DATA) {
+      cout << "Table = " << state.table_name << endl;
+      cout << "File = " << state.str << endl;
+    }
+
   }
   else
     throw Exception(Error::HQL_PARSE_ERROR, std::string("parse error at: ") + info.stop);

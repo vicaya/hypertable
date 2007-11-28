@@ -1,4 +1,24 @@
 
+CREATE TABLE
+============
+
+CREATE TABLE name '(' [create_definition, ...] ')'
+
+create_definition:
+	column_family_name [MAX_VERSIONS '=' value] [TTL '=' duration]
+	| ACCESS GROUP name [IN_MEMORY] [BLOCKSIZE '=' value] ['(' [column_family_name, ...] ')']
+
+duration:
+	num MONTHS
+	| num WEEKS
+	| num DAYS
+	| num HOURS
+	| num MINUTES
+	| num SECONDS
+
+SELECT
+======
+
 SELECT ( '*' | column_family_name [, column_family_name]* )
     FROM table_name
     [where_clause]

@@ -18,15 +18,92 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include "Common/StringExt.h"
+
 #include "HqlHelpText.h"
 
 using namespace Hypertable;
-using namespace Hypertable::HqlHelpText;
 
-const char *Hypertable::HqlHelpText::help_text_summary =
-"\n" \
-"CREATE TABLE - Creates a table.\n" \
-"DESCRIBE TABLE - Displays a table's schema.\n" \
-"SHOW CREATE TABLE - Displays CREATE TABLE command used to create table.\n" \
-"\n";
+namespace {
+
+  const char *help_text_contents =
+  "\n" \
+  "CREATE TABLE      - Creates a table\n" \
+  "DESCRIBE TABLE    - Displays a table's schema\n" \
+  "SELECT            - Select (and display) cells from a table\n" \
+  "SHOW CREATE TABLE - Displays CREATE TABLE command used to create table\n" \
+  "\n" \
+  "For more information, type 'help <item>', where <item> is one of the preceeding\n" \
+  "commands.\n" \
+  "\n";
+
+  const char *help_text_create_table =
+  "\n" \
+  "CREATE TABLE name '(' [create_definition, ...] ')'\n" \
+  "\n" \
+  "create_definition:\n" \
+  "    column_family_name [MAX_VERSIONS '=' value] [TTL '=' duration]\n" \
+  "    | ACCESS GROUP name [IN_MEMORY] [BLOCKSIZE '=' value] ['(' [column_family_name, ...] ')']\n" \
+  "\n" \
+  "duration:\n" \
+  "    num MONTHS\n" \
+  "    | num WEEKS\n" \
+  "    | num DAYS\n" \
+  "    | num HOURS\n" \
+  "    | num MINUTES\n" \
+  "    | num SECONDS\n" \
+  "\n";
+
+  const char *help_text_select =
+  "\n" \
+  "SELECT ( '*' | column_family_name [, column_family_name]* )\n" \
+  "    FROM table_name\n" \
+  "    [where_clause]\n" \
+  "    [options_spec]\n" \
+  "\n" \
+  "where_clause:\n" \
+  "    WHERE \n" \
+  "    ( ROW = row_key\n" \
+  "    | (ROW > row_key | ROW >= row_key)\n" \
+  "    | (ROW < row_key | ROW <= row_key)\n" \
+  "    | (ROW > row_key | ROW >= row_key) \"&&\" (ROW < row_key | ROW <= row_key) )\n" \
+  "\n" \
+  "options_spec:\n" \
+  "    ( MAX_VERSIONS = version_count\n" \
+  "    | START_TIME = timestamp\n" \
+  "    | END_TIME = timestamp\n" \
+  "    | LIMIT = row_count\n" \
+  "    | INTO FILE 'file_name' )*\n" \
+  "\n";  
+
+
+  typedef __gnu_cxx::hash_map<std::string, const char *>  HelpTextMapT;
+
+  HelpTextMapT &buildHelpTextMap() {
+    HelpTextMapT *map = new HelpTextMapT();
+    (*map)["contents"] = help_text_contents;
+    (*map)["create table"] = help_text_create_table;
+    (*map)["select"] = help_text_select;
+    return *map;
+  }
+
+  HelpTextMapT &textMap = buildHelpTextMap();
+}
+
+
+const char *HqlHelpText::Get(const char *subject) {
+  HelpTextMapT::const_iterator iter = textMap.find(subject);
+  if (iter == textMap.end())
+    return 0;
+  return (*iter).second;
+}
+
+
+const char *HqlHelpText::Get(std::string &subject) {
+  HelpTextMapT::const_iterator iter = textMap.find(subject);
+  if (iter == textMap.end())
+    return 0;
+  return (*iter).second;
+}
+
 

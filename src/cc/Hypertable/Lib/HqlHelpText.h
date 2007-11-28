@@ -23,11 +23,11 @@
 
 namespace Hypertable {
   
-  namespace HqlHelpText {
-
-    extern const char *help_text_summary;
-
-  }
+  class HqlHelpText {
+  public:
+    static const char *HqlHelpText::Get(const char *subject);
+    static const char *HqlHelpText::Get(std::string &subject);
+  };
 
 }
 
