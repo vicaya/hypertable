@@ -144,24 +144,24 @@ bool TableScanner::next(CellT &cell) {
       throw Exception(Error::BAD_KEY);
 
     // check for end row
-    if (!strcmp(keyComps.rowKey, end_row_key)) {
+    if (!strcmp(keyComps.row, end_row_key)) {
       m_eos = true;
       return false;
     }
 
     // check for row change and row limit
-    if (strcmp(m_cur_row.c_str(), keyComps.rowKey)) {
+    if (strcmp(m_cur_row.c_str(), keyComps.row)) {
       m_rows_seen++;
-      m_cur_row = keyComps.rowKey;
+      m_cur_row = keyComps.row;
       if (m_scan_spec.rowLimit > 0 && m_rows_seen > m_scan_spec.rowLimit) {
 	m_eos = true;
 	return false;
       }
     }
 
-    cell.row_key = keyComps.rowKey;
-    cell.column_qualifier = keyComps.columnQualifier;
-    if ((cf = m_schema_ptr->get_column_family(keyComps.columnFamily)) == 0) {
+    cell.row_key = keyComps.row;
+    cell.column_qualifier = keyComps.column_qualifier;
+    if ((cf = m_schema_ptr->get_column_family(keyComps.column_family_code)) == 0) {
       // LOG ERROR ...
       throw Exception(Error::BAD_KEY);
     }

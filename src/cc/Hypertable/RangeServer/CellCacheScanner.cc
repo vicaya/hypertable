@@ -73,7 +73,7 @@ void CellCacheScanner::forward() {
     if (!keyComps.load((*m_cur_iter).first)) {
       LOG_ERROR("Problem parsing key!");
     }
-    else if (m_scan_context_ptr->familyMask[keyComps.columnFamily]) {
+    else if (m_scan_context_ptr->familyMask[keyComps.column_family_code]) {
       m_cur_key = (*m_cur_iter).first;
       m_cur_value = (*m_cur_iter).second;
       return;

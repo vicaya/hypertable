@@ -28,6 +28,8 @@
 #include "Common/ByteString.h"
 #include "Common/DynamicBuffer.h"
 
+#include "KeySpec.h"
+
 using namespace Hypertable;
 
 namespace Hypertable {
@@ -39,7 +41,7 @@ namespace Hypertable {
   
   /** Provides access to internal components of opaque key.
    */
-  class Key {
+  class Key : public KeySpec {
   public:
 
     static const char *END_ROW_MARKER;
@@ -47,7 +49,7 @@ namespace Hypertable {
     /**
      * Constructor (for implicit construction).
      */
-    Key() : timestampPtr(0) { return; }
+    Key() : timestamp_ptr(0) { return; }
 
     /**
      * Constructor that takes an opaque key as an argument.  load is called to
@@ -73,13 +75,11 @@ namespace Hypertable {
      */
     void updateTimestamp(uint64_t timestamp);
 
-    const char    *rowKey;
-    const char    *columnQualifier;
-    const uint8_t *endPtr;
-    uint64_t    timestamp;
-    uint8_t     columnFamily;
-    uint8_t     flag;
-    uint8_t    *timestampPtr;
+    uint64_t       timestamp;
+    uint8_t        column_family_code;
+    uint8_t        flag;
+    uint8_t       *timestamp_ptr;
+    const uint8_t *end_ptr;
   };
 
 
@@ -93,7 +93,7 @@ namespace Hypertable {
   std::ostream &operator<<(std::ostream &os, const Key &key);
 
 
-  void CreateKey(ByteString32T *key, uint8_t flag, const char *rowKey, uint8_t columnFamily, const char *columnQualifier, uint64_t timestamp);
+  void CreateKey(ByteString32T *key, uint8_t flag, const char *row, uint8_t column_family_code, const char *column_qualifier, uint64_t timestamp);
 
   /**
    * Builds an opaque key from a set of key components.  This function allocates
@@ -103,15 +103,15 @@ namespace Hypertable {
    * <rowKey> '\0' <columnFamily> <columnQualifier> '\0' <flag> ~BIGENDIAN(<timestamp>)
    * <p>
    * @param flag DELETE_ROW, DELETE_CELL, or INSERT
-   * @param rowKey '\0' terminated row key
-   * @param columnFamily column family
-   * @param columnQualifier '\0' terminated column qualifier
+   * @param row '\0' terminated row key
+   * @param column_family_code column family
+   * @param column_qualifier '\0' terminated column qualifier
    * @param timestamp timestamp in microseconds
    * @return newly allocated opaque key
    */
-  ByteString32T *CreateKey(uint8_t flag, const char *rowKey, uint8_t columnFamily, const char *columnQualifier, uint64_t timestamp);
+  ByteString32T *CreateKey(uint8_t flag, const char *row, uint8_t column_family_code, const char *column_qualifier, uint64_t timestamp);
 
-  void CreateKeyAndAppend(DynamicBuffer &dst_buf, uint8_t flag, const char *rowKey, uint8_t columnFamily, const char *columnQualifier, uint64_t timestamp);
+  void CreateKeyAndAppend(DynamicBuffer &dst_buf, uint8_t flag, const char *row, uint8_t column_family_code, const char *column_qualifier, uint64_t timestamp);
 
 }
 

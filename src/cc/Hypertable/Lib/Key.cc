@@ -37,18 +37,18 @@ namespace Hypertable {
 
   const char *Key::END_ROW_MARKER = (const char *)end_row_chars;
 
-  void CreateKey(ByteString32T *key, uint8_t flag, const char *rowKey, uint8_t columnFamily, const char *columnQualifier, uint64_t timestamp) {
-    size_t len = strlen(rowKey) + 4 + sizeof(int64_t);
-    if (columnQualifier != 0)
-      len += strlen(columnQualifier);
+  void CreateKey(ByteString32T *key, uint8_t flag, const char *row, uint8_t column_family_code, const char *column_qualifier, uint64_t timestamp) {
+    size_t len = strlen(row) + 4 + sizeof(int64_t);
+    if (column_qualifier != 0)
+      len += strlen(column_qualifier);
     uint8_t *ptr = key->data;
     key->len = len;
-    strcpy((char *)ptr, rowKey);
-    ptr += strlen(rowKey) + 1;
-    *ptr++ = columnFamily;
-    if (columnQualifier != 0) {
-      strcpy((char *)ptr, columnQualifier);
-      ptr += strlen(columnQualifier) + 1;
+    strcpy((char *)ptr, row);
+    ptr += strlen(row) + 1;
+    *ptr++ = column_family_code;
+    if (column_qualifier != 0) {
+      strcpy((char *)ptr, column_qualifier);
+      ptr += strlen(column_qualifier) + 1;
     }
     else
       *ptr++ = 0;
@@ -69,21 +69,21 @@ namespace Hypertable {
     assert((ptr-key->data) == (int32_t)key->len);
   }
 
-  ByteString32T *CreateKey(uint8_t flag, const char *rowKey, uint8_t columnFamily, const char *columnQualifier, uint64_t timestamp) {
-    size_t len = strlen(rowKey) + 4 + sizeof(int64_t);
-    if (columnQualifier != 0)
-      len += strlen(columnQualifier);
+  ByteString32T *CreateKey(uint8_t flag, const char *row, uint8_t column_family_code, const char *column_qualifier, uint64_t timestamp) {
+    size_t len = strlen(row) + 4 + sizeof(int64_t);
+    if (column_qualifier != 0)
+      len += strlen(column_qualifier);
     ByteString32T *key = (ByteString32T *)new uint8_t [ len + sizeof(int32_t) ];
-    CreateKey(key, flag, rowKey, columnFamily, columnQualifier, timestamp);
+    CreateKey(key, flag, row, column_family_code, column_qualifier, timestamp);
     return key;
   }
 
-  void CreateKeyAndAppend(DynamicBuffer &dst_buf, uint8_t flag, const char *rowKey, uint8_t columnFamily, const char *columnQualifier, uint64_t timestamp) {
-    size_t len = strlen(rowKey) + 4 + sizeof(int64_t);
-    if (columnQualifier != 0)
-      len += strlen(columnQualifier);
+  void CreateKeyAndAppend(DynamicBuffer &dst_buf, uint8_t flag, const char *row, uint8_t column_family_code, const char *column_qualifier, uint64_t timestamp) {
+    size_t len = strlen(row) + 4 + sizeof(int64_t);
+    if (column_qualifier != 0)
+      len += strlen(column_qualifier);
     dst_buf.ensure(len + 4);
-    CreateKey((ByteString32T *)dst_buf.ptr, flag, rowKey, columnFamily, columnQualifier, timestamp);    
+    CreateKey((ByteString32T *)dst_buf.ptr, flag, row, column_family_code, column_qualifier, timestamp);    
     dst_buf.ptr += Length((ByteString32T *)dst_buf.ptr);
   }
 
@@ -98,7 +98,7 @@ namespace Hypertable {
     const uint8_t *ptr = key->data;
     const uint8_t *endptr = key->data + key->len;
 
-    rowKey = (const char *)ptr;
+    row = (const char *)ptr;
 
     while (ptr < endptr && *ptr != 0)
       ptr++;
@@ -108,8 +108,8 @@ namespace Hypertable {
       return false;
     }
 
-    columnFamily = *ptr++;
-    columnQualifier = (const char *)ptr;
+    column_family_code = *ptr++;
+    column_qualifier = (const char *)ptr;
 
     while (ptr < endptr && *ptr != 0)
       ptr++;
@@ -125,9 +125,9 @@ namespace Hypertable {
     }
 
     flag = *ptr++;
-    timestampPtr = (uint8_t *)ptr;
+    timestamp_ptr = (uint8_t *)ptr;
     memcpy(&timestamp, ptr, sizeof(uint64_t));
-    endPtr = ptr + sizeof(uint64_t);
+    end_ptr = ptr + sizeof(uint64_t);
 
     timestamp = ByteOrderSwapInt64(timestamp);
     timestamp = ~timestamp;
@@ -139,18 +139,18 @@ namespace Hypertable {
     timestamp = ts;
     ts = ByteOrderSwapInt64(ts);
     ts = ~ts;
-    memcpy(timestampPtr, &ts, sizeof(int64_t));
+    memcpy(timestamp_ptr, &ts, sizeof(int64_t));
   }
 
 
 
   std::ostream &operator<<(std::ostream &os, const Key &keyComps) {
-    os << "row='" << keyComps.rowKey << "' ";
+    os << "row='" << keyComps.row << "' ";
     if (keyComps.flag == FLAG_DELETE_ROW)
       os << "ts=" << keyComps.timestamp << " DELETE";
     else {
-      os << "family=" << (int)keyComps.columnFamily;
-      os << " qualifier='" << keyComps.columnQualifier << "' ts=" << keyComps.timestamp;
+      os << "family=" << (int)keyComps.column_family_code;
+      os << " qualifier='" << keyComps.column_qualifier << "' ts=" << keyComps.timestamp;
       if (keyComps.flag == FLAG_DELETE_CELL)
 	os << " DELETE";
     }

@@ -248,8 +248,8 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
       return Error::INVALID_METADATA;
     }
 
-    if ((stripped_key = strchr(keyComps.rowKey, ':')) == 0) {
-      LOG_VA_ERROR("Bad row key found in METADATA - '%s'", keyComps.rowKey);
+    if ((stripped_key = strchr(keyComps.row, ':')) == 0) {
+      LOG_VA_ERROR("Bad row key found in METADATA - '%s'", keyComps.row);
       return Error::INVALID_METADATA;
     }
     stripped_key++;
@@ -272,22 +272,22 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
       }
     }
     else {
-      table_id = (uint32_t)strtol(keyComps.rowKey, 0, 10);
+      table_id = (uint32_t)strtol(keyComps.row, 0, 10);
       range_loc_info.end_row = stripped_key;
       got_end_row = true;
     }
 
-    if (keyComps.columnFamily == m_startrow_cid) {
+    if (keyComps.column_family_code == m_startrow_cid) {
       //cout << "TS=" << keyComps.timestamp << endl;
       range_loc_info.start_row = std::string((const char *)value->data, value->len);
       got_start_row = true;
     }
-    else if (keyComps.columnFamily == m_location_cid) {
+    else if (keyComps.column_family_code == m_location_cid) {
       range_loc_info.location = std::string((const char *)value->data, value->len);
       got_location = true;
     }
     else {
-      LOG_VA_ERROR("METADATA lookup on row '%s' returned incorrect column (id=%d)", (const char *)key->data, keyComps.columnFamily);
+      LOG_VA_ERROR("METADATA lookup on row '%s' returned incorrect column (id=%d)", (const char *)key->data, keyComps.column_family_code);
     }
   }
 

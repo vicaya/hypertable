@@ -30,22 +30,22 @@ namespace Hypertable {
     Schema::ColumnFamily *cf;
 
     if (keyComps.flag == FLAG_DELETE_ROW) {
-      cout << keyComps.timestamp << " " << keyComps.rowKey << " DELETE" << endl;
+      cout << keyComps.timestamp << " " << keyComps.row << " DELETE" << endl;
     }
     else {
-      if (keyComps.columnFamily > 0) {
-	cf = schemaPtr->get_column_family(keyComps.columnFamily);
+      if (keyComps.column_family_code > 0) {
+	cf = schemaPtr->get_column_family(keyComps.column_family_code);
 	if (keyComps.flag == FLAG_DELETE_CELL)
-	  cout << keyComps.timestamp << " " << keyComps.rowKey << " " << cf->name << ":" << keyComps.columnQualifier << " DELETE" << endl;
+	  cout << keyComps.timestamp << " " << keyComps.row << " " << cf->name << ":" << keyComps.column_qualifier << " DELETE" << endl;
 	else {
-	  cout << keyComps.timestamp << " " << keyComps.rowKey << " " << cf->name << ":" << keyComps.columnQualifier;
+	  cout << keyComps.timestamp << " " << keyComps.row << " " << cf->name << ":" << keyComps.column_qualifier;
 	  if (display_values)
 	    cout << " " << (const char *)value->data;
 	  cout << endl;
 	}
       }
       else {
-	cerr << "Bad column family (" << (int)keyComps.columnFamily << ") for row key " << keyComps.rowKey;
+	cerr << "Bad column family (" << (int)keyComps.column_family_code << ") for row key " << keyComps.row;
 	if (display_values)
 	  cerr << " value=" << (const char *)value->data;
 	cerr << endl;

@@ -142,8 +142,8 @@ int Range::add(const ByteString32T *key, const ByteString32T *value) {
     return 0;
   }
 
-  if (keyComps.columnFamily >= m_column_family_vector.size()) {
-    LOG_VA_ERROR("Bad column family (%d)", keyComps.columnFamily);
+  if (keyComps.column_family_code >= m_column_family_vector.size()) {
+    LOG_VA_ERROR("Bad column family (%d)", keyComps.column_family_code);
     return 0;
   }
 
@@ -156,7 +156,7 @@ int Range::add(const ByteString32T *key, const ByteString32T *value) {
     }
   }
   else if (keyComps.flag == FLAG_DELETE_CELL || keyComps.flag == FLAG_INSERT) {
-    m_column_family_vector[keyComps.columnFamily]->add(key, value);
+    m_column_family_vector[keyComps.column_family_code]->add(key, value);
   }
   else {
     LOG_VA_ERROR("Bad flag value (%d)", keyComps.flag);

@@ -148,7 +148,7 @@ void CellStoreScannerV0::forward() {
       LOG_ERROR("Problem parsing key!");
       break;
     }
-    if (m_scan_context_ptr->familyMask[keyComps.columnFamily])
+    if (m_scan_context_ptr->familyMask[keyComps.column_family_code])
       break;
   }
 }
