@@ -45,9 +45,9 @@ Types.cc
 
 add_library (Hypertable ${Hypertable_SRCS})
 
-# generateTestData
-add_executable (generateTestData generateTestData.cc)
-target_link_libraries (generateTestData Hypertable Hyperspace pthread ${BOOST_LIB} AsyncComm Common log4cpp expat)
+# generate_test_data
+add_executable (generate_test_data generate_test_data.cc)
+target_link_libraries (generate_test_data Hypertable Hyperspace pthread ${BOOST_LIB} AsyncComm Common log4cpp expat)
 
 # MetadataTest
 add_executable (MetadataTest MetadataTest.cc)
@@ -91,4 +91,4 @@ add_test (Schema schemaTest)
 add_test (LocationCache locationCacheTest)
 add_test (LoadDataSource loadDataSourceTest)
 
-install (TARGETS generateTestData RUNTIME DESTINATION bin)
+install (TARGETS generate_test_data RUNTIME DESTINATION bin)

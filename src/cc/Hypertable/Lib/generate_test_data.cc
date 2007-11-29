@@ -50,6 +50,8 @@ namespace {
     "OPTINS:",
     "  --config=<fname>  Read configuration properties from <fname>",
     "  --limit=<n>       Only output <n> lines of testdata",
+    "  --no-deletes      Don't generate delete records so output can",
+    "                    be used with the LOAD DATA FILE HQL command",
     "  --seed=<n>        Seed the randon number generator with <n>",
     "  --timestamps      Generate timestamps",
     "  --qualifier-limit=<n>  Limit the pool of qualifiers to <n>",
@@ -110,6 +112,7 @@ int main(int argc, char **argv) {
   uint32_t rowLimit = 0;
   uint32_t limit = 0;
   uint32_t emitted = 0;
+  bool no_deletes = false;
 
   System::initialize(argv[0]);
   ReactorFactory::initialize((uint16_t)System::get_processor_count());
@@ -131,6 +134,9 @@ int main(int argc, char **argv) {
     }
     else if (!strcmp(argv[i], "--timestamps")) {
       generateTimestamps = true;
+    }
+    else if (!strcmp(argv[i], "--no-deletes")) {
+      no_deletes = true;
     }
     else if (tableName == "")
       tableName = argv[i];
@@ -199,7 +205,7 @@ int main(int argc, char **argv) {
 
     index = rand();
     modValue = rand() % 49;
-    if ((index % 49) == (size_t)modValue) {
+    if (!no_deletes && (index % 49) == (size_t)modValue) {
       if (generateTimestamps)
 	cout << timestamp << "\t" << rowKey << "\tDELETE" << endl;
       else
@@ -215,7 +221,7 @@ int main(int argc, char **argv) {
 
     index = rand();
     modValue = rand() % 29;
-    if ((index % 29) == 0) {
+    if (!no_deletes && (index % 29) == 0) {
       if (generateTimestamps)
 	cout << timestamp << "\t" << rowKey << "\t" << cfNames[family] << ":" << qualifier << "\tDELETE" << endl;
       else

@@ -197,6 +197,8 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
   meta_scan_spec.endRowInclusive = true;
   // meta_scan_spec.interval = ????;
 
+  m_conn_manager_ptr->wait_for_connection(addr, 12);
+
   if ((error = m_range_server.create_scanner(addr, m_metadata_table, range, meta_scan_spec, scan_block)) != Error::OK)
     return error;
 
@@ -232,6 +234,7 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
   Key keyComps;
   const char *stripped_key;
   uint32_t table_id = 0;
+  struct sockaddr_in addr;
   
   range_loc_info.start_row = "";
   range_loc_info.end_row = "";
@@ -257,6 +260,16 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
     if (got_end_row) {
       if (strcmp(stripped_key, range_loc_info.end_row.c_str())) {
 	if (got_start_row && got_location) {
+
+	  /**
+	   * Add this location (address) to the connection manager
+	   */
+	  if (!LocationCache::location_to_addr(range_loc_info.location.c_str(), addr)) {
+	    LOG_VA_ERROR("Invalid location found in METADATA entry for row '%s' - %s", range_loc_info.end_row.c_str(), range_loc_info.location.c_str());
+	    return Error::INVALID_METADATA;
+	  }
+	  m_conn_manager_ptr->add(addr, 30, "RangeServer");
+
 	  m_cache.insert(table_id, range_loc_info);
 	  //cout << "cache insert table=" << table_id << " start=" << range_loc_info.start_row << " end=" << range_loc_info.end_row << " loc=" << range_loc_info.location << endl;
 	}

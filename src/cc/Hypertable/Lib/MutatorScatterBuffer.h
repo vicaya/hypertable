@@ -100,13 +100,13 @@ namespace Hypertable {
     class UpdateBuffer : public ReferenceCount {
     public:
       UpdateBuffer(CompletionCounter *cc) : buf(1024), error(0), counterp(cc) { return; }
-      std::vector<const ByteString32T *>  keys;
-      DynamicBuffer                       buf;
-      struct sockaddr_in                  addr;
-      int                                 error;
-      EventPtr                            event_ptr;
-      CompletionCounter                  *counterp;
-      DispatchHandlerPtr                  dispatch_handler_ptr;
+      std::vector<uint64_t>  key_offsets;
+      DynamicBuffer          buf;
+      struct sockaddr_in     addr;
+      int                    error;
+      EventPtr               event_ptr;
+      CompletionCounter     *counterp;
+      DispatchHandlerPtr     dispatch_handler_ptr;
     };
     typedef boost::intrusive_ptr<UpdateBuffer> UpdateBufferPtr;
 

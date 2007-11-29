@@ -44,6 +44,7 @@ namespace {
     { Error::BAD_KEY,                     "HYPERTABLE bad key" },
     { Error::METADATA_NOT_FOUND,          "HYPERTABLE metadata not found" },
     { Error::HQL_PARSE_ERROR,             "HYPERTABLE HQL parse error" },
+    { Error::FILE_NOT_FOUND,              "HYPERTABLE file not found" },
     { Error::COMM_NOT_CONNECTED,          "COMM not connected" },
     { Error::COMM_BROKEN_CONNECTION,      "COMM broken connection" },
     { Error::COMM_CONNECT_ERROR,          "COMM connect error" },
@@ -117,6 +118,7 @@ const int Error::INVALID_METADATA;
 const int Error::BAD_KEY;
 const int Error::METADATA_NOT_FOUND;
 const int Error::HQL_PARSE_ERROR;
+const int Error::FILE_NOT_FOUND;
 
 const int Error::COMM_NOT_CONNECTED;
 const int Error::COMM_BROKEN_CONNECTION;

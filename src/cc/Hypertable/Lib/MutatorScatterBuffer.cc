@@ -56,7 +56,7 @@ int MutatorScatterBuffer::set(Key &key, uint8_t *value, uint32_t value_len) {
       return Error::INVALID_METADATA;
   }
 
-  (*iter).second->keys.push_back((const ByteString32T *)(*iter).second->buf.ptr);
+  (*iter).second->key_offsets.push_back((*iter).second->buf.fill());
   CreateKeyAndAppend((*iter).second->buf, FLAG_INSERT, key.row, key.column_family_code, key.column_qualifier, key.timestamp);
   CreateAndAppend((*iter).second->buf, value, value_len);
   
@@ -71,18 +71,23 @@ int MutatorScatterBuffer::set(Key &key, uint8_t *value, uint32_t value_len) {
 int MutatorScatterBuffer::send() {
   UpdateBufferPtr update_buffer_ptr;
   struct ltByteString32 swo_bs32;
+  std::vector<ByteString32T *>  kvec;
 
-  update_buffer_ptr->counterp->set(m_buffer_map.size());
+  m_completion_counter.set(m_buffer_map.size());
 
   for (UpdateBufferMapT::const_iterator iter = m_buffer_map.begin(); iter != m_buffer_map.end(); iter++) {
     update_buffer_ptr = (*iter).second;
-    sort(update_buffer_ptr->keys.begin(), update_buffer_ptr->keys.begin(), swo_bs32);
+    kvec.clear();
+    kvec.reserve( update_buffer_ptr->key_offsets.size() );
+    for (size_t i=0; i<update_buffer_ptr->key_offsets.size(); i++)
+      kvec.push_back((ByteString32T *)(update_buffer_ptr->buf.buf + update_buffer_ptr->key_offsets[i]));
+    sort(kvec.begin(), kvec.end(), swo_bs32);
     uint8_t *data, *ptr, *src_base, *src_ptr;
     size_t len = update_buffer_ptr->buf.fill();
     ptr = data = new uint8_t [ len ];
 
-    for (size_t i=0; i<update_buffer_ptr->keys.size(); i++) {
-      src_ptr = src_base = (uint8_t *)update_buffer_ptr->keys[i];
+    for (size_t i=0; i<kvec.size(); i++) {
+      src_ptr = src_base = (uint8_t *)kvec[i];
       src_ptr += Length((const ByteString32T *)src_ptr);  // skip key
       src_ptr += Length((const ByteString32T *)src_ptr);  // skip value
       memcpy(ptr, src_base, src_ptr-src_base);

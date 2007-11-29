@@ -21,12 +21,14 @@
 #include <cstring>
 
 #include "Common/Error.h"
+#include "Common/FileUtils.h"
 
 #include "Client.h"
 #include "HqlCommandInterpreter.h"
 #include "HqlHelpText.h"
 #include "HqlParser.h"
 #include "Key.h"
+#include "LoadDataSource.h"
 
 using namespace Hypertable;
 using namespace Hypertable::HqlParser;
@@ -132,15 +134,35 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
     else if (state.command == COMMAND_LOAD_DATA) {
       TablePtr table_ptr;
       MutatorPtr mutator_ptr;
+      LoadDataSource *lds;
+      uint64_t timestamp;
+      KeySpec key;
+      uint8_t *value;
+      uint32_t value_len;
 
       if ((error = m_client->open_table(state.table_name, table_ptr)) != Error::OK)
 	throw Exception(error, std::string("Problem opening table '") + state.table_name + "'");
 
       if ((error = table_ptr->create_mutator(mutator_ptr)) != Error::OK)
 	throw Exception(error, std::string("Problem creating mutator on table '") + state.table_name + "'");
-      
-      cout << "Table = " << state.table_name << endl;
-      cout << "File = " << state.str << endl;
+
+      boost::trim_if(state.str, boost::is_any_of("'\""));
+
+      if (!FileUtils::exists(state.str.c_str()))
+	throw Exception(Error::FILE_NOT_FOUND, state.str);
+
+      lds = new LoadDataSource(state.str);
+
+      while (lds->next(&timestamp, &key, &value, &value_len)) {
+	try {
+	  mutator_ptr->set(timestamp, key, value, value_len);
+	}
+	catch (Hypertable::Exception &e) {
+	  cerr << "error: " << Error::get_text(e.code()) << " - " << e.what() << endl;
+	}
+      }
+      delete lds;
+      mutator_ptr->flush();
     }
 
   }
