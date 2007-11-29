@@ -9,4 +9,4 @@ TODO:
 - Add inMemory mode
 - Add blocksize attribute to AccessGroup schema and hook it up with CellStore
 - Figure out a solution to the problem of an update timing out
-
+- Make sure ':' character cannot be specified in column family name

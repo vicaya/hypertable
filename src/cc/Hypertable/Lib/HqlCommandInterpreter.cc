@@ -92,7 +92,6 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       cout << schema_str << endl;
     }
     else if (state.command == COMMAND_SELECT) {
-      int error;
       TablePtr table_ptr;
       TableScannerPtr scanner_ptr;
       ScanSpecificationT scan_spec;
@@ -131,6 +130,15 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       }
     }
     else if (state.command == COMMAND_LOAD_DATA) {
+      TablePtr table_ptr;
+      MutatorPtr mutator_ptr;
+
+      if ((error = m_client->open_table(state.table_name, table_ptr)) != Error::OK)
+	throw Exception(error, std::string("Problem opening table '") + state.table_name + "'");
+
+      if ((error = table_ptr->create_mutator(mutator_ptr)) != Error::OK)
+	throw Exception(error, std::string("Problem creating mutator on table '") + state.table_name + "'");
+      
       cout << "Table = " << state.table_name << endl;
       cout << "File = " << state.str << endl;
     }

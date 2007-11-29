@@ -22,6 +22,7 @@ EventHandlerMasterChange.cc
 HqlCommandInterpreter.cc
 HqlHelpText.cc
 Key.cc
+LoadDataSource.cc
 LocationCache.cc
 MasterClient.cc
 MasterFileHandler.cc
@@ -60,6 +61,10 @@ target_link_libraries (schemaTest Hypertable pthread ${BOOST_LIB} Common log4cpp
 add_executable (locationCacheTest tests/locationCacheTest.cc)
 target_link_libraries (locationCacheTest Hypertable ${BOOST_LIB} Common log4cpp)
 
+# loadDataSourceTest
+add_executable (loadDataSourceTest tests/loadDataSourceTest.cc)
+target_link_libraries (loadDataSourceTest Hypertable ${BOOST_LIB} Common log4cpp)
+
 
 #
 # Copy test files
@@ -80,8 +85,10 @@ configure_file(${SRC_DIR}/good-schema-1.xml ${DST_DIR}/good-schema-1.xml COPYONL
 configure_file(${HYPERTABLE_SOURCE_DIR}/test/random.dat ${DST_DIR}/random.dat COPYONLY)
 configure_file(${SRC_DIR}/schemaTest.golden ${DST_DIR}/schemaTest.golden)
 configure_file(${SRC_DIR}/locationCacheTest.golden ${DST_DIR}/locationCacheTest.golden)
+configure_file(${SRC_DIR}/loadDataSourceTest.golden ${DST_DIR}/loadDataSourceTest.golden)
 
 add_test (Schema schemaTest)
 add_test (LocationCache locationCacheTest)
+add_test (LoadDataSource loadDataSourceTest)
 
 install (TARGETS generateTestData RUNTIME DESTINATION bin)

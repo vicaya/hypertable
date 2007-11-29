@@ -89,6 +89,33 @@ void Mutator::set(uint64_t timestamp, KeySpec &key, uint8_t *value, uint32_t val
 }
 
 
+void Mutator::flush() {
+  int error;
+
+  /**
+   * wait for previous send to complete
+   */
+  if (m_prev_buffer_ptr) {
+    if (!m_prev_buffer_ptr->wait_for_completion()) {
+      LOG_ERROR("Errors encountered in result of scatter send");
+    }
+  }
+
+  /**
+   * If there are buffered updates, send them and wait for completion
+   */
+  if (m_memory_used > 0) {
+    if ((error = m_buffer_ptr->send()) != Error::OK) {
+      LOG_ERROR("Errors encountered in scatter send");
+    }
+    if (!m_buffer_ptr->wait_for_completion()) {
+      LOG_ERROR("Errors encountered in result of scatter send");
+    }
+  }
+
+}
+
+
 
 #if 0
     void delete_row(uint64_t timestamp, KeySpec &key);

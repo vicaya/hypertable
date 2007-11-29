@@ -43,7 +43,7 @@ namespace Hypertable {
     virtual ~Mutator() { return; }
 
     void set(uint64_t timestamp, KeySpec &key, uint8_t *value, uint32_t value_len);
-    
+    void flush();
 
     /**
     void delete_row(uint64_t timestamp, KeySpec &key);
