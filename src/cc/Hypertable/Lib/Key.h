@@ -43,6 +43,7 @@ namespace Hypertable {
   public:
 
     static const char *END_ROW_MARKER;
+    static const char *END_ROOT_ROW;
 
     /**
      * Constructor (for implicit construction).

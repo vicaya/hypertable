@@ -36,8 +36,6 @@ extern "C" {
 
 namespace {
   const uint32_t METADATA_READAHEAD_COUNT = 10;
-  const char root_end_row[5] = { '0', ':', 0xFF, 0xFF, 0 };
-  const char *METADATA_ROOT_END_ROW = (const char *)root_end_row;
 }
 
 
@@ -128,10 +126,20 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
   if (m_cache.lookup(table->id, row_key, range_loc_info_p))
     return Error::OK;
 
+  /**
+   * If key is on root METADATA range, return root range information
+   */
+  if (table->id == 0 && (row_key == 0 || strcmp(row_key, Key::END_ROOT_ROW) < 0)) {
+    range_loc_info_p->start_row = "";
+    range_loc_info_p->end_row = Key::END_ROOT_ROW;
+    range_loc_info_p->location = m_root_range_info.location;
+    return Error::OK;
+  }
+
   /** at this point, we didn't find it so we need to do a METADATA lookup **/
 
   range.startRow = 0;
-  range.endRow = METADATA_ROOT_END_ROW;
+  range.endRow = Key::END_ROOT_ROW;
   memcpy(&addr, &m_root_addr, sizeof(struct sockaddr_in));
 
   size_t len = row_key ? strlen(row_key) : 0;
@@ -139,8 +147,14 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
   char *meta_end_key = new char [ 16 ];          // TODO: delete me!
   char *meta_key_ptr;
 
-  build_metadata_start_row_key(meta_start_key, "0:%d:", table->id, row_key);
-  build_metadata_end_row_key(meta_end_key, "0:%d:", table->id);
+  if (table->id == 0) {
+    build_metadata_start_row_key(meta_start_key, "%d:", 0, row_key);
+    build_metadata_end_row_key(meta_end_key, "%d:", 0);
+  }
+  else {
+    build_metadata_start_row_key(meta_start_key, "0:%d:", table->id, row_key);
+    build_metadata_end_row_key(meta_end_key, "0:%d:", table->id);
+  }
 
   /**
    * Find second level METADATA range from root
@@ -174,6 +188,9 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
       return Error::METADATA_NOT_FOUND;
     }
   }
+
+  if (table->id == 0)
+    return Error::OK;
 
   /**
    * Find actual range from second-level METADATA range
@@ -271,7 +288,7 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
 	  m_conn_manager_ptr->add(addr, 30, "RangeServer");
 
 	  m_cache.insert(table_id, range_loc_info);
-	  //cout << "cache insert table=" << table_id << " start=" << range_loc_info.start_row << " end=" << range_loc_info.end_row << " loc=" << range_loc_info.location << endl;
+	  //cout << "(1) cache insert table=" << table_id << " start=" << range_loc_info.start_row << " end=" << range_loc_info.end_row << " loc=" << range_loc_info.location << endl;
 	}
 	else {
 	  LOG_VA_ERROR("Incomplete METADATA record found in root tablet under row key '%s'", range_loc_info.end_row.c_str());
@@ -304,8 +321,10 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
     }
   }
 
-  if (got_start_row && got_end_row && got_location)
+  if (got_start_row && got_end_row && got_location) {
     m_cache.insert(table_id, range_loc_info);
+    //cout << "(2) cache insert table=" << table_id << " start=" << range_loc_info.start_row << " end=" << range_loc_info.end_row << " loc=" << range_loc_info.location << endl;
+  }
   else if (got_end_row) {
     LOG_VA_ERROR("Incomplete METADATA record found in root tablet under row key '%s'", range_loc_info.end_row.c_str());
   }
@@ -323,7 +342,6 @@ int RangeLocator::read_root_location() {
   int error;
   DynamicBuffer value(0);
   std::string addrStr;
-  RangeLocationInfo range_loc_info;
   char buf[8];
 
   if ((error = m_hyperspace_ptr->attr_get(m_root_file_handle, "location", value)) != Error::OK) {
@@ -331,11 +349,11 @@ int RangeLocator::read_root_location() {
     return error;
   }
 
-  range_loc_info.start_row  = "";
-  range_loc_info.end_row    = build_metadata_end_row_key(buf, "%d:", 0);
-  range_loc_info.location   = (const char *)value.buf;
+  m_root_range_info.start_row  = "";
+  m_root_range_info.end_row    = Key::END_ROOT_ROW;
+  m_root_range_info.location   = (const char *)value.buf;
   
-  m_cache.insert(0, range_loc_info, true);
+  m_cache.insert(0, m_root_range_info, true);
 
   if (!LocationCache::location_to_addr((const char *)value.buf, m_root_addr)) {
     LOG_ERROR("Bad format of 'location' attribute of /hypertable/root Hyperspace file");

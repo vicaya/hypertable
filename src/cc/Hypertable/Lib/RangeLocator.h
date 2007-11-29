@@ -88,6 +88,7 @@ namespace Hypertable {
     HandleCallbackPtr      m_root_handler_ptr;
     bool                   m_root_stale;
     struct sockaddr_in     m_root_addr;
+    RangeLocationInfo      m_root_range_info;
     RangeServerClient      m_range_server;
     SchemaPtr              m_metadata_schema_ptr;
     uint8_t                m_startrow_cid;
