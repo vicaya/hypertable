@@ -21,13 +21,19 @@
 #ifndef HYPERTABLE_KEYSPEC_H
 #define HYPERTABLE_KEYSPEC_H
 
+extern "C" {
+#include <sys/types.h>
+}
+
 namespace Hypertable {
 
   class KeySpec {
   public:
-    const char *row;
-    const char *column_family;
-    const char *column_qualifier;
+    const void  *row;
+    size_t       row_len;
+    const char  *column_family;
+    const void  *column_qualifier;
+    size_t       column_qualifier_len;
   };
 
 }

@@ -18,59 +18,50 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MUTATOR_H
-#define HYPERTABLE_MUTATOR_H
+#ifndef HYPERTABLE_MUTATORSCATTERBUFFER_H
+#define HYPERTABLE_MUTATORSCATTERBUFFER_H
 
-#include "AsyncComm/ConnectionManager.h"
+#include <vector>
 
-#include "Common/StringExt.h"
+#include "Common/ByteString.h"
 #include "Common/ReferenceCount.h"
+#include "Common/StringExt.h"
 
-#include "Cell.h"
-#include "KeySpec.h"
-#include "MutatorScatterBuffer.h"
 #include "RangeLocator.h"
 #include "RangeServerClient.h"
 #include "Schema.h"
-#include "Types.h"
 
 namespace Hypertable {
 
-  class Mutator : public ReferenceCount {
-
+  class MutatorScatterBuffer : public ReferenceCount {
   public:
-    Mutator(ConnectionManagerPtr &conn_manager_ptr, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
-    virtual ~Mutator() { return; }
-
+    MutatorScatterBuffer(ConnectionManagerPtr &conn_manager_ptr, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
     void set(uint64_t timestamp, KeySpec &key, uint8_t *value, uint32_t value_len);
-    
-
-    /**
-    void delete_row(uint64_t timestamp, KeySpec &key);
-    void delete_cell(uint64_t timestamp, KeySpec &key);
-    void delete_qualified_cell(uint64_t timestamp, KeySpec &key);
-    **/
-
-    //void flush(MutationResultPtr &resultPtr);
-
-    uint64_t memory_used();
+    int flush();
+    bool wait_for_completion();
 
   private:
-    
+
+    class UpdateBuffer : public ReferenceCount {
+    public:
+      std::vector<ByteString32T *>  keys;
+      DynamicBuffer                 buf;
+    };
+    typedef boost::intrusive_ptr<UpdateBuffer> UpdateBufferPtr;
+
+    typedef __gnu_cxx::hash_map<string, UpdateBufferPtr> UpdateBufferMapT;
+
     ConnectionManagerPtr m_conn_manager_ptr;
     SchemaPtr            m_schema_ptr;
     RangeLocatorPtr      m_range_locator_ptr;
+    RangeServerClient    m_range_server;
     std::string          m_table_name;
     TableIdentifierT     m_table_identifier;
-    uint64_t             m_cur_memory_used;
-    uint64_t             m_max_memory;
-    MutatorScatterBufferPtr  m_buffer_ptr;
-    MutatorScatterBufferPtr  m_prev_buffer_ptr;
+    UpdateBufferMapT     m_buffer_map;
   };
-  typedef boost::intrusive_ptr<Mutator> MutatorPtr;
-
+  typedef boost::intrusive_ptr<MutatorScatterBuffer> MutatorScatterBufferPtr;
 
 
 }
 
-#endif // HYPERTABLE_MUTATOR_H
+#endif // HYPERTABLE_MUTATORSCATTERBUFFER_H

@@ -8,4 +8,5 @@ TODO:
 - Add logic to prevent root METADATA range from splitting
 - Add inMemory mode
 - Add blocksize attribute to AccessGroup schema and hook it up with CellStore
+- Figure out a solution to the problem of an update timing out
 

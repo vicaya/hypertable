@@ -28,8 +28,6 @@
 #include "Common/ByteString.h"
 #include "Common/DynamicBuffer.h"
 
-#include "KeySpec.h"
-
 using namespace Hypertable;
 
 namespace Hypertable {
@@ -41,7 +39,7 @@ namespace Hypertable {
   
   /** Provides access to internal components of opaque key.
    */
-  class Key : public KeySpec {
+  class Key {
   public:
 
     static const char *END_ROW_MARKER;
@@ -75,6 +73,8 @@ namespace Hypertable {
      */
     void updateTimestamp(uint64_t timestamp);
 
+    const char    *row;
+    const char    *column_qualifier;
     uint64_t       timestamp;
     uint8_t        column_family_code;
     uint8_t        flag;
