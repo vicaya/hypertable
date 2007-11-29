@@ -56,13 +56,15 @@ namespace Hypertable {
     uint64_t memory_used();
 
   private:
+
+    void sanity_check_key(KeySpec &key);
     
     ConnectionManagerPtr m_conn_manager_ptr;
     SchemaPtr            m_schema_ptr;
     RangeLocatorPtr      m_range_locator_ptr;
     std::string          m_table_name;
     TableIdentifierT     m_table_identifier;
-    uint64_t             m_cur_memory_used;
+    uint64_t             m_memory_used;
     uint64_t             m_max_memory;
     MutatorScatterBufferPtr  m_buffer_ptr;
     MutatorScatterBufferPtr  m_prev_buffer_ptr;

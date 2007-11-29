@@ -29,8 +29,6 @@
 #include "DispatchHandler.h"
 #include "Event.h"
 
-using namespace std;
-
 namespace Hypertable {
 
   /**
@@ -92,9 +90,9 @@ namespace Hypertable {
     bool wait_for_reply(EventPtr &eventPtr);
 
   private:
-    queue<EventPtr>   m_receive_queue;
-    boost::mutex      m_mutex;
-    boost::condition  m_cond;
+    std::queue<EventPtr> m_receive_queue;
+    boost::mutex         m_mutex;
+    boost::condition     m_cond;
   };
 }
 

@@ -28,6 +28,7 @@ MasterFileHandler.cc
 MasterProtocol.cc
 Metadata.cc
 Mutator.cc
+MutatorDispatchHandler.cc
 MutatorScatterBuffer.cc
 RangeLocator.cc
 RangeServerClient.cc

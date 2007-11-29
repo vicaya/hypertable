@@ -68,6 +68,15 @@ namespace Hypertable {
     dst_buf.ptr += Length(bs);
   }
 
+  inline void CreateAndAppend(DynamicBuffer &dst_buf, const void *value, uint32_t value_len) {
+    ByteString32T *bs;
+    dst_buf.ensure(value_len + 4);
+    bs = (ByteString32T *)dst_buf.ptr;
+    bs->len = value_len;
+    memcpy(bs->data, value, value_len);
+    dst_buf.ptr += Length(bs);
+  }
+
   inline void Create(ByteString32T *bs, const void *data, uint32_t len) {
     bs->len = len;
     if (len)

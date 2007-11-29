@@ -23,10 +23,18 @@
 
 #include <vector>
 
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/condition.hpp>
+
+#include "AsyncComm/DispatchHandler.h"
+#include "AsyncComm/Event.h"
+
+#include "Common/atomic.h"
 #include "Common/ByteString.h"
 #include "Common/ReferenceCount.h"
 #include "Common/StringExt.h"
 
+#include "Key.h"
 #include "RangeLocator.h"
 #include "RangeServerClient.h"
 #include "Schema.h"
@@ -34,18 +42,71 @@
 namespace Hypertable {
 
   class MutatorScatterBuffer : public ReferenceCount {
+
   public:
+
     MutatorScatterBuffer(ConnectionManagerPtr &conn_manager_ptr, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
-    void set(uint64_t timestamp, KeySpec &key, uint8_t *value, uint32_t value_len);
-    int flush();
+    int set(Key &key, uint8_t *value, uint32_t value_len);
+    int send();
+    bool completed();
     bool wait_for_completion();
 
   private:
 
+    /**
+     * 
+     */
+    class CompletionCounter {
+    public:
+      void set(size_t count) { 
+	boost::mutex::scoped_lock lock(m_mutex);
+	m_outstanding = count;
+	m_done = (m_outstanding == 0) ? true : false;
+	m_errors = 0;
+      }
+      void decrement(bool error) {
+	boost::mutex::scoped_lock lock(m_mutex);
+	assert(m_outstanding);
+	m_outstanding--;
+	if (error)
+	  m_errors++;
+	if (m_outstanding == 0) {
+	  m_done = true;
+	  m_cond.notify_all();
+	}
+      }
+      bool wait_for_completion() {
+	boost::mutex::scoped_lock lock(m_mutex);
+	while (m_outstanding)
+	  m_cond.wait(lock);
+	return (m_errors == 0);
+      }
+
+      bool is_complete() { return m_done; }
+
+    private:
+      boost::mutex m_mutex;
+      boost::condition m_cond;
+      size_t m_outstanding;
+      size_t m_errors;
+      bool m_done;
+    };
+
+    friend class MutatorDispatchHandler;
+
+    /**
+     * 
+     */
     class UpdateBuffer : public ReferenceCount {
     public:
-      std::vector<ByteString32T *>  keys;
-      DynamicBuffer                 buf;
+      UpdateBuffer(CompletionCounter *cc) : buf(1024), error(0), counterp(cc) { return; }
+      std::vector<const ByteString32T *>  keys;
+      DynamicBuffer                       buf;
+      struct sockaddr_in                  addr;
+      int                                 error;
+      EventPtr                            event_ptr;
+      CompletionCounter                  *counterp;
+      DispatchHandlerPtr                  dispatch_handler_ptr;
     };
     typedef boost::intrusive_ptr<UpdateBuffer> UpdateBufferPtr;
 
@@ -58,6 +119,7 @@ namespace Hypertable {
     std::string          m_table_name;
     TableIdentifierT     m_table_identifier;
     UpdateBufferMapT     m_buffer_map;
+    CompletionCounter    m_completion_counter;
   };
   typedef boost::intrusive_ptr<MutatorScatterBuffer> MutatorScatterBufferPtr;
 
