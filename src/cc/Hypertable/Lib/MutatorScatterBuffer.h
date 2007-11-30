@@ -47,9 +47,11 @@ namespace Hypertable {
 
     MutatorScatterBuffer(ConnectionManagerPtr &conn_manager_ptr, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
     int set(Key &key, uint8_t *value, uint32_t value_len);
-    int send();
+    int set(ByteString32T *key, ByteString32T *value);
+    void send();
     bool completed();
-    bool wait_for_completion();
+    int wait_for_completion();
+    MutatorScatterBuffer *create_redo_buffer();
 
   private:
 
@@ -58,28 +60,29 @@ namespace Hypertable {
      */
     class CompletionCounter {
     public:
+      CompletionCounter() : m_outstanding(0), m_last_error(0), m_done(false) { }
       void set(size_t count) { 
 	boost::mutex::scoped_lock lock(m_mutex);
 	m_outstanding = count;
 	m_done = (m_outstanding == 0) ? true : false;
-	m_errors = 0;
+	m_last_error = 0;
       }
-      void decrement(bool error) {
+      void decrement(int error) {
 	boost::mutex::scoped_lock lock(m_mutex);
 	assert(m_outstanding);
 	m_outstanding--;
-	if (error)
-	  m_errors++;
+	if (error != Error::OK)
+	  m_last_error = error;
 	if (m_outstanding == 0) {
 	  m_done = true;
 	  m_cond.notify_all();
 	}
       }
-      bool wait_for_completion() {
+      int wait_for_completion() {
 	boost::mutex::scoped_lock lock(m_mutex);
 	while (m_outstanding)
 	  m_cond.wait(lock);
-	return (m_errors == 0);
+	return m_last_error;
       }
 
       bool is_complete() { return m_done; }
@@ -88,7 +91,7 @@ namespace Hypertable {
       boost::mutex m_mutex;
       boost::condition m_cond;
       size_t m_outstanding;
-      size_t m_errors;
+      int    m_last_error;
       bool m_done;
     };
 
@@ -99,9 +102,10 @@ namespace Hypertable {
      */
     class UpdateBuffer : public ReferenceCount {
     public:
-      UpdateBuffer(CompletionCounter *cc) : buf(1024), error(0), counterp(cc) { return; }
+      UpdateBuffer(CompletionCounter *cc) : buf(1024), sorted(false), error(0), counterp(cc) { return; }
       std::vector<uint64_t>  key_offsets;
       DynamicBuffer          buf;
+      bool                   sorted;
       struct sockaddr_in     addr;
       int                    error;
       EventPtr               event_ptr;

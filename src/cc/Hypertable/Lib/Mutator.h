@@ -57,6 +57,8 @@ namespace Hypertable {
 
   private:
 
+    void wait_for_previous_buffer();
+
     void sanity_check_key(KeySpec &key);
     
     ConnectionManagerPtr m_conn_manager_ptr;

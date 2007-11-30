@@ -103,7 +103,7 @@ RangeLocator::~RangeLocator() {
 
 
 
-int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocationInfo *range_loc_info_p) {
+int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocationInfo *range_loc_info_p, bool hard) {
   RangeT range;
   ScanSpecificationT meta_scan_spec;
   ScanBlock scan_block;
@@ -123,7 +123,7 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
       return error;
   }
 
-  if (m_cache.lookup(table->id, row_key, range_loc_info_p))
+  if (!hard && m_cache.lookup(table->id, row_key, range_loc_info_p))
     return Error::OK;
 
   /**
@@ -160,7 +160,7 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
    * Find second level METADATA range from root
    */
   meta_key_ptr = meta_start_key+2;
-  if (!m_cache.lookup(0, meta_key_ptr, range_loc_info_p, inclusive)) {
+  if (hard || !m_cache.lookup(0, meta_key_ptr, range_loc_info_p, inclusive)) {
     meta_scan_spec.rowLimit = METADATA_READAHEAD_COUNT;
     meta_scan_spec.max_versions = 1;
     meta_scan_spec.columns.push_back("StartRow");

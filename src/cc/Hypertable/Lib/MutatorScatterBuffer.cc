@@ -34,6 +34,7 @@ MutatorScatterBuffer::MutatorScatterBuffer(ConnectionManagerPtr &conn_manager_pt
 }
 
 
+
 /**
  *
  */
@@ -68,30 +69,70 @@ int MutatorScatterBuffer::set(Key &key, uint8_t *value, uint32_t value_len) {
 /**
  *
  */
-int MutatorScatterBuffer::send() {
+int MutatorScatterBuffer::set(ByteString32T *key, ByteString32T *value) {
+  int error;
+  RangeLocationInfo range_info;
+  UpdateBufferMapT::const_iterator iter;
+
+  if ((error = m_range_locator_ptr->find(&m_table_identifier, (const char *)key->data, &range_info)) != Error::OK)
+    return error;
+
+  iter = m_buffer_map.find(range_info.location);
+
+  if (iter == m_buffer_map.end()) {
+    // TODO:  fix me!
+    m_buffer_map[range_info.location] = new UpdateBuffer(&m_completion_counter);
+    iter = m_buffer_map.find(range_info.location);
+
+    if (!LocationCache::location_to_addr(range_info.location.c_str(), (*iter).second->addr))
+      return Error::INVALID_METADATA;
+  }
+
+  (*iter).second->key_offsets.push_back((*iter).second->buf.fill());
+  (*iter).second->buf.add(key, Length(key));
+  (*iter).second->buf.add(value, Length(value));
+  
+  return Error::OK;
+}
+
+
+
+/**
+ *
+ */
+void MutatorScatterBuffer::send() {
   UpdateBufferPtr update_buffer_ptr;
   struct ltByteString32 swo_bs32;
   std::vector<ByteString32T *>  kvec;
+  uint8_t *data, *ptr;
 
   m_completion_counter.set(m_buffer_map.size());
 
   for (UpdateBufferMapT::const_iterator iter = m_buffer_map.begin(); iter != m_buffer_map.end(); iter++) {
     update_buffer_ptr = (*iter).second;
-    kvec.clear();
-    kvec.reserve( update_buffer_ptr->key_offsets.size() );
-    for (size_t i=0; i<update_buffer_ptr->key_offsets.size(); i++)
-      kvec.push_back((ByteString32T *)(update_buffer_ptr->buf.buf + update_buffer_ptr->key_offsets[i]));
-    sort(kvec.begin(), kvec.end(), swo_bs32);
-    uint8_t *data, *ptr, *src_base, *src_ptr;
-    size_t len = update_buffer_ptr->buf.fill();
-    ptr = data = new uint8_t [ len ];
+    if (!update_buffer_ptr->sorted) {
+      kvec.clear();
+      kvec.reserve( update_buffer_ptr->key_offsets.size() );
+      for (size_t i=0; i<update_buffer_ptr->key_offsets.size(); i++)
+	kvec.push_back((ByteString32T *)(update_buffer_ptr->buf.buf + update_buffer_ptr->key_offsets[i]));
+      sort(kvec.begin(), kvec.end(), swo_bs32);
+      uint8_t *src_base, *src_ptr;
+      size_t len = update_buffer_ptr->buf.fill();
+      ptr = data = new uint8_t [ len ];
 
-    for (size_t i=0; i<kvec.size(); i++) {
-      src_ptr = src_base = (uint8_t *)kvec[i];
-      src_ptr += Length((const ByteString32T *)src_ptr);  // skip key
-      src_ptr += Length((const ByteString32T *)src_ptr);  // skip value
-      memcpy(ptr, src_base, src_ptr-src_base);
-      ptr += src_ptr - src_base;
+      for (size_t i=0; i<kvec.size(); i++) {
+	src_ptr = src_base = (uint8_t *)kvec[i];
+	src_ptr += Length((const ByteString32T *)src_ptr);  // skip key
+	src_ptr += Length((const ByteString32T *)src_ptr);  // skip value
+	memcpy(ptr, src_base, src_ptr-src_base);
+	ptr += src_ptr - src_base;
+      }
+    }
+    else {
+      size_t len = update_buffer_ptr->buf.fill();
+      data = new uint8_t [ len ];
+      memcpy(data, update_buffer_ptr->buf.buf, len);
+      ptr = data + len;
     }
 
     update_buffer_ptr->dispatch_handler_ptr = new MutatorDispatchHandler(update_buffer_ptr.get());
@@ -101,10 +142,8 @@ int MutatorScatterBuffer::send() {
      */
     if ((update_buffer_ptr->error = m_range_server.update(update_buffer_ptr->addr, m_table_identifier, data, ptr-data,
 							  update_buffer_ptr->dispatch_handler_ptr.get())) != Error::OK)
-      update_buffer_ptr->counterp->decrement(true);
+      update_buffer_ptr->counterp->decrement(update_buffer_ptr->error);
   }
-  
-  return false;
 }
 
 
@@ -121,8 +160,88 @@ bool MutatorScatterBuffer::completed() {
 /**
  * 
  */
-bool MutatorScatterBuffer::wait_for_completion() {
+int MutatorScatterBuffer::wait_for_completion() {
   return m_completion_counter.wait_for_completion();
 }
 
 
+MutatorScatterBuffer *MutatorScatterBuffer::create_redo_buffer() {
+  int error;
+  UpdateBufferPtr update_buffer_ptr;
+  RangeLocationInfo range_info;
+  struct ltByteString32 swo_bs32;
+  std::vector<ByteString32T *>  kvec;
+  uint8_t *data, *ptr;
+  ByteString32T *low_key, *key, *value;
+
+  MutatorScatterBuffer *redo_buffer = new MutatorScatterBuffer(m_conn_manager_ptr, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+
+  for (UpdateBufferMapT::const_iterator iter = m_buffer_map.begin(); iter != m_buffer_map.end(); iter++) {
+    update_buffer_ptr = (*iter).second;
+
+    if (update_buffer_ptr->error != Error::OK) {
+
+      if (update_buffer_ptr->error == Error::RANGESERVER_PARTIAL_UPDATE) {
+	uint8_t *src_base, *src_ptr, *src_end;
+
+	src_ptr = src_base = update_buffer_ptr->event_ptr->message + 4;
+	src_end = update_buffer_ptr->event_ptr->message + update_buffer_ptr->event_ptr->messageLen;
+
+	low_key = (ByteString32T *)src_base;
+	
+	// do a hard lookup for the lowest key
+	if ((error = m_range_locator_ptr->find(&m_table_identifier, (const char *)low_key->data, &range_info, true)) != Error::OK) {
+	  LOG_VA_WARN("Problem finding range for row '%s'", (const char *)low_key->data);
+	  delete redo_buffer;
+	  return 0;
+	}
+
+	// now add all of the old keys to the redo buffer
+	while (src_ptr < src_end) {
+	  key = (ByteString32T *)src_ptr;
+	  value = (ByteString32T *)(((uint8_t *)key) + Length(key));
+	  if ((error = redo_buffer->set(key, value)) != Error::OK) {
+	    LOG_VA_ERROR("Problem adding row '%s' to redo buffer", (const char *)key->data);
+	    delete redo_buffer;
+	    return 0;
+	  }
+	  src_ptr += Length(key) + Length(value);
+	}
+
+      }
+      else {
+	low_key = (ByteString32T *)update_buffer_ptr->buf.buf;
+
+	// find the lowest key
+	for (size_t i=0; i<update_buffer_ptr->key_offsets.size(); i++) {
+	  key = (ByteString32T *)(update_buffer_ptr->buf.buf + update_buffer_ptr->key_offsets[i]);
+	  if (strcmp((char *)key->data, (char *)low_key->data) < 0)
+	    low_key = key;
+	}
+
+	// do a hard lookup for the lowest key
+	if ((error = m_range_locator_ptr->find(&m_table_identifier, (const char *)low_key->data, &range_info, true)) != Error::OK) {
+	  LOG_VA_WARN("Problem finding range for row '%s'", (const char *)low_key->data);
+	  delete redo_buffer;
+	  return 0;
+	}
+
+	// now add all of the old keys to the redo buffer
+	for (size_t i=0; i<update_buffer_ptr->key_offsets.size(); i++) {
+	  key = (ByteString32T *)(update_buffer_ptr->buf.buf + update_buffer_ptr->key_offsets[i]);
+	  value = (ByteString32T *)(((uint8_t *)key) + Length(key));
+	  if ((error = redo_buffer->set(key, value)) != Error::OK) {
+	    LOG_VA_ERROR("Problem adding row '%s' to redo buffer", (const char *)key->data);
+	    delete redo_buffer;
+	    return 0;
+	  }
+	}
+
+      }
+
+    }
+
+  }
+
+  return redo_buffer;
+}

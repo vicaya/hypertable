@@ -20,6 +20,10 @@
 
 #include <cstring>
 
+extern "C" {
+#include <poll.h>
+}
+
 #include "Common/StringExt.h"
 
 #include "Key.h"
@@ -73,15 +77,10 @@ void Mutator::set(uint64_t timestamp, KeySpec &key, uint8_t *value, uint32_t val
 
   if (m_memory_used > m_max_memory) {
 
-    if (m_prev_buffer_ptr) {
-      if (!m_prev_buffer_ptr->wait_for_completion()) {
-	LOG_ERROR("Errors encountered in result of scatter send");
-      }
-    }
+    if (m_prev_buffer_ptr)
+      wait_for_previous_buffer();
 
-    if ((error = m_buffer_ptr->send()) != Error::OK) {
-      LOG_ERROR("Errors encountered in scatter send");
-    }
+    m_buffer_ptr->send();
 
     m_prev_buffer_ptr = m_buffer_ptr;
 
@@ -95,27 +94,61 @@ void Mutator::set(uint64_t timestamp, KeySpec &key, uint8_t *value, uint32_t val
 void Mutator::flush() {
   int error;
 
-  /**
-   * wait for previous send to complete
-   */
-  if (m_prev_buffer_ptr) {
-    if (!m_prev_buffer_ptr->wait_for_completion()) {
-      LOG_ERROR("Errors encountered in result of scatter send");
-    }
-  }
+  if (m_prev_buffer_ptr)
+    wait_for_previous_buffer();
 
   /**
    * If there are buffered updates, send them and wait for completion
    */
   if (m_memory_used > 0) {
-    if ((error = m_buffer_ptr->send()) != Error::OK) {
-      LOG_ERROR("Errors encountered in scatter send");
-    }
-    if (!m_buffer_ptr->wait_for_completion()) {
-      LOG_ERROR("Errors encountered in result of scatter send");
-    }
+    m_buffer_ptr->send();
+    if ((error = m_buffer_ptr->wait_for_completion()) != Error::OK)
+      throw Exception(error, "Errors encountered in result of scatter send");
   }
 
+}
+
+void Mutator::wait_for_previous_buffer() {
+  int error;
+
+  if (m_prev_buffer_ptr->wait_for_completion() != Error::OK) {
+    MutatorScatterBuffer *redo_buffer = 0;
+    int wait_time = 2;
+
+    /**
+     * Make several attempts to create redo buffer
+     */
+    while (wait_time < 10) {
+      try {
+	redo_buffer = m_prev_buffer_ptr->create_redo_buffer();
+	break;
+      }
+      catch (Hypertable::Exception &e) {
+	if (wait_time < 30) {
+	  LOG_VA_WARN("%s - %s", Error::get_text(e.code()), e.what());
+	}
+	else
+	  throw e;
+      }
+      poll(0, 0, wait_time*1000);
+      wait_time += 2;
+    }
+
+    m_prev_buffer_ptr = redo_buffer;
+
+    /**
+     * Re-send failed sends
+     */
+    m_prev_buffer_ptr->send();
+
+    /**
+     * Wait for re-send to complete
+     */
+    if ((error = m_prev_buffer_ptr->wait_for_completion()) != Error::OK)
+      throw Exception(error, "Errors encountered in scatter resend");
+
+  }
+  
 }
 
 
