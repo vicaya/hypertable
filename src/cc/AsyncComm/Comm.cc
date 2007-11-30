@@ -135,6 +135,15 @@ int Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chf_ptr)
 
 
 /**
+ * 
+ */
+int Comm::set_alias(struct sockaddr_in &addr, struct sockaddr_in &alias) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  return m_handler_map.set_alias(addr, alias);
+}
+
+
+/**
  *
  */
 int Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chf_ptr, DispatchHandlerPtr &default_handler_ptr) {

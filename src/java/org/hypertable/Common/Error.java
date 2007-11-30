@@ -39,14 +39,15 @@ public class Error {
     static public final int HQL_PARSE_ERROR    = 11;
     static public final int FILE_NOT_FOUND     = 12;
 
-    static public final int COMM_NOT_CONNECTED      = 0x00010001;
-    static public final int COMM_BROKEN_CONNECTION  = 0x00010002;
-    static public final int COMM_CONNECT_ERROR      = 0x00010003;
-    static public final int COMM_ALREADY_CONNECTED  = 0x00010004;
-    static public final int COMM_REQUEST_TIMEOUT    = 0x00010005;
-    static public final int COMM_SEND_ERROR         = 0x00010006;
-    static public final int COMM_RECEIVE_ERROR      = 0x00010007;
-    static public final int COMM_POLL_ERROR         = 0x00010008;
+    static public final int COMM_NOT_CONNECTED       = 0x00010001;
+    static public final int COMM_BROKEN_CONNECTION   = 0x00010002;
+    static public final int COMM_CONNECT_ERROR       = 0x00010003;
+    static public final int COMM_ALREADY_CONNECTED   = 0x00010004;
+    static public final int COMM_REQUEST_TIMEOUT     = 0x00010005;
+    static public final int COMM_SEND_ERROR          = 0x00010006;
+    static public final int COMM_RECEIVE_ERROR       = 0x00010007;
+    static public final int COMM_POLL_ERROR          = 0x00010008;
+    static public final int COMM_CONFLICTING_ADDRESS = 0x00010009;
 
     static public final int DFSBROKER_BAD_FILE_HANDLE   = 0x00020001;
     static public final int DFSBROKER_IO_ERROR          = 0x00020002;

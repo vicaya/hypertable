@@ -53,6 +53,7 @@ namespace {
     { Error::COMM_SEND_ERROR,             "COMM send error" },
     { Error::COMM_RECEIVE_ERROR,          "COMM receive error" },
     { Error::COMM_POLL_ERROR,             "COMM poll error" },
+    { Error::COMM_CONFLICTING_ADDRESS,    "COMM conflicting address" },
     { Error::DFSBROKER_BAD_FILE_HANDLE,   "DFS BROKER bad file handle" },
     { Error::DFSBROKER_IO_ERROR,          "DFS BROKER i/o error" },
     { Error::DFSBROKER_FILE_NOT_FOUND,    "DFS BROKER file not found" },

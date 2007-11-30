@@ -57,6 +57,7 @@ namespace Hypertable {
       m_poll_interest = 0;
       socklen_t namelen = sizeof(m_local_addr);
       getsockname(m_sd, (sockaddr *)&m_local_addr, &namelen);
+      memset(&m_alias, 0, sizeof(m_alias));
     }
 
 #if defined(__APPLE__)
@@ -128,6 +129,14 @@ namespace Hypertable {
       memcpy(addrPtr, &m_local_addr, sizeof(struct sockaddr_in));
     }
 
+    void set_alias(struct sockaddr_in &alias) {
+      memcpy(&m_alias, &alias, sizeof(m_alias));
+    }
+
+    void get_alias(struct sockaddr_in *aliasp) {
+      memcpy(aliasp, &m_alias, sizeof(m_alias));
+    }
+
     int get_sd() { return m_sd; }
 
     Reactor *get_reactor() { return m_reactor; }
@@ -161,6 +170,7 @@ namespace Hypertable {
 
     struct sockaddr_in  m_addr;
     struct sockaddr_in  m_local_addr;
+    struct sockaddr_in  m_alias;
     int                 m_sd;
     DispatchHandlerPtr  m_dispatch_handler_ptr;
     HandlerMap         &m_handler_map;

@@ -47,7 +47,7 @@ using namespace Hypertable;
 using namespace Hypertable::DfsBroker;
 using namespace std;
 
-Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, ApplicationQueuePtr &appQueuePtr) : m_conn_manager_ptr(connManagerPtr), m_app_queue_ptr(appQueuePtr), m_verbose(false), m_dfs_client(0) {
+Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, ApplicationQueuePtr &appQueuePtr) : m_initialized(false), m_conn_manager_ptr(connManagerPtr), m_app_queue_ptr(appQueuePtr), m_verbose(false), m_dfs_client(0) {
   int error;
   Client *dfsClient;
   uint16_t port;

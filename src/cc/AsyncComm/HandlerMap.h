@@ -21,11 +21,15 @@
 #ifndef HYPERTABLE_HANDLERMAP_H
 #define HYPERTABLE_HANDLERMAP_H
 
+#include <cassert>
+
 //#define DISABLE_LOG_DEBUG
 
 #include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
 
+#include "Common/Error.h"
+#include "Common/InetAddr.h"
 #include "Common/Logger.h"
 #include "Common/SockAddrMap.h"
 
@@ -41,7 +45,24 @@ namespace Hypertable {
 
     void insert_handler(IOHandler *handler) {
       boost::mutex::scoped_lock lock(m_mutex);
+      assert(m_handler_map.find(handler->get_address()) == m_handler_map.end());
       m_handler_map[handler->get_address()] = handler;
+    }
+
+    int set_alias(struct sockaddr_in &addr, struct sockaddr_in &alias) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      SockAddrMapT<IOHandlerPtr>::iterator iter;
+
+      if (m_handler_map.find(alias) != m_handler_map.end())
+	return Error::COMM_CONFLICTING_ADDRESS;
+
+      if ((iter = m_handler_map.find(addr)) == m_handler_map.end())
+	return Error::COMM_NOT_CONNECTED;
+
+      (*iter).second->set_alias(alias);
+      m_handler_map[alias] = (*iter).second;
+
+      return Error::OK;
     }
 
     bool contains_handler(struct sockaddr_in &addr) {
@@ -73,6 +94,7 @@ namespace Hypertable {
 
     void insert_datagram_handler(IOHandler *handler) {
       boost::mutex::scoped_lock lock(m_mutex);
+      assert(m_datagram_handler_map.find(handler->get_local_address()) == m_datagram_handler_map.end());
       m_datagram_handler_map[handler->get_local_address()] = handler;
     }
 
@@ -90,6 +112,16 @@ namespace Hypertable {
       if ((iter = m_handler_map.find(addr)) != m_handler_map.end()) {
 	handlerPtr = (*iter).second;
 	m_handler_map.erase(iter);
+	struct sockaddr_in alias;
+	handlerPtr->get_alias(&alias);
+	if (alias.sin_port != 0) {
+	  if ((iter = m_handler_map.find(alias)) != m_handler_map.end())
+	    m_handler_map.erase(iter);
+	  else {
+	    std::string err_str;
+	    LOG_VA_ERROR("Unable to find mapping for alias (%s) in HandlerMap", InetAddr::string_format(err_str, alias));
+	  }
+	}
       }
       else if ((iter = m_datagram_handler_map.find(addr)) != m_datagram_handler_map.end()) {
 	handlerPtr = (*iter).second;

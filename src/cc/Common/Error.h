@@ -45,14 +45,15 @@ namespace Hypertable {
     static const int HQL_PARSE_ERROR    = 11;
     static const int FILE_NOT_FOUND     = 12;
 
-    static const int COMM_NOT_CONNECTED     = 0x00010001;
-    static const int COMM_BROKEN_CONNECTION = 0x00010002;
-    static const int COMM_CONNECT_ERROR     = 0x00010003;
-    static const int COMM_ALREADY_CONNECTED = 0x00010004;
-    static const int COMM_REQUEST_TIMEOUT   = 0x00010005;
-    static const int COMM_SEND_ERROR        = 0x00010006;
-    static const int COMM_RECEIVE_ERROR     = 0x00010007;
-    static const int COMM_POLL_ERROR        = 0x00010008;
+    static const int COMM_NOT_CONNECTED       = 0x00010001;
+    static const int COMM_BROKEN_CONNECTION   = 0x00010002;
+    static const int COMM_CONNECT_ERROR       = 0x00010003;
+    static const int COMM_ALREADY_CONNECTED   = 0x00010004;
+    static const int COMM_REQUEST_TIMEOUT     = 0x00010005;
+    static const int COMM_SEND_ERROR          = 0x00010006;
+    static const int COMM_RECEIVE_ERROR       = 0x00010007;
+    static const int COMM_POLL_ERROR          = 0x00010008;
+    static const int COMM_CONFLICTING_ADDRESS = 0x00010009;
 
     static const int DFSBROKER_BAD_FILE_HANDLE   = 0x00020001;
     static const int DFSBROKER_IO_ERROR          = 0x00020002;

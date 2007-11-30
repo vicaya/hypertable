@@ -25,8 +25,8 @@ namespace Hypertable {
   
   class HqlHelpText {
   public:
-    static const char *HqlHelpText::Get(const char *subject);
-    static const char *HqlHelpText::Get(std::string &subject);
+    static const char *Get(const char *subject);
+    static const char *Get(std::string &subject);
   };
 
 }
