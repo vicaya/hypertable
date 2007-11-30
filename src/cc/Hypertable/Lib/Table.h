@@ -42,13 +42,22 @@ namespace Hypertable {
   class Table : public ReferenceCount {
 
   public:
-    Table(ConnectionManagerPtr &conn_manager_ptr, Hyperspace::SessionPtr &hyperspace_ptr, std::string &name);
+    Table(ConnectionManagerPtr &conn_manager_ptr, Hyperspace::SessionPtr &hyperspace_ptr, std::string name);
+    Table(Comm *comm, Hyperspace::SessionPtr &hyperspace_ptr, std::string name);
     virtual ~Table();
 
     int create_mutator(MutatorPtr &mutatorPtr);
     int create_scanner(ScanSpecificationT &scanSpec, TableScannerPtr &scannerPtr);
 
+    void get_identifier(TableIdentifierT *table_id_p) {
+      memcpy(table_id_p, &m_table, sizeof(TableIdentifierT));
+    }
+
   private:
+
+    void initialize(std::string &name);
+
+    Comm                  *m_comm;
     ConnectionManagerPtr   m_conn_manager_ptr;
     Hyperspace::SessionPtr m_hyperspace_ptr;
     SchemaPtr              m_schema_ptr;

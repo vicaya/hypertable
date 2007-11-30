@@ -81,7 +81,13 @@ namespace Hypertable {
      */
     int connect(struct sockaddr_in &addr, struct sockaddr_in &local_addr, DispatchHandlerPtr &default_handler_ptr);
 
-
+    /**
+     * Sets an alias for a TCP connection
+     *
+     * @param addr connection identifier (remote address)
+     * @param alias alias connection identifier
+     * @return Error::OK on success or error code on failure
+     */
     int set_alias(struct sockaddr_in &addr, struct sockaddr_in &alias);
 
     /**

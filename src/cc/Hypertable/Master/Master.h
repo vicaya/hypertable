@@ -38,6 +38,7 @@
 #include "Hyperspace/Session.h"
 
 #include "Hypertable/Lib/Filesystem.h"
+#include "Hypertable/Lib/Table.h"
 #include "Hypertable/Lib/Types.h"
 
 #include "HyperspaceSessionHandler.h"
@@ -83,6 +84,7 @@ namespace Hypertable {
     uint64_t m_servers_dir_handle;
     struct LockSequencerT m_master_file_sequencer;
     HandleCallbackPtr m_servers_dir_callback_ptr;
+    TablePtr m_metadata_table_ptr;
 
     typedef __gnu_cxx::hash_map<std::string, RangeServerStatePtr> ServerMapT;
 

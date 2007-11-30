@@ -36,7 +36,21 @@ using namespace Hyperspace;
 /**
  * 
  */
-Table::Table(ConnectionManagerPtr &conn_manager_ptr, Hyperspace::SessionPtr &hyperspace_ptr, std::string &name) : m_conn_manager_ptr(conn_manager_ptr), m_hyperspace_ptr(hyperspace_ptr) {
+Table::Table(ConnectionManagerPtr &conn_manager_ptr, Hyperspace::SessionPtr &hyperspace_ptr, std::string name) : m_comm(conn_manager_ptr->get_comm()), m_conn_manager_ptr(conn_manager_ptr), m_hyperspace_ptr(hyperspace_ptr) {
+  initialize(name);
+  m_range_locator_ptr = new RangeLocator(m_conn_manager_ptr, m_hyperspace_ptr);
+}
+
+/**
+ *
+ */
+Table::Table(Comm *comm, Hyperspace::SessionPtr &hyperspace_ptr, std::string name) : m_comm(comm), m_conn_manager_ptr(0), m_hyperspace_ptr(hyperspace_ptr) {
+  initialize(name);
+  m_range_locator_ptr = new RangeLocator(m_comm, m_hyperspace_ptr);  
+}
+
+
+void Table::initialize(std::string &name) {
   int error;
   std::string tableFile = (std::string)"/hypertable/tables/" + name;
   DynamicBuffer value_buf(0);
@@ -92,7 +106,6 @@ Table::Table(ConnectionManagerPtr &conn_manager_ptr, Hyperspace::SessionPtr &hyp
 
   m_table.generation = m_schema_ptr->get_generation();
 
-  m_range_locator_ptr = new RangeLocator(m_conn_manager_ptr, m_hyperspace_ptr);
 }
 
 Table::~Table() {
@@ -101,12 +114,12 @@ Table::~Table() {
 
 
 int Table::create_mutator(MutatorPtr &mutator_ptr) {
-  mutator_ptr = new Mutator(m_conn_manager_ptr, &m_table, m_schema_ptr, m_range_locator_ptr);
+  mutator_ptr = new Mutator(m_conn_manager_ptr->get_comm(), &m_table, m_schema_ptr, m_range_locator_ptr);
   return Error::OK;
 }
 
 
 int Table::create_scanner(ScanSpecificationT &scan_spec, TableScannerPtr &scanner_ptr) {
-  scanner_ptr = new TableScanner(m_conn_manager_ptr, &m_table, m_schema_ptr, m_range_locator_ptr, scan_spec);
+  scanner_ptr = new TableScanner(m_conn_manager_ptr->get_comm(), &m_table, m_schema_ptr, m_range_locator_ptr, scan_spec);
   return Error::OK;
 }

@@ -33,6 +33,7 @@ extern "C" {
 #include "Common/System.h"
 
 #include "DfsBroker/Lib/Client.h"
+#include "Hypertable/Lib/LocationCache.h"
 #include "Hypertable/Lib/RangeServerClient.h"
 #include "Hypertable/Lib/Schema.h"
 #include "Hyperspace/DirEntry.h"
@@ -144,6 +145,11 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, Ap
    * Locate tablet servers
    */
   scan_servers_directory();
+
+  /**
+   * Open METADATA table
+   */
+  m_metadata_table_ptr = new Table(m_conn_manager_ptr->get_comm(), m_hyperspace_ptr, "METADATA");
 
 }
 
@@ -329,6 +335,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
   RangeServerStatePtr statePtr;
   std::string idStr = location;
   ServerMapT::iterator iter = m_server_map.find(idStr);
+  struct sockaddr_in alias;
 
   if ((iter = m_server_map.find(location)) != m_server_map.end())
     statePtr = (*iter).second;
@@ -340,6 +347,16 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 
   statePtr->addr = addr;
 
+  if (!LocationCache::location_to_addr(location, alias)) {
+    LOG_VA_ERROR("Problem creating address from location '%s'", location);
+    cb->error(Error::INVALID_METADATA, (std::string)"Unable to convert location '" + location + "' to address");
+    return;
+  }
+  else {
+    Comm *comm = m_conn_manager_ptr->get_comm();
+    comm->set_alias(addr, alias);
+  }
+
   {
     std::string addrStr;
     LOG_VA_INFO("Server Registered %s -> %s", location, InetAddr::string_format(addrStr, addr));
@@ -347,6 +364,33 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
   }
 
   cb->response_ok();
+
+  /**
+   * The following code is temporary ...
+   */
+  if (!m_initialized) {
+    int error;
+    struct sockaddr_in addr;
+    TableIdentifierT table;
+    RangeT range;
+    RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30);
+
+    m_metadata_table_ptr->get_identifier(&table);
+    table.name = "METADATA";
+
+    /**
+     * Load ROOT range
+     */
+    range.startRow = 0;
+    range.endRow = Key::END_ROOT_ROW;
+
+    if ((error = rsc.load_range(alias, table, range, 0)) != Error::OK) {
+      std::string addrStr;
+      LOG_VA_ERROR("Problem issuing 'load range' command for %s[..%s] at server %s",
+		   table.name, range.endRow, InetAddr::string_format(addrStr, alias));
+    }
+  }
+
 }
 
 /**

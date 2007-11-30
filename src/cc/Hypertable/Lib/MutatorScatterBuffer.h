@@ -45,7 +45,7 @@ namespace Hypertable {
 
   public:
 
-    MutatorScatterBuffer(ConnectionManagerPtr &conn_manager_ptr, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
+    MutatorScatterBuffer(Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
     int set(Key &key, uint8_t *value, uint32_t value_len);
     int set(ByteString32T *key, ByteString32T *value);
     void send();
@@ -116,7 +116,7 @@ namespace Hypertable {
 
     typedef __gnu_cxx::hash_map<string, UpdateBufferPtr> UpdateBufferMapT;
 
-    ConnectionManagerPtr m_conn_manager_ptr;
+    Comm                *m_comm;
     SchemaPtr            m_schema_ptr;
     RangeLocatorPtr      m_range_locator_ptr;
     RangeServerClient    m_range_server;

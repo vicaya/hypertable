@@ -59,6 +59,7 @@ VALGRIND_RANGESERVER=
 VALGRIND_MASTER=
 
 START_RANGESERVER="true"
+START_MASTER="true"
 
 while [ "$1" != "${1##[-+]}" ]; do
     case $1 in
@@ -79,6 +80,10 @@ while [ "$1" != "${1##[-+]}" ]; do
 	    ;;
 	--no-range-server)
 	    START_RANGESERVER="false"
+	    shift
+	    ;;
+	--no-master)
+	    START_MASTER="false"
 	    shift
 	    ;;
 	*)     
@@ -198,28 +203,30 @@ echo "Successfully started Hyperspace"
 #
 # Start Hypertable.Master
 #
-PIDFILE=$HYPERTABLE_HOME/run/Hypertable.Master.pid
-LOGFILE=$HYPERTABLE_HOME/log/Hypertable.Master.log
+if [ "$START_MASTER" == "true" ] ; then
 
-$HYPERTABLE_HOME/bin/serverup master
-if [ $? != 0 ] ; then
-    $VALGRIND_MASTER $HYPERTABLE_HOME/bin/Hypertable.Master --pidfile=$PIDFILE --verbose 1>& $LOGFILE &
-    sleep 1
+    PIDFILE=$HYPERTABLE_HOME/run/Hypertable.Master.pid
+    LOGFILE=$HYPERTABLE_HOME/log/Hypertable.Master.log
+
     $HYPERTABLE_HOME/bin/serverup master
     if [ $? != 0 ] ; then
-	echo -n "Hypertable.Master hasn't come up yet, trying again in 5 seconds ..."
-	sleep 5
-	echo ""
+	$VALGRIND_MASTER $HYPERTABLE_HOME/bin/Hypertable.Master --pidfile=$PIDFILE --verbose 1>& $LOGFILE &
+	sleep 1
 	$HYPERTABLE_HOME/bin/serverup master
 	if [ $? != 0 ] ; then
-	    tail -100 $LOGFILE
-	    echo "Problem statring Hypertable.Master";
-	    exit 1
+	    echo -n "Hypertable.Master hasn't come up yet, trying again in 5 seconds ..."
+	    sleep 5
+	    echo ""
+	    $HYPERTABLE_HOME/bin/serverup master
+	    if [ $? != 0 ] ; then
+		tail -100 $LOGFILE
+		echo "Problem statring Hypertable.Master";
+		exit 1
+	    fi
 	fi
     fi
+    echo "Successfully started Hypertable.Master"
 fi
-echo "Successfully started Hypertable.Master"
-
 
 #
 # If the tables have not been created, then create them

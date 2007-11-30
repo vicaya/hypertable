@@ -260,10 +260,6 @@ int RangeServer::directory_initialize(Properties *props) {
 
   Global::log = new CommitLog(Global::logDfs, Global::logDir, logFileSize);    
 
-  /**
-   *  Register with Master
-   */
-
   return Error::OK;
 }
 

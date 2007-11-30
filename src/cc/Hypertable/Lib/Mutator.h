@@ -39,7 +39,7 @@ namespace Hypertable {
   class Mutator : public ReferenceCount {
 
   public:
-    Mutator(ConnectionManagerPtr &conn_manager_ptr, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
+    Mutator(Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
     virtual ~Mutator() { return; }
 
     void set(uint64_t timestamp, KeySpec &key, uint8_t *value, uint32_t value_len);
@@ -60,8 +60,8 @@ namespace Hypertable {
     void wait_for_previous_buffer();
 
     void sanity_check_key(KeySpec &key);
-    
-    ConnectionManagerPtr m_conn_manager_ptr;
+
+    Comm                *m_comm;
     SchemaPtr            m_schema_ptr;
     RangeLocatorPtr      m_range_locator_ptr;
     std::string          m_table_name;

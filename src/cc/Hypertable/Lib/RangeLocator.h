@@ -56,6 +56,15 @@ namespace Hypertable {
      */
     RangeLocator(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr);
 
+    /** Constructor.  Loads the METADATA schema and the root range address from Hyperspace.
+     * Installs a RootFileHandler to handle root range location changes.  Does not
+     * manager connections.
+     *
+     * @param comm pointer to comm subsystem
+     * @param hyperspacePtr smart pointer to Hyperspace session
+     */
+    RangeLocator(Comm *comm, Hyperspace::SessionPtr &hyperspacePtr);
+
     /** Destructor.  Closes the root file in Hyperspace */
     ~RangeLocator();
 
@@ -75,6 +84,8 @@ namespace Hypertable {
     void set_root_stale() { m_root_stale=true; }
 
   private:
+
+    void initialize();
 
     int process_metadata_scanblock(ScanBlock &scan_block);
 

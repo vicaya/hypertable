@@ -27,7 +27,7 @@
 /**
  *
  */
-MutatorScatterBuffer::MutatorScatterBuffer(ConnectionManagerPtr &conn_manager_ptr, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_conn_manager_ptr(conn_manager_ptr), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(conn_manager_ptr->get_comm(), 30), m_table_name(table_identifier->name) {
+MutatorScatterBuffer::MutatorScatterBuffer(Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, 30), m_table_name(table_identifier->name) {
   // copy TableIdentifierT
   memcpy(&m_table_identifier, table_identifier, sizeof(TableIdentifierT));
   m_table_identifier.name = m_table_name.c_str();
@@ -174,7 +174,7 @@ MutatorScatterBuffer *MutatorScatterBuffer::create_redo_buffer() {
   uint8_t *data, *ptr;
   ByteString32T *low_key, *key, *value;
 
-  MutatorScatterBuffer *redo_buffer = new MutatorScatterBuffer(m_conn_manager_ptr, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+  MutatorScatterBuffer *redo_buffer = new MutatorScatterBuffer(m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
 
   for (UpdateBufferMapT::const_iterator iter = m_buffer_map.begin(); iter != m_buffer_map.end(); iter++) {
     update_buffer_ptr = (*iter).second;

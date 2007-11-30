@@ -43,6 +43,19 @@ namespace {
  * 
  */
 RangeLocator::RangeLocator(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr) : m_conn_manager_ptr(connManagerPtr), m_hyperspace_ptr(hyperspacePtr), m_cache(1000), m_root_stale(true), m_range_server(connManagerPtr->get_comm(), 30) {
+  initialize();
+}
+
+
+/**
+ * 
+ */
+RangeLocator::RangeLocator(Comm *comm, Hyperspace::SessionPtr &hyperspacePtr) : m_conn_manager_ptr(0), m_hyperspace_ptr(hyperspacePtr), m_cache(1000), m_root_stale(true), m_range_server(comm, 30) {
+  initialize();
+}
+
+
+void RangeLocator::initialize() {
   int error;
   DynamicBuffer valueBuf(0);
   HandleCallbackPtr nullHandleCallback;
@@ -94,8 +107,8 @@ RangeLocator::RangeLocator(ConnectionManagerPtr &connManagerPtr, Hyperspace::Ses
     throw Exception(Error::BAD_SCHEMA);
   }
   m_location_cid = cf->id;
-
 }
+
 
 RangeLocator::~RangeLocator() {
   m_hyperspace_ptr->close(m_root_file_handle);
@@ -214,7 +227,8 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
   meta_scan_spec.endRowInclusive = true;
   // meta_scan_spec.interval = ????;
 
-  m_conn_manager_ptr->wait_for_connection(addr, 12);
+  if (m_conn_manager_ptr)
+    m_conn_manager_ptr->wait_for_connection(addr, 12);
 
   if ((error = m_range_server.create_scanner(addr, m_metadata_table, range, meta_scan_spec, scan_block)) != Error::OK)
     return error;
@@ -285,7 +299,8 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
 	    LOG_VA_ERROR("Invalid location found in METADATA entry for row '%s' - %s", range_loc_info.end_row.c_str(), range_loc_info.location.c_str());
 	    return Error::INVALID_METADATA;
 	  }
-	  m_conn_manager_ptr->add(addr, 30, "RangeServer");
+	  if (m_conn_manager_ptr)
+	    m_conn_manager_ptr->add(addr, 30, "RangeServer");
 
 	  m_cache.insert(table_id, range_loc_info);
 	  //cout << "(1) cache insert table=" << table_id << " start=" << range_loc_info.start_row << " end=" << range_loc_info.end_row << " loc=" << range_loc_info.location << endl;
@@ -355,17 +370,20 @@ int RangeLocator::read_root_location() {
   
   m_cache.insert(0, m_root_range_info, true);
 
-  if (!LocationCache::location_to_addr((const char *)value.buf, m_root_addr)) {
-    LOG_ERROR("Bad format of 'location' attribute of /hypertable/root Hyperspace file");
-    return Error::BAD_ROOT_LOCATION;    
-  }
+  if (m_conn_manager_ptr) {
 
-  m_conn_manager_ptr->add(m_root_addr, 30, "Root RangeServer");
+    if (!LocationCache::location_to_addr((const char *)value.buf, m_root_addr)) {
+      LOG_ERROR("Bad format of 'location' attribute of /hypertable/root Hyperspace file");
+      return Error::BAD_ROOT_LOCATION;    
+    }
 
-  if (!m_conn_manager_ptr->wait_for_connection(m_root_addr, 20)) {
-    std::string addr_str;
-    LOG_VA_ERROR("Timeout (20s) waiting for root RangeServer connection - %s",
-		 InetAddr::string_format(addr_str, m_root_addr));
+    m_conn_manager_ptr->add(m_root_addr, 30, "Root RangeServer");
+
+    if (!m_conn_manager_ptr->wait_for_connection(m_root_addr, 20)) {
+      std::string addr_str;
+      LOG_VA_ERROR("Timeout (20s) waiting for root RangeServer connection - %s",
+		   InetAddr::string_format(addr_str, m_root_addr));
+    }
   }
 
   m_root_stale = false;

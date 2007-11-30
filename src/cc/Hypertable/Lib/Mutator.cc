@@ -37,12 +37,12 @@ namespace {
 /**
  * 
  */
-Mutator::Mutator(ConnectionManagerPtr &conn_manager_ptr, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_conn_manager_ptr(conn_manager_ptr), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_table_name(table_identifier->name), m_memory_used(0), m_max_memory(DEFAULT_MAX_MEMORY) {
+Mutator::Mutator(Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_table_name(table_identifier->name), m_memory_used(0), m_max_memory(DEFAULT_MAX_MEMORY) {
   // copy TableIdentifierT
   memcpy(&m_table_identifier, table_identifier, sizeof(TableIdentifierT));
   m_table_identifier.name = m_table_name.c_str();
 
-  m_buffer_ptr = new MutatorScatterBuffer(m_conn_manager_ptr, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+  m_buffer_ptr = new MutatorScatterBuffer(m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
 
 }
 
@@ -84,7 +84,7 @@ void Mutator::set(uint64_t timestamp, KeySpec &key, uint8_t *value, uint32_t val
 
     m_prev_buffer_ptr = m_buffer_ptr;
 
-    m_buffer_ptr = new MutatorScatterBuffer(m_conn_manager_ptr, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+    m_buffer_ptr = new MutatorScatterBuffer(m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
     m_memory_used = 0;
   }
 

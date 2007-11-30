@@ -37,7 +37,7 @@ namespace Hypertable {
   class TableScanner : public ReferenceCount {
 
   public:
-    TableScanner(ConnectionManagerPtr &conn_manager_ptr, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpecificationT &scan_spec);
+    TableScanner(Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpecificationT &scan_spec);
     virtual ~TableScanner();
 
     bool next(CellT &cell);
@@ -45,14 +45,14 @@ namespace Hypertable {
   private:
 
     void find_range_and_start_scan(const char *row_key);
-    
-    ConnectionManagerPtr m_conn_manager_ptr;
-    SchemaPtr            m_schema_ptr;
-    RangeLocatorPtr      m_range_locator_ptr;
-    ScanSpecificationT   m_scan_spec;
-    RangeServerClient    m_range_server;
-    std::string          m_table_name;
-    TableIdentifierT     m_table_identifier;
+
+    Comm               *m_comm;
+    SchemaPtr           m_schema_ptr;
+    RangeLocatorPtr     m_range_locator_ptr;
+    ScanSpecificationT  m_scan_spec;
+    RangeServerClient   m_range_server;
+    std::string         m_table_name;
+    TableIdentifierT    m_table_identifier;
     bool                m_started;
     bool                m_eos;
     ScanBlock           m_scanblock;
