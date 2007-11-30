@@ -389,6 +389,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
       LOG_VA_ERROR("Problem issuing 'load range' command for %s[..%s] at server %s",
 		   table.name, range.endRow, InetAddr::string_format(addrStr, alias));
     }
+    m_initialized = true;
   }
 
 }
