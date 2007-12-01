@@ -49,11 +49,12 @@ using namespace Hyperspace;
 /**
  * 
  */
-Session::Session(Comm *comm, PropertiesPtr &props_ptr, SessionCallback *callback) : m_comm(comm), m_verbose(false), m_state(STATE_JEOPARDY), m_session_callback(callback) {
+Session::Session(Comm *comm, PropertiesPtr &props_ptr, SessionCallback *callback) : m_comm(comm), m_verbose(false), m_silent(false), m_state(STATE_JEOPARDY), m_session_callback(callback) {
   uint16_t masterPort;
   const char *masterHost;
 
   m_verbose = props_ptr->getPropertyBool("verbose", false);
+  m_silent = props_ptr->getPropertyBool("silent", false);
   masterHost = props_ptr->getProperty("Hyperspace.Master.host", "localhost");
   masterPort = (uint16_t)props_ptr->getPropertyInt("Hyperspace.Master.port", Master::DEFAULT_MASTER_PORT);
   m_grace_period = (uint32_t)props_ptr->getPropertyInt("Hyperspace.GracePeriod", Master::DEFAULT_GRACEPERIOD);
@@ -100,9 +101,10 @@ int Session::open(ClientHandleStatePtr &handle_state_ptr, CommBufPtr &cbuf_ptr, 
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       error = (int)Protocol::response_code(eventPtr.get());
-      LOG_VA_ERROR("Hyperspace 'open' error, name=%s flags=0x%x events=0x%x : %s",
-		   handle_state_ptr->normalName.c_str(), handle_state_ptr->openFlags,
-		   handle_state_ptr->eventMask, Error::get_text(error));
+      if (!m_silent)
+	LOG_VA_ERROR("Hyperspace 'open' error, name=%s flags=0x%x events=0x%x : %s",
+		     handle_state_ptr->normalName.c_str(), handle_state_ptr->openFlags,
+		     handle_state_ptr->eventMask, Error::get_text(error));
       if (m_verbose)
 	LOG_VA_ERROR("%s", Protocol::string_format_message(eventPtr.get()).c_str());
     }
@@ -185,7 +187,8 @@ int Session::close(uint64_t handle) {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       error = (int)Protocol::response_code(eventPtr.get());
-      LOG_VA_ERROR("Hyperspace 'close' error : %s", Error::get_text(error));
+      if (!m_silent)
+	LOG_VA_ERROR("Hyperspace 'close' error : %s", Error::get_text(error));
       if (m_verbose)
 	LOG_VA_ERROR("%s", Protocol::string_format_message(eventPtr.get()).c_str());
     }
@@ -220,7 +223,8 @@ int Session::mkdir(std::string name) {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       error = (int)Protocol::response_code(eventPtr.get());
-      LOG_VA_ERROR("Hyperspace 'mkdir' error, name=%s : %s", normalName.c_str(), Error::get_text(error));
+      if (!m_silent)
+	LOG_VA_ERROR("Hyperspace 'mkdir' error, name=%s : %s", normalName.c_str(), Error::get_text(error));
       if (m_verbose)
 	LOG_VA_ERROR("%s", Protocol::string_format_message(eventPtr.get()).c_str());
     }
@@ -251,7 +255,8 @@ int Session::unlink(std::string name) {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       error = (int)Protocol::response_code(eventPtr.get());
-      LOG_VA_ERROR("Hyperspace 'delete' error, name=%s : %s", normalName.c_str(), Error::get_text(error));
+      if (!m_silent)
+	LOG_VA_ERROR("Hyperspace 'delete' error, name=%s : %s", normalName.c_str(), Error::get_text(error));
       if (m_verbose)
 	LOG_VA_ERROR("%s", Protocol::string_format_message(eventPtr.get()).c_str());
     }
@@ -282,7 +287,8 @@ int Session::exists(std::string name, bool *existsp) {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       error = (int)Protocol::response_code(eventPtr.get());
-      LOG_VA_ERROR("Hyperspace 'exists' error, name=%s : %s", normalName.c_str(), Error::get_text(error));
+      if (!m_silent)
+	LOG_VA_ERROR("Hyperspace 'exists' error, name=%s : %s", normalName.c_str(), Error::get_text(error));
       if (m_verbose)
 	LOG_VA_ERROR("%s", Protocol::string_format_message(eventPtr.get()).c_str());
     }
@@ -320,7 +326,8 @@ int Session::attr_set(uint64_t handle, std::string name, const void *value, size
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       error = (int)Protocol::response_code(eventPtr.get());
-      LOG_VA_ERROR("Hyperspace 'attrset' error, name=%s : %s", name.c_str(), Error::get_text(error));
+      if (!m_silent)
+	LOG_VA_ERROR("Hyperspace 'attrset' error, name=%s : %s", name.c_str(), Error::get_text(error));
       if (m_verbose)
 	LOG_VA_ERROR("%s", Protocol::string_format_message(eventPtr.get()).c_str());
     }
@@ -350,7 +357,8 @@ int Session::attr_get(uint64_t handle, std::string name, DynamicBuffer &value) {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       error = (int)Protocol::response_code(eventPtr.get());
-      LOG_VA_ERROR("Hyperspace 'attrget' error, name=%s : %s", name.c_str(), Error::get_text(error));
+      if (!m_silent)
+	LOG_VA_ERROR("Hyperspace 'attrget' error, name=%s : %s", name.c_str(), Error::get_text(error));
       if (m_verbose)
 	LOG_VA_ERROR("%s", Protocol::string_format_message(eventPtr.get()).c_str());
     }
@@ -394,7 +402,8 @@ int Session::attr_del(uint64_t handle, std::string name) {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       error = (int)Protocol::response_code(eventPtr.get());
-      LOG_VA_ERROR("Hyperspace 'attrdel' error, name=%s : %s", name.c_str(), Error::get_text(error));
+      if (!m_silent)
+	LOG_VA_ERROR("Hyperspace 'attrdel' error, name=%s : %s", name.c_str(), Error::get_text(error));
       if (m_verbose)
 	LOG_VA_ERROR("%s", Protocol::string_format_message(eventPtr.get()).c_str());
     }
@@ -421,7 +430,8 @@ int Session::readdir(uint64_t handle, std::vector<struct DirEntryT> &listing) {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       error = (int)Protocol::response_code(eventPtr.get());
-      LOG_VA_ERROR("Hyperspace 'readdir' error : %s", Error::get_text(error));
+      if (!m_silent)
+	LOG_VA_ERROR("Hyperspace 'readdir' error : %s", Error::get_text(error));
       if (m_verbose)
 	LOG_VA_ERROR("%s", Protocol::string_format_message(eventPtr.get()).c_str());
     }
@@ -431,13 +441,15 @@ int Session::readdir(uint64_t handle, std::vector<struct DirEntryT> &listing) {
       uint32_t entryCount;
       struct DirEntryT dentry;
       if (!Serialization::decode_int(&ptr, &remaining, &entryCount)) {
-	LOG_ERROR("Problem decoding READDIR return packet");
+	if (!m_silent)
+	  LOG_ERROR("Problem decoding READDIR return packet");
 	return Error::PROTOCOL_ERROR;
       }
       listing.clear();
       for (uint32_t i=0; i<entryCount; i++) {
 	if (!Hyperspace::decode_range_dir_entry(&ptr, &remaining, dentry)) {
-	  LOG_VA_ERROR("Problem decoding entry %d of READDIR return packet", i);
+	  if (!m_silent)
+	    LOG_VA_ERROR("Problem decoding entry %d of READDIR return packet", i);
 	  return Error::PROTOCOL_ERROR;
 	}
 	listing.push_back(dentry);
@@ -482,7 +494,8 @@ int Session::lock(uint64_t handle, uint32_t mode, struct LockSequencerT *sequenc
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       error = (int)Protocol::response_code(eventPtr.get());
-      LOG_VA_ERROR("Hyperspace 'lock' error, handle=%lld name='%s' : %s", handle, handle_state_ptr->normalName.c_str(), Error::get_text(error));
+      if (!m_silent)
+	LOG_VA_ERROR("Hyperspace 'lock' error, handle=%lld name='%s' : %s", handle, handle_state_ptr->normalName.c_str(), Error::get_text(error));
       if (m_verbose)
 	LOG_VA_ERROR("%s", Protocol::string_format_message(eventPtr.get()).c_str());
     }
@@ -540,7 +553,8 @@ int Session::try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp, struct 
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       error = (int)Protocol::response_code(eventPtr.get());
-      LOG_VA_ERROR("Hyperspace 'trylock' error, handle=%lld name='%s' : %s", handle, handle_state_ptr->normalName.c_str(), Error::get_text(error));
+      if (!m_silent)
+	LOG_VA_ERROR("Hyperspace 'trylock' error, handle=%lld name='%s' : %s", handle, handle_state_ptr->normalName.c_str(), Error::get_text(error));
       if (m_verbose)
 	LOG_VA_ERROR("%s", Protocol::string_format_message(eventPtr.get()).c_str());
     }
@@ -589,7 +603,8 @@ int Session::release(uint64_t handle) {
     boost::mutex::scoped_lock lock(handle_state_ptr->mutex);
     if (!syncHandler.wait_for_reply(eventPtr)) {
       error = (int)Protocol::response_code(eventPtr.get());
-      LOG_VA_ERROR("Hyperspace 'release' error : %s", Error::get_text(error));
+      if (!m_silent)
+	LOG_VA_ERROR("Hyperspace 'release' error : %s", Error::get_text(error));
       if (m_verbose)
 	LOG_VA_ERROR("%s", Protocol::string_format_message(eventPtr.get()).c_str());
     }
@@ -642,7 +657,8 @@ int Session::status() {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       error = (int)Protocol::response_code(eventPtr);
-      LOG_VA_ERROR("Hyperspace 'status' error : %s", Error::get_text(error));
+      if (!m_silent)
+	LOG_VA_ERROR("Hyperspace 'status' error : %s", Error::get_text(error));
       if (m_verbose)
 	LOG_VA_ERROR("%s", Protocol::string_format_message(eventPtr.get()).c_str());
     }
@@ -737,8 +753,9 @@ int Session::send_message(CommBufPtr &cbuf_ptr, DispatchHandler *handler) {
 
   if ((error = m_comm->send_request(m_master_addr, m_timeout, cbuf_ptr, handler)) != Error::OK) {
     std::string str;
-    LOG_VA_WARN("Comm::send_request to Hypertable.Master at %s failed - %s",
-		InetAddr::string_format(str, m_master_addr), Error::get_text(error));
+    if (!m_silent)
+      LOG_VA_WARN("Comm::send_request to Hypertable.Master at %s failed - %s",
+		  InetAddr::string_format(str, m_master_addr), Error::get_text(error));
   }
   return error;
 }

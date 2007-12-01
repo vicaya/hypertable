@@ -369,6 +369,7 @@ namespace Hyperspace {
     boost::condition m_cond;
     Comm *m_comm;
     bool m_verbose;
+    bool m_silent;
     int  m_state;
     uint32_t m_grace_period;
     uint32_t m_lease_interval;

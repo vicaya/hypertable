@@ -262,10 +262,10 @@ fi
 #
 # If the tables have not been created, then create them
 #
+sleep 1
 for table in Test1 Test2 Test3 ; do
     $HYPERTABLE_HOME/bin/hyperspace --eval "exists /hypertable/tables/$table" >& /dev/null
     if [ $? != 0 ] ; then
-	sleep 1
 	$HYPERTABLE_HOME/bin/hypertable --batch < $HYPERTABLE_HOME/test/$table-create.hql >& /tmp/foo.$$
 	if [ $? != 0 ] ; then
 	    echo "Problem creating table $table, killing servers...";

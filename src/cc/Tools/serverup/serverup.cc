@@ -165,6 +165,8 @@ int main(int argc, char **argv) {
       goto abort;
   }
 
+  propsPtr->setProperty("silent", "true");
+
   comm = new Comm();
   connManagerPtr = new ConnectionManager(comm);
   connManagerPtr->set_quiet_mode(true);

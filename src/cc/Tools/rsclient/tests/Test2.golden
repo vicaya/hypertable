@@ -1,10 +1,6 @@
 Welcome to the Range Server command interpreter.
 Type 'help' for a description of commands.
 
-rsclient> load range Test2[..??]
-TableName  = Test2
-StartRow   = 
-EndRow     = ÿÿ
 rsclient> update Test2 Test2-data.txt
 success
 success
