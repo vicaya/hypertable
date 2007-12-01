@@ -169,6 +169,7 @@ fi
 cp $HYPERTABLE_HOME/test/metadata.orig $HYPERTABLE_HOME/test/metadata
 rm -rf $HYPERTABLE_HOME/log/hypertable/*
 $HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable"
+rm -rf $HYPERTABLE_HOME/hyperspace/*
 
 
 #
@@ -226,31 +227,9 @@ if [ "$START_MASTER" == "true" ] ; then
 	fi
     fi
     echo "Successfully started Hypertable.Master"
+else
+    exit 0
 fi
-
-#
-# If the tables have not been created, then create them
-#
-for table in Test1 Test2 Test3 ; do
-    $HYPERTABLE_HOME/bin/hyperspace --eval "exists /hypertable/tables/$table" >& /dev/null
-    if [ $? != 0 ] ; then
-	$HYPERTABLE_HOME/bin/hypertable --batch < $HYPERTABLE_HOME/test/$table-create.hql >& /tmp/foo.$$
-	if [ $? != 0 ] ; then
-	    echo "Problem creating table $table, killing servers...";
-	    for pidfile in $HYPERTABLE_HOME/run/*.pid ; do
-		kill -9 `cat $pidfile`
-		rm $pidfile
-	    done
-	    cat /tmp/foo.$$
-	    rm -f /tmp/foo.$$
-	    exit 1
-	else
-	    echo "Successfully created table $table."
-	fi
-    fi
-done
-rm -f /tmp/foo.$$
-
 
 #
 # Start Hypertable.RangeServer
@@ -279,3 +258,29 @@ if [ "$START_RANGESERVER" == "true" ] ; then
     fi
     echo "Successfully started Hypertable.RangeServer"
 fi
+
+#
+# If the tables have not been created, then create them
+#
+for table in Test1 Test2 Test3 ; do
+    $HYPERTABLE_HOME/bin/hyperspace --eval "exists /hypertable/tables/$table" >& /dev/null
+    if [ $? != 0 ] ; then
+	sleep 1
+	$HYPERTABLE_HOME/bin/hypertable --batch < $HYPERTABLE_HOME/test/$table-create.hql >& /tmp/foo.$$
+	if [ $? != 0 ] ; then
+	    echo "Problem creating table $table, killing servers...";
+	    for pidfile in $HYPERTABLE_HOME/run/*.pid ; do
+		kill -9 `cat $pidfile`
+		rm $pidfile
+	    done
+	    cat /tmp/foo.$$
+	    rm -f /tmp/foo.$$
+	    exit 1
+	else
+	    echo "Successfully created table $table."
+	fi
+    fi
+done
+rm -f /tmp/foo.$$
+
+

@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <string>
@@ -45,6 +46,8 @@ void System::initialize(const char *argv0) {
   const char *execPath = getenv("_");
   char cwd[1024];
   int offset;
+
+  srand((unsigned)getpid());
 
   getcwd(cwd, 1024);
   strcat(cwd, "/");

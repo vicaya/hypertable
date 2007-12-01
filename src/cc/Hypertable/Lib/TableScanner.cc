@@ -108,7 +108,8 @@ bool TableScanner::next(CellT &cell) {
 
   while (!m_scanblock.more()) {
     if (m_scanblock.eos()) {
-      if (m_range_info.end_row == std::string(Key::END_ROW_MARKER)) {
+      if (!strcmp(m_range_info.end_row.c_str(), Key::END_ROW_MARKER) ||
+	  !strcmp(m_range_info.end_row.c_str(), m_scan_spec.endRow)) {
 	m_eos = true;
 	return false;
       }

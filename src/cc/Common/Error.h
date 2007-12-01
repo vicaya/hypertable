@@ -84,21 +84,21 @@ namespace Hypertable {
     static const int MASTER_BAD_SCHEMA     = 0x00040002;
     static const int MASTER_NOT_RUNNING    = 0x00040003;
 
-    static const int RANGESERVER_GENERATION_MISMATCH  = 0x00050001;
-    static const int RANGESERVER_RANGE_ALREADY_LOADED = 0x00050002;
-    static const int RANGESERVER_RANGE_MISMATCH       = 0x00050003;
-    static const int RANGESERVER_NONEXISTENT_RANGE    = 0x00050004;
-    static const int RANGESERVER_PARTIAL_UPDATE       = 0x00050005;
-    static const int RANGESERVER_RANGE_NOT_FOUND      = 0x00050006;
-    static const int RANGESERVER_INVALID_SCANNER_ID   = 0x00050007;
-    static const int RANGESERVER_SCHEMA_PARSE_ERROR   = 0x00050008;
-    static const int RANGESERVER_SCHEMA_INVALID_CFID  = 0x00050009;
-    static const int RANGESERVER_INVALID_COLUMNFAMILY = 0x0005000A;
-    static const int RANGESERVER_TRUNCATED_COMMIT_LOG = 0x0005000B;
+    static const int RANGESERVER_GENERATION_MISMATCH   = 0x00050001;
+    static const int RANGESERVER_RANGE_ALREADY_LOADED  = 0x00050002;
+    static const int RANGESERVER_RANGE_MISMATCH        = 0x00050003;
+    static const int RANGESERVER_NONEXISTENT_RANGE     = 0x00050004;
+    static const int RANGESERVER_PARTIAL_UPDATE        = 0x00050005;
+    static const int RANGESERVER_RANGE_NOT_FOUND       = 0x00050006;
+    static const int RANGESERVER_INVALID_SCANNER_ID    = 0x00050007;
+    static const int RANGESERVER_SCHEMA_PARSE_ERROR    = 0x00050008;
+    static const int RANGESERVER_SCHEMA_INVALID_CFID   = 0x00050009;
+    static const int RANGESERVER_INVALID_COLUMNFAMILY  = 0x0005000A;
+    static const int RANGESERVER_TRUNCATED_COMMIT_LOG  = 0x0005000B;
+    static const int RANGESERVER_NO_METADATA_FOR_RANGE = 0x0005000C;
 
     static const char *get_text(int error);
     static std::string get_text_string(int error) { return get_text(error); }
-
   };
 
   /**

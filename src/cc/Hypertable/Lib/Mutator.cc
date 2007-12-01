@@ -30,7 +30,7 @@ extern "C" {
 #include "Mutator.h"
 
 namespace {
-  const uint64_t DEFAULT_MAX_MEMORY = 40000000LL;
+  const uint64_t DEFAULT_MAX_MEMORY = 20000000LL;
 }
 
 

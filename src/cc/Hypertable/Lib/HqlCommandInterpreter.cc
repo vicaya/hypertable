@@ -125,10 +125,10 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
 	throw Exception(error, std::string("Problem creating scanner on table '") + state.table_name + "'");
 
       while (scanner_ptr->next(cell)) {
-	cout << cell.row_key << "\t" << cell.column_family;
+	cout << cell.timestamp << "\t" << cell.row_key << "\t" << cell.column_family;
 	if (*cell.column_qualifier)
-	  cout  << ":"<< cell.column_qualifier;
-	cout << "\t" << cell.timestamp << endl;
+	  cout << ":"<< cell.column_qualifier;
+	cout << "\t" << std::string((const char *)cell.value, cell.value_len) << endl;
       }
     }
     else if (state.command == COMMAND_LOAD_DATA) {

@@ -73,7 +73,8 @@ namespace Hypertable {
     dst_buf.ensure(value_len + 4);
     bs = (ByteString32T *)dst_buf.ptr;
     bs->len = value_len;
-    memcpy(bs->data, value, value_len);
+    if (value_len > 0)
+      memcpy(bs->data, value, value_len);
     dst_buf.ptr += Length(bs);
   }
 

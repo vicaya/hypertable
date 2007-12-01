@@ -39,7 +39,7 @@ namespace Hypertable {
 
   public:
 
-    AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *lg, RangeInfoPtr &tabletInfoPtr);
+    AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range);
     virtual ~AccessGroup();
     virtual int add(const ByteString32T *key, const ByteString32T *value);
 
@@ -61,6 +61,8 @@ namespace Hypertable {
     const char *get_name() { return m_name.c_str(); }
 
     int shrink(std::string &new_start_row);
+
+    void get_files(std::string &text);
 
   private:
     boost::mutex         m_mutex;

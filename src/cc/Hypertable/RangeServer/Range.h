@@ -43,7 +43,7 @@ namespace Hypertable {
     typedef std::vector<AccessGroup *>  ColumnFamilyVectorT;
 
   public:
-    Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr);
+    Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeT *range);
     virtual ~Range();
     virtual int add(const ByteString32T *key, const ByteString32T *value);
     virtual const char *get_split_row();
@@ -89,7 +89,9 @@ namespace Hypertable {
 
   private:
 
-    bool extract_access_group_from_path(std::string &path, std::string &name, uint32_t *tableIdp);
+    int load_cell_stores();
+
+    bool extract_csid_from_path(std::string &path, uint32_t *storeIdp);
 
     uint64_t run_compaction(bool major=false);
 
@@ -116,6 +118,7 @@ namespace Hypertable {
     boost::condition m_update_quiesce_cond;
     bool             m_hold_updates;
     uint32_t         m_update_counter;
+    bool             m_is_root;
   };
 
   typedef boost::intrusive_ptr<Range> RangePtr;

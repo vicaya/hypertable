@@ -33,14 +33,13 @@
 #include "Hypertable/Lib/RangeServerProtocol.h"
 #include "Hypertable/Lib/Schema.h"
 #include "Hypertable/Lib/Filesystem.h"
+#include "Hypertable/Lib/Table.h"
 #include "Hypertable/Lib/Types.h"
 
 #include "CommitLog.h"
 #include "FileBlockCache.h"
 #include "ScannerMap.h"
 #include "TableInfo.h"
-
-#define METADATA_TEST 1
 
 namespace Hypertable {
 
@@ -61,21 +60,10 @@ namespace Hypertable {
     static int32_t        localityGroupMaxMemory;
     static ScannerMap     scannerMap;
     static Hypertable::FileBlockCache *blockCache;
+    static TablePtr       metadata_table_ptr;
 
     // temporary for testing
     static Metadata            *metadata;
-#ifdef METADATA_TEST
-    static TableIdentifierT     metadata_identifier;
-    static RangeServerClientPtr metadata_range_server;
-    static uint8_t metadata_column_family_LogDir;
-    static uint8_t metadata_column_family_SplitLogDir;
-    static uint8_t metadata_column_family_SplitPoint;
-    static uint8_t metadata_column_family_Files;
-    static uint8_t metadata_column_family_StartRow;
-    static uint8_t metadata_column_family_Location;
-    static uint8_t metadata_column_family_Event;
-    static struct sockaddr_in local_addr;
-#endif
   };
 }
 

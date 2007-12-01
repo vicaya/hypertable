@@ -78,17 +78,18 @@ public class Error {
     static public final int MASTER_BAD_SCHEMA    = 0x00040002;
     static public final int MASTER_NOT_RUNNING   = 0x00040003;
 
-    static public final int RANGESERVER_GENERATION_MISMATCH  = 0x00050001;
-    static public final int RANGESERVER_RANGE_ALREADY_LOADED = 0x00050002;
-    static public final int RANGESERVER_RANGE_MISMATCH       = 0x00050003;
-    static public final int RANGESERVER_NONEXISTENT_RANGE    = 0x00050004;
-    static public final int RANGESERVER_PARTIAL_UPDATE       = 0x00050005;
-    static public final int RANGESERVER_RANGE_NOT_FOUND      = 0x00050006;
-    static public final int RANGESERVER_INVALID_SCANNER_ID   = 0x00050007;
-    static public final int RANGESERVER_SCHEMA_PARSE_ERROR   = 0x00050008;
-    static public final int RANGESERVER_SCHEMA_INVALID_CFID  = 0x00050009;
-    static public final int RANGESERVER_INVALID_COLUMNFAMILY = 0x0005000A;
-    static public final int RANGESERVER_TRUNCATED_COMMIT_LOG = 0x0005000B;
+    static public final int RANGESERVER_GENERATION_MISMATCH   = 0x00050001;
+    static public final int RANGESERVER_RANGE_ALREADY_LOADED  = 0x00050002;
+    static public final int RANGESERVER_RANGE_MISMATCH        = 0x00050003;
+    static public final int RANGESERVER_NONEXISTENT_RANGE     = 0x00050004;
+    static public final int RANGESERVER_PARTIAL_UPDATE        = 0x00050005;
+    static public final int RANGESERVER_RANGE_NOT_FOUND       = 0x00050006;
+    static public final int RANGESERVER_INVALID_SCANNER_ID    = 0x00050007;
+    static public final int RANGESERVER_SCHEMA_PARSE_ERROR    = 0x00050008;
+    static public final int RANGESERVER_SCHEMA_INVALID_CFID   = 0x00050009;
+    static public final int RANGESERVER_INVALID_COLUMNFAMILY  = 0x0005000A;
+    static public final int RANGESERVER_TRUNCATED_COMMIT_LOG  = 0x0005000B;
+    static public final int RANGESERVER_NO_METADATA_FOR_RANGE = 0x0005000C;
 
 
     static public String GetText(int lcode) {
@@ -156,5 +157,6 @@ public class Error {
 	mTextMap.put(RANGESERVER_SCHEMA_INVALID_CFID,  "RANGE SERVER invalid column family id");
 	mTextMap.put(RANGESERVER_INVALID_COLUMNFAMILY, "RANGE SERVER invalid column family");
 	mTextMap.put(RANGESERVER_TRUNCATED_COMMIT_LOG, "RANGE SERVER truncated commit log");
+	mTextMap.put(RANGESERVER_TRUNCATED_COMMIT_LOG, "RANGE SERVER no metadata for range");
     }
 }

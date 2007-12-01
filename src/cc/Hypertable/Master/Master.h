@@ -72,7 +72,6 @@ namespace Hypertable {
     bool create_hyperspace_dir(std::string dir);
 
     boost::mutex m_mutex;
-    bool         m_initialized;
     ConnectionManagerPtr m_conn_manager_ptr;
     ApplicationQueuePtr m_app_queue_ptr;
     bool m_verbose;
@@ -85,6 +84,10 @@ namespace Hypertable {
     struct LockSequencerT m_master_file_sequencer;
     HandleCallbackPtr m_servers_dir_callback_ptr;
     TablePtr m_metadata_table_ptr;
+
+    /** temporary vairables **/
+    bool m_initialized;
+    struct sockaddr_in m_rs_addr;
 
     typedef __gnu_cxx::hash_map<std::string, RangeServerStatePtr> ServerMapT;
 

@@ -66,18 +66,16 @@ bool TableInfo::get_range(RangeT *range, RangePtr &rangePtr) {
 /**
  * 
  */
-void TableInfo::add_range(RangeInfoPtr &rangeInfoPtr, RangePtr &rangePtr) {
-  boost::mutex::scoped_lock lock(m_mutex);
-  std::string rangeEndRow;
+void TableInfo::add_range(RangeT *range, RangePtr &rangePtr) {
 
-  rangeInfoPtr->get_end_row(rangeEndRow);
+  rangePtr = new Range(m_master_client_ptr, m_identifier, m_schema, range);
 
-  RangeMapT::iterator iter = m_range_map.find(rangeEndRow);
-  assert(iter == m_range_map.end());
-
-  rangePtr = new Range(m_master_client_ptr, m_identifier, m_schema, rangeInfoPtr);
-
-  m_range_map[rangeEndRow] = rangePtr;
+  {
+    boost::mutex::scoped_lock lock(m_mutex);
+    RangeMapT::iterator iter = m_range_map.find(range->endRow);
+    assert(iter == m_range_map.end());
+    m_range_map[range->endRow] = rangePtr;
+  }
 }
 
 

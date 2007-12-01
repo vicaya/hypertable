@@ -48,7 +48,7 @@ using namespace Hypertable;
 using namespace Hypertable::DfsBroker;
 using namespace std;
 
-Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, ApplicationQueuePtr &appQueuePtr) : m_initialized(false), m_conn_manager_ptr(connManagerPtr), m_app_queue_ptr(appQueuePtr), m_verbose(false), m_dfs_client(0) {
+Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, ApplicationQueuePtr &appQueuePtr) : m_conn_manager_ptr(connManagerPtr), m_app_queue_ptr(appQueuePtr), m_verbose(false), m_dfs_client(0), m_initialized(false) {
   int error;
   Client *dfsClient;
   uint16_t port;
@@ -357,6 +357,9 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
     comm->set_alias(addr, alias);
   }
 
+  /** TEMPORARY:  Use this address to assign ranges created with the create table command **/
+  memcpy(&m_rs_addr, &alias, sizeof(m_rs_addr));
+
   {
     std::string addrStr;
     LOG_VA_INFO("Server Registered %s -> %s", location, InetAddr::string_format(addrStr, addr));
@@ -366,7 +369,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
   cb->response_ok();
 
   /**
-   * The following code is temporary ...
+   * TEMPORARY: Load root and second-level METADATA ranges
    */
   if (!m_initialized) {
     int error;
@@ -379,7 +382,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
     table.name = "METADATA";
 
     /**
-     * Load ROOT range
+     * Load root METADATA range
      */
     range.startRow = 0;
     range.endRow = Key::END_ROOT_ROW;
@@ -389,13 +392,58 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
       LOG_VA_ERROR("Problem issuing 'load range' command for %s[..%s] at server %s",
 		   table.name, range.endRow, InetAddr::string_format(addrStr, alias));
     }
+
+
+    /**
+     * Write METADATA entry for second-level METADATA range
+     */
+
+    MutatorPtr mutator_ptr;
+    KeySpec key;
+    std::string metadata_key_str;
+
+    if ((error = m_metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK) {
+      // TODO: throw exception
+      LOG_ERROR("Problem creating mutator on METADATA table");
+      exit(1);
+    }
+
+    metadata_key_str = std::string("0:") + Key::END_ROW_MARKER;
+    key.row = metadata_key_str.c_str();
+    key.row_len = metadata_key_str.length();
+    key.column_qualifier = 0;
+    key.column_qualifier_len = 0;
+
+    try {
+      key.column_family = "StartRow";
+      mutator_ptr->set(0, key, (uint8_t *)Key::END_ROOT_ROW, strlen(Key::END_ROOT_ROW));
+      mutator_ptr->flush();
+    }
+    catch (Hypertable::Exception &e) {
+      // TODO: propagate exception
+      LOG_VA_ERROR("Problem updating METADATA with split info (row key = %s) - %s", metadata_key_str.c_str(), e.what());
+      exit(1);
+    }
+
+    /**
+     * Load second-level METADATA range
+     */
+    range.startRow = Key::END_ROOT_ROW;
+    range.endRow = Key::END_ROW_MARKER;
+
+    if ((error = rsc.load_range(alias, table, range, 0)) != Error::OK) {
+      std::string addrStr;
+      LOG_VA_ERROR("Problem issuing 'load range' command for %s[..%s] at server %s",
+		   table.name, range.endRow, InetAddr::string_format(addrStr, alias));
+    }
+
     m_initialized = true;
   }
 
 }
 
 /**
- * Just turns around and assigns new range to caller
+ * TEMPORARY: Just turns around and assigns new range to caller
  */
 void Master::report_split(ResponseCallback *cb, TableIdentifierT &table, RangeT &range) {
   boost::mutex::scoped_lock lock(m_mutex);
@@ -505,6 +553,59 @@ int Master::create_table(const char *tableName, const char *schemaString, std::s
     if ((error = m_dfs_client->mkdirs(lgDir)) != Error::OK) {
       errMsg = (string)"Problem creating table directory '" + lgDir + "'";
       goto abort;
+    }
+  }
+
+  /**
+   * Write METADATA entry, single range covering entire table '\0' to 0xff 0xff
+   */
+  if (table_id != 0) {
+    MutatorPtr mutator_ptr;
+    KeySpec key;
+    std::string metadata_key_str;
+
+    if ((error = m_metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK) {
+      // TODO: throw exception
+      LOG_ERROR("Problem creating mutator on METADATA table");
+      exit(1);
+    }
+
+    metadata_key_str = std::string("") + table_id + ":" + Key::END_ROW_MARKER;
+    key.row = metadata_key_str.c_str();
+    key.row_len = metadata_key_str.length();
+    key.column_qualifier = 0;
+    key.column_qualifier_len = 0;
+
+    try {
+      key.column_family = "StartRow";
+      mutator_ptr->set(0, key, 0, 0);
+      mutator_ptr->flush();
+    }
+    catch (Hypertable::Exception &e) {
+      // TODO: propagate exception
+      LOG_VA_ERROR("Problem updating METADATA with new table info (row key = %s) - %s", metadata_key_str.c_str(), e.what());
+      exit(1);
+    }
+
+    /**
+     * TEMPORARY:  ask the one Range Server that we know about to load the range
+     */
+
+    TableIdentifierT table;
+    RangeT range;
+    RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30);
+
+    table.name = tableName;
+    table.id = table_id;
+    table.generation = schema->get_generation();
+
+    range.startRow = 0;
+    range.endRow = Key::END_ROW_MARKER;
+
+    if ((error = rsc.load_range(m_rs_addr, table, range, 0)) != Error::OK) {
+      std::string addrStr;
+      LOG_VA_ERROR("Problem issuing 'load range' command for %s[..%s] at server %s",
+		   table.name, range.endRow, InetAddr::string_format(addrStr, m_rs_addr));
     }
   }
 

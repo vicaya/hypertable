@@ -26,6 +26,8 @@ extern "C" {
 #include <string.h>
 }
 
+#include <boost/algorithm/string.hpp>
+
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/md5.h"
@@ -43,25 +45,23 @@ using namespace std;
 
 
 
-Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeInfoPtr &rangeInfoPtr) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_schema(schemaPtr), m_maintenance_in_progress(false), m_latest_timestamp(0), m_split_start_time(0), m_hold_updates(false), m_update_counter(0) {
-  CellStorePtr cellStorePtr;
-  std::string accessGroupName;
+Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeT *range) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_schema(schemaPtr), m_maintenance_in_progress(false), m_latest_timestamp(0), m_split_start_time(0), m_hold_updates(false), m_update_counter(0) {
+  int error;
   AccessGroup *ag;
-  uint64_t minLogCutoff = 0;
-  uint32_t storeId;
-  int32_t len;
 
   Copy(identifier, m_identifier);
 
-  rangeInfoPtr->get_start_row(m_start_row);
-  rangeInfoPtr->get_end_row(m_end_row);
+  m_start_row = range->startRow;
+  m_end_row = range->endRow;
+
+  m_is_root = (m_identifier.id == 0 && *range->startRow == 0 && !strcmp(range->endRow, Key::END_ROOT_ROW));
 
   m_column_family_vector.resize( m_schema->get_max_column_family_id() + 1 );
 
   list<Schema::AccessGroup *> *agList = m_schema->get_access_group_list();
 
   for (list<Schema::AccessGroup *>::iterator agIter = agList->begin(); agIter != agList->end(); agIter++) {
-    ag = new AccessGroup(m_identifier, m_schema, (*agIter), rangeInfoPtr);
+    ag = new AccessGroup(m_identifier, m_schema, (*agIter), range);
     m_access_group_map[(*agIter)->name] = ag;
     m_access_group_vector.push_back(ag);
     for (list<Schema::ColumnFamily *>::iterator cfIter = (*agIter)->columns.begin(); cfIter != (*agIter)->columns.end(); cfIter++)
@@ -69,29 +69,15 @@ Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, S
   }
 
   /**
-   * Load CellStores
+   * Read the cell store files from METADATA and 
    */
-  vector<string> cellStoreVector;
-  rangeInfoPtr->get_tables(cellStoreVector);
-  for (size_t i=0; i<cellStoreVector.size(); i++) {
-    cellStorePtr = new CellStoreV0(Global::dfs);
-    if (!extract_access_group_from_path(cellStoreVector[i], accessGroupName, &storeId)) {
-      LOG_VA_ERROR("Unable to extract locality group name from path '%s'", cellStoreVector[i].c_str());
-      continue;
+  if (!m_is_root) {
+    if ((error = load_cell_stores()) != Error::OK) {
+      // TODO: throw exception
     }
-    if (cellStorePtr->open(cellStoreVector[i].c_str(), m_start_row.c_str(), m_end_row.c_str()) != Error::OK)
-      continue;
-    if (cellStorePtr->load_index() != Error::OK)
-      continue;
-    ag = m_access_group_map[accessGroupName];
-    if (ag == 0) {
-      LOG_VA_ERROR("Unrecognized locality group name '%s' in path '%s'", accessGroupName.c_str(), cellStoreVector[i].c_str());
-      continue;
-    }
-    if (minLogCutoff == 0 || cellStorePtr->get_log_cutoff_time() < minLogCutoff)
-      minLogCutoff = cellStorePtr->get_log_cutoff_time();
-    ag->add_cell_store(cellStorePtr, storeId);
-    //cout << "Just added " << cellStorePtrVector[i].c_str() << endl;
+  }
+  else {
+    // TODO: read from hyperspace
   }
 
   return;
@@ -105,27 +91,127 @@ Range::~Range() {
 }
 
 
+
+/**
+ *
+ */
+int Range::load_cell_stores() {
+  AccessGroup *ag;
+  CellStorePtr cellStorePtr;
+  CellT cell;
+  KeySpec key;
+  ScanSpecificationT scan_spec;
+  TableScannerPtr scanner_ptr;
+  const char *base, *ptr, *end;
+  int error;
+  int32_t len;
+  std::string ag_name;
+  std::string file_str;
+  uint32_t csid;
+  uint64_t minLogCutoff = 0;
+  std::vector<std::string> csvec;
+  std::string metadata_key = std::string("") + (uint32_t)m_identifier.id + ":" + m_end_row;
+
+  scan_spec.rowLimit = 1;
+  scan_spec.max_versions = 1;
+  scan_spec.startRow = metadata_key.c_str();
+  scan_spec.startRowInclusive = true;
+  scan_spec.endRow = metadata_key.c_str();
+  scan_spec.endRowInclusive = true;
+  scan_spec.interval.first = 0;
+  scan_spec.interval.second = ScanContext::END_OF_TIME;
+  scan_spec.columns.clear();
+  scan_spec.columns.push_back("Files");
+
+  if ((error = Global::metadata_table_ptr->create_scanner(scan_spec, scanner_ptr)) != Error::OK) {
+    LOG_ERROR("Problem creating scanner on METADATA table");
+    return error;
+  }
+
+  try {
+
+    while (scanner_ptr->next(cell)) {
+
+      if (strcmp(cell.column_family, "Files")) {
+	// should never happen
+	LOG_VA_ERROR("Scanner requested column 'Files' but got '%s'", cell.column_family);
+	return Error::INVALID_METADATA;
+      }
+
+      ag_name = std::string(cell.column_qualifier);
+
+      ag = m_access_group_map[ag_name];
+      if (ag == 0) {
+	LOG_VA_ERROR("Unrecognized access group name '%s' found in METADATA for table '%s'", ag_name.c_str(), m_identifier.name);
+	continue;
+      }
+
+      csvec.clear();
+      ptr = base = (const char *)cell.value;
+      end = (const char *)cell.value + cell.value_len;
+      while (ptr < end) {
+
+	while (*ptr != ';' && ptr < end)
+	  ptr++;
+
+	file_str = std::string(base, ptr-base);
+	boost::trim(file_str);
+
+	if (file_str != "")
+	  csvec.push_back(file_str);
+
+	++ptr;
+	base = ptr;
+      }
+
+      for (size_t i=0; i<csvec.size(); i++) {
+
+	cellStorePtr = new CellStoreV0(Global::dfs);
+
+	if (!extract_csid_from_path(csvec[i], &csid)) {
+	  LOG_VA_ERROR("Unable to extract cell store ID from path '%s'", csvec[i].c_str());
+	  continue;
+	}
+	if ((error = cellStorePtr->open(csvec[i].c_str(), m_start_row.c_str(), m_end_row.c_str())) != Error::OK) {
+	  // this should throw an exception
+	  LOG_VA_ERROR("Problem opening cell store '%s', skipping...", csvec[i].c_str());
+	  continue;
+	}
+	if ((error = cellStorePtr->load_index()) != Error::OK) {
+	  // this should throw an exception
+	  LOG_VA_ERROR("Problem loading index of cell store '%s', skipping...", csvec[i].c_str());
+	  continue;
+	}
+
+	// TODO: maybe do something here?
+	if (minLogCutoff == 0 || cellStorePtr->get_log_cutoff_time() < minLogCutoff)
+	  minLogCutoff = cellStorePtr->get_log_cutoff_time();
+
+	ag->add_cell_store(cellStorePtr, csid);
+      }
+    }
+
+  }
+  catch (Hypertable::Exception &e) {
+    LOG_VA_ERROR("%s", e.what());
+    return e.code();
+  }
+
+  return Error::OK;
+}
+
+
+
 /**
  */
-bool Range::extract_access_group_from_path(std::string &path, std::string &name, uint32_t *storeIdp) {
-  const char *base = strstr(path.c_str(), m_identifier.name);
+bool Range::extract_csid_from_path(std::string &path, uint32_t *csidp) {
+  const char *base;
   const char *endptr;
 
-  if (base == 0)
-    return false;
-
-  base += strlen(m_identifier.name);
-  if (*base++ != '/')
-    return false;
-  endptr = strchr(base, '/');
-  if (endptr == 0)
-    return false;
-  name = string(base, endptr-base);
-
   if ((base = strrchr(path.c_str(), '/')) == 0 || strncmp(base, "/cs", 3))
-    *storeIdp = 0;
+    *csidp = 0;
   else
-    *storeIdp = atoi(base+3);
+    *csidp = atoi(base+3);
   
   return true;
 }
@@ -245,9 +331,11 @@ void Range::do_maintenance() {
   if (disk_usage() > Global::rangeMaxBytes) {
     std::string splitLogDir;
     char md5DigestStr[33];
-    RangeInfoPtr rangeInfoPtr;
     int error;
     std::string old_start_row;
+    MutatorPtr mutator_ptr;
+    KeySpec key;
+    std::string metadata_key_str;
 
     // this call sets m_split_row
     get_split_row();
@@ -270,30 +358,30 @@ void Range::do_maintenance() {
     /**
      *  Update METADATA with split information
      */
-    if ((error = Global::metadata->get_range_info(m_identifier.name, m_end_row.c_str(), rangeInfoPtr)) != Error::OK) {
-      LOG_VA_ERROR("Unable to find range (table='%s' endRow='%s') in metadata - %s",
-		   m_identifier.name, m_end_row.c_str(), Error::get_text(error));
-      exit(1);
+    if ((error = Global::metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK) {
+      // TODO: throw exception
+      LOG_ERROR("Problem creating mutator on METADATA table");
+      return;
     }
-    rangeInfoPtr->set_split_point(m_split_row);
-    rangeInfoPtr->set_split_log_dir(splitLogDir);
-    Global::metadata->sync();
 
-#ifdef METADATA_TEST
-    if (Global::metadata_range_server) {
-      DynamicBuffer send_buf(0);
-      std::string row_key = std::string("") + (uint32_t)m_identifier.id + ":" + m_end_row;
-      CreateKeyAndAppend(send_buf, FLAG_INSERT, row_key.c_str(), Global::metadata_column_family_SplitPoint, 0, Global::log->get_timestamp());
-      CreateAndAppend(send_buf, m_split_row.c_str());
-      CreateKeyAndAppend(send_buf, FLAG_INSERT, row_key.c_str(), Global::metadata_column_family_SplitLogDir, 0, Global::log->get_timestamp());
-      CreateAndAppend(send_buf, splitLogDir.c_str());
-      if ((error = Global::metadata_range_server->update(Global::local_addr, Global::metadata_identifier, send_buf.buf, send_buf.fill())) != Error::OK) {
-	LOG_VA_ERROR("Problem updating METADATA LogDir: column - %s", Error::get_text(error));
-	DUMP_CORE;
-      }
-      send_buf.release();
+    metadata_key_str = std::string("") + (uint32_t)m_identifier.id + ":" + m_end_row;
+    key.row = metadata_key_str.c_str();
+    key.row_len = metadata_key_str.length();
+    key.column_qualifier = 0;
+    key.column_qualifier_len = 0;
+
+    try {
+      key.column_family = "SplitPoint";
+      mutator_ptr->set(0, key, (uint8_t *)m_split_row.c_str(), m_split_row.length());
+      key.column_family = "SplitLogDir";
+      mutator_ptr->set(0, key, (uint8_t *)splitLogDir.c_str(), splitLogDir.length());
+      mutator_ptr->flush();
     }
-#endif
+    catch (Hypertable::Exception &e) {
+      // TODO: propagate exception
+      LOG_VA_ERROR("Problem updating METADATA with split info (row key = %s) - %s", metadata_key_str.c_str(), e.what());
+      return;
+    }
 
     /**
      * Atomically obtain timestamp and install split log
@@ -328,71 +416,58 @@ void Range::do_maintenance() {
     /**
      * Create METADATA entry for new range
      */
-    {
-      std::vector<std::string> stores;
-      std::string table_name = m_identifier.name;
-      RangeInfoPtr newRangePtr( new RangeInfo() );
-      newRangePtr->set_table_name(table_name);
-      newRangePtr->set_start_row(m_start_row);
-      newRangePtr->set_end_row(m_split_row);
-      newRangePtr->set_split_log_dir(splitLogDir);
-      rangeInfoPtr->get_tables(stores);
-      for (std::vector<std::string>::iterator iter = stores.begin(); iter != stores.end(); iter++)
-	newRangePtr->add_cell_store(*iter);
-      Global::metadata->add_range_info(newRangePtr);
-      Global::metadata->sync();
+    try {
+      std::string files;
+      metadata_key_str = std::string("") + (uint32_t)m_identifier.id + ":" + m_split_row;
+      key.row = metadata_key_str.c_str();
+      key.row_len = metadata_key_str.length();
+      key.column_qualifier = 0;
+      key.column_qualifier_len = 0;
 
-#ifdef METADATA_TEST
-      if (Global::metadata_range_server) {
-	DynamicBuffer send_buf(0);
-	std::string row_key = std::string("") + (uint32_t)m_identifier.id + ":" + m_split_row;
-	std::string files = "";
-	CreateKeyAndAppend(send_buf, FLAG_INSERT, row_key.c_str(), Global::metadata_column_family_StartRow, 0, Global::log->get_timestamp());
-	CreateAndAppend(send_buf, m_start_row.c_str());
-	CreateKeyAndAppend(send_buf, FLAG_INSERT, row_key.c_str(), Global::metadata_column_family_SplitLogDir, 0, Global::log->get_timestamp());
-	CreateAndAppend(send_buf, splitLogDir.c_str());
-	for (std::vector<std::string>::iterator iter = stores.begin(); iter != stores.end(); iter++)
-	  files += *iter + "\n";
-	CreateKeyAndAppend(send_buf, FLAG_INSERT, row_key.c_str(), Global::metadata_column_family_Files, 0, Global::log->get_timestamp());
-	CreateAndAppend(send_buf, files.c_str());
-	if ((error = Global::metadata_range_server->update(Global::local_addr, Global::metadata_identifier, send_buf.buf, send_buf.fill())) != Error::OK) {
-	  LOG_VA_ERROR("Problem updating METADATA LogDir: column - %s", Error::get_text(error));
-	  DUMP_CORE;
-	}
-	send_buf.release();
+      key.column_family = "StartRow";
+      mutator_ptr->set(0, key, (uint8_t *)m_start_row.c_str(), m_start_row.length());
+      key.column_family = "SplitLogDir";
+      mutator_ptr->set(0, key, (uint8_t *)splitLogDir.c_str(), splitLogDir.length());
+
+      key.column_family = "Files";
+      for (size_t i=0; i<m_access_group_vector.size(); i++) {
+	key.column_qualifier = m_access_group_vector[i]->get_name();
+	key.column_qualifier_len = strlen(m_access_group_vector[i]->get_name());
+	m_access_group_vector[i]->get_files(files);
+	mutator_ptr->set(0, key, (uint8_t *)files.c_str(), files.length());
       }
-#endif
-
+      mutator_ptr->flush();
+    }
+    catch (Hypertable::Exception &e) {
+      // TODO: propagate exception
+      LOG_VA_ERROR("Problem updating METADATA with new range information (row key = %s) - %s", metadata_key_str.c_str(), e.what());
+      //return;
     }
 
     /**
      *  Shrink range and remove pending split info from METADATA for existing range
      */
-    {
-      boost::mutex::scoped_lock lock(m_mutex);
+    try {
+      boost::mutex::scoped_lock lock(m_mutex);  // why is this lock here?  can we move this block up?
       old_start_row = m_start_row;
       m_start_row = m_split_row;
-      splitLogDir = "";
-      rangeInfoPtr->set_start_row(m_start_row);
-      rangeInfoPtr->set_split_log_dir(splitLogDir);
-      Global::metadata->sync();
 
-#ifdef METADATA_TEST
-      if (Global::metadata_range_server) {
-	DynamicBuffer send_buf(0);
-	std::string row_key = std::string("") + (uint32_t)m_identifier.id + ":" + m_end_row;
-	CreateKeyAndAppend(send_buf, FLAG_INSERT, row_key.c_str(), Global::metadata_column_family_StartRow, 0, Global::log->get_timestamp());
-	CreateAndAppend(send_buf, m_start_row.c_str());
-	CreateKeyAndAppend(send_buf, FLAG_INSERT, row_key.c_str(), Global::metadata_column_family_SplitLogDir, 0, Global::log->get_timestamp());
-	CreateAndAppend(send_buf, "");
-	if ((error = Global::metadata_range_server->update(Global::local_addr, Global::metadata_identifier, send_buf.buf, send_buf.fill())) != Error::OK) {
-	  LOG_VA_ERROR("Problem updating METADATA LogDir: column - %s", Error::get_text(error));
-	  DUMP_CORE;
-	}
-	send_buf.release();
-      }
-#endif
+      metadata_key_str = std::string("") + (uint32_t)m_identifier.id + ":" + m_end_row;
+      key.row = metadata_key_str.c_str();
+      key.row_len = metadata_key_str.length();
+      key.column_qualifier = 0;
+      key.column_qualifier_len = 0;
 
+      key.column_family = "StartRow";
+      mutator_ptr->set(0, key, (uint8_t *)m_start_row.c_str(), m_start_row.length());
+      key.column_family = "SplitLogDir";
+      mutator_ptr->set(0, key, 0, 0);
+      mutator_ptr->flush();
+    }
+    catch (Hypertable::Exception &e) {
+      // TODO: propagate exception
+      LOG_VA_ERROR("Problem resetting METADATA after split (row key = %s) - %s", metadata_key_str.c_str(), e.what());
+      //return;
     }
 
     /**

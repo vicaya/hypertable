@@ -91,6 +91,7 @@ namespace {
     { Error::RANGESERVER_SCHEMA_INVALID_CFID,  "RANGE SERVER invalid column family id" },
     { Error::RANGESERVER_INVALID_COLUMNFAMILY, "RANGE SERVER invalid column family" },
     { Error::RANGESERVER_TRUNCATED_COMMIT_LOG, "RANGE SERVER truncated commit log" },
+    { Error::RANGESERVER_NO_METADATA_FOR_RANGE, "RANGE SERVER no metadata for range" },
     { 0, 0 }
   };
 
@@ -168,6 +169,7 @@ const int Error::RANGESERVER_INVALID_SCANNER_ID;
 const int Error::RANGESERVER_SCHEMA_PARSE_ERROR;
 const int Error::RANGESERVER_SCHEMA_INVALID_CFID;
 const int Error::RANGESERVER_TRUNCATED_COMMIT_LOG;
+const int Error::RANGESERVER_NO_METADATA_FOR_RANGE;
 
 const char *Error::get_text(int error) {
   const char *text = textMap[error];

@@ -114,12 +114,12 @@ Table::~Table() {
 
 
 int Table::create_mutator(MutatorPtr &mutator_ptr) {
-  mutator_ptr = new Mutator(m_conn_manager_ptr->get_comm(), &m_table, m_schema_ptr, m_range_locator_ptr);
+  mutator_ptr = new Mutator(m_comm, &m_table, m_schema_ptr, m_range_locator_ptr);
   return Error::OK;
 }
 
 
 int Table::create_scanner(ScanSpecificationT &scan_spec, TableScannerPtr &scanner_ptr) {
-  scanner_ptr = new TableScanner(m_conn_manager_ptr->get_comm(), &m_table, m_schema_ptr, m_range_locator_ptr, scan_spec);
+  scanner_ptr = new TableScanner(m_comm, &m_table, m_schema_ptr, m_range_locator_ptr, scan_spec);
   return Error::OK;
 }

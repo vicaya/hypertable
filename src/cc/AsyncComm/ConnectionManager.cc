@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <cstdlib>
 #include <iostream>
 
 extern "C" {
@@ -199,7 +200,15 @@ void ConnectionManager::send_connect_request(ConnectionState *connState) {
 
     // reschedule
     boost::xtime_get(&connState->nextRetry, boost::TIME_UTC);
-    connState->nextRetry.sec += connState->timeout;
+    int32_t sec_addition;
+    if (rand() % 2)
+      sec_addition = connState->timeout + (rand() % 2);
+    else
+      sec_addition = connState->timeout - (rand() % 2);
+    if (sec_addition < 1)
+      sec_addition = 1;
+    connState->nextRetry.sec += sec_addition;
+    connState->nextRetry.nsec = ((int64_t)rand() << 32) | rand();
 
     // add to retry heap
     m_impl->retryQueue.push(connState);

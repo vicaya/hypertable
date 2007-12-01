@@ -52,7 +52,7 @@ namespace Hypertable {
       m_schema = schemaPtr;
     }
     bool get_range(RangeT *range, RangePtr &rangePtr);
-    void add_range(RangeInfoPtr &rangeInfoPtr, RangePtr &rangePtr);
+    void add_range(RangeT *range, RangePtr &rangePtr);
     bool find_containing_range(std::string row, RangePtr &rangePtr);
 
   private:

@@ -370,14 +370,14 @@ int RangeLocator::read_root_location() {
   
   m_cache.insert(0, m_root_range_info, true);
 
+  if (!LocationCache::location_to_addr((const char *)value.buf, m_root_addr)) {
+    LOG_ERROR("Bad format of 'location' attribute of /hypertable/root Hyperspace file");
+    return Error::BAD_ROOT_LOCATION;    
+  }
+
   if (m_conn_manager_ptr) {
 
-    if (!LocationCache::location_to_addr((const char *)value.buf, m_root_addr)) {
-      LOG_ERROR("Bad format of 'location' attribute of /hypertable/root Hyperspace file");
-      return Error::BAD_ROOT_LOCATION;    
-    }
-
-    m_conn_manager_ptr->add(m_root_addr, 30, "Root RangeServer");
+    m_conn_manager_ptr->add(m_root_addr, 8, "Root RangeServer");
 
     if (!m_conn_manager_ptr->wait_for_connection(m_root_addr, 20)) {
       std::string addr_str;

@@ -93,6 +93,7 @@ namespace Hypertable {
     std::string            m_location;
     ConnectionHandler     *m_master_connection_handler;
     MasterClientPtr        m_master_client_ptr;
+
   };
   typedef boost::intrusive_ptr<RangeServer> RangeServerPtr;
   

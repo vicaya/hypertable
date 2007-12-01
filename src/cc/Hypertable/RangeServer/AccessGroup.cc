@@ -33,12 +33,12 @@
 #include "MergeScanner.h"
 
 
-AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *lg, RangeInfoPtr &rangeInfoPtr) : CellList(), m_mutex(), m_lock(m_mutex,false), m_schema_ptr(schemaPtr), m_name(lg->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_log_cutoff_time(0), m_disk_usage(0) {
-  rangeInfoPtr->get_table_name(m_table_name);
-  rangeInfoPtr->get_start_row(m_start_row);
-  rangeInfoPtr->get_end_row(m_end_row);
+AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range) : CellList(), m_mutex(), m_lock(m_mutex,false), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_log_cutoff_time(0), m_disk_usage(0) {
+  m_table_name = table_identifier.name;
+  m_start_row = range->startRow;
+  m_end_row = range->endRow;
   m_cell_cache_ptr = new CellCache();
-  for (list<Schema::ColumnFamily *>::iterator iter = lg->columns.begin(); iter != lg->columns.end(); iter++) {
+  for (list<Schema::ColumnFamily *>::iterator iter = ag->columns.begin(); iter != ag->columns.end(); iter++) {
     m_column_families.insert((uint8_t)(*iter)->id);
   }
   Copy(table_identifier, m_table_identifier);
@@ -135,11 +135,12 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
   ByteString32T *value = 0;
   Key keyComps;
   CellListScannerPtr scannerPtr;
-  RangeInfoPtr rangeInfoPtr;
   size_t tableIndex = 1;
   int error;
   CellStorePtr cellStorePtr;
   vector<string> replacedFiles;
+  std::string files;
+  std::string metadata_key_str;
 
   {
     boost::mutex::scoped_lock lock(m_mutex);
@@ -148,7 +149,7 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
       if (m_cell_cache_ptr->memory_used() == 0 && m_stores.size() <= (size_t)1)
 	return;
       tableIndex = 0;
-      LOG_INFO("Starting Major Compaction");
+      LOG_VA_INFO("Starting Major Compaction (%s.%s)", m_table_name.c_str(), m_name.c_str());
     }
     else {
       if (m_cell_cache_ptr->memory_used() < (uint32_t)Global::localityGroupMaxMemory)
@@ -158,11 +159,11 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
 	ltCellStore sortObj;
 	sort(m_stores.begin(), m_stores.end(), sortObj);
 	tableIndex = m_stores.size() - Global::localityGroupMergeFiles;
-	LOG_INFO("Starting Merging Compaction");
+	LOG_VA_INFO("Starting Merging Compaction (%s.%s)", m_table_name.c_str(), m_name.c_str());
       }
       else {
 	tableIndex = m_stores.size();
-	LOG_INFO("Starting Minor Compaction");
+	LOG_VA_INFO("Starting Minor Compaction (%s.%s)", m_table_name.c_str(), m_name.c_str());
       }
     }
   }
@@ -233,38 +234,6 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
   */
 
   /**
-   *  Update METADATA with new cellStore information
-   */
-  if ((error = Global::metadata->get_range_info(m_table_name, m_end_row, rangeInfoPtr)) != Error::OK) {
-    LOG_VA_ERROR("Unable to find tablet (table='%s' endRow='%s') in metadata - %s",
-		 m_table_name.c_str(), m_end_row.c_str(), Error::get_text(error));
-    exit(1);
-  }
-  for (vector<string>::iterator iter = replacedFiles.begin(); iter != replacedFiles.end(); iter++)
-    rangeInfoPtr->remove_cell_store(*iter);
-  rangeInfoPtr->add_cell_store(cellStoreFile);
-  Global::metadata->sync();
-
-#ifdef METADATA_TEST
-  if (Global::metadata_range_server) {
-    DynamicBuffer send_buf(0);
-    std::string row_key = std::string("") + (uint32_t)m_table_identifier.id + ":" + m_end_row;
-    std::string files = "";
-    std::vector<std::string> store_files;
-    rangeInfoPtr->get_tables(store_files);
-    for (std::vector<std::string>::iterator iter = store_files.begin(); iter != store_files.end(); iter++)
-      files += *iter + "\n";
-    CreateKeyAndAppend(send_buf, FLAG_INSERT, row_key.c_str(), Global::metadata_column_family_Files, 0, Global::log->get_timestamp());
-    CreateAndAppend(send_buf, files.c_str());
-    if ((error = Global::metadata_range_server->update(Global::local_addr, Global::metadata_identifier, send_buf.buf, send_buf.fill())) != Error::OK) {
-      LOG_VA_ERROR("Problem updating METADATA Files: column - %s", Error::get_text(error));
-      DUMP_CORE;
-    }
-    send_buf.release();
-  }
-#endif
-
-  /**
    * Install new CellCache and CellStore
    */
   {
@@ -280,15 +249,41 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
     /** Add the new table to the table vector **/
     m_stores.push_back(cellStorePtr);
 
+    get_files(files);
+
     /** Re-compute disk usage **/
     m_disk_usage = 0;
     for (size_t i=0; i<m_stores.size(); i++)
       m_disk_usage += m_stores[i]->disk_usage();
   }
 
+  try {
+    MutatorPtr mutator_ptr;
+    KeySpec key;
+
+    if ((error = Global::metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK) {
+      // TODO: throw exception
+      LOG_VA_ERROR("Problem creating mutator on METADATA table - %s", Error::get_text(error));
+    }
+    else {
+      metadata_key_str = std::string("") + (uint32_t)m_table_identifier.id + ":" + m_end_row;
+      key.row = metadata_key_str.c_str();
+      key.row_len = metadata_key_str.length();
+      key.column_family = "Files";
+      key.column_qualifier = m_name.c_str();
+      key.column_qualifier_len = m_name.length();
+      mutator_ptr->set(0, key, (uint8_t *)files.c_str(), files.length());
+      mutator_ptr->flush();
+    }
+  }
+  catch (Hypertable::Exception &e) {
+    // TODO: propagate exception
+    LOG_VA_ERROR("Problem updating METADATA with new file information (row key = %s) - %s", metadata_key_str.c_str(), e.what());
+  }
+
   // TODO: Compaction thread function should re-shuffle the heap of locality groups and purge the commit log
 
-  LOG_INFO("Finished Compaction");
+  LOG_VA_INFO("Finished Compaction (%s.%s)", m_table_name.c_str(), m_name.c_str());
 }
 
 
@@ -345,3 +340,13 @@ int AccessGroup::shrink(std::string &new_start_row) {
   return Error::OK;
 }
 
+
+
+/**
+ *
+ */
+void AccessGroup::get_files(std::string &text) {
+  text = "";
+  for (size_t i=0; i<m_stores.size(); i++)
+    text += m_stores[i]->get_filename() + ";\n";
+}
