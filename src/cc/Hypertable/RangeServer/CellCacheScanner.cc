@@ -46,9 +46,17 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellCachePtr, ScanContextPtr &s
   m_cur_iter = m_start_iter;
 
   if (m_cur_iter != m_end_iter) {
-    m_cur_key = (*m_cur_iter).first;
-    m_cur_value = (*m_cur_iter).second;
-    m_eos = false;
+    Key keyComps;
+    if (!keyComps.load((*m_cur_iter).first)) {
+      LOG_ERROR("Problem parsing key!");
+      m_eos = true;
+    }
+    else if (m_scan_context_ptr->familyMask[keyComps.column_family_code]) {
+      m_cur_key = (*m_cur_iter).first;
+      m_cur_value = (*m_cur_iter).second;
+    }
+    else
+      forward();
   }
   else
     m_eos = true;
@@ -63,6 +71,8 @@ bool CellCacheScanner::get(ByteString32T **keyp, ByteString32T **valuep) {
   }
   return false;
 }
+
+
 
 void CellCacheScanner::forward() {
   boost::mutex::scoped_lock lock(m_cell_cache_mutex);

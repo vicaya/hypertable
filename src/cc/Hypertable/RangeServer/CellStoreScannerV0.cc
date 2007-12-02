@@ -93,6 +93,17 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPt
     }
   }
 
+  /**
+   * Column family check
+   */
+  Key keyComps;
+  if (!keyComps.load(m_cur_key)) {
+    LOG_ERROR("Problem parsing key!");
+  }
+  else if (!m_scan_context_ptr->familyMask[keyComps.column_family_code]) {
+    forward();
+  }
+
 }
 
 

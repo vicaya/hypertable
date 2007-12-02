@@ -257,6 +257,8 @@ if [ "$START_RANGESERVER" == "true" ] ; then
 	fi
     fi
     echo "Successfully started Hypertable.RangeServer"
+else
+    exit 0
 fi
 
 #

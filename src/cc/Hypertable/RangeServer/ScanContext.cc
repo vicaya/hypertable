@@ -20,6 +20,8 @@
 
 #include <cassert>
 
+#include "Common/Logger.h"
+
 #include "Hypertable/Lib/Key.h"
 
 #include "ScanContext.h"
