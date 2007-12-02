@@ -275,6 +275,14 @@ bool FileUtils::exists(const char *fname) {
   return true;
 }
 
+uint64_t FileUtils::size(const char *fname) {
+  struct stat statbuf;
+  if (stat(fname, &statbuf) != 0)
+    return 0;
+  return statbuf.st_size;
+  
+}
+
 
 off_t FileUtils::length(const char *fname) {
   struct stat statbuf;

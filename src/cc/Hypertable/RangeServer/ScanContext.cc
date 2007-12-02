@@ -114,8 +114,13 @@ void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp)
       end_row = Key::END_ROW_MARKER;
     else {
       end_row = spec->endRow;
-      if (spec->endRowInclusive)
-	end_row.append(1,1);    // bump to next row
+      if (spec->endRowInclusive) {
+	uint8_t last_char = spec->endRow[strlen(spec->endRow)-1];
+	if (last_char == 0xff)
+	  end_row.append(1,1);    // bump to next row
+	else
+	  end_row[strlen(spec->endRow)-1] = (last_char+1);
+      }
     }
   }
   else {

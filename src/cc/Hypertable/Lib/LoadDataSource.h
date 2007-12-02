@@ -41,7 +41,7 @@ namespace Hypertable {
       return;
     }
 
-    bool next(uint64_t *timestampp, KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp);
+    bool next(uint64_t *timestampp, KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp=0);
 
   private:
     std::ifstream m_fin;

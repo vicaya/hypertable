@@ -23,11 +23,15 @@
 #include "MutatorDispatchHandler.h"
 #include "MutatorScatterBuffer.h"
 
+namespace {
+  const int MAX_SEND_BUFFER_SIZE = 65536;
+}
+
 
 /**
  *
  */
-MutatorScatterBuffer::MutatorScatterBuffer(Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, 30), m_table_name(table_identifier->name) {
+MutatorScatterBuffer::MutatorScatterBuffer(Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, 30), m_table_name(table_identifier->name), m_full(false) {
   // copy TableIdentifierT
   memcpy(&m_table_identifier, table_identifier, sizeof(TableIdentifierT));
   m_table_identifier.name = m_table_name.c_str();
@@ -60,6 +64,9 @@ int MutatorScatterBuffer::set(Key &key, uint8_t *value, uint32_t value_len) {
   (*iter).second->key_offsets.push_back((*iter).second->buf.fill());
   CreateKeyAndAppend((*iter).second->buf, FLAG_INSERT, key.row, key.column_family_code, key.column_qualifier, key.timestamp);
   CreateAndAppend((*iter).second->buf, value, value_len);
+
+  if ((*iter).second->buf.fill() > MAX_SEND_BUFFER_SIZE)
+    m_full = true;
   
   return Error::OK;
 }
@@ -91,6 +98,9 @@ int MutatorScatterBuffer::set(ByteString32T *key, ByteString32T *value) {
   (*iter).second->key_offsets.push_back((*iter).second->buf.fill());
   (*iter).second->buf.add(key, Length(key));
   (*iter).second->buf.add(value, Length(value));
+
+  if ((*iter).second->buf.fill() > MAX_SEND_BUFFER_SIZE)
+    m_full = true;
   
   return Error::OK;
 }
@@ -173,6 +183,7 @@ MutatorScatterBuffer *MutatorScatterBuffer::create_redo_buffer() {
   std::vector<ByteString32T *>  kvec;
   uint8_t *data, *ptr;
   ByteString32T *low_key, *key, *value;
+  int count = 0;
 
   MutatorScatterBuffer *redo_buffer = new MutatorScatterBuffer(m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
 
@@ -196,6 +207,8 @@ MutatorScatterBuffer *MutatorScatterBuffer::create_redo_buffer() {
 	  return 0;
 	}
 
+	count = 0;
+
 	// now add all of the old keys to the redo buffer
 	while (src_ptr < src_end) {
 	  key = (ByteString32T *)src_ptr;
@@ -206,7 +219,10 @@ MutatorScatterBuffer *MutatorScatterBuffer::create_redo_buffer() {
 	    return 0;
 	  }
 	  src_ptr += Length(key) + Length(value);
+	  count++;
 	}
+
+	LOG_VA_INFO("Partial update, resending %d updates", count);
 
       }
       else {
@@ -226,6 +242,8 @@ MutatorScatterBuffer *MutatorScatterBuffer::create_redo_buffer() {
 	  return 0;
 	}
 
+	count = 0;
+
 	// now add all of the old keys to the redo buffer
 	for (size_t i=0; i<update_buffer_ptr->key_offsets.size(); i++) {
 	  key = (ByteString32T *)(update_buffer_ptr->buf.buf + update_buffer_ptr->key_offsets[i]);
@@ -235,7 +253,10 @@ MutatorScatterBuffer *MutatorScatterBuffer::create_redo_buffer() {
 	    delete redo_buffer;
 	    return 0;
 	  }
+	  count++;
 	}
+
+	LOG_VA_INFO("Send error '%s', resending %d updates", Error::get_text(update_buffer_ptr->error), count);
 
       }
 

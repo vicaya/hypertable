@@ -18,7 +18,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <cstdio>
 #include <cstring>
+
+#include <boost/progress.hpp>
+#include <boost/timer.hpp>
 
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
@@ -139,6 +143,11 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       KeySpec key;
       uint8_t *value;
       uint32_t value_len;
+      boost::timer  my_timer;
+      uint32_t consumed;
+      uint64_t file_size;
+      string start_msg;
+      int thousandth;
 
       if ((error = m_client->open_table(state.table_name, table_ptr)) != Error::OK)
 	throw Exception(error, std::string("Problem opening table '") + state.table_name + "'");
@@ -151,16 +160,35 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       if (!FileUtils::exists(state.str.c_str()))
 	throw Exception(Error::FILE_NOT_FOUND, state.str);
 
+      file_size = FileUtils::size(state.str.c_str());
+
+      printf("\nLoading ");
+      if (file_size > 1000000000000LL)
+	printf("%3lld,", file_size/1000000000000LL);
+      if (file_size > 1000000000LL)
+	printf("%3lld,", (file_size%1000000000000LL) / 1000000000LL);
+      if (file_size > 1000000LL)
+	printf("%3lld,", (file_size%1000000000LL) / 1000000LL);
+      if (file_size > 1000LL)
+	printf("%3lld,", (file_size%1000000LL) / 1000LL);
+      printf("%3lld", file_size % 1000LL);
+      printf(" bytes of input data...\n");
+      fflush(stdout);
+
+      boost::progress_display show_progress( file_size );
+
       lds = new LoadDataSource(state.str);
 
-      while (lds->next(&timestamp, &key, &value, &value_len)) {
+      while (lds->next(&timestamp, &key, &value, &value_len, &consumed)) {
 	try {
 	  mutator_ptr->set(timestamp, key, value, value_len);
 	}
 	catch (Hypertable::Exception &e) {
 	  cerr << "error: " << Error::get_text(e.code()) << " - " << e.what() << endl;
 	}
+	show_progress += consumed;
       }
+      
       delete lds;
       mutator_ptr->flush();
     }

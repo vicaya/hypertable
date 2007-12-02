@@ -40,12 +40,18 @@ using namespace std;
 /**
  * 
  */
-bool LoadDataSource::next(uint64_t *timestampp, KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp) {
+bool LoadDataSource::next(uint64_t *timestampp, KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp) {
   string line;
   char *base, *ptr, *colon;
+  
+  if (consumedp)
+    *consumedp = 0;
 
   while (getline(m_fin, line)) {
     m_cur_line++;
+
+    if (consumedp)
+      *consumedp += line.length() + 1;
 
     m_line_buffer.clear();
 

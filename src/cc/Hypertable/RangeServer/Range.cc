@@ -119,7 +119,7 @@ int Range::load_cell_stores() {
   scan_spec.endRow = metadata_key.c_str();
   scan_spec.endRowInclusive = true;
   scan_spec.interval.first = 0;
-  scan_spec.interval.second = ScanContext::END_OF_TIME;
+  scan_spec.interval.second = 0;
   scan_spec.columns.clear();
   scan_spec.columns.push_back("Files");
 
@@ -135,6 +135,7 @@ int Range::load_cell_stores() {
       if (strcmp(cell.column_family, "Files")) {
 	// should never happen
 	LOG_VA_ERROR("Scanner requested column 'Files' but got '%s'", cell.column_family);
+	LOG_VA_ERROR("value = %s", std::string((const char *)cell.value, cell.value_len).c_str());
 	return Error::INVALID_METADATA;
       }
 

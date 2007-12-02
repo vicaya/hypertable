@@ -75,7 +75,7 @@ void Mutator::set(uint64_t timestamp, KeySpec &key, uint8_t *value, uint32_t val
 
   m_memory_used += 20 + key.row_len + key.column_qualifier_len + value_len;
 
-  if (m_memory_used > m_max_memory) {
+  if (m_buffer_ptr->full() || m_memory_used > m_max_memory) {
 
     if (m_prev_buffer_ptr)
       wait_for_previous_buffer();

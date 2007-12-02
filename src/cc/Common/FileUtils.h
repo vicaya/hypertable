@@ -46,6 +46,7 @@ namespace Hypertable {
     static char *file_to_buffer(const char *fname, off_t *lenp);
     static bool mkdirs(const char *dirname);
     static bool exists(const char *fname);
+    static uint64_t size(const char *fname);
     static off_t length(const char *fname);
     static int getxattr(const char *path, const char *name, void *value, size_t size);
     static int fgetxattr(int fd, const char *name, void *value, size_t size);
