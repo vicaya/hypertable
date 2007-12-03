@@ -59,7 +59,6 @@ namespace Hypertable {
     std::string         m_cur_row;
     RangeLocationInfo   m_range_info;
     struct sockaddr_in  m_cur_addr;
-    RangeT              m_cur_range;
     bool                m_readahead;
     bool                m_fetch_outstanding;
     DispatchHandlerSynchronizer  m_sync_handler;

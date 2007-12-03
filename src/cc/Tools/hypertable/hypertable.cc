@@ -145,12 +145,12 @@ int main(int argc, char **argv) {
   cout << "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer." << endl;
   cout << endl << flush;
 
-  try {
+  g_accum = "";
+  if (!g_batch_mode)
+    using_history();
+  while ((line = rl_gets()) != 0) {
 
-    g_accum = "";
-    if (!g_batch_mode)
-      using_history();
-    while ((line = rl_gets()) != 0) {
+    try {
 
       if (*line == 0)
 	continue;
@@ -230,13 +230,12 @@ int main(int argc, char **argv) {
       }
 
     }
+    catch (Hypertable::Exception &e) {
+      cerr << e.what() << endl;
+      if (g_batch_mode)
+	return 1;
+    }
 
-  }
-  catch (Hypertable::Exception &e) {
-    cerr << e.what() << endl;
-    if (!g_batch_mode)
-      write_history(history_file.c_str());
-    return 1;
   }
 
   if (!g_batch_mode)

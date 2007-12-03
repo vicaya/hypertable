@@ -24,7 +24,7 @@
 #include "MutatorScatterBuffer.h"
 
 namespace {
-  const int MAX_SEND_BUFFER_SIZE = 65536;
+  const int MAX_SEND_BUFFER_SIZE = 1000000;
 }
 
 
@@ -222,7 +222,7 @@ MutatorScatterBuffer *MutatorScatterBuffer::create_redo_buffer() {
 	  count++;
 	}
 
-	LOG_VA_INFO("Partial update, resending %d updates", count);
+	//LOG_VA_INFO("Partial update, resending %d updates", count);
 
       }
       else {
@@ -265,4 +265,18 @@ MutatorScatterBuffer *MutatorScatterBuffer::create_redo_buffer() {
   }
 
   return redo_buffer;
+}
+
+
+void MutatorScatterBuffer::reset() {
+
+  for (UpdateBufferMapT::const_iterator iter = m_buffer_map.begin(); iter != m_buffer_map.end(); iter++) {
+    (*iter).second->key_offsets.clear();
+    (*iter).second->buf.clear();  // maybe deallocate here???
+    (*iter).second->sorted = false;
+    (*iter).second->error = Error::OK;
+    (*iter).second->event_ptr = 0;
+    (*iter).second->dispatch_handler_ptr = 0;
+  }
+
 }

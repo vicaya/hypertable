@@ -464,6 +464,8 @@ void Range::do_maintenance() {
       key.column_family = "SplitLogDir";
       mutator_ptr->set(0, key, 0, 0);
       mutator_ptr->flush();
+
+      LOG_VA_INFO("drj just reset StartRow to '%s' for row %s", m_start_row.c_str(), metadata_key_str.c_str());
     }
     catch (Hypertable::Exception &e) {
       // TODO: propagate exception

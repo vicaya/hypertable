@@ -241,7 +241,7 @@ namespace Hypertable {
     struct scan_set_row {
       scan_set_row(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const { 
-	display_string("scan_set_row");      
+	display_string("scan_set_row");
 	if (state.scan.row != "")
 	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT ROW predicate multiply defined."));
 	else if (state.scan.start_row != "" || state.scan.end_row != "")
@@ -423,6 +423,7 @@ namespace Hypertable {
 	  chlit<>     SEMI(';');
 	  chlit<>     COLON(':');
 	  chlit<>     EQUAL('=');
+	  strlit<>    DOUBLEEQUAL("..");
 	  chlit<>     LT('<');
 	  strlit<>    LE("<=");
 	  strlit<>    GE(">=");
@@ -600,6 +601,7 @@ namespace Hypertable {
 
 	  row_restriction_clause
 	    =  ROW >> EQUAL >> string_literal[scan_set_row(self.state)]
+	    |  ROW >> DOUBLEEQUAL >> string_literal[scan_set_row(self.state)]
 	    | ROW >> GT >> string_literal[scan_set_start_row(self.state, false)]
 	    | ROW >> GE >> string_literal[scan_set_start_row(self.state, true)]
 	    | ROW >> LT >> string_literal[scan_set_end_row(self.state, false)]

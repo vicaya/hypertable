@@ -106,33 +106,26 @@ void Mutator::flush() {
       throw Exception(error, "Errors encountered in result of scatter send");
   }
 
+  m_buffer_ptr->reset();
+
 }
 
 void Mutator::wait_for_previous_buffer() {
   int error;
+  MutatorScatterBuffer *redo_buffer = 0;
+  int wait_time = 2;
 
-  if (m_prev_buffer_ptr->wait_for_completion() != Error::OK) {
-    MutatorScatterBuffer *redo_buffer = 0;
-    int wait_time = 2;
+  while ((error = m_prev_buffer_ptr->wait_for_completion()) != Error::OK && wait_time < 16) {
+
+    // wait a bit
+    poll(0, 0, wait_time*1000);
+    wait_time += 2;
 
     /**
      * Make several attempts to create redo buffer
      */
-    while (wait_time < 10) {
-      try {
-	redo_buffer = m_prev_buffer_ptr->create_redo_buffer();
-	break;
-      }
-      catch (Hypertable::Exception &e) {
-	if (wait_time < 30) {
-	  LOG_VA_WARN("%s - %s", Error::get_text(e.code()), e.what());
-	}
-	else
-	  throw e;
-      }
-      poll(0, 0, wait_time*1000);
-      wait_time += 2;
-    }
+    if ((redo_buffer = m_prev_buffer_ptr->create_redo_buffer()) == 0)
+      continue;
 
     m_prev_buffer_ptr = redo_buffer;
 
@@ -141,16 +134,14 @@ void Mutator::wait_for_previous_buffer() {
      */
     m_prev_buffer_ptr->send();
 
-    /**
-     * Wait for re-send to complete
-     */
-    if ((error = m_prev_buffer_ptr->wait_for_completion()) != Error::OK)
-      throw Exception(error, "Errors encountered in scatter resend");
+  }
 
+  if (error != Error::OK) {
+    LOG_VA_ERROR("Problem resending failed updates - %s", Error::get_text(error));
+    throw Exception(error, "Problem resending failed updates");
   }
   
 }
-
 
 
 #if 0
@@ -159,19 +150,6 @@ void Mutator::wait_for_previous_buffer() {
     void delete_qualified_cell(uint64_t timestamp, KeySpec &key);
 #endif
 
-
-
-/**
- *
-
-void Mutator::flush(MutationResultPtr &resultPtr) {
-
-  // Sweep through the set of per-range queues, sending UPDATE requests to their range servers
-
-  // Increment useCount variable in callback, once for each request that went out
-
-}
- */
 
 
 void Mutator::sanity_check_key(KeySpec &key) {

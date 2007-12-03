@@ -23,6 +23,7 @@
 
 #include <boost/shared_array.hpp>
 
+#include "Common/ByteOrder.h"
 #include "Common/FileUtils.h"
 #include "Common/md5.h"
 #include "Common/StringExt.h"
@@ -744,6 +745,8 @@ namespace {
 void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, BufferT &buffer) {
   const uint8_t *modPtr;
   const uint8_t *modEnd;
+  uint8_t *ts_ptr;
+  const uint8_t auto_ts[8] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
   string errMsg;
   int error = Error::OK;
   TableInfoPtr tableInfoPtr;
@@ -830,6 +833,16 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     goSize = 0;
 
     while (modPtr < modEnd && (endRow == "" || (strcmp(row, endRow.c_str()) <= 0))) {
+
+      // If timestamp value is set to AUTO (zero one's compliment), then assign a timestamp
+      ts_ptr = (uint8_t *)modPtr + Length((const ByteString32T *)modPtr) - 8;
+      if (!memcmp(ts_ptr, auto_ts, 8)) {
+	uint64_t serial_ts = nextTimestamp++;
+	serial_ts = ByteOrderSwapInt64(serial_ts);
+	serial_ts = ~serial_ts;
+	memcpy(ts_ptr, &serial_ts, 8);
+      }
+
       update.base = modPtr;
       modPtr += Length((const ByteString32T *)modPtr); // skip key
       modPtr += Length((const ByteString32T *)modPtr); // skip value

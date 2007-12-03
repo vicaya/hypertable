@@ -52,6 +52,7 @@ namespace Hypertable {
     void send();
     bool completed();
     int wait_for_completion();
+    void reset();
     MutatorScatterBuffer *create_redo_buffer();
 
   private:

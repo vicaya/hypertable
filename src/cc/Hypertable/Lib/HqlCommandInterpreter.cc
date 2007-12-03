@@ -112,6 +112,7 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
 	scan_spec.startRowInclusive = true;
 	scan_spec.endRow = state.scan.row.c_str();
 	scan_spec.endRowInclusive = true;
+	scan_spec.rowLimit = 1;
       }
       else {
 	scan_spec.startRow = (state.scan.start_row == "") ? 0 : state.scan.start_row.c_str();
@@ -148,6 +149,8 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       uint64_t file_size;
       string start_msg;
       int thousandth;
+      double dval;
+      uint64_t insert_count = 0;
 
       if ((error = m_client->open_table(state.table_name, table_ptr)) != Error::OK)
 	throw Exception(error, std::string("Problem opening table '") + state.table_name + "'");
@@ -180,6 +183,7 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       lds = new LoadDataSource(state.str);
 
       while (lds->next(&timestamp, &key, &value, &value_len, &consumed)) {
+	insert_count++;
 	try {
 	  mutator_ptr->set(timestamp, key, value, value_len);
 	}
@@ -191,6 +195,11 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       
       delete lds;
       mutator_ptr->flush();
+
+      double elapsed = my_timer.elapsed();
+
+      printf("Load complete (%.2lfs elapsed, %.2lf bytes/s, %.2lf inserts/s)\n", elapsed, (double)file_size / elapsed, (double)insert_count / elapsed);
+
     }
 
   }
