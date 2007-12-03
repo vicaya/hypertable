@@ -23,6 +23,11 @@
 
 #include <boost/progress.hpp>
 #include <boost/timer.hpp>
+#include <boost/thread/xtime.hpp>
+
+extern "C" {
+#include <time.h>
+}
 
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
@@ -102,6 +107,9 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       TableScannerPtr scanner_ptr;
       ScanSpecificationT scan_spec;
       CellT cell;
+      uint32_t nsec;
+      time_t unix_time;
+      struct tm tms;
 
       scan_spec.rowLimit = state.scan.limit;
       scan_spec.max_versions = state.scan.max_versions;
@@ -130,10 +138,14 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
 	throw Exception(error, std::string("Problem creating scanner on table '") + state.table_name + "'");
 
       while (scanner_ptr->next(cell)) {
-	cout << cell.timestamp << "\t" << cell.row_key << "\t" << cell.column_family;
+	nsec = cell.timestamp % 1000000000LL;
+	unix_time = cell.timestamp / 1000000000LL;
+	localtime_r(&unix_time, &tms);
+	printf("%d-%02d-%02d %02d:%02d:%02d.%d", tms.tm_year+1900, tms.tm_mon+1, tms.tm_mday, tms.tm_hour, tms.tm_min, tms.tm_sec, nsec);
+	printf("\t%s\t%s", cell.row_key, cell.column_family);
 	if (*cell.column_qualifier)
-	  cout << ":"<< cell.column_qualifier;
-	cout << "\t" << std::string((const char *)cell.value, cell.value_len) << endl;
+	  printf(":%s", cell.column_qualifier);
+	printf("\t%s\n", std::string((const char *)cell.value, cell.value_len).c_str());
       }
     }
     else if (state.command == COMMAND_LOAD_DATA) {
@@ -144,13 +156,16 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       KeySpec key;
       uint8_t *value;
       uint32_t value_len;
-      boost::timer  my_timer;
       uint32_t consumed;
       uint64_t file_size;
       string start_msg;
       int thousandth;
       double dval;
       uint64_t insert_count = 0;
+      boost::xtime start_time, finish_time;
+      double elapsed_time;
+
+      boost::xtime_get(&start_time, boost::TIME_UTC);
 
       if ((error = m_client->open_table(state.table_name, table_ptr)) != Error::OK)
 	throw Exception(error, std::string("Problem opening table '") + state.table_name + "'");
@@ -196,9 +211,17 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       delete lds;
       mutator_ptr->flush();
 
-      double elapsed = my_timer.elapsed();
+      boost::xtime_get(&finish_time, boost::TIME_UTC);
 
-      printf("Load complete (%.2lfs elapsed, %.2lf bytes/s, %.2lf inserts/s)\n", elapsed, (double)file_size / elapsed, (double)insert_count / elapsed);
+      if (start_time.sec == finish_time.sec)
+	elapsed_time = (double)(finish_time.nsec - start_time.nsec) / 1000000000.0;
+      else {
+	elapsed_time = finish_time.sec - start_time.sec;
+	elapsed_time += ((1000000000.0 - (double)start_time.nsec) + (double)finish_time.nsec) / 1000000000.0;
+      }
+
+      printf("Load complete (%.2lfs elapsed_time, %.2lf bytes/s, %.2lf inserts/s)\n",
+	     elapsed_time, (double)file_size / elapsed_time, (double)insert_count / elapsed_time);
 
     }
 

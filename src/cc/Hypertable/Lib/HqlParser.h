@@ -57,7 +57,7 @@ namespace Hypertable {
 
     class hql_interpreter_scan_state {
     public:
-      hql_interpreter_scan_state() : start_row_inclusive(true), end_row_inclusive(true), limit(0), max_versions(0), start_time(0), end_time(0) {
+      hql_interpreter_scan_state() : start_row_inclusive(true), end_row_inclusive(true), limit(0), max_versions(0), nanoseconds(0), start_time(0), end_time(0) {
 	memset(&tmval, 0, sizeof(tmval));
       }
       std::vector<std::string> columns;
@@ -69,6 +69,7 @@ namespace Hypertable {
       uint32_t limit;
       uint32_t max_versions;
       struct tm tmval;
+      uint32_t nanoseconds;
       uint64_t start_time;
       uint64_t end_time;
       std::string outfile;
@@ -371,6 +372,16 @@ namespace Hypertable {
       hql_interpreter_state &state;
     };
 
+    struct scan_set_nanoseconds {
+      scan_set_nanoseconds(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(const unsigned int &ival) const { 
+	display_string_with_val("scan_set_nanoseconds", ival);
+	state.scan.nanoseconds = ival;
+      }
+      hql_interpreter_state &state;
+    };
+
+
     struct scan_set_start_time {
       scan_set_start_time(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const { 
@@ -378,7 +389,7 @@ namespace Hypertable {
 	time_t t = mktime(&state.scan.tmval);
 	if (t == (time_t)-1)
 	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT invalid start time."));
-	state.scan.start_time = (uint64_t)t * 1000000LL;
+	state.scan.start_time = (uint64_t)t * 1000000000LL;
       }
       hql_interpreter_state &state;
     };
@@ -390,7 +401,7 @@ namespace Hypertable {
 	time_t t = mktime(&state.scan.tmval);
 	if (t == (time_t)-1)
 	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT invalid end time."));
-	state.scan.end_time = (uint64_t)t * 1000000LL;
+	state.scan.end_time = (uint64_t)t * 1000000000LL;
       }
       hql_interpreter_state &state;
     };
@@ -423,7 +434,7 @@ namespace Hypertable {
 	  chlit<>     SEMI(';');
 	  chlit<>     COLON(':');
 	  chlit<>     EQUAL('=');
-	  strlit<>    DOUBLEEQUAL("..");
+	  strlit<>    DOUBLEEQUAL("==");
 	  chlit<>     LT('<');
 	  strlit<>    LE("<=");
 	  strlit<>    GE(">=");
@@ -601,7 +612,7 @@ namespace Hypertable {
 
 	  row_restriction_clause
 	    =  ROW >> EQUAL >> string_literal[scan_set_row(self.state)]
-	    |  ROW >> DOUBLEEQUAL >> string_literal[scan_set_row(self.state)]
+	    | ROW >> DOUBLEEQUAL >> string_literal[scan_set_row(self.state)]
 	    | ROW >> GT >> string_literal[scan_set_start_row(self.state, false)]
 	    | ROW >> GE >> string_literal[scan_set_start_row(self.state, true)]
 	    | ROW >> LT >> string_literal[scan_set_end_row(self.state, false)]
@@ -631,7 +642,8 @@ namespace Hypertable {
 	    = lexeme_d[
 		       limit_d(0u, 9999u)[uint4_p[scan_set_year(self.state)]] >> '-'    //  Year
 		       >>  limit_d(1u, 12u)[uint2_p[scan_set_month(self.state)]] >> '-' //  Month 01..12
-		       >>  limit_d(1u, 31u)[uint2_p[scan_set_day(self.state)]]          //  Day 01..31
+		       >>  limit_d(1u, 31u)[uint2_p[scan_set_day(self.state)]] >>       //  Day 01..31
+		       !( DOT >> uint_p[scan_set_nanoseconds(self.state)] )
 	    ];	  
 	    
 

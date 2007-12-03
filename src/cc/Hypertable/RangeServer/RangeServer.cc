@@ -800,7 +800,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 
   // timestamp
   gettimeofday(&tval, 0);
-  nextTimestamp = ((uint64_t)tval.tv_sec * 1000000LL) + tval.tv_usec;
+  nextTimestamp = ((uint64_t)tval.tv_sec * 1000000000LL) + (tval.tv_usec * 1000);
 
   while (modPtr < modEnd) {
 

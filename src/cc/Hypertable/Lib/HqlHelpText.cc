@@ -30,6 +30,7 @@ namespace {
   "\n" \
   "CREATE TABLE      - Creates a table\n" \
   "DESCRIBE TABLE    - Displays a table's schema\n" \
+  "LOAD DATA INFILE  - Loads data from a tab delimited input file into a table\n" \
   "SELECT            - Select (and display) cells from a table\n" \
   "SHOW CREATE TABLE - Displays CREATE TABLE command used to create table\n" \
   "\n" \
@@ -74,8 +75,79 @@ namespace {
   "    | END_TIME = timestamp\n" \
   "    | LIMIT = row_count\n" \
   "    | INTO FILE 'file_name' )*\n" \
-  "\n";  
+  "\n" \
+  "timestamp:\n" \
+  "    YYYY-MM-DD HH:MM:SS[.nanoseconds]\n" \
+  "\n";
 
+  const char *help_text_describe_table =
+  "\n" \
+  "DESCRIBE TABLE name\n" \
+  "\n" \
+  "Example:\n" \
+  "\n" \
+  "hypertable> describe table Test1;\n" \
+  "\n" \
+  "<Schema generation=\"1\">\n" \
+  "  <AccessGroup name=\"jan\">\n" \
+  "    <ColumnFamily id=\"4\">\n" \
+  "      <Name>cherry</Name>\n" \
+  "    </ColumnFamily>\n" \
+  "  </AccessGroup>\n" \
+  "  <AccessGroup name=\"default\">\n" \
+  "    <ColumnFamily id=\"5\">\n" \
+  "      <Name>banana</Name>\n" \
+  "    </ColumnFamily>\n" \
+  "    <ColumnFamily id=\"6\">\n" \
+  "      <Name>apple</Name>\n" \
+  "    </ColumnFamily>\n" \
+  "  </AccessGroup>\n" \
+  "  <AccessGroup name=\"marsha\">\n" \
+  "    <ColumnFamily id=\"7\">\n" \
+  "      <Name>onion</Name>\n" \
+  "    </ColumnFamily>\n" \
+  "    <ColumnFamily id=\"8\">\n" \
+  "      <Name>cassis</Name>\n" \
+  "    </ColumnFamily>\n" \
+  "  </AccessGroup>\n" \
+  "</Schema>\n" \
+  "\n";
+
+  const char *help_text_show_create_table = 
+  "\n" \
+  "SHOW CREATE TABLE name\n" \
+  "\n" \
+  "Example:\n" \
+  "\n" \
+  "hypertable> show create table Test1;\n" \
+  "\n" \
+  "CREATE TABLE Test1 (\n" \
+  "  banana,\n" \
+  "  apple,\n" \
+  "  cherry,\n" \
+  "  onion,\n" \
+  "  cassis,\n" \
+  "  ACCESS GROUP jan ( cherry ),\n" \
+  "  ACCESS GROUP default ( banana apple ),\n" \
+  "  ACCESS GROUP marsha ( onion cassis )\n" \
+  ")\n" \
+  "\n";
+
+  const char *help_text_load_data_infile = 
+  "\n" \
+  "LOAD DATA INFILE fname INTO TABLE name\n" \
+  "\n" \
+  "Example:\n" \
+  "\n" \
+  "hypertable> load data infile \"data.txt\" into table Test1;\n" \
+  "\n" \
+  "Loading 238,920,253 bytes of input data...\n" \
+  "\n" \
+  "0%   10   20   30   40   50   60   70   80   90   100%\n" \
+  "|----|----|----|----|----|----|----|----|----|----|\n" \
+  "***************************************************\n" \
+  "Load complete (59.70s elapsed_time, 4001802.20 bytes/s, 33499.06 inserts/s)\n" \
+  "\n";  
 
   typedef __gnu_cxx::hash_map<std::string, const char *>  HelpTextMapT;
 
@@ -84,6 +156,9 @@ namespace {
     (*map)["contents"] = help_text_contents;
     (*map)["create table"] = help_text_create_table;
     (*map)["select"] = help_text_select;
+    (*map)["describe table"] = help_text_describe_table;
+    (*map)["show create table"] = help_text_show_create_table;
+    (*map)["load data infile"] = help_text_load_data_infile;
     return *map;
   }
 

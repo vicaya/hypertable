@@ -114,6 +114,7 @@ int main(int argc, char **argv) {
   string configFile = "";
   Client *hypertable;
   queue<string> command_queue;
+  std::string command;
   const char *base, *ptr;
   HqlCommandInterpreter *interp;
   std::string history_file = (std::string)getenv("HOME") + "/.hypertable_history";
@@ -156,7 +157,7 @@ int main(int argc, char **argv) {
 	continue;
 
       if (!strncasecmp(line, "help", 4) || !strncmp(line, "\\h", 2) || *line == '?') {
-	std::string command = line;
+	command = line;
 	std::transform( command.begin(), command.end(), command.begin(), ::tolower );
 	trim_if(command, boost::is_any_of(" \t\n\r;"));
 	if (command == "help" || command == "\\h" || command == "?") {
@@ -225,8 +226,9 @@ int main(int argc, char **argv) {
 	    write_history(history_file.c_str());
 	  return 0;
 	}
-	interp->execute_line(command_queue.front());
+	command = command_queue.front();
 	command_queue.pop();
+	interp->execute_line(command);
       }
 
     }
