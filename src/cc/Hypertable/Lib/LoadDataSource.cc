@@ -42,7 +42,7 @@ using namespace std;
  */
 bool LoadDataSource::next(uint64_t *timestampp, KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp) {
   string line;
-  char *base, *ptr, *colon;
+  char *base, *ptr, *colon, *endptr;
   
   if (consumedp)
     *consumedp = 0;
@@ -70,8 +70,8 @@ bool LoadDataSource::next(uint64_t *timestampp, KeySpec *keyp, uint8_t **valuep,
     if (!strcmp(base, "AUTO"))
       *timestampp = 0LL;
     else {
-      *timestampp = strtoll(base, 0, 0);
-      if (*timestampp == 0 && errno == EINVAL) {
+      *timestampp = strtoll(base, &endptr, 0);
+      if (*timestampp == 0 && errno == EINVAL || *endptr != 0) {
 	cerr << "error: invalid timestamp (" << base << ") on line " << (m_cur_line-1) << endl;
 	continue;
       }

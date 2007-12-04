@@ -86,6 +86,7 @@ configure_file(${HYPERTABLE_SOURCE_DIR}/test/random.dat ${DST_DIR}/random.dat CO
 configure_file(${SRC_DIR}/schemaTest.golden ${DST_DIR}/schemaTest.golden)
 configure_file(${SRC_DIR}/locationCacheTest.golden ${DST_DIR}/locationCacheTest.golden)
 configure_file(${SRC_DIR}/loadDataSourceTest.golden ${DST_DIR}/loadDataSourceTest.golden)
+configure_file(${SRC_DIR}/loadDataSourceTest.dat ${DST_DIR}/loadDataSourceTest.dat)
 
 add_test (Schema schemaTest)
 add_test (LocationCache locationCacheTest)
