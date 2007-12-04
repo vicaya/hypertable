@@ -276,7 +276,11 @@ uint64_t Range::disk_usage() {
 const char *Range::get_split_row() {
   std::vector<std::string> split_rows;
   for (size_t i=0; i<m_access_group_vector.size(); i++)
-    m_access_group_vector[i]->get_split_rows(split_rows);
+    m_access_group_vector[i]->get_split_rows(split_rows, false);
+  if (split_rows.size() == 0) {
+    for (size_t i=0; i<m_access_group_vector.size(); i++)
+      m_access_group_vector[i]->get_split_rows(split_rows, true);
+  }
   sort(split_rows.begin(), split_rows.end());
   /**
   for (size_t i=0; i<split_rows.size(); i++)

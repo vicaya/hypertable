@@ -80,7 +80,7 @@ bool AccessGroup::include_in_scan(ScanContextPtr &scanContextPtr) {
 
 const char *AccessGroup::get_split_row() {
   std::vector<std::string> split_rows;
-  get_split_rows(split_rows);
+  get_split_rows(split_rows, true);
   if (split_rows.size() > 0) {
     sort(split_rows.begin(), split_rows.end());
     return (split_rows[split_rows.size()/2]).c_str();
@@ -88,10 +88,12 @@ const char *AccessGroup::get_split_row() {
   return "";
 }
 
-void AccessGroup::get_split_rows(std::vector<std::string> &split_rows) {
+void AccessGroup::get_split_rows(std::vector<std::string> &split_rows, bool include_cache) {
   boost::mutex::scoped_lock lock(m_mutex);
   for (size_t i=0; i<m_stores.size(); i++)
     split_rows.push_back(m_stores[i]->get_split_row());
+  if (include_cache)
+    m_cell_cache_ptr->get_split_rows(split_rows);
 }
 
 uint64_t AccessGroup::disk_usage() {

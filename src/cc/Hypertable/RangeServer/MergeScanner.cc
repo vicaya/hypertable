@@ -34,6 +34,8 @@ using namespace Hypertable;
 MergeScanner::MergeScanner(ScanContextPtr &scanContextPtr, bool returnDeletes) : CellListScanner(scanContextPtr), m_done(false), m_initialized(false), m_scanners(), m_queue(), m_delete_present(false), m_deleted_row(0), m_deleted_cell(0), m_return_deletes(returnDeletes), m_row_count(0), m_row_limit(0), m_cell_count(0), m_cell_limit(0), m_cell_cutoff(0), m_prev_key(0) {
   if (scanContextPtr->spec != 0)
     m_row_limit = scanContextPtr->spec->rowLimit;
+  m_start_timestamp = scanContextPtr->interval.first;
+  m_end_timestamp = scanContextPtr->interval.second;
 }
 
 
@@ -82,6 +84,9 @@ void MergeScanner::forward() {
       if (!keyComps.load(sstate.key)) {
 	LOG_ERROR("Problem decoding key!");
       }
+      else if (keyComps.timestamp < m_start_timestamp) {
+	continue;
+      }
       else if (keyComps.flag == FLAG_DELETE_ROW) {
 	len = strlen(keyComps.row) + 1;
 	if (m_delete_present && m_deleted_row.fill() == len && !memcmp(m_deleted_row.buf, keyComps.row, len)) {
@@ -117,6 +122,8 @@ void MergeScanner::forward() {
 	  break;
       }
       else {
+	if (keyComps.timestamp >= m_end_timestamp)
+	  continue;
 	if (m_delete_present) {
 	  if (m_deleted_cell.fill() > 0) {
 	    len = (keyComps.column_qualifier - keyComps.row) + strlen(keyComps.column_qualifier) + 1;
@@ -218,11 +225,21 @@ void MergeScanner::initialize() {
       m_queue.push(sstate);
     }
   }
-  if (!m_queue.empty()) {
+  while (!m_queue.empty()) {
     const ScannerStateT &sstate = m_queue.top();
     Key keyComps;
     if (!keyComps.load(sstate.key)) {
       assert(!"MergeScanner::initialize() - Problem decoding key!");
+    }
+
+    if (keyComps.timestamp < m_start_timestamp) {
+      ScannerStateT tmp_sstate;
+      m_queue.pop();
+      sstate.scanner->forward();
+      tmp_sstate.scanner = sstate.scanner;
+      if (sstate.scanner->get(&tmp_sstate.key, &tmp_sstate.value))
+	m_queue.push(tmp_sstate);
+      continue;
     }
 
     if (keyComps.flag == FLAG_DELETE_ROW) {
@@ -248,12 +265,22 @@ void MergeScanner::initialize() {
 	forward();
     }
     else {
+      if (keyComps.timestamp >= m_end_timestamp) {
+	ScannerStateT tmp_sstate;
+	m_queue.pop();
+	sstate.scanner->forward();
+	tmp_sstate.scanner = sstate.scanner;
+	if (sstate.scanner->get(&tmp_sstate.key, &tmp_sstate.value))
+	  m_queue.push(tmp_sstate);
+	continue;
+      }
       m_delete_present = false;
       m_prev_key.set(sstate.key->data, sstate.key->len);
       m_cell_limit = m_scan_context_ptr->familyInfo[keyComps.column_family_code].max_versions;
       m_cell_cutoff = m_scan_context_ptr->familyInfo[keyComps.column_family_code].cutoffTime;
       m_cell_count = 0;
     }
+    break;
   }
 
   m_initialized = true;

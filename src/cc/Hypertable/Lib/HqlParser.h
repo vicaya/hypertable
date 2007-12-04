@@ -383,27 +383,39 @@ namespace Hypertable {
 
 
     struct scan_set_start_time {
-      scan_set_start_time(hql_interpreter_state &state_) : state(state_) { }
+      scan_set_start_time(hql_interpreter_state &state_, bool inclusive_) : state(state_), inclusive(inclusive_) { }
       void operator()(char const *str, char const *end) const { 
 	display_string("scan_set_start_time");
+	if (state.scan.start_time != 0)
+	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT multiple start time predicates."));
 	time_t t = mktime(&state.scan.tmval);
 	if (t == (time_t)-1)
 	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT invalid start time."));
-	state.scan.start_time = (uint64_t)t * 1000000000LL;
+	state.scan.start_time = (uint64_t)t * 1000000000LL + state.scan.nanoseconds;
+	if (!inclusive)
+	  state.scan.start_time++;
+	state.scan.nanoseconds = 0;
       }
       hql_interpreter_state &state;
+      bool inclusive;
     };
 
     struct scan_set_end_time {
-      scan_set_end_time(hql_interpreter_state &state_) : state(state_) { }
+      scan_set_end_time(hql_interpreter_state &state_, bool inclusive_) : state(state_), inclusive(inclusive_) { }
       void operator()(char const *str, char const *end) const { 
 	display_string("scan_set_end_time");
+	if (state.scan.end_time != 0)
+	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT multiple end time predicates."));
 	time_t t = mktime(&state.scan.tmval);
 	if (t == (time_t)-1)
 	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT invalid end time."));
-	state.scan.end_time = (uint64_t)t * 1000000000LL;
+	state.scan.end_time = (uint64_t)t * 1000000000LL + state.scan.nanoseconds;
+	state.scan.nanoseconds = 0;
+	if (inclusive && state.scan.end_time != 0)
+	  state.scan.end_time--;
       }
       hql_interpreter_state &state;
+      bool inclusive;
     };
 
     struct hql_interpreter : public grammar<hql_interpreter> {
@@ -419,7 +431,8 @@ namespace Hypertable {
 
 	  keywords =
 	    "access", "ACCESS", "Access", "GROUP", "group", "Group",
-	    "from", "FROM", "From";
+	    "from", "FROM", "From", "start_time", "START_TIME", "Start_Time", "Start_time",
+	    "end_time", "END_TIME", "End_Time", "End_time";
 
 	  /**
 	   * OPERATORS
@@ -493,6 +506,7 @@ namespace Hypertable {
 	  token_t LOAD         = as_lower_d["load"];
 	  token_t DATA         = as_lower_d["data"];
 	  token_t INFILE       = as_lower_d["infile"];
+	  token_t TIMESTAMP    = as_lower_d["timestamp"];
 
 	  /**
 	   * Start grammar definition
@@ -603,7 +617,19 @@ namespace Hypertable {
 	      >> ( '*' | ( identifier[scan_add_column_family(self.state)] >> *( COMMA >> identifier[scan_add_column_family(self.state)] ) ) ) 
 	      >> FROM >> identifier[set_table_name(self.state)]
 	      >> !where_clause
+	      >> !time_predicate
 	      >> *( option_spec )
+	    ;
+
+	  time_predicate
+	    = time_predicate_clause >> *( AND >> time_predicate_clause )
+	    ;
+
+	  time_predicate_clause
+	    = TIMESTAMP >> GT >> date_expression[scan_set_start_time(self.state, false)]
+	    | TIMESTAMP >> GE >> date_expression[scan_set_start_time(self.state, true)]
+	    | TIMESTAMP >> LT >> date_expression[scan_set_end_time(self.state, false)]
+	    | TIMESTAMP >> LE >> date_expression[scan_set_end_time(self.state, true)]
 	    ;
 
 	  where_clause
@@ -620,8 +646,8 @@ namespace Hypertable {
 	    ;
 
 	  option_spec
-	    = START_TIME >> EQUAL >> date_expression[scan_set_start_time(self.state)]
-	    | END_TIME >> EQUAL >> date_expression[scan_set_end_time(self.state)]
+	    = START_TIME >> EQUAL >> date_expression[scan_set_start_time(self.state, true)]
+	    | END_TIME >> EQUAL >> date_expression[scan_set_end_time(self.state, false)]
 	    | MAX_VERSIONS >> EQUAL >> uint_p[scan_set_max_versions(self.state)]
 	    | LIMIT >> EQUAL >> uint_p[scan_set_limit(self.state)]
 	    | INTO >> FILE >> string_literal[scan_set_outfile(self.state)]
@@ -642,16 +668,16 @@ namespace Hypertable {
 	    = lexeme_d[
 		       limit_d(0u, 9999u)[uint4_p[scan_set_year(self.state)]] >> '-'    //  Year
 		       >>  limit_d(1u, 12u)[uint2_p[scan_set_month(self.state)]] >> '-' //  Month 01..12
-		       >>  limit_d(1u, 31u)[uint2_p[scan_set_day(self.state)]] >>       //  Day 01..31
-		       !( DOT >> uint_p[scan_set_nanoseconds(self.state)] )
+		       >>  limit_d(1u, 31u)[uint2_p[scan_set_day(self.state)]]          //  Day 01..31
 	    ];	  
 	    
 
 	  time 
 	    = lexeme_d[
-		       limit_d(0u, 23u)[uint2_p[scan_set_hours(self.state)]] >> ':'     //  Hours 00..23
+		       limit_d(0u, 23u)[uint2_p[scan_set_hours(self.state)]] >> ':'       //  Hours 00..23
 		       >>  limit_d(0u, 59u)[uint2_p[scan_set_minutes(self.state)]] >> ':' //  Minutes 00..59
-		       >>  limit_d(0u, 59u)[uint2_p[scan_set_seconds(self.state)]]        //  Seconds 00..59
+		       >>  limit_d(0u, 59u)[uint2_p[scan_set_seconds(self.state)]] >>     //  Seconds 00..59
+		       !( DOT >> uint_p[scan_set_nanoseconds(self.state)] )
 	    ];
 
 	  year
@@ -704,6 +730,8 @@ namespace Hypertable {
 	  BOOST_SPIRIT_DEBUG_RULE(time);
 	  BOOST_SPIRIT_DEBUG_RULE(year);
 	  BOOST_SPIRIT_DEBUG_RULE(load_data_statement);
+	  BOOST_SPIRIT_DEBUG_RULE(time_predicate);
+	  BOOST_SPIRIT_DEBUG_RULE(time_predicate_clause);
 	}
 #endif
 
@@ -718,7 +746,7 @@ namespace Hypertable {
         access_group_option, in_memory_option, blocksize_option, help_statement,
         describe_table_statement, show_statement, select_statement, where_clause,
         row_restriction_clause, option_spec, date_expression, datetime, date, time,
-        year, load_data_statement;
+        year, load_data_statement, time_predicate, time_predicate_clause;
 
       };
 

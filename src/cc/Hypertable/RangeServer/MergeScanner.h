@@ -74,6 +74,8 @@ namespace Hypertable {
     uint32_t      m_cell_count;
     uint32_t      m_cell_limit;
     uint64_t      m_cell_cutoff;
+    uint64_t      m_start_timestamp;
+    uint64_t      m_end_timestamp;
     DynamicBuffer m_prev_key;
   };
 }
