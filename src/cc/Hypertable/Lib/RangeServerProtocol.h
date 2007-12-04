@@ -57,11 +57,12 @@ namespace Hypertable {
      * gets returned.
      *
      * @param table table identifier
+     * @param min_ts minimum timestamp
      * @param data buffer holding key/value pairs
      * @param len length of data buffer
      * @return protocol message
      */
-    static CommBuf *create_request_update(TableIdentifierT &table, uint8_t *data, size_t len);
+    static CommBuf *create_request_update(TableIdentifierT &table, uint64_t min_ts, uint8_t *data, size_t len);
 
     /** Creates a "create scanner" request message.
      *

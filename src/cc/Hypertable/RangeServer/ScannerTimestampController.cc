@@ -18,28 +18,29 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_COMMANDGETSCHEMA_H
-#define HYPERTABLE_COMMANDGETSCHEMA_H
+#include "ScannerTimestampController.h"
 
-#include "Common/InteractiveCommand.h"
+using namespace Hypertable;
 
-namespace Hypertable {
 
-  class Client;
-
-  class CommandGetSchema : public InteractiveCommand {
-  public:
-    CommandGetSchema(Client *client) : m_client(client) { return; }
-    virtual const char *command_text() { return "get schema"; }
-    virtual const char **usage() { return ms_usage; }
-    virtual int run();
-
-  private:
-    static const char *ms_usage[];
-
-    Client *m_client;
-  };
-
+void ScannerTimestampController::add_update_timestamp(uint64_t timestamp) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  m_update_timestamps.push_back(timestamp);
 }
 
-#endif // HYPERTABLE_COMMANDGETSCHEMA_H
+
+void ScannerTimestampController::remove_update_timestamp(uint64_t timestamp) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  UpdateTimestampContainerT::nth_index<1>::type &sorted_index = m_update_timestamps.get<1>();
+  sorted_index.erase(timestamp);
+}
+
+
+uint64_t ScannerTimestampController::get_oldest_update_timestamp() {
+  boost::mutex::scoped_lock lock(m_mutex);
+  UpdateTimestampContainerT::const_iterator iter = m_update_timestamps.begin();
+  if (iter == m_update_timestamps.end())
+    return 0;
+  return *iter;
+}
+

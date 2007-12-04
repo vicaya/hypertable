@@ -109,6 +109,7 @@ namespace Hypertable {
     bool       m_maintenance_in_progress;
 
     uint64_t         m_latest_timestamp;
+    uint64_t         m_temp_timestamp;
     uint64_t         m_split_start_time;
     std::string      m_split_row;
     CommitLogPtr     m_split_log_ptr;

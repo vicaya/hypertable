@@ -54,6 +54,7 @@ namespace Hypertable {
     int wait_for_completion();
     void reset();
     MutatorScatterBuffer *create_redo_buffer();
+    void set_min_timestamp(uint64_t timestamp) { m_min_timestamp = timestamp; }
 
   private:
 
@@ -126,6 +127,7 @@ namespace Hypertable {
     TableIdentifierT     m_table_identifier;
     UpdateBufferMapT     m_buffer_map;
     CompletionCounter    m_completion_counter;
+    uint64_t             m_min_timestamp;
     bool                 m_full;
   };
   typedef boost::intrusive_ptr<MutatorScatterBuffer> MutatorScatterBufferPtr;

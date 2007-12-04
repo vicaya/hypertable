@@ -234,8 +234,8 @@ int Range::add(const ByteString32T *key, const ByteString32T *value) {
     return 0;
   }
 
-  if (keyComps.timestamp > m_latest_timestamp)
-    m_latest_timestamp = keyComps.timestamp;
+  if (keyComps.timestamp > m_temp_timestamp)
+    m_temp_timestamp = keyComps.timestamp;
 
   if (keyComps.flag == FLAG_DELETE_ROW) {
     for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++) {
@@ -573,6 +573,11 @@ uint64_t Range::run_compaction(bool major) {
 
 
 void Range::lock() {
+  // this is a bit of a hack to collect the most recent timestamp seen
+  {
+    boost::mutex::scoped_lock lock(m_mutex);
+    m_temp_timestamp = m_latest_timestamp;
+  }
   for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++)
     (*iter).second->lock();
 }
@@ -581,6 +586,11 @@ void Range::lock() {
 void Range::unlock() {
   for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++)
     (*iter).second->unlock();
+  // this is a bit of a hack to collect the most recent timestamp seen
+  {
+    boost::mutex::scoped_lock lock(m_mutex);
+    m_latest_timestamp = m_temp_timestamp;
+  }
 }
 
 

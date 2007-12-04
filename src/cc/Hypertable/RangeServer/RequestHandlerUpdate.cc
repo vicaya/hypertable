@@ -37,6 +37,7 @@ using namespace Hypertable;
 void RequestHandlerUpdate::run() {
   ResponseCallbackUpdate cb(m_comm, m_event_ptr);
   TableIdentifierT table;
+  uint64_t min_timestamp;
   size_t remaining = m_event_ptr->messageLen - 2;
   uint8_t *msgPtr = m_event_ptr->message + 2;
   BufferT mods;
@@ -45,10 +46,14 @@ void RequestHandlerUpdate::run() {
   if (!DecodeTableIdentifier(&msgPtr, &remaining, &table))
     goto abort;
 
+  // Scanner ID
+  if (!Serialization::decode_long(&msgPtr, &remaining, &min_timestamp))
+    goto abort;
+
   mods.buf = msgPtr;
   mods.len = remaining;
 
-  m_range_server->update(&cb, &table, mods);
+  m_range_server->update(&cb, &table, min_timestamp, mods);
 
   return;
 

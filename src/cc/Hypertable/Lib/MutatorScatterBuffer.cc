@@ -31,7 +31,7 @@ namespace {
 /**
  *
  */
-MutatorScatterBuffer::MutatorScatterBuffer(Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, 30), m_table_name(table_identifier->name), m_full(false) {
+MutatorScatterBuffer::MutatorScatterBuffer(Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, 30), m_table_name(table_identifier->name), m_min_timestamp(0), m_full(false) {
   // copy TableIdentifierT
   memcpy(&m_table_identifier, table_identifier, sizeof(TableIdentifierT));
   m_table_identifier.name = m_table_name.c_str();
@@ -64,6 +64,9 @@ int MutatorScatterBuffer::set(Key &key, uint8_t *value, uint32_t value_len) {
   (*iter).second->key_offsets.push_back((*iter).second->buf.fill());
   CreateKeyAndAppend((*iter).second->buf, FLAG_INSERT, key.row, key.column_family_code, key.column_qualifier, key.timestamp);
   CreateAndAppend((*iter).second->buf, value, value_len);
+
+  if (m_min_timestamp == 0 || key.timestamp < m_min_timestamp)
+    m_min_timestamp = key.timestamp;
 
   if ((*iter).second->buf.fill() > MAX_SEND_BUFFER_SIZE)
     m_full = true;
@@ -150,7 +153,7 @@ void MutatorScatterBuffer::send() {
     /**
      * Send update
      */
-    if ((update_buffer_ptr->error = m_range_server.update(update_buffer_ptr->addr, m_table_identifier, data, ptr-data,
+    if ((update_buffer_ptr->error = m_range_server.update(update_buffer_ptr->addr, m_table_identifier, m_min_timestamp, data, ptr-data,
 							  update_buffer_ptr->dispatch_handler_ptr.get())) != Error::OK)
       update_buffer_ptr->counterp->decrement(update_buffer_ptr->error);
   }
@@ -186,6 +189,7 @@ MutatorScatterBuffer *MutatorScatterBuffer::create_redo_buffer() {
   int count = 0;
 
   MutatorScatterBuffer *redo_buffer = new MutatorScatterBuffer(m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+  redo_buffer->set_min_timestamp(m_min_timestamp);
 
   for (UpdateBufferMapT::const_iterator iter = m_buffer_map.begin(); iter != m_buffer_map.end(); iter++) {
     update_buffer_ptr = (*iter).second;
@@ -269,7 +273,6 @@ MutatorScatterBuffer *MutatorScatterBuffer::create_redo_buffer() {
 
 
 void MutatorScatterBuffer::reset() {
-
   for (UpdateBufferMapT::const_iterator iter = m_buffer_map.begin(); iter != m_buffer_map.end(); iter++) {
     (*iter).second->key_offsets.clear();
     (*iter).second->buf.clear();  // maybe deallocate here???
@@ -278,5 +281,5 @@ void MutatorScatterBuffer::reset() {
     (*iter).second->event_ptr = 0;
     (*iter).second->dispatch_handler_ptr = 0;
   }
-
+  m_min_timestamp = 0;
 }

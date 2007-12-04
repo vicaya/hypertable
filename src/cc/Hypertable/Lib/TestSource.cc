@@ -61,7 +61,7 @@ bool TestSource::next(ByteString32T **keyp, ByteString32T **valuep) {
     }
 
     if (!strcasecmp(ptr, "AUTO")) {
-      timestamp = (uint64_t)-1;
+      timestamp = 0;
     }
     else {
       timestamp = strtoll(ptr, 0, 0);
@@ -69,6 +69,8 @@ bool TestSource::next(ByteString32T **keyp, ByteString32T **valuep) {
 	cerr << "Invalid timestamp (" << ptr << ") on line " << (m_cur_line-1) << endl;
 	continue;
       }
+      if (m_min_timestamp == 0 || timestamp < m_min_timestamp)
+	m_min_timestamp = timestamp;
     }
 
     if ((rowKey = strtok_r(0, "\t", &last)) == 0) {

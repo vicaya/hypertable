@@ -54,7 +54,7 @@ namespace Hypertable {
     void create_scanner(ResponseCallbackCreateScanner *cb, TableIdentifierT *table, RangeT *range, ScanSpecificationT *scan_spec);
     void fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t scannerId);
     void load_range(ResponseCallback *cb, TableIdentifierT *table, RangeT *range, uint16_t flags);
-    void update(ResponseCallbackUpdate *cb, TableIdentifierT *table, BufferT &buffer);
+    void update(ResponseCallbackUpdate *cb, TableIdentifierT *table, uint64_t min_timestamp, BufferT &buffer);
 
     ApplicationQueuePtr get_application_queue_ptr() { return m_app_queue_ptr; }
 
@@ -65,17 +65,8 @@ namespace Hypertable {
   private:
     int directory_initialize(Properties *props);
 
-    bool get_table_info(std::string &name, TableInfoPtr &info);
-    bool get_table_info(const char *name, TableInfoPtr &info) {
-      std::string nameStr = name;
-      return get_table_info(nameStr, info);
-    }
-
-    void set_table_info(std::string &name, TableInfoPtr &info);
-    void set_table_info(const char *name, TableInfoPtr &info) {
-      std::string nameStr = name;
-      set_table_info(nameStr, info);
-    }
+    bool get_table_info(std::string name, TableInfoPtr &info);
+    void set_table_info(std::string name, TableInfoPtr &info);
 
     int verify_schema(TableInfoPtr &tableInfoPtr, int generation, std::string &errMsg);
 
@@ -93,7 +84,6 @@ namespace Hypertable {
     std::string            m_location;
     ConnectionHandler     *m_master_connection_handler;
     MasterClientPtr        m_master_client_ptr;
-
   };
   typedef boost::intrusive_ptr<RangeServer> RangeServerPtr;
   

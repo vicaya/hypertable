@@ -56,7 +56,6 @@ namespace {
  * Constructor
  */
 RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : m_mutex(), m_verbose(false), m_comm(comm) {
-  const char *metadataFile = 0;
   int workerCount;
   int error;
   uint16_t port;
@@ -73,9 +72,6 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : m_mutex(), m_ver
 
   assert(Global::localityGroupMergeFiles <= Global::localityGroupMaxFiles);
 
-  metadataFile = propsPtr->getProperty("metadata");
-  assert(metadataFile != 0);
-
   m_verbose = propsPtr->getPropertyBool("verbose", false);
 
   if (Global::verbose) {
@@ -86,16 +82,10 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : m_mutex(), m_ver
     cout << "Hypertable.RangeServer.Range.MaxBytes=" << Global::rangeMaxBytes << endl;
     cout << "Hypertable.RangeServer.port=" << port << endl;
     cout << "Hypertable.RangeServer.workers=" << workerCount << endl;
-    cout << "METADATA file = '" << metadataFile << "'" << endl;
   }
 
   m_conn_manager_ptr = new ConnectionManager(comm);
   m_app_queue_ptr = new ApplicationQueue(workerCount);
-
-  /**
-   * Load METADATA simulation data
-   */
-  Global::metadata = Metadata::new_instance(metadataFile);
 
   Global::protocol = new Hypertable::RangeServerProtocol();
 
@@ -351,7 +341,8 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
   bool more = true;
   std::set<uint8_t> columnFamilies;
   uint32_t id;
-  uint64_t scanTimestamp;
+  uint64_t scan_timestamp;
+  uint64_t update_timestamp;
   SchemaPtr schemaPtr;
   ScanContextPtr scanContextPtr;
 
@@ -373,8 +364,6 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
     goto abort;
   }
 
-  scanTimestamp = rangePtr->get_timestamp();
-
   schemaPtr = tableInfoPtr->get_schema();
 
   /**
@@ -394,7 +383,17 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
   kvBuffer = new uint8_t [ sizeof(int32_t) + DEFAULT_SCANBUF_SIZE ];
   kvLenp = (uint32_t *)kvBuffer;
 
-  scanContextPtr = new ScanContext(scanTimestamp, scan_spec, schemaPtr);
+  /**
+   * Compute scan timestamp (time for which only records prior will be considered).
+   * It is the lesser of A) the most recent update from the range (plus 1) and
+   * B) the timestamp of the oldest update in progress.
+   */
+  scan_timestamp = rangePtr->get_timestamp() + 1;
+  update_timestamp = Global::scanner_timestamp_controller.get_oldest_update_timestamp();
+  if (update_timestamp < scan_timestamp)
+    scan_timestamp = update_timestamp;
+
+  scanContextPtr = new ScanContext(scan_timestamp, scan_spec, schemaPtr);
   if (scanContextPtr->error != Error::OK) {
     errMsg = "Problem initializing scan context";
     goto abort;
@@ -742,7 +741,7 @@ namespace {
 /**
  * Update
  */
-void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, BufferT &buffer) {
+void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, uint64_t min_timestamp, BufferT &buffer) {
   const uint8_t *modPtr;
   const uint8_t *modEnd;
   uint8_t *ts_ptr;
@@ -764,6 +763,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
   CommitLogPtr splitLogPtr;
   uint64_t splitStartTime;
   size_t goSize = 0;
+  size_t goBase = 0;
   size_t stopSize = 0;
   size_t splitSize = 0;
   std::string endRow;
@@ -799,8 +799,15 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
   modPtr = buffer.buf;
 
   // timestamp
-  gettimeofday(&tval, 0);
-  nextTimestamp = ((uint64_t)tval.tv_sec * 1000000000LL) + (tval.tv_usec * 1000);
+  {
+    boost::xtime now;
+    boost::xtime_get(&now, boost::TIME_UTC);
+    nextTimestamp = ((uint64_t)now.sec * 1000000000LL) + (uint64_t)now.nsec;
+  }
+
+  Global::scanner_timestamp_controller.add_update_timestamp((min_timestamp == 0) ? nextTimestamp : min_timestamp);
+
+  goMods.clear();
 
   while (modPtr < modEnd) {
 
@@ -829,8 +836,6 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 
     splitMods.clear();
     splitSize = 0;
-    goMods.clear();
-    goSize = 0;
 
     while (modPtr < modEnd && (endRow == "" || (strcmp(row, endRow.c_str()) <= 0))) {
 
@@ -876,34 +881,16 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     }
 
     /**
-     * Commit mutations that are destined for this range
-     */
-    if (goSize > 0) {
-      boost::shared_array<uint8_t> bufPtr( new uint8_t [ goSize ] );
-      uint8_t *base = bufPtr.get();
-      uint8_t *ptr = base;
-
-      for (size_t i=0; i<goMods.size(); i++) {
-	memcpy(ptr, goMods[i].base, goMods[i].len);
-	ptr += goMods[i].len;
-      }
-      if ((error = Global::log->write(table->name, base, ptr-base, clientTimestamp)) != Error::OK) {
-	errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to commit log";
-	rangePtr->decrement_update_counter();
-	goto abort;
-      }
-    }
-
-    /**
      * Apply the modifications
      */
     rangePtr->lock();
     /** Apply the GO mods **/
-    for (size_t i=0; i<goMods.size(); i++) {
+    for (size_t i=goBase; i<goMods.size(); i++) {
       ByteString32T *key = (ByteString32T *)goMods[i].base;
       ByteString32T *value = (ByteString32T *)(goMods[i].base + Length(key));
       rangePtr->add(key, value);
     }
+    goBase = goMods.size();
     /** Apply the SPLIT mods **/
     for (size_t i=0; i<splitMods.size(); i++) {
       ByteString32T *key = (ByteString32T *)splitMods[i].base;
@@ -921,6 +908,25 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 
     if (Global::verbose) {
       LOG_VA_INFO("Added %d (%d split off) updates to '%s'", goMods.size()+splitMods.size(), splitMods.size(), table->name);
+    }
+  }
+
+  /**
+   * Commit valid (go) mutations
+   */
+  if (goSize > 0) {
+    boost::shared_array<uint8_t> bufPtr( new uint8_t [ goSize ] );
+    uint8_t *base = bufPtr.get();
+    uint8_t *ptr = base;
+
+    for (size_t i=0; i<goMods.size(); i++) {
+      memcpy(ptr, goMods[i].base, goMods[i].len);
+      ptr += goMods[i].len;
+    }
+    if ((error = Global::log->write(table->name, base, ptr-base, clientTimestamp)) != Error::OK) {
+      errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to commit log";
+      rangePtr->decrement_update_counter();
+      goto abort;
     }
   }
 
@@ -954,6 +960,8 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 
  abort:
 
+  Global::scanner_timestamp_controller.remove_update_timestamp((min_timestamp == 0) ? nextTimestamp : min_timestamp);
+
   if (error != Error::OK) {
     LOG_VA_ERROR("%s '%s'", Error::get_text(error), errMsg.c_str());
     if ((error = cb->error(error, errMsg)) != Error::OK) {
@@ -967,7 +975,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 /**
  *
  */
-bool RangeServer::get_table_info(string &name, TableInfoPtr &info) {
+bool RangeServer::get_table_info(string name, TableInfoPtr &info) {
   boost::mutex::scoped_lock lock(m_mutex);
   TableInfoMapT::iterator iter = m_table_info_map.find(name);
   if (iter == m_table_info_map.end())
@@ -977,18 +985,16 @@ bool RangeServer::get_table_info(string &name, TableInfoPtr &info) {
 }
 
 
-
 /**
  *
  */
-void RangeServer::set_table_info(string &name, TableInfoPtr &info) {
+void RangeServer::set_table_info(string name, TableInfoPtr &info) {
   boost::mutex::scoped_lock lock(m_mutex);
   TableInfoMapT::iterator iter = m_table_info_map.find(name);
   if (iter != m_table_info_map.end())
     m_table_info_map.erase(iter);
   m_table_info_map[name] = info;
 }
-
 
 
 int RangeServer::verify_schema(TableInfoPtr &tableInfoPtr, int generation, std::string &errMsg) {

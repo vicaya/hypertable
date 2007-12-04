@@ -24,6 +24,8 @@
 #include <queue>
 #include <string>
 
+#include <boost/thread/xtime.hpp>
+
 extern "C" {
 #include <sys/time.h>
 }
@@ -89,10 +91,10 @@ namespace Hypertable {
     std::string &get_log_dir() { return m_log_dir; }
 
     uint64_t get_timestamp() { 
-      struct timeval tval;
       boost::mutex::scoped_lock lock(m_mutex);
-      gettimeofday(&tval, 0);
-      return ((uint64_t)tval.tv_sec * 1000000LL) + (uint64_t)tval.tv_usec;
+      boost::xtime now;
+      boost::xtime_get(&now, boost::TIME_UTC);
+      return ((uint64_t)now.sec * 1000000000LL) + (uint64_t)now.nsec;
     }
 
   private:

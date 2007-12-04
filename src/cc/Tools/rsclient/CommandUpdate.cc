@@ -112,8 +112,11 @@ int CommandUpdate::run() {
   DynamicBuffer buf(BUFFER_SIZE);
   ByteString32T *key, *value;
   EventPtr eventPtr;
+  uint64_t min_timestamp;
 
   while (true) {
+
+    tsource->clear_min_timestamp();
 
     while (tsource->next(&key, &value)) {
       buf.ensure(Length(key) + Length(value));
@@ -122,6 +125,8 @@ int CommandUpdate::run() {
       if (buf.fill() > BUFFER_SIZE)
 	break;
     }
+
+    min_timestamp = tsource->get_min_timestamp();
 
     /**
      * Sort the keys
@@ -172,7 +177,7 @@ int CommandUpdate::run() {
     outstanding = false;
 
     if (send_buf_len > 0) {
-      if ((error = m_range_server_ptr->update(m_addr, *table, send_buf, send_buf_len, &syncHandler)) != Error::OK) {
+      if ((error = m_range_server_ptr->update(m_addr, *table, min_timestamp, send_buf, send_buf_len, &syncHandler)) != Error::OK) {
 	LOG_VA_ERROR("Problem sending updates - %s", Error::get_text(error));
 	return error;
       }

@@ -48,7 +48,7 @@ using namespace std;
 
 namespace {
   const char *usage[] = {
-    "usage: Hypertable.range_server --metadata=<file> [OPTIONS]",
+    "usage: Hypertable.range_server [OPTIONS]",
     "",
     "OPTIONS:",
     "  --config=<file>      Read configuration from <file>.  The default config file is",
@@ -71,7 +71,6 @@ namespace {
 int main(int argc, char **argv) {
   string configFile = "";
   string pidFile = "";
-  string metadataFile = "";
   int port, reactorCount;
   char *logBroker = 0;
   Comm *comm = 0;
@@ -90,9 +89,6 @@ int main(int argc, char **argv) {
 	pidFile = &argv[i][10];
       else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
 	Global::verbose = true;
-      else if (!strncmp(argv[i], "--metadata=", 11)) {
-	metadataFile = &argv[i][11];
-      }
       else
 	Usage::dump_and_exit(usage);
     }
@@ -120,12 +116,6 @@ int main(int argc, char **argv) {
     propsPtr->setProperty("Hypertable.RangeServer.CommitLog.DfsBroker.host", logBroker);
     propsPtr->setProperty("Hypertable.RangeServer.CommitLog.DfsBroker.port", portStr);
   }
-
-  if (metadataFile == "") {
-    LOG_ERROR("--metadata argument not specified.");
-    exit(1);
-  }
-  propsPtr->setProperty("metadata", metadataFile.c_str());
 
   reactorCount = propsPtr->getPropertyInt("Hypertable.range_server.reactors", System::get_processor_count());
   ReactorFactory::initialize(reactorCount);

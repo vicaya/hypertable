@@ -56,6 +56,7 @@ ResponseCallbackFetchScanblock.cc
 ResponseCallbackUpdate.cc
 ScanContext.cc
 ScannerMap.cc
+ScannerTimestampController.cc
 TableInfo.cc
 main.cc
 )
