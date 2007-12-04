@@ -34,6 +34,7 @@
 #include "CellStore.h"
 #include "CommitLog.h"
 #include "RangeInfo.h"
+#include "ScannerTimestampController.h"
 
 namespace Hypertable {
 
@@ -58,10 +59,7 @@ namespace Hypertable {
     string &start_row() { return m_start_row; }  // TODO: fix me!!!
     string &end_row() { return m_end_row; }
 
-    uint64_t get_timestamp() {
-      boost::mutex::scoped_lock lock(m_mutex);
-      return m_latest_timestamp;
-    }
+    uint64_t get_timestamp();
 
     int replay_split_log(string &logDir);
 
@@ -71,6 +69,13 @@ namespace Hypertable {
 
     void increment_update_counter();
     void decrement_update_counter();
+
+    void add_update_timestamp(uint64_t timestamp) {
+      m_scanner_timestamp_controller.add_update_timestamp(timestamp);      
+    }
+    void remove_update_timestamp(uint64_t timestamp) {
+      m_scanner_timestamp_controller.remove_update_timestamp(timestamp);      
+    }
 
     bool get_split_info(std::string &split_row, CommitLogPtr &splitLogPtr, uint64_t *splitStartTime) {
       boost::mutex::scoped_lock lock(m_mutex);
@@ -120,6 +125,8 @@ namespace Hypertable {
     bool             m_hold_updates;
     uint32_t         m_update_counter;
     bool             m_is_root;
+    ScannerTimestampController m_scanner_timestamp_controller;
+
   };
 
   typedef boost::intrusive_ptr<Range> RangePtr;

@@ -50,7 +50,7 @@ namespace Hypertable {
     ScanSpecificationT *spec;
     std::string start_row;
     std::string end_row;
-    uint64_t timestamp;
+    std::pair<uint64_t, uint64_t> interval;
     int error;
     bool familyMask[256];
     CellFilterInfoT familyInfo[256];

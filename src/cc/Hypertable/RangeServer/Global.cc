@@ -40,4 +40,3 @@ int32_t                Global::localityGroupMaxMemory = 0;
 ScannerMap             Global::scannerMap;
 FileBlockCache        *Global::blockCache = 0;
 TablePtr               Global::metadata_table_ptr = 0;
-ScannerTimestampController Global::scanner_timestamp_controller;

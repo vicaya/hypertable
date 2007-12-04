@@ -397,7 +397,9 @@ void Range::do_maintenance() {
 
       {
 	boost::mutex::scoped_lock lock(m_mutex);
-	m_split_start_time = m_latest_timestamp;
+	m_split_start_time = m_scanner_timestamp_controller.get_oldest_update_timestamp();
+	if (m_split_start_time == 0 || m_latest_timestamp < m_split_start_time)
+	  m_split_start_time = m_latest_timestamp;
       }
 
       m_split_log_ptr = new CommitLog(Global::dfs, splitLogDir, 0x100000000LL);
@@ -407,12 +409,13 @@ void Range::do_maintenance() {
       m_maintenance_finished_cond.notify_all();
     }
 
+
     /**
-     * Perform major compaction
+     * Perform major compactions
      */
-    for (size_t i=0; i<m_access_group_vector.size(); i++) {
+    for (size_t i=0; i<m_access_group_vector.size(); i++)
       m_access_group_vector[i]->run_compaction(m_split_start_time, true);  // verify the timestamp
-    }
+
 
     /**
      * Create METADATA entry for new range
@@ -564,6 +567,15 @@ uint64_t Range::run_compaction(bool major) {
     m_maintenance_finished_cond.notify_all();
   }
 
+  /**
+   * The following code ensures that pending updates that have not been
+   * committed on this range do not get included in the compaction
+   * scan
+   */
+  int64_t temp_timestamp = m_scanner_timestamp_controller.get_oldest_update_timestamp();
+  if (temp_timestamp != 0 && temp_timestamp < timestamp)
+    timestamp = temp_timestamp;
+
   for (size_t i=0; i<m_access_group_vector.size(); i++)
     m_access_group_vector[i]->run_compaction(timestamp, major);
 
@@ -656,3 +668,14 @@ void Range::decrement_update_counter() {
     m_update_quiesce_cond.notify_one();
 }
 
+
+/**
+ * 
+ */
+uint64_t Range::get_timestamp() {
+  boost::mutex::scoped_lock lock(m_mutex);
+  uint64_t timestamp = m_scanner_timestamp_controller.get_oldest_update_timestamp();
+  if (timestamp != 0 && timestamp <= m_latest_timestamp)
+    return timestamp;
+  return m_latest_timestamp + 1;
+}

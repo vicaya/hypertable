@@ -166,7 +166,6 @@ fi
 #
 # Reset state
 #
-cp $HYPERTABLE_HOME/test/metadata.orig $HYPERTABLE_HOME/test/metadata
 rm -rf $HYPERTABLE_HOME/log/hypertable/*
 $HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable"
 rm -rf $HYPERTABLE_HOME/hyperspace/*
@@ -241,7 +240,7 @@ if [ "$START_RANGESERVER" == "true" ] ; then
 
     $HYPERTABLE_HOME/bin/serverup rangeserver
     if [ $? != 0 ] ; then
-	$VALGRIND_RANGESERVER  $HYPERTABLE_HOME/bin/Hypertable.RangeServer $RANGESERVER_OPTS --pidfile=$PIDFILE --metadata=$HYPERTABLE_HOME/test/metadata --verbose 1>& $LOGFILE &
+	$VALGRIND_RANGESERVER  $HYPERTABLE_HOME/bin/Hypertable.RangeServer $RANGESERVER_OPTS --pidfile=$PIDFILE --verbose 1>& $LOGFILE &
 	sleep 1
 	$HYPERTABLE_HOME/bin/serverup rangeserver
 	if [ $? != 0 ] ; then

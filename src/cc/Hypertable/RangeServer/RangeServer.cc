@@ -342,7 +342,6 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
   std::set<uint8_t> columnFamilies;
   uint32_t id;
   uint64_t scan_timestamp;
-  uint64_t update_timestamp;
   SchemaPtr schemaPtr;
   ScanContextPtr scanContextPtr;
 
@@ -383,15 +382,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
   kvBuffer = new uint8_t [ sizeof(int32_t) + DEFAULT_SCANBUF_SIZE ];
   kvLenp = (uint32_t *)kvBuffer;
 
-  /**
-   * Compute scan timestamp (time for which only records prior will be considered).
-   * It is the lesser of A) the most recent update from the range (plus 1) and
-   * B) the timestamp of the oldest update in progress.
-   */
-  scan_timestamp = rangePtr->get_timestamp() + 1;
-  update_timestamp = Global::scanner_timestamp_controller.get_oldest_update_timestamp();
-  if (update_timestamp < scan_timestamp)
-    scan_timestamp = update_timestamp;
+  scan_timestamp = rangePtr->get_timestamp();
 
   scanContextPtr = new ScanContext(scan_timestamp, scan_spec, schemaPtr);
   if (scanContextPtr->error != Error::OK) {
@@ -734,6 +725,11 @@ namespace {
     size_t len;
   } UpdateRecT;
 
+  typedef struct {
+    RangePtr range_ptr;
+    uint64_t timestamp;
+  } MinTimestampRecT;
+
 }
 
 
@@ -749,7 +745,6 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, ui
   string errMsg;
   int error = Error::OK;
   TableInfoPtr tableInfoPtr;
-  uint64_t nextTimestamp = 0;
   uint64_t updateTimestamp = 0;
   uint64_t clientTimestamp = 0;
   struct timeval tval;
@@ -767,7 +762,12 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, ui
   size_t stopSize = 0;
   size_t splitSize = 0;
   std::string endRow;
-  RangePtr rangePtr;
+  std::vector<MinTimestampRecT>  min_ts_vector;
+  MinTimestampRecT  min_ts_rec;
+  uint64_t next_timestamp;
+  uint64_t temp_timestamp;
+
+  min_ts_vector.reserve(50);
 
   /**
   if (Global::verbose)
@@ -798,22 +798,13 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, ui
   modEnd = buffer.buf + buffer.len;
   modPtr = buffer.buf;
 
-  // timestamp
-  {
-    boost::xtime now;
-    boost::xtime_get(&now, boost::TIME_UTC);
-    nextTimestamp = ((uint64_t)now.sec * 1000000000LL) + (uint64_t)now.nsec;
-  }
-
-  Global::scanner_timestamp_controller.add_update_timestamp((min_timestamp == 0) ? nextTimestamp : min_timestamp);
-
   goMods.clear();
 
   while (modPtr < modEnd) {
 
     row = (const char *)((ByteString32T *)modPtr)->data;
 
-    if (!tableInfoPtr->find_containing_range(row, rangePtr)) {
+    if (!tableInfoPtr->find_containing_range(row, min_ts_rec.range_ptr)) {
       update.base = modPtr;
       modPtr += Length((const ByteString32T *)modPtr); // skip key
       modPtr += Length((const ByteString32T *)modPtr); // skip value
@@ -824,28 +815,45 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, ui
     }
 
     /** Increment update count (block if maintenance in progress) **/
-    rangePtr->increment_update_counter();
+    min_ts_rec.range_ptr->increment_update_counter();
 
     /** Obtain "update timestamp" **/
     updateTimestamp = Global::log->get_timestamp();
 
-    endRow = rangePtr->end_row();
+    endRow = min_ts_rec.range_ptr->end_row();
 
     /** Fetch range split information **/
-    rangePtr->get_split_info(split_row, splitLogPtr, &splitStartTime);
+    min_ts_rec.range_ptr->get_split_info(split_row, splitLogPtr, &splitStartTime);
 
     splitMods.clear();
     splitSize = 0;
+
+    next_timestamp = 0;
+    min_ts_rec.timestamp = 0;
 
     while (modPtr < modEnd && (endRow == "" || (strcmp(row, endRow.c_str()) <= 0))) {
 
       // If timestamp value is set to AUTO (zero one's compliment), then assign a timestamp
       ts_ptr = (uint8_t *)modPtr + Length((const ByteString32T *)modPtr) - 8;
       if (!memcmp(ts_ptr, auto_ts, 8)) {
-	uint64_t serial_ts = nextTimestamp++;
-	serial_ts = ByteOrderSwapInt64(serial_ts);
-	serial_ts = ~serial_ts;
-	memcpy(ts_ptr, &serial_ts, 8);
+	if (next_timestamp == 0) {
+	  boost::xtime now;
+	  boost::xtime_get(&now, boost::TIME_UTC);
+	  next_timestamp = ((uint64_t)now.sec * 1000000000LL) + (uint64_t)now.nsec;
+	}
+	temp_timestamp = next_timestamp++;
+	if (min_ts_rec.timestamp == 0 || temp_timestamp < min_ts_rec.timestamp)
+	  min_ts_rec.timestamp = temp_timestamp;
+	temp_timestamp = ByteOrderSwapInt64(temp_timestamp);
+	temp_timestamp = ~temp_timestamp;
+	memcpy(ts_ptr, &temp_timestamp, 8);
+      }
+      else {
+	memcpy(&temp_timestamp, ts_ptr, 8);
+	temp_timestamp = ByteOrderSwapInt64(temp_timestamp);
+	temp_timestamp = ~temp_timestamp;
+	if (min_ts_rec.timestamp == 0 || temp_timestamp < min_ts_rec.timestamp)
+	  min_ts_rec.timestamp = temp_timestamp;
       }
 
       update.base = modPtr;
@@ -863,6 +871,10 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, ui
       row = (const char *)((ByteString32T *)modPtr)->data;
     }
 
+    // force scans to only see updates before this time
+    min_ts_rec.range_ptr->add_update_timestamp( min_ts_rec.timestamp );
+    min_ts_vector.push_back(min_ts_rec);
+
     if (splitSize > 0) {
       boost::shared_array<uint8_t> bufPtr( new uint8_t [ splitSize ] );
       uint8_t *base = bufPtr.get();
@@ -875,7 +887,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, ui
 
       if ((error = splitLogPtr->write(table->name, base, ptr-base, clientTimestamp)) != Error::OK) {
 	errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to split log";
-	rangePtr->decrement_update_counter();
+	min_ts_rec.range_ptr->decrement_update_counter();
 	goto abort;
       }
     }
@@ -883,28 +895,28 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, ui
     /**
      * Apply the modifications
      */
-    rangePtr->lock();
+    min_ts_rec.range_ptr->lock();
     /** Apply the GO mods **/
     for (size_t i=goBase; i<goMods.size(); i++) {
       ByteString32T *key = (ByteString32T *)goMods[i].base;
       ByteString32T *value = (ByteString32T *)(goMods[i].base + Length(key));
-      rangePtr->add(key, value);
+      min_ts_rec.range_ptr->add(key, value);
     }
     goBase = goMods.size();
     /** Apply the SPLIT mods **/
     for (size_t i=0; i<splitMods.size(); i++) {
       ByteString32T *key = (ByteString32T *)splitMods[i].base;
       ByteString32T *value = (ByteString32T *)(splitMods[i].base + Length(key));
-      rangePtr->add(key, value);
+      min_ts_rec.range_ptr->add(key, value);
     }
-    rangePtr->unlock();
+    min_ts_rec.range_ptr->unlock();
 
     /**
      * Split and Compaction processing
      */
-    rangePtr->schedule_maintenance();
+    min_ts_rec.range_ptr->schedule_maintenance();
 
-    rangePtr->decrement_update_counter();
+    min_ts_rec.range_ptr->decrement_update_counter();
 
     if (Global::verbose) {
       LOG_VA_INFO("Added %d (%d split off) updates to '%s'", goMods.size()+splitMods.size(), splitMods.size(), table->name);
@@ -925,7 +937,6 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, ui
     }
     if ((error = Global::log->write(table->name, base, ptr-base, clientTimestamp)) != Error::OK) {
       errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to commit log";
-      rangePtr->decrement_update_counter();
       goto abort;
     }
   }
@@ -960,7 +971,9 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, ui
 
  abort:
 
-  Global::scanner_timestamp_controller.remove_update_timestamp((min_timestamp == 0) ? nextTimestamp : min_timestamp);
+  // unblock scanner timestamp
+  for (size_t i=0; i<min_ts_vector.size(); i++)
+    min_ts_vector[i].range_ptr->remove_update_timestamp(min_ts_vector[i].timestamp);
 
   if (error != Error::OK) {
     LOG_VA_ERROR("%s '%s'", Error::get_text(error), errMsg.c_str());

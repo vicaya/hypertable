@@ -185,15 +185,6 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
     return;
   }
 
-  /**
-   * Compute scan timestamp (time for which only records prior will be considered).
-   * It is the lesser of A) the most recent update from the range (passed in)
-   * B) the timestamp of the oldest update in progress.
-   */
-  uint64_t update_timestamp = Global::scanner_timestamp_controller.get_oldest_update_timestamp();
-  if (update_timestamp < timestamp)
-    timestamp = update_timestamp;
-
   {
     ScanContextPtr scanContextPtr = new ScanContext(timestamp, 0, m_schema_ptr);
 

@@ -12,3 +12,4 @@ TODO:
 - Make sure ':' character cannot be specified in column family name
 - Range constructor should throw exceptions
 - clientTimestamp value does not appear to be used in RangeServer::update
+- Make sure updates are sent sorted in ascending order of timestamp (for same row)

@@ -40,7 +40,6 @@
 #include "FileBlockCache.h"
 #include "ScannerMap.h"
 #include "TableInfo.h"
-#include "ScannerTimestampController.h"
 
 namespace Hypertable {
 
@@ -62,7 +61,6 @@ namespace Hypertable {
     static ScannerMap     scannerMap;
     static Hypertable::FileBlockCache *blockCache;
     static TablePtr       metadata_table_ptr;
-    static ScannerTimestampController scanner_timestamp_controller;
   };
 }
 

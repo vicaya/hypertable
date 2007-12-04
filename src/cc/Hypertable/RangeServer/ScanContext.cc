@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <algorithm>
 #include <cassert>
 
 #include "Common/Logger.h"
@@ -38,7 +39,16 @@ void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp)
   Schema::ColumnFamily *columnFamily;
   uint32_t max_versions = 0;
 
-  timestamp = ts;
+  // set time interval
+  if (ss) {
+    interval.first = ss->interval.first;
+    interval.second = (ss->interval.second != 0) ? std::min(ts, ss->interval.second) : ts;
+  }
+  else {
+    interval.first = 0;
+    interval.second = ts;
+  }    
+
   spec = ss;
 
   assert(sp);
@@ -62,7 +72,7 @@ void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp)
       if (columnFamily->ttl == 0)
 	familyInfo[columnFamily->id].cutoffTime == 0;
       else
-	familyInfo[columnFamily->id].cutoffTime == timestamp - (columnFamily->ttl * 1000000);
+	familyInfo[columnFamily->id].cutoffTime == ts - (columnFamily->ttl * 1000000);
       if (max_versions == 0)
 	familyInfo[columnFamily->id].max_versions = columnFamily->max_versions;
       else {
@@ -87,7 +97,7 @@ void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp)
 	if ((*cfIter)->ttl == 0)
 	  familyInfo[(*cfIter)->id].cutoffTime == 0;
 	else
-	  familyInfo[(*cfIter)->id].cutoffTime == timestamp - ((*cfIter)->ttl * 1000000);
+	  familyInfo[(*cfIter)->id].cutoffTime == ts - ((*cfIter)->ttl * 1000000);
 
 	if (max_versions == 0)
 	  familyInfo[(*cfIter)->id].max_versions = (*cfIter)->max_versions;
