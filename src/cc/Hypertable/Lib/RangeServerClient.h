@@ -73,13 +73,12 @@ namespace Hypertable {
      *
      * @param addr remote address of RangeServer connection
      * @param table table identifier
-     * @param min_ts minimum timestamp of the set of updates
      * @param data buffer holding key/value pairs
      * @param len length of data buffer
      * @param handler response handler
      * @return Error::OK on success or error code on failure
      */
-    int update(struct sockaddr_in &addr, TableIdentifierT &table, uint64_t min_ts, uint8_t *data, size_t len, DispatchHandler *handler);
+    int update(struct sockaddr_in &addr, TableIdentifierT &table, uint8_t *data, size_t len, DispatchHandler *handler);
 
     /** Issues an "update" request.  The data argument holds a sequence of key/value
      * pairs.  Each key/value pair is encoded as two variable lenght ByteString32T records
@@ -87,12 +86,11 @@ namespace Hypertable {
      *
      * @param addr remote address of RangeServer connection
      * @param table table identifier
-     * @param min_ts minimum timestamp of the set of updates
      * @param data buffer holding key/value pairs
      * @param len length of data buffer
      * @return Error::OK on success or error code on failure
      */
-    int update(struct sockaddr_in &addr, TableIdentifierT &table, uint64_t min_ts, uint8_t *data, size_t len);
+    int update(struct sockaddr_in &addr, TableIdentifierT &table, uint8_t *data, size_t len);
 
     /** Issues a "create scanner" request asynchronously.
      *

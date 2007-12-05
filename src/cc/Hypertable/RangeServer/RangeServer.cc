@@ -737,7 +737,7 @@ namespace {
 /**
  * Update
  */
-void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, uint64_t min_timestamp, BufferT &buffer) {
+void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, BufferT &buffer) {
   const uint8_t *modPtr;
   const uint8_t *modEnd;
   uint8_t *ts_ptr;

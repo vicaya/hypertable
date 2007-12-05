@@ -141,7 +141,7 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
 	nsec = cell.timestamp % 1000000000LL;
 	unix_time = cell.timestamp / 1000000000LL;
 	localtime_r(&unix_time, &tms);
-	printf("%d-%02d-%02d %02d:%02d:%02d.%d", tms.tm_year+1900, tms.tm_mon+1, tms.tm_mday, tms.tm_hour, tms.tm_min, tms.tm_sec, nsec);
+	printf("%d-%02d-%02d %02d:%02d:%02d.%09d", tms.tm_year+1900, tms.tm_mon+1, tms.tm_mday, tms.tm_hour, tms.tm_min, tms.tm_sec, nsec);
 	printf("\t%s\t%s", cell.row_key, cell.column_family);
 	if (*cell.column_qualifier)
 	  printf(":%s", cell.column_qualifier);

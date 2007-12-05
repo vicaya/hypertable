@@ -103,7 +103,7 @@ void Mutator::flush() {
   if (m_memory_used > 0) {
     m_buffer_ptr->send();
     if ((error = m_buffer_ptr->wait_for_completion()) != Error::OK)
-      throw Exception(error, "Errors encountered in result of scatter send");
+      throw Exception(error, "MutatorScatterBuffer::wait_for_completion returned an error");
   }
 
   m_buffer_ptr->reset();

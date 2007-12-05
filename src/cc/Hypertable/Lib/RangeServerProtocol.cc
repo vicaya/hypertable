@@ -50,12 +50,11 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::create_request_update(TableIdentifierT &table, uint64_t min_ts, uint8_t *data, size_t len) {
+  CommBuf *RangeServerProtocol::create_request_update(TableIdentifierT &table, uint8_t *data, size_t len) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
-    CommBuf *cbuf = new CommBuf(hbuilder, 10 + EncodedLengthTableIdentifier(table), data, len);
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthTableIdentifier(table), data, len);
     cbuf->append_short(COMMAND_UPDATE);
     EncodeTableIdentifier(cbuf->get_data_ptr_address(), table);
-    cbuf->append_long(min_ts);
     return cbuf;
   }
 

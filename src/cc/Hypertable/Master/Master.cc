@@ -421,7 +421,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
     }
     catch (Hypertable::Exception &e) {
       // TODO: propagate exception
-      LOG_VA_ERROR("Problem updating METADATA with split info (row key = %s) - %s", metadata_key_str.c_str(), e.what());
+      LOG_VA_ERROR("METADATA update error (row_key = %s) - %s : %s", metadata_key_str.c_str(), e.what(), Error::get_text(e.code()));
       exit(1);
     }
 
