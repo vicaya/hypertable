@@ -333,7 +333,10 @@ void Range::schedule_maintenance() {
 
 void Range::do_maintenance() {
   assert(m_maintenance_in_progress);
-  if (disk_usage() > Global::rangeMaxBytes) {
+  uint64_t disk_used = disk_usage();
+
+  if (disk_used > Global::rangeMaxBytes ||
+      (Global::range_metadata_max_bytes && m_identifier.id == 0 && disk_used > Global::range_metadata_max_bytes)) {
     std::string splitLogDir;
     char md5DigestStr[33];
     int error;
@@ -681,5 +684,12 @@ uint64_t Range::get_timestamp() {
   uint64_t timestamp = m_scanner_timestamp_controller.get_oldest_update_timestamp();
   if (timestamp != 0 && timestamp <= m_latest_timestamp)
     return timestamp;
+  
+  if (m_latest_timestamp == 0) {
+    boost::xtime now;
+    boost::xtime_get(&now, boost::TIME_UTC);
+    timestamp = ((uint64_t)now.sec * 1000000000LL) + (uint64_t)now.nsec;
+    return timestamp;
+  }
   return m_latest_timestamp + 1;
 }

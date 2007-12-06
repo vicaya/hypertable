@@ -121,9 +121,13 @@ int main(int argc, char **argv) {
   ReactorFactory::initialize(reactorCount);
   comm = new Comm();
 
+  Global::range_metadata_max_bytes = propsPtr->getPropertyInt64("Hypertable.RangeServer.Range.MetadataMaxBytes", 0LL);
+
   if (Global::verbose) {
     cout << "CPU count = " << System::get_processor_count() << endl;
     cout << "Hypertable.range_server.reactors=" << reactorCount << endl;
+    if (Global::range_metadata_max_bytes != 0)
+      cout << "Hypertable.RangeServer.Range.MetadataMaxBytes=" << Global::range_metadata_max_bytes << endl;
   }
 
   RangeServerPtr range_server_ptr = new RangeServer(comm, propsPtr);

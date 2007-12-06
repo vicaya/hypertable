@@ -40,3 +40,5 @@ int32_t                Global::localityGroupMaxMemory = 0;
 ScannerMap             Global::scannerMap;
 FileBlockCache        *Global::blockCache = 0;
 TablePtr               Global::metadata_table_ptr = 0;
+uint64_t               Global::range_metadata_max_bytes = 0;
+

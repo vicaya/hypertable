@@ -61,6 +61,7 @@ namespace Hypertable {
     static ScannerMap     scannerMap;
     static Hypertable::FileBlockCache *blockCache;
     static TablePtr       metadata_table_ptr;
+    static uint64_t       range_metadata_max_bytes;
   };
 }
 
