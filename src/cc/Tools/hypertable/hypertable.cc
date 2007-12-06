@@ -24,6 +24,8 @@
 #include <queue>
 
 extern "C" {
+#include <limits.h>
+#include <poll.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 }
@@ -228,7 +230,21 @@ int main(int argc, char **argv) {
 	}
 	command = command_queue.front();
 	command_queue.pop();
-	interp->execute_line(command);
+	if (!strncmp(command.c_str(), "pause", 5)) {
+	  std::string sec_str = command.substr(5);
+	  boost::trim(sec_str);
+	  char *endptr;
+	  long secs = strtol(sec_str.c_str(), &endptr, 0);
+	  if (secs == 0 && errno == EINVAL || *endptr != 0) {
+	    cout << "error: invalid seconds specification" << endl;
+	    if (g_batch_mode)
+	      return 1;
+	  }
+	  else
+	    poll(0, 0, secs*1000);
+	}
+	else
+	  interp->execute_line(command);
       }
 
     }
