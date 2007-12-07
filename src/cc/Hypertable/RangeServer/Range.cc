@@ -409,6 +409,7 @@ void Range::do_maintenance() {
 	m_split_start_time = m_scanner_timestamp_controller.get_oldest_update_timestamp();
 	if (m_split_start_time == 0 || m_latest_timestamp < m_split_start_time)
 	  m_split_start_time = m_latest_timestamp;
+	old_start_row = m_start_row;
       }
 
       m_split_log_ptr = new CommitLog(Global::dfs, splitLogDir, 0x100000000LL);
@@ -439,7 +440,7 @@ void Range::do_maintenance() {
       key.column_qualifier_len = 0;
 
       key.column_family = "StartRow";
-      mutator_ptr->set(0, key, (uint8_t *)m_start_row.c_str(), m_start_row.length());
+      mutator_ptr->set(0, key, (uint8_t *)old_start_row.c_str(), old_start_row.length());
       key.column_family = "SplitLogDir";
       mutator_ptr->set(0, key, (uint8_t *)splitLogDir.c_str(), splitLogDir.length());
 
@@ -470,12 +471,6 @@ void Range::do_maintenance() {
       DUMP_CORE;
     }
 
-    {
-      boost::mutex::scoped_lock lock(m_mutex);
-      old_start_row = m_start_row;
-      m_start_row = m_split_row;
-    }
-
     /**
      * If this is a METADATA range, then update the ROOT range
      */
@@ -494,7 +489,7 @@ void Range::do_maintenance() {
 	metadata_key_str = std::string("0:") + m_end_row;
 	key.row = metadata_key_str.c_str();
 	key.row_len = metadata_key_str.length();
-	mutator_ptr->set(0, key, (uint8_t *)m_start_row.c_str(), m_start_row.length());
+	mutator_ptr->set(0, key, (uint8_t *)m_split_row.c_str(), m_split_row.length());
       }
       catch (Hypertable::Exception &e) {
 	// TODO: propagate exception
@@ -509,12 +504,6 @@ void Range::do_maintenance() {
     {
       boost::mutex::scoped_lock lock(m_maintenance_mutex);
 
-      {
-	boost::mutex::scoped_lock lock(m_mutex);
-	m_split_start_time = 0;
-	m_split_row = "";
-      }
-
       // block updates
       m_hold_updates = true;
       while (m_update_counter > 0)
@@ -522,9 +511,15 @@ void Range::do_maintenance() {
 
       /*** At this point, there are no running updates ***/
 
-      // Shrink this range's access groups
-      for (size_t i=0; i<m_access_group_vector.size(); i++)
-	m_access_group_vector[i]->shrink(m_start_row);
+      {
+	boost::mutex::scoped_lock lock(m_mutex);
+	m_start_row = m_split_row;
+	m_split_start_time = 0;
+	m_split_row = "";
+	// Shrink this range's access groups
+	for (size_t i=0; i<m_access_group_vector.size(); i++)
+	  m_access_group_vector[i]->shrink(m_start_row);
+      }
 
       // unblock updates
       m_hold_updates = false;
