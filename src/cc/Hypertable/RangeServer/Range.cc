@@ -309,12 +309,14 @@ uint64_t Range::get_log_cutoff_time() {
  */
 void Range::schedule_maintenance() {
   boost::mutex::scoped_lock lock(m_mutex);
+  uint64_t disk_used = disk_usage();
 
   if (m_maintenance_in_progress)
     return;
 
   // Need split?
-  if (disk_usage() > Global::rangeMaxBytes) {
+  if (disk_used > Global::rangeMaxBytes || 
+      (Global::range_metadata_max_bytes && m_identifier.id == 0 && disk_used > Global::range_metadata_max_bytes)) {
     m_maintenance_in_progress = true;
     MaintenanceThread::schedule_maintenance(this);
   }
@@ -425,7 +427,8 @@ void Range::do_maintenance() {
 
 
     /**
-     * Create METADATA entry for new range
+     * Create second-level METADATA entry for new range and update second-level
+     * METADATA entry for existing range to reflect the shrink 
      */
     try {
       std::string files;
@@ -447,21 +450,6 @@ void Range::do_maintenance() {
 	m_access_group_vector[i]->get_files(files);
 	mutator_ptr->set(0, key, (uint8_t *)files.c_str(), files.length());
       }
-      mutator_ptr->flush();
-    }
-    catch (Hypertable::Exception &e) {
-      // TODO: propagate exception
-      LOG_VA_ERROR("Problem updating METADATA with new range information (row key = %s) - %s", metadata_key_str.c_str(), e.what());
-      //return;
-    }
-
-    /**
-     *  Shrink range and remove pending split info from METADATA for existing range
-     */
-    try {
-      boost::mutex::scoped_lock lock(m_mutex);  // why is this lock here?  can we move this block up?
-      old_start_row = m_start_row;
-      m_start_row = m_split_row;
 
       metadata_key_str = std::string("") + (uint32_t)m_identifier.id + ":" + m_end_row;
       key.row = metadata_key_str.c_str();
@@ -470,17 +458,49 @@ void Range::do_maintenance() {
       key.column_qualifier_len = 0;
 
       key.column_family = "StartRow";
-      mutator_ptr->set(0, key, (uint8_t *)m_start_row.c_str(), m_start_row.length());
+      mutator_ptr->set(0, key, (uint8_t *)m_split_row.c_str(), m_split_row.length());
       key.column_family = "SplitLogDir";
       mutator_ptr->set(0, key, 0, 0);
-      mutator_ptr->flush();
 
-      LOG_VA_INFO("drj just reset StartRow to '%s' for row %s", m_start_row.c_str(), metadata_key_str.c_str());
+      mutator_ptr->flush();
     }
     catch (Hypertable::Exception &e) {
       // TODO: propagate exception
-      LOG_VA_ERROR("Problem resetting METADATA after split (row key = %s) - %s", metadata_key_str.c_str(), e.what());
-      //return;
+      LOG_VA_ERROR("Problem updating METADATA with new range information (row key = %s) - %s", metadata_key_str.c_str(), e.what());
+      DUMP_CORE;
+    }
+
+    {
+      boost::mutex::scoped_lock lock(m_mutex);
+      old_start_row = m_start_row;
+      m_start_row = m_split_row;
+    }
+
+    /**
+     * If this is a METADATA range, then update the ROOT range
+     */
+    if (m_identifier.id == 0) {
+      try {
+	// new range
+	metadata_key_str = std::string("0:") + m_split_row;
+	key.row = metadata_key_str.c_str();
+	key.row_len = metadata_key_str.length();
+	key.column_qualifier = 0;
+	key.column_qualifier_len = 0;
+	key.column_family = "StartRow";
+	mutator_ptr->set(0, key, (uint8_t *)old_start_row.c_str(), old_start_row.length());
+
+	// existing range
+	metadata_key_str = std::string("0:") + m_end_row;
+	key.row = metadata_key_str.c_str();
+	key.row_len = metadata_key_str.length();
+	mutator_ptr->set(0, key, (uint8_t *)m_start_row.c_str(), m_start_row.length());
+      }
+      catch (Hypertable::Exception &e) {
+	// TODO: propagate exception
+	LOG_VA_ERROR("Problem updating ROOT METADATA range (new=%s, existing=%s) - %s", m_split_row.c_str(), m_end_row.c_str(), e.what());
+	DUMP_CORE;
+      }
     }
 
     /**
@@ -529,7 +549,7 @@ void Range::do_maintenance() {
       // update the latest generation, this should probably be protected
       m_identifier.generation = m_schema->get_generation();
 
-      LOG_INFO("About to report split");
+      LOG_VA_INFO("Reporting newly split off range %s[%s..%s] to Master", m_identifier.name, range.startRow, range.endRow);
       cout << flush;
       if ((error = m_master_client_ptr->report_split(m_identifier, range)) != Error::OK) {
 	LOG_VA_ERROR("Problem reporting split (table=%s, start_row=%s, end_row=%s) to master.",
@@ -646,7 +666,11 @@ int Range::replay_split_log(string &log_dir) {
     nblocks++;
   }
 
-  LOG_VA_INFO("Replayed %d updates (%d blocks) from split log '%s'", count, nblocks, log_dir.c_str());
+  {
+    boost::mutex::scoped_lock lock(m_mutex);
+    LOG_VA_INFO("Replayed %d updates (%d blocks) from split log '%s' into %s[%s..%s]",
+		count, nblocks, log_dir.c_str(), m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
+  }
 
   error = commit_log_reader_ptr->last_error();
 

@@ -23,6 +23,7 @@
 
 extern "C" {
 #include <limits.h>
+#include <poll.h>
 }
 
 #include "Common/Error.h"
@@ -113,6 +114,30 @@ void RangeLocator::initialize() {
 RangeLocator::~RangeLocator() {
   m_hyperspace_ptr->close(m_root_file_handle);
 }
+
+
+
+int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocationInfo *range_loc_info_p, int timeout) {
+  int error;
+  float wait_time = 1.0;
+  float total_wait_time = 0.0;
+
+  error = find(table, row_key, range_loc_info_p, false);
+
+  // retry loop
+  while (error != Error::OK && total_wait_time < (float)timeout) {
+    // wait a bit
+    poll(0, 0, (int)(wait_time*1000.0));
+    total_wait_time += wait_time;
+    wait_time *= 1.5;
+    // try again, the hard way
+    error = find(table, row_key, range_loc_info_p, true);
+  }
+
+  return error;
+}
+
+
 
 
 
@@ -246,7 +271,7 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
     row_key = "";
 
   if (!m_cache.lookup(table->id, row_key, range_loc_info_p, inclusive)) {
-    LOG_VA_ERROR("Unable to find metadata for row '%s'", meta_start_key);
+    LOG_VA_ERROR("RangeLocator failed to find metadata for table '%s' row '%s'", table->name, row_key);
     return Error::METADATA_NOT_FOUND;
   }
 
@@ -307,6 +332,7 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
 	}
 	else {
 	  LOG_VA_ERROR("Incomplete METADATA record found in root tablet under row key '%s'", range_loc_info.end_row.c_str());
+	  DUMP_CORE;
 	}
 	range_loc_info.start_row = "";
 	range_loc_info.end_row = "";

@@ -90,8 +90,12 @@ const char *AccessGroup::get_split_row() {
 
 void AccessGroup::get_split_rows(std::vector<std::string> &split_rows, bool include_cache) {
   boost::mutex::scoped_lock lock(m_mutex);
-  for (size_t i=0; i<m_stores.size(); i++)
-    split_rows.push_back(m_stores[i]->get_split_row());
+  const char *row;
+  for (size_t i=0; i<m_stores.size(); i++) {
+    row = m_stores[i]->get_split_row();
+    if (row)
+      split_rows.push_back(row);
+  }
   if (include_cache)
     m_cell_cache_ptr->get_split_rows(split_rows);
 }
@@ -282,7 +286,7 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
   }
   catch (Hypertable::Exception &e) {
     // TODO: propagate exception
-    LOG_VA_ERROR("Problem updating METADATA with new file information (row key = %s) - %s", metadata_key_str.c_str(), e.what());
+    LOG_VA_ERROR("Problem updating 'File' column of METADATA (row key = %s) - %s", metadata_key_str.c_str(), e.what());
   }
 
   // TODO: Compaction thread function should re-shuffle the heap of locality groups and purge the commit log

@@ -346,9 +346,10 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
   ScanContextPtr scanContextPtr;
 
   if (Global::verbose) {
-    cout << *table << endl;
-    cout << *range << endl;
-    cout << *scan_spec << endl;
+    cout << "RangeServer::create_scanner" << endl;
+    cout << *table;
+    cout << *range;
+    cout << *scan_spec;
   }
 
   if (!get_table_info(table->name, tableInfoPtr)) {
@@ -437,17 +438,18 @@ void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t s
   uint32_t *kvLenp = 0;
   uint32_t bytesFetched = 0;
 
+  if (Global::verbose) {
+    cout << "RangeServer::fetch_scanblock" << endl;
+    cout << "Scanner ID = " << scannerId << endl;
+  }
+
   if (!Global::scannerMap.get(scannerId, scannerPtr, rangePtr)) {
     error = Error::RANGESERVER_INVALID_SCANNER_ID;
     char tbuf[32];
     sprintf(tbuf, "%d", scannerId);
     errMsg = (string)tbuf;
-    goto abort;
-    
+    goto abort;    
   }
-
-  if (Global::verbose)
-    cout << "Scanner ID = " << scannerId << endl;
 
   kvBuffer = new uint8_t [ sizeof(int32_t) + DEFAULT_SCANBUF_SIZE ];
   kvLenp = (uint32_t *)kvBuffer;
@@ -509,8 +511,12 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
   std::string metadata_key_str;
   std::string start_row, split_log_dir;
 
-  if (Global::verbose)
-    cout << *range << endl;
+  if (Global::verbose) {
+    cout << "load_range" << endl;
+    cout << *table;
+    cout << *range;
+    cout << "flags = " << flags << endl;
+  }
 
   /**
    * Get TableInfo, create if doesn't exist
@@ -578,7 +584,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
     scan_spec.endRow = metadata_key_str.c_str();
     scan_spec.endRowInclusive = true;
     scan_spec.interval.first = 0;
-    scan_spec.interval.second = ScanContext::END_OF_TIME;
+    scan_spec.interval.second = 0;
 
     scan_spec.columns.clear();
     scan_spec.columns.push_back("StartRow");
@@ -769,10 +775,10 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 
   min_ts_vector.reserve(50);
 
-  /**
-  if (Global::verbose)
-    cout << *range << endl;
-  */
+  if (Global::verbose) {
+    cout << "RangeServer::update" << endl;
+    cout << *table;
+  }
 
   // TODO: Sanity check mod data (checksum validation)
 

@@ -102,18 +102,18 @@ void Mutator::flush() {
    */
   if (m_memory_used > 0) {
     m_buffer_ptr->send();
-    if ((error = m_buffer_ptr->wait_for_completion()) != Error::OK)
-      throw Exception(error, "MutatorScatterBuffer::wait_for_completion returned an error");
+    m_prev_buffer_ptr = m_buffer_ptr;
+    wait_for_previous_buffer();
   }
 
   m_buffer_ptr->reset();
-
+  m_prev_buffer_ptr = 0;
 }
 
 void Mutator::wait_for_previous_buffer() {
   int error;
   MutatorScatterBuffer *redo_buffer = 0;
-  int wait_time = 2;
+  int wait_time = 1;
 
   while ((error = m_prev_buffer_ptr->wait_for_completion()) != Error::OK && wait_time < 16) {
 
@@ -137,8 +137,8 @@ void Mutator::wait_for_previous_buffer() {
   }
 
   if (error != Error::OK) {
-    LOG_VA_ERROR("Problem resending failed updates - %s", Error::get_text(error));
-    throw Exception(error, "Problem resending failed updates");
+    LOG_VA_ERROR("Problem resending failed updates (table=%s) - %s", m_table_name.c_str(), Error::get_text(error));
+    throw Exception(error, (std::string)"Problem resending failed updates (table=" + m_table_name.c_str() + ")");
   }
   
 }

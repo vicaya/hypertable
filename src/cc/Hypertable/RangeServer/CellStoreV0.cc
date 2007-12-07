@@ -75,7 +75,9 @@ uint16_t CellStoreV0::get_flags() {
 }
 
 const char *CellStoreV0::get_split_row() {
-  return m_split_row.c_str();
+  if (m_split_row != "")
+    return m_split_row.c_str();
+  return 0;
 }
 
 
@@ -478,7 +480,8 @@ int CellStoreV0::load_index() {
       if ((i%2)==0)
 	++mid_iter;
     }
-    record_split_row((*mid_iter).first);
+    if (mid_iter != m_index.end())
+      record_split_row((*mid_iter).first);
   }
 
 #if 0

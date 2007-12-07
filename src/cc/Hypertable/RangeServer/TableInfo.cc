@@ -45,7 +45,6 @@ TableInfo::~TableInfo() {
  */
 bool TableInfo::get_range(RangeT *range, RangePtr &rangePtr) {
   boost::mutex::scoped_lock lock(m_mutex);
-  string startRow = range->startRow;
   string endRow = range->endRow;
 
   RangeMapT::iterator iter = m_range_map.find(endRow);
@@ -55,7 +54,9 @@ bool TableInfo::get_range(RangeT *range, RangePtr &rangePtr) {
 
   rangePtr = (*iter).second;
 
-  if (rangePtr->start_row() != startRow)
+  string startRow = rangePtr->start_row();
+
+  if (strcmp(startRow.c_str(), range->startRow))
     return false;
 
   return true;

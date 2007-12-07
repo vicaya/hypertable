@@ -56,8 +56,15 @@ namespace Hypertable {
 
     CellListScanner *create_scanner(ScanContextPtr &scanContextPtr);
 
-    string &start_row() { return m_start_row; }  // TODO: fix me!!!
-    string &end_row() { return m_end_row; }
+    string start_row() {
+      boost::mutex::scoped_lock lock(m_mutex);
+      return m_start_row;
+    }
+
+    string end_row() {
+      boost::mutex::scoped_lock lock(m_mutex);
+      return m_end_row;
+    }
 
     uint64_t get_timestamp();
 

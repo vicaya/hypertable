@@ -47,13 +47,12 @@ int MutatorScatterBuffer::set(Key &key, uint8_t *value, uint32_t value_len) {
   RangeLocationInfo range_info;
   UpdateBufferMapT::const_iterator iter;
 
-  if ((error = m_range_locator_ptr->find(&m_table_identifier, key.row, &range_info)) != Error::OK)
+  if ((error = m_range_locator_ptr->find(&m_table_identifier, key.row, &range_info, 21)) != Error::OK)
     return error;
 
   iter = m_buffer_map.find(range_info.location);
 
   if (iter == m_buffer_map.end()) {
-    // TODO:  fix me!
     m_buffer_map[range_info.location] = new UpdateBuffer(&m_completion_counter);
     iter = m_buffer_map.find(range_info.location);
 
@@ -81,13 +80,12 @@ int MutatorScatterBuffer::set(ByteString32T *key, ByteString32T *value) {
   RangeLocationInfo range_info;
   UpdateBufferMapT::const_iterator iter;
 
-  if ((error = m_range_locator_ptr->find(&m_table_identifier, (const char *)key->data, &range_info)) != Error::OK)
+  if ((error = m_range_locator_ptr->find(&m_table_identifier, (const char *)key->data, &range_info, 21)) != Error::OK)
     return error;
 
   iter = m_buffer_map.find(range_info.location);
 
   if (iter == m_buffer_map.end()) {
-    // TODO:  fix me!
     m_buffer_map[range_info.location] = new UpdateBuffer(&m_completion_counter);
     iter = m_buffer_map.find(range_info.location);
 
@@ -202,7 +200,7 @@ MutatorScatterBuffer *MutatorScatterBuffer::create_redo_buffer() {
 	
 	// do a hard lookup for the lowest key
 	if ((error = m_range_locator_ptr->find(&m_table_identifier, (const char *)low_key->data, &range_info, true)) != Error::OK) {
-	  LOG_VA_WARN("Problem finding range for row '%s'", (const char *)low_key->data);
+	  LOG_VA_WARN("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)low_key->data);
 	  delete redo_buffer;
 	  return 0;
 	}
@@ -214,7 +212,7 @@ MutatorScatterBuffer *MutatorScatterBuffer::create_redo_buffer() {
 	  key = (ByteString32T *)src_ptr;
 	  value = (ByteString32T *)(((uint8_t *)key) + Length(key));
 	  if ((error = redo_buffer->set(key, value)) != Error::OK) {
-	    LOG_VA_ERROR("Problem adding row '%s' to redo buffer", (const char *)key->data);
+	    LOG_VA_ERROR("Problem adding row '%s' of table '%s' to redo buffer", (const char *)low_key->data, m_table_name.c_str());
 	    delete redo_buffer;
 	    return 0;
 	  }
@@ -237,7 +235,7 @@ MutatorScatterBuffer *MutatorScatterBuffer::create_redo_buffer() {
 
 	// do a hard lookup for the lowest key
 	if ((error = m_range_locator_ptr->find(&m_table_identifier, (const char *)low_key->data, &range_info, true)) != Error::OK) {
-	  LOG_VA_WARN("Problem finding range for row '%s'", (const char *)low_key->data);
+	  LOG_VA_WARN("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)low_key->data);
 	  delete redo_buffer;
 	  return 0;
 	}
@@ -249,7 +247,7 @@ MutatorScatterBuffer *MutatorScatterBuffer::create_redo_buffer() {
 	  key = (ByteString32T *)(update_buffer_ptr->buf.buf + update_buffer_ptr->key_offsets[i]);
 	  value = (ByteString32T *)(((uint8_t *)key) + Length(key));
 	  if ((error = redo_buffer->set(key, value)) != Error::OK) {
-	    LOG_VA_ERROR("Problem adding row '%s' to redo buffer", (const char *)key->data);
+	    LOG_VA_ERROR("Problem adding row '%s' of table '%s' to redo buffer", (const char *)low_key->data, m_table_name.c_str());
 	    delete redo_buffer;
 	    return 0;
 	  }

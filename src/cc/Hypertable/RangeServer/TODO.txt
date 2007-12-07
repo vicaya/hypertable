@@ -13,6 +13,7 @@ TODO:
 - clientTimestamp value does not appear to be used in RangeServer::update
 - Make sure updates are sent sorted in ascending order of timestamp (for same row)
 - Add global (timeout, workers, reactors, etc.) to config file 
+- Add delete_row, delete_cell, delete_qualified_cell, etc. to Mutator
 
 DONE:
 - Add PAUSE command to hypertable (to facilitate testing)

@@ -73,10 +73,20 @@ namespace Hypertable {
      * @param table pointer to table identifier structure
      * @param row_key row key to locate
      * @param range_loc_info_p address of RangeLocationInfo structure to hold result
+     * @param timeout maximum time to retry before giving up
+     * @return Error::OK on success or error code on failure
+     */
+    int find(TableIdentifierT *table, const char *row_key, RangeLocationInfo *range_loc_info_p, int timeout);
+
+    /** Locates the range that contains the given row key.
+     * 
+     * @param table pointer to table identifier structure
+     * @param row_key row key to locate
+     * @param range_loc_info_p address of RangeLocationInfo structure to hold result
      * @param hard find the hard way (e.g. don't consult cache)
      * @return Error::OK on success or error code on failure
      */
-    int find(TableIdentifierT *table, const char *row_key, RangeLocationInfo *range_loc_info_p, bool hard=false);
+    int find(TableIdentifierT *table, const char *row_key, RangeLocationInfo *range_loc_info_p, bool hard);
 
     /** Sets the "root stale" flag.  Causes methods to reread the root range location before
      * doing METADATA scans.
