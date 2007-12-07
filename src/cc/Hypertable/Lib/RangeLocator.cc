@@ -332,7 +332,7 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
 	}
 	else {
 	  LOG_VA_ERROR("Incomplete METADATA record found in root tablet under row key '%s'", range_loc_info.end_row.c_str());
-	  DUMP_CORE;
+	  //DUMP_CORE;
 	}
 	range_loc_info.start_row = "";
 	range_loc_info.end_row = "";
