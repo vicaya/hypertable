@@ -18,11 +18,12 @@
 
 project (HYPERTABLE)
 
-# CMAKE_CXX_FLAGS
-#set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-variadic-macros -Wall")
-
 # Enable testing
 enable_testing()
+
+if (CMAKE_COMPILER_IS_GNUCXX)
+  add_definitions(-Wall -pedantic -Wno-long-long -Wno-variadic-macros)
+endif (CMAKE_COMPILER_IS_GNUCXX)
 
 # Uncomment the following to build dynamic libraries
 # set (BUILD_SHARED_LIBS ON)
