@@ -33,33 +33,42 @@
 CellCacheScanner::CellCacheScanner(CellCachePtr &cellCachePtr, ScanContextPtr &scanContextPtr) : CellListScanner(scanContextPtr), m_cell_cache_ptr(cellCachePtr), m_cell_cache_mutex(cellCachePtr->m_mutex), m_cur_key(0), m_cur_value(0), m_eos(false) {
   ByteString32T *bs;
 
-  /** set start iterator **/
-  bs = Create(scanContextPtr->start_row.c_str(), strlen(scanContextPtr->start_row.c_str()));
-  m_start_iter = m_cell_cache_ptr->m_cell_map.lower_bound(bs);
-  Destroy(bs);
+  {
+    boost::mutex::scoped_lock lock(m_cell_cache_mutex);
 
-  /** set end iterator **/
-  bs = Create(scanContextPtr->end_row.c_str(), strlen(scanContextPtr->end_row.c_str()));
-  m_end_iter = m_cell_cache_ptr->m_cell_map.lower_bound(bs);
-  Destroy(bs);
+    /** set start iterator **/
+    bs = Create(scanContextPtr->start_row.c_str(), strlen(scanContextPtr->start_row.c_str()));
+    m_start_iter = m_cell_cache_ptr->m_cell_map.lower_bound(bs);
+    Destroy(bs);
 
-  m_cur_iter = m_start_iter;
+    /** set end iterator **/
+    bs = Create(scanContextPtr->end_row.c_str(), strlen(scanContextPtr->end_row.c_str()));
+    m_end_iter = m_cell_cache_ptr->m_cell_map.lower_bound(bs);
+    Destroy(bs);
 
-  if (m_cur_iter != m_end_iter) {
-    Key keyComps;
-    if (!keyComps.load((*m_cur_iter).first)) {
-      LOG_ERROR("Problem parsing key!");
+    m_cur_iter = m_start_iter;
+
+    if (m_cur_iter != m_end_iter) {
+      Key keyComps;
+      if (!keyComps.load((*m_cur_iter).first)) {
+	LOG_ERROR("Problem parsing key!");
+	m_eos = true;
+	return;
+      }
+      else if (m_scan_context_ptr->familyMask[keyComps.column_family_code]) {
+	m_cur_key = (*m_cur_iter).first;
+	m_cur_value = (*m_cur_iter).second;
+	return;
+      }
+    }
+    else {
       m_eos = true;
+      return;
     }
-    else if (m_scan_context_ptr->familyMask[keyComps.column_family_code]) {
-      m_cur_key = (*m_cur_iter).first;
-      m_cur_value = (*m_cur_iter).second;
-    }
-    else
-      forward();
   }
-  else
-    m_eos = true;
+
+  forward();
+
 }
 
 
