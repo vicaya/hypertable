@@ -339,7 +339,6 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
   RangePtr rangePtr;
   CellListScannerPtr scannerPtr;
   bool more = true;
-  std::set<uint8_t> columnFamilies;
   uint32_t id;
   uint64_t scan_timestamp;
   SchemaPtr schemaPtr;
@@ -366,32 +365,25 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
 
   schemaPtr = tableInfoPtr->get_schema();
 
-  /**
-   * Load column families set
-   */
-  for (std::vector<const char *>::const_iterator iter = scan_spec->columns.begin(); iter != scan_spec->columns.end(); iter++) {
-    Schema::ColumnFamily *cf = schemaPtr->get_column_family(*iter);
-    if (cf == 0) {
-      error = Error::RANGESERVER_INVALID_COLUMNFAMILY;
-      errMsg = (std::string)*iter;
-      goto abort;
-    }
-    columnFamilies.insert((uint8_t)cf->id);
-  }
-
-
-  kvBuffer = new uint8_t [ sizeof(int32_t) + DEFAULT_SCANBUF_SIZE ];
-  kvLenp = (uint32_t *)kvBuffer;
-
   scan_timestamp = rangePtr->get_timestamp();
 
-  scanContextPtr = new ScanContext(scan_timestamp, scan_spec, schemaPtr);
+  scanContextPtr = new ScanContext(scan_timestamp, scan_spec, range, schemaPtr);
   if (scanContextPtr->error != Error::OK) {
     errMsg = "Problem initializing scan context";
     goto abort;
   }
  
   scannerPtr = rangePtr->create_scanner(scanContextPtr);
+
+  // TODO: fix this kludge (0 return above means range split)
+  if (!scannerPtr) {
+    error = Error::RANGESERVER_RANGE_NOT_FOUND;
+    errMsg = (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]";
+    goto abort;
+  }
+
+  kvBuffer = new uint8_t [ sizeof(int32_t) + DEFAULT_SCANBUF_SIZE ];
+  kvLenp = (uint32_t *)kvBuffer;
 
   more = FillScanBlock(scannerPtr, kvBuffer+sizeof(int32_t), DEFAULT_SCANBUF_SIZE, kvLenp);
   if (more)

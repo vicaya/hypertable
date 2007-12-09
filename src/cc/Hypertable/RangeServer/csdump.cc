@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
    * Dump keys
    */
   if (!trailer_only) {
-    ScanContextPtr scanContextPtr( new ScanContext(ScanContext::END_OF_TIME, 0) );
+    ScanContextPtr scanContextPtr( new ScanContext(ScanContext::END_OF_TIME) );
 
     scanner = cellStorePtr->create_scanner(scanContextPtr);
     while (scanner->get(&key, &value)) {

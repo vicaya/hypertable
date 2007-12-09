@@ -144,11 +144,8 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
   size_t tableIndex = 1;
   int error;
   CellStorePtr cellStorePtr;
-  vector<string> replacedFiles;
   std::string files;
   std::string metadata_key_str;
-
-  timestamp++;
 
   {
     boost::mutex::scoped_lock lock(m_mutex);
@@ -192,7 +189,7 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
   }
 
   {
-    ScanContextPtr scanContextPtr = new ScanContext(timestamp, 0, m_schema_ptr);
+    ScanContextPtr scanContextPtr = new ScanContext(timestamp, m_schema_ptr);
 
     if (major || tableIndex < m_stores.size()) {
       MergeScanner *mscanner = new MergeScanner(scanContextPtr, !major);
@@ -210,45 +207,31 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
       LOG_ERROR("Problem deserializing key/value pair");
       return;
     }
-    // this assumes that the timestamp of the oldest entry in all CellStores is less than timestamp
-    // this should be asserted somewhere.
+    // This check should not be necessary since the scan will be restricted to timestamp
+    // in the ScanContext
     if (keyComps.timestamp <= timestamp)
       cellStorePtr->add(key, value);
+
     scannerPtr->forward();
   }
 
-  {
-    boost::mutex::scoped_lock lock(m_mutex);
-    string fname;
-    for (size_t i=tableIndex; i<m_stores.size(); i++) {
-      fname = m_stores[i]->get_filename();
-      replacedFiles.push_back(fname);  // hack: fix me!
-    }
-  }
-    
   if (cellStorePtr->finalize(timestamp) != 0) {
     LOG_VA_ERROR("Problem finalizing CellStore '%s'", cellStoreFile.c_str());
     return;
   }
 
   /**
-   * HACK: Delete underlying files -- fix me!!!
-  for (size_t i=tableIndex; i<m_stores.size(); i++) {
-    if ((m_stores[i]->get_flags() & CellStore::FLAG_SHARED) == 0) {
-      std::string &fname = m_stores[i]->get_filename();
-      Global::hdfsClient->remove(fname.c_str());
-    }
-  }
-  */
-
-  /**
    * Install new CellCache and CellStore
    */
   {
     boost::mutex::scoped_lock lock(m_mutex);
+    CellCachePtr tmp_cell_cache_ptr;
 
     /** Slice and install new CellCache **/
+    tmp_cell_cache_ptr = m_cell_cache_ptr;
+    tmp_cell_cache_ptr->lock();
     m_cell_cache_ptr = m_cell_cache_ptr->slice_copy(timestamp);
+    tmp_cell_cache_ptr->unlock();    
 
     /** Drop the compacted tables from the table vector **/
     if (tableIndex < m_stores.size())
@@ -302,7 +285,7 @@ int AccessGroup::shrink(std::string &new_start_row) {
   boost::mutex::scoped_lock lock(m_mutex);
   int error;
   CellCachePtr old_cell_cache_ptr = m_cell_cache_ptr;
-  ScanContextPtr scanContextPtr = new ScanContext(ScanContext::END_OF_TIME, 0, m_schema_ptr);
+  ScanContextPtr scanContextPtr = new ScanContext(ScanContext::END_OF_TIME, m_schema_ptr);
   CellListScannerPtr cell_cache_scanner_ptr;
   ByteString32T *key;
   ByteString32T *value;

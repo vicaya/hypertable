@@ -103,6 +103,19 @@ int MutatorScatterBuffer::set(ByteString32T *key, ByteString32T *value) {
   return Error::OK;
 }
 
+namespace {
+  struct ltByteString32Chronological {
+    bool operator()(const ByteString32T * bs1ptr, const ByteString32T *bs2ptr) const {
+      int rval = strcmp((const char *)bs1ptr->data, (const char *)bs2ptr->data);
+      if (rval == 0) {
+	const uint8_t *ts1ptr = bs1ptr->data + bs1ptr->len - 8;
+	const uint8_t *ts2ptr = bs2ptr->data + bs2ptr->len - 8;
+	return memcmp(ts1ptr, ts2ptr, 8) > 0;  // this gives chronological
+      }
+      return rval < 0;
+    }
+  };
+}
 
 
 /**
@@ -110,7 +123,7 @@ int MutatorScatterBuffer::set(ByteString32T *key, ByteString32T *value) {
  */
 void MutatorScatterBuffer::send() {
   UpdateBufferPtr update_buffer_ptr;
-  struct ltByteString32 swo_bs32;
+  struct ltByteString32Chronological swo_bs32;
   std::vector<ByteString32T *>  kvec;
   uint8_t *data, *ptr;
 
@@ -177,7 +190,6 @@ MutatorScatterBuffer *MutatorScatterBuffer::create_redo_buffer() {
   int error;
   UpdateBufferPtr update_buffer_ptr;
   RangeLocationInfo range_info;
-  struct ltByteString32 swo_bs32;
   std::vector<ByteString32T *>  kvec;
   uint8_t *data, *ptr;
   ByteString32T *low_key, *key, *value;

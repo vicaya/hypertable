@@ -45,7 +45,7 @@ using namespace std;
 
 
 
-Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeT *range) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_schema(schemaPtr), m_maintenance_in_progress(false), m_latest_timestamp(0), m_split_start_time(0), m_hold_updates(false), m_update_counter(0) {
+Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeT *range) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_schema(schemaPtr), m_maintenance_in_progress(false), m_latest_timestamp(0), m_temp_timestamp(0), m_split_start_time(0), m_hold_updates(false), m_update_counter(0) {
   int error;
   AccessGroup *ag;
 
@@ -242,9 +242,8 @@ int Range::add(const ByteString32T *key, const ByteString32T *value) {
       (*iter).second->add(key, value);
     }
   }
-  else if (keyComps.flag == FLAG_DELETE_CELL || keyComps.flag == FLAG_INSERT) {
+  else if (keyComps.flag == FLAG_DELETE_CELL || keyComps.flag == FLAG_INSERT)
     m_column_family_vector[keyComps.column_family_code]->add(key, value);
-  }
   else {
     LOG_VA_ERROR("Bad flag value (%d)", keyComps.flag);
   }
@@ -608,10 +607,6 @@ uint64_t Range::run_compaction(bool major) {
 
 void Range::lock() {
   // this is a bit of a hack to collect the most recent timestamp seen
-  {
-    boost::mutex::scoped_lock lock(m_mutex);
-    m_temp_timestamp = m_latest_timestamp;
-  }
   for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++)
     (*iter).second->lock();
 }
@@ -710,5 +705,5 @@ uint64_t Range::get_timestamp() {
     timestamp = ((uint64_t)now.sec * 1000000000LL) + (uint64_t)now.nsec;
     return timestamp;
   }
-  return m_latest_timestamp + 1;
+  return m_latest_timestamp;
 }

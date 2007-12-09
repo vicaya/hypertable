@@ -48,6 +48,7 @@ namespace Hypertable {
 
     SchemaPtr schemaPtr;
     ScanSpecificationT *spec;
+    RangeT *range;
     std::string start_row;
     std::string end_row;
     std::pair<uint64_t, uint64_t> interval;
@@ -62,19 +63,28 @@ namespace Hypertable {
      * @param ss scan specification (can be NULL)
      * @param sp shared pointer to schema object
      */
-    ScanContext(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp) : error(Error::OK) {
-      initialize(ts, ss, sp);
+    ScanContext(uint64_t ts, ScanSpecificationT *ss, RangeT *range_, SchemaPtr &sp) : error(Error::OK) {
+      initialize(ts, ss, range_, sp);
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param ts scan timestamp (point in time when scan began)
+     * @param sp shared pointer to schema object
+     */
+    ScanContext(uint64_t ts, SchemaPtr &sp) : error(Error::OK) {
+      initialize(ts, 0, 0, sp);
     }
 
     /**
      * Constructor.  Calls initialize() with an empty schema pointer.
      *
      * @param ts scan timestamp (point in time when scan began)
-     * @param ss scan specification (can be NULL)
      */
-    ScanContext(uint64_t ts, ScanSpecificationT *ss) : error(Error::OK) {
+    ScanContext(uint64_t ts) : error(Error::OK) {
       SchemaPtr schemaPtr;
-      initialize(ts, ss, schemaPtr);
+      initialize(ts, 0, 0, schemaPtr);
     }
 
   private:
@@ -89,9 +99,10 @@ namespace Hypertable {
      *
      * @param ts scan timestamp (point in time when scan began)
      * @param ss scan specification
+     * @param range_ range specifier
      * @param sp shared pointer to schema object
      */
-    void initialize(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp);
+    void initialize(uint64_t ts, ScanSpecificationT *ss, RangeT *range_, SchemaPtr &sp);
 
   };
 

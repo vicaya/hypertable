@@ -99,8 +99,10 @@ CellListScanner *CellCache::create_scanner(ScanContextPtr &scanContextPtr) {
 
 
 
+/**
+ * This must be called with the cell cache locked
+ */
 CellCache *CellCache::slice_copy(uint64_t timestamp) {
-  boost::mutex::scoped_lock lock(m_mutex);
   CellCache *cache = new CellCache();
   Key keyComps;
   ByteString32T *key;

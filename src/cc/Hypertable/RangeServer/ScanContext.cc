@@ -35,7 +35,7 @@ const uint64_t ScanContext::END_OF_TIME = (uint64_t)-1;
 /**
  *
  */
-void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp) {
+void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, RangeT *range_, SchemaPtr &sp) {
   Schema::ColumnFamily *columnFamily;
   uint32_t max_versions = 0;
 
@@ -50,8 +50,7 @@ void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp)
   }    
 
   spec = ss;
-
-  assert(sp);
+  range = range_;
 
   if (spec == 0)
     memset(familyMask, true, 256*sizeof(bool));
@@ -62,50 +61,53 @@ void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, SchemaPtr &sp)
 
   memset(familyInfo, 0, 256*sizeof(CellFilterInfoT));
 
-  schemaPtr = sp;
-  if (spec && spec->columns.size() > 0) {
-    for (std::vector<const char *>::const_iterator iter = spec->columns.begin(); iter != spec->columns.end(); iter++) {
-      columnFamily = schemaPtr->get_column_family(*iter);
-      assert(columnFamily);
+  if (sp) {
 
-      familyMask[columnFamily->id] = true;
-      if (columnFamily->ttl == 0)
-	familyInfo[columnFamily->id].cutoffTime == 0;
-      else
-	familyInfo[columnFamily->id].cutoffTime == ts - (columnFamily->ttl * 1000000);
-      if (max_versions == 0)
-	familyInfo[columnFamily->id].max_versions = columnFamily->max_versions;
-      else {
-	if (columnFamily->max_versions == 0)
-	  familyInfo[columnFamily->id].max_versions = max_versions;
+    schemaPtr = sp;
+    if (spec && spec->columns.size() > 0) {
+      for (std::vector<const char *>::const_iterator iter = spec->columns.begin(); iter != spec->columns.end(); iter++) {
+	columnFamily = schemaPtr->get_column_family(*iter);
+	assert(columnFamily);
+
+	familyMask[columnFamily->id] = true;
+	if (columnFamily->ttl == 0)
+	  familyInfo[columnFamily->id].cutoffTime == 0;
 	else
-	  familyInfo[columnFamily->id].max_versions = (max_versions < columnFamily->max_versions) ? max_versions : columnFamily->max_versions;
+	  familyInfo[columnFamily->id].cutoffTime == ts - (columnFamily->ttl * 1000000);
+	if (max_versions == 0)
+	  familyInfo[columnFamily->id].max_versions = columnFamily->max_versions;
+	else {
+	  if (columnFamily->max_versions == 0)
+	    familyInfo[columnFamily->id].max_versions = max_versions;
+	  else
+	    familyInfo[columnFamily->id].max_versions = (max_versions < columnFamily->max_versions) ? max_versions : columnFamily->max_versions;
+	}
       }
     }
-  }
-  else {
-    list<Schema::AccessGroup *> *agList = schemaPtr->get_access_group_list();
+    else {
+      list<Schema::AccessGroup *> *agList = schemaPtr->get_access_group_list();
 
-    familyMask[0] = true;  // ROW_DELETE records have 0 column family, so this allows them to pass through
-    for (list<Schema::AccessGroup *>::iterator agIter = agList->begin(); agIter != agList->end(); agIter++) {
-      for (list<Schema::ColumnFamily *>::iterator cfIter = (*agIter)->columns.begin(); cfIter != (*agIter)->columns.end(); cfIter++) {
-	if ((*cfIter)->id == 0) {
-	  error = Error::RANGESERVER_SCHEMA_INVALID_CFID;
-	  return;
-	}
-	familyMask[(*cfIter)->id] = true;
-	if ((*cfIter)->ttl == 0)
-	  familyInfo[(*cfIter)->id].cutoffTime == 0;
-	else
-	  familyInfo[(*cfIter)->id].cutoffTime == ts - ((*cfIter)->ttl * 1000000);
-
-	if (max_versions == 0)
-	  familyInfo[(*cfIter)->id].max_versions = (*cfIter)->max_versions;
-	else {
-	  if ((*cfIter)->max_versions == 0)
-	    familyInfo[(*cfIter)->id].max_versions = max_versions;
+      familyMask[0] = true;  // ROW_DELETE records have 0 column family, so this allows them to pass through
+      for (list<Schema::AccessGroup *>::iterator agIter = agList->begin(); agIter != agList->end(); agIter++) {
+	for (list<Schema::ColumnFamily *>::iterator cfIter = (*agIter)->columns.begin(); cfIter != (*agIter)->columns.end(); cfIter++) {
+	  if ((*cfIter)->id == 0) {
+	    error = Error::RANGESERVER_SCHEMA_INVALID_CFID;
+	    return;
+	  }
+	  familyMask[(*cfIter)->id] = true;
+	  if ((*cfIter)->ttl == 0)
+	    familyInfo[(*cfIter)->id].cutoffTime == 0;
 	  else
-	    familyInfo[(*cfIter)->id].max_versions = (max_versions < (*cfIter)->max_versions) ? max_versions : (*cfIter)->max_versions;
+	    familyInfo[(*cfIter)->id].cutoffTime == ts - ((*cfIter)->ttl * 1000000);
+
+	  if (max_versions == 0)
+	    familyInfo[(*cfIter)->id].max_versions = (*cfIter)->max_versions;
+	  else {
+	    if ((*cfIter)->max_versions == 0)
+	      familyInfo[(*cfIter)->id].max_versions = max_versions;
+	    else
+	      familyInfo[(*cfIter)->id].max_versions = (max_versions < (*cfIter)->max_versions) ? max_versions : (*cfIter)->max_versions;
+	  }
 	}
       }
     }
