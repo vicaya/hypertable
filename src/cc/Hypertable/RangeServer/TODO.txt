@@ -11,11 +11,12 @@ TODO:
 - Make sure ':' character cannot be specified in column family name
 - Range constructor should throw exceptions
 - clientTimestamp value does not appear to be used in RangeServer::update
-- Make sure updates are sent sorted in ascending order of timestamp (for same row)
 - Add global (timeout, workers, reactors, etc.) to config file 
 - Add delete_row, delete_cell, delete_qualified_cell, etc. to Mutator
+- Figure out get_timestamp stuff (see Merge scanner) is it less than, less than or equal to???
 
 DONE:
+- Make sure updates are sent sorted in ascending order of timestamp (for same row)
 - Add PAUSE command to hypertable (to facilitate testing)
 - Get scan time interval working
 - Add auto-assigned timestamps

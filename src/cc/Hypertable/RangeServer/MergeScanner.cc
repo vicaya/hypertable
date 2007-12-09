@@ -122,7 +122,7 @@ void MergeScanner::forward() {
 	  break;
       }
       else {
-	if (keyComps.timestamp >= m_end_timestamp)
+	if (keyComps.timestamp > m_end_timestamp)
 	  continue;
 	if (m_delete_present) {
 	  if (m_deleted_cell.fill() > 0) {
@@ -226,19 +226,17 @@ void MergeScanner::initialize() {
     }
   }
   while (!m_queue.empty()) {
-    const ScannerStateT &sstate = m_queue.top();
+    sstate = m_queue.top();
     Key keyComps;
     if (!keyComps.load(sstate.key)) {
       assert(!"MergeScanner::initialize() - Problem decoding key!");
     }
 
     if (keyComps.timestamp < m_start_timestamp) {
-      ScannerStateT tmp_sstate;
       m_queue.pop();
       sstate.scanner->forward();
-      tmp_sstate.scanner = sstate.scanner;
-      if (sstate.scanner->get(&tmp_sstate.key, &tmp_sstate.value))
-	m_queue.push(tmp_sstate);
+      if (sstate.scanner->get(&sstate.key, &sstate.value))
+	m_queue.push(sstate);
       continue;
     }
 
@@ -265,13 +263,11 @@ void MergeScanner::initialize() {
 	forward();
     }
     else {
-      if (keyComps.timestamp >= m_end_timestamp) {
-	ScannerStateT tmp_sstate;
+      if (keyComps.timestamp > m_end_timestamp) {
 	m_queue.pop();
 	sstate.scanner->forward();
-	tmp_sstate.scanner = sstate.scanner;
-	if (sstate.scanner->get(&tmp_sstate.key, &tmp_sstate.value))
-	  m_queue.push(tmp_sstate);
+	if (sstate.scanner->get(&sstate.key, &sstate.value))
+	  m_queue.push(sstate);
 	continue;
       }
       m_delete_present = false;
