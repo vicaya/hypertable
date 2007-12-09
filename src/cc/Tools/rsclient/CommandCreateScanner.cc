@@ -65,7 +65,6 @@ TableInfo        *CommandCreateScanner::ms_table_info = 0;
 bool              CommandCreateScanner::ms_display_values = false;
 
 int CommandCreateScanner::run() {
-  off_t len;
   int error;
   std::string tableName;
   std::string startRow;
@@ -74,7 +73,6 @@ int CommandCreateScanner::run() {
   ScanSpecificationT scan_spec;
   char *last;
   const char *columnStr;
-  uint32_t ilen;
   ScanBlock scanblock;
   SchemaPtr schema_ptr;
   TableIdentifierT *table;
@@ -184,7 +182,6 @@ int CommandCreateScanner::run() {
   int error;
   char errBuf[256];
   char *base = (char *)specStr.c_str();
-  const char *ptr;
 
   errBuf[0] = 0;
 

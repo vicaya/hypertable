@@ -661,8 +661,8 @@ namespace Hypertable {
 	    = date >> time
 	    ;
 
-	  uint_parser<int, 10, 2, 2> uint2_p;
-	  uint_parser<int, 10, 4, 4> uint4_p;
+	  uint_parser<unsigned int, 10, 2, 2> uint2_p;
+	  uint_parser<unsigned int, 10, 4, 4> uint4_p;
 
 	  date
 	    = lexeme_d[

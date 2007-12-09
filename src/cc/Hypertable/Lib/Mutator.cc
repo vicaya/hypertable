@@ -92,7 +92,6 @@ void Mutator::set(uint64_t timestamp, KeySpec &key, uint8_t *value, uint32_t val
 
 
 void Mutator::flush() {
-  int error;
 
   if (m_prev_buffer_ptr)
     wait_for_previous_buffer();

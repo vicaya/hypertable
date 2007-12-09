@@ -41,9 +41,6 @@ using namespace Hyperspace;
  *
  */
 Client::Client(std::string configFile) {
-  uint16_t masterPort;
-  const char *masterHost;
-  struct sockaddr_in addr;
   PropertiesPtr propsPtr( new Properties(configFile) );
 
   m_comm = new Comm();

@@ -32,6 +32,8 @@ namespace Hypertable {
 
   public:
 
+    virtual ~InteractiveCommand() { return; }
+
     void parse_command_line(const char *line);
     bool matches(const char *line) { return !strncmp(line, command_text(), strlen(command_text())); }
 

@@ -159,8 +159,6 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       uint32_t consumed;
       uint64_t file_size;
       string start_msg;
-      int thousandth;
-      double dval;
       uint64_t insert_count = 0;
       boost::xtime start_time, finish_time;
       double elapsed_time;
@@ -220,7 +218,7 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
 	elapsed_time += ((1000000000.0 - (double)start_time.nsec) + (double)finish_time.nsec) / 1000000000.0;
       }
 
-      printf("Load complete (%.2lfs elapsed_time, %.2lf bytes/s, %.2lf inserts/s)\n",
+      printf("Load complete (%.2fs elapsed_time, %.2f bytes/s, %.2f inserts/s)\n",
 	     elapsed_time, (double)file_size / elapsed_time, (double)insert_count / elapsed_time);
 
     }

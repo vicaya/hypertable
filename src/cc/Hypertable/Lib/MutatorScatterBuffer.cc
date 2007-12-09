@@ -24,7 +24,7 @@
 #include "MutatorScatterBuffer.h"
 
 namespace {
-  const int MAX_SEND_BUFFER_SIZE = 1000000;
+  const uint32_t MAX_SEND_BUFFER_SIZE = 1000000;
 }
 
 
@@ -191,7 +191,6 @@ MutatorScatterBuffer *MutatorScatterBuffer::create_redo_buffer() {
   UpdateBufferPtr update_buffer_ptr;
   RangeLocationInfo range_info;
   std::vector<ByteString32T *>  kvec;
-  uint8_t *data, *ptr;
   ByteString32T *low_key, *key, *value;
   int count = 0;
 

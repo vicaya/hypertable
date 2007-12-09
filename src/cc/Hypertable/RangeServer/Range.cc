@@ -99,12 +99,10 @@ int Range::load_cell_stores() {
   AccessGroup *ag;
   CellStorePtr cellStorePtr;
   CellT cell;
-  KeySpec key;
   ScanSpecificationT scan_spec;
   TableScannerPtr scanner_ptr;
   const char *base, *ptr, *end;
   int error;
-  int32_t len;
   std::string ag_name;
   std::string file_str;
   uint32_t csid;
@@ -207,7 +205,6 @@ int Range::load_cell_stores() {
  */
 bool Range::extract_csid_from_path(std::string &path, uint32_t *csidp) {
   const char *base;
-  const char *endptr;
 
   if ((base = strrchr(path.c_str(), '/')) == 0 || strncmp(base, "/cs", 3))
     *csidp = 0;
@@ -593,7 +590,7 @@ uint64_t Range::run_compaction(bool major) {
    * committed on this range do not get included in the compaction
    * scan
    */
-  int64_t temp_timestamp = m_scanner_timestamp_controller.get_oldest_update_timestamp();
+  uint64_t temp_timestamp = m_scanner_timestamp_controller.get_oldest_update_timestamp();
   if (temp_timestamp != 0 && temp_timestamp < timestamp)
     timestamp = temp_timestamp;
 
@@ -630,7 +627,7 @@ int Range::replay_split_log(string &log_dir) {
   int error;
   CommitLogReaderPtr commit_log_reader_ptr = new CommitLogReader(Global::dfs, log_dir);
   CommitLogHeaderT *header;  
-  const uint8_t *base, *ptr, *end;
+  const uint8_t *ptr, *end;
   ByteString32T *key, *value;
   size_t nblocks = 0;
   size_t count = 0;

@@ -90,7 +90,6 @@ int main(int argc, char **argv) {
   TestData tdata;
   Schema *schema;
   std::string schemaSpec;
-  off_t len;
   struct timeval tval;
   uint64_t timestamp;
   uint32_t index;

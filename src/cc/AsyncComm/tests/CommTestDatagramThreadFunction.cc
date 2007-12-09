@@ -102,8 +102,6 @@ void CommTestDatagramThreadFunction::operator()() {
   ifstream infile(m_input_file);
   ofstream outfile(m_output_file);
   const char *str;
-  uint64_t gid64 = (uint64_t)this;
-  uint32_t gid = (uint32_t)(gid64 & 0x00000000FFFFFFFFLL);
   int nsent = 0;
   struct sockaddr_in localAddr;
   ResponseHandler *respHandler = new ResponseHandler();
@@ -111,7 +109,7 @@ void CommTestDatagramThreadFunction::operator()() {
 
   InetAddr::initialize(&localAddr, INADDR_ANY, m_port);
 
-  if (error = m_comm->create_datagram_receive_socket(&localAddr, dispatchHandlerPtr)) {
+  if ((error = m_comm->create_datagram_receive_socket(&localAddr, dispatchHandlerPtr)) != Error::OK) {
     LOG_VA_ERROR("Problem opening datagram receive port %d - %s", m_port, Error::get_text(error));
     return;
   }

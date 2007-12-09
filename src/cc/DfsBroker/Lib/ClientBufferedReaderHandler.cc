@@ -28,7 +28,7 @@
 using namespace Hypertable;
 
 namespace {
-  const uint32_t DEFAULT_READ_SIZE = 8192;
+  const int32_t DEFAULT_READ_SIZE = 8192;
 }
 
 /**
@@ -55,12 +55,14 @@ ClientBufferedReaderHandler::ClientBufferedReaderHandler(DfsBroker::Client *clie
 }
 
 
+
 ClientBufferedReaderHandler::~ClientBufferedReaderHandler() {
   boost::mutex::scoped_lock lock(m_mutex);
   m_eof = true;
   while (m_outstanding > 0)
     m_cond.wait(lock);
 }
+
 
 
 /**

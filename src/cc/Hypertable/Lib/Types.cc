@@ -90,7 +90,7 @@ namespace Hypertable {
     size_t len = 28;
     len += Serialization::encoded_length_string(scanSpec.startRow);
     len += Serialization::encoded_length_string(scanSpec.endRow);
-    for (int i=0; i<scanSpec.columns.size(); i++)
+    for (size_t i=0; i<scanSpec.columns.size(); i++)
       len += Serialization::encoded_length_string(scanSpec.columns[i]);
     return len;
   }
@@ -104,7 +104,7 @@ namespace Hypertable {
     Serialization::encode_string(bufPtr, scanSpec.endRow);
     *(*bufPtr)++ = (uint8_t)scanSpec.endRowInclusive;
     Serialization::encode_short(bufPtr, (short)scanSpec.columns.size());
-    for (int i=0; i<scanSpec.columns.size(); i++)
+    for (size_t i=0; i<scanSpec.columns.size(); i++)
       Serialization::encode_string(bufPtr, scanSpec.columns[i]);
     Serialization::encode_long(bufPtr, scanSpec.interval.first);
     Serialization::encode_long(bufPtr, scanSpec.interval.second);
@@ -150,6 +150,7 @@ namespace Hypertable {
     os << "Table Name = " << table_identifier.name << endl;
     os << "Table ID   = " << table_identifier.id << endl;
     os << "Generation = " << table_identifier.generation << endl;
+    return os;
   }
 
   std::ostream &operator<<(std::ostream &os, const RangeT &range) {

@@ -194,7 +194,6 @@ void Master::destroy_session(uint64_t sessionId) {
 
 int Master::renew_session_lease(uint64_t sessionId) {
   boost::mutex::scoped_lock lock(m_session_map_mutex);  
-  boost::xtime now;
 
   SessionMapT::iterator iter = m_session_map.find(sessionId);
   if (iter == m_session_map.end())
@@ -412,7 +411,6 @@ void Master::open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
   NodeDataPtr nodePtr;
   NodeDataPtr parentNodePtr;
   HandleDataPtr handlePtr;
-  int error;
   bool created = false;
   bool isDirectory = false;
   bool existed;
@@ -872,9 +870,8 @@ void Master::readdir(ResponseCallbackReaddir *cb, uint64_t sessionId, uint64_t h
 void Master::lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle, uint32_t mode, bool tryAcquire) {
   SessionDataPtr sessionPtr;
   HandleDataPtr handlePtr;
-  int error;
   bool notify = true;
-
+  
   if (m_verbose) {
     LOG_VA_INFO("lock(session=%lld, handle=%lld, mode=0x%x, tryAcquire=%d)", sessionId, handle, mode, tryAcquire);
   }
@@ -1107,7 +1104,7 @@ void Master::report_error(ResponseCallback *cb) {
     cb->error(Error::HYPERSPACE_FILE_EXISTS, errbuf);
   else if (errno == ENOATTR)
     cb->error(Error::HYPERSPACE_ATTR_NOT_FOUND, errbuf);
-  else if (errno = EISDIR)
+  else if (errno == EISDIR)
     cb->error(Error::HYPERSPACE_IS_DIRECTORY, errbuf);
   else {
     LOG_VA_ERROR("Unknown error, errno = %d", errno);
@@ -1158,7 +1155,6 @@ void Master::deliver_event_notifications(NodeData *node, HyperspaceEventPtr &eve
  * Assumes node is locked.
  */
 void Master::deliver_event_notification(HandleDataPtr &handlePtr, HyperspaceEventPtr &eventPtr, bool waitForNotify) {
-  int notifications = 0;
 
   // log event
 

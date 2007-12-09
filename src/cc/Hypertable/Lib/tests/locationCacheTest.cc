@@ -190,7 +190,6 @@ namespace {
 
   void TestLookup(LocationCache &cache, uint32_t tableId, const char *rowKey) {
     RangeLocationInfo  range_loc_info;
-    const char *serverId;
     outfile << "LOOKUP(" << tableId << ", " << rowKey << ") -> ";
 
     if (cache.lookup(tableId, rowKey, &range_loc_info))

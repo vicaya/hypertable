@@ -40,7 +40,6 @@ const char *CommandRelease::ms_usage[] = {
 
 int CommandRelease::run() {
   uint64_t handle;
-  uint32_t mode = 0;
   struct LockSequencerT lockseq;
 
   if (m_args.size() != 1) {

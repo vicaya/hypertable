@@ -100,7 +100,6 @@ void LocalBroker::open(ResponseCallbackOpen *cb, const char *fileName, uint32_t 
   }
 
   {
-    int error;
     struct sockaddr_in addr;
     OpenFileDataLocalPtr dataPtr(new OpenFileDataLocal(fd, O_RDONLY));
 
@@ -149,7 +148,6 @@ void LocalBroker::create(ResponseCallbackOpen *cb, const char *fileName, bool ov
   }
 
   {
-    int error;
     struct sockaddr_in addr;
     OpenFileDataLocalPtr dataPtr(new OpenFileDataLocal(fd, O_WRONLY));
 
@@ -196,7 +194,7 @@ void LocalBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
     return;
   }
 
-  if ((offset = (uint64_t)lseek(dataPtr->fd, 0, SEEK_CUR)) == -1) {
+  if ((offset = (uint64_t)lseek(dataPtr->fd, 0, SEEK_CUR)) == (uint64_t)-1) {
     LOG_VA_ERROR("lseek failed: fd=%d offset=0 SEEK_CUR - %s", dataPtr->fd, strerror(errno));
     report_error(cb);
     return;
@@ -232,7 +230,7 @@ void LocalBroker::append(ResponseCallbackAppend *cb, uint32_t fd, uint32_t amoun
     return;
   }
 
-  if ((offset = (uint64_t)lseek(dataPtr->fd, 0, SEEK_CUR)) == -1) {
+  if ((offset = (uint64_t)lseek(dataPtr->fd, 0, SEEK_CUR)) == (uint64_t)-1) {
     LOG_VA_ERROR("lseek failed: fd=%d offset=0 SEEK_CUR - %s", dataPtr->fd, strerror(errno));
     report_error(cb);
     return;
@@ -263,7 +261,7 @@ void LocalBroker::seek(ResponseCallback *cb, uint32_t fd, uint64_t offset) {
     return;
   }
 
-  if ((offset = (uint64_t)lseek(dataPtr->fd, offset, SEEK_SET)) == -1) {
+  if ((offset = (uint64_t)lseek(dataPtr->fd, offset, SEEK_SET)) == (uint64_t)-1) {
     LOG_VA_ERROR("lseek failed: fd=%d offset=%lld - %s", dataPtr->fd, offset, strerror(errno));
     report_error(cb);
     return;
@@ -314,7 +312,7 @@ void LocalBroker::length(ResponseCallbackLength *cb, const char *fileName) {
   else
     absFileName = m_rootdir + "/" + fileName;
 
-  if ((length = FileUtils::length(absFileName.c_str())) == (off_t)-1) {
+  if ((length = FileUtils::length(absFileName.c_str())) == (uint64_t)-1) {
     LOG_VA_ERROR("length (stat) failed: file='%s' - %s", absFileName.c_str(), strerror(errno));
     report_error(cb);
     return;

@@ -745,7 +745,6 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
   TableInfoPtr tableInfoPtr;
   uint64_t updateTimestamp = 0;
   uint64_t clientTimestamp = 0;
-  struct timeval tval;
   const char *row;
   std::string split_row;
   vector<UpdateRecT> goMods;

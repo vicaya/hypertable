@@ -64,15 +64,12 @@ const char *CommandUpdate::ms_usage[] = {
 
 int CommandUpdate::run() {
   DispatchHandlerSynchronizer syncHandler;
-  off_t len;
-  const char *schema = 0;
   int error;
   TableIdentifierT *table;
   std::string tableName;
   SchemaPtr schema_ptr;
   TestData tdata;
   TestSource  *tsource = 0;
-  uint8_t *bufs[2];
   bool outstanding = false;
   struct stat statbuf;
   TableInfo *table_info;

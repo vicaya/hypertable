@@ -35,7 +35,7 @@
 /**
  * 
  */
-MasterClient::MasterClient(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr, time_t timeout, ApplicationQueuePtr &appQueuePtr) : m_verbose(true), m_conn_manager_ptr(connManagerPtr), m_hyperspace_ptr(hyperspacePtr), m_timeout(timeout), m_app_queue_ptr(appQueuePtr), m_initiated(false) {
+MasterClient::MasterClient(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr, time_t timeout, ApplicationQueuePtr &appQueuePtr) : m_verbose(true), m_conn_manager_ptr(connManagerPtr), m_hyperspace_ptr(hyperspacePtr), m_app_queue_ptr(appQueuePtr), m_timeout(timeout), m_initiated(false) {
   int error;
 
   m_comm = m_conn_manager_ptr->get_comm();

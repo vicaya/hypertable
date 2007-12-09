@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
   TestHarness harness("commTestTimer");
   bool golden = false;
   TimerHandler *timerHandler;
-  int waitTime = 0;
+  uint32_t waitTime = 0;
   ostream &out = harness.get_log_stream();
 
   if (argc > 1) {

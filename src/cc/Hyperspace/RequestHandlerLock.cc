@@ -38,7 +38,6 @@ void RequestHandlerLock::run() {
   ResponseCallbackLock cb(m_comm, m_event_ptr);
   size_t remaining = m_event_ptr->messageLen - 2;
   uint8_t *msgPtr = m_event_ptr->message + 2;
-  const char *name;
   uint64_t handle;
   uint32_t mode;
   uint8_t tryAcquire;

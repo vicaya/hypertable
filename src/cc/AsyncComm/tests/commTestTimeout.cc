@@ -112,7 +112,6 @@ namespace {
 
 
 int main(int argc, char **argv) {
-  boost::thread  *thread1, *thread2;
   struct sockaddr_in addr;
   Comm *comm;
   int error;

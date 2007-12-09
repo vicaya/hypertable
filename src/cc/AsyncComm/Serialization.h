@@ -183,7 +183,7 @@ namespace Hypertable {
       (*remainingPtr) -= 4;
       (*bufPtr) += 4;
       // data
-      if (*remainingPtr < *lenPtr)
+      if (*remainingPtr < (size_t)*lenPtr)
 	return false;
       *dstPtr = (*bufPtr);
       (*remainingPtr) -= *lenPtr;

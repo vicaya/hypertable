@@ -85,7 +85,7 @@ namespace {
   NotificationHandler *gNotifyHandler = 0;
 
   void IssueCommandNoWait(int fd, const char *command) {
-    if (write(fd, command, strlen(command)) != strlen(command)) {
+    if (write(fd, command, strlen(command)) != (ssize_t)strlen(command)) {
       perror("write");
       exit(1);
     }

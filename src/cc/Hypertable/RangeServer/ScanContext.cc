@@ -71,9 +71,9 @@ void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, RangeT *range_
 
 	familyMask[columnFamily->id] = true;
 	if (columnFamily->ttl == 0)
-	  familyInfo[columnFamily->id].cutoffTime == 0;
+	  familyInfo[columnFamily->id].cutoffTime = 0;
 	else
-	  familyInfo[columnFamily->id].cutoffTime == ts - (columnFamily->ttl * 1000000);
+	  familyInfo[columnFamily->id].cutoffTime = ts - ((uint64_t)columnFamily->ttl * 1000000000LL);
 	if (max_versions == 0)
 	  familyInfo[columnFamily->id].max_versions = columnFamily->max_versions;
 	else {
@@ -96,9 +96,9 @@ void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, RangeT *range_
 	  }
 	  familyMask[(*cfIter)->id] = true;
 	  if ((*cfIter)->ttl == 0)
-	    familyInfo[(*cfIter)->id].cutoffTime == 0;
+	    familyInfo[(*cfIter)->id].cutoffTime = 0;
 	  else
-	    familyInfo[(*cfIter)->id].cutoffTime == ts - ((*cfIter)->ttl * 1000000);
+	    familyInfo[(*cfIter)->id].cutoffTime = ts - ((uint64_t)(*cfIter)->ttl * 1000000000LL);
 
 	  if (max_versions == 0)
 	    familyInfo[(*cfIter)->id].max_versions = (*cfIter)->max_versions;

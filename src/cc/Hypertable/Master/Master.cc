@@ -373,7 +373,6 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
    */
   if (!m_initialized) {
     int error;
-    struct sockaddr_in addr;
     TableIdentifierT table;
     RangeT range;
     RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30);

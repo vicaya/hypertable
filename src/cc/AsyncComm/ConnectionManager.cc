@@ -54,7 +54,6 @@ void ConnectionManager::add(struct sockaddr_in &addr, time_t timeout, const char
   boost::mutex::scoped_lock lock(m_impl->mutex);
   SockAddrMapT<ConnectionStatePtr> iter;
   ConnectionState *connState;
-  int error;
 
   if (m_impl->connMap.find(addr) != m_impl->connMap.end())
     return;
@@ -101,7 +100,6 @@ void ConnectionManager::add(struct sockaddr_in &addr, struct sockaddr_in &localA
   boost::mutex::scoped_lock lock(m_impl->mutex);
   SockAddrMapT<ConnectionStatePtr> iter;
   ConnectionState *connState;
-  int error;
 
   if (m_impl->connMap.find(addr) != m_impl->connMap.end())
     return;

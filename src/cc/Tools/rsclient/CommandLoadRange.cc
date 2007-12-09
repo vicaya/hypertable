@@ -38,8 +38,6 @@ const char *CommandLoadRange::ms_usage[] = {
 };
 
 int CommandLoadRange::run() {
-  off_t len;
-  const char *schema = 0;
   int error;
   std::string tableName;
   std::string startRow;

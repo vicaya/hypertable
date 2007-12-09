@@ -203,7 +203,6 @@ int main(int argc, char **argv, char **envp) {
   string configFile = "";
   vector<InteractiveCommand *>  commands;
   Comm *comm;
-  ConnectionManager *connManager;
   PropertiesPtr propsPtr;
   Hyperspace::Session *session;
   SessionHandler sessionHandler;

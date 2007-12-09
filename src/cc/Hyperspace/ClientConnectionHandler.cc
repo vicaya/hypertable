@@ -34,7 +34,7 @@ using namespace Hypertable;
 /**
  *
  */
-ClientConnectionHandler::ClientConnectionHandler(Comm *comm, Session *session, time_t timeout) : m_comm(comm), m_session(session), m_state(DISCONNECTED), m_session_id(0), m_verbose(false), m_timeout(timeout) {
+ClientConnectionHandler::ClientConnectionHandler(Comm *comm, Session *session, time_t timeout) : m_comm(comm), m_session(session), m_session_id(0), m_state(DISCONNECTED), m_verbose(false), m_timeout(timeout) {
   memset(&m_master_addr, 0, sizeof(struct sockaddr_in));
   return;
 }

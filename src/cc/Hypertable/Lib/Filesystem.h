@@ -35,6 +35,8 @@ namespace Hypertable {
   class Filesystem {
   public:
 
+    virtual ~Filesystem() { return; }
+
     /** Opens a file asynchronously.  Issues an open file request.  The caller will
      * get notified of successful completion or error via the given dispatch handler.
      * It is up to the caller to deserialize the returned file descriptor from

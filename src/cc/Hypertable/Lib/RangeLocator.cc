@@ -147,12 +147,9 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
   ScanBlock scan_block;
   int error;
   Key keyComps;
-  const ByteString32T *key;
-  const ByteString32T *value;
   RangeLocationInfo range_loc_info;
   std::string start_row;
   std::string end_row;
-  char buf[16];
   struct sockaddr_in addr;
   bool inclusive = (row_key == 0 || *row_key == 0) ? true : false;
 
@@ -283,7 +280,6 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
  *
  */
 int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
-  int error;
   RangeLocationInfo range_loc_info;
   const ByteString32T *key;
   const ByteString32T *value;
@@ -383,7 +379,6 @@ int RangeLocator::read_root_location() {
   int error;
   DynamicBuffer value(0);
   std::string addrStr;
-  char buf[8];
 
   if ((error = m_hyperspace_ptr->attr_get(m_root_file_handle, "location", value)) != Error::OK) {
     LOG_VA_ERROR("Problem reading 'location' attribute of Hyperspace file /hypertable/root - %s", Error::get_text(error));

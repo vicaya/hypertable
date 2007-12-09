@@ -76,6 +76,7 @@ namespace Hyperspace {
    */
   class SessionCallback {
   public:
+    virtual ~SessionCallback() { return; }
     virtual void safe() = 0;
     virtual void expired() = 0;
     virtual void jeopardy() = 0;

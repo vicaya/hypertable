@@ -128,8 +128,9 @@ namespace Hypertable {
      * Advance the primary buffer internal data pointer by len bytes
      *
      * @param len the number of bytes to advance the pointer by
+     * @return returns the advanced internal data pointer
      */
-    void *advance_data_ptr(size_t len) { dataPtr += len; }
+    void *advance_data_ptr(size_t len) { dataPtr += len; return dataPtr; }
 
     /**
      * Append a byte of data to the primary buffer, advancing the

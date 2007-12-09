@@ -35,7 +35,6 @@ using namespace std;
 void InteractiveCommand::parse_command_line(const char *line) {
   size_t commandLen = strlen(this->command_text());
   const char *base, *ptr;
-  int lastchar = 0;
   string key, value;
 
   assert(!strncmp(line, command_text(), commandLen));

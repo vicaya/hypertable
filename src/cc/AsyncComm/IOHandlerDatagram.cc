@@ -128,6 +128,8 @@ bool IOHandlerDatagram::handle_event(struct kevent *event) {
     return false;
   }
 
+  return false;
+
 }
 #else
 ImplementMe;
@@ -197,7 +199,7 @@ int IOHandlerDatagram::flush_send_queue() {
 		  inet_ntoa(sendRec.first.sin_addr), ntohs(sendRec.first.sin_port), strerror(errno));
       return Error::COMM_SEND_ERROR;
     }
-    else if (nsent < sendRec.second->dataLen) {
+    else if (nsent < (ssize_t)sendRec.second->dataLen) {
       LOG_VA_WARN("Only sent %d bytes", nsent);
       if (nsent == 0)
 	break;

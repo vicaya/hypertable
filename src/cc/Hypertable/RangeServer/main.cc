@@ -71,7 +71,7 @@ namespace {
 int main(int argc, char **argv) {
   string configFile = "";
   string pidFile = "";
-  int port, reactorCount;
+  int reactorCount;
   char *logBroker = 0;
   Comm *comm = 0;
   PropertiesPtr propsPtr;
