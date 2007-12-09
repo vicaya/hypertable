@@ -53,8 +53,6 @@ namespace {
     0
   };
 
-  const int DEFAULT_PORT = 32998;
-  const char *DEFAULT_PORT_ARG = "--port=32998";
 }
 
 

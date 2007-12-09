@@ -119,8 +119,12 @@ int main(int argc, char **argv) {
 	pidFile = &argv[i][10];
       else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
 	verbose = true;
+      else if (!strcmp(argv[i], "-?") || !strcmp(argv[i], "--help")) {
+	Usage::dump_and_exit(usage);
+      }
       else {
 	cerr << "Hyperspace.master: Unrecognized argument '" << argv[i] << "'" << endl;
+	
 	exit(1);
       }
     }

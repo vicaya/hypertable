@@ -29,8 +29,8 @@ using namespace Hypertable;
 using namespace std;
 
 namespace {
-  const char end_row_chars[3] = { 0xff, 0xff, 0 };
-  const char end_root_row_chars[5] = { '0', ':', 0xff, 0xff, 0 };
+  const char end_row_chars[3] = { (char)0xff, (char)0xff, 0 };
+  const char end_root_row_chars[5] = { '0', ':', (char)0xff, (char)0xff, 0 };
 }
 
 

@@ -32,6 +32,7 @@ extern "C" {
 #include "Common/Logger.h"
 #include "Common/ServerLauncher.h"
 #include "Common/System.h"
+#include "Common/Usage.h"
 
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/CommBuf.h"
@@ -122,6 +123,9 @@ int main(int argc, char **argv) {
   struct sockaddr_in addr;
   char masterInstallDir[2048];
   DispatchHandlerPtr dhp;
+
+  if (argc > 1 && (!strcmp(argv[1], "-?") || !strcmp(argv[1], "--help")))
+    Usage::dump_and_exit(usage);
 
   gNotifyHandler = new NotificationHandler();
 
