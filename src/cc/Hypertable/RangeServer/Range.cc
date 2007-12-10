@@ -458,7 +458,6 @@ void Range::do_maintenance() {
       mutator_ptr->set(0, key, (uint8_t *)m_split_row.c_str(), m_split_row.length());
       key.column_family = "SplitLogDir";
       mutator_ptr->set(0, key, 0, 0);
-
       mutator_ptr->flush();
     }
     catch (Hypertable::Exception &e) {
@@ -466,6 +465,7 @@ void Range::do_maintenance() {
       LOG_VA_ERROR("Problem updating METADATA with new range information (row key = %s) - %s", metadata_key_str.c_str(), e.what());
       DUMP_CORE;
     }
+
 
     /**
      * If this is a METADATA range, then update the ROOT range
@@ -486,6 +486,7 @@ void Range::do_maintenance() {
 	key.row = metadata_key_str.c_str();
 	key.row_len = metadata_key_str.length();
 	mutator_ptr->set(0, key, (uint8_t *)m_split_row.c_str(), m_split_row.length());
+	mutator_ptr->flush();
       }
       catch (Hypertable::Exception &e) {
 	// TODO: propagate exception
@@ -493,6 +494,7 @@ void Range::do_maintenance() {
 	DUMP_CORE;
       }
     }
+
 
     /**
      *  Do the split
@@ -548,7 +550,7 @@ void Range::do_maintenance() {
       }
     }
 
-    LOG_VA_INFO("Split Complete.  New Range startRow=%s", m_start_row.c_str());
+    LOG_VA_INFO("Split Complete.  New Range end_row=%s", m_start_row.c_str());
 
   }
   else

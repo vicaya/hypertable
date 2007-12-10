@@ -198,6 +198,7 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
   if (hard || !m_cache.lookup(0, meta_key_ptr, range_loc_info_p, inclusive)) {
     meta_scan_spec.rowLimit = METADATA_READAHEAD_COUNT;
     meta_scan_spec.max_versions = 1;
+    meta_scan_spec.columns.clear();
     meta_scan_spec.columns.push_back("StartRow");
     meta_scan_spec.columns.push_back("Location");
     meta_scan_spec.startRow = meta_start_key;
@@ -241,6 +242,7 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
 
   meta_scan_spec.rowLimit = METADATA_READAHEAD_COUNT;
   meta_scan_spec.max_versions = 1;
+  meta_scan_spec.columns.clear();
   meta_scan_spec.columns.push_back("StartRow");
   meta_scan_spec.columns.push_back("Location");
   meta_scan_spec.startRow = meta_start_key+2;

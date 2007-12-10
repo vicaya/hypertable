@@ -166,9 +166,9 @@ namespace Hypertable {
   }
 
   std::ostream &operator<<(std::ostream &os, const ScanSpecificationT &scanSpec) {
-    os << "RowLimit  = " << scanSpec.rowLimit << endl;
-    os << "CellLimit = " << scanSpec.rowLimit << endl;
-    os << "Columns   = ";
+    os << "RowLimit    = " << scanSpec.rowLimit << endl;
+    os << "MaxVersions = " << scanSpec.max_versions << endl;
+    os << "Columns     = ";
     for (std::vector<const char *>::const_iterator iter = scanSpec.columns.begin(); iter != scanSpec.columns.end(); iter++)
       os << *iter << " ";
     os << endl;
@@ -180,10 +180,10 @@ namespace Hypertable {
     if (scanSpec.endRow)
       os << "EndRow    = " << scanSpec.endRow << endl;
     else
-      os << "EndRow  = " << endl;
+      os << "EndRow    = " << endl;
     os << "EndRowInclusive = " << scanSpec.endRowInclusive << endl;
-    os << "MinTime   = " << scanSpec.interval.first << endl;
-    os << "MaxTime   = " << scanSpec.interval.second << endl;
+    os << "MinTime     = " << scanSpec.interval.first << endl;
+    os << "MaxTime     = " << scanSpec.interval.second << endl;
     return os;
   }
 

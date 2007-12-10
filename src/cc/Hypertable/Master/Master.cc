@@ -443,12 +443,16 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 
 /**
  * TEMPORARY: Just turns around and assigns new range to caller
+ *
+ * NOTE: this call can't be protected by a mutex because it can cause the
+ * whole system to wedge under certain situations
  */
 void Master::report_split(ResponseCallback *cb, TableIdentifierT &table, RangeT &range) {
-  boost::mutex::scoped_lock lock(m_mutex);
   int error;
   struct sockaddr_in addr;
   RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30);
+
+  LOG_VA_INFO("Entering report_split for %s[%s:%s].", table.name, range.startRow, range.endRow);
 
   cb->response_ok();  
 

@@ -508,6 +508,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
     cout << *table;
     cout << *range;
     cout << "flags = " << flags << endl;
+    cout << flush;
   }
 
   /**
@@ -605,6 +606,8 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
       }
     }
     catch (Hypertable::Exception &e) {
+      LOG_VA_ERROR("Caught exception in load_range trying to scan METADATA table (start_row,end_row=%s) - %s",
+		   metadata_key_str.c_str(), e.what());
       error = e.code();
       errMsg = e.what();
       goto abort;
@@ -702,6 +705,9 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
 
   if ((error = cb->response_ok()) != Error::OK) {
     LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
+  }
+  else {
+    LOG_VA_ERROR("Successfully loaded range %s[%s..%s]", table->name, range->startRow, range->endRow);
   }
 
   error = Error::OK;
