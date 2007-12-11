@@ -109,7 +109,7 @@ bool TableScanner::next(CellT &cell) {
   while (!m_scanblock.more()) {
     if (m_scanblock.eos()) {
       if (!strcmp(m_range_info.end_row.c_str(), Key::END_ROW_MARKER) ||
-	  (strcmp(m_scan_spec.endRow, m_range_info.end_row.c_str()) <= 0)) {
+	  (m_scan_spec.endRow && (strcmp(m_scan_spec.endRow, m_range_info.end_row.c_str()) <= 0))) {
 	m_eos = true;
 	return false;
       }
@@ -147,7 +147,21 @@ bool TableScanner::next(CellT &cell) {
       throw Exception(Error::BAD_KEY);
 
     // check for end row
-    if (!strcmp(keyComps.row, end_row_key)) {
+    if (m_scan_spec.endRow) {
+      if (m_scan_spec.endRowInclusive) {
+	if (strcmp(keyComps.row, m_scan_spec.endRow) > 0) {
+	  m_eos = true;
+	  return false;
+	}
+      }
+      else {
+	if (strcmp(keyComps.row, m_scan_spec.endRow) >= 0) {
+	  m_eos = true;
+	  return false;
+	}
+      }
+    }
+    else if (!strcmp(keyComps.row, end_row_key)) {
       m_eos = true;
       return false;
     }
