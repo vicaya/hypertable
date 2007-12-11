@@ -31,50 +31,21 @@ namespace Hypertable {
   class CellList;
   class CellListScanner;
 
-  void intrusive_ptr_add_ref(CellList *cl);
-  void intrusive_ptr_release(CellList *cl);
-
   /**
    * Abstract base class for all Cell list classes.
    */
   class CellList : public ReferenceCount {
   public:
-    CellList() { atomic_set(&refCount, 0); }
     virtual ~CellList() { return; }
     virtual int add(const ByteString32T *key, const ByteString32T *value) = 0;
     virtual CellListScanner *create_scanner(ScanContextPtr &scanContextPtr) { return 0; }
     virtual const char *get_split_row() = 0;
     virtual const char *get_start_row() { return m_start_row.c_str(); }
     virtual const char *get_end_row() { return m_end_row.c_str(); }
-    friend void intrusive_ptr_add_ref(CellList *cl);
-    friend void intrusive_ptr_release(CellList *cl);    
   protected:
     std::string m_start_row;
     std::string m_end_row;
-  private:
-    atomic_t refCount;
   };
-
-  /**
-   * Atomically increments reference count of given CellList
-   *
-   * @param cl pointer to the Cell list
-   */
-  inline void intrusive_ptr_add_ref(CellList *cl) {
-    atomic_inc_return(&cl->refCount);
-  }
-
-  /**
-   * Atomically decrements reference count of given Cell list, deleting
-   * the Cell list when the count reaches zero
-   *
-   * @param cl pointer to the Cell list
-   */
-  inline void intrusive_ptr_release(CellList *cl) {
-    if (atomic_sub_and_test(1, &cl->refCount))
-      delete cl;
-  }
-
   typedef boost::intrusive_ptr<CellList> CellListPtr;
 
 }

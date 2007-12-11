@@ -1,5 +1,7 @@
 
 TODO:
+- Add scanner reaper to RangeServer
+- Add range merging
 - Refactor so that schema can get updated on change
 - Get rid of directly written 'packed' commit log header in favor of a serialized one
 - Add destroy_scanner method to RangeServer
@@ -14,8 +16,11 @@ TODO:
 - Add global (timeout, workers, reactors, etc.) to config file 
 - Add delete_row, delete_cell, delete_qualified_cell, etc. to Mutator
 - Figure out get_timestamp stuff (see Merge scanner) is it less than, less than or equal to???
+- Improve get_split_keys in Range class
+- Make sure LogDir for root METADATA range gets written somewhere
 
 DONE:
+- Get METADATA range split working
 - Make sure updates are sent sorted in ascending order of timestamp (for same row)
 - Add PAUSE command to hypertable (to facilitate testing)
 - Get scan time interval working

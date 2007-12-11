@@ -92,6 +92,19 @@ void CellCache::get_split_rows(std::vector<std::string> &split_rows) {
 
 
 
+void CellCache::get_rows(std::vector<std::string> &rows) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  const char *last_row = "";
+  for (CellMapT::const_iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++) {
+    if (strcmp((const char *)(*iter).first->data, last_row)) {
+      rows.push_back((const char *)(*iter).first->data);
+      last_row = (const char *)(*iter).first->data;
+    }
+  }
+}
+
+
+
 CellListScanner *CellCache::create_scanner(ScanContextPtr &scanContextPtr) {
   CellCachePtr cellCachePtr(this);
   return new CellCacheScanner(cellCachePtr, scanContextPtr);

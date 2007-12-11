@@ -45,6 +45,7 @@ namespace Hypertable {
 
     virtual const char *get_split_row();
     virtual void get_split_rows(std::vector<std::string> &split_rows, bool include_cache);
+    virtual void get_cached_rows(std::vector<std::string> &rows);
 
     void lock() { m_lock.lock(); m_cell_cache_ptr->lock(); }
     void unlock() { m_cell_cache_ptr->unlock(); m_lock.unlock(); }

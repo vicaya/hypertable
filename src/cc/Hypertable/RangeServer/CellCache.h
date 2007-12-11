@@ -56,6 +56,8 @@ namespace Hypertable {
 
     virtual void get_split_rows(std::vector<std::string> &split_rows);
 
+    virtual void get_rows(std::vector<std::string> &rows);
+
     /**
      * Creates a CellCacheScanner object that contains an shared pointer (intrusive_ptr)
      * to this CellCache.

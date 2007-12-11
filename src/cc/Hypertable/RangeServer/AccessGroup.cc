@@ -100,6 +100,10 @@ void AccessGroup::get_split_rows(std::vector<std::string> &split_rows, bool incl
     m_cell_cache_ptr->get_split_rows(split_rows);
 }
 
+void AccessGroup::get_cached_rows(std::vector<std::string> &rows) {
+  m_cell_cache_ptr->get_rows(rows);
+}
+
 uint64_t AccessGroup::disk_usage() {
   boost::mutex::scoped_lock lock(m_mutex);
   return m_disk_usage + m_cell_cache_ptr->memory_used();
