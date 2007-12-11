@@ -27,7 +27,6 @@ LocationCache.cc
 MasterClient.cc
 MasterFileHandler.cc
 MasterProtocol.cc
-Metadata.cc
 Mutator.cc
 MutatorDispatchHandler.cc
 MutatorScatterBuffer.cc
@@ -48,10 +47,6 @@ add_library (Hypertable ${Hypertable_SRCS})
 # generate_test_data
 add_executable (generate_test_data generate_test_data.cc)
 target_link_libraries (generate_test_data Hypertable Hyperspace pthread ${BOOST_LIB} AsyncComm Common log4cpp expat)
-
-# MetadataTest
-add_executable (MetadataTest MetadataTest.cc)
-target_link_libraries (MetadataTest pthread ${BOOST_LIB} Hypertable AsyncComm Common log4cpp expat)
 
 # schemaTest
 add_executable (schemaTest tests/schemaTest.cc)

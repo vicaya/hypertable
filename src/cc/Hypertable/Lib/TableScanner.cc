@@ -188,7 +188,7 @@ void TableScanner::find_range_and_start_scan(const char *row_key) {
   RangeT  range;
   DynamicBuffer dbuf(0);
 
-  if ((error = m_range_locator_ptr->find(&m_table_identifier, row_key, &m_range_info, 21)) != Error::OK)
+  if ((error = m_range_locator_ptr->find(&m_table_identifier, row_key, &m_range_info, false)) != Error::OK)
     throw Exception(error, std::string("Unable to find range server for table '") + m_table_identifier.name + "' row key '" + row_key + "'");
 
   m_started = true;
@@ -196,7 +196,6 @@ void TableScanner::find_range_and_start_scan(const char *row_key) {
   dbuf.ensure(m_range_info.start_row.length() + m_range_info.end_row.length() + 2);
   range.startRow = (const char *)dbuf.addNoCheck(m_range_info.start_row.c_str(), m_range_info.start_row.length()+1);
   range.endRow   = (const char *)dbuf.addNoCheck(m_range_info.end_row.c_str(), m_range_info.end_row.length()+1);
-
   if (!LocationCache::location_to_addr(m_range_info.location.c_str(), m_cur_addr)) {
     LOG_VA_ERROR("Invalid location found in METADATA entry range [%s..%s] - %s",
 		 range.startRow, range.endRow, m_range_info.location.c_str());
@@ -204,13 +203,21 @@ void TableScanner::find_range_and_start_scan(const char *row_key) {
   }
 
   if ((error = m_range_server.create_scanner(m_cur_addr, m_table_identifier, range, m_scan_spec, m_scanblock)) != Error::OK) {
+
     // try again, the hard way
     if ((error = m_range_locator_ptr->find(&m_table_identifier, row_key, &m_range_info, 21)) != Error::OK)
       throw Exception(error, std::string("Unable to find range server for table '") + m_table_identifier.name + "' row key '" + row_key + "'");
+
     // reset the range information
     dbuf.ensure(m_range_info.start_row.length() + m_range_info.end_row.length() + 2);
     range.startRow = (const char *)dbuf.addNoCheck(m_range_info.start_row.c_str(), m_range_info.start_row.length()+1);
     range.endRow   = (const char *)dbuf.addNoCheck(m_range_info.end_row.c_str(), m_range_info.end_row.length()+1);
+    if (!LocationCache::location_to_addr(m_range_info.location.c_str(), m_cur_addr)) {
+      LOG_VA_ERROR("Invalid location found in METADATA entry range [%s..%s] - %s",
+		   range.startRow, range.endRow, m_range_info.location.c_str());
+      throw Exception(Error::INVALID_METADATA);
+    }
+
     // create the scanner
     if ((error = m_range_server.create_scanner(m_cur_addr, m_table_identifier, range, m_scan_spec, m_scanblock)) != Error::OK)
       throw Exception(error, std::string("Problem creating scanner on ") + m_table_identifier.name + "[" + range.startRow + ".." + range.endRow + "]");

@@ -55,6 +55,8 @@ namespace Hypertable {
     void add_range(RangeT *range, RangePtr &rangePtr);
     bool find_containing_range(std::string row, RangePtr &rangePtr);
 
+    void dump_range_table();
+
   private:
 
     typedef std::map<std::string, RangePtr> RangeMapT;

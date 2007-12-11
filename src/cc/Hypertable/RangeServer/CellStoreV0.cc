@@ -482,6 +482,7 @@ int CellStoreV0::load_index() {
     }
     if (mid_iter != m_index.end())
       record_split_row((*mid_iter).first);
+
   }
 
 #if 0
@@ -529,6 +530,8 @@ void CellStoreV0::display_block_info() {
 
 
 void CellStoreV0::record_split_row(const ByteString32T *key) {
-  m_split_row = (const char *)key->data;
+  std::string split_row = (const char *)key->data;
+  if (split_row > m_start_row && split_row < m_end_row)
+    m_split_row = split_row;
   //cout << "record_split_row = " << m_split_row << endl;
 }

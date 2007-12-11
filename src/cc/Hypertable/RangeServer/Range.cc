@@ -273,18 +273,23 @@ const char *Range::get_split_row() {
   std::vector<std::string> split_rows;
   for (size_t i=0; i<m_access_group_vector.size(); i++)
     m_access_group_vector[i]->get_split_rows(split_rows, false);
-  if (split_rows.size() == 0) {
+  if (split_rows.size() < 5) {
     for (size_t i=0; i<m_access_group_vector.size(); i++)
       m_access_group_vector[i]->get_split_rows(split_rows, true);
   }
   sort(split_rows.begin(), split_rows.end());
   /**
+  cout << "Dumping split rows for " << m_identifier.name << "[" << m_start_row << ".." << m_end_row << "]" << endl;
   for (size_t i=0; i<split_rows.size(); i++)
     cout << "Range::get_split_row [" << i << "] = " << split_rows[i] << endl;
   */
   if (split_rows.size() > 0) {
     boost::mutex::scoped_lock lock(m_mutex);    
     m_split_row = split_rows[split_rows.size()/2];
+    if (m_split_row <= m_start_row || m_split_row >= m_end_row) {
+      LOG_VA_FATAL("Unable to determine split row for range %s[%s..%s]", m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
+      DUMP_CORE;
+    } 
   }
   return m_split_row.c_str();
 }

@@ -47,9 +47,11 @@ int MutatorScatterBuffer::set(Key &key, uint8_t *value, uint32_t value_len) {
   RangeLocationInfo range_info;
   UpdateBufferMapT::const_iterator iter;
 
-  if ((error = m_range_locator_ptr->find(&m_table_identifier, key.row, &range_info, 21)) != Error::OK) {
-    LOG_VA_ERROR("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)key.row);
-    return error;
+  if ((error = m_range_locator_ptr->find(&m_table_identifier, key.row, &range_info, false)) != Error::OK) {
+    if ((error = m_range_locator_ptr->find(&m_table_identifier, key.row, &range_info, 21)) != Error::OK) {
+      LOG_VA_ERROR("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)key.row);
+      return error;
+    }
   }
 
   iter = m_buffer_map.find(range_info.location);
@@ -82,9 +84,11 @@ int MutatorScatterBuffer::set(ByteString32T *key, ByteString32T *value) {
   RangeLocationInfo range_info;
   UpdateBufferMapT::const_iterator iter;
 
-  if ((error = m_range_locator_ptr->find(&m_table_identifier, (const char *)key->data, &range_info, 21)) != Error::OK) {
-    LOG_VA_ERROR("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)key->data);
-    return error;
+  if ((error = m_range_locator_ptr->find(&m_table_identifier, (const char *)key->data, &range_info, false)) != Error::OK) {
+    if ((error = m_range_locator_ptr->find(&m_table_identifier, (const char *)key->data, &range_info, 21)) != Error::OK) {
+      LOG_VA_ERROR("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)key->data);
+      return error;
+    }
   }
 
   iter = m_buffer_map.find(range_info.location);

@@ -28,7 +28,6 @@
 #include "Common/Properties.h"
 #include "AsyncComm/Comm.h"
 #include "Hyperspace/Session.h"
-#include "Hypertable/Lib/Metadata.h"
 #include "Hypertable/Lib/RangeServerClient.h"
 #include "Hypertable/Lib/RangeServerProtocol.h"
 #include "Hypertable/Lib/Schema.h"

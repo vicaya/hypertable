@@ -707,7 +707,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
     LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
   }
   else {
-    LOG_VA_ERROR("Successfully loaded range %s[%s..%s]", table->name, range->startRow, range->endRow);
+    LOG_VA_INFO("Successfully loaded range %s[%s..%s]", table->name, range->startRow, range->endRow);
   }
 
   error = Error::OK;
@@ -816,7 +816,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
       stopSize += update.len;
       continue;
     }
-
+    
     /** Increment update count (block if maintenance in progress) **/
     min_ts_rec.range_ptr->increment_update_counter();
 

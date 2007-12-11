@@ -122,7 +122,7 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
   float wait_time = 1.0;
   float total_wait_time = 0.0;
 
-  error = find(table, row_key, range_loc_info_p, false);
+  error = find(table, row_key, range_loc_info_p, true);
 
   // retry loop
   while (error != Error::OK && total_wait_time < (float)timeout) {

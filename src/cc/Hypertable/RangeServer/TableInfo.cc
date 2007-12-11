@@ -40,6 +40,14 @@ TableInfo::~TableInfo() {
   Free(m_identifier);
 }
 
+
+void TableInfo::dump_range_table() {
+  boost::mutex::scoped_lock lock(m_mutex);
+  for (RangeMapT::iterator iter = m_range_map.begin(); iter != m_range_map.end(); iter++) {
+    cout << m_identifier.name << "[" << (*iter).second->start_row() << ".." << (*iter).second->end_row() << "]" << endl;
+  }
+}
+
 /**
  * 
  */
