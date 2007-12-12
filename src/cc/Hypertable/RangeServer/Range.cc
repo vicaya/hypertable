@@ -183,8 +183,8 @@ int Range::load_cell_stores() {
 	}
 
 	// TODO: maybe do something here?
-	if (minLogCutoff == 0 || cellStorePtr->get_log_cutoff_time() < minLogCutoff)
-	  minLogCutoff = cellStorePtr->get_log_cutoff_time();
+	if (minLogCutoff == 0 || cellStorePtr->get_timestamp() < minLogCutoff)
+	  minLogCutoff = cellStorePtr->get_timestamp();
 
 	ag->add_cell_store(cellStorePtr, csid);
       }
@@ -323,11 +323,11 @@ const char *Range::get_split_row() {
 }
 
 
-uint64_t Range::get_log_cutoff_time() {
-  uint64_t cutoffTime = m_access_group_vector[0]->get_log_cutoff_time();
+uint64_t Range::get_persist_timestamp() {
+  uint64_t cutoffTime = m_access_group_vector[0]->get_persist_timestamp();
   for (size_t i=1; i<m_access_group_vector.size(); i++) {
-    if (m_access_group_vector[i]->get_log_cutoff_time() < cutoffTime)
-      cutoffTime = m_access_group_vector[i]->get_log_cutoff_time();
+    if (m_access_group_vector[i]->get_persist_timestamp() < cutoffTime)
+      cutoffTime = m_access_group_vector[i]->get_persist_timestamp();
   }
   return cutoffTime;
 }

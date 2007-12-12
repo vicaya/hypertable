@@ -51,7 +51,7 @@ namespace Hypertable {
     virtual void lock();
     virtual void unlock();
 
-    uint64_t get_log_cutoff_time();
+    uint64_t get_persist_timestamp();
     uint64_t disk_usage();
 
     CellListScanner *create_scanner(ScanContextPtr &scanContextPtr);

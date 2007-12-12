@@ -54,21 +54,17 @@ namespace Hypertable {
     virtual int create(const char *fname, size_t blockSize=Constants::DEFAULT_BLOCKSIZE);
     virtual int add(const ByteString32T *key, const ByteString32T *value);
     virtual int finalize(uint64_t timestamp);
-
     virtual int open(const char *fname, const char *start_row, const char *end_row);
     virtual int load_index();
-    virtual uint64_t get_log_cutoff_time();
+    virtual uint64_t get_timestamp();
     virtual uint64_t disk_usage() { return m_disk_usage; }
     virtual const char *get_split_row();
     virtual std::string &get_filename() { return m_filename; }
-    virtual uint16_t get_flags();
-
-    /**
-     * Creates a CellStoreScannerV0 object that contains an shared pointer (intrusive_ptr)
-     * to this CellStore;
-     */
     virtual CellListScanner *create_scanner(ScanContextPtr &scanContextPtr);
 
+    /**
+     * Displays block map information to stdout
+     */
     void display_block_info();
 
     friend class CellStoreScannerV0;

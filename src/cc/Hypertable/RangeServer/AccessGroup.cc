@@ -33,7 +33,7 @@
 #include "MergeScanner.h"
 
 
-AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range) : CellList(), m_mutex(), m_lock(m_mutex,false), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_log_cutoff_time(0), m_disk_usage(0) {
+AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range) : CellList(), m_mutex(), m_lock(m_mutex,false), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_persist_timestamp(0), m_disk_usage(0) {
   m_table_name = table_identifier.name;
   m_start_row = range->startRow;
   m_end_row = range->endRow;
@@ -121,8 +121,8 @@ void AccessGroup::add_cell_store(CellStorePtr &cellStorePtr, uint32_t id) {
   boost::mutex::scoped_lock lock(m_mutex);
   if (id >= m_next_table_id) 
     m_next_table_id = id+1;
-  if (cellStorePtr->get_log_cutoff_time() > m_log_cutoff_time)
-    m_log_cutoff_time = cellStorePtr->get_log_cutoff_time();
+  if (cellStorePtr->get_timestamp() > m_persist_timestamp)
+    m_persist_timestamp = cellStorePtr->get_timestamp();
   m_stores.push_back(cellStorePtr);
   m_disk_usage += cellStorePtr->disk_usage();
 }

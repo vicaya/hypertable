@@ -64,15 +64,10 @@ CellStoreV0::~CellStoreV0() {
 
 
 
-uint64_t CellStoreV0::get_log_cutoff_time() {
+uint64_t CellStoreV0::get_timestamp() {
   return m_trailer.timestamp;
 }
 
-
-
-uint16_t CellStoreV0::get_flags() {
-  return m_trailer.flags;
-}
 
 const char *CellStoreV0::get_split_row() {
   if (m_split_row != "")
@@ -194,7 +189,7 @@ int CellStoreV0::finalize(uint64_t timestamp) {
   m_trailer.timestamp = timestamp;
   m_trailer.flags = 0;
   m_trailer.compressionType = Constants::COMPRESSION_TYPE_ZLIB;
-  m_trailer.version = 1;
+  m_trailer.version = 0;
 
   /**
    * Chop the Index buffers down to the exact length
@@ -516,7 +511,7 @@ void CellStoreV0::display_block_info() {
   for (IndexMapT::const_iterator iter = m_index.begin(); iter != m_index.end(); iter++) {
     if (last_key) {
       block_size = (*iter).second - last_offset;
-      cout << i << ": size=" << block_size << " row=" << (const char *)last_key->data << endl;
+      cout << i << ": offset=" << last_offset << " size=" << block_size << " row=" << (const char *)last_key->data << endl;
       i++;
     }
     last_offset = (*iter).second;
@@ -524,7 +519,7 @@ void CellStoreV0::display_block_info() {
   }
   if (last_key) {
     block_size = m_trailer.fixIndexOffset - last_offset;
-    cout << i << ": size=" << block_size << " row=" << (const char *)last_key->data << endl;
+    cout << i << ": offset=" << last_offset << " size=" << block_size << " row=" << (const char *)last_key->data << endl;
   }
 }
 

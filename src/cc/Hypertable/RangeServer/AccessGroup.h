@@ -57,7 +57,7 @@ namespace Hypertable {
     void add_cell_store(CellStorePtr &cellStorePtr, uint32_t id);
     bool needs_compaction();
     void run_compaction(uint64_t timestamp, bool major);
-    uint64_t get_log_cutoff_time() { return m_log_cutoff_time; }
+    uint64_t get_persist_timestamp() { return m_persist_timestamp; }
 
     const char *get_name() { return m_name.c_str(); }
 
@@ -78,7 +78,7 @@ namespace Hypertable {
     std::vector<CellStorePtr> m_stores;
     CellCachePtr         m_cell_cache_ptr;
     uint32_t             m_next_table_id;
-    uint64_t             m_log_cutoff_time;
+    uint64_t             m_persist_timestamp;
     uint64_t             m_disk_usage;
   };
 

@@ -18,6 +18,8 @@ TODO:
 - Figure out get_timestamp stuff (see Merge scanner) is it less than, less than or equal to???
 - Improve get_split_keys in Range class
 - Make sure LogDir for root METADATA range gets written somewhere
+- Fixe bus error when you issue the following select statement after an initial load:
+  select * from Test1 where row >= 'n' && row < 'm';
 
 DONE:
 - Get METADATA range split working

@@ -52,7 +52,7 @@ BlockDeflaterZlib::~BlockDeflaterZlib() {
 
 
 /**
- *
+ * 
  */
 void BlockDeflaterZlib::deflate(Hypertable::DynamicBuffer &inbuf, Hypertable::DynamicBuffer &outbuf, const char magic[12], size_t reserve) {
   uint32_t avail_out = inbuf.fill() + 6 + (((inbuf.fill() / 16000) + 1 ) * 5);  // see http://www.zlib.net/zlib_tech.html

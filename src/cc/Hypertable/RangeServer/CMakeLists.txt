@@ -29,7 +29,6 @@ BlockDeflaterZlib.cc
 BlockInflaterZlib.cc
 CellCache.cc
 CellCacheScanner.cc
-CellStore.cc
 CellStoreScannerV0.cc
 CellStoreV0.cc
 CommitLog.cc

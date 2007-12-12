@@ -138,7 +138,7 @@ int main(int argc, char **argv) {
   /**
    * Dump trailer
    */
-  cout << "timestamp " << cellStorePtr->get_log_cutoff_time() << endl;
+  cout << "timestamp " << cellStorePtr->get_timestamp() << endl;
   cout << "split row '" << cellStorePtr->get_split_row() << "'" << endl;
 
   return 0;
