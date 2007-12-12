@@ -60,7 +60,8 @@ namespace Hypertable {
      * Constructor.
      *
      * @param ts scan timestamp (point in time when scan began)
-     * @param ss scan specification (can be NULL)
+     * @param ss scan specification
+     * @param range_ range specifier
      * @param sp shared pointer to schema object
      */
     ScanContext(uint64_t ts, ScanSpecificationT *ss, RangeT *range_, SchemaPtr &sp) : error(Error::OK) {

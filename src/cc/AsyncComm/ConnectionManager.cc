@@ -41,14 +41,6 @@ using namespace std;
 
 
 /**
- * This method adds a connection to the connection manager if it is not already added.
- * It first allocates a ConnectionStateT structure for the connection and initializes
- * it to the non-connected state.  It then attempts to establish the connection.
- *
- * @param addr         The address to connect to
- * @param timeout      When connection dies, wait this many seconds before attempting to reestablish
- * @param serviceName  The name of the service we're connnecting to (used for better log messages)
- * @param handlerPtr   This is the default handler to install on the connection.  All events get changed through to this handler.
  */
 void ConnectionManager::add(struct sockaddr_in &addr, time_t timeout, const char *serviceName, DispatchHandlerPtr &handlerPtr) {
   boost::mutex::scoped_lock lock(m_impl->mutex);
@@ -86,15 +78,7 @@ void ConnectionManager::add(struct sockaddr_in &addr, time_t timeout, const char
 
 
 /**
- * This method adds a connection to the connection manager if it is not already added.
- * It first allocates a ConnectionStateT structure for the connection and initializes
- * it to the non-connected state.  It then attempts to establish the connection.
  *
- * @param addr         The address to connect to
- * @param localAddr    The local address to bind to
- * @param timeout      When connection dies, wait this many seconds before attempting to reestablish
- * @param serviceName  The name of the service we're connnecting to (used for better log messages)
- * @param handlerPtr   This is the default handler to install on the connection.  All events get changed through to this handler.
  */
 void ConnectionManager::add(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, const char *serviceName, DispatchHandlerPtr &handlerPtr) {
   boost::mutex::scoped_lock lock(m_impl->mutex);

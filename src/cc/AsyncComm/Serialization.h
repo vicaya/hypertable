@@ -36,6 +36,7 @@ namespace Hypertable {
      *
      * @param bufPtr address of source buffer
      * @param remainingPtr address of variable containing number of bytes remaining in buffer
+     * @param bytePtr address of variable to hold decoded byte
      * @return true on success, false if buffer has insufficient room
      */
     inline bool decode_byte(uint8_t **bufPtr, size_t *remainingPtr, uint8_t *bytePtr) {
@@ -66,6 +67,7 @@ namespace Hypertable {
      *
      * @param bufPtr address of buffer containing encoded short
      * @param remainingPtr address of variable containing number of bytes remaining in buffer
+     * @param shortPtr address of variable to hold decoded short
      * @return true on success, false if buffer has insufficient room
      */
     inline bool decode_short(uint8_t **bufPtr, size_t *remainingPtr, uint16_t *shortPtr) {
@@ -90,13 +92,14 @@ namespace Hypertable {
       *bufPtr += 4;
     }
 
-
+    
     /**
      * Decodes an int (4 byte integer) from the given buffer.  Increments
      * buffer pointer and decrements remainingPtr on success.
      *
      * @param bufPtr address of buffer containing encoded int
      * @param remainingPtr address of variable containing number of bytes remaining in buffer
+     * @param intPtr address of variable to hold decoded int
      * @return true on success, false if buffer has insufficient room
      */
     inline bool decode_int(uint8_t **bufPtr, size_t *remainingPtr, uint32_t *intPtr) {
@@ -114,7 +117,7 @@ namespace Hypertable {
      * enough space available.  Increments buffer pointer.
      *
      * @param bufPtr address of destinatin buffer
-     * @param ival the long value to encode
+     * @param lval the long value to encode
      */
     inline void encode_long(uint8_t **bufPtr, uint64_t lval) {
       memcpy(*bufPtr, &lval, 8);
@@ -128,6 +131,7 @@ namespace Hypertable {
      *
      * @param bufPtr address of buffer containing encoded long
      * @param remainingPtr address of variable containing number of bytes remaining in buffer
+     * @param longPtr address of variable to hold decoded long
      * @return true on success, false if buffer has insufficient room
      */
     inline bool decode_long(uint8_t **bufPtr, size_t *remainingPtr, uint64_t *longPtr) {
@@ -165,7 +169,7 @@ namespace Hypertable {
       *bufPtr += len + 4;
     }
 
-
+    
     /**
      * Decodes a variable sized byte array from the given buffer.  Byte array is
      * encoded as a 4 byte length followed by the data.  Increments buffer
@@ -173,6 +177,8 @@ namespace Hypertable {
      *
      * @param bufPtr address of buffer containing encoded byte array
      * @param remainingPtr address of variable containing number of bytes remaining in buffer
+     * @param dstPtr address of pointer to decoded byte array
+     * @param lenPtr address of length of decoded byte array
      * @return true on success, false if buffer has insufficient room
      */
     inline bool decode_byte_array(uint8_t **bufPtr, size_t *remainingPtr, uint8_t **dstPtr, int32_t *lenPtr) {
@@ -240,11 +246,11 @@ namespace Hypertable {
     /**
      * Encodes a c-style null-terminated string into the given buffer.
      * Encoded as a 2 byte length followed by the string data, followed
-     * by a '\0' termination byte.  The length value does not include
-     * the '\0'.  Assumes there is enough space available.  Increments
+     * by a '\\0' termination byte.  The length value does not include
+     * the '\\0'.  Assumes there is enough space available.  Increments
      * buffer pointer.
      *
-     * @param bufPtr address of destinatin buffer
+     * @param bufPtr address of destination buffer
      * @param str the c-style string to encode
      */
     inline void encode_string(uint8_t **bufPtr, const char *str) {
@@ -260,15 +266,15 @@ namespace Hypertable {
 	(*bufPtr) += len;
       }
 
-      // '\0' terminator
+      // '\\0' terminator
       *(*bufPtr)++ = 0;
     }
 
 
     /**
      * Encodes a std::string into the given buffer.  Encoded as a
-     * 2 byte length followed by the string data, followed by a '\0'
-     * termination byte.  The length value does not include the '\0'.
+     * 2 byte length followed by the string data, followed by a '\\0'
+     * termination byte.  The length value does not include the '\\0'.
      * Assumes there is enough space available.  Increments buffer
      * pointer.
      *
@@ -282,8 +288,8 @@ namespace Hypertable {
 
     /**
      * Decodes a c-style string from the given buffer.  The encoding of the
-     * string is a 2 byte length followed by the string, followed by a '\0'
-     * termination byte.  The length does not include the '\0' terminator.
+     * string is a 2 byte length followed by the string, followed by a '\\0'
+     * termination byte.  The length does not include the '\\0' terminator.
      * The decoded string pointer points back into the encoding buffer.
      * Increments buffer pointer and decrements remainingPtr on success.
      *
@@ -308,8 +314,8 @@ namespace Hypertable {
 
     /**
      * Decodes a std::string from the given buffer.  The encoding of the
-     * string is a 2 byte length followed by the string, followed by a '\0'
-     * termination byte.  The length does not include the '\0' terminator.
+     * string is a 2 byte length followed by the string, followed by a '\\0'
+     * termination byte.  The length does not include the '\\0' terminator.
      * Increments buffer pointer and decrements remainingPtr on success.
      *
      * @param bufPtr address of buffer containing encoded string

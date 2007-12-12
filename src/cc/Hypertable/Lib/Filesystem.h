@@ -330,7 +330,6 @@ namespace Hypertable {
      * with the same file descriptor.
      *
      * @param fd open file descriptor
-     * @param handler dispatch handler
      * @return Error::OK on success or error code on failure
      */
     virtual int flush(int32_t fd) = 0;

@@ -134,7 +134,7 @@ namespace Hypertable {
      * @param addr The IP address to maintain a connection to
      * @param timeout The timeout value (in seconds) that gets passed into Comm::connect and also used as the waiting period betweeen connection attempts
      * @param serviceName The name of the serivce at the other end of the connection used for descriptive log messages
-     * @param handler This is the default handler to install on the connection.  All events get changed through to this handler.
+     * @param handlerPtr This is the default handler to install on the connection.  All events get changed through to this handler.
      */
     void add(struct sockaddr_in &addr, time_t timeout, const char *serviceName, DispatchHandlerPtr &handlerPtr);
 
@@ -162,7 +162,7 @@ namespace Hypertable {
      * @param localAddr The local address to bind to
      * @param timeout The timeout value (in seconds) that gets passed into Comm::connect and also used as the waiting period betweeen connection attempts
      * @param serviceName The name of the serivce at the other end of the connection used for descriptive log messages
-     * @param handler This is the default handler to install on the connection.  All events get changed through to this handler.
+     * @param handlerPtr This is the default handler to install on the connection.  All events get changed through to this handler.
      */
     void add(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, const char *serviceName, DispatchHandlerPtr &handlerPtr);
 

@@ -48,8 +48,8 @@ namespace Hypertable {
        * objects which are required in the DfsBroker::connection_handler constructor.
        *
        * @param comm pointer to the AsyncComm object
-       * @param appQueue pointer to the application work queue
-       * @param broker abstract pointer to the broker object
+       * @param appQueuePtr pointer to the application work queue
+       * @param brokerPtr abstract pointer to the broker object
        */
       ConnectionHandlerFactory(Comm *comm, ApplicationQueuePtr &appQueuePtr, BrokerPtr &brokerPtr) : m_comm(comm), m_app_queue_ptr(appQueuePtr), m_broker_ptr(brokerPtr) { return; }
 

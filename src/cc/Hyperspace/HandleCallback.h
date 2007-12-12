@@ -97,8 +97,6 @@ namespace Hyperspace {
 
     /** Invoked when a lock gets released on the file associated with
      * the registered handle
-     *
-     * @param name the name of the attribute that was deleted
      */    
     virtual void lock_released() { return; }
 

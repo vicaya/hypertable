@@ -146,7 +146,7 @@ namespace Hyperspace {
      * @param props_ptr smart pointer to properties object
      * @param callback session state callback
      */
-    Session(Comm *comm, PropertiesPtr &propsPtr, SessionCallback *callback=0);
+    Session(Comm *comm, PropertiesPtr &props_ptr, SessionCallback *callback=0);
 
     virtual ~Session();
 
@@ -227,7 +227,6 @@ namespace Hyperspace {
      *
      * @param handle file handle
      * @param name name of extended attribute
-     * @param value reference to DynamicBuffer to hold returned value
      * @return Error::OK on success or error code on failure
      */
     int attr_del(uint64_t handle, std::string name);

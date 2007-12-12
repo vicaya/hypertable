@@ -45,7 +45,7 @@ namespace Hypertable {
      * when an event occurs in response to a previously sent
      * request that was supplied with this dispatch handler.
      *
-     * @param eventPtr shared pointer to event object
+     * @param event_ptr shared pointer to event object
      */
     virtual void handle(EventPtr &event_ptr);
 

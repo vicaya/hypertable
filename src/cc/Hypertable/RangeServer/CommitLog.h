@@ -52,16 +52,16 @@ namespace Hypertable {
   } CommitLogFileInfoT;
 
   /**
-   * Commit log.  Consists of a series of blocks.  Each block contains a series of one
-   * or more key/value pairs that were commtted together.  Each block begins with a header
-   * with the following format:
+   * Commit log for persisting updates.  Consists of a series of blocks.  Each block contains a
+   * series of one or more key/value pairs that were commtted together.  Each block begins with
+   * a header with the following format:
    * <pre>
    * "-BLOCK--"   - 8 bytes
    * timestamp    - 8 bytes
    * length       - 4 bytes
    * checksum     - 2 bytes
    * tableName    - variable
-   * '\0'         - 1 byte
+   * '\\0'         - 1 byte
    * payload      - variable
    * </pre>
    *

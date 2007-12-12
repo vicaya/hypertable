@@ -53,6 +53,7 @@ using namespace Hypertable;
 
 
 namespace {
+
   int  gDelay = 0;
   bool gVerbose = false;
   const int DEFAULT_PORT = 11255;
@@ -74,132 +75,131 @@ namespace {
     "to the server.  Each reply from the server is echoed to stdout.",
     (const char *)0
   };
-}
 
-/**
- * This is the request handler class that is used when the server
- * is run with an application queue (--app-queue).  It just echos
- * back the message
- */
-class RequestHandler : public ApplicationHandler {
-public:
+  /**
+   * This is the request handler class that is used when the server
+   * is run with an application queue (--app-queue).  It just echos
+   * back the message
+   */
+  class RequestHandler : public ApplicationHandler {
+  public:
 
-  RequestHandler(Comm *comm, EventPtr &eventPtr) : ApplicationHandler(eventPtr), m_comm(comm) { return; }
+    RequestHandler(Comm *comm, EventPtr &eventPtr) : ApplicationHandler(eventPtr), m_comm(comm) { return; }
 
-  virtual void run() {
-    m_header_builder.initialize_from_request(m_event_ptr->header);
-    CommBufPtr cbufPtr( new CommBuf(m_header_builder, m_event_ptr->messageLen) );
-    cbufPtr->append_bytes((uint8_t *)m_event_ptr->message, m_event_ptr->messageLen);
-    int error = m_comm->send_response(m_event_ptr->addr, cbufPtr);
-    if (error != Error::OK) {
-      LOG_VA_ERROR("Comm::send_response returned %s", Error::get_text(error));
+    virtual void run() {
+      m_header_builder.initialize_from_request(m_event_ptr->header);
+      CommBufPtr cbufPtr( new CommBuf(m_header_builder, m_event_ptr->messageLen) );
+      cbufPtr->append_bytes((uint8_t *)m_event_ptr->message, m_event_ptr->messageLen);
+      int error = m_comm->send_response(m_event_ptr->addr, cbufPtr);
+      if (error != Error::OK) {
+	LOG_VA_ERROR("Comm::send_response returned %s", Error::get_text(error));
+      }
     }
-  }
-private:
-  Comm *m_comm;
-  HeaderBuilder m_header_builder;
-};
+  private:
+    Comm *m_comm;
+    HeaderBuilder m_header_builder;
+  };
 
 
-/**
- * This is the dispatch handler that is used when
- * the server is in TCP mode (default).
- */
-class Dispatcher : public DispatchHandler {
+  /**
+   * This is the dispatch handler that is used when
+   * the server is in TCP mode (default).
+   */
+  class Dispatcher : public DispatchHandler {
 
-public:
+  public:
 
-  Dispatcher(Comm *comm, ApplicationQueue *appQueue) : m_comm(comm), m_app_queue(appQueue) { return; }
+    Dispatcher(Comm *comm, ApplicationQueue *appQueue) : m_comm(comm), m_app_queue(appQueue) { return; }
   
-  virtual void handle(EventPtr &eventPtr) {
-    if (gVerbose && eventPtr->type == Event::CONNECTION_ESTABLISHED) {
-      LOG_INFO("Connection Established.");
-    }
-    else if (gVerbose && eventPtr->type == Event::DISCONNECT) {
-      if (eventPtr->error != 0) {
-	LOG_VA_INFO("Disconnect : %s", Error::get_text(eventPtr->error));
+    virtual void handle(EventPtr &eventPtr) {
+      if (gVerbose && eventPtr->type == Event::CONNECTION_ESTABLISHED) {
+	LOG_INFO("Connection Established.");
       }
-      else {
-	LOG_INFO("Disconnect.");
+      else if (gVerbose && eventPtr->type == Event::DISCONNECT) {
+	if (eventPtr->error != 0) {
+	  LOG_VA_INFO("Disconnect : %s", Error::get_text(eventPtr->error));
+	}
+	else {
+	  LOG_INFO("Disconnect.");
+	}
+      }
+      else if (eventPtr->type == Event::ERROR) {
+	LOG_VA_WARN("Error : %s", Error::get_text(eventPtr->error));
+      }
+      else if (eventPtr->type == Event::MESSAGE) {
+	if (m_app_queue == 0) {
+	  m_header_builder.initialize_from_request(eventPtr->header);
+	  CommBufPtr cbufPtr( new CommBuf(m_header_builder, eventPtr->messageLen) );
+	  cbufPtr->append_bytes((uint8_t *)eventPtr->message, eventPtr->messageLen);
+	  if (gDelay > 0)
+	    poll(0, 0, gDelay);
+	  int error = m_comm->send_response(eventPtr->addr, cbufPtr);
+	  if (error != Error::OK) {
+	    LOG_VA_ERROR("Comm::send_response returned %s", Error::get_text(error));
+	  }
+	}
+	else
+	  m_app_queue->add( new RequestHandler(m_comm, eventPtr) );
       }
     }
-    else if (eventPtr->type == Event::ERROR) {
-      LOG_VA_WARN("Error : %s", Error::get_text(eventPtr->error));
-    }
-    else if (eventPtr->type == Event::MESSAGE) {
-      if (m_app_queue == 0) {
+
+  private:
+    Comm             *m_comm;
+    ApplicationQueue *m_app_queue;
+    HeaderBuilder     m_header_builder;
+  };
+
+
+
+  /**
+   * This is the dispatch handler that is used when
+   * the server is in UDP mode.
+   */
+  class UdpDispatcher : public DispatchHandler {
+  public:
+
+    UdpDispatcher(Comm *comm) : m_comm(comm) { return; }
+
+    virtual void handle(EventPtr &eventPtr) {
+      if (eventPtr->type == Event::MESSAGE) {
 	m_header_builder.initialize_from_request(eventPtr->header);
 	CommBufPtr cbufPtr( new CommBuf(m_header_builder, eventPtr->messageLen) );
 	cbufPtr->append_bytes((uint8_t *)eventPtr->message, eventPtr->messageLen);
 	if (gDelay > 0)
 	  poll(0, 0, gDelay);
-	int error = m_comm->send_response(eventPtr->addr, cbufPtr);
+	int error = m_comm->send_datagram(eventPtr->addr, eventPtr->localAddr, cbufPtr);
 	if (error != Error::OK) {
 	  LOG_VA_ERROR("Comm::send_response returned %s", Error::get_text(error));
 	}
       }
-      else
-	m_app_queue->add( new RequestHandler(m_comm, eventPtr) );
-    }
-  }
-
-private:
-  Comm             *m_comm;
-  ApplicationQueue *m_app_queue;
-  HeaderBuilder     m_header_builder;
-};
-
-
-
-/**
- * This is the dispatch handler that is used when
- * the server is in UDP mode.
- */
-class UdpDispatcher : public DispatchHandler {
-public:
-
-  UdpDispatcher(Comm *comm) : m_comm(comm) { return; }
-
-  virtual void handle(EventPtr &eventPtr) {
-    if (eventPtr->type == Event::MESSAGE) {
-      m_header_builder.initialize_from_request(eventPtr->header);
-      CommBufPtr cbufPtr( new CommBuf(m_header_builder, eventPtr->messageLen) );
-      cbufPtr->append_bytes((uint8_t *)eventPtr->message, eventPtr->messageLen);
-      if (gDelay > 0)
-	poll(0, 0, gDelay);
-      int error = m_comm->send_datagram(eventPtr->addr, eventPtr->localAddr, cbufPtr);
-      if (error != Error::OK) {
-	LOG_VA_ERROR("Comm::send_response returned %s", Error::get_text(error));
+      else {
+	LOG_VA_ERROR("Error : %s", eventPtr->toString().c_str());
       }
     }
-    else {
-      LOG_VA_ERROR("Error : %s", eventPtr->toString().c_str());
+
+  private:
+    Comm           *m_comm;
+    HeaderBuilder   m_header_builder;
+  };
+
+
+  /**
+   * This handler factory gets passed into Comm::listen.  It
+   * gets constructed with a pointer to a DispatchHandler.
+   */
+  class HandlerFactory : public ConnectionHandlerFactory {
+  public:
+    HandlerFactory(DispatchHandlerPtr &dhp) : m_dispatch_handler_ptr(dhp) { return; }
+
+    virtual void get_instance(DispatchHandlerPtr &dhp) {
+      dhp = m_dispatch_handler_ptr;
     }
-  }
 
-private:
-  Comm           *m_comm;
-  HeaderBuilder   m_header_builder;
-};
+  private:
+    DispatchHandlerPtr m_dispatch_handler_ptr;
+  };
 
-
-
-/**
- * This handler factory gets passed into Comm::listen.  It
- * gets constructed with a pointer to a DispatchHandler.
- */
-class HandlerFactory : public ConnectionHandlerFactory {
-public:
-  HandlerFactory(DispatchHandlerPtr &dhp) : m_dispatch_handler_ptr(dhp) { return; }
-
-  virtual void get_instance(DispatchHandlerPtr &dhp) {
-    dhp = m_dispatch_handler_ptr;
-  }
-
-private:
-  DispatchHandlerPtr m_dispatch_handler_ptr;
-};
-
+}
 
 
 /**

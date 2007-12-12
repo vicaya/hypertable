@@ -34,16 +34,13 @@ atomic_t ReactorFactory::ms_next_reactor = ATOMIC_INIT(0);
 
 
 /**
- * Method to initialize the reactor factory
- *
- * @param reactorCount number of reactors to initialize
  */
-void ReactorFactory::initialize(uint16_t reactorCount) {
+void ReactorFactory::initialize(uint16_t reactor_count) {
   Reactor *reactor;
   ReactorRunner rrunner;
   signal(SIGPIPE, SIG_IGN);
-  assert(reactorCount > 0);
-  for (uint16_t i=0; i<reactorCount; i++) {
+  assert(reactor_count > 0);
+  for (uint16_t i=0; i<reactor_count; i++) {
     reactor = new Reactor();
     ms_reactors.push_back(reactor);
     rrunner.set_reactor(reactor);

@@ -97,7 +97,7 @@ namespace Hypertable {
      * @param addr remote address of RangeServer connection
      * @param table table identifier
      * @param range range specification
-     * @param range scan_spec scan specification
+     * @param scan_spec scan specification
      * @param handler response handler
      * @return Error::OK on success or error code on failure
      */
@@ -108,7 +108,7 @@ namespace Hypertable {
      * @param addr remote address of RangeServer connection
      * @param table table identifier
      * @param range range specification
-     * @param range scan_spec scan specification
+     * @param scan_spec scan specification
      * @param scan_block block of return key/value pairs
      * @return Error::OK on success or error code on failure
      */
@@ -130,7 +130,7 @@ namespace Hypertable {
      * @param scan_block block of return key/value pairs
      * @return Error::OK on success or error code on failure
      */
-    int fetch_scanblock(struct sockaddr_in &addr, int scanner_id, ScanBlock &scanblock);
+    int fetch_scanblock(struct sockaddr_in &addr, int scanner_id, ScanBlock &scan_block);
 
     /** Issues a "status" request.  This call blocks until it receives a response from the server.
      * 

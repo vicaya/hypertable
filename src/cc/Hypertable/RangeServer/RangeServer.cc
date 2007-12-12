@@ -991,7 +991,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 /**
  *
  */
-bool RangeServer::get_table_info(string name, TableInfoPtr &info) {
+bool RangeServer::get_table_info(std::string name, TableInfoPtr &info) {
   boost::mutex::scoped_lock lock(m_mutex);
   TableInfoMapT::iterator iter = m_table_info_map.find(name);
   if (iter == m_table_info_map.end())
@@ -1004,7 +1004,7 @@ bool RangeServer::get_table_info(string name, TableInfoPtr &info) {
 /**
  *
  */
-void RangeServer::set_table_info(string name, TableInfoPtr &info) {
+void RangeServer::set_table_info(std::string name, TableInfoPtr &info) {
   boost::mutex::scoped_lock lock(m_mutex);
   TableInfoMapT::iterator iter = m_table_info_map.find(name);
   if (iter != m_table_info_map.end())

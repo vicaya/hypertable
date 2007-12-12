@@ -59,25 +59,24 @@ namespace {
   };
   const int DEFAULT_PORT              = 38050;
   const int DEFAULT_WORKERS           = 20;
+
+
+  /**
+   *
+   */
+  class HandlerFactory : public ConnectionHandlerFactory {
+  public:
+    HandlerFactory(Comm *comm, ApplicationQueuePtr &appQueuePtr, MasterPtr &masterPtr) : m_comm(comm), m_app_queue_ptr(appQueuePtr), m_master_ptr(masterPtr) { return; }
+    virtual void get_instance(DispatchHandlerPtr &dhp) {
+      dhp = new ConnectionHandler(m_comm, m_app_queue_ptr, m_master_ptr);
+    }
+  private:
+    Comm                *m_comm;
+    ApplicationQueuePtr  m_app_queue_ptr;
+    MasterPtr            m_master_ptr;
+  };
+
 }
-
-
-
-/**
- *
- */
-class HandlerFactory : public ConnectionHandlerFactory {
-public:
-  HandlerFactory(Comm *comm, ApplicationQueuePtr &appQueuePtr, MasterPtr &masterPtr) : m_comm(comm), m_app_queue_ptr(appQueuePtr), m_master_ptr(masterPtr) { return; }
-  virtual void get_instance(DispatchHandlerPtr &dhp) {
-    dhp = new ConnectionHandler(m_comm, m_app_queue_ptr, m_master_ptr);
-  }
-private:
-  Comm                *m_comm;
-  ApplicationQueuePtr  m_app_queue_ptr;
-  MasterPtr            m_master_ptr;
-};
-
 
 
 /**

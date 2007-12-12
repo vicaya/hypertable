@@ -224,7 +224,7 @@ namespace Hypertable {
      * by the expire_time argument.  The handler argument represents the dispatch
      * handler to receive the TIMER event.
      *
-     * @param duration_millis number of milliseconds to wait
+     * @param expire_time number of milliseconds to wait
      * @param handler the dispatch handler to receive the TIMER event upon expiration
      * @return Error::OK on success or error code on failure
      */

@@ -34,7 +34,6 @@ namespace Hypertable {
 
   static const uint32_t FLAG_DELETE_ROW   = 0x00;
   static const uint32_t FLAG_DELETE_CELL  = 0x01;
-  static const uint32_t FLAG_PRUNE_CELL   = 0x02;
   static const uint32_t FLAG_INSERT       = 0xFF;
   
   /** Provides access to internal components of opaque key.
@@ -101,12 +100,12 @@ namespace Hypertable {
    * memory for the key an then packs the components into the key so that keys can
    * be lexicographically compared.  The opaque key has the following packed format:
    * <p>
-   * <rowKey> '\0' <columnFamily> <columnQualifier> '\0' <flag> ~BIGENDIAN(<timestamp>)
+   * &lt;rowKey&gt; NUL &lt;columnFamily&gt; &lt;columnQualifier&gt; NULL &lt;flag&gt; ~BIGENDIAN(&lt;timestamp&gt;)
    * <p>
    * @param flag DELETE_ROW, DELETE_CELL, or INSERT
-   * @param row '\0' terminated row key
+   * @param row NUL-terminated row key
    * @param column_family_code column family
-   * @param column_qualifier '\0' terminated column qualifier
+   * @param column_qualifier NUL-terminated column qualifier
    * @param timestamp timestamp in microseconds
    * @return newly allocated opaque key
    */

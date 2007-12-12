@@ -51,6 +51,7 @@ namespace Hypertable {
 
   class Master : public ReferenceCount {
   public:
+
     Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, ApplicationQueuePtr &appQueuePtr);
     ~Master();
 
@@ -59,8 +60,8 @@ namespace Hypertable {
     void register_server(ResponseCallback *cb, const char *location, struct sockaddr_in &addr);
     void report_split(ResponseCallback *cb, TableIdentifierT &table, RangeT &range);
 
-    void server_joined(std::string &hyperspaceFilename);
-    void server_left(std::string &hyperspaceFilename);
+    void server_joined(std::string &location);
+    void server_left(std::string &location);
 
   protected:
     int create_table(const char *tableName, const char *schemaString, std::string &errMsg);

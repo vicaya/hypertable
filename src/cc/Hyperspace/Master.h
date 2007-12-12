@@ -132,9 +132,10 @@ namespace Hyperspace {
      *
      * @param normalName Normalized (e.g. no trailing '/') name of path to find parent of
      * @param parentNodePtr pointer reference to hold return pointer
-     * @param 
+     * @param childName reference to string to hold the child directory entry name
+     * @return true if parent node found, false otherwise
      */
-    bool find_parent_node(std::string normalName, NodeDataPtr &nodePtr, std::string &nodeName);
+    bool find_parent_node(std::string normalName, NodeDataPtr &parentNodePtr, std::string &childName);
     bool destroy_handle(uint64_t handle, int *errorp, std::string &errMsg, bool waitForNotify=true);
     void release_lock(HandleDataPtr &handlePtr, bool waitForNotify=true);
     void lock_handle(HandleDataPtr &handlePtr, uint32_t mode);

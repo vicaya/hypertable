@@ -26,19 +26,22 @@
 
 using namespace Hypertable;
 
-Filesystem            *Global::dfs = 0;
-Filesystem            *Global::logDfs = 0;
-boost::thread         *Global::maintenanceThreadPtr = 0;
-RangeServerProtocol   *Global::protocol = 0;
-bool                   Global::verbose = false;
-CommitLog             *Global::log = 0;
-std::string            Global::logDir = "";
-uint64_t               Global::rangeMaxBytes = 0;
-int32_t                Global::localityGroupMaxFiles = 0;
-int32_t                Global::localityGroupMergeFiles = 0;
-int32_t                Global::localityGroupMaxMemory = 0;
-ScannerMap             Global::scannerMap;
-FileBlockCache        *Global::blockCache = 0;
-TablePtr               Global::metadata_table_ptr = 0;
-uint64_t               Global::range_metadata_max_bytes = 0;
+namespace Hypertable {
 
+  Filesystem            *Global::dfs = 0;
+  Filesystem            *Global::logDfs = 0;
+  boost::thread         *Global::maintenanceThreadPtr = 0;
+  RangeServerProtocol   *Global::protocol = 0;
+  bool                   Global::verbose = false;
+  CommitLog             *Global::log = 0;
+  std::string            Global::logDir = "";
+  uint64_t               Global::rangeMaxBytes = 0;
+  int32_t                Global::localityGroupMaxFiles = 0;
+  int32_t                Global::localityGroupMergeFiles = 0;
+  int32_t                Global::localityGroupMaxMemory = 0;
+  ScannerMap             Global::scannerMap;
+  FileBlockCache        *Global::blockCache = 0;
+  TablePtr               Global::metadata_table_ptr = 0;
+  uint64_t               Global::range_metadata_max_bytes = 0;
+
+}
