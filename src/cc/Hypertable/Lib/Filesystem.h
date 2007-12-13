@@ -64,7 +64,7 @@ namespace Hypertable {
      * @param fdp address of variable to hold return file descriptor
      * @return Error::OK on success or error code on failure
      */
-    virtual int open_buffered(std::string &name, uint32_t bufSize, int32_t *fdp) = 0;
+    virtual int open_buffered(std::string &name, uint32_t bufSize, int32_t *fdp, uint64_t initial_offset=0) = 0;
 
     /** Creates a file asynchronously.  Issues a create file request with various create
      * mode parameters.   The caller will get notified of successful completion

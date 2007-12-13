@@ -34,12 +34,24 @@ namespace {
 /**
  *
  */
-ClientBufferedReaderHandler::ClientBufferedReaderHandler(DfsBroker::Client *client, uint32_t fd, uint32_t bufSize) : m_client(client), m_fd(fd), m_eof(false), m_error(Error::OK) {
+ClientBufferedReaderHandler::ClientBufferedReaderHandler(DfsBroker::Client *client, uint32_t fd, uint32_t bufSize, uint64_t initial_offset) : m_client(client), m_fd(fd), m_eof(false), m_error(Error::OK) {
 
   m_max_outstanding = (bufSize + (DEFAULT_READ_SIZE-1)) / DEFAULT_READ_SIZE;
 
   if (m_max_outstanding < 2)
     m_max_outstanding = 2;
+
+  /**
+   * Seek to initial offset
+   */
+  if (initial_offset > 0) {
+    if ((m_error = m_client->seek(m_fd, initial_offset)) != Error::OK) {
+      // TODO: throw exception
+      LOG_VA_ERROR("Problem seeking to position '%lld' in file", initial_offset);
+      m_eof = true;
+      return;
+    }
+  }
 
   {
     boost::mutex::scoped_lock lock(m_mutex);

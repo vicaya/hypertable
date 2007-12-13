@@ -48,6 +48,7 @@ namespace Hypertable {
     } BlockInfoT;
 
     bool fetch_next_block();
+    bool fetch_next_block_readahead();
     bool initialize();
 
     CellStorePtr            m_cell_store_ptr;
@@ -65,6 +66,9 @@ namespace Hypertable {
     int                   m_file_id;
     std::string           m_start_row;
     std::string           m_end_row;
+    bool                  m_readahead;
+    int32_t               m_fd;
+    uint32_t              m_file_offset;
   };
 
 }

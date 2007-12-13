@@ -80,6 +80,7 @@ namespace Hypertable {
     uint32_t             m_next_table_id;
     uint64_t             m_persist_timestamp;
     uint64_t             m_disk_usage;
+    uint32_t             m_blocksize;
   };
 
 }

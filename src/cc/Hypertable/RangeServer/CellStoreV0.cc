@@ -43,7 +43,7 @@ extern "C" {
 using namespace Hypertable;
 
 CellStoreV0::CellStoreV0(Filesystem *filesys) : m_filesys(filesys), m_filename(), m_fd(-1), m_index(),
-  m_buffer(0), m_fix_index_buffer(0), m_var_index_buffer(0), m_block_size(Constants::DEFAULT_BLOCKSIZE),
+  m_buffer(0), m_fix_index_buffer(0), m_var_index_buffer(0), m_blocksize(0),
   m_outstanding_appends(0), m_offset(0), m_last_key(0), m_file_length(0), m_disk_usage(0), m_file_id(0) {
   m_block_deflater = new BlockDeflaterZlib();
   m_file_id = FileBlockCache::get_next_file_id();
@@ -82,16 +82,16 @@ CellListScanner *CellStoreV0::create_scanner(ScanContextPtr &scanContextPtr) {
 }
 
 
-int CellStoreV0::create(const char *fname, size_t blockSize) {
+int CellStoreV0::create(const char *fname, uint32_t blocksize) {
 
-  m_block_size = blockSize;
-  m_buffer.reserve(m_block_size*2);
+  m_blocksize = blocksize;
+  m_buffer.reserve(m_blocksize*2);
 
   m_fd = -1;
   m_offset = 0;
   m_last_key = 0;
-  m_fix_index_buffer.reserve(m_block_size);
-  m_var_index_buffer.reserve(m_block_size);
+  m_fix_index_buffer.reserve(m_blocksize);
+  m_var_index_buffer.reserve(m_blocksize);
 
   memset(&m_trailer, 0, sizeof(m_trailer));
 
@@ -110,7 +110,7 @@ int CellStoreV0::add(const ByteString32T *key, const ByteString32T *value) {
   EventPtr eventPtr;
   DynamicBuffer zBuffer(0);
 
-  if (m_buffer.fill() > m_block_size) {
+  if (m_buffer.fill() > m_blocksize) {
 
     add_index_entry(m_last_key, m_offset);
 
@@ -187,8 +187,8 @@ int CellStoreV0::finalize(uint64_t timestamp) {
 
   m_trailer.fixIndexOffset = m_offset;
   m_trailer.timestamp = timestamp;
-  m_trailer.flags = 0;
   m_trailer.compressionType = Constants::COMPRESSION_TYPE_ZLIB;
+  m_trailer.blocksize = m_blocksize;
   m_trailer.version = 0;
 
   /**
@@ -350,7 +350,7 @@ int CellStoreV0::open(const char *fname, const char *start_row, const char *end_
   }
 
   /** Sanity check trailer **/
-  if (m_trailer.version != 1) {
+  if (m_trailer.version != 0) {
     LOG_VA_ERROR("Unsupported CellStore version (%d) for file '%s'", m_trailer.version, fname);
     goto abort;
   }
@@ -364,6 +364,8 @@ int CellStoreV0::open(const char *fname, const char *start_row, const char *end_
 		 m_trailer.fixIndexOffset, m_trailer.varIndexOffset, m_file_length, fname);
     goto abort;
   }
+
+  m_blocksize = m_trailer.blocksize;
 
 #if 0
   cout << "m_index.size() = " << m_index.size() << endl;

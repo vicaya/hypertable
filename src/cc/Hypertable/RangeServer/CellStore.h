@@ -51,7 +51,7 @@ namespace Hypertable {
      * @param blockSize amount of uncompressed data to compress into a block
      * @return Error::OK on success, error code on failure
      */
-    virtual int create(const char *fname, size_t blockSize=Constants::DEFAULT_BLOCKSIZE) = 0;
+    virtual int create(const char *fname, uint32_t blocksize) = 0;
     
     /**
      * Finalizes the creation of a cell store, by writing block index and metadata trailer.
@@ -79,6 +79,15 @@ namespace Hypertable {
      * @return Error::OK on success, error code on failure
      */
     virtual int load_index() = 0;
+
+    /**
+     * Returns the block size used for this cell store.  The block size is the amount of
+     * uncompressed key/value pairs to collect before compressing and storing as a 
+     * compressed block in the cell store.
+     *
+     * @return block size
+     */
+    virtual uint32_t get_blocksize() = 0;
 
     /**
      * Returns the timestamp of the latest (newest) key/value pair in this cell store.

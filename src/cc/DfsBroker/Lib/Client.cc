@@ -96,7 +96,7 @@ int Client::open(std::string &name, int32_t *fdp) {
 }
 
 
-int Client::open_buffered(std::string &name, uint32_t bufSize, int32_t *fdp) {
+int Client::open_buffered(std::string &name, uint32_t bufSize, int32_t *fdp, uint64_t initial_offset) {
   int error;
 
   if ((error = open(name, fdp)) != Error::OK)
@@ -105,7 +105,7 @@ int Client::open_buffered(std::string &name, uint32_t bufSize, int32_t *fdp) {
   {
     boost::mutex::scoped_lock lock(m_mutex);
     assert(m_buffered_reader_map.find(*fdp) == m_buffered_reader_map.end());
-    m_buffered_reader_map[*fdp] = new ClientBufferedReaderHandler(this, *fdp, bufSize);
+    m_buffered_reader_map[*fdp] = new ClientBufferedReaderHandler(this, *fdp, bufSize, initial_offset);
   }
 
   return Error::OK;

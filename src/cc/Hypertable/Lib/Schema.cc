@@ -234,6 +234,13 @@ void Schema::set_access_group_parameter(const char *param, const char *value) {
       else
 	set_error_string((string)"Invalid value (" + value + ") for AccessGroup attribute '" + param + "'");
     }
+    else if (!strcasecmp(param, "blockSize")) {
+      long long blocksize = strtoll(value, 0, 10);
+      if (blocksize == 0 || blocksize >= 4294967296LL)
+	set_error_string((string)"Invalid value (" + value + ") for AccessGroup attribute '" + param + "'");
+      else
+	m_open_access_group->blocksize = (uint32_t)blocksize;
+    }
     else
       set_error_string((string)"Invalid AccessGroup attribute '" + param + "'");
   }
@@ -301,6 +308,8 @@ void Schema::render(std::string &output) {
     output += (string)"  <AccessGroup name=\"" + (*iter)->name + "\"";
     if ((*iter)->in_memory)
       output += " inMemory=\"true\"";
+    if ((*iter)->blocksize > 0)
+      output += (std::string)" blockSize=\"" + (*iter)->blocksize + "\"";
     output += ">\n";
     for (list<ColumnFamily *>::iterator cfiter = (*iter)->columns.begin(); cfiter != (*iter)->columns.end(); cfiter++) {
       output += (string)"    <ColumnFamily";

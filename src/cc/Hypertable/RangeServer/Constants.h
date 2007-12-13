@@ -33,8 +33,6 @@ namespace Hypertable {
     static const char INDEX_FIXED_BLOCK_MAGIC[12];
     static const char INDEX_VARIABLE_BLOCK_MAGIC[12];
 
-    static const uint32_t DEFAULT_BLOCKSIZE = 65536;
-
     static const uint16_t COMPRESSION_TYPE_ZLIB = 1;
 
     typedef struct {

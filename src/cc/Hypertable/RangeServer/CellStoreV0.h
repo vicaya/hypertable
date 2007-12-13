@@ -51,11 +51,12 @@ namespace Hypertable {
     CellStoreV0(Filesystem *filesys);
     virtual ~CellStoreV0();
 
-    virtual int create(const char *fname, size_t blockSize=Constants::DEFAULT_BLOCKSIZE);
+    virtual int create(const char *fname, uint32_t blocksize);
     virtual int add(const ByteString32T *key, const ByteString32T *value);
     virtual int finalize(uint64_t timestamp);
     virtual int open(const char *fname, const char *start_row, const char *end_row);
     virtual int load_index();
+    virtual uint32_t get_blocksize() { return m_blocksize; }
     virtual uint64_t get_timestamp();
     virtual uint64_t disk_usage() { return m_disk_usage; }
     virtual const char *get_split_row();
@@ -79,7 +80,7 @@ namespace Hypertable {
       uint32_t  varIndexOffset;
       uint32_t  indexEntries;
       uint64_t  timestamp;
-      uint16_t  flags;
+      uint32_t  blocksize;
       uint16_t  compressionType;
       uint16_t  version;
     } __attribute__((packed)) StoreTrailerT;
@@ -95,7 +96,7 @@ namespace Hypertable {
     DynamicBuffer          m_buffer;
     DynamicBuffer          m_fix_index_buffer;
     DynamicBuffer          m_var_index_buffer;
-    size_t                 m_block_size;
+    uint32_t               m_blocksize;
     DispatchHandlerSynchronizer  m_sync_handler;
     uint32_t               m_outstanding_appends;
     uint32_t               m_offset;

@@ -33,7 +33,12 @@
 #include "MergeScanner.h"
 
 
-AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range) : CellList(), m_mutex(), m_lock(m_mutex,false), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_persist_timestamp(0), m_disk_usage(0) {
+namespace {
+  const uint32_t DEFAULT_BLOCKSIZE = 65536;
+}
+
+
+AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range) : CellList(), m_mutex(), m_lock(m_mutex,false), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_persist_timestamp(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE) {
   m_table_name = table_identifier.name;
   m_start_row = range->startRow;
   m_end_row = range->endRow;
@@ -42,6 +47,8 @@ AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPt
     m_column_families.insert((uint8_t)(*iter)->id);
   }
   Copy(table_identifier, m_table_identifier);
+  if (ag->blocksize != 0)
+    m_blocksize = ag->blocksize;
 }
 
 
@@ -187,7 +194,7 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
 
   cellStorePtr = new CellStoreV0(Global::dfs);
 
-  if (cellStorePtr->create(cellStoreFile.c_str()) != 0) {
+  if (cellStorePtr->create(cellStoreFile.c_str(), m_blocksize) != 0) {
     LOG_VA_ERROR("Problem compacting locality group to file '%s'", cellStoreFile.c_str());
     return;
   }
