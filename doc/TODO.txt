@@ -4,7 +4,6 @@ Hyperspace:
 - Add consistent gid to requests
 
 TODO:
-- Make serverup quiet when checking for un-initialized Master
 - Add Create command to Hyperspace that allows caller to supply initial attributes
 - Add ReactorFactory::Destroy
 - Get rid of connection ID from Event structure
@@ -25,14 +24,15 @@ TODO:
 - Add ReactorFactory::Shutdown
 - Add "Scan Cache"
 - Add Bloom filter
-- Add user supplied block size to LocalityGroup
 - Add user supplied compression type to LocalityGroup
 - Use Findbugs (http://findbugs.sourceforge.net/) to find bugs in Java code.
 - Add access control
-- Add better split key computation logic (exponential backoff sampler)
 
 
 DONE:
+- Make serverup quiet when checking for un-initialized Master
+- Add user supplied block size to LocalityGroup
+- Add better split key computation logic (exponential backoff sampler)
 - Add Connection canceling logic to AsyncComm
 - Modified RangeServer UPDATE command to accept updates for any/all of the server's ranges instead of just a single range
 - Added atomic open/lock commands to Hyperspace

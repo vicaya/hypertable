@@ -14,8 +14,8 @@ CONTENTS
 
   3. Install the following libraries:
     - Boost version 1.34.1 (http://www.boost.org/)
-    - log4cpp version 0.3.5rc3 (http://log4cpp.sourceforge.net/)
-    - expat version 2.0.1 (http://sourceforge.net/projects/expat)
+    - log4cpp (http://log4cpp.sourceforge.net/)
+    - expat (http://sourceforge.net/projects/expat)
 
   4. Checkout the source code.
 
@@ -52,14 +52,24 @@ CONTENTS
 
    NOTE: These instructions assume the installation directory is ~/hypertable
 
-2. Stop the servers
+2. Make sure you have extended attributes enabled on the partition that holds the
+   installation (e.g. ~/hypertable).  To do that, you need to add the user_xattr
+   property to the relevant file systems in your /etc/fstab file. For example:
+
+   /dev/hda3     /home     ext3     defaults,user_xattr     1 2
+
+   You can then remount the affected partitions as follows:
+
+   $ mount -o remount /home
+
+3. Stop the servers
 
   *** Must be performed prior to running the regression tests each time **
 
   cd ~/hypertable
   ./test/stop-servers.sh
 
-3. Start the servers.  The following example illustrates the use of the 'local'
+4. Start the servers.  The following example illustrates the use of the 'local'
    DFS broker, but can be changed to use any DFS broker (e.g. hadoop, kosmos, etc.)
    by replacing the 'local' keyword with the name of the broker you want to use.
 
@@ -74,7 +84,7 @@ CONTENTS
   Successfully started Hypertable.Master
   Successfully started Hypertable.RangeServer
 
-4. Run the regression tests
+5. Run the regression tests
 
   cd ~/build/hypertable
   make test
@@ -93,17 +103,3 @@ The documentation tree will get generated under ~/build/hypertable/doc.  To view
 the HTML docs, load the following file into a web browser:
 
   ~/build/hypertable/doc/html/index.html
-
-
-
-
-LATER:
-
-To set extended attributes, you should add the user_xattr property to the relevant
-file systems in your /etc/fstab file. For example:
-
-/dev/hda3     /home     ext3     defaults,user_xattr     1 2
-
-You can then remount the affected partitions as follows:
-
-# mount -o remount /home

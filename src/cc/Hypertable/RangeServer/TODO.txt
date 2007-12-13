@@ -1,5 +1,6 @@
 
 TODO:
+- Add compression ratio field in CellStoreV0 trailer
 - Add delete_row, delete_cell, delete_qualified_cell, etc. to Mutator
 - Add header to load data infile format to specify with or without timestamps
 - Add support for TSV files
