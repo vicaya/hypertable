@@ -22,6 +22,7 @@
 #include <utility>
 
 #include "Common/NumberStream.h"
+#include "Common/Usage.h"
 
 #include "Hypertable/Lib/LocationCache.h"
 
@@ -209,6 +210,9 @@ int main(int argc, char **argv) {
   uint32_t serveri;
   const char *start, *end;
   RangeLocationInfo range_loc_info;
+
+  if (argc > 1 && (!strcmp(argv[1], "--help") || !strcmp(argv[1], "-?")))
+    Usage::dump_and_exit(usage);
 
   outfile.open("./locationCacheTest.output");
 

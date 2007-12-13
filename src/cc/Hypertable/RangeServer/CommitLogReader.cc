@@ -93,7 +93,7 @@ CommitLogReader::CommitLogReader(Filesystem *fs, std::string &logDir) : m_fs(fs)
       exit(1);
     }
 
-    if (flen < sizeof(CommitLogHeaderT))
+    if (flen < (int64_t)sizeof(CommitLogHeaderT))
       continue;
 
     if ((error = m_fs->open(m_log_file_info[i].fname, &fd)) != Error::OK) {
