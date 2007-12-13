@@ -432,8 +432,8 @@ const char *RangeLocator::build_metadata_end_row_key(char *buf, const char *form
   char *ptr;
   sprintf(buf, format, table_id);
   ptr = buf + strlen(buf);
-  *ptr++ = 0xff;
-  *ptr++ = 0xff;
+  *ptr++ = (char)0xff;
+  *ptr++ = (char)0xff;
   *ptr = 0;
   return buf;
 }

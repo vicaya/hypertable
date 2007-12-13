@@ -27,7 +27,7 @@
 using namespace Hypertable;
 
 namespace {
-  const char end_row_key[2] = { 0xff, 0xff };
+  const char end_row_key[2] = { (char)0xff, (char)0xff };
 }
 
 /**
