@@ -30,6 +30,7 @@ namespace {
   "\n" \
   "CREATE TABLE      - Creates a table\n" \
   "DESCRIBE TABLE    - Displays a table's schema\n" \
+  "INSERT            - Inserts data into a table\n" \
   "LOAD DATA INFILE  - Loads data from a tab delimited input file into a table\n" \
   "SELECT            - Select (and display) cells from a table\n" \
   "SHOW CREATE TABLE - Displays CREATE TABLE command used to create table\n" \
@@ -57,7 +58,7 @@ namespace {
 
   const char *help_text_select =
   "\n" \
-  "SELECT ( '*' | column_family_name [, column_family_name]* )\n" \
+  "SELECT ( '*' | column_family_name [ ',' column_family_name]* )\n" \
   "    FROM table_name\n" \
   "    [where_clause]\n" \
   "    [options_spec]\n" \
@@ -84,7 +85,7 @@ namespace {
   "    | INTO FILE 'file_name' )*\n" \
   "\n" \
   "timestamp:\n" \
-  "    YYYY-MM-DD HH:MM:SS[.nanoseconds]\n" \
+  "    'YYYY-MM-DD HH:MM:SS[.nanoseconds]'\n" \
   "\n";
 
   const char *help_text_describe_table =
@@ -156,12 +157,29 @@ namespace {
   "Load complete (59.70s elapsed_time, 4001802.20 bytes/s, 33499.06 inserts/s)\n" \
   "\n";  
 
+  const char *help_text_insert =
+  "\n" \
+  "INSERT INTO table_name VALUES value_list\n" \
+  "\n" \
+  "value_list:\n" \
+  "    value_spec [ ',' value_spec ... ]\n" \
+  "\n" \
+  "value_spec:\n" \
+  "    '(' row_key ',' column_key ',' value ')'\n" \
+  "    '(' timestamp ',' row_key ',' column_key ',' value ')'\n" \
+  "\n" \
+  "timestamp:\n" \
+  "    'YYYY-MM-DD HH:MM:SS[.nanoseconds]'\n" \
+  "\n";
+
+
   typedef __gnu_cxx::hash_map<std::string, const char *>  HelpTextMapT;
 
   HelpTextMapT &buildHelpTextMap() {
     HelpTextMapT *map = new HelpTextMapT();
     (*map)["contents"] = help_text_contents;
     (*map)["create table"] = help_text_create_table;
+    (*map)["insert"] = help_text_insert;
     (*map)["select"] = help_text_select;
     (*map)["describe table"] = help_text_describe_table;
     (*map)["show create table"] = help_text_show_create_table;

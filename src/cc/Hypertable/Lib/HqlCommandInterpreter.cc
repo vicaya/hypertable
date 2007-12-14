@@ -222,6 +222,41 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
 	     elapsed_time, (double)file_size / elapsed_time, (double)insert_count / elapsed_time);
 
     }
+    else if (state.command == COMMAND_INSERT) {
+      TablePtr table_ptr;
+      MutatorPtr mutator_ptr;
+      KeySpec key;
+      char *column_qualifier;
+      std::string tmp_str;
+
+      if ((error = m_client->open_table(state.table_name, table_ptr)) != Error::OK)
+	throw Exception(error, std::string("Problem opening table '") + state.table_name + "'");
+
+      if ((error = table_ptr->create_mutator(mutator_ptr)) != Error::OK)
+	throw Exception(error, std::string("Problem creating mutator on table '") + state.table_name + "'");
+
+      for (size_t i=0; i<state.inserts.size(); i++) {
+	key.row = state.inserts[i].row_key.c_str();
+	key.row_len = state.inserts[i].row_key.length();
+	key.column_family = state.inserts[i].column_key.c_str();
+	if ((column_qualifier = strchr(state.inserts[i].column_key.c_str(), ':')) != 0) {
+	  *column_qualifier++ = 0;
+	  key.column_qualifier = column_qualifier;
+	  key.column_qualifier_len = strlen(column_qualifier);
+	}
+	else {
+	  key.column_qualifier = 0;
+	  key.column_qualifier_len = 0;
+	}
+	try {
+	  mutator_ptr->set(state.inserts[i].timestamp, key, (uint8_t *)state.inserts[i].value.c_str(), (uint32_t)state.inserts[i].value.length());
+	}
+	catch (Hypertable::Exception &e) {
+	  cerr << "error: " << Error::get_text(e.code()) << " - " << e.what() << endl;
+	}
+      }
+      mutator_ptr->flush();
+    }
 
   }
   else

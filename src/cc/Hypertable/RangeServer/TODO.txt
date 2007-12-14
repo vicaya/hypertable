@@ -1,10 +1,11 @@
 
 TODO:
+- Add comma separating the column families in the ACCESS GROUP clause
+- Add regression for HQL
 - Add compression ratio field in CellStoreV0 trailer
-- Add delete_row, delete_cell, delete_qualified_cell, etc. to Mutator
+- Add delete_row, delete_cell, etc. to Mutator
 - Add header to load data infile format to specify with or without timestamps
 - Add support for TSV files
-- Add INSERT command to Hql
 - Clean up timestamp clause in SELECT
 - Add DropTable command to RangeServer
 - Add scanner reaper to RangeServer
@@ -26,6 +27,7 @@ TODO:
 - Can get rid of m_blocksize in CellStoreV0 and just use the one in m_trailer
 
 DONE:
+- Add INSERT command to Hql
 - Add blocksize attribute to AccessGroup schema and hook it up with CellStore
 - Fix excessive seek problem during major/merging compaction (added CellStoreScannerV0 readahead)
 - Improve get_split_keys in Range class

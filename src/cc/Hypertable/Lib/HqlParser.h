@@ -22,6 +22,15 @@
 #define HYPERTABLE_HQLPARSER_H
 
 //#define BOOST_SPIRIT_DEBUG  ///$$$ DEFINE THIS WHEN DEBUGGING $$$///
+
+#ifdef BOOST_SPIRIT_DEBUG
+#define display_string(str) cerr << str << endl
+#define display_string_with_val(str, val) cerr << str << " val=" << val << endl
+#else
+#define display_string(str)
+#define display_string_with_val(str, val)
+#endif
+
 #include <boost/algorithm/string.hpp>
 #include <boost/spirit/core.hpp>
 #include <boost/spirit/symbols/symbols.hpp>
@@ -41,8 +50,6 @@ extern "C" {
 using namespace std;
 using namespace boost::spirit;
 
-#define display_string(str) //cerr << str << endl
-#define display_string_with_val(str, val) //cerr << str << " val=" << val << endl
 
 namespace Hypertable {
 
@@ -54,12 +61,27 @@ namespace Hypertable {
     const int COMMAND_SHOW_CREATE_TABLE = 4;
     const int COMMAND_SELECT            = 5;
     const int COMMAND_LOAD_DATA         = 6;
+    const int COMMAND_INSERT            = 7;
+    const int COMMAND_DELETE            = 8;
+
+    class insert_record {
+    public:
+      insert_record() : timestamp(0) { }
+      void clear() {
+	timestamp = 0;
+	row_key = "";
+	column_key = "";
+	value = "";
+      }
+      uint64_t    timestamp;
+      std::string row_key;
+      std::string column_key;
+      std::string value;
+    };
 
     class hql_interpreter_scan_state {
     public:
-      hql_interpreter_scan_state() : start_row_inclusive(true), end_row_inclusive(true), limit(0), max_versions(0), nanoseconds(0), start_time(0), end_time(0) {
-	memset(&tmval, 0, sizeof(tmval));
-      }
+      hql_interpreter_scan_state() : start_row_inclusive(true), end_row_inclusive(true), limit(0), max_versions(0), start_time(0), end_time(0) { }
       std::vector<std::string> columns;
       std::string row;
       std::string start_row;
@@ -68,8 +90,6 @@ namespace Hypertable {
       bool end_row_inclusive;
       uint32_t limit;
       uint32_t max_versions;
-      struct tm tmval;
-      uint32_t nanoseconds;
       uint64_t start_time;
       uint64_t end_time;
       std::string outfile;
@@ -77,7 +97,9 @@ namespace Hypertable {
    
     class hql_interpreter_state {
     public:
-      hql_interpreter_state() : command(0), cf(0), ag(0) { }
+      hql_interpreter_state() : command(0), cf(0), ag(0), nanoseconds(0) {
+	memset(&tmval, 0, sizeof(tmval));
+      }
       int command;
       std::string table_name;
       std::string str;
@@ -85,7 +107,11 @@ namespace Hypertable {
       Schema::AccessGroup *ag;
       Schema::ColumnFamilyMapT cf_map;
       Schema::AccessGroupMapT ag_map;
+      struct tm tmval;
+      uint32_t nanoseconds;
       hql_interpreter_scan_state scan;
+      insert_record current_insert_value;
+      std::vector<insert_record> inserts;
     };
 
     struct set_command {
@@ -322,7 +348,7 @@ namespace Hypertable {
       scan_set_year(hql_interpreter_state &state_) : state(state_) { }
       void operator()(const unsigned int &ival) const { 
 	display_string_with_val("scan_set_year", ival);
-	state.scan.tmval.tm_year = ival - 1900;
+	state.tmval.tm_year = ival - 1900;
       }
       hql_interpreter_state &state;
     };
@@ -331,7 +357,7 @@ namespace Hypertable {
       scan_set_month(hql_interpreter_state &state_) : state(state_) { }
       void operator()(const unsigned int &ival) const { 
 	display_string_with_val("scan_set_month", ival);
-	state.scan.tmval.tm_mon = ival-1;
+	state.tmval.tm_mon = ival-1;
       }
       hql_interpreter_state &state;
     };
@@ -340,7 +366,7 @@ namespace Hypertable {
       scan_set_day(hql_interpreter_state &state_) : state(state_) { }
       void operator()(const unsigned int &ival) const { 
 	display_string_with_val("scan_set_day", ival);
-	state.scan.tmval.tm_mday = ival;
+	state.tmval.tm_mday = ival;
       }
       hql_interpreter_state &state;
     };
@@ -349,7 +375,7 @@ namespace Hypertable {
       scan_set_seconds(hql_interpreter_state &state_) : state(state_) { }
       void operator()(const unsigned int &ival) const { 
 	display_string_with_val("scan_set_seconds", ival);
-	state.scan.tmval.tm_sec = ival;
+	state.tmval.tm_sec = ival;
       }
       hql_interpreter_state &state;
     };
@@ -358,7 +384,7 @@ namespace Hypertable {
       scan_set_minutes(hql_interpreter_state &state_) : state(state_) { }
       void operator()(const unsigned int &ival) const { 
 	display_string_with_val("scan_set_minutes", ival);
-	state.scan.tmval.tm_min = ival;
+	state.tmval.tm_min = ival;
       }
       hql_interpreter_state &state;
     };
@@ -367,7 +393,7 @@ namespace Hypertable {
       scan_set_hours(hql_interpreter_state &state_) : state(state_) { }
       void operator()(const unsigned int &ival) const { 
 	display_string_with_val("scan_set_hours", ival);
-	state.scan.tmval.tm_hour = ival;
+	state.tmval.tm_hour = ival;
       }
       hql_interpreter_state &state;
     };
@@ -376,7 +402,7 @@ namespace Hypertable {
       scan_set_nanoseconds(hql_interpreter_state &state_) : state(state_) { }
       void operator()(const unsigned int &ival) const { 
 	display_string_with_val("scan_set_nanoseconds", ival);
-	state.scan.nanoseconds = ival;
+	state.nanoseconds = ival;
       }
       hql_interpreter_state &state;
     };
@@ -388,13 +414,14 @@ namespace Hypertable {
 	display_string("scan_set_start_time");
 	if (state.scan.start_time != 0)
 	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT multiple start time predicates."));
-	time_t t = mktime(&state.scan.tmval);
+	time_t t = mktime(&state.tmval);
 	if (t == (time_t)-1)
 	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT invalid start time."));
-	state.scan.start_time = (uint64_t)t * 1000000000LL + state.scan.nanoseconds;
+	state.scan.start_time = (uint64_t)t * 1000000000LL + state.nanoseconds;
 	if (!inclusive)
 	  state.scan.start_time++;
-	state.scan.nanoseconds = 0;
+	memset(&state.tmval, 0, sizeof(state.tmval));
+	state.nanoseconds = 0;
       }
       hql_interpreter_state &state;
       bool inclusive;
@@ -406,16 +433,71 @@ namespace Hypertable {
 	display_string("scan_set_end_time");
 	if (state.scan.end_time != 0)
 	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT multiple end time predicates."));
-	time_t t = mktime(&state.scan.tmval);
+	time_t t = mktime(&state.tmval);
 	if (t == (time_t)-1)
 	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT invalid end time."));
-	state.scan.end_time = (uint64_t)t * 1000000000LL + state.scan.nanoseconds;
-	state.scan.nanoseconds = 0;
+	state.scan.end_time = (uint64_t)t * 1000000000LL + state.nanoseconds;
+	memset(&state.tmval, 0, sizeof(state.tmval));
+	state.nanoseconds = 0;
 	if (inclusive && state.scan.end_time != 0)
 	  state.scan.end_time--;
       }
       hql_interpreter_state &state;
       bool inclusive;
+    };
+
+    struct set_insert_timestamp {
+      set_insert_timestamp(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("set_insert_timestamp");
+	time_t t = mktime(&state.tmval);
+	if (t == (time_t)-1)
+	  throw Exception(Error::HQL_PARSE_ERROR, std::string("INSERT invalid timestamp."));
+	state.current_insert_value.timestamp = (uint64_t)t * 1000000000LL + state.nanoseconds;
+	memset(&state.tmval, 0, sizeof(state.tmval));
+	state.nanoseconds = 0;
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct set_insert_rowkey {
+      set_insert_rowkey(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("set_insert_rowkey");
+	state.current_insert_value.row_key = std::string(str, end-str);
+	boost::trim_if(state.current_insert_value.row_key, boost::is_any_of("'\""));
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct set_insert_columnkey {
+      set_insert_columnkey(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("set_insert_columnkey");
+	state.current_insert_value.column_key = std::string(str, end-str);
+	boost::trim_if(state.current_insert_value.column_key, boost::is_any_of("'\""));
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct set_insert_value {
+      set_insert_value(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("set_insert_value");
+	state.current_insert_value.value = std::string(str, end-str);
+	boost::trim_if(state.current_insert_value.value, boost::is_any_of("'\""));
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct add_insert_value {
+      add_insert_value(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("add_insert_value");
+	state.inserts.push_back(state.current_insert_value);
+	state.current_insert_value.clear();
+      }
+      hql_interpreter_state &state;
     };
 
     struct hql_interpreter : public grammar<hql_interpreter> {
@@ -507,6 +589,8 @@ namespace Hypertable {
 	  token_t DATA         = as_lower_d["data"];
 	  token_t INFILE       = as_lower_d["infile"];
 	  token_t TIMESTAMP    = as_lower_d["timestamp"];
+	  token_t INSERT       = as_lower_d["insert"];
+	  token_t VALUES       = as_lower_d["values"];
 
 	  /**
 	   * Start grammar definition
@@ -539,6 +623,22 @@ namespace Hypertable {
 	    | load_data_statement[set_command(self.state, COMMAND_LOAD_DATA)]
 	    | show_statement[set_command(self.state, COMMAND_SHOW_CREATE_TABLE)]
 	    | help_statement[set_help(self.state)]
+	    | insert_statement[set_command(self.state, COMMAND_INSERT)]
+	    ;
+
+	  insert_statement
+	    = INSERT >> INTO >> identifier[set_table_name(self.state)] >> VALUES >> insert_value_list
+	    ;
+
+	  insert_value_list
+	    = insert_value[add_insert_value(self.state)] >> *( COMMA >> insert_value[add_insert_value(self.state)] )
+	    ;
+
+	  insert_value
+	    = LPAREN >> *( date_expression[set_insert_timestamp(self.state)] >> COMMA) 
+		     >> string_literal[set_insert_rowkey(self.state)] >> COMMA
+		     >> string_literal[set_insert_columnkey(self.state)] >> COMMA
+		     >> string_literal[set_insert_value (self.state)] >> RPAREN
 	    ;
 
 	  show_statement
@@ -722,6 +822,9 @@ namespace Hypertable {
 	  BOOST_SPIRIT_DEBUG_RULE(time);
 	  BOOST_SPIRIT_DEBUG_RULE(year);
 	  BOOST_SPIRIT_DEBUG_RULE(load_data_statement);
+	  BOOST_SPIRIT_DEBUG_RULE(insert_statement);
+	  BOOST_SPIRIT_DEBUG_RULE(insert_value_list);
+	  BOOST_SPIRIT_DEBUG_RULE(insert_value);
 	}
 #endif
 
@@ -736,8 +839,7 @@ namespace Hypertable {
         access_group_option, in_memory_option, blocksize_option, help_statement,
         describe_table_statement, show_statement, select_statement, where_clause,
         where_predicate, option_spec, date_expression, datetime, date, time,
-        year, load_data_statement;
-
+        year, load_data_statement, insert_statement, insert_value_list, insert_value;
       };
 
       hql_interpreter_state &state;
