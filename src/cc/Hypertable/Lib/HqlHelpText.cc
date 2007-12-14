@@ -60,20 +60,21 @@ namespace {
   "SELECT ( '*' | column_family_name [, column_family_name]* )\n" \
   "    FROM table_name\n" \
   "    [where_clause]\n" \
-  "    [time_clause]\n" \
   "    [options_spec]\n" \
   "\n" \
   "where_clause:\n" \
-  "    WHERE \n" \
-  "    ( ROW = row_key\n" \
-  "    | (ROW > row_key | ROW >= row_key)\n" \
-  "    | (ROW < row_key | ROW <= row_key)\n" \
-  "    | (ROW > row_key | ROW >= row_key) \"&&\" (ROW < row_key | ROW <= row_key) )\n" \
+  "    WHERE where_predicate [ && where_predicate ... ] \n" \
   "\n" \
-  "time_clause:\n" \
-  "    ( (TIMESTAMP > timestamp | TIMESTAMP >= timestamp)\n" \
-  "    | (TIMESTAMP < timestamp | TIMESTAMP <= timestamp)\n" \
-  "    | (TIMESTAMP > timestamp | TIMESTAMP >= timestamp) \"&&\" (TIMESTAMP < timestamp | TIMESTAMP <= timestamp)\n" \
+  "where_predicate: \n" \
+  "    ROW = row_key\n" \
+  "    | ROW > row_key\n"
+  "    | ROW >= row_key\n" \
+  "    | ROW < row_key\n" \
+  "    | ROW <= row_key\n" \
+  "    | TIMESTAMP >  timestamp\n" \
+  "    | TIMESTAMP >= timestamp\n" \
+  "    | TIMESTAMP <  timestamp\n" \
+  "    | TIMESTAMP <= timestamp\n" \
   "\n" \
   "options_spec:\n" \
   "    ( MAX_VERSIONS = version_count\n" \

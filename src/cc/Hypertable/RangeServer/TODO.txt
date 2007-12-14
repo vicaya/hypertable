@@ -6,6 +6,7 @@ TODO:
 - Add support for TSV files
 - Add INSERT command to Hql
 - Clean up timestamp clause in SELECT
+- Add DropTable command to RangeServer
 - Add scanner reaper to RangeServer
 - Add range merging
 - Refactor so that schema can get updated on change
@@ -35,4 +36,17 @@ DONE:
 - Add auto-assigned timestamps
 - Change RangeServer::update to do a single write to the commit log instead of
   once for every range being updated.
+
+-------------------
+
+INSERT INTO Test1 VALUES ("foo", "apple:http://www.google.com/", "the cow jumped over the moon"), ("bar", "banana:htt://www.yahoo.com", "the dog jumped over the moon");
+
+INSERT INTO Test1 VALUES ('2007-12-13 08:20:34', "foo", "apple:http://www.google.com/", "the cow jumped over the moon"), ('2007-12-13 08:20:36', "bar", "banana:htt://www.yahoo.com", "the dog jumped over the moon");
+
+
+DELETE from [table name] where row = 'row-key' [&& column = 'column-key'] [&& timestamp = 'timestamp'];
+
+
+
+
 

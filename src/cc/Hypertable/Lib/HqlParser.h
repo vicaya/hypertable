@@ -617,32 +617,24 @@ namespace Hypertable {
 	      >> ( '*' | ( identifier[scan_add_column_family(self.state)] >> *( COMMA >> identifier[scan_add_column_family(self.state)] ) ) ) 
 	      >> FROM >> identifier[set_table_name(self.state)]
 	      >> !where_clause
-	      >> !time_predicate
 	      >> *( option_spec )
 	    ;
 
-	  time_predicate
-	    = time_predicate_clause >> *( AND >> time_predicate_clause )
-	    ;
-
-	  time_predicate_clause
-	    = TIMESTAMP >> GT >> date_expression[scan_set_start_time(self.state, false)]
-	    | TIMESTAMP >> GE >> date_expression[scan_set_start_time(self.state, true)]
-	    | TIMESTAMP >> LT >> date_expression[scan_set_end_time(self.state, false)]
-	    | TIMESTAMP >> LE >> date_expression[scan_set_end_time(self.state, true)]
-	    ;
-
 	  where_clause
-	    = WHERE >> row_restriction_clause >> *( AND >> row_restriction_clause )
+	    = WHERE >> where_predicate >> *( AND >> where_predicate )
 	    ;
 
-	  row_restriction_clause
+	  where_predicate
 	    =  ROW >> EQUAL >> string_literal[scan_set_row(self.state)]
 	    | ROW >> DOUBLEEQUAL >> string_literal[scan_set_row(self.state)]
 	    | ROW >> GT >> string_literal[scan_set_start_row(self.state, false)]
 	    | ROW >> GE >> string_literal[scan_set_start_row(self.state, true)]
 	    | ROW >> LT >> string_literal[scan_set_end_row(self.state, false)]
 	    | ROW >> LE >> string_literal[scan_set_end_row(self.state, true)]
+	    | TIMESTAMP >> GT >> date_expression[scan_set_start_time(self.state, false)]
+	    | TIMESTAMP >> GE >> date_expression[scan_set_start_time(self.state, true)]
+	    | TIMESTAMP >> LT >> date_expression[scan_set_end_time(self.state, false)]
+	    | TIMESTAMP >> LE >> date_expression[scan_set_end_time(self.state, true)]
 	    ;
 
 	  option_spec
@@ -722,7 +714,7 @@ namespace Hypertable {
 	  BOOST_SPIRIT_DEBUG_RULE(show_statement);
 	  BOOST_SPIRIT_DEBUG_RULE(select_statement);
 	  BOOST_SPIRIT_DEBUG_RULE(where_clause);
-	  BOOST_SPIRIT_DEBUG_RULE(row_restriction_clause);
+	  BOOST_SPIRIT_DEBUG_RULE(where_predicate);
 	  BOOST_SPIRIT_DEBUG_RULE(option_spec);
 	  BOOST_SPIRIT_DEBUG_RULE(date_expression);
 	  BOOST_SPIRIT_DEBUG_RULE(datetime);
@@ -730,8 +722,6 @@ namespace Hypertable {
 	  BOOST_SPIRIT_DEBUG_RULE(time);
 	  BOOST_SPIRIT_DEBUG_RULE(year);
 	  BOOST_SPIRIT_DEBUG_RULE(load_data_statement);
-	  BOOST_SPIRIT_DEBUG_RULE(time_predicate);
-	  BOOST_SPIRIT_DEBUG_RULE(time_predicate_clause);
 	}
 #endif
 
@@ -745,8 +735,8 @@ namespace Hypertable {
         ttl_option, access_group_definition,
         access_group_option, in_memory_option, blocksize_option, help_statement,
         describe_table_statement, show_statement, select_statement, where_clause,
-        row_restriction_clause, option_spec, date_expression, datetime, date, time,
-        year, load_data_statement, time_predicate, time_predicate_clause;
+        where_predicate, option_spec, date_expression, datetime, date, time,
+        year, load_data_statement;
 
       };
 

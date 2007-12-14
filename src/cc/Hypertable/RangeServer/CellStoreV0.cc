@@ -47,6 +47,7 @@ CellStoreV0::CellStoreV0(Filesystem *filesys) : m_filesys(filesys), m_filename()
   m_outstanding_appends(0), m_offset(0), m_last_key(0), m_file_length(0), m_disk_usage(0), m_file_id(0) {
   m_block_deflater = new BlockDeflaterZlib();
   m_file_id = FileBlockCache::get_next_file_id();
+  assert(sizeof(float) == 4);
 }
 
 
