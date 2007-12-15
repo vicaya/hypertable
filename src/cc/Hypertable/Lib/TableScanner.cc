@@ -203,7 +203,7 @@ void TableScanner::find_range_and_start_scan(const char *row_key) {
   DynamicBuffer dbuf(0);
 
   if ((error = m_range_locator_ptr->find(&m_table_identifier, row_key, &m_range_info, false)) != Error::OK)
-    throw Exception(error, std::string("Unable to find range server for table '") + m_table_identifier.name + "' row key '" + row_key + "'");
+    throw Exception(error, std::string("Unable to find range server for table '") + m_table_identifier.name + "' row key '" + (row_key ? row_key : "") + "'");
 
   m_started = true;
 
@@ -220,7 +220,7 @@ void TableScanner::find_range_and_start_scan(const char *row_key) {
 
     // try again, the hard way
     if ((error = m_range_locator_ptr->find(&m_table_identifier, row_key, &m_range_info, 21)) != Error::OK)
-      throw Exception(error, std::string("Unable to find range server for table '") + m_table_identifier.name + "' row key '" + row_key + "'");
+      throw Exception(error, std::string("Unable to find range server for table '") + m_table_identifier.name + "' row key '" + (row_key ? row_key : "") + "'");
 
     // reset the range information
     dbuf.ensure(m_range_info.start_row.length() + m_range_info.end_row.length() + 2);
