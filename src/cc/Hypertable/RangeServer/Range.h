@@ -78,7 +78,7 @@ namespace Hypertable {
     void decrement_update_counter();
 
     void add_update_timestamp(uint64_t timestamp) {
-      m_scanner_timestamp_controller.add_update_timestamp(timestamp);      
+      m_scanner_timestamp_controller.add_update_timestamp(timestamp);
     }
     void remove_update_timestamp(uint64_t timestamp) {
       m_scanner_timestamp_controller.remove_update_timestamp(timestamp);      

@@ -6,7 +6,6 @@ TODO:
 - Add delete_row, delete_cell, etc. to Mutator
 - Add header to load data infile format to specify with or without timestamps
 - Add support for TSV files
-- Clean up timestamp clause in SELECT
 - Add DropTable command to RangeServer
 - Add scanner reaper to RangeServer
 - Add range merging
@@ -16,17 +15,18 @@ TODO:
 - Add logic to prevent root METADATA range from splitting
 - Add inMemory mode
 - Figure out a solution to the problem of an update timing out
-- Make sure ':' character cannot be specified in column family name
 - Range constructor should throw exceptions
 - clientTimestamp value does not appear to be used in RangeServer::update
 - Add global (timeout, workers, reactors, etc.) to config file 
-- Figure out get_timestamp stuff (see Merge scanner) is it less than, less than or equal to???
 - Make sure LogDir for root METADATA range gets written somewhere
 - Fix bus error when you issue the following select statement after an initial load:
   select * from Test1 where row >= 'n' && row < 'm';
 - Can get rid of m_blocksize in CellStoreV0 and just use the one in m_trailer
 
 DONE:
+- Figure out get_timestamp stuff (see Merge scanner) is it less than, less than or equal to???
+- Make sure ':' character cannot be specified in column family name
+- Clean up timestamp clause in SELECT
 - Add INSERT command to Hql
 - Add blocksize attribute to AccessGroup schema and hook it up with CellStore
 - Fix excessive seek problem during major/merging compaction (added CellStoreScannerV0 readahead)

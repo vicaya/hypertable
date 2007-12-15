@@ -200,7 +200,7 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
   }
 
   {
-    ScanContextPtr scanContextPtr = new ScanContext(timestamp, m_schema_ptr);
+    ScanContextPtr scanContextPtr = new ScanContext(timestamp+1, m_schema_ptr);
 
     if (major || tableIndex < m_stores.size()) {
       MergeScanner *mscanner = new MergeScanner(scanContextPtr, !major);
@@ -214,12 +214,12 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
   }
 
   while (scannerPtr->get(&key, &value)) {
+
     if (!keyComps.load(key)) {
       LOG_ERROR("Problem deserializing key/value pair");
       return;
     }
-    // This check should not be necessary since the scan will be restricted to timestamp
-    // in the ScanContext
+
     if (keyComps.timestamp <= timestamp)
       cellStorePtr->add(key, value);
 

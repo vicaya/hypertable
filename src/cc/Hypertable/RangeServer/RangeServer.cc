@@ -365,7 +365,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
 
   schemaPtr = tableInfoPtr->get_schema();
 
-  scan_timestamp = rangePtr->get_timestamp();
+  scan_timestamp = rangePtr->get_timestamp() + 1;
 
   scanContextPtr = new ScanContext(scan_timestamp, scan_spec, range, schemaPtr);
   if (scanContextPtr->error != Error::OK) {
@@ -874,7 +874,8 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
       row = (const char *)((ByteString32T *)modPtr)->data;
     }
 
-    // force scans to only see updates before this time
+    // force scans to only see updates before the earliest time in this range
+    min_ts_rec.timestamp--;
     min_ts_rec.range_ptr->add_update_timestamp( min_ts_rec.timestamp );
     min_ts_vector.push_back(min_ts_rec);
 

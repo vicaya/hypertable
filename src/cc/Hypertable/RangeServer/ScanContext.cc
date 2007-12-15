@@ -47,7 +47,10 @@ void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, RangeT *range_
   else {
     interval.first = 0;
     interval.second = ts;
-  }    
+  }
+
+  if (interval.second == 0)
+    interval.second = END_OF_TIME;
 
   spec = ss;
   range = range_;

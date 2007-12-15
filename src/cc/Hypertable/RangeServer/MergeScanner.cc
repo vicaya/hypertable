@@ -122,7 +122,7 @@ void MergeScanner::forward() {
 	  break;
       }
       else {
-	if (keyComps.timestamp > m_end_timestamp)
+	if (keyComps.timestamp >= m_end_timestamp)
 	  continue;
 	if (m_delete_present) {
 	  if (m_deleted_cell.fill() > 0) {
@@ -263,7 +263,7 @@ void MergeScanner::initialize() {
 	forward();
     }
     else {
-      if (keyComps.timestamp > m_end_timestamp) {
+      if (keyComps.timestamp >= m_end_timestamp) {
 	m_queue.pop();
 	sstate.scanner->forward();
 	if (sstate.scanner->get(&sstate.key, &sstate.value))
