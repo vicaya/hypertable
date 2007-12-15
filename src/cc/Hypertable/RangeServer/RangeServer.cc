@@ -890,7 +890,6 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 
       if ((error = splitLogPtr->write(table->name, base, ptr-base, clientTimestamp)) != Error::OK) {
 	errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to split log";
-	min_ts_rec.range_ptr->decrement_update_counter();
 	goto abort;
       }
     }
@@ -918,8 +917,6 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
      * Split and Compaction processing
      */
     min_ts_rec.range_ptr->schedule_maintenance();
-
-    min_ts_rec.range_ptr->decrement_update_counter();
 
     if (Global::verbose) {
       LOG_VA_INFO("Added %d (%d split off) updates to '%s'", goMods.size()+splitMods.size(), splitMods.size(), table->name);
@@ -974,9 +971,11 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 
  abort:
 
-  // unblock scanner timestamp
-  for (size_t i=0; i<min_ts_vector.size(); i++)
+  // unblock scanner timestamp and decrement update counter
+  for (size_t i=0; i<min_ts_vector.size(); i++) {
     min_ts_vector[i].range_ptr->remove_update_timestamp(min_ts_vector[i].timestamp);
+    min_ts_vector[i].range_ptr->decrement_update_counter();
+  }
 
   if (error != Error::OK) {
     LOG_VA_ERROR("%s '%s'", Error::get_text(error), errMsg.c_str());

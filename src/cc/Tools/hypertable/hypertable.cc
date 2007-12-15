@@ -74,7 +74,7 @@ namespace {
   }
 
   const char *usage[] = {
-    "usage: hql [OPTIONS]",
+    "usage: hypertable [OPTIONS]",
     "",
     "OPTIONS:",
     "",
@@ -98,7 +98,7 @@ namespace {
   "Note that all text commands must be first on line and end with ';'\n" \
   "?         (\\?) Synonym for `help'.\n" \
   "clear     (\\c) Clear command.\n" \
-  "exit      (\\q) Exit mysql. Same as quit.\n" \
+  "exit      (\\q) Exit hypertable. Same as quit.\n" \
   "print     (\\p) Print current command.\n" \
   "quit      (\\q) Quit mysql.\n" \
   "status    (\\s) Get status information from the server.\n" \
@@ -140,13 +140,15 @@ int main(int argc, char **argv) {
 
   interp = hypertable->create_hql_interpreter();
 
-  if (!g_batch_mode)
+  if (!g_batch_mode) {
+
     read_history(history_file.c_str());
 
-  cout << "Welcome to the HQL command interpreter." << endl;
-  cout << endl;
-  cout << "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer." << endl;
-  cout << endl << flush;
+    cout << "Welcome to the HQL command interpreter." << endl;
+    cout << endl;
+    cout << "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer." << endl;
+    cout << endl << flush;
+  }
 
   g_accum = "";
   if (!g_batch_mode)
