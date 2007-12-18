@@ -117,8 +117,8 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : m_mutex(), m_ver
    * Check for and connect to commit log DFS broker
    */
   {
-    const char *logHost = propsPtr->getProperty("Hypertable.RangeServer.commit_log.dfs_broker.host", 0);
-    uint16_t logPort    = propsPtr->getPropertyInt("Hypertable.RangeServer.commit_log.dfs_broker.port", 0);
+    const char *logHost = propsPtr->getProperty("Hypertable.RangeServer.CommitLog.DfsBroker.host", 0);
+    uint16_t logPort    = propsPtr->getPropertyInt("Hypertable.RangeServer.CommitLog.DfsBroker.port", 0);
     struct sockaddr_in addr;
     if (logHost != 0) {
       InetAddr::initialize(&addr, logHost, logPort);

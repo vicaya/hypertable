@@ -65,7 +65,7 @@ void CellStoreTrailerV0::serialize(uint8_t *buf) {
   Serialization::encode_short(&buf, compression_type);
   Serialization::encode_int(&buf, (uint32_t)compression_ratio);
   Serialization::encode_short(&buf, version);
-  assert((buf-base) == CellStoreTrailerV0::size());
+  assert((buf-base) == (int)CellStoreTrailerV0::size());
 }
 
 

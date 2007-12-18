@@ -441,7 +441,7 @@ void Range::do_maintenance() {
 	old_start_row = m_start_row;
       }
 
-      m_split_log_ptr = new CommitLog(Global::dfs, splitLogDir, 0x100000000LL);
+      m_split_log_ptr = new CommitLog(Global::logDfs, splitLogDir, 0x100000000LL);
 
       /** unblock updates **/
       m_hold_updates = false;

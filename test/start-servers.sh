@@ -134,8 +134,8 @@ if [ $? != 0 ] ; then
 	  exit 1
       fi
   fi
+  echo "Successfully started DFSBroker ($1)"
 fi
-echo "Successfully started DFSBroker ($1)"
 
 
 #
