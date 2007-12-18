@@ -94,7 +94,7 @@ int CellStoreV0::create(const char *fname, uint32_t blocksize) {
   m_fix_index_buffer.reserve(m_blocksize);
   m_var_index_buffer.reserve(m_blocksize);
 
-  memset(&m_trailer, 0, sizeof(m_trailer));
+  m_trailer.clear();
 
   m_filename = fname;
 
@@ -186,9 +186,9 @@ int CellStoreV0::finalize(uint64_t timestamp) {
     m_offset += zlen;
   }
 
-  m_trailer.fixIndexOffset = m_offset;
+  m_trailer.fix_index_offset = m_offset;
   m_trailer.timestamp = timestamp;
-  m_trailer.compressionType = Constants::COMPRESSION_TYPE_ZLIB;
+  m_trailer.compression_type = Constants::COMPRESSION_TYPE_ZLIB;
   m_trailer.blocksize = m_blocksize;
   m_trailer.version = 0;
 
@@ -229,8 +229,8 @@ int CellStoreV0::finalize(uint64_t timestamp) {
   /**
    * Write variable index + trailer
    */
-  m_trailer.varIndexOffset = m_offset;
-  m_block_deflater->deflate(m_var_index_buffer, zBuffer, Constants::INDEX_VARIABLE_BLOCK_MAGIC, sizeof(m_trailer));
+  m_trailer.var_index_offset = m_offset;
+  m_block_deflater->deflate(m_var_index_buffer, zBuffer, Constants::INDEX_VARIABLE_BLOCK_MAGIC, m_trailer.size());
 
   // wait for fixed index write
   if (m_outstanding_appends > 0) {
@@ -248,7 +248,7 @@ int CellStoreV0::finalize(uint64_t timestamp) {
   ByteString32T *key;
   m_fix_index_buffer.ptr = m_fix_index_buffer.buf;
   m_var_index_buffer.ptr = m_var_index_buffer.buf;
-  for (size_t i=0; i<m_trailer.indexEntries; i++) {
+  for (size_t i=0; i<m_trailer.index_entries; i++) {
     // variable portion
     key = (ByteString32T *)m_var_index_buffer.ptr;
     m_var_index_buffer.ptr += sizeof(int32_t) + key->len;
@@ -256,7 +256,7 @@ int CellStoreV0::finalize(uint64_t timestamp) {
     memcpy(&offset, m_fix_index_buffer.ptr, sizeof(offset));
     m_fix_index_buffer.ptr += sizeof(offset);
     m_index.insert(m_index.end(), IndexMapT::value_type(key, offset));
-    if (i == m_trailer.indexEntries/2) {
+    if (i == m_trailer.index_entries/2) {
       record_split_row((ByteString32T *)m_var_index_buffer.ptr);
     }
   }
@@ -264,7 +264,13 @@ int CellStoreV0::finalize(uint64_t timestamp) {
   // deallocate fix index data
   delete [] m_fix_index_buffer.release();
 
-  zBuffer.add(&m_trailer, sizeof(m_trailer));
+  // write filter_offset (empty for now)
+  m_trailer.filter_offset = m_offset + zBuffer.fill();
+
+  // 
+  m_trailer.serialize(zBuffer.ptr);
+  zBuffer.ptr += m_trailer.size();
+  LOG_VA_INFO("drj Just added trailer of size %d", m_trailer.size());
 
   zbuf = zBuffer.release(&zlen);
 
@@ -309,7 +315,7 @@ void CellStoreV0::add_index_entry(const ByteString32T *key, uint32_t offset) {
   memcpy(m_fix_index_buffer.ptr, &offset, sizeof(offset));
   m_fix_index_buffer.ptr += sizeof(offset);
 
-  m_trailer.indexEntries++;
+  m_trailer.index_entries++;
 }
 
 
@@ -331,7 +337,7 @@ int CellStoreV0::open(const char *fname, const char *start_row, const char *end_
   if ((error = m_filesys->length(m_filename, (int64_t *)&m_file_length)) != Error::OK)
     goto abort;
 
-  if (m_file_length < sizeof(StoreTrailerT)) {
+  if (m_file_length < m_trailer.size()) {
     LOG_VA_ERROR("Bad length of CellStore file '%s' - %lld", m_filename.c_str(), m_file_length);
     goto abort;
   }
@@ -340,14 +346,28 @@ int CellStoreV0::open(const char *fname, const char *start_row, const char *end_
   if ((error = m_filesys->open(m_filename, &m_fd)) != Error::OK)
     goto abort;
 
-  /** Read trailer **/
-  uint32_t len;
-  if ((error = m_filesys->pread(m_fd, m_file_length-sizeof(StoreTrailerT), sizeof(StoreTrailerT), (uint8_t *)&m_trailer, &len)) != Error::OK)
-    goto abort;
+  /**
+   * Read and deserialize trailer
+   */
+  {
+    uint32_t len;
+    uint8_t *trailer_buf = new uint8_t [ m_trailer.size() ];
 
-  if (len != sizeof(StoreTrailerT)) {
-    LOG_VA_ERROR("Problem reading trailer for CellStore file '%s' - only read %d of %d bytes", m_filename.c_str(), len, sizeof(StoreTrailerT));
-    goto abort;
+    if ((error = m_filesys->pread(m_fd, m_file_length-m_trailer.size(), m_trailer.size(), trailer_buf, &len)) != Error::OK) {
+      LOG_VA_ERROR("Problem reading trailer for CellStore file '%s' - %s", m_filename.c_str(), Error::get_text(error));
+      delete [] trailer_buf;
+      goto abort;
+    }
+
+    if (len != m_trailer.size()) {
+      LOG_VA_ERROR("Problem reading trailer for CellStore file '%s' - only read %d of %d bytes",
+		   m_filename.c_str(), len, m_trailer.size());
+      delete [] trailer_buf;
+      goto abort;
+    }
+
+    m_trailer.deserialize(trailer_buf);
+    delete [] trailer_buf;
   }
 
   /** Sanity check trailer **/
@@ -355,14 +375,14 @@ int CellStoreV0::open(const char *fname, const char *start_row, const char *end_
     LOG_VA_ERROR("Unsupported CellStore version (%d) for file '%s'", m_trailer.version, fname);
     goto abort;
   }
-  if (m_trailer.compressionType != Constants::COMPRESSION_TYPE_ZLIB) {
-    LOG_VA_ERROR("Unsupported CellStore compression type (%d) for file '%s'", m_trailer.compressionType, fname);
+  if (m_trailer.compression_type != Constants::COMPRESSION_TYPE_ZLIB) {
+    LOG_VA_ERROR("Unsupported CellStore compression type (%d) for file '%s'", m_trailer.compression_type, fname);
     goto abort;
   }
-  if (!(m_trailer.fixIndexOffset < m_trailer.varIndexOffset &&
-	m_trailer.varIndexOffset < m_file_length)) {
+  if (!(m_trailer.fix_index_offset < m_trailer.var_index_offset &&
+	m_trailer.var_index_offset < m_file_length)) {
     LOG_VA_ERROR("Bad index offsets in CellStore trailer fix=%lld, var=%lld, length=%lld, file='%s'",
-		 m_trailer.fixIndexOffset, m_trailer.varIndexOffset, m_file_length, fname);
+		 m_trailer.fix_index_offset, m_trailer.var_index_offset, m_file_length, fname);
     goto abort;
   }
 
@@ -370,13 +390,13 @@ int CellStoreV0::open(const char *fname, const char *start_row, const char *end_
 
 #if 0
   cout << "m_index.size() = " << m_index.size() << endl;
-  cout << "Fixed Index Offset: " << m_trailer.fixIndexOffset << endl;
-  cout << "Variable Index Offset: " << m_trailer.varIndexOffset << endl;
+  cout << "Fixed Index Offset: " << m_trailer.fix_index_offset << endl;
+  cout << "Variable Index Offset: " << m_trailer.var_index_offset << endl;
   cout << "Replaced Files Offset: " << m_trailer.replacedFilesOffset << endl;
   cout << "Replaced Files Count: " << m_trailer.replacedFilesCount << endl;
-  cout << "Number of Index Entries: " << m_trailer.indexEntries << endl;
+  cout << "Number of Index Entries: " << m_trailer.index_entries << endl;
   cout << "Flags: " << m_trailer.flags << endl;
-  cout << "Compression Type: " << m_trailer.compressionType << endl;
+  cout << "Compression Type: " << m_trailer.compression_type << endl;
   cout << "Version: " << m_trailer.version << endl;
   for (size_t i=0; i<m_replaced_files.size(); i++)
     cout << "Replaced File: '" << m_replaced_files[i] << "'" << endl;
@@ -399,11 +419,11 @@ int CellStoreV0::load_index() {
   uint32_t len;
   BlockInflaterZlib *inflater = new BlockInflaterZlib();
 
-  amount = (m_file_length-sizeof(StoreTrailerT)) - m_trailer.fixIndexOffset;
+  amount = (m_file_length-m_trailer.size()) - m_trailer.fix_index_offset;
   buf = new uint8_t [ amount ];
 
   /** Read index data **/
-  if ((error = m_filesys->pread(m_fd, m_trailer.fixIndexOffset, amount, buf, &len)) != Error::OK)
+  if ((error = m_filesys->pread(m_fd, m_trailer.fix_index_offset, amount, buf, &len)) != Error::OK)
     goto abort;
 
   if (len != amount) {
@@ -412,11 +432,11 @@ int CellStoreV0::load_index() {
   }
 
   /** inflate fixed index **/
-  if (!inflater->inflate(buf, m_trailer.varIndexOffset-m_trailer.fixIndexOffset, Constants::INDEX_FIXED_BLOCK_MAGIC, m_fix_index_buffer))
+  if (!inflater->inflate(buf, m_trailer.var_index_offset-m_trailer.fix_index_offset, Constants::INDEX_FIXED_BLOCK_MAGIC, m_fix_index_buffer))
     goto abort;
 
-  vbuf = buf + (m_trailer.varIndexOffset-m_trailer.fixIndexOffset);
-  amount = (m_file_length-sizeof(StoreTrailerT)) - m_trailer.varIndexOffset;
+  vbuf = buf + (m_trailer.var_index_offset-m_trailer.fix_index_offset);
+  amount = (m_file_length-m_trailer.size()) - m_trailer.var_index_offset;
 
   /** inflate variable index **/
   if (!inflater->inflate(vbuf, amount, Constants::INDEX_VARIABLE_BLOCK_MAGIC, m_var_index_buffer))
@@ -433,7 +453,7 @@ int CellStoreV0::load_index() {
   vEnd = m_var_index_buffer.ptr;
   m_var_index_buffer.ptr = m_var_index_buffer.buf;
 
-  for (size_t i=0; i< m_trailer.indexEntries; i++) {
+  for (size_t i=0; i< m_trailer.index_entries; i++) {
 
     assert(m_fix_index_buffer.ptr < fEnd);
     assert(m_var_index_buffer.ptr < vEnd);
@@ -485,11 +505,11 @@ int CellStoreV0::load_index() {
 
 #if 0
   cout << "m_index.size() = " << m_index.size() << endl;
-  cout << "Fixed Index Offset: " << m_trailer.fixIndexOffset << endl;
-  cout << "Variable Index Offset: " << m_trailer.varIndexOffset << endl;
-  cout << "Number of Index Entries: " << m_trailer.indexEntries << endl;
+  cout << "Fixed Index Offset: " << m_trailer.fix_index_offset << endl;
+  cout << "Variable Index Offset: " << m_trailer.var_index_offset << endl;
+  cout << "Number of Index Entries: " << m_trailer.index_entries << endl;
   cout << "Flags: " << m_trailer.flags << endl;
-  cout << "Compression Type: " << m_trailer.compressionType << endl;
+  cout << "Compression Type: " << m_trailer.compression_type << endl;
   cout << "Version: " << m_trailer.version << endl;
 #endif
 
@@ -521,7 +541,7 @@ void CellStoreV0::display_block_info() {
     last_key = (*iter).first;
   }
   if (last_key) {
-    block_size = m_trailer.fixIndexOffset - last_offset;
+    block_size = m_trailer.fix_index_offset - last_offset;
     cout << i << ": offset=" << last_offset << " size=" << block_size << " row=" << (const char *)last_key->data << endl;
   }
 }

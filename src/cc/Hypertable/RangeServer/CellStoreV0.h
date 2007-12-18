@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_CELLSTOREVERSION1_H
-#define HYPERTABLE_CELLSTOREVERSION1_H
+#ifndef HYPERTABLE_CELLSTOREV0_H
+#define HYPERTABLE_CELLSTOREV0_H
 
 #include <map>
 #include <string>
@@ -31,6 +31,7 @@
 
 #include "BlockDeflater.h"
 #include "CellStore.h"
+#include "CellStoreTrailerV0.h"
 
 using namespace Hypertable;
 
@@ -70,20 +71,12 @@ namespace Hypertable {
 
     friend class CellStoreScannerV0;
 
+    virtual CellStoreTrailer *get_trailer() { return &m_trailer; }
+
   protected:
 
     void add_index_entry(const ByteString32T *key, uint32_t offset);
     void record_split_row(const ByteString32T *key);
-
-    typedef struct {
-      uint32_t  fixIndexOffset;
-      uint32_t  varIndexOffset;
-      uint32_t  indexEntries;
-      uint64_t  timestamp;
-      uint32_t  blocksize;
-      uint16_t  compressionType;
-      uint16_t  version;
-    } __attribute__((packed)) StoreTrailerT;
 
     typedef map<ByteString32T *, uint32_t, ltByteString32> IndexMapT;
 
@@ -91,7 +84,7 @@ namespace Hypertable {
     std::string            m_filename;
     int32_t                m_fd;
     IndexMapT              m_index;
-    StoreTrailerT          m_trailer;
+    CellStoreTrailerV0     m_trailer;
     BlockDeflater         *m_block_deflater;
     DynamicBuffer          m_buffer;
     DynamicBuffer          m_fix_index_buffer;
@@ -111,4 +104,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_CELLSTOREVERSION1_H
+#endif // HYPERTABLE_CELLSTOREV0_H

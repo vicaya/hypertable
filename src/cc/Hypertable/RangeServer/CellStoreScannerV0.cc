@@ -274,7 +274,7 @@ bool CellStoreScannerV0::fetch_next_block() {
     CellStoreV0::IndexMapT::iterator iterNext = m_iter;
     iterNext++;
     if (iterNext == m_index.end()) {
-      m_block.zlength = m_cell_store_v0->m_trailer.fixIndexOffset - m_block.offset;
+      m_block.zlength = m_cell_store_v0->m_trailer.fix_index_offset - m_block.offset;
       if (m_end_row.c_str()[0] != (char)0xff)
 	m_check_for_range_end = true;
     }
@@ -360,7 +360,7 @@ bool CellStoreScannerV0::fetch_next_block_readahead() {
     CellStoreV0::IndexMapT::iterator iterNext = m_iter;
     iterNext++;
     if (iterNext == m_index.end()) {
-      m_block.zlength = m_cell_store_v0->m_trailer.fixIndexOffset - m_block.offset;
+      m_block.zlength = m_cell_store_v0->m_trailer.fix_index_offset - m_block.offset;
       if (m_end_row.c_str()[0] != (char)0xff)
 	m_check_for_range_end = true;
     }

@@ -30,6 +30,7 @@ BlockInflaterZlib.cc
 CellCache.cc
 CellCacheScanner.cc
 CellStoreScannerV0.cc
+CellStoreTrailerV0.cc
 CellStoreV0.cc
 CommitLog.cc
 CommitLogReader.cc
@@ -69,7 +70,7 @@ target_link_libraries (Hypertable.RangeServer pthread ${BOOST_LIB} Hypertable Hy
 #target_link_libraries (cellCacheTest pthread ${BOOST_LIB} Hypertable AsyncComm Common log4cpp)
 
 # csdump
-add_executable (csdump Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc csdump.cc CellStoreScannerV0.cc FileBlockCache.cc Global.cc ScanContext.cc)
+add_executable (csdump Constants.cc CellStoreV0.cc CellStoreTrailerV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc csdump.cc CellStoreScannerV0.cc FileBlockCache.cc Global.cc ScanContext.cc)
 target_link_libraries (csdump pthread ${BOOST_LIB} Hypertable DfsBroker AsyncComm Common log4cpp ${ZLIB_LIBRARIES})
 
 # cellStoreTest

@@ -37,6 +37,7 @@
 
 #include "CellStoreV0.h"
 #include "CellStoreScannerV0.h"
+#include "CellStoreTrailer.h"
 #include "Global.h"
 
 using namespace Hypertable;
@@ -49,8 +50,7 @@ namespace {
     "usage: cellStoreDump [OPTIONS] <fname>",
     "",
     "OPTIONS:",
-    "  --trailer-only  - Dump out the trailer information only",
-    "  --block-info    - Dump block information",
+    "  -a   Dump everything, including key/value pairs",
     "",
     "Dumps the contents of the CellStore contained in the DFS file <fname>.",
     0
@@ -68,18 +68,15 @@ int main(int argc, char **argv) {
   struct sockaddr_in addr;
   ByteString32T *key;
   ByteString32T *value;
-  bool trailer_only = false;
-  bool block_info = false;
+  bool dump_all = false;
   CellStoreV0Ptr cellStorePtr;
 
   ReactorFactory::initialize(1);
   System::initialize(argv[0]);
 
   for (int i=1; i<argc; i++) {
-    if (!strcmp(argv[i], "--trailer-only"))
-      trailer_only = true;
-    else if (!strcmp(argv[i], "--block-info"))
-      block_info = true;
+    if (!strcmp(argv[i], "-a"))
+      dump_all = true;
     else if (!strcmp(argv[i], "--help"))
       Usage::dump_and_exit(usage);
     else if (fname == "")
@@ -116,18 +113,16 @@ int main(int argc, char **argv) {
   if (cellStorePtr->load_index() != 0)
     return 1;
 
-  if (block_info) {
-    cellStorePtr->display_block_info();
-    return 0;
-  }
 
   /**
    * Dump keys
    */
-  if (!trailer_only) {
+  if (dump_all) {
     ScanContextPtr scanContextPtr( new ScanContext(ScanContext::END_OF_TIME) );
 
     scanner = cellStorePtr->create_scanner(scanContextPtr);
+    cout << endl;
+    cout << "KEYS:" << endl;
     while (scanner->get(&key, &value)) {
       cout << Key(key) << endl;
       scanner->forward();
@@ -136,9 +131,24 @@ int main(int argc, char **argv) {
   }
 
   /**
+   * Dump block index
+   */
+  cout << endl;
+  cout << "BLOCK INDEX:" << endl;
+  cellStorePtr->display_block_info();
+
+
+  /**
    * Dump trailer
    */
-  cout << "timestamp " << cellStorePtr->get_timestamp() << endl;
+  CellStoreTrailer *trailer = cellStorePtr->get_trailer();
+
+  cout << endl;
+  cout << "TRAILER:" << endl;
+  cout << *trailer;
+
+  cout << endl;
+  cout << "OTHER:" << endl;
   cout << "split row '" << cellStorePtr->get_split_row() << "'" << endl;
 
   return 0;

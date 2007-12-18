@@ -25,6 +25,7 @@
 #include "Common/ByteString.h"
 
 #include "CellList.h"
+#include "CellStoreTrailer.h"
 #include "Constants.h"
 
 
@@ -107,8 +108,17 @@ namespace Hypertable {
 
     /**
      * Pathname of cell store file
+     *
+     * @return string reference to the cell store path name
      */
     virtual std::string &get_filename() = 0;
+
+    /**
+     * Return a pointer to the trailer object for this cell store
+     *
+     * @return pointer to the internal trailer of this cell store
+     */
+    virtual CellStoreTrailer *get_trailer() = 0;
 
   };
 
