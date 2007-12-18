@@ -60,11 +60,14 @@ namespace Hypertable {
      * Turns on readahead mode so that data is prefetched.
      *
      * @param name absolute path name of file to open
-     * @param bufSize readahead buffer size
+     * @param buf_size read buffer size
+     * @param outstanding maximum number of outstanding reads
      * @param fdp address of variable to hold return file descriptor
+     * @param start_offset starting read offset
+     * @param end_offset ending read offset
      * @return Error::OK on success or error code on failure
      */
-    virtual int open_buffered(std::string &name, uint32_t bufSize, int32_t *fdp, uint64_t initial_offset=0) = 0;
+    virtual int open_buffered(std::string &name, uint32_t buf_size, uint32_t outstanding, int32_t *fdp, uint64_t start_offset=0, uint64_t end_offset=0) = 0;
 
     /** Creates a file asynchronously.  Issues a create file request with various create
      * mode parameters.   The caller will get notified of successful completion

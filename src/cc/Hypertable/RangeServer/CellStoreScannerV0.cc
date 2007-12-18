@@ -34,7 +34,7 @@ namespace {
 }
 
 
-CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPtr &scanContextPtr) : CellListScanner(scanContextPtr), m_cell_store_ptr(cellStorePtr), m_cur_key(0), m_cur_value(0), m_check_for_range_end(false), m_end_inclusive(true), m_readahead(true), m_fd(-1), m_file_offset(0) {
+CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPtr &scanContextPtr) : CellListScanner(scanContextPtr), m_cell_store_ptr(cellStorePtr), m_cur_key(0), m_cur_value(0), m_check_for_range_end(false), m_end_inclusive(true), m_readahead(true), m_fd(-1), m_start_offset(0), m_end_offset(0) {
   ByteString32T  *key;
   bool start_inclusive = false;
 
@@ -79,20 +79,33 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPt
   if (m_start_row == m_end_row || (scanContextPtr->spec && scanContextPtr->spec->rowLimit == 1)) {
     m_readahead = false;
     memset(&m_block, 0, sizeof(m_block));
-
     if (!fetch_next_block()) {
       m_iter = m_index.end();
       return;
     }
-
   }
   else {
     int error;
     uint32_t buf_size = m_cell_store_ptr->get_blocksize();
     if (buf_size < MINIMUM_READAHEAD_AMOUNT)
       buf_size = MINIMUM_READAHEAD_AMOUNT;
-    m_file_offset = (*m_iter).second;
-    if ((error = m_cell_store_v0->m_filesys->open_buffered(m_cell_store_ptr->get_filename(), buf_size, &m_fd, m_file_offset)) != Error::OK) {
+
+    m_start_offset = (*m_iter).second;
+
+    key = Create(m_end_row.c_str(), strlen(m_end_row.c_str()));
+    if ((m_end_iter = m_index.upper_bound(key)) == m_index.end())
+      m_end_offset = m_cell_store_v0->m_trailer.fix_index_offset;
+    else {
+      CellStoreV0::IndexMapT::iterator iter_next = m_end_iter;
+      iter_next++;
+      if (iter_next == m_index.end())
+	m_end_offset = m_cell_store_v0->m_trailer.fix_index_offset;
+      else
+	m_end_offset = (*iter_next).second;
+    }
+    Destroy(key);
+
+    if ((error = m_cell_store_v0->m_filesys->open_buffered(m_cell_store_ptr->get_filename(), buf_size, 2, &m_fd, m_start_offset, m_end_offset)) != Error::OK) {
       // TODO: should throw an exception here
       LOG_VA_ERROR("Problem opening cell store '%s' in readahead mode - %s", 
 		   m_cell_store_ptr->get_filename().c_str(), Error::get_text(error));
@@ -104,7 +117,6 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPt
       return;
     }
   }
-
 
   /**
    * Seek to start of range in block
@@ -355,7 +367,7 @@ bool CellStoreScannerV0::fetch_next_block_readahead() {
     uint32_t nread;
 
     m_block.offset = (*m_iter).second;
-    assert(m_block.offset == m_file_offset);
+    assert(m_block.offset == m_start_offset);
 
     CellStoreV0::IndexMapT::iterator iterNext = m_iter;
     iterNext++;
@@ -379,7 +391,7 @@ bool CellStoreScannerV0::fetch_next_block_readahead() {
       goto abort;
     }
     assert(nread == m_block.zlength);
-    m_file_offset += nread;
+    m_start_offset += nread;
 
     /** inflate compressed block **/
     if (!m_block_inflater->inflate(buf, m_block.zlength, Constants::DATA_BLOCK_MAGIC, expandBuffer))

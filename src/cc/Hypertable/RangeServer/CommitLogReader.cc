@@ -148,7 +148,7 @@ bool CommitLogReader::next_block(CommitLogHeaderT **blockp) {
     if (m_cur_log_offset >= m_log_file_info.size())
       return false;
 
-    if ((m_error = m_fs->open_buffered(m_log_file_info[m_cur_log_offset].fname, READAHEAD_BUFFER_SIZE, &m_fd)) != Error::OK) {
+    if ((m_error = m_fs->open_buffered(m_log_file_info[m_cur_log_offset].fname, READAHEAD_BUFFER_SIZE, 2, &m_fd)) != Error::OK) {
       LOG_VA_ERROR("Problem trying to open commit log file '%s' - %s", m_log_file_info[m_cur_log_offset].fname.c_str(), Error::get_text(m_error));
       return false;
     }

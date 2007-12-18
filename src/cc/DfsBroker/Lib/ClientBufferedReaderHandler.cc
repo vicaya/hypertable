@@ -27,27 +27,24 @@
 
 using namespace Hypertable;
 
-namespace {
-  const int32_t DEFAULT_READ_SIZE = 8192;
-}
-
 /**
  *
  */
-ClientBufferedReaderHandler::ClientBufferedReaderHandler(DfsBroker::Client *client, uint32_t fd, uint32_t bufSize, uint64_t initial_offset) : m_client(client), m_fd(fd), m_eof(false), m_error(Error::OK) {
+ClientBufferedReaderHandler::ClientBufferedReaderHandler(DfsBroker::Client *client, uint32_t fd, uint32_t buf_size, uint32_t outstanding, uint64_t start_offset, uint64_t end_offset) : m_client(client), m_fd(fd), m_read_size(buf_size), m_eof(false), m_error(Error::OK) {
 
-  m_max_outstanding = (bufSize + (DEFAULT_READ_SIZE-1)) / DEFAULT_READ_SIZE;
+  m_max_outstanding = outstanding;
 
-  if (m_max_outstanding < 2)
-    m_max_outstanding = 2;
+  m_end_offset = end_offset;
+  m_outstanding_offset = start_offset;
+
 
   /**
    * Seek to initial offset
    */
-  if (initial_offset > 0) {
-    if ((m_error = m_client->seek(m_fd, initial_offset)) != Error::OK) {
+  if (start_offset > 0) {
+    if ((m_error = m_client->seek(m_fd, start_offset)) != Error::OK) {
       // TODO: throw exception
-      LOG_VA_ERROR("Problem seeking to position '%lld' in file", initial_offset);
+      LOG_VA_ERROR("Problem seeking to position '%lld' in file", start_offset);
       m_eof = true;
       return;
     }
@@ -55,12 +52,20 @@ ClientBufferedReaderHandler::ClientBufferedReaderHandler(DfsBroker::Client *clie
 
   {
     boost::mutex::scoped_lock lock(m_mutex);
+    uint32_t toread;
 
     for (m_outstanding=0; m_outstanding<m_max_outstanding; m_outstanding++) {
-      if ((m_error = m_client->read(m_fd, DEFAULT_READ_SIZE, this)) != Error::OK) {
+      if (m_end_offset && (m_end_offset-m_outstanding_offset) < m_read_size) {
+	if ((toread = (uint32_t)(m_end_offset - m_outstanding_offset)) == 0)
+	  break;
+      }
+      else
+	toread = m_read_size;
+      if ((m_error = m_client->read(m_fd, toread, this)) != Error::OK) {
 	m_eof = true;
 	break;
       }
+      m_outstanding_offset -= toread;
     }
     m_ptr = m_end_ptr = 0;
   }
@@ -88,13 +93,13 @@ void ClientBufferedReaderHandler::handle(EventPtr &eventPtr) {
   if (eventPtr->type == Event::MESSAGE) {
     if ((m_error = (int)Protocol::response_code(eventPtr)) != Error::OK) {
       LOG_VA_ERROR("DfsBroker 'read' error (amount=%d, fd=%d) : %s",
-		   DEFAULT_READ_SIZE, m_fd, Protocol::string_format_message(eventPtr).c_str());
+		   m_read_size, m_fd, Protocol::string_format_message(eventPtr).c_str());
       m_eof = true;
       return;
     }
     m_queue.push(eventPtr);
     DfsBroker::Protocol::ResponseHeaderReadT *readHeader = (DfsBroker::Protocol::ResponseHeaderReadT *)eventPtr->message;
-    if (readHeader->amount < DEFAULT_READ_SIZE)
+    if (readHeader->amount < (int32_t)m_read_size)
       m_eof = true;
   }
   else if (eventPtr->type == Event::ERROR) {
@@ -175,6 +180,7 @@ int ClientBufferedReaderHandler::read(uint8_t *buf, uint32_t len, uint32_t *nrea
  */
 void ClientBufferedReaderHandler::read_ahead() {
   uint32_t n = m_max_outstanding - (m_outstanding + m_queue.size());
+  uint32_t toread;
 
   assert(m_max_outstanding >= (m_outstanding + m_queue.size()));
   
@@ -182,11 +188,18 @@ void ClientBufferedReaderHandler::read_ahead() {
     return;
 
   for (uint32_t i=0; i<n; i++) {
-    if ((m_error = m_client->read(m_fd, DEFAULT_READ_SIZE, this)) != Error::OK) {
+    if (m_end_offset && (m_end_offset-m_outstanding_offset) < m_read_size) {
+      if ((toread = (uint32_t)(m_end_offset - m_outstanding_offset)) == 0)
+	break;
+    }
+    else
+      toread = m_read_size;
+    if ((m_error = m_client->read(m_fd, toread, this)) != Error::OK) {
       m_eof = true;
       break;
     }
     m_outstanding++;
+    m_outstanding_offset -= toread;
   }
 }
 

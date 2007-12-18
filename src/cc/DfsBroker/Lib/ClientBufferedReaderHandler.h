@@ -36,7 +36,7 @@ namespace Hypertable {
   class ClientBufferedReaderHandler : public DispatchHandler {
 
   public:
-    ClientBufferedReaderHandler(DfsBroker::Client *client, uint32_t fd, uint32_t bufSize, uint64_t initial_offset);
+    ClientBufferedReaderHandler(DfsBroker::Client *client, uint32_t fd, uint32_t buf_size, uint32_t outstanding, uint64_t start_offset, uint64_t end_offset);
 
     virtual ~ClientBufferedReaderHandler();
 
@@ -54,11 +54,14 @@ namespace Hypertable {
     DfsBroker::Client   *m_client;
     uint32_t             m_fd;
     uint32_t             m_max_outstanding;
+    uint32_t             m_read_size;
     uint32_t             m_outstanding;
     bool                 m_eof;
     int                  m_error;
     uint8_t             *m_ptr;
     uint8_t             *m_end_ptr;
+    uint64_t             m_end_offset;
+    uint64_t             m_outstanding_offset;
   };
 
 }

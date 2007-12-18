@@ -56,6 +56,7 @@ namespace Hypertable {
     CellStoreV0::IndexMapT  m_index;
 
     CellStoreV0::IndexMapT::iterator m_iter;
+    CellStoreV0::IndexMapT::iterator m_end_iter;
 
     BlockInfoT            m_block;
     ByteString32T        *m_cur_key;
@@ -68,7 +69,8 @@ namespace Hypertable {
     std::string           m_end_row;
     bool                  m_readahead;
     int32_t               m_fd;
-    uint32_t              m_file_offset;
+    uint32_t              m_start_offset;
+    uint32_t              m_end_offset;
   };
 
 }
