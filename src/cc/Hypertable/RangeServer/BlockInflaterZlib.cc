@@ -46,6 +46,7 @@ BlockInflaterZlib::BlockInflaterZlib() : BlockInflater() {
   m_stream.next_in = Z_NULL;
   int ret = inflateInit(&m_stream);
   assert(ret == Z_OK);
+  (void)ret;
 }
 
 

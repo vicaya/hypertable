@@ -55,6 +55,7 @@ namespace Hypertable {
     void fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t scannerId);
     void load_range(ResponseCallback *cb, TableIdentifierT *table, RangeT *range, uint16_t flags);
     void update(ResponseCallbackUpdate *cb, TableIdentifierT *table, BufferT &buffer);
+    void dump_stats(ResponseCallback *cb);
 
     ApplicationQueuePtr get_application_queue_ptr() { return m_app_queue_ptr; }
 

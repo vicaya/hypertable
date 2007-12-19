@@ -47,6 +47,7 @@ Range.cc
 RangeServer.cc
 RequestHandlerCompact.cc
 RequestHandlerCreateScanner.cc
+RequestHandlerDumpStats.cc
 RequestHandlerFetchScanblock.cc
 RequestHandlerLoadRange.cc
 RequestHandlerStatus.cc

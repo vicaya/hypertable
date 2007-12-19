@@ -132,6 +132,8 @@ namespace Hypertable {
      */
     int fetch_scanblock(struct sockaddr_in &addr, int scanner_id, ScanBlock &scan_block);
 
+    int dump_stats(struct sockaddr_in &addr);
+
     /** Issues a "status" request.  This call blocks until it receives a response from the server.
      * 
      * @param addr remote address of RangeServer connection

@@ -135,8 +135,16 @@ CellCache *CellCache::slice_copy(uint64_t timestamp) {
       memcpy(key, (*iter).first, kvLen);
       value = (ByteString32T *)(key->data + key->len);
       cache->add(key, value);
+      /**
+      if (keyComps.timestamp == timestamp+1)
+	cout << "drj (2) BOUNDARY row-key=" << keyComps.row << " qualifier=" << keyComps.column_qualifier << endl << flush;
+      */
     }
-
+    /*
+    else if (keyComps.timestamp == timestamp) {
+      cout << "drj BOUNDARY row-key=" << keyComps.row << " qualifier=" << keyComps.column_qualifier << endl << flush;
+    }
+    */
   }
 
   return cache;

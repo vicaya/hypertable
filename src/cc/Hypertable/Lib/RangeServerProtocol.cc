@@ -31,7 +31,8 @@ namespace Hypertable {
     "create scanner",
     "fetch scanblock",
     "compact",
-    "status"
+    "status",
+    "dump stats"
   };
 
   const char *RangeServerProtocol::command_text(short command) {
@@ -80,6 +81,13 @@ namespace Hypertable {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
     CommBuf *cbuf = new CommBuf(hbuilder, 2);
     cbuf->append_short(COMMAND_STATUS);
+    return cbuf;
+  }
+
+  CommBuf *RangeServerProtocol::create_request_dump_stats() {
+    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
+    CommBuf *cbuf = new CommBuf(hbuilder, 2);
+    cbuf->append_short(COMMAND_DUMP_STATS);
     return cbuf;
   }
 

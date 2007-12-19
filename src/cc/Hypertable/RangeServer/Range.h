@@ -99,6 +99,8 @@ namespace Hypertable {
     std::vector<AccessGroup *> &access_group_vector() { return m_access_group_vector; }
     AccessGroup *get_access_group(string &lgName) { return m_access_group_map[lgName]; }
 
+    void dump_stats();
+
   private:
 
     int load_cell_stores();
@@ -133,6 +135,7 @@ namespace Hypertable {
     uint32_t         m_update_counter;
     bool             m_is_root;
     ScannerTimestampController m_scanner_timestamp_controller;
+    uint64_t         m_added;
 
   };
 

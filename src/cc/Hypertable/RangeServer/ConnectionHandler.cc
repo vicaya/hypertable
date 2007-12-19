@@ -30,6 +30,7 @@
 #include "Hypertable/Lib/RangeServerProtocol.h"
 
 #include "RequestHandlerCompact.h"
+#include "RequestHandlerDumpStats.h"
 #include "RequestHandlerLoadRange.h"
 #include "RequestHandlerUpdate.h"
 #include "RequestHandlerCreateScanner.h"
@@ -100,6 +101,9 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
 	break;
       case RangeServerProtocol::COMMAND_STATUS:
 	requestHandler = new RequestHandlerStatus(m_comm, m_range_server_ptr.get(), eventPtr);
+	break;
+      case RangeServerProtocol::COMMAND_DUMP_STATS:
+	requestHandler = new RequestHandlerDumpStats(m_comm, m_range_server_ptr.get(), eventPtr);
 	break;
       default:
 	std::string message = (string)"Command code " + command + " not implemented";

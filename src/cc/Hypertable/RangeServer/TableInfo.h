@@ -57,6 +57,8 @@ namespace Hypertable {
 
     void dump_range_table();
 
+    void get_range_vector(std::vector<RangePtr> &range_vec);
+
   private:
 
     typedef std::map<std::string, RangePtr> RangeMapT;

@@ -295,7 +295,7 @@ int Session::exists(std::string name, bool *existsp) {
     else {
       uint8_t *ptr = eventPtr->message + 4;
       size_t remaining = eventPtr->messageLen - 4;
-      uint8_t bval;
+      uint8_t bval = 0;
       if (!Serialization::decode_byte(&ptr, &remaining, &bval))
 	assert(!"problem decoding return packet");
       *existsp = (bval == 0) ? false : true;
@@ -363,8 +363,8 @@ int Session::attr_get(uint64_t handle, std::string name, DynamicBuffer &value) {
 	LOG_VA_ERROR("%s", Protocol::string_format_message(eventPtr.get()).c_str());
     }
     else {
-      uint8_t *attrValue;
-      int32_t attrValueLen;
+      uint8_t *attrValue = 0;
+      int32_t attrValueLen = 0;
       uint8_t *ptr = eventPtr->message + 4;
       size_t remaining = eventPtr->messageLen - 4;
       if (!Serialization::decode_byte_array(&ptr, &remaining, &attrValue, &attrValueLen)) {

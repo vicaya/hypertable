@@ -38,6 +38,7 @@ BlockDeflaterZlib::BlockDeflaterZlib() : BlockDeflater() {
   m_stream.opaque = Z_NULL;
   int ret = deflateInit(&m_stream, Z_BEST_COMPRESSION);
   assert(ret == Z_OK);
+  (void)ret;
 }
 
 
@@ -70,6 +71,7 @@ void BlockDeflaterZlib::deflate(Hypertable::DynamicBuffer &inbuf, Hypertable::Dy
 
   int ret = ::deflate(&m_stream, Z_FINISH); 
   assert(ret == Z_STREAM_END);
+  (void)ret;
 
   memcpy(header->magic, magic, 12);
   header->zlength = (avail_out - m_stream.avail_out);

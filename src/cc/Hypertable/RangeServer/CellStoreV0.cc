@@ -270,7 +270,6 @@ int CellStoreV0::finalize(uint64_t timestamp) {
   // 
   m_trailer.serialize(zBuffer.ptr);
   zBuffer.ptr += m_trailer.size();
-  LOG_VA_INFO("drj Just added trailer of size %d", m_trailer.size());
 
   zbuf = zBuffer.release(&zlen);
 

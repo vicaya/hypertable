@@ -669,7 +669,13 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
     }
   }
 
-  tableInfoPtr->add_range(range, rangePtr);
+  rangePtr = new Range(m_master_client_ptr, *table, schemaPtr, range);
+
+  /**
+   * NOTE: The range does not need to be locked in the following replay since
+   * it has not been added yet and therefore no one else can find it and
+   * concurrently access it.
+   */
 
   // TODO: if (flags & RangeServerProtocol::LOAD_RANGE_FLAG_PHANTOM), do the following in 'go live'
   if (split_log_dir != "") {
@@ -683,6 +689,8 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
       goto abort;
     }
   }
+
+  tableInfoPtr->add_range(range, rangePtr);
 
   /**
    * Update LogDir
@@ -843,6 +851,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 	  boost::xtime now;
 	  boost::xtime_get(&now, boost::TIME_UTC);
 	  next_timestamp = ((uint64_t)now.sec * 1000000000LL) + (uint64_t)now.nsec;
+	  //LOG_VA_INFO("drj TIMESTAMP %lld (%s)", next_timestamp, (const char *)((const ByteString32T *)modPtr)->data);
 	}
 	temp_timestamp = next_timestamp++;
 	if (min_ts_rec.timestamp == 0 || temp_timestamp < min_ts_rec.timestamp)
@@ -984,6 +993,21 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
       LOG_VA_ERROR("Problem sending error response - %s", Error::get_text(error));
     }
   }
+}
+
+
+void RangeServer::dump_stats(ResponseCallback *cb) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  std::vector<RangePtr> range_vec;
+  
+  LOG_INFO("dump_stats");
+
+  for (TableInfoMapT::iterator table_iter = m_table_info_map.begin(); table_iter != m_table_info_map.end(); table_iter++) {
+    (*table_iter).second->get_range_vector(range_vec);
+    for (size_t i=0; i<range_vec.size(); i++)
+      range_vec[i]->dump_stats();
+  }
+  cb->response_ok();
 }
 
 

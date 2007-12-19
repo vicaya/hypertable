@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
   Schema *schema;
   std::string schemaSpec;
   struct timeval tval;
-  uint64_t timestamp;
+  uint64_t timestamp = 0;
   uint32_t index;
   const char *rowKey;
   const char *qualifier;

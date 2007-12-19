@@ -5,7 +5,7 @@ TODO:
 - Add header to load data infile format to specify with or without timestamps
 - Add delete_row, delete_cell, etc. to Mutator
 - Add DropTable command to RangeServer
-- Refactor so that schema can get updated on change
+- Refactor so that schema can get updated on change (overhaul TableInfo)
 
 - Add comma separating the column families in the ACCESS GROUP clause
 - Add regression for HQL

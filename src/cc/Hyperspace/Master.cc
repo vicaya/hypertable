@@ -698,7 +698,7 @@ void Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t sessionId, uint64_t 
   HandleDataPtr handlePtr;
   int error;
   int alen;
-  uint8_t *buf;
+  uint8_t *buf = 0;
 
   if (m_verbose) {
     LOG_VA_INFO("attrget(session=%lld, handle=%lld, name=%s)", sessionId, handle, name);
@@ -1023,6 +1023,7 @@ void Master::release_lock(HandleDataPtr &handlePtr, bool waitForNotify) {
     else {
       unsigned int count = handlePtr->node->sharedLockHandles.erase(handlePtr->id);
       assert(count);
+      (void)count;
     }
     handlePtr->locked = false;
   }

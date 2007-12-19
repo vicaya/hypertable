@@ -136,6 +136,21 @@ int RangeServerClient::status(struct sockaddr_in &addr) {
   return error;
 }
 
+int RangeServerClient::dump_stats(struct sockaddr_in &addr) {
+  DispatchHandlerSynchronizer syncHandler;
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_dump_stats() );
+  int error = send_message(addr, cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.wait_for_reply(eventPtr)) {
+      LOG_VA_ERROR("RangeServer 'status' error : %s", Protocol::string_format_message(eventPtr).c_str());
+      error = (int)Protocol::response_code(eventPtr);
+    }
+  }
+  return error;
+}
+
+
 /**
  *
  */

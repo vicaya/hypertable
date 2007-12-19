@@ -45,7 +45,7 @@ using namespace std;
 
 
 
-Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeT *range) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_schema(schemaPtr), m_maintenance_in_progress(false), m_latest_timestamp(0), m_temp_timestamp(0), m_split_start_time(0), m_hold_updates(false), m_update_counter(0) {
+Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeT *range) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_schema(schemaPtr), m_maintenance_in_progress(false), m_latest_timestamp(0), m_temp_timestamp(0), m_split_start_time(0), m_hold_updates(false), m_update_counter(0), m_added(0) {
   int error;
   AccessGroup *ag;
 
@@ -239,8 +239,10 @@ int Range::add(const ByteString32T *key, const ByteString32T *value) {
       (*iter).second->add(key, value);
     }
   }
-  else if (keyComps.flag == FLAG_DELETE_CELL || keyComps.flag == FLAG_INSERT)
+  else if (keyComps.flag == FLAG_DELETE_CELL || keyComps.flag == FLAG_INSERT) {
     m_column_family_vector[keyComps.column_family_code]->add(key, value);
+    m_added++;
+  }
   else {
     LOG_VA_ERROR("Bad flag value (%d)", keyComps.flag);
   }
@@ -636,6 +638,14 @@ uint64_t Range::run_compaction(bool major) {
 }
 
 
+/**
+ * 
+ */
+void Range::dump_stats() {
+  cout << "STATS: " << m_identifier.name << "[" << m_start_row << ".." << m_end_row << "] added = " << m_added << endl;
+  cout << flush;
+}
+
 
 void Range::lock() {
   // this is a bit of a hack to collect the most recent timestamp seen
@@ -693,6 +703,8 @@ int Range::replay_split_log(string &log_dir) {
     LOG_VA_INFO("Replayed %d updates (%d blocks) from split log '%s' into %s[%s..%s]",
 		count, nblocks, log_dir.c_str(), m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
   }
+
+  m_added = 0;
 
   error = commit_log_reader_ptr->last_error();
 
