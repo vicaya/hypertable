@@ -38,7 +38,7 @@ namespace {
 }
 
 
-AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range) : CellList(), m_mutex(), m_lock(m_mutex,false), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_persist_timestamp(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE) {
+AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range) : CellList(), m_mutex(), m_lock(m_mutex,false), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_persist_timestamp(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE), m_compression_ratio(1.0) {
   m_table_name = table_identifier.name;
   m_start_row = range->startRow;
   m_end_row = range->endRow;
@@ -113,7 +113,7 @@ void AccessGroup::get_cached_rows(std::vector<std::string> &rows) {
 
 uint64_t AccessGroup::disk_usage() {
   boost::mutex::scoped_lock lock(m_mutex);
-  return m_disk_usage + m_cell_cache_ptr->memory_used();
+  return m_disk_usage + (m_compression_ratio * (float)m_cell_cache_ptr->memory_used());
 }
 
 bool AccessGroup::needs_compaction() {
@@ -253,10 +253,14 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
 
     get_files(files);
 
-    /** Re-compute disk usage **/
+    /** Re-compute disk usage and compresion ratio**/
     m_disk_usage = 0;
-    for (size_t i=0; i<m_stores.size(); i++)
+    m_compression_ratio = 0.0;
+    for (size_t i=0; i<m_stores.size(); i++) {
       m_disk_usage += m_stores[i]->disk_usage();
+      m_compression_ratio += m_stores[i]->compression_ratio();
+    }
+    m_compression_ratio /= m_stores.size();
   }
 
   try {

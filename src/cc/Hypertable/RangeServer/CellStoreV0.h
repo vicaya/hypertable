@@ -60,6 +60,7 @@ namespace Hypertable {
     virtual uint32_t get_blocksize() { return m_blocksize; }
     virtual uint64_t get_timestamp();
     virtual uint64_t disk_usage() { return m_disk_usage; }
+    virtual float compression_ratio() { return m_trailer.compression_ratio; }
     virtual const char *get_split_row();
     virtual std::string &get_filename() { return m_filename; }
     virtual CellListScanner *create_scanner(ScanContextPtr &scanContextPtr);
@@ -98,6 +99,8 @@ namespace Hypertable {
     uint32_t               m_disk_usage;
     std::string            m_split_row;
     int                    m_file_id;
+    float                  m_uncompressed_data;
+    float                  m_compressed_data;
   };
   typedef boost::intrusive_ptr<CellStoreV0> CellStoreV0Ptr;
 

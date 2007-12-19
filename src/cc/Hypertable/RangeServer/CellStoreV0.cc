@@ -94,6 +94,9 @@ int CellStoreV0::create(const char *fname, uint32_t blocksize) {
   m_fix_index_buffer.reserve(m_blocksize);
   m_var_index_buffer.reserve(m_blocksize);
 
+  m_uncompressed_data = 0.0;
+  m_compressed_data = 0.0;
+
   m_trailer.clear();
 
   m_filename = fname;
@@ -102,7 +105,6 @@ int CellStoreV0::create(const char *fname, uint32_t blocksize) {
   m_end_row = Key::END_ROW_MARKER;
 
   return m_filesys->create(m_filename, true, -1, -1, -1, &m_fd);
-
 }
 
 
@@ -115,7 +117,9 @@ int CellStoreV0::add(const ByteString32T *key, const ByteString32T *value) {
 
     add_index_entry(m_last_key, m_offset);
 
+    m_uncompressed_data += (float)m_buffer.fill();
     m_block_deflater->deflate(m_buffer, zBuffer, Constants::DATA_BLOCK_MAGIC);
+    m_compressed_data += (float)zBuffer.fill();
     m_buffer.clear();
 
     if (m_outstanding_appends > 0) {
@@ -142,12 +146,8 @@ int CellStoreV0::add(const ByteString32T *key, const ByteString32T *value) {
 
   m_buffer.ensure( keyLen + valueLen );
 
-  memcpy(m_buffer.ptr, key, keyLen);
-  m_last_key = (ByteString32T *)m_buffer.ptr;
-  m_buffer.ptr += keyLen;
-
-  memcpy(m_buffer.ptr, value, valueLen);
-  m_buffer.ptr += valueLen;
+  m_last_key = (ByteString32T *)m_buffer.addNoCheck(key, keyLen);
+  m_buffer.addNoCheck(value, valueLen);
 
   return 0;
 }
@@ -167,7 +167,9 @@ int CellStoreV0::finalize(uint64_t timestamp) {
 
     add_index_entry(m_last_key, m_offset);
 
+    m_uncompressed_data += (float)m_buffer.fill();
     m_block_deflater->deflate(m_buffer, zBuffer, Constants::DATA_BLOCK_MAGIC);
+    m_compressed_data += (float)zBuffer.fill();
     zbuf = zBuffer.release(&zlen);
 
     if (m_outstanding_appends > 0) {
@@ -189,6 +191,7 @@ int CellStoreV0::finalize(uint64_t timestamp) {
   m_trailer.fix_index_offset = m_offset;
   m_trailer.timestamp = timestamp;
   m_trailer.compression_type = Constants::COMPRESSION_TYPE_ZLIB;
+  m_trailer.compression_ratio = m_compressed_data / m_uncompressed_data;
   m_trailer.blocksize = m_blocksize;
   m_trailer.version = 0;
 

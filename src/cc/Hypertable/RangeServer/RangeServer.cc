@@ -143,7 +143,8 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : m_mutex(), m_ver
     struct sockaddr_in addr;    
 
     InetAddr::get_hostname(hostStr);
-    InetAddr::initialize(&addr, hostStr.c_str(), port);
+    if (!InetAddr::initialize(&addr, hostStr.c_str(), port))
+      exit(1);
 
     gettimeofday(&tval, 0);
 

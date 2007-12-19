@@ -121,7 +121,10 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, Ap
       std::string hostStr, addrStr;
       struct hostent *he;
       InetAddr::get_hostname(hostStr);
-      he = gethostbyname(hostStr.c_str());
+      if ((he = gethostbyname(hostStr.c_str())) == 0) {
+	LOG_VA_ERROR("Problem obtaining address for hostname '%s'", hostStr.c_str());
+	exit(1);
+      }
       addrStr = std::string(inet_ntoa(*(struct in_addr *)*he->h_addr_list)) + ":" + (int)port;
       if ((error = m_hyperspace_ptr->attr_set(m_master_file_handle, "address", addrStr.c_str(), strlen(addrStr.c_str()))) != Error::OK) {
 	LOG_VA_ERROR("Problem setting attribute 'address' of hyperspace file /hypertable/master - %s", Error::get_text(error));

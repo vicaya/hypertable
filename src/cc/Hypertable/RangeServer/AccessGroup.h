@@ -81,6 +81,7 @@ namespace Hypertable {
     uint64_t             m_persist_timestamp;
     uint64_t             m_disk_usage;
     uint32_t             m_blocksize;
+    float                m_compression_ratio;
   };
 
 }

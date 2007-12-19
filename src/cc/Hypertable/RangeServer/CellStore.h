@@ -107,6 +107,13 @@ namespace Hypertable {
     virtual uint64_t disk_usage() = 0;
 
     /**
+     * Returns block compression ratio of this cell store.
+     *
+     * @return compression ratio
+     */
+    virtual float compression_ratio() = 0;
+
+    /**
      * Pathname of cell store file
      *
      * @return string reference to the cell store path name
