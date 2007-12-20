@@ -91,6 +91,7 @@ public class Error {
     static public final int RANGESERVER_TRUNCATED_COMMIT_LOG  = 0x0005000B;
     static public final int RANGESERVER_NO_METADATA_FOR_RANGE = 0x0005000C;
 
+    static public final int HQL_BAD_LOAD_FILE_FORMAT = 0x00060001;
 
     static public String GetText(int lcode) {
 	return mTextMap.get(lcode);
@@ -158,5 +159,7 @@ public class Error {
 	mTextMap.put(RANGESERVER_INVALID_COLUMNFAMILY, "RANGE SERVER invalid column family");
 	mTextMap.put(RANGESERVER_TRUNCATED_COMMIT_LOG, "RANGE SERVER truncated commit log");
 	mTextMap.put(RANGESERVER_TRUNCATED_COMMIT_LOG, "RANGE SERVER no metadata for range");
+	mTextMap.put(RANGESERVER_TRUNCATED_COMMIT_LOG, "RANGE SERVER no metadata for range");
+	mTextMap.put(HQL_BAD_LOAD_FILE_FORMAT,    "HQL bad load file format");
     }
 }

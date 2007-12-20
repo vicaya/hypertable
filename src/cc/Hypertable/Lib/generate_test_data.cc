@@ -186,6 +186,14 @@ int main(int argc, char **argv) {
 
   srand(seed);
 
+  /**
+   * Output header line
+   */
+  if (generateTimestamps)
+    cout << "timestamp\trowkey\tcolumnkey\tvalue" << endl;
+  else
+    cout << "rowkey\tcolumnkey\tvalue" << endl;
+
   while (true) {
 
     if (limit && emitted >= limit)
@@ -208,7 +216,7 @@ int main(int argc, char **argv) {
       if (generateTimestamps)
 	cout << timestamp << "\t" << rowKey << "\tDELETE" << endl;
       else
-	cout << "AUTO\t" << rowKey << "\tDELETE" << endl;	
+	cout << rowKey << "\tDELETE" << endl;	
       continue;
     }
 
@@ -224,7 +232,7 @@ int main(int argc, char **argv) {
       if (generateTimestamps)
 	cout << timestamp << "\t" << rowKey << "\t" << cfNames[family] << ":" << qualifier << "\tDELETE" << endl;
       else
-	cout << "AUTO\t" << rowKey << "\t" << cfNames[family] << ":" << qualifier << "\tDELETE" << endl;
+	cout << rowKey << "\t" << cfNames[family] << ":" << qualifier << "\tDELETE" << endl;
       continue;
     }
 
@@ -239,7 +247,7 @@ int main(int argc, char **argv) {
     if (generateTimestamps)
       cout << timestamp << "\t" << rowKey << "\t" << cfNames[family] << ":" << qualifier << "\t" << value << endl;    
     else
-      cout << "AUTO\t" << rowKey << "\t" << cfNames[family] << ":" << qualifier << "\t" << value << endl;    
+      cout << rowKey << "\t" << cfNames[family] << ":" << qualifier << "\t" << value << endl;    
   }
 
   return 0;

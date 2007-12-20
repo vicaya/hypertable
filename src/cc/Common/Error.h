@@ -97,6 +97,8 @@ namespace Hypertable {
     static const int RANGESERVER_TRUNCATED_COMMIT_LOG  = 0x0005000B;
     static const int RANGESERVER_NO_METADATA_FOR_RANGE = 0x0005000C;
 
+    static const int HQL_BAD_LOAD_FILE_FORMAT  = 0x00060001;
+
     static const char *get_text(int error);
     static std::string get_text_string(int error) { return get_text(error); }
   };

@@ -24,6 +24,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include "Common/ByteString.h"
 #include "Common/DynamicBuffer.h"
@@ -37,17 +38,20 @@ namespace Hypertable {
   class LoadDataSource {
 
   public:
-    LoadDataSource(std::string fname) : m_fin(fname.c_str()), m_cur_line(0), m_line_buffer(0) {
-      return;
-    }
+    LoadDataSource(std::string fname);
     virtual ~LoadDataSource() { return; }
-
     virtual bool next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp);
 
   private:
+    std::vector<std::string> m_column_names;
+    std::vector<const char *> m_values;
+    size_t m_next_value;
     std::ifstream m_fin;
     long m_cur_line;
     DynamicBuffer m_line_buffer;
+    bool m_hyperformat;
+    bool m_leading_timestamps;
+    size_t m_cur_row_length;
   };
 
 }

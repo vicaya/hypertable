@@ -1,12 +1,9 @@
 
 TODO:
-- Add compression ratio field in CellStoreV0 trailer
 - Add support for TSV files
-- Add header to load data infile format to specify with or without timestamps
 - Add delete_row, delete_cell, etc. to Mutator
 - Add DropTable command to RangeServer
 - Refactor so that schema can get updated on change (overhaul TableInfo)
-
 - Add comma separating the column families in the ACCESS GROUP clause
 - Add regression for HQL
 - Add scanner reaper to RangeServer
@@ -23,8 +20,11 @@ TODO:
 - Fix bus error when you issue the following select statement after an initial load:
   select * from Test1 where row >= 'n' && row < 'm';
 - Can get rid of m_blocksize in CellStoreV0 and just use the one in m_trailer
+- Clean up generate_test_data (have it generate timestamps formatted propertly and modify LoadDataSource to consume it).
 
 DONE:
+- Add header to load data infile format to specify with or without timestamps
+- Add compression ratio field in CellStoreV0 trailer
 - Figure out get_timestamp stuff (see Merge scanner) is it less than, less than or equal to???
 - Make sure ':' character cannot be specified in column family name
 - Clean up timestamp clause in SELECT

@@ -218,6 +218,9 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
 	elapsed_time += ((1000000000.0 - (double)start_time.nsec) + (double)finish_time.nsec) / 1000000000.0;
       }
 
+      if (show_progress.count() < file_size)
+	show_progress += file_size - show_progress.count();
+
       printf("Load complete (%.2fs elapsed_time, %.2f bytes/s, %.2f inserts/s)\n",
 	     elapsed_time, (double)file_size / elapsed_time, (double)insert_count / elapsed_time);
 

@@ -139,6 +139,7 @@ namespace Hypertable {
 	display_string("set_column_family");
 	state.cf = new Schema::ColumnFamily();
 	state.cf->name = std::string(str, end-str);
+	boost::trim_if(state.cf->name, boost::is_any_of("'\""));
 	Schema::ColumnFamilyMapT::const_iterator iter = state.cf_map.find(state.cf->name);
 	if (iter != state.cf_map.end())
 	  throw Exception(Error::HQL_PARSE_ERROR, std::string("Column family '") + state.cf->name + " multiply defined.");
@@ -220,7 +221,7 @@ namespace Hypertable {
       void operator()(char const *str, char const *end) const { 
 	display_string("add_column_family");
 	std::string name = std::string(str, end-str);
-
+	boost::trim_if(name, boost::is_any_of("'\""));
 	Schema::ColumnFamilyMapT::const_iterator iter = state.cf_map.find(name);
 	if (iter == state.cf_map.end())
 	  throw Exception(Error::HQL_PARSE_ERROR, std::string("Access Group '") + state.ag->name + "' includes unknown column family '" + name + "'");
@@ -670,8 +671,12 @@ namespace Hypertable {
 	      | access_group_definition
 	    ;
 
+	  column_name 
+	    = ( identifier | string_literal )
+	    ;
+
 	  column_definition
-	    = identifier[create_column_family(self.state)] >> *( column_option )
+	    = column_name[create_column_family(self.state)] >> *( column_option )
 	    ;
 
 	  column_option
@@ -695,8 +700,8 @@ namespace Hypertable {
 	  access_group_definition
 	    = ACCESS >> GROUP >> identifier[create_access_group(self.state)] 
 		     >> *( access_group_option ) 
-		     >> !( LPAREN >> identifier[add_column_family(self.state)]
-		     >> *( identifier[add_column_family(self.state)] ) >> RPAREN )
+		     >> !( LPAREN >> column_name[add_column_family(self.state)]
+		     >> *( COMMA >> column_name[add_column_family(self.state)] ) >> RPAREN )
 	    ;
 
 	  access_group_option
@@ -793,6 +798,7 @@ namespace Hypertable {
 #ifdef BOOST_SPIRIT_DEBUG
         void debug() {
 	  BOOST_SPIRIT_DEBUG_RULE(column_definition);
+	  BOOST_SPIRIT_DEBUG_RULE(column_name);
 	  BOOST_SPIRIT_DEBUG_RULE(column_option);
 	  BOOST_SPIRIT_DEBUG_RULE(create_definition);
 	  BOOST_SPIRIT_DEBUG_RULE(create_definitions);
@@ -832,7 +838,7 @@ namespace Hypertable {
 	start() const { return statement; }
 	symbols<> keywords;
 	rule<ScannerT>
-	column_definition, column_option, create_definition, create_definitions,
+	column_definition, column_name, column_option, create_definition, create_definitions,
 	create_table_statement, duration, identifier, max_versions_option,
         statement, single_string_literal, double_string_literal, string_literal,
         ttl_option, access_group_definition,

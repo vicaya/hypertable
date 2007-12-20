@@ -1,8 +1,8 @@
 row=abenteric column_family=foo column_qualifier=http://www.foo.com/ value=How now brown cow
 row=barothermohygrograph column_family=bar value=Herbie Hancock
 row=Batonga column_family=foo value=Head Hunters
-error: too few fields on line 3
-error: invalid timestamp (abracadabra) on line 4
 error: too few fields on line 5
-error: too few fields on line 6
-row=carbonification column_family=sherlock column_qualifier=holmes value=this	is	a	tab	delimited	value
+error: invalid timestamp (abracadabra) on line 6
+error: too few fields on line 7
+error: too few fields on line 8
+row=carbonification column_family=sherlock column_qualifier=holmes value=this\tis\ta\ttab\tdelimited\tvalue
