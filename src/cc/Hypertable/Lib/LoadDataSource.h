@@ -28,7 +28,7 @@
 #include "Common/ByteString.h"
 #include "Common/DynamicBuffer.h"
 
-#include "KeySpec.h"
+#include "DataSource.h"
 
 using namespace Hypertable;
 
@@ -40,8 +40,9 @@ namespace Hypertable {
     LoadDataSource(std::string fname) : m_fin(fname.c_str()), m_cur_line(0), m_line_buffer(0) {
       return;
     }
+    virtual ~LoadDataSource() { return; }
 
-    bool next(uint64_t *timestampp, KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp=0);
+    virtual bool next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp);
 
   private:
     std::ifstream m_fin;

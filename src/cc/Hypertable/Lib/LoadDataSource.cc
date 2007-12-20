@@ -40,9 +40,12 @@ using namespace std;
 /**
  * 
  */
-bool LoadDataSource::next(uint64_t *timestampp, KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp) {
+bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp) {
   string line;
   char *base, *ptr, *colon, *endptr;
+
+  if (type_flagp)
+    *type_flagp = FLAG_INSERT;
   
   if (consumedp)
     *consumedp = 0;

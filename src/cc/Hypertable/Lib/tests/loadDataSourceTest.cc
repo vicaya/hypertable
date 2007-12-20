@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
 
   lds = new LoadDataSource("loadDataSourceTest.dat");
 
-  while (lds->next(&timestamp, &key, &value, &value_len)) {
+  while (lds->next(0, &timestamp, &key, &value, &value_len, 0)) {
     cerr << "row=" << (const char *)key.row << " column_family=" << key.column_family;
     if (key.column_qualifier_len > 0)
       cerr << " column_qualifier=" << (const char *)key.column_qualifier;

@@ -195,7 +195,7 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
 
       lds = new LoadDataSource(state.str);
 
-      while (lds->next(&timestamp, &key, &value, &value_len, &consumed)) {
+      while (lds->next(0, &timestamp, &key, &value, &value_len, &consumed)) {
 	insert_count++;
 	try {
 	  mutator_ptr->set(timestamp, key, value, value_len);
