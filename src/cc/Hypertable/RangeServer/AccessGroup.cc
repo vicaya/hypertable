@@ -113,7 +113,7 @@ void AccessGroup::get_cached_rows(std::vector<std::string> &rows) {
 
 uint64_t AccessGroup::disk_usage() {
   boost::mutex::scoped_lock lock(m_mutex);
-  return m_disk_usage + (m_compression_ratio * (float)m_cell_cache_ptr->memory_used());
+  return m_disk_usage + (uint64_t)(m_compression_ratio * (float)m_cell_cache_ptr->memory_used());
 }
 
 bool AccessGroup::needs_compaction() {
