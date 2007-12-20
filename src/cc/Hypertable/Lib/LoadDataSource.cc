@@ -183,8 +183,14 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
 	keyp->column_qualifier_len = 0;
 	*timestampp = 0;
       }
-      *valuep = (uint8_t *)m_values[m_next_value];
-      *value_lenp = strlen(m_values[m_next_value]);
+      if (m_values[m_next_value] == 0) {
+	*valuep = 0;
+	*value_lenp = 0;
+      }
+      else {
+	*valuep = (uint8_t *)m_values[m_next_value];
+	*value_lenp = strlen(m_values[m_next_value]);
+      }
       m_next_value++;
       return true;
     }

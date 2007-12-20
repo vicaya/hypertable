@@ -86,7 +86,7 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       }
       for (Schema::ColumnFamilyMapT::const_iterator cf_iter = state.cf_map.begin(); cf_iter != state.cf_map.end(); cf_iter++) {
 	if ((*cf_iter).second->ag == "")
-	  (*cf_iter).second->ag == "default";
+	  (*cf_iter).second->ag = "default";
 	schema->add_column_family((*cf_iter).second);
       }
       const char *error_str = schema->get_error_string();
