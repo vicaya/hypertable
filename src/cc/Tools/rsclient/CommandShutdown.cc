@@ -18,30 +18,32 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_COMMANDFETCHSCANBLOCK_H
-#define HYPERTABLE_COMMANDFETCHSCANBLOCK_H
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
 
-#include "Common/InteractiveCommand.h"
+#include "Common/Error.h"
 
-#include "Hypertable/Lib/MasterClient.h"
-#include "Hypertable/Lib/RangeServerClient.h"
+#include "CommandShutdown.h"
 
-namespace Hypertable {
+using namespace Hypertable;
+using namespace std;
 
-  class CommandFetchScanblock : public InteractiveCommand {
-  public:
-    CommandFetchScanblock(struct sockaddr_in &addr, RangeServerClientPtr &range_server_ptr) : m_addr(addr), m_range_server_ptr(range_server_ptr) { return; }
-    virtual const char *command_text() { return "fetch scanblock"; }
-    virtual const char **usage() { return ms_usage; }
-    virtual int run();
+const char *CommandShutdown::ms_usage[] = {
+  "shutdown",
+  "",
+  "  This command issues a SHUTDOWN command to the range server which causes it",
+  "  to call exit.",
+  (const char *)0
+};
 
-  private:
-    static const char *ms_usage[];
 
-    struct sockaddr_in m_addr;
-    RangeServerClientPtr m_range_server_ptr;
-  };
 
+int CommandShutdown::run() {
+  int error;
+
+  if ((error = m_range_server_ptr->shutdown(m_addr)) != Error::OK)
+    return error;
+
+  return Error::OK;
 }
-
-#endif // HYPERTABLE_COMMANDFETCHSCANBLOCK_H

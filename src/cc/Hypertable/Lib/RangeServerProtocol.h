@@ -36,8 +36,9 @@ namespace Hypertable {
     static const short COMMAND_FETCH_SCANBLOCK  = 3;
     static const short COMMAND_COMPACT          = 4;
     static const short COMMAND_STATUS           = 5;
-    static const short COMMAND_DUMP_STATS       = 6;
-    static const short COMMAND_MAX              = 7;
+    static const short COMMAND_SHUTDOWN         = 6;
+    static const short COMMAND_DUMP_STATS       = 7;
+    static const short COMMAND_MAX              = 8;
 
     static const uint16_t LOAD_RANGE_FLAG_PHANTOM = 0x0001;
 
@@ -86,6 +87,16 @@ namespace Hypertable {
      */
     static CommBuf *create_request_status();
 
+    /** Creates a "shutdown" request message.
+     *
+     * @return protocol message
+     */
+    static CommBuf *create_request_shutdown();
+
+    /** Creates a "dump stats" command (for testint)
+     *
+     * @return protocol message
+     */
     static CommBuf *create_request_dump_stats();
 
     virtual const char *command_text(short command);

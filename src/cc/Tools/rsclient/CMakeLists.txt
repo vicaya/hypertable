@@ -26,6 +26,7 @@ rsclient.cc
 CommandCreateScanner.cc
 CommandFetchScanblock.cc
 CommandLoadRange.cc
+CommandShutdown.cc
 CommandUpdate.cc
 DisplayScanData.cc
 TableInfo.cc

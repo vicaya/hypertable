@@ -32,6 +32,7 @@ namespace Hypertable {
     "fetch scanblock",
     "compact",
     "status",
+    "shutdown",
     "dump stats"
   };
 
@@ -81,6 +82,13 @@ namespace Hypertable {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
     CommBuf *cbuf = new CommBuf(hbuilder, 2);
     cbuf->append_short(COMMAND_STATUS);
+    return cbuf;
+  }
+
+  CommBuf *RangeServerProtocol::create_request_shutdown() {
+    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
+    CommBuf *cbuf = new CommBuf(hbuilder, 2);
+    cbuf->append_short(COMMAND_SHUTDOWN);
     return cbuf;
   }
 

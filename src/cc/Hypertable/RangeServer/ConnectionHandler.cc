@@ -19,6 +19,10 @@
  */
 #include <iostream>
 
+extern "C" {
+#include <poll.h>
+}
+
 #include "Common/Error.h"
 #include "Common/Exception.h"
 #include "Common/StringExt.h"
@@ -102,6 +106,13 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
       case RangeServerProtocol::COMMAND_STATUS:
 	requestHandler = new RequestHandlerStatus(m_comm, m_range_server_ptr.get(), eventPtr);
 	break;
+      case RangeServerProtocol::COMMAND_SHUTDOWN:
+	{
+	  ResponseCallback cb(m_comm, eventPtr);
+	  cb.response_ok();
+	}
+	poll(0, 0, 2000);
+	exit(0);
       case RangeServerProtocol::COMMAND_DUMP_STATS:
 	requestHandler = new RequestHandlerDumpStats(m_comm, m_range_server_ptr.get(), eventPtr);
 	break;

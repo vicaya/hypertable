@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_COMMANDFETCHSCANBLOCK_H
-#define HYPERTABLE_COMMANDFETCHSCANBLOCK_H
+#ifndef HYPERTABLE_COMMANDSHUTDOWN_H
+#define HYPERTABLE_COMMANDSHUTDOWN_H
 
 #include "Common/InteractiveCommand.h"
 
@@ -28,10 +28,10 @@
 
 namespace Hypertable {
 
-  class CommandFetchScanblock : public InteractiveCommand {
+  class CommandShutdown : public InteractiveCommand {
   public:
-    CommandFetchScanblock(struct sockaddr_in &addr, RangeServerClientPtr &range_server_ptr) : m_addr(addr), m_range_server_ptr(range_server_ptr) { return; }
-    virtual const char *command_text() { return "fetch scanblock"; }
+    CommandShutdown(struct sockaddr_in &addr, RangeServerClientPtr &range_server_ptr) : m_addr(addr), m_range_server_ptr(range_server_ptr) { return; }
+    virtual const char *command_text() { return "shutdown"; }
     virtual const char **usage() { return ms_usage; }
     virtual int run();
 
@@ -44,4 +44,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_COMMANDFETCHSCANBLOCK_H
+#endif // HYPERTABLE_COMMANDSHUTDOWN_H

@@ -43,6 +43,7 @@ extern "C" {
 #include "CommandFetchScanblock.h"
 #include "CommandLoadRange.h"
 #include "CommandUpdate.h"
+#include "CommandShutdown.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -231,6 +232,7 @@ int main(int argc, char **argv) {
   commands.push_back( fetchScanblock );
   commands.push_back( new CommandLoadRange(addr, range_server_ptr, hyperspace_ptr) );
   commands.push_back( new CommandUpdate(addr, range_server_ptr, hyperspace_ptr) );
+  commands.push_back( new CommandShutdown(addr, range_server_ptr) );
 
   cout << "Welcome to the Range Server command interpreter." << endl;
   cout << "Type 'help' for a description of commands." << endl;
