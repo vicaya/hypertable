@@ -43,8 +43,6 @@ extern "C" {
 
 namespace Hypertable {
 
-  class HandlerMap;
-
   /**
    *
    */
@@ -52,8 +50,8 @@ namespace Hypertable {
 
   public:
 
-    IOHandler(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp, HandlerMap &hmap) : m_addr(addr), m_sd(sd), m_dispatch_handler_ptr(dhp), m_handler_map(hmap) {
-      m_reactor = ReactorFactory::get_reactor();
+    IOHandler(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp) : m_addr(addr), m_sd(sd), m_dispatch_handler_ptr(dhp) {
+      ReactorFactory::get_reactor(m_reactor_ptr);
       m_poll_interest = 0;
       socklen_t namelen = sizeof(m_local_addr);
       getsockname(m_sd, (sockaddr *)&m_local_addr, &namelen);
@@ -108,9 +106,9 @@ namespace Hypertable {
       memset(&event, 0, sizeof(struct epoll_event));
       event.data.ptr = this;
       event.events = EPOLLIN | EPOLLERR | EPOLLHUP;
-      if (epoll_ctl(m_reactor->pollFd, EPOLL_CTL_ADD, m_sd, &event) < 0) {
+      if (epoll_ctl(m_reactor_ptr->pollFd, EPOLL_CTL_ADD, m_sd, &event) < 0) {
 	LOG_VA_ERROR("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN|EPOLLERR|EPOLLHUP) failed : %s",
-		     m_reactor->pollFd, m_sd, strerror(errno));
+		     m_reactor_ptr->pollFd, m_sd, strerror(errno));
 	exit(1);
       }
       m_poll_interest |= Reactor::READ_READY;
@@ -139,17 +137,15 @@ namespace Hypertable {
 
     int get_sd() { return m_sd; }
 
-    Reactor *get_reactor() { return m_reactor; }
-
-    HandlerMap &get_handler_map() { return m_handler_map; }
+    void get_reactor(ReactorPtr &reactor_ptr) { reactor_ptr = m_reactor_ptr; }
 
     void shutdown() { 
       struct TimerT timer;
-      m_reactor->schedule_removal(this);
+      m_reactor_ptr->schedule_removal(this);
       boost::xtime_get(&timer.expireTime, boost::TIME_UTC);
       timer.expireTime.nsec += 200000000LL;
       timer.handler = 0;
-      m_reactor->add_timer(timer);
+      m_reactor_ptr->add_timer(timer);
     }
 
   protected:
@@ -159,9 +155,9 @@ namespace Hypertable {
       remove_poll_interest(Reactor::READ_READY|Reactor::WRITE_READY);
 #elif defined(__linux__)
       struct epoll_event event;  // this is necessary for < Linux 2.6.9
-      if (epoll_ctl(m_reactor->pollFd, EPOLL_CTL_DEL, m_sd, &event) < 0) {
+      if (epoll_ctl(m_reactor_ptr->pollFd, EPOLL_CTL_DEL, m_sd, &event) < 0) {
 	LOG_VA_ERROR("epoll_ctl(%d, EPOLL_CTL_DEL, %d) failed : %s",
-		     m_reactor->pollFd, m_sd, strerror(errno));
+		     m_reactor_ptr->pollFd, m_sd, strerror(errno));
 	exit(1);
       }
       m_poll_interest = 0;
@@ -173,8 +169,7 @@ namespace Hypertable {
     struct sockaddr_in  m_alias;
     int                 m_sd;
     DispatchHandlerPtr  m_dispatch_handler_ptr;
-    HandlerMap         &m_handler_map;
-    Reactor            *m_reactor;
+    ReactorPtr          m_reactor_ptr;
     int                 m_poll_interest;
 
 #if defined(__APPLE__)

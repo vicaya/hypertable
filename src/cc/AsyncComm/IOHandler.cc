@@ -52,10 +52,10 @@ void IOHandler::add_poll_interest(int mode) {
   if (m_poll_interest & Reactor::WRITE_READY)
     event.events |= EPOLLOUT;
 
-  if (epoll_ctl(m_reactor->pollFd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
+  if (epoll_ctl(m_reactor_ptr->pollFd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
     /**
     LOG_VA_ERROR("epoll_ctl(%d, EPOLL_CTL_MOD, sd=%d) (mode=%x) : %s", 
-		 m_reactor->pollFd, m_sd, mode, strerror(errno));
+		 m_reactor_ptr->pollFd, m_sd, mode, strerror(errno));
     *((int *)0) = 1;
     **/
   }
@@ -77,7 +77,7 @@ void IOHandler::remove_poll_interest(int mode) {
   if (m_poll_interest & Reactor::WRITE_READY)
     event.events |= EPOLLOUT;
 
-  if (epoll_ctl(m_reactor->pollFd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
+  if (epoll_ctl(m_reactor_ptr->pollFd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
     LOG_VA_ERROR("epoll_ctl(EPOLL_CTL_MOD, sd=%d) (mode=%x) : %s", m_sd, mode, strerror(errno));
     exit(1);
   }
@@ -129,7 +129,7 @@ void IOHandler::add_poll_interest(int mode) {
   }
   assert(count > 0);
     
-  if (kevent(m_reactor->kQueue, events, count, 0, 0, 0) == -1) {
+  if (kevent(m_reactor_ptr->kQueue, events, count, 0, 0, 0) == -1) {
     LOG_VA_ERROR("kevent(sd=%d) (mode=%x) : %s", m_sd, mode, strerror(errno));
     exit(1);
   }
@@ -150,7 +150,7 @@ void IOHandler::remove_poll_interest(int mode) {
     count++;
   }
 
-  if (kevent(m_reactor->kQueue, devents, count, 0, 0, 0) == -1 && errno != ENOENT) {
+  if (kevent(m_reactor_ptr->kQueue, devents, count, 0, 0, 0) == -1 && errno != ENOENT) {
     LOG_VA_ERROR("kevent(sd=%d) (mode=%x) : %s", m_sd, mode, strerror(errno));
     exit(1);
   }

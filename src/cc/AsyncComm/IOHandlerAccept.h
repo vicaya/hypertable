@@ -22,6 +22,7 @@
 #ifndef HYPERTABLE_IOHANDLERACCEPT_H
 #define HYPERTABLE_IOHANDLERACCEPT_H
 
+#include "HandlerMap.h"
 #include "IOHandler.h"
 #include "ConnectionHandlerFactory.h"
 
@@ -38,7 +39,7 @@ namespace Hypertable {
 
   public:
 
-    IOHandlerAccept(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp, HandlerMap &hmap, ConnectionHandlerFactoryPtr &chfPtr) : IOHandler(sd, addr, dhp, hmap), m_handler_factory_ptr(chfPtr) {
+    IOHandlerAccept(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp, HandlerMapPtr &handler_map_ptr, ConnectionHandlerFactoryPtr &chfPtr) : IOHandler(sd, addr, dhp), m_handler_map_ptr(handler_map_ptr), m_handler_factory_ptr(chfPtr) {
       return;
     }
 
@@ -57,6 +58,7 @@ namespace Hypertable {
     bool handle_incoming_connection();
 
   private:
+    HandlerMapPtr m_handler_map_ptr;
     ConnectionHandlerFactoryPtr m_handler_factory_ptr;
   };
 

@@ -248,8 +248,8 @@ namespace Hypertable {
     static atomic_t ms_next_request_id;
 
     boost::mutex  m_mutex;
-    HandlerMap    m_handler_map;
-    Reactor      *m_timer_reactor;
+    HandlerMapPtr  m_handler_map_ptr;
+    ReactorPtr     m_timer_reactor_ptr;
   };
 
   typedef boost::shared_ptr<Comm> CommPtr;

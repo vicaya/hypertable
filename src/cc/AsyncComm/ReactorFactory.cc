@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include "HandlerMap.h"
 #include "ReactorFactory.h"
 #include "ReactorRunner.h"
 using namespace Hypertable;
@@ -28,23 +29,32 @@ extern "C" {
 #include <signal.h>
 }
 
-vector<Reactor *> ReactorFactory::ms_reactors;
+vector<ReactorPtr> ReactorFactory::ms_reactors;
 atomic_t ReactorFactory::ms_next_reactor = ATOMIC_INIT(0);
-
+boost::thread_group ReactorFactory::ms_threads;
 
 
 /**
  */
 void ReactorFactory::initialize(uint16_t reactor_count) {
-  Reactor *reactor;
+  ReactorPtr reactor_ptr;
   ReactorRunner rrunner;
+  ReactorRunner::ms_handler_map_ptr = new HandlerMap();
   signal(SIGPIPE, SIG_IGN);
   assert(reactor_count > 0);
   for (uint16_t i=0; i<reactor_count; i++) {
-    reactor = new Reactor();
-    ms_reactors.push_back(reactor);
-    rrunner.set_reactor(reactor);
-    reactor->threadPtr = new boost::thread(rrunner);
+    reactor_ptr = new Reactor();
+    ms_reactors.push_back(reactor_ptr);
+    rrunner.set_reactor(reactor_ptr);
+    ms_threads.create_thread(rrunner);
   }
 }
 
+void ReactorFactory::destroy() {
+  ReactorRunner::ms_shutdown = true;
+  for (size_t i=0; i<ms_reactors.size(); i++)
+    ms_reactors[i]->poll_loop_interrupt();
+  ms_threads.join_all();  
+  ms_reactors.clear();
+  ReactorRunner::ms_handler_map_ptr = 0;
+}

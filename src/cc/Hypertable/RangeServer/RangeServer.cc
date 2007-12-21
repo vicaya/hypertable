@@ -193,7 +193,17 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : m_mutex(), m_ver
  *
  */
 RangeServer::~RangeServer() {
+  delete Global::blockCache;
+  delete Global::protocol;
+  m_hyperspace_ptr = 0;
+  delete Global::dfs;
+  if (Global::logDfs != Global::dfs)
+    delete Global::logDfs;
+  Global::metadata_table_ptr = 0;
+  m_master_client_ptr = 0;
+  m_conn_manager_ptr = 0;
   m_app_queue_ptr->shutdown();
+  m_app_queue_ptr = 0;
 }
 
 

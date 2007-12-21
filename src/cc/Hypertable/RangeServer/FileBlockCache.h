@@ -1,4 +1,4 @@
-/**
+/** -*- C++ -*-
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
@@ -49,6 +49,7 @@ namespace Hypertable {
   public:
 
     FileBlockCache(uint64_t maxMemory) : m_mutex(), m_block_map(), m_head(0), m_tail(0) { return; }
+    ~FileBlockCache();
     bool checkout(int fileId, uint32_t offset, uint8_t **blockp, uint32_t *lengthp);
     void checkin(int fileId, uint32_t offset);
     bool insert_and_checkout(int fileId, uint32_t offset, uint8_t *block, uint32_t length);

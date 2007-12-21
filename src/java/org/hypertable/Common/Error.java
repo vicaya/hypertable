@@ -90,6 +90,7 @@ public class Error {
     static public final int RANGESERVER_INVALID_COLUMNFAMILY  = 0x0005000A;
     static public final int RANGESERVER_TRUNCATED_COMMIT_LOG  = 0x0005000B;
     static public final int RANGESERVER_NO_METADATA_FOR_RANGE = 0x0005000C;
+    static public final int RANGESERVER_SHUTTING_DOWN         = 0x0005000D;
 
     static public final int HQL_BAD_LOAD_FILE_FORMAT = 0x00060001;
 
@@ -158,8 +159,8 @@ public class Error {
 	mTextMap.put(RANGESERVER_SCHEMA_INVALID_CFID,  "RANGE SERVER invalid column family id");
 	mTextMap.put(RANGESERVER_INVALID_COLUMNFAMILY, "RANGE SERVER invalid column family");
 	mTextMap.put(RANGESERVER_TRUNCATED_COMMIT_LOG, "RANGE SERVER truncated commit log");
-	mTextMap.put(RANGESERVER_TRUNCATED_COMMIT_LOG, "RANGE SERVER no metadata for range");
-	mTextMap.put(RANGESERVER_TRUNCATED_COMMIT_LOG, "RANGE SERVER no metadata for range");
+	mTextMap.put(RANGESERVER_NO_METADATA_FOR_RANGE,"RANGE SERVER no metadata for range");
+	mTextMap.put(RANGESERVER_SHUTTING_DOWN,        "RANGE SERVER shutting down");
 	mTextMap.put(HQL_BAD_LOAD_FILE_FORMAT,    "HQL bad load file format");
     }
 }

@@ -46,6 +46,7 @@ extern "C" {
 #include "Common/System.h"
 
 #include "ReactorFactory.h"
+#include "ReactorRunner.cc"
 #include "Comm.h"
 #include "IOHandlerAccept.h"
 #include "IOHandlerData.h"
@@ -62,7 +63,8 @@ Comm::Comm() {
     LOG_ERROR("ReactorFactory::initialize must be called before creating AsyncComm::comm object");
     DUMP_CORE;
   }
-  m_timer_reactor = ReactorFactory::get_reactor();
+  ReactorFactory::get_reactor(m_timer_reactor_ptr);
+  m_handler_map_ptr = ReactorRunner::ms_handler_map_ptr;
 }
 
 
@@ -73,12 +75,14 @@ Comm::Comm() {
 Comm::~Comm() {
 
   set<IOHandler *> handlers;
-  m_handler_map.decomission_all(handlers);
+  m_handler_map_ptr->decomission_all(handlers);
   for (set<IOHandler *>::iterator iter = handlers.begin(); iter != handlers.end(); ++iter)
     (*iter)->shutdown();
 
   // wait for all decomissioned handlers to get purged by Reactor
-  m_handler_map.wait_for_empty();
+  // (I think this is no longer needed, since the reactors should have been
+  //  shut down before destroying the Comm layer)
+  // m_handler_map_ptr->wait_for_empty();
 }
 
 
@@ -88,7 +92,7 @@ Comm::~Comm() {
 int Comm::connect(struct sockaddr_in &addr, DispatchHandlerPtr &default_handler_ptr) {
   int sd;
 
-  if (m_handler_map.contains_handler(addr))
+  if (m_handler_map_ptr->contains_handler(addr))
     return Error::COMM_ALREADY_CONNECTED;
 
   if ((sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
@@ -107,7 +111,7 @@ int Comm::connect(struct sockaddr_in &addr, DispatchHandlerPtr &default_handler_
 int Comm::connect(struct sockaddr_in &addr, struct sockaddr_in &local_addr, DispatchHandlerPtr &default_handler_ptr) {
   int sd;
 
-  if (m_handler_map.contains_handler(addr))
+  if (m_handler_map_ptr->contains_handler(addr))
     return Error::COMM_ALREADY_CONNECTED;
 
   if ((sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
@@ -139,7 +143,7 @@ int Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chf_ptr)
  */
 int Comm::set_alias(struct sockaddr_in &addr, struct sockaddr_in &alias) {
   boost::mutex::scoped_lock lock(m_mutex);
-  return m_handler_map.set_alias(addr, alias);
+  return m_handler_map_ptr->set_alias(addr, alias);
 }
 
 
@@ -179,8 +183,8 @@ int Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chf_ptr,
     exit(1);
   }
 
-  handlerPtr = acceptHandler = new IOHandlerAccept(sd, addr, default_handler_ptr, m_handler_map, chf_ptr);
-  m_handler_map.insert_handler(acceptHandler);
+  handlerPtr = acceptHandler = new IOHandlerAccept(sd, addr, default_handler_ptr, m_handler_map_ptr, chf_ptr);
+  m_handler_map_ptr->insert_handler(acceptHandler);
   acceptHandler->start_polling();
 
   return Error::OK;
@@ -196,7 +200,7 @@ int Comm::send_request(struct sockaddr_in &addr, time_t timeout, CommBufPtr &cbu
 
   cbuf_ptr->reset_data_pointers();
 
-  if (!m_handler_map.lookup_data_handler(addr, dataHandlerPtr)) {
+  if (!m_handler_map_ptr->lookup_data_handler(addr, dataHandlerPtr)) {
     LOG_VA_ERROR("No connection for %s:%d", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
     return Error::COMM_NOT_CONNECTED;
   }
@@ -220,7 +224,7 @@ int Comm::send_response(struct sockaddr_in &addr, CommBufPtr &cbuf_ptr) {
 
   cbuf_ptr->reset_data_pointers();
 
-  if (!m_handler_map.lookup_data_handler(addr, dataHandlerPtr)) {
+  if (!m_handler_map_ptr->lookup_data_handler(addr, dataHandlerPtr)) {
     LOG_VA_ERROR("No connection for %s:%d", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
     return Error::COMM_NOT_CONNECTED;
   }
@@ -270,11 +274,11 @@ int Comm::create_datagram_receive_socket(struct sockaddr_in *addr, DispatchHandl
     exit(1);
   }
 
-  handlerPtr = datagramHandler = new IOHandlerDatagram(sd, *addr, dispatchHandlerPtr, m_handler_map);
+  handlerPtr = datagramHandler = new IOHandlerDatagram(sd, *addr, dispatchHandlerPtr);
 
   handlerPtr->get_local_address(addr);
 
-  m_handler_map.insert_datagram_handler(datagramHandler);
+  m_handler_map_ptr->insert_datagram_handler(datagramHandler);
   datagramHandler->start_polling();
 
   return Error::OK;
@@ -292,7 +296,7 @@ int Comm::send_datagram(struct sockaddr_in &addr, struct sockaddr_in &send_addr,
 
   cbuf_ptr->reset_data_pointers();
 
-  if (!m_handler_map.lookup_datagram_handler(send_addr, datagramHandlerPtr)) {
+  if (!m_handler_map_ptr->lookup_datagram_handler(send_addr, datagramHandlerPtr)) {
     std::string str;
     LOG_VA_ERROR("Datagram send address %s not registered", InetAddr::string_format(str, send_addr));
     DUMP_CORE;
@@ -317,7 +321,7 @@ int Comm::set_timer(uint64_t duration_millis, DispatchHandler *handler) {
   timer.expireTime.sec += duration_millis / 1000LL;
   timer.expireTime.nsec += (duration_millis % 1000LL) * 1000000LL;
   timer.handler = handler;
-  m_timer_reactor->add_timer(timer);
+  m_timer_reactor_ptr->add_timer(timer);
   return Error::OK;
 }
 
@@ -330,7 +334,7 @@ int Comm::set_timer_absolute(boost::xtime expire_time, DispatchHandler *handler)
   struct TimerT timer;  
   memcpy(&timer.expireTime, &expire_time, sizeof(boost::xtime));
   timer.handler = handler;
-  m_timer_reactor->add_timer(timer);
+  m_timer_reactor_ptr->add_timer(timer);
   return Error::OK;
 }
 
@@ -341,7 +345,7 @@ int Comm::get_local_address(struct sockaddr_in addr, struct sockaddr_in *local_a
   boost::mutex::scoped_lock lock(m_mutex);
   IOHandlerDataPtr dataHandlerPtr;
 
-  if (!m_handler_map.lookup_data_handler(addr, dataHandlerPtr)) {
+  if (!m_handler_map_ptr->lookup_data_handler(addr, dataHandlerPtr)) {
     LOG_VA_ERROR("No connection for %s:%d", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
     return Error::COMM_NOT_CONNECTED;
   }
@@ -358,7 +362,7 @@ int Comm::get_local_address(struct sockaddr_in addr, struct sockaddr_in *local_a
 int Comm::close_socket(struct sockaddr_in &addr) {
   IOHandlerPtr handlerPtr;
 
-  if (!m_handler_map.decomission_handler(addr, handlerPtr))
+  if (!m_handler_map_ptr->decomission_handler(addr, handlerPtr))
     return Error::COMM_NOT_CONNECTED;
 
   handlerPtr->shutdown();
@@ -391,8 +395,8 @@ int Comm::connect_socket(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &d
     LOG_VA_WARN("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
 #endif
 
-  handlerPtr = dataHandler = new IOHandlerData(sd, addr, default_handler_ptr, m_handler_map);
-  m_handler_map.insert_handler(dataHandler);
+  handlerPtr = dataHandler = new IOHandlerData(sd, addr, default_handler_ptr);
+  m_handler_map_ptr->insert_handler(dataHandler);
 
   while (::connect(sd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) < 0) {
     if (errno == EINTR) {

@@ -134,8 +134,10 @@ namespace Hypertable {
       ApplicationQueueState &m_state;
     };
 
+    boost::mutex           m_mutex;
     ApplicationQueueState  m_state;
     boost::thread_group    m_threads;
+    bool joined;
 
   public:
 
@@ -145,7 +147,7 @@ namespace Hypertable {
      *
      * @param worker_count number of worker threads to create
      */
-    ApplicationQueue(int worker_count) {
+    ApplicationQueue(int worker_count) : joined(false) {
       Worker Worker(m_state);
       assert (worker_count > 0);
       for (int i=0; i<worker_count; ++i)
@@ -168,7 +170,11 @@ namespace Hypertable {
      * queue threads exit.
      */
     void join() {
-      m_threads.join_all();
+      boost::mutex::scoped_lock lock(m_mutex);
+      if (!joined) {
+	m_threads.join_all();
+	joined = true;
+      }
     }
 
     /**

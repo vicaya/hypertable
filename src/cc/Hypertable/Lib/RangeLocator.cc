@@ -137,8 +137,37 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
   return error;
 }
 
-
-
+namespace {
+  class MetaKeyBuilder {
+  public:
+    MetaKeyBuilder() : start(0), end(0) { return; }
+    void build_keys(const char *format, uint32_t table_id, const char *row_key) {
+      char *ptr;
+      if (row_key) {
+	start = new char [ 16 + strlen(row_key) + 1 ];
+	sprintf(start, format, table_id);
+	strcat(start, row_key);
+      }
+      else {
+	start = new char [ 16 ];
+	sprintf(start, format, table_id);
+      }
+      end = new char [ 16 ];
+      sprintf(end, format, table_id);
+      ptr = end + strlen(end);
+      *ptr++ = (char)0xff;
+      *ptr++ = (char)0xff;
+      *ptr = 0;
+      
+    }
+    ~MetaKeyBuilder() {
+      delete [] start;
+      delete [] end;
+    }
+    char *start;
+    char *end;
+  };
+}
 
 
 int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocationInfo *range_loc_info_p, bool hard) {
@@ -177,31 +206,26 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
   range.endRow = Key::END_ROOT_ROW;
   memcpy(&addr, &m_root_addr, sizeof(struct sockaddr_in));
 
-  size_t len = row_key ? strlen(row_key) : 0;
-  char *meta_start_key = new char [ 16 + len ];  // TODO: delete me!
-  char *meta_end_key = new char [ 16 ];          // TODO: delete me!
+  MetaKeyBuilder meta_keys;
   char *meta_key_ptr;
 
-  if (table->id == 0) {
-    build_metadata_start_row_key(meta_start_key, "%d:", 0, row_key);
-    build_metadata_end_row_key(meta_end_key, "%d:", 0);
-  }
-  else {
-    build_metadata_start_row_key(meta_start_key, "0:%d:", table->id, row_key);
-    build_metadata_end_row_key(meta_end_key, "0:%d:", table->id);
-  }
+  if (table->id == 0)
+    meta_keys.build_keys("%d:", 0, row_key);
+  else
+    meta_keys.build_keys("%d:", table->id, row_key);
+
 
   /**
    * Find second level METADATA range from root
    */
-  meta_key_ptr = meta_start_key+2;
+  meta_key_ptr = meta_keys.start+2;
   if (hard || !m_cache.lookup(0, meta_key_ptr, range_loc_info_p, inclusive)) {
     meta_scan_spec.rowLimit = METADATA_READAHEAD_COUNT;
     meta_scan_spec.max_versions = 1;
     meta_scan_spec.columns.clear();
     meta_scan_spec.columns.push_back("StartRow");
     meta_scan_spec.columns.push_back("Location");
-    meta_scan_spec.startRow = meta_start_key;
+    meta_scan_spec.startRow = meta_keys.start;
     meta_scan_spec.startRowInclusive = true;
     meta_scan_spec.endRow = 0;
     meta_scan_spec.endRowInclusive = false;
@@ -220,7 +244,7 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
     }
 
     if (!m_cache.lookup(0, meta_key_ptr, range_loc_info_p, inclusive)) {
-      LOG_VA_ERROR("Unable to find metadata for row '%s'", meta_start_key);
+      LOG_VA_ERROR("Unable to find metadata for row '%s'", meta_keys.start);
       return Error::METADATA_NOT_FOUND;
     }
   }
@@ -245,9 +269,9 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
   meta_scan_spec.columns.clear();
   meta_scan_spec.columns.push_back("StartRow");
   meta_scan_spec.columns.push_back("Location");
-  meta_scan_spec.startRow = meta_start_key+2;
+  meta_scan_spec.startRow = meta_keys.start+2;
   meta_scan_spec.startRowInclusive = true;
-  meta_scan_spec.endRow = meta_end_key+2;
+  meta_scan_spec.endRow = meta_keys.end+2;
   meta_scan_spec.endRowInclusive = true;
   // meta_scan_spec.interval = ????;
 
@@ -413,29 +437,3 @@ int RangeLocator::read_root_location() {
 
   return Error::OK;
 }
-
-
-/**
- * 
- */
-const char *RangeLocator::build_metadata_start_row_key(char *buf, const char *format, uint32_t table_id, const char *row_key) {
-  sprintf(buf, format, table_id);
-  if (row_key)
-    strcat(buf, row_key);
-  return buf;
-}
-
-/**
- * 
- */
-const char *RangeLocator::build_metadata_end_row_key(char *buf, const char *format, uint32_t table_id) {
-  char *ptr;
-  sprintf(buf, format, table_id);
-  ptr = buf + strlen(buf);
-  *ptr++ = (char)0xff;
-  *ptr++ = (char)0xff;
-  *ptr = 0;
-  return buf;
-}
-
-

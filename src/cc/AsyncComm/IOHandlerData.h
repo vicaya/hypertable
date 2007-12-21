@@ -47,8 +47,8 @@ namespace Hypertable {
 
   public:
 
-    IOHandlerData(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp, HandlerMap &hmap) 
-      : IOHandler(sd, addr, dhp, hmap), m_request_cache(), m_send_queue() {
+    IOHandlerData(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp) 
+      : IOHandler(sd, addr, dhp), m_request_cache(), m_send_queue() {
       m_connected = false;
       reset_incoming_message_state();
       m_id = atomic_inc_return(&ms_next_connection_id);

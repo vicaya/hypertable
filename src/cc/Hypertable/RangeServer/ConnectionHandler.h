@@ -47,6 +47,7 @@ namespace Hypertable {
     ApplicationQueuePtr  m_app_queue_ptr;
     RangeServerPtr       m_range_server_ptr;
     MasterClientPtr      m_master_client_ptr;
+    bool                 m_shutdown;
   };
 
 }

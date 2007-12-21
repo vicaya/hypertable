@@ -31,15 +31,15 @@
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
+#include "Common/ReferenceCount.h"
 #include "Common/SockAddrMap.h"
 
-#include "IOHandlerAccept.h"
 #include "IOHandlerData.h"
 #include "IOHandlerDatagram.h"
 
 namespace Hypertable {
 
-  class HandlerMap {
+  class HandlerMap : public ReferenceCount {
 
   public:
 
@@ -76,17 +76,6 @@ namespace Hypertable {
       if (handler) {
 	ioHandlerDataPtr = dynamic_cast<IOHandlerData *>(handler);
 	if (ioHandlerDataPtr)
-	  return true;
-      }
-      return false;
-    }
-
-    bool lookup_accept_handler(struct sockaddr_in &addr, IOHandlerAcceptPtr &ioHandlerAcceptPtr) {
-      boost::mutex::scoped_lock lock(m_mutex);
-      IOHandler *handler = lookup_handler(addr);
-      if (handler) {
-	ioHandlerAcceptPtr = dynamic_cast<IOHandlerAccept *>(handler);
-	if (ioHandlerAcceptPtr)
 	  return true;
       }
       return false;
@@ -195,6 +184,7 @@ namespace Hypertable {
     SockAddrMapT<IOHandlerPtr>  m_datagram_handler_map;
     set<IOHandlerPtr, ltiohp>   m_decomissioned_handlers;
   };
+  typedef boost::intrusive_ptr<HandlerMap> HandlerMapPtr;
 
 }
 

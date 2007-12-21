@@ -18,6 +18,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#ifndef HYPERTABLE_REACTORRUNNER_H
+#define HYPERTABLE_REACTORRUNNER_H
+
+#include "HandlerMap.h"
 #include "Reactor.h"
 
 namespace Hypertable {
@@ -30,10 +34,14 @@ namespace Hypertable {
   class ReactorRunner {
   public:
     void operator()();
-    void set_reactor(Reactor *reactor) { m_reactor = reactor; }
+    void set_reactor(ReactorPtr &reactor_ptr) { m_reactor_ptr = reactor_ptr; }
+    static bool ms_shutdown;
+    static HandlerMapPtr ms_handler_map_ptr;
   private:
     void cleanup_and_remove_handlers(set<IOHandler *> &handlers);
-    Reactor *m_reactor;
+    ReactorPtr m_reactor_ptr;
   };
 
 }
+
+#endif // HYPERTABLE_REACTORRUNNER_H

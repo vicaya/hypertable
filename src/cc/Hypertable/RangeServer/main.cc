@@ -142,6 +142,8 @@ int main(int argc, char **argv) {
 
   app_queue_ptr->join();
 
+  ReactorFactory::destroy();
+
   LOG_ERROR("Exiting RangeServer.");
 
   delete comm;

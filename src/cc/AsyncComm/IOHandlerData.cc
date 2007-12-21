@@ -41,7 +41,6 @@ extern "C" {
 #include "Common/InetAddr.h"
 
 #include "IOHandlerData.h"
-#include "HandlerMap.h"
 using namespace Hypertable;
 
 atomic_t IOHandlerData::ms_next_connection_id = ATOMIC_INIT(1);
@@ -113,7 +112,7 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
 	  uint32_t id = ((Header::HeaderT *)m_message)->id;
 	  if (id != 0 &&
 	      (((Header::HeaderT *)m_message)->flags & Header::FLAGS_MASK_REQUEST) == 0 &&
-	      (dh = m_reactor->remove_request(id)) == 0) {
+	      (dh = m_reactor_ptr->remove_request(id)) == 0) {
 	    LOG_VA_WARN("Received response for non-pending event (id=%d,version=%d,totalLen=%d)",
 			id, ((Header::HeaderT *)m_message)->version, ((Header::HeaderT *)m_message)->totalLen);
 	    delete [] m_message;
@@ -217,7 +216,7 @@ bool IOHandlerData::handle_event(struct kevent *event) {
 	  uint32_t id = ((Header::HeaderT *)m_message)->id;
 	  if (id != 0 && 
 	      (((Header::HeaderT *)m_message)->flags & Header::FLAGS_MASK_REQUEST) == 0 &&
-	      (dh = m_reactor->remove_request(id)) == 0) {
+	      (dh = m_reactor_ptr->remove_request(id)) == 0) {
 	    LOG_VA_WARN("Received response for non-pending event (id=%d)", id);
 	    delete [] m_message;
 	  }
@@ -294,7 +293,7 @@ int IOHandlerData::send_message(CommBufPtr &cbufPtr, time_t timeout, DispatchHan
     boost::xtime expireTime;
     boost::xtime_get(&expireTime, boost::TIME_UTC);
     expireTime.sec += timeout;
-    m_reactor->add_request(mheader->id, this, dispatchHandler, expireTime);
+    m_reactor_ptr->add_request(mheader->id, this, dispatchHandler, expireTime);
   }
 
   m_send_queue.push_back(cbufPtr);

@@ -26,6 +26,13 @@ using namespace Hypertable;
 atomic_t FileBlockCache::ms_next_file_id = ATOMIC_INIT(0);
 
 
+FileBlockCache::~FileBlockCache() {
+  for (BlockMapT::iterator iter = m_block_map.begin(); iter != m_block_map.end(); iter++) {
+    delete [] (*iter).second->block;
+    delete (*iter).second;
+  }
+}
+
 bool FileBlockCache::checkout(int fileId, uint32_t offset, uint8_t **blockp, uint32_t *lengthp) {
   boost::mutex::scoped_lock lock(m_mutex);
   CacheKeyT key;

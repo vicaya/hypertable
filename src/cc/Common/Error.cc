@@ -92,6 +92,7 @@ namespace {
     { Error::RANGESERVER_INVALID_COLUMNFAMILY, "RANGE SERVER invalid column family" },
     { Error::RANGESERVER_TRUNCATED_COMMIT_LOG, "RANGE SERVER truncated commit log" },
     { Error::RANGESERVER_NO_METADATA_FOR_RANGE, "RANGE SERVER no metadata for range" },
+    { Error::RANGESERVER_SHUTTING_DOWN,         "RANGE SERVER shutting down" },
     { Error::HQL_BAD_LOAD_FILE_FORMAT,         "HQL bad load file format" },
     { 0, 0 }
   };
@@ -171,6 +172,7 @@ const int Error::RANGESERVER_SCHEMA_PARSE_ERROR;
 const int Error::RANGESERVER_SCHEMA_INVALID_CFID;
 const int Error::RANGESERVER_TRUNCATED_COMMIT_LOG;
 const int Error::RANGESERVER_NO_METADATA_FOR_RANGE;
+const int Error::RANGESERVER_SHUTTING_DOWN;
 
 const int Error::HQL_BAD_LOAD_FILE_FORMAT;
 

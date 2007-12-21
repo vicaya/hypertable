@@ -97,10 +97,10 @@ bool IOHandlerAccept::handle_incoming_connection() {
   DispatchHandlerPtr dhp;
   m_handler_factory_ptr->get_instance(dhp);
 
-  dataHandler = new IOHandlerData(sd, addr, dhp, m_handler_map);
+  dataHandler = new IOHandlerData(sd, addr, dhp);
 
   IOHandlerPtr handlerPtr( dataHandler );
-  m_handler_map.insert_handler(dataHandler);
+  m_handler_map_ptr->insert_handler(dataHandler);
   dataHandler->start_polling();
 
   deliver_event( new Event(Event::CONNECTION_ESTABLISHED, dataHandler->connection_id(), addr, Error::OK) );

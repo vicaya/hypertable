@@ -96,11 +96,7 @@ namespace Hypertable {
   private:
 
     void initialize();
-
     int process_metadata_scanblock(ScanBlock &scan_block);
-
-    const char *build_metadata_start_row_key(char *buf, const char *format, uint32_t table_id, const char *row_key);
-    const char *build_metadata_end_row_key(char *buf, const char *format, uint32_t table_id);
     int read_root_location();
 
     ConnectionManagerPtr   m_conn_manager_ptr;

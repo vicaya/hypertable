@@ -22,6 +22,8 @@
 #ifndef HYPERTABLE_REACTORFACTORY_H
 #define HYPERTABLE_REACTORFACTORY_H
 
+#include <boost/thread/thread.hpp>
+
 extern "C" {
 #include <stdint.h>
 }
@@ -51,17 +53,23 @@ namespace Hypertable {
      */
     static void initialize(uint16_t reactor_count);
 
+    /** This method shuts down the reactors
+     */
+    static void destroy();
+
     /** This method returns the 'next' reactor.  It returns pointers to reactors
      * in round-robin fashion and is used by the Comm subsystem to evenly distribute
      * descriptors across all of the reactors.
      */
-    static Reactor *get_reactor() {
+    static void get_reactor(ReactorPtr &reactor_ptr) {
       assert(ms_reactors.size() > 0);
-      return ms_reactors[atomic_inc_return(&ms_next_reactor) % ms_reactors.size()];
+      reactor_ptr = ms_reactors[atomic_inc_return(&ms_next_reactor) % ms_reactors.size()];
     }
 
     /** vector of reactors */
-    static vector<Reactor *> ms_reactors;
+    static vector<ReactorPtr> ms_reactors;
+
+    static boost::thread_group ms_threads;
 
   private:
 

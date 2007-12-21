@@ -51,14 +51,14 @@ using namespace Hypertable;
 /**
  *
  */
-ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &appQueuePtr, RangeServerPtr rangeServerPtr, MasterClientPtr &masterClientPtr) : m_comm(comm), m_app_queue_ptr(appQueuePtr), m_range_server_ptr(rangeServerPtr), m_master_client_ptr(masterClientPtr) {
+ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &appQueuePtr, RangeServerPtr rangeServerPtr, MasterClientPtr &masterClientPtr) : m_comm(comm), m_app_queue_ptr(appQueuePtr), m_range_server_ptr(rangeServerPtr), m_master_client_ptr(masterClientPtr), m_shutdown(false) {
   return;
 }
 
 /**
  *
  */
-ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &appQueuePtr, RangeServerPtr rangeServerPtr) : m_comm(comm), m_app_queue_ptr(appQueuePtr), m_range_server_ptr(rangeServerPtr) {
+ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &appQueuePtr, RangeServerPtr rangeServerPtr) : m_comm(comm), m_app_queue_ptr(appQueuePtr), m_range_server_ptr(rangeServerPtr), m_shutdown(false) {
   return;
 }
 
@@ -68,6 +68,9 @@ ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &appQueuePt
  */
 void ConnectionHandler::handle(EventPtr &eventPtr) {
   short command = -1;
+
+  if (m_shutdown)
+    return;
 
   if (eventPtr->type == Event::MESSAGE) {
     ApplicationHandler *requestHandler = 0;
@@ -107,12 +110,18 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
 	requestHandler = new RequestHandlerStatus(m_comm, m_range_server_ptr.get(), eventPtr);
 	break;
       case RangeServerProtocol::COMMAND_SHUTDOWN:
+	m_shutdown = true;
+	LOG_INFO("Executing SHUTDOWN command.");
 	{
 	  ResponseCallback cb(m_comm, eventPtr);
 	  cb.response_ok();
 	}
-	poll(0, 0, 2000);
-	exit(0);
+	m_app_queue_ptr->shutdown();
+	m_app_queue_ptr->join();
+	m_app_queue_ptr = 0;
+	m_range_server_ptr = 0;
+	m_master_client_ptr = 0;
+	return;
       case RangeServerProtocol::COMMAND_DUMP_STATS:
 	requestHandler = new RequestHandlerDumpStats(m_comm, m_range_server_ptr.get(), eventPtr);
 	break;

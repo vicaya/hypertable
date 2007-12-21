@@ -71,7 +71,7 @@ while [ "$1" != "${1##[-+]}" ]; do
 	    shift
 	    ;;
 	--valgrind-range-server)
-	    VALGRIND_RANGESERVER="valgrind -v --log-file=vg "
+	    VALGRIND_RANGESERVER="valgrind -v --log-file=vg --leak-check=full "
 	    shift
 	    ;;
 	--valgrind-master)

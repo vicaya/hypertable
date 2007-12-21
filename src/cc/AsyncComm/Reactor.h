@@ -26,13 +26,15 @@
 
 #include <boost/thread/thread.hpp>
 
+#include "Common/ReferenceCount.h"
+
 #include "PollTimeout.h"
 #include "RequestCache.h"
 #include "Timer.h"
 
 namespace Hypertable {
 
-  class Reactor {
+  class Reactor : public ReferenceCount {
 
     friend class ReactorFactory;
 
@@ -42,6 +44,9 @@ namespace Hypertable {
     static const int WRITE_READY;
 
     Reactor();
+    ~Reactor() {
+      poll_loop_interrupt();	
+    }
 
     void operator()();
 
@@ -89,13 +94,11 @@ namespace Hypertable {
     int kQueue;
 #endif
 
-  protected:
-
     void poll_loop_interrupt();
     void poll_loop_continue();
 
+  protected:
     boost::mutex    m_mutex;
-    boost::thread   *threadPtr;
     RequestCache    m_request_cache;
     std::priority_queue<TimerT, std::vector<TimerT>, ltTimer> m_timer_heap;
     int             m_interrupt_sd;
@@ -103,6 +106,8 @@ namespace Hypertable {
     boost::xtime    m_next_wakeup;
     set<IOHandler *> m_removed_handlers;
   };
+  typedef boost::intrusive_ptr<Reactor> ReactorPtr;
+
 
 }
 

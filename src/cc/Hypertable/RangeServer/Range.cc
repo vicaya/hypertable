@@ -88,6 +88,8 @@ Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, S
  */
 Range::~Range() {
   Free(m_identifier);
+  for (size_t i=0; i<m_access_group_vector.size(); i++)
+    delete m_access_group_vector[i];
 }
 
 
