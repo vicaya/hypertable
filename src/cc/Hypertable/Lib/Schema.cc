@@ -62,6 +62,14 @@ Schema::Schema(bool readIds) : m_error_string(), m_next_column_id(0), m_access_g
 }
 
 
+Schema::~Schema() {
+  for (list<AccessGroup *>::const_iterator agiter = m_access_groups.begin(); agiter != m_access_groups.end(); agiter++)
+    delete *agiter;
+  for (ColumnFamilyMapT::const_iterator iter = m_column_family_map.begin(); iter != m_column_family_map.end(); iter++)
+    delete (*iter).second;
+}
+
+
 Schema *Schema::new_instance(const char *buf, int len, bool readIds) {
   boost::mutex::scoped_lock lock(ms_mutex);
   XML_Parser parser = XML_ParserCreate("US-ASCII");

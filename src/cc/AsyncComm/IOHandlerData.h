@@ -1,4 +1,4 @@
-/**
+/** -*- C++ -*-
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.

@@ -37,7 +37,6 @@
 #include "FillScanBlock.h"
 #include "Global.h"
 #include "HandlerFactory.h"
-#include "HyperspaceSessionHandler.h"
 #include "MaintenanceThread.h"
 #include "RangeServer.h"
 #include "ScanContext.h"
@@ -47,7 +46,6 @@ using namespace std;
 
 namespace {
   const int DEFAULT_SCANBUF_SIZE = 32768;
-  const int DEFAULT_WORKERS = 20;
   const int DEFAULT_PORT    = 38060;
 }
 
@@ -55,16 +53,15 @@ namespace {
 /**
  * Constructor
  */
-RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : m_mutex(), m_verbose(false), m_comm(comm) {
-  int workerCount;
+RangeServer::RangeServer(PropertiesPtr &propsPtr, ConnectionManagerPtr &conn_manager_ptr, ApplicationQueuePtr &app_queue_ptr, Hyperspace::SessionPtr &hyperspace_ptr) : m_mutex(), m_verbose(false), m_conn_manager_ptr(conn_manager_ptr), m_app_queue_ptr(app_queue_ptr), m_hyperspace_ptr(hyperspace_ptr) {
   int error;
   uint16_t port;
+  Comm *comm = conn_manager_ptr->get_comm();
 
   Global::rangeMaxBytes           = propsPtr->getPropertyInt64("Hypertable.RangeServer.Range.MaxBytes", 200000000LL);
   Global::localityGroupMaxFiles   = propsPtr->getPropertyInt("Hypertable.RangeServer.AccessGroup.MaxFiles", 10);
   Global::localityGroupMergeFiles = propsPtr->getPropertyInt("Hypertable.RangeServer.AccessGroup.MergeFiles", 4);
   Global::localityGroupMaxMemory  = propsPtr->getPropertyInt("Hypertable.RangeServer.AccessGroup.MaxMemory", 4000000);
-  workerCount                     = propsPtr->getPropertyInt("Hypertable.RangeServer.workers", DEFAULT_WORKERS);
   port                            = propsPtr->getPropertyInt("Hypertable.RangeServer.port", DEFAULT_PORT);
 
   uint64_t blockCacheMemory = propsPtr->getPropertyInt64("Hypertable.RangeServer.BlockCache.MaxMemory", 200000000LL);
@@ -81,22 +78,13 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : m_mutex(), m_ver
     cout << "Hypertable.RangeServer.BlockCache.MaxMemory=" << blockCacheMemory << endl;
     cout << "Hypertable.RangeServer.Range.MaxBytes=" << Global::rangeMaxBytes << endl;
     cout << "Hypertable.RangeServer.port=" << port << endl;
-    cout << "Hypertable.RangeServer.workers=" << workerCount << endl;
+    //cout << "Hypertable.RangeServer.workers=" << workerCount << endl;
   }
 
-  m_conn_manager_ptr = new ConnectionManager(comm);
-  m_app_queue_ptr = new ApplicationQueue(workerCount);
+  //m_conn_manager_ptr = new ConnectionManager(comm);
+  //m_app_queue_ptr = new ApplicationQueue(workerCount);
 
   Global::protocol = new Hypertable::RangeServerProtocol();
-
-  /**
-   * Connect to Hyperspace
-   */
-  m_hyperspace_ptr = new Hyperspace::Session(comm, propsPtr, new HyperspaceSessionHandler(this));
-  if (!m_hyperspace_ptr->wait_for_connection(30)) {
-    LOG_ERROR("Unable to connect to hyperspace, exiting...");
-    exit(1);
-  }
 
   DfsBroker::Client *dfsClient = new DfsBroker::Client(m_conn_manager_ptr, propsPtr);
 
@@ -173,17 +161,12 @@ RangeServer::RangeServer(Comm *comm, PropertiesPtr &propsPtr) : m_mutex(), m_ver
       exit(1);
     }
   }
-
-  /**
-   * Open METADATA table
-   */
-  Global::metadata_table_ptr = new Table(m_conn_manager_ptr, m_hyperspace_ptr, "METADATA");
-
+ 
   /**
    * Create Master client
    */
   m_master_client_ptr = new MasterClient(m_conn_manager_ptr, m_hyperspace_ptr, 30, m_app_queue_ptr);
-  m_master_connection_handler = new ConnectionHandler(m_comm, m_app_queue_ptr, this, m_master_client_ptr);
+  m_master_connection_handler = new ConnectionHandler(comm, m_app_queue_ptr, this, m_master_client_ptr);
   m_master_client_ptr->initiate_connection(m_master_connection_handler);
 
 }
@@ -202,7 +185,6 @@ RangeServer::~RangeServer() {
   Global::metadata_table_ptr = 0;
   m_master_client_ptr = 0;
   m_conn_manager_ptr = 0;
-  m_app_queue_ptr->shutdown();
   m_app_queue_ptr = 0;
 }
 

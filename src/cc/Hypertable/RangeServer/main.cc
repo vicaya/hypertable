@@ -36,10 +36,13 @@ extern "C" {
 #include "Common/System.h"
 #include "Common/Usage.h"
 
+#include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/Comm.h"
+#include "AsyncComm/ConnectionManager.h"
 
 #include "ConnectionHandler.h"
 #include "Global.h"
+#include "HyperspaceSessionHandler.h"
 #include "RangeServer.h"
 
 using namespace Hypertable;
@@ -62,6 +65,7 @@ namespace {
     "This program is the Hypertable range server.",
     (const char *)0
   };
+  const int DEFAULT_WORKERS = 20;
 }
 
 
@@ -69,12 +73,16 @@ namespace {
  * 
  */
 int main(int argc, char **argv) {
+  ConnectionManagerPtr conn_manager_ptr;
+  ApplicationQueuePtr app_queue_ptr;
+  Hyperspace::SessionPtr hyperspace_ptr;
+  CommPtr comm_ptr;
   string configFile = "";
   string pidFile = "";
   int reactorCount;
   char *logBroker = 0;
-  Comm *comm = 0;
   PropertiesPtr propsPtr;
+  int workerCount;
 
   System::initialize(argv[0]);
   Global::verbose = false;
@@ -119,7 +127,26 @@ int main(int argc, char **argv) {
 
   reactorCount = propsPtr->getPropertyInt("Hypertable.range_server.reactors", System::get_processor_count());
   ReactorFactory::initialize(reactorCount);
-  comm = new Comm();
+  comm_ptr = new Comm();
+
+  workerCount = propsPtr->getPropertyInt("Hypertable.RangeServer.workers", DEFAULT_WORKERS);
+
+  conn_manager_ptr = new ConnectionManager(comm_ptr.get());
+  app_queue_ptr = new ApplicationQueue(workerCount);
+
+  /**
+   * Connect to Hyperspace
+   */
+  hyperspace_ptr = new Hyperspace::Session(comm_ptr.get(), propsPtr, new HyperspaceSessionHandler());
+  if (!hyperspace_ptr->wait_for_connection(30)) {
+    LOG_ERROR("Unable to connect to hyperspace, exiting...");
+    exit(1);
+  }
+
+  /**
+   * Open METADATA table
+   */
+  Global::metadata_table_ptr = new Table(conn_manager_ptr, hyperspace_ptr, "METADATA");
 
   Global::range_metadata_max_bytes = propsPtr->getPropertyInt64("Hypertable.RangeServer.Range.MetadataMaxBytes", 0LL);
 
@@ -130,7 +157,7 @@ int main(int argc, char **argv) {
       cout << "Hypertable.RangeServer.Range.MetadataMaxBytes=" << Global::range_metadata_max_bytes << endl;
   }
 
-  RangeServerPtr range_server_ptr = new RangeServer(comm, propsPtr);
+  RangeServerPtr range_server_ptr = new RangeServer(propsPtr, conn_manager_ptr, app_queue_ptr, hyperspace_ptr);
 
   if (pidFile != "") {
     fstream filestr (pidFile.c_str(), fstream::out);
@@ -138,14 +165,13 @@ int main(int argc, char **argv) {
     filestr.close();
   }
 
-  ApplicationQueuePtr app_queue_ptr = range_server_ptr->get_application_queue_ptr();
-
   app_queue_ptr->join();
+
+  Global::metadata_table_ptr = 0;
 
   ReactorFactory::destroy();
 
   LOG_ERROR("Exiting RangeServer.");
 
-  delete comm;
   return 0;
 }

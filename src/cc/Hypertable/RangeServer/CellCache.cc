@@ -118,9 +118,6 @@ CellListScanner *CellCache::create_scanner(ScanContextPtr &scanContextPtr) {
 CellCache *CellCache::slice_copy(uint64_t timestamp) {
   CellCache *cache = new CellCache();
   Key keyComps;
-  ByteString32T *key;
-  ByteString32T *value;
-  size_t kvLen;
 
   for (CellMapT::iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++) {
 
@@ -129,22 +126,9 @@ CellCache *CellCache::slice_copy(uint64_t timestamp) {
       continue;
     }
 
-    if (keyComps.timestamp > timestamp) {
-      kvLen = (*iter).first->len + (*iter).second->len + (2*sizeof(int32_t));
-      key = (ByteString32T *) new uint8_t [ kvLen ];
-      memcpy(key, (*iter).first, kvLen);
-      value = (ByteString32T *)(key->data + key->len);
-      cache->add(key, value);
-      /**
-      if (keyComps.timestamp == timestamp+1)
-	cout << "drj (2) BOUNDARY row-key=" << keyComps.row << " qualifier=" << keyComps.column_qualifier << endl << flush;
-      */
-    }
-    /*
-    else if (keyComps.timestamp == timestamp) {
-      cout << "drj BOUNDARY row-key=" << keyComps.row << " qualifier=" << keyComps.column_qualifier << endl << flush;
-    }
-    */
+    if (keyComps.timestamp > timestamp)
+      cache->add((*iter).first, (*iter).second);
+
   }
 
   return cache;

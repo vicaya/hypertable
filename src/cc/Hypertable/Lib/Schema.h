@@ -61,6 +61,7 @@ namespace Hypertable {
     };
 
     Schema(bool readIds=false);
+    ~Schema();
 
     static Schema *new_instance(const char *buf, int len, bool readIds=false);
     friend Schema *new_instance(const char *buf, int len, bool readIds=false);

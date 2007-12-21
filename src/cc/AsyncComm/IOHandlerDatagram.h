@@ -1,4 +1,4 @@
-/**
+/** -*- C++ -*-
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
@@ -47,6 +47,8 @@ namespace Hypertable {
     IOHandlerDatagram(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp) : IOHandler(sd, addr, dhp), m_send_queue() {
       m_message = new uint8_t [ 65536 ];
     }
+
+    virtual ~IOHandlerDatagram() { delete [] m_message; }
 
     int send_message(struct sockaddr_in &addr, CommBufPtr &cbufPtr);
 

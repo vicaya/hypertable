@@ -47,7 +47,7 @@ namespace Hypertable {
 
   class RangeServer : public ReferenceCount {
   public:
-    RangeServer(Comm *comm, PropertiesPtr &propsPtr);
+    RangeServer(PropertiesPtr &propsPtr, ConnectionManagerPtr &conn_manager_ptr, ApplicationQueuePtr &app_queue_ptr, Hyperspace::SessionPtr &hyperspace_ptr);
     virtual ~RangeServer();
 
     void compact(ResponseCallback *cb, TableIdentifierT *table, RangeT *range, uint8_t compaction_type);
@@ -76,15 +76,15 @@ namespace Hypertable {
     boost::mutex           m_mutex;
     bool                   m_verbose;
     Comm                  *m_comm;
-    Hyperspace::SessionPtr m_hyperspace_ptr;
     TableInfoMapT          m_table_info_map;
-    ApplicationQueuePtr    m_app_queue_ptr;
     ConnectionManagerPtr   m_conn_manager_ptr;
+    ApplicationQueuePtr    m_app_queue_ptr;
     uint64_t               m_existence_file_handle;
     struct LockSequencerT  m_existence_file_sequencer;
     std::string            m_location;
     ConnectionHandler     *m_master_connection_handler;
     MasterClientPtr        m_master_client_ptr;
+    Hyperspace::SessionPtr m_hyperspace_ptr;
   };
   typedef boost::intrusive_ptr<RangeServer> RangeServerPtr;
   

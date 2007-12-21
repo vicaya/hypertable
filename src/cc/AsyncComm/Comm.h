@@ -23,13 +23,14 @@
 
 #include <string>
 
-#include <boost/shared_ptr.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/xtime.hpp>
 
 extern "C" {
 #include <stdint.h>
 }
+
+#include "Common/ReferenceCount.h"
 
 #include "DispatchHandler.h"
 #include "CommBuf.h"
@@ -47,7 +48,7 @@ namespace Hypertable {
    * prior to constructing this class in order to create the system-wide
    * I/O reactor threads.
    */
-  class Comm {
+  class Comm : public ReferenceCount {
 
   public:
 
@@ -247,12 +248,11 @@ namespace Hypertable {
 
     static atomic_t ms_next_request_id;
 
-    boost::mutex  m_mutex;
+    boost::mutex   m_mutex;
     HandlerMapPtr  m_handler_map_ptr;
     ReactorPtr     m_timer_reactor_ptr;
   };
-
-  typedef boost::shared_ptr<Comm> CommPtr;
+  typedef boost::intrusive_ptr<Comm> CommPtr;
 
 }
 
