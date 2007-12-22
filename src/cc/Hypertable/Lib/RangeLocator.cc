@@ -347,7 +347,7 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
 	    return Error::INVALID_METADATA;
 	  }
 	  if (m_conn_manager_ptr)
-	    m_conn_manager_ptr->add(addr, 30, "RangeServer");
+	    m_conn_manager_ptr->add(addr, 300, "RangeServer");
 
 	  m_cache.insert(table_id, range_loc_info);
 	  //cout << "(1) cache insert table=" << table_id << " start=" << range_loc_info.start_row << " end=" << range_loc_info.end_row << " loc=" << range_loc_info.location << endl;
