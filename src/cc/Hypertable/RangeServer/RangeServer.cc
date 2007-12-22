@@ -110,7 +110,7 @@ RangeServer::RangeServer(PropertiesPtr &propsPtr, ConnectionManagerPtr &conn_man
     struct sockaddr_in addr;
     if (logHost != 0) {
       InetAddr::initialize(&addr, logHost, logPort);
-      dfsClient = new DfsBroker::Client(m_conn_manager_ptr, addr, 30);
+      dfsClient = new DfsBroker::Client(m_conn_manager_ptr, addr, 600);
       if (!dfsClient->wait_for_connection(30)) {
 	LOG_ERROR("Unable to connect to DFS Broker, exiting...");
 	exit(1);
@@ -165,7 +165,7 @@ RangeServer::RangeServer(PropertiesPtr &propsPtr, ConnectionManagerPtr &conn_man
   /**
    * Create Master client
    */
-  m_master_client_ptr = new MasterClient(m_conn_manager_ptr, m_hyperspace_ptr, 30, m_app_queue_ptr);
+  m_master_client_ptr = new MasterClient(m_conn_manager_ptr, m_hyperspace_ptr, 300, m_app_queue_ptr);
   m_master_connection_handler = new ConnectionHandler(comm, m_app_queue_ptr, this, m_master_client_ptr);
   m_master_client_ptr->initiate_connection(m_master_connection_handler);
 

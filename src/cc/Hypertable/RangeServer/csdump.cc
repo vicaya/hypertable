@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
   comm = new Comm();
   connManagerPtr = new ConnectionManager(comm);
 
-  client = new DfsBroker::Client(connManagerPtr, addr, 20);
+  client = new DfsBroker::Client(connManagerPtr, addr, 600);
   if (!client->wait_for_connection(15)) {
     cerr << "error: timed out waiting for DFS broker" << endl;
     exit(1);
