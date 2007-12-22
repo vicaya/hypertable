@@ -212,7 +212,7 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
   if (table->id == 0)
     meta_keys.build_keys("%d:", 0, row_key);
   else
-    meta_keys.build_keys("%d:", table->id, row_key);
+    meta_keys.build_keys("0:%d:", table->id, row_key);
 
 
   /**
