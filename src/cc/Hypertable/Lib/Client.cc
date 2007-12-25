@@ -56,7 +56,7 @@ Client::Client(std::string configFile) {
 
   m_app_queue_ptr = new ApplicationQueue(1);
 
-  master_timeout = m_props_ptr->getPropertyInt("Hypertable.Master.Client.timeout", 180);
+  master_timeout = m_props_ptr->getPropertyInt("Hypertable.Master.Client.Timeout", 180);
 
   m_master_client_ptr = new MasterClient(m_conn_manager_ptr, m_hyperspace_ptr, master_timeout, m_app_queue_ptr);
   if (m_master_client_ptr->initiate_connection(0) != Error::OK) {
@@ -80,7 +80,7 @@ int Client::create_table(std::string name, std::string schema) {
 int Client::open_table(std::string name, TablePtr &tablePtr) {
   Table *table;
   try {
-    table = new Table(m_conn_manager_ptr, m_hyperspace_ptr, name);
+    table = new Table(m_props_ptr, m_conn_manager_ptr, m_hyperspace_ptr, name);
   }
   catch (Exception &e) {
     LOG_VA_ERROR("Problem opening table '%s' - %s", name.c_str(), e.what());

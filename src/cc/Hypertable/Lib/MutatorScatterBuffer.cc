@@ -18,10 +18,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include "Defaults.h"
 #include "Key.h"
 #include "KeySpec.h"
 #include "MutatorDispatchHandler.h"
 #include "MutatorScatterBuffer.h"
+
+using namespace Hypertable;
 
 namespace {
   const uint32_t MAX_SEND_BUFFER_SIZE = 1000000;
@@ -31,7 +34,14 @@ namespace {
 /**
  *
  */
-MutatorScatterBuffer::MutatorScatterBuffer(Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, 300), m_table_name(table_identifier->name), m_full(false) {
+MutatorScatterBuffer::MutatorScatterBuffer(PropertiesPtr &props_ptr, Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT), m_table_name(table_identifier->name), m_full(false) {
+  int client_timeout;
+
+  if ((client_timeout = props_ptr->getPropertyInt("Hypertable.RangeServer.Client.Timeout", 0)) != 0)
+    m_range_server.set_timeout(client_timeout);
+  else if ((client_timeout = props_ptr->getPropertyInt("Hypertable.Connection.Timeout", 0)) != 0)
+    m_range_server.set_timeout(client_timeout);
+  
   // copy TableIdentifierT
   memcpy(&m_table_identifier, table_identifier, sizeof(TableIdentifierT));
   m_table_identifier.name = m_table_name.c_str();
@@ -202,7 +212,7 @@ MutatorScatterBuffer *MutatorScatterBuffer::create_redo_buffer() {
   ByteString32T *low_key, *key, *value;
   int count = 0;
 
-  MutatorScatterBuffer *redo_buffer = new MutatorScatterBuffer(m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+  MutatorScatterBuffer *redo_buffer = new MutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
 
   for (UpdateBufferMapT::const_iterator iter = m_buffer_map.begin(); iter != m_buffer_map.end(); iter++) {
     update_buffer_ptr = (*iter).second;

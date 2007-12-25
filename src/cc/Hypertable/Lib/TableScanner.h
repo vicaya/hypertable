@@ -21,6 +21,7 @@
 #ifndef HYPERTABLE_TABLESCANNER_H
 #define HYPERTABLE_TABLESCANNER_H
 
+#include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
 
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
@@ -37,7 +38,7 @@ namespace Hypertable {
   class TableScanner : public ReferenceCount {
 
   public:
-    TableScanner(Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpecificationT &scan_spec);
+    TableScanner(PropertiesPtr &props_ptr, Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpecificationT &scan_spec);
     virtual ~TableScanner();
 
     bool next(CellT &cell);

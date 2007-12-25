@@ -21,6 +21,7 @@
 #ifndef HYPERTABLE_TABLE_H
 #define HYPERTABLE_TABLE_H
 
+#include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
 
 #include "Mutator.h"
@@ -42,8 +43,8 @@ namespace Hypertable {
   class Table : public ReferenceCount {
 
   public:
-    Table(ConnectionManagerPtr &conn_manager_ptr, Hyperspace::SessionPtr &hyperspace_ptr, std::string name);
-    Table(Comm *comm, Hyperspace::SessionPtr &hyperspace_ptr, std::string name);
+    Table(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, Hyperspace::SessionPtr &hyperspace_ptr, std::string name);
+    Table(PropertiesPtr &props_ptr, Comm *comm, Hyperspace::SessionPtr &hyperspace_ptr, std::string name);
     virtual ~Table();
 
     int create_mutator(MutatorPtr &mutatorPtr);
@@ -57,6 +58,7 @@ namespace Hypertable {
 
     void initialize(std::string &name);
 
+    PropertiesPtr          m_props_ptr;
     Comm                  *m_comm;
     ConnectionManagerPtr   m_conn_manager_ptr;
     Hyperspace::SessionPtr m_hyperspace_ptr;

@@ -18,6 +18,7 @@
 
 set ( Hypertable_SRCS
 Client.cc
+Defaults.cc
 EventHandlerMasterChange.cc
 HqlCommandInterpreter.cc
 HqlHelpText.cc

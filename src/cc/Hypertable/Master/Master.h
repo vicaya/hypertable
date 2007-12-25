@@ -52,7 +52,7 @@ namespace Hypertable {
   class Master : public ReferenceCount {
   public:
 
-    Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, ApplicationQueuePtr &appQueuePtr);
+    Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &props_ptr, ApplicationQueuePtr &appQueuePtr);
     ~Master();
 
     void create_table(ResponseCallback *cb, const char *tableName, const char *schemaString);

@@ -46,6 +46,12 @@ namespace Hypertable {
     RangeServerClient(Comm *comm, time_t timeout);
     ~RangeServerClient();
 
+    /** Sets the client connection timeout
+     *
+     * @param timeout timeout value in seconds
+     */
+    void set_timeout(time_t timeout) { m_timeout = timeout; }
+
     /** Issues a "load range" request asynchronously.
      *
      * @param addr remote address of RangeServer connection

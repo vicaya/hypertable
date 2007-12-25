@@ -30,6 +30,7 @@ extern "C" {
 
 #include "Hyperspace/Session.h"
 
+#include "Defaults.h"
 #include "Key.h"
 #include "RootFileHandler.h"
 #include "RangeLocator.h"
@@ -43,7 +44,14 @@ namespace {
 /**
  * 
  */
-RangeLocator::RangeLocator(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr) : m_conn_manager_ptr(connManagerPtr), m_hyperspace_ptr(hyperspacePtr), m_cache(1000), m_root_stale(true), m_range_server(connManagerPtr->get_comm(), 300) {
+RangeLocator::RangeLocator(PropertiesPtr &props_ptr, ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr) : m_conn_manager_ptr(connManagerPtr), m_hyperspace_ptr(hyperspacePtr), m_cache(1000), m_root_stale(true), m_range_server(connManagerPtr->get_comm(), HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT) {
+  time_t client_timeout;
+
+  if ((client_timeout = props_ptr->getPropertyInt("Hypertable.RangeServer.Client.Timeout", 0)) != 0)
+    m_range_server.set_timeout(client_timeout);
+  else if ((client_timeout = props_ptr->getPropertyInt("Hypertable.Connection.Timeout", 0)) != 0)
+    m_range_server.set_timeout(client_timeout);
+
   initialize();
 }
 
@@ -51,7 +59,14 @@ RangeLocator::RangeLocator(ConnectionManagerPtr &connManagerPtr, Hyperspace::Ses
 /**
  * 
  */
-RangeLocator::RangeLocator(Comm *comm, Hyperspace::SessionPtr &hyperspacePtr) : m_conn_manager_ptr(0), m_hyperspace_ptr(hyperspacePtr), m_cache(1000), m_root_stale(true), m_range_server(comm, 30) {
+RangeLocator::RangeLocator(PropertiesPtr &props_ptr, Comm *comm, Hyperspace::SessionPtr &hyperspacePtr) : m_conn_manager_ptr(0), m_hyperspace_ptr(hyperspacePtr), m_cache(1000), m_root_stale(true), m_range_server(comm, HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT) {
+  time_t client_timeout;
+
+  if ((client_timeout = props_ptr->getPropertyInt("Hypertable.RangeServer.Client.Timeout", 0)) != 0)
+    m_range_server.set_timeout(client_timeout);
+  else if ((client_timeout = props_ptr->getPropertyInt("Hypertable.Connection.Timeout", 0)) != 0)
+    m_range_server.set_timeout(client_timeout);
+
   initialize();
 }
 
@@ -62,7 +77,7 @@ void RangeLocator::initialize() {
   HandleCallbackPtr nullHandleCallback;
   uint64_t handle;
   Schema *schema = 0;
-  
+
   m_root_handler_ptr = new RootFileHandler(this);
 
   if ((error = m_hyperspace_ptr->open("/hypertable/root", OPEN_FLAG_READ, m_root_handler_ptr, &m_root_file_handle)) != Error::OK) {

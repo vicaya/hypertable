@@ -47,6 +47,12 @@ namespace Hypertable {
     MasterClient(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr, time_t timeout, ApplicationQueuePtr &appQueuePtr);
     ~MasterClient();
 
+    /** Sets the client connection timeout
+     *
+     * @param timeout timeout value in seconds
+     */
+    void set_timeout(time_t timeout) { m_timeout = timeout; }
+
     int initiate_connection(DispatchHandlerPtr dispatchHandlerPtr);
 
     bool wait_for_connection(long maxWaitSecs);

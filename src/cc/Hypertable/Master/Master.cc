@@ -50,21 +50,21 @@ using namespace std;
 
 namespace Hypertable {
 
-Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, ApplicationQueuePtr &appQueuePtr) : m_conn_manager_ptr(connManagerPtr), m_app_queue_ptr(appQueuePtr), m_verbose(false), m_dfs_client(0), m_initialized(false) {
+Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &props_ptr, ApplicationQueuePtr &appQueuePtr) : m_conn_manager_ptr(connManagerPtr), m_app_queue_ptr(appQueuePtr), m_verbose(false), m_dfs_client(0), m_initialized(false) {
   int error;
   Client *dfsClient;
   uint16_t port;
 
-  m_hyperspace_ptr = new Hyperspace::Session(connManagerPtr->get_comm(), propsPtr, &m_hyperspace_session_handler);
+  m_hyperspace_ptr = new Hyperspace::Session(connManagerPtr->get_comm(), props_ptr, &m_hyperspace_session_handler);
 
   if (!m_hyperspace_ptr->wait_for_connection(30)) {
     LOG_ERROR("Unable to connect to hyperspace, exiting...");
     exit(1);
   }
 
-  m_verbose = propsPtr->getPropertyBool("verbose", false);
+  m_verbose = props_ptr->getPropertyBool("verbose", false);
 
-  if ((port = (uint16_t)propsPtr->getPropertyInt("Hypertable.Master.port", 0)) == 0) {
+  if ((port = (uint16_t)props_ptr->getPropertyInt("Hypertable.Master.port", 0)) == 0) {
     LOG_ERROR("Hypertable.Master.port property not found in config file, exiting...");
     exit(1);
   }
@@ -72,12 +72,12 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, Ap
   /**
    * Create DFS Client connection
    */
-  dfsClient = new Client(connManagerPtr, propsPtr);
+  dfsClient = new Client(connManagerPtr, props_ptr);
 
   if (m_verbose) {
-    cout << "DfsBroker.host=" << propsPtr->getProperty("DfsBroker.host", "") << endl;
-    cout << "DfsBroker.port=" << propsPtr->getProperty("DfsBroker.port", "") << endl;
-    cout << "DfsBroker.timeout=" << propsPtr->getProperty("DfsBroker.timeout", "") << endl;
+    cout << "DfsBroker.host=" << props_ptr->getProperty("DfsBroker.host", "") << endl;
+    cout << "DfsBroker.port=" << props_ptr->getProperty("DfsBroker.port", "") << endl;
+    cout << "DfsBroker.timeout=" << props_ptr->getProperty("DfsBroker.timeout", "") << endl;
   }
 
   if (!dfsClient->wait_for_connection(30)) {
@@ -154,7 +154,7 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, Ap
   /**
    * Open METADATA table
    */
-  m_metadata_table_ptr = new Table(m_conn_manager_ptr->get_comm(), m_hyperspace_ptr, "METADATA");
+  m_metadata_table_ptr = new Table(props_ptr, m_conn_manager_ptr->get_comm(), m_hyperspace_ptr, "METADATA");
 
 }
 

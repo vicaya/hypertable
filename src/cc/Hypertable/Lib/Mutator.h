@@ -23,6 +23,7 @@
 
 #include "AsyncComm/ConnectionManager.h"
 
+#include "Common/Properties.h"
 #include "Common/StringExt.h"
 #include "Common/ReferenceCount.h"
 
@@ -39,7 +40,7 @@ namespace Hypertable {
   class Mutator : public ReferenceCount {
 
   public:
-    Mutator(Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
+    Mutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
     virtual ~Mutator() { return; }
 
     void set(uint64_t timestamp, KeySpec &key, uint8_t *value, uint32_t value_len);
@@ -61,6 +62,7 @@ namespace Hypertable {
 
     void sanity_check_key(KeySpec &key);
 
+    PropertiesPtr        m_props_ptr;
     Comm                *m_comm;
     SchemaPtr            m_schema_ptr;
     RangeLocatorPtr      m_range_locator_ptr;

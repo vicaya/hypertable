@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
   /**
    * Open METADATA table
    */
-  Global::metadata_table_ptr = new Table(conn_manager_ptr, hyperspace_ptr, "METADATA");
+  Global::metadata_table_ptr = new Table(props_ptr, conn_manager_ptr, hyperspace_ptr, "METADATA");
 
   Global::range_metadata_max_bytes = props_ptr->getPropertyInt64("Hypertable.RangeServer.Range.MetadataMaxBytes", 0LL);
 

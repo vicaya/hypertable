@@ -51,19 +51,21 @@ namespace Hypertable {
     /** Constructor.  Loads the METADATA schema and the root range address from Hyperspace.
      * Installs a RootFileHandler to handle root range location changes.
      *
+     * @param props_ptr smart pointer to config properties object
      * @param connManagerPtr smart pointer to connection manager
      * @param hyperspacePtr smart pointer to Hyperspace session
      */
-    RangeLocator(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr);
+    RangeLocator(PropertiesPtr &props_ptr, ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr);
 
     /** Constructor.  Loads the METADATA schema and the root range address from Hyperspace.
      * Installs a RootFileHandler to handle root range location changes.  Does not
      * manager connections.
      *
+     * @param props_ptr smart pointer to config properties object
      * @param comm pointer to comm subsystem
      * @param hyperspacePtr smart pointer to Hyperspace session
      */
-    RangeLocator(Comm *comm, Hyperspace::SessionPtr &hyperspacePtr);
+    RangeLocator(PropertiesPtr &props_ptr, Comm *comm, Hyperspace::SessionPtr &hyperspacePtr);
 
     /** Destructor.  Closes the root file in Hyperspace */
     ~RangeLocator();
