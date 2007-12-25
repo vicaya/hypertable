@@ -29,7 +29,6 @@ extern "C" {
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
-#include "Common/Properties.h"
 #include "Common/System.h"
 
 #include "Client.h"
@@ -41,12 +40,14 @@ using namespace Hyperspace;
  *
  */
 Client::Client(std::string configFile) {
-  PropertiesPtr propsPtr( new Properties(configFile) );
+  time_t master_timeout;
+
+  m_props_ptr = new Properties(configFile);
 
   m_comm = new Comm();
   m_conn_manager_ptr = new ConnectionManager(m_comm);
 
-  m_hyperspace_ptr = new Hyperspace::Session(m_comm, propsPtr);
+  m_hyperspace_ptr = new Hyperspace::Session(m_comm, m_props_ptr);
   while (!m_hyperspace_ptr->wait_for_connection(2)) {
     cout << "Waiting for connection to Hyperspace..." << flush;
     poll(0, 0, 5000);
@@ -55,7 +56,9 @@ Client::Client(std::string configFile) {
 
   m_app_queue_ptr = new ApplicationQueue(1);
 
-  m_master_client_ptr = new MasterClient(m_conn_manager_ptr, m_hyperspace_ptr, 20, m_app_queue_ptr);
+  master_timeout = m_props_ptr->getPropertyInt("Hypertable.Master.Client.timeout", 180);
+
+  m_master_client_ptr = new MasterClient(m_conn_manager_ptr, m_hyperspace_ptr, master_timeout, m_app_queue_ptr);
   if (m_master_client_ptr->initiate_connection(0) != Error::OK) {
     LOG_ERROR("Unable to establish connection with Master, exiting...");
     exit(1);

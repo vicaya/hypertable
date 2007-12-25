@@ -23,6 +23,8 @@
 
 #include <string>
 
+#include "Common/Properties.h"
+
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/ConnectionManager.h"
 #include "Hyperspace/Session.h"
@@ -48,11 +50,11 @@ namespace Hypertable {
 
     HqlCommandInterpreter *create_hql_interpreter();
 
-    //Table OpenTable();
     //void DeleteTable();
     // String [] ListTables();
 
   private:
+    PropertiesPtr           m_props_ptr;
     Comm                   *m_comm;
     ConnectionManagerPtr    m_conn_manager_ptr;
     ApplicationQueuePtr     m_app_queue_ptr;

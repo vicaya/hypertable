@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
   string pidFile = "";
   int reactorCount;
   char *logBroker = 0;
-  PropertiesPtr propsPtr;
+  PropertiesPtr props_ptr;
   int workerCount;
 
   System::initialize(argv[0]);
@@ -110,9 +110,9 @@ int main(int argc, char **argv) {
   if (configFile == "")
     configFile = System::installDir + "/conf/hypertable.cfg";
 
-  propsPtr.reset( new Properties(configFile) );
+  props_ptr = new Properties(configFile);
   if (Global::verbose)
-    propsPtr->setProperty("verbose", "true");
+    props_ptr->setProperty("verbose", "true");
 
   if (logBroker != 0) {
     char *portStr = strchr(logBroker, ':');
@@ -121,15 +121,15 @@ int main(int argc, char **argv) {
       exit(1);
     }
     *portStr++ = 0;
-    propsPtr->setProperty("Hypertable.RangeServer.CommitLog.DfsBroker.host", logBroker);
-    propsPtr->setProperty("Hypertable.RangeServer.CommitLog.DfsBroker.port", portStr);
+    props_ptr->setProperty("Hypertable.RangeServer.CommitLog.DfsBroker.host", logBroker);
+    props_ptr->setProperty("Hypertable.RangeServer.CommitLog.DfsBroker.port", portStr);
   }
 
-  reactorCount = propsPtr->getPropertyInt("Hypertable.range_server.reactors", System::get_processor_count());
+  reactorCount = props_ptr->getPropertyInt("Hypertable.range_server.reactors", System::get_processor_count());
   ReactorFactory::initialize(reactorCount);
   comm_ptr = new Comm();
 
-  workerCount = propsPtr->getPropertyInt("Hypertable.RangeServer.workers", DEFAULT_WORKERS);
+  workerCount = props_ptr->getPropertyInt("Hypertable.RangeServer.workers", DEFAULT_WORKERS);
 
   conn_manager_ptr = new ConnectionManager(comm_ptr.get());
   app_queue_ptr = new ApplicationQueue(workerCount);
@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
   /**
    * Connect to Hyperspace
    */
-  hyperspace_ptr = new Hyperspace::Session(comm_ptr.get(), propsPtr, new HyperspaceSessionHandler());
+  hyperspace_ptr = new Hyperspace::Session(comm_ptr.get(), props_ptr, new HyperspaceSessionHandler());
   if (!hyperspace_ptr->wait_for_connection(30)) {
     LOG_ERROR("Unable to connect to hyperspace, exiting...");
     exit(1);
@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
    */
   Global::metadata_table_ptr = new Table(conn_manager_ptr, hyperspace_ptr, "METADATA");
 
-  Global::range_metadata_max_bytes = propsPtr->getPropertyInt64("Hypertable.RangeServer.Range.MetadataMaxBytes", 0LL);
+  Global::range_metadata_max_bytes = props_ptr->getPropertyInt64("Hypertable.RangeServer.Range.MetadataMaxBytes", 0LL);
 
   if (Global::verbose) {
     cout << "CPU count = " << System::get_processor_count() << endl;
@@ -157,7 +157,7 @@ int main(int argc, char **argv) {
       cout << "Hypertable.RangeServer.Range.MetadataMaxBytes=" << Global::range_metadata_max_bytes << endl;
   }
 
-  RangeServerPtr range_server_ptr = new RangeServer(propsPtr, conn_manager_ptr, app_queue_ptr, hyperspace_ptr);
+  RangeServerPtr range_server_ptr = new RangeServer(props_ptr, conn_manager_ptr, app_queue_ptr, hyperspace_ptr);
 
   if (pidFile != "") {
     fstream filestr (pidFile.c_str(), fstream::out);

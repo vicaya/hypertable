@@ -31,7 +31,7 @@ namespace {
 /**
  *
  */
-MutatorScatterBuffer::MutatorScatterBuffer(Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, 30), m_table_name(table_identifier->name), m_full(false) {
+MutatorScatterBuffer::MutatorScatterBuffer(Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, 300), m_table_name(table_identifier->name), m_full(false) {
   // copy TableIdentifierT
   memcpy(&m_table_identifier, table_identifier, sizeof(TableIdentifierT));
   m_table_identifier.name = m_table_name.c_str();

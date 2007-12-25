@@ -37,7 +37,7 @@ namespace {
 /**
  *
  */
-TableScanner::TableScanner(Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpecificationT &scan_spec) : m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, 30), m_table_name(table_identifier->name), m_started(false), m_eos(false), m_readahead(true), m_fetch_outstanding(false), m_rows_seen(0) {
+TableScanner::TableScanner(Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpecificationT &scan_spec) : m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, 300), m_table_name(table_identifier->name), m_started(false), m_eos(false), m_readahead(true), m_fetch_outstanding(false), m_rows_seen(0) {
   char *str;
 
   m_scan_spec.rowLimit = scan_spec.rowLimit;

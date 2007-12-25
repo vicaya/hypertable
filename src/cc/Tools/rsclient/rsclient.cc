@@ -88,7 +88,7 @@ namespace {
   /**
    *
    */
-  void BuildInetAddress(struct sockaddr_in &addr, PropertiesPtr &propsPtr, std::string &userSuppliedHost, uint16_t userSuppliedPort) {
+  void BuildInetAddress(struct sockaddr_in &addr, PropertiesPtr &props_ptr, std::string &userSuppliedHost, uint16_t userSuppliedPort) {
     std::string host;
     uint16_t port;
 
@@ -98,7 +98,7 @@ namespace {
       host = userSuppliedHost;
 
     if (userSuppliedPort == 0)
-      port = (uint16_t)propsPtr->getPropertyInt("Hypertable.RangeServer.port", 38060);
+      port = (uint16_t)props_ptr->getPropertyInt("Hypertable.RangeServer.port", 38060);
     else
       port = userSuppliedPort;
 
@@ -184,7 +184,7 @@ int main(int argc, char **argv) {
   vector<InteractiveCommand *>  commands;
   Comm *comm;
   ConnectionManager *connManager;
-  PropertiesPtr propsPtr;
+  PropertiesPtr props_ptr;
   CommandFetchScanblock *fetchScanblock;
   Hyperspace::SessionPtr hyperspace_ptr;
   RangeServerClientPtr range_server_ptr;
@@ -205,9 +205,9 @@ int main(int argc, char **argv) {
   if (configFile == "")
     configFile = System::installDir + "/conf/hypertable.cfg";
 
-  propsPtr.reset( new Properties(configFile) );
+  props_ptr = new Properties(configFile);
 
-  BuildInetAddress(addr, propsPtr, host, port);
+  BuildInetAddress(addr, props_ptr, host, port);
 
   read_history(history_file.c_str());
 
@@ -223,7 +223,7 @@ int main(int argc, char **argv) {
     cerr << "Timed out waiting for for connection to Range Server.  Exiting ..." << endl;
 
   // Connect to Hyperspace
-  hyperspace_ptr = new Hyperspace::Session(connManager->get_comm(), propsPtr, 0);
+  hyperspace_ptr = new Hyperspace::Session(connManager->get_comm(), props_ptr, 0);
   if (!hyperspace_ptr->wait_for_connection(30))
     exit(1);
 

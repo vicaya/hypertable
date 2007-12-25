@@ -38,7 +38,7 @@ namespace Hypertable {
   class CellCache : public CellList {
 
   public:
-    CellCache() : CellList(), m_mutex(), m_lock(m_mutex,false), m_memory_used(0) { return; }
+    CellCache() : CellList(), m_mutex(), m_memory_used(0) { return; }
     virtual ~CellCache();
 
     /**
@@ -64,8 +64,8 @@ namespace Hypertable {
      */
     virtual CellListScanner *create_scanner(ScanContextPtr &scanContextPtr);
 
-    void lock()   { m_lock.lock(); }
-    void unlock() { m_lock.unlock(); }
+    void lock()   { boost::detail::thread::lock_ops<boost::mutex>::lock(m_mutex); }
+    void unlock() { boost::detail::thread::lock_ops<boost::mutex>::unlock(m_mutex); }
 
     /**
      * Makes a copy of this CellCache, but only includes the key/value
@@ -93,7 +93,6 @@ namespace Hypertable {
     typedef std::map<const ByteString32T *, const ByteString32T *, ltByteString32> CellMapT;
 
     boost::mutex               m_mutex;
-    boost::mutex::scoped_lock  m_lock;
     CellMapT                   m_cell_map;
     uint64_t                   m_memory_used;
   };

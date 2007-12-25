@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
   string serverName = "";
   string hostName = "";
   int port = 0;
-  PropertiesPtr propsPtr;
+  PropertiesPtr props_ptr;
   struct sockaddr_in addr;
   const char *hostProperty = 0;
   const char *portProperty = 0;
@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
   if (configFile == "")
     configFile = System::installDir + "/conf/hypertable.cfg";
 
-  propsPtr.reset( new Properties(configFile) );
+  props_ptr = new Properties(configFile);
 
   if (serverName == "dfsbroker") {
     hostProperty = "DfsBroker.host";
@@ -148,14 +148,14 @@ int main(int argc, char **argv) {
 
   {
     if (hostName == "")
-      hostName = propsPtr->getProperty(hostProperty, "localhost");
+      hostName = props_ptr->getProperty(hostProperty, "localhost");
     else if (serverName != "rangeserver")
-      propsPtr->setProperty(hostProperty, hostName.c_str());
+      props_ptr->setProperty(hostProperty, hostName.c_str());
 
     if (portStr != 0)
-      propsPtr->setProperty(portProperty, portStr);
+      props_ptr->setProperty(portProperty, portStr);
 
-    port = propsPtr->getPropertyInt(portProperty, 0);
+    port = props_ptr->getPropertyInt(portProperty, 0);
     if (port == 0 || port < 1024 || port >= 65536) {
       LOG_VA_ERROR("%s not specified or out of range : %d", portProperty, port);
       return 1;
@@ -165,7 +165,7 @@ int main(int argc, char **argv) {
       goto abort;
   }
 
-  propsPtr->setProperty("silent", "true");
+  props_ptr->setProperty("silent", "true");
 
   comm = new Comm();
   connManagerPtr = new ConnectionManager(comm);
@@ -179,7 +179,7 @@ int main(int argc, char **argv) {
       goto abort;
   }
   else if (serverName == "hyperspace") {
-    hyperspacePtr = new Hyperspace::Session(connManagerPtr->get_comm(), propsPtr, 0);
+    hyperspacePtr = new Hyperspace::Session(connManagerPtr->get_comm(), props_ptr, 0);
     if (!hyperspacePtr->wait_for_connection(2))
       goto abort;
     if ((error = hyperspacePtr->status()) != Error::OK)
@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
   else if (serverName == "master") {
     MasterClientPtr  masterPtr;
 
-    hyperspacePtr = new Hyperspace::Session(connManagerPtr->get_comm(), propsPtr, 0);
+    hyperspacePtr = new Hyperspace::Session(connManagerPtr->get_comm(), props_ptr, 0);
 
     if (!hyperspacePtr->wait_for_connection(2))
       goto abort;

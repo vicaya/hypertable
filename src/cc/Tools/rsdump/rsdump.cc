@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
   string configFile = "";
   string hostName = "";
   int port = 0;
-  PropertiesPtr propsPtr;
+  PropertiesPtr props_ptr;
   struct sockaddr_in addr;
   const char *hostProperty = 0;
   const char *portProperty = 0;
@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
   if (configFile == "")
     configFile = System::installDir + "/conf/hypertable.cfg";
 
-  propsPtr.reset( new Properties(configFile) );
+  props_ptr = new Properties(configFile);
 
   if (hostName == "")
     hostName = "localhost";
@@ -115,12 +115,12 @@ int main(int argc, char **argv) {
 
   {
     if (hostName == "")
-      hostName = propsPtr->getProperty(hostProperty, "localhost");
+      hostName = props_ptr->getProperty(hostProperty, "localhost");
     
     if (portStr != 0)
-      propsPtr->setProperty(portProperty, portStr);
+      props_ptr->setProperty(portProperty, portStr);
 
-    port = propsPtr->getPropertyInt(portProperty, 0);
+    port = props_ptr->getPropertyInt(portProperty, 0);
     if (port == 0 || port < 1024 || port >= 65536) {
       LOG_VA_ERROR("%s not specified or out of range : %d", portProperty, port);
       return 1;
@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
       goto abort;
   }
 
-  propsPtr->setProperty("silent", "true");
+  props_ptr->setProperty("silent", "true");
 
   comm = new Comm();
   connManagerPtr = new ConnectionManager(comm);

@@ -25,11 +25,12 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "ReferenceCount.h"
 #include "StringExt.h"
 
 namespace Hypertable {
 
-  class Properties {
+  class Properties : public ReferenceCount {
 
   public:
 
@@ -66,8 +67,7 @@ namespace Hypertable {
 
     PropertyMapT  m_map;
   };
-
-  typedef boost::shared_ptr<Properties> PropertiesPtr;
+  typedef boost::intrusive_ptr<Properties> PropertiesPtr;
 
 }
 

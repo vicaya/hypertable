@@ -203,7 +203,7 @@ int main(int argc, char **argv, char **envp) {
   string configFile = "";
   vector<InteractiveCommand *>  commands;
   Comm *comm;
-  PropertiesPtr propsPtr;
+  PropertiesPtr props_ptr;
   Hyperspace::Session *session;
   SessionHandler sessionHandler;
   bool verbose = false;
@@ -239,14 +239,14 @@ int main(int argc, char **argv, char **envp) {
   if (notifier == 0)
     notifier = new Notifier();
 
-  propsPtr.reset( new Properties( configFile ) );
+  props_ptr = new Properties( configFile );
 
   if (verbose)
-    propsPtr->setProperty("verbose", "true");
+    props_ptr->setProperty("verbose", "true");
 
   comm = new Comm();
 
-  session = new Session(comm, propsPtr, &sessionHandler);
+  session = new Session(comm, props_ptr, &sessionHandler);
 
   if (!session->wait_for_connection(30)) {
     cerr << "Unable to establish session with Hyerspace, exiting..." << endl;

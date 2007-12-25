@@ -73,7 +73,7 @@ namespace {
 int main(int argc, char **argv) {
   string configFile = "";
   string pidFile = "";
-  PropertiesPtr propsPtr;
+  PropertiesPtr props_ptr;
   bool verbose = false;
   int reactorCount, workerCount;
   uint16_t port = 0;
@@ -108,14 +108,14 @@ int main(int argc, char **argv) {
     exit(0);
   }
 
-  propsPtr.reset( new Properties(configFile) );
+  props_ptr = new Properties(configFile);
   if (verbose)
-    propsPtr->setProperty("verbose", "true");
+    props_ptr->setProperty("verbose", "true");
 
   if (port == 0)
-    port         = propsPtr->getPropertyInt("DfsBroker.local.port",     DEFAULT_PORT);
-  reactorCount = propsPtr->getPropertyInt("DfsBroker.local.reactors", System::get_processor_count());
-  workerCount  = propsPtr->getPropertyInt("DfsBroker.local.workers",  DEFAULT_WORKERS);
+    port         = props_ptr->getPropertyInt("DfsBroker.local.port",     DEFAULT_PORT);
+  reactorCount = props_ptr->getPropertyInt("DfsBroker.local.reactors", System::get_processor_count());
+  workerCount  = props_ptr->getPropertyInt("DfsBroker.local.workers",  DEFAULT_WORKERS);
 
   ReactorFactory::initialize(reactorCount);
 
@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
 
   InetAddr::initialize(&listenAddr, INADDR_ANY, port);
 
-  brokerPtr = new LocalBroker(propsPtr);
+  brokerPtr = new LocalBroker(props_ptr);
   appQueuePtr = new ApplicationQueue(workerCount);
   ConnectionHandlerFactoryPtr chfPtr(new DfsBroker::ConnectionHandlerFactory(comm, appQueuePtr, brokerPtr));
   if ((error = comm->listen(listenAddr, chfPtr)) != Error::OK) {

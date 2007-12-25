@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
   Comm *comm;
   ConnectionManagerPtr connManagerPtr;
   DfsBroker::Client *client;
-  PropertiesPtr propsPtr;
+  PropertiesPtr props_ptr;
 
   System::initialize(argv[0]);
   ReactorFactory::initialize((uint16_t)System::get_processor_count());
@@ -118,12 +118,12 @@ int main(int argc, char **argv) {
   if (configFile == "")
     configFile = System::installDir + "/conf/hypertable.cfg";
 
-  propsPtr.reset( new Properties( configFile ) );
+  props_ptr = new Properties( configFile );
 
   comm = new Comm();
   connManagerPtr = new ConnectionManager(comm);
 
-  client = new DfsBroker::Client(connManagerPtr, propsPtr);
+  client = new DfsBroker::Client(connManagerPtr, props_ptr);
 
   if (!client->wait_for_connection(15)) {
     LOG_ERROR("Error:  Timed out waiting for DFS broker.");
