@@ -37,6 +37,7 @@
 
 #include "CommitLog.h"
 #include "FileBlockCache.h"
+#include "MemoryTracker.h"
 #include "ScannerMap.h"
 #include "TableInfo.h"
 
@@ -61,6 +62,7 @@ namespace Hypertable {
     static Hypertable::FileBlockCache *blockCache;
     static TablePtr       metadata_table_ptr;
     static uint64_t       range_metadata_max_bytes;
+    static Hypertable::MemoryTracker memory_tracker;
   };
 }
 

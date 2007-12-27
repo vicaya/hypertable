@@ -27,6 +27,7 @@
 
 #include "CellCache.h"
 #include "CellCacheScanner.h"
+#include "Global.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -36,6 +37,9 @@ CellCache::~CellCache() {
   for (CellMapT::iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++)
     delete [] (*iter).first;
   //cout << "DELETE CellCache" << endl;
+
+  Global::memory_tracker.remove_memory(m_memory_used);
+  Global::memory_tracker.remove_items(m_cell_map.size());
 }
 
 
@@ -43,19 +47,19 @@ CellCache::~CellCache() {
  * 
  */
 int CellCache::add(const ByteString32T *key, const ByteString32T *value) {
-  size_t kvLen = key->len + (2*sizeof(int32_t));
+  size_t kv_len = key->len + (2*sizeof(int32_t));
   ByteString32T *newKey;
   ByteString32T *newValue;
 
   if (value) {
-    kvLen += value->len;
-    newKey = (ByteString32T *)new uint8_t [ kvLen ];
+    kv_len += value->len;
+    newKey = (ByteString32T *)new uint8_t [ kv_len ];
     newValue = (ByteString32T *)(newKey->data + key->len);
     memcpy(newKey, key, sizeof(int32_t) + key->len);
     memcpy(newValue, value, sizeof(int32_t) + value->len);
   }
   else {
-    newKey = (ByteString32T *)new uint8_t [ kvLen ];
+    newKey = (ByteString32T *)new uint8_t [ kv_len ];
     newValue = (ByteString32T *)(newKey->data + key->len);
     memcpy(newKey, key, sizeof(int32_t) + key->len);
     newValue->len = 0;
@@ -65,7 +69,8 @@ int CellCache::add(const ByteString32T *key, const ByteString32T *value) {
 
   m_cell_map.insert(iter, CellMapT::value_type(newKey, newValue));
 
-  m_memory_used += sizeof(CellMapT::value_type) + kvLen;
+  //m_memory_used += sizeof(CellMapT::value_type) + kv_len;
+  m_memory_used += kv_len;
 
   return 0;
 }
@@ -130,6 +135,9 @@ CellCache *CellCache::slice_copy(uint64_t timestamp) {
       cache->add((*iter).first, (*iter).second);
 
   }
+
+  Global::memory_tracker.add_memory(cache->m_memory_used);
+  Global::memory_tracker.add_items(cache->m_cell_map.size());
 
   return cache;
 }

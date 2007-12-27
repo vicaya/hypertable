@@ -23,6 +23,11 @@
 
 #include <boost/shared_array.hpp>
 
+extern "C" {
+#include <sys/time.h>
+#include <sys/resource.h>
+}
+
 #include "Common/ByteOrder.h"
 #include "Common/FileUtils.h"
 #include "Common/md5.h"
@@ -770,6 +775,8 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
   MinTimestampRecT  min_ts_rec;
   uint64_t next_timestamp;
   uint64_t temp_timestamp;
+  uint64_t memory_added = 0;
+  uint64_t items_added = 0;
 
   min_ts_vector.reserve(50);
 
@@ -885,7 +892,10 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
       boost::shared_array<uint8_t> bufPtr( new uint8_t [ splitSize ] );
       uint8_t *base = bufPtr.get();
       uint8_t *ptr = base;
-      
+
+      items_added += splitMods.size();
+      memory_added += splitSize;
+
       for (size_t i=0; i<splitMods.size(); i++) {
 	memcpy(ptr, splitMods[i].base, splitMods[i].len);
 	ptr += splitMods[i].len;
@@ -934,6 +944,9 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     uint8_t *base = bufPtr.get();
     uint8_t *ptr = base;
 
+    items_added += goMods.size();
+    memory_added += goSize;
+
     for (size_t i=0; i<goMods.size(); i++) {
       memcpy(ptr, goMods[i].base, goMods[i].len);
       ptr += goMods[i].len;
@@ -973,6 +986,19 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
   error = Error::OK;
 
  abort:
+
+  Global::memory_tracker.add_memory(memory_added);
+  Global::memory_tracker.add_items(items_added);
+
+  {
+    struct rusage ru;
+
+    getrusage(RUSAGE_SELF, &ru);
+
+    LOG_VA_INFO("drj mem=%lld items=%lld rss=%ld data=%ld stack=%ld", Global::memory_tracker.get_memory(), Global::memory_tracker.get_items(),
+		ru.ru_maxrss, ru.ru_idrss, ru.ru_isrss);
+
+  }
 
   // unblock scanner timestamp and decrement update counter
   for (size_t i=0; i<min_ts_vector.size(); i++) {

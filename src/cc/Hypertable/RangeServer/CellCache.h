@@ -84,7 +84,8 @@ namespace Hypertable {
      */
     uint64_t memory_used() {
       boost::mutex::scoped_lock lock(m_mutex);
-      return m_memory_used;
+      // redo this ...
+      return m_memory_used + (m_cell_map.size() * sizeof(CellMapT::value_type));
     }
 
     friend class CellCacheScanner;
