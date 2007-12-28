@@ -32,9 +32,11 @@ extern "C" {
 #include "Common/FileUtils.h"
 #include "Common/md5.h"
 
+#include "Hypertable/Lib/CommitLog.h"
+#include "Hypertable/Lib/CommitLogReader.h"
+
+
 #include "CellStoreV0.h"
-#include "CommitLog.h"
-#include "CommitLogReader.h"
 #include "Global.h"
 #include "MaintenanceThread.h"
 #include "MergeScanner.h"

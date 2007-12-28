@@ -32,8 +32,6 @@ CellCacheScanner.cc
 CellStoreScannerV0.cc
 CellStoreTrailerV0.cc
 CellStoreV0.cc
-CommitLog.cc
-CommitLogReader.cc
 ConnectionHandler.cc
 Constants.cc
 EventHandlerMasterConnection.cc

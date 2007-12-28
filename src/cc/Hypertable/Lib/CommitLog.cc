@@ -21,12 +21,12 @@
 #include <boost/shared_array.hpp>
 
 #include "Common/Error.h"
+#include "Common/Logger.h"
 #include "Common/StringExt.h"
 
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "AsyncComm/Protocol.h"
 
-#include "Global.h"
 #include "CommitLog.h"
 
 using namespace Hypertable;

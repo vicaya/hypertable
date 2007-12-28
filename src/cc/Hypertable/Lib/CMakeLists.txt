@@ -18,6 +18,8 @@
 
 set ( Hypertable_SRCS
 Client.cc
+CommitLog.cc
+CommitLogReader.cc
 Defaults.cc
 EventHandlerMasterChange.cc
 HqlCommandInterpreter.cc

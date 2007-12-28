@@ -34,11 +34,11 @@ extern "C" {
 #include "Common/StringExt.h"
 #include "Common/System.h"
 
+#include "Hypertable/Lib/CommitLog.h"
 #include "Hypertable/Lib/RangeServerProtocol.h"
 
 #include "DfsBroker/Lib/Client.h"
 
-#include "CommitLog.h"
 #include "FillScanBlock.h"
 #include "Global.h"
 #include "HandlerFactory.h"
