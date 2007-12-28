@@ -26,13 +26,13 @@
 
 #include <boost/thread/condition.hpp>
 
+#include "Hypertable/Lib/CommitLog.h"
 #include "Hypertable/Lib/Key.h"
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/Schema.h"
 
 #include "AccessGroup.h"
 #include "CellStore.h"
-#include "CommitLog.h"
 #include "RangeInfo.h"
 #include "ScannerTimestampController.h"
 

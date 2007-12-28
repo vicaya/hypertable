@@ -28,6 +28,7 @@
 #include "Common/Properties.h"
 #include "AsyncComm/Comm.h"
 #include "Hyperspace/Session.h"
+#include "Hypertable/Lib/CommitLog.h"
 #include "Hypertable/Lib/RangeServerClient.h"
 #include "Hypertable/Lib/RangeServerProtocol.h"
 #include "Hypertable/Lib/Schema.h"
@@ -35,7 +36,6 @@
 #include "Hypertable/Lib/Table.h"
 #include "Hypertable/Lib/Types.h"
 
-#include "CommitLog.h"
 #include "FileBlockCache.h"
 #include "MemoryTracker.h"
 #include "ScannerMap.h"
