@@ -35,11 +35,11 @@ ParseRangeSpec.cc
 
 # rsclient - Range Server client command interpreter
 add_executable (rsclient ${rsclient_SRCS})
-target_link_libraries (rsclient pthread ${BOOST_LIB} Hypertable AsyncComm Hyperspace DfsBroker Common log4cpp expat readline curses)
+target_link_libraries (rsclient pthread ${BOOST_LIB} Hypertable AsyncComm Hyperspace DfsBroker Common log4cpp expat readline curses ${Tcmalloc_LIBRARIES})
 
 # rsTest
 add_executable (rsTest tests/rsTest.cc ${TEST_DEPENDENCIES} )
-target_link_libraries (rsTest pthread ${BOOST_LIB} Common log4cpp)
+target_link_libraries (rsTest pthread ${BOOST_LIB} Common log4cpp ${Tcmalloc_LIBRARIES})
 
 install (TARGETS rsclient RUNTIME DESTINATION bin)
 

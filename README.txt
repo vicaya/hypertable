@@ -13,19 +13,30 @@ CONTENTS
   2. Make sure Java 1.5 or later and the ant build tool is installed on your machine.
 
   3. Install the following libraries:
+    - java 1.5+
+    - ant
     - Boost version 1.34.1 (http://www.boost.org/)
     - log4cpp (http://log4cpp.sourceforge.net/)
     - expat (http://sourceforge.net/projects/expat)
+    - lzo-2.02 (http://www.oberhumer.com/opensource/lzo/)
+
+    HIGHLY RECOMMENDED (but non required):
+    - tcmalloc (http://code.google.com/p/google-perftools/)
+    - libunwind (required by tcmalloc, see google-perftools documentation)
+
+    NOTE: If tcmalloc is available on your system, install it.  Hypertable is
+          very malloc intensive and tcmalloc provides a huge performance improvement.
 
   4. Checkout the source code.
 
-    mkdir ~/code
-    cd ~/code
-    svn checkout http://hypertable.googlecode.com/svn/trunk hypertable
+    mkdir ~/src
+    cd ~/src
+    git clone git://72.51.43.91/pub/repos/hypertable.git
+    ( or if you prefer, svn checkout http://hypertable.googlecode.com/svn/trunk hypertable )
 
   5. Build hypertable.jar
 
-    cd ~/code/hypertable
+    cd ~/src/hypertable
     ant jar
 
   6. Create an install directory
@@ -39,7 +50,7 @@ CONTENTS
   8. Configure the build. 
 
     cd ~/build/hypertable
-    cmake -DCMAKE_BUILD_TYPE="Debug" -DCMAKE_INSTALL_PREFIX= ~/code/hypertable
+    cmake -DCMAKE_BUILD_TYPE="Debug" -DCMAKE_INSTALL_PREFIX= ~/src/hypertable
 
   9. Build the software.
 
@@ -92,12 +103,16 @@ CONTENTS
 
 === HOW TO BUILD SOURCE CODE DOCUMENTATION TREE (Doxygen) ===
 
-If you have doxygen installed on your system, then CMake should detect this and
-add a 'doc' target to the make file.  Building the source code documentation
-tree is just a matter of running the following commands:
+1. Install the following libraries:
+  - doxygen (http://www.stack.nl/~dimitri/doxygen/)
+  - graphviz (http://www.graphviz.org/)
 
-  cd ~/build/hypertable
-  make doc
+2. If you have doxygen installed on your system, then CMake should detect this and
+   add a 'doc' target to the make file.  Building the source code documentation
+   tree is just a matter of running the following commands:
+
+   cd ~/build/hypertable
+   make doc
 
 The documentation tree will get generated under ~/build/hypertable/doc.  To view
 the HTML docs, load the following file into a web browser:
