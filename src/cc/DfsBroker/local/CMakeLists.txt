@@ -18,6 +18,6 @@
 
 # localBroker
 add_executable (localBroker main.cc LocalBroker.cc)
-target_link_libraries (localBroker pthread ${BOOST_LIB} DfsBroker AsyncComm Common log4cpp)
+target_link_libraries (localBroker pthread ${BOOST_LIB} DfsBroker AsyncComm Common log4cpp ${Tcmalloc_LIBRARIES})
 
 install (TARGETS localBroker RUNTIME DESTINATION bin)

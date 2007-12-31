@@ -62,27 +62,11 @@ main.cc
 
 # RangeServer
 add_executable (Hypertable.RangeServer ${RangeServer_SRCS})
-target_link_libraries (Hypertable.RangeServer pthread ${BOOST_LIB} Hypertable Hyperspace DfsBroker AsyncComm Common log4cpp expat ${ZLIB_LIBRARIES})
-
-# cellCacheTest
-#add_executable (cellCacheTest CellCache.cc CellCacheScanner.cc tests/cellCacheTest.cc ScanContext.cc ${TEST_DEPENDENCIES})
-#target_link_libraries (cellCacheTest pthread ${BOOST_LIB} Hypertable AsyncComm Common log4cpp)
+target_link_libraries (Hypertable.RangeServer pthread ${BOOST_LIB} Hypertable Hyperspace DfsBroker AsyncComm Common log4cpp expat ${ZLIB_LIBRARIES} ${Tcmalloc_LIBRARIES})
 
 # csdump
 add_executable (csdump Constants.cc CellStoreV0.cc CellStoreTrailerV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc csdump.cc CellStoreScannerV0.cc FileBlockCache.cc Global.cc ScanContext.cc)
-target_link_libraries (csdump pthread ${BOOST_LIB} Hypertable DfsBroker AsyncComm Common log4cpp ${ZLIB_LIBRARIES})
-
-# cellStoreTest
-#add_executable (cellStoreTest Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc tests/cellStoreTest.cc CellStoreScannerV0.cc CellCache.cc CellCacheScanner.cc FileBlockCache.cc Global.cc CellStore.cc ScanContext.cc ${TEST_DEPENDENCIES})
-#target_link_libraries (cellStoreTest pthread ${BOOST_LIB} Hypertable DfsBroker AsyncComm Common log4cpp ${ZLIB_LIBRARIES})
-
-# cellStoreTest2
-#add_executable (cellStoreTest2 Constants.cc CellStoreV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc tests/cellStoreTest2.cc CellStoreScannerV0.cc CellCache.cc CellCacheScanner.cc MergeScanner.cc FileBlockCache.cc Global.cc CellStore.cc ScanContext.cc ${TEST_DEPENDENCIES})
-#target_link_libraries (cellStoreTest2 pthread ${BOOST_LIB} Hypertable DfsBroker AsyncComm Common log4cpp ${ZLIB_LIBRARIES} expat)
-
-# commitLogReaderTest
-#add_executable (commitLogReaderTest CommitLogReaderLocal.cc tests/commitLogReaderTest.cc)
-#target_link_libraries (commitLogReaderTest pthread ${BOOST_LIB} Common log4cpp)
+target_link_libraries (csdump pthread ${BOOST_LIB} Hypertable DfsBroker AsyncComm Common log4cpp ${ZLIB_LIBRARIES} ${Tcmalloc_LIBRARIES})
 
 #
 # Get test environment setup
@@ -102,10 +86,6 @@ add_custom_command (SOURCE ${SRC_DIR}/tests/shakespeare.txt.gz
 add_custom_command (SOURCE ${SRC_DIR}/tests
                     COMMAND ln ARGS -s ${SRC_DIR}/tests ${DST_DIR}/tests
                     OUTPUT ${DST_DIR}/tests)
-
-#add_test (CellStoreTest cellStoreTest)
-#add_test (CellStoreTest2 cellStoreTest2)
-#add_test (CellCacheTest cellCacheTest)
 
 install (TARGETS Hypertable.RangeServer csdump
 	 RUNTIME DESTINATION bin)

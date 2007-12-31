@@ -43,11 +43,11 @@ Util.cc
 
 # hyperspace - Hyperspace client program
 add_executable (hyperspace ${hyperspace_SRCS} )
-target_link_libraries (hyperspace pthread ${BOOST_LIB} Hyperspace AsyncComm Common log4cpp readline curses)
+target_link_libraries (hyperspace pthread ${BOOST_LIB} Hyperspace AsyncComm Common log4cpp readline curses ${Tcmalloc_LIBRARIES})
 
 # hyperspaceTest
 add_executable (hyperspaceTest test/hyperspaceTest.cc)
-target_link_libraries (hyperspaceTest pthread ${BOOST_LIB} AsyncComm Common log4cpp)
+target_link_libraries (hyperspaceTest pthread ${BOOST_LIB} AsyncComm Common log4cpp ${Tcmalloc_LIBRARIES})
 
 configure_file(${SRC_DIR}/test/hyperspaceTest.cfg ${DST_DIR}/hyperspaceTest.cfg)
 configure_file(${SRC_DIR}/test/client1.golden ${DST_DIR}/client1.golden COPYONLY)

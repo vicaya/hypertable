@@ -35,6 +35,7 @@ find_package(Boost REQUIRED)
 find_package(Log4cpp REQUIRED)
 find_package(EXPAT REQUIRED)
 find_package(Doxygen)
+find_package(Tcmalloc)
 
 # include directories
 include_directories(${Boost_INCLUDE_DIRS} ${Log4cpp_INCLUDE_DIR} src/cc)
