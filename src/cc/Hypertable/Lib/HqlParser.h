@@ -103,6 +103,7 @@ namespace Hypertable {
       int command;
       std::string table_name;
       std::string str;
+      std::string row_key_column;
       Schema::ColumnFamily *cf;
       Schema::AccessGroup *ag;
       Schema::ColumnFamilyMapT cf_map;
@@ -253,6 +254,16 @@ namespace Hypertable {
       void operator()(char const *str, char const *end) const { 
 	display_string("set_str");
 	state.str = std::string(str, end-str);
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct set_row_key_column {
+      set_row_key_column(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("set_row_key_column");
+	state.row_key_column = std::string(str, end-str);
+	trim_if(state.row_key_column, boost::is_any_of("'\""));
       }
       hql_interpreter_state &state;
     };
@@ -578,6 +589,7 @@ namespace Hypertable {
 	  token_t FROM         = as_lower_d["from"];
 	  token_t WHERE        = as_lower_d["where"];
 	  token_t ROW          = as_lower_d["row"];
+	  token_t ROW_KEY_COLUMN = as_lower_d["row_key_column"];
 	  token_t START_ROW    = as_lower_d["start_row"];
 	  token_t END_ROW      = as_lower_d["end_row"];
 	  token_t INCLUSIVE    = as_lower_d["inclusive"];
@@ -783,11 +795,11 @@ namespace Hypertable {
 
 	  load_data_statement
 	    = LOAD >> DATA >> INFILE 
+	    >> !( ROW_KEY_COLUMN >> EQUAL >> ( string_literal | identifier )[set_row_key_column(self.state)] )
 	    >> string_literal[set_str(self.state)] 
 	    >> INTO >> TABLE 
 	    >> identifier[set_table_name(self.state)]
 	    ;
-
 
 	  /**
 	   * End grammar definition

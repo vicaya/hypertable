@@ -961,28 +961,6 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     LOG_VA_INFO("Dropped %d updates (out-of-range)", stopMods.size());
   }
 
-  /**
-   * Send back response
-   */
-  if (stopSize > 0) {
-    ExtBufferT ext;
-    ext.buf = new uint8_t [ stopSize ];
-    uint8_t *ptr = ext.buf;
-    for (size_t i=0; i<stopMods.size(); i++) {
-      memcpy(ptr, stopMods[i].base, stopMods[i].len);
-      ptr += stopMods[i].len;
-    }
-    ext.len = ptr - ext.buf;
-    if ((error = cb->response(ext)) != Error::OK) {
-      LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
-    }
-  }
-  else {
-    if ((error = cb->response_ok()) != Error::OK) {
-      LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
-    }
-  }
-
   error = Error::OK;
 
  abort:
@@ -1006,7 +984,30 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     min_ts_vector[i].range_ptr->decrement_update_counter();
   }
 
-  if (error != Error::OK) {
+  if (error == Error::OK) {
+    /**
+     * Send back response
+     */
+    if (stopSize > 0) {
+      ExtBufferT ext;
+      ext.buf = new uint8_t [ stopSize ];
+      uint8_t *ptr = ext.buf;
+      for (size_t i=0; i<stopMods.size(); i++) {
+	memcpy(ptr, stopMods[i].base, stopMods[i].len);
+	ptr += stopMods[i].len;
+      }
+      ext.len = ptr - ext.buf;
+      if ((error = cb->response(ext)) != Error::OK) {
+	LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
+      }
+    }
+    else {
+      if ((error = cb->response_ok()) != Error::OK) {
+	LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
+      }
+    }
+  }
+  else {
     LOG_VA_ERROR("%s '%s'", Error::get_text(error), errMsg.c_str());
     if ((error = cb->error(error, errMsg)) != Error::OK) {
       LOG_VA_ERROR("Problem sending error response - %s", Error::get_text(error));

@@ -143,7 +143,7 @@ namespace {
 
   const char *help_text_load_data_infile = 
   "\n" \
-  "LOAD DATA INFILE fname INTO TABLE name\n" \
+  "LOAD DATA INFILE [ROW_KEY_COLUMN=columname] fname INTO TABLE name\n" \
   "\n" \
   "Example:\n" \
   "\n" \
