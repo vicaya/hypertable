@@ -41,9 +41,10 @@ using namespace std;
 /**
  *
  */
-LoadDataSource::LoadDataSource(std::string fname) : m_fin(fname.c_str()), m_cur_line(0), m_line_buffer(0), m_hyperformat(false), m_leading_timestamps(false) {
+LoadDataSource::LoadDataSource(std::string fname, std::string row_key_column) : m_fin(fname.c_str()), m_cur_line(0), m_line_buffer(0), m_hyperformat(false), m_leading_timestamps(false), m_row_index(0) {
   string line;
   char *base, *ptr;
+  int index = 0;
 
   if (!getline(m_fin, line))
     return;
@@ -52,7 +53,10 @@ LoadDataSource::LoadDataSource(std::string fname) : m_fin(fname.c_str()), m_cur_
   while ((ptr = strchr(base, '\t')) != 0) {
     *ptr++ = 0;
     m_column_names.push_back(base);
+    if (row_key_column != "" && row_key_column == std::string(base))
+      m_row_index = index;
     base = ptr;
+    index++;
   }
   m_column_names.push_back(base);
 
@@ -175,7 +179,7 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
   else {
 
     if (m_next_value > 0 && m_next_value < m_column_names.size()) {
-      keyp->row = m_values[0];
+      keyp->row = m_values[m_row_index];
       keyp->row_len = m_cur_row_length;
       keyp->column_family = m_column_names[m_next_value].c_str();
       if (keyp->column_qualifier || keyp->column_qualifier_len || *timestampp) {
@@ -225,15 +229,15 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
 	continue;
       }
 
-      if (m_values[0] == 0) {
+      if (m_values[m_row_index] == 0) {
 	cerr << "error: NULL row key on line " << m_cur_line << endl;
 	continue;
       }
 
-      m_cur_row_length = strlen(m_values[0]);
+      m_cur_row_length = strlen(m_values[m_row_index]);
 
       m_next_value = 1;
-      keyp->row = m_values[0];
+      keyp->row = m_values[m_row_index];
       keyp->row_len = m_cur_row_length;
       keyp->column_family = m_column_names[m_next_value].c_str();
       if (keyp->column_qualifier || keyp->column_qualifier_len || *timestampp) {

@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
   close(2);
   dup(fd);
 
-  lds = new LoadDataSource("loadDataSourceTest.dat");
+  lds = new LoadDataSource("loadDataSourceTest.dat", "");
 
   while (lds->next(0, &timestamp, &key, &value, &value_len, 0)) {
     cerr << "row=" << (const char *)key.row << " column_family=" << key.column_family;
