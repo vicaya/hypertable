@@ -969,13 +969,10 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
   Global::memory_tracker.add_items(items_added);
 
   {
-    struct rusage ru;
-
-    getrusage(RUSAGE_SELF, &ru);
-
-    LOG_VA_INFO("drj mem=%lld items=%lld rss=%ld data=%ld stack=%ld", Global::memory_tracker.get_memory(), Global::memory_tracker.get_items(),
-		ru.ru_maxrss, ru.ru_idrss, ru.ru_isrss);
-
+    uint64_t mt_memory = Global::memory_tracker.get_memory();
+    uint64_t mt_items = Global::memory_tracker.get_items();
+    uint64_t vm_estimate = mt_memory + (mt_items*120);
+    LOG_VA_INFO("drj mem=%lld items=%lld vm-est%lld", mt_memory, mt_items, vm_estimate);
   }
 
   // unblock scanner timestamp and decrement update counter
