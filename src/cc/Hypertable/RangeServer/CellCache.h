@@ -22,6 +22,7 @@
 
 #include <map>
 
+#include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/intrusive_ptr.hpp>
 
@@ -38,7 +39,7 @@ namespace Hypertable {
   class CellCache : public CellList {
 
   public:
-    CellCache() : CellList(), m_mutex(), m_memory_used(0) { return; }
+    CellCache() : CellList(), m_refcount(0), m_child(0), m_memory_used(0) { return; }
     virtual ~CellCache();
 
     /**
@@ -91,11 +92,29 @@ namespace Hypertable {
     friend class CellCacheScanner;
 
   protected:
-    typedef std::map<const ByteString32T *, const ByteString32T *, ltByteString32> CellMapT;
+    typedef std::map<const ByteString32T *, uint32_t, ltByteString32> CellMapT;
 
-    boost::mutex               m_mutex;
-    CellMapT                   m_cell_map;
-    uint64_t                   m_memory_used;
+    static const uint32_t ALLOC_BIT_MASK;
+    static const uint32_t OFFSET_BIT_MASK;
+
+    void increment_refcount() {
+      boost::mutex::scoped_lock lock(m_refcount_mutex);
+      m_refcount++;
+    }
+
+    void decrement_refcount() {
+      boost::mutex::scoped_lock lock(m_refcount_mutex);
+      m_refcount--;
+      m_refcount_cond.notify_all();
+    }
+
+    boost::mutex       m_mutex;
+    boost::mutex       m_refcount_mutex;
+    boost::condition   m_refcount_cond;
+    uint32_t           m_refcount;
+    CellCache         *m_child;
+    CellMapT           m_cell_map;
+    uint64_t           m_memory_used;
   };
 
   typedef boost::intrusive_ptr<CellCache> CellCachePtr;

@@ -57,7 +57,7 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellCachePtr, ScanContextPtr &s
       }
       else if (m_scan_context_ptr->familyMask[keyComps.column_family_code]) {
 	m_cur_key = (*m_cur_iter).first;
-	m_cur_value = (*m_cur_iter).second;
+	m_cur_value = (ByteString32T *)(((uint8_t *)(*m_cur_iter).first) + (CellCache::OFFSET_BIT_MASK & (*m_cur_iter).second));
 	return;
       }
     }
@@ -94,7 +94,7 @@ void CellCacheScanner::forward() {
     }
     else if (m_scan_context_ptr->familyMask[keyComps.column_family_code]) {
       m_cur_key = (*m_cur_iter).first;
-      m_cur_value = (*m_cur_iter).second;
+      m_cur_value = (ByteString32T *)(((uint8_t *)(*m_cur_iter).first) + (CellCache::OFFSET_BIT_MASK & (*m_cur_iter).second));
       return;
     }
     m_cur_iter++;

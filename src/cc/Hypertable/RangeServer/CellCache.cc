@@ -33,13 +33,45 @@ using namespace Hypertable;
 using namespace std;
 
 
-CellCache::~CellCache() {
-  for (CellMapT::iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++)
-    delete [] (*iter).first;
-  //cout << "DELETE CellCache" << endl;
+const uint32_t CellCache::ALLOC_BIT_MASK  = 0x80000000;
+const uint32_t CellCache::OFFSET_BIT_MASK = 0x7FFFFFFF;
 
-  Global::memory_tracker.remove_memory(m_memory_used);
+
+CellCache::~CellCache() {
+  uint64_t mem_freed = 0;
+  uint32_t offset;
+  uint32_t skipped = 0;
+
+  /**
+   * If our reference count is greater than zero, the we still have a parent
+   * that is referencing us and our memory, so wait for our parent to
+   * be destructed and then deallocate.
+   * Remember: parents share some k/v pair memory with their children
+   * and it is the child's responsibility to delete it.
+   */
+  {
+    boost::mutex::scoped_lock lock(m_refcount_mutex);
+    while (m_refcount > 0) 
+      m_refcount_cond.wait(lock);
+  }
+
+  for (CellMapT::iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++) {
+    if (((*iter).second & ALLOC_BIT_MASK) == 0) {
+      offset = (*iter).second & OFFSET_BIT_MASK;
+      mem_freed += offset + Length((ByteString32T *)(((uint8_t *)(*iter).first) + offset));
+      delete [] (*iter).first;
+    }
+    else
+      skipped++;
+  }
+
+  LOG_VA_INFO("dougo mem=%ld skipped=%ld total=%ld", mem_freed, skipped, m_cell_map.size());
+
+  Global::memory_tracker.remove_memory(mem_freed);
   Global::memory_tracker.remove_items(m_cell_map.size());
+
+  if (m_child)
+    m_child->decrement_refcount();
 }
 
 
@@ -65,11 +97,8 @@ int CellCache::add(const ByteString32T *key, const ByteString32T *value) {
     newValue->len = 0;
   }
 
-  CellMapT::iterator iter = m_cell_map.lower_bound(key);
+  m_cell_map.insert(CellMapT::value_type(newKey, Length(newKey)));
 
-  m_cell_map.insert(iter, CellMapT::value_type(newKey, newValue));
-
-  //m_memory_used += sizeof(CellMapT::value_type) + kv_len;
   m_memory_used += kv_len;
 
   return 0;
@@ -121,8 +150,9 @@ CellListScanner *CellCache::create_scanner(ScanContextPtr &scanContextPtr) {
  * This must be called with the cell cache locked
  */
 CellCache *CellCache::slice_copy(uint64_t timestamp) {
-  CellCache *cache = new CellCache();
   Key keyComps;
+
+  m_child = new CellCache();
 
   for (CellMapT::iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++) {
 
@@ -131,14 +161,16 @@ CellCache *CellCache::slice_copy(uint64_t timestamp) {
       continue;
     }
 
-    if (keyComps.timestamp > timestamp)
-      cache->add((*iter).first, (*iter).second);
-
+    if (keyComps.timestamp > timestamp) {
+      m_child->m_cell_map.insert(CellMapT::value_type((*iter).first, (*iter).second));
+      (*iter).second |= ALLOC_BIT_MASK;  // mark this entry in the "old" map so it doesn't get deleted
+    }
   }
 
-  Global::memory_tracker.add_memory(cache->m_memory_used);
-  Global::memory_tracker.add_items(cache->m_cell_map.size());
+  Global::memory_tracker.add_items(m_child->m_cell_map.size());
 
-  return cache;
+  m_child->increment_refcount();
+
+  return m_child;
 }
 
