@@ -20,6 +20,7 @@
 
 package org.hypertable.DfsBroker.hadoop;
 
+import java.io.EOFException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -289,8 +290,15 @@ public class HdfsBroker {
 	    long offset = ofd.is.getPos();
 
 	    byte [] data = new byte [ amount ];
+	    int nread = 0;
 
-	    int nread = ofd.is.read(data, 0, data.length);
+	    try {
+		ofd.is.readFully(data, 0, data.length);
+		nread = data.length;
+	    }
+	    catch (EOFException e) {
+		nread = ofd.is.read(data, 0, data.length);
+	    }
 
 	    error = cb.response(offset, nread, data);
 
@@ -365,7 +373,15 @@ public class HdfsBroker {
 
 	    ofd.is.seek(offset);
 
-	    int nread = ofd.is.read(data, 0, data.length);
+	    int nread = 0;
+
+	    try {
+		ofd.is.readFully(data, 0, data.length);
+		nread = data.length;
+	    }
+	    catch (EOFException e) {
+		nread = ofd.is.read(data, 0, data.length);
+	    }
 
 	    error = cb.response(offset, nread, data);
 

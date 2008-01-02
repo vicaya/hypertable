@@ -36,7 +36,7 @@ ClientBufferedReaderHandler::ClientBufferedReaderHandler(DfsBroker::Client *clie
 
   m_end_offset = end_offset;
   m_outstanding_offset = start_offset;
-
+  m_actual_offset = start_offset;
 
   /**
    * Seek to initial offset
@@ -99,8 +99,11 @@ void ClientBufferedReaderHandler::handle(EventPtr &eventPtr) {
     }
     m_queue.push(eventPtr);
     DfsBroker::Protocol::ResponseHeaderReadT *readHeader = (DfsBroker::Protocol::ResponseHeaderReadT *)eventPtr->message;
-    if (readHeader->amount < (int32_t)m_read_size)
+    m_actual_offset += readHeader->amount;
+    if (readHeader->amount < (int32_t)m_read_size) {
+      LOG_VA_ERROR("short read %ld < %ld (actual=%ld, end=%ld)", readHeader->amount, (int32_t)m_read_size, m_actual_offset, m_end_offset);
       m_eof = true;
+    }
   }
   else if (eventPtr->type == Event::ERROR) {
     LOG_VA_ERROR("%s", eventPtr->toString().c_str());    
@@ -131,8 +134,10 @@ int ClientBufferedReaderHandler::read(uint8_t *buf, uint32_t len, uint32_t *nrea
     while (m_queue.empty() && !m_eof)
       m_cond.wait(lock);
 
-    if (m_error != Error::OK || m_queue.empty())
+    if (m_error != Error::OK || m_queue.empty()) {
+      LOG_VA_ERROR("return 1 error=%d", m_error);
       return m_error;
+    }
 
     if (m_ptr == 0) {
       EventPtr &eventPtr = m_queue.front();

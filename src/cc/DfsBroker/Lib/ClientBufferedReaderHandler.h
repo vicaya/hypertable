@@ -62,6 +62,7 @@ namespace Hypertable {
     uint8_t             *m_end_ptr;
     uint64_t             m_end_offset;
     uint64_t             m_outstanding_offset;
+    uint64_t             m_actual_offset;
   };
 
 }
