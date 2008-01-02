@@ -108,6 +108,7 @@ int BlockCompressionCodecZlib::deflate(const DynamicBuffer &input, DynamicBuffer
   assert(ret == Z_STREAM_END);
   (void)ret;
 
+  header->set_flags(BlockCompressionHeader::FLAGS_COMPRESSED);
   header->set_length(input.fill());
   header->set_zlength(avail_out - m_stream_deflate.avail_out);
   header->set_checksum( fletcher16(output.buf + header->encoded_length(), header->get_zlength()) );

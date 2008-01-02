@@ -314,14 +314,15 @@ bool CellStoreScannerV0::fetch_next_block() {
 	input.buf = buf;
 	input.ptr = buf + m_block.zlength;
 	if ((error = m_zcodec->inflate(input, expandBuffer, &header)) != Error::OK) {
-	  LOG_VA_ERROR("Problem inflating cell store block - %s", Error::get_text(error));
+	  LOG_VA_ERROR("Problem inflating cell store (%s) block - %s", m_cell_store_ptr->get_filename().c_str(), Error::get_text(error));
+	  input.buf = 0;
 	  goto abort;
 	}
+	input.buf = 0;
 	if (!header.check_magic(CellStoreV0::DATA_BLOCK_MAGIC)) {
 	  LOG_ERROR("Problem inflating cell store block - magic string mismatch");
 	  goto abort;
 	}
-	input.buf = 0;
       }
 
       /** take ownership of inflate buffer **/
@@ -404,6 +405,10 @@ bool CellStoreScannerV0::fetch_next_block_readahead() {
 		   m_block.zlength, m_cell_store_ptr->get_filename().c_str());
       goto abort;
     }
+    if (nread != m_block.zlength) {
+      LOG_VA_ERROR("short read %ld != %ld", nread, m_block.zlength);
+      DUMP_CORE;
+    }
     assert(nread == m_block.zlength);
     m_start_offset += nread;
 
@@ -414,14 +419,15 @@ bool CellStoreScannerV0::fetch_next_block_readahead() {
       input.buf = buf;
       input.ptr = buf + m_block.zlength;
       if ((error = m_zcodec->inflate(input, expandBuffer, &header)) != Error::OK) {
-	LOG_VA_ERROR("Problem inflating cell store block - %s", Error::get_text(error));
+	LOG_VA_ERROR("Problem inflating cell store (%s) block - %s", m_cell_store_ptr->get_filename().c_str(), Error::get_text(error));
+	input.buf = 0;
 	goto abort;
       }
+      input.buf = 0;
       if (!header.check_magic(CellStoreV0::DATA_BLOCK_MAGIC)) {
 	LOG_ERROR("Problem inflating cell store block - magic string mismatch");
 	goto abort;
       }
-      input.buf = 0;
     }
 
     /** take ownership of inflate buffer **/

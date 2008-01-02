@@ -464,13 +464,14 @@ int CellStoreV0::load_index() {
   {
     input.buf = buf;
     input.ptr = buf + (m_trailer.var_index_offset - m_trailer.fix_index_offset);
-    if ((error = m_zcodec->inflate(input, m_fix_index_buffer, &header)) != Error::OK)
+    if ((error = m_zcodec->inflate(input, m_fix_index_buffer, &header)) != Error::OK) {
+      LOG_VA_ERROR("Fixed index decompression error - %s", Error::get_text(error));
       goto abort;
+    }
     if (!header.check_magic(INDEX_FIXED_BLOCK_MAGIC)) {
       error = Error::BLOCK_ZCODEC_BAD_MAGIC;
       goto abort;
     }
-    input.buf = 0;
   }
 
   vbuf = buf + (m_trailer.var_index_offset-m_trailer.fix_index_offset);
@@ -480,13 +481,14 @@ int CellStoreV0::load_index() {
   {
     input.buf = vbuf;
     input.ptr = vbuf + amount;
-    if ((error = m_zcodec->inflate(input, m_var_index_buffer, &header)) != Error::OK)
+    if ((error = m_zcodec->inflate(input, m_var_index_buffer, &header)) != Error::OK) {
+      LOG_VA_ERROR("Variable index decompression error - %s", Error::get_text(error));
       goto abort;
+    }
     if (!header.check_magic(INDEX_VARIABLE_BLOCK_MAGIC)) {
       error = Error::BLOCK_ZCODEC_BAD_MAGIC;
       goto abort;
     }
-    input.buf = 0;
   }
 
   m_index.clear();
@@ -563,6 +565,7 @@ int CellStoreV0::load_index() {
   error = 0;
 
  abort:
+  input.buf = 0;
   delete m_zcodec;
   m_zcodec = 0;
   delete [] m_fix_index_buffer.release();
