@@ -38,6 +38,12 @@ public class Error {
     static public final int METADATA_NOT_FOUND = 10;
     static public final int HQL_PARSE_ERROR    = 11;
     static public final int FILE_NOT_FOUND     = 12;
+    static public final int BLOCK_ZCODEC_INVALID_ARG       = 13;
+    static public final int BLOCK_ZCODEC_TRUNCATED         = 14;
+    static public final int BLOCK_ZCODEC_BAD_HEADER        = 15;
+    static public final int BLOCK_ZCODEC_BAD_MAGIC         = 16;
+    static public final int BLOCK_ZCODEC_CHECKSUM_MISMATCH = 17;
+    static public final int BLOCK_ZCODEC_INFLATE_ERROR     = 18;
 
     static public final int COMM_NOT_CONNECTED       = 0x00010001;
     static public final int COMM_BROKEN_CONNECTION   = 0x00010002;
@@ -91,7 +97,11 @@ public class Error {
     static public final int RANGESERVER_TRUNCATED_COMMIT_LOG  = 0x0005000B;
     static public final int RANGESERVER_NO_METADATA_FOR_RANGE = 0x0005000C;
     static public final int RANGESERVER_SHUTTING_DOWN         = 0x0005000D;
-
+    static public final int RANGESERVER_CELLSTORE_BLOCK_TRUNCATED         = 0x0005000E;
+    static public final int RANGESERVER_CELLSTORE_BLOCK_BAD_HEADER        = 0x0005000F;
+    static public final int RANGESERVER_CELLSTORE_BLOCK_BAD_MAGIC         = 0x00050010;
+    static public final int RANGESERVER_CELLSTORE_BLOCK_CHECKSUM_MISMATCH = 0x00050011;
+    static public final int RANGESERVER_CELLSTORE_BLOCK_INFLATE_ERROR     = 0x00050012;
     static public final int HQL_BAD_LOAD_FILE_FORMAT = 0x00060001;
 
     static public String GetText(int lcode) {
@@ -114,6 +124,12 @@ public class Error {
 	mTextMap.put(METADATA_NOT_FOUND,         "HYPERTABLE metadata not found");
 	mTextMap.put(HQL_PARSE_ERROR,            "HYPERTABLE HQL parse error");
 	mTextMap.put(FILE_NOT_FOUND,             "HYPERTABLE file not found");
+	mTextMap.put(BLOCK_ZCODEC_INVALID_ARG,   "HYPERTABLE compression codec invalid arg");
+	mTextMap.put(BLOCK_ZCODEC_TRUNCATED,     "HYPERTABLE compression codec block truncated");
+	mTextMap.put(BLOCK_ZCODEC_BAD_HEADER,    "HYPERTABLE compression codec bad block header");
+	mTextMap.put(BLOCK_ZCODEC_BAD_MAGIC,     "HYPERTABLE compression codec bad magic string");
+	mTextMap.put(BLOCK_ZCODEC_CHECKSUM_MISMATCH, "HYPERTABLE compression codec block checksum mismatch");
+	mTextMap.put(BLOCK_ZCODEC_INFLATE_ERROR, "HYPERTABLE compression codec inflate error");
 	mTextMap.put(COMM_NOT_CONNECTED,         "COMM not connected");
 	mTextMap.put(COMM_BROKEN_CONNECTION,     "COMM broken connection");
 	mTextMap.put(COMM_CONNECT_ERROR,         "COMM connect error");

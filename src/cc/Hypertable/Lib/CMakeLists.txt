@@ -17,11 +17,14 @@
 # 
 
 set ( Hypertable_SRCS
+BlockCompressionCodec.cc
+BlockCompressionCodecZlib.cc
 Client.cc
 CommitLog.cc
 CommitLogReader.cc
 Defaults.cc
 EventHandlerMasterChange.cc
+fletcher16.cc
 HqlCommandInterpreter.cc
 HqlHelpText.cc
 Key.cc

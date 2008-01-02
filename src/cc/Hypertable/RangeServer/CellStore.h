@@ -26,8 +26,6 @@
 
 #include "CellList.h"
 #include "CellStoreTrailer.h"
-#include "Constants.h"
-
 
 namespace Hypertable {
 

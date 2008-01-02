@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -17,29 +17,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#ifndef HYPERTABLE_BLOCKDEFLATERZLIB_H
-#define HYPERTABLE_BLOCKDEFLATERZLIB_H
+
+#ifndef HYPERTABLE_FLETCHER16_H
+#define HYPERTABLE_FLETCHER16_H
 
 extern "C" {
-#include <zlib.h>
+#include <stdint.h>
 }
-
-#include "BlockDeflater.h"
-
-using namespace Hypertable;
 
 namespace Hypertable {
 
-  class BlockDeflaterZlib : public BlockDeflater {
-  public:
-    BlockDeflaterZlib();
-    virtual ~BlockDeflaterZlib();
-    virtual void deflate(Hypertable::DynamicBuffer &inbuf, Hypertable::DynamicBuffer &outbuf,
-			 const char magic[12], size_t reserve=0);
+  extern uint16_t fletcher16(uint8_t *data, uint32_t len);
 
-  private:
-    z_stream  m_stream;
-  };
 }
 
-#endif // HYPERTABLE_BLOCKDEFLATERZLIB_H
+#endif // HYPERTABLE_FLETCHER16_H

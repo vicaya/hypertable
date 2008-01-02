@@ -27,9 +27,10 @@
 
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "Common/DynamicBuffer.h"
+
+#include "Hypertable/Lib/BlockCompressionCodec.h"
 #include "Hypertable/Lib/Filesystem.h"
 
-#include "BlockDeflater.h"
 #include "CellStore.h"
 #include "CellStoreTrailerV0.h"
 
@@ -39,6 +40,7 @@ using namespace Hypertable;
  * Forward declarations
  */
 namespace Hypertable {
+  class BlockCompressionCodec;
   class Client;
   class Protocol;
 }
@@ -49,7 +51,7 @@ namespace Hypertable {
 
   public:
 
-    CellStoreV0(Filesystem *filesys);
+    CellStoreV0(Filesystem *filesys, int zcodec=BlockCompressionCodec::ZLIB, const char *zcodec_args="");
     virtual ~CellStoreV0();
 
     virtual int create(const char *fname, uint32_t blocksize);
@@ -65,6 +67,8 @@ namespace Hypertable {
     virtual std::string &get_filename() { return m_filename; }
     virtual CellListScanner *create_scanner(ScanContextPtr &scanContextPtr);
 
+    BlockCompressionCodec *create_block_compression_codec();
+
     /**
      * Displays block map information to stdout
      */
@@ -79,6 +83,10 @@ namespace Hypertable {
     void add_index_entry(const ByteString32T *key, uint32_t offset);
     void record_split_row(const ByteString32T *key);
 
+    static const char DATA_BLOCK_MAGIC[12];
+    static const char INDEX_FIXED_BLOCK_MAGIC[12];
+    static const char INDEX_VARIABLE_BLOCK_MAGIC[12];
+
     typedef map<ByteString32T *, uint32_t, ltByteString32> IndexMapT;
 
     Filesystem            *m_filesys;
@@ -86,7 +94,7 @@ namespace Hypertable {
     int32_t                m_fd;
     IndexMapT              m_index;
     CellStoreTrailerV0     m_trailer;
-    BlockDeflater         *m_block_deflater;
+    BlockCompressionCodec *m_zcodec;
     DynamicBuffer          m_buffer;
     DynamicBuffer          m_fix_index_buffer;
     DynamicBuffer          m_var_index_buffer;
@@ -101,6 +109,8 @@ namespace Hypertable {
     int                    m_file_id;
     float                  m_uncompressed_data;
     float                  m_compressed_data;
+    std::string            m_zcodec_args;
+
   };
   typedef boost::intrusive_ptr<CellStoreV0> CellStoreV0Ptr;
 

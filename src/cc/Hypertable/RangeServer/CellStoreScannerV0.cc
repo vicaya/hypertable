@@ -23,7 +23,7 @@
 #include "Common/Error.h"
 #include "Common/System.h"
 
-#include "BlockInflaterZlib.h"
+#include "BlockCompressionHeaderCellStore.h"
 #include "Global.h"
 #include "CellStoreScannerV0.h"
 
@@ -43,7 +43,7 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPt
 
   m_index = m_cell_store_v0->m_index;
   m_file_id = m_cell_store_v0->m_file_id;
-  m_block_inflater = new BlockInflaterZlib();
+  m_zcodec = m_cell_store_v0->create_block_compression_codec();
   memset(&m_block, 0, sizeof(m_block));
 
   // compute start row
@@ -186,7 +186,7 @@ CellStoreScannerV0::~CellStoreScannerV0() {
     if (m_block.base != 0)
       Global::blockCache->checkin(m_file_id, m_block.offset);
   }
-  delete m_block_inflater;
+  delete m_zcodec;
 }
 
 
@@ -269,6 +269,7 @@ void CellStoreScannerV0::forward() {
 bool CellStoreScannerV0::fetch_next_block() {
   uint8_t *buf = 0;
   bool rval = false;
+  int error;
 
   // If we're at the end of the current block, deallocate and move to next
   if (m_block.base != 0 && m_block.ptr >= m_block.end) {
@@ -307,8 +308,21 @@ bool CellStoreScannerV0::fetch_next_block() {
 	goto abort;
 
       /** inflate compressed block **/
-      if (!m_block_inflater->inflate(buf, m_block.zlength, Constants::DATA_BLOCK_MAGIC, expandBuffer))
-	goto abort;
+      {
+	BlockCompressionHeaderCellStore header;
+	DynamicBuffer input(0);
+	input.buf = buf;
+	input.ptr = buf + m_block.zlength;
+	if ((error = m_zcodec->inflate(input, expandBuffer, &header)) != Error::OK) {
+	  LOG_VA_ERROR("Problem inflating cell store block - %s", Error::get_text(error));
+	  goto abort;
+	}
+	if (!header.check_magic(CellStoreV0::DATA_BLOCK_MAGIC)) {
+	  LOG_ERROR("Problem inflating cell store block - magic string mismatch");
+	  goto abort;
+	}
+	input.buf = 0;
+      }
 
       /** take ownership of inflate buffer **/
       size_t fill;
@@ -394,8 +408,21 @@ bool CellStoreScannerV0::fetch_next_block_readahead() {
     m_start_offset += nread;
 
     /** inflate compressed block **/
-    if (!m_block_inflater->inflate(buf, m_block.zlength, Constants::DATA_BLOCK_MAGIC, expandBuffer))
-      goto abort;
+    {
+      BlockCompressionHeaderCellStore header;
+      DynamicBuffer input(0);
+      input.buf = buf;
+      input.ptr = buf + m_block.zlength;
+      if ((error = m_zcodec->inflate(input, expandBuffer, &header)) != Error::OK) {
+	LOG_VA_ERROR("Problem inflating cell store block - %s", Error::get_text(error));
+	goto abort;
+      }
+      if (!header.check_magic(CellStoreV0::DATA_BLOCK_MAGIC)) {
+	LOG_ERROR("Problem inflating cell store block - magic string mismatch");
+	goto abort;
+      }
+      input.buf = 0;
+    }
 
     /** take ownership of inflate buffer **/
     size_t fill;

@@ -40,9 +40,9 @@ namespace Hypertable {
 
     ~DynamicBuffer() { delete [] buf; }
 
-    size_t remaining() { return size - (ptr-buf); }
+    size_t remaining() const { return size - (ptr-buf); }
 
-    size_t fill() { return ptr-buf; }
+    size_t fill() const { return ptr-buf; }
 
     void ensure(size_t len) {
       if (len > remaining())

@@ -25,15 +25,13 @@ set ( TEST_DEPENDENCIES ${DST_DIR}/shakespeare.txt ${DST_DIR}/words ${DST_DIR}/u
 
 set ( RangeServer_SRCS
 AccessGroup.cc
-BlockDeflaterZlib.cc
-BlockInflaterZlib.cc
+BlockCompressionHeaderCellStore.cc
 CellCache.cc
 CellCacheScanner.cc
 CellStoreScannerV0.cc
 CellStoreTrailerV0.cc
 CellStoreV0.cc
 ConnectionHandler.cc
-Constants.cc
 EventHandlerMasterConnection.cc
 FileBlockCache.cc
 FillScanBlock.cc
@@ -65,7 +63,7 @@ add_executable (Hypertable.RangeServer ${RangeServer_SRCS})
 target_link_libraries (Hypertable.RangeServer pthread ${BOOST_LIB} Hypertable Hyperspace DfsBroker AsyncComm Common log4cpp expat ${ZLIB_LIBRARIES} ${Tcmalloc_LIBRARIES})
 
 # csdump
-add_executable (csdump Constants.cc CellStoreV0.cc CellStoreTrailerV0.cc BlockDeflaterZlib.cc BlockInflaterZlib.cc csdump.cc CellStoreScannerV0.cc FileBlockCache.cc Global.cc ScanContext.cc)
+add_executable (csdump CellStoreV0.cc CellStoreTrailerV0.cc BlockCompressionHeaderCellStore.cc csdump.cc CellStoreScannerV0.cc FileBlockCache.cc Global.cc ScanContext.cc)
 target_link_libraries (csdump pthread ${BOOST_LIB} Hypertable DfsBroker AsyncComm Common log4cpp ${ZLIB_LIBRARIES} ${Tcmalloc_LIBRARIES})
 
 #

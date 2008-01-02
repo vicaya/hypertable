@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -17,11 +17,26 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#include "Constants.h"
+
+#include "fletcher16.h"
 
 using namespace Hypertable;
 
-const char Constants::DATA_BLOCK_MAGIC[12]           = { 'D','a','t','a','-','-','-','-','-','-','-','-' };
-const char Constants::INDEX_FIXED_BLOCK_MAGIC[12]    = { 'I','d','x','F','i','x','-','-','-','-','-','-' };
-const char Constants::INDEX_VARIABLE_BLOCK_MAGIC[12] = { 'I','d','x','V','a','r','-','-','-','-','-','-' };
-
+uint16_t Hypertable::fletcher16(uint8_t *data, uint32_t len) {
+  uint16_t sum1 = 0xff, sum2 = 0xff;
+ 
+  while (len) {
+    unsigned tlen = len > 20 ? 20 : len;
+    len -= tlen;
+    do {
+      sum1 += *data++;
+      sum2 += sum1;
+    } while (--tlen);
+    sum1 = (sum1 & 0xff) + (sum1 >> 8);
+    sum2 = (sum2 & 0xff) + (sum2 >> 8);
+  }
+  /* Second reduction step to reduce sums to 8 bits */
+  sum1 = (sum1 & 0xff) + (sum1 >> 8);
+  sum2 = (sum2 & 0xff) + (sum2 >> 8);
+  return sum2 << 8 | sum1;
+}
