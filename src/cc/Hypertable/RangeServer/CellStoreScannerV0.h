@@ -27,8 +27,8 @@
 
 namespace Hypertable {
 
+  class BlockCompressionCodec;
   class CellStore;
-  class BlockInflater;
 
   class CellStoreScannerV0 : public CellListScanner {
   public:
@@ -61,7 +61,7 @@ namespace Hypertable {
     BlockInfoT            m_block;
     ByteString32T        *m_cur_key;
     ByteString32T        *m_cur_value;
-    BlockInflater        *m_block_inflater;
+    BlockCompressionCodec *m_zcodec;
     bool                  m_check_for_range_end;
     bool                  m_end_inclusive;
     int                   m_file_id;

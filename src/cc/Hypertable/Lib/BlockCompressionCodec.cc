@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -17,23 +17,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#ifndef HYPERTABLE_BLOCKINFLATER_H
-#define HYPERTABLE_BLOCKINFLATER_H
 
-extern "C" {
-#include <stdint.h>
-}
+#include "BlockCompressionCodec.h"
 
-namespace Hypertable {
+using namespace Hypertable;
 
-  class DynamicBuffer;
-
-  class BlockInflater {
-  public:
-    virtual ~BlockInflater() { return; }
-    virtual bool inflate(uint8_t *zbuf, uint32_t zlen, const char magic[12], Hypertable::DynamicBuffer &outbuf) = 0;
-  };
-
-}
-
-#endif // HYPERTABLE_BLOCKINFLATER_H
+const int BlockCompressionCodec::ZLIB = 1;
+const int BlockCompressionCodec::LZO  = 2;
+const int BlockCompressionCodec::BMZ  = 3;

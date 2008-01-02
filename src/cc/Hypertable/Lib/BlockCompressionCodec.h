@@ -17,28 +17,37 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#ifndef HYPERTABLE_BLOCKINFLATERZLIB_H
-#define HYPERTABLE_BLOCKINFLATERZLIB_H
 
-extern "C" {
-#include <zlib.h>
-}
+#ifndef HYPERTABLE_BLOCKCOMPRESSIONCODEC_H
+#define HYPERTABLE_BLOCKCOMPRESSIONCODEC_H
 
-#include "BlockInflater.h"
+#include <string>
 
-using namespace Hypertable;
+#include "Common/Error.h"
+
+#include "BlockCompressionHeader.h"
 
 namespace Hypertable {
 
-  class BlockInflaterZlib : public BlockInflater {
-  public:
-    BlockInflaterZlib();
-    virtual ~BlockInflaterZlib();
-    virtual bool inflate(uint8_t *zbuf, uint32_t zlen, const char magic[12], Hypertable::DynamicBuffer &outbuf);
+  class DynamicBuffer;
 
-  private:
-    z_stream  m_stream;
+  /**
+   * Abstract base class for block compression codecs.  
+   */
+  class BlockCompressionCodec {
+  public:
+    virtual ~BlockCompressionCodec() { return; }
+
+    virtual int deflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader *header, size_t reserve=0) = 0;
+    virtual int inflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader *header) = 0;
+    virtual int set_args(std::string args) { return Error::OK; }
+
+    static const int ZLIB;
+    static const int LZO;
+    static const int BMZ;
   };
+
 }
 
-#endif // HYPERTABLE_BLOCKINFLATERZLIB_H
+#endif // HYPERTABLE_BLOCKCOMPRESSIONCODEC_H
+

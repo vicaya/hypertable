@@ -18,24 +18,41 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_BLOCKDEFLATER_H
-#define HYPERTABLE_BLOCKDEFLATER_H
+#ifndef HYPERTABLE_BLOCKCOMPRESSIONCODECZLIB_H
+#define HYPERTABLE_BLOCKCOMPRESSIONCODECZLIB_H
 
 extern "C" {
-#include <stdint.h>
+#include <zlib.h>
 }
+
+#include "BlockCompressionCodec.h"
 
 namespace Hypertable {
 
   class DynamicBuffer;
 
-  class BlockDeflater {
+  /**
+   * Abstract base class for block compression codecs.  
+   */
+  class BlockCompressionCodecZlib : public BlockCompressionCodec {
+
   public:
-    virtual ~BlockDeflater() { return; }
-    virtual void deflate(Hypertable::DynamicBuffer &inbuf, Hypertable::DynamicBuffer &outbuf,
-			 const char magic[12], size_t reserve=0) = 0;
+    BlockCompressionCodecZlib();
+    virtual ~BlockCompressionCodecZlib();
+
+    virtual int set_args(std::string args);
+    virtual int deflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader *header, size_t reserve=0);
+    virtual int inflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader *header);
+
+  private:
+    z_stream  m_stream_inflate;
+    bool      m_inflate_initialized;
+    z_stream  m_stream_deflate;
+    bool      m_deflate_initialized;
+    int       m_level;
   };
 
 }
 
-#endif // HYPERTABLE_BLOCKDEFLATER_H
+#endif // HYPERTABLE_BLOCKCOMPRESSIONCODECZLIB_H
+
