@@ -1,18 +1,21 @@
 
 TODO:
-- Add support for TSV files
+- Add DELETE to Hql
 - Add delete_row, delete_cell, etc. to Mutator
+- Add support for different compression schemes with args
+- Add lzo compression
+- Add a delete_table method to the range server
+- Memory Throttling
+- Implement InMemory access groups
+- Add compression to commit log
+- Add Phantom updates
+- CommitLog garbage collection
 - Add DropTable command to RangeServer
-- Refactor so that schema can get updated on change (overhaul TableInfo)
-- Add comma separating the column families in the ACCESS GROUP clause
-- Add regression for HQL
 - Add scanner reaper to RangeServer
-- Add range merging
 - Get rid of directly written 'packed' commit log header in favor of a serialized one
 - Add destroy_scanner method to RangeServer
 - Add logic to prevent root METADATA range from splitting
 - Add inMemory mode
-- Figure out a solution to the problem of an update timing out
 - Range constructor should throw exceptions
 - clientTimestamp value does not appear to be used in RangeServer::update
 - Add global (timeout, workers, reactors, etc.) to config file 
@@ -22,8 +25,15 @@ TODO:
 - Can get rid of m_blocksize in CellStoreV0 and just use the one in m_trailer
 - Clean up generate_test_data (have it generate timestamps formatted propertly and modify LoadDataSource to consume it).
 - Make sure the crate table/modify schema cannot overflow a byte on column IDs.
+- Add range merging
+- Refactor so that schema can get updated on change (overhaul TableInfo)
+
 
 DONE:
+- Figure out a solution to the problem of an update timing out
+- Add regression for HQL
+- Add comma separating the column families in the ACCESS GROUP clause
+- Add support for TSV files
 - Add header to load data infile format to specify with or without timestamps
 - Add compression ratio field in CellStoreV0 trailer
 - Figure out get_timestamp stuff (see Merge scanner) is it less than, less than or equal to???

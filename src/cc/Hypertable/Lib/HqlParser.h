@@ -97,7 +97,7 @@ namespace Hypertable {
    
     class hql_interpreter_state {
     public:
-      hql_interpreter_state() : command(0), cf(0), ag(0), nanoseconds(0) {
+      hql_interpreter_state() : command(0), cf(0), ag(0), nanoseconds(0), delete_all_columns(false), delete_time(0) {
 	memset(&tmval, 0, sizeof(tmval));
       }
       int command;
@@ -113,6 +113,10 @@ namespace Hypertable {
       hql_interpreter_scan_state scan;
       insert_record current_insert_value;
       std::vector<insert_record> inserts;
+      std::vector<std::string> delete_columns;
+      bool delete_all_columns;
+      std::string delete_row;
+      uint64_t delete_time;
     };
 
     struct set_command {
@@ -130,6 +134,7 @@ namespace Hypertable {
       void operator()(char const *str, char const *end) const { 
 	display_string("set_table_name");
 	state.table_name = std::string(str, end-str);
+	boost::trim_if(state.table_name, boost::is_any_of("'\""));
       }
       hql_interpreter_state &state;
     };
@@ -512,6 +517,47 @@ namespace Hypertable {
       hql_interpreter_state &state;
     };
 
+    struct delete_column {
+      delete_column(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	std::string column = std::string(str, end-str);
+	display_string("delete_column");
+	boost::trim_if(column, boost::is_any_of("'\""));
+	state.delete_columns.push_back(column);
+      }
+      void operator()(const char c) const { 
+	display_string("delete_column *");
+	state.delete_all_columns = true;
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct delete_set_row {
+      delete_set_row(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("delete_set_row");
+	state.delete_row = std::string(str, end-str);
+	trim_if(state.delete_row, boost::is_any_of("'\""));
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct set_delete_timestamp {
+      set_delete_timestamp(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("set_delete_timestamp");
+	time_t t = mktime(&state.tmval);
+	if (t == (time_t)-1)
+	  throw Exception(Error::HQL_PARSE_ERROR, std::string("DELETE invalid timestamp."));
+	state.delete_time = (uint64_t)t * 1000000000LL + state.nanoseconds;
+	memset(&state.tmval, 0, sizeof(state.tmval));
+	state.nanoseconds = 0;
+      }
+      hql_interpreter_state &state;
+    };
+
+
+
     struct hql_interpreter : public grammar<hql_interpreter> {
       hql_interpreter(hql_interpreter_state &state_) : state(state_) {}
 
@@ -603,6 +649,7 @@ namespace Hypertable {
 	  token_t INFILE       = as_lower_d["infile"];
 	  token_t TIMESTAMP    = as_lower_d["timestamp"];
 	  token_t INSERT       = as_lower_d["insert"];
+	  token_t DELETE       = as_lower_d["delete"];
 	  token_t VALUES       = as_lower_d["values"];
 
 	  /**
@@ -629,6 +676,11 @@ namespace Hypertable {
 			+( anychar_p-chlit<>('"') ) >>
 			chlit<>('"') ];
 
+	  user_identifier
+	    = identifier
+	    | string_literal
+	    ;
+
 	  statement
 	    = select_statement[set_command(self.state, COMMAND_SELECT)]
 	    | create_table_statement[set_command(self.state, COMMAND_CREATE_TABLE)]
@@ -637,6 +689,18 @@ namespace Hypertable {
 	    | show_statement[set_command(self.state, COMMAND_SHOW_CREATE_TABLE)]
 	    | help_statement[set_help(self.state)]
 	    | insert_statement[set_command(self.state, COMMAND_INSERT)]
+	    | delete_statement[set_command(self.state, COMMAND_DELETE)]
+	    ;
+
+	  delete_statement
+	    = DELETE >> delete_column_clause 
+		     >> FROM >> user_identifier[set_table_name(self.state)] 
+		     >> WHERE >> ROW >> EQUAL >> string_literal[delete_set_row(self.state)]
+	             >> !( TIMESTAMP >> date_expression[set_delete_timestamp(self.state)] )
+	    ;
+
+	  delete_column_clause
+	    = ( STAR[delete_column(self.state)] | (column_name[delete_column(self.state)] >> *( COMMA >> column_name[delete_column(self.state)] )) )
 	    ;
 
 	  insert_statement
@@ -817,6 +881,7 @@ namespace Hypertable {
 	  BOOST_SPIRIT_DEBUG_RULE(create_table_statement);
 	  BOOST_SPIRIT_DEBUG_RULE(duration);
 	  BOOST_SPIRIT_DEBUG_RULE(identifier);
+	  BOOST_SPIRIT_DEBUG_RULE(user_identifier);
 	  BOOST_SPIRIT_DEBUG_RULE(max_versions_option);
 	  BOOST_SPIRIT_DEBUG_RULE(statement);
 	  BOOST_SPIRIT_DEBUG_RULE(string_literal);
@@ -843,6 +908,8 @@ namespace Hypertable {
 	  BOOST_SPIRIT_DEBUG_RULE(insert_statement);
 	  BOOST_SPIRIT_DEBUG_RULE(insert_value_list);
 	  BOOST_SPIRIT_DEBUG_RULE(insert_value);
+	  BOOST_SPIRIT_DEBUG_RULE(delete_statement);
+	  BOOST_SPIRIT_DEBUG_RULE(delete_column_clause);
 	}
 #endif
 
@@ -851,13 +918,14 @@ namespace Hypertable {
 	symbols<> keywords;
 	rule<ScannerT>
 	column_definition, column_name, column_option, create_definition, create_definitions,
-	create_table_statement, duration, identifier, max_versions_option,
+	create_table_statement, duration, identifier, user_identifier, max_versions_option,
         statement, single_string_literal, double_string_literal, string_literal,
         ttl_option, access_group_definition,
         access_group_option, in_memory_option, blocksize_option, help_statement,
         describe_table_statement, show_statement, select_statement, where_clause,
         where_predicate, option_spec, date_expression, datetime, date, time,
-        year, load_data_statement, insert_statement, insert_value_list, insert_value;
+	year, load_data_statement, insert_statement, insert_value_list, insert_value,
+	delete_statement, delete_column_clause; 
       };
 
       hql_interpreter_state &state;

@@ -85,6 +85,52 @@ int MutatorScatterBuffer::set(Key &key, uint8_t *value, uint32_t value_len) {
 }
 
 
+/**
+ *
+ */
+int MutatorScatterBuffer::set_delete(Key &key) {
+  int error;
+  RangeLocationInfo range_info;
+  UpdateBufferMapT::const_iterator iter;
+
+  if ((error = m_range_locator_ptr->find(&m_table_identifier, key.row, &range_info, false)) != Error::OK) {
+    if ((error = m_range_locator_ptr->find(&m_table_identifier, key.row, &range_info, 21)) != Error::OK) {
+      LOG_VA_ERROR("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)key.row);
+      return error;
+    }
+  }
+
+  iter = m_buffer_map.find(range_info.location);
+
+  if (iter == m_buffer_map.end()) {
+    m_buffer_map[range_info.location] = new UpdateBuffer(&m_completion_counter);
+    iter = m_buffer_map.find(range_info.location);
+
+    if (!LocationCache::location_to_addr(range_info.location.c_str(), (*iter).second->addr))
+      return Error::INVALID_METADATA;
+  }
+
+  (*iter).second->key_offsets.push_back((*iter).second->buf.fill());
+  uint8_t key_flag;
+  if (key.column_family_code == 0)
+    key_flag = FLAG_DELETE_ROW;
+  else if (key.column_qualifier)
+    key_flag = FLAG_DELETE_CELL;
+  else
+    key_flag = FLAG_DELETE_COLUMN_FAMILY;
+
+  cout << "delete: " << key << endl;
+
+  CreateKeyAndAppend((*iter).second->buf, key_flag, key.row, key.column_family_code, key.column_qualifier, key.timestamp);
+  CreateAndAppend((*iter).second->buf, 0, 0);
+
+  if ((*iter).second->buf.fill() > MAX_SEND_BUFFER_SIZE)
+    m_full = true;
+  
+  return Error::OK;
+}
+
+
 
 /**
  *

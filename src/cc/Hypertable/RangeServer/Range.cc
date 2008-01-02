@@ -243,12 +243,9 @@ int Range::add(const ByteString32T *key, const ByteString32T *value) {
       (*iter).second->add(key, value);
     }
   }
-  else if (keyComps.flag == FLAG_DELETE_CELL || keyComps.flag == FLAG_INSERT) {
+  else {
     m_column_family_vector[keyComps.column_family_code]->add(key, value);
     m_added++;
-  }
-  else {
-    LOG_VA_ERROR("Bad flag value (%d)", keyComps.flag);
   }
   return 0;
 }

@@ -50,6 +50,7 @@ namespace {
   bool g_batch_mode = false;
   bool g_cont = false;
   char *line_read = 0;
+  std::string gInputStr;
 
   char *rl_gets () {
 
@@ -59,8 +60,14 @@ namespace {
     }
 
     /* Get a line from the user. */
-    if (g_batch_mode)
-      line_read = readline(0);
+    if (g_batch_mode) {
+      if (!getline(cin, gInputStr))
+	return 0;
+      boost::trim(gInputStr);
+      if (gInputStr.find("quit", 0) != 0)
+	cout << gInputStr << endl;
+      return (char *)gInputStr.c_str();
+    }
     else if (!g_cont)
       line_read = readline("hypertable> ");
     else
