@@ -142,9 +142,7 @@ int Client::create(std::string &name, bool overwrite, int32_t bufferSize,
 
 int Client::close(int32_t fd, DispatchHandler *handler) {
   ClientBufferedReaderHandler *brHandler = 0;
-  int error;
   CommBufPtr cbufPtr( m_protocol->create_close_request(fd) );
-  error = send_message(cbufPtr, handler);
 
   {
     boost::mutex::scoped_lock lock(m_mutex);
@@ -156,7 +154,7 @@ int Client::close(int32_t fd, DispatchHandler *handler) {
   }
   delete brHandler;
 
-  return error;
+  return send_message(cbufPtr, handler);
 }
 
 
@@ -166,13 +164,6 @@ int Client::close(int32_t fd) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( m_protocol->create_close_request(fd) );
-  int error = send_message(cbufPtr, &syncHandler);
-  if (error == Error::OK) {
-    if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'close' error, fd=%d : %s", fd, m_protocol->string_format_message(eventPtr).c_str());
-      error = (int)m_protocol->response_code(eventPtr);
-    }
-  }
 
   {
     boost::mutex::scoped_lock lock(m_mutex);
@@ -183,6 +174,14 @@ int Client::close(int32_t fd) {
     }
   }
   delete brHandler;
+
+  int error = send_message(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.wait_for_reply(eventPtr)) {
+      LOG_VA_ERROR("Dfs 'close' error, fd=%d : %s", fd, m_protocol->string_format_message(eventPtr).c_str());
+      error = (int)m_protocol->response_code(eventPtr);
+    }
+  }
 
   return error;
 }

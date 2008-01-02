@@ -35,8 +35,6 @@ namespace Hypertable {
     virtual size_t encoded_length() { return 12 + (2*sizeof(int32_t)) + (2*sizeof(int16_t)); }
     virtual void   encode(uint8_t **buf_ptr);
     virtual int    decode(uint8_t **buf_ptr, size_t *remaining_ptr);
-
-    enum Flags { FLAGS_COMPRESSED=0x0001 };
   };
 
 }
