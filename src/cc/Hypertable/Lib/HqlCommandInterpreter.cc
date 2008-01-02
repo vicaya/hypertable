@@ -260,6 +260,58 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       }
       mutator_ptr->flush();
     }
+    else if (state.command == COMMAND_DELETE) {
+      TablePtr table_ptr;
+      MutatorPtr mutator_ptr;
+      KeySpec key;
+      char *column_qualifier;
+      std::string tmp_str;
+
+      if ((error = m_client->open_table(state.table_name, table_ptr)) != Error::OK)
+	throw Exception(error, std::string("Problem opening table '") + state.table_name + "'");
+
+      if ((error = table_ptr->create_mutator(mutator_ptr)) != Error::OK)
+	throw Exception(error, std::string("Problem creating mutator on table '") + state.table_name + "'");
+
+      memset(&key, 0, sizeof(key));
+      key.row = state.delete_row.c_str();
+      key.row_len = state.delete_row.length();
+
+      if (state.delete_time != 0)
+	state.delete_time++;
+
+      if (state.delete_all_columns) {
+	try {
+	  mutator_ptr->set_delete(state.delete_time, key);
+	}
+	catch (Hypertable::Exception &e) {
+	  cerr << "error: " << Error::get_text(e.code()) << " - " << e.what() << endl;
+	  return;
+	}
+      }
+      else {
+	for (size_t i=0; i<state.delete_columns.size(); i++) {
+	  key.column_family = state.delete_columns[i].c_str();
+	  if ((column_qualifier = strchr(state.delete_columns[i].c_str(), ':')) != 0) {
+	    *column_qualifier++ = 0;
+	    key.column_qualifier = column_qualifier;
+	    key.column_qualifier_len = strlen(column_qualifier);
+	  }
+	  else {
+	    key.column_qualifier = 0;
+	    key.column_qualifier_len = 0;
+	  }
+	  try {
+	    mutator_ptr->set_delete(state.delete_time, key);
+	  }
+	  catch (Hypertable::Exception &e) {
+	    cerr << "error: " << Error::get_text(e.code()) << " - " << e.what() << endl;
+	  }
+	}
+      }
+      mutator_ptr->flush();
+    }
+
 
   }
   else

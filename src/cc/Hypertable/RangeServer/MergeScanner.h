@@ -66,6 +66,8 @@ namespace Hypertable {
     bool          m_delete_present;
     DynamicBuffer m_deleted_row;
     uint64_t      m_deleted_row_timestamp;
+    DynamicBuffer m_deleted_column_family;
+    uint64_t      m_deleted_column_family_timestamp;
     DynamicBuffer m_deleted_cell;
     uint64_t      m_deleted_cell_timestamp;
     bool          m_return_deletes;

@@ -32,9 +32,10 @@ using namespace Hypertable;
 
 namespace Hypertable {
 
-  static const uint32_t FLAG_DELETE_ROW   = 0x00;
-  static const uint32_t FLAG_DELETE_CELL  = 0x01;
-  static const uint32_t FLAG_INSERT       = 0xFF;
+  static const uint32_t FLAG_DELETE_ROW            = 0x00;
+  static const uint32_t FLAG_DELETE_COLUMN_FAMILY  = 0x01;
+  static const uint32_t FLAG_DELETE_CELL           = 0x02;
+  static const uint32_t FLAG_INSERT                = 0xFF;
   
   /** Provides access to internal components of opaque key.
    */

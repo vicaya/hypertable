@@ -29,6 +29,7 @@ namespace {
   const char *help_text_contents =
   "\n" \
   "CREATE TABLE      - Creates a table\n" \
+  "DELETE            - Delete all or part of a row from a table\n" \
   "DESCRIBE TABLE    - Displays a table's schema\n" \
   "INSERT            - Inserts data into a table\n" \
   "LOAD DATA INFILE  - Loads data from a tab delimited input file into a table\n" \
@@ -172,6 +173,19 @@ namespace {
   "    'YYYY-MM-DD HH:MM:SS[.nanoseconds]'\n" \
   "\n";
 
+  const char *help_text_delete =
+  "\n" \
+  "DELETE ( '*' | column_key [ ',' column_key ...] )\n" \
+  "    FROM table_name\n" \
+  "    WHERE ROW '=' row_key\n" \
+  "    [ TIMESTAMP timestamp ]\n" \
+  "\n" \
+  "column_key:\n" \
+  "    column_family [ ':' column_qualifier ]\n" \
+  "\n" \
+  "timestamp:\n" \
+  "    'YYYY-MM-DD HH:MM:SS[.nanoseconds]'\n" \
+  "\n";
 
   typedef __gnu_cxx::hash_map<std::string, const char *>  HelpTextMapT;
 
@@ -179,6 +193,7 @@ namespace {
     HelpTextMapT *map = new HelpTextMapT();
     (*map)["contents"] = help_text_contents;
     (*map)["create table"] = help_text_create_table;
+    (*map)["delete"] = help_text_delete;
     (*map)["insert"] = help_text_insert;
     (*map)["select"] = help_text_select;
     (*map)["describe table"] = help_text_describe_table;

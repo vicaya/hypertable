@@ -44,15 +44,8 @@ namespace Hypertable {
     virtual ~Mutator() { return; }
 
     void set(uint64_t timestamp, KeySpec &key, uint8_t *value, uint32_t value_len);
+    void set_delete(uint64_t timestamp, KeySpec &key);
     void flush();
-
-    /**
-    void delete_row(uint64_t timestamp, KeySpec &key);
-    void delete_cell(uint64_t timestamp, KeySpec &key);
-    void delete_qualified_cell(uint64_t timestamp, KeySpec &key);
-    **/
-
-    //void flush(MutationResultPtr &resultPtr);
 
     uint64_t memory_used();
 
