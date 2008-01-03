@@ -31,6 +31,7 @@ endif (CMAKE_COMPILER_IS_GNUCXX)
 # Locate required packages
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 find_package(ZLIB REQUIRED)
+find_package(Lzo2 REQUIRED)
 find_package(Boost REQUIRED)
 find_package(Log4cpp REQUIRED)
 find_package(EXPAT REQUIRED)

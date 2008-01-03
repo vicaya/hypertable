@@ -31,6 +31,7 @@ extern "C" {
 
 #include "AsyncComm/Protocol.h"
 
+#include "Hypertable/Lib/BlockCompressionCodecLzo.h"
 #include "Hypertable/Lib/BlockCompressionCodecZlib.h"
 #include "Hypertable/Lib/Key.h"
 
@@ -68,6 +69,8 @@ CellStoreV0::~CellStoreV0() {
 BlockCompressionCodec *CellStoreV0::create_block_compression_codec() {
   if (m_trailer.compression_type == BlockCompressionCodec::ZLIB) 
     return new BlockCompressionCodecZlib(m_compressor_args);
+  else if (m_trailer.compression_type == BlockCompressionCodec::LZO)
+    return new BlockCompressionCodecLzo(m_compressor_args);
   LOG_VA_ERROR("Unsupported compression type - %d", m_trailer.compression_type);
   DUMP_CORE;
   return 0;
@@ -129,6 +132,10 @@ int CellStoreV0::create(const char *fname, uint32_t blocksize, std::string compr
   if (compressor_type == "" || compressor_type == "zlib") {
     m_trailer.compression_type = BlockCompressionCodec::ZLIB;
     m_compressor = new BlockCompressionCodecZlib(m_compressor_args);
+  }
+  else if (compressor_type == "lzo") {
+    m_trailer.compression_type = BlockCompressionCodec::LZO;
+    m_compressor = new BlockCompressionCodecLzo(m_compressor_args);
   }
   else
     throw Exception(Error::BLOCK_COMPRESSOR_UNSUPPORTED_TYPE, compressor);
@@ -415,10 +422,6 @@ int CellStoreV0::open(const char *fname, const char *start_row, const char *end_
     LOG_VA_ERROR("Unsupported CellStore version (%d) for file '%s'", m_trailer.version, fname);
     goto abort;
   }
-  if (m_trailer.compression_type != BlockCompressionCodec::ZLIB) {
-    LOG_VA_ERROR("Unsupported CellStore compression type (%d) for file '%s'", m_trailer.compression_type, fname);
-    goto abort;
-  }
   if (!(m_trailer.fix_index_offset < m_trailer.var_index_offset &&
 	m_trailer.var_index_offset < m_file_length)) {
     LOG_VA_ERROR("Bad index offsets in CellStore trailer fix=%lld, var=%lld, length=%lld, file='%s'",
@@ -443,8 +446,8 @@ int CellStoreV0::load_index() {
   uint32_t len;
   BlockCompressionHeaderCellStore header;
   DynamicBuffer input(0);
-  
-  m_compressor = new BlockCompressionCodecZlib(m_compressor_args);
+
+  m_compressor = create_block_compression_codec();
 
   amount = (m_file_length-m_trailer.size()) - m_trailer.fix_index_offset;
   buf = new uint8_t [ amount ];

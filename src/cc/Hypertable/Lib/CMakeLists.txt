@@ -18,7 +18,9 @@
 
 set ( Hypertable_SRCS
 BlockCompressionCodec.cc
+BlockCompressionCodecLzo.cc
 BlockCompressionCodecZlib.cc
+BlockCompressionHeaderCommitLog.cc
 Client.cc
 CommitLog.cc
 CommitLogReader.cc
@@ -66,6 +68,10 @@ target_link_libraries (locationCacheTest Hypertable ${BOOST_LIB} Common log4cpp)
 add_executable (loadDataSourceTest tests/loadDataSourceTest.cc)
 target_link_libraries (loadDataSourceTest Hypertable ${BOOST_LIB} Common log4cpp)
 
+# lzo_test
+add_executable (lzo_test tests/lzo_test.cc)
+target_link_libraries (lzo_test Hypertable ${BOOST_LIB} Common log4cpp ${Lzo2_LIBRARIES})
+
 
 #
 # Copy test files
@@ -92,5 +98,6 @@ configure_file(${SRC_DIR}/loadDataSourceTest.dat ${DST_DIR}/loadDataSourceTest.d
 add_test (Schema schemaTest)
 add_test (LocationCache locationCacheTest)
 add_test (LoadDataSource loadDataSourceTest)
+add_test (lzo lzo_test)
 
 install (TARGETS generate_test_data RUNTIME DESTINATION bin)
