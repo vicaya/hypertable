@@ -46,7 +46,7 @@ const char CellStoreV0::INDEX_VARIABLE_BLOCK_MAGIC[12] = { 'I','d','x','V','a','
 using namespace Hypertable;
 
 CellStoreV0::CellStoreV0(Filesystem *filesys) : m_filesys(filesys), m_filename(), m_fd(-1), m_index(),
-  m_compressor(0), m_buffer(0), m_fix_index_buffer(0), m_var_index_buffer(0), m_blocksize(0),
+  m_compressor(0), m_buffer(0), m_fix_index_buffer(0), m_var_index_buffer(0),
   m_outstanding_appends(0), m_offset(0), m_last_key(0), m_file_length(0), m_disk_usage(0), m_file_id(0) {
   m_file_id = FileBlockCache::get_next_file_id();
   assert(sizeof(float) == 4);
@@ -96,19 +96,19 @@ CellListScanner *CellStoreV0::create_scanner(ScanContextPtr &scanContextPtr) {
 int CellStoreV0::create(const char *fname, uint32_t blocksize, std::string compressor) {
   std::string compressor_type;
 
-  m_blocksize = blocksize;
-  m_buffer.reserve(m_blocksize*2);
+  m_buffer.reserve(blocksize*2);
 
   m_fd = -1;
   m_offset = 0;
   m_last_key = 0;
-  m_fix_index_buffer.reserve(m_blocksize);
-  m_var_index_buffer.reserve(m_blocksize);
+  m_fix_index_buffer.reserve(blocksize);
+  m_var_index_buffer.reserve(blocksize);
 
   m_uncompressed_data = 0.0;
   m_compressed_data = 0.0;
 
   m_trailer.clear();
+  m_trailer.blocksize = blocksize;
 
   m_filename = fname;
 
@@ -142,7 +142,7 @@ int CellStoreV0::add(const ByteString32T *key, const ByteString32T *value) {
   EventPtr eventPtr;
   DynamicBuffer zBuffer(0);
 
-  if (m_buffer.fill() > m_blocksize) {
+  if (m_buffer.fill() > m_trailer.blocksize) {
     BlockCompressionHeaderCellStore header(DATA_BLOCK_MAGIC);
 
     add_index_entry(m_last_key, m_offset);
@@ -222,7 +222,6 @@ int CellStoreV0::finalize(uint64_t timestamp) {
   m_trailer.fix_index_offset = m_offset;
   m_trailer.timestamp = timestamp;
   m_trailer.compression_ratio = m_compressed_data / m_uncompressed_data;
-  m_trailer.blocksize = m_blocksize;
   m_trailer.version = 0;
 
   /**
@@ -427,22 +426,6 @@ int CellStoreV0::open(const char *fname, const char *start_row, const char *end_
     goto abort;
   }
 
-  m_blocksize = m_trailer.blocksize;
-
-#if 0
-  cout << "m_index.size() = " << m_index.size() << endl;
-  cout << "Fixed Index Offset: " << m_trailer.fix_index_offset << endl;
-  cout << "Variable Index Offset: " << m_trailer.var_index_offset << endl;
-  cout << "Replaced Files Offset: " << m_trailer.replacedFilesOffset << endl;
-  cout << "Replaced Files Count: " << m_trailer.replacedFilesCount << endl;
-  cout << "Number of Index Entries: " << m_trailer.index_entries << endl;
-  cout << "Flags: " << m_trailer.flags << endl;
-  cout << "Compression Type: " << m_trailer.compression_type << endl;
-  cout << "Version: " << m_trailer.version << endl;
-  for (size_t i=0; i<m_replaced_files.size(); i++)
-    cout << "Replaced File: '" << m_replaced_files[i] << "'" << endl;
-#endif
-
   return Error::OK;
 
  abort:
@@ -566,16 +549,6 @@ int CellStoreV0::load_index() {
       record_split_row((*mid_iter).first);
 
   }
-
-#if 0
-  cout << "m_index.size() = " << m_index.size() << endl;
-  cout << "Fixed Index Offset: " << m_trailer.fix_index_offset << endl;
-  cout << "Variable Index Offset: " << m_trailer.var_index_offset << endl;
-  cout << "Number of Index Entries: " << m_trailer.index_entries << endl;
-  cout << "Flags: " << m_trailer.flags << endl;
-  cout << "Compression Type: " << m_trailer.compression_type << endl;
-  cout << "Version: " << m_trailer.version << endl;
-#endif
 
   error = 0;
 

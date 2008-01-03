@@ -1,9 +1,9 @@
 
 TODO:
 - Add lzo compressor
-- Memory Throttling
 - Add compression to commit log
 - Get rid of directly written 'packed' commit log header in favor of a serialized one
+- Memory Throttling
 - Add Phantom updates
 - CommitLog garbage collection
 - Implement InMemory access groups
@@ -15,16 +15,16 @@ TODO:
 - clientTimestamp value does not appear to be used in RangeServer::update
 - Add global (timeout, workers, reactors, etc.) to config file 
 - Make sure LogDir for root METADATA range gets written somewhere
-- Fix bus error when you issue the following select statement after an initial load:
-  select * from Test1 where row >= 'n' && row < 'm';
-- Can get rid of m_blocksize in CellStoreV0 and just use the one in m_trailer
 - Clean up generate_test_data (have it generate timestamps formatted propertly and modify LoadDataSource to consume it).
 - Make sure the crate table/modify schema cannot overflow a byte on column IDs.
-- Add range merging
-- Refactor so that schema can get updated on change (overhaul TableInfo)
 - Re-write schema parser using Boost Spirit instead of expat (removes a dependency)
+- Refactor so that schema can get updated on change (overhaul TableInfo)
+- Add range merging
 
 DONE:
+- Can get rid of m_blocksize in CellStoreV0 and just use the one in m_trailer
+- Fix bus error when you issue the following select statement after an initial load:
+  select * from Test1 where row >= 'n' && row < 'm';
 - Add DELETE to Hql
 - Add delete_row, delete_cell, etc. to Mutator
 - Add support for different compression schemes with args
