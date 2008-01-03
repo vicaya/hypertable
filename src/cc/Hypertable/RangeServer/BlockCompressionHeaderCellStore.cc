@@ -53,7 +53,7 @@ void BlockCompressionHeaderCellStore::encode(uint8_t **buf_ptr) {
 int BlockCompressionHeaderCellStore::decode(uint8_t **buf_ptr, size_t *remaining_ptr) {
 
   if (*remaining_ptr < encoded_length())
-    return Error::BLOCK_ZCODEC_TRUNCATED;
+    return Error::BLOCK_COMPRESSOR_TRUNCATED;
 
   memcpy(m_magic, *buf_ptr, 12);
   (*buf_ptr) += 12;

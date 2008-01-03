@@ -48,9 +48,10 @@ namespace Hypertable {
      *
      * @param fname name of file to contain the cell store
      * @param blockSize amount of uncompressed data to compress into a block
+     * @param compressor string indicating compressor type and arguments (e.g. "zlib --best")
      * @return Error::OK on success, error code on failure
      */
-    virtual int create(const char *fname, uint32_t blocksize) = 0;
+    virtual int create(const char *fname, uint32_t blocksize, std::string compressor) = 0;
     
     /**
      * Finalizes the creation of a cell store, by writing block index and metadata trailer.

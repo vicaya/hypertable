@@ -49,6 +49,9 @@ AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPt
   Copy(table_identifier, m_table_identifier);
   if (ag->blocksize != 0)
     m_blocksize = ag->blocksize;
+
+  m_compressor = (ag->compressor != "") ? ag->compressor : schemaPtr->get_compressor();
+
 }
 
 
@@ -191,10 +194,10 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
   md5DigestStr[24] = 0;
   sprintf(filename, "cs%d", m_next_table_id++);
   cellStoreFile = (string)"/hypertable/tables/" + m_table_name + "/" + m_name + "/" + md5DigestStr + "/" + filename;
-
+  
   cellStorePtr = new CellStoreV0(Global::dfs);
 
-  if (cellStorePtr->create(cellStoreFile.c_str(), m_blocksize) != 0) {
+  if (cellStorePtr->create(cellStoreFile.c_str(), m_blocksize, m_compressor) != 0) {
     LOG_VA_ERROR("Problem compacting locality group to file '%s'", cellStoreFile.c_str());
     return;
   }

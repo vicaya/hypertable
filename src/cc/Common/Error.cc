@@ -45,12 +45,13 @@ namespace {
     { Error::METADATA_NOT_FOUND,          "HYPERTABLE metadata not found" },
     { Error::HQL_PARSE_ERROR,             "HYPERTABLE HQL parse error" },
     { Error::FILE_NOT_FOUND,              "HYPERTABLE file not found" },
-    { Error::BLOCK_ZCODEC_INVALID_ARG,    "HYPERTABLE compression codec invalid arg" },
-    { Error::BLOCK_ZCODEC_TRUNCATED,      "HYPERTABLE compression codec block truncated" },
-    { Error::BLOCK_ZCODEC_BAD_HEADER,     "HYPERTABLE compression codec bad block header" },
-    { Error::BLOCK_ZCODEC_BAD_MAGIC,      "HYPERTABLE compression codec bad magic string" },
-    { Error::BLOCK_ZCODEC_CHECKSUM_MISMATCH, "HYPERTABLE compression codec block checksum mismatch" },
-    { Error::BLOCK_ZCODEC_INFLATE_ERROR,  "HYPERTABLE compression codec inflate error" },
+    { Error::BLOCK_COMPRESSOR_UNSUPPORTED_TYPE,  "HYPERTABLE block compressor unsupported type" },
+    { Error::BLOCK_COMPRESSOR_INVALID_ARG,       "HYPERTABLE block compressor invalid arg" },
+    { Error::BLOCK_COMPRESSOR_TRUNCATED,         "HYPERTABLE block compressor block truncated" },
+    { Error::BLOCK_COMPRESSOR_BAD_HEADER,        "HYPERTABLE block compressor bad block header" },
+    { Error::BLOCK_COMPRESSOR_BAD_MAGIC,         "HYPERTABLE block compressor bad magic string" },
+    { Error::BLOCK_COMPRESSOR_CHECKSUM_MISMATCH, "HYPERTABLE block compressor block checksum mismatch" },
+    { Error::BLOCK_COMPRESSOR_INFLATE_ERROR,     "HYPERTABLE block compressor inflate error" },
     { Error::COMM_NOT_CONNECTED,          "COMM not connected" },
     { Error::COMM_BROKEN_CONNECTION,      "COMM broken connection" },
     { Error::COMM_CONNECT_ERROR,          "COMM connect error" },
@@ -129,12 +130,13 @@ const int Error::BAD_KEY;
 const int Error::METADATA_NOT_FOUND;
 const int Error::HQL_PARSE_ERROR;
 const int Error::FILE_NOT_FOUND;
-const int Error::BLOCK_ZCODEC_INVALID_ARG;
-const int Error::BLOCK_ZCODEC_TRUNCATED;
-const int Error::BLOCK_ZCODEC_BAD_HEADER;
-const int Error::BLOCK_ZCODEC_BAD_MAGIC;
-const int Error::BLOCK_ZCODEC_CHECKSUM_MISMATCH;
-const int Error::BLOCK_ZCODEC_INFLATE_ERROR;
+const int Error::BLOCK_COMPRESSOR_UNSUPPORTED_TYPE;
+const int Error::BLOCK_COMPRESSOR_INVALID_ARG;
+const int Error::BLOCK_COMPRESSOR_TRUNCATED;
+const int Error::BLOCK_COMPRESSOR_BAD_HEADER;
+const int Error::BLOCK_COMPRESSOR_BAD_MAGIC;
+const int Error::BLOCK_COMPRESSOR_CHECKSUM_MISMATCH;
+const int Error::BLOCK_COMPRESSOR_INFLATE_ERROR;
 
 const int Error::COMM_NOT_CONNECTED;
 const int Error::COMM_BROKEN_CONNECTION;

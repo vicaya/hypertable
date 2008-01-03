@@ -57,6 +57,7 @@ namespace Hypertable {
       string name;
       bool     in_memory;
       uint32_t blocksize;
+      std::string compressor;
       list<ColumnFamily *> columns;
     };
 
@@ -105,6 +106,9 @@ namespace Hypertable {
 
     void add_column_family(ColumnFamily *cf);
 
+    void set_compressor(std::string compressor) { m_compressor = compressor; }
+    std::string &get_compressor() { return m_compressor; }
+
     typedef __gnu_cxx::hash_map<string, ColumnFamily *> ColumnFamilyMapT;
     typedef __gnu_cxx::hash_map<string, AccessGroup *> AccessGroupMapT;
 
@@ -124,6 +128,7 @@ namespace Hypertable {
     bool           m_read_ids;
     bool           m_output_ids;
     size_t         m_max_column_family_id;
+    std::string    m_compressor;
 
     static void start_element_handler(void *userData, const XML_Char *name, const XML_Char **atts);
     static void end_element_handler(void *userData, const XML_Char *name);

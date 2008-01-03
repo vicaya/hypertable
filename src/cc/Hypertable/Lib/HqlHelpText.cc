@@ -42,11 +42,14 @@ namespace {
 
   const char *help_text_create_table =
   "\n" \
-  "CREATE TABLE name '(' [create_definition, ...] ')'\n" \
+  "CREATE TABLE [table_option ...] name '(' [create_definition, ...] ')'\n" \
+  "\n" \
+  "table_option:\n" \
+  "    COMPRESSOR '=' string_literal\n" \
   "\n" \
   "create_definition:\n" \
   "    column_family_name [MAX_VERSIONS '=' value] [TTL '=' duration]\n" \
-  "    | ACCESS GROUP name [IN_MEMORY] [BLOCKSIZE '=' value] ['(' [column_family_name, ...] ')']\n" \
+  "    | ACCESS GROUP name [access_group_option ...] ['(' [column_family_name, ...] ')']\n" \
   "\n" \
   "duration:\n" \
   "    num MONTHS\n" \
@@ -55,6 +58,11 @@ namespace {
   "    | num HOURS\n" \
   "    | num MINUTES\n" \
   "    | num SECONDS\n" \
+  "\n" \
+  "access_group_option:\n" \
+  "    IN_MEMORY\n" \
+  "    | BLOCKSIZE '=' value\n" \
+  "    | COMPRESSOR '=' string_literal\n" \
   "\n";
 
   const char *help_text_select =

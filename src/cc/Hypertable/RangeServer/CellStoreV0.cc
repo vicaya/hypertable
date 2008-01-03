@@ -19,7 +19,7 @@
  */
 #include <cassert>
 
-#include <boost/scoped_ptr.hpp>
+#include <boost/algorithm/string.hpp>
 
 extern "C" {
 #include <string.h>
@@ -45,10 +45,9 @@ const char CellStoreV0::INDEX_VARIABLE_BLOCK_MAGIC[12] = { 'I','d','x','V','a','
 
 using namespace Hypertable;
 
-CellStoreV0::CellStoreV0(Filesystem *filesys, int zcodec, const char *zcodec_args) : m_filesys(filesys), m_filename(), m_fd(-1), m_index(),
-  m_zcodec(0), m_buffer(0), m_fix_index_buffer(0), m_var_index_buffer(0), m_blocksize(0),
-  m_outstanding_appends(0), m_offset(0), m_last_key(0), m_file_length(0), m_disk_usage(0), m_file_id(0), m_zcodec_args(zcodec_args) {
-  assert(zcodec == BlockCompressionCodec::ZLIB);
+CellStoreV0::CellStoreV0(Filesystem *filesys) : m_filesys(filesys), m_filename(), m_fd(-1), m_index(),
+  m_compressor(0), m_buffer(0), m_fix_index_buffer(0), m_var_index_buffer(0), m_blocksize(0),
+  m_outstanding_appends(0), m_offset(0), m_last_key(0), m_file_length(0), m_disk_usage(0), m_file_id(0) {
   m_file_id = FileBlockCache::get_next_file_id();
   assert(sizeof(float) == 4);
 }
@@ -57,7 +56,7 @@ CellStoreV0::CellStoreV0(Filesystem *filesys, int zcodec, const char *zcodec_arg
 
 CellStoreV0::~CellStoreV0() {
   int error;
-  delete m_zcodec;
+  delete m_compressor;
   if (m_fd != -1) {
     if ((error = m_filesys->close(m_fd)) != Error::OK) {
       LOG_VA_ERROR("Problem closing HDFS client - %s", Error::get_text(error));
@@ -68,7 +67,7 @@ CellStoreV0::~CellStoreV0() {
 
 BlockCompressionCodec *CellStoreV0::create_block_compression_codec() {
   if (m_trailer.compression_type == BlockCompressionCodec::ZLIB) 
-    return new BlockCompressionCodecZlib();
+    return new BlockCompressionCodecZlib(m_compressor_args);
   LOG_VA_ERROR("Unsupported compression type - %d", m_trailer.compression_type);
   DUMP_CORE;
   return 0;
@@ -94,7 +93,8 @@ CellListScanner *CellStoreV0::create_scanner(ScanContextPtr &scanContextPtr) {
 }
 
 
-int CellStoreV0::create(const char *fname, uint32_t blocksize) {
+int CellStoreV0::create(const char *fname, uint32_t blocksize, std::string compressor) {
+  std::string compressor_type;
 
   m_blocksize = blocksize;
   m_buffer.reserve(m_blocksize*2);
@@ -115,7 +115,23 @@ int CellStoreV0::create(const char *fname, uint32_t blocksize) {
   m_start_row = "";
   m_end_row = Key::END_ROW_MARKER;
 
-  m_zcodec = new BlockCompressionCodecZlib();
+  size_t offset = compressor.find_first_of(" \t\n\r");
+  if (offset != std::string::npos) {
+    compressor_type = compressor.substr(0, offset);
+    m_compressor_args = compressor.substr(offset+1);
+    boost::trim(m_compressor_args);
+  }
+  else {
+    compressor_type = compressor;
+    m_compressor_args = "";
+  }
+
+  if (compressor == "" || compressor == "zlib") {
+    m_trailer.compression_type = BlockCompressionCodec::ZLIB;
+    m_compressor = new BlockCompressionCodecZlib(m_compressor_args);
+  }
+  else
+    throw Exception(Error::BLOCK_COMPRESSOR_UNSUPPORTED_TYPE, compressor);
 
   return m_filesys->create(m_filename, true, -1, -1, -1, &m_fd);
 }
@@ -132,7 +148,7 @@ int CellStoreV0::add(const ByteString32T *key, const ByteString32T *value) {
     add_index_entry(m_last_key, m_offset);
 
     m_uncompressed_data += (float)m_buffer.fill();
-    m_zcodec->deflate(m_buffer, zBuffer, &header);
+    m_compressor->deflate(m_buffer, zBuffer, &header);
     m_compressed_data += (float)zBuffer.fill();
     m_buffer.clear();
 
@@ -183,7 +199,7 @@ int CellStoreV0::finalize(uint64_t timestamp) {
     add_index_entry(m_last_key, m_offset);
 
     m_uncompressed_data += (float)m_buffer.fill();
-    m_zcodec->deflate(m_buffer, zBuffer, &header);
+    m_compressor->deflate(m_buffer, zBuffer, &header);
     m_compressed_data += (float)zBuffer.fill();
     zbuf = zBuffer.release(&zlen);
 
@@ -205,7 +221,6 @@ int CellStoreV0::finalize(uint64_t timestamp) {
 
   m_trailer.fix_index_offset = m_offset;
   m_trailer.timestamp = timestamp;
-  m_trailer.compression_type = BlockCompressionCodec::ZLIB;
   m_trailer.compression_ratio = m_compressed_data / m_uncompressed_data;
   m_trailer.blocksize = m_blocksize;
   m_trailer.version = 0;
@@ -227,7 +242,7 @@ int CellStoreV0::finalize(uint64_t timestamp) {
    */
   {
     BlockCompressionHeaderCellStore header(INDEX_FIXED_BLOCK_MAGIC);
-    m_zcodec->deflate(m_fix_index_buffer, zBuffer, &header);
+    m_compressor->deflate(m_fix_index_buffer, zBuffer, &header);
     zbuf = zBuffer.release(&zlen);
   }
 
@@ -253,7 +268,7 @@ int CellStoreV0::finalize(uint64_t timestamp) {
   {
     BlockCompressionHeaderCellStore header(INDEX_VARIABLE_BLOCK_MAGIC);
     m_trailer.var_index_offset = m_offset;
-    m_zcodec->deflate(m_var_index_buffer, zBuffer, &header, m_trailer.size());
+    m_compressor->deflate(m_var_index_buffer, zBuffer, &header, m_trailer.size());
   }
 
   // wait for fixed index write
@@ -318,8 +333,8 @@ int CellStoreV0::finalize(uint64_t timestamp) {
   error = 0;
 
  abort:
-  delete m_zcodec;
-  m_zcodec = 0;
+  delete m_compressor;
+  m_compressor = 0;
 
   return error;
 }
@@ -446,7 +461,7 @@ int CellStoreV0::load_index() {
   BlockCompressionHeaderCellStore header;
   DynamicBuffer input(0);
   
-  m_zcodec = new BlockCompressionCodecZlib();
+  m_compressor = new BlockCompressionCodecZlib(m_compressor_args);
 
   amount = (m_file_length-m_trailer.size()) - m_trailer.fix_index_offset;
   buf = new uint8_t [ amount ];
@@ -464,12 +479,12 @@ int CellStoreV0::load_index() {
   {
     input.buf = buf;
     input.ptr = buf + (m_trailer.var_index_offset - m_trailer.fix_index_offset);
-    if ((error = m_zcodec->inflate(input, m_fix_index_buffer, &header)) != Error::OK) {
+    if ((error = m_compressor->inflate(input, m_fix_index_buffer, &header)) != Error::OK) {
       LOG_VA_ERROR("Fixed index decompression error - %s", Error::get_text(error));
       goto abort;
     }
     if (!header.check_magic(INDEX_FIXED_BLOCK_MAGIC)) {
-      error = Error::BLOCK_ZCODEC_BAD_MAGIC;
+      error = Error::BLOCK_COMPRESSOR_BAD_MAGIC;
       goto abort;
     }
   }
@@ -481,12 +496,12 @@ int CellStoreV0::load_index() {
   {
     input.buf = vbuf;
     input.ptr = vbuf + amount;
-    if ((error = m_zcodec->inflate(input, m_var_index_buffer, &header)) != Error::OK) {
+    if ((error = m_compressor->inflate(input, m_var_index_buffer, &header)) != Error::OK) {
       LOG_VA_ERROR("Variable index decompression error - %s", Error::get_text(error));
       goto abort;
     }
     if (!header.check_magic(INDEX_VARIABLE_BLOCK_MAGIC)) {
-      error = Error::BLOCK_ZCODEC_BAD_MAGIC;
+      error = Error::BLOCK_COMPRESSOR_BAD_MAGIC;
       goto abort;
     }
   }
@@ -566,8 +581,8 @@ int CellStoreV0::load_index() {
 
  abort:
   input.buf = 0;
-  delete m_zcodec;
-  m_zcodec = 0;
+  delete m_compressor;
+  m_compressor = 0;
   delete [] m_fix_index_buffer.release();
   delete [] buf;
   return error;
