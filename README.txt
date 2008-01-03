@@ -22,7 +22,6 @@ CONTENTS
 
     HIGHLY RECOMMENDED (but non required):
     - tcmalloc (http://code.google.com/p/google-perftools/)
-    - libunwind (required by tcmalloc, see google-perftools documentation)
 
     NOTE: If tcmalloc is available on your system, install it.  Hypertable is
           very malloc intensive and tcmalloc provides a huge performance improvement.
