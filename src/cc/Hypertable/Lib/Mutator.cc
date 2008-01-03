@@ -91,6 +91,51 @@ void Mutator::set(uint64_t timestamp, KeySpec &key, uint8_t *value, uint32_t val
 }
 
 
+
+void Mutator::set_delete(uint64_t timestamp, KeySpec &key) {
+  int error;
+  Key full_key;
+
+  sanity_check_key(key);
+
+  if (key.column_family == 0) {
+    full_key.row = (const char *)key.row;
+    full_key.column_family_code = 0;
+    full_key.column_qualifier = 0;
+    full_key.timestamp = timestamp;    
+  }
+  else  {
+    Schema::ColumnFamily *cf = m_schema_ptr->get_column_family(key.column_family);
+    if (cf == 0)
+      throw Exception(Error::BAD_KEY, (std::string)"Invalid key - bad column family '" + key.column_family + "'");
+    full_key.row = (const char *)key.row;
+    full_key.column_qualifier = (const char *)key.column_qualifier;
+    full_key.column_family_code = (uint8_t)cf->id;
+    full_key.timestamp = timestamp;
+  }
+
+  if ((error = m_buffer_ptr->set_delete(full_key)) != Error::OK) {
+    LOG_VA_ERROR("Problem doing delete - %s", Error::get_text(error));
+  }
+
+  m_memory_used += 20 + key.row_len + key.column_qualifier_len;
+
+  if (m_buffer_ptr->full() || m_memory_used > m_max_memory) {
+
+    if (m_prev_buffer_ptr)
+      wait_for_previous_buffer();
+
+    m_buffer_ptr->send();
+
+    m_prev_buffer_ptr = m_buffer_ptr;
+
+    m_buffer_ptr = new MutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+    m_memory_used = 0;
+  }
+
+}
+
+
 void Mutator::flush() {
 
   if (m_prev_buffer_ptr)
@@ -141,13 +186,6 @@ void Mutator::wait_for_previous_buffer() {
   }
   
 }
-
-
-#if 0
-    void delete_row(uint64_t timestamp, KeySpec &key);
-    void delete_cell(uint64_t timestamp, KeySpec &key);
-    void delete_qualified_cell(uint64_t timestamp, KeySpec &key);
-#endif
 
 
 

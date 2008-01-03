@@ -16,6 +16,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
 
+set ( SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Tools/hypertable" )
+set ( DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Tools/hypertable" )
+
 set (hypertable_SRCS
 hypertable.cc
 )
@@ -24,5 +27,15 @@ hypertable.cc
 add_executable (hypertable ${hypertable_SRCS})
 target_link_libraries (hypertable pthread ${BOOST_LIB} Hypertable AsyncComm Hyperspace DfsBroker Common log4cpp expat readline curses ${Tcmalloc_LIBRARIES})
 
+# hypertable_test
+add_executable (hypertable_test test/hypertable_test.cc ${TEST_DEPENDENCIES} )
+target_link_libraries (hypertable_test pthread ${BOOST_LIB} Common log4cpp ${Tcmalloc_LIBRARIES})
+
 install (TARGETS hypertable RUNTIME DESTINATION bin)
+
+configure_file(${HYPERTABLE_SOURCE_DIR}/conf/hypertable.cfg  ${DST_DIR}/hypertable.cfg)
+configure_file(${SRC_DIR}/test/hypertable_test.golden ${DST_DIR}/hypertable_test.golden)
+configure_file(${SRC_DIR}/test/hypertable_test.hql ${DST_DIR}/hypertable_test.hql)
+
+add_test (hypertable hypertable_test)
 

@@ -47,6 +47,7 @@ namespace Hypertable {
 
     MutatorScatterBuffer(PropertiesPtr &props_ptr, Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
     int set(Key &key, uint8_t *value, uint32_t value_len);
+    int set_delete(Key &key);
     int set(ByteString32T *key, ByteString32T *value);
     bool full() { return m_full; }
     void send();

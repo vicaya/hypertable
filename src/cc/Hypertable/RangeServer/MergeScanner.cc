@@ -31,7 +31,7 @@ using namespace Hypertable;
 /**
  * 
  */
-MergeScanner::MergeScanner(ScanContextPtr &scanContextPtr, bool returnDeletes) : CellListScanner(scanContextPtr), m_done(false), m_initialized(false), m_scanners(), m_queue(), m_delete_present(false), m_deleted_row(0), m_deleted_cell(0), m_return_deletes(returnDeletes), m_row_count(0), m_row_limit(0), m_cell_count(0), m_cell_limit(0), m_cell_cutoff(0), m_prev_key(0) {
+MergeScanner::MergeScanner(ScanContextPtr &scanContextPtr, bool returnDeletes) : CellListScanner(scanContextPtr), m_done(false), m_initialized(false), m_scanners(), m_queue(), m_delete_present(false), m_deleted_row(0), m_deleted_column_family(0), m_deleted_cell(0), m_return_deletes(returnDeletes), m_row_count(0), m_row_limit(0), m_cell_count(0), m_cell_limit(0), m_cell_cutoff(0), m_prev_key(0) {
   if (scanContextPtr->spec != 0)
     m_row_limit = scanContextPtr->spec->rowLimit;
   m_start_timestamp = scanContextPtr->interval.first;
@@ -104,6 +104,23 @@ void MergeScanner::forward() {
 	if (m_return_deletes)
 	  break;
       }
+      else if (keyComps.flag == FLAG_DELETE_COLUMN_FAMILY) {
+	len = keyComps.column_qualifier - keyComps.row;
+	if (m_delete_present && m_deleted_column_family.fill() == len && !memcmp(m_deleted_column_family.buf, keyComps.row, len)) {
+	  if (m_deleted_column_family_timestamp < keyComps.timestamp)
+	    m_deleted_column_family_timestamp = keyComps.timestamp;
+	}
+	else {
+	  m_deleted_column_family.clear();
+	  m_deleted_column_family.ensure(len);
+	  memcpy(m_deleted_column_family.buf, sstate.key->data, len);
+	  m_deleted_column_family.ptr = m_deleted_column_family.buf + len;
+	  m_deleted_column_family_timestamp = keyComps.timestamp;
+	  m_delete_present = true;
+	}
+	if (m_return_deletes)
+	  break;
+      }
       else if (keyComps.flag == FLAG_DELETE_CELL) {
 	len = (keyComps.column_qualifier - keyComps.row) + strlen(keyComps.column_qualifier) + 1;
 	if (m_delete_present && m_deleted_cell.fill() == len && !memcmp(m_deleted_cell.buf, keyComps.row, len)) {
@@ -133,6 +150,15 @@ void MergeScanner::forward() {
 	      break;
 	    }
 	    m_deleted_cell.clear();
+	  }
+	  if (m_deleted_column_family.fill() > 0) {
+	    len = keyComps.column_qualifier - keyComps.row;
+	    if (m_deleted_column_family.fill() == len && !memcmp(m_deleted_column_family.buf, keyComps.row, len)) {
+	      if (keyComps.timestamp < m_deleted_column_family_timestamp)
+		continue;
+	      break;
+	    }
+	    m_deleted_column_family.clear();
 	  }
 	  if (m_deleted_row.fill() > 0) {
 	    len = strlen(keyComps.row) + 1;
@@ -247,6 +273,17 @@ void MergeScanner::initialize() {
       memcpy(m_deleted_row.buf, keyComps.row, len);
       m_deleted_row.ptr = m_deleted_row.buf + len;
       m_deleted_row_timestamp = keyComps.timestamp;
+      m_delete_present = true;
+      if (!m_return_deletes)
+	forward();
+    }
+    else if (keyComps.flag == FLAG_DELETE_COLUMN_FAMILY) {
+      size_t len = (keyComps.column_qualifier - keyComps.row) + strlen(keyComps.column_qualifier) + 1;
+      m_deleted_column_family.clear();
+      m_deleted_column_family.ensure(len);
+      memcpy(m_deleted_column_family.buf, sstate.key->data, len);
+      m_deleted_column_family.ptr = m_deleted_column_family.buf + len;
+      m_deleted_column_family_timestamp = keyComps.timestamp;
       m_delete_present = true;
       if (!m_return_deletes)
 	forward();

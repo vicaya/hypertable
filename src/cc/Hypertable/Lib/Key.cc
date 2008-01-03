@@ -152,9 +152,13 @@ namespace Hypertable {
       os << "ts=" << keyComps.timestamp << " DELETE";
     else {
       os << "family=" << (int)keyComps.column_family_code;
-      os << " qualifier='" << keyComps.column_qualifier << "' ts=" << keyComps.timestamp;
+      if (keyComps.column_qualifier) 
+	os << " qualifier='" << keyComps.column_qualifier << "'";
+      os << " ts=" << keyComps.timestamp;
       if (keyComps.flag == FLAG_DELETE_CELL)
 	os << " DELETE";
+      else if (keyComps.flag == FLAG_DELETE_COLUMN_FAMILY)
+	os << " DELETE_COLUMN_FAMILY";
     }
     return os;
   }
