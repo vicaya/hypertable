@@ -37,7 +37,7 @@ namespace Hypertable {
   class BlockCompressionCodecZlib : public BlockCompressionCodec {
 
   public:
-    BlockCompressionCodecZlib();
+    BlockCompressionCodecZlib(std::string args);
     virtual ~BlockCompressionCodecZlib();
 
     virtual int set_args(std::string args);

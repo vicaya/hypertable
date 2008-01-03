@@ -32,7 +32,9 @@ using namespace Hypertable;
 /**
  *
  */
-BlockCompressionCodecZlib::BlockCompressionCodecZlib() : m_inflate_initialized(false), m_deflate_initialized(false), m_level(Z_BEST_SPEED) {
+BlockCompressionCodecZlib::BlockCompressionCodecZlib(std::string args) : m_inflate_initialized(false), m_deflate_initialized(false), m_level(Z_BEST_SPEED) {
+  if (args != "")
+    set_args(args);
 }
 
 
@@ -71,7 +73,7 @@ int BlockCompressionCodecZlib::set_args(std::string args) {
   }
   else {
     LOG_VA_ERROR("Unrecognized argument to Zlib codec: '%s'", args.c_str());
-    return Error::BLOCK_ZCODEC_INVALID_ARG;
+    return Error::BLOCK_COMPRESSOR_INVALID_ARG;
   }
   return Error::OK;
 }
@@ -150,13 +152,13 @@ int BlockCompressionCodecZlib::inflate(const DynamicBuffer &input, DynamicBuffer
 
   if (header->get_zlength() != remaining) {
     LOG_VA_ERROR("Block decompression error, header zlength = %d, actual = %d", header->get_zlength(), remaining);
-    return Error::BLOCK_ZCODEC_BAD_HEADER;
+    return Error::BLOCK_COMPRESSOR_BAD_HEADER;
   }
 
   uint16_t checksum = fletcher16(msg_ptr, remaining);
   if (checksum != header->get_checksum()) {
     LOG_VA_ERROR("Compressed block checksum mismatch header=%d, computed=%d", header->get_checksum(), checksum);
-    return Error::BLOCK_ZCODEC_CHECKSUM_MISMATCH;
+    return Error::BLOCK_COMPRESSOR_CHECKSUM_MISMATCH;
   }
 
   m_stream_inflate.avail_in = remaining;
@@ -185,5 +187,5 @@ int BlockCompressionCodecZlib::inflate(const DynamicBuffer &input, DynamicBuffer
  abort:
   ::inflateReset(&m_stream_inflate);
   output.free();
-  return Error::BLOCK_ZCODEC_INFLATE_ERROR;
+  return Error::BLOCK_COMPRESSOR_INFLATE_ERROR;
 }

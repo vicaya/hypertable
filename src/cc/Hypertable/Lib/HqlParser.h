@@ -103,6 +103,7 @@ namespace Hypertable {
       int command;
       std::string table_name;
       std::string str;
+      std::string table_compressor;
       std::string row_key_column;
       Schema::ColumnFamily *cf;
       Schema::AccessGroup *ag;
@@ -213,6 +214,16 @@ namespace Hypertable {
       hql_interpreter_state &state;
     };
 
+    struct set_access_group_compressor {
+      set_access_group_compressor(hql_interpreter_state &state_) : state(state_) {  }
+      void operator()(char const *str, char const *end) const { 
+	display_string("set_access_group_compressor");
+	state.ag->compressor = std::string(str, end-str);
+	boost::trim_if(state.ag->compressor, boost::is_any_of("'\""));	
+      }
+      hql_interpreter_state &state;
+    };
+
     struct set_access_group_blocksize {
       set_access_group_blocksize(hql_interpreter_state &state_) : state(state_) { }
       void operator()(const unsigned int &blocksize) const { 
@@ -237,6 +248,19 @@ namespace Hypertable {
       }
       hql_interpreter_state &state;
     };
+
+    struct set_table_compressor {
+      set_table_compressor(hql_interpreter_state &state_) : state(state_) {  }
+      void operator()(char const *str, char const *end) const { 
+	display_string("set_table_compressor");
+	if (state.table_compressor != "")
+	  throw Exception(Error::HQL_PARSE_ERROR, std::string("table compressor multiply defined"));
+	state.table_compressor = std::string(str, end-str);
+	boost::trim_if(state.table_compressor, boost::is_any_of("'\""));	
+      }
+      hql_interpreter_state &state;
+    };
+
 
     struct set_help {
       set_help(hql_interpreter_state &state_) : state(state_) { }
@@ -651,6 +675,7 @@ namespace Hypertable {
 	  token_t INSERT       = as_lower_d["insert"];
 	  token_t DELETE       = as_lower_d["delete"];
 	  token_t VALUES       = as_lower_d["values"];
+	  token_t COMPRESSOR   = as_lower_d["compressor"];
 
 	  /**
 	   * Start grammar definition
@@ -732,8 +757,13 @@ namespace Hypertable {
 
 	  create_table_statement
 	    =  CREATE >> TABLE
+		      >> *( table_option )
 		      >> identifier[set_table_name(self.state)]
 		      >> !( create_definitions )
+	    ;
+
+	  table_option
+	    = COMPRESSOR >> EQUAL >> string_literal[set_table_compressor(self.state)]
 	    ;
 
 	  create_definitions 
@@ -782,7 +812,8 @@ namespace Hypertable {
 
 	  access_group_option
 	    = in_memory_option[set_access_group_in_memory(self.state)]
-	    | blocksize_option
+	    | blocksize_option 
+	    | COMPRESSOR >> EQUAL >> string_literal[set_access_group_compressor(self.state)]
 	    ;
 
 	  in_memory_option
@@ -910,6 +941,7 @@ namespace Hypertable {
 	  BOOST_SPIRIT_DEBUG_RULE(insert_value);
 	  BOOST_SPIRIT_DEBUG_RULE(delete_statement);
 	  BOOST_SPIRIT_DEBUG_RULE(delete_column_clause);
+	  BOOST_SPIRIT_DEBUG_RULE(table_option);
 	}
 #endif
 
@@ -925,7 +957,7 @@ namespace Hypertable {
         describe_table_statement, show_statement, select_statement, where_clause,
         where_predicate, option_spec, date_expression, datetime, date, time,
 	year, load_data_statement, insert_statement, insert_value_list, insert_value,
-	delete_statement, delete_column_clause; 
+	delete_statement, delete_column_clause, table_option;
       };
 
       hql_interpreter_state &state;

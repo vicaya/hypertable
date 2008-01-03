@@ -44,12 +44,13 @@ namespace Hypertable {
     static const int METADATA_NOT_FOUND = 10;
     static const int HQL_PARSE_ERROR    = 11;
     static const int FILE_NOT_FOUND     = 12;
-    static const int BLOCK_ZCODEC_INVALID_ARG       = 13;
-    static const int BLOCK_ZCODEC_TRUNCATED         = 14;
-    static const int BLOCK_ZCODEC_BAD_HEADER        = 15;
-    static const int BLOCK_ZCODEC_BAD_MAGIC         = 16;
-    static const int BLOCK_ZCODEC_CHECKSUM_MISMATCH = 17;
-    static const int BLOCK_ZCODEC_INFLATE_ERROR     = 18;
+    static const int BLOCK_COMPRESSOR_UNSUPPORTED_TYPE  = 13;
+    static const int BLOCK_COMPRESSOR_INVALID_ARG       = 14;
+    static const int BLOCK_COMPRESSOR_TRUNCATED         = 15;
+    static const int BLOCK_COMPRESSOR_BAD_HEADER        = 16;
+    static const int BLOCK_COMPRESSOR_BAD_MAGIC         = 17;
+    static const int BLOCK_COMPRESSOR_CHECKSUM_MISMATCH = 18;
+    static const int BLOCK_COMPRESSOR_INFLATE_ERROR     = 19;
 
     static const int COMM_NOT_CONNECTED       = 0x00010001;
     static const int COMM_BROKEN_CONNECTION   = 0x00010002;

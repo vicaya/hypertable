@@ -249,6 +249,10 @@ void Schema::set_access_group_parameter(const char *param, const char *value) {
       else
 	m_open_access_group->blocksize = (uint32_t)blocksize;
     }
+    else if (!strcasecmp(param, "compressor")) {
+      m_open_access_group->compressor = value;
+      boost::trim(m_open_access_group->compressor);
+    }
     else
       set_error_string((string)"Invalid AccessGroup attribute '" + param + "'");
   }
@@ -318,6 +322,8 @@ void Schema::render(std::string &output) {
       output += " inMemory=\"true\"";
     if ((*iter)->blocksize > 0)
       output += (std::string)" blockSize=\"" + (*iter)->blocksize + "\"";
+    if ((*iter)->compressor != "")
+      output += (std::string)" compressor=\"" + (*iter)->compressor + "\"";
     output += ">\n";
     for (list<ColumnFamily *>::iterator cfiter = (*iter)->columns.begin(); cfiter != (*iter)->columns.end(); cfiter++) {
       output += (string)"    <ColumnFamily";
@@ -362,6 +368,8 @@ void Schema::render_hql_create_table(std::string table_name, std::string &output
       output += (std::string)" IN_MEMORY";
     if ((*ag_iter)->blocksize != 0)
       output += (std::string)" BLOCKSIZE=" + (*ag_iter)->blocksize;
+    if ((*ag_iter)->compressor != "")
+      output += (std::string)" COMPRESSOR=\"" + (*ag_iter)->compressor + "\"";
     if (!(*ag_iter)->columns.empty()) {
       output += (std::string)" (";
       for (list<ColumnFamily *>::iterator cfl_iter = (*ag_iter)->columns.begin(); cfl_iter != (*ag_iter)->columns.end(); cfl_iter++) {
