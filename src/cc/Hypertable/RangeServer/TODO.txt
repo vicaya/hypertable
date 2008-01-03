@@ -1,9 +1,8 @@
 
 TODO:
-- Add lzo compressor
+- Memory Throttling
 - Add compression to commit log
 - Get rid of directly written 'packed' commit log header in favor of a serialized one
-- Memory Throttling
 - Add Phantom updates
 - CommitLog garbage collection
 - Implement InMemory access groups
@@ -22,7 +21,8 @@ TODO:
 - Add range merging
 
 DONE:
-- Can get rid of m_blocksize in CellStoreV0 and just use the one in m_trailer
+- Add lzo block compressor
+- Got rid of m_blocksize in CellStoreV0 and just use the one in m_trailer
 - Fix bus error when you issue the following select statement after an initial load:
   select * from Test1 where row >= 'n' && row < 'm';
 - Add DELETE to Hql
