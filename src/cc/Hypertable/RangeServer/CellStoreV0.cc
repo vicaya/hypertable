@@ -126,7 +126,7 @@ int CellStoreV0::create(const char *fname, uint32_t blocksize, std::string compr
     m_compressor_args = "";
   }
 
-  if (compressor == "" || compressor == "zlib") {
+  if (compressor_type == "" || compressor_type == "zlib") {
     m_trailer.compression_type = BlockCompressionCodec::ZLIB;
     m_compressor = new BlockCompressionCodecZlib(m_compressor_args);
   }

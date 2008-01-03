@@ -105,6 +105,8 @@ void Schema::start_element_handler(void *userData,
 	return;
       if (ms_schema->m_read_ids && !strcasecmp(atts[i], "generation"))
 	ms_schema->set_generation(atts[i+1]);
+      else if (!strcasecmp(atts[i], "compressor"))
+	ms_schema->set_compressor((std::string)atts[i+1]);
       else
 	ms_schema->set_error_string((string)"Unrecognized 'Schema' attribute : " + atts[i]);
     }
@@ -309,11 +311,10 @@ void Schema::render(std::string &output) {
   }
 
   output += "<Schema";
-  if (m_output_ids) {
-    output += " generation=\"";
-    sprintf(buf, "%d", m_generation);
-    output += (string)buf + "\"";
-  }
+  if (m_output_ids)
+    output += (std::string)" generation=\"" + (uint32_t)m_generation + "\"";
+  if (m_compressor != "")
+    output += (std::string)" compressor=\"" + m_compressor + "\"";
   output += ">\n";
 
   for (list<AccessGroup *>::iterator iter = m_access_groups.begin(); iter != m_access_groups.end(); iter++) {
@@ -350,7 +351,10 @@ void Schema::render(std::string &output) {
 void Schema::render_hql_create_table(std::string table_name, std::string &output) {
 
   output += "\n";
-  output += "CREATE TABLE " + table_name + " (\n";
+  output += "CREATE TABLE ";
+  if (m_compressor != "")
+    output += (std::string)"COMPRESSOR=\"" + m_compressor + "\" ";
+  output += table_name + " (\n";
 
   for (ColumnFamilyMapT::const_iterator cf_iter = m_column_family_map.begin(); cf_iter != m_column_family_map.end(); cf_iter++) {
     output += (std::string)"  " + (*cf_iter).first;

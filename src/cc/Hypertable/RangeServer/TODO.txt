@@ -1,21 +1,16 @@
 
 TODO:
-- Add DELETE to Hql
-- Add delete_row, delete_cell, etc. to Mutator
-- Add support for different compression schemes with args
-- Add lzo compression
-- Add a delete_table method to the range server
+- Add lzo compressor
 - Memory Throttling
-- Implement InMemory access groups
 - Add compression to commit log
+- Get rid of directly written 'packed' commit log header in favor of a serialized one
 - Add Phantom updates
 - CommitLog garbage collection
+- Implement InMemory access groups
 - Add DropTable command to RangeServer
 - Add scanner reaper to RangeServer
-- Get rid of directly written 'packed' commit log header in favor of a serialized one
 - Add destroy_scanner method to RangeServer
 - Add logic to prevent root METADATA range from splitting
-- Add inMemory mode
 - Range constructor should throw exceptions
 - clientTimestamp value does not appear to be used in RangeServer::update
 - Add global (timeout, workers, reactors, etc.) to config file 
@@ -27,9 +22,12 @@ TODO:
 - Make sure the crate table/modify schema cannot overflow a byte on column IDs.
 - Add range merging
 - Refactor so that schema can get updated on change (overhaul TableInfo)
-
+- Re-write schema parser using Boost Spirit instead of expat (removes a dependency)
 
 DONE:
+- Add DELETE to Hql
+- Add delete_row, delete_cell, etc. to Mutator
+- Add support for different compression schemes with args
 - Figure out a solution to the problem of an update timing out
 - Add regression for HQL
 - Add comma separating the column families in the ACCESS GROUP clause
