@@ -98,6 +98,10 @@ TableScanner::~TableScanner() {
     delete [] m_scan_spec.columns[i];
   delete [] m_scan_spec.startRow;
   delete [] m_scan_spec.endRow;
+
+  // if there is an outstanding fetch, wait for it to come back or timeout
+  if (m_fetch_outstanding)
+    m_sync_handler.wait_for_reply(m_event_ptr);
 }
 
 
@@ -127,6 +131,7 @@ bool TableScanner::next(CellT &cell) {
     else {
       if (m_fetch_outstanding) {
 	if (!m_sync_handler.wait_for_reply(m_event_ptr)) {
+	  m_fetch_outstanding = false;
 	  LOG_VA_ERROR("RangeServer 'fetch scanblock' error : %s", Protocol::string_format_message(m_event_ptr).c_str());
 	  throw Exception((int)Protocol::response_code(m_event_ptr));
 	}
