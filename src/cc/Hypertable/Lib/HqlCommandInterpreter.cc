@@ -77,6 +77,7 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
     }
     else if (state.command == COMMAND_CREATE_TABLE) {
       schema = new Schema();
+      schema->set_compressor(state.table_compressor);
       for (Schema::AccessGroupMapT::const_iterator ag_iter = state.ag_map.begin(); ag_iter != state.ag_map.end(); ag_iter++)
 	schema->add_access_group((*ag_iter).second);
       if (state.ag_map.find("default") == state.ag_map.end()) {
