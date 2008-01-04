@@ -33,7 +33,7 @@ namespace {
   const char *usage[] = {
     "usage: lzo_test",
     "",
-    "Validates lzo block compressor.",
+    "Validates lzo block compressor. Exit status of 0 if OK, non-zero if something is wrong.",
     0
   };
 }
@@ -48,6 +48,9 @@ int main(int argc, char **argv) {
   DynamicBuffer output2(0);
   BlockCompressionCodecLzo *compressor = new BlockCompressionCodecLzo("");
   BlockCompressionHeaderCommitLog header(MAGIC, 0, "foo");
+
+  if (argc > 1 && !strcmp(argv[1], "--help"))
+    Usage::dump_and_exit(usage);
 
   System::initialize(argv[0]);
 

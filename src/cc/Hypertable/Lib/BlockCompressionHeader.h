@@ -43,23 +43,19 @@ namespace Hypertable {
     void     set_checksum(uint16_t checksum) { m_checksum = checksum; }
     uint16_t get_checksum() { return m_checksum; }
 
-    void     set_flags(uint16_t flags) { m_flags = flags; }
-    void     set_flag(uint16_t flag) { m_flags |= flag; }
-    void     unset_flag(uint16_t flag) { m_flags &= ~flag; }
-    uint16_t get_flags() { return m_flags; }
+    void     set_type(uint16_t type) { m_type = type; }
+    uint16_t get_type() { return m_type; }
 
     virtual size_t encoded_length() = 0;
     virtual void   encode(uint8_t **buf_ptr) = 0;
     virtual int    decode(uint8_t **buf_ptr, size_t *remaining_ptr) = 0;
-
-    enum Flags { FLAGS_COMPRESSED=0x0001 };
 
   protected:
     char m_magic[12];
     uint32_t m_length;
     uint32_t m_zlength;
     uint16_t m_checksum;
-    uint16_t m_flags;
+    uint16_t m_type;
   };
 
 }

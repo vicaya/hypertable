@@ -42,9 +42,8 @@ namespace Hypertable {
     virtual int inflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader *header) = 0;
     virtual int set_args(std::string args) { return Error::OK; }
 
-    static const int ZLIB;
-    static const int LZO;
-    static const int BMZ;
+    enum { NONE=0, BMZ=1, ZLIB=2, LZO=3, QUICKLZ=4 };
+
   };
 
 }

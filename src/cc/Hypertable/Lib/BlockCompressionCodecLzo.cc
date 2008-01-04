@@ -65,13 +65,13 @@ int BlockCompressionCodecLzo::deflate(const DynamicBuffer &input, DynamicBuffer 
 
   /* check for an incompressible block */
   if (out_len >= input.fill()) {
-    header->unset_flag(BlockCompressionHeader::FLAGS_COMPRESSED);
+    header->set_type(NONE);
     memcpy(output.buf+header->encoded_length(), input.buf, input.fill());
     header->set_length(input.fill());
     header->set_zlength(input.fill());
   }
   else {
-    header->set_flags(BlockCompressionHeader::FLAGS_COMPRESSED);
+    header->set_type(LZO);
     header->set_length(input.fill());
     header->set_zlength(out_len);
   }
@@ -112,7 +112,7 @@ int BlockCompressionCodecLzo::inflate(const DynamicBuffer &input, DynamicBuffer 
   output.reserve(header->get_length());
 
    // check compress bit
-  if ((header->get_flags() & BlockCompressionHeader::FLAGS_COMPRESSED) == 0)
+  if (header->get_type() == NONE)
     memcpy(output.buf, msg_ptr, header->get_length());
   else {
     new_len = header->get_length();

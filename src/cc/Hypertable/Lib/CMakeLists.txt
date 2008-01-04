@@ -17,7 +17,6 @@
 # 
 
 set ( Hypertable_SRCS
-BlockCompressionCodec.cc
 BlockCompressionCodecLzo.cc
 BlockCompressionCodecZlib.cc
 BlockCompressionHeaderCommitLog.cc

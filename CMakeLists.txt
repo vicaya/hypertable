@@ -31,12 +31,15 @@ endif (CMAKE_COMPILER_IS_GNUCXX)
 # Locate required packages
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 find_package(ZLIB REQUIRED)
-find_package(Lzo2 REQUIRED)
+#find_package(Lzo2 REQUIRED)
 find_package(Boost REQUIRED)
 find_package(Log4cpp REQUIRED)
 find_package(EXPAT REQUIRED)
 find_package(Doxygen)
 find_package(Tcmalloc)
+
+# temporary hack
+set (Lzo2_LIBRARIES "-llzo2")
 
 # include directories
 include_directories(${Boost_INCLUDE_DIRS} ${Log4cpp_INCLUDE_DIR} src/cc)

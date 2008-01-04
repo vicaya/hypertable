@@ -29,7 +29,7 @@ using namespace Hypertable;
 BlockCompressionHeaderCommitLog::BlockCompressionHeaderCommitLog() {
   m_length = 0;
   m_zlength = 0;
-  m_flags = 0;
+  m_type = 0;
   m_checksum = 0;
   memset(m_magic, 0, 12);
   m_timestamp = 0;
@@ -52,7 +52,7 @@ void BlockCompressionHeaderCommitLog::encode(uint8_t **buf_ptr) {
   (*buf_ptr) += 12;
   Serialization::encode_int(buf_ptr, m_length);
   Serialization::encode_int(buf_ptr, m_zlength);
-  Serialization::encode_short(buf_ptr, m_flags);
+  Serialization::encode_short(buf_ptr, m_type);
   Serialization::encode_short(buf_ptr, m_checksum);
   Serialization::encode_long(buf_ptr, m_timestamp);
   if (m_tablename) {
@@ -81,7 +81,7 @@ int BlockCompressionHeaderCommitLog::decode(uint8_t **buf_ptr, size_t *remaining
   if (!Serialization::decode_int(buf_ptr, remaining_ptr, &m_zlength))
     return Error::BLOCK_COMPRESSOR_TRUNCATED;
 
-  if (!Serialization::decode_short(buf_ptr, remaining_ptr, &m_flags))
+  if (!Serialization::decode_short(buf_ptr, remaining_ptr, &m_type))
     return Error::BLOCK_COMPRESSOR_TRUNCATED;
 
   if (!Serialization::decode_short(buf_ptr, remaining_ptr, &m_checksum))
