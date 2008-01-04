@@ -32,6 +32,8 @@ extern "C" {
 #include "AsyncComm/Protocol.h"
 
 #include "Hypertable/Lib/BlockCompressionCodecLzo.h"
+#include "Hypertable/Lib/BlockCompressionCodecNone.h"
+#include "Hypertable/Lib/BlockCompressionCodecQuicklz.h"
 #include "Hypertable/Lib/BlockCompressionCodecZlib.h"
 #include "Hypertable/Lib/Key.h"
 
@@ -67,10 +69,14 @@ CellStoreV0::~CellStoreV0() {
 
 
 BlockCompressionCodec *CellStoreV0::create_block_compression_codec() {
+  if (m_trailer.compression_type == BlockCompressionCodec::QUICKLZ)
+    return new BlockCompressionCodecQuicklz(m_compressor_args);
   if (m_trailer.compression_type == BlockCompressionCodec::ZLIB) 
     return new BlockCompressionCodecZlib(m_compressor_args);
   else if (m_trailer.compression_type == BlockCompressionCodec::LZO)
     return new BlockCompressionCodecLzo(m_compressor_args);
+  else if (m_trailer.compression_type == BlockCompressionCodec::NONE)
+    return new BlockCompressionCodecNone(m_compressor_args);
   LOG_VA_ERROR("Unsupported compression type - %d", m_trailer.compression_type);
   DUMP_CORE;
   return 0;
@@ -133,9 +139,17 @@ int CellStoreV0::create(const char *fname, uint32_t blocksize, std::string compr
     m_trailer.compression_type = BlockCompressionCodec::ZLIB;
     m_compressor = new BlockCompressionCodecZlib(m_compressor_args);
   }
+  else if (compressor_type == "quicklz") {
+    m_trailer.compression_type = BlockCompressionCodec::QUICKLZ;
+    m_compressor = new BlockCompressionCodecQuicklz(m_compressor_args);
+  }
   else if (compressor_type == "lzo") {
     m_trailer.compression_type = BlockCompressionCodec::LZO;
     m_compressor = new BlockCompressionCodecLzo(m_compressor_args);
+  }
+  else if (compressor_type == "none") {
+    m_trailer.compression_type = BlockCompressionCodec::NONE;
+    m_compressor = new BlockCompressionCodecNone(m_compressor_args);
   }
   else
     throw Exception(Error::BLOCK_COMPRESSOR_UNSUPPORTED_TYPE, compressor);
