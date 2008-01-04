@@ -25,15 +25,25 @@
 #include "Common/Usage.h"
 
 #include "Hypertable/Lib/BlockCompressionCodecLzo.h"
+#include "Hypertable/Lib/BlockCompressionCodecNone.h"
+#include "Hypertable/Lib/BlockCompressionCodecQuicklz.h"
+#include "Hypertable/Lib/BlockCompressionCodecZlib.h"
 #include "Hypertable/Lib/BlockCompressionHeaderCommitLog.h"
 
 using namespace Hypertable;
 
 namespace {
   const char *usage[] = {
-    "usage: lzo_test",
+    "usage: compressor_test <type>",
     "",
-    "Validates lzo block compressor. Exit status of 0 if OK, non-zero if something is wrong.",
+    "Validates a block compressor.  The type of compressor to validate",
+    "is specified by the <type> argument which can be one of:",
+    "",
+    "none",
+    "zlib",
+    "lzo",
+    "quicklz",
+    "",
     0
   };
 }
@@ -46,13 +56,26 @@ int main(int argc, char **argv) {
   DynamicBuffer input(0);
   DynamicBuffer output1(0);
   DynamicBuffer output2(0);
-  BlockCompressionCodecLzo *compressor = new BlockCompressionCodecLzo("");
+  BlockCompressionCodec *compressor;
   BlockCompressionHeaderCommitLog header(MAGIC, 0, "foo");
-
-  if (argc > 1 && !strcmp(argv[1], "--help"))
+  
+  if (argc == 1 || !strcmp(argv[1], "--help"))
     Usage::dump_and_exit(usage);
 
   System::initialize(argv[0]);
+
+  if (!strcmp(argv[1], "none"))
+    compressor = new BlockCompressionCodecNone("");
+  else if (!strcmp(argv[1], "zlib"))
+    compressor = new BlockCompressionCodecZlib("");
+  else if (!strcmp(argv[1], "lzo"))
+    compressor = new BlockCompressionCodecLzo("");
+  else if (!strcmp(argv[1], "quicklz"))
+    compressor = new BlockCompressionCodecQuicklz("");
+  else {
+    LOG_VA_INFO("Unsupported compressor type - %s", argv[1]);
+    return 1;
+  }
 
   if ((input.buf = (uint8_t *)FileUtils::file_to_buffer("./good-schema-1.xml", &len)) == 0) {
     LOG_ERROR("Problem loading './good-schema-1.xml'");
