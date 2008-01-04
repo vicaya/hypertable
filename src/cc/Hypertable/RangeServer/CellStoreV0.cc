@@ -42,9 +42,9 @@ extern "C" {
 #include "CellStoreV0.h"
 #include "FileBlockCache.h"
 
-const char CellStoreV0::DATA_BLOCK_MAGIC[12]           = { 'D','a','t','a','-','-','-','-','-','-','-','-' };
-const char CellStoreV0::INDEX_FIXED_BLOCK_MAGIC[12]    = { 'I','d','x','F','i','x','-','-','-','-','-','-' };
-const char CellStoreV0::INDEX_VARIABLE_BLOCK_MAGIC[12] = { 'I','d','x','V','a','r','-','-','-','-','-','-' };
+const char CellStoreV0::DATA_BLOCK_MAGIC[10]           = { 'D','a','t','a','-','-','-','-','-','-' };
+const char CellStoreV0::INDEX_FIXED_BLOCK_MAGIC[10]    = { 'I','d','x','F','i','x','-','-','-','-' };
+const char CellStoreV0::INDEX_VARIABLE_BLOCK_MAGIC[10] = { 'I','d','x','V','a','r','-','-','-','-' };
 
 using namespace Hypertable;
 
@@ -71,7 +71,7 @@ CellStoreV0::~CellStoreV0() {
 BlockCompressionCodec *CellStoreV0::create_block_compression_codec() {
   if (m_trailer.compression_type == BlockCompressionCodec::QUICKLZ)
     return new BlockCompressionCodecQuicklz(m_compressor_args);
-  if (m_trailer.compression_type == BlockCompressionCodec::ZLIB) 
+  else if (m_trailer.compression_type == BlockCompressionCodec::ZLIB) 
     return new BlockCompressionCodecZlib(m_compressor_args);
   else if (m_trailer.compression_type == BlockCompressionCodec::LZO)
     return new BlockCompressionCodecLzo(m_compressor_args);

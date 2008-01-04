@@ -30,9 +30,9 @@ namespace Hypertable {
   public:
     virtual ~BlockCompressionHeader() { return; }
 
-    void set_magic(const char magic[12]) { memcpy(m_magic, magic, 12); }
-    void get_magic(char magic[12]) { memcpy(magic, m_magic, 12); }
-    bool check_magic(const char magic[12]) { return !memcmp(magic, m_magic, 12); }
+    void set_magic(const char magic[10]) { memcpy(m_magic, magic, 10); }
+    void get_magic(char magic[10]) { memcpy(magic, m_magic, 10); }
+    bool check_magic(const char magic[10]) { return !memcmp(magic, m_magic, 10); }
 
     void     set_length(uint32_t length) { m_length = length; }
     uint32_t get_length() { return m_length; }
@@ -46,16 +46,18 @@ namespace Hypertable {
     void     set_type(uint16_t type) { m_type = type; }
     uint16_t get_type() { return m_type; }
 
-    virtual size_t encoded_length() = 0;
-    virtual void   encode(uint8_t **buf_ptr) = 0;
-    virtual int    decode(uint8_t **buf_ptr, size_t *remaining_ptr) = 0;
+    virtual size_t   encoded_length() = 0;
+    virtual void     encode(uint8_t **buf_ptr) = 0;
+    virtual int      decode_fixed(uint8_t **buf_ptr, size_t *remaining_ptr) = 0;
+    virtual int      decode_variable(uint8_t **buf_ptr, size_t *remaining_ptr) = 0;
 
   protected:
-    char m_magic[12];
+    char m_magic[10];
     uint32_t m_length;
     uint32_t m_zlength;
     uint16_t m_checksum;
     uint16_t m_type;
+    uint16_t m_header_length;
   };
 
 }

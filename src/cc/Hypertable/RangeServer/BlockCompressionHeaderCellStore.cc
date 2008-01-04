@@ -31,15 +31,16 @@ BlockCompressionHeaderCellStore::BlockCompressionHeaderCellStore() {
   m_zlength = 0;
   m_type = 0;
   m_checksum = 0;
-  memset(m_magic, 0, 12);
+  memset(m_magic, 0, 10);
 }
 
 /**
  *
  */
 void BlockCompressionHeaderCellStore::encode(uint8_t **buf_ptr) {
-  memcpy(*buf_ptr, m_magic, 12);
-  (*buf_ptr) += 12;
+  memcpy(*buf_ptr, m_magic, 10);
+  (*buf_ptr) += 10;
+  Serialization::encode_short(buf_ptr, 24);
   Serialization::encode_int(buf_ptr, m_length);
   Serialization::encode_int(buf_ptr, m_zlength);
   Serialization::encode_short(buf_ptr, m_type);
@@ -50,19 +51,29 @@ void BlockCompressionHeaderCellStore::encode(uint8_t **buf_ptr) {
 /**
  *
  */
-int BlockCompressionHeaderCellStore::decode(uint8_t **buf_ptr, size_t *remaining_ptr) {
+int BlockCompressionHeaderCellStore::decode_fixed(uint8_t **buf_ptr, size_t *remaining_ptr) {
+  uint16_t header_len;
 
   if (*remaining_ptr < encoded_length())
     return Error::BLOCK_COMPRESSOR_TRUNCATED;
 
-  memcpy(m_magic, *buf_ptr, 12);
-  (*buf_ptr) += 12;
-  *remaining_ptr -= 12;
+  memcpy(m_magic, *buf_ptr, 10);
+  (*buf_ptr) += 10;
+  *remaining_ptr -= 10;
 
+  Serialization::decode_short(buf_ptr, remaining_ptr, &header_len);
   Serialization::decode_int(buf_ptr, remaining_ptr, &m_length);
   Serialization::decode_int(buf_ptr, remaining_ptr, &m_zlength);
   Serialization::decode_short(buf_ptr, remaining_ptr, &m_type);
   Serialization::decode_short(buf_ptr, remaining_ptr, &m_checksum);
 
+  return Error::OK;
+}
+
+
+/**
+ *
+ */
+int BlockCompressionHeaderCellStore::decode_variable(uint8_t **buf_ptr, size_t *remaining_ptr) {
   return Error::OK;
 }

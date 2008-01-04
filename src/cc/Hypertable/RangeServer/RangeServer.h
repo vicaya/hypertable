@@ -64,7 +64,7 @@ namespace Hypertable {
     void master_change();
 
   private:
-    int directory_initialize(Properties *props);
+    int directory_initialize(PropertiesPtr &props_ptr);
 
     bool get_table_info(std::string name, TableInfoPtr &info);
     void set_table_info(std::string name, TableInfoPtr &info);

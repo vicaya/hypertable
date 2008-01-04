@@ -58,23 +58,23 @@ namespace {
 /**
  * Constructor
  */
-RangeServer::RangeServer(PropertiesPtr &propsPtr, ConnectionManagerPtr &conn_manager_ptr, ApplicationQueuePtr &app_queue_ptr, Hyperspace::SessionPtr &hyperspace_ptr) : m_mutex(), m_verbose(false), m_conn_manager_ptr(conn_manager_ptr), m_app_queue_ptr(app_queue_ptr), m_hyperspace_ptr(hyperspace_ptr) {
+RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, ApplicationQueuePtr &app_queue_ptr, Hyperspace::SessionPtr &hyperspace_ptr) : m_mutex(), m_verbose(false), m_conn_manager_ptr(conn_manager_ptr), m_app_queue_ptr(app_queue_ptr), m_hyperspace_ptr(hyperspace_ptr) {
   int error;
   uint16_t port;
   Comm *comm = conn_manager_ptr->get_comm();
 
-  Global::rangeMaxBytes           = propsPtr->getPropertyInt64("Hypertable.RangeServer.Range.MaxBytes", 200000000LL);
-  Global::localityGroupMaxFiles   = propsPtr->getPropertyInt("Hypertable.RangeServer.AccessGroup.MaxFiles", 10);
-  Global::localityGroupMergeFiles = propsPtr->getPropertyInt("Hypertable.RangeServer.AccessGroup.MergeFiles", 4);
-  Global::localityGroupMaxMemory  = propsPtr->getPropertyInt("Hypertable.RangeServer.AccessGroup.MaxMemory", 4000000);
-  port                            = propsPtr->getPropertyInt("Hypertable.RangeServer.port", DEFAULT_PORT);
+  Global::rangeMaxBytes           = props_ptr->getPropertyInt64("Hypertable.RangeServer.Range.MaxBytes", 200000000LL);
+  Global::localityGroupMaxFiles   = props_ptr->getPropertyInt("Hypertable.RangeServer.AccessGroup.MaxFiles", 10);
+  Global::localityGroupMergeFiles = props_ptr->getPropertyInt("Hypertable.RangeServer.AccessGroup.MergeFiles", 4);
+  Global::localityGroupMaxMemory  = props_ptr->getPropertyInt("Hypertable.RangeServer.AccessGroup.MaxMemory", 4000000);
+  port                            = props_ptr->getPropertyInt("Hypertable.RangeServer.port", DEFAULT_PORT);
 
-  uint64_t blockCacheMemory = propsPtr->getPropertyInt64("Hypertable.RangeServer.BlockCache.MaxMemory", 200000000LL);
+  uint64_t blockCacheMemory = props_ptr->getPropertyInt64("Hypertable.RangeServer.BlockCache.MaxMemory", 200000000LL);
   Global::blockCache = new FileBlockCache(blockCacheMemory);
 
   assert(Global::localityGroupMergeFiles <= Global::localityGroupMaxFiles);
 
-  m_verbose = propsPtr->getPropertyBool("verbose", false);
+  m_verbose = props_ptr->getPropertyBool("verbose", false);
 
   if (Global::verbose) {
     cout << "Hypertable.RangeServer.AccessGroup.MaxFiles=" << Global::localityGroupMaxFiles << endl;
@@ -91,12 +91,12 @@ RangeServer::RangeServer(PropertiesPtr &propsPtr, ConnectionManagerPtr &conn_man
 
   Global::protocol = new Hypertable::RangeServerProtocol();
 
-  DfsBroker::Client *dfsClient = new DfsBroker::Client(m_conn_manager_ptr, propsPtr);
+  DfsBroker::Client *dfsClient = new DfsBroker::Client(m_conn_manager_ptr, props_ptr);
 
   if (m_verbose) {
-    cout << "DfsBroker.host=" << propsPtr->getProperty("DfsBroker.host", "") << endl;
-    cout << "DfsBroker.port=" << propsPtr->getProperty("DfsBroker.port", "") << endl;
-    cout << "DfsBroker.timeout=" << propsPtr->getProperty("DfsBroker.timeout", "") << endl;
+    cout << "DfsBroker.host=" << props_ptr->getProperty("DfsBroker.host", "") << endl;
+    cout << "DfsBroker.port=" << props_ptr->getProperty("DfsBroker.port", "") << endl;
+    cout << "DfsBroker.timeout=" << props_ptr->getProperty("DfsBroker.timeout", "") << endl;
   }
 
   if (!dfsClient->wait_for_connection(30)) {
@@ -110,8 +110,8 @@ RangeServer::RangeServer(PropertiesPtr &propsPtr, ConnectionManagerPtr &conn_man
    * Check for and connect to commit log DFS broker
    */
   {
-    const char *logHost = propsPtr->getProperty("Hypertable.RangeServer.CommitLog.DfsBroker.host", 0);
-    uint16_t logPort    = propsPtr->getPropertyInt("Hypertable.RangeServer.CommitLog.DfsBroker.port", 0);
+    const char *logHost = props_ptr->getProperty("Hypertable.RangeServer.CommitLog.DfsBroker.host", 0);
+    uint16_t logPort    = props_ptr->getPropertyInt("Hypertable.RangeServer.CommitLog.DfsBroker.port", 0);
     struct sockaddr_in addr;
     if (logHost != 0) {
       InetAddr::initialize(&addr, logHost, logPort);
@@ -144,7 +144,7 @@ RangeServer::RangeServer(PropertiesPtr &propsPtr, ConnectionManagerPtr &conn_man
     m_location = (std::string)inet_ntoa(addr.sin_addr) + "_" + (int)port + "_" + (uint32_t)tval.tv_sec;
   }
 
-  if (directory_initialize(propsPtr.get()) != Error::OK)
+  if (directory_initialize(props_ptr) != Error::OK)
     exit(1);
 
   // start commpaction thread
@@ -200,7 +200,7 @@ RangeServer::~RangeServer() {
  * - Clear any Range server state (including any partially created commit logs)
  * - Open the commit log
  */
-int RangeServer::directory_initialize(Properties *props) {
+int RangeServer::directory_initialize(PropertiesPtr &props_ptr) {
   int error;
   bool exists;
   std::string topDir;
@@ -247,13 +247,10 @@ int RangeServer::directory_initialize(Properties *props) {
     return error;
   }
 
-  int64_t logFileSize = props->getPropertyInt64("Hypertable.RangeServer.logFileSize", 0x100000000LL);
-  if (Global::verbose) {
-    cout << "Hypertable.RangeServer.logFileSize=" << logFileSize << endl;
+  if (Global::verbose)
     cout << "logDir=" << Global::logDir << endl;
-  }
 
-  Global::log = new CommitLog(Global::logDfs, Global::logDir, logFileSize);    
+  Global::log = new CommitLog(Global::logDfs, Global::logDir, props_ptr);
 
   return Error::OK;
 }

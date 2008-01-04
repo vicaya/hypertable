@@ -92,7 +92,10 @@ int BlockCompressionCodecQuicklz::inflate(const DynamicBuffer &input, DynamicBuf
   uint8_t *msg_ptr = input.buf;
   size_t remaining = input.fill();
 
-  if ((error = header->decode(&msg_ptr, &remaining)) != Error::OK)
+  if ((error = header->decode_fixed(&msg_ptr, &remaining)) != Error::OK)
+    return error;
+
+  if ((error = header->decode_variable(&msg_ptr, &remaining)) != Error::OK)
     return error;
 
   if (header->get_zlength() != remaining) {

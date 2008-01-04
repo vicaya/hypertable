@@ -430,6 +430,7 @@ void Range::do_maintenance() {
      */
     {
       boost::mutex::scoped_lock lock(m_maintenance_mutex);
+      PropertiesPtr props_ptr(0);
 
       /** block updates **/
       m_hold_updates = true;
@@ -444,7 +445,7 @@ void Range::do_maintenance() {
 	old_start_row = m_start_row;
       }
 
-      m_split_log_ptr = new CommitLog(Global::logDfs, splitLogDir, 0x100000000LL);
+      m_split_log_ptr = new CommitLog(Global::logDfs, splitLogDir, props_ptr);
 
       /** unblock updates **/
       m_hold_updates = false;

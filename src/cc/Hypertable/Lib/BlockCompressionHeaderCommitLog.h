@@ -31,14 +31,15 @@ namespace Hypertable {
   class BlockCompressionHeaderCommitLog : public BlockCompressionHeader {
   public:
     BlockCompressionHeaderCommitLog();
-    BlockCompressionHeaderCommitLog(const char magic[12], uint64_t timestamp, const char *tablename);
+    BlockCompressionHeaderCommitLog(const char magic[10], uint64_t timestamp, const char *tablename);
 
     void set_timestamp(uint64_t timestamp) { m_timestamp = timestamp; }
     void set_tablename(const char *tablename) { m_tablename = tablename; }
 
     virtual size_t encoded_length() { return 33 + (m_tablename ? strlen(m_tablename) : 0); }
     virtual void   encode(uint8_t **buf_ptr);
-    virtual int    decode(uint8_t **buf_ptr, size_t *remaining_ptr);
+    virtual int    decode_fixed(uint8_t **buf_ptr, size_t *remaining_ptr);
+    virtual int    decode_variable(uint8_t **buf_ptr, size_t *remaining_ptr);
     
   private:
     uint64_t m_timestamp;

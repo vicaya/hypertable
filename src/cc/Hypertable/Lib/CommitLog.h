@@ -32,6 +32,7 @@ extern "C" {
 
 #include <boost/thread/mutex.hpp>
 
+#include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
 
 #include "Hypertable/Lib/Filesystem.h"
@@ -72,7 +73,7 @@ namespace Hypertable {
 
     enum Flag { LINK=0x0001 };
 
-    CommitLog(Filesystem *fs, std::string &logDir, int64_t logFileSize);
+    CommitLog(Filesystem *fs, std::string &log_dir, PropertiesPtr &props_ptr);
     virtual ~CommitLog() { return; }
 
     int write(const char *tableName, uint8_t *data, uint32_t len, uint64_t timestamp);

@@ -83,9 +83,9 @@ namespace Hypertable {
     void add_index_entry(const ByteString32T *key, uint32_t offset);
     void record_split_row(const ByteString32T *key);
 
-    static const char DATA_BLOCK_MAGIC[12];
-    static const char INDEX_FIXED_BLOCK_MAGIC[12];
-    static const char INDEX_VARIABLE_BLOCK_MAGIC[12];
+    static const char DATA_BLOCK_MAGIC[10];
+    static const char INDEX_FIXED_BLOCK_MAGIC[10];
+    static const char INDEX_VARIABLE_BLOCK_MAGIC[10];
 
     typedef map<ByteString32T *, uint32_t, ltByteString32> IndexMapT;
 

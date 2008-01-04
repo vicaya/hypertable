@@ -95,7 +95,10 @@ int BlockCompressionCodecLzo::inflate(const DynamicBuffer &input, DynamicBuffer 
   size_t remaining = input.fill();
   lzo_uint new_len;
 
-  if ((error = header->decode(&msg_ptr, &remaining)) != Error::OK)
+  if ((error = header->decode_fixed(&msg_ptr, &remaining)) != Error::OK)
+    return error;
+
+  if ((error = header->decode_variable(&msg_ptr, &remaining)) != Error::OK)
     return error;
 
   if (header->get_zlength() != remaining) {

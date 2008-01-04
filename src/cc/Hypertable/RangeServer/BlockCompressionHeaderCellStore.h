@@ -31,10 +31,12 @@ namespace Hypertable {
   class BlockCompressionHeaderCellStore : public BlockCompressionHeader {
   public:
     BlockCompressionHeaderCellStore();
-    BlockCompressionHeaderCellStore(const char magic[12]) { set_magic(magic); }
-    virtual size_t encoded_length() { return 12 + (2*sizeof(int32_t)) + (2*sizeof(int16_t)); }
+    BlockCompressionHeaderCellStore(const char magic[10]) { set_magic(magic); }
+
+    virtual size_t encoded_length() { return 24; }
     virtual void   encode(uint8_t **buf_ptr);
-    virtual int    decode(uint8_t **buf_ptr, size_t *remaining_ptr);
+    virtual int    decode_fixed(uint8_t **buf_ptr, size_t *remaining_ptr);
+    virtual int    decode_variable(uint8_t **buf_ptr, size_t *remaining_ptr);
   };
 
 }

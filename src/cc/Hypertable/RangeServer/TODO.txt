@@ -15,6 +15,9 @@ TODO:
 - Add global (timeout, workers, reactors, etc.) to config file 
 - Make sure LogDir for root METADATA range gets written somewhere
 - Clean up generate_test_data (have it generate timestamps formatted propertly and modify LoadDataSource to consume it).
+- Fix timestamp issue.  In RangeServer::update the updateTimestamp is obtained
+  from the commit log, but the splitStartTime is obtain from the updates and
+  they are compared against one another (updateTimestamp > splitStartTime)
 - Make sure the crate table/modify schema cannot overflow a byte on column IDs.
 - Re-write schema parser using Boost Spirit instead of expat (removes a dependency)
 - Refactor so that schema can get updated on change (overhaul TableInfo)

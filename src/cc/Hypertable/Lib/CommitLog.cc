@@ -34,8 +34,13 @@ using namespace Hypertable;
 /**
  *
  */
-CommitLog::CommitLog(Filesystem *fs, std::string &logDir, int64_t logFileSize) : m_fs(fs), m_log_dir(logDir), m_max_file_size(logFileSize), m_cur_log_length(0), m_cur_log_num(0), m_last_timestamp(0) {
+CommitLog::CommitLog(Filesystem *fs, std::string &logDir, PropertiesPtr &props_ptr) : m_fs(fs), m_log_dir(logDir), m_cur_log_length(0), m_cur_log_num(0), m_last_timestamp(0) {
   int error;
+
+  if (props_ptr)
+    m_max_file_size = props_ptr->getPropertyInt64("Hypertable.RangeServer.logFileSize", 0x100000000LL);
+  else
+    m_max_file_size = 0x100000000LL;
 
   if (m_log_dir.find('/', m_log_dir.length()-1) == string::npos)
     m_log_dir += "/";

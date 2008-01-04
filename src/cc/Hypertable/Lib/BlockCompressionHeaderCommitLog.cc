@@ -31,13 +31,14 @@ BlockCompressionHeaderCommitLog::BlockCompressionHeaderCommitLog() {
   m_zlength = 0;
   m_type = 0;
   m_checksum = 0;
-  memset(m_magic, 0, 12);
+  memset(m_magic, 0, 10);
   m_timestamp = 0;
   m_tablename = 0;
+  m_header_length = 0;
 }
 
 
-BlockCompressionHeaderCommitLog::BlockCompressionHeaderCommitLog(const char magic[12], uint64_t timestamp, const char *tablename) {
+BlockCompressionHeaderCommitLog::BlockCompressionHeaderCommitLog(const char magic[10], uint64_t timestamp, const char *tablename) {
   set_magic(magic);
   m_timestamp = timestamp;
   m_tablename = tablename;
@@ -48,8 +49,10 @@ BlockCompressionHeaderCommitLog::BlockCompressionHeaderCommitLog(const char magi
  *
  */
 void BlockCompressionHeaderCommitLog::encode(uint8_t **buf_ptr) {
-  memcpy(*buf_ptr, m_magic, 12);
-  (*buf_ptr) += 12;
+  m_header_length = 33 + (m_tablename ? strlen(m_tablename) : 0);
+  memcpy(*buf_ptr, m_magic, 10);
+  (*buf_ptr) += 10;
+  Serialization::encode_short(buf_ptr, m_header_length);
   Serialization::encode_int(buf_ptr, m_length);
   Serialization::encode_int(buf_ptr, m_zlength);
   Serialization::encode_short(buf_ptr, m_type);
@@ -66,14 +69,17 @@ void BlockCompressionHeaderCommitLog::encode(uint8_t **buf_ptr) {
 /**
  *
  */
-int BlockCompressionHeaderCommitLog::decode(uint8_t **buf_ptr, size_t *remaining_ptr) {
+int BlockCompressionHeaderCommitLog::decode_fixed(uint8_t **buf_ptr, size_t *remaining_ptr) {
 
-  if (*remaining_ptr < 12)
+  if (*remaining_ptr < 10)
     return Error::BLOCK_COMPRESSOR_TRUNCATED;
   
-  memcpy(m_magic, *buf_ptr, 12);
-  (*buf_ptr) += 12;
-  *remaining_ptr -= 12;
+  memcpy(m_magic, *buf_ptr, 10);
+  (*buf_ptr) += 10;
+  *remaining_ptr -= 10;
+
+  if (!Serialization::decode_short(buf_ptr, remaining_ptr, &m_header_length))
+    return Error::BLOCK_COMPRESSOR_TRUNCATED;
 
   if (!Serialization::decode_int(buf_ptr, remaining_ptr, &m_length))
     return Error::BLOCK_COMPRESSOR_TRUNCATED;
@@ -90,14 +96,33 @@ int BlockCompressionHeaderCommitLog::decode(uint8_t **buf_ptr, size_t *remaining
   if (!Serialization::decode_long(buf_ptr, remaining_ptr, &m_timestamp))
     return Error::BLOCK_COMPRESSOR_TRUNCATED;    
 
-  m_tablename = (const char *)*buf_ptr;
-  for (; *(*buf_ptr) && *remaining_ptr > 0; ++(*buf_ptr),--(*remaining_ptr))
-    ;
-
-  if (*(*buf_ptr) != 0)
-    return Error::BLOCK_COMPRESSOR_TRUNCATED;
-
-  ++(*buf_ptr);
-  --(*remaining_ptr);
   return Error::OK;
 }
+
+
+/**
+ *
+ */
+int BlockCompressionHeaderCommitLog::decode_variable(uint8_t **buf_ptr, size_t *remaining_ptr) {
+  size_t remaining_header;
+
+  if (m_header_length <= 32)
+    return Error::BLOCK_COMPRESSOR_TRUNCATED;
+
+  remaining_header = m_header_length - 32;
+
+  if (*remaining_ptr < remaining_header)
+    return Error::BLOCK_COMPRESSOR_TRUNCATED;
+    
+  m_tablename = (const char *)*buf_ptr;
+
+  if (m_tablename[remaining_header-1] != 0)
+    return Error::BLOCK_COMPRESSOR_BAD_HEADER;
+
+  (*buf_ptr) += remaining_header;
+  (*remaining_ptr) -= remaining_header;
+
+  return Error::OK;
+}
+
+
