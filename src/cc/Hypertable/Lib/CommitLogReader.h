@@ -27,11 +27,11 @@
 
 #include "Common/ReferenceCount.h"
 
-#include "Hypertable/Lib/Filesystem.h"
-#include "Hypertable/Lib/Key.h"
-
+#include "BlockCompressionHeaderCommitLog.h"
 #include "CommitLog.h"
 #include "CommitLogReader.h"
+#include "Filesystem.h"
+#include "Key.h"
 
 using namespace Hypertable;
 
@@ -40,8 +40,7 @@ namespace Hypertable {
   typedef struct {
     uint32_t     num;
     std::string  fname;
-    int64_t      length;
-    uint64_t     timestamp;
+    BlockCompressionHeaderCommitLog trailer;
   } LogFileInfoT;
 
   inline bool operator<(const LogFileInfoT &lfi1, const LogFileInfoT &lfi2) {
@@ -51,9 +50,9 @@ namespace Hypertable {
   class CommitLogReader : public ReferenceCount {
   public:
     CommitLogReader(Filesystem *fs, std::string &logDir);
-    virtual ~CommitLogReader() { return; }
+    virtual ~CommitLogReader();
     virtual void initialize_read(uint64_t timestamp);
-    virtual bool next_block(CommitLogHeaderT **blockp);
+    virtual bool next_block(const uint8_t **blockp, size_t *lenp, BlockCompressionHeaderCommitLog *header);
     virtual int last_error() { return m_error; }
 
   private:
@@ -64,7 +63,12 @@ namespace Hypertable {
     size_t                    m_cur_log_offset;
     int32_t                   m_fd;
     DynamicBuffer             m_block_buffer;
+    DynamicBuffer             m_zblock_buffer;
     int                       m_error;
+    size_t                    m_fixed_header_length;
+    bool                      m_got_compressor;
+    BlockCompressionCodec     *m_compressor;
+
   };
   typedef boost::intrusive_ptr<CommitLogReader> CommitLogReaderPtr;
 

@@ -167,6 +167,7 @@ void LocalBroker::close(ResponseCallback *cb, uint32_t fd) {
   if (m_verbose) {
     LOG_VA_INFO("close fd=%d", fd);
   }
+  ::close(fd);
   m_open_file_map.remove(fd);
   cb->response_ok();
 }

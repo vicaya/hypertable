@@ -43,6 +43,7 @@ namespace Hypertable {
 
     virtual int deflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader *header, size_t reserve=0);
     virtual int inflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader *header);
+    virtual int get_type() { return LZO; }
 
   private:
     uint8_t *m_workmem;

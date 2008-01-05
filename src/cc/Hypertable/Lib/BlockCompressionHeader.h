@@ -46,6 +46,9 @@ namespace Hypertable {
     void     set_type(uint16_t type) { m_type = type; }
     uint16_t get_type() { return m_type; }
 
+    uint16_t get_header_length() { return m_header_length; }
+
+    virtual size_t   fixed_length() = 0;
     virtual size_t   encoded_length() = 0;
     virtual void     encode(uint8_t **buf_ptr) = 0;
     virtual int      decode_fixed(uint8_t **buf_ptr, size_t *remaining_ptr) = 0;

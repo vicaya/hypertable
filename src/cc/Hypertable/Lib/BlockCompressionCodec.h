@@ -41,6 +41,7 @@ namespace Hypertable {
     virtual int deflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader *header, size_t reserve=0) = 0;
     virtual int inflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader *header) = 0;
     virtual int set_args(std::string args) { return Error::OK; }
+    virtual int get_type() = 0;
 
     enum { NONE=0, BMZ=1, ZLIB=2, LZO=3, QUICKLZ=4 };
 

@@ -33,6 +33,7 @@ namespace Hypertable {
     BlockCompressionHeaderCellStore();
     BlockCompressionHeaderCellStore(const char magic[10]) { set_magic(magic); }
 
+    virtual size_t fixed_length() { return 24; }
     virtual size_t encoded_length() { return 24; }
     virtual void   encode(uint8_t **buf_ptr);
     virtual int    decode_fixed(uint8_t **buf_ptr, size_t *remaining_ptr);

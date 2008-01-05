@@ -1,20 +1,17 @@
 
 TODO:
-- Memory Throttling
-- Add compression to commit log
-- Get rid of directly written 'packed' commit log header in favor of a serialized one
+- Add logic to prevent root METADATA range from splitting
+- Add scanner reaper to RangeServer
 - Add Phantom updates
 - CommitLog garbage collection
 - Implement InMemory access groups
 - Add DropTable command to RangeServer
-- Add scanner reaper to RangeServer
 - Add destroy_scanner method to RangeServer
-- Add logic to prevent root METADATA range from splitting
+- Memory Throttling
 - Range constructor should throw exceptions
 - clientTimestamp value does not appear to be used in RangeServer::update
 - Add global (timeout, workers, reactors, etc.) to config file 
 - Make sure LogDir for root METADATA range gets written somewhere
-- Clean up generate_test_data (have it generate timestamps formatted propertly and modify LoadDataSource to consume it).
 - Fix timestamp issue.  In RangeServer::update the updateTimestamp is obtained
   from the commit log, but the splitStartTime is obtain from the updates and
   they are compared against one another (updateTimestamp > splitStartTime)
@@ -22,8 +19,13 @@ TODO:
 - Re-write schema parser using Boost Spirit instead of expat (removes a dependency)
 - Refactor so that schema can get updated on change (overhaul TableInfo)
 - Add range merging
+- CommitLog reader should sanity check each block header
+- CommitLogReader should be able to throw errors
+- Clean up generate_test_data (have it generate timestamps formatted propertly and modify LoadDataSource to consume it).
 
 DONE:
+- Add compression to commit log
+- Get rid of directly written 'packed' commit log header in favor of a serialized one
 - Add lzo block compressor
 - Got rid of m_blocksize in CellStoreV0 and just use the one in m_trailer
 - Fix bus error when you issue the following select statement after an initial load:

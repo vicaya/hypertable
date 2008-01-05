@@ -99,11 +99,7 @@ public class Error {
     static public final int RANGESERVER_TRUNCATED_COMMIT_LOG  = 0x0005000B;
     static public final int RANGESERVER_NO_METADATA_FOR_RANGE = 0x0005000C;
     static public final int RANGESERVER_SHUTTING_DOWN         = 0x0005000D;
-    static public final int RANGESERVER_CELLSTORE_BLOCK_TRUNCATED         = 0x0005000E;
-    static public final int RANGESERVER_CELLSTORE_BLOCK_BAD_HEADER        = 0x0005000F;
-    static public final int RANGESERVER_CELLSTORE_BLOCK_BAD_MAGIC         = 0x00050010;
-    static public final int RANGESERVER_CELLSTORE_BLOCK_CHECKSUM_MISMATCH = 0x00050011;
-    static public final int RANGESERVER_CELLSTORE_BLOCK_INFLATE_ERROR     = 0x00050012;
+    static public final int RANGESERVER_CORRUPT_COMMIT_LOG    = 0x0005000E;
     static public final int HQL_BAD_LOAD_FILE_FORMAT = 0x00060001;
 
     static public String GetText(int lcode) {
@@ -180,6 +176,7 @@ public class Error {
 	mTextMap.put(RANGESERVER_INVALID_COLUMNFAMILY, "RANGE SERVER invalid column family");
 	mTextMap.put(RANGESERVER_TRUNCATED_COMMIT_LOG, "RANGE SERVER truncated commit log");
 	mTextMap.put(RANGESERVER_NO_METADATA_FOR_RANGE,"RANGE SERVER no metadata for range");
+	mTextMap.put(RANGESERVER_CORRUPT_COMMIT_LOG,   "RANGE SERVER corrupt commit log");
 	mTextMap.put(RANGESERVER_SHUTTING_DOWN,        "RANGE SERVER shutting down");
 	mTextMap.put(HQL_BAD_LOAD_FILE_FORMAT,    "HQL bad load file format");
     }

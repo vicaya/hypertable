@@ -673,21 +673,24 @@ void Range::unlock() {
 int Range::replay_split_log(string &log_dir) {
   int error;
   CommitLogReaderPtr commit_log_reader_ptr = new CommitLogReader(Global::dfs, log_dir);
-  CommitLogHeaderT *header;  
-  const uint8_t *ptr, *end;
+  BlockCompressionHeaderCommitLog header;
+  const uint8_t *base, *ptr, *end;
+  size_t len;
   ByteString32T *key, *value;
   size_t nblocks = 0;
   size_t count = 0;
   
   commit_log_reader_ptr->initialize_read(0);
 
-  while (commit_log_reader_ptr->next_block(&header)) {
+  while (commit_log_reader_ptr->next_block(&base, &len, &header)) {
 
-    assert(!strcmp(m_identifier.name, (const char *)&header[1]));
-    assert(header->flags == 0);
+    if (strcmp(m_identifier.name, header.get_tablename())) {
+      LOG_VA_ERROR("Table name mis-match in split log replay \"%s\" != \"%s\"", m_identifier.name, header.get_tablename());
+      return Error::RANGESERVER_CORRUPT_COMMIT_LOG;
+    }
 
-    ptr = (uint8_t *)&header[1] + strlen((const char *)&header[1]) + 1;
-    end = (uint8_t *)header + header->length;
+    ptr = base;
+    end = base + len;
 
     while (ptr < end) {
       key = (ByteString32T *)ptr;

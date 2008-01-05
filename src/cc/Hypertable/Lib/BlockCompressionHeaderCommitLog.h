@@ -34,9 +34,13 @@ namespace Hypertable {
     BlockCompressionHeaderCommitLog(const char magic[10], uint64_t timestamp, const char *tablename);
 
     void set_timestamp(uint64_t timestamp) { m_timestamp = timestamp; }
-    void set_tablename(const char *tablename) { m_tablename = tablename; }
+    uint64_t get_timestamp() { return m_timestamp; }
 
-    virtual size_t encoded_length() { return 33 + (m_tablename ? strlen(m_tablename) : 0); }
+    void set_tablename(const char *tablename) { m_tablename = tablename; }
+    const char *get_tablename() { return m_tablename; }
+
+    virtual size_t fixed_length() { return 32; }
+    virtual size_t encoded_length() { return fixed_length() + (m_tablename ? strlen(m_tablename) : 0) + 1; }
     virtual void   encode(uint8_t **buf_ptr);
     virtual int    decode_fixed(uint8_t **buf_ptr, size_t *remaining_ptr);
     virtual int    decode_variable(uint8_t **buf_ptr, size_t *remaining_ptr);

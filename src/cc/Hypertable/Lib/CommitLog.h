@@ -35,17 +35,10 @@ extern "C" {
 #include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
 
+#include "Hypertable/Lib/BlockCompressionCodec.h"
 #include "Hypertable/Lib/Filesystem.h"
 
 namespace Hypertable {
-
-  typedef struct {
-    char      marker[8];
-    uint64_t  timestamp;
-    uint32_t  length;
-    uint16_t  checksum;
-    uint16_t  flags;
-  } __attribute__((packed)) CommitLogHeaderT;
 
   typedef struct {
     std::string  fname;
@@ -53,30 +46,62 @@ namespace Hypertable {
   } CommitLogFileInfoT;
 
   /**
-   * Commit log for persisting updates.  Consists of a series of blocks.  Each block contains a
-   * series of one or more key/value pairs that were commtted together.  Each block begins with
-   * a header with the following format:
-   * <pre>
-   * "-BLOCK--"   - 8 bytes
-   * timestamp    - 8 bytes
-   * length       - 4 bytes
-   * checksum     - 2 bytes
-   * tableName    - variable
-   * '\\0'         - 1 byte
-   * payload      - variable
-   * </pre>
-   *
-   * The log ends with an empty block containing the timestamp of the last real block.
+   * Commit log for persisting updates.  The commit log is a directory that contains
+   * a growing number of files that contain compressed blocks of "commits".  The files
+   * are named starting with '0' and will periodically roll, which means that a trailer
+   * is written into the file, the file is closed, and then the numeric name is
+   * incremented by one and opened.  Periodically when old parts of the log are no
+   * longer needed, they get purged.  The size of each file is determined by the
+   * following config file property:
+   *<pre>
+   * Hypertable.RangeServer.logFileSize
+   *</pre>
+   * The commit log will persist (write then sync) a series of "commits" which are either
+   * blocks of updates (serialized sequence of key/value pairs) or a link block which is
+   * a block that just contains an external reference to another commit log that should be
+   * linked into this commit log at the point where the link occurs.  Each commit is
+   * compressed into a block using the same block compressor object that are used for
+   * the cell stores.  By default, the quicklz algorithm is used, but this can be changed
+   * with The following config property:
+   *<pre>
+   *Hypertable.RangeServer.CommitLog.Compressor
+   *</pre>
+   * Each block begins with a header and contains the following information:
+   *<pre>
+   * magic_string (10 bytes)
+   * header length (2 bytes)
+   * uncompressed length (4 bytes)
+   * compressed length (4 bytes)
+   * compression type (2 bytes)
+   * checksum (2 bytes)
+   * timestamp (8 bytes)
+   * '\0' terminated table_name (variable)
+   *</pre>
+   * When the log rolls, a header (with an empty table name) is written at the end of the
+   * file and contains the timestamp of the most recent commit in the file.
    */
   class CommitLog : public ReferenceCount {
   public:
 
-    enum Flag { LINK=0x0001 };
-
     CommitLog(Filesystem *fs, std::string &log_dir, PropertiesPtr &props_ptr);
-    virtual ~CommitLog() { return; }
+    virtual ~CommitLog();
 
-    int write(const char *tableName, uint8_t *data, uint32_t len, uint64_t timestamp);
+    /**
+     * Atomically obtains a timestamp
+     * 
+     * @return microseconds since the epoch
+     */
+    uint64_t get_timestamp();
+
+    /** Writes a block of updates to the commit log.
+     *
+     * @param table_name name of table that the external log applies to
+     * @param data pointer to block of updates
+     * @param len length of block of updates
+     * @param timestamp current commit log time obtained with a call to #get_timestamp
+     * @return Error::OK on success or error code on failure
+     */
+    int write(const char *table_name, uint8_t *data, uint32_t len, uint64_t timestamp);
 
     /** Links an external log into this log.
      *
@@ -91,17 +116,18 @@ namespace Hypertable {
     int purge(uint64_t timestamp);
     std::string &get_log_dir() { return m_log_dir; }
 
-    uint64_t get_timestamp() { 
-      boost::mutex::scoped_lock lock(m_mutex);
-      boost::xtime now;
-      boost::xtime_get(&now, boost::TIME_UTC);
-      return ((uint64_t)now.sec * 1000000000LL) + (uint64_t)now.nsec;
-    }
+    static const char MAGIC_UPDATES[10];
+    static const char MAGIC_LINK[10];
+    static const char MAGIC_TRAILER[10];
 
   private:
 
+    int roll();
+    int compress_and_write(DynamicBuffer &input, BlockCompressionHeader *header, uint64_t timestamp);
+
     boost::mutex               m_mutex;
     Filesystem                *m_fs;
+    BlockCompressionCodec     *m_compressor;
     std::string                m_log_dir;
     std::string                m_log_file;
     int64_t                    m_max_file_size;

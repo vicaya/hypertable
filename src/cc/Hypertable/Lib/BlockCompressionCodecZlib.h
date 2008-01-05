@@ -43,6 +43,7 @@ namespace Hypertable {
     virtual int set_args(std::string args);
     virtual int deflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader *header, size_t reserve=0);
     virtual int inflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader *header);
+    virtual int get_type() { return ZLIB; }
 
   private:
     z_stream  m_stream_inflate;

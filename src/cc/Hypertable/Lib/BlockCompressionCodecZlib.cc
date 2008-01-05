@@ -110,9 +110,21 @@ int BlockCompressionCodecZlib::deflate(const DynamicBuffer &input, DynamicBuffer
   assert(ret == Z_STREAM_END);
   (void)ret;
 
-  header->set_type(ZLIB);
-  header->set_length(input.fill());
-  header->set_zlength(avail_out - m_stream_deflate.avail_out);
+  uint32_t zlen = avail_out - m_stream_deflate.avail_out;
+
+  /* check for an incompressible block */
+  if (zlen >= input.fill()) {
+    header->set_type(NONE);
+    memcpy(output.buf+header->encoded_length(), input.buf, input.fill());
+    header->set_length(input.fill());
+    header->set_zlength(input.fill());
+  }
+  else {
+    header->set_type(ZLIB);
+    header->set_length(input.fill());
+    header->set_zlength(zlen);
+  }
+
   header->set_checksum( fletcher16(output.buf + header->encoded_length(), header->get_zlength()) );
   
   deflateReset(&m_stream_deflate);
@@ -164,27 +176,33 @@ int BlockCompressionCodecZlib::inflate(const DynamicBuffer &input, DynamicBuffer
     return Error::BLOCK_COMPRESSOR_CHECKSUM_MISMATCH;
   }
 
-  m_stream_inflate.avail_in = remaining;
-  m_stream_inflate.next_in = msg_ptr;
+   // check compress bit
+  if (header->get_type() == NONE)
+    memcpy(output.buf, msg_ptr, header->get_length());
+  else {
 
-  output.reserve(header->get_length());
-  m_stream_inflate.avail_out = header->get_length();
-  m_stream_inflate.next_out = output.buf;
+    m_stream_inflate.avail_in = remaining;
+    m_stream_inflate.next_in = msg_ptr;
 
-  ret = ::inflate(&m_stream_inflate, Z_NO_FLUSH);
-  if (ret != Z_STREAM_END) {
-    LOG_VA_ERROR("Compressed block inflate error (return value = %d)", ret);
-    goto abort;
-  }
+    output.reserve(header->get_length());
+    m_stream_inflate.avail_out = header->get_length();
+    m_stream_inflate.next_out = output.buf;
 
-  if (m_stream_inflate.avail_out != 0) {
-    LOG_VA_ERROR("Compressed block inflate error, expected %d but only inflated to %d bytes", header->get_length(), header->get_length()-m_stream_inflate.avail_out);
-    goto abort;
+    ret = ::inflate(&m_stream_inflate, Z_NO_FLUSH);
+    if (ret != Z_STREAM_END) {
+      LOG_VA_ERROR("Compressed block inflate error (return value = %d)", ret);
+      goto abort;
+    }
+
+    if (m_stream_inflate.avail_out != 0) {
+      LOG_VA_ERROR("Compressed block inflate error, expected %d but only inflated to %d bytes", header->get_length(), header->get_length()-m_stream_inflate.avail_out);
+      goto abort;
+    }
+    ::inflateReset(&m_stream_inflate);  
   }
 
   output.ptr = output.buf + header->get_length();
 
-  ::inflateReset(&m_stream_inflate);  
   return Error::OK;
 
  abort:
