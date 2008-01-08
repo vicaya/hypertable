@@ -39,6 +39,7 @@ Global.cc
 HyperspaceSessionHandler.cc
 MaintenanceThread.cc
 MergeScanner.cc
+MetadataNormal.cc
 Range.cc
 RangeServer.cc
 RequestHandlerCompact.cc

@@ -33,6 +33,7 @@
 
 #include "AccessGroup.h"
 #include "CellStore.h"
+#include "Metadata.h"
 #include "RangeInfo.h"
 #include "ScannerTimestampController.h"
 
@@ -103,7 +104,7 @@ namespace Hypertable {
 
   private:
 
-    int load_cell_stores();
+    void load_cell_stores(Metadata *metadata);
 
     bool extract_csid_from_path(std::string &path, uint32_t *storeIdp);
 

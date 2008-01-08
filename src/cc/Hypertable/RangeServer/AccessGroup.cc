@@ -31,6 +31,7 @@
 #include "CellStoreV0.h"
 #include "Global.h"
 #include "MergeScanner.h"
+#include "MetadataNormal.h"
 
 
 namespace {
@@ -156,7 +157,6 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
   Key keyComps;
   CellListScannerPtr scannerPtr;
   size_t tableIndex = 1;
-  int error;
   CellStorePtr cellStorePtr;
   std::string files;
   std::string metadata_key_str;
@@ -267,27 +267,13 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
   }
 
   try {
-    MutatorPtr mutator_ptr;
-    KeySpec key;
-
-    if ((error = Global::metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK) {
-      // TODO: throw exception
-      LOG_VA_ERROR("Problem creating mutator on METADATA table - %s", Error::get_text(error));
-    }
-    else {
-      metadata_key_str = std::string("") + (uint32_t)m_table_identifier.id + ":" + m_end_row;
-      key.row = metadata_key_str.c_str();
-      key.row_len = metadata_key_str.length();
-      key.column_family = "Files";
-      key.column_qualifier = m_name.c_str();
-      key.column_qualifier_len = m_name.length();
-      mutator_ptr->set(0, key, (uint8_t *)files.c_str(), files.length());
-      mutator_ptr->flush();
-    }
+    MetadataNormal metadata(m_table_identifier, m_end_row);
+    metadata.write_files(m_name, files);
   }
   catch (Hypertable::Exception &e) {
     // TODO: propagate exception
-    LOG_VA_ERROR("Problem updating 'File' column of METADATA (row key = %s) - %s", metadata_key_str.c_str(), e.what());
+    LOG_VA_ERROR("Problem updating 'File' column of METADATA (%d:%s) - %s",
+		 m_table_identifier.id, metadata_key_str.c_str(), Error::get_text(e.code()));
   }
 
   // TODO: Compaction thread function should re-shuffle the heap of locality groups and purge the commit log

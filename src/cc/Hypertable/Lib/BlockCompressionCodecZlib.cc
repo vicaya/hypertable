@@ -176,6 +176,8 @@ int BlockCompressionCodecZlib::inflate(const DynamicBuffer &input, DynamicBuffer
     return Error::BLOCK_COMPRESSOR_CHECKSUM_MISMATCH;
   }
 
+  output.reserve(header->get_length());
+
    // check compress bit
   if (header->get_type() == NONE)
     memcpy(output.buf, msg_ptr, header->get_length());
@@ -184,7 +186,6 @@ int BlockCompressionCodecZlib::inflate(const DynamicBuffer &input, DynamicBuffer
     m_stream_inflate.avail_in = remaining;
     m_stream_inflate.next_in = msg_ptr;
 
-    output.reserve(header->get_length());
     m_stream_inflate.avail_out = header->get_length();
     m_stream_inflate.next_out = output.buf;
 

@@ -40,15 +40,15 @@ extern "C" {
 #include "Global.h"
 #include "MaintenanceThread.h"
 #include "MergeScanner.h"
+#include "MetadataNormal.h"
 #include "Range.h"
+
 
 using namespace Hypertable;
 using namespace std;
 
 
-
 Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeT *range) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_schema(schemaPtr), m_maintenance_in_progress(false), m_latest_timestamp(0), m_temp_timestamp(0), m_split_start_time(0), m_hold_updates(false), m_update_counter(0), m_added(0) {
-  int error;
   AccessGroup *ag;
 
   Copy(identifier, m_identifier);
@@ -73,13 +73,12 @@ Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, S
   /**
    * Read the cell store files from METADATA and 
    */
-  if (!m_is_root) {
-    if ((error = load_cell_stores()) != Error::OK) {
-      // TODO: throw exception
-    }
+  if (m_is_root) {
+    // TODO: read from hyperspace
   }
   else {
-    // TODO: read from hyperspace
+    MetadataNormal metadata(m_identifier, m_end_row);
+    load_cell_stores(&metadata);
   }
 
   return;
@@ -99,108 +98,73 @@ Range::~Range() {
 /**
  *
  */
-int Range::load_cell_stores() {
+void Range::load_cell_stores(Metadata *metadata) {
+  int error;
   AccessGroup *ag;
   CellStorePtr cellStorePtr;
-  CellT cell;
-  ScanSpecificationT scan_spec;
-  TableScannerPtr scanner_ptr;
-  const char *base, *ptr, *end;
-  int error;
-  std::string ag_name;
-  std::string file_str;
   uint32_t csid;
   uint64_t minLogCutoff = 0;
+  const char *base, *ptr, *end;
   std::vector<std::string> csvec;
-  std::string metadata_key = std::string("") + (uint32_t)m_identifier.id + ":" + m_end_row;
+  std::string ag_name;
+  std::string files;
+  std::string file_str;
 
-  scan_spec.rowLimit = 1;
-  scan_spec.max_versions = 1;
-  scan_spec.startRow = metadata_key.c_str();
-  scan_spec.startRowInclusive = true;
-  scan_spec.endRow = metadata_key.c_str();
-  scan_spec.endRowInclusive = true;
-  scan_spec.interval.first = 0;
-  scan_spec.interval.second = 0;
-  scan_spec.columns.clear();
-  scan_spec.columns.push_back("Files");
+  metadata->reset_files_scan();
 
-  if ((error = Global::metadata_table_ptr->create_scanner(scan_spec, scanner_ptr)) != Error::OK) {
-    LOG_ERROR("Problem creating scanner on METADATA table");
-    return error;
-  }
+  while (metadata->get_next_files(ag_name, files)) {
+    csvec.clear();
 
-  try {
+    if ((ag = m_access_group_map[ag_name]) == 0) {
+      LOG_VA_ERROR("Unrecognized access group name '%s' found in METADATA for table '%s'", ag_name.c_str(), m_identifier.name);
+      continue;
+    }
 
-    while (scanner_ptr->next(cell)) {
+    ptr = base = (const char *)files.c_str();
+    end = base + strlen(base);
+    while (ptr < end) {
 
-      if (strcmp(cell.column_family, "Files")) {
-	// should never happen
-	LOG_VA_ERROR("Scanner requested column 'Files' but got '%s'", cell.column_family);
-	LOG_VA_ERROR("value = %s", std::string((const char *)cell.value, cell.value_len).c_str());
-	return Error::INVALID_METADATA;
+      while (*ptr != ';' && ptr < end)
+	ptr++;
+
+      file_str = std::string(base, ptr-base);
+      boost::trim(file_str);
+
+      if (file_str != "")
+	csvec.push_back(file_str);
+
+      ++ptr;
+      base = ptr;
+    }
+
+    for (size_t i=0; i<csvec.size(); i++) {
+
+      cellStorePtr = new CellStoreV0(Global::dfs);
+
+      if (!extract_csid_from_path(csvec[i], &csid)) {
+	LOG_VA_ERROR("Unable to extract cell store ID from path '%s'", csvec[i].c_str());
+	continue;
       }
-
-      ag_name = std::string(cell.column_qualifier);
-
-      ag = m_access_group_map[ag_name];
-      if (ag == 0) {
-	LOG_VA_ERROR("Unrecognized access group name '%s' found in METADATA for table '%s'", ag_name.c_str(), m_identifier.name);
+      if ((error = cellStorePtr->open(csvec[i].c_str(), m_start_row.c_str(), m_end_row.c_str())) != Error::OK) {
+	// this should throw an exception
+	LOG_VA_ERROR("Problem opening cell store '%s', skipping...", csvec[i].c_str());
+	continue;
+      }
+      if ((error = cellStorePtr->load_index()) != Error::OK) {
+	// this should throw an exception
+	LOG_VA_ERROR("Problem loading index of cell store '%s', skipping...", csvec[i].c_str());
 	continue;
       }
 
-      csvec.clear();
-      ptr = base = (const char *)cell.value;
-      end = (const char *)cell.value + cell.value_len;
-      while (ptr < end) {
+      // TODO: maybe do something here?
+      if (minLogCutoff == 0 || cellStorePtr->get_timestamp() < minLogCutoff)
+	minLogCutoff = cellStorePtr->get_timestamp();
 
-	while (*ptr != ';' && ptr < end)
-	  ptr++;
-
-	file_str = std::string(base, ptr-base);
-	boost::trim(file_str);
-
-	if (file_str != "")
-	  csvec.push_back(file_str);
-
-	++ptr;
-	base = ptr;
-      }
-
-      for (size_t i=0; i<csvec.size(); i++) {
-
-	cellStorePtr = new CellStoreV0(Global::dfs);
-
-	if (!extract_csid_from_path(csvec[i], &csid)) {
-	  LOG_VA_ERROR("Unable to extract cell store ID from path '%s'", csvec[i].c_str());
-	  continue;
-	}
-	if ((error = cellStorePtr->open(csvec[i].c_str(), m_start_row.c_str(), m_end_row.c_str())) != Error::OK) {
-	  // this should throw an exception
-	  LOG_VA_ERROR("Problem opening cell store '%s', skipping...", csvec[i].c_str());
-	  continue;
-	}
-	if ((error = cellStorePtr->load_index()) != Error::OK) {
-	  // this should throw an exception
-	  LOG_VA_ERROR("Problem loading index of cell store '%s', skipping...", csvec[i].c_str());
-	  continue;
-	}
-
-	// TODO: maybe do something here?
-	if (minLogCutoff == 0 || cellStorePtr->get_timestamp() < minLogCutoff)
-	  minLogCutoff = cellStorePtr->get_timestamp();
-
-	ag->add_cell_store(cellStorePtr, csid);
-      }
+      ag->add_cell_store(cellStorePtr, csid);
     }
 
   }
-  catch (Hypertable::Exception &e) {
-    LOG_VA_ERROR("%s", e.what());
-    return e.code();
-  }
 
-  return Error::OK;
 }
 
 

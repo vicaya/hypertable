@@ -1,5 +1,6 @@
 
 TODO:
+- Make sure LogDir for root METADATA range gets written somewhere
 - Add logic to prevent root METADATA range from splitting
 - Add scanner reaper to RangeServer
 - Add Phantom updates
@@ -9,9 +10,8 @@ TODO:
 - Add destroy_scanner method to RangeServer
 - Memory Throttling
 - Range constructor should throw exceptions
-- clientTimestamp value does not appear to be used in RangeServer::update
 - Add global (timeout, workers, reactors, etc.) to config file 
-- Make sure LogDir for root METADATA range gets written somewhere
+- clientTimestamp value does not appear to be used in RangeServer::update
 - Fix timestamp issue.  In RangeServer::update the updateTimestamp is obtained
   from the commit log, but the splitStartTime is obtain from the updates and
   they are compared against one another (updateTimestamp > splitStartTime)
