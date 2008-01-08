@@ -32,6 +32,7 @@
 #include "Global.h"
 #include "MergeScanner.h"
 #include "MetadataNormal.h"
+#include "MetadataRoot.h"
 
 
 namespace {
@@ -39,7 +40,7 @@ namespace {
 }
 
 
-AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range) : CellList(), m_mutex(), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_persist_timestamp(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE), m_compression_ratio(1.0) {
+AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range) : CellList(), m_mutex(), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_persist_timestamp(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE), m_compression_ratio(1.0), m_is_root(false) {
   m_table_name = table_identifier.name;
   m_start_row = range->startRow;
   m_end_row = range->endRow;
@@ -52,6 +53,8 @@ AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPt
     m_blocksize = ag->blocksize;
 
   m_compressor = (ag->compressor != "") ? ag->compressor : schemaPtr->get_compressor();
+
+  m_is_root = (table_identifier.id == 0 && *range->startRow == 0 && !strcmp(range->endRow, Key::END_ROOT_ROW));
 
 }
 
@@ -267,8 +270,14 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
   }
 
   try {
-    MetadataNormal metadata(m_table_identifier, m_end_row);
-    metadata.write_files(m_name, files);
+    if (m_is_root) {
+      MetadataRoot metadata(m_schema_ptr);
+      metadata.write_files(m_name, files);
+    }
+    else {
+      MetadataNormal metadata(m_table_identifier, m_end_row);
+      metadata.write_files(m_name, files);
+    }
   }
   catch (Hypertable::Exception &e) {
     // TODO: propagate exception

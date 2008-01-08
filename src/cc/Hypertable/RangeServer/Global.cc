@@ -28,6 +28,7 @@ using namespace Hypertable;
 
 namespace Hypertable {
 
+  SessionPtr             Global::hyperspace_ptr = 0;
   Filesystem            *Global::dfs = 0;
   Filesystem            *Global::logDfs = 0;
   boost::thread         *Global::maintenanceThreadPtr = 0;

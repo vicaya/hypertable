@@ -40,6 +40,7 @@ HyperspaceSessionHandler.cc
 MaintenanceThread.cc
 MergeScanner.cc
 MetadataNormal.cc
+MetadataRoot.cc
 Range.cc
 RangeServer.cc
 RequestHandlerCompact.cc

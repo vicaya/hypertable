@@ -41,6 +41,7 @@ extern "C" {
 #include "MaintenanceThread.h"
 #include "MergeScanner.h"
 #include "MetadataNormal.h"
+#include "MetadataRoot.h"
 #include "Range.h"
 
 
@@ -74,7 +75,8 @@ Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, S
    * Read the cell store files from METADATA and 
    */
   if (m_is_root) {
-    // TODO: read from hyperspace
+    MetadataRoot metadata(m_schema);
+    load_cell_stores(&metadata);
   }
   else {
     MetadataNormal metadata(m_identifier, m_end_row);

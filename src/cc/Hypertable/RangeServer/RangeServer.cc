@@ -654,18 +654,6 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
 
     tableInfoPtr->add_range(range, rangePtr);
 
-    /**
-     * Update LogDir
-     */
-    if (!is_root) {
-      key.column_family = "LogDir";
-      mutator_ptr->set(0, key, (uint8_t *)Global::log->get_log_dir().c_str(), strlen(Global::log->get_log_dir().c_str()));
-      mutator_ptr->flush();
-    }
-    else {
-      // TODO: update hyperspace
-    }
-
     if ((error = cb->response_ok()) != Error::OK) {
       LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
     }

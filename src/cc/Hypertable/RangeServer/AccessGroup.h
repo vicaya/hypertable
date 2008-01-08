@@ -82,6 +82,7 @@ namespace Hypertable {
     uint32_t             m_blocksize;
     float                m_compression_ratio;
     std::string          m_compressor;
+    bool                 m_is_root;
   };
 
 }

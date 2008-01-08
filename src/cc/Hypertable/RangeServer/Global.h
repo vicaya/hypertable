@@ -47,6 +47,7 @@ namespace Hypertable {
 
   class Global {
   public:
+    static Hyperspace::SessionPtr hyperspace_ptr;
     static Hypertable::Filesystem *dfs;
     static Hypertable::Filesystem *logDfs;
     static boost::thread *maintenanceThreadPtr;

@@ -76,7 +76,6 @@ int main(int argc, char **argv) {
   {
     ConnectionManagerPtr conn_manager_ptr;
     ApplicationQueuePtr app_queue_ptr;
-    Hyperspace::SessionPtr hyperspace_ptr;
     CommPtr comm_ptr;
     string configFile = "";
     string pidFile = "";
@@ -138,8 +137,8 @@ int main(int argc, char **argv) {
     /**
      * Connect to Hyperspace
      */
-    hyperspace_ptr = new Hyperspace::Session(comm_ptr.get(), props_ptr, new HyperspaceSessionHandler());
-    if (!hyperspace_ptr->wait_for_connection(30)) {
+    Global::hyperspace_ptr = new Hyperspace::Session(comm_ptr.get(), props_ptr, new HyperspaceSessionHandler());
+    if (!Global::hyperspace_ptr->wait_for_connection(30)) {
       LOG_ERROR("Unable to connect to hyperspace, exiting...");
       exit(1);
     }
@@ -147,7 +146,7 @@ int main(int argc, char **argv) {
     /**
      * Open METADATA table
      */
-    Global::metadata_table_ptr = new Table(props_ptr, conn_manager_ptr, hyperspace_ptr, "METADATA");
+    Global::metadata_table_ptr = new Table(props_ptr, conn_manager_ptr, Global::hyperspace_ptr, "METADATA");
 
     Global::range_metadata_max_bytes = props_ptr->getPropertyInt64("Hypertable.RangeServer.Range.MetadataMaxBytes", 0LL);
 
@@ -158,7 +157,7 @@ int main(int argc, char **argv) {
 	cout << "Hypertable.RangeServer.Range.MetadataMaxBytes=" << Global::range_metadata_max_bytes << endl;
     }
 
-    RangeServerPtr range_server_ptr = new RangeServer(props_ptr, conn_manager_ptr, app_queue_ptr, hyperspace_ptr);
+    RangeServerPtr range_server_ptr = new RangeServer(props_ptr, conn_manager_ptr, app_queue_ptr, Global::hyperspace_ptr);
 
     if (pidFile != "") {
       fstream filestr (pidFile.c_str(), fstream::out);
