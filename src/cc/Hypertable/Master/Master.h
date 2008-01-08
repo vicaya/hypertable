@@ -93,6 +93,7 @@ namespace Hypertable {
     typedef __gnu_cxx::hash_map<std::string, RangeServerStatePtr> ServerMapT;
 
     ServerMapT  m_server_map;
+    ServerMapT::iterator m_server_map_iter;
 
   };
   typedef boost::intrusive_ptr<Master> MasterPtr;

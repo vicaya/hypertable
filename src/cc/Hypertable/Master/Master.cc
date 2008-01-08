@@ -55,6 +55,8 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &props_ptr, A
   Client *dfsClient;
   uint16_t port;
 
+  m_server_map_iter = m_server_map.begin();
+  
   m_hyperspace_ptr = new Hyperspace::Session(connManagerPtr->get_comm(), props_ptr, &m_hyperspace_session_handler);
 
   if (!m_hyperspace_ptr->wait_for_connection(30)) {
@@ -233,11 +235,14 @@ void Master::server_left(std::string &location) {
   ServerMapT::iterator iter = m_server_map.find(location);
   std::string hsFilename = (std::string)"/hypertable/servers/" + location;
 
-
   if (iter == m_server_map.end()) {
     LOG_VA_WARN("Server (%s) not found in map", location.c_str());
     return;
   }
+
+  // if we're about to delete the item pointing to the server map iterator, then advance the iterator
+  if (iter == m_server_map_iter)
+    m_server_map_iter++;
 
   if ((error = m_hyperspace_ptr->try_lock((*iter).second->hyperspaceHandle, LOCK_MODE_EXCLUSIVE, &lockStatus, &lockSequencer)) != Error::OK) {
     LOG_VA_ERROR("Problem obtaining exclusive lock on master Hyperspace file '/hypertable/master' - %s", Error::get_text(error));
@@ -459,9 +464,19 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 
     LOG_VA_INFO("Entering report_split for %s[%s:%s].", table.name, range.startRow, range.endRow);
 
-    cb->response_ok();  
+    cb->response_ok();
 
-    cb->get_address(addr);
+    {
+      boost::mutex::scoped_lock lock(m_mutex);
+      if (m_server_map_iter == m_server_map.end())
+	m_server_map_iter = m_server_map.begin();
+      assert(m_server_map_iter != m_server_map.end());
+      memcpy(&addr, &((*m_server_map_iter).second->addr), sizeof(struct sockaddr_in));
+      m_server_map_iter++;
+      LOG_VA_INFO("Assigning newly reported range %s[%s:%s] to %s", table.name, range.startRow, range.endRow, (*m_server_map_iter).first.c_str());
+    }
+
+    //cb->get_address(addr);
 
     if ((error = rsc.load_range(addr, table, range, 0)) != Error::OK) {
       std::string addrStr;
