@@ -88,7 +88,6 @@ namespace Hypertable {
 
     /** temporary vairables **/
     bool m_initialized;
-    struct sockaddr_in m_rs_addr;
 
     typedef __gnu_cxx::hash_map<std::string, RangeServerStatePtr> ServerMapT;
 

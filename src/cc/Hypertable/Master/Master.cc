@@ -367,9 +367,6 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
     comm->set_alias(addr, alias);
   }
 
-  /** TEMPORARY:  Use this address to assign ranges created with the create table command **/
-  memcpy(&m_rs_addr, &alias, sizeof(m_rs_addr));
-
   {
     std::string addrStr;
     LOG_VA_INFO("Server Registered %s -> %s", location, InetAddr::string_format(addrStr, addr));
@@ -472,8 +469,8 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 	m_server_map_iter = m_server_map.begin();
       assert(m_server_map_iter != m_server_map.end());
       memcpy(&addr, &((*m_server_map_iter).second->addr), sizeof(struct sockaddr_in));
-      m_server_map_iter++;
       LOG_VA_INFO("Assigning newly reported range %s[%s:%s] to %s", table.name, range.startRow, range.endRow, (*m_server_map_iter).first.c_str());
+      m_server_map_iter++;
     }
 
     //cb->get_address(addr);
@@ -586,6 +583,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
       MutatorPtr mutator_ptr;
       KeySpec key;
       std::string metadata_key_str;
+      struct sockaddr_in addr;
 
       if ((error = m_metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK) {
 	// TODO: throw exception
@@ -625,10 +623,20 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
       range.startRow = 0;
       range.endRow = Key::END_ROW_MARKER;
 
-      if ((error = rsc.load_range(m_rs_addr, table, range, 0)) != Error::OK) {
+      {
+	boost::mutex::scoped_lock lock(m_mutex);
+	if (m_server_map_iter == m_server_map.end())
+	  m_server_map_iter = m_server_map.begin();
+	assert(m_server_map_iter != m_server_map.end());
+	memcpy(&addr, &((*m_server_map_iter).second->addr), sizeof(struct sockaddr_in));
+	LOG_VA_INFO("Assigning first range %s[%s:%s] to %s", table.name, range.startRow, range.endRow, (*m_server_map_iter).first.c_str());
+	m_server_map_iter++;
+      }
+
+      if ((error = rsc.load_range(addr, table, range, 0)) != Error::OK) {
 	std::string addrStr;
 	LOG_VA_ERROR("Problem issuing 'load range' command for %s[..%s] at server %s",
-		     table.name, range.endRow, InetAddr::string_format(addrStr, m_rs_addr));
+		     table.name, range.endRow, InetAddr::string_format(addrStr, addr));
       }
     }
 

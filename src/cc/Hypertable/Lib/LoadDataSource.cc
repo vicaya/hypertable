@@ -224,7 +224,7 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
       m_values.push_back(base);
       m_next_value++;
       
-      if (m_next_value != m_column_names.size()) {
+      if (m_next_value < m_column_names.size()) {
 	cerr << "error: too few fields on line " << m_cur_line << endl;
 	continue;
       }

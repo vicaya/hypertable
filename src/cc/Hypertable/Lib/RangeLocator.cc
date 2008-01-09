@@ -400,7 +400,19 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
   }
 
   if (got_start_row && got_end_row && got_location) {
+
+    /**
+     * Add this location (address) to the connection manager
+     */
+    if (!LocationCache::location_to_addr(range_loc_info.location.c_str(), addr)) {
+      LOG_VA_ERROR("Invalid location found in METADATA entry for row '%s' - %s", range_loc_info.end_row.c_str(), range_loc_info.location.c_str());
+      return Error::INVALID_METADATA;
+    }
+    if (m_conn_manager_ptr)
+      m_conn_manager_ptr->add(addr, 300, "RangeServer");
+
     m_cache.insert(table_id, range_loc_info);
+
     //cout << "(2) cache insert table=" << table_id << " start=" << range_loc_info.start_row << " end=" << range_loc_info.end_row << " loc=" << range_loc_info.location << endl;
   }
   else if (got_end_row) {

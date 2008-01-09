@@ -64,32 +64,24 @@ START_MASTER="true"
 while [ "$1" != "${1##[-+]}" ]; do
     case $1 in
 	'')    
-	    echo $"$0: Usage: start-servers.sh [local|hadoop|kosmos]"
+	    echo $"$0: Usage: start-range-server.sh [local|hadoop|kosmos]"
 	    exit 1;;
 	--valgrind-range-server)
 	    VALGRIND_RANGESERVER="valgrind -v --log-file=vg --leak-check=full --num-callers=20 "
-	    shift
-	    ;;
-	--valgrind-master)
-	    VALGRIND_MASTER="valgrind -v --log-file=vg "
 	    shift
 	    ;;
 	--no-range-server)
 	    START_RANGESERVER="false"
 	    shift
 	    ;;
-	--no-master)
-	    START_MASTER="false"
-	    shift
-	    ;;
 	*)     
-	    echo $"$0: Usage: start-servers.sh [local|hadoop|kosmos]"
+	    echo $"$0: Usage: start-range-server.sh [local|hadoop|kosmos]"
 	    exit 1;;
     esac
 done
 
 if [ "$#" -eq 0 ]; then
-    echo $"$0: Usage: start-servers.sh [local|hadoop|kosmos]"
+    echo $"$0: Usage: start-range-server.sh [local|hadoop|kosmos]"
     exit 1
 fi
 
@@ -97,7 +89,7 @@ START_COMMITLOG_BROKER=no
 RANGESERVER_OPTS=
 
 #
-# Start DfsBroker.hadoop
+# Start DfsBroker
 #
 PIDFILE=$HYPERTABLE_HOME/run/DfsBroker.$1.pid
 LOGFILE=$HYPERTABLE_HOME/log/DfsBroker.$1.log
@@ -113,7 +105,7 @@ if [ $? != 0 ] ; then
   elif [ "$1" == "local" ] ; then
       $HYPERTABLE_HOME/bin/localBroker --pidfile=$PIDFILE --verbose 1>& $LOGFILE &    
   else
-      echo $"$0: Usage: start-servers.sh [local|hadoop|kosmos]"      
+      echo $"$0: Usage: start-range-server.sh [local|hadoop|kosmos]"      
       exit 1
   fi
 
@@ -133,14 +125,13 @@ if [ $? != 0 ] ; then
   echo "Successfully started DFSBroker ($1)"
 fi
 
-
 #
 # Commit Log broker
 #
 $HYPERTABLE_HOME/bin/serverup --host=localhost --port=38031 dfsbroker
 if [ "$START_COMMITLOG_BROKER" == "yes" ] ; then
       $HYPERTABLE_HOME/bin/localBroker --listen-port=38031 --pidfile=$HYPERTABLE_HOME/run/CommitLog.DfsBroker.$1.pid --verbose 1>& $HYPERTABLE_HOME/log/CommitLog.DfsBroker.$1.log &
-      RANGESERVER_OPTS=--log-broker=localhost:38031
+      RANGESERVER_OPTS="--log-broker=localhost:38031"
 
   sleep 1
   $HYPERTABLE_HOME/bin/serverup --host=localhost --port=38031 dfsbroker
@@ -158,73 +149,6 @@ if [ "$START_COMMITLOG_BROKER" == "yes" ] ; then
   echo "Successfully started Commit Log DFSBroker (local)"
 fi
 
-
-#
-# Reset state
-#
-rm -rf $HYPERTABLE_HOME/log/hypertable/*
-$HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable"
-rm -rf $HYPERTABLE_HOME/hyperspace/*
-
-
-#
-# Start Hyperspace
-#
-PIDFILE=$HYPERTABLE_HOME/run/Hyperspace.pid
-LOGFILE=$HYPERTABLE_HOME/log/Hyperspace.log
-
-if [ ! -d $HYPERTABLE_HOME/hyperspace ] ; then
-    mkdir $HYPERTABLE_HOME/hyperspace
-fi
-
-$HYPERTABLE_HOME/bin/serverup hyperspace
-if [ $? != 0 ] ; then
-    nohup $HYPERTABLE_HOME/bin/Hyperspace.Master --pidfile=$PIDFILE --verbose 1>& $LOGFILE &
-    sleep 1
-    $HYPERTABLE_HOME/bin/serverup hyperspace
-    if [ $? != 0 ] ; then
-	echo -n "Hyperspace hasn't come up yet, trying again in 5 seconds ..."
-	sleep 5
-	echo ""
-	$HYPERTABLE_HOME/bin/serverup hyperspace
-	if [ $? != 0 ] ; then
-	    tail -100 $LOGFILE
-	    echo "Problem statring Hyperspace";
-	    exit 1
-	fi
-    fi
-fi
-echo "Successfully started Hyperspace"
-
-#
-# Start Hypertable.Master
-#
-if [ "$START_MASTER" == "true" ] ; then
-
-    PIDFILE=$HYPERTABLE_HOME/run/Hypertable.Master.pid
-    LOGFILE=$HYPERTABLE_HOME/log/Hypertable.Master.log
-
-    $HYPERTABLE_HOME/bin/serverup master
-    if [ $? != 0 ] ; then
-	$VALGRIND_MASTER $HYPERTABLE_HOME/bin/Hypertable.Master --pidfile=$PIDFILE --verbose 1>& $LOGFILE &
-	sleep 1
-	$HYPERTABLE_HOME/bin/serverup master
-	if [ $? != 0 ] ; then
-	    echo -n "Hypertable.Master hasn't come up yet, trying again in 5 seconds ..."
-	    sleep 5
-	    echo ""
-	    $HYPERTABLE_HOME/bin/serverup master
-	    if [ $? != 0 ] ; then
-		tail -100 $LOGFILE
-		echo "Problem statring Hypertable.Master";
-		exit 1
-	    fi
-	fi
-    fi
-    echo "Successfully started Hypertable.Master"
-else
-    exit 0
-fi
 
 #
 # Start Hypertable.RangeServer

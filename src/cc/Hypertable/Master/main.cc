@@ -66,7 +66,7 @@ namespace {
    */
   class HandlerFactory : public ConnectionHandlerFactory {
   public:
-    HandlerFactory(Comm *comm, ApplicationQueuePtr &appQueuePtr, MasterPtr &masterPtr) : m_comm(comm), m_app_queue_ptr(appQueuePtr), m_master_ptr(masterPtr) { return; }
+    HandlerFactory(Comm *comm, ApplicationQueuePtr &appQueuePtr, MasterPtr &master_ptr) : m_comm(comm), m_app_queue_ptr(appQueuePtr), m_master_ptr(master_ptr) { return; }
     virtual void get_instance(DispatchHandlerPtr &dhp) {
       dhp = new ConnectionHandler(m_comm, m_app_queue_ptr, m_master_ptr);
     }
@@ -87,10 +87,10 @@ int main(int argc, char **argv) {
   string pidFile = "";
   PropertiesPtr props_ptr;
   bool verbose = false;
-  MasterPtr masterPtr;
+  MasterPtr master_ptr;
   int port, reactorCount, workerCount;
   Comm *comm;
-  ApplicationQueuePtr appQueuePtr;
+  ApplicationQueuePtr app_queue_ptr;
   ConnectionManagerPtr connManagerPtr;
   struct sockaddr_in listenAddr;
 
@@ -132,11 +132,11 @@ int main(int argc, char **argv) {
     cout << "Hypertable.Master.reactors=" << reactorCount << endl;
   }
 
-  appQueuePtr = new ApplicationQueue(workerCount);
-  masterPtr = new Master(connManagerPtr, props_ptr, appQueuePtr);
+  app_queue_ptr = new ApplicationQueue(workerCount);
+  master_ptr = new Master(connManagerPtr, props_ptr, app_queue_ptr);
 
   InetAddr::initialize(&listenAddr, INADDR_ANY, port);
-  ConnectionHandlerFactoryPtr chfPtr(new HandlerFactory(comm, appQueuePtr, masterPtr));
+  ConnectionHandlerFactoryPtr chfPtr(new HandlerFactory(comm, app_queue_ptr, master_ptr));
   comm->listen(listenAddr, chfPtr);
 
   if (pidFile != "") {
@@ -145,9 +145,7 @@ int main(int argc, char **argv) {
     filestr.close();
   }
 
-  poll(0, 0, -1);
-
-  appQueuePtr->shutdown();
+  app_queue_ptr->join();
 
   delete comm;
   return 0;
