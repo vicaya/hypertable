@@ -26,6 +26,8 @@
 
 extern "C" {
 #include <strings.h>
+#define _XOPEN_SOURCE /* glibc2 needs this */
+#include <time.h>
 }
 
 #include "Common/ByteOrder.h"
@@ -41,8 +43,8 @@ using namespace std;
 /**
  *
  */
-LoadDataSource::LoadDataSource(std::string fname, std::string row_key_column) : m_fin(fname.c_str()), m_cur_line(0), m_line_buffer(0), m_hyperformat(false), m_leading_timestamps(false), m_row_index(0) {
-  string line;
+LoadDataSource::LoadDataSource(std::string fname, std::string row_key_column, std::string timestamp_column) : m_fin(fname.c_str()), m_cur_line(0), m_line_buffer(0), m_hyperformat(false), m_leading_timestamps(false), m_row_index(0), m_timestamp_index(-1), m_timestamp(0) {
+  string line, column_name;
   char *base, *ptr;
   int index = 0;
 
@@ -53,8 +55,11 @@ LoadDataSource::LoadDataSource(std::string fname, std::string row_key_column) : 
   while ((ptr = strchr(base, '\t')) != 0) {
     *ptr++ = 0;
     m_column_names.push_back(base);
-    if (row_key_column != "" && row_key_column == std::string(base))
+    column_name = std::string(base);
+    if (row_key_column != "" && row_key_column == column_name)
       m_row_index = index;
+    if (timestamp_column != "" && timestamp_column == column_name)
+      m_timestamp_index = index;
     base = ptr;
     index++;
   }
@@ -182,10 +187,11 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
       keyp->row = m_values[m_row_index];
       keyp->row_len = m_cur_row_length;
       keyp->column_family = m_column_names[m_next_value].c_str();
-      if (keyp->column_qualifier || keyp->column_qualifier_len || *timestampp) {
+      *timestampp = m_timestamp;
+      // clear these, just in case they were set by the client
+      if (keyp->column_qualifier || keyp->column_qualifier_len) {
 	keyp->column_qualifier = 0;
 	keyp->column_qualifier_len = 0;
-	*timestampp = 0;
       }
       if (m_values[m_next_value] == 0) {
 	*valuep = 0;
@@ -223,10 +229,33 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
       }
       m_values.push_back(base);
       m_next_value++;
-      
+
+      /**
       if (m_next_value < m_column_names.size()) {
 	cerr << "error: too few fields on line " << m_cur_line << endl;
 	continue;
+      }
+      */
+      if (m_timestamp_index >= 0) {
+	struct tm tm;
+	time_t t;
+
+	if (m_values.size() <= (size_t)m_timestamp_index) {
+	  cerr << "warn: timestamp field not found on line " << m_cur_line << ", skipping..." << endl;
+	  continue;
+	}
+
+	if (strptime(m_values[m_timestamp_index], "%Y-%m-%d %H:%M:%S", &tm) == 0) {
+	  cerr << "warn: invalid timestamp format on line " << m_cur_line << ", skipping..." << endl;
+	  continue;
+	}
+
+	if ((t = mktime(&tm)) == (time_t)-1) {
+	  cerr << "warn: invalid timestamp format on line " << m_cur_line << ", skipping..." << endl;
+	  continue;
+	}
+
+	m_timestamp = (uint64_t)t * 1000000000LL;
       }
 
       if (m_values[m_row_index] == 0) {

@@ -194,7 +194,7 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
 
       boost::progress_display show_progress( file_size );
 
-      lds = new LoadDataSource(state.str, state.row_key_column);
+      lds = new LoadDataSource(state.str, state.row_key_column, state.timestamp_column);
 
       while (lds->next(0, &timestamp, &key, &value, &value_len, &consumed)) {
 	insert_count++;

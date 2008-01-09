@@ -38,7 +38,7 @@ namespace Hypertable {
   class LoadDataSource {
 
   public:
-    LoadDataSource(std::string fname, std::string row_key_column);
+    LoadDataSource(std::string fname, std::string row_key_column, std::string timestamp_column);
     virtual ~LoadDataSource() { return; }
     virtual bool next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp);
 
@@ -53,6 +53,8 @@ namespace Hypertable {
     bool m_leading_timestamps;
     size_t m_cur_row_length;
     int m_row_index;
+    int m_timestamp_index;
+    uint64_t m_timestamp;
   };
 
 }

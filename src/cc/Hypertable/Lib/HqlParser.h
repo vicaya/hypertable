@@ -105,6 +105,7 @@ namespace Hypertable {
       std::string str;
       std::string table_compressor;
       std::string row_key_column;
+      std::string timestamp_column;
       Schema::ColumnFamily *cf;
       Schema::AccessGroup *ag;
       Schema::ColumnFamilyMapT cf_map;
@@ -293,6 +294,16 @@ namespace Hypertable {
 	display_string("set_row_key_column");
 	state.row_key_column = std::string(str, end-str);
 	trim_if(state.row_key_column, boost::is_any_of("'\""));
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct set_timestamp_column {
+      set_timestamp_column(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("set_timestamp_column");
+	state.timestamp_column = std::string(str, end-str);
+	trim_if(state.timestamp_column, boost::is_any_of("'\""));
       }
       hql_interpreter_state &state;
     };
@@ -660,6 +671,7 @@ namespace Hypertable {
 	  token_t WHERE        = as_lower_d["where"];
 	  token_t ROW          = as_lower_d["row"];
 	  token_t ROW_KEY_COLUMN = as_lower_d["row_key_column"];
+	  token_t TIMESTAMP_COLUMN = as_lower_d["timestamp_column"];
 	  token_t START_ROW    = as_lower_d["start_row"];
 	  token_t END_ROW      = as_lower_d["end_row"];
 	  token_t INCLUSIVE    = as_lower_d["inclusive"];
@@ -890,10 +902,15 @@ namespace Hypertable {
 
 	  load_data_statement
 	    = LOAD >> DATA >> INFILE 
-	    >> !( ROW_KEY_COLUMN >> EQUAL >> ( string_literal | identifier )[set_row_key_column(self.state)] )
+	    >> !( load_data_option >> *( load_data_option ) )
 	    >> string_literal[set_str(self.state)] 
 	    >> INTO >> TABLE 
 	    >> identifier[set_table_name(self.state)]
+	    ;
+
+	  load_data_option
+	    = ROW_KEY_COLUMN >> EQUAL >> ( string_literal | identifier )[set_row_key_column(self.state)]
+	    | TIMESTAMP_COLUMN >> EQUAL >> ( string_literal | identifier )[set_timestamp_column(self.state)]
 	    ;
 
 	  /**
@@ -936,6 +953,7 @@ namespace Hypertable {
 	  BOOST_SPIRIT_DEBUG_RULE(time);
 	  BOOST_SPIRIT_DEBUG_RULE(year);
 	  BOOST_SPIRIT_DEBUG_RULE(load_data_statement);
+	  BOOST_SPIRIT_DEBUG_RULE(load_data_option);
 	  BOOST_SPIRIT_DEBUG_RULE(insert_statement);
 	  BOOST_SPIRIT_DEBUG_RULE(insert_value_list);
 	  BOOST_SPIRIT_DEBUG_RULE(insert_value);
@@ -956,8 +974,8 @@ namespace Hypertable {
         access_group_option, in_memory_option, blocksize_option, help_statement,
         describe_table_statement, show_statement, select_statement, where_clause,
         where_predicate, option_spec, date_expression, datetime, date, time,
-	year, load_data_statement, insert_statement, insert_value_list, insert_value,
-	delete_statement, delete_column_clause, table_option;
+	year, load_data_statement, load_data_option, insert_statement, insert_value_list,
+	insert_value, delete_statement, delete_column_clause, table_option;
       };
 
       hql_interpreter_state &state;
