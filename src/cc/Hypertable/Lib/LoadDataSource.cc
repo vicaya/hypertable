@@ -26,7 +26,6 @@
 
 extern "C" {
 #include <strings.h>
-#define _XOPEN_SOURCE /* glibc2 needs this */
 #include <time.h>
 }
 
@@ -76,6 +75,8 @@ LoadDataSource::LoadDataSource(std::string fname, std::string row_key_column, st
       }
     }
   }
+
+  m_next_value = m_column_names.size();
 
   if (!m_hyperformat && m_column_names.size() < 2)
     throw Exception(Error::HQL_BAD_LOAD_FILE_FORMAT, "No columns specified in load file");
@@ -183,6 +184,9 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
   }
   else {
 
+    while (m_next_value == (size_t)m_timestamp_index || m_next_value == (size_t)m_row_index)
+      m_next_value++;
+
     if (m_next_value > 0 && m_next_value < m_column_names.size()) {
       keyp->row = m_values[m_row_index];
       keyp->row_len = m_cur_row_length;
@@ -217,7 +221,6 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
 
       base = (char *)m_line_buffer.buf;
 
-      m_next_value = 0;
       while ((ptr = strchr(base, '\t')) != 0) {
 	*ptr++ = 0;
 	if (strlen(base) == 0 || !strcmp(base, "NULL") || !strcmp(base, "\\N"))
@@ -225,17 +228,9 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
 	else
 	  m_values.push_back(base);
 	base = ptr;
-	m_next_value++;
       }
       m_values.push_back(base);
-      m_next_value++;
 
-      /**
-      if (m_next_value < m_column_names.size()) {
-	cerr << "error: too few fields on line " << m_cur_line << endl;
-	continue;
-      }
-      */
       if (m_timestamp_index >= 0) {
 	struct tm tm;
 	time_t t;
@@ -263,16 +258,19 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
 	continue;
       }
 
+      m_next_value = 0;
+      while (m_next_value == (size_t)m_timestamp_index || m_next_value == (size_t)m_row_index)
+	m_next_value++;
+
       m_cur_row_length = strlen(m_values[m_row_index]);
 
-      m_next_value = 1;
       keyp->row = m_values[m_row_index];
       keyp->row_len = m_cur_row_length;
       keyp->column_family = m_column_names[m_next_value].c_str();
-      if (keyp->column_qualifier || keyp->column_qualifier_len || *timestampp) {
+      *timestampp = m_timestamp;
+      if (keyp->column_qualifier || keyp->column_qualifier_len) {
 	keyp->column_qualifier = 0;
 	keyp->column_qualifier_len = 0;
-	*timestampp = 0;
       }
       if (m_values[m_next_value] == 0) {
 	*valuep = 0;

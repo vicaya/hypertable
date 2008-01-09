@@ -284,6 +284,7 @@ namespace Hypertable {
       void operator()(char const *str, char const *end) const { 
 	display_string("set_str");
 	state.str = std::string(str, end-str);
+	trim_if(state.str, boost::is_any_of("'\""));
       }
       hql_interpreter_state &state;
     };
@@ -311,8 +312,10 @@ namespace Hypertable {
     struct scan_add_column_family {
       scan_add_column_family(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const { 
+	std::string column_name = std::string(str, end-str);
 	display_string("scan_add_column_family");
-	state.scan.columns.push_back(std::string(str, end-str));
+	trim_if(column_name, boost::is_any_of("'\""));
+	state.scan.columns.push_back(column_name);
       }
       hql_interpreter_state &state;
     };
@@ -764,13 +767,13 @@ namespace Hypertable {
 	    ;
 
 	  describe_table_statement
-	    = DESCRIBE >> TABLE >> identifier[set_table_name(self.state)]
+	    = DESCRIBE >> TABLE >> user_identifier[set_table_name(self.state)]
 	    ;
 
 	  create_table_statement
 	    =  CREATE >> TABLE
 		      >> *( table_option )
-		      >> identifier[set_table_name(self.state)]
+		      >> user_identifier[set_table_name(self.state)]
 		      >> !( create_definitions )
 	    ;
 
@@ -838,8 +841,8 @@ namespace Hypertable {
 
 	  select_statement
 	    = SELECT 
-	      >> ( '*' | ( identifier[scan_add_column_family(self.state)] >> *( COMMA >> identifier[scan_add_column_family(self.state)] ) ) ) 
-	      >> FROM >> identifier[set_table_name(self.state)]
+	      >> ( '*' | ( user_identifier[scan_add_column_family(self.state)] >> *( COMMA >> user_identifier[scan_add_column_family(self.state)] ) ) ) 
+	      >> FROM >> user_identifier[set_table_name(self.state)]
 	      >> !where_clause
 	      >> *( option_spec )
 	    ;
@@ -905,7 +908,7 @@ namespace Hypertable {
 	    >> !( load_data_option >> *( load_data_option ) )
 	    >> string_literal[set_str(self.state)] 
 	    >> INTO >> TABLE 
-	    >> identifier[set_table_name(self.state)]
+	    >> user_identifier[set_table_name(self.state)]
 	    ;
 
 	  load_data_option

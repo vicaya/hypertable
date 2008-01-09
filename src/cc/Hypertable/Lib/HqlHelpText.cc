@@ -152,7 +152,16 @@ namespace {
 
   const char *help_text_load_data_infile = 
   "\n" \
-  "LOAD DATA INFILE [ROW_KEY_COLUMN=columname] fname INTO TABLE name\n" \
+  "LOAD DATA INFILE [options] fname INTO TABLE name\n" \
+  "\n" \
+  "options:\n" \
+  "\n" \
+  "  ( ROW_KEY_COLUMN=name | TIMESTAMP_COLUMN=name )*\n" \
+  "\n" \
+  "The following is an example of the timestamp format that is\n" \
+  "expected in the timestamp column:\n" \
+  "\n" \
+  "  2008-01-09 09:46:51\n" \
   "\n" \
   "Example:\n" \
   "\n" \

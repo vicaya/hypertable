@@ -16,6 +16,8 @@ TODO:
 - Make sure the crate table/modify schema cannot overflow a byte on column IDs.
 - Re-write schema parser using Boost Spirit instead of expat (removes a dependency)
 - Refactor so that schema can get updated on change (overhaul TableInfo)
+- Make sure byte order swapping for timestamp happens properly on all architectures
+- Make the Serialization routines work for all architectures
 - Add range merging
 - CommitLog reader should sanity check each block header
 - CommitLogReader should be able to throw errors
