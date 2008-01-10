@@ -32,7 +32,6 @@ extern "C" {
 #include "Common/ByteOrder.h"
 #include "Common/DynamicBuffer.h"
 #include "Common/Error.h"
-#include "Common/mktime_replacement.h"
 
 #include "Key.h"
 
@@ -247,7 +246,7 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
 	  continue;
 	}
 
-	if ((t = mktime_replacement(&tm)) == (time_t)-1) {
+	if ((t = timegm(&tm)) == (time_t)-1) {
 	  cerr << "warn: invalid timestamp format on line " << m_cur_line << ", skipping..." << endl;
 	  continue;
 	}

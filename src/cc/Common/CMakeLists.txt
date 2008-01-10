@@ -27,7 +27,6 @@ Properties.cc
 System.cc
 Usage.cc
 md5.cc
-mktime_replacement.cc
 )
 
 add_library (Common ${Common_SRCS})
