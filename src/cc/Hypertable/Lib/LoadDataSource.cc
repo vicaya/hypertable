@@ -32,11 +32,13 @@ extern "C" {
 #include "Common/ByteOrder.h"
 #include "Common/DynamicBuffer.h"
 #include "Common/Error.h"
+#include "Common/mktime_replacement.h"
 
 #include "Key.h"
 
 #include "LoadDataSource.h"
 
+using namespace Hypertable;
 using namespace std;
 
 /**
@@ -238,14 +240,14 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
 	if (m_values.size() <= (size_t)m_timestamp_index) {
 	  cerr << "warn: timestamp field not found on line " << m_cur_line << ", skipping..." << endl;
 	  continue;
-	}
+	}	
 
-	if (strptime(m_values[m_timestamp_index], "%Y-%m-%d %H:%M:%S", &tm) == 0) {
+	if (!parse_date_format(m_values[m_timestamp_index], &tm)) {
 	  cerr << "warn: invalid timestamp format on line " << m_cur_line << ", skipping..." << endl;
 	  continue;
 	}
 
-	if ((t = mktime(&tm)) == (time_t)-1) {
+	if ((t = mktime_replacement(&tm)) == (time_t)-1) {
 	  cerr << "warn: invalid timestamp format on line " << m_cur_line << ", skipping..." << endl;
 	  continue;
 	}
@@ -288,4 +290,72 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
   }
 
   return false;
+}
+
+
+
+bool LoadDataSource::parse_date_format(const char *str, struct tm *tm) {
+  int ival;
+  const char *ptr = str;
+  char *end_ptr;
+
+  /**
+   * year
+   */
+  if ((ival = strtol(ptr, &end_ptr, 10)) == 0 || (end_ptr - ptr) != 4 || *end_ptr != '-')
+    return false;
+  tm->tm_year = ival - 1900;
+
+  ptr = end_ptr + 1;
+
+  /**
+   * month
+   */
+  if ((ival = strtol(ptr, &end_ptr, 10)) == 0 || (end_ptr - ptr) != 2 || *end_ptr != '-')
+    return false;
+  tm->tm_mon = ival - 1;
+
+  ptr = end_ptr + 1;
+  
+  /**
+   * day
+   */
+  if ((ival = strtol(ptr, &end_ptr, 10)) == 0 || (end_ptr - ptr) != 2 || *end_ptr != ' ')
+    return false;
+  tm->tm_mday = ival;
+
+  ptr = end_ptr + 1;
+
+  /**
+   * hour
+   */
+  ival = strtol(ptr, &end_ptr, 10);
+  if ((end_ptr - ptr) != 2 || *end_ptr != ':')
+    return false;
+  tm->tm_hour = ival;
+
+  ptr = end_ptr + 1;
+
+  /**
+   * minute
+   */
+  ival = strtol(ptr, &end_ptr, 10);
+  if ((end_ptr - ptr) != 2 || *end_ptr != ':')
+    return false;
+  tm->tm_min = ival;
+
+  ptr = end_ptr + 1;
+
+  /**
+   * second
+   */
+  ival = strtol(ptr, &end_ptr, 10);
+  if ((end_ptr - ptr) != 2)
+    return false;
+  tm->tm_sec = ival;
+
+  tm->tm_gmtoff = 0;
+  tm->tm_zone = "GMT";
+
+  return true;
 }

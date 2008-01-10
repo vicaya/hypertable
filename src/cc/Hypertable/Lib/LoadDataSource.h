@@ -43,6 +43,9 @@ namespace Hypertable {
     virtual bool next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp);
 
   private:
+
+    bool parse_date_format(const char *str, struct tm *tm);
+
     std::vector<std::string> m_column_names;
     std::vector<const char *> m_values;
     size_t m_next_value;
