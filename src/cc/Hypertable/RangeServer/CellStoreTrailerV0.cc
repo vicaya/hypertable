@@ -43,7 +43,8 @@ void CellStoreTrailerV0::clear() {
   var_index_offset = 0;
   filter_offset = 0;
   index_entries = 0;
-  timestamp = 0;
+  timestamp.logical = 0;
+  timestamp.real = 0;
   blocksize = 0;
   compression_type = 0;
   compression_ratio = 0.0;
@@ -60,7 +61,8 @@ void CellStoreTrailerV0::serialize(uint8_t *buf) {
   Serialization::encode_int(&buf, var_index_offset);
   Serialization::encode_int(&buf, filter_offset);
   Serialization::encode_int(&buf, index_entries);
-  Serialization::encode_long(&buf, timestamp);
+  Serialization::encode_long(&buf, timestamp.logical);
+  Serialization::encode_long(&buf, timestamp.real);
   Serialization::encode_int(&buf, blocksize);
   Serialization::encode_short(&buf, compression_type);
   Serialization::encode_int(&buf, *((uint32_t *)&compression_ratio));
@@ -79,7 +81,8 @@ void CellStoreTrailerV0::deserialize(uint8_t *buf) {
   Serialization::decode_int(&buf, &remaining, &var_index_offset);
   Serialization::decode_int(&buf, &remaining, &filter_offset);
   Serialization::decode_int(&buf, &remaining, &index_entries);
-  Serialization::decode_long(&buf, &remaining, &timestamp);
+  Serialization::decode_long(&buf, &remaining, &timestamp.logical);
+  Serialization::decode_long(&buf, &remaining, &timestamp.real);
   Serialization::decode_int(&buf, &remaining, &blocksize);
   Serialization::decode_short(&buf, &remaining, &compression_type);
   Serialization::decode_int(&buf, &remaining, (uint32_t *)&compression_ratio);
@@ -95,7 +98,8 @@ void CellStoreTrailerV0::display(std::ostream &os) {
   os << "var_index_offset = " << var_index_offset << endl;
   os << "filter_offset = " << filter_offset << endl;
   os << "index_entries = " << index_entries << endl;
-  os << "timestamp = " << timestamp << endl;
+  os << "timestamp logical = " << timestamp.logical << endl;
+  os << "timestamp real = " << timestamp.real << endl;
   os << "blocksize = " << blocksize << endl;
   os << "compression_type = " << compression_type << endl;
   os << "compression_ratio = " << compression_ratio << endl;

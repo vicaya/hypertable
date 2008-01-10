@@ -84,8 +84,8 @@ BlockCompressionCodec *CellStoreV0::create_block_compression_codec() {
 
 
 
-uint64_t CellStoreV0::get_timestamp() {
-  return m_trailer.timestamp;
+void CellStoreV0::get_timestamp(Timestamp &timestamp) {
+  timestamp = m_trailer.timestamp;
 }
 
 
@@ -205,7 +205,7 @@ int CellStoreV0::add(const ByteString32T *key, const ByteString32T *value) {
 
 
 
-int CellStoreV0::finalize(uint64_t timestamp) {
+int CellStoreV0::finalize(Timestamp &timestamp) {
   EventPtr eventPtr;
   int error = -1;
   uint8_t *zbuf;

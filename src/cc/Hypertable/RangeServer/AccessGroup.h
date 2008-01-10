@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -30,6 +30,7 @@
 #include "CellCache.h"
 #include "CellStore.h"
 #include "RangeInfo.h"
+#include "Timestamp.h"
 
 using namespace Hypertable;
 
@@ -54,10 +55,11 @@ namespace Hypertable {
 
     bool include_in_scan(ScanContextPtr &scanContextPtr);
     uint64_t disk_usage();
-    void add_cell_store(CellStorePtr &cellStorePtr, uint32_t id);
+    void add_cell_store(CellStorePtr &cellstore_ptr, uint32_t id);
     bool needs_compaction();
-    void run_compaction(uint64_t timestamp, bool major);
-    uint64_t get_persist_timestamp() { return m_persist_timestamp; }
+    void run_compaction(Timestamp timestamp, bool major);
+
+    void get_compaction_timestamp(Timestamp &timestamp);
 
     const char *get_name() { return m_name.c_str(); }
 
@@ -77,12 +79,12 @@ namespace Hypertable {
     std::vector<CellStorePtr> m_stores;
     CellCachePtr         m_cell_cache_ptr;
     uint32_t             m_next_table_id;
-    uint64_t             m_persist_timestamp;
     uint64_t             m_disk_usage;
     uint32_t             m_blocksize;
     float                m_compression_ratio;
     std::string          m_compressor;
     bool                 m_is_root;
+    Timestamp            m_compaction_timestamp;
   };
 
 }

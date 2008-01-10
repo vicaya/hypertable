@@ -56,11 +56,11 @@ namespace Hypertable {
 
     virtual int create(const char *fname, uint32_t blocksize, std::string compressor);
     virtual int add(const ByteString32T *key, const ByteString32T *value);
-    virtual int finalize(uint64_t timestamp);
+    virtual int finalize(Timestamp &timestamp);
     virtual int open(const char *fname, const char *start_row, const char *end_row);
     virtual int load_index();
     virtual uint32_t get_blocksize() { return m_trailer.blocksize; }
-    virtual uint64_t get_timestamp();
+    virtual void get_timestamp(Timestamp &timestamp);
     virtual uint64_t disk_usage() { return m_disk_usage; }
     virtual float compression_ratio() { return m_trailer.compression_ratio; }
     virtual const char *get_split_row();

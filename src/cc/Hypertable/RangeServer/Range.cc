@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -49,7 +49,7 @@ using namespace Hypertable;
 using namespace std;
 
 
-Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeT *range, uint64_t soft_limit) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_schema(schemaPtr), m_maintenance_in_progress(false), m_latest_timestamp(0), m_temp_timestamp(0), m_split_start_time(0), m_hold_updates(false), m_update_counter(0), m_added(0) {
+Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeT *range, uint64_t soft_limit) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_schema(schemaPtr), m_maintenance_in_progress(false), m_last_logical_timestamp(0), m_logical_split_start_time(0), m_hold_updates(false), m_update_counter(0), m_added(0) {
   AccessGroup *ag;
 
   if (soft_limit == 0 || soft_limit > Global::rangeMaxBytes)
@@ -110,7 +110,6 @@ void Range::load_cell_stores(Metadata *metadata) {
   AccessGroup *ag;
   CellStorePtr cellStorePtr;
   uint32_t csid;
-  uint64_t minLogCutoff = 0;
   const char *base, *ptr, *end;
   std::vector<std::string> csvec;
   std::string ag_name;
@@ -163,10 +162,6 @@ void Range::load_cell_stores(Metadata *metadata) {
 	continue;
       }
 
-      // TODO: maybe do something here?
-      if (minLogCutoff == 0 || cellStorePtr->get_timestamp() < minLogCutoff)
-	minLogCutoff = cellStorePtr->get_timestamp();
-
       ag->add_cell_store(cellStorePtr, csid);
     }
 
@@ -206,8 +201,8 @@ int Range::add(const ByteString32T *key, const ByteString32T *value) {
     return 0;
   }
 
-  if (keyComps.timestamp > m_temp_timestamp)
-    m_temp_timestamp = keyComps.timestamp;
+  if (keyComps.timestamp > m_last_logical_timestamp)
+    m_last_logical_timestamp = keyComps.timestamp;
 
   if (keyComps.flag == FLAG_DELETE_ROW) {
     for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++) {
@@ -294,16 +289,6 @@ const char *Range::get_split_row() {
     DUMP_CORE;
   }
   return m_split_row.c_str();
-}
-
-
-uint64_t Range::get_persist_timestamp() {
-  uint64_t cutoffTime = m_access_group_vector[0]->get_persist_timestamp();
-  for (size_t i=1; i<m_access_group_vector.size(); i++) {
-    if (m_access_group_vector[i]->get_persist_timestamp() < cutoffTime)
-      cutoffTime = m_access_group_vector[i]->get_persist_timestamp();
-  }
-  return cutoffTime;
 }
 
 
@@ -410,9 +395,9 @@ void Range::do_maintenance() {
 
       {
 	boost::mutex::scoped_lock lock(m_mutex);
-	m_split_start_time = m_scanner_timestamp_controller.get_oldest_update_timestamp();
-	if (m_split_start_time == 0 || m_latest_timestamp < m_split_start_time)
-	  m_split_start_time = m_latest_timestamp;
+	m_logical_split_start_time = m_scanner_timestamp_controller.get_oldest_update_timestamp();
+	if (m_logical_split_start_time == 0 || m_timestamp.logical < m_logical_split_start_time)
+	  m_logical_split_start_time = m_timestamp.logical;
 	old_start_row = m_start_row;
       }
 
@@ -427,8 +412,11 @@ void Range::do_maintenance() {
     /**
      * Perform major compactions
      */
-    for (size_t i=0; i<m_access_group_vector.size(); i++)
-      m_access_group_vector[i]->run_compaction(m_split_start_time, true);  // verify the timestamp
+    {
+      Timestamp split_timestamp(m_logical_split_start_time, Global::log->get_timestamp());
+      for (size_t i=0; i<m_access_group_vector.size(); i++)
+	m_access_group_vector[i]->run_compaction(split_timestamp, true);
+    }
 
 
     /**
@@ -520,7 +508,7 @@ void Range::do_maintenance() {
       {
 	boost::mutex::scoped_lock lock(m_mutex);
 	m_start_row = m_split_row;
-	m_split_start_time = 0;
+	m_logical_split_start_time = 0;
 	m_split_row = "";
 	// Shrink this range's access groups
 	for (size_t i=0; i<m_access_group_vector.size(); i++)
@@ -579,8 +567,8 @@ void Range::do_compaction(bool major) {
 }
 
 
-uint64_t Range::run_compaction(bool major) {
-  uint64_t timestamp;
+void Range::run_compaction(bool major) {
+  Timestamp timestamp;
   
   {
     boost::mutex::scoped_lock lock(m_maintenance_mutex);
@@ -592,7 +580,7 @@ uint64_t Range::run_compaction(bool major) {
 
     {
       boost::mutex::scoped_lock lock(m_mutex);
-      timestamp = m_latest_timestamp;
+      timestamp = m_timestamp;
     }
 
     /** unblock updates **/
@@ -602,17 +590,21 @@ uint64_t Range::run_compaction(bool major) {
 
   /**
    * The following code ensures that pending updates that have not been
-   * committed on this range do not get included in the compaction
-   * scan
+   * committed on this range do not get included in the compaction scan
+   *
+   * NOTE: Ideally, the real time of the start of the oldest outstanding
+   * update should be tracked and used here, but I don't feel like doing
+   * that now.  For now we just use the most recent update's real time.
+   * This may result in edge cases where the commit log garbage collection
+   * compaction is less than optimal.
    */
   uint64_t temp_timestamp = m_scanner_timestamp_controller.get_oldest_update_timestamp();
-  if (temp_timestamp != 0 && temp_timestamp < timestamp)
-    timestamp = temp_timestamp;
+  if (temp_timestamp != 0 && temp_timestamp < timestamp.logical)
+    timestamp.logical = temp_timestamp;
 
   for (size_t i=0; i<m_access_group_vector.size(); i++)
     m_access_group_vector[i]->run_compaction(timestamp, major);
 
-  return timestamp;
 }
 
 
@@ -626,19 +618,19 @@ void Range::dump_stats() {
 
 
 void Range::lock() {
-  // this is a bit of a hack to collect the most recent timestamp seen
   for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++)
     (*iter).second->lock();
 }
 
 
-void Range::unlock() {
+void Range::unlock(uint64_t real_timestamp) {
   for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++)
     (*iter).second->unlock();
-  // this is a bit of a hack to collect the most recent timestamp seen
+  // This is a performance optimization to maintain the logical timestamp without excessive locking
   {
     boost::mutex::scoped_lock lock(m_mutex);
-    m_latest_timestamp = m_temp_timestamp;
+    m_timestamp.logical = m_last_logical_timestamp;
+    m_timestamp.real = real_timestamp;
   }
 }
 
@@ -721,14 +713,14 @@ void Range::decrement_update_counter() {
 uint64_t Range::get_timestamp() {
   boost::mutex::scoped_lock lock(m_mutex);
   uint64_t timestamp = m_scanner_timestamp_controller.get_oldest_update_timestamp();
-  if (timestamp != 0 && timestamp <= m_latest_timestamp)
+  if (timestamp != 0 && timestamp <= m_timestamp.logical)
     return timestamp;
   
-  if (m_latest_timestamp == 0) {
+  if (m_timestamp.logical == 0) {
     boost::xtime now;
     boost::xtime_get(&now, boost::TIME_UTC);
     timestamp = ((uint64_t)now.sec * 1000000000LL) + (uint64_t)now.nsec;
     return timestamp;
   }
-  return m_latest_timestamp;
+  return m_timestamp.logical;
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -36,6 +36,7 @@
 #include "Metadata.h"
 #include "RangeInfo.h"
 #include "ScannerTimestampController.h"
+#include "Timestamp.h"
 
 namespace Hypertable {
 
@@ -49,10 +50,9 @@ namespace Hypertable {
     virtual ~Range();
     virtual int add(const ByteString32T *key, const ByteString32T *value);
     virtual const char *get_split_row();
-    virtual void lock();
-    virtual void unlock();
+    void lock();
+    void unlock(uint64_t real_timestamp);
 
-    uint64_t get_persist_timestamp();
     uint64_t disk_usage();
 
     CellListScanner *create_scanner(ScanContextPtr &scanContextPtr);
@@ -87,8 +87,8 @@ namespace Hypertable {
 
     bool get_split_info(std::string &split_row, CommitLogPtr &splitLogPtr, uint64_t *splitStartTime) {
       boost::mutex::scoped_lock lock(m_mutex);
-      *splitStartTime = m_split_start_time;
-      if (m_split_start_time == 0) {
+      *splitStartTime = m_logical_split_start_time;
+      if (m_logical_split_start_time == 0) {
 	split_row = "";
 	return false;
       }
@@ -108,7 +108,7 @@ namespace Hypertable {
 
     bool extract_csid_from_path(std::string &path, uint32_t *storeIdp);
 
-    uint64_t run_compaction(bool major=false);
+    void run_compaction(bool major=false);
 
     boost::mutex     m_mutex;
     MasterClientPtr  m_master_client_ptr;
@@ -123,9 +123,9 @@ namespace Hypertable {
     ColumnFamilyVectorT      m_column_family_vector;
     bool       m_maintenance_in_progress;
 
-    uint64_t         m_latest_timestamp;
-    uint64_t         m_temp_timestamp;
-    uint64_t         m_split_start_time;
+    Timestamp        m_timestamp;
+    uint64_t         m_last_logical_timestamp;
+    uint64_t         m_logical_split_start_time;
     std::string      m_split_row;
     CommitLogPtr     m_split_log_ptr;
 

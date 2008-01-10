@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -698,7 +698,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
   string errMsg;
   int error = Error::OK;
   TableInfoPtr tableInfoPtr;
-  uint64_t updateTimestamp = 0;
+  uint64_t update_timestamp = 0;
   uint64_t clientTimestamp = 0;
   const char *row;
   std::string split_row;
@@ -772,7 +772,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     min_ts_rec.range_ptr->increment_update_counter();
 
     /** Obtain "update timestamp" **/
-    updateTimestamp = Global::log->get_timestamp();
+    update_timestamp = Global::log->get_timestamp();
 
     endRow = min_ts_rec.range_ptr->end_row();
 
@@ -815,7 +815,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
       modPtr += Length((const ByteString32T *)modPtr); // skip key
       modPtr += Length((const ByteString32T *)modPtr); // skip value
       update.len = modPtr - update.base;
-      if (splitStartTime != 0 && updateTimestamp > splitStartTime && strcmp(row, split_row.c_str()) <= 0) {
+      if (splitStartTime != 0 && update_timestamp > splitStartTime && strcmp(row, split_row.c_str()) <= 0) {
 	splitMods.push_back(update);
 	splitSize += update.len;
       }
@@ -867,7 +867,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
       ByteString32T *value = (ByteString32T *)(splitMods[i].base + Length(key));
       min_ts_rec.range_ptr->add(key, value);
     }
-    min_ts_rec.range_ptr->unlock();
+    min_ts_rec.range_ptr->unlock(update_timestamp);
 
     /**
      * Split and Compaction processing

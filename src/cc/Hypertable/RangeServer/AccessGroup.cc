@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -40,7 +40,7 @@ namespace {
 }
 
 
-AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range) : CellList(), m_mutex(), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_persist_timestamp(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE), m_compression_ratio(1.0), m_is_root(false) {
+AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range) : CellList(), m_mutex(), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE), m_compression_ratio(1.0), m_is_root(false) {
   m_table_name = table_identifier.name;
   m_start_row = range->startRow;
   m_end_row = range->endRow;
@@ -131,14 +131,20 @@ bool AccessGroup::needs_compaction() {
 }
 
 
-void AccessGroup::add_cell_store(CellStorePtr &cellStorePtr, uint32_t id) {
+void AccessGroup::add_cell_store(CellStorePtr &cellstore_ptr, uint32_t id) {
   boost::mutex::scoped_lock lock(m_mutex);
   if (id >= m_next_table_id) 
     m_next_table_id = id+1;
-  if (cellStorePtr->get_timestamp() > m_persist_timestamp)
-    m_persist_timestamp = cellStorePtr->get_timestamp();
-  m_stores.push_back(cellStorePtr);
-  m_disk_usage += cellStorePtr->disk_usage();
+  m_stores.push_back(cellstore_ptr);
+  m_disk_usage += cellstore_ptr->disk_usage();
+  if (m_compaction_timestamp.logical == 0)
+    cellstore_ptr->get_timestamp(m_compaction_timestamp);
+  else {
+    Timestamp timestamp;
+    cellstore_ptr->get_timestamp(timestamp);
+    if (timestamp.real > m_compaction_timestamp.real)
+      m_compaction_timestamp = timestamp;
+  }
 }
 
 
@@ -151,7 +157,7 @@ namespace {
 }
 
 
-void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
+void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
   std::string cellStoreFile;
   char md5DigestStr[33];
   char filename[16];
@@ -206,7 +212,7 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
   }
 
   {
-    ScanContextPtr scanContextPtr = new ScanContext(timestamp+1, m_schema_ptr);
+    ScanContextPtr scanContextPtr = new ScanContext(timestamp.logical+1, m_schema_ptr);
 
     if (major || tableIndex < m_stores.size()) {
       MergeScanner *mscanner = new MergeScanner(scanContextPtr, !major);
@@ -226,7 +232,7 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
       return;
     }
 
-    if (keyComps.timestamp <= timestamp)
+    if (keyComps.timestamp <= timestamp.logical)
       cellStorePtr->add(key, value);
 
     scannerPtr->forward();
@@ -247,7 +253,7 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
     /** Slice and install new CellCache **/
     tmp_cell_cache_ptr = m_cell_cache_ptr;
     tmp_cell_cache_ptr->lock();
-    m_cell_cache_ptr = m_cell_cache_ptr->slice_copy(timestamp);
+    m_cell_cache_ptr = m_cell_cache_ptr->slice_copy(timestamp.logical);
     tmp_cell_cache_ptr->unlock();    
 
     /** Drop the compacted tables from the table vector **/
@@ -267,6 +273,8 @@ void AccessGroup::run_compaction(uint64_t timestamp, bool major) {
       m_compression_ratio += m_stores[i]->compression_ratio();
     }
     m_compression_ratio /= m_stores.size();
+
+    m_compaction_timestamp = timestamp;
   }
 
   try {
@@ -353,4 +361,13 @@ void AccessGroup::get_files(std::string &text) {
   text = "";
   for (size_t i=0; i<m_stores.size(); i++)
     text += m_stores[i]->get_filename() + ";\n";
+}
+
+
+/**
+ *
+ */
+void AccessGroup::get_compaction_timestamp(Timestamp &timestamp) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  timestamp = m_compaction_timestamp;
 }

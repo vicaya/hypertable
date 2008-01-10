@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -18,39 +18,23 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_CELLSTORETRAILERV0_H
-#define HYPERTABLE_CELLSTORETRAILERV0_H
+#ifndef HYPERTABLE_TIMESTAMP_H
+#define HYPERTABLE_TIMESTAMP_H
 
 extern "C" {
 #include <stdint.h>
 }
 
-#include "CellStoreTrailer.h"
-#include "Timestamp.h"
-
 namespace Hypertable {
 
-  class CellStoreTrailerV0 : public CellStoreTrailer {
+  class Timestamp {
   public:
-    CellStoreTrailerV0();
-    virtual ~CellStoreTrailerV0() { return; }
-    virtual void clear();
-    virtual size_t size() { return 44; }
-    virtual void serialize(uint8_t *buf);
-    virtual void deserialize(uint8_t *buf);
-    virtual void display(std::ostream &os);
-
-    uint32_t  fix_index_offset;
-    uint32_t  var_index_offset;
-    uint32_t  filter_offset;
-    uint32_t  index_entries;
-    Timestamp timestamp;
-    uint32_t  blocksize;
-    uint16_t  compression_type;
-    float     compression_ratio;
-    uint16_t  version;
+    Timestamp(uint64_t l, uint64_t r) : logical(l), real(r) { return; }
+    Timestamp() : logical(0), real(0) { return; }
+    uint64_t logical;
+    uint64_t real;
   };
 
 }
 
-#endif // HYPERTABLE_CELLSTORETRAILERV0_H
+#endif // HYPERTABLE_TIMESTAMP_H
