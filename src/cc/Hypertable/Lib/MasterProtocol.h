@@ -52,7 +52,7 @@ namespace Hypertable {
 
     static CommBuf *create_register_server_request(std::string &location);
 
-    static CommBuf *create_report_split_request(TableIdentifierT &table, RangeT &range);
+    static CommBuf *create_report_split_request(TableIdentifierT &table, RangeT &range, uint64_t soft_limit);
 
     virtual const char *command_text(short command);
     

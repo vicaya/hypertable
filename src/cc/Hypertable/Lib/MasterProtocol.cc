@@ -60,12 +60,13 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *MasterProtocol::create_report_split_request(TableIdentifierT &table, RangeT &range) {
+  CommBuf *MasterProtocol::create_report_split_request(TableIdentifierT &table, RangeT &range, uint64_t soft_limit) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
-    CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthTableIdentifier(table) + EncodedLengthRange(range));
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthTableIdentifier(table) + EncodedLengthRange(range) + 8);
     cbuf->append_short(COMMAND_REPORT_SPLIT);
     EncodeTableIdentifier(cbuf->get_data_ptr_address(), table);
     EncodeRange(cbuf->get_data_ptr_address(), range);
+    cbuf->append_long(soft_limit);
     return cbuf;
   }
 

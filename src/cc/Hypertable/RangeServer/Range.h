@@ -45,7 +45,7 @@ namespace Hypertable {
     typedef std::vector<AccessGroup *>  ColumnFamilyVectorT;
 
   public:
-    Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeT *range);
+    Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeT *range, uint64_t soft_limit);
     virtual ~Range();
     virtual int add(const ByteString32T *key, const ByteString32T *value);
     virtual const char *get_split_row();
@@ -137,6 +137,7 @@ namespace Hypertable {
     bool             m_is_root;
     ScannerTimestampController m_scanner_timestamp_controller;
     uint64_t         m_added;
+    uint64_t         m_disk_limit;
 
   };
 

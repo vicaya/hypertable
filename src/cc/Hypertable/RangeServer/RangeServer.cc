@@ -478,7 +478,7 @@ void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t s
 /**
  * LoadRange
  */
-void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, RangeT *range, uint16_t flags) {
+void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, RangeT *range, uint64_t soft_limit, uint16_t flags) {
   DynamicBuffer endRowBuffer(0);
   std::string errMsg;
   int error = Error::OK;
@@ -635,7 +635,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
       }
     }
 
-    rangePtr = new Range(m_master_client_ptr, *table, schemaPtr, range);
+    rangePtr = new Range(m_master_client_ptr, *table, schemaPtr, range, soft_limit);
 
     /**
      * NOTE: The range does not need to be locked in the following replay since

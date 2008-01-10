@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <algorithm>
 #include <string>
 
 extern "C" {
@@ -70,6 +71,8 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &props_ptr, A
     LOG_ERROR("Hypertable.Master.port property not found in config file, exiting...");
     exit(1);
   }
+
+  m_max_range_bytes = props_ptr->getPropertyInt64("Hypertable.RangeServer.Range.MaxBytes", 200000000LL);
 
   /**
    * Create DFS Client connection
@@ -393,7 +396,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
     range.startRow = 0;
     range.endRow = Key::END_ROOT_ROW;
 
-    if ((error = rsc.load_range(alias, table, range, 0)) != Error::OK) {
+    if ((error = rsc.load_range(alias, table, range, m_max_range_bytes, 0)) != Error::OK) {
       std::string addrStr;
       LOG_VA_ERROR("Problem issuing 'load range' command for %s[..%s] at server %s",
 		   table.name, range.endRow, InetAddr::string_format(addrStr, alias));
@@ -437,7 +440,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
     range.startRow = Key::END_ROOT_ROW;
     range.endRow = Key::END_ROW_MARKER;
 
-    if ((error = rsc.load_range(alias, table, range, 0)) != Error::OK) {
+    if ((error = rsc.load_range(alias, table, range, m_max_range_bytes, 0)) != Error::OK) {
       std::string addrStr;
       LOG_VA_ERROR("Problem issuing 'load range' command for %s[..%s] at server %s",
 		   table.name, range.endRow, InetAddr::string_format(addrStr, alias));
@@ -454,7 +457,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
    * NOTE: this call can't be protected by a mutex because it can cause the
    * whole system to wedge under certain situations
    */
-  void Master::report_split(ResponseCallback *cb, TableIdentifierT &table, RangeT &range) {
+  void Master::report_split(ResponseCallback *cb, TableIdentifierT &table, RangeT &range, uint64_t soft_limit) {
     int error;
     struct sockaddr_in addr;
     RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30);
@@ -475,7 +478,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 
     //cb->get_address(addr);
 
-    if ((error = rsc.load_range(addr, table, range, 0)) != Error::OK) {
+    if ((error = rsc.load_range(addr, table, range, soft_limit, 0)) != Error::OK) {
       std::string addrStr;
       LOG_VA_ERROR("Problem issuing 'load range' command for %s[%s:%s] at server %s",
 		   table.name, range.startRow, range.endRow, InetAddr::string_format(addrStr, addr));
@@ -614,6 +617,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 
       TableIdentifierT table;
       RangeT range;
+      uint64_t soft_limit;
       RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30);
 
       table.name = tableName;
@@ -631,9 +635,10 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 	memcpy(&addr, &((*m_server_map_iter).second->addr), sizeof(struct sockaddr_in));
 	LOG_VA_INFO("Assigning first range %s[%s:%s] to %s", table.name, range.startRow, range.endRow, (*m_server_map_iter).first.c_str());
 	m_server_map_iter++;
+	soft_limit = m_max_range_bytes / std::min(16, (int)m_server_map.size());
       }
 
-      if ((error = rsc.load_range(addr, table, range, 0)) != Error::OK) {
+      if ((error = rsc.load_range(addr, table, range, soft_limit, 0)) != Error::OK) {
 	std::string addrStr;
 	LOG_VA_ERROR("Problem issuing 'load range' command for %s[..%s] at server %s",
 		     table.name, range.endRow, InetAddr::string_format(addrStr, addr));

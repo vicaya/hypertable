@@ -48,10 +48,11 @@ namespace Hypertable {
      *
      * @param table table identifier
      * @param range range specification
+     * @param soft_limit soft maximum size of range in bytes (doubles at each split up to a max)
      * @param flags load flags
      * @return protocol message
      */
-    static CommBuf *create_request_load_range(TableIdentifierT &table, RangeT &range, uint16_t flags);
+    static CommBuf *create_request_load_range(TableIdentifierT &table, RangeT &range, uint64_t soft_limit, uint16_t flags);
 
     /** Creates an "update" request message.  The data argument holds a sequence of key/value
      * pairs.  Each key/value pair is encoded as two variable lenght ByteString32T records

@@ -49,8 +49,13 @@ using namespace Hypertable;
 using namespace std;
 
 
-Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeT *range) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_schema(schemaPtr), m_maintenance_in_progress(false), m_latest_timestamp(0), m_temp_timestamp(0), m_split_start_time(0), m_hold_updates(false), m_update_counter(0), m_added(0) {
+Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeT *range, uint64_t soft_limit) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_schema(schemaPtr), m_maintenance_in_progress(false), m_latest_timestamp(0), m_temp_timestamp(0), m_split_start_time(0), m_hold_updates(false), m_update_counter(0), m_added(0) {
   AccessGroup *ag;
+
+  if (soft_limit == 0 || soft_limit > Global::rangeMaxBytes)
+    m_disk_limit = Global::rangeMaxBytes;
+  else
+    m_disk_limit = soft_limit;
 
   Copy(identifier, m_identifier);
 
@@ -313,7 +318,7 @@ void Range::schedule_maintenance() {
     return;
 
   // Need split?
-  if (disk_used > Global::rangeMaxBytes || 
+  if (disk_used > m_disk_limit || 
       (Global::range_metadata_max_bytes && m_identifier.id == 0 && disk_used > Global::range_metadata_max_bytes)) {
     m_maintenance_in_progress = true;
     MaintenanceThread::schedule_maintenance(this);
@@ -335,7 +340,7 @@ void Range::do_maintenance() {
   assert(m_maintenance_in_progress);
   uint64_t disk_used = disk_usage();
 
-  if (disk_used > Global::rangeMaxBytes ||
+  if (disk_used > m_disk_limit ||
       (Global::range_metadata_max_bytes && m_identifier.id == 0 && disk_used > Global::range_metadata_max_bytes)) {
     std::string splitLogDir;
     char md5DigestStr[33];
@@ -547,7 +552,12 @@ void Range::do_maintenance() {
 
       LOG_VA_INFO("Reporting newly split off range %s[%s..%s] to Master", m_identifier.name, range.startRow, range.endRow);
       cout << flush;
-      if ((error = m_master_client_ptr->report_split(m_identifier, range)) != Error::OK) {
+      if (m_disk_limit < Global::rangeMaxBytes) {
+	m_disk_limit *= 2;
+	if (m_disk_limit > Global::rangeMaxBytes)
+	  m_disk_limit = Global::rangeMaxBytes;
+      }
+      if ((error = m_master_client_ptr->report_split(m_identifier, range, m_disk_limit)) != Error::OK) {
 	LOG_VA_ERROR("Problem reporting split (table=%s, start_row=%s, end_row=%s) to master.",
 		     m_identifier.name, range.startRow, range.endRow);
       }

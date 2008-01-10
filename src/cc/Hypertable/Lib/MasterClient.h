@@ -68,8 +68,8 @@ namespace Hypertable {
     int register_server(std::string &location, DispatchHandler *handler);
     int register_server(std::string &location);
 
-    int report_split(TableIdentifierT &table, RangeT &range, DispatchHandler *handler);
-    int report_split(TableIdentifierT &table, RangeT &range);
+    int report_split(TableIdentifierT &table, RangeT &range, uint64_t soft_limit, DispatchHandler *handler);
+    int report_split(TableIdentifierT &table, RangeT &range, uint64_t soft_limit);
 
     int reload_master();
 

@@ -58,7 +58,7 @@ namespace Hypertable {
     void create_table(ResponseCallback *cb, const char *tableName, const char *schemaString);
     void get_schema(ResponseCallbackGetSchema *cb, const char *tableName);
     void register_server(ResponseCallback *cb, const char *location, struct sockaddr_in &addr);
-    void report_split(ResponseCallback *cb, TableIdentifierT &table, RangeT &range);
+    void report_split(ResponseCallback *cb, TableIdentifierT &table, RangeT &range, uint64_t soft_limit);
 
     void server_joined(std::string &location);
     void server_left(std::string &location);
@@ -85,6 +85,7 @@ namespace Hypertable {
     struct LockSequencerT m_master_file_sequencer;
     HandleCallbackPtr m_servers_dir_callback_ptr;
     TablePtr m_metadata_table_ptr;
+    uint64_t m_max_range_bytes;
 
     /** temporary vairables **/
     bool m_initialized;

@@ -77,7 +77,7 @@ int CommandLoadRange::run() {
   range.startRow = startRow.c_str();
   range.endRow = endRow.c_str();
 
-  if ((error = m_range_server_ptr->load_range(m_addr, *table, range, 0)) != Error::OK)
+  if ((error = m_range_server_ptr->load_range(m_addr, *table, range, 200000000LL, 0)) != Error::OK)
     return error;
 
   return Error::OK;
