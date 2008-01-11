@@ -56,6 +56,7 @@ CONTENTS
     make
     make install DESTDIR=<your_install_dir>
 
+
 === HOW TO RUN REGRESSION TESTS ===
 
 1. Make sure software is built and installed according to 'HOW TO BUILD'
@@ -86,7 +87,7 @@ CONTENTS
   *** Must be performed prior to running the regression tests each time **
 
   cd ~/hypertable
-  ./test/start-test-servers.sh local
+  ./bin/start-test-servers.sh local
 
   [ Expected output ... ]
   Successfully started DFSBroker (local)
