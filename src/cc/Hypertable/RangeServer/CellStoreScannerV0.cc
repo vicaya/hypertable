@@ -180,6 +180,14 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPt
 
 
 CellStoreScannerV0::~CellStoreScannerV0() {
+  int error;
+
+  if (m_fd != -1) {
+    if ((error = m_cell_store_v0->m_filesys->close(m_fd, 0)) != Error::OK) {
+      LOG_VA_ERROR("Problem closing descriptor %d file=%s", m_fd, m_cell_store_ptr->get_filename().c_str());
+    }
+  }
+
   if (m_readahead)
     delete [] m_block.base;
   else {

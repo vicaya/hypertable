@@ -122,6 +122,23 @@ namespace Hypertable {
      */
     int create_scanner(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, ScanSpecificationT &scan_spec, ScanBlock &scan_block);
 
+    /** Issues a "destroy scanner" request asynchronously.
+     *
+     * @param addr remote address of RangeServer connection
+     * @param scanner_id Scanner ID returned from a call to create_scanner.
+     * @param handler response handler
+     * @return Error::OK on success or error code on failure
+     */
+    int destroy_scanner(struct sockaddr_in &addr, int scanner_id, DispatchHandler *handler);
+
+    /** Issues a "destroy scanner" request.
+     *
+     * @param addr remote address of RangeServer connection
+     * @param scanner_id scanner ID returned from a call to create_scanner.
+     * @return Error::OK on success or error code on failure
+     */
+    int destroy_scanner(struct sockaddr_in &addr, int scanner_id);
+
     /** Issues a "fetch scanblock" request asynchronously.
      *
      * @param addr remote address of RangeServer connection

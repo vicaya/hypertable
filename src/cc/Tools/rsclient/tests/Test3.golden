@@ -641,6 +641,7 @@ EndRow     = ÿÿ
 1189631332594257 Aaronitic onion:http://sports.espn.go.com/mlb/players/profile?statsId=6305
 1189631333117419 Aaronitic onion:http://toughpigs.com/anthernie00.htm
 1189631332590687 Aaronitic onion:http://www.freebornhall.com/History/ResidenceHalls/
+rsclient> destroy scanner
 rsclient> create scanner Test3[..??] max-versions=2
 TableName  = Test3
 StartRow   = 
@@ -927,4 +928,5 @@ EndRow     = ÿÿ
 1189631332229521 Aaronitic onion:http://www.housing.berkeley.edu/housing/
 1189631332121844 Aaronitic onion:http://www.lsbu.ac.uk/news-php/news.php?newsid=86
 1189631333391097 Aaronitic onion:http://www.nielsenmedia.com/DMAs.html
+rsclient> destroy scanner
 rsclient> quit

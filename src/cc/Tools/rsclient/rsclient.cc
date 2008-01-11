@@ -40,6 +40,7 @@ extern "C" {
 #include "Hyperspace/Session.h"
 
 #include "CommandCreateScanner.h"
+#include "CommandDestroyScanner.h"
 #include "CommandFetchScanblock.h"
 #include "CommandLoadRange.h"
 #include "CommandUpdate.h"
@@ -228,6 +229,7 @@ int main(int argc, char **argv) {
     exit(1);
 
   commands.push_back( new CommandCreateScanner(addr, range_server_ptr, hyperspace_ptr) );  
+  commands.push_back( new CommandDestroyScanner(addr, range_server_ptr) );
   fetchScanblock = new CommandFetchScanblock(addr, range_server_ptr);
   commands.push_back( fetchScanblock );
   commands.push_back( new CommandLoadRange(addr, range_server_ptr, hyperspace_ptr) );

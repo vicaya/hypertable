@@ -24,6 +24,7 @@ set ( TEST_DEPENDENCIES ${DST_DIR}/Test1-data.txt ${DST_DIR}/Test2-data.txt )
 set (rsclient_SRCS
 rsclient.cc
 CommandCreateScanner.cc
+CommandDestroyScanner.cc
 CommandFetchScanblock.cc
 CommandLoadRange.cc
 CommandShutdown.cc

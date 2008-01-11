@@ -1,0 +1,15 @@
+
+RealTime - Microseconds since the Epoch
+LogicalTime - Increasng 64-bit "timestamp" supplied with updates
+
+Log Replay
+ - Range Server loads the CellStores for each range, recording the highest LogicalTime seen
+ - Range Server will drop any phantom (e.g. log replay) updates that have a logical time that is <= highest LogicalTime of the CellStores
+
+
+
+
+CellStores will store two timestamps:
+  1. RealTime of when the compaction happened
+  2. LogicalTime of last update
+

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -121,6 +121,7 @@ bool TableScanner::next(CellT &cell) {
     if (m_scanblock.eos()) {
       if (!strcmp(m_range_info.end_row.c_str(), Key::END_ROW_MARKER) ||
 	  (m_scan_spec.endRow && (strcmp(m_scan_spec.endRow, m_range_info.end_row.c_str()) <= 0))) {
+	m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
 	m_eos = true;
 	return false;
       }
@@ -162,18 +163,21 @@ bool TableScanner::next(CellT &cell) {
     if (m_scan_spec.endRow) {
       if (m_scan_spec.endRowInclusive) {
 	if (strcmp(keyComps.row, m_scan_spec.endRow) > 0) {
+	  m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
 	  m_eos = true;
 	  return false;
 	}
       }
       else {
 	if (strcmp(keyComps.row, m_scan_spec.endRow) >= 0) {
+	  m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
 	  m_eos = true;
 	  return false;
 	}
       }
     }
     else if (!strcmp(keyComps.row, end_row_key)) {
+      m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
       m_eos = true;
       return false;
     }
@@ -183,6 +187,7 @@ bool TableScanner::next(CellT &cell) {
       m_rows_seen++;
       m_cur_row = keyComps.row;
       if (m_scan_spec.rowLimit > 0 && m_rows_seen > m_scan_spec.rowLimit) {
+	m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
 	m_eos = true;
 	return false;
       }
@@ -203,6 +208,7 @@ bool TableScanner::next(CellT &cell) {
 
   LOG_ERROR("No end marker found at end of table.");
 
+  m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
   m_eos = true;
   return false;
 }

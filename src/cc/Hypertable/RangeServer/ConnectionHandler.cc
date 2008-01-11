@@ -34,6 +34,7 @@ extern "C" {
 #include "Hypertable/Lib/RangeServerProtocol.h"
 
 #include "RequestHandlerCompact.h"
+#include "RequestHandlerDestroyScanner.h"
 #include "RequestHandlerDumpStats.h"
 #include "RequestHandlerLoadRange.h"
 #include "RequestHandlerUpdate.h"
@@ -102,6 +103,9 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
 	break;
       case RangeServerProtocol::COMMAND_CREATE_SCANNER:
 	requestHandler = new RequestHandlerCreateScanner(m_comm, m_range_server_ptr.get(), eventPtr);
+	break;
+      case RangeServerProtocol::COMMAND_DESTROY_SCANNER:
+	requestHandler = new RequestHandlerDestroyScanner(m_comm, m_range_server_ptr.get(), eventPtr);
 	break;
       case RangeServerProtocol::COMMAND_FETCH_SCANBLOCK:
 	requestHandler = new RequestHandlerFetchScanblock(m_comm, m_range_server_ptr.get(), eventPtr);

@@ -387,7 +387,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
     id = 0;
 
   if (Global::verbose) {
-    LOG_VA_INFO("Successfully created scanner on table '%s'", table->name);
+    LOG_VA_INFO("Successfully created scanner (id=%d) on table '%s'", id, table->name);
   }
 
   /**
@@ -412,6 +412,13 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
       LOG_VA_ERROR("Problem sending error response - %s", Error::get_text(error));
     }
   }
+}
+
+
+void RangeServer::destroy_scanner(ResponseCallback *cb, uint32_t scannerId) {
+  LOG_VA_INFO("destroying scanner id=%u", scannerId);
+  Global::scannerMap.remove(scannerId);
+  cb->response_ok();
 }
 
 

@@ -33,7 +33,8 @@ namespace Hypertable {
     "compact",
     "status",
     "shutdown",
-    "dump stats"
+    "dump stats",
+    "destroy scanner"
   };
 
   const char *RangeServerProtocol::command_text(short command) {
@@ -68,6 +69,14 @@ namespace Hypertable {
     EncodeTableIdentifier(cbuf->get_data_ptr_address(), table);
     EncodeRange(cbuf->get_data_ptr_address(), range);
     EncodeScanSpecification(cbuf->get_data_ptr_address(), scan_spec);
+    return cbuf;
+  }
+
+  CommBuf *RangeServerProtocol::create_request_destroy_scanner(int scanner_id) {
+    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER, scanner_id);
+    CommBuf *cbuf = new CommBuf(hbuilder, 6);
+    cbuf->append_short(COMMAND_DESTROY_SCANNER);
+    cbuf->append_int(scanner_id);
     return cbuf;
   }
 

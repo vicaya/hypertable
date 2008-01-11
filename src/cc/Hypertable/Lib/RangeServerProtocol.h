@@ -38,7 +38,8 @@ namespace Hypertable {
     static const short COMMAND_STATUS           = 5;
     static const short COMMAND_SHUTDOWN         = 6;
     static const short COMMAND_DUMP_STATS       = 7;
-    static const short COMMAND_MAX              = 8;
+    static const short COMMAND_DESTROY_SCANNER  = 8;
+    static const short COMMAND_MAX              = 9;
 
     static const uint16_t LOAD_RANGE_FLAG_PHANTOM = 0x0001;
 
@@ -74,6 +75,13 @@ namespace Hypertable {
      * @return protocol message
      */
     static CommBuf *create_request_create_scanner(TableIdentifierT &table, RangeT &range, ScanSpecificationT &scan_spec);
+
+    /** Creates a "destroy scanner" request message.
+     *
+     * @param scanner_id scanner ID returned from a "create scanner" request
+     * @return protocol message
+     */
+    static CommBuf *create_request_destroy_scanner(int scanner_id);
 
     /** Creates a "fetch scanblock" request message.
      *

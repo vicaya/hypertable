@@ -101,7 +101,7 @@ void ClientBufferedReaderHandler::handle(EventPtr &eventPtr) {
     DfsBroker::Protocol::ResponseHeaderReadT *readHeader = (DfsBroker::Protocol::ResponseHeaderReadT *)eventPtr->message;
     m_actual_offset += readHeader->amount;
     if (readHeader->amount < (int32_t)m_read_size) {
-      LOG_VA_ERROR("short read %ld < %ld (actual=%ld, end=%ld)", readHeader->amount, (int32_t)m_read_size, m_actual_offset, m_end_offset);
+      //LOG_VA_ERROR("short read %ld < %ld (actual=%ld, end=%ld)", readHeader->amount, (int32_t)m_read_size, m_actual_offset, m_end_offset);
       m_eof = true;
     }
   }

@@ -100,6 +100,27 @@ int RangeServerClient::create_scanner(struct sockaddr_in &addr, TableIdentifierT
 }
 
 
+int RangeServerClient::destroy_scanner(struct sockaddr_in &addr, int scanner_id, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_destroy_scanner(scanner_id) );
+  return send_message(addr, cbufPtr, handler);
+}
+
+
+int RangeServerClient::destroy_scanner(struct sockaddr_in &addr, int scanner_id) {
+  DispatchHandlerSynchronizer syncHandler;
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_destroy_scanner(scanner_id) );
+  int error = send_message(addr, cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.wait_for_reply(eventPtr)) {
+      LOG_VA_ERROR("RangeServer 'fetch scanblock' error : %s", Protocol::string_format_message(eventPtr).c_str());
+      error = (int)Protocol::response_code(eventPtr);
+    }
+  }
+  return error;
+}
+
+
 int RangeServerClient::fetch_scanblock(struct sockaddr_in &addr, int scanner_id, DispatchHandler *handler) {
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_fetch_scanblock(scanner_id) );
   return send_message(addr, cbufPtr, handler);

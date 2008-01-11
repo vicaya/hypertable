@@ -6,7 +6,6 @@ TODO:
 - Implement InMemory access groups
 - Add logic to prevent root METADATA range from splitting
 - Add DropTable command to RangeServer
-- Add destroy_scanner method to RangeServer
 - Memory Throttling
 - Add global (timeout, workers, reactors, etc.) to config file 
 - Make sure the crate table/modify schema cannot overflow a byte on column IDs.
@@ -20,6 +19,7 @@ TODO:
 - Clean up generate_test_data (have it generate timestamps formatted propertly and modify LoadDataSource to consume it).
 
 DONE:
+- Add destroy_scanner method to RangeServer
 - clientTimestamp value does not appear to be used in RangeServer::update
 - Fix timestamp issue.  In RangeServer::update the updateTimestamp is obtained
   from the commit log, but the splitStartTime is obtain from the updates and

@@ -250,12 +250,12 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
       return error;
 
     if ((error = process_metadata_scanblock(scan_block)) != Error::OK) {
-      // TODO: m_range_server.destroy_scanner(addr, scan_block.get_scanner_id(), 0);
+      m_range_server.destroy_scanner(addr, scan_block.get_scanner_id(), 0);
       return error;
     }
 
     if (!scan_block.eos()) {
-      // TODO: m_range_server.destroy_scanner(addr, scan_block.get_scanner_id(), 0);
+      m_range_server.destroy_scanner(addr, scan_block.get_scanner_id(), 0);
     }
 
     if (!m_cache.lookup(0, meta_key_ptr, range_loc_info_p, inclusive)) {
@@ -297,12 +297,12 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
     return error;
 
   if ((error = process_metadata_scanblock(scan_block)) != Error::OK) {
-    // TODO: m_range_server.destroy_scanner(addr, scan_block.get_scanner_id(), 0);
+    m_range_server.destroy_scanner(addr, scan_block.get_scanner_id(), 0);
     return error;
   }
 
   if (!scan_block.eos()) {
-    // TODO: m_range_server.destroy_scanner(addr, scan_block.get_scanner_id(), 0);
+    m_range_server.destroy_scanner(addr, scan_block.get_scanner_id(), 0);
   }
 
   if (row_key == 0)
