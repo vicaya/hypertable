@@ -61,6 +61,8 @@ VALGRIND_MASTER=
 START_RANGESERVER="true"
 START_MASTER="true"
 
+CONFIG_OPT=
+
 while [ "$1" != "${1##[-+]}" ]; do
     case $1 in
 	'')    
@@ -72,6 +74,11 @@ while [ "$1" != "${1##[-+]}" ]; do
 	    ;;
 	--no-range-server)
 	    START_RANGESERVER="false"
+	    shift
+	    ;;
+	--config)
+	    shift
+	    CONFIG_OPT="--config=$1"
 	    shift
 	    ;;
 	*)     
@@ -98,12 +105,12 @@ $HYPERTABLE_HOME/bin/serverup dfsbroker
 if [ $? != 0 ] ; then
 
   if [ "$1" == "hadoop" ] ; then
-      nohup $HYPERTABLE_HOME/bin/jrun --pidfile $PIDFILE org.hypertable.DfsBroker.hadoop.main --verbose 1>& $LOGFILE &
+      nohup $HYPERTABLE_HOME/bin/jrun --pidfile $PIDFILE org.hypertable.DfsBroker.hadoop.main $CONFIG_OPT --verbose 1>& $LOGFILE &
       START_COMMITLOG_BROKER=yes
   elif [ "$1" == "kosmos" ] ; then
-      $HYPERTABLE_HOME/bin/kosmosBroker --pidfile=$PIDFILE --verbose 1>& $LOGFILE &   
+      nohup $HYPERTABLE_HOME/bin/kosmosBroker $CONFIG_OPT --pidfile=$PIDFILE --verbose 1>& $LOGFILE &   
   elif [ "$1" == "local" ] ; then
-      $HYPERTABLE_HOME/bin/localBroker --pidfile=$PIDFILE --verbose 1>& $LOGFILE &    
+      nohup $HYPERTABLE_HOME/bin/localBroker $CONFIG_OPT --pidfile=$PIDFILE --verbose 1>& $LOGFILE &    
   else
       echo $"$0: Usage: start-range-server.sh [local|hadoop|kosmos]"      
       exit 1
@@ -130,7 +137,7 @@ fi
 #
 $HYPERTABLE_HOME/bin/serverup --host=localhost --port=38031 dfsbroker
 if [ "$START_COMMITLOG_BROKER" == "yes" ] ; then
-      $HYPERTABLE_HOME/bin/localBroker --listen-port=38031 --pidfile=$HYPERTABLE_HOME/run/CommitLog.DfsBroker.$1.pid --verbose 1>& $HYPERTABLE_HOME/log/CommitLog.DfsBroker.$1.log &
+      nohup $HYPERTABLE_HOME/bin/localBroker $CONFIG_OPT --listen-port=38031 --pidfile=$HYPERTABLE_HOME/run/CommitLog.DfsBroker.$1.pid --verbose 1>& $HYPERTABLE_HOME/log/CommitLog.DfsBroker.$1.log &
       RANGESERVER_OPTS="--log-broker=localhost:38031"
 
   sleep 1
@@ -160,7 +167,7 @@ if [ "$START_RANGESERVER" == "true" ] ; then
 
     $HYPERTABLE_HOME/bin/serverup rangeserver
     if [ $? != 0 ] ; then
-	$VALGRIND_RANGESERVER  $HYPERTABLE_HOME/bin/Hypertable.RangeServer $RANGESERVER_OPTS --pidfile=$PIDFILE --verbose 1>& $LOGFILE &
+	nohup $VALGRIND_RANGESERVER $HYPERTABLE_HOME/bin/Hypertable.RangeServer $CONFIG_OPT $RANGESERVER_OPTS --pidfile=$PIDFILE --verbose 1>& $LOGFILE &
 	sleep 1
 	$HYPERTABLE_HOME/bin/serverup rangeserver
 	if [ $? != 0 ] ; then
@@ -179,29 +186,3 @@ if [ "$START_RANGESERVER" == "true" ] ; then
 else
     exit 0
 fi
-
-#
-# If the tables have not been created, then create them
-#
-sleep 1
-for table in Test1 Test2 Test3 ; do
-    $HYPERTABLE_HOME/bin/hyperspace --eval "exists /hypertable/tables/$table" >& /dev/null
-    if [ $? != 0 ] ; then
-	$HYPERTABLE_HOME/bin/hypertable --batch < $HYPERTABLE_HOME/test/$table-create.hql >& /tmp/foo.$$
-	if [ $? != 0 ] ; then
-	    echo "Problem creating table $table, killing servers...";
-	    for pidfile in $HYPERTABLE_HOME/run/*.pid ; do
-		kill -9 `cat $pidfile`
-		rm $pidfile
-	    done
-	    cat /tmp/foo.$$
-	    rm -f /tmp/foo.$$
-	    exit 1
-	else
-	    echo "Successfully created table $table."
-	fi
-    fi
-done
-rm -f /tmp/foo.$$
-
-

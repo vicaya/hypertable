@@ -44,6 +44,14 @@ popd >& /dev/null
 
 
 #
+# Clear state
+#
+rm -rf $HYPERTABLE_HOME/log/hypertable/*
+$HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable"
+rm -rf $HYPERTABLE_HOME/hyperspace/*
+
+
+#
 # Stop servers
 #
 for pidfile in $HYPERTABLE_HOME/run/*.pid ; do
