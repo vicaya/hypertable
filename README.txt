@@ -20,7 +20,7 @@ CONTENTS
     - expat (http://sourceforge.net/projects/expat)
     - lzo-2.02 (http://www.oberhumer.com/opensource/lzo/)
 
-    HIGHLY RECOMMENDED (but non required):
+    HIGHLY RECOMMENDED (but not required):
     - tcmalloc (http://code.google.com/p/google-perftools/)
 
     NOTE: If tcmalloc is available on your system, install it.  Hypertable is
@@ -77,7 +77,7 @@ CONTENTS
   *** Must be performed prior to running the regression tests each time **
 
   cd ~/hypertable
-  ./test/stop-servers.sh
+  ./bin/stop-servers.sh
 
 4. Start the servers.  The following example illustrates the use of the 'local'
    DFS broker, but can be changed to use any DFS broker (e.g. hadoop, kosmos, etc.)
@@ -86,7 +86,7 @@ CONTENTS
   *** Must be performed prior to running the regression tests each time **
 
   cd ~/hypertable
-  ./test/start-servers.sh local
+  ./test/start-test-servers.sh local
 
   [ Expected output ... ]
   Successfully started DFSBroker (local)

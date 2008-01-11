@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+# Copyright (C) 2008 Doug Judd (Zvents, Inc.)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -93,15 +93,15 @@ install (FILES build/hypertable.jar DESTINATION java/lib)
 install (FILES bin/jrun 
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 	 DESTINATION bin)
-install (FILES test/start-servers.sh
+install (FILES test/start-test-servers.sh
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 	 DESTINATION test)
-install (FILES test/start-range-server.sh
+install (FILES bin/start-range-server.sh
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-	 DESTINATION test)
-install (FILES test/stop-servers.sh
+	 DESTINATION bin)
+install (FILES bin/stop-servers.sh
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-	 DESTINATION test)
+	 DESTINATION bin)
 install (FILES test/Test1-create.hql DESTINATION test)
 install (FILES test/Test2-create.hql DESTINATION test)
 install (FILES test/Test3-create.hql DESTINATION test)
