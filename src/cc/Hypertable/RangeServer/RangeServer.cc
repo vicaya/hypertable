@@ -699,7 +699,6 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
   int error = Error::OK;
   TableInfoPtr tableInfoPtr;
   uint64_t update_timestamp = 0;
-  uint64_t clientTimestamp = 0;
   const char *row;
   std::string split_row;
   vector<UpdateRecT> goMods;
@@ -844,7 +843,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 	ptr += splitMods[i].len;
       }
 
-      if ((error = splitLogPtr->write(table->name, base, ptr-base, clientTimestamp)) != Error::OK) {
+      if ((error = splitLogPtr->write(table->name, base, ptr-base, update_timestamp)) != Error::OK) {
 	errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to split log";
 	goto abort;
       }
@@ -894,7 +893,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
       memcpy(ptr, goMods[i].base, goMods[i].len);
       ptr += goMods[i].len;
     }
-    if ((error = Global::log->write(table->name, base, ptr-base, clientTimestamp)) != Error::OK) {
+    if ((error = Global::log->write(table->name, base, ptr-base, update_timestamp)) != Error::OK) {
       errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to commit log";
       goto abort;
     }

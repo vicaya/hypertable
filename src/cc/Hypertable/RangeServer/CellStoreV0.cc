@@ -135,13 +135,13 @@ int CellStoreV0::create(const char *fname, uint32_t blocksize, std::string compr
     m_compressor_args = "";
   }
 
-  if (compressor_type == "" || compressor_type == "zlib") {
-    m_trailer.compression_type = BlockCompressionCodec::ZLIB;
-    m_compressor = new BlockCompressionCodecZlib(m_compressor_args);
-  }
-  else if (compressor_type == "quicklz") {
+  if (compressor_type == "" || compressor_type == "quicklz") {
     m_trailer.compression_type = BlockCompressionCodec::QUICKLZ;
     m_compressor = new BlockCompressionCodecQuicklz(m_compressor_args);
+  }
+  else if (compressor_type == "zlib") {
+    m_trailer.compression_type = BlockCompressionCodec::ZLIB;
+    m_compressor = new BlockCompressionCodecZlib(m_compressor_args);
   }
   else if (compressor_type == "lzo") {
     m_trailer.compression_type = BlockCompressionCodec::LZO;
