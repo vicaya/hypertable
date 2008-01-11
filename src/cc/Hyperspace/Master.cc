@@ -424,6 +424,7 @@ void Master::open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
 
   if (m_verbose) {
     LOG_VA_INFO("open(sessionId=%lld, fname=%s, flags=0x%x, eventMask=0x%x)", sessionId, name, flags, eventMask);
+    cout << flush;
   }
 
   assert(name[0] == '/');

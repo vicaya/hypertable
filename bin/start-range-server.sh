@@ -93,6 +93,10 @@ if [ "$#" -eq 0 ]; then
 fi
 
 START_COMMITLOG_BROKER=no
+if [ "$1" == "hadoop" ] ; then
+      START_COMMITLOG_BROKER=yes
+fi
+
 RANGESERVER_OPTS=
 
 #
@@ -106,7 +110,6 @@ if [ $? != 0 ] ; then
 
   if [ "$1" == "hadoop" ] ; then
       nohup $HYPERTABLE_HOME/bin/jrun --pidfile $PIDFILE org.hypertable.DfsBroker.hadoop.main $CONFIG_OPT --verbose 1>& $LOGFILE &
-      START_COMMITLOG_BROKER=yes
   elif [ "$1" == "kosmos" ] ; then
       nohup $HYPERTABLE_HOME/bin/kosmosBroker $CONFIG_OPT --pidfile=$PIDFILE --verbose 1>& $LOGFILE &   
   elif [ "$1" == "local" ] ; then
