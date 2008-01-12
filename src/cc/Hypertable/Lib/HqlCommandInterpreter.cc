@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <cassert>
 #include <cstdio>
 #include <cstring>
 
@@ -42,7 +43,7 @@ extern "C" {
 using namespace Hypertable;
 using namespace Hypertable::HqlParser;
 
-HqlCommandInterpreter::HqlCommandInterpreter(Client *client) : m_client(client) {
+HqlCommandInterpreter::HqlCommandInterpreter(Client *client) : m_client(client), m_timestamp_output_format(TIMESTAMP_FORMAT_DEFAULT) {
   return;
 }
 
@@ -139,10 +140,15 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
 	throw Exception(error, std::string("Problem creating scanner on table '") + state.table_name + "'");
 
       while (scanner_ptr->next(cell)) {
-	nsec = cell.timestamp % 1000000000LL;
-	unix_time = cell.timestamp / 1000000000LL;
-	localtime_r(&unix_time, &tms);
-	printf("%d-%02d-%02d %02d:%02d:%02d.%09d", tms.tm_year+1900, tms.tm_mon+1, tms.tm_mday, tms.tm_hour, tms.tm_min, tms.tm_sec, nsec);
+	if (m_timestamp_output_format == TIMESTAMP_FORMAT_USECS) {
+	  printf("%llu", (long long unsigned int)cell.timestamp);
+	}
+	else {
+	  nsec = cell.timestamp % 1000000000LL;
+	  unix_time = cell.timestamp / 1000000000LL;
+	  localtime_r(&unix_time, &tms);
+	  printf("%d-%02d-%02d %02d:%02d:%02d.%09d", tms.tm_year+1900, tms.tm_mon+1, tms.tm_mday, tms.tm_hour, tms.tm_min, tms.tm_sec, nsec);
+	}
 	printf("\t%s\t%s", cell.row_key, cell.column_family);
 	if (*cell.column_qualifier)
 	  printf(":%s", cell.column_qualifier);
@@ -318,4 +324,15 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
   else
     throw Exception(Error::HQL_PARSE_ERROR, std::string("parse error at: ") + info.stop);
 
+}
+
+
+void HqlCommandInterpreter::set_timestamp_output_format(std::string format) {
+  if (format == "default")
+    m_timestamp_output_format = TIMESTAMP_FORMAT_DEFAULT;
+  else if (format == "usecs")
+    m_timestamp_output_format = TIMESTAMP_FORMAT_USECS;
+  else {
+    assert(!"invalid timestamp format");
+  }
 }

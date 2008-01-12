@@ -85,10 +85,17 @@ namespace {
     "",
     "OPTIONS:",
     "",
-    "  -B, --batch    Disable interactive behavior.",
-    "  --config=<f>   Read configuration from <f>.  The default config",
-    "     file is \"conf/hypertable.cfg\" relative to the toplevel install",
+    "  -B, --batch",
+    "      Disable interactive behavior.",
+    "",
+    "  --config=<f>",
+    "     Read configuration from <f>.  The default config file is",
+    "     \"conf/hypertable.cfg\" relative to the toplevel install",
     "     directory",
+    "",
+    "  --timestamp-format=<f>",
+    "     Use <f> output format for the timestamp.  Currently",
+    "     the only formats are 'default' and 'usecs'",
     "",
     "  --help  Display this help text and exit.",
     "",
@@ -124,6 +131,7 @@ int main(int argc, char **argv) {
   Client *hypertable;
   queue<string> command_queue;
   std::string command;
+  std::string timestamp_format;
   const char *base, *ptr;
   HqlCommandInterpreter *interp;
   std::string history_file = (std::string)getenv("HOME") + "/.hypertable_history";
@@ -136,6 +144,10 @@ int main(int argc, char **argv) {
       g_batch_mode = true;
     else if (!strncmp(argv[i], "--config=", 9))
       configFile = &argv[i][9];
+    else if (!strncmp(argv[i], "--timestamp-format=", 19)) {
+      timestamp_format = &argv[i][19];
+      boost::trim_if(timestamp_format, boost::is_any_of("'\""));      
+    }
     else
       Usage::dump_and_exit(usage);
   }
@@ -146,6 +158,9 @@ int main(int argc, char **argv) {
   hypertable = new Client(configFile);
 
   interp = hypertable->create_hql_interpreter();
+
+  if (timestamp_format != "")
+    interp->set_timestamp_output_format(timestamp_format);
 
   if (!g_batch_mode) {
 

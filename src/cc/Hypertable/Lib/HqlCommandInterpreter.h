@@ -33,8 +33,13 @@ namespace Hypertable {
 
     void execute_line(std::string &line);
 
+    void set_timestamp_output_format(std::string format);
+
   private:
     Client *m_client;
+    int m_timestamp_output_format;
+
+    enum { TIMESTAMP_FORMAT_DEFAULT, TIMESTAMP_FORMAT_USECS };
 
   };
   typedef boost::intrusive_ptr<HqlCommandInterpreter> HqlCommandInterpreterPtr;
