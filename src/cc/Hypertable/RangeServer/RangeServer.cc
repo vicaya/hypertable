@@ -68,6 +68,12 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
   Global::localityGroupMergeFiles = props_ptr->getPropertyInt("Hypertable.RangeServer.AccessGroup.MergeFiles", 4);
   Global::localityGroupMaxMemory  = props_ptr->getPropertyInt("Hypertable.RangeServer.AccessGroup.MaxMemory", 4000000);
   port                            = props_ptr->getPropertyInt("Hypertable.RangeServer.port", DEFAULT_PORT);
+  m_scanner_ttl                   = (time_t)props_ptr->getPropertyInt("Hypertable.RangeServer.Scanner.ttl", 120);
+
+  if (m_scanner_ttl < (time_t)10) {
+    LOG_VA_WARN("Value %u for Hypertable.RangeServer.Scanner.ttl is too small, setting to 10", (unsigned int)m_scanner_ttl);
+    m_scanner_ttl = (time_t)10;
+  }
 
   uint64_t blockCacheMemory = props_ptr->getPropertyInt64("Hypertable.RangeServer.BlockCache.MaxMemory", 200000000LL);
   Global::blockCache = new FileBlockCache(blockCacheMemory);
@@ -360,7 +366,10 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
 
   schemaPtr = tableInfoPtr->get_schema();
 
-  scan_timestamp = rangePtr->get_timestamp() + 1;
+  scan_timestamp = rangePtr->get_timestamp();
+
+  if (scan_timestamp != 0)
+    scan_timestamp++;
 
   scanContextPtr = new ScanContext(scan_timestamp, scan_spec, range, schemaPtr);
   if (scanContextPtr->error != Error::OK) {
@@ -1041,4 +1050,18 @@ int RangeServer::verify_schema(TableInfoPtr &tableInfoPtr, int generation, std::
   }
   
   return Error::OK;
+}
+
+
+
+void RangeServer::do_maintenance() {
+  Global::scannerMap.purge_expired(m_scanner_ttl);
+}
+
+
+
+/**
+ */
+uint64_t RangeServer::get_timer_interval() {
+  return 60000;
 }

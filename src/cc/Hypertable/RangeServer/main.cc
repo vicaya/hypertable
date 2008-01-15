@@ -44,6 +44,7 @@ extern "C" {
 #include "Global.h"
 #include "HyperspaceSessionHandler.h"
 #include "RangeServer.h"
+#include "TimerHandler.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -83,6 +84,7 @@ int main(int argc, char **argv) {
     char *logBroker = 0;
     PropertiesPtr props_ptr;
     int workerCount;
+    TimerHandlerPtr timer_handler_ptr;
 
     System::initialize(argv[0]);
     Global::verbose = false;
@@ -164,6 +166,9 @@ int main(int argc, char **argv) {
       filestr << getpid() << endl;
       filestr.close();
     }
+
+    // install maintenance timer
+    timer_handler_ptr = new TimerHandler(comm_ptr.get(), range_server_ptr.get());
 
     app_queue_ptr->join();
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -57,7 +57,10 @@ namespace Hypertable {
     void load_range(ResponseCallback *cb, TableIdentifierT *table, RangeT *range, uint64_t soft_limit, uint16_t flags);
     void update(ResponseCallbackUpdate *cb, TableIdentifierT *table, BufferT &buffer);
     void dump_stats(ResponseCallback *cb);
+    void do_maintenance();
 
+    uint64_t get_timer_interval();
+    
     ApplicationQueuePtr get_application_queue_ptr() { return m_app_queue_ptr; }
 
     std::string &get_location() { return m_location; }
@@ -86,6 +89,7 @@ namespace Hypertable {
     ConnectionHandler     *m_master_connection_handler;
     MasterClientPtr        m_master_client_ptr;
     Hyperspace::SessionPtr m_hyperspace_ptr;
+    time_t                 m_scanner_ttl;
   };
   typedef boost::intrusive_ptr<RangeServer> RangeServerPtr;
   

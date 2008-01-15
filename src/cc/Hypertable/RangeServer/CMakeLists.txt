@@ -58,6 +58,7 @@ ScanContext.cc
 ScannerMap.cc
 ScannerTimestampController.cc
 TableInfo.cc
+TimerHandler.cc
 main.cc
 )
 

@@ -24,6 +24,10 @@
 
 #include <ext/hash_map>
 
+extern "C" {
+#include <time.h>
+}
+
 #include "Common/atomic.h"
 
 #include "CellListScanner.h"
@@ -38,14 +42,19 @@ namespace Hypertable {
     uint32_t put(CellListScannerPtr &scannerPtr, RangePtr &rangePtr);
     bool get(uint32_t id, CellListScannerPtr &scannerPtr, RangePtr &rangePtr);
     bool remove(uint32_t id);
+    void purge_expired(time_t expire_time);
 
   private:
+
+    time_t get_timestamp();
+
     static atomic_t ms_next_id;
 
     boost::mutex   m_mutex;
     typedef struct {
       CellListScannerPtr scannerPtr;
       RangePtr rangePtr;
+      time_t last_access;
     } ScanInfoT;
     typedef __gnu_cxx::hash_map<uint32_t, ScanInfoT> CellListScannerMapT;
 
