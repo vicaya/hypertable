@@ -42,7 +42,7 @@ namespace Hypertable {
 
     AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range);
     virtual ~AccessGroup();
-    virtual int add(const ByteString32T *key, const ByteString32T *value);
+    virtual int add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp);
 
     virtual const char *get_split_row();
     virtual void get_split_rows(std::vector<std::string> &split_rows, bool include_cache);
@@ -60,6 +60,10 @@ namespace Hypertable {
     void run_compaction(Timestamp timestamp, bool major);
 
     void get_compaction_timestamp(Timestamp &timestamp);
+    uint64_t get_oldest_cached_timestamp() {
+      boost::mutex::scoped_lock lock(m_mutex);
+      return m_oldest_cached_timestamp;
+    }
 
     const char *get_name() { return m_name.c_str(); }
 
@@ -85,6 +89,7 @@ namespace Hypertable {
     std::string          m_compressor;
     bool                 m_is_root;
     Timestamp            m_compaction_timestamp;
+    uint64_t             m_oldest_cached_timestamp;
   };
 
 }

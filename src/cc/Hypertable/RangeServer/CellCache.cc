@@ -78,10 +78,12 @@ CellCache::~CellCache() {
 /**
  * 
  */
-int CellCache::add(const ByteString32T *key, const ByteString32T *value) {
+int CellCache::add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp) {
   size_t kv_len = key->len + (2*sizeof(int32_t));
   ByteString32T *newKey;
   ByteString32T *newValue;
+
+  (void)real_timestamp;
 
   if (value) {
     kv_len += value->len;

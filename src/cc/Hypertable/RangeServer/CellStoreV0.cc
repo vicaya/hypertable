@@ -158,10 +158,12 @@ int CellStoreV0::create(const char *fname, uint32_t blocksize, std::string compr
 }
 
 
-int CellStoreV0::add(const ByteString32T *key, const ByteString32T *value) {
+int CellStoreV0::add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp) {
   int error;
   EventPtr eventPtr;
   DynamicBuffer zBuffer(0);
+
+  (void)real_timestamp;
 
   if (m_buffer.fill() > m_trailer.blocksize) {
     BlockCompressionHeaderCellStore header(DATA_BLOCK_MAGIC);

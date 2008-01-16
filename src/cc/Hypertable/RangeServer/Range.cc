@@ -49,13 +49,16 @@ using namespace Hypertable;
 using namespace std;
 
 
-Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeT *range, uint64_t soft_limit) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_schema(schemaPtr), m_maintenance_in_progress(false), m_last_logical_timestamp(0), m_logical_split_start_time(0), m_hold_updates(false), m_update_counter(0), m_added(0) {
+Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeT *range, uint64_t soft_limit) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_schema(schemaPtr), m_maintenance_in_progress(false), m_last_logical_timestamp(0), m_hold_updates(false), m_update_counter(0), m_added(0) {
   AccessGroup *ag;
 
   if (soft_limit == 0 || soft_limit > Global::rangeMaxBytes)
     m_disk_limit = Global::rangeMaxBytes;
   else
     m_disk_limit = soft_limit;
+
+  m_split_timestamp.logical = 0;
+  m_split_timestamp.real = 0;
 
   Copy(identifier, m_identifier);
 
@@ -188,7 +191,7 @@ bool Range::extract_csid_from_path(std::string &path, uint32_t *csidp) {
 /**
  * TODO: Make this more robust
  */
-int Range::add(const ByteString32T *key, const ByteString32T *value) {
+int Range::add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp) {
   Key keyComps;
 
   if (!keyComps.load(key)) {
@@ -206,11 +209,11 @@ int Range::add(const ByteString32T *key, const ByteString32T *value) {
 
   if (keyComps.flag == FLAG_DELETE_ROW) {
     for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++) {
-      (*iter).second->add(key, value);
+      (*iter).second->add(key, value, real_timestamp);
     }
   }
   else {
-    m_column_family_vector[keyComps.column_family_code]->add(key, value);
+    m_column_family_vector[keyComps.column_family_code]->add(key, value, real_timestamp);
     m_added++;
   }
   return 0;
@@ -395,9 +398,11 @@ void Range::do_maintenance() {
 
       {
 	boost::mutex::scoped_lock lock(m_mutex);
-	m_logical_split_start_time = m_scanner_timestamp_controller.get_oldest_update_timestamp();
-	if (m_logical_split_start_time == 0 || m_timestamp.logical < m_logical_split_start_time)
-	  m_logical_split_start_time = m_timestamp.logical;
+	m_split_timestamp.logical = m_scanner_timestamp_controller.get_oldest_update_timestamp();
+	if (m_split_timestamp.logical == 0 || m_timestamp.logical < m_split_timestamp.logical)
+	  m_split_timestamp = m_timestamp;
+	else
+	  m_split_timestamp.real = Global::log->get_timestamp();
 	old_start_row = m_start_row;
       }
 
@@ -413,9 +418,8 @@ void Range::do_maintenance() {
      * Perform major compactions
      */
     {
-      Timestamp split_timestamp(m_logical_split_start_time, Global::log->get_timestamp());
       for (size_t i=0; i<m_access_group_vector.size(); i++)
-	m_access_group_vector[i]->run_compaction(split_timestamp, true);
+	m_access_group_vector[i]->run_compaction(m_split_timestamp, true);
     }
 
 
@@ -508,7 +512,7 @@ void Range::do_maintenance() {
       {
 	boost::mutex::scoped_lock lock(m_mutex);
 	m_start_row = m_split_row;
-	m_logical_split_start_time = 0;
+	m_split_timestamp.clear();
 	m_split_row = "";
 	// Shrink this range's access groups
 	for (size_t i=0; i<m_access_group_vector.size(); i++)
@@ -638,7 +642,7 @@ void Range::unlock(uint64_t real_timestamp) {
 
 /**
  */
-int Range::replay_split_log(string &log_dir) {
+int Range::replay_split_log(string &log_dir, uint64_t real_timestamp) {
   int error;
   CommitLogReaderPtr commit_log_reader_ptr = new CommitLogReader(Global::dfs, log_dir);
   BlockCompressionHeaderCommitLog header;
@@ -665,7 +669,7 @@ int Range::replay_split_log(string &log_dir) {
       ptr += Length(key);
       value = (ByteString32T *)ptr;
       ptr += Length(value);
-      add(key, value);
+      add(key, value, real_timestamp);
       count++;
     }
     nblocks++;

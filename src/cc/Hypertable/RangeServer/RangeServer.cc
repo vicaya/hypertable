@@ -664,7 +664,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
       uint64_t timestamp = Global::log->get_timestamp();
       if ((error = Global::log->link_log(table->name, split_log_dir.c_str(), timestamp)) != Error::OK)
 	throw Exception(error, (std::string)"Unable to link external log '" + split_log_dir + "' into commit log");
-      if ((error = rangePtr->replay_split_log(split_log_dir)) != Error::OK)
+      if ((error = rangePtr->replay_split_log(split_log_dir, timestamp)) != Error::OK)
 	throw Exception(error, (std::string)"Problem replaying split log '" + split_log_dir + "'");
     }
 
@@ -873,14 +873,14 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     for (size_t i=goBase; i<goMods.size(); i++) {
       ByteString32T *key = (ByteString32T *)goMods[i].base;
       ByteString32T *value = (ByteString32T *)(goMods[i].base + Length(key));
-      min_ts_rec.range_ptr->add(key, value);
+      min_ts_rec.range_ptr->add(key, value, update_timestamp);
     }
     goBase = goMods.size();
     /** Apply the SPLIT mods **/
     for (size_t i=0; i<splitMods.size(); i++) {
       ByteString32T *key = (ByteString32T *)splitMods[i].base;
       ByteString32T *value = (ByteString32T *)(splitMods[i].base + Length(key));
-      min_ts_rec.range_ptr->add(key, value);
+      min_ts_rec.range_ptr->add(key, value, update_timestamp);
     }
     min_ts_rec.range_ptr->unlock(update_timestamp);
 

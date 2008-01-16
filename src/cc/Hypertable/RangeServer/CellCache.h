@@ -49,9 +49,10 @@ namespace Hypertable {
      *
      * @param key key to be inserted
      * @param value value to inserted
+     * @param real_timestamp real commit log timestamp
      * @return zero
      */
-    virtual int add(const ByteString32T *key, const ByteString32T *value);
+    virtual int add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp);
 
     virtual const char *get_split_row();
 
@@ -67,6 +68,8 @@ namespace Hypertable {
 
     void lock()   { boost::detail::thread::lock_ops<boost::mutex>::lock(m_mutex); }
     void unlock() { boost::detail::thread::lock_ops<boost::mutex>::unlock(m_mutex); }
+
+    size_t size() { return m_cell_map.size(); }
 
     /**
      * Makes a copy of this CellCache, but only includes the key/value

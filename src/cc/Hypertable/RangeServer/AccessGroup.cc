@@ -40,7 +40,7 @@ namespace {
 }
 
 
-AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range) : CellList(), m_mutex(), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE), m_compression_ratio(1.0), m_is_root(false) {
+AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range) : CellList(), m_mutex(), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE), m_compression_ratio(1.0), m_is_root(false), m_oldest_cached_timestamp(0) {
   m_table_name = table_identifier.name;
   m_start_row = range->startRow;
   m_end_row = range->endRow;
@@ -69,8 +69,11 @@ AccessGroup::~AccessGroup() {
  * Also, at the end of compaction processing, when m_cell_cache_ptr gets reset to a new value,
  * the CellCache should be locked as well.
  */
-int AccessGroup::add(const ByteString32T *key, const ByteString32T *value) {
-  return m_cell_cache_ptr->add(key, value);
+int AccessGroup::add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp) {
+  // assumes timestamps are coming in order
+  if (m_oldest_cached_timestamp == 0)
+    m_oldest_cached_timestamp = real_timestamp;
+  return m_cell_cache_ptr->add(key, value, real_timestamp);
 }
 
 
@@ -233,7 +236,7 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
     }
 
     if (keyComps.timestamp <= timestamp.logical)
-      cellStorePtr->add(key, value);
+      cellStorePtr->add(key, value, timestamp.real);
 
     scannerPtr->forward();
   }
@@ -254,6 +257,8 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
     tmp_cell_cache_ptr = m_cell_cache_ptr;
     tmp_cell_cache_ptr->lock();
     m_cell_cache_ptr = m_cell_cache_ptr->slice_copy(timestamp.logical);
+    // If inserts have arrived since we started splitting, then set the oldest cached timestamp value, otherwise clear it
+    m_oldest_cached_timestamp = (m_cell_cache_ptr->size() > 0) ? timestamp.real + 1 : 0;
     tmp_cell_cache_ptr->unlock();    
 
     /** Drop the compacted tables from the table vector **/
@@ -275,6 +280,7 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
     m_compression_ratio /= m_stores.size();
 
     m_compaction_timestamp = timestamp;
+
   }
 
   try {
@@ -324,7 +330,7 @@ int AccessGroup::shrink(std::string &new_start_row) {
    */
   while (cell_cache_scanner_ptr->get(&key, &value)) {
     if (strcmp((const char *)key->data, m_start_row.c_str()) > 0)
-      add(key, value);
+      add(key, value, 0);
     cell_cache_scanner_ptr->forward();
   }
 

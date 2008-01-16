@@ -48,7 +48,7 @@ namespace Hypertable {
   public:
     Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeT *range, uint64_t soft_limit);
     virtual ~Range();
-    virtual int add(const ByteString32T *key, const ByteString32T *value);
+    virtual int add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp);
     virtual const char *get_split_row();
     void lock();
     void unlock(uint64_t real_timestamp);
@@ -69,7 +69,7 @@ namespace Hypertable {
 
     uint64_t get_timestamp();
 
-    int replay_split_log(string &logDir);
+    int replay_split_log(string &logDir, uint64_t real_timestamp);
 
     void schedule_maintenance();
     void do_maintenance();
@@ -87,8 +87,8 @@ namespace Hypertable {
 
     bool get_split_info(std::string &split_row, CommitLogPtr &splitLogPtr, uint64_t *splitStartTime) {
       boost::mutex::scoped_lock lock(m_mutex);
-      *splitStartTime = m_logical_split_start_time;
-      if (m_logical_split_start_time == 0) {
+      *splitStartTime = m_split_timestamp.logical;
+      if (m_split_timestamp.logical == 0) {
 	split_row = "";
 	return false;
       }
@@ -125,7 +125,7 @@ namespace Hypertable {
 
     Timestamp        m_timestamp;
     uint64_t         m_last_logical_timestamp;
-    uint64_t         m_logical_split_start_time;
+    Timestamp        m_split_timestamp;
     std::string      m_split_row;
     CommitLogPtr     m_split_log_ptr;
 

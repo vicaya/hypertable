@@ -38,7 +38,7 @@ namespace Hypertable {
 
     virtual ~CellStore() { return; }
     
-    virtual int add(const ByteString32T *key, const ByteString32T *value) = 0;
+    virtual int add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp) = 0;
 
     virtual const char *get_split_row() = 0;
 
