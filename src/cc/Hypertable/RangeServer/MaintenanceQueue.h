@@ -23,7 +23,7 @@
 
 #include <cassert>
 
-#include "ScheduledMaintenance.h"
+#include "MaintenanceTask.h"
 
 namespace Hypertable {
 
@@ -31,13 +31,13 @@ namespace Hypertable {
    */
   class MaintenanceQueue : public ReferenceCount {
 
-    struct ltScheduledMaintenance {
-      bool operator()(const ScheduledMaintenance *sm1, const ScheduledMaintenance *sm2) const {
+    struct ltMaintenanceTask {
+      bool operator()(const MaintenanceTask *sm1, const MaintenanceTask *sm2) const {
 	return xtime_cmp(sm1->start_time, sm2->start_time) >= 0;
       }
     };
 
-    typedef std::priority_queue<ScheduledMaintenance *, std::vector<ScheduledMaintenance *>, ltScheduledMaintenance> MaintenanceQueueT;
+    typedef std::priority_queue<MaintenanceTask *, std::vector<MaintenanceTask *>, ltMaintenanceTask> MaintenanceQueueT;
 
     class MaintenanceQueueState {
     public:
@@ -56,7 +56,7 @@ namespace Hypertable {
 
       void operator()() {
 	boost::xtime now, next_work;
-	ScheduledMaintenance *task;
+	MaintenanceTask *task;
 
 	while (true) {
 
@@ -145,7 +145,7 @@ namespace Hypertable {
      * related by the thread group ID value in the ApplicationHandler.  This thread
      * group ID is constructed in the Event object
      */
-    void add(ScheduledMaintenance *task) {
+    void add(MaintenanceTask *task) {
       boost::mutex::scoped_lock lock(m_state.mutex);
       m_state.queue.push(task);
       m_state.cond.notify_one();

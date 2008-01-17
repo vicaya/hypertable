@@ -18,22 +18,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "ScheduledMaintenanceSplit.h"
+#include "MaintenanceTaskCompaction.h"
 
 using namespace Hypertable;
 
-
 /**
  *
  */
-ScheduledMaintenanceSplit::ScheduledMaintenanceSplit(RangePtr &range_ptr) : ScheduledMaintenance(), m_range_ptr(range_ptr) {
+MaintenanceTaskCompaction::MaintenanceTaskCompaction(RangePtr &range_ptr, bool major) : MaintenanceTask(), m_range_ptr(range_ptr), m_major(major) {
 }
 
 
-
 /**
  *
  */
-void ScheduledMaintenanceSplit::execute() {
-  m_range_ptr->do_split();
+void MaintenanceTaskCompaction::execute() {
+  m_range_ptr->do_compaction(m_major);
 }

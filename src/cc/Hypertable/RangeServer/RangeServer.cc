@@ -45,7 +45,7 @@ extern "C" {
 #include "MaintenanceQueue.h"
 #include "RangeServer.h"
 #include "ScanContext.h"
-#include "ScheduledMaintenanceCompaction.h"
+#include "MaintenanceTaskCompaction.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -299,7 +299,7 @@ void RangeServer::compact(ResponseCallback *cb, TableIdentifierT *table, RangeT 
   }
 
   // schedule the compaction
-  Global::maintenance_queue->add( new ScheduledMaintenanceCompaction(range_ptr, major) );
+  Global::maintenance_queue->add( new MaintenanceTaskCompaction(range_ptr, major) );
 
   if ((error = cb->response_ok()) != Error::OK) {
     LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
@@ -882,7 +882,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     /**
      * Split and Compaction processing
      */
-    ScheduledMaintenance *task = min_ts_rec.range_ptr->get_maintenance();
+    MaintenanceTask *task = min_ts_rec.range_ptr->get_maintenance();
     if (task)
       Global::maintenance_queue->add( task );
 

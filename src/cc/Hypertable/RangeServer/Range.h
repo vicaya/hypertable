@@ -36,7 +36,7 @@
 #include "Metadata.h"
 #include "RangeInfo.h"
 #include "ScannerTimestampController.h"
-#include "ScheduledMaintenance.h"
+#include "MaintenanceTask.h"
 #include "Timestamp.h"
 
 namespace Hypertable {
@@ -72,7 +72,7 @@ namespace Hypertable {
 
     int replay_split_log(string &logDir, uint64_t real_timestamp);
 
-    ScheduledMaintenance *get_maintenance();
+    MaintenanceTask *get_maintenance();
     void do_split();
     void do_compaction(bool major=false);
 

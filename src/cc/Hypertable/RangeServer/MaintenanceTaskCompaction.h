@@ -18,22 +18,23 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_SCHEDULEDMAINTENANCESPLIT_H
-#define HYPERTABLE_SCHEDULEDMAINTENANCESPLIT_H
+#ifndef HYPERTABLE_MAINTENANCETASKCOMPACTION_H
+#define HYPERTABLE_MAINTENANCETASKCOMPACTION_H
 
 #include "Range.h"
-#include "ScheduledMaintenance.h"
+#include "MaintenanceTask.h"
 
 namespace Hypertable {
 
-  class ScheduledMaintenanceSplit : public ScheduledMaintenance {
+  class MaintenanceTaskCompaction : public MaintenanceTask {
   public:
-    ScheduledMaintenanceSplit(RangePtr &range_ptr);
+    MaintenanceTaskCompaction(RangePtr &range_ptr, bool major);
     virtual void execute();
   private:
     RangePtr m_range_ptr;
+    bool     m_major;
   };
 
 }
 
-#endif // HYPERTABLE_SCHEDULEDMAINTENANCESPLIT_H
+#endif // HYPERTABLE_MAINTENANCETASKCOMPACTION_H

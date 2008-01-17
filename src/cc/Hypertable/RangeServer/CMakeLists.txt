@@ -56,8 +56,8 @@ ResponseCallbackUpdate.cc
 ScanContext.cc
 ScannerMap.cc
 ScannerTimestampController.cc
-ScheduledMaintenanceCompaction.cc
-ScheduledMaintenanceSplit.cc
+MaintenanceTaskCompaction.cc
+MaintenanceTaskSplit.cc
 TableInfo.cc
 TimerHandler.cc
 main.cc

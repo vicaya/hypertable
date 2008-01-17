@@ -18,20 +18,22 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "ScheduledMaintenanceCompaction.h"
+#ifndef HYPERTABLE_MAINTENANCETASK_H
+#define HYPERTABLE_MAINTENANCETASK_H
 
-using namespace Hypertable;
+#include <boost/thread/xtime.hpp>
 
-/**
- *
- */
-ScheduledMaintenanceCompaction::ScheduledMaintenanceCompaction(RangePtr &range_ptr, bool major) : ScheduledMaintenance(), m_range_ptr(range_ptr), m_major(major) {
+namespace Hypertable {
+
+  class MaintenanceTask {
+  public:
+    MaintenanceTask(boost::xtime start_time_) : start_time(start_time_) { return; }
+    MaintenanceTask() { boost::xtime_get(&start_time, boost::TIME_UTC); return; }
+    virtual ~MaintenanceTask() { return; }
+    virtual void execute() = 0;
+    boost::xtime start_time;
+  };
+
 }
 
-
-/**
- *
- */
-void ScheduledMaintenanceCompaction::execute() {
-  m_range_ptr->do_compaction(m_major);
-}
+#endif // HYPERTABLE_MAINTENANCETASK_H
