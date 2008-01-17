@@ -37,6 +37,7 @@
 #include "Hypertable/Lib/Types.h"
 
 #include "FileBlockCache.h"
+#include "MaintenanceQueue.h"
 #include "MemoryTracker.h"
 #include "ScannerMap.h"
 #include "TableInfo.h"
@@ -50,7 +51,7 @@ namespace Hypertable {
     static Hyperspace::SessionPtr hyperspace_ptr;
     static Hypertable::Filesystem *dfs;
     static Hypertable::Filesystem *logDfs;
-    static boost::thread *maintenanceThreadPtr;
+    static Hypertable::MaintenanceQueue *maintenance_queue;
     static Hypertable::RangeServerProtocol *protocol;
     static bool           verbose;
     static CommitLog     *log;

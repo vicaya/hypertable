@@ -38,11 +38,12 @@ extern "C" {
 
 #include "CellStoreV0.h"
 #include "Global.h"
-#include "MaintenanceThread.h"
 #include "MergeScanner.h"
 #include "MetadataNormal.h"
 #include "MetadataRoot.h"
 #include "Range.h"
+#include "ScheduledMaintenanceCompaction.h"
+#include "ScheduledMaintenanceSplit.h"
 
 
 using namespace Hypertable;
@@ -298,71 +299,153 @@ const char *Range::get_split_row() {
 /**
  * 
  */
-void Range::schedule_maintenance() {
+ScheduledMaintenance *Range::get_maintenance() {
   boost::mutex::scoped_lock lock(m_mutex);
   uint64_t disk_used = disk_usage();
 
   if (m_maintenance_in_progress)
-    return;
+    return 0;
 
   // Need split?
   if (disk_used > m_disk_limit || 
       (Global::range_metadata_max_bytes && m_identifier.id == 0 && disk_used > Global::range_metadata_max_bytes)) {
+    RangePtr range_ptr(this);
     m_maintenance_in_progress = true;
-    MaintenanceThread::schedule_maintenance(this);
+    return new ScheduledMaintenanceSplit(range_ptr);
   }
   else {
     // Need compaction?
     for (size_t i=0; i<m_access_group_vector.size(); i++) {
       if (m_access_group_vector[i]->needs_compaction()) {
+	RangePtr range_ptr(this);
 	m_maintenance_in_progress = true;
-	MaintenanceThread::schedule_maintenance(this);
-	break;
+	return new ScheduledMaintenanceCompaction(range_ptr, false);
       }
     }
   }
+  return 0;
 }
 
 
-void Range::do_maintenance() {
+void Range::do_split() {
+  std::string splitLogDir;
+  char md5DigestStr[33];
+  int error;
+  std::string old_start_row;
+  MutatorPtr mutator_ptr;
+  KeySpec key;
+  std::string metadata_key_str;
+
   assert(m_maintenance_in_progress);
-  uint64_t disk_used = disk_usage();
 
-  if (disk_used > m_disk_limit ||
-      (Global::range_metadata_max_bytes && m_identifier.id == 0 && disk_used > Global::range_metadata_max_bytes)) {
-    std::string splitLogDir;
-    char md5DigestStr[33];
-    int error;
-    std::string old_start_row;
-    MutatorPtr mutator_ptr;
-    KeySpec key;
-    std::string metadata_key_str;
+  // this call sets m_split_row
+  get_split_row();
 
-    // this call sets m_split_row
-    get_split_row();
+  /**
+   * Create Split LOG
+   */
+  md5_string(m_split_row.c_str(), md5DigestStr);
+  md5DigestStr[24] = 0;
+  std::string::size_type pos = Global::logDir.rfind("primary", Global::logDir.length());
+  assert (pos != std::string::npos);
+  splitLogDir = Global::logDir.substr(0, pos) + md5DigestStr;
 
-    /**
-     * Create Split LOG
-     */
-    md5_string(m_split_row.c_str(), md5DigestStr);
-    md5DigestStr[24] = 0;
-    std::string::size_type pos = Global::logDir.rfind("primary", Global::logDir.length());
-    assert (pos != std::string::npos);
-    splitLogDir = Global::logDir.substr(0, pos) + md5DigestStr;
+  // Create split log dir
+  if ((error = Global::logDfs->mkdirs(splitLogDir)) != Error::OK) {
+    LOG_VA_ERROR("Problem creating DFS log directory '%s'", splitLogDir.c_str());
+    exit(1);
+  }
 
-    // Create split log dir
-    if ((error = Global::logDfs->mkdirs(splitLogDir)) != Error::OK) {
-      LOG_VA_ERROR("Problem creating DFS log directory '%s'", splitLogDir.c_str());
-      exit(1);
+  /**
+   *  Update METADATA with split information
+   */
+  if ((error = Global::metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK) {
+    // TODO: throw exception
+    LOG_ERROR("Problem creating mutator on METADATA table");
+    return;
+  }
+
+  metadata_key_str = std::string("") + (uint32_t)m_identifier.id + ":" + m_end_row;
+  key.row = metadata_key_str.c_str();
+  key.row_len = metadata_key_str.length();
+  key.column_qualifier = 0;
+  key.column_qualifier_len = 0;
+
+  try {
+    key.column_family = "SplitPoint";
+    mutator_ptr->set(0, key, (uint8_t *)m_split_row.c_str(), m_split_row.length());
+    key.column_family = "SplitLogDir";
+    mutator_ptr->set(0, key, (uint8_t *)splitLogDir.c_str(), splitLogDir.length());
+    mutator_ptr->flush();
+  }
+  catch (Hypertable::Exception &e) {
+    // TODO: propagate exception
+    LOG_VA_ERROR("Problem updating METADATA with split info (row key = %s) - %s", metadata_key_str.c_str(), e.what());
+    return;
+  }
+
+  /**
+   * Atomically obtain timestamp and install split log
+   */
+  {
+    boost::mutex::scoped_lock lock(m_maintenance_mutex);
+    PropertiesPtr props_ptr(0);
+
+    /** block updates **/
+    m_hold_updates = true;
+    while (m_update_counter > 0)
+      m_update_quiesce_cond.wait(lock);
+
+    {
+      boost::mutex::scoped_lock lock(m_mutex);
+      m_split_timestamp.logical = m_scanner_timestamp_controller.get_oldest_update_timestamp();
+      if (m_split_timestamp.logical == 0 || m_timestamp.logical < m_split_timestamp.logical)
+	m_split_timestamp = m_timestamp;
+      else
+	m_split_timestamp.real = Global::log->get_timestamp();
+      old_start_row = m_start_row;
     }
 
-    /**
-     *  Update METADATA with split information
-     */
-    if ((error = Global::metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK) {
-      // TODO: throw exception
-      LOG_ERROR("Problem creating mutator on METADATA table");
-      return;
+    m_split_log_ptr = new CommitLog(Global::logDfs, splitLogDir, props_ptr);
+
+    /** unblock updates **/
+    m_hold_updates = false;
+    m_maintenance_finished_cond.notify_all();
+  }
+
+
+  /**
+   * Perform major compactions
+   */
+  {
+    for (size_t i=0; i<m_access_group_vector.size(); i++)
+      m_access_group_vector[i]->run_compaction(m_split_timestamp, true);
+  }
+
+
+  /**
+   * Create second-level METADATA entry for new range and update second-level
+   * METADATA entry for existing range to reflect the shrink 
+   */
+  try {
+    std::string files;
+    metadata_key_str = std::string("") + (uint32_t)m_identifier.id + ":" + m_split_row;
+    key.row = metadata_key_str.c_str();
+    key.row_len = metadata_key_str.length();
+    key.column_qualifier = 0;
+    key.column_qualifier_len = 0;
+
+    key.column_family = "StartRow";
+    mutator_ptr->set(0, key, (uint8_t *)old_start_row.c_str(), old_start_row.length());
+    key.column_family = "SplitLogDir";
+    mutator_ptr->set(0, key, (uint8_t *)splitLogDir.c_str(), splitLogDir.length());
+
+    key.column_family = "Files";
+    for (size_t i=0; i<m_access_group_vector.size(); i++) {
+      key.column_qualifier = m_access_group_vector[i]->get_name();
+      key.column_qualifier_len = strlen(m_access_group_vector[i]->get_name());
+      m_access_group_vector[i]->get_files(files);
+      mutator_ptr->set(0, key, (uint8_t *)files.c_str(), files.length());
     }
 
     metadata_key_str = std::string("") + (uint32_t)m_identifier.id + ":" + m_end_row;
@@ -371,195 +454,108 @@ void Range::do_maintenance() {
     key.column_qualifier = 0;
     key.column_qualifier_len = 0;
 
+    key.column_family = "StartRow";
+    mutator_ptr->set(0, key, (uint8_t *)m_split_row.c_str(), m_split_row.length());
+    key.column_family = "SplitLogDir";
+    mutator_ptr->set(0, key, 0, 0);
+    mutator_ptr->flush();
+  }
+  catch (Hypertable::Exception &e) {
+    // TODO: propagate exception
+    LOG_VA_ERROR("Problem updating METADATA with new range information (row key = %s) - %s", metadata_key_str.c_str(), e.what());
+    DUMP_CORE;
+  }
+
+
+  /**
+   * If this is a METADATA range, then update the ROOT range
+   */
+  if (m_identifier.id == 0) {
     try {
-      key.column_family = "SplitPoint";
-      mutator_ptr->set(0, key, (uint8_t *)m_split_row.c_str(), m_split_row.length());
-      key.column_family = "SplitLogDir";
-      mutator_ptr->set(0, key, (uint8_t *)splitLogDir.c_str(), splitLogDir.length());
-      mutator_ptr->flush();
-    }
-    catch (Hypertable::Exception &e) {
-      // TODO: propagate exception
-      LOG_VA_ERROR("Problem updating METADATA with split info (row key = %s) - %s", metadata_key_str.c_str(), e.what());
-      return;
-    }
-
-    /**
-     * Atomically obtain timestamp and install split log
-     */
-    {
-      boost::mutex::scoped_lock lock(m_maintenance_mutex);
-      PropertiesPtr props_ptr(0);
-
-      /** block updates **/
-      m_hold_updates = true;
-      while (m_update_counter > 0)
-	m_update_quiesce_cond.wait(lock);
-
-      {
-	boost::mutex::scoped_lock lock(m_mutex);
-	m_split_timestamp.logical = m_scanner_timestamp_controller.get_oldest_update_timestamp();
-	if (m_split_timestamp.logical == 0 || m_timestamp.logical < m_split_timestamp.logical)
-	  m_split_timestamp = m_timestamp;
-	else
-	  m_split_timestamp.real = Global::log->get_timestamp();
-	old_start_row = m_start_row;
-      }
-
-      m_split_log_ptr = new CommitLog(Global::logDfs, splitLogDir, props_ptr);
-
-      /** unblock updates **/
-      m_hold_updates = false;
-      m_maintenance_finished_cond.notify_all();
-    }
-
-
-    /**
-     * Perform major compactions
-     */
-    {
-      for (size_t i=0; i<m_access_group_vector.size(); i++)
-	m_access_group_vector[i]->run_compaction(m_split_timestamp, true);
-    }
-
-
-    /**
-     * Create second-level METADATA entry for new range and update second-level
-     * METADATA entry for existing range to reflect the shrink 
-     */
-    try {
-      std::string files;
-      metadata_key_str = std::string("") + (uint32_t)m_identifier.id + ":" + m_split_row;
+      // new range
+      metadata_key_str = std::string("0:") + m_split_row;
       key.row = metadata_key_str.c_str();
       key.row_len = metadata_key_str.length();
       key.column_qualifier = 0;
       key.column_qualifier_len = 0;
-
       key.column_family = "StartRow";
       mutator_ptr->set(0, key, (uint8_t *)old_start_row.c_str(), old_start_row.length());
-      key.column_family = "SplitLogDir";
-      mutator_ptr->set(0, key, (uint8_t *)splitLogDir.c_str(), splitLogDir.length());
 
-      key.column_family = "Files";
-      for (size_t i=0; i<m_access_group_vector.size(); i++) {
-	key.column_qualifier = m_access_group_vector[i]->get_name();
-	key.column_qualifier_len = strlen(m_access_group_vector[i]->get_name());
-	m_access_group_vector[i]->get_files(files);
-	mutator_ptr->set(0, key, (uint8_t *)files.c_str(), files.length());
-      }
-
-      metadata_key_str = std::string("") + (uint32_t)m_identifier.id + ":" + m_end_row;
+      // existing range
+      metadata_key_str = std::string("0:") + m_end_row;
       key.row = metadata_key_str.c_str();
       key.row_len = metadata_key_str.length();
-      key.column_qualifier = 0;
-      key.column_qualifier_len = 0;
-
-      key.column_family = "StartRow";
       mutator_ptr->set(0, key, (uint8_t *)m_split_row.c_str(), m_split_row.length());
-      key.column_family = "SplitLogDir";
-      mutator_ptr->set(0, key, 0, 0);
       mutator_ptr->flush();
     }
     catch (Hypertable::Exception &e) {
       // TODO: propagate exception
-      LOG_VA_ERROR("Problem updating METADATA with new range information (row key = %s) - %s", metadata_key_str.c_str(), e.what());
+      LOG_VA_ERROR("Problem updating ROOT METADATA range (new=%s, existing=%s) - %s", m_split_row.c_str(), m_end_row.c_str(), e.what());
       DUMP_CORE;
     }
-
-
-    /**
-     * If this is a METADATA range, then update the ROOT range
-     */
-    if (m_identifier.id == 0) {
-      try {
-	// new range
-	metadata_key_str = std::string("0:") + m_split_row;
-	key.row = metadata_key_str.c_str();
-	key.row_len = metadata_key_str.length();
-	key.column_qualifier = 0;
-	key.column_qualifier_len = 0;
-	key.column_family = "StartRow";
-	mutator_ptr->set(0, key, (uint8_t *)old_start_row.c_str(), old_start_row.length());
-
-	// existing range
-	metadata_key_str = std::string("0:") + m_end_row;
-	key.row = metadata_key_str.c_str();
-	key.row_len = metadata_key_str.length();
-	mutator_ptr->set(0, key, (uint8_t *)m_split_row.c_str(), m_split_row.length());
-	mutator_ptr->flush();
-      }
-      catch (Hypertable::Exception &e) {
-	// TODO: propagate exception
-	LOG_VA_ERROR("Problem updating ROOT METADATA range (new=%s, existing=%s) - %s", m_split_row.c_str(), m_end_row.c_str(), e.what());
-	DUMP_CORE;
-      }
-    }
-
-
-    /**
-     *  Do the split
-     */
-    {
-      boost::mutex::scoped_lock lock(m_maintenance_mutex);
-
-      // block updates
-      m_hold_updates = true;
-      while (m_update_counter > 0)
-	m_update_quiesce_cond.wait(lock);
-
-      /*** At this point, there are no running updates ***/
-
-      {
-	boost::mutex::scoped_lock lock(m_mutex);
-	m_start_row = m_split_row;
-	m_split_timestamp.clear();
-	m_split_row = "";
-	// Shrink this range's access groups
-	for (size_t i=0; i<m_access_group_vector.size(); i++)
-	  m_access_group_vector[i]->shrink(m_start_row);
-      }
-
-      // unblock updates
-      m_hold_updates = false;
-      m_maintenance_finished_cond.notify_all();
-    }
-
-    // close split log
-    if ((error = m_split_log_ptr->close(Global::log->get_timestamp())) != Error::OK) {
-      LOG_VA_ERROR("Problem closing split log '%s' - %s", m_split_log_ptr->get_log_dir().c_str(), Error::get_text(error));
-    }
-    m_split_log_ptr = 0;
-
-    /**
-     *  Notify Master of split
-     */
-    {
-      RangeT range;
-
-      range.startRow = old_start_row.c_str();
-      range.endRow = m_start_row.c_str();
-
-      // update the latest generation, this should probably be protected
-      m_identifier.generation = m_schema->get_generation();
-
-      LOG_VA_INFO("Reporting newly split off range %s[%s..%s] to Master", m_identifier.name, range.startRow, range.endRow);
-      cout << flush;
-      if (m_disk_limit < Global::rangeMaxBytes) {
-	m_disk_limit *= 2;
-	if (m_disk_limit > Global::rangeMaxBytes)
-	  m_disk_limit = Global::rangeMaxBytes;
-      }
-      if ((error = m_master_client_ptr->report_split(m_identifier, range, m_disk_limit)) != Error::OK) {
-	LOG_VA_ERROR("Problem reporting split (table=%s, start_row=%s, end_row=%s) to master.",
-		     m_identifier.name, range.startRow, range.endRow);
-      }
-    }
-
-    LOG_VA_INFO("Split Complete.  New Range end_row=%s", m_start_row.c_str());
-
   }
-  else
-    run_compaction(false);
+
+
+  /**
+   *  Do the split
+   */
+  {
+    boost::mutex::scoped_lock lock(m_maintenance_mutex);
+
+    // block updates
+    m_hold_updates = true;
+    while (m_update_counter > 0)
+      m_update_quiesce_cond.wait(lock);
+
+    /*** At this point, there are no running updates ***/
+
+    {
+      boost::mutex::scoped_lock lock(m_mutex);
+      m_start_row = m_split_row;
+      m_split_timestamp.clear();
+      m_split_row = "";
+      // Shrink this range's access groups
+      for (size_t i=0; i<m_access_group_vector.size(); i++)
+	m_access_group_vector[i]->shrink(m_start_row);
+    }
+
+    // unblock updates
+    m_hold_updates = false;
+    m_maintenance_finished_cond.notify_all();
+  }
+
+  // close split log
+  if ((error = m_split_log_ptr->close(Global::log->get_timestamp())) != Error::OK) {
+    LOG_VA_ERROR("Problem closing split log '%s' - %s", m_split_log_ptr->get_log_dir().c_str(), Error::get_text(error));
+  }
+  m_split_log_ptr = 0;
+
+  /**
+   *  Notify Master of split
+   */
+  {
+    RangeT range;
+
+    range.startRow = old_start_row.c_str();
+    range.endRow = m_start_row.c_str();
+
+    // update the latest generation, this should probably be protected
+    m_identifier.generation = m_schema->get_generation();
+
+    LOG_VA_INFO("Reporting newly split off range %s[%s..%s] to Master", m_identifier.name, range.startRow, range.endRow);
+    cout << flush;
+    if (m_disk_limit < Global::rangeMaxBytes) {
+      m_disk_limit *= 2;
+      if (m_disk_limit > Global::rangeMaxBytes)
+	m_disk_limit = Global::rangeMaxBytes;
+    }
+    if ((error = m_master_client_ptr->report_split(m_identifier, range, m_disk_limit)) != Error::OK) {
+      LOG_VA_ERROR("Problem reporting split (table=%s, start_row=%s, end_row=%s) to master.",
+		   m_identifier.name, range.startRow, range.endRow);
+    }
+  }
+
+  LOG_VA_INFO("Split Complete.  New Range end_row=%s", m_start_row.c_str());
 
   m_maintenance_in_progress = false;
 }

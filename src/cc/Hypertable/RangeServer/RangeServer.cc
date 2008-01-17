@@ -42,9 +42,10 @@ extern "C" {
 #include "FillScanBlock.h"
 #include "Global.h"
 #include "HandlerFactory.h"
-#include "MaintenanceThread.h"
+#include "MaintenanceQueue.h"
 #include "RangeServer.h"
 #include "ScanContext.h"
+#include "ScheduledMaintenanceCompaction.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -153,12 +154,8 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
   if (directory_initialize(props_ptr) != Error::OK)
     exit(1);
 
-  // start commpaction thread
-  {
-    MaintenanceThread maintenanceThread;
-    Global::maintenanceThreadPtr = new boost::thread(maintenanceThread);
-  }
-
+  // Create the maintenance queue
+  Global::maintenance_queue = new MaintenanceQueue(1);
 
   /**
    * Listen for incoming connections
@@ -270,15 +267,12 @@ void RangeServer::compact(ResponseCallback *cb, TableIdentifierT *table, RangeT 
   int error = Error::OK;
   std::string errMsg;
   TableInfoPtr tableInfoPtr;
-  RangePtr rangePtr;
-  MaintenanceThread::WorkType workType = MaintenanceThread::COMPACTION_MINOR;
+  RangePtr range_ptr;
   bool major = false;
 
   // Check for major compaction
-  if (compaction_type == 1) {
+  if (compaction_type == 1)
     major = true;
-    workType = MaintenanceThread::COMPACTION_MAJOR;
-  }
 
   if (Global::verbose) {
     cout << *table;
@@ -298,13 +292,14 @@ void RangeServer::compact(ResponseCallback *cb, TableIdentifierT *table, RangeT 
   /**
    * Fetch range info
    */
-  if (!tableInfoPtr->get_range(range, rangePtr)) {
+  if (!tableInfoPtr->get_range(range, range_ptr)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
     errMsg = (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]";
     goto abort;
   }
 
-  MaintenanceThread::schedule_compaction(rangePtr.get(), workType);
+  // schedule the compaction
+  Global::maintenance_queue->add( new ScheduledMaintenanceCompaction(range_ptr, major) );
 
   if ((error = cb->response_ok()) != Error::OK) {
     LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
@@ -887,7 +882,9 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     /**
      * Split and Compaction processing
      */
-    min_ts_rec.range_ptr->schedule_maintenance();
+    ScheduledMaintenance *task = min_ts_rec.range_ptr->get_maintenance();
+    if (task)
+      Global::maintenance_queue->add( task );
 
     if (Global::verbose) {
       LOG_VA_INFO("Added %d (%d split off) updates to '%s'", goMods.size()+splitMods.size(), splitMods.size(), table->name);

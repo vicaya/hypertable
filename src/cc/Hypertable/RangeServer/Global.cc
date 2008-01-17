@@ -31,7 +31,7 @@ namespace Hypertable {
   SessionPtr             Global::hyperspace_ptr = 0;
   Filesystem            *Global::dfs = 0;
   Filesystem            *Global::logDfs = 0;
-  boost::thread         *Global::maintenanceThreadPtr = 0;
+  MaintenanceQueue      *Global::maintenance_queue = 0;
   RangeServerProtocol   *Global::protocol = 0;
   bool                   Global::verbose = false;
   CommitLog             *Global::log = 0;

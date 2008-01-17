@@ -37,7 +37,6 @@ FileBlockCache.cc
 FillScanBlock.cc
 Global.cc
 HyperspaceSessionHandler.cc
-MaintenanceThread.cc
 MergeScanner.cc
 MetadataNormal.cc
 MetadataRoot.cc
@@ -57,6 +56,8 @@ ResponseCallbackUpdate.cc
 ScanContext.cc
 ScannerMap.cc
 ScannerTimestampController.cc
+ScheduledMaintenanceCompaction.cc
+ScheduledMaintenanceSplit.cc
 TableInfo.cc
 TimerHandler.cc
 main.cc
