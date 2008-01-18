@@ -49,6 +49,7 @@ Table.cc
 TableScanner.cc
 TestSource.cc
 Types.cc
+lzo/minilzo.c
 )
 
 add_library (Hypertable ${Hypertable_SRCS})

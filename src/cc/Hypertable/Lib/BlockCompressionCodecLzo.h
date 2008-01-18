@@ -22,8 +22,7 @@
 #define HYPERTABLE_BLOCKCOMPRESSIONCODECLZO_H
 
 extern "C" {
-#include "lzo/lzoconf.h"
-#include "lzo/lzo1x.h"
+#include "lzo/minilzo.h"
 }
 
 #include "BlockCompressionCodec.h"
