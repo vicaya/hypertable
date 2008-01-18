@@ -68,7 +68,13 @@ namespace Hypertable {
       return m_end_row;
     }
 
+    string table_name() {
+      return (std::string)m_identifier.name;
+    }
+
     uint64_t get_timestamp();
+
+    uint64_t get_oldest_cached_timestamp();
 
     int replay_split_log(string &logDir, uint64_t real_timestamp);
 

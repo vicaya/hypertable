@@ -58,6 +58,7 @@ namespace Hypertable {
     void update(ResponseCallbackUpdate *cb, TableIdentifierT *table, BufferT &buffer);
     void dump_stats(ResponseCallback *cb);
     void do_maintenance();
+    void log_cleanup();
 
     uint64_t get_timer_interval();
     
@@ -90,6 +91,8 @@ namespace Hypertable {
     MasterClientPtr        m_master_client_ptr;
     Hyperspace::SessionPtr m_hyperspace_ptr;
     time_t                 m_scanner_ttl;
+    long                   m_last_commit_log_clean;
+    long                   m_commit_log_clean_interval;
   };
   typedef boost::intrusive_ptr<RangeServer> RangeServerPtr;
   

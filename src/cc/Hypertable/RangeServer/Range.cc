@@ -717,3 +717,16 @@ uint64_t Range::get_timestamp() {
     return timestamp;
   return m_timestamp.logical;
 }
+
+
+uint64_t Range::get_oldest_cached_timestamp() {
+  uint64_t tmp_timestamp, oldest_timestamp = 0;
+  for (size_t i=0; i<m_access_group_vector.size(); i++) {
+    if ((tmp_timestamp = m_access_group_vector[i]->get_oldest_cached_timestamp()) != 0) {
+      if (oldest_timestamp == 0 || tmp_timestamp < oldest_timestamp)
+	oldest_timestamp = tmp_timestamp;
+    }
+  }
+  return oldest_timestamp;
+}
+

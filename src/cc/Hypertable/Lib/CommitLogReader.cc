@@ -280,3 +280,13 @@ bool CommitLogReader::next_block(const uint8_t **blockp, size_t *lenp, BlockComp
 
   return true;
 }
+
+
+
+/**
+ *
+ */
+void CommitLogReader::dump_log_metadata() {
+  for (size_t i=0; i<m_log_file_info.size(); i++)
+    cout << "LOG FRAGMENT name='" << m_log_file_info[i].fname << "' timestamp=" << m_log_file_info[i].trailer.get_timestamp() << endl;
+}

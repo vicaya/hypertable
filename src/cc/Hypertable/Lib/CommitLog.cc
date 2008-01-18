@@ -53,13 +53,15 @@ CommitLog::CommitLog(Filesystem *fs, std::string &log_dir, PropertiesPtr &props_
   std::string compressor_args;
 
   if (props_ptr) {
-    m_max_file_size = props_ptr->getPropertyInt64("Hypertable.RangeServer.logFileSize", 0x100000000LL);
+    m_max_file_size = props_ptr->getPropertyInt64("Hypertable.RangeServer.CommitLog.RollLimit", 0x100000000LL);
     compressor = props_ptr->getProperty("Hypertable.RangeServer.CommitLog.Compressor", "quicklz");
   }
   else {
     m_max_file_size = 0x100000000LL;
     compressor = "quicklz";
   }
+
+  LOG_VA_INFO("RollLimit = %lld", m_max_file_size);
 
   size_t offset = compressor.find_first_of(" \t\n\r");
   if (offset != std::string::npos) {
@@ -236,13 +238,18 @@ int CommitLog::purge(uint64_t timestamp) {
 
   while (!m_file_info_queue.empty()) {
     fileInfo = m_file_info_queue.front();
-    if (fileInfo.timestamp < timestamp) {
-      // should do something on error, but for now, just move on
-      if ((error = m_fs->remove(fileInfo.fname)) == Error::OK)
-	m_file_info_queue.pop();
+    if (fileInfo.timestamp > 0 && fileInfo.timestamp < timestamp) {
+      if ((error = m_fs->remove(fileInfo.fname)) != Error::OK && error != Error::DFSBROKER_FILE_NOT_FOUND) {
+	LOG_VA_ERROR("Problem removing log fragment '%s' - %s", fileInfo.fname.c_str(), Error::get_text(error));
+	return error;
+      }
+      m_file_info_queue.pop();
+      LOG_VA_INFO("Removed log fragment file='%s' timestamp=%lld", fileInfo.fname.c_str(), fileInfo.timestamp);
     }
-    else
+    else {
+      //LOG_VA_INFO("LOG FRAGMENT PURGE breaking because %lld >= %lld", fileInfo.timestamp, timestamp);
       break;
+    }
   }
   return Error::OK;
 }

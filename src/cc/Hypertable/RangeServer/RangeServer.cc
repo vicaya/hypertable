@@ -46,6 +46,7 @@ extern "C" {
 #include "RangeServer.h"
 #include "ScanContext.h"
 #include "MaintenanceTaskCompaction.h"
+#include "MaintenanceTaskLogCleanup.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -59,7 +60,7 @@ namespace {
 /**
  * Constructor
  */
-RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, ApplicationQueuePtr &app_queue_ptr, Hyperspace::SessionPtr &hyperspace_ptr) : m_mutex(), m_verbose(false), m_conn_manager_ptr(conn_manager_ptr), m_app_queue_ptr(app_queue_ptr), m_hyperspace_ptr(hyperspace_ptr) {
+RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, ApplicationQueuePtr &app_queue_ptr, Hyperspace::SessionPtr &hyperspace_ptr) : m_mutex(), m_verbose(false), m_conn_manager_ptr(conn_manager_ptr), m_app_queue_ptr(app_queue_ptr), m_hyperspace_ptr(hyperspace_ptr), m_last_commit_log_clean(0) {
   int error;
   uint16_t port;
   Comm *comm = conn_manager_ptr->get_comm();
@@ -70,6 +71,7 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
   Global::localityGroupMaxMemory  = props_ptr->getPropertyInt("Hypertable.RangeServer.AccessGroup.MaxMemory", 4000000);
   port                            = props_ptr->getPropertyInt("Hypertable.RangeServer.port", DEFAULT_PORT);
   m_scanner_ttl                   = (time_t)props_ptr->getPropertyInt("Hypertable.RangeServer.Scanner.ttl", 120);
+  m_commit_log_clean_interval     = (long)props_ptr->getPropertyInt("Hypertable.RangeServer.CommitLog.CleanInterval", 60);
 
   if (m_scanner_ttl < (time_t)10) {
     LOG_VA_WARN("Value %u for Hypertable.RangeServer.Scanner.ttl is too small, setting to 10", (unsigned int)m_scanner_ttl);
@@ -975,6 +977,7 @@ void RangeServer::dump_stats(ResponseCallback *cb) {
   LOG_INFO("dump_stats");
 
   for (TableInfoMapT::iterator table_iter = m_table_info_map.begin(); table_iter != m_table_info_map.end(); table_iter++) {
+    range_vec.clear();
     (*table_iter).second->get_range_vector(range_vec);
     for (size_t i=0; i<range_vec.size(); i++)
       range_vec[i]->dump_stats();
@@ -1052,7 +1055,49 @@ int RangeServer::verify_schema(TableInfoPtr &tableInfoPtr, int generation, std::
 
 
 void RangeServer::do_maintenance() {
+  struct timeval tval;
+
+  /**
+   * Purge expired scanners
+   */
   Global::scannerMap.purge_expired(m_scanner_ttl);
+
+  /**
+   * Schedule log cleanup
+   */
+  gettimeofday(&tval, 0);
+  if ((tval.tv_sec - m_last_commit_log_clean) >= m_commit_log_clean_interval) {
+    // schedule log cleanup
+    Global::maintenance_queue->add( new MaintenanceTaskLogCleanup(this) );
+    m_last_commit_log_clean = tval.tv_sec;
+  }
+}
+
+
+
+/**
+ */
+void RangeServer::log_cleanup() {
+  std::vector<RangePtr> range_vec;
+  uint64_t timestamp, oldest_cached_timestamp = 0;
+
+  {
+    boost::mutex::scoped_lock lock(m_mutex);
+    for (TableInfoMapT::iterator table_iter = m_table_info_map.begin(); table_iter != m_table_info_map.end(); table_iter++) {
+      (*table_iter).second->get_range_vector(range_vec);
+    }
+  }
+
+  for (size_t i=0; i<range_vec.size(); i++) {
+    timestamp = range_vec[i]->get_oldest_cached_timestamp();
+    if (oldest_cached_timestamp == 0 || timestamp < oldest_cached_timestamp)
+      oldest_cached_timestamp = timestamp;
+    //cout << range_vec[i]->table_name() << "[" << range_vec[i]->start_row() << ".." << range_vec[i]->end_row() << "] = " << range_vec[i]->get_oldest_cached_timestamp() << endl;
+  }
+
+  if (oldest_cached_timestamp != 0)
+    Global::log->purge(oldest_cached_timestamp);
+
 }
 
 

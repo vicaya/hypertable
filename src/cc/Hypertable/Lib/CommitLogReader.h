@@ -54,6 +54,7 @@ namespace Hypertable {
     virtual void initialize_read(uint64_t timestamp);
     virtual bool next_block(const uint8_t **blockp, size_t *lenp, BlockCompressionHeaderCommitLog *header);
     virtual int last_error() { return m_error; }
+    void dump_log_metadata();
 
   private:
     Filesystem               *m_fs;
