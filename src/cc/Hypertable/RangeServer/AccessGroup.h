@@ -40,6 +40,15 @@ namespace Hypertable {
 
   public:
 
+    typedef struct {
+      AccessGroup *ag;
+      uint64_t oldest_cached_timestamp;
+      uint64_t mem_used;
+      size_t mem_added;
+      bool in_memory;
+      void *user_data;
+    } CompactionPriorityDataT;
+
     AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range);
     virtual ~AccessGroup();
     virtual int add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp);
@@ -64,6 +73,8 @@ namespace Hypertable {
       boost::mutex::scoped_lock lock(m_mutex);
       return m_oldest_cached_timestamp;
     }
+
+    void get_compaction_priority_data(CompactionPriorityDataT &priority_data);
 
     const char *get_name() { return m_name.c_str(); }
 
