@@ -406,7 +406,7 @@ void Range::do_split() {
       old_start_row = m_start_row;
     }
 
-    m_split_log_ptr = new CommitLog(Global::logDfs, splitLogDir, props_ptr);
+    m_split_log_ptr = new CommitLog(Global::dfs, splitLogDir, props_ptr);
 
     /** unblock updates **/
     m_hold_updates = false;

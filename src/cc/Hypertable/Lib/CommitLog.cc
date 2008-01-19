@@ -94,6 +94,9 @@ CommitLog::CommitLog(Filesystem *fs, std::string &log_dir, PropertiesPtr &props_
 
   m_log_file = m_log_dir + m_cur_log_num;
 
+  // create the log directory
+  m_fs->mkdirs(m_log_dir);
+
   if ((error = m_fs->create(m_log_file, true, 8192, 3, 67108864, &m_fd)) != Error::OK) {
     LOG_VA_ERROR("Problem creating commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
     exit(1);

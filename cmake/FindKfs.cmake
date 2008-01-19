@@ -12,7 +12,7 @@ IF (Kfs_INCLUDE_DIR)
 ENDIF (Kfs_INCLUDE_DIR)
 
 FIND_PATH(Kfs_INCLUDE_DIR kfs/KfsClient.h
-  /home/sriram/code/kosmosfs/build/include
+  /home/doug/src/kosmosfs/build/release/include
   /opt/local/include
   /usr/local/include
   /usr/include
@@ -21,7 +21,7 @@ FIND_PATH(Kfs_INCLUDE_DIR kfs/KfsClient.h
 SET(Kfs_NAMES kfsClient)
 FIND_LIBRARY(Kfs_LIBRARY
   NAMES ${Kfs_NAMES}
-  PATHS /home/sriram/code/kosmosfs/build/lib /usr/lib /usr/local/lib /opt/local/lib
+  PATHS /home/doug/src/kosmosfs/build/release/lib /usr/lib /usr/local/lib /opt/local/lib
 )
 
 IF (Kfs_INCLUDE_DIR AND Kfs_LIBRARY)
