@@ -18,7 +18,6 @@ CONTENTS
     - Boost version 1.34.1 (http://www.boost.org/)
     - log4cpp (http://log4cpp.sourceforge.net/)
     - expat (http://sourceforge.net/projects/expat)
-    - lzo-2.02 (http://www.oberhumer.com/opensource/lzo/)
 
     HIGHLY RECOMMENDED (but not required):
     - tcmalloc (http://code.google.com/p/google-perftools/)
@@ -30,8 +29,7 @@ CONTENTS
 
     mkdir ~/src
     cd ~/src
-    git clone git://72.51.43.91/pub/repos/hypertable.git
-    ( or if you prefer, svn checkout http://hypertable.googlecode.com/svn/trunk hypertable )
+    git clone git://scm.hypertable.org/pub/repos/hypertable.git
 
   5. Build hypertable.jar
 
@@ -75,7 +73,7 @@ CONTENTS
 
 3. Stop the servers
 
-  *** Must be performed prior to running the regression tests each time **
+  *** NOTE: Must be performed prior to running the regression tests each time **
 
   cd ~/hypertable
   ./bin/stop-servers.sh
@@ -84,7 +82,7 @@ CONTENTS
    DFS broker, but can be changed to use any DFS broker (e.g. hadoop, kosmos, etc.)
    by replacing the 'local' keyword with the name of the broker you want to use.
 
-  *** Must be performed prior to running the regression tests each time **
+  *** NOTE: Must be performed prior to running the regression tests each time **
 
   cd ~/hypertable
   ./bin/start-test-servers.sh local
