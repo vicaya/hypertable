@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Sriram Rao (Kosmix Corp)
+ * Copyright (C) 2008 Sriram Rao (Kosmix Corp)
  * 
  * This file is part of Hypertable.
  * 
@@ -61,9 +61,9 @@ KosmosBroker::~KosmosBroker() {
 
 
 /**
- * Open
+ * open
  */
-void KosmosBroker::Open(ResponseCallbackOpen *cb, const char *fileName, uint32_t bufferSize) {
+void KosmosBroker::open(ResponseCallbackOpen *cb, const char *fileName, uint32_t bufferSize) {
   int fd;
   std::string absFileName;
   KfsClient *clnt = KfsClient::Instance();
@@ -92,7 +92,6 @@ void KosmosBroker::Open(ResponseCallbackOpen *cb, const char *fileName, uint32_t
   }
 
   {
-    int error;
     struct sockaddr_in addr;
     OpenFileDataKosmosPtr dataPtr(new OpenFileDataKosmos(fd, O_RDONLY));
 
@@ -100,8 +99,8 @@ void KosmosBroker::Open(ResponseCallbackOpen *cb, const char *fileName, uint32_t
 
     std::cerr << "Got fd for file: " << absFileName << std::endl;
 
-    mOpenFileMap.Create(fd, addr, dataPtr);
-
+    m_open_file_map.create(fd, addr, dataPtr);
+    
     std::cerr << "Inserted fd into open file map for file: "<< absFileName << std::endl;
 
     cb->response(fd);
@@ -110,9 +109,9 @@ void KosmosBroker::Open(ResponseCallbackOpen *cb, const char *fileName, uint32_t
 
 
 /**
- * Create
+ * create
  */
-void KosmosBroker::Create(ResponseCallbackOpen *cb, const char *fileName, bool overwrite,
+void KosmosBroker::create(ResponseCallbackOpen *cb, const char *fileName, bool overwrite,
 	    uint32_t bufferSize, uint16_t replication, uint64_t blockSize) {
   int fd;
   int flags;
@@ -152,13 +151,12 @@ void KosmosBroker::Create(ResponseCallbackOpen *cb, const char *fileName, bool o
   }
 
   {
-    int error;
     struct sockaddr_in addr;
     OpenFileDataKosmosPtr dataPtr(new OpenFileDataKosmos(fd, O_WRONLY));
 
     cb->get_address(addr);
 
-    mOpenFileMap.Create(fd, addr, dataPtr);
+    m_open_file_map.create(fd, addr, dataPtr);
 
     cb->response(fd);
   }
@@ -166,24 +164,23 @@ void KosmosBroker::Create(ResponseCallbackOpen *cb, const char *fileName, bool o
 
 
 /**
- * Close
+ * close
  */
-void KosmosBroker::Close(ResponseCallback *cb, uint32_t fd) {
-  KfsClient *clnt = KfsClient::Instance();
+void KosmosBroker::close(ResponseCallback *cb, uint32_t fd) {
   if (mVerbose) {
     LOG_VA_INFO("close fd=%d", fd);
   }
 
-  mOpenFileMap.Remove(fd);
+  m_open_file_map.remove(fd);
 
   cb->response_ok();
 }
 
 
 /**
- * Read
+ * read
  */
-void KosmosBroker::Read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
+void KosmosBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
   OpenFileDataKosmosPtr dataPtr;
   ssize_t nread;
   uint64_t offset;
@@ -196,7 +193,7 @@ void KosmosBroker::Read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) 
 
   buf = new uint8_t [ amount ]; // TODO: we should sanity check this amount
 
-  if (!mOpenFileMap.Get(fd, dataPtr)) {
+  if (!m_open_file_map.get(fd, dataPtr)) {
     char errbuf[32];
     sprintf(errbuf, "%d", fd);
     cb->error(Error::DFSBROKER_BAD_FILE_HANDLE, errbuf);
@@ -218,9 +215,9 @@ void KosmosBroker::Read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) 
 
 
 /**
- * Append
+ * append
  */
-void KosmosBroker::Append(ResponseCallbackAppend *cb, uint32_t fd, uint32_t amount, uint8_t *data) {
+void KosmosBroker::append(ResponseCallbackAppend *cb, uint32_t fd, uint32_t amount, uint8_t *data) {
   OpenFileDataKosmosPtr dataPtr;
   ssize_t nwritten;
   uint64_t offset;
@@ -230,7 +227,7 @@ void KosmosBroker::Append(ResponseCallbackAppend *cb, uint32_t fd, uint32_t amou
     LOG_VA_INFO("append fd=%d amount=%d", fd, amount);
   }
 
-  if (!mOpenFileMap.Get(fd, dataPtr)) {
+  if (!m_open_file_map.get(fd, dataPtr)) {
     char errbuf[32];
     sprintf(errbuf, "%d", fd);
     cb->error(Error::DFSBROKER_BAD_FILE_HANDLE, errbuf);
@@ -253,13 +250,13 @@ void KosmosBroker::Append(ResponseCallbackAppend *cb, uint32_t fd, uint32_t amou
 
 
 /**
- * Seek
+ * seek
  */
-void KosmosBroker::Seek(ResponseCallback *cb, uint32_t fd, uint64_t offset) {
+void KosmosBroker::seek(ResponseCallback *cb, uint32_t fd, uint64_t offset) {
   OpenFileDataKosmosPtr dataPtr;
   KfsClient *clnt = KfsClient::Instance();
 
-  if (!mOpenFileMap.Get(fd, dataPtr)) {
+  if (!m_open_file_map.get(fd, dataPtr)) {
     char errbuf[32];
     sprintf(errbuf, "%d", fd);
     cb->error(Error::DFSBROKER_BAD_FILE_HANDLE, errbuf);
@@ -278,9 +275,9 @@ void KosmosBroker::Seek(ResponseCallback *cb, uint32_t fd, uint64_t offset) {
 
 
 /**
- * Remove
+ * remove
  */
-void KosmosBroker::Remove(ResponseCallback *cb, const char *fileName) {
+void KosmosBroker::remove(ResponseCallback *cb, const char *fileName) {
   std::string absFileName;
   KfsClient *clnt = KfsClient::Instance();
   int res;
@@ -306,9 +303,9 @@ void KosmosBroker::Remove(ResponseCallback *cb, const char *fileName) {
 
 
 /**
- * Length
+ * length
  */
-void KosmosBroker::Length(ResponseCallbackLength *cb, const char *fileName) {
+void KosmosBroker::length(ResponseCallbackLength *cb, const char *fileName) {
   std::string absFileName;
   uint64_t length;
   int res;
@@ -336,9 +333,9 @@ void KosmosBroker::Length(ResponseCallbackLength *cb, const char *fileName) {
 
 
 /**
- * Pread
+ * pread
  */
-void KosmosBroker::Pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset, uint32_t amount) {
+void KosmosBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset, uint32_t amount) {
   OpenFileDataKosmosPtr dataPtr;
   ssize_t nread;
   uint8_t *buf;
@@ -350,7 +347,7 @@ void KosmosBroker::Pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
 
   buf = new uint8_t [ amount ]; // TODO: we should sanity check this amount
 
-  if (!mOpenFileMap.Get(fd, dataPtr)) {
+  if (!m_open_file_map.get(fd, dataPtr)) {
     char errbuf[32];
     sprintf(errbuf, "%d", fd);
     cb->error(Error::DFSBROKER_BAD_FILE_HANDLE, errbuf);
@@ -376,9 +373,9 @@ void KosmosBroker::Pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
 
 
 /**
- * Mkdirs
+ * mkdirs
  */
-void KosmosBroker::Mkdirs(ResponseCallback *cb, const char *dirName) {
+void KosmosBroker::mkdirs(ResponseCallback *cb, const char *dirName) {
   std::string absDirName;
   std::string::size_type curr = 0;
   KfsClient *clnt = KfsClient::Instance();
@@ -430,9 +427,9 @@ void KosmosBroker::Mkdirs(ResponseCallback *cb, const char *dirName) {
 
 
 /**
- * Rmdir
+ * rmdir
  */
-void KosmosBroker::Rmdir(ResponseCallback *cb, const char *dirName) {
+void KosmosBroker::rmdir(ResponseCallback *cb, const char *dirName) {
   std::string absDirName;
   KfsClient *clnt = KfsClient::Instance();
   int res;
@@ -446,7 +443,7 @@ void KosmosBroker::Rmdir(ResponseCallback *cb, const char *dirName) {
   else
     absDirName = mRootdir + "/" + dirName;
 
-  if ((res = clnt->Rmdir(absDirName.c_str())) != 0) {
+  if ((res = clnt->Rmdirs(absDirName.c_str())) != 0) {
     string errMsg = KFS::ErrorCodeToStr(res);
     LOG_VA_ERROR("rmdir failed: dirName='%s' - %s", absDirName.c_str(), errMsg.c_str());
     ReportError(cb, res);
@@ -458,9 +455,9 @@ void KosmosBroker::Rmdir(ResponseCallback *cb, const char *dirName) {
 
 
 /**
- * Flush
+ * flush
  */
-void KosmosBroker::Flush(ResponseCallback *cb, uint32_t fd) {
+void KosmosBroker::flush(ResponseCallback *cb, uint32_t fd) {
   OpenFileDataKosmosPtr dataPtr;
   KfsClient *clnt = KfsClient::Instance();
   int res;
@@ -469,7 +466,7 @@ void KosmosBroker::Flush(ResponseCallback *cb, uint32_t fd) {
     LOG_VA_INFO("flush fd=%d", fd);
   }
 
-  if (!mOpenFileMap.Get(fd, dataPtr)) {
+  if (!m_open_file_map.get(fd, dataPtr)) {
     char errbuf[32];
     sprintf(errbuf, "%d", fd);
     cb->error(Error::DFSBROKER_BAD_FILE_HANDLE, errbuf);
@@ -488,20 +485,55 @@ void KosmosBroker::Flush(ResponseCallback *cb, uint32_t fd) {
 
 
 /**
- * Status
+ * status
  */
-void KosmosBroker::Status(ResponseCallback *cb) {
+void KosmosBroker::status(ResponseCallback *cb) {
   cb->response_ok();
 }
 
 
 /**
- * Shutdown
+ * shutdown
  */
-void KosmosBroker::Shutdown(ResponseCallback *cb) {
-  mOpenFileMap.RemoveAll();
+void KosmosBroker::shutdown(ResponseCallback *cb) {
+  m_open_file_map.remove_all();
   cb->response_ok();
   poll(0, 0, 2000);
+}
+
+
+void KosmosBroker::readdir(ResponseCallbackReaddir *cb, const char *dirName) {
+  std::vector<std::string> listing;
+  std::vector<std::string> stripped_listing;
+  std::string abs_path;
+  KfsClient *clnt = KfsClient::Instance();
+  int error;
+
+  if (mVerbose) {
+    LOG_VA_INFO("readdir dir_name='%s'", dirName);
+  }
+
+  if (dirName[0] == '/')
+    abs_path = dirName;
+  else
+    abs_path = mRootdir + "/" + dirName;
+
+  if ((error = clnt->Readdir(abs_path.c_str(), listing)) < 0) {
+    string errMsg = KFS::ErrorCodeToStr(error);
+    LOG_VA_ERROR("readdir failed: file='%s' - %s", abs_path.c_str(), errMsg.c_str());
+    ReportError(cb, error);
+    return;
+  }
+
+  for (size_t i=0;i<listing.size(); i++) {
+	 if (listing[i] == "." || listing[i] == "..")
+	   continue;
+	 stripped_listing.push_back(listing[i]);
+       }
+
+  LOG_VA_INFO("Sending back %d listings", stripped_listing.size());
+
+  cb->response(stripped_listing);
 }
 
 

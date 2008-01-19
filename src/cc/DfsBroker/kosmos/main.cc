@@ -44,7 +44,7 @@ using namespace std;
 
 namespace {
   const char *usage[] = {
-    "usage: localBroker [OPTIONS]",
+    "usage: kosmosBroker [OPTIONS]",
     "",
     "OPTIONS:",
     "  --config=<file>   Read configuration from <file>.  The default config file is",
@@ -56,7 +56,7 @@ namespace {
     "This program is the local DFS broker.",
     (const char *)0
   };
-  const int DEFAULT_PORT    = 38546;
+  const int DEFAULT_PORT    = 38030;
   const int DEFAULT_WORKERS = 20;
 }
 
@@ -72,10 +72,12 @@ int main(int argc, char **argv) {
   bool verbose = false;
   int port, reactorCount, workerCount;
   Comm *comm;
-  KosmosBroker *broker = 0;
-  ApplicationQueue *appQueue = 0;
+  BrokerPtr broker_ptr;
+  ApplicationQueuePtr app_queue_ptr;
+  struct sockaddr_in listen_addr;
+  int error;
 
-  System::Initialize(argv[0]);
+  System::initialize(argv[0]);
   
   if (argc > 1) {
     for (int i=1; i<argc; i++) {
@@ -86,40 +88,47 @@ int main(int argc, char **argv) {
       else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
 	verbose = true;
       else
-	Usage::DumpAndExit(usage);
+	Usage::dump_and_exit(usage);
     }
   }
 
   if (configFile == "")
     configFile = System::installDir + "/conf/hypertable.cfg";
 
-  if (!FileUtils::Exists(configFile.c_str())) {
+  if (!FileUtils::exists(configFile.c_str())) {
     cerr << "Error: Unable to open config file '" << configFile << "'" << endl;
     exit(0);
   }
 
-  propsPtr.reset( new Hypertable::Properties(configFile) );
+  propsPtr = new Hypertable::Properties(configFile);
   if (verbose)
     propsPtr->setProperty("verbose", "true");
 
-  port         = propsPtr->getPropertyInt("DfsBroker.local.port",     DEFAULT_PORT);
-  reactorCount = propsPtr->getPropertyInt("DfsBroker.local.reactors", System::GetProcessorCount());
-  workerCount  = propsPtr->getPropertyInt("DfsBroker.local.workers",  DEFAULT_WORKERS);
+  port         = propsPtr->getPropertyInt("DfsBroker.kfs.port",     DEFAULT_PORT);
+  reactorCount = propsPtr->getPropertyInt("DfsBroker.kfs.reactors", System::get_processor_count());
+  workerCount  = propsPtr->getPropertyInt("DfsBroker.kfs.workers",  DEFAULT_WORKERS);
 
-  ReactorFactory::Initialize(reactorCount);
+  ReactorFactory::initialize(reactorCount);
 
   comm = new Comm();
 
   if (verbose) {
-    cout << "CPU count = " << System::GetProcessorCount() << endl;
-    cout << "DfsBroker.local.port=" << port << endl;
-    cout << "DfsBroker.local.reactors=" << reactorCount << endl;
-    cout << "DfsBroker.local.workers=" << workerCount << endl;
+    cout << "CPU count = " << System::get_processor_count() << endl;
+    cout << "DfsBroker.kfs.port=" << port << endl;
+    cout << "DfsBroker.kfs.reactors=" << reactorCount << endl;
+    cout << "DfsBroker.kfs.workers=" << workerCount << endl;
   }
 
-  broker = new KosmosBroker(propsPtr);
-  appQueue = new ApplicationQueue(workerCount);
-  comm->Listen(port, new DfsBroker::ConnectionHandlerFactory(comm, appQueue, broker));
+  InetAddr::initialize(&listen_addr, INADDR_ANY, port);
+
+  broker_ptr = new KosmosBroker(propsPtr);
+  app_queue_ptr = new ApplicationQueue(workerCount);
+  ConnectionHandlerFactoryPtr chf_ptr(new DfsBroker::ConnectionHandlerFactory(comm, app_queue_ptr, broker_ptr));
+  if ((error = comm->listen(listen_addr, chf_ptr)) != Error::OK) {
+    std::string addrStr;
+    LOG_VA_ERROR("Problem listening for connections on %s - %s", InetAddr::string_format(addrStr, listen_addr), Error::get_text(error));
+    return 1;
+  }
 
   if (pidFile != "") {
     fstream filestr (pidFile.c_str(), fstream::out);
@@ -127,12 +136,8 @@ int main(int argc, char **argv) {
     filestr.close();
   }
 
-  poll(0, 0, -1);
+  app_queue_ptr->join();
 
-  appQueue->Shutdown();
-
-  delete appQueue;
-  delete broker;
   delete comm;
   return 0;
 }

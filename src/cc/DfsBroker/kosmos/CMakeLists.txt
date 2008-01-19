@@ -16,15 +16,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
 
-include_directories ( ~/kfs/include/ )
-link_directories ( ~/kfs/lib )
-
-set(KFS_CLIENT_DIR ~/kfs/lib )
-set(KFS_CLIENT_LIBS kfsClient kfsIO common)
+include_directories ( ${Kfs_INCLUDE_DIR} )
 
 # kosmosBroker
 add_executable (kosmosBroker main.cc KosmosBroker.cc)
-target_link_libraries (kosmosBroker pthread ${BOOST_LIB} DfsBroker AsyncComm Common log4cpp ${KFS_CLIENT_LIBS})
+target_link_libraries (kosmosBroker pthread ${BOOST_LIB} DfsBroker AsyncComm Common log4cpp ${Kfs_LIBRARY})
 
 install (TARGETS kosmosBroker RUNTIME DESTINATION bin)
 

@@ -418,6 +418,10 @@ void LocalBroker::rmdir(ResponseCallback *cb, const char *dirName) {
  */
 void LocalBroker::readdir(ResponseCallbackReaddir *cb, const char *dirName) {
   std::vector<std::string> listing;
+
+  int Readdir(const char *pathname, std::vector<std::string> &result);
+
+
   std::string absDirName;
 
   if (m_verbose) {
