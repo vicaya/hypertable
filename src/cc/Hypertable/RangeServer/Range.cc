@@ -296,6 +296,24 @@ const char *Range::get_split_row() {
 }
 
 
+
+/**
+ *  
+ */
+void Range::get_compaction_priority_data(std::vector<AccessGroup::CompactionPriorityDataT> &priority_data_vector) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  size_t next_slot = priority_data_vector.size();
+
+  priority_data_vector.resize( priority_data_vector.size() + m_access_group_vector.size() );
+
+  for (size_t i=0; i<m_access_group_vector.size(); i++) {
+    m_access_group_vector[i]->get_compaction_priority_data(priority_data_vector[next_slot]);
+    next_slot++;
+  }
+}
+
+
+
 /**
  * 
  */
@@ -569,7 +587,7 @@ void Range::do_compaction(bool major) {
 
 void Range::run_compaction(bool major) {
   Timestamp timestamp;
-  
+
   {
     boost::mutex::scoped_lock lock(m_maintenance_mutex);
 

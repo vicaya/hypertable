@@ -1076,9 +1076,11 @@ void RangeServer::do_maintenance() {
 
 
 /**
+ *
  */
 void RangeServer::log_cleanup() {
   std::vector<RangePtr> range_vec;
+  std::vector<AccessGroup::CompactionPriorityDataT> priority_data_vec;
   uint64_t timestamp, oldest_cached_timestamp = 0;
 
   {
@@ -1086,6 +1088,28 @@ void RangeServer::log_cleanup() {
     for (TableInfoMapT::iterator table_iter = m_table_info_map.begin(); table_iter != m_table_info_map.end(); table_iter++) {
       (*table_iter).second->get_range_vector(range_vec);
     }
+  }
+
+  /**
+   * Load up a vector of compaction priority data
+   */
+  for (size_t i=0; i<range_vec.size(); i++) {
+    size_t start = priority_data_vec.size();
+    range_vec[i]->get_compaction_priority_data(priority_data_vec);
+    for (size_t j=start; j<priority_data_vec.size(); j++)
+      priority_data_vec[j].user_data = (void *)i;
+  }
+
+  /**
+   * 
+   */
+  for (size_t i=0; i<priority_data_vec.size(); i++) {
+    size_t rangei = (size_t)priority_data_vec[i].user_data;
+    cout << range_vec[rangei]->table_name() << "[" << range_vec[rangei]->start_row() << ".." << range_vec[rangei]->end_row() << "]";
+    cout << " ag=" << priority_data_vec[i].ag->get_name();
+    cout << " timestamp=" << priority_data_vec[i].oldest_cached_timestamp;
+    cout << " memory=" << priority_data_vec[i].mem_used;
+    cout << endl;
   }
 
   for (size_t i=0; i<range_vec.size(); i++) {

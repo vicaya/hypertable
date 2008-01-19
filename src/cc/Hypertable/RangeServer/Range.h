@@ -78,6 +78,8 @@ namespace Hypertable {
 
     int replay_split_log(string &logDir, uint64_t real_timestamp);
 
+    void get_compaction_priority_data(std::vector<AccessGroup::CompactionPriorityDataT> &priority_data_vector);
+
     MaintenanceTask *get_maintenance();
     void do_split();
     void do_compaction(bool major=false);
@@ -88,6 +90,7 @@ namespace Hypertable {
     void add_update_timestamp(uint64_t timestamp) {
       m_scanner_timestamp_controller.add_update_timestamp(timestamp);
     }
+
     void remove_update_timestamp(uint64_t timestamp) {
       m_scanner_timestamp_controller.remove_update_timestamp(timestamp);      
     }

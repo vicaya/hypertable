@@ -133,6 +133,16 @@ bool AccessGroup::needs_compaction() {
   return false;
 }
 
+void AccessGroup::get_compaction_priority_data(CompactionPriorityDataT &priority_data) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  priority_data.ag = this;
+  priority_data.oldest_cached_timestamp = m_oldest_cached_timestamp;
+  priority_data.mem_used = m_cell_cache_ptr->memory_used();
+  // TBD ...
+  priority_data.mem_added = 0;
+  priority_data.in_memory = false;
+}
+
 
 void AccessGroup::add_cell_store(CellStorePtr &cellstore_ptr, uint32_t id) {
   boost::mutex::scoped_lock lock(m_mutex);
