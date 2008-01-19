@@ -38,21 +38,14 @@ find_package(EXPAT REQUIRED)
 find_package(Doxygen)
 find_package(Tcmalloc)
 
+MESSAGE(STATUS "log4cpp lib     = ${Log4cpp_LIBRARY}")
+MESSAGE(STATUS "log4cpp include = ${Log4cpp_INCLUDE_DIR}")
+
 # include directories
 include_directories(${Boost_INCLUDE_DIRS} ${Log4cpp_INCLUDE_DIR} src/cc)
 
 # link directories
 link_directories(${Boost_LIBRARY_DIRS})
-
-IF(EXISTS "${Boost_LIBRARY_DIR}/libboost_thread.a")
-  set (BOOST_LIB "boost_thread")
-ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/libboost_thread-mt.a")
-  set (BOOST_LIB "boost_thread-mt")
-ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/libboost_thread-gcc41-mt.a")
-  set (BOOST_LIB "boost_thread-gcc41-mt")
-ELSE(EXISTS "${Boost_LIBRARY_DIR}/libboost_thread.a")
-  set (BOOST_LIB "boost_thread")
-ENDIF(EXISTS "${Boost_LIBRARY_DIR}/libboost_thread.a")
 
 IF (DOXYGEN_FOUND)
    configure_file(${HYPERTABLE_SOURCE_DIR}/doc/Doxyfile ${HYPERTABLE_BINARY_DIR}/Doxyfile)
