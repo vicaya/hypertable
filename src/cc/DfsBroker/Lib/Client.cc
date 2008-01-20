@@ -87,10 +87,8 @@ int Client::open(std::string &name, int32_t *fdp) {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       LOG_VA_ERROR("Dfs 'open' error, name=%s : %s", name.c_str(), m_protocol->string_format_message(eventPtr).c_str());
-      error = (int)m_protocol->response_code(eventPtr);
     }
-    else
-      *fdp = ((Protocol::ResponseHeaderOpenT *)eventPtr->message)->handle;
+    error = decode_response_open(eventPtr, fdp);
   }
   return error;
 }

@@ -37,12 +37,13 @@ using namespace std;
  *
  */
 int32_t Protocol::response_code(Event *event) {
+  int32_t error;
   if (event->type == Event::ERROR)
     return event->error;
-  if (event->messageLen < sizeof(int32_t))
+  uint8_t *msg = event->message;
+  size_t remaining = event->messageLen;
+  if (!Serialization::decode_int(&msg, &remaining, (uint32_t *)&error))
     return Error::RESPONSE_TRUNCATED;
-  int32_t error;
-  memcpy(&error, event->message, sizeof(int32_t));
   return error;
 }
 
@@ -53,8 +54,8 @@ int32_t Protocol::response_code(Event *event) {
  */
 std::string Protocol::string_format_message(Event *event) {
   int error = 0;
-  uint8_t *msgPtr = event->message;
-  size_t len = event->messageLen;
+  uint8_t *msg = event->message;
+  size_t remaining = event->messageLen;
 
   if (event == 0)
     return (std::string)"NULL event";
@@ -62,19 +63,15 @@ std::string Protocol::string_format_message(Event *event) {
   if (event->type != Event::MESSAGE)
     return event->toString();
 
-  if (len < sizeof(int32_t))
+  if (!Serialization::decode_int(&msg, &remaining, (uint32_t *)&error))
     return (std::string)"Message Truncated";
-
-  memcpy(&error, msgPtr, sizeof(int32_t));
-  msgPtr += sizeof(int32_t);
-  len -= sizeof(int32_t);
 
   if (error == Error::OK)
     return (std::string)Error::get_text(error);
   else {
     const char *str;
 
-    if (!Serialization::decode_string(&msgPtr, &len, &str))
+    if (!Serialization::decode_string(&msg, &remaining, &str))
       return (std::string)Error::get_text(error) + " - truncated";
 
     return (std::string)Error::get_text(error) + " : " + str;

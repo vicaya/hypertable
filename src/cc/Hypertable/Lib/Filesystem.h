@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -69,6 +69,14 @@ namespace Hypertable {
      */
     virtual int open_buffered(std::string &name, uint32_t buf_size, uint32_t outstanding, int32_t *fdp, uint64_t start_offset=0, uint64_t end_offset=0) = 0;
 
+    /** Decodes the response from an open request
+     *
+     * @param event_ptr reference to response event
+     * @param fdp address of variable to hold return file descriptor
+     * @return error code from event object
+     */
+    int decode_response_open(EventPtr &event_ptr, int32_t *fdp);
+
     /** Creates a file asynchronously.  Issues a create file request with various create
      * mode parameters.   The caller will get notified of successful completion
      * or error via the given dispatch handler.  It is up to the caller to deserialize
@@ -97,6 +105,14 @@ namespace Hypertable {
      */
     virtual int create(std::string &name, bool overwrite, int32_t bufferSize,
 		       int32_t replication, int64_t blockSize, int32_t *fdp) = 0;
+
+    /** Decodes the response from a create request
+     *
+     * @param event_ptr reference to response event
+     * @param fdp address of variable to hold return file descriptor
+     * @return error code from event object
+     */
+    int decode_response_create(EventPtr &event_ptr, int32_t *fdp);
 
     /** Closes a file asynchronously.  Issues a close file request.
      * The caller will get notified of successful completion or error via
@@ -146,6 +162,15 @@ namespace Hypertable {
      * @return Error::OK on success or error code on failure
      */
     virtual int read(int32_t fd, uint32_t amount, uint8_t *dst, uint32_t *nreadp) = 0;
+
+    /** Decodes the response from a read request
+     *
+     * @param event_ptr reference to response event
+     * @param dst destination buffer for read data
+     * @param nreadp address of variable to hold amount of data read.
+     * @return error code from event object
+     */
+    int decode_response_read(EventPtr &event_ptr, uint8_t *dst, uint32_t *nreadp);
 
     /** Appends data to a file asynchronously.  Issues an append request.
      * The caller will get notified of successful completion or error via the
@@ -233,6 +258,14 @@ namespace Hypertable {
      */
     virtual int length(std::string &name, int64_t *lenp) = 0;
 
+    /** Decodes the response from a length request
+     *
+     * @param event_ptr reference to response event
+     * @param lenp address of variable to hold returned length
+     * @return error code from event object
+     */
+    int decode_response_length(EventPtr &event_ptr, int64_t *lenp);
+
     /** Reads data from a file at the specified position asynchronously.  Issues
      * a pread request.  The caller will get notified of successful completion or
      * error via the given dispatch handler.  It's up to the caller to deserialize
@@ -260,6 +293,15 @@ namespace Hypertable {
      * @return Error::OK on success or error code on failure
      */
     virtual int pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst, uint32_t *nreadp) = 0;
+
+    /** Decodes the response from a pread request
+     *
+     * @param event_ptr reference to response event
+     * @param dst destination buffer for read data
+     * @param nreadp address of variable to hold amount of data read.
+     * @return error code from event object
+     */
+    int decode_response_pread(EventPtr &event_ptr, uint8_t *dst, uint32_t *nreadp);
 
     /** Creates a directory asynchronously.  Issues a mkdirs request which creates a directory,
      * including all its missing parents.  The caller will get notified of successful completion
@@ -316,6 +358,14 @@ namespace Hypertable {
      */
     virtual int readdir(std::string &name, std::vector<std::string> &listing) = 0;
 
+    /** Decodes the response from a readdir request
+     *
+     * @param event_ptr reference to response event
+     * @param listing reference to vector of entry names
+     * @return error code from event object
+     */
+    int decode_response_readdir(EventPtr &event_ptr, std::vector<std::string> &listing);
+
     /** Flushes a file asynchronously.  Isues a flush command which causes all buffered
      * writes to get persisted to disk.  The caller will get notified of successful
      * completion or error via the given dispatch handler.  This command will get
@@ -336,6 +386,13 @@ namespace Hypertable {
      * @return Error::OK on success or error code on failure
      */
     virtual int flush(int32_t fd) = 0;
+
+    /** Decodes the response from an request that only returns an error code
+     *
+     * @param event_ptr reference to response event
+     * @return error code from event object
+     */
+    int decode_response(EventPtr &event_ptr);
 
   };
 

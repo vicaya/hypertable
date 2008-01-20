@@ -28,6 +28,7 @@ CommitLogReader.cc
 Defaults.cc
 EventHandlerMasterChange.cc
 fletcher16.cc
+Filesystem.cc
 HqlCommandInterpreter.cc
 HqlHelpText.cc
 Key.cc

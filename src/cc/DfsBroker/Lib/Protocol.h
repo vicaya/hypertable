@@ -71,66 +71,6 @@ namespace Hypertable {
 
       virtual const char *command_text(short command);
 
-      /**
-       * Request Headers
-       */
-
-      typedef struct {
-	uint16_t command;
-      } __attribute__((packed)) RequestHeaderT;
-
-      typedef struct {
-	RequestHeaderT hdr;
-	uint32_t       bufferSize;
-      } __attribute__((packed)) RequestHeaderOpenT;
-
-      typedef struct {
-	RequestHeaderT hdr;
-	int16_t        overwrite;
-	int32_t        replication;
-	int32_t        bufferSize;
-	int64_t        blockSize;
-      } __attribute__((packed)) RequestHeaderCreateT;
-
-      typedef struct {
-	RequestHeaderT hdr;
-	int32_t        fd;
-      } __attribute__((packed)) RequestHeaderCloseT;
-
-      typedef RequestHeaderCloseT RequestHeaderFlushT;
-
-      typedef struct {
-	RequestHeaderT hdr;
-	int32_t        fd;
-	uint32_t       amount;
-      } __attribute__((packed)) RequestHeaderReadT;
-
-      typedef RequestHeaderReadT RequestHeaderAppendT;
-
-      typedef struct {
-	RequestHeaderT hdr;
-	int32_t        fd;
-	uint64_t       offset;
-      } __attribute__((packed)) RequestHeaderSeekT;
-
-      typedef  struct {
-	RequestHeaderT hdr;
-      } __attribute__((packed)) RequestHeaderRemoveT;
-
-      typedef RequestHeaderRemoveT RequestHeaderLengthT;
-
-      typedef RequestHeaderRemoveT RequestHeaderMkdirsT;
-
-      typedef RequestHeaderRemoveT RequestHeaderRmdirT;
-
-      typedef RequestHeaderRemoveT RequestHeaderReaddirT;
-
-      typedef struct {
-	RequestHeaderT hdr;
-	int32_t        fd;
-	uint64_t       offset;
-	uint32_t       amount;
-      } __attribute__((packed)) RequestHeaderPositionReadT;
 
       /**
        * Response Headers
