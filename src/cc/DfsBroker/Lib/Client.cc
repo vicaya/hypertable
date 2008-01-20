@@ -128,10 +128,8 @@ int Client::create(std::string &name, bool overwrite, int32_t bufferSize,
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       LOG_VA_ERROR("Dfs 'create' error, name=%s : %s", name.c_str(), m_protocol->string_format_message(eventPtr).c_str());
-      error = (int)m_protocol->response_code(eventPtr);
     }
-    else
-      *fdp = ((Protocol::ResponseHeaderCreateT *)eventPtr->message)->handle;
+    error = decode_response_create(eventPtr, fdp);
   }
   return error;
 }
@@ -177,8 +175,8 @@ int Client::close(int32_t fd) {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       LOG_VA_ERROR("Dfs 'close' error, fd=%d : %s", fd, m_protocol->string_format_message(eventPtr).c_str());
-      error = (int)m_protocol->response_code(eventPtr);
     }
+    error = decode_response(eventPtr);
   }
 
   return error;
@@ -215,13 +213,8 @@ int Client::read(int32_t fd, uint32_t amount, uint8_t *dst, uint32_t *nreadp) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       LOG_VA_ERROR("Dfs 'read' error (amount=%d, fd=%d) : %s",
 		   amount, fd, m_protocol->string_format_message(eventPtr).c_str());
-      error = (int)m_protocol->response_code(eventPtr);
     }
-    else {
-      Protocol::ResponseHeaderReadT *readHeader = (Protocol::ResponseHeaderReadT *)eventPtr->message;
-      *nreadp = readHeader->amount;
-      memcpy(dst, &readHeader[1], readHeader->amount);
-    }
+    error = decode_response_read(eventPtr, dst, nreadp);
   }
   return error;
 }
@@ -243,11 +236,12 @@ int Client::append(int32_t fd, const void *buf, uint32_t amount) {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       LOG_VA_ERROR("Dfs 'append' error, fd=%d, amount=%d : %s", fd, amount, m_protocol->string_format_message(eventPtr).c_str());
-      error = (int)m_protocol->response_code(eventPtr);
     }
-    else if (((Protocol::ResponseHeaderAppendT *)eventPtr->message)->amount != (int32_t)amount) {
-      LOG_VA_ERROR("Short DFS file append fd=%d : tried to append %d but only got %d", fd, amount,
-		   ((Protocol::ResponseHeaderAppendT *)eventPtr->message)->amount);
+    uint64_t offset;
+    uint32_t actual_amount;
+    error = decode_response_append(eventPtr, &offset, &actual_amount);
+    if (amount != actual_amount) {
+      LOG_VA_ERROR("Short DFS file append fd=%d : tried to append %d but only got %d", fd, amount, actual_amount);
       error = Error::DFSBROKER_IO_ERROR;
     }
   }
@@ -269,7 +263,7 @@ int Client::seek(int32_t fd, uint64_t offset) {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       LOG_VA_ERROR("Dfs 'seek' error, fd=%d, offset=%lld : %s", fd, offset, m_protocol->string_format_message(eventPtr).c_str());
-      error = (int)m_protocol->response_code(eventPtr);
+      error = decode_response(eventPtr);
     }
   }
   return error;
@@ -290,7 +284,7 @@ int Client::remove(std::string &name) {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       LOG_VA_ERROR("Dfs 'remove' error, name=%s : %s", name.c_str(), m_protocol->string_format_message(eventPtr).c_str());
-      error = (int)m_protocol->response_code(eventPtr);
+      error = decode_response(eventPtr);
     }
   }
   return error;
@@ -312,7 +306,7 @@ int Client::status() {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       LOG_VA_ERROR(" 'status' error : %s", m_protocol->string_format_message(eventPtr).c_str());
-      error = (int)m_protocol->response_code(eventPtr);
+      error = decode_response(eventPtr);
     }
   }
   return error;
@@ -334,10 +328,8 @@ int Client::length(std::string &name, int64_t *lenp) {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       LOG_VA_ERROR("Dfs 'length' error, name=%s : %s", name.c_str(), m_protocol->string_format_message(eventPtr).c_str());
-      error = (int)m_protocol->response_code(eventPtr);
     }
-    else
-      *lenp = ((Protocol::ResponseHeaderLengthT *)eventPtr->message)->length;
+    error = decode_response_length(eventPtr, lenp);
   }
   return error;
 }
@@ -361,13 +353,8 @@ int Client::pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst, ui
     if (!syncHandler.wait_for_reply(eventPtr)) {
       LOG_VA_ERROR("Dfs 'pread' error (offset=%lld, amount=%d, fd=%d) : %s",
 		   offset, amount, fd, m_protocol->string_format_message(eventPtr).c_str());
-      error = (int)m_protocol->response_code(eventPtr);
     }
-    else {
-      Protocol::ResponseHeaderReadT *readHeader = (Protocol::ResponseHeaderReadT *)eventPtr->message;
-      *nreadp = readHeader->amount;
-      memcpy(dst, &readHeader[1], readHeader->amount);
-    }
+    error = decode_response_pread(eventPtr, dst, nreadp);
   }
   return error;
 }
@@ -387,7 +374,7 @@ int Client::mkdirs(std::string &name) {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       LOG_VA_ERROR("Dfs 'mkdirs' error, name=%s : %s", name.c_str(), m_protocol->string_format_message(eventPtr).c_str());
-      error = (int)m_protocol->response_code(eventPtr);
+      error = decode_response(eventPtr);
     }
   }
   return error;
@@ -408,7 +395,7 @@ int Client::flush(int32_t fd) {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       LOG_VA_ERROR("Dfs 'flush' error, fd=%d : %s", fd, m_protocol->string_format_message(eventPtr).c_str());
-      error = (int)m_protocol->response_code(eventPtr);
+      error = decode_response(eventPtr);
     }
   }
   return error;
@@ -429,7 +416,7 @@ int Client::rmdir(std::string &name) {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       LOG_VA_ERROR("Dfs 'rmdir' error, name=%s : %s", name.c_str(), m_protocol->string_format_message(eventPtr).c_str());
-      error = (int)m_protocol->response_code(eventPtr);
+      error = decode_response(eventPtr);
     }
   }
   return error;
@@ -458,22 +445,8 @@ int Client::readdir(std::string &name, std::vector<std::string> &listing) {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       LOG_VA_ERROR("Dfs 'readdir' error, name=%s : %s", name.c_str(), m_protocol->string_format_message(eventPtr).c_str());
-      error = (int)m_protocol->response_code(eventPtr);
     }
-    else {
-      uint8_t *msgPtr = eventPtr->message + 4;
-      size_t remaining = eventPtr->messageLen - 4;
-      uint32_t len;
-      const char *str;
-      listing.clear();
-      if (!Serialization::decode_int(&msgPtr, &remaining, &len))
-	return Error::RESPONSE_TRUNCATED;
-      for (uint32_t i=0; i<len; i++) {
-	if (!Serialization::decode_string(&msgPtr, &remaining, &str))
-	  return Error::RESPONSE_TRUNCATED;
-	listing.push_back((std::string)str);
-      }
-    }
+    error = decode_response_readdir(eventPtr, listing);
   }
   return error;
 }

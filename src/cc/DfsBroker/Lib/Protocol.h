@@ -71,35 +71,6 @@ namespace Hypertable {
 
       virtual const char *command_text(short command);
 
-
-      /**
-       * Response Headers
-       */
-
-      typedef struct {
-	int32_t  error;
-	int32_t  handle;
-      } __attribute__((packed)) ResponseHeaderOpenT;
-
-      typedef ResponseHeaderOpenT ResponseHeaderCreateT;
-
-      typedef struct {
-	int32_t  error;
-	uint64_t offset;
-	int32_t  amount;
-      } __attribute__((packed)) ResponseHeaderReadT;
-
-      typedef ResponseHeaderReadT ResponseHeaderAppendT;
-
-      typedef ResponseHeaderOpenT ResponseHeaderRemoveT;
-
-      typedef ResponseHeaderOpenT ResponseHeaderMkdirsT;
-
-      typedef struct {
-	int32_t  error;
-	int64_t  length;
-      } __attribute__((packed)) ResponseHeaderLengthT;
-
       static const uint16_t COMMAND_OPEN     = 0;
       static const uint16_t COMMAND_CREATE   = 1;
       static const uint16_t COMMAND_CLOSE    = 2;

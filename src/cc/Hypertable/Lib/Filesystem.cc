@@ -34,10 +34,13 @@ int Filesystem::decode_response_open(EventPtr &event_ptr, int32_t *fdp) {
   if (!Serialization::decode_int(&msg, &remaining, (uint32_t *)&error))
     return Error::RESPONSE_TRUNCATED;
 
+  if (error != Error::OK)
+    return error;
+
   if (!Serialization::decode_int(&msg, &remaining, (uint32_t *)fdp))
     return Error::RESPONSE_TRUNCATED;
 
-  return error;
+  return Error::OK;
 }
 
 /**
@@ -58,6 +61,9 @@ int Filesystem::decode_response_read(EventPtr &event_ptr, uint8_t *dst, uint32_t
   if (!Serialization::decode_int(&msg, &remaining, (uint32_t *)&error))
     return Error::RESPONSE_TRUNCATED;
 
+  if (error != Error::OK)
+    return error;
+
   if (!Serialization::decode_long(&msg, &remaining, &offset))
     return Error::RESPONSE_TRUNCATED;
 
@@ -70,7 +76,33 @@ int Filesystem::decode_response_read(EventPtr &event_ptr, uint8_t *dst, uint32_t
   // PERF: We could just send back a pointer to msg here
   memcpy(dst, msg, *nreadp);
 
-  return error;
+  return Error::OK;
+}
+
+
+/**
+ */
+int Filesystem::decode_response_read_header(EventPtr &event_ptr, uint64_t *offsetp, uint32_t *amountp, uint8_t **dstp) {
+  uint8_t *msg = event_ptr->message;
+  size_t remaining = event_ptr->messageLen;
+  int error;
+
+  if (!Serialization::decode_int(&msg, &remaining, (uint32_t *)&error))
+    return Error::RESPONSE_TRUNCATED;
+
+  if (error != Error::OK)
+    return error;
+
+  if (!Serialization::decode_long(&msg, &remaining, offsetp))
+    return Error::RESPONSE_TRUNCATED;
+
+  if (!Serialization::decode_int(&msg, &remaining, amountp))
+    return Error::RESPONSE_TRUNCATED;
+
+  if (dstp)
+    *dstp = msg;
+
+  return Error::OK;
 }
 
 
@@ -80,6 +112,30 @@ int Filesystem::decode_response_read(EventPtr &event_ptr, uint8_t *dst, uint32_t
 int Filesystem::decode_response_pread(EventPtr &event_ptr, uint8_t *dst, uint32_t *nreadp) {
   return decode_response_read(event_ptr, dst, nreadp);
 }
+
+/**
+ */
+int Filesystem::decode_response_append(EventPtr &event_ptr, uint64_t *offsetp, uint32_t *amountp) {
+  uint8_t *msg = event_ptr->message;
+  size_t remaining = event_ptr->messageLen;
+  int error;
+
+  if (!Serialization::decode_int(&msg, &remaining, (uint32_t *)&error))
+    return Error::RESPONSE_TRUNCATED;
+
+  if (error != Error::OK)
+    return error;
+
+  if (!Serialization::decode_long(&msg, &remaining, offsetp))
+    return Error::RESPONSE_TRUNCATED;
+
+  if (!Serialization::decode_int(&msg, &remaining, amountp))
+    return Error::RESPONSE_TRUNCATED;
+
+  return Error::OK;
+}
+
+
 
 
 /**
@@ -92,10 +148,13 @@ int Filesystem::decode_response_length(EventPtr &event_ptr, int64_t *lenp) {
   if (!Serialization::decode_int(&msg, &remaining, (uint32_t *)&error))
     return Error::RESPONSE_TRUNCATED;
 
+  if (error != Error::OK)
+    return error;
+
   if (!Serialization::decode_long(&msg, &remaining, (uint64_t *)lenp))
     return Error::RESPONSE_TRUNCATED;
 
-  return error;
+  return Error::OK;
 }
 
 
@@ -111,6 +170,9 @@ int Filesystem::decode_response_readdir(EventPtr &event_ptr, std::vector<std::st
   if (!Serialization::decode_int(&msg, &remaining, (uint32_t *)&error))
     return Error::RESPONSE_TRUNCATED;
 
+  if (error != Error::OK)
+    return error;
+
   listing.clear();
   if (!Serialization::decode_int(&msg, &remaining, &len))
     return Error::RESPONSE_TRUNCATED;
@@ -121,7 +183,7 @@ int Filesystem::decode_response_readdir(EventPtr &event_ptr, std::vector<std::st
     listing.push_back((std::string)str);
   }
 
-  return error;
+  return Error::OK;
 }
 
 
@@ -135,5 +197,5 @@ int Filesystem::decode_response(EventPtr &event_ptr) {
   if (!Serialization::decode_int(&msg, &remaining, (uint32_t *)&error))
     return Error::RESPONSE_TRUNCATED;
 
-  return error;
+  return Error::OK;
 }

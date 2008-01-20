@@ -51,9 +51,11 @@ int CommandCopyToLocal::run() {
   int error = Error::OK;
   EventPtr eventPtr;
   FILE *fp = 0;
-  DfsBroker::Protocol::ResponseHeaderReadT *readHeader = 0;
   uint64_t startOffset = 0;
   int srcArg = 0;
+  uint64_t offset;
+  uint32_t amount;
+  uint8_t *dst;
 
   if (m_args.size() < 2) {
     cerr << "Insufficient number of arguments" << endl;
@@ -89,19 +91,17 @@ int CommandCopyToLocal::run() {
 
   while (syncHandler.wait_for_reply(eventPtr)) {
 
-    if ((error = Protocol::response_code(eventPtr)) != Error::OK)
+    if ((error = Filesystem::decode_response_read_header(eventPtr, &offset, &amount, &dst)) != Error::OK)
       goto abort;
 
-    readHeader = (DfsBroker::Protocol::ResponseHeaderReadT *)eventPtr->message;
-
-    if (readHeader->amount > 0) {
-      if (fwrite(&readHeader[1], readHeader->amount, 1, fp) != 1) {
+    if (amount > 0) {
+      if (fwrite(dst, amount, 1, fp) != 1) {
 	perror("write failed");
 	goto abort;
       }
     }
 
-    if (readHeader->amount < BUFFER_SIZE) {
+    if (amount < (uint32_t)BUFFER_SIZE) {
       syncHandler.wait_for_reply(eventPtr);
       break;
     }

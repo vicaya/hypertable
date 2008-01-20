@@ -49,7 +49,6 @@ int CommandCopyFromLocal::run() {
   int error = Error::OK;
   EventPtr eventPtr;
   FILE *fp = 0;
-  DfsBroker::Protocol::ResponseHeaderAppendT *appendHeader = 0;
   size_t nread;
   int srcArg = 0;
   uint8_t *buf;
@@ -82,10 +81,6 @@ int CommandCopyFromLocal::run() {
       LOG_VA_ERROR("%s", eventPtr->toString().c_str());
       goto abort;
     }
-
-    appendHeader = (DfsBroker::Protocol::ResponseHeaderAppendT *)eventPtr->message;
-
-    //LOG_VA_INFO("Wrote %d bytes at offset %lld", appendHeader->amount, appendHeader->offset);
 
     buf = new uint8_t [ BUFFER_SIZE ];
     if ((nread = fread(buf, 1, BUFFER_SIZE, fp)) == 0)

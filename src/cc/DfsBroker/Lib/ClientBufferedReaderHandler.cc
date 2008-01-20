@@ -98,11 +98,16 @@ void ClientBufferedReaderHandler::handle(EventPtr &eventPtr) {
       return;
     }
     m_queue.push(eventPtr);
-    DfsBroker::Protocol::ResponseHeaderReadT *readHeader = (DfsBroker::Protocol::ResponseHeaderReadT *)eventPtr->message;
-    m_actual_offset += readHeader->amount;
-    if (readHeader->amount < (int32_t)m_read_size) {
-      //LOG_VA_ERROR("short read %ld < %ld (actual=%ld, end=%ld)", readHeader->amount, (int32_t)m_read_size, m_actual_offset, m_end_offset);
-      m_eof = true;
+
+    {
+      uint64_t offset;
+      uint32_t amount;
+      Filesystem::decode_response_read_header(eventPtr, &offset, &amount, 0);
+      m_actual_offset += amount;
+      if (amount < m_read_size) {
+	//LOG_VA_ERROR("short read %ld < %ld (actual=%ld, end=%ld)", amount, (int32_t)m_read_size, m_actual_offset, m_end_offset);
+	m_eof = true;
+      }
     }
   }
   else if (eventPtr->type == Event::ERROR) {
@@ -140,10 +145,11 @@ int ClientBufferedReaderHandler::read(uint8_t *buf, uint32_t len, uint32_t *nrea
     }
 
     if (m_ptr == 0) {
+      uint64_t offset;
+      uint32_t amount;
       EventPtr &eventPtr = m_queue.front();
-      DfsBroker::Protocol::ResponseHeaderReadT *readHeader = (DfsBroker::Protocol::ResponseHeaderReadT *)eventPtr->message;
-      m_ptr = (uint8_t *)&readHeader[1];
-      m_end_ptr = m_ptr + readHeader->amount;
+      Filesystem::decode_response_read_header(eventPtr, &offset, &amount, &m_ptr);
+      m_end_ptr = m_ptr + amount;
     }
 
     available = m_end_ptr-m_ptr;
