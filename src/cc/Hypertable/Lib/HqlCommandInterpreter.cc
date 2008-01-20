@@ -169,14 +169,25 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       uint64_t insert_count = 0;
       boost::xtime start_time, finish_time;
       double elapsed_time;
+      bool into_table = true;
+      bool display_timestamps = false;
+      FILE *outfp;
 
       boost::xtime_get(&start_time, boost::TIME_UTC);
 
-      if ((error = m_client->open_table(state.table_name, table_ptr)) != Error::OK)
-	throw Exception(error, std::string("Problem opening table '") + state.table_name + "'");
+      if (state.table_name == "") {
+	if (state.output_file == "")
+	  throw Exception(Error::HQL_PARSE_ERROR, "LOAD DATA INFILE ... INTO FILE - bad filename");
+	outfp = fopen(state.output_file.c_str(), "w");
+	into_table = false;
+      }
+      else {
+	if ((error = m_client->open_table(state.table_name, table_ptr)) != Error::OK)
+	  throw Exception(error, std::string("Problem opening table '") + state.table_name + "'");
 
-      if ((error = table_ptr->create_mutator(mutator_ptr)) != Error::OK)
-	throw Exception(error, std::string("Problem creating mutator on table '") + state.table_name + "'");
+	if ((error = table_ptr->create_mutator(mutator_ptr)) != Error::OK)
+	  throw Exception(error, std::string("Problem creating mutator on table '") + state.table_name + "'");
+      }
 
       boost::trim_if(state.str, boost::is_any_of("'\""));
 
@@ -202,19 +213,41 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
 
       lds = new LoadDataSource(state.str, state.row_key_column, state.timestamp_column);
 
+      if (!into_table) {
+	display_timestamps = lds->has_timestamps();
+	if (display_timestamps)
+	  fprintf(outfp, "timestamp\trowkey\tcolumnkey\tvalue\n");
+	else
+	  fprintf(outfp, "rowkey\tcolumnkey\tvalue\n");
+      }
+
       while (lds->next(0, &timestamp, &key, &value, &value_len, &consumed)) {
-	insert_count++;
-	try {
-	  mutator_ptr->set(timestamp, key, value, value_len);
-	}
-	catch (Hypertable::Exception &e) {
-	  cerr << "error: " << Error::get_text(e.code()) << " - " << e.what() << endl;
+	if (value_len > 0) {
+	  insert_count++;
+	  if (into_table) {
+	    try {
+	      mutator_ptr->set(timestamp, key, value, value_len);
+	    }
+	    catch (Hypertable::Exception &e) {
+	      cerr << "error: " << Error::get_text(e.code()) << " - " << e.what() << endl;
+	    }
+	  }
+	  else {
+	    if (display_timestamps)
+	      fprintf(outfp, "%llu\t%s\t%s\t%s\n", (long long unsigned int)timestamp, (const char *)key.row, key.column_family, (const char *)value);
+	    else
+	      fprintf(outfp, "%s\t%s\t%s\n", (const char *)key.row, key.column_family, (const char *)value);
+	  }
 	}
 	show_progress += consumed;
       }
       
       delete lds;
-      mutator_ptr->flush();
+
+      if (into_table)
+	mutator_ptr->flush();
+      else
+	fclose(outfp);
 
       boost::xtime_get(&finish_time, boost::TIME_UTC);
 

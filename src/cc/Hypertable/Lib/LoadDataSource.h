@@ -40,6 +40,7 @@ namespace Hypertable {
   public:
     LoadDataSource(std::string fname, std::string row_key_column, std::string timestamp_column);
     virtual ~LoadDataSource() { return; }
+    bool has_timestamps() { return m_leading_timestamps || (m_timestamp_index != -1); }
     virtual bool next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp);
 
   private:

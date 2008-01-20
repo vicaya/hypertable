@@ -103,6 +103,7 @@ namespace Hypertable {
       int command;
       std::string table_name;
       std::string str;
+      std::string output_file;
       std::string table_compressor;
       std::string row_key_column;
       std::string timestamp_column;
@@ -285,6 +286,16 @@ namespace Hypertable {
 	display_string("set_str");
 	state.str = std::string(str, end-str);
 	trim_if(state.str, boost::is_any_of("'\""));
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct set_output_file {
+      set_output_file(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("set_output_file");
+	state.output_file = std::string(str, end-str);
+	trim_if(state.output_file, boost::is_any_of("'\""));
       }
       hql_interpreter_state &state;
     };
@@ -907,8 +918,9 @@ namespace Hypertable {
 	    = LOAD >> DATA >> INFILE 
 	    >> !( load_data_option >> *( load_data_option ) )
 	    >> string_literal[set_str(self.state)] 
-	    >> INTO >> TABLE 
-	    >> user_identifier[set_table_name(self.state)]
+	    >> INTO >> 
+	    ( TABLE >> user_identifier[set_table_name(self.state)]
+	      | FILE >> user_identifier[set_output_file(self.state)] )
 	    ;
 
 	  load_data_option

@@ -154,6 +154,8 @@ namespace {
   "\n" \
   "LOAD DATA INFILE [options] fname INTO TABLE name\n" \
   "\n" \
+  "LOAD DATA INFILE [options] fname INTO FILE fname\n" \
+  "\n" \
   "options:\n" \
   "\n" \
   "  ( ROW_KEY_COLUMN=name | TIMESTAMP_COLUMN=name )*\n" \
@@ -173,6 +175,10 @@ namespace {
   "|----|----|----|----|----|----|----|----|----|----|\n" \
   "***************************************************\n" \
   "Load complete (59.70s elapsed_time, 4001802.20 bytes/s, 33499.06 inserts/s)\n" \
+  "\n" \
+  "The second form (INTO FILE) is really for testing purposes.  It allows\n" \
+  "you to convert your .tsv file into a load file that contains one\n" \
+  "insert per line which can be helpful for debugging." \
   "\n";  
 
   const char *help_text_insert =
