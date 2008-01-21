@@ -55,6 +55,7 @@ namespace Hypertable {
     int wait_for_completion();
     void reset();
     MutatorScatterBuffer *create_redo_buffer();
+    uint64_t get_resend_count() { return m_resends; }
 
   private:
 
@@ -129,6 +130,7 @@ namespace Hypertable {
     UpdateBufferMapT     m_buffer_map;
     CompletionCounter    m_completion_counter;
     bool                 m_full;
+    uint64_t             m_resends;
   };
   typedef boost::intrusive_ptr<MutatorScatterBuffer> MutatorScatterBufferPtr;
 

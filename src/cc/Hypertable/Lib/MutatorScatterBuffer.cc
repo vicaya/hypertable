@@ -34,7 +34,7 @@ namespace {
 /**
  *
  */
-MutatorScatterBuffer::MutatorScatterBuffer(PropertiesPtr &props_ptr, Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT), m_table_name(table_identifier->name), m_full(false) {
+MutatorScatterBuffer::MutatorScatterBuffer(PropertiesPtr &props_ptr, Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT), m_table_name(table_identifier->name), m_full(false), m_resends(0) {
   int client_timeout;
 
   if ((client_timeout = props_ptr->getPropertyInt("Hypertable.RangeServer.Client.Timeout", 0)) != 0)
@@ -280,8 +280,6 @@ MutatorScatterBuffer *MutatorScatterBuffer::create_redo_buffer() {
 	  return 0;
 	}
 
-	count = 0;
-
 	// now add all of the old keys to the redo buffer
 	while (src_ptr < src_end) {
 	  key = (ByteString32T *)src_ptr;
@@ -292,7 +290,7 @@ MutatorScatterBuffer *MutatorScatterBuffer::create_redo_buffer() {
 	    return 0;
 	  }
 	  src_ptr += Length(key) + Length(value);
-	  count++;
+	  m_resends++;
 	}
 
 	//LOG_VA_INFO("Partial update, resending %d updates", count);

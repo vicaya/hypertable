@@ -273,6 +273,8 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       printf("    Throughput:  %.2f bytes/s\n", (double)file_size / elapsed_time);
       printf(" Total inserts:  %llu\n", (long long unsigned int)insert_count);
       printf("    Throughput:  %.2f inserts/s\n", (double)insert_count / elapsed_time);
+      if (mutator_ptr)
+	printf("       Resends:  %llu\n", (long long unsigned int)mutator_ptr->get_resend_count());
       printf("\n");
 
       /*

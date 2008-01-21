@@ -49,6 +49,8 @@ namespace Hypertable {
 
     uint64_t memory_used();
 
+    uint64_t get_resend_count() { return m_resends; }
+
   private:
 
     void wait_for_previous_buffer();
@@ -65,6 +67,7 @@ namespace Hypertable {
     uint64_t             m_max_memory;
     MutatorScatterBufferPtr  m_buffer_ptr;
     MutatorScatterBufferPtr  m_prev_buffer_ptr;
+    uint64_t             m_resends;
   };
   typedef boost::intrusive_ptr<Mutator> MutatorPtr;
 

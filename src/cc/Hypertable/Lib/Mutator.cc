@@ -37,7 +37,7 @@ namespace {
 /**
  * 
  */
-Mutator::Mutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_table_name(table_identifier->name), m_memory_used(0), m_max_memory(DEFAULT_MAX_MEMORY) {
+Mutator::Mutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_table_name(table_identifier->name), m_memory_used(0), m_max_memory(DEFAULT_MAX_MEMORY), m_resends(0) {
   // copy TableIdentifierT
   memcpy(&m_table_identifier, table_identifier, sizeof(TableIdentifierT));
   m_table_identifier.name = m_table_name.c_str();
@@ -170,6 +170,8 @@ void Mutator::wait_for_previous_buffer() {
      */
     if ((redo_buffer = m_prev_buffer_ptr->create_redo_buffer()) == 0)
       continue;
+
+    m_resends += m_prev_buffer_ptr->get_resend_count();
 
     m_prev_buffer_ptr = redo_buffer;
 
