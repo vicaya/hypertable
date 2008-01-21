@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -165,13 +165,15 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       uint32_t value_len;
       uint32_t consumed;
       uint64_t file_size;
+      uint64_t total_values_size = 0;
+      uint64_t total_rowkey_size = 0;
       string start_msg;
       uint64_t insert_count = 0;
       boost::xtime start_time, finish_time;
       double elapsed_time;
       bool into_table = true;
       bool display_timestamps = false;
-      FILE *outfp;
+      FILE *outfp = 0;
 
       boost::xtime_get(&start_time, boost::TIME_UTC);
 
@@ -224,6 +226,8 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       while (lds->next(0, &timestamp, &key, &value, &value_len, &consumed)) {
 	if (value_len > 0) {
 	  insert_count++;
+	  total_values_size += value_len;
+	  total_rowkey_size += key.row_len;
 	  if (into_table) {
 	    try {
 	      mutator_ptr->set(timestamp, key, value, value_len);
@@ -261,8 +265,20 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       if (show_progress.count() < file_size)
 	show_progress += file_size - show_progress.count();
 
+      printf("Load complete.\n");
+      printf("\n");
+      printf("  Elapsed time:  %.2f s\n", elapsed_time);
+      printf("Avg value size:  %.2f bytes\n", (double)total_values_size / insert_count);
+      printf("  Avg key size:  %.2f bytes\n", (double)total_rowkey_size / insert_count);
+      printf("    Throughput:  %.2f bytes/s\n", (double)file_size / elapsed_time);
+      printf(" Total inserts:  %llu\n", (long long unsigned int)insert_count);
+      printf("    Throughput:  %.2f inserts/s\n", (double)insert_count / elapsed_time);
+      printf("\n");
+
+      /*
       printf("Load complete (%.2fs elapsed_time, %.2f bytes/s, %.2f inserts/s)\n",
 	     elapsed_time, (double)file_size / elapsed_time, (double)insert_count / elapsed_time);
+      */
 
     }
     else if (state.command == COMMAND_INSERT) {
