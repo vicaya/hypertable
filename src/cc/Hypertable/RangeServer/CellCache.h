@@ -39,7 +39,7 @@ namespace Hypertable {
   class CellCache : public CellList {
 
   public:
-    CellCache() : CellList(), m_refcount(0), m_child(0), m_memory_used(0) { return; }
+    CellCache() : CellList(), m_refcount(0), m_child(0), m_memory_used(0), m_collisions(0) { return; }
     virtual ~CellCache();
 
     /**
@@ -92,6 +92,8 @@ namespace Hypertable {
       return m_memory_used + (m_cell_map.size() * sizeof(CellMapT::value_type));
     }
 
+    uint32_t get_collision_count() { return m_collisions; }
+
     friend class CellCacheScanner;
 
   protected:
@@ -118,6 +120,7 @@ namespace Hypertable {
     CellCache         *m_child;
     CellMapT           m_cell_map;
     uint64_t           m_memory_used;
+    uint32_t           m_collisions;
   };
 
   typedef boost::intrusive_ptr<CellCache> CellCachePtr;

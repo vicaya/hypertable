@@ -139,8 +139,12 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPt
     while (strcmp((const char *)m_cur_key->data, m_start_row.c_str()) <= 0) {
       m_block.ptr = ((uint8_t *)m_cur_value) + Length(m_cur_value);
       if (m_block.ptr >= m_block.end) {
-	m_iter = m_index.end();
-	return;
+	if (m_readahead) {
+	  if (!fetch_next_block_readahead())
+	    return;
+	}
+	else if (!fetch_next_block())
+	  return;
       }
       m_cur_key = (ByteString32T *)m_block.ptr;
       m_cur_value = (ByteString32T *)(m_block.ptr + Length(m_cur_key));
@@ -172,9 +176,8 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPt
   if (!keyComps.load(m_cur_key)) {
     LOG_ERROR("Problem parsing key!");
   }
-  else if (!m_scan_context_ptr->familyMask[keyComps.column_family_code]) {
+  else if (!m_scan_context_ptr->familyMask[keyComps.column_family_code])
     forward();
-  }
 
 }
 

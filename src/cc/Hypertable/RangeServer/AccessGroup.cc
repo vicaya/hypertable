@@ -40,7 +40,7 @@ namespace {
 }
 
 
-AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range) : CellList(), m_mutex(), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE), m_compression_ratio(1.0), m_is_root(false), m_oldest_cached_timestamp(0) {
+AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range) : CellList(), m_mutex(), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE), m_compression_ratio(1.0), m_is_root(false), m_oldest_cached_timestamp(0), m_collisions(0) {
   m_table_name = table_identifier.name;
   m_start_row = range->startRow;
   m_end_row = range->endRow;
@@ -266,6 +266,7 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
     /** Slice and install new CellCache **/
     tmp_cell_cache_ptr = m_cell_cache_ptr;
     tmp_cell_cache_ptr->lock();
+    m_collisions += m_cell_cache_ptr->get_collision_count();
     m_cell_cache_ptr = m_cell_cache_ptr->slice_copy(timestamp.logical);
     // If inserts have arrived since we started splitting, then set the oldest cached timestamp value, otherwise clear it
     m_oldest_cached_timestamp = (m_cell_cache_ptr->size() > 0) ? timestamp.real + 1 : 0;

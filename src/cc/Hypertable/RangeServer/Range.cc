@@ -149,6 +149,8 @@ void Range::load_cell_stores(Metadata *metadata) {
 
     for (size_t i=0; i<csvec.size(); i++) {
 
+      LOG_VA_INFO("drj Loading CellStore %s", csvec[i].c_str());
+
       cellStorePtr = new CellStoreV0(Global::dfs);
 
       if (!extract_csid_from_path(csvec[i], &csid)) {
@@ -630,7 +632,16 @@ void Range::run_compaction(bool major) {
  * 
  */
 void Range::dump_stats() {
-  cout << "STATS: " << m_identifier.name << "[" << m_start_row << ".." << m_end_row << "] added = " << m_added << endl;
+  std::string range_str = (std::string)m_identifier.name + "[" + m_start_row + ".." + m_end_row + "]";
+  uint64_t collisions = 0;
+  uint64_t cached = 0;
+  for (size_t i=0; i<m_access_group_vector.size(); i++) {
+    collisions += m_access_group_vector[i]->get_collision_count();
+    cached += m_access_group_vector[i]->get_cached_count();
+  }
+  cout << "STAT\t " << range_str << "\tadded\t" << m_added << endl;
+  cout << "STAT\t " << range_str << "\tcollisions\t" << collisions << endl;
+  cout << "STAT\t " << range_str << "\tcached\t" << cached << endl;
   cout << flush;
 }
 
