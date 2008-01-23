@@ -47,6 +47,7 @@ extern "C" {
 #include "ScanContext.h"
 #include "MaintenanceTaskCompaction.h"
 #include "MaintenanceTaskLogCleanup.h"
+#include "MaintenanceTaskSplit.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -884,9 +885,31 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     /**
      * Split and Compaction processing
      */
-    MaintenanceTask *task = min_ts_rec.range_ptr->get_maintenance();
-    if (task)
-      Global::maintenance_queue->add( task );
+    {
+      std::vector<AccessGroup::CompactionPriorityDataT> priority_data_vec;
+      std::vector<AccessGroup *> compactions;
+      uint64_t disk_usage = 0;
+
+      min_ts_rec.range_ptr->get_compaction_priority_data(priority_data_vec);
+      for (size_t i=0; i<priority_data_vec.size(); i++) {
+	disk_usage += priority_data_vec[i].disk_used;
+	if (priority_data_vec[i].mem_used >= (uint32_t)Global::localityGroupMaxMemory)
+	  compactions.push_back(priority_data_vec[i].ag);
+      }
+
+      if (disk_usage > min_ts_rec.range_ptr->get_size_limit() || 
+	  (Global::range_metadata_max_bytes && table->id == 0 && disk_usage > Global::range_metadata_max_bytes)) {
+	if (!min_ts_rec.range_ptr->test_and_set_maintenance())
+	  Global::maintenance_queue->add( new MaintenanceTaskSplit(min_ts_rec.range_ptr) );
+      }
+      else if (!compactions.empty()) {
+	if (!min_ts_rec.range_ptr->test_and_set_maintenance()) {
+	  for (size_t i=0; i<compactions.size(); i++)
+	    compactions[i]->set_compaction_bit();
+	  Global::maintenance_queue->add( new MaintenanceTaskCompaction(min_ts_rec.range_ptr, false) );
+	}
+      }
+    }
 
     if (Global::verbose) {
       LOG_VA_INFO("Added %d (%d split off) updates to '%s'", goMods.size()+splitMods.size(), splitMods.size(), table->name);

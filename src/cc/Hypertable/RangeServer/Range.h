@@ -80,7 +80,14 @@ namespace Hypertable {
 
     void get_compaction_priority_data(std::vector<AccessGroup::CompactionPriorityDataT> &priority_data_vector);
 
-    MaintenanceTask *get_maintenance();
+
+    bool test_and_set_maintenance() {
+      boost::mutex::scoped_lock lock(m_mutex);
+      bool old_value = m_maintenance_in_progress;
+      m_maintenance_in_progress = true;
+      return old_value;
+    }
+
     void do_split();
     void do_compaction(bool major=false);
 
@@ -111,6 +118,8 @@ namespace Hypertable {
     AccessGroup *get_access_group(string &lgName) { return m_access_group_map[lgName]; }
 
     void dump_stats();
+
+    uint64_t get_size_limit() { return m_disk_limit; }
 
   private:
 

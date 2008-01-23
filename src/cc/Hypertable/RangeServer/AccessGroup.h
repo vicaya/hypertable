@@ -44,6 +44,7 @@ namespace Hypertable {
       AccessGroup *ag;
       uint64_t oldest_cached_timestamp;
       uint64_t mem_used;
+      uint64_t disk_used;
       size_t mem_added;
       bool in_memory;
       void *user_data;
@@ -65,7 +66,6 @@ namespace Hypertable {
     bool include_in_scan(ScanContextPtr &scanContextPtr);
     uint64_t disk_usage();
     void add_cell_store(CellStorePtr &cellstore_ptr, uint32_t id);
-    bool needs_compaction();
     void run_compaction(Timestamp timestamp, bool major);
 
     void get_compaction_timestamp(Timestamp &timestamp);
@@ -75,6 +75,10 @@ namespace Hypertable {
     }
 
     void get_compaction_priority_data(CompactionPriorityDataT &priority_data);
+
+    void set_compaction_bit() { m_needs_compaction = true; }
+
+    bool needs_compaction() { return m_needs_compaction; }
 
     const char *get_name() { return m_name.c_str(); }
 
@@ -112,6 +116,7 @@ namespace Hypertable {
     Timestamp            m_compaction_timestamp;
     uint64_t             m_oldest_cached_timestamp;
     uint64_t             m_collisions;
+    bool                 m_needs_compaction;
   };
 
 }

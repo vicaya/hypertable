@@ -40,7 +40,7 @@ namespace {
 }
 
 
-AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range) : CellList(), m_mutex(), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE), m_compression_ratio(1.0), m_is_root(false), m_oldest_cached_timestamp(0), m_collisions(0) {
+AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range) : CellList(), m_mutex(), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE), m_compression_ratio(1.0), m_is_root(false), m_oldest_cached_timestamp(0), m_collisions(0), m_needs_compaction(false) {
   m_table_name = table_identifier.name;
   m_start_row = range->startRow;
   m_end_row = range->endRow;
@@ -126,18 +126,12 @@ uint64_t AccessGroup::disk_usage() {
   return m_disk_usage + (uint64_t)(m_compression_ratio * (float)m_cell_cache_ptr->memory_used());
 }
 
-bool AccessGroup::needs_compaction() {
-  boost::mutex::scoped_lock lock(m_mutex);
-  if (m_cell_cache_ptr->memory_used() >= (uint32_t)Global::localityGroupMaxMemory)
-    return true;
-  return false;
-}
-
 void AccessGroup::get_compaction_priority_data(CompactionPriorityDataT &priority_data) {
   boost::mutex::scoped_lock lock(m_mutex);
   priority_data.ag = this;
   priority_data.oldest_cached_timestamp = m_oldest_cached_timestamp;
   priority_data.mem_used = m_cell_cache_ptr->memory_used();
+  priority_data.disk_used = m_disk_usage + (uint64_t)(m_compression_ratio * (float)m_cell_cache_ptr->memory_used());
   // TBD ...
   priority_data.mem_added = 0;
   priority_data.in_memory = false;
@@ -183,6 +177,11 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
   std::string files;
   std::string metadata_key_str;
 
+  if (!m_needs_compaction)
+    return;
+
+  m_needs_compaction = false;
+
   {
     boost::mutex::scoped_lock lock(m_mutex);
     if (major) {
@@ -193,9 +192,6 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
       LOG_VA_INFO("Starting Major Compaction (%s.%s)", m_table_name.c_str(), m_name.c_str());
     }
     else {
-      if (m_cell_cache_ptr->memory_used() < (uint32_t)Global::localityGroupMaxMemory)
-	return;
-
       if (m_stores.size() > (size_t)Global::localityGroupMaxFiles) {
 	ltCellStore sortObj;
 	sort(m_stores.begin(), m_stores.end(), sortObj);

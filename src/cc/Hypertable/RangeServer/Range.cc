@@ -42,8 +42,6 @@ extern "C" {
 #include "MetadataNormal.h"
 #include "MetadataRoot.h"
 #include "Range.h"
-#include "MaintenanceTaskCompaction.h"
-#include "MaintenanceTaskSplit.h"
 
 
 using namespace Hypertable;
@@ -314,37 +312,6 @@ void Range::get_compaction_priority_data(std::vector<AccessGroup::CompactionPrio
   }
 }
 
-
-
-/**
- * 
- */
-MaintenanceTask *Range::get_maintenance() {
-  boost::mutex::scoped_lock lock(m_mutex);
-  uint64_t disk_used = disk_usage();
-
-  if (m_maintenance_in_progress)
-    return 0;
-
-  // Need split?
-  if (disk_used > m_disk_limit || 
-      (Global::range_metadata_max_bytes && m_identifier.id == 0 && disk_used > Global::range_metadata_max_bytes)) {
-    RangePtr range_ptr(this);
-    m_maintenance_in_progress = true;
-    return new MaintenanceTaskSplit(range_ptr);
-  }
-  else {
-    // Need compaction?
-    for (size_t i=0; i<m_access_group_vector.size(); i++) {
-      if (m_access_group_vector[i]->needs_compaction()) {
-	RangePtr range_ptr(this);
-	m_maintenance_in_progress = true;
-	return new MaintenanceTaskCompaction(range_ptr, false);
-      }
-    }
-  }
-  return 0;
-}
 
 
 void Range::do_split() {
