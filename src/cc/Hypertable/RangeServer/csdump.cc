@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -20,6 +20,8 @@
 #include <string>
 #include <vector>
 #include <iostream>
+
+#include <boost/algorithm/string.hpp>
 
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ConnectionManager.h"
@@ -50,7 +52,10 @@ namespace {
     "usage: cellStoreDump [OPTIONS] <fname>",
     "",
     "OPTIONS:",
-    "  -a   Dump everything, including key/value pairs",
+    "  -a                Dump everything, including key/value pairs",
+    "  -c,--count        Count the number of key/value pairs",
+    "  --end-key=<key>   Ignore keys that are greater than <key>",
+    "  --start-key=<key> Ignore keys that are less than or equal to <key>",
     "",
     "Dumps the contents of the CellStore contained in the DFS file <fname>.",
     0
@@ -70,6 +75,11 @@ int main(int argc, char **argv) {
   ByteString32T *value;
   bool dump_all = false;
   CellStoreV0Ptr cellStorePtr;
+  bool count_keys = false;
+  uint64_t key_count = 0;
+  std::string start_key, end_key;
+  bool got_end_key = false;
+  bool hit_start = false;
 
   ReactorFactory::initialize(1);
   System::initialize(argv[0]);
@@ -77,6 +87,17 @@ int main(int argc, char **argv) {
   for (int i=1; i<argc; i++) {
     if (!strcmp(argv[i], "-a"))
       dump_all = true;
+    else if (!strcmp(argv[i], "-c") || !strcmp(argv[i], "--count"))
+      count_keys = true;
+    else if (!strncmp(argv[i], "--start-key=", 12)) {
+      start_key = &argv[i][12];
+      boost::trim_if(start_key, boost::is_any_of("'\""));
+    }
+    else if (!strncmp(argv[i], "--end-key=", 10)) {
+      end_key = &argv[i][10];
+      boost::trim_if(end_key, boost::is_any_of("'\""));
+      got_end_key = true;
+    }
     else if (!strcmp(argv[i], "--help"))
       Usage::dump_and_exit(usage);
     else if (fname == "")
@@ -87,6 +108,9 @@ int main(int argc, char **argv) {
 
   if (fname == "")
       Usage::dump_and_exit(usage);
+
+  if (start_key == "")
+    hit_start = true;
 
   InetAddr::initialize(&addr, "localhost", DEFAULT_DFSBROKER_PORT);
   
@@ -117,17 +141,30 @@ int main(int argc, char **argv) {
   /**
    * Dump keys
    */
-  if (dump_all) {
+  if (dump_all || count_keys) {
     ScanContextPtr scanContextPtr( new ScanContext(ScanContext::END_OF_TIME) );
 
     scanner = cellStorePtr->create_scanner(scanContextPtr);
-    cout << endl;
-    cout << "KEYS:" << endl;
     while (scanner->get(&key, &value)) {
-      cout << Key(key) << endl;
+      if (!hit_start) {
+	if (strcmp(start_key.c_str(), (const char *)key->data) <= 0)
+	  continue;
+	hit_start = true;
+      }
+      if (got_end_key && strcmp((const char *)key->data, end_key.c_str()) > 0)
+	break;
+      if (count_keys)
+	key_count++;
+      else
+	cout << Key(key) << endl;
       scanner->forward();
     }
     delete scanner;
+  }
+
+  if (count_keys) {
+    cout << key_count << endl;
+    return 0;
   }
 
   /**
