@@ -74,17 +74,21 @@ bool MetadataRoot::get_next_files(std::string &ag_name, std::string &files) {
     DynamicBuffer value(0);
     std::string attrname = (std::string)"files." + m_agnames[m_next];
     m_next++;
+    Global::hyperspace_ptr->set_silent_flag(true);
     if ((error = Global::hyperspace_ptr->attr_get(m_handle, attrname.c_str(), value)) != Error::OK) {
       if (error == Error::HYPERSPACE_ATTR_NOT_FOUND)
 	continue;
       LOG_VA_ERROR("Problem getting attribute '%s' on Hyperspace file '/hypertable/root' - %s", 
 		   attrname.c_str(), Error::get_text(error));
+      Global::hyperspace_ptr->set_silent_flag(false);
       return false;
     }
     files = (const char *)value.buf;
+    Global::hyperspace_ptr->set_silent_flag(false);
     return true;
   }
 
+  Global::hyperspace_ptr->set_silent_flag(false);
   return false;
 }
 

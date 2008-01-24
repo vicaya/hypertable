@@ -129,6 +129,7 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPt
       m_block.ptr = ((uint8_t *)m_cur_value) + Length(m_cur_value);
       if (m_block.ptr >= m_block.end) {
 	m_iter = m_index.end();
+	LOG_VA_ERROR("Unable to find start of range (row='%s') in %s", m_start_row.c_str(), m_cell_store_ptr->get_filename().c_str());
 	return;
       }
       m_cur_key = (ByteString32T *)m_block.ptr;

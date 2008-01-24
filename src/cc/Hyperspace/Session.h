@@ -332,6 +332,12 @@ namespace Hyperspace {
      */
     bool wait_for_connection(long max_wait_secs);
 
+    /** Sets silent flag.  Turns on or off log output
+     *
+     * @param silent value of silent flag
+     */
+    void set_silent_flag(bool silent) { m_silent = silent; }
+
     /** Sets verbose flag.  Turns on or off (default) verbose logging
      *
      * @param verbose value of verbose flag
