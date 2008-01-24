@@ -99,9 +99,11 @@ int CellCache::add(const ByteString32T *key, const ByteString32T *value, uint64_
     newValue->len = 0;
   }
 
-  std::pair<CellMapT::iterator, bool> iresult = m_cell_map.insert(CellMapT::value_type(newKey, Length(newKey)));
-  if (!iresult.second)
+  if ( ! m_cell_map.insert(CellMapT::value_type(newKey, Length(newKey))).second ) {
     m_collisions++;
+    LOG_VA_WARN("Collision detected key insert (row = %s)", (const char *)newKey->data);
+    delete [] newKey;
+  }
 
   m_memory_used += kv_len;
 
