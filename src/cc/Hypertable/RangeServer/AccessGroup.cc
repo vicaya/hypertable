@@ -177,7 +177,7 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
   std::string files;
   std::string metadata_key_str;
 
-  if (!m_needs_compaction)
+  if (!major && !m_needs_compaction)
     return;
 
   m_needs_compaction = false;
