@@ -56,6 +56,7 @@ AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPt
 
   m_is_root = (table_identifier.id == 0 && *range->startRow == 0 && !strcmp(range->endRow, Key::END_ROOT_ROW));
 
+  m_in_memory = ag->in_memory;
 }
 
 
@@ -132,9 +133,8 @@ void AccessGroup::get_compaction_priority_data(CompactionPriorityDataT &priority
   priority_data.oldest_cached_timestamp = m_oldest_cached_timestamp;
   priority_data.mem_used = m_cell_cache_ptr->memory_used();
   priority_data.disk_used = m_disk_usage + (uint64_t)(m_compression_ratio * (float)m_cell_cache_ptr->memory_used());
-  // TBD ...
-  priority_data.mem_added = 0;
-  priority_data.in_memory = false;
+  priority_data.in_memory = m_in_memory;
+  priority_data.deletes = m_cell_cache_ptr->get_delete_count();
 }
 
 
@@ -184,7 +184,11 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
 
   {
     boost::mutex::scoped_lock lock(m_mutex);
-    if (major) {
+    if (m_in_memory) {
+      tableIndex = 0;
+      LOG_VA_INFO("Starting InMemory Compaction (%s.%s end_row='%s')", m_table_name.c_str(), m_name.c_str(), m_end_row.c_str());
+    }
+    else if (major) {
       // TODO: if the oldest CellCache entry is newer than timestamp, then return
       if (m_cell_cache_ptr->memory_used() == 0 && m_stores.size() <= (size_t)1)
 	return;
@@ -223,7 +227,12 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
   {
     ScanContextPtr scanContextPtr = new ScanContext(timestamp.logical+1, m_schema_ptr);
 
-    if (major || tableIndex < m_stores.size()) {
+    if (m_in_memory) {
+      MergeScanner *mscanner = new MergeScanner(scanContextPtr, false);
+      mscanner->add_scanner( m_cell_cache_ptr->create_scanner(scanContextPtr) );
+      scannerPtr = mscanner;
+    }
+    else if (major || tableIndex < m_stores.size()) {
       MergeScanner *mscanner = new MergeScanner(scanContextPtr, !major);
       mscanner->add_scanner( m_cell_cache_ptr->create_scanner(scanContextPtr) );
       for (size_t i=tableIndex; i<m_stores.size(); i++)
@@ -263,7 +272,11 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
     tmp_cell_cache_ptr = m_cell_cache_ptr;
     tmp_cell_cache_ptr->lock();
     m_collisions += m_cell_cache_ptr->get_collision_count();
-    m_cell_cache_ptr = m_cell_cache_ptr->slice_copy(timestamp.logical);
+    if (!m_in_memory)
+      m_cell_cache_ptr = m_cell_cache_ptr->slice_copy(timestamp.logical);
+    else {
+      LOG_WARN("InMemory access group memory cleanup not yet implemented.");
+    }
     // If inserts have arrived since we started splitting, then set the oldest cached timestamp value, otherwise clear it
     m_oldest_cached_timestamp = (m_cell_cache_ptr->size() > 0) ? timestamp.real + 1 : 0;
     tmp_cell_cache_ptr->unlock();    
@@ -305,8 +318,6 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
     LOG_VA_ERROR("Problem updating 'File' column of METADATA (%d:%s) - %s",
 		 m_table_identifier.id, metadata_key_str.c_str(), Error::get_text(e.code()));
   }
-
-  // TODO: Compaction thread function should re-shuffle the heap of locality groups and purge the commit log
 
   LOG_VA_INFO("Finished Compaction (%s.%s)", m_table_name.c_str(), m_name.c_str());
 }

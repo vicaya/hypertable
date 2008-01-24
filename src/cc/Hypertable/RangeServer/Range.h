@@ -119,6 +119,8 @@ namespace Hypertable {
 
     uint64_t get_size_limit() { return m_disk_limit; }
 
+    bool is_root() { return m_is_root; }
+
   private:
 
     void load_cell_stores(Metadata *metadata);

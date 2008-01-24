@@ -45,7 +45,7 @@ namespace Hypertable {
       uint64_t oldest_cached_timestamp;
       uint64_t mem_used;
       uint64_t disk_used;
-      size_t mem_added;
+      uint32_t deletes;
       bool in_memory;
       void *user_data;
     } CompactionPriorityDataT;
@@ -117,6 +117,7 @@ namespace Hypertable {
     uint64_t             m_oldest_cached_timestamp;
     uint64_t             m_collisions;
     bool                 m_needs_compaction;
+    bool                 m_in_memory;
   };
 
 }

@@ -307,7 +307,8 @@ void RangeServer::compact(ResponseCallback *cb, TableIdentifierT *table, RangeT 
   }
 
   // schedule the compaction
-  Global::maintenance_queue->add( new MaintenanceTaskCompaction(range_ptr, major) );
+  if (!range_ptr->test_and_set_maintenance())
+    Global::maintenance_queue->add( new MaintenanceTaskCompaction(range_ptr, major) );
 
   if ((error = cb->response_ok()) != Error::OK) {
     LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
@@ -889,7 +890,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 
     /**
      * Split and Compaction processing
-
+     */
     {
       std::vector<AccessGroup::CompactionPriorityDataT> priority_data_vec;
       std::vector<AccessGroup *> compactions;
@@ -898,12 +899,13 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
       min_ts_rec.range_ptr->get_compaction_priority_data(priority_data_vec);
       for (size_t i=0; i<priority_data_vec.size(); i++) {
 	disk_usage += priority_data_vec[i].disk_used;
-	if (priority_data_vec[i].mem_used >= (uint32_t)Global::localityGroupMaxMemory)
+	if (!priority_data_vec[i].in_memory && priority_data_vec[i].mem_used >= (uint32_t)Global::localityGroupMaxMemory)
 	  compactions.push_back(priority_data_vec[i].ag);
       }
 
-      if (disk_usage > min_ts_rec.range_ptr->get_size_limit() || 
-	  (Global::range_metadata_max_bytes && table->id == 0 && disk_usage > Global::range_metadata_max_bytes)) {
+      if (!min_ts_rec.range_ptr->is_root() &&
+	  (disk_usage > min_ts_rec.range_ptr->get_size_limit() || 
+	   (Global::range_metadata_max_bytes && table->id == 0 && disk_usage > Global::range_metadata_max_bytes))) {
 	if (!min_ts_rec.range_ptr->test_and_set_maintenance())
 	  Global::maintenance_queue->add( new MaintenanceTaskSplit(min_ts_rec.range_ptr) );
       }
@@ -915,7 +917,6 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 	}
       }
     }
-     */
 
     if (Global::verbose) {
       LOG_VA_INFO("Added %d (%d split off) updates to '%s'", goMods.size()+splitMods.size(), splitMods.size(), table->name);
@@ -1095,7 +1096,7 @@ void RangeServer::do_maintenance() {
    * Schedule log cleanup
    */
   gettimeofday(&tval, 0);
-  if ((tval.tv_sec - m_last_commit_log_clean) >= (m_timer_interval*4)/5) {
+  if ((tval.tv_sec - m_last_commit_log_clean) >= (int)(m_timer_interval*4)/5) {
     // schedule log cleanup
     Global::maintenance_queue->add( new MaintenanceTaskLogCleanup(this) );
     m_last_commit_log_clean = tval.tv_sec;

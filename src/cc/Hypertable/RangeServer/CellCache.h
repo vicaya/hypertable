@@ -39,7 +39,7 @@ namespace Hypertable {
   class CellCache : public CellList {
 
   public:
-    CellCache() : CellList(), m_refcount(0), m_child(0), m_memory_used(0), m_collisions(0) { return; }
+    CellCache() : CellList(), m_refcount(0), m_child(0), m_memory_used(0), m_deletes(0), m_collisions(0) { return; }
     virtual ~CellCache();
 
     /**
@@ -94,6 +94,8 @@ namespace Hypertable {
 
     uint32_t get_collision_count() { return m_collisions; }
 
+    uint32_t get_delete_count() { return m_deletes; }
+
     friend class CellCacheScanner;
 
   protected:
@@ -120,6 +122,7 @@ namespace Hypertable {
     CellCache         *m_child;
     CellMapT           m_cell_map;
     uint64_t           m_memory_used;
+    uint32_t           m_deletes;
     uint32_t           m_collisions;
   };
 
