@@ -272,11 +272,10 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
     tmp_cell_cache_ptr = m_cell_cache_ptr;
     tmp_cell_cache_ptr->lock();
     m_collisions += m_cell_cache_ptr->get_collision_count();
-    if (!m_in_memory)
+    if (m_in_memory)
+      m_cell_cache_ptr->purge_deletes();
+    else
       m_cell_cache_ptr = m_cell_cache_ptr->slice_copy(timestamp.logical);
-    else {
-      LOG_WARN("InMemory access group memory cleanup not yet implemented.");
-    }
     // If inserts have arrived since we started splitting, then set the oldest cached timestamp value, otherwise clear it
     m_oldest_cached_timestamp = (m_cell_cache_ptr->size() > 0) ? timestamp.real + 1 : 0;
     tmp_cell_cache_ptr->unlock();    

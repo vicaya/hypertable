@@ -183,3 +183,122 @@ CellCache *CellCache::slice_copy(uint64_t timestamp) {
   return m_child;
 }
 
+
+/**
+ *
+ */
+void CellCache::purge_deletes() {
+  Key key_comps;
+  size_t len;
+  bool          delete_present = false;
+  DynamicBuffer deleted_row(0);
+  uint64_t      deleted_row_timestamp = 0;
+  DynamicBuffer deleted_column_family(0);
+  uint64_t      deleted_column_family_timestamp = 0;
+  DynamicBuffer deleted_cell(0);
+  uint64_t      deleted_cell_timestamp = 0;
+  CellMapT::iterator iter, tmp_iter;
+
+  iter = m_cell_map.begin();
+
+  while (iter != m_cell_map.end()) {
+    
+    if (!key_comps.load((*iter).first)) {
+      LOG_ERROR("Problem deserializing key/value pair");
+      iter++;
+      continue;
+    }
+
+    if (key_comps.flag == FLAG_INSERT) {
+
+      if (delete_present) {
+	if (deleted_cell.fill() > 0) {
+	  len = (key_comps.column_qualifier - key_comps.row) + strlen(key_comps.column_qualifier) + 1;
+	  if (deleted_cell.fill() == len && !memcmp(deleted_cell.buf, key_comps.row, len)) {
+	    if (key_comps.timestamp < deleted_cell_timestamp) {
+	      tmp_iter = iter;
+	      iter++;
+	      m_cell_map.erase(tmp_iter);
+	    }
+	    else
+	      iter++;
+	    continue;
+	  }
+	  deleted_cell.clear();
+	}
+	if (deleted_column_family.fill() > 0) {
+	  len = key_comps.column_qualifier - key_comps.row;
+	  if (deleted_column_family.fill() == len && !memcmp(deleted_column_family.buf, key_comps.row, len)) {
+	    if (key_comps.timestamp < deleted_column_family_timestamp) {
+	      tmp_iter = iter;
+	      iter++;
+	      m_cell_map.erase(tmp_iter);
+	    }
+	    else
+	      iter++;
+	    continue;
+	  }
+	  deleted_column_family.clear();
+	}
+	if (deleted_row.fill() > 0) {
+	  len = strlen(key_comps.row) + 1;
+	  if (deleted_row.fill() == len && !memcmp(deleted_row.buf, key_comps.row, len)) {
+	    if (key_comps.timestamp < deleted_row_timestamp) {
+	      tmp_iter = iter;
+	      iter++;
+	      m_cell_map.erase(tmp_iter);
+	    }
+	    else
+	      iter++;
+	    continue;
+	  }
+	  deleted_row.clear();
+	}
+	delete_present = false;
+      }
+      iter++;
+    }
+    else {
+      if (key_comps.flag == FLAG_DELETE_ROW) {
+	len = strlen(key_comps.row) + 1;
+	if (delete_present && deleted_row.fill() == len && !memcmp(deleted_row.buf, key_comps.row, len)) {
+	  if (deleted_row_timestamp < key_comps.timestamp)
+	    deleted_row_timestamp = key_comps.timestamp;
+	}
+	else {
+	  deleted_row.set(key_comps.row, len);
+	  deleted_row_timestamp = key_comps.timestamp;
+	  delete_present = true;
+	}
+      }
+      else if (key_comps.flag == FLAG_DELETE_COLUMN_FAMILY) {
+	len = key_comps.column_qualifier - key_comps.row;
+	if (delete_present && deleted_column_family.fill() == len && !memcmp(deleted_column_family.buf, key_comps.row, len)) {
+	  if (deleted_column_family_timestamp < key_comps.timestamp)
+	    deleted_column_family_timestamp = key_comps.timestamp;
+	}
+	else {
+	  deleted_column_family.set(key_comps.row, len);
+	  deleted_column_family_timestamp = key_comps.timestamp;
+	  delete_present = true;
+	}
+      }
+      else if (key_comps.flag == FLAG_DELETE_CELL) {
+	len = (key_comps.column_qualifier - key_comps.row) + strlen(key_comps.column_qualifier) + 1;
+	if (delete_present && deleted_cell.fill() == len && !memcmp(deleted_cell.buf, key_comps.row, len)) {
+	  if (deleted_cell_timestamp < key_comps.timestamp)
+	    deleted_cell_timestamp = key_comps.timestamp;
+	}
+	else {
+	  deleted_cell.set(key_comps.row, len);
+	  deleted_cell_timestamp = key_comps.timestamp;
+	  delete_present = true;
+	}
+      }
+      tmp_iter = iter;
+      iter++;
+      m_cell_map.erase(tmp_iter);
+    }
+  }
+  
+}

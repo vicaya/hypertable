@@ -83,6 +83,11 @@ namespace Hypertable {
     CellCache *slice_copy(uint64_t timestamp);
 
     /**
+     * Purges all deleted pairs along with the corresponding delete entries.
+     */
+    void purge_deletes();
+
+    /**
      * Returns the amount of memory used by the CellCache.  This is the summation
      * of the lengths of all the keys and values in the map.
      */
