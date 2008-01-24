@@ -72,7 +72,12 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
   Global::localityGroupMaxMemory  = props_ptr->getPropertyInt("Hypertable.RangeServer.AccessGroup.MaxMemory", 4000000);
   port                            = props_ptr->getPropertyInt("Hypertable.RangeServer.port", DEFAULT_PORT);
   m_scanner_ttl                   = (time_t)props_ptr->getPropertyInt("Hypertable.RangeServer.Scanner.ttl", 120);
-  m_commit_log_clean_interval     = (long)props_ptr->getPropertyInt("Hypertable.RangeServer.CommitLog.CleanInterval", 60);
+  m_timer_interval                = props_ptr->getPropertyInt("Hypertable.RangeServer.Timer.Interval", 60);
+
+  if (m_timer_interval >= 1000) {
+    LOG_ERROR("Hypertable.RangeServer.Timer.Interval property too large, exiting ...");
+    exit(1);
+  }
 
   if (m_scanner_ttl < (time_t)10) {
     LOG_VA_WARN("Value %u for Hypertable.RangeServer.Scanner.ttl is too small, setting to 10", (unsigned int)m_scanner_ttl);
@@ -884,7 +889,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 
     /**
      * Split and Compaction processing
-     */
+
     {
       std::vector<AccessGroup::CompactionPriorityDataT> priority_data_vec;
       std::vector<AccessGroup *> compactions;
@@ -910,6 +915,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 	}
       }
     }
+     */
 
     if (Global::verbose) {
       LOG_VA_INFO("Added %d (%d split off) updates to '%s'", goMods.size()+splitMods.size(), splitMods.size(), table->name);
@@ -1089,7 +1095,7 @@ void RangeServer::do_maintenance() {
    * Schedule log cleanup
    */
   gettimeofday(&tval, 0);
-  if ((tval.tv_sec - m_last_commit_log_clean) >= m_commit_log_clean_interval) {
+  if ((tval.tv_sec - m_last_commit_log_clean) >= (m_timer_interval*4)/5) {
     // schedule log cleanup
     Global::maintenance_queue->add( new MaintenanceTaskLogCleanup(this) );
     m_last_commit_log_clean = tval.tv_sec;
@@ -1104,7 +1110,10 @@ void RangeServer::do_maintenance() {
 void RangeServer::log_cleanup() {
   std::vector<RangePtr> range_vec;
   std::vector<AccessGroup::CompactionPriorityDataT> priority_data_vec;
+  std::map<uint64_t, FragmentPriorityDataT> log_frag_map;
+  std::set<size_t> compaction_set;
   uint64_t timestamp, oldest_cached_timestamp = 0;
+  uint64_t prune_threshold = 2 * Global::log->get_max_fragment_size();
 
   {
     boost::mutex::scoped_lock lock(m_mutex);
@@ -1119,29 +1128,48 @@ void RangeServer::log_cleanup() {
   for (size_t i=0; i<range_vec.size(); i++) {
     size_t start = priority_data_vec.size();
     range_vec[i]->get_compaction_priority_data(priority_data_vec);
-    for (size_t j=start; j<priority_data_vec.size(); j++)
+    for (size_t j=start; j<priority_data_vec.size(); j++) {
       priority_data_vec[j].user_data = (void *)i;
+      if ((timestamp = priority_data_vec[j].ag->get_oldest_cached_timestamp()) != 0) {
+	if (oldest_cached_timestamp == 0 || timestamp < oldest_cached_timestamp)
+	  oldest_cached_timestamp = timestamp;
+      }
+    }
+  }
+
+  Global::log->load_fragment_priority_map(log_frag_map);
+
+  /**
+   * Determine which AGs need compaction for the sake of garbage collecting commit log fragments
+   */
+  for (size_t i=0; i<priority_data_vec.size(); i++) {
+    std::map<uint64_t, FragmentPriorityDataT>::iterator map_iter = log_frag_map.lower_bound( priority_data_vec[i].oldest_cached_timestamp );
+    size_t rangei = (size_t)priority_data_vec[i].user_data;
+
+    // this should never happen
+    if (map_iter == log_frag_map.end())
+      continue;
+
+    if ( priority_data_vec[i].oldest_cached_timestamp > 0 && (*map_iter).second.cumulative_size > prune_threshold ) {
+      std::string range_str = range_vec[rangei]->table_name() + "[" + range_vec[rangei]->start_row() + ".." + range_vec[rangei]->end_row() + "]." + priority_data_vec[i].ag->get_name();
+      priority_data_vec[i].ag->set_compaction_bit();
+      compaction_set.insert( rangei );
+      LOG_VA_INFO("Compacting %s because cumulative log size of %lld exceeds threshold %lld",
+		  range_str.c_str(), (*map_iter).second.cumulative_size, prune_threshold);
+    }
   }
 
   /**
-   * 
+   * Schedule the compactions
    */
-  for (size_t i=0; i<priority_data_vec.size(); i++) {
-    size_t rangei = (size_t)priority_data_vec[i].user_data;
-    cout << range_vec[rangei]->table_name() << "[" << range_vec[rangei]->start_row() << ".." << range_vec[rangei]->end_row() << "]";
-    cout << " ag=" << priority_data_vec[i].ag->get_name();
-    cout << " timestamp=" << priority_data_vec[i].oldest_cached_timestamp;
-    cout << " memory=" << priority_data_vec[i].mem_used;
-    cout << endl;
+  for (std::set<size_t>::iterator iter = compaction_set.begin(); iter != compaction_set.end(); iter++) {
+    if (!range_vec[*iter]->test_and_set_maintenance())
+      Global::maintenance_queue->add( new MaintenanceTaskCompaction(range_vec[*iter], false) );
   }
 
-  for (size_t i=0; i<range_vec.size(); i++) {
-    timestamp = range_vec[i]->get_oldest_cached_timestamp();
-    if (oldest_cached_timestamp == 0 || timestamp < oldest_cached_timestamp)
-      oldest_cached_timestamp = timestamp;
-    //cout << range_vec[i]->table_name() << "[" << range_vec[i]->start_row() << ".." << range_vec[i]->end_row() << "] = " << range_vec[i]->get_oldest_cached_timestamp() << endl;
-  }
-
+  /**
+   * Purge the commit log
+   */
   if (oldest_cached_timestamp != 0)
     Global::log->purge(oldest_cached_timestamp);
 
@@ -1152,5 +1180,5 @@ void RangeServer::log_cleanup() {
 /**
  */
 uint64_t RangeServer::get_timer_interval() {
-  return 60000;
+  return m_timer_interval*1000;
 }

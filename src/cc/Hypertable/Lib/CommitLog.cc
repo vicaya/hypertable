@@ -53,11 +53,11 @@ CommitLog::CommitLog(Filesystem *fs, std::string &log_dir, PropertiesPtr &props_
   std::string compressor_args;
 
   if (props_ptr) {
-    m_max_file_size = props_ptr->getPropertyInt64("Hypertable.RangeServer.CommitLog.RollLimit", 0x100000000LL);
+    m_max_file_size = props_ptr->getPropertyInt64("Hypertable.RangeServer.CommitLog.RollLimit", 268435456LL);
     compressor = props_ptr->getProperty("Hypertable.RangeServer.CommitLog.Compressor", "quicklz");
   }
   else {
-    m_max_file_size = 0x100000000LL;
+    m_max_file_size = 268435456LL;
     compressor = "quicklz";
   }
 
@@ -236,6 +236,7 @@ int CommitLog::close(uint64_t timestamp) {
  * 
  */
 int CommitLog::purge(uint64_t timestamp) {
+  boost::mutex::scoped_lock lock(m_mutex);
   CommitLogFileInfoT fileInfo;
   int error = Error::OK;
 
@@ -246,7 +247,7 @@ int CommitLog::purge(uint64_t timestamp) {
 	LOG_VA_ERROR("Problem removing log fragment '%s' - %s", fileInfo.fname.c_str(), Error::get_text(error));
 	return error;
       }
-      m_file_info_queue.pop();
+      m_file_info_queue.pop_front();
       LOG_VA_INFO("Removed log fragment file='%s' timestamp=%lld", fileInfo.fname.c_str(), fileInfo.timestamp);
     }
     else {
@@ -293,8 +294,9 @@ int CommitLog::roll() {
     }
 
     fileInfo.timestamp = m_last_timestamp;
+    fileInfo.size = m_cur_log_length + header.fixed_length();
     fileInfo.fname = m_log_file;
-    m_file_info_queue.push(fileInfo);
+    m_file_info_queue.push_back(fileInfo);
 
     m_last_timestamp = 0;
     m_cur_log_length = 0;
@@ -361,3 +363,24 @@ int CommitLog::compress_and_write(DynamicBuffer &input, BlockCompressionHeader *
 }
 
 
+/**
+ *
+ */
+void CommitLog::load_fragment_priority_map(std::map<uint64_t, FragmentPriorityDataT> &frag_map) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  uint64_t cumulative_total = m_cur_log_length;
+  uint32_t distance = 0;
+  FragmentPriorityDataT frag_data;
+
+  frag_data.distance = distance++;
+  frag_data.cumulative_size = cumulative_total;
+  frag_map[m_last_timestamp] = frag_data;
+
+  for (deque<CommitLogFileInfoT>::reverse_iterator iter = m_file_info_queue.rbegin(); iter != m_file_info_queue.rend(); iter++) {
+    cumulative_total += (*iter).size;
+    frag_data.distance = distance++;
+    frag_data.cumulative_size = cumulative_total;
+    frag_map[(*iter).timestamp] = frag_data;
+  }
+  
+}

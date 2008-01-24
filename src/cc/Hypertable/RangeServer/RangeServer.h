@@ -92,7 +92,7 @@ namespace Hypertable {
     Hyperspace::SessionPtr m_hyperspace_ptr;
     time_t                 m_scanner_ttl;
     long                   m_last_commit_log_clean;
-    long                   m_commit_log_clean_interval;
+    uint64_t               m_timer_interval;
   };
   typedef boost::intrusive_ptr<RangeServer> RangeServerPtr;
   

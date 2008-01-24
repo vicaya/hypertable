@@ -21,7 +21,8 @@
 #ifndef HYPERTABLE_COMMITLOG_H
 #define HYPERTABLE_COMMITLOG_H
 
-#include <queue>
+#include <deque>
+#include <map>
 #include <string>
 
 #include <boost/thread/xtime.hpp>
@@ -42,8 +43,14 @@ namespace Hypertable {
 
   typedef struct {
     std::string  fname;
+    uint64_t     size;
     uint64_t     timestamp;
   } CommitLogFileInfoT;
+
+  typedef struct {
+    uint32_t distance;
+    uint64_t cumulative_size;
+  } FragmentPriorityDataT;
 
   /**
    * Commit log for persisting updates.  The commit log is a directory that contains
@@ -116,6 +123,10 @@ namespace Hypertable {
     int purge(uint64_t timestamp);
     std::string &get_log_dir() { return m_log_dir; }
 
+    void load_fragment_priority_map(std::map<uint64_t, FragmentPriorityDataT> &frag_map);
+
+    int64_t get_max_fragment_size() { return m_max_file_size; }
+
     static const char MAGIC_UPDATES[10];
     static const char MAGIC_LINK[10];
     static const char MAGIC_TRAILER[10];
@@ -135,7 +146,7 @@ namespace Hypertable {
     uint32_t                   m_cur_log_num;
     int32_t                    m_fd;
     uint64_t                   m_last_timestamp;
-    std::queue<CommitLogFileInfoT>   m_file_info_queue;
+    std::deque<CommitLogFileInfoT>   m_file_info_queue;
   };
 
   typedef boost::intrusive_ptr<CommitLog> CommitLogPtr;

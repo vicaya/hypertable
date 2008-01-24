@@ -74,8 +74,6 @@ namespace Hypertable {
 
     uint64_t get_timestamp();
 
-    uint64_t get_oldest_cached_timestamp();
-
     int replay_split_log(string &logDir, uint64_t real_timestamp);
 
     void get_compaction_priority_data(std::vector<AccessGroup::CompactionPriorityDataT> &priority_data_vector);
