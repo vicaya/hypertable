@@ -511,7 +511,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
   bool registerTable = false;
   bool is_root = !strcmp(table->name, "METADATA") && (*range->startRow == 0) && !strcmp(range->endRow, Key::END_ROOT_ROW);
   TableScannerPtr scanner_ptr;
-  MutatorPtr mutator_ptr;
+  TableMutatorPtr mutator_ptr;
   ScanSpecificationT scan_spec;
   CellT cell;
   KeySpec key;

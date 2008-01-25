@@ -37,9 +37,6 @@ LocationCache.cc
 MasterClient.cc
 MasterFileHandler.cc
 MasterProtocol.cc
-Mutator.cc
-MutatorDispatchHandler.cc
-MutatorScatterBuffer.cc
 RangeLocator.cc
 RangeServerClient.cc
 RangeServerProtocol.cc
@@ -47,6 +44,9 @@ RootFileHandler.cc
 ScanBlock.cc
 Schema.cc
 Table.cc
+TableMutator.cc
+TableMutatorDispatchHandler.cc
+TableMutatorScatterBuffer.cc
 TableScanner.cc
 TestSource.cc
 Types.cc

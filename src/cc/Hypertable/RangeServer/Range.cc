@@ -319,11 +319,18 @@ void Range::do_split() {
   char md5DigestStr[33];
   int error;
   std::string old_start_row;
-  MutatorPtr mutator_ptr;
+  TableMutatorPtr mutator_ptr;
   KeySpec key;
   std::string metadata_key_str;
 
   assert(m_maintenance_in_progress);
+
+  // This should never happen...
+  if (m_is_root) {
+    LOG_ERROR("Split scheduled for root METADATA range");
+    m_maintenance_in_progress = false;
+    return;
+  }
 
   // this call sets m_split_row
   get_split_row();

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -21,8 +21,8 @@
 #include "Defaults.h"
 #include "Key.h"
 #include "KeySpec.h"
-#include "MutatorDispatchHandler.h"
-#include "MutatorScatterBuffer.h"
+#include "TableMutatorDispatchHandler.h"
+#include "TableMutatorScatterBuffer.h"
 
 using namespace Hypertable;
 
@@ -34,7 +34,7 @@ namespace {
 /**
  *
  */
-MutatorScatterBuffer::MutatorScatterBuffer(PropertiesPtr &props_ptr, Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT), m_table_name(table_identifier->name), m_full(false), m_resends(0) {
+TableMutatorScatterBuffer::TableMutatorScatterBuffer(PropertiesPtr &props_ptr, Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT), m_table_name(table_identifier->name), m_full(false), m_resends(0) {
   int client_timeout;
 
   if ((client_timeout = props_ptr->getPropertyInt("Hypertable.RangeServer.Client.Timeout", 0)) != 0)
@@ -52,7 +52,7 @@ MutatorScatterBuffer::MutatorScatterBuffer(PropertiesPtr &props_ptr, Comm *comm,
 /**
  *
  */
-int MutatorScatterBuffer::set(Key &key, uint8_t *value, uint32_t value_len) {
+int TableMutatorScatterBuffer::set(Key &key, uint8_t *value, uint32_t value_len) {
   int error;
   RangeLocationInfo range_info;
   UpdateBufferMapT::const_iterator iter;
@@ -88,7 +88,7 @@ int MutatorScatterBuffer::set(Key &key, uint8_t *value, uint32_t value_len) {
 /**
  *
  */
-int MutatorScatterBuffer::set_delete(Key &key) {
+int TableMutatorScatterBuffer::set_delete(Key &key) {
   int error;
   RangeLocationInfo range_info;
   UpdateBufferMapT::const_iterator iter;
@@ -135,7 +135,7 @@ int MutatorScatterBuffer::set_delete(Key &key) {
 /**
  *
  */
-int MutatorScatterBuffer::set(ByteString32T *key, ByteString32T *value) {
+int TableMutatorScatterBuffer::set(ByteString32T *key, ByteString32T *value) {
   int error;
   RangeLocationInfo range_info;
   UpdateBufferMapT::const_iterator iter;
@@ -185,7 +185,7 @@ namespace {
 /**
  *
  */
-void MutatorScatterBuffer::send() {
+void TableMutatorScatterBuffer::send() {
   UpdateBufferPtr update_buffer_ptr;
   struct ltByteString32Chronological swo_bs32;
   std::vector<ByteString32T *>  kvec;
@@ -220,7 +220,7 @@ void MutatorScatterBuffer::send() {
       ptr = data + len;
     }
 
-    update_buffer_ptr->dispatch_handler_ptr = new MutatorDispatchHandler(update_buffer_ptr.get());
+    update_buffer_ptr->dispatch_handler_ptr = new TableMutatorDispatchHandler(update_buffer_ptr.get());
 
     /**
      * Send update
@@ -236,7 +236,7 @@ void MutatorScatterBuffer::send() {
 /**
  * 
  */
-bool MutatorScatterBuffer::completed() {
+bool TableMutatorScatterBuffer::completed() {
   return m_completion_counter.is_complete();
 }
 
@@ -245,12 +245,12 @@ bool MutatorScatterBuffer::completed() {
 /**
  * 
  */
-int MutatorScatterBuffer::wait_for_completion() {
+int TableMutatorScatterBuffer::wait_for_completion() {
   return m_completion_counter.wait_for_completion();
 }
 
 
-MutatorScatterBuffer *MutatorScatterBuffer::create_redo_buffer() {
+TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer() {
   int error;
   UpdateBufferPtr update_buffer_ptr;
   RangeLocationInfo range_info;
@@ -258,7 +258,7 @@ MutatorScatterBuffer *MutatorScatterBuffer::create_redo_buffer() {
   ByteString32T *low_key, *key, *value;
   int count = 0;
 
-  MutatorScatterBuffer *redo_buffer = new MutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+  TableMutatorScatterBuffer *redo_buffer = new TableMutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
 
   for (UpdateBufferMapT::const_iterator iter = m_buffer_map.begin(); iter != m_buffer_map.end(); iter++) {
     update_buffer_ptr = (*iter).second;
@@ -339,7 +339,7 @@ MutatorScatterBuffer *MutatorScatterBuffer::create_redo_buffer() {
 }
 
 
-void MutatorScatterBuffer::reset() {
+void TableMutatorScatterBuffer::reset() {
   for (UpdateBufferMapT::const_iterator iter = m_buffer_map.begin(); iter != m_buffer_map.end(); iter++) {
     (*iter).second->key_offsets.clear();
     (*iter).second->buf.clear();  // maybe deallocate here???

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MUTATOR_H
-#define HYPERTABLE_MUTATOR_H
+#ifndef HYPERTABLE_TABLEMUTATOR_H
+#define HYPERTABLE_TABLEMUTATOR_H
 
 #include "AsyncComm/ConnectionManager.h"
 
@@ -29,7 +29,7 @@
 
 #include "Cell.h"
 #include "KeySpec.h"
-#include "MutatorScatterBuffer.h"
+#include "TableMutatorScatterBuffer.h"
 #include "RangeLocator.h"
 #include "RangeServerClient.h"
 #include "Schema.h"
@@ -37,11 +37,11 @@
 
 namespace Hypertable {
 
-  class Mutator : public ReferenceCount {
+  class TableMutator : public ReferenceCount {
 
   public:
-    Mutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
-    virtual ~Mutator() { return; }
+    TableMutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
+    virtual ~TableMutator() { return; }
 
     void set(uint64_t timestamp, KeySpec &key, uint8_t *value, uint32_t value_len);
     void set_delete(uint64_t timestamp, KeySpec &key);
@@ -65,14 +65,14 @@ namespace Hypertable {
     TableIdentifierT     m_table_identifier;
     uint64_t             m_memory_used;
     uint64_t             m_max_memory;
-    MutatorScatterBufferPtr  m_buffer_ptr;
-    MutatorScatterBufferPtr  m_prev_buffer_ptr;
+    TableMutatorScatterBufferPtr  m_buffer_ptr;
+    TableMutatorScatterBufferPtr  m_prev_buffer_ptr;
     uint64_t             m_resends;
   };
-  typedef boost::intrusive_ptr<Mutator> MutatorPtr;
+  typedef boost::intrusive_ptr<TableMutator> TableMutatorPtr;
 
 
 
 }
 
-#endif // HYPERTABLE_MUTATOR_H
+#endif // HYPERTABLE_TABLEMUTATOR_H

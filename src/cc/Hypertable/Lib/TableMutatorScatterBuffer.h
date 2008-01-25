@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MUTATORSCATTERBUFFER_H
-#define HYPERTABLE_MUTATORSCATTERBUFFER_H
+#ifndef HYPERTABLE_TABLEMUTATORSCATTERBUFFER_H
+#define HYPERTABLE_TABLEMUTATORSCATTERBUFFER_H
 
 #include <vector>
 
@@ -41,11 +41,11 @@
 
 namespace Hypertable {
 
-  class MutatorScatterBuffer : public ReferenceCount {
+  class TableMutatorScatterBuffer : public ReferenceCount {
 
   public:
 
-    MutatorScatterBuffer(PropertiesPtr &props_ptr, Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
+    TableMutatorScatterBuffer(PropertiesPtr &props_ptr, Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
     int set(Key &key, uint8_t *value, uint32_t value_len);
     int set_delete(Key &key);
     int set(ByteString32T *key, ByteString32T *value);
@@ -54,7 +54,7 @@ namespace Hypertable {
     bool completed();
     int wait_for_completion();
     void reset();
-    MutatorScatterBuffer *create_redo_buffer();
+    TableMutatorScatterBuffer *create_redo_buffer();
     uint64_t get_resend_count() { return m_resends; }
 
   private:
@@ -99,7 +99,7 @@ namespace Hypertable {
       bool m_done;
     };
 
-    friend class MutatorDispatchHandler;
+    friend class TableMutatorDispatchHandler;
 
     /**
      * 
@@ -132,9 +132,9 @@ namespace Hypertable {
     bool                 m_full;
     uint64_t             m_resends;
   };
-  typedef boost::intrusive_ptr<MutatorScatterBuffer> MutatorScatterBufferPtr;
+  typedef boost::intrusive_ptr<TableMutatorScatterBuffer> TableMutatorScatterBufferPtr;
 
 
 }
 
-#endif // HYPERTABLE_MUTATORSCATTERBUFFER_H
+#endif // HYPERTABLE_TABLEMUTATORSCATTERBUFFER_H

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -113,8 +113,8 @@ Table::~Table() {
 }
 
 
-int Table::create_mutator(MutatorPtr &mutator_ptr) {
-  mutator_ptr = new Mutator(m_props_ptr, m_comm, &m_table, m_schema_ptr, m_range_locator_ptr);
+int Table::create_mutator(TableMutatorPtr &mutator_ptr) {
+  mutator_ptr = new TableMutator(m_props_ptr, m_comm, &m_table, m_schema_ptr, m_range_locator_ptr);
   return Error::OK;
 }
 

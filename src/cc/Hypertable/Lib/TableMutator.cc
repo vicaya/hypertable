@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -27,7 +27,7 @@ extern "C" {
 #include "Common/StringExt.h"
 
 #include "Key.h"
-#include "Mutator.h"
+#include "TableMutator.h"
 
 namespace {
   const uint64_t DEFAULT_MAX_MEMORY = 20000000LL;
@@ -37,12 +37,12 @@ namespace {
 /**
  * 
  */
-Mutator::Mutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_table_name(table_identifier->name), m_memory_used(0), m_max_memory(DEFAULT_MAX_MEMORY), m_resends(0) {
+TableMutator::TableMutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_table_name(table_identifier->name), m_memory_used(0), m_max_memory(DEFAULT_MAX_MEMORY), m_resends(0) {
   // copy TableIdentifierT
   memcpy(&m_table_identifier, table_identifier, sizeof(TableIdentifierT));
   m_table_identifier.name = m_table_name.c_str();
 
-  m_buffer_ptr = new MutatorScatterBuffer(props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+  m_buffer_ptr = new TableMutatorScatterBuffer(props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
 
 }
 
@@ -50,7 +50,7 @@ Mutator::Mutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifierT *table_i
 /**
  * 
  */
-void Mutator::set(uint64_t timestamp, KeySpec &key, uint8_t *value, uint32_t value_len) {
+void TableMutator::set(uint64_t timestamp, KeySpec &key, uint8_t *value, uint32_t value_len) {
   int error;
 
   sanity_check_key(key);
@@ -84,7 +84,7 @@ void Mutator::set(uint64_t timestamp, KeySpec &key, uint8_t *value, uint32_t val
 
     m_prev_buffer_ptr = m_buffer_ptr;
 
-    m_buffer_ptr = new MutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+    m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
     m_memory_used = 0;
   }
 
@@ -92,7 +92,7 @@ void Mutator::set(uint64_t timestamp, KeySpec &key, uint8_t *value, uint32_t val
 
 
 
-void Mutator::set_delete(uint64_t timestamp, KeySpec &key) {
+void TableMutator::set_delete(uint64_t timestamp, KeySpec &key) {
   int error;
   Key full_key;
 
@@ -129,14 +129,14 @@ void Mutator::set_delete(uint64_t timestamp, KeySpec &key) {
 
     m_prev_buffer_ptr = m_buffer_ptr;
 
-    m_buffer_ptr = new MutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+    m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
     m_memory_used = 0;
   }
 
 }
 
 
-void Mutator::flush() {
+void TableMutator::flush() {
 
   if (m_prev_buffer_ptr)
     wait_for_previous_buffer();
@@ -154,9 +154,9 @@ void Mutator::flush() {
   m_prev_buffer_ptr = 0;
 }
 
-void Mutator::wait_for_previous_buffer() {
+void TableMutator::wait_for_previous_buffer() {
   int error;
-  MutatorScatterBuffer *redo_buffer = 0;
+  TableMutatorScatterBuffer *redo_buffer = 0;
   int wait_time = 1;
 
   while ((error = m_prev_buffer_ptr->wait_for_completion()) != Error::OK && wait_time < 16) {
@@ -191,7 +191,7 @@ void Mutator::wait_for_previous_buffer() {
 
 
 
-void Mutator::sanity_check_key(KeySpec &key) {
+void TableMutator::sanity_check_key(KeySpec &key) {
   const char *row = (const char *)key.row;
   const char *column_qualifier = (const char *)key.column_qualifier;
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -23,7 +23,7 @@
 #include "Common/Error.h"
 #include "Common/Logger.h"
 
-#include "MutatorDispatchHandler.h"
+#include "TableMutatorDispatchHandler.h"
 
 using namespace Hypertable;
 
@@ -31,7 +31,7 @@ using namespace Hypertable;
 /**
  *
  */
-MutatorDispatchHandler::MutatorDispatchHandler(MutatorScatterBuffer::UpdateBuffer *update_buffer) : m_update_buffer(update_buffer) {
+TableMutatorDispatchHandler::TableMutatorDispatchHandler(TableMutatorScatterBuffer::UpdateBuffer *update_buffer) : m_update_buffer(update_buffer) {
   return;
 }
 
@@ -40,7 +40,7 @@ MutatorDispatchHandler::MutatorDispatchHandler(MutatorScatterBuffer::UpdateBuffe
 /**
  *
  */
-void MutatorDispatchHandler::handle(EventPtr &event_ptr) {
+void TableMutatorDispatchHandler::handle(EventPtr &event_ptr) {
 
   if (event_ptr->type == Event::MESSAGE) {
     m_update_buffer->error = Protocol::response_code(event_ptr);

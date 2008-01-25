@@ -23,9 +23,6 @@
 
 #include "Common/Error.h"
 
-#include "Hypertable/Lib/Mutator.h"
-#include "Hypertable/Lib/TableScanner.h"
-
 #include "Global.h"
 #include "MetadataRoot.h"
 

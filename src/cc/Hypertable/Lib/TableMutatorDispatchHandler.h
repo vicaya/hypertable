@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -18,13 +18,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MUTATORDISPATCHHANDLER_H
-#define HYPERTABLE_MUTATORDISPATCHHANDLER_H
+#ifndef HYPERTABLE_TABLEMUTATORDISPATCHHANDLER_H
+#define HYPERTABLE_TABLEMUTATORDISPATCHHANDLER_H
 
 #include "AsyncComm/DispatchHandler.h"
 #include "AsyncComm/Event.h"
 
-#include "MutatorScatterBuffer.h"
+#include "TableMutatorScatterBuffer.h"
 
 namespace Hypertable {
 
@@ -32,13 +32,13 @@ namespace Hypertable {
    * This class is a DispatchHandler class that can be used
    *
    */
-  class MutatorDispatchHandler : public DispatchHandler {
-  
+  class TableMutatorDispatchHandler : public DispatchHandler {
+
   public:
     /**
      * Constructor.  Initializes state.
      */
-    MutatorDispatchHandler(MutatorScatterBuffer::UpdateBuffer *update_buffer);
+    TableMutatorDispatchHandler(TableMutatorScatterBuffer::UpdateBuffer *update_buffer);
 
     /**
      * Dispatch method.  This gets called by the AsyncComm layer
@@ -50,9 +50,9 @@ namespace Hypertable {
     virtual void handle(EventPtr &event_ptr);
 
   private:
-    MutatorScatterBuffer::UpdateBuffer *m_update_buffer;
+    TableMutatorScatterBuffer::UpdateBuffer *m_update_buffer;
   };
 }
 
 
-#endif // HYPERTABLE_MUTATORDISPATCHHANDLER_H
+#endif // HYPERTABLE_TABLEMUTATORDISPATCHHANDLER_H

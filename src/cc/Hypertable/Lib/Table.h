@@ -24,7 +24,7 @@
 #include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
 
-#include "Mutator.h"
+#include "TableMutator.h"
 #include "Schema.h"
 #include "RangeLocator.h"
 #include "TableScanner.h"
@@ -47,8 +47,8 @@ namespace Hypertable {
     Table(PropertiesPtr &props_ptr, Comm *comm, Hyperspace::SessionPtr &hyperspace_ptr, std::string name);
     virtual ~Table();
 
-    int create_mutator(MutatorPtr &mutatorPtr);
-    int create_scanner(ScanSpecificationT &scanSpec, TableScannerPtr &scannerPtr);
+    int create_mutator(TableMutatorPtr &mutator_ptr);
+    int create_scanner(ScanSpecificationT &scan_spec, TableScannerPtr &scanner_ptr);
 
     void get_identifier(TableIdentifierT *table_id_p) {
       memcpy(table_id_p, &m_table, sizeof(TableIdentifierT));

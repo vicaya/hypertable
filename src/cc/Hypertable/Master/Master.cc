@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -407,7 +407,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
      * Write METADATA entry for second-level METADATA range
      */
 
-    MutatorPtr mutator_ptr;
+    TableMutatorPtr mutator_ptr;
     KeySpec key;
     std::string metadata_key_str;
 
@@ -583,7 +583,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
      * Write METADATA entry, single range covering entire table '\\0' to 0xff 0xff
      */
     if (table_id != 0) {
-      MutatorPtr mutator_ptr;
+      TableMutatorPtr mutator_ptr;
       KeySpec key;
       std::string metadata_key_str;
       struct sockaddr_in addr;

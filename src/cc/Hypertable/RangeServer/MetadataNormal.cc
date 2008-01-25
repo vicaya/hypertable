@@ -23,7 +23,7 @@
 
 #include "Common/Error.h"
 
-#include "Hypertable/Lib/Mutator.h"
+#include "Hypertable/Lib/TableMutator.h"
 #include "Hypertable/Lib/TableScanner.h"
 
 #include "Global.h"
@@ -90,7 +90,7 @@ bool MetadataNormal::get_next_files(std::string &ag_name, std::string &files) {
 
 void MetadataNormal::write_files(std::string &ag_name, std::string &files) {
   int error;
-  MutatorPtr mutator_ptr;
+  TableMutatorPtr mutator_ptr;
   KeySpec key;
 
   if ((error = Global::metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK)

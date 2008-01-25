@@ -157,7 +157,7 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
     }
     else if (state.command == COMMAND_LOAD_DATA) {
       TablePtr table_ptr;
-      MutatorPtr mutator_ptr;
+      TableMutatorPtr mutator_ptr;
       LoadDataSource *lds;
       uint64_t timestamp;
       KeySpec key;
@@ -285,7 +285,7 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
     }
     else if (state.command == COMMAND_INSERT) {
       TablePtr table_ptr;
-      MutatorPtr mutator_ptr;
+      TableMutatorPtr mutator_ptr;
       KeySpec key;
       char *column_qualifier;
       std::string tmp_str;
@@ -320,7 +320,7 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
     }
     else if (state.command == COMMAND_DELETE) {
       TablePtr table_ptr;
-      MutatorPtr mutator_ptr;
+      TableMutatorPtr mutator_ptr;
       KeySpec key;
       char *column_qualifier;
       std::string tmp_str;
