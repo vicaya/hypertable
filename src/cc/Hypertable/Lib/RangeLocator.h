@@ -21,6 +21,8 @@
 #ifndef HYPERTABLE_RANGELOCATOR_H
 #define HYPERTABLE_RANGELOCATOR_H
 
+#include <deque>
+
 #include "Common/ReferenceCount.h"
 
 #include "AsyncComm/ConnectionManager.h"
@@ -101,6 +103,7 @@ namespace Hypertable {
     int process_metadata_scanblock(ScanBlock &scan_block);
     int read_root_location();
 
+    boost::mutex           m_mutex;
     ConnectionManagerPtr   m_conn_manager_ptr;
     Hyperspace::SessionPtr m_hyperspace_ptr;
     LocationCache          m_cache;
@@ -114,6 +117,8 @@ namespace Hypertable {
     uint8_t                m_startrow_cid;
     uint8_t                m_location_cid;
     TableIdentifierT       m_metadata_table;
+    std::deque<std::string> m_last_errors;
+    
   };
   typedef boost::intrusive_ptr<RangeLocator> RangeLocatorPtr;
 

@@ -46,6 +46,10 @@ const char CellStoreV0::DATA_BLOCK_MAGIC[10]           = { 'D','a','t','a','-','
 const char CellStoreV0::INDEX_FIXED_BLOCK_MAGIC[10]    = { 'I','d','x','F','i','x','-','-','-','-' };
 const char CellStoreV0::INDEX_VARIABLE_BLOCK_MAGIC[10] = { 'I','d','x','V','a','r','-','-','-','-' };
 
+namespace {
+  const uint32_t MAX_APPENDS_OUTSTANDING = 3;
+}
+
 using namespace Hypertable;
 
 CellStoreV0::CellStoreV0(Filesystem *filesys) : m_filesys(filesys), m_filename(), m_fd(-1), m_index(),
@@ -135,17 +139,17 @@ int CellStoreV0::create(const char *fname, uint32_t blocksize, std::string compr
     m_compressor_args = "";
   }
 
-  if (compressor_type == "" || compressor_type == "quicklz") {
+  if (compressor_type == "" || compressor_type == "lzo") {
+    m_trailer.compression_type = BlockCompressionCodec::LZO;
+    m_compressor = new BlockCompressionCodecLzo(m_compressor_args);
+  }
+  else if (compressor_type == "quicklz") {
     m_trailer.compression_type = BlockCompressionCodec::QUICKLZ;
     m_compressor = new BlockCompressionCodecQuicklz(m_compressor_args);
   }
   else if (compressor_type == "zlib") {
     m_trailer.compression_type = BlockCompressionCodec::ZLIB;
     m_compressor = new BlockCompressionCodecZlib(m_compressor_args);
-  }
-  else if (compressor_type == "lzo") {
-    m_trailer.compression_type = BlockCompressionCodec::LZO;
-    m_compressor = new BlockCompressionCodecLzo(m_compressor_args);
   }
   else if (compressor_type == "none") {
     m_trailer.compression_type = BlockCompressionCodec::NONE;
@@ -175,7 +179,7 @@ int CellStoreV0::add(const ByteString32T *key, const ByteString32T *value, uint6
     m_compressed_data += (float)zBuffer.fill();
     m_buffer.clear();
 
-    if (m_outstanding_appends > 0) {
+    if (m_outstanding_appends >= MAX_APPENDS_OUTSTANDING) {
       if (!m_sync_handler.wait_for_reply(eventPtr)) {
 	LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", m_filename.c_str(), Hypertable::Protocol::string_format_message(eventPtr).c_str());
 	return -1;
@@ -226,7 +230,7 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
     m_compressed_data += (float)zBuffer.fill();
     zbuf = zBuffer.release(&zlen);
 
-    if (m_outstanding_appends > 0) {
+    if (m_outstanding_appends >= MAX_APPENDS_OUTSTANDING) {
       if (!m_sync_handler.wait_for_reply(eventPtr)) {
 	LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", m_filename.c_str(), Protocol::string_format_message(eventPtr).c_str());
 	goto abort;
@@ -268,17 +272,6 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
     zbuf = zBuffer.release(&zlen);
   }
 
-  /**
-   * wait for last Client op
-   */
-  if (m_outstanding_appends > 0) {
-    if (!m_sync_handler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("Problem writing to HDFS file '%s' : %s", m_filename.c_str(), Protocol::string_format_message(eventPtr).c_str());
-      goto abort;
-    }
-    m_outstanding_appends--;
-  }
-
   if (m_filesys->append(m_fd, zbuf, zlen, &m_sync_handler) != Error::OK)
     goto abort;
   m_outstanding_appends++;
@@ -291,15 +284,6 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
     BlockCompressionHeaderCellStore header(INDEX_VARIABLE_BLOCK_MAGIC);
     m_trailer.var_index_offset = m_offset;
     m_compressor->deflate(m_var_index_buffer, zBuffer, &header, m_trailer.size());
-  }
-
-  // wait for fixed index write
-  if (m_outstanding_appends > 0) {
-    if (!m_sync_handler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("Problem writing fixed index to HDFS file '%s' : %s", m_filename.c_str(), Protocol::string_format_message(eventPtr).c_str());
-      goto abort;
-    }
-    m_outstanding_appends--;
   }
 
   /**

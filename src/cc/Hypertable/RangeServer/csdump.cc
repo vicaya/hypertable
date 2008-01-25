@@ -70,7 +70,6 @@ int main(int argc, char **argv) {
   ConnectionManagerPtr connManagerPtr;
   DfsBroker::Client *client;
   std::string fname = "";
-  struct sockaddr_in addr;
   ByteString32T *key;
   ByteString32T *value;
   bool dump_all = false;
@@ -80,6 +79,8 @@ int main(int argc, char **argv) {
   std::string start_key, end_key;
   bool got_end_key = false;
   bool hit_start = false;
+  PropertiesPtr props_ptr;
+  string configFile = "";
 
   ReactorFactory::initialize(1);
   System::initialize(argv[0]);
@@ -109,15 +110,18 @@ int main(int argc, char **argv) {
   if (fname == "")
       Usage::dump_and_exit(usage);
 
+  if (configFile == "")
+    configFile = System::installDir + "/conf/hypertable.cfg";
+
+  props_ptr = new Properties(configFile);
+
   if (start_key == "")
     hit_start = true;
 
-  InetAddr::initialize(&addr, "localhost", DEFAULT_DFSBROKER_PORT);
-  
   comm = new Comm();
   connManagerPtr = new ConnectionManager(comm);
 
-  client = new DfsBroker::Client(connManagerPtr, addr, 600);
+  client = new DfsBroker::Client(connManagerPtr, props_ptr);
   if (!client->wait_for_connection(15)) {
     cerr << "error: timed out waiting for DFS broker" << endl;
     exit(1);
@@ -147,8 +151,10 @@ int main(int argc, char **argv) {
     scanner = cellStorePtr->create_scanner(scanContextPtr);
     while (scanner->get(&key, &value)) {
       if (!hit_start) {
-	if (strcmp(start_key.c_str(), (const char *)key->data) <= 0)
+	if (strcmp((const char *)key->data, start_key.c_str()) <= 0) {
+	  scanner->forward();
 	  continue;
+	}
 	hit_start = true;
       }
       if (got_end_key && strcmp((const char *)key->data, end_key.c_str()) > 0)

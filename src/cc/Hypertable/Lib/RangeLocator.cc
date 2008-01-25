@@ -38,6 +38,7 @@ extern "C" {
 
 namespace {
   const uint32_t METADATA_READAHEAD_COUNT = 10;
+  const uint32_t MAX_ERROR_QUEUE_LENGTH = 4;
 }
 
 
@@ -148,6 +149,15 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
     // try again, the hard way
     error = find(table, row_key, range_loc_info_p, true);
   }
+
+  // report errors if there are any
+  if (error) {
+    boost::mutex::scoped_lock lock(m_mutex);
+    for (std::deque<std::string>::iterator iter = m_last_errors.begin(); iter != m_last_errors.end(); iter++) {
+      LOG_VA_ERROR("%s", (*iter).c_str());
+    }
+  }
+  m_last_errors.clear();
 
   return error;
 }
@@ -309,7 +319,10 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
     row_key = "";
 
   if (!m_cache.lookup(table->id, row_key, range_loc_info_p, inclusive)) {
-    LOG_VA_ERROR("RangeLocator failed to find metadata for table '%s' row '%s'", table->name, row_key);
+    boost::mutex::scoped_lock lock(m_mutex);
+    m_last_errors.push_back( (std::string)"RangeLocator failed to find metadata for table '" + table->name + "' row '" + row_key + "'" );
+    while (m_last_errors.size() > MAX_ERROR_QUEUE_LENGTH)
+      m_last_errors.pop_front();
     return Error::METADATA_NOT_FOUND;
   }
 
@@ -368,8 +381,10 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
 	  //cout << "(1) cache insert table=" << table_id << " start=" << range_loc_info.start_row << " end=" << range_loc_info.end_row << " loc=" << range_loc_info.location << endl;
 	}
 	else {
-	  LOG_VA_ERROR("Incomplete METADATA record found in root tablet under row key '%s'", range_loc_info.end_row.c_str());
-	  //DUMP_CORE;
+	  boost::mutex::scoped_lock lock(m_mutex);
+	  m_last_errors.push_back( (std::string)"Incomplete METADATA record found in root tablet under row key '" + range_loc_info.end_row + "'" );
+	  while (m_last_errors.size() > MAX_ERROR_QUEUE_LENGTH)
+	    m_last_errors.pop_front();
 	}
 	range_loc_info.start_row = "";
 	range_loc_info.end_row = "";

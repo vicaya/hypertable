@@ -815,12 +815,13 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 	  next_timestamp = ((uint64_t)now.sec * 1000000000LL) + (uint64_t)now.nsec;
 	  //LOG_VA_INFO("drj TIMESTAMP %lld (%s)", next_timestamp, (const char *)((const ByteString32T *)modPtr)->data);
 	}
-	temp_timestamp = next_timestamp++;
+	temp_timestamp = ++next_timestamp;
 	if (min_ts_rec.timestamp == 0 || temp_timestamp < min_ts_rec.timestamp)
 	  min_ts_rec.timestamp = temp_timestamp;
 	temp_timestamp = ByteOrderSwapInt64(temp_timestamp);
 	temp_timestamp = ~temp_timestamp;
 	memcpy(ts_ptr, &temp_timestamp, 8);
+	temp_timestamp = next_timestamp;
       }
       else {
 	memcpy(&temp_timestamp, ts_ptr, 8);
@@ -834,7 +835,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
       modPtr += Length((const ByteString32T *)modPtr); // skip key
       modPtr += Length((const ByteString32T *)modPtr); // skip value
       update.len = modPtr - update.base;
-      if (splitStartTime != 0 && update_timestamp > splitStartTime && strcmp(row, split_row.c_str()) <= 0) {
+      if (splitStartTime != 0 && temp_timestamp > splitStartTime && strcmp(row, split_row.c_str()) <= 0) {
 	splitMods.push_back(update);
 	splitSize += update.len;
       }
