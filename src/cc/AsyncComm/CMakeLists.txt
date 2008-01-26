@@ -78,7 +78,11 @@ add_test (AsyncComm-timeout commTestTimeout)
 add_test (AsyncComm-timer commTestTimer)
 add_test (AsyncComm-reverse-request commTestReverseRequest)
 
+file (GLOB HEADERS *.h)
+
+install (FILES ${HEADERS} DESTINATION include/hypertable-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}/AsyncComm)
+
 install (TARGETS AsyncComm
          RUNTIME DESTINATION bin
          LIBRARY DESTINATION lib
-         ARCHIVE DESTINATION lib/static)
+         ARCHIVE DESTINATION lib)

@@ -43,3 +43,12 @@ ResponseCallbackReaddir.cc
 )
 
 add_library (DfsBroker ${DfsBroker_SRCS})
+
+file (GLOB HEADERS *.h)
+
+install (FILES ${HEADERS} DESTINATION include/hypertable-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}/DfsBroker/Lib)
+
+install (TARGETS DfsBroker
+         RUNTIME DESTINATION bin
+         LIBRARY DESTINATION lib
+         ARCHIVE DESTINATION lib)

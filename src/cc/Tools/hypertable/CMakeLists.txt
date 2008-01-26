@@ -25,7 +25,7 @@ hypertable.cc
 
 # hypertable - command interpreter
 add_executable (hypertable ${hypertable_SRCS})
-target_link_libraries (hypertable pthread ${BOOST_LIB} Hypertable AsyncComm Hyperspace DfsBroker Common log4cpp expat readline curses ${Tcmalloc_LIBRARIES})
+target_link_libraries (hypertable pthread ${BOOST_LIB} Hypertable log4cpp expat readline curses ${Tcmalloc_LIBRARIES})
 
 # hypertable_test
 add_executable (hypertable_test test/hypertable_test.cc ${TEST_DEPENDENCIES} )

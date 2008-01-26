@@ -59,5 +59,13 @@ main.cc
 add_executable (Hyperspace.Master ${Master_SRCS})
 target_link_libraries (Hyperspace.Master pthread ${BOOST_LIB} Hyperspace DfsBroker AsyncComm Common log4cpp)
 
+file (GLOB HEADERS *.h)
+
+install (FILES ${HEADERS} DESTINATION include/hypertable-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}/Hyperspace)
+
 install (TARGETS Hyperspace.Master RUNTIME DESTINATION bin)
 
+install (TARGETS Hyperspace
+         RUNTIME DESTINATION bin
+         LIBRARY DESTINATION lib
+         ARCHIVE DESTINATION lib)

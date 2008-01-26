@@ -40,4 +40,3 @@ configure_file(${SRC_DIR}/good-schema-1.xml ${DST_DIR}/good-schema-1.xml COPYONL
 configure_file(${SRC_DIR}/schemaTest.golden ${DST_DIR}/schemaTest.golden)
 
 add_test (Schema schemaTest)
-

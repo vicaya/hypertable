@@ -18,6 +18,10 @@
 
 project (HYPERTABLE)
 
+set (VERSION_MAJOR "0")
+set (VERSION_MINOR "9")
+set (VERSION_MICRO "0")
+
 # Enable testing
 enable_testing()
 
@@ -37,9 +41,6 @@ find_package(Log4cpp REQUIRED)
 find_package(EXPAT REQUIRED)
 find_package(Doxygen)
 find_package(Tcmalloc)
-
-MESSAGE(STATUS "log4cpp lib     = ${Log4cpp_LIBRARY}")
-MESSAGE(STATUS "log4cpp include = ${Log4cpp_INCLUDE_DIR}")
 
 # include directories
 include_directories(${Boost_INCLUDE_DIRS} ${Log4cpp_INCLUDE_DIR} src/cc)

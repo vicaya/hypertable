@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+# Copyright (C) 2008 Doug Judd (Zvents, Inc.)
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -54,26 +54,28 @@ lzo/minilzo.c
 )
 
 add_library (Hypertable ${Hypertable_SRCS})
+add_dependencies (Hypertable Hyperspace DfsBroker AsyncComm Common)
+target_link_libraries (Hypertable Hyperspace DfsBroker AsyncComm Common)
 
 # generate_test_data
 add_executable (generate_test_data generate_test_data.cc)
-target_link_libraries (generate_test_data Hypertable Hyperspace pthread ${BOOST_LIB} AsyncComm Common log4cpp expat)
+target_link_libraries (generate_test_data Hypertable pthread ${BOOST_LIB} log4cpp expat)
 
 # schemaTest
 add_executable (schemaTest tests/schemaTest.cc)
-target_link_libraries (schemaTest Hypertable pthread ${BOOST_LIB} Common log4cpp expat)
+target_link_libraries (schemaTest Hypertable pthread ${BOOST_LIB} log4cpp expat)
 
 # locationCacheTest
 add_executable (locationCacheTest tests/locationCacheTest.cc)
-target_link_libraries (locationCacheTest Hypertable ${BOOST_LIB} Common log4cpp)
+target_link_libraries (locationCacheTest Hypertable ${BOOST_LIB} log4cpp)
 
 # loadDataSourceTest
 add_executable (loadDataSourceTest tests/loadDataSourceTest.cc)
-target_link_libraries (loadDataSourceTest Hypertable ${BOOST_LIB} Common log4cpp)
+target_link_libraries (loadDataSourceTest Hypertable ${BOOST_LIB} log4cpp)
 
 # compressor_test
 add_executable (compressor_test tests/compressor_test.cc)
-target_link_libraries (compressor_test Hypertable ${BOOST_LIB} Common log4cpp ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES})
+target_link_libraries (compressor_test Hypertable ${BOOST_LIB} log4cpp ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES})
 
 #
 # Copy test files
@@ -105,4 +107,13 @@ add_test (Block-Compressor-NONE compressor_test none)
 add_test (Block-Compressor-QUICKLZ compressor_test quicklz)
 add_test (Block-Compressor-ZLIB compressor_test zlib)
 
+file (GLOB HEADERS *.h)
+
+install (FILES ${HEADERS} DESTINATION include/hypertable-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}/Hypertable/Lib)
+
 install (TARGETS generate_test_data RUNTIME DESTINATION bin)
+
+install (TARGETS Hypertable
+         RUNTIME DESTINATION bin
+         LIBRARY DESTINATION lib
+         ARCHIVE DESTINATION lib)

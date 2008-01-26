@@ -36,7 +36,11 @@ add_executable (htConvert htConvert.cc)
 # Link the executable to the Common library.
 target_link_libraries (htConvert Common log4cpp pthread)
 
+file (GLOB HEADERS *.h)
+
+install (FILES ${HEADERS} DESTINATION include/hypertable-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}/Common)
+
 install (TARGETS Common
          RUNTIME DESTINATION bin
          LIBRARY DESTINATION lib
-         ARCHIVE DESTINATION lib/static)
+         ARCHIVE DESTINATION lib)
