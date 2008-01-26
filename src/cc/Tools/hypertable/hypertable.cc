@@ -28,12 +28,14 @@ extern "C" {
 #include <poll.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <signal.h>
 }
 
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/thread/exceptions.hpp>
 
+#include "Common/FileUtils.h"
 #include "Common/Properties.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
@@ -51,6 +53,7 @@ namespace {
   bool g_cont = false;
   char *line_read = 0;
   std::string gInputStr;
+  std::string g_history_file;
 
   char *rl_gets () {
 
@@ -78,6 +81,11 @@ namespace {
       add_history (line_read);
 
     return line_read;
+  }
+
+  void termination_handler (int signum) {
+    write_history(g_history_file.c_str());
+    exit(1);
   }
 
   const char *usage[] = {
@@ -110,13 +118,14 @@ namespace {
   "\n" \
   "List of all hypertable commands:\n" \
   "Note that all text commands must be first on line and end with ';'\n" \
-  "?         (\\?) Synonym for `help'.\n" \
-  "clear     (\\c) Clear command.\n" \
-  "exit      (\\q) Exit hypertable. Same as quit.\n" \
-  "print     (\\p) Print current command.\n" \
-  "quit      (\\q) Quit hypertable.\n" \
-  "status    (\\s) Get status information from the server.\n" \
-  "system    (\\!) Execute a system shell command.\n" \
+  "?          (\\?) Synonym for `help'.\n" \
+  "clear      (\\c) Clear command.\n" \
+  "exit       (\\q) Exit hypertable. Same as quit.\n" \
+  "print      (\\p) Print current command.\n" \
+  "quit       (\\q) Quit hypertable.\n" \
+  "source <f> (.)  Execute all HQL commands in file <f>.\n" \
+  "status     (\\s) Get status information from the server.\n" \
+  "system     (\\!) Execute a system shell command.\n" \
   "\n" \
   "For help with HQL commands and Hypertable administrative commands,\n" \
   "type 'help contents'\n" \
@@ -132,9 +141,11 @@ int main(int argc, char **argv) {
   queue<string> command_queue;
   std::string command;
   std::string timestamp_format;
+  std::string source_commands;
   const char *base, *ptr;
   HqlCommandInterpreter *interp;
-  std::string history_file = (std::string)getenv("HOME") + "/.hypertable_history";
+
+  g_history_file = (std::string)getenv("HOME") + "/.hypertable_history";
 
   System::initialize(argv[0]);
   ReactorFactory::initialize((uint16_t)System::get_processor_count());
@@ -164,13 +175,20 @@ int main(int argc, char **argv) {
 
   if (!g_batch_mode) {
 
-    read_history(history_file.c_str());
+    read_history(g_history_file.c_str());
 
     cout << "Welcome to the HQL command interpreter." << endl;
     cout << endl;
     cout << "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer." << endl;
     cout << endl << flush;
   }
+
+  if (signal (SIGINT, termination_handler) == SIG_IGN)
+    signal (SIGINT, SIG_IGN);
+  if (signal (SIGHUP, termination_handler) == SIG_IGN)
+    signal (SIGHUP, SIG_IGN);
+  if (signal (SIGTERM, termination_handler) == SIG_IGN)
+    signal (SIGTERM, SIG_IGN);
 
   g_accum = "";
   if (!g_batch_mode)
@@ -196,7 +214,7 @@ int main(int argc, char **argv) {
       }
       else if (!strcasecmp(line, "quit") || !strcasecmp(line, "exit") || !strcmp(line, "\\q")) {
 	if (!g_batch_mode)
-	  write_history(history_file.c_str());
+	  write_history(g_history_file.c_str());
 	return 0;
       }
       else if (!strcasecmp(line, "print") || !strcmp(line, "\\p")) {
@@ -207,6 +225,30 @@ int main(int argc, char **argv) {
 	g_accum = "";
 	g_cont = false;
 	continue;
+      }
+      else if (!strncmp(line, "source", 6) || line[0] == '.') {
+	if ((base = strchr(line, ' ')) == 0) {
+	  cout << "syntax error: source or '.' must be followed by a space character" << endl;
+	  continue;
+	}
+	std::string fname = base;
+	trim_if(fname, boost::is_any_of(" \t\n\r;"));
+	off_t flen;
+	if ((base = FileUtils::file_to_buffer(fname.c_str(), &flen)) == 0)
+	  continue;
+	source_commands = "";
+	ptr = strtok((char *)base, "\n\r");
+	while (ptr != 0) {
+	  command = ptr;
+	  boost::trim(command);
+	  if (command.find("#") != 0)
+	    source_commands += command + " ";
+	  ptr = strtok(0, "\n\r");
+	}
+	if (source_commands == "")
+	  continue;
+	delete [] base;
+	line = source_commands.c_str();
       }
       else if (!strncasecmp(line, "system", 6) || !strncmp(line, "\\!", 2)) {
 	std::string command = line;
@@ -233,23 +275,29 @@ int main(int argc, char **argv) {
 	g_accum += string(base, ptr-base);
 	if (g_accum.size() > 0) {
 	  boost::trim(g_accum);
-	  command_queue.push(g_accum);
+	  if (g_accum.find("#") != 0)
+	    command_queue.push(g_accum);
 	  g_accum = "";
 	  g_cont = false;
 	}
 	base = ptr+1;
 	ptr = strchr(base, ';');
       }
-      g_accum += string(base);
-      boost::trim(g_accum);
-      if (g_accum != "")
+      command = string(base);
+      boost::trim(command);
+      if (command != "" && command.find("#") != 0) {
+	g_accum += command;
+	boost::trim(g_accum);
+      }
+      if (g_accum != "") {
 	g_cont = true;
-      g_accum += " ";
+	g_accum += " ";
+      }
 
       while (!command_queue.empty()) {
 	if (command_queue.front() == "quit" || command_queue.front() == "exit") {
 	  if (!g_batch_mode)
-	    write_history(history_file.c_str());
+	    write_history(g_history_file.c_str());
 	  return 0;
 	}
 	command = command_queue.front();
@@ -281,6 +329,6 @@ int main(int argc, char **argv) {
   }
 
   if (!g_batch_mode)
-    write_history(history_file.c_str());
+    write_history(g_history_file.c_str());
   return 0;
 }
