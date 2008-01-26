@@ -26,193 +26,208 @@ using namespace Hypertable;
 
 namespace {
 
-  const char *help_text_contents =
-  "HQL Statements\n" \
-  "--------------\n" \
-  "CREATE TABLE ....... Creates a table\n" \
-  "DELETE ............. Delete all or part of a row from a table\n" \
-  "DESCRIBE TABLE ..... Displays a table's schema\n" \
-  "INSERT ............. Inserts data into a table\n" \
-  "LOAD DATA INFILE ... Loads data from a tab delimited input file into a table\n" \
-  "SELECT ............. Select (and display) cells from a table\n" \
-  "SHOW CREATE TABLE .. Displays CREATE TABLE command used to create table\n" \
-  "\n" \
-  "Statements must be terminated with ';' to execute.  For more information on\n" \
-  "a specific statement, type 'help <statement>', where <statement> is one from\n" \
-  "the preceeding list.\n" \
-  "\n";
+  const char *help_text_contents[] = {
+    "HQL Statements",
+    "--------------",
+    "CREATE TABLE ....... Creates a table",
+    "DELETE ............. Delete all or part of a row from a table",
+    "DESCRIBE TABLE ..... Displays a table's schema",
+    "INSERT ............. Inserts data into a table",
+    "LOAD DATA INFILE ... Loads data from a tab delimited input file into a table",
+    "SELECT ............. Select (and display) cells from a table",
+    "SHOW CREATE TABLE .. Displays CREATE TABLE command used to create table",
+    "",
+    "Statements must be terminated with ';' to execute.  For more information on",
+    "a specific statement, type 'help <statement>', where <statement> is one from",
+    "the preceeding list.",
+    "",
+    (const char *)0
+  };
 
-  const char *help_text_create_table =
-  "\n" \
-  "CREATE TABLE [table_option ...] name '(' [create_definition, ...] ')'\n" \
-  "\n" \
-  "table_option:\n" \
-  "    COMPRESSOR '=' string_literal\n" \
-  "\n" \
-  "create_definition:\n" \
-  "    column_family_name [MAX_VERSIONS '=' value] [TTL '=' duration]\n" \
-  "    | ACCESS GROUP name [access_group_option ...] ['(' [column_family_name, ...] ')']\n" \
-  "\n" \
-  "duration:\n" \
-  "    num MONTHS\n" \
-  "    | num WEEKS\n" \
-  "    | num DAYS\n" \
-  "    | num HOURS\n" \
-  "    | num MINUTES\n" \
-  "    | num SECONDS\n" \
-  "\n" \
-  "access_group_option:\n" \
-  "    IN_MEMORY\n" \
-  "    | BLOCKSIZE '=' value\n" \
-  "    | COMPRESSOR '=' string_literal\n" \
-  "\n";
+  const char *help_text_create_table[] = {
+    "",
+    "CREATE TABLE [table_option ...] name '(' [create_definition, ...] ')'",
+    "",
+    "table_option:",
+    "    COMPRESSOR '=' string_literal",
+    "",
+    "create_definition:",
+    "    column_family_name [MAX_VERSIONS '=' value] [TTL '=' duration]",
+    "    | ACCESS GROUP name [access_group_option ...] ['(' [column_family_name, ...] ')']",
+    "",
+    "duration:",
+    "    num MONTHS",
+    "    | num WEEKS",
+    "    | num DAYS",
+    "    | num HOURS",
+    "    | num MINUTES",
+    "    | num SECONDS",
+    "",
+    "access_group_option:",
+    "    IN_MEMORY",
+    "    | BLOCKSIZE '=' value",
+    "    | COMPRESSOR '=' string_literal",
+    "",
+    (const char *)0
+  };
 
-  const char *help_text_select =
-  "\n" \
-  "SELECT ( '*' | column_family_name [ ',' column_family_name]* )\n" \
-  "    FROM table_name\n" \
-  "    [where_clause]\n" \
-  "    [options_spec]\n" \
-  "\n" \
-  "where_clause:\n" \
-  "    WHERE where_predicate [ && where_predicate ... ] \n" \
-  "\n" \
-  "where_predicate: \n" \
-  "    ROW = row_key\n" \
-  "    | ROW > row_key\n"
-  "    | ROW >= row_key\n" \
-  "    | ROW < row_key\n" \
-  "    | ROW <= row_key\n" \
-  "    | TIMESTAMP >  timestamp\n" \
-  "    | TIMESTAMP >= timestamp\n" \
-  "    | TIMESTAMP <  timestamp\n" \
-  "    | TIMESTAMP <= timestamp\n" \
-  "\n" \
-  "options_spec:\n" \
-  "    ( MAX_VERSIONS = version_count\n" \
-  "    | START_TIME = timestamp\n" \
-  "    | END_TIME = timestamp\n" \
-  "    | LIMIT = row_count\n" \
-  "    | INTO FILE 'file_name' )*\n" \
-  "\n" \
-  "timestamp:\n" \
-  "    'YYYY-MM-DD HH:MM:SS[.nanoseconds]'\n" \
-  "\n";
+  const char *help_text_select[] = {
+    "",
+    "SELECT ( '*' | column_family_name [ ',' column_family_name]* )",
+    "    FROM table_name",
+    "    [where_clause]",
+    "    [options_spec]",
+    "",
+    "where_clause:",
+    "    WHERE where_predicate [ && where_predicate ... ] ",
+    "",
+    "where_predicate: ",
+    "    ROW = row_key",
+    "    | ROW > row_key",  "    | ROW >= row_key\n" \
+    "    | ROW < row_key",
+    "    | ROW <= row_key",
+    "    | TIMESTAMP >  timestamp",
+    "    | TIMESTAMP >= timestamp",
+    "    | TIMESTAMP <  timestamp",
+    "    | TIMESTAMP <= timestamp",
+    "",
+    "options_spec:",
+    "    ( MAX_VERSIONS = version_count",
+    "    | START_TIME = timestamp",
+    "    | END_TIME = timestamp",
+    "    | LIMIT = row_count",
+    "    | INTO FILE 'file_name' )*",
+    "",
+    "timestamp:",
+    "    'YYYY-MM-DD HH:MM:SS[.nanoseconds]'",
+    "",
+    (const char *)0
+  };
+    
+  const char *help_text_describe_table[] = {
+    "",
+    "DESCRIBE TABLE name",
+    "",
+    "Example:",
+    "",
+    "hypertable> describe table Test1;",
+    "",
+    "<Schema generation=\"1\">",
+    "  <AccessGroup name=\"jan\">",
+    "    <ColumnFamily id=\"4\">",
+    "      <Name>cherry</Name>",
+    "    </ColumnFamily>",
+    "  </AccessGroup>",
+    "  <AccessGroup name=\"default\">",
+    "    <ColumnFamily id=\"5\">",
+    "      <Name>banana</Name>",
+    "    </ColumnFamily>",
+    "    <ColumnFamily id=\"6\">",
+    "      <Name>apple</Name>",
+    "    </ColumnFamily>",
+    "  </AccessGroup>",
+    "  <AccessGroup name=\"marsha\">",
+    "    <ColumnFamily id=\"7\">",
+    "      <Name>onion</Name>",
+    "    </ColumnFamily>",
+    "    <ColumnFamily id=\"8\">",
+    "      <Name>cassis</Name>",
+    "    </ColumnFamily>",
+    "  </AccessGroup>",
+    "</Schema>",
+    "",
+    (const char *)0
+  };
 
-  const char *help_text_describe_table =
-  "\n" \
-  "DESCRIBE TABLE name\n" \
-  "\n" \
-  "Example:\n" \
-  "\n" \
-  "hypertable> describe table Test1;\n" \
-  "\n" \
-  "<Schema generation=\"1\">\n" \
-  "  <AccessGroup name=\"jan\">\n" \
-  "    <ColumnFamily id=\"4\">\n" \
-  "      <Name>cherry</Name>\n" \
-  "    </ColumnFamily>\n" \
-  "  </AccessGroup>\n" \
-  "  <AccessGroup name=\"default\">\n" \
-  "    <ColumnFamily id=\"5\">\n" \
-  "      <Name>banana</Name>\n" \
-  "    </ColumnFamily>\n" \
-  "    <ColumnFamily id=\"6\">\n" \
-  "      <Name>apple</Name>\n" \
-  "    </ColumnFamily>\n" \
-  "  </AccessGroup>\n" \
-  "  <AccessGroup name=\"marsha\">\n" \
-  "    <ColumnFamily id=\"7\">\n" \
-  "      <Name>onion</Name>\n" \
-  "    </ColumnFamily>\n" \
-  "    <ColumnFamily id=\"8\">\n" \
-  "      <Name>cassis</Name>\n" \
-  "    </ColumnFamily>\n" \
-  "  </AccessGroup>\n" \
-  "</Schema>\n" \
-  "\n";
+  const char *help_text_show_create_table[] = {
+  "",
+    "SHOW CREATE TABLE name",
+    "",
+    "Example:",
+    "",
+    "hypertable> show create table Test1;",
+    "",
+    "CREATE TABLE Test1 (",
+    "  banana,",
+    "  apple,",
+    "  cherry,",
+    "  onion,",
+    "  cassis,",
+    "  ACCESS GROUP jan ( cherry ),",
+    "  ACCESS GROUP default ( banana apple ),",
+    "  ACCESS GROUP marsha ( onion cassis )",
+    ")",
+    "",
+    (const char *)0
+  };
 
-  const char *help_text_show_create_table = 
-  "\n" \
-  "SHOW CREATE TABLE name\n" \
-  "\n" \
-  "Example:\n" \
-  "\n" \
-  "hypertable> show create table Test1;\n" \
-  "\n" \
-  "CREATE TABLE Test1 (\n" \
-  "  banana,\n" \
-  "  apple,\n" \
-  "  cherry,\n" \
-  "  onion,\n" \
-  "  cassis,\n" \
-  "  ACCESS GROUP jan ( cherry ),\n" \
-  "  ACCESS GROUP default ( banana apple ),\n" \
-  "  ACCESS GROUP marsha ( onion cassis )\n" \
-  ")\n" \
-  "\n";
+  const char *help_text_load_data_infile[] = {
+    "",
+    "LOAD DATA INFILE [options] fname INTO TABLE name",
+    "",
+    "LOAD DATA INFILE [options] fname INTO FILE fname",
+    "",
+    "options:",
+    "",
+    "  ( ROW_KEY_COLUMN=name | TIMESTAMP_COLUMN=name )*",
+    "",
+    "The following is an example of the timestamp format that is",
+    "expected in the timestamp column:",
+    "",
+    "  2008-01-09 09:46:51",
+    "",
+    "Example:",
+    "",
+    "hypertable> load data infile \"data.txt\" into table Test1;",
+    "",
+    "Loading 238,920,253 bytes of input data...",
+    "",
+    "0%   10   20   30   40   50   60   70   80   90   100%",
+    "|----|----|----|----|----|----|----|----|----|----|",
+    "***************************************************",
+    "Load complete (59.70s elapsed_time, 4001802.20 bytes/s, 33499.06 inserts/s)",
+    "",
+    "The second form (INTO FILE) is really for testing purposes.  It allows",
+    "you to convert your .tsv file into a load file that contains one",
+    "insert per line which can be helpful for debugging." \
+    "",
+    (const char *)0
+  };
+    
+  const char *help_text_insert[] = {
+    "",
+    "INSERT INTO table_name VALUES value_list",
+    "",
+    "value_list:",
+    "    value_spec [ ',' value_spec ... ]",
+    "",
+    "value_spec:",
+    "    '(' row_key ',' column_key ',' value ')'",
+    "    '(' timestamp ',' row_key ',' column_key ',' value ')'",
+    "",
+    "timestamp:",
+    "    'YYYY-MM-DD HH:MM:SS[.nanoseconds]'",
+    "",
+    (const char *)0
+  };
+    
+  const char *help_text_delete[] = {
+    "",
+    "DELETE ( '*' | column_key [ ',' column_key ...] )",
+    "    FROM table_name",
+    "    WHERE ROW '=' row_key",
+    "    [ TIMESTAMP timestamp ]",
+    "",
+    "column_key:",
+    "    column_family [ ':' column_qualifier ]",
+    "",
+    "timestamp:",
+    "    'YYYY-MM-DD HH:MM:SS[.nanoseconds]'",
+    "",
+    (const char *)0
+  };
 
-  const char *help_text_load_data_infile = 
-  "\n" \
-  "LOAD DATA INFILE [options] fname INTO TABLE name\n" \
-  "\n" \
-  "LOAD DATA INFILE [options] fname INTO FILE fname\n" \
-  "\n" \
-  "options:\n" \
-  "\n" \
-  "  ( ROW_KEY_COLUMN=name | TIMESTAMP_COLUMN=name )*\n" \
-  "\n" \
-  "The following is an example of the timestamp format that is\n" \
-  "expected in the timestamp column:\n" \
-  "\n" \
-  "  2008-01-09 09:46:51\n" \
-  "\n" \
-  "Example:\n" \
-  "\n" \
-  "hypertable> load data infile \"data.txt\" into table Test1;\n" \
-  "\n" \
-  "Loading 238,920,253 bytes of input data...\n" \
-  "\n" \
-  "0%   10   20   30   40   50   60   70   80   90   100%\n" \
-  "|----|----|----|----|----|----|----|----|----|----|\n" \
-  "***************************************************\n" \
-  "Load complete (59.70s elapsed_time, 4001802.20 bytes/s, 33499.06 inserts/s)\n" \
-  "\n" \
-  "The second form (INTO FILE) is really for testing purposes.  It allows\n" \
-  "you to convert your .tsv file into a load file that contains one\n" \
-  "insert per line which can be helpful for debugging." \
-  "\n";  
-
-  const char *help_text_insert =
-  "\n" \
-  "INSERT INTO table_name VALUES value_list\n" \
-  "\n" \
-  "value_list:\n" \
-  "    value_spec [ ',' value_spec ... ]\n" \
-  "\n" \
-  "value_spec:\n" \
-  "    '(' row_key ',' column_key ',' value ')'\n" \
-  "    '(' timestamp ',' row_key ',' column_key ',' value ')'\n" \
-  "\n" \
-  "timestamp:\n" \
-  "    'YYYY-MM-DD HH:MM:SS[.nanoseconds]'\n" \
-  "\n";
-
-  const char *help_text_delete =
-  "\n" \
-  "DELETE ( '*' | column_key [ ',' column_key ...] )\n" \
-  "    FROM table_name\n" \
-  "    WHERE ROW '=' row_key\n" \
-  "    [ TIMESTAMP timestamp ]\n" \
-  "\n" \
-  "column_key:\n" \
-  "    column_family [ ':' column_qualifier ]\n" \
-  "\n" \
-  "timestamp:\n" \
-  "    'YYYY-MM-DD HH:MM:SS[.nanoseconds]'\n" \
-  "\n";
-
-  typedef __gnu_cxx::hash_map<std::string, const char *>  HelpTextMapT;
+  typedef __gnu_cxx::hash_map<std::string, const char **>  HelpTextMapT;
 
   HelpTextMapT &buildHelpTextMap() {
     HelpTextMapT *map = new HelpTextMapT();
@@ -223,8 +238,13 @@ namespace {
     (*map)["insert"] = help_text_insert;
     (*map)["select"] = help_text_select;
     (*map)["describe table"] = help_text_describe_table;
+    (*map)["describe"] = help_text_describe_table;
     (*map)["show create table"] = help_text_show_create_table;
+    (*map)["show create"] = help_text_show_create_table;
+    (*map)["show"] = help_text_show_create_table;
     (*map)["load data infile"] = help_text_load_data_infile;
+    (*map)["load data"] = help_text_load_data_infile;
+    (*map)["load"] = help_text_load_data_infile;
     return *map;
   }
 
@@ -232,7 +252,7 @@ namespace {
 }
 
 
-const char *HqlHelpText::Get(const char *subject) {
+const char **HqlHelpText::Get(const char *subject) {
   HelpTextMapT::const_iterator iter = textMap.find(subject);
   if (iter == textMap.end())
     return 0;
@@ -240,7 +260,7 @@ const char *HqlHelpText::Get(const char *subject) {
 }
 
 
-const char *HqlHelpText::Get(std::string &subject) {
+const char **HqlHelpText::Get(std::string &subject) {
   HelpTextMapT::const_iterator iter = textMap.find(subject);
   if (iter == textMap.end())
     return 0;

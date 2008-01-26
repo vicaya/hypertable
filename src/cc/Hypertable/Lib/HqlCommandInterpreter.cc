@@ -70,9 +70,11 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       cout << out_str << flush;
     }
     else if (state.command == COMMAND_HELP) {
-      const char *text = HqlHelpText::Get(state.str);
-      if (text)
-	cout << text << flush;
+      const char **text = HqlHelpText::Get(state.str);
+      if (text) {
+	for (size_t i=0; text[i]; i++)
+	  cout << text[i] << endl;
+      }
       else
 	cout << endl << "no help for '" << state.str << "'" << endl << endl;
     }
