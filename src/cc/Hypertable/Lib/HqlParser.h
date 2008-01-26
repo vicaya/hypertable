@@ -276,6 +276,8 @@ namespace Hypertable {
 	  boost::trim(state.str);
 	  std::transform( state.str.begin(), state.str.end(), state.str.begin(), ::tolower );
 	}
+	else
+	  state.str = "";
       }
       hql_interpreter_state &state;
     };

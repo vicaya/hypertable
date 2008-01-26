@@ -27,17 +27,19 @@ using namespace Hypertable;
 namespace {
 
   const char *help_text_contents =
+  "HQL Statements\n" \
+  "--------------\n" \
+  "CREATE TABLE ....... Creates a table\n" \
+  "DELETE ............. Delete all or part of a row from a table\n" \
+  "DESCRIBE TABLE ..... Displays a table's schema\n" \
+  "INSERT ............. Inserts data into a table\n" \
+  "LOAD DATA INFILE ... Loads data from a tab delimited input file into a table\n" \
+  "SELECT ............. Select (and display) cells from a table\n" \
+  "SHOW CREATE TABLE .. Displays CREATE TABLE command used to create table\n" \
   "\n" \
-  "CREATE TABLE      - Creates a table\n" \
-  "DELETE            - Delete all or part of a row from a table\n" \
-  "DESCRIBE TABLE    - Displays a table's schema\n" \
-  "INSERT            - Inserts data into a table\n" \
-  "LOAD DATA INFILE  - Loads data from a tab delimited input file into a table\n" \
-  "SELECT            - Select (and display) cells from a table\n" \
-  "SHOW CREATE TABLE - Displays CREATE TABLE command used to create table\n" \
-  "\n" \
-  "For more information, type 'help <item>', where <item> is one of the preceeding\n" \
-  "commands.\n" \
+  "Statements must be terminated with ';' to execute.  For more information on\n" \
+  "a specific statement, type 'help <statement>', where <statement> is one from\n" \
+  "the preceeding list.\n" \
   "\n";
 
   const char *help_text_create_table =
@@ -214,6 +216,7 @@ namespace {
 
   HelpTextMapT &buildHelpTextMap() {
     HelpTextMapT *map = new HelpTextMapT();
+    (*map)[""] = help_text_contents;
     (*map)["contents"] = help_text_contents;
     (*map)["create table"] = help_text_create_table;
     (*map)["delete"] = help_text_delete;

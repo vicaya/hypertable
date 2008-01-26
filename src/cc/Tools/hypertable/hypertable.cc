@@ -113,24 +113,18 @@ namespace {
 
   const char *help_text = 
   "\n" \
-  "For information about Hypertable, visit:\n" \
-  "  http://www.hypertable.org/\n" \
+  "For information about Hypertable, visit http://www.hypertable.org/\n" \
   "\n" \
-  "List of all hypertable commands:\n" \
-  "Note that all text commands must be first on line and end with ';'\n" \
+  "Interpreter Commands\n" \
+  "--------------------\n" \
   "?          (\\?) Synonym for `help'.\n" \
   "clear      (\\c) Clear command.\n" \
   "exit       (\\q) Exit hypertable. Same as quit.\n" \
   "print      (\\p) Print current command.\n" \
   "quit       (\\q) Quit hypertable.\n" \
   "source <f> (.)  Execute all HQL commands in file <f>.\n" \
-  "status     (\\s) Get status information from the server.\n" \
   "system     (\\!) Execute a system shell command.\n" \
-  "\n" \
-  "For help with HQL commands and Hypertable administrative commands,\n" \
-  "type 'help contents'\n" \
   "\n";
-
 }
 
 
@@ -204,12 +198,9 @@ int main(int argc, char **argv) {
 	command = line;
 	std::transform( command.begin(), command.end(), command.begin(), ::tolower );
 	trim_if(command, boost::is_any_of(" \t\n\r;"));
-	if (command == "help" || command == "\\h" || command == "?") {
+	if (command == "help" || command == "\\h" || command == "?")
 	  cout << help_text;
-	  continue;
-	}
-	else
-	  interp->execute_line(command);
+	interp->execute_line(command);
 	continue;
       }
       else if (!strcasecmp(line, "quit") || !strcasecmp(line, "exit") || !strcmp(line, "\\q")) {
