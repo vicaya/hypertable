@@ -114,7 +114,7 @@ namespace {
   "clear     (\\c) Clear command.\n" \
   "exit      (\\q) Exit hypertable. Same as quit.\n" \
   "print     (\\p) Print current command.\n" \
-  "quit      (\\q) Quit mysql.\n" \
+  "quit      (\\q) Quit hypertable.\n" \
   "status    (\\s) Get status information from the server.\n" \
   "system    (\\!) Execute a system shell command.\n" \
   "\n" \

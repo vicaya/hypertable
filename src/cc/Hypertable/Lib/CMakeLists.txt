@@ -54,8 +54,8 @@ lzo/minilzo.c
 )
 
 add_library (Hypertable ${Hypertable_SRCS})
-add_dependencies (Hypertable Hyperspace DfsBroker AsyncComm Common)
-target_link_libraries (Hypertable Hyperspace DfsBroker AsyncComm Common)
+add_dependencies (Hypertable Hyperspace AsyncComm Common)
+target_link_libraries (Hypertable Hyperspace AsyncComm Common)
 
 # generate_test_data
 add_executable (generate_test_data generate_test_data.cc)

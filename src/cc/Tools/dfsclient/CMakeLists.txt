@@ -32,11 +32,11 @@ CommandShutdown.cc
 
 # dfsclient - command interpreter
 add_executable (dfsclient dfsclient.cc ${dfsclient_SRCS})
-target_link_libraries (dfsclient pthread ${BOOST_LIB} log4cpp expat readline curses ${Tcmalloc_LIBRARIES} Hypertable)
+target_link_libraries (dfsclient pthread ${BOOST_LIB} log4cpp expat readline curses ${Tcmalloc_LIBRARIES} DfsBroker Hypertable)
 
 # dfsTest
 add_executable (dfsTest dfsTest.cc dfsTestThreadFunction.cc ${dfsclient_SRCS})
-target_link_libraries (dfsTest pthread ${BOOST_LIB} log4cpp ${Tcmalloc_LIBRARIES} Hypertable)
+target_link_libraries (dfsTest pthread ${BOOST_LIB} log4cpp ${Tcmalloc_LIBRARIES} DfsBroker Hypertable)
 
 configure_file(${SRC_DIR}/dfsTest.golden ${DST_DIR}/dfsTest.golden COPYONLY)
 

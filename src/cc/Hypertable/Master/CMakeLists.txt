@@ -34,6 +34,6 @@ main.cc
 
 # Hypertable.Master
 add_executable (Hypertable.Master ${Master_SRCS})
-target_link_libraries (Hypertable.Master pthread ${BOOST_LIB} log4cpp expat ${Tcmalloc_LIBRARIES} Hypertable)
+target_link_libraries (Hypertable.Master pthread ${BOOST_LIB} log4cpp expat ${Tcmalloc_LIBRARIES} DfsBroker Hypertable)
 
 install (TARGETS Hypertable.Master RUNTIME DESTINATION bin)

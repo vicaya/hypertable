@@ -43,6 +43,7 @@ ResponseCallbackReaddir.cc
 )
 
 add_library (DfsBroker ${DfsBroker_SRCS})
+add_dependencies (DfsBroker Hypertable)
 
 file (GLOB HEADERS *.h)
 
