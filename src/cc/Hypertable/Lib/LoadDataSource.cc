@@ -19,6 +19,7 @@
  */
 
 #include <cerrno>
+#include <cctype>
 #include <cstring>
 
 #include <boost/algorithm/string.hpp>
@@ -52,6 +53,11 @@ LoadDataSource::LoadDataSource(std::string fname, std::string row_key_column, st
     return;
 
   base = (char *)line.c_str();
+  if (*base == '#') {
+    base++;
+    while (isspace(*base))
+      base++;
+  }
   while ((ptr = strchr(base, '\t')) != 0) {
     *ptr++ = 0;
     m_column_names.push_back(base);
