@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -28,6 +28,8 @@ extern "C" {
 }
 
 #include <boost/algorithm/string.hpp>
+#include <boost/thread/condition.hpp>
+#include <boost/thread/mutex.hpp>
 
 #include "Common/Error.h"
 #include "Common/InteractiveCommand.h"
@@ -82,29 +84,68 @@ namespace {
     (const char *)0
   };
   
+  
+  /**
+   */
+  class ConnectionHandler : public DispatchHandler {
+  public:
+
+    ConnectionHandler() : m_notified(false), m_connected(false) { return; }
+  
+    virtual void handle(EventPtr &event_ptr) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      m_notified = true;
+      if (event_ptr->type == Event::CONNECTION_ESTABLISHED)
+	m_connected = true;
+      else if (event_ptr->type == Event::ERROR) {
+	LOG_VA_ERROR("%s", event_ptr->toString().c_str());
+      }
+      else if (event_ptr->type == Event::MESSAGE) {
+	LOG_VA_ERROR("%s", event_ptr->toString().c_str());	
+      }
+      m_cond.notify_one();
+    }
+
+    bool wait_for_notification() {
+      boost::mutex::scoped_lock lock(m_mutex);
+      if (m_notified)
+	return m_connected;
+      m_cond.wait(lock);
+      return m_connected;
+    }
+
+  private:
+    boost::mutex m_mutex;
+    boost::condition m_cond;
+    bool m_notified;
+    bool m_connected;
+  };
 }
+
 
 
 /**
  *
  */
 int main(int argc, char **argv) {
+  int error;
   const char *line;
   char *eval = 0;
   size_t i;
-  string configFile = "";
+  string config_file = "";
   vector<InteractiveCommand *>  commands;
   Comm *comm;
-  ConnectionManagerPtr connManagerPtr;
   DfsBroker::Client *client;
   PropertiesPtr props_ptr;
+  ConnectionHandler *conn_handler = new ConnectionHandler();
+  DispatchHandlerPtr handler_ptr = conn_handler;
 
   System::initialize(argv[0]);
   ReactorFactory::initialize((uint16_t)System::get_processor_count());
 
   for (int i=1; i<argc; i++) {
     if (!strncmp(argv[i], "--config=", 9))
-      configFile = &argv[i][9];
+      config_file = &argv[i][9];
     else if (!strcmp(argv[i], "--eval")) {
       i++;
       if (i == argc)
@@ -115,19 +156,40 @@ int main(int argc, char **argv) {
       Usage::dump_and_exit(usage);
   }
 
-  if (configFile == "")
-    configFile = System::installDir + "/conf/hypertable.cfg";
+  if (config_file == "")
+    config_file = System::installDir + "/conf/hypertable.cfg";
 
-  props_ptr = new Properties( configFile );
+  props_ptr = new Properties( config_file );
 
   comm = new Comm();
-  connManagerPtr = new ConnectionManager(comm);
 
-  client = new DfsBroker::Client(connManagerPtr, props_ptr);
+  {
+    const char *host;
+    uint16_t port;
+    struct sockaddr_in addr;
 
-  if (!client->wait_for_connection(15)) {
-    LOG_ERROR("Error:  Timed out waiting for DFS broker.");
-    exit(1);
+    if ((port = (uint16_t)props_ptr->getPropertyInt("DfsBroker.port", 0)) == 0) {
+      LOG_VA_ERROR("DfsBroker.port property not found in config file '%s'", config_file.c_str());
+      return 1;
+    }
+
+    if ((host = props_ptr->getProperty("DfsBroker.host", (const char *)0)) == 0) {
+      LOG_VA_ERROR("DfsBroker.host property not found in config file '%s'", config_file.c_str());
+      return 1;
+    }
+
+    InetAddr::initialize(&addr, host, port);
+
+    if ((error = comm->connect(addr, handler_ptr)) != Error::OK) {
+      LOG_VA_ERROR("Problem connecting to DfsBroker - %s", Error::get_text(error));
+      return 1;
+    }
+
+    if (!conn_handler->wait_for_notification()) {
+      cout << "Unable to connect to DfsBroker." << endl << flush;
+      return 1;
+    }
+    client = new DfsBroker::Client(comm, addr, 15);
   }
 
   commands.push_back( new CommandCopyFromLocal(client) );

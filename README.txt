@@ -1,12 +1,15 @@
 
-CONTENTS
+================
+=== CONTENTS ===
+================
 
   * HOW TO BUILD
   * HOW TO RUN REGRESSION TESTS
   * HOW TO BUILD SOURCE CODE DOCUMENTATION TREE (Doxygen)
 
-
+====================
 === HOW TO BUILD ===
+====================
 
   1. Install CMake (http://www.cmake.org/)
 
@@ -54,16 +57,17 @@ CONTENTS
     make
     make install DESTDIR=<your_install_dir>
 
-
+===================================
 === HOW TO RUN REGRESSION TESTS ===
+===================================
 
 1. Make sure software is built and installed according to 'HOW TO BUILD'
 
-   NOTE: These instructions assume the installation directory is ~/hypertable
-
 2. Make sure you have extended attributes enabled on the partition that holds the
-   installation (e.g. ~/hypertable).  To do that, you need to add the user_xattr
-   property to the relevant file systems in your /etc/fstab file. For example:
+   installation (e.g. ~/hypertable).  This is not necessary on the mac, but is
+   in general on Linux systems.  To enable extended attributes on Linux, you need
+   to add the user_xattr property to the relevant file systems in your /etc/fstab
+   file. For example:
 
    /dev/hda3     /home     ext3     defaults,user_xattr     1 2
 
@@ -71,35 +75,25 @@ CONTENTS
 
    $ mount -o remount /home
 
-3. Stop the servers
+3. Restart servers and re-create test tables
 
-  *** NOTE: Must be performed prior to running the regression tests each time **
-
-  cd ~/hypertable
-  ./bin/stop-servers.sh
-
-4. Start the servers.  The following example illustrates the use of the 'local'
-   DFS broker, but can be changed to use any DFS broker (e.g. hadoop, kosmos, etc.)
-   by replacing the 'local' keyword with the name of the broker you want to use.
-
-  *** NOTE: Must be performed prior to running the regression tests each time **
+   **********************************************************************************
+   *** WARNING: THIS STEP MUST BE PERFORMED EVERY TIME PRIOR TO RUNNING THE TEST! ***
+   **********************************************************************************
 
   cd ~/hypertable
-  ./bin/start-test-servers.sh local
+  bin/kill-servers.sh
+  bin/start-all-servers.sh local
+  bin/hypertable --batch < test/create-test-tables.hql
 
-  [ Expected output ... ]
-  Successfully started DFSBroker (local)
-  Successfully started Hyperspace
-  Successfully started Hypertable.Master
-  Successfully started Hypertable.RangeServer
-
-5. Run the regression tests
+4. Run the regression tests
 
   cd ~/build/hypertable
   make test
 
-
+=============================================================
 === HOW TO BUILD SOURCE CODE DOCUMENTATION TREE (Doxygen) ===
+=============================================================
 
 1. Install the following libraries:
   - doxygen (http://www.stack.nl/~dimitri/doxygen/)

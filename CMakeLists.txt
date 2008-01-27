@@ -89,7 +89,7 @@ install (FILES build/hypertable.jar DESTINATION java/lib)
 install (FILES bin/jrun 
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 	 DESTINATION bin)
-install (FILES bin/start-test-servers.sh
+install (FILES bin/start-all-servers.sh
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 	 DESTINATION bin)
 install (FILES bin/start-master.sh
@@ -98,13 +98,10 @@ install (FILES bin/start-master.sh
 install (FILES bin/start-range-server.sh
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 	 DESTINATION bin)
-install (FILES bin/stop-servers.sh
+install (FILES bin/kill-servers.sh
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 	 DESTINATION bin)
 install (FILES bin/slaves.sh
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 	 DESTINATION bin)
-install (FILES test/Test1-create.hql DESTINATION test)
-install (FILES test/Test2-create.hql DESTINATION test)
-install (FILES test/Test3-create.hql DESTINATION test)
-
+install (FILES test/create-test-tables.hql DESTINATION test)

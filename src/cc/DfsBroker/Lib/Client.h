@@ -69,11 +69,11 @@ namespace Hypertable {
        * address given by the addr argument and uses the timeout argument for
        * the request timeout values.
        *
-       * @param connManagerPtr smart pointer to connection manager
+       * @param conn_manager_ptr smart pointer to connection manager
        * @param addr address of DFS broker to connect to
        * @param timeout timeout value to use in requests
        */
-      Client(ConnectionManagerPtr &connManagerPtr, struct sockaddr_in &addr, time_t timeout);
+      Client(ConnectionManagerPtr &conn_manager_ptr, struct sockaddr_in &addr, time_t timeout);
 
       /** Constructor with Properties object.  The following properties are read
        * to determine the location of the broker and the request timeout value:
@@ -83,10 +83,18 @@ namespace Hypertable {
        * DfsBroker.timeout
        * </pre>
        *
-       * @param connManagerPtr smart pointer to connection manager
-       * @param propsPtr smart pointer to properties object
+       * @param conn_manager_ptr smart pointer to connection manager
+       * @param props_ptr smart pointer to properties object
        */
-      Client(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr);
+      Client(ConnectionManagerPtr &conn_manager_ptr, PropertiesPtr &props_ptr);
+
+      /** Constructor without connection manager.
+       *
+       * @param comm pointer to the Comm object
+       * @param addr remote address of already connected DfsBroker
+       * @param timeout timeout value to use in requests
+       */
+      Client(Comm *comm, struct sockaddr_in &addr, time_t timeout);
 
       /** Waits up to max_wait_secs for a connection to be established with the DFS
        * broker.
@@ -95,7 +103,9 @@ namespace Hypertable {
        * @return true if connected, false otherwise
        */
       bool wait_for_connection(long max_wait_secs) {
-	return m_conn_manager_ptr->wait_for_connection(m_addr, max_wait_secs);
+	if (m_conn_manager_ptr)
+	  return m_conn_manager_ptr->wait_for_connection(m_addr, max_wait_secs);
+	return true;
       }
 
       virtual int open(std::string &name, DispatchHandler *handler);
@@ -159,7 +169,7 @@ namespace Hypertable {
        */
       int shutdown(uint16_t flags, DispatchHandler *handler);
 
-      Protocol *get_protocol_object() { return m_protocol; }
+      Protocol *get_protocol_object() { return &m_protocol; }
 
       /** Gets the configured request timeout value.
        *
@@ -185,7 +195,7 @@ namespace Hypertable {
       struct sockaddr_in    m_addr;
       time_t                m_timeout;
       MessageBuilderSimple *m_message_builder;
-      Protocol             *m_protocol;
+      Protocol              m_protocol;
       BufferedReaderMapT    m_buffered_reader_map;
     };
 
