@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -347,6 +347,39 @@ namespace Hypertable {
       hql_interpreter_state &state;
     };
 
+    struct scan_set_row_prefix {
+      scan_set_row_prefix(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("scan_set_row_prefix");
+	if (state.scan.row != "")
+	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT ROW predicate multiply defined."));
+	else if (state.scan.start_row != "" || state.scan.end_row != "")
+	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT conflicting row specifications."));
+	state.scan.start_row = std::string(str, end-str);
+	trim_if(state.scan.start_row, boost::is_any_of("'\""));
+	state.scan.start_row_inclusive = true;
+	str = state.scan.start_row.c_str();
+	end = str + state.scan.start_row.length();
+	const char *ptr;
+	for (ptr=end-1; ptr>str; --ptr) {
+	  if (*ptr < (char)0xff) {
+	    state.scan.end_row = std::string(str, ptr-str);
+	    state.scan.end_row.append(1, (*ptr)+1);
+	    ptr++;
+	    if (ptr < end)
+	      state.scan.end_row += std::string(ptr, end-ptr);
+	    break;
+	  }
+	}
+	if (ptr == str) {
+	  state.scan.end_row  = state.scan.start_row;
+	  state.scan.end_row.append(1, (char)0xff);
+	}
+	state.scan.end_row_inclusive = false;
+      }
+      hql_interpreter_state &state;
+    };
+
     struct scan_set_start_row {
       scan_set_start_row(hql_interpreter_state &state_, bool inclusive_) : state(state_), inclusive(inclusive_) { }
       void operator()(char const *str, char const *end) const { 
@@ -629,6 +662,7 @@ namespace Hypertable {
 	   * OPERATORS
 	   */
 	  chlit<>     SINGLEQUOTE('\'');
+	  chlit<>     DOUBLEQUOTE('"');
 	  chlit<>     QUESTIONMARK('?');
 	  chlit<>     PLUS('+');
 	  chlit<>     MINUS('-');
@@ -704,6 +738,8 @@ namespace Hypertable {
 	  token_t DELETE       = as_lower_d["delete"];
 	  token_t VALUES       = as_lower_d["values"];
 	  token_t COMPRESSOR   = as_lower_d["compressor"];
+	  token_t STARTS       = as_lower_d["starts"];
+	  token_t WITH         = as_lower_d["with"];
 
 	  /**
 	   * Start grammar definition
@@ -871,6 +907,7 @@ namespace Hypertable {
 	    | ROW >> GE >> string_literal[scan_set_start_row(self.state, true)]
 	    | ROW >> LT >> string_literal[scan_set_end_row(self.state, false)]
 	    | ROW >> LE >> string_literal[scan_set_end_row(self.state, true)]
+	    | ROW >> STARTS >> WITH >> string_literal[scan_set_row_prefix(self.state)]
 	    | TIMESTAMP >> GT >> date_expression[scan_set_start_time(self.state, false)]
 	    | TIMESTAMP >> GE >> date_expression[scan_set_start_time(self.state, true)]
 	    | TIMESTAMP >> LT >> date_expression[scan_set_end_time(self.state, false)]
@@ -886,7 +923,8 @@ namespace Hypertable {
 	    ;
 
 	  date_expression
-	    = SINGLEQUOTE >> ( datetime | date | time | year ) >> SINGLEQUOTE
+	    = SINGLEQUOTE >> ( datetime | date | time | year ) >> SINGLEQUOTE 
+	    | DOUBLEQUOTE >> ( datetime | date | time | year ) >> DOUBLEQUOTE 
 	    ;
 
 	  datetime

@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
+#include <cctype>
 #include <iostream>
 #include <string>
 
@@ -349,6 +349,8 @@ void Schema::render(std::string &output) {
 }
 
 void Schema::render_hql_create_table(std::string table_name, std::string &output) {
+  bool needs_quotes = false;
+  const char *ptr;
 
   output += "\n";
   output += "CREATE TABLE ";
@@ -357,7 +359,25 @@ void Schema::render_hql_create_table(std::string table_name, std::string &output
   output += table_name + " (\n";
 
   for (ColumnFamilyMapT::const_iterator cf_iter = m_column_family_map.begin(); cf_iter != m_column_family_map.end(); cf_iter++) {
-    output += (std::string)"  " + (*cf_iter).first;
+
+    // check to see if column family name needs quotes around it
+    needs_quotes = false;
+    ptr = (*cf_iter).first.c_str();
+    if (!isalpha(*ptr))
+      needs_quotes = true;
+    else {
+      for (; *ptr; ptr++) {
+	if (!isalnum(*ptr)) {
+	  needs_quotes = true;
+	  break;
+	}
+      }
+    }
+
+    if (needs_quotes)
+      output += (std::string)"  '" + (*cf_iter).first + "'";
+    else
+      output += (std::string)"  " + (*cf_iter).first;
     if ((*cf_iter).second->max_versions != 0)
       output += (std::string)" MAX_VERSIONS=" + (*cf_iter).second->max_versions;
     if ((*cf_iter).second->ttl != 0)
@@ -375,9 +395,33 @@ void Schema::render_hql_create_table(std::string table_name, std::string &output
     if ((*ag_iter)->compressor != "")
       output += (std::string)" COMPRESSOR=\"" + (*ag_iter)->compressor + "\"";
     if (!(*ag_iter)->columns.empty()) {
+      bool display_comma = false;
       output += (std::string)" (";
       for (list<ColumnFamily *>::iterator cfl_iter = (*ag_iter)->columns.begin(); cfl_iter != (*ag_iter)->columns.end(); cfl_iter++) {
-	output += (std::string)" " + (*cfl_iter)->name;
+
+	// check to see if column family name needs quotes around it
+	needs_quotes = false;
+	ptr = (*cfl_iter)->name.c_str();
+	if (!isalpha(*ptr))
+	  needs_quotes = true;
+	else {
+	  for (; *ptr; ptr++) {
+	    if (!isalnum(*ptr)) {
+	      needs_quotes = true;
+	      break;
+	    }
+	  }
+	}
+
+	if (display_comma)
+	  output += (std::string)",";
+	else
+	  display_comma = true;
+
+	if (needs_quotes)
+	  output += (std::string)" '" + (*cfl_iter)->name + "'";
+	else
+	  output += (std::string)" " + (*cfl_iter)->name;
       }
       output += (std::string)" )";
     }
