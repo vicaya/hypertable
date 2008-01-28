@@ -52,6 +52,7 @@ TableScanner.cc
 TestSource.cc
 Types.cc
 lzo/minilzo.c
+bmz/bmz.c
 )
 
 add_library (Hypertable ${Hypertable_SRCS})
@@ -77,6 +78,13 @@ target_link_libraries (loadDataSourceTest Hypertable ${BOOST_LIB} log4cpp)
 # compressor_test
 add_executable (compressor_test tests/compressor_test.cc)
 target_link_libraries (compressor_test Hypertable log4cpp ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES})
+
+# bmz binaries
+add_executable(bmz-test bmz/bmz-test.c)
+target_link_libraries(bmz-test Hypertable)
+
+add_executable(bmzip bmz/bmzip.c)
+target_link_libraries(bmzip Hypertable)
 
 #
 # Copy test files
