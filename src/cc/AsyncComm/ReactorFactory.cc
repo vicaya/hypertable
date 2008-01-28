@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -30,13 +30,17 @@ extern "C" {
 }
 
 vector<ReactorPtr> ReactorFactory::ms_reactors;
-atomic_t ReactorFactory::ms_next_reactor = ATOMIC_INIT(0);
 boost::thread_group ReactorFactory::ms_threads;
+boost::mutex ReactorFactory::ms_mutex;
+atomic_t ReactorFactory::ms_next_reactor = ATOMIC_INIT(0);
 
 
 /**
  */
 void ReactorFactory::initialize(uint16_t reactor_count) {
+  boost::mutex::scoped_lock lock(ms_mutex);
+  if (!ms_reactors.empty())
+    return;
   ReactorPtr reactor_ptr;
   ReactorRunner rrunner;
   ReactorRunner::ms_handler_map_ptr = new HandlerMap();

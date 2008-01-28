@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -40,12 +40,16 @@ using namespace std;
 
 string System::installDir;
 string System::executableName;
-
+boost::mutex System::ms_mutex;
 
 void System::initialize(const char *argv0) {
+  boost::mutex::scoped_lock lock(ms_mutex);
   const char *execPath = getenv("_");
   char cwd[1024];
   int offset;
+
+  if (installDir != "")
+    return;
 
   srand((unsigned)getpid());
 
@@ -99,8 +103,8 @@ void System::initialize(const char *argv0) {
       installDir = ".";
     else
       installDir.erase(pos);
-    cerr << "WARNING: " << executableName << " does not appear to have been run from an installation." << endl;
-    cerr << "WARNING: Using '" << installDir << "' as the installation directory" << endl;
+    //cerr << "WARNING: " << executableName << " does not appear to have been run from an installation." << endl;
+    //cerr << "WARNING: Using '" << installDir << "' as the installation directory" << endl;
   }
   else
     installDir.erase(pos);

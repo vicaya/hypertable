@@ -46,6 +46,7 @@ public class Error {
     static public final int BLOCK_COMPRESSOR_CHECKSUM_MISMATCH = 18;
     static public final int BLOCK_COMPRESSOR_INFLATE_ERROR     = 19;
     static public final int BLOCK_COMPRESSOR_INIT_ERROR        = 20;
+    static public final int TABLE_DOES_NOT_EXIST               = 21;
 
     static public final int COMM_NOT_CONNECTED       = 0x00010001;
     static public final int COMM_BROKEN_CONNECTION   = 0x00010002;
@@ -130,6 +131,7 @@ public class Error {
 	mTextMap.put(BLOCK_COMPRESSOR_CHECKSUM_MISMATCH, "HYPERTABLE block compressor block checksum mismatch");
 	mTextMap.put(BLOCK_COMPRESSOR_INFLATE_ERROR,     "HYPERTABLE block compressor inflate error");
 	mTextMap.put(BLOCK_COMPRESSOR_INIT_ERROR,        "HYPERTABLE block compressor initialization error");
+	mTextMap.put(TABLE_DOES_NOT_EXIST,       "HYPERTABLE table does not exist");
 	mTextMap.put(COMM_NOT_CONNECTED,         "COMM not connected");
 	mTextMap.put(COMM_BROKEN_CONNECTION,     "COMM broken connection");
 	mTextMap.put(COMM_CONNECT_ERROR,         "COMM connect error");

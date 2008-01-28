@@ -113,9 +113,6 @@ int main(int argc, char **argv) {
   uint32_t emitted = 0;
   bool no_deletes = false;
 
-  System::initialize(argv[0]);
-  ReactorFactory::initialize((uint16_t)System::get_processor_count());
-
   for (int i=1; i<argc; i++) {
     if (!strncmp(argv[i], "--config=", 9))
       configFile = &argv[i][9];
@@ -152,7 +149,7 @@ int main(int argc, char **argv) {
   if (!tdata.load(System::installDir + "/demo"))
     exit(1);
 
-  client = new Client(configFile);
+  client = new Client(argv[0], configFile);
 
   if ((error = client->get_schema(tableName, schemaSpec)) != Error::OK) {
     LOG_VA_ERROR("Problem getting schema for table '%s' - %s", argv[1], Error::get_text(error));

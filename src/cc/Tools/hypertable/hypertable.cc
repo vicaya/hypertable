@@ -141,9 +141,6 @@ int main(int argc, char **argv) {
 
   g_history_file = (std::string)getenv("HOME") + "/.hypertable_history";
 
-  System::initialize(argv[0]);
-  ReactorFactory::initialize((uint16_t)System::get_processor_count());
-
   for (int i=1; i<argc; i++) {
     if (!strcmp(argv[i], "--batch") || !strcmp(argv[i], "-B"))
       g_batch_mode = true;
@@ -160,7 +157,7 @@ int main(int argc, char **argv) {
   if (configFile == "")
     configFile = System::installDir + "/conf/hypertable.cfg";
 
-  hypertable = new Client(configFile);
+  hypertable = new Client(argv[0], configFile);
 
   interp = hypertable->create_hql_interpreter();
 
@@ -312,7 +309,7 @@ int main(int argc, char **argv) {
 
     }
     catch (Hypertable::Exception &e) {
-      cerr << e.what() << endl;
+      cerr << "Error: " << e.what() << endl;
       if (g_batch_mode)
 	return 1;
     }

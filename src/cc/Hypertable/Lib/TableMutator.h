@@ -43,7 +43,7 @@ namespace Hypertable {
     TableMutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
     virtual ~TableMutator() { return; }
 
-    void set(uint64_t timestamp, KeySpec &key, uint8_t *value, uint32_t value_len);
+    void set(uint64_t timestamp, KeySpec &key, const void *value, uint32_t value_len);
     void set_delete(uint64_t timestamp, KeySpec &key);
     void flush();
 

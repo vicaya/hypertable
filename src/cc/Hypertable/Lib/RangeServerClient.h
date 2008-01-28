@@ -21,7 +21,7 @@
 #ifndef HYPERTABLE_RANGESERVERCLIENT_H
 #define HYPERTABLE_RANGESERVERCLIENT_H
 
-#include <boost/shared_ptr.hpp>
+#include <boost/intrusive_ptr.hpp>
 
 #include "Common/Properties.h"
 #include "Common/ReferenceCount.h"

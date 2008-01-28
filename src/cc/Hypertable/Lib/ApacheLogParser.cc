@@ -39,14 +39,14 @@ void ApacheLogParser::load(std::string filename) {
 /**
  */
 bool ApacheLogParser::next(ApacheLogEntryT &entry) {
-  const char *base;
+  char *base;
 
   memset(&entry, 0, sizeof(entry));
 
   if (!getline(m_fin, m_line))
     return false;
 
-  base = m_line.c_str();
+  base = (char *)m_line.c_str();
 
   // IP address
   if ((base = extract_field(base, &entry.ip_address)) == 0)
@@ -92,7 +92,7 @@ bool ApacheLogParser::next(ApacheLogEntryT &entry) {
 /**
  *
  */
-const char *ApacheLogParser::extract_field(const char *base, const char **field_ptr) {
+char *ApacheLogParser::extract_field(char *base, char **field_ptr) {
   char *ptr;
   while (isspace(*base))
     base++;
@@ -117,7 +117,7 @@ const char *ApacheLogParser::extract_field(const char *base, const char **field_
 /**
  *
  */
-const char *ApacheLogParser::extract_timestamp(const char *base, uint64_t *timestampp) {
+char *ApacheLogParser::extract_timestamp(char *base, uint64_t *timestampp) {
   struct tm tm;
   char *end_ptr;
   char *ptr;

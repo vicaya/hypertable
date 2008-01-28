@@ -55,8 +55,8 @@ lzo/minilzo.c
 )
 
 add_library (Hypertable ${Hypertable_SRCS})
-add_dependencies (Hypertable Hyperspace AsyncComm Common)
-target_link_libraries (Hypertable Hyperspace AsyncComm Common)
+add_dependencies (Hypertable Hyperspace AsyncComm Common ${BOOST_LIB})
+target_link_libraries (Hypertable Hyperspace AsyncComm Common ${BOOST_LIB})
 
 # generate_test_data
 add_executable (generate_test_data generate_test_data.cc)
@@ -76,7 +76,7 @@ target_link_libraries (loadDataSourceTest Hypertable ${BOOST_LIB} log4cpp)
 
 # compressor_test
 add_executable (compressor_test tests/compressor_test.cc)
-target_link_libraries (compressor_test Hypertable ${BOOST_LIB} log4cpp ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES})
+target_link_libraries (compressor_test Hypertable log4cpp ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES})
 
 #
 # Copy test files

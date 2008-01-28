@@ -61,10 +61,15 @@ void Table::initialize(std::string &name) {
   /**
    * Open table file
    */
+  m_hyperspace_ptr->set_silent_flag(true);
   if ((error = m_hyperspace_ptr->open(tableFile, OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
+    m_hyperspace_ptr->set_silent_flag(false);
+    if (error == Error::HYPERSPACE_BAD_PATHNAME)
+      throw Exception(Error::TABLE_DOES_NOT_EXIST);
     LOG_VA_ERROR("Unable to open Hyperspace table file '%s' - %s", tableFile.c_str(), Error::get_text(error));
     throw Exception(error);
   }
+  m_hyperspace_ptr->set_silent_flag(false);
 
   {
     char *table_name = new char [ strlen(name.c_str()) + 1 ];

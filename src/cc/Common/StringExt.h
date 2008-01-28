@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -20,13 +20,10 @@
 #ifndef HYPERTABLE_STRINGEXT_H
 #define HYPERTABLE_STRINGEXT_H
 
+#include <cstdio>
 #include <ext/hash_map>
 #include <stdexcept>
 #include <string>
-
-extern "C" {
-#include <stdio.h>
-}
 
 namespace __gnu_cxx {
   template<> struct hash< std::string >  {

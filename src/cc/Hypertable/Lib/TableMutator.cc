@@ -50,7 +50,7 @@ TableMutator::TableMutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier
 /**
  * 
  */
-void TableMutator::set(uint64_t timestamp, KeySpec &key, uint8_t *value, uint32_t value_len) {
+void TableMutator::set(uint64_t timestamp, KeySpec &key, const void *value, uint32_t value_len) {
   int error;
 
   sanity_check_key(key);
@@ -202,10 +202,10 @@ void TableMutator::sanity_check_key(KeySpec &key) {
     throw Exception(Error::BAD_KEY, "Invalid row key - cannot be zero length");
 
   if (row[key.row_len] != 0)
-    throw Exception(Error::BAD_KEY, "Invalid row key - must be followed by a '\0' character");
+    throw Exception(Error::BAD_KEY, "Invalid row key - must be followed by a '\\0' character");
 
   if (strlen(row) != key.row_len)
-    throw Exception(Error::BAD_KEY, (std::string)"Invalid row key - '\0' character not allowed (offset=" + (uint32_t)strlen(row) + ")");
+    throw Exception(Error::BAD_KEY, (std::string)"Invalid row key - '\\0' character not allowed (offset=" + (uint32_t)strlen(row) + ")");
 
   if (row[0] == (char)0xff && row[1] == (char)0xff)
     throw Exception(Error::BAD_KEY, "Invalid row key - cannot start with character sequence 0xff 0xff");
@@ -215,8 +215,8 @@ void TableMutator::sanity_check_key(KeySpec &key) {
    */
   if (key.column_qualifier_len > 0) {
     if (column_qualifier[key.column_qualifier_len] != 0)
-      throw Exception(Error::BAD_KEY, "Invalid column qualifier - must be followed by a '\0' character");
+      throw Exception(Error::BAD_KEY, "Invalid column qualifier - must be followed by a '\\0' character");
     if (strlen(column_qualifier) != key.column_qualifier_len)
-      throw Exception(Error::BAD_KEY, (std::string)"Invalid column qualifier - '\0' character not allowed (offset=" + (uint32_t)strlen(column_qualifier) + ")");
+      throw Exception(Error::BAD_KEY, (std::string)"Invalid column qualifier - '\\0' character not allowed (offset=" + (uint32_t)strlen(column_qualifier) + ")");
   }
 }

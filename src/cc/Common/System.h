@@ -23,6 +23,8 @@
 
 #include <string>
 
+#include <boost/thread/mutex.hpp>
+
 #define DUMP_CORE *((int *)0) = 1;
 
 namespace Hypertable {
@@ -37,6 +39,8 @@ namespace Hypertable {
     
     static int get_processor_count();
 
+  private:
+    static boost::mutex ms_mutex;
   };
 
 }

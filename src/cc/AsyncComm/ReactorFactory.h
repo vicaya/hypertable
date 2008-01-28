@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -22,6 +22,7 @@
 #ifndef HYPERTABLE_REACTORFACTORY_H
 #define HYPERTABLE_REACTORFACTORY_H
 
+#include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 
 extern "C" {
@@ -72,7 +73,7 @@ namespace Hypertable {
     static boost::thread_group ms_threads;
 
   private:
-
+    static boost::mutex ms_mutex;
     static atomic_t ms_next_reactor;
 
   };

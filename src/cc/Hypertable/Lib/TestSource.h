@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -17,6 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+
+#ifndef HYPERTABLE_TESTSOURCE_H
+#define HYPERTABLE_TESTSOURCE_H
 
 #include <fstream>
 #include <iostream>
@@ -56,3 +59,4 @@ namespace Hypertable {
 
 }
 
+#endif // HYPERTABLE_TESTSOURCE_H

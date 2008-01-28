@@ -53,6 +53,7 @@ namespace {
     { Error::BLOCK_COMPRESSOR_CHECKSUM_MISMATCH, "HYPERTABLE block compressor block checksum mismatch" },
     { Error::BLOCK_COMPRESSOR_INFLATE_ERROR,     "HYPERTABLE block compressor inflate error" },
     { Error::BLOCK_COMPRESSOR_INIT_ERROR,        "HYPERTABLE block compressor initialization error" },
+    { Error::TABLE_DOES_NOT_EXIST,               "HYPERTABLE table does not exist" },
     { Error::COMM_NOT_CONNECTED,          "COMM not connected" },
     { Error::COMM_BROKEN_CONNECTION,      "COMM broken connection" },
     { Error::COMM_CONNECT_ERROR,          "COMM connect error" },
@@ -140,6 +141,7 @@ const int Error::BLOCK_COMPRESSOR_BAD_MAGIC;
 const int Error::BLOCK_COMPRESSOR_CHECKSUM_MISMATCH;
 const int Error::BLOCK_COMPRESSOR_INFLATE_ERROR;
 const int Error::BLOCK_COMPRESSOR_INIT_ERROR;
+const int Error::TABLE_DOES_NOT_EXIST;
 
 const int Error::COMM_NOT_CONNECTED;
 const int Error::COMM_BROKEN_CONNECTION;

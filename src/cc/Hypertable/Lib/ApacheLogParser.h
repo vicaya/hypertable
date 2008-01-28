@@ -30,14 +30,14 @@
 namespace Hypertable {
 
   typedef struct {
-    const char *ip_address;
-    const char *userid;
+    char *ip_address;
+    char *userid;
     uint64_t timestamp;
-    const char *request;
-    const char *response_code;
-    const char *object_size;
-    const char *referer;
-    const char *user_agent;
+    char *request;
+    char *response_code;
+    char *object_size;
+    char *referer;
+    char *user_agent;
   } ApacheLogEntryT;
 
   class ApacheLogParser {
@@ -48,8 +48,8 @@ namespace Hypertable {
 
   private:
 
-    const char *extract_field(const char *base, const char **field_ptr);
-    const char *extract_timestamp(const char *base, uint64_t *timestampp);
+    char *extract_field(char *base, char **field_ptr);
+    char *extract_timestamp(char *base, uint64_t *timestampp);
 
     std::ifstream m_fin;
     std::string m_line;

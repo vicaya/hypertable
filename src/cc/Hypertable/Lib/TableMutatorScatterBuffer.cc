@@ -52,7 +52,7 @@ TableMutatorScatterBuffer::TableMutatorScatterBuffer(PropertiesPtr &props_ptr, C
 /**
  *
  */
-int TableMutatorScatterBuffer::set(Key &key, uint8_t *value, uint32_t value_len) {
+int TableMutatorScatterBuffer::set(Key &key, const void *value, uint32_t value_len) {
   int error;
   RangeLocationInfo range_info;
   UpdateBufferMapT::const_iterator iter;

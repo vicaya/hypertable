@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -24,6 +24,7 @@
 #include <string>
 
 #include "Common/Properties.h"
+#include "Common/ReferenceCount.h"
 
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/ConnectionManager.h"
@@ -38,11 +39,11 @@ namespace Hypertable {
   class Comm;
   class HqlCommandInterpreter;
 
-  class Client {
+  class Client : public ReferenceCount {
 
   public:
 
-    Client(std::string configFile);
+    Client(const char *argv0, std::string configFile);
 
     int create_table(std::string name, std::string schema);
     int open_table(std::string name, TablePtr &tablePtr);
@@ -61,6 +62,8 @@ namespace Hypertable {
     Hyperspace::SessionPtr  m_hyperspace_ptr;
     MasterClientPtr         m_master_client_ptr;
   };
+  typedef boost::intrusive_ptr<Client> ClientPtr;
+  
 
 }
 

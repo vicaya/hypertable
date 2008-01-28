@@ -23,7 +23,7 @@
 
 #include <ext/hash_map>
 
-#include <boost/shared_ptr.hpp>
+#include <boost/intrusive_ptr.hpp>
 
 #include "ReferenceCount.h"
 #include "StringExt.h"

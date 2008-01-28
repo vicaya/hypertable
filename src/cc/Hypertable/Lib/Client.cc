@@ -25,6 +25,7 @@ extern "C" {
 }
 
 #include "AsyncComm/Comm.h"
+#include "AsyncComm/ReactorFactory.h"
 
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
@@ -39,9 +40,12 @@ using namespace Hyperspace;
 /**
  *
  */
-Client::Client(std::string configFile) {
+Client::Client(const char *argv0, std::string configFile) {
   time_t master_timeout;
 
+  System::initialize(argv0);
+  ReactorFactory::initialize((uint16_t)System::get_processor_count());
+  
   m_props_ptr = new Properties(configFile);
 
   m_comm = new Comm();
@@ -83,7 +87,6 @@ int Client::open_table(std::string name, TablePtr &tablePtr) {
     table = new Table(m_props_ptr, m_conn_manager_ptr, m_hyperspace_ptr, name);
   }
   catch (Exception &e) {
-    LOG_VA_ERROR("Problem opening table '%s' - %s", name.c_str(), e.what());
     return e.code();
   }
   tablePtr = table;
@@ -103,3 +106,4 @@ int Client::get_schema(std::string tableName, std::string &schema) {
 HqlCommandInterpreter *Client::create_hql_interpreter() {
   return new HqlCommandInterpreter(this);
 }
+
