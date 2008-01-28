@@ -387,7 +387,25 @@ void Schema::render_hql_create_table(std::string table_name, std::string &output
 
   size_t i=1;
   for (list<AccessGroup *>::iterator ag_iter = m_access_groups.begin(); ag_iter != m_access_groups.end(); ag_iter++, i++) {
-    output += (std::string)"  ACCESS GROUP " + (*ag_iter)->name;
+    output += (std::string)"  ACCESS GROUP ";
+
+    needs_quotes = false;
+    ptr = (*ag_iter)->name.c_str();
+    if (!isalpha(*ptr))
+      needs_quotes = true;
+    else {
+      for (++ptr; *ptr; ptr++) {
+	if (!isalnum(*ptr)) {
+	  needs_quotes = true;
+	  break;
+	}
+      }
+    }
+    if (needs_quotes)
+      output += (std::string)"'" + (*ag_iter)->name + "'";
+    else
+      output += (*ag_iter)->name;
+
     if ((*ag_iter)->in_memory)
       output += (std::string)" IN_MEMORY";
     if ((*ag_iter)->blocksize != 0)
@@ -405,7 +423,7 @@ void Schema::render_hql_create_table(std::string table_name, std::string &output
 	if (!isalpha(*ptr))
 	  needs_quotes = true;
 	else {
-	  for (; *ptr; ptr++) {
+	  for (++ptr; *ptr; ptr++) {
 	    if (!isalnum(*ptr)) {
 	      needs_quotes = true;
 	      break;

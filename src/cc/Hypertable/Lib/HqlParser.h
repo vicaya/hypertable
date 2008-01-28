@@ -195,6 +195,7 @@ namespace Hypertable {
       void operator()(char const *str, char const *end) const { 
 	display_string("create_access_group");
 	std::string name = std::string(str, end-str);
+	boost::trim_if(name, boost::is_any_of("'\""));
 	Schema::AccessGroupMapT::const_iterator iter = state.ag_map.find(name);
 	if (iter != state.ag_map.end())
 	  state.ag = (*iter).second;
@@ -868,7 +869,7 @@ namespace Hypertable {
 	    ;
 
 	  access_group_definition
-	    = ACCESS >> GROUP >> identifier[create_access_group(self.state)] 
+	    = ACCESS >> GROUP >> user_identifier[create_access_group(self.state)] 
 		     >> *( access_group_option ) 
 		     >> !( LPAREN >> column_name[add_column_family(self.state)]
 		     >> *( COMMA >> column_name[add_column_family(self.state)] ) >> RPAREN )
