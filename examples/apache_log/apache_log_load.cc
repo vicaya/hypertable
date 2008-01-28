@@ -1,3 +1,23 @@
+/**
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * 
+ * This file is part of Hypertable.
+ * 
+ * Hypertable is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or any later version.
+ * 
+ * Hypertable is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
+
 #include <cstring>
 #include <iostream>
 
@@ -13,7 +33,8 @@ using namespace std;
 
 namespace {
 
-  /** This function returns a null terminated pointer to the page that is
+  /** 
+   * This function returns a null terminated pointer to the page that is
    * referenced in the given GET request.
    */
   const char *extract_requested_page(char *request) {
@@ -27,7 +48,8 @@ namespace {
     return 0;
   }
 
-  /** This function extracts the toplevel User agent from a user agent string,
+  /** 
+   * This function extracts the toplevel User agent from a user agent string,
    * which involves stripping off the version specific info in parenthesis
    */
   const char *extract_toplevel_user_agent(char *user_agent) {
@@ -67,13 +89,16 @@ int main(int argc, char **argv) {
 
   try {
 
-    hypertable_client_ptr = new Client(argv[0], System::installDir + "/conf/hypertable.cfg");
+    // Create Hypertable client object
+    hypertable_client_ptr = new Hypertable::Client(argv[0]);
 
+    // Open the 'WebServerLog' table
     if ((error = hypertable_client_ptr->open_table("WebServerLog", table_ptr)) != Error::OK) {
       cerr << "Error: unable to open table 'WebServerLog' - " << Error::get_text(error) << endl;
       return 1;
     }
 
+    // Create a mutator object on the 'WebServerLog' table
     if ((error = table_ptr->create_mutator(mutator_ptr)) != Error::OK) {
       cerr << "Error: problem creating mutator on table 'WebServerLog' - " << Error::get_text(error) << endl;
       return 1;
@@ -85,20 +110,22 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  // Initialize the key variable, 'RequestInfo' is the only column we're updating
   memset(&key, 0, sizeof(key));
   key.column_family = "RequestInfo";
 
+  // Load the log file into the ApacheLogParser object
   parser.load(argv[1]);
 
+  // The parser next method will return true until EOF
   while (parser.next(entry)) {
 
-    if (entry.timestamp == 0)
-      continue;
-
+    // Extract the page being requested and use it as the row key
     if ((key.row = extract_requested_page(entry.request)) == 0)
       continue;
     key.row_len = strlen((const char *)key.row);
 
+    // Assemble value:  <IpAddress> <Referer> <UserAgent>
     try {
       std::string str;
       str += (entry.ip_address) ? entry.ip_address : "-";
@@ -114,9 +141,7 @@ int main(int argc, char **argv) {
 
   }
 
-  /**
-   * Flush pending updates
-   */
+  // Flush pending updates
   try {
     mutator_ptr->flush();
   }

@@ -41,50 +41,57 @@ void ApacheLogParser::load(std::string filename) {
 bool ApacheLogParser::next(ApacheLogEntryT &entry) {
   char *base;
 
-  memset(&entry, 0, sizeof(entry));
+  while (true) {
 
-  if (!getline(m_fin, m_line))
-    return false;
+    memset(&entry, 0, sizeof(entry));
 
-  base = (char *)m_line.c_str();
+    if (!getline(m_fin, m_line))
+      return false;
 
-  // IP address
-  if ((base = extract_field(base, &entry.ip_address)) == 0)
+    base = (char *)m_line.c_str();
+
+    // IP address
+    if ((base = extract_field(base, &entry.ip_address)) == 0)
+      continue;
+
+    // skip identd
+    if ((base = extract_field(base, 0)) == 0)
+      continue;
+
+    // userid
+    if ((base = extract_field(base, &entry.userid)) == 0)
+      continue;
+
+    // timestamp
+    if ((base = extract_timestamp(base, &entry.timestamp)) == 0)
+      continue;
+
+    if (entry.timestamp == 0)
+      continue;
+
+    // request
+    if ((base = extract_field(base, &entry.request)) == 0)
+      continue;
+
+    // response_code
+    if ((base = extract_field(base, &entry.response_code)) == 0)
+      continue;
+
+    // object_size
+    if ((base = extract_field(base, &entry.object_size)) == 0)
+      continue;
+
+    // referer
+    if ((base = extract_field(base, &entry.referer)) == 0)
+      return true;
+
+    // user_agent
+    if ((base = extract_field(base, &entry.user_agent)) == 0)
+      return true;
+
     return true;
+  }
 
-  // skip identd
-  if ((base = extract_field(base, 0)) == 0)
-    return true;
-
-  // userid
-  if ((base = extract_field(base, &entry.userid)) == 0)
-    return true;
-
-  // timestamp
-  if ((base = extract_timestamp(base, &entry.timestamp)) == 0)
-    return true;
-
-  // request
-  if ((base = extract_field(base, &entry.request)) == 0)
-    return true;
-
-  // response_code
-  if ((base = extract_field(base, &entry.response_code)) == 0)
-    return true;
-
-  // object_size
-  if ((base = extract_field(base, &entry.object_size)) == 0)
-    return true;
-
-  // referer
-  if ((base = extract_field(base, &entry.referer)) == 0)
-    return true;
-
-  // user_agent
-  if ((base = extract_field(base, &entry.user_agent)) == 0)
-    return true;
-
-  return true;
 }
 
 
