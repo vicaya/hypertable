@@ -103,7 +103,7 @@ FIND_PATH(Boost_INCLUDE_DIR NAMES boost/config.hpp PATH_SUFFIXES ${SUFFIX_FOR_PA
   DOC "The ${BOOST_INCLUDE_PATH_DESCRIPTION}"
 )
 
-SET(Boost_NAMES boost_thread-gcc41-mt)
+SET(Boost_NAMES boost_thread-mt boost_thread-gcc41-mt)
 FIND_LIBRARY(Boost_LIB
   NAMES ${Boost_NAMES}
   PATHS /usr/lib /usr/local/lib /usr/local/lib64 /opt/local/lib
