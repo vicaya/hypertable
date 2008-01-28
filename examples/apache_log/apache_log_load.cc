@@ -1,4 +1,3 @@
-
 #include <cstring>
 #include <iostream>
 
@@ -14,6 +13,9 @@ using namespace std;
 
 namespace {
 
+  /** This function returns a null terminated pointer to the page that is
+   * referenced in the given GET request.
+   */
   const char *extract_requested_page(char *request) {
     char *base, *ptr;
     if (!strncmp(request, "GET ", 4)) {
@@ -25,6 +27,9 @@ namespace {
     return 0;
   }
 
+  /** This function extracts the toplevel User agent from a user agent string,
+   * which involves stripping off the version specific info in parenthesis
+   */
   const char *extract_toplevel_user_agent(char *user_agent) {
     char *ptr;
     if (user_agent) {
@@ -39,6 +44,12 @@ namespace {
 
 
 /**
+ * This program is designed to parse an Apache web server log and insert
+ * the values into a table called 'WebServerLog'.  The name of the Apache
+ * web server log file is supplied as the one and only argument on the
+ * command line.  The expected format of the log is Apache Common or
+ * Combined format (see http://httpd.apache.org/docs/1.3/logs.html#common
+ * for details).
  */
 int main(int argc, char **argv) {
   int error;

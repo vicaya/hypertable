@@ -40,13 +40,22 @@ using namespace Hyperspace;
 /**
  *
  */
-Client::Client(const char *argv0, std::string configFile) {
-  time_t master_timeout;
-
+Client::Client(const char *argv0, std::string config_file) {
   System::initialize(argv0);
   ReactorFactory::initialize((uint16_t)System::get_processor_count());
-  
-  m_props_ptr = new Properties(configFile);
+  initialize(config_file);
+}
+
+Client::Client(const char *argv0) {
+  System::initialize(argv0);
+  ReactorFactory::initialize((uint16_t)System::get_processor_count());
+  initialize( System::installDir + "/conf/hypertable.cfg" );
+}
+
+void Client::initialize(std::string config_file) {
+  time_t master_timeout;
+
+  m_props_ptr = new Properties(config_file);
 
   m_comm = new Comm();
   m_conn_manager_ptr = new ConnectionManager(m_comm);
@@ -68,6 +77,7 @@ Client::Client(const char *argv0, std::string configFile) {
     exit(1);
   }
 }
+
 
 
 /**

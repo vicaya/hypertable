@@ -44,7 +44,8 @@ namespace Hypertable {
   public:
 
     Client(const char *argv0, std::string configFile);
-
+    Client(const char *argv0);
+    void initialize(std::string config_file);
     int create_table(std::string name, std::string schema);
     int open_table(std::string name, TablePtr &tablePtr);
     int get_schema(std::string tableName, std::string &schema);
