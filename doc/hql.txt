@@ -1,40 +1,62 @@
 
-CREATE TABLE
-============
+DELETE Syntax
 
-CREATE TABLE name '(' [create_definition, ...] ')'
-
-create_definition:
-	column_family_name [MAX_VERSIONS '=' value] [TTL '=' duration]
-	| ACCESS GROUP name [IN_MEMORY] [BLOCKSIZE '=' value] ['(' [column_family_name, ...] ')']
-
-duration:
-	num MONTHS
-	| num WEEKS
-	| num DAYS
-	| num HOURS
-	| num MINUTES
-	| num SECONDS
-
-SELECT
-======
-
-SELECT ( '*' | column_family_name [, column_family_name]* )
+  DELETE ( '*' | column_key [ ',' column_key ...] )
     FROM table_name
-    [where_clause]
-    [options_spec]
+    WHERE ROW '=' row_key
+    [ TIMESTAMP timestamp ]
 
-where_clause:
-    WHERE 
-    ( ROW = row_key
-      | (ROW > row_key | ROW >= row_key)
-      | (ROW < row_key | ROW <= row_key)
-      | (ROW > row_key | ROW >= row_key) "&&" (ROW < row_key | ROW <= row_key) )
+  column_key:
+    column_family [ ':' column_qualifier ]
 
-options_spec:
-    ( MAX_VERSIONS = version_count
-      | START_TIME = timestamp
-      | END_TIME = timestamp
-      | LIMIT = row_count
-      | INTO FILE 'file_name' )*
+  timestamp:
+    'YYYY-MM-DD HH:MM:SS[.nanoseconds]'
+
+The DELETE command provides a way to delete cells from a row in a table.
+The command applies to a single row only and can be used to delete, for
+a given row, all of the cells in a qualified column, all the cells in a
+column family, or all of the cells in the row.  An example of each
+type of delete is shown below.  Assume that we're starting with a table
+that contains the following:
+
+hypertable> SELECT * FROM CrawlDb;
+2008-01-28 11:42:27.550602004   org.hypertable.www      status-code     200
+2008-01-28 11:42:27.534581004   org.hypertable.www      status-code     200
+2008-01-28 11:42:27.550602002   org.hypertable.www      anchor:http://www.news.com/     Hypertable
+2008-01-28 11:42:27.534581002   org.hypertable.www      anchor:http://www.news.com/     Hypertable
+2008-01-28 11:42:27.550602001   org.hypertable.www      anchor:http://www.opensource.org/       Hypertable.org
+2008-01-28 11:42:27.534581001   org.hypertable.www      anchor:http://www.opensource.org/       Hypertable.org
+2008-01-28 11:42:27.550602003   org.hypertable.www      checksum        822828699
+2008-01-28 11:42:27.534581003   org.hypertable.www      checksum        2921728
+
+The first example shows how to delete the cells in the column
+'anchor:http://www.opensource.org/' of the row 'org.hypertable.www'.
+
+hypertable> DELETE "anchor:http://www.opensource.org/" FROM CrawlDb WHERE ROW = 'org.hypertable.www';
+
+hypertable> select * from CrawlDb;
+2008-01-28 11:42:27.550602004   org.hypertable.www      status-code     200
+2008-01-28 11:42:27.534581004   org.hypertable.www      status-code     200
+2008-01-28 11:42:27.550602002   org.hypertable.www      anchor:http://www.news.com/     Hypertable
+2008-01-28 11:42:27.534581002   org.hypertable.www      anchor:http://www.news.com/     Hypertable
+2008-01-28 11:42:27.550602003   org.hypertable.www      checksum        822828699
+2008-01-28 11:42:27.534581003   org.hypertable.www      checksum        2921728
+
+The next example shows how to delete all of the cells in the column
+family 'checksum' of the row 'org.hypertable.www'.
+
+hypertable> DELETE checksum FROM CrawlDb WHERE ROW = "org.hypertable.www";
+
+hypertable> select * from CrawlDb;
+2008-01-28 11:42:27.550602004   org.hypertable.www      status-code     200
+2008-01-28 11:42:27.534581004   org.hypertable.www      status-code     200
+2008-01-28 11:42:27.550602002   org.hypertable.www      anchor:http://www.news.com/     Hypertable
+2008-01-28 11:42:27.534581002   org.hypertable.www      anchor:http://www.news.com/     Hypertable
+
+And finaly, here's how to delete all of the cells in the row 'org.hypertable.www'.
+
+hypertable> DELETE * FROM CrawlDb WHERE ROW = "org.hypertable.www";
+
+hypertable> SELECT * FROM CrawlDb;
+
 
