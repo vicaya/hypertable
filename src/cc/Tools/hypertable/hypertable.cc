@@ -154,6 +154,9 @@ int main(int argc, char **argv) {
       Usage::dump_and_exit(usage);
   }
 
+  System::initialize(argv[0]);
+  ReactorFactory::initialize((uint16_t)System::get_processor_count());
+
   if (configFile == "")
     configFile = System::installDir + "/conf/hypertable.cfg";
 
