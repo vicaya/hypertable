@@ -81,10 +81,10 @@ target_link_libraries (compressor_test Hypertable log4cpp ${ZLIB_LIBRARIES} ${Lz
 
 # bmz binaries
 add_executable(bmz-test bmz/bmz-test.c)
-target_link_libraries(bmz-test Hypertable)
+target_link_libraries(bmz-test Hypertable log4cpp)
 
 add_executable(bmzip bmz/bmzip.c)
-target_link_libraries(bmzip Hypertable)
+target_link_libraries(bmzip Hypertable log4cpp)
 
 #
 # Copy test files
