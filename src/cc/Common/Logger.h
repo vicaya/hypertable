@@ -43,162 +43,230 @@ namespace Hypertable {
 
 #ifndef DISABLE_LOG_DEBUG
 
-#define LOG_ENTER \
-   { \
+#define HT_LOG_ENTER \
+  if (Logger::logger->isDebugEnabled()) do { \
     if (Logger::ms_show_line_numbers) \
       Logger::logger->debug("(%s:%d) %s() ENTER", __FILE__, __LINE__, __func__); \
     else \
       Logger::logger->debug("%s() ENTER", __func__); \
     std::cout << std::flush; \
-  }
+  } while(0)
 
-#define LOG_EXIT \
-   { \
+#define HT_LOG_EXIT \
+  if (Logger::logger->isDebugEnabled()) do { \
     if (Logger::ms_show_line_numbers) \
       Logger::logger->debug("(%s:%d) %s() EXIT", __FILE__, __LINE__, __func__); \
     else \
       Logger::logger->debug("%s() EXIT", __func__); \
     std::cout << std::flush; \
-  }
+  } while(0)
 
-#define LOG_DEBUG(msg) Logger::logger->debug("(%s:%d) " msg, __FILE__, __LINE__);
-#define LOG_VA_DEBUG(msg, ...) \
-   { \
+#define HT_DEBUG(msg) if (Logger::logger->isDebugEnabled()) do { \
+  Logger::logger->debug("(%s:%d) " msg, __FILE__, __LINE__) \
+} while (0)
+
+#define HT_DEBUGF(msg, ...) \
+  if (Logger::logger->isDebugEnabled()) do { \
     if (Logger::ms_show_line_numbers) \
       Logger::logger->debug("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
     else \
       Logger::logger->debug(msg, __VA_ARGS__);  \
     std::cout << std::flush; \
-   }
+  } while (0)
 #else
-#define LOG_ENTER
-#define LOG_EXIT
-#define LOG_DEBUG(msg)
-#define LOG_VA_DEBUG(msg, ...)
+#define HT_LOG_ENTER
+#define HT_LOG_EXIT
+#define HT_DEBUG(msg)
+#define HT_DEBUGF(msg, ...)
 #endif
 
 #ifndef DISABLE_LOG_INFO
-#define LOG_INFO(msg) Logger::logger->info("(%s:%d) " msg, __FILE__, __LINE__);
-#define LOG_VA_INFO(msg, ...) \
-   { \
+#define HT_INFO(msg) if (Logger::logger->isInfoEnabled()) do { \
+  Logger::logger->info("(%s:%d) " msg, __FILE__, __LINE__); \
+} while(0)
+
+#define HT_INFOF(msg, ...) \
+  if (Logger::logger->isInfoEnabled()) do { \
     if (Logger::ms_show_line_numbers) \
       Logger::logger->info("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
     else \
       Logger::logger->info(msg, __VA_ARGS__);  \
-   }
+  } while (0)
 #else
-#define LOG_INFO(msg)
-#define LOG_VA_INFO(msg, ...)
+#define HT_INFO(msg)
+#define HT_INFOF(msg, ...)
 #endif
 
 #ifndef DISABLE_LOG_NOTICE
-#define LOG_NOTICE(msg) Logger::logger->notice("(%s:%d) " msg, __FILE__, __LINE__);
-#define LOG_VA_NOTICE(msg, ...) \
-   { \
+#define HT_NOTICE(msg) if (Logger::logger->isNoticeEnabled()) do { \
+  Logger::logger->notice("(%s:%d) " msg, __FILE__, __LINE__); \
+} while (0)
+#define HT_NOTICEF(msg, ...) \
+  if (Logger::logger->isNoticeEnabled()) { \
     if (Logger::ms_show_line_numbers) \
       Logger::logger->notice("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
     else \
       Logger::logger->notice(msg, __VA_ARGS__);  \
-   }
+  } while (0)
 #else
-#define LOG_NOTICE(msg)
-#define LOG_VA_NOTICE(msg, ...)
+#define HT_NOTICE(msg)
+#define HT_NOTICEF(msg, ...)
 #endif
 
 #ifndef DISABLE_LOG_WARN
-#define LOG_WARN(msg) Logger::logger->warn("(%s:%d) " msg, __FILE__, __LINE__);
-#define LOG_VA_WARN(msg, ...) \
-   { \
+#define HT_WARN(msg) if (Logger::logger->isWarnEnabled()) do { \
+  Logger::logger->warn("(%s:%d) " msg, __FILE__, __LINE__); \
+} while (0)
+
+#define HT_WARNF(msg, ...) \
+  if (Logger::logger->isWarnEnabled()) do { \
     if (Logger::ms_show_line_numbers) \
       Logger::logger->warn("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
     else \
       Logger::logger->warn(msg, __VA_ARGS__);  \
     std::cout << std::flush; \
-   }
+   } while (0)
 #else
-#define LOG_WARN(msg)
-#define LOG_VA_WARN(msg, ...)
+#define HT_WARN(msg)
+#define HT_WARNF(msg, ...)
 #endif
 
 #ifndef DISABLE_LOG_ERROR
-#define LOG_ERROR(msg) Logger::logger->error("(%s:%d) " msg, __FILE__, __LINE__);
-#define LOG_VA_ERROR(msg, ...) \
-   { \
+#define HT_ERROR(msg) if (Logger::logger->isErrorEnabled()) do { \
+  Logger::logger->error("(%s:%d) " msg, __FILE__, __LINE__); \
+} while (0)
+#define HT_ERRORF(msg, ...) \
+  if (Logger::logger->isErrorEnabled()) do { \
     if (Logger::ms_show_line_numbers) \
       Logger::logger->error("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
     else \
       Logger::logger->error(msg, __VA_ARGS__);  \
     std::cout << std::flush; \
-   }
+  } while (0)
 #else
-#define LOG_ERROR(msg)
-#define LOG_VA_ERROR(msg, ...)
+#define HT_ERROR(msg)
+#define HT_ERRORF(msg, ...)
 #endif
 
 #ifndef DISABLE_LOG_CRIT
-#define LOG_CRIT(msg) Logger::logger->crit("(%s:%d) " msg, __FILE__, __LINE__);
-#define LOG_VA_CRIT(msg, ...) \
-   { \
+#define HT_CRIT(msg) if (Logger::logger->isCritEnabled()) do { \
+  Logger::logger->crit("(%s:%d) " msg, __FILE__, __LINE__); \
+} while (0)
+#define HT_CRITF(msg, ...) \
+  if (Logger::logger->isCritEnabled()) do { \
     if (Logger::ms_show_line_numbers) \
       Logger::logger->crit("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
     else \
       Logger::logger->crit(msg, __VA_ARGS__);  \
     std::cout << std::flush; \
-   }
+  } while (0)
 #else
-#define LOG_CRIT(msg)
-#define LOG_VA_CRIT(msg, ...)
+#define HT_CRIT(msg)
+#define HT_CRITF(msg, ...)
 #endif
 
 #ifndef DISABLE_LOG_ALERT
-#define LOG_ALERT(msg) Logger::logger->alert("(%s:%d) " msg, __FILE__, __LINE__);
-#define LOG_VA_ALERT(msg, ...) \
-   { \
+#define HT_ALERT(msg) if (Logger::logger->isAlertEnabled()) do { \
+  Logger::logger->alert("(%s:%d) " msg, __FILE__, __LINE__); \
+} while (0)
+#define HT_ALERTF(msg, ...) \
+  if (Logger::logger->isAlertEnabled()) do { \
     if (Logger::ms_show_line_numbers) \
       Logger::logger->alert("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
     else \
       Logger::logger->alert(msg, __VA_ARGS__);  \
     std::cout << std::flush; \
-   }
+  } while (0)
 #else
-#define LOG_ALERT(msg)
-#define LOG_VA_ALERT(msg, ...)
+#define HT_ALERT(msg)
+#define HT_ALERTF(msg, ...)
 #endif
 
 #ifndef DISABLE_LOG_EMERG
-#define LOG_EMERG(msg) Logger::logger->emerg("(%s:%d) " msg, __FILE__, __LINE__);
-#define LOG_VA_EMERG(msg, ...) \
-   { \
+#define HT_EMERG(msg) if (Logger::logger->isEmergEnabled()) do { \
+  Logger::logger->emerg("(%s:%d) " msg, __FILE__, __LINE__); \
+} while (0)
+#define HT_EMERGF(msg, ...) \
+  if (Logger::logger->isEmergEnabled()) do { \
     if (Logger::ms_show_line_numbers) \
       Logger::logger->emerg("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
     else \
       Logger::logger->emerg(msg, __VA_ARGS__);  \
     std::cout << std::flush; \
-   }
+  } while (0)
 #else
-#define LOG_EMERG(msg)
-#define LOG_VA_EMERG(msg, ...)
+#define HT_EMERG(msg)
+#define HT_EMERGF(msg, ...)
 #endif
 
 #ifndef DISABLE_LOG_FATAL
-#define LOG_FATAL(msg) Logger::logger->fatal("(%s:%d) " msg, __FILE__, __LINE__);
-#define LOG_VA_FATAL(msg, ...) \
-   { \
+#define HT_FATAL(msg) if (Logger::logger->isFatalEnabled()) do { \
+  Logger::logger->fatal("(%s:%d) " msg, __FILE__, __LINE__); \
+} while (0)
+#define HT_FATALF(msg, ...) \
+  if (Logger::logger->isFatalEnabled()) do { \
     if (Logger::ms_show_line_numbers) \
       Logger::logger->fatal("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__);  \
     else \
       Logger::logger->fatal(msg, __VA_ARGS__);  \
     std::cout << std::flush; \
-   }
+  } while (0)
 #else
-#define LOG_FATAL(msg)
-#define LOG_VA_FATAL(msg, ...)
+#define HT_FATAL(msg)
+#define HT_FATALF(msg, ...)
 #endif
+
+// @deprecated
+#ifndef HT_NO_DEPRECATED
+#define LOG_DEBUG       HT_DEBUG
+#define LOG_VA_DEBUG    HT_DEBUGF
+#define LOG_INFO        HT_INFO
+#define LOG_VA_INFO     HT_INFOF
+#define LOG_NOTICE      HT_NOTICE
+#define LOG_VA_NOTICE   HT_NOTICEF
+#define LOG_WARN        HT_WARN
+#define LOG_VA_WARN     HT_WARNF
+#define LOG_ERROR       HT_ERROR
+#define LOG_VA_ERROR    HT_ERRORF
+#define LOG_CRIT        HT_CRIT
+#define LOG_VA_CRIT     HT_CRITF
+#define LOG_ALERT       HT_ALERT
+#define LOG_VA_ALERT    HT_ALERTF
+#define LOG_EMERG       HT_EMERG
+#define LOG_VA_EMERG    HT_EMERGF
+#define LOG_FATAL       HT_FATAL
+#define LOG_VA_FATAL    HT_FATALF
+#define LOG_ENTER       HT_LOG_ENTER
+#define LOG_EXIT        HT_LOG_EXIT
+#endif // HT_NO_DEPRECATED
 
 #else // HYPERTABLE_DISABLE_LOGGING
 
+#define HT_DEBUG(msg)
+#define HT_DEBUGF(msg, ...) 
+#define HT_INFO(msg)
+#define HT_INFOF(msg, ...)
+#define HT_NOTICE(msg)
+#define HT_NOTICEF(msg, ...)
+#define HT_WARN(msg)
+#define HT_WARNF(msg, ...)
+#define HT_ERROR(msg)
+#define HT_ERRORF(msg, ...)
+#define HT_CRIT(msg)
+#define HT_CRITF(msg, ...)
+#define HT_ALERT(msg)
+#define HT_ALERTF(msg, ...)
+#define HT_EMERG(msg)
+#define HT_EMERGF(msg, ...)
+#define HT_FATAL(msg)
+#define HT_FATALF(msg, ...)
+#define HT_LOG_ENTER
+#define HT_LOG_EXIT
+
+// @deprecated
+#ifndef HT_NO_DEPRECATED
 #define LOG_DEBUG(msg)
-#define LOG_VA_DEBUG(msg, ...) 
+#define LOG_VA_DEBUG(msg, ...)
 #define LOG_INFO(msg)
 #define LOG_VA_INFO(msg, ...)
 #define LOG_NOTICE(msg)
@@ -217,6 +285,7 @@ namespace Hypertable {
 #define LOG_VA_FATAL(msg, ...)
 #define LOG_ENTER
 #define LOG_EXIT
+#endif // HT_NO_DEPRECATED
 
 #endif // HYPERTABLE_DISABLE_LOGGING
 
