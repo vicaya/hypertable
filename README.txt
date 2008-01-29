@@ -50,7 +50,7 @@
   8. Configure the build. 
 
     cd ~/build/hypertable
-    cmake -DCMAKE_BUILD_TYPE="Debug" -DCMAKE_INSTALL_PREFIX= ~/src/hypertable
+    cmake -DCMAKE_INSTALL_PREFIX= -DCMAKE_BUILD_TYPE="Debug" ~/src/hypertable
 
   9. Build the software.
 

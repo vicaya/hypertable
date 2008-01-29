@@ -32,6 +32,8 @@ extern "C" {
 #include "Common/Logger.h"
 #include "Common/System.h"
 
+#include "Hyperspace/DirEntry.h"
+
 #include "Client.h"
 #include "HqlCommandInterpreter.h"
 
@@ -110,6 +112,32 @@ int Client::open_table(std::string name, TablePtr &tablePtr) {
  */
 int Client::get_schema(std::string tableName, std::string &schema) {
   return m_master_client_ptr->get_schema(tableName.c_str(), schema);
+}
+
+
+
+/**
+ */
+int Client::get_tables(std::vector<std::string> tables) {
+  int error;
+  uint64_t handle;
+  HandleCallbackPtr nullHandleCallback;
+  std::vector<struct Hyperspace::DirEntryT> listing;
+
+  if ((error = m_hyperspace_ptr->open("/hypertable/tables", OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK)
+    return error;
+
+  if ((error = m_hyperspace_ptr->readdir(handle, listing)) != Error::OK)
+    return error;
+
+  for (size_t i=0; i<listing.size(); i++) {
+    if (!listing[i].isDirectory)
+      tables.push_back(listing[i].name);
+  }
+
+  m_hyperspace_ptr->close(handle);
+
+  return Error::OK;
 }
 
 

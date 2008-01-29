@@ -103,7 +103,7 @@ FIND_PATH(Boost_INCLUDE_DIR NAMES boost/config.hpp PATH_SUFFIXES ${SUFFIX_FOR_PA
   DOC "The ${BOOST_INCLUDE_PATH_DESCRIPTION}"
 )
 
-SET(Boost_NAMES boost_thread-mt boost_thread-gcc41-mt)
+SET(Boost_NAMES boost_thread-mt boost_thread-gcc41-mt boost_thread)
 FIND_LIBRARY(Boost_LIB
   NAMES ${Boost_NAMES}
   PATHS /usr/lib /usr/local/lib /usr/local/lib64 /opt/local/lib
@@ -129,13 +129,7 @@ IF(Boost_INCLUDE_DIR)
     GET_FILENAME_COMPONENT(Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR} PATH)
   ENDIF("${Boost_LIBRARY_DIR}" MATCHES "/include$")
 
-  IF(EXISTS "${Boost_LIBRARY_DIR}/lib/libboost_thread.a")
-    SET (Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/lib)
-    SET (BOOST_LIB "boost_thread")
-  ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/lib64/libboost_thread.a")
-    SET (Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/lib64)
-    SET (BOOST_LIB "boost_thread")
-  ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/lib/libboost_thread-mt.a")
+  IF(EXISTS "${Boost_LIBRARY_DIR}/lib/libboost_thread-mt.a")
     SET (Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/lib)
     SET (BOOST_LIB "boost_thread-mt")
   ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/lib64/libboost_thread-mt.a")
@@ -147,9 +141,15 @@ IF(Boost_INCLUDE_DIR)
   ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/lib64/libboost_thread-gcc41-mt.a")
     SET (Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/lib64)
     SET (BOOST_LIB "boost_thread-gcc41-mt")
-  ELSE(EXISTS "${Boost_LIBRARY_DIR}/lib/libboost_thread.a")
+  ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/lib/libboost_thread.a")
+    SET (Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/lib)
+    SET (BOOST_LIB "boost_thread")
+  ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/lib64/libboost_thread.a")
+    SET (Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/lib64)
+    SET (BOOST_LIB "boost_thread")
+  ELSE(EXISTS "${Boost_LIBRARY_DIR}/lib/libboost_thread-mt.a")
       MESSAGE(FATAL_ERROR "Boost thread library was not found.")
-  ENDIF(EXISTS "${Boost_LIBRARY_DIR}/lib/libboost_thread.a")
+  ENDIF(EXISTS "${Boost_LIBRARY_DIR}/lib/libboost_thread-mt.a")
 
   IF(EXISTS "${Boost_INCLUDE_DIR}")
     SET(Boost_INCLUDE_DIRS ${Boost_INCLUDE_DIR})

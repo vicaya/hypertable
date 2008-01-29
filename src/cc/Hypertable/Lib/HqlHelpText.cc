@@ -36,6 +36,7 @@ namespace {
     "LOAD DATA INFILE ... Loads data from a tab delimited input file into a table",
     "SELECT ............. Select (and display) cells from a table",
     "SHOW CREATE TABLE .. Displays CREATE TABLE command used to create table",
+    "SHOW TABLES ........ Displays the list of tables",
     "",
     "Statements must be terminated with ';' to execute.  For more information on",
     "a specific statement, type 'help <statement>', where <statement> is one from",
@@ -276,6 +277,21 @@ namespace {
     (const char *)0
   };
 
+  const char *help_text_show_tables[] = {
+    "",
+    "SHOW TABLES",
+    "",
+    "Example:",
+    "",
+    "hypertable> show tables;",
+    "",
+    "CrawlDb",
+    "Query-Log",
+    "",
+    (const char *)0
+  };
+
+
   typedef __gnu_cxx::hash_map<std::string, const char **>  HelpTextMapT;
 
   HelpTextMapT &buildHelpTextMap() {
@@ -290,10 +306,10 @@ namespace {
     (*map)["describe"] = help_text_describe_table;
     (*map)["show create table"] = help_text_show_create_table;
     (*map)["show create"] = help_text_show_create_table;
-    (*map)["show"] = help_text_show_create_table;
     (*map)["load data infile"] = help_text_load_data_infile;
     (*map)["load data"] = help_text_load_data_infile;
     (*map)["load"] = help_text_load_data_infile;
+    (*map)["show tables"] = help_text_show_tables;
     return *map;
   }
 

@@ -371,8 +371,17 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       }
       mutator_ptr->flush();
     }
-
-
+    else if (state.command == COMMAND_SHOW_TABLES) {
+      std::vector<std::string> tables;
+      if ((error = m_client->get_tables(tables)) != Error::OK)
+	throw Exception(error, std::string("Problem obtaining table list"));
+      if (tables.empty())
+	cout << "Empty set" << endl;
+      else {
+	for (size_t i=0; i<tables.size(); i++)
+	  cout << tables[i] << endl;
+      }
+    }
   }
   else
     throw Exception(Error::HQL_PARSE_ERROR, std::string("parse error at: ") + info.stop);

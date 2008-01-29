@@ -63,6 +63,7 @@ namespace Hypertable {
     const int COMMAND_LOAD_DATA         = 6;
     const int COMMAND_INSERT            = 7;
     const int COMMAND_DELETE            = 8;
+    const int COMMAND_SHOW_TABLES       = 9;
 
     class insert_record {
     public:
@@ -695,6 +696,7 @@ namespace Hypertable {
 	  token_t CREATE       = as_lower_d["create"];
 	  token_t HELP         = as_lower_d["help"];
 	  token_t TABLE        = as_lower_d["table"];
+	  token_t TABLES       = as_lower_d["tables"];
 	  token_t TTL          = as_lower_d["ttl"];
 	  token_t MONTHS       = as_lower_d["months"];
 	  token_t MONTH        = as_lower_d["month"];
@@ -780,6 +782,11 @@ namespace Hypertable {
 	    | help_statement[set_help(self.state)]
 	    | insert_statement[set_command(self.state, COMMAND_INSERT)]
 	    | delete_statement[set_command(self.state, COMMAND_DELETE)]
+	    | show_tables_statement[set_command(self.state, COMMAND_SHOW_TABLES)]
+	    ;
+
+	  show_tables_statement
+	    = SHOW >> TABLES
 	    ;
 
 	  delete_statement
@@ -1016,6 +1023,7 @@ namespace Hypertable {
 	  BOOST_SPIRIT_DEBUG_RULE(delete_statement);
 	  BOOST_SPIRIT_DEBUG_RULE(delete_column_clause);
 	  BOOST_SPIRIT_DEBUG_RULE(table_option);
+	  BOOST_SPIRIT_DEBUG_RULE(show_tables_statement);
 	}
 #endif
 
@@ -1031,7 +1039,8 @@ namespace Hypertable {
         describe_table_statement, show_statement, select_statement, where_clause,
         where_predicate, option_spec, date_expression, datetime, date, time,
 	year, load_data_statement, load_data_option, insert_statement, insert_value_list,
-	insert_value, delete_statement, delete_column_clause, table_option;
+	insert_value, delete_statement, delete_column_clause, table_option,
+        show_tables_statement;
       };
 
       hql_interpreter_state &state;
