@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -177,7 +177,7 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPt
   if (!keyComps.load(m_cur_key)) {
     LOG_ERROR("Problem parsing key!");
   }
-  else if (!m_scan_context_ptr->familyMask[keyComps.column_family_code])
+  else if (keyComps.flag != FLAG_DELETE_ROW && !m_scan_context_ptr->familyMask[keyComps.column_family_code])
     forward();
 
 }
@@ -259,7 +259,7 @@ void CellStoreScannerV0::forward() {
       LOG_ERROR("Problem parsing key!");
       break;
     }
-    if (m_scan_context_ptr->familyMask[keyComps.column_family_code])
+    if (keyComps.flag != FLAG_DELETE_ROW || m_scan_context_ptr->familyMask[keyComps.column_family_code])
       break;
   }
 }

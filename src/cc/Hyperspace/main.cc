@@ -182,7 +182,7 @@ int main(int argc, char **argv) {
     filestr.close();
   }
 
-  poll(0, 0, -1);
+  appQueuePtr->join();
 
   appQueuePtr->shutdown();
 

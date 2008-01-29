@@ -35,6 +35,7 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellCachePtr, ScanContextPtr &s
 
   {
     boost::mutex::scoped_lock lock(m_cell_cache_mutex);
+    Key keyComps;
 
     /** set start iterator **/
     bs = Create(scanContextPtr->start_row.c_str(), strlen(scanContextPtr->start_row.c_str()));
@@ -48,26 +49,20 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellCachePtr, ScanContextPtr &s
 
     m_cur_iter = m_start_iter;
 
-    if (m_cur_iter != m_end_iter) {
-      Key keyComps;
+    while (m_cur_iter != m_end_iter) {
       if (!keyComps.load((*m_cur_iter).first)) {
 	LOG_ERROR("Problem parsing key!");
-	m_eos = true;
-	return;
       }
-      else if (m_scan_context_ptr->familyMask[keyComps.column_family_code]) {
+      else if (keyComps.flag == FLAG_DELETE_ROW || m_scan_context_ptr->familyMask[keyComps.column_family_code]) {
 	m_cur_key = (*m_cur_iter).first;
 	m_cur_value = (ByteString32T *)(((uint8_t *)(*m_cur_iter).first) + (CellCache::OFFSET_BIT_MASK & (*m_cur_iter).second));
 	return;
       }
+      m_cur_iter++;
     }
-    else {
-      m_eos = true;
-      return;
-    }
+    m_eos = true;
+    return;
   }
-
-  forward();
 
 }
 
@@ -92,7 +87,7 @@ void CellCacheScanner::forward() {
     if (!keyComps.load((*m_cur_iter).first)) {
       LOG_ERROR("Problem parsing key!");
     }
-    else if (m_scan_context_ptr->familyMask[keyComps.column_family_code]) {
+    else if (keyComps.flag == FLAG_DELETE_ROW || m_scan_context_ptr->familyMask[keyComps.column_family_code]) {
       m_cur_key = (*m_cur_iter).first;
       m_cur_value = (ByteString32T *)(((uint8_t *)(*m_cur_iter).first) + (CellCache::OFFSET_BIT_MASK & (*m_cur_iter).second));
       return;

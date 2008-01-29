@@ -118,7 +118,7 @@ int Client::get_schema(std::string tableName, std::string &schema) {
 
 /**
  */
-int Client::get_tables(std::vector<std::string> tables) {
+int Client::get_tables(std::vector<std::string> &tables) {
   int error;
   uint64_t handle;
   HandleCallbackPtr nullHandleCallback;
