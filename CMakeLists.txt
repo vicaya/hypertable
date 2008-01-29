@@ -25,9 +25,9 @@ set (VERSION_MICRO "0")
 # Enable testing
 enable_testing()
 
-if (CMAKE_COMPILER_IS_GNUCXX)
+if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
   add_definitions(-Wall -pedantic -Wno-long-long -Wno-variadic-macros)
-endif (CMAKE_COMPILER_IS_GNUCXX)
+endif (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 
 # Uncomment the following to build dynamic libraries
 # set (BUILD_SHARED_LIBS ON)
