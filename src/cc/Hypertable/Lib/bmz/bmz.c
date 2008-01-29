@@ -414,7 +414,7 @@ update_hash_mod16x2(UInt32 h, int in, int out, UInt32 pow1, UInt32 pow2,
 /* Faster hash using mask instead of mod 
  * m needs to be power-of-2
  */
-#define R_HASH_mask_BODY(int_type) \
+#define R_HASH_MASK_BODY(int_type) \
   int_type h = 0, p = 1; \
   \
   while (len--) { \
@@ -427,12 +427,12 @@ update_hash_mod16x2(UInt32 h, int in, int out, UInt32 pow1, UInt32 pow2,
 
 static UInt64
 r_hash_mask(const Byte *buf, size_t len, UInt64 b, UInt64 m) {
-  R_HASH_mask_BODY(UInt64);
+  R_HASH_MASK_BODY(UInt64);
 }
 
 static UInt32
 r_hash_mask32(const Byte *buf, size_t len, UInt32 b, UInt32 m) {
-  R_HASH_mask_BODY(UInt32);
+  R_HASH_MASK_BODY(UInt32);
 }
 
 /* C* rolling hash family (see D* above) */
@@ -448,7 +448,7 @@ r_hash_mask32x2(const Byte *buf, size_t len, UInt64 b1, UInt64 b2) {
          r_hash_mask(buf, len, b2, BM_MASK32);
 }
 
-#define POW_mask_BODY(_pow_fun_, _int_type_) \
+#define POW_MASK_BODY(_pow_fun_, _int_type_) \
   if (n == 0) return 1; \
   if (n == 1) return (x & m); \
   { \
@@ -460,15 +460,15 @@ r_hash_mask32x2(const Byte *buf, size_t len, UInt64 b1, UInt64 b2) {
 
 static UInt64
 pow_mask(UInt64 x, UInt64 n, UInt64 m) {
-  POW_mask_BODY(pow_mask, UInt64)
+  POW_MASK_BODY(pow_mask, UInt64)
 }
 
 static UInt32
 pow_mask32(UInt32 x, UInt32 n, UInt32 m) {
-  POW_mask_BODY(pow_mask32, UInt32)
+  POW_MASK_BODY(pow_mask32, UInt32)
 }
 
-#define UPDATE_HASH_mask_BODY \
+#define UPDATE_HASH_MASK_BODY \
   h *= b; \
   h -= (out * pow_n) & m; \
   h += in; \
@@ -476,13 +476,13 @@ pow_mask32(UInt32 x, UInt32 n, UInt32 m) {
 
 static inline UInt64
 update_hash_mask(UInt64 h, int in, int out, UInt64 pow_n, UInt64 b, UInt64 m) {
-  UPDATE_HASH_mask_BODY;
+  UPDATE_HASH_MASK_BODY;
 }
 
 static inline UInt32
 update_hash_mask32(UInt32 h, int in, int out, UInt32 pow_n,
                    UInt32 b, UInt32 m) {
-  UPDATE_HASH_mask_BODY;
+  UPDATE_HASH_MASK_BODY;
 }
 
 static inline UInt32
@@ -764,7 +764,7 @@ bmz_bench_lut_mask16x2(const void *src, size_t in_len, size_t fp_len,
 
 void
 bmz_bench_lut_mask(const void *src, size_t in_len, size_t fp_len,
-                     void *work_mem, size_t b) {
+                   void *work_mem, size_t b) {
   size_t pow_n, m = BM_MASKSZ;
 
   BM_LUT_BENCH_BODY(hash = r_hash_mask(in, fp_len, b, m);
@@ -774,7 +774,7 @@ bmz_bench_lut_mask(const void *src, size_t in_len, size_t fp_len,
 
 void
 bmz_bench_lut_mask32x2(const void *src, size_t in_len, size_t fp_len,
-                   void *work_mem, size_t b1, size_t b2) {
+                       void *work_mem, size_t b1, size_t b2) {
   size_t pow_n_b1, pow_n_b2;
 
   BM_LUT_BENCH_BODY(hash = r_hash_mask32x2(in, fp_len, b1, b2);
