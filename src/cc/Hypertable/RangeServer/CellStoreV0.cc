@@ -54,7 +54,7 @@ using namespace Hypertable;
 
 CellStoreV0::CellStoreV0(Filesystem *filesys) : m_filesys(filesys), m_filename(), m_fd(-1), m_index(),
   m_compressor(0), m_buffer(0), m_fix_index_buffer(0), m_var_index_buffer(0),
-  m_outstanding_appends(0), m_offset(0), m_last_key(0), m_file_length(0), m_disk_usage(0), m_file_id(0) {
+  m_outstanding_appends(0), m_offset(0), m_last_key(0), m_file_length(0), m_disk_usage(0), m_file_id(0), m_uncompressed_blocksize(0) {
   m_file_id = FileBlockCache::get_next_file_id();
   assert(sizeof(float) == 4);
 }
@@ -122,6 +122,7 @@ int CellStoreV0::create(const char *fname, uint32_t blocksize, std::string compr
 
   m_trailer.clear();
   m_trailer.blocksize = blocksize;
+  m_uncompressed_blocksize = blocksize;
 
   m_filename = fname;
 
@@ -169,7 +170,7 @@ int CellStoreV0::add(const ByteString32T *key, const ByteString32T *value, uint6
 
   (void)real_timestamp;
 
-  if (m_buffer.fill() > m_trailer.blocksize) {
+  if (m_buffer.fill() > m_uncompressed_blocksize) {
     BlockCompressionHeaderCellStore header(DATA_BLOCK_MAGIC);
 
     add_index_entry(m_last_key, m_offset);
@@ -178,6 +179,9 @@ int CellStoreV0::add(const ByteString32T *key, const ByteString32T *value, uint6
     m_compressor->deflate(m_buffer, zBuffer, &header);
     m_compressed_data += (float)zBuffer.fill();
     m_buffer.clear();
+
+    uint64_t llval = ((uint64_t)m_trailer.blocksize * (uint64_t)m_uncompressed_data) / (uint64_t)m_compressed_data;
+    m_uncompressed_blocksize = (uint32_t)llval;
 
     if (m_outstanding_appends >= MAX_APPENDS_OUTSTANDING) {
       if (!m_sync_handler.wait_for_reply(eventPtr)) {

@@ -635,7 +635,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 	memcpy(&addr, &((*m_server_map_iter).second->addr), sizeof(struct sockaddr_in));
 	LOG_VA_INFO("Assigning first range %s[%s:%s] to %s", table.name, range.startRow, range.endRow, (*m_server_map_iter).first.c_str());
 	m_server_map_iter++;
-	soft_limit = m_max_range_bytes / std::min(16, (int)m_server_map.size());
+	soft_limit = m_max_range_bytes / std::min(64, (int)m_server_map.size()*2);
       }
 
       if ((error = rsc.load_range(addr, table, range, soft_limit, 0)) != Error::OK) {

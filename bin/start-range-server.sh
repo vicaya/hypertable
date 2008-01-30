@@ -93,9 +93,9 @@ if [ "$#" -eq 0 ]; then
 fi
 
 START_COMMITLOG_BROKER=no
-if [ "$1" == "hadoop" ] ; then
-      START_COMMITLOG_BROKER=yes
-fi
+#if [ "$1" == "hadoop" ] ; then
+#      START_COMMITLOG_BROKER=yes
+#fi
 
 RANGESERVER_OPTS=
 

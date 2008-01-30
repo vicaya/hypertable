@@ -107,7 +107,7 @@ if [ $? != 0 ] ; then
 
   if [ "$1" == "hadoop" ] ; then
       nohup $HYPERTABLE_HOME/bin/jrun --pidfile $PIDFILE org.hypertable.DfsBroker.hadoop.main --verbose 1>& $LOGFILE &
-      START_COMMITLOG_BROKER=yes
+#      START_COMMITLOG_BROKER=yes
   elif [ "$1" == "kosmos" ] ; then
       $HYPERTABLE_HOME/bin/kosmosBroker --pidfile=$PIDFILE --verbose 1>& $LOGFILE &   
   elif [ "$1" == "local" ] ; then

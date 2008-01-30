@@ -274,7 +274,7 @@ TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer() {
 	low_key = (ByteString32T *)src_base;
 	
 	// do a hard lookup for the lowest key
-	if ((error = m_range_locator_ptr->find(&m_table_identifier, (const char *)low_key->data, &range_info, true)) != Error::OK) {
+	if ((error = m_range_locator_ptr->find(&m_table_identifier, (const char *)low_key->data, &range_info, 21)) != Error::OK) {
 	  LOG_VA_WARN("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)low_key->data);
 	  delete redo_buffer;
 	  return 0;
@@ -307,7 +307,7 @@ TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer() {
 	}
 
 	// do a hard lookup for the lowest key
-	if ((error = m_range_locator_ptr->find(&m_table_identifier, (const char *)low_key->data, &range_info, true)) != Error::OK) {
+	if ((error = m_range_locator_ptr->find(&m_table_identifier, (const char *)low_key->data, &range_info, 21)) != Error::OK) {
 	  LOG_VA_WARN("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)low_key->data);
 	  delete redo_buffer;
 	  return 0;
