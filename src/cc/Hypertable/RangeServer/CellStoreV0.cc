@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -109,7 +109,7 @@ CellListScanner *CellStoreV0::create_scanner(ScanContextPtr &scanContextPtr) {
 int CellStoreV0::create(const char *fname, uint32_t blocksize, std::string compressor) {
   std::string compressor_type;
 
-  m_buffer.reserve(blocksize*2);
+  m_buffer.reserve(blocksize*4);
 
   m_fd = -1;
   m_offset = 0;
@@ -205,6 +205,8 @@ int CellStoreV0::add(const ByteString32T *key, const ByteString32T *value, uint6
 
   m_last_key = (ByteString32T *)m_buffer.addNoCheck(key, keyLen);
   m_buffer.addNoCheck(value, valueLen);
+
+  m_trailer.total_entries++;
 
   return 0;
 }
@@ -583,7 +585,7 @@ void CellStoreV0::display_block_info() {
     last_key = (*iter).first;
   }
   if (last_key) {
-    block_size = m_trailer.fix_index_offset - last_offset;
+    block_size = m_trailer.filter_offset - last_offset;
     cout << i << ": offset=" << last_offset << " size=" << block_size << " row=" << (const char *)last_key->data << endl;
   }
 }

@@ -35,7 +35,7 @@ namespace Hypertable {
     CellStoreTrailerV0();
     virtual ~CellStoreTrailerV0() { return; }
     virtual void clear();
-    virtual size_t size() { return 44; }
+    virtual size_t size() { return 48; }
     virtual void serialize(uint8_t *buf);
     virtual void deserialize(uint8_t *buf);
     virtual void display(std::ostream &os);
@@ -44,10 +44,11 @@ namespace Hypertable {
     uint32_t  var_index_offset;
     uint32_t  filter_offset;
     uint32_t  index_entries;
-    Timestamp timestamp;
+    uint32_t  total_entries;
     uint32_t  blocksize;
-    uint16_t  compression_type;
+    Timestamp timestamp;
     float     compression_ratio;
+    uint16_t  compression_type;
     uint16_t  version;
   };
 
