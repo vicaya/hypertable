@@ -489,7 +489,87 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
   }
 
   void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_exists) {
-    LOG_VA_INFO("DROP TABLE %d '%s'", (int)if_exists, table_name);
+    int error = Error::OK;
+    std::string table_file = (std::string)"/hypertable/tables/" + table_name;
+    DynamicBuffer value_buf(0);
+    int ival;
+    HandleCallbackPtr nullHandleCallback;
+    uint64_t handle;
+    uint32_t table_id;
+
+    /**
+     * Create table file
+     */
+    if ((error = m_hyperspace_ptr->open(table_file.c_str(), OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
+      if (if_exists && error == Error::HYPERSPACE_FILE_NOT_FOUND)
+	cb->response_ok();
+      else
+	cb->error(error, (std::string)"Problem opening file '" + table_file + "'");
+      return;
+    }
+
+    /**
+     * 
+     */
+    if ((error = m_hyperspace_ptr->attr_get(handle, "table_id", value_buf)) != Error::OK) {
+      LOG_VA_ERROR("Problem getting attribute 'last_table_id' from file /hypertable/master - %s", Error::get_text(error));
+      exit(1);
+    }
+
+    assert(value_buf.fill() == sizeof(int32_t));
+
+    memcpy(&ival, value_buf.buf, sizeof(int32_t));
+
+    {
+      char start_row[16];
+      char end_row[16];
+      TableScannerPtr scanner_ptr;
+      ScanSpecificationT scan_spec;
+      CellT cell;
+      std::string location_str;
+
+      sprintf(start_row, "%d:", ival);
+      sprintf(end_row, "%d:", ival+1);
+
+      scan_spec.rowLimit = 0;
+      scan_spec.max_versions = 1;
+      scan_spec.columns.clear();
+      scan_spec.columns.push_back("Location");
+      scan_spec.startRow = start_row;
+      scan_spec.startRowInclusive = true;
+      scan_spec.endRow = end_row;
+      scan_spec.endRowInclusive = false;
+      scan_spec.interval.first = 0;
+      scan_spec.interval.second = 0;
+
+      LOG_INFO("About to create scanner");
+      cout << flush;
+
+      if ((error = m_metadata_table_ptr->create_scanner(scan_spec, scanner_ptr)) != Error::OK) {
+	LOG_VA_ERROR("Problem creating scanner on table '%s' - %s", table_name, Error::get_text(error));
+	//throw Exception(error, std::string("Problem creating scanner on table '") + table_name + "'");
+      }
+      else {
+
+	while (scanner_ptr->next(cell)) {
+	  location_str = std::string((const char *)cell.value, cell.value_len);
+	  cout << "LOC: " << location_str << endl;
+	}
+      }
+
+      LOG_INFO("Finished scan");
+      cout << flush;
+
+    }
+
+    /**
+     * 
+     */
+    if ((error = m_hyperspace_ptr->close(handle)) != Error::OK) {
+      LOG_VA_ERROR("Problem closing hyperspace handle %lld - %s", (long long int)handle, Error::get_text(error));
+    }
+
+    LOG_VA_INFO("DROP TABLE %d '%s' id=%d", (int)if_exists, table_name, ival);
     cout << flush;
     cb->response_ok();
   }
