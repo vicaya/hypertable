@@ -488,6 +488,12 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 
   }
 
+  void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_exists) {
+    LOG_VA_INFO("DROP TABLE %d '%s'", (int)if_exists, table_name);
+    cout << flush;
+    cb->response_ok();
+  }
+
 
   int Master::create_table(const char *tableName, const char *schemaString, std::string &errMsg) {
     int error = Error::OK;

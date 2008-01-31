@@ -71,6 +71,9 @@ namespace Hypertable {
     int report_split(TableIdentifierT &table, RangeT &range, uint64_t soft_limit, DispatchHandler *handler);
     int report_split(TableIdentifierT &table, RangeT &range, uint64_t soft_limit);
 
+    int drop_table(const char *table_name, bool if_exists, DispatchHandler *handler);
+    int drop_table(const char *table_name, bool if_exists);
+
     int reload_master();
 
     void set_verbose_flag(bool verbose) { m_verbose = verbose; }

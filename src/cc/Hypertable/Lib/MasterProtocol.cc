@@ -70,12 +70,22 @@ namespace Hypertable {
     return cbuf;
   }
 
+  CommBuf *MasterProtocol::create_drop_table_request(const char *table_name, bool if_exists) {
+    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
+    CommBuf *cbuf = new CommBuf(hbuilder, 3 + Serialization::encoded_length_string(table_name));
+    cbuf->append_short(COMMAND_DROP_TABLE);
+    cbuf->append_bool(if_exists);
+    cbuf->append_string(table_name);
+    return cbuf;
+  }
+
   const char *MasterProtocol::m_command_strings[] = {
     "create table",
     "get schema",
     "status",
     "register server",
-    "report split"
+    "report split",
+    "drop table"
   };
 
   const char *MasterProtocol::command_text(short command) {
