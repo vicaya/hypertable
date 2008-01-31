@@ -64,6 +64,7 @@ namespace Hypertable {
     const int COMMAND_INSERT            = 7;
     const int COMMAND_DELETE            = 8;
     const int COMMAND_SHOW_TABLES       = 9;
+    const int COMMAND_DROP_TABLE        = 10;
 
     class insert_record {
     public:
@@ -98,7 +99,7 @@ namespace Hypertable {
    
     class hql_interpreter_state {
     public:
-      hql_interpreter_state() : command(0), cf(0), ag(0), nanoseconds(0), delete_all_columns(false), delete_time(0) {
+      hql_interpreter_state() : command(0), cf(0), ag(0), nanoseconds(0), delete_all_columns(false), delete_time(0), if_exists(false) {
 	memset(&tmval, 0, sizeof(tmval));
       }
       int command;
@@ -121,6 +122,7 @@ namespace Hypertable {
       bool delete_all_columns;
       std::string delete_row;
       uint64_t delete_time;
+      bool if_exists;
     };
 
     struct set_command {
@@ -139,6 +141,15 @@ namespace Hypertable {
 	display_string("set_table_name");
 	state.table_name = std::string(str, end-str);
 	boost::trim_if(state.table_name, boost::is_any_of("'\""));
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct set_if_exists {
+      set_if_exists(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("set_if_exists");
+	state.if_exists = true;
       }
       hql_interpreter_state &state;
     };
@@ -694,6 +705,7 @@ namespace Hypertable {
 	  typedef inhibit_case<strlit<> > token_t;
 
 	  token_t CREATE       = as_lower_d["create"];
+	  token_t DROP         = as_lower_d["drop"];
 	  token_t HELP         = as_lower_d["help"];
 	  token_t TABLE        = as_lower_d["table"];
 	  token_t TABLES       = as_lower_d["tables"];
@@ -743,6 +755,8 @@ namespace Hypertable {
 	  token_t COMPRESSOR   = as_lower_d["compressor"];
 	  token_t STARTS       = as_lower_d["starts"];
 	  token_t WITH         = as_lower_d["with"];
+	  token_t IF           = as_lower_d["if"];
+	  token_t EXISTS       = as_lower_d["exists"];
 
 	  /**
 	   * Start grammar definition
@@ -783,6 +797,11 @@ namespace Hypertable {
 	    | insert_statement[set_command(self.state, COMMAND_INSERT)]
 	    | delete_statement[set_command(self.state, COMMAND_DELETE)]
 	    | show_tables_statement[set_command(self.state, COMMAND_SHOW_TABLES)]
+	    | drop_table_statement[set_command(self.state, COMMAND_DROP_TABLE)]
+	    ;
+
+	  drop_table_statement
+	    = DROP >> TABLE >> !( IF >> EXISTS[set_if_exists(self.state)] ) >> user_identifier[set_table_name(self.state)] 
 	    ;
 
 	  show_tables_statement
@@ -1024,6 +1043,7 @@ namespace Hypertable {
 	  BOOST_SPIRIT_DEBUG_RULE(delete_column_clause);
 	  BOOST_SPIRIT_DEBUG_RULE(table_option);
 	  BOOST_SPIRIT_DEBUG_RULE(show_tables_statement);
+	  BOOST_SPIRIT_DEBUG_RULE(drop_table_statement);
 	}
 #endif
 
@@ -1040,7 +1060,7 @@ namespace Hypertable {
         where_predicate, option_spec, date_expression, datetime, date, time,
 	year, load_data_statement, load_data_option, insert_statement, insert_value_list,
 	insert_value, delete_statement, delete_column_clause, table_option,
-        show_tables_statement;
+        show_tables_statement, drop_table_statement;
       };
 
       hql_interpreter_state &state;

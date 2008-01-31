@@ -40,6 +40,7 @@ extern "C" {
 #include "RequestHandlerUpdate.h"
 #include "RequestHandlerCreateScanner.h"
 #include "RequestHandlerFetchScanblock.h"
+#include "RequestHandlerDropTable.h"
 #include "RequestHandlerStatus.h"
 
 #include "ConnectionHandler.h"
@@ -109,6 +110,9 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
 	break;
       case RangeServerProtocol::COMMAND_FETCH_SCANBLOCK:
 	requestHandler = new RequestHandlerFetchScanblock(m_comm, m_range_server_ptr.get(), eventPtr);
+	break;
+      case RangeServerProtocol::COMMAND_DROP_TABLE:
+	requestHandler = new RequestHandlerDropTable(m_comm, m_range_server_ptr.get(), eventPtr);
 	break;
       case RangeServerProtocol::COMMAND_STATUS:
 	requestHandler = new RequestHandlerStatus(m_comm, m_range_server_ptr.get(), eventPtr);

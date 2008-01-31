@@ -50,6 +50,7 @@ RequestHandlerCreateScanner.cc
 RequestHandlerDestroyScanner.cc
 RequestHandlerDumpStats.cc
 RequestHandlerFetchScanblock.cc
+RequestHandlerDropTable.cc
 RequestHandlerLoadRange.cc
 RequestHandlerStatus.cc
 RequestHandlerUpdate.cc

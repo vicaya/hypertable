@@ -1001,6 +1001,13 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 }
 
 
+
+void RangeServer::drop_table(ResponseCallback *cb, const char *table_name, bool if_exists) {
+  LOG_INFO("DROP TABLE");  
+  cb->response_ok();
+}
+
+
 void RangeServer::dump_stats(ResponseCallback *cb) {
   boost::mutex::scoped_lock lock(m_mutex);
   std::vector<RangePtr> range_vec;

@@ -382,6 +382,12 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
 	  cout << tables[i] << endl;
       }
     }
+    else if (state.command == COMMAND_DROP_TABLE) {
+      cout << "drop table ";
+      if (state.if_exists)
+	cout << "if exists ";
+      cout << state.table_name << endl;
+    }
   }
   else
     throw Exception(Error::HQL_PARSE_ERROR, std::string("parse error at: ") + info.stop);

@@ -133,6 +133,14 @@ namespace Hypertable {
     void *advance_data_ptr(size_t len) { dataPtr += len; return dataPtr; }
 
     /**
+     * Append a boolean value to the primary buffer, advancing the
+     * primary buffer internal data pointer by 1
+     * 
+     * @param bval boolean value to append into buffer
+     */
+    void append_bool(bool bval) { Serialization::encode_bool(&dataPtr, bval); }
+
+    /**
      * Append a byte of data to the primary buffer, advancing the
      * primary buffer internal data pointer by 1
      * 
