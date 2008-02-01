@@ -17,6 +17,7 @@
 # 
 
 set (Common_SRCS
+Checksum.cc
 Error.cc
 FileUtils.cc
 InetAddr.cc
