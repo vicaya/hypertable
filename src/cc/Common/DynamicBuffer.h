@@ -31,7 +31,7 @@ namespace Hypertable {
 
   public:
 
-    DynamicBuffer(size_t initialSize) : buf(0), ptr(0), size(initialSize), checksum(0) {
+    DynamicBuffer(size_t initialSize) : buf(0), ptr(0), size(initialSize) {
       if (initialSize == 0)
 	ptr = buf = 0;
       else
@@ -46,7 +46,7 @@ namespace Hypertable {
 
     void ensure(size_t len) {
       if (len > remaining())
-	grow((size_t)(1.5 * (fill()+len)));
+	grow((size_t)((fill()+len) * 3 / 2));
     }
 
     void reserve(size_t len) {
@@ -59,8 +59,6 @@ namespace Hypertable {
 	return 0;
       uint8_t *rptr = ptr;
       memcpy(ptr, data, len);
-      for (size_t i=0; i<len; i++)
-	checksum += (uint32_t)((uint8_t *)data)[i];
       ptr += len;
       return rptr;
     }
@@ -73,13 +71,11 @@ namespace Hypertable {
 
     void set(const void *data, size_t len) {
       ptr = buf;
-      checksum = 0;
       add(data, len);
     }
 
     void clear() {
       ptr = buf;
-      checksum = 0;
     }
 
     void free() {
@@ -94,7 +90,6 @@ namespace Hypertable {
 	*lenp = fill();
       ptr = buf = 0;
       size = 0;
-      checksum = 0;
       return rbuf;
     }
 
@@ -111,7 +106,6 @@ namespace Hypertable {
     uint8_t *buf;
     uint8_t *ptr;
     size_t   size;
-    uint16_t checksum;
   };
 
 }
