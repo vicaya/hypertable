@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -205,8 +205,11 @@ int Comm::send_request(struct sockaddr_in &addr, time_t timeout, CommBufPtr &cbu
     return Error::COMM_NOT_CONNECTED;
   }
 
-  mheader->flags |= Header::FLAGS_MASK_REQUEST;
-  if (responseHandler)
+  mheader->flags |= Header::FLAGS_BIT_REQUEST;
+  if (responseHandler == 0)
+    mheader->flags |= Header::FLAGS_BIT_IGNORE_RESPONSE;
+  mheader->id = atomic_inc_return(&ms_next_request_id);
+  if (mheader->id == 0)
     mheader->id = atomic_inc_return(&ms_next_request_id);
 
   if ((error = dataHandlerPtr->send_message(cbuf_ptr, timeout, responseHandler)) != Error::OK)
@@ -229,7 +232,7 @@ int Comm::send_response(struct sockaddr_in &addr, CommBufPtr &cbuf_ptr) {
     return Error::COMM_NOT_CONNECTED;
   }
 
-  mheader->flags &= Header::FLAGS_MASK_RESPONSE;
+  mheader->flags &= Header::FLAGS_MASK_REQUEST;
 
   if ((error = dataHandlerPtr->send_message(cbuf_ptr)) != Error::OK)
     dataHandlerPtr->shutdown();
@@ -302,7 +305,7 @@ int Comm::send_datagram(struct sockaddr_in &addr, struct sockaddr_in &send_addr,
     DUMP_CORE;
   }
 
-  mheader->flags &= Header::FLAGS_MASK_REQUEST;
+  mheader->flags |= (Header::FLAGS_BIT_REQUEST|Header::FLAGS_BIT_IGNORE_RESPONSE);
 
   if ((error = datagramHandlerPtr->send_message(addr, cbuf_ptr)) != Error::OK)
     datagramHandlerPtr->shutdown();

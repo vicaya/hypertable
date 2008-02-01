@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -111,10 +111,12 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
 	  DispatchHandler *dh = 0;
 	  uint32_t id = ((Header::HeaderT *)m_message)->id;
 	  if (id != 0 &&
-	      (((Header::HeaderT *)m_message)->flags & Header::FLAGS_MASK_REQUEST) == 0 &&
+	      (((Header::HeaderT *)m_message)->flags & Header::FLAGS_BIT_REQUEST) == 0 &&
 	      (dh = m_reactor_ptr->remove_request(id)) == 0) {
-	    LOG_VA_WARN("Received response for non-pending event (id=%d,version=%d,totalLen=%d)",
-			id, ((Header::HeaderT *)m_message)->version, ((Header::HeaderT *)m_message)->totalLen);
+	    if ((((Header::HeaderT *)m_message)->flags & Header::FLAGS_BIT_IGNORE_RESPONSE) == 0) {
+	      LOG_VA_WARN("Received response for non-pending event (id=%d,version=%d,totalLen=%d)",
+			  id, ((Header::HeaderT *)m_message)->version, ((Header::HeaderT *)m_message)->totalLen);
+	    }
 	    delete [] m_message;
 	  }
 	  else
@@ -215,9 +217,11 @@ bool IOHandlerData::handle_event(struct kevent *event) {
 	  DispatchHandler *dh = 0;
 	  uint32_t id = ((Header::HeaderT *)m_message)->id;
 	  if (id != 0 && 
-	      (((Header::HeaderT *)m_message)->flags & Header::FLAGS_MASK_REQUEST) == 0 &&
+	      (((Header::HeaderT *)m_message)->flags & Header::FLAGS_BIT_REQUEST) == 0 &&
 	      (dh = m_reactor_ptr->remove_request(id)) == 0) {
-	    LOG_VA_WARN("Received response for non-pending event (id=%d)", id);
+	    if ((((Header::HeaderT *)m_message)->flags & Header::FLAGS_BIT_IGNORE_RESPONSE) == 0) {
+	      LOG_VA_WARN("Received response for non-pending event (id=%d)", id);
+	    }
 	    delete [] m_message;
 	  }
 	  else
@@ -289,7 +293,7 @@ int IOHandlerData::send_message(CommBufPtr &cbufPtr, time_t timeout, DispatchHan
   LOG_ENTER;
   
   // If request, Add message ID to request cache
-  if (mheader->id != 0 && dispatchHandler != 0 && mheader->flags & Header::FLAGS_MASK_REQUEST) {
+  if (mheader->id != 0 && dispatchHandler != 0 && mheader->flags & Header::FLAGS_BIT_REQUEST) {
     boost::xtime expireTime;
     boost::xtime_get(&expireTime, boost::TIME_UTC);
     expireTime.sec += timeout;

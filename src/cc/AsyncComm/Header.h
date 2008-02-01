@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -40,8 +40,11 @@ namespace Hypertable {
     static const uint8_t PROTOCOL_HYPERTABLE_RANGESERVER  = 4;
     static const uint8_t PROTOCOL_MAX                     = 5;
 
-    static const uint8_t FLAGS_MASK_REQUEST  = 0x01;
-    static const uint8_t FLAGS_MASK_RESPONSE = 0xFE;
+    static const uint8_t FLAGS_BIT_REQUEST          = 0x01;
+    static const uint8_t FLAGS_BIT_IGNORE_RESPONSE  = 0x02;
+
+    static const uint8_t FLAGS_MASK_REQUEST         = 0xFE;
+    static const uint8_t FLAGS_MASK_IGNORE_RESPONSE = 0xFD;
 
     static const char *protocolStrings[PROTOCOL_MAX];
 
