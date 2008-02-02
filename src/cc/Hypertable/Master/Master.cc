@@ -493,6 +493,8 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 
   void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_exists) {
     int error = Error::OK;
+    int saved_error = Error::OK;
+    std::string err_msg;
     std::string table_file = (std::string)"/hypertable/tables/" + table_name;
     DynamicBuffer value_buf(0);
     int ival;
@@ -579,7 +581,8 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 	    sync_handler.add( (*iter).second->addr );
 	  }
 	  else {
-	    // do something here!!!!
+	    saved_error = Error::RANGESERVER_UNAVAILABLE;
+	    err_msg = *loc_iter;
 	  }
 	}
 
@@ -596,8 +599,15 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 
     }
 
-    LOG_VA_INFO("DROP TABLE if_exists=%d '%s' id=%d", (int)if_exists, table_name, ival);
-    cb->response_ok();
+    if (saved_error != Error::OK) {
+      LOG_VA_ERROR("DROP TABLE failed '%s' - %s", err_msg.c_str(), Error::get_text(error));
+      cb->error(saved_error, err_msg);
+    }
+    else {
+      LOG_VA_INFO("DROP TABLE '%s' id=%d success", table_name, ival);
+      cb->response_ok();
+    }
+    cout << flush;
   }
 
 

@@ -1003,7 +1003,21 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 
 
 void RangeServer::drop_table(ResponseCallback *cb, const char *table_name) {
-  LOG_INFO("DROP TABLE");  
+  TableInfoPtr table_info_ptr;
+  std::vector<RangePtr> range_vector;
+
+  LOG_INFO("drop_table");  
+
+  /**
+   * Set the 'drop' bit For each range in the table
+   */
+  if (remove_table_info(table_name, table_info_ptr)) {
+    table_info_ptr->get_range_vector(range_vector);
+    for (size_t i=0; i<range_vector.size(); i++)
+      range_vector[i]->drop();
+    range_vector.clear();
+  }
+
   cb->response_ok();
 }
 
@@ -1048,6 +1062,21 @@ void RangeServer::set_table_info(std::string name, TableInfoPtr &info) {
     m_table_info_map.erase(iter);
   m_table_info_map[name] = info;
 }
+
+
+/**
+ *
+ */
+bool RangeServer::remove_table_info(std::string name, TableInfoPtr &info) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  TableInfoMapT::iterator iter = m_table_info_map.find(name);
+  if (iter == m_table_info_map.end())
+    return false;
+  info = (*iter).second;
+  m_table_info_map.erase(iter);
+  return true;
+}
+
 
 
 int RangeServer::verify_schema(TableInfoPtr &tableInfoPtr, int generation, std::string &errMsg) {

@@ -40,7 +40,7 @@ namespace {
 }
 
 
-AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range) : CellList(), m_mutex(), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE), m_compression_ratio(1.0), m_is_root(false), m_oldest_cached_timestamp(0), m_collisions(0), m_needs_compaction(false) {
+AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range) : CellList(), m_mutex(), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE), m_compression_ratio(1.0), m_is_root(false), m_oldest_cached_timestamp(0), m_collisions(0), m_needs_compaction(false), m_drop(false) {
   m_table_name = table_identifier.name;
   m_start_row = range->startRow;
   m_end_row = range->endRow;
@@ -61,6 +61,42 @@ AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPt
 
 
 AccessGroup::~AccessGroup() {
+  if (m_drop) {
+    if (m_table_identifier.id == 0) {
+      LOG_ERROR("~AccessGroup has drop bit set, but table is METADATA");
+      Free(m_table_identifier);
+      return;
+    }
+    std::string metadata_key = std::string("") + (uint32_t)m_table_identifier.id + ":" + m_end_row;
+    int error;
+    TableMutatorPtr mutator_ptr;
+    KeySpec key;
+
+    if ((error = Global::metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK) {
+      LOG_VA_ERROR("Problem creating mutator on METADATA table - %s", Error::get_text(error));
+      Free(m_table_identifier);
+      return;
+    }
+
+    try {
+      key.row = metadata_key.c_str();
+      key.row_len = metadata_key.length();
+      key.column_family = "Files";
+      key.column_qualifier = m_name.c_str();
+      key.column_qualifier_len = m_name.length();
+      mutator_ptr->set(0, key, (uint8_t *)"!", 1);
+      key.column_family = "Location";
+      key.column_qualifier = 0;
+      key.column_qualifier_len = 0;
+      mutator_ptr->set(0, key, 0, 0);
+      mutator_ptr->flush();
+    }
+    catch (Hypertable::Exception &e) {
+      // TODO: propagate exception
+      LOG_VA_ERROR("Problem updating 'File' column of METADATA (%d:%s) - %s",
+		   m_table_identifier.id, metadata_key.c_str(), Error::get_text(e.code()));
+    }
+  }
   Free(m_table_identifier);
   return;
 }

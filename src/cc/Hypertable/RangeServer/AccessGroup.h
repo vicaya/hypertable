@@ -96,6 +96,8 @@ namespace Hypertable {
       return m_cell_cache_ptr->size();
     }
 
+    void drop() { m_drop = true; }
+
   private:
     boost::mutex         m_mutex;
     TableIdentifierT     m_table_identifier;
@@ -118,6 +120,7 @@ namespace Hypertable {
     uint64_t             m_collisions;
     bool                 m_needs_compaction;
     bool                 m_in_memory;
+    bool                 m_drop;
   };
 
 }

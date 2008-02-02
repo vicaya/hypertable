@@ -383,14 +383,8 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       }
     }
     else if (state.command == COMMAND_DROP_TABLE) {
-      cout << "drop table ";
-      if (state.if_exists)
-	cout << "if exists ";
-      cout << state.table_name << endl;
-
       if ((error = m_client->drop_table(state.table_name, state.if_exists)) != Error::OK)
 	throw Exception(error, std::string("Problem droppint table '") + state.table_name + "'");
-
     }
   }
   else

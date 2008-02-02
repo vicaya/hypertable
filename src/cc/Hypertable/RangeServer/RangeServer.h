@@ -74,6 +74,7 @@ namespace Hypertable {
 
     bool get_table_info(std::string name, TableInfoPtr &info);
     void set_table_info(std::string name, TableInfoPtr &info);
+    bool remove_table_info(std::string name, TableInfoPtr &info);
 
     int verify_schema(TableInfoPtr &tableInfoPtr, int generation, std::string &errMsg);
 
