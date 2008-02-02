@@ -56,7 +56,7 @@ namespace Hypertable {
     void fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t scannerId);
     void load_range(ResponseCallback *cb, TableIdentifierT *table, RangeT *range, uint64_t soft_limit, uint16_t flags);
     void update(ResponseCallbackUpdate *cb, TableIdentifierT *table, BufferT &buffer);
-    void drop_table(ResponseCallback *cb, const char *table_name, bool if_exists);
+    void drop_table(ResponseCallback *cb, const char *table_name);
     void dump_stats(ResponseCallback *cb);
     void do_maintenance();
     void log_cleanup();

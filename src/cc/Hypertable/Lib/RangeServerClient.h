@@ -161,20 +161,18 @@ namespace Hypertable {
      *
      * @param addr remote address of RangeServer connection
      * @param table_name name of table to drop
-     * @param if_exists if set, don't return error if table does not exist
      * @param handler response handler
      * @return Error::OK on success or error code on failure
      */
-    int drop_table(struct sockaddr_in &addr, std::string table_name, bool if_exists, DispatchHandler *handler);
+    int drop_table(struct sockaddr_in &addr, std::string table_name, DispatchHandler *handler);
 
     /** Issues a "drop table" request.
      *
      * @param addr remote address of RangeServer connection
      * @param table_name name of table to drop
-     * @param if_exists if set, don't return error if table does not exist
      * @return Error::OK on success or error code on failure
      */
-    int drop_table(struct sockaddr_in &addr, std::string table_name, bool if_exists);
+    int drop_table(struct sockaddr_in &addr, std::string table_name);
 
     /** Issues a "status" request.  This call blocks until it receives a response from the server.
      * 

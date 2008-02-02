@@ -1002,7 +1002,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 
 
 
-void RangeServer::drop_table(ResponseCallback *cb, const char *table_name, bool if_exists) {
+void RangeServer::drop_table(ResponseCallback *cb, const char *table_name) {
   LOG_INFO("DROP TABLE");  
   cb->response_ok();
 }

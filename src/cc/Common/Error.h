@@ -107,6 +107,7 @@ namespace Hypertable {
     static const int RANGESERVER_NO_METADATA_FOR_RANGE = 0x0005000C;
     static const int RANGESERVER_SHUTTING_DOWN         = 0x0005000D;
     static const int RANGESERVER_CORRUPT_COMMIT_LOG    = 0x0005000E;
+    static const int RANGESERVER_UNAVAILABLE           = 0x0005000F;
 
     static const int HQL_BAD_LOAD_FILE_FORMAT  = 0x00060001;
 

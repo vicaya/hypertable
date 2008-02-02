@@ -112,10 +112,9 @@ namespace Hypertable {
     /** Creates a "drop table" request message.
      *
      * @param table_name name of table to drop
-     * @param if_exists flag indicating that if table does not exist, don't return an error
      * @return protocol message
      */
-    static CommBuf *create_request_drop_table(std::string &table_name, bool if_exists);
+    static CommBuf *create_request_drop_table(std::string &table_name);
 
     virtual const char *command_text(short command);
   };

@@ -29,6 +29,8 @@ extern "C" {
 #include <sys/types.h>
 }
 
+#include <boost/algorithm/string.hpp>
+
 #include "Common/FileUtils.h"
 #include "Common/InetAddr.h"
 #include "Common/System.h"
@@ -39,6 +41,7 @@ extern "C" {
 #include "Hypertable/Lib/Schema.h"
 #include "Hyperspace/DirEntry.h"
 
+#include "DropTableDispatchHandler.h"
 #include "Master.h"
 #include "ServersDirectoryHandler.h"
 #include "ServerLockFileHandler.h"
@@ -512,8 +515,16 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
      * 
      */
     if ((error = m_hyperspace_ptr->attr_get(handle, "table_id", value_buf)) != Error::OK) {
-      LOG_VA_ERROR("Problem getting attribute 'last_table_id' from file /hypertable/master - %s", Error::get_text(error));
-      exit(1);
+      LOG_VA_ERROR("Problem getting attribute 'table_id' from file '%s' - %s", table_file.c_str(), Error::get_text(error));
+      cb->error(error, (std::string)"Problem reading attribute 'table_id' from file '" + table_file + "'");
+      return;
+    }
+
+    /**
+     * 
+     */
+    if ((error = m_hyperspace_ptr->close(handle)) != Error::OK) {
+      LOG_VA_ERROR("Problem closing hyperspace handle %lld - %s", (long long int)handle, Error::get_text(error));
     }
 
     assert(value_buf.fill() == sizeof(int32_t));
@@ -527,6 +538,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
       ScanSpecificationT scan_spec;
       CellT cell;
       std::string location_str;
+      std::set<std::string> unique_locations;
 
       sprintf(start_row, "%d:", ival);
       sprintf(end_row, "%d:", ival+1);
@@ -542,35 +554,49 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
       scan_spec.interval.first = 0;
       scan_spec.interval.second = 0;
 
-      LOG_INFO("About to create scanner");
-      cout << flush;
-
       if ((error = m_metadata_table_ptr->create_scanner(scan_spec, scanner_ptr)) != Error::OK) {
-	LOG_VA_ERROR("Problem creating scanner on table '%s' - %s", table_name, Error::get_text(error));
-	//throw Exception(error, std::string("Problem creating scanner on table '") + table_name + "'");
+	LOG_VA_ERROR("Problem creating scanner on METADATA table - %s", table_name, Error::get_text(error));
+	cb->error(error, "Problem creating scanner on METADATA table");
+	return;
       }
       else {
-
 	while (scanner_ptr->next(cell)) {
 	  location_str = std::string((const char *)cell.value, cell.value_len);
-	  cout << "LOC: " << location_str << endl;
+	  boost::trim(location_str);
+	  if (location_str != "")
+	    unique_locations.insert(location_str);
 	}
       }
 
-      LOG_INFO("Finished scan");
-      cout << flush;
+      if (!unique_locations.empty()) {
+	boost::mutex::scoped_lock lock(m_mutex);
+	DropTableDispatchHandler sync_handler(table_name, m_conn_manager_ptr->get_comm(), 30);
+	RangeServerStatePtr state_ptr;
+	ServerMapT::iterator iter;
+
+	for (std::set<std::string>::iterator loc_iter = unique_locations.begin(); loc_iter != unique_locations.end(); loc_iter++) {
+	  if ((iter = m_server_map.find(*loc_iter)) != m_server_map.end()) {
+	    sync_handler.add( (*iter).second->addr );
+	  }
+	  else {
+	    // do something here!!!!
+	  }
+	}
+
+	if (!sync_handler.wait_for_completion()) {
+	  std::vector<DropTableDispatchHandler::ErrorResultT> errors;
+	  sync_handler.get_errors(errors);
+	  for (size_t i=0; i<errors.size(); i++) {
+	    LOG_VA_WARN("drop table error - %s - %s", errors[i].msg.c_str(), Error::get_text(errors[i].error));
+	  }
+	  cb->error(errors[0].error, errors[0].msg);
+	  return;
+	}
+      }
 
     }
 
-    /**
-     * 
-     */
-    if ((error = m_hyperspace_ptr->close(handle)) != Error::OK) {
-      LOG_VA_ERROR("Problem closing hyperspace handle %lld - %s", (long long int)handle, Error::get_text(error));
-    }
-
-    LOG_VA_INFO("DROP TABLE %d '%s' id=%d", (int)if_exists, table_name, ival);
-    cout << flush;
+    LOG_VA_INFO("DROP TABLE if_exists=%d '%s' id=%d", (int)if_exists, table_name, ival);
     cb->response_ok();
   }
 

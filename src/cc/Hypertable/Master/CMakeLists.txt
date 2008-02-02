@@ -18,6 +18,7 @@
 
 set ( Master_SRCS
 ConnectionHandler.cc
+DropTableDispatchHandler.cc
 EventHandlerServerJoined.cc
 EventHandlerServerLeft.cc
 Master.cc

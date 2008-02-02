@@ -36,24 +36,19 @@ using namespace Hypertable;
  */
 void RequestHandlerDropTable::run() {
   ResponseCallback cb(m_comm, m_event_ptr);
-  bool if_exists;
   const char *table_name;
   size_t remaining = m_event_ptr->messageLen - 2;
   uint8_t *msgPtr = m_event_ptr->message + 2;
-
-  // if_exists flag
-  if (!Serialization::decode_bool(&msgPtr, &remaining, &if_exists))
-    goto abort;
 
   // table name
   if (!Serialization::decode_string(&msgPtr, &remaining, &table_name))
     goto abort;
 
-  m_range_server->drop_table(&cb, table_name, if_exists);
+  m_range_server->drop_table(&cb, table_name);
 
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with DropTable message");
-  cb.error(Error::PROTOCOL_ERROR, "Encoding problem with DropTable message");
+  LOG_ERROR("Encoding problem with DROP TABLE message");
+  cb.error(Error::PROTOCOL_ERROR, "Encoding problem with DROP TABLE message");
 }

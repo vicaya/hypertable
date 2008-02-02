@@ -144,16 +144,16 @@ int RangeServerClient::fetch_scanblock(struct sockaddr_in &addr, int scanner_id,
 }
 
 
-int RangeServerClient::drop_table(struct sockaddr_in &addr, std::string table_name, bool if_exists, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( RangeServerProtocol::create_request_drop_table(table_name, if_exists) );
+int RangeServerClient::drop_table(struct sockaddr_in &addr, std::string table_name, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_drop_table(table_name) );
   return send_message(addr, cbufPtr, handler);
 }
 
 
-int RangeServerClient::drop_table(struct sockaddr_in &addr, std::string table_name, bool if_exists) {
+int RangeServerClient::drop_table(struct sockaddr_in &addr, std::string table_name) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( RangeServerProtocol::create_request_drop_table(table_name, if_exists) );
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_drop_table(table_name) );
   int error = send_message(addr, cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
