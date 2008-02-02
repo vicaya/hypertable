@@ -42,6 +42,10 @@ BlockCompressionHeaderCommitLog::BlockCompressionHeaderCommitLog(const char magi
   set_magic(magic);
   m_timestamp = timestamp;
   m_tablename = tablename;
+  m_length = 0;
+  m_zlength = 0;
+  m_type = 0;
+  m_checksum = 0;
 }
 
 

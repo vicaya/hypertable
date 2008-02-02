@@ -51,7 +51,6 @@ namespace Hypertable {
 
   class Master : public ReferenceCount {
   public:
-
     Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &props_ptr, ApplicationQueuePtr &appQueuePtr);
     ~Master();
 
@@ -68,12 +67,12 @@ namespace Hypertable {
     int create_table(const char *tableName, const char *schemaString, std::string &errMsg);
 
   private:
-
     bool initialize();
     void scan_servers_directory();
     bool create_hyperspace_dir(std::string dir);
 
     boost::mutex m_mutex;
+    PropertiesPtr m_props_ptr;
     ConnectionManagerPtr m_conn_manager_ptr;
     ApplicationQueuePtr m_app_queue_ptr;
     bool m_verbose;

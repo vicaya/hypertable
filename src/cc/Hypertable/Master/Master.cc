@@ -54,7 +54,7 @@ using namespace std;
 
 namespace Hypertable {
 
-Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &props_ptr, ApplicationQueuePtr &appQueuePtr) : m_conn_manager_ptr(connManagerPtr), m_app_queue_ptr(appQueuePtr), m_verbose(false), m_dfs_client(0), m_initialized(false) {
+Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &props_ptr, ApplicationQueuePtr &appQueuePtr) : m_props_ptr(props_ptr), m_conn_manager_ptr(connManagerPtr), m_app_queue_ptr(appQueuePtr), m_verbose(false), m_dfs_client(0), m_initialized(false) {
   int error;
   Client *dfsClient;
   uint16_t port;
@@ -158,11 +158,6 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &props_ptr, A
    * Locate tablet servers
    */
   scan_servers_directory();
-
-  /**
-   * Open METADATA table
-   */
-  m_metadata_table_ptr = new Table(props_ptr, m_conn_manager_ptr->get_comm(), m_hyperspace_ptr, "METADATA");
 
 }
 
@@ -390,6 +385,26 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
     RangeT range;
     RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30);
 
+    /**
+     * Create METADATA table
+     */
+    {
+      std::string errMsg;
+      std::string metadataSchemaFile = System::installDir + "/conf/METADATA.xml";
+      off_t schemaLen;
+      const char *schemaStr = FileUtils::file_to_buffer(metadataSchemaFile.c_str(), &schemaLen);
+
+      if ((error = create_table("METADATA", schemaStr, errMsg)) != Error::OK) {
+	LOG_VA_ERROR("Problem creating METADATA table - %s", Error::get_text(error));
+	return;
+      }
+    }
+
+    /**
+     * Open METADATA table
+     */
+    m_metadata_table_ptr = new Table(m_props_ptr, m_conn_manager_ptr->get_comm(), m_hyperspace_ptr, "METADATA");
+
     m_metadata_table_ptr->get_identifier(&table);
     table.name = "METADATA";
 
@@ -500,13 +515,12 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
     int ival;
     HandleCallbackPtr nullHandleCallback;
     uint64_t handle;
-    uint32_t table_id;
 
     /**
      * Create table file
      */
     if ((error = m_hyperspace_ptr->open(table_file.c_str(), OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
-      if (if_exists && error == Error::HYPERSPACE_FILE_NOT_FOUND)
+      if (if_exists && error == Error::HYPERSPACE_BAD_PATHNAME)
 	cb->response_ok();
       else
 	cb->error(error, (std::string)"Problem opening file '" + table_file + "'");
@@ -821,21 +835,6 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
     if ((error = m_hyperspace_ptr->attr_set(m_master_file_handle, "last_table_id", &table_id, sizeof(int32_t))) != Error::OK) {
       LOG_VA_ERROR("Problem setting attribute 'last_table_id' of file /hypertable/master - %s", Error::get_text(error));
       return false;
-    }
-
-    /**
-     * Create METADATA table
-     */
-    {
-      std::string errMsg;
-      std::string metadataSchemaFile = System::installDir + "/conf/METADATA.xml";
-      off_t schemaLen;
-      const char *schemaStr = FileUtils::file_to_buffer(metadataSchemaFile.c_str(), &schemaLen);
-
-      if ((error = create_table("METADATA", schemaStr, errMsg)) != Error::OK) {
-	LOG_VA_ERROR("Problem creating METADATA table - %s", Error::get_text(error));
-	return false;
-      }
     }
 
     m_hyperspace_ptr->close(handle);

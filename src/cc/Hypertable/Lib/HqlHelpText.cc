@@ -30,11 +30,12 @@ namespace {
     "HQL Statements",
     "--------------",
     "CREATE TABLE ....... Creates a table",
-    "DELETE ............. Delete all or part of a row from a table",
+    "DELETE ............. Deletes all or part of a row from a table",
     "DESCRIBE TABLE ..... Displays a table's schema",
+    "DROP TABLE ......... Removes a table",
     "INSERT ............. Inserts data into a table",
     "LOAD DATA INFILE ... Loads data from a tab delimited input file into a table",
-    "SELECT ............. Select (and display) cells from a table",
+    "SELECT ............. Selects (and display) cells from a table",
     "SHOW CREATE TABLE .. Displays CREATE TABLE command used to create table",
     "SHOW TABLES ........ Displays the list of tables",
     "",
@@ -291,6 +292,17 @@ namespace {
     (const char *)0
   };
 
+  const char *help_text_drop_table[] = {
+    "",
+    "DROP TABLE [IF EXISTS] name",
+    "",
+    "Removes the table 'name' from the system.  If the IF EXIST clause is given,",
+    "then the command will succeed (i.e. won't generate an error) if a table",
+    "by the name of 'name' does not exist.",
+    "",
+    (const char *)0
+  };
+
 
   typedef __gnu_cxx::hash_map<std::string, const char **>  HelpTextMapT;
 
@@ -310,6 +322,8 @@ namespace {
     (*map)["load data"] = help_text_load_data_infile;
     (*map)["load"] = help_text_load_data_infile;
     (*map)["show tables"] = help_text_show_tables;
+    (*map)["drop"] = help_text_drop_table;
+    (*map)["drop table"] = help_text_drop_table;
     return *map;
   }
 
