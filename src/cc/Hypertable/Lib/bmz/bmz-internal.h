@@ -142,6 +142,9 @@ bmz_bm_pack_mask32x2(const void *in, size_t in_len, void *out,
                      size_t *out_len_p, size_t offset, size_t fp_len,
                      void *work_mem, size_t b1, size_t b2);
 
+HT_EXTERN(size_t)
+bmz_bm_pack_worklen(size_t in_len, size_t fp_len);
+
 HT_EXTERN(int)
 bmz_bm_dump(const void *in, size_t in_len);
 

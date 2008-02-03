@@ -209,7 +209,7 @@ test_from_string(const char *data, size_t len) {
 
   out_len0 = out_len = bmz_pack_buflen(len);
   buf = malloc(out_len);
-  work_len = bmz_pack_worklen(len, s_fp_len);
+  work_len = bmz_bm_pack_worklen(len, s_fp_len);
   mem = malloc(work_len);
   LOG(1, "input length: %lu, out_len %lu, work_len: %lu\n",
       len, out_len, work_len);

@@ -1150,52 +1150,50 @@ bmz_bm_pack_mask32x2(const void *src, size_t in_len, void *dst,
 
 size_t
 bmz_pack_buflen(size_t in_len) {
-  /* needed space for bm_encode as well */
-  return in_len * 2 + BM_LZ_MAX(in_len) + 1;
+  return in_len + BM_LZ_MAX(in_len) + 1;
 }
 
+
+
+/* Workmem (lut) for bm pack */
+size_t
+bmz_bm_pack_worklen(size_t in_len, size_t fp_len) {
+  return bm_lut_size(in_len / fp_len) * sizeof(BmLutEntry);
+}
+
+/* Size for compressor auxiliary memory */
+static size_t
+bmz_pack_auxlen(size_t in_len, size_t fp_len) {
+  size_t lz_worklen = bmz_lz_pack_worklen(in_len) + 16;
+  size_t bm_worklen = bmz_bm_pack_worklen(in_len, fp_len) + 16;
+  return bm_worklen > lz_worklen ? bm_worklen : lz_worklen;
+}
+
+/* Including temporary space for bm output as well */
 size_t
 bmz_pack_worklen(size_t in_len, size_t fp_len) {
   BM_CHECK(fp_len > 0);
-  return bmz_lz_pack_worklen(in_len) + 16 /* slack for alignment */ +
-         bm_lut_size(in_len / fp_len) * sizeof(BmLutEntry);
+  return in_len + bmz_pack_auxlen(in_len, fp_len); 
 }
 
 size_t
-bmz_unpack_buflen(size_t out_len) {
-  return out_len * 2 + 1;
-}
-
-static size_t
-lz_pack_overlap_offset(size_t in_len) {
-  size_t offset = in_len > 0xbfff ? 0xbfff : in_len;
-  return offset + BM_LZ_MAX(in_len);
-}
-
-static size_t
-lz_unpack_overlap_offset(size_t out_len) {
-  /* out_len should be orig_len + orig_len + 1 */
-  return (out_len - 1) / 2;
+bmz_unpack_worklen(size_t out_len) {
+  return out_len + 1;
 }
 
 #define BMZ_PACK_BODY(_bm_pack_) \
-  size_t tlen = lz_pack_overlap_offset(in_len); \
-  Byte *dst = (Byte *) out; \
-  Byte *work_mem_aligned = BM_ALIGN(work_mem, 8); \
+  size_t tlen = in_len + 1; \
+  Byte *dst = (Byte *)work_mem; \
+  Byte *aux_mem = dst + tlen; \
+  Byte *work_mem_aligned = BM_ALIGN(aux_mem, 8); \
   int ret; \
   \
-  /* overlap flag assume the following memory layout            \
-   * |==== input/output =====|======== bm temp ========|        \
-   * |<--------------- bmz_pack_buflen --------------->|        \
-   * |<------- in_len ------>|                                  \
-   * |<-- *out_len_p -->|                                       \
-   */                                                           \
-  if (flags & BMZ_F_OVERLAP && tlen < in_len) tlen = in_len; \
-  if (tlen >= *out_len_p) return BMZ_E_OUTPUT_OVERRUN; \
-  \
-  dst += tlen; \
-  *out_len_p -= tlen; \
-  tlen = *out_len_p; \
+  /* overlap flag assume the following memory layout    \
+   * |=============== input/output =================|   \
+   * |<------------- bmz_pack_buflen -------------->|   \
+   * |<---------------- in_len ---------------->|       \
+   * |<-- *out_len_p -->|                               \
+   */                                                   \
   ret = _bm_pack_; \
   if (ret != BMZ_E_OK) return ret; \
   return bmz_lz_pack(dst, tlen, out, out_len_p, work_mem_aligned)
@@ -1267,13 +1265,12 @@ bmz_pack(const void *in, size_t in_len, void *out, size_t *out_len_p,
 }
 
 int
-bmz_unpack(const void *in, size_t in_len, void *out, size_t *out_len_p) {
-  size_t tlen = lz_unpack_overlap_offset(*out_len_p);
-  Byte *dst = (Byte *) out + tlen;
+bmz_unpack(const void *in, size_t in_len, void *out, size_t *out_len_p,
+           void *work_mem) {
+  Byte *dst = (Byte *)work_mem;
+  size_t tlen = *out_len_p + 1;
   int ret;
 
-  *out_len_p = tlen;
-  tlen += 1;
   ret = bmz_lz_unpack((Byte *)in, in_len, dst, &tlen);
   if (ret != BMZ_E_OK) return ret;
   return bmz_bm_unpack(dst, tlen, out, out_len_p);
@@ -1433,6 +1430,12 @@ input_overrun:
 }
 
 int
+bmz_init() {
+  int ret = lzo_init();
+  return ret == LZO_E_OK ? BMZ_E_OK : BMZ_E_ERROR;
+}
+
+int
 bmz_lz_pack(const void *in, size_t in_len, void *out, size_t *out_len_p,
             void *work_mem) {
   return lzo1x_1_compress((Byte *)in, in_len, (Byte *)out, out_len_p, work_mem);
@@ -1448,9 +1451,14 @@ bmz_lz_unpack(const void *in, size_t in_len, void *out, size_t *out_len_p) {
   return lzo1x_decompress((Byte *)in, in_len, (Byte *)out, out_len_p, NULL);
 }
 
-UInt32
+unsigned
 bmz_checksum(const void *in, size_t in_len) {
   return lzo_adler32(1, (Byte *)in, in_len);
+}
+
+unsigned
+bmz_update_checksum(unsigned s, const void *in, size_t in_len) {
+  return lzo_adler32(s, (Byte *)in, in_len);
 }
 
 /* vim: et sw=2

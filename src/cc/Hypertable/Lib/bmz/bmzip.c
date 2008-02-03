@@ -181,14 +181,15 @@ do_pack(const void *in, size_t in_len, size_t buf_len,
   if (bm_only) {
     out_len = in_len + 1;
 
-    if (buf_len > in_len + out_len + worklen) {
+    if (buf_len > in_len + worklen) {
       out = (Byte *)in + in_len;
       work_mem = out + out_len;
     }
     else {
-      out = malloc(out_len + worklen);
+      out = malloc(worklen); /* bmz_pack_worklen includes out_len for bm */
 
-      if (!out) DIE("error allocating %lu bytes memory", out_len + worklen);
+      if (!out)
+        DIE("error allocating %lu bytes memory", worklen);
 
       work_mem = out + out_len;
     }
@@ -202,7 +203,8 @@ do_pack(const void *in, size_t in_len, size_t buf_len,
   else {
     out = malloc(buflen + worklen);
 
-    if (!out) DIE("error allocating %lu bytes memory", buflen + worklen);
+    if (!out)
+      DIE("error allocating %lu bytes memory", buflen + worklen);
 
     work_mem = out + buflen;
   }
@@ -210,7 +212,6 @@ do_pack(const void *in, size_t in_len, size_t buf_len,
   if (bm_only) {
     ret = bmz_bm_pack_mask(in, in_len, out, &out_len, offset, fp_len,
                            work_mem, 257);
-
     if (ret != BMZ_E_OK)
       DIE("error encoding bm output (error %d)", ret);
 
@@ -222,7 +223,7 @@ do_pack(const void *in, size_t in_len, size_t buf_len,
     }
   }
   else if ((ret = bmz_pack(in, in_len, out, &out_len, offset, fp_len,
-                           (s_bm_hash << 24) | BMZ_F_OVERLAP, work_mem))
+                           (s_bm_hash << 24), work_mem))
            != BMZ_E_OK) {
     DIE("error compressing input (error %d)", ret);
   }
@@ -236,8 +237,8 @@ do_unpack(const void *in, size_t in_len, size_t buf_len) {
   uint16_t version;
   uint64_t orig_size;
   uint32_t checksum, cs, options;
-  size_t buflen, len = in_len - BMZ_HEADER_SZ;
-  void *out;
+  size_t outlen, worklen, len = in_len - BMZ_HEADER_SZ;
+  Byte *out, *workmem;
   int ret;
 
   if (in_len < BMZ_HEADER_SZ) DIE("file truncated (size: %lu)", in_len);
@@ -251,29 +252,30 @@ do_unpack(const void *in, size_t in_len, size_t buf_len) {
   bp += BMZ_HEADER_SZ;
   buf_len -= BMZ_HEADER_SZ;
   cs = bmz_checksum(bp, len);
+  outlen = orig_size;
 
   if (cs != checksum)
     DIE("checksum mismatch (expecting %x, got %x).", checksum, cs);
 
   if (options & BMZ_O_BM_ONLY) {
-    buflen = orig_size;
-    out = buf_len > in_len + orig_size ? (Byte*)bp + len : malloc(buflen);
+    out = buf_len > in_len + orig_size ? (Byte*)bp + len : malloc(outlen);
 
-    if ((ret = bmz_bm_unpack(bp, len, out, &buflen)) != BMZ_E_OK)
+    if ((ret = bmz_bm_unpack(bp, len, out, &outlen)) != BMZ_E_OK)
       DIE("error decoding bm input (error %d)", ret);
   }
   else {
-    buflen = bmz_unpack_buflen(orig_size > len ? orig_size : len);
-    out = buf_len > buflen ? (Byte *)bp : malloc(buflen);
+    worklen = bmz_unpack_worklen(orig_size > len ? orig_size : len);
+    out = (buf_len > outlen + worklen) ? (Byte *)bp : malloc(outlen + worklen);
+    workmem = out + outlen;
 
-    if ((ret = bmz_unpack(bp, len, out, &buflen)) != BMZ_E_OK)
+    if ((ret = bmz_unpack(bp, len, out, &outlen, workmem)) != BMZ_E_OK)
       DIE("error decompressing (error %d)", ret);
   }
-  if (orig_size != buflen)
+  if (orig_size != outlen)
     WARN("size mismatch (expecting %llu, got %lu)", 
-         (unsigned long long)orig_size, buflen);
+         (unsigned long long)orig_size, outlen);
 
-  write(1, out, buflen);
+  write(1, out, outlen);
 }
 
 static void
