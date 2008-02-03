@@ -3,9 +3,9 @@
 
   <property name="Name" value="Hypertable"/>
   <property name="name" value="hypertable"/>
-  <property name="version" value="0.1.0"/>
+  <property name="version" value="0.9.0"/>
   <property name="final.name" value="${name}-${version}"/>
-  <property name="year" value="2007"/>
+  <property name="year" value="2008"/>
 
   <property name="src.dir" value="${basedir}/src/java"/>
   <property name="lib.dir" value="${basedir}/lib"/>
@@ -54,13 +54,12 @@
   <!--                                                                    -->
   <!-- ================================================================== -->
   <target name="jar" depends="compile">
-    <jar jarfile="${build.dir}/${name}.jar"
+    <jar jarfile="${build.dir}/${final.name}.jar"
          basedir="${build.classes}">
       <manifest>
         <section name="org/hypertable">
           <attribute name="Implementation-Title" value="Hypertable"/>
           <attribute name="Implementation-Version" value="${version}"/>
-          <attribute name="Implementation-Vendor" value="Zvents"/>
         </section>
       </manifest>
     </jar>
