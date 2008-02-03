@@ -49,7 +49,7 @@ BlockCompressionHeaderCommitLog::BlockCompressionHeaderCommitLog(const char magi
  *
  */
 void BlockCompressionHeaderCommitLog::encode(uint8_t **buf_ptr) {
-  m_header_length = 33 + (m_tablename ? strlen(m_tablename) : 0);
+  m_header_length = encoded_length();
   memcpy(*buf_ptr, m_magic, 10);
   (*buf_ptr) += 10;
   Serialization::encode_short(buf_ptr, m_header_length);
@@ -106,10 +106,10 @@ int BlockCompressionHeaderCommitLog::decode_fixed(uint8_t **buf_ptr, size_t *rem
 int BlockCompressionHeaderCommitLog::decode_variable(uint8_t **buf_ptr, size_t *remaining_ptr) {
   size_t remaining_header;
 
-  if (m_header_length <= 32)
+  if (m_header_length <= fixed_length())
     return Error::BLOCK_COMPRESSOR_TRUNCATED;
 
-  remaining_header = m_header_length - 32;
+  remaining_header = m_header_length - fixed_length();
 
   if (*remaining_ptr < remaining_header)
     return Error::BLOCK_COMPRESSOR_TRUNCATED;

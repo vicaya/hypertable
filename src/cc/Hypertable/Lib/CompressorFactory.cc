@@ -19,6 +19,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include "CompressorFactory.h"
+#include "BlockCompressionCodecBmz.h"
 #include "BlockCompressionCodecNone.h"
 #include "BlockCompressionCodecZlib.h"
 #include "BlockCompressionCodecLzo.h"
@@ -43,6 +44,9 @@ CompressorFactory::parse_block_codec_spec(const string &spec,
   if (name == "none" || name.empty())
     return BlockCompressionCodec::NONE;
 
+  if (name == "bmz")
+    return BlockCompressionCodec::BMZ;
+
   if (name == "zlib")
     return BlockCompressionCodec::ZLIB;
 
@@ -60,6 +64,8 @@ BlockCompressionCodec *
 CompressorFactory::create_block_codec(BlockCompressionCodec::Type type,
                                       const BlockCompressionCodec::Args &args) {
   switch (type) {
+  case BlockCompressionCodec::BMZ:
+    return new BlockCompressionCodecBmz(args);
   case BlockCompressionCodec::NONE:
     return new BlockCompressionCodecNone(args);
   case BlockCompressionCodec::ZLIB:

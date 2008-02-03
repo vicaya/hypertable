@@ -202,6 +202,7 @@ namespace Hypertable {
 #ifndef DISABLE_LOG_FATAL
 #define HT_FATAL(msg) if (Logger::logger->isFatalEnabled()) do { \
   Logger::logger->fatal("(%s:%d) " msg, __FILE__, __LINE__); \
+  abort(); \
 } while (0)
 #define HT_FATALF(msg, ...) \
   if (Logger::logger->isFatalEnabled()) do { \
@@ -210,6 +211,7 @@ namespace Hypertable {
     else \
       Logger::logger->fatal(msg, __VA_ARGS__);  \
     std::cout << std::flush; \
+    abort(); \
   } while (0)
 #define HT_EXPECT(_e_, _code_) if (_e_); else \
   HT_FATAL("failed expectation: " #_e_)

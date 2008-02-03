@@ -18,6 +18,7 @@
 
 set ( Hypertable_SRCS
 ApacheLogParser.cc
+BlockCompressionCodecBmz.cc
 BlockCompressionCodecLzo.cc
 BlockCompressionCodecNone.cc
 BlockCompressionCodecQuicklz.cc
@@ -112,10 +113,11 @@ configure_file(${SRC_DIR}/loadDataSourceTest.dat ${DST_DIR}/loadDataSourceTest.d
 add_test (Schema schemaTest)
 add_test (LocationCache locationCacheTest)
 add_test (LoadDataSource loadDataSourceTest)
-add_test (Block-Compressor-LZO compressor_test lzo)
-add_test (Block-Compressor-NONE compressor_test none)
-add_test (Block-Compressor-QUICKLZ compressor_test quicklz)
-add_test (Block-Compressor-ZLIB compressor_test zlib)
+add_test (BlockCompressor-BMZ compressor_test bmz)
+add_test (BlockCompressor-LZO compressor_test lzo)
+add_test (BlockCompressor-NONE compressor_test none)
+add_test (BlockCompressor-QUICKLZ compressor_test quicklz)
+add_test (BlockCompressor-ZLIB compressor_test zlib)
 
 file (GLOB HEADERS *.h)
 
