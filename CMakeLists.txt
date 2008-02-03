@@ -106,3 +106,4 @@ install (FILES bin/slaves.sh
 	 DESTINATION bin)
 install (FILES test/create-test-tables.hql DESTINATION test)
 install (DIRECTORY examples/apache_log DESTINATION examples USE_SOURCE_PERMISSIONS)
+install (DIRECTORY examples/hql_tutorial DESTINATION examples USE_SOURCE_PERMISSIONS)

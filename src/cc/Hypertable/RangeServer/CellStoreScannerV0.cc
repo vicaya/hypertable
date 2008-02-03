@@ -259,7 +259,7 @@ void CellStoreScannerV0::forward() {
       LOG_ERROR("Problem parsing key!");
       break;
     }
-    if (keyComps.flag != FLAG_DELETE_ROW || m_scan_context_ptr->familyMask[keyComps.column_family_code])
+    if (keyComps.flag == FLAG_DELETE_ROW || m_scan_context_ptr->familyMask[keyComps.column_family_code])
       break;
   }
 }
