@@ -570,6 +570,8 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
       scan_spec.interval.first = 0;
       scan_spec.interval.second = 0;
 
+      cout << "about to create scanner" << endl << flush;
+
       if ((error = m_metadata_table_ptr->create_scanner(scan_spec, scanner_ptr)) != Error::OK) {
 	LOG_VA_ERROR("Problem creating scanner on METADATA table - %s", table_name, Error::get_text(error));
 	cb->error(error, "Problem creating scanner on METADATA table");
@@ -583,6 +585,8 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 	    unique_locations.insert(location_str);
 	}
       }
+
+      cout << "locations count = " << unique_locations.size() << endl << flush;
 
       if (!unique_locations.empty()) {
 	boost::mutex::scoped_lock lock(m_mutex);
@@ -600,6 +604,8 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 	  }
 	}
 
+	cout << "waiting for completion" << endl << flush;
+
 	if (!sync_handler.wait_for_completion()) {
 	  std::vector<DropTableDispatchHandler::ErrorResultT> errors;
 	  sync_handler.get_errors(errors);
@@ -613,14 +619,21 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 
     }
 
+    cout << "almost done" << endl << flush;
+
     if (saved_error != Error::OK) {
       LOG_VA_ERROR("DROP TABLE failed '%s' - %s", err_msg.c_str(), Error::get_text(error));
       cb->error(saved_error, err_msg);
+      return;
     }
-    else {
-      LOG_VA_INFO("DROP TABLE '%s' id=%d success", table_name, ival);
-      cb->response_ok();
+    else if ((error = m_hyperspace_ptr->unlink(table_file.c_str())) != Error::OK) {
+      LOG_VA_ERROR("Problem removing hyperspace file - %s", Error::get_text(error));
+      cb->error(error, (std::string)"Problem removing file '" + table_file + "'");
+      return;
     }
+
+    LOG_VA_INFO("DROP TABLE '%s' id=%d success", table_name, ival);
+    cb->response_ok();
     cout << flush;
   }
 

@@ -1015,6 +1015,7 @@ void RangeServer::drop_table(ResponseCallback *cb, const char *table_name) {
   std::vector<RangePtr> range_vector;
 
   LOG_INFO("drop_table");  
+  cout << flush;
 
   /**
    * Set the 'drop' bit For each range in the table
@@ -1025,6 +1026,8 @@ void RangeServer::drop_table(ResponseCallback *cb, const char *table_name) {
       range_vector[i]->drop();
     range_vector.clear();
   }
+
+  cout << "almost done" << endl << flush;
 
   cb->response_ok();
 }

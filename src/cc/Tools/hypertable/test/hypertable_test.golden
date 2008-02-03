@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS hypertable;
 CREATE TABLE hypertable (
 apple,
 banana
@@ -27,6 +28,7 @@ select * from hypertable display_timestamps;
 2007-12-02 08:00:02.000000000	foo	apple:2	nothing
 insert into hypertable VALUES ('how', 'apple:0', 'nothing'), ('how', 'apple:1', 'nothing'), ('how', 'apple:2', 'nothing');
 insert into hypertable VALUES ('now', 'banana:0', 'nothing'), ('now', 'banana:1', 'nothing'), ('now', 'banana:2', 'nothing');
+drop table if exists Pages;
 create table Pages ( "refer-url", "http-code", timestamp, rowkey, ACCESS GROUP default ( "refer-url", "http-code", timestamp, rowkey ) );
 insert into Pages VALUES ('2008-01-28 22:00:03',  "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern", 'http-code', '200' );
 select "http-code" from Pages where ROW = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern" display_timestamps;
