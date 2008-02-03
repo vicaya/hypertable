@@ -39,7 +39,7 @@ namespace Hypertable {
     void set_tablename(const char *tablename) { m_tablename = tablename; }
     const char *get_tablename() { return m_tablename; }
 
-    virtual size_t fixed_length() { return 32; }
+    virtual size_t fixed_length() { return 34; }
     virtual size_t encoded_length() { return fixed_length() + (m_tablename ? strlen(m_tablename) : 0) + 1; }
     virtual void   encode(uint8_t **buf_ptr);
     virtual int    decode_fixed(uint8_t **buf_ptr, size_t *remaining_ptr);

@@ -21,27 +21,20 @@
 #ifndef HYPERTABLE_BLOCKCOMPRESSIONCODECLZO_H
 #define HYPERTABLE_BLOCKCOMPRESSIONCODECLZO_H
 
-extern "C" {
-#include "lzo/minilzo.h"
-}
-
 #include "BlockCompressionCodec.h"
 
 namespace Hypertable {
 
-  class DynamicBuffer;
-
-  /**
-   * Abstract base class for block compression codecs.  
-   */
   class BlockCompressionCodecLzo : public BlockCompressionCodec {
 
   public:
-    BlockCompressionCodecLzo(std::string args);
+    BlockCompressionCodecLzo(const Args &args);
     virtual ~BlockCompressionCodecLzo();
 
-    virtual int deflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader *header, size_t reserve=0);
-    virtual int inflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader *header);
+    virtual int deflate(const DynamicBuffer &input, DynamicBuffer &output,
+                        BlockCompressionHeader &header, size_t reserve=0);
+    virtual int inflate(const DynamicBuffer &input, DynamicBuffer &output,
+                        BlockCompressionHeader &header);
     virtual int get_type() { return LZO; }
 
   private:

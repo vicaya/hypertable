@@ -20,6 +20,9 @@
 #ifndef HYPERTABLE_CHECKSUM_H
 #define HYPERTABLE_CHECKSUM_H
 
+#include <stdlib.h>
+#include <stdint.h>
+
 namespace Hypertable {
 
 /** Compute fletcher32 checksum for arbitary data

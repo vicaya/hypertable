@@ -25,17 +25,14 @@
 
 namespace Hypertable {
 
-  class DynamicBuffer;
-
-  /**
-   * Abstract base class for block compression codecs.  
-   */
   class BlockCompressionCodecNone : public BlockCompressionCodec {
 
   public:
-    BlockCompressionCodecNone(std::string args);
-    virtual int deflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader *header, size_t reserve=0);
-    virtual int inflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader *header);
+    BlockCompressionCodecNone(const Args &args);
+    virtual int deflate(const DynamicBuffer &input, DynamicBuffer &output,
+                        BlockCompressionHeader &header, size_t reserve=0);
+    virtual int inflate(const DynamicBuffer &input, DynamicBuffer &output,
+                        BlockCompressionHeader &header);
     virtual int get_type() { return NONE; }
   };
 

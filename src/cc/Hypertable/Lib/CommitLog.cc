@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include <boost/algorithm/string.hpp>
-
 #include "Common/DynamicBuffer.h"
 #include "Common/Error.h"
 #include "Common/Logger.h"
@@ -28,10 +26,7 @@
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "AsyncComm/Protocol.h"
 
-#include "Hypertable/Lib/BlockCompressionCodecLzo.h"
-#include "Hypertable/Lib/BlockCompressionCodecNone.h"
-#include "Hypertable/Lib/BlockCompressionCodecQuicklz.h"
-#include "Hypertable/Lib/BlockCompressionCodecZlib.h"
+#include "Hypertable/Lib/CompressorFactory.h"
 #include "Hypertable/Lib/BlockCompressionHeaderCommitLog.h"
 
 #include "CommitLog.h"
@@ -49,8 +44,6 @@ const char CommitLog::MAGIC_TRAILER[10] = { 'L','O','G','T','R','A','I','L','E',
 CommitLog::CommitLog(Filesystem *fs, std::string &log_dir, PropertiesPtr &props_ptr) : m_fs(fs), m_log_dir(log_dir), m_cur_log_length(0), m_cur_log_num(0), m_last_timestamp(0) {
   int error;
   std::string compressor;
-  std::string compressor_type;
-  std::string compressor_args;
 
   if (props_ptr) {
     m_max_file_size = props_ptr->getPropertyInt64("Hypertable.RangeServer.CommitLog.RollLimit", 268435456LL);
@@ -63,29 +56,7 @@ CommitLog::CommitLog(Filesystem *fs, std::string &log_dir, PropertiesPtr &props_
 
   LOG_VA_INFO("RollLimit = %lld", m_max_file_size);
 
-  size_t offset = compressor.find_first_of(" \t\n\r");
-  if (offset != std::string::npos) {
-    compressor_type = compressor.substr(0, offset);
-    compressor_args = compressor.substr(offset+1);
-    boost::trim(compressor_args);
-  }
-  else {
-    compressor_type = compressor;
-    compressor_args = "";
-  }
-
-  if (compressor_type == "quicklz")
-    m_compressor = new BlockCompressionCodecQuicklz(compressor_args);
-  else if (compressor_type == "zlib")
-    m_compressor = new BlockCompressionCodecZlib(compressor_args);
-  else if (compressor_type == "lzo")
-    m_compressor = new BlockCompressionCodecLzo(compressor_args);
-  else if (compressor_type == "none")
-    m_compressor = new BlockCompressionCodecNone(compressor_args);
-  else {
-    LOG_VA_ERROR("Unsupported compression type - %d", compressor_type.c_str());
-    DUMP_CORE;
-  }
+  m_compressor = CompressorFactory::create_block_codec(compressor);
 
   //cout << "Hypertable.RangeServer.logFileSize=" << logFileSize << endl;
 
@@ -330,7 +301,7 @@ int CommitLog::compress_and_write(DynamicBuffer &input, BlockCompressionHeader *
     boost::mutex::scoped_lock lock(m_mutex);
     size_t zlen;
 
-    if ((error = m_compressor->deflate(input, zblock, header)) != Error::OK)
+    if ((error = m_compressor->deflate(input, zblock, *header)) != Error::OK)
       return error;
 
     if ((error = m_fs->append(m_fd, zblock.buf, zblock.fill(), &sync_handler)) != Error::OK)

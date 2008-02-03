@@ -40,11 +40,11 @@ BlockCompressionHeaderCellStore::BlockCompressionHeaderCellStore() {
 void BlockCompressionHeaderCellStore::encode(uint8_t **buf_ptr) {
   memcpy(*buf_ptr, m_magic, 10);
   (*buf_ptr) += 10;
-  Serialization::encode_short(buf_ptr, 24);
+  Serialization::encode_short(buf_ptr, encoded_length());
   Serialization::encode_int(buf_ptr, m_length);
   Serialization::encode_int(buf_ptr, m_zlength);
   Serialization::encode_short(buf_ptr, m_type);
-  Serialization::encode_short(buf_ptr, m_checksum);
+  Serialization::encode_int(buf_ptr, m_checksum);
 }
 
 
@@ -65,7 +65,7 @@ int BlockCompressionHeaderCellStore::decode_fixed(uint8_t **buf_ptr, size_t *rem
   Serialization::decode_int(buf_ptr, remaining_ptr, &m_length);
   Serialization::decode_int(buf_ptr, remaining_ptr, &m_zlength);
   Serialization::decode_short(buf_ptr, remaining_ptr, &m_type);
-  Serialization::decode_short(buf_ptr, remaining_ptr, &m_checksum);
+  Serialization::decode_int(buf_ptr, remaining_ptr, &m_checksum);
 
   return Error::OK;
 }

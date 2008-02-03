@@ -211,9 +211,13 @@ namespace Hypertable {
       Logger::logger->fatal(msg, __VA_ARGS__);  \
     std::cout << std::flush; \
   } while (0)
+#define HT_EXPECT(_e_, _code_) if (_e_); else \
+  HT_FATAL("failed expectation: " #_e_)
 #else
 #define HT_FATAL(msg)
 #define HT_FATALF(msg, ...)
+#define HT_EXPECT(_e_, _code_) if (_e_); else throw \
+  Exception(_code_, "failed expectation: " #_e_)
 #endif
 
 // @deprecated
@@ -260,6 +264,7 @@ namespace Hypertable {
 #define HT_EMERGF(msg, ...)
 #define HT_FATAL(msg)
 #define HT_FATALF(msg, ...)
+#define HT_EXPECT(e)
 #define HT_LOG_ENTER
 #define HT_LOG_EXIT
 

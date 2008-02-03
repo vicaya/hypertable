@@ -54,7 +54,7 @@ namespace Hypertable {
     CellStoreV0(Filesystem *filesys);
     virtual ~CellStoreV0();
 
-    virtual int create(const char *fname, uint32_t blocksize, std::string compressor);
+    virtual int create(const char *fname, uint32_t blocksize, const std::string &compressor);
     virtual int add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp);
     virtual int finalize(Timestamp &timestamp);
     virtual int open(const char *fname, const char *start_row, const char *end_row);
@@ -108,7 +108,7 @@ namespace Hypertable {
     int                    m_file_id;
     float                  m_uncompressed_data;
     float                  m_compressed_data;
-    std::string            m_compressor_args;
+    BlockCompressionCodec::Args m_compressor_args;
   };
   typedef boost::intrusive_ptr<CellStoreV0> CellStoreV0Ptr;
 

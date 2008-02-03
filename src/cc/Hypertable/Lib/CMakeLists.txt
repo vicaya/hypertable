@@ -23,6 +23,7 @@ BlockCompressionCodecNone.cc
 BlockCompressionCodecQuicklz.cc
 BlockCompressionCodecZlib.cc
 BlockCompressionHeaderCommitLog.cc
+CompressorFactory.cc
 Client.cc
 CommitLog.cc
 CommitLogReader.cc

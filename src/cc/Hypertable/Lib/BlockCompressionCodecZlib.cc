@@ -18,13 +18,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include <boost/algorithm/string.hpp>
-
 #include "Common/DynamicBuffer.h"
 #include "Common/Logger.h"
+#include "Common/Checksum.h"
 
 #include "BlockCompressionCodecZlib.h"
-#include "fletcher16.h"
 
 using namespace Hypertable;
 
@@ -32,8 +30,8 @@ using namespace Hypertable;
 /**
  *
  */
-BlockCompressionCodecZlib::BlockCompressionCodecZlib(std::string args) : m_inflate_initialized(false), m_deflate_initialized(false), m_level(Z_BEST_SPEED) {
-  if (args != "")
+BlockCompressionCodecZlib::BlockCompressionCodecZlib(const Args &args) : m_inflate_initialized(false), m_deflate_initialized(false), m_level(Z_BEST_SPEED) {
+  if (!args.empty())
     set_args(args);
 }
 
@@ -43,6 +41,7 @@ BlockCompressionCodecZlib::BlockCompressionCodecZlib(std::string args) : m_infla
  *
  */
 BlockCompressionCodecZlib::~BlockCompressionCodecZlib() {
+  HT_ASSERT_SAME_THREAD(m_creator_thread);
   if (m_deflate_initialized)
     deflateEnd(&m_stream_deflate);
   if (m_inflate_initialized)
@@ -51,29 +50,30 @@ BlockCompressionCodecZlib::~BlockCompressionCodecZlib() {
 
 
 
-int BlockCompressionCodecZlib::set_args(std::string args) {
-  boost::trim(args);
+int BlockCompressionCodecZlib::set_args(const Args &args) {
+  HT_ASSERT_SAME_THREAD(m_creator_thread);
 
-  if (args == "")
-    return Error::OK;
+  Args::const_iterator it = args.begin(), arg_end = args.end();
 
-  if (args == "--best" || args == "-9") {
-    m_level = Z_BEST_COMPRESSION;
-    if (m_deflate_initialized) {
-      deflateEnd(&m_stream_deflate);
-      m_deflate_initialized = false;
+  for (; it != arg_end; ++it) {
+    if (*it == "--best" || *it == "-9") {
+      m_level = Z_BEST_COMPRESSION;
+      if (m_deflate_initialized) {
+        deflateEnd(&m_stream_deflate);
+        m_deflate_initialized = false;
+      }
     }
-  }
-  else if (args == "--normal") {
-    m_level = Z_DEFAULT_COMPRESSION;
-    if (m_deflate_initialized) {
-      deflateEnd(&m_stream_deflate);
-      m_deflate_initialized = false;
+    else if (*it == "--normal") {
+      m_level = Z_DEFAULT_COMPRESSION;
+      if (m_deflate_initialized) {
+        deflateEnd(&m_stream_deflate);
+        m_deflate_initialized = false;
+      }
     }
-  }
-  else {
-    LOG_VA_ERROR("Unrecognized argument to Zlib codec: '%s'", args.c_str());
-    return Error::BLOCK_COMPRESSOR_INVALID_ARG;
+    else {
+      LOG_VA_ERROR("Unrecognized argument to Zlib codec: '%s'", (*it).c_str());
+      return Error::BLOCK_COMPRESSOR_INVALID_ARG;
+    }
   }
   return Error::OK;
 }
@@ -83,7 +83,8 @@ int BlockCompressionCodecZlib::set_args(std::string args) {
 /**
  * 
  */
-int BlockCompressionCodecZlib::deflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader *header, size_t reserve) {
+int BlockCompressionCodecZlib::deflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader &header, size_t reserve) {
+  HT_ASSERT_SAME_THREAD(m_creator_thread);
   uint32_t avail_out = input.fill() + 6 + (((input.fill() / 16000) + 1 ) * 5);  // see http://www.zlib.net/zlib_tech.html
 
   if (!m_deflate_initialized) {
@@ -98,13 +99,13 @@ int BlockCompressionCodecZlib::deflate(const DynamicBuffer &input, DynamicBuffer
   }
 
   output.clear();
-  output.reserve( header->encoded_length() + avail_out + reserve );
+  output.reserve( header.encoded_length() + avail_out + reserve );
 
   m_stream_deflate.avail_in = input.fill();
   m_stream_deflate.next_in = input.buf;
 
   m_stream_deflate.avail_out = avail_out;
-  m_stream_deflate.next_out = output.buf + header->encoded_length();
+  m_stream_deflate.next_out = output.buf + header.encoded_length();
 
   int ret = ::deflate(&m_stream_deflate, Z_FINISH); 
   assert(ret == Z_STREAM_END);
@@ -114,24 +115,24 @@ int BlockCompressionCodecZlib::deflate(const DynamicBuffer &input, DynamicBuffer
 
   /* check for an incompressible block */
   if (zlen >= input.fill()) {
-    header->set_type(NONE);
-    memcpy(output.buf+header->encoded_length(), input.buf, input.fill());
-    header->set_length(input.fill());
-    header->set_zlength(input.fill());
+    header.set_type(NONE);
+    memcpy(output.buf+header.encoded_length(), input.buf, input.fill());
+    header.set_length(input.fill());
+    header.set_zlength(input.fill());
   }
   else {
-    header->set_type(ZLIB);
-    header->set_length(input.fill());
-    header->set_zlength(zlen);
+    header.set_type(ZLIB);
+    header.set_length(input.fill());
+    header.set_zlength(zlen);
   }
 
-  header->set_checksum( fletcher16(output.buf + header->encoded_length(), header->get_zlength()) );
+  header.set_checksum( fletcher32(output.buf + header.encoded_length(), header.get_zlength()) );
   
   deflateReset(&m_stream_deflate);
 
   output.ptr = output.buf;
-  header->encode(&output.ptr);
-  output.ptr += header->get_zlength();
+  header.encode(&output.ptr);
+  output.ptr += header.get_zlength();
 
   return Error::OK;
 }
@@ -140,7 +141,8 @@ int BlockCompressionCodecZlib::deflate(const DynamicBuffer &input, DynamicBuffer
 /**
  * 
  */
-int BlockCompressionCodecZlib::inflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader *header) {
+int BlockCompressionCodecZlib::inflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader &header) {
+  HT_ASSERT_SAME_THREAD(m_creator_thread);
   int ret;
   int error;
   uint8_t *msg_ptr = input.buf;
@@ -159,34 +161,34 @@ int BlockCompressionCodecZlib::inflate(const DynamicBuffer &input, DynamicBuffer
     m_inflate_initialized = true;
   }
 
-  if ((error = header->decode_fixed(&msg_ptr, &remaining)) != Error::OK)
+  if ((error = header.decode_fixed(&msg_ptr, &remaining)) != Error::OK)
     return error;
 
-  if ((error = header->decode_variable(&msg_ptr, &remaining)) != Error::OK)
+  if ((error = header.decode_variable(&msg_ptr, &remaining)) != Error::OK)
     return error;
 
-  if (header->get_zlength() != remaining) {
-    LOG_VA_ERROR("Block decompression error, header zlength = %d, actual = %d", header->get_zlength(), remaining);
+  if (header.get_zlength() != remaining) {
+    LOG_VA_ERROR("Block decompression error, header zlength = %d, actual = %d", header.get_zlength(), remaining);
     return Error::BLOCK_COMPRESSOR_BAD_HEADER;
   }
 
-  uint16_t checksum = fletcher16(msg_ptr, remaining);
-  if (checksum != header->get_checksum()) {
-    LOG_VA_ERROR("Compressed block checksum mismatch header=%d, computed=%d", header->get_checksum(), checksum);
+  uint32_t checksum = fletcher32(msg_ptr, remaining);
+  if (checksum != header.get_checksum()) {
+    LOG_VA_ERROR("Compressed block checksum mismatch header=%d, computed=%d", header.get_checksum(), checksum);
     return Error::BLOCK_COMPRESSOR_CHECKSUM_MISMATCH;
   }
 
-  output.reserve(header->get_length());
+  output.reserve(header.get_length());
 
    // check compress bit
-  if (header->get_type() == NONE)
-    memcpy(output.buf, msg_ptr, header->get_length());
+  if (header.get_type() == NONE)
+    memcpy(output.buf, msg_ptr, header.get_length());
   else {
 
     m_stream_inflate.avail_in = remaining;
     m_stream_inflate.next_in = msg_ptr;
 
-    m_stream_inflate.avail_out = header->get_length();
+    m_stream_inflate.avail_out = header.get_length();
     m_stream_inflate.next_out = output.buf;
 
     ret = ::inflate(&m_stream_inflate, Z_NO_FLUSH);
@@ -196,13 +198,13 @@ int BlockCompressionCodecZlib::inflate(const DynamicBuffer &input, DynamicBuffer
     }
 
     if (m_stream_inflate.avail_out != 0) {
-      LOG_VA_ERROR("Compressed block inflate error, expected %d but only inflated to %d bytes", header->get_length(), header->get_length()-m_stream_inflate.avail_out);
+      LOG_VA_ERROR("Compressed block inflate error, expected %d but only inflated to %d bytes", header.get_length(), header.get_length()-m_stream_inflate.avail_out);
       goto abort;
     }
     ::inflateReset(&m_stream_inflate);  
   }
 
-  output.ptr = output.buf + header->get_length();
+  output.ptr = output.buf + header.get_length();
 
   return Error::OK;
 

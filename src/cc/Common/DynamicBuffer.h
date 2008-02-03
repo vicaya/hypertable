@@ -49,9 +49,9 @@ namespace Hypertable {
 	grow((size_t)((fill()+len) * 3 / 2));
     }
 
-    void reserve(size_t len) {
+    void reserve(size_t len, bool nocopy = false) {
       if (len > remaining())
-	grow(fill() + len);
+	grow(fill() + len, nocopy);
     }
 
     uint8_t *addNoCheck(const void *data, size_t len) {
@@ -93,10 +93,12 @@ namespace Hypertable {
       return rbuf;
     }
 
-    void grow(size_t newSize) {
+    void grow(size_t newSize, bool nocopy = false) {
       uint8_t *newBuf = new uint8_t [ newSize ];
-      if (buf != 0)
+
+      if (!nocopy && buf)
 	memcpy(newBuf, buf, ptr-buf);
+
       ptr = newBuf + (ptr-buf);
       delete [] buf;
       buf = newBuf;

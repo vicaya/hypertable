@@ -325,7 +325,7 @@ bool CellStoreScannerV0::fetch_next_block() {
 	DynamicBuffer input(0);
 	input.buf = buf;
 	input.ptr = buf + m_block.zlength;
-	if ((error = m_zcodec->inflate(input, expandBuffer, &header)) != Error::OK) {
+	if ((error = m_zcodec->inflate(input, expandBuffer, header)) != Error::OK) {
 	  LOG_VA_ERROR("Problem inflating cell store (%s) block - %s", m_cell_store_ptr->get_filename().c_str(), Error::get_text(error));
 	  input.buf = 0;
 	  goto abort;
@@ -430,7 +430,7 @@ bool CellStoreScannerV0::fetch_next_block_readahead() {
       DynamicBuffer input(0);
       input.buf = buf;
       input.ptr = buf + m_block.zlength;
-      if ((error = m_zcodec->inflate(input, expandBuffer, &header)) != Error::OK) {
+      if ((error = m_zcodec->inflate(input, expandBuffer, header)) != Error::OK) {
 	LOG_VA_ERROR("Problem inflating cell store (%s) block - %s", m_cell_store_ptr->get_filename().c_str(), Error::get_text(error));
 	input.buf = 0;
 	goto abort;

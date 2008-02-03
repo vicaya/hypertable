@@ -35,10 +35,7 @@ extern "C" {
 #include "Common/Error.h"
 #include "Common/Logger.h"
 
-#include "BlockCompressionCodecLzo.h"
-#include "BlockCompressionCodecNone.h"
-#include "BlockCompressionCodecQuicklz.h"
-#include "BlockCompressionCodecZlib.h"
+#include "Hypertable/Lib/CompressorFactory.h"
 #include "CommitLog.h"
 #include "CommitLogReader.h"
 
@@ -128,24 +125,16 @@ CommitLogReader::CommitLogReader(Filesystem *fs, std::string &logDir) : m_fs(fs)
 
     if (m_log_file_info[i].trailer.check_magic(CommitLog::MAGIC_TRAILER)) {
       if (m_compressor == 0) {
-	if (m_log_file_info[i].trailer.get_type() == BlockCompressionCodec::QUICKLZ)
-	  m_compressor = new BlockCompressionCodecQuicklz("");
-	else if (m_log_file_info[i].trailer.get_type() == BlockCompressionCodec::NONE)
-	  m_compressor = new BlockCompressionCodecNone("");
-	else if (m_log_file_info[i].trailer.get_type() == BlockCompressionCodec::ZLIB)
-	  m_compressor = new BlockCompressionCodecZlib("");
-	else if (m_log_file_info[i].trailer.get_type() == BlockCompressionCodec::LZO)
-	  m_compressor = new BlockCompressionCodecLzo("");
-	else {
-	  LOG_VA_ERROR("Unsupported compression type - %d", m_log_file_info[i].trailer.get_type());
-	  DUMP_CORE;
-	}
+        m_compressor = CompressorFactory::create_block_codec(
+                        (BlockCompressionCodec::Type)
+                        m_log_file_info[i].trailer.get_type());
 	m_got_compressor = true;
       }
     }
     else {
       m_log_file_info[i].trailer.set_timestamp(0);
-      m_compressor = new BlockCompressionCodecNone("");
+      m_compressor = CompressorFactory::create_block_codec(
+                        BlockCompressionCodec::NONE);
       m_got_compressor = false;
     }
 
@@ -256,23 +245,15 @@ bool CommitLogReader::next_block(const uint8_t **blockp, size_t *lenp, BlockComp
 
   if (!m_got_compressor && header->get_type() != BlockCompressionCodec::NONE) {
     delete m_compressor;
-    if (header->get_type() == BlockCompressionCodec::QUICKLZ)
-      m_compressor = new BlockCompressionCodecQuicklz("");
-    else if (header->get_type() == BlockCompressionCodec::ZLIB)
-      m_compressor = new BlockCompressionCodecZlib("");
-    else if (header->get_type() == BlockCompressionCodec::LZO)
-      m_compressor = new BlockCompressionCodecLzo("");
-    else {
-      LOG_VA_ERROR("Unsupported compression type - %d", header->get_type());
-      DUMP_CORE;
-    }
+    m_compressor = CompressorFactory::create_block_codec(
+        (BlockCompressionCodec::Type)header->get_type());
     m_got_compressor = true;
   }
 
   /**
    * decompress block
    */
-  if ((m_error = m_compressor->inflate(m_zblock_buffer, m_block_buffer, header)) != Error::OK)
+  if ((m_error = m_compressor->inflate(m_zblock_buffer, m_block_buffer, *header)) != Error::OK)
     return false;
 
   *blockp = m_block_buffer.buf;

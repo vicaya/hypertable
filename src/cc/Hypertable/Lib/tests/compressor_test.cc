@@ -24,10 +24,7 @@
 #include "Common/System.h"
 #include "Common/Usage.h"
 
-#include "Hypertable/Lib/BlockCompressionCodecLzo.h"
-#include "Hypertable/Lib/BlockCompressionCodecNone.h"
-#include "Hypertable/Lib/BlockCompressionCodecQuicklz.h"
-#include "Hypertable/Lib/BlockCompressionCodecZlib.h"
+#include "Hypertable/Lib/CompressorFactory.h"
 #include "Hypertable/Lib/BlockCompressionHeaderCommitLog.h"
 
 using namespace Hypertable;
@@ -64,18 +61,10 @@ int main(int argc, char **argv) {
 
   System::initialize(argv[0]);
 
-  if (!strcmp(argv[1], "none"))
-    compressor = new BlockCompressionCodecNone("");
-  else if (!strcmp(argv[1], "zlib"))
-    compressor = new BlockCompressionCodecZlib("");
-  else if (!strcmp(argv[1], "lzo"))
-    compressor = new BlockCompressionCodecLzo("");
-  else if (!strcmp(argv[1], "quicklz"))
-    compressor = new BlockCompressionCodecQuicklz("");
-  else {
-    LOG_VA_INFO("Unsupported compressor type - %s", argv[1]);
+  compressor = CompressorFactory::create_block_codec(argv[1]);
+
+  if (!compressor)
     return 1;
-  }
 
   if ((input.buf = (uint8_t *)FileUtils::file_to_buffer("./good-schema-1.xml", &len)) == 0) {
     LOG_ERROR("Problem loading './good-schema-1.xml'");
@@ -83,12 +72,12 @@ int main(int argc, char **argv) {
   }
   input.ptr = input.buf + len;
 
-  if ((error = compressor->deflate(input, output1, &header)) != Error::OK) {
+  if ((error = compressor->deflate(input, output1, header)) != Error::OK) {
     LOG_VA_ERROR("Problem deflating - %s", Error::get_text(error));
     return 1;
   }
 
-  if ((error = compressor->inflate(output1, output2, &header)) != Error::OK) {
+  if ((error = compressor->inflate(output1, output2, header)) != Error::OK) {
     LOG_VA_ERROR("Problem inflating - %s", Error::get_text(error));
     return 1;
   }
@@ -108,12 +97,12 @@ int main(int argc, char **argv) {
   memcpy(input.buf, "foo", 3);
   input.ptr = input.buf + 3;
 
-  if ((error = compressor->deflate(input, output1, &header)) != Error::OK) {
+  if ((error = compressor->deflate(input, output1, header)) != Error::OK) {
     LOG_VA_ERROR("Problem deflating - %s", Error::get_text(error));
     return 1;
   }
 
-  if ((error = compressor->inflate(output1, output2, &header)) != Error::OK) {
+  if ((error = compressor->inflate(output1, output2, header)) != Error::OK) {
     LOG_VA_ERROR("Problem inflating - %s", Error::get_text(error));
     return 1;
   }

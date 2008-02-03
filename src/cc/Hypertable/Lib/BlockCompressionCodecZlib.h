@@ -29,20 +29,17 @@ extern "C" {
 
 namespace Hypertable {
 
-  class DynamicBuffer;
-
-  /**
-   * Abstract base class for block compression codecs.  
-   */
   class BlockCompressionCodecZlib : public BlockCompressionCodec {
 
   public:
-    BlockCompressionCodecZlib(std::string args);
+    BlockCompressionCodecZlib(const Args &args);
     virtual ~BlockCompressionCodecZlib();
 
-    virtual int set_args(std::string args);
-    virtual int deflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader *header, size_t reserve=0);
-    virtual int inflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader *header);
+    virtual int set_args(const Args &args);
+    virtual int deflate(const DynamicBuffer &input, DynamicBuffer &output,
+                        BlockCompressionHeader &header, size_t reserve=0);
+    virtual int inflate(const DynamicBuffer &input, DynamicBuffer &output,
+                        BlockCompressionHeader &header);
     virtual int get_type() { return ZLIB; }
 
   private:

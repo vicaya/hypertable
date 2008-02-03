@@ -50,9 +50,10 @@ namespace Hypertable {
     static const int BLOCK_COMPRESSOR_BAD_HEADER        = 16;
     static const int BLOCK_COMPRESSOR_BAD_MAGIC         = 17;
     static const int BLOCK_COMPRESSOR_CHECKSUM_MISMATCH = 18;
-    static const int BLOCK_COMPRESSOR_INFLATE_ERROR     = 19;
-    static const int BLOCK_COMPRESSOR_INIT_ERROR        = 20;
-    static const int TABLE_DOES_NOT_EXIST               = 21;
+    static const int BLOCK_COMPRESSOR_DEFLATE_ERROR     = 19;
+    static const int BLOCK_COMPRESSOR_INFLATE_ERROR     = 20;
+    static const int BLOCK_COMPRESSOR_INIT_ERROR        = 21;
+    static const int TABLE_DOES_NOT_EXIST               = 22;
 
     static const int COMM_NOT_CONNECTED       = 0x00010001;
     static const int COMM_BROKEN_CONNECTION   = 0x00010002;
@@ -121,11 +122,12 @@ namespace Hypertable {
   class Exception : public std::runtime_error {
   public:
     Exception(int error) : std::runtime_error(Error::get_text_string(error)), m_error(error) { return; }
-    Exception(int error, std::string msg) : std::runtime_error(msg), m_error(error) { return; }
+    Exception(int error, const std::string &msg) : std::runtime_error(msg), m_error(error) { return; }
     int code() { return m_error; }
   private:
     int m_error;
   };
-}
+
+} // namespace Hypertable
 
 #endif // HYPERTABLE_ERROR_H

@@ -40,8 +40,8 @@ namespace Hypertable {
     void     set_zlength(uint32_t zlength) { m_zlength = zlength; }
     uint32_t get_zlength() { return m_zlength; }
 
-    void     set_checksum(uint16_t checksum) { m_checksum = checksum; }
-    uint16_t get_checksum() { return m_checksum; }
+    void     set_checksum(uint32_t checksum) { m_checksum = checksum; }
+    uint32_t get_checksum() { return m_checksum; }
 
     void     set_type(uint16_t type) { m_type = type; }
     uint16_t get_type() { return m_type; }
@@ -53,12 +53,24 @@ namespace Hypertable {
     virtual void     encode(uint8_t **buf_ptr) = 0;
     virtual int      decode_fixed(uint8_t **buf_ptr, size_t *remaining_ptr) = 0;
     virtual int      decode_variable(uint8_t **buf_ptr, size_t *remaining_ptr) = 0;
+    virtual int
+    decode(uint8_t **bp, size_t *remainp) {
+      int ret;
+
+      if ((ret = decode_fixed(bp, remainp)) != Error::OK)
+        return ret;
+
+      if ((ret = decode_variable(bp, remainp)) != Error::OK)
+        return ret;
+
+      return Error::OK;
+    }
 
   protected:
     char m_magic[10];
     uint32_t m_length;
     uint32_t m_zlength;
-    uint16_t m_checksum;
+    uint32_t m_checksum;
     uint16_t m_type;
     uint16_t m_header_length;
   };
