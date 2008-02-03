@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007 Sriram Rao (Kosmix Corp)
+# Copyright (C) 2008 Sriram Rao (Kosmix Corp)
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +20,6 @@ include_directories ( ${Kfs_INCLUDE_DIR} )
 
 # kosmosBroker
 add_executable (kosmosBroker main.cc KosmosBroker.cc)
-target_link_libraries (kosmosBroker pthread ${BOOST_LIB} DfsBroker AsyncComm Common log4cpp ${Kfs_LIBRARY})
+target_link_libraries (kosmosBroker pthread ${BOOST_LIB} HyperDfsBroker HyperComm HyperCommon log4cpp ${Kfs_LIBRARY})
 
 install (TARGETS kosmosBroker RUNTIME DESTINATION bin)
-

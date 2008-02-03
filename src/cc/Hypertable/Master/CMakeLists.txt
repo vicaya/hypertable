@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+# Copyright (C) 2008 Doug Judd (Zvents, Inc.)
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -36,6 +36,6 @@ main.cc
 
 # Hypertable.Master
 add_executable (Hypertable.Master ${Master_SRCS})
-target_link_libraries (Hypertable.Master pthread ${BOOST_LIB} log4cpp expat ${Tcmalloc_LIBRARIES} DfsBroker Hypertable)
+target_link_libraries (Hypertable.Master pthread ${BOOST_LIB} log4cpp expat ${Tcmalloc_LIBRARIES} HyperDfsBroker Hypertable)
 
 install (TARGETS Hypertable.Master RUNTIME DESTINATION bin)

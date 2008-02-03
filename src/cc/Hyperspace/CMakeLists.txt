@@ -1,12 +1,12 @@
 #
-# Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+# Copyright (C) 2008 Doug Judd (Zvents, Inc.)
 # 
 # This file is part of Hypertable.
 # 
 # Hypertable is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or any later version.
+# as published by the Free Software Foundation; version 2 of
+# the License.
 # 
 # Hypertable is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -57,7 +57,7 @@ main.cc
 
 # Hyperspace.Master
 add_executable (Hyperspace.Master ${Master_SRCS})
-target_link_libraries (Hyperspace.Master pthread ${BOOST_LIB} Hyperspace DfsBroker AsyncComm Common log4cpp)
+target_link_libraries (Hyperspace.Master pthread ${BOOST_LIB} Hyperspace HyperDfsBroker HyperComm HyperCommon log4cpp)
 
 file (GLOB HEADERS *.h)
 

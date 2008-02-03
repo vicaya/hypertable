@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+# Copyright (C) 2008 Doug Judd (Zvents, Inc.)
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -35,35 +35,35 @@ RequestCache.cc
 ResponseCallback.cc
 )
 
-add_library (AsyncComm ${AsyncComm_SRCS})
+add_library (HyperComm ${AsyncComm_SRCS})
 
 # sampleClient
 add_executable (sampleClient sampleClient.cc)
-target_link_libraries (sampleClient pthread ${BOOST_LIB} AsyncComm Common log4cpp)
+target_link_libraries (sampleClient pthread ${BOOST_LIB} HyperComm HyperCommon log4cpp)
 
 # testServer
 add_executable (testServer testServer.cc)
-target_link_libraries (testServer pthread ${BOOST_LIB} AsyncComm Common log4cpp)
+target_link_libraries (testServer pthread ${BOOST_LIB} HyperComm HyperCommon log4cpp)
 
 # commTest
 add_executable (commTest tests/commTest.cc tests/CommTestThreadFunction.cc)
-target_link_libraries (commTest pthread ${BOOST_LIB} AsyncComm Common log4cpp expat)
+target_link_libraries (commTest pthread ${BOOST_LIB} HyperComm HyperCommon log4cpp expat)
 
 # commTestDatagram
 add_executable (commTestDatagram tests/commTestDatagram.cc tests/CommTestDatagramThreadFunction.cc)
-target_link_libraries (commTestDatagram pthread ${BOOST_LIB} AsyncComm Common log4cpp expat)
+target_link_libraries (commTestDatagram pthread ${BOOST_LIB} HyperComm HyperCommon log4cpp expat)
 
 # commTestTimeout
 add_executable (commTestTimeout tests/commTestTimeout.cc)
-target_link_libraries (commTestTimeout pthread ${BOOST_LIB} AsyncComm Common log4cpp expat)
+target_link_libraries (commTestTimeout pthread ${BOOST_LIB} HyperComm HyperCommon log4cpp expat)
 
 # commTestTimer
 add_executable (commTestTimer tests/commTestTimer.cc)
-target_link_libraries (commTestTimer pthread ${BOOST_LIB} AsyncComm Common log4cpp expat)
+target_link_libraries (commTestTimer pthread ${BOOST_LIB} HyperComm HyperCommon log4cpp expat)
 
 # commTestReverseRequest
 add_executable (commTestReverseRequest tests/commTestReverseRequest.cc)
-target_link_libraries (commTestReverseRequest pthread ${BOOST_LIB} AsyncComm Common log4cpp expat)
+target_link_libraries (commTestReverseRequest pthread ${BOOST_LIB} HyperComm HyperCommon log4cpp expat)
 
 set (SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/AsyncComm/tests")
 set (DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/AsyncComm")
@@ -72,17 +72,17 @@ configure_file(${SRC_DIR}/commTestTimer.golden ${DST_DIR}/commTestTimer.golden)
 configure_file(${SRC_DIR}/datafile.txt ${DST_DIR}/datafile.txt)
 configure_file(${SRC_DIR}/commTestReverseRequest.golden ${DST_DIR}/commTestReverseRequest.golden)
 
-add_test (AsyncComm commTest)
-add_test (AsyncComm-datagram commTestDatagram)
-add_test (AsyncComm-timeout commTestTimeout)
-add_test (AsyncComm-timer commTestTimer)
-add_test (AsyncComm-reverse-request commTestReverseRequest)
+add_test (HyperComm commTest)
+add_test (HyperComm-datagram commTestDatagram)
+add_test (HyperComm-timeout commTestTimeout)
+add_test (HyperComm-timer commTestTimer)
+add_test (HyperComm-reverse-request commTestReverseRequest)
 
 file (GLOB HEADERS *.h)
 
 install (FILES ${HEADERS} DESTINATION include/hypertable-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}/AsyncComm)
 
-install (TARGETS AsyncComm
+install (TARGETS HyperComm
          RUNTIME DESTINATION bin
          LIBRARY DESTINATION lib
          ARCHIVE DESTINATION lib)

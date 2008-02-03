@@ -1,12 +1,12 @@
 #
-# Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+# Copyright (C) 2008 Doug Judd (Zvents, Inc.)
 # 
 # This file is part of Hypertable.
 # 
 # Hypertable is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or any later version.
+# as published by the Free Software Foundation; version 2
+# of the License.
 # 
 # Hypertable is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -67,11 +67,11 @@ main.cc
 
 # RangeServer
 add_executable (Hypertable.RangeServer ${RangeServer_SRCS})
-target_link_libraries (Hypertable.RangeServer pthread ${BOOST_LIB} log4cpp expat ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES} ${Tcmalloc_LIBRARIES} DfsBroker Hypertable)
+target_link_libraries (Hypertable.RangeServer pthread ${BOOST_LIB} log4cpp expat ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES} ${Tcmalloc_LIBRARIES} HyperDfsBroker Hypertable)
 
 # csdump
 add_executable (csdump CellStoreV0.cc CellStoreTrailerV0.cc BlockCompressionHeaderCellStore.cc csdump.cc CellStoreScannerV0.cc FileBlockCache.cc Global.cc ScanContext.cc)
-target_link_libraries (csdump pthread ${BOOST_LIB} log4cpp ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES} ${Tcmalloc_LIBRARIES} DfsBroker Hypertable)
+target_link_libraries (csdump pthread ${BOOST_LIB} log4cpp ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES} ${Tcmalloc_LIBRARIES} HyperDfsBroker Hypertable)
 
 #
 # Get test environment setup

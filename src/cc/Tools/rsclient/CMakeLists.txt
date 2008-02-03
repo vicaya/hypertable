@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+# Copyright (C) 2008 Doug Judd (Zvents, Inc.)
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -40,7 +40,7 @@ target_link_libraries (rsclient pthread ${BOOST_LIB} Hypertable log4cpp expat re
 
 # rsTest
 add_executable (rsTest tests/rsTest.cc ${TEST_DEPENDENCIES} )
-target_link_libraries (rsTest pthread ${BOOST_LIB} Common log4cpp ${Tcmalloc_LIBRARIES})
+target_link_libraries (rsTest pthread ${BOOST_LIB} HyperCommon log4cpp ${Tcmalloc_LIBRARIES})
 
 install (TARGETS rsclient RUNTIME DESTINATION bin)
 
