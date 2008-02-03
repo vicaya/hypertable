@@ -83,7 +83,7 @@ namespace Hypertable {
 
     class hql_interpreter_scan_state {
     public:
-      hql_interpreter_scan_state() : start_row_inclusive(true), end_row_inclusive(true), limit(0), max_versions(0), start_time(0), end_time(0) { }
+      hql_interpreter_scan_state() : start_row_inclusive(true), end_row_inclusive(true), limit(0), max_versions(0), start_time(0), end_time(0), display_timestamps(false) { }
       std::vector<std::string> columns;
       std::string row;
       std::string start_row;
@@ -95,6 +95,7 @@ namespace Hypertable {
       uint64_t start_time;
       uint64_t end_time;
       std::string outfile;
+      bool display_timestamps;
     };
    
     class hql_interpreter_state {
@@ -342,6 +343,15 @@ namespace Hypertable {
 	display_string("scan_add_column_family");
 	trim_if(column_name, boost::is_any_of("'\""));
 	state.scan.columns.push_back(column_name);
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct scan_set_display_timestamps {
+      scan_set_display_timestamps(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("scan_set_display_timestamps");
+	state.scan.display_timestamps=true;
       }
       hql_interpreter_state &state;
     };
@@ -757,6 +767,8 @@ namespace Hypertable {
 	  token_t WITH         = as_lower_d["with"];
 	  token_t IF           = as_lower_d["if"];
 	  token_t EXISTS       = as_lower_d["exists"];
+	  token_t DISPLAY_TIMESTAMPS = as_lower_d["display_timestamps"];
+
 
 	  /**
 	   * Start grammar definition
@@ -947,6 +959,7 @@ namespace Hypertable {
 	    | MAX_VERSIONS >> EQUAL >> uint_p[scan_set_max_versions(self.state)]
 	    | LIMIT >> EQUAL >> uint_p[scan_set_limit(self.state)]
 	    | INTO >> FILE >> string_literal[scan_set_outfile(self.state)]
+	    | DISPLAY_TIMESTAMPS[scan_set_display_timestamps(self.state)]
 	    ;
 
 	  date_expression
