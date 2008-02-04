@@ -557,7 +557,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
       std::set<std::string> unique_locations;
 
       sprintf(start_row, "%d:", ival);
-      sprintf(end_row, "%d:", ival+1);
+      sprintf(end_row, "%d:%s", ival, Key::END_ROW_MARKER);
 
       scan_spec.rowLimit = 0;
       scan_spec.max_versions = 1;
@@ -566,11 +566,9 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
       scan_spec.startRow = start_row;
       scan_spec.startRowInclusive = true;
       scan_spec.endRow = end_row;
-      scan_spec.endRowInclusive = false;
+      scan_spec.endRowInclusive = true;
       scan_spec.interval.first = 0;
       scan_spec.interval.second = 0;
-
-      cout << "about to create scanner" << endl << flush;
 
       if ((error = m_metadata_table_ptr->create_scanner(scan_spec, scanner_ptr)) != Error::OK) {
 	LOG_VA_ERROR("Problem creating scanner on METADATA table - %s", table_name, Error::get_text(error));
@@ -585,8 +583,6 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 	    unique_locations.insert(location_str);
 	}
       }
-
-      cout << "locations count = " << unique_locations.size() << endl << flush;
 
       if (!unique_locations.empty()) {
 	boost::mutex::scoped_lock lock(m_mutex);
@@ -604,8 +600,6 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 	  }
 	}
 
-	cout << "waiting for completion" << endl << flush;
-
 	if (!sync_handler.wait_for_completion()) {
 	  std::vector<DropTableDispatchHandler::ErrorResultT> errors;
 	  sync_handler.get_errors(errors);
@@ -618,8 +612,6 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
       }
 
     }
-
-    cout << "almost done" << endl << flush;
 
     if (saved_error != Error::OK) {
       LOG_VA_ERROR("DROP TABLE failed '%s' - %s", err_msg.c_str(), Error::get_text(error));

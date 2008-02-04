@@ -45,6 +45,7 @@ AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPt
   m_start_row = range->startRow;
   m_end_row = range->endRow;
   m_cell_cache_ptr = new CellCache();
+
   for (list<Schema::ColumnFamily *>::iterator iter = ag->columns.begin(); iter != ag->columns.end(); iter++) {
     m_column_families.insert((uint8_t)(*iter)->id);
   }
@@ -365,6 +366,7 @@ int AccessGroup::shrink(std::string &new_start_row) {
   boost::mutex::scoped_lock lock(m_mutex);
   int error;
   CellCachePtr old_cell_cache_ptr = m_cell_cache_ptr;
+  CellCachePtr new_cell_cache_ptr;
   ScanContextPtr scanContextPtr = new ScanContext(ScanContext::END_OF_TIME, m_schema_ptr);
   CellListScannerPtr cell_cache_scanner_ptr;
   ByteString32T *key;
@@ -374,7 +376,10 @@ int AccessGroup::shrink(std::string &new_start_row) {
 
   m_start_row = new_start_row;
 
-  m_cell_cache_ptr = new CellCache();
+  new_cell_cache_ptr = new CellCache();
+  new_cell_cache_ptr->lock();
+
+  m_cell_cache_ptr = new_cell_cache_ptr;
 
   cell_cache_scanner_ptr = old_cell_cache_ptr->create_scanner(scanContextPtr);
 
@@ -386,6 +391,8 @@ int AccessGroup::shrink(std::string &new_start_row) {
       add(key, value, 0);
     cell_cache_scanner_ptr->forward();
   }
+
+  new_cell_cache_ptr->unlock();
 
   /**
    * Shrink the CellStores

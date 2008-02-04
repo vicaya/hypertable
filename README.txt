@@ -48,17 +48,6 @@
     make
     make install DESTDIR=<your_install_dir>
 
-
-  Java Build (to build the Hadoop DFS broker)
-  -------------------------------------------
-
-  8. Make sure Java 1.5 or later and the ant build tool is installed on your machine.
-
-  9. Build hypertable-0.9.0.jar
-
-    cd ~/src/hypertable
-    ant jar
-
 ===================================
 === HOW TO RUN REGRESSION TESTS ===
 ===================================
@@ -79,14 +68,13 @@
 
 3. Restart servers and re-create test tables
 
-   **********************************************************************************
-   *** WARNING: THIS STEP MUST BE PERFORMED EVERY TIME PRIOR TO RUNNING THE TEST! ***
-   **********************************************************************************
+   **********************************************************************
+   *** WARNING: THIS STEP MUST BE PERFORMED PRIOR TO RUNNING THE TEST ***
+   **********************************************************************
 
   cd ~/hypertable
   bin/kill-servers.sh
   bin/start-all-servers.sh local
-  bin/hypertable --batch < test/create-test-tables.hql
 
 4. Run the regression tests
 
