@@ -28,6 +28,7 @@ namespace Hypertable {
 class BlockCompressionCodecBmz : public BlockCompressionCodec {
 public:
   BlockCompressionCodecBmz(const Args &args);
+  virtual ~BlockCompressionCodecBmz();
 
   virtual int set_args(const Args &args);
   virtual int deflate(const DynamicBuffer &input, DynamicBuffer &output,

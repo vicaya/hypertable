@@ -53,7 +53,6 @@ BlockCompressionCodecQuicklz::~BlockCompressionCodecQuicklz() {
  * 
  */
 int BlockCompressionCodecQuicklz::deflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader &header, size_t reserve) {
-  HT_ASSERT_SAME_THREAD(m_creator_thread);
   uint32_t avail_out = input.fill() + 400;
   size_t len;
 
@@ -89,7 +88,6 @@ int BlockCompressionCodecQuicklz::deflate(const DynamicBuffer &input, DynamicBuf
  * 
  */
 int BlockCompressionCodecQuicklz::inflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader &header) {
-  HT_ASSERT_SAME_THREAD(m_creator_thread);
   int error;
   uint8_t *msg_ptr = input.buf;
   size_t remaining = input.fill();

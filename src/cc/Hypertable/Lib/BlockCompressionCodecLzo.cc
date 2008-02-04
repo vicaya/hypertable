@@ -53,7 +53,6 @@ BlockCompressionCodecLzo::~BlockCompressionCodecLzo() {
  * 
  */
 int BlockCompressionCodecLzo::deflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader &header, size_t reserve) {
-  HT_ASSERT_SAME_THREAD(m_creator_thread);
   uint32_t avail_out = (input.fill() + input.fill() / 16 + 64 + 3);
   int ret;
   lzo_uint out_len = avail_out;
@@ -90,7 +89,6 @@ int BlockCompressionCodecLzo::deflate(const DynamicBuffer &input, DynamicBuffer 
  * 
  */
 int BlockCompressionCodecLzo::inflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader &header) {
-  HT_ASSERT_SAME_THREAD(m_creator_thread);
   int ret;
   int error;
   uint8_t *msg_ptr = input.buf;

@@ -51,8 +51,6 @@ BlockCompressionCodecZlib::~BlockCompressionCodecZlib() {
 
 
 int BlockCompressionCodecZlib::set_args(const Args &args) {
-  HT_ASSERT_SAME_THREAD(m_creator_thread);
-
   Args::const_iterator it = args.begin(), arg_end = args.end();
 
   for (; it != arg_end; ++it) {
@@ -84,7 +82,6 @@ int BlockCompressionCodecZlib::set_args(const Args &args) {
  * 
  */
 int BlockCompressionCodecZlib::deflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader &header, size_t reserve) {
-  HT_ASSERT_SAME_THREAD(m_creator_thread);
   uint32_t avail_out = input.fill() + 6 + (((input.fill() / 16000) + 1 ) * 5);  // see http://www.zlib.net/zlib_tech.html
 
   if (!m_deflate_initialized) {
@@ -142,7 +139,6 @@ int BlockCompressionCodecZlib::deflate(const DynamicBuffer &input, DynamicBuffer
  * 
  */
 int BlockCompressionCodecZlib::inflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader &header) {
-  HT_ASSERT_SAME_THREAD(m_creator_thread);
   int ret;
   int error;
   uint8_t *msg_ptr = input.buf;

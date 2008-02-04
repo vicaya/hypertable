@@ -36,6 +36,10 @@ BlockCompressionCodecBmz::BlockCompressionCodecBmz(const Args &args) :
   set_args(args);
 }
 
+BlockCompressionCodecBmz::~BlockCompressionCodecBmz() {
+  HT_ASSERT_SAME_THREAD(m_creator_thread);
+}
+
 #define _NEXT_ARG(_code_) do { \
   ++it; \
   HT_EXPECT(it != arg_end, Error::BLOCK_COMPRESSOR_INVALID_ARG); \
@@ -44,8 +48,6 @@ BlockCompressionCodecBmz::BlockCompressionCodecBmz(const Args &args) :
 
 int
 BlockCompressionCodecBmz::set_args(const Args &args) {
-  HT_ASSERT_SAME_THREAD(m_creator_thread);
-
   Args::const_iterator it = args.begin(), arg_end = args.end();
 
   for (; it != arg_end; ++it) {
@@ -63,7 +65,6 @@ BlockCompressionCodecBmz::deflate(const DynamicBuffer &input,
                                   DynamicBuffer &output,
                                   BlockCompressionHeader &header,
                                   size_t reserve) {
-  HT_ASSERT_SAME_THREAD(m_creator_thread);
   size_t inlen = input.fill();
   size_t headerlen = header.encoded_length();
   size_t outlen = bmz_pack_buflen(inlen);
@@ -100,7 +101,6 @@ int
 BlockCompressionCodecBmz::inflate(const DynamicBuffer &input,
                                   DynamicBuffer &output,
                                   BlockCompressionHeader &header) {
-  HT_ASSERT_SAME_THREAD(m_creator_thread);
   uint8_t *ip = input.buf;
   size_t remain = input.fill();
 
