@@ -31,6 +31,38 @@ namespace Hypertable {
   namespace Serialization {
 
     /**
+     * Encodes a boolean into the given buffer.  Assumes there is
+     * enough space available.  Increments buffer pointer.
+     *
+     * @param bufPtr address of destination buffer
+     * @param bval the boolean value
+     */
+    inline void encode_bool(uint8_t **bufPtr, bool bval) {
+      *(*bufPtr) = (bval) ? 1 : 0;
+      (*bufPtr)++;
+    }
+
+
+    /**
+     * Decodes a boolean value from the given buffer.  Increments buffer pointer
+     * and decrements remainingPtr on success.
+     *
+     * @param bufPtr address of source buffer
+     * @param remainingPtr address of variable containing number of bytes remaining in buffer
+     * @param bytePtr address of variable to hold decoded byte
+     * @return true on success, false if buffer has insufficient room
+     */
+    inline bool decode_bool(uint8_t **bufPtr, size_t *remainingPtr, bool *boolp) {
+      if (*remainingPtr == 0)
+	return false;
+      *boolp = (*(*bufPtr) == 0) ? false : true;
+      (*bufPtr)++;
+      (*remainingPtr)--;
+      return true;
+    }
+
+
+    /**
      * Decodes a single byte from the given buffer.  Increments buffer pointer
      * and decrements remainingPtr on success.
      *

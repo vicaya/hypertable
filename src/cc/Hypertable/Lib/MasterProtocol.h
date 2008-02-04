@@ -40,7 +40,8 @@ namespace Hypertable {
     static const short COMMAND_STATUS          = 2;
     static const short COMMAND_REGISTER_SERVER = 3;
     static const short COMMAND_REPORT_SPLIT    = 4;
-    static const short COMMAND_MAX             = 5;
+    static const short COMMAND_DROP_TABLE      = 5;
+    static const short COMMAND_MAX             = 6;
 
     static const char *m_command_strings[];
 
@@ -53,6 +54,8 @@ namespace Hypertable {
     static CommBuf *create_register_server_request(std::string &location);
 
     static CommBuf *create_report_split_request(TableIdentifierT &table, RangeT &range, uint64_t soft_limit);
+
+    static CommBuf *create_drop_table_request(const char *table_name, bool if_exists);
 
     virtual const char *command_text(short command);
     

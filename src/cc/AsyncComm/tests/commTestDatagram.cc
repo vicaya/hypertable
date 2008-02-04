@@ -136,6 +136,8 @@ int main(int argc, char **argv) {
   if (system("diff commTestDatagram.output.1 commTestDatagram.output.2"))
     return 1;
 
+  ReactorFactory::destroy();
+
   delete comm;
   delete thread1;
   delete thread2;

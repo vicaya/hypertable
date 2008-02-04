@@ -29,6 +29,8 @@ extern "C" {
 #include <sys/types.h>
 }
 
+#include <boost/algorithm/string.hpp>
+
 #include "Common/FileUtils.h"
 #include "Common/InetAddr.h"
 #include "Common/System.h"
@@ -39,6 +41,7 @@ extern "C" {
 #include "Hypertable/Lib/Schema.h"
 #include "Hyperspace/DirEntry.h"
 
+#include "DropTableDispatchHandler.h"
 #include "Master.h"
 #include "ServersDirectoryHandler.h"
 #include "ServerLockFileHandler.h"
@@ -51,7 +54,7 @@ using namespace std;
 
 namespace Hypertable {
 
-Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &props_ptr, ApplicationQueuePtr &appQueuePtr) : m_conn_manager_ptr(connManagerPtr), m_app_queue_ptr(appQueuePtr), m_verbose(false), m_dfs_client(0), m_initialized(false) {
+Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &props_ptr, ApplicationQueuePtr &appQueuePtr) : m_props_ptr(props_ptr), m_conn_manager_ptr(connManagerPtr), m_app_queue_ptr(appQueuePtr), m_verbose(false), m_dfs_client(0), m_initialized(false) {
   int error;
   Client *dfsClient;
   uint16_t port;
@@ -155,11 +158,6 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &props_ptr, A
    * Locate tablet servers
    */
   scan_servers_directory();
-
-  /**
-   * Open METADATA table
-   */
-  m_metadata_table_ptr = new Table(props_ptr, m_conn_manager_ptr->get_comm(), m_hyperspace_ptr, "METADATA");
 
 }
 
@@ -387,6 +385,26 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
     RangeT range;
     RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30);
 
+    /**
+     * Create METADATA table
+     */
+    {
+      std::string errMsg;
+      std::string metadataSchemaFile = System::installDir + "/conf/METADATA.xml";
+      off_t schemaLen;
+      const char *schemaStr = FileUtils::file_to_buffer(metadataSchemaFile.c_str(), &schemaLen);
+
+      if ((error = create_table("METADATA", schemaStr, errMsg)) != Error::OK) {
+	LOG_VA_ERROR("Problem creating METADATA table - %s", Error::get_text(error));
+	return;
+      }
+    }
+
+    /**
+     * Open METADATA table
+     */
+    m_metadata_table_ptr = new Table(m_props_ptr, m_conn_manager_ptr->get_comm(), m_hyperspace_ptr, "METADATA");
+
     m_metadata_table_ptr->get_identifier(&table);
     table.name = "METADATA";
 
@@ -486,6 +504,129 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
     else
       LOG_VA_INFO("report_split for %s[%s:%s] successful.", table.name, range.startRow, range.endRow);
 
+  }
+
+  void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_exists) {
+    int error = Error::OK;
+    int saved_error = Error::OK;
+    std::string err_msg;
+    std::string table_file = (std::string)"/hypertable/tables/" + table_name;
+    DynamicBuffer value_buf(0);
+    int ival;
+    HandleCallbackPtr nullHandleCallback;
+    uint64_t handle;
+
+    /**
+     * Create table file
+     */
+    if ((error = m_hyperspace_ptr->open(table_file.c_str(), OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
+      if (if_exists && error == Error::HYPERSPACE_BAD_PATHNAME)
+	cb->response_ok();
+      else
+	cb->error(error, (std::string)"Problem opening file '" + table_file + "'");
+      return;
+    }
+
+    /**
+     * 
+     */
+    if ((error = m_hyperspace_ptr->attr_get(handle, "table_id", value_buf)) != Error::OK) {
+      LOG_VA_ERROR("Problem getting attribute 'table_id' from file '%s' - %s", table_file.c_str(), Error::get_text(error));
+      cb->error(error, (std::string)"Problem reading attribute 'table_id' from file '" + table_file + "'");
+      return;
+    }
+
+    /**
+     * 
+     */
+    if ((error = m_hyperspace_ptr->close(handle)) != Error::OK) {
+      LOG_VA_ERROR("Problem closing hyperspace handle %lld - %s", (long long int)handle, Error::get_text(error));
+    }
+
+    assert(value_buf.fill() == sizeof(int32_t));
+
+    memcpy(&ival, value_buf.buf, sizeof(int32_t));
+
+    {
+      char start_row[16];
+      char end_row[16];
+      TableScannerPtr scanner_ptr;
+      ScanSpecificationT scan_spec;
+      CellT cell;
+      std::string location_str;
+      std::set<std::string> unique_locations;
+
+      sprintf(start_row, "%d:", ival);
+      sprintf(end_row, "%d:%s", ival, Key::END_ROW_MARKER);
+
+      scan_spec.rowLimit = 0;
+      scan_spec.max_versions = 1;
+      scan_spec.columns.clear();
+      scan_spec.columns.push_back("Location");
+      scan_spec.startRow = start_row;
+      scan_spec.startRowInclusive = true;
+      scan_spec.endRow = end_row;
+      scan_spec.endRowInclusive = true;
+      scan_spec.interval.first = 0;
+      scan_spec.interval.second = 0;
+
+      if ((error = m_metadata_table_ptr->create_scanner(scan_spec, scanner_ptr)) != Error::OK) {
+	LOG_VA_ERROR("Problem creating scanner on METADATA table - %s", table_name, Error::get_text(error));
+	cb->error(error, "Problem creating scanner on METADATA table");
+	return;
+      }
+      else {
+	while (scanner_ptr->next(cell)) {
+	  location_str = std::string((const char *)cell.value, cell.value_len);
+	  boost::trim(location_str);
+	  if (location_str != "")
+	    unique_locations.insert(location_str);
+	}
+      }
+
+      if (!unique_locations.empty()) {
+	boost::mutex::scoped_lock lock(m_mutex);
+	DropTableDispatchHandler sync_handler(table_name, m_conn_manager_ptr->get_comm(), 30);
+	RangeServerStatePtr state_ptr;
+	ServerMapT::iterator iter;
+
+	for (std::set<std::string>::iterator loc_iter = unique_locations.begin(); loc_iter != unique_locations.end(); loc_iter++) {
+	  if ((iter = m_server_map.find(*loc_iter)) != m_server_map.end()) {
+	    sync_handler.add( (*iter).second->addr );
+	  }
+	  else {
+	    saved_error = Error::RANGESERVER_UNAVAILABLE;
+	    err_msg = *loc_iter;
+	  }
+	}
+
+	if (!sync_handler.wait_for_completion()) {
+	  std::vector<DropTableDispatchHandler::ErrorResultT> errors;
+	  sync_handler.get_errors(errors);
+	  for (size_t i=0; i<errors.size(); i++) {
+	    LOG_VA_WARN("drop table error - %s - %s", errors[i].msg.c_str(), Error::get_text(errors[i].error));
+	  }
+	  cb->error(errors[0].error, errors[0].msg);
+	  return;
+	}
+      }
+
+    }
+
+    if (saved_error != Error::OK) {
+      LOG_VA_ERROR("DROP TABLE failed '%s' - %s", err_msg.c_str(), Error::get_text(error));
+      cb->error(saved_error, err_msg);
+      return;
+    }
+    else if ((error = m_hyperspace_ptr->unlink(table_file.c_str())) != Error::OK) {
+      LOG_VA_ERROR("Problem removing hyperspace file - %s", Error::get_text(error));
+      cb->error(error, (std::string)"Problem removing file '" + table_file + "'");
+      return;
+    }
+
+    LOG_VA_INFO("DROP TABLE '%s' id=%d success", table_name, ival);
+    cb->response_ok();
+    cout << flush;
   }
 
 
@@ -635,7 +776,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 	memcpy(&addr, &((*m_server_map_iter).second->addr), sizeof(struct sockaddr_in));
 	LOG_VA_INFO("Assigning first range %s[%s:%s] to %s", table.name, range.startRow, range.endRow, (*m_server_map_iter).first.c_str());
 	m_server_map_iter++;
-	soft_limit = m_max_range_bytes / std::min(16, (int)m_server_map.size());
+	soft_limit = m_max_range_bytes / std::min(64, (int)m_server_map.size()*2);
       }
 
       if ((error = rsc.load_range(addr, table, range, soft_limit, 0)) != Error::OK) {
@@ -699,21 +840,6 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
     if ((error = m_hyperspace_ptr->attr_set(m_master_file_handle, "last_table_id", &table_id, sizeof(int32_t))) != Error::OK) {
       LOG_VA_ERROR("Problem setting attribute 'last_table_id' of file /hypertable/master - %s", Error::get_text(error));
       return false;
-    }
-
-    /**
-     * Create METADATA table
-     */
-    {
-      std::string errMsg;
-      std::string metadataSchemaFile = System::installDir + "/conf/METADATA.xml";
-      off_t schemaLen;
-      const char *schemaStr = FileUtils::file_to_buffer(metadataSchemaFile.c_str(), &schemaLen);
-
-      if ((error = create_table("METADATA", schemaStr, errMsg)) != Error::OK) {
-	LOG_VA_ERROR("Problem creating METADATA table - %s", Error::get_text(error));
-	return false;
-      }
     }
 
     m_hyperspace_ptr->close(handle);

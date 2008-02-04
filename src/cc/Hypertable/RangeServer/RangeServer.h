@@ -56,6 +56,7 @@ namespace Hypertable {
     void fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t scannerId);
     void load_range(ResponseCallback *cb, TableIdentifierT *table, RangeT *range, uint64_t soft_limit, uint16_t flags);
     void update(ResponseCallbackUpdate *cb, TableIdentifierT *table, BufferT &buffer);
+    void drop_table(ResponseCallback *cb, const char *table_name);
     void dump_stats(ResponseCallback *cb);
     void do_maintenance();
     void log_cleanup();
@@ -73,12 +74,14 @@ namespace Hypertable {
 
     bool get_table_info(std::string name, TableInfoPtr &info);
     void set_table_info(std::string name, TableInfoPtr &info);
+    bool remove_table_info(std::string name, TableInfoPtr &info);
 
     int verify_schema(TableInfoPtr &tableInfoPtr, int generation, std::string &errMsg);
 
     typedef __gnu_cxx::hash_map<string, TableInfoPtr> TableInfoMapT;
 
     boost::mutex           m_mutex;
+    PropertiesPtr          m_props_ptr;
     bool                   m_verbose;
     Comm                  *m_comm;
     TableInfoMapT          m_table_info_map;

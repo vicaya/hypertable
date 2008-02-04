@@ -141,6 +141,11 @@ int Client::get_tables(std::vector<std::string> &tables) {
 }
 
 
+int Client::drop_table(std::string name, bool if_exists) {
+  return m_master_client_ptr->drop_table(name.c_str(), if_exists);
+}
+
+
 HqlCommandInterpreter *Client::create_hql_interpreter() {
   return new HqlCommandInterpreter(this);
 }

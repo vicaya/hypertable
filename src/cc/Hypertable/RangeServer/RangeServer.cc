@@ -61,7 +61,7 @@ namespace {
 /**
  * Constructor
  */
-RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, ApplicationQueuePtr &app_queue_ptr, Hyperspace::SessionPtr &hyperspace_ptr) : m_mutex(), m_verbose(false), m_conn_manager_ptr(conn_manager_ptr), m_app_queue_ptr(app_queue_ptr), m_hyperspace_ptr(hyperspace_ptr), m_last_commit_log_clean(0) {
+RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, ApplicationQueuePtr &app_queue_ptr, Hyperspace::SessionPtr &hyperspace_ptr) : m_mutex(), m_props_ptr(props_ptr), m_verbose(false), m_conn_manager_ptr(conn_manager_ptr), m_app_queue_ptr(app_queue_ptr), m_hyperspace_ptr(hyperspace_ptr), m_last_commit_log_clean(0) {
   int error;
   uint16_t port;
   Comm *comm = conn_manager_ptr->get_comm();
@@ -552,6 +552,14 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
       throw Exception(Error::RANGESERVER_RANGE_ALREADY_LOADED, (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]");
 
     /**
+     * Lazily create METADATA table pointer
+     */
+    if (!Global::metadata_table_ptr) {
+      boost::mutex::scoped_lock lock(m_mutex);
+      Global::metadata_table_ptr = new Table(m_props_ptr, m_conn_manager_ptr, Global::hyperspace_ptr, "METADATA");
+    }
+
+    /**
      * Take ownership of the range by writing the 'Location' column in the
      * METADATA table, or /hypertable/root{location} attribute of Hyperspace
      * if it is the root range.
@@ -1001,6 +1009,30 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 }
 
 
+
+void RangeServer::drop_table(ResponseCallback *cb, const char *table_name) {
+  TableInfoPtr table_info_ptr;
+  std::vector<RangePtr> range_vector;
+
+  LOG_INFO("drop_table");  
+  cout << flush;
+
+  /**
+   * Set the 'drop' bit For each range in the table
+   */
+  if (remove_table_info(table_name, table_info_ptr)) {
+    table_info_ptr->get_range_vector(range_vector);
+    for (size_t i=0; i<range_vector.size(); i++)
+      range_vector[i]->drop();
+    range_vector.clear();
+  }
+
+  cout << "almost done" << endl << flush;
+
+  cb->response_ok();
+}
+
+
 void RangeServer::dump_stats(ResponseCallback *cb) {
   boost::mutex::scoped_lock lock(m_mutex);
   std::vector<RangePtr> range_vec;
@@ -1041,6 +1073,21 @@ void RangeServer::set_table_info(std::string name, TableInfoPtr &info) {
     m_table_info_map.erase(iter);
   m_table_info_map[name] = info;
 }
+
+
+/**
+ *
+ */
+bool RangeServer::remove_table_info(std::string name, TableInfoPtr &info) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  TableInfoMapT::iterator iter = m_table_info_map.find(name);
+  if (iter == m_table_info_map.end())
+    return false;
+  info = (*iter).second;
+  m_table_info_map.erase(iter);
+  return true;
+}
+
 
 
 int RangeServer::verify_schema(TableInfoPtr &tableInfoPtr, int generation, std::string &errMsg) {

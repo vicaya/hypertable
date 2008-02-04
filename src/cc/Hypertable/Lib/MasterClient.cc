@@ -190,6 +190,31 @@ int MasterClient::report_split(TableIdentifierT &table, RangeT &range, uint64_t 
 }
 
 
+
+int MasterClient::drop_table(const char *table_name, bool if_exists, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( MasterProtocol::create_drop_table_request(table_name, if_exists) );
+  return send_message(cbufPtr, handler);
+}
+
+
+
+int MasterClient::drop_table(const char *table_name, bool if_exists) {
+  DispatchHandlerSynchronizer syncHandler;
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( MasterProtocol::create_drop_table_request(table_name, if_exists) );
+  int error = send_message(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.wait_for_reply(eventPtr)) {
+      if (m_verbose)
+	LOG_VA_ERROR("Master 'drop table' error : %s", MasterProtocol::string_format_message(eventPtr).c_str());
+      error = (int)MasterProtocol::response_code(eventPtr);
+    }
+  }
+  return error;
+}
+
+
+
 int MasterClient::send_message(CommBufPtr &cbufPtr, DispatchHandler *handler) {
   boost::mutex::scoped_lock lock(m_mutex);
   int error;

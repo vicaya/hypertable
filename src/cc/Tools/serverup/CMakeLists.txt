@@ -18,7 +18,7 @@
 
 # hypertable - command interpreter
 add_executable (serverup serverup.cc)
-target_link_libraries (serverup pthread ${BOOST_LIB} log4cpp expat ${Tcmalloc_LIBRARIES} DfsBroker Hypertable)
+target_link_libraries (serverup pthread ${BOOST_LIB} log4cpp expat ${Tcmalloc_LIBRARIES} HyperDfsBroker Hypertable)
 
 install (TARGETS serverup RUNTIME DESTINATION bin)
 

@@ -37,6 +37,8 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellCachePtr, ScanContextPtr &s
     boost::mutex::scoped_lock lock(m_cell_cache_mutex);
     Key keyComps;
 
+    assert(scanContextPtr->start_row <= scanContextPtr->end_row);
+
     /** set start iterator **/
     bs = Create(scanContextPtr->start_row.c_str(), strlen(scanContextPtr->start_row.c_str()));
     m_start_iter = m_cell_cache_ptr->m_cell_map.lower_bound(bs);

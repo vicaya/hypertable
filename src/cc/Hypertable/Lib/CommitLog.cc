@@ -47,11 +47,11 @@ CommitLog::CommitLog(Filesystem *fs, std::string &log_dir, PropertiesPtr &props_
 
   if (props_ptr) {
     m_max_file_size = props_ptr->getPropertyInt64("Hypertable.RangeServer.CommitLog.RollLimit", 268435456LL);
-    compressor = props_ptr->getProperty("Hypertable.RangeServer.CommitLog.Compressor", "quicklz");
+    compressor = props_ptr->getProperty("Hypertable.RangeServer.CommitLog.Compressor", "lzo");
   }
   else {
     m_max_file_size = 268435456LL;
-    compressor = "quicklz";
+    compressor = "lzo";
   }
 
   LOG_VA_INFO("RollLimit = %lld", m_max_file_size);

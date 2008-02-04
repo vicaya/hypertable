@@ -50,6 +50,7 @@ namespace Hypertable {
     int open_table(std::string name, TablePtr &tablePtr);
     int get_schema(std::string tableName, std::string &schema);
     int get_tables(std::vector<std::string> &tables);
+    int drop_table(std::string name, bool if_exists);
 
     HqlCommandInterpreter *create_hql_interpreter();
 

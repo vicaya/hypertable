@@ -142,16 +142,18 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
 	throw Exception(error, std::string("Problem creating scanner on table '") + state.table_name + "'");
 
       while (scanner_ptr->next(cell)) {
-	if (m_timestamp_output_format == TIMESTAMP_FORMAT_USECS) {
-	  printf("%llu", (long long unsigned int)cell.timestamp);
+	if (state.scan.display_timestamps) {
+	  if (m_timestamp_output_format == TIMESTAMP_FORMAT_USECS) {
+	    printf("%llu\t", (long long unsigned int)cell.timestamp);
+	  }
+	  else {
+	    nsec = cell.timestamp % 1000000000LL;
+	    unix_time = cell.timestamp / 1000000000LL;
+	    localtime_r(&unix_time, &tms);
+	    printf("%d-%02d-%02d %02d:%02d:%02d.%09d\t", tms.tm_year+1900, tms.tm_mon+1, tms.tm_mday, tms.tm_hour, tms.tm_min, tms.tm_sec, nsec);
+	  }
 	}
-	else {
-	  nsec = cell.timestamp % 1000000000LL;
-	  unix_time = cell.timestamp / 1000000000LL;
-	  localtime_r(&unix_time, &tms);
-	  printf("%d-%02d-%02d %02d:%02d:%02d.%09d", tms.tm_year+1900, tms.tm_mon+1, tms.tm_mday, tms.tm_hour, tms.tm_min, tms.tm_sec, nsec);
-	}
-	printf("\t%s\t%s", cell.row_key, cell.column_family);
+	printf("%s\t%s", cell.row_key, cell.column_family);
 	if (*cell.column_qualifier)
 	  printf(":%s", cell.column_qualifier);
 	printf("\t%s\n", std::string((const char *)cell.value, cell.value_len).c_str());
@@ -381,6 +383,10 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
 	for (size_t i=0; i<tables.size(); i++)
 	  cout << tables[i] << endl;
       }
+    }
+    else if (state.command == COMMAND_DROP_TABLE) {
+      if ((error = m_client->drop_table(state.table_name, state.if_exists)) != Error::OK)
+	throw Exception(error, std::string("Problem droppint table '") + state.table_name + "'");
     }
   }
   else

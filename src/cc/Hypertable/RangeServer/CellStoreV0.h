@@ -108,6 +108,7 @@ namespace Hypertable {
     int                    m_file_id;
     float                  m_uncompressed_data;
     float                  m_compressed_data;
+    uint32_t               m_uncompressed_blocksize;
     BlockCompressionCodec::Args m_compressor_args;
   };
   typedef boost::intrusive_ptr<CellStoreV0> CellStoreV0Ptr;

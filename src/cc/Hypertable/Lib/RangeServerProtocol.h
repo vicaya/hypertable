@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -39,7 +39,8 @@ namespace Hypertable {
     static const short COMMAND_SHUTDOWN         = 6;
     static const short COMMAND_DUMP_STATS       = 7;
     static const short COMMAND_DESTROY_SCANNER  = 8;
-    static const short COMMAND_MAX              = 9;
+    static const short COMMAND_DROP_TABLE       = 9;
+    static const short COMMAND_MAX              = 10;
 
     static const uint16_t LOAD_RANGE_FLAG_PHANTOM = 0x0001;
 
@@ -107,6 +108,13 @@ namespace Hypertable {
      * @return protocol message
      */
     static CommBuf *create_request_dump_stats();
+
+    /** Creates a "drop table" request message.
+     *
+     * @param table_name name of table to drop
+     * @return protocol message
+     */
+    static CommBuf *create_request_drop_table(std::string &table_name);
 
     virtual const char *command_text(short command);
   };

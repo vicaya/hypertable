@@ -85,7 +85,8 @@ install (FILES lib/commons-logging-1.0.4.jar DESTINATION java/lib)
 install (FILES lib/hadoop-0.14.4-core.jar DESTINATION java/lib)
 install (FILES lib/junit-4.3.1.jar DESTINATION java/lib)
 install (FILES lib/log4j-1.2.13.jar DESTINATION java/lib)
-install (FILES build/hypertable.jar DESTINATION java/lib)
+install (FILES lib/hypertable-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}.jar DESTINATION java/lib)
+install (FILES build/hypertable-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}.jar DESTINATION java/lib OPTIONAL)
 install (FILES bin/jrun 
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 	 DESTINATION bin)
@@ -105,3 +106,6 @@ install (FILES bin/slaves.sh
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 	 DESTINATION bin)
 install (FILES test/create-test-tables.hql DESTINATION test)
+install (DIRECTORY examples/apache_log DESTINATION examples USE_SOURCE_PERMISSIONS)
+install (DIRECTORY examples/hql_tutorial DESTINATION examples USE_SOURCE_PERMISSIONS)
+

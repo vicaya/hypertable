@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -51,7 +51,7 @@ using namespace Hypertable;
 
 CellStoreV0::CellStoreV0(Filesystem *filesys) : m_filesys(filesys), m_filename(), m_fd(-1), m_index(),
   m_compressor(0), m_buffer(0), m_fix_index_buffer(0), m_var_index_buffer(0),
-  m_outstanding_appends(0), m_offset(0), m_last_key(0), m_file_length(0), m_disk_usage(0), m_file_id(0) {
+  m_outstanding_appends(0), m_offset(0), m_last_key(0), m_file_length(0), m_disk_usage(0), m_file_id(0), m_uncompressed_blocksize(0) {
   m_file_id = FileBlockCache::get_next_file_id();
   assert(sizeof(float) == 4);
 }
@@ -95,7 +95,7 @@ CellListScanner *CellStoreV0::create_scanner(ScanContextPtr &scanContextPtr) {
 
 
 int CellStoreV0::create(const char *fname, uint32_t blocksize, const std::string &compressor) {
-  m_buffer.reserve(blocksize*2);
+  m_buffer.reserve(blocksize*4);
 
   m_fd = -1;
   m_offset = 0;
@@ -108,6 +108,7 @@ int CellStoreV0::create(const char *fname, uint32_t blocksize, const std::string
 
   m_trailer.clear();
   m_trailer.blocksize = blocksize;
+  m_uncompressed_blocksize = blocksize;
 
   m_filename = fname;
 
@@ -134,7 +135,7 @@ int CellStoreV0::add(const ByteString32T *key, const ByteString32T *value, uint6
 
   (void)real_timestamp;
 
-  if (m_buffer.fill() > m_trailer.blocksize) {
+  if (m_buffer.fill() > m_uncompressed_blocksize) {
     BlockCompressionHeaderCellStore header(DATA_BLOCK_MAGIC);
 
     add_index_entry(m_last_key, m_offset);
@@ -143,6 +144,9 @@ int CellStoreV0::add(const ByteString32T *key, const ByteString32T *value, uint6
     m_compressor->deflate(m_buffer, zBuffer, header);
     m_compressed_data += (float)zBuffer.fill();
     m_buffer.clear();
+
+    uint64_t llval = ((uint64_t)m_trailer.blocksize * (uint64_t)m_uncompressed_data) / (uint64_t)m_compressed_data;
+    m_uncompressed_blocksize = (uint32_t)llval;
 
     if (m_outstanding_appends >= MAX_APPENDS_OUTSTANDING) {
       if (!m_sync_handler.wait_for_reply(eventPtr)) {
@@ -170,6 +174,8 @@ int CellStoreV0::add(const ByteString32T *key, const ByteString32T *value, uint6
 
   m_last_key = (ByteString32T *)m_buffer.addNoCheck(key, keyLen);
   m_buffer.addNoCheck(value, valueLen);
+
+  m_trailer.total_entries++;
 
   return 0;
 }
@@ -548,7 +554,7 @@ void CellStoreV0::display_block_info() {
     last_key = (*iter).first;
   }
   if (last_key) {
-    block_size = m_trailer.fix_index_offset - last_offset;
+    block_size = m_trailer.filter_offset - last_offset;
     cout << i << ": offset=" << last_offset << " size=" << block_size << " row=" << (const char *)last_key->data << endl;
   }
 }

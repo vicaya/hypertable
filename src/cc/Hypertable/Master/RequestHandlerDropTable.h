@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -18,38 +18,34 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#ifndef HYPERTABLE_REQUESTHANDLERDROPTABLE_H
+#define HYPERTABLE_REQUESTHANDLERDROPTABLE_H
 
+#include "Common/Runnable.h"
 
-package org.hypertable.Hypertable;
+#include "AsyncComm/ApplicationHandler.h"
+#include "AsyncComm/Comm.h"
+#include "AsyncComm/Event.h"
 
-import org.hypertable.Common.Error;
+using namespace Hypertable;
 
-public class TableMutator {
+namespace Hypertable {
 
-    public TableMutator() {
+  class Master;
+
+  class RequestHandlerDropTable : public ApplicationHandler {
+  public:
+    RequestHandlerDropTable(Comm *comm, Master *master, EventPtr &eventPtr) : ApplicationHandler(eventPtr), m_comm(comm), m_master(master) {
+      return;
     }
 
-    public int Set(String row, String columnFamily, String columnQualifier, long timestamp, byte [] value) {
+    virtual void run();
 
-	// Lookup tablet using row key
-	
-	// If location uknown, kick off a lookup and chain data onto a pending queue
+  private:
+    Comm     *m_comm;
+    Master   *m_master;
+  };
 
-	// If location known, add data to location specific queue
-
-	return Error.OK;
-    }
-
-
-    int GroupCommit() {
-	// For all of the 
-	return Error.OK;
-    }
-
-    int WaitForResult() {
-	//
-	return Error.OK;
-    }
-    
 }
 
+#endif // HYPERTABLE_REQUESTHANDLERDROPTABLE_H

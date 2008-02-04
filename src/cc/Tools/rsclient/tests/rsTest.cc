@@ -37,6 +37,7 @@ using namespace std;
 
 namespace {
   const char *requiredFiles[] = {
+    "../hypertable/hypertable",
     "./rsclient",
     "./hypertable.cfg",
     "./Test1-data.txt",
@@ -46,6 +47,7 @@ namespace {
     "./Test2.cmd",
     "./Test2.golden",
     "./Test3.cmd",
+    "./initialize.hql",
     0
   };
 }
@@ -61,6 +63,14 @@ int main(int argc, char **argv) {
       return 1;
     }
   }
+
+  /**
+   * Initialize
+   */
+  commandStr = (std::string)"../hypertable/hypertable --config=hypertable.cfg --batch < initialize.hql > /tmp/rsTest.out";
+  if (system(commandStr.c_str()) != 0)
+    return 1;
+
 
   /**
    *  Test1

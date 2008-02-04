@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -18,20 +18,34 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#ifndef HYPERTABLE_REQUESTHANDLERDROPTABLE_H
+#define HYPERTABLE_REQUESTHANDLERDROPTABLE_H
 
+#include "Common/Runnable.h"
 
-package org.hypertable.Hypertable;
+#include "AsyncComm/ApplicationHandler.h"
+#include "AsyncComm/Comm.h"
+#include "AsyncComm/Event.h"
 
-import java.util.HashMap;
+using namespace Hypertable;
 
-import org.hypertable.AsyncComm.Comm;
+namespace Hypertable {
 
-public class Global {
-    public static Comm            comm = null;
-    public static boolean         verbose = false;
-    public static boolean         interactive = true;
-    public static org.hypertable.Hypertable.Master.Protocol  masterProtocol = new org.hypertable.Hypertable.Master.Protocol();
-    public static org.hypertable.Hypertable.Master.Client    master;
-    public static HashMap<String,Table>  tableMap = new HashMap<String,Table>();
-    public static LocationCache    locationCache = new LocationCache(65536);
+  class RangeServer;
+
+  class RequestHandlerDropTable : public ApplicationHandler {
+  public:
+    RequestHandlerDropTable(Comm *comm, RangeServer *rangeServer, EventPtr &eventPtr) : ApplicationHandler(eventPtr), m_comm(comm), m_range_server(rangeServer) {
+      return;
+    }
+
+    virtual void run();
+
+  private:
+    Comm        *m_comm;
+    RangeServer *m_range_server;
+  };
+
 }
+
+#endif // HYPERTABLE_REQUESTHANDLERDROPTABLE_H

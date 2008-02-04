@@ -103,6 +103,7 @@ namespace {
     { Error::RANGESERVER_NO_METADATA_FOR_RANGE, "RANGE SERVER no metadata for range" },
     { Error::RANGESERVER_SHUTTING_DOWN,        "RANGE SERVER shutting down" },
     { Error::RANGESERVER_CORRUPT_COMMIT_LOG,   "RANGE SERVER corrupt commit log" },
+    { Error::RANGESERVER_UNAVAILABLE,          "RANGE SERVER unavailable" },
     { Error::HQL_BAD_LOAD_FILE_FORMAT,         "HQL bad load file format" },
     { 0, 0 }
   };
@@ -193,6 +194,7 @@ const int Error::RANGESERVER_TRUNCATED_COMMIT_LOG;
 const int Error::RANGESERVER_NO_METADATA_FOR_RANGE;
 const int Error::RANGESERVER_SHUTTING_DOWN;
 const int Error::RANGESERVER_CORRUPT_COMMIT_LOG;
+const int Error::RANGESERVER_UNAVAILABLE;
 
 const int Error::HQL_BAD_LOAD_FILE_FORMAT;
 

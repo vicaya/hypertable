@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+# Copyright (C) 2008 Doug Judd (Zvents, Inc.)
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -42,14 +42,14 @@ ResponseCallbackLength.cc
 ResponseCallbackReaddir.cc
 )
 
-add_library (DfsBroker ${DfsBroker_SRCS})
-add_dependencies (DfsBroker Hypertable)
+add_library (HyperDfsBroker ${DfsBroker_SRCS})
+add_dependencies (HyperDfsBroker Hypertable)
 
 file (GLOB HEADERS *.h)
 
 install (FILES ${HEADERS} DESTINATION include/hypertable-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}/DfsBroker/Lib)
 
-install (TARGETS DfsBroker
+install (TARGETS HyperDfsBroker
          RUNTIME DESTINATION bin
          LIBRARY DESTINATION lib
          ARCHIVE DESTINATION lib)

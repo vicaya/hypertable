@@ -121,6 +121,12 @@ namespace Hypertable {
 
     bool is_root() { return m_is_root; }
 
+    void drop() {
+      boost::mutex::scoped_lock lock(m_mutex);
+      for (size_t i=0; i<m_access_group_vector.size(); i++)
+	m_access_group_vector[i]->drop();
+    }
+
   private:
 
     void load_cell_stores(Metadata *metadata);

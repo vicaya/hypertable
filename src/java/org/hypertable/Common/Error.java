@@ -101,6 +101,8 @@ public class Error {
     static public final int RANGESERVER_NO_METADATA_FOR_RANGE = 0x0005000C;
     static public final int RANGESERVER_SHUTTING_DOWN         = 0x0005000D;
     static public final int RANGESERVER_CORRUPT_COMMIT_LOG    = 0x0005000E;
+    static public final int RANGESERVER_UNAVAILABLE           = 0x0005000F;
+
     static public final int HQL_BAD_LOAD_FILE_FORMAT = 0x00060001;
 
     static public String GetText(int lcode) {
@@ -180,6 +182,7 @@ public class Error {
 	mTextMap.put(RANGESERVER_NO_METADATA_FOR_RANGE,"RANGE SERVER no metadata for range");
 	mTextMap.put(RANGESERVER_CORRUPT_COMMIT_LOG,   "RANGE SERVER corrupt commit log");
 	mTextMap.put(RANGESERVER_SHUTTING_DOWN,        "RANGE SERVER shutting down");
+	mTextMap.put(RANGESERVER_UNAVAILABLE,          "RANGE SERVER unavailable");
 	mTextMap.put(HQL_BAD_LOAD_FILE_FORMAT,    "HQL bad load file format");
     }
 }

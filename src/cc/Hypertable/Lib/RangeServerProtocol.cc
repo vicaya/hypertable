@@ -34,7 +34,8 @@ namespace Hypertable {
     "status",
     "shutdown",
     "dump stats",
-    "destroy scanner"
+    "destroy scanner",
+    "drop table"
   };
 
   const char *RangeServerProtocol::command_text(short command) {
@@ -85,6 +86,14 @@ namespace Hypertable {
     CommBuf *cbuf = new CommBuf(hbuilder, 6);
     cbuf->append_short(COMMAND_FETCH_SCANBLOCK);
     cbuf->append_int(scanner_id);
+    return cbuf;
+  }
+
+  CommBuf *RangeServerProtocol::create_request_drop_table(std::string &table_name) {
+    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::encoded_length_string(table_name));
+    cbuf->append_short(COMMAND_DROP_TABLE);
+    cbuf->append_string(table_name);
     return cbuf;
   }
 

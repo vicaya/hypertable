@@ -3,8 +3,8 @@
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or any later version.
+# as published by the Free Software Foundation; version 2 of
+# the License.
 # 
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,6 +18,6 @@
 
 # dumplog - program to display a commit log
 add_executable (dumplog dumplog.cc)
-target_link_libraries (dumplog pthread ${BOOST_LIB} log4cpp ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES} ${Tcmalloc_LIBRARIES} DfsBroker Hypertable)
+target_link_libraries (dumplog pthread ${BOOST_LIB} log4cpp ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES} ${Tcmalloc_LIBRARIES} HyperDfsBroker Hypertable)
 
 install (TARGETS dumplog RUNTIME DESTINATION bin)

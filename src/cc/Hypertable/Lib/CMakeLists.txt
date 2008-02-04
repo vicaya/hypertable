@@ -58,8 +58,8 @@ bmz/bmz.c
 )
 
 add_library (Hypertable ${Hypertable_SRCS})
-add_dependencies (Hypertable Hyperspace AsyncComm Common ${BOOST_LIB})
-target_link_libraries (Hypertable Hyperspace AsyncComm Common ${BOOST_LIB})
+add_dependencies (Hypertable Hyperspace HyperComm HyperCommon ${BOOST_LIB})
+target_link_libraries (Hypertable Hyperspace HyperComm HyperCommon ${BOOST_LIB})
 
 # generate_test_data
 add_executable (generate_test_data generate_test_data.cc)

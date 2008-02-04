@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+# Copyright (C) 2008 Doug Judd (Zvents, Inc.)
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -18,6 +18,6 @@
 
 # localBroker
 add_executable (localBroker main.cc LocalBroker.cc)
-target_link_libraries (localBroker pthread ${BOOST_LIB} DfsBroker AsyncComm Common log4cpp ${Tcmalloc_LIBRARIES})
+target_link_libraries (localBroker pthread ${BOOST_LIB} HyperDfsBroker HyperComm HyperCommon log4cpp ${Tcmalloc_LIBRARIES})
 
 install (TARGETS localBroker RUNTIME DESTINATION bin)
