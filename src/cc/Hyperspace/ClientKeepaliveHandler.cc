@@ -40,11 +40,11 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsP
   uint16_t masterPort;
   const char *masterHost;
 
-  m_verbose = propsPtr->getPropertyBool("verbose", false);
-  masterHost = propsPtr->getProperty("Hyperspace.Master.host", "localhost");
-  masterPort = (uint16_t)propsPtr->getPropertyInt("Hyperspace.Master.port", Master::DEFAULT_MASTER_PORT);
-  m_lease_interval = (uint32_t)propsPtr->getPropertyInt("Hyperspace.Lease.Interval", Master::DEFAULT_LEASE_INTERVAL);
-  m_keep_alive_interval = (uint32_t)propsPtr->getPropertyInt("Hyperspace.KeepAlive.Interval", Master::DEFAULT_KEEPALIVE_INTERVAL);
+  m_verbose = propsPtr->get_bool("verbose", false);
+  masterHost = propsPtr->get("Hyperspace.Master.host", "localhost");
+  masterPort = (uint16_t)propsPtr->get_int("Hyperspace.Master.port", Master::DEFAULT_MASTER_PORT);
+  m_lease_interval = (uint32_t)propsPtr->get_int("Hyperspace.Lease.Interval", Master::DEFAULT_LEASE_INTERVAL);
+  m_keep_alive_interval = (uint32_t)propsPtr->get_int("Hyperspace.KeepAlive.Interval", Master::DEFAULT_KEEPALIVE_INTERVAL);
   
   if (!InetAddr::initialize(&m_master_addr, masterHost, masterPort))
     exit(1);

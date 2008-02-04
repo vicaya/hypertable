@@ -37,9 +37,9 @@ namespace {
 TableMutatorScatterBuffer::TableMutatorScatterBuffer(PropertiesPtr &props_ptr, Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT), m_table_name(table_identifier->name), m_full(false), m_resends(0) {
   int client_timeout;
 
-  if ((client_timeout = props_ptr->getPropertyInt("Hypertable.RangeServer.Client.Timeout", 0)) != 0)
+  if ((client_timeout = props_ptr->get_int("Hypertable.RangeServer.Client.Timeout", 0)) != 0)
     m_range_server.set_timeout(client_timeout);
-  else if ((client_timeout = props_ptr->getPropertyInt("Hypertable.Connection.Timeout", 0)) != 0)
+  else if ((client_timeout = props_ptr->get_int("Hypertable.Connection.Timeout", 0)) != 0)
     m_range_server.set_timeout(client_timeout);
   
   // copy TableIdentifierT

@@ -168,12 +168,12 @@ int main(int argc, char **argv) {
     uint16_t port;
     struct sockaddr_in addr;
 
-    if ((port = (uint16_t)props_ptr->getPropertyInt("DfsBroker.port", 0)) == 0) {
+    if ((port = (uint16_t)props_ptr->get_int("DfsBroker.port", 0)) == 0) {
       LOG_VA_ERROR("DfsBroker.port property not found in config file '%s'", config_file.c_str());
       return 1;
     }
 
-    if ((host = props_ptr->getProperty("DfsBroker.host", (const char *)0)) == 0) {
+    if ((host = props_ptr->get("DfsBroker.host", (const char *)0)) == 0) {
       LOG_VA_ERROR("DfsBroker.host property not found in config file '%s'", config_file.c_str());
       return 1;
     }

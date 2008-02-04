@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
 
     props_ptr = new Properties(configFile);
     if (Global::verbose)
-      props_ptr->setProperty("verbose", "true");
+      props_ptr->set("verbose", "true");
 
     if (logBroker != 0) {
       char *portStr = strchr(logBroker, ':');
@@ -123,15 +123,15 @@ int main(int argc, char **argv) {
 	exit(1);
       }
       *portStr++ = 0;
-      props_ptr->setProperty("Hypertable.RangeServer.CommitLog.DfsBroker.host", logBroker);
-      props_ptr->setProperty("Hypertable.RangeServer.CommitLog.DfsBroker.port", portStr);
+      props_ptr->set("Hypertable.RangeServer.CommitLog.DfsBroker.host", logBroker);
+      props_ptr->set("Hypertable.RangeServer.CommitLog.DfsBroker.port", portStr);
     }
 
-    reactorCount = props_ptr->getPropertyInt("Hypertable.range_server.reactors", System::get_processor_count());
+    reactorCount = props_ptr->get_int("Hypertable.range_server.reactors", System::get_processor_count());
     ReactorFactory::initialize(reactorCount);
     comm_ptr = new Comm();
 
-    workerCount = props_ptr->getPropertyInt("Hypertable.RangeServer.workers", DEFAULT_WORKERS);
+    workerCount = props_ptr->get_int("Hypertable.RangeServer.workers", DEFAULT_WORKERS);
 
     conn_manager_ptr = new ConnectionManager(comm_ptr.get());
     app_queue_ptr = new ApplicationQueue(workerCount);
@@ -145,7 +145,7 @@ int main(int argc, char **argv) {
       exit(1);
     }
 
-    Global::range_metadata_max_bytes = props_ptr->getPropertyInt64("Hypertable.RangeServer.Range.MetadataMaxBytes", 0LL);
+    Global::range_metadata_max_bytes = props_ptr->get_int64("Hypertable.RangeServer.Range.MetadataMaxBytes", 0LL);
 
     if (Global::verbose) {
       cout << "CPU count = " << System::get_processor_count() << endl;

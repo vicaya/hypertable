@@ -48,9 +48,9 @@ namespace {
 RangeLocator::RangeLocator(PropertiesPtr &props_ptr, ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr) : m_conn_manager_ptr(connManagerPtr), m_hyperspace_ptr(hyperspacePtr), m_cache(1000), m_root_stale(true), m_range_server(connManagerPtr->get_comm(), HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT) {
   time_t client_timeout;
 
-  if ((client_timeout = props_ptr->getPropertyInt("Hypertable.RangeServer.Client.Timeout", 0)) != 0)
+  if ((client_timeout = props_ptr->get_int("Hypertable.RangeServer.Client.Timeout", 0)) != 0)
     m_range_server.set_timeout(client_timeout);
-  else if ((client_timeout = props_ptr->getPropertyInt("Hypertable.Connection.Timeout", 0)) != 0)
+  else if ((client_timeout = props_ptr->get_int("Hypertable.Connection.Timeout", 0)) != 0)
     m_range_server.set_timeout(client_timeout);
 
   initialize();
@@ -63,9 +63,9 @@ RangeLocator::RangeLocator(PropertiesPtr &props_ptr, ConnectionManagerPtr &connM
 RangeLocator::RangeLocator(PropertiesPtr &props_ptr, Comm *comm, Hyperspace::SessionPtr &hyperspacePtr) : m_conn_manager_ptr(0), m_hyperspace_ptr(hyperspacePtr), m_cache(1000), m_root_stale(true), m_range_server(comm, HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT) {
   time_t client_timeout;
 
-  if ((client_timeout = props_ptr->getPropertyInt("Hypertable.RangeServer.Client.Timeout", 0)) != 0)
+  if ((client_timeout = props_ptr->get_int("Hypertable.RangeServer.Client.Timeout", 0)) != 0)
     m_range_server.set_timeout(client_timeout);
-  else if ((client_timeout = props_ptr->getPropertyInt("Hypertable.Connection.Timeout", 0)) != 0)
+  else if ((client_timeout = props_ptr->get_int("Hypertable.Connection.Timeout", 0)) != 0)
     m_range_server.set_timeout(client_timeout);
 
   initialize();

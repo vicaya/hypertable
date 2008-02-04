@@ -135,11 +135,11 @@ int main(int argc, char **argv) {
 
   props_ptr = new Properties(configFile);
   if (verbose)
-    props_ptr->setProperty("verbose", "true");
+    props_ptr->set("verbose", "true");
 
-  port         = props_ptr->getPropertyInt("Hyperspace.Master.port", Master::DEFAULT_MASTER_PORT);
-  reactorCount = props_ptr->getPropertyInt("Hyperspace.Master.reactors", System::get_processor_count());
-  workerCount  = props_ptr->getPropertyInt("Hyperspace.Master.workers", DEFAULT_WORKERS);
+  port         = props_ptr->get_int("Hyperspace.Master.port", Master::DEFAULT_MASTER_PORT);
+  reactorCount = props_ptr->get_int("Hyperspace.Master.reactors", System::get_processor_count());
+  workerCount  = props_ptr->get_int("Hyperspace.Master.workers", DEFAULT_WORKERS);
 
   ReactorFactory::initialize(reactorCount);
 

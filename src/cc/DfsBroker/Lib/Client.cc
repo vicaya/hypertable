@@ -48,17 +48,17 @@ Client::Client(ConnectionManagerPtr &conn_manager_ptr, PropertiesPtr &props_ptr)
   m_comm = conn_manager_ptr->get_comm();
 
   {
-    if ((port = (uint16_t)props_ptr->getPropertyInt("DfsBroker.port", 0)) == 0) {
+    if ((port = (uint16_t)props_ptr->get_int("DfsBroker.port", 0)) == 0) {
       LOG_ERROR(".port property not specified.");
       exit(1);
     }
 
-    if ((host = props_ptr->getProperty("DfsBroker.host", (const char *)0)) == 0) {
+    if ((host = props_ptr->get("DfsBroker.host", (const char *)0)) == 0) {
       LOG_ERROR(".host property not specified.");
       exit(1);
     }
 
-    m_timeout = props_ptr->getPropertyInt("DfsBroker.timeout", 30);
+    m_timeout = props_ptr->get_int("DfsBroker.timeout", 30);
 
     InetAddr::initialize(&m_addr, host, port);
   }

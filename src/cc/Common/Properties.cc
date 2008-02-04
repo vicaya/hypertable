@@ -106,14 +106,7 @@ void Properties::load(const char *fname) throw(std::invalid_argument) {
   }
 }
 
-const char *Properties::getProperty(const char *str) {
-  PropertyMapT::iterator iter =  m_map.find(str);
-  if (iter == m_map.end())
-    return 0;
-  return ((*iter).second.c_str());
-}
-
-const char *Properties::getProperty(const char *str, const char *defaultValue) {
+const char *Properties::get(const char *str, const char *defaultValue) {
   PropertyMapT::iterator iter =  m_map.find(str);
   if (iter == m_map.end())
     return defaultValue;
@@ -121,11 +114,10 @@ const char *Properties::getProperty(const char *str, const char *defaultValue) {
 }
 
 
-
 /**
  *
  */
-int64_t Properties::getPropertyInt64(const char *str, int64_t defaultValue) {
+int64_t Properties::get_int64(const char *str, int64_t defaultValue) {
   const char *ptr;
 
   PropertyMapT::iterator iter = m_map.find(str);
@@ -156,8 +148,8 @@ int64_t Properties::getPropertyInt64(const char *str, int64_t defaultValue) {
   return llval * factor;
 }
 
-int Properties::getPropertyInt(const char *str, int defaultValue) {
-  int64_t llval = getPropertyInt64(str, defaultValue);
+int Properties::get_int(const char *str, int defaultValue) {
+  int64_t llval = get_int64(str, defaultValue);
   
   if (llval > numeric_limits<int>::max())
     throw std::invalid_argument(string("Integer value too large for property '") + str + "'");
@@ -165,7 +157,7 @@ int Properties::getPropertyInt(const char *str, int defaultValue) {
   return (int)llval;
 }
 
-bool Properties::getPropertyBool(const char *str, bool defaultValue) {
+bool Properties::get_bool(const char *str, bool defaultValue) {
   PropertyMapT::iterator iter = m_map.find(str);
   if (iter == m_map.end())
     return defaultValue;
@@ -182,7 +174,7 @@ bool Properties::getPropertyBool(const char *str, bool defaultValue) {
 
 
 
-std::string Properties::setProperty(const char *key, const char *value) {
+std::string Properties::set(const char *key, const char *value) {
   std::string oldValue;
 
   PropertyMapT::iterator iter = m_map.find(key);

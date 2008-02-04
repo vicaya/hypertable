@@ -242,7 +242,7 @@ int main(int argc, char **argv, char **envp) {
   props_ptr = new Properties( configFile );
 
   if (verbose)
-    props_ptr->setProperty("verbose", "true");
+    props_ptr->set("verbose", "true");
 
   comm = new Comm();
 

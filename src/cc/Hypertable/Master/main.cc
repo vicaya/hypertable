@@ -113,12 +113,13 @@ int main(int argc, char **argv) {
     configFile = System::installDir + "/conf/hypertable.cfg";
 
   props_ptr = new Properties(configFile);
-  if (verbose)
-    props_ptr->setProperty("verbose", "true");
 
-  port         = props_ptr->getPropertyInt("Hypertable.Master.port", DEFAULT_PORT);
-  reactorCount = props_ptr->getPropertyInt("Hypertable.Master.reactors", System::get_processor_count());
-  workerCount  = props_ptr->getPropertyInt("Hypertable.Master.workers", DEFAULT_WORKERS);
+  if (verbose)
+    props_ptr->set("verbose", "true");
+
+  port         = props_ptr->get_int("Hypertable.Master.port", DEFAULT_PORT);
+  reactorCount = props_ptr->get_int("Hypertable.Master.reactors", System::get_processor_count());
+  workerCount  = props_ptr->get_int("Hypertable.Master.workers", DEFAULT_WORKERS);
 
   ReactorFactory::initialize(reactorCount);
 

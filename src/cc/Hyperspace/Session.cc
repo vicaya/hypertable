@@ -53,12 +53,12 @@ Session::Session(Comm *comm, PropertiesPtr &props_ptr, SessionCallback *callback
   uint16_t masterPort;
   const char *masterHost;
 
-  m_verbose = props_ptr->getPropertyBool("verbose", false);
-  m_silent = props_ptr->getPropertyBool("silent", false);
-  masterHost = props_ptr->getProperty("Hyperspace.Master.host", "localhost");
-  masterPort = (uint16_t)props_ptr->getPropertyInt("Hyperspace.Master.port", Master::DEFAULT_MASTER_PORT);
-  m_grace_period = (uint32_t)props_ptr->getPropertyInt("Hyperspace.GracePeriod", Master::DEFAULT_GRACEPERIOD);
-  m_lease_interval = (uint32_t)props_ptr->getPropertyInt("Hyperspace.Lease.Interval", Master::DEFAULT_LEASE_INTERVAL);
+  m_verbose = props_ptr->get_bool("verbose", false);
+  m_silent = props_ptr->get_bool("silent", false);
+  masterHost = props_ptr->get("Hyperspace.Master.host", "localhost");
+  masterPort = (uint16_t)props_ptr->get_int("Hyperspace.Master.port", Master::DEFAULT_MASTER_PORT);
+  m_grace_period = (uint32_t)props_ptr->get_int("Hyperspace.GracePeriod", Master::DEFAULT_GRACEPERIOD);
+  m_lease_interval = (uint32_t)props_ptr->get_int("Hyperspace.Lease.Interval", Master::DEFAULT_LEASE_INTERVAL);
   m_timeout = m_lease_interval * 2;
 
   if (!InetAddr::initialize(&m_master_addr, masterHost, masterPort))

@@ -71,7 +71,7 @@ void Client::initialize(std::string config_file) {
 
   m_app_queue_ptr = new ApplicationQueue(1);
 
-  master_timeout = m_props_ptr->getPropertyInt("Hypertable.Master.Client.Timeout", 180);
+  master_timeout = m_props_ptr->get_int("Hypertable.Master.Client.Timeout", 180);
 
   m_master_client_ptr = new MasterClient(m_conn_manager_ptr, m_hyperspace_ptr, master_timeout, m_app_queue_ptr);
   if (m_master_client_ptr->initiate_connection(0) != Error::OK) {

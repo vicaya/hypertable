@@ -44,22 +44,20 @@ namespace Hypertable {
 
     void load(std::string &fname) { load(fname.c_str());  }
 
-    const char *getProperty(const char *str);
+    const char *get(const char *str, const char *defaultValue = NULL);
 
-    const char *getProperty(const char *str, const char *defaultValue);
+    int get_int(const char *str, int defaultValue = 0);
 
-    int getPropertyInt(const char *str, int defaultValue);
+    int64_t get_int64(const char *str, int64_t defaultValue = 0);
 
-    int64_t getPropertyInt64(const char *str, int64_t defaultValue);
+    bool get_bool(const char *str, bool defaultValue = false);
 
-    bool getPropertyBool(const char *str, bool defaultValue);
-
-    bool containsKey(const char *str) {
+    bool has_key(const char *str) {
       PropertyMapT::iterator iter = m_map.find(str);
       return (iter == m_map.end()) ? false : true;
     }
 
-    std::string setProperty(const char *key, const char *value);
+    std::string set(const char *key, const char *value);
 
   private:
 

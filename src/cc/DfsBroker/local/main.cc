@@ -110,12 +110,12 @@ int main(int argc, char **argv) {
 
   props_ptr = new Properties(configFile);
   if (verbose)
-    props_ptr->setProperty("verbose", "true");
+    props_ptr->set("verbose", "true");
 
   if (port == 0)
-    port         = props_ptr->getPropertyInt("DfsBroker.local.port",     DEFAULT_PORT);
-  reactorCount = props_ptr->getPropertyInt("DfsBroker.local.reactors", System::get_processor_count());
-  workerCount  = props_ptr->getPropertyInt("DfsBroker.local.workers",  DEFAULT_WORKERS);
+    port       = props_ptr->get_int("DfsBroker.local.port",     DEFAULT_PORT);
+  reactorCount = props_ptr->get_int("DfsBroker.local.reactors", System::get_processor_count());
+  workerCount  = props_ptr->get_int("DfsBroker.local.workers",  DEFAULT_WORKERS);
 
   ReactorFactory::initialize(reactorCount);
 

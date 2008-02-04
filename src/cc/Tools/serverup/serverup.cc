@@ -148,14 +148,14 @@ int main(int argc, char **argv) {
 
   {
     if (hostName == "")
-      hostName = props_ptr->getProperty(hostProperty, "localhost");
+      hostName = props_ptr->get(hostProperty, "localhost");
     else if (serverName != "rangeserver")
-      props_ptr->setProperty(hostProperty, hostName.c_str());
+      props_ptr->set(hostProperty, hostName.c_str());
 
     if (portStr != 0)
-      props_ptr->setProperty(portProperty, portStr);
+      props_ptr->set(portProperty, portStr);
 
-    port = props_ptr->getPropertyInt(portProperty, 0);
+    port = props_ptr->get_int(portProperty, 0);
     if (port == 0 || port < 1024 || port >= 65536) {
       LOG_VA_ERROR("%s not specified or out of range : %d", portProperty, port);
       return 1;
@@ -165,7 +165,7 @@ int main(int argc, char **argv) {
       goto abort;
   }
 
-  props_ptr->setProperty("silent", "true");
+  props_ptr->set("silent", "true");
 
   comm = new Comm();
   connManagerPtr = new ConnectionManager(comm);

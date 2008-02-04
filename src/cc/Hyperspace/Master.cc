@@ -68,13 +68,13 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, Se
   ssize_t xattrLen;
   uint16_t port;
 
-  m_verbose = propsPtr->getPropertyBool("verbose", false);
+  m_verbose = propsPtr->get_bool("verbose", false);
 
-  m_lease_interval = (uint32_t)propsPtr->getPropertyInt("Hyperspace.Lease.Interval", DEFAULT_LEASE_INTERVAL);
+  m_lease_interval = (uint32_t)propsPtr->get_int("Hyperspace.Lease.Interval", DEFAULT_LEASE_INTERVAL);
 
-  m_keep_alive_interval = (uint32_t)propsPtr->getPropertyInt("Hyperspace.KeepAlive.Interval", DEFAULT_KEEPALIVE_INTERVAL);
+  m_keep_alive_interval = (uint32_t)propsPtr->get_int("Hyperspace.KeepAlive.Interval", DEFAULT_KEEPALIVE_INTERVAL);
 
-  if ((dirname = propsPtr->getProperty("Hyperspace.Master.dir", 0)) == 0) {
+  if ((dirname = propsPtr->get("Hyperspace.Master.dir", 0)) == 0) {
     LOG_ERROR("Property 'Hyperspace.Master.dir' not found.");
     exit(1);
   }
@@ -136,7 +136,7 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, Se
   rootNodePtr->name = "/";
   m_node_map["/"] = rootNodePtr;
 
-  port = propsPtr->getPropertyInt("Hyperspace.Master.port", DEFAULT_MASTER_PORT);
+  port = propsPtr->get_int("Hyperspace.Master.port", DEFAULT_MASTER_PORT);
   InetAddr::initialize(&m_local_addr, INADDR_ANY, port);
 
   m_keepalive_handler_ptr.reset( new ServerKeepaliveHandler(connManagerPtr->get_comm(), this) );
