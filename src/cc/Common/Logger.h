@@ -62,7 +62,7 @@ namespace Hypertable {
   } while(0)
 
 #define HT_DEBUG(msg) if (Logger::logger->isDebugEnabled()) do { \
-  Logger::logger->debug("(%s:%d) " msg, __FILE__, __LINE__) \
+  Logger::logger->debug("(%s:%d) " msg, __FILE__, __LINE__); \
 } while (0)
 
 #define HT_DEBUGF(msg, ...) \

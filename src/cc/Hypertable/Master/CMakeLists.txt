@@ -31,11 +31,15 @@ RequestHandlerReportSplit.cc
 ResponseCallbackGetSchema.cc
 ServerLockFileHandler.cc
 ServersDirectoryHandler.cc
+TableFileGc.cc
 main.cc
 )
 
 # Hypertable.Master
 add_executable (Hypertable.Master ${Master_SRCS})
 target_link_libraries (Hypertable.Master pthread ${BOOST_LIB} log4cpp expat ${Tcmalloc_LIBRARIES} HyperDfsBroker Hypertable)
+
+add_executable(testgc testgc.cc TableFileGc.cc)
+target_link_libraries (testgc pthread ${BOOST_LIB} log4cpp expat ${Tcmalloc_LIBRARIES} HyperDfsBroker Hypertable)
 
 install (TARGETS Hypertable.Master RUNTIME DESTINATION bin)

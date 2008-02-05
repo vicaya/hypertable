@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Luke Lu (Zvents, Inc.)
+ * Copyright (C) 2008 Luke Lu (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -17,29 +17,17 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef HYPERTABLE_THREAD_H
-#define HYPERTABLE_THREAD_H
+#ifndef HYPERTABLE_HASHMAP_H
+#define HYPERTABLE_HASHMAP_H
 
-#include <boost/thread.hpp>
-#include "Common/Logger.h"
+#include <boost/config.hpp>
+#include BOOST_HASH_MAP_HEADER
+#include BOOST_HASH_SET_HEADER
 
 namespace Hypertable {
-
-#ifdef BOOST_HAS_PTHREADS
-#  define HT_THREAD_ID_DECL(_var_) pthread_t _var_
-#  define HT_ASSERT_SAME_THREAD(_tid_) if (pthread_self() != (_tid_)) \
-     HT_FATALF("expected current thread id %u, got %u", \
-               (unsigned)(_tid_), (unsigned) pthread_self())
-#  define HT_THREAD_ID_SET(_var_) _var_ = pthread_self()
-#else
-#  define HT_THREAD_ID_DECL(_var_)
-#  define HT_ASSERT_SAME_THREAD(_tid_)
-#  define HT_THREAD_ID_SET(_var_)
-#endif
-
-typedef boost::thread           Thread;
-typedef boost::thread_group     ThreadGroup;
-
+  // import hash_map/set into our namespace
+  using BOOST_STD_EXTENSION_NAMESPACE::hash_map;
+  using BOOST_STD_EXTENSION_NAMESPACE::hash_set;
 } // namespace Hypertable
 
-#endif // HYPERTABLE_THREAD_H
+#endif // HYPERTABLE_HASHMAP_H

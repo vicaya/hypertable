@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
     filestr.close();
   }
 
-  app_queue_ptr->join();
+  master_ptr->join();
 
   delete comm;
   return 0;

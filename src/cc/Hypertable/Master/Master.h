@@ -25,6 +25,7 @@
 
 #include <boost/thread/mutex.hpp>
 
+#include "Common/Thread.h"
 #include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
 #include "Common/StringExt.h"
@@ -44,8 +45,7 @@
 #include "HyperspaceSessionHandler.h"
 #include "RangeServerState.h"
 #include "ResponseCallbackGetSchema.h"
-
-using namespace Hypertable;
+#include "TableFileGc.h"
 
 namespace Hypertable {
 
@@ -62,6 +62,8 @@ namespace Hypertable {
 
     void server_joined(std::string &location);
     void server_left(std::string &location);
+
+    void join();
 
   protected:
     int create_table(const char *tableName, const char *schemaString, std::string &errMsg);
@@ -95,6 +97,7 @@ namespace Hypertable {
     ServerMapT  m_server_map;
     ServerMapT::iterator m_server_map_iter;
 
+    ThreadGroup m_threads;
   };
   typedef boost::intrusive_ptr<Master> MasterPtr;
 

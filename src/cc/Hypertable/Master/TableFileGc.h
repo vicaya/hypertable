@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Luke Lu (Zvents, Inc.)
+ * Copyright (C) 2008 Luke Lu (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -17,29 +17,17 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef HYPERTABLE_THREAD_H
-#define HYPERTABLE_THREAD_H
-
-#include <boost/thread.hpp>
-#include "Common/Logger.h"
+#ifndef HYPERTABLE_TABLE_FILE_GC_H
+#define HYPERTABLE_TABLE_FILE_GC_H
 
 namespace Hypertable {
 
-#ifdef BOOST_HAS_PTHREADS
-#  define HT_THREAD_ID_DECL(_var_) pthread_t _var_
-#  define HT_ASSERT_SAME_THREAD(_tid_) if (pthread_self() != (_tid_)) \
-     HT_FATALF("expected current thread id %u, got %u", \
-               (unsigned)(_tid_), (unsigned) pthread_self())
-#  define HT_THREAD_ID_SET(_var_) _var_ = pthread_self()
-#else
-#  define HT_THREAD_ID_DECL(_var_)
-#  define HT_ASSERT_SAME_THREAD(_tid_)
-#  define HT_THREAD_ID_SET(_var_)
-#endif
+extern void start_table_file_gc(PropertiesPtr props, ThreadGroup &threads,
+                                TablePtr metadata, Filesystem *fs);
 
-typedef boost::thread           Thread;
-typedef boost::thread_group     ThreadGroup;
+extern void test_table_file_gc(TablePtr metadata, Filesystem *fs,
+                               bool dryrun = false);
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_THREAD_H
+#endif // HYPERTABLE_TABLE_FILE_GC_H
