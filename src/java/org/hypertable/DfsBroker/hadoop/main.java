@@ -55,7 +55,7 @@ public class main {
     };
 
 
-    static final String DEFAULT_PORT = "38546";
+    static final String DEFAULT_PORT = "38030";
 
     private static class HandlerFactory implements ConnectionHandlerFactory {
 	public HandlerFactory(Comm comm, ApplicationQueue appQueue, HdfsBroker broker) {
