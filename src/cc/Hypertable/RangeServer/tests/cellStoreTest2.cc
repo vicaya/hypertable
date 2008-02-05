@@ -122,7 +122,7 @@ namespace {
       return false;
     schema = Schema::NewInstance(schemaData, len, true);
     if (!schema->IsValid()) {
-      LOG_VA_ERROR("Schema Parse Error: %s", schema->GetErrorString());
+      HT_ERRORF("Schema Parse Error: %s", schema->GetErrorString());
       return false;
     }
 
@@ -148,15 +148,15 @@ namespace {
      */
     if (stat("tests/testdata.txt", &statbuf) != 0) {
       if (stat("tests/testdata.txt.gz", &statbuf) != 0) {
-	LOG_VA_ERROR("Unable to stat file 'tests/testdata.txt.gz' : %s", strerror(errno));
+	HT_ERRORF("Unable to stat file 'tests/testdata.txt.gz' : %s", strerror(errno));
 	return false;
       }
       if (system("gzcat tests/testdata.txt.gz > tests/testdata.txt")) {
-	LOG_ERROR("Unable to decompress file 'tests/testdata.txt.gz");
+	HT_ERROR("Unable to decompress file 'tests/testdata.txt.gz");
 	return false;
       }
       if (stat("tests/testdata.txt", &statbuf) != 0) {
-	LOG_VA_ERROR("Unable to stat file 'tests/testdata.txt' : %s", strerror(errno));
+	HT_ERRORF("Unable to stat file 'tests/testdata.txt' : %s", strerror(errno));
 	return false;
       }
     }
@@ -180,7 +180,7 @@ namespace {
     for (KeyValueMapT::iterator iter = kvMap.begin(); iter != kvMap.end(); iter++) {
     
       if (!keyComps.load((*iter).first)) {
-	LOG_ERROR("Problem parsing key!!");
+	HT_ERROR("Problem parsing key!!");
 	return 1;
       }
 

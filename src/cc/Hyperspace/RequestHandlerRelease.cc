@@ -48,6 +48,6 @@ void RequestHandlerRelease::run() {
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with RELEASE message");
+  HT_ERROR("Encoding problem with RELEASE message");
   cb.error(Error::PROTOCOL_ERROR, "Encoding problem with RELEASE message");
 }

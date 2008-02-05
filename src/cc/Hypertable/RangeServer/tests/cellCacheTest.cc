@@ -191,7 +191,7 @@ int main(int argc, char **argv) {
   Global::protocol = new Hdfs::Protocol();
 
   if (!Global::client->WaitForConnection(15)) {
-    LOG_ERROR("Unable to connect to HDFS");
+    HT_ERROR("Unable to connect to HDFS");
     return 1;
   }
 

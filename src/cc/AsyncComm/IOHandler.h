@@ -71,7 +71,7 @@ namespace Hypertable {
     void deliver_event(Event *event) {
       memcpy(&event->localAddr, &m_local_addr, sizeof(m_local_addr));
       if (!m_dispatch_handler_ptr) {
-	LOG_VA_INFO("%s", event->toString().c_str());
+	HT_INFOF("%s", event->toString().c_str());
 	delete event;
       }
       else {
@@ -84,7 +84,7 @@ namespace Hypertable {
       memcpy(&event->localAddr, &m_local_addr, sizeof(m_local_addr));
       if (!dh) {
 	if (!m_dispatch_handler_ptr) {
-	  LOG_VA_INFO("%s", event->toString().c_str());
+	  HT_INFOF("%s", event->toString().c_str());
 	  delete event;
 	}
 	else {
@@ -107,7 +107,7 @@ namespace Hypertable {
       event.data.ptr = this;
       event.events = EPOLLIN | EPOLLERR | EPOLLHUP;
       if (epoll_ctl(m_reactor_ptr->pollFd, EPOLL_CTL_ADD, m_sd, &event) < 0) {
-	LOG_VA_ERROR("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN|EPOLLERR|EPOLLHUP) failed : %s",
+	HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN|EPOLLERR|EPOLLHUP) failed : %s",
 		     m_reactor_ptr->pollFd, m_sd, strerror(errno));
 	exit(1);
       }
@@ -156,7 +156,7 @@ namespace Hypertable {
 #elif defined(__linux__)
       struct epoll_event event;  // this is necessary for < Linux 2.6.9
       if (epoll_ctl(m_reactor_ptr->pollFd, EPOLL_CTL_DEL, m_sd, &event) < 0) {
-	LOG_VA_ERROR("epoll_ctl(%d, EPOLL_CTL_DEL, %d) failed : %s",
+	HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_DEL, %d) failed : %s",
 		     m_reactor_ptr->pollFd, m_sd, strerror(errno));
 	exit(1);
       }

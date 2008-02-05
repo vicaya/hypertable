@@ -44,7 +44,7 @@ ClientBufferedReaderHandler::ClientBufferedReaderHandler(DfsBroker::Client *clie
   if (start_offset > 0) {
     if ((m_error = m_client->seek(m_fd, start_offset)) != Error::OK) {
       // TODO: throw exception
-      LOG_VA_ERROR("Problem seeking to position '%lld' in file", start_offset);
+      HT_ERRORF("Problem seeking to position '%lld' in file", start_offset);
       m_eof = true;
       return;
     }
@@ -92,7 +92,7 @@ void ClientBufferedReaderHandler::handle(EventPtr &eventPtr) {
 
   if (eventPtr->type == Event::MESSAGE) {
     if ((m_error = (int)Protocol::response_code(eventPtr)) != Error::OK) {
-      LOG_VA_ERROR("DfsBroker 'read' error (amount=%d, fd=%d) : %s",
+      HT_ERRORF("DfsBroker 'read' error (amount=%d, fd=%d) : %s",
 		   m_read_size, m_fd, Protocol::string_format_message(eventPtr).c_str());
       m_eof = true;
       return;
@@ -105,18 +105,18 @@ void ClientBufferedReaderHandler::handle(EventPtr &eventPtr) {
       Filesystem::decode_response_read_header(eventPtr, &offset, &amount, 0);
       m_actual_offset += amount;
       if (amount < m_read_size) {
-	//LOG_VA_ERROR("short read %ld < %ld (actual=%ld, end=%ld)", amount, (int32_t)m_read_size, m_actual_offset, m_end_offset);
+	//HT_ERRORF("short read %ld < %ld (actual=%ld, end=%ld)", amount, (int32_t)m_read_size, m_actual_offset, m_end_offset);
 	m_eof = true;
       }
     }
   }
   else if (eventPtr->type == Event::ERROR) {
-    LOG_VA_ERROR("%s", eventPtr->toString().c_str());    
+    HT_ERRORF("%s", eventPtr->toString().c_str());    
     m_error = eventPtr->error;
     m_eof = true;
   }
   else {
-    LOG_VA_ERROR("%s", eventPtr->toString().c_str());
+    HT_ERRORF("%s", eventPtr->toString().c_str());
     assert(!"Not supposed to receive this type of event!");
   }
 
@@ -140,7 +140,7 @@ int ClientBufferedReaderHandler::read(uint8_t *buf, uint32_t len, uint32_t *nrea
       m_cond.wait(lock);
 
     if (m_error != Error::OK || m_queue.empty()) {
-      LOG_VA_ERROR("return 1 error=%d", m_error);
+      HT_ERRORF("return 1 error=%d", m_error);
       return m_error;
     }
 

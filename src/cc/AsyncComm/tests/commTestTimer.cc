@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
   for (int i=0; history[i].msg; i++) {
     timerHandler = new TimerHandler(history[i].msg, out);
     if ((error = comm->set_timer(history[i].delay*1000, timerHandler)) != Error::OK) {
-      LOG_VA_ERROR("Problem setting timer - %s", Error::get_text(error));
+      HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
       exit(1);
     }
     if (history[i].delay > waitTime)

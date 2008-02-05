@@ -58,6 +58,6 @@ void RequestHandlerCreateScanner::run() {
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with CreateScanner message");
+  HT_ERROR("Encoding problem with CreateScanner message");
   cb.error(Error::PROTOCOL_ERROR, "Encoding problem with CreateScanner message");
 }

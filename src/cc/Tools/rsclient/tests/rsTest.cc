@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
 
   for (int i=0; requiredFiles[i]; i++) {
     if (!FileUtils::exists(requiredFiles[i])) {
-      LOG_VA_ERROR("Unable to find '%s'", requiredFiles[i]);
+      HT_ERRORF("Unable to find '%s'", requiredFiles[i]);
       return 1;
     }
   }

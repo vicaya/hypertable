@@ -152,7 +152,7 @@ public:
     InetAddr::initialize(&m_send_addr, INADDR_ANY, 0);
     if ((error = m_comm->create_datagram_receive_socket(&m_send_addr, nullHandler)) != Error::OK) {
       std::string str;
-      LOG_VA_ERROR("Problem creating UDP receive socket %s - %s", InetAddr::string_format(str, m_send_addr), Error::get_text(error));
+      HT_ERRORF("Problem creating UDP receive socket %s - %s", InetAddr::string_format(str, m_send_addr), Error::get_text(error));
       exit(1);
     }
   }
@@ -167,7 +167,7 @@ public:
       CommBufPtr cbufPtr( new CommBuf(m_builder, 2) );
       cbufPtr->append_short(0);
       if ((error = m_comm->send_datagram(m_addr, m_send_addr, cbufPtr)) != Error::OK) {
-	LOG_VA_ERROR("Problem sending datagram - %s", Error::get_text(error));
+	HT_ERRORF("Problem sending datagram - %s", Error::get_text(error));
 	exit(1);
       }
     }
@@ -290,7 +290,7 @@ int main(int argc, char **argv, char **envp) {
 	}
       }
       if (i == commands.size()) {
-	LOG_VA_ERROR("Unrecognized command : %s", commandStr.c_str());
+	HT_ERRORF("Unrecognized command : %s", commandStr.c_str());
 	return 1;
       }
       str = strtok(0, ";");      

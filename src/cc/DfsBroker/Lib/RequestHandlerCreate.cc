@@ -65,7 +65,7 @@ void RequestHandlerCreate::run() {
 
   // validate filename
   if (fileName[strlen(fileName)-1] == '/') {
-    LOG_VA_ERROR("open failed: bad filename - %s", fileName);
+    HT_ERRORF("open failed: bad filename - %s", fileName);
     cb.error(Error::DFSBROKER_BAD_FILENAME, fileName);
     return;
   }
@@ -75,7 +75,7 @@ void RequestHandlerCreate::run() {
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with CREATE message");
+  HT_ERROR("Encoding problem with CREATE message");
   cb.error(Error::PROTOCOL_ERROR, "Encoding problem with CREATE message");
   return;
 }

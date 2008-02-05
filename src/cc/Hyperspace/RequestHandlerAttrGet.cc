@@ -54,6 +54,6 @@ void RequestHandlerAttrGet::run() {
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with ATTRGET message");
+  HT_ERROR("Encoding problem with ATTRGET message");
   cb.error(Error::PROTOCOL_ERROR, "Encoding problem with ATTRGET message");
 }

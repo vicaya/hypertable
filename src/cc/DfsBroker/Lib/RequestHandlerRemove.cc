@@ -47,7 +47,7 @@ void RequestHandlerRemove::run() {
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with REMOVE message");
+  HT_ERROR("Encoding problem with REMOVE message");
   cb.error(Error::PROTOCOL_ERROR, "Encoding problem with REMOVE message");
   return;
 }

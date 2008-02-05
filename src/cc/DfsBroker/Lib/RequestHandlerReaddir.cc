@@ -48,7 +48,7 @@ void RequestHandlerReaddir::run() {
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with READDIR message");
+  HT_ERROR("Encoding problem with READDIR message");
   cb.error(Error::PROTOCOL_ERROR, "Encoding problem with READDIR message");
   return;
 }

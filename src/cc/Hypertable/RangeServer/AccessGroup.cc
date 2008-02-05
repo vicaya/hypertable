@@ -64,7 +64,7 @@ AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPt
 AccessGroup::~AccessGroup() {
   if (m_drop) {
     if (m_table_identifier.id == 0) {
-      LOG_ERROR("~AccessGroup has drop bit set, but table is METADATA");
+      HT_ERROR("~AccessGroup has drop bit set, but table is METADATA");
       Free(m_table_identifier);
       return;
     }
@@ -74,7 +74,7 @@ AccessGroup::~AccessGroup() {
     KeySpec key;
 
     if ((error = Global::metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK) {
-      LOG_VA_ERROR("Problem creating mutator on METADATA table - %s", Error::get_text(error));
+      HT_ERRORF("Problem creating mutator on METADATA table - %s", Error::get_text(error));
       Free(m_table_identifier);
       return;
     }
@@ -94,7 +94,7 @@ AccessGroup::~AccessGroup() {
     }
     catch (Hypertable::Exception &e) {
       // TODO: propagate exception
-      LOG_VA_ERROR("Problem updating 'File' column of METADATA (%d:%s) - %s",
+      HT_ERRORF("Problem updating 'File' column of METADATA (%d:%s) - %s",
 		   m_table_identifier.id, metadata_key.c_str(), Error::get_text(e.code()));
     }
   }
@@ -223,25 +223,25 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
     boost::mutex::scoped_lock lock(m_mutex);
     if (m_in_memory) {
       tableIndex = 0;
-      LOG_VA_INFO("Starting InMemory Compaction (%s.%s end_row='%s')", m_table_name.c_str(), m_name.c_str(), m_end_row.c_str());
+      HT_INFOF("Starting InMemory Compaction (%s.%s end_row='%s')", m_table_name.c_str(), m_name.c_str(), m_end_row.c_str());
     }
     else if (major) {
       // TODO: if the oldest CellCache entry is newer than timestamp, then return
       if (m_cell_cache_ptr->memory_used() == 0 && m_stores.size() <= (size_t)1)
 	return;
       tableIndex = 0;
-      LOG_VA_INFO("Starting Major Compaction (%s.%s)", m_table_name.c_str(), m_name.c_str());
+      HT_INFOF("Starting Major Compaction (%s.%s)", m_table_name.c_str(), m_name.c_str());
     }
     else {
       if (m_stores.size() > (size_t)Global::localityGroupMaxFiles) {
 	ltCellStore sortObj;
 	sort(m_stores.begin(), m_stores.end(), sortObj);
 	tableIndex = m_stores.size() - Global::localityGroupMergeFiles;
-	LOG_VA_INFO("Starting Merging Compaction (%s.%s)", m_table_name.c_str(), m_name.c_str());
+	HT_INFOF("Starting Merging Compaction (%s.%s)", m_table_name.c_str(), m_name.c_str());
       }
       else {
 	tableIndex = m_stores.size();
-	LOG_VA_INFO("Starting Minor Compaction (%s.%s)", m_table_name.c_str(), m_name.c_str());
+	HT_INFOF("Starting Minor Compaction (%s.%s)", m_table_name.c_str(), m_name.c_str());
       }
     }
   }
@@ -257,7 +257,7 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
   cellStorePtr = new CellStoreV0(Global::dfs);
 
   if (cellStorePtr->create(cellStoreFile.c_str(), m_blocksize, m_compressor) != 0) {
-    LOG_VA_ERROR("Problem compacting locality group to file '%s'", cellStoreFile.c_str());
+    HT_ERRORF("Problem compacting locality group to file '%s'", cellStoreFile.c_str());
     return;
   }
 
@@ -283,7 +283,7 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
   while (scannerPtr->get(&key, &value)) {
 
     if (!keyComps.load(key)) {
-      LOG_ERROR("Problem deserializing key/value pair");
+      HT_ERROR("Problem deserializing key/value pair");
       return;
     }
 
@@ -294,7 +294,7 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
   }
 
   if (cellStorePtr->finalize(timestamp) != 0) {
-    LOG_VA_ERROR("Problem finalizing CellStore '%s'", cellStoreFile.c_str());
+    HT_ERRORF("Problem finalizing CellStore '%s'", cellStoreFile.c_str());
     return;
   }
 
@@ -351,11 +351,11 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
   }
   catch (Hypertable::Exception &e) {
     // TODO: propagate exception
-    LOG_VA_ERROR("Problem updating 'File' column of METADATA (%d:%s) - %s",
+    HT_ERRORF("Problem updating 'File' column of METADATA (%d:%s) - %s",
 		 m_table_identifier.id, metadata_key_str.c_str(), Error::get_text(e.code()));
   }
 
-  LOG_VA_INFO("Finished Compaction (%s.%s)", m_table_name.c_str(), m_name.c_str());
+  HT_INFOF("Finished Compaction (%s.%s)", m_table_name.c_str(), m_name.c_str());
 }
 
 
@@ -401,12 +401,12 @@ int AccessGroup::shrink(std::string &new_start_row) {
     std::string filename = m_stores[i]->get_filename();
     new_cell_store = new CellStoreV0(Global::dfs);
     if ((error = new_cell_store->open(filename.c_str(), m_start_row.c_str(), m_end_row.c_str())) != Error::OK) {
-      LOG_VA_ERROR("Problem opening cell store '%s' [%s:%s] - %s",
+      HT_ERRORF("Problem opening cell store '%s' [%s:%s] - %s",
 		   filename.c_str(), m_start_row.c_str(), m_end_row.c_str(), Error::get_text(error));
       return error;
     }
     if ((error = new_cell_store->load_index()) != Error::OK) {
-      LOG_VA_ERROR("Problem loading index of cell store '%s' [%s:%s] - %s",
+      HT_ERRORF("Problem loading index of cell store '%s' [%s:%s] - %s",
 		   filename.c_str(), m_start_row.c_str(), m_end_row.c_str(), Error::get_text(error));
       return error;
     }

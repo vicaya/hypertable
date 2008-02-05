@@ -64,7 +64,7 @@ bool IOHandlerDatagram::handle_event(struct epoll_event *event) {
     socklen_t fromlen = sizeof(struct sockaddr_in);
 
     if ((nread = FileUtils::recvfrom(m_sd, m_message, 65536, (struct sockaddr *)&addr, &fromlen)) == (ssize_t)-1) {
-      LOG_VA_ERROR("FileUtils::recvfrom(%d) failure : %s", m_sd, strerror(errno));
+      HT_ERRORF("FileUtils::recvfrom(%d) failure : %s", m_sd, strerror(errno));
       deliver_event( new Event(Event::ERROR, m_sd, addr, Error::COMM_RECEIVE_ERROR) );
       return true;
     }
@@ -78,7 +78,7 @@ bool IOHandlerDatagram::handle_event(struct epoll_event *event) {
   }
 
   if (event->events & EPOLLERR) {
-    LOG_VA_WARN("Received EPOLLERR on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+    HT_WARNF("Received EPOLLERR on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
     deliver_event( new Event(Event::ERROR, 0, m_addr, Error::COMM_POLL_ERROR) );
     return true;
   }
@@ -115,7 +115,7 @@ bool IOHandlerDatagram::handle_event(struct kevent *event) {
     socklen_t fromlen = sizeof(struct sockaddr_in);
 
     if ((nread = FileUtils::recvfrom(m_sd, m_message, 65536, (struct sockaddr *)&addr, &fromlen)) == (ssize_t)-1) {
-      LOG_VA_ERROR("FileUtils::recvfrom(%d, len=%d) failure : %s", m_sd, available, strerror(errno));
+      HT_ERRORF("FileUtils::recvfrom(%d, len=%d) failure : %s", m_sd, available, strerror(errno));
       deliver_event( new Event(Event::ERROR, m_sd, addr, Error::COMM_RECEIVE_ERROR) );
       return true;
     }
@@ -157,9 +157,9 @@ int IOHandlerDatagram::send_message(struct sockaddr_in &addr, CommBufPtr &cbufPt
   int error;
   bool initiallyEmpty = m_send_queue.empty() ? true : false;
 
-  LOG_ENTER;
+  HT_LOG_ENTER;
 
-  //LOG_VA_INFO("Pushing message destined for %s:%d onto send queue", 
+  //HT_INFOF("Pushing message destined for %s:%d onto send queue", 
   //inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
 
   m_send_queue.push_back(SendRecT(addr, cbufPtr));
@@ -169,11 +169,11 @@ int IOHandlerDatagram::send_message(struct sockaddr_in &addr, CommBufPtr &cbufPt
 
   if (initiallyEmpty && !m_send_queue.empty()) {
     add_poll_interest(Reactor::WRITE_READY);
-    //LOG_INFO("Adding Write interest");
+    //HT_INFO("Adding Write interest");
   }
   else if (!initiallyEmpty && m_send_queue.empty()) {
     remove_poll_interest(Reactor::WRITE_READY);
-    //LOG_INFO("Removing Write interest");
+    //HT_INFO("Removing Write interest");
   }
 
   return Error::OK;
@@ -195,12 +195,12 @@ int IOHandlerDatagram::flush_send_queue() {
 			      (const sockaddr*)&sendRec.first, sizeof(struct sockaddr_in));
 
     if (nsent == (ssize_t)-1) {
-      LOG_VA_WARN("FileUtils::sendto(%d, len=%d, addr=%s:%d) failed : %s", m_sd, sendRec.second->dataLen,
+      HT_WARNF("FileUtils::sendto(%d, len=%d, addr=%s:%d) failed : %s", m_sd, sendRec.second->dataLen,
 		  inet_ntoa(sendRec.first.sin_addr), ntohs(sendRec.first.sin_port), strerror(errno));
       return Error::COMM_SEND_ERROR;
     }
     else if (nsent < (ssize_t)sendRec.second->dataLen) {
-      LOG_VA_WARN("Only sent %d bytes", nsent);
+      HT_WARNF("Only sent %d bytes", nsent);
       if (nsent == 0)
 	break;
       sendRec.second->dataLen -= nsent;
@@ -208,7 +208,7 @@ int IOHandlerDatagram::flush_send_queue() {
       break;
     }
 
-    //LOG_VA_INFO("Successfully sent message to %s:%d", inet_ntoa(sendRec.first.sin_addr), ntohs(sendRec.first.sin_port));
+    //HT_INFOF("Successfully sent message to %s:%d", inet_ntoa(sendRec.first.sin_addr), ntohs(sendRec.first.sin_port));
 
     // buffer written successfully, now remove from queue (which will destroy buffer)
     m_send_queue.pop_front();

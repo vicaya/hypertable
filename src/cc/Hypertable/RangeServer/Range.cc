@@ -124,7 +124,7 @@ void Range::load_cell_stores(Metadata *metadata) {
     csvec.clear();
 
     if ((ag = m_access_group_map[ag_name]) == 0) {
-      LOG_VA_ERROR("Unrecognized access group name '%s' found in METADATA for table '%s'", ag_name.c_str(), m_identifier.name);
+      HT_ERRORF("Unrecognized access group name '%s' found in METADATA for table '%s'", ag_name.c_str(), m_identifier.name);
       continue;
     }
 
@@ -147,22 +147,22 @@ void Range::load_cell_stores(Metadata *metadata) {
 
     for (size_t i=0; i<csvec.size(); i++) {
 
-      LOG_VA_INFO("drj Loading CellStore %s", csvec[i].c_str());
+      HT_INFOF("drj Loading CellStore %s", csvec[i].c_str());
 
       cellStorePtr = new CellStoreV0(Global::dfs);
 
       if (!extract_csid_from_path(csvec[i], &csid)) {
-	LOG_VA_ERROR("Unable to extract cell store ID from path '%s'", csvec[i].c_str());
+	HT_ERRORF("Unable to extract cell store ID from path '%s'", csvec[i].c_str());
 	continue;
       }
       if ((error = cellStorePtr->open(csvec[i].c_str(), m_start_row.c_str(), m_end_row.c_str())) != Error::OK) {
 	// this should throw an exception
-	LOG_VA_ERROR("Problem opening cell store '%s', skipping...", csvec[i].c_str());
+	HT_ERRORF("Problem opening cell store '%s', skipping...", csvec[i].c_str());
 	continue;
       }
       if ((error = cellStorePtr->load_index()) != Error::OK) {
 	// this should throw an exception
-	LOG_VA_ERROR("Problem loading index of cell store '%s', skipping...", csvec[i].c_str());
+	HT_ERRORF("Problem loading index of cell store '%s', skipping...", csvec[i].c_str());
 	continue;
       }
 
@@ -196,12 +196,12 @@ int Range::add(const ByteString32T *key, const ByteString32T *value, uint64_t re
   Key keyComps;
 
   if (!keyComps.load(key)) {
-    LOG_ERROR("Problem parsing key!!");
+    HT_ERROR("Problem parsing key!!");
     return 0;
   }
 
   if (keyComps.column_family_code >= m_column_family_vector.size()) {
-    LOG_VA_ERROR("Bad column family (%d)", keyComps.column_family_code);
+    HT_ERRORF("Bad column family (%d)", keyComps.column_family_code);
     return 0;
   }
 
@@ -278,18 +278,18 @@ const char *Range::get_split_row() {
 	sort(split_rows.begin(), split_rows.end());
 	m_split_row = split_rows[split_rows.size()/2];
 	if (m_split_row <= m_start_row || m_split_row >= m_end_row) {
-	  LOG_VA_FATAL("Unable to determine split row for range %s[%s..%s]", m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
+	  HT_FATALF("Unable to determine split row for range %s[%s..%s]", m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
 	  DUMP_CORE;
 	}
       }
       else {
-	LOG_VA_FATAL("Unable to determine split row for range %s[%s..%s]", m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
+	HT_FATALF("Unable to determine split row for range %s[%s..%s]", m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
 	DUMP_CORE;
       }
     } 
   }
   else {
-    LOG_VA_FATAL("Unable to determine split row for range %s[%s..%s]", m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
+    HT_FATALF("Unable to determine split row for range %s[%s..%s]", m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
     DUMP_CORE;
   }
   return m_split_row.c_str();
@@ -327,7 +327,7 @@ void Range::do_split() {
 
   // This should never happen...
   if (m_is_root) {
-    LOG_ERROR("Split scheduled for root METADATA range");
+    HT_ERROR("Split scheduled for root METADATA range");
     m_maintenance_in_progress = false;
     return;
   }
@@ -346,7 +346,7 @@ void Range::do_split() {
 
   // Create split log dir
   if ((error = Global::logDfs->mkdirs(splitLogDir)) != Error::OK) {
-    LOG_VA_ERROR("Problem creating DFS log directory '%s'", splitLogDir.c_str());
+    HT_ERRORF("Problem creating DFS log directory '%s'", splitLogDir.c_str());
     exit(1);
   }
 
@@ -355,7 +355,7 @@ void Range::do_split() {
    */
   if ((error = Global::metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK) {
     // TODO: throw exception
-    LOG_ERROR("Problem creating mutator on METADATA table");
+    HT_ERROR("Problem creating mutator on METADATA table");
     return;
   }
 
@@ -374,7 +374,7 @@ void Range::do_split() {
   }
   catch (Hypertable::Exception &e) {
     // TODO: propagate exception
-    LOG_VA_ERROR("Problem updating METADATA with split info (row key = %s) - %s", metadata_key_str.c_str(), e.what());
+    HT_ERRORF("Problem updating METADATA with split info (row key = %s) - %s", metadata_key_str.c_str(), e.what());
     return;
   }
 
@@ -456,7 +456,7 @@ void Range::do_split() {
   }
   catch (Hypertable::Exception &e) {
     // TODO: propagate exception
-    LOG_VA_ERROR("Problem updating METADATA with new range information (row key = %s) - %s", metadata_key_str.c_str(), e.what());
+    HT_ERRORF("Problem updating METADATA with new range information (row key = %s) - %s", metadata_key_str.c_str(), e.what());
     DUMP_CORE;
   }
 
@@ -484,7 +484,7 @@ void Range::do_split() {
     }
     catch (Hypertable::Exception &e) {
       // TODO: propagate exception
-      LOG_VA_ERROR("Problem updating ROOT METADATA range (new=%s, existing=%s) - %s", m_split_row.c_str(), m_end_row.c_str(), e.what());
+      HT_ERRORF("Problem updating ROOT METADATA range (new=%s, existing=%s) - %s", m_split_row.c_str(), m_end_row.c_str(), e.what());
       DUMP_CORE;
     }
   }
@@ -520,7 +520,7 @@ void Range::do_split() {
 
   // close split log
   if ((error = m_split_log_ptr->close(Global::log->get_timestamp())) != Error::OK) {
-    LOG_VA_ERROR("Problem closing split log '%s' - %s", m_split_log_ptr->get_log_dir().c_str(), Error::get_text(error));
+    HT_ERRORF("Problem closing split log '%s' - %s", m_split_log_ptr->get_log_dir().c_str(), Error::get_text(error));
   }
   m_split_log_ptr = 0;
 
@@ -536,7 +536,7 @@ void Range::do_split() {
     // update the latest generation, this should probably be protected
     m_identifier.generation = m_schema->get_generation();
 
-    LOG_VA_INFO("Reporting newly split off range %s[%s..%s] to Master", m_identifier.name, range.startRow, range.endRow);
+    HT_INFOF("Reporting newly split off range %s[%s..%s] to Master", m_identifier.name, range.startRow, range.endRow);
     cout << flush;
     if (m_disk_limit < Global::rangeMaxBytes) {
       m_disk_limit *= 2;
@@ -544,12 +544,12 @@ void Range::do_split() {
 	m_disk_limit = Global::rangeMaxBytes;
     }
     if ((error = m_master_client_ptr->report_split(m_identifier, range, m_disk_limit)) != Error::OK) {
-      LOG_VA_ERROR("Problem reporting split (table=%s, start_row=%s, end_row=%s) to master.",
+      HT_ERRORF("Problem reporting split (table=%s, start_row=%s, end_row=%s) to master.",
 		   m_identifier.name, range.startRow, range.endRow);
     }
   }
 
-  LOG_VA_INFO("Split Complete.  New Range end_row=%s", m_start_row.c_str());
+  HT_INFOF("Split Complete.  New Range end_row=%s", m_start_row.c_str());
 
   m_maintenance_in_progress = false;
 }
@@ -656,7 +656,7 @@ int Range::replay_split_log(string &log_dir, uint64_t real_timestamp) {
   while (commit_log_reader_ptr->next_block(&base, &len, &header)) {
 
     if (strcmp(m_identifier.name, header.get_tablename())) {
-      LOG_VA_ERROR("Table name mis-match in split log replay \"%s\" != \"%s\"", m_identifier.name, header.get_tablename());
+      HT_ERRORF("Table name mis-match in split log replay \"%s\" != \"%s\"", m_identifier.name, header.get_tablename());
       return Error::RANGESERVER_CORRUPT_COMMIT_LOG;
     }
 
@@ -676,7 +676,7 @@ int Range::replay_split_log(string &log_dir, uint64_t real_timestamp) {
 
   {
     boost::mutex::scoped_lock lock(m_mutex);
-    LOG_VA_INFO("Replayed %d updates (%d blocks) from split log '%s' into %s[%s..%s]",
+    HT_INFOF("Replayed %d updates (%d blocks) from split log '%s' into %s[%s..%s]",
 		count, nblocks, log_dir.c_str(), m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
   }
 

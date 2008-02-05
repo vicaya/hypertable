@@ -133,7 +133,7 @@ bool TableScanner::next(CellT &cell) {
       if (m_fetch_outstanding) {
 	if (!m_sync_handler.wait_for_reply(m_event_ptr)) {
 	  m_fetch_outstanding = false;
-	  LOG_VA_ERROR("RangeServer 'fetch scanblock' error : %s", Protocol::string_format_message(m_event_ptr).c_str());
+	  HT_ERRORF("RangeServer 'fetch scanblock' error : %s", Protocol::string_format_message(m_event_ptr).c_str());
 	  throw Exception((int)Protocol::response_code(m_event_ptr));
 	}
 	else {
@@ -206,7 +206,7 @@ bool TableScanner::next(CellT &cell) {
     return true;
   }
 
-  LOG_ERROR("No end marker found at end of table.");
+  HT_ERROR("No end marker found at end of table.");
 
   m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
   m_eos = true;
@@ -232,7 +232,7 @@ void TableScanner::find_range_and_start_scan(const char *row_key) {
   range.startRow = (const char *)dbuf.addNoCheck(m_range_info.start_row.c_str(), m_range_info.start_row.length()+1);
   range.endRow   = (const char *)dbuf.addNoCheck(m_range_info.end_row.c_str(), m_range_info.end_row.length()+1);
   if (!LocationCache::location_to_addr(m_range_info.location.c_str(), m_cur_addr)) {
-    LOG_VA_ERROR("Invalid location found in METADATA entry range [%s..%s] - %s",
+    HT_ERRORF("Invalid location found in METADATA entry range [%s..%s] - %s",
 		 range.startRow, range.endRow, m_range_info.location.c_str());
     throw Exception(Error::INVALID_METADATA);
   }
@@ -248,7 +248,7 @@ void TableScanner::find_range_and_start_scan(const char *row_key) {
     range.startRow = (const char *)dbuf.addNoCheck(m_range_info.start_row.c_str(), m_range_info.start_row.length()+1);
     range.endRow   = (const char *)dbuf.addNoCheck(m_range_info.end_row.c_str(), m_range_info.end_row.length()+1);
     if (!LocationCache::location_to_addr(m_range_info.location.c_str(), m_cur_addr)) {
-      LOG_VA_ERROR("Invalid location found in METADATA entry range [%s..%s] - %s",
+      HT_ERRORF("Invalid location found in METADATA entry range [%s..%s] - %s",
 		   range.startRow, range.endRow, m_range_info.location.c_str());
       throw Exception(Error::INVALID_METADATA);
     }

@@ -108,7 +108,7 @@ namespace Hypertable {
 	    m_handler_map.erase(iter);
 	  else {
 	    std::string err_str;
-	    LOG_VA_ERROR("Unable to find mapping for alias (%s) in HandlerMap", InetAddr::string_format(err_str, alias));
+	    HT_ERRORF("Unable to find mapping for alias (%s) in HandlerMap", InetAddr::string_format(err_str, alias));
 	  }
 	}
       }

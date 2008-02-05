@@ -47,7 +47,7 @@ void RequestHandlerFlush::run() {
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with FLUSH message");
+  HT_ERROR("Encoding problem with FLUSH message");
   cb.error(Error::PROTOCOL_ERROR, "Encoding problem with FLUSH message");
   return;
 }

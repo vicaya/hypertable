@@ -65,7 +65,7 @@ namespace {
 	m_cond.notify_one();
       }
       else {
-	LOG_VA_INFO("%s", eventPtr->toString().c_str());
+	HT_INFOF("%s", eventPtr->toString().c_str());
 	//exit(1);
       }
     }
@@ -110,7 +110,7 @@ void CommTestDatagramThreadFunction::operator()() {
   InetAddr::initialize(&localAddr, INADDR_ANY, m_port);
 
   if ((error = m_comm->create_datagram_receive_socket(&localAddr, dispatchHandlerPtr)) != Error::OK) {
-    LOG_VA_ERROR("Problem opening datagram receive port %d - %s", m_port, Error::get_text(error));
+    HT_ERRORF("Problem opening datagram receive port %d - %s", m_port, Error::get_text(error));
     return;
   }
 
@@ -121,7 +121,7 @@ void CommTestDatagramThreadFunction::operator()() {
 	CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::encoded_length_string(line)) );
 	cbufPtr->append_string(line);
 	if ((error = m_comm->send_datagram(m_addr, localAddr, cbufPtr)) != Error::OK) {
-	  LOG_VA_ERROR("Problem sending datagram - %s", Error::get_text(error));
+	  HT_ERRORF("Problem sending datagram - %s", Error::get_text(error));
 	  return;
 	}
 	outstanding++;
@@ -145,7 +145,7 @@ void CommTestDatagramThreadFunction::operator()() {
     infile.close();
   }
   else {
-    LOG_VA_ERROR("Unable to open file '%s' : %s", m_input_file, strerror(errno));
+    HT_ERRORF("Unable to open file '%s' : %s", m_input_file, strerror(errno));
     return;
   }
 

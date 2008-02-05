@@ -47,7 +47,7 @@ void RequestHandlerLength::run() {
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with LENGTH message");
+  HT_ERROR("Encoding problem with LENGTH message");
   cb.error(Error::PROTOCOL_ERROR, "Encoding problem with LENGTH message");
   return;
 }

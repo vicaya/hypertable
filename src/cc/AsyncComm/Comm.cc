@@ -60,7 +60,7 @@ atomic_t Comm::ms_next_request_id = ATOMIC_INIT(1);
  */
 Comm::Comm() {
   if (ReactorFactory::ms_reactors.size() == 0) {
-    LOG_ERROR("ReactorFactory::initialize must be called before creating AsyncComm::comm object");
+    HT_ERROR("ReactorFactory::initialize must be called before creating AsyncComm::comm object");
     DUMP_CORE;
   }
   ReactorFactory::get_reactor(m_timer_reactor_ptr);
@@ -115,13 +115,13 @@ int Comm::connect(struct sockaddr_in &addr, struct sockaddr_in &local_addr, Disp
     return Error::COMM_ALREADY_CONNECTED;
 
   if ((sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-    LOG_VA_ERROR("socket() failure: %s", strerror(errno));
+    HT_ERRORF("socket() failure: %s", strerror(errno));
     exit(1);
   }
 
   // bind socket to local address
   if ((bind(sd, (const sockaddr *)&local_addr, sizeof(sockaddr_in))) < 0) {
-    LOG_VA_ERROR("bind() failure: %s", strerror(errno));
+    HT_ERRORF("bind() failure: %s", strerror(errno));
     exit(1);
   }
 
@@ -166,7 +166,7 @@ int Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chf_ptr,
     cerr << "setsockopt(TCP_NODELAY) failure: " << strerror(errno) << endl;
 #elif defined(__APPLE__)
   if (setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one)) < 0)
-    LOG_VA_WARN("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
+    HT_WARNF("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
 #endif
 
   if (setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0)
@@ -201,7 +201,7 @@ int Comm::send_request(struct sockaddr_in &addr, time_t timeout, CommBufPtr &cbu
   cbuf_ptr->reset_data_pointers();
 
   if (!m_handler_map_ptr->lookup_data_handler(addr, dataHandlerPtr)) {
-    LOG_VA_ERROR("No connection for %s:%d", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+    HT_ERRORF("No connection for %s:%d", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
     return Error::COMM_NOT_CONNECTED;
   }
 
@@ -228,7 +228,7 @@ int Comm::send_response(struct sockaddr_in &addr, CommBufPtr &cbuf_ptr) {
   cbuf_ptr->reset_data_pointers();
 
   if (!m_handler_map_ptr->lookup_data_handler(addr, dataHandlerPtr)) {
-    LOG_VA_ERROR("No connection for %s:%d", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+    HT_ERRORF("No connection for %s:%d", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
     return Error::COMM_NOT_CONNECTED;
   }
 
@@ -252,7 +252,7 @@ int Comm::create_datagram_receive_socket(struct sockaddr_in *addr, DispatchHandl
   int sd;
 
   if ((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-    LOG_VA_ERROR("socket() failure: %s", strerror(errno));
+    HT_ERRORF("socket() failure: %s", strerror(errno));
     exit(1);
   }
 
@@ -261,19 +261,19 @@ int Comm::create_datagram_receive_socket(struct sockaddr_in *addr, DispatchHandl
 
   int bufsize = 4*32768;
   if (setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize, sizeof(bufsize)) < 0) {
-    LOG_VA_ERROR("setsockopt(SO_SNDBUF) failed - %s", strerror(errno));
+    HT_ERRORF("setsockopt(SO_SNDBUF) failed - %s", strerror(errno));
   }
   if (setsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char *)&bufsize, sizeof(bufsize)) < 0) {
-    LOG_VA_ERROR("setsockopt(SO_RCVBUF) failed - %s", strerror(errno));
+    HT_ERRORF("setsockopt(SO_RCVBUF) failed - %s", strerror(errno));
   }
 
   if (setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0) {
-    LOG_VA_WARN("setsockopt(SO_REUSEADDR) failure: %s", strerror(errno));
+    HT_WARNF("setsockopt(SO_REUSEADDR) failure: %s", strerror(errno));
   }
 
   // bind socket
   if ((bind(sd, (const sockaddr *)addr, sizeof(sockaddr_in))) < 0) {
-    LOG_VA_ERROR("bind() failure: %s", strerror(errno));
+    HT_ERRORF("bind() failure: %s", strerror(errno));
     exit(1);
   }
 
@@ -301,7 +301,7 @@ int Comm::send_datagram(struct sockaddr_in &addr, struct sockaddr_in &send_addr,
 
   if (!m_handler_map_ptr->lookup_datagram_handler(send_addr, datagramHandlerPtr)) {
     std::string str;
-    LOG_VA_ERROR("Datagram send address %s not registered", InetAddr::string_format(str, send_addr));
+    HT_ERRORF("Datagram send address %s not registered", InetAddr::string_format(str, send_addr));
     DUMP_CORE;
   }
 
@@ -349,7 +349,7 @@ int Comm::get_local_address(struct sockaddr_in addr, struct sockaddr_in *local_a
   IOHandlerDataPtr dataHandlerPtr;
 
   if (!m_handler_map_ptr->lookup_data_handler(addr, dataHandlerPtr)) {
-    LOG_VA_ERROR("No connection for %s:%d", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+    HT_ERRORF("No connection for %s:%d", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
     return Error::COMM_NOT_CONNECTED;
   }
 
@@ -395,7 +395,7 @@ int Comm::connect_socket(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &d
     cerr << "setsockopt(TCP_NODELAY) failure: " << strerror(errno) << endl;
 #elif defined(__APPLE__)
   if (setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one)) < 0)
-    LOG_VA_WARN("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
+    HT_WARNF("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
 #endif
 
   handlerPtr = dataHandler = new IOHandlerData(sd, addr, default_handler_ptr);
@@ -411,7 +411,7 @@ int Comm::connect_socket(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &d
       dataHandler->add_poll_interest(Reactor::READ_READY|Reactor::WRITE_READY);
       return Error::OK;
     }
-    LOG_VA_ERROR("connect() failure : %s", strerror(errno));
+    HT_ERRORF("connect() failure : %s", strerror(errno));
     exit(1);
   }
 

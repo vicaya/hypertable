@@ -38,7 +38,7 @@ MetadataRoot::MetadataRoot(SchemaPtr &schema_ptr) : m_next(0) {
     m_agnames.push_back( (*ag_iter)->name );
 
   if ((error = Global::hyperspace_ptr->open("/hypertable/root", OPEN_FLAG_READ, nullCallbackPtr, &m_handle)) != Error::OK) {
-    LOG_VA_ERROR("Problem creating Hyperspace root file '/hypertable/root' - %s", Error::get_text(error));
+    HT_ERRORF("Problem creating Hyperspace root file '/hypertable/root' - %s", Error::get_text(error));
     DUMP_CORE;
   }
 
@@ -52,7 +52,7 @@ MetadataRoot::MetadataRoot(SchemaPtr &schema_ptr) : m_next(0) {
 MetadataRoot::~MetadataRoot() {
   int error;
   if ((error = Global::hyperspace_ptr->close(m_handle)) != Error::OK) {
-    LOG_VA_WARN("Problem closing Hyperspace handle - %s", Error::get_text(error));
+    HT_WARNF("Problem closing Hyperspace handle - %s", Error::get_text(error));
   }
 }
 
@@ -75,7 +75,7 @@ bool MetadataRoot::get_next_files(std::string &ag_name, std::string &files) {
     if ((error = Global::hyperspace_ptr->attr_get(m_handle, attrname.c_str(), value)) != Error::OK) {
       if (error == Error::HYPERSPACE_ATTR_NOT_FOUND)
 	continue;
-      LOG_VA_ERROR("Problem getting attribute '%s' on Hyperspace file '/hypertable/root' - %s", 
+      HT_ERRORF("Problem getting attribute '%s' on Hyperspace file '/hypertable/root' - %s", 
 		   attrname.c_str(), Error::get_text(error));
       Global::hyperspace_ptr->set_silent_flag(false);
       return false;

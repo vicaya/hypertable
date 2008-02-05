@@ -222,30 +222,6 @@ namespace Hypertable {
   Exception(_code_, "failed expectation: " #_e_)
 #endif
 
-// @deprecated
-#ifndef HT_NO_DEPRECATED
-#define LOG_DEBUG       HT_DEBUG
-#define LOG_VA_DEBUG    HT_DEBUGF
-#define LOG_INFO        HT_INFO
-#define LOG_VA_INFO     HT_INFOF
-#define LOG_NOTICE      HT_NOTICE
-#define LOG_VA_NOTICE   HT_NOTICEF
-#define LOG_WARN        HT_WARN
-#define LOG_VA_WARN     HT_WARNF
-#define LOG_ERROR       HT_ERROR
-#define LOG_VA_ERROR    HT_ERRORF
-#define LOG_CRIT        HT_CRIT
-#define LOG_VA_CRIT     HT_CRITF
-#define LOG_ALERT       HT_ALERT
-#define LOG_VA_ALERT    HT_ALERTF
-#define LOG_EMERG       HT_EMERG
-#define LOG_VA_EMERG    HT_EMERGF
-#define LOG_FATAL       HT_FATAL
-#define LOG_VA_FATAL    HT_FATALF
-#define LOG_ENTER       HT_LOG_ENTER
-#define LOG_EXIT        HT_LOG_EXIT
-#endif // HT_NO_DEPRECATED
-
 #else // HYPERTABLE_DISABLE_LOGGING
 
 #define HT_DEBUG(msg)
@@ -269,30 +245,6 @@ namespace Hypertable {
 #define HT_EXPECT(e)
 #define HT_LOG_ENTER
 #define HT_LOG_EXIT
-
-// @deprecated
-#ifndef HT_NO_DEPRECATED
-#define LOG_DEBUG(msg)
-#define LOG_VA_DEBUG(msg, ...)
-#define LOG_INFO(msg)
-#define LOG_VA_INFO(msg, ...)
-#define LOG_NOTICE(msg)
-#define LOG_VA_NOTICE(msg, ...)
-#define LOG_WARN(msg)
-#define LOG_VA_WARN(msg, ...)
-#define LOG_ERROR(msg)
-#define LOG_VA_ERROR(msg, ...)
-#define LOG_CRIT(msg)
-#define LOG_VA_CRIT(msg, ...)
-#define LOG_ALERT(msg)
-#define LOG_VA_ALERT(msg, ...)
-#define LOG_EMERG(msg)
-#define LOG_VA_EMERG(msg, ...)
-#define LOG_FATAL(msg)
-#define LOG_VA_FATAL(msg, ...)
-#define LOG_ENTER
-#define LOG_EXIT
-#endif // HT_NO_DEPRECATED
 
 #endif // HYPERTABLE_DISABLE_LOGGING
 

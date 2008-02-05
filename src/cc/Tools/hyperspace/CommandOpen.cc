@@ -108,7 +108,7 @@ int CommandOpen::run() {
     return -1;
   }
 
-  //LOG_VA_INFO("open(%s, 0x%x, 0x%x)", fname.c_str(), flags, eventMask);
+  //HT_INFOF("open(%s, 0x%x, 0x%x)", fname.c_str(), flags, eventMask);
 
   HandleCallbackPtr callbackPtr = new FileHandleCallback(eventMask);
 

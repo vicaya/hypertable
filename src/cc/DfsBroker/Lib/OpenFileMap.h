@@ -92,7 +92,7 @@ namespace Hypertable {
 	    (*iter).second->addr.sin_port == addr.sin_port &&
 	    (*iter).second->addr.sin_addr.s_addr == addr.sin_addr.s_addr) {
 	  OpenFileMapT::iterator delIter = iter;
-	  LOG_VA_ERROR("Removing handle %d from open file map because of lost owning client connection", (*iter).first);
+	  HT_ERRORF("Removing handle %d from open file map because of lost owning client connection", (*iter).first);
 	  iter++;
 	  m_file_map.erase(delIter);
 	}

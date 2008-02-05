@@ -125,22 +125,22 @@ public:
     boost::mutex::scoped_lock lock(m_mutex);
     if (eventPtr->type == Event::CONNECTION_ESTABLISHED) {
       if (gVerbose)
-	LOG_VA_INFO("Connection Established - %s", eventPtr->toString().c_str());
+	HT_INFOF("Connection Established - %s", eventPtr->toString().c_str());
       m_connected = true;
       m_cond.notify_one();
     }
     else if (eventPtr->type == Event::DISCONNECT) {
       if (eventPtr->error != 0) {
-	LOG_VA_INFO("Disconnect : %s", Error::get_text(eventPtr->error));
+	HT_INFOF("Disconnect : %s", Error::get_text(eventPtr->error));
       }
       else {
-	LOG_INFO("Disconnect.");
+	HT_INFO("Disconnect.");
       }
       m_connected = false;
       m_cond.notify_one();
     }
     else if (eventPtr->type == Event::ERROR) {
-      LOG_VA_INFO("Error : %s", Error::get_text(eventPtr->error));
+      HT_INFOF("Error : %s", Error::get_text(eventPtr->error));
       //exit(1);
     }
     else if (eventPtr->type == Event::MESSAGE) {
@@ -212,7 +212,7 @@ public:
       m_cond.notify_one();
     }
     else {
-      LOG_VA_INFO("%s", eventPtr->toString().c_str());
+      HT_INFOF("%s", eventPtr->toString().c_str());
       //exit(1);
     }
   }
@@ -306,7 +306,7 @@ int main(int argc, char **argv) {
   ifstream myfile(inputFile);
 
   if (!myfile.is_open()) {
-    LOG_VA_ERROR("Unable to open file '%s' : %s", inputFile, strerror(errno));
+    HT_ERRORF("Unable to open file '%s' : %s", inputFile, strerror(errno));
     return 0;
   }
 
@@ -318,7 +318,7 @@ int main(int argc, char **argv) {
     InetAddr::initialize(&localAddr, INADDR_ANY, port);
     if ((error = comm->create_datagram_receive_socket(&localAddr, dhp)) != Error::OK) {
       std::string str;
-      LOG_VA_ERROR("Problem creating UDP receive socket %s - %s", InetAddr::string_format(str, localAddr), Error::get_text(error));
+      HT_ERRORF("Problem creating UDP receive socket %s - %s", InetAddr::string_format(str, localAddr), Error::get_text(error));
       exit(1);
     }
   }
@@ -328,14 +328,14 @@ int main(int argc, char **argv) {
 
     if (localAddr.sin_port == 0) {
       if ((error = comm->connect(addr, dhp)) != Error::OK) {
-	LOG_VA_ERROR("Comm::connect error - %s", Error::get_text(error));
+	HT_ERRORF("Comm::connect error - %s", Error::get_text(error));
 	exit(1);
       }
     }
     else {
       chfPtr = new HandlerFactory(dhp);
       if ((error = comm->listen(localAddr, chfPtr, dhp)) != Error::OK) {
-	LOG_VA_ERROR("Comm::listen error - %s", Error::get_text(error));
+	HT_ERRORF("Comm::listen error - %s", Error::get_text(error));
 	exit(1);
       }
     }
@@ -353,7 +353,7 @@ int main(int argc, char **argv) {
 
       if (udpMode) {
 	if ((error = comm->send_datagram(addr, localAddr, cbufPtr)) != Error::OK) {
-	  LOG_VA_ERROR("Problem sending datagram - %s", Error::get_text(error));
+	  HT_ERRORF("Problem sending datagram - %s", Error::get_text(error));
 	  return 1;
 	}
       }
@@ -361,14 +361,14 @@ int main(int argc, char **argv) {
 	while ((error = comm->send_request(addr, timeout, cbufPtr, respHandler)) != Error::OK) {
 	  if (error == Error::COMM_NOT_CONNECTED) {
 	    if (retries == 5) {
-	      LOG_ERROR("Connection timeout.");
+	      HT_ERROR("Connection timeout.");
 	      return 1;
 	    }
 	    poll(0, 0, 1000);
 	    retries++;
 	  }
 	  else {
-	    LOG_VA_ERROR("CommEngine::send_message returned '%s'", Error::get_text(error));
+	    HT_ERRORF("CommEngine::send_message returned '%s'", Error::get_text(error));
 	    return 1;
 	  }
 	}

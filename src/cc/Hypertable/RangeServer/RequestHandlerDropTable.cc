@@ -49,6 +49,6 @@ void RequestHandlerDropTable::run() {
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with DROP TABLE message");
+  HT_ERROR("Encoding problem with DROP TABLE message");
   cb.error(Error::PROTOCOL_ERROR, "Encoding problem with DROP TABLE message");
 }

@@ -69,7 +69,7 @@ int BlockCompressionCodecZlib::set_args(const Args &args) {
       }
     }
     else {
-      LOG_VA_ERROR("Unrecognized argument to Zlib codec: '%s'", (*it).c_str());
+      HT_ERRORF("Unrecognized argument to Zlib codec: '%s'", (*it).c_str());
       return Error::BLOCK_COMPRESSOR_INVALID_ARG;
     }
   }
@@ -164,13 +164,13 @@ int BlockCompressionCodecZlib::inflate(const DynamicBuffer &input, DynamicBuffer
     return error;
 
   if (header.get_zlength() != remaining) {
-    LOG_VA_ERROR("Block decompression error, header zlength = %d, actual = %d", header.get_zlength(), remaining);
+    HT_ERRORF("Block decompression error, header zlength = %d, actual = %d", header.get_zlength(), remaining);
     return Error::BLOCK_COMPRESSOR_BAD_HEADER;
   }
 
   uint32_t checksum = fletcher32(msg_ptr, remaining);
   if (checksum != header.get_checksum()) {
-    LOG_VA_ERROR("Compressed block checksum mismatch header=%d, computed=%d", header.get_checksum(), checksum);
+    HT_ERRORF("Compressed block checksum mismatch header=%d, computed=%d", header.get_checksum(), checksum);
     return Error::BLOCK_COMPRESSOR_CHECKSUM_MISMATCH;
   }
 
@@ -189,12 +189,12 @@ int BlockCompressionCodecZlib::inflate(const DynamicBuffer &input, DynamicBuffer
 
     ret = ::inflate(&m_stream_inflate, Z_NO_FLUSH);
     if (ret != Z_STREAM_END) {
-      LOG_VA_ERROR("Compressed block inflate error (return value = %d)", ret);
+      HT_ERRORF("Compressed block inflate error (return value = %d)", ret);
       goto abort;
     }
 
     if (m_stream_inflate.avail_out != 0) {
-      LOG_VA_ERROR("Compressed block inflate error, expected %d but only inflated to %d bytes", header.get_length(), header.get_length()-m_stream_inflate.avail_out);
+      HT_ERRORF("Compressed block inflate error, expected %d but only inflated to %d bytes", header.get_length(), header.get_length()-m_stream_inflate.avail_out);
       goto abort;
     }
     ::inflateReset(&m_stream_inflate);  

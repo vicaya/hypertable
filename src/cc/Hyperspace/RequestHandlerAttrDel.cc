@@ -53,6 +53,6 @@ void RequestHandlerAttrDel::run() {
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with ATTRDEL message");
+  HT_ERROR("Encoding problem with ATTRDEL message");
   cb.error(Error::PROTOCOL_ERROR, "Encoding problem with ATTRDEL message");
 }

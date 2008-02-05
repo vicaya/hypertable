@@ -46,18 +46,18 @@ void TableMutatorDispatchHandler::handle(EventPtr &event_ptr) {
     m_update_buffer->error = Protocol::response_code(event_ptr);
     if (m_update_buffer->error == Error::RANGESERVER_PARTIAL_UPDATE) {
       m_update_buffer->event_ptr = event_ptr;
-      //LOG_VA_INFO("partial update - %s", event_ptr->toString().c_str());
+      //HT_INFOF("partial update - %s", event_ptr->toString().c_str());
     }
     m_update_buffer->counterp->decrement(m_update_buffer->error);
   }
   else if (event_ptr->type == Event::ERROR) {
     m_update_buffer->error = event_ptr->error;
     m_update_buffer->counterp->decrement(event_ptr->error);
-    LOG_VA_WARN("%s", event_ptr->toString().c_str());
+    HT_WARNF("%s", event_ptr->toString().c_str());
   }
   else {
     // this should never happen
-    LOG_VA_INFO("%s", event_ptr->toString().c_str());
+    HT_INFOF("%s", event_ptr->toString().c_str());
     m_update_buffer->counterp->decrement(event_ptr->error);
   }
 

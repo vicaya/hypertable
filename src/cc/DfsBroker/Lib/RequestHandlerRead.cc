@@ -52,7 +52,7 @@ void RequestHandlerRead::run() {
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with READ message");
+  HT_ERROR("Encoding problem with READ message");
   cb.error(Error::PROTOCOL_ERROR, "Encoding problem with READ message");
   return;
 }

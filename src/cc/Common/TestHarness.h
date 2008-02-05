@@ -65,7 +65,7 @@ namespace Hypertable {
       sprintf(m_output_file, "%s%d", name, getpid());
 
       if ((m_fd = open(m_output_file, O_CREAT | O_TRUNC | O_WRONLY, 0644)) < 0) {
-	LOG_VA_ERROR("open(%s) failed - %s", m_output_file, strerror(errno));
+	HT_ERRORF("open(%s) failed - %s", m_output_file, strerror(errno));
 	exit(1);
       }
 
@@ -104,7 +104,7 @@ namespace Hypertable {
 
     void clear_output() {
       if (!m_appender->reopen()) {
-	LOG_VA_ERROR("Problem re-opening logging output file %s", m_output_file);
+	HT_ERRORF("Problem re-opening logging output file %s", m_output_file);
 	display_error_and_exit();
       }
     }

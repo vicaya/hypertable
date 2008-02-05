@@ -64,6 +64,6 @@ void RequestHandlerLoadRange::run() {
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with LoadRange message");
+  HT_ERROR("Encoding problem with LoadRange message");
   cb.error(Error::PROTOCOL_ERROR, "Encoding problem with LoadRange message");
 }

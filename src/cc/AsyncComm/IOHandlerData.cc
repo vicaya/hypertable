@@ -66,7 +66,7 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
 	nread = FileUtils::read(m_sd, ptr, m_message_header_remaining);
 	if (nread == (size_t)-1) {
 	  if (errno != ECONNREFUSED) {
-	    LOG_VA_ERROR("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_header_remaining, strerror(errno));
+	    HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_header_remaining, strerror(errno));
 	  }
 	  int error = (errno == ECONNREFUSED) ? Error::COMM_CONNECT_ERROR : Error::OK;
 	  deliver_event( new Event(Event::DISCONNECT, m_id, m_addr, error ) );
@@ -94,7 +94,7 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
       if (m_got_header) {
 	nread = FileUtils::read(m_sd, m_message_ptr, m_message_remaining);
 	if (nread < 0) {
-	  LOG_VA_ERROR("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_header_remaining, strerror(errno));
+	  HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_header_remaining, strerror(errno));
 	  deliver_event( new Event(Event::DISCONNECT, m_id, m_addr, Error::OK) );
 	  return true;
 	}
@@ -114,7 +114,7 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
 	      (((Header::HeaderT *)m_message)->flags & Header::FLAGS_BIT_REQUEST) == 0 &&
 	      (dh = m_reactor_ptr->remove_request(id)) == 0) {
 	    if ((((Header::HeaderT *)m_message)->flags & Header::FLAGS_BIT_IGNORE_RESPONSE) == 0) {
-	      LOG_VA_WARN("Received response for non-pending event (id=%d,version=%d,totalLen=%d)",
+	      HT_WARNF("Received response for non-pending event (id=%d,version=%d,totalLen=%d)",
 			  id, ((Header::HeaderT *)m_message)->version, ((Header::HeaderT *)m_message)->totalLen);
 	    }
 	    delete [] m_message;
@@ -129,13 +129,13 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
   }
 
   if (event->events & EPOLLERR) {
-    LOG_VA_WARN("Received EPOLLERR on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+    HT_WARNF("Received EPOLLERR on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
     deliver_event( new Event(Event::DISCONNECT, m_id, m_addr, Error::OK) );
     return true;
   }
 
   if (event->events & EPOLLHUP) {
-    LOG_VA_WARN("Received EPOLLHUP on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+    HT_WARNF("Received EPOLLHUP on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
     deliver_event( new Event(Event::DISCONNECT, m_id, m_addr, Error::OK) );
     return true;
   }
@@ -178,7 +178,7 @@ bool IOHandlerData::handle_event(struct kevent *event) {
 	if (m_message_header_remaining < available) {
 	  nread = FileUtils::read(m_sd, ptr, m_message_header_remaining);
 	  if (nread < 0) {
-	    LOG_VA_ERROR("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_header_remaining, strerror(errno));
+	    HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_header_remaining, strerror(errno));
 	    deliver_event( new Event(Event::DISCONNECT, m_id, m_addr, Error::OK) );
 	    return true;
 	  }
@@ -194,7 +194,7 @@ bool IOHandlerData::handle_event(struct kevent *event) {
 	else {
 	  nread = FileUtils::read(m_sd, ptr, available);
 	  if (nread < 0) {
-	    LOG_VA_ERROR("FileUtils::read(%d, len=%d) failure : %s", m_sd, available, strerror(errno));
+	    HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, available, strerror(errno));
 	    deliver_event( new Event(Event::DISCONNECT, m_id, m_addr, Error::OK) );
 	    return true;
 	  }
@@ -207,7 +207,7 @@ bool IOHandlerData::handle_event(struct kevent *event) {
 	if (m_message_remaining <= available) {
 	  nread = FileUtils::read(m_sd, m_message_ptr, m_message_remaining);
 	  if (nread < 0) {
-	    LOG_VA_ERROR("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_remaining, strerror(errno));
+	    HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_remaining, strerror(errno));
 	    deliver_event( new Event(Event::DISCONNECT, m_id, m_addr, Error::OK) );
 	    return true;
 	  }
@@ -220,7 +220,7 @@ bool IOHandlerData::handle_event(struct kevent *event) {
 	      (((Header::HeaderT *)m_message)->flags & Header::FLAGS_BIT_REQUEST) == 0 &&
 	      (dh = m_reactor_ptr->remove_request(id)) == 0) {
 	    if ((((Header::HeaderT *)m_message)->flags & Header::FLAGS_BIT_IGNORE_RESPONSE) == 0) {
-	      LOG_VA_WARN("Received response for non-pending event (id=%d)", id);
+	      HT_WARNF("Received response for non-pending event (id=%d)", id);
 	    }
 	    delete [] m_message;
 	  }
@@ -231,7 +231,7 @@ bool IOHandlerData::handle_event(struct kevent *event) {
 	else {
 	  nread = FileUtils::read(m_sd, m_message_ptr, available);
 	  if (nread < 0) {
-	    LOG_VA_ERROR("FileUtils::read(%d, len=%d) failure : %s", m_sd, available, strerror(errno));
+	    HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, available, strerror(errno));
 	    deliver_event( new Event(Event::DISCONNECT, m_id, m_addr, Error::OK) );
 	    return true;
 	  }
@@ -258,14 +258,14 @@ bool IOHandlerData::handle_write_readiness() {
 
     int bufsize = 4*32768;
     if (setsockopt(m_sd, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize, sizeof(bufsize)) < 0) {
-      LOG_VA_ERROR("setsockopt(SO_SNDBUF) failed - %s", strerror(errno));
+      HT_ERRORF("setsockopt(SO_SNDBUF) failed - %s", strerror(errno));
     }
     if (setsockopt(m_sd, SOL_SOCKET, SO_RCVBUF, (char *)&bufsize, sizeof(bufsize)) < 0) {
-      LOG_VA_ERROR("setsockopt(SO_RCVBUF) failed - %s", strerror(errno));
+      HT_ERRORF("setsockopt(SO_RCVBUF) failed - %s", strerror(errno));
     }
 
     if (getsockname(m_sd, (struct sockaddr *)&m_local_addr, &nameLen) < 0) {
-      LOG_VA_ERROR("getsockname(%d) failed - %s", m_sd, strerror(errno));
+      HT_ERRORF("getsockname(%d) failed - %s", m_sd, strerror(errno));
       exit(1);
     }
     //clog << "Connection established." << endl;
@@ -290,7 +290,7 @@ int IOHandlerData::send_message(CommBufPtr &cbufPtr, time_t timeout, DispatchHan
   bool initiallyEmpty = m_send_queue.empty() ? true : false;
   Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
 
-  LOG_ENTER;
+  HT_LOG_ENTER;
   
   // If request, Add message ID to request cache
   if (mheader->id != 0 && dispatchHandler != 0 && mheader->flags & Header::FLAGS_BIT_REQUEST) {
@@ -307,11 +307,11 @@ int IOHandlerData::send_message(CommBufPtr &cbufPtr, time_t timeout, DispatchHan
 
   if (initiallyEmpty && !m_send_queue.empty()) {
     add_poll_interest(Reactor::WRITE_READY);
-    //LOG_INFO("Adding Write interest");
+    //HT_INFO("Adding Write interest");
   }
   else if (!initiallyEmpty && m_send_queue.empty()) {
     remove_poll_interest(Reactor::WRITE_READY);
-    //LOG_INFO("Removing Write interest");
+    //HT_INFO("Removing Write interest");
   }
 
   return Error::OK;
@@ -348,7 +348,7 @@ int IOHandlerData::flush_send_queue() {
 
     nwritten = FileUtils::writev(m_sd, vec, count);
     if (nwritten == (ssize_t)-1) {
-      LOG_VA_WARN("FileUtils::writev(%d, len=%d) failed : %s", m_sd, towrite, strerror(errno));
+      HT_WARNF("FileUtils::writev(%d, len=%d) failed : %s", m_sd, towrite, strerror(errno));
       return Error::COMM_BROKEN_CONNECTION;
     }
     else if (nwritten < towrite) {

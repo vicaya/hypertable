@@ -47,7 +47,7 @@ int RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifierT &ta
   int error = send_message(addr, cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("RangeServer 'load range' error : %s", Protocol::string_format_message(eventPtr).c_str());
+      HT_ERRORF("RangeServer 'load range' error : %s", Protocol::string_format_message(eventPtr).c_str());
       error = (int)Protocol::response_code(eventPtr);
     }
   }
@@ -68,7 +68,7 @@ int RangeServerClient::update(struct sockaddr_in &addr, TableIdentifierT &table,
   int error = send_message(addr, cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("RangeServer 'update' error : %s", Protocol::string_format_message(eventPtr).c_str());
+      HT_ERRORF("RangeServer 'update' error : %s", Protocol::string_format_message(eventPtr).c_str());
       error = (int)Protocol::response_code(eventPtr);
     }
   }
@@ -90,7 +90,7 @@ int RangeServerClient::create_scanner(struct sockaddr_in &addr, TableIdentifierT
   int error = send_message(addr, cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("RangeServer 'create scanner' error : %s", Protocol::string_format_message(eventPtr).c_str());
+      HT_ERRORF("RangeServer 'create scanner' error : %s", Protocol::string_format_message(eventPtr).c_str());
       error = (int)Protocol::response_code(eventPtr);
     }
     else
@@ -113,7 +113,7 @@ int RangeServerClient::destroy_scanner(struct sockaddr_in &addr, int scanner_id)
   int error = send_message(addr, cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("RangeServer 'fetch scanblock' error : %s", Protocol::string_format_message(eventPtr).c_str());
+      HT_ERRORF("RangeServer 'fetch scanblock' error : %s", Protocol::string_format_message(eventPtr).c_str());
       error = (int)Protocol::response_code(eventPtr);
     }
   }
@@ -134,7 +134,7 @@ int RangeServerClient::fetch_scanblock(struct sockaddr_in &addr, int scanner_id,
   int error = send_message(addr, cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("RangeServer 'fetch scanblock' error : %s", Protocol::string_format_message(eventPtr).c_str());
+      HT_ERRORF("RangeServer 'fetch scanblock' error : %s", Protocol::string_format_message(eventPtr).c_str());
       error = (int)Protocol::response_code(eventPtr);
     }
     else
@@ -157,7 +157,7 @@ int RangeServerClient::drop_table(struct sockaddr_in &addr, std::string table_na
   int error = send_message(addr, cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("RangeServer 'drop table' error : %s", Protocol::string_format_message(eventPtr).c_str());
+      HT_ERRORF("RangeServer 'drop table' error : %s", Protocol::string_format_message(eventPtr).c_str());
       error = (int)Protocol::response_code(eventPtr);
     }
   }
@@ -172,7 +172,7 @@ int RangeServerClient::status(struct sockaddr_in &addr) {
   int error = send_message(addr, cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("RangeServer 'status' error : %s", Protocol::string_format_message(eventPtr).c_str());
+      HT_ERRORF("RangeServer 'status' error : %s", Protocol::string_format_message(eventPtr).c_str());
       error = (int)Protocol::response_code(eventPtr);
     }
   }
@@ -186,7 +186,7 @@ int RangeServerClient::shutdown(struct sockaddr_in &addr) {
   int error = send_message(addr, cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("RangeServer 'shutdown' error : %s", Protocol::string_format_message(eventPtr).c_str());
+      HT_ERRORF("RangeServer 'shutdown' error : %s", Protocol::string_format_message(eventPtr).c_str());
       error = (int)Protocol::response_code(eventPtr);
     }
   }
@@ -200,7 +200,7 @@ int RangeServerClient::dump_stats(struct sockaddr_in &addr) {
   int error = send_message(addr, cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("RangeServer 'status' error : %s", Protocol::string_format_message(eventPtr).c_str());
+      HT_ERRORF("RangeServer 'status' error : %s", Protocol::string_format_message(eventPtr).c_str());
       error = (int)Protocol::response_code(eventPtr);
     }
   }
@@ -215,7 +215,7 @@ int RangeServerClient::send_message(struct sockaddr_in &addr, CommBufPtr &cbufPt
   int error;
 
   if ((error = m_comm->send_request(addr, m_timeout, cbufPtr, handler)) != Error::OK) {
-    LOG_VA_WARN("Comm::send_request to %s:%d failed - %s",
+    HT_WARNF("Comm::send_request to %s:%d failed - %s",
 		inet_ntoa(addr.sin_addr), ntohs(addr.sin_port), Error::get_text(error));
   }
   return error;

@@ -119,7 +119,7 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
 	break;
       case RangeServerProtocol::COMMAND_SHUTDOWN:
 	m_shutdown = true;
-	LOG_INFO("Executing SHUTDOWN command.");
+	HT_INFO("Executing SHUTDOWN command.");
 	{
 	  ResponseCallback cb(m_comm, eventPtr);
 	  cb.response_ok();
@@ -142,13 +142,13 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
     catch (ProtocolException &e) {
       ResponseCallback cb(m_comm, eventPtr);
       std::string errMsg = e.what();
-      LOG_VA_ERROR("Protocol error '%s'", e.what());
+      HT_ERRORF("Protocol error '%s'", e.what());
       cb.error(Error::PROTOCOL_ERROR, errMsg);
     }
   }
   else if (eventPtr->type == Event::CONNECTION_ESTABLISHED) {
 
-    LOG_VA_INFO("%s", eventPtr->toString().c_str());
+    HT_INFOF("%s", eventPtr->toString().c_str());
 
     /**
      * If this is the connection to the Master, then we need to register ourselves
@@ -158,7 +158,7 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
       m_app_queue_ptr->add( new EventHandlerMasterConnection(m_master_client_ptr, m_range_server_ptr->get_location(), eventPtr) );
   }
   else {
-    LOG_VA_INFO("%s", eventPtr->toString().c_str());
+    HT_INFOF("%s", eventPtr->toString().c_str());
   }
 
 }

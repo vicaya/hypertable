@@ -92,14 +92,14 @@ int main(int argc, char **argv) {
   client = new DfsBroker::Client(connManagerPtr, addr, 15);
 
   if (!client->wait_for_connection(15)) {
-    LOG_ERROR("Unable to connect to DFS");
+    HT_ERROR("Unable to connect to DFS");
     return 1;
   }
 
   sprintf(buf, "/dfsTest%d", getpid());
   testDir = buf;
   if ((error = client->mkdirs(testDir)) != Error::OK) {
-    LOG_VA_ERROR("Problem making DFS directory '%s' - %s", testDir.c_str(), Error::get_text(error));
+    HT_ERRORF("Problem making DFS directory '%s' - %s", testDir.c_str(), Error::get_text(error));
     exit(1);
   }
   outfileA = testDir + "/output.a";
@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
     vector<string> listing;
     
     if ((error = client->readdir(testDir, listing)) != Error::OK) {
-      LOG_VA_ERROR("Problem listing DFS test directory '%s' - %s", testDir.c_str(), Error::get_text(error));
+      HT_ERRORF("Problem listing DFS test directory '%s' - %s", testDir.c_str(), Error::get_text(error));
       return 1;
     }
 
@@ -141,7 +141,7 @@ int main(int argc, char **argv) {
     return 1;
 
   if ((error = client->rmdir(testDir)) != Error::OK) {
-    LOG_VA_ERROR("Problem removing DFS test directory '%s' - %s", testDir.c_str(), Error::get_text(error));
+    HT_ERRORF("Problem removing DFS test directory '%s' - %s", testDir.c_str(), Error::get_text(error));
     return 1;
   }
 

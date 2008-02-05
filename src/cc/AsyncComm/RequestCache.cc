@@ -31,7 +31,7 @@ using namespace Hypertable;
 void RequestCache::insert(uint32_t id, IOHandler *handler, DispatchHandler *dh, boost::xtime &expire) {
   CacheNodeT *node = new CacheNodeT;
 
-  LOG_VA_DEBUG("Adding id %d", id);
+  HT_DEBUGF("Adding id %d", id);
 
   node->id = id;
   node->handler = handler;
@@ -55,12 +55,12 @@ void RequestCache::insert(uint32_t id, IOHandler *handler, DispatchHandler *dh, 
 
 DispatchHandler *RequestCache::remove(uint32_t id) {
 
-  LOG_VA_DEBUG("Removing id %d", id);
+  HT_DEBUGF("Removing id %d", id);
 
   IdHandlerMapT::iterator iter = m_id_map.find(id);
 
   if (iter == m_id_map.end()) {
-    LOG_VA_DEBUG("ID %d not found in request cache", id);
+    HT_DEBUGF("ID %d not found in request cache", id);
     return 0;
   }
 
@@ -127,7 +127,7 @@ DispatchHandler *RequestCache::get_next_timeout(boost::xtime &now, IOHandler *&h
 void RequestCache::purge_requests(IOHandler *handler) {
   for (CacheNodeT *node = m_tail; node != 0; node = node->next) {
     if (node->handler == handler) {
-      LOG_VA_DEBUG("Purging request id %d", node->id);
+      HT_DEBUGF("Purging request id %d", node->id);
       node->handler = 0;  // mark for deletion
     }
   }

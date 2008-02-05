@@ -44,18 +44,18 @@ namespace Hypertable {
     uint64_t handle;
 
     if ((error = hyperspace_ptr->open(table_file.c_str(), OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
-      LOG_VA_ERROR("Unable to open Hyperspace file '%s' (%s)", table_file.c_str(), Error::get_text(error));
+      HT_ERRORF("Unable to open Hyperspace file '%s' (%s)", table_file.c_str(), Error::get_text(error));
       return error;
     }
 
     if ((error = hyperspace_ptr->attr_get(handle, "schema", valueBuf)) != Error::OK) {
-      LOG_VA_ERROR("Problem getting 'schema' attribute for '%s' - %s", m_table.name, Error::get_text(error));
+      HT_ERRORF("Problem getting 'schema' attribute for '%s' - %s", m_table.name, Error::get_text(error));
       return error;
     }
 
     Schema *schema = Schema::new_instance((const char *)valueBuf.buf, valueBuf.fill(), true);
     if (!schema->is_valid()) {
-      LOG_VA_ERROR("Schema Parse Error: %s", schema->get_error_string());
+      HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
       delete schema;
       return Error::RANGESERVER_SCHEMA_PARSE_ERROR;
     }
@@ -65,12 +65,12 @@ namespace Hypertable {
 
     valueBuf.clear();
     if ((error = hyperspace_ptr->attr_get(handle, "table_id", valueBuf)) != Error::OK) {
-      LOG_VA_ERROR("Problem getting attribute 'table_id' from '%s' - %s", m_table.name, Error::get_text(error));
+      HT_ERRORF("Problem getting attribute 'table_id' from '%s' - %s", m_table.name, Error::get_text(error));
       return error;
     }
 
     if (valueBuf.fill() != sizeof(int32_t)) {
-      LOG_VA_ERROR("%s/table_id contains a bad value", table_file.c_str());
+      HT_ERRORF("%s/table_id contains a bad value", table_file.c_str());
       return Error::INVALID_METADATA;
     }
 

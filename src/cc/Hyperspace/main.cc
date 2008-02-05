@@ -162,7 +162,7 @@ int main(int argc, char **argv) {
   ConnectionHandlerFactoryPtr chfPtr( new HandlerFactory(comm, appQueuePtr, masterPtr) );
   if ((error = comm->listen(localAddr, chfPtr)) != Error::OK) {
     std::string str;
-    LOG_VA_ERROR("Unable to listen for connections on %s - %s", 
+    HT_ERRORF("Unable to listen for connections on %s - %s", 
 		 InetAddr::string_format(str, localAddr), Error::get_text(error));
     exit(1);
   }
@@ -171,7 +171,7 @@ int main(int argc, char **argv) {
 
   if ((error = comm->create_datagram_receive_socket(&localAddr, dhp)) != Error::OK) {
     std::string str;
-    LOG_VA_ERROR("Unable to create datagram receive socket %s - %s", 
+    HT_ERRORF("Unable to create datagram receive socket %s - %s", 
 		 InetAddr::string_format(str, localAddr), Error::get_text(error));
     exit(1);
   }

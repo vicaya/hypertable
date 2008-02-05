@@ -53,7 +53,7 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellCachePtr, ScanContextPtr &s
 
     while (m_cur_iter != m_end_iter) {
       if (!keyComps.load((*m_cur_iter).first)) {
-	LOG_ERROR("Problem parsing key!");
+	HT_ERROR("Problem parsing key!");
       }
       else if (keyComps.flag == FLAG_DELETE_ROW || m_scan_context_ptr->familyMask[keyComps.column_family_code]) {
 	m_cur_key = (*m_cur_iter).first;
@@ -87,7 +87,7 @@ void CellCacheScanner::forward() {
   m_cur_iter++;
   while (m_cur_iter != m_end_iter) {
     if (!keyComps.load((*m_cur_iter).first)) {
-      LOG_ERROR("Problem parsing key!");
+      HT_ERROR("Problem parsing key!");
     }
     else if (keyComps.flag == FLAG_DELETE_ROW || m_scan_context_ptr->familyMask[keyComps.column_family_code]) {
       m_cur_key = (*m_cur_iter).first;

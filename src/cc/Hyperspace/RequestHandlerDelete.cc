@@ -50,6 +50,6 @@ void RequestHandlerDelete::run() {
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with DELETE message");
+  HT_ERROR("Encoding problem with DELETE message");
   cb.error(Error::PROTOCOL_ERROR, "Encoding problem with DELETE message");
 }

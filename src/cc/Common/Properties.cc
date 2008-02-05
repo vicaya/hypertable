@@ -167,7 +167,7 @@ bool Properties::get_bool(const char *str, bool defaultValue) {
   else if (!strcasecmp((*iter).second.c_str(), "false") || !strcmp((*iter).second.c_str(), "0"))
     return false;
 
-  LOG_VA_ERROR("Invalid value for property '%s' (%s), using default value", str, (*iter).second.c_str());
+  HT_ERRORF("Invalid value for property '%s' (%s), using default value", str, (*iter).second.c_str());
 
   return defaultValue;
 }

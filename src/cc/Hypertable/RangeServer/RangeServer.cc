@@ -75,12 +75,12 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
   m_timer_interval                = props_ptr->get_int("Hypertable.RangeServer.Timer.Interval", 60);
 
   if (m_timer_interval >= 1000) {
-    LOG_ERROR("Hypertable.RangeServer.Timer.Interval property too large, exiting ...");
+    HT_ERROR("Hypertable.RangeServer.Timer.Interval property too large, exiting ...");
     exit(1);
   }
 
   if (m_scanner_ttl < (time_t)10) {
-    LOG_VA_WARN("Value %u for Hypertable.RangeServer.Scanner.ttl is too small, setting to 10", (unsigned int)m_scanner_ttl);
+    HT_WARNF("Value %u for Hypertable.RangeServer.Scanner.ttl is too small, setting to 10", (unsigned int)m_scanner_ttl);
     m_scanner_ttl = (time_t)10;
   }
 
@@ -115,7 +115,7 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
   }
 
   if (!dfsClient->wait_for_connection(30)) {
-    LOG_ERROR("Unable to connect to DFS Broker, exiting...");
+    HT_ERROR("Unable to connect to DFS Broker, exiting...");
     exit(1);
   }
 
@@ -132,7 +132,7 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
       InetAddr::initialize(&addr, logHost, logPort);
       dfsClient = new DfsBroker::Client(m_conn_manager_ptr, addr, 600);
       if (!dfsClient->wait_for_connection(30)) {
-	LOG_ERROR("Unable to connect to DFS Broker, exiting...");
+	HT_ERROR("Unable to connect to DFS Broker, exiting...");
 	exit(1);
       }
       Global::logDfs = dfsClient;
@@ -173,7 +173,7 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
     struct sockaddr_in addr;
     InetAddr::initialize(&addr, INADDR_ANY, port);  // Listen on any interface
     if ((error = comm->listen(addr, chfPtr)) != Error::OK) {
-      LOG_VA_ERROR("Listen error address=%s:%d - %s", inet_ntoa(addr.sin_addr), port, Error::get_text(error));
+      HT_ERRORF("Listen error address=%s:%d - %s", inet_ntoa(addr.sin_addr), port, Error::get_text(error));
       exit(1);
     }
   }
@@ -220,12 +220,12 @@ int RangeServer::directory_initialize(PropertiesPtr &props_ptr) {
    * Create /hypertable/servers directory
    */
   if ((error = m_hyperspace_ptr->exists("/hypertable/servers", &exists)) != Error::OK) {
-    LOG_VA_ERROR("Problem checking existence of '/hypertable/servers' Hyperspace directory - %s", Error::get_text(error));
+    HT_ERRORF("Problem checking existence of '/hypertable/servers' Hyperspace directory - %s", Error::get_text(error));
     return error;
   }
 
   if (!exists) {
-    LOG_ERROR("Hyperspace directory '/hypertable/servers' does not exist, try running 'Hypertable.master --initialize' first");
+    HT_ERROR("Hyperspace directory '/hypertable/servers' does not exist, try running 'Hypertable.master --initialize' first");
     return error;
   }
 
@@ -239,12 +239,12 @@ int RangeServer::directory_initialize(PropertiesPtr &props_ptr) {
   HandleCallbackPtr nullCallbackPtr;
 
   if ((error = m_hyperspace_ptr->open(topDir.c_str(), oflags, nullCallbackPtr, &m_existence_file_handle)) != Error::OK) {
-    LOG_VA_ERROR("Problem creating Hyperspace server existance file '%s' - %s", topDir.c_str(), Error::get_text(error));
+    HT_ERRORF("Problem creating Hyperspace server existance file '%s' - %s", topDir.c_str(), Error::get_text(error));
     exit(1);
   }
 
   if ((error = m_hyperspace_ptr->get_sequencer(m_existence_file_handle, &m_existence_file_sequencer)) != Error::OK) {
-    LOG_VA_ERROR("Problem obtaining lock sequencer for file '%s' - %s", topDir.c_str(), Error::get_text(error));
+    HT_ERRORF("Problem obtaining lock sequencer for file '%s' - %s", topDir.c_str(), Error::get_text(error));
     exit(1);
   }
 
@@ -254,7 +254,7 @@ int RangeServer::directory_initialize(PropertiesPtr &props_ptr) {
    * Create /hypertable/servers/X.X.X.X_port_nnnnn/commit/primary directory
    */
   if ((error = Global::logDfs->mkdirs(Global::logDir)) != Error::OK) {
-    LOG_VA_ERROR("Problem creating local log directory '%s'", Global::logDir.c_str());
+    HT_ERRORF("Problem creating local log directory '%s'", Global::logDir.c_str());
     return error;
   }
 
@@ -311,11 +311,11 @@ void RangeServer::compact(ResponseCallback *cb, TableIdentifierT *table, RangeT 
     Global::maintenance_queue->add( new MaintenanceTaskCompaction(range_ptr, major) );
 
   if ((error = cb->response_ok()) != Error::OK) {
-    LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
+    HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
   }
 
   if (Global::verbose) {
-    LOG_VA_INFO("Compaction (%s) scheduled for table '%s' end row '%s'",
+    HT_INFOF("Compaction (%s) scheduled for table '%s' end row '%s'",
 		(major ? "major" : "minor"), table->name, range->endRow);
   }
 
@@ -323,9 +323,9 @@ void RangeServer::compact(ResponseCallback *cb, TableIdentifierT *table, RangeT 
 
  abort:
   if (error != Error::OK) {
-    LOG_VA_ERROR("%s '%s'", Error::get_text(error), errMsg.c_str());
+    HT_ERRORF("%s '%s'", Error::get_text(error), errMsg.c_str());
     if ((error = cb->error(error, errMsg)) != Error::OK) {
-      LOG_VA_ERROR("Problem sending error response - %s", Error::get_text(error));
+      HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
     }
   }
 }
@@ -400,7 +400,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
     id = 0;
 
   if (Global::verbose) {
-    LOG_VA_INFO("Successfully created scanner (id=%d) on table '%s'", id, table->name);
+    HT_INFOF("Successfully created scanner (id=%d) on table '%s'", id, table->name);
   }
 
   /**
@@ -412,7 +412,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
     ext.buf = kvBuffer;
     ext.len = sizeof(int32_t) + *kvLenp;
     if ((error = cb->response(moreFlag, id, ext)) != Error::OK) {
-      LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
+      HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
     }
   }
 
@@ -420,16 +420,16 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
 
  abort:
   if (error != Error::OK) {
-    LOG_VA_ERROR("%s '%s'", Error::get_text(error), errMsg.c_str());
+    HT_ERRORF("%s '%s'", Error::get_text(error), errMsg.c_str());
     if ((error = cb->error(error, errMsg)) != Error::OK) {
-      LOG_VA_ERROR("Problem sending error response - %s", Error::get_text(error));
+      HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
     }
   }
 }
 
 
 void RangeServer::destroy_scanner(ResponseCallback *cb, uint32_t scannerId) {
-  LOG_VA_INFO("destroying scanner id=%u", scannerId);
+  HT_INFOF("destroying scanner id=%u", scannerId);
   Global::scannerMap.remove(scannerId);
   cb->response_ok();
 }
@@ -475,21 +475,21 @@ void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t s
     ext.buf = kvBuffer;
     ext.len = sizeof(int32_t) + *kvLenp;
     if ((error = cb->response(moreFlag, scannerId, ext)) != Error::OK) {
-      LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
+      HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
     }
   }
 
   if (Global::verbose) {
-    LOG_VA_INFO("Successfully fetched %d bytes of scan data", bytesFetched);
+    HT_INFOF("Successfully fetched %d bytes of scan data", bytesFetched);
   }
 
   error = Error::OK;
 
  abort:
   if (error != Error::OK) {
-    LOG_VA_ERROR("%s '%s'", Error::get_text(error), errMsg.c_str());
+    HT_ERRORF("%s '%s'", Error::get_text(error), errMsg.c_str());
     if ((error = cb->error(error, errMsg)) != Error::OK) {
-      LOG_VA_ERROR("Problem sending error response - %s", Error::get_text(error));
+      HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
     }
   }
 }
@@ -611,7 +611,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
 	}
 	else {
 	  // should never happen
-	  LOG_ERROR("Scanner returned column not requested.");
+	  HT_ERROR("Scanner returned column not requested.");
 	}
       }
 
@@ -628,15 +628,15 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
       HandleCallbackPtr nullCallbackPtr;
       uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE;
 
-      LOG_INFO("Loading root METADATA range");
+      HT_INFO("Loading root METADATA range");
 
       if ((error = m_hyperspace_ptr->open("/hypertable/root", oflags, nullCallbackPtr, &handle)) != Error::OK) {
-	LOG_VA_ERROR("Problem creating Hyperspace root file '/hypertable/root' - %s", Error::get_text(error));
+	HT_ERRORF("Problem creating Hyperspace root file '/hypertable/root' - %s", Error::get_text(error));
 	DUMP_CORE;
       }
 
       if ((error = m_hyperspace_ptr->attr_set(handle, "location", m_location.c_str(), strlen(m_location.c_str()))) != Error::OK) {
-	LOG_VA_ERROR("Problem creating attribute 'location' on Hyperspace file '/hypertable/root' - %s", Error::get_text(error));
+	HT_ERRORF("Problem creating attribute 'location' on Hyperspace file '/hypertable/root' - %s", Error::get_text(error));
 	DUMP_CORE;
       }
 
@@ -683,17 +683,17 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
     tableInfoPtr->add_range(range, rangePtr);
 
     if ((error = cb->response_ok()) != Error::OK) {
-      LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
+      HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
     }
     else {
-      LOG_VA_INFO("Successfully loaded range %s[%s..%s]", table->name, range->startRow, range->endRow);
+      HT_INFOF("Successfully loaded range %s[%s..%s]", table->name, range->startRow, range->endRow);
     }
 
   }
   catch (Hypertable::Exception &e) {
-    LOG_VA_ERROR("%s '%s'", e.code(), e.what());
+    HT_ERRORF("%s '%s'", e.code(), e.what());
     if ((error = cb->error(e.code(), e.what())) != Error::OK) {
-      LOG_VA_ERROR("Problem sending error response - %s", Error::get_text(error));
+      HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
     }
   }
 }
@@ -765,9 +765,9 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     ext.buf = new uint8_t [ buffer.len ];
     memcpy(ext.buf, buffer.buf, buffer.len);
     ext.len = buffer.len;
-    LOG_VA_ERROR("Unable to find table info for table '%s'", table->name);
+    HT_ERRORF("Unable to find table info for table '%s'", table->name);
     if ((error = cb->response(ext)) != Error::OK) {
-      LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
+      HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
     }
     return;
   }
@@ -821,7 +821,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 	  boost::xtime now;
 	  boost::xtime_get(&now, boost::TIME_UTC);
 	  next_timestamp = ((uint64_t)now.sec * 1000000000LL) + (uint64_t)now.nsec;
-	  //LOG_VA_INFO("drj TIMESTAMP %lld (%s)", next_timestamp, (const char *)((const ByteString32T *)modPtr)->data);
+	  //HT_INFOF("drj TIMESTAMP %lld (%s)", next_timestamp, (const char *)((const ByteString32T *)modPtr)->data);
 	}
 	temp_timestamp = ++next_timestamp;
 	if (min_ts_rec.timestamp == 0 || temp_timestamp < min_ts_rec.timestamp)
@@ -928,7 +928,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     }
 
     if (Global::verbose) {
-      LOG_VA_INFO("Added %d (%d split off) updates to '%s'", goMods.size()+splitMods.size(), splitMods.size(), table->name);
+      HT_INFOF("Added %d (%d split off) updates to '%s'", goMods.size()+splitMods.size(), splitMods.size(), table->name);
     }
   }
 
@@ -954,7 +954,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
   }
 
   if (Global::verbose) {
-    LOG_VA_INFO("Dropped %d updates (out-of-range)", stopMods.size());
+    HT_INFOF("Dropped %d updates (out-of-range)", stopMods.size());
   }
 
   error = Error::OK;
@@ -968,7 +968,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     uint64_t mt_memory = Global::memory_tracker.get_memory();
     uint64_t mt_items = Global::memory_tracker.get_items();
     uint64_t vm_estimate = mt_memory + (mt_items*120);
-    LOG_VA_INFO("drj mem=%lld items=%lld vm-est%lld", mt_memory, mt_items, vm_estimate);
+    HT_INFOF("drj mem=%lld items=%lld vm-est%lld", mt_memory, mt_items, vm_estimate);
   }
 
   // unblock scanner timestamp and decrement update counter
@@ -991,19 +991,19 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
       }
       ext.len = ptr - ext.buf;
       if ((error = cb->response(ext)) != Error::OK) {
-	LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
+	HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       }
     }
     else {
       if ((error = cb->response_ok()) != Error::OK) {
-	LOG_VA_ERROR("Problem sending OK response - %s", Error::get_text(error));
+	HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       }
     }
   }
   else {
-    LOG_VA_ERROR("%s '%s'", Error::get_text(error), errMsg.c_str());
+    HT_ERRORF("%s '%s'", Error::get_text(error), errMsg.c_str());
     if ((error = cb->error(error, errMsg)) != Error::OK) {
-      LOG_VA_ERROR("Problem sending error response - %s", Error::get_text(error));
+      HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
     }
   }
 }
@@ -1014,7 +1014,7 @@ void RangeServer::drop_table(ResponseCallback *cb, const char *table_name) {
   TableInfoPtr table_info_ptr;
   std::vector<RangePtr> range_vector;
 
-  LOG_INFO("drop_table");  
+  HT_INFO("drop_table");  
   cout << flush;
 
   /**
@@ -1037,7 +1037,7 @@ void RangeServer::dump_stats(ResponseCallback *cb) {
   boost::mutex::scoped_lock lock(m_mutex);
   std::vector<RangePtr> range_vec;
   
-  LOG_INFO("dump_stats");
+  HT_INFO("dump_stats");
 
   for (TableInfoMapT::iterator table_iter = m_table_info_map.begin(); table_iter != m_table_info_map.end(); table_iter++) {
     range_vec.clear();
@@ -1101,7 +1101,7 @@ int RangeServer::verify_schema(TableInfoPtr &tableInfoPtr, int generation, std::
   if (schemaPtr.get() == 0 || schemaPtr->get_generation() < generation) {
 
     if ((error = m_hyperspace_ptr->open(tableFile.c_str(), OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
-      LOG_VA_ERROR("Unable to open Hyperspace file '%s' (%s)", tableFile.c_str(), Error::get_text(error));
+      HT_ERRORF("Unable to open Hyperspace file '%s' (%s)", tableFile.c_str(), Error::get_text(error));
       exit(1);
     }
 
@@ -1203,7 +1203,7 @@ void RangeServer::log_cleanup() {
       std::string range_str = range_vec[rangei]->table_name() + "[" + range_vec[rangei]->start_row() + ".." + range_vec[rangei]->end_row() + "]." + priority_data_vec[i].ag->get_name();
       priority_data_vec[i].ag->set_compaction_bit();
       compaction_set.insert( rangei );
-      LOG_VA_INFO("Compacting %s because cumulative log size of %lld exceeds threshold %lld",
+      HT_INFOF("Compacting %s because cumulative log size of %lld exceeds threshold %lld",
 		  range_str.c_str(), (*map_iter).second.cumulative_size, prune_threshold);
     }
   }

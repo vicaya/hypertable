@@ -92,7 +92,7 @@ namespace {
       cbufPtr->append_bytes((uint8_t *)m_event_ptr->message, m_event_ptr->messageLen);
       int error = m_comm->send_response(m_event_ptr->addr, cbufPtr);
       if (error != Error::OK) {
-	LOG_VA_ERROR("Comm::send_response returned %s", Error::get_text(error));
+	HT_ERRORF("Comm::send_response returned %s", Error::get_text(error));
       }
     }
   private:
@@ -113,18 +113,18 @@ namespace {
   
     virtual void handle(EventPtr &eventPtr) {
       if (gVerbose && eventPtr->type == Event::CONNECTION_ESTABLISHED) {
-	LOG_INFO("Connection Established.");
+	HT_INFO("Connection Established.");
       }
       else if (gVerbose && eventPtr->type == Event::DISCONNECT) {
 	if (eventPtr->error != 0) {
-	  LOG_VA_INFO("Disconnect : %s", Error::get_text(eventPtr->error));
+	  HT_INFOF("Disconnect : %s", Error::get_text(eventPtr->error));
 	}
 	else {
-	  LOG_INFO("Disconnect.");
+	  HT_INFO("Disconnect.");
 	}
       }
       else if (eventPtr->type == Event::ERROR) {
-	LOG_VA_WARN("Error : %s", Error::get_text(eventPtr->error));
+	HT_WARNF("Error : %s", Error::get_text(eventPtr->error));
       }
       else if (eventPtr->type == Event::MESSAGE) {
 	if (m_app_queue == 0) {
@@ -135,7 +135,7 @@ namespace {
 	    poll(0, 0, gDelay);
 	  int error = m_comm->send_response(eventPtr->addr, cbufPtr);
 	  if (error != Error::OK) {
-	    LOG_VA_ERROR("Comm::send_response returned %s", Error::get_text(error));
+	    HT_ERRORF("Comm::send_response returned %s", Error::get_text(error));
 	  }
 	}
 	else
@@ -169,11 +169,11 @@ namespace {
 	  poll(0, 0, gDelay);
 	int error = m_comm->send_datagram(eventPtr->addr, eventPtr->localAddr, cbufPtr);
 	if (error != Error::OK) {
-	  LOG_VA_ERROR("Comm::send_response returned %s", Error::get_text(error));
+	  HT_ERRORF("Comm::send_response returned %s", Error::get_text(error));
 	}
       }
       else {
-	LOG_VA_ERROR("Error : %s", eventPtr->toString().c_str());
+	HT_ERRORF("Error : %s", eventPtr->toString().c_str());
       }
     }
 
@@ -267,14 +267,14 @@ int main(int argc, char **argv) {
     
     if (clientAddr.sin_port != 0) {
       if ((error = comm->connect(clientAddr, localAddr, dhp)) != Error::OK) {
-	LOG_VA_ERROR("Comm::connect error - %s", Error::get_text(error));
+	HT_ERRORF("Comm::connect error - %s", Error::get_text(error));
 	exit(1);
       }
     }
     else {
       chfPtr = new HandlerFactory(dhp);
       if ((error = comm->listen(localAddr, chfPtr, dhp)) != Error::OK) {
-	LOG_VA_ERROR("Comm::listen error - %s", Error::get_text(error));
+	HT_ERRORF("Comm::listen error - %s", Error::get_text(error));
 	exit(1);
       }
     }

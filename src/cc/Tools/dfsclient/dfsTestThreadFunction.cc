@@ -71,7 +71,7 @@ void dfsTestThreadFunction::operator()() {
   m_client->length(m_dfs_file, &dfsSize);
 
   if (origSize != dfsSize) {
-    LOG_VA_ERROR("Length mismatch: %ld != %ld", origSize, dfsSize);
+    HT_ERRORF("Length mismatch: %ld != %ld", origSize, dfsSize);
     exit(1);
   }
 

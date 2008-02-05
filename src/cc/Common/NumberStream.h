@@ -40,16 +40,16 @@ namespace Hypertable {
       struct stat statbuf;
       
       if (stat(fname, &statbuf) != 0) {
-	LOG_VA_ERROR("Problem stating file '%s' - %s", fname, strerror(errno));
+	HT_ERRORF("Problem stating file '%s' - %s", fname, strerror(errno));
 	exit(1);
       }
       if (statbuf.st_size < (off_t)sizeof(int32_t)) {
-	LOG_VA_ERROR("Number stream file '%s' is not big enough, must be at least 4 bytes long", fname);
+	HT_ERRORF("Number stream file '%s' is not big enough, must be at least 4 bytes long", fname);
 	exit(1);
       }
       
       if ((m_fp = fopen(fname, "r")) == 0) {
-	LOG_VA_ERROR("Unable to open number stream file '%s'", fname);
+	HT_ERRORF("Unable to open number stream file '%s'", fname);
 	exit(1);
       }
     }
@@ -62,7 +62,7 @@ namespace Hypertable {
       if (fread(&number, sizeof(int32_t), 1, m_fp) == 0) {
 	fseek(m_fp, 0L, SEEK_SET);
 	if (fread(&number, sizeof(int32_t), 1, m_fp) == 0) {
-	  LOG_ERROR("Problem reading integer from number stream, exiting...");
+	  HT_ERROR("Problem reading integer from number stream, exiting...");
 	  exit(1);
 	}
       }

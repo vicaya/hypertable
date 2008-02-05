@@ -66,7 +66,7 @@ void Table::initialize(std::string &name) {
     m_hyperspace_ptr->set_silent_flag(false);
     if (error == Error::HYPERSPACE_BAD_PATHNAME)
       throw Exception(Error::TABLE_DOES_NOT_EXIST);
-    LOG_VA_ERROR("Unable to open Hyperspace table file '%s' - %s", tableFile.c_str(), Error::get_text(error));
+    HT_ERRORF("Unable to open Hyperspace table file '%s' - %s", tableFile.c_str(), Error::get_text(error));
     throw Exception(error);
   }
   m_hyperspace_ptr->set_silent_flag(false);
@@ -82,7 +82,7 @@ void Table::initialize(std::string &name) {
    */
   value_buf.clear();
   if ((error = m_hyperspace_ptr->attr_get(handle, "table_id", value_buf)) != Error::OK) {
-    LOG_VA_ERROR("Problem getting attribute 'table_id' for table file '%s' - %s", tableFile.c_str(), Error::get_text(error));
+    HT_ERRORF("Problem getting attribute 'table_id' for table file '%s' - %s", tableFile.c_str(), Error::get_text(error));
     throw Exception(error);
   }
 
@@ -96,7 +96,7 @@ void Table::initialize(std::string &name) {
    */
   value_buf.clear();
   if ((error = m_hyperspace_ptr->attr_get(handle, "schema", value_buf)) != Error::OK) {
-    LOG_VA_ERROR("Problem getting attribute 'schema' for table file '%s' - %s", tableFile.c_str(), Error::get_text(error));
+    HT_ERRORF("Problem getting attribute 'schema' for table file '%s' - %s", tableFile.c_str(), Error::get_text(error));
     throw Exception(error);
   }
 
@@ -105,7 +105,7 @@ void Table::initialize(std::string &name) {
   m_schema_ptr = Schema::new_instance((const char *)value_buf.buf, strlen((const char *)value_buf.buf), true);
 
   if (!m_schema_ptr->is_valid()) {
-    LOG_VA_ERROR("Schema Parse Error: %s", m_schema_ptr->get_error_string());
+    HT_ERRORF("Schema Parse Error: %s", m_schema_ptr->get_error_string());
     throw Exception(Error::BAD_SCHEMA);
   }
 

@@ -98,7 +98,7 @@ int CommandUpdate::run() {
 
   // verify data file
   if (stat(m_args[1].first.c_str(), &statbuf) != 0) {
-    LOG_VA_ERROR("Unable to stat data file '%s' : %s", m_args[1].second.c_str(), strerror(errno));
+    HT_ERRORF("Unable to stat data file '%s' : %s", m_args[1].second.c_str(), strerror(errno));
     return false;
   }
 
@@ -158,7 +158,7 @@ int CommandUpdate::run() {
 	if (error == Error::RANGESERVER_PARTIAL_UPDATE)
 	  cout << "partial update" << endl;
 	else {
-	  LOG_VA_ERROR("update error : %s", (Protocol::string_format_message(eventPtr)).c_str());
+	  HT_ERRORF("update error : %s", (Protocol::string_format_message(eventPtr)).c_str());
 	  return error;
 	}
       }
@@ -170,7 +170,7 @@ int CommandUpdate::run() {
 
     if (send_buf_len > 0) {
       if ((error = m_range_server_ptr->update(m_addr, *table, send_buf, send_buf_len, &syncHandler)) != Error::OK) {
-	LOG_VA_ERROR("Problem sending updates - %s", Error::get_text(error));
+	HT_ERRORF("Problem sending updates - %s", Error::get_text(error));
 	return error;
       }
       outstanding = true;
@@ -185,7 +185,7 @@ int CommandUpdate::run() {
       if (error == Error::RANGESERVER_PARTIAL_UPDATE)
 	cout << "partial update" << endl;
       else {
-	LOG_VA_ERROR("update error : %s", (Protocol::string_format_message(eventPtr)).c_str());
+	HT_ERRORF("update error : %s", (Protocol::string_format_message(eventPtr)).c_str());
 	return error;
       }
     }

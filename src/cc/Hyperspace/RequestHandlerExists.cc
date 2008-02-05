@@ -51,7 +51,7 @@ void RequestHandlerExists::run() {
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with EXISTS message");
+  HT_ERROR("Encoding problem with EXISTS message");
   cb.error(Error::PROTOCOL_ERROR, "Encoding problem with EXISTS message");
 }
 

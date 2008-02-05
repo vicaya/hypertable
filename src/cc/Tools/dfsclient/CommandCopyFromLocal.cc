@@ -78,7 +78,7 @@ int CommandCopyFromLocal::run() {
   while (true) {
 
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("%s", eventPtr->toString().c_str());
+      HT_ERRORF("%s", eventPtr->toString().c_str());
       goto abort;
     }
 

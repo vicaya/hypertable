@@ -67,28 +67,28 @@ int main(int argc, char **argv) {
     return 1;
 
   if ((input.buf = (uint8_t *)FileUtils::file_to_buffer("./good-schema-1.xml", &len)) == 0) {
-    LOG_ERROR("Problem loading './good-schema-1.xml'");
+    HT_ERROR("Problem loading './good-schema-1.xml'");
     return 1;
   }
   input.ptr = input.buf + len;
 
   if ((error = compressor->deflate(input, output1, header)) != Error::OK) {
-    LOG_VA_ERROR("Problem deflating - %s", Error::get_text(error));
+    HT_ERRORF("Problem deflating - %s", Error::get_text(error));
     return 1;
   }
 
   if ((error = compressor->inflate(output1, output2, header)) != Error::OK) {
-    LOG_VA_ERROR("Problem inflating - %s", Error::get_text(error));
+    HT_ERRORF("Problem inflating - %s", Error::get_text(error));
     return 1;
   }
 
   if (input.fill() != output2.fill()) {
-    LOG_VA_ERROR("Input length (%ld) does not match output length (%ld) after lzo codec", input.fill(), output2.fill());
+    HT_ERRORF("Input length (%ld) does not match output length (%ld) after lzo codec", input.fill(), output2.fill());
     return 1;
   }
 
   if (memcmp(input.buf, output2.buf, input.fill())) {
-    LOG_ERROR("Input does not match output after lzo codec");
+    HT_ERROR("Input does not match output after lzo codec");
     return 1;
   }
 
@@ -98,22 +98,22 @@ int main(int argc, char **argv) {
   input.ptr = input.buf + 3;
 
   if ((error = compressor->deflate(input, output1, header)) != Error::OK) {
-    LOG_VA_ERROR("Problem deflating - %s", Error::get_text(error));
+    HT_ERRORF("Problem deflating - %s", Error::get_text(error));
     return 1;
   }
 
   if ((error = compressor->inflate(output1, output2, header)) != Error::OK) {
-    LOG_VA_ERROR("Problem inflating - %s", Error::get_text(error));
+    HT_ERRORF("Problem inflating - %s", Error::get_text(error));
     return 1;
   }
 
   if (input.fill() != output2.fill()) {
-    LOG_VA_ERROR("Input length (%ld) does not match output length (%ld) after lzo codec", input.fill(), output2.fill());
+    HT_ERRORF("Input length (%ld) does not match output length (%ld) after lzo codec", input.fill(), output2.fill());
     return 1;
   }
 
   if (memcmp(input.buf, output2.buf, input.fill())) {
-    LOG_ERROR("Input does not match output after lzo codec");
+    HT_ERROR("Input does not match output after lzo codec");
     return 1;
   }
 

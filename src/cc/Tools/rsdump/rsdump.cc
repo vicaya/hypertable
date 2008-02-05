@@ -122,7 +122,7 @@ int main(int argc, char **argv) {
 
     port = props_ptr->get_int(portProperty, 0);
     if (port == 0 || port < 1024 || port >= 65536) {
-      LOG_VA_ERROR("%s not specified or out of range : %d", portProperty, port);
+      HT_ERRORF("%s not specified or out of range : %d", portProperty, port);
       return 1;
     }
 

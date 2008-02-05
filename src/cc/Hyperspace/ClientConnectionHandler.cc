@@ -54,13 +54,13 @@ void ClientConnectionHandler::handle(Hypertable::EventPtr &eventPtr) {
   int error;
 
   if (m_verbose) {
-    LOG_VA_INFO("%s", eventPtr->toString().c_str());
+    HT_INFOF("%s", eventPtr->toString().c_str());
   }
 
   if (eventPtr->type == Hypertable::Event::MESSAGE) {
 
     if (Protocol::response_code(eventPtr.get()) != Error::OK) {
-      LOG_VA_ERROR("Connection handshake error: %s", Protocol::string_format_message(eventPtr.get()).c_str());
+      HT_ERRORF("Connection handshake error: %s", Protocol::string_format_message(eventPtr.get()).c_str());
       m_comm->close_socket(eventPtr->addr);
       m_state = DISCONNECTED;
       return;
@@ -73,7 +73,7 @@ void ClientConnectionHandler::handle(Hypertable::EventPtr &eventPtr) {
   else if (eventPtr->type == Hypertable::Event::DISCONNECT) {
 
     if (m_verbose) {
-      LOG_VA_WARN("%s", eventPtr->toString().c_str());
+      HT_WARNF("%s", eventPtr->toString().c_str());
     }
 
     m_session->state_transition(Session::STATE_JEOPARDY);
@@ -89,13 +89,13 @@ void ClientConnectionHandler::handle(Hypertable::EventPtr &eventPtr) {
     CommBufPtr commBufPtr( Hyperspace::Protocol::create_handshake_request(m_session_id) );
 
     if ((error = m_comm->send_request(eventPtr->addr, m_timeout, commBufPtr, this)) != Error::OK) {
-      LOG_VA_ERROR("Problem sending handshake request - %s", Error::get_text(error));
+      HT_ERRORF("Problem sending handshake request - %s", Error::get_text(error));
       m_comm->close_socket(eventPtr->addr);
       m_state = DISCONNECTED;
     }
   }
   else {
-    LOG_VA_INFO("%s", eventPtr->toString().c_str());
+    HT_INFOF("%s", eventPtr->toString().c_str());
     m_comm->close_socket(eventPtr->addr);
     m_state = DISCONNECTED;
   }

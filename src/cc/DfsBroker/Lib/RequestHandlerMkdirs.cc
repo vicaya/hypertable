@@ -47,7 +47,7 @@ void RequestHandlerMkdirs::run() {
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with MKDIRS message");
+  HT_ERROR("Encoding problem with MKDIRS message");
   cb.error(Error::PROTOCOL_ERROR, "Encoding problem with MKDIRS message");
   return;
 }

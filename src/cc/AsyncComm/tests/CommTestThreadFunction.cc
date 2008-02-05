@@ -115,14 +115,14 @@ void CommTestThreadFunction::operator()() {
 	while ((error = m_comm->send_request(m_addr, 30, cbufPtr, respHandler)) != Error::OK) {
 	  if (error == Error::COMM_NOT_CONNECTED) {
 	    if (retries == 5) {
-	      LOG_ERROR("Connection timeout.");
+	      HT_ERROR("Connection timeout.");
 	      return;
 	    }
 	    poll(0, 0, 1000);
 	    retries++;
 	  }
 	  else {
-	    LOG_VA_ERROR("CommEngine::send_message returned '%s'", Error::get_text(error));
+	    HT_ERRORF("CommEngine::send_message returned '%s'", Error::get_text(error));
 	    return;
 	  }
 	}
@@ -147,7 +147,7 @@ void CommTestThreadFunction::operator()() {
     infile.close();
   }
   else {
-    LOG_VA_ERROR("Unable to open file '%s' : %s", m_input_file, strerror(errno));
+    HT_ERRORF("Unable to open file '%s' : %s", m_input_file, strerror(errno));
     return;
   }
 

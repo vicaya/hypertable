@@ -88,12 +88,12 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
     catch (ProtocolException &e) {
       ResponseCallback cb(m_comm, eventPtr);
       std::string errMsg = e.what();
-      LOG_VA_ERROR("Protocol error '%s'", e.what());
+      HT_ERRORF("Protocol error '%s'", e.what());
       cb.error(Error::PROTOCOL_ERROR, errMsg);
     }
   }
   else {
-    LOG_VA_INFO("%s", eventPtr->toString().c_str());
+    HT_INFOF("%s", eventPtr->toString().c_str());
   }
 
 }

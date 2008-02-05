@@ -36,7 +36,7 @@ TimerHandler::TimerHandler(Comm *comm, RangeServer *range_server) : m_comm(comm)
   int error; 
 
   if ((error = m_comm->set_timer(range_server->get_timer_interval(), this)) != Error::OK) {
-    LOG_VA_ERROR("Problem setting timer - %s", Error::get_text(error));
+    HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
     exit(1);
   }
   
@@ -55,15 +55,15 @@ void TimerHandler::handle(Hypertable::EventPtr &event_ptr) {
     if (event_ptr->type == Hypertable::Event::TIMER) {
       m_range_server->do_maintenance();
       if ((error = m_comm->set_timer(m_range_server->get_timer_interval(), this)) != Error::OK) {
-	LOG_VA_ERROR("Problem setting timer - %s", Error::get_text(error));
+	HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
 	exit(1);
       }
     }
     else {
-      LOG_VA_ERROR("Unexpected event - %s", event_ptr->toString().c_str());
+      HT_ERRORF("Unexpected event - %s", event_ptr->toString().c_str());
     }
   }
   catch (Hypertable::Exception &e) {
-    LOG_VA_ERROR("%s '%s'", e.code(), e.what());
+    HT_ERRORF("%s '%s'", e.code(), e.what());
   }
 }

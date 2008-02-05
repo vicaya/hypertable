@@ -98,10 +98,10 @@ namespace {
       if (event_ptr->type == Event::CONNECTION_ESTABLISHED)
 	m_connected = true;
       else if (event_ptr->type == Event::ERROR) {
-	LOG_VA_ERROR("%s", event_ptr->toString().c_str());
+	HT_ERRORF("%s", event_ptr->toString().c_str());
       }
       else if (event_ptr->type == Event::MESSAGE) {
-	LOG_VA_ERROR("%s", event_ptr->toString().c_str());	
+	HT_ERRORF("%s", event_ptr->toString().c_str());	
       }
       m_cond.notify_one();
     }
@@ -169,19 +169,19 @@ int main(int argc, char **argv) {
     struct sockaddr_in addr;
 
     if ((port = (uint16_t)props_ptr->get_int("DfsBroker.port", 0)) == 0) {
-      LOG_VA_ERROR("DfsBroker.port property not found in config file '%s'", config_file.c_str());
+      HT_ERRORF("DfsBroker.port property not found in config file '%s'", config_file.c_str());
       return 1;
     }
 
     if ((host = props_ptr->get("DfsBroker.host", (const char *)0)) == 0) {
-      LOG_VA_ERROR("DfsBroker.host property not found in config file '%s'", config_file.c_str());
+      HT_ERRORF("DfsBroker.host property not found in config file '%s'", config_file.c_str());
       return 1;
     }
 
     InetAddr::initialize(&addr, host, port);
 
     if ((error = comm->connect(addr, handler_ptr)) != Error::OK) {
-      LOG_VA_ERROR("Problem connecting to DfsBroker - %s", Error::get_text(error));
+      HT_ERRORF("Problem connecting to DfsBroker - %s", Error::get_text(error));
       return 1;
     }
 
@@ -219,7 +219,7 @@ int main(int argc, char **argv) {
 	}
       }
       if (i == commands.size()) {
-	LOG_VA_ERROR("Unrecognized command : %s", commandStr.c_str());
+	HT_ERRORF("Unrecognized command : %s", commandStr.c_str());
 	return 1;
       }
       str = strtok(0, ";");      

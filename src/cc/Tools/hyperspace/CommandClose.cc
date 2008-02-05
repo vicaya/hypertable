@@ -55,7 +55,7 @@ int CommandClose::run() {
     return -1;
 
   if ((error = m_session->close(handle)) != Error::OK) {
-    LOG_VA_ERROR("Error executing CLOSE request - %s", Error::get_text(error));
+    HT_ERRORF("Error executing CLOSE request - %s", Error::get_text(error));
   }
 
   return error;

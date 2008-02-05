@@ -51,16 +51,16 @@ namespace Hypertable {
        */
       if (stat(shakespeareFile.c_str(), &statbuf) != 0) {
 	if (stat(shakespeareFileGz.c_str(), &statbuf) != 0) {
-	  LOG_VA_ERROR("Unable to stat file 'shakespeare.txt.gz' : %s", strerror(errno));
+	  HT_ERRORF("Unable to stat file 'shakespeare.txt.gz' : %s", strerror(errno));
 	  return false;
 	}
 	systemCommand = "zcat " + shakespeareFileGz + " > " + shakespeareFile;
 	if (system(systemCommand.c_str())) {
-	  LOG_VA_ERROR("Unable to decompress file '%s'", shakespeareFileGz.c_str());
+	  HT_ERRORF("Unable to decompress file '%s'", shakespeareFileGz.c_str());
 	  return false;
 	}
 	if (stat(shakespeareFile.c_str(), &statbuf) != 0) {
-	  LOG_VA_ERROR("Unable to stat file '%s' : %s", shakespeareFile.c_str(), strerror(errno));
+	  HT_ERRORF("Unable to stat file '%s' : %s", shakespeareFile.c_str(), strerror(errno));
 	  return false;
 	}
       }
@@ -82,16 +82,16 @@ namespace Hypertable {
        */
       if (stat(wordsFile.c_str(), &statbuf) != 0) {
 	if (stat(wordsFileGz.c_str(), &statbuf) != 0) {
-	  LOG_VA_ERROR("Unable to stat file '%s' : %s", wordsFileGz.c_str(), strerror(errno));
+	  HT_ERRORF("Unable to stat file '%s' : %s", wordsFileGz.c_str(), strerror(errno));
 	  return false;
 	}
 	systemCommand = "zcat " + wordsFileGz + " > " + wordsFile;
 	if (system(systemCommand.c_str())) {
-	  LOG_VA_ERROR("Unable to decompress file '%s'", wordsFileGz.c_str());
+	  HT_ERRORF("Unable to decompress file '%s'", wordsFileGz.c_str());
 	  return false;
 	}
 	if (stat(wordsFile.c_str(), &statbuf) != 0) {
-	  LOG_VA_ERROR("Unable to stat file '%s' : %s", wordsFile.c_str(), strerror(errno));
+	  HT_ERRORF("Unable to stat file '%s' : %s", wordsFile.c_str(), strerror(errno));
 	  return false;
 	}
       }
@@ -112,16 +112,16 @@ namespace Hypertable {
        */
       if (stat(urlsFile.c_str(), &statbuf) != 0) {
 	if (stat(urlsFileGz.c_str(), &statbuf) != 0) {
-	  LOG_VA_ERROR("Unable to stat file 'urls.txt.gz' : %s", strerror(errno));
+	  HT_ERRORF("Unable to stat file 'urls.txt.gz' : %s", strerror(errno));
 	  return false;
 	}
 	systemCommand = "zcat " + urlsFileGz + " > " + urlsFile;
 	if (system(systemCommand.c_str())) {
-	  LOG_VA_ERROR("Unable to decompress file '%s'", urlsFileGz.c_str());
+	  HT_ERRORF("Unable to decompress file '%s'", urlsFileGz.c_str());
 	  return false;
 	}
 	if (stat(urlsFile.c_str(), &statbuf) != 0) {
-	  LOG_VA_ERROR("Unable to stat file '%s' : %s", urlsFile.c_str(), strerror(errno));
+	  HT_ERRORF("Unable to stat file '%s' : %s", urlsFile.c_str(), strerror(errno));
 	  return false;
 	}
       }

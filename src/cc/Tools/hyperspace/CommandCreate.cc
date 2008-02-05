@@ -111,7 +111,7 @@ int CommandCreate::run() {
     return -1;
   }
 
-  //LOG_VA_INFO("create(%s, 0x%x, 0x%x)", fname.c_str(), flags, eventMask);
+  //HT_INFOF("create(%s, 0x%x, 0x%x)", fname.c_str(), flags, eventMask);
 
   HandleCallbackPtr callbackPtr = new FileHandleCallback(eventMask);
 

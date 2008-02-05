@@ -56,7 +56,7 @@ void RequestHandlerAppend::run() {
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with APPEND message");
+  HT_ERROR("Encoding problem with APPEND message");
   cb.error(Error::PROTOCOL_ERROR, "Encoding problem with APPEND message");
   return;
 }

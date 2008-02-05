@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
     if (logBroker != 0) {
       char *portStr = strchr(logBroker, ':');
       if (portStr == 0) {
-	LOG_ERROR("Invalid address format for --log-broker, must be <host>:<port>");
+	HT_ERROR("Invalid address format for --log-broker, must be <host>:<port>");
 	exit(1);
       }
       *portStr++ = 0;
@@ -141,7 +141,7 @@ int main(int argc, char **argv) {
      */
     Global::hyperspace_ptr = new Hyperspace::Session(comm_ptr.get(), props_ptr, new HyperspaceSessionHandler());
     if (!Global::hyperspace_ptr->wait_for_connection(30)) {
-      LOG_ERROR("Unable to connect to hyperspace, exiting...");
+      HT_ERROR("Unable to connect to hyperspace, exiting...");
       exit(1);
     }
 
@@ -171,7 +171,7 @@ int main(int argc, char **argv) {
 
     ReactorFactory::destroy();
 
-    LOG_ERROR("Exiting RangeServer.");
+    HT_ERROR("Exiting RangeServer.");
 
   }
   exit(1);

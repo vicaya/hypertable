@@ -57,7 +57,7 @@ void ReactorRunner::operator()() {
 
   while ((n = epoll_wait(m_reactor_ptr->pollFd, events, 256, timeout.get_millis())) >= 0 || errno == EINTR) {
     m_reactor_ptr->get_removed_handlers(removedHandlers);
-    LOG_VA_DEBUG("epoll_wait returned %d events", n);
+    HT_DEBUGF("epoll_wait returned %d events", n);
     for (int i=0; i<n; i++) {
       if (removedHandlers.count((IOHandler *)events[i].data.ptr) == 0) {
 	handler = (IOHandler *)events[i].data.ptr;
@@ -74,7 +74,7 @@ void ReactorRunner::operator()() {
       return;
   }
 
-  LOG_VA_ERROR("epoll_wait(%d) failed : %s", m_reactor_ptr->pollFd, strerror(errno));
+  HT_ERRORF("epoll_wait(%d) failed : %s", m_reactor_ptr->pollFd, strerror(errno));
 
 #elif defined(__APPLE__)
   struct kevent events[32];
@@ -97,7 +97,7 @@ void ReactorRunner::operator()() {
       return;
   }
 
-  LOG_VA_ERROR("kevent(%d) failed : %s", m_reactor_ptr->kQueue, strerror(errno));
+  HT_ERRORF("kevent(%d) failed : %s", m_reactor_ptr->kQueue, strerror(errno));
 
 #endif
 }
@@ -114,14 +114,14 @@ void ReactorRunner::cleanup_and_remove_handlers(set<IOHandler *> &handlers) {
     struct epoll_event event;
     memset(&event, 0, sizeof(struct epoll_event));
     if (epoll_ctl(m_reactor_ptr->pollFd, EPOLL_CTL_DEL, handler->get_sd(), &event) < 0) {
-      LOG_VA_ERROR("epoll_ctl(EPOLL_CTL_DEL, %d) failure, %s", handler->get_sd(), strerror(errno));
+      HT_ERRORF("epoll_ctl(EPOLL_CTL_DEL, %d) failure, %s", handler->get_sd(), strerror(errno));
     }
 #elif defined(__APPLE__)
     struct kevent devents[2];
     EV_SET(&devents[0], handler->get_sd(), EVFILT_READ, EV_DELETE, 0, 0, 0);
     EV_SET(&devents[1], handler->get_sd(), EVFILT_WRITE, EV_DELETE, 0, 0, 0);
     if (kevent(m_reactor_ptr->kQueue, devents, 2, NULL, 0, NULL) == -1 && errno != ENOENT) {
-      LOG_VA_ERROR("kevent(%d) : %s", handler->get_sd(), strerror(errno));
+      HT_ERRORF("kevent(%d) : %s", handler->get_sd(), strerror(errno));
     }
 #else
     ImplementMe;

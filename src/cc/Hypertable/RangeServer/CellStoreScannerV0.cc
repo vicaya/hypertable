@@ -107,7 +107,7 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPt
 
     if ((error = m_cell_store_v0->m_filesys->open_buffered(m_cell_store_ptr->get_filename(), buf_size, 2, &m_fd, m_start_offset, m_end_offset)) != Error::OK) {
       // TODO: should throw an exception here
-      LOG_VA_ERROR("Problem opening cell store '%s' in readahead mode - %s", 
+      HT_ERRORF("Problem opening cell store '%s' in readahead mode - %s", 
 		   m_cell_store_ptr->get_filename().c_str(), Error::get_text(error));
       m_iter = m_index.end();
     }
@@ -129,7 +129,7 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPt
       m_block.ptr = ((uint8_t *)m_cur_value) + Length(m_cur_value);
       if (m_block.ptr >= m_block.end) {
 	m_iter = m_index.end();
-	LOG_VA_ERROR("Unable to find start of range (row='%s') in %s", m_start_row.c_str(), m_cell_store_ptr->get_filename().c_str());
+	HT_ERRORF("Unable to find start of range (row='%s') in %s", m_start_row.c_str(), m_cell_store_ptr->get_filename().c_str());
 	return;
       }
       m_cur_key = (ByteString32T *)m_block.ptr;
@@ -175,7 +175,7 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPt
    */
   Key keyComps;
   if (!keyComps.load(m_cur_key)) {
-    LOG_ERROR("Problem parsing key!");
+    HT_ERROR("Problem parsing key!");
   }
   else if (keyComps.flag != FLAG_DELETE_ROW && !m_scan_context_ptr->familyMask[keyComps.column_family_code])
     forward();
@@ -188,7 +188,7 @@ CellStoreScannerV0::~CellStoreScannerV0() {
 
   if (m_fd != -1) {
     if ((error = m_cell_store_v0->m_filesys->close(m_fd, 0)) != Error::OK) {
-      LOG_VA_ERROR("Problem closing descriptor %d file=%s", m_fd, m_cell_store_ptr->get_filename().c_str());
+      HT_ERRORF("Problem closing descriptor %d file=%s", m_fd, m_cell_store_ptr->get_filename().c_str());
     }
   }
 
@@ -256,7 +256,7 @@ void CellStoreScannerV0::forward() {
      * Column family check
      */
     if (!keyComps.load(m_cur_key)) {
-      LOG_ERROR("Problem parsing key!");
+      HT_ERROR("Problem parsing key!");
       break;
     }
     if (keyComps.flag == FLAG_DELETE_ROW || m_scan_context_ptr->familyMask[keyComps.column_family_code])
@@ -326,13 +326,13 @@ bool CellStoreScannerV0::fetch_next_block() {
 	input.buf = buf;
 	input.ptr = buf + m_block.zlength;
 	if ((error = m_zcodec->inflate(input, expandBuffer, header)) != Error::OK) {
-	  LOG_VA_ERROR("Problem inflating cell store (%s) block - %s", m_cell_store_ptr->get_filename().c_str(), Error::get_text(error));
+	  HT_ERRORF("Problem inflating cell store (%s) block - %s", m_cell_store_ptr->get_filename().c_str(), Error::get_text(error));
 	  input.buf = 0;
 	  goto abort;
 	}
 	input.buf = 0;
 	if (!header.check_magic(CellStoreV0::DATA_BLOCK_MAGIC)) {
-	  LOG_ERROR("Problem inflating cell store block - magic string mismatch");
+	  HT_ERROR("Problem inflating cell store block - magic string mismatch");
 	  goto abort;
 	}
       }
@@ -346,7 +346,7 @@ bool CellStoreScannerV0::fetch_next_block() {
       if (!Global::blockCache->insert_and_checkout(m_file_id, (uint32_t)m_block.offset, m_block.base, len)) {
 	delete [] m_block.base;
 	if (!Global::blockCache->checkout(m_file_id, (uint32_t)m_block.offset, &m_block.base, &len)) {
-	  LOG_VA_ERROR("Problem checking out block from cache fileId=%d, offset=%ld", m_file_id, (uint32_t)m_block.offset);
+	  HT_ERRORF("Problem checking out block from cache fileId=%d, offset=%ld", m_file_id, (uint32_t)m_block.offset);
 	  DUMP_CORE;
 	}
       }
@@ -413,12 +413,12 @@ bool CellStoreScannerV0::fetch_next_block_readahead() {
     buf = new uint8_t [ m_block.zlength ];
 
     if ((error = m_cell_store_v0->m_filesys->read(m_fd, m_block.zlength, buf, &nread)) != Error::OK) {
-      LOG_VA_ERROR("Problem reading %ld bytes from cell store file '%s'",
+      HT_ERRORF("Problem reading %ld bytes from cell store file '%s'",
 		   m_block.zlength, m_cell_store_ptr->get_filename().c_str());
       goto abort;
     }
     if (nread != m_block.zlength) {
-      LOG_VA_ERROR("short read %ld != %ld", nread, m_block.zlength);
+      HT_ERRORF("short read %ld != %ld", nread, m_block.zlength);
       DUMP_CORE;
     }
     assert(nread == m_block.zlength);
@@ -431,13 +431,13 @@ bool CellStoreScannerV0::fetch_next_block_readahead() {
       input.buf = buf;
       input.ptr = buf + m_block.zlength;
       if ((error = m_zcodec->inflate(input, expandBuffer, header)) != Error::OK) {
-	LOG_VA_ERROR("Problem inflating cell store (%s) block - %s", m_cell_store_ptr->get_filename().c_str(), Error::get_text(error));
+	HT_ERRORF("Problem inflating cell store (%s) block - %s", m_cell_store_ptr->get_filename().c_str(), Error::get_text(error));
 	input.buf = 0;
 	goto abort;
       }
       input.buf = 0;
       if (!header.check_magic(CellStoreV0::DATA_BLOCK_MAGIC)) {
-	LOG_ERROR("Problem inflating cell store block - magic string mismatch");
+	HT_ERROR("Problem inflating cell store block - magic string mismatch");
 	goto abort;
       }
     }

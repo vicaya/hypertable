@@ -193,12 +193,12 @@ char *FileUtils::file_to_buffer(const char *fname, off_t *lenp) {
   *lenp = 0;
 
   if ((fd = open(fname, O_RDONLY)) < 0) {
-    LOG_VA_ERROR("open(\"%s\") failure - %s", fname,  strerror(errno));
+    HT_ERRORF("open(\"%s\") failure - %s", fname,  strerror(errno));
     return 0;
   }
 
   if (fstat(fd, &statbuf) < 0) {
-    LOG_VA_ERROR("fstat(\"%s\") failure - %s", fname,  strerror(errno));
+    HT_ERRORF("fstat(\"%s\") failure - %s", fname,  strerror(errno));
     return 0;
   }
 
@@ -209,14 +209,14 @@ char *FileUtils::file_to_buffer(const char *fname, off_t *lenp) {
   ssize_t nread = FileUtils::read(fd, rbuf, *lenp);
 
   if (nread == (ssize_t)-1) {
-    LOG_VA_ERROR("read(\"%s\") failure - %s", fname,  strerror(errno));
+    HT_ERRORF("read(\"%s\") failure - %s", fname,  strerror(errno));
     delete [] rbuf;
     *lenp = 0;
     return 0;
   }
 
   if (nread < *lenp) {
-    LOG_VA_WARN("short read (%d of %d bytes)", nread, *lenp);
+    HT_WARNF("short read (%d of %d bytes)", nread, *lenp);
     *lenp = nread;
   }
 
@@ -239,12 +239,12 @@ bool FileUtils::mkdirs(const char *dirname) {
     if (stat(tmpDir, &statbuf) != 0) {
       if (errno == ENOENT) {
 	if (mkdir(tmpDir, 0755) != 0) {
-	  LOG_VA_ERROR("Problem creating directory '%s' - %s", tmpDir, strerror(errno));
+	  HT_ERRORF("Problem creating directory '%s' - %s", tmpDir, strerror(errno));
 	  return false;
 	}
       }
       else {
-	LOG_VA_ERROR("Problem stat'ing directory '%s' - %s", tmpDir, strerror(errno));
+	HT_ERRORF("Problem stat'ing directory '%s' - %s", tmpDir, strerror(errno));
 	return false;
       }
     }
@@ -254,12 +254,12 @@ bool FileUtils::mkdirs(const char *dirname) {
   if (stat(tmpDir, &statbuf) != 0) {
     if (errno == ENOENT) {
       if (mkdir(tmpDir, 0755) != 0) {
-	LOG_VA_ERROR("Problem creating directory '%s' - %s", tmpDir, strerror(errno));
+	HT_ERRORF("Problem creating directory '%s' - %s", tmpDir, strerror(errno));
 	return false;
       }
     }
     else {
-      LOG_VA_ERROR("Problem stat'ing directory '%s' - %s", tmpDir, strerror(errno));
+      HT_ERRORF("Problem stat'ing directory '%s' - %s", tmpDir, strerror(errno));
       return false;
     }
   }

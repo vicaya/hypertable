@@ -49,12 +49,12 @@ Client::Client(ConnectionManagerPtr &conn_manager_ptr, PropertiesPtr &props_ptr)
 
   {
     if ((port = (uint16_t)props_ptr->get_int("DfsBroker.port", 0)) == 0) {
-      LOG_ERROR(".port property not specified.");
+      HT_ERROR(".port property not specified.");
       exit(1);
     }
 
     if ((host = props_ptr->get("DfsBroker.host", (const char *)0)) == 0) {
-      LOG_ERROR(".host property not specified.");
+      HT_ERROR(".host property not specified.");
       exit(1);
     }
 
@@ -87,7 +87,7 @@ int Client::open(std::string &name, int32_t *fdp) {
   int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'open' error, name=%s : %s", name.c_str(), m_protocol.string_format_message(eventPtr).c_str());
+      HT_ERRORF("Dfs 'open' error, name=%s : %s", name.c_str(), m_protocol.string_format_message(eventPtr).c_str());
     }
     error = decode_response_open(eventPtr, fdp);
   }
@@ -128,7 +128,7 @@ int Client::create(std::string &name, bool overwrite, int32_t bufferSize,
   int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'create' error, name=%s : %s", name.c_str(), m_protocol.string_format_message(eventPtr).c_str());
+      HT_ERRORF("Dfs 'create' error, name=%s : %s", name.c_str(), m_protocol.string_format_message(eventPtr).c_str());
     }
     error = decode_response_create(eventPtr, fdp);
   }
@@ -175,7 +175,7 @@ int Client::close(int32_t fd) {
   int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'close' error, fd=%d : %s", fd, m_protocol.string_format_message(eventPtr).c_str());
+      HT_ERRORF("Dfs 'close' error, fd=%d : %s", fd, m_protocol.string_format_message(eventPtr).c_str());
     }
     error = decode_response(eventPtr);
   }
@@ -212,7 +212,7 @@ int Client::read(int32_t fd, uint32_t amount, uint8_t *dst, uint32_t *nreadp) {
   *nreadp = 0;
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'read' error (amount=%d, fd=%d) : %s",
+      HT_ERRORF("Dfs 'read' error (amount=%d, fd=%d) : %s",
 		   amount, fd, m_protocol.string_format_message(eventPtr).c_str());
     }
     error = decode_response_read(eventPtr, dst, nreadp);
@@ -236,13 +236,13 @@ int Client::append(int32_t fd, const void *buf, uint32_t amount) {
   int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'append' error, fd=%d, amount=%d : %s", fd, amount, m_protocol.string_format_message(eventPtr).c_str());
+      HT_ERRORF("Dfs 'append' error, fd=%d, amount=%d : %s", fd, amount, m_protocol.string_format_message(eventPtr).c_str());
     }
     uint64_t offset;
     uint32_t actual_amount;
     error = decode_response_append(eventPtr, &offset, &actual_amount);
     if (amount != actual_amount) {
-      LOG_VA_ERROR("Short DFS file append fd=%d : tried to append %d but only got %d", fd, amount, actual_amount);
+      HT_ERRORF("Short DFS file append fd=%d : tried to append %d but only got %d", fd, amount, actual_amount);
       error = Error::DFSBROKER_IO_ERROR;
     }
   }
@@ -263,7 +263,7 @@ int Client::seek(int32_t fd, uint64_t offset) {
   int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'seek' error, fd=%d, offset=%lld : %s", fd, offset, m_protocol.string_format_message(eventPtr).c_str());
+      HT_ERRORF("Dfs 'seek' error, fd=%d, offset=%lld : %s", fd, offset, m_protocol.string_format_message(eventPtr).c_str());
       error = decode_response(eventPtr);
     }
   }
@@ -284,7 +284,7 @@ int Client::remove(std::string &name) {
   int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'remove' error, name=%s : %s", name.c_str(), m_protocol.string_format_message(eventPtr).c_str());
+      HT_ERRORF("Dfs 'remove' error, name=%s : %s", name.c_str(), m_protocol.string_format_message(eventPtr).c_str());
       error = decode_response(eventPtr);
     }
   }
@@ -306,7 +306,7 @@ int Client::status() {
   int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR(" 'status' error : %s", m_protocol.string_format_message(eventPtr).c_str());
+      HT_ERRORF(" 'status' error : %s", m_protocol.string_format_message(eventPtr).c_str());
       error = decode_response(eventPtr);
     }
   }
@@ -328,7 +328,7 @@ int Client::length(std::string &name, int64_t *lenp) {
   int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'length' error, name=%s : %s", name.c_str(), m_protocol.string_format_message(eventPtr).c_str());
+      HT_ERRORF("Dfs 'length' error, name=%s : %s", name.c_str(), m_protocol.string_format_message(eventPtr).c_str());
     }
     error = decode_response_length(eventPtr, lenp);
   }
@@ -352,7 +352,7 @@ int Client::pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst, ui
   *nreadp = 0;
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'pread' error (offset=%lld, amount=%d, fd=%d) : %s",
+      HT_ERRORF("Dfs 'pread' error (offset=%lld, amount=%d, fd=%d) : %s",
 		   offset, amount, fd, m_protocol.string_format_message(eventPtr).c_str());
     }
     error = decode_response_pread(eventPtr, dst, nreadp);
@@ -374,7 +374,7 @@ int Client::mkdirs(std::string &name) {
   int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'mkdirs' error, name=%s : %s", name.c_str(), m_protocol.string_format_message(eventPtr).c_str());
+      HT_ERRORF("Dfs 'mkdirs' error, name=%s : %s", name.c_str(), m_protocol.string_format_message(eventPtr).c_str());
       error = decode_response(eventPtr);
     }
   }
@@ -395,7 +395,7 @@ int Client::flush(int32_t fd) {
   int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'flush' error, fd=%d : %s", fd, m_protocol.string_format_message(eventPtr).c_str());
+      HT_ERRORF("Dfs 'flush' error, fd=%d : %s", fd, m_protocol.string_format_message(eventPtr).c_str());
       error = decode_response(eventPtr);
     }
   }
@@ -416,7 +416,7 @@ int Client::rmdir(std::string &name) {
   int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'rmdir' error, name=%s : %s", name.c_str(), m_protocol.string_format_message(eventPtr).c_str());
+      HT_ERRORF("Dfs 'rmdir' error, name=%s : %s", name.c_str(), m_protocol.string_format_message(eventPtr).c_str());
       error = decode_response(eventPtr);
     }
   }
@@ -445,7 +445,7 @@ int Client::readdir(std::string &name, std::vector<std::string> &listing) {
   int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      LOG_VA_ERROR("Dfs 'readdir' error, name=%s : %s", name.c_str(), m_protocol.string_format_message(eventPtr).c_str());
+      HT_ERRORF("Dfs 'readdir' error, name=%s : %s", name.c_str(), m_protocol.string_format_message(eventPtr).c_str());
     }
     error = decode_response_readdir(eventPtr, listing);
   }
@@ -458,7 +458,7 @@ int Client::send_message(CommBufPtr &cbufPtr, DispatchHandler *handler) {
   int error;
 
   if ((error = m_comm->send_request(m_addr, m_timeout, cbufPtr, handler)) != Error::OK) {
-    LOG_VA_WARN("Comm::send_request to %s:%d failed - %s",
+    HT_WARNF("Comm::send_request to %s:%d failed - %s",
 		inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port), Error::get_text(error));
   }
   return error;

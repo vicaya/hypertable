@@ -50,7 +50,7 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
   uint16_t command = (uint16_t)-1;
   int error;
 
-  LOG_VA_INFO("%s", eventPtr->toString().c_str());
+  HT_INFOF("%s", eventPtr->toString().c_str());
 
   if (eventPtr->type == Hypertable::Event::MESSAGE) {
     ApplicationHandler *requestHandler = 0;
@@ -73,7 +73,7 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
       if (command != Protocol::COMMAND_HANDSHAKE && 
 	  (error = m_master_ptr->renew_session_lease(m_session_id)) != Error::OK) {
 	ResponseCallback cb(m_comm, eventPtr);
-	LOG_VA_INFO("Session handle %lld expired", m_session_id);
+	HT_INFOF("Session handle %lld expired", m_session_id);
 	cb.error(error, "");
 	return;
       }
@@ -138,19 +138,19 @@ void ServerConnectionHandler::handle(EventPtr &eventPtr) {
     catch (ProtocolException &e) {
       ResponseCallback cb(m_comm, eventPtr);
       std::string errMsg = e.what();
-      LOG_VA_ERROR("Protocol error '%s'", e.what());
+      HT_ERRORF("Protocol error '%s'", e.what());
       cb.error(Error::PROTOCOL_ERROR, errMsg);
     }
   }
   else if (eventPtr->type == Hypertable::Event::CONNECTION_ESTABLISHED) {
-    LOG_VA_INFO("%s", eventPtr->toString().c_str());    
+    HT_INFOF("%s", eventPtr->toString().c_str());    
   }
   else if (eventPtr->type == Hypertable::Event::DISCONNECT) {
     m_master_ptr->destroy_session(m_session_id);
     cout << flush;
   }
   else {
-    LOG_VA_INFO("%s", eventPtr->toString().c_str());
+    HT_INFOF("%s", eventPtr->toString().c_str());
   }
 
 }

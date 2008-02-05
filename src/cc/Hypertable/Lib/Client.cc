@@ -75,7 +75,7 @@ void Client::initialize(std::string config_file) {
 
   m_master_client_ptr = new MasterClient(m_conn_manager_ptr, m_hyperspace_ptr, master_timeout, m_app_queue_ptr);
   if (m_master_client_ptr->initiate_connection(0) != Error::OK) {
-    LOG_ERROR("Unable to establish connection with Master, exiting...");
+    HT_ERROR("Unable to establish connection with Master, exiting...");
     exit(1);
   }
 }

@@ -47,7 +47,7 @@ MasterClient::MasterClient(ConnectionManagerPtr &connManagerPtr, Hyperspace::Ses
   m_master_file_callback_ptr = new MasterFileHandler(this, m_app_queue_ptr);
   if ((error = m_hyperspace_ptr->open("/hypertable/master", OPEN_FLAG_READ, m_master_file_callback_ptr, &m_master_file_handle)) != Error::OK) {
     if (error != Error::HYPERSPACE_FILE_NOT_FOUND && error != Error::HYPERSPACE_BAD_PATHNAME) {
-      LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/master' - %s", Error::get_text(error));
+      HT_ERRORF("Unable to open Hyperspace file '/hypertable/master' - %s", Error::get_text(error));
       exit(1);
     }
     m_master_file_handle = 0;
@@ -89,7 +89,7 @@ int MasterClient::create_table(const char *tableName, const char *schemaString) 
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       if (m_verbose)
-	LOG_VA_ERROR("Master 'create table' error, tableName=%s : %s", tableName, MasterProtocol::string_format_message(eventPtr).c_str());
+	HT_ERRORF("Master 'create table' error, tableName=%s : %s", tableName, MasterProtocol::string_format_message(eventPtr).c_str());
       error = (int)MasterProtocol::response_code(eventPtr);
     }
   }
@@ -111,7 +111,7 @@ int MasterClient::get_schema(const char *tableName, std::string &schema) {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       if (m_verbose)
-	LOG_VA_ERROR("Master 'get schema' error, tableName=%s : %s", tableName, MasterProtocol::string_format_message(eventPtr).c_str());
+	HT_ERRORF("Master 'get schema' error, tableName=%s : %s", tableName, MasterProtocol::string_format_message(eventPtr).c_str());
       error = (int)MasterProtocol::response_code(eventPtr);
     }
     else {
@@ -120,7 +120,7 @@ int MasterClient::get_schema(const char *tableName, std::string &schema) {
       const char *schemaStr;
       if (!Serialization::decode_string(&ptr, &remaining, &schemaStr)) {
 	if (m_verbose)
-	  LOG_VA_ERROR("Problem decoding response to 'get schema' command for table '%s'", tableName);
+	  HT_ERRORF("Problem decoding response to 'get schema' command for table '%s'", tableName);
 	return Error::PROTOCOL_ERROR;
       }
       schema = schemaStr;
@@ -138,7 +138,7 @@ int MasterClient::status() {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       if (m_verbose)
-	LOG_VA_ERROR("Master 'status' error : %s", MasterProtocol::string_format_message(eventPtr).c_str());
+	HT_ERRORF("Master 'status' error : %s", MasterProtocol::string_format_message(eventPtr).c_str());
       error = (int)MasterProtocol::response_code(eventPtr);
     }
   }
@@ -160,7 +160,7 @@ int MasterClient::register_server(std::string &location) {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       if (m_verbose)
-	LOG_VA_ERROR("Master 'register server' error : %s", MasterProtocol::string_format_message(eventPtr).c_str());
+	HT_ERRORF("Master 'register server' error : %s", MasterProtocol::string_format_message(eventPtr).c_str());
       error = (int)MasterProtocol::response_code(eventPtr);
     }
   }
@@ -182,7 +182,7 @@ int MasterClient::report_split(TableIdentifierT &table, RangeT &range, uint64_t 
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       if (m_verbose)
-	LOG_VA_ERROR("Master 'report split' error : %s", MasterProtocol::string_format_message(eventPtr).c_str());
+	HT_ERRORF("Master 'report split' error : %s", MasterProtocol::string_format_message(eventPtr).c_str());
       error = (int)MasterProtocol::response_code(eventPtr);
     }
   }
@@ -206,7 +206,7 @@ int MasterClient::drop_table(const char *table_name, bool if_exists) {
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
       if (m_verbose)
-	LOG_VA_ERROR("Master 'drop table' error : %s", MasterProtocol::string_format_message(eventPtr).c_str());
+	HT_ERRORF("Master 'drop table' error : %s", MasterProtocol::string_format_message(eventPtr).c_str());
       error = (int)MasterProtocol::response_code(eventPtr);
     }
   }
@@ -222,7 +222,7 @@ int MasterClient::send_message(CommBufPtr &cbufPtr, DispatchHandler *handler) {
   if ((error = m_comm->send_request(m_master_addr, m_timeout, cbufPtr, handler)) != Error::OK) {
     std::string addrStr;
     if (m_verbose)
-      LOG_VA_WARN("Comm::send_request to %s failed - %s", InetAddr::string_format(addrStr, m_master_addr), Error::get_text(error));
+      HT_WARNF("Comm::send_request to %s failed - %s", InetAddr::string_format(addrStr, m_master_addr), Error::get_text(error));
   }
 
   return error;
@@ -240,7 +240,7 @@ int MasterClient::reload_master() {
 
   if ((error = m_hyperspace_ptr->attr_get(m_master_file_handle, "address", value)) != Error::OK) {
     if (m_verbose)
-      LOG_VA_ERROR("Problem reading 'address' attribute of Hyperspace file /hypertable/master - %s", Error::get_text(error));
+      HT_ERRORF("Problem reading 'address' attribute of Hyperspace file /hypertable/master - %s", Error::get_text(error));
     return Error::MASTER_NOT_RUNNING;
   }
 
@@ -251,10 +251,10 @@ int MasterClient::reload_master() {
     if (m_master_addr.sin_port != 0) {
       if ((error = m_conn_manager_ptr->remove(m_master_addr)) != Error::OK) {
 	if (m_verbose)
-	  LOG_VA_WARN("Problem removing connection to Master - %s", Error::get_text(error));
+	  HT_WARNF("Problem removing connection to Master - %s", Error::get_text(error));
       }
       if (m_verbose)
-	LOG_VA_INFO("Connecting to new Master (old=%s, new=%s)", m_master_addr_string.c_str(), addrStr.c_str());
+	HT_INFOF("Connecting to new Master (old=%s, new=%s)", m_master_addr_string.c_str(), addrStr.c_str());
     }
 
     m_master_addr_string = addrStr;

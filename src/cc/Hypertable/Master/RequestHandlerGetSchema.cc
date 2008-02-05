@@ -41,7 +41,7 @@ void RequestHandlerGetSchema::run() {
 
   // table name
   if (!Serialization::decode_string(&msgPtr, &remaining, &tableName)) {
-    LOG_ERROR("Encoding problem with Create Table message");
+    HT_ERROR("Encoding problem with Create Table message");
     cb.error(Error::PROTOCOL_ERROR, "Encoding problem with Create Table message");
     return;
   }

@@ -72,7 +72,7 @@ void ScannerMap::purge_expired(time_t expire_time) {
   while (iter != m_scanner_map.end()) {
     if ((now - (*iter).second.last_access) > expire_time) {
       CellListScannerMapT::iterator tmp_iter = iter;
-      LOG_VA_WARN("Destroying scanner %d because it has not been used in %u seconds", (*iter).first, (uint32_t)expire_time);
+      HT_WARNF("Destroying scanner %d because it has not been used in %u seconds", (*iter).first, (uint32_t)expire_time);
       iter++;
       (*tmp_iter).second.scannerPtr = 0;
       (*tmp_iter).second.rangePtr = 0;

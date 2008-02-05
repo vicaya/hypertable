@@ -59,7 +59,7 @@ int TableMutatorScatterBuffer::set(Key &key, const void *value, uint32_t value_l
 
   if ((error = m_range_locator_ptr->find(&m_table_identifier, key.row, &range_info, false)) != Error::OK) {
     if ((error = m_range_locator_ptr->find(&m_table_identifier, key.row, &range_info, 21)) != Error::OK) {
-      LOG_VA_ERROR("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)key.row);
+      HT_ERRORF("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)key.row);
       return error;
     }
   }
@@ -95,7 +95,7 @@ int TableMutatorScatterBuffer::set_delete(Key &key) {
 
   if ((error = m_range_locator_ptr->find(&m_table_identifier, key.row, &range_info, false)) != Error::OK) {
     if ((error = m_range_locator_ptr->find(&m_table_identifier, key.row, &range_info, 21)) != Error::OK) {
-      LOG_VA_ERROR("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)key.row);
+      HT_ERRORF("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)key.row);
       return error;
     }
   }
@@ -142,7 +142,7 @@ int TableMutatorScatterBuffer::set(ByteString32T *key, ByteString32T *value) {
 
   if ((error = m_range_locator_ptr->find(&m_table_identifier, (const char *)key->data, &range_info, false)) != Error::OK) {
     if ((error = m_range_locator_ptr->find(&m_table_identifier, (const char *)key->data, &range_info, 21)) != Error::OK) {
-      LOG_VA_ERROR("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)key->data);
+      HT_ERRORF("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)key->data);
       return error;
     }
   }
@@ -275,7 +275,7 @@ TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer() {
 	
 	// do a hard lookup for the lowest key
 	if ((error = m_range_locator_ptr->find(&m_table_identifier, (const char *)low_key->data, &range_info, 21)) != Error::OK) {
-	  LOG_VA_WARN("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)low_key->data);
+	  HT_WARNF("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)low_key->data);
 	  delete redo_buffer;
 	  return 0;
 	}
@@ -285,7 +285,7 @@ TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer() {
 	  key = (ByteString32T *)src_ptr;
 	  value = (ByteString32T *)(((uint8_t *)key) + Length(key));
 	  if ((error = redo_buffer->set(key, value)) != Error::OK) {
-	    LOG_VA_ERROR("Problem adding row '%s' of table '%s' to redo buffer", (const char *)low_key->data, m_table_name.c_str());
+	    HT_ERRORF("Problem adding row '%s' of table '%s' to redo buffer", (const char *)low_key->data, m_table_name.c_str());
 	    delete redo_buffer;
 	    return 0;
 	  }
@@ -293,7 +293,7 @@ TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer() {
 	  m_resends++;
 	}
 
-	//LOG_VA_INFO("Partial update, resending %d updates", count);
+	//HT_INFOF("Partial update, resending %d updates", count);
 
       }
       else {
@@ -308,7 +308,7 @@ TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer() {
 
 	// do a hard lookup for the lowest key
 	if ((error = m_range_locator_ptr->find(&m_table_identifier, (const char *)low_key->data, &range_info, 21)) != Error::OK) {
-	  LOG_VA_WARN("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)low_key->data);
+	  HT_WARNF("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)low_key->data);
 	  delete redo_buffer;
 	  return 0;
 	}
@@ -320,14 +320,14 @@ TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer() {
 	  key = (ByteString32T *)(update_buffer_ptr->buf.buf + update_buffer_ptr->key_offsets[i]);
 	  value = (ByteString32T *)(((uint8_t *)key) + Length(key));
 	  if ((error = redo_buffer->set(key, value)) != Error::OK) {
-	    LOG_VA_ERROR("Problem adding row '%s' of table '%s' to redo buffer", (const char *)low_key->data, m_table_name.c_str());
+	    HT_ERRORF("Problem adding row '%s' of table '%s' to redo buffer", (const char *)low_key->data, m_table_name.c_str());
 	    delete redo_buffer;
 	    return 0;
 	  }
 	  count++;
 	}
 
-	LOG_VA_INFO("Send error '%s', resending %d updates", Error::get_text(update_buffer_ptr->error), count);
+	HT_INFOF("Send error '%s', resending %d updates", Error::get_text(update_buffer_ptr->error), count);
 
       }
 

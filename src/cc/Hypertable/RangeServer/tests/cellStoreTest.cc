@@ -276,7 +276,7 @@ int main(int argc, char **argv) {
   char outfileC[32];
   strcpy(outfileC, "/tmp/cellStoreTest-3-XXXXXX");
   if (mkstemp(outfileC) == 0) {
-    LOG_VA_ERROR("mkstemp(\"%s\") failed - %s", outfileC, strerror(errno));
+    HT_ERRORF("mkstemp(\"%s\") failed - %s", outfileC, strerror(errno));
     exit(1);
   }
   ofstream outstreamC(outfileC);

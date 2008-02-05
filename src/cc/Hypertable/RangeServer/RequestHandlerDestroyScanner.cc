@@ -48,6 +48,6 @@ void RequestHandlerDestroyScanner::run() {
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with DestroyScanner message");
+  HT_ERROR("Encoding problem with DestroyScanner message");
   cb.error(Error::PROTOCOL_ERROR, "Encoding problem with DestroyScanner message");
 }

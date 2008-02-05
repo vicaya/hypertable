@@ -47,7 +47,7 @@ void RequestHandlerRegisterServer::run() {
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with Register Server message");
+  HT_ERROR("Encoding problem with Register Server message");
   cb.error(Error::PROTOCOL_ERROR, "Encoding problem with Register Server message");
   return;
 }

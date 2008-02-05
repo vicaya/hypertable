@@ -132,18 +132,18 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
     catch (ProtocolException &e) {
       ResponseCallback cb(m_comm, eventPtr);
       std::string errMsg = e.what();
-      LOG_VA_ERROR("Protocol error '%s'", e.what());
+      HT_ERRORF("Protocol error '%s'", e.what());
       cb.error(Error::PROTOCOL_ERROR, errMsg);
     }
   }
   else if (eventPtr->type == Event::DISCONNECT) {
-    LOG_VA_INFO("%s : Closing all open handles from %s:%d", eventPtr->toString().c_str(),
+    HT_INFOF("%s : Closing all open handles from %s:%d", eventPtr->toString().c_str(),
 		inet_ntoa(eventPtr->addr.sin_addr), ntohs(eventPtr->addr.sin_port));
     OpenFileMap &ofMap = m_broker_ptr->get_open_file_map();
     ofMap.remove_all(eventPtr->addr);
   }
   else {
-    LOG_VA_INFO("%s", eventPtr->toString().c_str());
+    HT_INFOF("%s", eventPtr->toString().c_str());
   }
 
 }

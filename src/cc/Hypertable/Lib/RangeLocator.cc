@@ -82,17 +82,17 @@ void RangeLocator::initialize() {
   m_root_handler_ptr = new RootFileHandler(this);
 
   if ((error = m_hyperspace_ptr->open("/hypertable/root", OPEN_FLAG_READ, m_root_handler_ptr, &m_root_file_handle)) != Error::OK) {
-    LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/root' (%s)", Error::get_text(error));
+    HT_ERRORF("Unable to open Hyperspace file '/hypertable/root' (%s)", Error::get_text(error));
     throw Exception(error);
   }
 
   if ((error = m_hyperspace_ptr->open("/hypertable/tables/METADATA", OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
-    LOG_VA_ERROR("Unable to open Hyperspace file '/hypertable/tables/METADATA' (%s)", Error::get_text(error));
+    HT_ERRORF("Unable to open Hyperspace file '/hypertable/tables/METADATA' (%s)", Error::get_text(error));
     throw Exception(error);
   }
 
   if ((error = m_hyperspace_ptr->attr_get(handle, "schema", valueBuf)) != Error::OK) {
-    LOG_ERROR("Problem getting 'schema' attribute from METADATA hyperspace file");
+    HT_ERROR("Problem getting 'schema' attribute from METADATA hyperspace file");
     throw Exception(error);
   }
 
@@ -101,7 +101,7 @@ void RangeLocator::initialize() {
   schema = Schema::new_instance((const char *)valueBuf.buf, valueBuf.fill(), true);
   if (!schema->is_valid()) {
     delete schema;
-    LOG_VA_ERROR("Schema Parse Error for table METADATA : %s", schema->get_error_string());
+    HT_ERRORF("Schema Parse Error for table METADATA : %s", schema->get_error_string());
     throw Exception(Error::RANGESERVER_SCHEMA_PARSE_ERROR);
   }
 
@@ -114,13 +114,13 @@ void RangeLocator::initialize() {
   Schema::ColumnFamily *cf;
 
   if ((cf = schema->get_column_family("StartRow")) == 0) {
-    LOG_ERROR("Unable to find column family 'StartRow' in METADATA schema");
+    HT_ERROR("Unable to find column family 'StartRow' in METADATA schema");
     throw Exception(Error::BAD_SCHEMA);
   }
   m_startrow_cid = cf->id;
 
   if ((cf = schema->get_column_family("Location")) == 0) {
-    LOG_ERROR("Unable to find column family 'Location' in METADATA schema");
+    HT_ERROR("Unable to find column family 'Location' in METADATA schema");
     throw Exception(Error::BAD_SCHEMA);
   }
   m_location_cid = cf->id;
@@ -154,7 +154,7 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
   if (error) {
     boost::mutex::scoped_lock lock(m_mutex);
     for (std::deque<std::string>::iterator iter = m_last_errors.begin(); iter != m_last_errors.end(); iter++) {
-      LOG_VA_ERROR("%s", (*iter).c_str());
+      HT_ERRORF("%s", (*iter).c_str());
     }
   }
   m_last_errors.clear();
@@ -269,7 +269,7 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
     }
 
     if (!m_cache.lookup(0, meta_key_ptr, range_loc_info_p, inclusive)) {
-      LOG_VA_ERROR("Unable to find metadata for row '%s'", meta_keys.start);
+      HT_ERRORF("Unable to find metadata for row '%s'", meta_keys.start);
       return Error::METADATA_NOT_FOUND;
     }
   }
@@ -285,7 +285,7 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
   range.endRow   = range_loc_info_p->end_row.c_str();
 
   if (!LocationCache::location_to_addr(range_loc_info_p->location.c_str(), addr)) {
-    LOG_VA_ERROR("Invalid location found in METADATA entry for row '%s' - %s", start_row.c_str(), range_loc_info_p->location.c_str());
+    HT_ERRORF("Invalid location found in METADATA entry for row '%s' - %s", start_row.c_str(), range_loc_info_p->location.c_str());
     return Error::INVALID_METADATA;
   }
 
@@ -353,12 +353,12 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
   while (scan_block.next(key, value)) {
 
     if (!keyComps.load(key)) {
-      LOG_VA_ERROR("METADATA lookup for '%s' returned bad key", (const char *)key->data);
+      HT_ERRORF("METADATA lookup for '%s' returned bad key", (const char *)key->data);
       return Error::INVALID_METADATA;
     }
 
     if ((stripped_key = strchr(keyComps.row, ':')) == 0) {
-      LOG_VA_ERROR("Bad row key found in METADATA - '%s'", keyComps.row);
+      HT_ERRORF("Bad row key found in METADATA - '%s'", keyComps.row);
       return Error::INVALID_METADATA;
     }
     stripped_key++;
@@ -371,7 +371,7 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
 	   * Add this location (address) to the connection manager
 	   */
 	  if (!LocationCache::location_to_addr(range_loc_info.location.c_str(), addr)) {
-	    LOG_VA_ERROR("Invalid location found in METADATA entry for row '%s' - %s", range_loc_info.end_row.c_str(), range_loc_info.location.c_str());
+	    HT_ERRORF("Invalid location found in METADATA entry for row '%s' - %s", range_loc_info.end_row.c_str(), range_loc_info.location.c_str());
 	    return Error::INVALID_METADATA;
 	  }
 	  if (m_conn_manager_ptr)
@@ -410,7 +410,7 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
       got_location = true;
     }
     else {
-      LOG_VA_ERROR("METADATA lookup on row '%s' returned incorrect column (id=%d)", (const char *)key->data, keyComps.column_family_code);
+      HT_ERRORF("METADATA lookup on row '%s' returned incorrect column (id=%d)", (const char *)key->data, keyComps.column_family_code);
     }
   }
 
@@ -420,7 +420,7 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
      * Add this location (address) to the connection manager
      */
     if (!LocationCache::location_to_addr(range_loc_info.location.c_str(), addr)) {
-      LOG_VA_ERROR("Invalid location found in METADATA entry for row '%s' - %s", range_loc_info.end_row.c_str(), range_loc_info.location.c_str());
+      HT_ERRORF("Invalid location found in METADATA entry for row '%s' - %s", range_loc_info.end_row.c_str(), range_loc_info.location.c_str());
       return Error::INVALID_METADATA;
     }
     if (m_conn_manager_ptr)
@@ -431,7 +431,7 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
     //cout << "(2) cache insert table=" << table_id << " start=" << range_loc_info.start_row << " end=" << range_loc_info.end_row << " loc=" << range_loc_info.location << endl;
   }
   else if (got_end_row) {
-    LOG_VA_ERROR("Incomplete METADATA record found in root tablet under row key '%s'", range_loc_info.end_row.c_str());
+    HT_ERRORF("Incomplete METADATA record found in root tablet under row key '%s'", range_loc_info.end_row.c_str());
   }
 
   return Error::OK;
@@ -449,7 +449,7 @@ int RangeLocator::read_root_location() {
   std::string addrStr;
 
   if ((error = m_hyperspace_ptr->attr_get(m_root_file_handle, "location", value)) != Error::OK) {
-    LOG_VA_ERROR("Problem reading 'location' attribute of Hyperspace file /hypertable/root - %s", Error::get_text(error));
+    HT_ERRORF("Problem reading 'location' attribute of Hyperspace file /hypertable/root - %s", Error::get_text(error));
     return error;
   }
 
@@ -460,7 +460,7 @@ int RangeLocator::read_root_location() {
   m_cache.insert(0, m_root_range_info, true);
 
   if (!LocationCache::location_to_addr((const char *)value.buf, m_root_addr)) {
-    LOG_ERROR("Bad format of 'location' attribute of /hypertable/root Hyperspace file");
+    HT_ERROR("Bad format of 'location' attribute of /hypertable/root Hyperspace file");
     return Error::BAD_ROOT_LOCATION;    
   }
 
@@ -470,7 +470,7 @@ int RangeLocator::read_root_location() {
 
     if (!m_conn_manager_ptr->wait_for_connection(m_root_addr, 20)) {
       std::string addr_str;
-      LOG_VA_ERROR("Timeout (20s) waiting for root RangeServer connection - %s",
+      HT_ERRORF("Timeout (20s) waiting for root RangeServer connection - %s",
 		   InetAddr::string_format(addr_str, m_root_addr));
     }
   }

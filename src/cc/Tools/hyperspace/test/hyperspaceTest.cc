@@ -141,14 +141,14 @@ int main(int argc, char **argv) {
 
   if ((error = comm->create_datagram_receive_socket(&addr, dhp)) != Error::OK) {
     std::string str;
-    LOG_VA_ERROR("Problem creating UDP receive socket %s - %s", InetAddr::string_format(str, addr), Error::get_text(error));
+    HT_ERRORF("Problem creating UDP receive socket %s - %s", InetAddr::string_format(str, addr), Error::get_text(error));
     exit(1);
   }
 
   system("/bin/rm -rf ./hsroot");
 
   if (system("mkdir ./hsroot") != 0) {
-    LOG_ERROR("Unable to create ./hsroot directory");
+    HT_ERROR("Unable to create ./hsroot directory");
     exit(1);
   }
 

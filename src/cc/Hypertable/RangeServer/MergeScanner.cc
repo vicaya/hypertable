@@ -82,7 +82,7 @@ void MergeScanner::forward() {
       sstate = m_queue.top();
 
       if (!keyComps.load(sstate.key)) {
-	LOG_ERROR("Problem decoding key!");
+	HT_ERROR("Problem decoding key!");
       }
       else if (keyComps.timestamp < m_start_timestamp) {
 	continue;

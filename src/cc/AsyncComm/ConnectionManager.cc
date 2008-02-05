@@ -170,12 +170,12 @@ void ConnectionManager::send_connect_request(ConnectionState *connState) {
   }
   else if (error != Error::OK) {
     if (connState->serviceName != "") {
-      LOG_VA_ERROR("Connection attempt to %s at %s:%d failed - %s.  Will retry again in %d seconds...", 
+      HT_ERRORF("Connection attempt to %s at %s:%d failed - %s.  Will retry again in %d seconds...", 
 		   connState->serviceName.c_str(), inet_ntoa(connState->addr.sin_addr), ntohs(connState->addr.sin_port),
 		   Error::get_text(error), connState->timeout);
     }
     else {
-      LOG_VA_ERROR("Connection attempt to service at %s:%d failed - %s.  Will retry again in %d seconds...",
+      HT_ERRORF("Connection attempt to service at %s:%d failed - %s.  Will retry again in %d seconds...",
 		   inet_ntoa(connState->addr.sin_addr), ntohs(connState->addr.sin_port),
 		   Error::get_text(error), connState->timeout);
     }
@@ -253,7 +253,7 @@ void ConnectionManager::handle(EventPtr &eventPtr) {
     }
     else if (eventPtr->type == Event::ERROR || eventPtr->type == Event::DISCONNECT) {
       if (!m_impl->quietMode) {
-	LOG_VA_INFO("%s; Problem connecting to %s, will retry in %d seconds...",
+	HT_INFOF("%s; Problem connecting to %s, will retry in %d seconds...",
 		    eventPtr->toString().c_str(), connState->serviceName.c_str(), connState->timeout);
       }
       connState->connected = false;
@@ -273,7 +273,7 @@ void ConnectionManager::handle(EventPtr &eventPtr) {
       connState->handlerPtr->handle(eventPtr);
   }
   else {
-    LOG_VA_WARN("Unable to find connection for %s:%d in map.", inet_ntoa(eventPtr->addr.sin_addr), ntohs(eventPtr->addr.sin_port));
+    HT_WARNF("Unable to find connection for %s:%d in map.", inet_ntoa(eventPtr->addr.sin_addr), ntohs(eventPtr->addr.sin_port));
   }
 }
 
@@ -303,7 +303,7 @@ void ConnectionManager::operator()() {
 	  m_impl->retryQueue.pop();
 	  /**
 	     if (!m_impl->quietMode) {
-	     LOG_VA_INFO("Attempting to re-establish connection to %s at %s:%d...",
+	     HT_INFOF("Attempting to re-establish connection to %s at %s:%d...",
 	     connStatePtr->serviceName.c_str(), inet_ntoa(connStatePtr->addr.sin_addr), ntohs(connStatePtr->addr.sin_port));
 	     }
 	  */

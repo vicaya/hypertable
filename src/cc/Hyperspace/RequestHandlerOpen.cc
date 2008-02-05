@@ -77,6 +77,6 @@ void RequestHandlerOpen::run() {
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with OPEN message");
+  HT_ERROR("Encoding problem with OPEN message");
   cb.error(Error::PROTOCOL_ERROR, "Encoding problem with OPEN message");
 }

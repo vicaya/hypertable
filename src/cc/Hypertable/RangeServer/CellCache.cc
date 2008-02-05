@@ -65,7 +65,7 @@ CellCache::~CellCache() {
       skipped++;
   }
 
-  LOG_VA_INFO("dougo mem=%ld skipped=%ld total=%ld", mem_freed, skipped, m_cell_map.size());
+  HT_INFOF("dougo mem=%ld skipped=%ld total=%ld", mem_freed, skipped, m_cell_map.size());
 
   Global::memory_tracker.remove_memory(mem_freed);
   Global::memory_tracker.remove_items(m_cell_map.size());
@@ -101,7 +101,7 @@ int CellCache::add(const ByteString32T *key, const ByteString32T *value, uint64_
 
   if ( ! m_cell_map.insert(CellMapT::value_type(newKey, Length(newKey))).second ) {
     m_collisions++;
-    LOG_VA_WARN("Collision detected key insert (row = %s)", (const char *)newKey->data);
+    HT_WARNF("Collision detected key insert (row = %s)", (const char *)newKey->data);
     delete [] newKey;
   }
   else {
@@ -166,7 +166,7 @@ CellCache *CellCache::slice_copy(uint64_t timestamp) {
   for (CellMapT::iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++) {
 
     if (!keyComps.load((*iter).first)) {
-      LOG_ERROR("Problem deserializing key/value pair");
+      HT_ERROR("Problem deserializing key/value pair");
       continue;
     }
 
@@ -204,7 +204,7 @@ void CellCache::purge_deletes() {
   while (iter != m_cell_map.end()) {
     
     if (!key_comps.load((*iter).first)) {
-      LOG_ERROR("Problem deserializing key/value pair");
+      HT_ERROR("Problem deserializing key/value pair");
       iter++;
       continue;
     }

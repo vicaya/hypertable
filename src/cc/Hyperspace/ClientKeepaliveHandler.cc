@@ -65,19 +65,19 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsP
   DispatchHandlerPtr dhp(this);
   if ((error = m_comm->create_datagram_receive_socket(&m_local_addr, dhp)) != Error::OK) {
     std::string str;
-    LOG_VA_ERROR("Unable to create datagram receive socket %s - %s", InetAddr::string_format(str, m_local_addr), Error::get_text(error));
+    HT_ERRORF("Unable to create datagram receive socket %s - %s", InetAddr::string_format(str, m_local_addr), Error::get_text(error));
     exit(1);
   }
 
   CommBufPtr commBufPtr( Hyperspace::Protocol::create_client_keepalive_request(m_session_id, m_last_known_event) );
 
   if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, commBufPtr) != Error::OK)) {
-    LOG_VA_ERROR("Unable to send datagram - %s", Error::get_text(error));
+    HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
     exit(1);
   }
 
   if ((error = m_comm->set_timer(m_keep_alive_interval*1000, this)) != Error::OK) {
-    LOG_VA_ERROR("Problem setting timer - %s", Error::get_text(error));
+    HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
     exit(1);
   }
 
@@ -103,7 +103,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &eventPtr) {
 
   /**
   if (m_verbose) {
-    LOG_VA_INFO("%s", eventPtr->toString().c_str());
+    HT_INFOF("%s", eventPtr->toString().c_str());
   }
   **/
 
@@ -145,7 +145,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &eventPtr) {
 
 	  if (error != Error::OK) {
 	    if (error != Error::HYPERSPACE_EXPIRED_SESSION) {
-	      LOG_VA_ERROR("Master session error - %s", Error::get_text(error));
+	      HT_ERRORF("Master session error - %s", Error::get_text(error));
 	    }
 	    expire_session();
 	    return;
@@ -172,8 +172,8 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &eventPtr) {
 	      throw ProtocolException("Truncated Request");
 
 	    HandleMapT::iterator iter = m_handle_map.find(handle);
-	    //LOG_VA_INFO("LastKnownEvent=%lld, eventId=%lld eventMask=%d", m_last_known_event, eventId, eventMask);
-	    //LOG_VA_INFO("handle=%lldm, eventId=%lld, eventMask=%d", handle, eventId, eventMask);
+	    //HT_INFOF("LastKnownEvent=%lld, eventId=%lld eventMask=%d", m_last_known_event, eventId, eventMask);
+	    //HT_INFOF("handle=%lldm, eventId=%lld, eventMask=%d", handle, eventId, eventMask);
 	    assert (iter != m_handle_map.end());
 	    ClientHandleStatePtr handleStatePtr = (*iter).second;
 
@@ -227,7 +227,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &eventPtr) {
 	  
 	  /**
 	  if (m_verbose) {
-	    LOG_VA_INFO("sessionId = %lld", m_session_id);
+	    HT_INFOF("sessionId = %lld", m_session_id);
 	  }
 	  **/
 
@@ -240,7 +240,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &eventPtr) {
 	    CommBufPtr commBufPtr( Hyperspace::Protocol::create_client_keepalive_request(m_session_id, m_last_known_event) );
 	    boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC);
 	    if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, commBufPtr) != Error::OK)) {
-	      LOG_VA_ERROR("Unable to send datagram - %s", Error::get_text(error));
+	      HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
 	      exit(1);
 	    }
 	  }
@@ -254,7 +254,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &eventPtr) {
     }
     catch (ProtocolException &e) {
       std::string errMsg = e.what();
-      LOG_VA_ERROR("Protocol error '%s'", e.what());
+      HT_ERRORF("Protocol error '%s'", e.what());
     }
   }
   else if (eventPtr->type == Hypertable::Event::TIMER) {
@@ -283,17 +283,17 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &eventPtr) {
     boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC);
     
     if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, commBufPtr) != Error::OK)) {
-      LOG_VA_ERROR("Unable to send datagram - %s", Error::get_text(error));
+      HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
       exit(1);
     }
 
     if ((error = m_comm->set_timer(m_keep_alive_interval*1000, this)) != Error::OK) {
-      LOG_VA_ERROR("Problem setting timer - %s", Error::get_text(error));
+      HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
       exit(1);
     }
   }
   else {
-    LOG_VA_INFO("%s", eventPtr->toString().c_str());
+    HT_INFOF("%s", eventPtr->toString().c_str());
   }
 }
 

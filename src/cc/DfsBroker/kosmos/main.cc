@@ -126,7 +126,7 @@ int main(int argc, char **argv) {
   ConnectionHandlerFactoryPtr chf_ptr(new DfsBroker::ConnectionHandlerFactory(comm, app_queue_ptr, broker_ptr));
   if ((error = comm->listen(listen_addr, chf_ptr)) != Error::OK) {
     std::string addrStr;
-    LOG_VA_ERROR("Problem listening for connections on %s - %s", InetAddr::string_format(addrStr, listen_addr), Error::get_text(error));
+    HT_ERRORF("Problem listening for connections on %s - %s", InetAddr::string_format(addrStr, listen_addr), Error::get_text(error));
     return 1;
   }
 

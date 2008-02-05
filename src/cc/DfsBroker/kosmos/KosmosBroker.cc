@@ -69,7 +69,7 @@ void KosmosBroker::open(ResponseCallbackOpen *cb, const char *fileName, uint32_t
   KfsClient *clnt = KfsClient::Instance();
 
   if (mVerbose) {
-    LOG_VA_INFO("open file='%s' bufferSize=%d", fileName, bufferSize);
+    HT_INFOF("open file='%s' bufferSize=%d", fileName, bufferSize);
   }
 
   if (fileName[0] == '/')
@@ -86,7 +86,7 @@ void KosmosBroker::open(ResponseCallbackOpen *cb, const char *fileName, uint32_t
    */
   if ((fd = clnt->Open(absFileName.c_str(), O_RDONLY)) < 0) {
     string errMsg = KFS::ErrorCodeToStr(fd);
-    LOG_VA_ERROR("open failed: file='%s' - %s", absFileName.c_str(), errMsg.c_str());
+    HT_ERRORF("open failed: file='%s' - %s", absFileName.c_str(), errMsg.c_str());
     ReportError(cb, fd);
     return;
   }
@@ -119,7 +119,7 @@ void KosmosBroker::create(ResponseCallbackOpen *cb, const char *fileName, bool o
   KfsClient *clnt = KfsClient::Instance();
   
   if (mVerbose) {
-    LOG_VA_INFO("create file='%s' overwrite=%d bufferSize=%d replication=%d blockSize=%d",
+    HT_INFOF("create file='%s' overwrite=%d bufferSize=%d replication=%d blockSize=%d",
 		fileName, (int)overwrite, bufferSize, replication, blockSize);
   }
 
@@ -145,7 +145,7 @@ void KosmosBroker::create(ResponseCallbackOpen *cb, const char *fileName, bool o
     string errMsg = KFS::ErrorCodeToStr(fd);
     std::cerr << "Create failed: " << errMsg << std::endl;
 
-    LOG_VA_ERROR("open failed: file='%s' - %s", absFileName.c_str(), errMsg.c_str());
+    HT_ERRORF("open failed: file='%s' - %s", absFileName.c_str(), errMsg.c_str());
     ReportError(cb, fd);
     return;
   }
@@ -168,7 +168,7 @@ void KosmosBroker::create(ResponseCallbackOpen *cb, const char *fileName, bool o
  */
 void KosmosBroker::close(ResponseCallback *cb, uint32_t fd) {
   if (mVerbose) {
-    LOG_VA_INFO("close fd=%d", fd);
+    HT_INFOF("close fd=%d", fd);
   }
 
   m_open_file_map.remove(fd);
@@ -188,7 +188,7 @@ void KosmosBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) 
   KfsClient *clnt = KfsClient::Instance();
 
   if (mVerbose) {
-    LOG_VA_INFO("read fd=%d amount=%d", fd, amount);
+    HT_INFOF("read fd=%d amount=%d", fd, amount);
   }
 
   buf = new uint8_t [ amount ]; // TODO: we should sanity check this amount
@@ -204,7 +204,7 @@ void KosmosBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) 
 
   if ((nread = clnt->Read(dataPtr->fd, (char *) buf, (size_t) amount)) < 0) {
     string errMsg = KFS::ErrorCodeToStr(nread);
-    LOG_VA_ERROR("read failed: fd=%d amount=%d - %s", dataPtr->fd, amount, errMsg.c_str());
+    HT_ERRORF("read failed: fd=%d amount=%d - %s", dataPtr->fd, amount, errMsg.c_str());
     ReportError(cb, nread);
     return;
   }
@@ -224,7 +224,7 @@ void KosmosBroker::append(ResponseCallbackAppend *cb, uint32_t fd, uint32_t amou
   KfsClient *clnt = KfsClient::Instance();
 
   if (mVerbose) {
-    LOG_VA_INFO("append fd=%d amount=%d", fd, amount);
+    HT_INFOF("append fd=%d amount=%d", fd, amount);
   }
 
   if (!m_open_file_map.get(fd, dataPtr)) {
@@ -238,7 +238,7 @@ void KosmosBroker::append(ResponseCallbackAppend *cb, uint32_t fd, uint32_t amou
 
   if ((nwritten = clnt->Write(dataPtr->fd, (const char *) data, (size_t) amount)) < 0) {
     string errMsg = KFS::ErrorCodeToStr(nwritten);
-    LOG_VA_ERROR("write failed: fd=%d amount=%d - %s", dataPtr->fd, amount, errMsg.c_str());
+    HT_ERRORF("write failed: fd=%d amount=%d - %s", dataPtr->fd, amount, errMsg.c_str());
     ReportError(cb, nwritten);
     return;
   }
@@ -265,7 +265,7 @@ void KosmosBroker::seek(ResponseCallback *cb, uint32_t fd, uint64_t offset) {
 
   if ((offset = (uint64_t) clnt->Seek(dataPtr->fd, offset, SEEK_SET)) == (uint64_t) -1) {
     string errMsg = KFS::ErrorCodeToStr(offset);
-    LOG_VA_ERROR("lseek failed: fd=%d offset=%lld - %s", dataPtr->fd, offset, errMsg.c_str());
+    HT_ERRORF("lseek failed: fd=%d offset=%lld - %s", dataPtr->fd, offset, errMsg.c_str());
     ReportError(cb, (int) offset);
     return;
   }
@@ -283,7 +283,7 @@ void KosmosBroker::remove(ResponseCallback *cb, const char *fileName) {
   int res;
   
   if (mVerbose) {
-    LOG_VA_INFO("remove file='%s'", fileName);
+    HT_INFOF("remove file='%s'", fileName);
   }
 
   if (fileName[0] == '/')
@@ -293,7 +293,7 @@ void KosmosBroker::remove(ResponseCallback *cb, const char *fileName) {
 
   if ((res = clnt->Remove(absFileName.c_str())) < 0) {
     string errMsg = KFS::ErrorCodeToStr(res);
-    LOG_VA_ERROR("unlink failed: file='%s' - %s", absFileName.c_str(), errMsg.c_str());
+    HT_ERRORF("unlink failed: file='%s' - %s", absFileName.c_str(), errMsg.c_str());
     ReportError(cb, res);
     return;
   }
@@ -313,7 +313,7 @@ void KosmosBroker::length(ResponseCallbackLength *cb, const char *fileName) {
   struct stat statInfo;
   
   if (mVerbose) {
-    LOG_VA_INFO("length file='%s'", fileName);
+    HT_INFOF("length file='%s'", fileName);
   }
 
   if (fileName[0] == '/')
@@ -323,7 +323,7 @@ void KosmosBroker::length(ResponseCallbackLength *cb, const char *fileName) {
 
   if ((res = clnt->Stat(absFileName.c_str(), statInfo)) < 0) {
     string errMsg = KFS::ErrorCodeToStr(res);
-    LOG_VA_ERROR("length (stat) failed: file='%s' - %s", absFileName.c_str(), errMsg.c_str());
+    HT_ERRORF("length (stat) failed: file='%s' - %s", absFileName.c_str(), errMsg.c_str());
     ReportError(cb, res);
     return;
   }
@@ -342,7 +342,7 @@ void KosmosBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
   KfsClient *clnt = KfsClient::Instance();
 
   if (mVerbose) {
-    LOG_VA_INFO("pread fd=%d offset=%lld amount=%d", fd, offset, amount);
+    HT_INFOF("pread fd=%d offset=%lld amount=%d", fd, offset, amount);
   }
 
   buf = new uint8_t [ amount ]; // TODO: we should sanity check this amount
@@ -356,14 +356,14 @@ void KosmosBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
 
   if ((offset = (uint64_t) clnt->Seek(dataPtr->fd, offset, SEEK_SET)) == (uint64_t) -1) {
     string errMsg = KFS::ErrorCodeToStr(offset);
-    LOG_VA_ERROR("lseek failed: fd=%d offset=%lld - %s", dataPtr->fd, offset, errMsg.c_str());
+    HT_ERRORF("lseek failed: fd=%d offset=%lld - %s", dataPtr->fd, offset, errMsg.c_str());
     ReportError(cb, (int) offset);
     return;
   }
 
   if ((nread = clnt->Read(dataPtr->fd, (char *) buf, (size_t) amount)) < 0) {
     string errMsg = KFS::ErrorCodeToStr(nread);
-    LOG_VA_ERROR("read failed: fd=%d amount=%d - %s", dataPtr->fd, amount, errMsg.c_str());
+    HT_ERRORF("read failed: fd=%d amount=%d - %s", dataPtr->fd, amount, errMsg.c_str());
     ReportError(cb, nread);
     return;
   }
@@ -383,7 +383,7 @@ void KosmosBroker::mkdirs(ResponseCallback *cb, const char *dirName) {
   struct stat statBuf;
   
   if (mVerbose) {
-    LOG_VA_INFO("mkdirs dir='%s'", dirName);
+    HT_INFOF("mkdirs dir='%s'", dirName);
   }
 
   if (dirName[0] == '/')
@@ -417,7 +417,7 @@ void KosmosBroker::mkdirs(ResponseCallback *cb, const char *dirName) {
 
   if (res < 0) {
     string errMsg = KFS::ErrorCodeToStr(res);
-    LOG_VA_ERROR("mkdirs failed: dirName='%s' - %s", absDirName.c_str(), errMsg.c_str());
+    HT_ERRORF("mkdirs failed: dirName='%s' - %s", absDirName.c_str(), errMsg.c_str());
     ReportError(cb, res);
     return;
   }
@@ -435,7 +435,7 @@ void KosmosBroker::rmdir(ResponseCallback *cb, const char *dirName) {
   int res;
   
   if (mVerbose) {
-    LOG_VA_INFO("rmdir dir='%s'", dirName);
+    HT_INFOF("rmdir dir='%s'", dirName);
   }
 
   if (dirName[0] == '/')
@@ -445,7 +445,7 @@ void KosmosBroker::rmdir(ResponseCallback *cb, const char *dirName) {
 
   if ((res = clnt->Rmdirs(absDirName.c_str())) != 0) {
     string errMsg = KFS::ErrorCodeToStr(res);
-    LOG_VA_ERROR("rmdir failed: dirName='%s' - %s", absDirName.c_str(), errMsg.c_str());
+    HT_ERRORF("rmdir failed: dirName='%s' - %s", absDirName.c_str(), errMsg.c_str());
     ReportError(cb, res);
     return;
   }
@@ -463,7 +463,7 @@ void KosmosBroker::flush(ResponseCallback *cb, uint32_t fd) {
   int res;
 
   if (mVerbose) {
-    LOG_VA_INFO("flush fd=%d", fd);
+    HT_INFOF("flush fd=%d", fd);
   }
 
   if (!m_open_file_map.get(fd, dataPtr)) {
@@ -475,7 +475,7 @@ void KosmosBroker::flush(ResponseCallback *cb, uint32_t fd) {
 
   if ((res = clnt->Sync(dataPtr->fd)) < 0) {
     string errMsg = KFS::ErrorCodeToStr(res);
-    LOG_VA_ERROR("flush failed: fd=%d - %s", dataPtr->fd, errMsg.c_str());
+    HT_ERRORF("flush failed: fd=%d - %s", dataPtr->fd, errMsg.c_str());
     ReportError(cb, res);
     return;
   }
@@ -510,7 +510,7 @@ void KosmosBroker::readdir(ResponseCallbackReaddir *cb, const char *dirName) {
   int error;
 
   if (mVerbose) {
-    LOG_VA_INFO("readdir dir_name='%s'", dirName);
+    HT_INFOF("readdir dir_name='%s'", dirName);
   }
 
   if (dirName[0] == '/')
@@ -520,7 +520,7 @@ void KosmosBroker::readdir(ResponseCallbackReaddir *cb, const char *dirName) {
 
   if ((error = clnt->Readdir(abs_path.c_str(), listing)) < 0) {
     string errMsg = KFS::ErrorCodeToStr(error);
-    LOG_VA_ERROR("readdir failed: file='%s' - %s", abs_path.c_str(), errMsg.c_str());
+    HT_ERRORF("readdir failed: file='%s' - %s", abs_path.c_str(), errMsg.c_str());
     ReportError(cb, error);
     return;
   }
@@ -531,7 +531,7 @@ void KosmosBroker::readdir(ResponseCallbackReaddir *cb, const char *dirName) {
 	 stripped_listing.push_back(listing[i]);
        }
 
-  LOG_VA_INFO("Sending back %d listings", stripped_listing.size());
+  HT_INFOF("Sending back %d listings", stripped_listing.size());
 
   cb->response(stripped_listing);
 }

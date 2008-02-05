@@ -114,7 +114,7 @@ CommBuf *Hyperspace::Protocol::create_server_keepalive_request(SessionDataPtr &s
     cbuf->append_long((*iter)->handle);
     (*iter)->eventPtr->encode(cbuf);
     /**
-    LOG_VA_ERROR("Encoding session=%lld handle=%lld eventMask=%d eventId=%lld",
+    HT_ERRORF("Encoding session=%lld handle=%lld eventMask=%d eventId=%lld",
 		 sessionPtr->id, (*iter)->handle, (*iter)->eventPtr->get_mask(), (*iter)->eventPtr->get_id());
     **/
   }

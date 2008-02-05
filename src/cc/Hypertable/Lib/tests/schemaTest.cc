@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
       harness.display_error_and_exit();
     schema = Schema::new_instance(buf, len);
     if (!schema->is_valid()) {
-      LOG_VA_ERROR("Schema Parse Error: %s", schema->get_error_string());      
+      HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());      
     }
     delete schema;
     delete [] buf;

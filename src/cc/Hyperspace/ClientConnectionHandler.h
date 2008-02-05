@@ -58,7 +58,7 @@ namespace Hyperspace {
       m_state = CONNECTING;
       if ((error = m_comm->connect(addr, dhp)) != Error::OK) {
 	std::string str;
-	LOG_VA_ERROR("Problem establishing TCP connection with Hyperspace.Master at %s - %s",
+	HT_ERRORF("Problem establishing TCP connection with Hyperspace.Master at %s - %s",
 		     InetAddr::string_format(str, addr), Error::get_text(error));
 	m_comm->close_socket(addr);
 	m_state = DISCONNECTED;

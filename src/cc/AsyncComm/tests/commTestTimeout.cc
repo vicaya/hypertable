@@ -87,10 +87,10 @@ namespace {
 	m_cond.notify_one();
       }
       else if (eventPtr->type == Event::ERROR) {
-	LOG_VA_INFO("%s", eventPtr->toString().c_str());
+	HT_INFOF("%s", eventPtr->toString().c_str());
       }
       else {
-	LOG_VA_INFO("%s", eventPtr->toString().c_str());
+	HT_INFOF("%s", eventPtr->toString().c_str());
 	m_connected = true;
 	m_cond.notify_one();
       }
@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
     CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::encoded_length_string(msg)) );
     cbufPtr->append_string(msg);
     if ((error = comm->send_request(addr, 5, cbufPtr, respHandler)) != Error::OK) {
-      LOG_VA_ERROR("Problem sending request - %s", Error::get_text(error));
+      HT_ERRORF("Problem sending request - %s", Error::get_text(error));
       return 1;
     }
 
@@ -160,7 +160,7 @@ int main(int argc, char **argv) {
     cbufPtr.reset (new CommBuf(hbuilder, Serialization::encoded_length_string(msg)) );
     cbufPtr->append_string(msg);
     if ((error = comm->send_request(addr, 5, cbufPtr, respHandler)) != Error::OK) {
-      LOG_VA_ERROR("Problem sending request - %s", Error::get_text(error));
+      HT_ERRORF("Problem sending request - %s", Error::get_text(error));
       return 1;
     }
 

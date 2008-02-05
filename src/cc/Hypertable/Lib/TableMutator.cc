@@ -69,7 +69,7 @@ void TableMutator::set(uint64_t timestamp, KeySpec &key, const void *value, uint
     full_key.timestamp = timestamp;
     
     if ((error = m_buffer_ptr->set(full_key, value, value_len)) != Error::OK) {
-      LOG_ERROR("Problem setting cell/value");
+      HT_ERROR("Problem setting cell/value");
     }
   }
 
@@ -115,7 +115,7 @@ void TableMutator::set_delete(uint64_t timestamp, KeySpec &key) {
   }
 
   if ((error = m_buffer_ptr->set_delete(full_key)) != Error::OK) {
-    LOG_VA_ERROR("Problem doing delete - %s", Error::get_text(error));
+    HT_ERRORF("Problem doing delete - %s", Error::get_text(error));
   }
 
   m_memory_used += 20 + key.row_len + key.column_qualifier_len;
@@ -183,7 +183,7 @@ void TableMutator::wait_for_previous_buffer() {
   }
 
   if (error != Error::OK) {
-    LOG_VA_ERROR("Problem resending failed updates (table=%s) - %s", m_table_name.c_str(), Error::get_text(error));
+    HT_ERRORF("Problem resending failed updates (table=%s) - %s", m_table_name.c_str(), Error::get_text(error));
     throw Exception(error, (std::string)"Problem resending failed updates (table=" + m_table_name.c_str() + ")");
   }
   

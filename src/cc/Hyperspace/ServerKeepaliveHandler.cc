@@ -42,7 +42,7 @@ ServerKeepaliveHandler::ServerKeepaliveHandler(Comm *comm, Master *master) : m_c
   m_master->get_datagram_send_address(&m_send_addr);
 
   if ((error = m_comm->set_timer(1000, this)) != Error::OK) {
-    LOG_VA_ERROR("Problem setting timer - %s", Error::get_text(error));
+    HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
     exit(1);
   }
   
@@ -90,23 +90,23 @@ void ServerKeepaliveHandler::handle(Hypertable::EventPtr &eventPtr) {
 
 	  if (sessionId == 0) {
 	    sessionId = m_master->create_session(eventPtr->addr);
-	    LOG_VA_INFO("Session handle %lld created", sessionId);
+	    HT_INFOF("Session handle %lld created", sessionId);
 	    error = Error::OK;
 	  }
 	  else
 	    error = m_master->renew_session_lease(sessionId);
 
 	  if (error == Error::HYPERSPACE_EXPIRED_SESSION) {
-	    LOG_VA_INFO("Session handle %lld expired", sessionId);
+	    HT_INFOF("Session handle %lld expired", sessionId);
 	    CommBufPtr cbufPtr( Protocol::create_server_keepalive_request(sessionId, Error::HYPERSPACE_EXPIRED_SESSION) );
 	    if ((error = m_comm->send_datagram(eventPtr->addr, m_send_addr, cbufPtr)) != Error::OK) {
-	      LOG_VA_ERROR("Comm::send_datagram returned %s", Error::get_text(error));
+	      HT_ERRORF("Comm::send_datagram returned %s", Error::get_text(error));
 	    }
 	    return;
 	  }
 
 	  if (!m_master->get_session(sessionId, sessionPtr)) {
-	    LOG_VA_ERROR("Unable to find data for session %lld", sessionId);
+	    HT_ERRORF("Unable to find data for session %lld", sessionId);
 	    return;
 	  }
 
@@ -115,13 +115,13 @@ void ServerKeepaliveHandler::handle(Hypertable::EventPtr &eventPtr) {
 	  /**
 	  {
 	    std::string str;
-	    LOG_VA_INFO("Sending Keepalive request to %s (lastKnownEvent=%lld)", InetAddr::string_format(str, eventPtr->addr), lastKnownEvent);
+	    HT_INFOF("Sending Keepalive request to %s (lastKnownEvent=%lld)", InetAddr::string_format(str, eventPtr->addr), lastKnownEvent);
 	  }
 	  **/
 
 	  CommBufPtr cbufPtr( Protocol::create_server_keepalive_request(sessionPtr) );
 	  if ((error = m_comm->send_datagram(eventPtr->addr, m_send_addr, cbufPtr)) != Error::OK) {
-	    LOG_VA_ERROR("Comm::send_datagram returned %s", Error::get_text(error));
+	    HT_ERRORF("Comm::send_datagram returned %s", Error::get_text(error));
 	  }
 	}
 	break;
@@ -132,7 +132,7 @@ void ServerKeepaliveHandler::handle(Hypertable::EventPtr &eventPtr) {
     }
     catch (ProtocolException &e) {
       std::string errMsg = e.what();
-      LOG_VA_ERROR("Protocol error '%s'", e.what());
+      HT_ERRORF("Protocol error '%s'", e.what());
     }
   }
   else if (eventPtr->type == Hypertable::Event::TIMER) {
@@ -140,13 +140,13 @@ void ServerKeepaliveHandler::handle(Hypertable::EventPtr &eventPtr) {
     m_master->remove_expired_sessions();
 
     if ((error = m_comm->set_timer(1000, this)) != Error::OK) {
-      LOG_VA_ERROR("Problem setting timer - %s", Error::get_text(error));
+      HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
       exit(1);
     }
 
   }
   else {
-    LOG_VA_INFO("%s", eventPtr->toString().c_str());
+    HT_INFOF("%s", eventPtr->toString().c_str());
   }
 }
 
@@ -158,23 +158,23 @@ void ServerKeepaliveHandler::deliver_event_notifications(uint64_t sessionId) {
   int error = 0;
   SessionDataPtr sessionPtr;
 
-  //LOG_VA_INFO("Delivering event notifications for session %lld", sessionId);
+  //HT_INFOF("Delivering event notifications for session %lld", sessionId);
 
   if (!m_master->get_session(sessionId, sessionPtr)) {
-    LOG_VA_ERROR("Unable to find data for session %lld", sessionId);
+    HT_ERRORF("Unable to find data for session %lld", sessionId);
     return;
   }
 
   /**
   {
     std::string str;
-    LOG_VA_INFO("Sending Keepalive request to %s", InetAddr::string_format(str, sessionPtr->addr));
+    HT_INFOF("Sending Keepalive request to %s", InetAddr::string_format(str, sessionPtr->addr));
   }
   **/
 
   CommBufPtr cbufPtr( Protocol::create_server_keepalive_request(sessionPtr) );
   if ((error = m_comm->send_datagram(sessionPtr->addr, m_send_addr, cbufPtr)) != Error::OK) {
-    LOG_VA_ERROR("Comm::send_datagram returned %s", Error::get_text(error));
+    HT_ERRORF("Comm::send_datagram returned %s", Error::get_text(error));
   }
 
 }

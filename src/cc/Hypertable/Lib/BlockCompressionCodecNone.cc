@@ -74,13 +74,13 @@ BlockCompressionCodecNone::inflate(const DynamicBuffer &input, DynamicBuffer &ou
     return error;
 
   if (header.get_zlength() != remaining) {
-    LOG_VA_ERROR("Block decompression error, header zlength = %d, actual = %d", header.get_zlength(), remaining);
+    HT_ERRORF("Block decompression error, header zlength = %d, actual = %d", header.get_zlength(), remaining);
     return Error::BLOCK_COMPRESSOR_BAD_HEADER;
   }
 
   uint32_t checksum = fletcher32(msg_ptr, remaining);
   if (checksum != header.get_checksum()) {
-    LOG_VA_ERROR("Compressed block checksum mismatch header=%d, computed=%d", header.get_checksum(), checksum);
+    HT_ERRORF("Compressed block checksum mismatch header=%d, computed=%d", header.get_checksum(), checksum);
     return Error::BLOCK_COMPRESSOR_CHECKSUM_MISMATCH;
   }
 

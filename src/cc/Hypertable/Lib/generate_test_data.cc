@@ -152,13 +152,13 @@ int main(int argc, char **argv) {
   client = new Client(argv[0], configFile);
 
   if ((error = client->get_schema(tableName, schemaSpec)) != Error::OK) {
-    LOG_VA_ERROR("Problem getting schema for table '%s' - %s", argv[1], Error::get_text(error));
+    HT_ERRORF("Problem getting schema for table '%s' - %s", argv[1], Error::get_text(error));
     return error;
   }
 
   schema = Schema::new_instance(schemaSpec.c_str(), strlen(schemaSpec.c_str()), true);
   if (!schema->is_valid()) {
-    LOG_VA_ERROR("Schema Parse Error: %s", schema->get_error_string());
+    HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
     exit(1);
   }
 

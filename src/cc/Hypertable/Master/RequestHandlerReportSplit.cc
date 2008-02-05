@@ -59,6 +59,6 @@ void RequestHandlerReportSplit::run() {
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with ReportSplit message");
+  HT_ERROR("Encoding problem with ReportSplit message");
   cb.error(Error::PROTOCOL_ERROR, "Encoding problem with ReportSplit message");
 }

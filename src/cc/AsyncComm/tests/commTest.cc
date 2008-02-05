@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
   connManagerPtr = new ConnectionManager(comm);
   connManagerPtr->add(addr, 5, "testServer");
   if (!connManagerPtr->wait_for_connection(addr, 30)) {
-    LOG_ERROR("Connect error");
+    HT_ERROR("Connect error");
     return 1;
   }
 

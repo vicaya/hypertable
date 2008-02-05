@@ -59,7 +59,7 @@ void RequestHandlerCompact::run() {
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with Compact message");
+  HT_ERROR("Encoding problem with Compact message");
   cb.error(Error::PROTOCOL_ERROR, "Encoding problem with Compact message");
   return;
 }

@@ -46,7 +46,7 @@ void RequestHandlerClose::run() {
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with CLOSE message");
+  HT_ERROR("Encoding problem with CLOSE message");
   cb.error(Error::PROTOCOL_ERROR, "Encoding problem with CLOSE message");
   return;
 }

@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
     }
 
     if (!dfs_client->wait_for_connection(30)) {
-      LOG_ERROR("Unable to connect to DFS Broker, exiting...");
+      HT_ERROR("Unable to connect to DFS Broker, exiting...");
       exit(1);
     }
   }

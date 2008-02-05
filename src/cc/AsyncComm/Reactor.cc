@@ -71,7 +71,7 @@ Reactor::Reactor() : m_mutex(), m_interrupt_in_progress(false) {
    * value
    */
   if ((m_interrupt_sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-    LOG_VA_ERROR("socket() failure: %s", strerror(errno));
+    HT_ERRORF("socket() failure: %s", strerror(errno));
     exit(1);
   }
 
@@ -86,7 +86,7 @@ Reactor::Reactor() : m_mutex(), m_interrupt_in_progress(false) {
 
   // bind socket
   if ((bind(m_interrupt_sd, (const sockaddr *)&addr, sizeof(sockaddr_in))) < 0) {
-    LOG_VA_ERROR("bind() failure: %s", strerror(errno));
+    HT_ERRORF("bind() failure: %s", strerror(errno));
     exit(1);
   }
 
@@ -95,7 +95,7 @@ Reactor::Reactor() : m_mutex(), m_interrupt_in_progress(false) {
   memset(&event, 0, sizeof(struct epoll_event));
   event.events = EPOLLERR | EPOLLHUP;
   if (epoll_ctl(pollFd, EPOLL_CTL_ADD, m_interrupt_sd, &event) < 0) {
-    LOG_VA_ERROR("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLERR|EPOLLHUP) failed : %s",
+    HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLERR|EPOLLHUP) failed : %s",
 		 pollFd, m_interrupt_sd, strerror(errno));
     exit(1);
   }
@@ -192,7 +192,7 @@ void Reactor::poll_loop_interrupt() {
 
   if (epoll_ctl(pollFd, EPOLL_CTL_MOD, m_interrupt_sd, &event) < 0) {
     /**
-    LOG_VA_ERROR("epoll_ctl(%d, EPOLL_CTL_MOD, sd=%d) : %s", 
+    HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_MOD, sd=%d) : %s", 
                  pollFd, m_interrupt_sd, strerror(errno));
     DUMP_CORE;
     **/
@@ -204,7 +204,7 @@ void Reactor::poll_loop_interrupt() {
   EV_SET(&event, m_interrupt_sd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, 0);
 
   if (kevent(kQueue, &event, 1, 0, 0, 0) == -1) {
-    LOG_VA_ERROR("kevent(sd=%d) : %s", m_interrupt_sd, strerror(errno));
+    HT_ERRORF("kevent(sd=%d) : %s", m_interrupt_sd, strerror(errno));
     exit(1);
   }
 #endif
@@ -228,7 +228,7 @@ void Reactor::poll_loop_continue() {
   event.events = EPOLLERR | EPOLLHUP;
 
   if (epoll_ctl(pollFd, EPOLL_CTL_MOD, m_interrupt_sd, &event) < 0) {
-    LOG_VA_ERROR("epoll_ctl(EPOLL_CTL_MOD, sd=%d) : %s", m_interrupt_sd, strerror(errno));
+    HT_ERRORF("epoll_ctl(EPOLL_CTL_MOD, sd=%d) : %s", m_interrupt_sd, strerror(errno));
     exit(1);
   }
 #elif defined(__APPLE__)
@@ -237,7 +237,7 @@ void Reactor::poll_loop_continue() {
   EV_SET(&devent, m_interrupt_sd, EVFILT_WRITE, EV_DELETE, 0, 0, 0);
 
   if (kevent(kQueue, &devent, 1, 0, 0, 0) == -1 && errno != ENOENT) {
-    LOG_VA_ERROR("kevent(sd=%d) : %s", m_interrupt_sd, strerror(errno));
+    HT_ERRORF("kevent(sd=%d) : %s", m_interrupt_sd, strerror(errno));
     exit(1);
   }
 #endif

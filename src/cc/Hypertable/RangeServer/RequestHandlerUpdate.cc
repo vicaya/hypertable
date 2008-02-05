@@ -53,7 +53,7 @@ void RequestHandlerUpdate::run() {
   return;
 
  abort:
-  LOG_ERROR("Encoding problem with Update message");
+  HT_ERROR("Encoding problem with Update message");
   cb.error(Error::PROTOCOL_ERROR, "Encoding problem with Update message");
   return;
 }

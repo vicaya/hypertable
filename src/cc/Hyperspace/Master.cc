@@ -75,7 +75,7 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, Se
   m_keep_alive_interval = (uint32_t)propsPtr->get_int("Hyperspace.KeepAlive.Interval", DEFAULT_KEEPALIVE_INTERVAL);
 
   if ((dirname = propsPtr->get("Hyperspace.Master.dir", 0)) == 0) {
-    LOG_ERROR("Property 'Hyperspace.Master.dir' not found.");
+    HT_ERROR("Property 'Hyperspace.Master.dir' not found.");
     exit(1);
   }
 
@@ -90,7 +90,7 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, Se
     m_base_dir = System::installDir + "/" + str;
 
   if ((m_base_fd = ::open(m_base_dir.c_str(), O_RDONLY)) < 0) {
-    LOG_VA_ERROR("Unable to open base directory %s - %s", m_base_dir.c_str(), strerror(errno));
+    HT_ERRORF("Unable to open base directory %s - %s", m_base_dir.c_str(), strerror(errno));
     exit(1);
   }
 
@@ -99,10 +99,10 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, Se
    */
   if (flock(m_base_fd, LOCK_EX | LOCK_NB) != 0) {
     if (errno == EWOULDBLOCK) {
-      LOG_VA_ERROR("Base directory '%s' is locked by another process.", m_base_dir.c_str());
+      HT_ERRORF("Base directory '%s' is locked by another process.", m_base_dir.c_str());
     }
     else {
-      LOG_VA_ERROR("Unable to lock base directory '%s' - %s", m_base_dir.c_str(), strerror(errno));
+      HT_ERRORF("Unable to lock base directory '%s' - %s", m_base_dir.c_str(), strerror(errno));
     }
     exit(1);
   }
@@ -115,19 +115,19 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, Se
       cerr << "'generation' attribute not found on base dir, creating ..." << endl;
       m_generation = 1;
       if (FileUtils::setxattr(m_base_dir.c_str(), "generation", &m_generation, sizeof(uint32_t), XATTR_CREATE) == -1) {
-	LOG_VA_ERROR("Problem creating extended attribute 'generation' on base dir '%s' - %s", m_base_dir.c_str(), strerror(errno));
+	HT_ERRORF("Problem creating extended attribute 'generation' on base dir '%s' - %s", m_base_dir.c_str(), strerror(errno));
 	exit(1);
       }
     }
     else {
-      LOG_VA_ERROR("Unable to read extended attribute 'generation' on base dir '%s' - %s", m_base_dir.c_str(), strerror(errno));
+      HT_ERRORF("Unable to read extended attribute 'generation' on base dir '%s' - %s", m_base_dir.c_str(), strerror(errno));
       exit(1);
     }
   }
   else {
     m_generation++;
     if (FileUtils::setxattr(m_base_dir.c_str(), "generation", &m_generation, sizeof(uint32_t), XATTR_REPLACE) == -1) {
-      LOG_VA_ERROR("Problem creating extended attribute 'generation' on base dir '%s' - %s", m_base_dir.c_str(), strerror(errno));
+      HT_ERRORF("Problem creating extended attribute 'generation' on base dir '%s' - %s", m_base_dir.c_str(), strerror(errno));
       exit(1);
     }
   }
@@ -237,7 +237,7 @@ void Master::remove_expired_sessions() {
   while (next_expired_session(sessionPtr)) {
 
     if (m_verbose) {
-      LOG_VA_INFO("Expiring session %lld", sessionPtr->id);
+      HT_INFOF("Expiring session %lld", sessionPtr->id);
     }
 
     sessionPtr->expire();
@@ -247,10 +247,10 @@ void Master::remove_expired_sessions() {
       HandleDataPtr handlePtr;
       for (set<uint64_t>::iterator iter = sessionPtr->handles.begin(); iter != sessionPtr->handles.end(); iter++) {
 	if (m_verbose) {
-	  LOG_VA_INFO("Destroying handle %lld", *iter);
+	  HT_INFOF("Destroying handle %lld", *iter);
 	}
 	if (!destroy_handle(*iter, &error, errMsg, false)) {
-	  LOG_VA_ERROR("Problem destroying handle - %s (%s)", Error::get_text(error), errMsg.c_str());
+	  HT_ERRORF("Problem destroying handle - %s (%s)", Error::get_text(error), errMsg.c_str());
 	}
       }
       sessionPtr->handles.clear();
@@ -309,7 +309,7 @@ void Master::mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name) {
   std::string childName;
 
   if (m_verbose) {
-    LOG_VA_INFO("mkdir(sessionId=%lld, name=%s)", sessionId, name);
+    HT_INFOF("mkdir(sessionId=%lld, name=%s)", sessionId, name);
   }
 
   if (!find_parent_node(name, parentNodePtr, childName)) {
@@ -349,7 +349,7 @@ void Master::unlink(ResponseCallback *cb, uint64_t sessionId, const char *name) 
   NodeDataPtr parentNodePtr;
 
   if (m_verbose) {
-    LOG_VA_INFO("unlink(sessionId=%lld, name=%s)", sessionId, name);
+    HT_INFOF("unlink(sessionId=%lld, name=%s)", sessionId, name);
   }
 
   if (!strcmp(name, "/")) {
@@ -423,7 +423,7 @@ void Master::open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
   uint64_t lockGeneration = 0;
 
   if (m_verbose) {
-    LOG_VA_INFO("open(sessionId=%lld, fname=%s, flags=0x%x, eventMask=0x%x)", sessionId, name, flags, eventMask);
+    HT_INFOF("open(sessionId=%lld, fname=%s, flags=0x%x, eventMask=0x%x)", sessionId, name, flags, eventMask);
     cout << flush;
   }
 
@@ -517,7 +517,7 @@ void Master::open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
       }
       nodePtr->fd = ::open(absName.c_str(), oflags, 0644);
       if (nodePtr->fd < 0) {
-	LOG_VA_ERROR("open(%s, 0x%x, 0644) failed (errno=%d) - %s", absName.c_str(), oflags, errno, strerror(errno));
+	HT_ERRORF("open(%s, 0x%x, 0644) failed (errno=%d) - %s", absName.c_str(), oflags, errno, strerror(errno));
 	report_error(cb);
 	return;
       }
@@ -529,13 +529,13 @@ void Master::open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
 	if (errno == ENOATTR) {
 	  nodePtr->lockGeneration = 1;
 	  if (FileUtils::fsetxattr(nodePtr->fd, "lock.generation", &nodePtr->lockGeneration, sizeof(uint64_t), 0) == -1) {
-	    LOG_VA_ERROR("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
+	    HT_ERRORF("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
 			 name, strerror(errno));
 	    DUMP_CORE;
 	  }
 	}
 	else {
-	  LOG_VA_ERROR("Problem reading extended attribute 'lock.generation' on file '%s' - %s",
+	  HT_ERRORF("Problem reading extended attribute 'lock.generation' on file '%s' - %s",
 		       name, strerror(errno));
 	  DUMP_CORE;
 	}
@@ -548,7 +548,7 @@ void Master::open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
        */
       for (size_t i=0; i<initAttrs.size(); i++) {
 	if (FileUtils::fsetxattr(nodePtr->fd, initAttrs[i].name, initAttrs[i].value, initAttrs[i].valueLen, 0) == -1) {
-	  LOG_VA_ERROR("Problem creating extended attribute '%s' on file '%s' - %s",
+	  HT_ERRORF("Problem creating extended attribute '%s' on file '%s' - %s",
 		       initAttrs[i].name, name, strerror(errno));
 	  DUMP_CORE;
 	}
@@ -590,7 +590,7 @@ void Master::open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
     if (lockMode != 0) {
       handlePtr->node->lockGeneration++;
       if (FileUtils::fsetxattr(handlePtr->node->fd, "lock.generation", &handlePtr->node->lockGeneration, sizeof(uint64_t), 0) == -1) {
-	LOG_VA_ERROR("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
+	HT_ERRORF("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
 		     handlePtr->node->name.c_str(), strerror(errno));
 	exit(1);
       }
@@ -623,7 +623,7 @@ void Master::close(ResponseCallback *cb, uint64_t sessionId, uint64_t handle) {
   std::string errMsg;
 
   if (m_verbose) {
-    LOG_VA_INFO("close(session=%lld, handle=%lld)", sessionId, handle);
+    HT_INFOF("close(session=%lld, handle=%lld)", sessionId, handle);
   }
 
   if (!get_session(sessionId, sessionPtr)) {
@@ -643,7 +643,7 @@ void Master::close(ResponseCallback *cb, uint64_t sessionId, uint64_t handle) {
   }
 
   if ((error = cb->response_ok()) != Error::OK) {
-    LOG_VA_ERROR("Problem sending back response - %s", Error::get_text(error));
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
   }
 }
 
@@ -658,7 +658,7 @@ void Master::attr_set(ResponseCallback *cb, uint64_t sessionId, uint64_t handle,
   int error;
 
   if (m_verbose) {
-    LOG_VA_INFO("attrset(session=%lld, handle=%lld, name=%s, valueLen=%d)", sessionId, handle, name, valueLen);
+    HT_INFOF("attrset(session=%lld, handle=%lld, name=%s, valueLen=%d)", sessionId, handle, name, valueLen);
   }
 
   if (!get_session(sessionId, sessionPtr)) {
@@ -675,7 +675,7 @@ void Master::attr_set(ResponseCallback *cb, uint64_t sessionId, uint64_t handle,
     boost::mutex::scoped_lock nodeLock(handlePtr->node->mutex);
 
     if (FileUtils::fsetxattr(handlePtr->node->fd, name, value, valueLen, 0) == -1) {
-      LOG_VA_ERROR("Problem creating extended attribute '%s' on file '%s' - %s",
+      HT_ERRORF("Problem creating extended attribute '%s' on file '%s' - %s",
 		   name, handlePtr->node->name.c_str(), strerror(errno));
       DUMP_CORE;
     }
@@ -685,7 +685,7 @@ void Master::attr_set(ResponseCallback *cb, uint64_t sessionId, uint64_t handle,
   }
 
   if ((error = cb->response_ok()) != Error::OK) {
-    LOG_VA_ERROR("Problem sending back response - %s", Error::get_text(error));
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
   }
 
 }
@@ -702,7 +702,7 @@ void Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t sessionId, uint64_t 
   uint8_t *buf = 0;
 
   if (m_verbose) {
-    LOG_VA_INFO("attrget(session=%lld, handle=%lld, name=%s)", sessionId, handle, name);
+    HT_INFOF("attrget(session=%lld, handle=%lld, name=%s)", sessionId, handle, name);
   }
 
   if (!get_session(sessionId, sessionPtr)) {
@@ -719,7 +719,7 @@ void Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t sessionId, uint64_t 
     boost::mutex::scoped_lock nodeLock(handlePtr->node->mutex);
 
     if ((alen = FileUtils::fgetxattr(handlePtr->node->fd, name, 0, 0)) < 0) {
-      LOG_VA_ERROR("Problem determining size of extended attribute '%s' on file '%s' - %s",
+      HT_ERRORF("Problem determining size of extended attribute '%s' on file '%s' - %s",
 		   name, handlePtr->node->name.c_str(), strerror(errno));
       report_error(cb);
       return;
@@ -728,14 +728,14 @@ void Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t sessionId, uint64_t 
     buf = new uint8_t [ alen + 8 ];
 
     if ((alen = FileUtils::fgetxattr(handlePtr->node->fd, name, buf, alen)) < 0) {
-      LOG_VA_ERROR("Problem determining size of extended attribute '%s' on file '%s' - %s",
+      HT_ERRORF("Problem determining size of extended attribute '%s' on file '%s' - %s",
 		   name, handlePtr->node->name.c_str(), strerror(errno));
       DUMP_CORE;
     }
   }
 
   if ((error = cb->response(buf, (uint32_t)alen)) != Error::OK) {
-    LOG_VA_ERROR("Problem sending back response - %s", Error::get_text(error));
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
   }
   
 }
@@ -748,7 +748,7 @@ void Master::attr_del(ResponseCallback *cb, uint64_t sessionId, uint64_t handle,
   int error;
 
   if (m_verbose) {
-    LOG_VA_INFO("attrdel(session=%lld, handle=%lld, name=%s)", sessionId, handle, name);
+    HT_INFOF("attrdel(session=%lld, handle=%lld, name=%s)", sessionId, handle, name);
   }
 
   if (!get_session(sessionId, sessionPtr)) {
@@ -765,7 +765,7 @@ void Master::attr_del(ResponseCallback *cb, uint64_t sessionId, uint64_t handle,
     boost::mutex::scoped_lock nodeLock(handlePtr->node->mutex);
 
     if (FileUtils::fremovexattr(handlePtr->node->fd, name) == -1) {
-      LOG_VA_ERROR("Problem removing extended attribute '%s' on file '%s' - %s",
+      HT_ERRORF("Problem removing extended attribute '%s' on file '%s' - %s",
 		   name, handlePtr->node->name.c_str(), strerror(errno));
       report_error(cb);
       return;
@@ -776,7 +776,7 @@ void Master::attr_del(ResponseCallback *cb, uint64_t sessionId, uint64_t handle,
   }
 
   if ((error = cb->response_ok()) != Error::OK) {
-    LOG_VA_ERROR("Problem sending back response - %s", Error::get_text(error));
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
   }
 
 }
@@ -787,7 +787,7 @@ void Master::exists(ResponseCallbackExists *cb, uint64_t sessionId, const char *
   int error;
 
   if (m_verbose) {
-    LOG_VA_INFO("exists(sessionId=%lld, name=%s)", sessionId, name);
+    HT_INFOF("exists(sessionId=%lld, name=%s)", sessionId, name);
   }
 
   assert(name[0] == '/' && name[strlen(name)-1] != '/');
@@ -795,7 +795,7 @@ void Master::exists(ResponseCallbackExists *cb, uint64_t sessionId, const char *
   absName = m_base_dir + name;
 
   if ((error = cb->response( FileUtils::exists(absName.c_str()) )) != Error::OK) {
-    LOG_VA_ERROR("Problem sending back response - %s", Error::get_text(error));
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
   }
 }
 
@@ -808,7 +808,7 @@ void Master::readdir(ResponseCallbackReaddir *cb, uint64_t sessionId, uint64_t h
   std::vector<struct DirEntryT> listing;
 
   if (m_verbose) {
-    LOG_VA_INFO("readdir(session=%lld, handle=%lld)", sessionId, handle);
+    HT_INFOF("readdir(session=%lld, handle=%lld)", sessionId, handle);
   }
 
   if (!get_session(sessionId, sessionPtr)) {
@@ -830,7 +830,7 @@ void Master::readdir(ResponseCallbackReaddir *cb, uint64_t sessionId, uint64_t h
 
     if (dirp == 0) {
       report_error(cb);
-      LOG_VA_ERROR("opendir('%s') failed - %s", absName.c_str(), strerror(errno));
+      HT_ERRORF("opendir('%s') failed - %s", absName.c_str(), strerror(errno));
       return;
     }
 
@@ -839,7 +839,7 @@ void Master::readdir(ResponseCallbackReaddir *cb, uint64_t sessionId, uint64_t h
 
     if (readdir_r(dirp, &dent, &dp) != 0) {
       report_error(cb);
-      LOG_VA_ERROR("readdir('%s') failed - %s", absName.c_str(), strerror(errno));
+      HT_ERRORF("readdir('%s') failed - %s", absName.c_str(), strerror(errno));
       (void)closedir(dirp);
       return;
     }
@@ -854,7 +854,7 @@ void Master::readdir(ResponseCallbackReaddir *cb, uint64_t sessionId, uint64_t h
 
       if (readdir_r(dirp, &dent, &dp) != 0) {
 	report_error(cb);
-	LOG_VA_ERROR("readdir('%s') failed - %s", absName.c_str(), strerror(errno));
+	HT_ERRORF("readdir('%s') failed - %s", absName.c_str(), strerror(errno));
 	(void)closedir(dirp);
 	return;
       }
@@ -874,7 +874,7 @@ void Master::lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle,
   bool notify = true;
   
   if (m_verbose) {
-    LOG_VA_INFO("lock(session=%lld, handle=%lld, mode=0x%x, tryAcquire=%d)", sessionId, handle, mode, tryAcquire);
+    HT_INFOF("lock(session=%lld, handle=%lld, mode=0x%x, tryAcquire=%d)", sessionId, handle, mode, tryAcquire);
   }
 
   if (!get_session(sessionId, sessionPtr)) {
@@ -936,7 +936,7 @@ void Master::lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle,
 
     handlePtr->node->lockGeneration++;
     if (FileUtils::fsetxattr(handlePtr->node->fd, "lock.generation", &handlePtr->node->lockGeneration, sizeof(uint64_t), 0) == -1) {
-      LOG_VA_ERROR("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
+      HT_ERRORF("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
 		   handlePtr->node->name.c_str(), strerror(errno));
       exit(1);
     }
@@ -992,7 +992,7 @@ void Master::release(ResponseCallback *cb, uint64_t sessionId, uint64_t handle) 
   HandleDataPtr handlePtr;
 
   if (m_verbose) {
-    LOG_VA_INFO("release(session=%lld, handle=%lld)", sessionId, handle);
+    HT_INFOF("release(session=%lld, handle=%lld)", sessionId, handle);
   }
 
   if (!get_session(sessionId, sessionPtr)) {
@@ -1033,10 +1033,10 @@ void Master::release_lock(HandleDataPtr &handlePtr, bool waitForNotify) {
 
   // deliver LOCK_RELEASED notifications if no more locks held on node
   if (handlePtr->node->sharedLockHandles.empty()) {
-    LOG_INFO("About to deliver lock released notifications");
+    HT_INFO("About to deliver lock released notifications");
     HyperspaceEventPtr eventPtr( new EventLockReleased() );
     deliver_event_notifications(handlePtr->node, eventPtr, waitForNotify);
-    LOG_INFO("Finished delivering lock released notifications");
+    HT_INFO("Finished delivering lock released notifications");
   }
 
   handlePtr->node->currentLockMode = 0;
@@ -1066,7 +1066,7 @@ void Master::release_lock(HandleDataPtr &handlePtr, bool waitForNotify) {
 
       handlePtr->node->lockGeneration++;
       if (FileUtils::fsetxattr(handlePtr->node->fd, "lock.generation", &handlePtr->node->lockGeneration, sizeof(uint64_t), 0) == -1) {
-	LOG_VA_ERROR("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
+	HT_ERRORF("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
 		     handlePtr->node->name.c_str(), strerror(errno));
 	exit(1);
       }
@@ -1109,7 +1109,7 @@ void Master::report_error(ResponseCallback *cb) {
   else if (errno == EISDIR)
     cb->error(Error::HYPERSPACE_IS_DIRECTORY, errbuf);
   else {
-    LOG_VA_ERROR("Unknown error, errno = %d", errno);
+    HT_ERRORF("Unknown error, errno = %d", errno);
     cb->error(Error::HYPERSPACE_IO_ERROR, errbuf);
   }
 }
@@ -1140,7 +1140,7 @@ void Master::deliver_event_notifications(NodeData *node, HyperspaceEventPtr &eve
   // log event
 
   for (HandleMapT::iterator iter = node->handleMap.begin(); iter != node->handleMap.end(); iter++) {
-    //LOG_VA_INFO("Delivering notification (%d == %d)", (*iter).second->eventMask, eventPtr->get_mask());
+    //HT_INFOF("Delivering notification (%d == %d)", (*iter).second->eventMask, eventPtr->get_mask());
     if ((*iter).second->eventMask & eventPtr->get_mask()) {
       (*iter).second->sessionPtr->add_notification( new Notification((*iter).first, eventPtr) );
       m_keepalive_handler_ptr->deliver_event_notifications((*iter).second->sessionPtr->id);
