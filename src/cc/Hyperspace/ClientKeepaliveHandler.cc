@@ -40,9 +40,9 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsP
   uint16_t masterPort;
   const char *masterHost;
 
-  m_verbose = propsPtr->get_bool("verbose", false);
-  masterHost = propsPtr->get("Hyperspace.Master.host", "localhost");
-  masterPort = (uint16_t)propsPtr->get_int("Hyperspace.Master.port", Master::DEFAULT_MASTER_PORT);
+  m_verbose = propsPtr->get_bool("Hypertable.Verbose", false);
+  masterHost = propsPtr->get("Hyperspace.Master.Host", "localhost");
+  masterPort = (uint16_t)propsPtr->get_int("Hyperspace.Master.Port", Master::DEFAULT_MASTER_PORT);
   m_lease_interval = (uint32_t)propsPtr->get_int("Hyperspace.Lease.Interval", Master::DEFAULT_LEASE_INTERVAL);
   m_keep_alive_interval = (uint32_t)propsPtr->get_int("Hyperspace.KeepAlive.Interval", Master::DEFAULT_KEEPALIVE_INTERVAL);
   
@@ -52,8 +52,8 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsP
   if (m_verbose) {
     cout << "Hyperspace.KeepAlive.Interval=" << m_keep_alive_interval << endl;
     cout << "Hyperspace.Lease.Interval=" << m_lease_interval << endl;
-    cout << "Hyperspace.Master.host=" << masterHost << endl;
-    cout << "Hyperspace.Master.port=" << masterPort << endl;
+    cout << "Hyperspace.Master.Host=" << masterHost << endl;
+    cout << "Hyperspace.Master.Port=" << masterPort << endl;
   }
 
   boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC);

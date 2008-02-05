@@ -127,21 +127,21 @@ int main(int argc, char **argv) {
   props_ptr = new Properties(configFile);
 
   if (serverName == "dfsbroker") {
-    hostProperty = "DfsBroker.host";
-    portProperty = "DfsBroker.port";
+    hostProperty = "DfsBroker.Host";
+    portProperty = "DfsBroker.Port";
   }
   else if (serverName == "hyperspace") {
-    hostProperty = "Hyperspace.Master.host";
-    portProperty = "Hyperspace.Master.port";
+    hostProperty = "Hyperspace.Master.Host";
+    portProperty = "Hyperspace.Master.Port";
   }
   else if (serverName == "master") {
-    hostProperty = "Hypertable.Master.host";
-    portProperty = "Hypertable.Master.port";
+    hostProperty = "Hypertable.Master.Host";
+    portProperty = "Hypertable.Master.Port";
   }
   else if (serverName == "rangeserver") {
     if (hostName == "")
       hostName = "localhost";
-    portProperty = "Hypertable.RangeServer.port";
+    portProperty = "Hypertable.RangeServer.Port";
   }
   else
     Usage::dump_and_exit(usage);

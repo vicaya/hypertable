@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
 
   if (hostName == "")
     hostName = "localhost";
-  portProperty = "Hypertable.RangeServer.port";
+  portProperty = "Hypertable.RangeServer.Port";
 
   {
     if (hostName == "")

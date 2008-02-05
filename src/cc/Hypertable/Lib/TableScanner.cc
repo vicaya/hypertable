@@ -42,9 +42,7 @@ TableScanner::TableScanner(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier
   char *str;
   time_t client_timeout;
 
-  if ((client_timeout = props_ptr->get_int("Hypertable.RangeServer.Client.Timeout", 0)) != 0)
-    m_range_server.set_timeout(client_timeout);
-  else if ((client_timeout = props_ptr->get_int("Hypertable.Connection.Timeout", 0)) != 0)
+  if ((client_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0)) != 0)
     m_range_server.set_timeout(client_timeout);
 
   m_scan_spec.rowLimit = scan_spec.rowLimit;

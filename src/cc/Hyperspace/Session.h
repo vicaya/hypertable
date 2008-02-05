@@ -112,9 +112,9 @@ namespace Hyperspace {
    * The following set of properties are available to configure the protocol (default
    * values are shown):
    * <pre>
-   * Hyperspace.Lease.Interval=12
-   * Hyperspace.KeepAlive.Interval=7
-   * Hyperspace.GracePeriod=45
+   * Hyperspace.Lease.Interval=20
+   * Hyperspace.KeepAlive.Interval=10
+   * Hyperspace.GracePeriod=60
    * </pre>
    */
   class Session : public ReferenceCount {

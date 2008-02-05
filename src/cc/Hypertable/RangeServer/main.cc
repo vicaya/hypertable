@@ -52,7 +52,7 @@ using namespace std;
 
 namespace {
   const char *usage[] = {
-    "usage: Hypertable.range_server [OPTIONS]",
+    "usage: Hypertable.RangeServer [OPTIONS]",
     "",
     "OPTIONS:",
     "  --config=<file>      Read configuration from <file>.  The default config file is",
@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
 
     props_ptr = new Properties(configFile);
     if (Global::verbose)
-      props_ptr->set("verbose", "true");
+      props_ptr->set("Hypertable.Verbose", "true");
 
     if (logBroker != 0) {
       char *portStr = strchr(logBroker, ':');
@@ -123,15 +123,15 @@ int main(int argc, char **argv) {
 	exit(1);
       }
       *portStr++ = 0;
-      props_ptr->set("Hypertable.RangeServer.CommitLog.DfsBroker.host", logBroker);
-      props_ptr->set("Hypertable.RangeServer.CommitLog.DfsBroker.port", portStr);
+      props_ptr->set("Hypertable.RangeServer.CommitLog.DfsBroker.Host", logBroker);
+      props_ptr->set("Hypertable.RangeServer.CommitLog.DfsBroker.Port", portStr);
     }
 
-    reactorCount = props_ptr->get_int("Hypertable.range_server.reactors", System::get_processor_count());
+    reactorCount = props_ptr->get_int("Hypertable.RangeServer.Reactors", System::get_processor_count());
     ReactorFactory::initialize(reactorCount);
     comm_ptr = new Comm();
 
-    workerCount = props_ptr->get_int("Hypertable.RangeServer.workers", DEFAULT_WORKERS);
+    workerCount = props_ptr->get_int("Hypertable.RangeServer.Workers", DEFAULT_WORKERS);
 
     conn_manager_ptr = new ConnectionManager(comm_ptr.get());
     app_queue_ptr = new ApplicationQueue(workerCount);
@@ -149,7 +149,7 @@ int main(int argc, char **argv) {
 
     if (Global::verbose) {
       cout << "CPU count = " << System::get_processor_count() << endl;
-      cout << "Hypertable.range_server.reactors=" << reactorCount << endl;
+      cout << "Hypertable.RangeServer.Reactors=" << reactorCount << endl;
       if (Global::range_metadata_max_bytes != 0)
 	cout << "Hypertable.RangeServer.Range.MetadataMaxBytes=" << Global::range_metadata_max_bytes << endl;
     }

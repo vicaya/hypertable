@@ -69,9 +69,9 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
   Global::rangeMaxBytes           = props_ptr->get_int64("Hypertable.RangeServer.Range.MaxBytes", 200000000LL);
   Global::localityGroupMaxFiles   = props_ptr->get_int("Hypertable.RangeServer.AccessGroup.MaxFiles", 10);
   Global::localityGroupMergeFiles = props_ptr->get_int("Hypertable.RangeServer.AccessGroup.MergeFiles", 4);
-  Global::localityGroupMaxMemory  = props_ptr->get_int("Hypertable.RangeServer.AccessGroup.MaxMemory", 4000000);
-  port                            = props_ptr->get_int("Hypertable.RangeServer.port", DEFAULT_PORT);
-  m_scanner_ttl                   = (time_t)props_ptr->get_int("Hypertable.RangeServer.Scanner.ttl", 120);
+  Global::localityGroupMaxMemory  = props_ptr->get_int("Hypertable.RangeServer.AccessGroup.MaxMemory", 50000000);
+  port                            = props_ptr->get_int("Hypertable.RangeServer.Port", DEFAULT_PORT);
+  m_scanner_ttl                   = (time_t)props_ptr->get_int("Hypertable.RangeServer.Scanner.Ttl", 120);
   m_timer_interval                = props_ptr->get_int("Hypertable.RangeServer.Timer.Interval", 60);
 
   if (m_timer_interval >= 1000) {
@@ -89,7 +89,7 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
 
   assert(Global::localityGroupMergeFiles <= Global::localityGroupMaxFiles);
 
-  m_verbose = props_ptr->get_bool("verbose", false);
+  m_verbose = props_ptr->get_bool("Hypertable.Verbose", false);
 
   if (Global::verbose) {
     cout << "Hypertable.RangeServer.AccessGroup.MaxFiles=" << Global::localityGroupMaxFiles << endl;
@@ -97,7 +97,7 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
     cout << "Hypertable.RangeServer.AccessGroup.MergeFiles=" << Global::localityGroupMergeFiles << endl;
     cout << "Hypertable.RangeServer.BlockCache.MaxMemory=" << blockCacheMemory << endl;
     cout << "Hypertable.RangeServer.Range.MaxBytes=" << Global::rangeMaxBytes << endl;
-    cout << "Hypertable.RangeServer.port=" << port << endl;
+    cout << "Hypertable.RangeServer.Port=" << port << endl;
     //cout << "Hypertable.RangeServer.workers=" << workerCount << endl;
   }
 
@@ -109,9 +109,9 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
   DfsBroker::Client *dfsClient = new DfsBroker::Client(m_conn_manager_ptr, props_ptr);
 
   if (m_verbose) {
-    cout << "DfsBroker.host=" << props_ptr->get("DfsBroker.host", "") << endl;
-    cout << "DfsBroker.port=" << props_ptr->get("DfsBroker.port", "") << endl;
-    cout << "DfsBroker.timeout=" << props_ptr->get("DfsBroker.timeout", "") << endl;
+    cout << "DfsBroker.Host=" << props_ptr->get("DfsBroker.Host", "") << endl;
+    cout << "DfsBroker.Port=" << props_ptr->get("DfsBroker.Port", "") << endl;
+    cout << "DfsBroker.Timeout=" << props_ptr->get("DfsBroker.Timeout", "") << endl;
   }
 
   if (!dfsClient->wait_for_connection(30)) {
@@ -125,8 +125,8 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
    * Check for and connect to commit log DFS broker
    */
   {
-    const char *logHost = props_ptr->get("Hypertable.RangeServer.CommitLog.DfsBroker.host", 0);
-    uint16_t logPort    = props_ptr->get_int("Hypertable.RangeServer.CommitLog.DfsBroker.port", 0);
+    const char *logHost = props_ptr->get("Hypertable.RangeServer.CommitLog.DfsBroker.Host", 0);
+    uint16_t logPort    = props_ptr->get_int("Hypertable.RangeServer.CommitLog.DfsBroker.Port", 0);
     struct sockaddr_in addr;
     if (logHost != 0) {
       InetAddr::initialize(&addr, logHost, logPort);
@@ -356,72 +356,62 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
     cout << *scan_spec;
   }
 
-  if (!get_table_info(table->name, tableInfoPtr)) {
-    error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errMsg = (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]";
-    goto abort;
-  }
+  try {
 
-  if (!tableInfoPtr->get_range(range, rangePtr)) {
-    error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errMsg = (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]";
-    goto abort;
-  }
+    if (!get_table_info(table->name, tableInfoPtr))
+      throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND,
+				  (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]");
 
-  schemaPtr = tableInfoPtr->get_schema();
+    if (!tableInfoPtr->get_range(range, rangePtr))
+      throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND,
+				  (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]");
 
-  scan_timestamp = rangePtr->get_timestamp();
+    schemaPtr = tableInfoPtr->get_schema();
 
-  if (scan_timestamp != 0)
-    scan_timestamp++;
+    scan_timestamp = rangePtr->get_timestamp();
 
-  scanContextPtr = new ScanContext(scan_timestamp, scan_spec, range, schemaPtr);
-  if (scanContextPtr->error != Error::OK) {
-    errMsg = "Problem initializing scan context";
-    goto abort;
-  }
+    if (scan_timestamp != 0)
+      scan_timestamp++;
+
+    scanContextPtr = new ScanContext(scan_timestamp, scan_spec, range, schemaPtr);
  
-  scannerPtr = rangePtr->create_scanner(scanContextPtr);
+    scannerPtr = rangePtr->create_scanner(scanContextPtr);
 
-  // TODO: fix this kludge (0 return above means range split)
-  if (!scannerPtr) {
-    error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errMsg = (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]";
-    goto abort;
-  }
+    // TODO: fix this kludge (0 return above means range split)
+    if (!scannerPtr)
+      throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND,
+				  (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]");
 
-  kvBuffer = new uint8_t [ sizeof(int32_t) + DEFAULT_SCANBUF_SIZE ];
-  kvLenp = (uint32_t *)kvBuffer;
+    kvBuffer = new uint8_t [ sizeof(int32_t) + DEFAULT_SCANBUF_SIZE ];
+    kvLenp = (uint32_t *)kvBuffer;
 
-  more = FillScanBlock(scannerPtr, kvBuffer+sizeof(int32_t), DEFAULT_SCANBUF_SIZE, kvLenp);
-  if (more)
-    id = Global::scannerMap.put(scannerPtr, rangePtr);
-  else
-    id = 0;
+    more = FillScanBlock(scannerPtr, kvBuffer+sizeof(int32_t), DEFAULT_SCANBUF_SIZE, kvLenp);
+    if (more)
+      id = Global::scannerMap.put(scannerPtr, rangePtr);
+    else
+      id = 0;
 
-  if (Global::verbose) {
-    HT_INFOF("Successfully created scanner (id=%d) on table '%s'", id, table->name);
-  }
+    if (Global::verbose) {
+      HT_INFOF("Successfully created scanner (id=%d) on table '%s'", id, table->name);
+    }
 
-  /**
-   *  Send back data
-   */
-  {
-    short moreFlag = more ? 0 : 1;
-    ExtBufferT ext;
-    ext.buf = kvBuffer;
-    ext.len = sizeof(int32_t) + *kvLenp;
-    if ((error = cb->response(moreFlag, id, ext)) != Error::OK) {
-      HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
+    /**
+     *  Send back data
+     */
+    {
+      short moreFlag = more ? 0 : 1;
+      ExtBufferT ext;
+      ext.buf = kvBuffer;
+      ext.len = sizeof(int32_t) + *kvLenp;
+      if ((error = cb->response(moreFlag, id, ext)) != Error::OK) {
+	HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
+      }
     }
   }
-
-  error = Error::OK;
-
- abort:
-  if (error != Error::OK) {
-    HT_ERRORF("%s '%s'", Error::get_text(error), errMsg.c_str());
-    if ((error = cb->error(error, errMsg)) != Error::OK) {
+  catch (Hypertable::Exception &e) {
+    int error;
+    HT_ERRORF("%s '%s'", Error::get_text(e.code()), e.what());
+    if ((error = cb->error(e.code(), e.what())) != Error::OK) {
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
     }
   }

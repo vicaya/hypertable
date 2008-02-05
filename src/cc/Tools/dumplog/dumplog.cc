@@ -104,8 +104,8 @@ int main(int argc, char **argv) {
    * Check for and connect to commit log DFS broker
    */
   {
-    const char *logHost = props_ptr->get("Hypertable.RangeServer.CommitLog.DfsBroker.host", 0);
-    uint16_t logPort    = props_ptr->get_int("Hypertable.RangeServer.CommitLog.DfsBroker.port", 0);
+    const char *logHost = props_ptr->get("Hypertable.RangeServer.CommitLog.DfsBroker.Host", 0);
+    uint16_t logPort    = props_ptr->get_int("Hypertable.RangeServer.CommitLog.DfsBroker.Port", 0);
     struct sockaddr_in addr;
     if (logHost != 0) {
       InetAddr::initialize(&addr, logHost, logPort);

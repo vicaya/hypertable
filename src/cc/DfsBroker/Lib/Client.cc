@@ -48,22 +48,23 @@ Client::Client(ConnectionManagerPtr &conn_manager_ptr, PropertiesPtr &props_ptr)
   m_comm = conn_manager_ptr->get_comm();
 
   {
-    if ((port = (uint16_t)props_ptr->get_int("DfsBroker.port", 0)) == 0) {
-      HT_ERROR(".port property not specified.");
+    if ((port = (uint16_t)props_ptr->get_int("DfsBroker.Port", 0)) == 0) {
+      HT_ERROR(".Port property not specified.");
       exit(1);
     }
 
-    if ((host = props_ptr->get("DfsBroker.host", (const char *)0)) == 0) {
-      HT_ERROR(".host property not specified.");
+    if ((host = props_ptr->get("DfsBroker.Host", (const char *)0)) == 0) {
+      HT_ERROR(".Host property not specified.");
       exit(1);
     }
 
-    m_timeout = props_ptr->get_int("DfsBroker.timeout", 30);
+    if ((m_timeout = props_ptr->get_int("DfsBroker.Timeout", 0)) == 0)
+      m_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 60);
 
     InetAddr::initialize(&m_addr, host, port);
   }
 
-  conn_manager_ptr->add(m_addr, m_timeout, "DFS Broker");
+  conn_manager_ptr->add(m_addr, 10, "DFS Broker");
   
 }
 

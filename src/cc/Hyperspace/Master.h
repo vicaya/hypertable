@@ -57,9 +57,9 @@ namespace Hyperspace {
   public:
 
     static const uint32_t DEFAULT_MASTER_PORT        = 38040;
-    static const uint32_t DEFAULT_LEASE_INTERVAL     = 12;
-    static const uint32_t DEFAULT_KEEPALIVE_INTERVAL = 7;
-    static const uint32_t DEFAULT_GRACEPERIOD        = 45;
+    static const uint32_t DEFAULT_LEASE_INTERVAL     = 20;
+    static const uint32_t DEFAULT_KEEPALIVE_INTERVAL = 10;
+    static const uint32_t DEFAULT_GRACEPERIOD        = 60;
 
     Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, ServerKeepaliveHandlerPtr &keepaliveHandlerPtr);
     ~Master();

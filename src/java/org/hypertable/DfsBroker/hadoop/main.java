@@ -55,7 +55,7 @@ public class main {
     };
 
 
-    static final String DEFAULT_PORT = "38546";
+    static final String DEFAULT_PORT = "38030";
 
     private static class HandlerFactory implements ConnectionHandlerFactory {
 	public HandlerFactory(Comm comm, ApplicationQueue appQueue, HdfsBroker broker) {
@@ -108,22 +108,22 @@ public class main {
 	    props.setProperty("verbose", "true");
 
 	// Determine listen port
-	str  = props.getProperty("HdfsBroker.port", DEFAULT_PORT);
+	str  = props.getProperty("HdfsBroker.Port", DEFAULT_PORT);
 	port = Integer.parseInt(str);
 
 	// Determine reactor count
-	str = props.getProperty("HdfsBroker.reactors");
+	str = props.getProperty("HdfsBroker.Reactors");
 	reactorCount = (str == null) ? (short)System.processorCount : Short.parseShort(str);
 
 	// Determine worker count
-	str = props.getProperty("HdfsBroker.workers");
+	str = props.getProperty("HdfsBroker.Workers");
 	workerCount = (str == null) ? (short)System.processorCount : Integer.parseInt(str);
 
 	if (verbose) {
 	    java.lang.System.out.println("Num CPUs=" + System.processorCount);
-	    java.lang.System.out.println("HdfsBroker.port=" + port);
-	    java.lang.System.out.println("HdfsBroker.reactors=" + reactorCount);
-	    java.lang.System.out.println("HdfsBroker.workers=" + workerCount);
+	    java.lang.System.out.println("HdfsBroker.Port=" + port);
+	    java.lang.System.out.println("HdfsBroker.Reactors=" + reactorCount);
+	    java.lang.System.out.println("HdfsBroker.Workers=" + workerCount);
 	}
 
 	ReactorFactory.Initialize(reactorCount);

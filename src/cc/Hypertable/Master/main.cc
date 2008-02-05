@@ -115,11 +115,11 @@ int main(int argc, char **argv) {
   props_ptr = new Properties(configFile);
 
   if (verbose)
-    props_ptr->set("verbose", "true");
+    props_ptr->set("Hypertable.Verbose", "true");
 
-  port         = props_ptr->get_int("Hypertable.Master.port", DEFAULT_PORT);
-  reactorCount = props_ptr->get_int("Hypertable.Master.reactors", System::get_processor_count());
-  workerCount  = props_ptr->get_int("Hypertable.Master.workers", DEFAULT_WORKERS);
+  port         = props_ptr->get_int("Hypertable.Master.Port", DEFAULT_PORT);
+  reactorCount = props_ptr->get_int("Hypertable.Master.Reactors", System::get_processor_count());
+  workerCount  = props_ptr->get_int("Hypertable.Master.Workers", DEFAULT_WORKERS);
 
   ReactorFactory::initialize(reactorCount);
 
@@ -128,9 +128,9 @@ int main(int argc, char **argv) {
 
   if (verbose) {
     cout << "CPU count = " << System::get_processor_count() << endl;
-    cout << "Hypertable.Master.port=" << port << endl;
-    cout << "Hypertable.Master.workers=" << workerCount << endl;
-    cout << "Hypertable.Master.reactors=" << reactorCount << endl;
+    cout << "Hypertable.Master.Port=" << port << endl;
+    cout << "Hypertable.Master.Workers=" << workerCount << endl;
+    cout << "Hypertable.Master.Reactors=" << reactorCount << endl;
   }
 
   app_queue_ptr = new ApplicationQueue(workerCount);
