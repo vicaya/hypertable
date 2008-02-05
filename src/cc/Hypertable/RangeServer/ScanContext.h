@@ -52,7 +52,6 @@ namespace Hypertable {
     std::string start_row;
     std::string end_row;
     std::pair<uint64_t, uint64_t> interval;
-    int error;
     bool familyMask[256];
     CellFilterInfoT familyInfo[256];
 
@@ -64,7 +63,7 @@ namespace Hypertable {
      * @param range_ range specifier
      * @param sp shared pointer to schema object
      */
-    ScanContext(uint64_t ts, ScanSpecificationT *ss, RangeT *range_, SchemaPtr &sp) : error(Error::OK) {
+    ScanContext(uint64_t ts, ScanSpecificationT *ss, RangeT *range_, SchemaPtr &sp) {
       initialize(ts, ss, range_, sp);
     }
 
@@ -74,7 +73,7 @@ namespace Hypertable {
      * @param ts scan timestamp (point in time when scan began)
      * @param sp shared pointer to schema object
      */
-    ScanContext(uint64_t ts, SchemaPtr &sp) : error(Error::OK) {
+    ScanContext(uint64_t ts, SchemaPtr &sp) {
       initialize(ts, 0, 0, sp);
     }
 
@@ -83,7 +82,7 @@ namespace Hypertable {
      *
      * @param ts scan timestamp (point in time when scan began)
      */
-    ScanContext(uint64_t ts) : error(Error::OK) {
+    ScanContext(uint64_t ts) {
       SchemaPtr schemaPtr;
       initialize(ts, 0, 0, schemaPtr);
     }

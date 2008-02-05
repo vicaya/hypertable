@@ -70,7 +70,9 @@ void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, RangeT *range_
     if (spec && spec->columns.size() > 0) {
       for (std::vector<const char *>::const_iterator iter = spec->columns.begin(); iter != spec->columns.end(); iter++) {
 	columnFamily = schemaPtr->get_column_family(*iter);
-	assert(columnFamily);
+
+	if (columnFamily == 0)
+	  throw Hypertable::Exception(Error::RANGESERVER_INVALID_COLUMNFAMILY, *iter);
 
 	familyMask[columnFamily->id] = true;
 	if (columnFamily->ttl == 0)
@@ -93,10 +95,8 @@ void ScanContext::initialize(uint64_t ts, ScanSpecificationT *ss, RangeT *range_
       familyMask[0] = true;  // ROW_DELETE records have 0 column family, so this allows them to pass through
       for (list<Schema::AccessGroup *>::iterator agIter = agList->begin(); agIter != agList->end(); agIter++) {
 	for (list<Schema::ColumnFamily *>::iterator cfIter = (*agIter)->columns.begin(); cfIter != (*agIter)->columns.end(); cfIter++) {
-	  if ((*cfIter)->id == 0) {
-	    error = Error::RANGESERVER_SCHEMA_INVALID_CFID;
-	    return;
-	  }
+	  if ((*cfIter)->id == 0)
+	    throw Hypertable::Exception(Error::RANGESERVER_SCHEMA_INVALID_CFID, (std::string)"Bad ID for Column Family '" + (*cfIter)->name + "'");
 	  familyMask[(*cfIter)->id] = true;
 	  if ((*cfIter)->ttl == 0)
 	    familyInfo[(*cfIter)->id].cutoffTime = 0;

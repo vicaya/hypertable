@@ -356,72 +356,62 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
     cout << *scan_spec;
   }
 
-  if (!get_table_info(table->name, tableInfoPtr)) {
-    error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errMsg = (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]";
-    goto abort;
-  }
+  try {
 
-  if (!tableInfoPtr->get_range(range, rangePtr)) {
-    error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errMsg = (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]";
-    goto abort;
-  }
+    if (!get_table_info(table->name, tableInfoPtr))
+      throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND,
+				  (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]");
 
-  schemaPtr = tableInfoPtr->get_schema();
+    if (!tableInfoPtr->get_range(range, rangePtr))
+      throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND,
+				  (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]");
 
-  scan_timestamp = rangePtr->get_timestamp();
+    schemaPtr = tableInfoPtr->get_schema();
 
-  if (scan_timestamp != 0)
-    scan_timestamp++;
+    scan_timestamp = rangePtr->get_timestamp();
 
-  scanContextPtr = new ScanContext(scan_timestamp, scan_spec, range, schemaPtr);
-  if (scanContextPtr->error != Error::OK) {
-    errMsg = "Problem initializing scan context";
-    goto abort;
-  }
+    if (scan_timestamp != 0)
+      scan_timestamp++;
+
+    scanContextPtr = new ScanContext(scan_timestamp, scan_spec, range, schemaPtr);
  
-  scannerPtr = rangePtr->create_scanner(scanContextPtr);
+    scannerPtr = rangePtr->create_scanner(scanContextPtr);
 
-  // TODO: fix this kludge (0 return above means range split)
-  if (!scannerPtr) {
-    error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errMsg = (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]";
-    goto abort;
-  }
+    // TODO: fix this kludge (0 return above means range split)
+    if (!scannerPtr)
+      throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND,
+				  (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]");
 
-  kvBuffer = new uint8_t [ sizeof(int32_t) + DEFAULT_SCANBUF_SIZE ];
-  kvLenp = (uint32_t *)kvBuffer;
+    kvBuffer = new uint8_t [ sizeof(int32_t) + DEFAULT_SCANBUF_SIZE ];
+    kvLenp = (uint32_t *)kvBuffer;
 
-  more = FillScanBlock(scannerPtr, kvBuffer+sizeof(int32_t), DEFAULT_SCANBUF_SIZE, kvLenp);
-  if (more)
-    id = Global::scannerMap.put(scannerPtr, rangePtr);
-  else
-    id = 0;
+    more = FillScanBlock(scannerPtr, kvBuffer+sizeof(int32_t), DEFAULT_SCANBUF_SIZE, kvLenp);
+    if (more)
+      id = Global::scannerMap.put(scannerPtr, rangePtr);
+    else
+      id = 0;
 
-  if (Global::verbose) {
-    HT_INFOF("Successfully created scanner (id=%d) on table '%s'", id, table->name);
-  }
+    if (Global::verbose) {
+      HT_INFOF("Successfully created scanner (id=%d) on table '%s'", id, table->name);
+    }
 
-  /**
-   *  Send back data
-   */
-  {
-    short moreFlag = more ? 0 : 1;
-    ExtBufferT ext;
-    ext.buf = kvBuffer;
-    ext.len = sizeof(int32_t) + *kvLenp;
-    if ((error = cb->response(moreFlag, id, ext)) != Error::OK) {
-      HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
+    /**
+     *  Send back data
+     */
+    {
+      short moreFlag = more ? 0 : 1;
+      ExtBufferT ext;
+      ext.buf = kvBuffer;
+      ext.len = sizeof(int32_t) + *kvLenp;
+      if ((error = cb->response(moreFlag, id, ext)) != Error::OK) {
+	HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
+      }
     }
   }
-
-  error = Error::OK;
-
- abort:
-  if (error != Error::OK) {
-    HT_ERRORF("%s '%s'", Error::get_text(error), errMsg.c_str());
-    if ((error = cb->error(error, errMsg)) != Error::OK) {
+  catch (Hypertable::Exception &e) {
+    int error;
+    HT_ERRORF("%s '%s'", Error::get_text(e.code()), e.what());
+    if ((error = cb->error(e.code(), e.what())) != Error::OK) {
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
     }
   }
