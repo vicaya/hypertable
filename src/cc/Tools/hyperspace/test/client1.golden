@@ -20,7 +20,7 @@ open foo flags=READ|CREATE|EXCL
 ERROR hyperspace : Hyperspace 'open' error, name=/foo flags=0x19 events=0x0 : HYPERSPACE file exists
 HYPERSPACE file exists
 lock foo EXCLUSIVE
-ERROR hyperspace : Hyperspace 'lock' error, handle=2 name='/foo' : HYPERSPACE mode restriction
+ERROR hyperspace : Hyperspace 'lock' error, name='/foo' : HYPERSPACE mode restriction
 HYPERSPACE mode restriction
 exists dir1
 true

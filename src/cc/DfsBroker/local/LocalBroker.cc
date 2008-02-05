@@ -45,13 +45,13 @@ using namespace Hypertable;
 LocalBroker::LocalBroker(PropertiesPtr &propsPtr) : m_verbose(false) {
   const char *root;
 
-  m_verbose = propsPtr->get_bool("verbose", false);
+  m_verbose = propsPtr->get_bool("Hypertable.Verbose", false);
 
   /**
    * Determine root directory
    */
-  if ((root = propsPtr->get("DfsBroker.local.root", 0)) == 0) {
-    HT_ERROR("Required property 'DfsBroker.local.root' not specified, exiting...");
+  if ((root = propsPtr->get("DfsBroker.Local.Root", 0)) == 0) {
+    HT_ERROR("Required property 'DfsBroker.Local.Root' not specified, exiting...");
     exit(1);
   }
 

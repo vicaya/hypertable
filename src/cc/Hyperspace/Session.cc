@@ -53,10 +53,10 @@ Session::Session(Comm *comm, PropertiesPtr &props_ptr, SessionCallback *callback
   uint16_t masterPort;
   const char *masterHost;
 
-  m_verbose = props_ptr->get_bool("verbose", false);
+  m_verbose = props_ptr->get_bool("Hypertable.Verbose", false);
   m_silent = props_ptr->get_bool("silent", false);
-  masterHost = props_ptr->get("Hyperspace.Master.host", "localhost");
-  masterPort = (uint16_t)props_ptr->get_int("Hyperspace.Master.port", Master::DEFAULT_MASTER_PORT);
+  masterHost = props_ptr->get("Hyperspace.Master.Host", "localhost");
+  masterPort = (uint16_t)props_ptr->get_int("Hyperspace.Master.Port", Master::DEFAULT_MASTER_PORT);
   m_grace_period = (uint32_t)props_ptr->get_int("Hyperspace.GracePeriod", Master::DEFAULT_GRACEPERIOD);
   m_lease_interval = (uint32_t)props_ptr->get_int("Hyperspace.Lease.Interval", Master::DEFAULT_LEASE_INTERVAL);
   m_timeout = m_lease_interval * 2;
@@ -504,7 +504,7 @@ int Session::lock(uint64_t handle, uint32_t mode, struct LockSequencerT *sequenc
     if (!syncHandler.wait_for_reply(eventPtr)) {
       error = (int)Protocol::response_code(eventPtr.get());
       if (!m_silent) {
-	HT_ERRORF("Hyperspace 'lock' error, handle=%lld name='%s' : %s", handle, handle_state_ptr->normalName.c_str(), Error::get_text(error));
+	HT_ERRORF("Hyperspace 'lock' error, name='%s' : %s", handle_state_ptr->normalName.c_str(), Error::get_text(error));
 	if (m_verbose)
 	  HT_ERRORF("%s", Protocol::string_format_message(eventPtr.get()).c_str());
       }
@@ -564,7 +564,7 @@ int Session::try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp, struct 
     if (!syncHandler.wait_for_reply(eventPtr)) {
       error = (int)Protocol::response_code(eventPtr.get());
       if (!m_silent) {
-	HT_ERRORF("Hyperspace 'trylock' error, handle=%lld name='%s' : %s", handle, handle_state_ptr->normalName.c_str(), Error::get_text(error));
+	HT_ERRORF("Hyperspace 'trylock' error, name='%s' : %s", handle_state_ptr->normalName.c_str(), Error::get_text(error));
 	if (m_verbose)
 	  HT_ERRORF("%s", Protocol::string_format_message(eventPtr.get()).c_str());
       }

@@ -113,9 +113,9 @@ int main(int argc, char **argv) {
     props_ptr->set("verbose", "true");
 
   if (port == 0)
-    port       = props_ptr->get_int("DfsBroker.local.port",     DEFAULT_PORT);
-  reactorCount = props_ptr->get_int("DfsBroker.local.reactors", System::get_processor_count());
-  workerCount  = props_ptr->get_int("DfsBroker.local.workers",  DEFAULT_WORKERS);
+    port       = props_ptr->get_int("DfsBroker.Local.Port",     DEFAULT_PORT);
+  reactorCount = props_ptr->get_int("DfsBroker.Local.Reactors", System::get_processor_count());
+  workerCount  = props_ptr->get_int("DfsBroker.Local.Workers",  DEFAULT_WORKERS);
 
   ReactorFactory::initialize(reactorCount);
 
@@ -123,9 +123,9 @@ int main(int argc, char **argv) {
 
   if (verbose) {
     cout << "CPU count = " << System::get_processor_count() << endl;
-    cout << "DfsBroker.local.port=" << port << endl;
-    cout << "DfsBroker.local.reactors=" << reactorCount << endl;
-    cout << "DfsBroker.local.workers=" << workerCount << endl;
+    cout << "DfsBroker.Local.Port=" << port << endl;
+    cout << "DfsBroker.Local.Reactors=" << reactorCount << endl;
+    cout << "DfsBroker.Local.Workers=" << workerCount << endl;
   }
 
   InetAddr::initialize(&listenAddr, INADDR_ANY, port);

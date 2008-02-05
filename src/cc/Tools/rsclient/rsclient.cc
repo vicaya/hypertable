@@ -99,7 +99,7 @@ namespace {
       host = userSuppliedHost;
 
     if (userSuppliedPort == 0)
-      port = (uint16_t)props_ptr->get_int("Hypertable.RangeServer.port", 38060);
+      port = (uint16_t)props_ptr->get_int("Hypertable.RangeServer.Port", 38060);
     else
       port = userSuppliedPort;
 

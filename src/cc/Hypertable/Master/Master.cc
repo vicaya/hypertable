@@ -68,10 +68,10 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &props_ptr, A
     exit(1);
   }
 
-  m_verbose = props_ptr->get_bool("verbose", false);
+  m_verbose = props_ptr->get_bool("Hypertable.Verbose", false);
 
-  if ((port = (uint16_t)props_ptr->get_int("Hypertable.Master.port", 0)) == 0) {
-    HT_ERROR("Hypertable.Master.port property not found in config file, exiting...");
+  if ((port = (uint16_t)props_ptr->get_int("Hypertable.Master.Port", 0)) == 0) {
+    HT_ERROR("Hypertable.Master.Port property not found in config file, exiting...");
     exit(1);
   }
 
@@ -83,9 +83,9 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &props_ptr, A
   dfsClient = new Client(connManagerPtr, props_ptr);
 
   if (m_verbose) {
-    cout << "DfsBroker.host=" << props_ptr->get("DfsBroker.host", "") << endl;
-    cout << "DfsBroker.port=" << props_ptr->get("DfsBroker.port", "") << endl;
-    cout << "DfsBroker.timeout=" << props_ptr->get("DfsBroker.timeout", "") << endl;
+    cout << "DfsBroker.Host=" << props_ptr->get("DfsBroker.Host", "") << endl;
+    cout << "DfsBroker.Port=" << props_ptr->get("DfsBroker.Port", "") << endl;
+    cout << "DfsBroker.Timeout=" << props_ptr->get("DfsBroker.Timeout", "") << endl;
   }
 
   if (!dfsClient->wait_for_connection(30)) {

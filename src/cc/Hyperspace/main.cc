@@ -48,7 +48,7 @@ using namespace std;
 
 namespace {
   const char *usage[] = {
-    "usage: Hyperspace.master [OPTIONS]",
+    "usage: Hyperspace.Master [OPTIONS]",
     "",
     "OPTIONS:",
     "  --config=<file>   Read configuration from <file>.  The default config file is",
@@ -135,11 +135,11 @@ int main(int argc, char **argv) {
 
   props_ptr = new Properties(configFile);
   if (verbose)
-    props_ptr->set("verbose", "true");
+    props_ptr->set("Hypertable.Verbose", "true");
 
-  port         = props_ptr->get_int("Hyperspace.Master.port", Master::DEFAULT_MASTER_PORT);
-  reactorCount = props_ptr->get_int("Hyperspace.Master.reactors", System::get_processor_count());
-  workerCount  = props_ptr->get_int("Hyperspace.Master.workers", DEFAULT_WORKERS);
+  port         = props_ptr->get_int("Hyperspace.Master.Port", Master::DEFAULT_MASTER_PORT);
+  reactorCount = props_ptr->get_int("Hyperspace.Master.Reactors", System::get_processor_count());
+  workerCount  = props_ptr->get_int("Hyperspace.Master.Workers", DEFAULT_WORKERS);
 
   ReactorFactory::initialize(reactorCount);
 
@@ -149,9 +149,9 @@ int main(int argc, char **argv) {
 
   if (verbose) {
     cout << "CPU count = " << System::get_processor_count() << endl;
-    cout << "Hyperspace.Master.port=" << port << endl;
-    cout << "Hyperspace.Master.workers=" << workerCount << endl;
-    cout << "Hyperspace.Master.reactors=" << reactorCount << endl;
+    cout << "Hyperspace.Master.Port=" << port << endl;
+    cout << "Hyperspace.Master.Workers=" << workerCount << endl;
+    cout << "Hyperspace.Master.Reactors=" << reactorCount << endl;
   }
 
   InetAddr::initialize(&localAddr, INADDR_ANY, port);

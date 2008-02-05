@@ -1,0 +1,170 @@
+
+# =========================
+# === Global properties ===
+# =========================
+
+# Length of time, in seconds, before timing out requests
+Hypertable.Request.Timeout=
+
+# Enable verbose output
+Hypertable.Verbose=
+
+
+# ================================
+# === Hadoop Broker properties ===
+# ================================
+
+# Port number on which to listen (read by HdfsBroker only)
+HdfsBroker.Port=
+
+# Hadoop Filesystem default name, same as fs.default.name property
+# in Hadoop config (e.g. hdfs://localhost:9000)
+HdfsBroker.fs.default.name=
+
+# Number of worker threads created
+HdfsBroker.Workers=
+
+# Number of communication reactor threads created
+HdfsBroker.Reactors=
+
+
+# ================================
+# === Kosmos Broker properties ===
+# ================================
+
+# Hostname of meta server
+Kfs.MetaServer.Name=
+
+# Port number for meta server
+Kfs.MetaServer.Port=
+
+
+# ===============================
+# === Local Broker properties ===
+# ===============================
+
+# Port number on which to listen (read by LocalBroker only)
+DfsBroker.Local.Port=
+
+# Root of file and directory heirarchy (if relative path,
+# then is relative to the installation directory)
+DfsBroker.Local.Root=
+
+# Number of worker threads created
+DfsBroker.Local.Workers=
+
+# Number of communication reactor threads created
+DfsBroker.Local.Reactors=
+
+
+# ====================================
+# === Dfs Broker client properties ===
+# ====================================
+
+# Host on which the broker is running (read by clients only)
+DfsBroker.Host=
+
+# Port number on which broker is listening (read by clients only)
+DfsBroker.Port=
+
+# Length of time, in seconds, to wait before timing out Dfs Broker
+# requests.  This takes precedence over Hypertable.Connection.Timeout
+DfsBroker.Timeout=
+
+
+# =============================
+# === Hyperspace properties ===
+# =============================
+
+# Host on which Hyperspace master is or should be running
+Hyperspace.Master.Host=
+
+# Port number on which Hyperspace master is or should be listening
+Hyperspace.Master.Port=
+
+# Number of worker threads created
+Hyperspace.Master.Workers=
+
+# Number of communication reactor threads created
+Hyperspace.Master.Reactors=
+
+# Root of hyperspace file and directory heirarchy in local
+# filesystem (if relative path, then is relative to the
+# installation directory)
+Hyperspace.Master.Dir=
+
+# Keepalive interval (see Chubby paper)
+Hyperspace.KeepAlive.Interval=
+
+# Lease interval (see Chubby paper)
+Hyperspace.Lease.Interval=
+
+# Grace period (see Chubby paper)
+Hyperspace.GracePeriod=
+
+
+# ====================================
+# === Hypertable Master properties ===
+# ====================================
+
+# Host on which Hyperspace Master is running
+Hypertable.Master.Host=
+
+# Port number on which Hypertable master is or should be listening
+Hypertable.Master.Port=
+
+# Number of worker threads created
+Hypertable.Master.Workers=
+
+# Number of communication reactor threads created
+Hypertable.Master.Reactors=
+
+
+# ==========================================
+# === Hypertable Range Server properties ===
+# ==========================================
+
+# Port number on which Hypertable range server is or should be listening
+Hypertable.RangeServer.Port=
+
+# Maximum number of cell store files to create before merging
+Hypertable.RangeServer.AccessGroup.MaxFiles=
+
+# Maximum amount of memory consumed by an Access Group
+Hypertable.RangeServer.AccessGroup.MaxMemory=
+
+# How many files to merge during a merging compaction
+Hypertable.RangeServer.AccessGroup.MergeFiles=
+
+# Amount of memory to dedicate to the block cache
+Hypertable.RangeServer.BlockCache.MaxMemory=
+
+# Maximum number of bytes per range before splitting
+Hypertable.RangeServer.Range.MaxBytes=
+
+# Maximum number of bytes per METADATA range before splitting (for testing)
+Hypertable.RangeServer.Range.MetadataMaxBytes=
+
+# Host of Dfs Broker to use for Commit Log
+Hypertable.RangeServer.CommitLog.DfsBroker.Host=
+
+# Port of Dfs Broker to use for Commit Log
+Hypertable.RangeServer.CommitLog.DfsBroker.Port=
+
+# Number of seconds of inactivity before destroying scanners
+Hypertable.RangeServer.Scanner.Ttl=
+
+# Timer interval in seconds (reaping scanners, purging commit logs, etc.)
+Hypertable.RangeServer.Timer.Interval=
+
+# Roll commit log after this many bytes
+Hypertable.RangeServer.CommitLog.RollLimit=
+
+# Commit log compressor to use (zlib, lzo, quicklz, bmz, none)
+Hypertable.RangeServer.CommitLog.Compressor=
+
+# Number of worker threads created
+Hypertable.RangeServer.Workers=
+
+# Number of communication reactor threads created
+Hypertable.RangeServer.Reactors=
