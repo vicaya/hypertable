@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
     propsPtr->set("verbose", "true");
 
   port         = propsPtr->get_int("DfsBroker.kfs.port",     DEFAULT_PORT);
-  reactorCount = propsPtr->get_int("DfsBroker.kfs.reactors", System::get_process_count());
+  reactorCount = propsPtr->get_int("DfsBroker.kfs.reactors", System::get_processor_count());
   workerCount  = propsPtr->get_int("DfsBroker.kfs.workers",  DEFAULT_WORKERS);
 
   ReactorFactory::initialize(reactorCount);
