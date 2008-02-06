@@ -18,6 +18,7 @@
  */
 
 #include <unistd.h>
+#include <cstring>
 #include "Common/Sweetener.h"
 #include "Common/Thread.h"
 #include "Common/Properties.h"
@@ -35,24 +36,19 @@ namespace {
 typedef CharStrHashMap<int> CountMap;
 
 struct GcWorker {
-  GcWorker(TablePtr metadata, Filesystem *fs, int interval,
+  GcWorker(TablePtr &metadata, Filesystem *fs, int interval,
            bool dryrun = false) : m_metadata(metadata),
            m_fs(fs), m_interval(interval), m_dryrun(dryrun) {}
 
-  TablePtr      m_metadata;
+  TablePtr     &m_metadata;
   Filesystem   *m_fs;
   int           m_interval;
   bool          m_dryrun;
 
   void
   scan_metadata() {
-    TableMutatorPtr mutator_ptr;
-    KeySpec key;
-    TableScannerPtr scanner_ptr;
+    TableScannerPtr scanner;
     ScanSpecificationT scan_spec;
-    CellT cell;
-    string location_str;
-    CountMap files_map;
 
     scan_spec.rowLimit = 0;
     scan_spec.max_versions = 0;
@@ -65,47 +61,45 @@ struct GcWorker {
     scan_spec.interval.first = 0;
     scan_spec.interval.second = 0;
 
-    int ret = m_metadata->create_scanner(scan_spec, scanner_ptr);
+    int ret = m_metadata->create_scanner(scan_spec, scanner);
 
     if (ret != Error::OK) {
       HT_ERRORF("Error creating scanner on METADATA table: %s",
                 Error::get_text(ret));
       return;
     }
-    ret = m_metadata->create_mutator(mutator_ptr);
+    TableMutatorPtr mutator;
+    ret = m_metadata->create_mutator(mutator);
 
     if (ret != Error::OK) {
       HT_ERRORF("Error creating mutator on METADATA table: %s",
                 Error::get_text(ret));
       return;
     }
-    memset(&key, 0, sizeof(key));
+    CellT cell;
     string last_row;
     string last_cq;
+    CountMap files_map;
     uint64_t last_time = 0;
     bool found_valid_files = true;
+    KeySpec key;
 
+    memset(&key, 0, sizeof(key));
     HT_DEBUG("TableFileGc: scanning metadata...");
 
-    while (scanner_ptr->next(cell)) {
-      if (last_row != cell.row_key) {
-        // new row
-        if (!found_valid_files && !last_row.empty()) {
-          key.row = last_row.c_str();
-          key.row_len = last_row.length();
-
-          HT_DEBUGF("TableFileGc: Deleting row %s", (char *)key.row);
-
-          if (!m_dryrun)
-            mutator_ptr->set_delete(0, key);
-        }
-        last_row = cell.row_key;
-        found_valid_files = false;
-      }
+    while (scanner->next(cell)) {
       if (strcmp("Files", cell.column_family)) {
         HT_ERRORF("Unexpected column family '%s', while scanning METADATA", 
                   cell.column_family);
         continue;
+      }
+      if (last_row != cell.row_key) {
+        // new row
+        if (!found_valid_files)
+          delete_row(key, last_row, mutator);
+
+        found_valid_files = false;
+        last_row = cell.row_key;
       }
       if (last_cq != cell.column_qualifier) {
         // new access group
@@ -125,8 +119,26 @@ struct GcWorker {
           insert_files(files_map, (char *)cell.value, cell.value_len);
       }
     }
-    mutator_ptr->flush();
+    // for last table
+    if (!found_valid_files)
+      delete_row(key, last_row, mutator);
+
+    mutator->flush();
     reap(files_map);
+  }
+
+  void
+  delete_row(KeySpec &key, const string &row, TableMutatorPtr &mutator) {
+    if (row.empty())
+      return;
+
+    key.row = row.c_str();
+    key.row_len = row.length();
+
+    HT_DEBUGF("TableFileGc: Deleting row %s", (char *)key.row);
+
+    if (!m_dryrun)
+      mutator->set_delete(0, key);
   }
 
   void
@@ -142,20 +154,31 @@ struct GcWorker {
 
       string name(p0, p - p0);
       p += 2;
-      CountMap::InsRet ret = map.insert(name.c_str(), c);
-
-      if (!ret.second)
-        (*ret.first).second += c;
-
+      insert_file(map, name.c_str(), c);
       p0 = p;
     }
   }
 
   void
-  reap(CountMap &map) {
-    size_t n = 0;
+  insert_file(CountMap &map, const char *fname, int c) {
+    CountMap::InsRet ret = map.insert(fname, c);
 
-    foreach (const CountMap::value_type &v, map) {
+    if (!ret.second)
+      (*ret.first).second += c;
+  }
+
+  /**
+   * Currently only stale cs files and range directories are reaped
+   * Table directories probably should be obtained when removing
+   * rows in METADATA
+   */
+  void
+  reap(CountMap &files_map) {
+    size_t nf = 0, nd = 0;
+    CountMap dirs_map; // reap empty range directories as well
+    int ret;
+
+    foreach (const CountMap::value_type &v, files_map) {
       if (!v.second) {
         // TODO: fs interface needs to be fixed to 
         // accept const char * and const string &
@@ -164,16 +187,36 @@ struct GcWorker {
         HT_DEBUGF("TableFileGc: removing file %s", v.first);
 
         if (!m_dryrun) {
-          int ret = m_fs->remove(name);
-
-          if (ret != Error::OK)
-            HT_ERRORF("Error removing '%s'", v.first);
+          if ((ret = m_fs->remove(name)) != Error::OK)
+            HT_ERRORF("Error removing file '%s'", v.first);
           else
-            ++n;
+            ++nf;
+        }
+      }
+      char *p = strrchr(v.first, '/');
+
+      if (p) {
+        string dir_name(v.first, p - v.first);
+        insert_file(dirs_map, dir_name.c_str(), v.second);
+      }
+    }
+    foreach (const CountMap::value_type &v, dirs_map) {
+      if (!v.second) {
+        // TODO: fs interface...
+        string name(v.first);
+
+        HT_DEBUGF("TableFileGc: removing directory %s", v.first);
+
+        if (!m_dryrun) {
+          if ((ret = m_fs->rmdir(name)) != Error::OK)
+            HT_ERRORF("Error removing directory '%s'", v.first);
+          else
+            ++nd;
         }
       }
     }
-    HT_DEBUGF("TableFileGc: removed %lu files", n);
+
+    HT_DEBUGF("TableFileGc: removed %lu files; %lu directories", nf, nd);
   }
 
   void
@@ -185,6 +228,8 @@ struct GcWorker {
         break; // interrupted       
 
       if (m_metadata) scan_metadata();
+      else HT_INFOF("TableFileGc: METADATA not ready, will try again in "
+                    "%d seconds", m_interval);
 
     } while (true);
   }
@@ -196,14 +241,17 @@ namespace Hypertable {
 
 void
 start_table_file_gc(PropertiesPtr props, ThreadGroup &threads,
-                    TablePtr metadata, Filesystem *fs) {
+                    TablePtr &metadata, Filesystem *fs) {
   int interval = props->get_int("Hypertable.TableFileGc.Interval", 300);
 
   threads.create_thread(GcWorker(metadata, fs, interval));
+
+  HT_INFOF("Started table file garbage collection thread with interval: "
+           "%d seconds", interval);
 }
 
 void
-test_table_file_gc(TablePtr metadata, Filesystem *fs,
+test_table_file_gc(TablePtr &metadata, Filesystem *fs,
                    bool dryrun) {
   GcWorker gc(metadata, fs, 0, dryrun);
   gc.scan_metadata();

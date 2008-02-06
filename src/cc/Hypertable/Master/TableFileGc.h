@@ -23,9 +23,9 @@
 namespace Hypertable {
 
 extern void start_table_file_gc(PropertiesPtr props, ThreadGroup &threads,
-                                TablePtr metadata, Filesystem *fs);
+                                TablePtr &metadata, Filesystem *fs);
 
-extern void test_table_file_gc(TablePtr metadata, Filesystem *fs,
+extern void test_table_file_gc(TablePtr &metadata, Filesystem *fs,
                                bool dryrun = false);
 
 } // namespace Hypertable
