@@ -25,6 +25,8 @@ extern "C" {
 #include <sys/stat.h>
 }
 
+#include <boost/algorithm/string.hpp>
+
 #include "Common/Error.h"
 #include "Common/Usage.h"
 
@@ -83,6 +85,10 @@ int CommandUpdate::run() {
     Usage::dump_and_exit(ms_usage);
 
   tableName = m_args[0].first;
+
+#if defined(__APPLE__)
+  boost::to_upper(tableName);
+#endif
 
   table_info = TableInfo::map[tableName];
 

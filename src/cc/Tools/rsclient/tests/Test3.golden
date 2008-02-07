@@ -356,9 +356,6 @@ success
 success
 success
 rsclient> create scanner Test3[..??]
-TableName  = Test3
-StartRow   = 
-EndRow     = ÿÿ
 1189631333354075 A plum:http://sports.espn.go.com/mlb/players/profile?statsId=6305
 1189631332683722 A plum:http://sports.espn.go.com/mlb/players/profile?statsId=6305
 1189631333619911 A plum:http://www.baseball-reference.com/r/roberda07.shtml
@@ -643,9 +640,6 @@ EndRow     = ÿÿ
 1189631332590687 Aaronitic onion:http://www.freebornhall.com/History/ResidenceHalls/
 rsclient> destroy scanner
 rsclient> create scanner Test3[..??] max-versions=2
-TableName  = Test3
-StartRow   = 
-EndRow     = ÿÿ
 1189631333354075 A plum:http://sports.espn.go.com/mlb/players/profile?statsId=6305
 1189631332683722 A plum:http://sports.espn.go.com/mlb/players/profile?statsId=6305
 1189631333619911 A plum:http://www.baseball-reference.com/r/roberda07.shtml

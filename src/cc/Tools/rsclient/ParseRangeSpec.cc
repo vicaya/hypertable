@@ -41,6 +41,10 @@ namespace Hypertable {
 
     tableName = std::string(base, leftBracket-base);
 
+#if defined(__APPLE__)
+  boost::to_upper(tableName);
+#endif
+
     ptr = leftBracket+1;
     if (ptr == dotdot)
       startRow = "";

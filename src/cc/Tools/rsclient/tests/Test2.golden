@@ -356,9 +356,6 @@ success
 success
 success
 rsclient> create scanner Test2[..??] start=Abama row-limit=4
-TableName  = Test2
-StartRow   = 
-EndRow     = ÿÿ
 1189631333674696 Abama plum:http://pbskids.org/sesame/index.html
 1189631333353299 Abama plum:http://www.baseball-reference.com/r/roberda07.shtml
 1189631333025117 Abama broccoli:http://www.sirlinksalot.net/bertandernie.html
@@ -526,9 +523,6 @@ EndRow     = ÿÿ
 1189631333541743 Abarambo cassis:http://www.usatoday.com/sports/bbw/columnist/nightengale/2005-01-19-majors_x.htm
 rsclient> destroy scanner
 rsclient> create scanner Test2[..??] start=Abama row-limit=2 max-versions=1
-TableName  = Test2
-StartRow   = 
-EndRow     = ÿÿ
 1189631333674696 Abama plum:http://pbskids.org/sesame/index.html
 1189631333353299 Abama plum:http://www.baseball-reference.com/r/roberda07.shtml
 1189631333025117 Abama broccoli:http://www.sirlinksalot.net/bertandernie.html

@@ -524,6 +524,10 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
   uint64_t handle;
   std::string table_name_str = table_name;
 
+#if defined(__APPLE__)
+  boost::to_upper(table_name_str);
+#endif
+
   /**
    * Create table file
    */
@@ -579,7 +583,7 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
     scan_spec.interval.second = 0;
 
     if ((error = m_metadata_table_ptr->create_scanner(scan_spec, scanner_ptr)) != Error::OK) {
-      HT_ERRORF("Problem creating scanner on METADATA table - %s", table_name, Error::get_text(error));
+      HT_ERRORF("Problem creating scanner on METADATA table - %s", Error::get_text(error));
       cb->error(error, "Problem creating scanner on METADATA table");
       return;
     }
@@ -632,7 +636,7 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
     return;
   }
 
-  HT_INFOF("DROP TABLE '%s' id=%d success", table_name, ival);
+  HT_INFOF("DROP TABLE '%s' id=%d success", table_name_str.c_str(), ival);
   cb->response_ok();
   cout << flush;
 }
@@ -790,7 +794,7 @@ int Master::create_table(const char *tableName, const char *schemaString, std::s
     if ((error = rsc.load_range(addr, table, range, soft_limit, 0)) != Error::OK) {
       std::string addrStr;
       HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server %s",
-                   table.name, range.endRow, InetAddr::string_format(addrStr, addr));
+		table.name, range.endRow, InetAddr::string_format(addrStr, addr));
     }
   }
 

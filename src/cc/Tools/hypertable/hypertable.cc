@@ -312,7 +312,7 @@ int main(int argc, char **argv) {
 
     }
     catch (Hypertable::Exception &e) {
-      cerr << "Error: " << e.what() << endl;
+      cerr << "Error: " << e.what() << " - " << Error::get_text(e.code()) << endl;
       if (g_batch_mode)
 	return 1;
       g_accum = "";

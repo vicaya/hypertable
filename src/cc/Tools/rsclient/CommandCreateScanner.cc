@@ -99,11 +99,13 @@ int CommandCreateScanner::run() {
   table = ms_table_info->get_table_identifier();
   ms_table_info->get_schema_ptr(schema_ptr);
 
+  /**
   cout << "TableName  = " << tableName << endl;
   //cout << "TableId    = " << table->id << endl;
   //cout << "Generation = " << table->generation << endl;
   cout << "StartRow   = " << startRow << endl;
   cout << "EndRow     = " << endRow << endl;
+  **/
 
   range.startRow = startRow.c_str();
   range.endRow = endRow.c_str();
