@@ -1016,6 +1016,9 @@ void RangeServer::drop_table(ResponseCallback *cb, const char *table_name) {
       range_vector[i]->drop();
     range_vector.clear();
   }
+  else {
+    HT_ERRORF("drop_table '%s' - table not found", table_name);
+  }
 
   cout << "almost done" << endl << flush;
 
@@ -1045,6 +1048,7 @@ void RangeServer::dump_stats(ResponseCallback *cb) {
  */
 bool RangeServer::get_table_info(std::string name, TableInfoPtr &info) {
   boost::mutex::scoped_lock lock(m_mutex);
+  HT_ERRORF("get_table_info '%s'", name.c_str());
   TableInfoMapT::iterator iter = m_table_info_map.find(name);
   if (iter == m_table_info_map.end())
     return false;
@@ -1058,6 +1062,7 @@ bool RangeServer::get_table_info(std::string name, TableInfoPtr &info) {
  */
 void RangeServer::set_table_info(std::string name, TableInfoPtr &info) {
   boost::mutex::scoped_lock lock(m_mutex);
+  HT_ERRORF("set_table_info '%s'", name.c_str());
   TableInfoMapT::iterator iter = m_table_info_map.find(name);
   if (iter != m_table_info_map.end())
     m_table_info_map.erase(iter);
@@ -1070,6 +1075,7 @@ void RangeServer::set_table_info(std::string name, TableInfoPtr &info) {
  */
 bool RangeServer::remove_table_info(std::string name, TableInfoPtr &info) {
   boost::mutex::scoped_lock lock(m_mutex);
+  HT_ERRORF("remove_table_info '%s'", name.c_str());
   TableInfoMapT::iterator iter = m_table_info_map.find(name);
   if (iter == m_table_info_map.end())
     return false;

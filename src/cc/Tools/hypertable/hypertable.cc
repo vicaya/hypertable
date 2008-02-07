@@ -315,6 +315,10 @@ int main(int argc, char **argv) {
       cerr << "Error: " << e.what() << endl;
       if (g_batch_mode)
 	return 1;
+      g_accum = "";
+      while (!command_queue.empty())
+	command_queue.pop();
+      g_cont=false;
     }
 
   }

@@ -276,7 +276,13 @@ void Master::server_left(std::string &location) {
 void Master::create_table(ResponseCallback *cb, const char *tableName, const char *schemaString) {
   int error;
   std::string errMsg;
-  if ((error = create_table(tableName, schemaString, errMsg)) != Error::OK)
+  std::string table_name_str = tableName;
+
+#if defined(__APPLE__)
+  boost::to_upper(table_name_str);
+#endif  
+
+  if ((error = create_table(table_name_str.c_str(), schemaString, errMsg)) != Error::OK)
     cb->error(error, errMsg);
   else
     cb->response_ok();
@@ -516,6 +522,7 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
   int ival;
   HandleCallbackPtr nullHandleCallback;
   uint64_t handle;
+  std::string table_name_str = table_name;
 
   /**
    * Create table file
@@ -587,7 +594,7 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
 
     if (!unique_locations.empty()) {
       boost::mutex::scoped_lock lock(m_mutex);
-      DropTableDispatchHandler sync_handler(table_name, m_conn_manager_ptr->get_comm(), 30);
+      DropTableDispatchHandler sync_handler(table_name_str, m_conn_manager_ptr->get_comm(), 30);
       RangeServerStatePtr state_ptr;
       ServerMapT::iterator iter;
 

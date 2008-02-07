@@ -5,7 +5,7 @@ HYPERTABLE_INSTALL_DIR=/Users/doug/hypertable
 HYPERTABLE_VERSION=0.9.0
 
 CFLAGS=-g -I$(BOOST_INCLUDE_DIR) -I$(HYPERTABLE_INSTALL_DIR)/include/hypertable-$(HYPERTABLE_VERSION)
-LDFLAGS=-L$(HYPERTABLE_INSTALL_DIR)/lib -lHypertable -lAsyncComm -lCommon -llog4cpp -lexpat -l$(BOOST_THREAD_LIB) -lHyperspace
+LDFLAGS=-L$(HYPERTABLE_INSTALL_DIR)/lib -lHypertable -lHyperComm -lHyperCommon -llog4cpp -lexpat -l$(BOOST_THREAD_LIB) -lHyperspace
 
 all: apache_log_load apache_log_query conf/hypertable.cfg
 
