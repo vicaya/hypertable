@@ -79,6 +79,9 @@ typedef uint64_t UInt64;
 typedef int64_t Int64;
 typedef int32_t Int32;
 
+/* For printf %llu in case some system has funky headers */
+typedef long long unsigned Llu;
+
 /* For lookup table */
 #define BM_NPOS ((size_t)-1)
 
@@ -317,7 +320,7 @@ init_bmlut(BmLut *table, size_t n, void *work_mem) {
   for (p = table->entries, endp = p + table->size; p < endp; ++p)
     p->pos = BM_NPOS;
 
-  BM_LOG(1, "n(fps): %lu, size: %lu\n", n, table->size);
+  BM_LOG(1, "n(fps): %llu, size: %llu\n", (Llu)n, (Llu)table->size);
 }
 
 /* Simple hash lookup with probing */
@@ -540,7 +543,7 @@ bmz_hash_mask32x2(const void *in, size_t in_len, size_t b1, size_t b2) {
     hash = _update_hash_; \
     if (h0 != hash) { \
       BM_LOG(0, "mismatch at pos %ld: %lx vs %lx\n", \
-             (long)(ip - in), h0, hash); \
+             (long)(ip - in), (long)h0, (long)hash); \
       ++errs; \
     } \
   } \
@@ -557,7 +560,7 @@ bmz_hash_mask32x2(const void *in, size_t in_len, size_t b1, size_t b2) {
   for (; ip < in_end - fp_len - 1; ++ip) { \
     hash = _update_hash_; \
   } \
-  BM_LOG(1, "last hash: %lx\n", hash) /* or the loop gets optimized out */
+  BM_LOG(1, "last hash: %lx\n", (long)hash) /* or the loop gets optimized out */
 
 int
 bmz_check_hash_mod(const void *src, size_t in_len, size_t fp_len,
@@ -721,11 +724,11 @@ bmz_bench_hash(const void *in, size_t in_len, unsigned type) {
     hash = _update_hash_; \
   } \
   c = lut.collisions; \
-  BM_LOG(1, "length: %lu, lut.size: %lu, lut.collisions: %lu (eff. bits: " \
-         "%.3f), lut.probes: %lu (%.3f/lu)\n", in_len, lut.size, c, \
-         c ? log((double)in_len / fp_len * scan_len / c) / log(2) \
-           : sizeof(size_t) * 8., \
-         lut.probes, (double)lut.probes / scan_len)
+  BM_LOG(1, "length: %llu, lut.size: %llu, lut.collisions: %llu (eff. bits: " \
+         "%.3f), lut.probes: %llu (%.3f/lu)\n", (Llu)in_len, (Llu)lut.size, \
+         (Llu)c, c ? log((double)in_len / fp_len * scan_len / c) / log(2) \
+                   : sizeof(size_t) * 8., \
+         (Llu)lut.probes, (double)lut.probes / scan_len)
 
 void
 bmz_bench_lut_mod(const void *src, size_t in_len, size_t fp_len,
@@ -973,15 +976,16 @@ bmz_bench_lut_mask32x2(const void *src, size_t in_len, size_t fp_len,
   \
   if (adapts > BM_COLLISION_ABORT_THRESH) { \
     /* stumped & give up, just pass the bytes */ \
-    BM_LOG(1, "too much collisions: %lu, giving up.\n", BM_ABORT_COLLISIONS); \
+    BM_LOG(1, "too much collisions: %llu, giving up.\n", \
+           (Llu)BM_ABORT_COLLISIONS); \
     goto output_overrun; \
   } \
   else if (collisions > collision_thresh) { \
     /* unlikely when the hash is good, so reinitialize hash, in case \
      * data is wacked/adversarial for some reasons. \
      */ \
-    BM_LOG(2, "hash collision %lu: %lx: pos: %lu and %lu: [" BM_COLOR_DBG, \
-           lut.collisions, hash, pos, i); \
+    BM_LOG(2, "hash collision %llu: %llx: pos: %llu and %llu: [" BM_COLOR_DBG, \
+           (Llu)lut.collisions, (Llu)hash, (Llu)pos, (Llu)i); \
     BM_LOG_(2, in + pos, fp_len); \
     BM_LOG(2, "%s", BM_COLOR_END "] vs [" BM_COLOR_ALT); \
     BM_LOG_(2, in + i, fp_len); \
@@ -999,11 +1003,12 @@ bmz_bench_lut_mask32x2(const void *src, size_t in_len, size_t fp_len,
 
 #define BM_ENCODE_STAT(_msg_) do { \
   size_t c = lut.collisions; \
-  BM_LOG(1, "%s: in: %lu, out: %lu, lut.collisions: %lu (eff. bits: %.3f) " \
-         "thresh: %lu), lut.probes: %lu (%.3f/lu)\n", _msg_, in_len, \
-         *out_len_p, c, c ? log((double)nfps * scan_len / c) / log(2) \
-                          : sizeof(size_t) * 8., \
-         collision_thresh, lut.probes, (double)lut.probes / scan_len); \
+  BM_LOG(1, "%s: in: %llu, out: %llu, lut.collisions: %llu (eff. bits: %.3f) " \
+         "thresh: %llu), lut.probes: %llu (%.3f/lu)\n", _msg_, (Llu)in_len, \
+         (Llu)*out_len_p, (Llu)c, \
+         c ? log((double)nfps * scan_len / c) / log(2) : sizeof(size_t) * 8., \
+         (Llu)collision_thresh, (Llu)lut.probes, \
+         (double)lut.probes / scan_len); \
 } while (0)
 
 /* The main algorithm */
@@ -1438,7 +1443,10 @@ bmz_init() {
 int
 bmz_lz_pack(const void *in, size_t in_len, void *out, size_t *out_len_p,
             void *work_mem) {
-  return lzo1x_1_compress((Byte *)in, in_len, (Byte *)out, out_len_p, work_mem);
+  lzo_uint olen = *out_len_p;
+  int ret = lzo1x_1_compress((Byte *)in, in_len, (Byte *)out, &olen, work_mem);
+  *out_len_p = olen;
+  return ret;
 }
 
 size_t
@@ -1448,7 +1456,10 @@ bmz_lz_pack_worklen(size_t in_len) {
 
 int
 bmz_lz_unpack(const void *in, size_t in_len, void *out, size_t *out_len_p) {
-  return lzo1x_decompress((Byte *)in, in_len, (Byte *)out, out_len_p, NULL);
+  lzo_uint olen = *out_len_p;
+  int ret = lzo1x_decompress((Byte *)in, in_len, (Byte *)out, &olen, NULL);
+  *out_len_p = olen;
+  return ret;
 }
 
 unsigned

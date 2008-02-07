@@ -31,20 +31,20 @@
 #define BMZ_HASH_MASK           4
 #define BMZ_HASH_MASK32X2       5
 
-HT_EXTERN(unsigned long)
+HT_EXTERN(size_t)
 bmz_hash_mod(const void *in, size_t in_len, size_t b, size_t m);
 
-HT_EXTERN(unsigned long)
+HT_EXTERN(size_t)
 bmz_hash_mod16x2(const void *in, size_t in_len, size_t b1, size_t b2,
                  size_t m1, size_t m2);
 
-HT_EXTERN(unsigned long)
+HT_EXTERN(size_t)
 bmz_hash_mask16x2(const void *in, size_t in_len, size_t b1, size_t b2);
 
-HT_EXTERN(unsigned long)
+HT_EXTERN(size_t)
 bmz_hash_mask(const void *in, size_t in_len, size_t b);
 
-HT_EXTERN(unsigned long)
+HT_EXTERN(size_t)
 bmz_hash_mask32x2(const void *in, size_t in_len, size_t b1, size_t b2);
 
 HT_EXTERN(int)

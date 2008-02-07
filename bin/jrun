@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Copyright 2007 Doug Judd (Zvents, Inc.)
 #
