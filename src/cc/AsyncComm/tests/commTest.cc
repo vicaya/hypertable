@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  CommTestThreadFunction threadFunc(comm, addr, "/usr/share/dict/words");
+  CommTestThreadFunction threadFunc(comm, addr, "./words");
 
   threadFunc.set_output_file("commTest.output.1");
   thread1 = new boost::thread(threadFunc);
@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
   thread2->join();
 
   std::string tmpFile = (std::string)"/tmp/commTest" + (int)getpid();
-  std::string commandStr = (std::string)"head -" + (int)MAX_MESSAGES + " /usr/share/dict/words > " + tmpFile  + " ; diff " + tmpFile + " commTest.output.1";
+  std::string commandStr = (std::string)"head -" + (int)MAX_MESSAGES + " ./words > " + tmpFile  + " ; diff " + tmpFile + " commTest.output.1";
 
   if (system(commandStr.c_str()))
     return 1;

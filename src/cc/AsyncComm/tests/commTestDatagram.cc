@@ -51,7 +51,7 @@ namespace {
     "",
     "This program tests the UDP portion of AsyncComm.  It runs the echo",
     "server (testServer) in UDP mode, and then spawns two threads that",
-    "read /usr/share/dict/words, one line at a time, and sends these",
+    "read ./words, one line at a time, and sends these",
     "lines to the echo server in UDP packets and writes the replies to",
     "temporary output files.  These files are then diff'ed against the",
     "original.",
@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
 
   poll(0, 0, 2000);
 
-  CommTestDatagramThreadFunction threadFunc(comm, addr, "/usr/share/dict/words");
+  CommTestDatagramThreadFunction threadFunc(comm, addr, "./words");
 
   threadFunc.set_output_file("commTestDatagram.output.1");
   threadFunc.set_receive_port(DEFAULT_PORT + 1);
@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
   thread2->join();
 
   std::string tmpFile = (std::string)"/tmp/commTestDatagram" + (int)getpid();
-  std::string commandStr = (std::string)"head -" + (int)MAX_MESSAGES + " /usr/share/dict/words > " + tmpFile  + " ; diff " + tmpFile + " commTestDatagram.output.1";
+  std::string commandStr = (std::string)"head -" + (int)MAX_MESSAGES + " ./words > " + tmpFile  + " ; diff " + tmpFile + " commTestDatagram.output.1";
 
   if (system(commandStr.c_str()))
     return 1;

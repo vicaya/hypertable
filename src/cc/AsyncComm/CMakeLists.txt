@@ -16,6 +16,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
 
+set (SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/AsyncComm/tests")
+set (DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/AsyncComm")
+
+set ( TEST_DEPENDENCIES ${DST_DIR}/words )
+
 set (AsyncComm_SRCS
 DispatchHandlerSynchronizer.cc
 Comm.cc
@@ -46,11 +51,11 @@ add_executable (testServer testServer.cc)
 target_link_libraries (testServer pthread ${BOOST_LIB} HyperComm HyperCommon log4cpp)
 
 # commTest
-add_executable (commTest tests/commTest.cc tests/CommTestThreadFunction.cc)
+add_executable (commTest tests/commTest.cc tests/CommTestThreadFunction.cc ${TEST_DEPENDENCIES})
 target_link_libraries (commTest pthread ${BOOST_LIB} HyperComm HyperCommon log4cpp expat)
 
 # commTestDatagram
-add_executable (commTestDatagram tests/commTestDatagram.cc tests/CommTestDatagramThreadFunction.cc)
+add_executable (commTestDatagram tests/commTestDatagram.cc tests/CommTestDatagramThreadFunction.cc ${TEST_DEPENDENCIES})
 target_link_libraries (commTestDatagram pthread ${BOOST_LIB} HyperComm HyperCommon log4cpp expat)
 
 # commTestTimeout
@@ -65,12 +70,15 @@ target_link_libraries (commTestTimer pthread ${BOOST_LIB} HyperComm HyperCommon 
 add_executable (commTestReverseRequest tests/commTestReverseRequest.cc)
 target_link_libraries (commTestReverseRequest pthread ${BOOST_LIB} HyperComm HyperCommon log4cpp expat)
 
-set (SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/AsyncComm/tests")
-set (DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/AsyncComm")
 configure_file(${SRC_DIR}/commTestTimeout.golden ${DST_DIR}/commTestTimeout.golden)
 configure_file(${SRC_DIR}/commTestTimer.golden ${DST_DIR}/commTestTimer.golden)
 configure_file(${SRC_DIR}/datafile.txt ${DST_DIR}/datafile.txt)
 configure_file(${SRC_DIR}/commTestReverseRequest.golden ${DST_DIR}/commTestReverseRequest.golden)
+
+add_custom_command (SOURCE ${HYPERTABLE_SOURCE_DIR}/test/words.gz
+                    COMMAND cp ARGS ${HYPERTABLE_SOURCE_DIR}/test/words.gz ${DST_DIR}
+                    COMMAND gunzip ARGS ${DST_DIR}/words.gz
+                    OUTPUT ${DST_DIR}/words)
 
 add_test (HyperComm commTest)
 add_test (HyperComm-datagram commTestDatagram)
