@@ -98,16 +98,17 @@ struct GcWorker {
         if (!found_valid_files)
           delete_row(key, last_row, mutator);
 
-        found_valid_files = false;
+        found_valid_files = *cell.value != '!';
         last_row = cell.row_key;
       }
       if (last_cq != cell.column_qualifier) {
         // new access group
         last_cq = cell.column_qualifier;
         last_time = cell.timestamp;
-        found_valid_files = *cell.value != '!';
+        int is_valid_files = *cell.value != '!';
+        found_valid_files |= is_valid_files;
 
-        if (found_valid_files)
+        if (is_valid_files)
           insert_files(files_map, (char *)cell.value, cell.value_len, 1);
       }
       else {
