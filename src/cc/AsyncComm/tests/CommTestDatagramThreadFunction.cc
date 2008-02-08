@@ -117,31 +117,33 @@ void CommTestDatagramThreadFunction::operator()() {
   if (infile.is_open()) {
     while (!infile.eof() && nsent < MAX_MESSAGES) {
       getline (infile,line);
-      if (line.length() > 0) {
-	CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::encoded_length_string(line)) );
-	cbufPtr->append_string(line);
-	if ((error = m_comm->send_datagram(m_addr, localAddr, cbufPtr)) != Error::OK) {
-	  HT_ERRORF("Problem sending datagram - %s", Error::get_text(error));
-	  return;
-	}
-	outstanding++;
+      if (infile.fail())
+	break;
 
-	if (outstanding  > maxOutstanding) {
-	  if (!respHandler->get_response(eventPtr))
-	    break;
-	  if (!Serialization::decode_string(&eventPtr->message, &eventPtr->messageLen, &str))
-	    outfile << "ERROR: deserialization problem." << endl;
-	  else {
-	    if (*str != 0)
-	      outfile << str << endl;
-	    else
-	      outfile << "[NULL]" << endl;
-	  }
-	  outstanding--;
+      CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::encoded_length_string(line)) );
+      cbufPtr->append_string(line);
+      if ((error = m_comm->send_datagram(m_addr, localAddr, cbufPtr)) != Error::OK) {
+	HT_ERRORF("Problem sending datagram - %s", Error::get_text(error));
+	return;
+      }
+      outstanding++;
+
+      if (outstanding  > maxOutstanding) {
+	if (!respHandler->get_response(eventPtr))
+	  break;
+	if (!Serialization::decode_string(&eventPtr->message, &eventPtr->messageLen, &str))
+	  outfile << "ERROR: deserialization problem." << endl;
+	else {
+	  if (*str != 0)
+	    outfile << str << endl;
+	  else
+	    outfile << endl;
 	}
+	outstanding--;
       }
       nsent++;
     }
+
     infile.close();
   }
   else {
@@ -156,7 +158,7 @@ void CommTestDatagramThreadFunction::operator()() {
       if (*str != 0)
 	outfile << str << endl;
       else
-	outfile << "[NULL]" << endl;
+	outfile << endl;
     }
     //cout << "out = " << outstanding << endl;
     outstanding--;

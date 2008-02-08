@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -108,39 +108,40 @@ void CommTestThreadFunction::operator()() {
   if (infile.is_open()) {
     while (!infile.eof() && nsent < MAX_MESSAGES) {
       getline (infile,line);
-      if (line.length() > 0) {
-	CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::encoded_length_string(line)) );
-	cbufPtr->append_string(line);
-	int retries = 0;
-	while ((error = m_comm->send_request(m_addr, 30, cbufPtr, respHandler)) != Error::OK) {
-	  if (error == Error::COMM_NOT_CONNECTED) {
-	    if (retries == 5) {
-	      HT_ERROR("Connection timeout.");
-	      return;
-	    }
-	    poll(0, 0, 1000);
-	    retries++;
-	  }
-	  else {
-	    HT_ERRORF("CommEngine::send_message returned '%s'", Error::get_text(error));
+      if (infile.fail())
+	break;
+
+      CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::encoded_length_string(line)) );
+      cbufPtr->append_string(line);
+      int retries = 0;
+      while ((error = m_comm->send_request(m_addr, 30, cbufPtr, respHandler)) != Error::OK) {
+	if (error == Error::COMM_NOT_CONNECTED) {
+	  if (retries == 5) {
+	    HT_ERROR("Connection timeout.");
 	    return;
 	  }
+	  poll(0, 0, 1000);
+	  retries++;
 	}
-	outstanding++;
+	else {
+	  HT_ERRORF("CommEngine::send_message returned '%s'", Error::get_text(error));
+	  return;
+	}
+      }
+      outstanding++;
 
-	if (outstanding  > maxOutstanding) {
-	  if (!respHandler->get_response(eventPtr))
-	    break;
-	  if (!Serialization::decode_string(&eventPtr->message, &eventPtr->messageLen, &str))
-	    outfile << "ERROR: deserialization problem." << endl;
-	  else {
-	    if (*str != 0)
-	      outfile << str << endl;
-	    else
-	      outfile << "[NULL]" << endl;
-	  }
-	  outstanding--;
+      if (outstanding  > maxOutstanding) {
+	if (!respHandler->get_response(eventPtr))
+	  break;
+	if (!Serialization::decode_string(&eventPtr->message, &eventPtr->messageLen, &str))
+	  outfile << "ERROR: deserialization problem." << endl;
+	else {
+	  if (*str != 0)
+	    outfile << str << endl;
+	  else
+	    outfile << endl;
 	}
+	outstanding--;
       }
       nsent++;
     }
@@ -158,7 +159,7 @@ void CommTestThreadFunction::operator()() {
       if (*str != 0)
 	outfile << str << endl;
       else
-	outfile << "[NULL]" << endl;
+	outfile << endl;
     }
     //cout << "out = " << outstanding << endl;
     outstanding--;
