@@ -225,6 +225,17 @@ struct GcWorker {
   }
 
   void
+  gc() {
+    try {
+      scan_metadata();
+    }
+    catch (Exception &e) {
+      HT_ERRORF("Error: caught exception while gc'ing: %s: %s",
+                e.what(), Error::get_text(e.code()));
+    }
+  }
+
+  void
   operator()() {
     do {
       int remain = sleep(m_interval);
@@ -232,7 +243,7 @@ struct GcWorker {
       if (remain)
         break; // interrupted       
 
-      if (m_metadata) scan_metadata();
+      if (m_metadata) gc();
       else HT_INFOF("TableFileGc: METADATA not ready, will try again in "
                     "%d seconds", m_interval);
 
@@ -247,7 +258,7 @@ namespace Hypertable {
 void
 start_table_file_gc(PropertiesPtr props, ThreadGroup &threads,
                     TablePtr &metadata, Filesystem *fs) {
-  int interval = props->get_int("Hypertable.TableFileGc.Interval", 300);
+  int interval = props->get_int("Hypertable.Master.Gc.Interval", 300);
 
   threads.create_thread(GcWorker(metadata, fs, interval));
 
@@ -259,7 +270,7 @@ void
 test_table_file_gc(TablePtr &metadata, Filesystem *fs,
                    bool dryrun) {
   GcWorker gc(metadata, fs, 0, dryrun);
-  gc.scan_metadata();
+  gc.gc();
 }
 
 } // namespace Hypertable
