@@ -19,6 +19,7 @@
 
 #include <iostream>
 #include "Common/Thread.h"
+#include "Common/System.h"
 #include "Common/Logger.h"
 #include "Common/Error.h"
 #include "Hypertable/Lib/Client.h"
@@ -64,7 +65,7 @@ main(int ac, char *av[]) {
   char **it = av + 1, **arg_end = av + ac;
   bool debug = false, dryrun = false;
   char *config = "conf/hypertable.cfg";
-  Logger::initialize(av[0]);
+  System::initialize(av[0]);
 
   for (; it < arg_end; ++it) {
     if (!strcmp("-d", *it))
