@@ -141,13 +141,23 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &props_ptr, A
     }
 
     if ((error = m_hyperspace_ptr->attr_get(m_master_file_handle, "last_table_id", valueBuf)) != Error::OK) {
-      HT_ERRORF("Problem getting attribute 'last_table_id' from file /hypertable/master - %s", Error::get_text(error));
-      exit(1);
+      if (error == Error::HYPERSPACE_ATTR_NOT_FOUND) {
+	uint32_t table_id = 0;
+	if ((error = m_hyperspace_ptr->attr_set(m_master_file_handle, "last_table_id", &table_id, sizeof(int32_t))) != Error::OK) {
+	  HT_ERRORF("Problem setting attribute 'last_table_id' of file /hypertable/master - %s", Error::get_text(error));
+	  exit(1);
+	}
+	ival = 0;
+      }
+      else {
+	HT_ERRORF("Problem getting attribute 'last_table_id' from file /hypertable/master - %s", Error::get_text(error));
+	exit(1);
+      }
     }
-
-    assert(valueBuf.fill() == sizeof(int32_t));
-
-    memcpy(&ival, valueBuf.buf, sizeof(int32_t));
+    else {
+      assert(valueBuf.fill() == sizeof(int32_t));
+      memcpy(&ival, valueBuf.buf, sizeof(int32_t));
+    }
 
     atomic_set(&m_last_table_id, ival);
     if (m_verbose)

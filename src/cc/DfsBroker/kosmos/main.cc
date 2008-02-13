@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -102,11 +102,11 @@ int main(int argc, char **argv) {
 
   propsPtr = new Hypertable::Properties(configFile);
   if (verbose)
-    propsPtr->set("verbose", "true");
+    propsPtr->set("Hypertable.Verbose", "true");
 
-  port         = propsPtr->get_int("DfsBroker.kfs.port",     DEFAULT_PORT);
-  reactorCount = propsPtr->get_int("DfsBroker.kfs.reactors", System::get_processor_count());
-  workerCount  = propsPtr->get_int("DfsBroker.kfs.workers",  DEFAULT_WORKERS);
+  port         = propsPtr->get_int("DfsBroker.Port",     DEFAULT_PORT);
+  workerCount  = propsPtr->get_int("DfsBroker.Workers",  DEFAULT_WORKERS);
+  reactorCount = propsPtr->get_int("Kfs.Reactors", System::get_processor_count());
 
   ReactorFactory::initialize(reactorCount);
 
@@ -114,9 +114,9 @@ int main(int argc, char **argv) {
 
   if (verbose) {
     cout << "CPU count = " << System::get_processor_count() << endl;
-    cout << "DfsBroker.kfs.port=" << port << endl;
-    cout << "DfsBroker.kfs.reactors=" << reactorCount << endl;
-    cout << "DfsBroker.kfs.workers=" << workerCount << endl;
+    cout << "DfsBroker.Port=" << port << endl;
+    cout << "DfsBroker.Workers=" << workerCount << endl;
+    cout << "Kfs.reactors=" << reactorCount << endl;
   }
 
   InetAddr::initialize(&listen_addr, INADDR_ANY, port);
