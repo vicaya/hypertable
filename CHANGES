@@ -1,0 +1,16 @@
+
+Version 0.9.0.2:
+(2008-02-12)
+
+  * Made all timestamps interpreted as GMT (issue #56)
+  * Catch table scanner / mutator exceptions in Master GC logic (issue #55)
+  * Fixed Master abort when last_table_id attribute of /hypertable/master not found
+  * Modified kosmosBroker properties to be capitalized camel case
+
+Version 0.9.0.1:
+(2008-02-07)
+
+  * Fixed compile errors on Ubuntu, FC5 and FC6
+  * Got rid of AsyncComm regression dependency on /usr/share/dict/words
+  * Fixed critical GC bu that deleting good MEATADATA rows
+  * Fixed FindBoost.cmake to work if only .so files are installed
