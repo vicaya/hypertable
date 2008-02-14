@@ -81,6 +81,8 @@ TableScanner::TableScanner(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier
 
   memcpy(&m_scan_spec.interval, &scan_spec.interval, sizeof(m_scan_spec.interval));
 
+  m_scan_spec.return_deletes = scan_spec.return_deletes;
+
   // copy TableIdentifierT
   memcpy(&m_table_identifier, table_identifier, sizeof(TableIdentifierT));
   m_table_identifier.name = m_table_name.c_str();
@@ -195,12 +197,15 @@ bool TableScanner::next(CellT &cell) {
     cell.column_qualifier = keyComps.column_qualifier;
     if ((cf = m_schema_ptr->get_column_family(keyComps.column_family_code)) == 0) {
       // LOG ERROR ...
-      throw Exception(Error::BAD_KEY);
+      //throw Exception(Error::BAD_KEY);
+      cell.column_family = 0;
     }
-    cell.column_family = cf->name.c_str();
+    else
+      cell.column_family = cf->name.c_str();
     cell.timestamp = keyComps.timestamp;
     cell.value = value->data;
     cell.value_len = value->len;
+    cell.flag = keyComps.flag;
     return true;
   }
 

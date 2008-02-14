@@ -48,8 +48,10 @@ using namespace Hypertable;
 using namespace std;
 
 
-Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeT *range, uint64_t soft_limit) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_schema(schemaPtr), m_maintenance_in_progress(false), m_last_logical_timestamp(0), m_hold_updates(false), m_update_counter(0), m_added(0) {
+Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeT *range, uint64_t soft_limit) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_schema(schemaPtr), m_maintenance_in_progress(false), m_last_logical_timestamp(0), m_hold_updates(false), m_update_counter(0), m_added_inserts(0) {
   AccessGroup *ag;
+  
+  memset(m_added_deletes, 0, 3*sizeof(int64_t));
 
   if (soft_limit == 0 || soft_limit > Global::rangeMaxBytes)
     m_disk_limit = Global::rangeMaxBytes;
@@ -213,16 +215,20 @@ int Range::add(const ByteString32T *key, const ByteString32T *value, uint64_t re
       (*iter).second->add(key, value, real_timestamp);
     }
   }
-  else {
+  else
     m_column_family_vector[keyComps.column_family_code]->add(key, value, real_timestamp);
-    m_added++;
-  }
+  if (keyComps.flag == FLAG_INSERT)
+    m_added_inserts++;
+  else
+    m_added_deletes[keyComps.flag]++;
   return 0;
 }
 
 
 CellListScanner *Range::create_scanner(ScanContextPtr &scanContextPtr) {
-  MergeScanner *mscanner = new MergeScanner(scanContextPtr, false);
+  bool return_deletes = scanContextPtr->spec ? scanContextPtr->spec->return_deletes : false;
+  cout << flush;
+  MergeScanner *mscanner = new MergeScanner(scanContextPtr, return_deletes);
   for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++) {
     if ((*iter).second->include_in_scan(scanContextPtr))
       mscanner->add_scanner((*iter).second->create_scanner(scanContextPtr));
@@ -613,7 +619,11 @@ void Range::dump_stats() {
     collisions += m_access_group_vector[i]->get_collision_count();
     cached += m_access_group_vector[i]->get_cached_count();
   }
-  cout << "STAT\t " << range_str << "\tadded\t" << m_added << endl;
+  cout << "STAT\t " << range_str << "\tadded inserts\t" << m_added_inserts << endl;
+  cout << "STAT\t " << range_str << "\tadded row deletes\t" << m_added_deletes[0] << endl;
+  cout << "STAT\t " << range_str << "\tadded cf deletes\t" << m_added_deletes[1] << endl;
+  cout << "STAT\t " << range_str << "\tadded cell deletes\t" << m_added_deletes[2] << endl;
+  cout << "STAT\t " << range_str << "\tadded total\t" << (m_added_inserts + m_added_deletes[0] + m_added_deletes[1] + m_added_deletes[2]) << endl;
   cout << "STAT\t " << range_str << "\tcollisions\t" << collisions << endl;
   cout << "STAT\t " << range_str << "\tcached\t" << cached << endl;
   cout << flush;
@@ -680,7 +690,8 @@ int Range::replay_split_log(string &log_dir, uint64_t real_timestamp) {
 		count, nblocks, log_dir.c_str(), m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
   }
 
-  m_added = 0;
+  m_added_inserts = 0;
+  memset(m_added_deletes, 0, 3*sizeof(int64_t));
 
   error = commit_log_reader_ptr->last_error();
 

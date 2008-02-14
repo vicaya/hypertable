@@ -250,6 +250,7 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
     meta_scan_spec.startRowInclusive = true;
     meta_scan_spec.endRow = 0;
     meta_scan_spec.endRowInclusive = false;
+    meta_scan_spec.return_deletes = false;
     // meta_scan_spec.interval = ????;
 
     if ((error = m_range_server.create_scanner(addr, m_metadata_table, range, meta_scan_spec, scan_block)) != Error::OK)

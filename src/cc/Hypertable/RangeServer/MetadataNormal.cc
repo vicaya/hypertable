@@ -63,6 +63,7 @@ void MetadataNormal::reset_files_scan() {
   scan_spec.interval.second = 0;
   scan_spec.columns.clear();
   scan_spec.columns.push_back("Files");
+  scan_spec.return_deletes = false;
 
   if ((error = Global::metadata_table_ptr->create_scanner(scan_spec, m_files_scanner_ptr)) != Error::OK)
     throw Hypertable::Exception(error, "Problem creating scanner on METADATA table");

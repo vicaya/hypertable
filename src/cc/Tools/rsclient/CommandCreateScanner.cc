@@ -122,6 +122,7 @@ int CommandCreateScanner::run() {
   scan_spec.endRowInclusive = true;
   scan_spec.interval.first = 0;
   scan_spec.interval.second = 0;
+  scan_spec.return_deletes = false;
 
   for (size_t i=1; i<m_args.size(); i++) {
     if (m_args[i].second == "") {

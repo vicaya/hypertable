@@ -591,6 +591,7 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
     scan_spec.endRowInclusive = true;
     scan_spec.interval.first = 0;
     scan_spec.interval.second = 0;
+    scan_spec.return_deletes=false;
 
     if ((error = m_metadata_table_ptr->create_scanner(scan_spec, scanner_ptr)) != Error::OK) {
       HT_ERRORF("Problem creating scanner on METADATA table - %s", Error::get_text(error));

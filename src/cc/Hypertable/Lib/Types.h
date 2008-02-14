@@ -56,6 +56,7 @@ namespace Hypertable {
     const char *endRow;
     bool endRowInclusive;
     std::pair<uint64_t,uint64_t> interval;
+    bool return_deletes;
   } ScanSpecificationT;
 
   typedef struct {

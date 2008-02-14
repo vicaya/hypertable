@@ -60,6 +60,7 @@ struct GcWorker {
     scan_spec.endRowInclusive = false;
     scan_spec.interval.first = 0;
     scan_spec.interval.second = 0;
+    scan_spec.return_deletes=false;
 
     int ret = m_metadata->create_scanner(scan_spec, scanner);
 

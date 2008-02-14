@@ -31,6 +31,7 @@ namespace Hypertable {
     uint64_t timestamp;
     const uint8_t *value;
     uint64_t value_len;
+    uint8_t flag;
   } CellT;
 
 }

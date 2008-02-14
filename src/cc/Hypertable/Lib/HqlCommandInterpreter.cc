@@ -134,6 +134,7 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       }
       scan_spec.interval.first  = state.scan.start_time;
       scan_spec.interval.second = state.scan.end_time;
+      scan_spec.return_deletes = state.scan.return_deletes;
 
       if ((error = m_client->open_table(state.table_name, table_ptr)) != Error::OK)
 	throw Exception(error, std::string("Problem opening table '") + state.table_name + "'");
@@ -153,10 +154,17 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
 	    printf("%d-%02d-%02d %02d:%02d:%02d.%09d\t", tms.tm_year+1900, tms.tm_mon+1, tms.tm_mday, tms.tm_hour, tms.tm_min, tms.tm_sec, nsec);
 	  }
 	}
-	printf("%s\t%s", cell.row_key, cell.column_family);
-	if (*cell.column_qualifier)
-	  printf(":%s", cell.column_qualifier);
-	printf("\t%s\n", std::string((const char *)cell.value, cell.value_len).c_str());
+	if (cell.column_family) {
+	  printf("%s\t%s", cell.row_key, cell.column_family);
+	  if (*cell.column_qualifier)
+	    printf(":%s", cell.column_qualifier);
+	}
+	else
+	  printf("%s", cell.row_key);
+	if (cell.flag != FLAG_INSERT)
+	  printf("\t%s\tDELETE\n", std::string((const char *)cell.value, cell.value_len).c_str());
+	else
+	  printf("\t%s\n", std::string((const char *)cell.value, cell.value_len).c_str());
       }
     }
     else if (state.command == COMMAND_LOAD_DATA) {

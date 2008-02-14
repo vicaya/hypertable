@@ -87,7 +87,7 @@ namespace Hypertable {
    *
    */
   size_t EncodedLengthScanSpecification(ScanSpecificationT &scanSpec) {
-    size_t len = 28;
+    size_t len = 29;
     len += Serialization::encoded_length_string(scanSpec.startRow);
     len += Serialization::encoded_length_string(scanSpec.endRow);
     for (size_t i=0; i<scanSpec.columns.size(); i++)
@@ -108,6 +108,7 @@ namespace Hypertable {
       Serialization::encode_string(bufPtr, scanSpec.columns[i]);
     Serialization::encode_long(bufPtr, scanSpec.interval.first);
     Serialization::encode_long(bufPtr, scanSpec.interval.second);
+    Serialization::encode_bool(bufPtr, scanSpec.return_deletes);
   }
 
 
@@ -140,6 +141,8 @@ namespace Hypertable {
     if (!Serialization::decode_long(bufPtr, remainingPtr, &scanSpec->interval.first))
       return false;
     if (!Serialization::decode_long(bufPtr, remainingPtr, &scanSpec->interval.second))
+      return false;
+    if (!Serialization::decode_bool(bufPtr, remainingPtr, &scanSpec->return_deletes))
       return false;
   
     return true;

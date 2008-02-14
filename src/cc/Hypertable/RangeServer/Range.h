@@ -161,9 +161,9 @@ namespace Hypertable {
     uint32_t         m_update_counter;
     bool             m_is_root;
     ScannerTimestampController m_scanner_timestamp_controller;
-    uint64_t         m_added;
+    uint64_t         m_added_deletes[3];
+    uint64_t         m_added_inserts;
     uint64_t         m_disk_limit;
-
   };
 
   typedef boost::intrusive_ptr<Range> RangePtr;

@@ -585,6 +585,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
       scan_spec.columns.clear();
       scan_spec.columns.push_back("StartRow");
       scan_spec.columns.push_back("SplitLogDir");
+      scan_spec.return_deletes = false;
 
       if ((error = Global::metadata_table_ptr->create_scanner(scan_spec, scanner_ptr)) != Error::OK)
 	throw Exception(error, "Problem creating scanner on METADATA table");
