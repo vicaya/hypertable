@@ -141,7 +141,7 @@ void MergeScanner::forward() {
       else {
 	if (keyComps.timestamp >= m_end_timestamp)
 	  continue;
-	if (m_delete_present) {
+	if (!m_return_deletes && m_delete_present) {
 	  if (m_deleted_cell.fill() > 0) {
 	    len = (keyComps.column_qualifier - keyComps.row) + strlen(keyComps.column_qualifier) + 1;
 	    if (m_deleted_cell.fill() == len && !memcmp(m_deleted_cell.buf, keyComps.row, len)) {

@@ -80,6 +80,8 @@ add_custom_command (SOURCE ${HYPERTABLE_SOURCE_DIR}/test/words.gz
                     COMMAND gunzip ARGS ${DST_DIR}/words.gz
                     OUTPUT ${DST_DIR}/words)
 
+set (ADDITIONAL_MAKE_CLEAN_FILES ${DST_DIR}/words)
+
 add_test (HyperComm commTest)
 add_test (HyperComm-datagram commTestDatagram)
 add_test (HyperComm-timeout commTestTimeout)
