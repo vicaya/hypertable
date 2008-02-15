@@ -13,7 +13,7 @@ select * from hypertable display_timestamps;
 2007-12-02 08:00:01.000000000	foo	apple:1	nothing
 2007-12-02 08:00:02.000000000	foo	apple:2	nothing
 delete "apple:1" from hypertable where row = 'foo' timestamp '2007-12-02 08:00:01';
-delete: row='foo' family=2 qualifier='1' ts=1196611201000000001
+delete: row='foo' family=2 qualifier='1' ts=1196582401000000001
 select * from hypertable display_timestamps;
 2007-12-02 08:00:05.000000000	bar	banana:2	nothing
 2007-12-02 08:00:03.000000000	foo	banana:0	nothing
@@ -34,5 +34,5 @@ insert into Pages VALUES ('2008-01-28 22:00:03',  "calendar.boston.com/abington-
 select "http-code" from Pages where ROW = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern" display_timestamps;
 2008-01-28 22:00:03.000000000	calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern	http-code	200
 delete * from Pages where ROW = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern" TIMESTAMP '2008-01-28 22:00:10';
-delete: row='calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern' family=0 ts=1201586410000000001
+delete: row='calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern' family=0 ts=1201557610000000001
 select "http-code" from Pages where ROW = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern" display_timestamps;

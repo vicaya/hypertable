@@ -538,7 +538,7 @@ namespace Hypertable {
 	display_string("scan_set_start_time");
 	if (state.scan.start_time != 0)
 	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT multiple start time predicates."));
-	time_t t = mktime(&state.tmval);
+	time_t t = timegm(&state.tmval);
 	if (t == (time_t)-1)
 	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT invalid start time."));
 	state.scan.start_time = (uint64_t)t * 1000000000LL + state.nanoseconds;
@@ -557,7 +557,7 @@ namespace Hypertable {
 	display_string("scan_set_end_time");
 	if (state.scan.end_time != 0)
 	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT multiple end time predicates."));
-	time_t t = mktime(&state.tmval);
+	time_t t = timegm(&state.tmval);
 	if (t == (time_t)-1)
 	  throw Exception(Error::HQL_PARSE_ERROR, std::string("SELECT invalid end time."));
 	state.scan.end_time = (uint64_t)t * 1000000000LL + state.nanoseconds;
@@ -574,7 +574,7 @@ namespace Hypertable {
       set_insert_timestamp(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const { 
 	display_string("set_insert_timestamp");
-	time_t t = mktime(&state.tmval);
+	time_t t = timegm(&state.tmval);
 	if (t == (time_t)-1)
 	  throw Exception(Error::HQL_PARSE_ERROR, std::string("INSERT invalid timestamp."));
 	state.current_insert_value.timestamp = (uint64_t)t * 1000000000LL + state.nanoseconds;
@@ -653,7 +653,7 @@ namespace Hypertable {
       set_delete_timestamp(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const { 
 	display_string("set_delete_timestamp");
-	time_t t = mktime(&state.tmval);
+	time_t t = timegm(&state.tmval);
 	if (t == (time_t)-1)
 	  throw Exception(Error::HQL_PARSE_ERROR, std::string("DELETE invalid timestamp."));
 	state.delete_time = (uint64_t)t * 1000000000LL + state.nanoseconds;

@@ -43,11 +43,11 @@ KosmosBroker::KosmosBroker(PropertiesPtr &propsPtr) : mVerbose(false) {
   const char *metaName;
   int metaPort;
 
-  mVerbose = propsPtr->get_bool("verbose", false);
+  mVerbose = propsPtr->get_bool("Hypertable.Verbose", false);
 
   KfsClient *clnt = KfsClient::Instance();
-  metaName = propsPtr->get("kfs.metaServer.name", "");
-  metaPort = propsPtr->get_int("kfs.metaServer.port", -1);
+  metaName = propsPtr->get("Kfs.MetaServer.Name", "");
+  metaPort = propsPtr->get_int("Kfs.MetaServer.Port", -1);
 
   std::cerr << "Server: " << metaName << " " << metaPort << std::endl;
   clnt->Init(metaName, metaPort);

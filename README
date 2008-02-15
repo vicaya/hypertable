@@ -18,6 +18,11 @@
     - log4cpp (http://log4cpp.sourceforge.net/)
     - expat (http://sourceforge.net/projects/expat)
 
+    On some GNU/Linux systems, the following packages need to be installed:
+    - libattr-devel (sys-apps/attr on Gentoo)
+    - readline-devel
+    - ncurses-devel
+
     HIGHLY RECOMMENDED (but not required):
     - tcmalloc (http://code.google.com/p/google-perftools/)
 
