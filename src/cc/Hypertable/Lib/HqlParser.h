@@ -83,7 +83,7 @@ namespace Hypertable {
 
     class hql_interpreter_scan_state {
     public:
-      hql_interpreter_scan_state() : start_row_inclusive(true), end_row_inclusive(true), limit(0), max_versions(0), start_time(0), end_time(0), display_timestamps(false), return_deletes(false) { }
+      hql_interpreter_scan_state() : start_row_inclusive(true), end_row_inclusive(true), limit(0), max_versions(0), start_time(0), end_time(0), display_timestamps(false), return_deletes(false), keys_only(false) { }
       std::vector<std::string> columns;
       std::string row;
       std::string start_row;
@@ -97,6 +97,7 @@ namespace Hypertable {
       std::string outfile;
       bool display_timestamps;
       bool return_deletes;
+      bool keys_only;
     };
    
     class hql_interpreter_state {
@@ -580,6 +581,15 @@ namespace Hypertable {
       hql_interpreter_state &state;
     };
 
+    struct scan_set_keys_only {
+      scan_set_keys_only(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("scan_set_keys_only");
+	state.scan.keys_only=true;
+      }
+      hql_interpreter_state &state;
+    };
+
     struct set_insert_timestamp {
       set_insert_timestamp(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const { 
@@ -779,7 +789,7 @@ namespace Hypertable {
 	  token_t EXISTS       = as_lower_d["exists"];
 	  token_t DISPLAY_TIMESTAMPS = as_lower_d["display_timestamps"];
 	  token_t RETURN_DELETES = as_lower_d["return_deletes"];
-
+	  token_t KEYS_ONLY    = as_lower_d["keys_only"];
 
 	  /**
 	   * Start grammar definition
@@ -972,6 +982,7 @@ namespace Hypertable {
 	    | INTO >> FILE >> string_literal[scan_set_outfile(self.state)]
 	    | DISPLAY_TIMESTAMPS[scan_set_display_timestamps(self.state)]
 	    | RETURN_DELETES[scan_set_return_deletes(self.state)]
+	    | KEYS_ONLY[scan_set_keys_only(self.state)]
 	    ;
 
 	  date_expression

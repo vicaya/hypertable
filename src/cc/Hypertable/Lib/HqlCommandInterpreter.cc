@@ -154,17 +154,21 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
 	    printf("%d-%02d-%02d %02d:%02d:%02d.%09d\t", tms.tm_year+1900, tms.tm_mon+1, tms.tm_mday, tms.tm_hour, tms.tm_min, tms.tm_sec, nsec);
 	  }
 	}
-	if (cell.column_family) {
-	  printf("%s\t%s", cell.row_key, cell.column_family);
-	  if (*cell.column_qualifier)
-	    printf(":%s", cell.column_qualifier);
+	if (!state.scan.keys_only) {
+	  if (cell.column_family) {
+	    printf("%s\t%s", cell.row_key, cell.column_family);
+	    if (*cell.column_qualifier)
+	      printf(":%s", cell.column_qualifier);
+	  }
+	  else
+	    printf("%s", cell.row_key);
+	  if (cell.flag != FLAG_INSERT)
+	    printf("\t%s\tDELETE\n", std::string((const char *)cell.value, cell.value_len).c_str());
+	  else
+	    printf("\t%s\n", std::string((const char *)cell.value, cell.value_len).c_str());
 	}
 	else
-	  printf("%s", cell.row_key);
-	if (cell.flag != FLAG_INSERT)
-	  printf("\t%s\tDELETE\n", std::string((const char *)cell.value, cell.value_len).c_str());
-	else
-	  printf("\t%s\n", std::string((const char *)cell.value, cell.value_len).c_str());
+	  printf("%s\n", cell.row_key);
       }
     }
     else if (state.command == COMMAND_LOAD_DATA) {
