@@ -18,11 +18,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
 
-set ( SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Hypertable/RangeServer" )
-set ( DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Hypertable/RangeServer" )
-
-set ( TEST_DEPENDENCIES ${DST_DIR}/shakespeare.txt ${DST_DIR}/words ${DST_DIR}/urls.txt ${DST_DIR}/tests )
-
 set ( RangeServer_SRCS
 AccessGroup.cc
 BlockCompressionHeaderCellStore.cc
@@ -73,26 +68,5 @@ target_link_libraries (Hypertable.RangeServer pthread ${BOOST_LIB} log4cpp expat
 add_executable (csdump CellStoreV0.cc CellStoreTrailerV0.cc BlockCompressionHeaderCellStore.cc csdump.cc CellStoreScannerV0.cc FileBlockCache.cc Global.cc ScanContext.cc)
 target_link_libraries (csdump pthread ${BOOST_LIB} log4cpp ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES} ${Tcmalloc_LIBRARIES} HyperDfsBroker Hypertable)
 
-#
-# Get test environment setup
-#
-add_custom_command (SOURCE ${SRC_DIR}/tests/urls.txt.gz
-                    COMMAND cp ARGS ${SRC_DIR}/tests/urls.txt.gz ${DST_DIR}
-                    COMMAND gzip ARGS -d ${DST_DIR}/urls.txt.gz
-                    OUTPUT ${DST_DIR}/urls.txt)
-add_custom_command (SOURCE ${SRC_DIR}/tests/words.gz
-                    COMMAND cp ARGS ${SRC_DIR}/tests/words.gz ${DST_DIR}
-                    COMMAND gzip ARGS -d ${DST_DIR}/words.gz
-                    OUTPUT ${DST_DIR}/words)
-add_custom_command (SOURCE ${SRC_DIR}/tests/shakespeare.txt.gz
-                    COMMAND cp ARGS ${SRC_DIR}/tests/shakespeare.txt.gz ${DST_DIR}
-                    COMMAND gzip ARGS -d ${DST_DIR}/shakespeare.txt.gz
-                    OUTPUT ${DST_DIR}/shakespeare.txt)
-add_custom_command (SOURCE ${SRC_DIR}/tests
-                    COMMAND ln ARGS -s ${SRC_DIR}/tests ${DST_DIR}/tests
-                    OUTPUT ${DST_DIR}/tests)
-
 install (TARGETS Hypertable.RangeServer csdump
 	 RUNTIME DESTINATION bin)
-install (FILES tests/urls.txt.gz tests/words.gz tests/shakespeare.txt.gz DESTINATION demo)
-
