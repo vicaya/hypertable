@@ -722,9 +722,16 @@ void Range::decrement_update_counter() {
 
 
 /**
- * 
  */
-uint64_t Range::get_timestamp() {
+uint64_t Range::get_latest_timestamp() {
+  boost::mutex::scoped_lock lock(m_mutex);
+  return m_timestamp.logical;
+}
+
+
+/**
+ */
+uint64_t Range::get_scan_timestamp() {
   boost::mutex::scoped_lock lock(m_mutex);
   uint64_t timestamp = m_scanner_timestamp_controller.get_oldest_update_timestamp();
   if (timestamp != 0 && timestamp <= m_timestamp.logical)

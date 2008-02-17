@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -94,21 +94,22 @@ namespace Hypertable {
     static const int MASTER_BAD_SCHEMA     = 0x00040002;
     static const int MASTER_NOT_RUNNING    = 0x00040003;
 
-    static const int RANGESERVER_GENERATION_MISMATCH   = 0x00050001;
-    static const int RANGESERVER_RANGE_ALREADY_LOADED  = 0x00050002;
-    static const int RANGESERVER_RANGE_MISMATCH        = 0x00050003;
-    static const int RANGESERVER_NONEXISTENT_RANGE     = 0x00050004;
-    static const int RANGESERVER_PARTIAL_UPDATE        = 0x00050005;
-    static const int RANGESERVER_RANGE_NOT_FOUND       = 0x00050006;
-    static const int RANGESERVER_INVALID_SCANNER_ID    = 0x00050007;
-    static const int RANGESERVER_SCHEMA_PARSE_ERROR    = 0x00050008;
-    static const int RANGESERVER_SCHEMA_INVALID_CFID   = 0x00050009;
-    static const int RANGESERVER_INVALID_COLUMNFAMILY  = 0x0005000A;
-    static const int RANGESERVER_TRUNCATED_COMMIT_LOG  = 0x0005000B;
-    static const int RANGESERVER_NO_METADATA_FOR_RANGE = 0x0005000C;
-    static const int RANGESERVER_SHUTTING_DOWN         = 0x0005000D;
-    static const int RANGESERVER_CORRUPT_COMMIT_LOG    = 0x0005000E;
-    static const int RANGESERVER_UNAVAILABLE           = 0x0005000F;
+    static const int RANGESERVER_GENERATION_MISMATCH    = 0x00050001;
+    static const int RANGESERVER_RANGE_ALREADY_LOADED   = 0x00050002;
+    static const int RANGESERVER_RANGE_MISMATCH         = 0x00050003;
+    static const int RANGESERVER_NONEXISTENT_RANGE      = 0x00050004;
+    static const int RANGESERVER_PARTIAL_UPDATE         = 0x00050005;
+    static const int RANGESERVER_RANGE_NOT_FOUND        = 0x00050006;
+    static const int RANGESERVER_INVALID_SCANNER_ID     = 0x00050007;
+    static const int RANGESERVER_SCHEMA_PARSE_ERROR     = 0x00050008;
+    static const int RANGESERVER_SCHEMA_INVALID_CFID    = 0x00050009;
+    static const int RANGESERVER_INVALID_COLUMNFAMILY   = 0x0005000A;
+    static const int RANGESERVER_TRUNCATED_COMMIT_LOG   = 0x0005000B;
+    static const int RANGESERVER_NO_METADATA_FOR_RANGE  = 0x0005000C;
+    static const int RANGESERVER_SHUTTING_DOWN          = 0x0005000D;
+    static const int RANGESERVER_CORRUPT_COMMIT_LOG     = 0x0005000E;
+    static const int RANGESERVER_UNAVAILABLE            = 0x0005000F;
+    static const int RANGESERVER_TIMESTAMP_ORDER_ERROR  = 0x00050010;
 
     static const int HQL_BAD_LOAD_FILE_FORMAT  = 0x00060001;
 

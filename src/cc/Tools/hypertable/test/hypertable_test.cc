@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
   /**
    *  hypertable_test
    */
-  commandStr = (std::string)"./hypertable --batch --config=hypertable.cfg < hypertable_test.hql > hypertable_test.output";
+  commandStr = (std::string)"./hypertable --no-prompt --config=hypertable.cfg < hypertable_test.hql &> hypertable_test.output";
   if (system(commandStr.c_str()) != 0)
     return 1;
 

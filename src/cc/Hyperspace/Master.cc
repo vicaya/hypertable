@@ -90,8 +90,15 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, Se
     m_base_dir = System::installDir + "/" + str;
 
   if ((m_base_fd = ::open(m_base_dir.c_str(), O_RDONLY)) < 0) {
-    HT_ERRORF("Unable to open base directory %s - %s", m_base_dir.c_str(), strerror(errno));
-    exit(1);
+    HT_WARNF("Unable to open base directory '%s' - will create.", m_base_dir.c_str(), strerror(errno));
+    if (!FileUtils::mkdirs(m_base_dir.c_str())) {
+      HT_ERRORF("Unable to create base directory %s - %s", m_base_dir.c_str(), strerror(errno));
+      exit(1);
+    }
+    if ((m_base_fd = ::open(m_base_dir.c_str(), O_RDONLY)) < 0) {
+      HT_ERRORF("Unable to open base directory %s - %s", m_base_dir.c_str(), strerror(errno));
+      exit(1);
+    }
   }
 
   /**
