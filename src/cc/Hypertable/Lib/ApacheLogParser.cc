@@ -39,6 +39,7 @@ void ApacheLogParser::load(std::string filename) {
 /**
  */
 bool ApacheLogParser::next(ApacheLogEntryT &entry) {
+  uint64_t timestamp;
   char *base;
 
   while (true) {
@@ -63,8 +64,17 @@ bool ApacheLogParser::next(ApacheLogEntryT &entry) {
       continue;
 
     // timestamp
-    if ((base = extract_timestamp(base, &entry.timestamp)) == 0)
+    if ((base = extract_timestamp(base, &timestamp)) == 0)
       continue;
+
+    // make sure there are no timestamp collisions
+    if (timestamp == m_last_timestamp)
+      m_timestamp_offset++;
+    else {
+      m_timestamp_offset=0;
+      m_last_timestamp = timestamp;
+    }
+    entry.timestamp = timestamp + m_timestamp_offset;
 
     if (entry.timestamp == 0)
       continue;
