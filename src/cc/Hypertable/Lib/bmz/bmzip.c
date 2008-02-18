@@ -52,6 +52,10 @@ static int s_no_mmap = 1;
 
 typedef unsigned char Byte;
 
+/* To silence warnings in format strings */
+typedef long long unsigned Llu;
+typedef long unsigned Lu;
+
 static int s_verbosity = 0;
 static int s_bm_dump = 0;
 static int s_bm_hash = 0;
@@ -112,7 +116,7 @@ static int s_bm_hash = 0;
 static void
 read_bmz_header(int fd, Byte *buf) {
   if (read(fd, buf, BMZ_HEADER_SZ) != BMZ_HEADER_SZ)
-    DIE("error reading bmz file header (%lu bytes)", BMZ_HEADER_SZ);
+    DIE("error reading bmz file header (%d bytes)", BMZ_HEADER_SZ);
 }
 
 static void
@@ -122,7 +126,7 @@ parse_bmz_header(const Byte *buf, uint16_t *version_p, uint64_t *orig_size_p,
   size_t magic_len = strlen(BMZ_MAGIC);
 
   if (memcmp(buf, BMZ_MAGIC, magic_len)) {
-    DIE("bad magic in file header (%lu bytes)", magic_len);
+    DIE("bad magic in file header (%lu bytes)", (Lu)magic_len);
   }
   bp += magic_len;
   BMZ_READ_INT16(bp, *version_p);
@@ -148,7 +152,7 @@ write_bmz_header(int fd, size_t in_len, uint32_t checksum, Byte options) {
   BMZ_WRITE_INT32(bp, checksum);
 
   if (write(fd, buf, BMZ_HEADER_SZ) != BMZ_HEADER_SZ)
-    DIE("error writing header (%lu bytes)", BMZ_HEADER_SZ);
+    DIE("error writing header (%d bytes)", BMZ_HEADER_SZ);
 }
 
 static void
@@ -165,9 +169,8 @@ do_list(int fd) {
   read_bmz_header(fd, buf);
   parse_bmz_header(buf, &version, &orig_size, &checksum, &options);
   printf("%8s%16s%16s%8s\n", "version", "compressed", "uncompressed", "ratio");
-  printf("    %04x%16llu%16llu%7.2f%%\n", version, (unsigned long long)size,
-         (unsigned long long)orig_size,
-         (unsigned long long)orig_size ? size * 100. / orig_size : 1);
+  printf("    %04x%16llu%16llu%7.2f%%\n", version, (Llu)size,
+         (Llu)orig_size, orig_size ? size * 100. / orig_size : 1);
 }
 
 static void
@@ -189,7 +192,7 @@ do_pack(const void *in, size_t in_len, size_t buf_len,
       out = malloc(worklen); /* bmz_pack_worklen includes out_len for bm */
 
       if (!out)
-        DIE("error allocating %lu bytes memory", worklen);
+        DIE("error allocating %lu bytes memory", (Lu)worklen);
 
       work_mem = out + out_len;
     }
@@ -204,7 +207,7 @@ do_pack(const void *in, size_t in_len, size_t buf_len,
     out = malloc(buflen + worklen);
 
     if (!out)
-      DIE("error allocating %lu bytes memory", buflen + worklen);
+      DIE("error allocating %lu bytes memory", (Lu)buflen + worklen);
 
     work_mem = out + buflen;
   }
@@ -241,13 +244,13 @@ do_unpack(const void *in, size_t in_len, size_t buf_len) {
   Byte *out, *workmem;
   int ret;
 
-  if (in_len < BMZ_HEADER_SZ) DIE("file truncated (size: %lu)", in_len);
+  if (in_len < BMZ_HEADER_SZ) DIE("file truncated (size: %lu)", (Lu)in_len);
 
   parse_bmz_header(bp, &version, &orig_size, &checksum, &options);
 
   if (orig_size > INT_MAX && sizeof(size_t) == 4) 
     DIE("original file size %llu requires 64-bit version of bmzip",
-        (unsigned long long)orig_size);
+        (Llu)orig_size);
 
   bp += BMZ_HEADER_SZ;
   buf_len -= BMZ_HEADER_SZ;
@@ -272,8 +275,8 @@ do_unpack(const void *in, size_t in_len, size_t buf_len) {
       DIE("error decompressing (error %d)", ret);
   }
   if (orig_size != outlen)
-    WARN("size mismatch (expecting %llu, got %lu)", 
-         (unsigned long long)orig_size, outlen);
+    WARN("size mismatch (expecting %llu, got %llu)", 
+         (Llu)orig_size, (Llu)outlen);
 
   write(1, out, outlen);
 }
@@ -326,7 +329,7 @@ read_from_fd(int fd, size_t *len_p, size_t *size_p) {
 
   if (st.st_size > INT_MAX && sizeof(size_t) == 4)
     DIE("file size %llu requires 64-bit version of bmzip",
-        (unsigned long long)st.st_size);
+        (Llu)st.st_size);
 
   sz = *len_p = *size_p = st.st_size;
 
@@ -334,7 +337,7 @@ read_from_fd(int fd, size_t *len_p, size_t *size_p) {
 
   if (!s_no_mmap) {
 #ifndef HT_NO_MMAP
-    LOG(1, "mmapping file (size: %lu)...", sz);
+    LOG(1, "mmapping file (size: %lu)...", (Lu)sz);
     data = mmap(NULL, sz, PROT_READ, MAP_PRIVATE, fd, 0);
 
     if (!data || (void *)-1 == data) {
@@ -346,12 +349,12 @@ read_from_fd(int fd, size_t *len_p, size_t *size_p) {
 #endif
   }
   if (!data) {
-    LOG(1, "reading file (size: %lu) into memory...", sz);
+    LOG(1, "reading file (size: %lu) into memory...", (Lu)sz);
     data = malloc(sz);
 
-    if (!data) DIE("cannot allocate %lu bytes memory", sz);
+    if (!data) DIE("cannot allocate %lu bytes memory", (Lu)sz);
 
-    if (read(fd, data, sz) != sz) DIE("error reading %lu bytes", sz);
+    if (read(fd, data, sz) != sz) DIE("error reading %lu bytes", (Lu)sz);
   }
 
   return data;

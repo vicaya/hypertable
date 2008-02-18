@@ -33,6 +33,9 @@ static size_t s_no_mmap = 0;
 static size_t s_no_mmap = 1;
 #endif
 
+/* To silence warnings in format strings */
+typedef long unsigned Lu;
+
 #define TIMES(_n_, _code_) do { \
   size_t _n = _n_; \
   while (_n--) { _code_; } \
@@ -145,7 +148,7 @@ test_bm_mask32x2(const char *in, size_t len, char *out, size_t *len_p,
 static void
 test_bm_unpack(const char *in, size_t len, char *out, size_t *len_p) {
   int ret = bmz_bm_unpack(in, len, out, len_p);
-  LOG(1, "\nbm_unpack returned %d, size: %lu\n", ret, *len_p);
+  LOG(1, "\nbm_unpack returned %d, size: %lu\n", ret, (Lu)*len_p);
   if (s_verbosity < 2) return;
   puts("bm decoded:");
   fwrite(out, 1, *len_p, stdout);
@@ -173,7 +176,7 @@ read_from_fp(FILE *fp, size_t *len_p) {
 
 static void
 print_hash(const char *label, size_t h) {
-  printf("%16s: %lx\n", label, h);
+  printf("%16s: %lx\n", label, (Lu)h);
 }
 
 static void
@@ -212,7 +215,7 @@ test_from_string(const char *data, size_t len) {
   work_len = bmz_bm_pack_worklen(len, s_fp_len);
   mem = malloc(work_len);
   LOG(1, "input length: %lu, out_len %lu, work_len: %lu\n",
-      len, out_len, work_len);
+      (Lu)len, (Lu)out_len, (Lu)work_len);
 
   /* memcpy/memmove for comparison */
   if (opt & O_MEMCPY) {
