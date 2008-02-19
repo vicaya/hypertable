@@ -22,11 +22,11 @@
 
 namespace Hypertable {
 
-extern void start_table_file_gc(PropertiesPtr props, ThreadGroup &threads,
-                                TablePtr &metadata, Filesystem *fs);
+extern void master_gc_start(PropertiesPtr props, ThreadGroup &threads,
+                            TablePtr &metadata, Filesystem *fs);
 
-extern void test_table_file_gc(TablePtr &metadata, Filesystem *fs,
-                               bool dryrun = false);
+extern void master_gc_once(TablePtr &metadata, Filesystem *fs,
+                           bool dryrun = false);
 
 } // namespace Hypertable
 

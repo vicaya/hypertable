@@ -31,7 +31,7 @@ RequestHandlerReportSplit.cc
 ResponseCallbackGetSchema.cc
 ServerLockFileHandler.cc
 ServersDirectoryHandler.cc
-TableFileGc.cc
+MasterGc.cc
 main.cc
 )
 
@@ -39,7 +39,7 @@ main.cc
 add_executable (Hypertable.Master ${Master_SRCS})
 target_link_libraries (Hypertable.Master pthread ${BOOST_LIB} log4cpp expat ${Tcmalloc_LIBRARIES} HyperDfsBroker Hypertable)
 
-add_executable(htgc htgc.cc TableFileGc.cc)
+add_executable(htgc htgc.cc MasterGc.cc)
 target_link_libraries (htgc pthread ${BOOST_LIB} log4cpp expat ${Tcmalloc_LIBRARIES} HyperDfsBroker Hypertable)
 
 install (TARGETS Hypertable.Master htgc RUNTIME DESTINATION bin)
