@@ -45,7 +45,7 @@
 #include "HyperspaceSessionHandler.h"
 #include "RangeServerState.h"
 #include "ResponseCallbackGetSchema.h"
-#include "TableFileGc.h"
+#include "MasterGc.h"
 
 namespace Hypertable {
 
