@@ -87,21 +87,22 @@ public class Error {
     static public final int MASTER_BAD_SCHEMA    = 0x00040002;
     static public final int MASTER_NOT_RUNNING   = 0x00040003;
 
-    static public final int RANGESERVER_GENERATION_MISMATCH   = 0x00050001;
-    static public final int RANGESERVER_RANGE_ALREADY_LOADED  = 0x00050002;
-    static public final int RANGESERVER_RANGE_MISMATCH        = 0x00050003;
-    static public final int RANGESERVER_NONEXISTENT_RANGE     = 0x00050004;
-    static public final int RANGESERVER_PARTIAL_UPDATE        = 0x00050005;
-    static public final int RANGESERVER_RANGE_NOT_FOUND       = 0x00050006;
-    static public final int RANGESERVER_INVALID_SCANNER_ID    = 0x00050007;
-    static public final int RANGESERVER_SCHEMA_PARSE_ERROR    = 0x00050008;
-    static public final int RANGESERVER_SCHEMA_INVALID_CFID   = 0x00050009;
-    static public final int RANGESERVER_INVALID_COLUMNFAMILY  = 0x0005000A;
-    static public final int RANGESERVER_TRUNCATED_COMMIT_LOG  = 0x0005000B;
-    static public final int RANGESERVER_NO_METADATA_FOR_RANGE = 0x0005000C;
-    static public final int RANGESERVER_SHUTTING_DOWN         = 0x0005000D;
-    static public final int RANGESERVER_CORRUPT_COMMIT_LOG    = 0x0005000E;
-    static public final int RANGESERVER_UNAVAILABLE           = 0x0005000F;
+    static public final int RANGESERVER_GENERATION_MISMATCH    = 0x00050001;
+    static public final int RANGESERVER_RANGE_ALREADY_LOADED   = 0x00050002;
+    static public final int RANGESERVER_RANGE_MISMATCH         = 0x00050003;
+    static public final int RANGESERVER_NONEXISTENT_RANGE      = 0x00050004;
+    static public final int RANGESERVER_PARTIAL_UPDATE         = 0x00050005;
+    static public final int RANGESERVER_RANGE_NOT_FOUND        = 0x00050006;
+    static public final int RANGESERVER_INVALID_SCANNER_ID     = 0x00050007;
+    static public final int RANGESERVER_SCHEMA_PARSE_ERROR     = 0x00050008;
+    static public final int RANGESERVER_SCHEMA_INVALID_CFID    = 0x00050009;
+    static public final int RANGESERVER_INVALID_COLUMNFAMILY   = 0x0005000A;
+    static public final int RANGESERVER_TRUNCATED_COMMIT_LOG   = 0x0005000B;
+    static public final int RANGESERVER_NO_METADATA_FOR_RANGE  = 0x0005000C;
+    static public final int RANGESERVER_SHUTTING_DOWN          = 0x0005000D;
+    static public final int RANGESERVER_CORRUPT_COMMIT_LOG     = 0x0005000E;
+    static public final int RANGESERVER_UNAVAILABLE            = 0x0005000F;
+    static public final int RANGESERVER_TIMESTAMP_ORDER_ERROR  = 0x00050010;
 
     static public final int HQL_BAD_LOAD_FILE_FORMAT = 0x00060001;
 
@@ -168,21 +169,22 @@ public class Error {
 	mTextMap.put(MASTER_TABLE_EXISTS,        "MASTER table exists");
 	mTextMap.put(MASTER_TABLE_EXISTS,        "MASTER bad schema");
 	mTextMap.put(MASTER_NOT_RUNNING,         "MASTER not running");
-	mTextMap.put(RANGESERVER_GENERATION_MISMATCH,  "RANGE SERVER generation mismatch");
-	mTextMap.put(RANGESERVER_RANGE_ALREADY_LOADED, "RANGE SERVER range already loaded");
-	mTextMap.put(RANGESERVER_RANGE_MISMATCH,       "RANGE SERVER range mismatch");
-	mTextMap.put(RANGESERVER_NONEXISTENT_RANGE,    "RANGE SERVER non-existent range");
-	mTextMap.put(RANGESERVER_PARTIAL_UPDATE,       "RANGE SERVER partial update");
-	mTextMap.put(RANGESERVER_RANGE_NOT_FOUND,      "RANGE SERVER range not found");
-	mTextMap.put(RANGESERVER_INVALID_SCANNER_ID,   "RANGE SERVER invalid scanner id");
-	mTextMap.put(RANGESERVER_SCHEMA_PARSE_ERROR,   "RANGE SERVER schema parse error");
-	mTextMap.put(RANGESERVER_SCHEMA_INVALID_CFID,  "RANGE SERVER invalid column family id");
-	mTextMap.put(RANGESERVER_INVALID_COLUMNFAMILY, "RANGE SERVER invalid column family");
-	mTextMap.put(RANGESERVER_TRUNCATED_COMMIT_LOG, "RANGE SERVER truncated commit log");
-	mTextMap.put(RANGESERVER_NO_METADATA_FOR_RANGE,"RANGE SERVER no metadata for range");
-	mTextMap.put(RANGESERVER_CORRUPT_COMMIT_LOG,   "RANGE SERVER corrupt commit log");
-	mTextMap.put(RANGESERVER_SHUTTING_DOWN,        "RANGE SERVER shutting down");
-	mTextMap.put(RANGESERVER_UNAVAILABLE,          "RANGE SERVER unavailable");
+	mTextMap.put(RANGESERVER_GENERATION_MISMATCH,   "RANGE SERVER generation mismatch");
+	mTextMap.put(RANGESERVER_RANGE_ALREADY_LOADED,  "RANGE SERVER range already loaded");
+	mTextMap.put(RANGESERVER_RANGE_MISMATCH,        "RANGE SERVER range mismatch");
+	mTextMap.put(RANGESERVER_NONEXISTENT_RANGE,     "RANGE SERVER non-existent range");
+	mTextMap.put(RANGESERVER_PARTIAL_UPDATE,        "RANGE SERVER partial update");
+	mTextMap.put(RANGESERVER_RANGE_NOT_FOUND,       "RANGE SERVER range not found");
+	mTextMap.put(RANGESERVER_INVALID_SCANNER_ID,    "RANGE SERVER invalid scanner id");
+	mTextMap.put(RANGESERVER_SCHEMA_PARSE_ERROR,    "RANGE SERVER schema parse error");
+	mTextMap.put(RANGESERVER_SCHEMA_INVALID_CFID,   "RANGE SERVER invalid column family id");
+	mTextMap.put(RANGESERVER_INVALID_COLUMNFAMILY,  "RANGE SERVER invalid column family");
+	mTextMap.put(RANGESERVER_TRUNCATED_COMMIT_LOG,  "RANGE SERVER truncated commit log");
+	mTextMap.put(RANGESERVER_NO_METADATA_FOR_RANGE, "RANGE SERVER no metadata for range");
+	mTextMap.put(RANGESERVER_CORRUPT_COMMIT_LOG,    "RANGE SERVER corrupt commit log");
+	mTextMap.put(RANGESERVER_SHUTTING_DOWN,         "RANGE SERVER shutting down");
+	mTextMap.put(RANGESERVER_UNAVAILABLE,           "RANGE SERVER unavailable");
+	mTextMap.put(RANGESERVER_TIMESTAMP_ORDER_ERROR, "RANGE SERVER supplied timestamp is not strictly increasing");
 	mTextMap.put(HQL_BAD_LOAD_FILE_FORMAT,    "HQL bad load file format");
     }
 }

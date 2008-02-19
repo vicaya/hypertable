@@ -1,3 +1,7 @@
+Welcome to the HQL command interpreter.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the buffer.
+
 DROP TABLE IF EXISTS hypertable;
 CREATE TABLE hypertable (
 apple,
@@ -28,6 +32,11 @@ select * from hypertable display_timestamps;
 2007-12-02 08:00:02.000000000	foo	apple:2	nothing
 insert into hypertable VALUES ('how', 'apple:0', 'nothing'), ('how', 'apple:1', 'nothing'), ('how', 'apple:2', 'nothing');
 insert into hypertable VALUES ('now', 'banana:0', 'nothing'), ('now', 'banana:1', 'nothing'), ('now', 'banana:2', 'nothing');
+insert into hypertable VALUES ('2007-12-02 08:00:00', 'lowrey', 'apple:0', 'nothing'), ('2007-12-02 08:00:00', 'season', 'apple:1', 'nothing'), ('2007-12-02 08:00:00', 'salt', 'apple:2', 'nothing');
+Error: Problem sending updates (table=HYPERTABLE) - RANGE SERVER supplied timestamp is not strictly increasing
+insert into hypertable VALUES ('2028-02-17 08:00:01', 'lowrey', 'apple:0', 'nothing');
+insert into hypertable VALUES ('2028-02-17 08:00:00', 'season', 'apple:1', 'nothing');
+Error: Problem sending updates (table=HYPERTABLE) - RANGE SERVER supplied timestamp is not strictly increasing
 drop table if exists Pages;
 create table Pages ( "refer-url", "http-code", timestamp, rowkey, ACCESS GROUP default ( "refer-url", "http-code", timestamp, rowkey ) );
 insert into Pages VALUES ('2008-01-28 22:00:03',  "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern", 'http-code', '200' );

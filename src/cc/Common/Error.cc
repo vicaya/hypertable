@@ -104,6 +104,7 @@ namespace {
     { Error::RANGESERVER_SHUTTING_DOWN,        "RANGE SERVER shutting down" },
     { Error::RANGESERVER_CORRUPT_COMMIT_LOG,   "RANGE SERVER corrupt commit log" },
     { Error::RANGESERVER_UNAVAILABLE,          "RANGE SERVER unavailable" },
+    { Error::RANGESERVER_TIMESTAMP_ORDER_ERROR,"RANGE SERVER supplied timestamp is not strictly increasing" },
     { Error::HQL_BAD_LOAD_FILE_FORMAT,         "HQL bad load file format" },
     { 0, 0 }
   };
@@ -195,6 +196,7 @@ const int Error::RANGESERVER_NO_METADATA_FOR_RANGE;
 const int Error::RANGESERVER_SHUTTING_DOWN;
 const int Error::RANGESERVER_CORRUPT_COMMIT_LOG;
 const int Error::RANGESERVER_UNAVAILABLE;
+const int Error::RANGESERVER_TIMESTAMP_ORDER_ERROR;
 
 const int Error::HQL_BAD_LOAD_FILE_FORMAT;
 

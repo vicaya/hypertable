@@ -43,6 +43,7 @@ namespace Hypertable {
   class ApacheLogParser {
 
   public:
+    ApacheLogParser() : m_last_timestamp(0), m_timestamp_offset(0) { return; }
     void load(std::string filename);
     bool next(ApacheLogEntryT &entry);
 
@@ -53,6 +54,8 @@ namespace Hypertable {
 
     std::ifstream m_fin;
     std::string m_line;
+    uint64_t m_last_timestamp;
+    uint32_t m_timestamp_offset;
 
   };
 

@@ -161,6 +161,11 @@ void TableMutator::wait_for_previous_buffer() {
 
   while ((error = m_prev_buffer_ptr->wait_for_completion()) != Error::OK && wait_time < 16) {
 
+    if (error == Error::RANGESERVER_TIMESTAMP_ORDER_ERROR) {
+      //HT_ERRORF("Problem sending updates (table=%s) - %s", m_table_name.c_str(), Error::get_text(error));
+      throw Exception(error, (std::string)"Problem sending updates (table=" + m_table_name.c_str() + ")");
+    }
+
     // wait a bit
     poll(0, 0, wait_time*1000);
     wait_time += 2;

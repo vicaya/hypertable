@@ -50,6 +50,7 @@ namespace {
 
   string g_accum;
   bool g_batch_mode = false;
+  bool g_no_prompt = false;
   bool g_cont = false;
   char *line_read = 0;
   std::string gInputStr;
@@ -63,7 +64,7 @@ namespace {
     }
 
     /* Get a line from the user. */
-    if (g_batch_mode) {
+    if (g_batch_mode || g_no_prompt) {
       if (!getline(cin, gInputStr))
 	return 0;
       boost::trim(gInputStr);
@@ -100,6 +101,9 @@ namespace {
     "     Read configuration from <f>.  The default config file is",
     "     \"conf/hypertable.cfg\" relative to the toplevel install",
     "     directory",
+    "",
+    "  --no-prompt",
+    "      Do not display an input prompt.",
     "",
     "  --timestamp-format=<f>",
     "     Use <f> output format for the timestamp.  Currently",
@@ -146,6 +150,8 @@ int main(int argc, char **argv) {
       g_batch_mode = true;
     else if (!strncmp(argv[i], "--config=", 9))
       configFile = &argv[i][9];
+    else if (!strcmp(argv[i], "--no-prompt"))
+      g_no_prompt = true;
     else if (!strncmp(argv[i], "--timestamp-format=", 19)) {
       timestamp_format = &argv[i][19];
       boost::trim_if(timestamp_format, boost::is_any_of("'\""));      

@@ -72,7 +72,8 @@ namespace Hypertable {
       return (std::string)m_identifier.name;
     }
 
-    uint64_t get_timestamp();
+    uint64_t get_latest_timestamp();
+    uint64_t get_scan_timestamp();
 
     int replay_split_log(string &logDir, uint64_t real_timestamp);
 

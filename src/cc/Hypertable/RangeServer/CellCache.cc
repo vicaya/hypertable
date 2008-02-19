@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -37,10 +37,15 @@ const uint32_t CellCache::ALLOC_BIT_MASK  = 0x80000000;
 const uint32_t CellCache::OFFSET_BIT_MASK = 0x7FFFFFFF;
 
 
+//#define STAT
+
+
 CellCache::~CellCache() {
   uint64_t mem_freed = 0;
   uint32_t offset;
+#ifdef STAT  
   uint32_t skipped = 0;
+#endif
 
   /**
    * If our reference count is greater than zero, the we still have a parent
@@ -61,11 +66,18 @@ CellCache::~CellCache() {
       mem_freed += offset + Length((ByteString32T *)(((uint8_t *)(*iter).first) + offset));
       delete [] (*iter).first;
     }
+#ifdef STAT
     else
       skipped++;
+#endif
   }
 
-  HT_INFOF("dougo mem=%ld skipped=%ld total=%ld", mem_freed, skipped, m_cell_map.size());
+#ifdef STAT
+  cout << flush;
+  cout << "STAT[~CellCache]\tmemory freed\t" << mem_freed << endl;
+  cout << "STAT[~CellCache]\tentries skipped\t" << skipped << endl;
+  cout << "STAT[~CellCache]\tentries total\t" << m_cell_map.size() << endl;
+#endif
 
   Global::memory_tracker.remove_memory(mem_freed);
   Global::memory_tracker.remove_items(m_cell_map.size());
@@ -160,6 +172,9 @@ CellListScanner *CellCache::create_scanner(ScanContextPtr &scanContextPtr) {
  */
 CellCache *CellCache::slice_copy(uint64_t timestamp) {
   Key keyComps;
+#ifdef STAT
+  uint64_t dropped = 0;
+#endif
 
   m_child = new CellCache();
 
@@ -174,7 +189,16 @@ CellCache *CellCache::slice_copy(uint64_t timestamp) {
       m_child->m_cell_map.insert(CellMapT::value_type((*iter).first, (*iter).second));
       (*iter).second |= ALLOC_BIT_MASK;  // mark this entry in the "old" map so it doesn't get deleted
     }
+#ifdef STAT
+    else
+      dropped++;
+#endif
   }
+
+#ifdef STAT
+  cout << flush;
+  cout << "STAT[slice_copy]\tdropped\t" << dropped << endl;
+#endif
 
   Global::memory_tracker.add_items(m_child->m_cell_map.size());
 

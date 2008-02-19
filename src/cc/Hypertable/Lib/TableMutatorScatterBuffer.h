@@ -75,8 +75,10 @@ namespace Hypertable {
 	boost::mutex::scoped_lock lock(m_mutex);
 	assert(m_outstanding);
 	m_outstanding--;
-	if (error != Error::OK)
-	  m_last_error = error;
+	if (error != Error::OK) {
+	  if (m_last_error == 0 || error != Error::RANGESERVER_PARTIAL_UPDATE)
+	    m_last_error = error;
+	}
 	if (m_outstanding == 0) {
 	  m_done = true;
 	  m_cond.notify_all();

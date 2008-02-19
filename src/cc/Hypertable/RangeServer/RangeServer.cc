@@ -368,7 +368,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
 
     schemaPtr = tableInfoPtr->get_schema();
 
-    scan_timestamp = rangePtr->get_timestamp();
+    scan_timestamp = rangePtr->get_scan_timestamp();
 
     if (scan_timestamp != 0)
       scan_timestamp++;
@@ -718,6 +718,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
   int error = Error::OK;
   TableInfoPtr tableInfoPtr;
   uint64_t update_timestamp = 0;
+  uint64_t min_timestamp = 0;
   const char *row;
   std::string split_row;
   vector<UpdateRecT> goMods;
@@ -789,6 +790,9 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     /** Increment update count (block if maintenance in progress) **/
     min_ts_rec.range_ptr->increment_update_counter();
 
+    /** Obtain the most recently seen timestamp **/
+    min_timestamp = min_ts_rec.range_ptr->get_latest_timestamp();
+
     /** Obtain "update timestamp" **/
     update_timestamp = Global::log->get_timestamp();
 
@@ -826,6 +830,11 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 	memcpy(&temp_timestamp, ts_ptr, 8);
 	temp_timestamp = ByteOrderSwapInt64(temp_timestamp);
 	temp_timestamp = ~temp_timestamp;
+	if (*(ts_ptr-1) > FLAG_DELETE_CELL && temp_timestamp <= min_timestamp) {
+	  error = Error::RANGESERVER_TIMESTAMP_ORDER_ERROR;
+	  errMsg = (string)"Update timestamp " + temp_timestamp + " is <= previously seen timestamp of " + min_timestamp;
+	  goto abort;
+	}
 	if (min_ts_rec.timestamp == 0 || temp_timestamp < min_ts_rec.timestamp)
 	  min_ts_rec.timestamp = temp_timestamp;
       }

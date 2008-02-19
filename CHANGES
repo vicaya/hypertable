@@ -1,4 +1,13 @@
 
+Version 0.9.0.3:
+(2008-02-19)
+
+  * Fixed bug in MergeScanner where deletes were being wrongly applied
+  * Detect and report "supplied timestamps not strictly increasing" error
+  * Added testing options KEYS_ONLY and RETURN_DELETES to SELECT statement
+  * Removed unused tests and associated data to bring source tarball below 20MB
+  * Modified ApacheLogParser to return non-coliding timestamps for requests that happened in the same second
+
 Version 0.9.0.2:
 (2008-02-12)
 
