@@ -26,7 +26,7 @@
 #include "Hypertable/Lib/Filesystem.h"
 #include "Hypertable/Lib/Table.h"
 #include "Hypertable/Lib/Types.h"
-#include "TableFileGc.h"
+#include "MasterGc.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -85,7 +85,7 @@ struct GcWorker {
     KeySpec key;
 
     memset(&key, 0, sizeof(key));
-    HT_DEBUG("TableFileGc: scanning metadata...");
+    HT_DEBUG("MasterGc: scanning metadata...");
 
     while (scanner->next(cell)) {
       if (strcmp("Files", cell.column_family)) {
@@ -140,7 +140,7 @@ struct GcWorker {
     key.row = row.c_str();
     key.row_len = row.length();
 
-    HT_DEBUGF("TableFileGc: Deleting row %s", (char *)key.row);
+    HT_DEBUGF("MasterGc: Deleting row %s", (char *)key.row);
 
     if (!m_dryrun)
       mutator->set_delete(0, key);
@@ -189,7 +189,7 @@ struct GcWorker {
         // accept const char * and const string &
         string name(v.first);
 
-        HT_DEBUGF("TableFileGc: removing file %s", v.first);
+        HT_DEBUGF("MasterGc: removing file %s", v.first);
 
         if (!m_dryrun) {
           if ((ret = m_fs->remove(name)) != Error::OK)
@@ -210,7 +210,7 @@ struct GcWorker {
         // TODO: fs interface...
         string name(v.first);
 
-        HT_DEBUGF("TableFileGc: removing directory %s", v.first);
+        HT_DEBUGF("MasterGc: removing directory %s", v.first);
 
         if (!m_dryrun) {
           if ((ret = m_fs->rmdir(name)) != Error::OK)
@@ -221,7 +221,7 @@ struct GcWorker {
       }
     }
 
-    HT_DEBUGF("TableFileGc: removed %lu files; %lu directories", nf, nd);
+    HT_DEBUGF("MasterGc: removed %lu files; %lu directories", nf, nd);
   }
 
   void
@@ -230,8 +230,7 @@ struct GcWorker {
       scan_metadata();
     }
     catch (Exception &e) {
-      HT_ERRORF("Error: caught exception while gc'ing: %s: %s",
-                e.what(), Error::get_text(e.code()));
+      HT_ERRORF("Error: caught exception while gc'ing: %s", e.what());
     }
   }
 
@@ -244,7 +243,7 @@ struct GcWorker {
         break; // interrupted       
 
       if (m_metadata) gc();
-      else HT_INFOF("TableFileGc: METADATA not ready, will try again in "
+      else HT_INFOF("MasterGc: METADATA not ready, will try again in "
                     "%d seconds", m_interval);
 
     } while (true);
@@ -256,8 +255,8 @@ struct GcWorker {
 namespace Hypertable {
 
 void
-start_table_file_gc(PropertiesPtr props, ThreadGroup &threads,
-                    TablePtr &metadata, Filesystem *fs) {
+master_gc_start(PropertiesPtr props, ThreadGroup &threads,
+                TablePtr &metadata, Filesystem *fs) {
   int interval = props->get_int("Hypertable.Master.Gc.Interval", 300);
 
   threads.create_thread(GcWorker(metadata, fs, interval));
@@ -267,10 +266,9 @@ start_table_file_gc(PropertiesPtr props, ThreadGroup &threads,
 }
 
 void
-test_table_file_gc(TablePtr &metadata, Filesystem *fs,
-                   bool dryrun) {
-  GcWorker gc(metadata, fs, 0, dryrun);
-  gc.gc();
+master_gc_once(TablePtr &metadata, Filesystem *fs, bool dryrun) {
+  GcWorker worker(metadata, fs, 0, dryrun);
+  worker.gc();
 }
 
 } // namespace Hypertable

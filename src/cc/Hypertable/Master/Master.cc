@@ -169,7 +169,7 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &props_ptr, A
    */
   scan_servers_directory();
 
-  start_table_file_gc(props_ptr, m_threads, m_metadata_table_ptr, m_dfs_client);
+  master_gc_start(props_ptr, m_threads, m_metadata_table_ptr, m_dfs_client);
 }
 
 

@@ -24,7 +24,7 @@
 #include "Common/Error.h"
 #include "Hypertable/Lib/Client.h"
 #include "DfsBroker/Lib/Client.h"
-#include "TableFileGc.h"
+#include "MasterGc.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -50,7 +50,7 @@ do_tfgc(const char *config, bool debug, bool dryrun) {
       cerr << "Error opening METADATA" << endl;
       exit(1);
     }
-    test_table_file_gc(table_ptr, fs, dryrun);
+    master_gc_once(table_ptr, fs, dryrun);
   }
   catch (exception &e) {
     cerr << "Error: "<< e.what() << endl;
