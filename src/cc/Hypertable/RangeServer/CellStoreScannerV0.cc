@@ -34,14 +34,17 @@ namespace {
 }
 
 
-CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPtr &scanContextPtr) : CellListScanner(scanContextPtr), m_cell_store_ptr(cellStorePtr), m_cur_key(0), m_cur_value(0), m_check_for_range_end(false), m_end_inclusive(true), m_readahead(true), m_fd(-1), m_start_offset(0), m_end_offset(0) {
+CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr,
+                                       ScanContextPtr &scanContextPtr) :
+    CellListScanner(scanContextPtr), m_cell_store_ptr(cellStorePtr),
+    m_cell_store_v0(dynamic_cast< CellStoreV0*>(m_cell_store_ptr.get())),
+    m_index(m_cell_store_v0->m_index), m_cur_key(0), m_cur_value(0),
+    m_check_for_range_end(false), m_end_inclusive(true),
+    m_readahead(true), m_fd(-1), m_start_offset(0), m_end_offset(0) {
   ByteString32T  *key;
   bool start_inclusive = false;
 
-  m_cell_store_v0 = dynamic_cast< CellStoreV0*>(m_cell_store_ptr.get());
   assert(m_cell_store_v0);
-
-  m_index = m_cell_store_v0->m_index;
   m_file_id = m_cell_store_v0->m_file_id;
   m_zcodec = m_cell_store_v0->create_block_compression_codec();
   memset(&m_block, 0, sizeof(m_block));
