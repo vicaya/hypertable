@@ -116,7 +116,7 @@ static int s_bm_hash = 0;
 static void
 read_bmz_header(int fd, Byte *buf) {
   if (read(fd, buf, BMZ_HEADER_SZ) != BMZ_HEADER_SZ)
-    DIE("error reading bmz file header (%d bytes)", BMZ_HEADER_SZ);
+    DIE("error reading bmz file header (%lu bytes)", (Lu)BMZ_HEADER_SZ);
 }
 
 static void
@@ -152,7 +152,7 @@ write_bmz_header(int fd, size_t in_len, uint32_t checksum, Byte options) {
   BMZ_WRITE_INT32(bp, checksum);
 
   if (write(fd, buf, BMZ_HEADER_SZ) != BMZ_HEADER_SZ)
-    DIE("error writing header (%d bytes)", BMZ_HEADER_SZ);
+    DIE("error writing header (%lu bytes)", (Lu)BMZ_HEADER_SZ);
 }
 
 static void
