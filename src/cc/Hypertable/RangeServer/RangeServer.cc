@@ -833,6 +833,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 	if (*(ts_ptr-1) > FLAG_DELETE_CELL && temp_timestamp <= min_timestamp) {
 	  error = Error::RANGESERVER_TIMESTAMP_ORDER_ERROR;
 	  errMsg = (string)"Update timestamp " + temp_timestamp + " is <= previously seen timestamp of " + min_timestamp;
+	  min_ts_rec.range_ptr->decrement_update_counter();
 	  goto abort;
 	}
 	if (min_ts_rec.timestamp == 0 || temp_timestamp < min_ts_rec.timestamp)
