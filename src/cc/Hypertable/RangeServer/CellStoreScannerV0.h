@@ -53,7 +53,7 @@ namespace Hypertable {
 
     CellStorePtr            m_cell_store_ptr;
     CellStoreV0            *m_cell_store_v0;
-    CellStoreV0::IndexMapT  m_index;
+    CellStoreV0::IndexMapT &m_index;
 
     CellStoreV0::IndexMapT::iterator m_iter;
     CellStoreV0::IndexMapT::iterator m_end_iter;
