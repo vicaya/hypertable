@@ -59,6 +59,7 @@ namespace Hypertable {
     int m_row_index;
     int m_timestamp_index;
     uint64_t m_timestamp;
+    int m_limit;
   };
 
 }

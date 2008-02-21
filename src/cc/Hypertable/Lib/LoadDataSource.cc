@@ -84,6 +84,7 @@ LoadDataSource::LoadDataSource(std::string fname, std::string row_key_column, st
   }
 
   m_next_value = m_column_names.size();
+  m_limit = 0;
 
   if (!m_hyperformat && m_column_names.size() < 2)
     throw Exception(Error::HQL_BAD_LOAD_FILE_FORMAT, "No columns specified in load file");
@@ -194,7 +195,7 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
     while (m_next_value == (size_t)m_timestamp_index || m_next_value == (size_t)m_row_index)
       m_next_value++;
 
-    if (m_next_value > 0 && m_next_value < m_column_names.size()) {
+    if (m_next_value > 0 && m_next_value < (size_t)m_limit) {
       keyp->row = m_values[m_row_index];
       keyp->row_len = m_cur_row_length;
       keyp->column_family = m_column_names[m_next_value].c_str();
@@ -236,7 +237,11 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
 	  m_values.push_back(base);
 	base = ptr;
       }
-      m_values.push_back(base);
+      if (strlen(base) == 0 || !strcmp(base, "NULL") || !strcmp(base, "\\N"))
+	m_values.push_back(0);
+      else
+	m_values.push_back(base);
+      m_limit = std::min(m_values.size(), m_column_names.size());
 
       if (m_timestamp_index >= 0) {
 	struct tm tm;
