@@ -48,14 +48,12 @@ namespace Hypertable {
     void initialize(std::string config_file);
     int create_table(std::string name, std::string schema);
     int open_table(std::string name, TablePtr &tablePtr);
+    int get_table_id(std::string name, uint32_t *table_idp);
     int get_schema(std::string tableName, std::string &schema);
     int get_tables(std::vector<std::string> &tables);
     int drop_table(std::string name, bool if_exists);
 
     HqlCommandInterpreter *create_hql_interpreter();
-
-    //void DeleteTable();
-    // String [] ListTables();
 
   private:
     PropertiesPtr           m_props_ptr;

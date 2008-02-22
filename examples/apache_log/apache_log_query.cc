@@ -67,6 +67,7 @@ int main(int argc, char **argv) {
     scan_spec.startRow = scan_spec.endRow = argv[1];
     scan_spec.startRowInclusive = scan_spec.endRowInclusive = true;
     scan_spec.interval.first = scan_spec.interval.second = 0;  // 0 means no time predicate
+    scan_spec.return_deletes = false;
 
     // Create a scanner on the 'WebServerLog' table 
     if ((error = table_ptr->create_scanner(scan_spec, scanner_ptr)) != Error::OK) {

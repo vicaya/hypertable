@@ -68,5 +68,9 @@ target_link_libraries (Hypertable.RangeServer pthread ${BOOST_LIB} log4cpp expat
 add_executable (csdump CellStoreV0.cc CellStoreTrailerV0.cc BlockCompressionHeaderCellStore.cc csdump.cc CellStoreScannerV0.cc FileBlockCache.cc Global.cc ScanContext.cc)
 target_link_libraries (csdump pthread ${BOOST_LIB} log4cpp ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES} ${Tcmalloc_LIBRARIES} HyperDfsBroker Hypertable)
 
-install (TARGETS Hypertable.RangeServer csdump
+# count_stored - program to diff two sorted files
+add_executable (count_stored count_stored.cc CellStoreV0.cc CellStoreTrailerV0.cc BlockCompressionHeaderCellStore.cc CellStoreScannerV0.cc FileBlockCache.cc Global.cc ScanContext.cc)
+target_link_libraries (count_stored pthread ${BOOST_LIB} log4cpp expat ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES} ${Tcmalloc_LIBRARIES} HyperDfsBroker Hypertable)
+
+install (TARGETS Hypertable.RangeServer csdump count_stored
 	 RUNTIME DESTINATION bin)

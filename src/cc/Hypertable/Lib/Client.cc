@@ -106,6 +106,43 @@ int Client::open_table(std::string name, TablePtr &tablePtr) {
 }
 
 
+/**
+ * 
+ */
+int Client::get_table_id(std::string name, uint32_t *table_idp) {
+  int error;
+  std::string table_file = (std::string)"/hypertable/tables/" + name;
+  DynamicBuffer value_buf(0);
+  HandleCallbackPtr nullHandleCallback;
+  uint64_t handle;
+
+  /**
+   * Open table file in Hyperspace
+   */
+  if ((error = m_hyperspace_ptr->open(table_file.c_str(), OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK)
+    return error;
+
+  /**
+   * Get the 'table_id' attribute
+   */
+  if ((error = m_hyperspace_ptr->attr_get(handle, "table_id", value_buf)) != Error::OK) {
+    HT_ERRORF("Problem getting attribute 'table_id' from file '%s'", table_file.c_str());
+    return error;
+  }
+
+  /**
+   * Close the hyperspace file
+   */
+  if ((error = m_hyperspace_ptr->close(handle)) != Error::OK)
+    return error;
+
+  assert(value_buf.fill() == sizeof(int32_t));
+
+  memcpy(table_idp, value_buf.buf, sizeof(int32_t));
+
+  return Error::OK;
+}
+
 
 /**
  * 
