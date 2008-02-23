@@ -61,7 +61,7 @@ namespace {
 /**
  * Constructor
  */
-RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, ApplicationQueuePtr &app_queue_ptr, Hyperspace::SessionPtr &hyperspace_ptr) : m_mutex(), m_props_ptr(props_ptr), m_verbose(false), m_conn_manager_ptr(conn_manager_ptr), m_app_queue_ptr(app_queue_ptr), m_hyperspace_ptr(hyperspace_ptr), m_last_commit_log_clean(0) {
+RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, ApplicationQueuePtr &app_queue_ptr, Hyperspace::SessionPtr &hyperspace_ptr) : m_mutex(), m_update_mutex(), m_props_ptr(props_ptr), m_verbose(false), m_conn_manager_ptr(conn_manager_ptr), m_app_queue_ptr(app_queue_ptr), m_hyperspace_ptr(hyperspace_ptr), m_last_commit_log_clean(0) {
   int error;
   uint16_t port;
   Comm *comm = conn_manager_ptr->get_comm();
@@ -710,6 +710,7 @@ namespace {
  * Update
  */
 void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, BufferT &buffer) {
+  boost::mutex::scoped_lock lock(m_update_mutex);
   const uint8_t *modPtr;
   const uint8_t *modEnd;
   uint8_t *ts_ptr;

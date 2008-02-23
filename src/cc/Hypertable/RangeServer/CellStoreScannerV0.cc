@@ -33,6 +33,8 @@ namespace {
   const uint32_t MINIMUM_READAHEAD_AMOUNT = 65536;
 }
 
+//#define STAT 1
+
 
 CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr,
                                        ScanContextPtr &scanContextPtr) :
@@ -203,9 +205,11 @@ CellStoreScannerV0::~CellStoreScannerV0() {
   }
   delete m_zcodec;
 
+#ifdef STAT
   cout << flush;
   cout << "STAT[~CellStoreScannerV0]\tget\t" << m_returned << "\t";
   cout << m_cell_store_v0->get_filename() << "[" << m_start_row << ".." << m_end_row << "]" << endl;
+#endif
 
 }
 
@@ -215,7 +219,9 @@ bool CellStoreScannerV0::get(ByteString32T **keyp, ByteString32T **valuep) {
   if (m_iter == m_index.end())
     return false;
 
+#ifdef STAT
   m_returned++;
+#endif
 
   *keyp = m_cur_key;
   *valuep = m_cur_value;

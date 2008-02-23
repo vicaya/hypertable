@@ -81,6 +81,7 @@ namespace Hypertable {
     typedef __gnu_cxx::hash_map<string, TableInfoPtr> TableInfoMapT;
 
     boost::mutex           m_mutex;
+    boost::mutex           m_update_mutex;
     PropertiesPtr          m_props_ptr;
     bool                   m_verbose;
     Comm                  *m_comm;

@@ -307,10 +307,12 @@ const char *Range::get_split_row() {
  *  
  */
 void Range::get_compaction_priority_data(std::vector<AccessGroup::CompactionPriorityDataT> &priority_data_vector) {
-  boost::mutex::scoped_lock lock(m_mutex);
   size_t next_slot = priority_data_vector.size();
 
-  priority_data_vector.resize( priority_data_vector.size() + m_access_group_vector.size() );
+  {
+    boost::mutex::scoped_lock lock(m_mutex);
+    priority_data_vector.resize( priority_data_vector.size() + m_access_group_vector.size() );
+  }
 
   for (size_t i=0; i<m_access_group_vector.size(); i++) {
     m_access_group_vector[i]->get_compaction_priority_data(priority_data_vector[next_slot]);
@@ -619,13 +621,13 @@ void Range::dump_stats() {
     collisions += m_access_group_vector[i]->get_collision_count();
     cached += m_access_group_vector[i]->get_cached_count();
   }
-  cout << "STAT\t " << range_str << "\tadded inserts\t" << m_added_inserts << endl;
-  cout << "STAT\t " << range_str << "\tadded row deletes\t" << m_added_deletes[0] << endl;
-  cout << "STAT\t " << range_str << "\tadded cf deletes\t" << m_added_deletes[1] << endl;
-  cout << "STAT\t " << range_str << "\tadded cell deletes\t" << m_added_deletes[2] << endl;
-  cout << "STAT\t " << range_str << "\tadded total\t" << (m_added_inserts + m_added_deletes[0] + m_added_deletes[1] + m_added_deletes[2]) << endl;
-  cout << "STAT\t " << range_str << "\tcollisions\t" << collisions << endl;
-  cout << "STAT\t " << range_str << "\tcached\t" << cached << endl;
+  cout << "STAT\t" << range_str << "\tadded inserts\t" << m_added_inserts << endl;
+  cout << "STAT\t" << range_str << "\tadded row deletes\t" << m_added_deletes[0] << endl;
+  cout << "STAT\t" << range_str << "\tadded cf deletes\t" << m_added_deletes[1] << endl;
+  cout << "STAT\t" << range_str << "\tadded cell deletes\t" << m_added_deletes[2] << endl;
+  cout << "STAT\t" << range_str << "\tadded total\t" << (m_added_inserts + m_added_deletes[0] + m_added_deletes[1] + m_added_deletes[2]) << endl;
+  cout << "STAT\t" << range_str << "\tcollisions\t" << collisions << endl;
+  cout << "STAT\t" << range_str << "\tcached\t" << cached << endl;
   cout << flush;
 }
 
@@ -637,14 +639,14 @@ void Range::lock() {
 
 
 void Range::unlock(uint64_t real_timestamp) {
-  for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++)
-    (*iter).second->unlock();
   // This is a performance optimization to maintain the logical timestamp without excessive locking
   {
     boost::mutex::scoped_lock lock(m_mutex);
     m_timestamp.logical = m_last_logical_timestamp;
     m_timestamp.real = real_timestamp;
   }
+  for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++)
+    (*iter).second->unlock();
 }
 
 
