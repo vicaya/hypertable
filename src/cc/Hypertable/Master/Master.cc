@@ -184,60 +184,14 @@ Master::~Master() {
  *
  */
 void Master::server_joined(std::string &location) {
-  int error;
-  RangeServerStatePtr statePtr;
-  uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
-  HandleCallbackPtr lockFileHandler;
-  uint32_t lockStatus;
-  struct LockSequencerT lockSequencer;
-  ServerMapT::iterator iter;
-  std::string hsFilename;
-  
-  {
-    boost::mutex::scoped_lock lock(m_mutex);
-    if ((iter = m_server_map.find(location)) != m_server_map.end())
-      statePtr = (*iter).second;
-    else {
-      statePtr = new RangeServerState();
-      statePtr->location = location;
-    }
-  }
-
   HT_INFOF("Server Joined (%s)", location.c_str());
-
-  hsFilename = (std::string)"/hypertable/servers/" + location;
-
-  lockFileHandler = new ServerLockFileHandler(statePtr, this, m_app_queue_ptr);
-
-  if ((error = m_hyperspace_ptr->open(hsFilename, oflags, lockFileHandler, &statePtr->hyperspaceHandle)) != Error::OK) {
-    HT_ERRORF("Problem opening discovered server file %s - %s", hsFilename.c_str(), Error::get_text(error));
-    return;
-  }
-
-  if ((error = m_hyperspace_ptr->try_lock(statePtr->hyperspaceHandle, LOCK_MODE_EXCLUSIVE, &lockStatus, &lockSequencer)) != Error::OK) {
-    HT_ERRORF("Problem attempting to obtain exclusive lock on server Hyperspace file '%s' - %s",
-		 hsFilename.c_str(), Error::get_text(error));
-    return;
-  }
-
-  if (lockStatus == LOCK_STATUS_GRANTED) {
-    HT_INFOF("Obtained lock on servers file %s, removing...", hsFilename.c_str());
-    if ((error = m_hyperspace_ptr->unlink(hsFilename)) != Error::OK)
-      HT_INFOF("Problem deleting Hyperspace file %s", hsFilename.c_str());
-    if ((error = m_hyperspace_ptr->close(statePtr->hyperspaceHandle)) != Error::OK)
-      HT_INFOF("Problem closing handle on deleting Hyperspace file %s", hsFilename.c_str());
-  }
-  else {
-    boost::mutex::scoped_lock lock(m_mutex);
-    m_server_map[statePtr->location] = statePtr;  
-  }
   cout << flush;
 }
 
 
 
 /**
- *
+ * 
  */
 void Master::server_left(std::string &location) {
   boost::mutex::scoped_lock lock(m_mutex);
@@ -360,19 +314,20 @@ void Master::get_schema(ResponseCallbackGetSchema *cb, const char *tableName) {
  */
 void Master::register_server(ResponseCallback *cb, const char *location, struct sockaddr_in &addr) {
   boost::mutex::scoped_lock lock(m_mutex);
+  int error;
   RangeServerStatePtr statePtr;
-  std::string idStr = location;
-  ServerMapT::iterator iter = m_server_map.find(idStr);
+  ServerMapT::iterator iter;
   struct sockaddr_in alias;
+  uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
+  HandleCallbackPtr lockFileHandler;
+  uint32_t lockStatus;
+  struct LockSequencerT lockSequencer;
+  std::string hsFilename;
 
-  if ((iter = m_server_map.find(location)) != m_server_map.end())
-    statePtr = (*iter).second;
-  else {
-    statePtr = new RangeServerState();
-    statePtr->location = location;
-    m_server_map[statePtr->location] = statePtr;
-  }
+  HT_EXPECT((iter = m_server_map.find(location)) == m_server_map.end(), Error::FAILED_EXPECTATION);
 
+  statePtr = new RangeServerState();
+  statePtr->location = location;
   statePtr->addr = addr;
 
   if (!LocationCache::location_to_addr(location, alias)) {
@@ -384,6 +339,33 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
     Comm *comm = m_conn_manager_ptr->get_comm();
     comm->set_alias(addr, alias);
   }
+
+  hsFilename = (std::string)"/hypertable/servers/" + location;
+
+  lockFileHandler = new ServerLockFileHandler(statePtr, this, m_app_queue_ptr);
+
+  if ((error = m_hyperspace_ptr->open(hsFilename, oflags, lockFileHandler, &statePtr->hyperspaceHandle)) != Error::OK) {
+    HT_ERRORF("Problem opening discovered server file %s - %s", hsFilename.c_str(), Error::get_text(error));
+    cb->error(error, (std::string)"Problem opening discovered server file '" + hsFilename + "'");
+    return;
+  }
+
+  if ((error = m_hyperspace_ptr->try_lock(statePtr->hyperspaceHandle, LOCK_MODE_EXCLUSIVE, &lockStatus, &lockSequencer)) != Error::OK) {
+    HT_ERRORF("Problem attempting to obtain exclusive lock on server Hyperspace file '%s' - %s",
+		 hsFilename.c_str(), Error::get_text(error));
+    cb->error(error, (std::string)"Problem attempting to obtain exclusive lock on server Hyperspace file '" + hsFilename + "'");
+    return;
+  }
+
+  if (lockStatus == LOCK_STATUS_GRANTED) {
+    HT_INFOF("Obtained lock on servers file %s, removing...", hsFilename.c_str());
+    if ((error = m_hyperspace_ptr->unlink(hsFilename)) != Error::OK)
+      HT_INFOF("Problem deleting Hyperspace file %s", hsFilename.c_str());
+    if ((error = m_hyperspace_ptr->close(statePtr->hyperspaceHandle)) != Error::OK)
+      HT_INFOF("Problem closing handle on deleting Hyperspace file %s", hsFilename.c_str());
+  }
+  else
+    m_server_map[statePtr->location] = statePtr;  
 
   {
     std::string addrStr;
@@ -666,6 +648,8 @@ int Master::create_table(const char *tableName, const char *schemaString, std::s
   uint64_t handle;
   uint32_t table_id;
 
+  m_hyperspace_ptr->set_silent_flag(true);
+
   /**
    * Check for table existence
    */
@@ -814,6 +798,7 @@ int Master::create_table(const char *tableName, const char *schemaString, std::s
   }
 
 abort:
+  m_hyperspace_ptr->set_silent_flag(false);
   delete schema;
   if (error != Error::OK) {
     if (m_verbose) {

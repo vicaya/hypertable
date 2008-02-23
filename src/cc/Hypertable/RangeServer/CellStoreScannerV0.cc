@@ -40,7 +40,7 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr,
     m_cell_store_v0(dynamic_cast< CellStoreV0*>(m_cell_store_ptr.get())),
     m_index(m_cell_store_v0->m_index), m_cur_key(0), m_cur_value(0),
     m_check_for_range_end(false), m_end_inclusive(true),
-    m_readahead(true), m_fd(-1), m_start_offset(0), m_end_offset(0) {
+    m_readahead(true), m_fd(-1), m_start_offset(0), m_end_offset(0), m_returned(0) {
   ByteString32T  *key;
   bool start_inclusive = false;
 
@@ -202,6 +202,11 @@ CellStoreScannerV0::~CellStoreScannerV0() {
       Global::blockCache->checkin(m_file_id, m_block.offset);
   }
   delete m_zcodec;
+
+  cout << flush;
+  cout << "STAT[~CellStoreScannerV0]\tget\t" << m_returned << "\t";
+  cout << m_cell_store_v0->get_filename() << "[" << m_start_row << ".." << m_end_row << "]" << endl;
+
 }
 
 
@@ -209,6 +214,8 @@ bool CellStoreScannerV0::get(ByteString32T **keyp, ByteString32T **valuep) {
 
   if (m_iter == m_index.end())
     return false;
+
+  m_returned++;
 
   *keyp = m_cur_key;
   *valuep = m_cur_value;

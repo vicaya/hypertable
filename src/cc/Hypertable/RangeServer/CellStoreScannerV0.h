@@ -71,6 +71,7 @@ namespace Hypertable {
     int32_t               m_fd;
     uint32_t              m_start_offset;
     uint32_t              m_end_offset;
+    uint32_t              m_returned;
   };
 
 }

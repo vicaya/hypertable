@@ -54,6 +54,7 @@ namespace Hypertable {
     static const int BLOCK_COMPRESSOR_INFLATE_ERROR     = 20;
     static const int BLOCK_COMPRESSOR_INIT_ERROR        = 21;
     static const int TABLE_DOES_NOT_EXIST               = 22;
+    static const int FAILED_EXPECTATION                 = 23;
 
     static const int COMM_NOT_CONNECTED       = 0x00010001;
     static const int COMM_BROKEN_CONNECTION   = 0x00010002;
