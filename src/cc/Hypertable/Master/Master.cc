@@ -584,7 +584,7 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
       while (scanner_ptr->next(cell)) {
         location_str = std::string((const char *)cell.value, cell.value_len);
         boost::trim(location_str);
-        if (location_str != "")
+        if (location_str != "" && location_str != "!")
           unique_locations.insert(location_str);
       }
     }

@@ -1013,26 +1013,61 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 
 
 void RangeServer::drop_table(ResponseCallback *cb, const char *table_name) {
+  int error;
   TableInfoPtr table_info_ptr;
   std::vector<RangePtr> range_vector;
+  std::string metadata_prefix;
+  std::string metadata_key; // ***********  = std::string("") + (uint32_t)m_table_identifier.id + ":" + m_end_row;
+  TableMutatorPtr mutator_ptr;
+  KeySpec key;
 
-  HT_INFO("drop_table");  
-  cout << flush;
-
-  /**
-   * Set the 'drop' bit For each range in the table
-   */
-  if (remove_table_info(table_name, table_info_ptr)) {
-    table_info_ptr->get_range_vector(range_vector);
-    for (size_t i=0; i<range_vector.size(); i++)
-      range_vector[i]->drop();
-    range_vector.clear();
-  }
-  else {
-    HT_ERRORF("drop_table '%s' - table not found", table_name);
+  if (Global::verbose) {
+    HT_INFOF("drop_table '%s'", table_name);  
+    cout << flush;
   }
 
-  cout << "almost done" << endl << flush;
+  // create METADATA table mutator for clearing 'Location' columns
+  if ((error = Global::metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK) {
+    HT_ERRORF("Problem creating mutator on METADATA table - %s", Error::get_text(error));
+    cb->error(error, "Problem creating mutator on METADATA table");
+    return;
+  }
+
+  // initialize key structure
+  memset(&key, 0, sizeof(key));
+  key.column_family = "Location";
+
+  try {
+
+     // For each range in dropped table, Set the 'drop' bit and clear
+    // the 'Location' column of the corresponding METADATA entry
+    if (remove_table_info(table_name, table_info_ptr)) {
+      metadata_prefix = std::string("") + table_info_ptr->get_id() + ":";
+      table_info_ptr->get_range_vector(range_vector);
+      for (size_t i=0; i<range_vector.size(); i++) {
+	range_vector[i]->drop();
+	metadata_key = metadata_prefix + range_vector[i]->end_row();
+	key.row = metadata_key.c_str();
+	key.row_len = metadata_key.length();
+	mutator_ptr->set(key, "!", 1);
+      }
+      range_vector.clear();
+    }
+    else {
+      HT_ERRORF("drop_table '%s' - table not found", table_name);
+    }
+    mutator_ptr->flush();
+  }
+  catch (Hypertable::Exception &e) {
+    HT_ERRORF("Problem clearing 'Location' columns of METADATA - %s", Error::get_text(e.code()));
+    cb->error(e.code(), "Problem clearing 'Location' columns of METADATA");
+    return;
+  }
+
+  if (Global::verbose) {
+    HT_INFOF("Successfully dropped table '%s'", table_name);  
+    cout << flush;
+  }
 
   cb->response_ok();
 }

@@ -43,6 +43,7 @@ namespace Hypertable {
     TableInfo(MasterClientPtr &master_client_ptr, TableIdentifierT *identifier, SchemaPtr &schemaPtr);
     virtual ~TableInfo();
     const char *get_name() { return m_identifier.name; }
+    uint32_t get_id() { return m_identifier.id; }
     SchemaPtr &get_schema() {
       boost::mutex::scoped_lock lock(m_mutex);
       return m_schema;

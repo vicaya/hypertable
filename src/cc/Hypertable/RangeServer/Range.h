@@ -63,8 +63,14 @@ namespace Hypertable {
       return m_start_row;
     }
 
+    /**
+     * Returns the end row of the range.
+     *
+     * @return the end row of the range
+     *
+     * This does not need to be protected by a lock because the end row of a range never changes.
+     */
     string end_row() {
-      boost::mutex::scoped_lock lock(m_mutex);
       return m_end_row;
     }
 

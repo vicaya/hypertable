@@ -136,6 +136,11 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
 
   error = find(table, row_key, range_loc_info_p, true);
 
+  if (error == Error::TABLE_DOES_NOT_EXIST) {
+    m_last_errors.clear();
+    throw Exception(error, (std::string)"Table '" + table->name + "' is being dropped.");
+  }
+
   // retry loop
   while (error != Error::OK && total_wait_time < (float)timeout) {
     // wait a bit
@@ -143,12 +148,17 @@ int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocati
     total_wait_time += wait_time;
     wait_time *= 1.5;
     // try again, the hard way
-    error = find(table, row_key, range_loc_info_p, true);
+    if ((error = find(table, row_key, range_loc_info_p, true)) == Error::TABLE_DOES_NOT_EXIST)
+      break;
   }
 
   // report errors if there are any
   if (error) {
     boost::mutex::scoped_lock lock(m_mutex);
+    if (error == Error::TABLE_DOES_NOT_EXIST) {
+      m_last_errors.clear();
+      throw Exception(error, (std::string)"Table '" + table->name + "' is being dropped.");
+    }
     for (std::deque<std::string>::iterator iter = m_last_errors.begin(); iter != m_last_errors.end(); iter++) {
       HT_ERRORF("%s", (*iter).c_str());
     }
@@ -379,7 +389,7 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
 	}
 	else {
 	  boost::mutex::scoped_lock lock(m_mutex);
-	  m_last_errors.push_back( (std::string)"Incomplete METADATA record found in root tablet under row key '" + range_loc_info.end_row + "'" );
+	  m_last_errors.push_back( (std::string)"Incomplete METADATA record found in root range under row key '" + range_loc_info.end_row + "'" );
 	  while (m_last_errors.size() > MAX_ERROR_QUEUE_LENGTH)
 	    m_last_errors.pop_front();
 	}
@@ -404,6 +414,8 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
     }
     else if (keyComps.column_family_code == m_location_cid) {
       range_loc_info.location = std::string((const char *)value->data, value->len);
+      if (range_loc_info.location == "!")
+	return Error::TABLE_DOES_NOT_EXIST;
       got_location = true;
     }
     else {

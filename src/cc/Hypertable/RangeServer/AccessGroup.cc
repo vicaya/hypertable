@@ -85,17 +85,13 @@ AccessGroup::~AccessGroup() {
       key.column_family = "Files";
       key.column_qualifier = m_name.c_str();
       key.column_qualifier_len = m_name.length();
-      mutator_ptr->set(0, key, (uint8_t *)"!", 1);
-      key.column_family = "Location";
-      key.column_qualifier = 0;
-      key.column_qualifier_len = 0;
-      mutator_ptr->set(0, key, 0, 0);
+      mutator_ptr->set(key, (uint8_t *)"!", 1);
       mutator_ptr->flush();
     }
     catch (Hypertable::Exception &e) {
       // TODO: propagate exception
-      HT_ERRORF("Problem updating 'File' column of METADATA (%d:%s) - %s",
-		   m_table_identifier.id, metadata_key.c_str(), Error::get_text(e.code()));
+      HT_ERRORF("Problem updating 'File' column of METADATA (%s) - %s",
+		metadata_key.c_str(), Error::get_text(e.code()));
     }
   }
   Free(m_table_identifier);
