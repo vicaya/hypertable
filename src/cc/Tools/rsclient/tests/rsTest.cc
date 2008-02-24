@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
   /**
    * Initialize
    */
-  commandStr = (std::string)"../hypertable/hypertable --config=hypertable.cfg --batch < initialize.hql > /tmp/rsTest.out";
+  commandStr = (std::string)"../hypertable/hypertable --config=hypertable.cfg --batch < initialize.hql > init.out";
   if (system(commandStr.c_str()) != 0)
     return 1;
 
