@@ -197,17 +197,20 @@ bool Range::extract_csid_from_path(std::string &path, uint32_t *csidp) {
 int Range::add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp) {
   Key keyComps;
 
-  if (!keyComps.load(key)) {
-    HT_ERROR("Problem parsing key!!");
-    return 0;
-  }
+  HT_EXPECT(keyComps.load(key), Error::FAILED_EXPECTATION);
 
   if (keyComps.column_family_code >= m_column_family_vector.size()) {
     HT_ERRORF("Bad column family (%d)", keyComps.column_family_code);
-    return 0;
+    return Error::RANGESERVER_INVALID_COLUMNFAMILY;
   }
 
-  if (keyComps.timestamp > m_last_logical_timestamp)
+  if (keyComps.timestamp <= m_last_logical_timestamp) {
+    if (keyComps.flag == FLAG_INSERT) {
+      HT_ERRORF("Problem adding key/value pair, key timestmap %llu <= %llu", keyComps.timestamp, m_last_logical_timestamp);
+      return Error::RANGESERVER_TIMESTAMP_ORDER_ERROR;
+    }
+  }
+  else
     m_last_logical_timestamp = keyComps.timestamp;
 
   if (keyComps.flag == FLAG_DELETE_ROW) {
@@ -217,11 +220,13 @@ int Range::add(const ByteString32T *key, const ByteString32T *value, uint64_t re
   }
   else
     m_column_family_vector[keyComps.column_family_code]->add(key, value, real_timestamp);
+
   if (keyComps.flag == FLAG_INSERT)
     m_added_inserts++;
   else
     m_added_deletes[keyComps.flag]++;
-  return 0;
+
+  return Error::OK;
 }
 
 

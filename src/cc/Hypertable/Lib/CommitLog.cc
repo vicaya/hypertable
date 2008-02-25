@@ -320,17 +320,17 @@ int CommitLog::compress_and_write(DynamicBuffer &input, BlockCompressionHeader *
   if (!sync_handler.wait_for_reply(event_ptr)) {
     HT_ERRORF("Problem appending to commit log file '%s' - %s",
 		 m_log_file.c_str(), Protocol::string_format_message(event_ptr).c_str());
-    return (int)Protocol::response_code(event_ptr);
+    error = (int)Protocol::response_code(event_ptr);
   }
 
   // wait for flush to complete
   if (!sync_handler.wait_for_reply(event_ptr)) {
     HT_ERRORF("Problem flushing commit log file '%s' - %s",
 		 m_log_file.c_str(), Protocol::string_format_message(event_ptr).c_str());
-    return (int)Protocol::response_code(event_ptr);
+    error = (int)Protocol::response_code(event_ptr);
   }
 
-  return Error::OK;
+  return error;
 }
 
 

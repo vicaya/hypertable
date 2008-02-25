@@ -61,7 +61,7 @@ namespace {
 /**
  * Constructor
  */
-RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, ApplicationQueuePtr &app_queue_ptr, Hyperspace::SessionPtr &hyperspace_ptr) : m_mutex(), m_update_mutex(), m_props_ptr(props_ptr), m_verbose(false), m_conn_manager_ptr(conn_manager_ptr), m_app_queue_ptr(app_queue_ptr), m_hyperspace_ptr(hyperspace_ptr), m_last_commit_log_clean(0) {
+RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, ApplicationQueuePtr &app_queue_ptr, Hyperspace::SessionPtr &hyperspace_ptr) : m_props_ptr(props_ptr), m_verbose(false), m_conn_manager_ptr(conn_manager_ptr), m_app_queue_ptr(app_queue_ptr), m_hyperspace_ptr(hyperspace_ptr), m_last_commit_log_clean(0) {
   int error;
   uint16_t port;
   Comm *comm = conn_manager_ptr->get_comm();
@@ -710,9 +710,10 @@ namespace {
  * Update
  */
 void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, BufferT &buffer) {
-  boost::mutex::scoped_lock lock(m_update_mutex);
-  const uint8_t *modPtr;
-  const uint8_t *modEnd;
+  const uint8_t *mod_ptr;
+  const uint8_t *mod_end;
+  const uint8_t *add_base_ptr;
+  const uint8_t *add_end_ptr;
   uint8_t *ts_ptr;
   const uint8_t auto_ts[8] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
   string errMsg;
@@ -730,7 +731,6 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
   CommitLogPtr splitLogPtr;
   uint64_t splitStartTime;
   size_t goSize = 0;
-  size_t goBase = 0;
   size_t stopSize = 0;
   size_t splitSize = 0;
   std::string endRow;
@@ -750,9 +750,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 
   // TODO: Sanity check mod data (checksum validation)
 
-  /**
-   * Fetch table info
-   */
+  // Fetch table info
   if (!get_table_info(table->name, tableInfoPtr)) {
     ExtBufferT ext;
     ext.buf = new uint8_t [ buffer.len ];
@@ -766,27 +764,35 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
   }
 
   // verify schema
-  if ((error = verify_schema(tableInfoPtr, table->generation, errMsg)) != Error::OK)
-    goto abort;
+  if ((error = verify_schema(tableInfoPtr, table->generation, errMsg)) != Error::OK) {
+    HT_ERRORF("%s", errMsg.c_str());
+    cb->error(error, errMsg);
+    return;
+  }
 
-  modEnd = buffer.buf + buffer.len;
-  modPtr = buffer.buf;
+  mod_end = buffer.buf + buffer.len;
+  mod_ptr = buffer.buf;
 
   goMods.clear();
 
-  while (modPtr < modEnd) {
+  boost::detail::thread::lock_ops<boost::mutex>::lock(m_update_mutex_a);
 
-    row = (const char *)((ByteString32T *)modPtr)->data;
+  while (mod_ptr < mod_end) {
 
+    row = (const char *)((ByteString32T *)mod_ptr)->data;
+
+    // Look for containing range, add to stop mods if not found
     if (!tableInfoPtr->find_containing_range(row, min_ts_rec.range_ptr)) {
-      update.base = modPtr;
-      modPtr += Length((const ByteString32T *)modPtr); // skip key
-      modPtr += Length((const ByteString32T *)modPtr); // skip value
-      update.len = modPtr - update.base;
+      update.base = mod_ptr;
+      mod_ptr += Length((const ByteString32T *)mod_ptr); // skip key
+      mod_ptr += Length((const ByteString32T *)mod_ptr); // skip value
+      update.len = mod_ptr - update.base;
       stopMods.push_back(update);
       stopSize += update.len;
       continue;
     }
+
+    add_base_ptr = mod_ptr;
     
     /** Increment update count (block if maintenance in progress) **/
     min_ts_rec.range_ptr->increment_update_counter();
@@ -808,16 +814,16 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     next_timestamp = 0;
     min_ts_rec.timestamp = 0;
 
-    while (modPtr < modEnd && (endRow == "" || (strcmp(row, endRow.c_str()) <= 0))) {
+    while (mod_ptr < mod_end && (endRow == "" || (strcmp(row, endRow.c_str()) <= 0))) {
 
       // If timestamp value is set to AUTO (zero one's compliment), then assign a timestamp
-      ts_ptr = (uint8_t *)modPtr + Length((const ByteString32T *)modPtr) - 8;
+      ts_ptr = (uint8_t *)mod_ptr + Length((const ByteString32T *)mod_ptr) - 8;
       if (!memcmp(ts_ptr, auto_ts, 8)) {
 	if (next_timestamp == 0) {
 	  boost::xtime now;
 	  boost::xtime_get(&now, boost::TIME_UTC);
 	  next_timestamp = ((uint64_t)now.sec * 1000000000LL) + (uint64_t)now.nsec;
-	  //HT_INFOF("drj TIMESTAMP %lld (%s)", next_timestamp, (const char *)((const ByteString32T *)modPtr)->data);
+	  //HT_INFOF("fugazi TIMESTAMP %lld", next_timestamp);
 	}
 	temp_timestamp = ++next_timestamp;
 	if (min_ts_rec.timestamp == 0 || temp_timestamp < min_ts_rec.timestamp)
@@ -835,16 +841,17 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 	  error = Error::RANGESERVER_TIMESTAMP_ORDER_ERROR;
 	  errMsg = (string)"Update timestamp " + temp_timestamp + " is <= previously seen timestamp of " + min_timestamp;
 	  min_ts_rec.range_ptr->decrement_update_counter();
+	  boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_a);
 	  goto abort;
 	}
 	if (min_ts_rec.timestamp == 0 || temp_timestamp < min_ts_rec.timestamp)
 	  min_ts_rec.timestamp = temp_timestamp;
       }
 
-      update.base = modPtr;
-      modPtr += Length((const ByteString32T *)modPtr); // skip key
-      modPtr += Length((const ByteString32T *)modPtr); // skip value
-      update.len = modPtr - update.base;
+      update.base = mod_ptr;
+      mod_ptr += Length((const ByteString32T *)mod_ptr); // skip key
+      mod_ptr += Length((const ByteString32T *)mod_ptr); // skip value
+      update.len = mod_ptr - update.base;
       if (splitStartTime != 0 && temp_timestamp > splitStartTime && strcmp(row, split_row.c_str()) <= 0) {
 	splitMods.push_back(update);
 	splitSize += update.len;
@@ -853,8 +860,12 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 	goMods.push_back(update);
 	goSize += update.len;
       }
-      row = (const char *)((ByteString32T *)modPtr)->data;
+      row = (const char *)((ByteString32T *)mod_ptr)->data;
     }
+
+    add_end_ptr = mod_ptr;
+
+    //HT_INFOF("fugazi TIMESTAMP --last-- %lld", next_timestamp);
 
     // force scans to only see updates before the earliest time in this range
     min_ts_rec.timestamp--;
@@ -874,8 +885,11 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 	ptr += splitMods[i].len;
       }
 
+      HT_EXPECT((ptr-base) <= (long)splitSize, Error::FAILED_EXPECTATION);
+
       if ((error = splitLogPtr->write(table->name, base, ptr-base, update_timestamp)) != Error::OK) {
 	errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to split log";
+	boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_a);
 	goto abort;
       }
     }
@@ -884,18 +898,16 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
      * Apply the modifications
      */
     min_ts_rec.range_ptr->lock();
-    /** Apply the GO mods **/
-    for (size_t i=goBase; i<goMods.size(); i++) {
-      ByteString32T *key = (ByteString32T *)goMods[i].base;
-      ByteString32T *value = (ByteString32T *)(goMods[i].base + Length(key));
-      min_ts_rec.range_ptr->add(key, value, update_timestamp);
-    }
-    goBase = goMods.size();
-    /** Apply the SPLIT mods **/
-    for (size_t i=0; i<splitMods.size(); i++) {
-      ByteString32T *key = (ByteString32T *)splitMods[i].base;
-      ByteString32T *value = (ByteString32T *)(splitMods[i].base + Length(key));
-      min_ts_rec.range_ptr->add(key, value, update_timestamp);
+    {
+      const uint8_t *ptr = add_base_ptr;
+      const ByteString32T *key, *value;
+      while (ptr < add_end_ptr) {
+	key = (const ByteString32T *)ptr;
+	ptr += Length(key);
+	value = (const ByteString32T *)ptr;
+	ptr += Length(value);
+	HT_EXPECT(min_ts_rec.range_ptr->add(key, value, update_timestamp) == Error::OK, Error::FAILED_EXPECTATION);
+      }
     }
     min_ts_rec.range_ptr->unlock(update_timestamp);
 
@@ -934,6 +946,9 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     }
   }
 
+  boost::detail::thread::lock_ops<boost::mutex>::lock(m_update_mutex_b);
+  boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_a);
+
   /**
    * Commit valid (go) mutations
    */
@@ -949,11 +964,17 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
       memcpy(ptr, goMods[i].base, goMods[i].len);
       ptr += goMods[i].len;
     }
+
+    HT_EXPECT((ptr-base) <= (long)goSize, Error::FAILED_EXPECTATION);
+
     if ((error = Global::log->write(table->name, base, ptr-base, update_timestamp)) != Error::OK) {
       errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to commit log";
+      boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_b);
       goto abort;
     }
   }
+
+  boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_b);
 
   if (Global::verbose) {
     HT_INFOF("Dropped %d updates (out-of-range)", stopMods.size());
