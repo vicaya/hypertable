@@ -65,7 +65,7 @@ IF(WIN32)
 ENDIF(WIN32)
 
 
-SET(BOOST_INCLUDE_PATH_DESCRIPTION "directory containing the boost include files. E.g /usr/local/include/boost-1_33_1 or c:\\boost\\include\\boost-1_33_1")
+SET(BOOST_INCLUDE_PATH_DESCRIPTION "directory containing the boost include files. E.g /usr/local/include/boost-1_34_1 or c:\\boost\\include\\boost-1_34_1")
 
 SET(BOOST_DIR_MESSAGE "Set the Boost_INCLUDE_DIR cmake cache entry to the ${BOOST_INCLUDE_PATH_DESCRIPTION}")
 
@@ -87,8 +87,6 @@ ENDIF(WIN32)
 SET(SUFFIX_FOR_PATH
  boost-1_34_1
  boost-1_34_0
- boost-1_33_1
- boost-1_33_0
 )
 
 #
@@ -190,4 +188,3 @@ IF(NOT Boost_FOUND)
     ENDIF(Boost_FIND_REQUIRED)
   ENDIF(NOT Boost_FIND_QUIETLY)
 ENDIF(NOT Boost_FOUND)
-
