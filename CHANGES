@@ -1,6 +1,6 @@
 
 Version 0.9.0.4:
-(2008-02-26)
+(2008-02-27)
 
   * Added code to check boost and apply fixes if necessary
   * Fixed issue #47 Cleaned up DROP_TABLE handling in RangeServer and Client
