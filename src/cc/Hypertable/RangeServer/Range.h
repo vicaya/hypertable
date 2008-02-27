@@ -148,8 +148,6 @@ namespace Hypertable {
     SchemaPtr        m_schema;
     std::string      m_start_row;
     std::string      m_end_row;
-    ByteString32Ptr  m_start_key_ptr;
-    ByteString32Ptr  m_end_key_ptr;
     AccessGroupMapT        m_access_group_map;
     std::vector<AccessGroup *>  m_access_group_vector;
     ColumnFamilyVectorT      m_column_family_vector;

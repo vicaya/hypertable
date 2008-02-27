@@ -204,6 +204,10 @@ int Range::add(const ByteString32T *key, const ByteString32T *value, uint64_t re
     return Error::RANGESERVER_INVALID_COLUMNFAMILY;
   }
 
+  /**
+     keys in a batch may come in out-of-order if they're supplied because
+     they get sorted by row key in the client.  This *shouldn't* be a problem.
+     
   if (keyComps.timestamp <= m_last_logical_timestamp) {
     if (keyComps.flag == FLAG_INSERT) {
       HT_ERRORF("Problem adding key/value pair, key timestmap %llu <= %llu", keyComps.timestamp, m_last_logical_timestamp);
@@ -211,6 +215,10 @@ int Range::add(const ByteString32T *key, const ByteString32T *value, uint64_t re
     }
   }
   else
+    m_last_logical_timestamp = keyComps.timestamp;
+  */
+
+  if (keyComps.timestamp > m_last_logical_timestamp)
     m_last_logical_timestamp = keyComps.timestamp;
 
   if (keyComps.flag == FLAG_DELETE_ROW) {

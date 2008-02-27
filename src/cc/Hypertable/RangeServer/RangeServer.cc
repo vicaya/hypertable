@@ -797,6 +797,12 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     /** Increment update count (block if maintenance in progress) **/
     min_ts_rec.range_ptr->increment_update_counter();
 
+    // Look again to make sure range didn't just shrink                                                                                                         
+    if (!tableInfoPtr->find_containing_range(row, min_ts_rec.range_ptr)) {
+      min_ts_rec.range_ptr->decrement_update_counter();
+      continue;
+    }
+
     /** Obtain the most recently seen timestamp **/
     min_timestamp = min_ts_rec.range_ptr->get_latest_timestamp();
 
