@@ -48,6 +48,7 @@ include_directories(src/cc ${Boost_INCLUDE_DIRS} ${Log4cpp_INCLUDE_DIR})
 try_run(BOOST_CHECK SHOULD_COMPILE
         ${HYPERTABLE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
         ${HYPERTABLE_SOURCE_DIR}/cmake/CheckBoost.cc
+        CMAKE_FLAGS -DINCLUDE_DIRECTORIES:STRING=${Boost_INCLUDE_DIRS}
         OUTPUT_VARIABLE TRY_OUT)
 string(REGEX REPLACE ".*\n([0-9_]+)" "\\1" BOOST_VERSION ${TRY_OUT})
 message(STATUS "Boost version: ${BOOST_VERSION}")
