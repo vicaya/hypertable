@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+# Copyright (C) 2008 Doug Judd (Zvents, Inc.)
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -18,7 +18,7 @@
 
 # hypertable - command interpreter
 add_executable (serverup serverup.cc)
-target_link_libraries (serverup pthread ${BOOST_LIB} log4cpp expat ${Tcmalloc_LIBRARIES} HyperDfsBroker Hypertable)
+target_link_libraries (serverup pthread ${BOOST_LIB} log4cpp expat HyperDfsBroker Hypertable ${MALLOC_LIBRARY})
 
 install (TARGETS serverup RUNTIME DESTINATION bin)
 

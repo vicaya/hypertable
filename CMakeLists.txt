@@ -42,6 +42,9 @@ find_package(EXPAT REQUIRED)
 find_package(Doxygen)
 find_package(Tcmalloc)
 
+# set malloc library
+set( MALLOC_LIBRARY ${Tcmalloc_LIBRARIES} )
+
 # include directories
 include_directories(src/cc ${Boost_INCLUDE_DIRS} ${Log4cpp_INCLUDE_DIR})
 
