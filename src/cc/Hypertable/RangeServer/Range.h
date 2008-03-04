@@ -79,7 +79,7 @@ namespace Hypertable {
     }
 
     uint64_t get_latest_timestamp();
-    uint64_t get_scan_timestamp();
+    bool get_scan_timestamp(Timestamp &ts);
 
     int replay_split_log(string &logDir, uint64_t real_timestamp);
 
@@ -99,12 +99,12 @@ namespace Hypertable {
     void increment_update_counter();
     void decrement_update_counter();
 
-    void add_update_timestamp(uint64_t timestamp) {
-      m_scanner_timestamp_controller.add_update_timestamp(timestamp);
+    void add_update_timestamp(Timestamp &ts) {
+      m_scanner_timestamp_controller.add_update_timestamp(ts);
     }
 
-    void remove_update_timestamp(uint64_t timestamp) {
-      m_scanner_timestamp_controller.remove_update_timestamp(timestamp);      
+    void remove_update_timestamp(Timestamp &ts) {
+      m_scanner_timestamp_controller.remove_update_timestamp(ts);
     }
 
     bool get_split_info(std::string &split_row, CommitLogPtr &splitLogPtr, uint64_t *splitStartTime) {

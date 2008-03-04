@@ -345,7 +345,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
   CellListScannerPtr scannerPtr;
   bool more = true;
   uint32_t id;
-  uint64_t scan_timestamp;
+  Timestamp scan_timestamp;
   SchemaPtr schemaPtr;
   ScanContextPtr scanContextPtr;
 
@@ -368,12 +368,9 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
 
     schemaPtr = tableInfoPtr->get_schema();
 
-    scan_timestamp = rangePtr->get_scan_timestamp();
+    rangePtr->get_scan_timestamp(scan_timestamp);
 
-    if (scan_timestamp != 0)
-      scan_timestamp++;
-
-    scanContextPtr = new ScanContext(scan_timestamp, scan_spec, range, schemaPtr);
+    scanContextPtr = new ScanContext(scan_timestamp.logical, scan_spec, range, schemaPtr);
  
     scannerPtr = rangePtr->create_scanner(scanContextPtr);
 
@@ -699,7 +696,7 @@ namespace {
 
   typedef struct {
     RangePtr range_ptr;
-    uint64_t timestamp;
+    Timestamp timestamp;
   } MinTimestampRecT;
 
 }
@@ -797,8 +794,8 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     /** Increment update count (block if maintenance in progress) **/
     min_ts_rec.range_ptr->increment_update_counter();
 
-    // Look again to make sure range didn't just shrink                                                                                                         
-    if (!tableInfoPtr->find_containing_range(row, min_ts_rec.range_ptr)) {
+    // Make sure range didn't just shrink
+    if (strcmp(row, (min_ts_rec.range_ptr->start_row()).c_str()) <= 0) {
       min_ts_rec.range_ptr->decrement_update_counter();
       continue;
     }
@@ -818,7 +815,8 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     splitSize = 0;
 
     next_timestamp = 0;
-    min_ts_rec.timestamp = 0;
+    min_ts_rec.timestamp.logical = 0;
+    min_ts_rec.timestamp.real = update_timestamp;
 
     while (mod_ptr < mod_end && (endRow == "" || (strcmp(row, endRow.c_str()) <= 0))) {
 
@@ -832,8 +830,8 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 	  //HT_INFOF("fugazi TIMESTAMP %lld", next_timestamp);
 	}
 	temp_timestamp = ++next_timestamp;
-	if (min_ts_rec.timestamp == 0 || temp_timestamp < min_ts_rec.timestamp)
-	  min_ts_rec.timestamp = temp_timestamp;
+	if (min_ts_rec.timestamp.logical == 0 || temp_timestamp < min_ts_rec.timestamp.logical)
+	  min_ts_rec.timestamp.logical = temp_timestamp;
 	temp_timestamp = ByteOrderSwapInt64(temp_timestamp);
 	temp_timestamp = ~temp_timestamp;
 	memcpy(ts_ptr, &temp_timestamp, 8);
@@ -850,8 +848,8 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 	  boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_a);
 	  goto abort;
 	}
-	if (min_ts_rec.timestamp == 0 || temp_timestamp < min_ts_rec.timestamp)
-	  min_ts_rec.timestamp = temp_timestamp;
+	if (min_ts_rec.timestamp.logical == 0 || temp_timestamp < min_ts_rec.timestamp.logical)
+	  min_ts_rec.timestamp.logical = temp_timestamp;
       }
 
       update.base = mod_ptr;
@@ -874,7 +872,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     //HT_INFOF("fugazi TIMESTAMP --last-- %lld", next_timestamp);
 
     // force scans to only see updates before the earliest time in this range
-    min_ts_rec.timestamp--;
+    min_ts_rec.timestamp.logical--;
     min_ts_rec.range_ptr->add_update_timestamp( min_ts_rec.timestamp );
     min_ts_vector.push_back(min_ts_rec);
 

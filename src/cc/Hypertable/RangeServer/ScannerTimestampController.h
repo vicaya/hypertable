@@ -27,6 +27,8 @@
 #include <boost/multi_index/identity.hpp>
 #include <boost/thread/mutex.hpp>
 
+#include "Timestamp.h"
+
 using namespace boost;
 using namespace boost::multi_index;
 
@@ -36,17 +38,17 @@ namespace Hypertable {
 
   public:
 
-    void add_update_timestamp(uint64_t timestampp);
-    void remove_update_timestamp(uint64_t timestamp);
-    uint64_t get_oldest_update_timestamp();
+    void add_update_timestamp(Timestamp &ts);
+    void remove_update_timestamp(Timestamp &ts);
+    bool get_oldest_update_timestamp(Timestamp *timestampp);
 
   private:
 
     typedef multi_index_container<
-      uint64_t,
+      Timestamp,
       indexed_by<
       sequenced<>, // list-like index
-      ordered_unique<identity<uint64_t> > // words by alphabetical order
+      ordered_unique<identity<Timestamp> > // words by alphabetical order
       >
       > UpdateTimestampContainerT;
 

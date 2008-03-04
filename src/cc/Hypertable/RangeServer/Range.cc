@@ -413,11 +413,9 @@ void Range::do_split() {
 
     {
       boost::mutex::scoped_lock lock(m_mutex);
-      m_split_timestamp.logical = m_scanner_timestamp_controller.get_oldest_update_timestamp();
-      if (m_split_timestamp.logical == 0 || m_timestamp.logical < m_split_timestamp.logical)
+      if (!m_scanner_timestamp_controller.get_oldest_update_timestamp(&m_split_timestamp) ||
+	  m_split_timestamp.logical == 0)
 	m_split_timestamp = m_timestamp;
-      else
-	m_split_timestamp.real = Global::log->get_timestamp();
       old_start_row = m_start_row;
     }
 
@@ -606,16 +604,10 @@ void Range::run_compaction(bool major) {
   /**
    * The following code ensures that pending updates that have not been
    * committed on this range do not get included in the compaction scan
-   *
-   * NOTE: Ideally, the real time of the start of the oldest outstanding
-   * update should be tracked and used here, but I don't feel like doing
-   * that now.  For now we just use the most recent update's real time.
-   * This may result in edge cases where the commit log garbage collection
-   * compaction is less than optimal.
    */
-  uint64_t temp_timestamp = m_scanner_timestamp_controller.get_oldest_update_timestamp();
-  if (temp_timestamp != 0 && temp_timestamp < timestamp.logical)
-    timestamp.logical = temp_timestamp;
+  Timestamp temp_timestamp;
+  if (m_scanner_timestamp_controller.get_oldest_update_timestamp(&temp_timestamp) && temp_timestamp < timestamp)
+    timestamp = temp_timestamp;
 
   for (size_t i=0; i<m_access_group_vector.size(); i++)
     m_access_group_vector[i]->run_compaction(timestamp, major);
@@ -746,12 +738,9 @@ uint64_t Range::get_latest_timestamp() {
 
 /**
  */
-uint64_t Range::get_scan_timestamp() {
+bool Range::get_scan_timestamp(Timestamp &ts) {
   boost::mutex::scoped_lock lock(m_mutex);
-  uint64_t timestamp = m_scanner_timestamp_controller.get_oldest_update_timestamp();
-  if (timestamp != 0 && timestamp <= m_timestamp.logical)
-    return timestamp;
-  return m_timestamp.logical;
+  return m_scanner_timestamp_controller.get_oldest_update_timestamp(&ts);
 }
 
 

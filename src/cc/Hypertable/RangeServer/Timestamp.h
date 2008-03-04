@@ -32,6 +32,7 @@ namespace Hypertable {
     Timestamp(uint64_t l, uint64_t r) : logical(l), real(r) { return; }
     Timestamp() : logical(0), real(0) { return; }
     void clear() { logical = real = 0; }
+    bool operator<(const Timestamp& ts) const { return logical<ts.logical; }
     uint64_t logical;
     uint64_t real;
   };
