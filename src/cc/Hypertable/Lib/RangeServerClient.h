@@ -191,6 +191,32 @@ namespace Hypertable {
 
     int dump_stats(struct sockaddr_in &addr);
 
+    /** Issues a "replay start" request.
+     *
+     * @param addr remote address of RangeServer connection
+     * @param handler response handler
+     * @return Error::OK on success or error code on failure
+     */
+    int replay_start(struct sockaddr_in &addr, DispatchHandler *handler);
+
+    /** Issues a "replay update" request.
+     *
+     * @param addr remote address of RangeServer connection
+     * @param data buffer holding replay updates
+     * @param len length of data buffer
+     * @param handler response handler
+     * @return Error::OK on success or error code on failure
+     */
+    int replay_update(struct sockaddr_in &addr, const uint8_t *data, size_t len, DispatchHandler *handler);
+
+    /** Issues a "replay commit" request.
+     *
+     * @param addr remote address of RangeServer connection
+     * @param handler response handler
+     * @return Error::OK on success or error code on failure
+     */
+    int replay_commit(struct sockaddr_in &addr, DispatchHandler *handler);
+
   private:
 
     int send_message(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *handler);

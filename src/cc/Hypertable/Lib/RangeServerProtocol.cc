@@ -35,7 +35,11 @@ namespace Hypertable {
     "shutdown",
     "dump stats",
     "destroy scanner",
-    "drop table"
+    "drop table",
+    "replay start",
+    "replay update",
+    "replay commit",    
+    (const char *)0
   };
 
   const char *RangeServerProtocol::command_text(short command) {
@@ -115,6 +119,27 @@ namespace Hypertable {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
     CommBuf *cbuf = new CommBuf(hbuilder, 2);
     cbuf->append_short(COMMAND_DUMP_STATS);
+    return cbuf;
+  }
+
+  CommBuf *RangeServerProtocol::create_request_replay_start() {
+    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
+    CommBuf *cbuf = new CommBuf(hbuilder, 2);
+    cbuf->append_short(COMMAND_REPLAY_START);
+    return cbuf;
+  }
+
+  CommBuf *RangeServerProtocol::create_request_replay_update(const uint8_t *data, size_t len) {
+    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
+    CommBuf *cbuf = new CommBuf(hbuilder, 2, data, len);
+    cbuf->append_short(COMMAND_REPLAY_UPDATE);
+    return cbuf;
+  }
+
+  CommBuf *RangeServerProtocol::create_request_replay_commit() {
+    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
+    CommBuf *cbuf = new CommBuf(hbuilder, 2);
+    cbuf->append_short(COMMAND_REPLAY_COMMIT);
     return cbuf;
   }
 

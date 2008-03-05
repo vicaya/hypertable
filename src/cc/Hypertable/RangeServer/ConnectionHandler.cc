@@ -42,6 +42,9 @@ extern "C" {
 #include "RequestHandlerFetchScanblock.h"
 #include "RequestHandlerDropTable.h"
 #include "RequestHandlerStatus.h"
+#include "RequestHandlerReplayStart.h"
+#include "RequestHandlerReplayUpdate.h"
+#include "RequestHandlerReplayCommit.h"
 
 #include "ConnectionHandler.h"
 #include "EventHandlerMasterConnection.h"
@@ -113,6 +116,15 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
 	break;
       case RangeServerProtocol::COMMAND_DROP_TABLE:
 	requestHandler = new RequestHandlerDropTable(m_comm, m_range_server_ptr.get(), eventPtr);
+	break;
+      case RangeServerProtocol::COMMAND_REPLAY_START:
+	requestHandler = new RequestHandlerReplayStart(m_comm, m_range_server_ptr.get(), eventPtr);
+	break;
+      case RangeServerProtocol::COMMAND_REPLAY_UPDATE:
+	requestHandler = new RequestHandlerReplayUpdate(m_comm, m_range_server_ptr.get(), eventPtr);
+	break;
+      case RangeServerProtocol::COMMAND_REPLAY_COMMIT:
+	requestHandler = new RequestHandlerReplayCommit(m_comm, m_range_server_ptr.get(), eventPtr);
 	break;
       case RangeServerProtocol::COMMAND_STATUS:
 	requestHandler = new RequestHandlerStatus(m_comm, m_range_server_ptr.get(), eventPtr);

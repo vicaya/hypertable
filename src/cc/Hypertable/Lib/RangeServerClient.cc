@@ -208,6 +208,25 @@ int RangeServerClient::dump_stats(struct sockaddr_in &addr) {
 }
 
 
+int RangeServerClient::replay_start(struct sockaddr_in &addr, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_replay_start() );
+  return send_message(addr, cbufPtr, handler);
+}
+
+
+int RangeServerClient::replay_update(struct sockaddr_in &addr, const uint8_t *data, size_t len, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_replay_update(data, len) );
+  return send_message(addr, cbufPtr, handler);
+}
+
+
+int RangeServerClient::replay_commit(struct sockaddr_in &addr, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_replay_commit() );
+  return send_message(addr, cbufPtr, handler);
+}
+
+
+
 /**
  *
  */

@@ -58,11 +58,16 @@ namespace Hypertable {
     void update(ResponseCallbackUpdate *cb, TableIdentifierT *table, BufferT &buffer);
     void drop_table(ResponseCallback *cb, const char *table_name);
     void dump_stats(ResponseCallback *cb);
+
+    void replay_start(ResponseCallback *cb);
+    void replay_update(ResponseCallback *cb, const uint8_t *data, size_t len);
+    void replay_commit(ResponseCallback *cb);
+
     void do_maintenance();
     void log_cleanup();
 
     uint64_t get_timer_interval();
-    
+
     ApplicationQueuePtr get_application_queue_ptr() { return m_app_queue_ptr; }
 
     std::string &get_location() { return m_location; }

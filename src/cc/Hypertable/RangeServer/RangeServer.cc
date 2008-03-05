@@ -1114,6 +1114,38 @@ void RangeServer::dump_stats(ResponseCallback *cb) {
 }
 
 
+/**
+ *
+ */
+void RangeServer::replay_start(ResponseCallback *cb) {
+  if (Global::verbose) {
+    HT_INFO("replay_start");
+    cout << flush;
+  }
+  cb->response_ok();
+}
+
+
+void RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data, size_t len) {
+  if (Global::verbose) {
+    HT_INFOF("replay_update - length=%ld", len);
+    cout << flush;
+  }
+  (void)data;
+  (void)len;
+  cb->response_ok();
+}
+
+
+void RangeServer::replay_commit(ResponseCallback *cb) {
+  if (Global::verbose) {
+    HT_INFO("replay_commit");
+    cout << flush;
+  }
+  cb->response_ok();
+}
+
+
 
 /**
  *

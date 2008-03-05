@@ -40,7 +40,10 @@ namespace Hypertable {
     static const short COMMAND_DUMP_STATS       = 7;
     static const short COMMAND_DESTROY_SCANNER  = 8;
     static const short COMMAND_DROP_TABLE       = 9;
-    static const short COMMAND_MAX              = 10;
+    static const short COMMAND_REPLAY_START     = 10;
+    static const short COMMAND_REPLAY_UPDATE    = 11;
+    static const short COMMAND_REPLAY_COMMIT    = 12;
+    static const short COMMAND_MAX              = 13;
 
     static const uint16_t LOAD_RANGE_FLAG_PHANTOM = 0x0001;
 
@@ -115,6 +118,27 @@ namespace Hypertable {
      * @return protocol message
      */
     static CommBuf *create_request_drop_table(std::string &table_name);
+
+    /** Creates a "replay start" request message.
+     *
+     * @return protocol message
+     */
+    static CommBuf *create_request_replay_start();
+
+    /** Creates a "replay update" request message.  The data argument holds a sequence of 
+     * blocks.  Each block consists of ...
+     *
+     * @param data buffer holding updates to replay
+     * @param len length of data buffer
+     * @return protocol message
+     */
+    static CommBuf *create_request_replay_update(const uint8_t *data, size_t len);
+
+    /** Creates a "replay commit" request message.
+     *
+     * @return protocol message
+     */
+    static CommBuf *create_request_replay_commit();
 
     virtual const char *command_text(short command);
   };
