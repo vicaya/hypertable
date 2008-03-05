@@ -64,6 +64,10 @@ namespace Hypertable {
      */
     DispatchHandlerSynchronizer();
 
+    virtual ~DispatchHandlerSynchronizer() {
+      m_valid = 0;
+    }
+
     /**
      * Dispatch method.  This gets called by the AsyncComm layer
      * when an event occurs in response to a previously sent
@@ -90,6 +94,7 @@ namespace Hypertable {
     bool wait_for_reply(EventPtr &eventPtr);
 
   private:
+    uint32_t             m_valid;
     std::queue<EventPtr> m_receive_queue;
     boost::mutex         m_mutex;
     boost::condition     m_cond;

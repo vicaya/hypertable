@@ -28,6 +28,10 @@
 
 using namespace Hypertable;
 
+namespace {
+  const uint8_t fence_marker[4] = { 0x11, 0x11, 0x11, 0x11 };
+}
+
 
 /**
  *
@@ -35,7 +39,8 @@ using namespace Hypertable;
 BlockCompressionCodecLzo::BlockCompressionCodecLzo(const Args &args) {
   if (lzo_init() != LZO_E_OK)
     throw Exception(Error::BLOCK_COMPRESSOR_INIT_ERROR, "Problem initializing lzo library");
-  m_workmem = new uint8_t [ LZO1X_1_MEM_COMPRESS ];
+  m_workmem = new uint8_t [ LZO1X_1_MEM_COMPRESS + 4 ];
+  memcpy(&m_workmem[LZO1X_1_MEM_COMPRESS], fence_marker, 4);
 }
 
 
@@ -53,12 +58,16 @@ BlockCompressionCodecLzo::~BlockCompressionCodecLzo() {
  * 
  */
 int BlockCompressionCodecLzo::deflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader &header, size_t reserve) {
-  uint32_t avail_out = (input.fill() + input.fill() / 16 + 64 + 3);
+  uint32_t avail_out = (input.fill() + input.fill() / 16 + 64 + 3 + 4);
   int ret;
   lzo_uint out_len = avail_out;
+  uint8_t *fence_ptr = 0;
 
   output.clear();
   output.reserve( header.encoded_length() + avail_out + reserve );
+
+  fence_ptr = output.buf + header.encoded_length() + (avail_out-4);
+  memcpy(fence_ptr, fence_marker, 4);
 
   ret = lzo1x_1_compress(input.buf, input.fill(), output.buf+header.encoded_length(), &out_len, m_workmem);
   assert(ret == LZO_E_OK);
@@ -80,6 +89,9 @@ int BlockCompressionCodecLzo::deflate(const DynamicBuffer &input, DynamicBuffer 
   output.ptr = output.buf;
   header.encode(&output.ptr);
   output.ptr += header.get_zlength();
+
+  HT_EXPECT(!memcmp(fence_ptr, fence_marker, 4), Error::FAILED_EXPECTATION);
+  HT_EXPECT(!memcmp(&m_workmem[LZO1X_1_MEM_COMPRESS], fence_marker, 4), Error::FAILED_EXPECTATION);
 
   return Error::OK;
 }
