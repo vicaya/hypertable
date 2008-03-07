@@ -666,7 +666,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
     // TODO: if (flags & RangeServerProtocol::LOAD_RANGE_FLAG_PHANTOM), do the following in 'go live'
     if (split_log_dir != "") {
       uint64_t timestamp = Global::log->get_timestamp();
-      if ((error = Global::log->link_log(table->name, split_log_dir.c_str(), timestamp)) != Error::OK)
+      if ((error = Global::log->link_log(table, split_log_dir.c_str(), timestamp)) != Error::OK)
 	throw Exception(error, (std::string)"Unable to link external log '" + split_log_dir + "' into commit log");
       if ((error = rangePtr->replay_split_log(split_log_dir, timestamp)) != Error::OK)
 	throw Exception(error, (std::string)"Problem replaying split log '" + split_log_dir + "'");
@@ -895,7 +895,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 
       HT_EXPECT((ptr-base) <= (long)splitSize, Error::FAILED_EXPECTATION);
 
-      if ((error = splitLogPtr->write(table->name, base, ptr-base, update_timestamp)) != Error::OK) {
+      if ((error = splitLogPtr->write(table, base, ptr-base, update_timestamp)) != Error::OK) {
 	errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to split log";
 	boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_a);
 	goto abort;
@@ -975,7 +975,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 
     HT_EXPECT((ptr-base) <= (long)goSize, Error::FAILED_EXPECTATION);
 
-    if ((error = Global::log->write(table->name, base, ptr-base, update_timestamp)) != Error::OK) {
+    if ((error = Global::log->write(table, base, ptr-base, update_timestamp)) != Error::OK) {
       errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to commit log";
       boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_b);
       goto abort;

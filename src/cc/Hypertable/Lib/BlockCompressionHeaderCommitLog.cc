@@ -26,22 +26,25 @@
 
 using namespace Hypertable;
 
-BlockCompressionHeaderCommitLog::BlockCompressionHeaderCommitLog() {
+BlockCompressionHeaderCommitLog::BlockCompressionHeaderCommitLog() : m_buffer(0) {
   m_length = 0;
   m_zlength = 0;
   m_type = 0;
   m_checksum = 0;
   memset(m_magic, 0, 10);
   m_timestamp = 0;
-  m_tablename = 0;
+  memset(&m_table, 0, sizeof(m_table));
   m_header_length = 0;
 }
 
 
-BlockCompressionHeaderCommitLog::BlockCompressionHeaderCommitLog(const char magic[10], uint64_t timestamp, const char *tablename) {
+BlockCompressionHeaderCommitLog::BlockCompressionHeaderCommitLog(const char magic[10], uint64_t timestamp, TableIdentifierT *table) : m_buffer(0) {
   set_magic(magic);
   m_timestamp = timestamp;
-  m_tablename = tablename;
+  if (table)
+    memcpy(&m_table, table, sizeof(m_table));
+  else
+    memset(&m_table, 0, sizeof(m_table));
   m_length = 0;
   m_zlength = 0;
   m_type = 0;
@@ -62,11 +65,7 @@ void BlockCompressionHeaderCommitLog::encode(uint8_t **buf_ptr) {
   Serialization::encode_short(buf_ptr, m_type);
   Serialization::encode_int(buf_ptr, m_checksum);
   Serialization::encode_long(buf_ptr, m_timestamp);
-  if (m_tablename) {
-    strcpy((char *)*buf_ptr, m_tablename);
-    (*buf_ptr) += strlen(m_tablename);
-  }
-  *(*buf_ptr)++ = 0;
+  EncodeTableIdentifier(buf_ptr, m_table);
 }
 
 
@@ -117,14 +116,13 @@ int BlockCompressionHeaderCommitLog::decode_variable(uint8_t **buf_ptr, size_t *
 
   if (*remaining_ptr < remaining_header)
     return Error::BLOCK_COMPRESSOR_TRUNCATED;
-    
-  m_tablename = (const char *)*buf_ptr;
 
-  if (m_tablename[remaining_header-1] != 0)
-    return Error::BLOCK_COMPRESSOR_BAD_HEADER;
+  if (!DecodeTableIdentifier(buf_ptr, remaining_ptr, &m_table))
+    return Error::BLOCK_COMPRESSOR_TRUNCATED;
 
-  (*buf_ptr) += remaining_header;
-  (*remaining_ptr) -= remaining_header;
+  // copy table name into internal buffer
+  m_buffer.set(m_table.name, strlen(m_table.name)+1);
+  m_table.name = (const char *)m_buffer.buf;
 
   return Error::OK;
 }

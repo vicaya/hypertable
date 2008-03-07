@@ -21,7 +21,10 @@
 #ifndef HYPERTABLE_BLOCKCOMPRESSIONHEADERCOMMITLOG_H
 #define HYPERTABLE_BLOCKCOMPRESSIONHEADERCOMMITLOG_H
 
-#include "Hypertable/Lib/BlockCompressionHeader.h"
+#include "Common/DynamicBuffer.h"
+
+#include "BlockCompressionHeader.h"
+#include "Types.h"
 
 namespace Hypertable {
 
@@ -31,23 +34,25 @@ namespace Hypertable {
   class BlockCompressionHeaderCommitLog : public BlockCompressionHeader {
   public:
     BlockCompressionHeaderCommitLog();
-    BlockCompressionHeaderCommitLog(const char magic[10], uint64_t timestamp, const char *tablename);
+    BlockCompressionHeaderCommitLog(const char magic[10], uint64_t timestamp, TableIdentifierT *table);
 
     void set_timestamp(uint64_t timestamp) { m_timestamp = timestamp; }
     uint64_t get_timestamp() { return m_timestamp; }
 
-    void set_tablename(const char *tablename) { m_tablename = tablename; }
-    const char *get_tablename() { return m_tablename; }
+    void get_table_identifier(TableIdentifierT &table_id) {
+      memcpy(&table_id, &m_table, sizeof(table_id));
+    }
 
     virtual size_t fixed_length() { return 34; }
-    virtual size_t encoded_length() { return fixed_length() + (m_tablename ? strlen(m_tablename) : 0) + 1; }
+    virtual size_t encoded_length() { return fixed_length() + EncodedLengthTableIdentifier(m_table); }
     virtual void   encode(uint8_t **buf_ptr);
     virtual int    decode_fixed(uint8_t **buf_ptr, size_t *remaining_ptr);
     virtual int    decode_variable(uint8_t **buf_ptr, size_t *remaining_ptr);
     
   private:
     uint64_t m_timestamp;
-    const char *m_tablename;
+    TableIdentifierT m_table;
+    DynamicBuffer m_buffer;
   };
 
 }

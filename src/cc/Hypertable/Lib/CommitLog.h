@@ -38,6 +38,7 @@ extern "C" {
 
 #include "Hypertable/Lib/BlockCompressionCodec.h"
 #include "Hypertable/Lib/Filesystem.h"
+#include "Hypertable/Lib/Types.h"
 
 namespace Hypertable {
 
@@ -102,22 +103,22 @@ namespace Hypertable {
 
     /** Writes a block of updates to the commit log.
      *
-     * @param table_name name of table that the external log applies to
+     * @param table table identifier of table that these updates are applied to
      * @param data pointer to block of updates
      * @param len length of block of updates
      * @param timestamp current commit log time obtained with a call to #get_timestamp
      * @return Error::OK on success or error code on failure
      */
-    int write(const char *table_name, uint8_t *data, uint32_t len, uint64_t timestamp);
+    int write(TableIdentifierT *table, uint8_t *data, uint32_t len, uint64_t timestamp);
 
     /** Links an external log into this log.
      *
-     * @param table_name name of table that the external log applies to
+     * @param table table identifier of table the external log applies to
      * @param log_dir the directory of the external log
      * @param timestamp current commit log time obtained with a call to #get_timestamp
      * @return Error::OK on success or error code on failure
      */
-    int link_log(const char *table_name, const char *log_dir, uint64_t timestamp);
+    int link_log(TableIdentifierT *table, const char *log_dir, uint64_t timestamp);
 
     int close(uint64_t timestamp);
     int purge(uint64_t timestamp);

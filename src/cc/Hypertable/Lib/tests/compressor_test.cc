@@ -26,6 +26,7 @@
 
 #include "Hypertable/Lib/CompressorFactory.h"
 #include "Hypertable/Lib/BlockCompressionHeaderCommitLog.h"
+#include "Hypertable/Lib/Types.h"
 
 using namespace Hypertable;
 
@@ -54,7 +55,13 @@ int main(int argc, char **argv) {
   DynamicBuffer output1(0);
   DynamicBuffer output2(0);
   BlockCompressionCodec *compressor;
-  BlockCompressionHeaderCommitLog header(MAGIC, 0, "foo");
+  TableIdentifierT table_id;
+
+  table_id.name = "foo";
+  table_id.id = 1;
+  table_id.generation = 1;
+
+  BlockCompressionHeaderCommitLog header(MAGIC, 0, &table_id);
   
   if (argc == 1 || !strcmp(argv[1], "--help"))
     Usage::dump_and_exit(usage);
