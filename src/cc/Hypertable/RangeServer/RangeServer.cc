@@ -185,6 +185,10 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
   m_master_connection_handler = new ConnectionHandler(comm, m_app_queue_ptr, this, m_master_client_ptr);
   m_master_client_ptr->initiate_connection(m_master_connection_handler);
 
+  // Create table info maps
+  m_live_map_ptr = new TableInfoMap();
+  m_replay_map_ptr = new TableInfoMap();
+
 }
 
 
@@ -291,7 +295,7 @@ void RangeServer::compact(ResponseCallback *cb, TableIdentifierT *table, RangeT 
   /**
    * Fetch table info
    */
-  if (!get_table_info(table->name, tableInfoPtr)) {
+  if (!m_live_map_ptr->get(table->name, tableInfoPtr)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
     errMsg = "No ranges loaded for table '" + (std::string)table->name + "'";
     goto abort;
@@ -358,7 +362,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
 
   try {
 
-    if (!get_table_info(table->name, tableInfoPtr))
+    if (!m_live_map_ptr->get(table->name, tableInfoPtr))
       throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND,
 				  (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]");
 
@@ -518,7 +522,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
     /**
      * Get TableInfo, create if doesn't exist
      */
-    if (!get_table_info(table->name, tableInfoPtr)) {
+    if (!m_live_map_ptr->get(table->name, tableInfoPtr)) {
       tableInfoPtr = new TableInfo(m_master_client_ptr, table, schemaPtr);
       registerTable = true;
     }
@@ -530,7 +534,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
       throw Exception(error, errMsg);
 
     if (registerTable)
-      set_table_info(table->name, tableInfoPtr);
+      m_live_map_ptr->set(table->name, tableInfoPtr);
 
     /**
      * Make sure this range is not already loaded
@@ -748,7 +752,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
   // TODO: Sanity check mod data (checksum validation)
 
   // Fetch table info
-  if (!get_table_info(table->name, tableInfoPtr)) {
+  if (!m_live_map_ptr->get(table->name, tableInfoPtr)) {
     ExtBufferT ext;
     ext.buf = new uint8_t [ buffer.len ];
     memcpy(ext.buf, buffer.buf, buffer.len);
@@ -1066,7 +1070,7 @@ void RangeServer::drop_table(ResponseCallback *cb, const char *table_name) {
 
      // For each range in dropped table, Set the 'drop' bit and clear
     // the 'Location' column of the corresponding METADATA entry
-    if (remove_table_info(table_name, table_info_ptr)) {
+    if (m_live_map_ptr->remove(table_name, table_info_ptr)) {
       metadata_prefix = std::string("") + table_info_ptr->get_id() + ":";
       table_info_ptr->get_range_vector(range_vector);
       for (size_t i=0; i<range_vector.size(); i++) {
@@ -1099,14 +1103,16 @@ void RangeServer::drop_table(ResponseCallback *cb, const char *table_name) {
 
 
 void RangeServer::dump_stats(ResponseCallback *cb) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  std::vector<TableInfoPtr> table_vec;
   std::vector<RangePtr> range_vec;
   
   HT_INFO("dump_stats");
 
-  for (TableInfoMapT::iterator table_iter = m_table_info_map.begin(); table_iter != m_table_info_map.end(); table_iter++) {
+  m_live_map_ptr->get_all(table_vec);
+
+  for (size_t i=0; i<table_vec.size(); i++) {
     range_vec.clear();
-    (*table_iter).second->get_range_vector(range_vec);
+    table_vec[i]->get_range_vector(range_vec);
     for (size_t i=0; i<range_vec.size(); i++)
       range_vec[i]->dump_stats();
   }
@@ -1143,46 +1149,6 @@ void RangeServer::replay_commit(ResponseCallback *cb) {
     cout << flush;
   }
   cb->response_ok();
-}
-
-
-
-/**
- *
- */
-bool RangeServer::get_table_info(std::string name, TableInfoPtr &info) {
-  boost::mutex::scoped_lock lock(m_mutex);
-  TableInfoMapT::iterator iter = m_table_info_map.find(name);
-  if (iter == m_table_info_map.end())
-    return false;
-  info = (*iter).second;
-  return true;
-}
-
-
-/**
- *
- */
-void RangeServer::set_table_info(std::string name, TableInfoPtr &info) {
-  boost::mutex::scoped_lock lock(m_mutex);
-  TableInfoMapT::iterator iter = m_table_info_map.find(name);
-  if (iter != m_table_info_map.end())
-    m_table_info_map.erase(iter);
-  m_table_info_map[name] = info;
-}
-
-
-/**
- *
- */
-bool RangeServer::remove_table_info(std::string name, TableInfoPtr &info) {
-  boost::mutex::scoped_lock lock(m_mutex);
-  TableInfoMapT::iterator iter = m_table_info_map.find(name);
-  if (iter == m_table_info_map.end())
-    return false;
-  info = (*iter).second;
-  m_table_info_map.erase(iter);
-  return true;
 }
 
 
@@ -1254,6 +1220,7 @@ void RangeServer::do_maintenance() {
  *
  */
 void RangeServer::log_cleanup() {
+  std::vector<TableInfoPtr> table_vec;
   std::vector<RangePtr> range_vec;
   std::vector<AccessGroup::CompactionPriorityDataT> priority_data_vec;
   std::map<uint64_t, FragmentPriorityDataT> log_frag_map;
@@ -1261,12 +1228,9 @@ void RangeServer::log_cleanup() {
   uint64_t timestamp, oldest_cached_timestamp = 0;
   uint64_t prune_threshold = 2 * Global::log->get_max_fragment_size();
 
-  {
-    boost::mutex::scoped_lock lock(m_mutex);
-    for (TableInfoMapT::iterator table_iter = m_table_info_map.begin(); table_iter != m_table_info_map.end(); table_iter++) {
-      (*table_iter).second->get_range_vector(range_vec);
-    }
-  }
+  m_live_map_ptr->get_all(table_vec);
+  for (size_t i=0; i<table_vec.size(); i++)
+    table_vec[i]->get_range_vector(range_vec);
 
   /**
    * Load up a vector of compaction priority data

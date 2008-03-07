@@ -38,6 +38,7 @@
 #include "ResponseCallbackFetchScanblock.h"
 #include "ResponseCallbackUpdate.h"
 #include "TableInfo.h"
+#include "TableInfoMap.h"
 
 using namespace Hypertable;
 
@@ -77,10 +78,6 @@ namespace Hypertable {
   private:
     int directory_initialize(PropertiesPtr &props_ptr);
 
-    bool get_table_info(std::string name, TableInfoPtr &info);
-    void set_table_info(std::string name, TableInfoPtr &info);
-    bool remove_table_info(std::string name, TableInfoPtr &info);
-
     int verify_schema(TableInfoPtr &tableInfoPtr, int generation, std::string &errMsg);
 
     typedef __gnu_cxx::hash_map<string, TableInfoPtr> TableInfoMapT;
@@ -91,7 +88,8 @@ namespace Hypertable {
     PropertiesPtr          m_props_ptr;
     bool                   m_verbose;
     Comm                  *m_comm;
-    TableInfoMapT          m_table_info_map;
+    TableInfoMapPtr        m_live_map_ptr;
+    TableInfoMapPtr        m_replay_map_ptr;
     ConnectionManagerPtr   m_conn_manager_ptr;
     ApplicationQueuePtr    m_app_queue_ptr;
     uint64_t               m_existence_file_handle;
