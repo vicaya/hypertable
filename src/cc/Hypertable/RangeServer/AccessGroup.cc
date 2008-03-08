@@ -369,6 +369,8 @@ int AccessGroup::shrink(std::string &new_start_row) {
   ByteString32T *value;
   std::vector<CellStorePtr> new_stores;
   CellStore *new_cell_store;
+  uint64_t memory_added = 0;
+  uint64_t items_added = 0;
 
   m_start_row = new_start_row;
 
@@ -383,12 +385,18 @@ int AccessGroup::shrink(std::string &new_start_row) {
    * Shrink the CellCache
    */
   while (cell_cache_scanner_ptr->get(&key, &value)) {
-    if (strcmp((const char *)key->data, m_start_row.c_str()) > 0)
+    if (strcmp((const char *)key->data, m_start_row.c_str()) > 0) {
       add(key, value, 0);
+      memory_added += Length(key) + Length(value);
+      items_added++;
+    }
     cell_cache_scanner_ptr->forward();
   }
 
   new_cell_cache_ptr->unlock();
+
+  Global::memory_tracker.add_memory(memory_added);
+  Global::memory_tracker.add_items(items_added);
 
   /**
    * Shrink the CellStores

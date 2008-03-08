@@ -668,6 +668,7 @@ int Range::replay_split_log(string &log_dir, uint64_t real_timestamp) {
   size_t nblocks = 0;
   size_t count = 0;
   TableIdentifierT table_id;
+  uint64_t memory_added = 0;
   
   commit_log_reader_ptr->initialize_read(0);
 
@@ -682,6 +683,8 @@ int Range::replay_split_log(string &log_dir, uint64_t real_timestamp) {
 
     ptr = base;
     end = base + len;
+
+    memory_added += len;
 
     while (ptr < end) {
       key = (ByteString32T *)ptr;
@@ -699,6 +702,9 @@ int Range::replay_split_log(string &log_dir, uint64_t real_timestamp) {
     HT_INFOF("Replayed %d updates (%d blocks) from split log '%s' into %s[%s..%s]",
 		count, nblocks, log_dir.c_str(), m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
   }
+
+  Global::memory_tracker.add_memory(memory_added);
+  Global::memory_tracker.add_items(count);
 
   m_added_inserts = 0;
   memset(m_added_deletes, 0, 3*sizeof(int64_t));
