@@ -78,13 +78,9 @@ DispatchHandler *RequestCache::remove(uint32_t id) {
 
   m_id_map.erase(iter);
 
-  if (node->handler != 0) {
-    DispatchHandler *dh = node->dh;
-    delete node;
-    return dh;
-  }
+  DispatchHandler *dh = node->dh;
   delete node;
-  return 0;
+  return dh;
 }
 
 

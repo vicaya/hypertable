@@ -110,9 +110,8 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
 	else {
 	  DispatchHandler *dh = 0;
 	  uint32_t id = ((Header::HeaderT *)m_message)->id;
-	  if (id != 0 &&
-	      (((Header::HeaderT *)m_message)->flags & Header::FLAGS_BIT_REQUEST) == 0 &&
-	      (dh = m_reactor_ptr->remove_request(id)) == 0) {
+	  if ((((Header::HeaderT *)m_message)->flags & Header::FLAGS_BIT_REQUEST) == 0 &&
+	      (id == 0 || (dh = m_reactor_ptr->remove_request(id)) == 0)) {
 	    if ((((Header::HeaderT *)m_message)->flags & Header::FLAGS_BIT_IGNORE_RESPONSE) == 0) {
 	      HT_WARNF("Received response for non-pending event (id=%d,version=%d,totalLen=%d)",
 			  id, ((Header::HeaderT *)m_message)->version, ((Header::HeaderT *)m_message)->totalLen);
@@ -216,9 +215,8 @@ bool IOHandlerData::handle_event(struct kevent *event) {
 
 	  DispatchHandler *dh = 0;
 	  uint32_t id = ((Header::HeaderT *)m_message)->id;
-	  if (id != 0 && 
-	      (((Header::HeaderT *)m_message)->flags & Header::FLAGS_BIT_REQUEST) == 0 &&
-	      (dh = m_reactor_ptr->remove_request(id)) == 0) {
+	  if ((((Header::HeaderT *)m_message)->flags & Header::FLAGS_BIT_REQUEST) == 0 &&
+	      (id == 0 || (dh = m_reactor_ptr->remove_request(id)) == 0)) {
 	    if ((((Header::HeaderT *)m_message)->flags & Header::FLAGS_BIT_IGNORE_RESPONSE) == 0) {
 	      HT_WARNF("Received response for non-pending event (id=%d)", id);
 	    }

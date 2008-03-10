@@ -206,11 +206,15 @@ int Comm::send_request(struct sockaddr_in &addr, time_t timeout, CommBufPtr &cbu
   }
 
   mheader->flags |= Header::FLAGS_BIT_REQUEST;
-  if (responseHandler == 0)
+  if (responseHandler == 0) {
     mheader->flags |= Header::FLAGS_BIT_IGNORE_RESPONSE;
-  mheader->id = atomic_inc_return(&ms_next_request_id);
-  if (mheader->id == 0)
+    mheader->id = 0;
+  }
+  else {
     mheader->id = atomic_inc_return(&ms_next_request_id);
+    if (mheader->id == 0)
+      mheader->id = atomic_inc_return(&ms_next_request_id);
+  }
 
   if ((error = dataHandlerPtr->send_message(cbuf_ptr, timeout, responseHandler)) != Error::OK)
     dataHandlerPtr->shutdown();
