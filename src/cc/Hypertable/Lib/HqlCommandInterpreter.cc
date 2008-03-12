@@ -43,10 +43,18 @@ extern "C" {
 using namespace Hypertable;
 using namespace Hypertable::HqlParser;
 
-HqlCommandInterpreter::HqlCommandInterpreter(Client *client) : m_client(client), m_timestamp_output_format(TIMESTAMP_FORMAT_DEFAULT) {
+
+/**
+ *
+ */
+HqlCommandInterpreter::HqlCommandInterpreter(Client *client) : m_client(client) {
   return;
 }
 
+
+/**
+ *
+ */
 void HqlCommandInterpreter::execute_line(std::string &line) {
   int error;
   std::string schema_str;
@@ -404,15 +412,4 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
   else
     throw Exception(Error::HQL_PARSE_ERROR, std::string("parse error at: ") + info.stop);
 
-}
-
-
-void HqlCommandInterpreter::set_timestamp_output_format(std::string format) {
-  if (format == "default")
-    m_timestamp_output_format = TIMESTAMP_FORMAT_DEFAULT;
-  else if (format == "usecs")
-    m_timestamp_output_format = TIMESTAMP_FORMAT_USECS;
-  else {
-    assert(!"invalid timestamp format");
-  }
 }

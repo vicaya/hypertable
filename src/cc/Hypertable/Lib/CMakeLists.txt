@@ -26,6 +26,8 @@ BlockCompressionCodecZlib.cc
 BlockCompressionHeaderCommitLog.cc
 CompressorFactory.cc
 Client.cc
+CommandInterpreter.cc
+CommandShell.cc
 CommitLog.cc
 CommitLogReader.cc
 Defaults.cc

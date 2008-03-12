@@ -350,3 +350,7 @@ const char **HqlHelpText::Get(std::string &subject) {
 }
 
 
+void HqlHelpText::install_range_server_client_text() {
+    textMap[""] = help_text_contents;
+    textMap["select"] = help_text_select;
+}

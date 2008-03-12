@@ -18,27 +18,29 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_HQLCOMMANDINTERPRETER_H
-#define HYPERTABLE_HQLCOMMANDINTERPRETER_H
+#include <string>
 
 #include "CommandInterpreter.h"
 
 using namespace Hypertable;
 
-namespace Hypertable {
 
-  class Client;
-
-  class HqlCommandInterpreter : public CommandInterpreter {
-  public:
-    HqlCommandInterpreter(Client *client);
-
-    virtual void execute_line(std::string &line);
-
-  private:
-    Client *m_client;
-  };
-  typedef boost::intrusive_ptr<HqlCommandInterpreter> HqlCommandInterpreterPtr;
+/**
+ */
+CommandInterpreter::CommandInterpreter() : m_timestamp_output_format(TIMESTAMP_FORMAT_DEFAULT) {
+  return;
 }
 
-#endif // HYPERTABLE_HQLCOMMANDINTERPRETER_H
+
+/**
+ */
+void CommandInterpreter::set_timestamp_output_format(std::string format) {
+  if (format == "default")
+    m_timestamp_output_format = TIMESTAMP_FORMAT_DEFAULT;
+  else if (format == "usecs")
+    m_timestamp_output_format = TIMESTAMP_FORMAT_USECS;
+  else {
+    assert(!"invalid timestamp format");
+  }
+}
+

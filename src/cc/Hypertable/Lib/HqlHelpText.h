@@ -27,6 +27,7 @@ namespace Hypertable {
   public:
     static const char **Get(const char *subject);
     static const char **Get(std::string &subject);
+    static void install_range_server_client_text();
   };
 
 }
