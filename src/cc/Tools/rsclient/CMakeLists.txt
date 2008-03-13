@@ -35,7 +35,7 @@ target_link_libraries (rsclient pthread ${BOOST_LIB} boost_program_options-mt Hy
 add_executable (rsTest tests/rsTest.cc ${TEST_DEPENDENCIES} )
 target_link_libraries (rsTest pthread ${BOOST_LIB} HyperCommon log4cpp ${MALLOC_LIBRARY})
 
-install (TARGETS rsclient RUNTIME DESTINATION bin)
+install (TARGETS rsclient RUNTIME DESTINATION ${VERSION}/bin)
 
 add_custom_command (SOURCE ${SRC_DIR}/tests/Test1-data.txt.gz
                     COMMAND cp ARGS ${SRC_DIR}/tests/Test1-data.txt.gz ${DST_DIR}

@@ -61,11 +61,11 @@ target_link_libraries (Hyperspace.Master pthread ${BOOST_LIB} Hyperspace HyperDf
 
 file (GLOB HEADERS *.h)
 
-install (FILES ${HEADERS} DESTINATION include/hypertable-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}/Hyperspace)
+install (FILES ${HEADERS} DESTINATION ${VERSION}/include/Hyperspace)
 
-install (TARGETS Hyperspace.Master RUNTIME DESTINATION bin)
+install (TARGETS Hyperspace.Master RUNTIME DESTINATION ${VERSION}/bin)
 
 install (TARGETS Hyperspace
-         RUNTIME DESTINATION bin
-         LIBRARY DESTINATION lib
-         ARCHIVE DESTINATION lib)
+         RUNTIME DESTINATION ${VERSION}/bin
+         LIBRARY DESTINATION ${VERSION}/lib
+         ARCHIVE DESTINATION ${VERSION}/lib)

@@ -90,9 +90,9 @@ add_test (HyperComm-reverse-request commTestReverseRequest)
 
 file (GLOB HEADERS *.h)
 
-install (FILES ${HEADERS} DESTINATION include/hypertable-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}/AsyncComm)
+install (FILES ${HEADERS} DESTINATION ${VERSION}/include/AsyncComm)
 
 install (TARGETS HyperComm
-         RUNTIME DESTINATION bin
-         LIBRARY DESTINATION lib
-         ARCHIVE DESTINATION lib)
+         RUNTIME DESTINATION ${VERSION}/bin
+         LIBRARY DESTINATION ${VERSION}/lib
+         ARCHIVE DESTINATION ${VERSION}/lib)

@@ -22,4 +22,4 @@ include_directories ( ${Kfs_INCLUDE_DIR} )
 add_executable (kosmosBroker main.cc KosmosBroker.cc)
 target_link_libraries (kosmosBroker pthread ${BOOST_LIB} HyperDfsBroker HyperComm HyperCommon log4cpp ${Kfs_LIBRARY})
 
-install (TARGETS kosmosBroker RUNTIME DESTINATION bin)
+install (TARGETS kosmosBroker RUNTIME DESTINATION ${VERSION}/bin)

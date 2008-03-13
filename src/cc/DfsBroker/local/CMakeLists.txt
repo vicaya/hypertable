@@ -20,4 +20,4 @@
 add_executable (localBroker main.cc LocalBroker.cc)
 target_link_libraries (localBroker pthread ${BOOST_LIB} HyperDfsBroker HyperComm HyperCommon log4cpp ${MALLOC_LIBRARY})
 
-install (TARGETS localBroker RUNTIME DESTINATION bin)
+install (TARGETS localBroker RUNTIME DESTINATION ${VERSION}/bin)

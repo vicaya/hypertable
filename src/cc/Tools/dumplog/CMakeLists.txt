@@ -20,4 +20,4 @@
 add_executable (dumplog dumplog.cc)
 target_link_libraries (dumplog pthread ${BOOST_LIB} log4cpp ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES} HyperDfsBroker Hypertable ${MALLOC_LIBRARY})
 
-install (TARGETS dumplog RUNTIME DESTINATION bin)
+install (TARGETS dumplog RUNTIME DESTINATION ${VERSION}/bin)

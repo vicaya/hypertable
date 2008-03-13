@@ -123,11 +123,11 @@ add_test (BlockCompressor-ZLIB compressor_test zlib)
 
 file (GLOB HEADERS *.h)
 
-install (FILES ${HEADERS} DESTINATION include/hypertable-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}/Hypertable/Lib)
+install (FILES ${HEADERS} DESTINATION ${VERSION}/include/Hypertable/Lib)
 
-install (TARGETS generate_test_data RUNTIME DESTINATION bin)
+install (TARGETS generate_test_data RUNTIME DESTINATION ${VERSION}/bin)
 
 install (TARGETS Hypertable
-         RUNTIME DESTINATION bin
-         LIBRARY DESTINATION lib
-         ARCHIVE DESTINATION lib)
+         RUNTIME DESTINATION ${VERSION}/bin
+         LIBRARY DESTINATION ${VERSION}/lib
+         ARCHIVE DESTINATION ${VERSION}/lib)

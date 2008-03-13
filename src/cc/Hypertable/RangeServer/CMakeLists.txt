@@ -77,4 +77,4 @@ add_executable (count_stored count_stored.cc CellStoreV0.cc CellStoreTrailerV0.c
 target_link_libraries (count_stored pthread ${BOOST_LIB} log4cpp expat ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES} HyperDfsBroker Hypertable ${MALLOC_LIBRARY})
 
 install (TARGETS Hypertable.RangeServer csdump count_stored
-	 RUNTIME DESTINATION bin)
+	 RUNTIME DESTINATION ${VERSION}/bin)

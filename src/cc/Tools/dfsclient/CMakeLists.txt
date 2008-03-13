@@ -42,5 +42,5 @@ configure_file(${SRC_DIR}/dfsTest.golden ${DST_DIR}/dfsTest.golden COPYONLY)
 
 add_test (HyperDfsBroker dfsTest)
 
-install (TARGETS dfsclient RUNTIME DESTINATION bin)
+install (TARGETS dfsclient RUNTIME DESTINATION ${VERSION}/bin)
 

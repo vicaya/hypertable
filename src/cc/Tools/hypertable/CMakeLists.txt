@@ -31,7 +31,7 @@ target_link_libraries (hypertable pthread ${BOOST_LIB} boost_program_options-mt 
 add_executable (hypertable_test test/hypertable_test.cc ${TEST_DEPENDENCIES} )
 target_link_libraries (hypertable_test pthread ${BOOST_LIB} HyperCommon log4cpp ${MALLOC_LIBRARY})
 
-install (TARGETS hypertable RUNTIME DESTINATION bin)
+install (TARGETS hypertable RUNTIME DESTINATION ${VERSION}/bin)
 
 configure_file(${HYPERTABLE_SOURCE_DIR}/conf/hypertable.cfg  ${DST_DIR}/hypertable.cfg)
 configure_file(${SRC_DIR}/test/hypertable_test.golden ${DST_DIR}/hypertable_test.golden)

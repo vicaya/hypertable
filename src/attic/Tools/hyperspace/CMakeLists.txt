@@ -31,6 +31,6 @@ target_link_libraries (hsTest pthread ${BOOST_LIB} Hyperspace AsyncComm Common l
 
 configure_file(${SRC_DIR}/Tools/hyperspace/hsTest.golden ${DST_DIR}/hsTest.golden)
 
-install (TARGETS hyperspace RUNTIME DESTINATION bin)
+install (TARGETS hyperspace RUNTIME DESTINATION ${VERSION}/bin)
 
 #add_test (Hyperspace hsTest)

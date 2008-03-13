@@ -20,5 +20,5 @@
 add_executable (rsdump rsdump.cc)
 target_link_libraries (rsdump pthread ${BOOST_LIB} Hypertable log4cpp expat ${MALLOC_LIBRARY})
 
-install (TARGETS rsdump RUNTIME DESTINATION bin)
+install (TARGETS rsdump RUNTIME DESTINATION ${VERSION}/bin)
 

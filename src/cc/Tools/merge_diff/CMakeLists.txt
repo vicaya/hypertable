@@ -20,4 +20,4 @@
 add_executable (merge_diff merge_diff.cc)
 target_link_libraries (merge_diff log4cpp ${Tcmalloc_LIBRARIES} Hypertable)
 
-install (TARGETS merge_diff RUNTIME DESTINATION bin)
+install (TARGETS merge_diff RUNTIME DESTINATION ${VERSION}/bin)

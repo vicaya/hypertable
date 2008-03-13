@@ -20,5 +20,5 @@
 add_executable (serverup serverup.cc)
 target_link_libraries (serverup pthread ${BOOST_LIB} log4cpp expat HyperDfsBroker Hypertable ${MALLOC_LIBRARY})
 
-install (TARGETS serverup RUNTIME DESTINATION bin)
+install (TARGETS serverup RUNTIME DESTINATION ${VERSION}/bin)
 

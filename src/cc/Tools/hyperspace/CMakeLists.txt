@@ -54,6 +54,6 @@ configure_file(${SRC_DIR}/test/client1.golden ${DST_DIR}/client1.golden COPYONLY
 configure_file(${SRC_DIR}/test/client2.golden ${DST_DIR}/client2.golden COPYONLY)
 configure_file(${SRC_DIR}/test/client3.golden ${DST_DIR}/client3.golden COPYONLY)
 
-install (TARGETS hyperspace RUNTIME DESTINATION bin)
+install (TARGETS hyperspace RUNTIME DESTINATION ${VERSION}/bin)
 
 add_test (Hyperspace hyperspaceTest)

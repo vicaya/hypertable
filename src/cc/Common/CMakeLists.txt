@@ -39,9 +39,9 @@ target_link_libraries (htConvert HyperCommon log4cpp pthread)
 
 file (GLOB HEADERS *.h)
 
-install (FILES ${HEADERS} DESTINATION include/hypertable-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}/Common)
+install (FILES ${HEADERS} DESTINATION ${VERSION}/include/Common)
 
 install (TARGETS HyperCommon
-         RUNTIME DESTINATION bin
-         LIBRARY DESTINATION lib
-         ARCHIVE DESTINATION lib)
+         RUNTIME DESTINATION ${VERSION}/bin
+         LIBRARY DESTINATION ${VERSION}/lib
+         ARCHIVE DESTINATION ${VERSION}/lib)

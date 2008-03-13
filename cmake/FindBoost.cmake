@@ -6,6 +6,7 @@
 #  Boost_LIBRARY_DIRS - The path to where the boost library files are.
 #  Boost_LIB_DIAGNOSTIC_DEFINITIONS - Only set if using Windows.
 #  BOOST_LIB - The name of the boost thread library
+#  BOOST_PROGRAM_OPTIONS_LIB - The name of the boost program options library
 # ----------------------------------------------------------------------------
 # If you have installed Boost in a non-standard location or you have
 # just staged the boost files using bjam then you have three
@@ -46,6 +47,10 @@
 # 1) Automatically find the Boost library files and eliminate the need
 #    to use Link Directories.
 #
+
+IF (NOT Boost_FIND_QUIETLY)
+  MESSAGE(STATUS "Looking for required boost libraries...")
+ENDIF (NOT Boost_FIND_QUIETLY)
 
 IF(WIN32)
   # In windows, automatic linking is performed, so you do not have to specify the libraries.
@@ -92,20 +97,47 @@ SET(SUFFIX_FOR_PATH
 #
 # Look for an installation.
 #
-FIND_PATH(Boost_INCLUDE_DIR NAMES boost/config.hpp PATH_SUFFIXES ${SUFFIX_FOR_PATH} PATHS
-
+FIND_PATH(Boost_INCLUDE_DIR
+  NAMES boost/config.hpp
+  PATH_SUFFIXES ${SUFFIX_FOR_PATH}
   # Look in other places.
-  ${BOOST_DIR_SEARCH}
-
+  PATHS ${BOOST_DIR_SEARCH}
   # Help the user find it if we cannot.
   DOC "The ${BOOST_INCLUDE_PATH_DESCRIPTION}"
 )
 
-SET(Boost_NAMES boost_thread-mt boost_thread-gcc41-mt boost_thread)
-FIND_LIBRARY(Boost_LIB
-  NAMES ${Boost_NAMES}
-  PATHS /usr/lib /usr/local/lib /usr/local/lib64 /opt/local/lib
-)
+MACRO(FIND_BOOST_PARENT root includedir)
+  # Look for the boost library path.
+  # Note that the user may not have installed any libraries
+  # so it is quite possible the library path may not exist.
+  SET(${root} ${includedir})
+
+  IF(${${root}} MATCHES "boost-[0-9]+")
+    GET_FILENAME_COMPONENT(${root} ${${root}} PATH)
+  ENDIF (${${root}} MATCHES "boost-[0-9]+")
+
+  IF(${${root}} MATCHES "/include$")
+    # Strip off the trailing "/include" in the path.
+    GET_FILENAME_COMPONENT(${root} ${${root}} PATH)
+  ENDIF(${${root}} MATCHES "/include$")
+ENDMACRO(FIND_BOOST_PARENT root includedir)
+
+MACRO(FIND_BOOST_LIBRARY lib libname libroot)
+  SET(${lib}_NAMES
+    "boost_${libname}-mt"
+    "boost_${libname}-gcc42-mt"
+    "boost_${libname}-gcc41-mt"
+    "boost_${libname}-gcc34-mt"
+  )
+  IF (NOT "${ARGN}" STREQUAL "MT_ONLY")
+    SET(${lib}_NAMES ${${lib}_NAMES} "boost_${libname}")
+  ENDIF (NOT "${ARGN}" STREQUAL "MT_ONLY")
+
+  FIND_LIBRARY(${lib}
+    NAMES ${${lib}_NAMES}
+    PATHS "${libroot}/lib" "${libroot}/lib64"
+  )
+ENDMACRO(FIND_BOOST_LIBRARY lib libname libroot)
 
 # Assume we didn't find it.
 SET(Boost_FOUND 0)
@@ -113,71 +145,20 @@ SET(Boost_FOUND 0)
 # Now try to get the include and library path.
 IF(Boost_INCLUDE_DIR)
 
-  # Look for the boost library path.
-  # Note that the user may not have installed any libraries
-  # so it is quite possible the Boost_LIBRARY_PATH may not exist.
-  SET(Boost_LIBRARY_DIR ${Boost_INCLUDE_DIR})
+  MESSAGE(STATUS "Boost include dir: ${Boost_INCLUDE_DIR}")
+  FIND_BOOST_PARENT(Boost_PARENT ${Boost_INCLUDE_DIR})
 
-  IF("${Boost_LIBRARY_DIR}" MATCHES "boost-[0-9]+")
-    GET_FILENAME_COMPONENT(Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR} PATH)
-  ENDIF ("${Boost_LIBRARY_DIR}" MATCHES "boost-[0-9]+")
+  # Add boost libraries here
+  FIND_BOOST_LIBRARY(BOOST_THREAD_LIB thread ${Boost_PARENT})
+  FIND_BOOST_LIBRARY(BOOST_PROGRAM_OPTIONS_LIB program_options ${Boost_PARENT})
 
-  IF("${Boost_LIBRARY_DIR}" MATCHES "/include$")
-    # Strip off the trailing "/include" in the path.
-    GET_FILENAME_COMPONENT(Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR} PATH)
-  ENDIF("${Boost_LIBRARY_DIR}" MATCHES "/include$")
+  MESSAGE(STATUS "Boost thread lib: ${BOOST_THREAD_LIB}")
+  MESSAGE(STATUS "Boost program options lib: ${BOOST_PROGRAM_OPTIONS_LIB}")
+  GET_FILENAME_COMPONENT(Boost_LIBRARY_DIR ${BOOST_THREAD_LIB} PATH)
+  MESSAGE(STATUS "Boost lib dir: ${Boost_LIBRARY_DIR}")
 
-  IF(EXISTS "${Boost_LIBRARY_DIR}/lib/libboost_thread-mt.a")
-    SET (Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/lib)
-    SET (BOOST_LIB "boost_thread-mt")
-  ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/lib64/libboost_thread-mt.a")
-    SET (Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/lib64)
-    SET (BOOST_LIB "boost_thread-mt")
-  ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/lib/libboost_thread-gcc41-mt.a")
-    SET (Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/lib)
-    SET (BOOST_LIB "boost_thread-gcc41-mt")
-  ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/lib64/libboost_thread-gcc41-mt.a")
-    SET (Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/lib64)
-    SET (BOOST_LIB "boost_thread-gcc41-mt")
-  ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/lib/libboost_thread-gcc34-mt.a")
-    SET (Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/lib)
-    SET (BOOST_LIB "boost_thread-gcc34-mt")
-  ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/lib64/libboost_thread-gcc34-mt.a")
-    SET (Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/lib64)
-    SET (BOOST_LIB "boost_thread-gcc34-mt")
-  ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/lib/libboost_thread.a")
-    SET (Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/lib)
-    SET (BOOST_LIB "boost_thread")
-  ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/lib64/libboost_thread.a")
-    SET (Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/lib64)
-    SET (BOOST_LIB "boost_thread")
-  ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/lib/libboost_thread-mt.so")
-    SET (Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/lib)
-    SET (BOOST_LIB "boost_thread-mt")
-  ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/lib64/libboost_thread-mt.so")
-    SET (Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/lib64)
-    SET (BOOST_LIB "boost_thread-mt")
-  ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/lib/libboost_thread-gcc41-mt.so")
-    SET (Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/lib)
-    SET (BOOST_LIB "boost_thread-gcc41-mt")
-  ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/lib64/libboost_thread-gcc41-mt.so")
-    SET (Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/lib64)
-    SET (BOOST_LIB "boost_thread-gcc41-mt")
-  ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/lib/libboost_thread-gcc34-mt.so")
-    SET (Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/lib)
-    SET (BOOST_LIB "boost_thread-gcc34-mt")
-  ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/lib64/libboost_thread-gcc34-mt.so")
-    SET (Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/lib64)
-    SET (BOOST_LIB "boost_thread-gcc34-mt")
-  ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/lib/libboost_thread.so")
-    SET (Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/lib)
-    SET (BOOST_LIB "boost_thread")
-  ELSEIF(EXISTS "${Boost_LIBRARY_DIR}/lib64/libboost_thread.so")
-    SET (Boost_LIBRARY_DIR ${Boost_LIBRARY_DIR}/lib64)
-    SET (BOOST_LIB "boost_thread")
-  ELSE(EXISTS "${Boost_LIBRARY_DIR}/lib/libboost_thread-mt.a")
-      MESSAGE(FATAL_ERROR "Boost thread library was not found.")
-  ENDIF(EXISTS "${Boost_LIBRARY_DIR}/lib/libboost_thread-mt.a")
+  # BOOST_LIB is our default boost lib, which is boost thread
+  SET(BOOST_LIB ${BOOST_PROGRAM_OPTIONS_LIB} ${BOOST_THREAD_LIB})
 
   IF(EXISTS "${Boost_INCLUDE_DIR}")
     SET(Boost_INCLUDE_DIRS ${Boost_INCLUDE_DIR})
@@ -189,6 +170,15 @@ IF(Boost_INCLUDE_DIR)
   IF(Boost_LIBRARY_DIR AND EXISTS "${Boost_LIBRARY_DIR}")
     SET(Boost_LIBRARY_DIRS ${Boost_LIBRARY_DIR})
   ENDIF(Boost_LIBRARY_DIR AND EXISTS "${Boost_LIBRARY_DIR}")
+
+  try_run(BOOST_CHECK SHOULD_COMPILE
+          ${HYPERTABLE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
+          ${HYPERTABLE_SOURCE_DIR}/cmake/CheckBoost.cc
+          CMAKE_FLAGS -DINCLUDE_DIRECTORIES:STRING=${Boost_INCLUDE_DIRS}
+          OUTPUT_VARIABLE TRY_OUT)
+  string(REGEX REPLACE ".*\n([0-9_]+).*" "\\1" BOOST_VERSION ${TRY_OUT})
+  message(STATUS "Boost version: ${BOOST_VERSION}")
+
 ENDIF(Boost_INCLUDE_DIR)
 
 IF(NOT Boost_FOUND)

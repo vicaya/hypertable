@@ -18,9 +18,11 @@
 
 project (HYPERTABLE)
 
-set (VERSION_MAJOR "0")
-set (VERSION_MINOR "9")
-set (VERSION_MICRO "0")
+set(VERSION_MAJOR "0")
+set(VERSION_MINOR "9")
+set(VERSION_MICRO "0")
+set(VERSION_PATCH "5")
+set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}.${VERSION_PATCH})
 
 # Enable testing
 enable_testing()
@@ -48,16 +50,8 @@ set( MALLOC_LIBRARY ${Tcmalloc_LIBRARIES} )
 # include directories
 include_directories(src/cc ${Boost_INCLUDE_DIRS} ${Log4cpp_INCLUDE_DIR})
 
-try_run(BOOST_CHECK SHOULD_COMPILE
-        ${HYPERTABLE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
-        ${HYPERTABLE_SOURCE_DIR}/cmake/CheckBoost.cc
-        CMAKE_FLAGS -DINCLUDE_DIRECTORIES:STRING=${Boost_INCLUDE_DIRS}
-        OUTPUT_VARIABLE TRY_OUT)
-string(REGEX REPLACE ".*\n([0-9_]+)" "\\1" BOOST_VERSION ${TRY_OUT})
-message(STATUS "Boost version: ${BOOST_VERSION}")
-
 if (NOT ${BOOST_CHECK} STREQUAL "0")
-  message(FATAL_ERROR "boost version not compatible")
+  message(FATAL_ERROR "Boost version not compatible")
 endif (NOT ${BOOST_CHECK} STREQUAL "0")
 
 if (${BOOST_VERSION} MATCHES "1_34")
@@ -96,37 +90,37 @@ IF (Kfs_FOUND)
    add_subdirectory (src/cc/DfsBroker/kosmos)
 ENDIF (Kfs_FOUND)
 
-install (FILES demo/metadata-test.xml DESTINATION demo)
-install (FILES demo/testdata.txt.bz2 DESTINATION demo)
-install (FILES demo/Test.xml DESTINATION demo)
-install (FILES demo/Test-schema.xml DESTINATION demo)
-install (FILES conf/hypertable.cfg DESTINATION conf)
-install (FILES conf/METADATA.xml DESTINATION conf)
-install (FILES lib/commons-logging-1.0.4.jar DESTINATION java/lib)
-install (FILES lib/hadoop-0.14.4-core.jar DESTINATION java/lib)
-install (FILES lib/junit-4.3.1.jar DESTINATION java/lib)
-install (FILES lib/log4j-1.2.13.jar DESTINATION java/lib)
-install (FILES lib/hypertable-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}.jar DESTINATION java/lib)
-install (FILES build/hypertable-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}.jar DESTINATION java/lib OPTIONAL)
+install (FILES demo/metadata-test.xml DESTINATION ${VERSION}/demo)
+install (FILES demo/testdata.txt.bz2 DESTINATION ${VERSION}/demo)
+install (FILES demo/Test.xml DESTINATION ${VERSION}/demo)
+install (FILES demo/Test-schema.xml DESTINATION ${VERSION}/demo)
+install (FILES conf/hypertable.cfg DESTINATION ${VERSION}/conf)
+install (FILES conf/METADATA.xml DESTINATION ${VERSION}/conf)
+install (FILES lib/commons-logging-1.0.4.jar DESTINATION ${VERSION}/java/lib)
+install (FILES lib/hadoop-0.14.4-core.jar DESTINATION ${VERSION}/java/lib)
+install (FILES lib/junit-4.3.1.jar DESTINATION ${VERSION}/java/lib)
+install (FILES lib/log4j-1.2.13.jar DESTINATION ${VERSION}/java/lib)
+install (FILES lib/hypertable-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}.jar DESTINATION ${VERSION}/java/lib)
+install (FILES build/hypertable-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}.jar DESTINATION ${VERSION}/java/lib OPTIONAL)
 install (FILES bin/jrun 
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-	 DESTINATION bin)
+	 DESTINATION ${VERSION}/bin)
 install (FILES bin/start-all-servers.sh
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-	 DESTINATION bin)
+	 DESTINATION ${VERSION}/bin)
 install (FILES bin/start-master.sh
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-	 DESTINATION bin)
+	 DESTINATION ${VERSION}/bin)
 install (FILES bin/start-range-server.sh
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-	 DESTINATION bin)
+	 DESTINATION ${VERSION}/bin)
 install (FILES bin/kill-servers.sh
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-	 DESTINATION bin)
+	 DESTINATION ${VERSION}/bin)
 install (FILES bin/slaves.sh
          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-	 DESTINATION bin)
-install (FILES test/create-test-tables.hql DESTINATION test)
-install (DIRECTORY examples/apache_log DESTINATION examples USE_SOURCE_PERMISSIONS)
-install (DIRECTORY examples/hql_tutorial DESTINATION examples USE_SOURCE_PERMISSIONS)
+	 DESTINATION ${VERSION}/bin)
+install (FILES test/create-test-tables.hql DESTINATION ${VERSION}/test)
+install (DIRECTORY examples/apache_log DESTINATION ${VERSION}/examples USE_SOURCE_PERMISSIONS)
+install (DIRECTORY examples/hql_tutorial DESTINATION ${VERSION}/examples USE_SOURCE_PERMISSIONS)
 
