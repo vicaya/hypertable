@@ -29,7 +29,7 @@ TableInfo.cc
 
 # rsclient - Range Server client command interpreter
 add_executable (rsclient ${rsclient_SRCS})
-target_link_libraries (rsclient pthread ${BOOST_LIB} boost_program_options-mt Hypertable log4cpp expat readline curses ${MALLOC_LIBRARY})
+target_link_libraries (rsclient pthread ${BOOST_LIB} Hypertable log4cpp expat readline curses ${MALLOC_LIBRARY})
 
 # rsTest
 add_executable (rsTest tests/rsTest.cc ${TEST_DEPENDENCIES} )
