@@ -1,6 +1,6 @@
-update Test2 Test2-data.txt
-create scanner Test2[..??] start=Abama row-limit=4
-destroy scanner
-create scanner Test2[..??] start=Abama row-limit=2 max-versions=1
-destroy scanner
+UPDATE Test2 "Test2-data.txt";
+CREATE SCANNER ON Test2[..??] WHERE ROW >= "Abama" LIMIT=4;
+DESTROY SCANNER;
+CREATE SCANNER ON Test2[..??] WHERE ROW >= "Abama" LIMIT=2 MAX_VERSIONS=1;
+DESTROY SCANNER;
 quit

@@ -49,12 +49,13 @@ namespace Hypertable {
     po::variables_map m_varmap;
     
 
-    std::string g_accum;
-    bool g_batch_mode;
-    bool g_no_prompt;
-    bool g_cont;
-    char *line_read;
-    std::string gInputStr;
+    std::string m_accum;
+    bool m_batch_mode;
+    bool m_no_prompt;
+    bool m_cont;
+    char *m_line_read;
+    std::string m_input_str;
+    std::string m_prompt_str;
   };
   typedef boost::intrusive_ptr<CommandShell> CommandShellPtr;
 

@@ -55,16 +55,25 @@ namespace Hypertable {
 
   namespace HqlParser {
 
-    const int COMMAND_HELP              = 1;
-    const int COMMAND_CREATE_TABLE      = 2;
-    const int COMMAND_DESCRIBE_TABLE    = 3;
-    const int COMMAND_SHOW_CREATE_TABLE = 4;
-    const int COMMAND_SELECT            = 5;
-    const int COMMAND_LOAD_DATA         = 6;
-    const int COMMAND_INSERT            = 7;
-    const int COMMAND_DELETE            = 8;
-    const int COMMAND_SHOW_TABLES       = 9;
-    const int COMMAND_DROP_TABLE        = 10;
+    enum {
+      COMMAND_HELP=1,
+      COMMAND_CREATE_TABLE,
+      COMMAND_DESCRIBE_TABLE,
+      COMMAND_SHOW_CREATE_TABLE,
+      COMMAND_SELECT,
+      COMMAND_LOAD_DATA,
+      COMMAND_INSERT,
+      COMMAND_DELETE,
+      COMMAND_SHOW_TABLES,
+      COMMAND_DROP_TABLE,
+      COMMAND_CREATE_SCANNER,
+      COMMAND_DESTROY_SCANNER,
+      COMMAND_FETCH_SCANBLOCK,
+      COMMAND_LOAD_RANGE,
+      COMMAND_SHUTDOWN,
+      COMMAND_UPDATE,
+      COMMAND_MAX
+    };
 
     class insert_record {
     public:
@@ -102,13 +111,14 @@ namespace Hypertable {
    
     class hql_interpreter_state {
     public:
-      hql_interpreter_state() : command(0), cf(0), ag(0), nanoseconds(0), delete_all_columns(false), delete_time(0), if_exists(false) {
+      hql_interpreter_state() : command(0), cf(0), ag(0), nanoseconds(0), delete_all_columns(false), delete_time(0), if_exists(false), scanner_id(-1) {
 	memset(&tmval, 0, sizeof(tmval));
       }
       int command;
       std::string table_name;
       std::string str;
       std::string output_file;
+      std::string input_file;
       std::string table_compressor;
       std::string row_key_column;
       std::string timestamp_column;
@@ -126,6 +136,9 @@ namespace Hypertable {
       std::string delete_row;
       uint64_t delete_time;
       bool if_exists;
+      std::string range_start_row;
+      std::string range_end_row;
+      int32_t scanner_id;
     };
 
     struct set_command {
@@ -144,6 +157,26 @@ namespace Hypertable {
 	display_string("set_table_name");
 	state.table_name = std::string(str, end-str);
 	boost::trim_if(state.table_name, boost::is_any_of("'\""));
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct set_range_start_row {
+      set_range_start_row(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("set_range_start_row");
+	state.range_start_row = std::string(str, end-str);
+	boost::trim_if(state.range_start_row, boost::is_any_of("'\""));
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct set_range_end_row {
+      set_range_end_row(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("set_range_end_row");
+	state.range_end_row = std::string(str, end-str);
+	boost::trim_if(state.range_end_row, boost::is_any_of("'\""));
       }
       hql_interpreter_state &state;
     };
@@ -314,6 +347,16 @@ namespace Hypertable {
 	display_string("set_output_file");
 	state.output_file = std::string(str, end-str);
 	trim_if(state.output_file, boost::is_any_of("'\""));
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct set_input_file {
+      set_input_file(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("set_input_file");
+	state.input_file = std::string(str, end-str);
+	trim_if(state.input_file, boost::is_any_of("'\""));
       }
       hql_interpreter_state &state;
     };
@@ -683,7 +726,14 @@ namespace Hypertable {
       hql_interpreter_state &state;
     };
 
-
+    struct set_scanner_id {
+      set_scanner_id(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("set_scanner_id");
+        state.scanner_id = (uint32_t)strtol(str, 0, 10);
+      }
+      hql_interpreter_state &state;
+    };
 
     struct hql_interpreter : public grammar<hql_interpreter> {
       hql_interpreter(hql_interpreter_state &state_) : state(state_) {}
@@ -728,6 +778,7 @@ namespace Hypertable {
 	  chlit<>     DOT('.');
 	  strlit<>    DOTDOT("..");
 	  strlit<>    AND("&&");
+	  strlit<>    DOUBLEQUESTIONMARK("??");
 
 	  /**
 	   * TOKENS
@@ -790,6 +841,14 @@ namespace Hypertable {
 	  token_t DISPLAY_TIMESTAMPS = as_lower_d["display_timestamps"];
 	  token_t RETURN_DELETES = as_lower_d["return_deletes"];
 	  token_t KEYS_ONLY    = as_lower_d["keys_only"];
+	  token_t RANGE        = as_lower_d["range"];
+	  token_t UPDATE       = as_lower_d["update"];
+	  token_t SCANNER      = as_lower_d["scanner"];
+	  token_t ON           = as_lower_d["on"];
+	  token_t DESTROY      = as_lower_d["destroy"];
+	  token_t FETCH        = as_lower_d["fetch"];
+	  token_t SCANBLOCK    = as_lower_d["scanblock"];
+	  token_t SHUTDOWN     = as_lower_d["shutdown"];
 
 	  /**
 	   * Start grammar definition
@@ -831,6 +890,45 @@ namespace Hypertable {
 	    | delete_statement[set_command(self.state, COMMAND_DELETE)]
 	    | show_tables_statement[set_command(self.state, COMMAND_SHOW_TABLES)]
 	    | drop_table_statement[set_command(self.state, COMMAND_DROP_TABLE)]
+	    | load_range_statement[set_command(self.state, COMMAND_LOAD_RANGE)]
+	    | update_statement[set_command(self.state, COMMAND_UPDATE)]
+	    | create_scanner_statement[set_command(self.state, COMMAND_CREATE_SCANNER)]
+	    | destroy_scanner_statement[set_command(self.state, COMMAND_DESTROY_SCANNER)]
+	    | fetch_scanblock_statement[set_command(self.state, COMMAND_FETCH_SCANBLOCK)]
+	    | shutdown_statement[set_command(self.state, COMMAND_SHUTDOWN)]
+	    ;
+
+	  shutdown_statement
+	    = SHUTDOWN
+	    ;
+
+	  fetch_scanblock_statement
+	    = FETCH >> SCANBLOCK >> !( lexeme_d[ (+digit_p)[set_scanner_id(self.state)] ] )
+	    ;
+
+	  destroy_scanner_statement
+	    = DESTROY >> SCANNER >> !( lexeme_d[ (+digit_p)[set_scanner_id(self.state)] ] )
+	    ;
+
+	  create_scanner_statement
+	    = CREATE >> SCANNER >> ON >> range_spec
+	      >> !where_clause
+	      >> *( option_spec )
+	    ;
+
+	  update_statement
+	    = UPDATE >> user_identifier[set_table_name(self.state)] >> user_identifier[set_input_file(self.state)]
+	    ;
+
+	  load_range_statement
+	    = LOAD >> RANGE >> range_spec
+	    ;
+
+	  range_spec
+	    = user_identifier[set_table_name(self.state)]
+	    >> LBRACK >> !( user_identifier[set_range_start_row(self.state)] ) 
+	    >> DOTDOT 
+	    >> ( user_identifier | DOUBLEQUESTIONMARK )[set_range_end_row(self.state)] >> RBRACK
 	    ;
 
 	  drop_table_statement
@@ -1080,6 +1178,13 @@ namespace Hypertable {
 	  BOOST_SPIRIT_DEBUG_RULE(table_option);
 	  BOOST_SPIRIT_DEBUG_RULE(show_tables_statement);
 	  BOOST_SPIRIT_DEBUG_RULE(drop_table_statement);
+	  BOOST_SPIRIT_DEBUG_RULE(load_range_statement);
+	  BOOST_SPIRIT_DEBUG_RULE(range_spec);
+	  BOOST_SPIRIT_DEBUG_RULE(update_statement);
+	  BOOST_SPIRIT_DEBUG_RULE(create_scanner_statement);
+	  BOOST_SPIRIT_DEBUG_RULE(destroy_scanner_statement);
+	  BOOST_SPIRIT_DEBUG_RULE(fetch_scanblock_statement);
+	  BOOST_SPIRIT_DEBUG_RULE(shutdown_statement);
 	}
 #endif
 
@@ -1096,7 +1201,9 @@ namespace Hypertable {
         where_predicate, option_spec, date_expression, datetime, date, time,
 	year, load_data_statement, load_data_option, insert_statement, insert_value_list,
 	insert_value, delete_statement, delete_column_clause, table_option,
-        show_tables_statement, drop_table_statement;
+        show_tables_statement, drop_table_statement, load_range_statement, range_spec,
+        update_statement, create_scanner_statement, destroy_scanner_statement,
+        fetch_scanblock_statement, shutdown_statement;
       };
 
       hql_interpreter_state &state;

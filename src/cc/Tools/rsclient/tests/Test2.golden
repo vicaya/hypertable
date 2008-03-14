@@ -1,7 +1,4 @@
-Welcome to the Range Server command interpreter.
-Type 'help' for a description of commands.
-
-rsclient> update Test2 Test2-data.txt
+UPDATE Test2 "Test2-data.txt";
 success
 success
 success
@@ -355,7 +352,7 @@ success
 success
 success
 success
-rsclient> create scanner Test2[..??] start=Abama row-limit=4
+CREATE SCANNER ON Test2[..??] WHERE ROW >= "Abama" LIMIT=4;
 1189631333674696 Abama plum:http://pbskids.org/sesame/index.html
 1189631333353299 Abama plum:http://www.baseball-reference.com/r/roberda07.shtml
 1189631333025117 Abama broccoli:http://www.sirlinksalot.net/bertandernie.html
@@ -521,8 +518,8 @@ rsclient> create scanner Test2[..??] start=Abama row-limit=4
 1189631332548717 Abarambo cassis:http://www.guardian.co.uk/Columnists/Archive/0,5673,-25,0.html
 1189631332230211 Abarambo cassis:http://www.psa.ac.uk/awards2003/toynbee.htm
 1189631333541743 Abarambo cassis:http://www.usatoday.com/sports/bbw/columnist/nightengale/2005-01-19-majors_x.htm
-rsclient> destroy scanner
-rsclient> create scanner Test2[..??] start=Abama row-limit=2 max-versions=1
+DESTROY SCANNER;
+CREATE SCANNER ON Test2[..??] WHERE ROW >= "Abama" LIMIT=2 MAX_VERSIONS=1;
 1189631333674696 Abama plum:http://pbskids.org/sesame/index.html
 1189631333353299 Abama plum:http://www.baseball-reference.com/r/roberda07.shtml
 1189631333025117 Abama broccoli:http://www.sirlinksalot.net/bertandernie.html
@@ -564,5 +561,4 @@ rsclient> create scanner Test2[..??] start=Abama row-limit=2 max-versions=1
 1189631333532516 Abanic cherry:http://www.housing.berkeley.edu/housing/
 1189631333707493 Abanic banana:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
 1189631333605956 Abanic cassis:http://www.housing.berkeley.edu/housing/
-rsclient> destroy scanner
-rsclient> quit
+DESTROY SCANNER;

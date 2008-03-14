@@ -1,18 +1,18 @@
-update Test1 Test1-data.txt
-create scanner Test1[..??]
-destroy scanner
-create scanner Test1[..??] start=Agamemnon end=Agamemnon
-destroy scanner
-create scanner Test1[..??] start=Agamemnon row-limit=5
-destroy scanner
-create scanner Test1[..??] row-range=[Agamemnon,Agamemnon]
-destroy scanner
-create scanner Test1[..??] row-range=[Agamemnon,Aganice]
-destroy scanner
-create scanner Test1[..??] row-range=(Agamemnon,Aganice]
-destroy scanner
-create scanner Test1[..??] row-range=[Agamemnon,Aganice)
-destroy scanner
-create scanner Test1[..??] row-range=(Agamemnon,Aganice)
-destroy scanner
-quit
+UPDATE Test1 "Test1-data.txt";
+CREATE SCANNER ON Test1[..??];
+DESTROY SCANNER;
+CREATE SCANNER ON Test1[..??] WHERE ROW = "Agamemnon";
+DESTROY SCANNER;
+CREATE SCANNER ON Test1[..??] WHERE ROW >= "Agamemnon" LIMIT=5;
+DESTROY SCANNER;
+CREATE SCANNER ON Test1[..??] WHERE ROW >= "Agamemnon" && ROW <= "Agamemnon";
+DESTROY SCANNER;
+CREATE SCANNER ON Test1[..??] WHERE ROW >= "Agamemnon" && ROW <= "Aganice";
+DESTROY SCANNER;
+CREATE SCANNER ON Test1[..??] WHERE ROW > "Agamemnon" && ROW <= "Aganice";
+DESTROY SCANNER;
+CREATE SCANNER ON Test1[..??] WHERE ROW >= "Agamemnon" && ROW < "Aganice";
+DESTROY SCANNER;
+CREATE SCANNER ON Test1[..??] WHERE ROW > "Agamemnon" && ROW < "Aganice";
+DESTROY SCANNER;
+quit;

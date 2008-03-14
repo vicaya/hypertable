@@ -408,6 +408,8 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       if ((error = m_client->drop_table(state.table_name, state.if_exists)) != Error::OK)
 	throw Exception(error, std::string("Problem droppint table '") + state.table_name + "'");
     }
+    else
+      throw Exception(Error::HQL_PARSE_ERROR, std::string("unsupported command: ") + line);
   }
   else
     throw Exception(Error::HQL_PARSE_ERROR, std::string("parse error at: ") + info.stop);

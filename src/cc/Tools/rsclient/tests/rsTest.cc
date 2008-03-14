@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
   /**
    *  Test1
    */
-  commandStr = (std::string)"./rsclient --config=hypertable.cfg < Test1.cmd > Test1.output";
+  commandStr = (std::string)"./rsclient --batch --config hypertable.cfg localhost < Test1.cmd > Test1.output";
   if (system(commandStr.c_str()) != 0)
     return 1;
 
@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
    *  Test2
    */
 
-  commandStr = (std::string)"./rsclient --config=hypertable.cfg < Test2.cmd > Test2.output";
+  commandStr = (std::string)"./rsclient --batch --config hypertable.cfg localhost < Test2.cmd > Test2.output";
   if (system(commandStr.c_str()) != 0)
     return 1;
 
@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
    *  Test3
    */
 
-  commandStr = (std::string)"./rsclient --config=hypertable.cfg < Test3.cmd > Test3.output";
+  commandStr = (std::string)"./rsclient --batch --config hypertable.cfg localhost < Test3.cmd > Test3.output";
   if (system(commandStr.c_str()) != 0)
     return 1;
 

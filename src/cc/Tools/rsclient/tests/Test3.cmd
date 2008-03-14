@@ -1,6 +1,6 @@
-update Test3 Test2-data.txt
-create scanner Test3[..??]
-destroy scanner
-create scanner Test3[..??] max-versions=2
-destroy scanner
+UPDATE Test3 "Test2-data.txt";
+CREATE SCANNER ON Test3[..??];
+DESTROY SCANNER;
+CREATE SCANNER ON Test3[..??] MAX_VERSIONS=2;
+DESTROY SCANNER;
 quit

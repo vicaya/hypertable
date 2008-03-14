@@ -27,8 +27,7 @@ using namespace Hypertable;
 namespace {
 
   const char *help_text_contents[] = {
-    "HQL Statements",
-    "--------------",
+    "",
     "CREATE TABLE ....... Creates a table",
     "DELETE ............. Deletes all or part of a row from a table",
     "DESCRIBE TABLE ..... Displays a table's schema",
@@ -42,6 +41,140 @@ namespace {
     "Statements must be terminated with ';' to execute.  For more information on",
     "a specific statement, type 'help <statement>', where <statement> is one from",
     "the preceeding list.",
+    "",
+    (const char *)0
+  };
+
+  const char *help_text_rsclient_contents[] = {
+    "",
+    "CREATE SCANNER .... Creates a scanner and displays first block of results",
+    "DESTROY SCANNER ... Destroys a scanner",
+    "FETCH SCANBLOCK ... Fetch the next block results of a scan",
+    "LOAD RANGE ........ Load a range",
+    "SHUTDOWN   ........ Shutdown the RangeServer",
+    "UPDATE ............ Selects (and display) cells from a table",
+    "",
+    "Statements must be terminated with ';' to execute.  For more information on",
+    "a specific statement, type 'help <statement>', where <statement> is one from",
+    "the preceeding list.",
+    "",
+    (const char *)0
+  };
+
+  const char *help_text_create_scanner[] = {
+    "",
+    "CREATE SCANNER ON range_spec",
+    "    [where_clause]",
+    "    [options_spec]",
+    "",
+    "range_spec:",
+    "    table_name '[' [start_row] \"..\" ( end_row | ?? ) ']'",
+    "",
+    "where_clause:",
+    "    WHERE where_predicate [ && where_predicate ... ] ",
+    "",
+    "where_predicate: ",
+    "    ROW = row_key",
+    "    | ROW > row_key",
+    "    | ROW >= row_key",
+    "    | ROW < row_key",
+    "    | ROW <= row_key",
+    "    | ROW STARTS WITH substr",
+    "    | TIMESTAMP >  timestamp",
+    "    | TIMESTAMP >= timestamp",
+    "    | TIMESTAMP <  timestamp",
+    "    | TIMESTAMP <= timestamp",
+    "",
+    "options_spec:",
+    "    ( MAX_VERSIONS = version_count",
+    "    | LIMIT = row_count",
+    "    | INTO FILE 'file_name'",
+    "    | DISPLAY_TIMESTAMPS",
+    "    | RETURN_DELETES",
+    "    | KEYS_ONLY )*",
+    "",
+    "timestamp:",
+    "    'YYYY-MM-DD HH:MM:SS[.nanoseconds]'",
+    "",
+    "NOTES:  If the start_row is absent from a range_spec, it means NULL or",
+    "the beginning of the range.  If the end_row is specified as ??, then it",
+    "will get converted to 0xff 0xff which indicates the end of the range.",
+    "",
+    "Example:",
+    "",
+    "  CREATE SCANNER ON Test[..??]",
+    "",
+    (const char *)0
+  };
+
+  const char *help_text_destroy_scanner[] = {
+    "",
+    "DESTROY SCANNER [scanner_id]",
+    "",
+    "This command will destroy a scanner previously created with",
+    "a CREATE SCANNER command.  If a scanner_id is supplied, then",
+    "the scanner corresponding to that ID will be destroyed, otherwise",
+    "the \"current\" or most recently created scanner will get destroyed.",
+    "",
+    (const char *)0
+  };
+
+  const char *help_text_fetch_scanblock[] = {
+    "",
+    "FETCH SCANBLOCK [scanner_id]",
+    "",
+    "This command will fetch and display the next block of results",
+    "of a scanner.  If a scanner_id is supplied, then the scanner",
+    "corresponding to that ID will be destroyed, otherwise the",
+    "\"current\" or most recently created scanner will get destroyed.",
+    "",
+    (const char *)0
+  };
+
+  const char *help_text_load_range[] = {
+    "",
+    "LOAD RANGE range_spec",
+    "",
+    "range_spec:",
+    "    table_name '[' [start_row] \"..\" ( end_row | ?? ) ']'",
+    "",
+    "This command will issue a 'load range' command to the RangeServer",
+    "for the range specified with range_spec.",
+    "",
+    (const char *)0
+  };
+
+  const char *help_text_update[] = {
+    "",
+    "UPDATE table_name input_file",
+    "",
+    "This command will read blocks of key/value pairs from input_file",
+    "and send them to the range server.  Here are some example input file",
+    "lines that illustrate the format of this file:",
+    "",
+    "1189631331826108        acaleph DELETE",
+    "1189631331826202        acrostolion     apple:http://www.baseball.com/       Vilia miretur vulgus",
+    "1189631331826211        acerin  banana:http://sports.espn.go.com/       DELETE",
+    "",
+    "The fields are separated by the tab character.  The lines have the following format:",
+    ""
+    "<timestamp> '\t' <row-key> '\t' <column-family>[:<column-qualfier>] '\t' <value>",
+    "",
+    "The string \"DELETE\" has special meaning.  In the first example line",
+    "above, it generates a 'delete row' for the row key 'acaleph'.  In the",
+    "third example line above, it generates a 'delete cell' for the column",
+    "'banana:http://sports.espn.go.com/' of row 'acerin'.",
+    "",
+    (const char *)0
+  };    
+
+  const char *help_text_shutdown[] = {
+    "",
+    "SHUTDOWN",
+    "",
+    "This command causes the RangeServer to shutdown.  It will",
+    "return immediately, but the RangeServer will wait for all",
+    "running requests to complete before shutting down.",
     "",
     (const char *)0
   };
@@ -100,7 +233,7 @@ namespace {
     "    | LIMIT = row_count",
     "    | INTO FILE 'file_name'",
     "    | DISPLAY_TIMESTAMPS",
-    "    | RETURN DELETES",
+    "    | RETURN_DELETES",
     "    | KEYS_ONLY )*",
     "",
     "timestamp:",
@@ -351,6 +484,17 @@ const char **HqlHelpText::Get(std::string &subject) {
 
 
 void HqlHelpText::install_range_server_client_text() {
-    textMap[""] = help_text_contents;
-    textMap["select"] = help_text_select;
+  textMap[""] = help_text_rsclient_contents;
+  textMap["contents"] = help_text_rsclient_contents;
+  textMap["select"] = help_text_select;
+  textMap["create"] = help_text_create_scanner;
+  textMap["create scanner"] = help_text_create_scanner;
+  textMap["destroy"] = help_text_destroy_scanner;
+  textMap["destroy scanner"] = help_text_destroy_scanner;
+  textMap["fetch"] = help_text_fetch_scanblock;
+  textMap["fetch scanblock"] = help_text_fetch_scanblock;
+  textMap["load"] = help_text_load_range;
+  textMap["load range"] = help_text_load_range;
+  textMap["update"] = help_text_update;
+  textMap["shutdown"] = help_text_shutdown;
 }

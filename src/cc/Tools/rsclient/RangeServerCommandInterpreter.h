@@ -18,30 +18,45 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_COMMANDDESTROYSCANNER_H
-#define HYPERTABLE_COMMANDDESTROYSCANNER_H
+#ifndef HYPERTABLE_RANGESERVERCOMMANDINTERPRETER_H
+#define HYPERTABLE_RANGESERVERCOMMANDINTERPRETER_H
 
-#include "Common/InteractiveCommand.h"
+#include <string>
 
-#include "Hypertable/Lib/MasterClient.h"
+#include "AsyncComm/Comm.h"
+
+#include "Hyperspace/Session.h"
+
+#include "Hypertable/Lib/CommandInterpreter.h"
 #include "Hypertable/Lib/RangeServerClient.h"
+
+#include "TableInfo.h"
 
 namespace Hypertable {
 
-  class CommandDestroyScanner : public InteractiveCommand {
+  class Client;
+
+  class RangeServerCommandInterpreter : public CommandInterpreter {
   public:
-    CommandDestroyScanner(struct sockaddr_in &addr, RangeServerClientPtr &range_server_ptr) : m_addr(addr), m_range_server_ptr(range_server_ptr) { return; }
-    virtual const char *command_text() { return "destroy scanner"; }
-    virtual const char **usage() { return ms_usage; }
-    virtual int run();
+    RangeServerCommandInterpreter(Comm *comm, Hyperspace::SessionPtr &hyperspace_ptr, struct sockaddr_in addr, RangeServerClientPtr &range_server_ptr);
+
+    virtual void execute_line(std::string &line);
 
   private:
-    static const char *ms_usage[];
 
+    void display_scan_data(const ByteString32T *key, const ByteString32T *value, SchemaPtr &schemaPtr);
+
+    Comm *m_comm;
+    Hyperspace::SessionPtr m_hyperspace_ptr;
     struct sockaddr_in m_addr;
     RangeServerClientPtr m_range_server_ptr;
+    typedef __gnu_cxx::hash_map<std::string, TableInfo *> MapT;
+    MapT m_table_map;
+    int32_t m_cur_scanner_id;
+
   };
+  typedef boost::intrusive_ptr<RangeServerCommandInterpreter> RangeServerCommandInterpreterPtr;
 
 }
 
-#endif // HYPERTABLE_COMMANDDESTROYSCANNER_H
+#endif // HYPERTABLE_RANGESERVERCOMMANDINTERPRETER_H

@@ -363,12 +363,11 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
   try {
 
     if (!m_live_map_ptr->get(table->name, tableInfoPtr))
-      throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND,
-				  (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]");
+      throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND, (std::string)"unknown table '" + table->name + "'");
 
     if (!tableInfoPtr->get_range(range, rangePtr))
       throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND,
-				  (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]");
+				  (std::string)"(a) " + table->name + "[" + range->startRow + ".." + range->endRow + "]");
 
     schemaPtr = tableInfoPtr->get_schema();
 
@@ -381,7 +380,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
     // TODO: fix this kludge (0 return above means range split)
     if (!scannerPtr)
       throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND,
-				  (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]");
+				  (std::string)"(b) " + table->name + "[" + range->startRow + ".." + range->endRow + "]");
 
     kvBuffer = new uint8_t [ sizeof(int32_t) + DEFAULT_SCANBUF_SIZE ];
     kvLenp = (uint32_t *)kvBuffer;

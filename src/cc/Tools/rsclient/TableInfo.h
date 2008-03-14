@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -40,10 +40,6 @@ namespace Hypertable {
 
     TableIdentifierT *get_table_identifier() { return &m_table; }
     void get_schema_ptr(SchemaPtr &schema_ptr) { schema_ptr = m_schema_ptr; }
-
-    typedef __gnu_cxx::hash_map<std::string, TableInfo *> MapT;
-
-    static MapT map;
 
   private:
     TableIdentifierT  m_table;

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -27,8 +27,6 @@
 #include "TableInfo.h"
 
 namespace Hypertable {
-
-  TableInfo::MapT  TableInfo::map;
 
   TableInfo::TableInfo(std::string &table_name) {
     memset(&m_table, 0, sizeof(TableIdentifierT));

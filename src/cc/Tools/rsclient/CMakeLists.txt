@@ -23,20 +23,13 @@ set ( TEST_DEPENDENCIES ${DST_DIR}/Test1-data.txt ${DST_DIR}/Test2-data.txt )
 
 set (rsclient_SRCS
 rsclient.cc
-CommandCreateScanner.cc
-CommandDestroyScanner.cc
-CommandFetchScanblock.cc
-CommandLoadRange.cc
-CommandShutdown.cc
-CommandUpdate.cc
-DisplayScanData.cc
+RangeServerCommandInterpreter.cc
 TableInfo.cc
-ParseRangeSpec.cc
 )
 
 # rsclient - Range Server client command interpreter
 add_executable (rsclient ${rsclient_SRCS})
-target_link_libraries (rsclient pthread ${BOOST_LIB} Hypertable log4cpp expat readline curses ${MALLOC_LIBRARY})
+target_link_libraries (rsclient pthread ${BOOST_LIB} boost_program_options-mt Hypertable log4cpp expat readline curses ${MALLOC_LIBRARY})
 
 # rsTest
 add_executable (rsTest tests/rsTest.cc ${TEST_DEPENDENCIES} )

@@ -1,6 +1,9 @@
-Welcome to the hypertable command interpreter.
 
-Type 'help;' or '\h' for help. Type '\c' to clear the buffer.
+Welcome to the hypertable command interpreter.
+For information about Hypertable, visit http://www.hypertable.org/
+
+Type 'help' for a list of commands, or 'help shell' for a
+list of shell meta commands.
 
 DROP TABLE IF EXISTS hypertable;
 CREATE TABLE hypertable (

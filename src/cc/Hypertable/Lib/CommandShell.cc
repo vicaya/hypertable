@@ -61,15 +61,13 @@ namespace {
 
   const char *help_text = 
   "\n" \
-  "For information about Hypertable, visit http://www.hypertable.org/\n" \
-  "\n" \
-  "Interpreter Commands\n" \
-  "--------------------\n" \
+  "Interpreter Meta Commands\n" \
+  "-------------------------\n" \
   "?          (\\?) Synonym for `help'.\n" \
   "clear      (\\c) Clear command.\n" \
   "exit       (\\q) Exit program. Same as quit.\n" \
   "print      (\\p) Print current command.\n" \
-  "quit       (\\q) Quit hypertable.\n" \
+  "quit       (\\q) Quit program.\n" \
   "source <f> (.)  Execute commands in file <f>.\n" \
   "system     (\\!) Execute a system shell command.\n" \
   "\n";
@@ -79,7 +77,8 @@ namespace {
 
 /**
  */
-CommandShell::CommandShell(std::string program_name, CommandInterpreterPtr &interp_ptr, po::variables_map &vm) : m_program_name(program_name), m_interp_ptr(interp_ptr), m_varmap(vm), g_batch_mode(false), g_no_prompt(false), g_cont(false), line_read(0) {
+CommandShell::CommandShell(std::string program_name, CommandInterpreterPtr &interp_ptr, po::variables_map &vm) : m_program_name(program_name), m_interp_ptr(interp_ptr), m_varmap(vm), m_batch_mode(false), m_no_prompt(false), m_cont(false), m_line_read(0) {
+  m_prompt_str = program_name + "> ";
 }
 
 
@@ -87,30 +86,30 @@ CommandShell::CommandShell(std::string program_name, CommandInterpreterPtr &inte
 /**
  */
 char *CommandShell::rl_gets () {
-  if (line_read) {
-    free (line_read);
-    line_read = (char *)NULL;
+  if (m_line_read) {
+    free (m_line_read);
+    m_line_read = (char *)NULL;
   }
 
   /* Get a line from the user. */
-  if (g_batch_mode || g_no_prompt) {
-    if (!getline(cin, gInputStr))
+  if (m_batch_mode || m_no_prompt) {
+    if (!getline(cin, m_input_str))
       return 0;
-    boost::trim(gInputStr);
-    if (gInputStr.find("quit", 0) != 0)
-      cout << gInputStr << endl;
-    return (char *)gInputStr.c_str();
+    boost::trim(m_input_str);
+    if (m_input_str.find("quit", 0) != 0)
+      cout << m_input_str << endl;
+    return (char *)m_input_str.c_str();
   }
-  else if (!g_cont)
-    line_read = readline("hypertable> ");
+  else if (!m_cont)
+    m_line_read = readline(m_prompt_str.c_str());
   else
-    line_read = readline("         -> ");
+    m_line_read = readline("         -> ");
 
   /* If the line has any text in it, save it on the history. */
-  if (!g_batch_mode && line_read && *line_read)
-    add_history (line_read);
+  if (!m_batch_mode && m_line_read && *m_line_read)
+    add_history (m_line_read);
 
-  return line_read;
+  return m_line_read;
 }
 
 
@@ -138,21 +137,24 @@ int CommandShell::run() {
 
   ms_history_file = (std::string)getenv("HOME") + "/." + m_program_name + "_history";
 
-  g_batch_mode = m_varmap.count("batch") ? true : false;
-  g_no_prompt = m_varmap.count("no-prompt") ? true : false;
+  m_batch_mode = m_varmap.count("batch") ? true : false;
+  m_no_prompt = m_varmap.count("no-prompt") ? true : false;
   if (m_varmap.count("timestamp-format"))
     timestamp_format = m_varmap["timestamp-format"].as<string>();
 
   if (timestamp_format != "")
     m_interp_ptr->set_timestamp_output_format(timestamp_format);
 
-  if (!g_batch_mode) {
+  if (!m_batch_mode) {
 
     read_history(ms_history_file.c_str());
 
-    cout << "Welcome to the " << m_program_name << " command interpreter." << endl;
     cout << endl;
-    cout << "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer." << endl;
+    cout << "Welcome to the " << m_program_name << " command interpreter." << endl;
+    cout << "For information about Hypertable, visit http://www.hypertable.org/" << endl;
+    cout << endl;
+    cout << "Type 'help' for a list of commands, or 'help shell' for a" << endl;
+    cout << "list of shell meta commands." << endl;
     cout << endl << flush;
   }
 
@@ -163,8 +165,8 @@ int CommandShell::run() {
   if (signal (SIGTERM, termination_handler) == SIG_IGN)
     signal (SIGTERM, SIG_IGN);
 
-  g_accum = "";
-  if (!g_batch_mode)
+  m_accum = "";
+  if (!m_batch_mode)
     using_history();
   while ((line = rl_gets()) != 0) {
 
@@ -173,27 +175,29 @@ int CommandShell::run() {
       if (*line == 0)
 	continue;
 
-      if (!strncasecmp(line, "help", 4) || !strncmp(line, "\\h", 2) || *line == '?') {
+      if (!strncasecmp(line, "help shell", 10)) {
+	cout << help_text;
+	continue;
+      }
+      else if (!strncasecmp(line, "help", 4) || !strncmp(line, "\\h", 2) || *line == '?') {
 	command = line;
 	std::transform( command.begin(), command.end(), command.begin(), ::tolower );
 	trim_if(command, boost::is_any_of(" \t\n\r;"));
-	if (command == "help" || command == "\\h" || command == "?")
-	  cout << help_text;
 	m_interp_ptr->execute_line(command);
 	continue;
       }
       else if (!strcasecmp(line, "quit") || !strcasecmp(line, "exit") || !strcmp(line, "\\q")) {
-	if (!g_batch_mode)
+	if (!m_batch_mode)
 	  write_history(ms_history_file.c_str());
 	return 0;
       }
       else if (!strcasecmp(line, "print") || !strcmp(line, "\\p")) {
-	cout << g_accum << endl;
+	cout << m_accum << endl;
 	continue;
       }
       else if (!strcasecmp(line, "clear") || !strcmp(line, "\\c")) {
-	g_accum = "";
-	g_cont = false;
+	m_accum = "";
+	m_cont = false;
 	continue;
       }
       else if (!strncmp(line, "source", 6) || line[0] == '.') {
@@ -242,13 +246,13 @@ int CommandShell::run() {
       base = line;
       ptr = strchr(base, ';');
       while (ptr) {
-	g_accum += string(base, ptr-base);
-	if (g_accum.size() > 0) {
-	  boost::trim(g_accum);
-	  if (g_accum.find("#") != 0)
-	    command_queue.push(g_accum);
-	  g_accum = "";
-	  g_cont = false;
+	m_accum += string(base, ptr-base);
+	if (m_accum.size() > 0) {
+	  boost::trim(m_accum);
+	  if (m_accum.find("#") != 0)
+	    command_queue.push(m_accum);
+	  m_accum = "";
+	  m_cont = false;
 	}
 	base = ptr+1;
 	ptr = strchr(base, ';');
@@ -256,17 +260,17 @@ int CommandShell::run() {
       command = string(base);
       boost::trim(command);
       if (command != "" && command.find("#") != 0) {
-	g_accum += command;
-	boost::trim(g_accum);
+	m_accum += command;
+	boost::trim(m_accum);
       }
-      if (g_accum != "") {
-	g_cont = true;
-	g_accum += " ";
+      if (m_accum != "") {
+	m_cont = true;
+	m_accum += " ";
       }
 
       while (!command_queue.empty()) {
 	if (command_queue.front() == "quit" || command_queue.front() == "exit") {
-	  if (!g_batch_mode)
+	  if (!m_batch_mode)
 	    write_history(ms_history_file.c_str());
 	  return 0;
 	}
@@ -279,7 +283,7 @@ int CommandShell::run() {
 	  long secs = strtol(sec_str.c_str(), &endptr, 0);
 	  if (secs == 0 && errno == EINVAL || *endptr != 0) {
 	    cout << "error: invalid seconds specification" << endl;
-	    if (g_batch_mode)
+	    if (m_batch_mode)
 	      return 1;
 	  }
 	  else
@@ -292,17 +296,17 @@ int CommandShell::run() {
     }
     catch (Hypertable::Exception &e) {
       cerr << "Error: " << e.what() << " - " << Error::get_text(e.code()) << endl;
-      if (g_batch_mode)
+      if (m_batch_mode)
 	return 1;
-      g_accum = "";
+      m_accum = "";
       while (!command_queue.empty())
 	command_queue.pop();
-      g_cont=false;
+      m_cont=false;
     }
 
   }
 
-  if (!g_batch_mode)
+  if (!m_batch_mode)
     write_history(ms_history_file.c_str());
   return 0;
 

@@ -1,0 +1,336 @@
+/**
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * 
+ * This file is part of Hypertable.
+ * 
+ * Hypertable is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or any later version.
+ * 
+ * Hypertable is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
+
+#include <cassert>
+#include <cstdio>
+#include <cstring>
+
+#include <boost/progress.hpp>
+#include <boost/timer.hpp>
+#include <boost/thread/xtime.hpp>
+
+extern "C" {
+#include <time.h>
+}
+
+#include "AsyncComm/DispatchHandlerSynchronizer.h"
+
+#include "Common/Error.h"
+#include "Common/FileUtils.h"
+
+#include "Hypertable/Lib/HqlHelpText.h"
+#include "Hypertable/Lib/HqlParser.h"
+#include "Hypertable/Lib/Key.h"
+#include "Hypertable/Lib/LoadDataSource.h"
+#include "Hypertable/Lib/ScanBlock.h"
+#include "Hypertable/Lib/TestSource.h"
+
+#include "RangeServerCommandInterpreter.h"
+
+#define BUFFER_SIZE 65536
+
+using namespace Hypertable;
+using namespace Hypertable::HqlParser;
+
+RangeServerCommandInterpreter::RangeServerCommandInterpreter(Comm *comm, Hyperspace::SessionPtr &hyperspace_ptr, struct sockaddr_in addr, RangeServerClientPtr &range_server_ptr) : m_comm(comm), m_hyperspace_ptr(hyperspace_ptr), m_addr(addr), m_range_server_ptr(range_server_ptr), m_cur_scanner_id(-1) {
+  HqlHelpText::install_range_server_client_text();
+  return;
+}
+
+
+void RangeServerCommandInterpreter::execute_line(std::string &line) {
+  int error;
+  TableIdentifierT *table;
+  RangeT range;
+  TableInfo *table_info;
+  std::string schema_str;
+  std::string out_str;
+  SchemaPtr schema_ptr;
+  hql_interpreter_state state;
+  hql_interpreter interp(state);
+  parse_info<> info;
+  DispatchHandlerSynchronizer sync_handler;
+  ScanBlock scanblock;
+  int32_t scanner_id;
+
+  info = parse(line.c_str(), interp, space_p);
+
+  if (info.full) {
+
+    // if table name specified, get associated objects
+    if (state.table_name != "") {
+#if defined(__APPLE__)
+      boost::to_upper(state.table_name);
+#endif
+      table_info = m_table_map[state.table_name];
+      if (table_info == 0) {
+	table_info = new TableInfo(state.table_name);
+	if ((error = table_info->load(m_hyperspace_ptr)) != Error::OK)
+	  throw Exception(error, std::string("Problem loading table '") + state.table_name + "'");
+	m_table_map[state.table_name] = table_info;
+      }
+      table = table_info->get_table_identifier();
+      table_info->get_schema_ptr(schema_ptr);
+    }
+
+    // if end row is "??", transform it to 0xff 0xff
+    if (state.range_end_row == "??")
+      state.range_end_row = Key::END_ROW_MARKER;
+
+    if (state.command == COMMAND_LOAD_RANGE) {
+
+      cout << "TableName  = " << state.table_name << endl;
+      cout << "StartRow   = " << state.range_start_row << endl;
+      cout << "EndRow     = " << state.range_end_row << endl;
+
+      range.startRow = state.range_start_row.c_str();
+      range.endRow = state.range_end_row.c_str();
+
+      if ((error = m_range_server_ptr->load_range(m_addr, *table, range, 200000000LL, 0)) != Error::OK)
+	throw Exception(error, std::string("load_range") + state.table_name + "'");
+
+    }
+    else if (state.command == COMMAND_UPDATE) {
+      TestSource *tsource = 0;
+      
+      if (!FileUtils::exists(state.input_file.c_str()))
+	throw Exception(Error::FILE_NOT_FOUND, std::string("Input file '") + state.input_file + "' does not exist");
+
+      tsource = new TestSource(state.input_file, schema_ptr.get());
+
+      uint8_t *send_buf = 0;
+      size_t   send_buf_len = 0;
+      DynamicBuffer buf(BUFFER_SIZE);
+      ByteString32T *key, *value;
+      EventPtr eventPtr;
+      bool outstanding = false;
+
+      while (true) {
+
+	while (tsource->next(&key, &value)) {
+	  buf.ensure(Length(key) + Length(value));
+	  buf.addNoCheck(key, Length(key));
+	  buf.addNoCheck(value, Length(value));
+	  if (buf.fill() > BUFFER_SIZE)
+	    break;
+	}
+
+	/**
+	 * Sort the keys
+	 */
+	if (buf.fill()) {
+	  std::vector<ByteString32T *> keys;
+	  struct ltByteString32 ltbs32;
+	  uint8_t *ptr;
+	  size_t len;
+
+	  ptr = buf.buf;
+
+	  while (ptr < buf.ptr) {
+	    key = (ByteString32T *)ptr;
+	    keys.push_back(key);
+	    ptr += Length(key) + Length(Skip(key));
+	  }
+
+	  std::sort(keys.begin(), keys.end(), ltbs32);
+
+	  send_buf = new uint8_t [ buf.fill() ];
+	  ptr = send_buf;
+	  for (size_t i=0; i<keys.size(); i++) {
+	    len = Length(keys[i]) + Length(Skip(keys[i]));
+	    memcpy(ptr, keys[i], len);
+	    ptr += len;
+	  }
+	  send_buf_len = ptr - send_buf;
+	  buf.clear();
+	}
+	else
+	  send_buf_len = 0;
+
+	if (outstanding) {
+	  if (!sync_handler.wait_for_reply(eventPtr)) {
+	    error = Protocol::response_code(eventPtr);
+	    if (error == Error::RANGESERVER_PARTIAL_UPDATE)
+	      cout << "partial update" << endl;
+	    else
+	      throw Exception(error, (Protocol::string_format_message(eventPtr)));
+	  }
+	  else
+	    cout << "success" << endl;
+	}
+
+	outstanding = false;
+
+	if (send_buf_len > 0) {
+	  if ((error = m_range_server_ptr->update(m_addr, *table, send_buf, send_buf_len, &sync_handler)) != Error::OK)
+	    throw Exception(error, "update error");
+	  outstanding = true;
+	}
+	else
+	  break;
+      }
+
+      if (outstanding) {
+	if (!sync_handler.wait_for_reply(eventPtr)) {
+	  error = Protocol::response_code(eventPtr);
+	  if (error == Error::RANGESERVER_PARTIAL_UPDATE)
+	    cout << "partial update" << endl;
+	  else
+	    throw Exception(error, (Protocol::string_format_message(eventPtr)));
+	}
+	else
+	  cout << "success" << endl;
+      }
+    }
+    else if (state.command == COMMAND_CREATE_SCANNER) {
+      ScanSpecificationT scan_spec;
+
+      range.startRow = state.range_start_row.c_str();
+      range.endRow = state.range_end_row.c_str();
+
+      /**
+       * Create Scan specification
+       */
+      scan_spec.rowLimit = state.scan.limit;
+      scan_spec.max_versions = state.scan.max_versions;
+      for (size_t i=0; i<state.scan.columns.size(); i++)
+	scan_spec.columns.push_back(state.scan.columns[i].c_str());
+      if (state.scan.row != "") {
+	scan_spec.startRow = state.scan.row.c_str();
+	scan_spec.startRowInclusive = true;
+	scan_spec.endRow = state.scan.row.c_str();
+	scan_spec.endRowInclusive = true;
+	scan_spec.rowLimit = 1;
+      }
+      else {
+	scan_spec.startRow = (state.scan.start_row == "") ? 0 : state.scan.start_row.c_str();
+	scan_spec.startRowInclusive = state.scan.start_row_inclusive;
+	scan_spec.endRow = (state.scan.end_row == "") ? Key::END_ROW_MARKER : state.scan.end_row.c_str();
+	scan_spec.endRowInclusive = state.scan.end_row_inclusive;
+      }
+      scan_spec.interval.first  = state.scan.start_time;
+      scan_spec.interval.second = state.scan.end_time;
+      scan_spec.return_deletes = state.scan.return_deletes;
+
+      /**
+       */
+      if ((error = m_range_server_ptr->create_scanner(m_addr, *table, range, scan_spec, scanblock)) != Error::OK)
+	throw Exception(error, "problem creating scanner");
+
+      m_cur_scanner_id = scanblock.get_scanner_id();
+
+      const ByteString32T *key, *value;
+
+      while (scanblock.next(key, value))
+	display_scan_data(key, value, schema_ptr);
+
+      if (scanblock.eos())
+	m_cur_scanner_id = -1;
+
+    }
+    else if (state.command == COMMAND_FETCH_SCANBLOCK) {
+
+      if (state.scanner_id == -1) {
+	if (m_cur_scanner_id == -1)
+	  throw Exception(Error::RANGESERVER_INVALID_SCANNER_ID, "No currently open scanner");
+	scanner_id = m_cur_scanner_id;
+	m_cur_scanner_id = -1;
+      }
+      else
+	scanner_id = state.scanner_id;
+
+      /**
+       */
+      if ((error = m_range_server_ptr->fetch_scanblock(m_addr, scanner_id, scanblock)) != Error::OK)
+	throw Exception(error, "problem fetching scanblock");
+
+      const ByteString32T *key, *value;
+
+      while (scanblock.next(key, value))
+	display_scan_data(key, value, schema_ptr);
+
+      if (scanblock.eos())
+	m_cur_scanner_id = -1;
+      
+    }
+    else if (state.command == COMMAND_DESTROY_SCANNER) {
+      int32_t scanner_id;
+
+      if (state.scanner_id == -1) {
+	if (m_cur_scanner_id == -1)
+	  return;
+	scanner_id = m_cur_scanner_id;
+	m_cur_scanner_id = -1;
+      }
+      else
+	scanner_id = state.scanner_id;
+
+      if ((error = m_range_server_ptr->destroy_scanner(m_addr, scanner_id)) != Error::OK)
+	throw Exception(error, "problem destroying scanner");
+      
+    }
+    else if (state.command == COMMAND_HELP) {
+      const char **text = HqlHelpText::Get(state.str);
+      if (text) {
+	for (size_t i=0; text[i]; i++)
+	  cout << text[i] << endl;
+      }
+      else
+	cout << endl << "no help for '" << state.str << "'" << endl << endl;
+    }
+    else if (state.command == COMMAND_SHUTDOWN) {
+      if ((error = m_range_server_ptr->shutdown(m_addr)) != Error::OK)
+	throw Exception(error, "problem shutting down RangeServer");
+    }
+    else
+      throw Exception(Error::HQL_PARSE_ERROR, "unsupported command");
+  }
+  else
+    throw Exception(Error::HQL_PARSE_ERROR, std::string("parse error at: ") + info.stop);
+}
+
+
+
+/**
+ *
+ */
+void RangeServerCommandInterpreter::display_scan_data(const ByteString32T *key, const ByteString32T *value, SchemaPtr &schemaPtr) {
+  Key keyComps(key);
+  Schema::ColumnFamily *cf;
+
+  if (keyComps.flag == FLAG_DELETE_ROW) {
+    cout << keyComps.timestamp << " " << keyComps.row << " DELETE" << endl;
+  }
+  else {
+    if (keyComps.column_family_code > 0) {
+      cf = schemaPtr->get_column_family(keyComps.column_family_code);
+      if (keyComps.flag == FLAG_DELETE_CELL)
+	cout << keyComps.timestamp << " " << keyComps.row << " " << cf->name << ":" << keyComps.column_qualifier << " DELETE" << endl;
+      else {
+	cout << keyComps.timestamp << " " << keyComps.row << " " << cf->name << ":" << keyComps.column_qualifier;
+	cout << endl;
+      }
+    }
+    else {
+      cerr << "Bad column family (" << (int)keyComps.column_family_code << ") for row key " << keyComps.row;
+      cerr << endl;
+    }
+  }
+}
