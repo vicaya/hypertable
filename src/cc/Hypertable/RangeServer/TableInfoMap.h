@@ -30,6 +30,11 @@
 
 namespace Hypertable {
 
+  class TableInfoMap;
+
+  typedef boost::intrusive_ptr<TableInfoMap> TableInfoMapPtr;
+
+
   /** 
    * Provides a mapping from table name to TableInfo object.
    */
@@ -42,6 +47,10 @@ namespace Hypertable {
     void set(std::string name, TableInfoPtr &info);
     bool remove(std::string name, TableInfoPtr &info);
     void get_all(std::vector<TableInfoPtr> &tv);
+    void clear();
+    void clear_ranges();
+    
+    void atomic_merge(TableInfoMapPtr &table_info_map_ptr, CommitLogPtr &replay_log_ptr);
 
   private:
     typedef __gnu_cxx::hash_map<string, TableInfoPtr> TableInfoMapT;
@@ -49,7 +58,6 @@ namespace Hypertable {
     boost::mutex  m_mutex;
     TableInfoMapT m_map;
   };
-  typedef boost::intrusive_ptr<TableInfoMap> TableInfoMapPtr;
 
 }
 

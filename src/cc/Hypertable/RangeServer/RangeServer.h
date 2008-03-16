@@ -90,6 +90,7 @@ namespace Hypertable {
     Comm                  *m_comm;
     TableInfoMapPtr        m_live_map_ptr;
     TableInfoMapPtr        m_replay_map_ptr;
+    CommitLogPtr           m_replay_log_ptr;
     ConnectionManagerPtr   m_conn_manager_ptr;
     ApplicationQueuePtr    m_app_queue_ptr;
     uint64_t               m_existence_file_handle;

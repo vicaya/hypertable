@@ -57,7 +57,7 @@ RangeServerCommandInterpreter::RangeServerCommandInterpreter(Comm *comm, Hypersp
 
 void RangeServerCommandInterpreter::execute_line(std::string &line) {
   int error;
-  TableIdentifierT *table;
+  TableIdentifierT *table = 0;
   RangeT range;
   TableInfo *table_info;
   std::string schema_str;

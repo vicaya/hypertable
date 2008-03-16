@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -51,7 +51,7 @@ void TableInfo::dump_range_table() {
 /**
  * 
  */
-bool TableInfo::get_range(RangeT *range, RangePtr &rangePtr) {
+bool TableInfo::get_range(RangeT *range, RangePtr &range_ptr) {
   boost::mutex::scoped_lock lock(m_mutex);
   string endRow = range->endRow;
 
@@ -60,9 +60,9 @@ bool TableInfo::get_range(RangeT *range, RangePtr &rangePtr) {
   if (iter == m_range_map.end())
     return false;
 
-  rangePtr = (*iter).second;
+  range_ptr = (*iter).second;
 
-  string startRow = rangePtr->start_row();
+  string startRow = range_ptr->start_row();
 
   if (strcmp(startRow.c_str(), range->startRow))
     return false;
@@ -75,18 +75,18 @@ bool TableInfo::get_range(RangeT *range, RangePtr &rangePtr) {
 /**
  * 
  */
-void TableInfo::add_range(RangeT *range, RangePtr &rangePtr) {
+void TableInfo::add_range(RangePtr &range_ptr) {
   boost::mutex::scoped_lock lock(m_mutex);
-  RangeMapT::iterator iter = m_range_map.find(range->endRow);
+  RangeMapT::iterator iter = m_range_map.find(range_ptr->end_row());
   assert(iter == m_range_map.end());
-  m_range_map[range->endRow] = rangePtr;
+  m_range_map[range_ptr->end_row()] = range_ptr;
 }
 
 
 /**
  * 
  */
-bool TableInfo::find_containing_range(std::string row, RangePtr &rangePtr) {
+bool TableInfo::find_containing_range(std::string row, RangePtr &range_ptr) {
   boost::mutex::scoped_lock lock(m_mutex);
 
   RangeMapT::iterator iter = m_range_map.lower_bound(row);
@@ -97,12 +97,28 @@ bool TableInfo::find_containing_range(std::string row, RangePtr &rangePtr) {
   if (row <= (*iter).second->start_row())
     return false;
 
-  rangePtr = (*iter).second;
+  range_ptr = (*iter).second;
 
   return true;
 }
 
+
 void TableInfo::get_range_vector(std::vector<RangePtr> &range_vec) {
   for (RangeMapT::iterator iter = m_range_map.begin(); iter != m_range_map.end(); iter++)
     range_vec.push_back((*iter).second);
+}
+
+
+void TableInfo::clear() {
+  boost::mutex::scoped_lock lock(m_mutex);
+  m_range_map.clear();
+}
+
+
+/**
+ * 
+ */
+TableInfo *TableInfo::create_shallow_copy() {
+  boost::mutex::scoped_lock lock(m_mutex);
+  return new TableInfo(m_master_client_ptr, &m_identifier, m_schema);
 }

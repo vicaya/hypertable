@@ -77,7 +77,12 @@ CommitLog::CommitLog(Filesystem *fs, std::string &log_dir, PropertiesPtr &props_
 
 
 CommitLog::~CommitLog() {
+  int error;
   delete m_compressor;
+  if (m_fd > 0) {
+    if ((error = m_fs->close(m_fd)) != Error::OK)
+      HT_ERRORF("Problem closing commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
+  }
 }
 
 

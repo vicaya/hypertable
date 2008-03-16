@@ -45,7 +45,7 @@ namespace Hypertable {
     static const short COMMAND_REPLAY_COMMIT    = 12;
     static const short COMMAND_MAX              = 13;
 
-    static const uint16_t LOAD_RANGE_FLAG_PHANTOM = 0x0001;
+    static const uint16_t LOAD_RANGE_FLAG_REPLAY = 0x0001;
 
     static const char *m_command_strings[];
 

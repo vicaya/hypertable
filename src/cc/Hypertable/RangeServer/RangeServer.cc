@@ -345,7 +345,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
   int error = Error::OK;
   std::string errMsg;
   TableInfoPtr tableInfoPtr;
-  RangePtr rangePtr;
+  RangePtr range_ptr;
   CellListScannerPtr scannerPtr;
   bool more = true;
   uint32_t id;
@@ -365,17 +365,17 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
     if (!m_live_map_ptr->get(table->name, tableInfoPtr))
       throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND, (std::string)"unknown table '" + table->name + "'");
 
-    if (!tableInfoPtr->get_range(range, rangePtr))
+    if (!tableInfoPtr->get_range(range, range_ptr))
       throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND,
 				  (std::string)"(a) " + table->name + "[" + range->startRow + ".." + range->endRow + "]");
 
     schemaPtr = tableInfoPtr->get_schema();
 
-    rangePtr->get_scan_timestamp(scan_timestamp);
+    range_ptr->get_scan_timestamp(scan_timestamp);
 
     scanContextPtr = new ScanContext(scan_timestamp.logical, scan_spec, range, schemaPtr);
  
-    scannerPtr = rangePtr->create_scanner(scanContextPtr);
+    scannerPtr = range_ptr->create_scanner(scanContextPtr);
 
     // TODO: fix this kludge (0 return above means range split)
     if (!scannerPtr)
@@ -387,7 +387,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
 
     more = FillScanBlock(scannerPtr, kvBuffer+sizeof(int32_t), DEFAULT_SCANBUF_SIZE, kvLenp);
     if (more)
-      id = Global::scannerMap.put(scannerPtr, rangePtr);
+      id = Global::scannerMap.put(scannerPtr, range_ptr);
     else
       id = 0;
 
@@ -429,7 +429,7 @@ void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t s
   string errMsg;
   int error = Error::OK;
   CellListScannerPtr scannerPtr;
-  RangePtr rangePtr;
+  RangePtr range_ptr;
   bool more = true;
   uint8_t *kvBuffer = 0;
   uint32_t *kvLenp = 0;
@@ -440,7 +440,7 @@ void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t s
     cout << "Scanner ID = " << scannerId << endl;
   }
 
-  if (!Global::scannerMap.get(scannerId, scannerPtr, rangePtr)) {
+  if (!Global::scannerMap.get(scannerId, scannerPtr, range_ptr)) {
     error = Error::RANGESERVER_INVALID_SCANNER_ID;
     char tbuf[32];
     sprintf(tbuf, "%d", scannerId);
@@ -493,8 +493,8 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
   std::string errMsg;
   int error = Error::OK;
   SchemaPtr schemaPtr;
-  TableInfoPtr tableInfoPtr;
-  RangePtr rangePtr;
+  TableInfoPtr table_info_ptr;
+  RangePtr range_ptr;
   string tableHdfsDir;
   string rangeHdfsDir;
   char md5DigestStr[33];
@@ -507,6 +507,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
   KeySpec key;
   std::string metadata_key_str;
   std::string start_row, split_log_dir;
+  bool replay = (flags & RangeServerProtocol::LOAD_RANGE_FLAG_REPLAY) == RangeServerProtocol::LOAD_RANGE_FLAG_REPLAY;
 
   if (Global::verbose) {
     cout << "load_range" << endl;
@@ -518,27 +519,45 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
 
   try {
 
-    /**
-     * Get TableInfo, create if doesn't exist
-     */
-    if (!m_live_map_ptr->get(table->name, tableInfoPtr)) {
-      tableInfoPtr = new TableInfo(m_master_client_ptr, table, schemaPtr);
-      registerTable = true;
+    if (replay) {
+
+      /** Get TableInfo from replay map, or copy it from live map, or create if doesn't exist **/
+      if (!m_replay_map_ptr->get(table->name, table_info_ptr)) {
+	if (!m_live_map_ptr->get(table->name, table_info_ptr)) {
+	  table_info_ptr = new TableInfo(m_master_client_ptr, table, schemaPtr);
+	  registerTable = true;
+	}
+	else
+	  table_info_ptr = table_info_ptr->create_shallow_copy();
+      }
+
+    }
+    else {
+      /** Get TableInfo, create if doesn't exist **/
+      if (!m_live_map_ptr->get(table->name, table_info_ptr)) {
+	table_info_ptr = new TableInfo(m_master_client_ptr, table, schemaPtr);
+	registerTable = true;
+      }
     }
 
     /**
-     * Verify schema, this will create the Schema object and add it to tableInfoPtr if it doesn't exist
+     * Verify schema, this will create the Schema object and add it to table_info_ptr if it doesn't exist
      */
-    if ((error = verify_schema(tableInfoPtr, table->generation, errMsg)) != Error::OK)
+    if ((error = verify_schema(table_info_ptr, table->generation, errMsg)) != Error::OK)
       throw Exception(error, errMsg);
 
-    if (registerTable)
-      m_live_map_ptr->set(table->name, tableInfoPtr);
 
+    if (registerTable) {
+      if (replay)
+	m_replay_map_ptr->set(table->name, table_info_ptr);
+      else
+	m_live_map_ptr->set(table->name, table_info_ptr);
+    }
+	
     /**
      * Make sure this range is not already loaded
      */
-    if (tableInfoPtr->get_range(range, rangePtr))
+    if (table_info_ptr->get_range(range, range_ptr))
       throw Exception(Error::RANGESERVER_RANGE_ALREADY_LOADED, (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]");
 
     /**
@@ -549,129 +568,141 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
       Global::metadata_table_ptr = new Table(m_props_ptr, m_conn_manager_ptr, Global::hyperspace_ptr, "METADATA");
     }
 
-    /**
-     * Take ownership of the range by writing the 'Location' column in the
-     * METADATA table, or /hypertable/root{location} attribute of Hyperspace
-     * if it is the root range.
-     */
-    if (!is_root) {
-
-      metadata_key_str = std::string("") + (uint32_t)table->id + ":" + range->endRow;
+    if (!replay) {
 
       /**
-       * Take ownership of the range
+       * Take ownership of the range by writing the 'Location' column in the
+       * METADATA table, or /hypertable/root{location} attribute of Hyperspace
+       * if it is the root range.
        */
-      if ((error = Global::metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK)
-	throw Exception(error, "Problem creating mutator on METADATA table");
-      key.row = metadata_key_str.c_str();
-      key.row_len = strlen(metadata_key_str.c_str());
-      key.column_family = "Location";
-      key.column_qualifier = 0;
-      key.column_qualifier_len = 0;
-      mutator_ptr->set(0, key, (uint8_t *)m_location.c_str(), strlen(m_location.c_str()));
-      mutator_ptr->flush();
+      if (!is_root) {
 
-      bool got_start_row = false;
+	metadata_key_str = std::string("") + (uint32_t)table->id + ":" + range->endRow;
 
-      scan_spec.rowLimit = 1;
-      scan_spec.max_versions = 1;
-      scan_spec.startRow = metadata_key_str.c_str();
-      scan_spec.startRowInclusive = true;
-      scan_spec.endRow = metadata_key_str.c_str();
-      scan_spec.endRowInclusive = true;
-      scan_spec.interval.first = 0;
-      scan_spec.interval.second = 0;
+	/**
+	 * Take ownership of the range
+	 */
+	if ((error = Global::metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK)
+	  throw Exception(error, "Problem creating mutator on METADATA table");
+	key.row = metadata_key_str.c_str();
+	key.row_len = strlen(metadata_key_str.c_str());
+	key.column_family = "Location";
+	key.column_qualifier = 0;
+	key.column_qualifier_len = 0;
+	mutator_ptr->set(0, key, (uint8_t *)m_location.c_str(), strlen(m_location.c_str()));
+	mutator_ptr->flush();
 
-      scan_spec.columns.clear();
-      scan_spec.columns.push_back("StartRow");
-      scan_spec.columns.push_back("SplitLogDir");
-      scan_spec.return_deletes = false;
+	bool got_start_row = false;
 
-      if ((error = Global::metadata_table_ptr->create_scanner(scan_spec, scanner_ptr)) != Error::OK)
-	throw Exception(error, "Problem creating scanner on METADATA table");
+	scan_spec.rowLimit = 1;
+	scan_spec.max_versions = 1;
+	scan_spec.startRow = metadata_key_str.c_str();
+	scan_spec.startRowInclusive = true;
+	scan_spec.endRow = metadata_key_str.c_str();
+	scan_spec.endRowInclusive = true;
+	scan_spec.interval.first = 0;
+	scan_spec.interval.second = 0;
 
-      while (scanner_ptr->next(cell)) {
-	if (!strcmp(cell.column_family, "StartRow")) {
-	  if (cell.value_len > 0)
-	    start_row = std::string((const char *)cell.value, cell.value_len);
-	  got_start_row = true;
+	scan_spec.columns.clear();
+	scan_spec.columns.push_back("StartRow");
+	scan_spec.columns.push_back("SplitLogDir");
+	scan_spec.return_deletes = false;
+
+	if ((error = Global::metadata_table_ptr->create_scanner(scan_spec, scanner_ptr)) != Error::OK)
+	  throw Exception(error, "Problem creating scanner on METADATA table");
+
+	while (scanner_ptr->next(cell)) {
+	  if (!strcmp(cell.column_family, "StartRow")) {
+	    if (cell.value_len > 0)
+	      start_row = std::string((const char *)cell.value, cell.value_len);
+	    got_start_row = true;
+	  }
+	  else if (!strcmp(cell.column_family, "SplitLogDir")) {
+	    if (cell.value_len > 0)
+	      split_log_dir = std::string((const char *)cell.value, cell.value_len);
+	  }
+	  else {
+	    // should never happen
+	    HT_ERROR("Scanner returned column not requested.");
+	  }
 	}
-	else if (!strcmp(cell.column_family, "SplitLogDir")) {
-	  if (cell.value_len > 0)
-	    split_log_dir = std::string((const char *)cell.value, cell.value_len);
+
+	if (!got_start_row)
+	  throw Exception(Error::RANGESERVER_NO_METADATA_FOR_RANGE, (std::string)"StartRow for METADATA[" + metadata_key_str + "] not found");
+
+	// make sure StartRow matches
+	if (*range->startRow == 0 && start_row != "" || strcmp(range->startRow, start_row.c_str()))
+	  throw Exception(Error::RANGESERVER_RANGE_MISMATCH, (std::string)"StartRow '" + std::string((const char *)cell.value, cell.value_len) + "' does not match '" + range->startRow + "'");
+
+      }
+      else {  //root
+	uint64_t handle;
+	HandleCallbackPtr nullCallbackPtr;
+	uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE;
+
+	HT_INFO("Loading root METADATA range");
+
+	if ((error = m_hyperspace_ptr->open("/hypertable/root", oflags, nullCallbackPtr, &handle)) != Error::OK) {
+	  HT_ERRORF("Problem creating Hyperspace root file '/hypertable/root' - %s", Error::get_text(error));
+	  DUMP_CORE;
 	}
-	else {
-	  // should never happen
-	  HT_ERROR("Scanner returned column not requested.");
+
+	if ((error = m_hyperspace_ptr->attr_set(handle, "location", m_location.c_str(), strlen(m_location.c_str()))) != Error::OK) {
+	  HT_ERRORF("Problem creating attribute 'location' on Hyperspace file '/hypertable/root' - %s", Error::get_text(error));
+	  DUMP_CORE;
+	}
+
+	m_hyperspace_ptr->close(handle);
+      }
+
+      schemaPtr = table_info_ptr->get_schema();
+
+      /**
+       * Check for existence of and create, if necessary, range directory (md5 of endrow)
+       * under all locality group directories for this table
+       */
+      {
+	assert(*range->endRow != 0);
+	md5_string(range->endRow, md5DigestStr);
+	md5DigestStr[24] = 0;
+	tableHdfsDir = (string)"/hypertable/tables/" + (string)table->name;
+	list<Schema::AccessGroup *> *lgList = schemaPtr->get_access_group_list();
+	for (list<Schema::AccessGroup *>::iterator lgIter = lgList->begin(); lgIter != lgList->end(); lgIter++) {
+	  // notice the below variables are different "range" vs. "table"
+	  rangeHdfsDir = tableHdfsDir + "/" + (*lgIter)->name + "/" + md5DigestStr;
+	  if ((error = Global::dfs->mkdirs(rangeHdfsDir)) != Error::OK)
+	    throw Exception(error, (std::string)"Problem creating range directory '" + rangeHdfsDir + "'");
 	}
       }
-
-      if (!got_start_row)
-	throw Exception(Error::RANGESERVER_NO_METADATA_FOR_RANGE, (std::string)"StartRow for METADATA[" + metadata_key_str + "] not found");
-
-      // make sure StartRow matches
-      if (*range->startRow == 0 && start_row != "" || strcmp(range->startRow, start_row.c_str()))
-	throw Exception(Error::RANGESERVER_RANGE_MISMATCH, (std::string)"StartRow '" + std::string((const char *)cell.value, cell.value_len) + "' does not match '" + range->startRow + "'");
-
-    }
-    else {  //root
-      uint64_t handle;
-      HandleCallbackPtr nullCallbackPtr;
-      uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE;
-
-      HT_INFO("Loading root METADATA range");
-
-      if ((error = m_hyperspace_ptr->open("/hypertable/root", oflags, nullCallbackPtr, &handle)) != Error::OK) {
-	HT_ERRORF("Problem creating Hyperspace root file '/hypertable/root' - %s", Error::get_text(error));
-	DUMP_CORE;
-      }
-
-      if ((error = m_hyperspace_ptr->attr_set(handle, "location", m_location.c_str(), strlen(m_location.c_str()))) != Error::OK) {
-	HT_ERRORF("Problem creating attribute 'location' on Hyperspace file '/hypertable/root' - %s", Error::get_text(error));
-	DUMP_CORE;
-      }
-
-      m_hyperspace_ptr->close(handle);
     }
 
-    schemaPtr = tableInfoPtr->get_schema();
-
-    /**
-     * Check for existence of and create, if necessary, range directory (md5 of endrow)
-     * under all locality group directories for this table
-     */
-    {
-      assert(*range->endRow != 0);
-      md5_string(range->endRow, md5DigestStr);
-      md5DigestStr[24] = 0;
-      tableHdfsDir = (string)"/hypertable/tables/" + (string)table->name;
-      list<Schema::AccessGroup *> *lgList = schemaPtr->get_access_group_list();
-      for (list<Schema::AccessGroup *>::iterator lgIter = lgList->begin(); lgIter != lgList->end(); lgIter++) {
-	// notice the below variables are different "range" vs. "table"
-	rangeHdfsDir = tableHdfsDir + "/" + (*lgIter)->name + "/" + md5DigestStr;
-	if ((error = Global::dfs->mkdirs(rangeHdfsDir)) != Error::OK)
-	  throw Exception(error, (std::string)"Problem creating range directory '" + rangeHdfsDir + "'");
-      }
-    }
-
-    rangePtr = new Range(m_master_client_ptr, *table, schemaPtr, range, soft_limit);
+    range_ptr = new Range(m_master_client_ptr, *table, schemaPtr, range, soft_limit);
 
     /**
      * NOTE: The range does not need to be locked in the following replay since
      * it has not been added yet and therefore no one else can find it and
      * concurrently access it.
      */
-
-    // TODO: if (flags & RangeServerProtocol::LOAD_RANGE_FLAG_PHANTOM), do the following in 'go live'
-    if (split_log_dir != "") {
-      uint64_t timestamp = Global::log->get_timestamp();
-      if ((error = Global::log->link_log(table, split_log_dir.c_str(), timestamp)) != Error::OK)
-	throw Exception(error, (std::string)"Unable to link external log '" + split_log_dir + "' into commit log");
-      if ((error = rangePtr->replay_split_log(split_log_dir, timestamp)) != Error::OK)
-	throw Exception(error, (std::string)"Problem replaying split log '" + split_log_dir + "'");
+    if (!replay) {
+      if (split_log_dir != "") {
+	uint64_t timestamp = Global::log->get_timestamp();
+	if ((error = Global::log->link_log(table, split_log_dir.c_str(), timestamp)) != Error::OK)
+	  throw Exception(error, (std::string)"Unable to link external log '" + split_log_dir + "' into commit log");
+	if ((error = range_ptr->replay_split_log(split_log_dir, timestamp)) != Error::OK)
+	  throw Exception(error, (std::string)"Problem replaying split log '" + split_log_dir + "'");
+	// now clear the SplitLogDir column
+	HT_EXPECT(!is_root, Error::FAILED_EXPECTATION);
+	key.row = metadata_key_str.c_str();
+	key.row_len = strlen(metadata_key_str.c_str());
+	key.column_family = "SplitLogDir";
+	key.column_qualifier = 0;
+	key.column_qualifier_len = 0;
+	mutator_ptr->set(0, key, 0, 0);
+	mutator_ptr->flush();
+      }
     }
 
-    tableInfoPtr->add_range(range, rangePtr);
+    table_info_ptr->add_range(range_ptr);
 
     if ((error = cb->response_ok()) != Error::OK) {
       HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
@@ -718,7 +749,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
   const uint8_t auto_ts[8] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
   string errMsg;
   int error = Error::OK;
-  TableInfoPtr tableInfoPtr;
+  TableInfoPtr table_info_ptr;
   uint64_t update_timestamp = 0;
   uint64_t min_timestamp = 0;
   const char *row;
@@ -751,7 +782,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
   // TODO: Sanity check mod data (checksum validation)
 
   // Fetch table info
-  if (!m_live_map_ptr->get(table->name, tableInfoPtr)) {
+  if (!m_live_map_ptr->get(table->name, table_info_ptr)) {
     ExtBufferT ext;
     ext.buf = new uint8_t [ buffer.len ];
     memcpy(ext.buf, buffer.buf, buffer.len);
@@ -764,7 +795,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
   }
 
   // verify schema
-  if ((error = verify_schema(tableInfoPtr, table->generation, errMsg)) != Error::OK) {
+  if ((error = verify_schema(table_info_ptr, table->generation, errMsg)) != Error::OK) {
     HT_ERRORF("%s", errMsg.c_str());
     cb->error(error, errMsg);
     return;
@@ -782,7 +813,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     row = (const char *)((ByteString32T *)mod_ptr)->data;
 
     // Look for containing range, add to stop mods if not found
-    if (!tableInfoPtr->find_containing_range(row, min_ts_rec.range_ptr)) {
+    if (!table_info_ptr->find_containing_range(row, min_ts_rec.range_ptr)) {
       update.base = mod_ptr;
       mod_ptr += Length((const ByteString32T *)mod_ptr); // skip key
       mod_ptr += Length((const ByteString32T *)mod_ptr); // skip value
@@ -1123,10 +1154,38 @@ void RangeServer::dump_stats(ResponseCallback *cb) {
  *
  */
 void RangeServer::replay_start(ResponseCallback *cb) {
+  int error;
+  std::string replay_log_dir = (std::string)"/hypertable/servers/" + m_location + "/commit/replay";
+
   if (Global::verbose) {
     HT_INFO("replay_start");
     cout << flush;
   }
+
+  m_replay_log_ptr = 0;
+
+  m_replay_map_ptr->clear_ranges();
+
+  /**
+   * Remove old replay log directory
+   */
+  if ((error = Global::logDfs->rmdir(replay_log_dir)) != Error::OK) {
+    HT_ERRORF("Problem removing replay log directory '%s'", replay_log_dir.c_str());
+    cb->error(error, std::string("Problem removing replay log directory '" + replay_log_dir + "'"));
+    return;
+  }
+
+  /**
+   * Create new replay log directory
+   */
+  if ((error = Global::logDfs->mkdirs(replay_log_dir)) != Error::OK) {
+    HT_ERRORF("Problem creating replay log directory '%s'", replay_log_dir.c_str());
+    cb->error(error, std::string("Problem creating replay log directory '" + replay_log_dir + "'"));
+    return;
+  }
+
+  m_replay_log_ptr = new CommitLog(Global::logDfs, replay_log_dir, m_props_ptr);
+
   cb->response_ok();
 }
 
@@ -1143,22 +1202,35 @@ void RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data, size_
 
 
 void RangeServer::replay_commit(ResponseCallback *cb) {
+
+  HT_EXPECT(m_replay_log_ptr, Error::FAILED_EXPECTATION);
+
   if (Global::verbose) {
     HT_INFO("replay_commit");
     cout << flush;
   }
+
+  try {
+    m_live_map_ptr->atomic_merge(m_replay_map_ptr, m_replay_log_ptr);
+  }
+  catch (Hypertable::Exception &e) {
+    HT_ERRORF("%s - %s", e.what(), Error::get_text(e.code()));
+    cb->error(e.code(), e.what());
+    return;
+  }
+
   cb->response_ok();
 }
 
 
 
-int RangeServer::verify_schema(TableInfoPtr &tableInfoPtr, int generation, std::string &errMsg) {
-  std::string tableFile = (std::string)"/hypertable/tables/" + tableInfoPtr->get_name();
+int RangeServer::verify_schema(TableInfoPtr &table_info_ptr, int generation, std::string &errMsg) {
+  std::string tableFile = (std::string)"/hypertable/tables/" + table_info_ptr->get_name();
   DynamicBuffer valueBuf(0);
   HandleCallbackPtr nullHandleCallback;
   int error;
   uint64_t handle;
-  SchemaPtr schemaPtr = tableInfoPtr->get_schema();
+  SchemaPtr schemaPtr = table_info_ptr->get_schema();
 
   if (schemaPtr.get() == 0 || schemaPtr->get_generation() < generation) {
 
@@ -1176,15 +1248,15 @@ int RangeServer::verify_schema(TableInfoPtr &tableInfoPtr, int generation, std::
 
     schemaPtr = Schema::new_instance((const char *)valueBuf.buf, valueBuf.fill(), true);
     if (!schemaPtr->is_valid()) {
-      errMsg = (std::string)"Schema Parse Error for table '" + tableInfoPtr->get_name() + "' : " + schemaPtr->get_error_string();
+      errMsg = (std::string)"Schema Parse Error for table '" + table_info_ptr->get_name() + "' : " + schemaPtr->get_error_string();
       return Error::RANGESERVER_SCHEMA_PARSE_ERROR;
     }
 
-    tableInfoPtr->update_schema(schemaPtr);
+    table_info_ptr->update_schema(schemaPtr);
 
     // Generation check ...
     if ( schemaPtr->get_generation() < generation ) {
-      errMsg = (std::string)"Fetched Schema generation for table '" + tableInfoPtr->get_name() + "' is " + schemaPtr->get_generation() + " but supplied is " + generation;
+      errMsg = (std::string)"Fetched Schema generation for table '" + table_info_ptr->get_name() + "' is " + schemaPtr->get_generation() + " but supplied is " + generation;
       return Error::RANGESERVER_GENERATION_MISMATCH;
     }
   }

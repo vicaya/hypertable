@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -52,13 +52,17 @@ namespace Hypertable {
       boost::mutex::scoped_lock lock(m_mutex);
       m_schema = schemaPtr;
     }
-    bool get_range(RangeT *range, RangePtr &rangePtr);
-    void add_range(RangeT *range, RangePtr &rangePtr);
-    bool find_containing_range(std::string row, RangePtr &rangePtr);
+    bool get_range(RangeT *range, RangePtr &range_ptr);
+    void add_range(RangePtr &range_ptr);
+    bool find_containing_range(std::string row, RangePtr &range_ptr);
 
     void dump_range_table();
 
     void get_range_vector(std::vector<RangePtr> &range_vec);
+
+    void clear();
+
+    TableInfo *create_shallow_copy();
 
   private:
 
