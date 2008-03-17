@@ -43,6 +43,7 @@ RangeServer.cc
 RequestHandlerCompact.cc
 RequestHandlerCreateScanner.cc
 RequestHandlerDestroyScanner.cc
+RequestHandlerDropRange.cc
 RequestHandlerDumpStats.cc
 RequestHandlerFetchScanblock.cc
 RequestHandlerDropTable.cc

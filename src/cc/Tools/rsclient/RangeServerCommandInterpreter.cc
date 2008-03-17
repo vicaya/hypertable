@@ -69,6 +69,7 @@ void RangeServerCommandInterpreter::execute_line(std::string &line) {
   DispatchHandlerSynchronizer sync_handler;
   ScanBlock scanblock;
   int32_t scanner_id;
+  EventPtr event_ptr;
 
   info = parse(line.c_str(), interp, space_p);
 
@@ -119,7 +120,6 @@ void RangeServerCommandInterpreter::execute_line(std::string &line) {
       size_t   send_buf_len = 0;
       DynamicBuffer buf(BUFFER_SIZE);
       ByteString32T *key, *value;
-      EventPtr eventPtr;
       bool outstanding = false;
 
       while (true) {
@@ -165,12 +165,12 @@ void RangeServerCommandInterpreter::execute_line(std::string &line) {
 	  send_buf_len = 0;
 
 	if (outstanding) {
-	  if (!sync_handler.wait_for_reply(eventPtr)) {
-	    error = Protocol::response_code(eventPtr);
+	  if (!sync_handler.wait_for_reply(event_ptr)) {
+	    error = Protocol::response_code(event_ptr);
 	    if (error == Error::RANGESERVER_PARTIAL_UPDATE)
 	      cout << "partial update" << endl;
 	    else
-	      throw Exception(error, (Protocol::string_format_message(eventPtr)));
+	      throw Exception(error, (Protocol::string_format_message(event_ptr)));
 	  }
 	  else
 	    cout << "success" << endl;
@@ -188,12 +188,12 @@ void RangeServerCommandInterpreter::execute_line(std::string &line) {
       }
 
       if (outstanding) {
-	if (!sync_handler.wait_for_reply(eventPtr)) {
-	  error = Protocol::response_code(eventPtr);
+	if (!sync_handler.wait_for_reply(event_ptr)) {
+	  error = Protocol::response_code(event_ptr);
 	  if (error == Error::RANGESERVER_PARTIAL_UPDATE)
 	    cout << "partial update" << endl;
 	  else
-	    throw Exception(error, (Protocol::string_format_message(eventPtr)));
+	    throw Exception(error, (Protocol::string_format_message(event_ptr)));
 	}
 	else
 	  cout << "success" << endl;
@@ -271,7 +271,6 @@ void RangeServerCommandInterpreter::execute_line(std::string &line) {
       
     }
     else if (state.command == COMMAND_DESTROY_SCANNER) {
-      int32_t scanner_id;
 
       if (state.scanner_id == -1) {
 	if (m_cur_scanner_id == -1)
@@ -285,6 +284,33 @@ void RangeServerCommandInterpreter::execute_line(std::string &line) {
       if ((error = m_range_server_ptr->destroy_scanner(m_addr, scanner_id)) != Error::OK)
 	throw Exception(error, "problem destroying scanner");
       
+    }
+    else if (state.command == COMMAND_DROP_RANGE) {
+
+      range.startRow = state.range_start_row.c_str();
+      range.endRow = state.range_end_row.c_str();
+
+      if ((error = m_range_server_ptr->drop_range(m_addr, *table, range, &sync_handler)) != Error::OK)
+	throw Exception(error, std::string("drop_range") + state.table_name + "'");
+
+      if (!sync_handler.wait_for_reply(event_ptr))
+	throw Exception(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
+
+    }
+    else if (state.command == COMMAND_REPLAY_START) {
+      if ((error = m_range_server_ptr->replay_start(m_addr, &sync_handler)) != Error::OK)
+	throw Exception(error, "problem starting replay");
+      if (!sync_handler.wait_for_reply(event_ptr))
+	throw Exception(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
+    }
+    else if (state.command == COMMAND_REPLAY_LOG) {
+      cout << "Not implemented." << endl;
+    }
+    else if (state.command == COMMAND_REPLAY_COMMIT) {
+      if ((error = m_range_server_ptr->replay_commit(m_addr, &sync_handler)) != Error::OK)
+	throw Exception(error, "problem committing replay");
+      if (!sync_handler.wait_for_reply(event_ptr))
+	throw Exception(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
     }
     else if (state.command == COMMAND_HELP) {
       const char **text = HqlHelpText::Get(state.str);

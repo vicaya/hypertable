@@ -49,8 +49,12 @@ namespace {
     "",
     "CREATE SCANNER .... Creates a scanner and displays first block of results",
     "DESTROY SCANNER ... Destroys a scanner",
+    "DROP RANGE ........ Drop a range",
     "FETCH SCANBLOCK ... Fetch the next block results of a scan",
     "LOAD RANGE ........ Load a range",
+    "REPLAY START ...... Start replay",
+    "REPLAY LOG ........ Replay a commit log",
+    "REPLAY COMMIT ..... Commit replay",
     "SHUTDOWN   ........ Shutdown the RangeServer",
     "UPDATE ............ Selects (and display) cells from a table",
     "",
@@ -178,6 +182,52 @@ namespace {
     "",
     (const char *)0
   };
+
+  const char *help_text_drop_range[] = {
+    "",
+    "DROP RANGE range_spec",
+    "",
+    "range_spec:",
+    "    table_name '[' [start_row] \"..\" ( end_row | ?? ) ']'",
+    "",
+    "This command will issue a 'drop range' command to the RangeServer",
+    "for the range specified with range_spec.",
+    "",
+    (const char *)0
+  };
+
+  const char *help_text_replay_start[] = {
+    "",
+    "REPLAY START",
+    "",
+    "This command will issue a 'replay start' command to the RangeServer.",
+    "This has the effect of clearing the replay table/range map, droppin any",
+    "existing replay commit log and creating a new one."
+    "",
+    (const char *)0
+  };
+
+  const char *help_text_replay_log[] = {
+    "",
+    "REPLAY LOG",
+    "",
+    "This command will issue a 'replay log' command to the RangeServer.",
+    "[...]",
+    "",
+    (const char *)0
+  };
+
+  const char *help_text_replay_commit[] = {
+    "",
+    "REPLAY COMMIT",
+    "",
+    "This command will issue a 'replay commit' command to the RangeServer.",
+    "This has the effect of atomically merging the 'replay' range map into the",
+    "'live' range map and linking the replay log into the main log.",
+    "",
+    (const char *)0
+  };
+
 
   const char *help_text_create_table[] = {
     "",
@@ -491,10 +541,14 @@ void HqlHelpText::install_range_server_client_text() {
   textMap["create scanner"] = help_text_create_scanner;
   textMap["destroy"] = help_text_destroy_scanner;
   textMap["destroy scanner"] = help_text_destroy_scanner;
+  textMap["drop range"] = help_text_drop_range;
   textMap["fetch"] = help_text_fetch_scanblock;
   textMap["fetch scanblock"] = help_text_fetch_scanblock;
   textMap["load"] = help_text_load_range;
   textMap["load range"] = help_text_load_range;
   textMap["update"] = help_text_update;
+  textMap["replay start"] = help_text_replay_start;
+  textMap["replay log"] = help_text_replay_log;
+  textMap["replay commit"] = help_text_replay_commit;
   textMap["shutdown"] = help_text_shutdown;
 }

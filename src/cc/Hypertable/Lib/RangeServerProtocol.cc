@@ -39,6 +39,7 @@ namespace Hypertable {
     "replay start",
     "replay update",
     "replay commit",    
+    "drop range",
     (const char *)0
   };
 
@@ -140,6 +141,15 @@ namespace Hypertable {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
     CommBuf *cbuf = new CommBuf(hbuilder, 2);
     cbuf->append_short(COMMAND_REPLAY_COMMIT);
+    return cbuf;
+  }
+
+  CommBuf *RangeServerProtocol::create_request_drop_range(TableIdentifierT &table, RangeT &range) {
+    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthTableIdentifier(table) + EncodedLengthRange(range));
+    cbuf->append_short(COMMAND_DROP_RANGE);
+    EncodeTableIdentifier(cbuf->get_data_ptr_address(), table);
+    EncodeRange(cbuf->get_data_ptr_address(), range);
     return cbuf;
   }
 

@@ -217,6 +217,16 @@ namespace Hypertable {
      */
     int replay_commit(struct sockaddr_in &addr, DispatchHandler *handler);
 
+    /** Issues a "load range" request asynchronously.
+     *
+     * @param addr remote address of RangeServer connection
+     * @param table table identifier
+     * @param range range specification
+     * @param handler response handler
+     * @return Error::OK on success or error code on failure
+     */
+    int drop_range(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, DispatchHandler *handler);
+
   private:
 
     int send_message(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *handler);

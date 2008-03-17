@@ -1224,6 +1224,34 @@ void RangeServer::replay_commit(ResponseCallback *cb) {
 
 
 
+void RangeServer::drop_range(ResponseCallback *cb, TableIdentifierT *table, RangeT *range) {
+  TableInfoPtr table_info_ptr;
+  RangePtr range_ptr;
+
+  if (Global::verbose) {
+    cout << "drop_range" << endl;
+    cout << *table;
+    cout << *range;
+    cout << flush;
+  }
+
+  /** Get TableInfo **/
+  if (!m_live_map_ptr->get(table->name, table_info_ptr)) {
+    cb->error(Error::RANGESERVER_RANGE_NOT_FOUND, std::string("No ranges loaded for table '") + table->name + "'");
+    return;
+  }
+
+  /** Remove the range **/
+  if (!table_info_ptr->remove_range(range, range_ptr)) {
+    cb->error(Error::RANGESERVER_RANGE_NOT_FOUND, (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]");
+    return;
+  }
+
+  cb->response_ok();
+}
+
+
+
 int RangeServer::verify_schema(TableInfoPtr &table_info_ptr, int generation, std::string &errMsg) {
   std::string tableFile = (std::string)"/hypertable/tables/" + table_info_ptr->get_name();
   DynamicBuffer valueBuf(0);

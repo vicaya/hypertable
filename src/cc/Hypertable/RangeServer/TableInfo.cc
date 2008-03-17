@@ -71,6 +71,31 @@ bool TableInfo::get_range(RangeT *range, RangePtr &range_ptr) {
 }
 
 
+/**
+ * 
+ */
+bool TableInfo::remove_range(RangeT *range, RangePtr &range_ptr) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  string endRow = range->endRow;
+
+  RangeMapT::iterator iter = m_range_map.find(endRow);
+
+  if (iter == m_range_map.end())
+    return false;
+
+  range_ptr = (*iter).second;
+
+  string startRow = range_ptr->start_row();
+
+  if (strcmp(startRow.c_str(), range->startRow))
+    return false;
+
+  m_range_map.erase(iter);
+
+  return true;
+}
+
+
 
 /**
  * 

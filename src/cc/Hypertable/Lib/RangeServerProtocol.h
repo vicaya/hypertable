@@ -43,7 +43,8 @@ namespace Hypertable {
     static const short COMMAND_REPLAY_START     = 10;
     static const short COMMAND_REPLAY_UPDATE    = 11;
     static const short COMMAND_REPLAY_COMMIT    = 12;
-    static const short COMMAND_MAX              = 13;
+    static const short COMMAND_DROP_RANGE       = 13;
+    static const short COMMAND_MAX              = 14;
 
     static const uint16_t LOAD_RANGE_FLAG_REPLAY = 0x0001;
 
@@ -139,6 +140,14 @@ namespace Hypertable {
      * @return protocol message
      */
     static CommBuf *create_request_replay_commit();
+
+    /** Creates a "drop range" request message.
+     *
+     * @param table table identifier
+     * @param range range specification
+     * @return protocol message
+     */
+    static CommBuf *create_request_drop_range(TableIdentifierT &table, RangeT &range);
 
     virtual const char *command_text(short command);
   };

@@ -64,6 +64,8 @@ namespace Hypertable {
     void replay_update(ResponseCallback *cb, const uint8_t *data, size_t len);
     void replay_commit(ResponseCallback *cb);
 
+    void drop_range(ResponseCallback *cb, TableIdentifierT *table, RangeT *range);
+
     void do_maintenance();
     void log_cleanup();
 

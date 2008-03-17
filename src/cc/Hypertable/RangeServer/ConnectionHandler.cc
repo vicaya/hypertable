@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -45,6 +45,7 @@ extern "C" {
 #include "RequestHandlerReplayStart.h"
 #include "RequestHandlerReplayUpdate.h"
 #include "RequestHandlerReplayCommit.h"
+#include "RequestHandlerDropRange.h"
 
 #include "ConnectionHandler.h"
 #include "EventHandlerMasterConnection.h"
@@ -71,23 +72,23 @@ ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &appQueuePt
 /**
  *
  */
-void ConnectionHandler::handle(EventPtr &eventPtr) {
+void ConnectionHandler::handle(EventPtr &event_ptr) {
   short command = -1;
 
   if (m_shutdown)
     return;
 
-  if (eventPtr->type == Event::MESSAGE) {
+  if (event_ptr->type == Event::MESSAGE) {
     ApplicationHandler *requestHandler = 0;
 
-    //eventPtr->display();
+    //event_ptr->display();
 
     try {
-      if (eventPtr->messageLen < sizeof(int16_t)) {
+      if (event_ptr->messageLen < sizeof(int16_t)) {
 	std::string message = "Truncated Request";
 	throw new ProtocolException(message);
       }
-      memcpy(&command, eventPtr->message, sizeof(int16_t));
+      memcpy(&command, event_ptr->message, sizeof(int16_t));
 
       // sanity check command code
       if (command < 0 || command >= RangeServerProtocol::COMMAND_MAX) {
@@ -97,43 +98,46 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
 
       switch (command) {
       case RangeServerProtocol::COMMAND_COMPACT:
-	requestHandler = new RequestHandlerCompact(m_comm, m_range_server_ptr.get(), eventPtr);
+	requestHandler = new RequestHandlerCompact(m_comm, m_range_server_ptr.get(), event_ptr);
 	break;
       case RangeServerProtocol::COMMAND_LOAD_RANGE:
-	requestHandler = new RequestHandlerLoadRange(m_comm, m_range_server_ptr.get(), eventPtr);
+	requestHandler = new RequestHandlerLoadRange(m_comm, m_range_server_ptr.get(), event_ptr);
 	break;
       case RangeServerProtocol::COMMAND_UPDATE:
-	requestHandler = new RequestHandlerUpdate(m_comm, m_range_server_ptr.get(), eventPtr);
+	requestHandler = new RequestHandlerUpdate(m_comm, m_range_server_ptr.get(), event_ptr);
 	break;
       case RangeServerProtocol::COMMAND_CREATE_SCANNER:
-	requestHandler = new RequestHandlerCreateScanner(m_comm, m_range_server_ptr.get(), eventPtr);
+	requestHandler = new RequestHandlerCreateScanner(m_comm, m_range_server_ptr.get(), event_ptr);
 	break;
       case RangeServerProtocol::COMMAND_DESTROY_SCANNER:
-	requestHandler = new RequestHandlerDestroyScanner(m_comm, m_range_server_ptr.get(), eventPtr);
+	requestHandler = new RequestHandlerDestroyScanner(m_comm, m_range_server_ptr.get(), event_ptr);
 	break;
       case RangeServerProtocol::COMMAND_FETCH_SCANBLOCK:
-	requestHandler = new RequestHandlerFetchScanblock(m_comm, m_range_server_ptr.get(), eventPtr);
+	requestHandler = new RequestHandlerFetchScanblock(m_comm, m_range_server_ptr.get(), event_ptr);
 	break;
       case RangeServerProtocol::COMMAND_DROP_TABLE:
-	requestHandler = new RequestHandlerDropTable(m_comm, m_range_server_ptr.get(), eventPtr);
+	requestHandler = new RequestHandlerDropTable(m_comm, m_range_server_ptr.get(), event_ptr);
 	break;
       case RangeServerProtocol::COMMAND_REPLAY_START:
-	requestHandler = new RequestHandlerReplayStart(m_comm, m_range_server_ptr.get(), eventPtr);
+	requestHandler = new RequestHandlerReplayStart(m_comm, m_range_server_ptr.get(), event_ptr);
 	break;
       case RangeServerProtocol::COMMAND_REPLAY_UPDATE:
-	requestHandler = new RequestHandlerReplayUpdate(m_comm, m_range_server_ptr.get(), eventPtr);
+	requestHandler = new RequestHandlerReplayUpdate(m_comm, m_range_server_ptr.get(), event_ptr);
 	break;
       case RangeServerProtocol::COMMAND_REPLAY_COMMIT:
-	requestHandler = new RequestHandlerReplayCommit(m_comm, m_range_server_ptr.get(), eventPtr);
+	requestHandler = new RequestHandlerReplayCommit(m_comm, m_range_server_ptr.get(), event_ptr);
+	break;
+      case RangeServerProtocol::COMMAND_DROP_RANGE:
+	requestHandler = new RequestHandlerDropRange(m_comm, m_range_server_ptr.get(), event_ptr);
 	break;
       case RangeServerProtocol::COMMAND_STATUS:
-	requestHandler = new RequestHandlerStatus(m_comm, m_range_server_ptr.get(), eventPtr);
+	requestHandler = new RequestHandlerStatus(m_comm, m_range_server_ptr.get(), event_ptr);
 	break;
       case RangeServerProtocol::COMMAND_SHUTDOWN:
 	m_shutdown = true;
 	HT_INFO("Executing SHUTDOWN command.");
 	{
-	  ResponseCallback cb(m_comm, eventPtr);
+	  ResponseCallback cb(m_comm, event_ptr);
 	  cb.response_ok();
 	}
 	m_app_queue_ptr->shutdown();
@@ -143,7 +147,7 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
 	m_master_client_ptr = 0;
 	return;
       case RangeServerProtocol::COMMAND_DUMP_STATS:
-	requestHandler = new RequestHandlerDumpStats(m_comm, m_range_server_ptr.get(), eventPtr);
+	requestHandler = new RequestHandlerDumpStats(m_comm, m_range_server_ptr.get(), event_ptr);
 	break;
       default:
 	std::string message = (string)"Command code " + command + " not implemented";
@@ -152,25 +156,25 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
       m_app_queue_ptr->add( requestHandler );
     }
     catch (ProtocolException &e) {
-      ResponseCallback cb(m_comm, eventPtr);
+      ResponseCallback cb(m_comm, event_ptr);
       std::string errMsg = e.what();
       HT_ERRORF("Protocol error '%s'", e.what());
       cb.error(Error::PROTOCOL_ERROR, errMsg);
     }
   }
-  else if (eventPtr->type == Event::CONNECTION_ESTABLISHED) {
+  else if (event_ptr->type == Event::CONNECTION_ESTABLISHED) {
 
-    HT_INFOF("%s", eventPtr->toString().c_str());
+    HT_INFOF("%s", event_ptr->toString().c_str());
 
     /**
      * If this is the connection to the Master, then we need to register ourselves
      * with the master
      */
     if (m_master_client_ptr)
-      m_app_queue_ptr->add( new EventHandlerMasterConnection(m_master_client_ptr, m_range_server_ptr->get_location(), eventPtr) );
+      m_app_queue_ptr->add( new EventHandlerMasterConnection(m_master_client_ptr, m_range_server_ptr->get_location(), event_ptr) );
   }
   else {
-    HT_INFOF("%s", eventPtr->toString().c_str());
+    HT_INFOF("%s", event_ptr->toString().c_str());
   }
 
 }

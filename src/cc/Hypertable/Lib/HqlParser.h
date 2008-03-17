@@ -72,6 +72,10 @@ namespace Hypertable {
       COMMAND_LOAD_RANGE,
       COMMAND_SHUTDOWN,
       COMMAND_UPDATE,
+      COMMAND_REPLAY_START,
+      COMMAND_REPLAY_LOG,
+      COMMAND_REPLAY_COMMIT,
+      COMMAND_DROP_RANGE,
       COMMAND_MAX
     };
 
@@ -111,7 +115,7 @@ namespace Hypertable {
    
     class hql_interpreter_state {
     public:
-      hql_interpreter_state() : command(0), cf(0), ag(0), nanoseconds(0), delete_all_columns(false), delete_time(0), if_exists(false), scanner_id(-1) {
+      hql_interpreter_state() : command(0), cf(0), ag(0), nanoseconds(0), delete_all_columns(false), delete_time(0), if_exists(false), replay(false), scanner_id(-1) {
 	memset(&tmval, 0, sizeof(tmval));
       }
       int command;
@@ -136,6 +140,7 @@ namespace Hypertable {
       std::string delete_row;
       uint64_t delete_time;
       bool if_exists;
+      bool replay;
       std::string range_start_row;
       std::string range_end_row;
       int32_t scanner_id;
@@ -186,6 +191,15 @@ namespace Hypertable {
       void operator()(char const *str, char const *end) const { 
 	display_string("set_if_exists");
 	state.if_exists = true;
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct set_replay {
+      set_replay(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("set_replay");
+	state.replay = true;
       }
       hql_interpreter_state &state;
     };
@@ -849,6 +863,10 @@ namespace Hypertable {
 	  token_t FETCH        = as_lower_d["fetch"];
 	  token_t SCANBLOCK    = as_lower_d["scanblock"];
 	  token_t SHUTDOWN     = as_lower_d["shutdown"];
+	  token_t REPLAY       = as_lower_d["replay"];
+	  token_t START        = as_lower_d["start"];
+	  token_t COMMIT       = as_lower_d["commit"];
+	  token_t LOG          = as_lower_d["log"];
 
 	  /**
 	   * Start grammar definition
@@ -896,6 +914,26 @@ namespace Hypertable {
 	    | destroy_scanner_statement[set_command(self.state, COMMAND_DESTROY_SCANNER)]
 	    | fetch_scanblock_statement[set_command(self.state, COMMAND_FETCH_SCANBLOCK)]
 	    | shutdown_statement[set_command(self.state, COMMAND_SHUTDOWN)]
+	    | drop_range_statement[set_command(self.state, COMMAND_DROP_RANGE)]
+	    | replay_start_statement[set_command(self.state, COMMAND_REPLAY_START)]
+	    | replay_log_statement[set_command(self.state, COMMAND_REPLAY_LOG)]
+	    | replay_commit_statement[set_command(self.state, COMMAND_REPLAY_COMMIT)]
+	    ;
+
+	  drop_range_statement
+	    = DROP >> RANGE >> range_spec
+	    ;
+
+	  replay_start_statement
+	    = REPLAY >> START
+	    ;
+
+	  replay_log_statement
+	    = REPLAY >> LOG >> user_identifier[set_input_file(self.state)]
+	    ;
+
+	  replay_commit_statement
+	    = REPLAY >> COMMIT
 	    ;
 
 	  shutdown_statement
@@ -921,7 +959,7 @@ namespace Hypertable {
 	    ;
 
 	  load_range_statement
-	    = LOAD >> RANGE >> range_spec
+	    = LOAD >> RANGE >> range_spec >> !( REPLAY[set_replay(self.state)] )
 	    ;
 
 	  range_spec
@@ -1185,6 +1223,10 @@ namespace Hypertable {
 	  BOOST_SPIRIT_DEBUG_RULE(destroy_scanner_statement);
 	  BOOST_SPIRIT_DEBUG_RULE(fetch_scanblock_statement);
 	  BOOST_SPIRIT_DEBUG_RULE(shutdown_statement);
+	  BOOST_SPIRIT_DEBUG_RULE(drop_range_statement);
+	  BOOST_SPIRIT_DEBUG_RULE(replay_start_statement);
+	  BOOST_SPIRIT_DEBUG_RULE(replay_log_statement);
+	  BOOST_SPIRIT_DEBUG_RULE(replay_commit_statement);
 	}
 #endif
 
@@ -1203,7 +1245,8 @@ namespace Hypertable {
 	insert_value, delete_statement, delete_column_clause, table_option,
         show_tables_statement, drop_table_statement, load_range_statement, range_spec,
         update_statement, create_scanner_statement, destroy_scanner_statement,
-        fetch_scanblock_statement, shutdown_statement;
+        fetch_scanblock_statement, shutdown_statement, drop_range_statement,
+        replay_start_statement, replay_log_statement, replay_commit_statement;
       };
 
       hql_interpreter_state &state;

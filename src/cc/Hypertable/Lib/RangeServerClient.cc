@@ -226,6 +226,12 @@ int RangeServerClient::replay_commit(struct sockaddr_in &addr, DispatchHandler *
 }
 
 
+int RangeServerClient::drop_range(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_drop_range(table, range) );
+  return send_message(addr, cbufPtr, handler);
+}
+
+
 
 /**
  *
