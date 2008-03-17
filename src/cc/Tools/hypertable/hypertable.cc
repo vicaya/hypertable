@@ -46,6 +46,9 @@ int main(int argc, char **argv) {
   string configFile = "";
   Client *hypertable;
 
+  System::initialize(argv[0]);
+  ReactorFactory::initialize((uint16_t)System::get_processor_count());
+
   try {
 
     po::options_description desc(usage_str);
