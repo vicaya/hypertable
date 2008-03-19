@@ -28,9 +28,9 @@ TableInfoMap::~TableInfoMap() {
 }
 
 
-bool TableInfoMap::get(std::string name, TableInfoPtr &info) {
+bool TableInfoMap::get(uint32_t id, TableInfoPtr &info) {
   boost::mutex::scoped_lock lock(m_mutex);
-  TableInfoMapT::iterator iter = m_map.find(name);
+  TableInfoMapT::iterator iter = m_map.find(id);
   if (iter == m_map.end())
     return false;
   info = (*iter).second;
@@ -38,18 +38,18 @@ bool TableInfoMap::get(std::string name, TableInfoPtr &info) {
 }
 
 
-void TableInfoMap::set(std::string name, TableInfoPtr &info) {
+void TableInfoMap::set(uint32_t id, TableInfoPtr &info) {
   boost::mutex::scoped_lock lock(m_mutex);
-  TableInfoMapT::iterator iter = m_map.find(name);
+  TableInfoMapT::iterator iter = m_map.find(id);
   if (iter != m_map.end())
     m_map.erase(iter);
-  m_map[name] = info;
+  m_map[id] = info;
 }
 
 
-bool TableInfoMap::remove(std::string name, TableInfoPtr &info) {
+bool TableInfoMap::remove(uint32_t id, TableInfoPtr &info) {
   boost::mutex::scoped_lock lock(m_mutex);
-  TableInfoMapT::iterator iter = m_map.find(name);
+  TableInfoMapT::iterator iter = m_map.find(id);
   if (iter == m_map.end())
     return false;
   info = (*iter).second;
@@ -81,17 +81,17 @@ void TableInfoMap::clear_ranges() {
 void TableInfoMap::atomic_merge(TableInfoMapPtr &table_info_map_ptr, CommitLogPtr &replay_log_ptr) {
   boost::mutex::scoped_lock lock(m_mutex);
   TableInfoMapT::iterator from_iter, to_iter;
-  std::string table_name;
+  uint32_t table_id;
   int error;
 
   for (from_iter = table_info_map_ptr->m_map.begin(); from_iter != table_info_map_ptr->m_map.end(); from_iter++) {
 
-    table_name = (*from_iter).second->get_name();
+    table_id = (*from_iter).second->get_id();
 
-    to_iter = m_map.find(table_name);
+    to_iter = m_map.find(table_id);
 
     if (to_iter == m_map.end())
-      m_map[table_name] = (*from_iter).second;
+      m_map[table_id] = (*from_iter).second;
     else {
       std::vector<RangePtr> range_vec;
       (*from_iter).second->get_range_vector(range_vec);

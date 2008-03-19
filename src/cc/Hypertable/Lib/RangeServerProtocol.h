@@ -115,10 +115,10 @@ namespace Hypertable {
 
     /** Creates a "drop table" request message.
      *
-     * @param table_name name of table to drop
+     * @param table table identifier
      * @return protocol message
      */
-    static CommBuf *create_request_drop_table(std::string &table_name);
+    static CommBuf *create_request_drop_table(TableIdentifierT &table);
 
     /** Creates a "replay start" request message.
      *

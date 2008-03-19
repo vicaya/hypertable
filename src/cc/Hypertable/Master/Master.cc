@@ -559,6 +559,11 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
     CellT cell;
     std::string location_str;
     std::set<std::string> unique_locations;
+    TableIdentifierT table;
+
+    table.name = table_name_str.c_str();
+    table.id = ival;
+    table.generation = 0;
 
     sprintf(start_row, "%d:", ival);
     sprintf(end_row, "%d:%s", ival, Key::END_ROW_MARKER);
@@ -591,7 +596,7 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
 
     if (!unique_locations.empty()) {
       boost::mutex::scoped_lock lock(m_mutex);
-      DropTableDispatchHandler sync_handler(table_name_str, m_conn_manager_ptr->get_comm(), 30);
+      DropTableDispatchHandler sync_handler(table, m_conn_manager_ptr->get_comm(), 30);
       RangeServerStatePtr state_ptr;
       ServerMapT::iterator iter;
 

@@ -94,11 +94,11 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::create_request_drop_table(std::string &table_name) {
+  CommBuf *RangeServerProtocol::create_request_drop_table(TableIdentifierT &table) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
-    CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::encoded_length_string(table_name));
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthTableIdentifier(table));
     cbuf->append_short(COMMAND_DROP_TABLE);
-    cbuf->append_string(table_name);
+    EncodeTableIdentifier(cbuf->get_data_ptr_address(), table);
     return cbuf;
   }
 

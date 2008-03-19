@@ -43,9 +43,9 @@ namespace Hypertable {
     TableInfoMap() { return; }
     virtual ~TableInfoMap();
 
-    bool get(std::string name, TableInfoPtr &info);
-    void set(std::string name, TableInfoPtr &info);
-    bool remove(std::string name, TableInfoPtr &info);
+    bool get(uint32_t id, TableInfoPtr &info);
+    void set(uint32_t id, TableInfoPtr &info);
+    bool remove(uint32_t id, TableInfoPtr &info);
     void get_all(std::vector<TableInfoPtr> &tv);
     void clear();
     void clear_ranges();
@@ -53,7 +53,7 @@ namespace Hypertable {
     void atomic_merge(TableInfoMapPtr &table_info_map_ptr, CommitLogPtr &replay_log_ptr);
 
   private:
-    typedef __gnu_cxx::hash_map<string, TableInfoPtr> TableInfoMapT;
+    typedef __gnu_cxx::hash_map<uint32_t, TableInfoPtr> TableInfoMapT;
 
     boost::mutex  m_mutex;
     TableInfoMapT m_map;

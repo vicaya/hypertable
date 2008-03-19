@@ -31,7 +31,9 @@ using namespace Hypertable;
 /**
  *
  */
-DropTableDispatchHandler::DropTableDispatchHandler(std::string table_name, Comm *comm, time_t timeout) : m_outstanding(0), m_client(comm, timeout), m_table_name(table_name) {
+DropTableDispatchHandler::DropTableDispatchHandler(TableIdentifierT &table, Comm *comm, time_t timeout) : m_outstanding(0), m_client(comm, timeout), m_table_name(table.name) {
+  memcpy(&m_table, &table, sizeof(TableIdentifierT));
+  m_table.name = m_table_name.c_str();
   return;
 }
 
@@ -44,7 +46,7 @@ void DropTableDispatchHandler::add(struct sockaddr_in &addr) {
   boost::mutex::scoped_lock lock(m_mutex);
   int error;
   
-  if ((error = m_client.drop_table(addr, m_table_name, this)) != Error::OK) {
+  if ((error = m_client.drop_table(addr, m_table, this)) != Error::OK) {
     ErrorResultT result;
     result.addr = addr;
     result.error = error;

@@ -48,7 +48,7 @@ namespace Hypertable {
     /**
      * Constructor.
      */
-    DropTableDispatchHandler(std::string table_name, Comm *comm, time_t timeout);
+    DropTableDispatchHandler(TableIdentifierT &table, Comm *comm, time_t timeout);
 
     /**
      * Adds 
@@ -73,6 +73,7 @@ namespace Hypertable {
     boost::condition   m_cond;
     int                m_outstanding;
     RangeServerClient  m_client;
+    TableIdentifierT   m_table;
     std::string        m_table_name;
     vector<ErrorResultT> m_errors;
   };

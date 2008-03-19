@@ -295,7 +295,7 @@ void RangeServer::compact(ResponseCallback *cb, TableIdentifierT *table, RangeT 
   /**
    * Fetch table info
    */
-  if (!m_live_map_ptr->get(table->name, tableInfoPtr)) {
+  if (!m_live_map_ptr->get(table->id, tableInfoPtr)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
     errMsg = "No ranges loaded for table '" + (std::string)table->name + "'";
     goto abort;
@@ -362,7 +362,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
 
   try {
 
-    if (!m_live_map_ptr->get(table->name, tableInfoPtr))
+    if (!m_live_map_ptr->get(table->id, tableInfoPtr))
       throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND, (std::string)"unknown table '" + table->name + "'");
 
     if (!tableInfoPtr->get_range(range, range_ptr))
@@ -522,8 +522,8 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
     if (replay) {
 
       /** Get TableInfo from replay map, or copy it from live map, or create if doesn't exist **/
-      if (!m_replay_map_ptr->get(table->name, table_info_ptr)) {
-	if (!m_live_map_ptr->get(table->name, table_info_ptr)) {
+      if (!m_replay_map_ptr->get(table->id, table_info_ptr)) {
+	if (!m_live_map_ptr->get(table->id, table_info_ptr)) {
 	  table_info_ptr = new TableInfo(m_master_client_ptr, table, schemaPtr);
 	  registerTable = true;
 	}
@@ -534,7 +534,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
     }
     else {
       /** Get TableInfo, create if doesn't exist **/
-      if (!m_live_map_ptr->get(table->name, table_info_ptr)) {
+      if (!m_live_map_ptr->get(table->id, table_info_ptr)) {
 	table_info_ptr = new TableInfo(m_master_client_ptr, table, schemaPtr);
 	registerTable = true;
       }
@@ -549,9 +549,9 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
 
     if (registerTable) {
       if (replay)
-	m_replay_map_ptr->set(table->name, table_info_ptr);
+	m_replay_map_ptr->set(table->id, table_info_ptr);
       else
-	m_live_map_ptr->set(table->name, table_info_ptr);
+	m_live_map_ptr->set(table->id, table_info_ptr);
     }
 	
     /**
@@ -782,7 +782,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
   // TODO: Sanity check mod data (checksum validation)
 
   // Fetch table info
-  if (!m_live_map_ptr->get(table->name, table_info_ptr)) {
+  if (!m_live_map_ptr->get(table->id, table_info_ptr)) {
     ExtBufferT ext;
     ext.buf = new uint8_t [ buffer.len ];
     memcpy(ext.buf, buffer.buf, buffer.len);
@@ -1071,7 +1071,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 
 
 
-void RangeServer::drop_table(ResponseCallback *cb, const char *table_name) {
+void RangeServer::drop_table(ResponseCallback *cb, TableIdentifierT *table) {
   int error;
   TableInfoPtr table_info_ptr;
   std::vector<RangePtr> range_vector;
@@ -1081,7 +1081,7 @@ void RangeServer::drop_table(ResponseCallback *cb, const char *table_name) {
   KeySpec key;
 
   if (Global::verbose) {
-    HT_INFOF("drop_table '%s'", table_name);  
+    HT_INFOF("drop_table '%s'", table->name);  
     cout << flush;
   }
 
@@ -1100,7 +1100,7 @@ void RangeServer::drop_table(ResponseCallback *cb, const char *table_name) {
 
      // For each range in dropped table, Set the 'drop' bit and clear
     // the 'Location' column of the corresponding METADATA entry
-    if (m_live_map_ptr->remove(table_name, table_info_ptr)) {
+    if (m_live_map_ptr->remove(table->id, table_info_ptr)) {
       metadata_prefix = std::string("") + table_info_ptr->get_id() + ":";
       table_info_ptr->get_range_vector(range_vector);
       for (size_t i=0; i<range_vector.size(); i++) {
@@ -1113,7 +1113,7 @@ void RangeServer::drop_table(ResponseCallback *cb, const char *table_name) {
       range_vector.clear();
     }
     else {
-      HT_ERRORF("drop_table '%s' - table not found", table_name);
+      HT_ERRORF("drop_table '%s' - table not found", table->name);
     }
     mutator_ptr->flush();
   }
@@ -1124,7 +1124,7 @@ void RangeServer::drop_table(ResponseCallback *cb, const char *table_name) {
   }
 
   if (Global::verbose) {
-    HT_INFOF("Successfully dropped table '%s'", table_name);  
+    HT_INFOF("Successfully dropped table '%s'", table->name);  
     cout << flush;
   }
 
@@ -1236,7 +1236,7 @@ void RangeServer::drop_range(ResponseCallback *cb, TableIdentifierT *table, Rang
   }
 
   /** Get TableInfo **/
-  if (!m_live_map_ptr->get(table->name, table_info_ptr)) {
+  if (!m_live_map_ptr->get(table->id, table_info_ptr)) {
     cb->error(Error::RANGESERVER_RANGE_NOT_FOUND, std::string("No ranges loaded for table '") + table->name + "'");
     return;
   }

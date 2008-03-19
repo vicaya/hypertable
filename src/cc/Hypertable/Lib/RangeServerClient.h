@@ -160,19 +160,19 @@ namespace Hypertable {
     /** Issues a "drop table" request asynchronously.
      *
      * @param addr remote address of RangeServer connection
-     * @param table_name name of table to drop
+     * @param table table identifier
      * @param handler response handler
      * @return Error::OK on success or error code on failure
      */
-    int drop_table(struct sockaddr_in &addr, std::string table_name, DispatchHandler *handler);
+    int drop_table(struct sockaddr_in &addr, TableIdentifierT &table, DispatchHandler *handler);
 
     /** Issues a "drop table" request.
      *
      * @param addr remote address of RangeServer connection
-     * @param table_name name of table to drop
+     * @param table table identifier
      * @return Error::OK on success or error code on failure
      */
-    int drop_table(struct sockaddr_in &addr, std::string table_name);
+    int drop_table(struct sockaddr_in &addr, TableIdentifierT &table);
 
     /** Issues a "status" request.  This call blocks until it receives a response from the server.
      * 

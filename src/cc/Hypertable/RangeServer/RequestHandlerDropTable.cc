@@ -36,15 +36,15 @@ using namespace Hypertable;
  */
 void RequestHandlerDropTable::run() {
   ResponseCallback cb(m_comm, m_event_ptr);
-  const char *table_name;
+  TableIdentifierT table;
   size_t remaining = m_event_ptr->messageLen - 2;
   uint8_t *msgPtr = m_event_ptr->message + 2;
 
-  // table name
-  if (!Serialization::decode_string(&msgPtr, &remaining, &table_name))
+  // Table
+  if (!DecodeTableIdentifier(&msgPtr, &remaining, &table))
     goto abort;
 
-  m_range_server->drop_table(&cb, table_name);
+  m_range_server->drop_table(&cb, &table);
 
   return;
 
