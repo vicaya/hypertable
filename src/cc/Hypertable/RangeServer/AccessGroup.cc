@@ -111,19 +111,21 @@ int AccessGroup::add(const ByteString32T *key, const ByteString32T *value, uint6
 }
 
 
-CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scanContextPtr) {
+CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context_ptr) {
   boost::mutex::scoped_lock lock(m_mutex);
-  MergeScanner *scanner = new MergeScanner(scanContextPtr);
-  scanner->add_scanner( m_cell_cache_ptr->create_scanner(scanContextPtr) );
-  for (size_t i=0; i<m_stores.size(); i++)
-    scanner->add_scanner( m_stores[i]->create_scanner(scanContextPtr) );
+  MergeScanner *scanner = new MergeScanner(scan_context_ptr);
+  scanner->add_scanner( m_cell_cache_ptr->create_scanner(scan_context_ptr) );
+  if (!m_in_memory) {
+    for (size_t i=0; i<m_stores.size(); i++)
+      scanner->add_scanner( m_stores[i]->create_scanner(scan_context_ptr) );
+  }
   return scanner;
 }
 
-bool AccessGroup::include_in_scan(ScanContextPtr &scanContextPtr) {
+bool AccessGroup::include_in_scan(ScanContextPtr &scan_context_ptr) {
   boost::mutex::scoped_lock lock(m_mutex);
   for (std::set<uint8_t>::iterator iter = m_column_families.begin(); iter != m_column_families.end(); iter++) {
-    if (scanContextPtr->familyMask[*iter])
+    if (scan_context_ptr->familyMask[*iter])
       return true;
   }
   return false;
@@ -157,7 +159,8 @@ void AccessGroup::get_cached_rows(std::vector<std::string> &rows) {
 
 uint64_t AccessGroup::disk_usage() {
   boost::mutex::scoped_lock lock(m_mutex);
-  return m_disk_usage + (uint64_t)(m_compression_ratio * (float)m_cell_cache_ptr->memory_used());
+  uint64_t du = (m_in_memory) ? m_disk_usage : 0;
+  return du + (uint64_t)(m_compression_ratio * (float)m_cell_cache_ptr->memory_used());
 }
 
 void AccessGroup::get_compaction_priority_data(CompactionPriorityDataT &priority_data) {
@@ -173,10 +176,16 @@ void AccessGroup::get_compaction_priority_data(CompactionPriorityDataT &priority
 
 void AccessGroup::add_cell_store(CellStorePtr &cellstore_ptr, uint32_t id) {
   boost::mutex::scoped_lock lock(m_mutex);
-  if (id >= m_next_table_id) 
+
+  // Figure out the "next" CellStore number
+  if (id >= m_next_table_id)
     m_next_table_id = id+1;
-  m_stores.push_back(cellstore_ptr);
+  else if (m_in_memory)
+    return;
+
   m_disk_usage += cellstore_ptr->disk_usage();
+
+  // Record the most recent compaction timestamp
   if (m_compaction_timestamp.logical == 0)
     cellstore_ptr->get_timestamp(m_compaction_timestamp);
   else {
@@ -185,6 +194,20 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore_ptr, uint32_t id) {
     if (timestamp.real > m_compaction_timestamp.real)
       m_compaction_timestamp = timestamp;
   }
+
+  if (m_in_memory) {
+    ScanContextPtr scan_context_ptr = new ScanContext(ScanContext::END_OF_TIME, m_schema_ptr);
+    CellListScannerPtr scanner_ptr = cellstore_ptr->create_scanner(scan_context_ptr);
+    ByteString32T *key, *value;
+    m_cell_cache_ptr = new CellCache();
+    while (scanner_ptr->get(&key, &value)) {
+      m_cell_cache_ptr->add(key, value, m_compaction_timestamp.real);
+      scanner_ptr->forward();
+    }
+  }
+
+  m_stores.push_back(cellstore_ptr);
+
 }
 
 
@@ -218,7 +241,7 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
   {
     boost::mutex::scoped_lock lock(m_mutex);
     if (m_in_memory) {
-      tableIndex = 0;
+      tableIndex = m_stores.size();
       HT_INFOF("Starting InMemory Compaction (%s.%s end_row='%s')", m_table_name.c_str(), m_name.c_str(), m_end_row.c_str());
     }
     else if (major) {
@@ -258,22 +281,22 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
   }
 
   {
-    ScanContextPtr scanContextPtr = new ScanContext(timestamp.logical+1, m_schema_ptr);
+    ScanContextPtr scan_context_ptr = new ScanContext(timestamp.logical+1, m_schema_ptr);
 
     if (m_in_memory) {
-      MergeScanner *mscanner = new MergeScanner(scanContextPtr, false);
-      mscanner->add_scanner( m_cell_cache_ptr->create_scanner(scanContextPtr) );
+      MergeScanner *mscanner = new MergeScanner(scan_context_ptr, false);
+      mscanner->add_scanner( m_cell_cache_ptr->create_scanner(scan_context_ptr) );
       scannerPtr = mscanner;
     }
     else if (major || tableIndex < m_stores.size()) {
-      MergeScanner *mscanner = new MergeScanner(scanContextPtr, !major);
-      mscanner->add_scanner( m_cell_cache_ptr->create_scanner(scanContextPtr) );
+      MergeScanner *mscanner = new MergeScanner(scan_context_ptr, !major);
+      mscanner->add_scanner( m_cell_cache_ptr->create_scanner(scan_context_ptr) );
       for (size_t i=tableIndex; i<m_stores.size(); i++)
-	mscanner->add_scanner( m_stores[i]->create_scanner(scanContextPtr) );
+	mscanner->add_scanner( m_stores[i]->create_scanner(scan_context_ptr) );
       scannerPtr = mscanner;
     }
     else
-      scannerPtr = m_cell_cache_ptr->create_scanner(scanContextPtr);
+      scannerPtr = m_cell_cache_ptr->create_scanner(scan_context_ptr);
   }
 
   while (scannerPtr->get(&key, &value)) {
@@ -316,6 +339,9 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
     /** Drop the compacted tables from the table vector **/
     if (tableIndex < m_stores.size())
       m_stores.resize(tableIndex);
+
+    if (m_in_memory)
+      m_stores.clear();
 
     /** Add the new table to the table vector **/
     m_stores.push_back(cellStorePtr);
@@ -363,7 +389,7 @@ int AccessGroup::shrink(std::string &new_start_row) {
   int error;
   CellCachePtr old_cell_cache_ptr = m_cell_cache_ptr;
   CellCachePtr new_cell_cache_ptr;
-  ScanContextPtr scanContextPtr = new ScanContext(ScanContext::END_OF_TIME, m_schema_ptr);
+  ScanContextPtr scan_context_ptr = new ScanContext(ScanContext::END_OF_TIME, m_schema_ptr);
   CellListScannerPtr cell_cache_scanner_ptr;
   ByteString32T *key;
   ByteString32T *value;
@@ -379,7 +405,7 @@ int AccessGroup::shrink(std::string &new_start_row) {
 
   m_cell_cache_ptr = new_cell_cache_ptr;
 
-  cell_cache_scanner_ptr = old_cell_cache_ptr->create_scanner(scanContextPtr);
+  cell_cache_scanner_ptr = old_cell_cache_ptr->create_scanner(scan_context_ptr);
 
   /**
    * Shrink the CellCache
