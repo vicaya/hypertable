@@ -39,12 +39,6 @@ using namespace Hypertable;
 using namespace std;
 
 
-#if defined(__linux__)
-#define stat stat64
-#define fstat fstat64
-#endif
-
-
 /**
  */
 ssize_t FileUtils::read(int fd, void *vptr, size_t n) {

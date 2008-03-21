@@ -28,7 +28,8 @@ set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}.${VERSION_PATCH})
 enable_testing()
 
 if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-  add_definitions(-Wall -pedantic -Wno-long-long -Wno-variadic-macros)
+  add_definitions(-Wall -pedantic -Wno-long-long -Wno-variadic-macros
+                  -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_REENTRANT)
 endif (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 
 # Uncomment the following to build dynamic libraries
