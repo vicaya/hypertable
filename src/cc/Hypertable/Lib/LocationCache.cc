@@ -215,14 +215,10 @@ bool LocationCache::location_to_addr(const char *location, struct sockaddr_in &a
   const char *ptr = location + strlen(location);
   std::string host;
   uint16_t port;
-  int us_seen = 0;
 
   for (--ptr; ptr >= location; --ptr) {
-    if (*ptr == '_') {
-      if (us_seen > 0)
-	break;
-      us_seen++;
-    }
+    if (*ptr == '_')
+      break;
   }
 
   port = (uint16_t)strtol(ptr+1, 0, 10);

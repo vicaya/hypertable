@@ -146,7 +146,6 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
    * 
    */
   {
-    struct timeval tval;
     std::string hostStr;
     struct sockaddr_in addr;    
 
@@ -154,9 +153,7 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
     if (!InetAddr::initialize(&addr, hostStr.c_str(), port))
       exit(1);
 
-    gettimeofday(&tval, 0);
-
-    m_location = (std::string)inet_ntoa(addr.sin_addr) + "_" + (int)port + "_" + (uint32_t)tval.tv_sec;
+    m_location = (std::string)inet_ntoa(addr.sin_addr) + "_" + (int)port;
   }
 
   if (directory_initialize(props_ptr) != Error::OK)
