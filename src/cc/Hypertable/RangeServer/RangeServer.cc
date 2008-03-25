@@ -757,7 +757,6 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
   UpdateRecT update;
   ByteString32Ptr splitKeyPtr;
   CommitLogPtr splitLogPtr;
-  uint64_t splitStartTime;
   size_t goSize = 0;
   size_t stopSize = 0;
   size_t splitSize = 0;
@@ -768,6 +767,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
   uint64_t temp_timestamp;
   uint64_t memory_added = 0;
   uint64_t items_added = 0;
+  bool split_pending;
 
   min_ts_vector.reserve(50);
 
@@ -840,7 +840,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     endRow = min_ts_rec.range_ptr->end_row();
 
     /** Fetch range split information **/
-    min_ts_rec.range_ptr->get_split_info(split_row, splitLogPtr, &splitStartTime);
+    split_pending = min_ts_rec.range_ptr->get_split_info(split_row, splitLogPtr);
 
     splitMods.clear();
     splitSize = 0;
@@ -887,7 +887,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
       mod_ptr += Length((const ByteString32T *)mod_ptr); // skip key
       mod_ptr += Length((const ByteString32T *)mod_ptr); // skip value
       update.len = mod_ptr - update.base;
-      if (splitStartTime != 0 && temp_timestamp > splitStartTime && strcmp(row, split_row.c_str()) <= 0) {
+      if (split_pending && strcmp(row, split_row.c_str()) <= 0) {
 	splitMods.push_back(update);
 	splitSize += update.len;
       }
@@ -1028,6 +1028,8 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
     uint64_t vm_estimate = mt_memory + (mt_items*120);
     HT_INFOF("drj mem=%lld items=%lld vm-est%lld", mt_memory, mt_items, vm_estimate);
   }
+
+  splitLogPtr = 0;
 
   // unblock scanner timestamp and decrement update counter
   for (size_t i=0; i<min_ts_vector.size(); i++) {

@@ -58,9 +58,6 @@ Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, S
   else
     m_disk_limit = soft_limit;
 
-  m_split_timestamp.logical = 0;
-  m_split_timestamp.real = 0;
-
   Copy(identifier, m_identifier);
 
   m_start_row = range->startRow;
@@ -343,6 +340,7 @@ void Range::do_split() {
   TableMutatorPtr mutator_ptr;
   KeySpec key;
   std::string metadata_key_str;
+  Timestamp timestamp;
 
   assert(m_maintenance_in_progress);
 
@@ -413,9 +411,9 @@ void Range::do_split() {
 
     {
       boost::mutex::scoped_lock lock(m_mutex);
-      if (!m_scanner_timestamp_controller.get_oldest_update_timestamp(&m_split_timestamp) ||
-	  m_split_timestamp.logical == 0)
-	m_split_timestamp = m_timestamp;
+      if (!m_scanner_timestamp_controller.get_oldest_update_timestamp(&timestamp) ||
+	  timestamp.logical == 0)
+	timestamp = m_timestamp;
       old_start_row = m_start_row;
     }
 
@@ -432,7 +430,7 @@ void Range::do_split() {
    */
   {
     for (size_t i=0; i<m_access_group_vector.size(); i++)
-      m_access_group_vector[i]->run_compaction(m_split_timestamp, true);
+      m_access_group_vector[i]->run_compaction(timestamp, true);
   }
 
 
@@ -522,10 +520,16 @@ void Range::do_split() {
 
     /*** At this point, there are no running updates ***/
 
+    // close split log
+    if ((error = m_split_log_ptr->close(Global::log->get_timestamp())) != Error::OK) {
+      HT_ERRORF("Problem closing split log '%s' - %s", m_split_log_ptr->get_log_dir().c_str(), Error::get_text(error));
+      // return error here!!!
+    }
+    m_split_log_ptr = 0;
+
     {
       boost::mutex::scoped_lock lock(m_mutex);
       m_start_row = m_split_row;
-      m_split_timestamp.clear();
       m_split_row = "";
       // Shrink this range's access groups
       for (size_t i=0; i<m_access_group_vector.size(); i++)
@@ -536,12 +540,6 @@ void Range::do_split() {
     m_hold_updates = false;
     m_maintenance_finished_cond.notify_all();
   }
-
-  // close split log
-  if ((error = m_split_log_ptr->close(Global::log->get_timestamp())) != Error::OK) {
-    HT_ERRORF("Problem closing split log '%s' - %s", m_split_log_ptr->get_log_dir().c_str(), Error::get_text(error));
-  }
-  m_split_log_ptr = 0;
 
   /**
    *  Notify Master of split

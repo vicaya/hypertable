@@ -107,16 +107,11 @@ namespace Hypertable {
       m_scanner_timestamp_controller.remove_update_timestamp(ts);
     }
 
-    bool get_split_info(std::string &split_row, CommitLogPtr &splitLogPtr, uint64_t *splitStartTime) {
+    bool get_split_info(std::string &split_row, CommitLogPtr &splitLogPtr) {
       boost::mutex::scoped_lock lock(m_mutex);
-      *splitStartTime = m_split_timestamp.logical;
-      if (m_split_timestamp.logical == 0) {
-	split_row = "";
-	return false;
-      }
       split_row = m_split_row;
       splitLogPtr = m_split_log_ptr;
-      return true;
+      return (bool)m_split_log_ptr;
     }
 
     std::vector<AccessGroup *> &access_group_vector() { return m_access_group_vector; }
@@ -155,7 +150,6 @@ namespace Hypertable {
 
     Timestamp        m_timestamp;
     uint64_t         m_last_logical_timestamp;
-    Timestamp        m_split_timestamp;
     std::string      m_split_row;
     CommitLogPtr     m_split_log_ptr;
 
