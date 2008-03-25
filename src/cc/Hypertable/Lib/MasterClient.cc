@@ -168,16 +168,16 @@ int MasterClient::register_server(std::string &location) {
 }
 
 
-int MasterClient::report_split(TableIdentifierT &table, RangeT &range, uint64_t soft_limit, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( MasterProtocol::create_report_split_request(table, range, soft_limit) );
+int MasterClient::report_split(TableIdentifierT &table, RangeT &range, const char *log_dir, uint64_t soft_limit, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( MasterProtocol::create_report_split_request(table, range, log_dir, soft_limit) );
   return send_message(cbufPtr, handler);
 }
 
 
-int MasterClient::report_split(TableIdentifierT &table, RangeT &range, uint64_t soft_limit) {
+int MasterClient::report_split(TableIdentifierT &table, RangeT &range, const char *log_dir, uint64_t soft_limit) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( MasterProtocol::create_report_split_request(table, range, soft_limit) );
+  CommBufPtr cbufPtr( MasterProtocol::create_report_split_request(table, range, log_dir, soft_limit) );
   int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {

@@ -57,7 +57,7 @@ namespace Hypertable {
     void create_table(ResponseCallback *cb, const char *tableName, const char *schemaString);
     void get_schema(ResponseCallbackGetSchema *cb, const char *tableName);
     void register_server(ResponseCallback *cb, const char *location, struct sockaddr_in &addr);
-    void report_split(ResponseCallback *cb, TableIdentifierT &table, RangeT &range, uint64_t soft_limit);
+    void report_split(ResponseCallback *cb, TableIdentifierT &table, RangeT &range, const char *transfer_log_dir, uint64_t soft_limit);
     void drop_table(ResponseCallback *cb, const char *table_name, bool if_exists);
 
     void server_joined(std::string &location);

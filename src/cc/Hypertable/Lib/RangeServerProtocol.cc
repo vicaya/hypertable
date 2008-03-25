@@ -49,12 +49,13 @@ namespace Hypertable {
     return m_command_strings[command];
   }
 
-  CommBuf *RangeServerProtocol::create_request_load_range(TableIdentifierT &table, RangeT &range, uint64_t soft_limit, uint16_t flags) {
+  CommBuf *RangeServerProtocol::create_request_load_range(TableIdentifierT &table, RangeT &range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
-    CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthTableIdentifier(table) + EncodedLengthRange(range) + 10);
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthTableIdentifier(table) + EncodedLengthRange(range) + Serialization::encoded_length_string(transfer_log_dir) + 10);
     cbuf->append_short(COMMAND_LOAD_RANGE);
     EncodeTableIdentifier(cbuf->get_data_ptr_address(), table);
     EncodeRange(cbuf->get_data_ptr_address(), range);
+    cbuf->append_string(transfer_log_dir);
     cbuf->append_long(soft_limit);
     cbuf->append_short(flags);
     return cbuf;

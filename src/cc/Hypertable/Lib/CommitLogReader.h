@@ -49,7 +49,7 @@ namespace Hypertable {
 
   class CommitLogReader : public ReferenceCount {
   public:
-    CommitLogReader(Filesystem *fs, std::string &logDir);
+    CommitLogReader(Filesystem *fs, const std::string &logDir);
     virtual ~CommitLogReader();
     virtual void initialize_read(uint64_t timestamp);
     virtual bool next_block(const uint8_t **blockp, size_t *lenp, BlockCompressionHeaderCommitLog *header);

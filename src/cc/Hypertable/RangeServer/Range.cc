@@ -333,7 +333,7 @@ void Range::get_compaction_priority_data(std::vector<AccessGroup::CompactionPrio
 
 
 void Range::do_split() {
-  std::string splitLogDir;
+  std::string split_log_dir;
   char md5DigestStr[33];
   int error;
   std::string old_start_row;
@@ -361,40 +361,12 @@ void Range::do_split() {
   md5DigestStr[24] = 0;
   std::string::size_type pos = Global::logDir.rfind("primary", Global::logDir.length());
   assert (pos != std::string::npos);
-  splitLogDir = Global::logDir.substr(0, pos) + md5DigestStr;
+  split_log_dir = Global::logDir.substr(0, pos) + md5DigestStr;
 
   // Create split log dir
-  if ((error = Global::logDfs->mkdirs(splitLogDir)) != Error::OK) {
-    HT_ERRORF("Problem creating DFS log directory '%s'", splitLogDir.c_str());
+  if ((error = Global::logDfs->mkdirs(split_log_dir)) != Error::OK) {
+    HT_ERRORF("Problem creating DFS log directory '%s'", split_log_dir.c_str());
     exit(1);
-  }
-
-  /**
-   *  Update METADATA with split information
-   */
-  if ((error = Global::metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK) {
-    // TODO: throw exception
-    HT_ERROR("Problem creating mutator on METADATA table");
-    return;
-  }
-
-  metadata_key_str = std::string("") + (uint32_t)m_identifier.id + ":" + m_end_row;
-  key.row = metadata_key_str.c_str();
-  key.row_len = metadata_key_str.length();
-  key.column_qualifier = 0;
-  key.column_qualifier_len = 0;
-
-  try {
-    key.column_family = "SplitPoint";
-    mutator_ptr->set(0, key, (uint8_t *)m_split_row.c_str(), m_split_row.length());
-    key.column_family = "SplitLogDir";
-    mutator_ptr->set(0, key, (uint8_t *)splitLogDir.c_str(), splitLogDir.length());
-    mutator_ptr->flush();
-  }
-  catch (Hypertable::Exception &e) {
-    // TODO: propagate exception
-    HT_ERRORF("Problem updating METADATA with split info (row key = %s) - %s", metadata_key_str.c_str(), e.what());
-    return;
   }
 
   /**
@@ -417,7 +389,7 @@ void Range::do_split() {
       old_start_row = m_start_row;
     }
 
-    m_split_log_ptr = new CommitLog(Global::dfs, splitLogDir, props_ptr);
+    m_split_log_ptr = new CommitLog(Global::dfs, split_log_dir, props_ptr);
 
     /** unblock updates **/
     m_hold_updates = false;
@@ -433,6 +405,11 @@ void Range::do_split() {
       m_access_group_vector[i]->run_compaction(timestamp, true);
   }
 
+  if ((error = Global::metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK) {
+    // TODO: throw exception
+    HT_ERROR("Problem creating mutator on METADATA table");
+    return;
+  }
 
   /**
    * Create second-level METADATA entry for new range and update second-level
@@ -448,8 +425,6 @@ void Range::do_split() {
 
     key.column_family = "StartRow";
     mutator_ptr->set(0, key, (uint8_t *)old_start_row.c_str(), old_start_row.length());
-    key.column_family = "SplitLogDir";
-    mutator_ptr->set(0, key, (uint8_t *)splitLogDir.c_str(), splitLogDir.length());
 
     key.column_family = "Files";
     for (size_t i=0; i<m_access_group_vector.size(); i++) {
@@ -467,8 +442,6 @@ void Range::do_split() {
 
     key.column_family = "StartRow";
     mutator_ptr->set(0, key, (uint8_t *)m_split_row.c_str(), m_split_row.length());
-    key.column_family = "SplitLogDir";
-    mutator_ptr->set(0, key, 0, 0);
     mutator_ptr->flush();
   }
   catch (Hypertable::Exception &e) {
@@ -560,7 +533,7 @@ void Range::do_split() {
       if (m_disk_limit > Global::rangeMaxBytes)
 	m_disk_limit = Global::rangeMaxBytes;
     }
-    if ((error = m_master_client_ptr->report_split(m_identifier, range, m_disk_limit)) != Error::OK) {
+    if ((error = m_master_client_ptr->report_split(m_identifier, range, split_log_dir.c_str(), m_disk_limit)) != Error::OK) {
       HT_ERRORF("Problem reporting split (table=%s, start_row=%s, end_row=%s) to master.",
 		   m_identifier.name, range.startRow, range.endRow);
     }
@@ -656,7 +629,7 @@ void Range::unlock(uint64_t real_timestamp) {
 
 /**
  */
-int Range::replay_split_log(string &log_dir, uint64_t real_timestamp) {
+int Range::replay_transfer_log(const string &log_dir, uint64_t real_timestamp) {
   int error;
   CommitLogReaderPtr commit_log_reader_ptr = new CommitLogReader(Global::dfs, log_dir);
   BlockCompressionHeaderCommitLog header;

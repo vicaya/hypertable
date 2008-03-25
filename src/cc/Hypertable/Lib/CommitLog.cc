@@ -41,7 +41,7 @@ const char CommitLog::MAGIC_TRAILER[10] = { 'L','O','G','T','R','A','I','L','E',
 /**
  *
  */
-CommitLog::CommitLog(Filesystem *fs, std::string &log_dir, PropertiesPtr &props_ptr) : m_fs(fs), m_log_dir(log_dir), m_cur_log_length(0), m_cur_log_num(0), m_last_timestamp(0) {
+CommitLog::CommitLog(Filesystem *fs, const std::string &log_dir, PropertiesPtr &props_ptr) : m_fs(fs), m_log_dir(log_dir), m_cur_log_length(0), m_cur_log_num(0), m_last_timestamp(0) {
   int error;
   std::string compressor;
 

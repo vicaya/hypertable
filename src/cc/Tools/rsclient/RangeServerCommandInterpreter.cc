@@ -104,7 +104,7 @@ void RangeServerCommandInterpreter::execute_line(std::string &line) {
       range.startRow = state.range_start_row.c_str();
       range.endRow = state.range_end_row.c_str();
 
-      if ((error = m_range_server_ptr->load_range(m_addr, *table, range, 200000000LL, 0)) != Error::OK)
+      if ((error = m_range_server_ptr->load_range(m_addr, *table, range, 0, 200000000LL, 0)) != Error::OK)
 	throw Exception(error, std::string("load_range") + state.table_name + "'");
 
     }

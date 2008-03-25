@@ -91,7 +91,7 @@ namespace Hypertable {
   class CommitLog : public ReferenceCount {
   public:
 
-    CommitLog(Filesystem *fs, std::string &log_dir, PropertiesPtr &props_ptr);
+    CommitLog(Filesystem *fs, const std::string &log_dir, PropertiesPtr &props_ptr);
     virtual ~CommitLog();
 
     /**

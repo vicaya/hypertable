@@ -49,7 +49,7 @@ namespace {
 /**
  *
  */
-CommitLogReader::CommitLogReader(Filesystem *fs, std::string &logDir) : m_fs(fs), m_log_dir(logDir), m_fd(-1), m_block_buffer(256), m_zblock_buffer(256), m_error(0), m_compressor(0) {
+CommitLogReader::CommitLogReader(Filesystem *fs, const std::string &logDir) : m_fs(fs), m_log_dir(logDir), m_fd(-1), m_block_buffer(256), m_zblock_buffer(256), m_error(0), m_compressor(0) {
   LogFileInfoT fileInfo;
   int error;
   int32_t fd;

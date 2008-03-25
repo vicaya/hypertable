@@ -35,15 +35,15 @@ RangeServerClient::~RangeServerClient() {
   return;
 }
 
-int RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, uint64_t soft_limit, uint16_t flags, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( RangeServerProtocol::create_request_load_range(table, range, soft_limit, flags) );
+int RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_load_range(table, range, transfer_log_dir, soft_limit, flags) );
   return send_message(addr, cbufPtr, handler);
 }
 
-int RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, uint64_t soft_limit, uint16_t flags) {
+int RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr( RangeServerProtocol::create_request_load_range(table, range, soft_limit, flags) );
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_load_range(table, range, transfer_log_dir, soft_limit, flags) );
   int error = send_message(addr, cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {

@@ -485,7 +485,7 @@ void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t s
 /**
  * LoadRange
  */
-void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, RangeT *range, uint64_t soft_limit, uint16_t flags) {
+void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, RangeT *range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags) {
   DynamicBuffer endRowBuffer(0);
   std::string errMsg;
   int error = Error::OK;
@@ -500,10 +500,8 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
   TableScannerPtr scanner_ptr;
   TableMutatorPtr mutator_ptr;
   ScanSpecificationT scan_spec;
-  CellT cell;
   KeySpec key;
   std::string metadata_key_str;
-  std::string start_row, split_log_dir;
   bool replay = (flags & RangeServerProtocol::LOAD_RANGE_FLAG_REPLAY) == RangeServerProtocol::LOAD_RANGE_FLAG_REPLAY;
 
   if (Global::verbose) {
@@ -589,48 +587,6 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
 	mutator_ptr->set(0, key, (uint8_t *)m_location.c_str(), strlen(m_location.c_str()));
 	mutator_ptr->flush();
 
-	bool got_start_row = false;
-
-	scan_spec.rowLimit = 1;
-	scan_spec.max_versions = 1;
-	scan_spec.startRow = metadata_key_str.c_str();
-	scan_spec.startRowInclusive = true;
-	scan_spec.endRow = metadata_key_str.c_str();
-	scan_spec.endRowInclusive = true;
-	scan_spec.interval.first = 0;
-	scan_spec.interval.second = 0;
-
-	scan_spec.columns.clear();
-	scan_spec.columns.push_back("StartRow");
-	scan_spec.columns.push_back("SplitLogDir");
-	scan_spec.return_deletes = false;
-
-	if ((error = Global::metadata_table_ptr->create_scanner(scan_spec, scanner_ptr)) != Error::OK)
-	  throw Exception(error, "Problem creating scanner on METADATA table");
-
-	while (scanner_ptr->next(cell)) {
-	  if (!strcmp(cell.column_family, "StartRow")) {
-	    if (cell.value_len > 0)
-	      start_row = std::string((const char *)cell.value, cell.value_len);
-	    got_start_row = true;
-	  }
-	  else if (!strcmp(cell.column_family, "SplitLogDir")) {
-	    if (cell.value_len > 0)
-	      split_log_dir = std::string((const char *)cell.value, cell.value_len);
-	  }
-	  else {
-	    // should never happen
-	    HT_ERROR("Scanner returned column not requested.");
-	  }
-	}
-
-	if (!got_start_row)
-	  throw Exception(Error::RANGESERVER_NO_METADATA_FOR_RANGE, (std::string)"StartRow for METADATA[" + metadata_key_str + "] not found");
-
-	// make sure StartRow matches
-	if (*range->startRow == 0 && start_row != "" || strcmp(range->startRow, start_row.c_str()))
-	  throw Exception(Error::RANGESERVER_RANGE_MISMATCH, (std::string)"StartRow '" + std::string((const char *)cell.value, cell.value_len) + "' does not match '" + range->startRow + "'");
-
       }
       else {  //root
 	uint64_t handle;
@@ -681,21 +637,12 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
      * concurrently access it.
      */
     if (!replay) {
-      if (split_log_dir != "") {
+      if (transfer_log_dir && *transfer_log_dir) {
 	uint64_t timestamp = Global::log->get_timestamp();
-	if ((error = Global::log->link_log(table, split_log_dir.c_str(), timestamp)) != Error::OK)
-	  throw Exception(error, (std::string)"Unable to link external log '" + split_log_dir + "' into commit log");
-	if ((error = range_ptr->replay_split_log(split_log_dir, timestamp)) != Error::OK)
-	  throw Exception(error, (std::string)"Problem replaying split log '" + split_log_dir + "'");
-	// now clear the SplitLogDir column
-	HT_EXPECT(!is_root, Error::FAILED_EXPECTATION);
-	key.row = metadata_key_str.c_str();
-	key.row_len = strlen(metadata_key_str.c_str());
-	key.column_family = "SplitLogDir";
-	key.column_qualifier = 0;
-	key.column_qualifier_len = 0;
-	mutator_ptr->set(0, key, 0, 0);
-	mutator_ptr->flush();
+	if ((error = Global::log->link_log(table, transfer_log_dir, timestamp)) != Error::OK)
+	  throw Exception(error, (std::string)"Unable to link external log '" + transfer_log_dir + "' into commit log");
+	if ((error = range_ptr->replay_transfer_log(transfer_log_dir, timestamp)) != Error::OK)
+	  throw Exception(error, (std::string)"Problem replaying split log '" + transfer_log_dir + "'");
       }
     }
 

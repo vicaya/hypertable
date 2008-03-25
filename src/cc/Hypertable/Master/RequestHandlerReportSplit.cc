@@ -38,6 +38,7 @@ void RequestHandlerReportSplit::run() {
   ResponseCallback cb(m_comm, m_event_ptr);
   TableIdentifierT table;
   RangeT range;
+  const char *log_dir;
   uint64_t soft_limit;
   size_t remaining = m_event_ptr->messageLen - 2;
   uint8_t *msgPtr = m_event_ptr->message + 2;
@@ -50,11 +51,15 @@ void RequestHandlerReportSplit::run() {
   if (!DecodeRange(&msgPtr, &remaining, &range))
     goto abort;
 
+  // log_dir
+  if (!Serialization::decode_string(&msgPtr, &remaining, &log_dir))
+    goto abort;
+
   // soft_limit
   if (!Serialization::decode_long(&msgPtr, &remaining, &soft_limit))
     goto abort;
 
-  m_master->report_split(&cb, table, range, soft_limit);
+  m_master->report_split(&cb, table, range, log_dir, soft_limit);
 
   return;
 
