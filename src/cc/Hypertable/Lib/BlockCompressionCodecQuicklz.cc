@@ -43,7 +43,6 @@ BlockCompressionCodecQuicklz::BlockCompressionCodecQuicklz(const Args &args) {
  *
  */
 BlockCompressionCodecQuicklz::~BlockCompressionCodecQuicklz() {
-  HT_ASSERT_SAME_THREAD(m_creator_thread);
   delete [] m_workmem;
 }
 

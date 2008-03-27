@@ -41,7 +41,6 @@ BlockCompressionCodecZlib::BlockCompressionCodecZlib(const Args &args) : m_infla
  *
  */
 BlockCompressionCodecZlib::~BlockCompressionCodecZlib() {
-  HT_ASSERT_SAME_THREAD(m_creator_thread);
   if (m_deflate_initialized)
     deflateEnd(&m_stream_deflate);
   if (m_inflate_initialized)

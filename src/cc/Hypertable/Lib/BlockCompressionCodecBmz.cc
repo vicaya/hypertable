@@ -37,7 +37,6 @@ BlockCompressionCodecBmz::BlockCompressionCodecBmz(const Args &args) :
 }
 
 BlockCompressionCodecBmz::~BlockCompressionCodecBmz() {
-  HT_ASSERT_SAME_THREAD(m_creator_thread);
 }
 
 #define _NEXT_ARG(_code_) do { \

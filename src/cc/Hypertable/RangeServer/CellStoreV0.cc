@@ -116,10 +116,10 @@ int CellStoreV0::create(const char *fname, uint32_t blocksize, const std::string
   m_end_row = Key::END_ROW_MARKER;
 
   if (compressor.empty())
-    m_trailer.compression_type = BlockCompressionCodec::LZO;
+    m_trailer.compression_type = CompressorFactory::parse_block_codec_spec((std::string)"lzo", m_compressor_args);
+  else
+    m_trailer.compression_type = CompressorFactory::parse_block_codec_spec(compressor, m_compressor_args);
 
-  m_trailer.compression_type = CompressorFactory::parse_block_codec_spec(
-      compressor, m_compressor_args);
   m_compressor = CompressorFactory::create_block_codec(
       (BlockCompressionCodec::Type)m_trailer.compression_type,
       m_compressor_args);

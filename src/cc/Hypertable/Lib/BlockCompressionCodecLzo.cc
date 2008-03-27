@@ -48,7 +48,6 @@ BlockCompressionCodecLzo::BlockCompressionCodecLzo(const Args &args) {
  *
  */
 BlockCompressionCodecLzo::~BlockCompressionCodecLzo() {
-  HT_ASSERT_SAME_THREAD(m_creator_thread);
   delete [] m_workmem;
 }
 

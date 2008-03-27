@@ -62,8 +62,10 @@ CellCache::~CellCache() {
 
   for (CellMapT::iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++) {
     if (((*iter).second & ALLOC_BIT_MASK) == 0) {
+      HT_EXPECT(memcmp((*iter).first, "DEAD", 4), Error::FAILED_EXPECTATION);
       offset = (*iter).second & OFFSET_BIT_MASK;
       mem_freed += offset + Length((ByteString32T *)(((uint8_t *)(*iter).first) + offset));
+      memcpy((void *)((*iter).first), "DEAD", 4);
       delete [] (*iter).first;
     }
 #ifdef STAT
