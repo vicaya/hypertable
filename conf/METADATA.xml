@@ -4,12 +4,6 @@
       <Name>LogDir</Name>
     </ColumnFamily>
     <ColumnFamily>
-      <Name>SplitLogDir</Name>
-    </ColumnFamily>
-    <ColumnFamily>
-      <Name>SplitPoint</Name>
-    </ColumnFamily>
-    <ColumnFamily>
       <Name>Files</Name>
     </ColumnFamily>
   </AccessGroup>

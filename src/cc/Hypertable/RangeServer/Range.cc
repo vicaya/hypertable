@@ -333,7 +333,7 @@ void Range::get_compaction_priority_data(std::vector<AccessGroup::CompactionPrio
 
 
 void Range::do_split() {
-  std::string split_log_dir;
+  std::string transfer_log_dir;
   char md5DigestStr[33];
   int error;
   std::string old_start_row;
@@ -342,39 +342,36 @@ void Range::do_split() {
   std::string metadata_key_str;
   Timestamp timestamp;
 
-  assert(m_maintenance_in_progress);
-
-  // This should never happen...
-  if (m_is_root) {
-    HT_ERROR("Split scheduled for root METADATA range");
-    m_maintenance_in_progress = false;
-    return;
-  }
+  HT_EXPECT(m_maintenance_in_progress, Error::FAILED_EXPECTATION);
+  HT_EXPECT(!m_is_root, Error::FAILED_EXPECTATION);
 
   // this call sets m_split_row
   get_split_row();
 
   /**
-   * Create Split LOG
+   * Create split (transfer) log
    */
   md5_string(m_split_row.c_str(), md5DigestStr);
   md5DigestStr[24] = 0;
   std::string::size_type pos = Global::logDir.rfind("primary", Global::logDir.length());
   assert (pos != std::string::npos);
-  split_log_dir = Global::logDir.substr(0, pos) + md5DigestStr;
+  transfer_log_dir = Global::logDir.substr(0, pos) + md5DigestStr;
 
-  // Create split log dir
-  if ((error = Global::logDfs->mkdirs(split_log_dir)) != Error::OK) {
-    HT_ERRORF("Problem creating DFS log directory '%s'", split_log_dir.c_str());
-    exit(1);
+  // Create transfer log dir
+  if ((error = Global::logDfs->mkdirs(transfer_log_dir)) != Error::OK) {
+    HT_ERRORF("Problem creating DFS log directory '%s'", transfer_log_dir.c_str());
+    DUMP_CORE;
   }
 
+  /***************************************************/
+  /** TBD: Write RS_SPLIT_START entry into meta-log **/
+  /***************************************************/
+
   /**
-   * Atomically obtain timestamp and install split log
+   * Create and install the split log
    */
   {
     boost::mutex::scoped_lock lock(m_maintenance_mutex);
-    PropertiesPtr props_ptr(0);
 
     /** block updates **/
     m_hold_updates = true;
@@ -387,9 +384,8 @@ void Range::do_split() {
 	  timestamp.logical == 0)
 	timestamp = m_timestamp;
       old_start_row = m_start_row;
+      m_split_log_ptr = new CommitLog(Global::dfs, transfer_log_dir);
     }
-
-    m_split_log_ptr = new CommitLog(Global::dfs, split_log_dir, props_ptr);
 
     /** unblock updates **/
     m_hold_updates = false;
@@ -405,18 +401,33 @@ void Range::do_split() {
       m_access_group_vector[i]->run_compaction(timestamp, true);
   }
 
-  if ((error = Global::metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK) {
-    // TODO: throw exception
-    HT_ERROR("Problem creating mutator on METADATA table");
-    return;
-  }
+  /****************************************************/
+  /** TBD: Write RS_SPLIT_SHRUNK entry into meta-log **/
+  /****************************************************/
 
-  /**
-   * Create second-level METADATA entry for new range and update second-level
-   * METADATA entry for existing range to reflect the shrink 
-   */
   try {
     std::string files;
+
+    if ((error = Global::metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK) {
+      HT_ERROR("Problem creating mutator on METADATA table");
+      // need to unblock updates and then return error
+      DUMP_CORE;
+    }
+
+    /**
+     * Shrink old range in METADATA by updating the 'StartRow' column.
+     */
+    metadata_key_str = std::string("") + (uint32_t)m_identifier.id + ":" + m_end_row;
+    key.row = metadata_key_str.c_str();
+    key.row_len = metadata_key_str.length();
+    key.column_qualifier = 0;
+    key.column_qualifier_len = 0;
+    key.column_family = "StartRow";
+    mutator_ptr->set(key, (uint8_t *)m_split_row.c_str(), m_split_row.length());
+
+    /**
+     * Create an entry for the new range
+     */
     metadata_key_str = std::string("") + (uint32_t)m_identifier.id + ":" + m_split_row;
     key.row = metadata_key_str.c_str();
     key.row_len = metadata_key_str.length();
@@ -424,7 +435,7 @@ void Range::do_split() {
     key.column_qualifier_len = 0;
 
     key.column_family = "StartRow";
-    mutator_ptr->set(0, key, (uint8_t *)old_start_row.c_str(), old_start_row.length());
+    mutator_ptr->set(key, (uint8_t *)old_start_row.c_str(), old_start_row.length());
 
     key.column_family = "Files";
     for (size_t i=0; i<m_access_group_vector.size(); i++) {
@@ -434,55 +445,20 @@ void Range::do_split() {
       mutator_ptr->set(0, key, (uint8_t *)files.c_str(), files.length());
     }
 
-    metadata_key_str = std::string("") + (uint32_t)m_identifier.id + ":" + m_end_row;
-    key.row = metadata_key_str.c_str();
-    key.row_len = metadata_key_str.length();
-    key.column_qualifier = 0;
-    key.column_qualifier_len = 0;
-
-    key.column_family = "StartRow";
-    mutator_ptr->set(0, key, (uint8_t *)m_split_row.c_str(), m_split_row.length());
     mutator_ptr->flush();
+
   }
   catch (Hypertable::Exception &e) {
     // TODO: propagate exception
-    HT_ERRORF("Problem updating METADATA with new range information (row key = %s) - %s", metadata_key_str.c_str(), e.what());
+    HT_ERRORF("Problem updating ROOT METADATA range (new=%s, existing=%s) - %s", m_split_row.c_str(), m_end_row.c_str(), e.what());
+    // need to unblock updates and then return error
     DUMP_CORE;
   }
 
-
   /**
-   * If this is a METADATA range, then update the ROOT range
+   *  Shrink the range
    */
-  if (m_identifier.id == 0) {
-    try {
-      // new range
-      metadata_key_str = std::string("0:") + m_split_row;
-      key.row = metadata_key_str.c_str();
-      key.row_len = metadata_key_str.length();
-      key.column_qualifier = 0;
-      key.column_qualifier_len = 0;
-      key.column_family = "StartRow";
-      mutator_ptr->set(0, key, (uint8_t *)old_start_row.c_str(), old_start_row.length());
 
-      // existing range
-      metadata_key_str = std::string("0:") + m_end_row;
-      key.row = metadata_key_str.c_str();
-      key.row_len = metadata_key_str.length();
-      mutator_ptr->set(0, key, (uint8_t *)m_split_row.c_str(), m_split_row.length());
-      mutator_ptr->flush();
-    }
-    catch (Hypertable::Exception &e) {
-      // TODO: propagate exception
-      HT_ERRORF("Problem updating ROOT METADATA range (new=%s, existing=%s) - %s", m_split_row.c_str(), m_end_row.c_str(), e.what());
-      DUMP_CORE;
-    }
-  }
-
-
-  /**
-   *  Do the split
-   */
   {
     boost::mutex::scoped_lock lock(m_maintenance_mutex);
 
@@ -491,23 +467,22 @@ void Range::do_split() {
     while (m_update_counter > 0)
       m_update_quiesce_cond.wait(lock);
 
-    /*** At this point, there are no running updates ***/
-
-    // close split log
-    if ((error = m_split_log_ptr->close(Global::log->get_timestamp())) != Error::OK) {
-      HT_ERRORF("Problem closing split log '%s' - %s", m_split_log_ptr->get_log_dir().c_str(), Error::get_text(error));
-      // return error here!!!
-    }
-    m_split_log_ptr = 0;
-
+    // Shrink access groups
     {
       boost::mutex::scoped_lock lock(m_mutex);
       m_start_row = m_split_row;
       m_split_row = "";
-      // Shrink this range's access groups
       for (size_t i=0; i<m_access_group_vector.size(); i++)
 	m_access_group_vector[i]->shrink(m_start_row);
     }
+
+    // Close and uninstall split log
+    if ((error = m_split_log_ptr->close(Global::log->get_timestamp())) != Error::OK) {
+      HT_ERRORF("Problem closing split log '%s' - %s", m_split_log_ptr->get_log_dir().c_str(), Error::get_text(error));
+      // return error here (unblock updates)
+      DUMP_CORE;
+    }
+    m_split_log_ptr = 0;
 
     // unblock updates
     m_hold_updates = false;
@@ -533,7 +508,7 @@ void Range::do_split() {
       if (m_disk_limit > Global::rangeMaxBytes)
 	m_disk_limit = Global::rangeMaxBytes;
     }
-    if ((error = m_master_client_ptr->report_split(m_identifier, range, split_log_dir.c_str(), m_disk_limit)) != Error::OK) {
+    if ((error = m_master_client_ptr->report_split(m_identifier, range, transfer_log_dir.c_str(), m_disk_limit)) != Error::OK) {
       HT_ERRORF("Problem reporting split (table=%s, start_row=%s, end_row=%s) to master.",
 		   m_identifier.name, range.startRow, range.endRow);
     }

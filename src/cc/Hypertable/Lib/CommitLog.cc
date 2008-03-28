@@ -38,12 +38,24 @@ const char CommitLog::MAGIC_LINK[10]    = { 'L','O','G','L','I','N','K','-','-',
 const char CommitLog::MAGIC_TRAILER[10] = { 'L','O','G','T','R','A','I','L','E','R' };
 
 
-/**
- *
- */
-CommitLog::CommitLog(Filesystem *fs, const std::string &log_dir, PropertiesPtr &props_ptr) : m_fs(fs), m_log_dir(log_dir), m_cur_log_length(0), m_cur_log_num(0), m_last_timestamp(0) {
+CommitLog::~CommitLog() {
+  int error;
+  delete m_compressor;
+  if (m_fd > 0) {
+    if ((error = m_fs->close(m_fd)) != Error::OK)
+      HT_ERRORF("Problem closing commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
+  }
+}
+
+void CommitLog::initialize(Filesystem *fs, const std::string &log_dir, PropertiesPtr &props_ptr) {
   int error;
   std::string compressor;
+
+  m_fs = fs;
+  m_log_dir = log_dir;
+  m_cur_log_length = 0;
+  m_cur_log_num = 0;
+  m_last_timestamp = 0;
 
   if (props_ptr) {
     m_max_file_size = props_ptr->get_int64("Hypertable.RangeServer.CommitLog.RollLimit", 100000000LL);
@@ -75,15 +87,6 @@ CommitLog::CommitLog(Filesystem *fs, const std::string &log_dir, PropertiesPtr &
 
 }
 
-
-CommitLog::~CommitLog() {
-  int error;
-  delete m_compressor;
-  if (m_fd > 0) {
-    if ((error = m_fs->close(m_fd)) != Error::OK)
-      HT_ERRORF("Problem closing commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
-  }
-}
 
 
 

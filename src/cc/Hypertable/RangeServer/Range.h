@@ -107,10 +107,10 @@ namespace Hypertable {
       m_scanner_timestamp_controller.remove_update_timestamp(ts);
     }
 
-    bool get_split_info(std::string &split_row, CommitLogPtr &splitLogPtr) {
+    bool get_split_info(std::string &split_row, CommitLogPtr &split_log_ptr) {
       boost::mutex::scoped_lock lock(m_mutex);
       split_row = m_split_row;
-      splitLogPtr = m_split_log_ptr;
+      split_log_ptr = m_split_log_ptr;
       return (bool)m_split_log_ptr;
     }
 

@@ -91,7 +91,15 @@ namespace Hypertable {
   class CommitLog : public ReferenceCount {
   public:
 
-    CommitLog(Filesystem *fs, const std::string &log_dir, PropertiesPtr &props_ptr);
+    CommitLog(Filesystem *fs, const std::string &log_dir, PropertiesPtr &props_ptr) {
+      initialize(fs, log_dir, props_ptr);
+    }
+
+    CommitLog(Filesystem *fs, const std::string &log_dir) {
+      PropertiesPtr props_ptr(0);
+      initialize(fs, log_dir, props_ptr);
+    }
+
     virtual ~CommitLog();
 
     /**
@@ -134,6 +142,7 @@ namespace Hypertable {
 
   private:
 
+    void initialize(Filesystem *fs, const std::string &log_dir, PropertiesPtr &props_ptr);
     int roll();
     int compress_and_write(DynamicBuffer &input, BlockCompressionHeader *header, uint64_t timestamp);
 
