@@ -28,9 +28,10 @@ set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}.${VERSION_PATCH})
 enable_testing()
 
 if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-  add_definitions(-Wall -pedantic -Wno-long-long -Wno-variadic-macros
-                  -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_REENTRANT)
+  add_definitions(-Wall -pedantic -Wno-long-long)
 endif (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+
+add_definitions(-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_REENTRANT)
 
 # Uncomment the following to build dynamic libraries
 # set (BUILD_SHARED_LIBS ON)
@@ -60,6 +61,12 @@ if (${BOOST_VERSION} MATCHES "1_34")
   include_directories(BEFORE src/cc/boost-1_34-fix)
 endif (${BOOST_VERSION} MATCHES "1_34")
 
+if (${GCC_VERSION} MATCHES "^[4-9]\\.")
+  add_definitions(-Wno-variadic-macros)
+elseif (${GCC_VERSION} MATCHES "^3\\.")
+  message(STATUS "Ancient gcc detected, hope it finishes despite warnings...")
+endif (${GCC_VERSION} MATCHES "^[4-9]\\.")
+
 # link directories
 link_directories(${Boost_LIBRARY_DIRS})
 
@@ -87,6 +94,7 @@ add_subdirectory (src/cc/Tools/rsdump)
 add_subdirectory (src/cc/Tools/serverup)
 add_subdirectory (src/cc/DfsBroker/Lib)
 add_subdirectory (src/cc/DfsBroker/local)
+add_subdirectory (examples/simple_bench)
 IF (Kfs_FOUND)
    add_subdirectory (src/cc/DfsBroker/kosmos)
 ENDIF (Kfs_FOUND)
