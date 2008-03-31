@@ -157,7 +157,7 @@ IF(Boost_INCLUDE_DIR)
   GET_FILENAME_COMPONENT(Boost_LIBRARY_DIR ${BOOST_THREAD_LIB} PATH)
   MESSAGE(STATUS "Boost lib dir: ${Boost_LIBRARY_DIR}")
 
-  # BOOST_LIB is our default boost lib, which is boost thread
+  # BOOST_LIB is our default boost libs.
   SET(BOOST_LIB ${BOOST_PROGRAM_OPTIONS_LIB} ${BOOST_THREAD_LIB})
 
   IF(EXISTS "${Boost_INCLUDE_DIR}")
@@ -175,9 +175,15 @@ IF(Boost_INCLUDE_DIR)
           ${HYPERTABLE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
           ${HYPERTABLE_SOURCE_DIR}/cmake/CheckBoost.cc
           CMAKE_FLAGS -DINCLUDE_DIRECTORIES:STRING=${Boost_INCLUDE_DIRS}
+          COMPILE_DEFINITIONS -v
           OUTPUT_VARIABLE TRY_OUT)
   string(REGEX REPLACE ".*\n([0-9_]+).*" "\\1" BOOST_VERSION ${TRY_OUT})
+  string(REGEX REPLACE ".*\ngcc version ([0-9.]+).*" "\\1" GCC_VERSION ${TRY_OUT})
   message(STATUS "Boost version: ${BOOST_VERSION}")
+
+  if (GCC_VERSION)
+    message(STATUS "gcc version: ${GCC_VERSION}")
+  endif (GCC_VERSION)
 
 ENDIF(Boost_INCLUDE_DIR)
 

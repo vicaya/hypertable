@@ -67,6 +67,9 @@ target_link_libraries (Hypertable Hyperspace HyperComm HyperCommon ${BOOST_LIB})
 add_executable (generate_test_data generate_test_data.cc)
 target_link_libraries (generate_test_data Hypertable pthread ${BOOST_LIB} log4cpp expat)
 
+# meta log test
+add_executable(metalog_api_test tests/MetaLogApiTest.cc)
+
 # schemaTest
 add_executable (schemaTest tests/schemaTest.cc)
 target_link_libraries (schemaTest Hypertable pthread ${BOOST_LIB} log4cpp expat)
@@ -112,6 +115,7 @@ configure_file(${SRC_DIR}/locationCacheTest.golden ${DST_DIR}/locationCacheTest.
 configure_file(${SRC_DIR}/loadDataSourceTest.golden ${DST_DIR}/loadDataSourceTest.golden)
 configure_file(${SRC_DIR}/loadDataSourceTest.dat ${DST_DIR}/loadDataSourceTest.dat)
 
+add_test (MetaLog-API metalog_api_test)
 add_test (Schema schemaTest)
 add_test (LocationCache locationCacheTest)
 add_test (LoadDataSource loadDataSourceTest)

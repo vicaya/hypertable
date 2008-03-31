@@ -25,6 +25,7 @@ Init.cc
 InteractiveCommand.cc
 Logger.cc
 Properties.cc
+String.cc
 System.cc
 Usage.cc
 md5.cc

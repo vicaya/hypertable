@@ -34,20 +34,20 @@ extern "C" {
 namespace Hypertable {
 
   /** Identifies a specific table and generation */
-  typedef struct {
+  typedef struct TableId {
     const char *name;
     uint32_t id;
     uint32_t generation;
   } TableIdentifierT;
 
   /** Identifies a range */
-  typedef struct {
+  typedef struct RangeSpec {
     const char *startRow;
     const char *endRow;
   } RangeT;
 
   /** Scan specification */
-  typedef struct {
+  typedef struct ScanSpec {
     uint32_t rowLimit;
     uint32_t max_versions;
     std::vector<const char *> columns;
@@ -59,7 +59,7 @@ namespace Hypertable {
     bool return_deletes;
   } ScanSpecificationT;
 
-  typedef struct {
+  typedef struct Buffer {
     uint8_t *buf;
     int32_t len;
   } BufferT;

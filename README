@@ -48,6 +48,9 @@
     cd ~/build/hypertable
     cmake -DCMAKE_INSTALL_PREFIX= -DCMAKE_BUILD_TYPE="Debug" ~/src/hypertable
 
+    Note, one can also use ccmake ~/src/hypertable to change build parameters
+    interactively (in a curse based UI.)
+
   7. Build the software.
 
     make
