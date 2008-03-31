@@ -1,12 +1,12 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,6 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
@@ -129,7 +130,7 @@ RangeLocator::~RangeLocator() {
 
 
 
-int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocationInfo *range_loc_info_p, int timeout) {
+int RangeLocator::find(TableIdentifier *table, const char *row_key, RangeLocationInfo *range_loc_info_p, int timeout) {
   int error;
   float wait_time = 1.0;
   float total_wait_time = 0.0;
@@ -201,9 +202,9 @@ namespace {
 }
 
 
-int RangeLocator::find(TableIdentifierT *table, const char *row_key, RangeLocationInfo *range_loc_info_p, bool hard) {
-  RangeT range;
-  ScanSpecificationT meta_scan_spec;
+int RangeLocator::find(TableIdentifier *table, const char *row_key, RangeLocationInfo *range_loc_info_p, bool hard) {
+  RangeSpec range;
+  ScanSpec meta_scan_spec;
   ScanBlock scan_block;
   int error;
   Key keyComps;

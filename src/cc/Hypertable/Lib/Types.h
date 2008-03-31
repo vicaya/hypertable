@@ -1,12 +1,12 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -34,20 +34,26 @@ extern "C" {
 namespace Hypertable {
 
   /** Identifies a specific table and generation */
-  typedef struct TableId {
+  class TableIdentifier {
+  public:
+    TableIdentifier() : name(0), id(0), generation(0) { return; }
     const char *name;
     uint32_t id;
     uint32_t generation;
-  } TableIdentifierT;
+  };
 
   /** Identifies a range */
-  typedef struct RangeSpec {
+  class RangeSpec {
+  public:
+    RangeSpec() : startRow(0), endRow(0) { return; }
     const char *startRow;
     const char *endRow;
-  } RangeT;
+  };
 
   /** Scan specification */
-  typedef struct ScanSpec {
+  class ScanSpec {
+  public:
+    ScanSpec();
     uint32_t rowLimit;
     uint32_t max_versions;
     std::vector<const char *> columns;
@@ -57,52 +63,54 @@ namespace Hypertable {
     bool endRowInclusive;
     std::pair<uint64_t,uint64_t> interval;
     bool return_deletes;
-  } ScanSpecificationT;
+  };
+
+  extern const uint64_t END_OF_TIME;
 
   typedef struct Buffer {
     uint8_t *buf;
     int32_t len;
   } BufferT;
 
-  void Copy(TableIdentifierT &src, TableIdentifierT &dst);
-  inline void Free(TableIdentifierT &identifier) { delete [] identifier.name; }
+  void Copy(TableIdentifier &src, TableIdentifier &dst);
+  inline void Free(TableIdentifier &identifier) { delete [] identifier.name; }
 
-  /** Returns encoded (serialized) length of the given TableIdentifierT.
+  /** Returns encoded (serialized) length of the given TableIdentifier.
    *
    * @param table_identifier table identifier structure
    * @return encoded length of table identifier
    */
-  size_t EncodedLengthTableIdentifier(TableIdentifierT &table_identifier);
+  size_t EncodedLengthTableIdentifier(TableIdentifier &table_identifier);
 
-  /** Encodes a TableIdentifierT into the given buffer. */
-  void EncodeTableIdentifier(uint8_t **bufPtr, TableIdentifierT &table_identifier);
+  /** Encodes a TableIdentifier into the given buffer. */
+  void EncodeTableIdentifier(uint8_t **bufPtr, TableIdentifier &table_identifier);
 
-  /** Decodes a TableIdentifierT from the given buffer */
-  bool DecodeTableIdentifier(uint8_t **bufPtr, size_t *remainingPtr, TableIdentifierT *table_identifier);
+  /** Decodes a TableIdentifier from the given buffer */
+  bool DecodeTableIdentifier(uint8_t **bufPtr, size_t *remainingPtr, TableIdentifier *table_identifier);
 
-  /** Returns encoded (serialized) length of a RangeT */
-  size_t EncodedLengthRange(RangeT &range);
+  /** Returns encoded (serialized) length of a RangeSpec */
+  size_t EncodedLengthRange(RangeSpec &range);
 
-  /** Encodes a RangeT into the given buffer. */
-  void EncodeRange(uint8_t **bufPtr, RangeT &range);
+  /** Encodes a RangeSpec into the given buffer. */
+  void EncodeRange(uint8_t **bufPtr, RangeSpec &range);
 
-  /** Decodes a RangeT from the given buffer */
-  bool DecodeRange(uint8_t **bufPtr, size_t *remainingPtr, RangeT *range);
+  /** Decodes a RangeSpec from the given buffer */
+  bool DecodeRange(uint8_t **bufPtr, size_t *remainingPtr, RangeSpec *range);
 
-  /** Returns encoded (serialized) length of a ScanSpecificationT structure. */
-  size_t EncodedLengthScanSpecification(ScanSpecificationT &scanSpec);
+  /** Returns encoded (serialized) length of a ScanSpec structure. */
+  size_t EncodedLengthScanSpecification(ScanSpec &scanSpec);
 
-  /** Encodes a ScanSpecificationT structure to the given buffer. */
-  void EncodeScanSpecification(uint8_t **bufPtr, ScanSpecificationT &scanSpec);
+  /** Encodes a ScanSpec structure to the given buffer. */
+  void EncodeScanSpecification(uint8_t **bufPtr, ScanSpec &scanSpec);
 
-  /** Decodes a ScanSpecificationT structure from the given buffer. */
-  bool DecodeScanSpecification(uint8_t **bufPtr, size_t *remainingPtr, ScanSpecificationT *scanSpec);
+  /** Decodes a ScanSpec structure from the given buffer. */
+  bool DecodeScanSpecification(uint8_t **bufPtr, size_t *remainingPtr, ScanSpec *scanSpec);
 
-  std::ostream &operator<<(std::ostream &os, const TableIdentifierT &table_identifier);
+  std::ostream &operator<<(std::ostream &os, const TableIdentifier &table_identifier);
 
-  std::ostream &operator<<(std::ostream &os, const RangeT &range);
+  std::ostream &operator<<(std::ostream &os, const RangeSpec &range);
 
-  std::ostream &operator<<(std::ostream &os, const ScanSpecificationT &scannerSpec);
+  std::ostream &operator<<(std::ostream &os, const ScanSpec &scannerSpec);
 
 }
 

@@ -1,12 +1,12 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -48,10 +48,10 @@ namespace Hypertable {
     virtual ~Table();
 
     int create_mutator(TableMutatorPtr &mutator_ptr);
-    int create_scanner(ScanSpecificationT &scan_spec, TableScannerPtr &scanner_ptr);
+    int create_scanner(ScanSpec &scan_spec, TableScannerPtr &scanner_ptr);
 
-    void get_identifier(TableIdentifierT *table_id_p) {
-      memcpy(table_id_p, &m_table, sizeof(TableIdentifierT));
+    void get_identifier(TableIdentifier *table_id_p) {
+      memcpy(table_id_p, &m_table, sizeof(TableIdentifier));
     }
 
   private:
@@ -64,7 +64,7 @@ namespace Hypertable {
     Hyperspace::SessionPtr m_hyperspace_ptr;
     SchemaPtr              m_schema_ptr;
     RangeLocatorPtr        m_range_locator_ptr;
-    TableIdentifierT       m_table;
+    TableIdentifier       m_table;
   };
   typedef boost::intrusive_ptr<Table> TablePtr;
 

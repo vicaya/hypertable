@@ -1,12 +1,12 @@
-/**
+/** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -117,7 +117,7 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
     else if (state.command == COMMAND_SELECT) {
       TablePtr table_ptr;
       TableScannerPtr scanner_ptr;
-      ScanSpecificationT scan_spec;
+      ScanSpec scan_spec;
       CellT cell;
       uint32_t nsec;
       time_t unix_time;

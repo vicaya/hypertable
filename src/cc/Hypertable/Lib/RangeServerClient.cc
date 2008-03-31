@@ -1,12 +1,12 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -35,12 +35,12 @@ RangeServerClient::~RangeServerClient() {
   return;
 }
 
-int RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags, DispatchHandler *handler) {
+int RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags, DispatchHandler *handler) {
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_load_range(table, range, transfer_log_dir, soft_limit, flags) );
   return send_message(addr, cbufPtr, handler);
 }
 
-int RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags) {
+int RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_load_range(table, range, transfer_log_dir, soft_limit, flags) );
@@ -55,13 +55,13 @@ int RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifierT &ta
 }
 
 
-int RangeServerClient::update(struct sockaddr_in &addr, TableIdentifierT &table, uint8_t *data, size_t len, DispatchHandler *handler) {
+int RangeServerClient::update(struct sockaddr_in &addr, TableIdentifier &table, uint8_t *data, size_t len, DispatchHandler *handler) {
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_update(table, data, len) );
   return send_message(addr, cbufPtr, handler);
 }
 
 
-int RangeServerClient::update(struct sockaddr_in &addr, TableIdentifierT &table, uint8_t *data, size_t len) {
+int RangeServerClient::update(struct sockaddr_in &addr, TableIdentifier &table, uint8_t *data, size_t len) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_update(table, data, len) );
@@ -77,13 +77,13 @@ int RangeServerClient::update(struct sockaddr_in &addr, TableIdentifierT &table,
 
 
 
-int RangeServerClient::create_scanner(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, ScanSpecificationT &scan_spec, DispatchHandler *handler) {
+int RangeServerClient::create_scanner(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, ScanSpec &scan_spec, DispatchHandler *handler) {
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_create_scanner(table, range, scan_spec) );
   return send_message(addr, cbufPtr, handler);
 }
 
 
-int RangeServerClient::create_scanner(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, ScanSpecificationT &scan_spec, ScanBlock &scan_block) {
+int RangeServerClient::create_scanner(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, ScanSpec &scan_spec, ScanBlock &scan_block) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_create_scanner(table, range, scan_spec) );
@@ -144,13 +144,13 @@ int RangeServerClient::fetch_scanblock(struct sockaddr_in &addr, int scanner_id,
 }
 
 
-int RangeServerClient::drop_table(struct sockaddr_in &addr, TableIdentifierT &table, DispatchHandler *handler) {
+int RangeServerClient::drop_table(struct sockaddr_in &addr, TableIdentifier &table, DispatchHandler *handler) {
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_drop_table(table) );
   return send_message(addr, cbufPtr, handler);
 }
 
 
-int RangeServerClient::drop_table(struct sockaddr_in &addr, TableIdentifierT &table) {
+int RangeServerClient::drop_table(struct sockaddr_in &addr, TableIdentifier &table) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_drop_table(table) );
@@ -226,7 +226,7 @@ int RangeServerClient::replay_commit(struct sockaddr_in &addr, DispatchHandler *
 }
 
 
-int RangeServerClient::drop_range(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, DispatchHandler *handler) {
+int RangeServerClient::drop_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, DispatchHandler *handler) {
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_drop_range(table, range) );
   return send_message(addr, cbufPtr, handler);
 }

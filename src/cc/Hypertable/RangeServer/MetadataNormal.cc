@@ -1,12 +1,12 @@
-/**
+/** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -33,9 +33,9 @@
 /**
  *
  */
-MetadataNormal::MetadataNormal(TableIdentifierT &identifier, std::string &end_row) : m_files_scanner_ptr(0) {
+MetadataNormal::MetadataNormal(TableIdentifier &identifier, std::string &end_row) : m_files_scanner_ptr(0) {
   m_metadata_key = std::string("") + (uint32_t)identifier.id + ":" + end_row;
-  memcpy(&m_identifier, &identifier, sizeof(TableIdentifierT));
+  memcpy(&m_identifier, &identifier, sizeof(TableIdentifier));
 }
 
 
@@ -51,7 +51,7 @@ MetadataNormal::~MetadataNormal() {
 
 void MetadataNormal::reset_files_scan() {
   int error;
-  ScanSpecificationT scan_spec;
+  ScanSpec scan_spec;
 
   scan_spec.rowLimit = 1;
   scan_spec.max_versions = 1;

@@ -1,12 +1,12 @@
-/**
+/** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -380,8 +380,8 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
    */
   if (!m_initialized) {
     int error;
-    TableIdentifierT table;
-    RangeT range;
+    TableIdentifier table;
+    RangeSpec range;
     RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30);
 
     /**
@@ -474,7 +474,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
  * NOTE: this call can't be protected by a mutex because it can cause the
  * whole system to wedge under certain situations
  */
-void Master::report_split(ResponseCallback *cb, TableIdentifierT &table, RangeT &range, const char *transfer_log_dir, uint64_t soft_limit) {
+void Master::report_split(ResponseCallback *cb, TableIdentifier &table, RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit) {
   int error;
   struct sockaddr_in addr;
   RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30);
@@ -555,11 +555,11 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
     char start_row[16];
     char end_row[16];
     TableScannerPtr scanner_ptr;
-    ScanSpecificationT scan_spec;
+    ScanSpec scan_spec;
     CellT cell;
     std::string location_str;
     std::set<std::string> unique_locations;
-    TableIdentifierT table;
+    TableIdentifier table;
 
     table.name = table_name_str.c_str();
     table.id = ival;
@@ -768,8 +768,8 @@ int Master::create_table(const char *tableName, const char *schemaString, std::s
      * TEMPORARY:  ask the one Range Server that we know about to load the range
      */
 
-    TableIdentifierT table;
-    RangeT range;
+    TableIdentifier table;
+    RangeSpec range;
     uint64_t soft_limit;
     RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30);
 

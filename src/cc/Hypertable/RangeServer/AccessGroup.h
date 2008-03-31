@@ -1,12 +1,12 @@
-/**
+/** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,6 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+
 #ifndef HYPERTABLE_ACCESSGROUP_H
 #define HYPERTABLE_ACCESSGROUP_H
 
@@ -50,7 +51,7 @@ namespace Hypertable {
       void *user_data;
     } CompactionPriorityDataT;
 
-    AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range);
+    AccessGroup(TableIdentifier &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeSpec *range);
     virtual ~AccessGroup();
     virtual int add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp);
 
@@ -100,7 +101,7 @@ namespace Hypertable {
 
   private:
     boost::mutex         m_mutex;
-    TableIdentifierT     m_table_identifier;
+    TableIdentifier     m_table_identifier;
     SchemaPtr            m_schema_ptr;
     std::set<uint8_t>    m_column_families;
     std::string          m_name;

@@ -1,12 +1,12 @@
-/**
+/** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -51,20 +51,20 @@ namespace Hypertable {
     RangeServer(PropertiesPtr &propsPtr, ConnectionManagerPtr &conn_manager_ptr, ApplicationQueuePtr &app_queue_ptr, Hyperspace::SessionPtr &hyperspace_ptr);
     virtual ~RangeServer();
 
-    void compact(ResponseCallback *cb, TableIdentifierT *table, RangeT *range, uint8_t compaction_type);
-    void create_scanner(ResponseCallbackCreateScanner *cb, TableIdentifierT *table, RangeT *range, ScanSpecificationT *scan_spec);
+    void compact(ResponseCallback *cb, TableIdentifier *table, RangeSpec *range, uint8_t compaction_type);
+    void create_scanner(ResponseCallbackCreateScanner *cb, TableIdentifier *table, RangeSpec *range, ScanSpec *scan_spec);
     void destroy_scanner(ResponseCallback *cb, uint32_t scannerId);
     void fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t scannerId);
-    void load_range(ResponseCallback *cb, TableIdentifierT *table, RangeT *range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags);
-    void update(ResponseCallbackUpdate *cb, TableIdentifierT *table, BufferT &buffer);
-    void drop_table(ResponseCallback *cb, TableIdentifierT *table);
+    void load_range(ResponseCallback *cb, TableIdentifier *table, RangeSpec *range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags);
+    void update(ResponseCallbackUpdate *cb, TableIdentifier *table, BufferT &buffer);
+    void drop_table(ResponseCallback *cb, TableIdentifier *table);
     void dump_stats(ResponseCallback *cb);
 
     void replay_start(ResponseCallback *cb);
     void replay_update(ResponseCallback *cb, const uint8_t *data, size_t len);
     void replay_commit(ResponseCallback *cb);
 
-    void drop_range(ResponseCallback *cb, TableIdentifierT *table, RangeT *range);
+    void drop_range(ResponseCallback *cb, TableIdentifier *table, RangeSpec *range);
 
     void do_maintenance();
     void log_cleanup();

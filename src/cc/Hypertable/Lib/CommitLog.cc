@@ -1,12 +1,12 @@
-/**
+/** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -106,7 +106,7 @@ uint64_t CommitLog::get_timestamp() {
 /**
  * 
  */
-int CommitLog::write(TableIdentifierT *table, uint8_t *data, uint32_t len, uint64_t timestamp) {
+int CommitLog::write(TableIdentifier *table, uint8_t *data, uint32_t len, uint64_t timestamp) {
   int error;
   BlockCompressionHeaderCommitLog header(MAGIC_UPDATES, timestamp, table);
   DynamicBuffer input(0);
@@ -141,7 +141,7 @@ int CommitLog::write(TableIdentifierT *table, uint8_t *data, uint32_t len, uint6
  * The current log file is closed and a new one is opened.  The linked to log
  * directory is written as the first log entry in the newly opened file.
  */
-int CommitLog::link_log(TableIdentifierT *table, const char *log_dir, uint64_t timestamp) {
+int CommitLog::link_log(TableIdentifier *table, const char *log_dir, uint64_t timestamp) {
   int error;
   BlockCompressionHeaderCommitLog header(MAGIC_LINK, timestamp, table);
   DynamicBuffer input(0);

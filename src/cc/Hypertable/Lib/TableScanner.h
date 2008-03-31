@@ -1,12 +1,12 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -38,7 +38,7 @@ namespace Hypertable {
   class TableScanner : public ReferenceCount {
 
   public:
-    TableScanner(PropertiesPtr &props_ptr, Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpecificationT &scan_spec);
+    TableScanner(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpec &scan_spec);
     virtual ~TableScanner();
 
     bool next(CellT &cell);
@@ -50,10 +50,10 @@ namespace Hypertable {
     Comm               *m_comm;
     SchemaPtr           m_schema_ptr;
     RangeLocatorPtr     m_range_locator_ptr;
-    ScanSpecificationT  m_scan_spec;
+    ScanSpec  m_scan_spec;
     RangeServerClient   m_range_server;
     std::string         m_table_name;
-    TableIdentifierT    m_table_identifier;
+    TableIdentifier    m_table_identifier;
     bool                m_started;
     bool                m_eos;
     ScanBlock           m_scanblock;

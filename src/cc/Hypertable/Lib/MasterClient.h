@@ -1,12 +1,12 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -68,8 +68,8 @@ namespace Hypertable {
     int register_server(std::string &location, DispatchHandler *handler);
     int register_server(std::string &location);
 
-    int report_split(TableIdentifierT &table, RangeT &range, const char *log_dir, uint64_t soft_limit, DispatchHandler *handler);
-    int report_split(TableIdentifierT &table, RangeT &range, const char *log_dir, uint64_t soft_limit);
+    int report_split(TableIdentifier &table, RangeSpec &range, const char *log_dir, uint64_t soft_limit, DispatchHandler *handler);
+    int report_split(TableIdentifier &table, RangeSpec &range, const char *log_dir, uint64_t soft_limit);
 
     int drop_table(const char *table_name, bool if_exists, DispatchHandler *handler);
     int drop_table(const char *table_name, bool if_exists);

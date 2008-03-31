@@ -1,12 +1,12 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -37,46 +37,46 @@ namespace {
     "diffs it against ./locationCacheTest.golden'.",
     0
   };
-  typedef pair<const char *, const char *> RowRangeT;
+  typedef pair<const char *, const char *> RowRangeSpec;
 
   const int MAX_RANGES = 33;
   const int MAX_WORDS = 90;
   const int MAX_SERVERIDS = 11;
 
-  RowRangeT ranges[MAX_RANGES] = {
-    RowRangeT("","allogene"),
-    RowRangeT("allogene", "archtreasurer"),
-    RowRangeT("archtreasurer", "beerocracy"),
-    RowRangeT("beerocracy", "bulblet"),
-    RowRangeT("bulblet", "chieftainship"),
-    RowRangeT("chieftainship", "consolatory"),
-    RowRangeT("consolatory", "deaconal"),
-    RowRangeT("deaconal", "diumvirate"),
-    RowRangeT("diumvirate", "Epicureanism"),
-    RowRangeT("Epicureanism", "flaminica"),
-    RowRangeT("flaminica", "globulet"),
-    RowRangeT("globulet", "heterochromatin"),
-    RowRangeT("heterochromatin", "impressionistically"),
-    RowRangeT("impressionistically", "janker"),
-    RowRangeT("janker", "linder"),
-    RowRangeT("linder", "merohedrism"),
-    RowRangeT("merohedrism", "mycodomatium"),
-    RowRangeT("mycodomatium", "nunatak"),
-    RowRangeT("nunatak", "oversound"),
-    RowRangeT("oversound", "perkingly"),
-    RowRangeT("perkingly", "polymely"),
-    RowRangeT("polymely", "prosopyl"),
-    RowRangeT("prosopyl", "reconsultation"),
-    RowRangeT("reconsultation", "Saan"),
-    RowRangeT("Saan", "setterwort"),
-    RowRangeT("setterwort", "spherics"),
-    RowRangeT("spherics", "sulphoarsenious"),
-    RowRangeT("sulphoarsenious", "tetrazolyl"),
-    RowRangeT("tetrazolyl", "trophic"),
-    RowRangeT("trophic", "undoubtingness"),
-    RowRangeT("undoubtingness", "unserrated"),
-    RowRangeT("unserrated", "vowellessness"),
-    RowRangeT("vowellessness", "")
+  RowRangeSpec ranges[MAX_RANGES] = {
+    RowRangeSpec("","allogene"),
+    RowRangeSpec("allogene", "archtreasurer"),
+    RowRangeSpec("archtreasurer", "beerocracy"),
+    RowRangeSpec("beerocracy", "bulblet"),
+    RowRangeSpec("bulblet", "chieftainship"),
+    RowRangeSpec("chieftainship", "consolatory"),
+    RowRangeSpec("consolatory", "deaconal"),
+    RowRangeSpec("deaconal", "diumvirate"),
+    RowRangeSpec("diumvirate", "Epicureanism"),
+    RowRangeSpec("Epicureanism", "flaminica"),
+    RowRangeSpec("flaminica", "globulet"),
+    RowRangeSpec("globulet", "heterochromatin"),
+    RowRangeSpec("heterochromatin", "impressionistically"),
+    RowRangeSpec("impressionistically", "janker"),
+    RowRangeSpec("janker", "linder"),
+    RowRangeSpec("linder", "merohedrism"),
+    RowRangeSpec("merohedrism", "mycodomatium"),
+    RowRangeSpec("mycodomatium", "nunatak"),
+    RowRangeSpec("nunatak", "oversound"),
+    RowRangeSpec("oversound", "perkingly"),
+    RowRangeSpec("perkingly", "polymely"),
+    RowRangeSpec("polymely", "prosopyl"),
+    RowRangeSpec("prosopyl", "reconsultation"),
+    RowRangeSpec("reconsultation", "Saan"),
+    RowRangeSpec("Saan", "setterwort"),
+    RowRangeSpec("setterwort", "spherics"),
+    RowRangeSpec("spherics", "sulphoarsenious"),
+    RowRangeSpec("sulphoarsenious", "tetrazolyl"),
+    RowRangeSpec("tetrazolyl", "trophic"),
+    RowRangeSpec("trophic", "undoubtingness"),
+    RowRangeSpec("undoubtingness", "unserrated"),
+    RowRangeSpec("unserrated", "vowellessness"),
+    RowRangeSpec("vowellessness", "")
   };
 
   const char *words[MAX_WORDS] = {

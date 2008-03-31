@@ -1,12 +1,12 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -80,7 +80,7 @@ namespace Hypertable {
      * @param timeout maximum time to retry before giving up
      * @return Error::OK on success or error code on failure
      */
-    int find(TableIdentifierT *table, const char *row_key, RangeLocationInfo *range_loc_info_p, int timeout);
+    int find(TableIdentifier *table, const char *row_key, RangeLocationInfo *range_loc_info_p, int timeout);
 
     /** Locates the range that contains the given row key.
      * 
@@ -90,7 +90,7 @@ namespace Hypertable {
      * @param hard find the hard way (e.g. don't consult cache)
      * @return Error::OK on success or error code on failure
      */
-    int find(TableIdentifierT *table, const char *row_key, RangeLocationInfo *range_loc_info_p, bool hard);
+    int find(TableIdentifier *table, const char *row_key, RangeLocationInfo *range_loc_info_p, bool hard);
 
     /** Sets the "root stale" flag.  Causes methods to reread the root range location before
      * doing METADATA scans.
@@ -116,7 +116,7 @@ namespace Hypertable {
     SchemaPtr              m_metadata_schema_ptr;
     uint8_t                m_startrow_cid;
     uint8_t                m_location_cid;
-    TableIdentifierT       m_metadata_table;
+    TableIdentifier       m_metadata_table;
     std::deque<std::string> m_last_errors;
     
   };

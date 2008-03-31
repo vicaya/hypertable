@@ -1,12 +1,12 @@
-/**
+/** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -58,7 +58,7 @@ namespace Hypertable {
      * @param range_locator_ptr smart pointer to range locator
      * 
      */
-    TableMutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifierT *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
+    TableMutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
 
     virtual ~TableMutator() { return; }
 
@@ -146,7 +146,7 @@ namespace Hypertable {
     SchemaPtr            m_schema_ptr;
     RangeLocatorPtr      m_range_locator_ptr;
     std::string          m_table_name;
-    TableIdentifierT     m_table_identifier;
+    TableIdentifier     m_table_identifier;
     uint64_t             m_memory_used;
     uint64_t             m_max_memory;
     TableMutatorScatterBufferPtr  m_buffer_ptr;

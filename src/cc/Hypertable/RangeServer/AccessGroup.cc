@@ -1,12 +1,12 @@
-/**
+/** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -40,7 +40,7 @@ namespace {
 }
 
 
-AccessGroup::AccessGroup(TableIdentifierT &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeT *range) : CellList(), m_mutex(), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE), m_compression_ratio(1.0), m_is_root(false), m_oldest_cached_timestamp(0), m_collisions(0), m_needs_compaction(false), m_drop(false) {
+AccessGroup::AccessGroup(TableIdentifier &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeSpec *range) : CellList(), m_mutex(), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE), m_compression_ratio(1.0), m_is_root(false), m_oldest_cached_timestamp(0), m_collisions(0), m_needs_compaction(false), m_drop(false) {
   m_table_name = table_identifier.name;
   m_start_row = range->startRow;
   m_end_row = range->endRow;
@@ -196,7 +196,7 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore_ptr, uint32_t id) {
   }
 
   if (m_in_memory) {
-    ScanContextPtr scan_context_ptr = new ScanContext(ScanContext::END_OF_TIME, m_schema_ptr);
+    ScanContextPtr scan_context_ptr = new ScanContext(END_OF_TIME, m_schema_ptr);
     CellListScannerPtr scanner_ptr = cellstore_ptr->create_scanner(scan_context_ptr);
     ByteString32T *key, *value;
     m_cell_cache_ptr = new CellCache();
@@ -389,7 +389,7 @@ int AccessGroup::shrink(std::string &new_start_row) {
   int error;
   CellCachePtr old_cell_cache_ptr = m_cell_cache_ptr;
   CellCachePtr new_cell_cache_ptr;
-  ScanContextPtr scan_context_ptr = new ScanContext(ScanContext::END_OF_TIME, m_schema_ptr);
+  ScanContextPtr scan_context_ptr = new ScanContext(END_OF_TIME, m_schema_ptr);
   CellListScannerPtr cell_cache_scanner_ptr;
   ByteString32T *key;
   ByteString32T *value;

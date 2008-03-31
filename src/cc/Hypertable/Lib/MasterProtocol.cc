@@ -1,12 +1,12 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -60,7 +60,7 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *MasterProtocol::create_report_split_request(TableIdentifierT &table, RangeT &range, const char *transfer_log_dir, uint64_t soft_limit) {
+  CommBuf *MasterProtocol::create_report_split_request(TableIdentifier &table, RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
     CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthTableIdentifier(table) + EncodedLengthRange(range) + Serialization::encoded_length_string(transfer_log_dir) + 8);
     cbuf->append_short(COMMAND_REPORT_SPLIT);

@@ -1,12 +1,12 @@
-/**
+/** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -29,7 +29,7 @@
 namespace Hypertable {
 
   TableInfo::TableInfo(std::string &table_name) {
-    memset(&m_table, 0, sizeof(TableIdentifierT));
+    memset(&m_table, 0, sizeof(TableIdentifier));
     m_table.name = new char [ strlen(table_name.c_str()) + 1 ];
     strcpy((char *)m_table.name, table_name.c_str());
   }

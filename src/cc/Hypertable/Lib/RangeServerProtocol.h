@@ -1,12 +1,12 @@
-/**
+/** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,6 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+
 #ifndef HYPERTABLE_RANGESERVERPROTOCOL_H
 #define HYPERTABLE_RANGESERVERPROTOCOL_H
 
@@ -59,7 +60,7 @@ namespace Hypertable {
      * @param flags load flags
      * @return protocol message
      */
-    static CommBuf *create_request_load_range(TableIdentifierT &table, RangeT &range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags);
+    static CommBuf *create_request_load_range(TableIdentifier &table, RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags);
 
     /** Creates an "update" request message.  The data argument holds a sequence of key/value
      * pairs.  Each key/value pair is encoded as two variable lenght ByteString32T records
@@ -71,7 +72,7 @@ namespace Hypertable {
      * @param len length of data buffer
      * @return protocol message
      */
-    static CommBuf *create_request_update(TableIdentifierT &table, uint8_t *data, size_t len);
+    static CommBuf *create_request_update(TableIdentifier &table, uint8_t *data, size_t len);
 
     /** Creates a "create scanner" request message.
      *
@@ -80,7 +81,7 @@ namespace Hypertable {
      * @param scan_spec scan specification
      * @return protocol message
      */
-    static CommBuf *create_request_create_scanner(TableIdentifierT &table, RangeT &range, ScanSpecificationT &scan_spec);
+    static CommBuf *create_request_create_scanner(TableIdentifier &table, RangeSpec &range, ScanSpec &scan_spec);
 
     /** Creates a "destroy scanner" request message.
      *
@@ -119,7 +120,7 @@ namespace Hypertable {
      * @param table table identifier
      * @return protocol message
      */
-    static CommBuf *create_request_drop_table(TableIdentifierT &table);
+    static CommBuf *create_request_drop_table(TableIdentifier &table);
 
     /** Creates a "replay start" request message.
      *
@@ -148,7 +149,7 @@ namespace Hypertable {
      * @param range range specification
      * @return protocol message
      */
-    static CommBuf *create_request_drop_range(TableIdentifierT &table, RangeT &range);
+    static CommBuf *create_request_drop_range(TableIdentifier &table, RangeSpec &range);
 
     virtual const char *command_text(short command);
   };

@@ -1,12 +1,12 @@
-/**
+/** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,6 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+
 #ifndef HYPERTABLE_TABLEINFO_H
 #define HYPERTABLE_TABLEINFO_H
 
@@ -40,7 +41,7 @@ namespace Hypertable {
   class TableInfo : public ReferenceCount {
 
   public:
-    TableInfo(MasterClientPtr &master_client_ptr, TableIdentifierT *identifier, SchemaPtr &schemaPtr);
+    TableInfo(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, SchemaPtr &schemaPtr);
     virtual ~TableInfo();
     const char *get_name() { return m_identifier.name; }
     uint32_t get_id() { return m_identifier.id; }
@@ -52,8 +53,8 @@ namespace Hypertable {
       boost::mutex::scoped_lock lock(m_mutex);
       m_schema = schemaPtr;
     }
-    bool get_range(RangeT *range, RangePtr &range_ptr);
-    bool remove_range(RangeT *range, RangePtr &range_ptr);
+    bool get_range(RangeSpec *range, RangePtr &range_ptr);
+    bool remove_range(RangeSpec *range, RangePtr &range_ptr);
     void add_range(RangePtr &range_ptr);
     bool find_containing_range(std::string row, RangePtr &range_ptr);
 
@@ -71,7 +72,7 @@ namespace Hypertable {
 
     boost::mutex     m_mutex;
     MasterClientPtr  m_master_client_ptr;
-    TableIdentifierT m_identifier;
+    TableIdentifier m_identifier;
     std::string      m_name;
     SchemaPtr        m_schema;
     RangeMapT        m_range_map;

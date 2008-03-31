@@ -17,6 +17,8 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
+#include <cstdarg>
+
 #include "String.h"
 
 namespace Hypertable {

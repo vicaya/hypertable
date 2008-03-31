@@ -18,6 +18,7 @@
 
 set (Common_SRCS
 Checksum.cc
+code_search_and_replace.cc
 Error.cc
 FileUtils.cc
 InetAddr.cc
@@ -33,10 +34,10 @@ md5.cc
 
 add_library (HyperCommon ${Common_SRCS})
 
-add_executable (htConvert htConvert.cc)
+add_executable (code_search_and_replace code_search_and_replace.cc)
 
 # Link the executable to the HyperCommon library.
-target_link_libraries (htConvert HyperCommon log4cpp pthread)
+target_link_libraries (code_search_and_replace pthread ${BOOST_LIB} HyperCommon log4cpp)
 
 file (GLOB HEADERS *.h)
 
@@ -46,3 +47,6 @@ install (TARGETS HyperCommon
          RUNTIME DESTINATION ${VERSION}/bin
          LIBRARY DESTINATION ${VERSION}/lib
          ARCHIVE DESTINATION ${VERSION}/lib)
+
+install (TARGETS code_search_and_replace
+	 RUNTIME DESTINATION ${VERSION}/bin)

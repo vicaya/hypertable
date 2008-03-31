@@ -1,12 +1,12 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,6 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+
 #ifndef HYPERTABLE_SCANCONTEXT_H
 #define HYPERTABLE_SCANCONTEXT_H
 
@@ -44,11 +45,9 @@ namespace Hypertable {
   class ScanContext : public ReferenceCount {
   public:
 
-    static const uint64_t END_OF_TIME;
-
     SchemaPtr schemaPtr;
-    ScanSpecificationT *spec;
-    RangeT *range;
+    ScanSpec *spec;
+    RangeSpec *range;
     std::string start_row;
     std::string end_row;
     std::pair<uint64_t, uint64_t> interval;
@@ -63,7 +62,7 @@ namespace Hypertable {
      * @param range_ range specifier
      * @param sp shared pointer to schema object
      */
-    ScanContext(uint64_t ts, ScanSpecificationT *ss, RangeT *range_, SchemaPtr &sp) {
+    ScanContext(uint64_t ts, ScanSpec *ss, RangeSpec *range_, SchemaPtr &sp) {
       initialize(ts, ss, range_, sp);
     }
 
@@ -102,7 +101,7 @@ namespace Hypertable {
      * @param range_ range specifier
      * @param sp shared pointer to schema object
      */
-    void initialize(uint64_t ts, ScanSpecificationT *ss, RangeT *range_, SchemaPtr &sp);
+    void initialize(uint64_t ts, ScanSpec *ss, RangeSpec *range_, SchemaPtr &sp);
 
   };
 

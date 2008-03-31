@@ -1,12 +1,12 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -63,7 +63,7 @@ namespace Hypertable {
      * @param handler response handler
      * @return Error::OK on success or error code on failure
      */
-    int load_range(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags, DispatchHandler *handler);
+    int load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags, DispatchHandler *handler);
 
     /** Issues a "load range" request.
      *
@@ -75,7 +75,7 @@ namespace Hypertable {
      * @param flags load flags
      * @return Error::OK on success or error code on failure
      */
-    int load_range(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags);
+    int load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags);
 
     /** Issues an "update" request asynchronously.  The data argument holds a sequence of key/value
      * pairs.  Each key/value pair is encoded as two variable lenght ByteString32T records
@@ -88,7 +88,7 @@ namespace Hypertable {
      * @param handler response handler
      * @return Error::OK on success or error code on failure
      */
-    int update(struct sockaddr_in &addr, TableIdentifierT &table, uint8_t *data, size_t len, DispatchHandler *handler);
+    int update(struct sockaddr_in &addr, TableIdentifier &table, uint8_t *data, size_t len, DispatchHandler *handler);
 
     /** Issues an "update" request.  The data argument holds a sequence of key/value
      * pairs.  Each key/value pair is encoded as two variable lenght ByteString32T records
@@ -100,7 +100,7 @@ namespace Hypertable {
      * @param len length of data buffer
      * @return Error::OK on success or error code on failure
      */
-    int update(struct sockaddr_in &addr, TableIdentifierT &table, uint8_t *data, size_t len);
+    int update(struct sockaddr_in &addr, TableIdentifier &table, uint8_t *data, size_t len);
 
     /** Issues a "create scanner" request asynchronously.
      *
@@ -111,7 +111,7 @@ namespace Hypertable {
      * @param handler response handler
      * @return Error::OK on success or error code on failure
      */
-    int create_scanner(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, ScanSpecificationT &scan_spec, DispatchHandler *handler);
+    int create_scanner(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, ScanSpec &scan_spec, DispatchHandler *handler);
 
     /** Issues a "create scanner" request.
      *
@@ -122,7 +122,7 @@ namespace Hypertable {
      * @param scan_block block of return key/value pairs
      * @return Error::OK on success or error code on failure
      */
-    int create_scanner(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, ScanSpecificationT &scan_spec, ScanBlock &scan_block);
+    int create_scanner(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, ScanSpec &scan_spec, ScanBlock &scan_block);
 
     /** Issues a "destroy scanner" request asynchronously.
      *
@@ -166,7 +166,7 @@ namespace Hypertable {
      * @param handler response handler
      * @return Error::OK on success or error code on failure
      */
-    int drop_table(struct sockaddr_in &addr, TableIdentifierT &table, DispatchHandler *handler);
+    int drop_table(struct sockaddr_in &addr, TableIdentifier &table, DispatchHandler *handler);
 
     /** Issues a "drop table" request.
      *
@@ -174,7 +174,7 @@ namespace Hypertable {
      * @param table table identifier
      * @return Error::OK on success or error code on failure
      */
-    int drop_table(struct sockaddr_in &addr, TableIdentifierT &table);
+    int drop_table(struct sockaddr_in &addr, TableIdentifier &table);
 
     /** Issues a "status" request.  This call blocks until it receives a response from the server.
      * 
@@ -227,7 +227,7 @@ namespace Hypertable {
      * @param handler response handler
      * @return Error::OK on success or error code on failure
      */
-    int drop_range(struct sockaddr_in &addr, TableIdentifierT &table, RangeT &range, DispatchHandler *handler);
+    int drop_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, DispatchHandler *handler);
 
   private:
 

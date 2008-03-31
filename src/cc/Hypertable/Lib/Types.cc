@@ -1,12 +1,12 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -30,28 +30,34 @@ using namespace std;
 
 namespace Hypertable {
 
-  void Copy(TableIdentifierT &src, TableIdentifierT &dst) {
-    memcpy(&dst, &src, sizeof(TableIdentifierT));
+  const uint64_t END_OF_TIME = (uint64_t)-1;
+
+  ScanSpec::ScanSpec() : rowLimit(0), max_versions(0), startRow(0), startRowInclusive(true), endRow(0), endRowInclusive(true), interval(0, END_OF_TIME), return_deletes(false) {
+    return;
+  }
+
+  void Copy(TableIdentifier &src, TableIdentifier &dst) {
+    memcpy(&dst, &src, sizeof(TableIdentifier));
     dst.name = new char [ strlen(src.name) + 1 ];
     strcpy((char *)dst.name, src.name);
   }
 
-  /** Returns encoded (serialized) length of the given TableIdentifierT.
+  /** Returns encoded (serialized) length of the given TableIdentifier.
    */
-  size_t EncodedLengthTableIdentifier(TableIdentifierT &table_identifier) {
+  size_t EncodedLengthTableIdentifier(TableIdentifier &table_identifier) {
     return 8 + Serialization::encoded_length_string(table_identifier.name);
   }
 
-  /** Encodes a TableIdentifierT into the given buffer. */
-  void EncodeTableIdentifier(uint8_t **bufPtr, TableIdentifierT &table_identifier) {
+  /** Encodes a TableIdentifier into the given buffer. */
+  void EncodeTableIdentifier(uint8_t **bufPtr, TableIdentifier &table_identifier) {
     Serialization::encode_string(bufPtr, table_identifier.name);
     Serialization::encode_int(bufPtr, table_identifier.id);
     Serialization::encode_int(bufPtr, table_identifier.generation);
   }
 
-  /** Decodes a TableIdentifierT from the given buffer */
-  bool DecodeTableIdentifier(uint8_t **bufPtr, size_t *remainingPtr, TableIdentifierT *table_identifier) {
-    memset(table_identifier, 0, sizeof(TableIdentifierT));
+  /** Decodes a TableIdentifier from the given buffer */
+  bool DecodeTableIdentifier(uint8_t **bufPtr, size_t *remainingPtr, TableIdentifier *table_identifier) {
+    memset(table_identifier, 0, sizeof(TableIdentifier));
     if (!Serialization::decode_string(bufPtr, remainingPtr, &table_identifier->name))
       return false;
     if (!Serialization::decode_int(bufPtr, remainingPtr, &table_identifier->id))
@@ -61,20 +67,20 @@ namespace Hypertable {
     return true;
   }
 
-  /** Returns encoded (serialized) length of a RangeT */
-  size_t EncodedLengthRange(RangeT &range) {
+  /** Returns encoded (serialized) length of a RangeSpec */
+  size_t EncodedLengthRange(RangeSpec &range) {
     return Serialization::encoded_length_string(range.startRow) + Serialization::encoded_length_string(range.endRow);
   }
 
-  /** Encodes a RangeT into the given buffer. */
-  void EncodeRange(uint8_t **bufPtr, RangeT &range) {
+  /** Encodes a RangeSpec into the given buffer. */
+  void EncodeRange(uint8_t **bufPtr, RangeSpec &range) {
     Serialization::encode_string(bufPtr, range.startRow);
     Serialization::encode_string(bufPtr, range.endRow);
   }
 
-  /** Decodes a RangeT from the given buffer */
-  bool DecodeRange(uint8_t **bufPtr, size_t *remainingPtr, RangeT *range) {
-    memset(range, 0, sizeof(RangeT));
+  /** Decodes a RangeSpec from the given buffer */
+  bool DecodeRange(uint8_t **bufPtr, size_t *remainingPtr, RangeSpec *range) {
+    memset(range, 0, sizeof(RangeSpec));
     if (!Serialization::decode_string(bufPtr, remainingPtr, &range->startRow))
       return false;
     if (!Serialization::decode_string(bufPtr, remainingPtr, &range->endRow))
@@ -86,7 +92,7 @@ namespace Hypertable {
   /**
    *
    */
-  size_t EncodedLengthScanSpecification(ScanSpecificationT &scanSpec) {
+  size_t EncodedLengthScanSpecification(ScanSpec &scanSpec) {
     size_t len = 29;
     len += Serialization::encoded_length_string(scanSpec.startRow);
     len += Serialization::encoded_length_string(scanSpec.endRow);
@@ -96,7 +102,7 @@ namespace Hypertable {
   }
 
 
-  void EncodeScanSpecification(uint8_t **bufPtr, ScanSpecificationT &scanSpec) {
+  void EncodeScanSpecification(uint8_t **bufPtr, ScanSpec &scanSpec) {
     Serialization::encode_int(bufPtr, scanSpec.rowLimit);
     Serialization::encode_int(bufPtr, scanSpec.max_versions);
     Serialization::encode_string(bufPtr, scanSpec.startRow);
@@ -112,7 +118,7 @@ namespace Hypertable {
   }
 
 
-  bool DecodeScanSpecification(uint8_t **bufPtr, size_t *remainingPtr, ScanSpecificationT *scanSpec) {
+  bool DecodeScanSpecification(uint8_t **bufPtr, size_t *remainingPtr, ScanSpec *scanSpec) {
     uint16_t columnCount;
     const char *column;
     uint8_t inclusiveByte;
@@ -149,14 +155,14 @@ namespace Hypertable {
   }
 
 
-  std::ostream &operator<<(std::ostream &os, const TableIdentifierT &table_identifier) {
+  std::ostream &operator<<(std::ostream &os, const TableIdentifier &table_identifier) {
     os << "Table Name = " << table_identifier.name << endl;
     os << "Table ID   = " << table_identifier.id << endl;
     os << "Generation = " << table_identifier.generation << endl;
     return os;
   }
 
-  std::ostream &operator<<(std::ostream &os, const RangeT &range) {
+  std::ostream &operator<<(std::ostream &os, const RangeSpec &range) {
     if (range.startRow == 0)
       os << "StartRow = [NULL]" << endl;
     else
@@ -168,7 +174,7 @@ namespace Hypertable {
     return os;
   }
 
-  std::ostream &operator<<(std::ostream &os, const ScanSpecificationT &scanSpec) {
+  std::ostream &operator<<(std::ostream &os, const ScanSpec &scanSpec) {
     os << "RowLimit    = " << scanSpec.rowLimit << endl;
     os << "MaxVersions = " << scanSpec.max_versions << endl;
     os << "Columns     = ";

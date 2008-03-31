@@ -1,12 +1,12 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -117,7 +117,7 @@ namespace Hypertable {
      * @param timestamp current commit log time obtained with a call to #get_timestamp
      * @return Error::OK on success or error code on failure
      */
-    int write(TableIdentifierT *table, uint8_t *data, uint32_t len, uint64_t timestamp);
+    int write(TableIdentifier *table, uint8_t *data, uint32_t len, uint64_t timestamp);
 
     /** Links an external log into this log.
      *
@@ -126,7 +126,7 @@ namespace Hypertable {
      * @param timestamp current commit log time obtained with a call to #get_timestamp
      * @return Error::OK on success or error code on failure
      */
-    int link_log(TableIdentifierT *table, const char *log_dir, uint64_t timestamp);
+    int link_log(TableIdentifier *table, const char *log_dir, uint64_t timestamp);
 
     int close(uint64_t timestamp);
     int purge(uint64_t timestamp);

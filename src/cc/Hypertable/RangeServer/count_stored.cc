@@ -1,12 +1,12 @@
-/**
+/** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; version 2 of
- * the License.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
   PropertiesPtr props_ptr;
   string config_file = "";
   CellStoreV0Ptr cell_store_ptr;
-  ScanContextPtr scan_context_ptr( new ScanContext(ScanContext::END_OF_TIME) );
+  ScanContextPtr scan_context_ptr( new ScanContext(END_OF_TIME) );
   ByteString32T *key;
   ByteString32T *value;
   uint64_t total_count = 0;
@@ -180,7 +180,7 @@ void fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_
   int error;
   TablePtr table_ptr;
   TableScannerPtr scanner_ptr;
-  ScanSpecificationT scan_spec;
+  ScanSpec scan_spec;
   CellT cell;
   uint32_t table_id;
   char start_row[16];

@@ -1,12 +1,12 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -49,7 +49,7 @@ namespace Hypertable {
     return m_command_strings[command];
   }
 
-  CommBuf *RangeServerProtocol::create_request_load_range(TableIdentifierT &table, RangeT &range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags) {
+  CommBuf *RangeServerProtocol::create_request_load_range(TableIdentifier &table, RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
     CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthTableIdentifier(table) + EncodedLengthRange(range) + Serialization::encoded_length_string(transfer_log_dir) + 10);
     cbuf->append_short(COMMAND_LOAD_RANGE);
@@ -61,7 +61,7 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::create_request_update(TableIdentifierT &table, uint8_t *data, size_t len) {
+  CommBuf *RangeServerProtocol::create_request_update(TableIdentifier &table, uint8_t *data, size_t len) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
     CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthTableIdentifier(table), data, len);
     cbuf->append_short(COMMAND_UPDATE);
@@ -69,7 +69,7 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::create_request_create_scanner(TableIdentifierT &table, RangeT &range, ScanSpecificationT &scan_spec) {
+  CommBuf *RangeServerProtocol::create_request_create_scanner(TableIdentifier &table, RangeSpec &range, ScanSpec &scan_spec) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
     CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthTableIdentifier(table) + EncodedLengthRange(range) + EncodedLengthScanSpecification(scan_spec));
     cbuf->append_short(COMMAND_CREATE_SCANNER);
@@ -95,7 +95,7 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::create_request_drop_table(TableIdentifierT &table) {
+  CommBuf *RangeServerProtocol::create_request_drop_table(TableIdentifier &table) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
     CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthTableIdentifier(table));
     cbuf->append_short(COMMAND_DROP_TABLE);
@@ -145,7 +145,7 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::create_request_drop_range(TableIdentifierT &table, RangeT &range) {
+  CommBuf *RangeServerProtocol::create_request_drop_range(TableIdentifier &table, RangeSpec &range) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
     CommBuf *cbuf = new CommBuf(hbuilder, 2 + EncodedLengthTableIdentifier(table) + EncodedLengthRange(range));
     cbuf->append_short(COMMAND_DROP_RANGE);

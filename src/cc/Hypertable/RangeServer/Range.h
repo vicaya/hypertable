@@ -1,12 +1,12 @@
-/**
+/** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,6 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+
 #ifndef HYPERTABLE_RANGE_H
 #define HYPERTABLE_RANGE_H
 
@@ -47,7 +48,7 @@ namespace Hypertable {
     typedef std::vector<AccessGroup *>  ColumnFamilyVectorT;
 
   public:
-    Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeT *range, uint64_t soft_limit);
+    Range(MasterClientPtr &master_client_ptr, TableIdentifier &identifier, SchemaPtr &schemaPtr, RangeSpec *range, uint64_t soft_limit);
     virtual ~Range();
     virtual int add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp);
     virtual const char *get_split_row();
@@ -139,7 +140,7 @@ namespace Hypertable {
 
     boost::mutex     m_mutex;
     MasterClientPtr  m_master_client_ptr;
-    TableIdentifierT m_identifier;
+    TableIdentifier m_identifier;
     SchemaPtr        m_schema;
     std::string      m_start_row;
     std::string      m_end_row;

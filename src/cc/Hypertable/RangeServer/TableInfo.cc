@@ -1,12 +1,12 @@
-/**
+/** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -28,7 +28,7 @@ using namespace Hypertable;
 /**
  *
  */
-TableInfo::TableInfo(MasterClientPtr &master_client_ptr, TableIdentifierT *identifier, SchemaPtr &schemaPtr) : m_mutex(), m_master_client_ptr(master_client_ptr), m_schema(schemaPtr) { 
+TableInfo::TableInfo(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, SchemaPtr &schemaPtr) : m_mutex(), m_master_client_ptr(master_client_ptr), m_schema(schemaPtr) { 
   Copy(*identifier, m_identifier);
   return;
 }
@@ -51,7 +51,7 @@ void TableInfo::dump_range_table() {
 /**
  * 
  */
-bool TableInfo::get_range(RangeT *range, RangePtr &range_ptr) {
+bool TableInfo::get_range(RangeSpec *range, RangePtr &range_ptr) {
   boost::mutex::scoped_lock lock(m_mutex);
   string endRow = range->endRow;
 
@@ -74,7 +74,7 @@ bool TableInfo::get_range(RangeT *range, RangePtr &range_ptr) {
 /**
  * 
  */
-bool TableInfo::remove_range(RangeT *range, RangePtr &range_ptr) {
+bool TableInfo::remove_range(RangeSpec *range, RangePtr &range_ptr) {
   boost::mutex::scoped_lock lock(m_mutex);
   string endRow = range->endRow;
 

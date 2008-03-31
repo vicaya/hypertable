@@ -1,12 +1,12 @@
-/**
+/** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -34,12 +34,12 @@ namespace Hypertable {
   class BlockCompressionHeaderCommitLog : public BlockCompressionHeader {
   public:
     BlockCompressionHeaderCommitLog();
-    BlockCompressionHeaderCommitLog(const char magic[10], uint64_t timestamp, TableIdentifierT *table);
+    BlockCompressionHeaderCommitLog(const char magic[10], uint64_t timestamp, TableIdentifier *table);
 
     void set_timestamp(uint64_t timestamp) { m_timestamp = timestamp; }
     uint64_t get_timestamp() { return m_timestamp; }
 
-    void get_table_identifier(TableIdentifierT &table_id) {
+    void get_table_identifier(TableIdentifier &table_id) {
       memcpy(&table_id, &m_table, sizeof(table_id));
     }
 
@@ -51,7 +51,7 @@ namespace Hypertable {
     
   private:
     uint64_t m_timestamp;
-    TableIdentifierT m_table;
+    TableIdentifier m_table;
     DynamicBuffer m_buffer;
   };
 

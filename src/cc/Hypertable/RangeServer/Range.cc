@@ -1,12 +1,12 @@
-/**
+/** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,6 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+
 #include <cassert>
 #include <string>
 #include <vector>
@@ -48,7 +49,7 @@ using namespace Hypertable;
 using namespace std;
 
 
-Range::Range(MasterClientPtr &master_client_ptr, TableIdentifierT &identifier, SchemaPtr &schemaPtr, RangeT *range, uint64_t soft_limit) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_schema(schemaPtr), m_maintenance_in_progress(false), m_last_logical_timestamp(0), m_hold_updates(false), m_update_counter(0), m_added_inserts(0) {
+Range::Range(MasterClientPtr &master_client_ptr, TableIdentifier &identifier, SchemaPtr &schemaPtr, RangeSpec *range, uint64_t soft_limit) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_schema(schemaPtr), m_maintenance_in_progress(false), m_last_logical_timestamp(0), m_hold_updates(false), m_update_counter(0), m_added_inserts(0) {
   AccessGroup *ag;
   
   memset(m_added_deletes, 0, 3*sizeof(int64_t));
@@ -493,7 +494,7 @@ void Range::do_split() {
    *  Notify Master of split
    */
   {
-    RangeT range;
+    RangeSpec range;
 
     range.startRow = old_start_row.c_str();
     range.endRow = m_start_row.c_str();
@@ -613,7 +614,7 @@ int Range::replay_transfer_log(const string &log_dir, uint64_t real_timestamp) {
   ByteString32T *key, *value;
   size_t nblocks = 0;
   size_t count = 0;
-  TableIdentifierT table_id;
+  TableIdentifier table_id;
   uint64_t memory_added = 0;
   
   commit_log_reader_ptr->initialize_read(0);

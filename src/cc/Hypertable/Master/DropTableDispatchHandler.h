@@ -1,12 +1,12 @@
-/**
+/** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -48,7 +48,7 @@ namespace Hypertable {
     /**
      * Constructor.
      */
-    DropTableDispatchHandler(TableIdentifierT &table, Comm *comm, time_t timeout);
+    DropTableDispatchHandler(TableIdentifier &table, Comm *comm, time_t timeout);
 
     /**
      * Adds 
@@ -73,7 +73,7 @@ namespace Hypertable {
     boost::condition   m_cond;
     int                m_outstanding;
     RangeServerClient  m_client;
-    TableIdentifierT   m_table;
+    TableIdentifier   m_table;
     std::string        m_table_name;
     vector<ErrorResultT> m_errors;
   };

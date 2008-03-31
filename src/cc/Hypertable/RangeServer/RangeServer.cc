@@ -1,12 +1,12 @@
-/**
+/** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -236,7 +236,7 @@ int RangeServer::directory_initialize(PropertiesPtr &props_ptr) {
    * Create "server existence" file in Hyperspace and obtain an exclusive lock on it
    */
 
-  uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_EXCL | OPEN_FLAG_LOCK_EXCLUSIVE;
+  uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_LOCK_EXCLUSIVE;
   HandleCallbackPtr nullCallbackPtr;
 
   if ((error = m_hyperspace_ptr->open(topDir.c_str(), oflags, nullCallbackPtr, &m_existence_file_handle)) != Error::OK) {
@@ -272,7 +272,7 @@ int RangeServer::directory_initialize(PropertiesPtr &props_ptr) {
 /**
  * Compact
  */
-void RangeServer::compact(ResponseCallback *cb, TableIdentifierT *table, RangeT *range, uint8_t compaction_type) {
+void RangeServer::compact(ResponseCallback *cb, TableIdentifier *table, RangeSpec *range, uint8_t compaction_type) {
   int error = Error::OK;
   std::string errMsg;
   TableInfoPtr tableInfoPtr;
@@ -336,7 +336,7 @@ void RangeServer::compact(ResponseCallback *cb, TableIdentifierT *table, RangeT 
 /** 
  *  CreateScanner
  */
-void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentifierT *table, RangeT *range, ScanSpecificationT *scan_spec) {
+void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentifier *table, RangeSpec *range, ScanSpec *scan_spec) {
   uint8_t *kvBuffer = 0;
   uint32_t *kvLenp = 0;
   int error = Error::OK;
@@ -485,7 +485,7 @@ void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t s
 /**
  * LoadRange
  */
-void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, RangeT *range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags) {
+void RangeServer::load_range(ResponseCallback *cb, TableIdentifier *table, RangeSpec *range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags) {
   DynamicBuffer endRowBuffer(0);
   std::string errMsg;
   int error = Error::OK;
@@ -499,7 +499,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifierT *table, Rang
   bool is_root = !strcmp(table->name, "METADATA") && (*range->startRow == 0) && !strcmp(range->endRow, Key::END_ROOT_ROW);
   TableScannerPtr scanner_ptr;
   TableMutatorPtr mutator_ptr;
-  ScanSpecificationT scan_spec;
+  ScanSpec scan_spec;
   KeySpec key;
   std::string metadata_key_str;
   bool replay = (flags & RangeServerProtocol::LOAD_RANGE_FLAG_REPLAY) == RangeServerProtocol::LOAD_RANGE_FLAG_REPLAY;
@@ -684,7 +684,7 @@ namespace {
 /**
  * Update
  */
-void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, BufferT &buffer) {
+void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, BufferT &buffer) {
   const uint8_t *mod_ptr;
   const uint8_t *mod_end;
   const uint8_t *add_base_ptr;
@@ -1017,7 +1017,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifierT *table, Bu
 
 
 
-void RangeServer::drop_table(ResponseCallback *cb, TableIdentifierT *table) {
+void RangeServer::drop_table(ResponseCallback *cb, TableIdentifier *table) {
   int error;
   TableInfoPtr table_info_ptr;
   std::vector<RangePtr> range_vector;
@@ -1170,7 +1170,7 @@ void RangeServer::replay_commit(ResponseCallback *cb) {
 
 
 
-void RangeServer::drop_range(ResponseCallback *cb, TableIdentifierT *table, RangeT *range) {
+void RangeServer::drop_range(ResponseCallback *cb, TableIdentifier *table, RangeSpec *range) {
   TableInfoPtr table_info_ptr;
   RangePtr range_ptr;
 
