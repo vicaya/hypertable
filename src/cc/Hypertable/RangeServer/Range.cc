@@ -409,11 +409,7 @@ void Range::do_split() {
   try {
     std::string files;
 
-    if ((error = Global::metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK) {
-      HT_ERROR("Problem creating mutator on METADATA table");
-      // need to unblock updates and then return error
-      DUMP_CORE;
-    }
+    mutator_ptr = Global::metadata_table_ptr->create_mutator();
 
     /**
      * Shrink old range in METADATA by updating the 'StartRow' column.

@@ -56,7 +56,6 @@ HqlCommandInterpreter::HqlCommandInterpreter(Client *client) : m_client(client) 
  *
  */
 void HqlCommandInterpreter::execute_line(std::string &line) {
-  int error;
   std::string schema_str;
   std::string out_str;
   hql_interpreter_state state;
@@ -69,8 +68,7 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
   if (info.full) {
 
     if (state.command == COMMAND_SHOW_CREATE_TABLE) {
-      if ((error = m_client->get_schema(state.table_name, schema_str)) != Error::OK)
-	throw Exception(error, std::string("Problem fetching schema for table '") + state.table_name + "' from master");
+      schema_str = m_client->get_schema(state.table_name);
       schema = Schema::new_instance(schema_str.c_str(), strlen(schema_str.c_str()), true);
       if (!schema->is_valid())
 	throw Exception(Error::BAD_SCHEMA, schema->get_error_string());
@@ -106,12 +104,11 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
 	throw Exception(Error::HQL_PARSE_ERROR, error_str);
       schema->render(schema_str);
 
-      if ((error = m_client->create_table(state.table_name, schema_str.c_str())) != Error::OK)
-	throw Exception(error, std::string("Problem creating table '") + state.table_name + "'");
+      m_client->create_table(state.table_name, schema_str.c_str());
+
     }
     else if (state.command == COMMAND_DESCRIBE_TABLE) {
-      if ((error = m_client->get_schema(state.table_name, schema_str)) != Error::OK)
-	throw Exception(error, std::string("Problem fetching schema for table '") + state.table_name + "' from master");
+      schema_str = m_client->get_schema(state.table_name);
       cout << schema_str << endl;
     }
     else if (state.command == COMMAND_SELECT) {
@@ -144,11 +141,9 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       scan_spec.interval.second = state.scan.end_time;
       scan_spec.return_deletes = state.scan.return_deletes;
 
-      if ((error = m_client->open_table(state.table_name, table_ptr)) != Error::OK)
-	throw Exception(error, std::string("Problem opening table '") + state.table_name + "'");
+      table_ptr = m_client->open_table(state.table_name);
 
-      if ((error = table_ptr->create_scanner(scan_spec, scanner_ptr)) != Error::OK)
-	throw Exception(error, std::string("Problem creating scanner on table '") + state.table_name + "'");
+      scanner_ptr = table_ptr->create_scanner(scan_spec);
 
       while (scanner_ptr->next(cell)) {
 	if (state.scan.display_timestamps) {
@@ -208,11 +203,8 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
 	into_table = false;
       }
       else {
-	if ((error = m_client->open_table(state.table_name, table_ptr)) != Error::OK)
-	  throw Exception(error, std::string("Problem opening table '") + state.table_name + "'");
-
-	if ((error = table_ptr->create_mutator(mutator_ptr)) != Error::OK)
-	  throw Exception(error, std::string("Problem creating mutator on table '") + state.table_name + "'");
+	table_ptr = m_client->open_table(state.table_name);
+	mutator_ptr = table_ptr->create_mutator();
       }
 
       boost::trim_if(state.str, boost::is_any_of("'\""));
@@ -314,11 +306,9 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       char *column_qualifier;
       std::string tmp_str;
 
-      if ((error = m_client->open_table(state.table_name, table_ptr)) != Error::OK)
-	throw Exception(error, std::string("Problem opening table '") + state.table_name + "'");
+      table_ptr = m_client->open_table(state.table_name);
 
-      if ((error = table_ptr->create_mutator(mutator_ptr)) != Error::OK)
-	throw Exception(error, std::string("Problem creating mutator on table '") + state.table_name + "'");
+      mutator_ptr = table_ptr->create_mutator();
 
       for (size_t i=0; i<state.inserts.size(); i++) {
 	key.row = state.inserts[i].row_key.c_str();
@@ -349,11 +339,9 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       char *column_qualifier;
       std::string tmp_str;
 
-      if ((error = m_client->open_table(state.table_name, table_ptr)) != Error::OK)
-	throw Exception(error, std::string("Problem opening table '") + state.table_name + "'");
+      table_ptr = m_client->open_table(state.table_name);
 
-      if ((error = table_ptr->create_mutator(mutator_ptr)) != Error::OK)
-	throw Exception(error, std::string("Problem creating mutator on table '") + state.table_name + "'");
+      mutator_ptr = table_ptr->create_mutator();
 
       memset(&key, 0, sizeof(key));
       key.row = state.delete_row.c_str();
@@ -395,8 +383,7 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
     }
     else if (state.command == COMMAND_SHOW_TABLES) {
       std::vector<std::string> tables;
-      if ((error = m_client->get_tables(tables)) != Error::OK)
-	throw Exception(error, std::string("Problem obtaining table list"));
+      m_client->get_tables(tables);
       if (tables.empty())
 	cout << "Empty set" << endl;
       else {
@@ -405,8 +392,7 @@ void HqlCommandInterpreter::execute_line(std::string &line) {
       }
     }
     else if (state.command == COMMAND_DROP_TABLE) {
-      if ((error = m_client->drop_table(state.table_name, state.if_exists)) != Error::OK)
-	throw Exception(error, std::string("Problem droppint table '") + state.table_name + "'");
+      m_client->drop_table(state.table_name, state.if_exists);
     }
     else
       throw Exception(Error::HQL_PARSE_ERROR, std::string("unsupported command: ") + line);

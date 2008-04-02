@@ -47,8 +47,20 @@ namespace Hypertable {
     Table(PropertiesPtr &props_ptr, Comm *comm, Hyperspace::SessionPtr &hyperspace_ptr, std::string name);
     virtual ~Table();
 
-    int create_mutator(TableMutatorPtr &mutator_ptr);
-    int create_scanner(ScanSpec &scan_spec, TableScannerPtr &scanner_ptr);
+    /**
+     * Creates a mutator on this table
+     *
+     * @return newly constructed mutator object
+     */
+    TableMutator *create_mutator();
+
+    /**
+     * Creates a scanner on this table
+     *
+     * @param scan_spec scan specification
+     * @param newly constructed scanner object
+     */
+    TableScanner *create_scanner(ScanSpec &scan_spec);
 
     void get_identifier(TableIdentifier *table_id_p) {
       memcpy(table_id_p, &m_table, sizeof(TableIdentifier));

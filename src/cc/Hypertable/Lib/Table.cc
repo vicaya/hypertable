@@ -130,13 +130,11 @@ Table::~Table() {
 }
 
 
-int Table::create_mutator(TableMutatorPtr &mutator_ptr) {
-  mutator_ptr = new TableMutator(m_props_ptr, m_comm, &m_table, m_schema_ptr, m_range_locator_ptr);
-  return Error::OK;
+TableMutator *Table::create_mutator() {
+  return new TableMutator(m_props_ptr, m_comm, &m_table, m_schema_ptr, m_range_locator_ptr);
 }
 
 
-int Table::create_scanner(ScanSpec &scan_spec, TableScannerPtr &scanner_ptr) {
-  scanner_ptr = new TableScanner(m_props_ptr, m_comm, &m_table, m_schema_ptr, m_range_locator_ptr, scan_spec);
-  return Error::OK;
+TableScanner *Table::create_scanner(ScanSpec &scan_spec) {
+  return new TableScanner(m_props_ptr, m_comm, &m_table, m_schema_ptr, m_range_locator_ptr, scan_spec);
 }

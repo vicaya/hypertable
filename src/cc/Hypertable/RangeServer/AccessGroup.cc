@@ -69,17 +69,13 @@ AccessGroup::~AccessGroup() {
       return;
     }
     std::string metadata_key = std::string("") + (uint32_t)m_table_identifier.id + ":" + m_end_row;
-    int error;
     TableMutatorPtr mutator_ptr;
     KeySpec key;
 
-    if ((error = Global::metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK) {
-      HT_ERRORF("Problem creating mutator on METADATA table - %s", Error::get_text(error));
-      Free(m_table_identifier);
-      return;
-    }
-
     try {
+
+      mutator_ptr = Global::metadata_table_ptr->create_mutator();
+
       key.row = metadata_key.c_str();
       key.row_len = metadata_key.length();
       key.column_family = "Files";

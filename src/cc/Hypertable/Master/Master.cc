@@ -428,11 +428,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
     KeySpec key;
     std::string metadata_key_str;
 
-    if ((error = m_metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK) {
-      // TODO: throw exception
-      HT_ERROR("Problem creating mutator on METADATA table");
-      exit(1);
-    }
+    mutator_ptr = m_metadata_table_ptr->create_mutator();
 
     metadata_key_str = std::string("0:") + Key::END_ROW_MARKER;
     key.row = metadata_key_str.c_str();
@@ -580,18 +576,13 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
     scan_spec.interval.second = 0;
     scan_spec.return_deletes=false;
 
-    if ((error = m_metadata_table_ptr->create_scanner(scan_spec, scanner_ptr)) != Error::OK) {
-      HT_ERRORF("Problem creating scanner on METADATA table - %s", Error::get_text(error));
-      cb->error(error, "Problem creating scanner on METADATA table");
-      return;
-    }
-    else {
-      while (scanner_ptr->next(cell)) {
-        location_str = std::string((const char *)cell.value, cell.value_len);
-        boost::trim(location_str);
-        if (location_str != "" && location_str != "!")
-          unique_locations.insert(location_str);
-      }
+    scanner_ptr = m_metadata_table_ptr->create_scanner(scan_spec);
+
+    while (scanner_ptr->next(cell)) {
+      location_str = std::string((const char *)cell.value, cell.value_len);
+      boost::trim(location_str);
+      if (location_str != "" && location_str != "!")
+	unique_locations.insert(location_str);
     }
 
     if (!unique_locations.empty()) {
@@ -741,11 +732,7 @@ int Master::create_table(const char *tableName, const char *schemaString, std::s
     std::string metadata_key_str;
     struct sockaddr_in addr;
 
-    if ((error = m_metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK) {
-      // TODO: throw exception
-      HT_ERROR("Problem creating mutator on METADATA table");
-      exit(1);
-    }
+    mutator_ptr = m_metadata_table_ptr->create_mutator();
 
     metadata_key_str = std::string("") + table_id + ":" + Key::END_ROW_MARKER;
     key.row = metadata_key_str.c_str();

@@ -45,12 +45,8 @@ do_tfgc(const char *config, bool debug, bool dryrun) {
     ClientPtr ht_ptr = new Hypertable::Client("testgc", config);
     TablePtr table_ptr;
 
-    int ret = ht_ptr->open_table("METADATA", table_ptr);
+    table_ptr = ht_ptr->open_table("METADATA");
 
-    if (ret != Error::OK) {
-      cerr << "Error opening METADATA" << endl;
-      exit(1);
-    }
     master_gc_once(table_ptr, fs, dryrun);
   }
   catch (exception &e) {

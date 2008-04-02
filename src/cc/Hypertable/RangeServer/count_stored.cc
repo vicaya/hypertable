@@ -177,7 +177,6 @@ int main(int argc, char **argv) {
  *
  */
 void fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_name, std::vector<CellStoreInfoT> &file_vector) {
-  int error;
   TablePtr table_ptr;
   TableScannerPtr scanner_ptr;
   ScanSpec scan_spec;
@@ -191,18 +190,11 @@ void fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_
   try {
 
     // Open the 'METADATA' table
-    if ((error = hypertable_client_ptr->open_table("METADATA", table_ptr)) != Error::OK) {
-      cerr << "Error: unable to open table 'WebServerLog' - " << Error::get_text(error) << endl;
-      exit(1);
-    }
+    table_ptr = hypertable_client_ptr->open_table("METADATA");
 
-    if ((error = hypertable_client_ptr->get_table_id(table_name, &table_id)) != Error::OK) {
-      cerr << Error::get_text(error) << endl;
-      exit(1);
-    }
+    table_id = hypertable_client_ptr->get_table_id(table_name);
 
     // Set up the scan specification
-    scan_spec.rowLimit = 0;
     scan_spec.max_versions = 1;
     sprintf(start_row, "%d:", table_id);
     scan_spec.startRow = start_row;
@@ -212,14 +204,9 @@ void fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_
     scan_spec.columns.clear();
     scan_spec.columns.push_back("Files");
     scan_spec.columns.push_back("StartRow");
-    scan_spec.interval.first = scan_spec.interval.second = 0;  // 0 means no time predicate
-    scan_spec.return_deletes = false;
 
     // Create a scanner on the 'METADATA' table 
-    if ((error = table_ptr->create_scanner(scan_spec, scanner_ptr)) != Error::OK) {
-      cerr << "Error: problem creating scanner on table 'WebServerLog' - " << Error::get_text(error) << endl;
-      exit(1);
-    }
+    scanner_ptr = table_ptr->create_scanner(scan_spec);
 
   }
   catch (std::exception &e) {

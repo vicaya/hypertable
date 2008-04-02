@@ -577,8 +577,8 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifier *table, Range
 	/**
 	 * Take ownership of the range
 	 */
-	if ((error = Global::metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK)
-	  throw Exception(error, "Problem creating mutator on METADATA table");
+	mutator_ptr = Global::metadata_table_ptr->create_mutator();
+
 	key.row = metadata_key_str.c_str();
 	key.row_len = strlen(metadata_key_str.c_str());
 	key.column_family = "Location";
@@ -1018,7 +1018,6 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Buf
 
 
 void RangeServer::drop_table(ResponseCallback *cb, TableIdentifier *table) {
-  int error;
   TableInfoPtr table_info_ptr;
   std::vector<RangePtr> range_vector;
   std::string metadata_prefix;
@@ -1032,11 +1031,7 @@ void RangeServer::drop_table(ResponseCallback *cb, TableIdentifier *table) {
   }
 
   // create METADATA table mutator for clearing 'Location' columns
-  if ((error = Global::metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK) {
-    HT_ERRORF("Problem creating mutator on METADATA table - %s", Error::get_text(error));
-    cb->error(error, "Problem creating mutator on METADATA table");
-    return;
-  }
+  mutator_ptr = Global::metadata_table_ptr->create_mutator();
 
   // initialize key structure
   memset(&key, 0, sizeof(key));

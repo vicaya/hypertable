@@ -25,6 +25,7 @@
 
 #include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
+#include "Common/String.h"
 
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/ConnectionManager.h"
@@ -43,19 +44,81 @@ namespace Hypertable {
 
   public:
 
-    Client(const char *argv0, std::string configFile);
-    Client(const char *argv0);
-    void initialize(std::string config_file);
-    int create_table(std::string name, std::string schema);
-    int open_table(std::string name, TablePtr &tablePtr);
-    int get_table_id(std::string name, uint32_t *table_idp);
-    int get_schema(std::string tableName, std::string &schema);
-    int get_tables(std::vector<std::string> &tables);
-    int drop_table(std::string name, bool if_exists);
+    /**
+     * Constructs the object using the specified config file
+     *
+     * @param argv0 the zero'th argument in the vector passed into main
+     * @param config_file name of configuration file
+     */
+    Client(const char *argv0, const String &config_file);
 
+    /**
+     * Constructs the object using the default config file
+     *
+     * @param argv0 the zero'th argument in the vector passed into main
+     */
+    Client(const char *argv0);
+
+    /**
+     * Creates a table
+     *
+     * @param name name of the table
+     * @param schema schema definition for the table
+     */
+    void create_table(const String &name, const String &schema);
+
+    /**
+     * Opens a table
+     *
+     * @param name name of the table
+     * @return pointer to newly created Table object
+     */
+    Table *open_table(const String &name);
+
+    /**
+     * Returns the table identifier for a table
+     *
+     * @param name name of table
+     * @return numeric identifier for the table
+     */
+    uint32_t get_table_id(const String &name);
+
+    /**
+     * Returns the schema for a table
+     *
+     * @param name table name
+     * @return XML schema of table
+     */
+    String get_schema(const String &name);
+
+    /**
+     * Returns a list of existing table names
+     *
+     * @param tables reference to vector of table names
+     */
+    void get_tables(std::vector<String> &tables);
+
+    /**
+     * Removes a table.  This command instructs the Master to
+     * remove a table from the system, including all of its
+     * ranges.
+     *
+     * @param name table name
+     * @param if_exists don't throw an exception if table does not exist
+     */
+    void drop_table(const String &name, bool if_exists);
+
+    /**
+     * Creates an HQL command interpreter
+     *
+     * @return a newly created interpreter object
+     */
     HqlCommandInterpreter *create_hql_interpreter();
 
   private:
+
+    void initialize(const String &config_file);
+
     PropertiesPtr           m_props_ptr;
     Comm                   *m_comm;
     ConnectionManagerPtr    m_conn_manager_ptr;

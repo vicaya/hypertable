@@ -51,33 +51,17 @@ struct GcWorker {
     TableScannerPtr scanner;
     ScanSpec scan_spec;
 
-    scan_spec.rowLimit = 0;
-    scan_spec.max_versions = 0;
     scan_spec.columns.clear();
     scan_spec.columns.push_back("Files");
     scan_spec.startRow = "";
     scan_spec.startRowInclusive = false;
-    scan_spec.endRow = Key::END_ROW_MARKER;;
+    scan_spec.endRow = Key::END_ROW_MARKER;
     scan_spec.endRowInclusive = false;
-    scan_spec.interval.first = 0;
-    scan_spec.interval.second = 0;
-    scan_spec.return_deletes=false;
 
-    int ret = m_metadata->create_scanner(scan_spec, scanner);
+    scanner = m_metadata->create_scanner(scan_spec);
 
-    if (ret != Error::OK) {
-      HT_ERRORF("Error creating scanner on METADATA table: %s",
-                Error::get_text(ret));
-      return;
-    }
-    TableMutatorPtr mutator;
-    ret = m_metadata->create_mutator(mutator);
+    TableMutatorPtr mutator = m_metadata->create_mutator();
 
-    if (ret != Error::OK) {
-      HT_ERRORF("Error creating mutator on METADATA table: %s",
-                Error::get_text(ret));
-      return;
-    }
     CellT cell;
     string last_row;
     string last_cq;

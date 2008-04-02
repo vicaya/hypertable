@@ -50,7 +50,6 @@ MetadataNormal::~MetadataNormal() {
 
 
 void MetadataNormal::reset_files_scan() {
-  int error;
   ScanSpec scan_spec;
 
   scan_spec.rowLimit = 1;
@@ -59,14 +58,11 @@ void MetadataNormal::reset_files_scan() {
   scan_spec.startRowInclusive = true;
   scan_spec.endRow = m_metadata_key.c_str();
   scan_spec.endRowInclusive = true;
-  scan_spec.interval.first = 0;
-  scan_spec.interval.second = 0;
   scan_spec.columns.clear();
   scan_spec.columns.push_back("Files");
-  scan_spec.return_deletes = false;
 
-  if ((error = Global::metadata_table_ptr->create_scanner(scan_spec, m_files_scanner_ptr)) != Error::OK)
-    throw Hypertable::Exception(error, "Problem creating scanner on METADATA table");
+  m_files_scanner_ptr = Global::metadata_table_ptr->create_scanner(scan_spec);
+
 }
 
 
@@ -90,12 +86,10 @@ bool MetadataNormal::get_next_files(std::string &ag_name, std::string &files) {
 
 
 void MetadataNormal::write_files(std::string &ag_name, std::string &files) {
-  int error;
   TableMutatorPtr mutator_ptr;
   KeySpec key;
 
-  if ((error = Global::metadata_table_ptr->create_mutator(mutator_ptr)) != Error::OK)
-    throw Hypertable::Exception(error, "Problem creating mutator on METADATA table");
+  mutator_ptr = Global::metadata_table_ptr->create_mutator();
 
   key.row = m_metadata_key.c_str();
   key.row_len = m_metadata_key.length();
@@ -104,5 +98,4 @@ void MetadataNormal::write_files(std::string &ag_name, std::string &files) {
   key.column_qualifier_len = ag_name.length();
   mutator_ptr->set(0, key, (uint8_t *)files.c_str(), files.length());
   mutator_ptr->flush();
-
 }

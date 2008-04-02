@@ -103,7 +103,6 @@ int main(int argc, char **argv) {
   int modValue;
   std::string configFile = "";
   Client *client;
-  int error;
   std::string tableName = "";
   unsigned int seed = 1234;
   bool generateTimestamps = false;
@@ -151,9 +150,12 @@ int main(int argc, char **argv) {
 
   client = new Client(argv[0], configFile);
 
-  if ((error = client->get_schema(tableName, schemaSpec)) != Error::OK) {
-    HT_ERRORF("Problem getting schema for table '%s' - %s", argv[1], Error::get_text(error));
-    return error;
+  try {
+    schemaSpec = client->get_schema(tableName);
+  }
+  catch (Hypertable::Exception &e) {
+    HT_ERRORF("Problem getting schema for table '%s' - %s", argv[1], e.what());
+    return e.code();
   }
 
   schema = Schema::new_instance(schemaSpec.c_str(), strlen(schemaSpec.c_str()), true);

@@ -39,7 +39,6 @@ void ApacheLogParser::load(std::string filename) {
 /**
  */
 bool ApacheLogParser::next(ApacheLogEntryT &entry) {
-  uint64_t timestamp;
   char *base;
 
   while (true) {
@@ -64,19 +63,7 @@ bool ApacheLogParser::next(ApacheLogEntryT &entry) {
       continue;
 
     // timestamp
-    if ((base = extract_timestamp(base, &timestamp)) == 0)
-      continue;
-
-    // make sure there are no timestamp collisions
-    if (timestamp == m_last_timestamp)
-      m_timestamp_offset++;
-    else {
-      m_timestamp_offset=0;
-      m_last_timestamp = timestamp;
-    }
-    entry.timestamp = timestamp + m_timestamp_offset;
-
-    if (entry.timestamp == 0)
+    if ((base = extract_timestamp(base, &entry.tm)) == 0)
       continue;
 
     // request
@@ -115,17 +102,16 @@ char *ApacheLogParser::extract_field(char *base, char **field_ptr) {
     base++;
   if (*base == '"') {
     base++;
-    if ((ptr = strchr(base, '"')) != 0)
-      *ptr++ = 0;
+    if ((ptr = strchr(base, '"')) == 0)
+      return 0;
+    *ptr++ = 0;
   }
   else if ((ptr = strchr(base, ' ')) != 0)
     *ptr++ = 0;
-  if (field_ptr) {
-    if (*base == 0 || (*base == '-' && *(base+1) == 0))
-      *field_ptr = 0;
-    else
-      *field_ptr = base;
-  }
+  else
+    ptr += strlen(base);
+  if (field_ptr)
+    *field_ptr = (*base != 0) ? base : (char *)"-";
   return ptr;
 }
 
@@ -134,14 +120,11 @@ char *ApacheLogParser::extract_field(char *base, char **field_ptr) {
 /**
  *
  */
-char *ApacheLogParser::extract_timestamp(char *base, uint64_t *timestampp) {
-  struct tm tm;
+char *ApacheLogParser::extract_timestamp(char *base, struct tm *tmp) {
   char *end_ptr;
   char *ptr;
 
-  memset(&tm, 0, sizeof(tm));
-
-  *timestampp = 0;
+  memset(tmp, 0, sizeof(tm));
 
   while (isspace(*base))
     base++;
@@ -151,7 +134,7 @@ char *ApacheLogParser::extract_timestamp(char *base, uint64_t *timestampp) {
   if ((ptr = strchr(base, ']')) != 0)
     *ptr++ = 0;
 
-  if ((tm.tm_mday = strtol(base, &end_ptr, 10)) == 0)
+  if ((tmp->tm_mday = strtol(base, &end_ptr, 10)) == 0)
     return 0;
   if (*end_ptr != '/')
     return 0;
@@ -164,57 +147,57 @@ char *ApacheLogParser::extract_timestamp(char *base, uint64_t *timestampp) {
     return 0;
   *end_ptr++ = 0;
   if (!strcasecmp(base, "Jan"))
-    tm.tm_mon = 0;
+    tmp->tm_mon = 0;
   else if (!strcasecmp(base, "Feb"))
-    tm.tm_mon = 1;
+    tmp->tm_mon = 1;
   else if (!strcasecmp(base, "Mar"))
-    tm.tm_mon = 2;
+    tmp->tm_mon = 2;
   else if (!strcasecmp(base, "Apr"))
-    tm.tm_mon = 3;
+    tmp->tm_mon = 3;
   else if (!strcasecmp(base, "May"))
-    tm.tm_mon = 4;
+    tmp->tm_mon = 4;
   else if (!strcasecmp(base, "Jun"))
-    tm.tm_mon = 5;
+    tmp->tm_mon = 5;
   else if (!strcasecmp(base, "Jul"))
-    tm.tm_mon = 6;
+    tmp->tm_mon = 6;
   else if (!strcasecmp(base, "Aug"))
-    tm.tm_mon = 7;
+    tmp->tm_mon = 7;
   else if (!strcasecmp(base, "Sep"))
-    tm.tm_mon = 8;
+    tmp->tm_mon = 8;
   else if (!strcasecmp(base, "Oct"))
-    tm.tm_mon = 9;
+    tmp->tm_mon = 9;
   else if (!strcasecmp(base, "Nov"))
-    tm.tm_mon = 10;
+    tmp->tm_mon = 10;
   else if (!strcasecmp(base, "Dec"))
-    tm.tm_mon = 11;
+    tmp->tm_mon = 11;
   else
     return 0;
 
   base = end_ptr;
-  if ((tm.tm_year = strtol(base, &end_ptr, 10)) == 0)
+  if ((tmp->tm_year = strtol(base, &end_ptr, 10)) == 0)
     return 0;
   if (*end_ptr != ':')
     return 0;
-  tm.tm_year -= 1900;
+  tmp->tm_year -= 1900;
 
   base = end_ptr+1;
-  tm.tm_hour = strtol(base, &end_ptr, 10);
-  if (*end_ptr != ':')
-    return 0;
-
-  base = end_ptr+1;
-  tm.tm_min = strtol(base, &end_ptr, 10);
+  tmp->tm_hour = strtol(base, &end_ptr, 10);
   if (*end_ptr != ':')
     return 0;
 
   base = end_ptr+1;
-  tm.tm_sec = strtol(base, &end_ptr, 10);
+  tmp->tm_min = strtol(base, &end_ptr, 10);
+  if (*end_ptr != ':')
+    return 0;
+
+  base = end_ptr+1;
+  tmp->tm_sec = strtol(base, &end_ptr, 10);
   base = end_ptr;
 
   while (isspace(*base))
     base++;
 
-  uint64_t offset = 0;
+  long offset = 0;
   bool positive = true;
   if (*base) {
     if (*base == '+')
@@ -248,15 +231,10 @@ char *ApacheLogParser::extract_timestamp(char *base, uint64_t *timestampp) {
     offset += 60 * (*base-'0');
   }
 
-  if ((*timestampp = timegm(&tm)) == (uint64_t)-1)
-    return 0;
-
   if (!positive)
-    *timestampp -= offset;
-  else
-    *timestampp += offset;
+    offset *= -1;
 
-  *timestampp *= 1000000000LL;
+  tmp->tm_gmtoff = offset;
 
   return ptr;
 }

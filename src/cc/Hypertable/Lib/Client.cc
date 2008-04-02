@@ -42,7 +42,7 @@ using namespace Hyperspace;
 /**
  *
  */
-Client::Client(const char *argv0, std::string config_file) {
+Client::Client(const char *argv0, const String &config_file) {
   System::initialize(argv0);
   ReactorFactory::initialize((uint16_t)System::get_processor_count());
   initialize(config_file);
@@ -54,7 +54,116 @@ Client::Client(const char *argv0) {
   initialize( System::installDir + "/conf/hypertable.cfg" );
 }
 
-void Client::initialize(std::string config_file) {
+/**
+ * 
+ */
+void Client::create_table(const String &name, const String &schema) {
+  int error;
+  if ((error = m_master_client_ptr->create_table(name.c_str(), schema.c_str())) != Error::OK)
+    throw Exception(error);
+}
+
+
+/**
+ *
+ */
+Table *Client::open_table(const String &name) {
+  return new Table(m_props_ptr, m_conn_manager_ptr, m_hyperspace_ptr, name);
+}
+
+
+/**
+ * 
+ */
+uint32_t Client::get_table_id(const String &name) {
+  int error;
+  String table_file = (String)"/hypertable/tables/" + name;
+  DynamicBuffer value_buf(0);
+  HandleCallbackPtr nullHandleCallback;
+  uint64_t handle;
+  uint32_t uval;
+
+  /**
+   * Open table file in Hyperspace
+   */
+  if ((error = m_hyperspace_ptr->open(table_file.c_str(), OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK)
+    throw Exception(error, (String)"Hyperspace::open(" + table_file + ") failed");
+
+  /**
+   * Get the 'table_id' attribute
+   */
+  if ((error = m_hyperspace_ptr->attr_get(handle, "table_id", value_buf)) != Error::OK)
+    throw Exception(error, (String)"Hyperspace::attr_get(file='" + table_file + "', attr=table_id) failed");
+
+  /**
+   * Close the hyperspace file
+   */
+  if ((error = m_hyperspace_ptr->close(handle)) != Error::OK)
+    throw Exception(error);
+
+  assert(value_buf.fill() == sizeof(int32_t));
+
+  memcpy(&uval, value_buf.buf, sizeof(int32_t));
+
+  return uval;
+}
+
+
+/**
+ * 
+ */
+String Client::get_schema(const String &name) {
+  int error;
+  String schema;
+  if ((error = m_master_client_ptr->get_schema(name.c_str(), schema)) != Error::OK)
+    throw Exception(error);
+  return schema;
+}
+
+
+
+/**
+ */
+void Client::get_tables(std::vector<String> &tables) {
+  int error;
+  uint64_t handle;
+  HandleCallbackPtr nullHandleCallback;
+  std::vector<struct Hyperspace::DirEntryT> listing;
+
+  if ((error = m_hyperspace_ptr->open("/hypertable/tables", OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK)
+    throw Exception(error);
+
+  if ((error = m_hyperspace_ptr->readdir(handle, listing)) != Error::OK)
+    throw Exception(error);
+
+  for (size_t i=0; i<listing.size(); i++) {
+    if (!listing[i].isDirectory)
+      tables.push_back(listing[i].name);
+  }
+
+  m_hyperspace_ptr->close(handle);
+
+}
+
+
+void Client::drop_table(const String &name, bool if_exists) {
+  int error;
+  if ((error = m_master_client_ptr->drop_table(name.c_str(), if_exists)) != Error::OK)
+    throw Exception(error);
+}
+
+
+HqlCommandInterpreter *Client::create_hql_interpreter() {
+  return new HqlCommandInterpreter(this);
+}
+
+
+
+// ------------- PRIVATE METHODS -----------------
+
+
+
+void Client::initialize(const String &config_file) {
   time_t master_timeout;
 
   m_props_ptr = new Properties(config_file);
@@ -81,109 +190,4 @@ void Client::initialize(std::string config_file) {
 }
 
 
-
-/**
- * 
- */
-int Client::create_table(std::string name, std::string schema) {
-  return m_master_client_ptr->create_table(name.c_str(), schema.c_str());
-}
-
-
-/**
- *
- */
-int Client::open_table(std::string name, TablePtr &tablePtr) {
-  Table *table;
-  try {
-    table = new Table(m_props_ptr, m_conn_manager_ptr, m_hyperspace_ptr, name);
-  }
-  catch (Exception &e) {
-    return e.code();
-  }
-  tablePtr = table;
-  return Error::OK;
-}
-
-
-/**
- * 
- */
-int Client::get_table_id(std::string name, uint32_t *table_idp) {
-  int error;
-  std::string table_file = (std::string)"/hypertable/tables/" + name;
-  DynamicBuffer value_buf(0);
-  HandleCallbackPtr nullHandleCallback;
-  uint64_t handle;
-
-  /**
-   * Open table file in Hyperspace
-   */
-  if ((error = m_hyperspace_ptr->open(table_file.c_str(), OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK)
-    return error;
-
-  /**
-   * Get the 'table_id' attribute
-   */
-  if ((error = m_hyperspace_ptr->attr_get(handle, "table_id", value_buf)) != Error::OK) {
-    HT_ERRORF("Problem getting attribute 'table_id' from file '%s'", table_file.c_str());
-    return error;
-  }
-
-  /**
-   * Close the hyperspace file
-   */
-  if ((error = m_hyperspace_ptr->close(handle)) != Error::OK)
-    return error;
-
-  assert(value_buf.fill() == sizeof(int32_t));
-
-  memcpy(table_idp, value_buf.buf, sizeof(int32_t));
-
-  return Error::OK;
-}
-
-
-/**
- * 
- */
-int Client::get_schema(std::string tableName, std::string &schema) {
-  return m_master_client_ptr->get_schema(tableName.c_str(), schema);
-}
-
-
-
-/**
- */
-int Client::get_tables(std::vector<std::string> &tables) {
-  int error;
-  uint64_t handle;
-  HandleCallbackPtr nullHandleCallback;
-  std::vector<struct Hyperspace::DirEntryT> listing;
-
-  if ((error = m_hyperspace_ptr->open("/hypertable/tables", OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK)
-    return error;
-
-  if ((error = m_hyperspace_ptr->readdir(handle, listing)) != Error::OK)
-    return error;
-
-  for (size_t i=0; i<listing.size(); i++) {
-    if (!listing[i].isDirectory)
-      tables.push_back(listing[i].name);
-  }
-
-  m_hyperspace_ptr->close(handle);
-
-  return Error::OK;
-}
-
-
-int Client::drop_table(std::string name, bool if_exists) {
-  return m_master_client_ptr->drop_table(name.c_str(), if_exists);
-}
-
-
-HqlCommandInterpreter *Client::create_hql_interpreter() {
-  return new HqlCommandInterpreter(this);
-}
 
