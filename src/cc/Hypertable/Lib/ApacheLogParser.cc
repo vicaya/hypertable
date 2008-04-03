@@ -111,7 +111,7 @@ char *ApacheLogParser::extract_field(char *base, char **field_ptr) {
   else
     ptr += strlen(base);
   if (field_ptr)
-    *field_ptr = (*base != 0) ? base : (char *)"-";
+    *field_ptr = (*base != 0) ? base : 0;
   return ptr;
 }
 

@@ -15,7 +15,8 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA  02110-1301, USA.
  */
 
 #include <cstdio>
@@ -28,52 +29,59 @@
 using namespace Hypertable;
 using namespace std;
 
+namespace {
+
+  const char *usage = 
+    "\n"
+    "  usage: apache_log_query <row-prefix> [ <cf> ... ]\n"
+    "\n"
+    "  Queries the table 'LogDb' for all rows that start\n"
+    "  with <row-prefix>.  If no column families are\n"
+    "  specified, then all column families are returned.\n"
+    "  Otherwise, just the column families specified by\n"
+    "  the <cf> arguments are returned\n";
+}
+
 /**
- * This program is designed to query the table 'WebServerLog' for
+ * This program is designed to query the table 'LogDb' for
  * the contents of the row that has the key equal to the web page
- * supplied as the command line argument.  The 'WebServerLog' table
+ * supplied as the command line argument.  The 'LogDb' table
  * is populated with the apache_log_load program.
  */
 int main(int argc, char **argv) {
-  int error;
-  ClientPtr hypertable_client_ptr;
+  ClientPtr client_ptr;
   TablePtr table_ptr;
   TableScannerPtr scanner_ptr;
-  ScanSpecificationT scan_spec;
+  ScanSpec scan_spec;
   CellT cell;
-  uint32_t nsec;
-  time_t unix_time;
-  struct tm tms;
+  String end_row;
 
   if (argc <= 1) { 
-    cout << "usage: apache_log_query <page>" << endl;
+    cout << usage << endl;
     return 0;
   }
 
   try {
 
     // Create Hypertable client object
-    hypertable_client_ptr = new Client(argv[0]);
+    client_ptr = new Client(argv[0]);
 
-    // Open the 'WebServerLog' table
-    if ((error = hypertable_client_ptr->open_table("WebServerLog", table_ptr)) != Error::OK) {
-      cerr << "Error: unable to open table 'WebServerLog' - " << Error::get_text(error) << endl;
-      return 1;
-    }
+    // Open the 'LogDb' table
+    table_ptr = client_ptr->open_table("LogDb");
 
-    // Set up the scan specification
-    scan_spec.rowLimit = 1;
-    scan_spec.max_versions = 0;
-    scan_spec.startRow = scan_spec.endRow = argv[1];
-    scan_spec.startRowInclusive = scan_spec.endRowInclusive = true;
-    scan_spec.interval.first = scan_spec.interval.second = 0;  // 0 means no time predicate
-    scan_spec.return_deletes = false;
+    // setup scan_spec startRow and endRow
+    scan_spec.startRow = argv[1];
+    end_row = (String)argv[1];
+    end_row.append(1, 0xff);
+    scan_spec.endRow = end_row.c_str();
 
-    // Create a scanner on the 'WebServerLog' table 
-    if ((error = table_ptr->create_scanner(scan_spec, scanner_ptr)) != Error::OK) {
-      cerr << "Error: problem creating scanner on table 'WebServerLog' - " << Error::get_text(error) << endl;
-      return 1;
-    }
+    // setup scan_spec columns
+    for (int i=2; i<argc; i++)
+      scan_spec.columns.push_back(argv[i]);
+
+    // Create a scanner on the 'LogDb' table 
+    scanner_ptr = table_ptr->create_scanner(scan_spec);
+
   }
   catch (std::exception &e) {
     cerr << "error: " << e.what() << endl;
@@ -82,11 +90,7 @@ int main(int argc, char **argv) {
 
   // Iterate through the cells returned by the scanner
   while (scanner_ptr->next(cell)) {
-    nsec = cell.timestamp % 1000000000LL;
-    unix_time = cell.timestamp / 1000000000LL;
-    localtime_r(&unix_time, &tms);
-    printf("%d-%02d-%02d %02d:%02d:%02d.%09d", tms.tm_year+1900, tms.tm_mon+1, tms.tm_mday, tms.tm_hour, tms.tm_min, tms.tm_sec, nsec);
-    printf("\t%s\t%s", cell.row_key, cell.column_family);
+    printf("%s\t%s", cell.row_key, cell.column_family);
     if (*cell.column_qualifier)
       printf(":%s", cell.column_qualifier);
     printf("\t%s\n", std::string((const char *)cell.value, cell.value_len).c_str());

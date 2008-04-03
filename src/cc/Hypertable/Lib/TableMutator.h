@@ -89,6 +89,20 @@ namespace Hypertable {
     }
 
     /**
+     * Inserts a cell into the table.  
+     *
+     * @param key key of the cell being inserted
+     * @param value null-terminated c-string value
+     */
+    void set(KeySpec &key, const char *value) {
+      if (value)
+	set(0, key, value, strlen(value));
+      else
+	set(0, key, 0, 0);
+    }
+
+
+    /**
      * Deletes an entire row, a column family in a particular row, or a specific
      * cell within a row.
      *
