@@ -55,6 +55,15 @@ namespace {
   }
 
   /**
+   * This function returns a string containing
+   * a sortable text representation of the
+   * given time structure
+   */
+  String format_timestamp(struct tm tm) {
+    return format("%d-%02d-%02d %02d:%02d:%02d", tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+  }
+
+  /**
    * This function displays a textual
    * representation of the given exception
    * to stderr
@@ -164,12 +173,14 @@ int main(int argc, char **argv) {
 
     // Assemble the row key
     if (time_order) {
-      row = format("%d-%02d-%02d %02d:%02d:%02d ", entry.tm.tm_year+1900, entry.tm.tm_mon+1, entry.tm.tm_mday, entry.tm.tm_hour, entry.tm.tm_min, entry.tm.tm_sec);
+      row = format_timestamp(entry.tm);
+      row += " ";
       row += extract_page(entry.request);
     }
     else {
       row = extract_page(entry.request);
-      row += format(" %d-%02d-%02d %02d:%02d:%02d", entry.tm.tm_year+1900, entry.tm.tm_mon+1, entry.tm.tm_mday, entry.tm.tm_hour, entry.tm.tm_min, entry.tm.tm_sec);
+      row += " ";
+      row += format_timestamp(entry.tm);
     }
 
     key.row = row.c_str();
