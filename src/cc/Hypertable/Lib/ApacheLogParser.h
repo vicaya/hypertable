@@ -23,9 +23,11 @@
 
 #include <string>
 
+#include <boost/iostreams/device/file.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+
 #include <fstream>
 #include <iostream>
-
 
 namespace Hypertable {
 
@@ -48,11 +50,10 @@ namespace Hypertable {
     bool next(ApacheLogEntry &entry);
 
   private:
-
     char *extract_field(char *base, char **field_ptr);
     char *extract_timestamp(char *base, struct tm *tmp);
 
-    std::ifstream m_fin;
+    boost::iostreams::filtering_istream m_fin;
     std::string m_line;
   };
 

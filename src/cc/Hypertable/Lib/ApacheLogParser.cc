@@ -26,12 +26,22 @@ extern "C" {
 #include <time.h>
 }
 
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+
+namespace io = boost::iostreams;
+
 using namespace Hypertable;
+using namespace boost::iostreams;
 
 
-
+/**
+ *
+ */
 void ApacheLogParser::load(std::string filename) {
-  m_fin.open(filename.c_str());
+  if (boost::algorithm::ends_with(filename, ".gz"))
+    m_fin.push(gzip_decompressor());
+  m_fin.push(file_source(filename));
 }
 
 
