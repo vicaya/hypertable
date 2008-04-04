@@ -38,7 +38,7 @@ void ApacheLogParser::load(std::string filename) {
 
 /**
  */
-bool ApacheLogParser::next(ApacheLogEntryT &entry) {
+bool ApacheLogParser::next(ApacheLogEntry &entry) {
   char *base;
 
   while (true) {
@@ -110,8 +110,12 @@ char *ApacheLogParser::extract_field(char *base, char **field_ptr) {
     *ptr++ = 0;
   else
     ptr += strlen(base);
-  if (field_ptr)
-    *field_ptr = (*base != 0) ? base : 0;
+  if (field_ptr) {
+    if (*base == 0 || !strcmp(base, "-"))
+      *field_ptr = 0;
+    else
+      *field_ptr = base;
+  }
   return ptr;
 }
 

@@ -114,7 +114,7 @@ namespace {
  */
 int main(int argc, char **argv) {
   ApacheLogParser parser;
-  ApacheLogEntryT entry;
+  ApacheLogEntry entry;
   ClientPtr client_ptr;
   TablePtr table_ptr;
   TableMutatorPtr mutator_ptr;

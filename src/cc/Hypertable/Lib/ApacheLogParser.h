@@ -29,7 +29,8 @@
 
 namespace Hypertable {
 
-  typedef struct {
+  class ApacheLogEntry {
+  public:
     char *ip_address;
     char *userid;
     struct tm tm;
@@ -38,13 +39,13 @@ namespace Hypertable {
     char *object_size;
     char *referer;
     char *user_agent;
-  } ApacheLogEntryT;
+  };
 
   class ApacheLogParser {
 
   public:
     void load(std::string filename);
-    bool next(ApacheLogEntryT &entry);
+    bool next(ApacheLogEntry &entry);
 
   private:
 
