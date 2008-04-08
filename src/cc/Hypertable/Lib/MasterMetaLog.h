@@ -19,44 +19,30 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_METALOG_H
-#define HYPERTABLE_METALOG_H
+#ifndef HYPERTABLE_MASTER_METALOG_H
+#define HYPERTABLE_MASTER_METALOG_H
 
-#include "Common/ReferenceCount.h"
-
-/**
- * Abstract classes/interfaces for meta log classes
- * cf. http://code.google.com/p/hypertable/wiki/MetaLogDesignNotes
- */
+#include "Common/String.h"
+#include "MetaLog.h"
 
 namespace Hypertable {
 
-class DynamicBuffer;
-
-class MetaLogEntry : public ReferenceCount {
+class MasterMetaLogEntry : public MetaLogEntry {
 public:
-  virtual ~MetaLogEntry() {}
-
-  virtual void write(DynamicBuffer &) = 0;
-  virtual void read(const void *buf, size_t len) = 0;
-  virtual int get_type() = 0;
 };
 
-typedef intrusive_ptr<MetaLogEntry> MetaLogEntryPtr;
+class Filesystem;
 
-class MetaLog : public ReferenceCount {
+class MasterMetaLog : public MetaLog {
 public:
-  virtual ~MetaLog() {}
+  MasterMetaLog(Filesystem *, const String &path);
 
-  virtual void write(MetaLogEntry *) = 0;
-  virtual void close() = 0;
-
-  // Remove finished entries except rs_range_loaded
-  virtual void purge() = 0;
+  virtual void write(MetaLogEntry *);
+  virtual void write(MasterMetaLogEntry *);
+  virtual void close();
+  virtual void purge();
 };
-
-typedef intrusive_ptr<MetaLog> MetaLogPtr;
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_METALOG_H
+#endif // HYPERTABLE_MASTER_METALOG_H

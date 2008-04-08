@@ -50,4 +50,8 @@
 #  endif
 #endif
 
+/* Probably should use pstdint.h from Hsieh for porting */
+#include <stdint.h>
+#include <stdlib.h>
+
 #endif /* HYPERTABLE_COMPAT_C_H */

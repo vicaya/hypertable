@@ -19,44 +19,33 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_METALOG_H
-#define HYPERTABLE_METALOG_H
+#ifndef HYPERTABLE_MASTER_METALOG_READER_H
+#define HYPERTABLE_MASTER_METALOG_READER_H
 
-#include "Common/ReferenceCount.h"
-
-/**
- * Abstract classes/interfaces for meta log classes
- * cf. http://code.google.com/p/hypertable/wiki/MetaLogDesignNotes
- */
+#include "Common/String.h"
+#include "MasterMetaLog.h"
+#include "MetaLogReader.h"
 
 namespace Hypertable {
 
-class DynamicBuffer;
-
-class MetaLogEntry : public ReferenceCount {
-public:
-  virtual ~MetaLogEntry() {}
-
-  virtual void write(DynamicBuffer &) = 0;
-  virtual void read(const void *buf, size_t len) = 0;
-  virtual int get_type() = 0;
+struct MasterStateInfo {
+  String range_server_to_recover;
+  MetaLogEntries transactions;
 };
 
-typedef intrusive_ptr<MetaLogEntry> MetaLogEntryPtr;
+typedef std::vector<MasterStateInfo> MasterStates;
+class Filesystem;
 
-class MetaLog : public ReferenceCount {
+class MasterMetaLogReader : public MetaLogReader {
 public:
-  virtual ~MetaLog() {}
+  MasterMetaLogReader(Filesystem *, const String& path);
 
-  virtual void write(MetaLogEntry *) = 0;
-  virtual void close() = 0;
+  virtual ScanEntry *next(ScanEntry *);
+  virtual MasterMetaLogEntry *read();
 
-  // Remove finished entries except rs_range_loaded
-  virtual void purge() = 0;
+  void load_master_states(MasterStates &);
 };
-
-typedef intrusive_ptr<MetaLog> MetaLogPtr;
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_METALOG_H
+#endif // HYPERTABLE_MASTER_METALOG_READER_H

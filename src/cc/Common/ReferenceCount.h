@@ -27,6 +27,8 @@
 
 namespace Hypertable {
 
+  using boost::intrusive_ptr;
+
   class ReferenceCount;
 
   void intrusive_ptr_add_ref(ReferenceCount *rc);

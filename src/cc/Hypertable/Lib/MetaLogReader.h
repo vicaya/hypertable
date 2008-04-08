@@ -22,17 +22,15 @@
 #ifndef HYPERTABLE_METALOG_READER_H
 #define HYPERTABLE_METALOG_READER_H
 
-#include <stdint.h>
-
 #include "MetaLog.h"
+#include <vector>
 
 namespace Hypertable {
 
-namespace MetaLogEntryFactory {
-  MetaLogEntry *new_from_payload(int type, const void *buf, size_t len);
-}
-
-class MetaLogReader {
+/**
+ * Interface for meta log readers 
+ */
+class MetaLogReader : public ReferenceCount {
 public:
   struct ScanEntry {
     int type;
@@ -44,32 +42,19 @@ public:
 public:
   virtual ~MetaLogReader() {}
   
-  // quick scan without deserialize entries, throws if invalid
+  /**
+   * quick scan without deserialize entries, throws if invalid
+   */
   virtual ScanEntry *next(ScanEntry *) = 0;
-  virtual ScanEntry *last(ScanEntry *) = 0;
 
-  // read and get ready for the next record, throws if invalid
-  virtual MetaLogEntry *read() {
-    // depends on how smart the compiler is, this maybe inlined
-    ScanEntry se;
-
-    if (!next(&se))
-      return NULL;
-
-    return MetaLogEntryFactory::new_from_payload(se.type, se.payload,
-                                                 se.payload_size);
-  }
-
-  virtual MetaLogEntry *read_last() {
-    ScanEntry se;
-
-    if (!last(&se))
-      return NULL;
-
-    return MetaLogEntryFactory::new_from_payload(se.type, se.payload,
-                                                 se.payload_size);
-  }
+  /**
+   * read and get ready for the next record, throws if invalid
+   */
+  virtual MetaLogEntry *read() = 0;
 };
+
+typedef std::vector<MetaLogEntryPtr> MetaLogEntries;
+typedef intrusive_ptr<MetaLogReader> MetaLogReaderPtr;
 
 } // namespace Hypertable
 

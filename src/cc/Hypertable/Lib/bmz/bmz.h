@@ -20,7 +20,7 @@
 #ifndef HYPERTABLE_BMZ_H
 #define HYPERTABLE_BMZ_H
 
-#include "compat-c.h"
+#include "Common/compat-c.h"
 
 #define BMZ_VER_NUM             0x0110
 #define BMZ_VER_MAJOR           (BMZ_VER_NUM >> 12) 

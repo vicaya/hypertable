@@ -19,60 +19,42 @@
  * 02110-1301, USA.
  */
 
-#include <stdlib.h>
-#include "Hypertable/Lib/MetaLogReader.h"
-#include <boost/scoped_ptr.hpp>
+#include "Common/Compat.h"
+#include "Hypertable/Lib/MasterMetaLogEntryFactory.h"
+#include "Hypertable/Lib/MasterMetaLogReader.h"
 
 using namespace Hypertable;
-
-namespace MetaLogEntryFactory {
-
-MetaLogEntry *
-new_from_payload(int type, const void *buf, size_t len) {
-  return NULL;
-}
-
-} // MetaLogEntryFactory
-
 using namespace MetaLogEntryFactory;
 
 namespace {
 
-struct NullEntry : public MetaLogEntry {
-  virtual void write(DynamicBuffer &)  {}
-  virtual void read(const void *buf, size_t len) {}
-  virtual bool is_valid() { return true; }
-  virtual int get_type() { return 0; }
-};
-
-struct NullLog : public MetaLog {
-  virtual void write(MetaLogEntry *) {}
-  virtual void close() {}
-  virtual void purge() {}
-};
-
-struct NullReader : public MetaLogReader {
-  virtual ScanEntry *next(ScanEntry *) { return NULL; }
-  virtual MetaLogEntry *read() { return NULL; }
-};
-
 void
-null_test() {
-  MetaLogPtr metalog(new NullLog);
-  MetaLogReaderPtr reader(new NullReader);
-  MetaLogEntryPtr log_entry(new NullEntry);
+write_test() {
+  MasterMetaLog *metalog = new MasterMetaLog(NULL, "/test/master.log");
+  MetaLogPtr scoped(metalog);
+  MetaLogEntryPtr log_entry(new_m_recovery_start("test_rs"));
 
   metalog->write(log_entry.get());
   metalog->purge();
   metalog->close();
+}
 
-  reader->read();
+void
+read_test() {
+  MasterMetaLogReader *reader =
+      new MasterMetaLogReader(NULL, "/test/master.log");
+  MetaLogReaderPtr scoped(reader);
+  MetaLogEntryPtr log_entry = reader->read();
+  MasterStates mstates;
+
+  reader->load_master_states(mstates);
 }
 
 } // local namespace
 
 int
 main() {
-  null_test();
+  write_test();
+  read_test();
   return 0;
 }

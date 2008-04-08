@@ -19,60 +19,44 @@
  * 02110-1301, USA.
  */
 
-#include <stdlib.h>
-#include "Hypertable/Lib/MetaLogReader.h"
-#include <boost/scoped_ptr.hpp>
+#include "Common/Compat.h"
+#include "Hypertable/Lib/RangeServerMetaLogEntryFactory.h"
+#include "Hypertable/Lib/RangeServerMetaLogReader.h"
 
 using namespace Hypertable;
-
-namespace MetaLogEntryFactory {
-
-MetaLogEntry *
-new_from_payload(int type, const void *buf, size_t len) {
-  return NULL;
-}
-
-} // MetaLogEntryFactory
-
 using namespace MetaLogEntryFactory;
 
 namespace {
 
-struct NullEntry : public MetaLogEntry {
-  virtual void write(DynamicBuffer &)  {}
-  virtual void read(const void *buf, size_t len) {}
-  virtual bool is_valid() { return true; }
-  virtual int get_type() { return 0; }
-};
-
-struct NullLog : public MetaLog {
-  virtual void write(MetaLogEntry *) {}
-  virtual void close() {}
-  virtual void purge() {}
-};
-
-struct NullReader : public MetaLogReader {
-  virtual ScanEntry *next(ScanEntry *) { return NULL; }
-  virtual MetaLogEntry *read() { return NULL; }
-};
-
 void
-null_test() {
-  MetaLogPtr metalog(new NullLog);
-  MetaLogReaderPtr reader(new NullReader);
-  MetaLogEntryPtr log_entry(new NullEntry);
+write_test() {
+  RangeServerMetaLog *metalog =
+      new RangeServerMetaLog(NULL, "/test/master.log");
+  MetaLogPtr scoped(metalog);
+  RangeSpec old, split_off;
+  MetaLogEntryPtr log_entry(new_rs_split_start(old, split_off, "split.log"));
 
   metalog->write(log_entry.get());
   metalog->purge();
   metalog->close();
+}
 
-  reader->read();
+void
+read_test() {
+  RangeServerMetaLogReader *reader =
+      new RangeServerMetaLogReader(NULL, "/test/master.log");
+  MetaLogReaderPtr scoped(reader);
+  MetaLogEntryPtr log_entry = reader->read();
+  RangeStates rstates;
+
+  reader->load_range_states(rstates);
 }
 
 } // local namespace
 
 int
 main() {
-  null_test();
+  write_test();
+  read_test();
   return 0;
 }

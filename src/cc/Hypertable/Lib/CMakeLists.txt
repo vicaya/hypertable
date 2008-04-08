@@ -41,6 +41,12 @@ LocationCache.cc
 MasterClient.cc
 MasterFileHandler.cc
 MasterProtocol.cc
+RangeServerMetaLogEntryFactory.cc
+RangeServerMetaLog.cc
+RangeServerMetaLogReader.cc
+MasterMetaLogEntryFactory.cc
+MasterMetaLog.cc
+MasterMetaLogReader.cc
 RangeLocator.cc
 RangeServerClient.cc
 RangeServerProtocol.cc
@@ -68,6 +74,11 @@ target_link_libraries (generate_test_data Hypertable pthread ${BOOST_LIB} log4cp
 
 # meta log test
 add_executable(metalog_api_test tests/MetaLogApiTest.cc)
+target_link_libraries(metalog_api_test Hypertable ${BOOST_LIB} log4cpp)
+add_executable(metalog_master_test tests/MetaLogMasterTest.cc)
+target_link_libraries(metalog_master_test Hypertable ${BOOST_LIB} log4cpp)
+add_executable(metalog_rs_test tests/MetaLogRangeServerTest.cc)
+target_link_libraries(metalog_rs_test Hypertable ${BOOST_LIB} log4cpp)
 
 # schemaTest
 add_executable (schemaTest tests/schemaTest.cc)
@@ -115,6 +126,8 @@ configure_file(${SRC_DIR}/loadDataSourceTest.golden ${DST_DIR}/loadDataSourceTes
 configure_file(${SRC_DIR}/loadDataSourceTest.dat ${DST_DIR}/loadDataSourceTest.dat)
 
 add_test (MetaLog-API metalog_api_test)
+add_test (MetaLog-Master metalog_master_test)
+add_test (MetaLog-RangeServer metalog_rs_test)
 add_test (Schema schemaTest)
 add_test (LocationCache locationCacheTest)
 add_test (LoadDataSource loadDataSourceTest)
