@@ -538,6 +538,30 @@ public class HdfsBroker {
 	    log.severe("Problem sending response to 'readdir' command - " + Error.GetText(error));
     }
 
+    /**
+     *
+     */
+    public void Exists(ResponseCallbackExists cb, String fileName) {
+	int error = Error.OK;
+
+	try {
+	    if (mVerbose)
+		log.info("Testing for existence of file '" + fileName);
+
+	    error = cb.response( mFilesystem.exists(new Path(fileName)) );
+	}
+	catch (FileNotFoundException e) {
+	    log.info("File not found: " + fileName);
+	    error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
+	}
+	catch (IOException e) {
+	    log.info("I/O exception while checking for existence of file '" + fileName + "' - " + e.getMessage());
+	    error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
+	}
+
+	if (error != Error.OK)
+	    log.severe("Problem sending response to 'exists' command - " + Error.GetText(error));
+    }
 
 
     private Configuration mConf = new Configuration();

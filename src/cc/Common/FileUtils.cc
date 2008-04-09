@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -188,19 +188,19 @@ void FileUtils::set_flags(int fd, int flags) {
 
 /**
  */
-char *FileUtils::file_to_buffer(const char *fname, off_t *lenp) {
+char *FileUtils::file_to_buffer(const std::string &fname, off_t *lenp) {
   struct stat statbuf;
   int fd;
 
   *lenp = 0;
 
-  if ((fd = open(fname, O_RDONLY)) < 0) {
-    HT_ERRORF("open(\"%s\") failure - %s", fname,  strerror(errno));
+  if ((fd = open(fname.c_str(), O_RDONLY)) < 0) {
+    HT_ERRORF("open(\"%s\") failure - %s", fname.c_str(),  strerror(errno));
     return 0;
   }
 
   if (fstat(fd, &statbuf) < 0) {
-    HT_ERRORF("fstat(\"%s\") failure - %s", fname,  strerror(errno));
+    HT_ERRORF("fstat(\"%s\") failure - %s", fname.c_str(),  strerror(errno));
     return 0;
   }
 
@@ -211,7 +211,7 @@ char *FileUtils::file_to_buffer(const char *fname, off_t *lenp) {
   ssize_t nread = FileUtils::read(fd, rbuf, *lenp);
 
   if (nread == (ssize_t)-1) {
-    HT_ERRORF("read(\"%s\") failure - %s", fname,  strerror(errno));
+    HT_ERRORF("read(\"%s\") failure - %s", fname.c_str(),  strerror(errno));
     delete [] rbuf;
     *lenp = 0;
     return 0;
@@ -228,14 +228,14 @@ char *FileUtils::file_to_buffer(const char *fname, off_t *lenp) {
 }
 
 
-bool FileUtils::mkdirs(const char *dirname) {
+bool FileUtils::mkdirs(const std::string &dirname) {
   struct stat statbuf;
-  boost::shared_array<char> tmpDirPtr(new char [ strlen(dirname) + 1 ]);
+  boost::shared_array<char> tmpDirPtr(new char [ dirname.length() + 1 ]);
   char *tmpDir = tmpDirPtr.get();
   char *ptr = tmpDir+1;
 
-  strcpy(tmpDir, dirname);
-  
+  strcpy(tmpDir, dirname.c_str());
+
   while ((ptr = strchr(ptr, '/')) != 0) {
     *ptr = 0;
     if (stat(tmpDir, &statbuf) != 0) {
@@ -270,68 +270,56 @@ bool FileUtils::mkdirs(const char *dirname) {
 }
 
 
-bool FileUtils::exists(const char *fname) {
+bool FileUtils::exists(const std::string &fname) {
   struct stat statbuf;
-  if (stat(fname, &statbuf) != 0)
+  if (stat(fname.c_str(), &statbuf) != 0)
     return false;
   return true;
 }
 
-uint64_t FileUtils::size(const char *fname) {
+uint64_t FileUtils::size(const std::string &fname) {
   struct stat statbuf;
-  if (stat(fname, &statbuf) != 0)
+  if (stat(fname.c_str(), &statbuf) != 0)
     return 0;
   return statbuf.st_size;
   
 }
 
 
-off_t FileUtils::length(const char *fname) {
+off_t FileUtils::length(const std::string &fname) {
   struct stat statbuf;
-  if (stat(fname, &statbuf) != 0)
+  if (stat(fname.c_str(), &statbuf) != 0)
     return (off_t)-1;
   return statbuf.st_size;
 }
 
 
-int FileUtils::getxattr(const char *path, const char *name, void *value, size_t size) {
-  std::string canonicalName;
-  if (!strncmp(name, "user.", 5))
-    canonicalName = name;
-  else
-    canonicalName = (std::string)"user." + name;
+int FileUtils::getxattr(const std::string &path, const std::string &name, void *value, size_t size) {
+  std::string canonicalName = (std::string)"user." + name;
 #if defined(__linux__)
-  return ::getxattr(path, canonicalName.c_str(), value, size);
+  return ::getxattr(path.c_str(), canonicalName.c_str(), value, size);
 #elif defined(__APPLE__)
-  return ::getxattr(path, canonicalName.c_str(), value, size, 0, 0);
+  return ::getxattr(path.c_str(), canonicalName.c_str(), value, size, 0, 0);
 #else
   ImplementMe;
 #endif
 }
 
 
-int FileUtils::setxattr(const char *path, const char *name, const void *value, size_t size, int flags) {
-  std::string canonicalName;
-  if (!strncmp(name, "user.", 5))
-    canonicalName = name;
-  else
-    canonicalName = (std::string)"user." + name;
+int FileUtils::setxattr(const std::string &path, const std::string &name, const void *value, size_t size, int flags) {
+  std::string canonicalName = (std::string)"user." + name;
 #if defined(__linux__)
-  return ::setxattr(path, canonicalName.c_str(), value, size, flags);
+  return ::setxattr(path.c_str(), canonicalName.c_str(), value, size, flags);
 #elif defined(__APPLE__)
-  return ::setxattr(path, canonicalName.c_str(), value, size, 0, flags);
+  return ::setxattr(path.c_str(), canonicalName.c_str(), value, size, 0, flags);
 #else
   ImplementMe;
 #endif
 }
 
 
-int FileUtils::fgetxattr(int fd, const char *name, void *value, size_t size) {
-  std::string canonicalName;
-  if (!strncmp(name, "user.", 5))
-    canonicalName = name;
-  else
-    canonicalName = (std::string)"user." + name;
+int FileUtils::fgetxattr(int fd, const std::string &name, void *value, size_t size) {
+  std::string canonicalName = (std::string)"user." + name;
 #if defined(__linux__)
   return ::fgetxattr(fd, canonicalName.c_str(), value, size);
 #elif defined(__APPLE__)
@@ -342,12 +330,8 @@ int FileUtils::fgetxattr(int fd, const char *name, void *value, size_t size) {
 }
 
 
-int FileUtils::fsetxattr(int fd, const char *name, const void *value, size_t size, int flags) {
-  std::string canonicalName;
-  if (!strncmp(name, "user.", 5))
-    canonicalName = name;
-  else
-    canonicalName = (std::string)"user." + name;
+int FileUtils::fsetxattr(int fd, const std::string &name, const void *value, size_t size, int flags) {
+  std::string canonicalName = (std::string)"user." + name;
 #if defined(__linux__)
   return ::fsetxattr(fd, canonicalName.c_str(), value, size, flags);
 #elif defined(__APPLE__)
@@ -358,27 +342,19 @@ int FileUtils::fsetxattr(int fd, const char *name, const void *value, size_t siz
 }
 
 
-int FileUtils::removexattr(const char *path, const char *name) {
-  std::string canonicalName;
-  if (!strncmp(name, "user.", 5))
-    canonicalName = name;
-  else
-    canonicalName = (std::string)"user." + name;
+int FileUtils::removexattr(const std::string &path, const std::string &name) {
+  std::string canonicalName = (std::string)"user." + name;
 #if defined(__linux__)
-  return ::removexattr(path, canonicalName.c_str());
+  return ::removexattr(path.c_str(), canonicalName.c_str());
 #elif defined(__APPLE__)
-  return ::removexattr(path, canonicalName.c_str(), 0);
+  return ::removexattr(path.c_str(), canonicalName.c_str(), 0);
 #else
   ImplementMe;
 #endif
 }
 
-int FileUtils::fremovexattr(int fd, const char *name) {
-  std::string canonicalName;
-  if (!strncmp(name, "user.", 5))
-    canonicalName = name;
-  else
-    canonicalName = (std::string)"user." + name;
+int FileUtils::fremovexattr(int fd, const std::string &name) {
+  std::string canonicalName = (std::string)"user." + name;
 #if defined(__linux__)
   return ::fremovexattr(fd, canonicalName.c_str());
 #elif defined(__APPLE__)

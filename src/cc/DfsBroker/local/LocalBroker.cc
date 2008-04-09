@@ -63,7 +63,7 @@ LocalBroker::LocalBroker(PropertiesPtr &propsPtr) : m_verbose(false) {
     m_rootdir = m_rootdir.substr(0, m_rootdir.length()-1);
 
   // ensure that root directory exists
-  if (!FileUtils::mkdirs(m_rootdir.c_str()))
+  if (!FileUtils::mkdirs(m_rootdir))
     exit(1);
 }
 
@@ -314,7 +314,7 @@ void LocalBroker::length(ResponseCallbackLength *cb, const char *fileName) {
   else
     absFileName = m_rootdir + "/" + fileName;
 
-  if ((length = FileUtils::length(absFileName.c_str())) == (uint64_t)-1) {
+  if ((length = FileUtils::length(absFileName)) == (uint64_t)-1) {
     HT_ERRORF("length (stat) failed: file='%s' - %s", absFileName.c_str(), strerror(errno));
     report_error(cb);
     return;
@@ -370,7 +370,7 @@ void LocalBroker::mkdirs(ResponseCallback *cb, const char *dirName) {
   else
     absDirName = m_rootdir + "/" + dirName;
 
-  if (!FileUtils::mkdirs(absDirName.c_str())) {
+  if (!FileUtils::mkdirs(absDirName)) {
     HT_ERRORF("mkdirs failed: dirName='%s' - %s", absDirName.c_str(), strerror(errno));
     report_error(cb);
     return;
@@ -500,7 +500,6 @@ void LocalBroker::flush(ResponseCallback *cb, uint32_t fd) {
 
 
 /**
- * Status
  */
 void LocalBroker::status(ResponseCallback *cb) {
   cb->response_ok();
@@ -508,12 +507,27 @@ void LocalBroker::status(ResponseCallback *cb) {
 
 
 /**
- * Shutdown
  */
 void LocalBroker::shutdown(ResponseCallback *cb) {
   m_open_file_map.remove_all();
   cb->response_ok();
   poll(0, 0, 2000);
+}
+
+
+void LocalBroker::exists(ResponseCallbackExists *cb, const char *fileName) {
+  std::string absFileName;
+  
+  if (m_verbose) {
+    HT_INFOF("exists file='%s'", fileName);
+  }
+
+  if (fileName[0] == '/')
+    absFileName = m_rootdir + fileName;
+  else
+    absFileName = m_rootdir + "/" + fileName;
+
+  cb->response( FileUtils::exists(absFileName) );
 }
 
 

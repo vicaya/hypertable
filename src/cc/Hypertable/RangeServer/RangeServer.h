@@ -79,7 +79,7 @@ namespace Hypertable {
     void master_change();
 
   private:
-    int directory_initialize(PropertiesPtr &props_ptr);
+    int initialize(PropertiesPtr &props_ptr);
 
     int verify_schema(TableInfoPtr &tableInfoPtr, int generation, std::string &errMsg);
 

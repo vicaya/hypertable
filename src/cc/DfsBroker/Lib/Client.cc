@@ -74,14 +74,14 @@ Client::Client(Comm *comm, struct sockaddr_in &addr, time_t timeout) : m_comm(co
 
 
 
-int Client::open(std::string &name, DispatchHandler *handler) {
+int Client::open(const std::string &name, DispatchHandler *handler) {
   CommBufPtr cbufPtr( m_protocol.create_open_request(name, 0) );
   return send_message(cbufPtr, handler);
 }
 
 
 
-int Client::open(std::string &name, int32_t *fdp) {
+int Client::open(const std::string &name, int32_t *fdp) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   *fdp = -1;
@@ -97,7 +97,7 @@ int Client::open(std::string &name, int32_t *fdp) {
 }
 
 
-int Client::open_buffered(std::string &name, uint32_t buf_size, uint32_t outstanding, int32_t *fdp, uint64_t start_offset, uint64_t end_offset) {
+int Client::open_buffered(const std::string &name, uint32_t buf_size, uint32_t outstanding, int32_t *fdp, uint64_t start_offset, uint64_t end_offset) {
   int error;
 
   if ((error = open(name, fdp)) != Error::OK)
@@ -114,14 +114,14 @@ int Client::open_buffered(std::string &name, uint32_t buf_size, uint32_t outstan
 }
 
 
-int Client::create(std::string &name, bool overwrite, int32_t bufferSize,
+int Client::create(const std::string &name, bool overwrite, int32_t bufferSize,
 		   int32_t replication, int64_t blockSize, DispatchHandler *handler) {
   CommBufPtr cbufPtr( m_protocol.create_create_request(name, overwrite, bufferSize, replication, blockSize) );
   return send_message(cbufPtr, handler);
 }
 
 
-int Client::create(std::string &name, bool overwrite, int32_t bufferSize,
+int Client::create(const std::string &name, bool overwrite, int32_t bufferSize,
 		   int32_t replication, int64_t blockSize, int32_t *fdp) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
@@ -273,13 +273,13 @@ int Client::seek(int32_t fd, uint64_t offset) {
 }
 
 
-int Client::remove(std::string &name, DispatchHandler *handler) {
+int Client::remove(const std::string &name, DispatchHandler *handler) {
   CommBufPtr cbufPtr( m_protocol.create_remove_request(name) );
   return send_message(cbufPtr, handler);
 }
 
 
-int Client::remove(std::string &name) {
+int Client::remove(const std::string &name) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( m_protocol.create_remove_request(name) );
@@ -316,14 +316,14 @@ int Client::status() {
 }
 
 
-int Client::length(std::string &name, DispatchHandler *handler) {
+int Client::length(const std::string &name, DispatchHandler *handler) {
   CommBufPtr cbufPtr( m_protocol.create_length_request(name) );
   return send_message(cbufPtr, handler);
 }
 
 
 
-int Client::length(std::string &name, int64_t *lenp) {
+int Client::length(const std::string &name, int64_t *lenp) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( m_protocol.create_length_request(name) );
@@ -363,13 +363,13 @@ int Client::pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst, ui
 }
 
 
-int Client::mkdirs(std::string &name, DispatchHandler *handler) {
+int Client::mkdirs(const std::string &name, DispatchHandler *handler) {
   CommBufPtr cbufPtr( m_protocol.create_mkdirs_request(name) );
   return send_message(cbufPtr, handler);
 }
 
 
-int Client::mkdirs(std::string &name) {
+int Client::mkdirs(const std::string &name) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( m_protocol.create_mkdirs_request(name) );
@@ -405,13 +405,13 @@ int Client::flush(int32_t fd) {
 }
 
 
-int Client::rmdir(std::string &name, DispatchHandler *handler) {
+int Client::rmdir(const std::string &name, DispatchHandler *handler) {
   CommBufPtr cbufPtr( m_protocol.create_rmdir_request(name) );
   return send_message(cbufPtr, handler);
 }
 
 
-int Client::rmdir(std::string &name) {
+int Client::rmdir(const std::string &name) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( m_protocol.create_rmdir_request(name) );
@@ -430,7 +430,7 @@ int Client::rmdir(std::string &name) {
 /**
  *
  */
-int Client::readdir(std::string &name, DispatchHandler *handler) {
+int Client::readdir(const std::string &name, DispatchHandler *handler) {
   CommBufPtr cbufPtr( m_protocol.create_readdir_request(name) );
   return send_message(cbufPtr, handler);
 }
@@ -440,7 +440,7 @@ int Client::readdir(std::string &name, DispatchHandler *handler) {
 /**
  *
  */
-int Client::readdir(std::string &name, std::vector<std::string> &listing) {
+int Client::readdir(const std::string &name, std::vector<std::string> &listing) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr( m_protocol.create_readdir_request(name) );
@@ -453,6 +453,28 @@ int Client::readdir(std::string &name, std::vector<std::string> &listing) {
   }
   return error;
 }
+
+
+int Client::exists(const std::string &name, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( m_protocol.create_exists_request(name) );
+  return send_message(cbufPtr, handler);
+}
+
+
+int Client::exists(const std::string &name, bool *existsp) {
+  DispatchHandlerSynchronizer syncHandler;
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr( m_protocol.create_exists_request(name) );
+  int error = send_message(cbufPtr, &syncHandler);
+  if (error == Error::OK) {
+    if (!syncHandler.wait_for_reply(eventPtr)) {
+      HT_ERRORF("Dfs 'exists' error, name=%s : %s", name.c_str(), m_protocol.string_format_message(eventPtr).c_str());
+    }
+    error = decode_response_exists(eventPtr, existsp);
+  }
+  return error;
+}
+
 
 
 

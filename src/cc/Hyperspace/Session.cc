@@ -138,7 +138,7 @@ int Session::open(ClientHandleStatePtr &handle_state_ptr, CommBufPtr &cbuf_ptr, 
 /**
  *
  */
-int Session::open(std::string name, uint32_t flags, HandleCallbackPtr &callback_ptr, uint64_t *handlep) {
+int Session::open(const std::string &name, uint32_t flags, HandleCallbackPtr &callback_ptr, uint64_t *handlep) {
   ClientHandleStatePtr handle_state_ptr( new ClientHandleState() );
   std::vector<AttributeT> emptyAttrs;
 
@@ -158,7 +158,7 @@ int Session::open(std::string name, uint32_t flags, HandleCallbackPtr &callback_
 /**
  *
  */
-int Session::create(std::string name, uint32_t flags, HandleCallbackPtr &callback_ptr, std::vector<AttributeT> &initAttrs, uint64_t *handlep) {
+int Session::create(const std::string &name, uint32_t flags, HandleCallbackPtr &callback_ptr, std::vector<AttributeT> &initAttrs, uint64_t *handlep) {
   ClientHandleStatePtr handle_state_ptr( new ClientHandleState() );
 
   handle_state_ptr->openFlags = flags | OPEN_FLAG_CREATE | OPEN_FLAG_EXCL;
@@ -209,7 +209,7 @@ int Session::close(uint64_t handle) {
 /**
  *
  */
-int Session::mkdir(std::string name) {
+int Session::mkdir(const std::string &name) {
   DispatchHandlerSynchronizer syncHandler;
   Hypertable::EventPtr eventPtr;
   std::string normalName;
@@ -242,7 +242,7 @@ int Session::mkdir(std::string name) {
 }
 
 
-int Session::unlink(std::string name) {
+int Session::unlink(const std::string &name) {
   DispatchHandlerSynchronizer syncHandler;
   Hypertable::EventPtr eventPtr;
   std::string normalName;
@@ -275,7 +275,7 @@ int Session::unlink(std::string name) {
 }
 
 
-int Session::exists(std::string name, bool *existsp) {
+int Session::exists(const std::string &name, bool *existsp) {
   DispatchHandlerSynchronizer syncHandler;
   Hypertable::EventPtr eventPtr;
   std::string normalName;

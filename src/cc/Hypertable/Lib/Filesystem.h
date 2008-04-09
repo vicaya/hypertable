@@ -47,7 +47,7 @@ namespace Hypertable {
      * @param handler dispatch handler
      * @return Error::OK on success or error code on failure
      */
-    virtual int open(std::string &name, DispatchHandler *handler) = 0;
+    virtual int open(const std::string &name, DispatchHandler *handler) = 0;
 
     /** Opens a file.  Issues an open file request and waits for it to complete.
      *
@@ -55,7 +55,7 @@ namespace Hypertable {
      * @param fdp address of variable to hold return file descriptor
      * @return Error::OK on success or error code on failure
      */
-    virtual int open(std::string &name, int32_t *fdp) = 0;
+    virtual int open(const std::string &name, int32_t *fdp) = 0;
 
     /** Opens a file in buffered (readahead) mode.  Issues an open file request and waits for it to complete.
      * Turns on readahead mode so that data is prefetched.
@@ -68,7 +68,7 @@ namespace Hypertable {
      * @param end_offset ending read offset
      * @return Error::OK on success or error code on failure
      */
-    virtual int open_buffered(std::string &name, uint32_t buf_size, uint32_t outstanding, int32_t *fdp, uint64_t start_offset=0, uint64_t end_offset=0) = 0;
+    virtual int open_buffered(const std::string &name, uint32_t buf_size, uint32_t outstanding, int32_t *fdp, uint64_t start_offset=0, uint64_t end_offset=0) = 0;
 
     /** Decodes the response from an open request
      *
@@ -91,7 +91,7 @@ namespace Hypertable {
      * @param handler dispatch handler
      * @return Error::OK on success or error code on failure
      */
-    virtual int create(std::string &name, bool overwrite, int32_t bufferSize,
+    virtual int create(const std::string &name, bool overwrite, int32_t bufferSize,
 		       int32_t replication, int64_t blockSize, DispatchHandler *handler) = 0;
 
     /** Creates a file.  Issues a create file request and waits for completion
@@ -104,7 +104,7 @@ namespace Hypertable {
      * @param fdp address of variable to hold return file descriptor
      * @return Error::OK on success or error code on failure
      */
-    virtual int create(std::string &name, bool overwrite, int32_t bufferSize,
+    virtual int create(const std::string &name, bool overwrite, int32_t bufferSize,
 		       int32_t replication, int64_t blockSize, int32_t *fdp) = 0;
 
     /** Decodes the response from a create request
@@ -249,7 +249,7 @@ namespace Hypertable {
      * @param handler dispatch handler
      * @return Error::OK on success or error code on failure
      */
-    virtual int remove(std::string &name, DispatchHandler *handler) = 0;
+    virtual int remove(const std::string &name, DispatchHandler *handler) = 0;
 
     /** Removes a file.  Issues a remove request and waits for it to
      * complete.
@@ -257,7 +257,7 @@ namespace Hypertable {
      * @param name absolute pathname of file to delete
      * @return Error::OK on success or error code on failure
      */
-    virtual int remove(std::string &name) = 0;
+    virtual int remove(const std::string &name) = 0;
 
     /** Gets the length of a file asynchronously.  Issues a length request.
      * The caller will get notified of successful completion or error via the
@@ -267,7 +267,7 @@ namespace Hypertable {
      * @param handler dispatch handler
      * @return Error::OK on success or error code on failure
      */
-    virtual int length(std::string &name, DispatchHandler *handler) = 0;
+    virtual int length(const std::string &name, DispatchHandler *handler) = 0;
 
     /** Gets the length of a file.  Issues a length request and waits for it
      * to complete.
@@ -276,7 +276,7 @@ namespace Hypertable {
      * @param lenp address of variable to hold returned length
      * @return Error::OK on success or error code on failure
      */
-    virtual int length(std::string &name, int64_t *lenp) = 0;
+    virtual int length(const std::string &name, int64_t *lenp) = 0;
 
     /** Decodes the response from a length request
      *
@@ -331,7 +331,7 @@ namespace Hypertable {
      * @param handler dispatch handler
      * @return Error::OK on success or error code on failure
      */
-    virtual int mkdirs(std::string &name, DispatchHandler *handler) = 0;
+    virtual int mkdirs(const std::string &name, DispatchHandler *handler) = 0;
 
     /** Creates a directory.  Issues a mkdirs request which creates a directory,
      * including all its missing parents, and waits for it to complete.
@@ -339,7 +339,7 @@ namespace Hypertable {
      * @param name absolute pathname of directory to create
      * @return Error::OK on success or error code on failure
      */
-    virtual int mkdirs(std::string &name) = 0;
+    virtual int mkdirs(const std::string &name) = 0;
 
     /** Recursively removes a directory asynchronously.  Issues a rmdir request.
      * The caller will get notified of successful completion or error via the given
@@ -349,7 +349,7 @@ namespace Hypertable {
      * @param handler dispatch handler
      * @return Error::OK on success or error code on failure
      */
-    virtual int rmdir(std::string &name, DispatchHandler *handler) = 0;
+    virtual int rmdir(const std::string &name, DispatchHandler *handler) = 0;
 
     /** Recursively removes a directory.  Issues a rmdir request and waits for
      * it to complete.
@@ -357,7 +357,7 @@ namespace Hypertable {
      * @param name absolute pathname of directory to remove
      * @return Error::OK on success or error code on failure
      */
-    virtual int rmdir(std::string &name) = 0;
+    virtual int rmdir(const std::string &name) = 0;
     
     /** Obtains a listing of all files in a directory asynchronously.  Issues a readdir
      * request.  The caller will get notified of successful completion or error via the
@@ -367,7 +367,7 @@ namespace Hypertable {
      * @param handler dispatch handler
      * @return Error::OK on success or error code on failure
      */
-    virtual int readdir(std::string &name, DispatchHandler *handler) = 0;
+    virtual int readdir(const std::string &name, DispatchHandler *handler) = 0;
 
     /** Obtains a listing of all files in a directory.  Issues a readdir request
      * and waits for it to complete.
@@ -376,7 +376,7 @@ namespace Hypertable {
      * @param listing reference to vector of entry names
      * @return Error::OK on success or error code on failure
      */
-    virtual int readdir(std::string &name, std::vector<std::string> &listing) = 0;
+    virtual int readdir(const std::string &name, std::vector<std::string> &listing) = 0;
 
     /** Decodes the response from a readdir request
      *
@@ -406,6 +406,34 @@ namespace Hypertable {
      * @return Error::OK on success or error code on failure
      */
     virtual int flush(int32_t fd) = 0;
+
+    /** Determines if a file exists asynchronously.  Issues an exists request.
+     * The caller will get notified of successful completion or error via the
+     * given dispatch handler.
+     *
+     * @param name absolute pathname of file
+     * @param handler dispatch handler
+     * @return Error::OK on success or error code on failure
+     */
+    virtual int exists(const std::string &name, DispatchHandler *handler) = 0;
+
+    /** Determines if a file exists.
+     *
+     * @param name absolute pathname of file
+     * @param existsp address of return variable (boolean exists flag)
+     * @return error code from event object
+     */
+    virtual int exists(const std::string &name, bool *existsp) = 0;
+
+
+    /** Decodes the response from an exists request.
+     *
+     * @param event_ptr reference to response event
+     * @param existsp address of return variable (boolean exists flag)
+     * @return error code from event object
+     */
+    static int decode_response_exists(EventPtr &event_ptr, bool *existsp);
+
 
     /** Decodes the response from an request that only returns an error code
      *

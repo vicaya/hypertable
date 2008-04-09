@@ -190,6 +190,27 @@ int Filesystem::decode_response_readdir(EventPtr &event_ptr, std::vector<std::st
 
 /**
  */
+int Filesystem::decode_response_exists(EventPtr &event_ptr, bool *existsp) {
+  uint8_t *msg = event_ptr->message;
+  size_t remaining = event_ptr->messageLen;
+  int error;
+
+  if (!Serialization::decode_int(&msg, &remaining, (uint32_t *)&error))
+    return Error::RESPONSE_TRUNCATED;
+
+  if (error != Error::OK)
+    return error;
+
+  if (!Serialization::decode_bool(&msg, &remaining, existsp))
+    return Error::RESPONSE_TRUNCATED;
+
+  return Error::OK;
+}
+
+
+
+/**
+ */
 int Filesystem::decode_response(EventPtr &event_ptr) {
   uint8_t *msg = event_ptr->message;
   size_t remaining = event_ptr->messageLen;

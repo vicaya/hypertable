@@ -31,6 +31,7 @@
 #include "ResponseCallbackAppend.h"
 #include "ResponseCallbackLength.h"
 #include "ResponseCallbackReaddir.h"
+#include "ResponseCallbackExists.h"
 
 using namespace Hypertable;
 
@@ -57,6 +58,7 @@ namespace Hypertable {
       virtual void flush(ResponseCallback *cb, uint32_t fd) = 0;
       virtual void status(ResponseCallback *cb) = 0;
       virtual void shutdown(ResponseCallback *cb) = 0;
+      virtual void exists(ResponseCallbackExists *cb, const char *fieName) = 0;
 
       OpenFileMap &get_open_file_map() { return m_open_file_map; }
 

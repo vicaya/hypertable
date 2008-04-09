@@ -157,7 +157,7 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
     m_location = (std::string)inet_ntoa(addr.sin_addr) + "_" + (int)port;
   }
 
-  if (directory_initialize(props_ptr) != Error::OK)
+  if (initialize(props_ptr) != Error::OK)
     exit(1);
 
   // Create the maintenance queue
@@ -213,10 +213,11 @@ RangeServer::~RangeServer() {
  * - Clear any Range server state (including any partially created commit logs)
  * - Open the commit log
  */
-int RangeServer::directory_initialize(PropertiesPtr &props_ptr) {
+int RangeServer::initialize(PropertiesPtr &props_ptr) {
   int error;
   bool exists;
-  std::string topDir;
+  std::string top_dir;
+  std::string meta_log_dir;
 
   /**
    * Create /hypertable/servers directory
@@ -227,33 +228,46 @@ int RangeServer::directory_initialize(PropertiesPtr &props_ptr) {
   }
 
   if (!exists) {
-    HT_ERROR("Hyperspace directory '/hypertable/servers' does not exist, try running 'Hypertable.master --initialize' first");
-    return error;
+    if ((error = m_hyperspace_ptr->mkdir("/hypertable/servers")) != Error::OK) {
+      HT_ERRORF("Problem creating directory '/hypertable/servers' - %s", Error::get_text(error));
+      return error;
+    }
   }
 
-  topDir = (std::string)"/hypertable/servers/" + m_location;
+  top_dir = (std::string)"/hypertable/servers/" + m_location;
 
   /**
    * Create "server existence" file in Hyperspace and obtain an exclusive lock on it
    */
 
-  uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_LOCK_EXCLUSIVE;
+  uint32_t lockStatus;
+  uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE | OPEN_FLAG_LOCK;
   HandleCallbackPtr nullCallbackPtr;
 
-  if ((error = m_hyperspace_ptr->open(topDir.c_str(), oflags, nullCallbackPtr, &m_existence_file_handle)) != Error::OK) {
-    HT_ERRORF("Problem creating Hyperspace server existance file '%s' - %s", topDir.c_str(), Error::get_text(error));
+  if ((error = m_hyperspace_ptr->open(top_dir.c_str(), oflags, nullCallbackPtr, &m_existence_file_handle)) != Error::OK) {
+    HT_ERRORF("Problem creating Hyperspace server existance file '%s' - %s", top_dir.c_str(), Error::get_text(error));
     exit(1);
   }
 
-  if ((error = m_hyperspace_ptr->get_sequencer(m_existence_file_handle, &m_existence_file_sequencer)) != Error::OK) {
-    HT_ERRORF("Problem obtaining lock sequencer for file '%s' - %s", topDir.c_str(), Error::get_text(error));
-    exit(1);
+  while (true) {
+
+    lockStatus = 0;
+
+    if ((error = m_hyperspace_ptr->try_lock(m_existence_file_handle, LOCK_MODE_EXCLUSIVE, &lockStatus, &m_existence_file_sequencer)) != Error::OK) {
+      HT_ERRORF("Problem obtaining exclusive lock on master Hyperspace file '%s' - %s", top_dir.c_str(), Error::get_text(error));
+      exit(1);
+    }
+    
+    if (lockStatus == LOCK_STATUS_GRANTED)
+      break;
+
+    cout << "Waiting for exclusive lock on hyperspace:/" << top_dir << " ..." << endl;
   }
 
-  Global::logDir = (string)topDir.c_str() + "/commit/primary";
+  Global::logDir = (string)top_dir.c_str() + "/log/primary";
 
   /**
-   * Create /hypertable/servers/X.X.X.X_port_nnnnn/commit/primary directory
+   * Create /hypertable/servers/X.X.X.X_port/log/primary directory
    */
   if ((error = Global::logDfs->mkdirs(Global::logDir)) != Error::OK) {
     HT_ERRORF("Problem creating local log directory '%s'", Global::logDir.c_str());
@@ -264,6 +278,10 @@ int RangeServer::directory_initialize(PropertiesPtr &props_ptr) {
     cout << "logDir=" << Global::logDir << endl;
 
   Global::log = new CommitLog(Global::logDfs, Global::logDir, props_ptr);
+
+  /**
+   * Check for existence of /hypertable/servers/X.X.X.X_port/log/meta directory
+   */
 
   return Error::OK;
 }
@@ -1097,7 +1115,7 @@ void RangeServer::dump_stats(ResponseCallback *cb) {
  */
 void RangeServer::replay_start(ResponseCallback *cb) {
   int error;
-  std::string replay_log_dir = (std::string)"/hypertable/servers/" + m_location + "/commit/replay";
+  std::string replay_log_dir = (std::string)"/hypertable/servers/" + m_location + "/log/replay";
 
   if (Global::verbose) {
     HT_INFO("replay_start");

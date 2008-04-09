@@ -21,6 +21,8 @@
 #ifndef HYPERTABLE_FDUTILS_H
 #define HYPERTABLE_FDUTILS_H
 
+#include <string>
+
 extern "C" {
 #include <fcntl.h>
 #include <stdint.h>
@@ -45,17 +47,17 @@ namespace Hypertable {
     static ssize_t sendto(int fd, const void *vptr, size_t n, const struct sockaddr *to, socklen_t tolen);
     static ssize_t recvfrom(int fd, void *vptr, size_t n, struct sockaddr *from, socklen_t *fromlen);
     static void set_flags(int fd, int flags);
-    static char *file_to_buffer(const char *fname, off_t *lenp);
-    static bool mkdirs(const char *dirname);
-    static bool exists(const char *fname);
-    static uint64_t size(const char *fname);
-    static off_t length(const char *fname);
-    static int getxattr(const char *path, const char *name, void *value, size_t size);
-    static int fgetxattr(int fd, const char *name, void *value, size_t size);
-    static int setxattr(const char *path, const char *name, const void *value, size_t size, int flags);
-    static int fsetxattr(int fd, const char *name, const void *value, size_t size, int flags);
-    static int removexattr(const char *path, const char *name);
-    static int fremovexattr(int fd, const char *name);
+    static char *file_to_buffer(const std::string &fname, off_t *lenp);
+    static bool mkdirs(const std::string &dirname);
+    static bool exists(const std::string &fname);
+    static uint64_t size(const std::string &fname);
+    static off_t length(const std::string &fname);
+    static int getxattr(const std::string &path, const std::string &name, void *value, size_t size);
+    static int fgetxattr(int fd, const std::string &name, void *value, size_t size);
+    static int setxattr(const std::string &path, const std::string &name, const void *value, size_t size, int flags);
+    static int fsetxattr(int fd, const std::string &name, const void *value, size_t size, int flags);
+    static int removexattr(const std::string &path, const std::string &name);
+    static int fremovexattr(int fd, const std::string &name);
   };
 
 }

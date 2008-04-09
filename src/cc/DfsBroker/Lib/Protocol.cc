@@ -51,14 +51,15 @@ namespace Hypertable {
       "status",
       "flush",
       "rmdir",
-      "readdir"
+      "readdir",
+      "exists"
     };
 
 
     /**
      *
      */
-    CommBuf *Protocol::create_open_request(std::string &fname, uint32_t bufferSize) {
+    CommBuf *Protocol::create_open_request(const std::string &fname, uint32_t bufferSize) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
       CommBuf *cbuf = new CommBuf(hbuilder, 6 + Serialization::encoded_length_string(fname));
       cbuf->append_short(COMMAND_OPEN);
@@ -70,7 +71,7 @@ namespace Hypertable {
 
     /**
      */
-    CommBuf *Protocol::create_create_request(std::string &fname, bool overwrite, int32_t bufferSize,
+    CommBuf *Protocol::create_create_request(const std::string &fname, bool overwrite, int32_t bufferSize,
 					   int32_t replication, int64_t blockSize) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
       CommBuf *cbuf = new CommBuf(hbuilder, 20 + Serialization::encoded_length_string(fname));
@@ -127,7 +128,7 @@ namespace Hypertable {
 
     /**
      */
-    CommBuf *Protocol::create_remove_request(std::string &fname) {
+    CommBuf *Protocol::create_remove_request(const std::string &fname) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
       CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::encoded_length_string(fname));
       cbuf->append_short(COMMAND_REMOVE);
@@ -138,7 +139,7 @@ namespace Hypertable {
 
     /**
      */
-    CommBuf *Protocol::create_length_request(std::string &fname) {
+    CommBuf *Protocol::create_length_request(const std::string &fname) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
       CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::encoded_length_string(fname));
       cbuf->append_short(COMMAND_LENGTH);
@@ -161,7 +162,7 @@ namespace Hypertable {
 
     /**
      */
-    CommBuf *Protocol::create_mkdirs_request(std::string &fname) {
+    CommBuf *Protocol::create_mkdirs_request(const std::string &fname) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
       CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::encoded_length_string(fname));
       cbuf->append_short(COMMAND_MKDIRS);
@@ -181,7 +182,7 @@ namespace Hypertable {
 
     /**
      */
-    CommBuf *Protocol::create_rmdir_request(std::string &fname) {
+    CommBuf *Protocol::create_rmdir_request(const std::string &fname) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
       CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::encoded_length_string(fname));
       cbuf->append_short(COMMAND_RMDIR);
@@ -191,7 +192,7 @@ namespace Hypertable {
 
     /**
      */
-    CommBuf *Protocol::create_readdir_request(std::string &fname) {
+    CommBuf *Protocol::create_readdir_request(const std::string &fname) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
       CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::encoded_length_string(fname));
       cbuf->append_short(COMMAND_READDIR);
@@ -220,6 +221,18 @@ namespace Hypertable {
       cbuf->append_short(COMMAND_STATUS);
       return cbuf;
     }
+
+
+    /**
+     */
+    CommBuf *Protocol::create_exists_request(const std::string &fname) {
+      HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
+      CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::encoded_length_string(fname));
+      cbuf->append_short(COMMAND_EXISTS);
+      cbuf->append_string(fname);
+      return cbuf;
+    }
+
 
     const char *Protocol::command_text(short command) {
       if (command < 0 || command >= COMMAND_MAX)

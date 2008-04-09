@@ -39,9 +39,9 @@ namespace Hypertable {
 
     public:
 
-      static CommBuf *create_open_request(std::string &fname, uint32_t bufferSize=0);
+      static CommBuf *create_open_request(const std::string &fname, uint32_t bufferSize=0);
 
-      static CommBuf *create_create_request(std::string &fname, bool overwrite, int32_t bufferSize,
+      static CommBuf *create_create_request(const std::string &fname, bool overwrite, int32_t bufferSize,
 				   int32_t replication, int64_t blockSize);
 
       static CommBuf *create_close_request(int32_t fd);
@@ -52,23 +52,26 @@ namespace Hypertable {
 
       static CommBuf *create_seek_request(int32_t fd, uint64_t offset);
 
-      static CommBuf *create_remove_request(std::string &fname);
+      static CommBuf *create_remove_request(const std::string &fname);
 
-      static CommBuf *create_length_request(std::string &fname);
+      static CommBuf *create_length_request(const std::string &fname);
 
       static CommBuf *create_position_read_request(int32_t fd, uint64_t offset, uint32_t amount);
 
-      static CommBuf *create_mkdirs_request(std::string &fname);
+      static CommBuf *create_mkdirs_request(const std::string &fname);
 
-      static CommBuf *create_rmdir_request(std::string &fname);
+      static CommBuf *create_rmdir_request(const std::string &fname);
 
-      static CommBuf *create_readdir_request(std::string &fname);
+      static CommBuf *create_readdir_request(const std::string &fname);
 
       static CommBuf *create_flush_request(int32_t fd);
 
       static CommBuf *create_status_request();
 
       static CommBuf *create_shutdown_request(uint16_t flags);
+
+      static CommBuf *create_exists_request(const std::string &fname);
+
 
       virtual const char *command_text(short command);
 
@@ -87,7 +90,8 @@ namespace Hypertable {
       static const uint16_t COMMAND_FLUSH    = 12;
       static const uint16_t COMMAND_RMDIR    = 13;
       static const uint16_t COMMAND_READDIR  = 14;
-      static const uint16_t COMMAND_MAX      = 15;
+      static const uint16_t COMMAND_EXISTS   = 15;
+      static const uint16_t COMMAND_MAX      = 16;
 
       static const uint16_t SHUTDOWN_FLAG_IMMEDIATE = 0x0001;
 

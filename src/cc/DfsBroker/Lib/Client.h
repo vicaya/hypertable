@@ -109,13 +109,13 @@ namespace Hypertable {
 	return true;
       }
 
-      virtual int open(std::string &name, DispatchHandler *handler);
-      virtual int open(std::string &name, int32_t *fdp);
-      virtual int open_buffered(std::string &name, uint32_t buf_size, uint32_t outstanding, int32_t *fdp, uint64_t start_offset=0, uint64_t end_offset=0);
+      virtual int open(const std::string &name, DispatchHandler *handler);
+      virtual int open(const std::string &name, int32_t *fdp);
+      virtual int open_buffered(const std::string &name, uint32_t buf_size, uint32_t outstanding, int32_t *fdp, uint64_t start_offset=0, uint64_t end_offset=0);
 
-      virtual int create(std::string &name, bool overwrite, int32_t bufferSize,
+      virtual int create(const std::string &name, bool overwrite, int32_t bufferSize,
 			 int32_t replication, int64_t blockSize, DispatchHandler *handler);
-      virtual int create(std::string &name, bool overwrite, int32_t bufferSize,
+      virtual int create(const std::string &name, bool overwrite, int32_t bufferSize,
 			 int32_t replication, int64_t blockSize, int32_t *fdp);
 
       virtual int close(int32_t fd, DispatchHandler *handler);
@@ -130,26 +130,29 @@ namespace Hypertable {
       virtual int seek(int32_t fd, uint64_t offset, DispatchHandler *handler);
       virtual int seek(int32_t fd, uint64_t offset);
 
-      virtual int remove(std::string &name, DispatchHandler *handler);
-      virtual int remove(std::string &name);
+      virtual int remove(const std::string &name, DispatchHandler *handler);
+      virtual int remove(const std::string &name);
 
-      virtual int length(std::string &name, DispatchHandler *handler);
-      virtual int length(std::string &name, int64_t *lenp);
+      virtual int length(const std::string &name, DispatchHandler *handler);
+      virtual int length(const std::string &name, int64_t *lenp);
 
       virtual int pread(int32_t fd, uint64_t offset, uint32_t amount, DispatchHandler *handler);
       virtual int pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst, uint32_t *nreadp);
 
-      virtual int mkdirs(std::string &name, DispatchHandler *handler);
-      virtual int mkdirs(std::string &name);
+      virtual int mkdirs(const std::string &name, DispatchHandler *handler);
+      virtual int mkdirs(const std::string &name);
 
       virtual int flush(int32_t fd, DispatchHandler *handler);
       virtual int flush(int32_t fd);
 
-      virtual int rmdir(std::string &name, DispatchHandler *handler);
-      virtual int rmdir(std::string &name);
+      virtual int rmdir(const std::string &name, DispatchHandler *handler);
+      virtual int rmdir(const std::string &name);
 
-      virtual int readdir(std::string &name, DispatchHandler *handler);
-      virtual int readdir(std::string &name, std::vector<std::string> &listing);
+      virtual int readdir(const std::string &name, DispatchHandler *handler);
+      virtual int readdir(const std::string &name, std::vector<std::string> &listing);
+
+      virtual int exists(const std::string &name, DispatchHandler *handler);
+      virtual int exists(const std::string &name, bool *existsp);
 
       /** Checks the status of the DFS broker.  Issues a status command and waits
        * for it to return.

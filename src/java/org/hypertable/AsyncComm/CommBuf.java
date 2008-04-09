@@ -62,6 +62,11 @@ public class CommBuf {
     }
 
     /**
+     * Append a boolean to the primary buffer
+     */
+    public void AppendBool(boolean bval) { data.put((bval) ? (byte)1 : (byte)0); }
+
+    /**
      * Append a byte of data to the primary buffer
      */
     public void AppendByte(byte bval) { data.put(bval); }

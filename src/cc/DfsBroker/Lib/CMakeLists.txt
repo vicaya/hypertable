@@ -35,11 +35,13 @@ RequestHandlerFlush.cc
 RequestHandlerStatus.cc
 RequestHandlerRmdir.cc
 RequestHandlerReaddir.cc
+RequestHandlerExists.cc
 ResponseCallbackOpen.cc
 ResponseCallbackRead.cc
 ResponseCallbackAppend.cc
 ResponseCallbackLength.cc
 ResponseCallbackReaddir.cc
+ResponseCallbackExists.cc
 )
 
 add_library (HyperDfsBroker ${DfsBroker_SRCS})

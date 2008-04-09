@@ -163,7 +163,7 @@ namespace Hyperspace {
      * @param handlep address of variable to hold returned handle
      * @return Error::OK on success or error code on failure
      */
-    int open(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, uint64_t *handlep);
+    int open(const std::string &name, uint32_t flags, HandleCallbackPtr &callbackPtr, uint64_t *handlep);
 
     /** Creates a file.  This method is basically
      * the same as the #open method except that it implicitly sets the 
@@ -181,7 +181,7 @@ namespace Hyperspace {
      * @param handlep address of variable to hold returned handle
      * @return Error::OK on success or error code on failure
      */
-    int create(std::string name, uint32_t flags, HandleCallbackPtr &callbackPtr, std::vector<AttributeT> &initAttrs, uint64_t *handlep);
+    int create(const std::string &name, uint32_t flags, HandleCallbackPtr &callbackPtr, std::vector<AttributeT> &initAttrs, uint64_t *handlep);
 
     /*
     int cancel(uint64_t handle);
@@ -203,7 +203,7 @@ namespace Hyperspace {
      * @param name absolute pathname of directory to create
      * @return Error::OK on success or error code on failure
      */
-    int mkdir(std::string name);
+    int mkdir(const std::string &name);
 
     /** Sets an extended attribute of a file.
      *
@@ -238,7 +238,7 @@ namespace Hyperspace {
      * @param existsp address of boolean variable to hold result
      * @return Error::OK on success or error code on failure
      */
-    int exists(std::string name, bool *existsp);
+    int exists(const std::string &name, bool *existsp);
 
     /** Removes a file or directory.  Directory must be empty, otherwise 
      * Error::HYPERSPACE_IO_ERROR will be returned.
@@ -246,7 +246,7 @@ namespace Hyperspace {
      * @param name absolute path name of file or directory to delete
      * @return Error::OK on success or error code on failure
      */
-    int unlink(std::string name);
+    int unlink(const std::string &name);
 
     /** Gets a directory listing.  The listing comes back as a vector of DireEntryT
      * structures which contains a name and boolean flag indicating if the entry is an
