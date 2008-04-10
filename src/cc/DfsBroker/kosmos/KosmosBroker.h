@@ -91,6 +91,7 @@ namespace Hypertable {
     virtual void status(ResponseCallback *cb);
     virtual void shutdown(ResponseCallback *cb);
     virtual void readdir(ResponseCallbackReaddir *cb, const char *dirName);
+    virtual void exists(ResponseCallbackExists *cb, const char *fileName);
 
   private:
 

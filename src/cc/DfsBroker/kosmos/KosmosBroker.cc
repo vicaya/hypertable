@@ -538,6 +538,24 @@ void KosmosBroker::readdir(ResponseCallbackReaddir *cb, const char *dirName) {
 }
 
 
+void KosmosBroker::exists(ResponseCallbackExists *cb, const char *fileName) {
+  std::string absFileName;
+  KfsClient *clnt = KfsClient::Instance();
+  
+  if (mVerbose) {
+    HT_INFOF("exists file='%s'", fileName);
+  }
+
+  if (fileName[0] == '/')
+    absFileName = fileName;
+  else
+    absFileName = mRootdir + "/" + fileName;
+
+  cb->response( clnt->Exists(absFileName.c_str()) );
+}
+
+
+
 /**
  * ReportError
  */

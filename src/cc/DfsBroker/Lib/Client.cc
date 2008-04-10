@@ -376,7 +376,8 @@ int Client::mkdirs(const std::string &name) {
   int error = send_message(cbufPtr, &syncHandler);
   if (error == Error::OK) {
     if (!syncHandler.wait_for_reply(eventPtr)) {
-      HT_ERRORF("Dfs 'mkdirs' error, name=%s : %s", name.c_str(), m_protocol.string_format_message(eventPtr).c_str());
+      std::string error_message = m_protocol.string_format_message(eventPtr);
+      HT_ERRORF("Dfs 'mkdirs' error, name=%s : %s", name.c_str(), error_message.c_str());
       error = decode_response(eventPtr);
     }
   }

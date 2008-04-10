@@ -19,26 +19,30 @@
  * 02110-1301, USA.
  */
 
-package org.hypertable.DfsBroker.hadoop;
+#ifndef HYPERTABLE_COMMANDEXISTS_H
+#define HYPERTABLE_COMMANDEXISTS_H
 
-import org.hypertable.AsyncComm.Comm;
-import org.hypertable.AsyncComm.CommBuf;
-import org.hypertable.AsyncComm.Event;
-import org.hypertable.AsyncComm.ResponseCallback;
-import org.hypertable.Common.Error;
+#include <vector>
 
-public class ResponseCallbackExists extends ResponseCallback {
+#include "Common/InteractiveCommand.h"
 
-    ResponseCallbackExists(Comm comm, Event event) {
-	super(comm, event);
-    }
+#include "DfsBroker/Lib/Client.h"
 
-    int response(boolean exists) {
-	mHeaderBuilder.InitializeFromRequest(mEvent.msg);
-	CommBuf cbuf = new CommBuf(mHeaderBuilder, 5);
-	cbuf.AppendInt(Error.OK);
-	cbuf.AppendBool(exists);
-	return mComm.SendResponse(mEvent.addr, cbuf);
-    }
+namespace Hypertable {
+
+  class CommandExists : public InteractiveCommand {
+  public:
+    CommandExists(DfsBroker::Client *client) : m_client(client) { return; }
+    virtual const char *command_text() { return "exists"; }
+    virtual const char **usage() { return ms_usage; }
+    virtual int run();
+
+  private:
+    static const char *ms_usage[];
+
+    DfsBroker::Client *m_client;
+  };
 }
+
+#endif // HYPERTABLE_COMMANDEXISTS_H
 

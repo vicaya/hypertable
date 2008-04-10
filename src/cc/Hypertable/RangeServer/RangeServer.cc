@@ -264,13 +264,13 @@ int RangeServer::initialize(PropertiesPtr &props_ptr) {
     cout << "Waiting for exclusive lock on hyperspace:/" << top_dir << " ..." << endl;
   }
 
-  Global::logDir = (string)top_dir.c_str() + "/log/primary";
+  Global::logDir = top_dir + "/log/primary";
 
   /**
    * Create /hypertable/servers/X.X.X.X_port/log/primary directory
    */
   if ((error = Global::logDfs->mkdirs(Global::logDir)) != Error::OK) {
-    HT_ERRORF("Problem creating local log directory '%s'", Global::logDir.c_str());
+    HT_ERRORF("Problem creating primary log directory '%s'", Global::logDir.c_str());
     return error;
   }
 

@@ -75,7 +75,8 @@ std::string Protocol::string_format_message(Event *event) {
     if (!Serialization::decode_string(&msg, &remaining, &str))
       return (std::string)Error::get_text(error) + " - truncated";
 
-    return (std::string)Error::get_text(error) + " : " + str;
+    std::string tmp_str = (std::string)Error::get_text(error) + " : " + str;
+    return (tmp_str.length() > 150) ? tmp_str.substr(0, 150) : tmp_str;
   }
 }
 

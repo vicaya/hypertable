@@ -19,26 +19,36 @@
  * 02110-1301, USA.
  */
 
-package org.hypertable.DfsBroker.hadoop;
+#include "Common/Error.h"
 
-import org.hypertable.AsyncComm.Comm;
-import org.hypertable.AsyncComm.CommBuf;
-import org.hypertable.AsyncComm.Event;
-import org.hypertable.AsyncComm.ResponseCallback;
-import org.hypertable.Common.Error;
+#include "CommandExists.h"
 
-public class ResponseCallbackExists extends ResponseCallback {
+using namespace Hypertable;
 
-    ResponseCallbackExists(Comm comm, Event event) {
-	super(comm, event);
-    }
+const char *CommandExists::ms_usage[] = {
+  "exists <file>",
+  "",
+  "  This command sends an exists request for the DFS file <file>",
+  "  to the DfsBroker and prints the result.",
+  (const char *)0
+};
 
-    int response(boolean exists) {
-	mHeaderBuilder.InitializeFromRequest(mEvent.msg);
-	CommBuf cbuf = new CommBuf(mHeaderBuilder, 5);
-	cbuf.AppendInt(Error.OK);
-	cbuf.AppendBool(exists);
-	return mComm.SendResponse(mEvent.addr, cbuf);
-    }
+
+int CommandExists::run() {
+  bool exists = false;
+
+  if (m_args.size() < 1) {
+    cerr << "Error: no filename supplied" << endl;
+    return -1;
+  }
+
+  m_client->exists(m_args[0].first, &exists);
+
+  if (exists)
+    cout << "true" << endl;
+  else
+    cout << "false" << endl;
+  
+  return Error::OK;
 }
 

@@ -46,6 +46,7 @@ extern "C" {
 #include "CommandRemove.h"
 #include "CommandRmdir.h"
 #include "CommandShutdown.h"
+#include "CommandExists.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -200,6 +201,7 @@ int main(int argc, char **argv) {
   commands.push_back( new CommandRemove(client) );
   commands.push_back( new CommandRmdir(client) );
   commands.push_back( new CommandShutdown(client) );
+  commands.push_back( new CommandExists(client) );
 
   /**
    * Non-interactive mode

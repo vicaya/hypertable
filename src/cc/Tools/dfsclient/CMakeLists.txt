@@ -28,6 +28,7 @@ CommandMkdirs.cc
 CommandRemove.cc
 CommandRmdir.cc
 CommandShutdown.cc
+CommandExists.cc
 )
 
 # dfsclient - command interpreter
