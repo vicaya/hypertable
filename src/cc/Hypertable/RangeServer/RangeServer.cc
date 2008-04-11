@@ -1320,7 +1320,7 @@ void RangeServer::log_cleanup() {
   std::vector<TableInfoPtr> table_vec;
   std::vector<RangePtr> range_vec;
   std::vector<AccessGroup::CompactionPriorityDataT> priority_data_vec;
-  std::map<uint64_t, FragmentPriorityDataT> log_frag_map;
+  LogFragmentPriorityMap log_frag_map;
   std::set<size_t> compaction_set;
   uint64_t timestamp, oldest_cached_timestamp = 0;
   uint64_t prune_threshold = 2 * Global::log->get_max_fragment_size();
@@ -1347,10 +1347,11 @@ void RangeServer::log_cleanup() {
   Global::log->load_fragment_priority_map(log_frag_map);
 
   /**
-   * Determine which AGs need compaction for the sake of garbage collecting commit log fragments
+   * Determine which AGs need compaction for the sake of
+   * garbage collecting commit log fragments
    */
   for (size_t i=0; i<priority_data_vec.size(); i++) {
-    std::map<uint64_t, FragmentPriorityDataT>::iterator map_iter = log_frag_map.lower_bound( priority_data_vec[i].oldest_cached_timestamp );
+    LogFragmentPriorityMap::iterator map_iter = log_frag_map.lower_bound( priority_data_vec[i].oldest_cached_timestamp );
     size_t rangei = (size_t)priority_data_vec[i].user_data;
 
     // this should never happen

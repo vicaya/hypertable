@@ -44,58 +44,51 @@ extern "C" {
 namespace Hypertable {
 
   typedef struct {
+    uint32_t distance;
+    uint64_t cumulative_size;
+  } LogFragmentPriorityData;
+
+  typedef std::map<uint64_t, LogFragmentPriorityData> LogFragmentPriorityMap;
+
+  typedef struct {
     std::string  fname;
     uint64_t     size;
     uint64_t     timestamp;
-  } CommitLogFileInfoT;
+  } CommitLogFileInfo;
 
-  typedef struct {
-    uint32_t distance;
-    uint64_t cumulative_size;
-  } FragmentPriorityDataT;
 
   /**
-   * Commit log for persisting updates.  The commit log is a directory that contains
+   * Commit log for persisting range updates.  The commit log is a directory that contains
    * a growing number of files that contain compressed blocks of "commits".  The files
    * are named starting with '0' and will periodically roll, which means that a trailer
-   * is written into the file, the file is closed, and then the numeric name is
+   * is written to the end of the file, the file is closed, and then the numeric name is
    * incremented by one and opened.  Periodically when old parts of the log are no
    * longer needed, they get purged.  The size of each file is determined by the
    * following config file property:
    *<pre>
    * Hypertable.RangeServer.logFileSize
    *</pre>
-   * The commit log will persist (write then sync) a series of "commits" which are either
-   * blocks of updates (serialized sequence of key/value pairs) or a link block which is
-   * a block that just contains an external reference to another commit log that should be
-   * linked into this commit log at the point where the link occurs.  Each commit is
-   * compressed into a block using the same block compressor object that are used for
-   * the cell stores.  By default, the quicklz algorithm is used, but this can be changed
-   * with The following config property:
-   *<pre>
-   *Hypertable.RangeServer.CommitLog.Compressor
-   *</pre>
-   * Each block begins with a header and contains the following information:
-   *<pre>
-   * magic_string (10 bytes)
-   * header length (2 bytes)
-   * uncompressed length (4 bytes)
-   * compressed length (4 bytes)
-   * compression type (2 bytes)
-   * checksum (2 bytes)
-   * timestamp (8 bytes)
-   * '\0' terminated table_name (variable)
-   *</pre>
-   * When the log rolls, a header (with an empty table name) is written at the end of the
-   * file and contains the timestamp of the most recent commit in the file.
    */
   class CommitLog : public ReferenceCount {
   public:
 
+    /**
+     * Constructs a CommitLog object using supplied properties.
+     *
+     * @param fs filesystem to write log into
+     * @param log_dir directory of the commit log
+     * @param props_ptr reference to properties map
+     */
     CommitLog(Filesystem *fs, const std::string &log_dir, PropertiesPtr &props_ptr) {
       initialize(fs, log_dir, props_ptr);
     }
 
+    /**
+     * Constructs a CommitLog object using default properties.
+     *
+     * @param fs filesystem to write log into
+     * @param log_dir directory of the commit log
+     */
     CommitLog(Filesystem *fs, const std::string &log_dir) {
       PropertiesPtr props_ptr(0);
       initialize(fs, log_dir, props_ptr);
@@ -129,13 +122,41 @@ namespace Hypertable {
      */
     int link_log(TableIdentifier *table, const char *log_dir, uint64_t timestamp);
 
+    /** Closes the log.  Writes the trailer and closes the file
+     *
+     * @param timestamp timestamp to write into trailer
+     */
     int close(uint64_t timestamp);
+
+    /** Purges the log.  Removes all of the log fragments that have
+     * a timestamp that is less than the given timestamp.
+     *
+     * @param timestamp real cutoff timestamp
+     */
     int purge(uint64_t timestamp);
-    std::string &get_log_dir() { return m_log_dir; }
 
-    void load_fragment_priority_map(std::map<uint64_t, FragmentPriorityDataT> &frag_map);
+    /** Fills up a map of per-fragment priority information.  One
+     * entry per log fragment is inserted into this map.  The key
+     * is the timestamp of the fragment (e.g. the real timestamp
+     * of the most recent data in the fragment file).  The value
+     * is a structure that contains information regarding how
+     * expensive it is to keep this fragment around.
+     *
+     * @param frag_map reference to map of log fragment priority data
+     */
+    void load_fragment_priority_map(LogFragmentPriorityMap &frag_map);
 
+    /**
+     * Returns the maximum size of each log fragment file
+     */
     int64_t get_max_fragment_size() { return m_max_file_size; }
+
+    /**
+     * Returns the log directory
+     */
+    std::string get_log_dir() {
+      return m_log_dir;
+    }
 
     static const char MAGIC_UPDATES[10];
     static const char MAGIC_LINK[10];
@@ -157,7 +178,7 @@ namespace Hypertable {
     uint32_t                   m_cur_log_num;
     int32_t                    m_fd;
     uint64_t                   m_last_timestamp;
-    std::deque<CommitLogFileInfoT>   m_file_info_queue;
+    std::deque<CommitLogFileInfo>   m_file_info_queue;
   };
 
   typedef boost::intrusive_ptr<CommitLog> CommitLogPtr;

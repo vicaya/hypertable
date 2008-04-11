@@ -217,7 +217,7 @@ int CommitLog::close(uint64_t timestamp) {
  */
 int CommitLog::purge(uint64_t timestamp) {
   boost::mutex::scoped_lock lock(m_mutex);
-  CommitLogFileInfoT fileInfo;
+  CommitLogFileInfo fileInfo;
   int error = Error::OK;
 
   while (!m_file_info_queue.empty()) {
@@ -244,7 +244,7 @@ int CommitLog::purge(uint64_t timestamp) {
  */
 int CommitLog::roll() {
   int error;
-  CommitLogFileInfoT fileInfo;
+  CommitLogFileInfo fileInfo;
   DynamicBuffer trailer(0);
 
   {
@@ -343,20 +343,21 @@ int CommitLog::compress_and_write(DynamicBuffer &input, BlockCompressionHeader *
 }
 
 
+
 /**
  *
  */
-void CommitLog::load_fragment_priority_map(std::map<uint64_t, FragmentPriorityDataT> &frag_map) {
+void CommitLog::load_fragment_priority_map(LogFragmentPriorityMap &frag_map) {
   boost::mutex::scoped_lock lock(m_mutex);
   uint64_t cumulative_total = m_cur_log_length;
   uint32_t distance = 0;
-  FragmentPriorityDataT frag_data;
+  LogFragmentPriorityData frag_data;
 
   frag_data.distance = distance++;
   frag_data.cumulative_size = cumulative_total;
   frag_map[m_last_timestamp] = frag_data;
 
-  for (deque<CommitLogFileInfoT>::reverse_iterator iter = m_file_info_queue.rbegin(); iter != m_file_info_queue.rend(); iter++) {
+  for (deque<CommitLogFileInfo>::reverse_iterator iter = m_file_info_queue.rbegin(); iter != m_file_info_queue.rend(); iter++) {
     cumulative_total += (*iter).size;
     frag_data.distance = distance++;
     frag_data.cumulative_size = cumulative_total;

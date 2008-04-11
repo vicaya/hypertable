@@ -59,4 +59,3 @@ namespace Hypertable {
 }
 
 #endif // HYPERTABLE_BLOCKCOMPRESSIONHEADERCOMMITLOG_H
-
