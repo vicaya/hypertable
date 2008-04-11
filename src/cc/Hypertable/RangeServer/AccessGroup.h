@@ -23,6 +23,7 @@
 #define HYPERTABLE_ACCESSGROUP_H
 
 #include <queue>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -31,7 +32,6 @@
 
 #include "CellCache.h"
 #include "CellStore.h"
-#include "RangeInfo.h"
 #include "Timestamp.h"
 
 using namespace Hypertable;

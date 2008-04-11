@@ -45,6 +45,7 @@ public:
 
   void load_master_states(MasterStates &);
 };
+typedef intrusive_ptr<MasterMetaLogReader> MasterMetaLogReaderPtr;
 
 } // namespace Hypertable
 

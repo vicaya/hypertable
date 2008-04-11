@@ -80,6 +80,7 @@ namespace Hypertable {
 
   private:
     int initialize(PropertiesPtr &props_ptr);
+    void fast_recover();
 
     int verify_schema(TableInfoPtr &tableInfoPtr, int generation, std::string &errMsg);
 

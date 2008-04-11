@@ -36,6 +36,7 @@ extern "C" {
 #include "Common/System.h"
 
 #include "Hypertable/Lib/CommitLog.h"
+#include "Hypertable/Lib/RangeServerMetaLogReader.h"
 #include "Hypertable/Lib/RangeServerProtocol.h"
 
 #include "DfsBroker/Lib/Client.h"
@@ -187,6 +188,8 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
   m_live_map_ptr = new TableInfoMap();
   m_replay_map_ptr = new TableInfoMap();
 
+  fast_recover();
+
 }
 
 
@@ -218,6 +221,7 @@ int RangeServer::initialize(PropertiesPtr &props_ptr) {
   bool exists;
   std::string top_dir;
   std::string meta_log_dir;
+  std::string primary_log_dir;
 
   /**
    * Create /hypertable/servers directory
@@ -264,26 +268,60 @@ int RangeServer::initialize(PropertiesPtr &props_ptr) {
     cout << "Waiting for exclusive lock on hyperspace:/" << top_dir << " ..." << endl;
   }
 
-  Global::logDir = top_dir + "/log/primary";
+  Global::logDir = top_dir + "/log";
+
+  primary_log_dir = Global::logDir + "/primary";
 
   /**
    * Create /hypertable/servers/X.X.X.X_port/log/primary directory
    */
-  if ((error = Global::logDfs->mkdirs(Global::logDir)) != Error::OK) {
-    HT_ERRORF("Problem creating primary log directory '%s'", Global::logDir.c_str());
+  if ((error = Global::logDfs->mkdirs(primary_log_dir)) != Error::OK) {
+    HT_ERRORF("Problem creating primary log directory '%s'", primary_log_dir.c_str());
     return error;
   }
 
   if (Global::verbose)
     cout << "logDir=" << Global::logDir << endl;
 
-  Global::log = new CommitLog(Global::logDfs, Global::logDir, props_ptr);
-
-  /**
-   * Check for existence of /hypertable/servers/X.X.X.X_port/log/meta directory
-   */
+  Global::log = new CommitLog(Global::logDfs, primary_log_dir, props_ptr);
 
   return Error::OK;
+}
+
+
+
+/**
+ */
+void RangeServer::fast_recover() {
+  int error;
+  bool exists;
+  std::string meta_log_dir = Global::logDir + "/meta";
+  RangeServerMetaLogReaderPtr meta_log_reader_ptr;
+  RangeStates range_states;
+
+  try {
+
+    /**
+     * Check for existence of /hypertable/servers/X.X.X.X_port/log/meta directory
+     */
+    if ((error = Global::logDfs->exists(meta_log_dir, &exists)) != Error::OK) {
+      HT_ERRORF("Problem checking for existence of %s", meta_log_dir.c_str());
+      exit(1);
+    }
+
+    if (!exists)
+      return;
+
+    meta_log_reader_ptr = new RangeServerMetaLogReader(Global::logDfs, meta_log_dir);
+
+    meta_log_reader_ptr->load_range_states(range_states);
+
+  }
+  catch (Exception &e) {
+    HT_ERRORF("Problem attempting fast recovery - %s - %s", Error::get_text(e.code()), e.what());
+    exit(1);
+  }
+
 }
 
 

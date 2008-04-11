@@ -47,6 +47,8 @@ public:
 
   void load_range_states(RangeStates &);
 };
+typedef intrusive_ptr<RangeServerMetaLogReader> RangeServerMetaLogReaderPtr;
+
 
 } // namespace Hypertable
 

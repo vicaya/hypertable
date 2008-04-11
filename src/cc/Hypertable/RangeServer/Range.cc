@@ -355,9 +355,7 @@ void Range::do_split() {
    */
   md5_string(m_split_row.c_str(), md5DigestStr);
   md5DigestStr[24] = 0;
-  std::string::size_type pos = Global::logDir.rfind("primary", Global::logDir.length());
-  assert (pos != std::string::npos);
-  transfer_log_dir = Global::logDir.substr(0, pos) + md5DigestStr;
+  transfer_log_dir = Global::logDir + "/" + md5DigestStr;
 
   // Create transfer log dir
   if ((error = Global::logDfs->mkdirs(transfer_log_dir)) != Error::OK) {

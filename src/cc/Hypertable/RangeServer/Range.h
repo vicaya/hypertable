@@ -36,7 +36,6 @@
 #include "AccessGroup.h"
 #include "CellStore.h"
 #include "Metadata.h"
-#include "RangeInfo.h"
 #include "ScannerTimestampController.h"
 #include "MaintenanceTask.h"
 #include "Timestamp.h"
