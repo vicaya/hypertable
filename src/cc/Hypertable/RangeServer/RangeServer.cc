@@ -164,6 +164,12 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
   // Create the maintenance queue
   Global::maintenance_queue = new MaintenanceQueue(1);
 
+  // Create table info maps
+  m_live_map_ptr = new TableInfoMap();
+  m_replay_map_ptr = new TableInfoMap();
+
+  fast_recover();
+
   /**
    * Listen for incoming connections
    */
@@ -176,19 +182,13 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
       exit(1);
     }
   }
- 
+
   /**
    * Create Master client
    */
   m_master_client_ptr = new MasterClient(m_conn_manager_ptr, m_hyperspace_ptr, 300, m_app_queue_ptr);
   m_master_connection_handler = new ConnectionHandler(comm, m_app_queue_ptr, this, m_master_client_ptr);
   m_master_client_ptr->initiate_connection(m_master_connection_handler);
-
-  // Create table info maps
-  m_live_map_ptr = new TableInfoMap();
-  m_replay_map_ptr = new TableInfoMap();
-
-  fast_recover();
 
 }
 
