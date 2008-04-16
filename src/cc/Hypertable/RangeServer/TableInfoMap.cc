@@ -103,6 +103,6 @@ void TableInfoMap::atomic_merge(TableInfoMapPtr &table_info_map_ptr, CommitLogPt
 
   table_info_map_ptr->clear();
 
-  if ((error = Global::log->link_log(0, replay_log_ptr->get_log_dir().c_str(), Global::log->get_timestamp())) != Error::OK)
+  if ((error = Global::log->link_log(replay_log_ptr->get_log_dir().c_str(), Global::log->get_timestamp())) != Error::OK)
     throw Exception(error, std::string("Problem linking replay commit log '") + replay_log_ptr->get_log_dir() + "'");
 }

@@ -38,7 +38,7 @@ namespace Hypertable {
    */
   class BlockCompressionCodec {
   public:
-    enum Type { UNKNOWN=-1, NONE=0, BMZ=1, ZLIB=2, LZO=3, QUICKLZ=4 };
+    enum Type { UNKNOWN=-1, NONE=0, BMZ=1, ZLIB=2, LZO=3, QUICKLZ=4, COMPRESSION_TYPE_LIMIT=5 };
     typedef std::vector<std::string> Args;
 
     BlockCompressionCodec() { HT_THREAD_ID_SET(m_creator_thread); }

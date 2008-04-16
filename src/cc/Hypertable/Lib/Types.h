@@ -38,6 +38,9 @@ namespace Hypertable {
   class TableIdentifier {
   public:
     TableIdentifier() : name(0), id(0), generation(0) { return; }
+    size_t encoded_length();
+    void encode(uint8_t **bufPtr);
+    bool decode(uint8_t **bufPtr, size_t *remainingPtr);
     const char *name;
     uint32_t id;
     uint32_t generation;
@@ -47,6 +50,9 @@ namespace Hypertable {
   class RangeSpec {
   public:
     RangeSpec() : startRow(0), endRow(0) { return; }
+    size_t encoded_length();
+    void encode(uint8_t **bufPtr);
+    bool decode(uint8_t **bufPtr, size_t *remainingPtr);
     const char *startRow;
     const char *endRow;
   };
@@ -55,6 +61,9 @@ namespace Hypertable {
   class ScanSpec {
   public:
     ScanSpec();
+    size_t encoded_length();
+    void encode(uint8_t **bufPtr);
+    bool decode(uint8_t **bufPtr, size_t *remainingPtr);
     uint32_t rowLimit;
     uint32_t max_versions;
     std::vector<const char *> columns;

@@ -27,105 +27,31 @@
 
 using namespace Hypertable;
 
-BlockCompressionHeaderCommitLog::BlockCompressionHeaderCommitLog() : m_buffer(0) {
-  m_length = 0;
-  m_zlength = 0;
-  m_type = 0;
-  m_checksum = 0;
-  memset(m_magic, 0, 10);
-  m_timestamp = 0;
-  memset(&m_table, 0, sizeof(m_table));
-  m_header_length = 0;
+const size_t BlockCompressionHeaderCommitLog::LENGTH;
+
+BlockCompressionHeaderCommitLog::BlockCompressionHeaderCommitLog() : BlockCompressionHeader(), m_timestamp(0) {
 }
 
-
-BlockCompressionHeaderCommitLog::BlockCompressionHeaderCommitLog(const char magic[10], uint64_t timestamp, TableIdentifier *table) : m_buffer(0) {
-  set_magic(magic);
-  m_timestamp = timestamp;
-  if (table)
-    memcpy(&m_table, table, sizeof(m_table));
-  else
-    memset(&m_table, 0, sizeof(m_table));
-  m_length = 0;
-  m_zlength = 0;
-  m_type = 0;
-  m_checksum = 0;
+BlockCompressionHeaderCommitLog::BlockCompressionHeaderCommitLog(const char *magic, uint64_t timestamp) : BlockCompressionHeader(magic), m_timestamp(timestamp) {
 }
 
-
-/**
- *
- */
 void BlockCompressionHeaderCommitLog::encode(uint8_t **buf_ptr) {
-  m_header_length = encoded_length();
-  memcpy(*buf_ptr, m_magic, 10);
-  (*buf_ptr) += 10;
-  Serialization::encode_short(buf_ptr, m_header_length);
-  Serialization::encode_int(buf_ptr, m_length);
-  Serialization::encode_int(buf_ptr, m_zlength);
-  Serialization::encode_short(buf_ptr, m_type);
-  Serialization::encode_int(buf_ptr, m_checksum);
+  uint8_t *base = *buf_ptr;
+  BlockCompressionHeader::encode(buf_ptr);
   Serialization::encode_long(buf_ptr, m_timestamp);
-  EncodeTableIdentifier(buf_ptr, m_table);
+  if ((size_t)(*buf_ptr - base) == length()) 
+    write_header_checksum(base);
 }
 
 
-/**
- *
- */
-int BlockCompressionHeaderCommitLog::decode_fixed(uint8_t **buf_ptr, size_t *remaining_ptr) {
+int BlockCompressionHeaderCommitLog::decode(uint8_t **buf_ptr, size_t *remaining_ptr) {
+  int error;
 
-  if (*remaining_ptr < 10)
-    return Error::BLOCK_COMPRESSOR_TRUNCATED;
-  
-  memcpy(m_magic, *buf_ptr, 10);
-  (*buf_ptr) += 10;
-  *remaining_ptr -= 10;
-
-  if (!Serialization::decode_short(buf_ptr, remaining_ptr, &m_header_length))
-    return Error::BLOCK_COMPRESSOR_TRUNCATED;
-
-  if (!Serialization::decode_int(buf_ptr, remaining_ptr, &m_length))
-    return Error::BLOCK_COMPRESSOR_TRUNCATED;
-
-  if (!Serialization::decode_int(buf_ptr, remaining_ptr, &m_zlength))
-    return Error::BLOCK_COMPRESSOR_TRUNCATED;
-
-  if (!Serialization::decode_short(buf_ptr, remaining_ptr, &m_type))
-    return Error::BLOCK_COMPRESSOR_TRUNCATED;
-
-  if (!Serialization::decode_int(buf_ptr, remaining_ptr, &m_checksum))
-    return Error::BLOCK_COMPRESSOR_TRUNCATED;
+  if ((error = BlockCompressionHeader::decode(buf_ptr, remaining_ptr)) != Error::OK)
+    return error;
 
   if (!Serialization::decode_long(buf_ptr, remaining_ptr, &m_timestamp))
-    return Error::BLOCK_COMPRESSOR_TRUNCATED;    
-
+    return Error::BLOCK_COMPRESSOR_TRUNCATED;
+  
   return Error::OK;
 }
-
-
-/**
- *
- */
-int BlockCompressionHeaderCommitLog::decode_variable(uint8_t **buf_ptr, size_t *remaining_ptr) {
-  size_t remaining_header;
-
-  if (m_header_length <= fixed_length())
-    return Error::BLOCK_COMPRESSOR_TRUNCATED;
-
-  remaining_header = m_header_length - fixed_length();
-
-  if (*remaining_ptr < remaining_header)
-    return Error::BLOCK_COMPRESSOR_TRUNCATED;
-
-  if (!DecodeTableIdentifier(buf_ptr, remaining_ptr, &m_table))
-    return Error::BLOCK_COMPRESSOR_TRUNCATED;
-
-  // copy table name into internal buffer
-  m_buffer.set(m_table.name, strlen(m_table.name)+1);
-  m_table.name = (const char *)m_buffer.buf;
-
-  return Error::OK;
-}
-
-

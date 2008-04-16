@@ -107,9 +107,9 @@ uint64_t CommitLog::get_timestamp() {
 /**
  * 
  */
-int CommitLog::write(TableIdentifier *table, uint8_t *data, uint32_t len, uint64_t timestamp) {
+int CommitLog::write(uint8_t *data, uint32_t len, uint64_t timestamp) {
   int error;
-  BlockCompressionHeaderCommitLog header(MAGIC_UPDATES, timestamp, table);
+  BlockCompressionHeaderCommitLog header(MAGIC_UPDATES, timestamp);
   DynamicBuffer input(0);
 
   input.buf = data;
@@ -142,9 +142,9 @@ int CommitLog::write(TableIdentifier *table, uint8_t *data, uint32_t len, uint64
  * The current log file is closed and a new one is opened.  The linked to log
  * directory is written as the first log entry in the newly opened file.
  */
-int CommitLog::link_log(TableIdentifier *table, const char *log_dir, uint64_t timestamp) {
+int CommitLog::link_log(const char *log_dir, uint64_t timestamp) {
   int error;
-  BlockCompressionHeaderCommitLog header(MAGIC_LINK, timestamp, table);
+  BlockCompressionHeaderCommitLog header(MAGIC_LINK, timestamp);
   DynamicBuffer input(0);
 
   /**
@@ -175,20 +175,20 @@ int CommitLog::link_log(TableIdentifier *table, const char *log_dir, uint64_t ti
  */
 int CommitLog::close(uint64_t timestamp) {
   int error;
-  BlockCompressionHeaderCommitLog header(MAGIC_TRAILER, timestamp, 0);
+  BlockCompressionHeaderCommitLog header(MAGIC_TRAILER, timestamp);
   DynamicBuffer trailer(0);
 
-  header.set_type( m_compressor->get_type() );
+  header.set_compression_type( m_compressor->get_type() );
 
-  trailer.ensure(header.encoded_length());
+  trailer.ensure(header.length());
   header.encode(&trailer.ptr);
 
   {
     boost::mutex::scoped_lock lock(m_mutex);
 
-    if ((error = m_fs->append(m_fd, trailer.buf, header.fixed_length())) != Error::OK) {
+    if ((error = m_fs->append(m_fd, trailer.buf, header.length())) != Error::OK) {
       HT_ERRORF("Problem appending %d byte trailer to commit log file '%s' - %s",
-		   header.fixed_length(), m_log_file.c_str(), Error::get_text(error));
+		header.length(), m_log_file.c_str(), Error::get_text(error));
       return error;
     }
 
@@ -249,14 +249,14 @@ int CommitLog::roll() {
 
   {
     boost::mutex::scoped_lock lock(m_mutex);
-    BlockCompressionHeaderCommitLog header(MAGIC_TRAILER, m_last_timestamp, 0);
+    BlockCompressionHeaderCommitLog header(MAGIC_TRAILER, m_last_timestamp);
 
-    header.set_type( m_compressor->get_type() );
+    header.set_compression_type( m_compressor->get_type() );
 
-    trailer.ensure(header.encoded_length());
+    trailer.ensure(header.length());
     header.encode(&trailer.ptr);
 
-    if ((error = m_fs->append(m_fd, trailer.buf, header.fixed_length())) != Error::OK) {
+    if ((error = m_fs->append(m_fd, trailer.buf, header.length())) != Error::OK) {
       HT_ERRORF("Problem appending %d bytes to commit log file '%s' - %s", trailer.fill(), m_log_file.c_str(), Error::get_text(error));
       return error;
     }
@@ -274,7 +274,7 @@ int CommitLog::roll() {
     }
 
     fileInfo.timestamp = m_last_timestamp;
-    fileInfo.size = m_cur_log_length + header.fixed_length();
+    fileInfo.size = m_cur_log_length + header.length();
     fileInfo.fname = m_log_file;
     m_file_info_queue.push_back(fileInfo);
 

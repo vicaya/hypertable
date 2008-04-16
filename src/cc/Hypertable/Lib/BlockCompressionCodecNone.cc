@@ -42,17 +42,17 @@ BlockCompressionCodecNone::BlockCompressionCodecNone(const Args &) {
 int
 BlockCompressionCodecNone::deflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader &header, size_t reserve) {
   output.clear();
-  output.reserve( header.encoded_length() + input.fill() + reserve );
+  output.reserve( header.length() + input.fill() + reserve );
 
-  header.set_type(NONE);
-  memcpy(output.buf+header.encoded_length(), input.buf, input.fill());
-  header.set_length(input.fill());
-  header.set_zlength(input.fill());
-  header.set_checksum(fletcher32(output.buf + header.encoded_length(), header.get_zlength()));
+  header.set_compression_type(NONE);
+  memcpy(output.buf+header.length(), input.buf, input.fill());
+  header.set_data_length(input.fill());
+  header.set_data_zlength(input.fill());
+  header.set_data_checksum(fletcher32(output.buf + header.length(), header.get_data_zlength()));
   
   output.ptr = output.buf;
   header.encode(&output.ptr);
-  output.ptr += header.get_zlength();
+  output.ptr += header.get_data_zlength();
 
   return Error::OK;
 }
@@ -68,27 +68,24 @@ BlockCompressionCodecNone::inflate(const DynamicBuffer &input, DynamicBuffer &ou
   uint8_t *msg_ptr = input.buf;
   size_t remaining = input.fill();
 
-  if ((error = header.decode_fixed(&msg_ptr, &remaining)) != Error::OK)
+  if ((error = header.decode(&msg_ptr, &remaining)) != Error::OK)
     return error;
 
-  if ((error = header.decode_variable(&msg_ptr, &remaining)) != Error::OK)
-    return error;
-
-  if (header.get_zlength() != remaining) {
-    HT_ERRORF("Block decompression error, header zlength = %d, actual = %d", header.get_zlength(), remaining);
+  if (header.get_data_zlength() != remaining) {
+    HT_ERRORF("Block decompression error, header zlength = %d, actual = %d", header.get_data_zlength(), remaining);
     return Error::BLOCK_COMPRESSOR_BAD_HEADER;
   }
 
   uint32_t checksum = fletcher32(msg_ptr, remaining);
-  if (checksum != header.get_checksum()) {
-    HT_ERRORF("Compressed block checksum mismatch header=%d, computed=%d", header.get_checksum(), checksum);
+  if (checksum != header.get_data_checksum()) {
+    HT_ERRORF("Compressed block checksum mismatch header=%d, computed=%d", header.get_data_checksum(), checksum);
     return Error::BLOCK_COMPRESSOR_CHECKSUM_MISMATCH;
   }
 
-  output.reserve(header.get_length());
+  output.reserve(header.get_data_length());
 
-  memcpy(output.buf, msg_ptr, header.get_length());
-  output.ptr = output.buf + header.get_length();
+  memcpy(output.buf, msg_ptr, header.get_data_length());
+  output.ptr = output.buf + header.get_data_length();
 
   return Error::OK;
 }

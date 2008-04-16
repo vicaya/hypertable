@@ -18,14 +18,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-
 #ifndef HYPERTABLE_DEFAULTS_H
 #define HYPERTABLE_DEFAULTS_H
+
+extern "C" {
+#include <stdint.h>
+}
 
 namespace Hypertable {
   
   extern const int HYPERTABLE_MASTER_CLIENT_TIMEOUT;
   extern const int HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT;
+
+  extern const char *HYPERTABLE_RANGESERVER_COMMITLOG_DFSBROKER_HOST;
+  extern const uint16_t HYPERTABLE_RANGESERVER_COMMITLOG_DFSBROKER_PORT;
 
 }
 

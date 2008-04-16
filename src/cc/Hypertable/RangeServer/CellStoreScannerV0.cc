@@ -24,7 +24,7 @@
 #include "Common/Error.h"
 #include "Common/System.h"
 
-#include "BlockCompressionHeaderCellStore.h"
+#include "Hypertable/Lib/BlockCompressionHeader.h"
 #include "Global.h"
 #include "CellStoreScannerV0.h"
 
@@ -338,7 +338,7 @@ bool CellStoreScannerV0::fetch_next_block() {
 
       /** inflate compressed block **/
       {
-	BlockCompressionHeaderCellStore header;
+	BlockCompressionHeader header;
 	DynamicBuffer input(0);
 	input.buf = buf;
 	input.ptr = buf + m_block.zlength;
@@ -443,7 +443,7 @@ bool CellStoreScannerV0::fetch_next_block_readahead() {
 
     /** inflate compressed block **/
     {
-      BlockCompressionHeaderCellStore header;
+      BlockCompressionHeader header;
       DynamicBuffer input(0);
       input.buf = buf;
       input.ptr = buf + m_block.zlength;

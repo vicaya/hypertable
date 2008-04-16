@@ -87,9 +87,8 @@ CommitLogReader::CommitLogReader(Filesystem *fs, const std::string &logDir) : m_
 
   sort(m_log_file_info.begin(), m_log_file_info.end());
 
-  m_fixed_header_length = fileInfo.trailer.fixed_length();
-  input.ensure( m_fixed_header_length );
-  m_zblock_buffer.ensure(m_fixed_header_length);
+  input.ensure( BlockCompressionHeaderCommitLog::LENGTH );
+  m_zblock_buffer.ensure( BlockCompressionHeaderCommitLog::LENGTH );
 
   for (size_t i=0; i<m_log_file_info.size(); i++) {
 
@@ -100,7 +99,7 @@ CommitLogReader::CommitLogReader(Filesystem *fs, const std::string &logDir) : m_
       exit(1);
     }
 
-    if (flen < (int64_t)m_fixed_header_length)
+    if (flen < (int64_t)BlockCompressionHeaderCommitLog::LENGTH)
       continue;
 
     if ((error = m_fs->open(m_log_file_info[i].fname, &fd)) != Error::OK) {
@@ -108,8 +107,8 @@ CommitLogReader::CommitLogReader(Filesystem *fs, const std::string &logDir) : m_
       exit(1);
     }
 
-    if ((error = m_fs->pread(fd, flen-m_fixed_header_length, m_fixed_header_length, input.buf, &nread)) != Error::OK ||
-	nread != m_fixed_header_length) {
+    if ((error = m_fs->pread(fd, flen-BlockCompressionHeaderCommitLog::LENGTH, BlockCompressionHeaderCommitLog::LENGTH, input.buf, &nread)) != Error::OK ||
+	nread != BlockCompressionHeaderCommitLog::LENGTH) {
       HT_ERRORF("Problem reading trailing header in commit log file '%s' - %s", m_log_file_info[i].fname.c_str(), strerror(errno));
       exit(1);
     }
@@ -122,13 +121,13 @@ CommitLogReader::CommitLogReader(Filesystem *fs, const std::string &logDir) : m_
     input.ptr = input.buf;
 
     size_t remaining = nread;
-    m_log_file_info[i].trailer.decode_fixed(&input.ptr, &remaining);
+    m_log_file_info[i].trailer.decode(&input.ptr, &remaining);
 
     if (m_log_file_info[i].trailer.check_magic(CommitLog::MAGIC_TRAILER)) {
       if (m_compressor == 0) {
         m_compressor = CompressorFactory::create_block_codec(
                         (BlockCompressionCodec::Type)
-                        m_log_file_info[i].trailer.get_type());
+                        m_log_file_info[i].trailer.get_compression_type());
 	m_got_compressor = true;
       }
     }
@@ -159,7 +158,6 @@ void CommitLogReader::initialize_read(uint64_t timestamp) {
 
 bool CommitLogReader::next_block(const uint8_t **blockp, size_t *lenp, BlockCompressionHeaderCommitLog *header) {
   size_t remaining;
-  size_t toread; 
   uint32_t nread;
   uint64_t timestamp;
 
@@ -185,12 +183,12 @@ bool CommitLogReader::next_block(const uint8_t **blockp, size_t *lenp, BlockComp
 
   m_zblock_buffer.ptr = m_zblock_buffer.buf;
 
-  if ((m_error = m_fs->read(m_fd, m_fixed_header_length, m_zblock_buffer.ptr, &nread)) != Error::OK) {
+  if ((m_error = m_fs->read(m_fd, BlockCompressionHeaderCommitLog::LENGTH, m_zblock_buffer.ptr, &nread)) != Error::OK) {
     HT_ERRORF("Problem reading header from commit log file '%s' - %s", m_log_file_info[m_cur_log_offset].fname.c_str(), Error::get_text(m_error));
     return false;
   }
     
-  if (nread != m_fixed_header_length) {
+  if (nread != BlockCompressionHeaderCommitLog::LENGTH) {
     HT_ERRORF("Short read of commit log block '%s'", m_log_file_info[m_cur_log_offset].fname.c_str());
     if ((m_error = m_fs->close(m_fd)) != Error::OK) {
       HT_ERRORF("Problem closing commit log file '%s' - %s", m_log_file_info[m_cur_log_offset].fname.c_str(), Error::get_text(m_error));
@@ -204,8 +202,8 @@ bool CommitLogReader::next_block(const uint8_t **blockp, size_t *lenp, BlockComp
   else {
     remaining = nread;
 
-    // decode fixed portion of header
-    header->decode_fixed(&m_zblock_buffer.ptr, &remaining);
+    // decode header
+    header->decode(&m_zblock_buffer.ptr, &remaining);
 
     if (header->check_magic(CommitLog::MAGIC_TRAILER)) {
       // TODO: this could be asynchronous
@@ -220,18 +218,14 @@ bool CommitLogReader::next_block(const uint8_t **blockp, size_t *lenp, BlockComp
 
   }
 
-  toread = (header->get_zlength() + header->get_header_length()) - m_fixed_header_length;
+  m_zblock_buffer.ensure(header->get_data_zlength());
 
-  // TODO: sanity check this header
-
-  m_zblock_buffer.ensure(toread);
-
-  if ((m_error = m_fs->read(m_fd, toread, m_zblock_buffer.ptr, &nread)) != Error::OK) {
+  if ((m_error = m_fs->read(m_fd, header->get_data_zlength(), m_zblock_buffer.ptr, &nread)) != Error::OK) {
     HT_ERRORF("Problem reading commit block from commit log file '%s' - %s", m_log_file_info[m_cur_log_offset].fname.c_str(), Error::get_text(m_error));
     return false;
   }
       
-  if (nread != toread) {
+  if (nread != header->get_data_zlength()) {
     HT_ERRORF("Short read of commit log block '%s'", m_log_file_info[m_cur_log_offset].fname.c_str());
     if ((m_error = m_fs->close(m_fd)) != Error::OK) {
       HT_ERRORF("Problem closing commit log file '%s' - %s", m_log_file_info[m_cur_log_offset].fname.c_str(), Error::get_text(m_error));
@@ -244,10 +238,10 @@ bool CommitLogReader::next_block(const uint8_t **blockp, size_t *lenp, BlockComp
 
   m_zblock_buffer.ptr += nread;
 
-  if (!m_got_compressor && header->get_type() != BlockCompressionCodec::NONE) {
+  if (!m_got_compressor && header->get_compression_type() != BlockCompressionCodec::NONE) {
     delete m_compressor;
     m_compressor = CompressorFactory::create_block_codec(
-        (BlockCompressionCodec::Type)header->get_type());
+        (BlockCompressionCodec::Type)header->get_compression_type());
     m_got_compressor = true;
   }
 

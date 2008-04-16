@@ -57,28 +57,28 @@ int BlockCompressionCodecQuicklz::deflate(const DynamicBuffer &input, DynamicBuf
   size_t len;
 
   output.clear();
-  output.reserve( header.encoded_length() + avail_out + reserve );
+  output.reserve( header.length() + avail_out + reserve );
 
   // compress 
-  len = qlz_compress((char *)input.buf, (char *)output.buf+header.encoded_length(), input.fill(), (char *)m_workmem);
+  len = qlz_compress((char *)input.buf, (char *)output.buf+header.length(), input.fill(), (char *)m_workmem);
 
   /* check for an incompressible block */
   if (len >= input.fill()) {
-    header.set_type(NONE);
-    memcpy(output.buf+header.encoded_length(), input.buf, input.fill());
-    header.set_length(input.fill());
-    header.set_zlength(input.fill());
+    header.set_compression_type(NONE);
+    memcpy(output.buf+header.length(), input.buf, input.fill());
+    header.set_data_length(input.fill());
+    header.set_data_zlength(input.fill());
   }
   else {
-    header.set_type(QUICKLZ);
-    header.set_length(input.fill());
-    header.set_zlength(len);
+    header.set_compression_type(QUICKLZ);
+    header.set_data_length(input.fill());
+    header.set_data_zlength(len);
   }
-  header.set_checksum(fletcher32(output.buf + header.encoded_length(), header.get_zlength()));
+  header.set_data_checksum(fletcher32(output.buf + header.length(), header.get_data_zlength()));
   
   output.ptr = output.buf;
   header.encode(&output.ptr);
-  output.ptr += header.get_zlength();
+  output.ptr += header.get_data_zlength();
 
   return Error::OK;
 }
@@ -92,35 +92,32 @@ int BlockCompressionCodecQuicklz::inflate(const DynamicBuffer &input, DynamicBuf
   uint8_t *msg_ptr = input.buf;
   size_t remaining = input.fill();
 
-  if ((error = header.decode_fixed(&msg_ptr, &remaining)) != Error::OK)
+  if ((error = header.decode(&msg_ptr, &remaining)) != Error::OK)
     return error;
 
-  if ((error = header.decode_variable(&msg_ptr, &remaining)) != Error::OK)
-    return error;
-
-  if (header.get_zlength() != remaining) {
-    HT_ERRORF("Block decompression error, header zlength = %d, actual = %d", header.get_zlength(), remaining);
+  if (header.get_data_zlength() != remaining) {
+    HT_ERRORF("Block decompression error, header zlength = %d, actual = %d", header.get_data_zlength(), remaining);
     return Error::BLOCK_COMPRESSOR_BAD_HEADER;
   }
 
   uint32_t checksum = fletcher32(msg_ptr, remaining);
-  if (checksum != header.get_checksum()) {
-    HT_ERRORF("Compressed block checksum mismatch header=%d, computed=%d", header.get_checksum(), checksum);
+  if (checksum != header.get_data_checksum()) {
+    HT_ERRORF("Compressed block checksum mismatch header=%d, computed=%d", header.get_data_checksum(), checksum);
     return Error::BLOCK_COMPRESSOR_CHECKSUM_MISMATCH;
   }
 
-  output.reserve(header.get_length());
+  output.reserve(header.get_data_length());
 
    // check compress type
-  if (header.get_type() == NONE)
-    memcpy(output.buf, msg_ptr, header.get_length());
+  if (header.get_compression_type() == NONE)
+    memcpy(output.buf, msg_ptr, header.get_data_length());
   else {
     size_t len;
     // decompress 
     len = qlz_decompress((char *)msg_ptr, (char *)output.buf, (char *)m_workmem);
-    assert(len == header.get_length());
+    assert(len == header.get_data_length());
   }
-  output.ptr = output.buf + header.get_length();
+  output.ptr = output.buf + header.get_data_length();
 
   return Error::OK;
 }

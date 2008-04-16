@@ -33,10 +33,10 @@ extern "C" {
 
 #include "AsyncComm/Protocol.h"
 
+#include "Hypertable/Lib/BlockCompressionHeader.h"
 #include "Hypertable/Lib/CompressorFactory.h"
 #include "Hypertable/Lib/Key.h"
 
-#include "BlockCompressionHeaderCellStore.h"
 #include "CellStoreScannerV0.h"
 #include "CellStoreV0.h"
 #include "FileBlockCache.h"
@@ -138,7 +138,7 @@ int CellStoreV0::add(const ByteString32T *key, const ByteString32T *value, uint6
   (void)real_timestamp;
 
   if (m_buffer.fill() > m_uncompressed_blocksize) {
-    BlockCompressionHeaderCellStore header(DATA_BLOCK_MAGIC);
+    BlockCompressionHeader header(DATA_BLOCK_MAGIC);
 
     add_index_entry(m_last_key, m_offset);
 
@@ -194,7 +194,7 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
   uint8_t *base;
 
   if (m_buffer.fill() > 0) {
-    BlockCompressionHeaderCellStore header(DATA_BLOCK_MAGIC);
+    BlockCompressionHeader header(DATA_BLOCK_MAGIC);
 
     add_index_entry(m_last_key, m_offset);
 
@@ -240,7 +240,7 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
    * Write fixed index
    */
   {
-    BlockCompressionHeaderCellStore header(INDEX_FIXED_BLOCK_MAGIC);
+    BlockCompressionHeader header(INDEX_FIXED_BLOCK_MAGIC);
     m_compressor->deflate(m_fix_index_buffer, zBuffer, header);
     zbuf = zBuffer.release(&zlen);
   }
@@ -254,7 +254,7 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
    * Write variable index + trailer
    */
   {
-    BlockCompressionHeaderCellStore header(INDEX_VARIABLE_BLOCK_MAGIC);
+    BlockCompressionHeader header(INDEX_VARIABLE_BLOCK_MAGIC);
     m_trailer.var_index_offset = m_offset;
     m_compressor->deflate(m_var_index_buffer, zBuffer, header, m_trailer.size());
   }
@@ -417,7 +417,7 @@ int CellStoreV0::load_index() {
   uint8_t *fEnd;
   uint8_t *vEnd;
   uint32_t len;
-  BlockCompressionHeaderCellStore header;
+  BlockCompressionHeader header;
   DynamicBuffer input(0);
 
   m_compressor = create_block_compression_codec();

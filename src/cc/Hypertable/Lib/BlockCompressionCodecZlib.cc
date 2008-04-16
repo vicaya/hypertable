@@ -96,13 +96,13 @@ int BlockCompressionCodecZlib::deflate(const DynamicBuffer &input, DynamicBuffer
   }
 
   output.clear();
-  output.reserve( header.encoded_length() + avail_out + reserve );
+  output.reserve( header.length() + avail_out + reserve );
 
   m_stream_deflate.avail_in = input.fill();
   m_stream_deflate.next_in = input.buf;
 
   m_stream_deflate.avail_out = avail_out;
-  m_stream_deflate.next_out = output.buf + header.encoded_length();
+  m_stream_deflate.next_out = output.buf + header.length();
 
   int ret = ::deflate(&m_stream_deflate, Z_FINISH); 
   assert(ret == Z_STREAM_END);
@@ -112,24 +112,24 @@ int BlockCompressionCodecZlib::deflate(const DynamicBuffer &input, DynamicBuffer
 
   /* check for an incompressible block */
   if (zlen >= input.fill()) {
-    header.set_type(NONE);
-    memcpy(output.buf+header.encoded_length(), input.buf, input.fill());
-    header.set_length(input.fill());
-    header.set_zlength(input.fill());
+    header.set_compression_type(NONE);
+    memcpy(output.buf+header.length(), input.buf, input.fill());
+    header.set_data_length(input.fill());
+    header.set_data_zlength(input.fill());
   }
   else {
-    header.set_type(ZLIB);
-    header.set_length(input.fill());
-    header.set_zlength(zlen);
+    header.set_compression_type(ZLIB);
+    header.set_data_length(input.fill());
+    header.set_data_zlength(zlen);
   }
 
-  header.set_checksum( fletcher32(output.buf + header.encoded_length(), header.get_zlength()) );
+  header.set_data_checksum( fletcher32(output.buf + header.length(), header.get_data_zlength()) );
   
   deflateReset(&m_stream_deflate);
 
   output.ptr = output.buf;
   header.encode(&output.ptr);
-  output.ptr += header.get_zlength();
+  output.ptr += header.get_data_zlength();
 
   return Error::OK;
 }
@@ -157,34 +157,31 @@ int BlockCompressionCodecZlib::inflate(const DynamicBuffer &input, DynamicBuffer
     m_inflate_initialized = true;
   }
 
-  if ((error = header.decode_fixed(&msg_ptr, &remaining)) != Error::OK)
+  if ((error = header.decode(&msg_ptr, &remaining)) != Error::OK)
     return error;
 
-  if ((error = header.decode_variable(&msg_ptr, &remaining)) != Error::OK)
-    return error;
-
-  if (header.get_zlength() != remaining) {
-    HT_ERRORF("Block decompression error, header zlength = %d, actual = %d", header.get_zlength(), remaining);
+  if (header.get_data_zlength() != remaining) {
+    HT_ERRORF("Block decompression error, header zlength = %d, actual = %d", header.get_data_zlength(), remaining);
     return Error::BLOCK_COMPRESSOR_BAD_HEADER;
   }
 
   uint32_t checksum = fletcher32(msg_ptr, remaining);
-  if (checksum != header.get_checksum()) {
-    HT_ERRORF("Compressed block checksum mismatch header=%d, computed=%d", header.get_checksum(), checksum);
+  if (checksum != header.get_data_checksum()) {
+    HT_ERRORF("Compressed block checksum mismatch header=%d, computed=%d", header.get_data_checksum(), checksum);
     return Error::BLOCK_COMPRESSOR_CHECKSUM_MISMATCH;
   }
 
-  output.reserve(header.get_length());
+  output.reserve(header.get_data_length());
 
    // check compress bit
-  if (header.get_type() == NONE)
-    memcpy(output.buf, msg_ptr, header.get_length());
+  if (header.get_compression_type() == NONE)
+    memcpy(output.buf, msg_ptr, header.get_data_length());
   else {
 
     m_stream_inflate.avail_in = remaining;
     m_stream_inflate.next_in = msg_ptr;
 
-    m_stream_inflate.avail_out = header.get_length();
+    m_stream_inflate.avail_out = header.get_data_length();
     m_stream_inflate.next_out = output.buf;
 
     ret = ::inflate(&m_stream_inflate, Z_NO_FLUSH);
@@ -194,13 +191,13 @@ int BlockCompressionCodecZlib::inflate(const DynamicBuffer &input, DynamicBuffer
     }
 
     if (m_stream_inflate.avail_out != 0) {
-      HT_ERRORF("Compressed block inflate error, expected %d but only inflated to %d bytes", header.get_length(), header.get_length()-m_stream_inflate.avail_out);
+      HT_ERRORF("Compressed block inflate error, expected %d but only inflated to %d bytes", header.get_data_length(), header.get_data_length()-m_stream_inflate.avail_out);
       goto abort;
     }
     ::inflateReset(&m_stream_inflate);  
   }
 
-  output.ptr = output.buf + header.get_length();
+  output.ptr = output.buf + header.get_data_length();
 
   return Error::OK;
 

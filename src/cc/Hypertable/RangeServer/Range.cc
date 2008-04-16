@@ -616,15 +616,15 @@ int Range::replay_transfer_log(const string &log_dir, uint64_t real_timestamp) {
 
   while (commit_log_reader_ptr->next_block(&base, &len, &header)) {
 
-    header.get_table_identifier(table_id);
+    ptr = base;
+    end = base + len;
+
+    table_id.decode((uint8_t **)&ptr, &len);
 
     if (strcmp(m_identifier.name, table_id.name)) {
       HT_ERRORF("Table name mis-match in split log replay \"%s\" != \"%s\"", m_identifier.name, table_id.name);
       return Error::RANGESERVER_CORRUPT_COMMIT_LOG;
     }
-
-    ptr = base;
-    end = base + len;
 
     memory_added += len;
 

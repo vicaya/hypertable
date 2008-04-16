@@ -105,22 +105,20 @@ namespace Hypertable {
 
     /** Writes a block of updates to the commit log.
      *
-     * @param table table identifier of table that these updates are applied to
      * @param data pointer to block of updates
      * @param len length of block of updates
      * @param timestamp current commit log time obtained with a call to #get_timestamp
      * @return Error::OK on success or error code on failure
      */
-    int write(TableIdentifier *table, uint8_t *data, uint32_t len, uint64_t timestamp);
+    int write(uint8_t *data, uint32_t len, uint64_t timestamp);
 
     /** Links an external log into this log.
      *
-     * @param table table identifier of table the external log applies to
      * @param log_dir the directory of the external log
      * @param timestamp current commit log time obtained with a call to #get_timestamp
      * @return Error::OK on success or error code on failure
      */
-    int link_log(TableIdentifier *table, const char *log_dir, uint64_t timestamp);
+    int link_log(const char *log_dir, uint64_t timestamp);
 
     /** Closes the log.  Writes the trailer and closes the file
      *
