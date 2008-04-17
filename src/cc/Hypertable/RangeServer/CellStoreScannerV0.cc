@@ -43,7 +43,8 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr,
     m_cell_store_v0(dynamic_cast< CellStoreV0*>(m_cell_store_ptr.get())),
     m_index(m_cell_store_v0->m_index), m_cur_key(0), m_cur_value(0),
     m_check_for_range_end(false), m_end_inclusive(true),
-    m_readahead(true), m_fd(-1), m_start_offset(0), m_end_offset(0), m_returned(0) {
+    m_readahead(true), m_fd(-1), m_start_offset(0), m_end_offset(0),
+    m_returned(0) {
   ByteString32T  *key;
   bool start_inclusive = false;
 
@@ -91,14 +92,14 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr,
     }
   }
   else {
-    int error;
     uint32_t buf_size = m_cell_store_ptr->get_blocksize();
+
     if (buf_size < MINIMUM_READAHEAD_AMOUNT)
       buf_size = MINIMUM_READAHEAD_AMOUNT;
 
     m_start_offset = (*m_iter).second;
-
     key = Create(m_end_row.c_str(), strlen(m_end_row.c_str()));
+
     if ((m_end_iter = m_index.upper_bound(key)) == m_index.end())
       m_end_offset = m_cell_store_v0->m_trailer.fix_index_offset;
     else {
@@ -111,11 +112,15 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr,
     }
     Destroy(key);
 
-    if ((error = m_cell_store_v0->m_filesys->open_buffered(m_cell_store_ptr->get_filename(), buf_size, 2, &m_fd, m_start_offset, m_end_offset)) != Error::OK) {
-      // TODO: should throw an exception here
-      HT_ERRORF("Problem opening cell store '%s' in readahead mode - %s", 
-		   m_cell_store_ptr->get_filename().c_str(), Error::get_text(error));
+    try {
+      m_fd = m_cell_store_v0->m_filesys->open_buffered(
+              m_cell_store_ptr->get_filename(), buf_size, 2,
+              m_start_offset, m_end_offset);
+    }
+    catch (Exception &e) {
       m_iter = m_index.end();
+      throw Exception(e.code(), format("Problem opening cell store in "
+                      "readahead mode: %s", e.what()));
     }
 
     if (!fetch_next_block_readahead()) {
@@ -190,28 +195,35 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr,
 
 
 CellStoreScannerV0::~CellStoreScannerV0() {
-  int error;
-
-  if (m_fd != -1) {
-    if ((error = m_cell_store_v0->m_filesys->close(m_fd, 0)) != Error::OK) {
-      HT_ERRORF("Problem closing descriptor %d file=%s", m_fd, m_cell_store_ptr->get_filename().c_str());
+  try {
+    if (m_fd != -1) {
+      try { m_cell_store_v0->m_filesys->close(m_fd, 0); }
+      catch (Exception &e) {
+        throw Exception(e.code(), format("Problem closing cellstore: %s",
+                        m_cell_store_ptr->get_filename().c_str()));
+      }
     }
-  }
 
-  if (m_readahead)
-    delete [] m_block.base;
-  else {
-    if (m_block.base != 0)
-      Global::blockCache->checkin(m_file_id, m_block.offset);
-  }
-  delete m_zcodec;
+    if (m_readahead)
+      delete [] m_block.base;
+    else {
+      if (m_block.base != 0)
+        Global::blockCache->checkin(m_file_id, m_block.offset);
+    }
+    delete m_zcodec;
 
 #ifdef STAT
-  cout << flush;
-  cout << "STAT[~CellStoreScannerV0]\tget\t" << m_returned << "\t";
-  cout << m_cell_store_v0->get_filename() << "[" << m_start_row << ".." << m_end_row << "]" << endl;
+    cout << flush;
+    cout << "STAT[~CellStoreScannerV0]\tget\t" << m_returned << "\t";
+    cout << m_cell_store_v0->get_filename() << "[" << m_start_row << ".." << m_end_row << "]" << endl;
 #endif
-
+  }
+  catch (Exception &e) {
+    HT_ERRORF("Exception caught in %s: %s", __func__, e.what());
+  }
+  catch (...) {
+    HT_ERRORF("Unknown exception caught in %s", __func__);
+  }
 }
 
 
@@ -332,26 +344,33 @@ bool CellStoreScannerV0::fetch_next_block() {
     if (!Global::blockCache->checkout(m_file_id, (uint32_t)m_block.offset, &m_block.base, &len)) {
       /** Read compressed block **/
       buf = new uint8_t [ m_block.zlength ];
-      uint32_t nread;
-      if (m_cell_store_v0->m_filesys->pread(m_cell_store_v0->m_fd, m_block.offset, m_block.zlength, buf, &nread) != Error::OK)
-	goto abort;
+      try {
+        m_cell_store_v0->m_filesys->pread(m_cell_store_v0->m_fd, buf,
+                                          m_block.zlength, m_block.offset);
+      }
+      catch (Exception &e) {
+        HT_ERRORF("Error reading cellstore (%s) block: %s",
+                  m_cell_store_ptr->get_filename().c_str(), e.what());
+        goto abort;
+      }
 
       /** inflate compressed block **/
-      {
-	BlockCompressionHeader header;
-	DynamicBuffer input(0);
-	input.buf = buf;
-	input.ptr = buf + m_block.zlength;
-	if ((error = m_zcodec->inflate(input, expandBuffer, header)) != Error::OK) {
-	  HT_ERRORF("Problem inflating cell store (%s) block - %s", m_cell_store_ptr->get_filename().c_str(), Error::get_text(error));
-	  input.buf = 0;
-	  goto abort;
-	}
-	input.buf = 0;
-	if (!header.check_magic(CellStoreV0::DATA_BLOCK_MAGIC)) {
-	  HT_ERROR("Problem inflating cell store block - magic string mismatch");
-	  goto abort;
-	}
+      BlockCompressionHeader header;
+      DynamicBuffer input(0);
+      input.buf = buf;
+      input.ptr = buf + m_block.zlength;
+      if ((error = m_zcodec->inflate(input, expandBuffer, header))
+          != Error::OK) {
+        HT_ERRORF("Problem inflating cell store (%s) block - %s",
+                  m_cell_store_ptr->get_filename().c_str(),
+                  Error::get_text(error));
+        input.buf = 0;
+        goto abort;
+      }
+      input.buf = 0;
+      if (!header.check_magic(CellStoreV0::DATA_BLOCK_MAGIC)) {
+        HT_ERROR("Problem inflating cell store block - magic string mismatch");
+        goto abort;
       }
 
       /** take ownership of inflate buffer **/
@@ -429,9 +448,12 @@ bool CellStoreScannerV0::fetch_next_block_readahead() {
     /** Read compressed block **/
     buf = new uint8_t [ m_block.zlength ];
 
-    if ((error = m_cell_store_v0->m_filesys->read(m_fd, m_block.zlength, buf, &nread)) != Error::OK) {
-      HT_ERRORF("Problem reading %ld bytes from cell store file '%s'",
-		   m_block.zlength, m_cell_store_ptr->get_filename().c_str());
+    try {
+      nread = m_cell_store_v0->m_filesys->read(m_fd, buf, m_block.zlength);
+    }
+    catch (Exception &e) {
+      HT_ERRORF("Problem reading cell store file '%s': %s",
+		m_cell_store_ptr->get_filename().c_str(), e.what());
       goto abort;
     }
     if (nread != m_block.zlength) {

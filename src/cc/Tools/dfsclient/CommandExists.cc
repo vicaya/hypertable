@@ -42,7 +42,7 @@ int CommandExists::run() {
     return -1;
   }
 
-  m_client->exists(m_args[0].first, &exists);
+  exists = m_client->exists(m_args[0].first);
 
   if (exists)
     cout << "true" << endl;

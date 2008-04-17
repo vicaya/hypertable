@@ -22,10 +22,9 @@
 #ifndef HYPERTABLE_DFSBROKER_CLIENT_H
 #define HYPERTABLE_DFSBROKER_CLIENT_H
 
-#include <ext/hash_map>
-
 #include <boost/thread/mutex.hpp>
 
+#include "Common/HashMap.h"
 #include "Common/Properties.h"
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "AsyncComm/ConnectionManager.h"
@@ -109,50 +108,55 @@ namespace Hypertable {
 	return true;
       }
 
-      virtual int open(const std::string &name, DispatchHandler *handler);
-      virtual int open(const std::string &name, int32_t *fdp);
-      virtual int open_buffered(const std::string &name, uint32_t buf_size, uint32_t outstanding, int32_t *fdp, uint64_t start_offset=0, uint64_t end_offset=0);
+      virtual void open(const String &name, DispatchHandler *handler);
+      virtual int open(const String &name);
+      virtual int open_buffered(const String &name, uint32_t buf_size,
+                                uint32_t outstanding, uint64_t start_offset=0,
+                                uint64_t end_offset=0);
 
-      virtual int create(const std::string &name, bool overwrite, int32_t bufferSize,
-			 int32_t replication, int64_t blockSize, DispatchHandler *handler);
-      virtual int create(const std::string &name, bool overwrite, int32_t bufferSize,
-			 int32_t replication, int64_t blockSize, int32_t *fdp);
+      virtual void create(const String &name, bool overwrite,
+                          int32_t bufferSize, int32_t replication,
+                          int64_t blockSize, DispatchHandler *handler);
+      virtual int create(const String &name, bool overwrite, int32_t bufferSize,
+			 int32_t replication, int64_t blockSize);
 
-      virtual int close(int32_t fd, DispatchHandler *handler);
-      virtual int close(int32_t fd);
+      virtual void close(int32_t fd, DispatchHandler *handler);
+      virtual void close(int32_t fd);
 
-      virtual int read(int32_t fd, uint32_t amount, DispatchHandler *handler);
-      virtual int read(int32_t fd, uint32_t amount, uint8_t *dst, uint32_t *nreadp);
+      virtual void read(int32_t fd, size_t amount, DispatchHandler *handler);
+      virtual size_t read(int32_t fd, void *dst, size_t amount);
 
-      virtual int append(int32_t fd, const void *buf, uint32_t amount, DispatchHandler *handler);
-      virtual int append(int32_t fd, const void *buf, uint32_t amount);
+      virtual void append(int32_t fd, const void *buf, size_t amount,
+                          DispatchHandler *handler);
+      virtual size_t append(int32_t fd, const void *buf, size_t amount);
 
-      virtual int seek(int32_t fd, uint64_t offset, DispatchHandler *handler);
-      virtual int seek(int32_t fd, uint64_t offset);
+      virtual void seek(int32_t fd, uint64_t offset, DispatchHandler *handler);
+      virtual void seek(int32_t fd, uint64_t offset);
 
-      virtual int remove(const std::string &name, DispatchHandler *handler);
-      virtual int remove(const std::string &name);
+      virtual void remove(const String &name, DispatchHandler *handler);
+      virtual void remove(const String &name, bool force = true);
 
-      virtual int length(const std::string &name, DispatchHandler *handler);
-      virtual int length(const std::string &name, int64_t *lenp);
+      virtual void length(const String &name, DispatchHandler *handler);
+      virtual int64_t length(const String &name);
 
-      virtual int pread(int32_t fd, uint64_t offset, uint32_t amount, DispatchHandler *handler);
-      virtual int pread(int32_t fd, uint64_t offset, uint32_t amount, uint8_t *dst, uint32_t *nreadp);
+      virtual void pread(int32_t fd, size_t len, uint64_t offset,
+                         DispatchHandler *handler);
+      virtual size_t pread(int32_t fd, void *dst, size_t len, uint64_t offset);
 
-      virtual int mkdirs(const std::string &name, DispatchHandler *handler);
-      virtual int mkdirs(const std::string &name);
+      virtual void mkdirs(const String &name, DispatchHandler *handler);
+      virtual void mkdirs(const String &name);
 
-      virtual int flush(int32_t fd, DispatchHandler *handler);
-      virtual int flush(int32_t fd);
+      virtual void flush(int32_t fd, DispatchHandler *handler);
+      virtual void flush(int32_t fd);
 
-      virtual int rmdir(const std::string &name, DispatchHandler *handler);
-      virtual int rmdir(const std::string &name);
+      virtual void rmdir(const String &name, DispatchHandler *handler);
+      virtual void rmdir(const String &name, bool force = true);
 
-      virtual int readdir(const std::string &name, DispatchHandler *handler);
-      virtual int readdir(const std::string &name, std::vector<std::string> &listing);
+      virtual void readdir(const String &name, DispatchHandler *handler);
+      virtual void readdir(const String &name, std::vector<String> &listing);
 
-      virtual int exists(const std::string &name, DispatchHandler *handler);
-      virtual int exists(const std::string &name, bool *existsp);
+      virtual void exists(const String &name, DispatchHandler *handler);
+      virtual bool exists(const String &name);
 
       /** Checks the status of the DFS broker.  Issues a status command and waits
        * for it to return.
@@ -169,9 +173,8 @@ namespace Hypertable {
        *
        * @param flags controls how broker gets shut down
        * @param handler response handler
-       * @return Error::OK if broker is up and OK, otherwise an error code
        */
-      int shutdown(uint16_t flags, DispatchHandler *handler);
+      void shutdown(uint16_t flags, DispatchHandler *handler);
 
       Protocol *get_protocol_object() { return &m_protocol; }
 
@@ -187,11 +190,10 @@ namespace Hypertable {
        *
        * @param cbufPtr message to send
        * @param handler response handler
-       * @return Error::OK on success or error code on failure
        */
-      int send_message(CommBufPtr &cbufPtr, DispatchHandler *handler);
+      void send_message(CommBufPtr &cbufPtr, DispatchHandler *handler);
 
-      typedef __gnu_cxx::hash_map<uint32_t, ClientBufferedReaderHandler *> BufferedReaderMapT;
+      typedef hash_map<uint32_t, ClientBufferedReaderHandler *> BufferedReaderMapT;
 
       boost::mutex          m_mutex;
       Comm                 *m_comm;
@@ -202,9 +204,7 @@ namespace Hypertable {
       Protocol              m_protocol;
       BufferedReaderMapT    m_buffered_reader_map;
     };
-
   }
-
 }
 
 

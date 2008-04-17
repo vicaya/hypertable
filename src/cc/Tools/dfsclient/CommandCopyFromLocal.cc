@@ -64,16 +64,15 @@ int CommandCopyFromLocal::run() {
     goto abort;
   }
 
-  if ((error = m_client->create(m_args[srcArg+1].first, true, -1, -1, -1, &fd)) != Error::OK)
-    goto abort;
+  try {
+  fd = m_client->create(m_args[srcArg+1].first, true, -1, -1, -1);
 
   // send 3 appends
   for (int i=0; i<3; i++) {
     buf = new uint8_t [ BUFFER_SIZE ];
     if ((nread = fread(buf, 1, BUFFER_SIZE, fp)) == 0)
       goto done;
-    if ((error = m_client->append(fd, buf, nread, &syncHandler)) != Error::OK)
-      goto done;
+    m_client->append(fd, buf, nread, &syncHandler);
   }
 
   while (true) {
@@ -86,16 +85,18 @@ int CommandCopyFromLocal::run() {
     buf = new uint8_t [ BUFFER_SIZE ];
     if ((nread = fread(buf, 1, BUFFER_SIZE, fp)) == 0)
       break;
-    if ((error = m_client->append(fd, buf, nread, &syncHandler)) != Error::OK)
-      goto abort;
+    m_client->append(fd, buf, nread, &syncHandler);
   }
 
- done:
-
-  if ((error = m_client->close(fd)) != Error::OK)
-    goto abort;
+done:
+  m_client->close(fd);
     
-  abort:
+  }
+  catch (Exception &e) {
+    HT_ERRORF("%s", e.what());
+  }
+
+abort:
   if (fp)
     fclose(fp);
   if (error != 0)

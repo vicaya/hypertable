@@ -49,7 +49,7 @@ namespace Hypertable {
     /**
      * Constructor (for implicit construction).
      */
-    Key() : timestamp_ptr(0) { return; }
+    Key() : flag(FLAG_INSERT), timestamp_ptr(0) { return; }
 
     /**
      * Constructor that takes an opaque key as an argument.  load is called to

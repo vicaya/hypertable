@@ -40,6 +40,7 @@ int CommandRmdir::run() {
     return -1;
   }
 
-  return m_client->rmdir(m_args[0].first);
+  m_client->rmdir(m_args[0].first);
+  return Error::OK;
 }
 

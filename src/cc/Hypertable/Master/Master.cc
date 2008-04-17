@@ -716,12 +716,11 @@ int Master::create_table(const char *tableName, const char *schemaString, std::s
    */
   tableBaseDir = (string)"/hypertable/tables/" + tableName + "/";
   lgList = schema->get_access_group_list();
-  for (list<Schema::AccessGroup *>::iterator lgIter = lgList->begin(); lgIter != lgList->end(); lgIter++) {
+
+  for (list<Schema::AccessGroup *>::iterator lgIter = lgList->begin();
+      lgIter != lgList->end(); lgIter++) {
     lgDir = tableBaseDir + (*lgIter)->name;
-    if ((error = m_dfs_client->mkdirs(lgDir)) != Error::OK) {
-      errMsg = (string)"Problem creating table directory '" + lgDir + "'";
-      goto abort;
-    }
+    m_dfs_client->mkdirs(lgDir);
   }
 
   /**

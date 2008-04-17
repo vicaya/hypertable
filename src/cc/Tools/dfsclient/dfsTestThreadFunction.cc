@@ -47,7 +47,6 @@ using namespace std;
 void dfsTestThreadFunction::operator()() {
   vector<const char *> args;
   int64_t origSize, dfsSize;
-  bool exists;
   CommandCopyFromLocal cmdCopyFromLocal(m_client);
   CommandCopyToLocal cmdCopyToLocal(m_client);
   CommandRemove cmdRemove(m_client);
@@ -71,13 +70,10 @@ void dfsTestThreadFunction::operator()() {
   origSize = statbuf.st_size;
 
   // Make sure file exists
-  if (m_client->exists(m_dfs_file, &exists) != Error::OK || !exists) {
-    cerr << "Problem checking existence of file " << m_dfs_file << endl;
-    exit(1);
-  }
+  HT_EXPECT(m_client->exists(m_dfs_file), Error::FAILED_EXPECTATION);
 
   // Determine DFS file size
-  m_client->length(m_dfs_file, &dfsSize);
+  dfsSize = m_client->length(m_dfs_file);
 
   if (origSize != dfsSize) {
     HT_ERRORF("Length mismatch: %ld != %ld", origSize, dfsSize);

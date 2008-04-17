@@ -26,6 +26,7 @@
 #include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
 
+#include "Common/String.h"
 #include "AsyncComm/DispatchHandler.h"
 
 namespace Hypertable {
@@ -43,7 +44,7 @@ namespace Hypertable {
 
     virtual void handle(EventPtr &eventPtr);
 
-    int read(uint8_t *buf, uint32_t len, uint32_t *nreadp);
+    size_t read(void *buf, size_t len);
 
   private:
 

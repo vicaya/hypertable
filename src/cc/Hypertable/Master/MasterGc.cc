@@ -168,21 +168,17 @@ struct GcWorker {
   reap(CountMap &files_map) {
     size_t nf = 0, nd = 0;
     CountMap dirs_map; // reap empty range directories as well
-    int ret;
 
     foreach (const CountMap::value_type &v, files_map) {
       if (!v.second) {
-        // TODO: fs interface needs to be fixed to 
-        // accept const char * and const string &
-        string name(v.first);
-
         HT_DEBUGF("MasterGc: removing file %s", v.first);
 
         if (!m_dryrun) {
-          if ((ret = m_fs->remove(name)) != Error::OK)
-            HT_ERRORF("Error removing file '%s'", v.first);
-          else
-            ++nf;
+          try { m_fs->remove(v.first); }
+          catch (Exception &e) {
+            HT_ERRORF("%s", e.what());
+          }
+          ++nf;
         }
       }
       char *p = strrchr(v.first, '/');
@@ -194,16 +190,14 @@ struct GcWorker {
     }
     foreach (const CountMap::value_type &v, dirs_map) {
       if (!v.second) {
-        // TODO: fs interface...
-        string name(v.first);
-
         HT_DEBUGF("MasterGc: removing directory %s", v.first);
 
         if (!m_dryrun) {
-          if ((ret = m_fs->rmdir(name)) != Error::OK)
-            HT_ERRORF("Error removing directory '%s'", v.first);
-          else
-            ++nd;
+          try { m_fs->rmdir(v.first); }
+          catch (Exception &e) {
+            HT_ERRORF("%s", e.what());
+          }
+          ++nd;
         }
       }
     }

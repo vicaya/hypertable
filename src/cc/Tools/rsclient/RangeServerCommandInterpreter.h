@@ -41,7 +41,7 @@ namespace Hypertable {
   public:
     RangeServerCommandInterpreter(Comm *comm, Hyperspace::SessionPtr &hyperspace_ptr, struct sockaddr_in addr, RangeServerClientPtr &range_server_ptr);
 
-    virtual void execute_line(std::string &line);
+    virtual void execute_line(const String &line);
 
   private:
 

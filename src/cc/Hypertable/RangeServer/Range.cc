@@ -358,8 +358,10 @@ void Range::do_split() {
   transfer_log_dir = Global::logDir + "/" + md5DigestStr;
 
   // Create transfer log dir
-  if ((error = Global::logDfs->mkdirs(transfer_log_dir)) != Error::OK) {
-    HT_ERRORF("Problem creating DFS log directory '%s'", transfer_log_dir.c_str());
+  try { Global::logDfs->mkdirs(transfer_log_dir); }
+  catch (Exception &e) {
+    HT_ERRORF("Problem creating log directory '%s': %s",
+              transfer_log_dir.c_str(), e.what());
     DUMP_CORE;
   }
 

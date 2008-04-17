@@ -40,6 +40,7 @@ int CommandRemove::run() {
     return -1;
   }
 
-  return m_client->remove(m_args[0].first);
+  m_client->remove(m_args[0].first);
+  return Error::OK;
 }
 

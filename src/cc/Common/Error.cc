@@ -19,7 +19,8 @@
  * 02110-1301, USA.
  */
 
-#include <cassert>
+#include "Common/Compat.h"
+#include "Common/HashMap.h"
 
 #include "Error.h"
 
@@ -71,6 +72,7 @@ namespace {
     { Error::DFSBROKER_BAD_FILENAME,      "DFS BROKER bad filename" },
     { Error::DFSBROKER_PERMISSION_DENIED, "DFS BROKER permission denied" },
     { Error::DFSBROKER_INVALID_ARGUMENT,  "DFS BROKER invalid argument" },
+    { Error::DFSBROKER_INVALID_CONFIG,    "DFS BROKER invalid config value" },
     { Error::HYPERSPACE_IO_ERROR,         "HYPERSPACE i/o error" },
     { Error::HYPERSPACE_CREATE_FAILED,    "HYPERSPACE create failed" },
     { Error::HYPERSPACE_FILE_NOT_FOUND,   "HYPERSPACE file not found" },
@@ -111,7 +113,7 @@ namespace {
     { 0, 0 }
   };
 
-  typedef __gnu_cxx::hash_map<uint32_t, const char *>  TextMapT;
+  typedef hash_map<int, const char *>  TextMapT;
 
   TextMapT &buildTextMap() {
     TextMapT *map = new TextMapT();
@@ -121,88 +123,8 @@ namespace {
   }
 
   TextMapT &textMap = buildTextMap();
-}
 
-
-const int Error::OK;
-const int Error::PROTOCOL_ERROR;
-const int Error::REQUEST_TRUNCATED;
-const int Error::RESPONSE_TRUNCATED;
-const int Error::REQUEST_TIMEOUT;
-const int Error::LOCAL_IO_ERROR;
-const int Error::BAD_ROOT_LOCATION;
-const int Error::BAD_SCHEMA;
-const int Error::INVALID_METADATA;
-const int Error::BAD_KEY;
-const int Error::METADATA_NOT_FOUND;
-const int Error::HQL_PARSE_ERROR;
-const int Error::FILE_NOT_FOUND;
-const int Error::BLOCK_COMPRESSOR_UNSUPPORTED_TYPE;
-const int Error::BLOCK_COMPRESSOR_INVALID_ARG;
-const int Error::BLOCK_COMPRESSOR_TRUNCATED;
-const int Error::BLOCK_COMPRESSOR_BAD_HEADER;
-const int Error::BLOCK_COMPRESSOR_BAD_MAGIC;
-const int Error::BLOCK_COMPRESSOR_CHECKSUM_MISMATCH;
-const int Error::BLOCK_COMPRESSOR_INFLATE_ERROR;
-const int Error::BLOCK_COMPRESSOR_INIT_ERROR;
-const int Error::TABLE_DOES_NOT_EXIST;
-const int Error::FAILED_EXPECTATION;
-
-const int Error::COMM_NOT_CONNECTED;
-const int Error::COMM_BROKEN_CONNECTION;
-const int Error::COMM_CONNECT_ERROR;
-const int Error::COMM_ALREADY_CONNECTED;
-const int Error::COMM_REQUEST_TIMEOUT;
-const int Error::COMM_SEND_ERROR;
-const int Error::COMM_RECEIVE_ERROR;
-const int Error::COMM_POLL_ERROR;
-
-const int Error::DFSBROKER_BAD_FILE_HANDLE;
-const int Error::DFSBROKER_IO_ERROR;
-const int Error::DFSBROKER_FILE_NOT_FOUND;
-const int Error::DFSBROKER_BAD_FILENAME;
-const int Error::DFSBROKER_PERMISSION_DENIED;
-const int Error::DFSBROKER_INVALID_ARGUMENT;
-
-const int Error::HYPERSPACE_IO_ERROR;
-const int Error::HYPERSPACE_CREATE_FAILED;
-const int Error::HYPERSPACE_FILE_NOT_FOUND;
-const int Error::HYPERSPACE_ATTR_NOT_FOUND;
-const int Error::HYPERSPACE_DELETE_ERROR;
-const int Error::HYPERSPACE_BAD_PATHNAME;
-const int Error::HYPERSPACE_PERMISSION_DENIED;
-const int Error::HYPERSPACE_EXPIRED_SESSION;
-const int Error::HYPERSPACE_FILE_EXISTS;
-const int Error::HYPERSPACE_IS_DIRECTORY;
-const int Error::HYPERSPACE_INVALID_HANDLE;
-const int Error::HYPERSPACE_MODE_RESTRICTION;
-const int Error::HYPERSPACE_ALREADY_LOCKED;
-const int Error::HYPERSPACE_LOCK_CONFLICT;
-const int Error::HYPERSPACE_NOT_LOCKED;
-const int Error::HYPERSPACE_BAD_ATTRIBUTE;
-
-const int Error::MASTER_TABLE_EXISTS;
-const int Error::MASTER_BAD_SCHEMA;
-const int Error::MASTER_NOT_RUNNING;
-
-const int Error::RANGESERVER_GENERATION_MISMATCH;
-const int Error::RANGESERVER_RANGE_ALREADY_LOADED;
-const int Error::RANGESERVER_RANGE_MISMATCH;
-const int Error::RANGESERVER_NONEXISTENT_RANGE;
-const int Error::RANGESERVER_PARTIAL_UPDATE;
-const int Error::RANGESERVER_RANGE_NOT_FOUND;
-const int Error::RANGESERVER_INVALID_SCANNER_ID;
-const int Error::RANGESERVER_SCHEMA_PARSE_ERROR;
-const int Error::RANGESERVER_SCHEMA_INVALID_CFID;
-const int Error::RANGESERVER_TRUNCATED_COMMIT_LOG;
-const int Error::RANGESERVER_NO_METADATA_FOR_RANGE;
-const int Error::RANGESERVER_SHUTTING_DOWN;
-const int Error::RANGESERVER_CORRUPT_COMMIT_LOG;
-const int Error::RANGESERVER_UNAVAILABLE;
-const int Error::RANGESERVER_TIMESTAMP_ORDER_ERROR;
-
-const int Error::HQL_BAD_LOAD_FILE_FORMAT;
-
+} // local namespace
 
 const char *Error::get_text(int error) {
   const char *text = textMap[error];

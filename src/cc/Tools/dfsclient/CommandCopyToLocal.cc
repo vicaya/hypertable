@@ -73,27 +73,20 @@ int CommandCopyToLocal::run() {
     goto abort;
   }
 
-  if ((error = m_client->open(m_args[srcArg].first, &fd)) != Error::OK)
-    goto abort;
+  try {
+  fd = m_client->open(m_args[srcArg].first);
 
   if (startOffset > 0) {
-    if ((error = m_client->seek(fd, startOffset)) != Error::OK)
-      goto abort;
+    m_client->seek(fd, startOffset);
   }
 
-  if ((error = m_client->read(fd, BUFFER_SIZE, &syncHandler)) != Error::OK)
-    goto abort;
-
-  if ((error = m_client->read(fd, BUFFER_SIZE, &syncHandler)) != Error::OK)
-    goto abort;
-
-  if ((error = m_client->read(fd, BUFFER_SIZE, &syncHandler)) != Error::OK)
-    goto abort;
+  m_client->read(fd, BUFFER_SIZE, &syncHandler);
+  m_client->read(fd, BUFFER_SIZE, &syncHandler);
+  m_client->read(fd, BUFFER_SIZE, &syncHandler);
 
   while (syncHandler.wait_for_reply(eventPtr)) {
 
-    if ((error = Filesystem::decode_response_read_header(eventPtr, &offset, &amount, &dst)) != Error::OK)
-      goto abort;
+    amount = Filesystem::decode_response_read_header(eventPtr, &offset, &dst);
 
     if (amount > 0) {
       if (fwrite(dst, amount, 1, fp) != 1) {
@@ -107,14 +100,17 @@ int CommandCopyToLocal::run() {
       break;
     }
 
-    if ((error = m_client->read(fd, BUFFER_SIZE, &syncHandler)) != Error::OK)
-      goto abort;
+    m_client->read(fd, BUFFER_SIZE, &syncHandler);
   }
 
-  if ((error = m_client->close(fd)) != Error::OK)
-    goto abort;
+  m_client->close(fd);
 
-  abort:
+  }
+  catch (Exception &e) {
+    HT_ERRORF("%s", e.what());
+  }
+
+abort:
   if (fp)
     fclose(fp);
   if (error != 0)

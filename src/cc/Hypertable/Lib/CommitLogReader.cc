@@ -52,7 +52,6 @@ namespace {
  */
 CommitLogReader::CommitLogReader(Filesystem *fs, const std::string &logDir) : m_fs(fs), m_log_dir(logDir), m_fd(-1), m_block_buffer(256), m_zblock_buffer(256), m_error(0), m_compressor(0) {
   LogFileInfoT fileInfo;
-  int error;
   int32_t fd;
   vector<string> listing;
   int64_t flen;
@@ -64,11 +63,7 @@ CommitLogReader::CommitLogReader(Filesystem *fs, const std::string &logDir) : m_
   if (m_log_dir.find('/', m_log_dir.length()-1) == string::npos)
     m_log_dir += "/";
 
-  if ((error = m_fs->readdir(m_log_dir, listing)) != Error::OK) {
-    HT_ERRORF("Problem reading directory '%s' - %s", m_log_dir.c_str(), Error::get_text(error));
-    exit(1);
-  }
-
+  m_fs->readdir(m_log_dir, listing);
   m_log_file_info.clear();
   fileInfo.trailer.set_magic(CommitLog::MAGIC_TRAILER);
 
@@ -93,31 +88,17 @@ CommitLogReader::CommitLogReader(Filesystem *fs, const std::string &logDir) : m_
   for (size_t i=0; i<m_log_file_info.size(); i++) {
 
     m_log_file_info[i].trailer.set_timestamp(0);
-
-    if ((error = m_fs->length(m_log_file_info[i].fname, &flen)) != Error::OK) {
-      HT_ERRORF("Problem trying to determine length of commit log file '%s' - %s", m_log_file_info[i].fname.c_str(), strerror(errno));
-      exit(1);
-    }
+    flen = m_fs->length(m_log_file_info[i].fname);
 
     if (flen < (int64_t)BlockCompressionHeaderCommitLog::LENGTH)
       continue;
 
-    if ((error = m_fs->open(m_log_file_info[i].fname, &fd)) != Error::OK) {
-      HT_ERRORF("Problem opening commit log file '%s' - %s", m_log_file_info[i].fname.c_str(), strerror(errno));
-      exit(1);
-    }
+    fd = m_fs->open(m_log_file_info[i].fname);
 
-    if ((error = m_fs->pread(fd, flen-BlockCompressionHeaderCommitLog::LENGTH, BlockCompressionHeaderCommitLog::LENGTH, input.buf, &nread)) != Error::OK ||
-	nread != BlockCompressionHeaderCommitLog::LENGTH) {
-      HT_ERRORF("Problem reading trailing header in commit log file '%s' - %s", m_log_file_info[i].fname.c_str(), strerror(errno));
-      exit(1);
-    }
-
-    if ((error = m_fs->close(fd)) != Error::OK) {
-      HT_ERRORF("Problem closing commit log file '%s' - %s", m_log_file_info[i].fname.c_str(), strerror(errno));
-      exit(1);
-    }
-
+    nread = m_fs->pread(fd, input.buf, BlockCompressionHeaderCommitLog::LENGTH,
+                        flen - BlockCompressionHeaderCommitLog::LENGTH);
+    HT_EXPECT(nread != m_fixed_header_length, Error::RESPONSE_TRUNCATED);
+    m_fs->close(fd);
     input.ptr = input.buf;
 
     size_t remaining = nread;
@@ -175,25 +156,18 @@ bool CommitLogReader::next_block(const uint8_t **blockp, size_t *lenp, BlockComp
     if (m_cur_log_offset >= m_log_file_info.size())
       return false;
 
-    if ((m_error = m_fs->open_buffered(m_log_file_info[m_cur_log_offset].fname, READAHEAD_BUFFER_SIZE, 2, &m_fd)) != Error::OK) {
-      HT_ERRORF("Problem trying to open commit log file '%s' - %s", m_log_file_info[m_cur_log_offset].fname.c_str(), Error::get_text(m_error));
-      return false;
-    }
+    m_fd = m_fs->open_buffered(m_log_file_info[m_cur_log_offset].fname,
+                               READAHEAD_BUFFER_SIZE, 2);
   }
 
   m_zblock_buffer.ptr = m_zblock_buffer.buf;
-
-  if ((m_error = m_fs->read(m_fd, BlockCompressionHeaderCommitLog::LENGTH, m_zblock_buffer.ptr, &nread)) != Error::OK) {
-    HT_ERRORF("Problem reading header from commit log file '%s' - %s", m_log_file_info[m_cur_log_offset].fname.c_str(), Error::get_text(m_error));
-    return false;
-  }
+  nread = m_fs->read(m_fd, m_zblock_buffer.ptr,
+                     BlockCompressionHeaderCommitLog::LENGTH);
     
   if (nread != BlockCompressionHeaderCommitLog::LENGTH) {
-    HT_ERRORF("Short read of commit log block '%s'", m_log_file_info[m_cur_log_offset].fname.c_str());
-    if ((m_error = m_fs->close(m_fd)) != Error::OK) {
-      HT_ERRORF("Problem closing commit log file '%s' - %s", m_log_file_info[m_cur_log_offset].fname.c_str(), Error::get_text(m_error));
-      return false;
-    }
+    HT_ERRORF("Short read of commit log block '%s'",
+              m_log_file_info[m_cur_log_offset].fname.c_str());
+    m_fs->close(m_fd);
     m_fd = -1;
     m_cur_log_offset++;
     m_error = Error::RANGESERVER_TRUNCATED_COMMIT_LOG;
@@ -207,30 +181,20 @@ bool CommitLogReader::next_block(const uint8_t **blockp, size_t *lenp, BlockComp
 
     if (header->check_magic(CommitLog::MAGIC_TRAILER)) {
       // TODO: this could be asynchronous
-      if ((m_error = m_fs->close(m_fd)) != Error::OK) {
-	HT_ERRORF("Problem closing commit log file '%s' - %s", m_log_file_info[m_cur_log_offset].fname.c_str(), Error::get_text(m_error));
-	return false;
-      }
+      m_fs->close(m_fd);
       m_fd = -1;
       m_cur_log_offset++;
       goto try_again;
     }
-
   }
 
   m_zblock_buffer.ensure(header->get_data_zlength());
-
-  if ((m_error = m_fs->read(m_fd, header->get_data_zlength(), m_zblock_buffer.ptr, &nread)) != Error::OK) {
-    HT_ERRORF("Problem reading commit block from commit log file '%s' - %s", m_log_file_info[m_cur_log_offset].fname.c_str(), Error::get_text(m_error));
-    return false;
-  }
+  nread = m_fs->read(m_fd, m_zblock_buffer.ptr, header->get_data_zlength());
       
   if (nread != header->get_data_zlength()) {
-    HT_ERRORF("Short read of commit log block '%s'", m_log_file_info[m_cur_log_offset].fname.c_str());
-    if ((m_error = m_fs->close(m_fd)) != Error::OK) {
-      HT_ERRORF("Problem closing commit log file '%s' - %s", m_log_file_info[m_cur_log_offset].fname.c_str(), Error::get_text(m_error));
-      return false;
-    }
+    HT_ERRORF("Short read of commit log block '%s'",
+              m_log_file_info[m_cur_log_offset].fname.c_str());
+    m_fs->close(m_fd);
     m_fd = -1;
     m_error = Error::RANGESERVER_TRUNCATED_COMMIT_LOG;
     return false;

@@ -275,8 +275,10 @@ int RangeServer::initialize(PropertiesPtr &props_ptr) {
   /**
    * Create /hypertable/servers/X.X.X.X_port/log/primary directory
    */
-  if ((error = Global::logDfs->mkdirs(primary_log_dir)) != Error::OK) {
-    HT_ERRORF("Problem creating primary log directory '%s'", primary_log_dir.c_str());
+  try { Global::logDfs->mkdirs(Global::logDir); }
+  catch (Exception &e) {
+    HT_ERRORF("Problem creating primary log directory '%s': %s",
+              Global::logDir.c_str(), e.what());
     return error;
   }
 
@@ -293,7 +295,6 @@ int RangeServer::initialize(PropertiesPtr &props_ptr) {
 /**
  */
 void RangeServer::fast_recover() {
-  int error;
   bool exists;
   std::string meta_log_dir = Global::logDir + "/meta";
   RangeServerMetaLogReaderPtr meta_log_reader_ptr;
@@ -304,10 +305,7 @@ void RangeServer::fast_recover() {
     /**
      * Check for existence of /hypertable/servers/X.X.X.X_port/log/meta directory
      */
-    if ((error = Global::logDfs->exists(meta_log_dir, &exists)) != Error::OK) {
-      HT_ERRORF("Problem checking for existence of %s", meta_log_dir.c_str());
-      exit(1);
-    }
+    exists = Global::logDfs->exists(meta_log_dir);
 
     if (!exists)
       return;
@@ -680,8 +678,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifier *table, Range
 	for (list<Schema::AccessGroup *>::iterator lgIter = lgList->begin(); lgIter != lgList->end(); lgIter++) {
 	  // notice the below variables are different "range" vs. "table"
 	  rangeHdfsDir = tableHdfsDir + "/" + (*lgIter)->name + "/" + md5DigestStr;
-	  if ((error = Global::dfs->mkdirs(rangeHdfsDir)) != Error::OK)
-	    throw Exception(error, (std::string)"Problem creating range directory '" + rangeHdfsDir + "'");
+	  Global::dfs->mkdirs(rangeHdfsDir);
 	}
       }
     }
@@ -1156,9 +1153,8 @@ void RangeServer::dump_stats(ResponseCallback *cb) {
  *
  */
 void RangeServer::replay_start(ResponseCallback *cb) {
-  int error;
-  std::string replay_log_dir = (std::string)"/hypertable/servers/" + m_location + "/log/replay";
-
+  String replay_log_dir = format("/hypertable/servers/%s/log/replay",
+                                 m_location.c_str());
   if (Global::verbose) {
     HT_INFO("replay_start");
     cout << flush;
@@ -1171,18 +1167,22 @@ void RangeServer::replay_start(ResponseCallback *cb) {
   /**
    * Remove old replay log directory
    */
-  if ((error = Global::logDfs->rmdir(replay_log_dir)) != Error::OK) {
-    HT_ERRORF("Problem removing replay log directory '%s'", replay_log_dir.c_str());
-    cb->error(error, std::string("Problem removing replay log directory '" + replay_log_dir + "'"));
+  try { Global::logDfs->rmdir(replay_log_dir); }
+  catch (Exception &e) {
+    HT_ERRORF("Problem removing replay log directory: %s", e.what());
+    cb->error(e.code(), format("Problem removing replay log directory: %s",
+              e.what()));
     return;
   }
 
   /**
    * Create new replay log directory
    */
-  if ((error = Global::logDfs->mkdirs(replay_log_dir)) != Error::OK) {
-    HT_ERRORF("Problem creating replay log directory '%s'", replay_log_dir.c_str());
-    cb->error(error, std::string("Problem creating replay log directory '" + replay_log_dir + "'"));
+  try { Global::logDfs->mkdirs(replay_log_dir); }
+  catch (Exception &e) {
+    HT_ERRORF("Problem creating replay log directory: %s ", e.what());
+    cb->error(e.code(), format("Problem creating replay log directory: %s",
+              e.what()));
     return;
   }
 

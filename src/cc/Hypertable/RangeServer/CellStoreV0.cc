@@ -61,12 +61,14 @@ CellStoreV0::CellStoreV0(Filesystem *filesys) : m_filesys(filesys), m_filename()
 
 
 CellStoreV0::~CellStoreV0() {
-  int error;
-  delete m_compressor;
-  if (m_fd != -1) {
-    if ((error = m_filesys->close(m_fd)) != Error::OK) {
-      HT_ERRORF("Problem closing HDFS client - %s", Error::get_text(error));
-    }
+  try {
+    delete m_compressor;
+
+    if (m_fd != -1)
+      m_filesys->close(m_fd);
+  }
+  catch (Exception &e) {
+    HT_ERRORF("%s: error closing DFS client: %s", __func__, e.what());
   }
 }
 
@@ -118,20 +120,26 @@ int CellStoreV0::create(const char *fname, uint32_t blocksize, const std::string
   m_end_row = Key::END_ROW_MARKER;
 
   if (compressor.empty())
-    m_trailer.compression_type = CompressorFactory::parse_block_codec_spec((std::string)"lzo", m_compressor_args);
+    m_trailer.compression_type = CompressorFactory::parse_block_codec_spec(
+                                  "lzo", m_compressor_args);
   else
-    m_trailer.compression_type = CompressorFactory::parse_block_codec_spec(compressor, m_compressor_args);
+    m_trailer.compression_type = CompressorFactory::parse_block_codec_spec(
+                                  compressor, m_compressor_args);
 
   m_compressor = CompressorFactory::create_block_codec(
-      (BlockCompressionCodec::Type)m_trailer.compression_type,
-      m_compressor_args);
+                  (BlockCompressionCodec::Type)m_trailer.compression_type,
+                  m_compressor_args);
 
-  return m_filesys->create(m_filename, true, -1, -1, -1, &m_fd);
+  try { m_fd = m_filesys->create(m_filename, true, -1, -1, -1); }
+  catch (Exception &e) {
+    HT_ERRORF("Error creating cellstore: %s", e.what());
+    return e.code();
+  }
+  return Error::OK;
 }
 
 
 int CellStoreV0::add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp) {
-  int error;
   EventPtr eventPtr;
   DynamicBuffer zBuffer(0);
 
@@ -152,7 +160,7 @@ int CellStoreV0::add(const ByteString32T *key, const ByteString32T *value, uint6
 
     if (m_outstanding_appends >= MAX_APPENDS_OUTSTANDING) {
       if (!m_sync_handler.wait_for_reply(eventPtr)) {
-	HT_ERRORF("Problem writing to HDFS file '%s' : %s", m_filename.c_str(), Hypertable::Protocol::string_format_message(eventPtr).c_str());
+	HT_ERRORF("Problem writing to DFS file '%s' : %s", m_filename.c_str(), Hypertable::Protocol::string_format_message(eventPtr).c_str());
 	return -1;
       }
       m_outstanding_appends--;
@@ -161,8 +169,10 @@ int CellStoreV0::add(const ByteString32T *key, const ByteString32T *value, uint6
     size_t  zlen;
     uint8_t *zbuf = zBuffer.release(&zlen);
 
-    if ((error = m_filesys->append(m_fd, zbuf, zlen, &m_sync_handler)) != Error::OK) {
-      HT_ERRORF("Problem writing to HDFS file '%s' : %s", m_filename.c_str(), Error::get_text(error));
+    try { m_filesys->append(m_fd, zbuf, zlen, &m_sync_handler); }
+    catch (Exception &e) {
+      HT_ERRORF("Problem writing to DFS file '%s' : %s",
+                m_filename.c_str(), e.what());
       return -1;
     }
     m_outstanding_appends++;
@@ -205,14 +215,16 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
 
     if (m_outstanding_appends >= MAX_APPENDS_OUTSTANDING) {
       if (!m_sync_handler.wait_for_reply(eventPtr)) {
-	HT_ERRORF("Problem writing to HDFS file '%s' : %s", m_filename.c_str(), Protocol::string_format_message(eventPtr).c_str());
+	HT_ERRORF("Problem writing to DFS file '%s' : %s", m_filename.c_str(), Protocol::string_format_message(eventPtr).c_str());
 	goto abort;
       }
       m_outstanding_appends--;
     }
 
-    if ((error = m_filesys->append(m_fd, zbuf, zlen, &m_sync_handler)) != Error::OK) {
-      HT_ERRORF("Problem writing to HDFS file '%s' : %s", m_filename.c_str(), Protocol::string_format_message(eventPtr).c_str());
+    try { m_filesys->append(m_fd, zbuf, zlen, &m_sync_handler); }
+    catch (Exception &e) {
+      HT_ERRORF("Problem writing to DFS file '%s' : %s", m_filename.c_str(),
+                e.what());
       goto abort;
     }
     m_outstanding_appends++;
@@ -245,8 +257,11 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
     zbuf = zBuffer.release(&zlen);
   }
 
-  if (m_filesys->append(m_fd, zbuf, zlen, &m_sync_handler) != Error::OK)
+  try { m_filesys->append(m_fd, zbuf, zlen, &m_sync_handler); }
+  catch (Exception &e) {
+    HT_ERRORF("%s: %s", __func__, e.what());
     goto abort;
+  }
   m_outstanding_appends++;
   m_offset += zlen;
 
@@ -291,24 +306,32 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
 
   zbuf = zBuffer.release(&zlen);
 
-  if (m_filesys->append(m_fd, zbuf, zlen) != Error::OK)
+  try { m_filesys->append(m_fd, zbuf, zlen); }
+  catch (Exception &e) {
+    HT_ERRORF("%s: %s", __func__, e.what());
     goto abort;
+  }
   m_outstanding_appends++;
   m_offset += zlen;
 
   /** close file for writing **/
-  if (m_filesys->close(m_fd) != Error::OK)
+  try { m_filesys->close(m_fd); }
+  catch (Exception &e) {
+    HT_ERRORF("%s: %s", __func__, e.what());
     goto abort;
+  }
 
   /** Set file length **/
   m_file_length = m_offset;
 
   /** Re-open file for reading **/
-  if ((error = m_filesys->open(m_filename, &m_fd)) != Error::OK)
+  try { m_fd = m_filesys->open(m_filename); }
+  catch (Exception &e) {
+    HT_ERRORF("%s: Error reopening cellstore: %s", __func__, e.what());
     goto abort;
+  }
 
   m_disk_usage = (uint32_t)m_file_length;
-
   error = 0;
 
  abort:
@@ -344,8 +367,6 @@ void CellStoreV0::add_index_entry(const ByteString32T *key, uint32_t offset) {
  *
  */
 int CellStoreV0::open(const char *fname, const char *start_row, const char *end_row) {
-  int error = 0;
-
   m_start_row = (start_row) ? start_row : "";
   m_end_row = (end_row) ? end_row : Key::END_ROW_MARKER;
 
@@ -354,17 +375,24 @@ int CellStoreV0::open(const char *fname, const char *start_row, const char *end_
   m_filename = fname;
 
   /** Get the file length **/
-  if ((error = m_filesys->length(m_filename, (int64_t *)&m_file_length)) != Error::OK)
-    goto abort;
-
-  if (m_file_length < m_trailer.size()) {
-    HT_ERRORF("Bad length of CellStore file '%s' - %lld", m_filename.c_str(), m_file_length);
+  try { m_file_length = m_filesys->length(m_filename); }
+  catch (Exception &e) {
+    HT_ERRORF("%s: %s", __func__, e.what());
     goto abort;
   }
 
-  /** Open the HDFS file **/
-  if ((error = m_filesys->open(m_filename, &m_fd)) != Error::OK)
+  if (m_file_length < m_trailer.size()) {
+    HT_ERRORF("Bad length of CellStore file '%s' - %lld", m_filename.c_str(),
+              m_file_length);
     goto abort;
+  }
+
+  /** Open the DFS file **/
+  try { m_fd =  m_filesys->open(m_filename); }
+  catch (Exception &e) {
+    HT_ERRORF("%s: %s", __func__, e.what());
+    goto abort;
+  }
 
   /**
    * Read and deserialize trailer
@@ -373,15 +401,20 @@ int CellStoreV0::open(const char *fname, const char *start_row, const char *end_
     uint32_t len;
     uint8_t *trailer_buf = new uint8_t [ m_trailer.size() ];
 
-    if ((error = m_filesys->pread(m_fd, m_file_length-m_trailer.size(), m_trailer.size(), trailer_buf, &len)) != Error::OK) {
-      HT_ERRORF("Problem reading trailer for CellStore file '%s' - %s", m_filename.c_str(), Error::get_text(error));
+    try {
+      len = m_filesys->pread(m_fd, trailer_buf, m_trailer.size(),
+                             m_file_length - m_trailer.size());
+    }
+    catch (Exception &e) {
+      HT_ERRORF("Problem reading trailer for CellStore '%s': %s",
+                m_filename.c_str(), e.what());
       delete [] trailer_buf;
       goto abort;
     }
 
     if (len != m_trailer.size()) {
-      HT_ERRORF("Problem reading trailer for CellStore file '%s' - only read %d of %d bytes",
-		   m_filename.c_str(), len, m_trailer.size());
+      HT_ERRORF("Problem reading trailer for CellStore file '%s' - only read "
+                "%d of %d bytes", m_filename.c_str(), len, m_trailer.size());
       delete [] trailer_buf;
       goto abort;
     }
@@ -392,13 +425,15 @@ int CellStoreV0::open(const char *fname, const char *start_row, const char *end_
 
   /** Sanity check trailer **/
   if (m_trailer.version != 0) {
-    HT_ERRORF("Unsupported CellStore version (%d) for file '%s'", m_trailer.version, fname);
+    HT_ERRORF("Unsupported CellStore version (%d) for file '%s'",
+              m_trailer.version, fname);
     goto abort;
   }
   if (!(m_trailer.fix_index_offset < m_trailer.var_index_offset &&
 	m_trailer.var_index_offset < m_file_length)) {
-    HT_ERRORF("Bad index offsets in CellStore trailer fix=%lld, var=%lld, length=%lld, file='%s'",
-		 m_trailer.fix_index_offset, m_trailer.var_index_offset, m_file_length, fname);
+    HT_ERRORF("Bad index offsets in CellStore trailer fix=%lld, var=%lld, "
+              "length=%lld, file='%s'", m_trailer.fix_index_offset,
+              m_trailer.var_index_offset, m_file_length, fname);
     goto abort;
   }
 
@@ -426,11 +461,18 @@ int CellStoreV0::load_index() {
   buf = new uint8_t [ amount ];
 
   /** Read index data **/
-  if ((error = m_filesys->pread(m_fd, m_trailer.fix_index_offset, amount, buf, &len)) != Error::OK)
+  try {
+    len = m_filesys->pread(m_fd, buf, amount, m_trailer.fix_index_offset);
+  }
+  catch (Exception &e) {
+    HT_ERRORF("Error reading trailer for cellstore '%s': %s",
+              m_filename.c_str(), e.what());
     goto abort;
+  }
 
   if (len != amount) {
-    HT_ERRORF("Problem loading index for CellStore '%s' : tried to read %d but only got %d", m_filename.c_str(), amount, len);
+    HT_ERRORF("Problem loading index for CellStore '%s' : tried to read %d "
+              "but only got %d", m_filename.c_str(), amount, len);
     goto abort;
   }
 

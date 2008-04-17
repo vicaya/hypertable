@@ -56,7 +56,7 @@ RangeServerCommandInterpreter::RangeServerCommandInterpreter(Comm *comm, Hypersp
 }
 
 
-void RangeServerCommandInterpreter::execute_line(std::string &line) {
+void RangeServerCommandInterpreter::execute_line(const String &line) {
   int error;
   TableIdentifier *table = 0;
   RangeSpec range;

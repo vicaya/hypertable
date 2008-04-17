@@ -23,14 +23,15 @@
 #define HYPERTABLE_COMMANDINTERPRETER_H
 
 #include "Common/ReferenceCount.h"
+#include "Common/String.h"
 
 namespace Hypertable {
 
   class CommandInterpreter : public ReferenceCount {
   public:
     CommandInterpreter();
-    virtual void execute_line(std::string &line) = 0;
-    void set_timestamp_output_format(std::string format);
+    virtual void execute_line(const String &line) = 0;
+    void set_timestamp_output_format(const String &format);
 
   protected:
     int m_timestamp_output_format;

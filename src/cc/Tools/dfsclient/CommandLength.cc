@@ -42,7 +42,7 @@ int CommandLength::run() {
     return -1;
   }
 
-  m_client->length(m_args[0].first, &length);
+  length = m_client->length(m_args[0].first);
 
   cout << length << endl;
   

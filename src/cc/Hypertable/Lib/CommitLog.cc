@@ -40,16 +40,19 @@ const char CommitLog::MAGIC_TRAILER[10] = { 'L','O','G','T','R','A','I','L','E',
 
 
 CommitLog::~CommitLog() {
-  int error;
   delete m_compressor;
   if (m_fd > 0) {
-    if ((error = m_fs->close(m_fd)) != Error::OK)
-      HT_ERRORF("Problem closing commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
+    try {
+      m_fs->close(m_fd);
+    }
+    catch (Exception &e) {
+      HT_ERRORF("Problem closing commit log file '%s' - %s",
+                m_log_file.c_str(), e.what());
+    }
   }
 }
 
 void CommitLog::initialize(Filesystem *fs, const std::string &log_dir, PropertiesPtr &props_ptr) {
-  int error;
   std::string compressor;
 
   m_fs = fs;
@@ -81,11 +84,7 @@ void CommitLog::initialize(Filesystem *fs, const std::string &log_dir, Propertie
   // create the log directory
   m_fs->mkdirs(m_log_dir);
 
-  if ((error = m_fs->create(m_log_file, true, 8192, 3, 67108864, &m_fd)) != Error::OK) {
-    HT_ERRORF("Problem creating commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
-    exit(1);
-  }
-
+  m_fd = m_fs->create(m_log_file, true, 8192, 3, 67108864);
 }
 
 
@@ -174,7 +173,6 @@ int CommitLog::link_log(const char *log_dir, uint64_t timestamp) {
  * 
  */
 int CommitLog::close(uint64_t timestamp) {
-  int error;
   BlockCompressionHeaderCommitLog header(MAGIC_TRAILER, timestamp);
   DynamicBuffer trailer(0);
 
@@ -183,28 +181,18 @@ int CommitLog::close(uint64_t timestamp) {
   trailer.ensure(header.length());
   header.encode(&trailer.ptr);
 
-  {
+  try {
     boost::mutex::scoped_lock lock(m_mutex);
 
-    if ((error = m_fs->append(m_fd, trailer.buf, header.length())) != Error::OK) {
-      HT_ERRORF("Problem appending %d byte trailer to commit log file '%s' - %s",
-		header.length(), m_log_file.c_str(), Error::get_text(error));
-      return error;
-    }
-
+    m_fs->append(m_fd, trailer.buf, header.length());
     trailer.release();
-
-    if ((error = m_fs->flush(m_fd)) != Error::OK) {
-      HT_ERRORF("Problem flushing commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
-      return error;
-    }
-
-    if ((error = m_fs->close(m_fd)) != Error::OK) {
-      HT_ERRORF("Problem closing commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
-      return error;
-    }
-    
+    m_fs->flush(m_fd);
+    m_fs->close(m_fd);
     m_fd = 0;
+  }
+  catch (Exception &e) {
+      HT_ERRORF("Problem closing commit log file '%s' - %s", m_log_file.c_str(),
+                e.what());
   }
 
   return Error::OK;
@@ -218,15 +206,11 @@ int CommitLog::close(uint64_t timestamp) {
 int CommitLog::purge(uint64_t timestamp) {
   boost::mutex::scoped_lock lock(m_mutex);
   CommitLogFileInfo fileInfo;
-  int error = Error::OK;
 
   while (!m_file_info_queue.empty()) {
     fileInfo = m_file_info_queue.front();
     if (fileInfo.timestamp > 0 && fileInfo.timestamp < timestamp) {
-      if ((error = m_fs->remove(fileInfo.fname)) != Error::OK && error != Error::DFSBROKER_FILE_NOT_FOUND) {
-	HT_ERRORF("Problem removing log fragment '%s' - %s", fileInfo.fname.c_str(), Error::get_text(error));
-	return error;
-      }
+      m_fs->remove(fileInfo.fname);
       m_file_info_queue.pop_front();
       HT_INFOF("Removed log fragment file='%s' timestamp=%lld", fileInfo.fname.c_str(), fileInfo.timestamp);
     }
@@ -243,11 +227,10 @@ int CommitLog::purge(uint64_t timestamp) {
  *
  */
 int CommitLog::roll() {
-  int error;
   CommitLogFileInfo fileInfo;
   DynamicBuffer trailer(0);
 
-  {
+  try {
     boost::mutex::scoped_lock lock(m_mutex);
     BlockCompressionHeaderCommitLog header(MAGIC_TRAILER, m_last_timestamp);
 
@@ -256,22 +239,10 @@ int CommitLog::roll() {
     trailer.ensure(header.length());
     header.encode(&trailer.ptr);
 
-    if ((error = m_fs->append(m_fd, trailer.buf, header.length())) != Error::OK) {
-      HT_ERRORF("Problem appending %d bytes to commit log file '%s' - %s", trailer.fill(), m_log_file.c_str(), Error::get_text(error));
-      return error;
-    }
-
+    m_fs->append(m_fd, trailer.buf, header.length());
     trailer.release();
-
-    if ((error = m_fs->flush(m_fd)) != Error::OK) {
-      HT_ERRORF("Problem flushing commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
-      return error;
-    }
-
-    if ((error = m_fs->close(m_fd)) != Error::OK) {
-      HT_ERRORF("Problem closing commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
-      return error;
-    }
+    m_fs->flush(m_fd);
+    m_fs->close(m_fd);
 
     fileInfo.timestamp = m_last_timestamp;
     fileInfo.size = m_cur_log_length + header.length();
@@ -284,14 +255,15 @@ int CommitLog::roll() {
     m_cur_log_num++;
     m_log_file = m_log_dir + m_cur_log_num;
 
-    if ((error = m_fs->create(m_log_file, true, 8192, 3, 67108864, &m_fd)) != Error::OK) {
-      HT_ERRORF("Problem creating commit log file '%s' - %s", m_log_file.c_str(), Error::get_text(error));
-      return error;
-    }
+    m_fd = m_fs->create(m_log_file, true, 8192, 3, 67108864);
+  }
+  catch (Exception &e) {
+    HT_ERRORF("Problem rolling commit log: %s: %s",
+              m_log_file.c_str(), e.what());
+    return e.code();
   }
 
   return Error::OK;
-
 }
 
 
@@ -300,42 +272,44 @@ int CommitLog::roll() {
  *
  */
 int CommitLog::compress_and_write(DynamicBuffer &input, BlockCompressionHeader *header, uint64_t timestamp) {
-  int error;
+  int error = Error::OK;
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
   DynamicBuffer zblock(0);
 
   // Compress block and kick off log write (protected by lock)
-  {
+  try {
     boost::mutex::scoped_lock lock(m_mutex);
     size_t zlen;
 
     if ((error = m_compressor->deflate(input, zblock, *header)) != Error::OK)
       return error;
 
-    if ((error = m_fs->append(m_fd, zblock.buf, zblock.fill(), &sync_handler)) != Error::OK)
-      return error;
-
+    m_fs->append(m_fd, zblock.buf, zblock.fill(), &sync_handler);
     zblock.release(&zlen);
-
-    if ((error = m_fs->flush(m_fd, &sync_handler)) != Error::OK)
-      return error;
-
+    m_fs->flush(m_fd, &sync_handler);
     m_last_timestamp = timestamp;
     m_cur_log_length += zlen;
+  }
+  catch (Exception &e) {
+    HT_ERRORF("Problem writing commit log: %s: %s",
+              m_log_file.c_str(), e.what());
+    error = e.code();
   }
 
   // wait for append to complete
   if (!sync_handler.wait_for_reply(event_ptr)) {
     HT_ERRORF("Problem appending to commit log file '%s' - %s",
-		 m_log_file.c_str(), Protocol::string_format_message(event_ptr).c_str());
+              m_log_file.c_str(),
+              Protocol::string_format_message(event_ptr).c_str());
     error = (int)Protocol::response_code(event_ptr);
   }
 
   // wait for flush to complete
   if (!sync_handler.wait_for_reply(event_ptr)) {
     HT_ERRORF("Problem flushing commit log file '%s' - %s",
-		 m_log_file.c_str(), Protocol::string_format_message(event_ptr).c_str());
+              m_log_file.c_str(),
+              Protocol::string_format_message(event_ptr).c_str());
     error = (int)Protocol::response_code(event_ptr);
   }
 

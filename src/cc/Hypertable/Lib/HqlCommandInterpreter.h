@@ -34,7 +34,7 @@ namespace Hypertable {
   public:
     HqlCommandInterpreter(Client *client);
 
-    virtual void execute_line(std::string &line);
+    virtual void execute_line(const String &line);
 
   private:
     Client *m_client;

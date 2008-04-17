@@ -61,11 +61,11 @@ int main(int argc, char **argv) {
   /**
    *  hypertable_test
    */
-  commandStr = (std::string)"./hypertable --no-prompt --config hypertable.cfg < hypertable_test.hql > hypertable_test.output 2>&1";
+  commandStr = "./hypertable --no-prompt --config hypertable.cfg < hypertable_test.hql > hypertable_test.output 2>&1";
   if (system(commandStr.c_str()) != 0)
     return 1;
 
-  commandStr = (std::string)"diff hypertable_test.output hypertable_test.golden";
+  commandStr = "diff hypertable_test.output hypertable_test.golden";
   if (system(commandStr.c_str()) != 0)
     return 1;
 

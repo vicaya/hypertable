@@ -56,7 +56,7 @@ HqlCommandInterpreter::HqlCommandInterpreter(Client *client) : m_client(client) 
 /**
  *
  */
-void HqlCommandInterpreter::execute_line(std::string &line) {
+void HqlCommandInterpreter::execute_line(const String &line) {
   std::string schema_str;
   std::string out_str;
   hql_interpreter_state state;

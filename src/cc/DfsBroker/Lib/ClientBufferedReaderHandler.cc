@@ -31,10 +31,13 @@ using namespace Hypertable;
 /**
  *
  */
-ClientBufferedReaderHandler::ClientBufferedReaderHandler(DfsBroker::Client *client, uint32_t fd, uint32_t buf_size, uint32_t outstanding, uint64_t start_offset, uint64_t end_offset) : m_client(client), m_fd(fd), m_read_size(buf_size), m_eof(false), m_error(Error::OK) {
+ClientBufferedReaderHandler::ClientBufferedReaderHandler(
+    DfsBroker::Client *client, uint32_t fd, uint32_t buf_size,
+    uint32_t outstanding, uint64_t start_offset, uint64_t end_offset) :
+    m_client(client), m_fd(fd), m_read_size(buf_size), m_eof(false),
+    m_error(Error::OK) {
 
   m_max_outstanding = outstanding;
-
   m_end_offset = end_offset;
   m_outstanding_offset = start_offset;
   m_actual_offset = start_offset;
@@ -43,11 +46,10 @@ ClientBufferedReaderHandler::ClientBufferedReaderHandler(DfsBroker::Client *clie
    * Seek to initial offset
    */
   if (start_offset > 0) {
-    if ((m_error = m_client->seek(m_fd, start_offset)) != Error::OK) {
-      // TODO: throw exception
-      HT_ERRORF("Problem seeking to position '%lld' in file", start_offset);
+    try { m_client->seek(m_fd, start_offset); }
+    catch (...) {
       m_eof = true;
-      return;
+      throw;
     }
   }
 
@@ -62,9 +64,11 @@ ClientBufferedReaderHandler::ClientBufferedReaderHandler(DfsBroker::Client *clie
       }
       else
 	toread = m_read_size;
-      if ((m_error = m_client->read(m_fd, toread, this)) != Error::OK) {
-	m_eof = true;
-	break;
+
+      try { m_client->read(m_fd, toread, this); }
+      catch (...) {
+        m_eof = true;
+        throw;
       }
       m_outstanding_offset -= toread;
     }
@@ -75,10 +79,16 @@ ClientBufferedReaderHandler::ClientBufferedReaderHandler(DfsBroker::Client *clie
 
 
 ClientBufferedReaderHandler::~ClientBufferedReaderHandler() {
-  boost::mutex::scoped_lock lock(m_mutex);
-  m_eof = true;
-  while (m_outstanding > 0)
-    m_cond.wait(lock);
+  try {
+    boost::mutex::scoped_lock lock(m_mutex);
+    m_eof = true;
+
+    while (m_outstanding > 0)
+      m_cond.wait(lock);
+  }
+  catch (...) {
+    HT_ERROR("synchronization error");
+  }
 }
 
 
@@ -93,22 +103,20 @@ void ClientBufferedReaderHandler::handle(EventPtr &eventPtr) {
 
   if (eventPtr->type == Event::MESSAGE) {
     if ((m_error = (int)Protocol::response_code(eventPtr)) != Error::OK) {
-      HT_ERRORF("DfsBroker 'read' error (amount=%d, fd=%d) : %s",
-		   m_read_size, m_fd, Protocol::string_format_message(eventPtr).c_str());
+      HT_ERRORF("DFS read error (amount=%u, fd=%d) : %s",
+		m_read_size, m_fd,
+                Protocol::string_format_message(eventPtr).c_str());
       m_eof = true;
       return;
     }
     m_queue.push(eventPtr);
 
-    {
-      uint64_t offset;
-      uint32_t amount;
-      Filesystem::decode_response_read_header(eventPtr, &offset, &amount, 0);
-      m_actual_offset += amount;
-      if (amount < m_read_size) {
-	//HT_ERRORF("short read %ld < %ld (actual=%ld, end=%ld)", amount, (int32_t)m_read_size, m_actual_offset, m_end_offset);
-	m_eof = true;
-      }
+    uint64_t offset;
+    size_t amount = Filesystem::decode_response_read_header(eventPtr, &offset);
+    m_actual_offset += amount;
+
+    if (amount < m_read_size) {
+      m_eof = true;
     }
   }
   else if (eventPtr->type == Event::ERROR) {
@@ -118,7 +126,7 @@ void ClientBufferedReaderHandler::handle(EventPtr &eventPtr) {
   }
   else {
     HT_ERRORF("%s", eventPtr->toString().c_str());
-    assert(!"Not supposed to receive this type of event!");
+    m_error = Error::FAILED_EXPECTATION;
   }
 
   m_cond.notify_all();
@@ -129,37 +137,40 @@ void ClientBufferedReaderHandler::handle(EventPtr &eventPtr) {
 /**
  *
  */
-int ClientBufferedReaderHandler::read(uint8_t *buf, uint32_t len, uint32_t *nreadp) {
+size_t
+ClientBufferedReaderHandler::read(void *buf, size_t len) {
   boost::mutex::scoped_lock lock(m_mutex);
-  uint8_t *ptr = buf;
-  uint32_t nleft = len;
-  uint32_t available;
+  uint8_t *ptr = (uint8_t *)buf;
+  long nleft = len;
+  long available, nread;
 
   while (true) {
 
     while (m_queue.empty() && !m_eof)
       m_cond.wait(lock);
 
-    if (m_error != Error::OK || m_queue.empty()) {
-      HT_ERRORF("return 1 error=%d", m_error);
-      return m_error;
-    }
+    if (m_error != Error::OK)
+      throw Exception(m_error);
+      
+    if (m_queue.empty())
+      throw Exception(Error::FAILED_EXPECTATION, "empty queue");
 
     if (m_ptr == 0) {
       uint64_t offset;
       uint32_t amount;
       EventPtr &eventPtr = m_queue.front();
-      Filesystem::decode_response_read_header(eventPtr, &offset, &amount, &m_ptr);
+      amount = Filesystem::decode_response_read_header(eventPtr, &offset,
+                                                       &m_ptr);
       m_end_ptr = m_ptr + amount;
     }
 
-    available = m_end_ptr-m_ptr;
+    available = m_end_ptr - m_ptr;
 
     if (available >= nleft) {
       memcpy(ptr, m_ptr, nleft);
-      *nreadp = len;
+      nread = len;
       m_ptr += nleft;
-      if ((m_end_ptr-m_ptr) == 0) {
+      if ((m_end_ptr - m_ptr) == 0) {
 	m_queue.pop();
 	m_ptr = 0;
 	read_ahead();
@@ -170,7 +181,7 @@ int ClientBufferedReaderHandler::read(uint8_t *buf, uint32_t len, uint32_t *nrea
       if (m_eof && m_queue.size() == 1) {
 	m_queue.pop();
 	m_ptr = m_end_ptr = 0;
-	*nreadp = len - nleft;
+	nread = len - nleft;
 	break;
       }
     }
@@ -182,7 +193,8 @@ int ClientBufferedReaderHandler::read(uint8_t *buf, uint32_t len, uint32_t *nrea
     m_ptr = 0;
     read_ahead();
   }
-  return Error::OK;
+
+  return nread;
 }
 
 
@@ -206,9 +218,11 @@ void ClientBufferedReaderHandler::read_ahead() {
     }
     else
       toread = m_read_size;
-    if ((m_error = m_client->read(m_fd, toread, this)) != Error::OK) {
+
+    try { m_client->read(m_fd, toread, this); }
+    catch(...) {
       m_eof = true;
-      break;
+      throw;
     }
     m_outstanding++;
     m_outstanding_offset -= toread;

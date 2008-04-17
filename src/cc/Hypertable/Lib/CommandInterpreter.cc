@@ -28,14 +28,15 @@ using namespace Hypertable;
 
 /**
  */
-CommandInterpreter::CommandInterpreter() : m_timestamp_output_format(TIMESTAMP_FORMAT_DEFAULT) {
-  return;
+CommandInterpreter::CommandInterpreter() :
+    m_timestamp_output_format(TIMESTAMP_FORMAT_DEFAULT) {
 }
 
 
 /**
  */
-void CommandInterpreter::set_timestamp_output_format(std::string format) {
+void
+CommandInterpreter::set_timestamp_output_format(const String &format) {
   if (format == "default")
     m_timestamp_output_format = TIMESTAMP_FORMAT_DEFAULT;
   else if (format == "usecs")

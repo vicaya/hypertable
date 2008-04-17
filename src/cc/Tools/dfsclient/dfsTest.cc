@@ -76,7 +76,6 @@ int main(int argc, char **argv) {
   DfsBroker::Client *client;
   char buf[32];
   std::string testDir, outfileA, outfileB;
-  int error;
 
   fstream filestr ("dfsTest.out", fstream::out);
 
@@ -99,10 +98,7 @@ int main(int argc, char **argv) {
 
   sprintf(buf, "/dfsTest%d", getpid());
   testDir = buf;
-  if ((error = client->mkdirs(testDir)) != Error::OK) {
-    HT_ERRORF("Problem making DFS directory '%s' - %s", testDir.c_str(), Error::get_text(error));
-    exit(1);
-  }
+  client->mkdirs(testDir);
   outfileA = testDir + "/output.a";
   outfileB = testDir + "/output.b";
 
@@ -125,10 +121,7 @@ int main(int argc, char **argv) {
   {
     vector<string> listing;
     
-    if ((error = client->readdir(testDir, listing)) != Error::OK) {
-      HT_ERRORF("Problem listing DFS test directory '%s' - %s", testDir.c_str(), Error::get_text(error));
-      return 1;
-    }
+    client->readdir(testDir, listing);
 
     sort(listing.begin(), listing.end());
 
@@ -141,10 +134,7 @@ int main(int argc, char **argv) {
   if (system("diff dfsTest.out dfsTest.golden"))
     return 1;
 
-  if ((error = client->rmdir(testDir)) != Error::OK) {
-    HT_ERRORF("Problem removing DFS test directory '%s' - %s", testDir.c_str(), Error::get_text(error));
-    return 1;
-  }
+  client->rmdir(testDir);
 
   if (system("diff /usr/share/dict/words output.a"))
     return 1;
