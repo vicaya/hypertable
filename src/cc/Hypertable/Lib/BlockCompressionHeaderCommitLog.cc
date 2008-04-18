@@ -39,12 +39,13 @@ void BlockCompressionHeaderCommitLog::encode(uint8_t **buf_ptr) {
   uint8_t *base = *buf_ptr;
   BlockCompressionHeader::encode(buf_ptr);
   Serialization::encode_long(buf_ptr, m_timestamp);
-  if ((size_t)(*buf_ptr - base) == length()) 
-    write_header_checksum(base);
+  if ((size_t)(*buf_ptr - base) + 2 == length()) 
+    write_header_checksum(base, buf_ptr);
 }
 
 
 int BlockCompressionHeaderCommitLog::decode(uint8_t **buf_ptr, size_t *remaining_ptr) {
+  uint8_t *base = *buf_ptr;
   int error;
 
   if ((error = BlockCompressionHeader::decode(buf_ptr, remaining_ptr)) != Error::OK)
@@ -52,6 +53,11 @@ int BlockCompressionHeaderCommitLog::decode(uint8_t **buf_ptr, size_t *remaining
 
   if (!Serialization::decode_long(buf_ptr, remaining_ptr, &m_timestamp))
     return Error::BLOCK_COMPRESSOR_TRUNCATED;
+
+  if ((size_t)(*buf_ptr - base) == length() - 2) {
+    *buf_ptr += 2;
+    *remaining_ptr -= 2;
+  }
   
   return Error::OK;
 }

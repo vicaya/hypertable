@@ -288,14 +288,14 @@ const char *Range::get_split_row() {
   if (split_rows.size() > 0) {
     boost::mutex::scoped_lock lock(m_mutex);    
     m_split_row = split_rows[split_rows.size()/2];
-    if (m_split_row <= m_start_row || m_split_row >= m_end_row) {
+    if (m_split_row < m_start_row || m_split_row >= m_end_row) {
       split_rows.clear();
       for (size_t i=0; i<m_access_group_vector.size(); i++)
 	m_access_group_vector[i]->get_cached_rows(split_rows);
       if (split_rows.size() > 0) {
 	sort(split_rows.begin(), split_rows.end());
 	m_split_row = split_rows[split_rows.size()/2];
-	if (m_split_row <= m_start_row || m_split_row >= m_end_row) {
+	if (m_split_row < m_start_row || m_split_row >= m_end_row) {
 	  HT_FATALF("Unable to determine split row for range %s[%s..%s]", m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
 	  DUMP_CORE;
 	}

@@ -30,7 +30,7 @@ namespace Hypertable {
   class BlockCompressionHeader {
   public:
 
-    static const size_t LENGTH = 28;
+    static const size_t LENGTH = 26;
 
     BlockCompressionHeader() : m_data_length(0), m_data_zlength(0), m_data_checksum(0), m_compression_type(-1)
     { return; }
@@ -58,7 +58,7 @@ namespace Hypertable {
 
     virtual size_t length() { return LENGTH; }
     virtual void   encode(uint8_t **buf_ptr);
-    virtual void   write_header_checksum(uint8_t *base);
+    virtual void   write_header_checksum(uint8_t *base, uint8_t **buf_ptr);
     virtual int    decode(uint8_t **buf_ptr, size_t *remaining_ptr);
 
   protected:

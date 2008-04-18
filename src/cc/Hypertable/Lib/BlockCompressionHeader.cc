@@ -25,6 +25,7 @@ extern "C" {
 }
 
 #include "AsyncComm/Serialization.h"
+#include "Common/Checksum.h"
 #include "Common/Error.h"
 #include "Common/Logger.h"
 
@@ -42,69 +43,62 @@ void BlockCompressionHeader::encode(uint8_t **buf_ptr) {
   uint8_t *base = *buf_ptr;
   memcpy(*buf_ptr, m_magic, 10);
   (*buf_ptr) += 10;
-  Serialization::encode_short(buf_ptr, 0);
-  Serialization::encode_short(buf_ptr, length());
-  Serialization::encode_short(buf_ptr, m_compression_type);
+  *(*buf_ptr)++ = (uint8_t)length();
+  *(*buf_ptr)++ = (uint8_t)m_compression_type;
   Serialization::encode_int(buf_ptr, m_data_checksum);
   Serialization::encode_int(buf_ptr, m_data_length);
   Serialization::encode_int(buf_ptr, m_data_zlength);
-  if ((size_t)(*buf_ptr - base) == length()) 
-    write_header_checksum(base);
+  if ((size_t)(*buf_ptr - base) + 2 == length())
+    write_header_checksum(base, buf_ptr);
 }
 
-void BlockCompressionHeader::write_header_checksum(uint8_t *base) {
-  uint16_t header_checksum = 0;
-  uint8_t *ptr = base;
-  for (size_t i=0; i<length(); i++)
-    header_checksum += *ptr++;
-  ptr = base + 10;
-  Serialization::encode_short(&ptr, header_checksum);
+void BlockCompressionHeader::write_header_checksum(uint8_t *base, uint8_t **buf_ptr) {
+  uint16_t checksum16 = (uint16_t)(fletcher32(base, *buf_ptr-base) >> 16);
+  Serialization::encode_short(buf_ptr, checksum16);
 }
 
 
 /**
  */
 int BlockCompressionHeader::decode(uint8_t **buf_ptr, size_t *remaining_ptr) {
-  uint16_t header_length, header_checksum, header_checksum_computed = 0;
-  uint8_t *ptr = *buf_ptr;
+  uint8_t *base = *buf_ptr;
+  uint16_t header_length;
+  uint8_t bval;
 
   if (*remaining_ptr < length())
     return Error::BLOCK_COMPRESSOR_TRUNCATED;
 
-  for (size_t i=0; i<length(); i++)
-    header_checksum_computed += *ptr++;
+  // verify checksum
+  {
+    uint16_t header_checksum, header_checksum_computed;
+    size_t remaining = 2;
+    uint8_t *ptr = *buf_ptr + length() - 2;
+    header_checksum_computed = (uint16_t)(fletcher32(*buf_ptr, length()-2) >> 16);
+    Serialization::decode_short(&ptr, &remaining, &header_checksum);
+    if (header_checksum_computed != header_checksum)
+      return Error::BLOCK_COMPRESSOR_BAD_HEADER;
+  }
 
   memcpy(m_magic, *buf_ptr, 10);
   (*buf_ptr) += 10;
   *remaining_ptr -= 10;
 
-  // subtract out the stored checksum bytes
-  header_checksum_computed -= (*buf_ptr)[0];
-  header_checksum_computed -= (*buf_ptr)[1];
-
-  if (!Serialization::decode_short(buf_ptr, remaining_ptr, &header_checksum))
-    return Error::BLOCK_COMPRESSOR_TRUNCATED;
-
-  if (header_checksum_computed != header_checksum)
-    return Error::BLOCK_COMPRESSOR_CHECKSUM_MISMATCH;
-
-  if (!Serialization::decode_short(buf_ptr, remaining_ptr, &header_length))
-    return Error::BLOCK_COMPRESSOR_TRUNCATED;
+  Serialization::decode_byte(buf_ptr, remaining_ptr, &bval);
+  header_length = bval;
   HT_EXPECT(header_length == length(), Error::FAILED_EXPECTATION);
 
-  if (!Serialization::decode_short(buf_ptr, remaining_ptr, &m_compression_type))
-    return Error::BLOCK_COMPRESSOR_TRUNCATED;
+  Serialization::decode_byte(buf_ptr, remaining_ptr, &bval);
+  m_compression_type = bval;
   HT_EXPECT(m_compression_type < BlockCompressionCodec::COMPRESSION_TYPE_LIMIT, Error::FAILED_EXPECTATION);  
 
-  if (!Serialization::decode_int(buf_ptr, remaining_ptr, &m_data_checksum))
-    return Error::BLOCK_COMPRESSOR_TRUNCATED;
+  Serialization::decode_int(buf_ptr, remaining_ptr, &m_data_checksum);
+  Serialization::decode_int(buf_ptr, remaining_ptr, &m_data_length);
+  Serialization::decode_int(buf_ptr, remaining_ptr, &m_data_zlength);
 
-  if (!Serialization::decode_int(buf_ptr, remaining_ptr, &m_data_length))
-    return Error::BLOCK_COMPRESSOR_TRUNCATED;
-
-  if (!Serialization::decode_int(buf_ptr, remaining_ptr, &m_data_zlength))
-    return Error::BLOCK_COMPRESSOR_TRUNCATED;
-
+  if ((size_t)(*buf_ptr - base) == length() - 2) {
+    *buf_ptr += 2;
+    *remaining_ptr -= 2;
+  }
 
   return Error::OK;
 }
