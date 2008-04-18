@@ -22,12 +22,12 @@
 #ifndef HYPERTABLE_COMMITLOGREADER_H
 #define HYPERTABLE_COMMITLOGREADER_H
 
-#include <string>
 #include <vector>
 
 #include <boost/thread/mutex.hpp>
 
 #include "Common/ReferenceCount.h"
+#include "Common/String.h"
 
 #include "BlockCompressionHeaderCommitLog.h"
 #include "CommitLog.h"
@@ -39,38 +39,33 @@ using namespace Hypertable;
 
 namespace Hypertable {
 
-  typedef struct {
-    uint32_t     num;
-    std::string  fname;
-    BlockCompressionHeaderCommitLog trailer;
-  } LogFileInfoT;
-
-  inline bool operator<(const LogFileInfoT &lfi1, const LogFileInfoT &lfi2) {
-    return lfi1.num < lfi2.num;
-  }
-
   class CommitLogReader : public ReferenceCount {
+
   public:
-    CommitLogReader(Filesystem *fs, const std::string &logDir);
+    CommitLogReader(Filesystem *fs, String logDir);
     virtual ~CommitLogReader();
-    virtual void initialize_read(uint64_t timestamp);
-    virtual bool next_block(const uint8_t **blockp, size_t *lenp, BlockCompressionHeaderCommitLog *header);
-    virtual int last_error() { return m_error; }
+
+    bool next_block(const uint8_t **blockp, size_t *lenp, BlockCompressionHeaderCommitLog *header);
+
     void dump_log_metadata();
 
   private:
-    Filesystem               *m_fs;
-    std::string               m_log_dir;
-    std::vector<LogFileInfoT> m_log_file_info;
-    uint64_t                  m_cutoff_time;
-    size_t                    m_cur_log_offset;
-    int32_t                   m_fd;
-    DynamicBuffer             m_block_buffer;
-    DynamicBuffer             m_zblock_buffer;
-    int                       m_error;
-    size_t                    m_fixed_header_length;
-    bool                      m_got_compressor;
-    BlockCompressionCodec     *m_compressor;
+
+    void load_fragments(String &logDir);
+    void load_compressor(uint16_t ztype);
+
+    Filesystem       *m_fs;
+    String            m_log_dir;
+    LogFragmentQueue  m_fragment_queue;
+    LogFragmentStack  m_fragment_stack;
+    size_t            m_cur_log_offset;
+    DynamicBuffer     m_block_buffer;
+
+    typedef __gnu_cxx::hash_map<uint16_t, BlockCompressionCodecPtr> CompressorMap;
+
+    CompressorMap          m_compressor_map;
+    uint16_t               m_compressor_type;
+    BlockCompressionCodec *m_compressor;
 
   };
   typedef boost::intrusive_ptr<CommitLogReader> CommitLogReaderPtr;

@@ -695,8 +695,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifier *table, Range
 	uint64_t timestamp = Global::log->get_timestamp();
 	if ((error = Global::log->link_log(transfer_log_dir, timestamp)) != Error::OK)
 	  throw Exception(error, (std::string)"Unable to link external log '" + transfer_log_dir + "' into commit log");
-	if ((error = range_ptr->replay_transfer_log(transfer_log_dir, timestamp)) != Error::OK)
-	  throw Exception(error, (std::string)"Problem replaying split log '" + transfer_log_dir + "'");
+	range_ptr->replay_transfer_log(transfer_log_dir, timestamp);
       }
     }
 

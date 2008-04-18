@@ -364,3 +364,8 @@ int FileUtils::fremovexattr(int fd, const std::string &name) {
 #endif
 
 }
+
+void FileUtils::add_trailing_slash(std::string &path) {
+  if (path.find('/', path.length()-1) == string::npos)
+    path += "/";
+}

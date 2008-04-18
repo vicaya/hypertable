@@ -34,187 +34,101 @@ extern "C" {
 }
 
 #include "Common/Error.h"
+#include "Common/FileUtils.h"
 #include "Common/Logger.h"
+#include "Common/StringExt.h"
 
 #include "Hypertable/Lib/CompressorFactory.h"
+
+#include "BlockCompressionCodec.h"
 #include "CommitLog.h"
+#include "CommitLogBlockStream.h"
 #include "CommitLogReader.h"
 
 using namespace Hypertable;
 using namespace std;
 
 namespace {
-  const uint32_t READAHEAD_BUFFER_SIZE = 131072;
+  struct reverse_sort_clfi {
+    bool operator()(const CommitLogFileInfo &clfi1, const CommitLogFileInfo &clfi2) const {
+      return clfi1.num >= clfi2.num;
+    }
+  };
 }
 
+
 /**
- *
  */
-CommitLogReader::CommitLogReader(Filesystem *fs, const std::string &logDir) : m_fs(fs), m_log_dir(logDir), m_fd(-1), m_block_buffer(256), m_zblock_buffer(256), m_error(0), m_compressor(0) {
-  LogFileInfoT fileInfo;
-  int32_t fd;
-  vector<string> listing;
-  int64_t flen;
-  uint32_t nread;
-  DynamicBuffer input(0);
-
-  HT_INFOF("Opening commit log %s", logDir.c_str());
-
-  if (m_log_dir.find('/', m_log_dir.length()-1) == string::npos)
-    m_log_dir += "/";
-
-  m_fs->readdir(m_log_dir, listing);
-  m_log_file_info.clear();
-  fileInfo.trailer.set_magic(CommitLog::MAGIC_TRAILER);
-
-  for (size_t i=0; i<listing.size(); i++) {
-    char *endptr;
-    long num = strtol(listing[i].c_str(), &endptr, 10);
-    if (*endptr != 0) {
-      HT_WARNF("Invalid file '%s' found in commit log directory '%s'", listing[i].c_str(), m_log_dir.c_str());
-    }
-    else {
-      fileInfo.num = (uint32_t)num;
-      fileInfo.fname = m_log_dir + listing[i];
-      m_log_file_info.push_back(fileInfo);
-    }
-  }
-
-  sort(m_log_file_info.begin(), m_log_file_info.end());
-
-  input.ensure( BlockCompressionHeaderCommitLog::LENGTH );
-  m_zblock_buffer.ensure( BlockCompressionHeaderCommitLog::LENGTH );
-
-  for (size_t i=0; i<m_log_file_info.size(); i++) {
-
-    m_log_file_info[i].trailer.set_timestamp(0);
-    flen = m_fs->length(m_log_file_info[i].fname);
-
-    if (flen < (int64_t)BlockCompressionHeaderCommitLog::LENGTH)
-      continue;
-
-    fd = m_fs->open(m_log_file_info[i].fname);
-
-    nread = m_fs->pread(fd, input.buf, BlockCompressionHeaderCommitLog::LENGTH,
-                        flen - BlockCompressionHeaderCommitLog::LENGTH);
-    HT_EXPECT(nread != m_fixed_header_length, Error::RESPONSE_TRUNCATED);
-    m_fs->close(fd);
-    input.ptr = input.buf;
-
-    size_t remaining = nread;
-    m_log_file_info[i].trailer.decode(&input.ptr, &remaining);
-
-    if (m_log_file_info[i].trailer.check_magic(CommitLog::MAGIC_TRAILER)) {
-      if (m_compressor == 0) {
-        m_compressor = CompressorFactory::create_block_codec(
-                        (BlockCompressionCodec::Type)
-                        m_log_file_info[i].trailer.get_compression_type());
-	m_got_compressor = true;
-      }
-    }
-    else {
-      m_log_file_info[i].trailer.set_timestamp(0);
-      m_compressor = CompressorFactory::create_block_codec(
-                        BlockCompressionCodec::NONE);
-      m_got_compressor = false;
-    }
-
-    //cout << m_log_file_info[i].num << ":  " << m_log_file_info[i].fname << " " << m_log_file_info[i].timestamp << endl;
-  }
+CommitLogReader::CommitLogReader(Filesystem *fs, String log_dir) : m_fs(fs), m_log_dir(log_dir), m_block_buffer(256), m_compressor(0) {
+  HT_INFOF("Opening commit log %s", log_dir.c_str());
+  load_fragments(log_dir);
 }
 
 
 CommitLogReader::~CommitLogReader() {
-  delete m_compressor;
-}
-
-
-void CommitLogReader::initialize_read(uint64_t timestamp) {
-  m_cutoff_time = timestamp;
-  m_cur_log_offset = 0;
-  m_fd = -1;
 }
 
 
 
 bool CommitLogReader::next_block(const uint8_t **blockp, size_t *lenp, BlockCompressionHeaderCommitLog *header) {
+  int error;
   size_t remaining;
-  uint32_t nread;
-  uint64_t timestamp;
+  CommitLogBlockStream::BlockInfo block_info;
+  DynamicBuffer zblock(0);
 
  try_again:
 
-  if (m_fd == -1) {
-
-    while (m_cur_log_offset < m_log_file_info.size()) {
-      timestamp = m_log_file_info[m_cur_log_offset].trailer.get_timestamp();
-      if (timestamp == 0 || timestamp >= m_cutoff_time)
-	break;
-      m_cur_log_offset++;
-    }
-
-    if (m_cur_log_offset >= m_log_file_info.size())
-      return false;
-
-    m_fd = m_fs->open_buffered(m_log_file_info[m_cur_log_offset].fname,
-                               READAHEAD_BUFFER_SIZE, 2);
-  }
-
-  m_zblock_buffer.ptr = m_zblock_buffer.buf;
-  nread = m_fs->read(m_fd, m_zblock_buffer.ptr,
-                     BlockCompressionHeaderCommitLog::LENGTH);
-    
-  if (nread != BlockCompressionHeaderCommitLog::LENGTH) {
-    HT_ERRORF("Short read of commit log block '%s'",
-              m_log_file_info[m_cur_log_offset].fname.c_str());
-    m_fs->close(m_fd);
-    m_fd = -1;
-    m_cur_log_offset++;
-    m_error = Error::RANGESERVER_TRUNCATED_COMMIT_LOG;
+  if (m_fragment_stack.empty())
     return false;
-  }
-  else {
-    remaining = nread;
 
-    // decode header
-    header->decode(&m_zblock_buffer.ptr, &remaining);
+  if (m_fragment_stack.top().block_stream == 0)
+    m_fragment_stack.top().block_stream = new CommitLogBlockStream(m_fs, m_fragment_stack.top().log_dir + m_fragment_stack.top().num );
 
-    if (header->check_magic(CommitLog::MAGIC_TRAILER)) {
-      // TODO: this could be asynchronous
-      m_fs->close(m_fd);
-      m_fd = -1;
-      m_cur_log_offset++;
-      goto try_again;
-    }
+  if (!m_fragment_stack.top().block_stream->next(&zblock.buf, &zblock.size, &block_info)) {
+    delete m_fragment_stack.top().block_stream;
+    m_fragment_stack.top().block_stream = 0;
+    m_fragment_queue.push_back( m_fragment_stack.top() );
+    m_fragment_stack.pop();
+    goto try_again;
   }
 
-  m_zblock_buffer.ensure(header->get_data_zlength());
-  nread = m_fs->read(m_fd, m_zblock_buffer.ptr, header->get_data_zlength());
-      
-  if (nread != header->get_data_zlength()) {
-    HT_ERRORF("Short read of commit log block '%s'",
-              m_log_file_info[m_cur_log_offset].fname.c_str());
-    m_fs->close(m_fd);
-    m_fd = -1;
-    m_error = Error::RANGESERVER_TRUNCATED_COMMIT_LOG;
-    return false;
+  if (zblock.buf == 0) {
+    HT_ERRORF("Corruption detected in CommitLog fragment %s starting at postion %lld for %lld bytes - %s",
+	      m_fragment_stack.top().block_stream->get_fname().c_str(),
+	      block_info.start_offset, block_info.end_offset - block_info.start_offset,
+	      Error::get_text(block_info.error));
+    goto try_again;    
   }
 
-  m_zblock_buffer.ptr += nread;
+  zblock.clear();
 
-  if (!m_got_compressor && header->get_compression_type() != BlockCompressionCodec::NONE) {
-    delete m_compressor;
-    m_compressor = CompressorFactory::create_block_codec(
-        (BlockCompressionCodec::Type)header->get_compression_type());
-    m_got_compressor = true;
+  remaining = zblock.size;
+
+  // decode header
+  if ((error = header->decode(&zblock.ptr, &remaining)) != Error::OK) {
+    HT_ERRORF("Corrupted header detected in CommitLog fragment %s starting at postion %lld (block len = %lld) - %s",
+	      m_fragment_stack.top().block_stream->get_fname().c_str(),
+	      block_info.start_offset, block_info.end_offset - block_info.start_offset,
+	      Error::get_text(error));
+    goto try_again;    
   }
+
+  zblock.ptr = zblock.buf + zblock.size;
+
+  load_compressor(header->get_compression_type());
 
   /**
    * decompress block
    */
-  if ((m_error = m_compressor->inflate(m_zblock_buffer, m_block_buffer, *header)) != Error::OK)
-    return false;
+  if ((error = m_compressor->inflate(zblock, m_block_buffer, *header)) != Error::OK) {
+    HT_ERRORF("Inflate error in CommitLog fragment %s starting at postion %lld (block len = %lld) - %s",
+	      m_fragment_stack.top().block_stream->get_fname().c_str(),
+	      block_info.start_offset, block_info.end_offset - block_info.start_offset,
+	      Error::get_text(error));
+    goto try_again;
+  }
 
+  zblock.release();
   *blockp = m_block_buffer.buf;
   *lenp = m_block_buffer.fill();
 
@@ -227,6 +141,69 @@ bool CommitLogReader::next_block(const uint8_t **blockp, size_t *lenp, BlockComp
  *
  */
 void CommitLogReader::dump_log_metadata() {
+  /*
   for (size_t i=0; i<m_log_file_info.size(); i++)
     cout << "LOG FRAGMENT name='" << m_log_file_info[i].fname << "' timestamp=" << m_log_file_info[i].trailer.get_timestamp() << endl;
+  */
+}
+
+
+void CommitLogReader::load_fragments(String &log_dir) {
+  vector<string> listing;
+  CommitLogFileInfo file_info;
+  vector<CommitLogFileInfo> fragment_vector;
+  struct reverse_sort_clfi fragment_ordering_obj;
+
+  FileUtils::add_trailing_slash( log_dir );
+  
+  m_fs->readdir(log_dir, listing);
+
+  if (listing.size() == 0)
+    return;
+
+  for (size_t i=0; i<listing.size(); i++) {
+    char *endptr;
+    long num = strtol(listing[i].c_str(), &endptr, 10);
+    if (*endptr != 0) {
+      HT_WARNF("Invalid file '%s' found in commit log directory '%s'", listing[i].c_str(), log_dir.c_str());
+    }
+    else {
+      file_info.num = (uint32_t)num;
+      file_info.log_dir = log_dir;
+      file_info.purge_log_dir = false;
+      file_info.timestamp = 0;
+      file_info.block_stream = 0;
+      file_info.size = m_fs->length(log_dir + listing[i]);
+      fragment_vector.push_back(file_info);
+    }
+  }
+
+  sort(fragment_vector.begin(), fragment_vector.end(), fragment_ordering_obj);
+
+  // set the "purge log dir" bit on the most recent fragment
+  fragment_vector[0].purge_log_dir = true;
+
+  for (size_t i=0; i<fragment_vector.size(); i++)
+    m_fragment_stack.push(fragment_vector[i]);
+
+}
+
+
+void CommitLogReader::load_compressor(uint16_t ztype) {
+  BlockCompressionCodecPtr compressor_ptr;
+
+  if (m_compressor != 0 && ztype == m_compressor_type)
+    return;
+  if (ztype >= BlockCompressionCodec::COMPRESSION_TYPE_LIMIT)
+    throw Hypertable::Exception(Error::BLOCK_COMPRESSOR_UNSUPPORTED_TYPE, (String)"Invalid compression type - " + ztype);
+
+  compressor_ptr = m_compressor_map[ztype];
+
+  if (!compressor_ptr) {
+    compressor_ptr = CompressorFactory::create_block_codec((BlockCompressionCodec::Type)ztype);
+    m_compressor_map[ztype] = compressor_ptr;
+  }
+
+  m_compressor_type = ztype;
+  m_compressor = compressor_ptr.get();
 }

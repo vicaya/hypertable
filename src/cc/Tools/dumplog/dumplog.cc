@@ -124,7 +124,9 @@ int main(int argc, char **argv) {
 
   log_reader = new CommitLogReader(dfs_client, log_dir);
 
-  log_reader->dump_log_metadata();
+  //log_reader->dump_log_metadata();
+
+  cout << "FIX ME!!" << endl;
 
   delete log_reader;
 

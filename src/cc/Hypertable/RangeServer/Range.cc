@@ -475,7 +475,7 @@ void Range::do_split() {
     }
 
     // Close and uninstall split log
-    if ((error = m_split_log_ptr->close(Global::log->get_timestamp())) != Error::OK) {
+    if ((error = m_split_log_ptr->close()) != Error::OK) {
       HT_ERRORF("Problem closing split log '%s' - %s", m_split_log_ptr->get_log_dir().c_str(), Error::get_text(error));
       // return error here (unblock updates)
       DUMP_CORE;
@@ -602,9 +602,8 @@ void Range::unlock(uint64_t real_timestamp) {
 
 /**
  */
-int Range::replay_transfer_log(const string &log_dir, uint64_t real_timestamp) {
-  int error;
-  CommitLogReaderPtr commit_log_reader_ptr = new CommitLogReader(Global::dfs, log_dir);
+void Range::replay_transfer_log(const string &log_dir, uint64_t real_timestamp) {
+  CommitLogReaderPtr commit_log_reader_ptr;
   BlockCompressionHeaderCommitLog header;
   const uint8_t *base, *ptr, *end;
   size_t len;
@@ -613,49 +612,52 @@ int Range::replay_transfer_log(const string &log_dir, uint64_t real_timestamp) {
   size_t count = 0;
   TableIdentifier table_id;
   uint64_t memory_added = 0;
+
+  try {
+
+    commit_log_reader_ptr = new CommitLogReader(Global::dfs, log_dir);
   
-  commit_log_reader_ptr->initialize_read(0);
+    while (commit_log_reader_ptr->next_block(&base, &len, &header)) {
 
-  while (commit_log_reader_ptr->next_block(&base, &len, &header)) {
+      ptr = base;
+      end = base + len;
 
-    ptr = base;
-    end = base + len;
+      table_id.decode((uint8_t **)&ptr, &len);
 
-    table_id.decode((uint8_t **)&ptr, &len);
+      if (strcmp(m_identifier.name, table_id.name))
+	throw Exception(Error::RANGESERVER_CORRUPT_COMMIT_LOG, 
+			format("Table name mis-match in split log replay \"%s\" != \"%s\"", m_identifier.name, table_id.name));
 
-    if (strcmp(m_identifier.name, table_id.name)) {
-      HT_ERRORF("Table name mis-match in split log replay \"%s\" != \"%s\"", m_identifier.name, table_id.name);
-      return Error::RANGESERVER_CORRUPT_COMMIT_LOG;
+      memory_added += len;
+
+      while (ptr < end) {
+	key = (ByteString32T *)ptr;
+	ptr += Length(key);
+	value = (ByteString32T *)ptr;
+	ptr += Length(value);
+	add(key, value, real_timestamp);
+	count++;
+      }
+      nblocks++;
     }
 
-    memory_added += len;
-
-    while (ptr < end) {
-      key = (ByteString32T *)ptr;
-      ptr += Length(key);
-      value = (ByteString32T *)ptr;
-      ptr += Length(value);
-      add(key, value, real_timestamp);
-      count++;
+    {
+      boost::mutex::scoped_lock lock(m_mutex);
+      HT_INFOF("Replayed %d updates (%d blocks) from split log '%s' into %s[%s..%s]",
+	       count, nblocks, log_dir.c_str(), m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
     }
-    nblocks++;
+
+    Global::memory_tracker.add_memory(memory_added);
+    Global::memory_tracker.add_items(count);
+
+    m_added_inserts = 0;
+    memset(m_added_deletes, 0, 3*sizeof(int64_t));
+
   }
-
-  {
-    boost::mutex::scoped_lock lock(m_mutex);
-    HT_INFOF("Replayed %d updates (%d blocks) from split log '%s' into %s[%s..%s]",
-		count, nblocks, log_dir.c_str(), m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
+  catch (Hypertable::Exception &e) {
+    HT_ERRORF("Problem replaying split log - %s '%s'", Error::get_text(e.code()), e.what());
+    throw;
   }
-
-  Global::memory_tracker.add_memory(memory_added);
-  Global::memory_tracker.add_items(count);
-
-  m_added_inserts = 0;
-  memset(m_added_deletes, 0, 3*sizeof(int64_t));
-
-  error = commit_log_reader_ptr->last_error();
-
-  return Error::OK;
 }
 
 

@@ -24,7 +24,7 @@
 
 #include <deque>
 #include <map>
-#include <string>
+#include <stack>
 
 #include <boost/thread/xtime.hpp>
 
@@ -35,11 +35,14 @@ extern "C" {
 #include <boost/thread/mutex.hpp>
 
 #include "Common/Properties.h"
+#include "Common/String.h"
 #include "Common/ReferenceCount.h"
 
 #include "Hypertable/Lib/BlockCompressionCodec.h"
 #include "Hypertable/Lib/Filesystem.h"
 #include "Hypertable/Lib/Types.h"
+
+#include "CommitLogBlockStream.h"
 
 namespace Hypertable {
 
@@ -51,10 +54,18 @@ namespace Hypertable {
   typedef std::map<uint64_t, LogFragmentPriorityData> LogFragmentPriorityMap;
 
   typedef struct {
-    std::string  fname;
-    uint64_t     size;
-    uint64_t     timestamp;
+    String     log_dir;
+    uint32_t   num;
+    uint64_t   size;
+    uint64_t   timestamp;
+    bool       purge_log_dir;
+    CommitLogBlockStream *block_stream;
   } CommitLogFileInfo;
+
+  typedef std::deque<CommitLogFileInfo> LogFragmentQueue;
+  typedef std::stack<CommitLogFileInfo> LogFragmentStack;
+
+  class CommitLogReader;
 
 
   /**
@@ -63,10 +74,10 @@ namespace Hypertable {
    * are named starting with '0' and will periodically roll, which means that a trailer
    * is written to the end of the file, the file is closed, and then the numeric name is
    * incremented by one and opened.  Periodically when old parts of the log are no
-   * longer needed, they get purged.  The size of each file is determined by the
-   * following config file property:
+   * longer needed, they get purged.  The size of each log fragment file is determined by
+   * the following config file property:
    *<pre>
-   * Hypertable.RangeServer.logFileSize
+   * Hypertable.RangeServer.CommitLog.RollLimit
    *</pre>
    */
   class CommitLog : public ReferenceCount {
@@ -79,7 +90,7 @@ namespace Hypertable {
      * @param log_dir directory of the commit log
      * @param props_ptr reference to properties map
      */
-    CommitLog(Filesystem *fs, const std::string &log_dir, PropertiesPtr &props_ptr) {
+    CommitLog(Filesystem *fs, const String &log_dir, PropertiesPtr &props_ptr) {
       initialize(fs, log_dir, props_ptr);
     }
 
@@ -89,7 +100,7 @@ namespace Hypertable {
      * @param fs filesystem to write log into
      * @param log_dir directory of the commit log
      */
-    CommitLog(Filesystem *fs, const std::string &log_dir) {
+    CommitLog(Filesystem *fs, const String &log_dir) {
       PropertiesPtr props_ptr(0);
       initialize(fs, log_dir, props_ptr);
     }
@@ -122,9 +133,9 @@ namespace Hypertable {
 
     /** Closes the log.  Writes the trailer and closes the file
      *
-     * @param timestamp timestamp to write into trailer
+     * @return Error::OK on success or error code on failure
      */
-    int close(uint64_t timestamp);
+    int close();
 
     /** Purges the log.  Removes all of the log fragments that have
      * a timestamp that is less than the given timestamp.
@@ -147,35 +158,34 @@ namespace Hypertable {
     /**
      * Returns the maximum size of each log fragment file
      */
-    int64_t get_max_fragment_size() { return m_max_file_size; }
+    int64_t get_max_fragment_size() { return m_max_fragment_size; }
 
     /**
      * Returns the log directory
      */
-    std::string get_log_dir() {
+    String get_log_dir() {
       return m_log_dir;
     }
 
     static const char MAGIC_UPDATES[10];
     static const char MAGIC_LINK[10];
-    static const char MAGIC_TRAILER[10];
 
   private:
 
-    void initialize(Filesystem *fs, const std::string &log_dir, PropertiesPtr &props_ptr);
+    void initialize(Filesystem *fs, const String &log_dir, PropertiesPtr &props_ptr);
     int roll();
     int compress_and_write(DynamicBuffer &input, BlockCompressionHeader *header, uint64_t timestamp);
 
-    boost::mutex               m_mutex;
-    Filesystem                *m_fs;
-    BlockCompressionCodec     *m_compressor;
-    std::string                m_log_dir;
-    std::string                m_log_file;
-    int64_t                    m_max_file_size;
-    int64_t                    m_cur_log_length;
-    uint32_t                   m_cur_log_num;
-    int32_t                    m_fd;
-    uint64_t                   m_last_timestamp;
+    boost::mutex            m_mutex;
+    Filesystem             *m_fs;
+    BlockCompressionCodec  *m_compressor;
+    String                  m_log_dir;
+    String                  m_cur_fragment_fname;
+    int64_t                 m_cur_fragment_length;
+    uint32_t                m_cur_fragment_num;
+    int64_t                 m_max_fragment_size;
+    int32_t                 m_fd;
+    uint64_t                m_last_timestamp;
     std::deque<CommitLogFileInfo>   m_file_info_queue;
   };
 

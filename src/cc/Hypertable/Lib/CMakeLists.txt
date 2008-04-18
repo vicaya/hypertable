@@ -29,6 +29,7 @@ CompressorFactory.cc
 Client.cc
 CommandInterpreter.cc
 CommandShell.cc
+CommitLogBlockStream.cc
 CommitLog.cc
 CommitLogReader.cc
 Defaults.cc
@@ -105,8 +106,8 @@ add_executable(bmzip bmz/bmzip.c)
 target_link_libraries(bmzip Hypertable log4cpp)
 
 # commit_log_test
-#add_executable (commit_log_test tests/commit_log_test.cc)
-#target_link_libraries (commit_log_test HyperDfsBroker Hypertable ${BOOST_LIB} log4cpp ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES})
+add_executable (commit_log_test tests/commit_log_test.cc)
+target_link_libraries (commit_log_test HyperDfsBroker Hypertable ${BOOST_LIB} log4cpp ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES})
 
 
 #
@@ -142,7 +143,7 @@ add_test (BlockCompressor-LZO compressor_test lzo)
 add_test (BlockCompressor-NONE compressor_test none)
 add_test (BlockCompressor-QUICKLZ compressor_test quicklz)
 add_test (BlockCompressor-ZLIB compressor_test zlib)
-#add_test (CommitLog commit_log_test)
+add_test (CommitLog commit_log_test)
 
 file (GLOB HEADERS *.h)
 

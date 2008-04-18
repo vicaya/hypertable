@@ -26,6 +26,7 @@
 #include <vector>
 #include "Common/Thread.h"
 #include "Common/Error.h"
+#include "Common/ReferenceCount.h"
 
 #include "BlockCompressionHeader.h"
 
@@ -36,7 +37,7 @@ namespace Hypertable {
   /**
    * Abstract base class for block compression codecs.
    */
-  class BlockCompressionCodec {
+  class BlockCompressionCodec : public ReferenceCount {
   public:
     enum Type { UNKNOWN=-1, NONE=0, BMZ=1, ZLIB=2, LZO=3, QUICKLZ=4, COMPRESSION_TYPE_LIMIT=5 };
     typedef std::vector<std::string> Args;
@@ -56,6 +57,8 @@ namespace Hypertable {
 
     HT_THREAD_ID_DECL(m_creator_thread);
   };
+  typedef boost::intrusive_ptr<BlockCompressionCodec> BlockCompressionCodecPtr;
+  
 
 } // namespace Hypertable
 
