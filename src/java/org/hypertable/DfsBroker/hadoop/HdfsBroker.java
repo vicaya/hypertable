@@ -478,8 +478,12 @@ public class HdfsBroker {
 	    if (mVerbose)
 		log.info("Removing directory '" + fileName + "'");
 
-	    if (!mFilesystem.delete(new Path(fileName)))
-		throw new IOException("Problem deleting directory '" + fileName + "'");
+	    if (!mFilesystem.delete(new Path(fileName))) {
+		if (!mFilesystem.exists(new Path(fileName)))
+		    throw new FileNotFoundException("Problem deleting path '" + fileName + "'");
+		else
+		    throw new IOException("Problem deleting path '" + fileName + "'");
+	    }
 
 	    error = cb.response_ok();
 	    
