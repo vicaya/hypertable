@@ -70,11 +70,7 @@ CommitLogReader::~CommitLogReader() {
 
 
 
-bool CommitLogReader::next_block(const uint8_t **blockp, size_t *lenp, BlockCompressionHeaderCommitLog *header) {
-  int error;
-  size_t remaining;
-  CommitLogBlockStream::BlockInfo block_info;
-  DynamicBuffer zblock(0);
+bool CommitLogReader::next_raw_block(CommitLogBlockInfo *infop, BlockCompressionHeaderCommitLog *header) {
 
  try_again:
 
@@ -82,9 +78,9 @@ bool CommitLogReader::next_block(const uint8_t **blockp, size_t *lenp, BlockComp
     return false;
 
   if (m_fragment_stack.top().block_stream == 0)
-    m_fragment_stack.top().block_stream = new CommitLogBlockStream(m_fs, m_fragment_stack.top().log_dir + m_fragment_stack.top().num );
+    m_fragment_stack.top().block_stream = new CommitLogBlockStream(m_fs, m_fragment_stack.top().log_dir, format("%u", m_fragment_stack.top().num) );
 
-  if (!m_fragment_stack.top().block_stream->next(&zblock.buf, &zblock.size, &block_info)) {
+  if (!m_fragment_stack.top().block_stream->next(infop, header)) {
     delete m_fragment_stack.top().block_stream;
     m_fragment_stack.top().block_stream = 0;
     m_fragment_queue.push_back( m_fragment_stack.top() );
@@ -92,60 +88,50 @@ bool CommitLogReader::next_block(const uint8_t **blockp, size_t *lenp, BlockComp
     goto try_again;
   }
 
-  if (zblock.buf == 0) {
-    HT_ERRORF("Corruption detected in CommitLog fragment %s starting at postion %lld for %lld bytes - %s",
-	      m_fragment_stack.top().block_stream->get_fname().c_str(),
-	      block_info.start_offset, block_info.end_offset - block_info.start_offset,
-	      Error::get_text(block_info.error));
-    goto try_again;    
-  }
-
-  zblock.clear();
-
-  remaining = zblock.size;
-
-  // decode header
-  if ((error = header->decode(&zblock.ptr, &remaining)) != Error::OK) {
-    HT_ERRORF("Corrupted header detected in CommitLog fragment %s starting at postion %lld (block len = %lld) - %s",
-	      m_fragment_stack.top().block_stream->get_fname().c_str(),
-	      block_info.start_offset, block_info.end_offset - block_info.start_offset,
-	      Error::get_text(error));
-    goto try_again;    
-  }
-
-  zblock.ptr = zblock.buf + zblock.size;
-
-  load_compressor(header->get_compression_type());
-
-  /**
-   * decompress block
-   */
-  if ((error = m_compressor->inflate(zblock, m_block_buffer, *header)) != Error::OK) {
-    HT_ERRORF("Inflate error in CommitLog fragment %s starting at postion %lld (block len = %lld) - %s",
-	      m_fragment_stack.top().block_stream->get_fname().c_str(),
-	      block_info.start_offset, block_info.end_offset - block_info.start_offset,
-	      Error::get_text(error));
-    goto try_again;
-  }
-
-  zblock.release();
-  *blockp = m_block_buffer.buf;
-  *lenp = m_block_buffer.fill();
-
   return true;
 }
 
 
 
-/**
- *
- */
-void CommitLogReader::dump_log_metadata() {
-  /*
-  for (size_t i=0; i<m_log_file_info.size(); i++)
-    cout << "LOG FRAGMENT name='" << m_log_file_info[i].fname << "' timestamp=" << m_log_file_info[i].trailer.get_timestamp() << endl;
-  */
+bool CommitLogReader::next(const uint8_t **blockp, size_t *lenp, BlockCompressionHeaderCommitLog *header) {
+  int error;
+  CommitLogBlockInfo binfo;
+
+  while (next_raw_block(&binfo, header)) {
+
+    if (binfo.error == Error::OK) {
+      DynamicBuffer zblock(0);
+
+      m_block_buffer.clear();
+      zblock.buf = binfo.block_ptr;
+      zblock.ptr = binfo.block_ptr + binfo.block_len;
+
+      load_compressor(header->get_compression_type());
+
+      // Decompress
+      if ((error = m_compressor->inflate(zblock, m_block_buffer, *header)) != Error::OK) {
+	HT_ERRORF("Inflate error in CommitLog fragment %s starting at postion %lld (block len = %lld) - %s",
+		  m_fragment_stack.top().block_stream->get_fname().c_str(),
+		  binfo.start_offset, binfo.end_offset - binfo.start_offset,
+		  Error::get_text(error));
+	continue;
+      }
+ 
+      zblock.release();
+      *blockp = m_block_buffer.buf;
+      *lenp = m_block_buffer.fill();
+      return true;
+    }
+
+    HT_ERRORF("Corruption detected in CommitLog fragment %s starting at postion %lld for %lld bytes - %s",
+	      m_fragment_stack.top().block_stream->get_fname().c_str(),
+	      binfo.start_offset, binfo.end_offset - binfo.start_offset,
+	      Error::get_text(binfo.error));
+  }
+
+  return false;
 }
+
 
 
 void CommitLogReader::load_fragments(String &log_dir) {

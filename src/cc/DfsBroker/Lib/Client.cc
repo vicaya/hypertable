@@ -130,9 +130,10 @@ Client::open_buffered(const String &name, uint32_t buf_size,
   }
   catch (Exception &e) {
     throw Exception(e.code(), format("Error opening buffered DFS file=%s "
-                    "buf_size=%u outstanding=%u start_offset=%llu "
-                    "end_offset=%llu: %s", name.c_str(), buf_size, outstanding,
-                    start_offset, end_offset, e.what()));
+				     "buf_size=%u outstanding=%u start_offset=%llu "
+				     "end_offset=%llu: %s", name.c_str(), buf_size, outstanding,
+				     (long long unsigned int)start_offset,
+				     (long long unsigned int)end_offset, e.what()));
   }
 }
 
@@ -324,7 +325,7 @@ Client::seek(int32_t fd, uint64_t offset, DispatchHandler *handler) {
   try { send_message(cbufPtr, handler); }
   catch (Exception &e) {
     throw Exception(e.code(), format("Error seeking to %llu on DFS fd %d: %s",
-                    (uint64_t)offset, (int)fd, e.what()));
+				     (long long unsigned int)offset, (int)fd, e.what()));
   }
 }
 
@@ -344,7 +345,7 @@ Client::seek(int32_t fd, uint64_t offset) {
   }
   catch (Exception &e) {
     throw Exception(e.code(), format("Error seeking to %llu on DFS fd %d: %s",
-                    (uint64_t)offset, (int)fd, e.what()));
+				     (long long unsigned int)offset, (int)fd, e.what()));
   }
 }
 
@@ -460,8 +461,10 @@ Client::pread(int32_t fd, size_t len, uint64_t offset,
 
   try { send_message(cbufPtr, handler); }
   catch (Exception &e) {
-    throw Exception(e.code(), format("Error sending pread request at byte %llu "
-                    "on DFS fd %d: %s", (uint64_t)offset, (int)fd, e.what()));
+    throw Exception(e.code(),
+		    format("Error sending pread request at byte %llu "
+			   "on DFS fd %d: %s",
+			   (long long unsigned int)offset, (int)fd, e.what()));
   }
 }
 
@@ -482,8 +485,10 @@ Client::pread(int32_t fd, void *dst, size_t len, uint64_t offset) {
     return decode_response_pread(eventPtr, dst, len);
   }
   catch (Exception &e) {
-    throw Exception(e.code(), format("Error preading at byte %llu on DFS "
-                    "fd %d: %s", (uint64_t)offset, (int)fd, e.what()));
+    throw Exception(e.code(),
+		    format("Error preading at byte %llu on DFS "
+                    "fd %d: %s",
+		   (long long unsigned int)offset, (int)fd, e.what()));
   }
 }
 

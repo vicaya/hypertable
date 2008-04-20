@@ -124,9 +124,27 @@ int main(int argc, char **argv) {
 
   log_reader = new CommitLogReader(dfs_client, log_dir);
 
-  //log_reader->dump_log_metadata();
+  CommitLogBlockInfo binfo;
+  BlockCompressionHeaderCommitLog header;
 
-  cout << "FIX ME!!" << endl;
+  while (log_reader->next_raw_block(&binfo, &header)) {
+
+    if (header.check_magic(CommitLog::MAGIC_DATA)) {
+      printf("DATA frag=\"%s\" start=%09lu end=%09lu ",
+	     binfo.file_fragment, binfo.start_offset, binfo.end_offset);
+
+      if (binfo.error == Error::OK) {
+	printf("ztype=\"%s\" zlen=%u len=%u\n",
+	       BlockCompressionCodec::get_compressor_name(header.get_compression_type()),
+	       header.get_data_zlength(), header.get_data_length());
+      }
+      else
+	printf("error = \"%s\"\n", Error::get_text(binfo.error));
+    }
+    else {
+      printf("TBD\n");
+    }
+  }
 
   delete log_reader;
 

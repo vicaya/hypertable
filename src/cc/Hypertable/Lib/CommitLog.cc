@@ -35,8 +35,8 @@
 
 using namespace Hypertable;
 
-const char CommitLog::MAGIC_UPDATES[10] = { 'L','O','G','U','P','D','A','T','E','S' };
-const char CommitLog::MAGIC_LINK[10]    = { 'L','O','G','L','I','N','K','-','-','-' };
+const char CommitLog::MAGIC_DATA[10] = { 'C','O','M','M','I','T','D','A','T','A' };
+const char CommitLog::MAGIC_LINK[10] = { 'C','O','M','M','I','T','L','I','N','K' };
 
 
 CommitLog::~CommitLog() {
@@ -107,7 +107,7 @@ uint64_t CommitLog::get_timestamp() {
  */
 int CommitLog::write(uint8_t *data, uint32_t len, uint64_t timestamp) {
   int error;
-  BlockCompressionHeaderCommitLog header(MAGIC_UPDATES, timestamp);
+  BlockCompressionHeaderCommitLog header(MAGIC_DATA, timestamp);
   DynamicBuffer input(0);
 
   input.buf = data;

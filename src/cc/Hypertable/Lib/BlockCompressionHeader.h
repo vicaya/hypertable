@@ -40,9 +40,9 @@ namespace Hypertable {
 
     virtual ~BlockCompressionHeader() { return; }
 
-    void set_magic(const char magic[10]) { memcpy(m_magic, magic, 10); }
-    void get_magic(char magic[10]) { memcpy(magic, m_magic, 10); }
-    bool check_magic(const char magic[10]) { return !memcmp(magic, m_magic, 10); }
+    void set_magic(const char *magic) { memcpy(m_magic, magic, 10); }
+    const char *get_magic() { return (const char *)m_magic; }
+    bool check_magic(const char *magic) { return !memcmp(magic, m_magic, 10); }
 
     void     set_data_length(uint32_t length) { m_data_length = length; }
     uint32_t get_data_length() { return m_data_length; }

@@ -18,6 +18,7 @@
 
 set ( Hypertable_SRCS
 ApacheLogParser.cc
+BlockCompressionCodec.cc
 BlockCompressionCodecBmz.cc
 BlockCompressionCodecLzo.cc
 BlockCompressionCodecNone.cc

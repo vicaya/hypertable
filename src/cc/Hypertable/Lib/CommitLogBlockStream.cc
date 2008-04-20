@@ -33,25 +33,24 @@ namespace {
 
 /**
  */
-CommitLogBlockStream::CommitLogBlockStream(Filesystem *fs) : m_fs(fs), m_fd(-1), m_cur_offset(0), m_file_length(0), m_got_header(false), m_block_buffer(BlockCompressionHeaderCommitLog::LENGTH) {
+CommitLogBlockStream::CommitLogBlockStream(Filesystem *fs) : m_fs(fs), m_fd(-1), m_cur_offset(0), m_file_length(0),m_block_buffer(BlockCompressionHeaderCommitLog::LENGTH) {
 }
 
-CommitLogBlockStream::CommitLogBlockStream(Filesystem *fs, const String &fname) : m_fs(fs), m_fd(-1), m_cur_offset(0), m_file_length(0), m_got_header(false), m_block_buffer(BlockCompressionHeaderCommitLog::LENGTH) {
-  load(fname);
+CommitLogBlockStream::CommitLogBlockStream(Filesystem *fs, const String &log_dir, const String &fragment) : m_fs(fs), m_fd(-1), m_cur_offset(0), m_file_length(0), m_block_buffer(BlockCompressionHeaderCommitLog::LENGTH) {
+  load(log_dir, fragment);
 }
 
 CommitLogBlockStream::~CommitLogBlockStream() {
   close();
 }
-
-void CommitLogBlockStream::load(const String &fname) {
+void CommitLogBlockStream::load(const String &log_dir, const String &fragment) {
   if (m_fd != -1)
     close();
-  m_fname = fname;
+  m_fragment = fragment;
+  m_fname = log_dir + fragment;
   m_cur_offset = 0;
-  m_file_length = m_fs->length(fname);
-  m_fd = m_fs->open_buffered(fname, READAHEAD_BUFFER_SIZE, 2);
-  m_got_header = false;
+  m_file_length = m_fs->length(m_fname);
+  m_fd = m_fs->open_buffered(m_fname, READAHEAD_BUFFER_SIZE, 2);
 }  
 
 void CommitLogBlockStream::close() {
@@ -67,7 +66,7 @@ void CommitLogBlockStream::close() {
   }
 }
 
-bool CommitLogBlockStream::next(uint8_t **blockp, size_t *lenp, BlockInfo *infop) {
+bool CommitLogBlockStream::next(CommitLogBlockInfo *infop, BlockCompressionHeaderCommitLog *header) {
   uint32_t nread;
 
   assert(m_fd != -1);
@@ -75,42 +74,36 @@ bool CommitLogBlockStream::next(uint8_t **blockp, size_t *lenp, BlockInfo *infop
   if (m_cur_offset >= m_file_length)
     return false;
 
-  memset(infop, 0, sizeof(BlockInfo));
+  memset(infop, 0, sizeof(CommitLogBlockInfo));
+  infop->file_fragment = m_fragment.c_str();
   infop->start_offset = m_cur_offset;
 
-  if (!m_got_header) {
-    if ((infop->error = load_next_valid_header()) != Error::OK) {
-      infop->end_offset = m_cur_offset;
-      *blockp = 0;
-      *lenp = 0;
-      return true;
-    }
+  if ((infop->error = load_next_valid_header(header)) != Error::OK) {
+    infop->end_offset = m_cur_offset;
+    return true;
   }
 
   m_cur_offset += BlockCompressionHeaderCommitLog::LENGTH;
 
   // check for truncation
-  if ((m_file_length - m_cur_offset) < m_header.get_data_zlength()) {
+  if ((m_file_length - m_cur_offset) < header->get_data_zlength()) {
     infop->end_offset = m_file_length;
     infop->error = Error::RANGESERVER_TRUNCATED_COMMIT_LOG;
     m_cur_offset = m_file_length;
-    *blockp = 0;
-    *lenp = 0;
     return true;
   }
 
-  m_block_buffer.ensure(BlockCompressionHeaderCommitLog::LENGTH + m_header.get_data_zlength());
+  m_block_buffer.ensure(BlockCompressionHeaderCommitLog::LENGTH + header->get_data_zlength());
 
-  nread = m_fs->read(m_fd, m_block_buffer.ptr, m_header.get_data_zlength());
+  nread = m_fs->read(m_fd, m_block_buffer.ptr, header->get_data_zlength());
 
-  HT_EXPECT(nread == m_header.get_data_zlength(), Error::FAILED_EXPECTATION);
+  HT_EXPECT(nread == header->get_data_zlength(), Error::FAILED_EXPECTATION);
 
   m_block_buffer.ptr += nread;
   m_cur_offset += nread;
   infop->end_offset = m_cur_offset;
-
-  *blockp = m_block_buffer.buf;
-  *lenp = m_block_buffer.fill();
+  infop->block_ptr = m_block_buffer.buf;
+  infop->block_len = m_block_buffer.fill();
 
   return true;
 }
@@ -119,7 +112,7 @@ bool CommitLogBlockStream::next(uint8_t **blockp, size_t *lenp, BlockInfo *infop
 
 /**
  */
-int CommitLogBlockStream::load_next_valid_header() {
+int CommitLogBlockStream::load_next_valid_header(BlockCompressionHeaderCommitLog *header) {
   uint32_t nread;
   size_t remaining = BlockCompressionHeaderCommitLog::LENGTH;
 
@@ -129,9 +122,7 @@ int CommitLogBlockStream::load_next_valid_header() {
 
   m_block_buffer.ptr = m_block_buffer.buf;
 
-  HT_EXPECT(m_header.decode(&m_block_buffer.ptr, &remaining) == Error::OK, Error::FAILED_EXPECTATION);
-
-  m_got_header = false;
+  HT_EXPECT(header->decode(&m_block_buffer.ptr, &remaining) == Error::OK, Error::FAILED_EXPECTATION);
 
   return Error::OK;
 }

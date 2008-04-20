@@ -166,7 +166,7 @@ namespace {
     size_t icount;
     BlockCompressionHeaderCommitLog header;
 
-    while (log_reader->next_block(&block, &block_len, &header)) {
+    while (log_reader->next(&block, &block_len, &header)) {
       assert((block_len % 4) == 0);
       icount = block_len / 4;
       iptr = (uint32_t *)block;

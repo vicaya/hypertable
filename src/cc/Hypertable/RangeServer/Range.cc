@@ -617,7 +617,7 @@ void Range::replay_transfer_log(const string &log_dir, uint64_t real_timestamp) 
 
     commit_log_reader_ptr = new CommitLogReader(Global::dfs, log_dir);
   
-    while (commit_log_reader_ptr->next_block(&base, &len, &header)) {
+    while (commit_log_reader_ptr->next(&base, &len, &header)) {
 
       ptr = base;
       end = base + len;

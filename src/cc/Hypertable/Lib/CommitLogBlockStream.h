@@ -33,37 +33,41 @@ using namespace Hypertable;
 
 namespace Hypertable {
 
+  class CommitLogBlockInfo {
+  public:
+    const char *file_fragment;
+    uint8_t *block_ptr;
+    size_t block_len;
+    uint64_t start_offset;
+    uint64_t end_offset;
+    int error;
+  };
+
+
   class CommitLogBlockStream : public ReferenceCount {
 
   public:
 
-    typedef struct {
-      uint64_t start_offset;
-      uint64_t end_offset;
-      int error;
-    } BlockInfo;
-
     CommitLogBlockStream(Filesystem *fs);
-    CommitLogBlockStream(Filesystem *fs, const String &fname);
+    CommitLogBlockStream(Filesystem *fs, const String &log_dir, const String &fragment);
     virtual ~CommitLogBlockStream();
 
-    void load(const String &fname);
+    void load(const String &log_dir, const String &fragment);
     void close();
-    bool next(uint8_t **blockp, size_t *lenp, BlockInfo *infop);
+    bool next(CommitLogBlockInfo *infop, BlockCompressionHeaderCommitLog *header);
 
     String &get_fname() { return m_fname; }
 
   private:
 
-    int load_next_valid_header();
+    int load_next_valid_header(BlockCompressionHeaderCommitLog *header);
     
     Filesystem   *m_fs;
+    String        m_fragment;
     String        m_fname;
     int32_t       m_fd;
     uint64_t      m_cur_offset;
     uint64_t      m_file_length;
-    BlockCompressionHeaderCommitLog m_header;
-    bool m_got_header;
     DynamicBuffer m_block_buffer;
   };
   typedef boost::intrusive_ptr<CommitLogBlockStream> CommitLogBlockStreamPtr;

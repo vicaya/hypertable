@@ -31,7 +31,7 @@
 
 #include "BlockCompressionHeaderCommitLog.h"
 #include "CommitLog.h"
-#include "CommitLogReader.h"
+#include "CommitLogBlockStream.h"
 #include "Filesystem.h"
 #include "Key.h"
 
@@ -45,9 +45,8 @@ namespace Hypertable {
     CommitLogReader(Filesystem *fs, String logDir);
     virtual ~CommitLogReader();
 
-    bool next_block(const uint8_t **blockp, size_t *lenp, BlockCompressionHeaderCommitLog *header);
-
-    void dump_log_metadata();
+    bool next_raw_block(CommitLogBlockInfo *infop, BlockCompressionHeaderCommitLog *header);
+    bool next(const uint8_t **blockp, size_t *lenp, BlockCompressionHeaderCommitLog *header);
 
   private:
 

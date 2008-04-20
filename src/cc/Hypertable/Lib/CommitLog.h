@@ -167,7 +167,7 @@ namespace Hypertable {
       return m_log_dir;
     }
 
-    static const char MAGIC_UPDATES[10];
+    static const char MAGIC_DATA[10];
     static const char MAGIC_LINK[10];
 
   private:
