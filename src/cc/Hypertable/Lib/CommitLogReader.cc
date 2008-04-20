@@ -59,8 +59,7 @@ namespace {
 
 /**
  */
-CommitLogReader::CommitLogReader(Filesystem *fs, String log_dir) : m_fs(fs), m_log_dir(log_dir), m_block_buffer(256), m_compressor(0) {
-  HT_INFOF("Opening commit log %s", log_dir.c_str());
+CommitLogReader::CommitLogReader(Filesystem *fs, String log_dir) : CommitLogBase(log_dir), m_fs(fs), m_block_buffer(256), m_compressor(0) {
   load_fragments(log_dir);
 }
 

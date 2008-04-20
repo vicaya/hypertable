@@ -63,7 +63,7 @@ void BlockCompressionHeader::write_header_checksum(uint8_t *base, uint8_t **buf_
 int BlockCompressionHeader::decode(uint8_t **buf_ptr, size_t *remaining_ptr) {
   uint8_t *base = *buf_ptr;
   uint16_t header_length;
-  uint8_t bval;
+  uint8_t bval = 0;
 
   if (*remaining_ptr < length())
     return Error::BLOCK_COMPRESSOR_TRUNCATED;

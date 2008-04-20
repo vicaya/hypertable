@@ -7,14 +7,14 @@
 // has been acquired (see http://www.quicklz.com/order.html). The commercial license 
 // does not cover derived or ported versions created by third parties under GPL.
 
-// Version 1.30 final
+// Version 1.31 final
 #define QLZ_VERSION_MAJOR 1
 #define QLZ_VERSION_MINOR 3
-#define QLZ_VERSION_REVISION 0
+#define QLZ_VERSION_REVISION 1
 
 // Set following flags according to the manual
 #define COMPRESSION_LEVEL 0
-//#define STREAMING_MODE 2000000
+#define STREAMING_MODE 960000
 #define test_rle
 #define speedup_incompressible
 //#define memory_safe
@@ -854,7 +854,7 @@ size_t qlz_compress(const void *source, char *destination, size_t size, char *sc
 		base = 9;
 
 // if not STREAMING_MODE, then STREAMING_MODE_ROUNDED == 0 and first case (streaming buffer full) is executed unconditionally, functioning as block comp.
-	if (*buffersize + size > STREAMING_MODE_ROUNDED)
+	if (*buffersize + size - 1 >= STREAMING_MODE_ROUNDED)
 	{
 #if (COMPRESSION_LEVEL == 0 && STREAMING_MODE_ROUNDED != 0)
 		memset((void *)hashtable, 0, HASH_SIZE);
@@ -927,7 +927,7 @@ size_t qlz_decompress(const char *source, void *destination, char *scratch)
 
 	size_t dsiz = qlz_size_decompressed((char *)source);
 	size_t csiz = qlz_size_compressed((char *)source);
-	if (*buffersize + qlz_size_decompressed((char *)source) > STREAMING_MODE_ROUNDED) 
+	if (*buffersize + qlz_size_decompressed((char *)source) - 1 >= STREAMING_MODE_ROUNDED) 
 	{	
 		if((*source & 1) == 1)		
 			qlz_decompress_core((const unsigned char *)source + headerlen, destination, dsiz, csiz, (unsigned char*)destination, hashtable);

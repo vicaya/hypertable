@@ -22,6 +22,7 @@
 #ifndef HYPERTABLE_COMMITLOGREADER_H
 #define HYPERTABLE_COMMITLOGREADER_H
 
+#include <stack>
 #include <vector>
 
 #include <boost/thread/mutex.hpp>
@@ -29,8 +30,9 @@
 #include "Common/ReferenceCount.h"
 #include "Common/String.h"
 
+#include "BlockCompressionCodec.h"
 #include "BlockCompressionHeaderCommitLog.h"
-#include "CommitLog.h"
+#include "CommitLogBase.h"
 #include "CommitLogBlockStream.h"
 #include "Filesystem.h"
 #include "Key.h"
@@ -39,14 +41,18 @@ using namespace Hypertable;
 
 namespace Hypertable {
 
-  class CommitLogReader : public ReferenceCount {
+  typedef std::stack<CommitLogFileInfo> LogFragmentStack;
+
+  class CommitLogReader : public CommitLogBase {
 
   public:
-    CommitLogReader(Filesystem *fs, String logDir);
+    CommitLogReader(Filesystem *fs, String log_dir);
     virtual ~CommitLogReader();
 
     bool next_raw_block(CommitLogBlockInfo *infop, BlockCompressionHeaderCommitLog *header);
     bool next(const uint8_t **blockp, size_t *lenp, BlockCompressionHeaderCommitLog *header);
+
+    LogFragmentQueue &get_fragment_queue() { return m_fragment_queue; }
 
   private:
 
@@ -54,8 +60,6 @@ namespace Hypertable {
     void load_compressor(uint16_t ztype);
 
     Filesystem       *m_fs;
-    String            m_log_dir;
-    LogFragmentQueue  m_fragment_queue;
     LogFragmentStack  m_fragment_stack;
     size_t            m_cur_log_offset;
     DynamicBuffer     m_block_buffer;

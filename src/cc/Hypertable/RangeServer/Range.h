@@ -29,6 +29,7 @@
 #include <boost/thread/condition.hpp>
 
 #include "Hypertable/Lib/CommitLog.h"
+#include "Hypertable/Lib/CommitLogReader.h"
 #include "Hypertable/Lib/Key.h"
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/Schema.h"
@@ -82,7 +83,7 @@ namespace Hypertable {
     uint64_t get_latest_timestamp();
     bool get_scan_timestamp(Timestamp &ts);
 
-    void replay_transfer_log(const string &logDir, uint64_t real_timestamp);
+    void replay_transfer_log(CommitLogReader *commit_log_reader, uint64_t real_timestamp);
 
     void get_compaction_priority_data(std::vector<AccessGroup::CompactionPriorityDataT> &priority_data_vector);
 

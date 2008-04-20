@@ -692,10 +692,11 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifier *table, Range
      */
     if (!replay) {
       if (transfer_log_dir && *transfer_log_dir) {
+	CommitLogReaderPtr commit_log_reader_ptr = new CommitLogReader(Global::dfs, transfer_log_dir);
 	uint64_t timestamp = Global::log->get_timestamp();
-	if ((error = Global::log->link_log(transfer_log_dir, timestamp)) != Error::OK)
+	range_ptr->replay_transfer_log(commit_log_reader_ptr.get(), timestamp);
+	if ((error = Global::log->link_log(commit_log_reader_ptr.get(), timestamp)) != Error::OK)
 	  throw Exception(error, (std::string)"Unable to link external log '" + transfer_log_dir + "' into commit log");
-	range_ptr->replay_transfer_log(transfer_log_dir, timestamp);
       }
     }
 
@@ -1212,7 +1213,7 @@ void RangeServer::replay_commit(ResponseCallback *cb) {
   }
 
   try {
-    m_live_map_ptr->atomic_merge(m_replay_map_ptr, m_replay_log_ptr);
+    m_live_map_ptr->atomic_merge(m_replay_map_ptr, m_replay_log_ptr.get());
   }
   catch (Hypertable::Exception &e) {
     HT_ERRORF("%s - %s", e.what(), Error::get_text(e.code()));

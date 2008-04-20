@@ -602,8 +602,7 @@ void Range::unlock(uint64_t real_timestamp) {
 
 /**
  */
-void Range::replay_transfer_log(const string &log_dir, uint64_t real_timestamp) {
-  CommitLogReaderPtr commit_log_reader_ptr;
+void Range::replay_transfer_log(CommitLogReader *commit_log_reader, uint64_t real_timestamp) {
   BlockCompressionHeaderCommitLog header;
   const uint8_t *base, *ptr, *end;
   size_t len;
@@ -615,9 +614,7 @@ void Range::replay_transfer_log(const string &log_dir, uint64_t real_timestamp) 
 
   try {
 
-    commit_log_reader_ptr = new CommitLogReader(Global::dfs, log_dir);
-  
-    while (commit_log_reader_ptr->next(&base, &len, &header)) {
+    while (commit_log_reader->next(&base, &len, &header)) {
 
       ptr = base;
       end = base + len;
@@ -644,7 +641,8 @@ void Range::replay_transfer_log(const string &log_dir, uint64_t real_timestamp) 
     {
       boost::mutex::scoped_lock lock(m_mutex);
       HT_INFOF("Replayed %d updates (%d blocks) from split log '%s' into %s[%s..%s]",
-	       count, nblocks, log_dir.c_str(), m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
+	       count, nblocks, commit_log_reader->get_log_dir().c_str(),
+	       m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
     }
 
     Global::memory_tracker.add_memory(memory_added);

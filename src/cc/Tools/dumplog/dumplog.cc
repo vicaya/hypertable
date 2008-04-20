@@ -39,6 +39,7 @@ extern "C" {
 
 #include "DfsBroker/Lib/Client.h"
 
+#include "Hypertable/Lib/CommitLog.h"
 #include "Hypertable/Lib/CommitLogReader.h"
 
 using namespace Hypertable;
@@ -60,6 +61,9 @@ namespace {
     "",
     (const char *)0
   };
+
+  void display_log(DfsBroker::Client *dfs_client, String prefix, CommitLogReader *log_reader);
+  
 }
 
 
@@ -124,29 +128,47 @@ int main(int argc, char **argv) {
 
   log_reader = new CommitLogReader(dfs_client, log_dir);
 
-  CommitLogBlockInfo binfo;
-  BlockCompressionHeaderCommitLog header;
-
-  while (log_reader->next_raw_block(&binfo, &header)) {
-
-    if (header.check_magic(CommitLog::MAGIC_DATA)) {
-      printf("DATA frag=\"%s\" start=%09lu end=%09lu ",
-	     binfo.file_fragment, binfo.start_offset, binfo.end_offset);
-
-      if (binfo.error == Error::OK) {
-	printf("ztype=\"%s\" zlen=%u len=%u\n",
-	       BlockCompressionCodec::get_compressor_name(header.get_compression_type()),
-	       header.get_data_zlength(), header.get_data_length());
-      }
-      else
-	printf("error = \"%s\"\n", Error::get_text(binfo.error));
-    }
-    else {
-      printf("TBD\n");
-    }
-  }
+  printf("LOG %s\n", log_dir.c_str());
+  display_log(dfs_client, "", log_reader);
 
   delete log_reader;
 
   return 0;
+}
+
+namespace {
+
+  void display_log(DfsBroker::Client *dfs_client, String prefix, CommitLogReader *log_reader) {
+    CommitLogBlockInfo binfo;
+    BlockCompressionHeaderCommitLog header;
+
+    while (log_reader->next_raw_block(&binfo, &header)) {
+
+      if (header.check_magic(CommitLog::MAGIC_DATA)) {
+	printf("%sDATA frag=\"%s\" start=%09llu end=%09llu ", 
+	       prefix.c_str(), binfo.file_fragment, 
+	       (long long unsigned int)binfo.start_offset,
+	       (long long unsigned int)binfo.end_offset);
+
+	if (binfo.error == Error::OK) {
+	  printf("ztype=\"%s\" zlen=%u len=%u\n",
+		 BlockCompressionCodec::get_compressor_name(header.get_compression_type()),
+		 header.get_data_zlength(), header.get_data_length());
+	}
+	else
+	  printf("%serror = \"%s\"\n", prefix.c_str(), Error::get_text(binfo.error));
+      }
+      else if (header.check_magic(CommitLog::MAGIC_LINK)) {
+	const char *log_dir = (const char *)binfo.block_ptr + header.length();
+	printf("%sLINK -> %s\n", prefix.c_str(), log_dir);
+	CommitLogReader *tmp_reader = new CommitLogReader(dfs_client, log_dir);
+	display_log(dfs_client, prefix+"  ", tmp_reader);
+	delete tmp_reader;
+      }
+      else {
+	printf("Invalid block header!!!\n");
+      }
+    }
+  }
+
 }

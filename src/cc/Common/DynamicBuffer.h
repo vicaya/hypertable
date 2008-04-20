@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -32,14 +32,14 @@ namespace Hypertable {
 
   public:
 
-    DynamicBuffer(size_t initialSize) : buf(0), ptr(0), size(initialSize) {
+    DynamicBuffer(size_t initialSize, bool own=true) : buf(0), ptr(0), size(initialSize), m_own(own) {
       if (initialSize == 0)
 	ptr = buf = 0;
       else
 	buf = ptr = new uint8_t [ size ];
     }
 
-    ~DynamicBuffer() { delete [] buf; }
+    ~DynamicBuffer() { if (m_own) delete [] buf; }
 
     size_t remaining() const { return size - (ptr-buf); }
 
@@ -80,7 +80,8 @@ namespace Hypertable {
     }
 
     void free() {
-      delete [] buf;
+      if (m_own)
+	delete [] buf;
       buf = ptr = 0;
       size = 0;
     }
@@ -101,7 +102,8 @@ namespace Hypertable {
 	memcpy(newBuf, buf, ptr-buf);
 
       ptr = newBuf + (ptr-buf);
-      delete [] buf;
+      if (m_own)
+	delete [] buf;
       buf = newBuf;
       size = newSize;
     }
@@ -109,6 +111,9 @@ namespace Hypertable {
     uint8_t *buf;
     uint8_t *ptr;
     size_t   size;
+
+  private:
+    bool m_own;
   };
 
 }

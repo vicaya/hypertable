@@ -19,6 +19,7 @@
  * 02110-1301, USA.
  */
 
+#include "Common/Checksum.h"
 #include "Common/DynamicBuffer.h"
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
@@ -29,9 +30,11 @@
 #include "AsyncComm/Protocol.h"
 
 #include "Hypertable/Lib/CompressorFactory.h"
+#include "Hypertable/Lib/BlockCompressionCodec.h"
 #include "Hypertable/Lib/BlockCompressionHeaderCommitLog.h"
 
 #include "CommitLog.h"
+#include "CommitLogReader.h"
 
 using namespace Hypertable;
 
@@ -41,14 +44,7 @@ const char CommitLog::MAGIC_LINK[10] = { 'C','O','M','M','I','T','L','I','N','K'
 
 CommitLog::~CommitLog() {
   delete m_compressor;
-  try {
-    if (m_fd > 0)
-      m_fs->close(m_fd);
-  }
-  catch (Hypertable::Exception &e) {
-    HT_ERRORF("Problem closing commit log file '%s' - %s (%s)",
-	      m_cur_fragment_fname.c_str(), e.what(), Error::get_text(e.code()));
-  }
+  close();
 }
 
 void CommitLog::initialize(Filesystem *fs, const String &log_dir, PropertiesPtr &props_ptr) {
@@ -108,7 +104,7 @@ uint64_t CommitLog::get_timestamp() {
 int CommitLog::write(uint8_t *data, uint32_t len, uint64_t timestamp) {
   int error;
   BlockCompressionHeaderCommitLog header(MAGIC_DATA, timestamp);
-  DynamicBuffer input(0);
+  DynamicBuffer input(0, false);
 
   input.buf = data;
   input.ptr = data + len;
@@ -116,18 +112,16 @@ int CommitLog::write(uint8_t *data, uint32_t len, uint64_t timestamp) {
   /**
    * Compress and write the commit block
    */
-  if ((error = compress_and_write(input, &header, timestamp)) != Error::OK) {
-    input.release();
+  if ((error = compress_and_write(input, &header, timestamp)) != Error::OK)
     return error;
-  }
-
-  input.release();
 
   /**
    * Roll the log
    */
-  if (m_cur_fragment_length > m_max_fragment_size)
+  if (m_cur_fragment_length > m_max_fragment_size) {
+    boost::mutex::scoped_lock lock(m_mutex);
     error = roll();
+  }
   else
     error = Error::OK;
 
@@ -136,32 +130,45 @@ int CommitLog::write(uint8_t *data, uint32_t len, uint64_t timestamp) {
 
 
 
-/** This method links an external log into this log by first rolling the log.
- * The current log file is closed and a new one is opened.  The linked to log
- * directory is written as the first log entry in the newly opened file.
+/**
  */
-int CommitLog::link_log(const char *log_dir, uint64_t timestamp) {
+int CommitLog::link_log(CommitLogBase *log_base, uint64_t timestamp) {
   int error;
   BlockCompressionHeaderCommitLog header(MAGIC_LINK, timestamp);
-  DynamicBuffer input(0);
+  DispatchHandlerSynchronizer sync_handler;
+  DynamicBuffer input(0, false);
+  String &log_dir = log_base->get_log_dir();
 
-  /**
-   * Roll the log
-   */
-  if ((error = roll()) != Error::OK)
-    return error;
+  input.ensure( header.length() );
 
-  input.add(log_dir, strlen(log_dir)+1);
+  header.set_compression_type(BlockCompressionCodec::NONE);
+  header.set_data_length( log_dir.length() + 1 );
+  header.set_data_zlength( log_dir.length() + 1 );
+  header.set_data_checksum( fletcher32(log_dir.c_str(), log_dir.length()+1) );
 
-  /**
-   * Compress and write the commit block
-   */
-  if ((error = compress_and_write(input, &header, timestamp)) != Error::OK) {
-    input.release();
-    return error;
+  header.encode(&input.ptr);
+  input.add( log_dir.c_str(), log_dir.length() + 1 );
+
+  try {
+    boost::mutex::scoped_lock lock(m_mutex);
+
+    m_fs->append(m_fd, input.buf, input.fill(), &sync_handler);
+    m_fs->flush(m_fd, &sync_handler);
+    m_last_timestamp = timestamp;
+    m_cur_fragment_length += input.fill();
+
+    if ((error = roll()) != Error::OK)
+      return error;
+
+    // Stitch in the fragment queue from the log being linked
+    // in to the current fragment queue of the current log
+    stitch_in( log_base );
+
   }
-
-  input.release();
+  catch (Hypertable::Exception &e) {
+    HT_ERRORF("Problem linking external log into commit log - %s", e.what());
+    return e.code();
+  }
 
   return Error::OK;
 }
@@ -169,16 +176,17 @@ int CommitLog::link_log(const char *log_dir, uint64_t timestamp) {
 
 
 /**
- * 
  */
 int CommitLog::close() {
 
   try {
     boost::mutex::scoped_lock lock(m_mutex);
-    m_fs->close(m_fd);
+    if (m_fd > 0)
+      m_fs->close(m_fd);
   }
   catch (Hypertable::Exception &e) {
-    HT_ERRORF("Problem closing commit log file '%s' - %s", m_cur_fragment_fname.c_str(), Error::get_text(e.code()));
+    HT_ERRORF("Problem closing commit log file '%s' - %s (%s)",
+	      m_cur_fragment_fname.c_str(), e.what(), Error::get_text(e.code()));
     return e.code();
   }
     
@@ -199,12 +207,12 @@ int CommitLog::purge(uint64_t timestamp) {
 
   try {
 
-    while (!m_file_info_queue.empty()) {
-      file_info = m_file_info_queue.front();
+    while (!m_fragment_queue.empty()) {
+      file_info = m_fragment_queue.front();
       if (file_info.timestamp > 0 && file_info.timestamp < timestamp) {
 	fname = file_info.log_dir + file_info.num;
 	m_fs->remove(fname);
-	m_file_info_queue.pop_front();
+	m_fragment_queue.pop_front();
 	HT_INFOF("Removed log fragment file='%s' timestamp=%lld", fname.c_str(), file_info.timestamp);
       }
       else {
@@ -230,7 +238,6 @@ int CommitLog::roll() {
   CommitLogFileInfo file_info;
 
   try {
-    boost::mutex::scoped_lock lock(m_mutex);
 
     m_fs->close(m_fd);
 
@@ -241,7 +248,7 @@ int CommitLog::roll() {
     file_info.purge_log_dir = false;
     file_info.block_stream = 0;
 
-    m_file_info_queue.push_back(file_info);
+    m_fragment_queue.push_back(file_info);
 
     m_last_timestamp = 0;
     m_cur_fragment_length = 0;
@@ -269,21 +276,19 @@ int CommitLog::compress_and_write(DynamicBuffer &input, BlockCompressionHeader *
   int error = Error::OK;
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
-  DynamicBuffer zblock(0);
+  DynamicBuffer zblock(0, false);
 
   // Compress block and kick off log write (protected by lock)
   try {
     boost::mutex::scoped_lock lock(m_mutex);
-    size_t zlen;
 
     if ((error = m_compressor->deflate(input, zblock, *header)) != Error::OK)
       return error;
 
     m_fs->append(m_fd, zblock.buf, zblock.fill(), &sync_handler);
-    zblock.release(&zlen);
     m_fs->flush(m_fd, &sync_handler);
     m_last_timestamp = timestamp;
-    m_cur_fragment_length += zlen;
+    m_cur_fragment_length += zblock.fill();
   }
   catch (Exception &e) {
     HT_ERRORF("Problem writing commit log: %s: %s",
@@ -323,7 +328,7 @@ void CommitLog::load_fragment_priority_map(LogFragmentPriorityMap &frag_map) {
   frag_data.cumulative_size = cumulative_total;
   frag_map[m_last_timestamp] = frag_data;
 
-  for (deque<CommitLogFileInfo>::reverse_iterator iter = m_file_info_queue.rbegin(); iter != m_file_info_queue.rend(); iter++) {
+  for (deque<CommitLogFileInfo>::reverse_iterator iter = m_fragment_queue.rbegin(); iter != m_fragment_queue.rend(); iter++) {
     cumulative_total += (*iter).size;
     frag_data.distance = distance++;
     frag_data.cumulative_size = cumulative_total;

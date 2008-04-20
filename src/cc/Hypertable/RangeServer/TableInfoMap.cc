@@ -79,7 +79,7 @@ void TableInfoMap::clear_ranges() {
 }
 
 
-void TableInfoMap::atomic_merge(TableInfoMapPtr &table_info_map_ptr, CommitLogPtr &replay_log_ptr) {
+void TableInfoMap::atomic_merge(TableInfoMapPtr &table_info_map_ptr, CommitLogBase *replay_log) {
   boost::mutex::scoped_lock lock(m_mutex);
   TableInfoMapT::iterator from_iter, to_iter;
   uint32_t table_id;
@@ -103,6 +103,6 @@ void TableInfoMap::atomic_merge(TableInfoMapPtr &table_info_map_ptr, CommitLogPt
 
   table_info_map_ptr->clear();
 
-  if ((error = Global::log->link_log(replay_log_ptr->get_log_dir().c_str(), Global::log->get_timestamp())) != Error::OK)
-    throw Exception(error, std::string("Problem linking replay commit log '") + replay_log_ptr->get_log_dir() + "'");
+  if ((error = Global::log->link_log(replay_log, Global::log->get_timestamp())) != Error::OK)
+    throw Exception(error, std::string("Problem linking replay commit log '") + replay_log->get_log_dir() + "'");
 }

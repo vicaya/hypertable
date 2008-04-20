@@ -42,6 +42,7 @@ extern "C" {
 #include "Hypertable/Lib/Filesystem.h"
 #include "Hypertable/Lib/Types.h"
 
+#include "CommitLogBase.h"
 #include "CommitLogBlockStream.h"
 
 namespace Hypertable {
@@ -52,21 +53,6 @@ namespace Hypertable {
   } LogFragmentPriorityData;
 
   typedef std::map<uint64_t, LogFragmentPriorityData> LogFragmentPriorityMap;
-
-  typedef struct {
-    String     log_dir;
-    uint32_t   num;
-    uint64_t   size;
-    uint64_t   timestamp;
-    bool       purge_log_dir;
-    CommitLogBlockStream *block_stream;
-  } CommitLogFileInfo;
-
-  typedef std::deque<CommitLogFileInfo> LogFragmentQueue;
-  typedef std::stack<CommitLogFileInfo> LogFragmentStack;
-
-  class CommitLogReader;
-
 
   /**
    * Commit log for persisting range updates.  The commit log is a directory that contains
@@ -80,7 +66,7 @@ namespace Hypertable {
    * Hypertable.RangeServer.CommitLog.RollLimit
    *</pre>
    */
-  class CommitLog : public ReferenceCount {
+  class CommitLog : public CommitLogBase {
   public:
 
     /**
@@ -90,7 +76,7 @@ namespace Hypertable {
      * @param log_dir directory of the commit log
      * @param props_ptr reference to properties map
      */
-    CommitLog(Filesystem *fs, const String &log_dir, PropertiesPtr &props_ptr) {
+    CommitLog(Filesystem *fs, const String &log_dir, PropertiesPtr &props_ptr) : CommitLogBase(log_dir) {
       initialize(fs, log_dir, props_ptr);
     }
 
@@ -100,7 +86,7 @@ namespace Hypertable {
      * @param fs filesystem to write log into
      * @param log_dir directory of the commit log
      */
-    CommitLog(Filesystem *fs, const String &log_dir) {
+    CommitLog(Filesystem *fs, const String &log_dir) : CommitLogBase(log_dir) {
       PropertiesPtr props_ptr(0);
       initialize(fs, log_dir, props_ptr);
     }
@@ -125,11 +111,11 @@ namespace Hypertable {
 
     /** Links an external log into this log.
      *
-     * @param log_dir the directory of the external log
+     * @param log_base pointer to commit log object to link in
      * @param timestamp current commit log time obtained with a call to #get_timestamp
      * @return Error::OK on success or error code on failure
      */
-    int link_log(const char *log_dir, uint64_t timestamp);
+    int link_log(CommitLogBase *log_base, uint64_t timestamp);
 
     /** Closes the log.  Writes the trailer and closes the file
      *
@@ -160,13 +146,6 @@ namespace Hypertable {
      */
     int64_t get_max_fragment_size() { return m_max_fragment_size; }
 
-    /**
-     * Returns the log directory
-     */
-    String get_log_dir() {
-      return m_log_dir;
-    }
-
     static const char MAGIC_DATA[10];
     static const char MAGIC_LINK[10];
 
@@ -179,14 +158,12 @@ namespace Hypertable {
     boost::mutex            m_mutex;
     Filesystem             *m_fs;
     BlockCompressionCodec  *m_compressor;
-    String                  m_log_dir;
     String                  m_cur_fragment_fname;
     int64_t                 m_cur_fragment_length;
     uint32_t                m_cur_fragment_num;
     int64_t                 m_max_fragment_size;
     int32_t                 m_fd;
     uint64_t                m_last_timestamp;
-    std::deque<CommitLogFileInfo>   m_file_info_queue;
   };
 
   typedef boost::intrusive_ptr<CommitLog> CommitLogPtr;
