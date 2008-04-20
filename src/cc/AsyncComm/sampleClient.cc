@@ -408,6 +408,8 @@ int main(int argc, char **argv) {
 
   myfile.close();
 
+  ReactorFactory::destroy();
+
   delete comm;
   return 0;
 }
