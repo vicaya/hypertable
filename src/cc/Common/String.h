@@ -32,10 +32,10 @@ namespace Hypertable {
 
   /** 
    * return a String using printf like format facilities
-   * vanilla but unsafe sprintf is 1.2x faster than this, which is:
+   * vanilla snprintf is about 1.5x faster than this, which is about:
    *   10x faster than boost::format;
-   *   1.8x faster than std::string append (operator+=);
-   *   3.8x faster than std::string operator+;
+   *   1.5x faster than std::string append (operator+=);
+   *   3.5x faster than std::string operator+;
    */
   String format(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
 }
