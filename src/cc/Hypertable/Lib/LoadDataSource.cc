@@ -21,8 +21,10 @@
 
 #include <cerrno>
 #include <cctype>
+#include <cstdlib>
 #include <cstring>
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/shared_array.hpp>
 
@@ -34,6 +36,7 @@ extern "C" {
 #include "Common/ByteOrder.h"
 #include "Common/DynamicBuffer.h"
 #include "Common/Error.h"
+#include "Common/Logger.h"
 
 #include "Key.h"
 
@@ -45,13 +48,17 @@ using namespace std;
 /**
  *
  */
-LoadDataSource::LoadDataSource(std::string fname, std::string row_key_column, std::string timestamp_column) : m_fin(fname.c_str()), m_cur_line(0), m_line_buffer(0), m_hyperformat(false), m_leading_timestamps(false), m_row_index(0), m_timestamp_index(-1), m_timestamp(0) {
+LoadDataSource::LoadDataSource(String fname, std::vector<String> &key_columns, String timestamp_column) : m_go_mask(0), m_fin(fname.c_str()), m_cur_line(0), m_line_buffer(0), m_row_key_buffer(0), m_hyperformat(false), m_leading_timestamps(false), m_timestamp_index(-1), m_timestamp(0) {
   string line, column_name;
   char *base, *ptr;
   int index = 0;
+  KeyComponentInfo key_comps;
 
   if (!getline(m_fin, line))
     return;
+
+  m_go_mask = new bool [ 257 ];
+  memset(m_go_mask, true, 257*sizeof(bool));
 
   base = (char *)line.c_str();
   if (*base == '#') {
@@ -62,15 +69,76 @@ LoadDataSource::LoadDataSource(std::string fname, std::string row_key_column, st
   while ((ptr = strchr(base, '\t')) != 0) {
     *ptr++ = 0;
     m_column_names.push_back(base);
-    column_name = std::string(base);
-    if (row_key_column != "" && row_key_column == column_name)
-      m_row_index = index;
-    if (timestamp_column != "" && timestamp_column == column_name)
+    column_name = String(base);
+    if (timestamp_column != "" && timestamp_column == column_name) {
       m_timestamp_index = index;
+      m_go_mask[index] = false;
+    }
     base = ptr;
     index++;
+    HT_EXPECT(index < 256, Error::ASSERTION_FAILURE);
   }
   m_column_names.push_back(base);
+
+  /**
+   * Set up row key columns
+   */
+  for (size_t i=0; i<key_columns.size(); i++) {
+    size_t j;
+    const char *ptr;
+
+    key_comps.clear();
+
+    if (boost::algorithm::starts_with(key_columns[i], "\\%"))
+      column_name = key_columns[i].substr(1);
+    else if (boost::algorithm::starts_with(key_columns[i], "%0")) {
+      key_comps.pad_character = '0';
+      column_name = key_columns[i].substr(2);
+      ptr = column_name.c_str();
+      key_comps.width = atoi(ptr);
+      while (isdigit(*ptr))
+	ptr++;
+      column_name = String(ptr);
+    }
+    else if (boost::algorithm::starts_with(key_columns[i], "%-")) {
+      key_comps.left_justify = true;
+      column_name = key_columns[i].substr(2);
+      ptr = column_name.c_str();
+      key_comps.width = atoi(ptr);
+      while (isdigit(*ptr))
+	ptr++;
+      column_name = String(ptr);
+    }
+    else if (boost::algorithm::starts_with(key_columns[i], "%")) {
+      column_name = key_columns[i].substr(1);
+      ptr = column_name.c_str();
+      key_comps.width = atoi(ptr);
+      while (isdigit(*ptr))
+	ptr++;
+      column_name = String(ptr);
+    }
+    else
+      column_name = key_columns[i];
+
+    for (j=0; j<m_column_names.size(); j++) {
+      if (m_column_names[j] == column_name) {
+	key_comps.index = j;
+	m_key_comps.push_back(key_comps);
+	m_go_mask[j] = false;
+	break;
+      }
+    }
+    if (j == m_column_names.size()) {
+      cout << "ERROR: key column '" << column_name << "' not found in input file" << endl;
+      exit(1);
+    }
+  }
+
+  if (m_key_comps.empty()) {
+    key_comps.clear();
+    m_key_comps.push_back(key_comps);
+    m_go_mask[0] = false;
+  }
 
   if (m_column_names.size() == 3 || m_column_names.size() == 4) {
     size_t i=m_column_names.size()-3;
@@ -101,6 +169,7 @@ LoadDataSource::LoadDataSource(std::string fname, std::string row_key_column, st
  */
 bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp) {
   string line;
+  int index;
   char *base, *ptr, *colon, *endptr;
 
   if (type_flagp)
@@ -193,12 +262,12 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
   }
   else {
 
-    while (m_next_value == (size_t)m_timestamp_index || m_next_value == (size_t)m_row_index)
+    while (!m_go_mask[m_next_value])
       m_next_value++;
 
     if (m_next_value > 0 && m_next_value < (size_t)m_limit) {
-      keyp->row = m_values[m_row_index];
-      keyp->row_len = m_cur_row_length;
+      keyp->row = m_row_key_buffer.buf;
+      keyp->row_len = m_row_key_buffer.fill();
       keyp->column_family = m_column_names[m_next_value].c_str();
       *timestampp = m_timestamp;
       // clear these, just in case they were set by the client
@@ -220,6 +289,7 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
 
     while (getline(m_fin, line)) {
       m_cur_line++;
+      index = 0;
 
       if (consumedp)
 	*consumedp += line.length() + 1;
@@ -232,17 +302,40 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
 
       while ((ptr = strchr(base, '\t')) != 0) {
 	*ptr++ = 0;
-	if (strlen(base) == 0 || !strcmp(base, "NULL") || !strcmp(base, "\\N"))
+	if (strlen(base) == 0 || !strcmp(base, "NULL") || !strcmp(base, "\\N")) {
+	  if (!m_go_mask[index]) {
+	    cout << "WARNING: Required key or timestamp field not found on line " << m_cur_line << ", skipping ..." << endl << flush;
+	    continue;
+	  }
 	  m_values.push_back(0);
+	}
 	else
 	  m_values.push_back(base);
 	base = ptr;
+	index++;
       }
       if (strlen(base) == 0 || !strcmp(base, "NULL") || !strcmp(base, "\\N"))
 	m_values.push_back(0);
       else
 	m_values.push_back(base);
       m_limit = std::min(m_values.size(), m_column_names.size());
+
+      /**
+       * setup row key
+       */
+      m_row_key_buffer.clear();
+      if (!add_row_component(0))
+	continue;
+      size_t i;
+      for (i=1; i<m_key_comps.size(); i++) {
+	m_row_key_buffer.add( " ", 1 );
+	if (!add_row_component(i))
+	  break;
+      }
+      if (i<m_key_comps.size())
+	continue;
+      m_row_key_buffer.ensure(1);
+      *m_row_key_buffer.ptr = 0;
 
       if (m_timestamp_index >= 0) {
 	struct tm tm;
@@ -266,19 +359,12 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
 	m_timestamp = (uint64_t)t * 1000000000LL;
       }
 
-      if (m_values[m_row_index] == 0) {
-	cerr << "error: NULL row key on line " << m_cur_line << endl;
-	continue;
-      }
-
       m_next_value = 0;
-      while (m_next_value == (size_t)m_timestamp_index || m_next_value == (size_t)m_row_index)
+      while (!m_go_mask[m_next_value])
 	m_next_value++;
 
-      m_cur_row_length = strlen(m_values[m_row_index]);
-
-      keyp->row = m_values[m_row_index];
-      keyp->row_len = m_cur_row_length;
+      keyp->row = m_row_key_buffer.buf;
+      keyp->row_len = m_row_key_buffer.fill();
       keyp->column_family = m_column_names[m_next_value].c_str();
       *timestampp = m_timestamp;
       if (keyp->column_qualifier || keyp->column_qualifier_len) {
@@ -301,6 +387,38 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
   }
 
   return false;
+}
+
+
+
+bool LoadDataSource::add_row_component(int index) {
+  const char *value = m_values[m_key_comps[index].index];
+  size_t value_len = strlen(value);
+
+  if ((size_t)m_key_comps[index].index >= m_values.size() || value == 0) {
+    cout << "WARNING: Required key field not found on line " << m_cur_line << ", skipping ..." << endl << flush;
+    return false;
+  }
+
+  if ((size_t)m_key_comps[index].width > value_len) {
+    size_t padding = m_key_comps[index].width - value_len;
+    m_row_key_buffer.ensure( m_key_comps[index].width );
+    if (m_key_comps[index].left_justify) {
+      m_row_key_buffer.add( value, value_len );
+      memset(m_row_key_buffer.ptr, m_key_comps[index].pad_character, padding);
+      m_row_key_buffer.ptr += padding;
+    }
+    else {
+      memset(m_row_key_buffer.ptr, m_key_comps[index].pad_character, padding);
+      m_row_key_buffer.ptr += padding;
+      m_row_key_buffer.add( value, value_len );
+    }
+  }
+  else
+    m_row_key_buffer.add( value, value_len );
+
+  return true;
+  
 }
 
 

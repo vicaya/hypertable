@@ -125,7 +125,7 @@ namespace Hypertable {
       std::string output_file;
       std::string input_file;
       std::string table_compressor;
-      std::string row_key_column;
+      std::vector<std::string> key_columns;
       std::string timestamp_column;
       Schema::ColumnFamily *cf;
       Schema::AccessGroup *ag;
@@ -376,12 +376,13 @@ namespace Hypertable {
       hql_interpreter_state &state;
     };
 
-    struct set_row_key_column {
-      set_row_key_column(hql_interpreter_state &state_) : state(state_) { }
+    struct add_row_key_column {
+      add_row_key_column(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const { 
-	display_string("set_row_key_column");
-	state.row_key_column = std::string(str, end-str);
-	trim_if(state.row_key_column, boost::is_any_of("'\""));
+	std::string column = std::string(str, end-str);
+	display_string("add_row_key_column");
+	trim_if(column, boost::is_any_of("'\""));
+	state.key_columns.push_back(column);
       }
       hql_interpreter_state &state;
     };
@@ -1005,7 +1006,7 @@ namespace Hypertable {
 	    ;
 
 	  show_statement
-	    = ( SHOW >> CREATE >> TABLE >> identifier[set_table_name(self.state)] )
+	    = ( SHOW >> CREATE >> TABLE >> user_identifier[set_table_name(self.state)] )
 	    ;
 
 	  help_statement
@@ -1164,8 +1165,8 @@ namespace Hypertable {
 	    ;
 
 	  load_data_option
-	    = ROW_KEY_COLUMN >> EQUAL >> ( string_literal | identifier )[set_row_key_column(self.state)]
-	    | TIMESTAMP_COLUMN >> EQUAL >> ( string_literal | identifier )[set_timestamp_column(self.state)]
+	    = ROW_KEY_COLUMN >> EQUAL >> user_identifier[add_row_key_column(self.state)] >> *( PLUS >> user_identifier[add_row_key_column(self.state)] )
+	    | TIMESTAMP_COLUMN >> EQUAL >> user_identifier[set_timestamp_column(self.state)]
 	    ;
 
 	  /**

@@ -29,6 +29,7 @@
 
 #include "Common/ByteString.h"
 #include "Common/DynamicBuffer.h"
+#include "Common/String.h"
 
 #include "DataSource.h"
 
@@ -39,25 +40,38 @@ namespace Hypertable {
   class LoadDataSource {
 
   public:
-    LoadDataSource(std::string fname, std::string row_key_column, std::string timestamp_column);
-    virtual ~LoadDataSource() { return; }
+    LoadDataSource(String fname, std::vector<String> &key_columns, String timestamp_column);
+    virtual ~LoadDataSource() { delete [] m_go_mask; return; }
     bool has_timestamps() { return m_leading_timestamps || (m_timestamp_index != -1); }
     virtual bool next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp);
 
   private:
+    
+    class KeyComponentInfo {
+    public:
+      KeyComponentInfo() : index(0), width(0), left_justify(false), pad_character(' ') { return; }
+      void clear() { index=0; width=0; left_justify=false; pad_character=' '; }
+      int index;
+      int width;
+      bool left_justify;
+      char pad_character;
+    };
 
     bool parse_date_format(const char *str, struct tm *tm);
 
-    std::vector<std::string> m_column_names;
+    bool add_row_component(int index);
+
+    std::vector<String> m_column_names;
     std::vector<const char *> m_values;
+    std::vector<KeyComponentInfo> m_key_comps;
+    bool *m_go_mask;
     size_t m_next_value;
     std::ifstream m_fin;
     long m_cur_line;
     DynamicBuffer m_line_buffer;
+    DynamicBuffer m_row_key_buffer;
     bool m_hyperformat;
     bool m_leading_timestamps;
-    size_t m_cur_row_length;
-    int m_row_index;
     int m_timestamp_index;
     uint64_t m_timestamp;
     int m_limit;

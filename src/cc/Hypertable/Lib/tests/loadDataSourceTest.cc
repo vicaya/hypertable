@@ -21,12 +21,14 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <vector>
 
 extern "C" {
 #include <errno.h>
 #include <fcntl.h>
 }
 
+#include "Common/String.h"
 
 #include "Hypertable/Lib/KeySpec.h"
 #include "Hypertable/Lib/LoadDataSource.h"
@@ -41,6 +43,7 @@ int main(int argc, char **argv) {
   uint8_t *value;
   uint32_t value_len;
   int fd;
+  std::vector<String> key_columns;
 
   if ((fd = open("loadDataSourceTest.output", O_WRONLY|O_CREAT|O_TRUNC, 0644)) < 0) {
     perror("open");
@@ -50,7 +53,7 @@ int main(int argc, char **argv) {
   close(2);
   dup(fd);
 
-  lds = new LoadDataSource("loadDataSourceTest.dat", "", "");
+  lds = new LoadDataSource("loadDataSourceTest.dat", key_columns, "");
 
   while (lds->next(0, &timestamp, &key, &value, &value_len, 0)) {
     cerr << "row=" << (const char *)key.row << " column_family=" << key.column_family;

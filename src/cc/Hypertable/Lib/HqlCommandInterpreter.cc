@@ -230,7 +230,7 @@ void HqlCommandInterpreter::execute_line(const String &line) {
 
       boost::progress_display show_progress( file_size );
 
-      lds = new LoadDataSource(state.str, state.row_key_column, state.timestamp_column);
+      lds = new LoadDataSource(state.str, state.key_columns, state.timestamp_column);
 
       if (!into_table) {
 	display_timestamps = lds->has_timestamps();
