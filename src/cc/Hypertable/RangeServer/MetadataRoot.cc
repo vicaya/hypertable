@@ -40,7 +40,7 @@ MetadataRoot::MetadataRoot(SchemaPtr &schema_ptr) : m_next(0) {
 
   if ((error = Global::hyperspace_ptr->open("/hypertable/root", OPEN_FLAG_READ, nullCallbackPtr, &m_handle)) != Error::OK) {
     HT_ERRORF("Problem creating Hyperspace root file '/hypertable/root' - %s", Error::get_text(error));
-    DUMP_CORE;
+    HT_ABORT;
   }
 
 }

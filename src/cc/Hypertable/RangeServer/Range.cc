@@ -292,18 +292,18 @@ const char *Range::get_split_row() {
 	m_split_row = split_rows[split_rows.size()/2];
 	if (m_split_row < m_start_row || m_split_row >= m_end_row) {
 	  HT_FATALF("Unable to determine split row for range %s[%s..%s]", m_identifier->name, m_start_row.c_str(), m_end_row.c_str());
-	  DUMP_CORE;
+	  HT_ABORT;
 	}
       }
       else {
 	HT_FATALF("Unable to determine split row for range %s[%s..%s]", m_identifier->name, m_start_row.c_str(), m_end_row.c_str());
-	DUMP_CORE;
+	HT_ABORT;
       }
     } 
   }
   else {
     HT_FATALF("Unable to determine split row for range %s[%s..%s]", m_identifier->name, m_start_row.c_str(), m_end_row.c_str());
-    DUMP_CORE;
+    HT_ABORT;
   }
   return m_split_row.c_str();
 }
@@ -435,7 +435,7 @@ void Range::split_install_log(Timestamp *timestampp, String &old_start_row) {
   catch (Exception &e) {
     HT_ERRORF("Problem creating log directory '%s': %s",
               m_state.split_log.c_str(), e.what());
-    DUMP_CORE;
+    HT_ABORT;
   }
 
   /***************************************************/
@@ -533,7 +533,7 @@ void Range::split_compact_and_shrink(Timestamp timestamp, String &old_start_row)
     // TODO: propagate exception
     HT_ERRORF("Problem updating ROOT METADATA range (new=%s, existing=%s) - %s", m_split_row.c_str(), m_end_row.c_str(), e.what());
     // need to unblock updates and then return error
-    DUMP_CORE;
+    HT_ABORT;
   }
 
   /**

@@ -19,70 +19,132 @@
  * 02110-1301, USA.
  */
 
-#include "Logger.h"
+#include "Common/Compat.h"
 
+#include <iostream>
 #include <log4cpp/Appender.hh>
 #include <log4cpp/BasicLayout.hh>
 #include <log4cpp/FileAppender.hh>
 #include <log4cpp/Layout.hh>
 #include <log4cpp/NDC.hh>
-#include <log4cpp/OstreamAppender.hh>
 #include <log4cpp/Priority.hh>
 
+#include "Logger.h"
+
 using namespace Hypertable;
+namespace Logging = log4cpp;
 
 namespace {
 
   /**
    * NoTimeLayout
    **/
-  class  NoTimeLayout : public log4cpp::Layout {
+  class  NoTimeLayout : public Logging::Layout {
   public:
     NoTimeLayout() { }
     virtual ~NoTimeLayout() { }
-    virtual std::string format(const log4cpp::LoggingEvent& event) {
-      std::ostringstream message;
-      const std::string& priorityName = log4cpp::Priority::getPriorityName(event.priority);
-      message << priorityName << " " << event.categoryName << " " << event.ndc << ": " << event.message << std::endl;
-      return message.str();
+    virtual String format(const Logging::LoggingEvent& event) {
+      return Hypertable::format("%s %s %s: %s\n",
+          Logging::Priority::getPriorityName(event.priority).c_str(),
+          event.categoryName.c_str(), event.ndc.c_str(),
+          event.message.c_str());
     }
   };
 
-}
+  /**
+   * FlushableAppender appender with flush method
+   */
+  class FlushableAppender : public Logging::LayoutAppender {
+  public:
+    FlushableAppender(const String &name) : Logging::LayoutAppender(name) {}
+    virtual ~FlushableAppender() {}
+    virtual void flush() = 0;
 
+    bool
+    set_flush_per_log(bool choice) {
+      bool old = m_flush_per_log;
+      m_flush_per_log = choice;
+      return old;
+    }
 
-log4cpp::Category *Logger::logger = 0;
-bool Logger::ms_show_line_numbers = true;
+  protected:
+    bool m_flush_per_log;
+  };
 
+  /**
+   * FlushableOstreamAppender appends LoggingEvents to ostreams.
+   */
+  class FlushableOstreamAppender : public FlushableAppender {
+  public:
+    FlushableOstreamAppender(const String& name, std::ostream &stream,
+                             bool flush_per_log) :
+                             FlushableAppender(name), m_stream(stream) {
+      set_flush_per_log(flush_per_log);
+    }
+    virtual ~FlushableOstreamAppender() { close(); }
+    
+    virtual bool reopen() { return true; }
+    virtual void close() { flush(); }
+    virtual void flush() { m_stream.flush(); }
 
-void Logger::initialize(const char *name, log4cpp::Priority::Value priority) {
-  log4cpp::Appender* appender = 
-    new log4cpp::OstreamAppender("default", &std::cout);
-  log4cpp::Layout* layout = new log4cpp::BasicLayout();
+  protected:
+    virtual void
+    _append(const Logging::LoggingEvent& event) {
+      m_stream << _getLayout().format(event);
+
+      if (m_flush_per_log)
+        m_stream.flush();
+    }
+
+  private:
+    std::ostream &m_stream;
+  };
+
+  FlushableAppender *appender = 0;
+
+} // local namespace
+
+Logging::Category *Logger::logger = 0;
+bool Logger::show_line_numbers = true;
+
+void
+Logger::initialize(const String &name, int priority, bool flush_per_log,
+                   std::ostream &out) {
+  appender = new FlushableOstreamAppender("default", out, flush_per_log);
+  Logging::Layout* layout = new Logging::BasicLayout();
   appender->setLayout(layout);
-  logger = &(log4cpp::Category::getInstance(std::string(name)));
+  logger = &(Logging::Category::getInstance(name));
   logger->addAppender(appender);
   logger->setAdditivity(false);
   logger->setPriority(priority);
 }
 
-
-void Logger::set_level(log4cpp::Priority::Value priority) {
+void
+Logger::set_level(int priority) {
   logger->setPriority(priority);
 }
 
-void Logger::suppress_line_numbers() {
-  ms_show_line_numbers = false;
+void
+Logger::suppress_line_numbers() {
+  Logger::show_line_numbers = false;
 }
 
-
-void Logger::set_test_mode(const char *name) {
-  log4cpp::FileAppender *appender;
-
-  ms_show_line_numbers = false;
-
+void
+Logger::set_test_mode(const String &name) {
+  Logging::FileAppender *appender;
+  Logger::show_line_numbers = false;
   logger->removeAllAppenders();
-  appender = new log4cpp::FileAppender((std::string)name, 1);
+  appender = new Logging::FileAppender(name, 1);
   appender->setLayout(new NoTimeLayout());
   logger->setAppender(appender);
+}
+
+bool
+Logger::set_flush_per_log(bool choice) {
+  return appender->set_flush_per_log(choice);
+}
+
+void
+Logger::flush() {
+  appender->flush();
 }
