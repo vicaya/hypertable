@@ -22,12 +22,14 @@
 #define HYPERTABLE_REFERENCECOUNT_H
 
 #include <boost/intrusive_ptr.hpp>
+#include <boost/noncopyable.hpp>
 
 #include "atomic.h"
 
 namespace Hypertable {
 
   using boost::intrusive_ptr;
+  using boost::noncopyable;
 
   class ReferenceCount;
 
@@ -41,7 +43,7 @@ namespace Hypertable {
    * intrusive_ptr functions, intrusive_ptr_add_ref and
    * intrusive_ptr_release, defined for it.
    */
-  class ReferenceCount {
+  class ReferenceCount : noncopyable {
   public:
     ReferenceCount() { atomic_set(&refCount, 0); }
     virtual ~ReferenceCount() { return; }
