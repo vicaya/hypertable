@@ -46,6 +46,10 @@ namespace Hypertable {
   class CommitLogBase : public ReferenceCount {
   public:
     CommitLogBase(const String &log_dir) : m_log_dir(log_dir) {
+      size_t lastslash = log_dir.find_last_of('/');
+      if (lastslash == log_dir.length()-1)
+	lastslash = log_dir.find_last_of('/', log_dir.length()-2);
+      m_log_name = (lastslash == string::npos) ? log_dir : log_dir.substr(lastslash+1);
       return;
     }
 
@@ -57,6 +61,7 @@ namespace Hypertable {
 
   protected:
     String           m_log_dir;
+    String           m_log_name;
     LogFragmentQueue m_fragment_queue;
   };
   typedef boost::intrusive_ptr<CommitLogBase> CommitLogBasePtr;

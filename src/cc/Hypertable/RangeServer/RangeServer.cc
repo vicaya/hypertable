@@ -711,7 +711,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifier *table, Range
 
   }
   catch (Hypertable::Exception &e) {
-    HT_ERRORF("%s '%s'", e.code(), e.what());
+    HT_ERRORF("%s '%s'", Error::get_text(error), e.what());
     if ((error = cb->error(e.code(), e.what())) != Error::OK) {
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
     }

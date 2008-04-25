@@ -119,6 +119,7 @@ bool CommitLogReader::next(const uint8_t **blockp, size_t *lenp, BlockCompressio
       zblock.release();
       *blockp = m_block_buffer.buf;
       *lenp = m_block_buffer.fill();
+      HT_INFOF("shaggy\t%s\t%u\t%u", m_log_name.c_str(), header->get_data_checksum(), header->get_data_zlength());
       return true;
     }
 

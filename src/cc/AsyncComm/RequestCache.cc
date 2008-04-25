@@ -34,6 +34,10 @@ void RequestCache::insert(uint32_t id, IOHandler *handler, DispatchHandler *dh, 
 
   HT_DEBUGF("Adding id %d", id);
 
+  IdHandlerMapT::iterator iter = m_id_map.find(id);
+
+  HT_EXPECT(iter == m_id_map.end(), Error::FAILED_EXPECTATION);
+
   node->id = id;
   node->handler = handler;
   node->dh = dh;

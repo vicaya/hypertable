@@ -310,6 +310,8 @@ int CommitLog::compress_and_write(DynamicBuffer &input, BlockCompressionHeader *
     error = (int)Protocol::response_code(event_ptr);
   }
 
+  HT_INFOF("scooby\t%s\t%u\t%u", m_log_name.c_str(), header->get_data_checksum(), header->get_data_zlength());
+
   return error;
 }
 
