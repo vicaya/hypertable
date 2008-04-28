@@ -328,35 +328,113 @@ void Range::get_compaction_priority_data(std::vector<AccessGroup::CompactionPrio
 }
 
 
-
-void Range::do_split() {
-  std::string transfer_log_dir;
-  char md5DigestStr[33];
-  int error;
-  std::string old_start_row;
-  TableMutatorPtr mutator_ptr;
-  KeySpec key;
-  std::string metadata_key_str;
+void Range::split() {
   Timestamp timestamp;
+  String old_start_row;
 
   HT_EXPECT(m_maintenance_in_progress, Error::FAILED_EXPECTATION);
   HT_EXPECT(!m_is_root, Error::FAILED_EXPECTATION);
 
-  // this call sets m_split_row
-  get_split_row();
+  try {
+
+    switch (m_state.state) {
+
+    case (RangeState::STEADY):
+      split_install_log(&timestamp, old_start_row);
+      m_state.state = RangeState::SPLIT_LOG_INSTALLED;
+
+    case (RangeState::SPLIT_LOG_INSTALLED):
+      split_compact_and_shrink(timestamp, old_start_row);
+      m_state.state = RangeState::SPLIT_SHRUNK;
+
+    case (RangeState::SPLIT_SHRUNK):
+      split_notify_master(old_start_row);
+      m_state.state = RangeState::STEADY;
+      m_state.split_log = "";
+
+    }
+
+  }
+  catch (Exception &e) {
+    m_maintenance_in_progress = false;
+    throw;
+  }
+
+  HT_INFOF("Split Complete.  New Range end_row=%s", m_start_row.c_str());
+
+  m_maintenance_in_progress = false;
+}
+
+
+
+
+/**
+ */
+void Range::split_install_log(Timestamp *timestampp, String &old_start_row) {
+  std::vector<String> split_rows;
+  char md5DigestStr[33];
+
+  for (size_t i=0; i<m_access_group_vector.size(); i++)
+    m_access_group_vector[i]->get_split_rows(split_rows, false);
+
+  /**
+   * If we didn't get at least one row from each Access Group, then try again
+   * the hard way (scans CellCache for middle row)
+   */
+  if (split_rows.size() < m_access_group_vector.size()) {
+    for (size_t i=0; i<m_access_group_vector.size(); i++)
+      m_access_group_vector[i]->get_split_rows(split_rows, true);
+  }
+  sort(split_rows.begin(), split_rows.end());
+
+  /**
+  cout << "Dumping split rows for " << m_identifier->name << "[" << m_start_row << ".." << m_end_row << "]" << endl;
+  for (size_t i=0; i<split_rows.size(); i++)
+    cout << "Range::get_split_row [" << i << "] = " << split_rows[i] << endl;
+  */
+
+  /**
+   * If we still didn't get a good split row, try again the *really* hard way
+   * by collecting all of the cached rows, sorting them and then taking the middle.
+   */
+  if (split_rows.size() > 0) {
+    boost::mutex::scoped_lock lock(m_mutex);    
+    m_split_row = split_rows[split_rows.size()/2];
+    if (m_split_row < m_start_row || m_split_row >= m_end_row) {
+      split_rows.clear();
+      for (size_t i=0; i<m_access_group_vector.size(); i++)
+	m_access_group_vector[i]->get_cached_rows(split_rows);
+      if (split_rows.size() > 0) {
+	sort(split_rows.begin(), split_rows.end());
+	m_split_row = split_rows[split_rows.size()/2];
+	if (m_split_row < m_start_row || m_split_row >= m_end_row)
+	  throw Exception(Error::RANGESERVER_SPLIT_ERROR,
+			  format("Unable to determine split row for range %s[%s..%s]",
+				 m_identifier->name, m_start_row.c_str(), m_end_row.c_str()));
+      }
+      else
+	throw Exception(Error::RANGESERVER_SPLIT_ERROR,
+			format("Unable to determine split row for range %s[%s..%s]",
+			       m_identifier->name, m_start_row.c_str(), m_end_row.c_str()));
+    } 
+  }
+  else
+    throw Exception(Error::RANGESERVER_SPLIT_ERROR,
+		    format("Unable to determine split row for range %s[%s..%s]",
+			   m_identifier->name, m_start_row.c_str(), m_end_row.c_str()));
 
   /**
    * Create split (transfer) log
    */
   md5_string(m_split_row.c_str(), md5DigestStr);
   md5DigestStr[24] = 0;
-  transfer_log_dir = Global::logDir + "/" + md5DigestStr;
+  m_state.split_log = Global::logDir + "/" + md5DigestStr;
 
   // Create transfer log dir
-  try { Global::logDfs->mkdirs(transfer_log_dir); }
+  try { Global::logDfs->mkdirs(m_state.split_log); }
   catch (Exception &e) {
     HT_ERRORF("Problem creating log directory '%s': %s",
-              transfer_log_dir.c_str(), e.what());
+              m_state.split_log.c_str(), e.what());
     DUMP_CORE;
   }
 
@@ -377,18 +455,26 @@ void Range::do_split() {
 
     {
       boost::mutex::scoped_lock lock(m_mutex);
-      if (!m_scanner_timestamp_controller.get_oldest_update_timestamp(&timestamp) ||
-	  timestamp.logical == 0)
-	timestamp = m_timestamp;
+      if (!m_scanner_timestamp_controller.get_oldest_update_timestamp(timestampp) ||
+	  timestampp->logical == 0)
+	*timestampp = m_timestamp;
       old_start_row = m_start_row;
-      m_split_log_ptr = new CommitLog(Global::dfs, transfer_log_dir);
+      m_split_log_ptr = new CommitLog(Global::dfs, m_state.split_log);
     }
 
     /** unblock updates **/
     m_hold_updates = false;
     m_maintenance_finished_cond.notify_all();
   }
+}
 
+
+
+/**
+ *
+ */
+void Range::split_compact_and_shrink(Timestamp timestamp, String &old_start_row) {
+  int error;
 
   /**
    * Perform major compactions
@@ -403,9 +489,11 @@ void Range::do_split() {
   /****************************************************/
 
   try {
-    std::string files;
+    String files;
+    String metadata_key_str;
+    KeySpec key;
 
-    mutator_ptr = Global::metadata_table_ptr->create_mutator();
+    TableMutatorPtr mutator_ptr = Global::metadata_table_ptr->create_mutator();
 
     /**
      * Shrink old range in METADATA by updating the 'StartRow' column.
@@ -472,8 +560,6 @@ void Range::do_split() {
     // Close and uninstall split log
     if ((error = m_split_log_ptr->close()) != Error::OK) {
       HT_ERRORF("Problem closing split log '%s' - %s", m_split_log_ptr->get_log_dir().c_str(), Error::get_text(error));
-      // return error here (unblock updates)
-      DUMP_CORE;
     }
     m_split_log_ptr = 0;
 
@@ -481,39 +567,40 @@ void Range::do_split() {
     m_hold_updates = false;
     m_maintenance_finished_cond.notify_all();
   }
-
-  /**
-   *  Notify Master of split
-   */
-  {
-    RangeSpec range;
-
-    range.startRow = old_start_row.c_str();
-    range.endRow = m_start_row.c_str();
-
-    // update the latest generation, this should probably be protected
-    m_identifier->generation = m_schema->get_generation();
-
-    HT_INFOF("Reporting newly split off range %s[%s..%s] to Master", m_identifier->name, range.startRow, range.endRow);
-    cout << flush;
-    if (m_state.soft_limit < Global::rangeMaxBytes) {
-      m_state.soft_limit *= 2;
-      if (m_state.soft_limit > Global::rangeMaxBytes)
-	m_state.soft_limit = Global::rangeMaxBytes;
-    }
-    if ((error = m_master_client_ptr->report_split(m_identifier, range, transfer_log_dir.c_str(), m_state.soft_limit)) != Error::OK) {
-      HT_ERRORF("Problem reporting split (table=%s, start_row=%s, end_row=%s) to master.",
-		   m_identifier->name, range.startRow, range.endRow);
-    }
-  }
-
-  HT_INFOF("Split Complete.  New Range end_row=%s", m_start_row.c_str());
-
-  m_maintenance_in_progress = false;
 }
 
 
-void Range::do_compaction(bool major) {
+
+/**
+ * 
+ */
+void Range::split_notify_master(String &old_start_row) {
+  int error;
+  RangeSpec range;
+
+  range.startRow = old_start_row.c_str();
+  range.endRow = m_start_row.c_str();
+
+  // update the latest generation, this should probably be protected
+  m_identifier->generation = m_schema->get_generation();
+
+  HT_INFOF("Reporting newly split off range %s[%s..%s] to Master", m_identifier->name, range.startRow, range.endRow);
+
+  if (m_state.soft_limit < Global::rangeMaxBytes) {
+    m_state.soft_limit *= 2;
+    if (m_state.soft_limit > Global::rangeMaxBytes)
+      m_state.soft_limit = Global::rangeMaxBytes;
+  }
+
+  if ((error = m_master_client_ptr->report_split(m_identifier, range, m_state.split_log.c_str(), m_state.soft_limit)) != Error::OK) {
+    throw Exception(error, format("Problem reporting split (table=%s, start_row=%s, end_row=%s) to master.",
+				  m_identifier->name, range.startRow, range.endRow));
+  }
+  
+}
+
+
+void Range::compact(bool major) {
   run_compaction(major);
   m_maintenance_in_progress = false;
 }

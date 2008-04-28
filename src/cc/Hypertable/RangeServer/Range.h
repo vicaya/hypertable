@@ -100,8 +100,8 @@ namespace Hypertable {
       return old_value;
     }
 
-    void do_split();
-    void do_compaction(bool major=false);
+    void split();
+    void compact(bool major=false);
 
     void increment_update_counter();
     void decrement_update_counter();
@@ -143,6 +143,10 @@ namespace Hypertable {
     bool extract_csid_from_path(String &path, uint32_t *storeIdp);
 
     void run_compaction(bool major=false);
+
+    void split_install_log(Timestamp *timestampp, String &old_start_row);
+    void split_compact_and_shrink(Timestamp timestamp, String &old_start_row);
+    void split_notify_master(String &old_start_row);
 
     boost::mutex     m_mutex;
     MasterClientPtr  m_master_client_ptr;

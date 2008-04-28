@@ -36,5 +36,5 @@ MaintenanceTaskSplit::MaintenanceTaskSplit(RangePtr &range_ptr) : MaintenanceTas
  *
  */
 void MaintenanceTaskSplit::execute() {
-  m_range_ptr->do_split();
+  m_range_ptr->split();
 }

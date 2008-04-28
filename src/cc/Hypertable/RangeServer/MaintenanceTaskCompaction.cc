@@ -34,5 +34,5 @@ MaintenanceTaskCompaction::MaintenanceTaskCompaction(RangePtr &range_ptr, bool m
  *
  */
 void MaintenanceTaskCompaction::execute() {
-  m_range_ptr->do_compaction(m_major);
+  m_range_ptr->compact(m_major);
 }

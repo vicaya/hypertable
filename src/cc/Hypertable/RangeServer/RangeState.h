@@ -29,8 +29,8 @@
  */
 class RangeState {
  public:
-  enum { NORMAL, SPLIT_LOG_INSTALLED, SPLIT_SHRUNK };
-  RangeState() : state(NORMAL), soft_limit(0) { return; }
+  enum { STEADY, SPLIT_LOG_INSTALLED, SPLIT_SHRUNK };
+  RangeState() : state(STEADY), soft_limit(0) { return; }
   int state;
   uint64_t soft_limit;
   String split_log;
