@@ -27,6 +27,8 @@
 #include <string>
 #include <vector>
 
+#include "Common/String.h"
+
 #include "Hypertable/Lib/Schema.h"
 #include "Hypertable/Lib/Types.h"
 
@@ -52,13 +54,13 @@ namespace Hypertable {
       void *user_data;
     } CompactionPriorityDataT;
 
-    AccessGroup(TableIdentifier &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeSpec *range);
+    AccessGroup(TableIdentifier *identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeSpec *range);
     virtual ~AccessGroup();
     virtual int add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp);
 
     virtual const char *get_split_row();
-    virtual void get_split_rows(std::vector<std::string> &split_rows, bool include_cache);
-    virtual void get_cached_rows(std::vector<std::string> &rows);
+    virtual void get_split_rows(std::vector<String> &split_rows, bool include_cache);
+    virtual void get_cached_rows(std::vector<String> &rows);
 
     void lock() { boost::detail::thread::lock_ops<boost::mutex>::lock(m_mutex); m_cell_cache_ptr->lock(); }
     void unlock() { m_cell_cache_ptr->unlock(); boost::detail::thread::lock_ops<boost::mutex>::unlock(m_mutex); }
@@ -84,9 +86,9 @@ namespace Hypertable {
 
     const char *get_name() { return m_name.c_str(); }
 
-    int shrink(std::string &new_start_row);
+    int shrink(String &new_start_row);
 
-    void get_files(std::string &text);
+    void get_files(String &text);
 
     uint64_t get_collision_count() {
       boost::mutex::scoped_lock lock(m_mutex);
@@ -102,20 +104,20 @@ namespace Hypertable {
 
   private:
     boost::mutex         m_mutex;
-    TableIdentifier     m_table_identifier;
+    TableIdentifierWrapper m_identifier;
     SchemaPtr            m_schema_ptr;
     std::set<uint8_t>    m_column_families;
-    std::string          m_name;
-    std::string          m_table_name;
-    std::string          m_start_row;
-    std::string          m_end_row;
+    String          m_name;
+    String          m_table_name;
+    String          m_start_row;
+    String          m_end_row;
     std::vector<CellStorePtr> m_stores;
     CellCachePtr         m_cell_cache_ptr;
     uint32_t             m_next_table_id;
     uint64_t             m_disk_usage;
     uint32_t             m_blocksize;
     float                m_compression_ratio;
-    std::string          m_compressor;
+    String          m_compressor;
     bool                 m_is_root;
     Timestamp            m_compaction_timestamp;
     uint64_t             m_oldest_cached_timestamp;

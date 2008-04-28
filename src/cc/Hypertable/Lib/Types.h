@@ -31,6 +31,7 @@ extern "C" {
 }
 
 #include "Common/ByteString.h"
+#include "Common/String.h"
 
 namespace Hypertable {
 
@@ -44,6 +45,21 @@ namespace Hypertable {
     const char *name;
     uint32_t id;
     uint32_t generation;
+  };
+
+  /** Wrapper for TableIdentifier.  Handles name allocation */
+  class TableIdentifierWrapper {
+  public:
+    TableIdentifierWrapper(TableIdentifier *identifier) : m_name(identifier->name) {
+      memcpy(&m_identifier, identifier, sizeof(TableIdentifier));
+      m_identifier.name = m_name.c_str();
+    }
+    TableIdentifier *operator-> () { return &m_identifier; }
+    operator TableIdentifier *() { return &m_identifier; }
+
+  private:
+    String m_name;
+    TableIdentifier m_identifier;
   };
 
   /** Identifies a range */

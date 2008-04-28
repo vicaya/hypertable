@@ -54,7 +54,7 @@ namespace Hypertable {
 
     static CommBuf *create_register_server_request(std::string &location);
 
-    static CommBuf *create_report_split_request(TableIdentifier &table, RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit);
+    static CommBuf *create_report_split_request(TableIdentifier *table, RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit);
 
     static CommBuf *create_drop_table_request(const char *table_name, bool if_exists);
 

@@ -19,31 +19,23 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_METADATANORMAL_H
-#define HYPERTABLE_METADATANORMAL_H
+#ifndef HYPERTABLE_RANGESTATE_H
+#define HYPERTABLE_RANGESTATE_H
 
-#include <string>
+#include "Common/String.h"
 
-#include "Hypertable/Lib/TableScanner.h"
-#include "Hypertable/Lib/Types.h"
+/**
+ * Holds the persistent state of a Range.
+ */
+class RangeState {
+ public:
+  enum { NORMAL, SPLIT_LOG_INSTALLED, SPLIT_SHRUNK };
+  RangeState() : state(NORMAL), soft_limit(0) { return; }
+  int state;
+  uint64_t soft_limit;
+  String split_log;
+};
 
-#include "Metadata.h"
 
-namespace Hypertable {
-  class MetadataNormal : public Metadata {
 
-  public:
-    MetadataNormal(TableIdentifier *identifier, std::string &end_row);
-    virtual ~MetadataNormal();
-    virtual void reset_files_scan();
-    virtual bool get_next_files(std::string &ag_name, std::string &files);
-    virtual void write_files(std::string &ag_name, std::string &files);
-
-  private:
-    TableScannerPtr         m_files_scanner_ptr;
-    std::string             m_metadata_key;
-  };
-}
-
-#endif // HYPERTABLE_METADATANORMAL_H
-
+#endif // HYPERTABLE_RANGESTATE_H

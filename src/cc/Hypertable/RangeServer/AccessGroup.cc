@@ -41,8 +41,8 @@ namespace {
 }
 
 
-AccessGroup::AccessGroup(TableIdentifier &table_identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeSpec *range) : CellList(), m_mutex(), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE), m_compression_ratio(1.0), m_is_root(false), m_oldest_cached_timestamp(0), m_collisions(0), m_needs_compaction(false), m_drop(false) {
-  m_table_name = table_identifier.name;
+AccessGroup::AccessGroup(TableIdentifier *identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeSpec *range) : CellList(), m_identifier(identifier), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE), m_compression_ratio(1.0), m_is_root(false), m_oldest_cached_timestamp(0), m_collisions(0), m_needs_compaction(false), m_drop(false) {
+  m_table_name = m_identifier->name;
   m_start_row = range->startRow;
   m_end_row = range->endRow;
   m_cell_cache_ptr = new CellCache();
@@ -50,13 +50,12 @@ AccessGroup::AccessGroup(TableIdentifier &table_identifier, SchemaPtr &schemaPtr
   for (list<Schema::ColumnFamily *>::iterator iter = ag->columns.begin(); iter != ag->columns.end(); iter++) {
     m_column_families.insert((uint8_t)(*iter)->id);
   }
-  Copy(table_identifier, m_table_identifier);
   if (ag->blocksize != 0)
     m_blocksize = ag->blocksize;
 
   m_compressor = (ag->compressor != "") ? ag->compressor : schemaPtr->get_compressor();
 
-  m_is_root = (table_identifier.id == 0 && *range->startRow == 0 && !strcmp(range->endRow, Key::END_ROOT_ROW));
+  m_is_root = (m_identifier->id == 0 && *range->startRow == 0 && !strcmp(range->endRow, Key::END_ROOT_ROW));
 
   m_in_memory = ag->in_memory;
 }
@@ -64,12 +63,11 @@ AccessGroup::AccessGroup(TableIdentifier &table_identifier, SchemaPtr &schemaPtr
 
 AccessGroup::~AccessGroup() {
   if (m_drop) {
-    if (m_table_identifier.id == 0) {
+    if (m_identifier->id == 0) {
       HT_ERROR("~AccessGroup has drop bit set, but table is METADATA");
-      Free(m_table_identifier);
       return;
     }
-    std::string metadata_key = std::string("") + (uint32_t)m_table_identifier.id + ":" + m_end_row;
+    String metadata_key = String("") + (uint32_t)m_identifier->id + ":" + m_end_row;
     TableMutatorPtr mutator_ptr;
     KeySpec key;
 
@@ -91,7 +89,6 @@ AccessGroup::~AccessGroup() {
 		metadata_key.c_str(), Error::get_text(e.code()));
     }
   }
-  Free(m_table_identifier);
   return;
 }
 
@@ -129,7 +126,7 @@ bool AccessGroup::include_in_scan(ScanContextPtr &scan_context_ptr) {
 }
 
 const char *AccessGroup::get_split_row() {
-  std::vector<std::string> split_rows;
+  std::vector<String> split_rows;
   get_split_rows(split_rows, true);
   if (split_rows.size() > 0) {
     sort(split_rows.begin(), split_rows.end());
@@ -138,7 +135,7 @@ const char *AccessGroup::get_split_row() {
   return "";
 }
 
-void AccessGroup::get_split_rows(std::vector<std::string> &split_rows, bool include_cache) {
+void AccessGroup::get_split_rows(std::vector<String> &split_rows, bool include_cache) {
   boost::mutex::scoped_lock lock(m_mutex);
   const char *row;
   for (size_t i=0; i<m_stores.size(); i++) {
@@ -150,7 +147,7 @@ void AccessGroup::get_split_rows(std::vector<std::string> &split_rows, bool incl
     m_cell_cache_ptr->get_split_rows(split_rows);
 }
 
-void AccessGroup::get_cached_rows(std::vector<std::string> &rows) {
+void AccessGroup::get_cached_rows(std::vector<String> &rows) {
   m_cell_cache_ptr->get_rows(rows);
 }
 
@@ -218,7 +215,7 @@ namespace {
 
 
 void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
-  std::string cellStoreFile;
+  String cellStoreFile;
   char md5DigestStr[33];
   char filename[16];
   ByteString32T *key = 0;
@@ -227,8 +224,8 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
   CellListScannerPtr scannerPtr;
   size_t tableIndex = 1;
   CellStorePtr cellStorePtr;
-  std::string files;
-  std::string metadata_key_str;
+  String files;
+  String metadata_key_str;
 
   if (!major && !m_needs_compaction)
     return;
@@ -364,14 +361,14 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
       metadata.write_files(m_name, files);
     }
     else {
-      MetadataNormal metadata(m_table_identifier, m_end_row);
+      MetadataNormal metadata(m_identifier, m_end_row);
       metadata.write_files(m_name, files);
     }
   }
   catch (Hypertable::Exception &e) {
     // TODO: propagate exception
     HT_ERRORF("Problem updating 'File' column of METADATA (%d:%s) - %s",
-		 m_table_identifier.id, metadata_key_str.c_str(), Error::get_text(e.code()));
+		 m_identifier->id, metadata_key_str.c_str(), Error::get_text(e.code()));
   }
 
   HT_INFOF("Finished Compaction (%s.%s)", m_table_name.c_str(), m_name.c_str());
@@ -381,7 +378,7 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
 /**
  * 
  */
-int AccessGroup::shrink(std::string &new_start_row) {
+int AccessGroup::shrink(String &new_start_row) {
   boost::mutex::scoped_lock lock(m_mutex);
   int error;
   CellCachePtr old_cell_cache_ptr = m_cell_cache_ptr;
@@ -425,7 +422,7 @@ int AccessGroup::shrink(std::string &new_start_row) {
    * Shrink the CellStores
    */
   for (size_t i=0; i<m_stores.size(); i++) {
-    std::string filename = m_stores[i]->get_filename();
+    String filename = m_stores[i]->get_filename();
     new_cell_store = new CellStoreV0(Global::dfs);
     if ((error = new_cell_store->open(filename.c_str(), m_start_row.c_str(), m_end_row.c_str())) != Error::OK) {
       HT_ERRORF("Problem opening cell store '%s' [%s:%s] - %s",
@@ -450,7 +447,7 @@ int AccessGroup::shrink(std::string &new_start_row) {
 /**
  *
  */
-void AccessGroup::get_files(std::string &text) {
+void AccessGroup::get_files(String &text) {
   text = "";
   for (size_t i=0; i<m_stores.size(); i++)
     text += m_stores[i]->get_filename() + ";\n";

@@ -34,9 +34,8 @@
 /**
  *
  */
-MetadataNormal::MetadataNormal(TableIdentifier &identifier, std::string &end_row) : m_files_scanner_ptr(0) {
-  m_metadata_key = std::string("") + (uint32_t)identifier.id + ":" + end_row;
-  memcpy(&m_identifier, &identifier, sizeof(TableIdentifier));
+MetadataNormal::MetadataNormal(TableIdentifier *identifier, std::string &end_row) : m_files_scanner_ptr(0) {
+  m_metadata_key = std::string("") + (uint32_t)identifier->id + ":" + end_row;
 }
 
 

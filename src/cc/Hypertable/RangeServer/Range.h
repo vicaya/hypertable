@@ -23,10 +23,11 @@
 #define HYPERTABLE_RANGE_H
 
 #include <map>
-#include <string>
 #include <vector>
 
 #include <boost/thread/condition.hpp>
+
+#include "Common/String.h"
 
 #include "Hypertable/Lib/CommitLog.h"
 #include "Hypertable/Lib/CommitLogReader.h"
@@ -36,20 +37,24 @@
 
 #include "AccessGroup.h"
 #include "CellStore.h"
-#include "Metadata.h"
-#include "ScannerTimestampController.h"
 #include "MaintenanceTask.h"
+#include "Metadata.h"
+#include "RangeState.h"
+#include "ScannerTimestampController.h"
 #include "Timestamp.h"
 
 namespace Hypertable {
 
+  /**
+   * Represents a table row range.
+   */
   class Range : public CellList {
 
     typedef std::map<string, AccessGroup *> AccessGroupMapT;
     typedef std::vector<AccessGroup *>  ColumnFamilyVectorT;
 
   public:
-    Range(MasterClientPtr &master_client_ptr, TableIdentifier &identifier, SchemaPtr &schemaPtr, RangeSpec *range, uint64_t soft_limit);
+    Range(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, SchemaPtr &schemaPtr, RangeSpec *range, RangeState &state);
     virtual ~Range();
     virtual int add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp);
     virtual const char *get_split_row();
@@ -72,12 +77,12 @@ namespace Hypertable {
      *
      * This does not need to be protected by a lock because the end row of a range never changes.
      */
-    string end_row() {
+    String end_row() {
       return m_end_row;
     }
 
-    string table_name() {
-      return (std::string)m_identifier.name;
+    String table_name() {
+      return (String)m_identifier->name;
     }
 
     uint64_t get_latest_timestamp();
@@ -109,7 +114,7 @@ namespace Hypertable {
       m_scanner_timestamp_controller.remove_update_timestamp(ts);
     }
 
-    bool get_split_info(std::string &split_row, CommitLogPtr &split_log_ptr) {
+    bool get_split_info(String &split_row, CommitLogPtr &split_log_ptr) {
       boost::mutex::scoped_lock lock(m_mutex);
       split_row = m_split_row;
       split_log_ptr = m_split_log_ptr;
@@ -121,7 +126,7 @@ namespace Hypertable {
 
     void dump_stats();
 
-    uint64_t get_size_limit() { return m_disk_limit; }
+    uint64_t get_size_limit() { return m_state.soft_limit; }
 
     bool is_root() { return m_is_root; }
 
@@ -135,16 +140,16 @@ namespace Hypertable {
 
     void load_cell_stores(Metadata *metadata);
 
-    bool extract_csid_from_path(std::string &path, uint32_t *storeIdp);
+    bool extract_csid_from_path(String &path, uint32_t *storeIdp);
 
     void run_compaction(bool major=false);
 
     boost::mutex     m_mutex;
     MasterClientPtr  m_master_client_ptr;
-    TableIdentifier m_identifier;
+    TableIdentifierWrapper m_identifier;
     SchemaPtr        m_schema;
-    std::string      m_start_row;
-    std::string      m_end_row;
+    String      m_start_row;
+    String      m_end_row;
     AccessGroupMapT        m_access_group_map;
     std::vector<AccessGroup *>  m_access_group_vector;
     ColumnFamilyVectorT      m_column_family_vector;
@@ -152,7 +157,7 @@ namespace Hypertable {
 
     Timestamp        m_timestamp;
     uint64_t         m_last_logical_timestamp;
-    std::string      m_split_row;
+    String      m_split_row;
     CommitLogPtr     m_split_log_ptr;
 
     boost::mutex     m_maintenance_mutex;
@@ -164,7 +169,7 @@ namespace Hypertable {
     ScannerTimestampController m_scanner_timestamp_controller;
     uint64_t         m_added_deletes[3];
     uint64_t         m_added_inserts;
-    uint64_t         m_disk_limit;
+    RangeState       m_state;
   };
 
   typedef boost::intrusive_ptr<Range> RangePtr;

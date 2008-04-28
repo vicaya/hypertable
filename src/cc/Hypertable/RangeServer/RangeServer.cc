@@ -314,6 +314,8 @@ void RangeServer::fast_recover() {
 
     meta_log_reader_ptr->load_range_states(range_states);
 
+    
+
   }
   catch (Exception &e) {
     HT_ERRORF("Problem attempting fast recovery - %s - %s", Error::get_text(e.code()), e.what());
@@ -683,7 +685,12 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifier *table, Range
       }
     }
 
-    range_ptr = new Range(m_master_client_ptr, *table, schemaPtr, range, soft_limit);
+    {
+      RangeState rstate;
+      rstate.soft_limit = soft_limit;
+
+      range_ptr = new Range(m_master_client_ptr, table, schemaPtr, range, rstate);
+    }
 
     /**
      * NOTE: The range does not need to be locked in the following replay since
@@ -716,6 +723,11 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifier *table, Range
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
     }
   }
+}
+
+
+void RangeServer::reload_range(TableIdentifier *table, RangeSpec *range, uint64_t soft_limit, const String &split_log) {
+  
 }
 
 

@@ -81,6 +81,7 @@ namespace Hypertable {
   private:
     int initialize(PropertiesPtr &props_ptr);
     void fast_recover();
+    void reload_range(TableIdentifier *table, RangeSpec *range, uint64_t soft_limit, const String &split_log);
 
     int verify_schema(TableInfoPtr &tableInfoPtr, int generation, std::string &errMsg);
 
