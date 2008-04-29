@@ -46,7 +46,7 @@ TableScanner::TableScanner(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier
   if ((client_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0)) != 0)
     m_range_server.set_timeout(client_timeout);
 
-  m_scan_spec.rowLimit = scan_spec.rowLimit;
+  m_scan_spec.row_limit = scan_spec.row_limit;
   m_scan_spec.max_versions = scan_spec.max_versions;
 
   // deep copy columns vector
@@ -57,27 +57,27 @@ TableScanner::TableScanner(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier
   }
 
   // deep copy start row
-  if (scan_spec.startRow) {
-    str = new char [ strlen(scan_spec.startRow) + 1 ];
-    strcpy(str, scan_spec.startRow);
-    m_scan_spec.startRow = str;
+  if (scan_spec.start_row) {
+    str = new char [ strlen(scan_spec.start_row) + 1 ];
+    strcpy(str, scan_spec.start_row);
+    m_scan_spec.start_row = str;
   }
   else
-    m_scan_spec.startRow = 0;
-  m_scan_spec.startRowInclusive = scan_spec.startRowInclusive;
+    m_scan_spec.start_row = 0;
+  m_scan_spec.start_row_inclusive = scan_spec.start_row_inclusive;
 
   // deep copy end row
-  if (scan_spec.endRow) {
-    str = new char [ strlen(scan_spec.endRow) + 1 ];
-    strcpy(str, scan_spec.endRow);
-    m_scan_spec.endRow = str;
+  if (scan_spec.end_row) {
+    str = new char [ strlen(scan_spec.end_row) + 1 ];
+    strcpy(str, scan_spec.end_row);
+    m_scan_spec.end_row = str;
   }
   else
-    m_scan_spec.endRow = 0;
-  m_scan_spec.endRowInclusive = scan_spec.endRowInclusive;
+    m_scan_spec.end_row = 0;
+  m_scan_spec.end_row_inclusive = scan_spec.end_row_inclusive;
 
-  if (m_scan_spec.rowLimit == 1 ||
-      ((m_scan_spec.startRow && m_scan_spec.endRow) && !strcmp(m_scan_spec.startRow, m_scan_spec.endRow)))
+  if (m_scan_spec.row_limit == 1 ||
+      ((m_scan_spec.start_row && m_scan_spec.end_row) && !strcmp(m_scan_spec.start_row, m_scan_spec.end_row)))
     m_readahead = false;
 
   memcpy(&m_scan_spec.interval, &scan_spec.interval, sizeof(m_scan_spec.interval));
@@ -97,8 +97,8 @@ TableScanner::TableScanner(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier
 TableScanner::~TableScanner() {
   for (size_t i=0; i<m_scan_spec.columns.size(); i++)
     delete [] m_scan_spec.columns[i];
-  delete [] m_scan_spec.startRow;
-  delete [] m_scan_spec.endRow;
+  delete [] m_scan_spec.start_row;
+  delete [] m_scan_spec.end_row;
 
   // if there is an outstanding fetch, wait for it to come back or timeout
   if (m_fetch_outstanding)
@@ -116,12 +116,12 @@ bool TableScanner::next(CellT &cell) {
     return false;
 
   if (!m_started)
-    find_range_and_start_scan(m_scan_spec.startRow);
+    find_range_and_start_scan(m_scan_spec.start_row);
 
   while (!m_scanblock.more()) {
     if (m_scanblock.eos()) {
       if (!strcmp(m_range_info.end_row.c_str(), Key::END_ROW_MARKER) ||
-	  (m_scan_spec.endRow && (strcmp(m_scan_spec.endRow, m_range_info.end_row.c_str()) <= 0))) {
+	  (m_scan_spec.end_row && (strcmp(m_scan_spec.end_row, m_range_info.end_row.c_str()) <= 0))) {
 	m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
 	m_eos = true;
 	return false;
@@ -161,16 +161,16 @@ bool TableScanner::next(CellT &cell) {
       throw Exception(Error::BAD_KEY);
 
     // check for end row
-    if (m_scan_spec.endRow) {
-      if (m_scan_spec.endRowInclusive) {
-	if (strcmp(keyComps.row, m_scan_spec.endRow) > 0) {
+    if (m_scan_spec.end_row) {
+      if (m_scan_spec.end_row_inclusive) {
+	if (strcmp(keyComps.row, m_scan_spec.end_row) > 0) {
 	  m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
 	  m_eos = true;
 	  return false;
 	}
       }
       else {
-	if (strcmp(keyComps.row, m_scan_spec.endRow) >= 0) {
+	if (strcmp(keyComps.row, m_scan_spec.end_row) >= 0) {
 	  m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
 	  m_eos = true;
 	  return false;
@@ -187,7 +187,7 @@ bool TableScanner::next(CellT &cell) {
     if (strcmp(m_cur_row.c_str(), keyComps.row)) {
       m_rows_seen++;
       m_cur_row = keyComps.row;
-      if (m_scan_spec.rowLimit > 0 && m_rows_seen > m_scan_spec.rowLimit) {
+      if (m_scan_spec.row_limit > 0 && m_rows_seen > m_scan_spec.row_limit) {
 	m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
 	m_eos = true;
 	return false;
@@ -233,11 +233,11 @@ void TableScanner::find_range_and_start_scan(const char *row_key) {
   m_started = true;
 
   dbuf.ensure(m_range_info.start_row.length() + m_range_info.end_row.length() + 2);
-  range.startRow = (const char *)dbuf.addNoCheck(m_range_info.start_row.c_str(), m_range_info.start_row.length()+1);
-  range.endRow   = (const char *)dbuf.addNoCheck(m_range_info.end_row.c_str(), m_range_info.end_row.length()+1);
+  range.start_row = (const char *)dbuf.addNoCheck(m_range_info.start_row.c_str(), m_range_info.start_row.length()+1);
+  range.end_row   = (const char *)dbuf.addNoCheck(m_range_info.end_row.c_str(), m_range_info.end_row.length()+1);
   if (!LocationCache::location_to_addr(m_range_info.location.c_str(), m_cur_addr)) {
     HT_ERRORF("Invalid location found in METADATA entry range [%s..%s] - %s",
-		 range.startRow, range.endRow, m_range_info.location.c_str());
+		 range.start_row, range.end_row, m_range_info.location.c_str());
     throw Exception(Error::INVALID_METADATA);
   }
 
@@ -249,17 +249,17 @@ void TableScanner::find_range_and_start_scan(const char *row_key) {
 
     // reset the range information
     dbuf.ensure(m_range_info.start_row.length() + m_range_info.end_row.length() + 2);
-    range.startRow = (const char *)dbuf.addNoCheck(m_range_info.start_row.c_str(), m_range_info.start_row.length()+1);
-    range.endRow   = (const char *)dbuf.addNoCheck(m_range_info.end_row.c_str(), m_range_info.end_row.length()+1);
+    range.start_row = (const char *)dbuf.addNoCheck(m_range_info.start_row.c_str(), m_range_info.start_row.length()+1);
+    range.end_row   = (const char *)dbuf.addNoCheck(m_range_info.end_row.c_str(), m_range_info.end_row.length()+1);
     if (!LocationCache::location_to_addr(m_range_info.location.c_str(), m_cur_addr)) {
       HT_ERRORF("Invalid location found in METADATA entry range [%s..%s] - %s",
-		   range.startRow, range.endRow, m_range_info.location.c_str());
+		   range.start_row, range.end_row, m_range_info.location.c_str());
       throw Exception(Error::INVALID_METADATA);
     }
 
     // create the scanner
     if ((error = m_range_server.create_scanner(m_cur_addr, m_table_identifier, range, m_scan_spec, m_scanblock)) != Error::OK)
-      throw Exception(error, std::string("Problem creating scanner on ") + m_table_identifier.name + "[" + range.startRow + ".." + range.endRow + "]");
+      throw Exception(error, std::string("Problem creating scanner on ") + m_table_identifier.name + "[" + range.start_row + ".." + range.end_row + "]");
   }
 
   // maybe kick off readahead

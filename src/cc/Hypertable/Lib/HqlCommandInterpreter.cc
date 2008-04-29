@@ -121,22 +121,22 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       time_t unix_time;
       struct tm tms;
 
-      scan_spec.rowLimit = state.scan.limit;
+      scan_spec.row_limit = state.scan.limit;
       scan_spec.max_versions = state.scan.max_versions;
       for (size_t i=0; i<state.scan.columns.size(); i++)
 	scan_spec.columns.push_back(state.scan.columns[i].c_str());
       if (state.scan.row != "") {
-	scan_spec.startRow = state.scan.row.c_str();
-	scan_spec.startRowInclusive = true;
-	scan_spec.endRow = state.scan.row.c_str();
-	scan_spec.endRowInclusive = true;
-	scan_spec.rowLimit = 1;
+	scan_spec.start_row = state.scan.row.c_str();
+	scan_spec.start_row_inclusive = true;
+	scan_spec.end_row = state.scan.row.c_str();
+	scan_spec.end_row_inclusive = true;
+	scan_spec.row_limit = 1;
       }
       else {
-	scan_spec.startRow = (state.scan.start_row == "") ? 0 : state.scan.start_row.c_str();
-	scan_spec.startRowInclusive = state.scan.start_row_inclusive;
-	scan_spec.endRow = (state.scan.end_row == "") ? Key::END_ROW_MARKER : state.scan.end_row.c_str();
-	scan_spec.endRowInclusive = state.scan.end_row_inclusive;
+	scan_spec.start_row = (state.scan.start_row == "") ? 0 : state.scan.start_row.c_str();
+	scan_spec.start_row_inclusive = state.scan.start_row_inclusive;
+	scan_spec.end_row = (state.scan.end_row == "") ? Key::END_ROW_MARKER : state.scan.end_row.c_str();
+	scan_spec.end_row_inclusive = state.scan.end_row_inclusive;
       }
       scan_spec.interval.first  = state.scan.start_time;
       scan_spec.interval.second = state.scan.end_time;

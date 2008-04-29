@@ -411,13 +411,13 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
     /**
      * Load root METADATA range
      */
-    range.startRow = 0;
-    range.endRow = Key::END_ROOT_ROW;
+    range.start_row = 0;
+    range.end_row = Key::END_ROOT_ROW;
 
     if ((error = rsc.load_range(alias, table, range, 0, m_max_range_bytes, 0)) != Error::OK) {
       std::string addrStr;
       HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server %s",
-		   table.name, range.endRow, InetAddr::string_format(addrStr, alias));
+		   table.name, range.end_row, InetAddr::string_format(addrStr, alias));
     }
 
 
@@ -451,13 +451,13 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
     /**
      * Load second-level METADATA range
      */
-    range.startRow = Key::END_ROOT_ROW;
-    range.endRow = Key::END_ROW_MARKER;
+    range.start_row = Key::END_ROOT_ROW;
+    range.end_row = Key::END_ROW_MARKER;
 
     if ((error = rsc.load_range(alias, table, range, 0, m_max_range_bytes, 0)) != Error::OK) {
       std::string addrStr;
       HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server %s",
-		   table.name, range.endRow, InetAddr::string_format(addrStr, alias));
+		   table.name, range.end_row, InetAddr::string_format(addrStr, alias));
     }
 
     m_initialized = true;
@@ -476,7 +476,7 @@ void Master::report_split(ResponseCallback *cb, TableIdentifier &table, RangeSpe
   struct sockaddr_in addr;
   RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30);
 
-  HT_INFOF("Entering report_split for %s[%s:%s].", table.name, range.startRow, range.endRow);
+  HT_INFOF("Entering report_split for %s[%s:%s].", table.name, range.start_row, range.end_row);
 
   cb->response_ok();
 
@@ -486,7 +486,7 @@ void Master::report_split(ResponseCallback *cb, TableIdentifier &table, RangeSpe
       m_server_map_iter = m_server_map.begin();
     assert(m_server_map_iter != m_server_map.end());
     memcpy(&addr, &((*m_server_map_iter).second->addr), sizeof(struct sockaddr_in));
-    HT_INFOF("Assigning newly reported range %s[%s:%s] to %s", table.name, range.startRow, range.endRow, (*m_server_map_iter).first.c_str());
+    HT_INFOF("Assigning newly reported range %s[%s:%s] to %s", table.name, range.start_row, range.end_row, (*m_server_map_iter).first.c_str());
     m_server_map_iter++;
   }
 
@@ -495,10 +495,10 @@ void Master::report_split(ResponseCallback *cb, TableIdentifier &table, RangeSpe
   if ((error = rsc.load_range(addr, table, range, transfer_log_dir, soft_limit, 0)) != Error::OK) {
     std::string addrStr;
     HT_ERRORF("Problem issuing 'load range' command for %s[%s:%s] at server %s",
-                 table.name, range.startRow, range.endRow, InetAddr::string_format(addrStr, addr));
+                 table.name, range.start_row, range.end_row, InetAddr::string_format(addrStr, addr));
   }
   else
-    HT_INFOF("report_split for %s[%s:%s] successful.", table.name, range.startRow, range.endRow);
+    HT_INFOF("report_split for %s[%s:%s] successful.", table.name, range.start_row, range.end_row);
 
 }
 
@@ -565,14 +565,14 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
     sprintf(start_row, "%d:", ival);
     sprintf(end_row, "%d:%s", ival, Key::END_ROW_MARKER);
 
-    scan_spec.rowLimit = 0;
+    scan_spec.row_limit = 0;
     scan_spec.max_versions = 1;
     scan_spec.columns.clear();
     scan_spec.columns.push_back("Location");
-    scan_spec.startRow = start_row;
-    scan_spec.startRowInclusive = true;
-    scan_spec.endRow = end_row;
-    scan_spec.endRowInclusive = true;
+    scan_spec.start_row = start_row;
+    scan_spec.start_row_inclusive = true;
+    scan_spec.end_row = end_row;
+    scan_spec.end_row_inclusive = true;
     scan_spec.interval.first = 0;
     scan_spec.interval.second = 0;
     scan_spec.return_deletes=false;
@@ -764,8 +764,8 @@ int Master::create_table(const char *tableName, const char *schemaString, std::s
     table.id = table_id;
     table.generation = schema->get_generation();
 
-    range.startRow = 0;
-    range.endRow = Key::END_ROW_MARKER;
+    range.start_row = 0;
+    range.end_row = Key::END_ROW_MARKER;
 
     {
       boost::mutex::scoped_lock lock(m_mutex);
@@ -773,7 +773,7 @@ int Master::create_table(const char *tableName, const char *schemaString, std::s
         m_server_map_iter = m_server_map.begin();
       assert(m_server_map_iter != m_server_map.end());
       memcpy(&addr, &((*m_server_map_iter).second->addr), sizeof(struct sockaddr_in));
-      HT_INFOF("Assigning first range %s[%s:%s] to %s", table.name, range.startRow, range.endRow, (*m_server_map_iter).first.c_str());
+      HT_INFOF("Assigning first range %s[%s:%s] to %s", table.name, range.start_row, range.end_row, (*m_server_map_iter).first.c_str());
       m_server_map_iter++;
       soft_limit = m_max_range_bytes / std::min(64, (int)m_server_map.size()*2);
     }
@@ -781,7 +781,7 @@ int Master::create_table(const char *tableName, const char *schemaString, std::s
     if ((error = rsc.load_range(addr, table, range, 0, soft_limit, 0)) != Error::OK) {
       std::string addrStr;
       HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server %s",
-		table.name, range.endRow, InetAddr::string_format(addrStr, addr));
+		table.name, range.end_row, InetAddr::string_format(addrStr, addr));
     }
   }
 

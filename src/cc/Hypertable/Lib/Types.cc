@@ -57,7 +57,7 @@ bool RangeSpec::decode(uint8_t **bufPtr, size_t *remainingPtr) {
 }
 
 
-ScanSpec::ScanSpec() : rowLimit(0), max_versions(0), startRow(0), startRowInclusive(true), endRow(0), endRowInclusive(true), interval(0, END_OF_TIME), return_deletes(false) {
+ScanSpec::ScanSpec() : row_limit(0), max_versions(0), start_row(0), start_row_inclusive(true), end_row(0), end_row_inclusive(true), interval(0, END_OF_TIME), return_deletes(false) {
   return;
 }
 
@@ -106,21 +106,21 @@ bool Hypertable::DecodeTableIdentifier(uint8_t **bufPtr, size_t *remainingPtr, T
 
 /** Returns encoded (serialized) length of a RangeSpec */
 size_t Hypertable::EncodedLengthRange(RangeSpec &range) {
-  return Serialization::encoded_length_string(range.startRow) + Serialization::encoded_length_string(range.endRow);
+  return Serialization::encoded_length_string(range.start_row) + Serialization::encoded_length_string(range.end_row);
 }
 
 /** Encodes a RangeSpec into the given buffer. */
 void Hypertable::EncodeRange(uint8_t **bufPtr, RangeSpec &range) {
-  Serialization::encode_string(bufPtr, range.startRow);
-  Serialization::encode_string(bufPtr, range.endRow);
+  Serialization::encode_string(bufPtr, range.start_row);
+  Serialization::encode_string(bufPtr, range.end_row);
 }
 
 /** Decodes a RangeSpec from the given buffer */
 bool Hypertable::DecodeRange(uint8_t **bufPtr, size_t *remainingPtr, RangeSpec *range) {
   memset(range, 0, sizeof(RangeSpec));
-  if (!Serialization::decode_string(bufPtr, remainingPtr, &range->startRow))
+  if (!Serialization::decode_string(bufPtr, remainingPtr, &range->start_row))
     return false;
-  if (!Serialization::decode_string(bufPtr, remainingPtr, &range->endRow))
+  if (!Serialization::decode_string(bufPtr, remainingPtr, &range->end_row))
     return false;
   return true;
 }
@@ -131,8 +131,8 @@ bool Hypertable::DecodeRange(uint8_t **bufPtr, size_t *remainingPtr, RangeSpec *
  */
 size_t Hypertable::EncodedLengthScanSpecification(ScanSpec &scanSpec) {
   size_t len = 29;
-  len += Serialization::encoded_length_string(scanSpec.startRow);
-  len += Serialization::encoded_length_string(scanSpec.endRow);
+  len += Serialization::encoded_length_string(scanSpec.start_row);
+  len += Serialization::encoded_length_string(scanSpec.end_row);
   for (size_t i=0; i<scanSpec.columns.size(); i++)
     len += Serialization::encoded_length_string(scanSpec.columns[i]);
   return len;
@@ -140,12 +140,12 @@ size_t Hypertable::EncodedLengthScanSpecification(ScanSpec &scanSpec) {
 
 
 void Hypertable::EncodeScanSpecification(uint8_t **bufPtr, ScanSpec &scanSpec) {
-  Serialization::encode_int(bufPtr, scanSpec.rowLimit);
+  Serialization::encode_int(bufPtr, scanSpec.row_limit);
   Serialization::encode_int(bufPtr, scanSpec.max_versions);
-  Serialization::encode_string(bufPtr, scanSpec.startRow);
-  *(*bufPtr)++ = (uint8_t)scanSpec.startRowInclusive;
-  Serialization::encode_string(bufPtr, scanSpec.endRow);
-  *(*bufPtr)++ = (uint8_t)scanSpec.endRowInclusive;
+  Serialization::encode_string(bufPtr, scanSpec.start_row);
+  *(*bufPtr)++ = (uint8_t)scanSpec.start_row_inclusive;
+  Serialization::encode_string(bufPtr, scanSpec.end_row);
+  *(*bufPtr)++ = (uint8_t)scanSpec.end_row_inclusive;
   Serialization::encode_short(bufPtr, (short)scanSpec.columns.size());
   for (size_t i=0; i<scanSpec.columns.size(); i++)
     Serialization::encode_string(bufPtr, scanSpec.columns[i]);
@@ -160,20 +160,20 @@ bool Hypertable::DecodeScanSpecification(uint8_t **bufPtr, size_t *remainingPtr,
   const char *column;
   uint8_t inclusiveByte;
 
-  if (!Serialization::decode_int(bufPtr, remainingPtr, &scanSpec->rowLimit))
+  if (!Serialization::decode_int(bufPtr, remainingPtr, &scanSpec->row_limit))
     return false;
   if (!Serialization::decode_int(bufPtr, remainingPtr, &scanSpec->max_versions))
     return false;
-  if (!Serialization::decode_string(bufPtr, remainingPtr, &scanSpec->startRow))
+  if (!Serialization::decode_string(bufPtr, remainingPtr, &scanSpec->start_row))
     return false;
   if (!Serialization::decode_byte(bufPtr, remainingPtr, &inclusiveByte))
     return false;
-  scanSpec->startRowInclusive = inclusiveByte ? true : false;
-  if (!Serialization::decode_string(bufPtr, remainingPtr, &scanSpec->endRow))
+  scanSpec->start_row_inclusive = inclusiveByte ? true : false;
+  if (!Serialization::decode_string(bufPtr, remainingPtr, &scanSpec->end_row))
     return false;
   if (!Serialization::decode_byte(bufPtr, remainingPtr, &inclusiveByte))
     return false;
-  scanSpec->endRowInclusive = inclusiveByte ? true : false;
+  scanSpec->end_row_inclusive = inclusiveByte ? true : false;
   if (!Serialization::decode_short(bufPtr, remainingPtr, &columnCount))
     return false;
   for (short i=0; i<columnCount; i++) {
@@ -200,34 +200,34 @@ std::ostream &Hypertable::operator<<(std::ostream &os, const TableIdentifier &ta
 }
 
 std::ostream &Hypertable::operator<<(std::ostream &os, const RangeSpec &range) {
-  if (range.startRow == 0)
+  if (range.start_row == 0)
     os << "StartRow = [NULL]" << endl;
   else
-    os << "StartRow = \"" << range.startRow << "\"" << endl;
-  if (range.endRow == 0)
+    os << "StartRow = \"" << range.start_row << "\"" << endl;
+  if (range.end_row == 0)
     os << "EndRow   = [NULL]" << endl;
   else
-    os << "EndRow   = \"" << range.endRow << "\"" << endl;
+    os << "EndRow   = \"" << range.end_row << "\"" << endl;
   return os;
 }
 
 std::ostream &Hypertable::operator<<(std::ostream &os, const ScanSpec &scanSpec) {
-  os << "RowLimit    = " << scanSpec.rowLimit << endl;
+  os << "RowLimit    = " << scanSpec.row_limit << endl;
   os << "MaxVersions = " << scanSpec.max_versions << endl;
   os << "Columns     = ";
   for (std::vector<const char *>::const_iterator iter = scanSpec.columns.begin(); iter != scanSpec.columns.end(); iter++)
     os << *iter << " ";
   os << endl;
-  if (scanSpec.startRow)
-    os << "StartRow  = " << scanSpec.startRow << endl;
+  if (scanSpec.start_row)
+    os << "StartRow  = " << scanSpec.start_row << endl;
   else
     os << "StartRow  = " << endl;
-  os << "StartRowInclusive = " << scanSpec.startRowInclusive << endl;
-  if (scanSpec.endRow)
-    os << "EndRow    = " << scanSpec.endRow << endl;
+  os << "StartRowInclusive = " << scanSpec.start_row_inclusive << endl;
+  if (scanSpec.end_row)
+    os << "EndRow    = " << scanSpec.end_row << endl;
   else
     os << "EndRow    = " << endl;
-  os << "EndRowInclusive = " << scanSpec.endRowInclusive << endl;
+  os << "EndRowInclusive = " << scanSpec.end_row_inclusive << endl;
   os << "MinTime     = " << scanSpec.interval.first << endl;
   os << "MaxTime     = " << scanSpec.interval.second << endl;
   return os;

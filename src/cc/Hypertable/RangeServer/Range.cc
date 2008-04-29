@@ -58,10 +58,10 @@ Range::Range(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, Sc
   if (m_state.soft_limit == 0 || m_state.soft_limit > Global::rangeMaxBytes)
     m_state.soft_limit = Global::rangeMaxBytes;
 
-  m_start_row = range->startRow;
-  m_end_row = range->endRow;
+  m_start_row = range->start_row;
+  m_end_row = range->end_row;
 
-  m_is_root = (m_identifier->id == 0 && *range->startRow == 0 && !strcmp(range->endRow, Key::END_ROOT_ROW));
+  m_is_root = (m_identifier->id == 0 && *range->start_row == 0 && !strcmp(range->end_row, Key::END_ROOT_ROW));
 
   m_column_family_vector.resize( m_schema->get_max_column_family_id() + 1 );
 
@@ -570,7 +570,6 @@ void Range::split_compact_and_shrink(Timestamp timestamp, String &old_start_row)
 }
 
 
-
 /**
  * 
  */
@@ -578,13 +577,13 @@ void Range::split_notify_master(String &old_start_row) {
   int error;
   RangeSpec range;
 
-  range.startRow = old_start_row.c_str();
-  range.endRow = m_start_row.c_str();
+  range.start_row = old_start_row.c_str();
+  range.end_row = m_start_row.c_str();
 
   // update the latest generation, this should probably be protected
   m_identifier->generation = m_schema->get_generation();
 
-  HT_INFOF("Reporting newly split off range %s[%s..%s] to Master", m_identifier->name, range.startRow, range.endRow);
+  HT_INFOF("Reporting newly split off range %s[%s..%s] to Master", m_identifier->name, range.start_row, range.end_row);
 
   if (m_state.soft_limit < Global::rangeMaxBytes) {
     m_state.soft_limit *= 2;
@@ -594,7 +593,7 @@ void Range::split_notify_master(String &old_start_row) {
 
   if ((error = m_master_client_ptr->report_split(m_identifier, range, m_state.split_log.c_str(), m_state.soft_limit)) != Error::OK) {
     throw Exception(error, format("Problem reporting split (table=%s, start_row=%s, end_row=%s) to master.",
-				  m_identifier->name, range.startRow, range.endRow));
+				  m_identifier->name, range.start_row, range.end_row));
   }
   
 }

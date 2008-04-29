@@ -198,10 +198,10 @@ void fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_
     // Set up the scan specification
     scan_spec.max_versions = 1;
     sprintf(start_row, "%d:", table_id);
-    scan_spec.startRow = start_row;
+    scan_spec.start_row = start_row;
     sprintf(end_row, "%d:%s", table_id, Key::END_ROW_MARKER);
-    scan_spec.endRow = end_row;
-    scan_spec.startRowInclusive = scan_spec.endRowInclusive = true;
+    scan_spec.end_row = end_row;
+    scan_spec.start_row_inclusive = scan_spec.end_row_inclusive = true;
     scan_spec.columns.clear();
     scan_spec.columns.push_back("Files");
     scan_spec.columns.push_back("StartRow");

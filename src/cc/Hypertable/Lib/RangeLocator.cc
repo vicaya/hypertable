@@ -235,8 +235,8 @@ int RangeLocator::find(TableIdentifier *table, const char *row_key, RangeLocatio
 
   /** at this point, we didn't find it so we need to do a METADATA lookup **/
 
-  range.startRow = 0;
-  range.endRow = Key::END_ROOT_ROW;
+  range.start_row = 0;
+  range.end_row = Key::END_ROOT_ROW;
   memcpy(&addr, &m_root_addr, sizeof(struct sockaddr_in));
 
   MetaKeyBuilder meta_keys;
@@ -253,15 +253,15 @@ int RangeLocator::find(TableIdentifier *table, const char *row_key, RangeLocatio
    */
   meta_key_ptr = meta_keys.start+2;
   if (hard || !m_cache.lookup(0, meta_key_ptr, range_loc_info_p, inclusive)) {
-    meta_scan_spec.rowLimit = METADATA_READAHEAD_COUNT;
+    meta_scan_spec.row_limit = METADATA_READAHEAD_COUNT;
     meta_scan_spec.max_versions = 1;
     meta_scan_spec.columns.clear();
     meta_scan_spec.columns.push_back("StartRow");
     meta_scan_spec.columns.push_back("Location");
-    meta_scan_spec.startRow = meta_keys.start;
-    meta_scan_spec.startRowInclusive = true;
-    meta_scan_spec.endRow = 0;
-    meta_scan_spec.endRowInclusive = false;
+    meta_scan_spec.start_row = meta_keys.start;
+    meta_scan_spec.start_row_inclusive = true;
+    meta_scan_spec.end_row = 0;
+    meta_scan_spec.end_row_inclusive = false;
     meta_scan_spec.return_deletes = false;
     // meta_scan_spec.interval = ????;
 
@@ -290,23 +290,23 @@ int RangeLocator::find(TableIdentifier *table, const char *row_key, RangeLocatio
    * Find actual range from second-level METADATA range
    */
 
-  range.startRow = range_loc_info_p->start_row.c_str();
-  range.endRow   = range_loc_info_p->end_row.c_str();
+  range.start_row = range_loc_info_p->start_row.c_str();
+  range.end_row   = range_loc_info_p->end_row.c_str();
 
   if (!LocationCache::location_to_addr(range_loc_info_p->location.c_str(), addr)) {
     HT_ERRORF("Invalid location found in METADATA entry for row '%s' - %s", start_row.c_str(), range_loc_info_p->location.c_str());
     return Error::INVALID_METADATA;
   }
 
-  meta_scan_spec.rowLimit = METADATA_READAHEAD_COUNT;
+  meta_scan_spec.row_limit = METADATA_READAHEAD_COUNT;
   meta_scan_spec.max_versions = 1;
   meta_scan_spec.columns.clear();
   meta_scan_spec.columns.push_back("StartRow");
   meta_scan_spec.columns.push_back("Location");
-  meta_scan_spec.startRow = meta_keys.start+2;
-  meta_scan_spec.startRowInclusive = true;
-  meta_scan_spec.endRow = meta_keys.end+2;
-  meta_scan_spec.endRowInclusive = true;
+  meta_scan_spec.start_row = meta_keys.start+2;
+  meta_scan_spec.start_row_inclusive = true;
+  meta_scan_spec.end_row = meta_keys.end+2;
+  meta_scan_spec.end_row_inclusive = true;
   // meta_scan_spec.interval = ????;
 
   if (m_conn_manager_ptr)

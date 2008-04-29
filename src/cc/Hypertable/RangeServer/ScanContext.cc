@@ -120,21 +120,21 @@ void ScanContext::initialize(uint64_t ts, ScanSpec *ss, RangeSpec *range_, Schem
   if (spec) {
 
     // start row
-    start_row = spec->startRow;
-    if (!spec->startRowInclusive)
+    start_row = spec->start_row;
+    if (!spec->start_row_inclusive)
       start_row.append(1,1);  // bump to next row
 
     // end row
-    if (spec->endRow[0] == 0)
+    if (spec->end_row[0] == 0)
       end_row = Key::END_ROW_MARKER;
     else {
-      end_row = spec->endRow;
-      if (spec->endRowInclusive) {
-	uint8_t last_char = spec->endRow[strlen(spec->endRow)-1];
+      end_row = spec->end_row;
+      if (spec->end_row_inclusive) {
+	uint8_t last_char = spec->end_row[strlen(spec->end_row)-1];
 	if (last_char == 0xff)
 	  end_row.append(1,1);    // bump to next row
 	else
-	  end_row[strlen(spec->endRow)-1] = (last_char+1);
+	  end_row[strlen(spec->end_row)-1] = (last_char+1);
       }
     }
   }

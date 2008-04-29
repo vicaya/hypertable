@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
   unsigned int seed = 1234;
   bool generateTimestamps = false;
   uint32_t qualifierLimit = 0;
-  uint32_t rowLimit = 0;
+  uint32_t row_limit = 0;
   uint32_t limit = 0;
   uint32_t emitted = 0;
   bool no_deletes = false;
@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
       qualifierLimit = atoi(&argv[i][18]);
     }
     else if (!strncmp(argv[i], "--row-limit=", 12)) {
-      rowLimit = atoi(&argv[i][12]);
+      row_limit = atoi(&argv[i][12]);
     }
     else if (!strncmp(argv[i], "--limit=", 8)) {
       limit = atoi(&argv[i][8]);
@@ -179,10 +179,10 @@ int main(int argc, char **argv) {
   else if (tdata.urls.size() < qualifierLimit)
     qualifierLimit = tdata.urls.size();
 
-  if (rowLimit == 0)
-    rowLimit = tdata.words.size();
-  else if (tdata.words.size() < rowLimit)
-    rowLimit = tdata.words.size();
+  if (row_limit == 0)
+    row_limit = tdata.words.size();
+  else if (tdata.words.size() < row_limit)
+    row_limit = tdata.words.size();
 
   srand(seed);
 
@@ -207,7 +207,7 @@ int main(int argc, char **argv) {
     }
 
     // row key
-    index = rand() % rowLimit;
+    index = rand() % row_limit;
     rowKey = tdata.words[index].get();
 
     index = rand();

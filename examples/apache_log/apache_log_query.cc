@@ -69,11 +69,11 @@ int main(int argc, char **argv) {
     // Open the 'LogDb' table
     table_ptr = client_ptr->open_table("LogDb");
 
-    // setup scan_spec startRow and endRow
-    scan_spec.startRow = argv[1];
+    // setup scan_spec start_row and end_row
+    scan_spec.start_row = argv[1];
     end_row = (String)argv[1];
     end_row.append(1, 0xff);
-    scan_spec.endRow = end_row.c_str();
+    scan_spec.end_row = end_row.c_str();
 
     // setup scan_spec columns
     for (int i=2; i<argc; i++)

@@ -34,7 +34,7 @@ using namespace Hypertable;
  */
 MergeScanner::MergeScanner(ScanContextPtr &scanContextPtr, bool returnDeletes) : CellListScanner(scanContextPtr), m_done(false), m_initialized(false), m_scanners(), m_queue(), m_delete_present(false), m_deleted_row(0), m_deleted_column_family(0), m_deleted_cell(0), m_return_deletes(returnDeletes), m_row_count(0), m_row_limit(0), m_cell_count(0), m_cell_limit(0), m_cell_cutoff(0), m_prev_key(0) {
   if (scanContextPtr->spec != 0)
-    m_row_limit = scanContextPtr->spec->rowLimit;
+    m_row_limit = scanContextPtr->spec->row_limit;
   m_start_timestamp = scanContextPtr->interval.first;
   m_end_timestamp = scanContextPtr->interval.second;
 }

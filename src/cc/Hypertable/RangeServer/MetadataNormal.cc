@@ -52,12 +52,12 @@ MetadataNormal::~MetadataNormal() {
 void MetadataNormal::reset_files_scan() {
   ScanSpec scan_spec;
 
-  scan_spec.rowLimit = 1;
+  scan_spec.row_limit = 1;
   scan_spec.max_versions = 1;
-  scan_spec.startRow = m_metadata_key.c_str();
-  scan_spec.startRowInclusive = true;
-  scan_spec.endRow = m_metadata_key.c_str();
-  scan_spec.endRowInclusive = true;
+  scan_spec.start_row = m_metadata_key.c_str();
+  scan_spec.start_row_inclusive = true;
+  scan_spec.end_row = m_metadata_key.c_str();
+  scan_spec.end_row_inclusive = true;
   scan_spec.columns.clear();
   scan_spec.columns.push_back("Files");
 

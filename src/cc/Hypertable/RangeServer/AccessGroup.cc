@@ -43,8 +43,8 @@ namespace {
 
 AccessGroup::AccessGroup(TableIdentifier *identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeSpec *range) : CellList(), m_identifier(identifier), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE), m_compression_ratio(1.0), m_is_root(false), m_oldest_cached_timestamp(0), m_collisions(0), m_needs_compaction(false), m_drop(false) {
   m_table_name = m_identifier->name;
-  m_start_row = range->startRow;
-  m_end_row = range->endRow;
+  m_start_row = range->start_row;
+  m_end_row = range->end_row;
   m_cell_cache_ptr = new CellCache();
 
   for (list<Schema::ColumnFamily *>::iterator iter = ag->columns.begin(); iter != ag->columns.end(); iter++) {
@@ -55,7 +55,7 @@ AccessGroup::AccessGroup(TableIdentifier *identifier, SchemaPtr &schemaPtr, Sche
 
   m_compressor = (ag->compressor != "") ? ag->compressor : schemaPtr->get_compressor();
 
-  m_is_root = (m_identifier->id == 0 && *range->startRow == 0 && !strcmp(range->endRow, Key::END_ROOT_ROW));
+  m_is_root = (m_identifier->id == 0 && *range->start_row == 0 && !strcmp(range->end_row, Key::END_ROOT_ROW));
 
   m_in_memory = ag->in_memory;
 }

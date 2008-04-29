@@ -95,7 +95,7 @@ namespace Hypertable {
      * up familyInfo entries for the column families that are included in the scan
      * which contains cell garbage collection info for each family (e.g. cutoff
      * timestamp and number of copies to keep).  Also sets up end_row to be the
-     * last possible key in spec->endRow.
+     * last possible key in spec->end_row.
      *
      * @param ts scan timestamp (point in time when scan began)
      * @param ss scan specification

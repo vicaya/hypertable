@@ -360,7 +360,7 @@ void RangeServer::compact(ResponseCallback *cb, TableIdentifier *table, RangeSpe
    */
   if (!tableInfoPtr->get_range(range, range_ptr)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errMsg = (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]";
+    errMsg = (std::string)table->name + "[" + range->start_row + ".." + range->end_row + "]";
     goto abort;
   }
 
@@ -374,7 +374,7 @@ void RangeServer::compact(ResponseCallback *cb, TableIdentifier *table, RangeSpe
 
   if (Global::verbose) {
     HT_INFOF("Compaction (%s) scheduled for table '%s' end row '%s'",
-		(major ? "major" : "minor"), table->name, range->endRow);
+		(major ? "major" : "minor"), table->name, range->end_row);
   }
 
   error = Error::OK;
@@ -421,7 +421,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
 
     if (!tableInfoPtr->get_range(range, range_ptr))
       throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND,
-				  (std::string)"(a) " + table->name + "[" + range->startRow + ".." + range->endRow + "]");
+				  (std::string)"(a) " + table->name + "[" + range->start_row + ".." + range->end_row + "]");
 
     schemaPtr = tableInfoPtr->get_schema();
 
@@ -434,7 +434,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
     // TODO: fix this kludge (0 return above means range split)
     if (!scannerPtr)
       throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND,
-				  (std::string)"(b) " + table->name + "[" + range->startRow + ".." + range->endRow + "]");
+				  (std::string)"(b) " + table->name + "[" + range->start_row + ".." + range->end_row + "]");
 
     kvBuffer = new uint8_t [ sizeof(int32_t) + DEFAULT_SCANBUF_SIZE ];
     kvLenp = (uint32_t *)kvBuffer;
@@ -543,7 +543,6 @@ void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t s
  * LoadRange
  */
 void RangeServer::load_range(ResponseCallback *cb, TableIdentifier *table, RangeSpec *range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags) {
-  DynamicBuffer endRowBuffer(0);
   std::string errMsg;
   int error = Error::OK;
   SchemaPtr schemaPtr;
@@ -553,7 +552,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifier *table, Range
   string rangeHdfsDir;
   char md5DigestStr[33];
   bool registerTable = false;
-  bool is_root = !strcmp(table->name, "METADATA") && (*range->startRow == 0) && !strcmp(range->endRow, Key::END_ROOT_ROW);
+  bool is_root = !strcmp(table->name, "METADATA") && (*range->start_row == 0) && !strcmp(range->end_row, Key::END_ROOT_ROW);
   TableScannerPtr scanner_ptr;
   TableMutatorPtr mutator_ptr;
   ScanSpec scan_spec;
@@ -610,7 +609,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifier *table, Range
      * Make sure this range is not already loaded
      */
     if (table_info_ptr->get_range(range, range_ptr))
-      throw Exception(Error::RANGESERVER_RANGE_ALREADY_LOADED, (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]");
+      throw Exception(Error::RANGESERVER_RANGE_ALREADY_LOADED, (std::string)table->name + "[" + range->start_row + ".." + range->end_row + "]");
 
     /**
      * Lazily create METADATA table pointer
@@ -629,7 +628,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifier *table, Range
        */
       if (!is_root) {
 
-	metadata_key_str = std::string("") + (uint32_t)table->id + ":" + range->endRow;
+	metadata_key_str = std::string("") + (uint32_t)table->id + ":" + range->end_row;
 
 	/**
 	 * Take ownership of the range
@@ -672,8 +671,8 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifier *table, Range
        * under all locality group directories for this table
        */
       {
-	assert(*range->endRow != 0);
-	md5_string(range->endRow, md5DigestStr);
+	assert(*range->end_row != 0);
+	md5_string(range->end_row, md5DigestStr);
 	md5DigestStr[24] = 0;
 	tableHdfsDir = (string)"/hypertable/tables/" + (string)table->name;
 	list<Schema::AccessGroup *> *lgList = schemaPtr->get_access_group_list();
@@ -713,7 +712,7 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifier *table, Range
       HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
     }
     else {
-      HT_INFOF("Successfully loaded range %s[%s..%s]", table->name, range->startRow, range->endRow);
+      HT_INFOF("Successfully loaded range %s[%s..%s]", table->name, range->start_row, range->end_row);
     }
 
   }
@@ -773,7 +772,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Buf
   size_t goSize = 0;
   size_t stopSize = 0;
   size_t splitSize = 0;
-  std::string endRow;
+  std::string end_row;
   std::vector<MinTimestampRecT>  min_ts_vector;
   MinTimestampRecT  min_ts_rec;
   uint64_t next_timestamp;
@@ -850,7 +849,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Buf
     /** Obtain "update timestamp" **/
     update_timestamp = Global::log->get_timestamp();
 
-    endRow = min_ts_rec.range_ptr->end_row();
+    end_row = min_ts_rec.range_ptr->end_row();
 
     /** Fetch range split information **/
     split_pending = min_ts_rec.range_ptr->get_split_info(split_row, splitLogPtr);
@@ -862,7 +861,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Buf
     min_ts_rec.timestamp.logical = 0;
     min_ts_rec.timestamp.real = update_timestamp;
 
-    while (mod_ptr < mod_end && (endRow == "" || (strcmp(row, endRow.c_str()) <= 0))) {
+    while (mod_ptr < mod_end && (end_row == "" || (strcmp(row, end_row.c_str()) <= 0))) {
 
       // If timestamp value is set to AUTO (zero one's compliment), then assign a timestamp
       ts_ptr = (uint8_t *)mod_ptr + Length((const ByteString32T *)mod_ptr) - 8;
@@ -1257,7 +1256,7 @@ void RangeServer::drop_range(ResponseCallback *cb, TableIdentifier *table, Range
 
   /** Remove the range **/
   if (!table_info_ptr->remove_range(range, range_ptr)) {
-    cb->error(Error::RANGESERVER_RANGE_NOT_FOUND, (std::string)table->name + "[" + range->startRow + ".." + range->endRow + "]");
+    cb->error(Error::RANGESERVER_RANGE_NOT_FOUND, (std::string)table->name + "[" + range->start_row + ".." + range->end_row + "]");
     return;
   }
 

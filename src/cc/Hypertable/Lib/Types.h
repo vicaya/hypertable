@@ -65,12 +65,12 @@ namespace Hypertable {
   /** Identifies a range */
   class RangeSpec {
   public:
-    RangeSpec() : startRow(0), endRow(0) { return; }
+    RangeSpec() : start_row(0), end_row(0) { return; }
     size_t encoded_length();
     void encode(uint8_t **bufPtr);
     bool decode(uint8_t **bufPtr, size_t *remainingPtr);
-    const char *startRow;
-    const char *endRow;
+    const char *start_row;
+    const char *end_row;
   };
 
   /** Scan specification */
@@ -80,13 +80,13 @@ namespace Hypertable {
     size_t encoded_length();
     void encode(uint8_t **bufPtr);
     bool decode(uint8_t **bufPtr, size_t *remainingPtr);
-    uint32_t rowLimit;
+    uint32_t row_limit;
     uint32_t max_versions;
     std::vector<const char *> columns;
-    const char *startRow;
-    bool startRowInclusive;
-    const char *endRow;
-    bool endRowInclusive;
+    const char *start_row;
+    bool start_row_inclusive;
+    const char *end_row;
+    bool end_row_inclusive;
     std::pair<uint64_t,uint64_t> interval;
     bool return_deletes;
   };

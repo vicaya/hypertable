@@ -102,8 +102,8 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       cout << "StartRow   = " << state.range_start_row << endl;
       cout << "EndRow     = " << state.range_end_row << endl;
 
-      range.startRow = state.range_start_row.c_str();
-      range.endRow = state.range_end_row.c_str();
+      range.start_row = state.range_start_row.c_str();
+      range.end_row = state.range_end_row.c_str();
 
       if ((error = m_range_server_ptr->load_range(m_addr, *table, range, 0, 200000000LL, 0)) != Error::OK)
 	throw Exception(error, std::string("load_range") + state.table_name + "'");
@@ -203,28 +203,28 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
     else if (state.command == COMMAND_CREATE_SCANNER) {
       ScanSpec scan_spec;
 
-      range.startRow = state.range_start_row.c_str();
-      range.endRow = state.range_end_row.c_str();
+      range.start_row = state.range_start_row.c_str();
+      range.end_row = state.range_end_row.c_str();
 
       /**
        * Create Scan specification
        */
-      scan_spec.rowLimit = state.scan.limit;
+      scan_spec.row_limit = state.scan.limit;
       scan_spec.max_versions = state.scan.max_versions;
       for (size_t i=0; i<state.scan.columns.size(); i++)
 	scan_spec.columns.push_back(state.scan.columns[i].c_str());
       if (state.scan.row != "") {
-	scan_spec.startRow = state.scan.row.c_str();
-	scan_spec.startRowInclusive = true;
-	scan_spec.endRow = state.scan.row.c_str();
-	scan_spec.endRowInclusive = true;
-	scan_spec.rowLimit = 1;
+	scan_spec.start_row = state.scan.row.c_str();
+	scan_spec.start_row_inclusive = true;
+	scan_spec.end_row = state.scan.row.c_str();
+	scan_spec.end_row_inclusive = true;
+	scan_spec.row_limit = 1;
       }
       else {
-	scan_spec.startRow = (state.scan.start_row == "") ? 0 : state.scan.start_row.c_str();
-	scan_spec.startRowInclusive = state.scan.start_row_inclusive;
-	scan_spec.endRow = (state.scan.end_row == "") ? Key::END_ROW_MARKER : state.scan.end_row.c_str();
-	scan_spec.endRowInclusive = state.scan.end_row_inclusive;
+	scan_spec.start_row = (state.scan.start_row == "") ? 0 : state.scan.start_row.c_str();
+	scan_spec.start_row_inclusive = state.scan.start_row_inclusive;
+	scan_spec.end_row = (state.scan.end_row == "") ? Key::END_ROW_MARKER : state.scan.end_row.c_str();
+	scan_spec.end_row_inclusive = state.scan.end_row_inclusive;
       }
       scan_spec.interval.first  = state.scan.start_time;
       scan_spec.interval.second = state.scan.end_time;
@@ -288,8 +288,8 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
     }
     else if (state.command == COMMAND_DROP_RANGE) {
 
-      range.startRow = state.range_start_row.c_str();
-      range.endRow = state.range_end_row.c_str();
+      range.start_row = state.range_start_row.c_str();
+      range.end_row = state.range_end_row.c_str();
 
       if ((error = m_range_server_ptr->drop_range(m_addr, *table, range, &sync_handler)) != Error::OK)
 	throw Exception(error, std::string("drop_range") + state.table_name + "'");
