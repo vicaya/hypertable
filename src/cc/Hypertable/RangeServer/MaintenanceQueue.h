@@ -57,7 +57,7 @@ namespace Hypertable {
 
       void operator()() {
 	boost::xtime now, next_work;
-	MaintenanceTask *task;
+	MaintenanceTask *task = 0;
 
 	while (true) {
 

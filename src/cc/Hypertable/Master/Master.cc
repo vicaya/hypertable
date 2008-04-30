@@ -414,10 +414,13 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
     range.start_row = 0;
     range.end_row = Key::END_ROOT_ROW;
 
-    if ((error = rsc.load_range(alias, table, range, 0, m_max_range_bytes, 0)) != Error::OK) {
+    try {
+      rsc.load_range(alias, table, range, 0, m_max_range_bytes, 0);
+    }
+    catch (Exception &e) {
       std::string addrStr;
-      HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server %s",
-		   table.name, range.end_row, InetAddr::string_format(addrStr, alias));
+      HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server %s - %s",
+		table.name, range.end_row, InetAddr::string_format(addrStr, alias), Error::get_text(e.code()));
     }
 
 
@@ -454,10 +457,13 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
     range.start_row = Key::END_ROOT_ROW;
     range.end_row = Key::END_ROW_MARKER;
 
-    if ((error = rsc.load_range(alias, table, range, 0, m_max_range_bytes, 0)) != Error::OK) {
+    try {
+      rsc.load_range(alias, table, range, 0, m_max_range_bytes, 0);
+    }
+    catch (Exception &e) {
       std::string addrStr;
-      HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server %s",
-		   table.name, range.end_row, InetAddr::string_format(addrStr, alias));
+      HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server %s - %s",
+		table.name, range.end_row, InetAddr::string_format(addrStr, alias), Error::get_text(e.code()));
     }
 
     m_initialized = true;
@@ -472,7 +478,6 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
  * whole system to wedge under certain situations
  */
 void Master::report_split(ResponseCallback *cb, TableIdentifier &table, RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit) {
-  int error;
   struct sockaddr_in addr;
   RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30);
 
@@ -492,13 +497,15 @@ void Master::report_split(ResponseCallback *cb, TableIdentifier &table, RangeSpe
 
   //cb->get_address(addr);
 
-  if ((error = rsc.load_range(addr, table, range, transfer_log_dir, soft_limit, 0)) != Error::OK) {
-    std::string addrStr;
-    HT_ERRORF("Problem issuing 'load range' command for %s[%s:%s] at server %s",
-                 table.name, range.start_row, range.end_row, InetAddr::string_format(addrStr, addr));
-  }
-  else
+  try {
+    rsc.load_range(addr, table, range, transfer_log_dir, soft_limit, 0);
     HT_INFOF("report_split for %s[%s:%s] successful.", table.name, range.start_row, range.end_row);
+  }
+  catch (Exception &e) {
+    std::string addrStr;
+    HT_ERRORF("Problem issuing 'load range' command for %s[%s:%s] at server %s - %s",
+	      table.name, range.start_row, range.end_row, InetAddr::string_format(addrStr, addr), Error::get_text(e.code()));
+  }
 
 }
 
@@ -778,10 +785,13 @@ int Master::create_table(const char *tableName, const char *schemaString, std::s
       soft_limit = m_max_range_bytes / std::min(64, (int)m_server_map.size()*2);
     }
 
-    if ((error = rsc.load_range(addr, table, range, 0, soft_limit, 0)) != Error::OK) {
+    try {
+      rsc.load_range(addr, table, range, 0, soft_limit, 0);
+    }
+    catch (Exception &e) {
       std::string addrStr;
-      HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server %s",
-		table.name, range.end_row, InetAddr::string_format(addrStr, addr));
+      HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server %s - %s",
+		table.name, range.end_row, InetAddr::string_format(addrStr, addr), Error::get_text(e.code()));
     }
   }
 

@@ -124,9 +124,7 @@ namespace Hypertable {
    */
   class Exception : public std::runtime_error {
   public:
-    Exception(int error) :
-              std::runtime_error(Error::get_text(error)),
-              m_error(error) { return; }
+    Exception(int error) : std::runtime_error(""), m_error(error) { return; }
     Exception(int error, const String &msg) :
               std::runtime_error(msg), m_error(error) { return; }
     int code() { return m_error; }

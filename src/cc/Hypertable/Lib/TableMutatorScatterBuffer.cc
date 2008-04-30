@@ -39,7 +39,7 @@ TableMutatorScatterBuffer::TableMutatorScatterBuffer(PropertiesPtr &props_ptr, C
   int client_timeout;
 
   if ((client_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0)) != 0)
-    m_range_server.set_timeout(client_timeout);
+    m_range_server.set_default_timeout(client_timeout);
   
   // copy TableIdentifier
   memcpy(&m_table_identifier, table_identifier, sizeof(TableIdentifier));
@@ -224,9 +224,14 @@ void TableMutatorScatterBuffer::send() {
     /**
      * Send update
      */
-    if ((update_buffer_ptr->error = m_range_server.update(update_buffer_ptr->addr, m_table_identifier, data, ptr-data,
-							  update_buffer_ptr->dispatch_handler_ptr.get())) != Error::OK)
+    try {
+      m_range_server.update(update_buffer_ptr->addr, m_table_identifier, data, ptr-data, update_buffer_ptr->dispatch_handler_ptr.get());
+      update_buffer_ptr->error = Error::OK;
+    }
+    catch (Exception &e) {
+      update_buffer_ptr->error = e.code();
       update_buffer_ptr->counterp->decrement(update_buffer_ptr->error);
+    }
   }
 }
 

@@ -20,6 +20,7 @@
  */
 
 #include "Common/Error.h"
+#include "Common/StringExt.h"
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 
 #include "RangeServerClient.h"
@@ -36,200 +37,166 @@ RangeServerClient::~RangeServerClient() {
   return;
 }
 
-int RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags, DispatchHandler *handler) {
+void RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags, DispatchHandler *handler) {
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_load_range(table, range, transfer_log_dir, soft_limit, flags) );
-  return send_message(addr, cbufPtr, handler);
+  send_message(addr, cbufPtr, handler);
 }
 
-int RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags) {
+void RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags) {
   DispatchHandlerSynchronizer syncHandler;
-  EventPtr eventPtr;
+  EventPtr event_ptr;
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_load_range(table, range, transfer_log_dir, soft_limit, flags) );
-  int error = send_message(addr, cbufPtr, &syncHandler);
-  if (error == Error::OK) {
-    if (!syncHandler.wait_for_reply(eventPtr)) {
-      HT_ERRORF("RangeServer 'load range' error : %s", Protocol::string_format_message(eventPtr).c_str());
-      error = (int)Protocol::response_code(eventPtr);
-    }
-  }
-  return error;
+  send_message(addr, cbufPtr, &syncHandler);
+  if (!syncHandler.wait_for_reply(event_ptr))
+    throw Exception((int)Protocol::response_code(event_ptr),
+		    std::string("RangeServer load_range() failure : ") + Protocol::string_format_message(event_ptr));
 }
 
 
-int RangeServerClient::update(struct sockaddr_in &addr, TableIdentifier &table, uint8_t *data, size_t len, DispatchHandler *handler) {
+void RangeServerClient::update(struct sockaddr_in &addr, TableIdentifier &table, uint8_t *data, size_t len, DispatchHandler *handler) {
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_update(table, data, len) );
-  return send_message(addr, cbufPtr, handler);
+  send_message(addr, cbufPtr, handler);
 }
 
 
-int RangeServerClient::update(struct sockaddr_in &addr, TableIdentifier &table, uint8_t *data, size_t len) {
+void RangeServerClient::update(struct sockaddr_in &addr, TableIdentifier &table, uint8_t *data, size_t len) {
   DispatchHandlerSynchronizer syncHandler;
-  EventPtr eventPtr;
+  EventPtr event_ptr;
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_update(table, data, len) );
-  int error = send_message(addr, cbufPtr, &syncHandler);
-  if (error == Error::OK) {
-    if (!syncHandler.wait_for_reply(eventPtr)) {
-      HT_ERRORF("RangeServer 'update' error : %s", Protocol::string_format_message(eventPtr).c_str());
-      error = (int)Protocol::response_code(eventPtr);
-    }
-  }
-  return error;
+  send_message(addr, cbufPtr, &syncHandler);
+  if (!syncHandler.wait_for_reply(event_ptr))
+    throw Exception((int)Protocol::response_code(event_ptr),
+		    std::string("RangeServer update() failure : ") + Protocol::string_format_message(event_ptr));
 }
 
 
 
-int RangeServerClient::create_scanner(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, ScanSpec &scan_spec, DispatchHandler *handler) {
+void RangeServerClient::create_scanner(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, ScanSpec &scan_spec, DispatchHandler *handler) {
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_create_scanner(table, range, scan_spec) );
-  return send_message(addr, cbufPtr, handler);
+  send_message(addr, cbufPtr, handler);
 }
 
 
-int RangeServerClient::create_scanner(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, ScanSpec &scan_spec, ScanBlock &scan_block) {
+void RangeServerClient::create_scanner(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, ScanSpec &scan_spec, ScanBlock &scan_block) {
   DispatchHandlerSynchronizer syncHandler;
-  EventPtr eventPtr;
+  EventPtr event_ptr;
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_create_scanner(table, range, scan_spec) );
-  int error = send_message(addr, cbufPtr, &syncHandler);
-  if (error == Error::OK) {
-    if (!syncHandler.wait_for_reply(eventPtr)) {
-      HT_ERRORF("RangeServer 'create scanner' error : %s", Protocol::string_format_message(eventPtr).c_str());
-      error = (int)Protocol::response_code(eventPtr);
-    }
-    else
-      error = scan_block.load(eventPtr);
+  send_message(addr, cbufPtr, &syncHandler);
+  if (!syncHandler.wait_for_reply(event_ptr))
+    throw Exception((int)Protocol::response_code(event_ptr),
+		    std::string("RangeServer create_scanner() failure : ") + Protocol::string_format_message(event_ptr));
+  else {
+    HT_EXPECT(scan_block.load(event_ptr) == Error::OK, Error::FAILED_EXPECTATION);
   }
-  return error;
 }
 
 
-int RangeServerClient::destroy_scanner(struct sockaddr_in &addr, int scanner_id, DispatchHandler *handler) {
+void RangeServerClient::destroy_scanner(struct sockaddr_in &addr, int scanner_id, DispatchHandler *handler) {
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_destroy_scanner(scanner_id) );
-  return send_message(addr, cbufPtr, handler);
+  send_message(addr, cbufPtr, handler);
 }
 
 
-int RangeServerClient::destroy_scanner(struct sockaddr_in &addr, int scanner_id) {
+void RangeServerClient::destroy_scanner(struct sockaddr_in &addr, int scanner_id) {
   DispatchHandlerSynchronizer syncHandler;
-  EventPtr eventPtr;
+  EventPtr event_ptr;
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_destroy_scanner(scanner_id) );
-  int error = send_message(addr, cbufPtr, &syncHandler);
-  if (error == Error::OK) {
-    if (!syncHandler.wait_for_reply(eventPtr)) {
-      HT_ERRORF("RangeServer 'fetch scanblock' error : %s", Protocol::string_format_message(eventPtr).c_str());
-      error = (int)Protocol::response_code(eventPtr);
-    }
-  }
-  return error;
+  send_message(addr, cbufPtr, &syncHandler);
+  if (!syncHandler.wait_for_reply(event_ptr))
+    throw Exception((int)Protocol::response_code(event_ptr),
+		    std::string("RangeServer destroy_scanner() failure : ") + Protocol::string_format_message(event_ptr));
 }
 
 
-int RangeServerClient::fetch_scanblock(struct sockaddr_in &addr, int scanner_id, DispatchHandler *handler) {
+void RangeServerClient::fetch_scanblock(struct sockaddr_in &addr, int scanner_id, DispatchHandler *handler) {
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_fetch_scanblock(scanner_id) );
-  return send_message(addr, cbufPtr, handler);
+  send_message(addr, cbufPtr, handler);
 }
 
 
-int RangeServerClient::fetch_scanblock(struct sockaddr_in &addr, int scanner_id, ScanBlock &scan_block) {
+void RangeServerClient::fetch_scanblock(struct sockaddr_in &addr, int scanner_id, ScanBlock &scan_block) {
   DispatchHandlerSynchronizer syncHandler;
-  EventPtr eventPtr;
+  EventPtr event_ptr;
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_fetch_scanblock(scanner_id) );
-  int error = send_message(addr, cbufPtr, &syncHandler);
-  if (error == Error::OK) {
-    if (!syncHandler.wait_for_reply(eventPtr)) {
-      HT_ERRORF("RangeServer 'fetch scanblock' error : %s", Protocol::string_format_message(eventPtr).c_str());
-      error = (int)Protocol::response_code(eventPtr);
-    }
-    else
-      error = scan_block.load(eventPtr);
+  send_message(addr, cbufPtr, &syncHandler);
+  if (!syncHandler.wait_for_reply(event_ptr))
+    throw Exception((int)Protocol::response_code(event_ptr),
+		    std::string("RangeServer fetch_scanblock() failure : ") + Protocol::string_format_message(event_ptr));
+  else {
+    HT_EXPECT(scan_block.load(event_ptr) == Error::OK, Error::FAILED_EXPECTATION);
   }
-  return error;
 }
 
 
-int RangeServerClient::drop_table(struct sockaddr_in &addr, TableIdentifier &table, DispatchHandler *handler) {
+void RangeServerClient::drop_table(struct sockaddr_in &addr, TableIdentifier &table, DispatchHandler *handler) {
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_drop_table(table) );
-  return send_message(addr, cbufPtr, handler);
+  send_message(addr, cbufPtr, handler);
 }
 
 
-int RangeServerClient::drop_table(struct sockaddr_in &addr, TableIdentifier &table) {
+void RangeServerClient::drop_table(struct sockaddr_in &addr, TableIdentifier &table) {
   DispatchHandlerSynchronizer syncHandler;
-  EventPtr eventPtr;
+  EventPtr event_ptr;
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_drop_table(table) );
-  int error = send_message(addr, cbufPtr, &syncHandler);
-  if (error == Error::OK) {
-    if (!syncHandler.wait_for_reply(eventPtr)) {
-      HT_ERRORF("RangeServer 'drop table' error : %s", Protocol::string_format_message(eventPtr).c_str());
-      error = (int)Protocol::response_code(eventPtr);
-    }
-  }
-  return error;
+  send_message(addr, cbufPtr, &syncHandler);
+  if (!syncHandler.wait_for_reply(event_ptr))
+    throw Exception((int)Protocol::response_code(event_ptr),
+		    std::string("RangeServer drop_table() failure : ") + Protocol::string_format_message(event_ptr));
 }
 
 
-int RangeServerClient::status(struct sockaddr_in &addr) {
+void RangeServerClient::status(struct sockaddr_in &addr) {
   DispatchHandlerSynchronizer syncHandler;
-  EventPtr eventPtr;
+  EventPtr event_ptr;
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_status() );
-  int error = send_message(addr, cbufPtr, &syncHandler);
-  if (error == Error::OK) {
-    if (!syncHandler.wait_for_reply(eventPtr)) {
-      HT_ERRORF("RangeServer 'status' error : %s", Protocol::string_format_message(eventPtr).c_str());
-      error = (int)Protocol::response_code(eventPtr);
-    }
-  }
-  return error;
+  send_message(addr, cbufPtr, &syncHandler);
+  if (!syncHandler.wait_for_reply(event_ptr))
+    throw Exception((int)Protocol::response_code(event_ptr),
+		    std::string("RangeServer status() failure : ") + Protocol::string_format_message(event_ptr));
 }
 
-int RangeServerClient::shutdown(struct sockaddr_in &addr) {
+void RangeServerClient::shutdown(struct sockaddr_in &addr) {
   DispatchHandlerSynchronizer syncHandler;
-  EventPtr eventPtr;
+  EventPtr event_ptr;
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_shutdown() );
-  int error = send_message(addr, cbufPtr, &syncHandler);
-  if (error == Error::OK) {
-    if (!syncHandler.wait_for_reply(eventPtr)) {
-      HT_ERRORF("RangeServer 'shutdown' error : %s", Protocol::string_format_message(eventPtr).c_str());
-      error = (int)Protocol::response_code(eventPtr);
-    }
-  }
-  return error;
+  send_message(addr, cbufPtr, &syncHandler);
+  if (!syncHandler.wait_for_reply(event_ptr))
+    throw Exception((int)Protocol::response_code(event_ptr),
+		    std::string("RangeServer shutdown() failure : ") + Protocol::string_format_message(event_ptr));
 }
 
-int RangeServerClient::dump_stats(struct sockaddr_in &addr) {
+void RangeServerClient::dump_stats(struct sockaddr_in &addr) {
   DispatchHandlerSynchronizer syncHandler;
-  EventPtr eventPtr;
+  EventPtr event_ptr;
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_dump_stats() );
-  int error = send_message(addr, cbufPtr, &syncHandler);
-  if (error == Error::OK) {
-    if (!syncHandler.wait_for_reply(eventPtr)) {
-      HT_ERRORF("RangeServer 'status' error : %s", Protocol::string_format_message(eventPtr).c_str());
-      error = (int)Protocol::response_code(eventPtr);
-    }
-  }
-  return error;
+  send_message(addr, cbufPtr, &syncHandler);
+  if (!syncHandler.wait_for_reply(event_ptr))
+    throw Exception((int)Protocol::response_code(event_ptr),
+		    std::string("RangeServer dump_stats() failure : ") + Protocol::string_format_message(event_ptr));
 }
 
 
-int RangeServerClient::replay_start(struct sockaddr_in &addr, DispatchHandler *handler) {
+void RangeServerClient::replay_start(struct sockaddr_in &addr, DispatchHandler *handler) {
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_replay_start() );
-  return send_message(addr, cbufPtr, handler);
+  send_message(addr, cbufPtr, handler);
 }
 
 
-int RangeServerClient::replay_update(struct sockaddr_in &addr, const uint8_t *data, size_t len, DispatchHandler *handler) {
+void RangeServerClient::replay_update(struct sockaddr_in &addr, const uint8_t *data, size_t len, DispatchHandler *handler) {
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_replay_update(data, len) );
-  return send_message(addr, cbufPtr, handler);
+  send_message(addr, cbufPtr, handler);
 }
 
 
-int RangeServerClient::replay_commit(struct sockaddr_in &addr, DispatchHandler *handler) {
+void RangeServerClient::replay_commit(struct sockaddr_in &addr, DispatchHandler *handler) {
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_replay_commit() );
-  return send_message(addr, cbufPtr, handler);
+  send_message(addr, cbufPtr, handler);
 }
 
 
-int RangeServerClient::drop_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, DispatchHandler *handler) {
+void RangeServerClient::drop_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, DispatchHandler *handler) {
   CommBufPtr cbufPtr( RangeServerProtocol::create_request_drop_range(table, range) );
-  return send_message(addr, cbufPtr, handler);
+  send_message(addr, cbufPtr, handler);
 }
 
 
@@ -237,12 +204,12 @@ int RangeServerClient::drop_range(struct sockaddr_in &addr, TableIdentifier &tab
 /**
  *
  */
-int RangeServerClient::send_message(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *handler) {
+void RangeServerClient::send_message(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *handler) {
   int error;
 
   if ((error = m_comm->send_request(addr, m_timeout, cbufPtr, handler)) != Error::OK) {
     HT_WARNF("Comm::send_request to %s:%d failed - %s",
 		inet_ntoa(addr.sin_addr), ntohs(addr.sin_port), Error::get_text(error));
+    throw Exception(error, std::string("Comm::send_request to ") + inet_ntoa(addr.sin_addr) + ":" + ntohs(addr.sin_port) + " failed");
   }
-  return error;
 }

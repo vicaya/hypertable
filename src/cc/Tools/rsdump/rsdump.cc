@@ -86,7 +86,6 @@ int main(int argc, char **argv) {
   Hyperspace::SessionPtr hyperspacePtr;
   RangeServerClient *rangeServer;
   ApplicationQueuePtr appQueuePtr;
-  int error;
   bool verbose = false;
 
   System::initialize(argv[0]);
@@ -142,8 +141,8 @@ int main(int argc, char **argv) {
   if (!connManagerPtr->wait_for_connection(addr, 2))
     goto abort;
   rangeServer = new RangeServerClient(comm, 30);
-  if ((error = rangeServer->dump_stats(addr)) != Error::OK)
-    goto abort;
+  rangeServer->dump_stats(addr);
+
   return 0;
 
  abort:

@@ -45,17 +45,18 @@ DropTableDispatchHandler::DropTableDispatchHandler(TableIdentifier &table, Comm 
  */
 void DropTableDispatchHandler::add(struct sockaddr_in &addr) {
   boost::mutex::scoped_lock lock(m_mutex);
-  int error;
-  
-  if ((error = m_client.drop_table(addr, m_table, this)) != Error::OK) {
+
+  try {
+    m_client.drop_table(addr, m_table, this);
+    m_outstanding++;
+  }
+  catch (Exception &e) {
     ErrorResultT result;
     result.addr = addr;
-    result.error = error;
+    result.error = e.code();
     result.msg = "Send error";
     m_errors.push_back(result);
   }
-  else
-    m_outstanding++;
 }
 
 

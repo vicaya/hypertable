@@ -211,8 +211,12 @@ int main(int argc, char **argv) {
     if (!connManagerPtr->wait_for_connection(addr, 2))
       goto abort;
     rangeServer = new RangeServerClient(comm, 30);
-    if ((error = rangeServer->status(addr)) != Error::OK)
+    try {
+      rangeServer->status(addr);
+    }
+    catch (Exception &e) {
       goto abort;
+    }
   }
 
   if (verbose)

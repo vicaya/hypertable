@@ -44,7 +44,7 @@ TableScanner::TableScanner(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier
   time_t client_timeout;
 
   if ((client_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0)) != 0)
-    m_range_server.set_timeout(client_timeout);
+    m_range_server.set_default_timeout(client_timeout);
 
   m_scan_spec.row_limit = scan_spec.row_limit;
   m_scan_spec.max_versions = scan_spec.max_versions;
@@ -140,18 +140,16 @@ bool TableScanner::next(CellT &cell) {
 	else {
 	  error = m_scanblock.load(m_event_ptr);
 	  if (m_readahead && !m_scanblock.eos()) {
-	    if ((error = m_range_server.fetch_scanblock(m_cur_addr, m_scanblock.get_scanner_id(), &m_sync_handler)) != Error::OK)
-	      throw Exception(error);
+	    m_range_server.fetch_scanblock(m_cur_addr, m_scanblock.get_scanner_id(), &m_sync_handler);
 	    m_fetch_outstanding = true;
 	  }
 	  else
 	    m_fetch_outstanding = false;
 	}
       }
-      else {
-	if ((error = m_range_server.fetch_scanblock(m_cur_addr, m_scanblock.get_scanner_id(), m_scanblock)) != Error::OK)
-	  throw Exception(error);
-      }
+      else
+	m_range_server.fetch_scanblock(m_cur_addr, m_scanblock.get_scanner_id(), m_scanblock);
+
     }
   }
 
@@ -241,7 +239,10 @@ void TableScanner::find_range_and_start_scan(const char *row_key) {
     throw Exception(Error::INVALID_METADATA);
   }
 
-  if ((error = m_range_server.create_scanner(m_cur_addr, m_table_identifier, range, m_scan_spec, m_scanblock)) != Error::OK) {
+  try {
+    m_range_server.create_scanner(m_cur_addr, m_table_identifier, range, m_scan_spec, m_scanblock);
+  }
+  catch (Exception &e) {
 
     // try again, the hard way
     if ((error = m_range_locator_ptr->find(&m_table_identifier, row_key, &m_range_info, 21)) != Error::OK)
@@ -258,14 +259,18 @@ void TableScanner::find_range_and_start_scan(const char *row_key) {
     }
 
     // create the scanner
-    if ((error = m_range_server.create_scanner(m_cur_addr, m_table_identifier, range, m_scan_spec, m_scanblock)) != Error::OK)
-      throw Exception(error, std::string("Problem creating scanner on ") + m_table_identifier.name + "[" + range.start_row + ".." + range.end_row + "]");
+    try {
+      m_range_server.create_scanner(m_cur_addr, m_table_identifier, range, m_scan_spec, m_scanblock);
+    }
+    catch (Exception &e) {
+      HT_ERRORF("%s", e.what());
+      throw Exception(e.code(), std::string("Problem creating scanner on ") + m_table_identifier.name + "[" + range.start_row + ".." + range.end_row + "]");
+    }
   }
 
   // maybe kick off readahead
   if (m_readahead && !m_scanblock.eos()) {
-    if ((error = m_range_server.fetch_scanblock(m_cur_addr, m_scanblock.get_scanner_id(), &m_sync_handler)) != Error::OK)
-      throw Exception(error);
+    m_range_server.fetch_scanblock(m_cur_addr, m_scanblock.get_scanner_id(), &m_sync_handler);
     m_fetch_outstanding = true;
   }
   else

@@ -105,8 +105,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       range.start_row = state.range_start_row.c_str();
       range.end_row = state.range_end_row.c_str();
 
-      if ((error = m_range_server_ptr->load_range(m_addr, *table, range, 0, 200000000LL, 0)) != Error::OK)
-	throw Exception(error, std::string("load_range") + state.table_name + "'");
+      m_range_server_ptr->load_range(m_addr, *table, range, 0, 200000000LL, 0);
 
     }
     else if (state.command == COMMAND_UPDATE) {
@@ -180,8 +179,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 	outstanding = false;
 
 	if (send_buf_len > 0) {
-	  if ((error = m_range_server_ptr->update(m_addr, *table, send_buf, send_buf_len, &sync_handler)) != Error::OK)
-	    throw Exception(error, "update error");
+	  m_range_server_ptr->update(m_addr, *table, send_buf, send_buf_len, &sync_handler);
 	  outstanding = true;
 	}
 	else
@@ -232,8 +230,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 
       /**
        */
-      if ((error = m_range_server_ptr->create_scanner(m_addr, *table, range, scan_spec, scanblock)) != Error::OK)
-	throw Exception(error, "problem creating scanner");
+      m_range_server_ptr->create_scanner(m_addr, *table, range, scan_spec, scanblock);
 
       m_cur_scanner_id = scanblock.get_scanner_id();
 
@@ -259,8 +256,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 
       /**
        */
-      if ((error = m_range_server_ptr->fetch_scanblock(m_addr, scanner_id, scanblock)) != Error::OK)
-	throw Exception(error, "problem fetching scanblock");
+      m_range_server_ptr->fetch_scanblock(m_addr, scanner_id, scanblock);
 
       const ByteString32T *key, *value;
 
@@ -282,8 +278,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       else
 	scanner_id = state.scanner_id;
 
-      if ((error = m_range_server_ptr->destroy_scanner(m_addr, scanner_id)) != Error::OK)
-	throw Exception(error, "problem destroying scanner");
+      m_range_server_ptr->destroy_scanner(m_addr, scanner_id);
       
     }
     else if (state.command == COMMAND_DROP_RANGE) {
@@ -291,16 +286,14 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       range.start_row = state.range_start_row.c_str();
       range.end_row = state.range_end_row.c_str();
 
-      if ((error = m_range_server_ptr->drop_range(m_addr, *table, range, &sync_handler)) != Error::OK)
-	throw Exception(error, std::string("drop_range") + state.table_name + "'");
+      m_range_server_ptr->drop_range(m_addr, *table, range, &sync_handler);
 
       if (!sync_handler.wait_for_reply(event_ptr))
 	throw Exception(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
 
     }
     else if (state.command == COMMAND_REPLAY_START) {
-      if ((error = m_range_server_ptr->replay_start(m_addr, &sync_handler)) != Error::OK)
-	throw Exception(error, "problem starting replay");
+      m_range_server_ptr->replay_start(m_addr, &sync_handler);
       if (!sync_handler.wait_for_reply(event_ptr))
 	throw Exception(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
     }
@@ -308,8 +301,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       cout << "Not implemented." << endl;
     }
     else if (state.command == COMMAND_REPLAY_COMMIT) {
-      if ((error = m_range_server_ptr->replay_commit(m_addr, &sync_handler)) != Error::OK)
-	throw Exception(error, "problem committing replay");
+      m_range_server_ptr->replay_commit(m_addr, &sync_handler);
       if (!sync_handler.wait_for_reply(event_ptr))
 	throw Exception(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
     }
@@ -323,8 +315,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 	cout << endl << "no help for '" << state.str << "'" << endl << endl;
     }
     else if (state.command == COMMAND_SHUTDOWN) {
-      if ((error = m_range_server_ptr->shutdown(m_addr)) != Error::OK)
-	throw Exception(error, "problem shutting down RangeServer");
+      m_range_server_ptr->shutdown(m_addr);
     }
     else
       throw Exception(Error::HQL_PARSE_ERROR, "unsupported command");

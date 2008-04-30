@@ -51,7 +51,7 @@ RangeLocator::RangeLocator(PropertiesPtr &props_ptr, ConnectionManagerPtr &connM
   time_t client_timeout;
 
   if ((client_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0)) != 0)
-    m_range_server.set_timeout(client_timeout);
+    m_range_server.set_default_timeout(client_timeout);
 
   initialize();
 }
@@ -64,7 +64,7 @@ RangeLocator::RangeLocator(PropertiesPtr &props_ptr, Comm *comm, Hyperspace::Ses
   time_t client_timeout;
 
   if ((client_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0)) != 0)
-    m_range_server.set_timeout(client_timeout);
+    m_range_server.set_default_timeout(client_timeout);
 
   initialize();
 }
@@ -265,8 +265,12 @@ int RangeLocator::find(TableIdentifier *table, const char *row_key, RangeLocatio
     meta_scan_spec.return_deletes = false;
     // meta_scan_spec.interval = ????;
 
-    if ((error = m_range_server.create_scanner(addr, m_metadata_table, range, meta_scan_spec, scan_block)) != Error::OK)
-      return error;
+    try {
+      m_range_server.create_scanner(addr, m_metadata_table, range, meta_scan_spec, scan_block);
+    }
+    catch (Exception &e) {
+      return e.code();
+    }
 
     if ((error = process_metadata_scanblock(scan_block)) != Error::OK) {
       m_range_server.destroy_scanner(addr, scan_block.get_scanner_id(), 0);
@@ -308,12 +312,16 @@ int RangeLocator::find(TableIdentifier *table, const char *row_key, RangeLocatio
   meta_scan_spec.end_row = meta_keys.end+2;
   meta_scan_spec.end_row_inclusive = true;
   // meta_scan_spec.interval = ????;
-
+  
   if (m_conn_manager_ptr)
     m_conn_manager_ptr->wait_for_connection(addr, 12);
 
-  if ((error = m_range_server.create_scanner(addr, m_metadata_table, range, meta_scan_spec, scan_block)) != Error::OK)
-    return error;
+  try {
+    m_range_server.create_scanner(addr, m_metadata_table, range, meta_scan_spec, scan_block);
+  }
+  catch (Exception &e) {
+    return e.code();
+  }
 
   if ((error = process_metadata_scanblock(scan_block)) != Error::OK) {
     m_range_server.destroy_scanner(addr, scan_block.get_scanner_id(), 0);
