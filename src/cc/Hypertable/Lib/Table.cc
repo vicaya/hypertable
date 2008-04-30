@@ -131,11 +131,13 @@ Table::~Table() {
 }
 
 
-TableMutator *Table::create_mutator() {
-  return new TableMutator(m_props_ptr, m_comm, &m_table, m_schema_ptr, m_range_locator_ptr);
+
+TableMutator *Table::create_mutator(int timeout) {
+  return new TableMutator(m_props_ptr, m_comm, &m_table, m_schema_ptr, m_range_locator_ptr, timeout);
 }
 
 
-TableScanner *Table::create_scanner(ScanSpec &scan_spec) {
-  return new TableScanner(m_props_ptr, m_comm, &m_table, m_schema_ptr, m_range_locator_ptr, scan_spec);
+
+TableScanner *Table::create_scanner(ScanSpec &scan_spec, int timeout) {
+  return new TableScanner(m_props_ptr, m_comm, &m_table, m_schema_ptr, m_range_locator_ptr, scan_spec, timeout);
 }

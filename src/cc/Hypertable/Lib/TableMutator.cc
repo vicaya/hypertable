@@ -40,12 +40,12 @@ namespace {
 /**
  * 
  */
-TableMutator::TableMutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_table_name(table_identifier->name), m_memory_used(0), m_max_memory(DEFAULT_MAX_MEMORY), m_resends(0) {
+TableMutator::TableMutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, int timeout) : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_table_name(table_identifier->name), m_memory_used(0), m_max_memory(DEFAULT_MAX_MEMORY), m_resends(0), m_timeout(timeout) {
   // copy TableIdentifier
   memcpy(&m_table_identifier, table_identifier, sizeof(TableIdentifier));
   m_table_identifier.name = m_table_name.c_str();
 
-  m_buffer_ptr = new TableMutatorScatterBuffer(props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+  m_buffer_ptr = new TableMutatorScatterBuffer(props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr, m_timeout);
 
 }
 
@@ -87,7 +87,7 @@ void TableMutator::set(uint64_t timestamp, KeySpec &key, const void *value, uint
 
     m_prev_buffer_ptr = m_buffer_ptr;
 
-    m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+    m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr, m_timeout);
     m_memory_used = 0;
   }
 
@@ -132,7 +132,7 @@ void TableMutator::set_delete(uint64_t timestamp, KeySpec &key) {
 
     m_prev_buffer_ptr = m_buffer_ptr;
 
-    m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+    m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr, m_timeout);
     m_memory_used = 0;
   }
 

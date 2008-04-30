@@ -50,16 +50,16 @@ namespace Hypertable {
   public:
 
     /**
-     * Constructs the TableMutator object.
+     * Constructs the TableMutator object
      *
      * @param props_ptr smart pointer to configuration properties object
      * @param comm pointer to the Comm layer
      * @param table_identifier pointer to the identifier of the table being mutated
      * @param schema_ptr smart pointer to schema object for table
      * @param range_locator_ptr smart pointer to range locator
-     * 
+     * @param timeout maximum time in seconds to allow methods to execute before throwing an exception
      */
-    TableMutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
+    TableMutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, int timeout);
 
     virtual ~TableMutator() { return; }
 
@@ -167,6 +167,7 @@ namespace Hypertable {
     TableMutatorScatterBufferPtr  m_buffer_ptr;
     TableMutatorScatterBufferPtr  m_prev_buffer_ptr;
     uint64_t             m_resends;
+    int                  m_timeout;
   };
   typedef boost::intrusive_ptr<TableMutator> TableMutatorPtr;
 

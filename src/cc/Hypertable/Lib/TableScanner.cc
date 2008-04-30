@@ -39,12 +39,15 @@ namespace {
 /**
  *
  */
-TableScanner::TableScanner(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpec &scan_spec) : m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT), m_table_name(table_identifier->name), m_started(false), m_eos(false), m_readahead(true), m_fetch_outstanding(false), m_rows_seen(0) {
+TableScanner::TableScanner(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpec &scan_spec, int timeout) : m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT), m_table_name(table_identifier->name), m_started(false), m_eos(false), m_readahead(true), m_fetch_outstanding(false), m_rows_seen(0), m_timeout(timeout) {
   char *str;
-  time_t client_timeout;
 
-  if ((client_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0)) != 0)
-    m_range_server.set_default_timeout(client_timeout);
+  if (m_timeout == 0 ||
+      (m_timeout = props_ptr->get_int("Hypertable.Client.Timeout", 0)) == 0 ||
+      (m_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0)) == 0)
+    m_timeout = HYPERTABLE_CLIENT_TIMEOUT;
+
+  m_range_server.set_default_timeout(m_timeout);
 
   m_scan_spec.row_limit = scan_spec.row_limit;
   m_scan_spec.max_versions = scan_spec.max_versions;

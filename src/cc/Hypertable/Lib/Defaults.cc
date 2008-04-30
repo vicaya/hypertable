@@ -21,6 +21,8 @@
 
 #include "Defaults.h"
 
+const int Hypertable::HYPERTABLE_CLIENT_TIMEOUT = 300;
+
 const int Hypertable::HYPERTABLE_MASTER_CLIENT_TIMEOUT = 300;
 const int Hypertable::HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT = 300;
 

@@ -35,11 +35,14 @@ namespace {
 /**
  *
  */
-TableMutatorScatterBuffer::TableMutatorScatterBuffer(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT), m_table_name(table_identifier->name), m_full(false), m_resends(0) {
-  int client_timeout;
+TableMutatorScatterBuffer::TableMutatorScatterBuffer(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, int timeout) : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT), m_table_name(table_identifier->name), m_full(false), m_resends(0), m_timeout(timeout) {
 
-  if ((client_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0)) != 0)
-    m_range_server.set_default_timeout(client_timeout);
+  if (m_timeout == 0 ||
+      (m_timeout = props_ptr->get_int("Hypertable.Client.Timeout", 0)) == 0 ||
+      (m_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0)) == 0)
+    m_timeout = HYPERTABLE_CLIENT_TIMEOUT;
+
+  m_range_server.set_default_timeout(m_timeout);
   
   // copy TableIdentifier
   memcpy(&m_table_identifier, table_identifier, sizeof(TableIdentifier));
@@ -262,7 +265,7 @@ TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer() {
   ByteString32T *low_key, *key, *value;
   int count = 0;
 
-  TableMutatorScatterBuffer *redo_buffer = new TableMutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+  TableMutatorScatterBuffer *redo_buffer = new TableMutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr, m_timeout);
 
   for (UpdateBufferMapT::const_iterator iter = m_buffer_map.begin(); iter != m_buffer_map.end(); iter++) {
     update_buffer_ptr = (*iter).second;

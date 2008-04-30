@@ -25,6 +25,7 @@
 #include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
 
+#include "Defaults.h"
 #include "TableMutator.h"
 #include "Schema.h"
 #include "RangeLocator.h"
@@ -51,17 +52,19 @@ namespace Hypertable {
     /**
      * Creates a mutator on this table
      *
+     * @param timeout maximum time in seconds to allow mutator methods to execute before throwing an exception
      * @return newly constructed mutator object
      */
-    TableMutator *create_mutator();
+    TableMutator *create_mutator(int timeout=0);
 
     /**
      * Creates a scanner on this table
      *
      * @param scan_spec scan specification
+     * @param timeout maximum time in seconds to allow scanner methods to execute before throwing an exception
      * @param newly constructed scanner object
      */
-    TableScanner *create_scanner(ScanSpec &scan_spec);
+    TableScanner *create_scanner(ScanSpec &scan_spec, int timeout=0);
 
     void get_identifier(TableIdentifier *table_id_p) {
       memcpy(table_id_p, &m_table, sizeof(TableIdentifier));

@@ -46,7 +46,7 @@ namespace Hypertable {
 
   public:
 
-    TableMutatorScatterBuffer(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
+    TableMutatorScatterBuffer(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, int timeout);
     int set(Key &key, const void *value, uint32_t value_len);
     int set_delete(Key &key);
     int set(ByteString32T *key, ByteString32T *value);
@@ -134,6 +134,7 @@ namespace Hypertable {
     CompletionCounter    m_completion_counter;
     bool                 m_full;
     uint64_t             m_resends;
+    int                  m_timeout;
   };
   typedef boost::intrusive_ptr<TableMutatorScatterBuffer> TableMutatorScatterBufferPtr;
 
