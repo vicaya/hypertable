@@ -151,7 +151,7 @@ bool TableScanner::next(CellT &cell) {
       }
       else {
 	timer.start();
-	m_range_server.set_timeout(timer.remaining() + 0.5);
+	m_range_server.set_timeout((time_t)(timer.remaining() + 0.5));
 	m_range_server.fetch_scanblock(m_cur_addr, m_scanblock.get_scanner_id(), m_scanblock);
       }
 
@@ -243,7 +243,7 @@ void TableScanner::find_range_and_start_scan(const char *row_key, Timer &timer) 
   }
 
   try {
-    m_range_server.set_timeout(timer.remaining() + 0.5);
+    m_range_server.set_timeout((time_t)(timer.remaining() + 0.5));
     m_range_server.create_scanner(m_cur_addr, m_table_identifier, range, m_scan_spec, m_scanblock);
   }
   catch (Exception &e) {
@@ -263,7 +263,7 @@ void TableScanner::find_range_and_start_scan(const char *row_key, Timer &timer) 
 
     // create the scanner
     try {
-      m_range_server.set_timeout(timer.remaining() + 0.5);
+      m_range_server.set_timeout((time_t)(timer.remaining() + 0.5));
       m_range_server.create_scanner(m_cur_addr, m_table_identifier, range, m_scan_spec, m_scanblock);
     }
     catch (Exception &e) {

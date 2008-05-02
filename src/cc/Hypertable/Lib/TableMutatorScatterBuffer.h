@@ -92,7 +92,7 @@ namespace Hypertable {
 	boost::xtime expire_time;
 
 	boost::xtime_get(&expire_time, boost::TIME_UTC);
-	expire_time.sec += timer.remaining();
+	expire_time.sec += (int64_t)timer.remaining();
 
 	while (m_outstanding) {
 	  if (!m_cond.timed_wait(lock, expire_time))

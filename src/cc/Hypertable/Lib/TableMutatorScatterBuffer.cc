@@ -50,12 +50,12 @@ TableMutatorScatterBuffer::TableMutatorScatterBuffer(PropertiesPtr &props_ptr, C
 void TableMutatorScatterBuffer::set(Key &key, const void *value, uint32_t value_len, Timer &timer) {
   RangeLocationInfo range_info;
   UpdateBufferMapT::const_iterator iter;
-  
+
   if (!m_cache_ptr->lookup(m_table_identifier->id, key.row, &range_info)) {
     timer.start();
     m_range_locator_ptr->find_loop(m_table_identifier, key.row, &range_info, timer, false);
   }
-  
+
   iter = m_buffer_map.find(range_info.location);
 
   if (iter == m_buffer_map.end()) {
@@ -240,69 +240,74 @@ TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer(Timer &
   std::vector<ByteString32T *>  kvec;
   ByteString32T *low_key, *key, *value;
   int count = 0;
+  TableMutatorScatterBuffer *redo_buffer = 0;
 
-  TableMutatorScatterBufferPtr redo_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm, m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+  try {
+
+    redo_buffer = new TableMutatorScatterBuffer(m_props_ptr, m_comm, m_table_identifier, m_schema_ptr, m_range_locator_ptr);
   
-  for (UpdateBufferMapT::const_iterator iter = m_buffer_map.begin(); iter != m_buffer_map.end(); iter++) {
-    update_buffer_ptr = (*iter).second;
+    for (UpdateBufferMapT::const_iterator iter = m_buffer_map.begin(); iter != m_buffer_map.end(); iter++) {
+      update_buffer_ptr = (*iter).second;
 
-    if (update_buffer_ptr->error != Error::OK) {
+      if (update_buffer_ptr->error != Error::OK) {
 
-      if (update_buffer_ptr->error == Error::RANGESERVER_PARTIAL_UPDATE) {
-	uint8_t *src_base, *src_ptr, *src_end;
+	if (update_buffer_ptr->error == Error::RANGESERVER_PARTIAL_UPDATE) {
+	  uint8_t *src_base, *src_ptr, *src_end;
 
-	src_ptr = src_base = update_buffer_ptr->event_ptr->message + 4;
-	src_end = update_buffer_ptr->event_ptr->message + update_buffer_ptr->event_ptr->messageLen;
+	  src_ptr = src_base = update_buffer_ptr->event_ptr->message + 4;
+	  src_end = update_buffer_ptr->event_ptr->message + update_buffer_ptr->event_ptr->messageLen;
 
-	low_key = (ByteString32T *)src_base;
+	  low_key = (ByteString32T *)src_base;
 	
-	// do a hard lookup for the lowest key
-	m_range_locator_ptr->find_loop(m_table_identifier, (const char *)low_key->data, &range_info, timer, true);
+	  // do a hard lookup for the lowest key
+	  m_range_locator_ptr->find_loop(m_table_identifier, (const char *)low_key->data, &range_info, timer, true);
 
-	// now add all of the old keys to the redo buffer
-	while (src_ptr < src_end) {
-	  key = (ByteString32T *)src_ptr;
-	  value = (ByteString32T *)(((uint8_t *)key) + Length(key));
-	  redo_buffer_ptr->set(key, value, timer);
-	  src_ptr += Length(key) + Length(value);
-	  m_resends++;
+	  // now add all of the old keys to the redo buffer
+	  while (src_ptr < src_end) {
+	    key = (ByteString32T *)src_ptr;
+	    value = (ByteString32T *)(((uint8_t *)key) + Length(key));
+	    redo_buffer->set(key, value, timer);
+	    src_ptr += Length(key) + Length(value);
+	    m_resends++;
+	  }
+
+	  //HT_INFOF("Partial update, resending %d updates", count);
+
 	}
+	else {
+	  low_key = (ByteString32T *)update_buffer_ptr->buf.buf;
 
-	//HT_INFOF("Partial update, resending %d updates", count);
+	  // find the lowest key
+	  for (size_t i=0; i<update_buffer_ptr->key_offsets.size(); i++) {
+	    key = (ByteString32T *)(update_buffer_ptr->buf.buf + update_buffer_ptr->key_offsets[i]);
+	    if (strcmp((char *)key->data, (char *)low_key->data) < 0)
+	      low_key = key;
+	  }
+
+	  // do a hard lookup for the lowest key
+	  m_range_locator_ptr->find_loop(m_table_identifier, (const char *)low_key->data, &range_info, timer, true);
+
+	  count = 0;
+
+	  // now add all of the old keys to the redo buffer
+	  for (size_t i=0; i<update_buffer_ptr->key_offsets.size(); i++) {
+	    key = (ByteString32T *)(update_buffer_ptr->buf.buf + update_buffer_ptr->key_offsets[i]);
+	    value = (ByteString32T *)(((uint8_t *)key) + Length(key));
+	    redo_buffer->set(key, value, timer);
+	    count++;
+	  }
+
+	  HT_INFOF("Send error '%s', resending %d updates", Error::get_text(update_buffer_ptr->error), count);
+
+	}
 
       }
-      else {
-	low_key = (ByteString32T *)update_buffer_ptr->buf.buf;
-
-	// find the lowest key
-	for (size_t i=0; i<update_buffer_ptr->key_offsets.size(); i++) {
-	  key = (ByteString32T *)(update_buffer_ptr->buf.buf + update_buffer_ptr->key_offsets[i]);
-	  if (strcmp((char *)key->data, (char *)low_key->data) < 0)
-	    low_key = key;
-	}
-
-	// do a hard lookup for the lowest key
-	m_range_locator_ptr->find_loop(m_table_identifier, (const char *)low_key->data, &range_info, timer, true);
-
-	count = 0;
-
-	// now add all of the old keys to the redo buffer
-	for (size_t i=0; i<update_buffer_ptr->key_offsets.size(); i++) {
-	  key = (ByteString32T *)(update_buffer_ptr->buf.buf + update_buffer_ptr->key_offsets[i]);
-	  value = (ByteString32T *)(((uint8_t *)key) + Length(key));
-	  redo_buffer_ptr->set(key, value, timer);
-	  count++;
-	}
-
-	HT_INFOF("Send error '%s', resending %d updates", Error::get_text(update_buffer_ptr->error), count);
-
-      }
-
     }
   }
-
-  TableMutatorScatterBuffer *redo_buffer = redo_buffer_ptr.get();
-  redo_buffer_ptr = (TableMutatorScatterBuffer *)0;
+  catch (Exception &e) {
+    delete redo_buffer;
+    throw;
+  }
 
   return redo_buffer;
 }

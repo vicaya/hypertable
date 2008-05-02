@@ -270,7 +270,7 @@ int RangeLocator::find(TableIdentifier *table, const char *row_key, RangeLocatio
     // meta_scan_spec.interval = ????;
 
     try {
-      m_range_server.set_timeout(timer.remaining() + 0.5);
+      m_range_server.set_timeout((time_t)(timer.remaining() + 0.5));
       m_range_server.create_scanner(addr, m_metadata_table, range, meta_scan_spec, scan_block);
     }
     catch (Exception &e) {
@@ -319,13 +319,13 @@ int RangeLocator::find(TableIdentifier *table, const char *row_key, RangeLocatio
   // meta_scan_spec.interval = ????;
   
   if (m_conn_manager_ptr &&
-      !m_conn_manager_ptr->wait_for_connection(addr, timer.remaining() + 0.5)) {
+      !m_conn_manager_ptr->wait_for_connection(addr, (time_t)(timer.remaining() + 0.5))) {
     if (timer.expired())
       throw Exception(Error::REQUEST_TIMEOUT);
   }
 
   try {
-    m_range_server.set_timeout(timer.remaining() + 0.5);
+    m_range_server.set_timeout((time_t)(timer.remaining() + 0.5));
     m_range_server.create_scanner(addr, m_metadata_table, range, meta_scan_spec, scan_block);
   }
   catch (Exception &e) {
@@ -496,7 +496,7 @@ int RangeLocator::read_root_location(Timer &timer) {
 
     m_conn_manager_ptr->add(m_root_addr, 8, "Root RangeServer");
 
-    if (!m_conn_manager_ptr->wait_for_connection(m_root_addr, timer.remaining() + 0.5)) {
+    if (!m_conn_manager_ptr->wait_for_connection(m_root_addr, (time_t)(timer.remaining() + 0.5))) {
       std::string addr_str;
       HT_ERRORF("Timeout (20s) waiting for root RangeServer connection - %s",
 		   InetAddr::string_format(addr_str, m_root_addr));
