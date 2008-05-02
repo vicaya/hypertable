@@ -27,6 +27,7 @@
 #include "Common/Properties.h"
 #include "Common/StringExt.h"
 #include "Common/ReferenceCount.h"
+#include "Common/Timer.h"
 
 #include "Cell.h"
 #include "KeySpec.h"
@@ -152,7 +153,7 @@ namespace Hypertable {
 
   private:
 
-    void wait_for_previous_buffer();
+    void wait_for_previous_buffer(Timer &timer);
 
     void sanity_check_key(KeySpec &key);
 
@@ -160,8 +161,7 @@ namespace Hypertable {
     Comm                *m_comm;
     SchemaPtr            m_schema_ptr;
     RangeLocatorPtr      m_range_locator_ptr;
-    std::string          m_table_name;
-    TableIdentifier     m_table_identifier;
+    TableIdentifierWrapper m_table_identifier;
     uint64_t             m_memory_used;
     uint64_t             m_max_memory;
     TableMutatorScatterBufferPtr  m_buffer_ptr;

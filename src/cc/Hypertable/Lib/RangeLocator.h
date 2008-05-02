@@ -25,6 +25,7 @@
 #include <deque>
 
 #include "Common/ReferenceCount.h"
+#include "Common/Timer.h"
 
 #include "AsyncComm/ConnectionManager.h"
 
@@ -78,36 +79,47 @@ namespace Hypertable {
      * @param table pointer to table identifier structure
      * @param row_key row key to locate
      * @param range_loc_info_p address of RangeLocationInfo structure to hold result
-     * @param timeout maximum time to retry before giving up
+     * @param timer reference to timer object
+     * @param hard don't consult cache
      * @return Error::OK on success or error code on failure
      */
-    int find(TableIdentifier *table, const char *row_key, RangeLocationInfo *range_loc_info_p, int timeout);
+    void find_loop(TableIdentifier *table, const char *row_key, RangeLocationInfo *range_loc_info_p, Timer &timer, bool hard);
 
     /** Locates the range that contains the given row key.
      * 
      * @param table pointer to table identifier structure
      * @param row_key row key to locate
      * @param range_loc_info_p address of RangeLocationInfo structure to hold result
-     * @param hard find the hard way (e.g. don't consult cache)
+     * @param timer reference to timer object
+     * @param hard don't consult cache
      * @return Error::OK on success or error code on failure
      */
-    int find(TableIdentifier *table, const char *row_key, RangeLocationInfo *range_loc_info_p, bool hard);
+    int find(TableIdentifier *table, const char *row_key, RangeLocationInfo *range_loc_info_p, Timer &timer, bool hard);
 
     /** Sets the "root stale" flag.  Causes methods to reread the root range location before
      * doing METADATA scans.
      */
     void set_root_stale() { m_root_stale=true; }
 
+    /**
+     * Returns the location cache
+     *
+     * @param cache_ptr reference to smart pointer to return location cache
+     */
+    void get_location_cache(LocationCachePtr &cache_ptr) {
+      cache_ptr = m_cache_ptr;
+    }
+
   private:
 
     void initialize();
     int process_metadata_scanblock(ScanBlock &scan_block);
-    int read_root_location();
+    int read_root_location(Timer &timer);
 
     boost::mutex           m_mutex;
     ConnectionManagerPtr   m_conn_manager_ptr;
     Hyperspace::SessionPtr m_hyperspace_ptr;
-    LocationCache          m_cache;
+    LocationCachePtr       m_cache_ptr;
     uint64_t               m_root_file_handle;
     HandleCallbackPtr      m_root_handler_ptr;
     bool                   m_root_stale;

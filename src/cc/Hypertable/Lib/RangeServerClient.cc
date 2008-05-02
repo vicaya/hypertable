@@ -29,7 +29,7 @@
 using namespace Hypertable;
 
 
-RangeServerClient::RangeServerClient(Comm *comm, time_t timeout) : m_comm(comm), m_timeout(timeout) {
+RangeServerClient::RangeServerClient(Comm *comm, time_t timeout) : m_comm(comm), m_default_timeout(timeout), m_timeout(0) {
 }
 
 
@@ -206,8 +206,10 @@ void RangeServerClient::drop_range(struct sockaddr_in &addr, TableIdentifier &ta
  */
 void RangeServerClient::send_message(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *handler) {
   int error;
+  time_t timeout = (m_timeout == 0) ? m_default_timeout : m_timeout;
 
-  if ((error = m_comm->send_request(addr, m_timeout, cbufPtr, handler)) != Error::OK) {
+  m_timeout = 0;
+  if ((error = m_comm->send_request(addr, timeout, cbufPtr, handler)) != Error::OK) {
     HT_WARNF("Comm::send_request to %s:%d failed - %s",
 		inet_ntoa(addr.sin_addr), ntohs(addr.sin_port), Error::get_text(error));
     throw Exception(error, std::string("Comm::send_request to ") + inet_ntoa(addr.sin_addr) + ":" + ntohs(addr.sin_port) + " failed");

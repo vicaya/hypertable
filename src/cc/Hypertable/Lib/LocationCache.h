@@ -85,7 +85,7 @@ namespace Hypertable {
   /**
    *  This class acts as a cache of Range location information.  It 
    */
-  class LocationCache {
+  class LocationCache : public ReferenceCount {
 
   public:
 
@@ -127,6 +127,7 @@ namespace Hypertable {
     ValueT        *m_tail;
     uint32_t       m_max_entries;
   };
+  typedef boost::intrusive_ptr<LocationCache> LocationCachePtr;
 
 }
 

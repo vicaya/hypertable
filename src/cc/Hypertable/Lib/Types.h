@@ -56,6 +56,7 @@ namespace Hypertable {
     }
     TableIdentifier *operator-> () { return &m_identifier; }
     operator TableIdentifier *() { return &m_identifier; }
+    operator TableIdentifier &() { return m_identifier; }
 
   private:
     String m_name;

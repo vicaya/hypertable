@@ -47,11 +47,17 @@ namespace Hypertable {
     RangeServerClient(Comm *comm, time_t timeout);
     ~RangeServerClient();
 
-    /** Sets the client connection timeout
+    /** Sets the default client connection timeout
      *
      * @param timeout timeout value in seconds
      */
-    void set_default_timeout(time_t timeout) { m_timeout = timeout; }
+    void set_default_timeout(time_t timeout) { m_default_timeout = timeout; }
+
+    /** Sets the request timeout
+     *
+     * @param timeout timeout value in seconds
+     */
+    void set_timeout(time_t timeout) { m_timeout = timeout; }
 
     /** Issues a "load range" request asynchronously.
      *
@@ -217,6 +223,7 @@ namespace Hypertable {
     void send_message(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *handler);
   
     Comm *m_comm;
+    time_t m_default_timeout;
     time_t m_timeout;
   };
 

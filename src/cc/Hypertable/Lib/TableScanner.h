@@ -57,15 +57,15 @@ namespace Hypertable {
 
   private:
 
-    void find_range_and_start_scan(const char *row_key);
+    void find_range_and_start_scan(const char *row_key, Timer &timer);
 
     Comm               *m_comm;
     SchemaPtr           m_schema_ptr;
     RangeLocatorPtr     m_range_locator_ptr;
-    ScanSpec  m_scan_spec;
+    LocationCachePtr    m_cache_ptr;
+    ScanSpec            m_scan_spec;
     RangeServerClient   m_range_server;
-    std::string         m_table_name;
-    TableIdentifier    m_table_identifier;
+    TableIdentifierWrapper m_table_identifier;
     bool                m_started;
     bool                m_eos;
     ScanBlock           m_scanblock;

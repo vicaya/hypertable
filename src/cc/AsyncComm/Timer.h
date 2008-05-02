@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_TIMER_H
-#define HYPERTABLE_TIMER_H
+#ifndef HYPERTABLE_TIMERT_H
+#define HYPERTABLE_TIMERT_H
 
 #include <boost/thread/xtime.hpp>
 
@@ -41,4 +41,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_TIMER_H
+#endif // HYPERTABLE_TIMERT_H

@@ -19,6 +19,8 @@
  * 02110-1301, USA.
  */
 
+#include "Common/Timer.h"
+
 #include "Defaults.h"
 #include "Key.h"
 #include "KeySpec.h"
@@ -35,18 +37,9 @@ namespace {
 /**
  *
  */
-TableMutatorScatterBuffer::TableMutatorScatterBuffer(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, int timeout) : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT), m_table_name(table_identifier->name), m_full(false), m_resends(0), m_timeout(timeout) {
+TableMutatorScatterBuffer::TableMutatorScatterBuffer(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr) : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, HYPERTABLE_CLIENT_TIMEOUT), m_table_identifier(table_identifier), m_full(false), m_resends(0) {
 
-  if (m_timeout == 0 ||
-      (m_timeout = props_ptr->get_int("Hypertable.Client.Timeout", 0)) == 0 ||
-      (m_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0)) == 0)
-    m_timeout = HYPERTABLE_CLIENT_TIMEOUT;
-
-  m_range_server.set_default_timeout(m_timeout);
-  
-  // copy TableIdentifier
-  memcpy(&m_table_identifier, table_identifier, sizeof(TableIdentifier));
-  m_table_identifier.name = m_table_name.c_str();
+  m_range_locator_ptr->get_location_cache(m_cache_ptr);
 }
 
 
@@ -54,18 +47,15 @@ TableMutatorScatterBuffer::TableMutatorScatterBuffer(PropertiesPtr &props_ptr, C
 /**
  *
  */
-int TableMutatorScatterBuffer::set(Key &key, const void *value, uint32_t value_len) {
-  int error;
+void TableMutatorScatterBuffer::set(Key &key, const void *value, uint32_t value_len, Timer &timer) {
   RangeLocationInfo range_info;
   UpdateBufferMapT::const_iterator iter;
-
-  if ((error = m_range_locator_ptr->find(&m_table_identifier, key.row, &range_info, false)) != Error::OK) {
-    if ((error = m_range_locator_ptr->find(&m_table_identifier, key.row, &range_info, 21)) != Error::OK) {
-      HT_ERRORF("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)key.row);
-      return error;
-    }
+  
+  if (!m_cache_ptr->lookup(m_table_identifier->id, key.row, &range_info)) {
+    timer.start();
+    m_range_locator_ptr->find_loop(m_table_identifier, key.row, &range_info, timer, false);
   }
-
+  
   iter = m_buffer_map.find(range_info.location);
 
   if (iter == m_buffer_map.end()) {
@@ -73,7 +63,7 @@ int TableMutatorScatterBuffer::set(Key &key, const void *value, uint32_t value_l
     iter = m_buffer_map.find(range_info.location);
 
     if (!LocationCache::location_to_addr(range_info.location.c_str(), (*iter).second->addr))
-      return Error::INVALID_METADATA;
+      throw Exception(Error::INVALID_METADATA, range_info.location);
   }
 
   (*iter).second->key_offsets.push_back((*iter).second->buf.fill());
@@ -82,24 +72,19 @@ int TableMutatorScatterBuffer::set(Key &key, const void *value, uint32_t value_l
 
   if ((*iter).second->buf.fill() > MAX_SEND_BUFFER_SIZE)
     m_full = true;
-  
-  return Error::OK;
 }
 
 
 /**
  *
  */
-int TableMutatorScatterBuffer::set_delete(Key &key) {
-  int error;
+void TableMutatorScatterBuffer::set_delete(Key &key, Timer &timer) {
   RangeLocationInfo range_info;
   UpdateBufferMapT::const_iterator iter;
 
-  if ((error = m_range_locator_ptr->find(&m_table_identifier, key.row, &range_info, false)) != Error::OK) {
-    if ((error = m_range_locator_ptr->find(&m_table_identifier, key.row, &range_info, 21)) != Error::OK) {
-      HT_ERRORF("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)key.row);
-      return error;
-    }
+  if (!m_cache_ptr->lookup(m_table_identifier->id, key.row, &range_info)) {
+    timer.start();
+    m_range_locator_ptr->find_loop(m_table_identifier, key.row, &range_info, timer, false);
   }
 
   iter = m_buffer_map.find(range_info.location);
@@ -109,7 +94,7 @@ int TableMutatorScatterBuffer::set_delete(Key &key) {
     iter = m_buffer_map.find(range_info.location);
 
     if (!LocationCache::location_to_addr(range_info.location.c_str(), (*iter).second->addr))
-      return Error::INVALID_METADATA;
+      throw Exception(Error::INVALID_METADATA, range_info.location);
   }
 
   (*iter).second->key_offsets.push_back((*iter).second->buf.fill());
@@ -121,15 +106,11 @@ int TableMutatorScatterBuffer::set_delete(Key &key) {
   else
     key_flag = FLAG_DELETE_COLUMN_FAMILY;
 
-  cout << "delete: " << key << endl;
-
   CreateKeyAndAppend((*iter).second->buf, key_flag, key.row, key.column_family_code, key.column_qualifier, key.timestamp);
   CreateAndAppend((*iter).second->buf, 0, 0);
 
   if ((*iter).second->buf.fill() > MAX_SEND_BUFFER_SIZE)
     m_full = true;
-  
-  return Error::OK;
 }
 
 
@@ -137,16 +118,13 @@ int TableMutatorScatterBuffer::set_delete(Key &key) {
 /**
  *
  */
-int TableMutatorScatterBuffer::set(ByteString32T *key, ByteString32T *value) {
-  int error;
+void TableMutatorScatterBuffer::set(ByteString32T *key, ByteString32T *value, Timer &timer) {
   RangeLocationInfo range_info;
   UpdateBufferMapT::const_iterator iter;
 
-  if ((error = m_range_locator_ptr->find(&m_table_identifier, (const char *)key->data, &range_info, false)) != Error::OK) {
-    if ((error = m_range_locator_ptr->find(&m_table_identifier, (const char *)key->data, &range_info, 21)) != Error::OK) {
-      HT_ERRORF("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)key->data);
-      return error;
-    }
+  if (!m_cache_ptr->lookup(m_table_identifier->id, (const char *)key->data, &range_info)) {
+    timer.start();
+    m_range_locator_ptr->find_loop(m_table_identifier, (const char *)key->data, &range_info, timer, false);
   }
 
   iter = m_buffer_map.find(range_info.location);
@@ -156,7 +134,7 @@ int TableMutatorScatterBuffer::set(ByteString32T *key, ByteString32T *value) {
     iter = m_buffer_map.find(range_info.location);
 
     if (!LocationCache::location_to_addr(range_info.location.c_str(), (*iter).second->addr))
-      return Error::INVALID_METADATA;
+      throw Exception(Error::INVALID_METADATA, range_info.location);
   }
 
   (*iter).second->key_offsets.push_back((*iter).second->buf.fill());
@@ -165,9 +143,8 @@ int TableMutatorScatterBuffer::set(ByteString32T *key, ByteString32T *value) {
 
   if ((*iter).second->buf.fill() > MAX_SEND_BUFFER_SIZE)
     m_full = true;
-  
-  return Error::OK;
 }
+
 
 namespace {
   struct ltByteString32Chronological {
@@ -252,21 +229,20 @@ bool TableMutatorScatterBuffer::completed() {
 /**
  * 
  */
-int TableMutatorScatterBuffer::wait_for_completion() {
-  return m_completion_counter.wait_for_completion();
+int TableMutatorScatterBuffer::wait_for_completion(Timer &timer) {
+  return m_completion_counter.wait_for_completion(timer);
 }
 
 
-TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer() {
-  int error;
+TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer(Timer &timer) {
   UpdateBufferPtr update_buffer_ptr;
   RangeLocationInfo range_info;
   std::vector<ByteString32T *>  kvec;
   ByteString32T *low_key, *key, *value;
   int count = 0;
 
-  TableMutatorScatterBuffer *redo_buffer = new TableMutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr, m_timeout);
-
+  TableMutatorScatterBufferPtr redo_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm, m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+  
   for (UpdateBufferMapT::const_iterator iter = m_buffer_map.begin(); iter != m_buffer_map.end(); iter++) {
     update_buffer_ptr = (*iter).second;
 
@@ -281,21 +257,13 @@ TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer() {
 	low_key = (ByteString32T *)src_base;
 	
 	// do a hard lookup for the lowest key
-	if ((error = m_range_locator_ptr->find(&m_table_identifier, (const char *)low_key->data, &range_info, 21)) != Error::OK) {
-	  HT_WARNF("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)low_key->data);
-	  delete redo_buffer;
-	  return 0;
-	}
+	m_range_locator_ptr->find_loop(m_table_identifier, (const char *)low_key->data, &range_info, timer, true);
 
 	// now add all of the old keys to the redo buffer
 	while (src_ptr < src_end) {
 	  key = (ByteString32T *)src_ptr;
 	  value = (ByteString32T *)(((uint8_t *)key) + Length(key));
-	  if ((error = redo_buffer->set(key, value)) != Error::OK) {
-	    HT_ERRORF("Problem adding row '%s' of table '%s' to redo buffer", (const char *)low_key->data, m_table_name.c_str());
-	    delete redo_buffer;
-	    return 0;
-	  }
+	  redo_buffer_ptr->set(key, value, timer);
 	  src_ptr += Length(key) + Length(value);
 	  m_resends++;
 	}
@@ -314,11 +282,7 @@ TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer() {
 	}
 
 	// do a hard lookup for the lowest key
-	if ((error = m_range_locator_ptr->find(&m_table_identifier, (const char *)low_key->data, &range_info, 21)) != Error::OK) {
-	  HT_WARNF("Unable to locate range server for table %s row %s", m_table_name.c_str(), (const char *)low_key->data);
-	  delete redo_buffer;
-	  return 0;
-	}
+	m_range_locator_ptr->find_loop(m_table_identifier, (const char *)low_key->data, &range_info, timer, true);
 
 	count = 0;
 
@@ -326,11 +290,7 @@ TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer() {
 	for (size_t i=0; i<update_buffer_ptr->key_offsets.size(); i++) {
 	  key = (ByteString32T *)(update_buffer_ptr->buf.buf + update_buffer_ptr->key_offsets[i]);
 	  value = (ByteString32T *)(((uint8_t *)key) + Length(key));
-	  if ((error = redo_buffer->set(key, value)) != Error::OK) {
-	    HT_ERRORF("Problem adding row '%s' of table '%s' to redo buffer", (const char *)low_key->data, m_table_name.c_str());
-	    delete redo_buffer;
-	    return 0;
-	  }
+	  redo_buffer_ptr->set(key, value, timer);
 	  count++;
 	}
 
@@ -339,8 +299,10 @@ TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer() {
       }
 
     }
-
   }
+
+  TableMutatorScatterBuffer *redo_buffer = redo_buffer_ptr.get();
+  redo_buffer_ptr = (TableMutatorScatterBuffer *)0;
 
   return redo_buffer;
 }

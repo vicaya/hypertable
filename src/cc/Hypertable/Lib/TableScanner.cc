@@ -39,13 +39,15 @@ namespace {
 /**
  *
  */
-TableScanner::TableScanner(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpec &scan_spec, int timeout) : m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT), m_table_name(table_identifier->name), m_started(false), m_eos(false), m_readahead(true), m_fetch_outstanding(false), m_rows_seen(0), m_timeout(timeout) {
+TableScanner::TableScanner(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpec &scan_spec, int timeout) : m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_range_server(comm, HYPERTABLE_CLIENT_TIMEOUT), m_table_identifier(table_identifier), m_started(false), m_eos(false), m_readahead(true), m_fetch_outstanding(false), m_rows_seen(0), m_timeout(timeout) {
   char *str;
 
   if (m_timeout == 0 ||
       (m_timeout = props_ptr->get_int("Hypertable.Client.Timeout", 0)) == 0 ||
       (m_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0)) == 0)
     m_timeout = HYPERTABLE_CLIENT_TIMEOUT;
+
+  m_range_locator_ptr->get_location_cache(m_cache_ptr);
 
   m_range_server.set_default_timeout(m_timeout);
 
@@ -87,10 +89,6 @@ TableScanner::TableScanner(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier
 
   m_scan_spec.return_deletes = scan_spec.return_deletes;
 
-  // copy TableIdentifier
-  memcpy(&m_table_identifier, table_identifier, sizeof(TableIdentifier));
-  m_table_identifier.name = m_table_name.c_str();
-
 }
 
 
@@ -114,12 +112,13 @@ bool TableScanner::next(CellT &cell) {
   int error;
   const ByteString32T *key, *value;
   Key keyComps;
+  Timer timer(m_timeout);
 
   if (m_eos)
     return false;
 
   if (!m_started)
-    find_range_and_start_scan(m_scan_spec.start_row);
+    find_range_and_start_scan(m_scan_spec.start_row, timer);
 
   while (!m_scanblock.more()) {
     if (m_scanblock.eos()) {
@@ -131,7 +130,7 @@ bool TableScanner::next(CellT &cell) {
       }
       std::string next_row = m_range_info.end_row;
       next_row.append(1,1);  // construct row key in next range
-      find_range_and_start_scan(next_row.c_str());
+      find_range_and_start_scan(next_row.c_str(), timer);
     }
     else {
       if (m_fetch_outstanding) {
@@ -150,8 +149,11 @@ bool TableScanner::next(CellT &cell) {
 	    m_fetch_outstanding = false;
 	}
       }
-      else
+      else {
+	timer.start();
+	m_range_server.set_timeout(timer.remaining() + 0.5);
 	m_range_server.fetch_scanblock(m_cur_addr, m_scanblock.get_scanner_id(), m_scanblock);
+      }
 
     }
   }
@@ -220,16 +222,14 @@ bool TableScanner::next(CellT &cell) {
 
 
 
-void TableScanner::find_range_and_start_scan(const char *row_key) {
-  int     error;
+void TableScanner::find_range_and_start_scan(const char *row_key, Timer &timer) {
   RangeSpec  range;
   DynamicBuffer dbuf(0);
 
-  if ((error = m_range_locator_ptr->find(&m_table_identifier, row_key, &m_range_info, false)) != Error::OK) {
-    // try again, the hard way
-    if ((error = m_range_locator_ptr->find(&m_table_identifier, row_key, &m_range_info, 21)) != Error::OK)
-      throw Exception(error, std::string("Unable to find range server for table '") + m_table_identifier.name + "' row key '" + (row_key ? row_key : "") + "'");
-  }
+  timer.start();
+
+  if (!m_cache_ptr->lookup(m_table_identifier->id, row_key, &m_range_info))
+    m_range_locator_ptr->find_loop(m_table_identifier, row_key, &m_range_info, timer, false);
 
   m_started = true;
 
@@ -243,13 +243,13 @@ void TableScanner::find_range_and_start_scan(const char *row_key) {
   }
 
   try {
+    m_range_server.set_timeout(timer.remaining() + 0.5);
     m_range_server.create_scanner(m_cur_addr, m_table_identifier, range, m_scan_spec, m_scanblock);
   }
   catch (Exception &e) {
 
     // try again, the hard way
-    if ((error = m_range_locator_ptr->find(&m_table_identifier, row_key, &m_range_info, 21)) != Error::OK)
-      throw Exception(error, std::string("Unable to find range server for table '") + m_table_identifier.name + "' row key '" + (row_key ? row_key : "") + "'");
+    m_range_locator_ptr->find_loop(m_table_identifier, row_key, &m_range_info, timer, true);
 
     // reset the range information
     dbuf.ensure(m_range_info.start_row.length() + m_range_info.end_row.length() + 2);
@@ -263,11 +263,12 @@ void TableScanner::find_range_and_start_scan(const char *row_key) {
 
     // create the scanner
     try {
+      m_range_server.set_timeout(timer.remaining() + 0.5);
       m_range_server.create_scanner(m_cur_addr, m_table_identifier, range, m_scan_spec, m_scanblock);
     }
     catch (Exception &e) {
       HT_ERRORF("%s", e.what());
-      throw Exception(e.code(), std::string("Problem creating scanner on ") + m_table_identifier.name + "[" + range.start_row + ".." + range.end_row + "]");
+      throw Exception(e.code(), std::string("Problem creating scanner on ") + m_table_identifier->name + "[" + range.start_row + ".." + range.end_row + "]");
     }
   }
 

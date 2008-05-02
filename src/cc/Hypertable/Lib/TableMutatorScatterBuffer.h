@@ -34,6 +34,7 @@
 #include "Common/ByteString.h"
 #include "Common/ReferenceCount.h"
 #include "Common/StringExt.h"
+#include "Common/Timer.h"
 
 #include "Key.h"
 #include "RangeLocator.h"
@@ -46,16 +47,16 @@ namespace Hypertable {
 
   public:
 
-    TableMutatorScatterBuffer(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, int timeout);
-    int set(Key &key, const void *value, uint32_t value_len);
-    int set_delete(Key &key);
-    int set(ByteString32T *key, ByteString32T *value);
+    TableMutatorScatterBuffer(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
+    void set(Key &key, const void *value, uint32_t value_len, Timer &timer);
+    void set_delete(Key &key, Timer &timer);
+    void set(ByteString32T *key, ByteString32T *value, Timer &timer);
     bool full() { return m_full; }
     void send();
     bool completed();
-    int wait_for_completion();
+    int wait_for_completion(Timer &timer);
     void reset();
-    TableMutatorScatterBuffer *create_redo_buffer();
+    TableMutatorScatterBuffer *create_redo_buffer(Timer &timer);
     uint64_t get_resend_count() { return m_resends; }
 
   private:
@@ -85,10 +86,19 @@ namespace Hypertable {
 	  m_cond.notify_all();
 	}
       }
-      int wait_for_completion() {
+
+      int wait_for_completion(Timer &timer) {
 	boost::mutex::scoped_lock lock(m_mutex);
-	while (m_outstanding)
-	  m_cond.wait(lock);
+	boost::xtime expire_time;
+
+	boost::xtime_get(&expire_time, boost::TIME_UTC);
+	expire_time.sec += timer.remaining();
+
+	while (m_outstanding) {
+	  if (!m_cond.timed_wait(lock, expire_time))
+	    throw Exception(Error::REQUEST_TIMEOUT);
+	}
+
 	return m_last_error;
       }
 
@@ -127,14 +137,13 @@ namespace Hypertable {
     Comm                *m_comm;
     SchemaPtr            m_schema_ptr;
     RangeLocatorPtr      m_range_locator_ptr;
+    LocationCachePtr     m_cache_ptr;
     RangeServerClient    m_range_server;
-    std::string          m_table_name;
-    TableIdentifier     m_table_identifier;
+    TableIdentifierWrapper m_table_identifier;
     UpdateBufferMapT     m_buffer_map;
     CompletionCounter    m_completion_counter;
     bool                 m_full;
     uint64_t             m_resends;
-    int                  m_timeout;
   };
   typedef boost::intrusive_ptr<TableMutatorScatterBuffer> TableMutatorScatterBufferPtr;
 

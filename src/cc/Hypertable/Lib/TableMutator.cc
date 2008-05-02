@@ -29,6 +29,7 @@ extern "C" {
 
 #include "Common/StringExt.h"
 
+#include "Defaults.h"
 #include "Key.h"
 #include "TableMutator.h"
 
@@ -40,13 +41,14 @@ namespace {
 /**
  * 
  */
-TableMutator::TableMutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, int timeout) : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_table_name(table_identifier->name), m_memory_used(0), m_max_memory(DEFAULT_MAX_MEMORY), m_resends(0), m_timeout(timeout) {
-  // copy TableIdentifier
-  memcpy(&m_table_identifier, table_identifier, sizeof(TableIdentifier));
-  m_table_identifier.name = m_table_name.c_str();
+TableMutator::TableMutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, int timeout) : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_table_identifier(table_identifier), m_memory_used(0), m_max_memory(DEFAULT_MAX_MEMORY), m_resends(0), m_timeout(timeout) {
 
-  m_buffer_ptr = new TableMutatorScatterBuffer(props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr, m_timeout);
+  if (m_timeout == 0 ||
+      (m_timeout = props_ptr->get_int("Hypertable.Client.Timeout", 0)) == 0 ||
+      (m_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0)) == 0)
+    m_timeout = HYPERTABLE_CLIENT_TIMEOUT;
 
+  m_buffer_ptr = new TableMutatorScatterBuffer(props_ptr, m_comm, m_table_identifier, m_schema_ptr, m_range_locator_ptr);
 }
 
 
@@ -54,7 +56,7 @@ TableMutator::TableMutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier
  * 
  */
 void TableMutator::set(uint64_t timestamp, KeySpec &key, const void *value, uint32_t value_len) {
-  int error;
+  Timer timer(m_timeout);
 
   sanity_check_key(key);
 
@@ -71,23 +73,23 @@ void TableMutator::set(uint64_t timestamp, KeySpec &key, const void *value, uint
     full_key.column_family_code = (uint8_t)cf->id;
     full_key.timestamp = timestamp;
     
-    if ((error = m_buffer_ptr->set(full_key, value, value_len)) != Error::OK) {
-      HT_ERROR("Problem setting cell/value");
-    }
+    m_buffer_ptr->set(full_key, value, value_len, timer);
   }
 
   m_memory_used += 20 + key.row_len + key.column_qualifier_len + value_len;
 
   if (m_buffer_ptr->full() || m_memory_used > m_max_memory) {
 
+    timer.start();
+
     if (m_prev_buffer_ptr)
-      wait_for_previous_buffer();
+      wait_for_previous_buffer(timer);
 
     m_buffer_ptr->send();
 
     m_prev_buffer_ptr = m_buffer_ptr;
 
-    m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr, m_timeout);
+    m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm, m_table_identifier, m_schema_ptr, m_range_locator_ptr);
     m_memory_used = 0;
   }
 
@@ -96,8 +98,8 @@ void TableMutator::set(uint64_t timestamp, KeySpec &key, const void *value, uint
 
 
 void TableMutator::set_delete(uint64_t timestamp, KeySpec &key) {
-  int error;
   Key full_key;
+  Timer timer(m_timeout);
 
   sanity_check_key(key);
 
@@ -117,22 +119,22 @@ void TableMutator::set_delete(uint64_t timestamp, KeySpec &key) {
     full_key.timestamp = timestamp;
   }
 
-  if ((error = m_buffer_ptr->set_delete(full_key)) != Error::OK) {
-    HT_ERRORF("Problem doing delete - %s", Error::get_text(error));
-  }
+  m_buffer_ptr->set_delete(full_key, timer);
 
   m_memory_used += 20 + key.row_len + key.column_qualifier_len;
 
   if (m_buffer_ptr->full() || m_memory_used > m_max_memory) {
 
+    timer.start();
+
     if (m_prev_buffer_ptr)
-      wait_for_previous_buffer();
+      wait_for_previous_buffer(timer);
 
     m_buffer_ptr->send();
 
     m_prev_buffer_ptr = m_buffer_ptr;
 
-    m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr, m_timeout);
+    m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm, m_table_identifier, m_schema_ptr, m_range_locator_ptr);
     m_memory_used = 0;
   }
 
@@ -140,9 +142,10 @@ void TableMutator::set_delete(uint64_t timestamp, KeySpec &key) {
 
 
 void TableMutator::flush() {
+  Timer timer(m_timeout, true);
 
   if (m_prev_buffer_ptr)
-    wait_for_previous_buffer();
+    wait_for_previous_buffer(timer);
 
   /**
    * If there are buffered updates, send them and wait for completion
@@ -150,26 +153,30 @@ void TableMutator::flush() {
   if (m_memory_used > 0) {
     m_buffer_ptr->send();
     m_prev_buffer_ptr = m_buffer_ptr;
-    wait_for_previous_buffer();
+    wait_for_previous_buffer(timer);
   }
 
   m_buffer_ptr->reset();
   m_prev_buffer_ptr = 0;
 }
 
-void TableMutator::wait_for_previous_buffer() {
+
+
+void TableMutator::wait_for_previous_buffer(Timer &timer) {
   int error;
   TableMutatorScatterBuffer *redo_buffer = 0;
   int wait_time = 1;
 
-  while ((error = m_prev_buffer_ptr->wait_for_completion()) != Error::OK && wait_time < 16) {
+  while ((error = m_prev_buffer_ptr->wait_for_completion(timer)) != Error::OK) {
 
     if (error == Error::RANGESERVER_TIMESTAMP_ORDER_ERROR) {
-      std::string table_name_upper = m_table_name;
+      std::string table_name_upper = m_table_identifier->name;
       boost::to_upper(table_name_upper);
-      //HT_ERRORF("Problem sending updates (table=%s) - %s", m_table_name.c_str(), Error::get_text(error));
       throw Exception(error, (std::string)"Problem sending updates (table=" + table_name_upper.c_str() + ")");
     }
+
+    if (timer.remaining() < wait_time)
+      throw Exception(Error::REQUEST_TIMEOUT);
 
     // wait a bit
     poll(0, 0, wait_time*1000);
@@ -178,7 +185,7 @@ void TableMutator::wait_for_previous_buffer() {
     /**
      * Make several attempts to create redo buffer
      */
-    if ((redo_buffer = m_prev_buffer_ptr->create_redo_buffer()) == 0)
+    if ((redo_buffer = m_prev_buffer_ptr->create_redo_buffer(timer)) == 0)
       continue;
 
     m_resends += m_prev_buffer_ptr->get_resend_count();
@@ -189,12 +196,11 @@ void TableMutator::wait_for_previous_buffer() {
      * Re-send failed sends
      */
     m_prev_buffer_ptr->send();
-
   }
 
   if (error != Error::OK) {
-    HT_ERRORF("Problem resending failed updates (table=%s) - %s", m_table_name.c_str(), Error::get_text(error));
-    throw Exception(error, (std::string)"Problem resending failed updates (table=" + m_table_name.c_str() + ")");
+    HT_ERRORF("Problem resending failed updates (table=%s) - %s", m_table_identifier->name, Error::get_text(error));
+    throw Exception(error, (std::string)"Problem resending failed updates (table=" + m_table_identifier->name + ")");
   }
   
 }
