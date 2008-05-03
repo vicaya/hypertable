@@ -124,6 +124,7 @@ namespace Hypertable {
       std::string str;
       std::string output_file;
       std::string input_file;
+      std::string header_file;
       std::string table_compressor;
       std::vector<std::string> key_columns;
       std::string timestamp_column;
@@ -372,6 +373,16 @@ namespace Hypertable {
 	display_string("set_input_file");
 	state.input_file = std::string(str, end-str);
 	trim_if(state.input_file, boost::is_any_of("'\""));
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct set_header_file {
+      set_header_file(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const { 
+	display_string("set_header_file");
+	state.header_file = std::string(str, end-str);
+	trim_if(state.header_file, boost::is_any_of("'\""));
       }
       hql_interpreter_state &state;
     };
@@ -834,6 +845,7 @@ namespace Hypertable {
 	  token_t ROW          = as_lower_d["row"];
 	  token_t ROW_KEY_COLUMN = as_lower_d["row_key_column"];
 	  token_t TIMESTAMP_COLUMN = as_lower_d["timestamp_column"];
+	  token_t HEADER_FILE  = as_lower_d["header_file"];
 	  token_t START_ROW    = as_lower_d["start_row"];
 	  token_t END_ROW      = as_lower_d["end_row"];
 	  token_t INCLUSIVE    = as_lower_d["inclusive"];
@@ -1167,6 +1179,7 @@ namespace Hypertable {
 	  load_data_option
 	    = ROW_KEY_COLUMN >> EQUAL >> user_identifier[add_row_key_column(self.state)] >> *( PLUS >> user_identifier[add_row_key_column(self.state)] )
 	    | TIMESTAMP_COLUMN >> EQUAL >> user_identifier[set_timestamp_column(self.state)]
+	    | HEADER_FILE >> EQUAL >> string_literal[set_header_file(self.state)]
 	    ;
 
 	  /**

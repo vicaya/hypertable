@@ -34,32 +34,49 @@ namespace Hypertable {
   class Stopwatch {
   public:
 
-    Stopwatch() { memset(&elapsed_time, 0, sizeof(elapsed_time)); }
+    Stopwatch(bool start_running=true) : m_running(false) {
+      memset(&elapsed_time, 0, sizeof(elapsed_time));
+      if (start_running)
+	start();
+    }
 
-    void start() { boost::xtime_get(&start_time, boost::TIME_UTC); }
+    void start() { 
+      if (!m_running) {
+	boost::xtime_get(&start_time, boost::TIME_UTC); 
+	m_running = true;
+      }
+    }
 
     void stop() {
-      boost::xtime stop_time;
-      boost::xtime_get(&stop_time, boost::TIME_UTC);
-      if (start_time.sec == stop_time.sec)
-	elapsed_time.nsec += stop_time.nsec - start_time.nsec;
-      else {
-	elapsed_time.sec += stop_time.sec - start_time.sec;
-	elapsed_time.nsec += (1000000000L - start_time.nsec) + stop_time.nsec;
-	if (elapsed_time.nsec > 1000000000L) {
-	  elapsed_time.sec += elapsed_time.nsec / 1000000000L;
-	  elapsed_time.nsec %= 1000000000L;
+      if (m_running) {
+	boost::xtime stop_time;
+	boost::xtime_get(&stop_time, boost::TIME_UTC);
+	if (start_time.sec == stop_time.sec)
+	  elapsed_time.nsec += stop_time.nsec - start_time.nsec;
+	else {
+	  elapsed_time.sec += stop_time.sec - start_time.sec;
+	  elapsed_time.nsec += (1000000000L - start_time.nsec) + stop_time.nsec;
+	  if (elapsed_time.nsec > 1000000000L) {
+	    elapsed_time.sec += elapsed_time.nsec / 1000000000L;
+	    elapsed_time.nsec %= 1000000000L;
+	  }
 	}
+	m_running = false;
       }
     }
 
     void reset() { memset(&elapsed_time, 0, sizeof(elapsed_time)); }
 
-    double elapsed() const { return (double)elapsed_time.sec + ((double)elapsed_time.nsec / 1000000000.0); }
-
-    boost::xtime &elapsed() { return elapsed_time; }
+    double elapsed() { 
+      if (m_running) {
+	stop();
+	start();
+      }
+      return (double)elapsed_time.sec + ((double)elapsed_time.nsec / 1000000000.0); 
+    }
 
   private:
+    bool m_running;
     boost::xtime start_time;
     boost::xtime elapsed_time;
   };

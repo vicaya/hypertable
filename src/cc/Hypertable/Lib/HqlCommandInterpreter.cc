@@ -33,6 +33,7 @@ extern "C" {
 
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
+#include "Common/Stopwatch.h"
 
 #include "Client.h"
 #include "HqlCommandInterpreter.h"
@@ -189,13 +190,10 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       uint64_t total_rowkey_size = 0;
       string start_msg;
       uint64_t insert_count = 0;
-      boost::xtime start_time, finish_time;
-      double elapsed_time;
+      Stopwatch stopwatch;
       bool into_table = true;
       bool display_timestamps = false;
       FILE *outfp = 0;
-
-      boost::xtime_get(&start_time, boost::TIME_UTC);
 
       if (state.table_name == "") {
 	if (state.output_file == "")
@@ -230,7 +228,7 @@ void HqlCommandInterpreter::execute_line(const String &line) {
 
       boost::progress_display show_progress( file_size );
 
-      lds = new LoadDataSource(state.str, state.key_columns, state.timestamp_column);
+      lds = new LoadDataSource(state.str, state.header_file, state.key_columns, state.timestamp_column);
 
       if (!into_table) {
 	display_timestamps = lds->has_timestamps();
@@ -270,26 +268,19 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       else
 	fclose(outfp);
 
-      boost::xtime_get(&finish_time, boost::TIME_UTC);
-
-      if (start_time.sec == finish_time.sec)
-	elapsed_time = (double)(finish_time.nsec - start_time.nsec) / 1000000000.0;
-      else {
-	elapsed_time = finish_time.sec - start_time.sec;
-	elapsed_time += ((1000000000.0 - (double)start_time.nsec) + (double)finish_time.nsec) / 1000000000.0;
-      }
-
       if (show_progress.count() < file_size)
 	show_progress += file_size - show_progress.count();
 
+      stopwatch.stop();
+
       printf("Load complete.\n");
       printf("\n");
-      printf("  Elapsed time:  %.2f s\n", elapsed_time);
+      printf("  Elapsed time:  %.2f s\n", stopwatch.elapsed());
       printf("Avg value size:  %.2f bytes\n", (double)total_values_size / insert_count);
       printf("  Avg key size:  %.2f bytes\n", (double)total_rowkey_size / insert_count);
-      printf("    Throughput:  %.2f bytes/s\n", (double)file_size / elapsed_time);
+      printf("    Throughput:  %.2f bytes/s\n", (double)file_size / stopwatch.elapsed());
       printf(" Total inserts:  %llu\n", (long long unsigned int)insert_count);
-      printf("    Throughput:  %.2f inserts/s\n", (double)insert_count / elapsed_time);
+      printf("    Throughput:  %.2f inserts/s\n", (double)insert_count / stopwatch.elapsed());
       if (mutator_ptr)
 	printf("       Resends:  %llu\n", (long long unsigned int)mutator_ptr->get_resend_count());
       printf("\n");

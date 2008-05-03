@@ -27,6 +27,9 @@
 #include <string>
 #include <vector>
 
+#include <boost/iostreams/device/file.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+
 #include "Common/ByteString.h"
 #include "Common/DynamicBuffer.h"
 #include "Common/String.h"
@@ -40,7 +43,7 @@ namespace Hypertable {
   class LoadDataSource {
 
   public:
-    LoadDataSource(String fname, std::vector<String> &key_columns, String timestamp_column);
+    LoadDataSource(String fname, String header_fname, std::vector<String> &key_columns, String timestamp_column);
     virtual ~LoadDataSource() { delete [] m_go_mask; return; }
     bool has_timestamps() { return m_leading_timestamps || (m_timestamp_index != -1); }
     virtual bool next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp);
@@ -66,7 +69,8 @@ namespace Hypertable {
     std::vector<KeyComponentInfo> m_key_comps;
     bool *m_go_mask;
     size_t m_next_value;
-    std::ifstream m_fin;
+    boost::iostreams::filtering_istream m_fin;
+    boost::iostreams::file_source m_source;
     long m_cur_line;
     DynamicBuffer m_line_buffer;
     DynamicBuffer m_row_key_buffer;
@@ -75,6 +79,8 @@ namespace Hypertable {
     int m_timestamp_index;
     uint64_t m_timestamp;
     int m_limit;
+    uint64_t m_offset;
+    bool m_zipped;
   };
 
 }

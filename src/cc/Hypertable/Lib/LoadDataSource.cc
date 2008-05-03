@@ -19,13 +19,16 @@
  * 02110-1301, USA.
  */
 
+#include <fstream>
+#include <iostream>
 #include <cerrno>
 #include <cctype>
 #include <cstdlib>
 #include <cstring>
 
-#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
 #include <boost/shared_array.hpp>
 
 extern "C" {
@@ -42,20 +45,34 @@ extern "C" {
 
 #include "LoadDataSource.h"
 
+using namespace boost::iostreams;
 using namespace Hypertable;
 using namespace std;
 
 /**
  *
  */
-LoadDataSource::LoadDataSource(String fname, std::vector<String> &key_columns, String timestamp_column) : m_go_mask(0), m_fin(fname.c_str()), m_cur_line(0), m_line_buffer(0), m_row_key_buffer(0), m_hyperformat(false), m_leading_timestamps(false), m_timestamp_index(-1), m_timestamp(0) {
+LoadDataSource::LoadDataSource(String fname, String header_fname, std::vector<String> &key_columns, String timestamp_column) : m_go_mask(0), m_source(fname), m_cur_line(0), m_line_buffer(0), m_row_key_buffer(0), m_hyperformat(false), m_leading_timestamps(false), m_timestamp_index(-1), m_timestamp(0), m_offset(0), m_zipped(false) {
   string line, column_name;
   char *base, *ptr;
   int index = 0;
   KeyComponentInfo key_comps;
 
-  if (!getline(m_fin, line))
-    return;
+  if (boost::algorithm::ends_with(fname, ".gz")) {
+    m_fin.push(gzip_decompressor());
+    m_zipped = true;
+  }
+  m_fin.push(m_source);
+
+  if (header_fname != "") {
+    std::ifstream in(header_fname.c_str());
+    if (!getline(in, line))
+      return;
+  }
+  else {
+    if (!getline(m_fin, line))
+      return;
+  }
 
   m_go_mask = new bool [ 257 ];
   memset(m_go_mask, true, 257*sizeof(bool));
@@ -183,7 +200,7 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
     while (getline(m_fin, line)) {
       m_cur_line++;
 
-      if (consumedp)
+      if (consumedp && !m_zipped)
 	*consumedp += line.length() + 1;
 
       m_line_buffer.clear();
@@ -257,6 +274,12 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
       *valuep = (uint8_t *)ptr;
       *value_lenp = strlen(ptr);
 
+      if (m_zipped && consumedp) {
+	uint64_t new_offset = m_source.seek(0, BOOST_IOS::cur);
+	*consumedp = new_offset - m_offset;
+	m_offset = new_offset;
+      }
+
       return true;
     }
   }
@@ -284,6 +307,13 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
 	*value_lenp = strlen(m_values[m_next_value]);
       }
       m_next_value++;
+
+      if (m_zipped && consumedp) {
+	uint64_t new_offset = m_source.seek(0, BOOST_IOS::cur);
+	*consumedp = new_offset - m_offset;
+	m_offset = new_offset;
+      }
+
       return true;
     }
 
@@ -291,7 +321,7 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
       m_cur_line++;
       index = 0;
 
-      if (consumedp)
+      if (consumedp && !m_zipped)
 	*consumedp += line.length() + 1;
 
       m_line_buffer.clear();
@@ -380,6 +410,12 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
 	*value_lenp = strlen(m_values[m_next_value]);
       }
       m_next_value++;
+
+      if (m_zipped && consumedp) {
+	uint64_t new_offset = m_source.seek(0, BOOST_IOS::cur);
+	*consumedp = new_offset - m_offset;
+	m_offset = new_offset;
+      }
 
       return true;
     }
