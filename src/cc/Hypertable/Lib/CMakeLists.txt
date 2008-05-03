@@ -73,7 +73,7 @@ target_link_libraries (Hypertable Hyperspace HyperComm HyperCommon ${BOOST_LIB})
 
 # generate_test_data
 add_executable (generate_test_data generate_test_data.cc)
-target_link_libraries (generate_test_data Hypertable pthread ${BOOST_LIB} log4cpp expat)
+target_link_libraries (generate_test_data Hypertable pthread ${BOOST_LIB} ${ZLIB_LIBRARIES} log4cpp expat)
 
 # meta log test
 add_executable(metalog_api_test tests/MetaLogApiTest.cc)
@@ -93,7 +93,7 @@ target_link_libraries (locationCacheTest Hypertable ${BOOST_LIB} log4cpp)
 
 # loadDataSourceTest
 add_executable (loadDataSourceTest tests/loadDataSourceTest.cc)
-target_link_libraries (loadDataSourceTest Hypertable ${BOOST_LIB} log4cpp)
+target_link_libraries (loadDataSourceTest Hypertable ${BOOST_LIB} ${ZLIB_LIBRARIES} log4cpp)
 
 # compressor_test
 add_executable (compressor_test tests/compressor_test.cc)
