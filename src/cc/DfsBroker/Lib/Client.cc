@@ -279,8 +279,7 @@ Client::read(int32_t fd, void *dst, size_t len) {
 
 
 void
-Client::append(int32_t fd, const void *buf, size_t len,
-               DispatchHandler *handler) {
+Client::append(int32_t fd, void *buf, size_t len, DispatchHandler *handler) {
   CommBufPtr cbufPtr(m_protocol.create_append_request(fd, buf, len));
 
   try { send_message(cbufPtr, handler); }
@@ -292,7 +291,7 @@ Client::append(int32_t fd, const void *buf, size_t len,
 
 
 size_t
-Client::append(int32_t fd, const void *buf, size_t len) {
+Client::append(int32_t fd, void *buf, size_t len) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
   CommBufPtr cbufPtr(m_protocol.create_append_request(fd, buf, len));
