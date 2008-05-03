@@ -53,6 +53,7 @@ MasterMetaLogReader.cc
 RangeLocator.cc
 RangeServerClient.cc
 RangeServerProtocol.cc
+RangeState.cc
 RootFileHandler.cc
 ScanBlock.cc
 Schema.cc

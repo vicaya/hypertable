@@ -19,23 +19,34 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RANGESTATE_H
-#define HYPERTABLE_RANGESTATE_H
+#include "RangeState.h"
 
-#include "Common/String.h"
+#include "AsyncComm/Serialization.h"
 
-/**
- * Holds the persistent state of a Range.
- */
-class RangeState {
- public:
-  enum { STEADY, SPLIT_LOG_INSTALLED, SPLIT_SHRUNK };
-  RangeState() : state(STEADY), soft_limit(0) { return; }
-  int state;
-  uint64_t soft_limit;
-  String split_log;
-};
+using namespace Hypertable;
+
+size_t RangeState::encoded_length() {
+  return 9 + Serialization::encoded_length_string(transfer_log);
+}
 
 
 
-#endif // HYPERTABLE_RANGESTATE_H
+void RangeState::encode(uint8_t **bufPtr) {
+  *(*bufPtr)++ = state;
+  Serialization::encode_long(bufPtr, soft_limit);
+  Serialization::encode_string(bufPtr, transfer_log);
+}
+
+
+
+bool RangeState::decode(uint8_t **bufPtr, size_t *remainingPtr) {
+  uint8_t bval;
+  if (!Serialization::decode_byte(bufPtr, remainingPtr, &bval))
+    return false;
+  state = bval;
+  if (!Serialization::decode_long(bufPtr, remainingPtr, &soft_limit))
+    return false;
+  if (!Serialization::decode_string(bufPtr, remainingPtr, &transfer_log))
+    return false;
+  return true;
+}

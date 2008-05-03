@@ -33,13 +33,13 @@
 #include "Hypertable/Lib/CommitLogReader.h"
 #include "Hypertable/Lib/Key.h"
 #include "Hypertable/Lib/MasterClient.h"
+#include "Hypertable/Lib/RangeState.h"
 #include "Hypertable/Lib/Schema.h"
 
 #include "AccessGroup.h"
 #include "CellStore.h"
 #include "MaintenanceTask.h"
 #include "Metadata.h"
-#include "RangeState.h"
 #include "ScannerTimestampController.h"
 #include "Timestamp.h"
 
@@ -54,7 +54,7 @@ namespace Hypertable {
     typedef std::vector<AccessGroup *>  ColumnFamilyVectorT;
 
   public:
-    Range(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, SchemaPtr &schemaPtr, RangeSpec *range, RangeState &state);
+    Range(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, SchemaPtr &schemaPtr, RangeSpec *range, RangeState *state);
     virtual ~Range();
     virtual int add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp);
     virtual const char *get_split_row();
@@ -173,7 +173,7 @@ namespace Hypertable {
     ScannerTimestampController m_scanner_timestamp_controller;
     uint64_t         m_added_deletes[3];
     uint64_t         m_added_inserts;
-    RangeState       m_state;
+    RangeStateCopy   m_state;
   };
 
   typedef boost::intrusive_ptr<Range> RangePtr;

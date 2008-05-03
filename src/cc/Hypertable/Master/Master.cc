@@ -39,6 +39,7 @@ extern "C" {
 #include "DfsBroker/Lib/Client.h"
 #include "Hypertable/Lib/LocationCache.h"
 #include "Hypertable/Lib/RangeServerClient.h"
+#include "Hypertable/Lib/RangeState.h"
 #include "Hypertable/Lib/Schema.h"
 #include "Hyperspace/DirEntry.h"
 
@@ -415,7 +416,9 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
     range.end_row = Key::END_ROOT_ROW;
 
     try {
-      rsc.load_range(alias, table, range, 0, m_max_range_bytes, 0);
+      RangeState range_state;
+      range_state.soft_limit = m_max_range_bytes;
+      rsc.load_range(alias, table, range, 0, range_state, 0);
     }
     catch (Exception &e) {
       std::string addrStr;
@@ -458,7 +461,9 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
     range.end_row = Key::END_ROW_MARKER;
 
     try {
-      rsc.load_range(alias, table, range, 0, m_max_range_bytes, 0);
+      RangeState range_state;
+      range_state.soft_limit = m_max_range_bytes;
+      rsc.load_range(alias, table, range, 0, range_state, 0);
     }
     catch (Exception &e) {
       std::string addrStr;
@@ -498,7 +503,9 @@ void Master::report_split(ResponseCallback *cb, TableIdentifier &table, RangeSpe
   //cb->get_address(addr);
 
   try {
-    rsc.load_range(addr, table, range, transfer_log_dir, soft_limit, 0);
+    RangeState range_state;
+    range_state.soft_limit = soft_limit;
+    rsc.load_range(addr, table, range, transfer_log_dir, range_state, 0);
     HT_INFOF("report_split for %s[%s:%s] successful.", table.name, range.start_row, range.end_row);
   }
   catch (Exception &e) {
@@ -786,7 +793,9 @@ int Master::create_table(const char *tableName, const char *schemaString, std::s
     }
 
     try {
-      rsc.load_range(addr, table, range, 0, soft_limit, 0);
+      RangeState range_state;
+      range_state.soft_limit = soft_limit;
+      rsc.load_range(addr, table, range, 0, range_state, 0);
     }
     catch (Exception &e) {
       std::string addrStr;

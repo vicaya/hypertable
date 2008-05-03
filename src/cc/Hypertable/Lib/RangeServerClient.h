@@ -32,6 +32,7 @@
 #include "AsyncComm/DispatchHandler.h"
 
 #include "RangeServerProtocol.h"
+#include "RangeState.h"
 #include "Types.h"
 
 using namespace Hypertable;
@@ -64,23 +65,23 @@ namespace Hypertable {
      * @param addr remote address of RangeServer connection
      * @param table table identifier
      * @param range range specification
-     * @param transfer_log_dir transfer log directory
-     * @param soft_limit soft maximum size of range in bytes (doubles at each split up to a max)
+     * @param transfer_log transfer log
+     * @param range_state range state
      * @param flags load flags
      * @param handler response handler
      */
-    void load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags, DispatchHandler *handler);
+    void load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, const char *transfer_log, RangeState &range_state, uint16_t flags, DispatchHandler *handler);
 
     /** Issues a "load range" request.
      *
      * @param addr remote address of RangeServer connection
      * @param table table identifier
      * @param range range specification
-     * @param transfer_log_dir transfer log directory
-     * @param soft_limit soft maximum size of range in bytes (doubles at each split up to a max)
+     * @param transfer_log transfer log
+     * @param range_state range state
      * @param flags load flags
      */
-    void load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags);
+    void load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, const char *transfer_log, RangeState &range_state, uint16_t flags);
 
     /** Issues an "update" request asynchronously.  The data argument holds a sequence of key/value
      * pairs.  Each key/value pair is encoded as two variable lenght ByteString32T records

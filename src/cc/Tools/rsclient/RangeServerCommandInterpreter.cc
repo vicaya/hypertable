@@ -40,6 +40,7 @@ extern "C" {
 #include "Hypertable/Lib/HqlParser.h"
 #include "Hypertable/Lib/Key.h"
 #include "Hypertable/Lib/LoadDataSource.h"
+#include "Hypertable/Lib/RangeState.h"
 #include "Hypertable/Lib/ScanBlock.h"
 #include "Hypertable/Lib/TestSource.h"
 
@@ -97,6 +98,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       state.range_end_row = Key::END_ROW_MARKER;
 
     if (state.command == COMMAND_LOAD_RANGE) {
+      RangeState range_state;
 
       cout << "TableName  = " << state.table_name << endl;
       cout << "StartRow   = " << state.range_start_row << endl;
@@ -105,7 +107,9 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       range.start_row = state.range_start_row.c_str();
       range.end_row = state.range_end_row.c_str();
 
-      m_range_server_ptr->load_range(m_addr, *table, range, 0, 200000000LL, 0);
+      range_state.soft_limit = 200000000LL;
+
+      m_range_server_ptr->load_range(m_addr, *table, range, 0, range_state, 0);
 
     }
     else if (state.command == COMMAND_UPDATE) {

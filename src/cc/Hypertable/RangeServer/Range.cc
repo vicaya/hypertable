@@ -50,7 +50,7 @@ using namespace Hypertable;
 using namespace std;
 
 
-Range::Range(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, SchemaPtr &schemaPtr, RangeSpec *range, RangeState &state) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_identifier(identifier), m_schema(schemaPtr), m_maintenance_in_progress(false), m_last_logical_timestamp(0), m_hold_updates(false), m_update_counter(0), m_added_inserts(0), m_state(state) {
+Range::Range(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, SchemaPtr &schemaPtr, RangeSpec *range, RangeState *state) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_identifier(identifier), m_schema(schemaPtr), m_maintenance_in_progress(false), m_last_logical_timestamp(0), m_hold_updates(false), m_update_counter(0), m_added_inserts(0), m_state(*state) {
   AccessGroup *ag;
   
   memset(m_added_deletes, 0, 3*sizeof(int64_t));
@@ -350,7 +350,7 @@ void Range::split() {
     case (RangeState::SPLIT_SHRUNK):
       split_notify_master(old_start_row);
       m_state.state = RangeState::STEADY;
-      m_state.split_log = "";
+      m_state.transfer_log = "";
 
     }
 
@@ -428,13 +428,13 @@ void Range::split_install_log(Timestamp *timestampp, String &old_start_row) {
    */
   md5_string(m_split_row.c_str(), md5DigestStr);
   md5DigestStr[24] = 0;
-  m_state.split_log = Global::logDir + "/" + md5DigestStr;
+  m_state.set_transfer_log(Global::logDir + "/" + md5DigestStr);
 
   // Create transfer log dir
-  try { Global::logDfs->mkdirs(m_state.split_log); }
+  try { Global::logDfs->mkdirs(m_state.transfer_log); }
   catch (Exception &e) {
     HT_ERRORF("Problem creating log directory '%s': %s",
-              m_state.split_log.c_str(), e.what());
+              m_state.transfer_log, e.what());
     HT_ABORT;
   }
 
@@ -459,7 +459,7 @@ void Range::split_install_log(Timestamp *timestampp, String &old_start_row) {
 	  timestampp->logical == 0)
 	*timestampp = m_timestamp;
       old_start_row = m_start_row;
-      m_split_log_ptr = new CommitLog(Global::dfs, m_state.split_log);
+      m_split_log_ptr = new CommitLog(Global::dfs, m_state.transfer_log);
     }
 
     /** unblock updates **/
@@ -591,7 +591,7 @@ void Range::split_notify_master(String &old_start_row) {
       m_state.soft_limit = Global::rangeMaxBytes;
   }
 
-  if ((error = m_master_client_ptr->report_split(m_identifier, range, m_state.split_log.c_str(), m_state.soft_limit)) != Error::OK) {
+  if ((error = m_master_client_ptr->report_split(m_identifier, range, m_state.transfer_log, m_state.soft_limit)) != Error::OK) {
     throw Exception(error, format("Problem reporting split (table=%s, start_row=%s, end_row=%s) to master.",
 				  m_identifier->name, range.start_row, range.end_row));
   }

@@ -33,6 +33,7 @@
 #include "Hyperspace/Session.h"
 
 #include "Hypertable/Lib/MasterClient.h"
+#include "Hypertable/Lib/RangeState.h"
 #include "Hypertable/Lib/Types.h"
 
 #include "ResponseCallbackCreateScanner.h"
@@ -56,7 +57,7 @@ namespace Hypertable {
     void create_scanner(ResponseCallbackCreateScanner *cb, TableIdentifier *table, RangeSpec *range, ScanSpec *scan_spec);
     void destroy_scanner(ResponseCallback *cb, uint32_t scannerId);
     void fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t scannerId);
-    void load_range(ResponseCallback *cb, TableIdentifier *table, RangeSpec *range, const char *transfer_log_dir, uint64_t soft_limit, uint16_t flags);
+    void load_range(ResponseCallback *cb, TableIdentifier *table, RangeSpec *range, const char *transfer_log_dir, RangeState *range_state, uint16_t flags);
     void update(ResponseCallbackUpdate *cb, TableIdentifier *table, BufferT &buffer);
     void drop_table(ResponseCallback *cb, TableIdentifier *table);
     void dump_stats(ResponseCallback *cb);

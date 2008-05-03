@@ -39,8 +39,8 @@ void RequestHandlerLoadRange::run() {
   ResponseCallback cb(m_comm, m_event_ptr);
   TableIdentifier table;
   RangeSpec range;
+  RangeState range_state;
   const char *transfer_log_dir;
-  uint64_t soft_limit;
   uint16_t flags;
   size_t remaining = m_event_ptr->messageLen - 2;
   uint8_t *msgPtr = m_event_ptr->message + 2;
@@ -57,15 +57,14 @@ void RequestHandlerLoadRange::run() {
   if (!Serialization::decode_string(&msgPtr, &remaining, &transfer_log_dir))
     goto abort;
 
-  // soft_limit
-  if (!Serialization::decode_long(&msgPtr, &remaining, &soft_limit))
+  if (!range_state.decode(&msgPtr, &remaining))
     goto abort;
-
+  
   // flags
   if (!Serialization::decode_short(&msgPtr, &remaining, &flags))
     goto abort;
 
-  m_range_server->load_range(&cb, &table, &range, transfer_log_dir, soft_limit, flags);
+  m_range_server->load_range(&cb, &table, &range, transfer_log_dir, &range_state, flags);
 
   return;
 
