@@ -22,6 +22,7 @@
 #define HYPERTABLE_LOGGER_H
 
 #include "String.h"
+#include <iostream>
 #include "FixedStream.h"
 #include <log4cpp/Category.hh>
 
