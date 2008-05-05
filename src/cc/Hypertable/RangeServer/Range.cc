@@ -186,15 +186,14 @@ bool Range::extract_csid_from_path(std::string &path, uint32_t *csidp) {
 
 
 /**
- * TODO: Make this more robust
  */
 int Range::add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp) {
-  Key keyComps;
+  Key key_comps;
 
-  HT_EXPECT(keyComps.load(key), Error::FAILED_EXPECTATION);
+  HT_EXPECT(key_comps.load(key), Error::FAILED_EXPECTATION);
 
-  if (keyComps.column_family_code >= m_column_family_vector.size()) {
-    HT_ERRORF("Bad column family (%d)", keyComps.column_family_code);
+  if (key_comps.column_family_code >= m_column_family_vector.size()) {
+    HT_ERRORF("Bad column family (%d)", key_comps.column_family_code);
     return Error::RANGESERVER_INVALID_COLUMNFAMILY;
   }
 
@@ -202,34 +201,64 @@ int Range::add(const ByteString32T *key, const ByteString32T *value, uint64_t re
      keys in a batch may come in out-of-order if they're supplied because
      they get sorted by row key in the client.  This *shouldn't* be a problem.
      
-  if (keyComps.timestamp <= m_last_logical_timestamp) {
-    if (keyComps.flag == FLAG_INSERT) {
-      HT_ERRORF("Problem adding key/value pair, key timestmap %llu <= %llu", keyComps.timestamp, m_last_logical_timestamp);
+  if (key_comps.timestamp <= m_last_logical_timestamp) {
+    if (key_comps.flag == FLAG_INSERT) {
+      HT_ERRORF("Problem adding key/value pair, key timestmap %llu <= %llu", key_comps.timestamp, m_last_logical_timestamp);
       return Error::RANGESERVER_TIMESTAMP_ORDER_ERROR;
     }
   }
   else
-    m_last_logical_timestamp = keyComps.timestamp;
+    m_last_logical_timestamp = key_comps.timestamp;
   */
 
-  if (keyComps.timestamp > m_last_logical_timestamp)
-    m_last_logical_timestamp = keyComps.timestamp;
+  if (key_comps.timestamp > m_last_logical_timestamp)
+    m_last_logical_timestamp = key_comps.timestamp;
 
-  if (keyComps.flag == FLAG_DELETE_ROW) {
+  if (key_comps.flag == FLAG_DELETE_ROW) {
     for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++) {
       (*iter).second->add(key, value, real_timestamp);
     }
   }
   else
-    m_column_family_vector[keyComps.column_family_code]->add(key, value, real_timestamp);
+    m_column_family_vector[key_comps.column_family_code]->add(key, value, real_timestamp);
 
-  if (keyComps.flag == FLAG_INSERT)
+  if (key_comps.flag == FLAG_INSERT)
     m_added_inserts++;
   else
-    m_added_deletes[keyComps.flag]++;
+    m_added_deletes[key_comps.flag]++;
 
   return Error::OK;
 }
+
+
+/**
+ */
+int Range::replay_add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp) {
+  Key key_comps;
+
+  HT_EXPECT(key_comps.load(key), Error::FAILED_EXPECTATION);
+
+  if (key_comps.column_family_code >= m_column_family_vector.size()) {
+    HT_ERRORF("Bad column family (%d)", key_comps.column_family_code);
+    return Error::RANGESERVER_INVALID_COLUMNFAMILY;
+  }
+
+  if (key_comps.flag == FLAG_DELETE_ROW) {
+    for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++) {
+      (*iter).second->replay_add(key, value, real_timestamp);
+    }
+  }
+  else
+    m_column_family_vector[key_comps.column_family_code]->replay_add(key, value, real_timestamp);
+
+  if (key_comps.flag == FLAG_INSERT)
+    m_added_inserts++;
+  else
+    m_added_deletes[key_comps.flag]++;
+
+  return Error::OK;
+}
+
 
 
 CellListScanner *Range::create_scanner(ScanContextPtr &scanContextPtr) {

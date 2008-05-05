@@ -1199,12 +1199,80 @@ void RangeServer::replay_start(ResponseCallback *cb) {
 
 
 void RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data, size_t len) {
+  TableIdentifier table_identifier;
+  TableInfoPtr table_info_ptr;
+  const ByteString32T *key, *value;
+  uint8_t *ptr = (uint8_t *)data;
+  const uint8_t *end_ptr = data + len;
+  size_t remaining = len;
+  uint32_t pair_i, pair_count;
+  const char *row;
+  String err_msg;
+  uint64_t timestamp;
+  RangePtr range_ptr;
+  String end_row;
+
   if (Global::verbose) {
     HT_INFOF("replay_update - length=%ld", len);
     cout << flush;
   }
-  (void)data;
-  (void)len;
+
+  try {
+
+    while (ptr < end_ptr) {
+
+      // decode table identifier + timestamp + key/value pair count
+      if (!table_identifier.decode(&ptr, &remaining) ||
+	  !Serialization::decode_long(&ptr, &remaining, &timestamp) ||
+	  !Serialization::decode_int(&ptr, &remaining, &pair_count))
+	throw Exception(Error::REQUEST_TRUNCATED, "Update block header truncated");
+
+      // Fetch table info
+      if (!m_replay_map_ptr->get(table_identifier.id, table_info_ptr))
+	throw Exception(Error::RANGESERVER_RANGE_NOT_FOUND, format("Unable to find table info for table name='%s' id=%u", table_identifier.name, table_identifier.id));
+
+      pair_i = 0;
+
+      while (ptr < end_ptr && pair_i < pair_count) {
+
+	row = (const char *)((ByteString32T *)ptr)->data;
+
+	// Look for containing range, add to stop mods if not found
+	if (!table_info_ptr->find_containing_range(row, range_ptr))
+	  throw Exception(Error::RANGESERVER_RANGE_NOT_FOUND, format("Unable to find range for row '%s'", row));
+
+	end_row = range_ptr->end_row();
+
+	while (ptr < end_ptr && 
+	       pair_i < pair_count &&
+	       (end_row == "" || (strcmp(row, end_row.c_str()) <= 0))) {
+
+	  // extract the key
+	  key = (const ByteString32T *)ptr;
+	  ptr += Length(key);
+	  if (ptr > end_ptr)
+	    throw Exception(Error::REQUEST_TRUNCATED, "Problem decoding key");
+
+	  value = (const ByteString32T *)ptr;
+	  ptr += Length(value);
+	  if (ptr > end_ptr)
+	    throw Exception(Error::REQUEST_TRUNCATED, "Problem decoding value");
+
+	  HT_EXPECT(range_ptr->add(key, value, timestamp) == Error::OK, Error::FAILED_EXPECTATION);
+	  pair_i++;
+	}
+
+      }
+
+    }
+
+  }
+  catch (Exception &e) {
+    HT_ERRORF("%s - %s", Error::get_text(e.code()), e.what());
+    cb->error(e.code(), e.what());
+    return;
+  }
+
   cb->response_ok();
 }
 
@@ -1260,7 +1328,7 @@ void RangeServer::drop_range(ResponseCallback *cb, TableIdentifier *table, Range
 
 
 
-int RangeServer::verify_schema(TableInfoPtr &table_info_ptr, int generation, std::string &errMsg) {
+int RangeServer::verify_schema(TableInfoPtr &table_info_ptr, int generation, std::string &err_msg) {
   std::string tableFile = (std::string)"/hypertable/tables/" + table_info_ptr->get_name();
   DynamicBuffer valueBuf(0);
   HandleCallbackPtr nullHandleCallback;
@@ -1276,7 +1344,7 @@ int RangeServer::verify_schema(TableInfoPtr &table_info_ptr, int generation, std
     }
 
     if ((error = m_hyperspace_ptr->attr_get(handle, "schema", valueBuf)) != Error::OK) {
-      errMsg = (std::string)"Problem getting 'schema' attribute for '" + tableFile + "'";
+      err_msg = (std::string)"Problem getting 'schema' attribute for '" + tableFile + "'";
       return error;
     }
 
@@ -1284,7 +1352,7 @@ int RangeServer::verify_schema(TableInfoPtr &table_info_ptr, int generation, std
 
     schemaPtr = Schema::new_instance((const char *)valueBuf.buf, valueBuf.fill(), true);
     if (!schemaPtr->is_valid()) {
-      errMsg = (std::string)"Schema Parse Error for table '" + table_info_ptr->get_name() + "' : " + schemaPtr->get_error_string();
+      err_msg = (std::string)"Schema Parse Error for table '" + table_info_ptr->get_name() + "' : " + schemaPtr->get_error_string();
       return Error::RANGESERVER_SCHEMA_PARSE_ERROR;
     }
 
@@ -1292,7 +1360,7 @@ int RangeServer::verify_schema(TableInfoPtr &table_info_ptr, int generation, std
 
     // Generation check ...
     if ( schemaPtr->get_generation() < generation ) {
-      errMsg = (std::string)"Fetched Schema generation for table '" + table_info_ptr->get_name() + "' is " + schemaPtr->get_generation() + " but supplied is " + generation;
+      err_msg = (std::string)"Fetched Schema generation for table '" + table_info_ptr->get_name() + "' is " + schemaPtr->get_generation() + " but supplied is " + generation;
       return Error::RANGESERVER_GENERATION_MISMATCH;
     }
   }

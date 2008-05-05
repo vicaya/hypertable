@@ -57,6 +57,7 @@ namespace Hypertable {
     Range(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, SchemaPtr &schemaPtr, RangeSpec *range, RangeState *state);
     virtual ~Range();
     virtual int add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp);
+    int replay_add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp);
     virtual const char *get_split_row();
     void lock();
     void unlock(uint64_t real_timestamp);
