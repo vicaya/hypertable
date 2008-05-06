@@ -109,6 +109,10 @@ namespace {
     { Error::RANGESERVER_UNAVAILABLE,          "RANGE SERVER unavailable" },
     { Error::RANGESERVER_TIMESTAMP_ORDER_ERROR,"RANGE SERVER supplied timestamp is not strictly increasing" },
     { Error::HQL_BAD_LOAD_FILE_FORMAT,         "HQL bad load file format" },
+    { Error::METALOG_CHECKSUM_MISMATCH, "METALOG checksum mismatch" },
+    { Error::SERIALIZATION_INPUT_OVERRUN, "SERIALIZATION input buffer overrun" },
+    { Error::SERIALIZATION_BAD_VINT,      "SERIALIZATION bad vint encoding" },
+    { Error::SERIALIZATION_BAD_CSTR,      "SERIALIZATION bad c-string" },
     { 0, 0 }
   };
 

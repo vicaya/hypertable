@@ -25,11 +25,61 @@
 #include <cstring>
 #include <string>
 
+#include "Common/Error.h"
+#include "Common/Logger.h"
 #include "Common/ByteString.h"
 
-namespace Hypertable {
+// vint limits
+#define HT_MAX_V1B 0x7f
+#define HT_MAX_V2B 0x3fff
+#define HT_MAX_V3B 0x1fffff
+#define HT_MAX_V4B 0xfffffff
+#define HT_MAX_V5B 0x7ffffffffull
+#define HT_MAX_V6B 0x3ffffffffffull
+#define HT_MAX_V7B 0x1ffffffffffffull
+#define HT_MAX_V8B 0xffffffffffffffull
+#define HT_MAX_V9B 0x7fffffffffffffffull
 
-  namespace Serialization {
+// vint encode
+#define HT_ENCODE_VINT0(_op_, _val_) \
+  if (_val_ <= HT_MAX_V1B) { \
+    *(_op_)++ = (uint8_t)(_val_ & 0x7f); \
+    return; \
+  }
+
+#define HT_ENCODE_VINT_(_op_, _val_) \
+  *(_op_)++ = (uint8_t)(_val_ | 0x80); \
+  _val_ >>= 7; \
+  HT_ENCODE_VINT0(_op_, _val_)
+
+#define HT_ENCODE_VINT4(_op_, _val_) \
+  HT_ENCODE_VINT_(_op_, _val_) HT_ENCODE_VINT_(_op_, _val_) \
+  HT_ENCODE_VINT_(_op_, _val_) HT_ENCODE_VINT_(_op_, _val_)
+
+// vint decode
+#define HT_DECODE_NEED(_rp_, _n_) \
+  if (*(_rp_) < _n_) \
+    throw Exception(Error::SERIALIZATION_INPUT_OVERRUN); \
+  *(_rp_) -= _n_
+
+#define HT_DECODE_VINT0(_type_, _n_, _ip_, _rp_) \
+  HT_DECODE_NEED(_rp_, 1); \
+  _type_ _n_ = (*(_ip_)++ & 0x7f), shift = 0;
+
+#define HT_DECODE_VINT_(_type_, _n_, _ip_, _rp_) \
+  shift += 7; \
+  if ((_ip_)[-1] & 0x80) { \
+    HT_DECODE_NEED(_rp_, 1); \
+    _n_ |= ((_type_)(*(_ip_)++ & 0x7f) << shift); \
+  } else return _n_;
+
+#define HT_DECODE_VINT4(_type_, _n_, _ip_, _rp_) \
+  HT_DECODE_VINT_(_type_, _n_, _ip_, _rp_) \
+  HT_DECODE_VINT_(_type_, _n_, _ip_, _rp_) \
+  HT_DECODE_VINT_(_type_, _n_, _ip_, _rp_) \
+  HT_DECODE_VINT_(_type_, _n_, _ip_, _rp_)
+
+namespace Hypertable { namespace Serialization {
 
     /**
      * Encodes a boolean into the given buffer.  Assumes there is
@@ -125,7 +175,7 @@ namespace Hypertable {
       *bufPtr += 4;
     }
 
-    
+
     /**
      * Decodes an int (4 byte integer) from the given buffer.  Increments
      * buffer pointer and decrements remainingPtr on success.
@@ -202,7 +252,7 @@ namespace Hypertable {
       *bufPtr += len + 4;
     }
 
-    
+
     /**
      * Decodes a variable sized byte array from the given buffer.  Byte array is
      * encoded as a 4 byte length followed by the data.  Increments buffer
@@ -292,7 +342,7 @@ namespace Hypertable {
       // 2-byte length
       memcpy(*bufPtr, &len, 2);
       (*bufPtr) += 2;
-      
+
       // string characters
       if (len > 0) {
 	memcpy(*bufPtr, str, len);
@@ -345,6 +395,7 @@ namespace Hypertable {
       return true;
     }
 
+
     /**
      * Decodes a std::string from the given buffer.  The encoding of the
      * string is a 2 byte length followed by the string, followed by a '\\0'
@@ -364,8 +415,261 @@ namespace Hypertable {
       return true;
     }
 
-  }
-  
-}
+
+    /**
+     * Encode a 16-bit integer in network byte order
+     *
+     * @param bufp - pointer to the destination buffer
+     * @param val value to encode
+     */
+    inline void encode_i16(uint8_t **bufp , uint16_t val) {
+      *(*bufp)++ = (uint8_t)(val >> 8);
+      *(*bufp)++ = (uint8_t)val;
+    }
+
+
+    /**
+     * Decode a 16-bit integer in network byte order
+     *
+     * @param bufp - pointer to the source buffer
+     * @param remainp - pointer to remaining size variable
+     * @return value
+     */
+    inline uint16_t decode_i16(const uint8_t **bufp, size_t *remainp) {
+      if (*remainp < 2)
+        throw Exception(Error::SERIALIZATION_INPUT_OVERRUN);
+
+      uint16_t val = (*(*bufp)++ << 8);
+      val |= *(*bufp)++;
+      *remainp -= 2;
+
+      return val;
+    }
+
+
+    /**
+     * Encode a 32-bit integer in network byte order
+     *
+     * @param bufp - pointer to the destination buffer
+     * @param val - value to encode
+     */
+    inline void encode_i32(uint8_t **bufp, uint32_t val) {
+      *(*bufp)++ = (uint8_t)(val >> 24);
+      *(*bufp)++ = (uint8_t)(val >> 16);
+      *(*bufp)++ = (uint8_t)(val >> 8);
+      *(*bufp)++ = (uint8_t)val;
+    }
+
+
+    /**
+     * Decode a 32-bit integer in network byte order
+     *
+     * @param bufp - pointer to the source buffer
+     * @param remainp - pointer to remaining size variable
+     * @return value
+     */
+    inline uint32_t decode_i32(const uint8_t **bufp, size_t *remainp) {
+      if (*remainp < 4)
+        throw Exception(Error::SERIALIZATION_INPUT_OVERRUN);
+
+      uint32_t val = (*(*bufp)++ << 24);
+      val |= (*(*bufp)++ << 16);
+      val |= (*(*bufp)++ << 8);
+      val |= *(*bufp)++;
+      *remainp -= 4;
+
+      return val;
+    }
+
+
+    /**
+     * Encode a 64-bit integer in network byte order
+     *
+     * @param bufp - pointer to the destination buffer
+     * @param val - value to encode
+     */
+    inline void encode_i64(uint8_t **bufp, uint64_t val) {
+      *(*bufp)++ = (uint8_t)(val >> 56);
+      *(*bufp)++ = (uint8_t)(val >> 48);
+      *(*bufp)++ = (uint8_t)(val >> 40);
+      *(*bufp)++ = (uint8_t)(val >> 32);
+      *(*bufp)++ = (uint8_t)(val >> 24);
+      *(*bufp)++ = (uint8_t)(val >> 16);
+      *(*bufp)++ = (uint8_t)(val >> 8);
+      *(*bufp)++ = (uint8_t)val;
+    }
+
+
+    /**
+     * Decode a 64-bit integer in network byte order
+     *
+     * @param bufp - pointer to the source buffer
+     * @param remainp - pointer to remaining size variable
+     * @return value
+     */
+    inline uint64_t decode_i64(const uint8_t **bufp, size_t *remainp) {
+      if (*remainp < 8)
+        throw Exception(Error::SERIALIZATION_INPUT_OVERRUN);
+
+      uint64_t val = ((uint64_t)*(*bufp)++ << 56);
+      val |= ((uint64_t)(*(*bufp)++) << 48);
+      val |= ((uint64_t)(*(*bufp)++) << 40);
+      val |= ((uint64_t)(*(*bufp)++) << 32);
+      val |= ((uint64_t)(*(*bufp)++) << 24);
+      val |= (*(*bufp)++ << 16);
+      val |= (*(*bufp)++ << 8);
+      val |= *(*bufp)++;
+      *remainp -= 8;
+
+      return val;
+    }
+
+
+    /**
+     * Length of a variable length encoded 32-bit integer (up to 5 bytes)
+     *
+     * @param val - 32-bit integer to encode
+     * @return number of bytes required
+     */
+    inline int encoded_length_vi32(uint32_t val) {
+       return (val > HT_MAX_V4B ? 5 : \
+               (val > HT_MAX_V3B ? 4 : \
+                (val > HT_MAX_V2B ? 3 : \
+                 (val > HT_MAX_V1B ? 2 : 1))));
+    }
+
+    /**
+     * Length of a variable length encoded 64-bit integer (up to 9 bytes)
+     *
+     * @param val - 64-bit integer to encode
+     * @return number of bytes required
+     */
+    inline int encoded_length_vi64(uint64_t val) {
+      return (val > HT_MAX_V9B ? 10 : \
+              (val > HT_MAX_V8B ? 9 : \
+               (val > HT_MAX_V7B ? 8 : \
+                (val > HT_MAX_V6B ? 7 : \
+                 (val > HT_MAX_V5B ? 6 : \
+                  (val > HT_MAX_V4B ? 5 : \
+                   (val > HT_MAX_V3B ? 4 : \
+                    (val > HT_MAX_V2B ? 3 : \
+                     (val > HT_MAX_V1B ? 2 : 1)))))))));
+    }
+
+    /**
+     * Encode a integer (up to 32-bit) in variable length encoding
+     *
+     * @param bufp - pointer to the destination buffer
+     * @param val - value to encode
+     */
+    inline void encode_vi32(uint8_t **bufp, uint32_t val) {
+      HT_ENCODE_VINT0(*bufp, val)
+      HT_ENCODE_VINT4(*bufp, val)
+      HT_ENCODE_VINT_(*bufp, val)
+      HT_EXPECT(!"bad/corrupted code", Error::FAILED_EXPECTATION);
+    }
+
+    /**
+     * Encode a integer (up to 64-bit) in variable length encoding
+     *
+     * @param bufp - pointer to the destination buffer
+     * @param val - value to encode
+     */
+    inline void encode_vi64(uint8_t **bufp, uint64_t val) {
+      HT_ENCODE_VINT0(*bufp, val)
+      HT_ENCODE_VINT4(*bufp, val)
+      HT_ENCODE_VINT4(*bufp, val)
+      HT_ENCODE_VINT_(*bufp, val)
+      HT_EXPECT(!"bad/corrupted code", Error::FAILED_EXPECTATION);
+    }
+
+    /**
+     * Decode a variable length encoded integer up to 32-bit
+     *
+     * @param bufp - pointer to the source buffer
+     * @param remainp - pointer to remaining size variable
+     * @return value
+     */
+    inline uint32_t decode_vi32(const uint8_t **bufp, size_t *remainp) {
+      HT_DECODE_VINT0(uint32_t, n, *bufp, remainp)
+      HT_DECODE_VINT4(uint32_t, n, *bufp, remainp)
+      HT_DECODE_VINT_(uint32_t, n, *bufp, remainp)
+      throw Exception(Error::SERIALIZATION_BAD_VINT);
+    }
+
+    /**
+     * Decode a variable length encoded integer up to 64-bit
+     *
+     * @param bufp - pointer to the source buffer
+     * @param remainp - pointer to remaining size variable
+     * @return value
+     */
+    inline uint64_t decode_vi64(const uint8_t **bufp, size_t *remainp) {
+      HT_DECODE_VINT0(uint64_t, n, *bufp, remainp)
+      HT_DECODE_VINT4(uint64_t, n, *bufp, remainp)
+      HT_DECODE_VINT4(uint64_t, n, *bufp, remainp)
+      HT_DECODE_VINT_(uint64_t, n, *bufp, remainp)
+      HT_DECODE_VINT_(uint64_t, n, *bufp, remainp)
+      throw Exception(Error::SERIALIZATION_BAD_VINT);
+    }
+
+
+    /**
+     * Computes the variable encoded length of a c-style null-terminated string
+     * Assuming string length can be encoded in 32-bit integer
+     *
+     * @param str pointer to the the c-style string
+     * @return the encoded length of str
+     */
+    inline size_t encoded_length_cstr(const char *s) {
+      uint32_t len = s ? strlen(s) : 0;
+      return 1 + len + encoded_length_vi32(len);
+    }
+
+
+    /**
+     * Encode a c-style string a long with the terminating null
+     *
+     * @param bufp - pointer to destination buffer
+     * @param s - pointer to the start of the string
+     */
+    inline void encode_cstr(uint8_t **bufp, const char *s) {
+      uint32_t len = s ? strlen(s) : 0;
+
+      encode_vi32(bufp, len);
+
+      if (len) {
+        memcpy(*bufp, s, len);
+        *bufp += len;
+      }
+      *(*bufp)++ = 0;
+    }
+
+
+    /**
+     * Decode a null terminated c-style string.
+     *
+     * @param bufp - pointer to the source buffer
+     * @param remainp - pointer to the remaining size variable
+     * @return str
+     */
+    inline const char *decode_cstr(const uint8_t **bufp, size_t *remainp) {
+      uint32_t len = decode_vi32(bufp, remainp) + 1;
+      const char *buf = (const char *)*bufp;
+
+      if (*remainp < len)
+        throw Exception(Error::SERIALIZATION_INPUT_OVERRUN);
+
+      *bufp += len;
+      *remainp -= len;
+
+      if ((*bufp)[-1]) // should be null
+        throw Exception(Error::SERIALIZATION_BAD_CSTR);
+
+      return buf;
+    }
+
+
+}} // namespace Hypertable::Serialization
 
 #endif // HYPERTABLE_SERIALIZATION_H

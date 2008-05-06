@@ -70,6 +70,10 @@ target_link_libraries (commTestTimer pthread ${BOOST_LIB} HyperComm HyperCommon 
 add_executable (commTestReverseRequest tests/commTestReverseRequest.cc)
 target_link_libraries (commTestReverseRequest pthread ${BOOST_LIB} HyperComm HyperCommon log4cpp expat)
 
+# serialization tests
+add_executable(sertest tests/sertest.cc)
+target_link_libraries(sertest pthread ${BOOST_LIB} HyperComm HyperCommon log4cpp)
+
 configure_file(${SRC_DIR}/commTestTimeout.golden ${DST_DIR}/commTestTimeout.golden)
 configure_file(${SRC_DIR}/commTestTimer.golden ${DST_DIR}/commTestTimer.golden)
 configure_file(${SRC_DIR}/datafile.txt ${DST_DIR}/datafile.txt)
@@ -87,6 +91,7 @@ add_test (HyperComm-datagram commTestDatagram)
 add_test (HyperComm-timeout commTestTimeout)
 add_test (HyperComm-timer commTestTimer)
 add_test (HyperComm-reverse-request commTestReverseRequest)
+add_test(Serialization sertest)
 
 file (GLOB HEADERS *.h)
 
