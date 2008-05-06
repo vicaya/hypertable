@@ -63,10 +63,10 @@ namespace Hypertable {
 
   CommBuf *MasterProtocol::create_report_split_request(TableIdentifier *table, RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
-    CommBuf *cbuf = new CommBuf(hbuilder, 2 + table->encoded_length() + EncodedLengthRange(range) + Serialization::encoded_length_string(transfer_log_dir) + 8);
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + table->encoded_length() + range.encoded_length() + Serialization::encoded_length_string(transfer_log_dir) + 8);
     cbuf->append_short(COMMAND_REPORT_SPLIT);
     table->encode(cbuf->get_data_ptr_address());
-    EncodeRange(cbuf->get_data_ptr_address(), range);
+    range.encode(cbuf->get_data_ptr_address());
     cbuf->append_string(transfer_log_dir);
     cbuf->append_long(soft_limit);
     return cbuf;

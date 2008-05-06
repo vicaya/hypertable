@@ -33,27 +33,43 @@ using namespace std;
 const uint64_t Hypertable::END_OF_TIME = (uint64_t)-1;
 
 size_t TableIdentifier::encoded_length() {
-  return EncodedLengthTableIdentifier(*this);
+  return 8 + Serialization::encoded_length_string(name);
 }
 
-void TableIdentifier::encode(uint8_t **bufPtr) {
-  EncodeTableIdentifier(bufPtr, *this);
+void TableIdentifier::encode(uint8_t **buf_ptr) {
+  Serialization::encode_string(buf_ptr, name);
+  Serialization::encode_int(buf_ptr, id);
+  Serialization::encode_int(buf_ptr, generation);
 }
 
-bool TableIdentifier::decode(uint8_t **bufPtr, size_t *remainingPtr) {
-  return DecodeTableIdentifier(bufPtr, remainingPtr, this);
+bool TableIdentifier::decode(uint8_t **buf_ptr, size_t *remainingPtr) {
+  name = 0;
+  id = generation = 0;
+  if (!Serialization::decode_string(buf_ptr, remainingPtr, &name))
+    return false;
+  if (!Serialization::decode_int(buf_ptr, remainingPtr, &id))
+    return false;
+  if (!Serialization::decode_int(buf_ptr, remainingPtr, &generation))
+    return false;
+  return true;
 }
 
 size_t RangeSpec::encoded_length() {
-  return EncodedLengthRange(*this);
+  return Serialization::encoded_length_string(start_row) + Serialization::encoded_length_string(end_row);
 }
 
-void RangeSpec::encode(uint8_t **bufPtr) {
-  EncodeRange(bufPtr, *this);
+void RangeSpec::encode(uint8_t **buf_ptr) {
+  Serialization::encode_string(buf_ptr, start_row);
+  Serialization::encode_string(buf_ptr, end_row);
 }
 
-bool RangeSpec::decode(uint8_t **bufPtr, size_t *remainingPtr) {
-  return DecodeRange(bufPtr, remainingPtr, this);
+bool RangeSpec::decode(uint8_t **buf_ptr, size_t *remainingPtr) {
+  start_row = end_row = 0;
+  if (!Serialization::decode_string(buf_ptr, remainingPtr, &start_row))
+    return false;
+  if (!Serialization::decode_string(buf_ptr, remainingPtr, &end_row))
+    return false;
+  return true;
 }
 
 
@@ -62,130 +78,60 @@ ScanSpec::ScanSpec() : row_limit(0), max_versions(0), start_row(0), start_row_in
 }
 
 size_t ScanSpec::encoded_length() {
-  return EncodedLengthScanSpecification(*this);
-}
-
-void ScanSpec::encode(uint8_t **bufPtr) {
-  EncodeScanSpecification(bufPtr, *this);
-}
-
-bool ScanSpec::decode(uint8_t **bufPtr, size_t *remainingPtr) {
-  return DecodeScanSpecification(bufPtr, remainingPtr, this);
-}
-
-void Hypertable::Copy(TableIdentifier &src, TableIdentifier &dst) {
-  memcpy(&dst, &src, sizeof(TableIdentifier));
-  dst.name = new char [ strlen(src.name) + 1 ];
-  strcpy((char *)dst.name, src.name);
-}
-
-/** Returns encoded (serialized) length of the given TableIdentifier.
- */
-size_t Hypertable::EncodedLengthTableIdentifier(TableIdentifier &table_identifier) {
-  return 8 + Serialization::encoded_length_string(table_identifier.name);
-}
-
-/** Encodes a TableIdentifier into the given buffer. */
-void Hypertable::EncodeTableIdentifier(uint8_t **bufPtr, TableIdentifier &table_identifier) {
-  Serialization::encode_string(bufPtr, table_identifier.name);
-  Serialization::encode_int(bufPtr, table_identifier.id);
-  Serialization::encode_int(bufPtr, table_identifier.generation);
-}
-
-/** Decodes a TableIdentifier from the given buffer */
-bool Hypertable::DecodeTableIdentifier(uint8_t **bufPtr, size_t *remainingPtr, TableIdentifier *table_identifier) {
-  memset(table_identifier, 0, sizeof(TableIdentifier));
-  if (!Serialization::decode_string(bufPtr, remainingPtr, &table_identifier->name))
-    return false;
-  if (!Serialization::decode_int(bufPtr, remainingPtr, &table_identifier->id))
-    return false;
-  if (!Serialization::decode_int(bufPtr, remainingPtr, &table_identifier->generation))
-    return false;
-  return true;
-}
-
-/** Returns encoded (serialized) length of a RangeSpec */
-size_t Hypertable::EncodedLengthRange(RangeSpec &range) {
-  return Serialization::encoded_length_string(range.start_row) + Serialization::encoded_length_string(range.end_row);
-}
-
-/** Encodes a RangeSpec into the given buffer. */
-void Hypertable::EncodeRange(uint8_t **bufPtr, RangeSpec &range) {
-  Serialization::encode_string(bufPtr, range.start_row);
-  Serialization::encode_string(bufPtr, range.end_row);
-}
-
-/** Decodes a RangeSpec from the given buffer */
-bool Hypertable::DecodeRange(uint8_t **bufPtr, size_t *remainingPtr, RangeSpec *range) {
-  memset(range, 0, sizeof(RangeSpec));
-  if (!Serialization::decode_string(bufPtr, remainingPtr, &range->start_row))
-    return false;
-  if (!Serialization::decode_string(bufPtr, remainingPtr, &range->end_row))
-    return false;
-  return true;
-}
-
-
-/**
- *
- */
-size_t Hypertable::EncodedLengthScanSpecification(ScanSpec &scanSpec) {
   size_t len = 29;
-  len += Serialization::encoded_length_string(scanSpec.start_row);
-  len += Serialization::encoded_length_string(scanSpec.end_row);
-  for (size_t i=0; i<scanSpec.columns.size(); i++)
-    len += Serialization::encoded_length_string(scanSpec.columns[i]);
+  len += Serialization::encoded_length_string(start_row);
+  len += Serialization::encoded_length_string(end_row);
+  for (size_t i=0; i<columns.size(); i++)
+    len += Serialization::encoded_length_string(columns[i]);
   return len;
 }
 
-
-void Hypertable::EncodeScanSpecification(uint8_t **bufPtr, ScanSpec &scanSpec) {
-  Serialization::encode_int(bufPtr, scanSpec.row_limit);
-  Serialization::encode_int(bufPtr, scanSpec.max_versions);
-  Serialization::encode_string(bufPtr, scanSpec.start_row);
-  *(*bufPtr)++ = (uint8_t)scanSpec.start_row_inclusive;
-  Serialization::encode_string(bufPtr, scanSpec.end_row);
-  *(*bufPtr)++ = (uint8_t)scanSpec.end_row_inclusive;
-  Serialization::encode_short(bufPtr, (short)scanSpec.columns.size());
-  for (size_t i=0; i<scanSpec.columns.size(); i++)
-    Serialization::encode_string(bufPtr, scanSpec.columns[i]);
-  Serialization::encode_long(bufPtr, scanSpec.interval.first);
-  Serialization::encode_long(bufPtr, scanSpec.interval.second);
-  Serialization::encode_bool(bufPtr, scanSpec.return_deletes);
+void ScanSpec::encode(uint8_t **buf_ptr) {
+  Serialization::encode_int(buf_ptr, row_limit);
+  Serialization::encode_int(buf_ptr, max_versions);
+  Serialization::encode_string(buf_ptr, start_row);
+  *(*buf_ptr)++ = (uint8_t)start_row_inclusive;
+  Serialization::encode_string(buf_ptr, end_row);
+  *(*buf_ptr)++ = (uint8_t)end_row_inclusive;
+  Serialization::encode_short(buf_ptr, (short)columns.size());
+  for (size_t i=0; i<columns.size(); i++)
+    Serialization::encode_string(buf_ptr, columns[i]);
+  Serialization::encode_long(buf_ptr, interval.first);
+  Serialization::encode_long(buf_ptr, interval.second);
+  Serialization::encode_bool(buf_ptr, return_deletes);
 }
 
-
-bool Hypertable::DecodeScanSpecification(uint8_t **bufPtr, size_t *remainingPtr, ScanSpec *scanSpec) {
+bool ScanSpec::decode(uint8_t **buf_ptr, size_t *remainingPtr) {
   uint16_t columnCount;
   const char *column;
   uint8_t inclusiveByte;
 
-  if (!Serialization::decode_int(bufPtr, remainingPtr, &scanSpec->row_limit))
+  if (!Serialization::decode_int(buf_ptr, remainingPtr, &row_limit))
     return false;
-  if (!Serialization::decode_int(bufPtr, remainingPtr, &scanSpec->max_versions))
+  if (!Serialization::decode_int(buf_ptr, remainingPtr, &max_versions))
     return false;
-  if (!Serialization::decode_string(bufPtr, remainingPtr, &scanSpec->start_row))
+  if (!Serialization::decode_string(buf_ptr, remainingPtr, &start_row))
     return false;
-  if (!Serialization::decode_byte(bufPtr, remainingPtr, &inclusiveByte))
+  if (!Serialization::decode_byte(buf_ptr, remainingPtr, &inclusiveByte))
     return false;
-  scanSpec->start_row_inclusive = inclusiveByte ? true : false;
-  if (!Serialization::decode_string(bufPtr, remainingPtr, &scanSpec->end_row))
+  start_row_inclusive = inclusiveByte ? true : false;
+  if (!Serialization::decode_string(buf_ptr, remainingPtr, &end_row))
     return false;
-  if (!Serialization::decode_byte(bufPtr, remainingPtr, &inclusiveByte))
+  if (!Serialization::decode_byte(buf_ptr, remainingPtr, &inclusiveByte))
     return false;
-  scanSpec->end_row_inclusive = inclusiveByte ? true : false;
-  if (!Serialization::decode_short(bufPtr, remainingPtr, &columnCount))
+  end_row_inclusive = inclusiveByte ? true : false;
+  if (!Serialization::decode_short(buf_ptr, remainingPtr, &columnCount))
     return false;
   for (short i=0; i<columnCount; i++) {
-    if (!Serialization::decode_string(bufPtr, remainingPtr, &column))
+    if (!Serialization::decode_string(buf_ptr, remainingPtr, &column))
       return false;
-    scanSpec->columns.push_back(column);
+    columns.push_back(column);
   }
-  if (!Serialization::decode_long(bufPtr, remainingPtr, &scanSpec->interval.first))
+  if (!Serialization::decode_long(buf_ptr, remainingPtr, &interval.first))
     return false;
-  if (!Serialization::decode_long(bufPtr, remainingPtr, &scanSpec->interval.second))
+  if (!Serialization::decode_long(buf_ptr, remainingPtr, &interval.second))
     return false;
-  if (!Serialization::decode_bool(bufPtr, remainingPtr, &scanSpec->return_deletes))
+  if (!Serialization::decode_bool(buf_ptr, remainingPtr, &return_deletes))
     return false;
   
   return true;

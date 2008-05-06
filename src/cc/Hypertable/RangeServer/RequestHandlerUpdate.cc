@@ -43,7 +43,7 @@ void RequestHandlerUpdate::run() {
   BufferT mods;
 
   // Table
-  if (!DecodeTableIdentifier(&msgPtr, &remaining, &table))
+  if (!table.decode(&msgPtr, &remaining))
     goto abort;
 
   mods.buf = msgPtr;

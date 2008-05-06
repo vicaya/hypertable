@@ -43,11 +43,11 @@ void RequestHandlerDropRange::run() {
   uint8_t *msgPtr = m_event_ptr->message + 2;
 
   // Table
-  if (!DecodeTableIdentifier(&msgPtr, &remaining, &table))
+  if (!table.decode(&msgPtr, &remaining))
     goto abort;
 
   // Range
-  if (!DecodeRange(&msgPtr, &remaining, &range))
+  if (!range.decode(&msgPtr, &remaining))
     goto abort;
 
   m_range_server->drop_range(&cb, &table, &range);

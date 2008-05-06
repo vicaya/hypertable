@@ -99,40 +99,6 @@ namespace Hypertable {
     int32_t len;
   } BufferT;
 
-  void Copy(TableIdentifier &src, TableIdentifier &dst);
-  inline void Free(TableIdentifier &identifier) { delete [] identifier.name; }
-
-  /** Returns encoded (serialized) length of the given TableIdentifier.
-   *
-   * @param table_identifier table identifier structure
-   * @return encoded length of table identifier
-   */
-  size_t EncodedLengthTableIdentifier(TableIdentifier &table_identifier);
-
-  /** Encodes a TableIdentifier into the given buffer. */
-  void EncodeTableIdentifier(uint8_t **bufPtr, TableIdentifier &table_identifier);
-
-  /** Decodes a TableIdentifier from the given buffer */
-  bool DecodeTableIdentifier(uint8_t **bufPtr, size_t *remainingPtr, TableIdentifier *table_identifier);
-
-  /** Returns encoded (serialized) length of a RangeSpec */
-  size_t EncodedLengthRange(RangeSpec &range);
-
-  /** Encodes a RangeSpec into the given buffer. */
-  void EncodeRange(uint8_t **bufPtr, RangeSpec &range);
-
-  /** Decodes a RangeSpec from the given buffer */
-  bool DecodeRange(uint8_t **bufPtr, size_t *remainingPtr, RangeSpec *range);
-
-  /** Returns encoded (serialized) length of a ScanSpec structure. */
-  size_t EncodedLengthScanSpecification(ScanSpec &scanSpec);
-
-  /** Encodes a ScanSpec structure to the given buffer. */
-  void EncodeScanSpecification(uint8_t **bufPtr, ScanSpec &scanSpec);
-
-  /** Decodes a ScanSpec structure from the given buffer. */
-  bool DecodeScanSpecification(uint8_t **bufPtr, size_t *remainingPtr, ScanSpec *scanSpec);
-
   std::ostream &operator<<(std::ostream &os, const TableIdentifier &table_identifier);
 
   std::ostream &operator<<(std::ostream &os, const RangeSpec &range);

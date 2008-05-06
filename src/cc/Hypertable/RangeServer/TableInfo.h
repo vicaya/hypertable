@@ -43,9 +43,8 @@ namespace Hypertable {
 
   public:
     TableInfo(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, SchemaPtr &schemaPtr);
-    virtual ~TableInfo();
-    const char *get_name() { return m_identifier.name; }
-    uint32_t get_id() { return m_identifier.id; }
+    const char *get_name() { return m_identifier->name; }
+    uint32_t get_id() { return m_identifier->id; }
     SchemaPtr &get_schema() {
       boost::mutex::scoped_lock lock(m_mutex);
       return m_schema;
@@ -73,8 +72,7 @@ namespace Hypertable {
 
     boost::mutex     m_mutex;
     MasterClientPtr  m_master_client_ptr;
-    TableIdentifier m_identifier;
-    std::string      m_name;
+    TableIdentifierWrapper m_identifier;
     SchemaPtr        m_schema;
     RangeMapT        m_range_map;
   };

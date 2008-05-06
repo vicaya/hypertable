@@ -29,23 +29,15 @@ using namespace Hypertable;
 /**
  *
  */
-TableInfo::TableInfo(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, SchemaPtr &schemaPtr) : m_mutex(), m_master_client_ptr(master_client_ptr), m_schema(schemaPtr) { 
-  Copy(*identifier, m_identifier);
+TableInfo::TableInfo(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, SchemaPtr &schemaPtr) : m_mutex(), m_master_client_ptr(master_client_ptr), m_identifier(identifier), m_schema(schemaPtr) {
   return;
-}
-
-
-/**
- */
-TableInfo::~TableInfo() {
-  Free(m_identifier);
 }
 
 
 void TableInfo::dump_range_table() {
   boost::mutex::scoped_lock lock(m_mutex);
   for (RangeMapT::iterator iter = m_range_map.begin(); iter != m_range_map.end(); iter++) {
-    cout << m_identifier.name << "[" << (*iter).second->start_row() << ".." << (*iter).second->end_row() << "]" << endl;
+    cout << m_identifier->name << "[" << (*iter).second->start_row() << ".." << (*iter).second->end_row() << "]" << endl;
   }
 }
 
@@ -146,5 +138,5 @@ void TableInfo::clear() {
  */
 TableInfo *TableInfo::create_shallow_copy() {
   boost::mutex::scoped_lock lock(m_mutex);
-  return new TableInfo(m_master_client_ptr, &m_identifier, m_schema);
+  return new TableInfo(m_master_client_ptr, m_identifier, m_schema);
 }
