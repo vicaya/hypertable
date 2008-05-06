@@ -29,6 +29,8 @@ namespace Hypertable {
    * cf. http://www.and.org/vstr/comparison
    */
   typedef std::string String;
+  typedef long unsigned int Lu;         // shortcut for printf format
+  typedef long long unsigned int Llu;   // ditto
 
   /** 
    * return a String using printf like format facilities

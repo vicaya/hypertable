@@ -23,6 +23,7 @@
 #define HYPERTABLE_ERROR_H
 
 #include "Common/String.h"
+#include <ostream>
 #include <stdexcept>
 
 namespace Hypertable {
@@ -123,14 +124,30 @@ namespace Hypertable {
    * as a constructor argument and translates it into an error message.
    */
   class Exception : public std::runtime_error {
-  public:
-    Exception(int error) : std::runtime_error(""), m_error(error) { return; }
-    Exception(int error, const String &msg) :
-              std::runtime_error(msg), m_error(error) { return; }
-    int code() { return m_error; }
-  private:
+    const Exception &operator=(const Exception &); // not assignable
+
     int m_error;
+  public:
+    typedef std::runtime_error Parent;
+
+    Exception(int error) : Parent(""), m_error(error), prev(0) {}
+    Exception(int error, const String &msg) :
+              Parent(msg), m_error(error), prev(0) {}
+    Exception(int error, const String &msg, const Exception &ex) :
+              Parent(msg), m_error(error), prev(new Exception(ex)) {}
+    // copy ctor is required for exceptions
+    Exception(const Exception &ex) : Parent(ex) {
+      m_error = ex.m_error;
+      prev = ex.prev ? new Exception(*ex.prev) : 0;
+    }
+    ~Exception() throw() { delete prev; }
+
+    int code() const { return m_error; }
+
+    Exception *prev;    // exception chain/list
   };
+
+  std::ostream &operator<<(std::ostream &out, const Exception &e);
 
 } // namespace Hypertable
 

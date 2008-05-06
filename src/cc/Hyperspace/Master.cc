@@ -539,13 +539,13 @@ void Master::open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
 	  if (FileUtils::fsetxattr(nodePtr->fd, "lock.generation", &nodePtr->lockGeneration, sizeof(uint64_t), 0) == -1) {
 	    HT_ERRORF("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
 			 name, strerror(errno));
-	    DUMP_CORE;
+	    HT_ABORT;
 	  }
 	}
 	else {
 	  HT_ERRORF("Problem reading extended attribute 'lock.generation' on file '%s' - %s",
 		       name, strerror(errno));
-	  DUMP_CORE;
+	  HT_ABORT;
 	}
 	len = sizeof(int64_t);
       }
@@ -558,7 +558,7 @@ void Master::open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
 	if (FileUtils::fsetxattr(nodePtr->fd, initAttrs[i].name, initAttrs[i].value, initAttrs[i].valueLen, 0) == -1) {
 	  HT_ERRORF("Problem creating extended attribute '%s' on file '%s' - %s",
 		       initAttrs[i].name, name, strerror(errno));
-	  DUMP_CORE;
+	  HT_ABORT;
 	}
       }
 
@@ -685,7 +685,7 @@ void Master::attr_set(ResponseCallback *cb, uint64_t sessionId, uint64_t handle,
     if (FileUtils::fsetxattr(handlePtr->node->fd, name, value, valueLen, 0) == -1) {
       HT_ERRORF("Problem creating extended attribute '%s' on file '%s' - %s",
 		   name, handlePtr->node->name.c_str(), strerror(errno));
-      DUMP_CORE;
+      HT_ABORT;
     }
 
     HyperspaceEventPtr eventPtr( new EventNamed(EVENT_MASK_ATTR_SET, name) );
@@ -738,7 +738,7 @@ void Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t sessionId, uint64_t 
     if ((alen = FileUtils::fgetxattr(handlePtr->node->fd, name, buf, alen)) < 0) {
       HT_ERRORF("Problem determining size of extended attribute '%s' on file '%s' - %s",
 		   name, handlePtr->node->name.c_str(), strerror(errno));
-      DUMP_CORE;
+      HT_ABORT;
     }
   }
 

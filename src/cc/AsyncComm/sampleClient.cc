@@ -285,7 +285,7 @@ int main(int argc, char **argv) {
       reactorCount = atoi(&argv[i][11]);
     else if (!strncmp(argv[i], "--recv-addr=", 12)) {
       if (!InetAddr::initialize(&localAddr, &argv[i][12]))
-	DUMP_CORE;
+	HT_ABORT;
     }
     else if (!strcmp(argv[i], "--verbose")) {
       gVerbose = true;

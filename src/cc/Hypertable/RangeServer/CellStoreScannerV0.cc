@@ -383,7 +383,7 @@ bool CellStoreScannerV0::fetch_next_block() {
 	delete [] m_block.base;
 	if (!Global::blockCache->checkout(m_file_id, (uint32_t)m_block.offset, &m_block.base, &len)) {
 	  HT_ERRORF("Problem checking out block from cache fileId=%d, offset=%ld", m_file_id, (uint32_t)m_block.offset);
-	  DUMP_CORE;
+	  HT_ABORT;
 	}
       }
     }
@@ -458,7 +458,7 @@ bool CellStoreScannerV0::fetch_next_block_readahead() {
     }
     if (nread != m_block.zlength) {
       HT_ERRORF("short read %ld != %ld", nread, m_block.zlength);
-      DUMP_CORE;
+      HT_ABORT;
     }
     assert(nread == m_block.zlength);
     m_start_offset += nread;

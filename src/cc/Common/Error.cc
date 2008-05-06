@@ -24,7 +24,6 @@
 
 #include "Error.h"
 
-using namespace std;
 using namespace Hypertable;
 
 namespace {
@@ -113,16 +112,16 @@ namespace {
     { 0, 0 }
   };
 
-  typedef hash_map<int, const char *>  TextMapT;
+  typedef hash_map<int, const char *>  TextMap;
 
-  TextMapT &buildTextMap() {
-    TextMapT *map = new TextMapT();
+  TextMap &buildTextMap() {
+    TextMap *map = new TextMap();
     for (int i=0; errorInfo[i].text != 0; i++)
       (*map)[errorInfo[i].code] = errorInfo[i].text;
     return *map;
   }
 
-  TextMapT &textMap = buildTextMap();
+  TextMap &textMap = buildTextMap();
 
 } // local namespace
 
@@ -132,3 +131,23 @@ const char *Error::get_text(int error) {
     return "ERROR NOT REGISTERED";
   return text;
 }
+
+namespace Hypertable {
+
+std::ostream &operator<<(std::ostream &out, const Exception &e) {
+  out << e.what() <<" - "<< Error::get_text(e.code());
+
+  int prev_code = e.code();
+
+  for (Exception *prev = e.prev; prev; prev = prev->prev) {
+    out <<": "<< prev->what();
+
+    if (e.code() != prev_code) {
+      out <<" - "<< Error::get_text(e.code());
+      prev_code = e.code();
+    }
+  }
+  return out;
+}
+
+} // namespace Hypertable

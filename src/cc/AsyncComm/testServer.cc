@@ -228,7 +228,7 @@ int main(int argc, char **argv) {
     }
     else if (!strncmp(argv[i], "--connect-to=", 13)) {
       if (!InetAddr::initialize(&clientAddr, &argv[i][13]))
-	DUMP_CORE;
+	HT_ABORT;
     }
     else if (!strncmp(argv[i], "--port=", 7)) {
       rval = atoi(&argv[i][7]);

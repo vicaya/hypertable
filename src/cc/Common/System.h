@@ -22,21 +22,17 @@
 #ifndef HYPERTABLE_SYSTEM_H
 #define HYPERTABLE_SYSTEM_H
 
-#include <string>
-
 #include <boost/thread/mutex.hpp>
-
-#define DUMP_CORE *((int *)0) = 1;
+#include "String.h"
 
 namespace Hypertable {
 
   class System {
-    
   public:
     static void initialize(const char *argv0);
 
-    static std::string installDir;
-    static std::string executableName;
+    static String installDir;
+    static String executableName;
     
     static int get_processor_count();
 

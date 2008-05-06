@@ -69,14 +69,14 @@ namespace Hypertable { namespace Logger {
 } while (0)
 
 // stream interface macro helpers
-#define HT_OUT(_enabled_) do { if (_enabled_) { \
+#define HT_OUT(_enabled_) do { if (Logger::logger->_enabled_()) { \
   char logbuf[1024]; \
   FixedOstream out(logbuf, sizeof(logbuf)); \
   if (Logger::show_line_numbers) \
     out <<"("<< __FILE__ <<':'<< __LINE__ <<") "; \
   out
 
-#define HT_OUT2(_enabled_) do { if (_enabled_) { \
+#define HT_OUT2(_enabled_) do { if (Logger::logger->_enabled_()) { \
   char logbuf[1024]; \
   FixedOstream out(logbuf, sizeof(logbuf)); \
   out << __func__; \
@@ -84,7 +84,7 @@ namespace Hypertable { namespace Logger {
     out << " ("<< __FILE__ <<':'<< __LINE__ <<")"; \
   out <<": "
 
-#define HT_END(_cat_) ; Logger::logger->_cat_(out.str()); \
+#define HT_END(_cat_) ""; Logger::logger->_cat_(out.str()); \
 } /* if enabled */ } while (0)
 
 #define HT_OUT_DISABLED do { if (0) {

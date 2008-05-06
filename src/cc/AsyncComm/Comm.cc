@@ -62,7 +62,7 @@ atomic_t Comm::ms_next_request_id = ATOMIC_INIT(1);
 Comm::Comm() {
   if (ReactorFactory::ms_reactors.size() == 0) {
     HT_ERROR("ReactorFactory::initialize must be called before creating AsyncComm::comm object");
-    DUMP_CORE;
+    HT_ABORT;
   }
   ReactorFactory::get_reactor(m_timer_reactor_ptr);
   m_handler_map_ptr = ReactorRunner::ms_handler_map_ptr;
@@ -307,7 +307,7 @@ int Comm::send_datagram(struct sockaddr_in &addr, struct sockaddr_in &send_addr,
   if (!m_handler_map_ptr->lookup_datagram_handler(send_addr, datagramHandlerPtr)) {
     std::string str;
     HT_ERRORF("Datagram send address %s not registered", InetAddr::string_format(str, send_addr));
-    DUMP_CORE;
+    HT_ABORT;
   }
 
   mheader->flags |= (Header::FLAGS_BIT_REQUEST|Header::FLAGS_BIT_IGNORE_RESPONSE);

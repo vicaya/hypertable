@@ -35,9 +35,13 @@ md5.cc
 add_library (HyperCommon ${Common_SRCS})
 
 add_executable (code_search_and_replace code_search_and_replace.cc)
-
-# Link the executable to the HyperCommon library.
 target_link_libraries (code_search_and_replace pthread ${BOOST_LIB} HyperCommon log4cpp)
+
+# test exes
+add_executable(exception_test tests/exception_test.cc)
+target_link_libraries(exception_test pthread ${BOOST_LIB} HyperCommon log4cpp)
+
+add_test(Common-Exception exception_test)
 
 file (GLOB HEADERS *.h)
 

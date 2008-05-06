@@ -134,7 +134,6 @@ configure_file(${SRC_DIR}/locationCacheTest.golden ${DST_DIR}/locationCacheTest.
 configure_file(${SRC_DIR}/loadDataSourceTest.golden ${DST_DIR}/loadDataSourceTest.golden)
 configure_file(${SRC_DIR}/loadDataSourceTest.dat ${DST_DIR}/loadDataSourceTest.dat)
 
-add_test (MetaLog-API metalog_api_test)
 add_test (MetaLog-Master metalog_master_test)
 add_test (MetaLog-RangeServer metalog_rs_test)
 add_test (Schema schemaTest)

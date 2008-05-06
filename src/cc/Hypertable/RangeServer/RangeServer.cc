@@ -653,12 +653,12 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifier *table, Range
 
 	if ((error = m_hyperspace_ptr->open("/hypertable/root", oflags, nullCallbackPtr, &handle)) != Error::OK) {
 	  HT_ERRORF("Problem creating Hyperspace root file '/hypertable/root' - %s", Error::get_text(error));
-	  DUMP_CORE;
+	  HT_ABORT;
 	}
 
 	if ((error = m_hyperspace_ptr->attr_set(handle, "location", m_location.c_str(), strlen(m_location.c_str()))) != Error::OK) {
 	  HT_ERRORF("Problem creating attribute 'location' on Hyperspace file '/hypertable/root' - %s", Error::get_text(error));
-	  DUMP_CORE;
+	  HT_ABORT;
 	}
 
 	m_hyperspace_ptr->close(handle);

@@ -84,8 +84,8 @@ Client::open(const String &name, DispatchHandler *handler) {
     send_message(cbufPtr, handler);
   }
   catch (Exception &e) {
-    throw Exception(e.code(), format("Error opening DFS file: %s: %s",
-                    name.c_str(), e.what()));
+    throw Exception(e.code(), format("Error opening DFS file: %s",
+                    name.c_str()), e);
   }
 }
 
@@ -106,8 +106,8 @@ Client::open(const String &name) {
     return decode_response_open(eventPtr);
   }
   catch (Exception &e) {
-    throw Exception(e.code(), format("Error opening DFS file: %s: %s",
-                    name.c_str(), e.what()));
+    throw Exception(e.code(), format("Error opening DFS file: %s",
+                    name.c_str()), e);
   }
 }
 
@@ -130,10 +130,10 @@ Client::open_buffered(const String &name, uint32_t buf_size,
   }
   catch (Exception &e) {
     throw Exception(e.code(), format("Error opening buffered DFS file=%s "
-				     "buf_size=%u outstanding=%u start_offset=%llu "
-				     "end_offset=%llu: %s", name.c_str(), buf_size, outstanding,
-				     (long long unsigned int)start_offset,
-				     (long long unsigned int)end_offset, e.what()));
+				     "buf_size=%u outstanding=%u "
+                                     "start_offset=%llu end_offset=%llu",
+                                     name.c_str(), buf_size, outstanding,
+				     (Llu)start_offset, (Llu)end_offset), e);
   }
 }
 
@@ -148,8 +148,8 @@ Client::create(const String &name, bool overwrite, int32_t bufferSize,
     send_message(cbufPtr, handler);
   }
   catch (Exception &e) {
-    throw Exception(e.code(), format("Error creating DFS file: %s: %s",
-                    name.c_str(), e.what()));
+    throw Exception(e.code(), format("Error creating DFS file: %s:",
+                    name.c_str()), e);
   }
 }
 
@@ -171,8 +171,8 @@ Client::create(const String &name, bool overwrite, int32_t bufferSize,
     return decode_response_create(eventPtr);
   }
   catch (Exception &e) {
-    throw Exception(e.code(), format("Error creating DFS file: %s: %s", 
-                    name.c_str(), e.what()));
+    throw Exception(e.code(), format("Error creating DFS file: %s", 
+                    name.c_str()), e);
   }
 }
 
@@ -195,8 +195,7 @@ Client::close(int32_t fd, DispatchHandler *handler) {
     send_message(cbufPtr, handler);
   }
   catch (Exception &e) {
-    throw Exception(e.code(), format("Error closing DFS fd: %d: %s",
-                    (int)fd, e.what()));
+    throw Exception(e.code(), format("Error closing DFS fd: %d", (int)fd), e);
   }
 }
 
@@ -226,8 +225,7 @@ Client::close(int32_t fd) {
                       m_protocol.string_format_message(eventPtr).c_str());
   }
   catch(Exception &e) {
-    throw Exception(e.code(), format("Error closing DFS fd: %d: %s",
-                    (int)fd, e.what()));
+    throw Exception(e.code(), format("Error closing DFS fd: %d", (int)fd), e);
   }
 }
 
@@ -241,7 +239,7 @@ Client::read(int32_t fd, size_t len, DispatchHandler *handler) {
   }
   catch (Exception &e) {
     throw Exception(e.code(), format("Error sending read request for %u bytes "
-                    "from DFS fd: %d: %s", (unsigned)len, (int)fd, e.what()));
+                    "from DFS fd: %d", (unsigned)len, (int)fd), e);
   }
 }
 
@@ -272,8 +270,8 @@ Client::read(int32_t fd, void *dst, size_t len) {
     return decode_response_read(eventPtr, dst, len);
   }
   catch (Exception &e) {
-    throw Exception(e.code(), format("Error reading %u bytes from DFS fd %d: "
-                    "%s", (unsigned)len, (int)fd, e.what()));
+    throw Exception(e.code(), format("Error reading %u bytes from DFS fd %d",
+                    (unsigned)len, (int)fd), e);
   }
 }
 
@@ -284,8 +282,8 @@ Client::append(int32_t fd, void *buf, size_t len, DispatchHandler *handler) {
 
   try { send_message(cbufPtr, handler); }
   catch (Exception &e) {
-    throw Exception(e.code(), format("Error appending %u bytes to DFS fd %d: "
-                    "%s", (unsigned)len, (int)fd, e.what()));
+    throw Exception(e.code(), format("Error appending %u bytes to DFS fd %d",
+                    (unsigned)len, (int)fd), e);
   }
 }
 
@@ -311,8 +309,8 @@ Client::append(int32_t fd, void *buf, size_t len) {
     return ret;
   }
   catch (Exception &e) {
-    throw Exception(e.code(), format("Error appending %u bytes to DFS fd %d: "
-                    "%s", (unsigned)len, (int)fd, e.what()));
+    throw Exception(e.code(), format("Error appending %u bytes to DFS fd %d",
+                    (unsigned)len, (int)fd), e);
   }
 }
 
@@ -323,8 +321,8 @@ Client::seek(int32_t fd, uint64_t offset, DispatchHandler *handler) {
 
   try { send_message(cbufPtr, handler); }
   catch (Exception &e) {
-    throw Exception(e.code(), format("Error seeking to %llu on DFS fd %d: %s",
-				     (long long unsigned int)offset, (int)fd, e.what()));
+    throw Exception(e.code(), format("Error seeking to %llu on DFS fd %d",
+				     (Llu)offset, (int)fd), e);
   }
 }
 
@@ -343,8 +341,8 @@ Client::seek(int32_t fd, uint64_t offset) {
                       m_protocol.string_format_message(eventPtr).c_str());
   }
   catch (Exception &e) {
-    throw Exception(e.code(), format("Error seeking to %llu on DFS fd %d: %s",
-				     (long long unsigned int)offset, (int)fd, e.what()));
+    throw Exception(e.code(), format("Error seeking to %llu on DFS fd %d",
+				     (Llu)offset, (int)fd), e);
   }
 }
 
@@ -355,8 +353,8 @@ Client::remove(const String &name, DispatchHandler *handler) {
 
   try { send_message(cbufPtr, handler); }
   catch (Exception &e) {
-    throw Exception(e.code(), format("Error removing DFS file: %s: %s", 
-                    name.c_str(), e.what()));
+    throw Exception(e.code(), format("Error removing DFS file: %s", 
+                    name.c_str()), e);
   }
 }
 
@@ -379,8 +377,8 @@ Client::remove(const String &name, bool force) {
     }
   }
   catch (Exception &e) {
-    throw Exception(e.code(), format("Error removing DFS file: %s: %s",
-                    name.c_str(), e.what()));
+    throw Exception(e.code(), format("Error removing DFS file: %s",
+                    name.c_str()), e);
   }
 }
 
@@ -391,8 +389,8 @@ Client::shutdown(uint16_t flags, DispatchHandler *handler) {
 
   try { send_message(cbufPtr, handler); }
   catch (Exception &e) {
-    throw Exception(e.code(), format("Error sending DFS shutdown (flags=%d): "
-                    "%s", (int)flags, e.what()));
+    throw Exception(e.code(), format("Error sending DFS shutdown (flags=%d)",
+                    (int)flags), e);
   }
 }
 
@@ -413,7 +411,7 @@ Client::status() {
     return decode_response(eventPtr);
   }
   catch (Exception &e) {
-    HT_ERRORF("Error getting DFS status: %s", e.what());
+    HT_ERROR_OUT << e << HT_ERROR_END;
     return e.code();
   }
 }
@@ -426,7 +424,7 @@ Client::length(const String &name, DispatchHandler *handler) {
   try { send_message(cbufPtr, handler); }
   catch (Exception &e) {
     throw Exception(e.code(), format("Error sending length request for DFS "
-                    "file: %s: %s", name.c_str(), e.what()));
+                    "file: %s", name.c_str()), e);
   }
 }
 
@@ -447,8 +445,8 @@ Client::length(const String &name) {
     return decode_response_length(eventPtr);
   }
   catch (Exception &e) {
-    throw Exception(e.code(), format("Error getting length of DFS file: "
-                    "%s: %s", name.c_str(), e.what()));
+    throw Exception(e.code(), format("Error getting length of DFS file: %s",
+                    name.c_str()), e);
   }
 }
 
@@ -460,10 +458,8 @@ Client::pread(int32_t fd, size_t len, uint64_t offset,
 
   try { send_message(cbufPtr, handler); }
   catch (Exception &e) {
-    throw Exception(e.code(),
-		    format("Error sending pread request at byte %llu "
-			   "on DFS fd %d: %s",
-			   (long long unsigned int)offset, (int)fd, e.what()));
+    throw Exception(e.code(), format("Error sending pread request at byte %llu "
+                                     "on DFS fd %d", (Llu)offset, (int)fd), e);
   }
 }
 
@@ -484,10 +480,8 @@ Client::pread(int32_t fd, void *dst, size_t len, uint64_t offset) {
     return decode_response_pread(eventPtr, dst, len);
   }
   catch (Exception &e) {
-    throw Exception(e.code(),
-		    format("Error preading at byte %llu on DFS "
-                    "fd %d: %s",
-		   (long long unsigned int)offset, (int)fd, e.what()));
+    throw Exception(e.code(), format("Error preading at byte %llu on DFS fd %d",
+                                     (Llu)offset, (int)fd), e);
   }
 }
 
@@ -499,7 +493,7 @@ Client::mkdirs(const String &name, DispatchHandler *handler) {
   try { send_message(cbufPtr, handler); }
   catch (Exception &e) {
     throw Exception(e.code(), format("Error sending mkdirs request for DFS "
-                    "directory: %s: %s", name.c_str(), e.what()));
+                    "directory: %s", name.c_str()), e);
   }
 }
 
@@ -518,8 +512,8 @@ Client::mkdirs(const String &name) {
                       m_protocol.string_format_message(eventPtr).c_str());
   }
   catch (Exception &e) {
-    throw Exception(e.code(), format("Error mkdirs for DFS directory %s: %s",
-                    name.c_str(), e.what()));
+    throw Exception(e.code(), format("Error mkdirs for DFS directory %s",
+                    name.c_str()), e);
   }
 }
 
@@ -530,8 +524,7 @@ Client::flush(int32_t fd, DispatchHandler *handler) {
   
   try { send_message(cbufPtr, handler); }
   catch (Exception &e) {
-    throw Exception(e.code(), format("Error flushing DFS fd %d: %s",
-                    (int)fd, e.what()));
+    throw Exception(e.code(), format("Error flushing DFS fd %d", (int)fd), e);
   }
 }
 
@@ -550,8 +543,7 @@ Client::flush(int32_t fd) {
                       m_protocol.string_format_message(eventPtr).c_str());
   }
   catch (Exception &e) {
-    throw Exception(e.code(), format("Error flushing DFS fd %d: %s",
-                    (int)fd, e.what()));
+    throw Exception(e.code(), format("Error flushing DFS fd %d", (int)fd), e);
   }
 }
 
@@ -563,7 +555,7 @@ Client::rmdir(const String &name, DispatchHandler *handler) {
   try { send_message(cbufPtr, handler); }
   catch (Exception &e) {
     throw Exception(e.code(), format("Error sending rmdir request for DFS "
-                    "directory: %s: %s", name.c_str(), e.what()));
+                    "directory: %s", name.c_str()), e);
   }
 }
 
@@ -586,8 +578,8 @@ Client::rmdir(const String &name, bool force) {
     }
   }
   catch (Exception &e) {
-    throw Exception(e.code(), format("Error removing DFS directory: %s: %s",
-                    name.c_str(), e.what()));
+    throw Exception(e.code(), format("Error removing DFS directory: %s",
+                    name.c_str()), e);
   }
 }
 
@@ -602,7 +594,7 @@ Client::readdir(const String &name, DispatchHandler *handler) {
   try { send_message(cbufPtr, handler); }
   catch (Exception &e) {
     throw Exception(e.code(), format("Error sending readdir request for DFS "
-                    "directory: %s: %s", name.c_str(), e.what()));
+                    "directory: %s", name.c_str()), e);
   }
 }
 
@@ -627,7 +619,7 @@ Client::readdir(const String &name, std::vector<String> &listing) {
   }
   catch (Exception &e) {
     throw Exception(e.code(), format("Error reading directory entries for DFS "
-                    "directory: %s: %s", name.c_str(), e.what()));
+                    "directory: %s", name.c_str()), e);
   }
 }
 
@@ -639,7 +631,7 @@ Client::exists(const String &name, DispatchHandler *handler) {
   try { send_message(cbufPtr, handler); }
   catch (Exception &e) {
     throw Exception(e.code(), format("Error sending 'exists' request for DFS "
-                    "path: %s: %s", name.c_str(), e.what()));
+                    "path: %s", name.c_str()), e);
   }
 }
 
@@ -660,8 +652,8 @@ Client::exists(const String &name) {
     return decode_response_exists(eventPtr);
   }
   catch (Exception &e) {
-    throw Exception(e.code(), format("Error checking existence of DFS path: "
-                    "%s: %s", name.c_str(), e.what()));
+    throw Exception(e.code(), format("Error checking existence of DFS path: %s",
+                    name.c_str()), e);
   }
 }
 
