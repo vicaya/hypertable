@@ -228,8 +228,8 @@ void TableScanner::find_range_and_start_scan(const char *row_key, Timer &timer) 
 
   timer.start();
 
-  if (!m_cache_ptr->lookup(m_table_identifier->id, row_key, &m_range_info))
-    m_range_locator_ptr->find_loop(m_table_identifier, row_key, &m_range_info, timer, false);
+  if (!m_cache_ptr->lookup(m_table_identifier.id, row_key, &m_range_info))
+    m_range_locator_ptr->find_loop(&m_table_identifier, row_key, &m_range_info, timer, false);
 
   m_started = true;
 
@@ -249,7 +249,7 @@ void TableScanner::find_range_and_start_scan(const char *row_key, Timer &timer) 
   catch (Exception &e) {
 
     // try again, the hard way
-    m_range_locator_ptr->find_loop(m_table_identifier, row_key, &m_range_info, timer, true);
+    m_range_locator_ptr->find_loop(&m_table_identifier, row_key, &m_range_info, timer, true);
 
     // reset the range information
     dbuf.ensure(m_range_info.start_row.length() + m_range_info.end_row.length() + 2);
@@ -268,7 +268,7 @@ void TableScanner::find_range_and_start_scan(const char *row_key, Timer &timer) 
     }
     catch (Exception &e) {
       HT_ERRORF("%s", e.what());
-      throw Exception(e.code(), std::string("Problem creating scanner on ") + m_table_identifier->name + "[" + range.start_row + ".." + range.end_row + "]");
+      throw Exception(e.code(), std::string("Problem creating scanner on ") + m_table_identifier.name + "[" + range.start_row + ".." + range.end_row + "]");
     }
   }
 

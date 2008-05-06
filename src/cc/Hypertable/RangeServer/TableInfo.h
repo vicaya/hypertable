@@ -43,8 +43,8 @@ namespace Hypertable {
 
   public:
     TableInfo(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, SchemaPtr &schemaPtr);
-    const char *get_name() { return m_identifier->name; }
-    uint32_t get_id() { return m_identifier->id; }
+    const char *get_name() { return m_identifier.name; }
+    uint32_t get_id() { return m_identifier.id; }
     SchemaPtr &get_schema() {
       boost::mutex::scoped_lock lock(m_mutex);
       return m_schema;
@@ -70,11 +70,11 @@ namespace Hypertable {
 
     typedef std::map<std::string, RangePtr> RangeMapT;
 
-    boost::mutex     m_mutex;
-    MasterClientPtr  m_master_client_ptr;
-    TableIdentifierWrapper m_identifier;
-    SchemaPtr        m_schema;
-    RangeMapT        m_range_map;
+    boost::mutex         m_mutex;
+    MasterClientPtr      m_master_client_ptr;
+    TableIdentifierCopy  m_identifier;
+    SchemaPtr            m_schema;
+    RangeMapT            m_range_map;
   };
 
   typedef boost::intrusive_ptr<TableInfo> TableInfoPtr;

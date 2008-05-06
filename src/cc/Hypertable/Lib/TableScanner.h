@@ -65,7 +65,7 @@ namespace Hypertable {
     LocationCachePtr    m_cache_ptr;
     ScanSpec            m_scan_spec;
     RangeServerClient   m_range_server;
-    TableIdentifierWrapper m_table_identifier;
+    TableIdentifierCopy m_table_identifier;
     bool                m_started;
     bool                m_eos;
     ScanBlock           m_scanblock;

@@ -139,7 +139,7 @@ namespace Hypertable {
     RangeLocatorPtr      m_range_locator_ptr;
     LocationCachePtr     m_cache_ptr;
     RangeServerClient    m_range_server;
-    TableIdentifierWrapper m_table_identifier;
+    TableIdentifierCopy  m_table_identifier;
     UpdateBufferMapT     m_buffer_map;
     CompletionCounter    m_completion_counter;
     bool                 m_full;

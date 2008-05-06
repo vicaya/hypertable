@@ -105,7 +105,7 @@ namespace Hypertable {
 
   private:
     boost::mutex         m_mutex;
-    TableIdentifierWrapper m_identifier;
+    TableIdentifierCopy  m_identifier;
     SchemaPtr            m_schema_ptr;
     std::set<uint8_t>    m_column_families;
     String          m_name;

@@ -48,7 +48,7 @@ TableMutator::TableMutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier
       (m_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0)) == 0)
     m_timeout = HYPERTABLE_CLIENT_TIMEOUT;
 
-  m_buffer_ptr = new TableMutatorScatterBuffer(props_ptr, m_comm, m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+  m_buffer_ptr = new TableMutatorScatterBuffer(props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
 }
 
 
@@ -89,7 +89,7 @@ void TableMutator::set(uint64_t timestamp, KeySpec &key, const void *value, uint
 
     m_prev_buffer_ptr = m_buffer_ptr;
 
-    m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm, m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+    m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
     m_memory_used = 0;
   }
 
@@ -134,7 +134,7 @@ void TableMutator::set_delete(uint64_t timestamp, KeySpec &key) {
 
     m_prev_buffer_ptr = m_buffer_ptr;
 
-    m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm, m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+    m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
     m_memory_used = 0;
   }
 
@@ -170,7 +170,7 @@ void TableMutator::wait_for_previous_buffer(Timer &timer) {
   while ((error = m_prev_buffer_ptr->wait_for_completion(timer)) != Error::OK) {
 
     if (error == Error::RANGESERVER_TIMESTAMP_ORDER_ERROR) {
-      std::string table_name_upper = m_table_identifier->name;
+      std::string table_name_upper = m_table_identifier.name;
       boost::to_upper(table_name_upper);
       throw Exception(error, (std::string)"Problem sending updates (table=" + table_name_upper.c_str() + ")");
     }
@@ -199,8 +199,8 @@ void TableMutator::wait_for_previous_buffer(Timer &timer) {
   }
 
   if (error != Error::OK) {
-    HT_ERRORF("Problem resending failed updates (table=%s) - %s", m_table_identifier->name, Error::get_text(error));
-    throw Exception(error, (std::string)"Problem resending failed updates (table=" + m_table_identifier->name + ")");
+    HT_ERRORF("Problem resending failed updates (table=%s) - %s", m_table_identifier.name, Error::get_text(error));
+    throw Exception(error, (std::string)"Problem resending failed updates (table=" + m_table_identifier.name + ")");
   }
   
 }

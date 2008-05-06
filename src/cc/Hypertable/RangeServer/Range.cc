@@ -61,7 +61,7 @@ Range::Range(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, Sc
   m_start_row = range->start_row;
   m_end_row = range->end_row;
 
-  m_is_root = (m_identifier->id == 0 && *range->start_row == 0 && !strcmp(range->end_row, Key::END_ROOT_ROW));
+  m_is_root = (m_identifier.id == 0 && *range->start_row == 0 && !strcmp(range->end_row, Key::END_ROOT_ROW));
 
   m_column_family_vector.resize( m_schema->get_max_column_family_id() + 1 );
 
@@ -83,7 +83,7 @@ Range::Range(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, Sc
     load_cell_stores(&metadata);
   }
   else {
-    MetadataNormal metadata(m_identifier, m_end_row);
+    MetadataNormal metadata(&m_identifier, m_end_row);
     load_cell_stores(&metadata);
   }
 
@@ -120,7 +120,7 @@ void Range::load_cell_stores(Metadata *metadata) {
     csvec.clear();
 
     if ((ag = m_access_group_map[ag_name]) == 0) {
-      HT_ERRORF("Unrecognized access group name '%s' found in METADATA for table '%s'", ag_name.c_str(), m_identifier->name);
+      HT_ERRORF("Unrecognized access group name '%s' found in METADATA for table '%s'", ag_name.c_str(), m_identifier.name);
       continue;
     }
 
@@ -300,7 +300,7 @@ const char *Range::get_split_row() {
   sort(split_rows.begin(), split_rows.end());
 
   /**
-  cout << "Dumping split rows for " << m_identifier->name << "[" << m_start_row << ".." << m_end_row << "]" << endl;
+  cout << "Dumping split rows for " << m_identifier.name << "[" << m_start_row << ".." << m_end_row << "]" << endl;
   for (size_t i=0; i<split_rows.size(); i++)
     cout << "Range::get_split_row [" << i << "] = " << split_rows[i] << endl;
   */
@@ -320,18 +320,18 @@ const char *Range::get_split_row() {
 	sort(split_rows.begin(), split_rows.end());
 	m_split_row = split_rows[split_rows.size()/2];
 	if (m_split_row < m_start_row || m_split_row >= m_end_row) {
-	  HT_FATALF("Unable to determine split row for range %s[%s..%s]", m_identifier->name, m_start_row.c_str(), m_end_row.c_str());
+	  HT_FATALF("Unable to determine split row for range %s[%s..%s]", m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
 	  HT_ABORT;
 	}
       }
       else {
-	HT_FATALF("Unable to determine split row for range %s[%s..%s]", m_identifier->name, m_start_row.c_str(), m_end_row.c_str());
+	HT_FATALF("Unable to determine split row for range %s[%s..%s]", m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
 	HT_ABORT;
       }
     } 
   }
   else {
-    HT_FATALF("Unable to determine split row for range %s[%s..%s]", m_identifier->name, m_start_row.c_str(), m_end_row.c_str());
+    HT_FATALF("Unable to determine split row for range %s[%s..%s]", m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
     HT_ABORT;
   }
   return m_split_row.c_str();
@@ -417,7 +417,7 @@ void Range::split_install_log(Timestamp *timestampp, String &old_start_row) {
   sort(split_rows.begin(), split_rows.end());
 
   /**
-  cout << "Dumping split rows for " << m_identifier->name << "[" << m_start_row << ".." << m_end_row << "]" << endl;
+  cout << "Dumping split rows for " << m_identifier.name << "[" << m_start_row << ".." << m_end_row << "]" << endl;
   for (size_t i=0; i<split_rows.size(); i++)
     cout << "Range::get_split_row [" << i << "] = " << split_rows[i] << endl;
   */
@@ -439,18 +439,18 @@ void Range::split_install_log(Timestamp *timestampp, String &old_start_row) {
 	if (m_split_row < m_start_row || m_split_row >= m_end_row)
 	  throw Exception(Error::RANGESERVER_SPLIT_ERROR,
 			  format("Unable to determine split row for range %s[%s..%s]",
-				 m_identifier->name, m_start_row.c_str(), m_end_row.c_str()));
+				 m_identifier.name, m_start_row.c_str(), m_end_row.c_str()));
       }
       else
 	throw Exception(Error::RANGESERVER_SPLIT_ERROR,
 			format("Unable to determine split row for range %s[%s..%s]",
-			       m_identifier->name, m_start_row.c_str(), m_end_row.c_str()));
+			       m_identifier.name, m_start_row.c_str(), m_end_row.c_str()));
     } 
   }
   else
     throw Exception(Error::RANGESERVER_SPLIT_ERROR,
 		    format("Unable to determine split row for range %s[%s..%s]",
-			   m_identifier->name, m_start_row.c_str(), m_end_row.c_str()));
+			   m_identifier.name, m_start_row.c_str(), m_end_row.c_str()));
 
   /**
    * Create split (transfer) log
@@ -527,7 +527,7 @@ void Range::split_compact_and_shrink(Timestamp timestamp, String &old_start_row)
     /**
      * Shrink old range in METADATA by updating the 'StartRow' column.
      */
-    metadata_key_str = std::string("") + (uint32_t)m_identifier->id + ":" + m_end_row;
+    metadata_key_str = std::string("") + (uint32_t)m_identifier.id + ":" + m_end_row;
     key.row = metadata_key_str.c_str();
     key.row_len = metadata_key_str.length();
     key.column_qualifier = 0;
@@ -538,7 +538,7 @@ void Range::split_compact_and_shrink(Timestamp timestamp, String &old_start_row)
     /**
      * Create an entry for the new range
      */
-    metadata_key_str = std::string("") + (uint32_t)m_identifier->id + ":" + m_split_row;
+    metadata_key_str = std::string("") + (uint32_t)m_identifier.id + ":" + m_split_row;
     key.row = metadata_key_str.c_str();
     key.row_len = metadata_key_str.length();
     key.column_qualifier = 0;
@@ -610,9 +610,9 @@ void Range::split_notify_master(String &old_start_row) {
   range.end_row = m_start_row.c_str();
 
   // update the latest generation, this should probably be protected
-  m_identifier->generation = m_schema->get_generation();
+  m_identifier.generation = m_schema->get_generation();
 
-  HT_INFOF("Reporting newly split off range %s[%s..%s] to Master", m_identifier->name, range.start_row, range.end_row);
+  HT_INFOF("Reporting newly split off range %s[%s..%s] to Master", m_identifier.name, range.start_row, range.end_row);
 
   if (m_state.soft_limit < Global::rangeMaxBytes) {
     m_state.soft_limit *= 2;
@@ -620,9 +620,9 @@ void Range::split_notify_master(String &old_start_row) {
       m_state.soft_limit = Global::rangeMaxBytes;
   }
 
-  if ((error = m_master_client_ptr->report_split(m_identifier, range, m_state.transfer_log, m_state.soft_limit)) != Error::OK) {
+  if ((error = m_master_client_ptr->report_split(&m_identifier, range, m_state.transfer_log, m_state.soft_limit)) != Error::OK) {
     throw Exception(error, format("Problem reporting split (table=%s, start_row=%s, end_row=%s) to master.",
-				  m_identifier->name, range.start_row, range.end_row));
+				  m_identifier.name, range.start_row, range.end_row));
   }
   
 }
@@ -673,7 +673,7 @@ void Range::run_compaction(bool major) {
  * 
  */
 void Range::dump_stats() {
-  std::string range_str = (std::string)m_identifier->name + "[" + m_start_row + ".." + m_end_row + "]";
+  std::string range_str = (std::string)m_identifier.name + "[" + m_start_row + ".." + m_end_row + "]";
   uint64_t collisions = 0;
   uint64_t cached = 0;
   for (size_t i=0; i<m_access_group_vector.size(); i++) {
@@ -731,9 +731,9 @@ void Range::replay_transfer_log(CommitLogReader *commit_log_reader, uint64_t rea
 
       table_id.decode((uint8_t **)&ptr, &len);
 
-      if (strcmp(m_identifier->name, table_id.name))
+      if (strcmp(m_identifier.name, table_id.name))
 	throw Exception(Error::RANGESERVER_CORRUPT_COMMIT_LOG, 
-			format("Table name mis-match in split log replay \"%s\" != \"%s\"", m_identifier->name, table_id.name));
+			format("Table name mis-match in split log replay \"%s\" != \"%s\"", m_identifier.name, table_id.name));
 
       memory_added += len;
 
@@ -752,7 +752,7 @@ void Range::replay_transfer_log(CommitLogReader *commit_log_reader, uint64_t rea
       boost::mutex::scoped_lock lock(m_mutex);
       HT_INFOF("Replayed %d updates (%d blocks) from split log '%s' into %s[%s..%s]",
 	       count, nblocks, commit_log_reader->get_log_dir().c_str(),
-	       m_identifier->name, m_start_row.c_str(), m_end_row.c_str());
+	       m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
     }
 
     Global::memory_tracker.add_memory(memory_added);

@@ -83,7 +83,7 @@ namespace Hypertable {
     }
 
     String table_name() {
-      return (String)m_identifier->name;
+      return (String)m_identifier.name;
     }
 
     uint64_t get_latest_timestamp();
@@ -149,12 +149,12 @@ namespace Hypertable {
     void split_compact_and_shrink(Timestamp timestamp, String &old_start_row);
     void split_notify_master(String &old_start_row);
 
-    boost::mutex     m_mutex;
-    MasterClientPtr  m_master_client_ptr;
-    TableIdentifierWrapper m_identifier;
-    SchemaPtr        m_schema;
-    String      m_start_row;
-    String      m_end_row;
+    boost::mutex        m_mutex;
+    MasterClientPtr     m_master_client_ptr;
+    TableIdentifierCopy m_identifier;
+    SchemaPtr           m_schema;
+    String  m_start_row;
+    String  m_end_row;
     AccessGroupMapT        m_access_group_map;
     std::vector<AccessGroup *>  m_access_group_vector;
     ColumnFamilyVectorT      m_column_family_vector;

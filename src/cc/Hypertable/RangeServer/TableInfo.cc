@@ -37,7 +37,7 @@ TableInfo::TableInfo(MasterClientPtr &master_client_ptr, TableIdentifier *identi
 void TableInfo::dump_range_table() {
   boost::mutex::scoped_lock lock(m_mutex);
   for (RangeMapT::iterator iter = m_range_map.begin(); iter != m_range_map.end(); iter++) {
-    cout << m_identifier->name << "[" << (*iter).second->start_row() << ".." << (*iter).second->end_row() << "]" << endl;
+    cout << m_identifier.name << "[" << (*iter).second->start_row() << ".." << (*iter).second->end_row() << "]" << endl;
   }
 }
 
@@ -138,5 +138,5 @@ void TableInfo::clear() {
  */
 TableInfo *TableInfo::create_shallow_copy() {
   boost::mutex::scoped_lock lock(m_mutex);
-  return new TableInfo(m_master_client_ptr, m_identifier, m_schema);
+  return new TableInfo(m_master_client_ptr, &m_identifier, m_schema);
 }

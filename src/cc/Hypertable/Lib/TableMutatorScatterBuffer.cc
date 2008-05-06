@@ -51,9 +51,9 @@ void TableMutatorScatterBuffer::set(Key &key, const void *value, uint32_t value_
   RangeLocationInfo range_info;
   UpdateBufferMapT::const_iterator iter;
 
-  if (!m_cache_ptr->lookup(m_table_identifier->id, key.row, &range_info)) {
+  if (!m_cache_ptr->lookup(m_table_identifier.id, key.row, &range_info)) {
     timer.start();
-    m_range_locator_ptr->find_loop(m_table_identifier, key.row, &range_info, timer, false);
+    m_range_locator_ptr->find_loop(&m_table_identifier, key.row, &range_info, timer, false);
   }
 
   iter = m_buffer_map.find(range_info.location);
@@ -82,9 +82,9 @@ void TableMutatorScatterBuffer::set_delete(Key &key, Timer &timer) {
   RangeLocationInfo range_info;
   UpdateBufferMapT::const_iterator iter;
 
-  if (!m_cache_ptr->lookup(m_table_identifier->id, key.row, &range_info)) {
+  if (!m_cache_ptr->lookup(m_table_identifier.id, key.row, &range_info)) {
     timer.start();
-    m_range_locator_ptr->find_loop(m_table_identifier, key.row, &range_info, timer, false);
+    m_range_locator_ptr->find_loop(&m_table_identifier, key.row, &range_info, timer, false);
   }
 
   iter = m_buffer_map.find(range_info.location);
@@ -122,9 +122,9 @@ void TableMutatorScatterBuffer::set(ByteString32T *key, ByteString32T *value, Ti
   RangeLocationInfo range_info;
   UpdateBufferMapT::const_iterator iter;
 
-  if (!m_cache_ptr->lookup(m_table_identifier->id, (const char *)key->data, &range_info)) {
+  if (!m_cache_ptr->lookup(m_table_identifier.id, (const char *)key->data, &range_info)) {
     timer.start();
-    m_range_locator_ptr->find_loop(m_table_identifier, (const char *)key->data, &range_info, timer, false);
+    m_range_locator_ptr->find_loop(&m_table_identifier, (const char *)key->data, &range_info, timer, false);
   }
 
   iter = m_buffer_map.find(range_info.location);
@@ -244,7 +244,7 @@ TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer(Timer &
 
   try {
 
-    redo_buffer = new TableMutatorScatterBuffer(m_props_ptr, m_comm, m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+    redo_buffer = new TableMutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
   
     for (UpdateBufferMapT::const_iterator iter = m_buffer_map.begin(); iter != m_buffer_map.end(); iter++) {
       update_buffer_ptr = (*iter).second;
@@ -260,7 +260,7 @@ TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer(Timer &
 	  low_key = (ByteString32T *)src_base;
 	
 	  // do a hard lookup for the lowest key
-	  m_range_locator_ptr->find_loop(m_table_identifier, (const char *)low_key->data, &range_info, timer, true);
+	  m_range_locator_ptr->find_loop(&m_table_identifier, (const char *)low_key->data, &range_info, timer, true);
 
 	  // now add all of the old keys to the redo buffer
 	  while (src_ptr < src_end) {
@@ -285,7 +285,7 @@ TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer(Timer &
 	  }
 
 	  // do a hard lookup for the lowest key
-	  m_range_locator_ptr->find_loop(m_table_identifier, (const char *)low_key->data, &range_info, timer, true);
+	  m_range_locator_ptr->find_loop(&m_table_identifier, (const char *)low_key->data, &range_info, timer, true);
 
 	  count = 0;
 

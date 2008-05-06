@@ -42,7 +42,7 @@ namespace {
 
 
 AccessGroup::AccessGroup(TableIdentifier *identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeSpec *range) : CellList(), m_identifier(identifier), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE), m_compression_ratio(1.0), m_is_root(false), m_oldest_cached_timestamp(0), m_collisions(0), m_needs_compaction(false), m_drop(false) {
-  m_table_name = m_identifier->name;
+  m_table_name = m_identifier.name;
   m_start_row = range->start_row;
   m_end_row = range->end_row;
   m_cell_cache_ptr = new CellCache();
@@ -55,7 +55,7 @@ AccessGroup::AccessGroup(TableIdentifier *identifier, SchemaPtr &schemaPtr, Sche
 
   m_compressor = (ag->compressor != "") ? ag->compressor : schemaPtr->get_compressor();
 
-  m_is_root = (m_identifier->id == 0 && *range->start_row == 0 && !strcmp(range->end_row, Key::END_ROOT_ROW));
+  m_is_root = (m_identifier.id == 0 && *range->start_row == 0 && !strcmp(range->end_row, Key::END_ROOT_ROW));
 
   m_in_memory = ag->in_memory;
 }
@@ -63,11 +63,11 @@ AccessGroup::AccessGroup(TableIdentifier *identifier, SchemaPtr &schemaPtr, Sche
 
 AccessGroup::~AccessGroup() {
   if (m_drop) {
-    if (m_identifier->id == 0) {
+    if (m_identifier.id == 0) {
       HT_ERROR("~AccessGroup has drop bit set, but table is METADATA");
       return;
     }
-    String metadata_key = String("") + (uint32_t)m_identifier->id + ":" + m_end_row;
+    String metadata_key = String("") + (uint32_t)m_identifier.id + ":" + m_end_row;
     TableMutatorPtr mutator_ptr;
     KeySpec key;
 
@@ -373,14 +373,14 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
       metadata.write_files(m_name, files);
     }
     else {
-      MetadataNormal metadata(m_identifier, m_end_row);
+      MetadataNormal metadata(&m_identifier, m_end_row);
       metadata.write_files(m_name, files);
     }
   }
   catch (Hypertable::Exception &e) {
     // TODO: propagate exception
     HT_ERRORF("Problem updating 'File' column of METADATA (%d:%s) - %s",
-		 m_identifier->id, metadata_key_str.c_str(), Error::get_text(e.code()));
+		 m_identifier.id, metadata_key_str.c_str(), Error::get_text(e.code()));
   }
 
   HT_INFOF("Finished Compaction (%s.%s)", m_table_name.c_str(), m_name.c_str());

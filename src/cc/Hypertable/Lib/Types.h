@@ -48,19 +48,26 @@ namespace Hypertable {
   };
 
   /** Wrapper for TableIdentifier.  Handles name allocation */
-  class TableIdentifierWrapper {
+  class TableIdentifierCopy : public TableIdentifier {
   public:
-    TableIdentifierWrapper(TableIdentifier *identifier) : m_name(identifier->name) {
-      memcpy(&m_identifier, identifier, sizeof(TableIdentifier));
-      m_identifier.name = m_name.c_str();
+    TableIdentifierCopy(TableIdentifier *identifier) : m_name(identifier->name) {
+      id = identifier->id;
+      generation = identifier->generation;
+      name = m_name.c_str();
     }
-    TableIdentifier *operator-> () { return &m_identifier; }
-    operator TableIdentifier *() { return &m_identifier; }
-    operator TableIdentifier &() { return m_identifier; }
+    TableIdentifierCopy(TableIdentifier &identifier) : m_name(identifier.name) {
+      id = identifier.id;
+      generation = identifier.generation;
+      name = m_name.c_str();
+    }
+    TableIdentifierCopy(TableIdentifierCopy &identifier) : m_name(identifier.name) {
+      id = identifier.id;
+      generation = identifier.generation;
+      name = m_name.c_str();
+    }
 
   private:
     String m_name;
-    TableIdentifier m_identifier;
   };
 
   /** Identifies a range */
