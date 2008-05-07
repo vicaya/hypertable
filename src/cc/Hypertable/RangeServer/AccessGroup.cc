@@ -107,13 +107,14 @@ int AccessGroup::add(const ByteString32T *key, const ByteString32T *value, uint6
 
 /**
  */
-int AccessGroup::replay_add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp) {
+bool AccessGroup::replay_add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp) {
   if (real_timestamp > m_compaction_timestamp.real) {
     if (m_oldest_cached_timestamp == 0)
       m_oldest_cached_timestamp = real_timestamp;
-    return m_cell_cache_ptr->add(key, value, real_timestamp);
+    m_cell_cache_ptr->add(key, value, real_timestamp);
+    return true;
   }
-  return Error::OK;
+  return false;
 }
 
 

@@ -37,6 +37,7 @@ namespace Hypertable {
   class ResponseCallback {
 
   public:
+
     /**
      * Constructor. Initializes a pointer to the Comm object and saves a pointer
      * to the event that triggered the request.
@@ -45,6 +46,8 @@ namespace Hypertable {
      * @param eventPtr smart pointer to the event that generated the request
      */
     ResponseCallback(Comm *comm, EventPtr &eventPtr) : m_comm(comm), m_event_ptr(eventPtr) { return; }
+
+    ResponseCallback() : m_comm(0), m_event_ptr(0) { return; }
 
     virtual ~ResponseCallback() { return; }
 
@@ -56,7 +59,7 @@ namespace Hypertable {
      * @param msg error message
      * @return Error::OK on success or error code on failure
      */
-    int error(int error, std::string msg);
+    virtual int error(int error, std::string msg);
 
     /**
      * Sends a a simple success response back to the client which is just
@@ -65,7 +68,7 @@ namespace Hypertable {
      *
      * @return Error::OK on success or error code on failure
      */
-    int response_ok();
+    virtual int response_ok();
 
     /** Gets the remote address of the client.
      *

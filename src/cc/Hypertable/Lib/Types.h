@@ -50,20 +50,22 @@ namespace Hypertable {
   /** Wrapper for TableIdentifier.  Handles name allocation */
   class TableIdentifierCopy : public TableIdentifier {
   public:
-    TableIdentifierCopy(TableIdentifier *identifier) : m_name(identifier->name) {
+    TableIdentifierCopy(const TableIdentifier *identifier) : m_name(identifier->name) {
       id = identifier->id;
       generation = identifier->generation;
       name = m_name.c_str();
     }
-    TableIdentifierCopy(TableIdentifier &identifier) : m_name(identifier.name) {
+    TableIdentifierCopy(const TableIdentifier &identifier) : m_name(identifier.name) {
       id = identifier.id;
       generation = identifier.generation;
       name = m_name.c_str();
     }
-    TableIdentifierCopy(TableIdentifierCopy &identifier) : m_name(identifier.name) {
+    TableIdentifierCopy &operator=(const TableIdentifier &identifier) {
+      m_name = identifier.name;
       id = identifier.id;
       generation = identifier.generation;
       name = m_name.c_str();
+      return *this;
     }
 
   private:

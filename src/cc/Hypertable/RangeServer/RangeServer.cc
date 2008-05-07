@@ -168,7 +168,7 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
   m_live_map_ptr = new TableInfoMap();
   m_replay_map_ptr = new TableInfoMap();
 
-  fast_recover();
+  //fast_recover();
 
   /**
    * Listen for incoming connections
@@ -290,6 +290,18 @@ int RangeServer::initialize(PropertiesPtr &props_ptr) {
   return Error::OK;
 }
 
+namespace {
+
+  class RecoverUpdateCallback : public ResponseCallback {
+  public:
+    RecoverUpdateCallback() { return; }
+    virtual int error(int error, std::string msg) {
+      throw Exception(error, msg);
+    }
+    virtual int response_ok() { return Error::OK; }
+  };
+}
+
 
 
 /**
@@ -297,8 +309,21 @@ int RangeServer::initialize(PropertiesPtr &props_ptr) {
 void RangeServer::fast_recover() {
   bool exists;
   std::string meta_log_dir = Global::logDir + "/meta";
+  std::string primary_log_dir = Global::logDir + "/primary";
   RangeServerMetaLogReaderPtr meta_log_reader_ptr;
+  CommitLogReaderPtr primary_log_reader;
   RangeStates range_states;
+  BlockCompressionHeaderCommitLog header;
+  const uint8_t *ptr, *end;
+  const uint8_t *base;
+  size_t len;
+  TableIdentifier table_id;
+  uint64_t timestamp;
+  DynamicBuffer dbuf(0);
+  RecoverUpdateCallback cb;
+  TableInfoPtr table_info_ptr;
+  RangePtr range_ptr;
+  const ByteString32T *key, *value;
 
   try {
 
@@ -314,7 +339,59 @@ void RangeServer::fast_recover() {
 
     meta_log_reader_ptr->load_range_states(range_states);
 
-    
+    primary_log_reader = new CommitLogReader(Global::logDfs, primary_log_dir);
+
+    while (primary_log_reader->next(&base, &len, &header)) {
+
+      timestamp = header.get_timestamp();
+
+      ptr = base;
+      end = base + len;
+
+      if (!table_id.decode((uint8_t **)&ptr, &len))
+	throw Exception(Error::RANGESERVER_TRUNCATED_COMMIT_LOG, "");
+
+      // Fetch table info
+      if (!m_replay_map_ptr->get(table_id.id, table_info_ptr))
+	continue;
+
+      dbuf.ensure(table_id.encoded_length() + 12 + len);
+      dbuf.clear();
+
+      table_id.encode(&dbuf.ptr);
+      Serialization::encode_long(&dbuf.ptr, timestamp);
+
+      base = dbuf.ptr;
+      dbuf.ptr += 4;
+
+      while (ptr < end) {
+
+	// extract the key
+	key = (const ByteString32T *)ptr;
+	ptr += Length(key);
+	if (ptr > end)
+	  throw Exception(Error::REQUEST_TRUNCATED, "Problem decoding key");
+
+	// extract the value
+	value = (const ByteString32T *)ptr;
+	ptr += Length(value);
+	if (ptr > end)
+	  throw Exception(Error::REQUEST_TRUNCATED, "Problem decoding value");
+
+	// Look for containing range, add to stop mods if not found
+	if (!table_info_ptr->find_containing_range((const char *)key->data, range_ptr))
+	  continue;
+
+	// add key/value pair to buffer
+	memcpy(dbuf.ptr, key, ptr-(uint8_t *)key);
+	dbuf.ptr += ptr - (uint8_t *)key;
+
+      }
+
+      Serialization::encode_int((uint8_t **)&base, dbuf.ptr-(base+4));
+
+      replay_update(&cb, dbuf.buf, dbuf.fill());
+    }
 
   }
   catch (Exception &e) {
@@ -736,7 +813,6 @@ namespace {
     RangePtr range_ptr;
     Timestamp timestamp;
   } MinTimestampRecT;
-
 }
 
 
@@ -1204,13 +1280,17 @@ void RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data, size_
   const ByteString32T *key, *value;
   uint8_t *ptr = (uint8_t *)data;
   const uint8_t *end_ptr = data + len;
+  const uint8_t *block_end_ptr;
+  uint32_t block_size;
   size_t remaining = len;
-  uint32_t pair_i, pair_count;
   const char *row;
   String err_msg;
   uint64_t timestamp;
   RangePtr range_ptr;
   String end_row;
+  uint32_t count;
+  uint64_t memory_added = 0;
+  uint64_t items_added = 0;
 
   if (Global::verbose) {
     HT_INFOF("replay_update - length=%ld", len);
@@ -1221,19 +1301,22 @@ void RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data, size_
 
     while (ptr < end_ptr) {
 
-      // decode table identifier + timestamp + key/value pair count
+      // decode table identifier + timestamp + key/value block size
       if (!table_identifier.decode(&ptr, &remaining) ||
 	  !Serialization::decode_long(&ptr, &remaining, &timestamp) ||
-	  !Serialization::decode_int(&ptr, &remaining, &pair_count))
+	  !Serialization::decode_int(&ptr, &remaining, &block_size))
 	throw Exception(Error::REQUEST_TRUNCATED, "Update block header truncated");
+
+      if (block_size > remaining)
+	throw Exception(Error::MALFORMED_REQUEST, String("Block (size=") + block_size + ") exceeds end of message");
+
+      block_end_ptr = ptr + block_size;
 
       // Fetch table info
       if (!m_replay_map_ptr->get(table_identifier.id, table_info_ptr))
 	throw Exception(Error::RANGESERVER_RANGE_NOT_FOUND, format("Unable to find table info for table name='%s' id=%u", table_identifier.name, table_identifier.id));
 
-      pair_i = 0;
-
-      while (ptr < end_ptr && pair_i < pair_count) {
+      while (ptr < block_end_ptr) {
 
 	row = (const char *)((ByteString32T *)ptr)->data;
 
@@ -1243,8 +1326,7 @@ void RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data, size_
 
 	end_row = range_ptr->end_row();
 
-	while (ptr < end_ptr && 
-	       pair_i < pair_count &&
+	while (ptr < block_end_ptr && 
 	       (end_row == "" || (strcmp(row, end_row.c_str()) <= 0))) {
 
 	  // extract the key
@@ -1258,13 +1340,18 @@ void RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data, size_
 	  if (ptr > end_ptr)
 	    throw Exception(Error::REQUEST_TRUNCATED, "Problem decoding value");
 
-	  HT_EXPECT(range_ptr->add(key, value, timestamp) == Error::OK, Error::FAILED_EXPECTATION);
-	  pair_i++;
+	  HT_EXPECT(range_ptr->replay_add(key, value, timestamp, &count) == Error::OK, Error::FAILED_EXPECTATION);
+
+	  if (count) {
+	    items_added += count;
+	    memory_added += count * (ptr - (uint8_t *)key);
+	  }
 	}
-
       }
-
     }
+
+    Global::memory_tracker.add_memory(memory_added);
+    Global::memory_tracker.add_items(items_added);
 
   }
   catch (Exception &e) {

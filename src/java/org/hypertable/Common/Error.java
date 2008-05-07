@@ -50,6 +50,7 @@ public class Error {
     static public final int BLOCK_COMPRESSOR_INIT_ERROR        = 21;
     static public final int TABLE_DOES_NOT_EXIST               = 22;
     static public final int FAILED_EXPECTATION                 = 23;
+    static public final int MALFORMED_REQUEST                  = 24;
 
     static public final int COMM_NOT_CONNECTED       = 0x00010001;
     static public final int COMM_BROKEN_CONNECTION   = 0x00010002;
@@ -140,6 +141,7 @@ public class Error {
 	mTextMap.put(BLOCK_COMPRESSOR_INIT_ERROR,        "HYPERTABLE block compressor initialization error");
 	mTextMap.put(TABLE_DOES_NOT_EXIST,       "HYPERTABLE table does not exist");
 	mTextMap.put(FAILED_EXPECTATION,         "HYPERTABLE failed expectation");
+	mTextMap.put(MALFORMED_REQUEST,          "HYPERTABLE malformed request");
 	mTextMap.put(COMM_NOT_CONNECTED,         "COMM not connected");
 	mTextMap.put(COMM_BROKEN_CONNECTION,     "COMM broken connection");
 	mTextMap.put(COMM_CONNECT_ERROR,         "COMM connect error");

@@ -53,6 +53,7 @@ namespace Hypertable {
       BLOCK_COMPRESSOR_INIT_ERROR        = 21,
       TABLE_DOES_NOT_EXIST               = 22,
       FAILED_EXPECTATION                 = 23,
+      MALFORMED_REQUEST                  = 24,
 
       COMM_NOT_CONNECTED       = 0x00010001,
       COMM_BROKEN_CONNECTION   = 0x00010002,

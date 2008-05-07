@@ -56,6 +56,7 @@ namespace {
     { Error::BLOCK_COMPRESSOR_INIT_ERROR,        "HYPERTABLE block compressor initialization error" },
     { Error::TABLE_DOES_NOT_EXIST,               "HYPERTABLE table does not exist" },
     { Error::FAILED_EXPECTATION,          "HYPERTABLE failed expectation" },
+    { Error::MALFORMED_REQUEST,           "HYPERTABLE malformed request" },
     { Error::COMM_NOT_CONNECTED,          "COMM not connected" },
     { Error::COMM_BROKEN_CONNECTION,      "COMM broken connection" },
     { Error::COMM_CONNECT_ERROR,          "COMM connect error" },

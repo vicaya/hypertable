@@ -57,7 +57,7 @@ namespace Hypertable {
     AccessGroup(TableIdentifier *identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeSpec *range);
     virtual ~AccessGroup();
     virtual int add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp);
-    int replay_add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp);
+    bool replay_add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp);
 
     virtual const char *get_split_row();
     virtual void get_split_rows(std::vector<String> &split_rows, bool include_cache);

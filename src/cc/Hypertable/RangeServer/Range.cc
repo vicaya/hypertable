@@ -233,10 +233,12 @@ int Range::add(const ByteString32T *key, const ByteString32T *value, uint64_t re
 
 /**
  */
-int Range::replay_add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp) {
+int Range::replay_add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp, uint32_t *num_addedp) {
   Key key_comps;
 
   HT_EXPECT(key_comps.load(key), Error::FAILED_EXPECTATION);
+
+  *num_addedp = 0;
 
   if (key_comps.column_family_code >= m_column_family_vector.size()) {
     HT_ERRORF("Bad column family (%d)", key_comps.column_family_code);
@@ -245,11 +247,14 @@ int Range::replay_add(const ByteString32T *key, const ByteString32T *value, uint
 
   if (key_comps.flag == FLAG_DELETE_ROW) {
     for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++) {
-      (*iter).second->replay_add(key, value, real_timestamp);
+      if ((*iter).second->replay_add(key, value, real_timestamp))
+	(*num_addedp)++;
     }
   }
-  else
-    m_column_family_vector[key_comps.column_family_code]->replay_add(key, value, real_timestamp);
+  else {
+    if (m_column_family_vector[key_comps.column_family_code]->replay_add(key, value, real_timestamp))
+      (*num_addedp)++;
+  }
 
   if (key_comps.flag == FLAG_INSERT)
     m_added_inserts++;
