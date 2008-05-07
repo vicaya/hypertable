@@ -213,10 +213,27 @@ namespace Hypertable { namespace Logger {
 #endif
 
 #ifndef DISABLE_LOG_FATAL
-#define HT_FATAL(msg) HT_LOG(isFatalEnabled, fatal, msg)
-#define HT_FATALF(msg, ...) HT_LOGF(isFatalEnabled, fatal, msg, __VA_ARGS__)
+#define HT_FATAL(msg) do { \
+  if (Logger::logger->isFatalEnabled()) { \
+    if (Logger::show_line_numbers) \
+      Logger::logger->fatal("(%s:%d) %s", __FILE__, __LINE__, msg); \
+    else \
+      Logger::logger->fatal("%s", msg); \
+    HT_ABORT; \
+  } \
+} while (0)
+#define HT_FATALF(msg, ...) do { \
+  if (Logger::logger->isFatalEnabled()) { \
+    if (Logger::show_line_numbers) \
+      Logger::logger->fatal("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__); \
+    else \
+      Logger::logger->fatal(msg, __VA_ARGS__);  \
+    HT_ABORT; \
+  } \
+} while (0)
 #define HT_FATAL_OUT HT_OUT2(isFatalEnabled)
-#define HT_FATAL_END HT_END(fatal)
+#define HT_FATAL_END ""; Logger::logger->fatal(out.str()); HT_ABORT; \
+} /* if enabled */ } while (0)
 #define HT_EXPECT(_e_, _code_) do { if (_e_); else \
   HT_FATAL("failed expectation: " #_e_); \
 } while (0)

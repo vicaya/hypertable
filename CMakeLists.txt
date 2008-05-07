@@ -75,11 +75,9 @@ IF (DOXYGEN_FOUND)
    add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${HYPERTABLE_BINARY_DIR}/Doxyfile)
 ENDIF (DOXYGEN_FOUND)
 
-# Recurse into the "Hello" and "Demo" subdirectories.  This does not actually
-# cause another cmake executable to run.  The same process will walk through
-# the project's entire directory structure.
-add_subdirectory (src/cc/AsyncComm)
+# sub-project directories
 add_subdirectory (src/cc/Common)
+add_subdirectory (src/cc/AsyncComm)
 add_subdirectory (src/cc/Hyperspace)
 add_subdirectory (src/cc/Hypertable/Master)
 add_subdirectory (src/cc/Hypertable/RangeServer)
