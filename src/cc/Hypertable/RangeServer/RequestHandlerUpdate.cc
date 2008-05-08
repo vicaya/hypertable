@@ -40,7 +40,7 @@ void RequestHandlerUpdate::run() {
   TableIdentifier table;
   size_t remaining = m_event_ptr->messageLen - 2;
   uint8_t *msgPtr = m_event_ptr->message + 2;
-  BufferT mods;
+  Buffer mods;
 
   // Table
   if (!table.decode(&msgPtr, &remaining))

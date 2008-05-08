@@ -1,12 +1,12 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Luke Lu (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; version 2 of the
- * License.
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or any later version.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,24 +19,17 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RESPONSECALLBACKUPDATE_H
-#define HYPERTABLE_RESPONSECALLBACKUPDATE_H
-
-#include "Common/Error.h"
-
-#include "AsyncComm/CommBuf.h"
-#include "AsyncComm/ResponseCallback.h"
+#ifndef HYPERTABLE_BUFFER_H
+#define HYPERTABLE_BUFFER_H
 
 namespace Hypertable {
 
-  class ResponseCallbackUpdate : public ResponseCallback {
-  public:
-    ResponseCallbackUpdate(Comm *comm, EventPtr &eventPtr) : ResponseCallback(comm, eventPtr) { return; }
-    int response(Buffer &ext);
-    using ResponseCallback::response_ok;
-  };
+struct Buffer {
+  uint8_t *buf;
+  int32_t len;
+};
 
-}
+} // namespace Hypertable
 
+#endif // HYPERTABLE_BUFFER_H
 
-#endif // HYPERTABLE_RESPONSECALLBACKUPDATE_H

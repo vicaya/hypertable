@@ -103,11 +103,6 @@ namespace Hypertable {
 
   extern const uint64_t END_OF_TIME;
 
-  typedef struct Buffer {
-    uint8_t *buf;
-    int32_t len;
-  } BufferT;
-
   std::ostream &operator<<(std::ostream &os, const TableIdentifier &table_identifier);
 
   std::ostream &operator<<(std::ostream &os, const RangeSpec &range);

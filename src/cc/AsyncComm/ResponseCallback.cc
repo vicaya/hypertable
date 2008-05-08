@@ -27,7 +27,7 @@
 
 using namespace Hypertable;
 
-int ResponseCallback::error(int error, std::string msg) {
+int ResponseCallback::error(int error, const String &msg) {
   hbuilder_.initialize_from_request(m_event_ptr->header);
   CommBufPtr cbufPtr( Protocol::create_error_message(hbuilder_, error, msg.c_str()) );
   return m_comm->send_response(m_event_ptr->addr, cbufPtr);

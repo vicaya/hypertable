@@ -32,7 +32,7 @@ namespace Hypertable {
   class ResponseCallbackFetchScanblock : public ResponseCallback {
   public:
     ResponseCallbackFetchScanblock(Comm *comm, EventPtr &eventPtr) : ResponseCallback(comm, eventPtr) { return; }
-    int response(short moreFlag, int32_t id, ExtBufferT &ext);
+    int response(short moreFlag, int32_t id, Buffer &ext);
   };
 
 }

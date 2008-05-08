@@ -22,7 +22,8 @@
 #ifndef HYPERTABLE_RESPONSECALLBACK_H
 #define HYPERTABLE_RESPONSECALLBACK_H
 
-#include <string>
+#include "Common/String.h"
+#include "Common/Buffer.h"
 
 #include "Comm.h"
 #include "Event.h"
@@ -59,7 +60,7 @@ namespace Hypertable {
      * @param msg error message
      * @return Error::OK on success or error code on failure
      */
-    virtual int error(int error, std::string msg);
+    virtual int error(int error, const String &msg);
 
     /**
      * Sends a a simple success response back to the client which is just
@@ -81,11 +82,6 @@ namespace Hypertable {
     EventPtr       m_event_ptr;
     HeaderBuilder  hbuilder_;
   };
-
-  typedef struct {
-    uint8_t *buf;
-    uint32_t len;
-  } ExtBufferT;
 
 }
 

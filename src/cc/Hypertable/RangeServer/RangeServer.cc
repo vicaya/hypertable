@@ -531,7 +531,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
      */
     {
       short moreFlag = more ? 0 : 1;
-      ExtBufferT ext;
+      Buffer ext;
       ext.buf = kvBuffer;
       ext.len = sizeof(int32_t) + *kvLenp;
       if ((error = cb->response(moreFlag, id, ext)) != Error::OK) {
@@ -592,7 +592,7 @@ void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t s
    */
   {
     short moreFlag = more ? 0 : 1;
-    ExtBufferT ext;
+    Buffer ext;
     ext.buf = kvBuffer;
     ext.len = sizeof(int32_t) + *kvLenp;
     if ((error = cb->response(moreFlag, scannerId, ext)) != Error::OK) {
@@ -820,7 +820,7 @@ namespace {
 /**
  * Update
  */
-void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, BufferT &buffer) {
+void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Buffer &buffer) {
   const uint8_t *mod_ptr;
   const uint8_t *mod_end;
   const uint8_t *add_base_ptr;
@@ -863,7 +863,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Buf
 
   // Fetch table info
   if (!m_live_map_ptr->get(table->id, table_info_ptr)) {
-    ExtBufferT ext;
+    Buffer ext;
     ext.buf = new uint8_t [ buffer.len ];
     memcpy(ext.buf, buffer.buf, buffer.len);
     ext.len = buffer.len;
@@ -1129,7 +1129,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Buf
      * Send back response
      */
     if (stopSize > 0) {
-      ExtBufferT ext;
+      Buffer ext;
       ext.buf = new uint8_t [ stopSize ];
       uint8_t *ptr = ext.buf;
       for (size_t i=0; i<stopMods.size(); i++) {

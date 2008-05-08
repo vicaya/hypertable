@@ -23,7 +23,7 @@
 
 using namespace Hypertable;
 
-int ResponseCallbackFetchScanblock::response(short moreFlag, int32_t id, ExtBufferT &ext) {
+int ResponseCallbackFetchScanblock::response(short moreFlag, int32_t id, Buffer &ext) {
   hbuilder_.initialize_from_request(m_event_ptr->header);
   CommBufPtr cbufPtr( new CommBuf(hbuilder_, 10, ext.buf, ext.len) );
   cbufPtr->append_int(Error::OK);
