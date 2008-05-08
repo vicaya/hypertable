@@ -415,6 +415,21 @@ namespace Hypertable { namespace Serialization {
       return true;
     }
 
+    /**
+     * Decode a 8-bit integer (a byte/character)
+     *
+     * @param bufp - pointer to the source buffer
+     * @param remainp - pointer to the remaining size variable
+     * @return value
+     */
+    inline uint8_t decode_i8(const uint8_t **bufp, size_t *remainp) {
+      if (*remainp < 1)
+        throw Exception(Error::SERIALIZATION_INPUT_OVERRUN);
+
+      *remainp -= 1;
+      return *(*bufp)++;
+    }
+
 
     /**
      * Encode a 16-bit integer in network byte order
