@@ -1,6 +1,6 @@
 #include "Common/Compat.h"
 #include "Common/System.h"
-#include "AsyncComm/Serialization.h"
+#include "Common/Serialization.h"
 
 using namespace Hypertable;
 using namespace Serialization;

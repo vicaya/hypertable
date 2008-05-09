@@ -22,7 +22,7 @@
 #include "Common/Error.h"
 
 #include "AsyncComm/CommBuf.h"
-#include "AsyncComm/Serialization.h"
+#include "Common/Serialization.h"
 
 #include "ResponseCallbackGetSchema.h"
 

@@ -21,7 +21,7 @@
 
 #include <iostream>
 
-#include "AsyncComm/Serialization.h"
+#include "Common/Serialization.h"
 
 #include "CellStoreTrailerV0.h"
 

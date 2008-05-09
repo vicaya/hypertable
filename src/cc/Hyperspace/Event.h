@@ -30,7 +30,7 @@
 
 #include "Common/ReferenceCount.h"
 #include "AsyncComm/CommBuf.h"
-#include "AsyncComm/Serialization.h"
+#include "Common/Serialization.h"
 
 #include "HandleCallback.h"
 

@@ -25,7 +25,7 @@
 #include "Common/Logger.h"
 
 #include "AsyncComm/ResponseCallback.h"
-#include "AsyncComm/Serialization.h"
+#include "Common/Serialization.h"
 
 #include "RequestHandlerOpen.h"
 

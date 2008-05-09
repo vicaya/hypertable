@@ -36,7 +36,7 @@ extern "C" {
 #include "Common/Logger.h"
 
 #include "HeaderBuilder.h"
-#include "Serialization.h"
+#include "Common/Serialization.h"
 
 namespace Hypertable {
 

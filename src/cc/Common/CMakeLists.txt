@@ -45,8 +45,13 @@ target_link_libraries(exception_test pthread ${BOOST_LIB} HyperCommon log4cpp)
 add_executable(logging_test tests/logging_test.cc)
 target_link_libraries(logging_test pthread ${BOOST_LIB} HyperCommon log4cpp) 
 
+# serialization tests
+add_executable(sertest tests/sertest.cc)
+target_link_libraries(sertest pthread ${BOOST_LIB} HyperCommon log4cpp)
+
 add_test(Common-Exception exception_test)
 add_test(Common-Logging logging_test)
+add_test(Common-Serialization sertest)
 
 file (GLOB HEADERS *.h)
 

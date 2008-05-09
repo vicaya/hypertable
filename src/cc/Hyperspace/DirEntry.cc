@@ -19,7 +19,7 @@
  * 02110-1301, USA.
  */
 
-#include "AsyncComm/Serialization.h"
+#include "Common/Serialization.h"
 
 #include "DirEntry.h"
 

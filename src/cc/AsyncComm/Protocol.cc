@@ -25,11 +25,11 @@
 
 #include "Common/Error.h"
 #include "Common/Logger.h"
+#include "Common/Serialization.h"
 
 #include "CommBuf.h"
 #include "Event.h"
 #include "Protocol.h"
-#include "Serialization.h"
 
 using namespace Hypertable;
 using namespace std;

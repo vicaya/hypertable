@@ -45,12 +45,12 @@ extern "C" {
 #include "Common/Logger.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
+#include "Common/Serialization.h"
 
 #include "DispatchHandler.h"
 #include "Comm.h"
 #include "Event.h"
 #include "HeaderBuilder.h"
-#include "Serialization.h"
 
 using namespace Hypertable;
 

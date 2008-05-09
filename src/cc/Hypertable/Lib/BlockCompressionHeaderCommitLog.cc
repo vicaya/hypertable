@@ -21,7 +21,7 @@
 
 #include "Common/Error.h"
 
-#include "AsyncComm/Serialization.h"
+#include "Common/Serialization.h"
 
 #include "BlockCompressionHeaderCommitLog.h"
 

@@ -22,7 +22,7 @@
 #include "Common/Error.h"
 #include "Common/Logger.h"
 
-#include "AsyncComm/Serialization.h"
+#include "Common/Serialization.h"
 
 #include "RequestHandlerAppend.h"
 #include "ResponseCallbackAppend.h"

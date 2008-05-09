@@ -22,7 +22,7 @@
 #include "Common/Error.h"
 
 #include "AsyncComm/Protocol.h"
-#include "AsyncComm/Serialization.h"
+#include "Common/Serialization.h"
 
 #include "ScanBlock.h"
 

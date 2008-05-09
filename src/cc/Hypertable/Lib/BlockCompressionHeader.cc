@@ -24,7 +24,7 @@ extern "C" {
 #include <string.h>
 }
 
-#include "AsyncComm/Serialization.h"
+#include "Common/Serialization.h"
 #include "Common/Checksum.h"
 #include "Common/Error.h"
 #include "Common/Logger.h"

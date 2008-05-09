@@ -23,7 +23,7 @@
 #include "Common/Logger.h"
 
 #include "AsyncComm/Comm.h"
-#include "AsyncComm/Serialization.h"
+#include "Common/Serialization.h"
 
 #include "Master.h"
 #include "RequestHandlerGetSchema.h"

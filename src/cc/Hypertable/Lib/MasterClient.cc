@@ -24,7 +24,7 @@
 
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
-#include "AsyncComm/Serialization.h"
+#include "Common/Serialization.h"
 
 #include "Hyperspace/Session.h"
 

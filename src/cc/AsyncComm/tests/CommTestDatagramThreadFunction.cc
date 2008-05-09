@@ -38,7 +38,7 @@ extern "C" {
 #include "AsyncComm/DispatchHandler.h"
 #include "AsyncComm/Event.h"
 #include "AsyncComm/HeaderBuilder.h"
-#include "AsyncComm/Serialization.h"
+#include "Common/Serialization.h"
 
 #include "CommTestDatagramThreadFunction.h"
 

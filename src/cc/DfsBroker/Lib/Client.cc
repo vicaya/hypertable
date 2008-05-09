@@ -23,7 +23,7 @@
 
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/HeaderBuilder.h"
-#include "AsyncComm/Serialization.h"
+#include "Common/Serialization.h"
 
 #include "Common/Error.h"
 #include "Common/InetAddr.h"

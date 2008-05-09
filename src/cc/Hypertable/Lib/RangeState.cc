@@ -21,7 +21,7 @@
 
 #include "RangeState.h"
 
-#include "AsyncComm/Serialization.h"
+#include "Common/Serialization.h"
 
 using namespace Hypertable;
 

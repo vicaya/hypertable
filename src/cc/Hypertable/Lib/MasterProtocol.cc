@@ -20,7 +20,7 @@
  */
 
 #include "AsyncComm/HeaderBuilder.h"
-#include "AsyncComm/Serialization.h"
+#include "Common/Serialization.h"
 
 #include "MasterProtocol.h"
 

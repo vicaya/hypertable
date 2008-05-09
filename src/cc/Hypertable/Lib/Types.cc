@@ -23,7 +23,7 @@
 #include <iostream>
 
 #include "AsyncComm/CommBuf.h"
-#include "AsyncComm/Serialization.h"
+#include "Common/Serialization.h"
 
 #include "Types.h"
 

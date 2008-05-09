@@ -31,7 +31,7 @@ extern "C" {
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ConnectionManager.h"
-#include "AsyncComm/Serialization.h"
+#include "Common/Serialization.h"
 
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
