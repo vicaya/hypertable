@@ -20,12 +20,22 @@ void _sig_##_handler(int) { \
     exit(0); \
   } \
   HT_INFO("Caught " #_sig_ " signal, continuing..."); \
-  HT_EXPECT(signal(_sig_, _sig_##_handler) != SIG_ERR, -1); \
   longjmp(jmp_ctx, 1); \
 }
 
-#define INSTALL_SIG_HANDLER(_sig_) \
-  HT_EXPECT(signal(_sig_, _sig_##_handler) != SIG_ERR, -1)
+#define INSTALL_SIG_HANDLER(_sig_) do { \
+  struct sigaction sa; \
+  memset(&sa, 0, sizeof(sa)); \
+  sa.sa_handler = _sig_##_handler; \
+  sa.sa_flags = SA_NODEFER | SA_RESTART; \
+  HT_EXPECT(sigaction(_sig_, &sa, NULL) == 0, -1); \
+} while (0)
+
+#define TRY_FATAL(_code_) do { \
+  if (setjmp(jmp_ctx) == 0) { \
+    _code_; \
+  } \
+} while (0)
 
 DEF_SIG_HANDLER(SIGABRT)
 DEF_SIG_HANDLER(SIGSEGV)
@@ -52,10 +62,8 @@ void test_basic_logging(const char *msg) {
   HT_ALERTF("%s", msg);
   HT_EMERG(msg);
   HT_EMERGF("%s", msg);
-  if (setjmp(jmp_ctx) == 0)
-    HT_FATAL(msg);
-  if (setjmp(jmp_ctx) == 0)
-    HT_FATALF("%s", msg);
+  TRY_FATAL(HT_FATAL(msg));
+  TRY_FATAL(HT_FATALF("%s", msg));
   HT_LOG_ENTER;
   HT_LOG_EXIT;
   HT_DEBUG_OUT << msg << HT_DEBUG_END;
@@ -66,8 +74,7 @@ void test_basic_logging(const char *msg) {
   HT_CRIT_OUT << msg << HT_CRIT_END;
   HT_ALERT_OUT << msg <<  HT_ALERT_END;
   HT_EMERG_OUT << msg <<  HT_EMERG_END;
-  if (setjmp(jmp_ctx) == 0)
-    HT_FATAL_OUT << msg <<  HT_FATAL_END;
+  TRY_FATAL(HT_FATAL_OUT << msg <<  HT_FATAL_END);
 }
 
 } // local namespace
