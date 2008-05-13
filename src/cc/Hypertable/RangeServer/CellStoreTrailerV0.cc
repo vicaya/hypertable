@@ -19,6 +19,7 @@
  * 02110-1301, USA.
  */
 
+#include <cassert>
 #include <iostream>
 
 #include "Common/Serialization.h"
