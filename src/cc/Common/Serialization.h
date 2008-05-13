@@ -522,10 +522,10 @@ namespace Hypertable { namespace Serialization {
      * @return number of bytes required
      */
     inline int encoded_length_vi32(uint32_t val) {
-       return (val > HT_MAX_V4B ? 5 : \
-               (val > HT_MAX_V3B ? 4 : \
-                (val > HT_MAX_V2B ? 3 : \
-                 (val > HT_MAX_V1B ? 2 : 1))));
+      return (val <= HT_MAX_V1B ? 1 : \
+	      (val <= HT_MAX_V2B ? 2 : \
+	       (val <= HT_MAX_V3B ? 3 : \
+		(val <= HT_MAX_V4B ? 4 : 5))));
     }
 
     /**
@@ -535,15 +535,15 @@ namespace Hypertable { namespace Serialization {
      * @return number of bytes required
      */
     inline int encoded_length_vi64(uint64_t val) {
-      return (val > HT_MAX_V9B ? 10 : \
-              (val > HT_MAX_V8B ? 9 : \
-               (val > HT_MAX_V7B ? 8 : \
-                (val > HT_MAX_V6B ? 7 : \
-                 (val > HT_MAX_V5B ? 6 : \
-                  (val > HT_MAX_V4B ? 5 : \
-                   (val > HT_MAX_V3B ? 4 : \
-                    (val > HT_MAX_V2B ? 3 : \
-                     (val > HT_MAX_V1B ? 2 : 1)))))))));
+      return (val <= HT_MAX_V1B ? 1 : \
+	      (val <= HT_MAX_V2B ? 2 : \
+	       (val <= HT_MAX_V3B ? 3 : \
+		(val <= HT_MAX_V4B ? 4 : \
+		 (val <= HT_MAX_V5B ? 5 : \
+		  (val <= HT_MAX_V6B ? 6 : \
+		   (val <= HT_MAX_V7B ? 7 : \
+		    (val <= HT_MAX_V8B ? 8 : \
+		     (val <= HT_MAX_V9B ? 9 : 10)))))))));
     }
 
     /**
