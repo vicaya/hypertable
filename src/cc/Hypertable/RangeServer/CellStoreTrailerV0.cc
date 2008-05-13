@@ -34,6 +34,7 @@ using namespace std;
  *
  */
 CellStoreTrailerV0::CellStoreTrailerV0() {
+  assert(sizeof(float) == 4);
   clear();
 }
 
@@ -68,7 +69,9 @@ void CellStoreTrailerV0::serialize(uint8_t *buf) {
   Serialization::encode_int(&buf, blocksize);
   Serialization::encode_long(&buf, timestamp.logical);
   Serialization::encode_long(&buf, timestamp.real);
-  Serialization::encode_int(&buf, *((uint32_t *)&compression_ratio));
+  uint32_t ival;
+  memcpy(&ival, &compression_ratio, 4);
+  Serialization::encode_int(&buf, ival);
   Serialization::encode_short(&buf, compression_type);
   Serialization::encode_short(&buf, version);
   assert((buf-base) == (int)CellStoreTrailerV0::size());
@@ -89,7 +92,9 @@ void CellStoreTrailerV0::deserialize(uint8_t *buf) {
   Serialization::decode_int(&buf, &remaining, &blocksize);
   Serialization::decode_long(&buf, &remaining, &timestamp.logical);
   Serialization::decode_long(&buf, &remaining, &timestamp.real);
-  Serialization::decode_int(&buf, &remaining, (uint32_t *)&compression_ratio);
+  uint32_t ival;
+  Serialization::decode_int(&buf, &remaining, &ival);
+  memcpy(&compression_ratio, &ival, 4);
   Serialization::decode_short(&buf, &remaining, &compression_type);
   Serialization::decode_short(&buf, &remaining, &version);
 }

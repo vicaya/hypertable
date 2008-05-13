@@ -63,9 +63,9 @@ namespace Hypertable {
       return len;
     }
     const char *str() const {
-      const char *rptr = (const char *)ptr;
-      Serialization::decode_vi32((const uint8_t **)&rptr);
-      return rptr;
+      const uint8_t *rptr = ptr;
+      Serialization::decode_vi32(&rptr);
+      return (const char *)rptr;
     }
     operator bool () const {
       return ptr != 0;

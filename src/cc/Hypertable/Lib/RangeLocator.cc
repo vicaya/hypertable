@@ -427,16 +427,16 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
     }
 
     if (keyComps.column_family_code == m_startrow_cid) {
-      char *str;
-      size_t len = value.decode_length((uint8_t **)&str);
+      uint8_t *str;
+      size_t len = value.decode_length(&str);
       //cout << "TS=" << keyComps.timestamp << endl;
-      range_loc_info.start_row = std::string(str, len);
+      range_loc_info.start_row = std::string((const char *)str, len);
       got_start_row = true;
     }
     else if (keyComps.column_family_code == m_location_cid) {
-      char *str;
-      size_t len = value.decode_length((uint8_t **)&str);
-      range_loc_info.location = std::string(str, len);
+      uint8_t *str;
+      size_t len = value.decode_length(&str);
+      range_loc_info.location = std::string((const char *)str, len);
       if (range_loc_info.location == "!")
 	return Error::TABLE_DOES_NOT_EXIST;
       got_location = true;
