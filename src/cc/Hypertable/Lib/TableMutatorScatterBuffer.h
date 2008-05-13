@@ -50,7 +50,7 @@ namespace Hypertable {
     TableMutatorScatterBuffer(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
     void set(Key &key, const void *value, uint32_t value_len, Timer &timer);
     void set_delete(Key &key, Timer &timer);
-    void set(ByteString32T *key, ByteString32T *value, Timer &timer);
+    void set(ByteString key, ByteString value, Timer &timer);
     bool full() { return m_full; }
     void send();
     bool completed();

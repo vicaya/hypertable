@@ -56,7 +56,7 @@ namespace Hypertable {
     virtual ~CellStoreV0();
 
     virtual int create(const char *fname, uint32_t blocksize, const std::string &compressor);
-    virtual int add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp);
+    virtual int add(const ByteString key, const ByteString value, uint64_t real_timestamp);
     virtual int finalize(Timestamp &timestamp);
     virtual int open(const char *fname, const char *start_row, const char *end_row);
     virtual int load_index();
@@ -81,14 +81,14 @@ namespace Hypertable {
 
   protected:
 
-    void add_index_entry(const ByteString32T *key, uint32_t offset);
-    void record_split_row(const ByteString32T *key);
+    void add_index_entry(const ByteString key, uint32_t offset);
+    void record_split_row(const ByteString key);
 
     static const char DATA_BLOCK_MAGIC[10];
     static const char INDEX_FIXED_BLOCK_MAGIC[10];
     static const char INDEX_VARIABLE_BLOCK_MAGIC[10];
 
-    typedef map<ByteString32T *, uint32_t, ltByteString32> IndexMapT;
+    typedef map<ByteString, uint32_t, ltByteString> IndexMapT;
 
     Filesystem            *m_filesys;
     std::string            m_filename;
@@ -102,7 +102,7 @@ namespace Hypertable {
     DispatchHandlerSynchronizer  m_sync_handler;
     uint32_t               m_outstanding_appends;
     uint32_t               m_offset;
-    ByteString32T         *m_last_key;
+    ByteString             m_last_key;
     uint64_t               m_file_length;
     uint32_t               m_disk_usage;
     std::string            m_split_row;

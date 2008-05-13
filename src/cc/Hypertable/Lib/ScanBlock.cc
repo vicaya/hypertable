@@ -45,7 +45,7 @@ int ScanBlock::load(EventPtr &eventPtr) {
   uint8_t *endPtr;
   size_t remaining = eventPtr->messageLen - 4;
   uint32_t len;
-  ByteString32T *key, *value;
+  ByteString key, value;
 
   m_event_ptr = eventPtr;
 
@@ -73,10 +73,10 @@ int ScanBlock::load(EventPtr &eventPtr) {
   endPtr = msgPtr + len;
 
   while (msgPtr < endPtr) {
-    key = (ByteString32T *)msgPtr;
-    msgPtr += 4 + key->len;
-    value = (ByteString32T *)msgPtr;
-    msgPtr += 4 + value->len;
+    key.ptr = msgPtr;
+    msgPtr += key.length();
+    value.ptr = msgPtr;
+    msgPtr += value.length();
     m_vec.push_back(std::make_pair(key, value));
   }
 
@@ -86,7 +86,7 @@ int ScanBlock::load(EventPtr &eventPtr) {
 }
 
 
-bool ScanBlock::next(const ByteString32T *&key, const ByteString32T *&value) {
+bool ScanBlock::next(ByteString &key, ByteString &value) {
 
   assert(m_error == Error::OK);
 

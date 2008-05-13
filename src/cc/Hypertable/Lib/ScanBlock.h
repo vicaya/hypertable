@@ -37,7 +37,7 @@ namespace Hypertable {
   class ScanBlock {
   public:
 
-    typedef std::vector< std::pair<const ByteString32T *, const ByteString32T *> > VectorT;
+    typedef std::vector< std::pair<ByteString, ByteString> > VectorT;
 
     ScanBlock();
 
@@ -65,7 +65,7 @@ namespace Hypertable {
      * @param value reference to return value pointer
      * @return true if key/value returned, false if no more key/value pairs
      */
-    bool next(const ByteString32T *&key, const ByteString32T *&value);
+    bool next(ByteString &key, ByteString &value);
 
     /** Returns true if this is the final scanblock returned by the scanner.
      *

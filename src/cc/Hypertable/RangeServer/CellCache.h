@@ -54,7 +54,7 @@ namespace Hypertable {
      * @param real_timestamp real commit log timestamp
      * @return zero
      */
-    virtual int add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp);
+    virtual int add(const ByteString key, const ByteString value, uint64_t real_timestamp);
 
     virtual const char *get_split_row();
 
@@ -106,7 +106,7 @@ namespace Hypertable {
     friend class CellCacheScanner;
 
   protected:
-    typedef std::map<const ByteString32T *, uint32_t, ltByteString32> CellMapT;
+    typedef std::map<const ByteString, uint32_t, ltByteString> CellMapT;
 
     static const uint32_t ALLOC_BIT_MASK;
     static const uint32_t OFFSET_BIT_MASK;

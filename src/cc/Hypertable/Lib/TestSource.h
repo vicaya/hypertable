@@ -41,14 +41,14 @@ namespace Hypertable {
       return;
     }
 
-    bool next(ByteString32T **keyp, ByteString32T **valuep);
+    bool next(ByteString &key, ByteString &value);
     void clear_min_timestamp() { m_min_timestamp = 0; }
     uint64_t get_min_timestamp() { return m_min_timestamp; }
 
   private:
-    bool create_row_delete(const char *row, uint64_t timestamp, ByteString32T **keyp, ByteString32T **valuep);
-    bool create_column_delete(const char *row, const char *column, uint64_t timestamp, ByteString32T **keyp, ByteString32T **valuep);
-    bool create_insert(const char *row, const char *column, uint64_t timestamp, const char *value, ByteString32T **keyp, ByteString32T **valuep);
+    bool create_row_delete(const char *row, uint64_t timestamp, ByteString &key, ByteString &value);
+    bool create_column_delete(const char *row, const char *column, uint64_t timestamp, ByteString &key, ByteString &value);
+    bool create_insert(const char *row, const char *column, uint64_t timestamp, const char *value_str, ByteString &key, ByteString &value);
 
     Schema *m_schema;
     ifstream m_fin;

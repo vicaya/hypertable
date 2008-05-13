@@ -45,7 +45,7 @@ namespace Hypertable {
 
   private:
 
-    void display_scan_data(const ByteString32T *key, const ByteString32T *value, SchemaPtr &schemaPtr);
+    void display_scan_data(const ByteString &key, const ByteString &value, SchemaPtr &schemaPtr);
 
     Comm *m_comm;
     Hyperspace::SessionPtr m_hyperspace_ptr;

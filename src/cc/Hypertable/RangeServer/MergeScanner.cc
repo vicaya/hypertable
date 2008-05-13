@@ -74,7 +74,7 @@ void MergeScanner::forward() {
 
       m_queue.pop();
       sstate.scanner->forward();
-      if (sstate.scanner->get(&sstate.key, &sstate.value))
+      if (sstate.scanner->get(sstate.key, sstate.value))
 	m_queue.push(sstate);
 
       if (m_queue.empty())
@@ -114,7 +114,7 @@ void MergeScanner::forward() {
 	else {
 	  m_deleted_column_family.clear();
 	  m_deleted_column_family.ensure(len);
-	  memcpy(m_deleted_column_family.buf, sstate.key->data, len);
+	  memcpy(m_deleted_column_family.buf, keyComps.row, len);
 	  m_deleted_column_family.ptr = m_deleted_column_family.buf + len;
 	  m_deleted_column_family_timestamp = keyComps.timestamp;
 	  m_delete_present = true;
@@ -131,7 +131,7 @@ void MergeScanner::forward() {
 	else {
 	  m_deleted_cell.clear();
 	  m_deleted_cell.ensure(len);
-	  memcpy(m_deleted_cell.buf, sstate.key->data, len);
+	  memcpy(m_deleted_cell.buf, keyComps.row, len);
 	  m_deleted_cell.ptr = m_deleted_cell.buf + len;
 	  m_deleted_cell_timestamp = keyComps.timestamp;
 	  m_delete_present = true;
@@ -176,6 +176,9 @@ void MergeScanner::forward() {
       }
     }
 
+    uint8_t *prev_key;
+    size_t prev_key_len = sstate.key.decode_length(&prev_key);
+
     if (m_prev_key.fill() != 0) {
 
       if (m_row_limit) {
@@ -185,7 +188,7 @@ void MergeScanner::forward() {
 	    m_done = true;
 	    return;
 	  }
-	  m_prev_key.set(sstate.key->data, sstate.key->len);
+	  m_prev_key.set(prev_key, prev_key_len);
 	  m_cell_limit = m_scan_context_ptr->familyInfo[keyComps.column_family_code].max_versions;
 	  m_cell_cutoff = m_scan_context_ptr->familyInfo[keyComps.column_family_code].cutoffTime;
 	  m_cell_count = 0;
@@ -193,17 +196,16 @@ void MergeScanner::forward() {
 	}
       }
 
-      if (sstate.key->len == m_prev_key.fill() && sstate.key->len > 9 &&
-	  !memcmp(sstate.key->data, m_prev_key.buf, sstate.key->len-9)) {
+      if (prev_key_len == m_prev_key.fill() && prev_key_len > 9 && !memcmp(prev_key, m_prev_key.buf, prev_key_len-9)) {
 	if (m_cell_limit) {
 	  m_cell_count++;
-	  m_prev_key.set(sstate.key->data, sstate.key->len);
+	  m_prev_key.set(prev_key, prev_key_len);
 	  if (m_cell_count >= m_cell_limit)
 	    continue;
 	}
       }
       else {
-	m_prev_key.set(sstate.key->data, sstate.key->len);
+	m_prev_key.set(prev_key, prev_key_len);
 	m_cell_limit = m_scan_context_ptr->familyInfo[keyComps.column_family_code].max_versions;
 	m_cell_cutoff = m_scan_context_ptr->familyInfo[keyComps.column_family_code].cutoffTime;
 	m_cell_count = 0;
@@ -211,7 +213,7 @@ void MergeScanner::forward() {
 
     }
     else {
-      m_prev_key.set(sstate.key->data, sstate.key->len);
+      m_prev_key.set(prev_key, prev_key_len);
       m_cell_limit = m_scan_context_ptr->familyInfo[keyComps.column_family_code].max_versions;
       m_cell_cutoff = m_scan_context_ptr->familyInfo[keyComps.column_family_code].cutoffTime;
       m_cell_count = 0;
@@ -225,7 +227,7 @@ void MergeScanner::forward() {
 
 
 
-bool MergeScanner::get(ByteString32T **keyp, ByteString32T **valuep) {
+bool MergeScanner::get(ByteString &key, ByteString &value) {
 
   if (!m_initialized)
     initialize();
@@ -233,8 +235,8 @@ bool MergeScanner::get(ByteString32T **keyp, ByteString32T **valuep) {
   if (!m_queue.empty() && !m_done) {
     const ScannerStateT &sstate = m_queue.top();
     // check for row or cell limit
-    *keyp = sstate.key;
-    *valuep = sstate.value;
+    key = sstate.key;
+    value = sstate.value;
     return true;
   }
   return false;
@@ -247,7 +249,7 @@ void MergeScanner::initialize() {
   while (!m_queue.empty())
     m_queue.pop();
   for (size_t i=0; i<m_scanners.size(); i++) {
-    if (m_scanners[i]->get(&sstate.key, &sstate.value)) {
+    if (m_scanners[i]->get(sstate.key, sstate.value)) {
       sstate.scanner = m_scanners[i];
       m_queue.push(sstate);
     }
@@ -262,7 +264,7 @@ void MergeScanner::initialize() {
     if (keyComps.timestamp < m_start_timestamp) {
       m_queue.pop();
       sstate.scanner->forward();
-      if (sstate.scanner->get(&sstate.key, &sstate.value))
+      if (sstate.scanner->get(sstate.key, sstate.value))
 	m_queue.push(sstate);
       continue;
     }
@@ -282,7 +284,7 @@ void MergeScanner::initialize() {
       size_t len = (keyComps.column_qualifier - keyComps.row) + strlen(keyComps.column_qualifier) + 1;
       m_deleted_column_family.clear();
       m_deleted_column_family.ensure(len);
-      memcpy(m_deleted_column_family.buf, sstate.key->data, len);
+      memcpy(m_deleted_column_family.buf, keyComps.row, len);
       m_deleted_column_family.ptr = m_deleted_column_family.buf + len;
       m_deleted_column_family_timestamp = keyComps.timestamp;
       m_delete_present = true;
@@ -293,7 +295,7 @@ void MergeScanner::initialize() {
       size_t len = (keyComps.column_qualifier - keyComps.row) + strlen(keyComps.column_qualifier) + 1;
       m_deleted_cell.clear();
       m_deleted_cell.ensure(len);
-      memcpy(m_deleted_cell.buf, sstate.key->data, len);
+      memcpy(m_deleted_cell.buf, keyComps.row, len);
       m_deleted_cell.ptr = m_deleted_cell.buf + len;
       m_deleted_cell_timestamp = keyComps.timestamp;
       m_delete_present = true;
@@ -304,12 +306,14 @@ void MergeScanner::initialize() {
       if (keyComps.timestamp >= m_end_timestamp) {
 	m_queue.pop();
 	sstate.scanner->forward();
-	if (sstate.scanner->get(&sstate.key, &sstate.value))
+	if (sstate.scanner->get(sstate.key, sstate.value))
 	  m_queue.push(sstate);
 	continue;
       }
       m_delete_present = false;
-      m_prev_key.set(sstate.key->data, sstate.key->len);
+      uint8_t *ptr;
+      size_t len = sstate.key.decode_length(&ptr);
+      m_prev_key.set(ptr, len);
       m_cell_limit = m_scan_context_ptr->familyInfo[keyComps.column_family_code].max_versions;
       m_cell_cutoff = m_scan_context_ptr->familyInfo[keyComps.column_family_code].cutoffTime;
       m_cell_count = 0;

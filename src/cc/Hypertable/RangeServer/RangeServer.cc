@@ -232,6 +232,7 @@ int RangeServer::initialize(PropertiesPtr &props_ptr) {
   }
 
   if (!exists) {
+    m_hyperspace_ptr->mkdir("/hypertable");
     if ((error = m_hyperspace_ptr->mkdir("/hypertable/servers")) != Error::OK) {
       HT_ERRORF("Problem creating directory '/hypertable/servers' - %s", Error::get_text(error));
       return error;
@@ -314,8 +315,8 @@ void RangeServer::fast_recover() {
   CommitLogReaderPtr primary_log_reader;
   RangeStates range_states;
   BlockCompressionHeaderCommitLog header;
-  const uint8_t *ptr, *end;
-  const uint8_t *base;
+  uint8_t *ptr, *end;
+  uint8_t *base;
   size_t len;
   TableIdentifier table_id;
   uint64_t timestamp;
@@ -323,7 +324,7 @@ void RangeServer::fast_recover() {
   RecoverUpdateCallback cb;
   TableInfoPtr table_info_ptr;
   RangePtr range_ptr;
-  const ByteString32T *key, *value;
+  ByteString key, value;
 
   try {
 
@@ -341,7 +342,7 @@ void RangeServer::fast_recover() {
 
     primary_log_reader = new CommitLogReader(Global::logDfs, primary_log_dir);
 
-    while (primary_log_reader->next(&base, &len, &header)) {
+    while (primary_log_reader->next((const uint8_t **)&base, &len, &header)) {
 
       timestamp = header.get_timestamp();
 
@@ -367,24 +368,24 @@ void RangeServer::fast_recover() {
       while (ptr < end) {
 
 	// extract the key
-	key = (const ByteString32T *)ptr;
-	ptr += Length(key);
+	key.ptr = ptr;
+	ptr += key.length();
 	if (ptr > end)
 	  throw Exception(Error::REQUEST_TRUNCATED, "Problem decoding key");
 
 	// extract the value
-	value = (const ByteString32T *)ptr;
-	ptr += Length(value);
+	value.ptr = ptr;
+	ptr += value.length();
 	if (ptr > end)
 	  throw Exception(Error::REQUEST_TRUNCATED, "Problem decoding value");
 
 	// Look for containing range, add to stop mods if not found
-	if (!table_info_ptr->find_containing_range((const char *)key->data, range_ptr))
+	if (!table_info_ptr->find_containing_range(key.str(), range_ptr))
 	  continue;
 
 	// add key/value pair to buffer
-	memcpy(dbuf.ptr, key, ptr-(uint8_t *)key);
-	dbuf.ptr += ptr - (uint8_t *)key;
+	memcpy(dbuf.ptr, key.ptr, ptr-key.ptr);
+	dbuf.ptr += ptr-key.ptr;
 
       }
 
@@ -821,7 +822,7 @@ namespace {
  * Update
  */
 void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Buffer &buffer) {
-  const uint8_t *mod_ptr;
+  uint8_t *mod_ptr;
   const uint8_t *mod_end;
   const uint8_t *add_base_ptr;
   const uint8_t *add_end_ptr;
@@ -838,7 +839,6 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Buf
   vector<UpdateRecT> splitMods;
   vector<UpdateRecT> stopMods;
   UpdateRecT update;
-  ByteString32Ptr splitKeyPtr;
   CommitLogPtr splitLogPtr;
   size_t goSize = 0;
   size_t stopSize = 0;
@@ -851,6 +851,9 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Buf
   uint64_t memory_added = 0;
   uint64_t items_added = 0;
   bool split_pending;
+  ByteString key, value;
+  bool a_locked = false;
+  bool b_locked = false;
 
   min_ts_vector.reserve(50);
 
@@ -861,248 +864,266 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Buf
 
   // TODO: Sanity check mod data (checksum validation)
 
-  // Fetch table info
-  if (!m_live_map_ptr->get(table->id, table_info_ptr)) {
-    Buffer ext;
-    ext.buf = new uint8_t [ buffer.len ];
-    memcpy(ext.buf, buffer.buf, buffer.len);
-    ext.len = buffer.len;
-    HT_ERRORF("Unable to find table info for table '%s'", table->name);
-    if ((error = cb->response(ext)) != Error::OK) {
-      HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
-    }
-    return;
-  }
+  try {
 
-  // verify schema
-  if ((error = verify_schema(table_info_ptr, table->generation, errMsg)) != Error::OK) {
-    HT_ERRORF("%s", errMsg.c_str());
-    cb->error(error, errMsg);
-    return;
-  }
-
-  mod_end = buffer.buf + buffer.len;
-  mod_ptr = buffer.buf;
-
-  goMods.clear();
-
-  boost::detail::thread::lock_ops<boost::mutex>::lock(m_update_mutex_a);
-
-  while (mod_ptr < mod_end) {
-
-    row = (const char *)((ByteString32T *)mod_ptr)->data;
-
-    // Look for containing range, add to stop mods if not found
-    if (!table_info_ptr->find_containing_range(row, min_ts_rec.range_ptr)) {
-      update.base = mod_ptr;
-      mod_ptr += Length((const ByteString32T *)mod_ptr); // skip key
-      mod_ptr += Length((const ByteString32T *)mod_ptr); // skip value
-      update.len = mod_ptr - update.base;
-      stopMods.push_back(update);
-      stopSize += update.len;
-      continue;
-    }
-
-    add_base_ptr = mod_ptr;
-    
-    /** Increment update count (block if maintenance in progress) **/
-    min_ts_rec.range_ptr->increment_update_counter();
-
-    // Make sure range didn't just shrink
-    if (strcmp(row, (min_ts_rec.range_ptr->start_row()).c_str()) <= 0) {
-      min_ts_rec.range_ptr->decrement_update_counter();
-      continue;
-    }
-
-    /** Obtain the most recently seen timestamp **/
-    min_timestamp = min_ts_rec.range_ptr->get_latest_timestamp();
-
-    /** Obtain "update timestamp" **/
-    update_timestamp = Global::log->get_timestamp();
-
-    end_row = min_ts_rec.range_ptr->end_row();
-
-    /** Fetch range split information **/
-    split_pending = min_ts_rec.range_ptr->get_split_info(split_row, splitLogPtr);
-
-    splitMods.clear();
-    splitSize = 0;
-
-    next_timestamp = 0;
-    min_ts_rec.timestamp.logical = 0;
-    min_ts_rec.timestamp.real = update_timestamp;
-
-    while (mod_ptr < mod_end && (end_row == "" || (strcmp(row, end_row.c_str()) <= 0))) {
-
-      // If timestamp value is set to AUTO (zero one's compliment), then assign a timestamp
-      ts_ptr = (uint8_t *)mod_ptr + Length((const ByteString32T *)mod_ptr) - 8;
-      if (!memcmp(ts_ptr, auto_ts, 8)) {
-	if (next_timestamp == 0) {
-	  boost::xtime now;
-	  boost::xtime_get(&now, boost::TIME_UTC);
-	  next_timestamp = ((uint64_t)now.sec * 1000000000LL) + (uint64_t)now.nsec;
-	  //HT_INFOF("fugazi TIMESTAMP %lld", next_timestamp);
-	}
-	temp_timestamp = ++next_timestamp;
-	if (min_ts_rec.timestamp.logical == 0 || temp_timestamp < min_ts_rec.timestamp.logical)
-	  min_ts_rec.timestamp.logical = temp_timestamp;
-	temp_timestamp = ByteOrderSwapInt64(temp_timestamp);
-	temp_timestamp = ~temp_timestamp;
-	memcpy(ts_ptr, &temp_timestamp, 8);
-	temp_timestamp = next_timestamp;
+    // Fetch table info
+    if (!m_live_map_ptr->get(table->id, table_info_ptr)) {
+      Buffer ext;
+      ext.buf = new uint8_t [ buffer.len ];
+      memcpy(ext.buf, buffer.buf, buffer.len);
+      ext.len = buffer.len;
+      HT_ERRORF("Unable to find table info for table '%s'", table->name);
+      if ((error = cb->response(ext)) != Error::OK) {
+	HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       }
-      else {
-	memcpy(&temp_timestamp, ts_ptr, 8);
-	temp_timestamp = ByteOrderSwapInt64(temp_timestamp);
-	temp_timestamp = ~temp_timestamp;
-	if (*(ts_ptr-1) > FLAG_DELETE_CELL && temp_timestamp <= min_timestamp) {
-	  error = Error::RANGESERVER_TIMESTAMP_ORDER_ERROR;
-	  errMsg = (string)"Update timestamp " + temp_timestamp + " is <= previously seen timestamp of " + min_timestamp;
-	  min_ts_rec.range_ptr->decrement_update_counter();
+      return;
+    }
+
+    // verify schema
+    if ((error = verify_schema(table_info_ptr, table->generation, errMsg)) != Error::OK) {
+      HT_ERRORF("%s", errMsg.c_str());
+      cb->error(error, errMsg);
+      return;
+    }
+
+    mod_end = buffer.buf + buffer.len;
+    mod_ptr = buffer.buf;
+
+    goMods.clear();
+
+    boost::detail::thread::lock_ops<boost::mutex>::lock(m_update_mutex_a);
+    a_locked = true;
+
+    while (mod_ptr < mod_end) {
+
+      key.ptr = mod_ptr;
+
+      row = key.str();
+    
+      // Look for containing range, add to stop mods if not found
+      if (!table_info_ptr->find_containing_range(row, min_ts_rec.range_ptr)) {
+	update.base = mod_ptr;
+	key.next(); // skip key
+	key.next(); // skip value;
+	mod_ptr = key.ptr;
+	update.len = mod_ptr - update.base;
+	stopMods.push_back(update);
+	stopSize += update.len;
+	continue;
+      }
+
+      add_base_ptr = mod_ptr;
+    
+      /** Increment update count (block if maintenance in progress) **/
+      min_ts_rec.range_ptr->increment_update_counter();
+
+      // Make sure range didn't just shrink
+      if (strcmp(row, (min_ts_rec.range_ptr->start_row()).c_str()) <= 0) {
+	min_ts_rec.range_ptr->decrement_update_counter();
+	continue;
+      }
+
+      /** Obtain the most recently seen timestamp **/
+      min_timestamp = min_ts_rec.range_ptr->get_latest_timestamp();
+
+      /** Obtain "update timestamp" **/
+      update_timestamp = Global::log->get_timestamp();
+
+      end_row = min_ts_rec.range_ptr->end_row();
+
+      /** Fetch range split information **/
+      split_pending = min_ts_rec.range_ptr->get_split_info(split_row, splitLogPtr);
+
+      splitMods.clear();
+      splitSize = 0;
+
+      next_timestamp = 0;
+      min_ts_rec.timestamp.logical = 0;
+      min_ts_rec.timestamp.real = update_timestamp;
+
+      while (mod_ptr < mod_end && (end_row == "" || (strcmp(row, end_row.c_str()) <= 0))) {
+
+	// If timestamp value is set to AUTO (zero one's compliment), then assign a timestamp
+	ts_ptr = mod_ptr + key.length() - 8;
+	if (!memcmp(ts_ptr, auto_ts, 8)) {
+	  if (next_timestamp == 0) {
+	    boost::xtime now;
+	    boost::xtime_get(&now, boost::TIME_UTC);
+	    next_timestamp = ((uint64_t)now.sec * 1000000000LL) + (uint64_t)now.nsec;
+	    //HT_INFOF("fugazi TIMESTAMP %lld", next_timestamp);
+	  }
+	  temp_timestamp = ++next_timestamp;
+	  if (min_ts_rec.timestamp.logical == 0 || temp_timestamp < min_ts_rec.timestamp.logical)
+	    min_ts_rec.timestamp.logical = temp_timestamp;
+	  temp_timestamp = ByteOrderSwapInt64(temp_timestamp);
+	  temp_timestamp = ~temp_timestamp;
+	  memcpy(ts_ptr, &temp_timestamp, 8);
+	  temp_timestamp = next_timestamp;
+	}
+	else {
+	  memcpy(&temp_timestamp, ts_ptr, 8);
+	  temp_timestamp = ByteOrderSwapInt64(temp_timestamp);
+	  temp_timestamp = ~temp_timestamp;
+	  if (*(ts_ptr-1) > FLAG_DELETE_CELL && temp_timestamp <= min_timestamp) {
+	    error = Error::RANGESERVER_TIMESTAMP_ORDER_ERROR;
+	    errMsg = (string)"Update timestamp " + temp_timestamp + " is <= previously seen timestamp of " + min_timestamp;
+	    min_ts_rec.range_ptr->decrement_update_counter();
+	    boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_a);
+	    goto abort;
+	  }
+	  if (min_ts_rec.timestamp.logical == 0 || temp_timestamp < min_ts_rec.timestamp.logical)
+	    min_ts_rec.timestamp.logical = temp_timestamp;
+	}
+
+	update.base = mod_ptr;
+	key.next(); // skip key
+	key.next(); // skip value
+	mod_ptr = key.ptr;
+	update.len = mod_ptr - update.base;
+	if (split_pending && strcmp(row, split_row.c_str()) <= 0) {
+	  splitMods.push_back(update);
+	  splitSize += update.len;
+	}
+	else {
+	  goMods.push_back(update);
+	  goSize += update.len;
+	}
+	if (mod_ptr < mod_end)
+	  row = key.str();
+      }
+
+      add_end_ptr = mod_ptr;
+
+      //HT_INFOF("fugazi TIMESTAMP --last-- %lld", next_timestamp);
+
+      // force scans to only see updates before the earliest time in this range
+      min_ts_rec.timestamp.logical--;
+      min_ts_rec.range_ptr->add_update_timestamp( min_ts_rec.timestamp );
+      min_ts_vector.push_back(min_ts_rec);
+
+      if (splitSize > 0) {
+	boost::shared_array<uint8_t> bufPtr( new uint8_t [ splitSize + table->encoded_length() ] );
+	uint8_t *base = bufPtr.get();
+	uint8_t *ptr = base;
+
+	table->encode(&ptr);
+
+	items_added += splitMods.size();
+	memory_added += splitSize;
+
+	for (size_t i=0; i<splitMods.size(); i++) {
+	  memcpy(ptr, splitMods[i].base, splitMods[i].len);
+	  ptr += splitMods[i].len;
+	}
+
+	HT_EXPECT((ptr-base) <= (long)(splitSize + table->encoded_length()), Error::FAILED_EXPECTATION);
+
+	if ((error = splitLogPtr->write(base, ptr-base, update_timestamp)) != Error::OK) {
+	  errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to split log";
 	  boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_a);
 	  goto abort;
 	}
-	if (min_ts_rec.timestamp.logical == 0 || temp_timestamp < min_ts_rec.timestamp.logical)
-	  min_ts_rec.timestamp.logical = temp_timestamp;
       }
 
-      update.base = mod_ptr;
-      mod_ptr += Length((const ByteString32T *)mod_ptr); // skip key
-      mod_ptr += Length((const ByteString32T *)mod_ptr); // skip value
-      update.len = mod_ptr - update.base;
-      if (split_pending && strcmp(row, split_row.c_str()) <= 0) {
-	splitMods.push_back(update);
-	splitSize += update.len;
+      /**
+       * Apply the modifications
+       */
+      min_ts_rec.range_ptr->lock();
+      {
+	uint8_t *ptr = (uint8_t *)add_base_ptr;
+	while (ptr < add_end_ptr) {
+	  key.ptr = ptr;
+	  ptr += key.length();
+	  value.ptr = ptr;
+	  ptr += value.length();
+	  HT_EXPECT(min_ts_rec.range_ptr->add(key, value, update_timestamp) == Error::OK, Error::FAILED_EXPECTATION);
+	}
       }
-      else {
-	goMods.push_back(update);
-	goSize += update.len;
+      min_ts_rec.range_ptr->unlock(update_timestamp);
+
+      /**
+       * Split and Compaction processing
+       */
+      {
+	std::vector<AccessGroup::CompactionPriorityDataT> priority_data_vec;
+	std::vector<AccessGroup *> compactions;
+	uint64_t disk_usage = 0;
+
+	min_ts_rec.range_ptr->get_compaction_priority_data(priority_data_vec);
+	for (size_t i=0; i<priority_data_vec.size(); i++) {
+	  disk_usage += priority_data_vec[i].disk_used;
+	  if (!priority_data_vec[i].in_memory && priority_data_vec[i].mem_used >= (uint32_t)Global::localityGroupMaxMemory)
+	    compactions.push_back(priority_data_vec[i].ag);
+	}
+
+	if (!min_ts_rec.range_ptr->is_root() &&
+	    (disk_usage > min_ts_rec.range_ptr->get_size_limit() || 
+	     (Global::range_metadata_max_bytes && table->id == 0 && disk_usage > Global::range_metadata_max_bytes))) {
+	  if (!min_ts_rec.range_ptr->test_and_set_maintenance())
+	    Global::maintenance_queue->add( new MaintenanceTaskSplit(min_ts_rec.range_ptr) );
+	}
+	else if (!compactions.empty()) {
+	  if (!min_ts_rec.range_ptr->test_and_set_maintenance()) {
+	    for (size_t i=0; i<compactions.size(); i++)
+	      compactions[i]->set_compaction_bit();
+	    Global::maintenance_queue->add( new MaintenanceTaskCompaction(min_ts_rec.range_ptr, false) );
+	  }
+	}
       }
-      row = (const char *)((ByteString32T *)mod_ptr)->data;
+
+      if (Global::verbose) {
+	HT_INFOF("Added %d (%d split off) updates to '%s'", goMods.size()+splitMods.size(), splitMods.size(), table->name);
+      }
     }
 
-    add_end_ptr = mod_ptr;
+    boost::detail::thread::lock_ops<boost::mutex>::lock(m_update_mutex_b);
+    boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_a);
+    b_locked = true;
 
-    //HT_INFOF("fugazi TIMESTAMP --last-- %lld", next_timestamp);
-
-    // force scans to only see updates before the earliest time in this range
-    min_ts_rec.timestamp.logical--;
-    min_ts_rec.range_ptr->add_update_timestamp( min_ts_rec.timestamp );
-    min_ts_vector.push_back(min_ts_rec);
-
-    if (splitSize > 0) {
-      boost::shared_array<uint8_t> bufPtr( new uint8_t [ splitSize + table->encoded_length() ] );
+    /**
+     * Commit valid (go) mutations
+     */
+    if (goSize > 0) {
+      boost::shared_array<uint8_t> bufPtr( new uint8_t [ goSize + table->encoded_length() ] );
       uint8_t *base = bufPtr.get();
       uint8_t *ptr = base;
 
       table->encode(&ptr);
 
-      items_added += splitMods.size();
-      memory_added += splitSize;
+      items_added += goMods.size();
+      memory_added += goSize;
 
-      for (size_t i=0; i<splitMods.size(); i++) {
-	memcpy(ptr, splitMods[i].base, splitMods[i].len);
-	ptr += splitMods[i].len;
+      for (size_t i=0; i<goMods.size(); i++) {
+	memcpy(ptr, goMods[i].base, goMods[i].len);
+	ptr += goMods[i].len;
       }
 
-      HT_EXPECT((ptr-base) <= (long)(splitSize + table->encoded_length()), Error::FAILED_EXPECTATION);
+      HT_EXPECT((ptr-base) <= (long)(goSize + table->encoded_length()), Error::FAILED_EXPECTATION);
 
-      if ((error = splitLogPtr->write(base, ptr-base, update_timestamp)) != Error::OK) {
-	errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to split log";
-	boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_a);
+      if ((error = Global::log->write(base, ptr-base, update_timestamp)) != Error::OK) {
+	errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to commit log";
+	boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_b);
 	goto abort;
       }
     }
 
-    /**
-     * Apply the modifications
-     */
-    min_ts_rec.range_ptr->lock();
-    {
-      const uint8_t *ptr = add_base_ptr;
-      const ByteString32T *key, *value;
-      while (ptr < add_end_ptr) {
-	key = (const ByteString32T *)ptr;
-	ptr += Length(key);
-	value = (const ByteString32T *)ptr;
-	ptr += Length(value);
-	HT_EXPECT(min_ts_rec.range_ptr->add(key, value, update_timestamp) == Error::OK, Error::FAILED_EXPECTATION);
-      }
-    }
-    min_ts_rec.range_ptr->unlock(update_timestamp);
-
-    /**
-     * Split and Compaction processing
-     */
-    {
-      std::vector<AccessGroup::CompactionPriorityDataT> priority_data_vec;
-      std::vector<AccessGroup *> compactions;
-      uint64_t disk_usage = 0;
-
-      min_ts_rec.range_ptr->get_compaction_priority_data(priority_data_vec);
-      for (size_t i=0; i<priority_data_vec.size(); i++) {
-	disk_usage += priority_data_vec[i].disk_used;
-	if (!priority_data_vec[i].in_memory && priority_data_vec[i].mem_used >= (uint32_t)Global::localityGroupMaxMemory)
-	  compactions.push_back(priority_data_vec[i].ag);
-      }
-
-      if (!min_ts_rec.range_ptr->is_root() &&
-	  (disk_usage > min_ts_rec.range_ptr->get_size_limit() || 
-	   (Global::range_metadata_max_bytes && table->id == 0 && disk_usage > Global::range_metadata_max_bytes))) {
-	if (!min_ts_rec.range_ptr->test_and_set_maintenance())
-	  Global::maintenance_queue->add( new MaintenanceTaskSplit(min_ts_rec.range_ptr) );
-      }
-      else if (!compactions.empty()) {
-	if (!min_ts_rec.range_ptr->test_and_set_maintenance()) {
-	  for (size_t i=0; i<compactions.size(); i++)
-	    compactions[i]->set_compaction_bit();
-	  Global::maintenance_queue->add( new MaintenanceTaskCompaction(min_ts_rec.range_ptr, false) );
-	}
-      }
-    }
+    boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_b);
 
     if (Global::verbose) {
-      HT_INFOF("Added %d (%d split off) updates to '%s'", goMods.size()+splitMods.size(), splitMods.size(), table->name);
+      HT_INFOF("Dropped %d updates (out-of-range)", stopMods.size());
     }
+
+    error = Error::OK;
   }
-
-  boost::detail::thread::lock_ops<boost::mutex>::lock(m_update_mutex_b);
-  boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_a);
-
-  /**
-   * Commit valid (go) mutations
-   */
-  if (goSize > 0) {
-    boost::shared_array<uint8_t> bufPtr( new uint8_t [ goSize + table->encoded_length() ] );
-    uint8_t *base = bufPtr.get();
-    uint8_t *ptr = base;
-
-    table->encode(&ptr);
-
-    items_added += goMods.size();
-    memory_added += goSize;
-
-    for (size_t i=0; i<goMods.size(); i++) {
-      memcpy(ptr, goMods[i].base, goMods[i].len);
-      ptr += goMods[i].len;
-    }
-
-    HT_EXPECT((ptr-base) <= (long)(goSize + table->encoded_length()), Error::FAILED_EXPECTATION);
-
-    if ((error = Global::log->write(base, ptr-base, update_timestamp)) != Error::OK) {
-      errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to commit log";
+  catch (Exception &e) {
+    HT_ERRORF("Exception caught: %s", Error::get_text(e.code()));
+    error = e.code();
+    errMsg = e.what();
+    if (b_locked)
       boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_b);
-      goto abort;
-    }
+    else if (a_locked)
+      boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_a);
   }
-
-  boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_b);
-
-  if (Global::verbose) {
-    HT_INFOF("Dropped %d updates (out-of-range)", stopMods.size());
-  }
-
-  error = Error::OK;
 
  abort:
 
@@ -1277,7 +1298,7 @@ void RangeServer::replay_start(ResponseCallback *cb) {
 void RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data, size_t len) {
   TableIdentifier table_identifier;
   TableInfoPtr table_info_ptr;
-  const ByteString32T *key, *value;
+  ByteString key, value;
   uint8_t *ptr = (uint8_t *)data;
   const uint8_t *end_ptr = data + len;
   const uint8_t *block_end_ptr;
@@ -1318,7 +1339,7 @@ void RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data, size_
 
       while (ptr < block_end_ptr) {
 
-	row = (const char *)((ByteString32T *)ptr)->data;
+	row = ByteString(ptr).str();
 
 	// Look for containing range, add to stop mods if not found
 	if (!table_info_ptr->find_containing_range(row, range_ptr))
@@ -1330,13 +1351,13 @@ void RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data, size_
 	       (end_row == "" || (strcmp(row, end_row.c_str()) <= 0))) {
 
 	  // extract the key
-	  key = (const ByteString32T *)ptr;
-	  ptr += Length(key);
+	  key.ptr = ptr;
+	  ptr += key.length();
 	  if (ptr > end_ptr)
 	    throw Exception(Error::REQUEST_TRUNCATED, "Problem decoding key");
 
-	  value = (const ByteString32T *)ptr;
-	  ptr += Length(value);
+	  value.ptr = ptr;
+	  ptr += value.length();
 	  if (ptr > end_ptr)
 	    throw Exception(Error::REQUEST_TRUNCATED, "Problem decoding value");
 
@@ -1344,7 +1365,7 @@ void RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data, size_
 
 	  if (count) {
 	    items_added += count;
-	    memory_added += count * (ptr - (uint8_t *)key);
+	    memory_added += count * (ptr - key.ptr);
 	  }
 	}
       }

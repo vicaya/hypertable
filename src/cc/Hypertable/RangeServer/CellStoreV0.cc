@@ -139,7 +139,7 @@ int CellStoreV0::create(const char *fname, uint32_t blocksize, const std::string
 }
 
 
-int CellStoreV0::add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp) {
+int CellStoreV0::add(const ByteString key, const ByteString value, uint64_t real_timestamp) {
   EventPtr eventPtr;
   DynamicBuffer zBuffer(0);
 
@@ -179,13 +179,13 @@ int CellStoreV0::add(const ByteString32T *key, const ByteString32T *value, uint6
     m_offset += zlen;
   }
 
-  size_t keyLen = sizeof(int32_t) + key->len;
-  size_t valueLen = sizeof(int32_t) + value->len;
+  size_t keyLen = key.length();
+  size_t valueLen = value.length();
 
   m_buffer.ensure( keyLen + valueLen );
 
-  m_last_key = (ByteString32T *)m_buffer.addNoCheck(key, keyLen);
-  m_buffer.addNoCheck(value, valueLen);
+  m_last_key.ptr = m_buffer.addNoCheck(key.ptr, keyLen);
+  m_buffer.addNoCheck(value.ptr, valueLen);
 
   m_trailer.total_entries++;
 
@@ -202,6 +202,7 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
   DynamicBuffer zBuffer(0);
   size_t len;
   uint8_t *base;
+  ByteString key;
 
   if (m_buffer.fill() > 0) {
     BlockCompressionHeader header(DATA_BLOCK_MAGIC);
@@ -278,19 +279,18 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
    * Set up m_index map
    */
   uint32_t offset;
-  ByteString32T *key;
   m_fix_index_buffer.ptr = m_fix_index_buffer.buf;
   m_var_index_buffer.ptr = m_var_index_buffer.buf;
   for (size_t i=0; i<m_trailer.index_entries; i++) {
     // variable portion
-    key = (ByteString32T *)m_var_index_buffer.ptr;
-    m_var_index_buffer.ptr += sizeof(int32_t) + key->len;
+    key.ptr = m_var_index_buffer.ptr;
+    m_var_index_buffer.ptr += key.length();
     // fixed portion (e.g. offset)
     memcpy(&offset, m_fix_index_buffer.ptr, sizeof(offset));
     m_fix_index_buffer.ptr += sizeof(offset);
     m_index.insert(m_index.end(), IndexMapT::value_type(key, offset));
     if (i == m_trailer.index_entries/2) {
-      record_split_row((ByteString32T *)m_var_index_buffer.ptr);
+      record_split_row(ByteString(m_var_index_buffer.ptr));
     }
   }
 
@@ -346,11 +346,11 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
 /**
  *
  */
-void CellStoreV0::add_index_entry(const ByteString32T *key, uint32_t offset) {
+void CellStoreV0::add_index_entry(const ByteString key, uint32_t offset) {
 
-  size_t keyLen = sizeof(int32_t) + key->len;
+  size_t keyLen = key.length();
   m_var_index_buffer.ensure( keyLen );
-  memcpy(m_var_index_buffer.ptr, key, keyLen);
+  memcpy(m_var_index_buffer.ptr, key.ptr, keyLen);
   m_var_index_buffer.ptr += keyLen;
 
   // Serialize offset into fix index buffer
@@ -454,6 +454,7 @@ int CellStoreV0::load_index() {
   uint32_t len;
   BlockCompressionHeader header;
   DynamicBuffer input(0);
+  ByteString key;
 
   m_compressor = create_block_compression_codec();
 
@@ -509,7 +510,6 @@ int CellStoreV0::load_index() {
 
   m_index.clear();
 
-  ByteString32T *key;
   uint32_t offset;
 
   // record end offsets for sanity checking and reset ptr
@@ -524,8 +524,8 @@ int CellStoreV0::load_index() {
     assert(m_var_index_buffer.ptr < vEnd);
 
     // Deserialized cell key (variable portion)
-    key = (ByteString32T *)m_var_index_buffer.ptr;
-    m_var_index_buffer.ptr += sizeof(int32_t) + key->len;
+    key.ptr = m_var_index_buffer.ptr;
+    m_var_index_buffer.ptr += key.length();
 
     // Deserialize offset
     memcpy(&offset, m_fix_index_buffer.ptr, sizeof(offset));
@@ -541,22 +541,27 @@ int CellStoreV0::load_index() {
   {
     uint32_t start = 0;
     uint32_t end = (uint32_t)m_file_length;
-    ByteString32T *start_key = Create(m_start_row.c_str(), strlen(m_start_row.c_str()));
-    ByteString32T *end_key = Create(m_end_row.c_str(), strlen(m_end_row.c_str()));
+    size_t start_row_length = m_start_row.length() + 1;
+    size_t end_row_length = m_end_row.length() + 1;
+    DynamicBuffer dbuf( 7 + std::max(start_row_length, end_row_length) );
+    ByteString bs;
     CellStoreV0::IndexMapT::const_iterator iter, mid_iter, end_iter;
 
-    iter = m_index.upper_bound(start_key);
+    dbuf.clear();
+    append_as_byte_string(dbuf, m_start_row.c_str(), start_row_length);
+    bs.ptr = dbuf.buf;
+    iter = m_index.upper_bound(bs);
     start = (*iter).second;
 
-    if ((end_iter = m_index.lower_bound(end_key)) == m_index.end())
+    dbuf.clear();
+    append_as_byte_string(dbuf, m_end_row.c_str(), end_row_length);
+    bs.ptr = dbuf.buf;
+    if ((end_iter = m_index.lower_bound(bs)) == m_index.end())
       end = m_file_length;
     else
       end = (*iter).second;
 
     m_disk_usage = end - start;
-
-    Destroy(start_key);
-    Destroy(end_key);
 
     size_t i=0;
     for (mid_iter=iter; iter!=end_iter; ++iter,++i) {
@@ -584,14 +589,14 @@ int CellStoreV0::load_index() {
  *
  */
 void CellStoreV0::display_block_info() {
-  ByteString32T *last_key = 0;
+  ByteString last_key;
   uint32_t last_offset = 0;
   uint32_t block_size;
   size_t i=0;
   for (IndexMapT::const_iterator iter = m_index.begin(); iter != m_index.end(); iter++) {
     if (last_key) {
       block_size = (*iter).second - last_offset;
-      cout << i << ": offset=" << last_offset << " size=" << block_size << " row=" << (const char *)last_key->data << endl;
+      cout << i << ": offset=" << last_offset << " size=" << block_size << " row=" << last_key.str() << endl;
       i++;
     }
     last_offset = (*iter).second;
@@ -599,13 +604,16 @@ void CellStoreV0::display_block_info() {
   }
   if (last_key) {
     block_size = m_trailer.filter_offset - last_offset;
-    cout << i << ": offset=" << last_offset << " size=" << block_size << " row=" << (const char *)last_key->data << endl;
+    cout << i << ": offset=" << last_offset << " size=" << block_size << " row=" << last_key.str() << endl;
   }
 }
 
 
-void CellStoreV0::record_split_row(const ByteString32T *key) {
-  std::string split_row = (const char *)key->data;
+
+void CellStoreV0::record_split_row(const ByteString key) {
+  uint8_t *ptr;
+  key.decode_length(&ptr);
+  std::string split_row = (const char *)ptr;
   if (split_row > m_start_row && split_row < m_end_row)
     m_split_row = split_row;
   //cout << "record_split_row = " << m_split_row << endl;

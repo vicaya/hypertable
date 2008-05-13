@@ -38,13 +38,13 @@ extern "C" {
 
 using namespace std;
 
-bool TestSource::next(ByteString32T **keyp, ByteString32T **valuep) {
+bool TestSource::next(ByteString &key, ByteString &value) {
   string line;
   boost::shared_array<char> linePtr;
   char *base, *ptr, *last;
   char *rowKey;
   char *column;
-  char *value;
+  char *value_str;
   uint64_t timestamp;
 
   while (getline(m_fin, line)) {
@@ -96,34 +96,34 @@ bool TestSource::next(ByteString32T **keyp, ByteString32T **valuep) {
     }
 
     if (!strcmp(column, "DELETE")) {
-      if (!create_row_delete(rowKey, timestamp, keyp, valuep)) {
+      if (!create_row_delete(rowKey, timestamp, key, value)) {
 	cerr << "Mal-formed input on line " << (m_cur_line-1) << endl;
 	continue;
       }
       return true;
     }
 
-    if ((value = strtok_r(0, "\t", &last)) == 0)
-      value = "";
+    if ((value_str = strtok_r(0, "\t", &last)) == 0)
+      value_str = "";
 
-    if (!strcmp(value, "DELETE")) {
-      if (!create_column_delete(rowKey, column, timestamp, keyp, valuep)) {
+    if (!strcmp(value_str, "DELETE")) {
+      if (!create_column_delete(rowKey, column, timestamp, key, value)) {
 	cerr << "Mal-formed input on line " << (m_cur_line-1) << endl;
 	continue;
       }
       return true;
     }
 
-    row_key_len = strlen(value);
+    row_key_len = strlen(value_str);
     if (row_key_len >= 2) {
-      if (!strcmp(&value[row_key_len-2], "??")) {
-	value[row_key_len-1] = (char )0xff;
-	value[row_key_len-2] = (char )0xff;
-	cerr << "converting end of value (" << value << ")" << endl;
+      if (!strcmp(&value_str[row_key_len-2], "??")) {
+	value_str[row_key_len-1] = (char )0xff;
+	value_str[row_key_len-2] = (char )0xff;
+	cerr << "converting end of value (" << value_str << ")" << endl;
       }
     }
 
-    if (!create_insert(rowKey, column, timestamp, value, keyp, valuep)) {
+    if (!create_insert(rowKey, column, timestamp, value_str, key, value)) {
       cerr << "Mal-formed input on line " << (m_cur_line-1) << endl;
       continue;
     }
@@ -135,14 +135,13 @@ bool TestSource::next(ByteString32T **keyp, ByteString32T **valuep) {
 }
 
 
-bool TestSource::create_row_delete(const char *row, uint64_t timestamp, ByteString32T **keyp, ByteString32T **valuep) {
+bool TestSource::create_row_delete(const char *row, uint64_t timestamp, ByteString &key, ByteString &value) {
   int32_t keyLen = strlen(row) + 12;
-  int32_t valueLen = 0;
 
   m_key_buffer.clear();
   m_key_buffer.ensure(sizeof(int32_t)+keyLen);
 
-  m_key_buffer.addNoCheck(&keyLen, sizeof(int32_t));
+  Serialization::encode_vi32(&m_key_buffer.ptr, keyLen);
   m_key_buffer.addNoCheck(row, strlen(row)+1);
   *m_key_buffer.ptr++ = 0;
   *m_key_buffer.ptr++ = 0;
@@ -151,19 +150,17 @@ bool TestSource::create_row_delete(const char *row, uint64_t timestamp, ByteStri
   timestamp = ByteOrderSwapInt64(timestamp);
   timestamp = ~timestamp;
   m_key_buffer.addNoCheck(&timestamp, sizeof(timestamp));
-  *keyp = (ByteString32T *)m_key_buffer.buf;
+  key.ptr = m_key_buffer.buf;
 
   m_value_buffer.clear();
-  m_value_buffer.ensure(sizeof(int32_t));
-  m_value_buffer.addNoCheck(&valueLen, sizeof(int32_t));  
-  *valuep = (ByteString32T *)m_value_buffer.buf;
+  append_as_byte_string(m_value_buffer, 0, 0);
+  value.ptr = m_value_buffer.buf;
   return true;
 }
 
 
-bool TestSource::create_column_delete(const char *row, const char *column, uint64_t timestamp, ByteString32T **keyp, ByteString32T **valuep) {
+bool TestSource::create_column_delete(const char *row, const char *column, uint64_t timestamp, ByteString &key, ByteString &value) {
   int32_t keyLen = 0;
-  int32_t valueLen = 0;
   string columnFamily;
   const char *qualifier;
   const char *ptr = strchr(column, ':');
@@ -186,7 +183,7 @@ bool TestSource::create_column_delete(const char *row, const char *column, uint6
   keyLen = strlen(row) + strlen(qualifier) + 12;
   m_key_buffer.ensure(sizeof(int32_t)+keyLen);
 
-  m_key_buffer.addNoCheck(&keyLen, sizeof(int32_t));
+  Serialization::encode_vi32(&m_key_buffer.ptr, keyLen);
   m_key_buffer.addNoCheck(row, strlen(row)+1);
   *m_key_buffer.ptr++ = cf->id;
   m_key_buffer.addNoCheck(qualifier, strlen(qualifier)+1);
@@ -195,19 +192,17 @@ bool TestSource::create_column_delete(const char *row, const char *column, uint6
   timestamp = ByteOrderSwapInt64(timestamp);
   timestamp = ~timestamp;
   m_key_buffer.addNoCheck(&timestamp, sizeof(timestamp));
-  *keyp = (ByteString32T *)m_key_buffer.buf;
+  key.ptr = m_key_buffer.buf;
 
   m_value_buffer.clear();
-  m_value_buffer.ensure(sizeof(int32_t));
-  m_value_buffer.addNoCheck(&valueLen, sizeof(int32_t));  
-  *valuep = (ByteString32T *)m_value_buffer.buf;
+  append_as_byte_string(m_value_buffer, 0, 0);
+  value.ptr = m_value_buffer.buf;
   return true;
 }
 
 
-bool TestSource::create_insert(const char *row, const char *column, uint64_t timestamp, const char *value, ByteString32T **keyp, ByteString32T **valuep) {
+bool TestSource::create_insert(const char *row, const char *column, uint64_t timestamp, const char *value_str, ByteString &key, ByteString &value) {
   int32_t keyLen = 0;
-  int32_t valueLen = strlen(value);
   string columnFamily;
   const char *qualifier;
   const char *ptr = strchr(column, ':');
@@ -230,7 +225,7 @@ bool TestSource::create_insert(const char *row, const char *column, uint64_t tim
   keyLen = strlen(row) + strlen(qualifier) + 12;
   m_key_buffer.ensure(keyLen+sizeof(int32_t));
 
-  m_key_buffer.addNoCheck(&keyLen, sizeof(int32_t));
+  Serialization::encode_vi32(&m_key_buffer.ptr, keyLen);
   m_key_buffer.addNoCheck(row, strlen(row)+1);
   *m_key_buffer.ptr++ = cf->id;
   m_key_buffer.addNoCheck(qualifier, strlen(qualifier)+1);
@@ -239,13 +234,11 @@ bool TestSource::create_insert(const char *row, const char *column, uint64_t tim
   timestamp = ByteOrderSwapInt64(timestamp);
   timestamp = ~timestamp;
   m_key_buffer.addNoCheck(&timestamp, sizeof(timestamp));
-  *keyp = (ByteString32T *)m_key_buffer.buf;
+  key.ptr = m_key_buffer.buf;
 
   m_value_buffer.clear();
-  m_value_buffer.ensure(sizeof(int32_t) + valueLen);
-  m_value_buffer.addNoCheck(&valueLen, sizeof(int32_t));  
-  m_value_buffer.addNoCheck(value, valueLen);
-  *valuep = (ByteString32T *)m_value_buffer.buf;
+  append_as_byte_string(m_value_buffer, value_str, strlen(value_str));
+  value.ptr = m_value_buffer.buf;
   return true;
 }
 

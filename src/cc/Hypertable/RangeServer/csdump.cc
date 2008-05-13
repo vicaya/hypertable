@@ -72,8 +72,7 @@ int main(int argc, char **argv) {
   ConnectionManagerPtr connManagerPtr;
   DfsBroker::Client *client;
   std::string fname = "";
-  ByteString32T *key;
-  ByteString32T *value;
+  ByteString key, value;
   bool dump_all = false;
   CellStoreV0Ptr cellStorePtr;
   bool count_keys = false;
@@ -83,6 +82,7 @@ int main(int argc, char **argv) {
   bool hit_start = false;
   PropertiesPtr props_ptr;
   string configFile = "";
+  Key key_comps;
 
   ReactorFactory::initialize(1);
   System::initialize(argv[0]);
@@ -151,20 +151,22 @@ int main(int argc, char **argv) {
     ScanContextPtr scanContextPtr( new ScanContext(END_OF_TIME) );
 
     scanner = cellStorePtr->create_scanner(scanContextPtr);
-    while (scanner->get(&key, &value)) {
+    while (scanner->get(key, value)) {
+      key_comps.load(key);
+
       if (!hit_start) {
-	if (strcmp((const char *)key->data, start_key.c_str()) <= 0) {
+	if (strcmp(key_comps.row, start_key.c_str()) <= 0) {
 	  scanner->forward();
 	  continue;
 	}
 	hit_start = true;
       }
-      if (got_end_key && strcmp((const char *)key->data, end_key.c_str()) > 0)
+      if (got_end_key && strcmp(key_comps.row, end_key.c_str()) > 0)
 	break;
       if (count_keys)
 	key_count++;
       else
-	cout << Key(key) << endl;
+	cout << key_comps << endl;
       scanner->forward();
     }
     delete scanner;

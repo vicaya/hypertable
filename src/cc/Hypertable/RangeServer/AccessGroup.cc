@@ -97,7 +97,7 @@ AccessGroup::~AccessGroup() {
  * Also, at the end of compaction processing, when m_cell_cache_ptr gets reset to a new value,
  * the CellCache should be locked as well.
  */
-int AccessGroup::add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp) {
+int AccessGroup::add(const ByteString key, const ByteString value, uint64_t real_timestamp) {
   // assumes timestamps are coming in order
   if (m_oldest_cached_timestamp == 0)
     m_oldest_cached_timestamp = real_timestamp;
@@ -107,7 +107,7 @@ int AccessGroup::add(const ByteString32T *key, const ByteString32T *value, uint6
 
 /**
  */
-bool AccessGroup::replay_add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp) {
+bool AccessGroup::replay_add(const ByteString key, const ByteString value, uint64_t real_timestamp) {
   if (real_timestamp > m_compaction_timestamp.real) {
     if (m_oldest_cached_timestamp == 0)
       m_oldest_cached_timestamp = real_timestamp;
@@ -205,9 +205,9 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore_ptr, uint32_t id) {
   if (m_in_memory) {
     ScanContextPtr scan_context_ptr = new ScanContext(END_OF_TIME, m_schema_ptr);
     CellListScannerPtr scanner_ptr = cellstore_ptr->create_scanner(scan_context_ptr);
-    ByteString32T *key, *value;
+    ByteString key, value;
     m_cell_cache_ptr = new CellCache();
-    while (scanner_ptr->get(&key, &value)) {
+    while (scanner_ptr->get(key, value)) {
       m_cell_cache_ptr->add(key, value, m_compaction_timestamp.real);
       scanner_ptr->forward();
     }
@@ -231,8 +231,8 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
   String cellStoreFile;
   char md5DigestStr[33];
   char filename[16];
-  ByteString32T *key = 0;
-  ByteString32T *value = 0;
+  ByteString key;
+  ByteString value;
   Key keyComps;
   CellListScannerPtr scannerPtr;
   size_t tableIndex = 1;
@@ -306,7 +306,7 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
       scannerPtr = m_cell_cache_ptr->create_scanner(scan_context_ptr);
   }
 
-  while (scannerPtr->get(&key, &value)) {
+  while (scannerPtr->get(key, value)) {
 
     if (!keyComps.load(key)) {
       HT_ERROR("Problem deserializing key/value pair");
@@ -398,8 +398,8 @@ int AccessGroup::shrink(String &new_start_row) {
   CellCachePtr new_cell_cache_ptr;
   ScanContextPtr scan_context_ptr = new ScanContext(END_OF_TIME, m_schema_ptr);
   CellListScannerPtr cell_cache_scanner_ptr;
-  ByteString32T *key;
-  ByteString32T *value;
+  ByteString key;
+  ByteString value;
   std::vector<CellStorePtr> new_stores;
   CellStore *new_cell_store;
   uint64_t memory_added = 0;
@@ -417,10 +417,10 @@ int AccessGroup::shrink(String &new_start_row) {
   /**
    * Shrink the CellCache
    */
-  while (cell_cache_scanner_ptr->get(&key, &value)) {
-    if (strcmp((const char *)key->data, m_start_row.c_str()) > 0) {
+  while (cell_cache_scanner_ptr->get(key, value)) {
+    if (strcmp(key.str(), m_start_row.c_str()) > 0) {
       add(key, value, 0);
-      memory_added += Length(key) + Length(value);
+      memory_added += key.length() + value.length();
       items_added++;
     }
     cell_cache_scanner_ptr->forward();

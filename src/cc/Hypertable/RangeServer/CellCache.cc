@@ -44,6 +44,7 @@ const uint32_t CellCache::OFFSET_BIT_MASK = 0x7FFFFFFF;
 CellCache::~CellCache() {
   uint64_t mem_freed = 0;
   uint32_t offset;
+  uint8_t *ptr;
 #ifdef STAT  
   uint32_t skipped = 0;
 #endif
@@ -63,11 +64,12 @@ CellCache::~CellCache() {
 
   for (CellMapT::iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++) {
     if (((*iter).second & ALLOC_BIT_MASK) == 0) {
-      HT_EXPECT(memcmp((*iter).first, "DEAD", 4), Error::FAILED_EXPECTATION);
+      ptr = (*iter).first.ptr;
+      HT_EXPECT(memcmp(ptr, "DEAD", 4), Error::FAILED_EXPECTATION);
       offset = (*iter).second & OFFSET_BIT_MASK;
-      mem_freed += offset + Length((ByteString32T *)(((uint8_t *)(*iter).first) + offset));
-      memcpy((void *)((*iter).first), "DEAD", 4);
-      delete [] (*iter).first;
+      mem_freed += offset + ByteString(ptr + offset).length();
+      memcpy(ptr, "DEAD", 4);
+      delete [] ptr;
     }
 #ifdef STAT
     else
@@ -90,38 +92,32 @@ CellCache::~CellCache() {
 }
 
 
+
 /**
- * 
  */
-int CellCache::add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp) {
-  size_t kv_len = key->len + (2*sizeof(int32_t));
-  ByteString32T *newKey;
-  ByteString32T *newValue;
+int CellCache::add(const ByteString key, const ByteString value, uint64_t real_timestamp) {
+  ByteString new_key;
+  uint8_t *ptr;
+  size_t key_len = key.length();
+  size_t total_len = key_len + value.length();
 
   (void)real_timestamp;
 
-  if (value) {
-    kv_len += value->len;
-    newKey = (ByteString32T *)new uint8_t [ kv_len ];
-    newValue = (ByteString32T *)(newKey->data + key->len);
-    memcpy(newKey, key, sizeof(int32_t) + key->len);
-    memcpy(newValue, value, sizeof(int32_t) + value->len);
-  }
-  else {
-    newKey = (ByteString32T *)new uint8_t [ kv_len ];
-    newValue = (ByteString32T *)(newKey->data + key->len);
-    memcpy(newKey, key, sizeof(int32_t) + key->len);
-    newValue->len = 0;
-  }
+  new_key.ptr = ptr = new uint8_t [ total_len ];
 
-  if ( ! m_cell_map.insert(CellMapT::value_type(newKey, Length(newKey))).second ) {
+  memcpy(ptr, key.ptr, key_len);
+  ptr += key_len;
+
+  value.write(ptr);
+
+  if ( ! m_cell_map.insert(CellMapT::value_type(new_key, key_len)).second ) {
     m_collisions++;
-    HT_WARNF("Collision detected key insert (row = %s)", (const char *)newKey->data);
-    delete [] newKey;
+    HT_WARNF("Collision detected key insert (row = %s)", new_key.str());
+    delete [] new_key.ptr;
   }
   else {
-    m_memory_used += kv_len;
-    if ( key->data[ key->len - 9] <= FLAG_DELETE_CELL )
+    m_memory_used += total_len;
+    if ( key.ptr[ key_len - 9] <= FLAG_DELETE_CELL )
       m_deletes++;
   }
 
@@ -144,7 +140,7 @@ void CellCache::get_split_rows(std::vector<std::string> &split_rows) {
     size_t i=0, mid = m_cell_map.size() / 2;
     for (i=0; i<mid; i++)
       iter++;
-    split_rows.push_back((const char *)(*iter).first->data);
+    split_rows.push_back((*iter).first.str());
   }
 }
 
@@ -152,11 +148,12 @@ void CellCache::get_split_rows(std::vector<std::string> &split_rows) {
 
 void CellCache::get_rows(std::vector<std::string> &rows) {
   boost::mutex::scoped_lock lock(m_mutex);
-  const char *last_row = "";
+  const char *row, *last_row = "";
   for (CellMapT::const_iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++) {
-    if (strcmp((const char *)(*iter).first->data, last_row)) {
-      rows.push_back((const char *)(*iter).first->data);
-      last_row = (const char *)(*iter).first->data;
+    row = (*iter).first.str();
+    if (strcmp(row, last_row)) {
+      rows.push_back(row);
+      last_row = row;
     }
   }
 }

@@ -110,7 +110,7 @@ TableScanner::~TableScanner() {
 
 bool TableScanner::next(CellT &cell) {
   int error;
-  const ByteString32T *key, *value;
+  ByteString key, value;
   Key keyComps;
   Timer timer(m_timeout);
 
@@ -207,8 +207,7 @@ bool TableScanner::next(CellT &cell) {
     else
       cell.column_family = cf->name.c_str();
     cell.timestamp = keyComps.timestamp;
-    cell.value = value->data;
-    cell.value_len = value->len;
+    cell.value_len = value.decode_length((uint8_t **)&cell.value);
     cell.flag = keyComps.flag;
     return true;
   }

@@ -287,7 +287,7 @@ int RangeLocator::find(TableIdentifier *table, const char *row_key, RangeLocatio
     }
 
     if (!m_cache_ptr->lookup(0, meta_key_ptr, range_loc_info_p, inclusive)) {
-      HT_ERRORF("Unable to find metadata for row '%s'", meta_keys.start);
+      HT_ERRORF("Unable to find metadata for row '%s' row_key=%s", meta_keys.start, row_key);
       return Error::METADATA_NOT_FOUND;
     }
   }
@@ -361,8 +361,8 @@ int RangeLocator::find(TableIdentifier *table, const char *row_key, RangeLocatio
  */
 int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
   RangeLocationInfo range_loc_info;
-  const ByteString32T *key;
-  const ByteString32T *value;
+  ByteString key;
+  ByteString value;
   Key keyComps;
   const char *stripped_key;
   uint32_t table_id = 0;
@@ -379,7 +379,7 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
   while (scan_block.next(key, value)) {
 
     if (!keyComps.load(key)) {
-      HT_ERRORF("METADATA lookup for '%s' returned bad key", (const char *)key->data);
+      HT_ERRORF("METADATA lookup for '%s' returned bad key", key.str());
       return Error::INVALID_METADATA;
     }
 
@@ -427,18 +427,22 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
     }
 
     if (keyComps.column_family_code == m_startrow_cid) {
+      char *str;
+      size_t len = value.decode_length((uint8_t **)&str);
       //cout << "TS=" << keyComps.timestamp << endl;
-      range_loc_info.start_row = std::string((const char *)value->data, value->len);
+      range_loc_info.start_row = std::string(str, len);
       got_start_row = true;
     }
     else if (keyComps.column_family_code == m_location_cid) {
-      range_loc_info.location = std::string((const char *)value->data, value->len);
+      char *str;
+      size_t len = value.decode_length((uint8_t **)&str);
+      range_loc_info.location = std::string(str, len);
       if (range_loc_info.location == "!")
 	return Error::TABLE_DOES_NOT_EXIST;
       got_location = true;
     }
     else {
-      HT_ERRORF("METADATA lookup on row '%s' returned incorrect column (id=%d)", (const char *)key->data, keyComps.column_family_code);
+      HT_ERRORF("METADATA lookup on row '%s' returned incorrect column (id=%d)", key.str(), keyComps.column_family_code);
     }
   }
 

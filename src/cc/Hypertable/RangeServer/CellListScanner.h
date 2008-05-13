@@ -37,7 +37,7 @@ namespace Hypertable {
     CellListScanner(ScanContextPtr &scanContextPtr) : m_scan_context_ptr(scanContextPtr) { return; }
     virtual ~CellListScanner() { return; }
     virtual void forward() = 0;
-    virtual bool get(ByteString32T **keyp, ByteString32T **valuep) = 0;
+    virtual bool get(ByteString &key, ByteString &value) = 0;
 
   protected:
     ScanContextPtr m_scan_context_ptr;

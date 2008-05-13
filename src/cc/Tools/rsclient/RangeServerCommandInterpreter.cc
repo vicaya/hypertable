@@ -123,15 +123,18 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       uint8_t *send_buf = 0;
       size_t   send_buf_len = 0;
       DynamicBuffer buf(BUFFER_SIZE);
-      ByteString32T *key, *value;
+      ByteString key, value;
+      size_t key_len, value_len;
       bool outstanding = false;
 
       while (true) {
 
-	while (tsource->next(&key, &value)) {
-	  buf.ensure(Length(key) + Length(value));
-	  buf.addNoCheck(key, Length(key));
-	  buf.addNoCheck(value, Length(value));
+	while (tsource->next(key, value)) {
+	  key_len = key.length();
+	  value_len = value.length();
+	  buf.ensure(key_len + value_len);
+	  buf.addNoCheck(key.ptr, key_len);
+	  buf.addNoCheck(value.ptr, value_len);
 	  if (buf.fill() > BUFFER_SIZE)
 	    break;
 	}
@@ -140,26 +143,30 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 	 * Sort the keys
 	 */
 	if (buf.fill()) {
-	  std::vector<ByteString32T *> keys;
-	  struct ltByteString32 ltbs32;
+	  std::vector<ByteString> keys;
+	  struct ltByteString ltbs;
 	  uint8_t *ptr;
 	  size_t len;
 
-	  ptr = buf.buf;
+	  key.ptr = ptr = buf.buf;
 
 	  while (ptr < buf.ptr) {
-	    key = (ByteString32T *)ptr;
 	    keys.push_back(key);
-	    ptr += Length(key) + Length(Skip(key));
+	    key.next();
+	    key.next();
+	    ptr = key.ptr;
 	  }
 
-	  std::sort(keys.begin(), keys.end(), ltbs32);
+	  std::sort(keys.begin(), keys.end(), ltbs);
 
 	  send_buf = new uint8_t [ buf.fill() ];
 	  ptr = send_buf;
 	  for (size_t i=0; i<keys.size(); i++) {
-	    len = Length(keys[i]) + Length(Skip(keys[i]));
-	    memcpy(ptr, keys[i], len);
+	    key = keys[i];
+	    key.next();
+	    key.next();
+	    len = key.ptr - keys[i].ptr;
+	    memcpy(ptr, keys[i].ptr, len);
 	    ptr += len;
 	  }
 	  send_buf_len = ptr - send_buf;
@@ -238,7 +245,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 
       m_cur_scanner_id = scanblock.get_scanner_id();
 
-      const ByteString32T *key, *value;
+      ByteString key, value;
 
       while (scanblock.next(key, value))
 	display_scan_data(key, value, schema_ptr);
@@ -262,7 +269,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
        */
       m_range_server_ptr->fetch_scanblock(m_addr, scanner_id, scanblock);
 
-      const ByteString32T *key, *value;
+      ByteString key, value;
 
       while (scanblock.next(key, value))
 	display_scan_data(key, value, schema_ptr);
@@ -333,7 +340,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 /**
  *
  */
-void RangeServerCommandInterpreter::display_scan_data(const ByteString32T *key, const ByteString32T *value, SchemaPtr &schemaPtr) {
+void RangeServerCommandInterpreter::display_scan_data(const ByteString &key, const ByteString &value, SchemaPtr &schemaPtr) {
   Key keyComps(key);
   Schema::ColumnFamily *cf;
 

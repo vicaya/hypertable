@@ -57,7 +57,7 @@ namespace Hypertable {
      *
      * @param key the opaque key
      */
-    Key(const ByteString32T *key);
+    Key(ByteString key);
 
     /**
      * Parses the opaque key and loads the components into the member variables
@@ -65,7 +65,7 @@ namespace Hypertable {
      * @param key the opaque key
      * @return true on success, false otherwise
      */
-    bool load(const ByteString32T *key);
+    bool load(ByteString key);
 
     /**
      * Updates the timestamp of a previously loaded key by writing the
@@ -94,9 +94,6 @@ namespace Hypertable {
    */
   std::ostream &operator<<(std::ostream &os, const Key &key);
 
-
-  void CreateKey(ByteString32T *key, uint8_t flag, const char *row, uint8_t column_family_code, const char *column_qualifier, uint64_t timestamp);
-
   /**
    * Builds an opaque key from a set of key components.  This function allocates
    * memory for the key an then packs the components into the key so that keys can
@@ -111,9 +108,9 @@ namespace Hypertable {
    * @param timestamp timestamp in microseconds
    * @return newly allocated opaque key
    */
-  ByteString32T *CreateKey(uint8_t flag, const char *row, uint8_t column_family_code, const char *column_qualifier, uint64_t timestamp);
+  ByteString create_key(uint8_t flag, const char *row, uint8_t column_family_code, const char *column_qualifier, uint64_t timestamp);
 
-  void CreateKeyAndAppend(DynamicBuffer &dst_buf, uint8_t flag, const char *row, uint8_t column_family_code, const char *column_qualifier, uint64_t timestamp);
+  void create_key_and_append(DynamicBuffer &dst_buf, uint8_t flag, const char *row, uint8_t column_family_code, const char *column_qualifier, uint64_t timestamp);
 
 }
 

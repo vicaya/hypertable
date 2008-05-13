@@ -41,11 +41,12 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr,
                                        ScanContextPtr &scanContextPtr) :
     CellListScanner(scanContextPtr), m_cell_store_ptr(cellStorePtr),
     m_cell_store_v0(dynamic_cast< CellStoreV0*>(m_cell_store_ptr.get())),
-    m_index(m_cell_store_v0->m_index), m_cur_key(0), m_cur_value(0),
+    m_index(m_cell_store_v0->m_index),
     m_check_for_range_end(false), m_end_inclusive(true),
     m_readahead(true), m_fd(-1), m_start_offset(0), m_end_offset(0),
     m_returned(0) {
-  ByteString32T  *key;
+  ByteString  key;
+  DynamicBuffer dbuf(0);
   bool start_inclusive = false;
 
   assert(m_cell_store_v0);
@@ -68,14 +69,15 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr,
     m_end_row = scanContextPtr->end_row;
   }
 
-  key = Create(m_start_row.c_str(), strlen(m_start_row.c_str()));
+  append_as_byte_string(dbuf, m_start_row.c_str());
+  key.ptr = dbuf.buf;
+
   if (start_inclusive)
     m_iter = m_index.lower_bound(key);
   else
     m_iter = m_index.upper_bound(key);
-  Destroy(key);
 
-  m_cur_key = 0;
+  m_cur_key.ptr = 0;
 
   if (m_iter == m_index.end())
     return;
@@ -98,7 +100,10 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr,
       buf_size = MINIMUM_READAHEAD_AMOUNT;
 
     m_start_offset = (*m_iter).second;
-    key = Create(m_end_row.c_str(), strlen(m_end_row.c_str()));
+
+    dbuf.clear();
+    append_as_byte_string(dbuf, m_end_row.c_str());
+    key.ptr = dbuf.buf;
 
     if ((m_end_iter = m_index.upper_bound(key)) == m_index.end())
       m_end_offset = m_cell_store_v0->m_trailer.fix_index_offset;
@@ -110,7 +115,6 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr,
       else
 	m_end_offset = (*iter_next).second;
     }
-    Destroy(key);
 
     try {
       m_fd = m_cell_store_v0->m_filesys->open_buffered(
@@ -132,24 +136,24 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr,
   /**
    * Seek to start of range in block
    */
-  m_cur_key = (ByteString32T *)m_block.ptr;
-  m_cur_value = (ByteString32T *)(m_block.ptr + Length(m_cur_key));
+  m_cur_key.ptr = m_block.ptr;
+  m_cur_value.ptr = m_block.ptr + m_cur_key.length();
 
   if (start_inclusive) {
-    while (strcmp((const char *)m_cur_key->data, m_start_row.c_str()) < 0) {
-      m_block.ptr = ((uint8_t *)m_cur_value) + Length(m_cur_value);
+    while (strcmp(m_cur_key.str(), m_start_row.c_str()) < 0) {
+      m_block.ptr = m_cur_value.ptr + m_cur_value.length();
       if (m_block.ptr >= m_block.end) {
 	m_iter = m_index.end();
 	HT_ERRORF("Unable to find start of range (row='%s') in %s", m_start_row.c_str(), m_cell_store_ptr->get_filename().c_str());
 	return;
       }
-      m_cur_key = (ByteString32T *)m_block.ptr;
-      m_cur_value = (ByteString32T *)(m_block.ptr + Length(m_cur_key));
+      m_cur_key.ptr = m_block.ptr;
+      m_cur_value.ptr = m_block.ptr + m_cur_key.length();
     }
   }
   else {
-    while (strcmp((const char *)m_cur_key->data, m_start_row.c_str()) <= 0) {
-      m_block.ptr = ((uint8_t *)m_cur_value) + Length(m_cur_value);
+    while (strcmp(m_cur_key.str(), m_start_row.c_str()) <= 0) {
+      m_block.ptr = m_cur_value.ptr + m_cur_value.length();
       if (m_block.ptr >= m_block.end) {
 	if (m_readahead) {
 	  if (!fetch_next_block_readahead())
@@ -158,8 +162,8 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr,
 	else if (!fetch_next_block())
 	  return;
       }
-      m_cur_key = (ByteString32T *)m_block.ptr;
-      m_cur_value = (ByteString32T *)(m_block.ptr + Length(m_cur_key));
+      m_cur_key.ptr = m_block.ptr;
+      m_cur_value.ptr = m_block.ptr + m_cur_key.length();
     }
   }
 
@@ -168,13 +172,13 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr,
    * End of range check
    */
   if (m_end_inclusive) {
-    if (strcmp((const char *)m_cur_key->data, m_end_row.c_str()) > 0) {
+    if (strcmp(m_cur_key.str(), m_end_row.c_str()) > 0) {
       m_iter = m_index.end();
       return;
     }
   }
   else {
-    if (strcmp((const char *)m_cur_key->data, m_end_row.c_str()) >= 0) {
+    if (strcmp(m_cur_key.str(), m_end_row.c_str()) >= 0) {
       m_iter = m_index.end();
       return;
     }
@@ -227,7 +231,7 @@ CellStoreScannerV0::~CellStoreScannerV0() {
 }
 
 
-bool CellStoreScannerV0::get(ByteString32T **keyp, ByteString32T **valuep) {
+bool CellStoreScannerV0::get(ByteString &key, ByteString &value) {
 
   if (m_iter == m_index.end())
     return false;
@@ -236,8 +240,8 @@ bool CellStoreScannerV0::get(ByteString32T **keyp, ByteString32T **valuep) {
   m_returned++;
 #endif
 
-  *keyp = m_cur_key;
-  *valuep = m_cur_value;
+  key = m_cur_key;
+  value = m_cur_value;
 
   return true;
 }
@@ -252,7 +256,7 @@ void CellStoreScannerV0::forward() {
     if (m_iter == m_index.end())
       return;
 
-    m_block.ptr = ((uint8_t *)m_cur_value) + Length(m_cur_value);    
+    m_block.ptr = m_cur_value.ptr + m_cur_value.length();
 
     if (m_block.ptr >= m_block.end) {
       if (m_readahead) {
@@ -263,18 +267,18 @@ void CellStoreScannerV0::forward() {
 	return;
     }
 
-    m_cur_key = (ByteString32T *)m_block.ptr;
-    m_cur_value = (ByteString32T *)(m_block.ptr + Length(m_cur_key));
+    m_cur_key.ptr = m_block.ptr;
+    m_cur_value.ptr = m_block.ptr + m_cur_key.length();
 
     if (m_check_for_range_end) {
       if (m_end_inclusive) {
-	if (strcmp((const char *)m_cur_key->data, m_end_row.c_str()) > 0) {
+	if (strcmp(m_cur_key.str(), m_end_row.c_str()) > 0) {
 	  m_iter = m_index.end();
 	  return;
 	}
       }
       else {
-	if (strcmp((const char *)m_cur_key->data, m_end_row.c_str()) >= 0) {
+	if (strcmp(m_cur_key.str(), m_end_row.c_str()) >= 0) {
 	  m_iter = m_index.end();
 	  return;
 	}
@@ -333,7 +337,7 @@ bool CellStoreScannerV0::fetch_next_block() {
 	m_check_for_range_end = true;
     }
     else {
-      if (strcmp((const char *)((*iterNext).first)->data, m_end_row.c_str()) >= 0)
+      if (strcmp((*iterNext).first.str(), m_end_row.c_str()) >= 0)
 	m_check_for_range_end = true;
       m_block.zlength = (*iterNext).second - m_block.offset;
     }
@@ -440,7 +444,7 @@ bool CellStoreScannerV0::fetch_next_block_readahead() {
 	m_check_for_range_end = true;
     }
     else {
-      if (strcmp((const char *)((*iterNext).first)->data, m_end_row.c_str()) >= 0)
+      if (strcmp((*iterNext).first.str(), m_end_row.c_str()) >= 0)
 	m_check_for_range_end = true;
       m_block.zlength = (*iterNext).second - m_block.offset;
     }

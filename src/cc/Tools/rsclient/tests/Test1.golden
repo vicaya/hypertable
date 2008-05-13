@@ -205,16 +205,6 @@ success
 success
 success
 success
-success
-success
-success
-success
-success
-success
-success
-success
-success
-success
 CREATE SCANNER ON Test1[..??];
 1181153478099511 A apple:http://www.lib.utexas.edu/
 1181153478459079 Aaronitic onion:http://prola.aps.org/abstract/PRI/v13/i5/p307_1
@@ -479,6 +469,19 @@ CREATE SCANNER ON Test1[..??];
 1181153477549526 Agrauleum apple:http://www.schiedamsemolens.nl/schiedamsemolens/
 1181153478310808 Agrilus plum:http://www.town.asahi.yamagata.jp/
 1181153478381429 Agrilus cassis:http://www1.dorsetcc.gov.uk/LIVING/FACTS/Census2001.nsf/6cadf4da179fc19500256663004afece/1f3a12dba044faa680256ec5004eec98?OpenDocument
+1181153477612813 Agriotes onion:http://cgsc.leavenworth.army.mil/carl/resources/csi/House/House.asp
+1181153478596543 Agriotes onion:http://maps.google.com/maps?ll=32.19776,-83.179271&spn=0.11,0.18
+1181153478188674 Aguacateca plum:http://www.mingalaronline.com/websites/Burmese_Kindoms.htm
+1181153478570416 Ahir apple:http://terraserver-usa.com/image.aspx?s=14&lon=-96.218727&lat=34.533662&w=2
+1181153478465571 Ahousaht cassis:http://www.northvegr.org/vigfusson/index002.php
+1181153478082964 Ahriman onion:http://www.freedomparty.org/consent/cons9709.htm
+1181153478376979 Ahrimanian broccoli:http://www.britannica.com/eb/article?eu=70501&tocid=0&query=soong&ct=
+1181153477696938 Aht broccoli:http://worldstatesmen.org/Russia.htm
+1181153478014306 Aht apple:http://www.worldstuntawards.com/
+1181153478085866 Aidenn cassis:http://www.townhall.com/opinion/columns/robertnovak/2003/02/20/169326.html
+1181153478248678 Ailuropus banana:http://www.livedepartureboards.co.uk/ldb/summary.aspx?T=KGP
+1181153478350839 Ailurus plum:http://www.skepdic.com/dogon.html
+1181153478588376 Ailurus apple:http://www.cnn.com/2006/SHOWBIZ/Movies/01/24/chris.penn.obit.ap/index.html
 DESTROY SCANNER;
 CREATE SCANNER ON Test1[..??] WHERE ROW = "Agamemnon";
 1181153478609060 Agamemnon plum:http://maps.google.com/maps?ll=43.297884,-91.989187&spn=0.11,0.18&t=h

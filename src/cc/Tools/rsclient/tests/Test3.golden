@@ -334,24 +334,6 @@ success
 success
 success
 success
-success
-success
-success
-success
-success
-success
-success
-success
-success
-success
-success
-success
-success
-success
-success
-success
-success
-success
 CREATE SCANNER ON Test3[..??];
 1189631333354075 A plum:http://sports.espn.go.com/mlb/players/profile?statsId=6305
 1189631332683722 A plum:http://sports.espn.go.com/mlb/players/profile?statsId=6305
@@ -635,6 +617,22 @@ CREATE SCANNER ON Test3[..??];
 1189631332594257 Aaronitic onion:http://sports.espn.go.com/mlb/players/profile?statsId=6305
 1189631333117419 Aaronitic onion:http://toughpigs.com/anthernie00.htm
 1189631332590687 Aaronitic onion:http://www.freebornhall.com/History/ResidenceHalls/
+1189631333203305 Aaronitic onion:http://www.housing.berkeley.edu/housing/
+1189631332229521 Aaronitic onion:http://www.housing.berkeley.edu/housing/
+1189631332121844 Aaronitic onion:http://www.lsbu.ac.uk/news-php/news.php?newsid=86
+1189631333391097 Aaronitic onion:http://www.nielsenmedia.com/DMAs.html
+1189631333016646 Aaronitic onion:http://www.sesameworkshop.org/sesamestreet/
+1189631332347242 Aaronitic onion:http://www.sirlinksalot.net/bertandernie.html
+1189631333422941 Aaronitic onion:http://www.usdoj.gov/usao/iln/osc/documents/ag_letter_december_30_2003.pdf
+1189631333106221 Aaronitic cassis:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
+1189631333511593 Aaronitic cassis:http://www.baseball-reference.com/r/roberda07.shtml
+1189631332569363 Aaronitic cassis:http://www.nielsenmedia.com/DMAs.html
+1189631333010055 Aaronitic cassis:http://www.sirlinksalot.net/bertandernie.html
+1189631333213516 Aaru plum:http://toughpigs.com/anthernie00.htm
+1189631333547034 Aaru plum:http://www.fcc.gov/fcc-bin/tvq?call=KOCB
+1189631333540530 Aaru plum:http://www.guardian.co.uk/Columnists/Archive/0,5673,-25,0.html
+1189631333439916 Aaru plum:http://www.sesameworkshop.org/sesamestreet/
+1189631333291316 Aaru plum:http://www.sirlinksalot.net/bertandernie.html
 DESTROY SCANNER;
 CREATE SCANNER ON Test3[..??] MAX_VERSIONS=2;
 1189631333354075 A plum:http://sports.espn.go.com/mlb/players/profile?statsId=6305
@@ -919,4 +917,20 @@ CREATE SCANNER ON Test3[..??] MAX_VERSIONS=2;
 1189631332229521 Aaronitic onion:http://www.housing.berkeley.edu/housing/
 1189631332121844 Aaronitic onion:http://www.lsbu.ac.uk/news-php/news.php?newsid=86
 1189631333391097 Aaronitic onion:http://www.nielsenmedia.com/DMAs.html
+1189631333016646 Aaronitic onion:http://www.sesameworkshop.org/sesamestreet/
+1189631332347242 Aaronitic onion:http://www.sirlinksalot.net/bertandernie.html
+1189631333422941 Aaronitic onion:http://www.usdoj.gov/usao/iln/osc/documents/ag_letter_december_30_2003.pdf
+1189631333106221 Aaronitic cassis:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
+1189631333511593 Aaronitic cassis:http://www.baseball-reference.com/r/roberda07.shtml
+1189631332569363 Aaronitic cassis:http://www.nielsenmedia.com/DMAs.html
+1189631333010055 Aaronitic cassis:http://www.sirlinksalot.net/bertandernie.html
+1189631333213516 Aaru plum:http://toughpigs.com/anthernie00.htm
+1189631333547034 Aaru plum:http://www.fcc.gov/fcc-bin/tvq?call=KOCB
+1189631333540530 Aaru plum:http://www.guardian.co.uk/Columnists/Archive/0,5673,-25,0.html
+1189631333439916 Aaru plum:http://www.sesameworkshop.org/sesamestreet/
+1189631333291316 Aaru plum:http://www.sirlinksalot.net/bertandernie.html
+1189631333333892 Aaru broccoli:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
+1189631333392739 Aaru broccoli:http://sports.espn.go.com/mlb/players/profile?statsId=6305
+1189631333458564 Aaru broccoli:http://www.lsbu.ac.uk/news-php/news.php?newsid=86
+1189631333268059 Aaru broccoli:http://www.usatoday.com/sports/bbw/columnist/nightengale/2005-01-19-majors_x.htm
 DESTROY SCANNER;

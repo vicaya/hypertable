@@ -40,20 +40,20 @@ namespace Hypertable {
 
     typedef struct {
       CellListScanner *scanner;
-      ByteString32T   *key;
-      ByteString32T   *value;
+      ByteString key;
+      ByteString value;
     } ScannerStateT;
 
     struct ltScannerState {
       bool operator()(const ScannerStateT &ss1, const ScannerStateT &ss2) const {
-	return !(*ss1.key < *ss2.key);
+	return !(ss1.key < ss2.key);
       }
     };
 
     MergeScanner(ScanContextPtr &scanContextPtr, bool returnDeletes=true);
     virtual ~MergeScanner();
     virtual void forward();
-    virtual bool get(ByteString32T **keyp, ByteString32T **valuep);
+    virtual bool get(ByteString &key, ByteString &value);
     void add_scanner(CellListScanner *scanner);
 
   private:

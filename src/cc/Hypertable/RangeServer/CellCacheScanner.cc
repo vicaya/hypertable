@@ -19,6 +19,7 @@
  * 02110-1301, USA.
  */
 
+#include <algorithm>
 #include <cassert>
 
 #include "Common/Logger.h"
@@ -32,7 +33,10 @@
  * 
  */
 CellCacheScanner::CellCacheScanner(CellCachePtr &cellCachePtr, ScanContextPtr &scanContextPtr) : CellListScanner(scanContextPtr), m_cell_cache_ptr(cellCachePtr), m_cell_cache_mutex(cellCachePtr->m_mutex), m_cur_key(0), m_cur_value(0), m_eos(false) {
-  ByteString32T *bs;
+  ByteString bs;
+  size_t start_row_len = strlen(scanContextPtr->start_row.c_str()) + 1;
+  size_t end_row_len = strlen(scanContextPtr->end_row.c_str()) + 1;
+  DynamicBuffer dbuf( 7 + std::max(start_row_len, end_row_len) );
 
   {
     boost::mutex::scoped_lock lock(m_cell_cache_mutex);
@@ -41,14 +45,16 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellCachePtr, ScanContextPtr &s
     assert(scanContextPtr->start_row <= scanContextPtr->end_row);
 
     /** set start iterator **/
-    bs = Create(scanContextPtr->start_row.c_str(), strlen(scanContextPtr->start_row.c_str()));
+    dbuf.clear();
+    append_as_byte_string(dbuf, scanContextPtr->start_row.c_str(), start_row_len);
+    bs.ptr = dbuf.buf;
     m_start_iter = m_cell_cache_ptr->m_cell_map.lower_bound(bs);
-    Destroy(bs);
 
     /** set end iterator **/
-    bs = Create(scanContextPtr->end_row.c_str(), strlen(scanContextPtr->end_row.c_str()));
+    dbuf.clear();
+    append_as_byte_string(dbuf, scanContextPtr->end_row.c_str(), end_row_len);
+    bs.ptr = dbuf.buf;
     m_end_iter = m_cell_cache_ptr->m_cell_map.lower_bound(bs);
-    Destroy(bs);
 
     m_cur_iter = m_start_iter;
 
@@ -58,7 +64,7 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellCachePtr, ScanContextPtr &s
       }
       else if (keyComps.flag == FLAG_DELETE_ROW || m_scan_context_ptr->familyMask[keyComps.column_family_code]) {
 	m_cur_key = (*m_cur_iter).first;
-	m_cur_value = (ByteString32T *)(((uint8_t *)(*m_cur_iter).first) + (CellCache::OFFSET_BIT_MASK & (*m_cur_iter).second));
+	m_cur_value.ptr = m_cur_key.ptr + (CellCache::OFFSET_BIT_MASK & (*m_cur_iter).second);
 	return;
       }
       m_cur_iter++;
@@ -70,10 +76,10 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellCachePtr, ScanContextPtr &s
 }
 
 
-bool CellCacheScanner::get(ByteString32T **keyp, ByteString32T **valuep) {
+bool CellCacheScanner::get(ByteString &key, ByteString &value) {
   if (!m_eos) {
-    *keyp = (ByteString32T *)m_cur_key;
-    *valuep = (ByteString32T *)m_cur_value;
+    key = m_cur_key;
+    value = m_cur_value;
     return true;
   }
   return false;
@@ -92,7 +98,7 @@ void CellCacheScanner::forward() {
     }
     else if (keyComps.flag == FLAG_DELETE_ROW || m_scan_context_ptr->familyMask[keyComps.column_family_code]) {
       m_cur_key = (*m_cur_iter).first;
-      m_cur_value = (ByteString32T *)(((uint8_t *)(*m_cur_iter).first) + (CellCache::OFFSET_BIT_MASK & (*m_cur_iter).second));
+      m_cur_value.ptr = m_cur_key.ptr + (CellCache::OFFSET_BIT_MASK & (*m_cur_iter).second);
       return;
     }
     m_cur_iter++;

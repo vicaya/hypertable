@@ -32,20 +32,9 @@ using namespace std;
 namespace {
   const char end_row_chars[3] = { (char)0xff, (char)0xff, 0 };
   const char end_root_row_chars[5] = { '0', ':', (char)0xff, (char)0xff, 0 };
-}
 
-
-namespace Hypertable {
-
-  const char *Key::END_ROW_MARKER = (const char *)end_row_chars;
-  const char *Key::END_ROOT_ROW   = (const char *)end_root_row_chars;
-
-  void CreateKey(ByteString32T *key, uint8_t flag, const char *row, uint8_t column_family_code, const char *column_qualifier, uint64_t timestamp) {
-    size_t len = strlen(row) + 4 + sizeof(int64_t);
-    if (column_qualifier != 0)
-      len += strlen(column_qualifier);
-    uint8_t *ptr = key->data;
-    key->len = len;
+  size_t write_key(uint8_t *buf, uint8_t flag, const char *row, uint8_t column_family_code, const char *column_qualifier, uint64_t timestamp) {
+    uint8_t *ptr = buf;
     strcpy((char *)ptr, row);
     ptr += strlen(row) + 1;
     *ptr++ = column_family_code;
@@ -69,68 +58,77 @@ namespace Hypertable {
 	*ptr++ = *tsPtr;
       }
     }
-    assert((ptr-key->data) == (int32_t)key->len);
+    return ptr-buf;
   }
 
-  ByteString32T *CreateKey(uint8_t flag, const char *row, uint8_t column_family_code, const char *column_qualifier, uint64_t timestamp) {
+}
+
+
+
+namespace Hypertable {
+
+  const char *Key::END_ROW_MARKER = (const char *)end_row_chars;
+  const char *Key::END_ROOT_ROW   = (const char *)end_root_row_chars;
+
+  ByteString create_key(uint8_t flag, const char *row, uint8_t column_family_code, const char *column_qualifier, uint64_t timestamp) {
     size_t len = strlen(row) + 4 + sizeof(int64_t);
     if (column_qualifier != 0)
       len += strlen(column_qualifier);
-    ByteString32T *key = (ByteString32T *)new uint8_t [ len + sizeof(int32_t) ];
-    CreateKey(key, flag, row, column_family_code, column_qualifier, timestamp);
-    return key;
+    uint8_t *ptr = new uint8_t [ len + Serialization::encoded_length_vi32(len) ];  // !!! could probably just make this 6
+    ByteString bs(ptr);
+    Serialization::encode_vi32(&ptr, len);
+    write_key(ptr, flag, row, column_family_code, column_qualifier, timestamp);
+    return bs;
   }
 
-  void CreateKeyAndAppend(DynamicBuffer &dst_buf, uint8_t flag, const char *row, uint8_t column_family_code, const char *column_qualifier, uint64_t timestamp) {
+  void create_key_and_append(DynamicBuffer &dst_buf, uint8_t flag, const char *row, uint8_t column_family_code, const char *column_qualifier, uint64_t timestamp) {
     size_t len = strlen(row) + 4 + sizeof(int64_t);
     if (column_qualifier != 0)
       len += strlen(column_qualifier);
-    dst_buf.ensure(len + 4);
-    CreateKey((ByteString32T *)dst_buf.ptr, flag, row, column_family_code, column_qualifier, timestamp);    
-    dst_buf.ptr += Length((ByteString32T *)dst_buf.ptr);
+    dst_buf.ensure(len + Serialization::encoded_length_vi32(len));  // !!! could probably just make this 6
+    Serialization::encode_vi32(&dst_buf.ptr, len);
+    dst_buf.ptr += write_key(dst_buf.ptr, flag, row, column_family_code, column_qualifier, timestamp);
   }
 
-  Key::Key(const ByteString32T *key) {
+  Key::Key(ByteString key) {
     load(key);
   }
 
   /**
    * TODO: Re-implement below function in terms of this function
    */
-  bool Key::load(const ByteString32T *key) {
-    const uint8_t *ptr = key->data;
-    const uint8_t *endptr = key->data + key->len;
+  bool Key::load(ByteString key) {
+    size_t len = key.decode_length((uint8_t **)&row);
+    const uint8_t *endptr = (const uint8_t *)row + len;
 
-    row = (const char *)ptr;
-
-    while (ptr < endptr && *ptr != 0)
-      ptr++;
-    ptr++;
-    if (ptr >= endptr) {
+    while (key.ptr < endptr && *key.ptr != 0)
+      key.ptr++;
+    key.ptr++;
+    if (key.ptr >= endptr) {
       cerr << "row decode overrun" << endl;
       return false;
     }
 
-    column_family_code = *ptr++;
-    column_qualifier = (const char *)ptr;
+    column_family_code = *key.ptr++;
+    column_qualifier = (const char *)key.ptr;
 
-    while (ptr < endptr && *ptr != 0)
-      ptr++;
-    ptr++;
-    if (ptr >= endptr) {
+    while (key.ptr < endptr && *key.ptr != 0)
+      key.ptr++;
+    key.ptr++;
+    if (key.ptr >= endptr) {
       cerr << "qualifier decode overrun" << endl;
       return false;
     }
 
-    if ((endptr - ptr) != 9) {
-      cerr << "timestamp decode overrun " << (endptr-ptr) << endl;
+    if ((endptr - key.ptr) != 9) {
+      cerr << "timestamp decode overrun " << (endptr-key.ptr) << endl;
       return false;
     }
 
-    flag = *ptr++;
-    timestamp_ptr = (uint8_t *)ptr;
-    memcpy(&timestamp, ptr, sizeof(uint64_t));
-    end_ptr = ptr + sizeof(uint64_t);
+    flag = *key.ptr++;
+    timestamp_ptr = (uint8_t *)key.ptr;
+    memcpy(&timestamp, key.ptr, sizeof(uint64_t));
+    end_ptr = key.ptr + sizeof(uint64_t);
 
     timestamp = ByteOrderSwapInt64(timestamp);
     timestamp = ~timestamp;

@@ -67,8 +67,8 @@ void TableMutatorScatterBuffer::set(Key &key, const void *value, uint32_t value_
   }
 
   (*iter).second->key_offsets.push_back((*iter).second->buf.fill());
-  CreateKeyAndAppend((*iter).second->buf, FLAG_INSERT, key.row, key.column_family_code, key.column_qualifier, key.timestamp);
-  CreateAndAppend((*iter).second->buf, value, value_len);
+  create_key_and_append((*iter).second->buf, FLAG_INSERT, key.row, key.column_family_code, key.column_qualifier, key.timestamp);
+  append_as_byte_string((*iter).second->buf, value, value_len);
 
   if ((*iter).second->buf.fill() > MAX_SEND_BUFFER_SIZE)
     m_full = true;
@@ -106,8 +106,8 @@ void TableMutatorScatterBuffer::set_delete(Key &key, Timer &timer) {
   else
     key_flag = FLAG_DELETE_COLUMN_FAMILY;
 
-  CreateKeyAndAppend((*iter).second->buf, key_flag, key.row, key.column_family_code, key.column_qualifier, key.timestamp);
-  CreateAndAppend((*iter).second->buf, 0, 0);
+  create_key_and_append((*iter).second->buf, key_flag, key.row, key.column_family_code, key.column_qualifier, key.timestamp);
+  append_as_byte_string((*iter).second->buf, 0, 0);
 
   if ((*iter).second->buf.fill() > MAX_SEND_BUFFER_SIZE)
     m_full = true;
@@ -118,13 +118,15 @@ void TableMutatorScatterBuffer::set_delete(Key &key, Timer &timer) {
 /**
  *
  */
-void TableMutatorScatterBuffer::set(ByteString32T *key, ByteString32T *value, Timer &timer) {
+void TableMutatorScatterBuffer::set(ByteString key, ByteString value, Timer &timer) {
   RangeLocationInfo range_info;
   UpdateBufferMapT::const_iterator iter;
+  uint8_t *ptr = key.ptr;
+  size_t len = Serialization::decode_vi32((const uint8_t **)&ptr);
 
-  if (!m_cache_ptr->lookup(m_table_identifier.id, (const char *)key->data, &range_info)) {
+  if (!m_cache_ptr->lookup(m_table_identifier.id, (const char *)ptr, &range_info)) {
     timer.start();
-    m_range_locator_ptr->find_loop(&m_table_identifier, (const char *)key->data, &range_info, timer, false);
+    m_range_locator_ptr->find_loop(&m_table_identifier, (const char *)ptr, &range_info, timer, false);
   }
 
   iter = m_buffer_map.find(range_info.location);
@@ -138,8 +140,8 @@ void TableMutatorScatterBuffer::set(ByteString32T *key, ByteString32T *value, Ti
   }
 
   (*iter).second->key_offsets.push_back((*iter).second->buf.fill());
-  (*iter).second->buf.add(key, Length(key));
-  (*iter).second->buf.add(value, Length(value));
+  (*iter).second->buf.add(key.ptr, (ptr-key.ptr)+len);
+  (*iter).second->buf.add(value.ptr, value.length());
 
   if ((*iter).second->buf.fill() > MAX_SEND_BUFFER_SIZE)
     m_full = true;
@@ -147,13 +149,16 @@ void TableMutatorScatterBuffer::set(ByteString32T *key, ByteString32T *value, Ti
 
 
 namespace {
-  struct ltByteString32Chronological {
-    bool operator()(const ByteString32T * bs1ptr, const ByteString32T *bs2ptr) const {
-      int rval = strcmp((const char *)bs1ptr->data, (const char *)bs2ptr->data);
+  struct ltByteStringChronological {
+    bool operator()(const ByteString bs1, const ByteString bs2) const {
+      uint8_t *ptr1, *ptr2;
+      size_t len1 = bs1.decode_length(&ptr1);
+      size_t len2 = bs2.decode_length(&ptr2);
+      int rval = strcmp((const char *)ptr1, (const char *)ptr2);
       if (rval == 0) {
-	const uint8_t *ts1ptr = bs1ptr->data + bs1ptr->len - 8;
-	const uint8_t *ts2ptr = bs2ptr->data + bs2ptr->len - 8;
-	return memcmp(ts1ptr, ts2ptr, 8) > 0;  // this gives chronological
+	ptr1 += len1 - 8;
+	ptr2 += len2 - 8;
+	return memcmp(ptr1, ptr2, 8) > 0;  // this gives chronological
       }
       return rval < 0;
     }
@@ -166,9 +171,10 @@ namespace {
  */
 void TableMutatorScatterBuffer::send() {
   UpdateBufferPtr update_buffer_ptr;
-  struct ltByteString32Chronological swo_bs32;
-  std::vector<ByteString32T *>  kvec;
+  struct ltByteStringChronological swo_bs;
+  std::vector<ByteString> kvec;
   uint8_t *data, *ptr;
+  ByteString bs;
 
   m_completion_counter.set(m_buffer_map.size());
 
@@ -178,18 +184,17 @@ void TableMutatorScatterBuffer::send() {
       kvec.clear();
       kvec.reserve( update_buffer_ptr->key_offsets.size() );
       for (size_t i=0; i<update_buffer_ptr->key_offsets.size(); i++)
-	kvec.push_back((ByteString32T *)(update_buffer_ptr->buf.buf + update_buffer_ptr->key_offsets[i]));
-      sort(kvec.begin(), kvec.end(), swo_bs32);
-      uint8_t *src_base, *src_ptr;
+	kvec.push_back((ByteString)(update_buffer_ptr->buf.buf + update_buffer_ptr->key_offsets[i]));
+      sort(kvec.begin(), kvec.end(), swo_bs);
       size_t len = update_buffer_ptr->buf.fill();
       ptr = data = new uint8_t [ len ];
 
       for (size_t i=0; i<kvec.size(); i++) {
-	src_ptr = src_base = (uint8_t *)kvec[i];
-	src_ptr += Length((const ByteString32T *)src_ptr);  // skip key
-	src_ptr += Length((const ByteString32T *)src_ptr);  // skip value
-	memcpy(ptr, src_base, src_ptr-src_base);
-	ptr += src_ptr - src_base;
+	bs = kvec[i];
+	bs.next();  // skip key
+	bs.next();  // skip value
+	memcpy(ptr, kvec[i].ptr, bs.ptr - kvec[i].ptr);
+	ptr += bs.ptr - kvec[i].ptr;
       }
     }
     else {
@@ -237,8 +242,8 @@ int TableMutatorScatterBuffer::wait_for_completion(Timer &timer) {
 TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer(Timer &timer) {
   UpdateBufferPtr update_buffer_ptr;
   RangeLocationInfo range_info;
-  std::vector<ByteString32T *>  kvec;
-  ByteString32T *low_key, *key, *value;
+  std::vector<ByteString>  kvec;
+  ByteString key, value, bs;
   int count = 0;
   TableMutatorScatterBuffer *redo_buffer = 0;
 
@@ -252,47 +257,50 @@ TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer(Timer &
       if (update_buffer_ptr->error != Error::OK) {
 
 	if (update_buffer_ptr->error == Error::RANGESERVER_PARTIAL_UPDATE) {
-	  uint8_t *src_base, *src_ptr, *src_end;
+	  uint8_t *ptr, *src_end;
 
-	  src_ptr = src_base = update_buffer_ptr->event_ptr->message + 4;
+	  bs.ptr = ptr = update_buffer_ptr->event_ptr->message + 4;
 	  src_end = update_buffer_ptr->event_ptr->message + update_buffer_ptr->event_ptr->messageLen;
 
-	  low_key = (ByteString32T *)src_base;
-	
 	  // do a hard lookup for the lowest key
-	  m_range_locator_ptr->find_loop(&m_table_identifier, (const char *)low_key->data, &range_info, timer, true);
+	  Serialization::decode_vi32((const uint8_t **)&ptr);
+	  m_range_locator_ptr->find_loop(&m_table_identifier, (const char *)ptr, &range_info, timer, true);
 
 	  // now add all of the old keys to the redo buffer
-	  while (src_ptr < src_end) {
-	    key = (ByteString32T *)src_ptr;
-	    value = (ByteString32T *)(((uint8_t *)key) + Length(key));
+	  while (bs.ptr < src_end) {
+	    key.ptr = bs.next();
+	    value.ptr = bs.next();
 	    redo_buffer->set(key, value, timer);
-	    src_ptr += Length(key) + Length(value);
 	    m_resends++;
 	  }
-
 	  //HT_INFOF("Partial update, resending %d updates", count);
-
 	}
 	else {
-	  low_key = (ByteString32T *)update_buffer_ptr->buf.buf;
+	  const char *low_row;
+	  size_t len;
+	  uint8_t *ptr;
+
+	  bs.ptr = update_buffer_ptr->buf.buf;
+	  len = bs.decode_length(&ptr);
+	  low_row = (const char *)ptr;
 
 	  // find the lowest key
 	  for (size_t i=0; i<update_buffer_ptr->key_offsets.size(); i++) {
-	    key = (ByteString32T *)(update_buffer_ptr->buf.buf + update_buffer_ptr->key_offsets[i]);
-	    if (strcmp((char *)key->data, (char *)low_key->data) < 0)
-	      low_key = key;
+	    bs.ptr = update_buffer_ptr->buf.buf + update_buffer_ptr->key_offsets[i];
+	    len = key.decode_length(&ptr);
+	    if (strcmp((const char *)ptr, low_row) < 0)
+	      low_row = (const char *)ptr;
 	  }
 
 	  // do a hard lookup for the lowest key
-	  m_range_locator_ptr->find_loop(&m_table_identifier, (const char *)low_key->data, &range_info, timer, true);
+	  m_range_locator_ptr->find_loop(&m_table_identifier, low_row, &range_info, timer, true);
 
 	  count = 0;
 
 	  // now add all of the old keys to the redo buffer
 	  for (size_t i=0; i<update_buffer_ptr->key_offsets.size(); i++) {
-	    key = (ByteString32T *)(update_buffer_ptr->buf.buf + update_buffer_ptr->key_offsets[i]);
-	    value = (ByteString32T *)(((uint8_t *)key) + Length(key));
+	    key.ptr = update_buffer_ptr->buf.buf + update_buffer_ptr->key_offsets[i];
+	    value.ptr = key.ptr + key.length();
 	    redo_buffer->set(key, value, timer);
 	    count++;
 	  }

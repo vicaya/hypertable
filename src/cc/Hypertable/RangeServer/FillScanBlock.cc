@@ -30,16 +30,19 @@ namespace Hypertable {
   bool FillScanBlock(CellListScannerPtr &scannerPtr, uint8_t *dst, size_t dstLen, uint32_t *lenp) {
     uint8_t *ptr = dst;
     uint8_t *end = dst + dstLen;
-    ByteString32T *key;
-    ByteString32T *value;
+    ByteString key;
+    ByteString value;
+    size_t key_len, value_len;
     bool more = true;
 
-    while ((more = scannerPtr->get(&key, &value))) {
-      if ((size_t)(end-ptr) >= Length(key) + Length(value)) {
-	memcpy(ptr, key, Length(key));
-	ptr += Length(key);
-	memcpy(ptr, value, Length(value));
-	ptr += Length(value);
+    while ((more = scannerPtr->get(key, value))) {
+      key_len = key.length();
+      value_len = value.length();
+      if ((size_t)(end-ptr) >= key_len + value_len) {
+	memcpy(ptr, key.ptr, key_len);
+	ptr += key_len;
+	memcpy(ptr, value.ptr, value_len);
+	ptr += value_len;
 	scannerPtr->forward();
       }
       else

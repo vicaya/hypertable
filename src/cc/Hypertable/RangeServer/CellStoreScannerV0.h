@@ -37,7 +37,7 @@ namespace Hypertable {
     CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPtr &scanContextPtr);
     virtual ~CellStoreScannerV0();
     virtual void forward();
-    virtual bool get(ByteString32T **keyp, ByteString32T **valuep);
+    virtual bool get(ByteString &key, ByteString &value);
 
   private:
 
@@ -61,8 +61,8 @@ namespace Hypertable {
     CellStoreV0::IndexMapT::iterator m_end_iter;
 
     BlockInfoT            m_block;
-    ByteString32T        *m_cur_key;
-    ByteString32T        *m_cur_value;
+    ByteString            m_cur_key;
+    ByteString            m_cur_value;
     BlockCompressionCodec *m_zcodec;
     bool                  m_check_for_range_end;
     bool                  m_end_inclusive;

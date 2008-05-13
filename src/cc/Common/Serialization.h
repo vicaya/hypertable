@@ -27,7 +27,6 @@
 
 #include "Common/Error.h"
 #include "Common/Logger.h"
-#include "Common/ByteString.h"
 
 // vint limits
 #define HT_MAX_V1B 0x7f
@@ -279,30 +278,6 @@ namespace Hypertable { namespace Serialization {
       (*bufPtr) += *lenPtr;
       return true;
     }
-
-    /**
-     * Decodes a ByteString32T from the given buffer.  The encoding of the
-     * ByteString32T is the same as a byte array, a 4 byte length followed
-     * by the data.  The decoded byte string pointer bs32Ptr points back
-     * into the encoding buffer.  Increments buffer pointer and decrements
-     * remainingPtr on success.
-     *
-     * @param bufPtr address of buffer containing encoded ByteString32T
-     * @param remainingPtr address of variable containing number of bytes remaining in buffer
-     * @param bs32Ptr address of ByteString32T pointer which points into buffer on success
-     * @return true on success, false if buffer has insufficient room
-     */
-    inline bool decode_byte_string32(const uint8_t **bufPtr, size_t *remainingPtr, ByteString32T **bs32Ptr) {
-      if (*remainingPtr < 4)
-	return false;
-      *bs32Ptr = (ByteString32T *)*bufPtr;
-      if (*remainingPtr < (*bs32Ptr)->len + 4)
-	return false;
-      (*remainingPtr) -= Length(*bs32Ptr);
-      (*bufPtr) += Length(*bs32Ptr);
-      return true;
-    }
-
 
     /**
      * Computes the encoded length of a c-style null-terminated string
@@ -625,6 +600,36 @@ namespace Hypertable { namespace Serialization {
       HT_DECODE_VINT4(uint64_t, n, *bufp, remainp)
       HT_DECODE_VINT_(uint64_t, n, *bufp, remainp)
       HT_DECODE_VINT_(uint64_t, n, *bufp, remainp)
+      throw Exception(Error::SERIALIZATION_BAD_VINT);
+    }
+
+    /**
+     * Decode a variable length encoded integer up to 32-bit
+     *
+     * @param bufp - pointer to the source buffer
+     * @return value
+     */
+    inline uint32_t decode_vi32(const uint8_t **bufp) {
+      size_t remain = 6;
+      HT_DECODE_VINT0(uint32_t, n, *bufp, &remain)
+      HT_DECODE_VINT4(uint32_t, n, *bufp, &remain)
+      HT_DECODE_VINT_(uint32_t, n, *bufp, &remain)
+      throw Exception(Error::SERIALIZATION_BAD_VINT);
+    }
+
+    /**
+     * Decode a variable length encoded integer up to 64-bit
+     *
+     * @param bufp - pointer to the source buffer
+     * @return value
+     */
+    inline uint64_t decode_vi64(const uint8_t **bufp) {
+      size_t remain = 12;
+      HT_DECODE_VINT0(uint64_t, n, *bufp, &remain)
+      HT_DECODE_VINT4(uint64_t, n, *bufp, &remain)
+      HT_DECODE_VINT4(uint64_t, n, *bufp, &remain)
+      HT_DECODE_VINT_(uint64_t, n, *bufp, &remain)
+      HT_DECODE_VINT_(uint64_t, n, *bufp, &remain)
       throw Exception(Error::SERIALIZATION_BAD_VINT);
     }
 

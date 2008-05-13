@@ -187,7 +187,7 @@ bool Range::extract_csid_from_path(std::string &path, uint32_t *csidp) {
 
 /**
  */
-int Range::add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp) {
+int Range::add(const ByteString key, const ByteString value, uint64_t real_timestamp) {
   Key key_comps;
 
   HT_EXPECT(key_comps.load(key), Error::FAILED_EXPECTATION);
@@ -233,7 +233,7 @@ int Range::add(const ByteString32T *key, const ByteString32T *value, uint64_t re
 
 /**
  */
-int Range::replay_add(const ByteString32T *key, const ByteString32T *value, uint64_t real_timestamp, uint32_t *num_addedp) {
+int Range::replay_add(const ByteString key, const ByteString value, uint64_t real_timestamp, uint32_t *num_addedp) {
   Key key_comps;
 
   HT_EXPECT(key_comps.load(key), Error::FAILED_EXPECTATION);
@@ -719,9 +719,9 @@ void Range::unlock(uint64_t real_timestamp) {
  */
 void Range::replay_transfer_log(CommitLogReader *commit_log_reader, uint64_t real_timestamp) {
   BlockCompressionHeaderCommitLog header;
-  const uint8_t *base, *ptr, *end;
+  uint8_t *base, *ptr, *end;
   size_t len;
-  ByteString32T *key, *value;
+  ByteString key, value;
   size_t nblocks = 0;
   size_t count = 0;
   TableIdentifier table_id;
@@ -729,7 +729,7 @@ void Range::replay_transfer_log(CommitLogReader *commit_log_reader, uint64_t rea
 
   try {
 
-    while (commit_log_reader->next(&base, &len, &header)) {
+    while (commit_log_reader->next((const uint8_t **)&base, &len, &header)) {
 
       ptr = base;
       end = base + len;
@@ -743,10 +743,10 @@ void Range::replay_transfer_log(CommitLogReader *commit_log_reader, uint64_t rea
       memory_added += len;
 
       while (ptr < end) {
-	key = (ByteString32T *)ptr;
-	ptr += Length(key);
-	value = (ByteString32T *)ptr;
-	ptr += Length(value);
+	key.ptr = ptr;
+	ptr += key.length();
+	value.ptr = ptr;
+	ptr += value.length();
 	add(key, value, real_timestamp);
 	count++;
       }
