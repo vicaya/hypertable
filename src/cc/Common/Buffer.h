@@ -22,10 +22,19 @@
 #ifndef HYPERTABLE_BUFFER_H
 #define HYPERTABLE_BUFFER_H
 
+#include <boost/noncopyable.hpp>
+
 namespace Hypertable {
 
-  class Buffer {
+  class Buffer : boost::noncopyable {
   public:
+    Buffer() : base(0), size(0), own(false) {
+      return; 
+    }
+    ~Buffer() {
+      if (own)
+	delete [] base;
+    }
     uint8_t *base;
     uint32_t size;
     bool own;

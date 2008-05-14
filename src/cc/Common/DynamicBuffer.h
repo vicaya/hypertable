@@ -37,13 +37,11 @@ namespace Hypertable {
     DynamicBuffer(size_t initial_size, bool own_buffer=true) {
       size = initial_size;
       own = own_buffer;
-      if (size == 0)
-	ptr = base = 0;
-      else
+      if (size)
 	base = ptr = new uint8_t [ size ];
+      else
+	ptr = 0;
     }
-
-    ~DynamicBuffer() { if (own) delete [] base; }
 
     size_t remaining() const { return size - (ptr-base); }
 
@@ -114,9 +112,6 @@ namespace Hypertable {
 
     uint8_t *ptr;
 
-  private:
-    DynamicBuffer&  operator = (const DynamicBuffer& other) { return *this; }
-    DynamicBuffer(const DynamicBuffer& other) { }
   };
 
 }

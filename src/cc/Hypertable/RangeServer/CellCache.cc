@@ -49,7 +49,7 @@ CellCache::~CellCache() {
   uint32_t skipped = 0;
 #endif
 
-  m_validation = 0x1234567890ul;
+  m_validation = 1234567890ul;
 
   /**
    * If our reference count is greater than zero, the we still have a parent
