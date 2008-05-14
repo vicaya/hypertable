@@ -41,7 +41,7 @@ namespace Hypertable {
   class CellCache : public CellList {
 
   public:
-    CellCache() : CellList(), m_refcount(0), m_child(0), m_memory_used(0), m_deletes(0), m_collisions(0) { return; }
+    CellCache() : CellList(), m_refcount(0), m_child(0), m_memory_used(0), m_deletes(0), m_collisions(0), m_validation(0) { return; }
     virtual ~CellCache();
 
     /**
@@ -131,6 +131,7 @@ namespace Hypertable {
     uint64_t           m_memory_used;
     uint32_t           m_deletes;
     uint32_t           m_collisions;
+    uint32_t           m_validation;
   };
 
   typedef boost::intrusive_ptr<CellCache> CellCachePtr;

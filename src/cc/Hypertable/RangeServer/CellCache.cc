@@ -49,6 +49,8 @@ CellCache::~CellCache() {
   uint32_t skipped = 0;
 #endif
 
+  m_validation = 0x1234567890ul;
+
   /**
    * If our reference count is greater than zero, the we still have a parent
    * that is referencing us and our memory, so wait for our parent to
@@ -102,6 +104,8 @@ int CellCache::add(const ByteString key, const ByteString value, uint64_t real_t
   size_t total_len = key_len + value.length();
 
   (void)real_timestamp;
+
+  HT_EXPECT(m_validation==0, Error::FAILED_EXPECTATION);
 
   new_key.ptr = ptr = new uint8_t [ total_len ];
 
