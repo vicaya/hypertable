@@ -102,7 +102,7 @@ bool CommitLogReader::next(const uint8_t **blockp, size_t *lenp, BlockCompressio
       DynamicBuffer zblock(0);
 
       m_block_buffer.clear();
-      zblock.buf = binfo.block_ptr;
+      zblock.base = binfo.block_ptr;
       zblock.ptr = binfo.block_ptr + binfo.block_len;
 
       load_compressor(header->get_compression_type());
@@ -117,7 +117,7 @@ bool CommitLogReader::next(const uint8_t **blockp, size_t *lenp, BlockCompressio
       }
  
       zblock.release();
-      *blockp = m_block_buffer.buf;
+      *blockp = m_block_buffer.base;
       *lenp = m_block_buffer.fill();
       HT_INFOF("shaggy\t%s\t%u\t%u", m_log_name.c_str(), header->get_data_checksum(), header->get_data_zlength());
       return true;

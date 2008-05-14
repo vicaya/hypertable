@@ -106,7 +106,7 @@ int CommitLog::write(uint8_t *data, uint32_t len, uint64_t timestamp) {
   BlockCompressionHeaderCommitLog header(MAGIC_DATA, timestamp);
   DynamicBuffer input(0, false);
 
-  input.buf = data;
+  input.base = data;
   input.ptr = data + len;
 
   /**
@@ -152,7 +152,7 @@ int CommitLog::link_log(CommitLogBase *log_base, uint64_t timestamp) {
   try {
     boost::mutex::scoped_lock lock(m_mutex);
 
-    m_fs->append(m_fd, input.buf, input.fill(), &sync_handler);
+    m_fs->append(m_fd, input.base, input.fill(), &sync_handler);
     m_fs->flush(m_fd, &sync_handler);
     m_last_timestamp = timestamp;
     m_cur_fragment_length += input.fill();
@@ -285,7 +285,7 @@ int CommitLog::compress_and_write(DynamicBuffer &input, BlockCompressionHeader *
     if ((error = m_compressor->deflate(input, zblock, *header)) != Error::OK)
       return error;
 
-    m_fs->append(m_fd, zblock.buf, zblock.fill(), &sync_handler);
+    m_fs->append(m_fd, zblock.base, zblock.fill(), &sync_handler);
     m_fs->flush(m_fd, &sync_handler);
     m_last_timestamp = timestamp;
     m_cur_fragment_length += zblock.fill();

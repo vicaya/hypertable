@@ -24,10 +24,12 @@
 
 namespace Hypertable {
 
-struct Buffer {
-  uint8_t *buf;
-  int32_t len;
-};
+  class Buffer {
+  public:
+    uint8_t *base;
+    uint32_t size;
+    bool own;
+  };
 
 } // namespace Hypertable
 

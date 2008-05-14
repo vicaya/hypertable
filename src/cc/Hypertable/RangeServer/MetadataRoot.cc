@@ -81,7 +81,7 @@ bool MetadataRoot::get_next_files(std::string &ag_name, std::string &files) {
       Global::hyperspace_ptr->set_silent_flag(false);
       return false;
     }
-    files = (const char *)value.buf;
+    files = (const char *)value.base;
     Global::hyperspace_ptr->set_silent_flag(false);
     return true;
   }

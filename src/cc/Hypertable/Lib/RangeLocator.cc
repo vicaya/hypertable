@@ -128,7 +128,7 @@ void RangeLocator::initialize() {
 
   m_hyperspace_ptr->close(handle);
 
-  schema = Schema::new_instance((const char *)valueBuf.buf, valueBuf.fill(), true);
+  schema = Schema::new_instance((const char *)valueBuf.base, valueBuf.fill(), true);
   if (!schema->is_valid()) {
     delete schema;
     HT_ERRORF("Schema Parse Error for table METADATA : %s", schema->get_error_string());
@@ -487,11 +487,11 @@ int RangeLocator::read_root_location(Timer &timer) {
 
   m_root_range_info.start_row  = "";
   m_root_range_info.end_row    = Key::END_ROOT_ROW;
-  m_root_range_info.location   = (const char *)value.buf;
+  m_root_range_info.location   = (const char *)value.base;
   
   m_cache_ptr->insert(0, m_root_range_info, true);
 
-  if (!LocationCache::location_to_addr((const char *)value.buf, m_root_addr)) {
+  if (!LocationCache::location_to_addr((const char *)value.base, m_root_addr)) {
     HT_ERROR("Bad format of 'location' attribute of /hypertable/root Hyperspace file");
     return Error::BAD_ROOT_LOCATION;    
   }

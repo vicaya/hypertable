@@ -279,8 +279,8 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
    * Set up m_index map
    */
   uint32_t offset;
-  m_fix_index_buffer.ptr = m_fix_index_buffer.buf;
-  m_var_index_buffer.ptr = m_var_index_buffer.buf;
+  m_fix_index_buffer.ptr = m_fix_index_buffer.base;
+  m_var_index_buffer.ptr = m_var_index_buffer.base;
   for (size_t i=0; i<m_trailer.index_entries; i++) {
     // variable portion
     key.ptr = m_var_index_buffer.ptr;
@@ -479,7 +479,7 @@ int CellStoreV0::load_index() {
 
   /** inflate fixed index **/
   {
-    input.buf = buf;
+    input.base = buf;
     input.ptr = buf + (m_trailer.var_index_offset - m_trailer.fix_index_offset);
     if ((error = m_compressor->inflate(input, m_fix_index_buffer, header)) != Error::OK) {
       HT_ERRORF("Fixed index decompression error - %s", Error::get_text(error));
@@ -496,7 +496,7 @@ int CellStoreV0::load_index() {
 
   /** inflate variable index **/ 
   {
-    input.buf = vbuf;
+    input.base = vbuf;
     input.ptr = vbuf + amount;
     if ((error = m_compressor->inflate(input, m_var_index_buffer, header)) != Error::OK) {
       HT_ERRORF("Variable index decompression error - %s", Error::get_text(error));
@@ -514,9 +514,9 @@ int CellStoreV0::load_index() {
 
   // record end offsets for sanity checking and reset ptr
   fEnd = m_fix_index_buffer.ptr;
-  m_fix_index_buffer.ptr = m_fix_index_buffer.buf;
+  m_fix_index_buffer.ptr = m_fix_index_buffer.base;
   vEnd = m_var_index_buffer.ptr;
-  m_var_index_buffer.ptr = m_var_index_buffer.buf;
+  m_var_index_buffer.ptr = m_var_index_buffer.base;
 
   for (size_t i=0; i< m_trailer.index_entries; i++) {
 
@@ -549,13 +549,13 @@ int CellStoreV0::load_index() {
 
     dbuf.clear();
     append_as_byte_string(dbuf, m_start_row.c_str(), start_row_length);
-    bs.ptr = dbuf.buf;
+    bs.ptr = dbuf.base;
     iter = m_index.upper_bound(bs);
     start = (*iter).second;
 
     dbuf.clear();
     append_as_byte_string(dbuf, m_end_row.c_str(), end_row_length);
-    bs.ptr = dbuf.buf;
+    bs.ptr = dbuf.base;
     if ((end_iter = m_index.lower_bound(bs)) == m_index.end())
       end = m_file_length;
     else
@@ -576,7 +576,7 @@ int CellStoreV0::load_index() {
   error = 0;
 
  abort:
-  input.buf = 0;
+  input.base = 0;
   delete m_compressor;
   m_compressor = 0;
   delete [] m_fix_index_buffer.release();

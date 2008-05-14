@@ -207,7 +207,7 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
 
       m_line_buffer.add(line.c_str(), strlen(line.c_str())+1);
 
-      base = (char *)m_line_buffer.buf;
+      base = (char *)m_line_buffer.base;
 
       /**
        *  Get timestamp
@@ -289,7 +289,7 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
       m_next_value++;
 
     if (m_next_value > 0 && m_next_value < (size_t)m_limit) {
-      keyp->row = m_row_key_buffer.buf;
+      keyp->row = m_row_key_buffer.base;
       keyp->row_len = m_row_key_buffer.fill();
       keyp->column_family = m_column_names[m_next_value].c_str();
       *timestampp = m_timestamp;
@@ -328,7 +328,7 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
       m_line_buffer.add(line.c_str(), strlen(line.c_str())+1);
       m_values.clear();
 
-      base = (char *)m_line_buffer.buf;
+      base = (char *)m_line_buffer.base;
 
       while ((ptr = strchr(base, '\t')) != 0) {
 	*ptr++ = 0;
@@ -393,7 +393,7 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
       while (!m_go_mask[m_next_value])
 	m_next_value++;
 
-      keyp->row = m_row_key_buffer.buf;
+      keyp->row = m_row_key_buffer.base;
       keyp->row_len = m_row_key_buffer.fill();
       keyp->column_family = m_column_names[m_next_value].c_str();
       *timestampp = m_timestamp;

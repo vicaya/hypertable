@@ -184,7 +184,7 @@ void TableMutatorScatterBuffer::send() {
       kvec.clear();
       kvec.reserve( update_buffer_ptr->key_offsets.size() );
       for (size_t i=0; i<update_buffer_ptr->key_offsets.size(); i++)
-	kvec.push_back((ByteString)(update_buffer_ptr->buf.buf + update_buffer_ptr->key_offsets[i]));
+	kvec.push_back((ByteString)(update_buffer_ptr->buf.base + update_buffer_ptr->key_offsets[i]));
       sort(kvec.begin(), kvec.end(), swo_bs);
       size_t len = update_buffer_ptr->buf.fill();
       ptr = data = new uint8_t [ len ];
@@ -200,7 +200,7 @@ void TableMutatorScatterBuffer::send() {
     else {
       size_t len = update_buffer_ptr->buf.fill();
       data = new uint8_t [ len ];
-      memcpy(data, update_buffer_ptr->buf.buf, len);
+      memcpy(data, update_buffer_ptr->buf.base, len);
       ptr = data + len;
     }
 
@@ -280,13 +280,13 @@ TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer(Timer &
 	  size_t len;
 	  uint8_t *ptr;
 
-	  bs.ptr = update_buffer_ptr->buf.buf;
+	  bs.ptr = update_buffer_ptr->buf.base;
 	  len = bs.decode_length(&ptr);
 	  low_row = (const char *)ptr;
 
 	  // find the lowest key
 	  for (size_t i=0; i<update_buffer_ptr->key_offsets.size(); i++) {
-	    bs.ptr = update_buffer_ptr->buf.buf + update_buffer_ptr->key_offsets[i];
+	    bs.ptr = update_buffer_ptr->buf.base + update_buffer_ptr->key_offsets[i];
 	    len = key.decode_length(&ptr);
 	    if (strcmp((const char *)ptr, low_row) < 0)
 	      low_row = (const char *)ptr;
@@ -299,7 +299,7 @@ TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer(Timer &
 
 	  // now add all of the old keys to the redo buffer
 	  for (size_t i=0; i<update_buffer_ptr->key_offsets.size(); i++) {
-	    key.ptr = update_buffer_ptr->buf.buf + update_buffer_ptr->key_offsets[i];
+	    key.ptr = update_buffer_ptr->buf.base + update_buffer_ptr->key_offsets[i];
 	    value.ptr = key.ptr + key.length();
 	    redo_buffer->set(key, value, timer);
 	    count++;

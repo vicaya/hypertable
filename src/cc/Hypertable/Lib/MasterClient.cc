@@ -245,7 +245,7 @@ int MasterClient::reload_master() {
     return Error::MASTER_NOT_RUNNING;
   }
 
-  addrStr = (const char *)value.buf;
+  addrStr = (const char *)value.base;
 
   if (addrStr != m_master_addr_string) {
 

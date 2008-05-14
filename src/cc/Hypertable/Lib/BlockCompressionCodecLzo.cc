@@ -66,16 +66,16 @@ int BlockCompressionCodecLzo::deflate(const DynamicBuffer &input, DynamicBuffer 
   output.clear();
   output.reserve( header.length() + avail_out + reserve );
 
-  fence_ptr = output.buf + header.length() + (avail_out-4);
+  fence_ptr = output.base + header.length() + (avail_out-4);
   memcpy(fence_ptr, fence_marker, 4);
 
-  ret = lzo1x_1_compress(input.buf, input.fill(), output.buf+header.length(), &out_len, m_workmem);
+  ret = lzo1x_1_compress(input.base, input.fill(), output.base+header.length(), &out_len, m_workmem);
   assert(ret == LZO_E_OK);
 
   /* check for an incompressible block */
   if (out_len >= input.fill()) {
     header.set_compression_type(NONE);
-    memcpy(output.buf+header.length(), input.buf, input.fill());
+    memcpy(output.base+header.length(), input.base, input.fill());
     header.set_data_length(input.fill());
     header.set_data_zlength(input.fill());
   }
@@ -84,9 +84,9 @@ int BlockCompressionCodecLzo::deflate(const DynamicBuffer &input, DynamicBuffer 
     header.set_data_length(input.fill());
     header.set_data_zlength(out_len);
   }
-  header.set_data_checksum(fletcher32(output.buf + header.length(), header.get_data_zlength()) );
+  header.set_data_checksum(fletcher32(output.base + header.length(), header.get_data_zlength()) );
   
-  output.ptr = output.buf;
+  output.ptr = output.base;
   header.encode(&output.ptr);
   output.ptr += header.get_data_zlength();
 
@@ -103,7 +103,7 @@ int BlockCompressionCodecLzo::deflate(const DynamicBuffer &input, DynamicBuffer 
 int BlockCompressionCodecLzo::inflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader &header) {
   int ret;
   int error;
-  uint8_t *msg_ptr = input.buf;
+  uint8_t *msg_ptr = input.base;
   size_t remaining = input.fill();
   lzo_uint new_len;
 
@@ -125,16 +125,16 @@ int BlockCompressionCodecLzo::inflate(const DynamicBuffer &input, DynamicBuffer 
 
    // check compress bit
   if (header.get_compression_type() == NONE)
-    memcpy(output.buf, msg_ptr, header.get_data_length());
+    memcpy(output.base, msg_ptr, header.get_data_length());
   else {
     new_len = header.get_data_length();
-    ret = lzo1x_decompress(msg_ptr, header.get_data_zlength(), output.buf, &new_len, 0);
+    ret = lzo1x_decompress(msg_ptr, header.get_data_zlength(), output.base, &new_len, 0);
     if (ret != LZO_E_OK || new_len != header.get_data_length()) {
       HT_ERRORF("Lzo decompression error, rval = %d", ret);
       return Error::BLOCK_COMPRESSOR_INFLATE_ERROR;
     }
   }
-  output.ptr = output.buf + header.get_data_length();
+  output.ptr = output.base + header.get_data_length();
 
   return Error::OK;
 }

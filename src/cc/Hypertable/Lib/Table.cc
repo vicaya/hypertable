@@ -102,7 +102,7 @@ void Table::initialize(std::string &name) {
   assert(value_buf.fill() == sizeof(int32_t));
 
   // TODO: fix me!
-  memcpy(&m_table.id, value_buf.buf, sizeof(int32_t));
+  memcpy(&m_table.id, value_buf.base, sizeof(int32_t));
 
   /**
    * Get schema attribute
@@ -115,7 +115,7 @@ void Table::initialize(std::string &name) {
 
   m_hyperspace_ptr->close(handle);
 
-  m_schema_ptr = Schema::new_instance((const char *)value_buf.buf, strlen((const char *)value_buf.buf), true);
+  m_schema_ptr = Schema::new_instance((const char *)value_buf.base, strlen((const char *)value_buf.base), true);
 
   if (!m_schema_ptr->is_valid()) {
     HT_ERRORF("Schema Parse Error: %s", m_schema_ptr->get_error_string());

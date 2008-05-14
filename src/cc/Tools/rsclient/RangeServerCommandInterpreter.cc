@@ -148,7 +148,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 	  uint8_t *ptr;
 	  size_t len;
 
-	  key.ptr = ptr = buf.buf;
+	  key.ptr = ptr = buf.base;
 
 	  while (ptr < buf.ptr) {
 	    keys.push_back(key);

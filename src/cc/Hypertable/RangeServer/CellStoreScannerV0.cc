@@ -70,7 +70,7 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr,
   }
 
   append_as_byte_string(dbuf, m_start_row.c_str());
-  key.ptr = dbuf.buf;
+  key.ptr = dbuf.base;
 
   if (start_inclusive)
     m_iter = m_index.lower_bound(key);
@@ -103,7 +103,7 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellStorePtr,
 
     dbuf.clear();
     append_as_byte_string(dbuf, m_end_row.c_str());
-    key.ptr = dbuf.buf;
+    key.ptr = dbuf.base;
 
     if ((m_end_iter = m_index.upper_bound(key)) == m_index.end())
       m_end_offset = m_cell_store_v0->m_trailer.fix_index_offset;
@@ -361,17 +361,17 @@ bool CellStoreScannerV0::fetch_next_block() {
       /** inflate compressed block **/
       BlockCompressionHeader header;
       DynamicBuffer input(0);
-      input.buf = buf;
+      input.base = buf;
       input.ptr = buf + m_block.zlength;
       if ((error = m_zcodec->inflate(input, expandBuffer, header))
           != Error::OK) {
         HT_ERRORF("Problem inflating cell store (%s) block - %s",
                   m_cell_store_ptr->get_filename().c_str(),
                   Error::get_text(error));
-        input.buf = 0;
+        input.base = 0;
         goto abort;
       }
-      input.buf = 0;
+      input.base = 0;
       if (!header.check_magic(CellStoreV0::DATA_BLOCK_MAGIC)) {
         HT_ERROR("Problem inflating cell store block - magic string mismatch");
         goto abort;
@@ -471,14 +471,14 @@ bool CellStoreScannerV0::fetch_next_block_readahead() {
     {
       BlockCompressionHeader header;
       DynamicBuffer input(0);
-      input.buf = buf;
+      input.base = buf;
       input.ptr = buf + m_block.zlength;
       if ((error = m_zcodec->inflate(input, expandBuffer, header)) != Error::OK) {
 	HT_ERRORF("Problem inflating cell store (%s) block - %s", m_cell_store_ptr->get_filename().c_str(), Error::get_text(error));
-	input.buf = 0;
+	input.base = 0;
 	goto abort;
       }
-      input.buf = 0;
+      input.base = 0;
       if (!header.check_magic(CellStoreV0::DATA_BLOCK_MAGIC)) {
 	HT_ERROR("Problem inflating cell store block - magic string mismatch");
 	goto abort;

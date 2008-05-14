@@ -69,11 +69,11 @@ int main(int argc, char **argv) {
   if (!compressor)
     return 1;
 
-  if ((input.buf = (uint8_t *)FileUtils::file_to_buffer("./good-schema-1.xml", &len)) == 0) {
+  if ((input.base = (uint8_t *)FileUtils::file_to_buffer("./good-schema-1.xml", &len)) == 0) {
     HT_ERROR("Problem loading './good-schema-1.xml'");
     return 1;
   }
-  input.ptr = input.buf + len;
+  input.ptr = input.base + len;
 
   if ((error = compressor->deflate(input, output1, header)) != Error::OK) {
     HT_ERRORF("Problem deflating - %s", Error::get_text(error));
@@ -90,15 +90,15 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  if (memcmp(input.buf, output2.buf, input.fill())) {
+  if (memcmp(input.base, output2.base, input.fill())) {
     HT_ERROR("Input does not match output after lzo codec");
     return 1;
   }
 
   // this should not compress ...
 
-  memcpy(input.buf, "foo", 3);
-  input.ptr = input.buf + 3;
+  memcpy(input.base, "foo", 3);
+  input.ptr = input.base + 3;
 
   if ((error = compressor->deflate(input, output1, header)) != Error::OK) {
     HT_ERRORF("Problem deflating - %s", Error::get_text(error));
@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  if (memcmp(input.buf, output2.buf, input.fill())) {
+  if (memcmp(input.base, output2.base, input.fill())) {
     HT_ERROR("Input does not match output after lzo codec");
     return 1;
   }

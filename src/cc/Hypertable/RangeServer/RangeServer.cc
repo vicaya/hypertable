@@ -391,7 +391,7 @@ void RangeServer::fast_recover() {
 
       Serialization::encode_int((uint8_t **)&base, dbuf.ptr-(base+4));
 
-      replay_update(&cb, dbuf.buf, dbuf.fill());
+      replay_update(&cb, dbuf.base, dbuf.fill());
     }
 
   }
@@ -533,8 +533,8 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
     {
       short moreFlag = more ? 0 : 1;
       Buffer ext;
-      ext.buf = kvBuffer;
-      ext.len = sizeof(int32_t) + *kvLenp;
+      ext.base = kvBuffer;
+      ext.size = sizeof(int32_t) + *kvLenp;
       if ((error = cb->response(moreFlag, id, ext)) != Error::OK) {
 	HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       }
@@ -594,8 +594,8 @@ void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t s
   {
     short moreFlag = more ? 0 : 1;
     Buffer ext;
-    ext.buf = kvBuffer;
-    ext.len = sizeof(int32_t) + *kvLenp;
+    ext.base = kvBuffer;
+    ext.size = sizeof(int32_t) + *kvLenp;
     if ((error = cb->response(moreFlag, scannerId, ext)) != Error::OK) {
       HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
     }
@@ -869,9 +869,9 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Buf
     // Fetch table info
     if (!m_live_map_ptr->get(table->id, table_info_ptr)) {
       Buffer ext;
-      ext.buf = new uint8_t [ buffer.len ];
-      memcpy(ext.buf, buffer.buf, buffer.len);
-      ext.len = buffer.len;
+      ext.base = new uint8_t [ buffer.size ];
+      memcpy(ext.base, buffer.base, buffer.size);
+      ext.size = buffer.size;
       HT_ERRORF("Unable to find table info for table '%s'", table->name);
       if ((error = cb->response(ext)) != Error::OK) {
 	HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
@@ -886,8 +886,8 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Buf
       return;
     }
 
-    mod_end = buffer.buf + buffer.len;
-    mod_ptr = buffer.buf;
+    mod_end = buffer.base + buffer.size;
+    mod_ptr = buffer.base;
 
     goMods.clear();
 
@@ -1151,13 +1151,13 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Buf
      */
     if (stopSize > 0) {
       Buffer ext;
-      ext.buf = new uint8_t [ stopSize ];
-      uint8_t *ptr = ext.buf;
+      ext.base = new uint8_t [ stopSize ];
+      uint8_t *ptr = ext.base;
       for (size_t i=0; i<stopMods.size(); i++) {
 	memcpy(ptr, stopMods[i].base, stopMods[i].len);
 	ptr += stopMods[i].len;
       }
-      ext.len = ptr - ext.buf;
+      ext.size = ptr - ext.base;
       if ((error = cb->response(ext)) != Error::OK) {
 	HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       }
@@ -1458,7 +1458,7 @@ int RangeServer::verify_schema(TableInfoPtr &table_info_ptr, int generation, std
 
     m_hyperspace_ptr->close(handle);
 
-    schemaPtr = Schema::new_instance((const char *)valueBuf.buf, valueBuf.fill(), true);
+    schemaPtr = Schema::new_instance((const char *)valueBuf.base, valueBuf.fill(), true);
     if (!schemaPtr->is_valid()) {
       err_msg = (std::string)"Schema Parse Error for table '" + table_info_ptr->get_name() + "' : " + schemaPtr->get_error_string();
       return Error::RANGESERVER_SCHEMA_PARSE_ERROR;

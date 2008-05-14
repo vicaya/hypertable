@@ -158,7 +158,7 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &props_ptr, A
     }
     else {
       assert(valueBuf.fill() == sizeof(int32_t));
-      memcpy(&ival, valueBuf.buf, sizeof(int32_t));
+      memcpy(&ival, valueBuf.base, sizeof(int32_t));
     }
 
     atomic_set(&m_last_table_id, ival);
@@ -293,10 +293,10 @@ void Master::get_schema(ResponseCallbackGetSchema *cb, const char *tableName) {
 
   m_hyperspace_ptr->close(handle);
   
-  cb->response((char *)schemaBuf.buf);
+  cb->response((char *)schemaBuf.base);
 
   if (m_verbose) {
-    HT_INFOF("Successfully fetched schema (length=%d) for table '%s'", strlen((char *)schemaBuf.buf), tableName);
+    HT_INFOF("Successfully fetched schema (length=%d) for table '%s'", strlen((char *)schemaBuf.base), tableName);
   }
 
  abort:
@@ -560,7 +560,7 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
 
   assert(value_buf.fill() == sizeof(int32_t));
 
-  memcpy(&ival, value_buf.buf, sizeof(int32_t));
+  memcpy(&ival, value_buf.base, sizeof(int32_t));
 
   {
     char start_row[16];

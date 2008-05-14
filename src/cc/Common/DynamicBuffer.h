@@ -26,24 +26,28 @@ extern "C" {
 #include <string.h>
 }
 
+#include "Buffer.h"
+
 namespace Hypertable {
 
-  class DynamicBuffer {
+  class DynamicBuffer : public Buffer {
 
   public:
 
-    DynamicBuffer(size_t initialSize, bool own=true) : buf(0), ptr(0), size(initialSize), m_own(own) {
-      if (initialSize == 0)
-	ptr = buf = 0;
+    DynamicBuffer(size_t initial_size, bool own_buffer=true) {
+      size = initial_size;
+      own = own_buffer;
+      if (size == 0)
+	ptr = base = 0;
       else
-	buf = ptr = new uint8_t [ size ];
+	base = ptr = new uint8_t [ size ];
     }
 
-    ~DynamicBuffer() { if (m_own) delete [] buf; }
+    ~DynamicBuffer() { if (own) delete [] base; }
 
-    size_t remaining() const { return size - (ptr-buf); }
+    size_t remaining() const { return size - (ptr-base); }
 
-    size_t fill() const { return ptr-buf; }
+    size_t fill() const { return ptr-base; }
 
     void ensure(size_t len) {
       if (len > remaining())
@@ -71,26 +75,26 @@ namespace Hypertable {
     }
 
     void set(const void *data, size_t len) {
-      ptr = buf;
+      ptr = base;
       add(data, len);
     }
 
     void clear() {
-      ptr = buf;
+      ptr = base;
     }
 
     void free() {
-      if (m_own)
-	delete [] buf;
-      buf = ptr = 0;
+      if (own)
+	delete [] base;
+      base = ptr = 0;
       size = 0;
     }
 
     uint8_t *release(size_t *lenp=0) {
-      uint8_t *rbuf = buf;
+      uint8_t *rbuf = base;
       if (lenp)
 	*lenp = fill();
-      ptr = buf = 0;
+      ptr = base = 0;
       size = 0;
       return rbuf;
     }
@@ -98,22 +102,21 @@ namespace Hypertable {
     void grow(size_t newSize, bool nocopy = false) {
       uint8_t *newBuf = new uint8_t [ newSize ];
 
-      if (!nocopy && buf)
-	memcpy(newBuf, buf, ptr-buf);
+      if (!nocopy && base)
+	memcpy(newBuf, base, ptr-base);
 
-      ptr = newBuf + (ptr-buf);
-      if (m_own)
-	delete [] buf;
-      buf = newBuf;
+      ptr = newBuf + (ptr-base);
+      if (own)
+	delete [] base;
+      base = newBuf;
       size = newSize;
     }
 
-    uint8_t *buf;
     uint8_t *ptr;
-    size_t   size;
 
   private:
-    bool m_own;
+    DynamicBuffer&  operator = (const DynamicBuffer& other) { return *this; }
+    DynamicBuffer(const DynamicBuffer& other) { }
   };
 
 }

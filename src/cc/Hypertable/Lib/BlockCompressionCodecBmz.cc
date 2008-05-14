@@ -73,14 +73,14 @@ BlockCompressionCodecBmz::deflate(const DynamicBuffer &input,
   output.reserve(outlen + headerlen + reserve);
   m_workmem.reserve(bmz_pack_worklen(inlen, m_fp_len), true);
 
-  HT_EXPECT(bmz_pack(input.buf, inlen, output.buf + headerlen, &outlen,
-                     m_offset, m_fp_len, 0, m_workmem.buf) == BMZ_E_OK, 
+  HT_EXPECT(bmz_pack(input.base, inlen, output.base + headerlen, &outlen,
+                     m_offset, m_fp_len, 0, m_workmem.base) == BMZ_E_OK, 
             Error::BLOCK_COMPRESSOR_DEFLATE_ERROR);
 
   // in case of an incompressible block
   if (outlen >= inlen) {
     header.set_compression_type(NONE);
-    memcpy(output.buf + headerlen, input.buf, inlen);
+    memcpy(output.base + headerlen, input.base, inlen);
     header.set_data_length(inlen);
     header.set_data_zlength(inlen);
   }
@@ -89,9 +89,9 @@ BlockCompressionCodecBmz::deflate(const DynamicBuffer &input,
     header.set_data_length(inlen);
     header.set_data_zlength(outlen);
   }
-  header.set_data_checksum(fletcher32(output.buf + headerlen, header.get_data_zlength()));
+  header.set_data_checksum(fletcher32(output.base + headerlen, header.get_data_zlength()));
   
-  output.ptr = output.buf;
+  output.ptr = output.base;
   header.encode(&output.ptr);
   output.ptr += header.get_data_zlength();
 
@@ -102,7 +102,7 @@ int
 BlockCompressionCodecBmz::inflate(const DynamicBuffer &input,
                                   DynamicBuffer &output,
                                   BlockCompressionHeader &header) {
-  uint8_t *ip = input.buf;
+  uint8_t *ip = input.base;
   size_t remain = input.fill();
 
   HT_EXPECT(header.decode(&ip, &remain) == Error::OK,
@@ -115,18 +115,18 @@ BlockCompressionCodecBmz::inflate(const DynamicBuffer &input,
   size_t outlen = header.get_data_length();
 
   if (header.get_compression_type() == NONE)
-    memcpy(output.buf, ip, outlen);
+    memcpy(output.base, ip, outlen);
   else {
     output.reserve(outlen);
     m_workmem.reserve(bmz_unpack_worklen(outlen), true);
 
-    HT_EXPECT(bmz_unpack(ip, header.get_data_zlength(), output.buf, &outlen,
-                         m_workmem.buf) == BMZ_E_OK,
+    HT_EXPECT(bmz_unpack(ip, header.get_data_zlength(), output.base, &outlen,
+                         m_workmem.base) == BMZ_E_OK,
               Error::BLOCK_COMPRESSOR_INFLATE_ERROR);
     HT_EXPECT(outlen == header.get_data_length(),
               Error::BLOCK_COMPRESSOR_INFLATE_ERROR);
   }
-  output.ptr = output.buf + outlen;
+  output.ptr = output.base + outlen;
 
   return Error::OK;
 }

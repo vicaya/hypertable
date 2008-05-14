@@ -104,7 +104,7 @@ uint32_t Client::get_table_id(const String &name) {
 
   assert(value_buf.fill() == sizeof(int32_t));
 
-  memcpy(&uval, value_buf.buf, sizeof(int32_t));
+  memcpy(&uval, value_buf.base, sizeof(int32_t));
 
   return uval;
 }

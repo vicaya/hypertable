@@ -150,11 +150,11 @@ bool TestSource::create_row_delete(const char *row, uint64_t timestamp, ByteStri
   timestamp = ByteOrderSwapInt64(timestamp);
   timestamp = ~timestamp;
   m_key_buffer.addNoCheck(&timestamp, sizeof(timestamp));
-  key.ptr = m_key_buffer.buf;
+  key.ptr = m_key_buffer.base;
 
   m_value_buffer.clear();
   append_as_byte_string(m_value_buffer, 0, 0);
-  value.ptr = m_value_buffer.buf;
+  value.ptr = m_value_buffer.base;
   return true;
 }
 
@@ -192,11 +192,11 @@ bool TestSource::create_column_delete(const char *row, const char *column, uint6
   timestamp = ByteOrderSwapInt64(timestamp);
   timestamp = ~timestamp;
   m_key_buffer.addNoCheck(&timestamp, sizeof(timestamp));
-  key.ptr = m_key_buffer.buf;
+  key.ptr = m_key_buffer.base;
 
   m_value_buffer.clear();
   append_as_byte_string(m_value_buffer, 0, 0);
-  value.ptr = m_value_buffer.buf;
+  value.ptr = m_value_buffer.base;
   return true;
 }
 
@@ -234,11 +234,11 @@ bool TestSource::create_insert(const char *row, const char *column, uint64_t tim
   timestamp = ByteOrderSwapInt64(timestamp);
   timestamp = ~timestamp;
   m_key_buffer.addNoCheck(&timestamp, sizeof(timestamp));
-  key.ptr = m_key_buffer.buf;
+  key.ptr = m_key_buffer.base;
 
   m_value_buffer.clear();
   append_as_byte_string(m_value_buffer, value_str, strlen(value_str));
-  value.ptr = m_value_buffer.buf;
+  value.ptr = m_value_buffer.base;
   return true;
 }
 

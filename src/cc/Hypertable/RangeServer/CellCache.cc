@@ -238,7 +238,7 @@ void CellCache::purge_deletes() {
       if (delete_present) {
 	if (deleted_cell.fill() > 0) {
 	  len = (key_comps.column_qualifier - key_comps.row) + strlen(key_comps.column_qualifier) + 1;
-	  if (deleted_cell.fill() == len && !memcmp(deleted_cell.buf, key_comps.row, len)) {
+	  if (deleted_cell.fill() == len && !memcmp(deleted_cell.base, key_comps.row, len)) {
 	    if (key_comps.timestamp < deleted_cell_timestamp) {
 	      tmp_iter = iter;
 	      iter++;
@@ -252,7 +252,7 @@ void CellCache::purge_deletes() {
 	}
 	if (deleted_column_family.fill() > 0) {
 	  len = key_comps.column_qualifier - key_comps.row;
-	  if (deleted_column_family.fill() == len && !memcmp(deleted_column_family.buf, key_comps.row, len)) {
+	  if (deleted_column_family.fill() == len && !memcmp(deleted_column_family.base, key_comps.row, len)) {
 	    if (key_comps.timestamp < deleted_column_family_timestamp) {
 	      tmp_iter = iter;
 	      iter++;
@@ -266,7 +266,7 @@ void CellCache::purge_deletes() {
 	}
 	if (deleted_row.fill() > 0) {
 	  len = strlen(key_comps.row) + 1;
-	  if (deleted_row.fill() == len && !memcmp(deleted_row.buf, key_comps.row, len)) {
+	  if (deleted_row.fill() == len && !memcmp(deleted_row.base, key_comps.row, len)) {
 	    if (key_comps.timestamp < deleted_row_timestamp) {
 	      tmp_iter = iter;
 	      iter++;
@@ -285,7 +285,7 @@ void CellCache::purge_deletes() {
     else {
       if (key_comps.flag == FLAG_DELETE_ROW) {
 	len = strlen(key_comps.row) + 1;
-	if (delete_present && deleted_row.fill() == len && !memcmp(deleted_row.buf, key_comps.row, len)) {
+	if (delete_present && deleted_row.fill() == len && !memcmp(deleted_row.base, key_comps.row, len)) {
 	  if (deleted_row_timestamp < key_comps.timestamp)
 	    deleted_row_timestamp = key_comps.timestamp;
 	}
@@ -297,7 +297,7 @@ void CellCache::purge_deletes() {
       }
       else if (key_comps.flag == FLAG_DELETE_COLUMN_FAMILY) {
 	len = key_comps.column_qualifier - key_comps.row;
-	if (delete_present && deleted_column_family.fill() == len && !memcmp(deleted_column_family.buf, key_comps.row, len)) {
+	if (delete_present && deleted_column_family.fill() == len && !memcmp(deleted_column_family.base, key_comps.row, len)) {
 	  if (deleted_column_family_timestamp < key_comps.timestamp)
 	    deleted_column_family_timestamp = key_comps.timestamp;
 	}
@@ -309,7 +309,7 @@ void CellCache::purge_deletes() {
       }
       else if (key_comps.flag == FLAG_DELETE_CELL) {
 	len = (key_comps.column_qualifier - key_comps.row) + strlen(key_comps.column_qualifier) + 1;
-	if (delete_present && deleted_cell.fill() == len && !memcmp(deleted_cell.buf, key_comps.row, len)) {
+	if (delete_present && deleted_cell.fill() == len && !memcmp(deleted_cell.base, key_comps.row, len)) {
 	  if (deleted_cell_timestamp < key_comps.timestamp)
 	    deleted_cell_timestamp = key_comps.timestamp;
 	}

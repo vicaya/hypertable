@@ -46,8 +46,8 @@ void RequestHandlerUpdate::run() {
   if (!table.decode(&msgPtr, &remaining))
     goto abort;
 
-  mods.buf = msgPtr;
-  mods.len = remaining;
+  mods.base = msgPtr;
+  mods.size = remaining;
 
   m_range_server->update(&cb, &table, mods);
 

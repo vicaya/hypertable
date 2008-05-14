@@ -102,7 +102,7 @@ bool CommitLogBlockStream::next(CommitLogBlockInfo *infop, BlockCompressionHeade
   m_block_buffer.ptr += nread;
   m_cur_offset += nread;
   infop->end_offset = m_cur_offset;
-  infop->block_ptr = m_block_buffer.buf;
+  infop->block_ptr = m_block_buffer.base;
   infop->block_len = m_block_buffer.fill();
 
   return true;
@@ -116,11 +116,11 @@ int CommitLogBlockStream::load_next_valid_header(BlockCompressionHeaderCommitLog
   uint32_t nread;
   size_t remaining = BlockCompressionHeaderCommitLog::LENGTH;
 
-  nread = m_fs->read(m_fd, m_block_buffer.buf, BlockCompressionHeaderCommitLog::LENGTH);
+  nread = m_fs->read(m_fd, m_block_buffer.base, BlockCompressionHeaderCommitLog::LENGTH);
 
   HT_EXPECT(nread == BlockCompressionHeaderCommitLog::LENGTH, Error::FAILED_EXPECTATION);
 
-  m_block_buffer.ptr = m_block_buffer.buf;
+  m_block_buffer.ptr = m_block_buffer.base;
 
   HT_EXPECT(header->decode(&m_block_buffer.ptr, &remaining) == Error::OK, Error::FAILED_EXPECTATION);
 

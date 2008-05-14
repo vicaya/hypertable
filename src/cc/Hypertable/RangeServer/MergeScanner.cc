@@ -90,15 +90,15 @@ void MergeScanner::forward() {
       }
       else if (keyComps.flag == FLAG_DELETE_ROW) {
 	len = strlen(keyComps.row) + 1;
-	if (m_delete_present && m_deleted_row.fill() == len && !memcmp(m_deleted_row.buf, keyComps.row, len)) {
+	if (m_delete_present && m_deleted_row.fill() == len && !memcmp(m_deleted_row.base, keyComps.row, len)) {
 	  if (m_deleted_row_timestamp < keyComps.timestamp)
 	    m_deleted_row_timestamp = keyComps.timestamp;
 	}
 	else {
 	  m_deleted_row.clear();
 	  m_deleted_row.ensure(len);
-	  memcpy(m_deleted_row.buf, keyComps.row, len);
-	  m_deleted_row.ptr = m_deleted_row.buf + len;
+	  memcpy(m_deleted_row.base, keyComps.row, len);
+	  m_deleted_row.ptr = m_deleted_row.base + len;
 	  m_deleted_row_timestamp = keyComps.timestamp;
 	  m_delete_present = true;
 	}
@@ -107,15 +107,15 @@ void MergeScanner::forward() {
       }
       else if (keyComps.flag == FLAG_DELETE_COLUMN_FAMILY) {
 	len = keyComps.column_qualifier - keyComps.row;
-	if (m_delete_present && m_deleted_column_family.fill() == len && !memcmp(m_deleted_column_family.buf, keyComps.row, len)) {
+	if (m_delete_present && m_deleted_column_family.fill() == len && !memcmp(m_deleted_column_family.base, keyComps.row, len)) {
 	  if (m_deleted_column_family_timestamp < keyComps.timestamp)
 	    m_deleted_column_family_timestamp = keyComps.timestamp;
 	}
 	else {
 	  m_deleted_column_family.clear();
 	  m_deleted_column_family.ensure(len);
-	  memcpy(m_deleted_column_family.buf, keyComps.row, len);
-	  m_deleted_column_family.ptr = m_deleted_column_family.buf + len;
+	  memcpy(m_deleted_column_family.base, keyComps.row, len);
+	  m_deleted_column_family.ptr = m_deleted_column_family.base + len;
 	  m_deleted_column_family_timestamp = keyComps.timestamp;
 	  m_delete_present = true;
 	}
@@ -124,15 +124,15 @@ void MergeScanner::forward() {
       }
       else if (keyComps.flag == FLAG_DELETE_CELL) {
 	len = (keyComps.column_qualifier - keyComps.row) + strlen(keyComps.column_qualifier) + 1;
-	if (m_delete_present && m_deleted_cell.fill() == len && !memcmp(m_deleted_cell.buf, keyComps.row, len)) {
+	if (m_delete_present && m_deleted_cell.fill() == len && !memcmp(m_deleted_cell.base, keyComps.row, len)) {
 	  if (m_deleted_cell_timestamp < keyComps.timestamp)
 	    m_deleted_cell_timestamp = keyComps.timestamp;
 	}
 	else {
 	  m_deleted_cell.clear();
 	  m_deleted_cell.ensure(len);
-	  memcpy(m_deleted_cell.buf, keyComps.row, len);
-	  m_deleted_cell.ptr = m_deleted_cell.buf + len;
+	  memcpy(m_deleted_cell.base, keyComps.row, len);
+	  m_deleted_cell.ptr = m_deleted_cell.base + len;
 	  m_deleted_cell_timestamp = keyComps.timestamp;
 	  m_delete_present = true;
 	}
@@ -145,7 +145,7 @@ void MergeScanner::forward() {
 	if (!m_return_deletes && m_delete_present) {
 	  if (m_deleted_cell.fill() > 0) {
 	    len = (keyComps.column_qualifier - keyComps.row) + strlen(keyComps.column_qualifier) + 1;
-	    if (m_deleted_cell.fill() == len && !memcmp(m_deleted_cell.buf, keyComps.row, len)) {
+	    if (m_deleted_cell.fill() == len && !memcmp(m_deleted_cell.base, keyComps.row, len)) {
 	      if (keyComps.timestamp < m_deleted_cell_timestamp)
 		continue;
 	      break;
@@ -154,7 +154,7 @@ void MergeScanner::forward() {
 	  }
 	  if (m_deleted_column_family.fill() > 0) {
 	    len = keyComps.column_qualifier - keyComps.row;
-	    if (m_deleted_column_family.fill() == len && !memcmp(m_deleted_column_family.buf, keyComps.row, len)) {
+	    if (m_deleted_column_family.fill() == len && !memcmp(m_deleted_column_family.base, keyComps.row, len)) {
 	      if (keyComps.timestamp < m_deleted_column_family_timestamp)
 		continue;
 	      break;
@@ -163,7 +163,7 @@ void MergeScanner::forward() {
 	  }
 	  if (m_deleted_row.fill() > 0) {
 	    len = strlen(keyComps.row) + 1;
-	    if (m_deleted_row.fill() == len && !memcmp(m_deleted_row.buf, keyComps.row, len)) {
+	    if (m_deleted_row.fill() == len && !memcmp(m_deleted_row.base, keyComps.row, len)) {
 	      if (keyComps.timestamp < m_deleted_row_timestamp)
 		continue;
 	      break;
@@ -182,7 +182,7 @@ void MergeScanner::forward() {
     if (m_prev_key.fill() != 0) {
 
       if (m_row_limit) {
-	if (strcmp(keyComps.row, (const char *)m_prev_key.buf)) {
+	if (strcmp(keyComps.row, (const char *)m_prev_key.base)) {
 	  m_row_count++;
 	  if (m_row_count >= m_row_limit) {
 	    m_done = true;
@@ -196,7 +196,7 @@ void MergeScanner::forward() {
 	}
       }
 
-      if (prev_key_len == m_prev_key.fill() && prev_key_len > 9 && !memcmp(prev_key, m_prev_key.buf, prev_key_len-9)) {
+      if (prev_key_len == m_prev_key.fill() && prev_key_len > 9 && !memcmp(prev_key, m_prev_key.base, prev_key_len-9)) {
 	if (m_cell_limit) {
 	  m_cell_count++;
 	  m_prev_key.set(prev_key, prev_key_len);
@@ -273,8 +273,8 @@ void MergeScanner::initialize() {
       size_t len = strlen(keyComps.row) + 1;
       m_deleted_row.clear();
       m_deleted_row.ensure(len);
-      memcpy(m_deleted_row.buf, keyComps.row, len);
-      m_deleted_row.ptr = m_deleted_row.buf + len;
+      memcpy(m_deleted_row.base, keyComps.row, len);
+      m_deleted_row.ptr = m_deleted_row.base + len;
       m_deleted_row_timestamp = keyComps.timestamp;
       m_delete_present = true;
       if (!m_return_deletes)
@@ -284,8 +284,8 @@ void MergeScanner::initialize() {
       size_t len = (keyComps.column_qualifier - keyComps.row) + strlen(keyComps.column_qualifier) + 1;
       m_deleted_column_family.clear();
       m_deleted_column_family.ensure(len);
-      memcpy(m_deleted_column_family.buf, keyComps.row, len);
-      m_deleted_column_family.ptr = m_deleted_column_family.buf + len;
+      memcpy(m_deleted_column_family.base, keyComps.row, len);
+      m_deleted_column_family.ptr = m_deleted_column_family.base + len;
       m_deleted_column_family_timestamp = keyComps.timestamp;
       m_delete_present = true;
       if (!m_return_deletes)
@@ -295,8 +295,8 @@ void MergeScanner::initialize() {
       size_t len = (keyComps.column_qualifier - keyComps.row) + strlen(keyComps.column_qualifier) + 1;
       m_deleted_cell.clear();
       m_deleted_cell.ensure(len);
-      memcpy(m_deleted_cell.buf, keyComps.row, len);
-      m_deleted_cell.ptr = m_deleted_cell.buf + len;
+      memcpy(m_deleted_cell.base, keyComps.row, len);
+      m_deleted_cell.ptr = m_deleted_cell.base + len;
       m_deleted_cell_timestamp = keyComps.timestamp;
       m_delete_present = true;
       if (!m_return_deletes)

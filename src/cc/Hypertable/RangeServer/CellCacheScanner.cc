@@ -47,13 +47,13 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellCachePtr, ScanContextPtr &s
     /** set start iterator **/
     dbuf.clear();
     append_as_byte_string(dbuf, scanContextPtr->start_row.c_str(), start_row_len);
-    bs.ptr = dbuf.buf;
+    bs.ptr = dbuf.base;
     m_start_iter = m_cell_cache_ptr->m_cell_map.lower_bound(bs);
 
     /** set end iterator **/
     dbuf.clear();
     append_as_byte_string(dbuf, scanContextPtr->end_row.c_str(), end_row_len);
-    bs.ptr = dbuf.buf;
+    bs.ptr = dbuf.base;
     m_end_iter = m_cell_cache_ptr->m_cell_map.lower_bound(bs);
 
     m_cur_iter = m_start_iter;

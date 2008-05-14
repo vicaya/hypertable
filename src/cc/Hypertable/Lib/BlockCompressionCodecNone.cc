@@ -45,12 +45,12 @@ BlockCompressionCodecNone::deflate(const DynamicBuffer &input, DynamicBuffer &ou
   output.reserve( header.length() + input.fill() + reserve );
 
   header.set_compression_type(NONE);
-  memcpy(output.buf+header.length(), input.buf, input.fill());
+  memcpy(output.base+header.length(), input.base, input.fill());
   header.set_data_length(input.fill());
   header.set_data_zlength(input.fill());
-  header.set_data_checksum(fletcher32(output.buf + header.length(), header.get_data_zlength()));
+  header.set_data_checksum(fletcher32(output.base + header.length(), header.get_data_zlength()));
   
-  output.ptr = output.buf;
+  output.ptr = output.base;
   header.encode(&output.ptr);
   output.ptr += header.get_data_zlength();
 
@@ -65,7 +65,7 @@ int
 BlockCompressionCodecNone::inflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader &header) {
 
   int error;
-  uint8_t *msg_ptr = input.buf;
+  uint8_t *msg_ptr = input.base;
   size_t remaining = input.fill();
 
   if ((error = header.decode(&msg_ptr, &remaining)) != Error::OK)
@@ -84,8 +84,8 @@ BlockCompressionCodecNone::inflate(const DynamicBuffer &input, DynamicBuffer &ou
 
   output.reserve(header.get_data_length());
 
-  memcpy(output.buf, msg_ptr, header.get_data_length());
-  output.ptr = output.buf + header.get_data_length();
+  memcpy(output.base, msg_ptr, header.get_data_length());
+  output.ptr = output.base + header.get_data_length();
 
   return Error::OK;
 }

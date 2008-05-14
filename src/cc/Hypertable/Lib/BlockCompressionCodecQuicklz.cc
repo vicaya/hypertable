@@ -60,12 +60,12 @@ int BlockCompressionCodecQuicklz::deflate(const DynamicBuffer &input, DynamicBuf
   output.reserve( header.length() + avail_out + reserve );
 
   // compress 
-  len = qlz_compress((char *)input.buf, (char *)output.buf+header.length(), input.fill(), (char *)m_workmem);
+  len = qlz_compress((char *)input.base, (char *)output.base+header.length(), input.fill(), (char *)m_workmem);
 
   /* check for an incompressible block */
   if (len >= input.fill()) {
     header.set_compression_type(NONE);
-    memcpy(output.buf+header.length(), input.buf, input.fill());
+    memcpy(output.base+header.length(), input.base, input.fill());
     header.set_data_length(input.fill());
     header.set_data_zlength(input.fill());
   }
@@ -74,9 +74,9 @@ int BlockCompressionCodecQuicklz::deflate(const DynamicBuffer &input, DynamicBuf
     header.set_data_length(input.fill());
     header.set_data_zlength(len);
   }
-  header.set_data_checksum(fletcher32(output.buf + header.length(), header.get_data_zlength()));
+  header.set_data_checksum(fletcher32(output.base + header.length(), header.get_data_zlength()));
   
-  output.ptr = output.buf;
+  output.ptr = output.base;
   header.encode(&output.ptr);
   output.ptr += header.get_data_zlength();
 
@@ -89,7 +89,7 @@ int BlockCompressionCodecQuicklz::deflate(const DynamicBuffer &input, DynamicBuf
  */
 int BlockCompressionCodecQuicklz::inflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader &header) {
   int error;
-  uint8_t *msg_ptr = input.buf;
+  uint8_t *msg_ptr = input.base;
   size_t remaining = input.fill();
 
   if ((error = header.decode(&msg_ptr, &remaining)) != Error::OK)
@@ -110,14 +110,14 @@ int BlockCompressionCodecQuicklz::inflate(const DynamicBuffer &input, DynamicBuf
 
    // check compress type
   if (header.get_compression_type() == NONE)
-    memcpy(output.buf, msg_ptr, header.get_data_length());
+    memcpy(output.base, msg_ptr, header.get_data_length());
   else {
     size_t len;
     // decompress 
-    len = qlz_decompress((char *)msg_ptr, (char *)output.buf, (char *)m_workmem);
+    len = qlz_decompress((char *)msg_ptr, (char *)output.base, (char *)m_workmem);
     assert(len == header.get_data_length());
   }
-  output.ptr = output.buf + header.get_data_length();
+  output.ptr = output.base + header.get_data_length();
 
   return Error::OK;
 }

@@ -52,7 +52,7 @@ namespace Hypertable {
       return error;
     }
 
-    Schema *schema = Schema::new_instance((const char *)valueBuf.buf, valueBuf.fill(), true);
+    Schema *schema = Schema::new_instance((const char *)valueBuf.base, valueBuf.fill(), true);
     if (!schema->is_valid()) {
       HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
       delete schema;
@@ -73,7 +73,7 @@ namespace Hypertable {
       return Error::INVALID_METADATA;
     }
 
-    memcpy(&m_table.id, valueBuf.buf, sizeof(int32_t));
+    memcpy(&m_table.id, valueBuf.base, sizeof(int32_t));
 
     hyperspace_ptr->close(handle);
 

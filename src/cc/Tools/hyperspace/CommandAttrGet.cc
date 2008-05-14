@@ -66,7 +66,7 @@ int CommandAttrGet::run() {
 	  return Error::HYPERSPACE_BAD_ATTRIBUTE;
 	}
 	short sval;
-	memcpy(&sval, value.buf, 2);
+	memcpy(&sval, value.base, 2);
 	cout << sval << endl;
       }
       else if (m_args[2].first == "int") {
@@ -75,7 +75,7 @@ int CommandAttrGet::run() {
 	  return Error::HYPERSPACE_BAD_ATTRIBUTE;
 	}
 	uint32_t ival;
-	memcpy(&ival, value.buf, 4);
+	memcpy(&ival, value.base, 4);
 	cout << ival << endl;
       }
       else if (m_args[2].first == "long") {
@@ -84,12 +84,12 @@ int CommandAttrGet::run() {
 	  return Error::HYPERSPACE_BAD_ATTRIBUTE;
 	}
 	uint64_t lval;
-	memcpy(&lval, value.buf, 8);
+	memcpy(&lval, value.base, 8);
 	cout << lval << endl;
       }
     }
     else {
-      std::string valStr = std::string((const char *)value.buf, value.fill());
+      std::string valStr = std::string((const char *)value.base, value.fill());
       cout << valStr << endl;
     }
   }

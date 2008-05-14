@@ -99,10 +99,10 @@ int BlockCompressionCodecZlib::deflate(const DynamicBuffer &input, DynamicBuffer
   output.reserve( header.length() + avail_out + reserve );
 
   m_stream_deflate.avail_in = input.fill();
-  m_stream_deflate.next_in = input.buf;
+  m_stream_deflate.next_in = input.base;
 
   m_stream_deflate.avail_out = avail_out;
-  m_stream_deflate.next_out = output.buf + header.length();
+  m_stream_deflate.next_out = output.base + header.length();
 
   int ret = ::deflate(&m_stream_deflate, Z_FINISH); 
   assert(ret == Z_STREAM_END);
@@ -113,7 +113,7 @@ int BlockCompressionCodecZlib::deflate(const DynamicBuffer &input, DynamicBuffer
   /* check for an incompressible block */
   if (zlen >= input.fill()) {
     header.set_compression_type(NONE);
-    memcpy(output.buf+header.length(), input.buf, input.fill());
+    memcpy(output.base+header.length(), input.base, input.fill());
     header.set_data_length(input.fill());
     header.set_data_zlength(input.fill());
   }
@@ -123,11 +123,11 @@ int BlockCompressionCodecZlib::deflate(const DynamicBuffer &input, DynamicBuffer
     header.set_data_zlength(zlen);
   }
 
-  header.set_data_checksum( fletcher32(output.buf + header.length(), header.get_data_zlength()) );
+  header.set_data_checksum( fletcher32(output.base + header.length(), header.get_data_zlength()) );
   
   deflateReset(&m_stream_deflate);
 
-  output.ptr = output.buf;
+  output.ptr = output.base;
   header.encode(&output.ptr);
   output.ptr += header.get_data_zlength();
 
@@ -141,7 +141,7 @@ int BlockCompressionCodecZlib::deflate(const DynamicBuffer &input, DynamicBuffer
 int BlockCompressionCodecZlib::inflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader &header) {
   int ret;
   int error;
-  uint8_t *msg_ptr = input.buf;
+  uint8_t *msg_ptr = input.base;
   size_t remaining = input.fill();
 
   if (!m_inflate_initialized) {
@@ -175,14 +175,14 @@ int BlockCompressionCodecZlib::inflate(const DynamicBuffer &input, DynamicBuffer
 
    // check compress bit
   if (header.get_compression_type() == NONE)
-    memcpy(output.buf, msg_ptr, header.get_data_length());
+    memcpy(output.base, msg_ptr, header.get_data_length());
   else {
 
     m_stream_inflate.avail_in = remaining;
     m_stream_inflate.next_in = msg_ptr;
 
     m_stream_inflate.avail_out = header.get_data_length();
-    m_stream_inflate.next_out = output.buf;
+    m_stream_inflate.next_out = output.base;
 
     ret = ::inflate(&m_stream_inflate, Z_NO_FLUSH);
     if (ret != Z_STREAM_END) {
@@ -197,7 +197,7 @@ int BlockCompressionCodecZlib::inflate(const DynamicBuffer &input, DynamicBuffer
     ::inflateReset(&m_stream_inflate);  
   }
 
-  output.ptr = output.buf + header.get_data_length();
+  output.ptr = output.base + header.get_data_length();
 
   return Error::OK;
 
