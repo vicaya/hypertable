@@ -24,6 +24,7 @@
 
 #include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
+#include "Common/HashMap.h"
 
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/Comm.h"
@@ -86,11 +87,11 @@ namespace Hypertable {
 
     int verify_schema(TableInfoPtr &tableInfoPtr, int generation, std::string &errMsg);
 
-    typedef __gnu_cxx::hash_map<string, TableInfoPtr> TableInfoMapT;
+    typedef hash_map<string, TableInfoPtr> TableInfoMapT;
 
-    boost::mutex           m_mutex;
-    boost::mutex           m_update_mutex_a;
-    boost::mutex           m_update_mutex_b;
+    Mutex                  m_mutex;
+    Mutex                  m_update_mutex_a;
+    Mutex                  m_update_mutex_b;
     PropertiesPtr          m_props_ptr;
     bool                   m_verbose;
     Comm                  *m_comm;
@@ -109,7 +110,7 @@ namespace Hypertable {
     long                   m_last_commit_log_clean;
     uint64_t               m_timer_interval;
   };
-  typedef boost::intrusive_ptr<RangeServer> RangeServerPtr;
+  typedef intrusive_ptr<RangeServer> RangeServerPtr;
   
 
 }
