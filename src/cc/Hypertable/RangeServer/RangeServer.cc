@@ -1011,7 +1011,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
 	HT_EXPECT(dbuf.fill() <= (splitSize + table->encoded_length()), Error::FAILED_EXPECTATION);
 
 	if ((error = splitLogPtr->write(dbuf, update_timestamp)) != Error::OK) {
-	  errMsg = (string)"Problem writing " + dbuf.fill() + " bytes to split log";
+	  errMsg = (string)"Problem writing " + (int)dbuf.fill() + " bytes to split log";
 	  boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_a);
 	  goto abort;
 	}
@@ -1091,7 +1091,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
       HT_EXPECT(dbuf.fill() <= (goSize + table->encoded_length()), Error::FAILED_EXPECTATION);
 
       if ((error = Global::log->write(dbuf, update_timestamp)) != Error::OK) {
-	errMsg = (string)"Problem writing " + dbuf.fill() + " bytes to commit log";
+	errMsg = (string)"Problem writing " + (int)dbuf.fill() + " bytes to commit log";
 	boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_b);
 	goto abort;
       }
