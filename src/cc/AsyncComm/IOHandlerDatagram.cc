@@ -190,7 +190,7 @@ int IOHandlerDatagram::flush_send_queue() {
     SendRecT &sendRec = m_send_queue.front();
 
     assert(sendRec.second->dataLen > 0);
-    assert(sendRec.second->ext == 0);
+    assert(sendRec.second->ext.base == 0);
 
     nsent = FileUtils::sendto(m_sd, sendRec.second->data, sendRec.second->dataLen,
 			      (const sockaddr*)&sendRec.first, sizeof(struct sockaddr_in));

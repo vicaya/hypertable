@@ -23,7 +23,6 @@
 #define HYPERTABLE_RESPONSECALLBACK_H
 
 #include "Common/String.h"
-#include "Common/Buffer.h"
 
 #include "Comm.h"
 #include "Event.h"

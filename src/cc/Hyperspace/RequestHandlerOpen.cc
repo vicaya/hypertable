@@ -68,8 +68,10 @@ void RequestHandlerOpen::run() {
   for (uint32_t i=0; i<attrCount; i++) {
     if (!Serialization::decode_string(&msgPtr, &remaining, &attr.name))
       goto abort;
-    if (!Serialization::decode_byte_array(&msgPtr, &remaining, (uint8_t **)&attr.value, &attr.valueLen))
+    uint8_t *byte_ptr;
+    if (!Serialization::decode_byte_array(&msgPtr, &remaining, &byte_ptr, &attr.valueLen))
       goto abort;
+    attr.value = byte_ptr;
     initAttrs.push_back(attr);
   }
 

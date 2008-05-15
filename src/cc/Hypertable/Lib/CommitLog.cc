@@ -101,18 +101,14 @@ uint64_t CommitLog::get_timestamp() {
 /**
  * 
  */
-int CommitLog::write(uint8_t *data, uint32_t len, uint64_t timestamp) {
+int CommitLog::write(DynamicBuffer &buffer, uint64_t timestamp) {
   int error;
   BlockCompressionHeaderCommitLog header(MAGIC_DATA, timestamp);
-  DynamicBuffer input(0, false);
-
-  input.base = data;
-  input.ptr = data + len;
 
   /**
    * Compress and write the commit block
    */
-  if ((error = compress_and_write(input, &header, timestamp)) != Error::OK)
+  if ((error = compress_and_write(buffer, &header, timestamp)) != Error::OK)
     return error;
 
   /**
@@ -136,7 +132,7 @@ int CommitLog::link_log(CommitLogBase *log_base, uint64_t timestamp) {
   int error;
   BlockCompressionHeaderCommitLog header(MAGIC_LINK, timestamp);
   DispatchHandlerSynchronizer sync_handler;
-  DynamicBuffer input(0, false);
+  DynamicBuffer input;
   String &log_dir = log_base->get_log_dir();
 
   input.ensure( header.length() );
@@ -151,11 +147,13 @@ int CommitLog::link_log(CommitLogBase *log_base, uint64_t timestamp) {
 
   try {
     boost::mutex::scoped_lock lock(m_mutex);
+    size_t amount = input.fill();
+    StaticBuffer send_buf(input);
 
-    m_fs->append(m_fd, input.base, input.fill(), &sync_handler);
+    m_fs->append(m_fd, send_buf, &sync_handler);
     m_fs->flush(m_fd, &sync_handler);
     m_last_timestamp = timestamp;
-    m_cur_fragment_length += input.fill();
+    m_cur_fragment_length += amount;
 
     if ((error = roll()) != Error::OK)
       return error;
@@ -276,7 +274,7 @@ int CommitLog::compress_and_write(DynamicBuffer &input, BlockCompressionHeader *
   int error = Error::OK;
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
-  DynamicBuffer zblock(0, false);
+  DynamicBuffer zblock;
 
   // Compress block and kick off log write (protected by lock)
   try {
@@ -285,10 +283,13 @@ int CommitLog::compress_and_write(DynamicBuffer &input, BlockCompressionHeader *
     if ((error = m_compressor->deflate(input, zblock, *header)) != Error::OK)
       return error;
 
-    m_fs->append(m_fd, zblock.base, zblock.fill(), &sync_handler);
+    size_t amount = zblock.fill();
+    StaticBuffer send_buf(zblock);
+
+    m_fs->append(m_fd, send_buf, &sync_handler);
     m_fs->flush(m_fd, &sync_handler);
     m_last_timestamp = timestamp;
-    m_cur_fragment_length += zblock.fill();
+    m_cur_fragment_length += amount;
   }
   catch (Exception &e) {
     HT_ERRORF("Problem writing commit log: %s: %s",

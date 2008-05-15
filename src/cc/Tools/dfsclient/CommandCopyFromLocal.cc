@@ -53,6 +53,7 @@ int CommandCopyFromLocal::run() {
   size_t nread;
   int srcArg = 0;
   uint8_t *buf;
+  StaticBuffer send_buf;
 
   if (m_args.size() != 2) {
     cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
@@ -72,7 +73,8 @@ int CommandCopyFromLocal::run() {
     buf = new uint8_t [ BUFFER_SIZE ];
     if ((nread = fread(buf, 1, BUFFER_SIZE, fp)) == 0)
       goto done;
-    m_client->append(fd, buf, nread, &syncHandler);
+    send_buf.set(buf, nread, true);
+    m_client->append(fd, send_buf, &syncHandler);
   }
 
   while (true) {
@@ -85,7 +87,8 @@ int CommandCopyFromLocal::run() {
     buf = new uint8_t [ BUFFER_SIZE ];
     if ((nread = fread(buf, 1, BUFFER_SIZE, fp)) == 0)
       break;
-    m_client->append(fd, buf, nread, &syncHandler);
+    send_buf.set(buf, nread, true);
+    m_client->append(fd, send_buf, &syncHandler);
   }
 
 done:

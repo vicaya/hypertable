@@ -53,16 +53,16 @@ void RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifier &ta
 }
 
 
-void RangeServerClient::update(struct sockaddr_in &addr, TableIdentifier &table, uint8_t *data, size_t len, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( RangeServerProtocol::create_request_update(table, data, len) );
+void RangeServerClient::update(struct sockaddr_in &addr, TableIdentifier &table, StaticBuffer &buffer, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_update(table, buffer) );
   send_message(addr, cbufPtr, handler);
 }
 
 
-void RangeServerClient::update(struct sockaddr_in &addr, TableIdentifier &table, uint8_t *data, size_t len) {
+void RangeServerClient::update(struct sockaddr_in &addr, TableIdentifier &table, StaticBuffer &buffer) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr event_ptr;
-  CommBufPtr cbufPtr( RangeServerProtocol::create_request_update(table, data, len) );
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_update(table, buffer) );
   send_message(addr, cbufPtr, &syncHandler);
   if (!syncHandler.wait_for_reply(event_ptr))
     throw Exception((int)Protocol::response_code(event_ptr),
@@ -182,8 +182,8 @@ void RangeServerClient::replay_start(struct sockaddr_in &addr, DispatchHandler *
 }
 
 
-void RangeServerClient::replay_update(struct sockaddr_in &addr, const uint8_t *data, size_t len, DispatchHandler *handler) {
-  CommBufPtr cbufPtr( RangeServerProtocol::create_request_replay_update(data, len) );
+void RangeServerClient::replay_update(struct sockaddr_in &addr, StaticBuffer &buffer, DispatchHandler *handler) {
+  CommBufPtr cbufPtr( RangeServerProtocol::create_request_replay_update(buffer) );
   send_message(addr, cbufPtr, handler);
 }
 

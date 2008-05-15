@@ -185,14 +185,12 @@ void KosmosBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) 
   OpenFileDataKosmosPtr dataPtr;
   ssize_t nread;
   uint64_t offset;
-  uint8_t *buf;
   KfsClient *clnt = KfsClient::Instance();
+  StaticBuffer buf(new uint8_t [amount], amount);
 
   if (mVerbose) {
     HT_INFOF("read fd=%d amount=%d", fd, amount);
   }
-
-  buf = new uint8_t [ amount ]; // TODO: we should sanity check this amount
 
   if (!m_open_file_map.get(fd, dataPtr)) {
     char errbuf[32];
@@ -203,14 +201,16 @@ void KosmosBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) 
 
   offset = clnt->Tell(dataPtr->fd);
 
-  if ((nread = clnt->Read(dataPtr->fd, (char *) buf, (size_t) amount)) < 0) {
+  if ((nread = clnt->Read(dataPtr->fd, (char *) buf.base, (size_t) amount)) < 0) {
     string errMsg = KFS::ErrorCodeToStr(nread);
     HT_ERRORF("read failed: fd=%d amount=%d - %s", dataPtr->fd, amount, errMsg.c_str());
     ReportError(cb, nread);
     return;
   }
 
-  cb->response(offset, nread, buf);
+  buf.size = nread;
+
+  cb->response(offset, buf);
 
 }
 
@@ -339,14 +339,12 @@ void KosmosBroker::length(ResponseCallbackLength *cb, const char *fileName) {
 void KosmosBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset, uint32_t amount) {
   OpenFileDataKosmosPtr dataPtr;
   ssize_t nread;
-  uint8_t *buf;
   KfsClient *clnt = KfsClient::Instance();
+  StaticBuffer buf(new uint8_t [amount], amount);
 
   if (mVerbose) {
     HT_INFOF("pread fd=%d offset=%lld amount=%d", fd, offset, amount);
   }
-
-  buf = new uint8_t [ amount ]; // TODO: we should sanity check this amount
 
   if (!m_open_file_map.get(fd, dataPtr)) {
     char errbuf[32];
@@ -362,14 +360,16 @@ void KosmosBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
     return;
   }
 
-  if ((nread = clnt->Read(dataPtr->fd, (char *) buf, (size_t) amount)) < 0) {
+  if ((nread = clnt->Read(dataPtr->fd, (char *) buf.base, (size_t) amount)) < 0) {
     string errMsg = KFS::ErrorCodeToStr(nread);
     HT_ERRORF("read failed: fd=%d amount=%d - %s", dataPtr->fd, amount, errMsg.c_str());
     ReportError(cb, nread);
     return;
   }
+
+  buf.size = nread;
   
-  cb->response(offset, nread, buf);
+  cb->response(offset, buf);
 }
 
 

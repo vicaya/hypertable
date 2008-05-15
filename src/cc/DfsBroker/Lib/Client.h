@@ -126,9 +126,8 @@ namespace Hypertable {
       virtual void read(int32_t fd, size_t amount, DispatchHandler *handler);
       virtual size_t read(int32_t fd, void *dst, size_t amount);
 
-      virtual void append(int32_t fd, void *buf, size_t amount,
-                          DispatchHandler *handler);
-      virtual size_t append(int32_t fd, void *buf, size_t amount);
+      virtual void append(int32_t fd, StaticBuffer &buffer, DispatchHandler *handler);
+      virtual size_t append(int32_t fd, StaticBuffer &buffer);
 
       virtual void seek(int32_t fd, uint64_t offset, DispatchHandler *handler);
       virtual void seek(int32_t fd, uint64_t offset);

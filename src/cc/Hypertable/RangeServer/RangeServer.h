@@ -58,7 +58,7 @@ namespace Hypertable {
     void destroy_scanner(ResponseCallback *cb, uint32_t scannerId);
     void fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t scannerId);
     void load_range(ResponseCallback *cb, TableIdentifier *table, RangeSpec *range, const char *transfer_log_dir, RangeState *range_state, uint16_t flags);
-    void update(ResponseCallbackUpdate *cb, TableIdentifier *table, Buffer &buffer);
+    void update(ResponseCallbackUpdate *cb, TableIdentifier *table, StaticBuffer &buffer);
     void drop_table(ResponseCallback *cb, TableIdentifier *table);
     void dump_stats(ResponseCallback *cb);
 

@@ -31,11 +31,11 @@ using namespace Hypertable;
 /**
  *
  */
-int ResponseCallbackAttrGet::response(const uint8_t *data, uint32_t len) {
+int ResponseCallbackAttrGet::response(StaticBuffer &buffer) {
   hbuilder_.initialize_from_request(m_event_ptr->header);
-  CommBufPtr cbufPtr( new CommBuf(hbuilder_, 8, data, len) );
+  CommBufPtr cbufPtr( new CommBuf(hbuilder_, 8, buffer) );
   cbufPtr->append_int(Error::OK);
-  cbufPtr->append_int(len);
+  cbufPtr->append_int(buffer.size);
   return m_comm->send_response(m_event_ptr->addr, cbufPtr);
 }
 

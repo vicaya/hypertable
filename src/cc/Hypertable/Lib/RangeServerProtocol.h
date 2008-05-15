@@ -70,11 +70,10 @@ namespace Hypertable {
      * gets returned.
      *
      * @param table table identifier
-     * @param data buffer holding key/value pairs
-     * @param len length of data buffer
+     * @param buffer buffer holding key/value pairs
      * @return protocol message
      */
-    static CommBuf *create_request_update(TableIdentifier &table, uint8_t *data, size_t len);
+    static CommBuf *create_request_update(TableIdentifier &table, StaticBuffer &buffer);
 
     /** Creates a "create scanner" request message.
      *
@@ -133,11 +132,10 @@ namespace Hypertable {
     /** Creates a "replay update" request message.  The data argument holds a sequence of 
      * blocks.  Each block consists of ...
      *
-     * @param data buffer holding updates to replay
-     * @param len length of data buffer
+     * @param buffer buffer holding updates to replay
      * @return protocol message
      */
-    static CommBuf *create_request_replay_update(const uint8_t *data, size_t len);
+    static CommBuf *create_request_replay_update(StaticBuffer &buffer);
 
     /** Creates a "replay commit" request message.
      *

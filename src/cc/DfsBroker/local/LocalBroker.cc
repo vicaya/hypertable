@@ -181,13 +181,11 @@ void LocalBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
   OpenFileDataLocalPtr dataPtr;
   ssize_t nread;
   uint64_t offset;
-  uint8_t *buf;
+  StaticBuffer buf(new uint8_t [amount], amount);
 
   if (m_verbose) {
     HT_INFOF("read fd=%d amount=%d", fd, amount);
   }
-
-  buf = new uint8_t [ amount ]; // TODO: we should sanity check this amount
 
   if (!m_open_file_map.get(fd, dataPtr)) {
     char errbuf[32];
@@ -202,14 +200,15 @@ void LocalBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
     return;
   }
 
-  if ((nread = FileUtils::read(dataPtr->fd, buf, amount)) == -1) {
+  if ((nread = FileUtils::read(dataPtr->fd, buf.base, amount)) == -1) {
     HT_ERRORF("read failed: fd=%d amount=%d - %s", dataPtr->fd, amount, strerror(errno));
     report_error(cb);
     return;
   }
 
-  cb->response(offset, nread, buf);
+  buf.size = nread;
 
+  cb->response(offset, buf);
 }
 
 
@@ -330,13 +329,11 @@ void LocalBroker::length(ResponseCallbackLength *cb, const char *fileName) {
 void LocalBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset, uint32_t amount) {
   OpenFileDataLocalPtr dataPtr;
   ssize_t nread;
-  uint8_t *buf;
+  StaticBuffer buf(new uint8_t [amount], amount);
 
   if (m_verbose) {
     HT_INFOF("pread fd=%d offset=%lld amount=%d", fd, offset, amount);
   }
-
-  buf = new uint8_t [ amount ]; // TODO: we should sanity check this amount
 
   if (!m_open_file_map.get(fd, dataPtr)) {
     char errbuf[32];
@@ -345,13 +342,15 @@ void LocalBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset, 
     return;
   }
 
-  if ((nread = FileUtils::pread(dataPtr->fd, buf, amount, (off_t)offset)) == -1) {
+  if ((nread = FileUtils::pread(dataPtr->fd, buf.base, amount, (off_t)offset)) == -1) {
     HT_ERRORF("pread failed: fd=%d amount=%d offset=%lld - %s", dataPtr->fd, amount, offset, strerror(errno));
     report_error(cb);
     return;
   }
 
-  cb->response(offset, nread, buf);
+  buf.size = nread;
+
+  cb->response(offset, buf);
 }
 
 

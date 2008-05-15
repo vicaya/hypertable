@@ -34,9 +34,10 @@ extern "C" {
 
 #include <boost/thread/mutex.hpp>
 
+#include "Common/DynamicBuffer.h"
 #include "Common/Properties.h"
-#include "Common/String.h"
 #include "Common/ReferenceCount.h"
+#include "Common/String.h"
 
 #include "Hypertable/Lib/BlockCompressionCodec.h"
 #include "Hypertable/Lib/Filesystem.h"
@@ -102,12 +103,11 @@ namespace Hypertable {
 
     /** Writes a block of updates to the commit log.
      *
-     * @param data pointer to block of updates
-     * @param len length of block of updates
+     * @param buffer block of updates to commit
      * @param timestamp current commit log time obtained with a call to #get_timestamp
      * @return Error::OK on success or error code on failure
      */
-    int write(uint8_t *data, uint32_t len, uint64_t timestamp);
+    int write(DynamicBuffer &buffer, uint64_t timestamp);
 
     /** Links an external log into this log.
      *

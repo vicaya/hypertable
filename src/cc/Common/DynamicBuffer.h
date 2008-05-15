@@ -26,13 +26,13 @@ extern "C" {
 #include <string.h>
 }
 
-#include "Buffer.h"
-
 namespace Hypertable {
 
-  class DynamicBuffer : public Buffer {
+  class DynamicBuffer {
 
   public:
+
+    DynamicBuffer() : base(0), ptr(0), size(0), own(true) { }
 
     DynamicBuffer(size_t initial_size, bool own_buffer=true) {
       size = initial_size;
@@ -40,8 +40,10 @@ namespace Hypertable {
       if (size)
 	base = ptr = new uint8_t [ size ];
       else
-	ptr = 0;
+	base = ptr = 0;
     }
+
+    ~DynamicBuffer() { if (own) delete [] base; }
 
     size_t remaining() const { return size - (ptr-base); }
 
@@ -110,8 +112,10 @@ namespace Hypertable {
       size = newSize;
     }
 
+    uint8_t *base;
     uint8_t *ptr;
-
+    uint32_t size;
+    bool own;
   };
 
 }

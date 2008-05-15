@@ -210,7 +210,8 @@ void TableMutatorScatterBuffer::send() {
      * Send update
      */
     try {
-      m_range_server.update(update_buffer_ptr->addr, m_table_identifier, data, ptr-data, update_buffer_ptr->dispatch_handler_ptr.get());
+      StaticBuffer buf(data, ptr-data);
+      m_range_server.update(update_buffer_ptr->addr, m_table_identifier, buf, update_buffer_ptr->dispatch_handler_ptr.get());
       update_buffer_ptr->error = Error::OK;
     }
     catch (Exception &e) {

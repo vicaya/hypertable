@@ -24,6 +24,7 @@
 
 #include <boost/intrusive_ptr.hpp>
 
+#include "Common/StaticBuffer.h"
 #include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
 
@@ -89,11 +90,10 @@ namespace Hypertable {
      *
      * @param addr remote address of RangeServer connection
      * @param table table identifier
-     * @param data buffer holding key/value pairs
-     * @param len length of data buffer
+     * @param buffer buffer holding key/value pairs
      * @param handler response handler
      */
-    void update(struct sockaddr_in &addr, TableIdentifier &table, uint8_t *data, size_t len, DispatchHandler *handler);
+    void update(struct sockaddr_in &addr, TableIdentifier &table, StaticBuffer &buffer, DispatchHandler *handler);
 
     /** Issues an "update" request.  The data argument holds a sequence of key/value
      * pairs.  Each key/value pair is encoded as two variable lenght ByteString32T records
@@ -101,10 +101,9 @@ namespace Hypertable {
      *
      * @param addr remote address of RangeServer connection
      * @param table table identifier
-     * @param data buffer holding key/value pairs
-     * @param len length of data buffer
+     * @param buffer buffer holding key/value pairs
      */
-    void update(struct sockaddr_in &addr, TableIdentifier &table, uint8_t *data, size_t len);
+    void update(struct sockaddr_in &addr, TableIdentifier &table, StaticBuffer &buffer);
 
     /** Issues a "create scanner" request asynchronously.
      *
@@ -197,11 +196,10 @@ namespace Hypertable {
     /** Issues a "replay update" request.
      *
      * @param addr remote address of RangeServer connection
-     * @param data buffer holding replay updates
-     * @param len length of data buffer
+     * @param buffer buffer holding replay updates
      * @param handler response handler
      */
-    void replay_update(struct sockaddr_in &addr, const uint8_t *data, size_t len, DispatchHandler *handler);
+    void replay_update(struct sockaddr_in &addr, StaticBuffer &buffer, DispatchHandler *handler);
 
     /** Issues a "replay commit" request.
      *

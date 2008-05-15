@@ -742,8 +742,11 @@ void Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t sessionId, uint64_t 
     }
   }
 
-  if ((error = cb->response(buf, (uint32_t)alen)) != Error::OK) {
-    HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
+  {
+    StaticBuffer buffer(buf, alen);
+    if ((error = cb->response(buffer)) != Error::OK) {
+      HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
+    }
   }
   
 }

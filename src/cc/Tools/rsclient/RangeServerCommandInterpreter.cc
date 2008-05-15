@@ -190,7 +190,8 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 	outstanding = false;
 
 	if (send_buf_len > 0) {
-	  m_range_server_ptr->update(m_addr, *table, send_buf, send_buf_len, &sync_handler);
+	  StaticBuffer mybuf(send_buf, send_buf_len);
+	  m_range_server_ptr->update(m_addr, *table, mybuf, &sync_handler);
 	  outstanding = true;
 	}
 	else

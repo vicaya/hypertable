@@ -27,6 +27,8 @@
 #include "AsyncComm/CommBuf.h"
 #include "AsyncComm/ResponseCallback.h"
 
+#include "Common/StaticBuffer.h"
+
 namespace Hypertable {
 
   namespace DfsBroker {
@@ -34,7 +36,7 @@ namespace Hypertable {
     class ResponseCallbackRead : public ResponseCallback {
     public:
       ResponseCallbackRead(Comm *comm, EventPtr &eventPtr) : ResponseCallback(comm, eventPtr) { return; }
-      int response(uint64_t offset, uint32_t nread, uint8_t *data);
+      int response(uint64_t offset, StaticBuffer &buffer);
 
     };
   }

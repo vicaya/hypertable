@@ -277,22 +277,22 @@ Client::read(int32_t fd, void *dst, size_t len) {
 
 
 void
-Client::append(int32_t fd, void *buf, size_t len, DispatchHandler *handler) {
-  CommBufPtr cbufPtr(m_protocol.create_append_request(fd, buf, len));
+Client::append(int32_t fd, StaticBuffer &buffer, DispatchHandler *handler) {
+  CommBufPtr cbufPtr(m_protocol.create_append_request(fd, buffer));
 
   try { send_message(cbufPtr, handler); }
   catch (Exception &e) {
     throw Exception(e.code(), format("Error appending %u bytes to DFS fd %d",
-                    (unsigned)len, (int)fd), e);
+				     (unsigned)buffer.size, (int)fd), e);
   }
 }
 
 
 size_t
-Client::append(int32_t fd, void *buf, size_t len) {
+Client::append(int32_t fd, StaticBuffer &buffer) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr(m_protocol.create_append_request(fd, buf, len));
+  CommBufPtr cbufPtr(m_protocol.create_append_request(fd, buffer));
 
   try {
     send_message(cbufPtr, &syncHandler);
@@ -303,14 +303,14 @@ Client::append(int32_t fd, void *buf, size_t len) {
     uint64_t offset;
     size_t ret = decode_response_append(eventPtr, &offset);
 
-    if (len != ret)
+    if (buffer.size != ret)
       throw Exception(Error::DFSBROKER_IO_ERROR, format("tried to append %u "
-                      "bytes but got %u", (unsigned)len, (unsigned)ret));
+                      "bytes but got %u", (unsigned)buffer.size, (unsigned)ret));
     return ret;
   }
   catch (Exception &e) {
     throw Exception(e.code(), format("Error appending %u bytes to DFS fd %d",
-                    (unsigned)len, (int)fd), e);
+				     (unsigned)buffer.size, (int)fd), e);
   }
 }
 

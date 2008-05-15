@@ -27,12 +27,14 @@
 #include "AsyncComm/CommBuf.h"
 #include "AsyncComm/ResponseCallback.h"
 
+#include "Common/StaticBuffer.h"
+
 namespace Hyperspace {
 
   class ResponseCallbackAttrGet : public Hypertable::ResponseCallback {
   public:
     ResponseCallbackAttrGet(Hypertable::Comm *comm, Hypertable::EventPtr &eventPtr) : Hypertable::ResponseCallback(comm, eventPtr) { return; }
-    int response(const uint8_t *data, uint32_t len);
+    int response(Hypertable::StaticBuffer &buffer);
   };
 
 }

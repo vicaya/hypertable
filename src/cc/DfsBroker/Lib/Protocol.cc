@@ -107,12 +107,12 @@ namespace Hypertable {
     }
 
 
-    CommBuf *Protocol::create_append_request(int32_t fd, const void *buf, uint32_t amount) {
+    CommBuf *Protocol::create_append_request(int32_t fd, StaticBuffer &buffer) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER, fd);
-      CommBuf *cbuf = new CommBuf(hbuilder, 10, buf, amount);
+      CommBuf *cbuf = new CommBuf(hbuilder, 10, buffer);
       cbuf->append_short(COMMAND_APPEND);
       cbuf->append_int(fd);
-      cbuf->append_int(amount);
+      cbuf->append_int(buffer.size);
       return cbuf;
     }
 

@@ -28,11 +28,11 @@
 using namespace Hypertable;
 using namespace Hypertable::DfsBroker;
 
-int ResponseCallbackRead::response(uint64_t offset, uint32_t nread, uint8_t *data) {
+int ResponseCallbackRead::response(uint64_t offset, StaticBuffer &buffer) {
   hbuilder_.initialize_from_request(m_event_ptr->header);
-  CommBufPtr cbufPtr( new CommBuf(hbuilder_, 16, data, nread) );
+  CommBufPtr cbufPtr( new CommBuf(hbuilder_, 16, buffer) );
   cbufPtr->append_int(Error::OK);
   cbufPtr->append_long(offset);
-  cbufPtr->append_int(nread);
+  cbufPtr->append_int(buffer.size);
   return m_comm->send_response(m_event_ptr->addr, cbufPtr);
 }

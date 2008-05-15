@@ -23,7 +23,7 @@
 #define HYPERTABLE_FILESYSTEM_H
 
 #include "Common/String.h"
-#include "Common/DynamicBuffer.h"
+#include "Common/StaticBuffer.h"
 #include "AsyncComm/DispatchHandler.h"
 
 namespace Hypertable {
@@ -189,21 +189,10 @@ namespace Hypertable {
      * other commands issued with the same file descriptor.
      *
      * @param fd open file descriptor
-     * @param buf pointer to data to append - take ownership of memory
-     * @param amount amount of data to append
+     * @param buffer buffer to append
      * @param handler dispatch handler
      */
-    virtual void append(int fd, void *buf, size_t amount,
-                        DispatchHandler *handler) = 0;
-    
-    /** Convenience method that takes a dynmaic buffer
-     */
-    virtual void append(int fd, DynamicBuffer &buf, DispatchHandler *handler) {
-      size_t len;
-      void *p = buf.release(&len);
-
-      append(fd, p, len, handler);
-    }
+    virtual void append(int fd, StaticBuffer &buffer, DispatchHandler *handler) = 0;
 
     /**
      * Appends data to a file.  Issues an append request and waits for it to
@@ -212,20 +201,9 @@ namespace Hypertable {
      * issued with the same file descriptor.
      *
      * @param fd open file descriptor
-     * @param buf pointer to data to append - take ownership of memory
-     * @param amount amount of data to append
-     * @return amount appended
+     * @param buffer buffer to append
      */
-    virtual size_t append(int fd, void *buf, size_t amount) = 0;
-
-    /** Convenience method that takes a dynamic buffer
-     */
-    virtual void append(int fd, DynamicBuffer &buf) {
-      size_t len;
-      void *p = buf.release(&len);
-
-      append(fd, p, len);
-    }
+    virtual size_t append(int fd, StaticBuffer &buffer) = 0;
 
     /** Decodes the response from an append request
      *

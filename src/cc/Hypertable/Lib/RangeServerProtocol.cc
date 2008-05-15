@@ -62,9 +62,9 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::create_request_update(TableIdentifier &table, uint8_t *data, size_t len) {
+  CommBuf *RangeServerProtocol::create_request_update(TableIdentifier &table, StaticBuffer &buffer) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
-    CommBuf *cbuf = new CommBuf(hbuilder, 2 + table.encoded_length(), data, len);
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + table.encoded_length(), buffer);
     cbuf->append_short(COMMAND_UPDATE);
     table.encode(cbuf->get_data_ptr_address());
     return cbuf;
@@ -132,9 +132,9 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::create_request_replay_update(const uint8_t *data, size_t len) {
+  CommBuf *RangeServerProtocol::create_request_replay_update(StaticBuffer &buffer) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
-    CommBuf *cbuf = new CommBuf(hbuilder, 2, data, len);
+    CommBuf *cbuf = new CommBuf(hbuilder, 2, buffer);
     cbuf->append_short(COMMAND_REPLAY_UPDATE);
     return cbuf;
   }

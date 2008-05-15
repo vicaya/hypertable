@@ -223,6 +223,7 @@ namespace {
     uint32_t limit;
     uint32_t payload[101];
     size_t link_point = 50;
+    DynamicBuffer dbuf;
 
     if (link_log)
       link_point = random() % 50;
@@ -241,7 +242,11 @@ namespace {
 	  *sump += payload[j];
 	}
 
-	if ((error = log->write((uint8_t *)payload, (uint32_t)4*limit, timestamp)) != Error::OK)
+	dbuf.base = (uint8_t *)payload;
+	dbuf.ptr = dbuf.base + (4*limit);
+	dbuf.own = false;
+
+	if ((error = log->write(dbuf, timestamp)) != Error::OK)
 	  throw Hypertable::Exception(error, "Problem writing to log file");
       }
     }

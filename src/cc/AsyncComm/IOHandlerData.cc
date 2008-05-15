@@ -335,10 +335,10 @@ int IOHandlerData::flush_send_queue() {
       towrite = cbufPtr->dataLen;
       ++count;
     }
-    if (cbufPtr->ext != 0) {
-      ssize_t remaining = cbufPtr->extLen - (cbufPtr->extPtr - cbufPtr->ext);
+    if (cbufPtr->ext.base != 0) {
+      ssize_t remaining = cbufPtr->ext.size - (cbufPtr->ext_ptr - cbufPtr->ext.base);
       if (remaining > 0) {
-	vec[count].iov_base = (void *)cbufPtr->extPtr;
+	vec[count].iov_base = (void *)cbufPtr->ext_ptr;
 	vec[count].iov_len = remaining;
 	towrite += remaining;
 	++count;
@@ -364,8 +364,8 @@ int IOHandlerData::flush_send_queue() {
 	  cbufPtr->dataLen = 0;
 	}
       }
-      if (cbufPtr->ext != 0) {
-	cbufPtr->extPtr += nwritten;
+      if (cbufPtr->ext.base != 0) {
+	cbufPtr->ext_ptr += nwritten;
 	break;
       }
     }

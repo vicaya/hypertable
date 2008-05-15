@@ -141,7 +141,7 @@ int CellStoreV0::create(const char *fname, uint32_t blocksize, const std::string
 
 int CellStoreV0::add(const ByteString key, const ByteString value, uint64_t real_timestamp) {
   EventPtr eventPtr;
-  DynamicBuffer zBuffer(0);
+  DynamicBuffer zBuffer;
 
   (void)real_timestamp;
 
@@ -166,10 +166,10 @@ int CellStoreV0::add(const ByteString key, const ByteString value, uint64_t real
       m_outstanding_appends--;
     }
 
-    size_t  zlen;
-    uint8_t *zbuf = zBuffer.release(&zlen);
+    size_t zlen = zBuffer.fill();
+    StaticBuffer send_buf(zBuffer);
 
-    try { m_filesys->append(m_fd, zbuf, zlen, &m_sync_handler); }
+    try { m_filesys->append(m_fd, send_buf, &m_sync_handler); }
     catch (Exception &e) {
       HT_ERRORF("Problem writing to DFS file '%s' : %s",
                 m_filename.c_str(), e.what());
@@ -197,12 +197,12 @@ int CellStoreV0::add(const ByteString key, const ByteString value, uint64_t real
 int CellStoreV0::finalize(Timestamp &timestamp) {
   EventPtr eventPtr;
   int error = -1;
-  uint8_t *zbuf;
   size_t zlen;
   DynamicBuffer zBuffer(0);
   size_t len;
   uint8_t *base;
   ByteString key;
+  StaticBuffer send_buf;
 
   if (m_buffer.fill() > 0) {
     BlockCompressionHeader header(DATA_BLOCK_MAGIC);
@@ -212,7 +212,9 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
     m_uncompressed_data += (float)m_buffer.fill();
     m_compressor->deflate(m_buffer, zBuffer, header);
     m_compressed_data += (float)zBuffer.fill();
-    zbuf = zBuffer.release(&zlen);
+
+    zlen = zBuffer.fill();
+    send_buf = zBuffer;
 
     if (m_outstanding_appends >= MAX_APPENDS_OUTSTANDING) {
       if (!m_sync_handler.wait_for_reply(eventPtr)) {
@@ -222,7 +224,7 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
       m_outstanding_appends--;
     }
 
-    try { m_filesys->append(m_fd, zbuf, zlen, &m_sync_handler); }
+    try { m_filesys->append(m_fd, send_buf, &m_sync_handler); }
     catch (Exception &e) {
       HT_ERRORF("Problem writing to DFS file '%s' : %s", m_filename.c_str(),
                 e.what());
@@ -255,10 +257,12 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
   {
     BlockCompressionHeader header(INDEX_FIXED_BLOCK_MAGIC);
     m_compressor->deflate(m_fix_index_buffer, zBuffer, header);
-    zbuf = zBuffer.release(&zlen);
   }
 
-  try { m_filesys->append(m_fd, zbuf, zlen, &m_sync_handler); }
+  zlen = zBuffer.fill();
+  send_buf = zBuffer;
+
+  try { m_filesys->append(m_fd, send_buf, &m_sync_handler); }
   catch (Exception &e) {
     HT_ERRORF("%s: %s", __func__, e.what());
     goto abort;
@@ -304,9 +308,10 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
   m_trailer.serialize(zBuffer.ptr);
   zBuffer.ptr += m_trailer.size();
 
-  zbuf = zBuffer.release(&zlen);
+  zlen = zBuffer.fill();
+  send_buf = zBuffer;
 
-  try { m_filesys->append(m_fd, zbuf, zlen); }
+  try { m_filesys->append(m_fd, send_buf); }
   catch (Exception &e) {
     HT_ERRORF("%s: %s", __func__, e.what());
     goto abort;

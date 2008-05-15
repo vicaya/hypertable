@@ -320,7 +320,7 @@ void RangeServer::fast_recover() {
   size_t len;
   TableIdentifier table_id;
   uint64_t timestamp;
-  DynamicBuffer dbuf(0);
+  DynamicBuffer dbuf;
   RecoverUpdateCallback cb;
   TableInfoPtr table_info_ptr;
   RangePtr range_ptr;
@@ -532,9 +532,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
      */
     {
       short moreFlag = more ? 0 : 1;
-      Buffer ext;
-      ext.base = kvBuffer;
-      ext.size = sizeof(int32_t) + *kvLenp;
+      StaticBuffer ext(kvBuffer, sizeof(int32_t) + *kvLenp);
       if ((error = cb->response(moreFlag, id, ext)) != Error::OK) {
 	HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       }
@@ -593,9 +591,7 @@ void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t s
    */
   {
     short moreFlag = more ? 0 : 1;
-    Buffer ext;
-    ext.base = kvBuffer;
-    ext.size = sizeof(int32_t) + *kvLenp;
+    StaticBuffer ext(kvBuffer, sizeof(int32_t) + *kvLenp);
     if ((error = cb->response(moreFlag, scannerId, ext)) != Error::OK) {
       HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
     }
@@ -821,7 +817,7 @@ namespace {
 /**
  * Update
  */
-void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Buffer &buffer) {
+void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, StaticBuffer &buffer) {
   uint8_t *mod_ptr;
   const uint8_t *mod_end;
   const uint8_t *add_base_ptr;
@@ -868,10 +864,8 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Buf
 
     // Fetch table info
     if (!m_live_map_ptr->get(table->id, table_info_ptr)) {
-      Buffer ext;
-      ext.base = new uint8_t [ buffer.size ];
+      StaticBuffer ext(new uint8_t [ buffer.size ], buffer.size);
       memcpy(ext.base, buffer.base, buffer.size);
-      ext.size = buffer.size;
       HT_ERRORF("Unable to find table info for table '%s'", table->name);
       if ((error = cb->response(ext)) != Error::OK) {
 	HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
@@ -1002,24 +996,22 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Buf
       min_ts_vector.push_back(min_ts_rec);
 
       if (splitSize > 0) {
-	boost::shared_array<uint8_t> bufPtr( new uint8_t [ splitSize + table->encoded_length() ] );
-	uint8_t *base = bufPtr.get();
-	uint8_t *ptr = base;
+	DynamicBuffer dbuf( splitSize + table->encoded_length() );
 
-	table->encode(&ptr);
+	table->encode(&dbuf.ptr);
 
 	items_added += splitMods.size();
 	memory_added += splitSize;
 
 	for (size_t i=0; i<splitMods.size(); i++) {
-	  memcpy(ptr, splitMods[i].base, splitMods[i].len);
-	  ptr += splitMods[i].len;
+	  memcpy(dbuf.ptr, splitMods[i].base, splitMods[i].len);
+	  dbuf.ptr += splitMods[i].len;
 	}
 
-	HT_EXPECT((ptr-base) <= (long)(splitSize + table->encoded_length()), Error::FAILED_EXPECTATION);
+	HT_EXPECT(dbuf.fill() <= (splitSize + table->encoded_length()), Error::FAILED_EXPECTATION);
 
-	if ((error = splitLogPtr->write(base, ptr-base, update_timestamp)) != Error::OK) {
-	  errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to split log";
+	if ((error = splitLogPtr->write(dbuf, update_timestamp)) != Error::OK) {
+	  errMsg = (string)"Problem writing " + dbuf.fill() + " bytes to split log";
 	  boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_a);
 	  goto abort;
 	}
@@ -1084,24 +1076,22 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Buf
      * Commit valid (go) mutations
      */
     if (goSize > 0) {
-      boost::shared_array<uint8_t> bufPtr( new uint8_t [ goSize + table->encoded_length() ] );
-      uint8_t *base = bufPtr.get();
-      uint8_t *ptr = base;
+      DynamicBuffer dbuf( goSize + table->encoded_length() );
 
-      table->encode(&ptr);
+      table->encode(&dbuf.ptr);
 
       items_added += goMods.size();
       memory_added += goSize;
 
       for (size_t i=0; i<goMods.size(); i++) {
-	memcpy(ptr, goMods[i].base, goMods[i].len);
-	ptr += goMods[i].len;
+	memcpy(dbuf.ptr, goMods[i].base, goMods[i].len);
+	dbuf.ptr += goMods[i].len;
       }
 
-      HT_EXPECT((ptr-base) <= (long)(goSize + table->encoded_length()), Error::FAILED_EXPECTATION);
+      HT_EXPECT(dbuf.fill() <= (goSize + table->encoded_length()), Error::FAILED_EXPECTATION);
 
-      if ((error = Global::log->write(base, ptr-base, update_timestamp)) != Error::OK) {
-	errMsg = (string)"Problem writing " + (int)(ptr-base) + " bytes to commit log";
+      if ((error = Global::log->write(dbuf, update_timestamp)) != Error::OK) {
+	errMsg = (string)"Problem writing " + dbuf.fill() + " bytes to commit log";
 	boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_b);
 	goto abort;
       }
@@ -1150,14 +1140,13 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Buf
      * Send back response
      */
     if (stopSize > 0) {
-      Buffer ext;
-      ext.base = new uint8_t [ stopSize ];
+      StaticBuffer ext(new uint8_t [ stopSize ], stopSize);
       uint8_t *ptr = ext.base;
       for (size_t i=0; i<stopMods.size(); i++) {
 	memcpy(ptr, stopMods[i].base, stopMods[i].len);
 	ptr += stopMods[i].len;
       }
-      ext.size = ptr - ext.base;
+      HT_EXPECT((size_t)(ptr-ext.base) == stopSize, Error::FAILED_EXPECTATION);
       if ((error = cb->response(ext)) != Error::OK) {
 	HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       }
@@ -1438,7 +1427,7 @@ void RangeServer::drop_range(ResponseCallback *cb, TableIdentifier *table, Range
 
 int RangeServer::verify_schema(TableInfoPtr &table_info_ptr, int generation, std::string &err_msg) {
   std::string tableFile = (std::string)"/hypertable/tables/" + table_info_ptr->get_name();
-  DynamicBuffer valueBuf(0);
+  DynamicBuffer valueBuf;
   HandleCallbackPtr nullHandleCallback;
   int error;
   uint64_t handle;

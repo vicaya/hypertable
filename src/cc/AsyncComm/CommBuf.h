@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -34,9 +34,10 @@ extern "C" {
 
 #include "Common/ByteString.h"
 #include "Common/Logger.h"
+#include "Common/Serialization.h"
+#include "Common/StaticBuffer.h"
 
 #include "HeaderBuilder.h"
-#include "Common/Serialization.h"
 
 namespace Hypertable {
 
@@ -83,17 +84,35 @@ namespace Hypertable {
      *
      * @param hbuilder the Header builder object used to write the header
      * @param len the length of the primary buffer to allocate
-     * @param _ex pointer to the extended buffer (this object takes ownership)
-     * @param _exLen the length of the extended buffer
      */
-    CommBuf(HeaderBuilder &hbuilder, uint32_t len, const void *_ex=0, uint32_t _exLen=0) {
+    CommBuf(HeaderBuilder &hbuilder, uint32_t len) : ext_ptr(0) {
       len += hbuilder.header_length();
       data = dataPtr = new uint8_t [ len ];
       dataLen = len;
-      ext = extPtr = (const uint8_t *)_ex;
-      extLen = _exLen;
-      hbuilder.set_total_len(len+extLen);
+      hbuilder.set_total_len(len);
       hbuilder.encode(&dataPtr);
+    }
+
+    /**
+     * This constructor initializes the CommBuf object by allocating a
+     * primary buffer of length len and writing the header into it
+     * with the given HeaderBuilder object, hbuilder.  It also sets the
+     * extended buffer to _ex and takes ownership of it.  The total
+     * length written into the header is len plus _exLen.  The internal
+     * pointer into the primary buffer is positioned to just after the
+     * header.
+     *
+     * @param hbuilder the Header builder object used to write the header
+     * @param len the length of the primary buffer to allocate
+     * @param buffer extended buffer
+     */
+    CommBuf(HeaderBuilder &hbuilder, uint32_t len, StaticBuffer &buffer) : ext(buffer) {
+      len += hbuilder.header_length();
+      data = dataPtr = new uint8_t [ len ];
+      dataLen = len;
+      hbuilder.set_total_len(len+buffer.size);
+      hbuilder.encode(&dataPtr);
+      ext_ptr = ext.base;
     }
 
     /**
@@ -101,7 +120,6 @@ namespace Hypertable {
      */
     ~CommBuf() {
       delete [] data;
-      delete [] ext;
     }
 
     /**
@@ -112,7 +130,7 @@ namespace Hypertable {
      */
     void reset_data_pointers() {
       dataPtr = (uint8_t *)data;
-      extPtr = ext;
+      ext_ptr = ext.base;
     }
 
     /**
@@ -216,12 +234,11 @@ namespace Hypertable {
 
     const uint8_t *data;
     uint32_t dataLen;
-    const uint8_t *ext;
-    uint32_t extLen;
+    StaticBuffer ext;
 
   protected:
     uint8_t *dataPtr;
-    const uint8_t *extPtr;
+    const uint8_t *ext_ptr;
   };
 
   typedef boost::shared_ptr<CommBuf> CommBufPtr;

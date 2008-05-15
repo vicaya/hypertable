@@ -26,6 +26,8 @@
 #include "AsyncComm/Event.h"
 #include "AsyncComm/Protocol.h"
 
+#include "Common/StaticBuffer.h"
+
 extern "C" {
 #include <stdint.h>
 #include <string.h>
@@ -48,7 +50,7 @@ namespace Hypertable {
 
       static CommBuf *create_read_request(int32_t fd, uint32_t amount);
 
-      static CommBuf *create_append_request(int32_t fd, const void *buf, uint32_t amount);
+      static CommBuf *create_append_request(int32_t fd, StaticBuffer &buffer);
 
       static CommBuf *create_seek_request(int32_t fd, uint64_t offset);
 
