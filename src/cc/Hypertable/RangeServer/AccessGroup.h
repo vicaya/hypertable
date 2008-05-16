@@ -63,8 +63,8 @@ namespace Hypertable {
     virtual void get_split_rows(std::vector<String> &split_rows, bool include_cache);
     virtual void get_cached_rows(std::vector<String> &rows);
 
-    void lock() { boost::detail::thread::lock_ops<boost::mutex>::lock(m_mutex); m_cell_cache_ptr->lock(); }
-    void unlock() { m_cell_cache_ptr->unlock(); boost::detail::thread::lock_ops<boost::mutex>::unlock(m_mutex); }
+    void lock() { m_mutex.lock(); m_cell_cache_ptr->lock(); }
+    void unlock() { m_cell_cache_ptr->unlock(); m_mutex.unlock(); }
 
     CellListScanner *create_scanner(ScanContextPtr &scanContextPtr);
 
@@ -104,7 +104,7 @@ namespace Hypertable {
     void drop() { m_drop = true; }
 
   private:
-    boost::mutex         m_mutex;
+    Mutex           m_mutex;
     TableIdentifierCopy  m_identifier;
     SchemaPtr            m_schema_ptr;
     std::set<uint8_t>    m_column_families;

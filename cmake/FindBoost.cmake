@@ -90,6 +90,7 @@ ENDIF(WIN32)
 
 # Add in some path suffixes. These will have to be updated whenever a new Boost version comes out.
 SET(SUFFIX_FOR_PATH
+ boost-1_35
  boost-1_34_1
  boost-1_34_0
 )

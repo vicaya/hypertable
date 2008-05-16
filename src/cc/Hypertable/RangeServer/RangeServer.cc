@@ -892,7 +892,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
 
     goMods.clear();
 
-    boost::detail::thread::lock_ops<boost::mutex>::lock(m_update_mutex_a);
+    m_update_mutex_a.lock();
     a_locked = true;
 
     send_back_ptr = 0;
@@ -979,7 +979,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
 	    error = Error::RANGESERVER_TIMESTAMP_ORDER_ERROR;
 	    errMsg = (string)"Update timestamp " + temp_timestamp + " is <= previously seen timestamp of " + min_timestamp;
 	    min_ts_rec.range_ptr->decrement_update_counter();
-	    boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_a);
+	    m_update_mutex_a.unlock();
 	    goto abort;
 	  }
 	  if (min_ts_rec.timestamp.logical == 0 || temp_timestamp < min_ts_rec.timestamp.logical)
@@ -1029,7 +1029,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
 
 	if ((error = splitLogPtr->write(dbuf, update_timestamp)) != Error::OK) {
 	  errMsg = (string)"Problem writing " + (int)dbuf.fill() + " bytes to split log";
-	  boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_a);
+	  m_update_mutex_a.unlock();
 	  goto abort;
 	}
       }
@@ -1094,8 +1094,8 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
       send_back_ptr = 0;
     }
 
-    boost::detail::thread::lock_ops<boost::mutex>::lock(m_update_mutex_b);
-    boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_a);
+    m_update_mutex_b.lock();
+    m_update_mutex_a.unlock();
     b_locked = true;
 
     /**
@@ -1118,12 +1118,12 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
 
       if ((error = Global::log->write(dbuf, update_timestamp)) != Error::OK) {
 	errMsg = (string)"Problem writing " + (int)dbuf.fill() + " bytes to commit log";
-	boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_b);
+	m_update_mutex_b.unlock();
 	goto abort;
       }
     }
 
-    boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_b);
+    m_update_mutex_b.unlock();
 
     if (Global::verbose && misses) {
       HT_INFOF("Sent back %d updates because out-of-range", misses);
@@ -1136,9 +1136,9 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
     error = e.code();
     errMsg = e.what();
     if (b_locked)
-      boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_b);
+      m_update_mutex_b.unlock();
     else if (a_locked)
-      boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_a);
+      m_update_mutex_a.unlock();
   }
 
  abort:

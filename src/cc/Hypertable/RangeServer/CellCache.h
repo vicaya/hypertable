@@ -25,8 +25,9 @@
 #include <map>
 
 #include <boost/thread/condition.hpp>
-#include <boost/thread/mutex.hpp>
 #include <boost/intrusive_ptr.hpp>
+
+#include "Common/Mutex.h"
 
 #include "CellListScanner.h"
 #include "CellList.h"
@@ -68,8 +69,8 @@ namespace Hypertable {
      */
     virtual CellListScanner *create_scanner(ScanContextPtr &scanContextPtr);
 
-    void lock()   { boost::detail::thread::lock_ops<boost::mutex>::lock(m_mutex); }
-    void unlock() { boost::detail::thread::lock_ops<boost::mutex>::unlock(m_mutex); }
+    void lock()   { m_mutex.lock(); }
+    void unlock() { m_mutex.unlock(); }
 
     size_t size() { return m_cell_map.size(); }
 
@@ -94,7 +95,7 @@ namespace Hypertable {
      * of the lengths of all the keys and values in the map.
      */
     uint64_t memory_used() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       // redo this ...
       return m_memory_used + (m_cell_map.size() * sizeof(CellMapT::value_type));
     }
@@ -112,18 +113,18 @@ namespace Hypertable {
     static const uint32_t OFFSET_BIT_MASK;
 
     void increment_refcount() {
-      boost::mutex::scoped_lock lock(m_refcount_mutex);
+      ScopedLock lock(m_refcount_mutex);
       m_refcount++;
     }
 
     void decrement_refcount() {
-      boost::mutex::scoped_lock lock(m_refcount_mutex);
+      ScopedLock lock(m_refcount_mutex);
       m_refcount--;
       m_refcount_cond.notify_all();
     }
 
-    boost::mutex       m_mutex;
-    boost::mutex       m_refcount_mutex;
+    Mutex              m_mutex;
+    Mutex              m_refcount_mutex;
     boost::condition   m_refcount_cond;
     uint32_t           m_refcount;
     CellCache         *m_child;
