@@ -264,6 +264,10 @@ bool TableMutatorScatterBuffer::wait_for_completion(Timer &timer) {
 	}
       }
 
+      // this prevents this mutation failure logic from being executed twice
+      // if this method gets called again
+      m_completion_counter.clear_errors();
+
       if (m_failed_mutations.size() > 0)
 	throw Exception(failed_regions[0].error);
 

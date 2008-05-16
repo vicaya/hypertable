@@ -49,17 +49,20 @@ namespace {
   
   void display_mutation_errors(int error, TableMutator *mutator) {
     std::vector<std::pair<Cell, int> > failed_mutations;
-    if (error == Error::REQUEST_TIMEOUT)
-      cerr << "Error: request timeout." << endl;
-    else {
-      mutator->get_failed(failed_mutations);
+
+    mutator->get_failed(failed_mutations);
+    if (!failed_mutations.empty()) {
       for (size_t i=0; i<failed_mutations.size(); i++) {
 	cout << "Failed: (" << failed_mutations[i].first.row_key << "," 
-	     << failed_mutations[i].first.column_family << ","
-	     << failed_mutations[i].first.timestamp << ") - "
+	     << failed_mutations[i].first.column_family;
+	if (failed_mutations[i].first.column_qualifier)
+	  cout << ":" << failed_mutations[i].first.column_qualifier;
+	cout << "," << failed_mutations[i].first.timestamp << ") - "
 	     << Error::get_text(failed_mutations[i].second) << endl;
       }
     }
+    else
+      cerr << "Error: " << Error::get_text(error) << endl;
   }
 
 }

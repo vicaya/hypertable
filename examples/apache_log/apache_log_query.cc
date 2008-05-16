@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
   TablePtr table_ptr;
   TableScannerPtr scanner_ptr;
   ScanSpec scan_spec;
-  CellT cell;
+  Cell cell;
   String end_row;
 
   if (argc <= 1) { 

@@ -1045,7 +1045,14 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
 	  ptr += key.length();
 	  value.ptr = ptr;
 	  ptr += value.length();
-	  HT_EXPECT(min_ts_rec.range_ptr->add(key, value, update_timestamp) == Error::OK, Error::FAILED_EXPECTATION);
+	  if ((error = min_ts_rec.range_ptr->add(key, value, update_timestamp)) != Error::OK) {
+	    SendBackRecT send_back;
+	    send_back.error = error;
+	    send_back.offset = key.ptr - buffer.base;
+	    send_back.len = add_end_ptr - key.ptr;
+	    send_back_vector.push_back(send_back);
+	    break;
+	  }
 	}
       }
       min_ts_rec.range_ptr->unlock(update_timestamp);

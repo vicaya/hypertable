@@ -50,7 +50,7 @@ using namespace Hypertable;
 using namespace std;
 
 
-Range::Range(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, SchemaPtr &schemaPtr, RangeSpec *range, RangeState *state) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_identifier(identifier), m_schema(schemaPtr), m_maintenance_in_progress(false), m_last_logical_timestamp(0), m_hold_updates(false), m_update_counter(0), m_added_inserts(0), m_state(*state) {
+Range::Range(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, SchemaPtr &schemaPtr, RangeSpec *range, RangeState *state) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_identifier(identifier), m_schema(schemaPtr), m_maintenance_in_progress(false), m_last_logical_timestamp(0), m_hold_updates(false), m_update_counter(0), m_added_inserts(0), m_state(*state), m_error(Error::OK) {
   AccessGroup *ag;
   
   memset(m_added_deletes, 0, 3*sizeof(int64_t));
@@ -189,6 +189,9 @@ bool Range::extract_csid_from_path(std::string &path, uint32_t *csidp) {
  */
 int Range::add(const ByteString key, const ByteString value, uint64_t real_timestamp) {
   Key key_comps;
+
+  if (m_error)
+    return m_error;
 
   HT_EXPECT(key_comps.load(key), Error::FAILED_EXPECTATION);
 
@@ -384,21 +387,27 @@ void Range::split_install_log(Timestamp *timestampp, String &old_start_row) {
       if (split_rows.size() > 0) {
 	sort(split_rows.begin(), split_rows.end());
 	m_split_row = split_rows[split_rows.size()/2];
-	if (m_split_row < m_start_row || m_split_row >= m_end_row)
+	if (m_split_row < m_start_row || m_split_row >= m_end_row) {
+	  m_error = Error::RANGESERVER_ROW_OVERFLOW;
 	  throw Exception(Error::RANGESERVER_ROW_OVERFLOW,
 			  format("Unable to determine split row for range %s[%s..%s]",
 				 m_identifier.name, m_start_row.c_str(), m_end_row.c_str()));
+	}
       }
-      else
+      else {
+	m_error = Error::RANGESERVER_ROW_OVERFLOW;
 	throw Exception(Error::RANGESERVER_ROW_OVERFLOW,
 			format("Unable to determine split row for range %s[%s..%s]",
 			       m_identifier.name, m_start_row.c_str(), m_end_row.c_str()));
+      }
     } 
   }
-  else
+  else {
+    m_error = Error::RANGESERVER_ROW_OVERFLOW;
     throw Exception(Error::RANGESERVER_ROW_OVERFLOW,
 		    format("Unable to determine split row for range %s[%s..%s]",
 			   m_identifier.name, m_start_row.c_str(), m_end_row.c_str()));
+  }
 
   /**
    * Create split (transfer) log

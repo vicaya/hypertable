@@ -175,6 +175,7 @@ namespace Hypertable {
     uint64_t         m_added_deletes[3];
     uint64_t         m_added_inserts;
     RangeStateCopy   m_state;
+    int32_t          m_error;
   };
 
   typedef boost::intrusive_ptr<Range> RangePtr;

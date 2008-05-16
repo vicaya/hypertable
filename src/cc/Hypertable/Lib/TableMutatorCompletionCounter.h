@@ -76,6 +76,8 @@ namespace Hypertable {
 
     bool has_errors() { return m_errors; }
 
+    void clear_errors() { m_errors = false; }
+
     bool is_complete() { return m_done; }
 
   private:

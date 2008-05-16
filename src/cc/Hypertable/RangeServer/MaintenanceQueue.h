@@ -88,7 +88,7 @@ namespace Hypertable {
 	    task->execute();
 	  }
 	  catch(Hypertable::Exception &e) {
-	    HT_ERRORF("%s '%s'", e.code(), e.what());
+	    HT_ERRORF("%s (%s)", Error::get_text(e.code()), e.what());
 	  }
 
 	  delete task;

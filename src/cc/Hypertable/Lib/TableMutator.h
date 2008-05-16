@@ -157,7 +157,8 @@ namespace Hypertable {
      * @param failed vector of Cell/error pairs
      */
     void get_failed(std::vector<std::pair<Cell, int> > &failed_mutations) {
-      m_prev_buffer_ptr->get_failed_mutations(failed_mutations);
+      if (m_prev_buffer_ptr)
+	m_prev_buffer_ptr->get_failed_mutations(failed_mutations);
     }
 
   private:

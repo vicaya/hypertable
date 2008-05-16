@@ -64,14 +64,33 @@ namespace {
   }
 
   /**
-   * This function displays a textual
-   * representation of the given exception
-   * to stderr
+   * Prints an exception to stderr
    */
   void report_error(Exception &e) {
     cerr << "error: "
 	 << Error::get_text(e.code())
 	 << " - " << e.what() << endl;
+  }
+
+  /**
+   * Prints an mutator exception to stderr
+   */
+  void report_mutation_error(Exception &e, TableMutatorPtr &mutator_ptr) {
+    std::vector<std::pair<Cell, int> > failed_mutations;
+
+    mutator_ptr->get_failed(failed_mutations);
+    if (!failed_mutations.empty()) {
+      for (size_t i=0; i<failed_mutations.size(); i++) {
+	cerr << "Failed: (" << failed_mutations[i].first.row_key << "," 
+	     << failed_mutations[i].first.column_family;
+	if (failed_mutations[i].first.column_qualifier)
+	  cerr << ":" << failed_mutations[i].first.column_qualifier;
+	cerr << "," << failed_mutations[i].first.timestamp << ") - "
+	     << Error::get_text(failed_mutations[i].second) << endl;
+      }
+    }
+    else
+      cerr << "Error: " << Error::get_text(e.code()) << endl;
   }
 
   const char *usage = 
@@ -203,19 +222,24 @@ int main(int argc, char **argv) {
       mutator_ptr->set(key, entry.user_agent);
     }
     catch (Exception &e) {
-      report_error(e);
+      report_mutation_error(e, mutator_ptr);
       return 1;
     }
 
   }
 
   // Flush pending updates
-  try {
-    mutator_ptr->flush();
-  }
-  catch (Exception &e) {
-    report_error(e);
-    return 1;
+  while (true) {
+    try {
+      mutator_ptr->flush();
+    }
+    catch (Exception &e) {
+      report_mutation_error(e, mutator_ptr);
+      // this continue is necessary since the flush may
+      // not have completed when exception was thrown
+      continue;
+    }
+    break;
   }
 
   return 0;
