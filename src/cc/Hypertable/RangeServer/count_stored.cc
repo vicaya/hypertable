@@ -183,7 +183,7 @@ void fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_
   TablePtr table_ptr;
   TableScannerPtr scanner_ptr;
   ScanSpec scan_spec;
-  CellT cell;
+  Cell cell;
   uint32_t table_id;
   char start_row[16];
   char end_row[16];

@@ -108,7 +108,7 @@ TableScanner::~TableScanner() {
 
 
 
-bool TableScanner::next(CellT &cell) {
+bool TableScanner::next(Cell &cell) {
   int error;
   ByteString key, value;
   Key keyComps;

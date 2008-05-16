@@ -106,6 +106,7 @@ namespace Hypertable {
 
     void insert(uint32_t tableId, RangeLocationInfo &range_loc_info, bool pegged=false);
     bool lookup(uint32_t tableId, const char *rowKey, RangeLocationInfo *range_loc_info_p, bool inclusive=false);
+    bool invalidate(uint32_t tableId, const char *rowKey);
 
     void display(std::ofstream &outfile);
 

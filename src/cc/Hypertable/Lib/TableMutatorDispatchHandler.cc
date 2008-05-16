@@ -32,7 +32,7 @@ using namespace Hypertable;
 /**
  *
  */
-TableMutatorDispatchHandler::TableMutatorDispatchHandler(TableMutatorScatterBuffer::UpdateBuffer *update_buffer) : m_update_buffer(update_buffer) {
+TableMutatorDispatchHandler::TableMutatorDispatchHandler(TableMutatorSendBuffer *send_buffer) : m_send_buffer(send_buffer) {
   return;
 }
 
@@ -42,25 +42,47 @@ TableMutatorDispatchHandler::TableMutatorDispatchHandler(TableMutatorScatterBuff
  *
  */
 void TableMutatorDispatchHandler::handle(EventPtr &event_ptr) {
+  int32_t error;
+  uint8_t *ptr;
+  size_t remaining;
+  uint32_t offset, len;
 
   if (event_ptr->type == Event::MESSAGE) {
-    m_update_buffer->error = Protocol::response_code(event_ptr);
-    if (m_update_buffer->error == Error::RANGESERVER_PARTIAL_UPDATE) {
-      m_update_buffer->event_ptr = event_ptr;
-      //HT_INFOF("partial update - %s", event_ptr->toString().c_str());
+    error = Protocol::response_code(event_ptr);
+    if (error != Error::OK) {
+      m_send_buffer->add_errors_all(error);
     }
-    m_update_buffer->counterp->decrement(m_update_buffer->error);
+    else {
+      ptr = event_ptr->message + 4;
+      remaining = event_ptr->messageLen - 4;
+      if (remaining == 0) {
+	m_send_buffer->clear();
+      }
+      else {
+	while (remaining) {
+	  if (!Serialization::decode_int(&ptr, &remaining, (uint32_t *)&error) ||
+	      !Serialization::decode_int(&ptr, &remaining, &offset) ||
+	      !Serialization::decode_int(&ptr, &remaining, &len)) {
+	    HT_ERROR("Response Truncated");
+	    break;
+	  }
+	  if (error == (uint32_t)Error::RANGESERVER_OUT_OF_RANGE)
+	    m_send_buffer->add_retries(offset, len);
+	  else
+	    m_send_buffer->add_errors(error, offset, len);
+	}
+      }
+    }
   }
   else if (event_ptr->type == Event::ERROR) {
-    m_update_buffer->error = event_ptr->error;
-    m_update_buffer->counterp->decrement(event_ptr->error);
-    HT_WARNF("%s", event_ptr->toString().c_str());
+    m_send_buffer->add_retries_all();
+    HT_WARNF("%s, will retry ...", event_ptr->toString().c_str());
   }
   else {
     // this should never happen
-    HT_INFOF("%s", event_ptr->toString().c_str());
-    m_update_buffer->counterp->decrement(event_ptr->error);
+    HT_ERRORF("%s", event_ptr->toString().c_str());
   }
 
+  m_send_buffer->counterp->decrement();
 }
 

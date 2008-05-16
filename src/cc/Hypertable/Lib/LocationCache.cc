@@ -139,6 +139,29 @@ bool LocationCache::lookup(uint32_t tableId, const char *rowKey, RangeLocationIn
   return true;
 }
 
+bool LocationCache::invalidate(uint32_t tableId, const char *rowKey) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  LocationMapT::iterator iter;
+  LocationCacheKeyT key;
+
+  //cout << tableId << " row=" << rowKey << endl << flush;
+
+  key.tableId = tableId;
+  key.end_row = rowKey;
+
+  if ((iter = m_location_map.lower_bound(key)) == m_location_map.end())
+    return false;
+
+  if ((*iter).first.tableId != tableId)
+    return false;
+
+  if (strcmp(rowKey, (*iter).second->start_row.c_str()) < 0)
+    return false;
+
+  remove((*iter).second);
+  return true;
+}
+
 
 void LocationCache::display(std::ofstream &outfile) {
   for (ValueT *value = m_head; value; value = value->prev)

@@ -45,6 +45,25 @@ extern "C" {
 using namespace Hypertable;
 using namespace Hypertable::HqlParser;
 
+namespace {
+  
+  void display_mutation_errors(int error, TableMutator *mutator) {
+    std::vector<std::pair<Cell, int> > failed_mutations;
+    if (error == Error::REQUEST_TIMEOUT)
+      cerr << "Error: request timeout." << endl;
+    else {
+      mutator->get_failed(failed_mutations);
+      for (size_t i=0; i<failed_mutations.size(); i++) {
+	cout << "Failed: (" << failed_mutations[i].first.row_key << "," 
+	     << failed_mutations[i].first.column_family << ","
+	     << failed_mutations[i].first.timestamp << ") - "
+	     << Error::get_text(failed_mutations[i].second) << endl;
+      }
+    }
+  }
+
+}
+
 
 /**
  *
@@ -117,7 +136,7 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       TablePtr table_ptr;
       TableScannerPtr scanner_ptr;
       ScanSpec scan_spec;
-      CellT cell;
+      Cell cell;
       uint32_t nsec;
       time_t unix_time;
       struct tm tms;
@@ -248,7 +267,7 @@ void HqlCommandInterpreter::execute_line(const String &line) {
 	      mutator_ptr->set(timestamp, key, value, value_len);
 	    }
 	    catch (Hypertable::Exception &e) {
-	      cerr << "error: " << Error::get_text(e.code()) << " - " << e.what() << endl;
+	      display_mutation_errors(e.code(), mutator_ptr.get());
 	    }
 	  }
 	  else {
@@ -263,8 +282,14 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       
       delete lds;
 
-      if (into_table)
-	mutator_ptr->flush();
+      if (into_table) {
+	try {
+	  mutator_ptr->flush();
+	}
+	catch (Exception &e) {
+	  display_mutation_errors(e.code(), mutator_ptr.get());
+	}
+      }
       else
 	fclose(outfp);
 
@@ -319,10 +344,16 @@ void HqlCommandInterpreter::execute_line(const String &line) {
 	  mutator_ptr->set(state.inserts[i].timestamp, key, (uint8_t *)state.inserts[i].value.c_str(), (uint32_t)state.inserts[i].value.length());
 	}
 	catch (Hypertable::Exception &e) {
-	  cerr << "error: " << Error::get_text(e.code()) << " - " << e.what() << endl;
+	  display_mutation_errors(e.code(), mutator_ptr.get());
 	}
       }
-      mutator_ptr->flush();
+
+      try {
+	mutator_ptr->flush();
+      }
+      catch (Exception &e) {
+	display_mutation_errors(e.code(), mutator_ptr.get());
+      }
     }
     else if (state.command == COMMAND_DELETE) {
       TablePtr table_ptr;
@@ -347,7 +378,7 @@ void HqlCommandInterpreter::execute_line(const String &line) {
 	  mutator_ptr->set_delete(state.delete_time, key);
 	}
 	catch (Hypertable::Exception &e) {
-	  cerr << "error: " << Error::get_text(e.code()) << " - " << e.what() << endl;
+	  display_mutation_errors(e.code(), mutator_ptr.get());
 	  return;
 	}
       }
@@ -367,11 +398,16 @@ void HqlCommandInterpreter::execute_line(const String &line) {
 	    mutator_ptr->set_delete(state.delete_time, key);
 	  }
 	  catch (Hypertable::Exception &e) {
-	    cerr << "error: " << Error::get_text(e.code()) << " - " << e.what() << endl;
+	    display_mutation_errors(e.code(), mutator_ptr.get());
 	  }
 	}
       }
-      mutator_ptr->flush();
+      try {
+	mutator_ptr->flush();
+      }
+      catch (Exception &e) {
+	display_mutation_errors(e.code(), mutator_ptr.get());
+      }
     }
     else if (state.command == COMMAND_SHOW_TABLES) {
       std::vector<std::string> tables;

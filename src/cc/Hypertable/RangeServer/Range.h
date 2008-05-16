@@ -58,7 +58,7 @@ namespace Hypertable {
     virtual ~Range();
     virtual int add(const ByteString key, const ByteString value, uint64_t real_timestamp);
     int replay_add(const ByteString key, const ByteString value, uint64_t real_timestamp, uint32_t *num_addedp);
-    virtual const char *get_split_row();
+    virtual const char *get_split_row() { return 0; }
     void lock();
     void unlock(uint64_t real_timestamp);
 

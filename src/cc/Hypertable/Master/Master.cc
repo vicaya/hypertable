@@ -567,7 +567,7 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
     char end_row[16];
     TableScannerPtr scanner_ptr;
     ScanSpec scan_spec;
-    CellT cell;
+    Cell cell;
     std::string location_str;
     std::set<std::string> unique_locations;
     TableIdentifier table;

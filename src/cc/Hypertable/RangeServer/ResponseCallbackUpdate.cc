@@ -26,6 +26,6 @@ using namespace Hypertable;
 int ResponseCallbackUpdate::response(StaticBuffer &ext) {
   hbuilder_.initialize_from_request(m_event_ptr->header);
   CommBufPtr cbufPtr( new CommBuf(hbuilder_, 4, ext) );
-  cbufPtr->append_int(Error::RANGESERVER_PARTIAL_UPDATE);
+  cbufPtr->append_int(Error::OK);
   return m_comm->send_response(m_event_ptr->addr, cbufPtr);
 }

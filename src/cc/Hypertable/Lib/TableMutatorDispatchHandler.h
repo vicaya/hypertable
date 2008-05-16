@@ -26,6 +26,7 @@
 #include "AsyncComm/Event.h"
 
 #include "TableMutatorScatterBuffer.h"
+#include "TableMutatorSendBuffer.h"
 
 namespace Hypertable {
 
@@ -39,7 +40,7 @@ namespace Hypertable {
     /**
      * Constructor.  Initializes state.
      */
-    TableMutatorDispatchHandler(TableMutatorScatterBuffer::UpdateBuffer *update_buffer);
+    TableMutatorDispatchHandler(TableMutatorSendBuffer *send_buffer);
 
     /**
      * Dispatch method.  This gets called by the AsyncComm layer
@@ -51,7 +52,7 @@ namespace Hypertable {
     virtual void handle(EventPtr &event_ptr);
 
   private:
-    TableMutatorScatterBuffer::UpdateBuffer *m_update_buffer;
+    TableMutatorSendBuffer *m_send_buffer;
   };
 }
 

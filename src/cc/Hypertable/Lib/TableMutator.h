@@ -151,6 +151,15 @@ namespace Hypertable {
      */
     uint64_t get_resend_count() { return m_resends; }
 
+    /**
+     * Returns the failed mutations
+     * 
+     * @param failed vector of Cell/error pairs
+     */
+    void get_failed(std::vector<std::pair<Cell, int> > &failed_mutations) {
+      m_prev_buffer_ptr->get_failed_mutations(failed_mutations);
+    }
+
   private:
 
     void wait_for_previous_buffer(Timer &timer);

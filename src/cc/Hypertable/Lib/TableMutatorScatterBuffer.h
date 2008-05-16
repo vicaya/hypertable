@@ -32,14 +32,17 @@
 
 #include "Common/atomic.h"
 #include "Common/ByteString.h"
+#include "Common/FlyweightString.h"
 #include "Common/ReferenceCount.h"
 #include "Common/StringExt.h"
 #include "Common/Timer.h"
 
+#include "Cell.h"
 #include "Key.h"
 #include "RangeLocator.h"
 #include "RangeServerClient.h"
 #include "Schema.h"
+#include "TableMutatorSendBuffer.h"
 
 namespace Hypertable {
 
@@ -54,84 +57,19 @@ namespace Hypertable {
     bool full() { return m_full; }
     void send();
     bool completed();
-    int wait_for_completion(Timer &timer);
+    bool wait_for_completion(Timer &timer);
     void reset();
     TableMutatorScatterBuffer *create_redo_buffer(Timer &timer);
     uint64_t get_resend_count() { return m_resends; }
+    void get_failed_mutations(std::vector<std::pair<Cell, int> > &failed_mutations) {
+      failed_mutations = m_failed_mutations;
+    }
 
   private:
 
-    /**
-     * 
-     */
-    class CompletionCounter {
-    public:
-      CompletionCounter() : m_outstanding(0), m_last_error(0), m_done(false) { }
-      void set(size_t count) { 
-	boost::mutex::scoped_lock lock(m_mutex);
-	m_outstanding = count;
-	m_done = (m_outstanding == 0) ? true : false;
-	m_last_error = 0;
-      }
-      void decrement(int error) {
-	boost::mutex::scoped_lock lock(m_mutex);
-	assert(m_outstanding);
-	m_outstanding--;
-	if (error != Error::OK) {
-	  if (m_last_error == 0 || error != Error::RANGESERVER_PARTIAL_UPDATE)
-	    m_last_error = error;
-	}
-	if (m_outstanding == 0) {
-	  m_done = true;
-	  m_cond.notify_all();
-	}
-      }
-
-      int wait_for_completion(Timer &timer) {
-	boost::mutex::scoped_lock lock(m_mutex);
-	boost::xtime expire_time;
-
-	boost::xtime_get(&expire_time, boost::TIME_UTC);
-	expire_time.sec += (int64_t)timer.remaining();
-
-	while (m_outstanding) {
-	  if (!m_cond.timed_wait(lock, expire_time))
-	    throw Exception(Error::REQUEST_TIMEOUT);
-	}
-
-	return m_last_error;
-      }
-
-      bool is_complete() { return m_done; }
-
-    private:
-      boost::mutex m_mutex;
-      boost::condition m_cond;
-      size_t m_outstanding;
-      int    m_last_error;
-      bool m_done;
-    };
-
     friend class TableMutatorDispatchHandler;
 
-    /**
-     * 
-     */
-    class UpdateBuffer : public ReferenceCount {
-    public:
-      UpdateBuffer(CompletionCounter *cc) : buf(1024), sorted(false), error(0), counterp(cc) { return; }
-      std::vector<uint64_t>  key_offsets;
-      DynamicBuffer          buf;
-      bool                   sorted;
-      struct sockaddr_in     addr;
-      int                    error;
-      EventPtr               event_ptr;
-      CompletionCounter     *counterp;
-      DispatchHandlerPtr     dispatch_handler_ptr;
-    };
-    typedef boost::intrusive_ptr<UpdateBuffer> UpdateBufferPtr;
-
-    typedef __gnu_cxx::hash_map<string, UpdateBufferPtr> UpdateBufferMapT;
+    typedef __gnu_cxx::hash_map<string, TableMutatorSendBufferPtr> TableMutatorSendBufferMapT;
 
     PropertiesPtr        m_props_ptr;
     Comm                *m_comm;
@@ -140,10 +78,13 @@ namespace Hypertable {
     LocationCachePtr     m_cache_ptr;
     RangeServerClient    m_range_server;
     TableIdentifierCopy  m_table_identifier;
-    UpdateBufferMapT     m_buffer_map;
-    CompletionCounter    m_completion_counter;
+    TableMutatorSendBufferMapT m_buffer_map;
+    TableMutatorCompletionCounter m_completion_counter;
     bool                 m_full;
     uint64_t             m_resends;
+    std::vector<std::pair<Cell, int> > m_failed_mutations;
+    FlyweightString      m_constant_strings;
+
   };
   typedef boost::intrusive_ptr<TableMutatorScatterBuffer> TableMutatorScatterBufferPtr;
 

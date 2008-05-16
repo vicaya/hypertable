@@ -807,6 +807,12 @@ namespace {
   } UpdateRecT;
 
   typedef struct {
+    int error;
+    uint32_t offset;
+    uint32_t len;
+  } SendBackRecT;
+
+  typedef struct {
     RangePtr range_ptr;
     Timestamp timestamp;
   } MinTimestampRecT;
@@ -833,11 +839,9 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
   std::string split_row;
   vector<UpdateRecT> goMods;
   vector<UpdateRecT> splitMods;
-  vector<UpdateRecT> stopMods;
   UpdateRecT update;
   CommitLogPtr splitLogPtr;
   size_t goSize = 0;
-  size_t stopSize = 0;
   size_t splitSize = 0;
   std::string end_row;
   std::vector<MinTimestampRecT>  min_ts_vector;
@@ -850,6 +854,9 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
   ByteString key, value;
   bool a_locked = false;
   bool b_locked = false;
+  vector<SendBackRecT> send_back_vector;
+  uint8_t *send_back_ptr = 0;
+  uint32_t misses = 0;
 
   min_ts_vector.reserve(50);
 
@@ -888,6 +895,8 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
     boost::detail::thread::lock_ops<boost::mutex>::lock(m_update_mutex_a);
     a_locked = true;
 
+    send_back_ptr = 0;
+
     while (mod_ptr < mod_end) {
 
       key.ptr = mod_ptr;
@@ -896,14 +905,22 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
     
       // Look for containing range, add to stop mods if not found
       if (!table_info_ptr->find_containing_range(row, min_ts_rec.range_ptr)) {
-	update.base = mod_ptr;
+	if (send_back_ptr == 0)
+	  send_back_ptr = mod_ptr;
 	key.next(); // skip key
 	key.next(); // skip value;
 	mod_ptr = key.ptr;
-	update.len = mod_ptr - update.base;
-	stopMods.push_back(update);
-	stopSize += update.len;
+	misses++;
 	continue;
+      }
+
+      if (send_back_ptr) {
+	SendBackRecT send_back;
+	send_back.error = Error::RANGESERVER_OUT_OF_RANGE;
+	send_back.offset = send_back_ptr - buffer.base;
+	send_back.len = mod_ptr - send_back_ptr;
+	send_back_vector.push_back(send_back);
+	send_back_ptr = 0;
       }
 
       add_base_ptr = mod_ptr;
@@ -1068,6 +1085,15 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
       }
     }
 
+    if (send_back_ptr) {
+      SendBackRecT send_back;
+      send_back.error = Error::RANGESERVER_OUT_OF_RANGE;
+      send_back.offset = send_back_ptr - buffer.base;
+      send_back.len = mod_ptr - send_back_ptr;
+      send_back_vector.push_back(send_back);
+      send_back_ptr = 0;
+    }
+
     boost::detail::thread::lock_ops<boost::mutex>::lock(m_update_mutex_b);
     boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_a);
     b_locked = true;
@@ -1099,8 +1125,8 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
 
     boost::detail::thread::lock_ops<boost::mutex>::unlock(m_update_mutex_b);
 
-    if (Global::verbose) {
-      HT_INFOF("Dropped %d updates (out-of-range)", stopMods.size());
+    if (Global::verbose && misses) {
+      HT_INFOF("Sent back %d updates because out-of-range", misses);
     }
 
     error = Error::OK;
@@ -1139,14 +1165,14 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
     /**
      * Send back response
      */
-    if (stopSize > 0) {
-      StaticBuffer ext(new uint8_t [ stopSize ], stopSize);
+    if (!send_back_vector.empty()) {
+      StaticBuffer ext(new uint8_t [ send_back_vector.size() * 12 ], send_back_vector.size() * 12);
       uint8_t *ptr = ext.base;
-      for (size_t i=0; i<stopMods.size(); i++) {
-	memcpy(ptr, stopMods[i].base, stopMods[i].len);
-	ptr += stopMods[i].len;
+      for (size_t i=0; i<send_back_vector.size(); i++) {
+	Serialization::encode_int(&ptr, send_back_vector[i].error);
+	Serialization::encode_int(&ptr, send_back_vector[i].offset);
+	Serialization::encode_int(&ptr, send_back_vector[i].len);
       }
-      HT_EXPECT((size_t)(ptr-ext.base) == stopSize, Error::FAILED_EXPECTATION);
       if ((error = cb->response(ext)) != Error::OK) {
 	HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       }

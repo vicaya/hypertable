@@ -25,15 +25,16 @@
 namespace Hypertable {
 
   /** Encapsulates decomposed key and value */
-  typedef struct {
+  class Cell {
+  public:
     const char *row_key;
     const char *column_family;
     const char *column_qualifier;
     uint64_t timestamp;
     const uint8_t *value;
-    uint64_t value_len;
+    uint32_t value_len;
     uint8_t flag;
-  } CellT;
+  };
 
 }
 

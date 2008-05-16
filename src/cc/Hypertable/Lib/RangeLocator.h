@@ -96,6 +96,17 @@ namespace Hypertable {
      */
     int find(TableIdentifier *table, const char *row_key, RangeLocationInfo *range_loc_info_p, Timer &timer, bool hard);
 
+    /**
+     * Invalidates the cached entry for the given row key
+     *
+     * @param table pointer to table identifier structure
+     * @param row_key row key to invalidate
+     * @return true if invalidated, false if not cached
+     */
+    bool invalidate(TableIdentifier *table, const char *row_key) {
+      return m_cache_ptr->invalidate(table->id, row_key);
+    }
+
     /** Sets the "root stale" flag.  Causes methods to reread the root range location before
      * doing METADATA scans.
      */

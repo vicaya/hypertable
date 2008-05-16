@@ -63,7 +63,7 @@ struct GcWorker {
 
     TableMutatorPtr mutator = m_metadata->create_mutator();
 
-    CellT cell;
+    Cell cell;
     string last_row;
     string last_cq;
     CountMap files_map;

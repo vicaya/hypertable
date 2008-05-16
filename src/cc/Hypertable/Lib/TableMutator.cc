@@ -163,17 +163,18 @@ void TableMutator::flush() {
 
 
 void TableMutator::wait_for_previous_buffer(Timer &timer) {
-  int error;
   TableMutatorScatterBuffer *redo_buffer = 0;
   int wait_time = 1;
 
-  while ((error = m_prev_buffer_ptr->wait_for_completion(timer)) != Error::OK) {
+  while (!m_prev_buffer_ptr->wait_for_completion(timer)) {
 
+#if 0
     if (error == Error::RANGESERVER_TIMESTAMP_ORDER_ERROR) {
       std::string table_name_upper = m_table_identifier.name;
       boost::to_upper(table_name_upper);
       throw Exception(error, (std::string)"Problem sending updates (table=" + table_name_upper.c_str() + ")");
     }
+#endif
 
     if (timer.remaining() < wait_time)
       throw Exception(Error::REQUEST_TIMEOUT);
@@ -198,11 +199,6 @@ void TableMutator::wait_for_previous_buffer(Timer &timer) {
     m_prev_buffer_ptr->send();
   }
 
-  if (error != Error::OK) {
-    HT_ERRORF("Problem resending failed updates (table=%s) - %s", m_table_identifier.name, Error::get_text(error));
-    throw Exception(error, (std::string)"Problem resending failed updates (table=" + m_table_identifier.name + ")");
-  }
-  
 }
 
 

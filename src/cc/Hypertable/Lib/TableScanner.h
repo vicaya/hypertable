@@ -53,7 +53,7 @@ namespace Hypertable {
 
     virtual ~TableScanner();
 
-    bool next(CellT &cell);
+    bool next(Cell &cell);
 
   private:
 

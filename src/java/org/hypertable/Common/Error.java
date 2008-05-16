@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -95,7 +95,7 @@ public class Error {
     static public final int RANGESERVER_RANGE_ALREADY_LOADED   = 0x00050002;
     static public final int RANGESERVER_RANGE_MISMATCH         = 0x00050003;
     static public final int RANGESERVER_NONEXISTENT_RANGE      = 0x00050004;
-    static public final int RANGESERVER_PARTIAL_UPDATE         = 0x00050005;
+    static public final int RANGESERVER_OUT_OF_RANGE           = 0x00050005;
     static public final int RANGESERVER_RANGE_NOT_FOUND        = 0x00050006;
     static public final int RANGESERVER_INVALID_SCANNER_ID     = 0x00050007;
     static public final int RANGESERVER_SCHEMA_PARSE_ERROR     = 0x00050008;
@@ -107,6 +107,7 @@ public class Error {
     static public final int RANGESERVER_CORRUPT_COMMIT_LOG     = 0x0005000E;
     static public final int RANGESERVER_UNAVAILABLE            = 0x0005000F;
     static public final int RANGESERVER_TIMESTAMP_ORDER_ERROR  = 0x00050010;
+    static public final int RANGESERVER_ROW_OVERFLOW           = 0x00050011;
 
     static public final int HQL_BAD_LOAD_FILE_FORMAT = 0x00060001;
 
@@ -180,7 +181,7 @@ public class Error {
 	mTextMap.put(RANGESERVER_RANGE_ALREADY_LOADED,  "RANGE SERVER range already loaded");
 	mTextMap.put(RANGESERVER_RANGE_MISMATCH,        "RANGE SERVER range mismatch");
 	mTextMap.put(RANGESERVER_NONEXISTENT_RANGE,     "RANGE SERVER non-existent range");
-	mTextMap.put(RANGESERVER_PARTIAL_UPDATE,        "RANGE SERVER partial update");
+	mTextMap.put(RANGESERVER_OUT_OF_RANGE,          "RANGE SERVER out of range");
 	mTextMap.put(RANGESERVER_RANGE_NOT_FOUND,       "RANGE SERVER range not found");
 	mTextMap.put(RANGESERVER_INVALID_SCANNER_ID,    "RANGE SERVER invalid scanner id");
 	mTextMap.put(RANGESERVER_SCHEMA_PARSE_ERROR,    "RANGE SERVER schema parse error");
@@ -192,6 +193,7 @@ public class Error {
 	mTextMap.put(RANGESERVER_SHUTTING_DOWN,         "RANGE SERVER shutting down");
 	mTextMap.put(RANGESERVER_UNAVAILABLE,           "RANGE SERVER unavailable");
 	mTextMap.put(RANGESERVER_TIMESTAMP_ORDER_ERROR, "RANGE SERVER supplied timestamp is not strictly increasing");
+	mTextMap.put(RANGESERVER_ROW_OVERFLOW,          "RANGE SERVER row overflow");
 	mTextMap.put(HQL_BAD_LOAD_FILE_FORMAT,    "HQL bad load file format");
     }
 }

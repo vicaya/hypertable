@@ -51,6 +51,30 @@ extern "C" {
 using namespace Hypertable;
 using namespace Hypertable::HqlParser;
 
+namespace {
+  
+  void process_event(EventPtr &event_ptr) {
+    int32_t error;
+    uint8_t *ptr = event_ptr->message + 4;
+    size_t remaining = event_ptr->messageLen - 4;
+    uint32_t offset, len;
+    if (remaining == 0)
+      cout << "success" << endl;
+    else {
+      while (remaining) {
+	if (!Serialization::decode_int(&ptr, &remaining, (uint32_t *)&error) ||
+	    !Serialization::decode_int(&ptr, &remaining, &offset) ||
+	    !Serialization::decode_int(&ptr, &remaining, &len)) {
+	  HT_ERROR("Response Truncated");
+	  break;
+	}
+	cout << "rejected: offset=" << offset << " span=" << len << " " << Error::get_text(error) << endl;
+      }
+    }
+  }
+
+}
+
 RangeServerCommandInterpreter::RangeServerCommandInterpreter(Comm *comm, Hyperspace::SessionPtr &hyperspace_ptr, struct sockaddr_in addr, RangeServerClientPtr &range_server_ptr) : m_comm(comm), m_hyperspace_ptr(hyperspace_ptr), m_addr(addr), m_range_server_ptr(range_server_ptr), m_cur_scanner_id(-1) {
   HqlHelpText::install_range_server_client_text();
   return;
@@ -176,15 +200,9 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 	  send_buf_len = 0;
 
 	if (outstanding) {
-	  if (!sync_handler.wait_for_reply(event_ptr)) {
-	    error = Protocol::response_code(event_ptr);
-	    if (error == Error::RANGESERVER_PARTIAL_UPDATE)
-	      cout << "partial update" << endl;
-	    else
-	      throw Exception(error, (Protocol::string_format_message(event_ptr)));
-	  }
-	  else
-	    cout << "success" << endl;
+	  if (!sync_handler.wait_for_reply(event_ptr))
+	    throw Exception(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
+	  process_event(event_ptr);
 	}
 
 	outstanding = false;
@@ -199,16 +217,11 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       }
 
       if (outstanding) {
-	if (!sync_handler.wait_for_reply(event_ptr)) {
-	  error = Protocol::response_code(event_ptr);
-	  if (error == Error::RANGESERVER_PARTIAL_UPDATE)
-	    cout << "partial update" << endl;
-	  else
-	    throw Exception(error, (Protocol::string_format_message(event_ptr)));
-	}
-	else
-	  cout << "success" << endl;
+	if (!sync_handler.wait_for_reply(event_ptr))
+	  throw Exception(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
+	process_event(event_ptr);
       }
+      
     }
     else if (state.command == COMMAND_CREATE_SCANNER) {
       ScanSpec scan_spec;

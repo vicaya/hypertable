@@ -68,7 +68,7 @@ void MetadataNormal::reset_files_scan() {
 
 
 bool MetadataNormal::get_next_files(std::string &ag_name, std::string &files) {
-  CellT cell;
+  Cell cell;
 
   assert(m_files_scanner_ptr);
 
