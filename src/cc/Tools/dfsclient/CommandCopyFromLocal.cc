@@ -74,7 +74,7 @@ int CommandCopyFromLocal::run() {
     if ((nread = fread(buf, 1, BUFFER_SIZE, fp)) == 0)
       goto done;
     send_buf.set(buf, nread, true);
-    m_client->append(fd, send_buf, &syncHandler);
+    m_client->append(fd, send_buf, 0, &syncHandler);
   }
 
   while (true) {
@@ -88,7 +88,7 @@ int CommandCopyFromLocal::run() {
     if ((nread = fread(buf, 1, BUFFER_SIZE, fp)) == 0)
       break;
     send_buf.set(buf, nread, true);
-    m_client->append(fd, send_buf, &syncHandler);
+    m_client->append(fd, send_buf, 0, &syncHandler);
   }
 
 done:

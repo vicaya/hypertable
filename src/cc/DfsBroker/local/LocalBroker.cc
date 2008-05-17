@@ -215,7 +215,8 @@ void LocalBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
 /**
  * Append
  */
-void LocalBroker::append(ResponseCallbackAppend *cb, uint32_t fd, uint32_t amount, uint8_t *data) {
+void LocalBroker::append(ResponseCallbackAppend *cb, uint32_t fd,
+                         uint32_t amount, uint8_t *data, bool sync) {
   OpenFileDataLocalPtr dataPtr;
   ssize_t nwritten;
   uint64_t offset;
@@ -239,6 +240,12 @@ void LocalBroker::append(ResponseCallbackAppend *cb, uint32_t fd, uint32_t amoun
 
   if ((nwritten = FileUtils::write(dataPtr->fd, data, amount)) == -1) {
     HT_ERRORF("write failed: fd=%d amount=%d - %s", dataPtr->fd, amount, strerror(errno));
+    report_error(cb);
+    return;
+  }
+
+  if (sync && fsync(dataPtr->fd) != 0) {
+    HT_ERRORF("flush failed: fd=%d - %s", dataPtr->fd, strerror(errno));
     report_error(cb);
     return;
   }

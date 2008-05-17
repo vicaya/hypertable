@@ -277,8 +277,9 @@ Client::read(int32_t fd, void *dst, size_t len) {
 
 
 void
-Client::append(int32_t fd, StaticBuffer &buffer, DispatchHandler *handler) {
-  CommBufPtr cbufPtr(m_protocol.create_append_request(fd, buffer));
+Client::append(int32_t fd, StaticBuffer &buffer, uint32_t flags,
+               DispatchHandler *handler) {
+  CommBufPtr cbufPtr(m_protocol.create_append_request(fd, buffer, flags));
 
   try { send_message(cbufPtr, handler); }
   catch (Exception &e) {
@@ -289,10 +290,10 @@ Client::append(int32_t fd, StaticBuffer &buffer, DispatchHandler *handler) {
 
 
 size_t
-Client::append(int32_t fd, StaticBuffer &buffer) {
+Client::append(int32_t fd, StaticBuffer &buffer, uint32_t flags) {
   DispatchHandlerSynchronizer syncHandler;
   EventPtr eventPtr;
-  CommBufPtr cbufPtr(m_protocol.create_append_request(fd, buffer));
+  CommBufPtr cbufPtr(m_protocol.create_append_request(fd, buffer, flags));
 
   try {
     send_message(cbufPtr, &syncHandler);

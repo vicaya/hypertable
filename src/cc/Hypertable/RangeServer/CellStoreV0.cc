@@ -169,7 +169,7 @@ int CellStoreV0::add(const ByteString key, const ByteString value, uint64_t real
     size_t zlen = zBuffer.fill();
     StaticBuffer send_buf(zBuffer);
 
-    try { m_filesys->append(m_fd, send_buf, &m_sync_handler); }
+    try { m_filesys->append(m_fd, send_buf, 0, &m_sync_handler); }
     catch (Exception &e) {
       HT_ERRORF("Problem writing to DFS file '%s' : %s",
                 m_filename.c_str(), e.what());
@@ -224,7 +224,7 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
       m_outstanding_appends--;
     }
 
-    try { m_filesys->append(m_fd, send_buf, &m_sync_handler); }
+    try { m_filesys->append(m_fd, send_buf, 0, &m_sync_handler); }
     catch (Exception &e) {
       HT_ERRORF("Problem writing to DFS file '%s' : %s", m_filename.c_str(),
                 e.what());
@@ -262,7 +262,7 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
   zlen = zBuffer.fill();
   send_buf = zBuffer;
 
-  try { m_filesys->append(m_fd, send_buf, &m_sync_handler); }
+  try { m_filesys->append(m_fd, send_buf, 0, &m_sync_handler); }
   catch (Exception &e) {
     HT_ERRORF("%s: %s", __func__, e.what());
     goto abort;

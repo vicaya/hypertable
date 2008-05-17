@@ -26,7 +26,6 @@
 #include "Common/Logger.h"
 #include "Common/StringExt.h"
 
-#include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "AsyncComm/Protocol.h"
 
 #include "Hypertable/Lib/CompressorFactory.h"
@@ -131,7 +130,6 @@ int CommitLog::write(DynamicBuffer &buffer, uint64_t timestamp) {
 int CommitLog::link_log(CommitLogBase *log_base, uint64_t timestamp) {
   int error;
   BlockCompressionHeaderCommitLog header(MAGIC_LINK, timestamp);
-  DispatchHandlerSynchronizer sync_handler;
   DynamicBuffer input;
   String &log_dir = log_base->get_log_dir();
 
@@ -150,8 +148,7 @@ int CommitLog::link_log(CommitLogBase *log_base, uint64_t timestamp) {
     size_t amount = input.fill();
     StaticBuffer send_buf(input);
 
-    m_fs->append(m_fd, send_buf, &sync_handler);
-    m_fs->flush(m_fd, &sync_handler);
+    m_fs->append(m_fd, send_buf, Filesystem::O_FLUSH);
     m_last_timestamp = timestamp;
     m_cur_fragment_length += amount;
 
@@ -272,7 +269,6 @@ int CommitLog::roll() {
  */
 int CommitLog::compress_and_write(DynamicBuffer &input, BlockCompressionHeader *header, uint64_t timestamp) {
   int error = Error::OK;
-  DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
   DynamicBuffer zblock;
 
@@ -286,8 +282,7 @@ int CommitLog::compress_and_write(DynamicBuffer &input, BlockCompressionHeader *
     size_t amount = zblock.fill();
     StaticBuffer send_buf(zblock);
 
-    m_fs->append(m_fd, send_buf, &sync_handler);
-    m_fs->flush(m_fd, &sync_handler);
+    m_fs->append(m_fd, send_buf, Filesystem::O_FLUSH);
     m_last_timestamp = timestamp;
     m_cur_fragment_length += amount;
   }
@@ -296,22 +291,6 @@ int CommitLog::compress_and_write(DynamicBuffer &input, BlockCompressionHeader *
               m_cur_fragment_fname.c_str(), e.what());
     error = e.code();
   }
-
-  // wait for append to complete
-  if (!sync_handler.wait_for_reply(event_ptr)) {
-    HT_ERRORF("Problem appending to commit log file '%s' - %s",
-		 m_cur_fragment_fname.c_str(), Protocol::string_format_message(event_ptr).c_str());
-    error = (int)Protocol::response_code(event_ptr);
-  }
-
-  // wait for flush to complete
-  if (!sync_handler.wait_for_reply(event_ptr)) {
-    HT_ERRORF("Problem flushing commit log file '%s' - %s",
-		 m_cur_fragment_fname.c_str(), Protocol::string_format_message(event_ptr).c_str());
-    error = (int)Protocol::response_code(event_ptr);
-  }
-
-  HT_INFOF("scooby\t%s\t%u\t%u", m_log_name.c_str(), header->get_data_checksum(), header->get_data_zlength());
 
   return error;
 }

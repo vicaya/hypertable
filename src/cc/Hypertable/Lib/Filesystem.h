@@ -38,6 +38,7 @@ namespace Hypertable {
    */
   class Filesystem {
   public:
+    enum OptionType { O_FLUSH = 1 };
 
     virtual ~Filesystem() { return; }
 
@@ -190,9 +191,11 @@ namespace Hypertable {
      *
      * @param fd open file descriptor
      * @param buffer buffer to append
+     * @param flags - O_FLUSH or 0
      * @param handler dispatch handler
      */
-    virtual void append(int fd, StaticBuffer &buffer, DispatchHandler *handler) = 0;
+    virtual void append(int fd, StaticBuffer &buffer, uint32_t flags,
+                        DispatchHandler *handler) = 0;
 
     /**
      * Appends data to a file.  Issues an append request and waits for it to
@@ -202,8 +205,9 @@ namespace Hypertable {
      *
      * @param fd open file descriptor
      * @param buffer buffer to append
+     * @param flags - O_FLUSH or 0
      */
-    virtual size_t append(int fd, StaticBuffer &buffer) = 0;
+    virtual size_t append(int fd, StaticBuffer &buffer, uint32_t flags = 0) = 0;
 
     /** Decodes the response from an append request
      *

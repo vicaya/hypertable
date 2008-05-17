@@ -313,7 +313,8 @@ public class HdfsBroker {
 	    log.severe("Error sending CLOSE response back");
     }
 
-    public void Write(ResponseCallbackWrite cb, int fd, int amount, byte [] data) {
+    public void Write(ResponseCallbackWrite cb, int fd, int amount,
+                      byte [] data, boolean sync) {
 	int error = Error.OK;
 	OpenFileData ofd;
 
@@ -335,6 +336,8 @@ public class HdfsBroker {
 	    long offset = ofd.os.getPos();
 
 	    ofd.os.write(data, 0, amount);
+
+            // TODO: if (sync) do flush here
 
 	    error = cb.response(offset, amount);
 	}

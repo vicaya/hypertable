@@ -41,6 +41,7 @@ public class RequestHandlerWrite extends ApplicationHandler {
 
     public void run() {
 	int     fd, amount;
+        boolean sync;
 	ResponseCallbackWrite cb = new ResponseCallbackWrite(mComm, mEvent);
 
 	try {
@@ -49,13 +50,13 @@ public class RequestHandlerWrite extends ApplicationHandler {
 		throw new ProtocolException("Truncated message");
 
 	    fd = mEvent.msg.buf.getInt();
-
 	    amount = mEvent.msg.buf.getInt();
+            sync = mEvent.msg.buf.getChar() != 0;
 
 	    byte [] data = new byte [ amount ];
 	    mEvent.msg.buf.get(data);
 
-	    mBroker.Write(cb, fd, amount, data);
+	    mBroker.Write(cb, fd, amount, data, sync);
 	}
 	catch (ProtocolException e) {
 	    int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());

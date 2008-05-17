@@ -37,22 +37,21 @@ using namespace Hypertable::DfsBroker;
 void RequestHandlerAppend::run() {
   ResponseCallbackAppend cb(m_comm, m_event_ptr);
   uint32_t fd, amount;
+  bool flush;
   size_t remaining = m_event_ptr->messageLen - 2;
   uint8_t *msgPtr = m_event_ptr->message + 2;
 
   if (remaining < 8)
     goto abort;
 
-  // fd
   Serialization::decode_int(&msgPtr, &remaining, &fd);
-
-  // amount
   Serialization::decode_int(&msgPtr, &remaining, &amount);
+  Serialization::decode_bool(&msgPtr, &remaining, &flush);
 
   if (remaining < amount)
     goto abort;
 
-  m_broker->append(&cb, fd, amount, msgPtr);
+  m_broker->append(&cb, fd, amount, msgPtr, flush);
 
   return;
 

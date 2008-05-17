@@ -27,11 +27,7 @@
 #include "AsyncComm/Protocol.h"
 
 #include "Common/StaticBuffer.h"
-
-extern "C" {
-#include <stdint.h>
-#include <string.h>
-}
+#include "Common/String.h"
 
 namespace Hypertable {
 
@@ -41,30 +37,36 @@ namespace Hypertable {
 
     public:
 
-      static CommBuf *create_open_request(const std::string &fname, uint32_t bufferSize=0);
+      static CommBuf *create_open_request(const String &fname,
+                                          uint32_t bufferSize=0);
 
-      static CommBuf *create_create_request(const std::string &fname, bool overwrite, int32_t bufferSize,
-				   int32_t replication, int64_t blockSize);
+      static CommBuf *create_create_request(const String &fname,
+                                            bool overwrite,
+                                            int32_t bufferSize,
+                                            int32_t replication,
+                                            int64_t blockSize);
 
       static CommBuf *create_close_request(int32_t fd);
 
       static CommBuf *create_read_request(int32_t fd, uint32_t amount);
 
-      static CommBuf *create_append_request(int32_t fd, StaticBuffer &buffer);
+      static CommBuf *create_append_request(int32_t fd, StaticBuffer &buffer,
+                                            bool flush = false);
 
       static CommBuf *create_seek_request(int32_t fd, uint64_t offset);
 
-      static CommBuf *create_remove_request(const std::string &fname);
+      static CommBuf *create_remove_request(const String &fname);
 
-      static CommBuf *create_length_request(const std::string &fname);
+      static CommBuf *create_length_request(const String &fname);
 
-      static CommBuf *create_position_read_request(int32_t fd, uint64_t offset, uint32_t amount);
+      static CommBuf *create_position_read_request(int32_t fd, uint64_t offset,
+                                                   uint32_t amount);
 
-      static CommBuf *create_mkdirs_request(const std::string &fname);
+      static CommBuf *create_mkdirs_request(const String &fname);
 
-      static CommBuf *create_rmdir_request(const std::string &fname);
+      static CommBuf *create_rmdir_request(const String &fname);
 
-      static CommBuf *create_readdir_request(const std::string &fname);
+      static CommBuf *create_readdir_request(const String &fname);
 
       static CommBuf *create_flush_request(int32_t fd);
 
@@ -72,7 +74,7 @@ namespace Hypertable {
 
       static CommBuf *create_shutdown_request(uint16_t flags);
 
-      static CommBuf *create_exists_request(const std::string &fname);
+      static CommBuf *create_exists_request(const String &fname);
 
 
       virtual const char *command_text(short command);

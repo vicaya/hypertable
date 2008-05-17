@@ -19,6 +19,8 @@
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
+
 #include <cassert>
 #include <iostream>
 
@@ -59,7 +61,7 @@ namespace Hypertable {
     /**
      *
      */
-    CommBuf *Protocol::create_open_request(const std::string &fname, uint32_t bufferSize) {
+    CommBuf *Protocol::create_open_request(const String &fname, uint32_t bufferSize) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
       CommBuf *cbuf = new CommBuf(hbuilder, 6 + Serialization::encoded_length_string(fname));
       cbuf->append_short(COMMAND_OPEN);
@@ -71,7 +73,7 @@ namespace Hypertable {
 
     /**
      */
-    CommBuf *Protocol::create_create_request(const std::string &fname, bool overwrite, int32_t bufferSize,
+    CommBuf *Protocol::create_create_request(const String &fname, bool overwrite, int32_t bufferSize,
 					   int32_t replication, int64_t blockSize) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
       CommBuf *cbuf = new CommBuf(hbuilder, 20 + Serialization::encoded_length_string(fname));
@@ -107,12 +109,14 @@ namespace Hypertable {
     }
 
 
-    CommBuf *Protocol::create_append_request(int32_t fd, StaticBuffer &buffer) {
+    CommBuf *Protocol::create_append_request(int32_t fd, StaticBuffer &buffer,
+                                             bool flush) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER, fd);
-      CommBuf *cbuf = new CommBuf(hbuilder, 10, buffer);
+      CommBuf *cbuf = new CommBuf(hbuilder, 11, buffer);
       cbuf->append_short(COMMAND_APPEND);
       cbuf->append_int(fd);
       cbuf->append_int(buffer.size);
+      cbuf->append_bool(flush);
       return cbuf;
     }
 
@@ -128,7 +132,7 @@ namespace Hypertable {
 
     /**
      */
-    CommBuf *Protocol::create_remove_request(const std::string &fname) {
+    CommBuf *Protocol::create_remove_request(const String &fname) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
       CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::encoded_length_string(fname));
       cbuf->append_short(COMMAND_REMOVE);
@@ -139,7 +143,7 @@ namespace Hypertable {
 
     /**
      */
-    CommBuf *Protocol::create_length_request(const std::string &fname) {
+    CommBuf *Protocol::create_length_request(const String &fname) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
       CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::encoded_length_string(fname));
       cbuf->append_short(COMMAND_LENGTH);
@@ -162,7 +166,7 @@ namespace Hypertable {
 
     /**
      */
-    CommBuf *Protocol::create_mkdirs_request(const std::string &fname) {
+    CommBuf *Protocol::create_mkdirs_request(const String &fname) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
       CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::encoded_length_string(fname));
       cbuf->append_short(COMMAND_MKDIRS);
@@ -182,7 +186,7 @@ namespace Hypertable {
 
     /**
      */
-    CommBuf *Protocol::create_rmdir_request(const std::string &fname) {
+    CommBuf *Protocol::create_rmdir_request(const String &fname) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
       CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::encoded_length_string(fname));
       cbuf->append_short(COMMAND_RMDIR);
@@ -192,7 +196,7 @@ namespace Hypertable {
 
     /**
      */
-    CommBuf *Protocol::create_readdir_request(const std::string &fname) {
+    CommBuf *Protocol::create_readdir_request(const String &fname) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
       CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::encoded_length_string(fname));
       cbuf->append_short(COMMAND_READDIR);
@@ -225,7 +229,7 @@ namespace Hypertable {
 
     /**
      */
-    CommBuf *Protocol::create_exists_request(const std::string &fname) {
+    CommBuf *Protocol::create_exists_request(const String &fname) {
       HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
       CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::encoded_length_string(fname));
       cbuf->append_short(COMMAND_EXISTS);

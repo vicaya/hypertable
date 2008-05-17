@@ -218,7 +218,8 @@ void KosmosBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) 
 /**
  * append
  */
-void KosmosBroker::append(ResponseCallbackAppend *cb, uint32_t fd, uint32_t amount, uint8_t *data) {
+void KosmosBroker::append(ResponseCallbackAppend *cb, uint32_t fd,
+                          uint32_t amount, uint8_t *data, bool sync) {
   OpenFileDataKosmosPtr dataPtr;
   ssize_t nwritten;
   uint64_t offset;
@@ -241,6 +242,13 @@ void KosmosBroker::append(ResponseCallbackAppend *cb, uint32_t fd, uint32_t amou
     string errMsg = KFS::ErrorCodeToStr(nwritten);
     HT_ERRORF("write failed: fd=%d amount=%d - %s", dataPtr->fd, amount, errMsg.c_str());
     ReportError(cb, nwritten);
+    return;
+  }
+
+  if (sync && (res = clnt->Sync(dataPtr->fd)) < 0) {
+    string errMsg = KFS::ErrorCodeToStr(res);
+    HT_ERRORF("flush failed: fd=%d - %s", dataPtr->fd, errMsg.c_str());
+    ReportError(cb, res);
     return;
   }
 
