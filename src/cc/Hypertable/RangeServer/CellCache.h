@@ -42,7 +42,7 @@ namespace Hypertable {
   class CellCache : public CellList {
 
   public:
-    CellCache() : CellList(), m_refcount(0), m_child(0), m_memory_used(0), m_deletes(0), m_collisions(0), m_validation(0) { return; }
+    CellCache() : CellList(), m_memory_used(0), m_deletes(0), m_collisions(0), m_validation(1234567890ul) { return; }
     virtual ~CellCache();
 
     /**
@@ -87,8 +87,10 @@ namespace Hypertable {
 
     /**
      * Purges all deleted pairs along with the corresponding delete entries.
+     *
+     * @return The new "purged" copy of the cell cache
      */
-    void purge_deletes();
+    CellCache *purge_deletes();
 
     /**
      * Returns the amount of memory used by the CellCache.  This is the summation
@@ -112,22 +114,8 @@ namespace Hypertable {
     static const uint32_t ALLOC_BIT_MASK;
     static const uint32_t OFFSET_BIT_MASK;
 
-    void increment_refcount() {
-      ScopedLock lock(m_refcount_mutex);
-      m_refcount++;
-    }
-
-    void decrement_refcount() {
-      ScopedLock lock(m_refcount_mutex);
-      m_refcount--;
-      m_refcount_cond.notify_all();
-    }
-
     Mutex              m_mutex;
-    Mutex              m_refcount_mutex;
-    boost::condition   m_refcount_cond;
-    uint32_t           m_refcount;
-    CellCache         *m_child;
+    std::vector<CellListPtr> m_children;
     CellMapT           m_cell_map;
     uint64_t           m_memory_used;
     uint32_t           m_deletes;

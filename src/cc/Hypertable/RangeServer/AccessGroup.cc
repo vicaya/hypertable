@@ -336,7 +336,7 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
     tmp_cell_cache_ptr->lock();
     m_collisions += m_cell_cache_ptr->get_collision_count();
     if (m_in_memory)
-      m_cell_cache_ptr->purge_deletes();
+      m_cell_cache_ptr = m_cell_cache_ptr->purge_deletes();
     else
       m_cell_cache_ptr = m_cell_cache_ptr->slice_copy(timestamp.logical);
     // If inserts have arrived since we started splitting, then set the oldest cached timestamp value, otherwise clear it

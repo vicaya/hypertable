@@ -49,20 +49,7 @@ CellCache::~CellCache() {
   uint32_t skipped = 0;
 #endif
 
-  m_validation = 1234567890ul;
-
-  /**
-   * If our reference count is greater than zero, the we still have a parent
-   * that is referencing us and our memory, so wait for our parent to
-   * be destructed and then deallocate.
-   * Remember: parents share some k/v pair memory with their children
-   * and it is the child's responsibility to delete it.
-   */
-  {
-    boost::mutex::scoped_lock lock(m_refcount_mutex);
-    while (m_refcount > 0) 
-      m_refcount_cond.wait(lock);
-  }
+  m_validation = 0;
 
   for (CellMapT::iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++) {
     if (((*iter).second & ALLOC_BIT_MASK) == 0) {
@@ -89,8 +76,6 @@ CellCache::~CellCache() {
   Global::memory_tracker.remove_memory(mem_freed);
   Global::memory_tracker.remove_items(m_cell_map.size());
 
-  if (m_child)
-    m_child->decrement_refcount();
 }
 
 
@@ -105,7 +90,7 @@ int CellCache::add(const ByteString key, const ByteString value, uint64_t real_t
 
   (void)real_timestamp;
 
-  HT_EXPECT(m_validation==0, Error::FAILED_EXPECTATION);
+  HT_EXPECT(m_validation==1234567890ul, Error::FAILED_EXPECTATION);
 
   new_key.ptr = ptr = new uint8_t [ total_len ];
 
@@ -180,7 +165,7 @@ CellCache *CellCache::slice_copy(uint64_t timestamp) {
   uint64_t dropped = 0;
 #endif
 
-  m_child = new CellCache();
+  CellCachePtr child_ptr = new CellCache();
 
   for (CellMapT::iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++) {
 
@@ -190,7 +175,7 @@ CellCache *CellCache::slice_copy(uint64_t timestamp) {
     }
 
     if (keyComps.timestamp > timestamp) {
-      m_child->m_cell_map.insert(CellMapT::value_type((*iter).first, (*iter).second));
+      child_ptr->m_cell_map.insert(CellMapT::value_type((*iter).first, (*iter).second));
       (*iter).second |= ALLOC_BIT_MASK;  // mark this entry in the "old" map so it doesn't get deleted
     }
 #ifdef STAT
@@ -204,18 +189,18 @@ CellCache *CellCache::slice_copy(uint64_t timestamp) {
   cout << "STAT[slice_copy]\tdropped\t" << dropped << endl;
 #endif
 
-  Global::memory_tracker.add_items(m_child->m_cell_map.size());
+  Global::memory_tracker.add_items(child_ptr->m_cell_map.size());
 
-  m_child->increment_refcount();
+  m_children.push_back(child_ptr);
 
-  return m_child;
+  return child_ptr.get();
 }
 
 
 /**
- *
+ * 
  */
-void CellCache::purge_deletes() {
+CellCache *CellCache::purge_deletes() {
   Key key_comps;
   size_t len;
   bool          delete_present = false;
@@ -225,7 +210,11 @@ void CellCache::purge_deletes() {
   uint64_t      deleted_column_family_timestamp = 0;
   DynamicBuffer deleted_cell(0);
   uint64_t      deleted_cell_timestamp = 0;
-  CellMapT::iterator iter, tmp_iter;
+  CellMapT::iterator iter;
+
+  HT_INFO("Purging deletes from CellCache");
+
+  CellCachePtr child_ptr = new CellCache();
 
   iter = m_cell_map.begin();
 
@@ -243,13 +232,11 @@ void CellCache::purge_deletes() {
 	if (deleted_cell.fill() > 0) {
 	  len = (key_comps.column_qualifier - key_comps.row) + strlen(key_comps.column_qualifier) + 1;
 	  if (deleted_cell.fill() == len && !memcmp(deleted_cell.base, key_comps.row, len)) {
-	    if (key_comps.timestamp < deleted_cell_timestamp) {
-	      tmp_iter = iter;
-	      iter++;
-	      m_cell_map.erase(tmp_iter);
+	    if (key_comps.timestamp > deleted_cell_timestamp) {
+	      child_ptr->m_cell_map.insert(CellMapT::value_type((*iter).first, (*iter).second));
+	      (*iter).second |= ALLOC_BIT_MASK;  // mark this entry in the "old" map so it doesn't get deleted
 	    }
-	    else
-	      iter++;
+	    iter++;
 	    continue;
 	  }
 	  deleted_cell.clear();
@@ -257,13 +244,11 @@ void CellCache::purge_deletes() {
 	if (deleted_column_family.fill() > 0) {
 	  len = key_comps.column_qualifier - key_comps.row;
 	  if (deleted_column_family.fill() == len && !memcmp(deleted_column_family.base, key_comps.row, len)) {
-	    if (key_comps.timestamp < deleted_column_family_timestamp) {
-	      tmp_iter = iter;
-	      iter++;
-	      m_cell_map.erase(tmp_iter);
+	    if (key_comps.timestamp > deleted_column_family_timestamp) {
+	      child_ptr->m_cell_map.insert(CellMapT::value_type((*iter).first, (*iter).second));
+	      (*iter).second |= ALLOC_BIT_MASK;  // mark this entry in the "old" map so it doesn't get deleted
 	    }
-	    else
-	      iter++;
+	    iter++;
 	    continue;
 	  }
 	  deleted_column_family.clear();
@@ -271,19 +256,19 @@ void CellCache::purge_deletes() {
 	if (deleted_row.fill() > 0) {
 	  len = strlen(key_comps.row) + 1;
 	  if (deleted_row.fill() == len && !memcmp(deleted_row.base, key_comps.row, len)) {
-	    if (key_comps.timestamp < deleted_row_timestamp) {
-	      tmp_iter = iter;
-	      iter++;
-	      m_cell_map.erase(tmp_iter);
+	    if (key_comps.timestamp > deleted_row_timestamp) {
+	      child_ptr->m_cell_map.insert(CellMapT::value_type((*iter).first, (*iter).second));
+	      (*iter).second |= ALLOC_BIT_MASK;  // mark this entry in the "old" map so it doesn't get deleted
 	    }
-	    else
-	      iter++;
+	    iter++;
 	    continue;
 	  }
 	  deleted_row.clear();
 	}
 	delete_present = false;
       }
+      child_ptr->m_cell_map.insert(CellMapT::value_type((*iter).first, (*iter).second));
+      (*iter).second |= ALLOC_BIT_MASK;  // mark this entry in the "old" map so it doesn't get deleted
       iter++;
     }
     else {
@@ -323,10 +308,13 @@ void CellCache::purge_deletes() {
 	  delete_present = true;
 	}
       }
-      tmp_iter = iter;
       iter++;
-      m_cell_map.erase(tmp_iter);
     }
   }
-  
+
+  Global::memory_tracker.add_items(child_ptr->m_cell_map.size());
+
+  m_children.push_back(child_ptr);
+
+  return child_ptr.get();
 }

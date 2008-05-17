@@ -517,7 +517,7 @@ void Range::split_compact_and_shrink(Timestamp timestamp, String &old_start_row)
   }
   catch (Hypertable::Exception &e) {
     // TODO: propagate exception
-    HT_ERRORF("Problem updating ROOT METADATA range (new=%s, existing=%s) - %s", m_split_row.c_str(), m_end_row.c_str(), e.what());
+    HT_ERRORF("Problem updating ROOT METADATA range (new=%s, existing=%s) - %s", m_split_row.c_str(), m_end_row.c_str(), Error::get_text(e.code()));
     // need to unblock updates and then return error
     HT_ABORT;
   }
