@@ -660,6 +660,38 @@ Client::exists(const String &name) {
 
 
 void
+Client::rename(const String &src, const String &dst, DispatchHandler *handler) {
+  CommBufPtr cbufPtr(m_protocol.create_rename_request(src, dst));
+
+  try { send_message(cbufPtr, handler); }
+  catch (Exception &e) {
+    throw Exception(e.code(), format("Error sending 'rename' request for DFS "
+                    "path: %s -> %s", src.c_str(), dst.c_str()), e);
+  }
+}
+
+
+void
+Client::rename(const String &src, const String &dst) {
+  DispatchHandlerSynchronizer syncHandler;
+  EventPtr eventPtr;
+  CommBufPtr cbufPtr(m_protocol.create_rename_request(src, dst));
+
+  try {
+    send_message(cbufPtr, &syncHandler);
+
+    if (!syncHandler.wait_for_reply(eventPtr))
+      throw Exception(Protocol::response_code(eventPtr.get()),
+                      m_protocol.string_format_message(eventPtr).c_str());
+  }
+  catch (Exception &e) {
+    throw Exception(e.code(), format("Error renaming of DFS path: %s -> %s",
+                    src.c_str(), dst.c_str()), e);
+  }
+}
+
+
+void
 Client::send_message(CommBufPtr &cbufPtr, DispatchHandler *handler) {
   int error = m_comm->send_request(m_addr, m_timeout, cbufPtr, handler);
 

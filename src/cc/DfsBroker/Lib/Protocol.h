@@ -76,6 +76,8 @@ namespace Hypertable {
 
       static CommBuf *create_exists_request(const String &fname);
 
+      static CommBuf *create_rename_request(const String &src,
+                                            const String &dst);
 
       virtual const char *command_text(short command);
 
@@ -95,7 +97,8 @@ namespace Hypertable {
       static const uint16_t COMMAND_RMDIR    = 13;
       static const uint16_t COMMAND_READDIR  = 14;
       static const uint16_t COMMAND_EXISTS   = 15;
-      static const uint16_t COMMAND_MAX      = 16;
+      static const uint16_t COMMAND_RENAME   = 16;
+      static const uint16_t COMMAND_MAX      = 17;
 
       static const uint16_t SHUTDOWN_FLAG_IMMEDIATE = 0x0001;
 

@@ -36,6 +36,7 @@ RequestHandlerStatus.cc
 RequestHandlerRmdir.cc
 RequestHandlerReaddir.cc
 RequestHandlerExists.cc
+RequestHandlerRename.cc
 ResponseCallbackOpen.cc
 ResponseCallbackRead.cc
 ResponseCallbackAppend.cc

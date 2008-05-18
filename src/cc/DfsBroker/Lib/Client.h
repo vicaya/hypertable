@@ -128,7 +128,8 @@ namespace Hypertable {
 
       virtual void append(int32_t fd, StaticBuffer &buffer, uint32_t flags,
                           DispatchHandler *handler);
-      virtual size_t append(int32_t fd, StaticBuffer &buffer, uint32_t flags);
+      virtual size_t append(int32_t fd, StaticBuffer &buffer,
+                            uint32_t flags = 0);
 
       virtual void seek(int32_t fd, uint64_t offset, DispatchHandler *handler);
       virtual void seek(int32_t fd, uint64_t offset);
@@ -157,6 +158,10 @@ namespace Hypertable {
 
       virtual void exists(const String &name, DispatchHandler *handler);
       virtual bool exists(const String &name);
+
+      virtual void rename(const String &src, const String &dst, 
+                          DispatchHandler *handler);
+      virtual void rename(const String &src, const String &dst);
 
       /** Checks the status of the DFS broker.  Issues a status command and waits
        * for it to return.

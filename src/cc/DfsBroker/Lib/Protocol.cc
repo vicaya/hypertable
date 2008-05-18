@@ -29,9 +29,10 @@
 
 #include "Protocol.h"
 
-using namespace Hypertable;
-using namespace Hypertable::DfsBroker;
 using namespace std;
+using namespace Hypertable;
+using namespace DfsBroker;
+using namespace Serialization;
 
 
 namespace Hypertable {
@@ -54,7 +55,8 @@ namespace Hypertable {
       "flush",
       "rmdir",
       "readdir",
-      "exists"
+      "exists",
+      "rename"
     };
 
 
@@ -234,6 +236,18 @@ namespace Hypertable {
       CommBuf *cbuf = new CommBuf(hbuilder, 2 + Serialization::encoded_length_string(fname));
       cbuf->append_short(COMMAND_EXISTS);
       cbuf->append_string(fname);
+      return cbuf;
+    }
+
+
+    CommBuf *
+    Protocol::create_rename_request(const String &src, const String &dst) {
+      HeaderBuilder hb(Header::PROTOCOL_DFSBROKER);
+      CommBuf *cbuf = new CommBuf(hb, 2 + encoded_length_string(src) + 
+                                  encoded_length_string(dst));
+      cbuf->append_short(COMMAND_RENAME);
+      cbuf->append_string(src);
+      cbuf->append_string(dst);
       return cbuf;
     }
 

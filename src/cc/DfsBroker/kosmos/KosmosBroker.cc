@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cerrno>
-#include <cstring>
 
 extern "C" {
 #include <fcntl.h>
@@ -66,7 +66,7 @@ KosmosBroker::~KosmosBroker() {
  */
 void KosmosBroker::open(ResponseCallbackOpen *cb, const char *fileName, uint32_t bufferSize) {
   int fd;
-  std::string absFileName;
+  String absFileName;
   KfsClient *clnt = KfsClient::Instance();
 
   if (mVerbose) {
@@ -116,7 +116,7 @@ void KosmosBroker::create(ResponseCallbackOpen *cb, const char *fileName, bool o
 	    uint32_t bufferSize, uint16_t replication, uint64_t blockSize) {
   int fd;
   int flags;
-  std::string absFileName;
+  String absFileName;
   KfsClient *clnt = KfsClient::Instance();
   
   if (mVerbose) {
@@ -287,7 +287,7 @@ void KosmosBroker::seek(ResponseCallback *cb, uint32_t fd, uint64_t offset) {
  * remove
  */
 void KosmosBroker::remove(ResponseCallback *cb, const char *fileName) {
-  std::string absFileName;
+  String absFileName;
   KfsClient *clnt = KfsClient::Instance();
   int res;
   
@@ -315,7 +315,7 @@ void KosmosBroker::remove(ResponseCallback *cb, const char *fileName) {
  * length
  */
 void KosmosBroker::length(ResponseCallbackLength *cb, const char *fileName) {
-  std::string absFileName;
+  String absFileName;
   uint64_t length;
   int res;
   KfsClient *clnt = KfsClient::Instance();
@@ -385,8 +385,8 @@ void KosmosBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
  * mkdirs
  */
 void KosmosBroker::mkdirs(ResponseCallback *cb, const char *dirName) {
-  std::string absDirName;
-  std::string::size_type curr = 0;
+  String absDirName;
+  String::size_type curr = 0;
   KfsClient *clnt = KfsClient::Instance();
   int res = 0;
   struct stat statBuf;
@@ -400,10 +400,10 @@ void KosmosBroker::mkdirs(ResponseCallback *cb, const char *dirName) {
   else
     absDirName = mRootdir + "/" + dirName;
 
-  std::string path;
-  while (curr != std::string::npos) {
+  String path;
+  while (curr != String::npos) {
     curr = absDirName.find('/', curr + 1);
-    if (curr != std::string::npos) 
+    if (curr != String::npos) 
       path.assign(absDirName, 0, curr);
     else
       path = absDirName;
@@ -439,7 +439,7 @@ void KosmosBroker::mkdirs(ResponseCallback *cb, const char *dirName) {
  * rmdir
  */
 void KosmosBroker::rmdir(ResponseCallback *cb, const char *dirName) {
-  std::string absDirName;
+  String absDirName;
   KfsClient *clnt = KfsClient::Instance();
   int res;
   
@@ -512,9 +512,9 @@ void KosmosBroker::shutdown(ResponseCallback *cb) {
 
 
 void KosmosBroker::readdir(ResponseCallbackReaddir *cb, const char *dirName) {
-  std::vector<std::string> listing;
-  std::vector<std::string> stripped_listing;
-  std::string abs_path;
+  std::vector<String> listing;
+  std::vector<String> stripped_listing;
+  String abs_path;
   KfsClient *clnt = KfsClient::Instance();
   int error;
 
@@ -547,7 +547,7 @@ void KosmosBroker::readdir(ResponseCallbackReaddir *cb, const char *dirName) {
 
 
 void KosmosBroker::exists(ResponseCallbackExists *cb, const char *fileName) {
-  std::string absFileName;
+  String absFileName;
   KfsClient *clnt = KfsClient::Instance();
   
   if (mVerbose) {
@@ -562,6 +562,21 @@ void KosmosBroker::exists(ResponseCallbackExists *cb, const char *fileName) {
   cb->response( clnt->Exists(absFileName.c_str()) );
 }
 
+
+void
+KosmosBroker::rename(ResponseCallback *cb, const char *src, const char *dst) {
+  KfsClient *client = KfsClient::Instance();
+
+  if (mVerbose)
+    HT_INFOF("rename %s -> %s", src, dst);
+
+  String absSrc =
+    format("%s%s%s", mRootdir.c_str(), *src == '/' ? "" : "/", src);
+  String absDst =
+    format("%s%s%s", mRootdir.c_str(), *dst == '/' ? "" : "/", dst);
+
+  cb->response(client->Rename(src, dst));
+}
 
 
 /**

@@ -19,8 +19,10 @@
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
+
 #include <cerrno>
-#include <cstdlib>
+#include <cstdio>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -35,6 +37,7 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include "Common/String.h"
 #include "Common/FileUtils.h"
 #include "Common/System.h"
 
@@ -78,7 +81,7 @@ LocalBroker::~LocalBroker() {
  */
 void LocalBroker::open(ResponseCallbackOpen *cb, const char *fileName, uint32_t bufferSize) {
   int fd;
-  std::string absFileName;
+  String absFileName;
   
   if (m_verbose) {
     HT_INFOF("open file='%s' bufferSize=%d", fileName, bufferSize);
@@ -120,7 +123,7 @@ void LocalBroker::create(ResponseCallbackOpen *cb, const char *fileName, bool ov
 	    uint32_t bufferSize, uint16_t replication, uint64_t blockSize) {
   int fd;
   int flags;
-  std::string absFileName;
+  String absFileName;
   
   if (m_verbose) {
     HT_INFOF("create file='%s' overwrite=%d bufferSize=%d replication=%d blockSize=%d",
@@ -283,7 +286,7 @@ void LocalBroker::seek(ResponseCallback *cb, uint32_t fd, uint64_t offset) {
  * Remove
  */
 void LocalBroker::remove(ResponseCallback *cb, const char *fileName) {
-  std::string absFileName;
+  String absFileName;
   
   if (m_verbose) {
     HT_INFOF("remove file='%s'", fileName);
@@ -308,7 +311,7 @@ void LocalBroker::remove(ResponseCallback *cb, const char *fileName) {
  * Length
  */
 void LocalBroker::length(ResponseCallbackLength *cb, const char *fileName) {
-  std::string absFileName;
+  String absFileName;
   uint64_t length;
   
   if (m_verbose) {
@@ -365,7 +368,7 @@ void LocalBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset, 
  * Mkdirs
  */
 void LocalBroker::mkdirs(ResponseCallback *cb, const char *dirName) {
-  std::string absDirName;
+  String absDirName;
   
   if (m_verbose) {
     HT_INFOF("mkdirs dir='%s'", dirName);
@@ -390,8 +393,8 @@ void LocalBroker::mkdirs(ResponseCallback *cb, const char *dirName) {
  * Rmdir
  */
 void LocalBroker::rmdir(ResponseCallback *cb, const char *dirName) {
-  std::string absDirName;
-  std::string commandStr;
+  String absDirName;
+  String commandStr;
   
   if (m_verbose) {
     HT_INFOF("rmdir dir='%s'", dirName);
@@ -402,7 +405,7 @@ void LocalBroker::rmdir(ResponseCallback *cb, const char *dirName) {
   else
     absDirName = m_rootdir + "/" + dirName;
 
-  commandStr = (std::string)"/bin/rm -rf " + absDirName;
+  commandStr = (String)"/bin/rm -rf " + absDirName;
   if (system(commandStr.c_str()) != 0) {
     HT_ERRORF("%s failed.", commandStr.c_str());
     cb->error(Error::DFSBROKER_IO_ERROR, commandStr);
@@ -424,12 +427,12 @@ void LocalBroker::rmdir(ResponseCallback *cb, const char *dirName) {
  * Readdir
  */
 void LocalBroker::readdir(ResponseCallbackReaddir *cb, const char *dirName) {
-  std::vector<std::string> listing;
+  std::vector<String> listing;
 
-  int Readdir(const char *pathname, std::vector<std::string> &result);
+  int Readdir(const char *pathname, std::vector<String> &result);
 
 
-  std::string absDirName;
+  String absDirName;
 
   if (m_verbose) {
     HT_INFOF("Readdir dir='%s'", dirName);
@@ -461,7 +464,7 @@ void LocalBroker::readdir(ResponseCallbackReaddir *cb, const char *dirName) {
   while (dp != 0) {
 
     if (dp->d_name[0] != '.' && dp->d_name[0] != 0)
-      listing.push_back((std::string)dp->d_name);
+      listing.push_back((String)dp->d_name);
 
     if (readdir_r(dirp, &dent, &dp) != 0) {
       HT_ERRORF("readdir('%s') failed - %s", absDirName.c_str(), strerror(errno));
@@ -522,7 +525,7 @@ void LocalBroker::shutdown(ResponseCallback *cb) {
 
 
 void LocalBroker::exists(ResponseCallbackExists *cb, const char *fileName) {
-  std::string absFileName;
+  String absFileName;
   
   if (m_verbose) {
     HT_INFOF("exists file='%s'", fileName);
@@ -534,6 +537,24 @@ void LocalBroker::exists(ResponseCallbackExists *cb, const char *fileName) {
     absFileName = m_rootdir + "/" + fileName;
 
   cb->response( FileUtils::exists(absFileName) );
+}
+
+
+void
+LocalBroker::rename(ResponseCallback *cb, const char *src, const char *dst) {
+  String asrc =
+    format("%s%s%s", m_rootdir.c_str(), *src == '/' ? "" : "/", src);
+  String adst =
+    format("%s%s%s", m_rootdir.c_str(), *dst == '/' ? "" : "/", dst);
+
+  if (m_verbose) 
+    HT_INFOF("rename %s -> %s", asrc.c_str(), adst.c_str());
+
+  if (std::rename(asrc.c_str(), adst.c_str()) != 0) {
+    report_error(cb);
+    return;
+  }
+  cb->response_ok();
 }
 
 

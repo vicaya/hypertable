@@ -42,6 +42,7 @@
 #include "RequestHandlerRmdir.h"
 #include "RequestHandlerReaddir.h"
 #include "RequestHandlerExists.h"
+#include "RequestHandlerRename.h"
 
 using namespace Hypertable;
 using namespace Hypertable::DfsBroker;
@@ -112,6 +113,9 @@ void ConnectionHandler::handle(EventPtr &eventPtr) {
 	break;
       case Protocol::COMMAND_EXISTS:
 	requestHandler = new RequestHandlerExists(m_comm, m_broker_ptr.get(), eventPtr);
+	break;
+      case Protocol::COMMAND_RENAME:
+	requestHandler = new RequestHandlerRename(m_comm, m_broker_ptr.get(), eventPtr);
 	break;
       case Protocol::COMMAND_STATUS:
 	requestHandler = new RequestHandlerStatus(m_comm, m_broker_ptr.get(), eventPtr);

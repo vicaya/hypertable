@@ -570,6 +570,24 @@ public class HdfsBroker {
 	    log.severe("Problem sending response to 'exists' command - " + Error.GetText(error));
     }
 
+    /**
+     * Do the rename
+     */
+    public void Rename(ResponseCallback cb, String src, String dst) {
+	try {
+	    if (mVerbose)
+		log.info("Renaming "+ src +" -> "+ dst);
+
+	    mFilesystem.rename(new Path(src), new Path(dst));
+	}
+	catch (IOException e) {
+	    log.info("I/O exception while renaming "+ src + " -> "+ dst +": "
+                     + e.getMessage());
+	    cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
+            return;
+	}
+        cb.response_ok();
+    }
 
     private Configuration mConf = new Configuration();
     private FileSystem    mFilesystem;

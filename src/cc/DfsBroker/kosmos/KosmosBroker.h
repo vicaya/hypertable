@@ -22,12 +22,11 @@
 #ifndef HYPERTABLE_KFSBROKER_H
 #define HYPERTABLE_KFSBROKER_H
 
-#include <string>
-
 extern "C" {
 #include <unistd.h>  
 }
 
+#include "Common/String.h"
 #include "Common/atomic.h"
 #include "Common/Properties.h"
 
@@ -93,13 +92,14 @@ namespace Hypertable {
     virtual void shutdown(ResponseCallback *cb);
     virtual void readdir(ResponseCallbackReaddir *cb, const char *dirName);
     virtual void exists(ResponseCallbackExists *cb, const char *fileName);
+    virtual void rename(ResponseCallback *cb, const char *src, const char *dst);
 
   private:
 
     virtual void ReportError(ResponseCallback *cb, int error);
 
     bool         mVerbose;
-    std::string  mRootdir;
+    String       mRootdir;
   };
 
 }

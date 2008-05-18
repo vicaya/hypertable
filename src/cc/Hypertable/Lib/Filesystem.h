@@ -415,7 +415,6 @@ namespace Hypertable {
      */
     virtual bool exists(const String &name) = 0;
 
-
     /** Decodes the response from an exists request.
      *
      * @param event_ptr reference to response event
@@ -424,6 +423,21 @@ namespace Hypertable {
      */
     static bool decode_response_exists(EventPtr &event_ptr);
 
+    /** Rename path asynchronously
+     * 
+     * @param src - source path 
+     * @param dst - destination path
+     * @param handler - dispatch/callback handler
+     */
+    virtual void rename(const String &src, const String &dst, 
+                        DispatchHandler *handler) = 0;
+
+    /** Rename a path
+     *
+     * @param src - source path 
+     * @param dst - destination path
+     */
+    virtual void rename(const String &src, const String &dst) = 0;
 
     /** Decodes the response from an request that only returns an error code
      *

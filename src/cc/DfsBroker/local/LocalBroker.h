@@ -28,6 +28,7 @@ extern "C" {
 #include <unistd.h>  
 }
 
+#include "Common/String.h"
 #include "Common/atomic.h"
 #include "Common/Properties.h"
 
@@ -88,13 +89,14 @@ namespace Hypertable {
     virtual void status(ResponseCallback *cb);
     virtual void shutdown(ResponseCallback *cb);
     virtual void exists(ResponseCallbackExists *cb, const char *fieName);
+    virtual void rename(ResponseCallback *cb, const char *src, const char *dst);
 
   private:
 
     virtual void report_error(ResponseCallback *cb);
 
     bool         m_verbose;
-    std::string  m_rootdir;
+    String       m_rootdir;
   };
 
 }

@@ -60,6 +60,8 @@ namespace Hypertable {
       virtual void status(ResponseCallback *cb) = 0;
       virtual void shutdown(ResponseCallback *cb) = 0;
       virtual void exists(ResponseCallbackExists *cb, const char *fieName) = 0;
+      virtual void rename(ResponseCallback *cb, const char *src,
+                          const char *dst) = 0;
 
       OpenFileMap &get_open_file_map() { return m_open_file_map; }
 

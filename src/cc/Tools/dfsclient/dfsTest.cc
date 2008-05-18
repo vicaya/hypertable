@@ -40,6 +40,8 @@ extern "C" {
 #include "Common/Logger.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
+#include "Common/Thread.h"
+#include "Common/StaticBuffer.h"
 
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ConnectionManager.h"
@@ -65,60 +67,33 @@ namespace {
     "  at localhost:38546",
     (const char *)0
   };
-}
 
+  void test_copy(DfsBroker::Client *client, const String &testDir) {
+    String outfileA = testDir + "/output.a";
+    String outfileB = testDir + "/output.b";
 
-int main(int argc, char **argv) {
-  boost::thread  *thread1, *thread2;
-  struct sockaddr_in addr;
-  Comm *comm;
-  ConnectionManagerPtr connManagerPtr;
-  DfsBroker::Client *client;
-  char buf[32];
-  std::string testDir, outfileA, outfileB;
+    dfsTestThreadFunction threadFunc(client, "/usr/share/dict/words");
 
-  fstream filestr ("dfsTest.out", fstream::out);
+    threadFunc.set_dfs_file(outfileA);
+    threadFunc.set_output_file("output.a");
+    Thread thread1(threadFunc);
 
-  if (argc != 1)
-    Usage::dump_and_exit(usage);
+    threadFunc.set_dfs_file(outfileB);
+    threadFunc.set_output_file("output.b");
+    Thread thread2(threadFunc);
 
-  System::initialize(argv[0]);
-  ReactorFactory::initialize(1);
+    thread1.join();
+    thread2.join();
 
-  InetAddr::initialize(&addr, "localhost", DEFAULT_DFSBROKER_PORT);
+    if (system("diff /usr/share/dict/words output.a"))
+      exit(1);
 
-  comm = new Comm();
-  connManagerPtr = new ConnectionManager(comm);
-  client = new DfsBroker::Client(connManagerPtr, addr, 15);
-
-  if (!client->wait_for_connection(15)) {
-    HT_ERROR("Unable to connect to DFS");
-    return 1;
+    if (system("diff output.a output.b"))
+      exit(1);
   }
 
-  sprintf(buf, "/dfsTest%d", getpid());
-  testDir = buf;
-  client->mkdirs(testDir);
-  outfileA = testDir + "/output.a";
-  outfileB = testDir + "/output.b";
-
-  dfsTestThreadFunction threadFunc(client, "/usr/share/dict/words");
-
-  threadFunc.set_dfs_file(outfileA);
-  threadFunc.set_output_file("output.a");
-  thread1 = new boost::thread(threadFunc);
-
-  threadFunc.set_dfs_file(outfileB);
-  threadFunc.set_output_file("output.b");
-  thread2 = new boost::thread(threadFunc);
-
-  thread1->join();
-  thread2->join();
-
-  /**
-   * Readdir test
-   */
-  {
+  void test_readdir(DfsBroker::Client *client, const String &testDir) {
+    ofstream filestr ("dfsTest.out");
     vector<string> listing;
     
     client->readdir(testDir, listing);
@@ -127,20 +102,70 @@ int main(int argc, char **argv) {
 
     for (size_t i=0; i<listing.size(); i++)
       filestr << listing[i] << endl;
+
+    filestr.close();
+
+    if (system("diff dfsTest.out dfsTest.golden"))
+      exit(1);
   }
 
-  filestr.close();
+  void test_rename(DfsBroker::Client *client, const String &testdir) {
+    char *magic = "the quick brown fox jumps over a lazy dog";
+    char buf[1024];
+    String file_a = testdir +"/filename.a";
+    String file_b = testdir +"/filename.b";
+    int fd = client->create(file_a, true, -1, -1, -1);
+    StaticBuffer sbuf(magic, strlen(magic) + 1, false);
+    client->append(fd, sbuf);
+    client->close(fd);
+    client->rename(file_a, file_b);
+    fd = client->open(file_b);
+    client->read(fd, buf, sizeof(buf));
+    HT_EXPECT(strcmp(buf, magic) == 0, -1);
+    client->close(fd);
+  }
+}
 
-  if (system("diff dfsTest.out dfsTest.golden"))
+
+int main(int argc, char **argv) {
+  try {
+    struct sockaddr_in addr;
+    Comm *comm;
+    ConnectionManagerPtr connManagerPtr;
+    DfsBroker::Client *client;
+
+    if (argc != 1)
+      Usage::dump_and_exit(usage);
+
+    System::initialize(argv[0]);
+    ReactorFactory::initialize(2);
+
+    InetAddr::initialize(&addr, "localhost", DEFAULT_DFSBROKER_PORT);
+
+    comm = new Comm();
+    connManagerPtr = new ConnectionManager(comm);
+    client = new DfsBroker::Client(connManagerPtr, addr, 15);
+
+    if (!client->wait_for_connection(15)) {
+      HT_ERROR("Unable to connect to DFS");
+      return 1;
+    }
+    String testDir = format("/dfsTest%d", getpid());
+    client->mkdirs(testDir);
+
+    test_copy(client, testDir);
+    test_readdir(client, testDir);
+    test_rename(client, testDir);
+
+    client->rmdir(testDir);
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_ERROR_END;
     return 1;
-
-  client->rmdir(testDir);
-
-  if (system("diff /usr/share/dict/words output.a"))
+  }
+  catch (...) {
+    HT_ERROR_OUT << "unexpected exception caught" << HT_ERROR_END;
     return 1;
-
-  if (system("diff output.a output.b"))
-    return 1;
-
+  }
   return 0;
 }

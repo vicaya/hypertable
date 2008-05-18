@@ -29,7 +29,8 @@ namespace Hypertable {
   class StaticBuffer {
   public:
 
-    StaticBuffer(uint8_t *data, uint32_t len, bool take_ownership=true) : base(data), size(len), own(take_ownership) { }
+    StaticBuffer(void *data, uint32_t len, bool take_ownership=true) :
+        base((uint8_t *)data), size(len), own(take_ownership) { }
 
     StaticBuffer() : base(0), size(0), own(true) { }
 
