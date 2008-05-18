@@ -135,24 +135,27 @@ struct GcWorker {
 
   void
   insert_files(CountMap &map, const char *buf, size_t len, int c = 0) {
-    const char *p = buf, *p0 = p, *endp = p + len - 1;
+    const char *p = buf, *pn = p, *endp = p + len - 1;
 
     while (p < endp) {
-      while (*p != ';' ||  p[1] != '\n' && p < endp)
+      while (p < endp && (*p != ';' ||  p[1] != '\n'))
         ++p;
 
       if (p == endp)
         break;
 
-      string name(p0, p - p0);
+      string name(pn, p - pn);
       p += 2;
       insert_file(map, name.c_str(), c);
-      p0 = p;
+      pn = p;
     }
   }
 
   void
   insert_file(CountMap &map, const char *fname, int c) {
+    if (*fname == '#') 
+      ++fname;
+
     CountMap::InsRet ret = map.insert(fname, c);
 
     if (!ret.second)
@@ -166,7 +169,7 @@ struct GcWorker {
    */
   void
   reap(CountMap &files_map) {
-    size_t nf = 0, nd = 0;
+    size_t nf = 0, nf_done = 0, nd = 0, nd_done = 0;
     CountMap dirs_map; // reap empty range directories as well
 
     foreach (const CountMap::value_type &v, files_map) {
@@ -174,12 +177,15 @@ struct GcWorker {
         HT_DEBUGF("MasterGc: removing file %s", v.first);
 
         if (!m_dryrun) {
-          try { m_fs->remove(v.first); }
+          try {
+            m_fs->remove(v.first);
+            ++nf_done;
+          }
           catch (Exception &e) {
             HT_ERRORF("%s", e.what());
           }
-          ++nf;
         }
+        ++nf;
       }
       char *p = strrchr(v.first, '/');
 
@@ -193,16 +199,20 @@ struct GcWorker {
         HT_DEBUGF("MasterGc: removing directory %s", v.first);
 
         if (!m_dryrun) {
-          try { m_fs->rmdir(v.first); }
+          try {
+            m_fs->rmdir(v.first);
+            ++nd_done;
+          }
           catch (Exception &e) {
             HT_ERRORF("%s", e.what());
           }
-          ++nd;
         }
+        ++nd;
       }
     }
 
-    HT_DEBUGF("MasterGc: removed %lu files; %lu directories", nf, nd);
+    HT_DEBUGF("MasterGc: removed %lu/%lu files; %lu/%lu directories",
+              (Lu)nf_done, (Lu)nf, (Lu)nd_done, (Lu)nd);
   }
 
   void
