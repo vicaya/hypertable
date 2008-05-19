@@ -29,6 +29,7 @@
 #include "AccessGroup.h"
 #include "CellCache.h"
 #include "CellCacheScanner.h"
+#include "CellStoreReleaseCallback.h"
 #include "CellStoreV0.h"
 #include "Global.h"
 #include "MergeScanner.h"
@@ -123,8 +124,12 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context_ptr) {
   MergeScanner *scanner = new MergeScanner(scan_context_ptr);
   scanner->add_scanner( m_cell_cache_ptr->create_scanner(scan_context_ptr) );
   if (!m_in_memory) {
-    for (size_t i=0; i<m_stores.size(); i++)
+    CellStoreReleaseCallback callback(this);
+    for (size_t i=0; i<m_stores.size(); i++) {
       scanner->add_scanner( m_stores[i]->create_scanner(scan_context_ptr) );
+      callback.add_file(m_stores[i]->get_filename());
+    }
+    scanner->install_release_callback(callback);
   }
   return scanner;
 }

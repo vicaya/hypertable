@@ -30,6 +30,7 @@
 #include "Common/DynamicBuffer.h"
 
 #include "CellListScanner.h"
+#include "CellStoreReleaseCallback.h"
 
 using namespace Hypertable;
 
@@ -56,6 +57,10 @@ namespace Hypertable {
     virtual bool get(ByteString &key, ByteString &value);
     void add_scanner(CellListScanner *scanner);
 
+    void install_release_callback(CellStoreReleaseCallback &cb) {
+      m_release_callback = cb;
+    }
+
   private:
 
     void initialize();
@@ -80,6 +85,7 @@ namespace Hypertable {
     uint64_t      m_start_timestamp;
     uint64_t      m_end_timestamp;
     DynamicBuffer m_prev_key;
+    CellStoreReleaseCallback m_release_callback;
   };
 }
 

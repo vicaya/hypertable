@@ -21,6 +21,7 @@
 set ( RangeServer_SRCS
 AccessGroup.cc
 CellCache.cc
+CellStoreReleaseCallback.cc
 CellCacheScanner.cc
 CellStoreScannerV0.cc
 CellStoreTrailerV0.cc
