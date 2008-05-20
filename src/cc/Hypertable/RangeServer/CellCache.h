@@ -24,9 +24,6 @@
 
 #include <map>
 
-#include <boost/thread/condition.hpp>
-#include <boost/intrusive_ptr.hpp>
-
 #include "Common/Mutex.h"
 
 #include "CellListScanner.h"

@@ -27,7 +27,12 @@
 #include <string>
 #include <vector>
 
+#include <ext/hash_map>
+
+#include <boost/thread/condition.hpp>
+
 #include "Common/String.h"
+#include "Common/StringExt.h"
 
 #include "Hypertable/Lib/Schema.h"
 #include "Hypertable/Lib/Types.h"
@@ -89,8 +94,6 @@ namespace Hypertable {
 
     int shrink(String &new_start_row);
 
-    void get_files(String &text);
-
     uint64_t get_collision_count() {
       boost::mutex::scoped_lock lock(m_mutex);
       return m_collisions + m_cell_cache_ptr->get_collision_count();
@@ -103,8 +106,20 @@ namespace Hypertable {
 
     void drop() { m_drop = true; }
 
+    void get_files(String &text);
+
+    void release_files(const std::vector<String> &files);
+
   private:
-    Mutex           m_mutex;
+
+    typedef __gnu_cxx::hash_map<String, uint32_t> FileRefCountMapT;
+    void increment_file_refcount(const String &filename);
+    bool decrement_file_refcount(const String &filename);
+
+    void update_files_column();
+
+    Mutex                m_mutex;
+    boost::condition     m_scanner_blocked_cond;
     TableIdentifierCopy  m_identifier;
     SchemaPtr            m_schema_ptr;
     std::set<uint8_t>    m_column_families;
@@ -118,7 +133,7 @@ namespace Hypertable {
     uint64_t             m_disk_usage;
     uint32_t             m_blocksize;
     float                m_compression_ratio;
-    String          m_compressor;
+    String               m_compressor;
     bool                 m_is_root;
     Timestamp            m_compaction_timestamp;
     uint64_t             m_oldest_cached_timestamp;
@@ -126,6 +141,10 @@ namespace Hypertable {
     bool                 m_needs_compaction;
     bool                 m_in_memory;
     bool                 m_drop;
+    std::set<String>     m_gc_locked_files;
+    std::set<String>     m_live_files;
+    FileRefCountMapT     m_file_refcounts;
+    bool                 m_scanners_blocked;
   };
 
 }

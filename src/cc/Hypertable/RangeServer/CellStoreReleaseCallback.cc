@@ -33,7 +33,9 @@ CellStoreReleaseCallback::CellStoreReleaseCallback(AccessGroup *ag) : m_access_g
 }
 
 void CellStoreReleaseCallback::operator()() const {
-  cout << "WOW" << endl;
-  for (size_t i=0; i<m_filenames.size(); i++)
-    cout << "CSRC: " << m_filenames[i] << endl;
+  HT_INFO("About to release files...");
+  cout << flush;
+  m_access_group->release_files(m_filenames);
+  HT_INFO("Finished releasing files.");
+  cout << flush;
 }

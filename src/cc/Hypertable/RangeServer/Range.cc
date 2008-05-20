@@ -134,6 +134,9 @@ void Range::load_cell_stores(Metadata *metadata) {
       file_str = std::string(base, ptr-base);
       boost::trim(file_str);
 
+      if (file_str[0] == '#')
+	file_str = file_str.substr(1);
+
       if (file_str != "")
 	csvec.push_back(file_str);
 
@@ -143,7 +146,7 @@ void Range::load_cell_stores(Metadata *metadata) {
 
     for (size_t i=0; i<csvec.size(); i++) {
 
-      HT_INFOF("drj Loading CellStore %s", csvec[i].c_str());
+      HT_INFOF("Loading CellStore %s", csvec[i].c_str());
 
       cellStorePtr = new CellStoreV0(Global::dfs);
 

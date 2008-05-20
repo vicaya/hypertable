@@ -1571,7 +1571,7 @@ void RangeServer::log_cleanup() {
       priority_data_vec[i].ag->set_compaction_bit();
       compaction_set.insert( rangei );
       HT_INFOF("Compacting %s because cumulative log size of %lld exceeds threshold %lld",
-		  range_str.c_str(), (*map_iter).second.cumulative_size, prune_threshold);
+	       range_str.c_str(), (*map_iter).second.cumulative_size, prune_threshold);
     }
   }
 

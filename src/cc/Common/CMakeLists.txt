@@ -33,6 +33,7 @@ md5.cc
 )
 
 add_library (HyperCommon ${Common_SRCS})
+target_link_libraries (HyperCommon log4cpp)
 
 # handy utils
 add_executable (code_search_and_replace code_search_and_replace.cc)

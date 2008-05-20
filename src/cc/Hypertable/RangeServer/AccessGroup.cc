@@ -42,7 +42,7 @@ namespace {
 }
 
 
-AccessGroup::AccessGroup(TableIdentifier *identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeSpec *range) : CellList(), m_identifier(identifier), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE), m_compression_ratio(1.0), m_is_root(false), m_oldest_cached_timestamp(0), m_collisions(0), m_needs_compaction(false), m_drop(false) {
+AccessGroup::AccessGroup(TableIdentifier *identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeSpec *range) : CellList(), m_identifier(identifier), m_schema_ptr(schemaPtr), m_name(ag->name), m_stores(), m_cell_cache_ptr(), m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE), m_compression_ratio(1.0), m_is_root(false), m_oldest_cached_timestamp(0), m_collisions(0), m_needs_compaction(false), m_drop(false), m_scanners_blocked(false) {
   m_table_name = m_identifier.name;
   m_start_row = range->start_row;
   m_end_row = range->end_row;
@@ -122,12 +122,19 @@ bool AccessGroup::replay_add(const ByteString key, const ByteString value, uint6
 CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context_ptr) {
   boost::mutex::scoped_lock lock(m_mutex);
   MergeScanner *scanner = new MergeScanner(scan_context_ptr);
+  String filename;
+
+  while (m_scanners_blocked)
+    m_scanner_blocked_cond.wait(lock);
+
   scanner->add_scanner( m_cell_cache_ptr->create_scanner(scan_context_ptr) );
   if (!m_in_memory) {
     CellStoreReleaseCallback callback(this);
     for (size_t i=0; i<m_stores.size(); i++) {
       scanner->add_scanner( m_stores[i]->create_scanner(scan_context_ptr) );
-      callback.add_file(m_stores[i]->get_filename());
+      filename = m_stores[i]->get_filename();
+      callback.add_file(filename);
+      increment_file_refcount(filename);
     }
     scanner->install_release_callback(callback);
   }
@@ -242,7 +249,6 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
   CellListScannerPtr scannerPtr;
   size_t tableIndex = 1;
   CellStorePtr cellStorePtr;
-  String files;
   String metadata_key_str;
 
   if (!major && !m_needs_compaction)
@@ -349,16 +355,28 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
     tmp_cell_cache_ptr->unlock();    
 
     /** Drop the compacted tables from the table vector **/
-    if (tableIndex < m_stores.size())
+    if (tableIndex < m_stores.size()) {
       m_stores.resize(tableIndex);
+      m_live_files.clear();
+      for (size_t i=0; i<m_stores.size(); i++)
+	m_live_files.insert( m_stores[i]->get_filename() );
+    }
 
-    if (m_in_memory)
+    if (m_in_memory) {
       m_stores.clear();
+      m_live_files.clear();
+    }
 
     /** Add the new table to the table vector **/
-    m_stores.push_back(cellStorePtr);
+    m_stores.push_back( cellStorePtr );
+    m_live_files.insert( cellStorePtr->get_filename() );
 
-    get_files(files);
+    /** Determine in-use files to prevent from being GC'd **/
+    m_gc_locked_files.clear();
+    for (FileRefCountMapT::iterator iter = m_file_refcounts.begin(); iter != m_file_refcounts.end(); iter++) {
+      if (m_live_files.count((*iter).first) == 0)
+	m_gc_locked_files.insert((*iter).first);
+    }
 
     /** Re-compute disk usage and compresion ratio**/
     m_disk_usage = 0;
@@ -371,23 +389,17 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
 
     m_compaction_timestamp = timestamp;
 
+    m_scanners_blocked = true;
   }
 
-  try {
-    if (m_is_root) {
-      MetadataRoot metadata(m_schema_ptr);
-      metadata.write_files(m_name, files);
-    }
-    else {
-      MetadataNormal metadata(&m_identifier, m_end_row);
-      metadata.write_files(m_name, files);
-    }
-  }
-  catch (Hypertable::Exception &e) {
-    // TODO: propagate exception
-    HT_ERRORF("Problem updating 'File' column of METADATA (%d:%s) - %s",
-		 m_identifier.id, metadata_key_str.c_str(), Error::get_text(e.code()));
-  }
+  update_files_column();
+
+  /**
+   * un-block scanners
+   */
+  m_scanners_blocked = false;
+  m_scanner_blocked_cond.notify_all();
+
 
   HT_INFOF("Finished Compaction (%s.%s)", m_table_name.c_str(), m_name.c_str());
 }
@@ -465,7 +477,16 @@ int AccessGroup::shrink(String &new_start_row) {
 /**
  *
  */
+void AccessGroup::get_compaction_timestamp(Timestamp &timestamp) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  timestamp = m_compaction_timestamp;
+}
+
+
+/**
+ */
 void AccessGroup::get_files(String &text) {
+  boost::mutex::scoped_lock lock(m_mutex);
   text = "";
   for (size_t i=0; i<m_stores.size(); i++)
     text += m_stores[i]->get_filename() + ";\n";
@@ -473,9 +494,88 @@ void AccessGroup::get_files(String &text) {
 
 
 /**
- *
  */
-void AccessGroup::get_compaction_timestamp(Timestamp &timestamp) {
-  boost::mutex::scoped_lock lock(m_mutex);
-  timestamp = m_compaction_timestamp;
+void AccessGroup::release_files(const std::vector<String> &files) {
+  bool need_files_update = false;
+
+  {
+    boost::mutex::scoped_lock lock(m_mutex);
+    for (size_t i=0; i<files.size(); i++) {
+      if (decrement_file_refcount(files[i])) {
+	if (m_gc_locked_files.count(files[i]) > 0) {
+	  m_gc_locked_files.erase(files[i]);
+	  need_files_update = true;
+	}
+      }
+    }
+  }
+
+  if (need_files_update)
+    update_files_column();
+}
+
+/**
+ */
+void AccessGroup::update_files_column() {
+  String files;
+
+  {
+    boost::mutex::scoped_lock lock(m_mutex);
+
+    /**
+     * Get list of files to write into 'Files' column
+     */
+    files = "";
+    // get the "live" ones
+    for (size_t i=0; i<m_stores.size(); i++)
+      files += m_stores[i]->get_filename() + ";\n";
+    // get the "locked" ones (prevents gc)
+    for (std::set<String>::iterator iter = m_gc_locked_files.begin(); iter != m_gc_locked_files.end(); iter++)
+      files += String("#") + *iter + ";\n";
+  }
+
+  try {
+    if (m_is_root) {
+      MetadataRoot metadata(m_schema_ptr);
+      metadata.write_files(m_name, files);
+    }
+    else {
+      MetadataNormal metadata(&m_identifier, m_end_row);
+      metadata.write_files(m_name, files);
+    }
+  }
+  catch (Hypertable::Exception &e) {
+    // TODO: propagate exception
+    HT_ERRORF("Problem updating 'Files' column of METADATA - %s", Error::get_text(e.code()));
+  }
+}
+
+
+/**
+ * Needs to be called with m_mutex locked
+ */
+void AccessGroup::increment_file_refcount(const String &filename) {
+  FileRefCountMapT::iterator iter = m_file_refcounts.find(filename);
+
+  if (iter == m_file_refcounts.end())
+    m_file_refcounts[filename] = 1;
+  else
+    (*iter).second++;
+}
+
+
+/**
+ * Needs to be called with m_mutex locked
+ */
+bool AccessGroup::decrement_file_refcount(const String &filename) {
+  FileRefCountMapT::iterator iter = m_file_refcounts.find(filename);
+
+  HT_EXPECT(iter != m_file_refcounts.end(), Error::FAILED_EXPECTATION);
+
+  if (--(*iter).second == 0) {
+    m_file_refcounts.erase(iter);
+    return true;
+  }
+
+  return false;
 }
