@@ -224,6 +224,7 @@ void KosmosBroker::append(ResponseCallbackAppend *cb, uint32_t fd,
   ssize_t nwritten;
   uint64_t offset;
   KfsClient *clnt = KfsClient::Instance();
+  int res;
 
   if (mVerbose) {
     HT_INFOF("append fd=%d amount=%d", fd, amount);
@@ -566,6 +567,7 @@ void KosmosBroker::exists(ResponseCallbackExists *cb, const char *fileName) {
 void
 KosmosBroker::rename(ResponseCallback *cb, const char *src, const char *dst) {
   KfsClient *client = KfsClient::Instance();
+  int error;
 
   if (mVerbose)
     HT_INFOF("rename %s -> %s", src, dst);
@@ -575,7 +577,10 @@ KosmosBroker::rename(ResponseCallback *cb, const char *src, const char *dst) {
   String absDst =
     format("%s%s%s", mRootdir.c_str(), *dst == '/' ? "" : "/", dst);
 
-  cb->response(client->Rename(src, dst));
+  if ((error = client->Rename(src, dst)) < 0)
+    ReportError(cb, error);
+  else
+    cb->response_ok();
 }
 
 

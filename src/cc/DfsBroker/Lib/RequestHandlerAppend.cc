@@ -37,7 +37,7 @@ using namespace Hypertable::DfsBroker;
 void RequestHandlerAppend::run() {
   ResponseCallbackAppend cb(m_comm, m_event_ptr);
   uint32_t fd, amount;
-  bool flush;
+  bool flush = false;
   size_t remaining = m_event_ptr->messageLen - 2;
   uint8_t *msgPtr = m_event_ptr->message + 2;
 

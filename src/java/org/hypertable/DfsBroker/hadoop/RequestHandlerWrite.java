@@ -51,7 +51,7 @@ public class RequestHandlerWrite extends ApplicationHandler {
 
 	    fd = mEvent.msg.buf.getInt();
 	    amount = mEvent.msg.buf.getInt();
-            sync = mEvent.msg.buf.getChar() != 0;
+            sync = mEvent.msg.buf.get() != 0;
 
 	    byte [] data = new byte [ amount ];
 	    mEvent.msg.buf.get(data);
