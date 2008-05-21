@@ -48,7 +48,7 @@ struct GcWorker {
   bool          m_dryrun;
 
   void
-  scan_metadata() {
+  scan_metadata(CountMap &files_map) {
     TableScannerPtr scanner;
     ScanSpec scan_spec;
 
@@ -66,12 +66,9 @@ struct GcWorker {
     Cell cell;
     string last_row;
     string last_cq;
-    CountMap files_map;
     uint64_t last_time = 0;
     bool found_valid_files = true;
-    KeySpec key;
 
-    memset(&key, 0, sizeof(key));
     HT_DEBUG("MasterGc: scanning metadata...");
 
     while (scanner->next(cell)) {
@@ -83,7 +80,7 @@ struct GcWorker {
       if (last_row != cell.row_key) {
         // new row
         if (!found_valid_files)
-          delete_row(key, last_row, mutator);
+          delete_row(last_row, mutator);
 
         last_row = cell.row_key;
         last_time = cell.timestamp;
@@ -107,30 +104,42 @@ struct GcWorker {
           HT_ERROR("Unexpected timestamp order while scanning METADATA");
           continue;
         }
-        if (*cell.value != '!')
+        if (*cell.value != '!') {
           insert_files(files_map, (char *)cell.value, cell.value_len);
+          delete_cell(cell, mutator);
+        }
       }
     }
     // for last table
     if (!found_valid_files)
-      delete_row(key, last_row, mutator);
+      delete_row(last_row, mutator);
 
     mutator->flush();
-    reap(files_map);
   }
 
   void
-  delete_row(KeySpec &key, const string &row, TableMutatorPtr &mutator) {
+  delete_row(const string &row, TableMutatorPtr &mutator) {
     if (row.empty())
       return;
 
-    key.row = row.c_str();
-    key.row_len = row.length();
+    KeySpec key(row);
 
     HT_DEBUGF("MasterGc: Deleting row %s", (char *)key.row);
 
     if (!m_dryrun)
       mutator->set_delete(0, key);
+  }
+
+  void
+  delete_cell(const Cell &cell, TableMutatorPtr &mutator) {
+    HT_DEBUG_OUT <<"MasterGc: Deleting cell: ("<< cell.row_key <<", "
+                 << cell.column_family <<", "<< cell.column_qualifier <<", "
+                 << cell.timestamp <<')'<< HT_DEBUG_END;
+
+    KeySpec key(cell.row_key, cell.column_family, cell.column_qualifier);
+
+    if (!m_dryrun)
+      mutator->set_delete(cell.timestamp, key);
   }
 
   void
@@ -218,7 +227,10 @@ struct GcWorker {
   void
   gc() {
     try {
-      scan_metadata();
+      CountMap files_map;
+      scan_metadata(files_map);
+      // TODO: scan_directories(files_map); // fsckish, slower
+      reap(files_map);
     }
     catch (Exception &e) {
       HT_ERRORF("Error: caught exception while gc'ing: %s", e.what());
