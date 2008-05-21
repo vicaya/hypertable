@@ -22,9 +22,7 @@
 #ifndef HYPERTABLE_RSCLIENT_TABLEINFO_H
 #define HYPERTABLE_RSCLIENT_TABLEINFO_H
 
-#include <string>
-
-#include <ext/hash_map>
+#include "Common/String.h"
 
 #include "Hypertable/Lib/Schema.h"
 #include "Hypertable/Lib/Types.h"
@@ -35,7 +33,7 @@ namespace Hypertable {
 
   class TableInfo {
   public:
-    TableInfo(std::string &table_name);
+    TableInfo(const String &table_name);
 
     int load(Hyperspace::SessionPtr &hyperspace_ptr);
 

@@ -22,13 +22,12 @@
 #ifndef HYPERTABLE_MASTER_H
 #define HYPERTABLE_MASTER_H
 
-#include <ext/hash_map>
-
 #include <boost/thread/mutex.hpp>
 
 #include "Common/Thread.h"
 #include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
+#include "Common/String.h"
 #include "Common/StringExt.h"
 
 #include "AsyncComm/ApplicationQueue.h"
@@ -61,18 +60,18 @@ namespace Hypertable {
     void report_split(ResponseCallback *cb, TableIdentifier &table, RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit);
     void drop_table(ResponseCallback *cb, const char *table_name, bool if_exists);
 
-    void server_joined(std::string &location);
-    void server_left(std::string &location);
+    void server_joined(const String &location);
+    void server_left(const String &location);
 
     void join();
 
   protected:
-    int create_table(const char *tableName, const char *schemaString, std::string &errMsg);
+    int create_table(const char *tableName, const char *schemaString, String &errMsg);
 
   private:
     bool initialize();
     void scan_servers_directory();
-    bool create_hyperspace_dir(std::string dir);
+    bool create_hyperspace_dir(const String &dir);
 
     boost::mutex m_mutex;
     PropertiesPtr m_props_ptr;
@@ -93,7 +92,7 @@ namespace Hypertable {
     /** temporary vairables **/
     bool m_initialized;
 
-    typedef __gnu_cxx::hash_map<std::string, RangeServerStatePtr> ServerMapT;
+    typedef hash_map<String, RangeServerStatePtr> ServerMapT;
 
     ServerMapT  m_server_map;
     ServerMapT::iterator m_server_map_iter;

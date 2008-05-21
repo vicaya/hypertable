@@ -69,7 +69,7 @@ namespace Hypertable {
 
     friend class TableMutatorDispatchHandler;
 
-    typedef __gnu_cxx::hash_map<string, TableMutatorSendBufferPtr> TableMutatorSendBufferMapT;
+    typedef hash_map<String, TableMutatorSendBufferPtr> TableMutatorSendBufferMapT;
 
     PropertiesPtr        m_props_ptr;
     Comm                *m_comm;

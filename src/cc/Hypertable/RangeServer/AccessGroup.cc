@@ -19,6 +19,7 @@
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <algorithm>
 #include <iterator>
 #include <vector>
@@ -373,10 +374,9 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
 
     /** Determine in-use files to prevent from being GC'd **/
     m_gc_locked_files.clear();
-    for (FileRefCountMapT::iterator iter = m_file_refcounts.begin(); iter != m_file_refcounts.end(); iter++) {
-      if (m_live_files.count((*iter).first) == 0)
-	m_gc_locked_files.insert((*iter).first);
-    }
+    foreach(const FileRefCountMapT::value_type &v, m_file_refcounts)
+      if (m_live_files.count(v.first) == 0)
+	m_gc_locked_files.insert(v.first);
 
     /** Re-compute disk usage and compresion ratio**/
     m_disk_usage = 0;
@@ -530,8 +530,8 @@ void AccessGroup::update_files_column() {
     for (size_t i=0; i<m_stores.size(); i++)
       files += m_stores[i]->get_filename() + ";\n";
     // get the "locked" ones (prevents gc)
-    for (std::set<String>::iterator iter = m_gc_locked_files.begin(); iter != m_gc_locked_files.end(); iter++)
-      files += String("#") + *iter + ";\n";
+    foreach(const String &f, m_gc_locked_files)
+      files += format("#%s;\n", f.c_str());
   }
 
   try {
@@ -546,7 +546,8 @@ void AccessGroup::update_files_column() {
   }
   catch (Hypertable::Exception &e) {
     // TODO: propagate exception
-    HT_ERRORF("Problem updating 'Files' column of METADATA - %s", Error::get_text(e.code()));
+    HT_ERROR_OUT <<"Problem updating 'Files' column of METADATA: "
+                 << e << HT_ERROR_END;
   }
 }
 

@@ -22,14 +22,15 @@
 #ifndef SOCKADDRMAP_H
 #define SOCKADDRMAP_H
 
-#include <ext/hash_map>
-using namespace std;
-
 extern "C" {
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 }
+
+#include "Common/HashMap.h"
+
+namespace Hypertable {
 
 class SockAddrHash {
  public:
@@ -44,7 +45,9 @@ struct SockAddrEqual {
 };
 
 template<typename _Tp, typename addr=struct sockaddr_in>
-class SockAddrMapT : public __gnu_cxx::hash_map<addr, _Tp, SockAddrHash, SockAddrEqual> {
+class SockAddrMapT : public hash_map<addr, _Tp, SockAddrHash, SockAddrEqual> {
 };
+
+} // namespace Hypertable
 
 #endif // SOCKADDRMAP_H

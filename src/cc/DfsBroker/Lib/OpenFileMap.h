@@ -19,8 +19,6 @@
  * 02110-1301, USA.
  */
 
-#include <ext/hash_map>
-
 #include <boost/intrusive_ptr.hpp>
 #include <boost/thread/mutex.hpp>
 
@@ -29,6 +27,7 @@ extern "C" {
 #include <netinet/in.h>
 }
 
+#include "Common/HashMap.h"
 #include "Common/Logger.h"
 #include "Common/ReferenceCount.h"
 
@@ -109,7 +108,7 @@ namespace Hypertable {
 
   private:
 
-    typedef __gnu_cxx::hash_map<int, OpenFileDataPtr> OpenFileMapT;
+    typedef hash_map<int, OpenFileDataPtr> OpenFileMapT;
 
     boost::mutex  m_mutex;
     OpenFileMapT  m_file_map;

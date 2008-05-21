@@ -26,7 +26,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/xtime.hpp>
 
-#include <ext/hash_map>
+#include "Common/HashMap.h"
 
 #include "DispatchHandler.h"
 
@@ -44,7 +44,7 @@ namespace Hypertable {
       DispatchHandler   *dh;
     } CacheNodeT;
 
-    typedef __gnu_cxx::hash_map<uint32_t, CacheNodeT *> IdHandlerMapT;
+    typedef hash_map<uint32_t, CacheNodeT *> IdHandlerMapT;
 
   public:
 

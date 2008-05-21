@@ -26,5 +26,6 @@
 
 // The same stuff for C code
 #include "compat-c.h"
+#include "Sweetener.h"
 
 #endif // HYPERTABLE_COMPAT_H

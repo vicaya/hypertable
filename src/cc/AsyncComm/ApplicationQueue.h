@@ -24,12 +24,12 @@
 
 #include <cassert>
 #include <list>
-#include <ext/hash_map>
 
 #include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 
+#include "Common/HashMap.h"
 #include "Common/ReferenceCount.h"
 #include "Common/StringExt.h"
 
@@ -51,7 +51,7 @@ namespace Hypertable {
       int      outstanding;
     };
 
-    typedef __gnu_cxx::hash_map<uint64_t, UsageRec *> UsageRecMapT;
+    typedef hash_map<uint64_t, UsageRec *> UsageRecMapT;
 
     class WorkRec {
     public:

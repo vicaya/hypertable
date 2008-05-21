@@ -110,12 +110,12 @@ namespace Hypertable {
     void set_compressor(std::string compressor) { m_compressor = compressor; }
     std::string &get_compressor() { return m_compressor; }
 
-    typedef __gnu_cxx::hash_map<string, ColumnFamily *> ColumnFamilyMapT;
-    typedef __gnu_cxx::hash_map<string, AccessGroup *> AccessGroupMapT;
+    typedef hash_map<string, ColumnFamily *> ColumnFamilyMapT;
+    typedef hash_map<string, AccessGroup *> AccessGroupMapT;
 
   private:
 
-    typedef __gnu_cxx::hash_map<uint32_t, ColumnFamily *> ColumnFamilyIdMapT;
+    typedef hash_map<uint32_t, ColumnFamily *> ColumnFamilyIdMapT;
 
     std::string m_error_string;
     int    m_next_column_id;

@@ -501,7 +501,7 @@ namespace {
   };
 
 
-  typedef __gnu_cxx::hash_map<std::string, const char **>  HelpTextMapT;
+  typedef hash_map<std::string, const char **>  HelpTextMapT;
 
   HelpTextMapT &buildHelpTextMap() {
     HelpTextMapT *map = new HelpTextMapT();

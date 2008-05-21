@@ -22,7 +22,6 @@
 #ifndef HYPERTABLE_BYTESTRING_H
 #define HYPERTABLE_BYTESTRING_H
 
-#include <ext/hash_map>
 #include <iostream>
 
 #include <boost/shared_array.hpp>

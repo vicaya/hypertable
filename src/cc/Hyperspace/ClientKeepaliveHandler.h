@@ -23,7 +23,6 @@
 #define HYPERSPACE_CLIENTKEEPALIVEHANDLER_H
 
 #include <cassert>
-#include <ext/hash_map>
 
 #include <boost/thread/mutex.hpp>
 
@@ -90,7 +89,7 @@ namespace Hyperspace {
     ClientConnectionHandlerPtr m_conn_handler_ptr;
     uint64_t m_last_known_event;
 
-    typedef __gnu_cxx::hash_map<uint64_t, ClientHandleStatePtr> HandleMapT;
+    typedef hash_map<uint64_t, ClientHandleStatePtr> HandleMapT;
     HandleMapT  m_handle_map;
   };
   typedef boost::intrusive_ptr<ClientKeepaliveHandler> ClientKeepaliveHandlerPtr;

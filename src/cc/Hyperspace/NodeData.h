@@ -25,10 +25,10 @@
 #include <iostream>
 #include <list>
 
-#include <string>
-
 #include <boost/thread/mutex.hpp>
 
+#include "Common/String.h"
+#include "Common/HashMap.h"
 #include "Common/ReferenceCount.h"
 
 #include "HandleData.h"
@@ -72,10 +72,10 @@ namespace Hyperspace {
     }
 
     boost::mutex mutex;
-    std::string name;
+    String      name;
     int         fd;
     bool        ephemeral;
-    typedef __gnu_cxx::hash_map<uint64_t, HandleDataPtr> HandleMapT;
+    typedef hash_map<uint64_t, HandleDataPtr> HandleMapT;
     HandleMapT handleMap;
     uint32_t currentLockMode;
     uint64_t lockGeneration;

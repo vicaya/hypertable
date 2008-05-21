@@ -19,8 +19,9 @@
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
+
 #include <algorithm>
-#include <string>
 
 extern "C" {
 #include <arpa/inet.h>
@@ -128,14 +129,14 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &props_ptr, A
 
     // Write master location in 'address' attribute, format is IP:port
     {
-      std::string hostStr, addrStr;
+      String hostStr, addrStr;
       struct hostent *he;
       InetAddr::get_hostname(hostStr);
       if ((he = gethostbyname(hostStr.c_str())) == 0) {
 	HT_ERRORF("Problem obtaining address for hostname '%s'", hostStr.c_str());
 	exit(1);
       }
-      addrStr = std::string(inet_ntoa(*(struct in_addr *)*he->h_addr_list)) + ":" + (int)port;
+      addrStr = String(inet_ntoa(*(struct in_addr *)*he->h_addr_list)) + ":" + (int)port;
       if ((error = m_hyperspace_ptr->attr_set(m_master_file_handle, "address", addrStr.c_str(), strlen(addrStr.c_str()))) != Error::OK) {
 	HT_ERRORF("Problem setting attribute 'address' of hyperspace file /hypertable/master - %s", Error::get_text(error));
 	exit(1);
@@ -185,7 +186,7 @@ Master::~Master() {
 /**
  *
  */
-void Master::server_joined(std::string &location) {
+void Master::server_joined(const String &location) {
   HT_INFOF("Server Joined (%s)", location.c_str());
   cout << flush;
 }
@@ -195,13 +196,13 @@ void Master::server_joined(std::string &location) {
 /**
  * 
  */
-void Master::server_left(std::string &location) {
+void Master::server_left(const String &location) {
   boost::mutex::scoped_lock lock(m_mutex);
   int error;
   uint32_t lockStatus;
   struct LockSequencerT lockSequencer;
   ServerMapT::iterator iter = m_server_map.find(location);
-  std::string hsFilename = (std::string)"/hypertable/servers/" + location;
+  String hsFilename = (String)"/hypertable/servers/" + location;
 
   if (iter == m_server_map.end()) {
     HT_WARNF("Server (%s) not found in map", location.c_str());
@@ -241,8 +242,8 @@ void Master::server_left(std::string &location) {
  */
 void Master::create_table(ResponseCallback *cb, const char *tableName, const char *schemaString) {
   int error;
-  std::string errMsg;
-  std::string table_name_str = tableName;
+  String errMsg;
+  String table_name_str = tableName;
 
 #if defined(__APPLE__)
   boost::to_upper(table_name_str);
@@ -260,8 +261,8 @@ void Master::create_table(ResponseCallback *cb, const char *tableName, const cha
  */
 void Master::get_schema(ResponseCallbackGetSchema *cb, const char *tableName) {
   int error = Error::OK;
-  std::string tableFile = (std::string)"/hypertable/tables/" + tableName;
-  std::string errMsg;
+  String tableFile = (String)"/hypertable/tables/" + tableName;
+  String errMsg;
   DynamicBuffer schemaBuf(0);
   uint64_t handle;
   bool exists;
@@ -271,7 +272,7 @@ void Master::get_schema(ResponseCallbackGetSchema *cb, const char *tableName) {
    * Check for table existence
    */
   if ((error = m_hyperspace_ptr->exists(tableFile, &exists)) != Error::OK) {
-    errMsg = (std::string)"Problem checking for existence of table '" + tableName + "' - " + Error::get_text(error);
+    errMsg = (String)"Problem checking for existence of table '" + tableName + "' - " + Error::get_text(error);
     goto abort;
   }
 
@@ -324,7 +325,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
   HandleCallbackPtr lockFileHandler;
   uint32_t lockStatus;
   struct LockSequencerT lockSequencer;
-  std::string hsFilename;
+  String hsFilename;
 
   HT_EXPECT((iter = m_server_map.find(location)) == m_server_map.end(), Error::FAILED_EXPECTATION);
 
@@ -334,7 +335,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 
   if (!LocationCache::location_to_addr(location, alias)) {
     HT_ERRORF("Problem creating address from location '%s'", location);
-    cb->error(Error::INVALID_METADATA, (std::string)"Unable to convert location '" + location + "' to address");
+    cb->error(Error::INVALID_METADATA, (String)"Unable to convert location '" + location + "' to address");
     return;
   }
   else {
@@ -342,20 +343,20 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
     comm->set_alias(addr, alias);
   }
 
-  hsFilename = (std::string)"/hypertable/servers/" + location;
+  hsFilename = (String)"/hypertable/servers/" + location;
 
   lockFileHandler = new ServerLockFileHandler(statePtr, this, m_app_queue_ptr);
 
   if ((error = m_hyperspace_ptr->open(hsFilename, oflags, lockFileHandler, &statePtr->hyperspaceHandle)) != Error::OK) {
     HT_ERRORF("Problem opening discovered server file %s - %s", hsFilename.c_str(), Error::get_text(error));
-    cb->error(error, (std::string)"Problem opening discovered server file '" + hsFilename + "'");
+    cb->error(error, (String)"Problem opening discovered server file '" + hsFilename + "'");
     return;
   }
 
   if ((error = m_hyperspace_ptr->try_lock(statePtr->hyperspaceHandle, LOCK_MODE_EXCLUSIVE, &lockStatus, &lockSequencer)) != Error::OK) {
     HT_ERRORF("Problem attempting to obtain exclusive lock on server Hyperspace file '%s' - %s",
 		 hsFilename.c_str(), Error::get_text(error));
-    cb->error(error, (std::string)"Problem attempting to obtain exclusive lock on server Hyperspace file '" + hsFilename + "'");
+    cb->error(error, (String)"Problem attempting to obtain exclusive lock on server Hyperspace file '" + hsFilename + "'");
     return;
   }
 
@@ -370,7 +371,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
     m_server_map[statePtr->location] = statePtr;  
 
   {
-    std::string addrStr;
+    String addrStr;
     HT_INFOF("Server Registered %s -> %s", location, InetAddr::string_format(addrStr, addr));
     cout << flush;
   }
@@ -390,8 +391,8 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
      * Create METADATA table
      */
     {
-      std::string errMsg;
-      std::string metadataSchemaFile = System::installDir + "/conf/METADATA.xml";
+      String errMsg;
+      String metadataSchemaFile = System::installDir + "/conf/METADATA.xml";
       off_t schemaLen;
       const char *schemaStr = FileUtils::file_to_buffer(metadataSchemaFile.c_str(), &schemaLen);
 
@@ -421,7 +422,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
       rsc.load_range(alias, table, range, 0, range_state, 0);
     }
     catch (Exception &e) {
-      std::string addrStr;
+      String addrStr;
       HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server %s - %s",
 		table.name, range.end_row, InetAddr::string_format(addrStr, alias), Error::get_text(e.code()));
     }
@@ -433,11 +434,11 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 
     TableMutatorPtr mutator_ptr;
     KeySpec key;
-    std::string metadata_key_str;
+    String metadata_key_str;
 
     mutator_ptr = m_metadata_table_ptr->create_mutator();
 
-    metadata_key_str = std::string("0:") + Key::END_ROW_MARKER;
+    metadata_key_str = String("0:") + Key::END_ROW_MARKER;
     key.row = metadata_key_str.c_str();
     key.row_len = metadata_key_str.length();
     key.column_qualifier = 0;
@@ -466,7 +467,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
       rsc.load_range(alias, table, range, 0, range_state, 0);
     }
     catch (Exception &e) {
-      std::string addrStr;
+      String addrStr;
       HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server %s - %s",
 		table.name, range.end_row, InetAddr::string_format(addrStr, alias), Error::get_text(e.code()));
     }
@@ -509,7 +510,7 @@ void Master::report_split(ResponseCallback *cb, TableIdentifier &table, RangeSpe
     HT_INFOF("report_split for %s[%s:%s] successful.", table.name, range.start_row, range.end_row);
   }
   catch (Exception &e) {
-    std::string addrStr;
+    String addrStr;
     HT_ERRORF("Problem issuing 'load range' command for %s[%s:%s] at server %s - %s",
 	      table.name, range.start_row, range.end_row, InetAddr::string_format(addrStr, addr), Error::get_text(e.code()));
   }
@@ -519,13 +520,13 @@ void Master::report_split(ResponseCallback *cb, TableIdentifier &table, RangeSpe
 void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_exists) {
   int error = Error::OK;
   int saved_error = Error::OK;
-  std::string err_msg;
-  std::string table_file = (std::string)"/hypertable/tables/" + table_name;
+  String err_msg;
+  String table_file = (String)"/hypertable/tables/" + table_name;
   DynamicBuffer value_buf(0);
   int ival;
   HandleCallbackPtr nullHandleCallback;
   uint64_t handle;
-  std::string table_name_str = table_name;
+  String table_name_str = table_name;
 
 #if defined(__APPLE__)
   boost::to_upper(table_name_str);
@@ -538,7 +539,7 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
     if (if_exists && error == Error::HYPERSPACE_BAD_PATHNAME)
       cb->response_ok();
     else
-      cb->error(error, (std::string)"Problem opening file '" + table_file + "'");
+      cb->error(error, (String)"Problem opening file '" + table_file + "'");
     return;
   }
 
@@ -547,7 +548,7 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
    */
   if ((error = m_hyperspace_ptr->attr_get(handle, "table_id", value_buf)) != Error::OK) {
     HT_ERRORF("Problem getting attribute 'table_id' from file '%s' - %s", table_file.c_str(), Error::get_text(error));
-    cb->error(error, (std::string)"Problem reading attribute 'table_id' from file '" + table_file + "'");
+    cb->error(error, (String)"Problem reading attribute 'table_id' from file '" + table_file + "'");
     return;
   }
 
@@ -568,8 +569,8 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
     TableScannerPtr scanner_ptr;
     ScanSpec scan_spec;
     Cell cell;
-    std::string location_str;
-    std::set<std::string> unique_locations;
+    String location_str;
+    std::set<String> unique_locations;
     TableIdentifier table;
 
     table.name = table_name_str.c_str();
@@ -594,7 +595,7 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
     scanner_ptr = m_metadata_table_ptr->create_scanner(scan_spec);
 
     while (scanner_ptr->next(cell)) {
-      location_str = std::string((const char *)cell.value, cell.value_len);
+      location_str = String((const char *)cell.value, cell.value_len);
       boost::trim(location_str);
       if (location_str != "" && location_str != "!")
 	unique_locations.insert(location_str);
@@ -606,7 +607,7 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
       RangeServerStatePtr state_ptr;
       ServerMapT::iterator iter;
 
-      for (std::set<std::string>::iterator loc_iter = unique_locations.begin(); loc_iter != unique_locations.end(); loc_iter++) {
+      for (std::set<String>::iterator loc_iter = unique_locations.begin(); loc_iter != unique_locations.end(); loc_iter++) {
         if ((iter = m_server_map.find(*loc_iter)) != m_server_map.end()) {
           sync_handler.add( (*iter).second->addr );
         }
@@ -636,7 +637,7 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
   }
   else if ((error = m_hyperspace_ptr->unlink(table_file.c_str())) != Error::OK) {
     HT_ERRORF("Problem removing hyperspace file - %s", Error::get_text(error));
-    cb->error(error, (std::string)"Problem removing file '" + table_file + "'");
+    cb->error(error, (String)"Problem removing file '" + table_file + "'");
     return;
   }
 
@@ -646,10 +647,10 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
 }
 
 
-int Master::create_table(const char *tableName, const char *schemaString, std::string &errMsg) {
+int Master::create_table(const char *tableName, const char *schemaString, String &errMsg) {
   int error = Error::OK;
-  std::string finalSchema = "";
-  std::string tableFile = (std::string)"/hypertable/tables/" + tableName;
+  String finalSchema = "";
+  String tableFile = (String)"/hypertable/tables/" + tableName;
   string tableBaseDir;
   string lgDir;
   Schema *schema = 0;
@@ -665,7 +666,7 @@ int Master::create_table(const char *tableName, const char *schemaString, std::s
    * Check for table existence
    */
   if ((error = m_hyperspace_ptr->exists(tableFile, &exists)) != Error::OK) {
-    errMsg = (std::string)"Problem checking for existence of table file '" + tableFile + "'";
+    errMsg = (String)"Problem checking for existence of table file '" + tableFile + "'";
     goto abort;
   }
   if (exists) {
@@ -703,13 +704,13 @@ int Master::create_table(const char *tableName, const char *schemaString, std::s
     else {
       table_id = (uint32_t)atomic_inc_return(&m_last_table_id);
       if ((error = m_hyperspace_ptr->attr_set(m_master_file_handle, "last_table_id", &table_id, sizeof(int32_t))) != Error::OK) {
-        errMsg = (std::string)"Problem setting attribute 'last_table_id' of file /hypertable/master - " + Error::get_text(error);
+        errMsg = (String)"Problem setting attribute 'last_table_id' of file /hypertable/master - " + Error::get_text(error);
         goto abort;
       }
     }
 
     if ((error = m_hyperspace_ptr->attr_set(handle, "table_id", &table_id, sizeof(int32_t))) != Error::OK) {
-      errMsg = (std::string)"Problem setting attribute 'table_id' of file " + tableFile + " - " + Error::get_text(error);
+      errMsg = (String)"Problem setting attribute 'table_id' of file " + tableFile + " - " + Error::get_text(error);
       goto abort;
     }
   }
@@ -719,7 +720,7 @@ int Master::create_table(const char *tableName, const char *schemaString, std::s
    * Write schema attribute
    */
   if ((error = m_hyperspace_ptr->attr_set(handle, "schema", finalSchema.c_str(), strlen(finalSchema.c_str()))) != Error::OK) {
-    errMsg = (std::string)"Problem creating attribute 'schema' for table file '" + tableFile + "'";
+    errMsg = (String)"Problem creating attribute 'schema' for table file '" + tableFile + "'";
     goto abort;
   }
 
@@ -743,12 +744,12 @@ int Master::create_table(const char *tableName, const char *schemaString, std::s
   if (table_id != 0) {
     TableMutatorPtr mutator_ptr;
     KeySpec key;
-    std::string metadata_key_str;
+    String metadata_key_str;
     struct sockaddr_in addr;
 
     mutator_ptr = m_metadata_table_ptr->create_mutator();
 
-    metadata_key_str = std::string("") + table_id + ":" + Key::END_ROW_MARKER;
+    metadata_key_str = String("") + table_id + ":" + Key::END_ROW_MARKER;
     key.row = metadata_key_str.c_str();
     key.row_len = metadata_key_str.length();
     key.column_qualifier = 0;
@@ -798,7 +799,7 @@ int Master::create_table(const char *tableName, const char *schemaString, std::s
       rsc.load_range(addr, table, range, 0, range_state, 0);
     }
     catch (Exception &e) {
-      std::string addrStr;
+      String addrStr;
       HT_ERRORF("Problem issuing 'load range' command for %s[..%s] at server %s - %s",
 		table.name, range.end_row, InetAddr::string_format(addrStr, addr), Error::get_text(e.code()));
     }
@@ -891,7 +892,7 @@ void Master::scan_servers_directory() {
   struct LockSequencerT lockSequencer;
   RangeServerStatePtr statePtr;
   uint32_t oflags;
-  std::string hsFilename;
+  String hsFilename;
 
   /**
    * Open /hyperspace/servers directory and scan for range servers
@@ -916,7 +917,7 @@ void Master::scan_servers_directory() {
     statePtr = new RangeServerState();
     statePtr->location = listing[i].name;
 
-    hsFilename = (std::string)"/hypertable/servers/" + listing[i].name;
+    hsFilename = (String)"/hypertable/servers/" + listing[i].name;
 
     lockFileHandler = new ServerLockFileHandler(statePtr, this, m_app_queue_ptr);
 
@@ -948,7 +949,7 @@ void Master::scan_servers_directory() {
 /**
  *
  */
-bool Master::create_hyperspace_dir(std::string dir) {
+bool Master::create_hyperspace_dir(const String &dir) {
   int error;
   bool exists;
 

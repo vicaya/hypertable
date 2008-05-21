@@ -22,7 +22,7 @@
 #ifndef HYPERTABLE_RANGESERVERCOMMANDINTERPRETER_H
 #define HYPERTABLE_RANGESERVERCOMMANDINTERPRETER_H
 
-#include <string>
+#include "Common/String.h"
 
 #include "AsyncComm/Comm.h"
 
@@ -51,7 +51,7 @@ namespace Hypertable {
     Hyperspace::SessionPtr m_hyperspace_ptr;
     struct sockaddr_in m_addr;
     RangeServerClientPtr m_range_server_ptr;
-    typedef __gnu_cxx::hash_map<std::string, TableInfo *> MapT;
+    typedef hash_map<String, TableInfo *> MapT;
     MapT m_table_map;
     int32_t m_cur_scanner_id;
 

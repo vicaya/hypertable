@@ -29,14 +29,14 @@
 
 namespace Hypertable {
 
-  TableInfo::TableInfo(std::string &table_name) {
+  TableInfo::TableInfo(const String &table_name) {
     memset(&m_table, 0, sizeof(TableIdentifier));
     m_table.name = new char [ strlen(table_name.c_str()) + 1 ];
     strcpy((char *)m_table.name, table_name.c_str());
   }
 
   int TableInfo::load(Hyperspace::SessionPtr &hyperspace_ptr) {
-    std::string table_file = (std::string)"/hypertable/tables/" + m_table.name;
+    String table_file = (String)"/hypertable/tables/" + m_table.name;
     DynamicBuffer valueBuf(0);
     int error;
     HandleCallbackPtr nullHandleCallback;

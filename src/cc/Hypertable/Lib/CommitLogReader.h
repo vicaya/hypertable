@@ -29,6 +29,7 @@
 
 #include "Common/ReferenceCount.h"
 #include "Common/String.h"
+#include "Common/HashMap.h"
 
 #include "BlockCompressionCodec.h"
 #include "BlockCompressionHeaderCommitLog.h"
@@ -64,7 +65,7 @@ namespace Hypertable {
     size_t            m_cur_log_offset;
     DynamicBuffer     m_block_buffer;
 
-    typedef __gnu_cxx::hash_map<uint16_t, BlockCompressionCodecPtr> CompressorMap;
+    typedef hash_map<uint16_t, BlockCompressionCodecPtr> CompressorMap;
 
     CompressorMap          m_compressor_map;
     uint16_t               m_compressor_type;

@@ -54,7 +54,7 @@ namespace Hypertable {
     void atomic_merge(TableInfoMapPtr &table_info_map_ptr, CommitLogBase *replay_log);
 
   private:
-    typedef __gnu_cxx::hash_map<uint32_t, TableInfoPtr> TableInfoMapT;
+    typedef hash_map<uint32_t, TableInfoPtr> TableInfoMapT;
 
     boost::mutex  m_mutex;
     TableInfoMapT m_map;

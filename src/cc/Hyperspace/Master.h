@@ -24,7 +24,6 @@
 
 #include <queue>
 #include <vector>
-#include <ext/hash_map>
 
 #include <boost/thread/mutex.hpp>
 
@@ -161,9 +160,9 @@ namespace Hyperspace {
       m_node_map[name] = nodePtr;
     }
 
-    typedef __gnu_cxx::hash_map<std::string, NodeDataPtr> NodeMapT;
-    typedef __gnu_cxx::hash_map<uint64_t, HandleDataPtr>  HandleMapT;
-    typedef __gnu_cxx::hash_map<uint64_t, SessionDataPtr> SessionMapT;
+    typedef hash_map<std::string, NodeDataPtr> NodeMapT;
+    typedef hash_map<uint64_t, HandleDataPtr>  HandleMapT;
+    typedef hash_map<uint64_t, SessionDataPtr> SessionMapT;
 
     bool          m_verbose;
     uint32_t      m_lease_interval;

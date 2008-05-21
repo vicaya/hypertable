@@ -24,13 +24,12 @@
 
 #include <boost/thread/mutex.hpp>
 
-#include <ext/hash_map>
-
 extern "C" {
 #include <time.h>
 }
 
 #include "Common/atomic.h"
+#include "Common/HashMap.h"
 
 #include "CellListScanner.h"
 #include "Range.h"
@@ -58,7 +57,7 @@ namespace Hypertable {
       RangePtr rangePtr;
       time_t last_access;
     } ScanInfoT;
-    typedef __gnu_cxx::hash_map<uint32_t, ScanInfoT> CellListScannerMapT;
+    typedef hash_map<uint32_t, ScanInfoT> CellListScannerMapT;
 
     CellListScannerMapT m_scanner_map;
 

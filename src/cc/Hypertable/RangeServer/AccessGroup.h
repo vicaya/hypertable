@@ -24,15 +24,13 @@
 
 #include <queue>
 #include <set>
-#include <string>
 #include <vector>
-
-#include <ext/hash_map>
 
 #include <boost/thread/condition.hpp>
 
 #include "Common/String.h"
 #include "Common/StringExt.h"
+#include "Common/HashMap.h"
 
 #include "Hypertable/Lib/Schema.h"
 #include "Hypertable/Lib/Types.h"
@@ -112,7 +110,7 @@ namespace Hypertable {
 
   private:
 
-    typedef __gnu_cxx::hash_map<String, uint32_t> FileRefCountMapT;
+    typedef hash_map<String, uint32_t> FileRefCountMapT;
     void increment_file_refcount(const String &filename);
     bool decrement_file_refcount(const String &filename);
 

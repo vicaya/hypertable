@@ -22,8 +22,6 @@
 #ifndef HYPERTABLE_PROPERTIES_H
 #define HYPERTABLE_PROPERTIES_H
 
-#include <ext/hash_map>
-
 #include <boost/intrusive_ptr.hpp>
 
 #include "ReferenceCount.h"
@@ -62,7 +60,7 @@ namespace Hypertable {
 
   private:
 
-    typedef __gnu_cxx::hash_map<std::string, std::string> PropertyMapT;
+    typedef hash_map<std::string, std::string> PropertyMapT;
 
     PropertyMapT  m_map;
   };

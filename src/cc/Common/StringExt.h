@@ -22,11 +22,12 @@
 #define HYPERTABLE_STRINGEXT_H
 
 #include <cstdio>
-#include <ext/hash_map>
 #include <stdexcept>
 #include <string>
 
-namespace __gnu_cxx {
+#include "HashMap.h"
+
+namespace BOOST_STD_EXTENSION_NAMESPACE {
   template<> struct hash< std::string >  {
     size_t operator()( const std::string& x ) const {
       return hash< const char* >()( x.c_str() );

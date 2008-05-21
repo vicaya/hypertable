@@ -24,9 +24,8 @@
 
 #include <boost/thread/mutex.hpp>
 
-#include <ext/hash_map>
-
 #include "Common/atomic.h"
+#include "Common/HashMap.h"
 
 namespace Hypertable {
 
@@ -76,7 +75,7 @@ namespace Hypertable {
       }
     };
 
-    typedef __gnu_cxx::hash_map<CacheKeyT, CacheValueT *, hashCacheKey, eqCacheKey> BlockMapT;
+    typedef hash_map<CacheKeyT, CacheValueT *, hashCacheKey, eqCacheKey> BlockMapT;
 
     boost::mutex  m_mutex;
     BlockMapT     m_block_map;

@@ -22,16 +22,15 @@
 #ifndef HYPERSPACE_GLOBAL_H
 #define HYPERSPACE_GLOBAL_H
 
-#include <string>
-
+#include "Common/String.h"
 #include "Common/StringExt.h"
 
 namespace Hyperspace {
 
 namespace Global {
   extern int exitStatus;
-  extern std::string cwd;
-  typedef __gnu_cxx::hash_map<std::string, uint64_t> FileMapT;
+  extern Hypertable::String cwd;
+  typedef Hypertable::hash_map<Hypertable::String, uint64_t> FileMapT;
   extern FileMapT fileMap;
 }
 
