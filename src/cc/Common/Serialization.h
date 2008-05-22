@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
@@ -93,48 +93,48 @@ namespace Hypertable { namespace Serialization {
      * Encodes a boolean into the given buffer.  Assumes there is
      * enough space available.  Increments buffer pointer.
      *
-     * @param bufPtr address of destination buffer
+     * @param bufp address of destination buffer
      * @param bval the boolean value
      */
-    inline void encode_bool(uint8_t **bufPtr, bool bval) {
-      *(*bufPtr) = (bval) ? 1 : 0;
-      (*bufPtr)++;
+    inline void encode_bool(uint8_t **bufp, bool bval) {
+      *(*bufp) = (bval) ? 1 : 0;
+      (*bufp)++;
     }
 
 
     /**
      * Decodes a boolean value from the given buffer.  Increments buffer pointer
-     * and decrements remainingPtr on success.
+     * and decrements remainingp on success.
      *
-     * @param bufPtr address of source buffer
-     * @param remainingPtr address of variable containing number of bytes remaining in buffer
+     * @param bufp address of source buffer
+     * @param remainingp address of variable containing number of bytes remaining in buffer
      * @param bytePtr address of variable to hold decoded byte
      * @return true on success, false if buffer has insufficient room
      */
-    inline bool decode_bool(uint8_t **bufPtr, size_t *remainingPtr, bool *boolp) {
-      if (*remainingPtr == 0)
+    inline bool decode_bool(uint8_t **bufp, size_t *remainingp, bool *boolp) {
+      if (*remainingp == 0)
 	return false;
-      *boolp = (*(*bufPtr) == 0) ? false : true;
-      (*bufPtr)++;
-      (*remainingPtr)--;
+      *boolp = (*(*bufp) == 0) ? false : true;
+      (*bufp)++;
+      (*remainingp)--;
       return true;
     }
 
 
     /**
      * Decodes a single byte from the given buffer.  Increments buffer pointer
-     * and decrements remainingPtr on success.
+     * and decrements remainingp on success.
      *
-     * @param bufPtr address of source buffer
-     * @param remainingPtr address of variable containing number of bytes remaining in buffer
+     * @param bufp address of source buffer
+     * @param remainingp address of variable containing number of bytes remaining in buffer
      * @param bytePtr address of variable to hold decoded byte
      * @return true on success, false if buffer has insufficient room
      */
-    inline bool decode_byte(uint8_t **bufPtr, size_t *remainingPtr, uint8_t *bytePtr) {
-      if (*remainingPtr == 0)
+    inline bool decode_byte(uint8_t **bufp, size_t *remainingp, uint8_t *bytePtr) {
+      if (*remainingp == 0)
 	return false;
-      *bytePtr = *(*bufPtr)++;
-      (*remainingPtr)--;
+      *bytePtr = *(*bufp)++;
+      (*remainingp)--;
       return true;
     }
 
@@ -143,30 +143,40 @@ namespace Hypertable { namespace Serialization {
      * Encodes a short (2 byte integer) into the given buffer.  Assumes there is
      * enough space available.  Increments buffer pointer.
      *
-     * @param bufPtr address of destinatin buffer
+     * @param bufp address of destinatin buffer
      * @param sval the short value to encode
      */
-    inline void encode_short(uint8_t **bufPtr, uint16_t sval) {
-      memcpy(*bufPtr, &sval, 2);
-      (*bufPtr) += 2;
+    inline void encode_short(uint8_t **bufp, uint16_t sval) {
+#ifdef BOOST_LITTLE_ENDIAN
+      memcpy(*bufp, &sval, 2);
+      *bufp += 2;
+#else
+      *(*bufp)++ = (uint8_t)sval;
+      *(*bufp)++ = (uint8_t)(sval >> 8);
+#endif
     }
 
 
     /**
      * Decodes a short (2 byte integer) from the given buffer.  Increments
-     * buffer pointer and decrements remainingPtr on success.
+     * buffer pointer and decrements remainingp on success.
      *
-     * @param bufPtr address of buffer containing encoded short
-     * @param remainingPtr address of variable containing number of bytes remaining in buffer
-     * @param shortPtr address of variable to hold decoded short
+     * @param bufp address of buffer containing encoded short
+     * @param remainingp address of variable containing number of bytes remaining in buffer
+     * @param svalp address of variable to hold decoded short
      * @return true on success, false if buffer has insufficient room
      */
-    inline bool decode_short(uint8_t **bufPtr, size_t *remainingPtr, uint16_t *shortPtr) {
-      if (*remainingPtr < 2)
+    inline bool decode_short(uint8_t **bufp, size_t *remainingp, uint16_t *svalp) {
+      if (*remainingp < 2)
 	return false;
-      memcpy(shortPtr, *bufPtr, 2);
-      (*remainingPtr) -= 2;
-      (*bufPtr) += 2;
+#ifdef BOOST_LITTLE_ENDIAN
+      memcpy(svalp, *bufp, 2);
+      *bufp += 2;
+#else
+      *svalp = *(*bufp)++;
+      *svalp |= (*(*bufp)++ << 8);
+#endif
+      *remainingp -= 2;
       return true;
     }
 
@@ -175,30 +185,45 @@ namespace Hypertable { namespace Serialization {
      * Encodes an int (4 byte integer) into the given buffer.  Assumes there is
      * enough space available.  Increments buffer pointer.
      *
-     * @param bufPtr address of destinatin buffer
+     * @param bufp address of destinatin buffer
      * @param ival the int value to encode
      */
-    inline void encode_int(uint8_t **bufPtr, uint32_t ival) {
-      memcpy(*bufPtr, &ival, 4);
-      *bufPtr += 4;
+    inline void encode_int(uint8_t **bufp, uint32_t ival) {
+#ifdef BOOST_LITTLE_ENDIAN
+      memcpy(*bufp, &ival, 4);
+      *bufp += 4;
+#else
+      *(*bufp)++ = (uint8_t)ival;
+      *(*bufp)++ = (uint8_t)(ival >> 8);
+      *(*bufp)++ = (uint8_t)(ival >> 16);
+      *(*bufp)++ = (uint8_t)(ival >> 24);
+#endif
     }
 
 
     /**
      * Decodes an int (4 byte integer) from the given buffer.  Increments
-     * buffer pointer and decrements remainingPtr on success.
+     * buffer pointer and decrements remainingp on success.
      *
-     * @param bufPtr address of buffer containing encoded int
-     * @param remainingPtr address of variable containing number of bytes remaining in buffer
-     * @param intPtr address of variable to hold decoded int
+     * @param bufp address of buffer containing encoded int
+     * @param remainingp address of variable containing number of bytes remaining in buffer
+     * @param ivalp address of variable to hold decoded int
      * @return true on success, false if buffer has insufficient room
      */
-    inline bool decode_int(uint8_t **bufPtr, size_t *remainingPtr, uint32_t *intPtr) {
-      if (*remainingPtr < 4)
+    inline bool decode_int(uint8_t **bufp, size_t *remainingp, uint32_t *ivalp) {
+      if (*remainingp < 4)
 	return false;
-      memcpy(intPtr, *bufPtr, 4);
-      (*remainingPtr) -= 4;
-      (*bufPtr) += 4;
+
+#ifdef BOOST_LITTLE_ENDIAN
+      memcpy(ivalp, *bufp, 4);
+      *bufp += 4;
+#else
+      *ivalp = *(*bufp)++;
+      *ivalp |= (*(*bufp)++ << 8);
+      *ivalp |= (*(*bufp)++ << 16);
+      *ivalp |= (*(*bufp)++ << 24);
+#endif
+      *remainingp -= 4;
       return true;
     }
 
@@ -207,30 +232,54 @@ namespace Hypertable { namespace Serialization {
      * Encodes a long (8 byte integer) into the given buffer.  Assumes there is
      * enough space available.  Increments buffer pointer.
      *
-     * @param bufPtr address of destinatin buffer
+     * @param bufp address of destinatin buffer
      * @param lval the long value to encode
      */
-    inline void encode_long(uint8_t **bufPtr, uint64_t lval) {
-      memcpy(*bufPtr, &lval, 8);
-      *bufPtr += 8;
+    inline void encode_long(uint8_t **bufp, uint64_t lval) {
+#ifdef BOOST_LITTLE_ENDIAN
+      memcpy(*bufp, &lval, 8);
+      *bufp += 8;
+#else
+      *(*bufp)++ = (uint8_t)lval;
+      *(*bufp)++ = (uint8_t)(lval >> 8);
+      *(*bufp)++ = (uint8_t)(lval >> 16);
+      *(*bufp)++ = (uint8_t)(lval >> 24);
+      *(*bufp)++ = (uint8_t)(lval >> 32);
+      *(*bufp)++ = (uint8_t)(lval >> 40);
+      *(*bufp)++ = (uint8_t)(lval >> 48);
+      *(*bufp)++ = (uint8_t)(lval >> 56);
+#endif
     }
 
 
     /**
      * Decodes an int (4 byte integer) from the given buffer.  Increments
-     * buffer pointer and decrements remainingPtr on success.
+     * buffer pointer and decrements remainingp on success.
      *
-     * @param bufPtr address of buffer containing encoded long
-     * @param remainingPtr address of variable containing number of bytes remaining in buffer
-     * @param longPtr address of variable to hold decoded long
+     * @param bufp address of buffer containing encoded long
+     * @param remainingp address of variable containing number of bytes remaining in buffer
+     * @param lvalp address of variable to hold decoded long
      * @return true on success, false if buffer has insufficient room
      */
-    inline bool decode_long(uint8_t **bufPtr, size_t *remainingPtr, uint64_t *longPtr) {
-      if (*remainingPtr < 8)
+    inline bool decode_long(uint8_t **bufp, size_t *remainingp, uint64_t *lvalp) {
+      if (*remainingp < 8)
 	return false;
-      memcpy(longPtr, *bufPtr, 8);
-      (*remainingPtr) -= 8;
-      (*bufPtr) += 8;
+
+#ifdef BOOST_LITTLE_ENDIAN
+      memcpy(lvalp, *bufp, 8);
+      *bufp += 8;
+#else
+      *lvalp = *(*bufp)++;
+      *lvalp |= (*(*bufp)++ << 8);
+      *lvalp |= (*(*bufp)++ << 16);
+      *lvalp |= ((uint64_t)(*(*bufp)++) << 24);
+      *lvalp |= ((uint64_t)(*(*bufp)++) << 32);
+      *lvalp |= ((uint64_t)(*(*bufp)++) << 40);
+      *lvalp |= ((uint64_t)(*(*bufp)++) << 48);
+      *lvalp |= ((uint64_t)(*(*bufp)++) << 56);
+#endif
+
+      *remainingp -= 8;
       return true;
     }
 
@@ -250,41 +299,40 @@ namespace Hypertable { namespace Serialization {
      * 4 byte length followed by the data.  Assumes there is enough space
      * available.  Increments buffer pointer.
      *
-     * @param bufPtr address of destinatin buffer
+     * @param bufp address of destinatin buffer
      * @param data pointer to array of bytes
      * @param len the length of the byte array
      */
-    inline void encode_byte_array(uint8_t **bufPtr, const void *data, int32_t len) {
-      memcpy(*bufPtr, &len, 4);
-      memcpy((*bufPtr)+4, (uint8_t *)data, len);
-      *bufPtr += len + 4;
+    inline void encode_byte_array(uint8_t **bufp, const void *data, int32_t len) {
+      encode_int(bufp, len);
+      memcpy(*bufp, (uint8_t *)data, len);
+      *bufp += len;
     }
 
 
     /**
      * Decodes a variable sized byte array from the given buffer.  Byte array is
      * encoded as a 4 byte length followed by the data.  Increments buffer
-     * pointer and decrements remainingPtr on success.
+     * pointer and decrements remainingp on success.
      *
-     * @param bufPtr address of buffer containing encoded byte array
-     * @param remainingPtr address of variable containing number of bytes remaining in buffer
+     * @param bufp address of buffer containing encoded byte array
+     * @param remainingp address of variable containing number of bytes remaining in buffer
      * @param dstPtr address of pointer to decoded byte array
-     * @param lenPtr address of length of decoded byte array
+     * @param lenp address of length of decoded byte array
      * @return true on success, false if buffer has insufficient room
      */
-    inline bool decode_byte_array(uint8_t **bufPtr, size_t *remainingPtr, uint8_t **dstPtr, int32_t *lenPtr) {
+    inline bool decode_byte_array(uint8_t **bufp, size_t *remainingp, uint8_t **dstPtr, int32_t *lenp) {
       // length
-      if (*remainingPtr < 4)
+      if (*remainingp < 4)
 	return false;
-      memcpy(lenPtr, *bufPtr, 4);
-      (*remainingPtr) -= 4;
-      (*bufPtr) += 4;
+      if (!decode_int(bufp, remainingp, (uint32_t *)lenp))
+	return false;
       // data
-      if (*remainingPtr < (size_t)*lenPtr)
+      if (*remainingp < (size_t)*lenp)
 	return false;
-      *dstPtr = (*bufPtr);
-      (*remainingPtr) -= *lenPtr;
-      (*bufPtr) += *lenPtr;
+      *dstPtr = (*bufp);
+      *remainingp -= *lenp;
+      *bufp += *lenp;
       return true;
     }
 
@@ -317,24 +365,22 @@ namespace Hypertable { namespace Serialization {
      * the '\\0'.  Assumes there is enough space available.  Increments
      * buffer pointer.
      *
-     * @param bufPtr address of destination buffer
+     * @param bufp address of destination buffer
      * @param str the c-style string to encode
      */
-    inline void encode_string(uint8_t **bufPtr, const char *str) {
+    inline void encode_string(uint8_t **bufp, const char *str) {
       uint16_t len = (str == 0) ? 0 : strlen(str);
 
-      // 2-byte length
-      memcpy(*bufPtr, &len, 2);
-      (*bufPtr) += 2;
+      encode_short(bufp, len);
 
       // string characters
       if (len > 0) {
-	memcpy(*bufPtr, str, len);
-	(*bufPtr) += len;
+	memcpy(*bufp, str, len);
+	(*bufp) += len;
       }
 
       // '\\0' terminator
-      *(*bufPtr)++ = 0;
+      *(*bufp)++ = 0;
     }
 
 
@@ -345,11 +391,11 @@ namespace Hypertable { namespace Serialization {
      * Assumes there is enough space available.  Increments buffer
      * pointer.
      *
-     * @param bufPtr address of destinatin buffer
+     * @param bufp address of destinatin buffer
      * @param str the std::string to encode
      */
-    inline void encode_string(uint8_t **bufPtr, const std::string &str) {
-      encode_string(bufPtr, str.c_str());
+    inline void encode_string(uint8_t **bufp, const std::string &str) {
+      encode_string(bufp, str.c_str());
     }
 
 
@@ -358,24 +404,25 @@ namespace Hypertable { namespace Serialization {
      * string is a 2 byte length followed by the string, followed by a '\\0'
      * termination byte.  The length does not include the '\\0' terminator.
      * The decoded string pointer points back into the encoding buffer.
-     * Increments buffer pointer and decrements remainingPtr on success.
+     * Increments buffer pointer and decrements remainingp on success.
      *
-     * @param bufPtr address of buffer containing encoded string
-     * @param remainingPtr address of variable containing number of bytes remaining in buffer
-     * @param strPtr address of string pointer, points back into encoding buffer on success
+     * @param bufp address of buffer containing encoded string
+     * @param remainingp address of variable containing number of bytes remaining in buffer
+     * @param strp address of string pointer, points back into encoding buffer on success
      * @return true on success, false if buffer has insufficient room
      */
-    inline bool decode_string(uint8_t **bufPtr, size_t *remainingPtr, const char **strPtr) {
+    inline bool decode_string(uint8_t **bufp, size_t *remainingp, const char **strp) {
       uint16_t len;
-      *strPtr = 0;
-      if (*remainingPtr < 3)
+      *strp = 0;
+      if (*remainingp < 3)
 	return false;
-      memcpy(&len, *bufPtr, 2);
-      if (*remainingPtr < (size_t)len+3)
+      if (!decode_short(bufp, remainingp, &len))
 	return false;
-      *strPtr = (const char *)((*bufPtr)+2);
-      (*remainingPtr) -= (size_t)len+3;
-      (*bufPtr) += (size_t)len+3;
+      if (*remainingp < (size_t)len+1)
+	return false;
+      *strp = (const char *)*bufp;
+      *remainingp -= (size_t)len+1;
+      *bufp += (size_t)len+1;
       return true;
     }
 
@@ -384,16 +431,16 @@ namespace Hypertable { namespace Serialization {
      * Decodes a std::string from the given buffer.  The encoding of the
      * string is a 2 byte length followed by the string, followed by a '\\0'
      * termination byte.  The length does not include the '\\0' terminator.
-     * Increments buffer pointer and decrements remainingPtr on success.
+     * Increments buffer pointer and decrements remainingp on success.
      *
-     * @param bufPtr address of buffer containing encoded string
-     * @param remainingPtr address of variable containing number of bytes remaining in buffer
+     * @param bufp address of buffer containing encoded string
+     * @param remainingp address of variable containing number of bytes remaining in buffer
      * @param str reference to std::string to hold result
      * @return true on success, false if buffer has insufficient room
      */
-    inline bool decode_string(uint8_t **bufPtr, size_t *remainingPtr, std::string &str) {
+    inline bool decode_string(uint8_t **bufp, size_t *remainingp, std::string &str) {
       const char *cstr;
-      if (!decode_string(bufPtr, remainingPtr, &cstr))
+      if (!decode_string(bufp, remainingp, &cstr))
 	return false;
       str = cstr;
       return true;
