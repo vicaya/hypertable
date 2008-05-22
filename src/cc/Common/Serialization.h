@@ -25,8 +25,14 @@
 #include <cstring>
 #include <string>
 
+#include <boost/detail/endian.hpp>
+
 #include "Common/Error.h"
 #include "Common/Logger.h"
+
+#ifdef HT_SERIALIZATION_GENERIC
+#undef BOOST_LITTLE_ENDIAN
+#endif
 
 // vint limits
 #define HT_MAX_V1B 0x7f
@@ -39,15 +45,18 @@
 #define HT_MAX_V8B 0xffffffffffffffull
 #define HT_MAX_V9B 0x7fffffffffffffffull
 
+#define HT_MAX_LEN_VINT32 5
+#define HT_MAX_LEN_VINT64 10
+
 // vint encode
 #define HT_ENCODE_VINT0(_op_, _val_) \
   if (_val_ <= HT_MAX_V1B) { \
-    *(_op_)++ = (uint8_t)(_val_ & 0x7f); \
+    *(_op_)++ = (uint8_t)((_val_) & 0x7f); \
     return; \
   }
 
 #define HT_ENCODE_VINT_(_op_, _val_) \
-  *(_op_)++ = (uint8_t)(_val_ | 0x80); \
+  *(_op_)++ = (uint8_t)((_val_) | 0x80); \
   _val_ >>= 7; \
   HT_ENCODE_VINT0(_op_, _val_)
 
@@ -407,19 +416,24 @@ namespace Hypertable { namespace Serialization {
 
 
     /**
-     * Encode a 16-bit integer in network byte order
+     * Encode a 16-bit integer in little-endian order 
      *
      * @param bufp - pointer to the destination buffer
      * @param val value to encode
      */
     inline void encode_i16(uint8_t **bufp , uint16_t val) {
-      *(*bufp)++ = (uint8_t)(val >> 8);
+#ifdef BOOST_LITTLE_ENDIAN
+      memcpy(*bufp, &val, 2);
+      *bufp += 2;
+#else
       *(*bufp)++ = (uint8_t)val;
+      *(*bufp)++ = (uint8_t)(val >> 8);
+#endif
     }
 
 
     /**
-     * Decode a 16-bit integer in network byte order
+     * Decode a 16-bit integer in little-endian order
      *
      * @param bufp - pointer to the source buffer
      * @param remainp - pointer to remaining size variable
@@ -429,8 +443,14 @@ namespace Hypertable { namespace Serialization {
       if (*remainp < 2)
         throw Exception(Error::SERIALIZATION_INPUT_OVERRUN);
 
-      uint16_t val = (*(*bufp)++ << 8);
-      val |= *(*bufp)++;
+#ifdef BOOST_LITTLE_ENDIAN
+      uint16_t val;
+      memcpy(&val, *bufp, 2);
+      *bufp += 2;
+#else
+      uint16_t val = *(*bufp)++;
+      val |= (*(*bufp)++ << 8);
+#endif
       *remainp -= 2;
 
       return val;
@@ -438,21 +458,26 @@ namespace Hypertable { namespace Serialization {
 
 
     /**
-     * Encode a 32-bit integer in network byte order
+     * Encode a 32-bit integer in little-endian order
      *
      * @param bufp - pointer to the destination buffer
      * @param val - value to encode
      */
     inline void encode_i32(uint8_t **bufp, uint32_t val) {
-      *(*bufp)++ = (uint8_t)(val >> 24);
-      *(*bufp)++ = (uint8_t)(val >> 16);
-      *(*bufp)++ = (uint8_t)(val >> 8);
+#ifdef BOOST_LITTLE_ENDIAN
+      memcpy(*bufp, &val, 4);
+      *bufp += 4;
+#else
       *(*bufp)++ = (uint8_t)val;
+      *(*bufp)++ = (uint8_t)(val >> 8);
+      *(*bufp)++ = (uint8_t)(val >> 16);
+      *(*bufp)++ = (uint8_t)(val >> 24);
+#endif
     }
 
 
     /**
-     * Decode a 32-bit integer in network byte order
+     * Decode a 32-bit integer in little-endian order
      *
      * @param bufp - pointer to the source buffer
      * @param remainp - pointer to remaining size variable
@@ -462,10 +487,16 @@ namespace Hypertable { namespace Serialization {
       if (*remainp < 4)
         throw Exception(Error::SERIALIZATION_INPUT_OVERRUN);
 
-      uint32_t val = (*(*bufp)++ << 24);
-      val |= (*(*bufp)++ << 16);
+#ifdef BOOST_LITTLE_ENDIAN
+      uint32_t val;
+      memcpy(&val, *bufp, 4);
+      *bufp += 4;
+#else
+      uint32_t val = *(*bufp)++;
       val |= (*(*bufp)++ << 8);
-      val |= *(*bufp)++;
+      val |= (*(*bufp)++ << 16);
+      val |= (*(*bufp)++ << 24);
+#endif
       *remainp -= 4;
 
       return val;
@@ -473,25 +504,30 @@ namespace Hypertable { namespace Serialization {
 
 
     /**
-     * Encode a 64-bit integer in network byte order
+     * Encode a 64-bit integer in little-endian order
      *
      * @param bufp - pointer to the destination buffer
      * @param val - value to encode
      */
     inline void encode_i64(uint8_t **bufp, uint64_t val) {
-      *(*bufp)++ = (uint8_t)(val >> 56);
-      *(*bufp)++ = (uint8_t)(val >> 48);
-      *(*bufp)++ = (uint8_t)(val >> 40);
-      *(*bufp)++ = (uint8_t)(val >> 32);
-      *(*bufp)++ = (uint8_t)(val >> 24);
-      *(*bufp)++ = (uint8_t)(val >> 16);
-      *(*bufp)++ = (uint8_t)(val >> 8);
+#ifdef BOOST_LITTLE_ENDIAN
+      memcpy(*bufp, &val, 8);
+      *bufp += 8;
+#else
       *(*bufp)++ = (uint8_t)val;
+      *(*bufp)++ = (uint8_t)(val >> 8);
+      *(*bufp)++ = (uint8_t)(val >> 16);
+      *(*bufp)++ = (uint8_t)(val >> 24);
+      *(*bufp)++ = (uint8_t)(val >> 32);
+      *(*bufp)++ = (uint8_t)(val >> 40);
+      *(*bufp)++ = (uint8_t)(val >> 48);
+      *(*bufp)++ = (uint8_t)(val >> 56);
+#endif
     }
 
 
     /**
-     * Decode a 64-bit integer in network byte order
+     * Decode a 64-bit integer in little-endian order
      *
      * @param bufp - pointer to the source buffer
      * @param remainp - pointer to remaining size variable
@@ -501,14 +537,20 @@ namespace Hypertable { namespace Serialization {
       if (*remainp < 8)
         throw Exception(Error::SERIALIZATION_INPUT_OVERRUN);
 
-      uint64_t val = ((uint64_t)*(*bufp)++ << 56);
-      val |= ((uint64_t)(*(*bufp)++) << 48);
-      val |= ((uint64_t)(*(*bufp)++) << 40);
-      val |= ((uint64_t)(*(*bufp)++) << 32);
-      val |= ((uint64_t)(*(*bufp)++) << 24);
-      val |= (*(*bufp)++ << 16);
+#ifdef BOOST_LITTLE_ENDIAN
+      uint64_t val;
+      memcpy(&val, *bufp, 8);
+      *bufp += 8;
+#else
+      uint64_t val = *(*bufp)++;
       val |= (*(*bufp)++ << 8);
-      val |= *(*bufp)++;
+      val |= (*(*bufp)++ << 16);
+      val |= ((uint64_t)(*(*bufp)++) << 24);
+      val |= ((uint64_t)(*(*bufp)++) << 32);
+      val |= ((uint64_t)(*(*bufp)++) << 40);
+      val |= ((uint64_t)(*(*bufp)++) << 48);
+      val |= ((uint64_t)(*(*bufp)++) << 56);
+#endif
       *remainp -= 8;
 
       return val;
@@ -556,7 +598,7 @@ namespace Hypertable { namespace Serialization {
       HT_ENCODE_VINT0(*bufp, val)
       HT_ENCODE_VINT4(*bufp, val)
       HT_ENCODE_VINT_(*bufp, val)
-      HT_EXPECT(!"bad/corrupted code", Error::FAILED_EXPECTATION);
+      HT_EXPECT(!"corrupted vint32", Error::FAILED_EXPECTATION);
     }
 
     /**
@@ -570,7 +612,7 @@ namespace Hypertable { namespace Serialization {
       HT_ENCODE_VINT4(*bufp, val)
       HT_ENCODE_VINT4(*bufp, val)
       HT_ENCODE_VINT_(*bufp, val)
-      HT_EXPECT(!"bad/corrupted code", Error::FAILED_EXPECTATION);
+      HT_EXPECT(!"corrupted vint64", Error::FAILED_EXPECTATION);
     }
 
     /**
@@ -611,10 +653,7 @@ namespace Hypertable { namespace Serialization {
      */
     inline uint32_t decode_vi32(const uint8_t **bufp) {
       size_t remain = 6;
-      HT_DECODE_VINT0(uint32_t, n, *bufp, &remain)
-      HT_DECODE_VINT4(uint32_t, n, *bufp, &remain)
-      HT_DECODE_VINT_(uint32_t, n, *bufp, &remain)
-      throw Exception(Error::SERIALIZATION_BAD_VINT);
+      return decode_vi32(bufp, &remain);
     }
 
     /**
@@ -625,12 +664,7 @@ namespace Hypertable { namespace Serialization {
      */
     inline uint64_t decode_vi64(const uint8_t **bufp) {
       size_t remain = 12;
-      HT_DECODE_VINT0(uint64_t, n, *bufp, &remain)
-      HT_DECODE_VINT4(uint64_t, n, *bufp, &remain)
-      HT_DECODE_VINT4(uint64_t, n, *bufp, &remain)
-      HT_DECODE_VINT_(uint64_t, n, *bufp, &remain)
-      HT_DECODE_VINT_(uint64_t, n, *bufp, &remain)
-      throw Exception(Error::SERIALIZATION_BAD_VINT);
+      return decode_vi64(bufp, &remain);
     }
 
 
