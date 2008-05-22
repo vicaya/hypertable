@@ -29,7 +29,6 @@ extern "C" {
 #include <sys/resource.h>
 }
 
-#include "Common/ByteOrder.h"
 #include "Common/FileUtils.h"
 #include "Common/md5.h"
 #include "Common/StringExt.h"
@@ -871,12 +870,14 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
 
     // Fetch table info
     if (!m_live_map_ptr->get(table->id, table_info_ptr)) {
-      StaticBuffer ext(new uint8_t [ buffer.size ], buffer.size);
-      memcpy(ext.base, buffer.base, buffer.size);
+      StaticBuffer ext(new uint8_t [ 12 ], 12);
+      uint8_t *ptr = ext.base;
+      Serialization::encode_int(&ptr, Error::RANGESERVER_TABLE_NOT_FOUND);
+      Serialization::encode_int(&ptr, 0);
+      Serialization::encode_int(&ptr, buffer.size);
       HT_ERRORF("Unable to find table info for table '%s'", table->name);
-      if ((error = cb->response(ext)) != Error::OK) {
+      if ((error = cb->response(ext)) != Error::OK)
 	HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
-      }
       return;
     }
 
@@ -961,21 +962,16 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
 	    boost::xtime now;
 	    boost::xtime_get(&now, boost::TIME_UTC);
 	    next_timestamp = ((uint64_t)now.sec * 1000000000LL) + (uint64_t)now.nsec;
-	    //HT_INFOF("fugazi TIMESTAMP %lld", next_timestamp);
 	  }
 	  temp_timestamp = ++next_timestamp;
 	  if (min_ts_rec.timestamp.logical == 0 || temp_timestamp < min_ts_rec.timestamp.logical)
 	    min_ts_rec.timestamp.logical = temp_timestamp;
-	  temp_timestamp = ByteOrderSwapInt64(temp_timestamp);
-	  temp_timestamp = ~temp_timestamp;
-	  memcpy(ts_ptr, &temp_timestamp, 8);
-	  temp_timestamp = next_timestamp;
+	  Key::encode_ts64(&ts_ptr, temp_timestamp);
 	}
 	else {
-	  memcpy(&temp_timestamp, ts_ptr, 8);
-	  temp_timestamp = ByteOrderSwapInt64(temp_timestamp);
-	  temp_timestamp = ~temp_timestamp;
-	  if (*(ts_ptr-1) > FLAG_DELETE_CELL && temp_timestamp <= min_timestamp) {
+	  uint8_t flag = *(ts_ptr-1);
+	  temp_timestamp = Key::decode_ts64((const uint8_t **)&ts_ptr);
+	  if (flag > FLAG_DELETE_CELL && temp_timestamp <= min_timestamp) {
 	    error = Error::RANGESERVER_TIMESTAMP_ORDER_ERROR;
 	    errMsg = (string)"Update timestamp " + temp_timestamp + " is <= previously seen timestamp of " + min_timestamp;
 	    min_ts_rec.range_ptr->decrement_update_counter();
@@ -1004,8 +1000,6 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
       }
 
       add_end_ptr = mod_ptr;
-
-      //HT_INFOF("fugazi TIMESTAMP --last-- %lld", next_timestamp);
 
       // force scans to only see updates before the earliest time in this range
       min_ts_rec.timestamp.logical--;

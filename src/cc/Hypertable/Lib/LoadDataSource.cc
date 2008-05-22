@@ -36,7 +36,6 @@ extern "C" {
 #include <time.h>
 }
 
-#include "Common/ByteOrder.h"
 #include "Common/DynamicBuffer.h"
 #include "Common/Error.h"
 #include "Common/Logger.h"

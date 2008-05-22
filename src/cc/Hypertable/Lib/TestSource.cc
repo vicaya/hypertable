@@ -29,7 +29,6 @@ extern "C" {
 #include <strings.h>
 }
 
-#include "Common/ByteOrder.h"
 #include "Common/DynamicBuffer.h"
 
 #include "Key.h"
@@ -146,10 +145,8 @@ bool TestSource::create_row_delete(const char *row, uint64_t timestamp, ByteStri
   *m_key_buffer.ptr++ = 0;
   *m_key_buffer.ptr++ = 0;
   *m_key_buffer.ptr++ = FLAG_DELETE_ROW;
+  Key::encode_ts64(&m_key_buffer.ptr, timestamp);
 
-  timestamp = ByteOrderSwapInt64(timestamp);
-  timestamp = ~timestamp;
-  m_key_buffer.addNoCheck(&timestamp, sizeof(timestamp));
   key.ptr = m_key_buffer.base;
 
   m_value_buffer.clear();
@@ -188,10 +185,8 @@ bool TestSource::create_column_delete(const char *row, const char *column, uint6
   *m_key_buffer.ptr++ = cf->id;
   m_key_buffer.addNoCheck(qualifier, strlen(qualifier)+1);
   *m_key_buffer.ptr++ = FLAG_DELETE_CELL;
+  Key::encode_ts64(&m_key_buffer.ptr, timestamp);
 
-  timestamp = ByteOrderSwapInt64(timestamp);
-  timestamp = ~timestamp;
-  m_key_buffer.addNoCheck(&timestamp, sizeof(timestamp));
   key.ptr = m_key_buffer.base;
 
   m_value_buffer.clear();
@@ -230,10 +225,8 @@ bool TestSource::create_insert(const char *row, const char *column, uint64_t tim
   *m_key_buffer.ptr++ = cf->id;
   m_key_buffer.addNoCheck(qualifier, strlen(qualifier)+1);
   *m_key_buffer.ptr++ = FLAG_INSERT;
+  Key::encode_ts64(&m_key_buffer.ptr, timestamp);
 
-  timestamp = ByteOrderSwapInt64(timestamp);
-  timestamp = ~timestamp;
-  m_key_buffer.addNoCheck(&timestamp, sizeof(timestamp));
   key.ptr = m_key_buffer.base;
 
   m_value_buffer.clear();
