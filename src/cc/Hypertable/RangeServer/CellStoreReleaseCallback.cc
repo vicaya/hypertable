@@ -33,9 +33,5 @@ CellStoreReleaseCallback::CellStoreReleaseCallback(AccessGroup *ag) : m_access_g
 }
 
 void CellStoreReleaseCallback::operator()() const {
-  HT_INFO("About to release files...");
-  cout << flush;
   m_access_group->release_files(m_filenames);
-  HT_INFO("Finished releasing files.");
-  cout << flush;
 }

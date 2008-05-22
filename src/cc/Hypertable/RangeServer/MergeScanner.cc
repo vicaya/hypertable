@@ -148,7 +148,7 @@ void MergeScanner::forward() {
 	  if (m_deleted_cell.fill() > 0) {
 	    len = (keyComps.column_qualifier - keyComps.row) + strlen(keyComps.column_qualifier) + 1;
 	    if (m_deleted_cell.fill() == len && !memcmp(m_deleted_cell.base, keyComps.row, len)) {
-	      if (keyComps.timestamp < m_deleted_cell_timestamp)
+	      if (keyComps.timestamp <= m_deleted_cell_timestamp)
 		continue;
 	      break;
 	    }
@@ -157,7 +157,7 @@ void MergeScanner::forward() {
 	  if (m_deleted_column_family.fill() > 0) {
 	    len = keyComps.column_qualifier - keyComps.row;
 	    if (m_deleted_column_family.fill() == len && !memcmp(m_deleted_column_family.base, keyComps.row, len)) {
-	      if (keyComps.timestamp < m_deleted_column_family_timestamp)
+	      if (keyComps.timestamp <= m_deleted_column_family_timestamp)
 		continue;
 	      break;
 	    }
@@ -166,7 +166,7 @@ void MergeScanner::forward() {
 	  if (m_deleted_row.fill() > 0) {
 	    len = strlen(keyComps.row) + 1;
 	    if (m_deleted_row.fill() == len && !memcmp(m_deleted_row.base, keyComps.row, len)) {
-	      if (keyComps.timestamp < m_deleted_row_timestamp)
+	      if (keyComps.timestamp <= m_deleted_row_timestamp)
 		continue;
 	      break;
 	    }

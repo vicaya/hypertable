@@ -21,11 +21,14 @@
 
 package org.hypertable.AsyncComm;
 
+import java.util.logging.Logger;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.HashMap;
 
 public class ApplicationQueue {
+
+    static final Logger log = Logger.getLogger("org.hypertable.AsyncComm.ApplicationQueue");
 
     private static class UsageRec {
 	long    threadGroup = 0;
@@ -78,18 +81,24 @@ public class ApplicationQueue {
 		    }
 		    
 		    if (rec != null) {
-			rec.appHandler.run();
-			if (rec.usage != null) {
-			    synchronized (mUsageMap) {
-				rec.usage.running = false;
-				rec.usage.outstanding--;
-				if (rec.usage.outstanding == 0) {
-				    mUsageMap.remove(rec.usage.threadGroup);
+			try {
+			    rec.appHandler.run();
+			}
+			catch (Exception e) {
+			    e.printStackTrace();
+			}
+			finally {
+			    if (rec.usage != null) {
+				synchronized (mUsageMap) {
+				    rec.usage.running = false;
+				    rec.usage.outstanding--;
+				    if (rec.usage.outstanding == 0) {
+					mUsageMap.remove(rec.usage.threadGroup);
+				    }
 				}
 			    }
 			}
 		    }
-
 		}
 
 	    }
