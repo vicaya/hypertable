@@ -24,6 +24,7 @@
 
 extern "C" {
 #include <errno.h>
+#include <pwd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -368,4 +369,39 @@ int FileUtils::fremovexattr(int fd, const std::string &name) {
 void FileUtils::add_trailing_slash(std::string &path) {
   if (path.find('/', path.length()-1) == string::npos)
     path += "/";
+}
+
+
+bool FileUtils::expand_tilde(std::string &fname) {
+  struct passwd pbuf;
+  struct passwd *prbuf;
+  char buf[256];
+
+  if (fname[0] != '~')
+    return false;
+
+  if (fname[1] == '/') {
+    if (getpwuid_r( getuid() , &pbuf, buf, 256, &prbuf ) != 0 || prbuf == 0)
+      return false;
+    fname = (std::string)pbuf.pw_dir + fname.substr(1);
+  }
+  else {
+    std::string name;
+    size_t first_slash = fname.find_first_of('/');
+
+    if (first_slash == string::npos)
+      name = fname.substr(1);
+    else
+      name = fname.substr(1, first_slash-1);
+
+    if (getpwnam_r( name.c_str() , &pbuf, buf, 256, &prbuf ) != 0 || prbuf == 0)
+      return false;
+
+    if (first_slash == string::npos)
+      fname = pbuf.pw_dir;
+    else
+      fname = (std::string)pbuf.pw_dir + fname.substr(first_slash);
+  }
+
+  return true;
 }

@@ -46,6 +46,8 @@ extern "C" {
 #include <time.h>
 }
 
+#include "Common/FileUtils.h"
+
 #include "Schema.h"
 
 using namespace std;
@@ -363,6 +365,7 @@ namespace Hypertable {
 	display_string("set_output_file");
 	state.output_file = std::string(str, end-str);
 	trim_if(state.output_file, boost::is_any_of("'\""));
+	FileUtils::expand_tilde(state.output_file);
       }
       hql_interpreter_state &state;
     };
@@ -373,6 +376,7 @@ namespace Hypertable {
 	display_string("set_input_file");
 	state.input_file = std::string(str, end-str);
 	trim_if(state.input_file, boost::is_any_of("'\""));
+	FileUtils::expand_tilde(state.input_file);
       }
       hql_interpreter_state &state;
     };
@@ -383,6 +387,7 @@ namespace Hypertable {
 	display_string("set_header_file");
 	state.header_file = std::string(str, end-str);
 	trim_if(state.header_file, boost::is_any_of("'\""));
+	FileUtils::expand_tilde(state.header_file);
       }
       hql_interpreter_state &state;
     };
@@ -1170,7 +1175,7 @@ namespace Hypertable {
 	  load_data_statement
 	    = LOAD >> DATA >> INFILE 
 	    >> !( load_data_option >> *( load_data_option ) )
-	    >> string_literal[set_str(self.state)] 
+	    >> string_literal[set_input_file(self.state)] 
 	    >> INTO >> 
 	    ( TABLE >> user_identifier[set_table_name(self.state)]
 	      | FILE >> user_identifier[set_output_file(self.state)] )
