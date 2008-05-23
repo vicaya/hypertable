@@ -75,7 +75,7 @@ namespace {
   /**
    * Prints an mutator exception to stderr
    */
-  void report_mutation_error(Exception &e, TableMutatorPtr &mutator_ptr) {
+  void handle_mutation_failure(TableMutatorPtr &mutator_ptr) {
     std::vector<std::pair<Cell, int> > failed_mutations;
 
     mutator_ptr->get_failed(failed_mutations);
@@ -89,8 +89,6 @@ namespace {
 	     << Error::get_text(failed_mutations[i].second) << endl;
       }
     }
-    else
-      cerr << "Error: " << Error::get_text(e.code()) << endl;
   }
 
   const char *usage = 
@@ -112,6 +110,8 @@ namespace {
     "\n"
     "  This format facilitates queries that return\n"
     "  a historical portion of the log.\n";
+
+  const int RETRY_TIMEOUT = 30;
 
 }
 
@@ -222,24 +222,22 @@ int main(int argc, char **argv) {
       mutator_ptr->set(key, entry.user_agent);
     }
     catch (Exception &e) {
-      report_mutation_error(e, mutator_ptr);
-      return 1;
+      cerr << "Exception caught: " << Error::get_text(e.code()) << endl;
+      do {
+	handle_mutation_failure(mutator_ptr);
+      } while (!mutator_ptr->retry(RETRY_TIMEOUT));
     }
-
   }
 
   // Flush pending updates
-  while (true) {
-    try {
-      mutator_ptr->flush();
-    }
-    catch (Exception &e) {
-      report_mutation_error(e, mutator_ptr);
-      // this continue is necessary since the flush may
-      // not have completed when exception was thrown
-      continue;
-    }
-    break;
+  try {
+    mutator_ptr->flush();
+  }
+  catch (Exception &e) {
+    cerr << "Exception caught: " << Error::get_text(e.code()) << endl;
+    do {
+      handle_mutation_failure(mutator_ptr);
+    } while (!mutator_ptr->retry(RETRY_TIMEOUT));
   }
 
   return 0;

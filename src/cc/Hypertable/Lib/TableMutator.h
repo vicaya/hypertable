@@ -134,6 +134,14 @@ namespace Hypertable {
     void flush();
 
     /**
+     * Retries the last operation
+     *
+     * @param timeout timeout in seconds, 0 means use default timeout
+     * @return true if successfully flushed, false otherwise
+     */
+    bool retry(int timeout=0);
+
+    /**
      * Returns the amount of memory used by the collected mutations.
      *
      * @return amount of memory used by the collected mutations.
@@ -163,6 +171,12 @@ namespace Hypertable {
 
   private:
 
+    enum Operation {
+      SET = 1,
+      SET_DELETE = 2,
+      FLUSH = 3
+    };
+
     void wait_for_previous_buffer(Timer &timer);
 
     void sanity_check_key(KeySpec &key);
@@ -178,6 +192,13 @@ namespace Hypertable {
     TableMutatorScatterBufferPtr  m_prev_buffer_ptr;
     uint64_t             m_resends;
     int                  m_timeout;
+
+    int32_t     m_last_error;
+    int         m_last_op;
+    uint64_t    m_last_timestamp;
+    KeySpec     m_last_key;
+    const void *m_last_value;
+    uint32_t    m_last_value_len;
   };
   typedef boost::intrusive_ptr<TableMutator> TableMutatorPtr;
 
