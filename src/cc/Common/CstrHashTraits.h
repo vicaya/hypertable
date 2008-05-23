@@ -24,10 +24,10 @@
 
 namespace Hypertable {
 
-/*
- * Traits for CharStrHashMap/Set
+/**
+ * Traits for CstrHashMap/Set
  */
-struct CharStrHashTraits {
+struct CstrHashTraits {
   typedef CharArena key_allocator;
 
   struct hasher {
@@ -50,8 +50,7 @@ struct CharStrHashTraits {
   };
 };
 
-// case-insensitive 
-struct CharStrCaseHashTraits {
+struct CstrCaseHashTraits {
   typedef CharArena key_allocator;
 
   struct hasher {

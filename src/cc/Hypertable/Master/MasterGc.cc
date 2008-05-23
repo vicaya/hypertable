@@ -24,7 +24,7 @@
 #include "Common/Sweetener.h"
 #include "Common/Thread.h"
 #include "Common/Properties.h"
-#include "Common/CharStrHashMap.h"
+#include "Common/CstrHashMap.h"
 #include "Hypertable/Lib/Filesystem.h"
 #include "Hypertable/Lib/Table.h"
 #include "Hypertable/Lib/Types.h"
@@ -35,7 +35,7 @@ using namespace std;
 
 namespace {
 
-typedef CharStrHashMap<int> CountMap;
+typedef CstrHashMap<int> CountMap;
 
 struct GcWorker {
   GcWorker(TablePtr &metadata, Filesystem *fs, int interval,
