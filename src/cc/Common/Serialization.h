@@ -108,7 +108,7 @@ namespace Hypertable { namespace Serialization {
      *
      * @param bufp address of source buffer
      * @param remainingp address of variable containing number of bytes remaining in buffer
-     * @param bytePtr address of variable to hold decoded byte
+     * @param boolp address of variable to hold decoded byte
      * @return true on success, false if buffer has insufficient room
      */
     inline bool decode_bool(uint8_t **bufp, size_t *remainingp, bool *boolp) {
@@ -719,7 +719,7 @@ namespace Hypertable { namespace Serialization {
      * Computes the variable encoded length of a c-style null-terminated string
      * Assuming string length can be encoded in 32-bit integer
      *
-     * @param str pointer to the the c-style string
+     * @param s pointer to the the c-style string
      * @return the encoded length of str
      */
     inline size_t encoded_length_cstr(const char *s) {

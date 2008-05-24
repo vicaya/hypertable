@@ -47,6 +47,7 @@ namespace Hypertable {
      * @param table_identifier pointer to the identifier of the table being mutated
      * @param schema_ptr smart pointer to schema object for table
      * @param range_locator_ptr smart pointer to range locator
+     * @param scan_spec reference to scan specification object
      * @param timeout maximum time in seconds to allow scanner methods to execute before throwing an exception
      */
     TableScanner(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpec &scan_spec, int timeout);
