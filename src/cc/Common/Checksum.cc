@@ -17,9 +17,9 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
-#include <stdlib.h>
-#include <stdint.h>
+#include "Compat.h"
 #include <arpa/inet.h>
+#include <zlib.h>
 #include "Checksum.h"
 
 namespace Hypertable {
@@ -194,6 +194,17 @@ update_adler32(uint32_t adler, const void *data8, size_t len) {
 uint32_t 
 adler32(const void *data, size_t len) {
   return update_adler32(1, data, len);
+}
+
+uint32_t
+crc32(const void *data, size_t len) {
+  uint32_t crc = ::crc32(0LL, Z_NULL, 0);
+  return ::crc32(crc, (Bytef *)data, len);
+}
+
+uint32_t
+update_crc32(uint32_t crc, const void *data, size_t len) {
+  return ::crc32(crc, (Bytef *)data, len);
 }
 
 } // namespace Hypertable

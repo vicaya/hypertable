@@ -59,6 +59,23 @@ adler32(const void *data, size_t len);
 extern uint32_t
 update_adler32(uint32_t adler, const void *data, size_t len);
 
+/** Compute crc32 checksum
+ *
+ * @param data - input data
+ * @param len - input data length in bytes
+ */
+extern uint32_t
+crc32(const void *data, size_t len);
+
+/** Update crc32 checksum incrementally
+ * 
+ * @param crc - current crc32 checksum
+ * @param data - input data
+ * @param len - input data length in bytes 
+ */
+extern uint32_t
+update_crc32(uint32_t crc, const void *data, size_t len);
+
 } // namespace Hypertable
 
 #endif /* HYPERTABLE_CHECKSUM_H */
