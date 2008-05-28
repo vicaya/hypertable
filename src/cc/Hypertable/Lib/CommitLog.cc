@@ -19,6 +19,8 @@
  * 02110-1301, USA.
  */
 
+#include <cassert>
+
 #include "Common/Checksum.h"
 #include "Common/DynamicBuffer.h"
 #include "Common/Error.h"
@@ -52,7 +54,6 @@ void CommitLog::initialize(Filesystem *fs, const String &log_dir, PropertiesPtr 
   m_log_dir = log_dir;
   m_cur_fragment_length = 0;
   m_cur_fragment_num = 0;
-  m_last_timestamp = 0;
 
   if (props_ptr) {
     m_max_fragment_size = props_ptr->get_int64("Hypertable.RangeServer.CommitLog.RollLimit", 100000000LL);
@@ -149,6 +150,7 @@ int CommitLog::link_log(CommitLogBase *log_base, uint64_t timestamp) {
     StaticBuffer send_buf(input);
 
     m_fs->append(m_fd, send_buf, Filesystem::O_FLUSH);
+    assert(timestamp != 0);
     m_last_timestamp = timestamp;
     m_cur_fragment_length += amount;
 
@@ -204,7 +206,7 @@ int CommitLog::purge(uint64_t timestamp) {
 
     while (!m_fragment_queue.empty()) {
       file_info = m_fragment_queue.front();
-      if (file_info.timestamp > 0 && file_info.timestamp < timestamp) {
+      if (file_info.timestamp < timestamp) {
 	fname = file_info.log_dir + file_info.num;
 	m_fs->remove(fname);
 	m_fragment_queue.pop_front();
@@ -231,6 +233,9 @@ int CommitLog::purge(uint64_t timestamp) {
  */
 int CommitLog::roll() {
   CommitLogFileInfo file_info;
+
+  if (m_last_timestamp == 0)
+    return Error::OK;
 
   try {
 
@@ -283,6 +288,8 @@ int CommitLog::compress_and_write(DynamicBuffer &input, BlockCompressionHeader *
     StaticBuffer send_buf(zblock);
 
     m_fs->append(m_fd, send_buf, Filesystem::O_FLUSH);
+    assert(timestamp != 0);
+    assert(timestamp != 0);
     m_last_timestamp = timestamp;
     m_cur_fragment_length += amount;
   }
@@ -306,9 +313,11 @@ void CommitLog::load_fragment_priority_map(LogFragmentPriorityMap &frag_map) {
   uint32_t distance = 0;
   LogFragmentPriorityData frag_data;
 
-  frag_data.distance = distance++;
-  frag_data.cumulative_size = cumulative_total;
-  frag_map[m_last_timestamp] = frag_data;
+  if (m_last_timestamp != 0) {
+    frag_data.distance = distance++;
+    frag_data.cumulative_size = cumulative_total;
+    frag_map[m_last_timestamp] = frag_data;
+  }
 
   for (deque<CommitLogFileInfo>::reverse_iterator iter = m_fragment_queue.rbegin(); iter != m_fragment_queue.rend(); iter++) {
     cumulative_total += (*iter).size;

@@ -1510,6 +1510,16 @@ void RangeServer::do_maintenance() {
   }
 }
 
+namespace {
+
+  struct ltPriorityData {
+    bool operator()(const AccessGroup::CompactionPriorityDataT &pd1, const AccessGroup::CompactionPriorityDataT &pd2) const {
+      return pd1.log_space_pinned >= pd2.log_space_pinned;
+    }
+  };
+
+
+}
 
 
 /**
@@ -1523,6 +1533,9 @@ void RangeServer::log_cleanup() {
   std::set<size_t> compaction_set;
   uint64_t timestamp, oldest_cached_timestamp = 0;
   uint64_t prune_threshold = 2 * Global::log->get_max_fragment_size();
+
+  HT_INFO("Cleaning log");
+  cout << flush;
 
   m_live_map_ptr->get_all(table_vec);
   for (size_t i=0; i<table_vec.size(); i++)
@@ -1551,27 +1564,32 @@ void RangeServer::log_cleanup() {
    */
   for (size_t i=0; i<priority_data_vec.size(); i++) {
     LogFragmentPriorityMap::iterator map_iter = log_frag_map.lower_bound( priority_data_vec[i].oldest_cached_timestamp );
-    size_t rangei = (size_t)priority_data_vec[i].user_data;
 
     // this should never happen
     if (map_iter == log_frag_map.end())
       continue;
 
-    if ( priority_data_vec[i].oldest_cached_timestamp > 0 && (*map_iter).second.cumulative_size > prune_threshold ) {
-      std::string range_str = range_vec[rangei]->table_name() + "[" + range_vec[rangei]->start_row() + ".." + range_vec[rangei]->end_row() + "]." + priority_data_vec[i].ag->get_name();
-      priority_data_vec[i].ag->set_compaction_bit();
-      compaction_set.insert( rangei );
-      HT_INFOF("Compacting %s because cumulative log size of %lld exceeds threshold %lld",
-	       range_str.c_str(), (*map_iter).second.cumulative_size, prune_threshold);
-    }
+    if (priority_data_vec[i].oldest_cached_timestamp > 0)
+      priority_data_vec[i].log_space_pinned = (*map_iter).second.cumulative_size;
+    else
+      priority_data_vec[i].log_space_pinned = 0;
+
   }
 
-  /**
-   * Schedule the compactions
-   */
-  for (std::set<size_t>::iterator iter = compaction_set.begin(); iter != compaction_set.end(); iter++) {
-    if (!range_vec[*iter]->test_and_set_maintenance())
-      Global::maintenance_queue->add( new MaintenanceTaskCompaction(range_vec[*iter], false) );
+  {
+    struct ltPriorityData compFunc;
+    std::sort(priority_data_vec.begin(), priority_data_vec.end(), compFunc);
+    for (size_t i=0; i<priority_data_vec.size(); i++) {
+      if (priority_data_vec[i].log_space_pinned >  prune_threshold) {
+	size_t rangei = (size_t)priority_data_vec[i].user_data;
+	if (!range_vec[rangei]->test_and_set_maintenance()) {
+	  priority_data_vec[i].ag->set_compaction_bit();
+	  Global::maintenance_queue->add( new MaintenanceTaskCompaction(range_vec[rangei], false) );
+	}
+      }
+      else
+	break;
+    }
   }
 
   /**

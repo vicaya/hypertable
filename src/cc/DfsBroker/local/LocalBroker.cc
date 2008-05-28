@@ -172,7 +172,6 @@ void LocalBroker::close(ResponseCallback *cb, uint32_t fd) {
     HT_INFOF("close fd=%d", fd);
   }
   m_open_file_map.remove(fd);
-  ::close(fd);
   cb->response_ok();
 }
 

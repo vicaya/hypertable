@@ -163,7 +163,6 @@ namespace Hypertable {
     uint32_t                m_cur_fragment_num;
     int64_t                 m_max_fragment_size;
     int32_t                 m_fd;
-    uint64_t                m_last_timestamp;
   };
 
   typedef boost::intrusive_ptr<CommitLog> CommitLogPtr;

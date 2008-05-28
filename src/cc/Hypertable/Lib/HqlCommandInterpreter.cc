@@ -234,15 +234,25 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       file_size = FileUtils::size(state.input_file.c_str());
 
       printf("\nLoading ");
-      if (file_size > 1000000000000LL)
-	printf("%3lld,", file_size/1000000000000LL);
-      if (file_size > 1000000000LL)
-	printf("%3lld,", (file_size%1000000000000LL) / 1000000000LL);
-      if (file_size > 1000000LL)
-	printf("%3lld,", (file_size%1000000000LL) / 1000000LL);
-      if (file_size > 1000LL)
-	printf("%3lld,", (file_size%1000000LL) / 1000LL);
-      printf("%3lld", file_size % 1000LL);
+      const char *format = "%3lld,";
+      if (file_size > 1000000000000LL) {
+	printf(format, file_size/1000000000000LL);
+	format = "%03lld,";
+      }
+      if (file_size > 1000000000LL) {
+	printf(format, (file_size%1000000000000LL) / 1000000000LL);
+	format = "%03lld,";
+      }
+      if (file_size > 1000000LL) {
+	printf(format, (file_size%1000000000LL) / 1000000LL);
+	format = "%03lld,";
+      }
+      if (file_size > 1000LL) {
+	printf(format, (file_size%1000000LL) / 1000LL);
+	printf("%03lld", file_size % 1000LL);
+      }
+      else
+	printf("%3lld", file_size % 1000LL);
       printf(" bytes of input data...\n");
       fflush(stdout);
 
