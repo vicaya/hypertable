@@ -65,12 +65,14 @@ namespace {
 RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, ApplicationQueuePtr &app_queue_ptr, Hyperspace::SessionPtr &hyperspace_ptr) : m_props_ptr(props_ptr), m_verbose(false), m_conn_manager_ptr(conn_manager_ptr), m_app_queue_ptr(app_queue_ptr), m_hyperspace_ptr(hyperspace_ptr), m_last_commit_log_clean(0) {
   int error;
   uint16_t port;
+  uint32_t maintenance_threads = 1;
   Comm *comm = conn_manager_ptr->get_comm();
 
   Global::rangeMaxBytes           = props_ptr->get_int64("Hypertable.RangeServer.Range.MaxBytes", 200000000LL);
   Global::localityGroupMaxFiles   = props_ptr->get_int("Hypertable.RangeServer.AccessGroup.MaxFiles", 10);
   Global::localityGroupMergeFiles = props_ptr->get_int("Hypertable.RangeServer.AccessGroup.MergeFiles", 4);
   Global::localityGroupMaxMemory  = props_ptr->get_int("Hypertable.RangeServer.AccessGroup.MaxMemory", 50000000);
+  maintenance_threads             = props_ptr->get_int("Hypertable.RangeServer.MaintenanceThreads", 1);
   port                            = props_ptr->get_int("Hypertable.RangeServer.Port", DEFAULT_PORT);
   m_scanner_ttl                   = (time_t)props_ptr->get_int("Hypertable.RangeServer.Scanner.Ttl", 120);
   m_timer_interval                = props_ptr->get_int("Hypertable.RangeServer.Timer.Interval", 60);
@@ -98,6 +100,7 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
     cout << "Hypertable.RangeServer.AccessGroup.MergeFiles=" << Global::localityGroupMergeFiles << endl;
     cout << "Hypertable.RangeServer.BlockCache.MaxMemory=" << blockCacheMemory << endl;
     cout << "Hypertable.RangeServer.Range.MaxBytes=" << Global::rangeMaxBytes << endl;
+    cout << "Hypertable.RangeServer.MaintenanceThreads=" << maintenance_threads << endl;
     cout << "Hypertable.RangeServer.Port=" << port << endl;
     //cout << "Hypertable.RangeServer.workers=" << workerCount << endl;
   }
@@ -161,7 +164,7 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
     exit(1);
 
   // Create the maintenance queue
-  Global::maintenance_queue = new MaintenanceQueue(1);
+  Global::maintenance_queue = new MaintenanceQueue(maintenance_threads);
 
   // Create table info maps
   m_live_map_ptr = new TableInfoMap();
@@ -1051,7 +1054,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
       /**
        * Split and Compaction processing
        */
-      {
+      if (!min_ts_rec.range_ptr->maintenance_in_progress()) {
 	std::vector<AccessGroup::CompactionPriorityDataT> priority_data_vec;
 	std::vector<AccessGroup *> compactions;
 	uint64_t disk_usage = 0;
@@ -1563,25 +1566,41 @@ void RangeServer::log_cleanup() {
    * garbage collecting commit log fragments
    */
   for (size_t i=0; i<priority_data_vec.size(); i++) {
+
+    if (priority_data_vec[i].oldest_cached_timestamp == 0)
+      continue;
+    
     LogFragmentPriorityMap::iterator map_iter = log_frag_map.lower_bound( priority_data_vec[i].oldest_cached_timestamp );
 
     // this should never happen
     if (map_iter == log_frag_map.end())
       continue;
 
+    if ((*map_iter).second.cumulative_size > prune_threshold) {
+      if (priority_data_vec[i].mem_used > 0)
+	priority_data_vec[i].ag->set_compaction_bit();
+      size_t rangei = (size_t)priority_data_vec[i].user_data;
+      if (!range_vec[rangei]->test_and_set_maintenance()) {
+	Global::maintenance_queue->add( new MaintenanceTaskCompaction(range_vec[rangei], false) );
+      }
+    }
+
+#if 0
     if (priority_data_vec[i].oldest_cached_timestamp > 0)
       priority_data_vec[i].log_space_pinned = (*map_iter).second.cumulative_size;
     else
       priority_data_vec[i].log_space_pinned = 0;
-
+#endif
   }
 
+#if 0
   {
     struct ltPriorityData compFunc;
     std::sort(priority_data_vec.begin(), priority_data_vec.end(), compFunc);
     for (size_t i=0; i<priority_data_vec.size(); i++) {
       if (priority_data_vec[i].log_space_pinned >  prune_threshold) {
 	size_t rangei = (size_t)priority_data_vec[i].user_data;
+	HT_EXPECT(rangei >= 0 && rangei < range_vec.size(), Error::FAILED_EXPECTATION);
 	if (!range_vec[rangei]->test_and_set_maintenance()) {
 	  priority_data_vec[i].ag->set_compaction_bit();
 	  Global::maintenance_queue->add( new MaintenanceTaskCompaction(range_vec[rangei], false) );
@@ -1591,6 +1610,7 @@ void RangeServer::log_cleanup() {
 	break;
     }
   }
+#endif
 
   /**
    * Purge the commit log

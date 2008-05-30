@@ -47,6 +47,7 @@ AccessGroup::AccessGroup(TableIdentifier *identifier, SchemaPtr &schemaPtr, Sche
   m_table_name = m_identifier.name;
   m_start_row = range->start_row;
   m_end_row = range->end_row;
+  m_range_name = m_table_name + "[" + m_start_row + ".." + m_end_row + "]";
   m_cell_cache_ptr = new CellCache();
 
   for (list<Schema::ColumnFamily *>::iterator iter = ag->columns.begin(); iter != ag->columns.end(); iter++) {
@@ -179,16 +180,18 @@ void AccessGroup::get_cached_rows(std::vector<String> &rows) {
 
 uint64_t AccessGroup::disk_usage() {
   boost::mutex::scoped_lock lock(m_mutex);
-  uint64_t du = (m_in_memory) ? m_disk_usage : 0;
-  return du + (uint64_t)(m_compression_ratio * (float)m_cell_cache_ptr->memory_used());
+  uint64_t du = (m_in_memory) ? 0 : m_disk_usage;
+  uint64_t mu = m_cell_cache_ptr->memory_used();
+  return du + (uint64_t)(m_compression_ratio * (float)mu);
 }
 
 void AccessGroup::get_compaction_priority_data(CompactionPriorityDataT &priority_data) {
   boost::mutex::scoped_lock lock(m_mutex);
   priority_data.ag = this;
   priority_data.oldest_cached_timestamp = m_oldest_cached_timestamp;
-  priority_data.mem_used = m_cell_cache_ptr->memory_used();
-  priority_data.disk_used = m_disk_usage + (uint64_t)(m_compression_ratio * (float)m_cell_cache_ptr->memory_used());
+  uint64_t mu = m_cell_cache_ptr->memory_used();
+  priority_data.mem_used = mu;
+  priority_data.disk_used = m_disk_usage + (uint64_t)(m_compression_ratio * (float)mu);
   priority_data.in_memory = m_in_memory;
   priority_data.deletes = m_cell_cache_ptr->get_delete_count();
 }
@@ -204,6 +207,7 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore_ptr, uint32_t id) {
     return;
 
   m_disk_usage += cellstore_ptr->disk_usage();
+  m_compression_ratio = cellstore_ptr->compression_ratio();
 
   // Record the most recent compaction timestamp
   if (m_compaction_timestamp.logical == 0)
@@ -260,26 +264,30 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
   {
     boost::mutex::scoped_lock lock(m_mutex);
     if (m_in_memory) {
+      if (m_cell_cache_ptr->memory_used() == 0)
+	return;
       tableIndex = m_stores.size();
-      HT_INFOF("Starting InMemory Compaction (%s.%s end_row='%s')", m_table_name.c_str(), m_name.c_str(), m_end_row.c_str());
+      HT_INFOF("Starting InMemory Compaction of %s(%s)", m_range_name.c_str(), m_name.c_str());
     }
     else if (major) {
       // TODO: if the oldest CellCache entry is newer than timestamp, then return
       if (m_cell_cache_ptr->memory_used() == 0 && m_stores.size() <= (size_t)1)
 	return;
       tableIndex = 0;
-      HT_INFOF("Starting Major Compaction (%s.%s)", m_table_name.c_str(), m_name.c_str());
+      HT_INFOF("Starting Major Compaction of %s(%s)", m_range_name.c_str(), m_name.c_str());
     }
     else {
       if (m_stores.size() > (size_t)Global::localityGroupMaxFiles) {
 	ltCellStore sortObj;
 	sort(m_stores.begin(), m_stores.end(), sortObj);
 	tableIndex = m_stores.size() - Global::localityGroupMergeFiles;
-	HT_INFOF("Starting Merging Compaction (%s.%s)", m_table_name.c_str(), m_name.c_str());
+	HT_INFOF("Starting Merging Compaction of %s(%s)", m_range_name.c_str(), m_name.c_str());
       }
       else {
+	if (m_cell_cache_ptr->memory_used() == 0)
+	  return;
 	tableIndex = m_stores.size();
-	HT_INFOF("Starting Minor Compaction (%s.%s)", m_table_name.c_str(), m_name.c_str());
+	HT_INFOF("Starting Minor Compaction of %s(%s)", m_range_name.c_str(), m_name.c_str());
       }
     }
   }
@@ -300,6 +308,7 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
   }
 
   {
+    boost::mutex::scoped_lock lock(m_mutex);
     ScanContextPtr scan_context_ptr = new ScanContext(timestamp.logical+1, m_schema_ptr);
 
     if (m_in_memory) {
@@ -400,8 +409,7 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
   m_scanners_blocked = false;
   m_scanner_blocked_cond.notify_all();
 
-
-  HT_INFOF("Finished Compaction (%s.%s)", m_table_name.c_str(), m_name.c_str());
+  HT_INFOF("Finished Compaction of %s(%s)", m_range_name.c_str(), m_name.c_str());
 }
 
 
@@ -423,6 +431,7 @@ int AccessGroup::shrink(String &new_start_row) {
   uint64_t items_added = 0;
 
   m_start_row = new_start_row;
+  m_range_name = m_table_name + "[" + m_start_row + ".." + m_end_row + "]";
 
   new_cell_cache_ptr = new CellCache();
   new_cell_cache_ptr->lock();

@@ -61,6 +61,8 @@ Range::Range(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, Sc
   m_start_row = range->start_row;
   m_end_row = range->end_row;
 
+  m_name = std::string(identifier->name) + "[" + m_start_row + ".." + m_end_row + "]";
+
   m_is_root = (m_identifier.id == 0 && *range->start_row == 0 && !strcmp(range->end_row, Key::END_ROOT_ROW));
 
   m_column_family_vector.resize( m_schema->get_max_column_family_id() + 1 );
@@ -371,9 +373,11 @@ void Range::split_install_log(Timestamp *timestampp, String &old_start_row) {
   sort(split_rows.begin(), split_rows.end());
 
   /**
-  cout << "Dumping split rows for " << m_identifier.name << "[" << m_start_row << ".." << m_end_row << "]" << endl;
+  cout << flush;
+  cout << "thelma Dumping split rows for " << m_name << "\n";
   for (size_t i=0; i<split_rows.size(); i++)
-    cout << "Range::get_split_row [" << i << "] = " << split_rows[i] << endl;
+    cout << "thelma Range::get_split_row [" << i << "] = " << split_rows[i] << "\n";
+  cout << flush;
   */
 
   /**
@@ -541,6 +545,7 @@ void Range::split_compact_and_shrink(Timestamp timestamp, String &old_start_row)
     {
       boost::mutex::scoped_lock lock(m_mutex);
       m_start_row = m_split_row;
+      m_name = std::string(m_identifier.name) + "[" + m_start_row + ".." + m_end_row + "]";
       m_split_row = "";
       for (size_t i=0; i<m_access_group_vector.size(); i++)
 	m_access_group_vector[i]->shrink(m_start_row);

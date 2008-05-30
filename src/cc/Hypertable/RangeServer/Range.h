@@ -101,6 +101,10 @@ namespace Hypertable {
       return old_value;
     }
 
+    bool maintenance_in_progress() {
+      return m_maintenance_in_progress;
+    }
+
     void split();
     void compact(bool major=false);
 
@@ -137,6 +141,11 @@ namespace Hypertable {
 	m_access_group_vector[i]->drop();
     }
 
+    String get_name() {
+      boost::mutex::scoped_lock lock(m_mutex);
+      return (String)m_name;
+    }
+
   private:
 
     void load_cell_stores(Metadata *metadata);
@@ -155,6 +164,7 @@ namespace Hypertable {
     SchemaPtr           m_schema;
     String  m_start_row;
     String  m_end_row;
+    String  m_name;
     AccessGroupMapT        m_access_group_map;
     std::vector<AccessGroup *>  m_access_group_vector;
     ColumnFamilyVectorT      m_column_family_vector;

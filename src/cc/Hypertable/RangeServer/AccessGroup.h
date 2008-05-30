@@ -126,6 +126,7 @@ namespace Hypertable {
     String          m_table_name;
     String          m_start_row;
     String          m_end_row;
+    String          m_range_name;
     std::vector<CellStorePtr> m_stores;
     CellCachePtr         m_cell_cache_ptr;
     uint32_t             m_next_table_id;
