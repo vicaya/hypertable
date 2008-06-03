@@ -23,11 +23,15 @@
     - readline-devel
     - ncurses-devel
 
+    On Ubuntu:
+    - apt-get install git-core
+    - apt-get install libboost.*-dev libboost-doc libboost.*1.34.1
+    - apt-get install libattr1 libattr1-dev
+    - apt-get install libexpat1 libexpat1-dev
+    - apt-get install libreadline5 libreadline5-dev
+
     HIGHLY RECOMMENDED (but not required):
     - tcmalloc (http://code.google.com/p/google-perftools/)
-
-    NOTE: If tcmalloc is available on your system, install it.  Hypertable is
-          very malloc intensive and tcmalloc provides a huge performance improvement.
 
   3. Checkout the source code.
 

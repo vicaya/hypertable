@@ -28,6 +28,8 @@ extern "C" {
 namespace Hypertable {
 
   extern const int HYPERTABLE_CLIENT_TIMEOUT;
+
+  extern const int HYPERTABLE_LOCATIONCACHE_MAXENTRIES;
   
   extern const int HYPERTABLE_MASTER_CLIENT_TIMEOUT;
   extern const int HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT;
