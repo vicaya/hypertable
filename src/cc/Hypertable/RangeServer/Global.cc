@@ -46,5 +46,7 @@ namespace Hypertable {
   TablePtr               Global::metadata_table_ptr = 0;
   uint64_t               Global::range_metadata_max_bytes = 0;
   MemoryTracker          Global::memory_tracker;
+  uint64_t               Global::log_prune_threshold_min = 0;
+  uint64_t               Global::log_prune_threshold_max = 0;
 
 }

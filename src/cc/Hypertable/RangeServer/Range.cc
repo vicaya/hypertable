@@ -50,7 +50,7 @@ using namespace Hypertable;
 using namespace std;
 
 
-Range::Range(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, SchemaPtr &schemaPtr, RangeSpec *range, RangeState *state) : CellList(), m_mutex(), m_master_client_ptr(master_client_ptr), m_identifier(identifier), m_schema(schemaPtr), m_maintenance_in_progress(false), m_last_logical_timestamp(0), m_hold_updates(false), m_update_counter(0), m_added_inserts(0), m_state(*state), m_error(Error::OK) {
+Range::Range(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, SchemaPtr &schemaPtr, RangeSpec *range, RangeState *state) : m_master_client_ptr(master_client_ptr), m_identifier(identifier), m_schema(schemaPtr), m_maintenance_in_progress(false), m_last_logical_timestamp(0), m_added_inserts(0), m_state(*state), m_error(Error::OK) {
   AccessGroup *ag;
   
   memset(m_added_deletes, 0, 3*sizeof(int64_t));
@@ -276,7 +276,6 @@ int Range::replay_add(const ByteString key, const ByteString value, uint64_t rea
 
 CellListScanner *Range::create_scanner(ScanContextPtr &scanContextPtr) {
   bool return_deletes = scanContextPtr->spec ? scanContextPtr->spec->return_deletes : false;
-  cout << flush;
   MergeScanner *mscanner = new MergeScanner(scanContextPtr, return_deletes);
   for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++) {
     if ((*iter).second->include_in_scan(scanContextPtr))
@@ -301,10 +300,7 @@ uint64_t Range::disk_usage() {
 void Range::get_compaction_priority_data(std::vector<AccessGroup::CompactionPriorityDataT> &priority_data_vector) {
   size_t next_slot = priority_data_vector.size();
 
-  {
-    boost::mutex::scoped_lock lock(m_mutex);
-    priority_data_vector.resize( priority_data_vector.size() + m_access_group_vector.size() );
-  }
+  priority_data_vector.resize( priority_data_vector.size() + m_access_group_vector.size() );
 
   for (size_t i=0; i<m_access_group_vector.size(); i++) {
     m_access_group_vector[i]->get_compaction_priority_data(priority_data_vector[next_slot]);
@@ -439,26 +435,15 @@ void Range::split_install_log(Timestamp *timestampp, String &old_start_row) {
    * Create and install the split log
    */
   {
-    boost::mutex::scoped_lock lock(m_maintenance_mutex);
-
-    /** block updates **/
-    m_hold_updates = true;
-    while (m_update_counter > 0)
-      m_update_quiesce_cond.wait(lock);
-
-    {
-      boost::mutex::scoped_lock lock(m_mutex);
-      if (!m_scanner_timestamp_controller.get_oldest_update_timestamp(timestampp) ||
-	  timestampp->logical == 0)
-	*timestampp = m_timestamp;
-      old_start_row = m_start_row;
-      m_split_log_ptr = new CommitLog(Global::dfs, m_state.transfer_log);
-    }
-
-    /** unblock updates **/
-    m_hold_updates = false;
-    m_maintenance_finished_cond.notify_all();
+    RangeUpdateBarrier::ScopedActivator block_updates(m_update_barrier);
+    boost::mutex::scoped_lock lock(m_mutex);
+    if (!m_scanner_timestamp_controller.get_oldest_update_timestamp(timestampp) ||
+	timestampp->logical == 0)
+      *timestampp = m_timestamp;
+    old_start_row = m_start_row;
+    m_split_log_ptr = new CommitLog(Global::dfs, m_state.transfer_log);
   }
+
 }
 
 
@@ -534,33 +519,23 @@ void Range::split_compact_and_shrink(Timestamp timestamp, String &old_start_row)
    */
 
   {
-    boost::mutex::scoped_lock lock(m_maintenance_mutex);
-
-    // block updates
-    m_hold_updates = true;
-    while (m_update_counter > 0)
-      m_update_quiesce_cond.wait(lock);
+    RangeUpdateBarrier::ScopedActivator block_updates(m_update_barrier);
+    boost::mutex::scoped_lock lock(m_mutex);
 
     // Shrink access groups
-    {
-      boost::mutex::scoped_lock lock(m_mutex);
-      m_start_row = m_split_row;
-      m_name = std::string(m_identifier.name) + "[" + m_start_row + ".." + m_end_row + "]";
-      m_split_row = "";
-      for (size_t i=0; i<m_access_group_vector.size(); i++)
-	m_access_group_vector[i]->shrink(m_start_row);
-    }
+    m_start_row = m_split_row;
+    m_name = std::string(m_identifier.name) + "[" + m_start_row + ".." + m_end_row + "]";
+    m_split_row = "";
+    for (size_t i=0; i<m_access_group_vector.size(); i++)
+      m_access_group_vector[i]->shrink(m_start_row);
 
     // Close and uninstall split log
     if ((error = m_split_log_ptr->close()) != Error::OK) {
       HT_ERRORF("Problem closing split log '%s' - %s", m_split_log_ptr->get_log_dir().c_str(), Error::get_text(error));
     }
     m_split_log_ptr = 0;
-
-    // unblock updates
-    m_hold_updates = false;
-    m_maintenance_finished_cond.notify_all();
   }
+
 }
 
 
@@ -603,21 +578,9 @@ void Range::run_compaction(bool major) {
   Timestamp timestamp;
 
   {
-    boost::mutex::scoped_lock lock(m_maintenance_mutex);
-
-    /** block updates **/
-    m_hold_updates = true;
-    while (m_update_counter > 0)
-      m_update_quiesce_cond.wait(lock);
-
-    {
-      boost::mutex::scoped_lock lock(m_mutex);
-      timestamp = m_timestamp;
-    }
-
-    /** unblock updates **/
-    m_hold_updates = false;
-    m_maintenance_finished_cond.notify_all();
+    RangeUpdateBarrier::ScopedActivator block_updates(m_update_barrier);
+    boost::mutex::scoped_lock lock(m_mutex);
+    timestamp = m_timestamp;
   }
 
   /**
@@ -731,28 +694,6 @@ void Range::replay_transfer_log(CommitLogReader *commit_log_reader, uint64_t rea
     HT_ERRORF("Problem replaying split log - %s '%s'", Error::get_text(e.code()), e.what());
     throw;
   }
-}
-
-
-/**
- *
- */
-void Range::increment_update_counter() {
-  boost::mutex::scoped_lock lock(m_maintenance_mutex);
-  while (m_hold_updates)
-    m_maintenance_finished_cond.wait(lock);
-  m_update_counter++;
-}
-
-
-/**
- *
- */
-void Range::decrement_update_counter() {
-  boost::mutex::scoped_lock lock(m_maintenance_mutex);
-  m_update_counter--;
-  if (m_hold_updates && m_update_counter == 0)
-    m_update_quiesce_cond.notify_one();
 }
 
 

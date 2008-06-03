@@ -473,7 +473,7 @@ namespace Hypertable {
 	}
 	if (ptr == str) {
 	  state.scan.end_row  = state.scan.start_row;
-	  state.scan.end_row.append(1, (char)0xff);
+	  state.scan.end_row.append(4, (char)0xff);
 	}
 	state.scan.end_row_inclusive = false;
       }

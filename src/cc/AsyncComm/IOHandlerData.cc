@@ -287,7 +287,7 @@ int IOHandlerData::send_message(CommBufPtr &cbufPtr, time_t timeout, DispatchHan
   boost::mutex::scoped_lock lock(m_mutex);
   int error;
   bool initiallyEmpty = m_send_queue.empty() ? true : false;
-  Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data;
+  Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data.base;
 
   HT_LOG_ENTER;
   
@@ -319,7 +319,7 @@ int IOHandlerData::send_message(CommBufPtr &cbufPtr, time_t timeout, DispatchHan
 
 
 int IOHandlerData::flush_send_queue() {
-  ssize_t nwritten, towrite;
+  ssize_t nwritten, towrite, remaining;
   struct iovec vec[2];
   int count;
 
@@ -329,14 +329,15 @@ int IOHandlerData::flush_send_queue() {
 
     count = 0;
     towrite = 0;
-    if (cbufPtr->dataLen > 0) {
-      vec[0].iov_base = (void *)cbufPtr->data;
-      vec[0].iov_len = cbufPtr->dataLen;
-      towrite = cbufPtr->dataLen;
+    remaining = cbufPtr->data.size - (cbufPtr->data_ptr - cbufPtr->data.base);
+    if (remaining > 0) {
+      vec[0].iov_base = (void *)cbufPtr->data_ptr;
+      vec[0].iov_len = remaining;
+      towrite = remaining;
       ++count;
     }
     if (cbufPtr->ext.base != 0) {
-      ssize_t remaining = cbufPtr->ext.size - (cbufPtr->ext_ptr - cbufPtr->ext.base);
+      remaining = cbufPtr->ext.size - (cbufPtr->ext_ptr - cbufPtr->ext.base);
       if (remaining > 0) {
 	vec[count].iov_base = (void *)cbufPtr->ext_ptr;
 	vec[count].iov_len = remaining;
@@ -353,15 +354,15 @@ int IOHandlerData::flush_send_queue() {
     else if (nwritten < towrite) {
       if (nwritten == 0)
 	break;
-      if (cbufPtr->dataLen > 0) {
-	if (nwritten < (ssize_t)cbufPtr->dataLen) {
-	  cbufPtr->dataLen -= nwritten;
-	  cbufPtr->data += nwritten;
+      remaining = cbufPtr->data.size - (cbufPtr->data_ptr - cbufPtr->data.base);
+      if (remaining > 0) {
+	if (nwritten < remaining) {
+	  cbufPtr->data_ptr += nwritten;
 	  break;
 	}
 	else {
-	  nwritten -= cbufPtr->dataLen;
-	  cbufPtr->dataLen = 0;
+	  nwritten -= remaining;
+	  cbufPtr->data_ptr += remaining;
 	}
       }
       if (cbufPtr->ext.base != 0) {

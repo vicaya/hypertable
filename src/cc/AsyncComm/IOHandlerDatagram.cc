@@ -183,33 +183,32 @@ int IOHandlerDatagram::send_message(struct sockaddr_in &addr, CommBufPtr &cbufPt
 
 
 int IOHandlerDatagram::flush_send_queue() {
-  ssize_t nsent;
+  ssize_t nsent, tosend;
 
   while (!m_send_queue.empty()) {
 
     SendRecT &sendRec = m_send_queue.front();
 
-    assert(sendRec.second->dataLen > 0);
+    tosend = sendRec.second->data.size - (sendRec.second->data_ptr - sendRec.second->data.base);
+
+    assert(tosend > 0);
     assert(sendRec.second->ext.base == 0);
 
-    nsent = FileUtils::sendto(m_sd, sendRec.second->data, sendRec.second->dataLen,
+    nsent = FileUtils::sendto(m_sd, sendRec.second->data_ptr, tosend,
 			      (const sockaddr*)&sendRec.first, sizeof(struct sockaddr_in));
 
     if (nsent == (ssize_t)-1) {
-      HT_WARNF("FileUtils::sendto(%d, len=%d, addr=%s:%d) failed : %s", m_sd, sendRec.second->dataLen,
+      HT_WARNF("FileUtils::sendto(%d, len=%d, addr=%s:%d) failed : %s", m_sd, tosend,
 		  inet_ntoa(sendRec.first.sin_addr), ntohs(sendRec.first.sin_port), strerror(errno));
       return Error::COMM_SEND_ERROR;
     }
-    else if (nsent < (ssize_t)sendRec.second->dataLen) {
+    else if (nsent < tosend) {
       HT_WARNF("Only sent %d bytes", nsent);
       if (nsent == 0)
 	break;
-      sendRec.second->dataLen -= nsent;
-      sendRec.second->data += nsent;
+      sendRec.second->data_ptr += nsent;
       break;
     }
-
-    //HT_INFOF("Successfully sent message to %s:%d", inet_ntoa(sendRec.first.sin_addr), ntohs(sendRec.first.sin_port));
 
     // buffer written successfully, now remove from queue (which will destroy buffer)
     m_send_queue.pop_front();

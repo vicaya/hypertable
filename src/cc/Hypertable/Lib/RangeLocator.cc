@@ -171,6 +171,7 @@ void RangeLocator::find_loop(TableIdentifier *table, const char *row_key, RangeL
   error = find(table, row_key, range_loc_info_p, timer, hard);
 
   if (error == Error::TABLE_DOES_NOT_EXIST) {
+    boost::mutex::scoped_lock lock(m_mutex);
     m_last_errors.clear();
     throw Exception(error, (std::string)"Table '" + table->name + "' is being dropped.");
   }

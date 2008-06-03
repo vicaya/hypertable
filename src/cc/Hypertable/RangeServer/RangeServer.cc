@@ -25,6 +25,7 @@
 #include <boost/shared_array.hpp>
 
 extern "C" {
+#include <math.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 }
@@ -62,7 +63,7 @@ namespace {
 /**
  * Constructor
  */
-RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, ApplicationQueuePtr &app_queue_ptr, Hyperspace::SessionPtr &hyperspace_ptr) : m_props_ptr(props_ptr), m_verbose(false), m_conn_manager_ptr(conn_manager_ptr), m_app_queue_ptr(app_queue_ptr), m_hyperspace_ptr(hyperspace_ptr), m_last_commit_log_clean(0) {
+RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, ApplicationQueuePtr &app_queue_ptr, Hyperspace::SessionPtr &hyperspace_ptr) : m_props_ptr(props_ptr), m_verbose(false), m_conn_manager_ptr(conn_manager_ptr), m_app_queue_ptr(app_queue_ptr), m_hyperspace_ptr(hyperspace_ptr), m_last_commit_log_clean(0), m_bytes_loaded(0) {
   int error;
   uint16_t port;
   uint32_t maintenance_threads = 1;
@@ -289,6 +290,11 @@ int RangeServer::initialize(PropertiesPtr &props_ptr) {
     cout << "logDir=" << Global::logDir << endl;
 
   Global::log = new CommitLog(Global::logDfs, primary_log_dir, props_ptr);
+
+  Global::log_prune_threshold_min = props_ptr->get_int64("Hypertable.RangeServer.CommitLog.PruneThreshold.Min", 
+							 2 * Global::log->get_max_fragment_size());
+  Global::log_prune_threshold_max = props_ptr->get_int64("Hypertable.RangeServer.CommitLog.PruneThreshold.Max", 
+							 10 * Global::log_prune_threshold_min);
 
   return Error::OK;
 }
@@ -1142,6 +1148,8 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
       m_update_mutex_a.unlock();
   }
 
+  m_bytes_loaded += buffer.size;
+
  abort:
 
   Global::memory_tracker.add_memory(memory_added);
@@ -1535,9 +1543,16 @@ void RangeServer::log_cleanup() {
   LogFragmentPriorityMap log_frag_map;
   std::set<size_t> compaction_set;
   uint64_t timestamp, oldest_cached_timestamp = 0;
-  uint64_t prune_threshold = 2 * Global::log->get_max_fragment_size();
+  uint64_t prune_threshold;
 
-  HT_INFO("Cleaning log");
+  // compute prune threshold
+  prune_threshold = (uint64_t)(log((double)(m_bytes_loaded / m_timer_interval)) * (double)142857142.85);
+  if (prune_threshold < Global::log_prune_threshold_min)
+    prune_threshold = Global::log_prune_threshold_min;
+  else if (prune_threshold > Global::log_prune_threshold_max)
+    prune_threshold = Global::log_prune_threshold_max;
+
+  HT_INFOF("Cleaning log (threshold=%lld)", prune_threshold);
   cout << flush;
 
   m_live_map_ptr->get_all(table_vec);
@@ -1584,33 +1599,7 @@ void RangeServer::log_cleanup() {
 	Global::maintenance_queue->add( new MaintenanceTaskCompaction(range_vec[rangei], false) );
       }
     }
-
-#if 0
-    if (priority_data_vec[i].oldest_cached_timestamp > 0)
-      priority_data_vec[i].log_space_pinned = (*map_iter).second.cumulative_size;
-    else
-      priority_data_vec[i].log_space_pinned = 0;
-#endif
   }
-
-#if 0
-  {
-    struct ltPriorityData compFunc;
-    std::sort(priority_data_vec.begin(), priority_data_vec.end(), compFunc);
-    for (size_t i=0; i<priority_data_vec.size(); i++) {
-      if (priority_data_vec[i].log_space_pinned >  prune_threshold) {
-	size_t rangei = (size_t)priority_data_vec[i].user_data;
-	HT_EXPECT(rangei >= 0 && rangei < range_vec.size(), Error::FAILED_EXPECTATION);
-	if (!range_vec[rangei]->test_and_set_maintenance()) {
-	  priority_data_vec[i].ag->set_compaction_bit();
-	  Global::maintenance_queue->add( new MaintenanceTaskCompaction(range_vec[rangei], false) );
-	}
-      }
-      else
-	break;
-    }
-  }
-#endif
 
   /**
    * Purge the commit log
@@ -1618,6 +1607,7 @@ void RangeServer::log_cleanup() {
   if (oldest_cached_timestamp != 0)
     Global::log->purge(oldest_cached_timestamp);
 
+  m_bytes_loaded = 0;
 }
 
 

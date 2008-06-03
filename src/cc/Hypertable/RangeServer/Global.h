@@ -67,6 +67,8 @@ namespace Hypertable {
     static TablePtr       metadata_table_ptr;
     static uint64_t       range_metadata_max_bytes;
     static Hypertable::MemoryTracker memory_tracker;
+    static uint64_t       log_prune_threshold_min;
+    static uint64_t       log_prune_threshold_max;
   };
 }
 
