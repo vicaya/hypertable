@@ -1,3 +1,111 @@
+Version 0.9.0.5:
+(2008-06-03)
+
+  * Made size of location cache configurable; set default to 1M
+  * [issue 67] fixed bad free in comm layer
+  * Fixed log fragment GC problem
+  * Fixed race condition in LocalBroker::close()
+  * Fixed doxygen comments; Updated Doxyfile to exclude boost fix dir
+  * [issue 99] Added TableMutator::retry()
+  * [issue 18] Added support for '~' expansion in hypertable
+  * [issue 10] Implemented proper serialization for Serialization.h functions
+  * [Issue 104] Fixed hang problem in HdfsBroker
+  * Changed serialization byte ordering to little endian
+  * Purge old cells to avoid repeated deletion of old files
+  * Various portability fixes
+  * [Issue 71] Fixed lagging scanners referencing GC'd CellStore problem
+  * Added release callback to MergeScanner
+  * Added GC support for issue 71 (race condition while compaction/scanning)
+  * Added Filesystem::rename and friends
+  * Added flush option to Filesystem::append and friends
+  * [issue 41] Fixed CellCache::purge_deletes problem
+  * Got RANGESERVER_ROW_OVERFLOW error propagating back to client
+  * Upgraged to Hadoop 0.16.4
+  * Overhauled Client library to send errors back as deltas
+  * Added mutex class to accomodate changes in boost 1.35+
+  * Fixed ambiguous operator+ overload problem
+  * Created new StaticBuffer class which is now used in all internal APIs
+  * Added destructor to Buffer class
+  * Cleaned up DynamicBuffer and Buffer
+  * Rearranged for better branch prediction in encoded_length_vi*
+  * Switched to a more reliable signal facility (sigaction)
+  * Got rid of some warnings on release build
+  * Fixed compile problem on Ubuntu
+  * Got rid of ByteString32 in favor of vint ByteString
+  * Moved Serialization.h and its tests to Common
+  * Added decode_i8 and regression tests.
+  * Refactored BufferT and ExtBufferT usages to use Common/Buffer
+  * Changed format of buffer passed to replay_update();
+  * Added portable serialization code:
+  * Added support for exception chaining.
+  * Changed append API to reflect the ownership change of write buffer
+  * Added include for stricter compilers (e.g. gcc 4.1.2)
+  * Changed TableIdentifierWrapper to TableIdentifierCopy
+  * Got rid of the EncodedLength/Encode/Decode functions from Types.h
+  * Implemented RangeServer::replay_update
+  * Modified RangeServer::load_range to include RangeState object
+  * Fixed some build problems on mac (because of newly added dependencies)
+  * Enhanced LOAD DATA INFILE to accept alt. header file and zipped files
+  * Fixed free memory used problem and got rid of warnings
+  * Added REQUEST_TIMEOUT exception to client; upgraded to Hadoop 0.16.3
+  * Added wrapper for high res time
+  * Added timeouts to TableMutator and TableScanner
+  * Changed RangeServerClient to throw exceptions
+  * Made scan spec public fields naming consistent with the rest of the API
+  * Logging cleanup; now redirectable; flushable; added stream macros
+  * Made ReferenceCount noncopyable
+  * Fixed a leaking corner case in Hypertable::format
+  * Added RangeState and re-organized Range split logic
+  * Added TableIdentifierWrapper and RangeState
+  * Allow keys to be built from multiple columns in LOAD DATA INFILE
+  * Fixed segfault caused by race condition in sampleClient
+  * Commit log re-write
+  * Fixed HdfsBroker::rmdir to return FileNotFound
+  * Moved header checksum to end of header; Improved split row selection
+  * FS interface cleanup. Use exception where appropriate.
+  * Cleaned up BlockCompressionHeader code
+  * Fixed bug in startup scripts related to hadoop upgrade
+  * Fixed initialization order problem in RangeServer
+  * Cleaned up CommitLog types and added doxygen comments
+  * Added smart pointers to MetaLog readers
+  * Finished adding exists method to DfsBroker client
+  * Added exists() method to Filesystem interface; Upgraded to Hadoop 0.16.2
+  * Fixed regressions due to the license preamble change
+  * Wrap long lines in license preambles.
+  * Delete cruft in attic along with the attic
+  * Modified ApacheLogParser to handle .gz files
+  * Put time formatting in a function for apache_log example
+  * Changed ApacheLogEntryT to ApacheLogEntry
+  * Cleaned up and improved apache_log example
+  * Got rid of error codes in Client API in favor of exceptions
+  * Types name change; Comment header update
+  * First cut of meta log API
+  * More build cleanups: move generic definitions outside gcc macros; support gcc 3.4.x
+  * Use our faster implementations by default and rename wikipedia based impls to *_wp
+  * Reorganized Range split logic for new MetaLog implementation
+  * Fixed bug that was causing default CellStore compressor to be "none"
+  * Changed so SplitPoint and SplitDir are passed through Master
+  * Got rid of split_timestamp
+  * Dropped timestamp from location string
+  * Handle large files on 32-bit systems.
+  * Fixed problem loading .tsv files > 2GB on Linux
+  * Changed argument of RangeServer::drop_table to TableIdentifierT
+  * Fixed IN_MEMORY loading problems (issue #66)
+  * Fixed initialization problem in hypertable command interperter
+  * Added replay commands to rsclient; Added RangeServer::drop_range()
+  * Implemented RangeServer::replay_start and replay_commit
+  * Got rid of boost program_options hack
+  * Build and install cleanups.
+  * Ported rsclient to new command line shell framework
+  * Abstracted command line shell into class that can be shared
+  * Fixed a few small (seemingly innocuous) issues in AsyncComm
+  * Fixed memory tracking
+  * Added complete TableIdentifier into CommitLog entry headers
+  * Created TableInfoMap class to prepare for "replay" map
+  * Added plumbing for RangeServer replay methods
+  * Modified ScannerTimestampController to store Timestamp objects
+  * Fixed FindBoost.cmake on Redhat 4u3
+  * Changed CMakeLists.txt files to facilitate use of other malloc packages
 
 Version 0.9.0.4:
 (2008-02-27)
