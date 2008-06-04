@@ -37,7 +37,7 @@ target_link_libraries (dfsclient pthread ${BOOST_LIB} log4cpp expat readline cur
 
 # dfsTest
 add_executable (dfsTest dfsTest.cc dfsTestThreadFunction.cc ${dfsclient_SRCS})
-target_link_libraries (dfsTest pthread ${BOOST_LIB} log4cpp HyperDfsBroker Hypertable ${MALLOC_LIBRARY})
+target_link_libraries (dfsTest pthread ${BOOST_LIB} log4cpp HyperDfsBroker Hypertable HyperCommon ${MALLOC_LIBRARY})
 
 configure_file(${SRC_DIR}/dfsTest.golden ${DST_DIR}/dfsTest.golden COPYONLY)
 

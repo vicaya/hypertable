@@ -228,29 +228,37 @@ void HqlCommandInterpreter::execute_line(const String &line) {
 	mutator_ptr = table_ptr->create_mutator();
       }
 
-      boost::trim_if(state.str, boost::is_any_of("'\""));
+      if (!FileUtils::exists(state.input_file.c_str()))
+	throw Exception(Error::FILE_NOT_FOUND, state.input_file);
 
-      if (!FileUtils::exists(state.str.c_str()))
-	throw Exception(Error::FILE_NOT_FOUND, state.str);
-
-      file_size = FileUtils::size(state.str.c_str());
+      file_size = FileUtils::size(state.input_file.c_str());
 
       printf("\nLoading ");
-      if (file_size > 1000000000000LL)
-	printf("%3lld,", file_size/1000000000000LL);
-      if (file_size > 1000000000LL)
-	printf("%3lld,", (file_size%1000000000000LL) / 1000000000LL);
-      if (file_size > 1000000LL)
-	printf("%3lld,", (file_size%1000000000LL) / 1000000LL);
-      if (file_size > 1000LL)
-	printf("%3lld,", (file_size%1000000LL) / 1000LL);
-      printf("%3lld", file_size % 1000LL);
+      const char *format = "%3lld,";
+      if (file_size > 1000000000000LL) {
+	printf(format, file_size/1000000000000LL);
+	format = "%03lld,";
+      }
+      if (file_size > 1000000000LL) {
+	printf(format, (file_size%1000000000000LL) / 1000000000LL);
+	format = "%03lld,";
+      }
+      if (file_size > 1000000LL) {
+	printf(format, (file_size%1000000000LL) / 1000000LL);
+	format = "%03lld,";
+      }
+      if (file_size > 1000LL) {
+	printf(format, (file_size%1000000LL) / 1000LL);
+	printf("%03lld", file_size % 1000LL);
+      }
+      else
+	printf("%3lld", file_size % 1000LL);
       printf(" bytes of input data...\n");
       fflush(stdout);
 
       boost::progress_display show_progress( file_size );
 
-      lds = new LoadDataSource(state.str, state.header_file, state.key_columns, state.timestamp_column);
+      lds = new LoadDataSource(state.input_file, state.header_file, state.key_columns, state.timestamp_column);
 
       if (!into_table) {
 	display_timestamps = lds->has_timestamps();

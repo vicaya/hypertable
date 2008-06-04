@@ -87,10 +87,10 @@ namespace Hypertable {
      */
     CommBuf(HeaderBuilder &hbuilder, uint32_t len) : ext_ptr(0) {
       len += hbuilder.header_length();
-      data = dataPtr = new uint8_t [ len ];
-      dataLen = len;
+      data.set( new uint8_t [ len ], len, true );
+      data_ptr = data.base;
       hbuilder.set_total_len(len);
-      hbuilder.encode(&dataPtr);
+      hbuilder.encode(&data_ptr);
     }
 
     /**
@@ -108,18 +108,11 @@ namespace Hypertable {
      */
     CommBuf(HeaderBuilder &hbuilder, uint32_t len, StaticBuffer &buffer) : ext(buffer) {
       len += hbuilder.header_length();
-      data = dataPtr = new uint8_t [ len ];
-      dataLen = len;
+      data.set( new uint8_t [ len ], len, true );
+      data_ptr = data.base;
       hbuilder.set_total_len(len+buffer.size);
-      hbuilder.encode(&dataPtr);
+      hbuilder.encode(&data_ptr);
       ext_ptr = ext.base;
-    }
-
-    /**
-     * Destructor.  Deallocates primary and extended buffers.
-     */
-    ~CommBuf() {
-      delete [] data;
     }
 
     /**
@@ -129,19 +122,20 @@ namespace Hypertable {
      * what is remaining to be sent.
      */
     void reset_data_pointers() {
-      dataPtr = (uint8_t *)data;
+      HT_EXPECT((data_ptr - data.base) == (int)data.size, Error::FAILED_EXPECTATION);
+      data_ptr = data.base;
       ext_ptr = ext.base;
     }
 
     /**
      * Returns the primary buffer internal data pointer
      */
-    void *get_data_ptr() { return dataPtr; }
+    void *get_data_ptr() { return data_ptr; }
 
     /**
      * Returns address of the primary buffer internal data pointer
      */
-    uint8_t **get_data_ptr_address() { return &dataPtr; }
+    uint8_t **get_data_ptr_address() { return &data_ptr; }
 
     /**
      * Advance the primary buffer internal data pointer by len bytes
@@ -149,7 +143,7 @@ namespace Hypertable {
      * @param len the number of bytes to advance the pointer by
      * @return returns the advanced internal data pointer
      */
-    void *advance_data_ptr(size_t len) { dataPtr += len; return dataPtr; }
+    void *advance_data_ptr(size_t len) { data_ptr += len; return data_ptr; }
 
     /**
      * Append a boolean value to the primary buffer, advancing the
@@ -157,7 +151,7 @@ namespace Hypertable {
      * 
      * @param bval boolean value to append into buffer
      */
-    void append_bool(bool bval) { Serialization::encode_bool(&dataPtr, bval); }
+    void append_bool(bool bval) { Serialization::encode_bool(&data_ptr, bval); }
 
     /**
      * Append a byte of data to the primary buffer, advancing the
@@ -165,7 +159,7 @@ namespace Hypertable {
      * 
      * @param bval byte value to append into buffer
      */
-    void append_byte(uint8_t bval) { *dataPtr++ = bval; }
+    void append_byte(uint8_t bval) { *data_ptr++ = bval; }
 
     /**
      * Appends a sequence of bytes to the primary buffer, advancing
@@ -174,7 +168,7 @@ namespace Hypertable {
      * @param bytes starting address of byte sequence
      * @param len number of bytes in sequence
      */
-    void append_bytes(uint8_t *bytes, uint32_t len) { memcpy(dataPtr, bytes, len); dataPtr += len; }
+    void append_bytes(uint8_t *bytes, uint32_t len) { memcpy(data_ptr, bytes, len); data_ptr += len; }
 
     /**
      * Appends a short integer (16 bit) to the the primary buffer,
@@ -182,7 +176,7 @@ namespace Hypertable {
      *
      * @param sval two byte short value to append into buffer
      */
-    void append_short(uint16_t sval) { Serialization::encode_short(&dataPtr, sval); }
+    void append_short(uint16_t sval) { Serialization::encode_short(&data_ptr, sval); }
     
     /**
      * Appends an integer (32 bit) to the the primary buffer,
@@ -190,7 +184,7 @@ namespace Hypertable {
      *
      * @param ival 4 byte integer value to append into buffer
      */
-    void append_int(uint32_t ival) { Serialization::encode_int(&dataPtr, ival); }
+    void append_int(uint32_t ival) { Serialization::encode_int(&data_ptr, ival); }
 
     /**
      * Appends a long integer (64 bit) to the the primary buffer,
@@ -198,7 +192,7 @@ namespace Hypertable {
      *
      * @param lval 8 byte long integer value to append into buffer
      */
-    void append_long(uint64_t lval) { Serialization::encode_long(&dataPtr, lval); }
+    void append_long(uint64_t lval) { Serialization::encode_long(&data_ptr, lval); }
 
     /**
      * Appends a byte array to the primary buffer.  A byte array
@@ -208,7 +202,7 @@ namespace Hypertable {
      * @param len length of byte array to append
      * @see Serialization::encode_byte_array
      */
-    void append_byte_array(const void *data, int32_t len) { Serialization::encode_byte_array(&dataPtr, data, len); }
+    void append_byte_array(const void *data, int32_t len) { Serialization::encode_byte_array(&data_ptr, data, len); }
     
     /**
      * Appends a c-style string to the primary buffer.  A string is
@@ -218,7 +212,7 @@ namespace Hypertable {
      * @param str c-style string to append
      * @see Serialization::encode_string
      */
-    void append_string(const char *str) { Serialization::encode_string(&dataPtr, str); }
+    void append_string(const char *str) { Serialization::encode_string(&data_ptr, str); }
 
     /**
      * Appends a std::string to the primary buffer.  A string is
@@ -228,16 +222,16 @@ namespace Hypertable {
      * @param str std string to append
      * @see Serialization::encode_string
      */
-    void append_string(const std::string &str) { Serialization::encode_string(&dataPtr, str.c_str()); }
+    void append_string(const std::string &str) { Serialization::encode_string(&data_ptr, str.c_str()); }
 
     friend class IOHandlerData;
+    friend class IOHandlerDatagram;
 
-    const uint8_t *data;
-    uint32_t dataLen;
+    StaticBuffer data;
     StaticBuffer ext;
 
   protected:
-    uint8_t *dataPtr;
+    uint8_t *data_ptr;
     const uint8_t *ext_ptr;
   };
 

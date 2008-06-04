@@ -50,7 +50,7 @@ namespace Hypertable {
      * Creates a new cell store.
      *
      * @param fname name of file to contain the cell store
-     * @param blockSize amount of uncompressed data to compress into a block
+     * @param blocksize amount of uncompressed data to compress into a block
      * @param compressor string indicating compressor type and arguments (e.g. "zlib --best")
      * @return Error::OK on success, error code on failure
      */

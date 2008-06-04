@@ -41,6 +41,7 @@ ResponseCallback.cc
 )
 
 add_library (HyperComm ${AsyncComm_SRCS})
+target_link_libraries(HyperComm HyperCommon)
 
 # sampleClient
 add_executable (sampleClient sampleClient.cc)

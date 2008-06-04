@@ -82,6 +82,7 @@ bool CommitLogReader::next_raw_block(CommitLogBlockInfo *infop, BlockCompression
   if (!m_fragment_stack.top().block_stream->next(infop, header)) {
     delete m_fragment_stack.top().block_stream;
     m_fragment_stack.top().block_stream = 0;
+    m_fragment_stack.top().timestamp = m_last_timestamp;
     m_fragment_queue.push_back( m_fragment_stack.top() );
     m_fragment_stack.pop();
     goto try_again;
@@ -99,7 +100,7 @@ bool CommitLogReader::next(const uint8_t **blockp, size_t *lenp, BlockCompressio
   while (next_raw_block(&binfo, header)) {
 
     if (binfo.error == Error::OK) {
-      DynamicBuffer zblock(0);
+      DynamicBuffer zblock;
 
       m_block_buffer.clear();
       zblock.base = binfo.block_ptr;
@@ -115,11 +116,12 @@ bool CommitLogReader::next(const uint8_t **blockp, size_t *lenp, BlockCompressio
 		  Error::get_text(error));
 	continue;
       }
+
+      m_last_timestamp = header->get_timestamp();
  
       zblock.release();
       *blockp = m_block_buffer.base;
       *lenp = m_block_buffer.fill();
-      HT_INFOF("shaggy\t%s\t%u\t%u", m_log_name.c_str(), header->get_data_checksum(), header->get_data_zlength());
       return true;
     }
 
@@ -160,9 +162,13 @@ void CommitLogReader::load_fragments(String &log_dir) {
       file_info.timestamp = 0;
       file_info.block_stream = 0;
       file_info.size = m_fs->length(log_dir + listing[i]);
-      fragment_vector.push_back(file_info);
+      if (file_info.size > 0)
+	fragment_vector.push_back(file_info);
     }
   }
+
+  if (fragment_vector.empty())
+    return;
 
   sort(fragment_vector.begin(), fragment_vector.end(), fragment_ordering_obj);
 

@@ -108,6 +108,7 @@ public class Error {
     static public final int RANGESERVER_UNAVAILABLE            = 0x0005000F;
     static public final int RANGESERVER_TIMESTAMP_ORDER_ERROR  = 0x00050010;
     static public final int RANGESERVER_ROW_OVERFLOW           = 0x00050011;
+    static public final int RANGESERVER_TABLE_NOT_FOUND        = 0x00050012;
 
     static public final int HQL_BAD_LOAD_FILE_FORMAT = 0x00060001;
 
@@ -194,6 +195,7 @@ public class Error {
 	mTextMap.put(RANGESERVER_UNAVAILABLE,           "RANGE SERVER unavailable");
 	mTextMap.put(RANGESERVER_TIMESTAMP_ORDER_ERROR, "RANGE SERVER supplied timestamp is not strictly increasing");
 	mTextMap.put(RANGESERVER_ROW_OVERFLOW,          "RANGE SERVER row overflow");
+	mTextMap.put(RANGESERVER_TABLE_NOT_FOUND,       "RANGE SERVER table not found");
 	mTextMap.put(HQL_BAD_LOAD_FILE_FORMAT,    "HQL bad load file format");
     }
 }

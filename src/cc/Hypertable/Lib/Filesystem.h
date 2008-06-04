@@ -176,7 +176,6 @@ namespace Hypertable {
      *
      * @param event_ptr reference to response event
      * @param offsetp address of variable offset of data read.
-     * @param amountp address of variable to hold amount of data read.
      * @param dstp address of pointer to hold pointer to data read
      * @return amount read
      */
@@ -245,7 +244,6 @@ namespace Hypertable {
      *
      * @param name absolute pathname of file to delete
      * @param handler dispatch handler
-     * @param force ignore non-existence error
      */
     virtual void remove(const String &name, DispatchHandler *handler) = 0;
 
@@ -271,7 +269,6 @@ namespace Hypertable {
      * to complete.
      *
      * @param name absolute pathname of file
-     * @param lenp address of variable to hold returned length
      */
     virtual int64_t length(const String &name) = 0;
 
@@ -315,7 +312,6 @@ namespace Hypertable {
      * @param event_ptr reference to response event
      * @param dst destination buffer for read data
      * @param len destination buffer size
-     * @param nreadp address of variable to hold amount of data read.
      * @return amount of data read
      */
     static size_t decode_response_pread(EventPtr &event_ptr,
@@ -351,6 +347,7 @@ namespace Hypertable {
      * it to complete.
      *
      * @param name absolute pathname of directory to remove
+     * @param force don't throw an error if file does not exist
      */
     virtual void rmdir(const String &name, bool force = true) = 0;
     
@@ -418,8 +415,7 @@ namespace Hypertable {
     /** Decodes the response from an exists request.
      *
      * @param event_ptr reference to response event
-     * @param existsp address of return variable (boolean exists flag)
-     * @return true/false
+     * @return true if file exists, false otherwise
      */
     static bool decode_response_exists(EventPtr &event_ptr);
 

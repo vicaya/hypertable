@@ -41,7 +41,7 @@ namespace {
 /**
  * 
  */
-TableMutator::TableMutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, int timeout) : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_table_identifier(table_identifier), m_memory_used(0), m_max_memory(DEFAULT_MAX_MEMORY), m_resends(0), m_timeout(timeout) {
+TableMutator::TableMutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, int timeout) : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_table_identifier(table_identifier), m_memory_used(0), m_max_memory(DEFAULT_MAX_MEMORY), m_resends(0), m_timeout(timeout), m_last_error(Error::OK), m_last_op(0) {
 
   if (m_timeout == 0 ||
       (m_timeout = props_ptr->get_int("Hypertable.Client.Timeout", 0)) == 0 ||
@@ -58,39 +58,58 @@ TableMutator::TableMutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier
 void TableMutator::set(uint64_t timestamp, KeySpec &key, const void *value, uint32_t value_len) {
   Timer timer(m_timeout);
 
-  sanity_check_key(key);
+  if (m_last_error != Error::OK)
+    m_last_error = Error::OK;
 
-  if (key.column_family == 0)
-    throw Exception(Error::BAD_KEY, "Invalid key - column family not specified");
+  try {
 
-  {
-    Key full_key;
-    Schema::ColumnFamily *cf = m_schema_ptr->get_column_family(key.column_family);
-    if (cf == 0)
-      throw Exception(Error::BAD_KEY, (std::string)"Invalid key - bad column family '" + key.column_family + "'");
-    full_key.row = (const char *)key.row;
-    full_key.column_qualifier = (const char *)key.column_qualifier;
-    full_key.column_family_code = (uint8_t)cf->id;
-    full_key.timestamp = timestamp;
+    m_last_op = SET;
+
+    sanity_check_key(key);
+
+    if (key.column_family == 0)
+      throw Exception(Error::BAD_KEY, "Invalid key - column family not specified");
+
+    {
+      Key full_key;
+      Schema::ColumnFamily *cf = m_schema_ptr->get_column_family(key.column_family);
+      if (cf == 0)
+	throw Exception(Error::BAD_KEY, (std::string)"Invalid key - bad column family '" + key.column_family + "'");
+      full_key.row = (const char *)key.row;
+      full_key.column_qualifier = (const char *)key.column_qualifier;
+      full_key.column_family_code = (uint8_t)cf->id;
+      full_key.timestamp = timestamp;
     
-    m_buffer_ptr->set(full_key, value, value_len, timer);
+      m_buffer_ptr->set(full_key, value, value_len, timer);
+    }
+
+    m_memory_used += 20 + key.row_len + key.column_qualifier_len + value_len;
+
+    m_last_op = FLUSH;
+
+    if (m_buffer_ptr->full() || m_memory_used > m_max_memory) {
+
+      timer.start();
+
+      if (m_prev_buffer_ptr)
+	wait_for_previous_buffer(timer);
+
+      m_buffer_ptr->send();
+
+      m_prev_buffer_ptr = m_buffer_ptr;
+
+      m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+      m_memory_used = 0;
+    }
+
   }
-
-  m_memory_used += 20 + key.row_len + key.column_qualifier_len + value_len;
-
-  if (m_buffer_ptr->full() || m_memory_used > m_max_memory) {
-
-    timer.start();
-
-    if (m_prev_buffer_ptr)
-      wait_for_previous_buffer(timer);
-
-    m_buffer_ptr->send();
-
-    m_prev_buffer_ptr = m_buffer_ptr;
-
-    m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
-    m_memory_used = 0;
+  catch (Exception &e) {
+    m_last_error = e.code();
+    memcpy(&m_last_timestamp, &timestamp, sizeof(timestamp));
+    memcpy(&m_last_key, &key, sizeof(key));
+    m_last_value = value;
+    m_last_value_len = value_len;
+    throw;
   }
 
 }
@@ -101,41 +120,57 @@ void TableMutator::set_delete(uint64_t timestamp, KeySpec &key) {
   Key full_key;
   Timer timer(m_timeout);
 
-  sanity_check_key(key);
+  if (m_last_error != Error::OK)
+    m_last_error = Error::OK;
 
-  if (key.column_family == 0) {
-    full_key.row = (const char *)key.row;
-    full_key.column_family_code = 0;
-    full_key.column_qualifier = 0;
-    full_key.timestamp = timestamp;    
+  try {
+
+    m_last_op = SET_DELETE;
+
+    sanity_check_key(key);
+
+    if (key.column_family == 0) {
+      full_key.row = (const char *)key.row;
+      full_key.column_family_code = 0;
+      full_key.column_qualifier = 0;
+      full_key.timestamp = timestamp;    
+    }
+    else  {
+      Schema::ColumnFamily *cf = m_schema_ptr->get_column_family(key.column_family);
+      if (cf == 0)
+	throw Exception(Error::BAD_KEY, (std::string)"Invalid key - bad column family '" + key.column_family + "'");
+      full_key.row = (const char *)key.row;
+      full_key.column_qualifier = (const char *)key.column_qualifier;
+      full_key.column_family_code = (uint8_t)cf->id;
+      full_key.timestamp = timestamp;
+    }
+
+    m_buffer_ptr->set_delete(full_key, timer);
+
+    m_memory_used += 20 + key.row_len + key.column_qualifier_len;
+
+    m_last_op = FLUSH;
+
+    if (m_buffer_ptr->full() || m_memory_used > m_max_memory) {
+
+      timer.start();
+
+      if (m_prev_buffer_ptr)
+	wait_for_previous_buffer(timer);
+
+      m_buffer_ptr->send();
+
+      m_prev_buffer_ptr = m_buffer_ptr;
+
+      m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+      m_memory_used = 0;
+    }
   }
-  else  {
-    Schema::ColumnFamily *cf = m_schema_ptr->get_column_family(key.column_family);
-    if (cf == 0)
-      throw Exception(Error::BAD_KEY, (std::string)"Invalid key - bad column family '" + key.column_family + "'");
-    full_key.row = (const char *)key.row;
-    full_key.column_qualifier = (const char *)key.column_qualifier;
-    full_key.column_family_code = (uint8_t)cf->id;
-    full_key.timestamp = timestamp;
-  }
-
-  m_buffer_ptr->set_delete(full_key, timer);
-
-  m_memory_used += 20 + key.row_len + key.column_qualifier_len;
-
-  if (m_buffer_ptr->full() || m_memory_used > m_max_memory) {
-
-    timer.start();
-
-    if (m_prev_buffer_ptr)
-      wait_for_previous_buffer(timer);
-
-    m_buffer_ptr->send();
-
-    m_prev_buffer_ptr = m_buffer_ptr;
-
-    m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
-    m_memory_used = 0;
+  catch (Exception &e) {
+    m_last_error = e.code();
+    memcpy(&m_last_timestamp, &timestamp, sizeof(timestamp));
+    memcpy(&m_last_key, &key, sizeof(key));
+    throw;
   }
 
 }
@@ -144,20 +179,59 @@ void TableMutator::set_delete(uint64_t timestamp, KeySpec &key) {
 void TableMutator::flush() {
   Timer timer(m_timeout, true);
 
-  if (m_prev_buffer_ptr)
-    wait_for_previous_buffer(timer);
+  if (m_last_error != Error::OK)
+    m_last_error = Error::OK;
 
-  /**
-   * If there are buffered updates, send them and wait for completion
-   */
-  if (m_memory_used > 0) {
-    m_buffer_ptr->send();
-    m_prev_buffer_ptr = m_buffer_ptr;
-    wait_for_previous_buffer(timer);
+  try {
+
+    if (m_prev_buffer_ptr)
+      wait_for_previous_buffer(timer);
+
+    /**
+     * If there are buffered updates, send them and wait for completion
+     */
+    if (m_memory_used > 0) {
+      m_buffer_ptr->send();
+      m_prev_buffer_ptr = m_buffer_ptr;
+      wait_for_previous_buffer(timer);
+    }
+
+    m_buffer_ptr->reset();
+    m_prev_buffer_ptr = 0;
+
+  }
+  catch (Exception &e) {
+    m_last_error = e.code();
+    m_last_op = FLUSH;
+    throw;
   }
 
-  m_buffer_ptr->reset();
-  m_prev_buffer_ptr = 0;
+}
+
+
+bool TableMutator::retry(int timeout) {
+  int save_timeout = m_timeout;
+
+  if (m_last_error == Error::OK)
+    return true;
+
+  try {
+    if (timeout != 0)
+      m_timeout = timeout;
+
+    if (m_last_op == SET)
+      set(m_last_timestamp, m_last_key, m_last_value, m_last_value_len);
+    else if (m_last_op == SET_DELETE)
+      set_delete(m_last_timestamp, m_last_key);
+    if (m_last_op == FLUSH)
+      flush();
+  }
+  catch(Exception &e) {
+    m_timeout = save_timeout;
+    return false;
+  }
+  m_timeout = save_timeout;
+  return true;
 }
 
 
@@ -167,14 +241,6 @@ void TableMutator::wait_for_previous_buffer(Timer &timer) {
   int wait_time = 1;
 
   while (!m_prev_buffer_ptr->wait_for_completion(timer)) {
-
-#if 0
-    if (error == Error::RANGESERVER_TIMESTAMP_ORDER_ERROR) {
-      std::string table_name_upper = m_table_identifier.name;
-      boost::to_upper(table_name_upper);
-      throw Exception(error, (std::string)"Problem sending updates (table=" + table_name_upper.c_str() + ")");
-    }
-#endif
 
     if (timer.remaining() < wait_time)
       throw Exception(Error::REQUEST_TIMEOUT);

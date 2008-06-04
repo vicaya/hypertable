@@ -83,6 +83,9 @@ RangeLocator::RangeLocator(PropertiesPtr &props_ptr, ConnectionManagerPtr &connM
   if ((client_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0)) != 0)
     m_range_server.set_default_timeout(client_timeout);
 
+  int cache_size = props_ptr->get_int("Hypertable.LocationCache.MaxEntries", HYPERTABLE_LOCATIONCACHE_MAXENTRIES);
+  m_cache_ptr = new LocationCache(cache_size);
+
   initialize();
 }
 
@@ -96,6 +99,9 @@ RangeLocator::RangeLocator(PropertiesPtr &props_ptr, Comm *comm, Hyperspace::Ses
   if ((client_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0)) != 0)
     m_range_server.set_default_timeout(client_timeout);
 
+  int cache_size = props_ptr->get_int("Hypertable.LocationCache.MaxEntries", HYPERTABLE_LOCATIONCACHE_MAXENTRIES);
+  m_cache_ptr = new LocationCache(cache_size);
+
   initialize();
 }
 
@@ -106,8 +112,6 @@ void RangeLocator::initialize() {
   HandleCallbackPtr nullHandleCallback;
   uint64_t handle;
   Schema *schema = 0;
-
-  m_cache_ptr = new LocationCache(1000);
 
   m_root_handler_ptr = new RootFileHandler(this);
 
@@ -171,6 +175,7 @@ void RangeLocator::find_loop(TableIdentifier *table, const char *row_key, RangeL
   error = find(table, row_key, range_loc_info_p, timer, hard);
 
   if (error == Error::TABLE_DOES_NOT_EXIST) {
+    boost::mutex::scoped_lock lock(m_mutex);
     m_last_errors.clear();
     throw Exception(error, (std::string)"Table '" + table->name + "' is being dropped.");
   }

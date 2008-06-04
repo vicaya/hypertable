@@ -62,7 +62,7 @@ namespace Hypertable {
      *
      * @param scan_spec scan specification
      * @param timeout maximum time in seconds to allow scanner methods to execute before throwing an exception
-     * @param newly constructed scanner object
+     * @return pointer to scanner object
      */
     TableScanner *create_scanner(ScanSpec &scan_spec, int timeout=0);
 

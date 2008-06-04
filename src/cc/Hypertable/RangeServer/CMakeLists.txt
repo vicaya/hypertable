@@ -67,11 +67,11 @@ main.cc
 
 # RangeServer
 add_executable (Hypertable.RangeServer ${RangeServer_SRCS})
-target_link_libraries (Hypertable.RangeServer pthread ${BOOST_LIB} log4cpp expat ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES} HyperDfsBroker Hypertable ${MALLOC_LIBRARY} )
+target_link_libraries (Hypertable.RangeServer pthread ${BOOST_LIB} log4cpp expat ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES} HyperDfsBroker Hypertable ${MALLOC_LIBRARY} m)
 
 # csdump
 add_executable (csdump CellStoreV0.cc CellStoreTrailerV0.cc csdump.cc CellStoreScannerV0.cc FileBlockCache.cc Global.cc ScanContext.cc)
-target_link_libraries (csdump pthread ${BOOST_LIB} log4cpp ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES} HyperDfsBroker Hypertable ${MALLOC_LIBRARY})
+target_link_libraries (csdump pthread ${BOOST_LIB} log4cpp ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES} HyperDfsBroker Hypertable HyperCommon ${MALLOC_LIBRARY})
 
 # count_stored - program to diff two sorted files
 add_executable (count_stored count_stored.cc CellStoreV0.cc CellStoreTrailerV0.cc CellStoreScannerV0.cc FileBlockCache.cc Global.cc ScanContext.cc)

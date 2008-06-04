@@ -110,6 +110,7 @@ namespace {
     { Error::RANGESERVER_UNAVAILABLE,          "RANGE SERVER unavailable" },
     { Error::RANGESERVER_TIMESTAMP_ORDER_ERROR,"RANGE SERVER supplied timestamp is not strictly increasing" },
     { Error::RANGESERVER_ROW_OVERFLOW,         "RANGE SERVER row overflow" },
+    { Error::RANGESERVER_TABLE_NOT_FOUND,      "RANGE SERVER table not found" },
     { Error::HQL_BAD_LOAD_FILE_FORMAT,         "HQL bad load file format" },
     { Error::METALOG_CHECKSUM_MISMATCH, "METALOG checksum mismatch" },
     { Error::SERIALIZATION_INPUT_OVERRUN, "SERIALIZATION input buffer overrun" },

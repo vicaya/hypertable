@@ -59,6 +59,7 @@ namespace Hypertable {
     static int removexattr(const std::string &path, const std::string &name);
     static int fremovexattr(int fd, const std::string &name);
     static void add_trailing_slash(std::string &path);
+    static bool expand_tilde(std::string &fname);
   };
 
 }

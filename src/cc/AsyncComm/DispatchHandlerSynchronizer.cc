@@ -31,7 +31,7 @@ using namespace Hypertable;
 /**
  *
  */
-DispatchHandlerSynchronizer::DispatchHandlerSynchronizer() : m_valid(0x11111111), m_receive_queue(), m_mutex(), m_cond() {
+DispatchHandlerSynchronizer::DispatchHandlerSynchronizer() : m_receive_queue(), m_mutex(), m_cond() {
   return;
 }
 
@@ -42,7 +42,6 @@ DispatchHandlerSynchronizer::DispatchHandlerSynchronizer() : m_valid(0x11111111)
  */
 void DispatchHandlerSynchronizer::handle(EventPtr &eventPtr) {
   boost::mutex::scoped_lock lock(m_mutex);
-  HT_EXPECT(m_valid == 0x11111111, Error::FAILED_EXPECTATION);
   m_receive_queue.push(eventPtr);
   m_cond.notify_one();    
 }

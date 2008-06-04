@@ -564,7 +564,7 @@ int CellStoreV0::load_index() {
     if ((end_iter = m_index.lower_bound(bs)) == m_index.end())
       end = m_file_length;
     else
-      end = (*iter).second;
+      end = (*end_iter).second;
 
     m_disk_usage = end - start;
 

@@ -25,11 +25,11 @@
 #include <boost/shared_array.hpp>
 
 extern "C" {
+#include <math.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 }
 
-#include "Common/ByteOrder.h"
 #include "Common/FileUtils.h"
 #include "Common/md5.h"
 #include "Common/StringExt.h"
@@ -63,15 +63,17 @@ namespace {
 /**
  * Constructor
  */
-RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, ApplicationQueuePtr &app_queue_ptr, Hyperspace::SessionPtr &hyperspace_ptr) : m_props_ptr(props_ptr), m_verbose(false), m_conn_manager_ptr(conn_manager_ptr), m_app_queue_ptr(app_queue_ptr), m_hyperspace_ptr(hyperspace_ptr), m_last_commit_log_clean(0) {
+RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, ApplicationQueuePtr &app_queue_ptr, Hyperspace::SessionPtr &hyperspace_ptr) : m_props_ptr(props_ptr), m_verbose(false), m_conn_manager_ptr(conn_manager_ptr), m_app_queue_ptr(app_queue_ptr), m_hyperspace_ptr(hyperspace_ptr), m_last_commit_log_clean(0), m_bytes_loaded(0) {
   int error;
   uint16_t port;
+  uint32_t maintenance_threads = 1;
   Comm *comm = conn_manager_ptr->get_comm();
 
   Global::rangeMaxBytes           = props_ptr->get_int64("Hypertable.RangeServer.Range.MaxBytes", 200000000LL);
   Global::localityGroupMaxFiles   = props_ptr->get_int("Hypertable.RangeServer.AccessGroup.MaxFiles", 10);
   Global::localityGroupMergeFiles = props_ptr->get_int("Hypertable.RangeServer.AccessGroup.MergeFiles", 4);
   Global::localityGroupMaxMemory  = props_ptr->get_int("Hypertable.RangeServer.AccessGroup.MaxMemory", 50000000);
+  maintenance_threads             = props_ptr->get_int("Hypertable.RangeServer.MaintenanceThreads", 1);
   port                            = props_ptr->get_int("Hypertable.RangeServer.Port", DEFAULT_PORT);
   m_scanner_ttl                   = (time_t)props_ptr->get_int("Hypertable.RangeServer.Scanner.Ttl", 120);
   m_timer_interval                = props_ptr->get_int("Hypertable.RangeServer.Timer.Interval", 60);
@@ -99,6 +101,7 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
     cout << "Hypertable.RangeServer.AccessGroup.MergeFiles=" << Global::localityGroupMergeFiles << endl;
     cout << "Hypertable.RangeServer.BlockCache.MaxMemory=" << blockCacheMemory << endl;
     cout << "Hypertable.RangeServer.Range.MaxBytes=" << Global::rangeMaxBytes << endl;
+    cout << "Hypertable.RangeServer.MaintenanceThreads=" << maintenance_threads << endl;
     cout << "Hypertable.RangeServer.Port=" << port << endl;
     //cout << "Hypertable.RangeServer.workers=" << workerCount << endl;
   }
@@ -162,7 +165,7 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
     exit(1);
 
   // Create the maintenance queue
-  Global::maintenance_queue = new MaintenanceQueue(1);
+  Global::maintenance_queue = new MaintenanceQueue(maintenance_threads);
 
   // Create table info maps
   m_live_map_ptr = new TableInfoMap();
@@ -287,6 +290,11 @@ int RangeServer::initialize(PropertiesPtr &props_ptr) {
     cout << "logDir=" << Global::logDir << endl;
 
   Global::log = new CommitLog(Global::logDfs, primary_log_dir, props_ptr);
+
+  Global::log_prune_threshold_min = props_ptr->get_int64("Hypertable.RangeServer.CommitLog.PruneThreshold.Min", 
+							 2 * Global::log->get_max_fragment_size());
+  Global::log_prune_threshold_max = props_ptr->get_int64("Hypertable.RangeServer.CommitLog.PruneThreshold.Max", 
+							 10 * Global::log_prune_threshold_min);
 
   return Error::OK;
 }
@@ -472,8 +480,7 @@ void RangeServer::compact(ResponseCallback *cb, TableIdentifier *table, RangeSpe
  *  CreateScanner
  */
 void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentifier *table, RangeSpec *range, ScanSpec *scan_spec) {
-  uint8_t *kvBuffer = 0;
-  uint32_t *kvLenp = 0;
+  uint8_t *kv_ptr, *kv_buffer = 0;
   int error = Error::OK;
   std::string errMsg;
   TableInfoPtr tableInfoPtr;
@@ -514,14 +521,13 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
       throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND,
 				  (std::string)"(b) " + table->name + "[" + range->start_row + ".." + range->end_row + "]");
 
-    kvBuffer = new uint8_t [ sizeof(int32_t) + DEFAULT_SCANBUF_SIZE ];
-    kvLenp = (uint32_t *)kvBuffer;
+    kv_ptr = kv_buffer = new uint8_t [ 4 + DEFAULT_SCANBUF_SIZE ];
+    uint32_t kv_len;
 
-    more = FillScanBlock(scannerPtr, kvBuffer+sizeof(int32_t), DEFAULT_SCANBUF_SIZE, kvLenp);
-    if (more)
-      id = Global::scannerMap.put(scannerPtr, range_ptr);
-    else
-      id = 0;
+    more = FillScanBlock(scannerPtr, kv_buffer+4, DEFAULT_SCANBUF_SIZE, &kv_len);
+    Serialization::encode_i32(&kv_ptr, kv_len);
+
+    id = (more) ? Global::scannerMap.put(scannerPtr, range_ptr) : 0;
 
     if (Global::verbose) {
       HT_INFOF("Successfully created scanner (id=%d) on table '%s'", id, table->name);
@@ -532,7 +538,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
      */
     {
       short moreFlag = more ? 0 : 1;
-      StaticBuffer ext(kvBuffer, sizeof(int32_t) + *kvLenp);
+      StaticBuffer ext(kv_buffer, 4 + kv_len);
       if ((error = cb->response(moreFlag, id, ext)) != Error::OK) {
 	HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       }
@@ -561,9 +567,7 @@ void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t s
   CellListScannerPtr scannerPtr;
   RangePtr range_ptr;
   bool more = true;
-  uint8_t *kvBuffer = 0;
-  uint32_t *kvLenp = 0;
-  uint32_t bytesFetched = 0;
+  uint8_t *kv_ptr, *kv_buffer = 0;
 
   if (Global::verbose) {
     cout << "RangeServer::fetch_scanblock" << endl;
@@ -578,27 +582,28 @@ void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t s
     goto abort;    
   }
 
-  kvBuffer = new uint8_t [ sizeof(int32_t) + DEFAULT_SCANBUF_SIZE ];
-  kvLenp = (uint32_t *)kvBuffer;
+  kv_ptr = kv_buffer = new uint8_t [ 4 + DEFAULT_SCANBUF_SIZE ];
+  uint32_t kv_len;
 
-  more = FillScanBlock(scannerPtr, kvBuffer+sizeof(int32_t), DEFAULT_SCANBUF_SIZE, kvLenp);
+  more = FillScanBlock(scannerPtr, kv_buffer+4, DEFAULT_SCANBUF_SIZE, &kv_len);
+  Serialization::encode_int(&kv_ptr, kv_len);
+  
   if (!more)
     Global::scannerMap.remove(scannerId);
-  bytesFetched = *kvLenp;
 
   /**
    *  Send back data
    */
   {
     short moreFlag = more ? 0 : 1;
-    StaticBuffer ext(kvBuffer, sizeof(int32_t) + *kvLenp);
+    StaticBuffer ext(kv_buffer, 4 + kv_len);
     if ((error = cb->response(moreFlag, scannerId, ext)) != Error::OK) {
       HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
     }
   }
 
   if (Global::verbose) {
-    HT_INFOF("Successfully fetched %d bytes of scan data", bytesFetched);
+    HT_INFOF("Successfully fetched %d bytes of scan data", kv_len);
   }
 
   error = Error::OK;
@@ -871,12 +876,14 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
 
     // Fetch table info
     if (!m_live_map_ptr->get(table->id, table_info_ptr)) {
-      StaticBuffer ext(new uint8_t [ buffer.size ], buffer.size);
-      memcpy(ext.base, buffer.base, buffer.size);
+      StaticBuffer ext(new uint8_t [ 12 ], 12);
+      uint8_t *ptr = ext.base;
+      Serialization::encode_int(&ptr, Error::RANGESERVER_TABLE_NOT_FOUND);
+      Serialization::encode_int(&ptr, 0);
+      Serialization::encode_int(&ptr, buffer.size);
       HT_ERRORF("Unable to find table info for table '%s'", table->name);
-      if ((error = cb->response(ext)) != Error::OK) {
+      if ((error = cb->response(ext)) != Error::OK)
 	HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
-      }
       return;
     }
 
@@ -961,21 +968,16 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
 	    boost::xtime now;
 	    boost::xtime_get(&now, boost::TIME_UTC);
 	    next_timestamp = ((uint64_t)now.sec * 1000000000LL) + (uint64_t)now.nsec;
-	    //HT_INFOF("fugazi TIMESTAMP %lld", next_timestamp);
 	  }
 	  temp_timestamp = ++next_timestamp;
 	  if (min_ts_rec.timestamp.logical == 0 || temp_timestamp < min_ts_rec.timestamp.logical)
 	    min_ts_rec.timestamp.logical = temp_timestamp;
-	  temp_timestamp = ByteOrderSwapInt64(temp_timestamp);
-	  temp_timestamp = ~temp_timestamp;
-	  memcpy(ts_ptr, &temp_timestamp, 8);
-	  temp_timestamp = next_timestamp;
+	  Key::encode_ts64(&ts_ptr, temp_timestamp);
 	}
 	else {
-	  memcpy(&temp_timestamp, ts_ptr, 8);
-	  temp_timestamp = ByteOrderSwapInt64(temp_timestamp);
-	  temp_timestamp = ~temp_timestamp;
-	  if (*(ts_ptr-1) > FLAG_DELETE_CELL && temp_timestamp <= min_timestamp) {
+	  uint8_t flag = *(ts_ptr-1);
+	  temp_timestamp = Key::decode_ts64((const uint8_t **)&ts_ptr);
+	  if (flag > FLAG_DELETE_CELL && temp_timestamp <= min_timestamp) {
 	    error = Error::RANGESERVER_TIMESTAMP_ORDER_ERROR;
 	    errMsg = (string)"Update timestamp " + temp_timestamp + " is <= previously seen timestamp of " + min_timestamp;
 	    min_ts_rec.range_ptr->decrement_update_counter();
@@ -1004,8 +1006,6 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
       }
 
       add_end_ptr = mod_ptr;
-
-      //HT_INFOF("fugazi TIMESTAMP --last-- %lld", next_timestamp);
 
       // force scans to only see updates before the earliest time in this range
       min_ts_rec.timestamp.logical--;
@@ -1060,7 +1060,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
       /**
        * Split and Compaction processing
        */
-      {
+      if (!min_ts_rec.range_ptr->maintenance_in_progress()) {
 	std::vector<AccessGroup::CompactionPriorityDataT> priority_data_vec;
 	std::vector<AccessGroup *> compactions;
 	uint64_t disk_usage = 0;
@@ -1147,6 +1147,8 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
     else if (a_locked)
       m_update_mutex_a.unlock();
   }
+
+  m_bytes_loaded += buffer.size;
 
  abort:
 
@@ -1519,6 +1521,16 @@ void RangeServer::do_maintenance() {
   }
 }
 
+namespace {
+
+  struct ltPriorityData {
+    bool operator()(const AccessGroup::CompactionPriorityDataT &pd1, const AccessGroup::CompactionPriorityDataT &pd2) const {
+      return pd1.log_space_pinned >= pd2.log_space_pinned;
+    }
+  };
+
+
+}
 
 
 /**
@@ -1531,7 +1543,17 @@ void RangeServer::log_cleanup() {
   LogFragmentPriorityMap log_frag_map;
   std::set<size_t> compaction_set;
   uint64_t timestamp, oldest_cached_timestamp = 0;
-  uint64_t prune_threshold = 2 * Global::log->get_max_fragment_size();
+  uint64_t prune_threshold;
+
+  // compute prune threshold
+  prune_threshold = (uint64_t)(log((double)(m_bytes_loaded / m_timer_interval)) * (double)142857142.85);
+  if (prune_threshold < Global::log_prune_threshold_min)
+    prune_threshold = Global::log_prune_threshold_min;
+  else if (prune_threshold > Global::log_prune_threshold_max)
+    prune_threshold = Global::log_prune_threshold_max;
+
+  HT_INFOF("Cleaning log (threshold=%lld)", prune_threshold);
+  cout << flush;
 
   m_live_map_ptr->get_all(table_vec);
   for (size_t i=0; i<table_vec.size(); i++)
@@ -1559,28 +1581,24 @@ void RangeServer::log_cleanup() {
    * garbage collecting commit log fragments
    */
   for (size_t i=0; i<priority_data_vec.size(); i++) {
+
+    if (priority_data_vec[i].oldest_cached_timestamp == 0)
+      continue;
+    
     LogFragmentPriorityMap::iterator map_iter = log_frag_map.lower_bound( priority_data_vec[i].oldest_cached_timestamp );
-    size_t rangei = (size_t)priority_data_vec[i].user_data;
 
     // this should never happen
     if (map_iter == log_frag_map.end())
       continue;
 
-    if ( priority_data_vec[i].oldest_cached_timestamp > 0 && (*map_iter).second.cumulative_size > prune_threshold ) {
-      std::string range_str = range_vec[rangei]->table_name() + "[" + range_vec[rangei]->start_row() + ".." + range_vec[rangei]->end_row() + "]." + priority_data_vec[i].ag->get_name();
-      priority_data_vec[i].ag->set_compaction_bit();
-      compaction_set.insert( rangei );
-      HT_INFOF("Compacting %s because cumulative log size of %lld exceeds threshold %lld",
-	       range_str.c_str(), (*map_iter).second.cumulative_size, prune_threshold);
+    if ((*map_iter).second.cumulative_size > prune_threshold) {
+      if (priority_data_vec[i].mem_used > 0)
+	priority_data_vec[i].ag->set_compaction_bit();
+      size_t rangei = (size_t)priority_data_vec[i].user_data;
+      if (!range_vec[rangei]->test_and_set_maintenance()) {
+	Global::maintenance_queue->add( new MaintenanceTaskCompaction(range_vec[rangei], false) );
+      }
     }
-  }
-
-  /**
-   * Schedule the compactions
-   */
-  for (std::set<size_t>::iterator iter = compaction_set.begin(); iter != compaction_set.end(); iter++) {
-    if (!range_vec[*iter]->test_and_set_maintenance())
-      Global::maintenance_queue->add( new MaintenanceTaskCompaction(range_vec[*iter], false) );
   }
 
   /**
@@ -1589,6 +1607,7 @@ void RangeServer::log_cleanup() {
   if (oldest_cached_timestamp != 0)
     Global::log->purge(oldest_cached_timestamp);
 
+  m_bytes_loaded = 0;
 }
 
 

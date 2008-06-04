@@ -109,6 +109,7 @@ namespace Hypertable {
     time_t                 m_scanner_ttl;
     long                   m_last_commit_log_clean;
     uint64_t               m_timer_interval;
+    uint64_t               m_bytes_loaded;
   };
   typedef intrusive_ptr<RangeServer> RangeServerPtr;
   

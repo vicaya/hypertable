@@ -122,6 +122,7 @@ bool TableInfo::find_containing_range(std::string row, RangePtr &range_ptr) {
 
 
 void TableInfo::get_range_vector(std::vector<RangePtr> &range_vec) {
+  boost::mutex::scoped_lock lock(m_mutex);
   for (RangeMapT::iterator iter = m_range_map.begin(); iter != m_range_map.end(); iter++)
     range_vec.push_back((*iter).second);
 }

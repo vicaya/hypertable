@@ -49,15 +49,11 @@ CellCache::~CellCache() {
   uint32_t skipped = 0;
 #endif
 
-  m_validation = 0;
-
   for (CellMapT::iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++) {
     if (((*iter).second & ALLOC_BIT_MASK) == 0) {
       ptr = (*iter).first.ptr;
-      HT_EXPECT(memcmp(ptr, "DEAD", 4), Error::FAILED_EXPECTATION);
       offset = (*iter).second & OFFSET_BIT_MASK;
       mem_freed += offset + ByteString(ptr + offset).length();
-      memcpy(ptr, "DEAD", 4);
       delete [] ptr;
     }
 #ifdef STAT
@@ -89,8 +85,6 @@ int CellCache::add(const ByteString key, const ByteString value, uint64_t real_t
   size_t total_len = key_len + value.length();
 
   (void)real_timestamp;
-
-  HT_EXPECT(m_validation==1234567890ul, Error::FAILED_EXPECTATION);
 
   new_key.ptr = ptr = new uint8_t [ total_len ];
 

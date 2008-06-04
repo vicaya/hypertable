@@ -203,65 +203,71 @@ int main(int argc, char **argv) {
   commands.push_back( new CommandShutdown(client) );
   commands.push_back( new CommandExists(client) );
 
-  /**
-   * Non-interactive mode
-   */
-  if (eval != 0) {
-    const char *str;
-    std::string commandStr;
-    str = strtok(eval, ";");
-    while (str) {
-      commandStr = str;
-      boost::trim(commandStr);
+  try {
+
+    /**
+     * Non-interactive mode
+     */
+    if (eval != 0) {
+      const char *str;
+      std::string commandStr;
+      str = strtok(eval, ";");
+      while (str) {
+	commandStr = str;
+	boost::trim(commandStr);
+	for (i=0; i<commands.size(); i++) {
+	  if (commands[i]->matches(commandStr.c_str())) {
+	    commands[i]->parse_command_line(commandStr.c_str());
+	    if (commands[i]->run() != Error::OK)
+	      return 1;
+	    break;
+	  }
+	}
+	if (i == commands.size()) {
+	  HT_ERRORF("Unrecognized command : %s", commandStr.c_str());
+	  return 1;
+	}
+	str = strtok(0, ";");      
+      }
+      return 0;
+    }
+
+    cout << "Welcome to dsftool, a command-line interface to the DFS broker." << endl;
+    cout << "Type 'help' for a description of commands." << endl;
+    cout << endl << flush;
+
+    using_history();
+    while ((line = rl_gets()) != 0) {
+
+      if (*line == 0)
+	continue;
+
       for (i=0; i<commands.size(); i++) {
-	if (commands[i]->matches(commandStr.c_str())) {
-	  commands[i]->parse_command_line(commandStr.c_str());
-	  if (commands[i]->run() != Error::OK)
-	    return 1;
+	if (commands[i]->matches(line)) {
+	  commands[i]->parse_command_line(line);
+	  commands[i]->run();
 	  break;
 	}
       }
+
       if (i == commands.size()) {
-	HT_ERRORF("Unrecognized command : %s", commandStr.c_str());
-	return 1;
-      }
-      str = strtok(0, ";");      
-    }
-    return 0;
-  }
-
-  cout << "Welcome to dsftool, a command-line interface to the DFS broker." << endl;
-  cout << "Type 'help' for a description of commands." << endl;
-  cout << endl << flush;
-
-  using_history();
-  while ((line = rl_gets()) != 0) {
-
-    if (*line == 0)
-      continue;
-
-    for (i=0; i<commands.size(); i++) {
-      if (commands[i]->matches(line)) {
-	commands[i]->parse_command_line(line);
-	commands[i]->run();
-	break;
-      }
-    }
-
-    if (i == commands.size()) {
-      if (!strcmp(line, "quit") || !strcmp(line, "exit"))
-	exit(0);
-      else if (!strcmp(line, "help")) {
-	cout << endl;
-	for (i=0; i<commands.size(); i++) {
-	  Usage::dump(commands[i]->usage());
+	if (!strcmp(line, "quit") || !strcmp(line, "exit"))
+	  exit(0);
+	else if (!strcmp(line, "help")) {
 	  cout << endl;
+	  for (i=0; i<commands.size(); i++) {
+	    Usage::dump(commands[i]->usage());
+	    cout << endl;
+	  }
 	}
+	else
+	  cout << "Unrecognized command." << endl;
       }
-      else
-	cout << "Unrecognized command." << endl;
-    }
 
+    }
+  }
+  catch (Exception &e) {
+    HT_ERRORF("exception: %s - %s", Error::get_text(e.code()), e.what());
   }
 
   return 0;

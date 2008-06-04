@@ -25,8 +25,6 @@
 #include <map>
 #include <vector>
 
-#include <boost/thread/condition.hpp>
-
 #include "Common/String.h"
 
 #include "Hypertable/Lib/CommitLog.h"
@@ -40,6 +38,7 @@
 #include "CellStore.h"
 #include "MaintenanceTask.h"
 #include "Metadata.h"
+#include "RangeUpdateBarrier.h"
 #include "ScannerTimestampController.h"
 #include "Timestamp.h"
 
@@ -101,11 +100,19 @@ namespace Hypertable {
       return old_value;
     }
 
+    bool maintenance_in_progress() {
+      return m_maintenance_in_progress;
+    }
+
     void split();
     void compact(bool major=false);
 
-    void increment_update_counter();
-    void decrement_update_counter();
+    void increment_update_counter() {
+      m_update_barrier.enter();
+    }
+    void decrement_update_counter() {
+      m_update_barrier.exit();
+    }
 
     void add_update_timestamp(Timestamp &ts) {
       m_scanner_timestamp_controller.add_update_timestamp(ts);
@@ -137,6 +144,11 @@ namespace Hypertable {
 	m_access_group_vector[i]->drop();
     }
 
+    String get_name() {
+      boost::mutex::scoped_lock lock(m_mutex);
+      return (String)m_name;
+    }
+
   private:
 
     void load_cell_stores(Metadata *metadata);
@@ -155,6 +167,7 @@ namespace Hypertable {
     SchemaPtr           m_schema;
     String  m_start_row;
     String  m_end_row;
+    String  m_name;
     AccessGroupMapT        m_access_group_map;
     std::vector<AccessGroup *>  m_access_group_vector;
     ColumnFamilyVectorT      m_column_family_vector;
@@ -165,11 +178,7 @@ namespace Hypertable {
     String      m_split_row;
     CommitLogPtr     m_split_log_ptr;
 
-    boost::mutex     m_maintenance_mutex;
-    boost::condition m_maintenance_finished_cond;
-    boost::condition m_update_quiesce_cond;
-    bool             m_hold_updates;
-    uint32_t         m_update_counter;
+    RangeUpdateBarrier m_update_barrier;
     bool             m_is_root;
     ScannerTimestampController m_scanner_timestamp_controller;
     uint64_t         m_added_deletes[3];

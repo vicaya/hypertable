@@ -30,7 +30,7 @@ using namespace Hypertable::DfsBroker;
 
 int ResponseCallbackExists::response(bool exists) {
   hbuilder_.initialize_from_request(m_event_ptr->header);
-  CommBufPtr cbufPtr( new CommBuf(hbuilder_, 12 ) );
+  CommBufPtr cbufPtr( new CommBuf(hbuilder_, 5 ) );
   cbufPtr->append_int(Error::OK);
   cbufPtr->append_bool(exists);
   return m_comm->send_response(m_event_ptr->addr, cbufPtr);

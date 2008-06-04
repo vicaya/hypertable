@@ -196,7 +196,7 @@ int Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chf_ptr,
 int Comm::send_request(struct sockaddr_in &addr, time_t timeout, CommBufPtr &cbuf_ptr, DispatchHandler *responseHandler) {
   boost::mutex::scoped_lock lock(m_mutex);
   IOHandlerDataPtr dataHandlerPtr;
-  Header::HeaderT *mheader = (Header::HeaderT *)cbuf_ptr->data;
+  Header::HeaderT *mheader = (Header::HeaderT *)cbuf_ptr->data.base;
   int error = Error::OK;
 
   cbuf_ptr->reset_data_pointers();
@@ -227,7 +227,7 @@ int Comm::send_request(struct sockaddr_in &addr, time_t timeout, CommBufPtr &cbu
 int Comm::send_response(struct sockaddr_in &addr, CommBufPtr &cbuf_ptr) {
   boost::mutex::scoped_lock lock(m_mutex);
   IOHandlerDataPtr dataHandlerPtr;
-  Header::HeaderT *mheader = (Header::HeaderT *)cbuf_ptr->data;
+  Header::HeaderT *mheader = (Header::HeaderT *)cbuf_ptr->data.base;
   int error = Error::OK;
 
   cbuf_ptr->reset_data_pointers();
@@ -299,7 +299,7 @@ int Comm::create_datagram_receive_socket(struct sockaddr_in *addr, DispatchHandl
 int Comm::send_datagram(struct sockaddr_in &addr, struct sockaddr_in &send_addr, CommBufPtr &cbuf_ptr) {
   boost::mutex::scoped_lock lock(m_mutex);
   IOHandlerDatagramPtr datagramHandlerPtr;
-  Header::HeaderT *mheader = (Header::HeaderT *)cbuf_ptr->data;
+  Header::HeaderT *mheader = (Header::HeaderT *)cbuf_ptr->data.base;
   int error = Error::OK;
 
   cbuf_ptr->reset_data_pointers();

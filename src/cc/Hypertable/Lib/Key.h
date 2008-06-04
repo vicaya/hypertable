@@ -25,6 +25,7 @@
 #include <iostream>
 
 #include <boost/shared_array.hpp>
+#include <boost/detail/endian.hpp>
 
 #include "Common/ByteString.h"
 #include "Common/DynamicBuffer.h"
@@ -45,6 +46,41 @@ namespace Hypertable {
 
     static const char *END_ROW_MARKER;
     static const char *END_ROOT_ROW;
+
+    static inline void encode_ts64(uint8_t **bufp, uint64_t val) {
+      val = ~val;
+#ifdef BOOST_LITTLE_ENDIAN
+      *(*bufp)++ = (uint8_t)(val >> 56);
+      *(*bufp)++ = (uint8_t)(val >> 48);
+      *(*bufp)++ = (uint8_t)(val >> 40);
+      *(*bufp)++ = (uint8_t)(val >> 32);
+      *(*bufp)++ = (uint8_t)(val >> 24);
+      *(*bufp)++ = (uint8_t)(val >> 16);
+      *(*bufp)++ = (uint8_t)(val >> 8);
+      *(*bufp)++ = (uint8_t)val;
+#else
+      memcpy(*bufp, &val, 8);
+      *bufp += 8;
+#endif      
+    }
+
+    static inline uint64_t decode_ts64(const uint8_t **bufp) {
+      uint64_t val;
+#ifdef BOOST_LITTLE_ENDIAN
+      val = ((uint64_t)*(*bufp)++ << 56);
+      val |= ((uint64_t)(*(*bufp)++) << 48);
+      val |= ((uint64_t)(*(*bufp)++) << 40);
+      val |= ((uint64_t)(*(*bufp)++) << 32);
+      val |= ((uint64_t)(*(*bufp)++) << 24);
+      val |= (*(*bufp)++ << 16);
+      val |= (*(*bufp)++ << 8);
+      val |= *(*bufp)++;
+#else
+      memcpy(&val, *bufp, 8);
+      *bufp += 8;
+#endif
+      return ~val;
+    }
 
     /**
      * Constructor (for implicit construction).

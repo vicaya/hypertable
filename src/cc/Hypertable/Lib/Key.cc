@@ -22,8 +22,6 @@
 #include <cassert>
 #include <iostream>
 
-#include "Common/ByteOrder.h"
-
 #include "Key.h"
 
 using namespace Hypertable;
@@ -127,20 +125,17 @@ namespace Hypertable {
 
     flag = *key.ptr++;
     timestamp_ptr = (uint8_t *)key.ptr;
-    memcpy(&timestamp, key.ptr, sizeof(uint64_t));
-    end_ptr = key.ptr + sizeof(uint64_t);
 
-    timestamp = ByteOrderSwapInt64(timestamp);
-    timestamp = ~timestamp;
+    timestamp = decode_ts64((const uint8_t **)&key.ptr);
+
+    end_ptr = key.ptr;
 
     return true;
   }
 
   void Key::updateTimestamp(uint64_t ts) {
-    timestamp = ts;
-    ts = ByteOrderSwapInt64(ts);
-    ts = ~ts;
-    memcpy(timestamp_ptr, &ts, sizeof(int64_t));
+    uint8_t *ptr = timestamp_ptr;
+    encode_ts64(&ptr, ts);
   }
 
 

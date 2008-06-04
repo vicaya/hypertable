@@ -52,9 +52,10 @@ namespace Hypertable {
       uint64_t oldest_cached_timestamp;
       uint64_t mem_used;
       uint64_t disk_used;
+      uint64_t log_space_pinned;
       uint32_t deletes;
-      bool in_memory;
       void *user_data;
+      bool in_memory;
     } CompactionPriorityDataT;
 
     AccessGroup(TableIdentifier *identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeSpec *range);
@@ -125,6 +126,7 @@ namespace Hypertable {
     String          m_table_name;
     String          m_start_row;
     String          m_end_row;
+    String          m_range_name;
     std::vector<CellStorePtr> m_stores;
     CellCachePtr         m_cell_cache_ptr;
     uint32_t             m_next_table_id;
