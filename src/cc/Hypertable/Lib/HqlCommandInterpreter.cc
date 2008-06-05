@@ -55,7 +55,7 @@ namespace {
       for (size_t i=0; i<failed_mutations.size(); i++) {
 	cout << "Failed: (" << failed_mutations[i].first.row_key << "," 
 	     << failed_mutations[i].first.column_family;
-	if (failed_mutations[i].first.column_qualifier)
+	if (failed_mutations[i].first.column_qualifier && *(failed_mutations[i].first.column_qualifier))
 	  cout << ":" << failed_mutations[i].first.column_qualifier;
 	cout << "," << failed_mutations[i].first.timestamp << ") - "
 	     << Error::get_text(failed_mutations[i].second) << endl;
@@ -278,7 +278,9 @@ void HqlCommandInterpreter::execute_line(const String &line) {
 	      mutator_ptr->set(timestamp, key, value, value_len);
 	    }
 	    catch (Hypertable::Exception &e) {
-	      display_mutation_errors(e.code(), mutator_ptr.get());
+	      do {
+		display_mutation_errors(e.code(), mutator_ptr.get());
+	      } while (!mutator_ptr->retry(30));
 	    }
 	  }
 	  else {
@@ -294,11 +296,14 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       delete lds;
 
       if (into_table) {
+	// Flush pending updates
 	try {
 	  mutator_ptr->flush();
 	}
 	catch (Exception &e) {
-	  display_mutation_errors(e.code(), mutator_ptr.get());
+	  do {
+	    display_mutation_errors(e.code(), mutator_ptr.get());
+	  } while (!mutator_ptr->retry(30));
 	}
       }
       else

@@ -175,32 +175,45 @@ void TableMutatorScatterBuffer::send() {
   std::vector<ByteString> kvec;
   uint8_t *ptr;
   ByteString bs;
+  size_t len;
 
   m_completion_counter.set(m_buffer_map.size());
 
   for (TableMutatorSendBufferMapT::const_iterator iter = m_buffer_map.begin(); iter != m_buffer_map.end(); iter++) {
     send_buffer_ptr = (*iter).second;
-    kvec.clear();
-    kvec.reserve( send_buffer_ptr->key_offsets.size() );
-    for (size_t i=0; i<send_buffer_ptr->key_offsets.size(); i++)
-      kvec.push_back((ByteString)(send_buffer_ptr->accum.base + send_buffer_ptr->key_offsets[i]));
-    sort(kvec.begin(), kvec.end(), swo_bs);
-    size_t len = send_buffer_ptr->accum.fill();
+
+    if ((len = send_buffer_ptr->accum.fill()) == 0) {
+      m_completion_counter.decrement();
+      continue;
+    }
 
     send_buffer_ptr->pending_updates.set(new uint8_t [ len ], len);
-    ptr = send_buffer_ptr->pending_updates.base;
 
-    for (size_t i=0; i<kvec.size(); i++) {
-      bs = kvec[i];
-      bs.next();  // skip key
-      bs.next();  // skip value
-      memcpy(ptr, kvec[i].ptr, bs.ptr - kvec[i].ptr);
-      ptr += bs.ptr - kvec[i].ptr;
+    if (send_buffer_ptr->resend()) {
+      memcpy(send_buffer_ptr->pending_updates.base, send_buffer_ptr->accum.base, len);
     }
-    send_buffer_ptr->accum.clear();
-    HT_EXPECT((size_t)(ptr-send_buffer_ptr->pending_updates.base)==len, Error::FAILED_EXPECTATION);
+    else {
+      kvec.clear();
+      kvec.reserve( send_buffer_ptr->key_offsets.size() );
+      for (size_t i=0; i<send_buffer_ptr->key_offsets.size(); i++)
+	kvec.push_back((ByteString)(send_buffer_ptr->accum.base + send_buffer_ptr->key_offsets[i]));
+      sort(kvec.begin(), kvec.end(), swo_bs);
 
-    send_buffer_ptr->dispatch_handler_ptr = new TableMutatorDispatchHandler(send_buffer_ptr.get());
+      ptr = send_buffer_ptr->pending_updates.base;
+
+      for (size_t i=0; i<kvec.size(); i++) {
+	bs = kvec[i];
+	bs.next();  // skip key
+	bs.next();  // skip value
+	memcpy(ptr, kvec[i].ptr, bs.ptr - kvec[i].ptr);
+	ptr += bs.ptr - kvec[i].ptr;
+      }
+      HT_EXPECT((size_t)(ptr-send_buffer_ptr->pending_updates.base)==len, Error::FAILED_EXPECTATION);
+      send_buffer_ptr->dispatch_handler_ptr = new TableMutatorDispatchHandler(send_buffer_ptr.get());
+    }
+
+    send_buffer_ptr->accum.free();
+    send_buffer_ptr->key_offsets.clear();
 
     /**
      * Send update
@@ -213,6 +226,7 @@ void TableMutatorScatterBuffer::send() {
       send_buffer_ptr->add_retries(0, send_buffer_ptr->pending_updates.size);
       m_completion_counter.decrement();
     }
+    send_buffer_ptr->pending_updates.own = true;
   }
 }
 
