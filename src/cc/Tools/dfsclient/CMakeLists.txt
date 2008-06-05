@@ -33,7 +33,7 @@ CommandExists.cc
 
 # dfsclient - command interpreter
 add_executable (dfsclient dfsclient.cc ${dfsclient_SRCS})
-target_link_libraries (dfsclient pthread ${BOOST_LIB} log4cpp expat readline curses HyperDfsBroker Hypertable ${MALLOC_LIBRARY})
+target_link_libraries (dfsclient pthread ${BOOST_LIB} log4cpp expat readline curses HyperDfsBroker Hypertable HyperCommon ${MALLOC_LIBRARY})
 
 # dfsTest
 add_executable (dfsTest dfsTest.cc dfsTestThreadFunction.cc ${dfsclient_SRCS})

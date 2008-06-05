@@ -82,7 +82,7 @@ CommBuf *Hyperspace::Protocol::create_client_keepalive_request(uint64_t sessionI
  */
 CommBuf *Hyperspace::Protocol::create_server_keepalive_request(uint64_t sessionId, int error) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
-  CommBuf *cbuf = new CommBuf(hbuilder, 14);
+  CommBuf *cbuf = new CommBuf(hbuilder, 18);
   cbuf->append_short(COMMAND_KEEPALIVE);
   cbuf->append_long(sessionId);
   cbuf->append_int(error);
