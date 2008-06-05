@@ -18,6 +18,6 @@
 
 # merge_diff - program to diff two sorted files
 add_executable (merge_diff merge_diff.cc)
-target_link_libraries (merge_diff log4cpp ${Tcmalloc_LIBRARIES} Hypertable)
+target_link_libraries (merge_diff ${Log4cpp_LIBRARIES} ${Tcmalloc_LIBRARIES} Hypertable)
 
 install (TARGETS merge_diff RUNTIME DESTINATION ${VERSION}/bin)

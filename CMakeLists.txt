@@ -24,9 +24,31 @@ set(VERSION_MICRO "0")
 set(VERSION_PATCH "5")
 set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}.${VERSION_PATCH})
 
+# Behavior compatibility
+mark_as_advanced(CMAKE_BACKWARDS_COMPATIBILITY)
+cmake_minimum_required(VERSION 2.4.6)
+if (COMMAND cmake_policy)
+  # we prefer the more strict behavior, to find out more:
+  # cmake --help-policy CMP0003
+  cmake_policy(SET CMP0003 NEW)
+endif (COMMAND cmake_policy)
+
+# Something nice for GUI like ccmake
+if (NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Debug
+      CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
+endif (NOT CMAKE_BUILD_TYPE)
+
+# Install prefix
+if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set(CMAKE_INSTALL_PREFIX "/opt/hypertable"
+      CACHE PATH "Install path prefix" FORCE)
+endif (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+
 # Enable testing
 enable_testing()
 
+# gcc warning settings
 if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
   add_definitions(-Wall -pedantic -Wno-long-long)
 endif (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
@@ -38,6 +60,8 @@ add_definitions(-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_REENTRANT)
 
 # Locate required packages
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+find_package(Threads REQUIRED)
+message(STATUS "Use thread library: ${CMAKE_THREAD_LIBS_INIT}")
 find_package(ZLIB REQUIRED)
 find_package(Boost REQUIRED)
 find_package(Kfs)
@@ -50,7 +74,8 @@ find_package(Tcmalloc)
 set( MALLOC_LIBRARY ${Tcmalloc_LIBRARIES} )
 
 # include directories
-include_directories(src/cc ${Boost_INCLUDE_DIRS} ${Log4cpp_INCLUDE_DIR})
+include_directories(src/cc ${ZLIB_INCLUDE_DIR} ${Boost_INCLUDE_DIRS}
+                    ${Log4cpp_INCLUDE_DIR} ${EXPAT_INCLUDE_DIRS})
 
 if (NOT ${BOOST_CHECK} STREQUAL "0")
   message(FATAL_ERROR "Boost version not compatible")
