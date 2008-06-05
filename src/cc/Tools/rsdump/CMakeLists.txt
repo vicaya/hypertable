@@ -18,7 +18,7 @@
 
 # hypertable - command interpreter
 add_executable (rsdump rsdump.cc)
-target_link_libraries (rsdump pthread ${BOOST_LIB} Hypertable log4cpp expat ${MALLOC_LIBRARY})
+target_link_libraries (rsdump ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} Hypertable ${Log4cpp_LIBRARIES} ${EXPAT_LIBRARIES} ${MALLOC_LIBRARY})
 
 install (TARGETS rsdump RUNTIME DESTINATION ${VERSION}/bin)
 

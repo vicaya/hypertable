@@ -57,7 +57,7 @@ main.cc
 
 # Hyperspace.Master
 add_executable (Hyperspace.Master ${Master_SRCS})
-target_link_libraries (Hyperspace.Master pthread ${BOOST_LIB} Hyperspace HyperDfsBroker HyperComm HyperCommon log4cpp)
+target_link_libraries (Hyperspace.Master ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} Hyperspace HyperDfsBroker HyperComm HyperCommon ${Log4cpp_LIBRARIES})
 
 file (GLOB HEADERS *.h)
 

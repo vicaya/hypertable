@@ -45,31 +45,31 @@ target_link_libraries(HyperComm HyperCommon)
 
 # sampleClient
 add_executable (sampleClient sampleClient.cc)
-target_link_libraries (sampleClient pthread ${BOOST_LIB} HyperComm HyperCommon log4cpp)
+target_link_libraries (sampleClient ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} HyperComm HyperCommon ${Log4cpp_LIBRARIES})
 
 # testServer
 add_executable (testServer testServer.cc)
-target_link_libraries (testServer pthread ${BOOST_LIB} HyperComm HyperCommon log4cpp)
+target_link_libraries (testServer ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} HyperComm HyperCommon ${Log4cpp_LIBRARIES})
 
 # commTest
 add_executable (commTest tests/commTest.cc tests/CommTestThreadFunction.cc ${TEST_DEPENDENCIES})
-target_link_libraries (commTest pthread ${BOOST_LIB} HyperComm HyperCommon log4cpp expat)
+target_link_libraries (commTest ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} HyperComm HyperCommon ${Log4cpp_LIBRARIES} ${EXPAT_LIBRARIES})
 
 # commTestDatagram
 add_executable (commTestDatagram tests/commTestDatagram.cc tests/CommTestDatagramThreadFunction.cc ${TEST_DEPENDENCIES})
-target_link_libraries (commTestDatagram pthread ${BOOST_LIB} HyperComm HyperCommon log4cpp expat)
+target_link_libraries (commTestDatagram ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} HyperComm HyperCommon ${Log4cpp_LIBRARIES} ${EXPAT_LIBRARIES})
 
 # commTestTimeout
 add_executable (commTestTimeout tests/commTestTimeout.cc)
-target_link_libraries (commTestTimeout pthread ${BOOST_LIB} HyperComm HyperCommon log4cpp expat)
+target_link_libraries (commTestTimeout ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} HyperComm HyperCommon ${Log4cpp_LIBRARIES} ${EXPAT_LIBRARIES})
 
 # commTestTimer
 add_executable (commTestTimer tests/commTestTimer.cc)
-target_link_libraries (commTestTimer pthread ${BOOST_LIB} HyperComm HyperCommon log4cpp expat)
+target_link_libraries (commTestTimer ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} HyperComm HyperCommon ${Log4cpp_LIBRARIES} ${EXPAT_LIBRARIES})
 
 # commTestReverseRequest
 add_executable (commTestReverseRequest tests/commTestReverseRequest.cc)
-target_link_libraries (commTestReverseRequest pthread ${BOOST_LIB} HyperComm HyperCommon log4cpp expat)
+target_link_libraries (commTestReverseRequest ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} HyperComm HyperCommon ${Log4cpp_LIBRARIES} ${EXPAT_LIBRARIES})
 
 configure_file(${SRC_DIR}/commTestTimeout.golden ${DST_DIR}/commTestTimeout.golden)
 configure_file(${SRC_DIR}/commTestTimer.golden ${DST_DIR}/commTestTimer.golden)
@@ -77,8 +77,7 @@ configure_file(${SRC_DIR}/datafile.txt ${DST_DIR}/datafile.txt)
 configure_file(${SRC_DIR}/commTestReverseRequest.golden ${DST_DIR}/commTestReverseRequest.golden)
 
 add_custom_command (SOURCE ${HYPERTABLE_SOURCE_DIR}/test/words.gz
-                    COMMAND cp ARGS ${HYPERTABLE_SOURCE_DIR}/test/words.gz ${DST_DIR}
-                    COMMAND gunzip ARGS ${DST_DIR}/words.gz
+                    COMMAND gzip ARGS -d < ${HYPERTABLE_SOURCE_DIR}/test/words.gz > ${DST_DIR}/words.gz
                     OUTPUT ${DST_DIR}/words)
 
 set (ADDITIONAL_MAKE_CLEAN_FILES ${DST_DIR}/words)

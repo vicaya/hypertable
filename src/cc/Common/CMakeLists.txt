@@ -33,22 +33,22 @@ md5.cc
 )
 
 add_library (HyperCommon ${Common_SRCS})
-target_link_libraries (HyperCommon log4cpp)
+target_link_libraries (HyperCommon ${Log4cpp_LIBRARIES})
 
 # handy utils
 add_executable (code_search_and_replace code_search_and_replace.cc)
-target_link_libraries (code_search_and_replace pthread ${BOOST_LIB} HyperCommon log4cpp)
+target_link_libraries (code_search_and_replace ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} HyperCommon ${Log4cpp_LIBRARIES})
 
 # tests
 add_executable(exception_test tests/exception_test.cc)
-target_link_libraries(exception_test pthread ${BOOST_LIB} HyperCommon log4cpp)
+target_link_libraries(exception_test ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} HyperCommon ${Log4cpp_LIBRARIES})
 
 add_executable(logging_test tests/logging_test.cc)
-target_link_libraries(logging_test pthread ${BOOST_LIB} HyperCommon log4cpp) 
+target_link_libraries(logging_test ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} HyperCommon ${Log4cpp_LIBRARIES}) 
 
 # serialization tests
 add_executable(sertest tests/sertest.cc)
-target_link_libraries(sertest pthread ${BOOST_LIB} HyperCommon log4cpp)
+target_link_libraries(sertest ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} HyperCommon ${Log4cpp_LIBRARIES})
 
 add_test(Common-Exception exception_test)
 add_test(Common-Logging logging_test)

@@ -74,42 +74,42 @@ target_link_libraries (Hypertable Hyperspace HyperComm HyperCommon ${BOOST_LIB})
 
 # generate_test_data
 add_executable (generate_test_data generate_test_data.cc)
-target_link_libraries (generate_test_data Hypertable pthread ${BOOST_LIB} ${ZLIB_LIBRARIES} log4cpp expat)
+target_link_libraries (generate_test_data Hypertable ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} ${ZLIB_LIBRARIES} ${Log4cpp_LIBRARIES} ${EXPAT_LIBRARIES})
 
 # meta log test
 add_executable(metalog_api_test tests/MetaLogApiTest.cc)
-target_link_libraries(metalog_api_test Hypertable ${BOOST_LIB} log4cpp)
+target_link_libraries(metalog_api_test Hypertable ${BOOST_LIB} ${Log4cpp_LIBRARIES})
 add_executable(metalog_master_test tests/MetaLogMasterTest.cc)
-target_link_libraries(metalog_master_test Hypertable ${BOOST_LIB} log4cpp)
+target_link_libraries(metalog_master_test Hypertable ${BOOST_LIB} ${Log4cpp_LIBRARIES})
 add_executable(metalog_rs_test tests/MetaLogRangeServerTest.cc)
-target_link_libraries(metalog_rs_test Hypertable ${BOOST_LIB} log4cpp)
+target_link_libraries(metalog_rs_test Hypertable ${BOOST_LIB} ${Log4cpp_LIBRARIES})
 
 # schemaTest
 add_executable (schemaTest tests/schemaTest.cc)
-target_link_libraries (schemaTest Hypertable pthread ${BOOST_LIB} log4cpp expat)
+target_link_libraries (schemaTest Hypertable ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} ${Log4cpp_LIBRARIES} ${EXPAT_LIBRARIES})
 
 # locationCacheTest
 add_executable (locationCacheTest tests/locationCacheTest.cc)
-target_link_libraries (locationCacheTest Hypertable ${BOOST_LIB} log4cpp)
+target_link_libraries (locationCacheTest Hypertable ${BOOST_LIB} ${Log4cpp_LIBRARIES})
 
 # loadDataSourceTest
 add_executable (loadDataSourceTest tests/loadDataSourceTest.cc)
-target_link_libraries (loadDataSourceTest Hypertable ${BOOST_LIB} ${ZLIB_LIBRARIES} log4cpp)
+target_link_libraries (loadDataSourceTest Hypertable ${BOOST_LIB} ${ZLIB_LIBRARIES} ${Log4cpp_LIBRARIES})
 
 # compressor_test
 add_executable (compressor_test tests/compressor_test.cc)
-target_link_libraries (compressor_test Hypertable log4cpp ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES})
+target_link_libraries (compressor_test Hypertable ${Log4cpp_LIBRARIES} ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES})
 
 # bmz binaries
 add_executable(bmz-test bmz/bmz-test.c)
-target_link_libraries(bmz-test Hypertable log4cpp)
+target_link_libraries(bmz-test Hypertable ${Log4cpp_LIBRARIES})
 
 add_executable(bmzip bmz/bmzip.c)
-target_link_libraries(bmzip Hypertable log4cpp)
+target_link_libraries(bmzip Hypertable ${Log4cpp_LIBRARIES})
 
 # commit_log_test
 add_executable (commit_log_test tests/commit_log_test.cc)
-target_link_libraries (commit_log_test HyperDfsBroker Hypertable ${BOOST_LIB} log4cpp ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES})
+target_link_libraries (commit_log_test HyperDfsBroker Hypertable ${BOOST_LIB} ${Log4cpp_LIBRARIES} ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES})
 
 
 #
