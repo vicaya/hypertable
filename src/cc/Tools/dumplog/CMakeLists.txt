@@ -18,6 +18,6 @@
 
 # dumplog - program to display a commit log
 add_executable (dumplog dumplog.cc)
-target_link_libraries (dumplog ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} ${Log4cpp_LIBRARIES} ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES} HyperDfsBroker Hypertable ${MALLOC_LIBRARY})
+target_link_libraries (dumplog ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} ${Log4cpp_LIBRARIES} ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES} HyperDfsBroker Hypertable HyperComm ${MALLOC_LIBRARY})
 
 install (TARGETS dumplog RUNTIME DESTINATION ${VERSION}/bin)
