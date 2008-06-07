@@ -1,4 +1,4 @@
-package org.apache.hadoop.hypertable.mapred;
+//package org.apache.hadoop.hypertable.mapred;
 
 import java.io.IOException;
 import java.util.Map;
@@ -17,12 +17,16 @@ import org.apache.hadoop.mapred.JobConfigurable;
 import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
 
-import org.apache.hadoop.hypertable.mapred.TableSplit;
+//import org.apache.hadoop.hypertable.mapred.TableSplit;
 
 public class TableInputFormat implements InputFormat<Text, MapWritable>, JobConfigurable
 {
   
   private Text m_tableName;
+
+  public TableInputFormat(String tableName) {
+    m_tableName = new Text(tableName);
+  }
 
   public void configure(JobConf job)
   {
@@ -44,18 +48,21 @@ public class TableInputFormat implements InputFormat<Text, MapWritable>, JobConf
     return new DummyRecordReader();
   }
   
-  public InputSplit[] getSplits(JobConf job, int numSplits) throws IOException {  
+  public InputSplit[] getSplits(JobConf job, int numSplits) throws IOException {
     String[] rangeVector = getRangeVector(m_tableName.toString());
     if (rangeVector == null || rangeVector.length == 0) {
       throw new IOException("No input split could be created.");
     }
     
-    InputSplit[] splits = new InputSplit[rangeVector.length/2];
+    InputSplit[] splits = new InputSplit[rangeVector.length/3];
     
     for (int i = 0; i < (rangeVector.length/3); i++) {
       Text start = new Text(rangeVector[i*3]);
       Text end = new Text(rangeVector[i*3+1]);
-      Text location = new Text(rangeVector[i*3+2]);
+      
+      int u = rangeVector[i*3+2].indexOf("_");
+      Text location = new Text(rangeVector[i*3+2].substring(0,u));
+      
       splits[i] = new TableSplit(m_tableName, start, end, location);
     }
     

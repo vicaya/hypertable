@@ -1,4 +1,4 @@
-package org.apache.hadoop.hypertable.mapred;
+//package org.apache.hadoop.hypertable.mapred;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -7,7 +7,7 @@ import java.io.IOException;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.InputSplit;
 
-class TableSplit implements InputSplit {
+public class TableSplit implements InputSplit {
   private Text m_tableName;
   private Text m_startRow;
   private Text m_endRow;
@@ -18,14 +18,15 @@ class TableSplit implements InputSplit {
     m_tableName = new Text();
     m_startRow = new Text();
     m_endRow = new Text();
+    m_location = new Text();
   }
   
   public TableSplit(Text tableName, Text startRow, Text endRow, Text location) {
     this();
+    m_location.set(location);
     m_tableName.set(tableName);
     m_startRow.set(startRow);
     m_endRow.set(endRow);
-    m_location.set(location);
   }
   
   public Text getTableName() {
