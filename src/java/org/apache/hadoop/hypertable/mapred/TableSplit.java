@@ -11,6 +11,7 @@ class TableSplit implements InputSplit {
   private Text m_tableName;
   private Text m_startRow;
   private Text m_endRow;
+  private Text m_location;
   
   public TableSplit()
   {
@@ -19,11 +20,12 @@ class TableSplit implements InputSplit {
     m_endRow = new Text();
   }
   
-  public TableSplit(Text tableName, Text startRow, Text endRow) {
+  public TableSplit(Text tableName, Text startRow, Text endRow, Text location) {
     this();
     m_tableName.set(tableName);
     m_startRow.set(startRow);
     m_endRow.set(endRow);
+    m_location.set(location);
   }
   
   public Text getTableName() {
@@ -40,6 +42,10 @@ class TableSplit implements InputSplit {
   
   public long getLength() {
     return 0;
+  }
+  
+  public Text getLocation() {
+    return m_location;
   }
   
   public void readFields(DataInput in) throws IOException {

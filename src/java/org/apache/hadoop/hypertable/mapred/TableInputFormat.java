@@ -17,7 +17,7 @@ import org.apache.hadoop.mapred.JobConfigurable;
 import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
 
-//import org.apache.hadoop.mapred.TableSplit;
+import org.apache.hadoop.hypertable.mapred.TableSplit;
 
 public class TableInputFormat implements InputFormat<Text, MapWritable>, JobConfigurable
 {
@@ -52,10 +52,11 @@ public class TableInputFormat implements InputFormat<Text, MapWritable>, JobConf
     
     InputSplit[] splits = new InputSplit[rangeVector.length/2];
     
-    for (int i = 0; i < (rangeVector.length/2); i++) {
-      Text start = new Text(rangeVector[i*2]);
-      Text end = new Text(rangeVector[i*2+1]);
-      splits[i] = new TableSplit(m_tableName, start, end);
+    for (int i = 0; i < (rangeVector.length/3); i++) {
+      Text start = new Text(rangeVector[i*3]);
+      Text end = new Text(rangeVector[i*3+1]);
+      Text location = new Text(rangeVector[i*3+2]);
+      splits[i] = new TableSplit(m_tableName, start, end, location);
     }
     
     return splits;
@@ -64,7 +65,10 @@ public class TableInputFormat implements InputFormat<Text, MapWritable>, JobConf
   public void validateInput(JobConf job) {
     
   }
-  
+
+  static {
+    System.loadLibrary("hypertable");
+  }
   /**
     This JNI function returns a range vector for a
     given table in form of a string vector, where each
