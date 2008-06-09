@@ -181,6 +181,7 @@ int main(int ac, char *av[]) {
   }
   catch (Exception &e) {
     HT_FATAL_OUT << e << HT_END;
+    return 1;
   }
   return 0;
 }
