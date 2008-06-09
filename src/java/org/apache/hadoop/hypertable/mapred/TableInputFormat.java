@@ -24,8 +24,7 @@ public class TableInputFormat implements InputFormat<Text, MapWritable>, JobConf
   
   private Text m_tableName;
 
-  public TableInputFormat(String tableName) {
-    m_tableName = new Text(tableName);
+  public TableInputFormat() {
   }
 
   public void configure(JobConf job)
