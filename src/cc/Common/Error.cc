@@ -27,12 +27,14 @@
 using namespace Hypertable;
 
 namespace {
-  typedef struct {
-    uint32_t     code;
+  struct ErrorInfo {
+    int          code;
     const char  *text;
-  } ErrorInfoT;
+  };
 
-  ErrorInfoT errorInfo[] = {
+  ErrorInfo errorInfo[] = {
+    { Error::UNPOSSIBLE,                  "But that's unpossible!" },
+    { Error::EXTERNAL,                    "External error" },
     { Error::OK,                          "HYPERTABLE ok" },
     { Error::PROTOCOL_ERROR,              "HYPERTABLE protocol error" },
     { Error::REQUEST_TRUNCATED,           "HYPERTABLE request truncated" },
@@ -55,6 +57,7 @@ namespace {
     { Error::BLOCK_COMPRESSOR_INFLATE_ERROR,     "HYPERTABLE block compressor inflate error" },
     { Error::BLOCK_COMPRESSOR_INIT_ERROR,        "HYPERTABLE block compressor initialization error" },
     { Error::TABLE_DOES_NOT_EXIST,               "HYPERTABLE table does not exist" },
+    { Error::TOO_MANY_COLUMNS,            "HYPERTABLE too many columns" },
     { Error::FAILED_EXPECTATION,          "HYPERTABLE failed expectation" },
     { Error::MALFORMED_REQUEST,           "HYPERTABLE malformed request" },
     { Error::COMM_NOT_CONNECTED,          "COMM not connected" },

@@ -29,6 +29,9 @@
 namespace Hypertable {
   namespace Error {
     enum Code {
+      UNPOSSIBLE         = -3,
+      EXTERNAL           = -2,
+      FAILED_EXPECTATION = -1,
       OK                 = 0,
       PROTOCOL_ERROR     = 1,
       REQUEST_TRUNCATED  = 2,
@@ -52,8 +55,8 @@ namespace Hypertable {
       BLOCK_COMPRESSOR_INFLATE_ERROR     = 20,
       BLOCK_COMPRESSOR_INIT_ERROR        = 21,
       TABLE_DOES_NOT_EXIST               = 22,
-      FAILED_EXPECTATION                 = 23,
-      MALFORMED_REQUEST                  = 24,
+      MALFORMED_REQUEST                  = 23,
+      TOO_MANY_COLUMNS                   = 24,
 
       COMM_NOT_CONNECTED       = 0x00010001,
       COMM_BROKEN_CONNECTION   = 0x00010002,

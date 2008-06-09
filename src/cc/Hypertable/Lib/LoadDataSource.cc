@@ -92,7 +92,7 @@ LoadDataSource::LoadDataSource(String fname, String header_fname, std::vector<St
     }
     base = ptr;
     index++;
-    HT_EXPECT(index < 256, Error::ASSERTION_FAILURE);
+    HT_EXPECT(index < 256, Error::TOO_MANY_COLUMNS);
   }
   m_column_names.push_back(base);
 

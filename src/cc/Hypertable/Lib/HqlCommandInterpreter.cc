@@ -201,7 +201,6 @@ void HqlCommandInterpreter::execute_line(const String &line) {
     else if (state.command == COMMAND_LOAD_DATA) {
       TablePtr table_ptr;
       TableMutatorPtr mutator_ptr;
-      LoadDataSource *lds;
       uint64_t timestamp;
       KeySpec key;
       uint8_t *value;
@@ -258,7 +257,7 @@ void HqlCommandInterpreter::execute_line(const String &line) {
 
       boost::progress_display show_progress( file_size );
 
-      lds = new LoadDataSource(state.input_file, state.header_file, state.key_columns, state.timestamp_column);
+      auto_ptr<LoadDataSource> lds(new LoadDataSource(state.input_file, state.header_file, state.key_columns, state.timestamp_column));
 
       if (!into_table) {
 	display_timestamps = lds->has_timestamps();
@@ -293,8 +292,6 @@ void HqlCommandInterpreter::execute_line(const String &line) {
 	show_progress += consumed;
       }
       
-      delete lds;
-
       if (into_table) {
 	// Flush pending updates
 	try {
