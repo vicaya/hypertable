@@ -21,6 +21,7 @@
 #ifndef HYPERTABLE_LOGGER_H
 #define HYPERTABLE_LOGGER_H
 
+#include "Error.h"
 #include "String.h"
 #include <iostream>
 #include "FixedStream.h"
@@ -234,8 +235,10 @@ namespace Hypertable { namespace Logger {
 #define HT_FATAL_OUT HT_OUT2(isFatalEnabled)
 #define HT_FATAL_END ""; Logger::logger->fatal(out.str()); HT_ABORT; \
 } /* if enabled */ } while (0)
-#define HT_EXPECT(_e_, _code_) do { if (_e_); else \
-  HT_FATAL("failed expectation: " #_e_); \
+#define HT_EXPECT(_e_, _code_) do { if (_e_); else { \
+    if (_code_ == Error::FAILED_EXPECTATION) \
+      HT_FATAL("failed expectation: " #_e_); \
+    HT_THROW(_code_, "failed expectation: " #_e_); } \
 } while (0)
 #else
 #define HT_FATAL(msg)
