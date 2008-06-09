@@ -8,43 +8,23 @@ using namespace Hypertable;
 namespace {
 
 void test_ex4() {
-  throw Exception(Error::PROTOCOL_ERROR, __func__);
+  HT_THROW(Error::PROTOCOL_ERROR, ""); 
 }
 
 void test_ex3() {
-  try {
-    test_ex4();
-  }
-  catch (Exception &e) {
-    throw Exception(e.code(), __func__, e);
-  }
+  HT_TRY("testing ex4", test_ex4());
 }
 
 void test_ex2() {
-  try {
-    test_ex3();
-  }
-  catch (Exception &e) {
-    throw Exception(e.code(), __func__, e);
-  }
+  HT_TRY("testing ex3", test_ex3());
 }
 
 void test_ex1() {
-  try {
-    test_ex2();
-  }
-  catch (Exception &e) {
-    throw Exception(e.code(), __func__, e);
-  }
+  HT_TRY("testing ex2", test_ex2());
 }
 
 void test_ex0() {
-  try {
-    test_ex1();
-  }
-  catch (Exception &e) {
-    throw Exception(e.code(), __func__, e);
-  }
+  HT_TRY("testing ex1", test_ex1());
 }
 
 } // local namespace
@@ -56,9 +36,6 @@ int main(int ac, char *av[]) {
     test_ex0();
   }
   catch (Exception &e) {
-    HT_DEBUG_OUT << e << HT_DEBUG_END;
-    HT_WARN_OUT << e << HT_WARN_END;
-    HT_INFO_OUT << e << HT_INFO_END;
-    HT_ERROR_OUT << e << HT_ERROR_END;
+    HT_INFO_OUT <<"Exception trace: "<<  e << HT_ERROR_END;
   }
 }
