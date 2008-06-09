@@ -25,15 +25,6 @@
 #include "serialization-c.h"
 
 
-/**
- * Try/catch wrapper for a bunch of decodes
- */
-#define HT_TRY_DECODE(_type_, _code_) try { _code_; } catch (Exception &e) { \
-  throw Exception(e.code(), "Error decoding " #_type_, e, \
-                  __LINE__, __func__, __FILE__); \
-  }
-
-
 namespace Hypertable { namespace Serialization {
 
   /**

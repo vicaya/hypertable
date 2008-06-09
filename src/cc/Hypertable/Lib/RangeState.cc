@@ -40,7 +40,7 @@ void RangeState::encode(uint8_t **bufp) {
 
 
 void RangeState::decode(const uint8_t **bufp, size_t *remainp) {
-  HT_TRY_DECODE(RangeState,
+  HT_TRY("decoding range state",
     state = decode_byte(bufp, remainp);
     soft_limit = decode_i64(bufp, remainp);
     transfer_log = decode_str16(bufp, remainp));

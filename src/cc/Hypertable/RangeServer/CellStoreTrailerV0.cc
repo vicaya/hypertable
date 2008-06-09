@@ -83,18 +83,19 @@ void CellStoreTrailerV0::serialize(uint8_t *buf) {
 /**
  */
 void CellStoreTrailerV0::deserialize(const uint8_t *buf) {
-  size_t remaining = CellStoreTrailerV0::size();
-  fix_index_offset = decode_i32(&buf, &remaining);
-  var_index_offset = decode_i32(&buf, &remaining);
-  filter_offset = decode_i32(&buf, &remaining);
-  index_entries = decode_i32(&buf, &remaining);
-  total_entries = decode_i32(&buf, &remaining);
-  blocksize = decode_i32(&buf, &remaining);
-  timestamp.logical = decode_i64(&buf, &remaining);
-  timestamp.real = decode_i64(&buf, &remaining);
-  compression_ratio_i32 = decode_i32(&buf, &remaining);
-  compression_type = decode_i16(&buf, &remaining);
-  version = decode_i16(&buf, &remaining);
+  HT_TRY("deserializing cellstore trailer",
+    size_t remaining = CellStoreTrailerV0::size();
+    fix_index_offset = decode_i32(&buf, &remaining);
+    var_index_offset = decode_i32(&buf, &remaining);
+    filter_offset = decode_i32(&buf, &remaining);
+    index_entries = decode_i32(&buf, &remaining);
+    total_entries = decode_i32(&buf, &remaining);
+    blocksize = decode_i32(&buf, &remaining);
+    timestamp.logical = decode_i64(&buf, &remaining);
+    timestamp.real = decode_i64(&buf, &remaining);
+    compression_ratio_i32 = decode_i32(&buf, &remaining);
+    compression_type = decode_i16(&buf, &remaining);
+    version = decode_i16(&buf, &remaining));
 }
 
 

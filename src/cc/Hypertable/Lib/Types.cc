@@ -45,7 +45,7 @@ void TableIdentifier::encode(uint8_t **bufp) const {
 }
 
 void TableIdentifier::decode(const uint8_t **bufp, size_t *remainp) {
-  HT_TRY_DECODE(TableIdentifier,
+  HT_TRY("decoding table identitier",
     name = decode_vstr(bufp, remainp);
     id = decode_i32(bufp, remainp);
     generation = decode_i32(bufp, remainp));
@@ -61,7 +61,7 @@ void RangeSpec::encode(uint8_t **bufp) const {
 }
 
 void RangeSpec::decode(const uint8_t **bufp, size_t *remainp) {
-  HT_TRY_DECODE(RangeSpec,
+  HT_TRY("decoding range spec",
     start_row = decode_vstr(bufp, remainp);
     end_row = decode_vstr(bufp, remainp));
 }
@@ -97,7 +97,7 @@ void ScanSpec::encode(uint8_t **bufp) const {
 }
 
 void ScanSpec::decode(const uint8_t **bufp, size_t *remainp) {
-  HT_TRY_DECODE(ScanSpec,
+  HT_TRY("decoding scan spec",
     row_limit = decode_vi32(bufp, remainp);
     max_versions = decode_vi32(bufp, remainp);
     start_row = decode_vstr(bufp, remainp);

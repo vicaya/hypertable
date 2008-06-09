@@ -41,8 +41,9 @@ namespace Hyperspace {
   DirEntry &
   decode_dir_entry(const uint8_t **bufp, size_t *remainp,
                          DirEntry &dir_entry) {
-    dir_entry.is_dir = decode_bool(bufp, remainp);
-    dir_entry.name = decode_vstr(bufp, remainp);
+    HT_TRY("decoding dir entry",
+      dir_entry.is_dir = decode_bool(bufp, remainp);
+      dir_entry.name = decode_vstr(bufp, remainp));
     return dir_entry;
   }
 }
