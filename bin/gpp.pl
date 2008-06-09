@@ -1,0 +1,42 @@
+#!/usr/bin/env perl
+# usage: gpp <c++flags> <source_file>
+# example: gpp -I../.. sertest.cc
+# which will generate sertest-x.cc and sertest-x.h
+
+use strict;
+
+open(my $h, "-|", "g++", "-E", @ARGV) or die;
+
+$/ = undef;
+$_ = <$h>;
+
+my $logfile = '/dev/null';
+
+if (defined $ENV{'GPP_DEBUG'}) {
+  print { open my $gh, ">", "gpp-$$.input"; $gh or die } $_;
+  $logfile = "gpp-$$.log";
+}
+
+sub cleanup {
+  local($_) = shift;
+  s/^#.*//mg;   # remove preprocessing directives
+  s/;/;\n/g;    # add a newline after ; to workaround a problem in bcpp
+  return $_;
+}
+
+if (/([\s\S]*\n# \d+ "([^"]+)"[^\n]*\n)([\s\S]*)/) {
+  my $fname = $2;
+  my $header = cleanup($1);
+  my $body = cleanup($3);
+  (my $hfile = $fname) =~ s/(.*)(\.\w+)$/$1-x.h/;
+  (my $xfile = $fname) =~ s/(.*)\./$1-x./;
+  print "Writing $hfile and $xfile...\n";
+  # the pragma is needed for certain template constructs in headers
+  print { open my $hh, "|bcpp -i 2 -bcl > $hfile 2>>$logfile"; $hh or die }
+      "#pragma GCC system_header\n", $header;
+  print { open my $fh, "|bcpp -i 2 -bcl > $xfile 2>>$logfile"; $fh or die } 
+      "#include \"$hfile\"\n", $body;
+}
+else {
+  print "Found nothing to work with!\n"
+}
