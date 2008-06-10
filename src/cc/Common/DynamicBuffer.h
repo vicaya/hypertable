@@ -44,11 +44,23 @@ namespace Hypertable {
 
     size_t fill() const { return ptr-base; }
 
+    /**
+     * Ensure space for additional data
+     * Will grow the space to 1.5 of the needed space with existing data
+     * unchanged.
+     *
+     * @param len - additional data in bytes
+     */
     void ensure(size_t len) {
       if (len > remaining())
         grow((fill() + len) * 3 / 2);
     }
 
+    /**
+     * Reserve space for additional data
+     * Will grow the space to exactly what's needed. Existing data is NOT
+     * preserved by default
+     */
     void reserve(size_t len, bool nocopy = false) {
       if (len > remaining())
         grow(fill() + len, nocopy);
