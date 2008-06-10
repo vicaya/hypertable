@@ -50,8 +50,12 @@
 #  endif
 #endif
 
-/* Probably should use pstdint.h from Hsieh for porting */
+/* We want C limit macros, even when using C++ compilers */
+#define __STDC_LIMIT_MACROS
 #include <stdint.h>
+#include <stddef.h>
+#include <string.h>
+#include <strings.h>
 #include <stdlib.h>
 
 #endif /* HYPERTABLE_COMPAT_C_H */
