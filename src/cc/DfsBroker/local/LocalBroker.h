@@ -77,7 +77,7 @@ namespace Hypertable {
     virtual void close(ResponseCallback *cb, uint32_t fd);
     virtual void read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount);
     virtual void append(ResponseCallbackAppend *cb, uint32_t fd,
-                        uint32_t amount, uint8_t *data, bool sync);
+                        uint32_t amount, const void *data, bool sync);
     virtual void seek(ResponseCallback *cb, uint32_t fd, uint64_t offset);
     virtual void remove(ResponseCallback *cb, const char *fileName);
     virtual void length(ResponseCallbackLength *cb, const char *fileName);

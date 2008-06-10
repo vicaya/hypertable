@@ -218,7 +218,7 @@ void LocalBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
  * Append
  */
 void LocalBroker::append(ResponseCallbackAppend *cb, uint32_t fd,
-                         uint32_t amount, uint8_t *data, bool sync) {
+                         uint32_t amount, const void *data, bool sync) {
   OpenFileDataLocalPtr dataPtr;
   ssize_t nwritten;
   uint64_t offset;
