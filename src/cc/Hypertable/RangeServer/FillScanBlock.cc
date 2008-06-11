@@ -38,7 +38,7 @@ namespace Hypertable {
     size_t key_len, value_len;
     bool more = true;
     size_t limit = HYPERTABLE_DATA_TRANSFER_BLOCKSIZE;
-    size_t remaining;
+    size_t remaining = HYPERTABLE_DATA_TRANSFER_BLOCKSIZE;
     uint8_t *ptr;
 
     assert(dbuf.base == 0);
@@ -47,12 +47,13 @@ namespace Hypertable {
       key_len = key.length();
       value_len = value.length();
       if (dbuf.base == 0) {
-	if (key_len + value_len > limit)
+	if (key_len + value_len > limit) {
 	  limit = key_len + value_len;
+	  remaining = limit;
+	}
 	dbuf.reserve(limit+4);
 	// skip encoded length
 	dbuf.ptr = dbuf.base + 4;
-	remaining = limit;
       }
       if (key_len + value_len <= remaining) {
 	dbuf.addNoCheck(key.ptr, key_len);
