@@ -137,27 +137,65 @@ namespace Hypertable {
     const Exception &operator=(const Exception &); // not assignable
 
     int m_error;
+    int m_line;
+    const char *m_func;
+    const char *m_file;
+
   public:
     typedef std::runtime_error Parent;
 
-    Exception(int error) : Parent(""), m_error(error), prev(0) {}
-    Exception(int error, const String &msg) :
-              Parent(msg), m_error(error), prev(0) {}
-    Exception(int error, const String &msg, const Exception &ex) :
-              Parent(msg), m_error(error), prev(new Exception(ex)) {}
+    Exception(int error, int l = 0, const char *fn = 0, const char *fl = 0)
+        : Parent(""), m_error(error), m_line(l), m_func(fn), m_file(fl),
+          prev(0) {}
+    Exception(int error, const String &msg, int l = 0, const char *fn = 0,
+              const char *fl = 0)
+        : Parent(msg), m_error(error), m_line(l), m_func(fn), m_file(fl),
+          prev(0) {}
+    Exception(int error, const String &msg, const Exception &ex,
+              int l = 0, const char *fn = 0, const char *fl = 0)
+        : Parent(msg), m_error(error), m_line(l), m_func(fn), m_file(fl),
+          prev(new Exception(ex)) {}
     // copy ctor is required for exceptions
-    Exception(const Exception &ex) : Parent(ex) {
-      m_error = ex.m_error;
+    Exception(const Exception &ex) : Parent(ex), m_error(ex.m_error),
+        m_line(ex.m_line), m_func(ex.m_func), m_file(ex.m_file) {
       prev = ex.prev ? new Exception(*ex.prev) : 0;
     }
     ~Exception() throw() { delete prev; }
 
     int code() const { return m_error; }
+    int line() const { return m_line; }
+    const char *func() const { return m_func; }
+    const char *file() const { return m_file; }
 
     Exception *prev;    // exception chain/list
   };
 
   std::ostream &operator<<(std::ostream &out, const Exception &e);
+
+/**
+ * Convenience macros to create an exception stack trace
+ */
+#define HT_THROW(_code_, _msg_) \
+  throw Exception(_code_, _msg_, __LINE__, __func__, __FILE__)
+
+#define HT_THROWF(_code_, _fmt_, ...) \
+  throw Exception(_code_, format(_fmt_, __VA_ARGS__), \
+                  __LINE__, __func__, __FILE__)
+
+#define HT_TRY(_s_, _code_) do { \
+  try { _code_; } \
+  catch (Exception &e) { \
+    throw Exception(e.code(), _s_, e, __LINE__, __func__, __FILE__); \
+  } \
+  catch (std::exception &e) { \
+    throw Exception(Error::EXTERNAL, format("External exception " _s_ ": %s", \
+                    e.what()), __LINE__, __func__, __FILE__); \
+  } \
+  catch (...) { throw Exception(Error::EXTERNAL, "Unknown exception " _s_, \
+                                __LINE__, __func__, __FILE__); \
+  } \
+} while (0)
+
 
 } // namespace Hypertable
 
