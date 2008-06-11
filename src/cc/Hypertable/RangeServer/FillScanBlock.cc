@@ -19,37 +19,58 @@
  * 02110-1301, USA.
  */
 
+#include <algorithm>
+
 extern "C" {
 #include <stdint.h>
 }
 
+#include "Common/Serialization.h"
+
+#include "Hypertable/Lib/Defaults.h"
 #include "FillScanBlock.h"
 
 namespace Hypertable {
 
-  bool FillScanBlock(CellListScannerPtr &scannerPtr, uint8_t *dst, size_t dstLen, uint32_t *lenp) {
-    uint8_t *ptr = dst;
-    uint8_t *end = dst + dstLen;
+  bool FillScanBlock(CellListScannerPtr &scannerPtr, DynamicBuffer &dbuf) {
     ByteString key;
     ByteString value;
     size_t key_len, value_len;
     bool more = true;
+    size_t limit = HYPERTABLE_DATA_TRANSFER_BLOCKSIZE;
+    size_t remaining;
+    uint8_t *ptr;
+
+    assert(dbuf.base == 0);
 
     while ((more = scannerPtr->get(key, value))) {
       key_len = key.length();
       value_len = value.length();
-      if ((size_t)(end-ptr) >= key_len + value_len) {
-	memcpy(ptr, key.ptr, key_len);
-	ptr += key_len;
-	memcpy(ptr, value.ptr, value_len);
-	ptr += value_len;
+      if (dbuf.base == 0) {
+	if (key_len + value_len > limit)
+	  limit = key_len + value_len;
+	dbuf.reserve(limit+4);
+	// skip encoded length
+	dbuf.ptr = dbuf.base + 4;
+	remaining = limit;
+      }
+      if (key_len + value_len <= remaining) {
+	dbuf.addNoCheck(key.ptr, key_len);
+	dbuf.addNoCheck(value.ptr, value_len);
+	remaining -= (key_len + value_len);
 	scannerPtr->forward();
       }
       else
 	break;
     }
 
-    *lenp = ptr - dst;
+    if (dbuf.base == 0) {
+      dbuf.reserve(limit+4);
+      dbuf.ptr = dbuf.base + 4;
+    }
+
+    ptr = dbuf.base;
+    Serialization::encode_i32(&ptr, dbuf.fill()-4);
 
     return more;
   }

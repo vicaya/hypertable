@@ -55,7 +55,6 @@ using namespace Hypertable;
 using namespace std;
 
 namespace {
-  const int DEFAULT_SCANBUF_SIZE = 32768;
   const int DEFAULT_PORT    = 38060;
 }
 
@@ -480,7 +479,6 @@ void RangeServer::compact(ResponseCallback *cb, TableIdentifier *table, RangeSpe
  *  CreateScanner
  */
 void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentifier *table, RangeSpec *range, ScanSpec *scan_spec) {
-  uint8_t *kv_ptr, *kv_buffer = 0;
   int error = Error::OK;
   std::string errMsg;
   TableInfoPtr tableInfoPtr;
@@ -500,6 +498,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
   }
 
   try {
+    DynamicBuffer rbuf;
 
     if (!m_live_map_ptr->get(table->id, tableInfoPtr))
       throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND, (std::string)"unknown table '" + table->name + "'");
@@ -521,11 +520,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
       throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND,
 				  (std::string)"(b) " + table->name + "[" + range->start_row + ".." + range->end_row + "]");
 
-    kv_ptr = kv_buffer = new uint8_t [ 4 + DEFAULT_SCANBUF_SIZE ];
-    uint32_t kv_len;
-
-    more = FillScanBlock(scannerPtr, kv_buffer+4, DEFAULT_SCANBUF_SIZE, &kv_len);
-    Serialization::encode_i32(&kv_ptr, kv_len);
+    more = FillScanBlock(scannerPtr, rbuf);
 
     id = (more) ? Global::scannerMap.put(scannerPtr, range_ptr) : 0;
 
@@ -538,7 +533,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
      */
     {
       short moreFlag = more ? 0 : 1;
-      StaticBuffer ext(kv_buffer, 4 + kv_len);
+      StaticBuffer ext(rbuf);
       if ((error = cb->response(moreFlag, id, ext)) != Error::OK) {
 	HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       }
@@ -567,7 +562,7 @@ void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t s
   CellListScannerPtr scannerPtr;
   RangePtr range_ptr;
   bool more = true;
-  uint8_t *kv_ptr, *kv_buffer = 0;
+  DynamicBuffer rbuf;
 
   if (Global::verbose) {
     cout << "RangeServer::fetch_scanblock" << endl;
@@ -582,11 +577,7 @@ void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t s
     goto abort;    
   }
 
-  kv_ptr = kv_buffer = new uint8_t [ 4 + DEFAULT_SCANBUF_SIZE ];
-  uint32_t kv_len;
-
-  more = FillScanBlock(scannerPtr, kv_buffer+4, DEFAULT_SCANBUF_SIZE, &kv_len);
-  Serialization::encode_int(&kv_ptr, kv_len);
+  more = FillScanBlock(scannerPtr, rbuf);
   
   if (!more)
     Global::scannerMap.remove(scannerId);
@@ -596,14 +587,15 @@ void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t s
    */
   {
     short moreFlag = more ? 0 : 1;
-    StaticBuffer ext(kv_buffer, 4 + kv_len);
+    StaticBuffer ext(rbuf);
+
     if ((error = cb->response(moreFlag, scannerId, ext)) != Error::OK) {
       HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
     }
-  }
 
-  if (Global::verbose) {
-    HT_INFOF("Successfully fetched %d bytes of scan data", kv_len);
+    if (Global::verbose) {
+      HT_INFOF("Successfully fetched %d bytes of scan data", ext.size-4);
+    }
   }
 
   error = Error::OK;
