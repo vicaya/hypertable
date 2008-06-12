@@ -66,7 +66,7 @@ CellStoreV0::~CellStoreV0() {
       m_filesys->close(m_fd);
   }
   catch (Exception &e) {
-    HT_ERRORF("%s: error closing DFS client: %s", __func__, e.what());
+    HT_ERROR_OUT << "Error closing DFS client: "<< e << HT_END;
   }
 }
 
@@ -262,7 +262,7 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
 
   try { m_filesys->append(m_fd, send_buf, 0, &m_sync_handler); }
   catch (Exception &e) {
-    HT_ERRORF("%s: %s", __func__, e.what());
+    HT_ERROR_OUT << e << HT_END;
     goto abort;
   }
   m_outstanding_appends++;
@@ -311,7 +311,7 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
 
   try { m_filesys->append(m_fd, send_buf); }
   catch (Exception &e) {
-    HT_ERRORF("%s: %s", __func__, e.what());
+    HT_ERROR_OUT << e << HT_END;
     goto abort;
   }
   m_outstanding_appends++;
@@ -320,7 +320,7 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
   /** close file for writing **/
   try { m_filesys->close(m_fd); }
   catch (Exception &e) {
-    HT_ERRORF("%s: %s", __func__, e.what());
+    HT_ERROR_OUT << e << HT_END;
     goto abort;
   }
 
@@ -330,7 +330,7 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
   /** Re-open file for reading **/
   try { m_fd = m_filesys->open(m_filename); }
   catch (Exception &e) {
-    HT_ERRORF("%s: Error reopening cellstore: %s", __func__, e.what());
+    HT_ERROR_OUT << "Error reopening cellstore: "<<  e << HT_END;
     goto abort;
   }
 
@@ -380,7 +380,7 @@ int CellStoreV0::open(const char *fname, const char *start_row, const char *end_
   /** Get the file length **/
   try { m_file_length = m_filesys->length(m_filename); }
   catch (Exception &e) {
-    HT_ERRORF("%s: %s", __func__, e.what());
+    HT_ERROR_OUT << e << HT_END;
     goto abort;
   }
 
@@ -393,7 +393,7 @@ int CellStoreV0::open(const char *fname, const char *start_row, const char *end_
   /** Open the DFS file **/
   try { m_fd =  m_filesys->open(m_filename); }
   catch (Exception &e) {
-    HT_ERRORF("%s: %s", __func__, e.what());
+    HT_ERROR_OUT << e << HT_END;
     goto abort;
   }
 

@@ -226,10 +226,10 @@ CellStoreScannerV0::~CellStoreScannerV0() {
 #endif
   }
   catch (Exception &e) {
-    HT_ERRORF("Exception caught in %s: %s", __func__, e.what());
+    HT_ERROR_OUT << e << HT_END;
   }
   catch (...) {
-    HT_ERRORF("Unknown exception caught in %s", __func__);
+    HT_ERRORF("Unknown exception caught in %s", HT_FUNC);
   }
 }
 

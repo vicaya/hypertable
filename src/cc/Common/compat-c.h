@@ -42,12 +42,14 @@
 #ifdef __GNUC__
 #  define HT_NORETURN __attribute__((__noreturn__))
 #  define HT_FORMAT(x) __attribute__((format x))
+#  define HT_FUNC __PRETTY_FUNCTION__
 #else
 #  define HT_NORETURN
 #  define HT_FORMAT(x)
 #  ifndef __attribute__
 #    define __attribute__(x)
 #  endif
+#  define HT_FUNC __func__
 #endif
 
 /* We want C limit macros, even when using C++ compilers */

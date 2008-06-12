@@ -109,18 +109,18 @@ namespace Hypertable { namespace Logger {
 #define HT_LOG_ENTER do { \
   if (Logger::logger->isDebugEnabled()) {\
     if (Logger::show_line_numbers) \
-      Logger::logger->debug("(%s:%d) %s() ENTER", __FILE__, __LINE__, __func__); \
+      Logger::logger->debug("(%s:%d) %s() ENTER", __FILE__, __LINE__, HT_FUNC); \
     else \
-      Logger::logger->debug("%s() ENTER", __func__); \
+      Logger::logger->debug("%s() ENTER", HT_FUNC); \
   } \
 } while(0)
 
 #define HT_LOG_EXIT do { \
   if (Logger::logger->isDebugEnabled()) { \
     if (Logger::show_line_numbers) \
-      Logger::logger->debug("(%s:%d) %s() EXIT", __FILE__, __LINE__, __func__); \
+      Logger::logger->debug("(%s:%d) %s() EXIT", __FILE__, __LINE__, HT_FUNC); \
     else \
-      Logger::logger->debug("%s() EXIT", __func__); \
+      Logger::logger->debug("%s() EXIT", HT_FUNC); \
   } \
 } while(0)
 

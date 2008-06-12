@@ -59,28 +59,28 @@
 # ifndef HT_THROW_INPUT_OVERRUN
 #   define HT_THROW_INPUT_OVERRUN(_s_) do { \
       std::fprintf(stderr, "Error: %s (%s:%d): input overrun deocding %s", \
-                   __func__, __FILE__, __LINE__, _s_); \
+                   HT_FUNC, __FILE__, __LINE__, _s_); \
       abort(); \
     } while (0)
 # endif
 # ifndef HT_THROW_BAD_VSTR
 #   define HT_THROW_BAD_VSTR(_s_) do { \
       std::fprintf(stderr, "Error: %s (%s:%d): malformed input decoding %s", \
-                   __func__, __FILE__, __LINE__, _s_); \
+                   HT_FUNC, __FILE__, __LINE__, _s_); \
       abort(); \
     } while (0)
 # endif
 # ifndef HT_THROW_BAD_VINT
 #   define HT_THROW_BAD_VINT(_s_) do { \
       std::fprintf(stderr, "Error: %s (%s:%d): malformed input decoding %s", \
-                   __func__, __FILE__, __LINE__, _s_); \
+                   HT_FUNC, __FILE__, __LINE__, _s_); \
       abort(); \
     } while (0)
 # endif
 # ifndef HT_THROW_UNPOSSIBLE
 #   define HT_THROW_UNPOSSIBLE(_s_) do { \
       std::fprintf(stderr, "Error: %s (%s:%d): unpossible!: %s", \
-                   __func__, __FILE__, __LINE__, _s_); \
+                   HT_FUNC, __FILE__, __LINE__, _s_); \
       abort(); \
     } while (0)
 # endif

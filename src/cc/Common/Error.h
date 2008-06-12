@@ -179,18 +179,18 @@ namespace Hypertable {
  * Convenience macros to create an exception stack trace
  */
 #define HT_THROW(_code_, _msg_) \
-  throw Exception(_code_, _msg_, __LINE__, __func__, __FILE__)
+  throw Exception(_code_, _msg_, __LINE__, HT_FUNC, __FILE__)
 
 #define HT_THROW2(_code_, _ex_, _msg_) \
-  throw Exception(_code_, _msg_, _ex_, __LINE__, __func__, __FILE__)
+  throw Exception(_code_, _msg_, _ex_, __LINE__, HT_FUNC, __FILE__)
 
 #define HT_THROWF(_code_, _fmt_, ...) \
   throw Exception(_code_, format(_fmt_, __VA_ARGS__), \
-                  __LINE__, __func__, __FILE__)
+                  __LINE__, HT_FUNC, __FILE__)
 
 #define HT_THROW2F(_code_, _ex_, _fmt_, ...) \
   throw Exception(_code_, format(_fmt_, __VA_ARGS__), _ex_, \
-                  __LINE__, __func__, __FILE__)
+                  __LINE__, HT_FUNC, __FILE__)
 
 #define HT_TRY(_s_, _code_) do { \
   try { _code_; } \

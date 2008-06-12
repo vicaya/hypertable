@@ -151,13 +151,13 @@ std::ostream &operator<<(std::ostream &out, const Exception &e) {
       << Error::get_text(e.code());
 
   if (e.line()) {
-    out <<"\n\tat "<< e.func() <<'('<< e.file() <<':'<< e.line() <<')';
+    out <<"\n\tat "<< e.func() <<" ("<< e.file() <<':'<< e.line() <<')';
   }
 
   int prev_code = e.code();
 
   for (Exception *prev = e.prev; prev; prev = prev->prev) {
-    out <<"\n\tat "<< (prev->func() ? prev->func() : "-") << '('
+    out <<"\n\tat "<< (prev->func() ? prev->func() : "-") <<" ("
         << (prev->file() ? prev->file() : "-") <<':'<< prev->line() <<"): "
         << prev->what();
 
