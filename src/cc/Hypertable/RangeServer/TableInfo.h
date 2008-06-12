@@ -72,7 +72,7 @@ namespace Hypertable {
 
     boost::mutex         m_mutex;
     MasterClientPtr      m_master_client_ptr;
-    TableIdentifierCopy  m_identifier;
+    TableIdentifierManaged m_identifier;
     SchemaPtr            m_schema;
     RangeMap             m_range_map;
   };

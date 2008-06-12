@@ -44,7 +44,14 @@ namespace {
 /**
  *
  */
-TableMutator::TableMutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, int timeout) : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_table_identifier(table_identifier), m_memory_used(0), m_max_memory(DEFAULT_MAX_MEMORY), m_resends(0), m_timeout(timeout), m_last_error(Error::OK), m_last_op(0) {
+TableMutator::TableMutator(PropertiesPtr &props_ptr, Comm *comm,
+    TableIdentifier *table_identifier, SchemaPtr &schema_ptr,
+    RangeLocatorPtr &range_locator_ptr, int timeout)
+    : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr),
+      m_range_locator_ptr(range_locator_ptr),
+      m_table_identifier(*table_identifier), m_memory_used(0),
+      m_max_memory(DEFAULT_MAX_MEMORY), m_resends(0), m_timeout(timeout),
+      m_last_error(Error::OK), m_last_op(0) {
 
   if (m_timeout == 0 ||
       (m_timeout = props_ptr->get_int("Hypertable.Client.Timeout", 0)) == 0 ||

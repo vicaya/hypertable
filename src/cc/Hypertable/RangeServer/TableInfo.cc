@@ -30,8 +30,10 @@ using namespace Hypertable;
 /**
  *
  */
-TableInfo::TableInfo(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, SchemaPtr &schemaPtr) : m_mutex(), m_master_client_ptr(master_client_ptr), m_identifier(identifier), m_schema(schemaPtr) {
-  return;
+TableInfo::TableInfo(MasterClientPtr &master_client_ptr,
+                     TableIdentifier *identifier, SchemaPtr &schema_ptr)
+    : m_mutex(), m_master_client_ptr(master_client_ptr),
+      m_identifier(*identifier), m_schema(schema_ptr) {
 }
 
 

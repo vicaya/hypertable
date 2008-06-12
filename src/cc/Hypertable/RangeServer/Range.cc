@@ -51,7 +51,12 @@ using namespace Hypertable;
 using namespace std;
 
 
-Range::Range(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, SchemaPtr &schemaPtr, RangeSpec *range, RangeState *state) : m_master_client_ptr(master_client_ptr), m_identifier(identifier), m_schema(schemaPtr), m_maintenance_in_progress(false), m_last_logical_timestamp(0), m_added_inserts(0), m_state(*state), m_error(Error::OK) {
+Range::Range(MasterClientPtr &master_client_ptr, TableIdentifier *identifier,
+             SchemaPtr &schema_ptr, RangeSpec *range, RangeState *state)
+    : m_master_client_ptr(master_client_ptr), m_identifier(*identifier),
+      m_schema(schema_ptr), m_maintenance_in_progress(false),
+      m_last_logical_timestamp(0), m_added_inserts(0), m_state(*state),
+      m_error(Error::OK) {
   AccessGroup *ag;
 
   memset(m_added_deletes, 0, 3*sizeof(int64_t));

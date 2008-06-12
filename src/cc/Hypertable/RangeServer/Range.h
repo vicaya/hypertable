@@ -168,7 +168,7 @@ namespace Hypertable {
 
     boost::mutex        m_mutex;
     MasterClientPtr     m_master_client_ptr;
-    TableIdentifierCopy m_identifier;
+    TableIdentifierManaged m_identifier;
     SchemaPtr           m_schema;
     String  m_start_row;
     String  m_end_row;
@@ -188,7 +188,7 @@ namespace Hypertable {
     ScannerTimestampController m_scanner_timestamp_controller;
     uint64_t         m_added_deletes[3];
     uint64_t         m_added_inserts;
-    RangeStateCopy   m_state;
+    RangeStateManaged m_state;
     int32_t          m_error;
   };
 

@@ -43,38 +43,31 @@ namespace Hypertable {
 
 
   /**
-   * Complete copy of the persistent state of a Range.
+   * Holds the storage the persistent state of a Range.
    */
-  class RangeStateCopy : public RangeState {
+  class RangeStateManaged : public RangeState {
   public:
-    RangeStateCopy(RangeState &rs) {
+    RangeStateManaged(const RangeState &rs) {
+      operator=(rs);
+    }
+    RangeStateManaged& operator=(const RangeState &rs) {
       state = rs.state;
       soft_limit = rs.soft_limit;
       if (rs.transfer_log) {
-	transfer_log_str = rs.transfer_log;
-	transfer_log = transfer_log_str.c_str();
-      }
-      else
-	transfer_log = 0;
-    }
-    RangeStateCopy& operator=(RangeState &rsc) {
-      state = rsc.state;
-      soft_limit = rsc.soft_limit;
-      if (rsc.transfer_log) {
-        transfer_log_str = rsc.transfer_log;
-        transfer_log = transfer_log_str.c_str();
+        m_transfer_log = rs.transfer_log;
+        transfer_log = m_transfer_log.c_str();
       }
       else
         transfer_log = 0;
       return *this;
     }
     void set_transfer_log(const String &tl) {
-      transfer_log_str = tl;
-      transfer_log = transfer_log_str.c_str();
+      m_transfer_log = tl;
+      transfer_log = m_transfer_log.c_str();
     }
 
   private:
-    String transfer_log_str;
+    String m_transfer_log;
   };
 
 }

@@ -49,19 +49,15 @@ namespace Hypertable {
   };
 
   /** Wrapper for TableIdentifier.  Handles name allocation */
-  class TableIdentifierCopy : public TableIdentifier {
+  class TableIdentifierManaged : public TableIdentifier {
   public:
-    TableIdentifierCopy(const TableIdentifier *identifier) : m_name(identifier->name) {
-      id = identifier->id;
-      generation = identifier->generation;
-      name = m_name.c_str();
-    }
-    TableIdentifierCopy(const TableIdentifier &identifier) : m_name(identifier.name) {
+    TableIdentifierManaged(const TableIdentifier &identifier)
+        : m_name(identifier.name) {
       id = identifier.id;
       generation = identifier.generation;
       name = m_name.c_str();
     }
-    TableIdentifierCopy &operator=(const TableIdentifier &identifier) {
+    TableIdentifierManaged &operator=(const TableIdentifier &identifier) {
       m_name = identifier.name;
       id = identifier.id;
       generation = identifier.generation;
@@ -90,15 +86,15 @@ namespace Hypertable {
   };
 
   /** RangeSpec with storage */
-  class RangeSpecHolder : public RangeSpec {
+  class RangeSpecManaged : public RangeSpec {
   public:
-    RangeSpecHolder(const RangeSpec &range)
+    RangeSpecManaged(const RangeSpec &range)
         : m_start(range.start_row), m_end(range.end_row) {
       start_row = m_start.c_str();
       end_row = m_end.c_str();
     }
 
-    RangeSpecHolder &operator=(const RangeSpec &range) {
+    RangeSpecManaged &operator=(const RangeSpec &range) {
       m_start = range.start_row;
       m_end = range.end_row;
       start_row = m_start.c_str();

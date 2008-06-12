@@ -185,7 +185,7 @@ namespace Hypertable {
     Comm                *m_comm;
     SchemaPtr            m_schema_ptr;
     RangeLocatorPtr      m_range_locator_ptr;
-    TableIdentifierCopy  m_table_identifier;
+    TableIdentifierManaged m_table_identifier;
     uint64_t             m_memory_used;
     uint64_t             m_max_memory;
     TableMutatorScatterBufferPtr  m_buffer_ptr;
