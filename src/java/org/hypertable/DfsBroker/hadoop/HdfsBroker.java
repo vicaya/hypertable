@@ -54,8 +54,11 @@ public class HdfsBroker {
     public HdfsBroker(Comm comm, Properties props) throws IOException {
 	String str;
 
-	if (props.getProperty("verbose").equalsIgnoreCase("true"))
+	str = props.getProperty("verbose");
+	if (str != null && str.equalsIgnoreCase("true"))
 	    mVerbose = true;
+	else 
+	    mVerbose = false;
 	str = props.getProperty("HdfsBroker.fs.default.name");
 	if (str == null) {
 	    java.lang.System.err.println("error: 'HdfsBroker.fs.default.name' property not specified.");
