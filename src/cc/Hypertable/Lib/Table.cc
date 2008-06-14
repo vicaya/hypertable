@@ -41,10 +41,6 @@ using namespace Hyperspace;
  */
 Table::Table(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, Hyperspace::SessionPtr &hyperspace_ptr, std::string name) : m_props_ptr(props_ptr), m_comm(conn_manager_ptr->get_comm()), m_conn_manager_ptr(conn_manager_ptr), m_hyperspace_ptr(hyperspace_ptr) {
 
-#if defined(__APPLE__)
-  boost::to_upper(name);
-#endif
-
   initialize(name);
   m_range_locator_ptr = new RangeLocator(props_ptr, m_conn_manager_ptr, m_hyperspace_ptr);
 }
@@ -53,10 +49,6 @@ Table::Table(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, H
  *
  */
 Table::Table(PropertiesPtr &props_ptr, Comm *comm, Hyperspace::SessionPtr &hyperspace_ptr, std::string name) : m_props_ptr(props_ptr), m_comm(comm), m_conn_manager_ptr(0), m_hyperspace_ptr(hyperspace_ptr) {
-
-#if defined(__APPLE__)
-  boost::to_upper(name);
-#endif
 
   initialize(name);
   m_range_locator_ptr = new RangeLocator(props_ptr, m_comm, m_hyperspace_ptr);  

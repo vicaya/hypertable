@@ -69,13 +69,14 @@ find_package(Log4cpp REQUIRED)
 find_package(EXPAT REQUIRED)
 find_package(Doxygen)
 find_package(Tcmalloc)
+find_package(BerkeleyDB REQUIRED)
 
 # set malloc library
 set( MALLOC_LIBRARY ${Tcmalloc_LIBRARIES} )
 
 # include directories
 include_directories(src/cc ${ZLIB_INCLUDE_DIR} ${Boost_INCLUDE_DIRS}
-                    ${Log4cpp_INCLUDE_DIR} ${EXPAT_INCLUDE_DIRS})
+                    ${Log4cpp_INCLUDE_DIR} ${EXPAT_INCLUDE_DIRS} ${BDB_INCLUDE_DIR})
 
 if (NOT ${BOOST_CHECK} STREQUAL "0")
   message(FATAL_ERROR "Boost version not compatible")
@@ -107,6 +108,7 @@ add_subdirectory (src/cc/Hyperspace)
 add_subdirectory (src/cc/Hypertable/Master)
 add_subdirectory (src/cc/Hypertable/RangeServer)
 add_subdirectory (src/cc/Hypertable/Lib)
+add_subdirectory (src/cc/Tools/bdbtest)
 add_subdirectory (src/cc/Tools/dfsclient)
 add_subdirectory (src/cc/Tools/hyperspace)
 add_subdirectory (src/cc/Tools/hypertable)

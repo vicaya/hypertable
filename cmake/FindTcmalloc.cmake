@@ -17,7 +17,7 @@ FIND_PATH(Tcmalloc_INCLUDE_DIR google/heap-checker.h
   /usr/include
 )
 
-SET(Tcmalloc_NAMES tcmalloc_minimal)
+SET(Tcmalloc_NAMES tcmalloc)
 FIND_LIBRARY(Tcmalloc_LIBRARY
   NAMES ${Tcmalloc_NAMES}
   PATHS /usr/lib /usr/local/lib /opt/local/lib
@@ -35,7 +35,6 @@ IF (Tcmalloc_FOUND)
    IF (NOT Tcmalloc_FIND_QUIETLY)
       MESSAGE(STATUS "Found Tcmalloc: ${Tcmalloc_LIBRARY}")
    ENDIF (NOT Tcmalloc_FIND_QUIETLY)
-      MESSAGE(STATUS "Found Tcmalloc: ${Tcmalloc_LIBRARY}")
 ELSE (Tcmalloc_FOUND)
       MESSAGE(STATUS "Not Found Tcmalloc: ${Tcmalloc_LIBRARY}")
    IF (Tcmalloc_FIND_REQUIRED)

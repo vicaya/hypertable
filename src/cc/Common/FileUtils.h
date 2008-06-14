@@ -29,9 +29,12 @@ extern "C" {
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/uio.h>
+
+#ifdef EXTENDED_ATTRIBUTES_ENABLED
 #include <sys/xattr.h>
 #if defined(__linux__)
 #include <attr/xattr.h>
+#endif
 #endif
 }
 
@@ -52,14 +55,18 @@ namespace Hypertable {
     static bool exists(const std::string &fname);
     static uint64_t size(const std::string &fname);
     static off_t length(const std::string &fname);
+    static void add_trailing_slash(std::string &path);
+    static bool expand_tilde(std::string &fname);
+
+#ifdef EXTENDED_ATTRIBUTES_ENABLED
     static int getxattr(const std::string &path, const std::string &name, void *value, size_t size);
     static int fgetxattr(int fd, const std::string &name, void *value, size_t size);
     static int setxattr(const std::string &path, const std::string &name, const void *value, size_t size, int flags);
     static int fsetxattr(int fd, const std::string &name, const void *value, size_t size, int flags);
     static int removexattr(const std::string &path, const std::string &name);
     static int fremovexattr(int fd, const std::string &name);
-    static void add_trailing_slash(std::string &path);
-    static bool expand_tilde(std::string &fname);
+#endif
+
   };
 
 }
