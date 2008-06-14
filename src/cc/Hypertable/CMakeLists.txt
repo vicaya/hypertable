@@ -20,7 +20,7 @@
 
 # schemaTest
 add_executable (schemaTest tests/schemaTest.cc Schema.cc)
-target_link_libraries (schemaTest Common log4cpp expat)
+target_link_libraries (schemaTest Common ${Log4cpp_LIBRARIES} ${EXPAT_LIBRARIES})
 
 #
 # Copy test files

@@ -37,9 +37,9 @@ main.cc
 
 # Hypertable.Master
 add_executable (Hypertable.Master ${Master_SRCS})
-target_link_libraries (Hypertable.Master ${BOOST_LIB} log4cpp expat HyperDfsBroker Hypertable ${MALLOC_LIBRARY} pthread)
+target_link_libraries (Hypertable.Master ${BOOST_LIB} ${Log4cpp_LIBRARIES} ${EXPAT_LIBRARIES} HyperDfsBroker Hypertable ${MALLOC_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 
 add_executable(htgc htgc.cc MasterGc.cc)
-target_link_libraries (htgc log4cpp expat HyperDfsBroker Hypertable ${BOOST_LIB} ${ZLIB_LIBRARIES} ${MALLOC_LIBRARY} pthread )
+target_link_libraries (htgc ${Log4cpp_LIBRARIES} ${EXPAT_LIBRARIES} HyperDfsBroker Hypertable ${BOOST_LIB} ${ZLIB_LIBRARIES} ${MALLOC_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} )
 
 install (TARGETS Hypertable.Master htgc RUNTIME DESTINATION ${VERSION}/bin)

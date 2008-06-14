@@ -41,7 +41,7 @@ void RequestHandlerAppend::run() {
   size_t remaining = m_event_ptr->messageLen - 2;
   uint8_t *msgPtr = m_event_ptr->message + 2;
 
-  if (remaining < 8)
+  if (remaining < 9)
     goto abort;
 
   Serialization::decode_int(&msgPtr, &remaining, &fd);

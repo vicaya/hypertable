@@ -39,11 +39,11 @@ namespace Hypertable {
    */
   class TableMutatorSendBuffer : public ReferenceCount {
   public:
-    TableMutatorSendBuffer(TableIdentifier *tid, TableMutatorCompletionCounter *cc, RangeLocator *rl) : counterp(cc), m_table_identifier(tid), m_range_locator(rl) { return; }
+    TableMutatorSendBuffer(TableIdentifier *tid, TableMutatorCompletionCounter *cc, RangeLocator *rl) : counterp(cc), m_table_identifier(tid), m_range_locator(rl), m_resend(false) { return; }
     void add_retries(uint32_t offset, uint32_t len) {
       accum.add(pending_updates.base+offset, len);
+      m_resend = true;
       counterp->set_retries();
-      pending_updates.own = true;
       // invalidate row key
       const uint8_t *ptr = pending_updates.base+offset;
       Serialization::decode_vi32(&ptr);
@@ -51,8 +51,8 @@ namespace Hypertable {
     }
     void add_retries_all() {
       accum.add(pending_updates.base, pending_updates.size);
+      m_resend = true;
       counterp->set_retries();
-      pending_updates.own = true;
       // invalidate row key
       const uint8_t *ptr = pending_updates.base;
       Serialization::decode_vi32(&ptr);
@@ -65,7 +65,6 @@ namespace Hypertable {
       failed.len = len;
       failed_regions.push_back(failed);
       counterp->set_errors();
-      pending_updates.own = true;
     }
     void add_errors_all(uint32_t error) {
       FailedRegionT failed;
@@ -74,15 +73,11 @@ namespace Hypertable {
       failed.len = pending_updates.size;
       failed_regions.push_back(failed);
       counterp->set_errors();
-      pending_updates.own = true;
     }
     void clear() {
       key_offsets.clear();
       accum.clear();
-      delete [] pending_updates.base;
-      pending_updates.base = 0;
-      pending_updates.size = 0;
-      pending_updates.own = true;
+      pending_updates.free();
       failed_regions.clear();
     }
     void reset() {
@@ -92,6 +87,8 @@ namespace Hypertable {
     void get_failed_regions(std::vector<FailedRegionT> &errors) {
       errors.insert(errors.end(), failed_regions.begin(), failed_regions.end());
     }
+
+    bool resend() { return m_resend; }
 
     std::vector<uint64_t> key_offsets;
     DynamicBuffer accum;
@@ -103,6 +100,7 @@ namespace Hypertable {
   private:
     TableIdentifier *m_table_identifier;
     RangeLocator *m_range_locator;
+    bool m_resend;
   };
   typedef boost::intrusive_ptr<TableMutatorSendBuffer> TableMutatorSendBufferPtr;
 

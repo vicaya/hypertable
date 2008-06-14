@@ -105,9 +105,18 @@ namespace Hypertable {
     }
 
     void set(uint8_t *data, uint32_t len, bool take_ownership=true) {
+      if (own)
+	delete [] base;
       base = data;
       size = len;
       own = take_ownership;
+    }
+
+    void free() {
+      if (own)
+	delete [] base;
+      base = 0;
+      size = 0;
     }
 
     uint8_t *base;

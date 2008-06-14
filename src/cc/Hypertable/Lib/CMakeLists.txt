@@ -75,46 +75,48 @@ target_link_libraries (Hypertable Hyperspace HyperComm HyperCommon ${BOOST_LIB})
 
 # generate_test_data
 add_executable (generate_test_data generate_test_data.cc)
-target_link_libraries (generate_test_data Hypertable pthread ${BOOST_LIB} ${ZLIB_LIBRARIES} log4cpp expat)
+target_link_libraries (generate_test_data Hypertable ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} ${ZLIB_LIBRARIES} ${Log4cpp_LIBRARIES} ${EXPAT_LIBRARIES})
 
 # meta log test
 add_executable(metalog_api_test tests/MetaLogApiTest.cc)
-target_link_libraries(metalog_api_test Hypertable ${BOOST_LIB} log4cpp)
+target_link_libraries(metalog_api_test Hypertable ${BOOST_LIB} ${Log4cpp_LIBRARIES})
 add_executable(metalog_master_test tests/MetaLogMasterTest.cc)
-target_link_libraries(metalog_master_test Hypertable ${BOOST_LIB} log4cpp)
+target_link_libraries(metalog_master_test Hypertable ${BOOST_LIB} ${Log4cpp_LIBRARIES})
 add_executable(metalog_rs_test tests/MetaLogRangeServerTest.cc)
-target_link_libraries(metalog_rs_test Hypertable ${BOOST_LIB} log4cpp)
+target_link_libraries(metalog_rs_test Hypertable ${BOOST_LIB} ${Log4cpp_LIBRARIES})
 
 # schemaTest
 add_executable (schemaTest tests/schemaTest.cc)
-target_link_libraries (schemaTest Hypertable pthread ${BOOST_LIB} log4cpp expat)
+target_link_libraries (schemaTest Hypertable ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} ${Log4cpp_LIBRARIES} ${EXPAT_LIBRARIES})
 
 # locationCacheTest
 add_executable (locationCacheTest tests/locationCacheTest.cc)
-target_link_libraries (locationCacheTest Hypertable ${BOOST_LIB} log4cpp)
+target_link_libraries (locationCacheTest Hypertable ${BOOST_LIB} ${Log4cpp_LIBRARIES})
 
 # loadDataSourceTest
 add_executable (loadDataSourceTest tests/loadDataSourceTest.cc)
-target_link_libraries (loadDataSourceTest Hypertable ${BOOST_LIB} ${ZLIB_LIBRARIES} log4cpp)
+target_link_libraries (loadDataSourceTest Hypertable ${BOOST_LIB} ${ZLIB_LIBRARIES} ${Log4cpp_LIBRARIES})
 
 # compressor_test
 add_executable (compressor_test tests/compressor_test.cc)
-target_link_libraries (compressor_test Hypertable log4cpp ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES})
+target_link_libraries (compressor_test Hypertable ${Log4cpp_LIBRARIES} ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES})
 
 # bmz binaries
 add_executable(bmz-test bmz/bmz-test.c)
-target_link_libraries(bmz-test Hypertable log4cpp)
+target_link_libraries(bmz-test Hypertable ${Log4cpp_LIBRARIES})
 
 add_executable(bmzip bmz/bmzip.c)
-target_link_libraries(bmzip Hypertable log4cpp)
+target_link_libraries(bmzip Hypertable ${Log4cpp_LIBRARIES})
 
 # commit_log_test
 add_executable (commit_log_test tests/commit_log_test.cc)
-target_link_libraries (commit_log_test HyperDfsBroker Hypertable ${BOOST_LIB} log4cpp ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES})
+target_link_libraries (commit_log_test HyperDfsBroker Hypertable ${BOOST_LIB} ${Log4cpp_LIBRARIES} ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES})
 
-# table_range_map_test
 add_executable (table_range_map_test tests/rangeMapTest.cc)
 target_link_libraries (table_range_map_test Hypertable ${BOOST_LIB} log4cpp ${ZLIB_LIBRARIES} expat)
+
+add_executable (large_insert_test tests/large_insert_test.cc)
+target_link_libraries (large_insert_test HyperDfsBroker Hypertable HyperCommon ${BOOST_LIB} ${Log4cpp_LIBRARIES} ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES} ${EXPAT_LIBRARIES})
 
 #
 # Copy test files
@@ -137,6 +139,8 @@ configure_file(${SRC_DIR}/schemaTest.golden ${DST_DIR}/schemaTest.golden)
 configure_file(${SRC_DIR}/locationCacheTest.golden ${DST_DIR}/locationCacheTest.golden)
 configure_file(${SRC_DIR}/loadDataSourceTest.golden ${DST_DIR}/loadDataSourceTest.golden)
 configure_file(${SRC_DIR}/loadDataSourceTest.dat ${DST_DIR}/loadDataSourceTest.dat)
+configure_file(${HYPERTABLE_SOURCE_DIR}/conf/hypertable.cfg ${DST_DIR}/hypertable.cfg)
+
 
 add_test (MetaLog-Master metalog_master_test)
 add_test (MetaLog-RangeServer metalog_rs_test)
@@ -150,6 +154,7 @@ add_test (BlockCompressor-QUICKLZ compressor_test quicklz)
 add_test (BlockCompressor-ZLIB compressor_test zlib)
 add_test (CommitLog commit_log_test)
 add_test (TableRangeTest table_range_map_test)
+add_test (LargeInsert large_insert_test)
 
 file (GLOB HEADERS *.h)
 

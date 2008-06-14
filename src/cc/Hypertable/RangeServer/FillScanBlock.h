@@ -22,11 +22,13 @@
 #ifndef HYPERTABLE_FILLSCANBLOCK_H
 #define HYPERTABLE_FILLSCANBLOCK_H
 
+#include "Common/DynamicBuffer.h"
+
 #include "CellListScanner.h"
 
 namespace Hypertable {
 
-  bool FillScanBlock(CellListScannerPtr &scannerPtr, uint8_t *dst, size_t dstLen, uint32_t *lenp);
+  bool FillScanBlock(CellListScannerPtr &scannerPtr, DynamicBuffer &dbuf);
 
 }
 

@@ -29,21 +29,21 @@ TableInfo.cc
 
 # rsclient - Range Server client command interpreter
 add_executable (rsclient ${rsclient_SRCS})
-target_link_libraries (rsclient pthread ${BOOST_LIB} Hypertable log4cpp expat readline curses ${MALLOC_LIBRARY})
+target_link_libraries (rsclient ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} Hypertable ${Log4cpp_LIBRARIES} ${EXPAT_LIBRARIES} readline curses ${MALLOC_LIBRARY})
 
 # rsTest
 add_executable (rsTest tests/rsTest.cc ${TEST_DEPENDENCIES} )
-target_link_libraries (rsTest pthread ${BOOST_LIB} HyperCommon log4cpp ${MALLOC_LIBRARY})
+target_link_libraries (rsTest ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} HyperCommon ${Log4cpp_LIBRARIES} ${MALLOC_LIBRARY})
 
 install (TARGETS rsclient RUNTIME DESTINATION ${VERSION}/bin)
 
 add_custom_command (SOURCE ${SRC_DIR}/tests/Test1-data.txt.gz
                     COMMAND cp ARGS ${SRC_DIR}/tests/Test1-data.txt.gz ${DST_DIR}
-                    COMMAND gunzip ARGS ${DST_DIR}/Test1-data.txt.gz
+                    COMMAND gunzip ARGS -f ${DST_DIR}/Test1-data.txt.gz
                     OUTPUT ${DST_DIR}/Test1-data.txt)
 add_custom_command (SOURCE ${SRC_DIR}/tests/Test2-data.txt.gz
                     COMMAND cp ARGS ${SRC_DIR}/tests/Test2-data.txt.gz ${DST_DIR}
-                    COMMAND gunzip ARGS ${DST_DIR}/Test2-data.txt.gz
+                    COMMAND gunzip ARGS -f ${DST_DIR}/Test2-data.txt.gz
                     OUTPUT ${DST_DIR}/Test2-data.txt)
 
 configure_file(${HYPERTABLE_SOURCE_DIR}/conf/hypertable.cfg  ${DST_DIR}/hypertable.cfg)

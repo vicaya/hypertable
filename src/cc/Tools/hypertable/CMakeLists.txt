@@ -25,11 +25,11 @@ hypertable.cc
 
 # hypertable - command interpreter
 add_executable (hypertable ${hypertable_SRCS})
-target_link_libraries (hypertable pthread ${BOOST_LIB} ${ZLIB_LIBRARIES} Hypertable log4cpp expat readline curses ${MALLOC_LIBRARY})
+target_link_libraries (hypertable ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} ${ZLIB_LIBRARIES} Hypertable ${Log4cpp_LIBRARIES} ${EXPAT_LIBRARIES} readline curses ${MALLOC_LIBRARY})
 
 # hypertable_test
 add_executable (hypertable_test test/hypertable_test.cc ${TEST_DEPENDENCIES} )
-target_link_libraries (hypertable_test pthread ${BOOST_LIB} HyperCommon log4cpp ${MALLOC_LIBRARY})
+target_link_libraries (hypertable_test ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} HyperCommon ${Log4cpp_LIBRARIES} ${MALLOC_LIBRARY})
 
 install (TARGETS hypertable RUNTIME DESTINATION ${VERSION}/bin)
 
