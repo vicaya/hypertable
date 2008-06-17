@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -72,36 +73,36 @@ namespace {
 
 
 /**
- * 
+ *
  */
 int main(int argc, char **argv) {
   {
     ConnectionManagerPtr conn_manager_ptr;
     ApplicationQueuePtr app_queue_ptr;
     CommPtr comm_ptr;
-    string configFile = "";
-    string pidFile = "";
-    int reactorCount;
-    char *logBroker = 0;
+    string cfgfile = "";
+    string pidfile = "";
+    int reactor_count;
+    char *logbroker = 0;
     PropertiesPtr props_ptr;
-    int workerCount;
+    int worker_count;
     TimerHandlerPtr timer_handler_ptr;
 
     System::initialize(argv[0]);
     Global::verbose = false;
-  
+
     if (argc > 1) {
       for (int i=1; i<argc; i++) {
-	if (!strncmp(argv[i], "--config=", 9))
-	  configFile = &argv[i][9];
-	else if (!strncmp(argv[i], "--log-broker=", 13))
-	  logBroker = &argv[i][13];
-	else if (!strncmp(argv[i], "--pidfile=", 10))
-	  pidFile = &argv[i][10];
-	else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
-	  Global::verbose = true;
-	else
-	  Usage::dump_and_exit(usage);
+        if (!strncmp(argv[i], "--config=", 9))
+          cfgfile = &argv[i][9];
+        else if (!strncmp(argv[i], "--log-broker=", 13))
+          logbroker = &argv[i][13];
+        else if (!strncmp(argv[i], "--pidfile=", 10))
+          pidfile = &argv[i][10];
+        else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
+          Global::verbose = true;
+        else
+          Usage::dump_and_exit(usage);
       }
     }
 
@@ -110,32 +111,32 @@ int main(int argc, char **argv) {
      */
     srand((unsigned)getpid());
 
-    if (configFile == "")
-      configFile = System::installDir + "/conf/hypertable.cfg";
+    if (cfgfile == "")
+      cfgfile = System::install_dir + "/conf/hypertable.cfg";
 
-    props_ptr = new Properties(configFile);
+    props_ptr = new Properties(cfgfile);
     if (Global::verbose)
       props_ptr->set("Hypertable.Verbose", "true");
 
-    if (logBroker != 0) {
-      char *portStr = strchr(logBroker, ':');
-      if (portStr == 0) {
-	HT_ERROR("Invalid address format for --log-broker, must be <host>:<port>");
-	exit(1);
+    if (logbroker != 0) {
+      char *portstr = strchr(logbroker, ':');
+      if (portstr == 0) {
+        HT_ERROR("Invalid address format for --log-broker, must be <host>:<port>");
+        exit(1);
       }
-      *portStr++ = 0;
-      props_ptr->set("Hypertable.RangeServer.CommitLog.DfsBroker.Host", logBroker);
-      props_ptr->set("Hypertable.RangeServer.CommitLog.DfsBroker.Port", portStr);
+      *portstr++ = 0;
+      props_ptr->set("Hypertable.RangeServer.CommitLog.DfsBroker.Host", logbroker);
+      props_ptr->set("Hypertable.RangeServer.CommitLog.DfsBroker.Port", portstr);
     }
 
-    reactorCount = props_ptr->get_int("Hypertable.RangeServer.Reactors", System::get_processor_count());
-    ReactorFactory::initialize(reactorCount);
+    reactor_count = props_ptr->get_int("Hypertable.RangeServer.Reactors", System::get_processor_count());
+    ReactorFactory::initialize(reactor_count);
     comm_ptr = new Comm();
 
-    workerCount = props_ptr->get_int("Hypertable.RangeServer.Workers", DEFAULT_WORKERS);
+    worker_count = props_ptr->get_int("Hypertable.RangeServer.Workers", DEFAULT_WORKERS);
 
     conn_manager_ptr = new ConnectionManager(comm_ptr.get());
-    app_queue_ptr = new ApplicationQueue(workerCount);
+    app_queue_ptr = new ApplicationQueue(worker_count);
 
     /**
      * Connect to Hyperspace
@@ -150,15 +151,15 @@ int main(int argc, char **argv) {
 
     if (Global::verbose) {
       cout << "CPU count = " << System::get_processor_count() << endl;
-      cout << "Hypertable.RangeServer.Reactors=" << reactorCount << endl;
+      cout << "Hypertable.RangeServer.Reactors=" << reactor_count << endl;
       if (Global::range_metadata_max_bytes != 0)
-	cout << "Hypertable.RangeServer.Range.MetadataMaxBytes=" << Global::range_metadata_max_bytes << endl;
+        cout << "Hypertable.RangeServer.Range.MetadataMaxBytes=" << Global::range_metadata_max_bytes << endl;
     }
 
     RangeServerPtr range_server_ptr = new RangeServer(props_ptr, conn_manager_ptr, app_queue_ptr, Global::hyperspace_ptr);
 
-    if (pidFile != "") {
-      fstream filestr (pidFile.c_str(), fstream::out);
+    if (pidfile != "") {
+      fstream filestr (pidfile.c_str(), fstream::out);
       filestr << getpid() << endl;
       filestr.close();
     }

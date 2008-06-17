@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -65,7 +65,7 @@ namespace Hypertable {
     virtual ~TableMutator() { return; }
 
     /**
-     * Inserts a cell into the table.  
+     * Inserts a cell into the table.
      *
      * NOTE: Use of this method is discouraged.  The system uses timestamps
      * internally to do maintenance and bookkeeping.  Timestamps must be assigned
@@ -80,7 +80,7 @@ namespace Hypertable {
     void set(uint64_t timestamp, KeySpec &key, const void *value, uint32_t value_len);
 
     /**
-     * Inserts a cell into the table.  
+     * Inserts a cell into the table.
      *
      * @param key key of the cell being inserted
      * @param value pointer to the value to store in the cell
@@ -91,16 +91,16 @@ namespace Hypertable {
     }
 
     /**
-     * Inserts a cell into the table.  
+     * Inserts a cell into the table.
      *
      * @param key key of the cell being inserted
      * @param value null-terminated c-string value
      */
     void set(KeySpec &key, const char *value) {
       if (value)
-	set(0, key, value, strlen(value));
+        set(0, key, value, strlen(value));
       else
-	set(0, key, 0, 0);
+        set(0, key, 0, 0);
     }
 
 
@@ -161,12 +161,12 @@ namespace Hypertable {
 
     /**
      * Returns the failed mutations
-     * 
+     *
      * @param failed_mutations reference to vector of Cell/error pairs
      */
     void get_failed(std::vector<std::pair<Cell, int> > &failed_mutations) {
       if (m_prev_buffer_ptr)
-	m_prev_buffer_ptr->get_failed_mutations(failed_mutations);
+        m_prev_buffer_ptr->get_failed_mutations(failed_mutations);
     }
 
   private:

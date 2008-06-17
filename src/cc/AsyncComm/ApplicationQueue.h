@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -29,6 +29,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 
+#include "Common/Logger.h"
 #include "Common/HashMap.h"
 #include "Common/ReferenceCount.h"
 #include "Common/StringExt.h"
@@ -45,13 +46,13 @@ namespace Hypertable {
 
     class UsageRec {
     public:
-      UsageRec() : threadGroup(0), running(false), outstanding(1) { return; }
-      uint64_t threadGroup;
+      UsageRec() : thread_group(0), running(false), outstanding(1) { return; }
+      uint64_t thread_group;
       bool     running;
       int      outstanding;
     };
 
-    typedef hash_map<uint64_t, UsageRec *> UsageRecMapT;
+    typedef hash_map<uint64_t, UsageRec *> UsageRecMap;
 
     class WorkRec {
     public:
@@ -63,11 +64,11 @@ namespace Hypertable {
 
     class ApplicationQueueState {
     public:
-      ApplicationQueueState() : queue(), usageMap(), queueMutex(), usageMutex(), cond(), shutdown(false) { return; }
-      list<WorkRec *>     queue;
-      UsageRecMapT        usageMap;
-      boost::mutex        queueMutex;
-      boost::mutex        usageMutex;
+      ApplicationQueueState() : queue(), usage_map(), queue_mutex(), usage_mutex(), cond(), shutdown(false) { return; }
+      std::list<WorkRec *> queue;
+      UsageRecMap         usage_map;
+      boost::mutex        queue_mutex;
+      boost::mutex        usage_mutex;
       boost::condition    cond;
       bool                shutdown;
     };
@@ -77,58 +78,58 @@ namespace Hypertable {
     public:
 
       Worker(ApplicationQueueState &qstate) : m_state(qstate) {
-	return;
+        return;
       }
 
       void operator()() {
-	WorkRec *rec = 0;
-	list<WorkRec *>::iterator iter;
+        WorkRec *rec = 0;
+        std::list<WorkRec *>::iterator iter;
 
-	while (true) {
+        while (true) {
 
-	  {  // !!! maybe ditch this block specifier
-	    boost::mutex::scoped_lock lock(m_state.queueMutex);
+          {  // !!! maybe ditch this block specifier
+            boost::mutex::scoped_lock lock(m_state.queue_mutex);
 
-	    while (m_state.queue.empty()) {
-	      if (m_state.shutdown) {
-		cerr << "shutdown!!!" << endl;
-		return;
-	      }
-	      m_state.cond.wait(lock);
-	    }
+            while (m_state.queue.empty()) {
+              if (m_state.shutdown) {
+                HT_INFO("shutdown!");
+                return;
+              }
+              m_state.cond.wait(lock);
+            }
 
-	    {
-	      boost::mutex::scoped_lock ulock(m_state.usageMutex);
+            {
+              boost::mutex::scoped_lock ulock(m_state.usage_mutex);
 
-	      for (iter = m_state.queue.begin(); iter != m_state.queue.end(); iter++) {
-		rec = (*iter);
-		if (rec->usage == 0 || !rec->usage->running) {
-		  if (rec->usage)
-		    rec->usage->running = true;
-		  m_state.queue.erase(iter);
-		  break;
-		}
-		rec = 0;
-	      }
-	    }
-	  }
-		    
-	  if (rec) {
-	    rec->handler->run();
-	    if (rec->usage) {
-	      boost::mutex::scoped_lock ulock(m_state.usageMutex);
-	      rec->usage->running = false;
-	      rec->usage->outstanding--;
-	      if (rec->usage->outstanding == 0) {
-		m_state.usageMap.erase(rec->usage->threadGroup);
-		delete rec->usage;
-	      }
-	    }
-	    delete rec;
-	  }
-	}
+              for (iter = m_state.queue.begin(); iter != m_state.queue.end(); iter++) {
+                rec = (*iter);
+                if (rec->usage == 0 || !rec->usage->running) {
+                  if (rec->usage)
+                    rec->usage->running = true;
+                  m_state.queue.erase(iter);
+                  break;
+                }
+                rec = 0;
+              }
+            }
+          }
 
-	cerr << "thread exit" << endl;
+          if (rec) {
+            rec->handler->run();
+            if (rec->usage) {
+              boost::mutex::scoped_lock ulock(m_state.usage_mutex);
+              rec->usage->running = false;
+              rec->usage->outstanding--;
+              if (rec->usage->outstanding == 0) {
+                m_state.usage_map.erase(rec->usage->thread_group);
+                delete rec->usage;
+              }
+            }
+            delete rec;
+          }
+        }
+
+        HT_INFO("thread exit");
       }
 
     private:
@@ -152,7 +153,7 @@ namespace Hypertable {
       Worker Worker(m_state);
       assert (worker_count > 0);
       for (int i=0; i<worker_count; ++i)
-	m_threads.create_thread(Worker);
+        m_threads.create_thread(Worker);
       //threads
     }
 
@@ -173,8 +174,8 @@ namespace Hypertable {
     void join() {
       boost::mutex::scoped_lock lock(m_mutex);
       if (!joined) {
-	m_threads.join_all();
-	joined = true;
+        m_threads.join_all();
+        joined = true;
       }
     }
 
@@ -184,29 +185,29 @@ namespace Hypertable {
      * related by the thread group ID value in the ApplicationHandler.  This thread
      * group ID is constructed in the Event object
      */
-    void add(ApplicationHandler *appHandler) {
-      UsageRecMapT::iterator uiter;
-      uint64_t threadGroup = appHandler->get_thread_group();
-      WorkRec *rec = new WorkRec(appHandler);
+    void add(ApplicationHandler *app_handler) {
+      UsageRecMap::iterator uiter;
+      uint64_t thread_group = app_handler->get_thread_group();
+      WorkRec *rec = new WorkRec(app_handler);
       rec->usage = 0;
 
-      if (threadGroup != 0) {
-	boost::mutex::scoped_lock ulock(m_state.usageMutex);
-	if ((uiter = m_state.usageMap.find(threadGroup)) != m_state.usageMap.end()) {
-	  rec->usage = (*uiter).second;
-	  rec->usage->outstanding++;
-	}
-	else {
-	  rec->usage = new UsageRec();
-	  rec->usage->threadGroup = threadGroup;
-	  m_state.usageMap[threadGroup] = rec->usage;
-	}
+      if (thread_group != 0) {
+        boost::mutex::scoped_lock ulock(m_state.usage_mutex);
+        if ((uiter = m_state.usage_map.find(thread_group)) != m_state.usage_map.end()) {
+          rec->usage = (*uiter).second;
+          rec->usage->outstanding++;
+        }
+        else {
+          rec->usage = new UsageRec();
+          rec->usage->thread_group = thread_group;
+          m_state.usage_map[thread_group] = rec->usage;
+        }
       }
 
       {
-	boost::mutex::scoped_lock lock(m_state.queueMutex);
-	m_state.queue.push_back(rec);
-	m_state.cond.notify_one();
+        boost::mutex::scoped_lock lock(m_state.queue_mutex);
+        m_state.queue.push_back(rec);
+        m_state.cond.notify_one();
       }
     }
   };

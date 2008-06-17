@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cassert>
 #include <string>
 
@@ -51,8 +52,9 @@ extern "C" {
 #include "MaintenanceTaskLogCleanup.h"
 #include "MaintenanceTaskSplit.h"
 
-using namespace Hypertable;
 using namespace std;
+using namespace Hypertable;
+using namespace Serialization;
 
 namespace {
   const int DEFAULT_PORT    = 38060;
@@ -68,10 +70,10 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
   uint32_t maintenance_threads = 1;
   Comm *comm = conn_manager_ptr->get_comm();
 
-  Global::rangeMaxBytes           = props_ptr->get_int64("Hypertable.RangeServer.Range.MaxBytes", 200000000LL);
-  Global::localityGroupMaxFiles   = props_ptr->get_int("Hypertable.RangeServer.AccessGroup.MaxFiles", 10);
-  Global::localityGroupMergeFiles = props_ptr->get_int("Hypertable.RangeServer.AccessGroup.MergeFiles", 4);
-  Global::localityGroupMaxMemory  = props_ptr->get_int("Hypertable.RangeServer.AccessGroup.MaxMemory", 50000000);
+  Global::range_max_bytes           = props_ptr->get_int64("Hypertable.RangeServer.Range.MaxBytes", 200000000LL);
+  Global::access_group_max_files   = props_ptr->get_int("Hypertable.RangeServer.AccessGroup.MaxFiles", 10);
+  Global::access_group_merge_files = props_ptr->get_int("Hypertable.RangeServer.AccessGroup.MergeFiles", 4);
+  Global::access_group_max_mem  = props_ptr->get_int("Hypertable.RangeServer.AccessGroup.MaxMemory", 50000000);
   maintenance_threads             = props_ptr->get_int("Hypertable.RangeServer.MaintenanceThreads", 1);
   port                            = props_ptr->get_int("Hypertable.RangeServer.Port", DEFAULT_PORT);
   m_scanner_ttl                   = (time_t)props_ptr->get_int("Hypertable.RangeServer.Scanner.Ttl", 120);
@@ -87,30 +89,30 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
     m_scanner_ttl = (time_t)10;
   }
 
-  uint64_t blockCacheMemory = props_ptr->get_int64("Hypertable.RangeServer.BlockCache.MaxMemory", 200000000LL);
-  Global::blockCache = new FileBlockCache(blockCacheMemory);
+  uint64_t block_cacheMemory = props_ptr->get_int64("Hypertable.RangeServer.BlockCache.MaxMemory", 200000000LL);
+  Global::block_cache = new FileBlockCache(block_cacheMemory);
 
-  assert(Global::localityGroupMergeFiles <= Global::localityGroupMaxFiles);
+  assert(Global::access_group_merge_files <= Global::access_group_max_files);
 
   m_verbose = props_ptr->get_bool("Hypertable.Verbose", false);
 
   if (Global::verbose) {
-    cout << "Hypertable.RangeServer.AccessGroup.MaxFiles=" << Global::localityGroupMaxFiles << endl;
-    cout << "Hypertable.RangeServer.AccessGroup.MaxMemory=" << Global::localityGroupMaxMemory << endl;
-    cout << "Hypertable.RangeServer.AccessGroup.MergeFiles=" << Global::localityGroupMergeFiles << endl;
-    cout << "Hypertable.RangeServer.BlockCache.MaxMemory=" << blockCacheMemory << endl;
-    cout << "Hypertable.RangeServer.Range.MaxBytes=" << Global::rangeMaxBytes << endl;
+    cout << "Hypertable.RangeServer.AccessGroup.MaxFiles=" << Global::access_group_max_files << endl;
+    cout << "Hypertable.RangeServer.AccessGroup.MaxMemory=" << Global::access_group_max_mem << endl;
+    cout << "Hypertable.RangeServer.AccessGroup.MergeFiles=" << Global::access_group_merge_files << endl;
+    cout << "Hypertable.RangeServer.BlockCache.MaxMemory=" << block_cacheMemory << endl;
+    cout << "Hypertable.RangeServer.Range.MaxBytes=" << Global::range_max_bytes << endl;
     cout << "Hypertable.RangeServer.MaintenanceThreads=" << maintenance_threads << endl;
     cout << "Hypertable.RangeServer.Port=" << port << endl;
-    //cout << "Hypertable.RangeServer.workers=" << workerCount << endl;
+    //cout << "Hypertable.RangeServer.workers=" << worker_count << endl;
   }
 
   //m_conn_manager_ptr = new ConnectionManager(comm);
-  //m_app_queue_ptr = new ApplicationQueue(workerCount);
+  //m_app_queue_ptr = new ApplicationQueue(worker_count);
 
   Global::protocol = new Hypertable::RangeServerProtocol();
 
-  DfsBroker::Client *dfsClient = new DfsBroker::Client(m_conn_manager_ptr, props_ptr);
+  DfsBroker::Client *dfs_client = new DfsBroker::Client(m_conn_manager_ptr, props_ptr);
 
   if (m_verbose) {
     cout << "DfsBroker.Host=" << props_ptr->get("DfsBroker.Host", "") << endl;
@@ -118,46 +120,46 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
     cout << "DfsBroker.Timeout=" << props_ptr->get("DfsBroker.Timeout", "") << endl;
   }
 
-  if (!dfsClient->wait_for_connection(30)) {
+  if (!dfs_client->wait_for_connection(30)) {
     HT_ERROR("Unable to connect to DFS Broker, exiting...");
     exit(1);
   }
 
-  Global::dfs = dfsClient;
+  Global::dfs = dfs_client;
 
   /**
    * Check for and connect to commit log DFS broker
    */
   {
-    const char *logHost = props_ptr->get("Hypertable.RangeServer.CommitLog.DfsBroker.Host", 0);
-    uint16_t logPort    = props_ptr->get_int("Hypertable.RangeServer.CommitLog.DfsBroker.Port", 0);
+    const char *loghost = props_ptr->get("Hypertable.RangeServer.CommitLog.DfsBroker.Host", 0);
+    uint16_t logport    = props_ptr->get_int("Hypertable.RangeServer.CommitLog.DfsBroker.Port", 0);
     struct sockaddr_in addr;
-    if (logHost != 0) {
-      InetAddr::initialize(&addr, logHost, logPort);
-      dfsClient = new DfsBroker::Client(m_conn_manager_ptr, addr, 600);
-      if (!dfsClient->wait_for_connection(30)) {
-	HT_ERROR("Unable to connect to DFS Broker, exiting...");
-	exit(1);
+    if (loghost != 0) {
+      InetAddr::initialize(&addr, loghost, logport);
+      dfs_client = new DfsBroker::Client(m_conn_manager_ptr, addr, 600);
+      if (!dfs_client->wait_for_connection(30)) {
+        HT_ERROR("Unable to connect to DFS Broker, exiting...");
+        exit(1);
       }
-      Global::logDfs = dfsClient;
+      Global::log_dfs = dfs_client;
     }
     else {
-      Global::logDfs = Global::dfs;
+      Global::log_dfs = Global::dfs;
     }
   }
 
   /**
-   * 
+   *
    */
   {
-    std::string hostStr;
-    struct sockaddr_in addr;    
+    String host_str;
+    struct sockaddr_in addr;
 
-    InetAddr::get_hostname(hostStr);
-    if (!InetAddr::initialize(&addr, hostStr.c_str(), port))
+    InetAddr::get_hostname(host_str);
+    if (!InetAddr::initialize(&addr, host_str.c_str(), port))
       exit(1);
 
-    m_location = (std::string)inet_ntoa(addr.sin_addr) + "_" + (int)port;
+    m_location = (String)inet_ntoa(addr.sin_addr) + "_" + (int)port;
   }
 
   if (initialize(props_ptr) != Error::OK)
@@ -176,10 +178,10 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
    * Listen for incoming connections
    */
   {
-    ConnectionHandlerFactoryPtr chfPtr(new HandlerFactory(comm, m_app_queue_ptr, this));
+    ConnectionHandlerFactoryPtr chfp(new HandlerFactory(comm, m_app_queue_ptr, this));
     struct sockaddr_in addr;
     InetAddr::initialize(&addr, INADDR_ANY, port);  // Listen on any interface
-    if ((error = comm->listen(addr, chfPtr)) != Error::OK) {
+    if ((error = comm->listen(addr, chfp)) != Error::OK) {
       HT_ERRORF("Listen error address=%s:%d - %s", inet_ntoa(addr.sin_addr), port, Error::get_text(error));
       exit(1);
     }
@@ -199,12 +201,12 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
  *
  */
 RangeServer::~RangeServer() {
-  delete Global::blockCache;
+  delete Global::block_cache;
   delete Global::protocol;
   m_hyperspace_ptr = 0;
   delete Global::dfs;
-  if (Global::logDfs != Global::dfs)
-    delete Global::logDfs;
+  if (Global::log_dfs != Global::dfs)
+    delete Global::log_dfs;
   Global::metadata_table_ptr = 0;
   m_master_client_ptr = 0;
   m_conn_manager_ptr = 0;
@@ -221,9 +223,9 @@ RangeServer::~RangeServer() {
 int RangeServer::initialize(PropertiesPtr &props_ptr) {
   int error;
   bool exists;
-  std::string top_dir;
-  std::string meta_log_dir;
-  std::string primary_log_dir;
+  String top_dir;
+  String meta_log_dir;
+  String primary_log_dir;
 
   /**
    * Create /hypertable/servers directory
@@ -241,59 +243,59 @@ int RangeServer::initialize(PropertiesPtr &props_ptr) {
     }
   }
 
-  top_dir = (std::string)"/hypertable/servers/" + m_location;
+  top_dir = (String)"/hypertable/servers/" + m_location;
 
   /**
    * Create "server existence" file in Hyperspace and obtain an exclusive lock on it
    */
 
-  uint32_t lockStatus;
+  uint32_t lock_status;
   uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE | OPEN_FLAG_LOCK;
-  HandleCallbackPtr nullCallbackPtr;
+  HandleCallbackPtr null_callback;
 
-  if ((error = m_hyperspace_ptr->open(top_dir.c_str(), oflags, nullCallbackPtr, &m_existence_file_handle)) != Error::OK) {
+  if ((error = m_hyperspace_ptr->open(top_dir.c_str(), oflags, null_callback, &m_existence_file_handle)) != Error::OK) {
     HT_ERRORF("Problem creating Hyperspace server existance file '%s' - %s", top_dir.c_str(), Error::get_text(error));
     exit(1);
   }
 
   while (true) {
 
-    lockStatus = 0;
+    lock_status = 0;
 
-    if ((error = m_hyperspace_ptr->try_lock(m_existence_file_handle, LOCK_MODE_EXCLUSIVE, &lockStatus, &m_existence_file_sequencer)) != Error::OK) {
+    if ((error = m_hyperspace_ptr->try_lock(m_existence_file_handle, LOCK_MODE_EXCLUSIVE, &lock_status, &m_existence_file_sequencer)) != Error::OK) {
       HT_ERRORF("Problem obtaining exclusive lock on master Hyperspace file '%s' - %s", top_dir.c_str(), Error::get_text(error));
       exit(1);
     }
-    
-    if (lockStatus == LOCK_STATUS_GRANTED)
+
+    if (lock_status == LOCK_STATUS_GRANTED)
       break;
 
     cout << "Waiting for exclusive lock on hyperspace:/" << top_dir << " ..." << endl;
   }
 
-  Global::logDir = top_dir + "/log";
+  Global::log_dir = top_dir + "/log";
 
-  primary_log_dir = Global::logDir + "/primary";
+  primary_log_dir = Global::log_dir + "/primary";
 
   /**
    * Create /hypertable/servers/X.X.X.X_port/log/primary directory
    */
-  try { Global::logDfs->mkdirs(Global::logDir); }
+  try { Global::log_dfs->mkdirs(Global::log_dir); }
   catch (Exception &e) {
     HT_ERRORF("Problem creating primary log directory '%s': %s",
-              Global::logDir.c_str(), e.what());
+              Global::log_dir.c_str(), e.what());
     return error;
   }
 
   if (Global::verbose)
-    cout << "logDir=" << Global::logDir << endl;
+    cout << "log_dir=" << Global::log_dir << endl;
 
-  Global::log = new CommitLog(Global::logDfs, primary_log_dir, props_ptr);
+  Global::log = new CommitLog(Global::log_dfs, primary_log_dir, props_ptr);
 
-  Global::log_prune_threshold_min = props_ptr->get_int64("Hypertable.RangeServer.CommitLog.PruneThreshold.Min", 
-							 2 * Global::log->get_max_fragment_size());
-  Global::log_prune_threshold_max = props_ptr->get_int64("Hypertable.RangeServer.CommitLog.PruneThreshold.Max", 
-							 10 * Global::log_prune_threshold_min);
+  Global::log_prune_threshold_min = props_ptr->get_int64("Hypertable.RangeServer.CommitLog.PruneThreshold.Min",
+                                                         2 * Global::log->get_max_fragment_size());
+  Global::log_prune_threshold_max = props_ptr->get_int64("Hypertable.RangeServer.CommitLog.PruneThreshold.Max",
+                                                         10 * Global::log_prune_threshold_min);
 
   return Error::OK;
 }
@@ -303,8 +305,8 @@ namespace {
   class RecoverUpdateCallback : public ResponseCallback {
   public:
     RecoverUpdateCallback() { return; }
-    virtual int error(int error, std::string msg) {
-      throw Exception(error, msg);
+    virtual int error(int error, const String &msg) {
+      HT_THROW(error, msg);
     }
     virtual int response_ok() { return Error::OK; }
   };
@@ -316,8 +318,8 @@ namespace {
  */
 void RangeServer::fast_recover() {
   bool exists;
-  std::string meta_log_dir = Global::logDir + "/meta";
-  std::string primary_log_dir = Global::logDir + "/primary";
+  String meta_log_dir = Global::log_dir + "/meta";
+  String primary_log_dir = Global::log_dir + "/primary";
   RangeServerMetaLogReaderPtr meta_log_reader_ptr;
   CommitLogReaderPtr primary_log_reader;
   RangeStates range_states;
@@ -338,16 +340,16 @@ void RangeServer::fast_recover() {
     /**
      * Check for existence of /hypertable/servers/X.X.X.X_port/log/meta directory
      */
-    exists = Global::logDfs->exists(meta_log_dir);
+    exists = Global::log_dfs->exists(meta_log_dir);
 
     if (!exists)
       return;
 
-    meta_log_reader_ptr = new RangeServerMetaLogReader(Global::logDfs, meta_log_dir);
+    meta_log_reader_ptr = new RangeServerMetaLogReader(Global::log_dfs, meta_log_dir);
 
     meta_log_reader_ptr->load_range_states(range_states);
 
-    primary_log_reader = new CommitLogReader(Global::logDfs, primary_log_dir);
+    primary_log_reader = new CommitLogReader(Global::log_dfs, primary_log_dir);
 
     while (primary_log_reader->next((const uint8_t **)&base, &len, &header)) {
 
@@ -356,47 +358,46 @@ void RangeServer::fast_recover() {
       ptr = base;
       end = base + len;
 
-      if (!table_id.decode((uint8_t **)&ptr, &len))
-	throw Exception(Error::RANGESERVER_TRUNCATED_COMMIT_LOG, "");
+      table_id.decode((const uint8_t **)&ptr, &len);
 
       // Fetch table info
       if (!m_replay_map_ptr->get(table_id.id, table_info_ptr))
-	continue;
+        continue;
 
       dbuf.ensure(table_id.encoded_length() + 12 + len);
       dbuf.clear();
 
       table_id.encode(&dbuf.ptr);
-      Serialization::encode_long(&dbuf.ptr, timestamp);
+      encode_i64(&dbuf.ptr, timestamp);
 
       base = dbuf.ptr;
       dbuf.ptr += 4;
 
       while (ptr < end) {
 
-	// extract the key
-	key.ptr = ptr;
-	ptr += key.length();
-	if (ptr > end)
-	  throw Exception(Error::REQUEST_TRUNCATED, "Problem decoding key");
+        // extract the key
+        key.ptr = ptr;
+        ptr += key.length();
+        if (ptr > end)
+          HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding key");
 
-	// extract the value
-	value.ptr = ptr;
-	ptr += value.length();
-	if (ptr > end)
-	  throw Exception(Error::REQUEST_TRUNCATED, "Problem decoding value");
+        // extract the value
+        value.ptr = ptr;
+        ptr += value.length();
+        if (ptr > end)
+          HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding value");
 
-	// Look for containing range, add to stop mods if not found
-	if (!table_info_ptr->find_containing_range(key.str(), range_ptr))
-	  continue;
+        // Look for containing range, add to stop mods if not found
+        if (!table_info_ptr->find_containing_range(key.str(), range_ptr))
+          continue;
 
-	// add key/value pair to buffer
-	memcpy(dbuf.ptr, key.ptr, ptr-key.ptr);
-	dbuf.ptr += ptr-key.ptr;
+        // add key/value pair to buffer
+        memcpy(dbuf.ptr, key.ptr, ptr-key.ptr);
+        dbuf.ptr += ptr-key.ptr;
 
       }
 
-      Serialization::encode_int((uint8_t **)&base, dbuf.ptr-(base+4));
+      encode_i32(&base, dbuf.ptr-(base+4));
 
       replay_update(&cb, dbuf.base, dbuf.fill());
     }
@@ -416,8 +417,8 @@ void RangeServer::fast_recover() {
  */
 void RangeServer::compact(ResponseCallback *cb, TableIdentifier *table, RangeSpec *range, uint8_t compaction_type) {
   int error = Error::OK;
-  std::string errMsg;
-  TableInfoPtr tableInfoPtr;
+  String errmsg;
+  TableInfoPtr table_info;
   RangePtr range_ptr;
   bool major = false;
 
@@ -434,24 +435,24 @@ void RangeServer::compact(ResponseCallback *cb, TableIdentifier *table, RangeSpe
   /**
    * Fetch table info
    */
-  if (!m_live_map_ptr->get(table->id, tableInfoPtr)) {
+  if (!m_live_map_ptr->get(table->id, table_info)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errMsg = "No ranges loaded for table '" + (std::string)table->name + "'";
+    errmsg = "No ranges loaded for table '" + (String)table->name + "'";
     goto abort;
   }
 
   /**
    * Fetch range info
    */
-  if (!tableInfoPtr->get_range(range, range_ptr)) {
+  if (!table_info->get_range(range, range_ptr)) {
     error = Error::RANGESERVER_RANGE_NOT_FOUND;
-    errMsg = (std::string)table->name + "[" + range->start_row + ".." + range->end_row + "]";
+    errmsg = (String)table->name + "[" + range->start_row + ".." + range->end_row + "]";
     goto abort;
   }
 
   // schedule the compaction
   if (!range_ptr->test_and_set_maintenance())
-    Global::maintenance_queue->add( new MaintenanceTaskCompaction(range_ptr, major) );
+    Global::maintenance_queue->add(new MaintenanceTaskCompaction(range_ptr, major));
 
   if ((error = cb->response_ok()) != Error::OK) {
     HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
@@ -459,15 +460,15 @@ void RangeServer::compact(ResponseCallback *cb, TableIdentifier *table, RangeSpe
 
   if (Global::verbose) {
     HT_INFOF("Compaction (%s) scheduled for table '%s' end row '%s'",
-		(major ? "major" : "minor"), table->name, range->end_row);
+                (major ? "major" : "minor"), table->name, range->end_row);
   }
 
   error = Error::OK;
 
  abort:
   if (error != Error::OK) {
-    HT_ERRORF("%s '%s'", Error::get_text(error), errMsg.c_str());
-    if ((error = cb->error(error, errMsg)) != Error::OK) {
+    HT_ERRORF("%s '%s'", Error::get_text(error), errmsg.c_str());
+    if ((error = cb->error(error, errmsg)) != Error::OK) {
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
     }
   }
@@ -475,20 +476,20 @@ void RangeServer::compact(ResponseCallback *cb, TableIdentifier *table, RangeSpe
 
 
 
-/** 
+/**
  *  CreateScanner
  */
 void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentifier *table, RangeSpec *range, ScanSpec *scan_spec) {
   int error = Error::OK;
-  std::string errMsg;
-  TableInfoPtr tableInfoPtr;
+  String errmsg;
+  TableInfoPtr table_info;
   RangePtr range_ptr;
-  CellListScannerPtr scannerPtr;
+  CellListScannerPtr scanner_ptr;
   bool more = true;
   uint32_t id;
   Timestamp scan_timestamp;
-  SchemaPtr schemaPtr;
-  ScanContextPtr scanContextPtr;
+  SchemaPtr schema_ptr;
+  ScanContextPtr scan_ctx;
 
   if (Global::verbose) {
     cout << "RangeServer::create_scanner" << endl;
@@ -500,29 +501,29 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
   try {
     DynamicBuffer rbuf;
 
-    if (!m_live_map_ptr->get(table->id, tableInfoPtr))
-      throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND, (std::string)"unknown table '" + table->name + "'");
+    if (!m_live_map_ptr->get(table->id, table_info))
+      throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND, (String)"unknown table '" + table->name + "'");
 
-    if (!tableInfoPtr->get_range(range, range_ptr))
+    if (!table_info->get_range(range, range_ptr))
       throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND,
-				  (std::string)"(a) " + table->name + "[" + range->start_row + ".." + range->end_row + "]");
+                                  (String)"(a) " + table->name + "[" + range->start_row + ".." + range->end_row + "]");
 
-    schemaPtr = tableInfoPtr->get_schema();
+    schema_ptr = table_info->get_schema();
 
     range_ptr->get_scan_timestamp(scan_timestamp);
 
-    scanContextPtr = new ScanContext(scan_timestamp.logical, scan_spec, range, schemaPtr);
- 
-    scannerPtr = range_ptr->create_scanner(scanContextPtr);
+    scan_ctx = new ScanContext(scan_timestamp.logical, scan_spec, range, schema_ptr);
+
+    scanner_ptr = range_ptr->create_scanner(scan_ctx);
 
     // TODO: fix this kludge (0 return above means range split)
-    if (!scannerPtr)
+    if (!scanner_ptr)
       throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND,
-				  (std::string)"(b) " + table->name + "[" + range->start_row + ".." + range->end_row + "]");
+                                  (String)"(b) " + table->name + "[" + range->start_row + ".." + range->end_row + "]");
 
-    more = FillScanBlock(scannerPtr, rbuf);
+    more = FillScanBlock(scanner_ptr, rbuf);
 
-    id = (more) ? Global::scannerMap.put(scannerPtr, range_ptr) : 0;
+    id = (more) ? Global::scanner_map.put(scanner_ptr, range_ptr) : 0;
 
     if (Global::verbose) {
       HT_INFOF("Successfully created scanner (id=%d) on table '%s'", id, table->name);
@@ -532,10 +533,10 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
      *  Send back data
      */
     {
-      short moreFlag = more ? 0 : 1;
+      short moreflag = more ? 0 : 1;
       StaticBuffer ext(rbuf);
-      if ((error = cb->response(moreFlag, id, ext)) != Error::OK) {
-	HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
+      if ((error = cb->response(moreflag, id, ext)) != Error::OK) {
+        HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       }
     }
   }
@@ -549,47 +550,47 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
 }
 
 
-void RangeServer::destroy_scanner(ResponseCallback *cb, uint32_t scannerId) {
-  HT_INFOF("destroying scanner id=%u", scannerId);
-  Global::scannerMap.remove(scannerId);
+void RangeServer::destroy_scanner(ResponseCallback *cb, uint32_t scanner_id) {
+  HT_INFOF("destroying scanner id=%u", scanner_id);
+  Global::scanner_map.remove(scanner_id);
   cb->response_ok();
 }
 
 
-void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t scannerId) {
-  string errMsg;
+void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t scanner_id) {
+  string errmsg;
   int error = Error::OK;
-  CellListScannerPtr scannerPtr;
+  CellListScannerPtr scanner_ptr;
   RangePtr range_ptr;
   bool more = true;
   DynamicBuffer rbuf;
 
   if (Global::verbose) {
     cout << "RangeServer::fetch_scanblock" << endl;
-    cout << "Scanner ID = " << scannerId << endl;
+    cout << "Scanner ID = " << scanner_id << endl;
   }
 
-  if (!Global::scannerMap.get(scannerId, scannerPtr, range_ptr)) {
+  if (!Global::scanner_map.get(scanner_id, scanner_ptr, range_ptr)) {
     error = Error::RANGESERVER_INVALID_SCANNER_ID;
     char tbuf[32];
-    sprintf(tbuf, "%d", scannerId);
-    errMsg = (string)tbuf;
-    goto abort;    
+    sprintf(tbuf, "%d", scanner_id);
+    errmsg = (string)tbuf;
+    goto abort;
   }
 
-  more = FillScanBlock(scannerPtr, rbuf);
-  
+  more = FillScanBlock(scanner_ptr, rbuf);
+
   if (!more)
-    Global::scannerMap.remove(scannerId);
+    Global::scanner_map.remove(scanner_id);
 
   /**
    *  Send back data
    */
   {
-    short moreFlag = more ? 0 : 1;
+    short moreflag = more ? 0 : 1;
     StaticBuffer ext(rbuf);
 
-    if ((error = cb->response(moreFlag, scannerId, ext)) != Error::OK) {
+    if ((error = cb->response(moreflag, scanner_id, ext)) != Error::OK) {
       HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
     }
 
@@ -602,8 +603,8 @@ void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t s
 
  abort:
   if (error != Error::OK) {
-    HT_ERRORF("%s '%s'", Error::get_text(error), errMsg.c_str());
-    if ((error = cb->error(error, errMsg)) != Error::OK) {
+    HT_ERRORF("%s '%s'", Error::get_text(error), errmsg.c_str());
+    if ((error = cb->error(error, errmsg)) != Error::OK) {
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
     }
   }
@@ -614,21 +615,21 @@ void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t s
  * LoadRange
  */
 void RangeServer::load_range(ResponseCallback *cb, TableIdentifier *table, RangeSpec *range, const char *transfer_log_dir, RangeState *range_state, uint16_t flags) {
-  std::string errMsg;
+  String errmsg;
   int error = Error::OK;
-  SchemaPtr schemaPtr;
+  SchemaPtr schema_ptr;
   TableInfoPtr table_info_ptr;
   RangePtr range_ptr;
-  string tableHdfsDir;
-  string rangeHdfsDir;
+  string table_dfsdir;
+  string range_dfsdir;
   char md5DigestStr[33];
-  bool registerTable = false;
+  bool register_table = false;
   bool is_root = !strcmp(table->name, "METADATA") && (*range->start_row == 0) && !strcmp(range->end_row, Key::END_ROOT_ROW);
   TableScannerPtr scanner_ptr;
   TableMutatorPtr mutator_ptr;
   ScanSpec scan_spec;
   KeySpec key;
-  std::string metadata_key_str;
+  String metadata_key_str;
   bool replay = (flags & RangeServerProtocol::LOAD_RANGE_FLAG_REPLAY) == RangeServerProtocol::LOAD_RANGE_FLAG_REPLAY;
 
   if (Global::verbose) {
@@ -645,42 +646,42 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifier *table, Range
 
       /** Get TableInfo from replay map, or copy it from live map, or create if doesn't exist **/
       if (!m_replay_map_ptr->get(table->id, table_info_ptr)) {
-	if (!m_live_map_ptr->get(table->id, table_info_ptr)) {
-	  table_info_ptr = new TableInfo(m_master_client_ptr, table, schemaPtr);
-	  registerTable = true;
-	}
-	else
-	  table_info_ptr = table_info_ptr->create_shallow_copy();
+        if (!m_live_map_ptr->get(table->id, table_info_ptr)) {
+          table_info_ptr = new TableInfo(m_master_client_ptr, table, schema_ptr);
+          register_table = true;
+        }
+        else
+          table_info_ptr = table_info_ptr->create_shallow_copy();
       }
 
     }
     else {
       /** Get TableInfo, create if doesn't exist **/
       if (!m_live_map_ptr->get(table->id, table_info_ptr)) {
-	table_info_ptr = new TableInfo(m_master_client_ptr, table, schemaPtr);
-	registerTable = true;
+        table_info_ptr = new TableInfo(m_master_client_ptr, table, schema_ptr);
+        register_table = true;
       }
     }
 
     /**
      * Verify schema, this will create the Schema object and add it to table_info_ptr if it doesn't exist
      */
-    if ((error = verify_schema(table_info_ptr, table->generation, errMsg)) != Error::OK)
-      throw Exception(error, errMsg);
+    if ((error = verify_schema(table_info_ptr, table->generation, errmsg)) != Error::OK)
+      HT_THROW(error, errmsg);
 
 
-    if (registerTable) {
+    if (register_table) {
       if (replay)
-	m_replay_map_ptr->set(table->id, table_info_ptr);
+        m_replay_map_ptr->set(table->id, table_info_ptr);
       else
-	m_live_map_ptr->set(table->id, table_info_ptr);
+        m_live_map_ptr->set(table->id, table_info_ptr);
     }
-	
+
     /**
      * Make sure this range is not already loaded
      */
     if (table_info_ptr->get_range(range, range_ptr))
-      throw Exception(Error::RANGESERVER_RANGE_ALREADY_LOADED, (std::string)table->name + "[" + range->start_row + ".." + range->end_row + "]");
+      HT_THROW(Error::RANGESERVER_RANGE_ALREADY_LOADED, (String)table->name + "[" + range->start_row + ".." + range->end_row + "]");
 
     /**
      * Lazily create METADATA table pointer
@@ -699,63 +700,63 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifier *table, Range
        */
       if (!is_root) {
 
-	metadata_key_str = std::string("") + (uint32_t)table->id + ":" + range->end_row;
+        metadata_key_str = String("") + (uint32_t)table->id + ":" + range->end_row;
 
-	/**
-	 * Take ownership of the range
-	 */
-	mutator_ptr = Global::metadata_table_ptr->create_mutator();
+        /**
+         * Take ownership of the range
+         */
+        mutator_ptr = Global::metadata_table_ptr->create_mutator();
 
-	key.row = metadata_key_str.c_str();
-	key.row_len = strlen(metadata_key_str.c_str());
-	key.column_family = "Location";
-	key.column_qualifier = 0;
-	key.column_qualifier_len = 0;
-	mutator_ptr->set(0, key, (uint8_t *)m_location.c_str(), strlen(m_location.c_str()));
-	mutator_ptr->flush();
+        key.row = metadata_key_str.c_str();
+        key.row_len = strlen(metadata_key_str.c_str());
+        key.column_family = "Location";
+        key.column_qualifier = 0;
+        key.column_qualifier_len = 0;
+        mutator_ptr->set(0, key, (uint8_t *)m_location.c_str(), strlen(m_location.c_str()));
+        mutator_ptr->flush();
 
       }
       else {  //root
-	uint64_t handle;
-	HandleCallbackPtr nullCallbackPtr;
-	uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE;
+        uint64_t handle;
+        HandleCallbackPtr null_callback;
+        uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE;
 
-	HT_INFO("Loading root METADATA range");
+        HT_INFO("Loading root METADATA range");
 
-	if ((error = m_hyperspace_ptr->open("/hypertable/root", oflags, nullCallbackPtr, &handle)) != Error::OK) {
-	  HT_ERRORF("Problem creating Hyperspace root file '/hypertable/root' - %s", Error::get_text(error));
-	  HT_ABORT;
-	}
+        if ((error = m_hyperspace_ptr->open("/hypertable/root", oflags, null_callback, &handle)) != Error::OK) {
+          HT_ERRORF("Problem creating Hyperspace root file '/hypertable/root' - %s", Error::get_text(error));
+          HT_ABORT;
+        }
 
-	if ((error = m_hyperspace_ptr->attr_set(handle, "location", m_location.c_str(), strlen(m_location.c_str()))) != Error::OK) {
-	  HT_ERRORF("Problem creating attribute 'location' on Hyperspace file '/hypertable/root' - %s", Error::get_text(error));
-	  HT_ABORT;
-	}
+        if ((error = m_hyperspace_ptr->attr_set(handle, "location", m_location.c_str(), strlen(m_location.c_str()))) != Error::OK) {
+          HT_ERRORF("Problem creating attribute 'location' on Hyperspace file '/hypertable/root' - %s", Error::get_text(error));
+          HT_ABORT;
+        }
 
-	m_hyperspace_ptr->close(handle);
+        m_hyperspace_ptr->close(handle);
       }
 
-      schemaPtr = table_info_ptr->get_schema();
+      schema_ptr = table_info_ptr->get_schema();
 
       /**
        * Check for existence of and create, if necessary, range directory (md5 of endrow)
        * under all locality group directories for this table
        */
       {
-	assert(*range->end_row != 0);
-	md5_string(range->end_row, md5DigestStr);
-	md5DigestStr[24] = 0;
-	tableHdfsDir = (string)"/hypertable/tables/" + (string)table->name;
-	list<Schema::AccessGroup *> *lgList = schemaPtr->get_access_group_list();
-	for (list<Schema::AccessGroup *>::iterator lgIter = lgList->begin(); lgIter != lgList->end(); lgIter++) {
-	  // notice the below variables are different "range" vs. "table"
-	  rangeHdfsDir = tableHdfsDir + "/" + (*lgIter)->name + "/" + md5DigestStr;
-	  Global::dfs->mkdirs(rangeHdfsDir);
-	}
+        assert(*range->end_row != 0);
+        md5_string(range->end_row, md5DigestStr);
+        md5DigestStr[24] = 0;
+        table_dfsdir = (string)"/hypertable/tables/" + (string)table->name;
+        list<Schema::AccessGroup *> *aglist = schema_ptr->get_access_group_list();
+        for (list<Schema::AccessGroup *>::iterator ag_it = aglist->begin(); ag_it != aglist->end(); ag_it++) {
+          // notice the below variables are different "range" vs. "table"
+          range_dfsdir = table_dfsdir + "/" + (*ag_it)->name + "/" + md5DigestStr;
+          Global::dfs->mkdirs(range_dfsdir);
+        }
       }
     }
 
-    range_ptr = new Range(m_master_client_ptr, table, schemaPtr, range, range_state);
+    range_ptr = new Range(m_master_client_ptr, table, schema_ptr, range, range_state);
 
     /**
      * NOTE: The range does not need to be locked in the following replay since
@@ -764,11 +765,11 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifier *table, Range
      */
     if (!replay) {
       if (transfer_log_dir && *transfer_log_dir) {
-	CommitLogReaderPtr commit_log_reader_ptr = new CommitLogReader(Global::dfs, transfer_log_dir);
-	uint64_t timestamp = Global::log->get_timestamp();
-	range_ptr->replay_transfer_log(commit_log_reader_ptr.get(), timestamp);
-	if ((error = Global::log->link_log(commit_log_reader_ptr.get(), timestamp)) != Error::OK)
-	  throw Exception(error, (std::string)"Unable to link external log '" + transfer_log_dir + "' into commit log");
+        CommitLogReaderPtr commit_log_reader_ptr = new CommitLogReader(Global::dfs, transfer_log_dir);
+        uint64_t timestamp = Global::log->get_timestamp();
+        range_ptr->replay_transfer_log(commit_log_reader_ptr.get(), timestamp);
+        if ((error = Global::log->link_log(commit_log_reader_ptr.get(), timestamp)) != Error::OK)
+          HT_THROW(error, (String)"Unable to link external log '" + transfer_log_dir + "' into commit log");
       }
     }
 
@@ -792,27 +793,27 @@ void RangeServer::load_range(ResponseCallback *cb, TableIdentifier *table, Range
 
 
 void RangeServer::reload_range(TableIdentifier *table, RangeSpec *range, uint64_t soft_limit, const String &split_log) {
-  
+
 }
 
 
 namespace {
 
-  typedef struct {
+  struct UpdateRec {
     const uint8_t *base;
     size_t len;
-  } UpdateRecT;
+  };
 
-  typedef struct {
+  struct SendBackRec {
     int error;
     uint32_t offset;
     uint32_t len;
-  } SendBackRecT;
+  };
 
-  typedef struct {
+  struct MinTimestampRec {
     RangePtr range_ptr;
     Timestamp timestamp;
-  } MinTimestampRecT;
+  };
 }
 
 
@@ -827,22 +828,22 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
   const uint8_t *add_end_ptr;
   uint8_t *ts_ptr;
   const uint8_t auto_ts[8] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-  string errMsg;
+  string errmsg;
   int error = Error::OK;
   TableInfoPtr table_info_ptr;
   uint64_t update_timestamp = 0;
   uint64_t min_timestamp = 0;
   const char *row;
-  std::string split_row;
-  vector<UpdateRecT> goMods;
-  vector<UpdateRecT> splitMods;
-  UpdateRecT update;
-  CommitLogPtr splitLogPtr;
-  size_t goSize = 0;
-  size_t splitSize = 0;
-  std::string end_row;
-  std::vector<MinTimestampRecT>  min_ts_vector;
-  MinTimestampRecT  min_ts_rec;
+  String split_row;
+  vector<UpdateRec> gomods;
+  vector<UpdateRec> splitmods;
+  UpdateRec update;
+  CommitLogPtr splitlog;
+  size_t gosz = 0;
+  size_t splitsz = 0;
+  String end_row;
+  std::vector<MinTimestampRec>  min_ts_vector;
+  MinTimestampRec  min_ts_rec;
   uint64_t next_timestamp;
   uint64_t temp_timestamp;
   uint64_t memory_added = 0;
@@ -851,8 +852,8 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
   ByteString key, value;
   bool a_locked = false;
   bool b_locked = false;
-  vector<SendBackRecT> send_back_vector;
-  uint8_t *send_back_ptr = 0;
+  vector<SendBackRec> send_back_vector;
+  const uint8_t *send_back_ptr = 0;
   uint32_t misses = 0;
 
   min_ts_vector.reserve(50);
@@ -868,28 +869,28 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
 
     // Fetch table info
     if (!m_live_map_ptr->get(table->id, table_info_ptr)) {
-      StaticBuffer ext(new uint8_t [ 12 ], 12);
+      StaticBuffer ext(new uint8_t [12], 12);
       uint8_t *ptr = ext.base;
-      Serialization::encode_int(&ptr, Error::RANGESERVER_TABLE_NOT_FOUND);
-      Serialization::encode_int(&ptr, 0);
-      Serialization::encode_int(&ptr, buffer.size);
+      encode_i32(&ptr, Error::RANGESERVER_TABLE_NOT_FOUND);
+      encode_i32(&ptr, 0);
+      encode_i32(&ptr, buffer.size);
       HT_ERRORF("Unable to find table info for table '%s'", table->name);
       if ((error = cb->response(ext)) != Error::OK)
-	HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
+        HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       return;
     }
 
     // verify schema
-    if ((error = verify_schema(table_info_ptr, table->generation, errMsg)) != Error::OK) {
-      HT_ERRORF("%s", errMsg.c_str());
-      cb->error(error, errMsg);
+    if ((error = verify_schema(table_info_ptr, table->generation, errmsg)) != Error::OK) {
+      HT_ERRORF("%s", errmsg.c_str());
+      cb->error(error, errmsg);
       return;
     }
 
     mod_end = buffer.base + buffer.size;
     mod_ptr = buffer.base;
 
-    goMods.clear();
+    gomods.clear();
 
     m_update_mutex_a.lock();
     a_locked = true;
@@ -901,36 +902,36 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
       key.ptr = mod_ptr;
 
       row = key.str();
-    
+
       // Look for containing range, add to stop mods if not found
       if (!table_info_ptr->find_containing_range(row, min_ts_rec.range_ptr)) {
-	if (send_back_ptr == 0)
-	  send_back_ptr = mod_ptr;
-	key.next(); // skip key
-	key.next(); // skip value;
-	mod_ptr = key.ptr;
-	misses++;
-	continue;
+        if (send_back_ptr == 0)
+          send_back_ptr = mod_ptr;
+        key.next(); // skip key
+        key.next(); // skip value;
+        mod_ptr = (uint8_t *)key.ptr;
+        misses++;
+        continue;
       }
 
       if (send_back_ptr) {
-	SendBackRecT send_back;
-	send_back.error = Error::RANGESERVER_OUT_OF_RANGE;
-	send_back.offset = send_back_ptr - buffer.base;
-	send_back.len = mod_ptr - send_back_ptr;
-	send_back_vector.push_back(send_back);
-	send_back_ptr = 0;
+        SendBackRec send_back;
+        send_back.error = Error::RANGESERVER_OUT_OF_RANGE;
+        send_back.offset = send_back_ptr - buffer.base;
+        send_back.len = mod_ptr - send_back_ptr;
+        send_back_vector.push_back(send_back);
+        send_back_ptr = 0;
       }
 
       add_base_ptr = mod_ptr;
-    
+
       /** Increment update count (block if maintenance in progress) **/
       min_ts_rec.range_ptr->increment_update_counter();
 
       // Make sure range didn't just shrink
       if (strcmp(row, (min_ts_rec.range_ptr->start_row()).c_str()) <= 0) {
-	min_ts_rec.range_ptr->decrement_update_counter();
-	continue;
+        min_ts_rec.range_ptr->decrement_update_counter();
+        continue;
       }
 
       /** Obtain the most recently seen timestamp **/
@@ -942,10 +943,10 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
       end_row = min_ts_rec.range_ptr->end_row();
 
       /** Fetch range split information **/
-      split_pending = min_ts_rec.range_ptr->get_split_info(split_row, splitLogPtr);
+      split_pending = min_ts_rec.range_ptr->get_split_info(split_row, splitlog);
 
-      splitMods.clear();
-      splitSize = 0;
+      splitmods.clear();
+      splitsz = 0;
 
       next_timestamp = 0;
       min_ts_rec.timestamp.logical = 0;
@@ -953,77 +954,77 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
 
       while (mod_ptr < mod_end && (end_row == "" || (strcmp(row, end_row.c_str()) <= 0))) {
 
-	// If timestamp value is set to AUTO (zero one's compliment), then assign a timestamp
-	ts_ptr = mod_ptr + key.length() - 8;
-	if (!memcmp(ts_ptr, auto_ts, 8)) {
-	  if (next_timestamp == 0) {
-	    boost::xtime now;
-	    boost::xtime_get(&now, boost::TIME_UTC);
-	    next_timestamp = ((uint64_t)now.sec * 1000000000LL) + (uint64_t)now.nsec;
-	  }
-	  temp_timestamp = ++next_timestamp;
-	  if (min_ts_rec.timestamp.logical == 0 || temp_timestamp < min_ts_rec.timestamp.logical)
-	    min_ts_rec.timestamp.logical = temp_timestamp;
-	  Key::encode_ts64(&ts_ptr, temp_timestamp);
-	}
-	else {
-	  uint8_t flag = *(ts_ptr-1);
-	  temp_timestamp = Key::decode_ts64((const uint8_t **)&ts_ptr);
-	  if (flag > FLAG_DELETE_CELL && temp_timestamp <= min_timestamp) {
-	    error = Error::RANGESERVER_TIMESTAMP_ORDER_ERROR;
-	    errMsg = (string)"Update timestamp " + temp_timestamp + " is <= previously seen timestamp of " + min_timestamp;
-	    min_ts_rec.range_ptr->decrement_update_counter();
-	    m_update_mutex_a.unlock();
-	    goto abort;
-	  }
-	  if (min_ts_rec.timestamp.logical == 0 || temp_timestamp < min_ts_rec.timestamp.logical)
-	    min_ts_rec.timestamp.logical = temp_timestamp;
-	}
+        // If timestamp value is set to AUTO (zero one's compliment), then assign a timestamp
+        ts_ptr = mod_ptr + key.length() - 8;
+        if (!memcmp(ts_ptr, auto_ts, 8)) {
+          if (next_timestamp == 0) {
+            boost::xtime now;
+            boost::xtime_get(&now, boost::TIME_UTC);
+            next_timestamp = ((uint64_t)now.sec * 1000000000LL) + (uint64_t)now.nsec;
+          }
+          temp_timestamp = ++next_timestamp;
+          if (min_ts_rec.timestamp.logical == 0 || temp_timestamp < min_ts_rec.timestamp.logical)
+            min_ts_rec.timestamp.logical = temp_timestamp;
+          Key::encode_ts64(&ts_ptr, temp_timestamp);
+        }
+        else {
+          uint8_t flag = *(ts_ptr-1);
+          temp_timestamp = Key::decode_ts64((const uint8_t **)&ts_ptr);
+          if (flag > FLAG_DELETE_CELL && temp_timestamp <= min_timestamp) {
+            error = Error::RANGESERVER_TIMESTAMP_ORDER_ERROR;
+            errmsg = (string)"Update timestamp " + temp_timestamp + " is <= previously seen timestamp of " + min_timestamp;
+            min_ts_rec.range_ptr->decrement_update_counter();
+            m_update_mutex_a.unlock();
+            goto abort;
+          }
+          if (min_ts_rec.timestamp.logical == 0 || temp_timestamp < min_ts_rec.timestamp.logical)
+            min_ts_rec.timestamp.logical = temp_timestamp;
+        }
 
-	update.base = mod_ptr;
-	key.next(); // skip key
-	key.next(); // skip value
-	mod_ptr = key.ptr;
-	update.len = mod_ptr - update.base;
-	if (split_pending && strcmp(row, split_row.c_str()) <= 0) {
-	  splitMods.push_back(update);
-	  splitSize += update.len;
-	}
-	else {
-	  goMods.push_back(update);
-	  goSize += update.len;
-	}
-	if (mod_ptr < mod_end)
-	  row = key.str();
+        update.base = mod_ptr;
+        key.next(); // skip key
+        key.next(); // skip value
+        mod_ptr = (uint8_t *)key.ptr;
+        update.len = mod_ptr - update.base;
+        if (split_pending && strcmp(row, split_row.c_str()) <= 0) {
+          splitmods.push_back(update);
+          splitsz += update.len;
+        }
+        else {
+          gomods.push_back(update);
+          gosz += update.len;
+        }
+        if (mod_ptr < mod_end)
+          row = key.str();
       }
 
       add_end_ptr = mod_ptr;
 
       // force scans to only see updates before the earliest time in this range
       min_ts_rec.timestamp.logical--;
-      min_ts_rec.range_ptr->add_update_timestamp( min_ts_rec.timestamp );
+      min_ts_rec.range_ptr->add_update_timestamp(min_ts_rec.timestamp);
       min_ts_vector.push_back(min_ts_rec);
 
-      if (splitSize > 0) {
-	DynamicBuffer dbuf( splitSize + table->encoded_length() );
+      if (splitsz > 0) {
+        DynamicBuffer dbuf(splitsz + table->encoded_length());
 
-	table->encode(&dbuf.ptr);
+        table->encode(&dbuf.ptr);
 
-	items_added += splitMods.size();
-	memory_added += splitSize;
+        items_added += splitmods.size();
+        memory_added += splitsz;
 
-	for (size_t i=0; i<splitMods.size(); i++) {
-	  memcpy(dbuf.ptr, splitMods[i].base, splitMods[i].len);
-	  dbuf.ptr += splitMods[i].len;
-	}
+        for (size_t i=0; i<splitmods.size(); i++) {
+          memcpy(dbuf.ptr, splitmods[i].base, splitmods[i].len);
+          dbuf.ptr += splitmods[i].len;
+        }
 
-	HT_EXPECT(dbuf.fill() <= (splitSize + table->encoded_length()), Error::FAILED_EXPECTATION);
+        HT_EXPECT(dbuf.fill() <= (splitsz + table->encoded_length()), Error::FAILED_EXPECTATION);
 
-	if ((error = splitLogPtr->write(dbuf, update_timestamp)) != Error::OK) {
-	  errMsg = (string)"Problem writing " + (int)dbuf.fill() + " bytes to split log";
-	  m_update_mutex_a.unlock();
-	  goto abort;
-	}
+        if ((error = splitlog->write(dbuf, update_timestamp)) != Error::OK) {
+          errmsg = (string)"Problem writing " + (int)dbuf.fill() + " bytes to split log";
+          m_update_mutex_a.unlock();
+          goto abort;
+        }
       }
 
       /**
@@ -1031,21 +1032,21 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
        */
       min_ts_rec.range_ptr->lock();
       {
-	uint8_t *ptr = (uint8_t *)add_base_ptr;
-	while (ptr < add_end_ptr) {
-	  key.ptr = ptr;
-	  ptr += key.length();
-	  value.ptr = ptr;
-	  ptr += value.length();
-	  if ((error = min_ts_rec.range_ptr->add(key, value, update_timestamp)) != Error::OK) {
-	    SendBackRecT send_back;
-	    send_back.error = error;
-	    send_back.offset = key.ptr - buffer.base;
-	    send_back.len = add_end_ptr - key.ptr;
-	    send_back_vector.push_back(send_back);
-	    break;
-	  }
-	}
+        uint8_t *ptr = (uint8_t *)add_base_ptr;
+        while (ptr < add_end_ptr) {
+          key.ptr = ptr;
+          ptr += key.length();
+          value.ptr = ptr;
+          ptr += value.length();
+          if ((error = min_ts_rec.range_ptr->add(key, value, update_timestamp)) != Error::OK) {
+            SendBackRec send_back;
+            send_back.error = error;
+            send_back.offset = key.ptr - buffer.base;
+            send_back.len = add_end_ptr - key.ptr;
+            send_back_vector.push_back(send_back);
+            break;
+          }
+        }
       }
       min_ts_rec.range_ptr->unlock(update_timestamp);
 
@@ -1053,39 +1054,39 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
        * Split and Compaction processing
        */
       if (!min_ts_rec.range_ptr->maintenance_in_progress()) {
-	std::vector<AccessGroup::CompactionPriorityDataT> priority_data_vec;
-	std::vector<AccessGroup *> compactions;
-	uint64_t disk_usage = 0;
+        std::vector<AccessGroup::CompactionPriorityData> priority_data_vec;
+        std::vector<AccessGroup *> compactions;
+        uint64_t disk_usage = 0;
 
-	min_ts_rec.range_ptr->get_compaction_priority_data(priority_data_vec);
-	for (size_t i=0; i<priority_data_vec.size(); i++) {
-	  disk_usage += priority_data_vec[i].disk_used;
-	  if (!priority_data_vec[i].in_memory && priority_data_vec[i].mem_used >= (uint32_t)Global::localityGroupMaxMemory)
-	    compactions.push_back(priority_data_vec[i].ag);
-	}
+        min_ts_rec.range_ptr->get_compaction_priority_data(priority_data_vec);
+        for (size_t i=0; i<priority_data_vec.size(); i++) {
+          disk_usage += priority_data_vec[i].disk_used;
+          if (!priority_data_vec[i].in_memory && priority_data_vec[i].mem_used >= (uint32_t)Global::access_group_max_mem)
+            compactions.push_back(priority_data_vec[i].ag);
+        }
 
-	if (!min_ts_rec.range_ptr->is_root() &&
-	    (disk_usage > min_ts_rec.range_ptr->get_size_limit() || 
-	     (Global::range_metadata_max_bytes && table->id == 0 && disk_usage > Global::range_metadata_max_bytes))) {
-	  if (!min_ts_rec.range_ptr->test_and_set_maintenance())
-	    Global::maintenance_queue->add( new MaintenanceTaskSplit(min_ts_rec.range_ptr) );
-	}
-	else if (!compactions.empty()) {
-	  if (!min_ts_rec.range_ptr->test_and_set_maintenance()) {
-	    for (size_t i=0; i<compactions.size(); i++)
-	      compactions[i]->set_compaction_bit();
-	    Global::maintenance_queue->add( new MaintenanceTaskCompaction(min_ts_rec.range_ptr, false) );
-	  }
-	}
+        if (!min_ts_rec.range_ptr->is_root() &&
+            (disk_usage > min_ts_rec.range_ptr->get_size_limit() ||
+             (Global::range_metadata_max_bytes && table->id == 0 && disk_usage > Global::range_metadata_max_bytes))) {
+          if (!min_ts_rec.range_ptr->test_and_set_maintenance())
+            Global::maintenance_queue->add(new MaintenanceTaskSplit(min_ts_rec.range_ptr));
+        }
+        else if (!compactions.empty()) {
+          if (!min_ts_rec.range_ptr->test_and_set_maintenance()) {
+            for (size_t i=0; i<compactions.size(); i++)
+              compactions[i]->set_compaction_bit();
+            Global::maintenance_queue->add(new MaintenanceTaskCompaction(min_ts_rec.range_ptr, false));
+          }
+        }
       }
 
       if (Global::verbose) {
-	HT_INFOF("Added %d (%d split off) updates to '%s'", goMods.size()+splitMods.size(), splitMods.size(), table->name);
+        HT_INFOF("Added %d (%d split off) updates to '%s'", gomods.size()+splitmods.size(), splitmods.size(), table->name);
       }
     }
 
     if (send_back_ptr) {
-      SendBackRecT send_back;
+      SendBackRec send_back;
       send_back.error = Error::RANGESERVER_OUT_OF_RANGE;
       send_back.offset = send_back_ptr - buffer.base;
       send_back.len = mod_ptr - send_back_ptr;
@@ -1100,25 +1101,25 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
     /**
      * Commit valid (go) mutations
      */
-    if (goSize > 0) {
-      DynamicBuffer dbuf( goSize + table->encoded_length() );
+    if (gosz > 0) {
+      DynamicBuffer dbuf(gosz + table->encoded_length());
 
       table->encode(&dbuf.ptr);
 
-      items_added += goMods.size();
-      memory_added += goSize;
+      items_added += gomods.size();
+      memory_added += gosz;
 
-      for (size_t i=0; i<goMods.size(); i++) {
-	memcpy(dbuf.ptr, goMods[i].base, goMods[i].len);
-	dbuf.ptr += goMods[i].len;
+      for (size_t i=0; i<gomods.size(); i++) {
+        memcpy(dbuf.ptr, gomods[i].base, gomods[i].len);
+        dbuf.ptr += gomods[i].len;
       }
 
-      HT_EXPECT(dbuf.fill() <= (goSize + table->encoded_length()), Error::FAILED_EXPECTATION);
+      HT_EXPECT(dbuf.fill() <= (gosz + table->encoded_length()), Error::FAILED_EXPECTATION);
 
       if ((error = Global::log->write(dbuf, update_timestamp)) != Error::OK) {
-	errMsg = (string)"Problem writing " + (int)dbuf.fill() + " bytes to commit log";
-	m_update_mutex_b.unlock();
-	goto abort;
+        errmsg = (string)"Problem writing " + (int)dbuf.fill() + " bytes to commit log";
+        m_update_mutex_b.unlock();
+        goto abort;
       }
     }
 
@@ -1133,7 +1134,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
   catch (Exception &e) {
     HT_ERRORF("Exception caught: %s", Error::get_text(e.code()));
     error = e.code();
-    errMsg = e.what();
+    errmsg = e.what();
     if (b_locked)
       m_update_mutex_b.unlock();
     else if (a_locked)
@@ -1154,7 +1155,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
     HT_INFOF("drj mem=%lld items=%lld vm-est%lld", mt_memory, mt_items, vm_estimate);
   }
 
-  splitLogPtr = 0;
+  splitlog = 0;
 
   // unblock scanner timestamp and decrement update counter
   for (size_t i=0; i<min_ts_vector.size(); i++) {
@@ -1167,26 +1168,26 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
      * Send back response
      */
     if (!send_back_vector.empty()) {
-      StaticBuffer ext(new uint8_t [ send_back_vector.size() * 12 ], send_back_vector.size() * 12);
+      StaticBuffer ext(new uint8_t [send_back_vector.size() * 12], send_back_vector.size() * 12);
       uint8_t *ptr = ext.base;
       for (size_t i=0; i<send_back_vector.size(); i++) {
-	Serialization::encode_int(&ptr, send_back_vector[i].error);
-	Serialization::encode_int(&ptr, send_back_vector[i].offset);
-	Serialization::encode_int(&ptr, send_back_vector[i].len);
+        encode_i32(&ptr, send_back_vector[i].error);
+        encode_i32(&ptr, send_back_vector[i].offset);
+        encode_i32(&ptr, send_back_vector[i].len);
       }
       if ((error = cb->response(ext)) != Error::OK) {
-	HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
+        HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       }
     }
     else {
       if ((error = cb->response_ok()) != Error::OK) {
-	HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
+        HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       }
     }
   }
   else {
-    HT_ERRORF("%s '%s'", Error::get_text(error), errMsg.c_str());
-    if ((error = cb->error(error, errMsg)) != Error::OK) {
+    HT_ERRORF("%s '%s'", Error::get_text(error), errmsg.c_str());
+    if ((error = cb->error(error, errmsg)) != Error::OK) {
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
     }
   }
@@ -1197,13 +1198,13 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
 void RangeServer::drop_table(ResponseCallback *cb, TableIdentifier *table) {
   TableInfoPtr table_info_ptr;
   std::vector<RangePtr> range_vector;
-  std::string metadata_prefix;
-  std::string metadata_key; // ***********  = std::string("") + (uint32_t)m_table_identifier.id + ":" + m_end_row;
+  String metadata_prefix;
+  String metadata_key; // ***********  = String("") + (uint32_t)m_table_identifier.id + ":" + m_end_row;
   TableMutatorPtr mutator_ptr;
   KeySpec key;
 
   if (Global::verbose) {
-    HT_INFOF("drop_table '%s'", table->name);  
+    HT_INFOF("drop_table '%s'", table->name);
     cout << flush;
   }
 
@@ -1219,14 +1220,14 @@ void RangeServer::drop_table(ResponseCallback *cb, TableIdentifier *table) {
      // For each range in dropped table, Set the 'drop' bit and clear
     // the 'Location' column of the corresponding METADATA entry
     if (m_live_map_ptr->remove(table->id, table_info_ptr)) {
-      metadata_prefix = std::string("") + table_info_ptr->get_id() + ":";
+      metadata_prefix = String("") + table_info_ptr->get_id() + ":";
       table_info_ptr->get_range_vector(range_vector);
       for (size_t i=0; i<range_vector.size(); i++) {
-	range_vector[i]->drop();
-	metadata_key = metadata_prefix + range_vector[i]->end_row();
-	key.row = metadata_key.c_str();
-	key.row_len = metadata_key.length();
-	mutator_ptr->set(key, "!", 1);
+        range_vector[i]->drop();
+        metadata_key = metadata_prefix + range_vector[i]->end_row();
+        key.row = metadata_key.c_str();
+        key.row_len = metadata_key.length();
+        mutator_ptr->set(key, "!", 1);
       }
       range_vector.clear();
     }
@@ -1242,7 +1243,7 @@ void RangeServer::drop_table(ResponseCallback *cb, TableIdentifier *table) {
   }
 
   if (Global::verbose) {
-    HT_INFOF("Successfully dropped table '%s'", table->name);  
+    HT_INFOF("Successfully dropped table '%s'", table->name);
     cout << flush;
   }
 
@@ -1253,7 +1254,7 @@ void RangeServer::drop_table(ResponseCallback *cb, TableIdentifier *table) {
 void RangeServer::dump_stats(ResponseCallback *cb) {
   std::vector<TableInfoPtr> table_vec;
   std::vector<RangePtr> range_vec;
-  
+
   HT_INFO("dump_stats");
 
   m_live_map_ptr->get_all(table_vec);
@@ -1286,7 +1287,7 @@ void RangeServer::replay_start(ResponseCallback *cb) {
   /**
    * Remove old replay log directory
    */
-  try { Global::logDfs->rmdir(replay_log_dir); }
+  try { Global::log_dfs->rmdir(replay_log_dir); }
   catch (Exception &e) {
     HT_ERRORF("Problem removing replay log directory: %s", e.what());
     cb->error(e.code(), format("Problem removing replay log directory: %s",
@@ -1297,7 +1298,7 @@ void RangeServer::replay_start(ResponseCallback *cb) {
   /**
    * Create new replay log directory
    */
-  try { Global::logDfs->mkdirs(replay_log_dir); }
+  try { Global::log_dfs->mkdirs(replay_log_dir); }
   catch (Exception &e) {
     HT_ERRORF("Problem creating replay log directory: %s ", e.what());
     cb->error(e.code(), format("Problem creating replay log directory: %s",
@@ -1305,7 +1306,7 @@ void RangeServer::replay_start(ResponseCallback *cb) {
     return;
   }
 
-  m_replay_log_ptr = new CommitLog(Global::logDfs, replay_log_dir, m_props_ptr);
+  m_replay_log_ptr = new CommitLog(Global::log_dfs, replay_log_dir, m_props_ptr);
 
   cb->response_ok();
 }
@@ -1315,7 +1316,7 @@ void RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data, size_
   TableIdentifier table_identifier;
   TableInfoPtr table_info_ptr;
   ByteString key, value;
-  uint8_t *ptr = (uint8_t *)data;
+  const uint8_t *ptr = data;
   const uint8_t *end_ptr = data + len;
   const uint8_t *block_end_ptr;
   uint32_t block_size;
@@ -1339,51 +1340,55 @@ void RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data, size_
     while (ptr < end_ptr) {
 
       // decode table identifier + timestamp + key/value block size
-      if (!table_identifier.decode(&ptr, &remaining) ||
-	  !Serialization::decode_long(&ptr, &remaining, &timestamp) ||
-	  !Serialization::decode_int(&ptr, &remaining, &block_size))
-	throw Exception(Error::REQUEST_TRUNCATED, "Update block header truncated");
+      table_identifier.decode(&ptr, &remaining);
+      timestamp = decode_i64(&ptr, &remaining);
+      block_size = decode_i32(&ptr, &remaining);
 
       if (block_size > remaining)
-	throw Exception(Error::MALFORMED_REQUEST, String("Block (size=") + block_size + ") exceeds end of message");
+        HT_THROWF(Error::MALFORMED_REQUEST, "Block (size=%lu) exceeds EOM",
+                  (Lu)block_size);
 
       block_end_ptr = ptr + block_size;
 
       // Fetch table info
       if (!m_replay_map_ptr->get(table_identifier.id, table_info_ptr))
-	throw Exception(Error::RANGESERVER_RANGE_NOT_FOUND, format("Unable to find table info for table name='%s' id=%u", table_identifier.name, table_identifier.id));
+        HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND, "Unable to find "
+                  "table info for table name='%s' id=%lu",
+                  table_identifier.name, (Lu)table_identifier.id);
 
       while (ptr < block_end_ptr) {
 
-	row = ByteString(ptr).str();
+        row = ByteString(ptr).str();
 
-	// Look for containing range, add to stop mods if not found
-	if (!table_info_ptr->find_containing_range(row, range_ptr))
-	  throw Exception(Error::RANGESERVER_RANGE_NOT_FOUND, format("Unable to find range for row '%s'", row));
+        // Look for containing range, add to stop mods if not found
+        if (!table_info_ptr->find_containing_range(row, range_ptr))
+          HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND, "Unable to find "
+                    "range for row '%s'", row);
 
-	end_row = range_ptr->end_row();
+        end_row = range_ptr->end_row();
 
-	while (ptr < block_end_ptr && 
-	       (end_row == "" || (strcmp(row, end_row.c_str()) <= 0))) {
+        while (ptr < block_end_ptr &&
+               (end_row == "" || (strcmp(row, end_row.c_str()) <= 0))) {
+          // extract the key
+          key.ptr = ptr;
+          ptr += key.length();
 
-	  // extract the key
-	  key.ptr = ptr;
-	  ptr += key.length();
-	  if (ptr > end_ptr)
-	    throw Exception(Error::REQUEST_TRUNCATED, "Problem decoding key");
+          if (ptr > end_ptr)
+            HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding key");
 
-	  value.ptr = ptr;
-	  ptr += value.length();
-	  if (ptr > end_ptr)
-	    throw Exception(Error::REQUEST_TRUNCATED, "Problem decoding value");
+          value.ptr = ptr;
+          ptr += value.length();
 
-	  HT_EXPECT(range_ptr->replay_add(key, value, timestamp, &count) == Error::OK, Error::FAILED_EXPECTATION);
+          if (ptr > end_ptr)
+            HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding value");
 
-	  if (count) {
-	    items_added += count;
-	    memory_added += count * (ptr - key.ptr);
-	  }
-	}
+          HT_EXPECT(range_ptr->replay_add(key, value, timestamp, &count) == Error::OK, Error::FAILED_EXPECTATION);
+
+          if (count) {
+            items_added += count;
+            memory_added += count * (ptr - key.ptr);
+          }
+        }
       }
     }
 
@@ -1392,8 +1397,8 @@ void RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data, size_
 
   }
   catch (Exception &e) {
-    HT_ERRORF("%s - %s", Error::get_text(e.code()), e.what());
-    cb->error(e.code(), e.what());
+    HT_ERROR_OUT << e << HT_END;
+    cb->error(e.code(), format("%s - %s", e.what(), Error::get_text(e.code())));
     return;
   }
 
@@ -1437,13 +1442,13 @@ void RangeServer::drop_range(ResponseCallback *cb, TableIdentifier *table, Range
 
   /** Get TableInfo **/
   if (!m_live_map_ptr->get(table->id, table_info_ptr)) {
-    cb->error(Error::RANGESERVER_RANGE_NOT_FOUND, std::string("No ranges loaded for table '") + table->name + "'");
+    cb->error(Error::RANGESERVER_RANGE_NOT_FOUND, String("No ranges loaded for table '") + table->name + "'");
     return;
   }
 
   /** Remove the range **/
   if (!table_info_ptr->remove_range(range, range_ptr)) {
-    cb->error(Error::RANGESERVER_RANGE_NOT_FOUND, (std::string)table->name + "[" + range->start_row + ".." + range->end_row + "]");
+    cb->error(Error::RANGESERVER_RANGE_NOT_FOUND, (String)table->name + "[" + range->start_row + ".." + range->end_row + "]");
     return;
   }
 
@@ -1452,43 +1457,43 @@ void RangeServer::drop_range(ResponseCallback *cb, TableIdentifier *table, Range
 
 
 
-int RangeServer::verify_schema(TableInfoPtr &table_info_ptr, int generation, std::string &err_msg) {
-  std::string tableFile = (std::string)"/hypertable/tables/" + table_info_ptr->get_name();
-  DynamicBuffer valueBuf;
-  HandleCallbackPtr nullHandleCallback;
+int RangeServer::verify_schema(TableInfoPtr &table_info_ptr, int generation, String &err_msg) {
+  String tablefile = (String)"/hypertable/tables/" + table_info_ptr->get_name();
+  DynamicBuffer valbuf;
+  HandleCallbackPtr null_handle_callback;
   int error;
   uint64_t handle;
-  SchemaPtr schemaPtr = table_info_ptr->get_schema();
+  SchemaPtr schema_ptr = table_info_ptr->get_schema();
 
-  if (schemaPtr.get() == 0 || schemaPtr->get_generation() < generation) {
+  if (schema_ptr.get() == 0 || schema_ptr->get_generation() < generation) {
 
-    if ((error = m_hyperspace_ptr->open(tableFile.c_str(), OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
-      HT_ERRORF("Unable to open Hyperspace file '%s' (%s)", tableFile.c_str(), Error::get_text(error));
+    if ((error = m_hyperspace_ptr->open(tablefile.c_str(), OPEN_FLAG_READ, null_handle_callback, &handle)) != Error::OK) {
+      HT_ERRORF("Unable to open Hyperspace file '%s' (%s)", tablefile.c_str(), Error::get_text(error));
       exit(1);
     }
 
-    if ((error = m_hyperspace_ptr->attr_get(handle, "schema", valueBuf)) != Error::OK) {
-      err_msg = (std::string)"Problem getting 'schema' attribute for '" + tableFile + "'";
+    if ((error = m_hyperspace_ptr->attr_get(handle, "schema", valbuf)) != Error::OK) {
+      err_msg = (String)"Problem getting 'schema' attribute for '" + tablefile + "'";
       return error;
     }
 
     m_hyperspace_ptr->close(handle);
 
-    schemaPtr = Schema::new_instance((const char *)valueBuf.base, valueBuf.fill(), true);
-    if (!schemaPtr->is_valid()) {
-      err_msg = (std::string)"Schema Parse Error for table '" + table_info_ptr->get_name() + "' : " + schemaPtr->get_error_string();
+    schema_ptr = Schema::new_instance((const char *)valbuf.base, valbuf.fill(), true);
+    if (!schema_ptr->is_valid()) {
+      err_msg = (String)"Schema Parse Error for table '" + table_info_ptr->get_name() + "' : " + schema_ptr->get_error_string();
       return Error::RANGESERVER_SCHEMA_PARSE_ERROR;
     }
 
-    table_info_ptr->update_schema(schemaPtr);
+    table_info_ptr->update_schema(schema_ptr);
 
     // Generation check ...
-    if ( schemaPtr->get_generation() < generation ) {
-      err_msg = (std::string)"Fetched Schema generation for table '" + table_info_ptr->get_name() + "' is " + schemaPtr->get_generation() + " but supplied is " + generation;
+    if (schema_ptr->get_generation() < generation) {
+      err_msg = (String)"Fetched Schema generation for table '" + table_info_ptr->get_name() + "' is " + schema_ptr->get_generation() + " but supplied is " + generation;
       return Error::RANGESERVER_GENERATION_MISMATCH;
     }
   }
-  
+
   return Error::OK;
 }
 
@@ -1500,7 +1505,7 @@ void RangeServer::do_maintenance() {
   /**
    * Purge expired scanners
    */
-  Global::scannerMap.purge_expired(m_scanner_ttl);
+  Global::scanner_map.purge_expired(m_scanner_ttl);
 
   /**
    * Schedule log cleanup
@@ -1508,15 +1513,15 @@ void RangeServer::do_maintenance() {
   gettimeofday(&tval, 0);
   if ((tval.tv_sec - m_last_commit_log_clean) >= (int)(m_timer_interval*4)/5) {
     // schedule log cleanup
-    Global::maintenance_queue->add( new MaintenanceTaskLogCleanup(this) );
+    Global::maintenance_queue->add(new MaintenanceTaskLogCleanup(this));
     m_last_commit_log_clean = tval.tv_sec;
   }
 }
 
 namespace {
 
-  struct ltPriorityData {
-    bool operator()(const AccessGroup::CompactionPriorityDataT &pd1, const AccessGroup::CompactionPriorityDataT &pd2) const {
+  struct LtPriorityData {
+    bool operator()(const AccessGroup::CompactionPriorityData &pd1, const AccessGroup::CompactionPriorityData &pd2) const {
       return pd1.log_space_pinned >= pd2.log_space_pinned;
     }
   };
@@ -1531,7 +1536,7 @@ namespace {
 void RangeServer::log_cleanup() {
   std::vector<TableInfoPtr> table_vec;
   std::vector<RangePtr> range_vec;
-  std::vector<AccessGroup::CompactionPriorityDataT> priority_data_vec;
+  std::vector<AccessGroup::CompactionPriorityData> priority_data_vec;
   LogFragmentPriorityMap log_frag_map;
   std::set<size_t> compaction_set;
   uint64_t timestamp, oldest_cached_timestamp = 0;
@@ -1560,8 +1565,8 @@ void RangeServer::log_cleanup() {
     for (size_t j=start; j<priority_data_vec.size(); j++) {
       priority_data_vec[j].user_data = (void *)i;
       if ((timestamp = priority_data_vec[j].ag->get_oldest_cached_timestamp()) != 0) {
-	if (oldest_cached_timestamp == 0 || timestamp < oldest_cached_timestamp)
-	  oldest_cached_timestamp = timestamp;
+        if (oldest_cached_timestamp == 0 || timestamp < oldest_cached_timestamp)
+          oldest_cached_timestamp = timestamp;
       }
     }
   }
@@ -1576,8 +1581,8 @@ void RangeServer::log_cleanup() {
 
     if (priority_data_vec[i].oldest_cached_timestamp == 0)
       continue;
-    
-    LogFragmentPriorityMap::iterator map_iter = log_frag_map.lower_bound( priority_data_vec[i].oldest_cached_timestamp );
+
+    LogFragmentPriorityMap::iterator map_iter = log_frag_map.lower_bound(priority_data_vec[i].oldest_cached_timestamp);
 
     // this should never happen
     if (map_iter == log_frag_map.end())
@@ -1585,10 +1590,10 @@ void RangeServer::log_cleanup() {
 
     if ((*map_iter).second.cumulative_size > prune_threshold) {
       if (priority_data_vec[i].mem_used > 0)
-	priority_data_vec[i].ag->set_compaction_bit();
+        priority_data_vec[i].ag->set_compaction_bit();
       size_t rangei = (size_t)priority_data_vec[i].user_data;
       if (!range_vec[rangei]->test_and_set_maintenance()) {
-	Global::maintenance_queue->add( new MaintenanceTaskCompaction(range_vec[rangei], false) );
+        Global::maintenance_queue->add(new MaintenanceTaskCompaction(range_vec[rangei], false));
       }
     }
   }

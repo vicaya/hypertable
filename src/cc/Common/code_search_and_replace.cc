@@ -1,23 +1,25 @@
 /**
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+#include "Common/Compat.h"
 
 #include <algorithm>
 #include <cctype>
@@ -25,13 +27,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-
-extern "C" {
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-}
 
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
@@ -45,30 +40,30 @@ using namespace std;
 
 namespace {
 
-  const char *usage_str = 
+  const char *usage_str =
   "\n" \
-  "usage: code_search_and_replace [OPTIONS] <file> [ <file> ...]\n" \
+  "usage: code_search_and_replace [OPTIONS] <file> [<file> ...]\n" \
   "\n" \
   "OPTIONS";
 
   struct lt_decreasing_length {
     bool operator()(const pair<string, string> &m1, const pair<string, string> &m2) const {
       if (m1.first == m2.first) {
-	cout << "error: multiple mappings for '" << m1.first << "'" << endl;
-	exit(1);
+        cout << "error: multiple mappings for '" << m1.first << "'" << endl;
+        exit(1);
       }
       return m1.first.length() >= m2.first.length();
     }
   };
 
   bool convert_file(string input_filename, string license_filename, vector< pair<string, string> > &exchange_strings, string &converted_contents);
-  
+
 }
 
 
 
 /**
- * 
+ *
  */
 int main(int argc, char **argv) {
   vector< pair<string, string> > exchange_strings;
@@ -104,7 +99,7 @@ int main(int argc, char **argv) {
 
     po::variables_map vm;
     store(po::command_line_parser(argc, argv).
-	  options(cmdline_options).positional(p).run(), vm);
+          options(cmdline_options).positional(p).run(), vm);
     po::notify(vm);
 
     if (vm.count("help") || vm.count("input-file") == 0) {
@@ -129,29 +124,29 @@ int main(int argc, char **argv) {
 
     for (size_t i=0; i<mapping.size(); i++) {
       if ((ptr = strstr(mapping[i].c_str(), "\\t")) == 0) {
-	cout << "error: bad mapping - " << mapping[i] << endl;
-	return 1;
+        cout << "error: bad mapping - " << mapping[i] << endl;
+        return 1;
       }
       *ptr = 0;
       ptr += 2;
-      exchange_strings.push_back( make_pair(mapping[i].c_str(), ptr) );
+      exchange_strings.push_back(make_pair(mapping[i].c_str(), ptr));
     }
 
     if (vm.count("map-file")) {
-      std::ifstream mappings_in( vm["map-file"].as< string >().c_str() );
+      std::ifstream mappings_in(vm["map-file"].as< string >().c_str());
       std::string line;
 
       while (getline(mappings_in, line)) {
-	boost::trim(line);
-	if (line != "") {
-	  char *line_ptr = (char *)line.c_str();
-	  if ((ptr = strstr(line_ptr, "\t")) == 0) {
-	    cout << "error: bad mapping - " << line << endl;
-	    return 1;
-	  }
-	  *ptr++ = 0;
-	  exchange_strings.push_back( make_pair(line_ptr, ptr) );
-	}
+        boost::trim(line);
+        if (line != "") {
+          char *line_ptr = (char *)line.c_str();
+          if ((ptr = strstr(line_ptr, "\t")) == 0) {
+            cout << "error: bad mapping - " << line << endl;
+            return 1;
+          }
+          *ptr++ = 0;
+          exchange_strings.push_back(make_pair(line_ptr, ptr));
+        }
       }
     }
 
@@ -164,17 +159,17 @@ int main(int argc, char **argv) {
       converted_contents = "";
       cout << "Converting '" << input_file[i] << "'" << endl << flush;
       if (!convert_file(input_file[i], license_name, exchange_strings, converted_contents))
-	cerr << "Problem converting '" << input_file[i] << "'" << endl;
+        cerr << "Problem converting '" << input_file[i] << "'" << endl;
       else {
-	orig_name = input_file[i];
-	backup_name = input_file[i] + ".old";
-	unlink(backup_name.c_str());
-	rename(orig_name.c_str(), backup_name.c_str());
-	{
-	  ofstream fout(input_file[i].c_str());
-	  fout << converted_contents;
-	  fout.close();
-	}
+        orig_name = input_file[i];
+        backup_name = input_file[i] + ".old";
+        unlink(backup_name.c_str());
+        rename(orig_name.c_str(), backup_name.c_str());
+        {
+          ofstream fout(input_file[i].c_str());
+          fout << converted_contents;
+          fout.close();
+        }
       }
     }
 
@@ -190,31 +185,31 @@ int main(int argc, char **argv) {
 
 namespace {
 
-  typedef struct {
+  struct ReplaceInfo {
     off_t offset;
-    const char *fromString;
-    const char *toString;
-  } ReplaceInfoT;
+    const char *from_string;
+    const char *to_string;
+  };
 
-  struct ltReplaceInfo {
-    bool operator()(const ReplaceInfoT &ri1, const ReplaceInfoT &ri2) const {
+  struct LtReplaceInfo {
+    bool operator()(const ReplaceInfo &ri1, const ReplaceInfo &ri2) const {
       return ri1.offset < ri2.offset;
     }
   };
 
   bool convert_file(string input_filename, string license_filename, vector< pair<string, string> > &exchange_strings, string &converted_contents) {
-    off_t lastOffset, flen, license_len;
+    off_t last_offset, flen, license_len;
     char *fcontents = FileUtils::file_to_buffer(input_filename.c_str(), &flen);
     char *ptr = fcontents;
-    char *codeStart, *base;
-    ReplaceInfoT rinfo;
-    vector<ReplaceInfoT> riVec;
+    char *code_start, *base;
+    ReplaceInfo rinfo;
+    vector<ReplaceInfo> rivec;
 
     if (fcontents == 0)
       return false;
 
     if (license_filename != "") {
-      
+
       converted_contents = FileUtils::file_to_buffer(license_filename.c_str(), &license_len);
 
       boost::trim(converted_contents);
@@ -222,57 +217,57 @@ namespace {
 
       while (true) {
 
-	while (*ptr && isspace(*ptr))
-	  ptr++;
+        while (*ptr && isspace(*ptr))
+          ptr++;
 
-	if (strncmp(ptr, "/*", 2)) {
-	  cerr << "Comment header not found in '" << input_filename << "'" << endl;
-	  return false;
-	}
+        if (strncmp(ptr, "/*", 2)) {
+          cerr << "Comment header not found in '" << input_filename << "'" << endl;
+          return false;
+        }
 
-	if ((ptr = strstr(ptr, "*/")) == 0) {
-	  cerr << "Unable to find end of comment header in '" << input_filename << "'" << endl;
-	  return false;
-	}
+        if ((ptr = strstr(ptr, "*/")) == 0) {
+          cerr << "Unable to find end of comment header in '" << input_filename << "'" << endl;
+          return false;
+        }
 
-	ptr += 2;
+        ptr += 2;
 
-	while (*ptr && isspace(*ptr))
-	  ptr++;
+        while (*ptr && isspace(*ptr))
+          ptr++;
 
-	if (strncmp(ptr, "/*", 2))
-	  break;
+        if (strncmp(ptr, "/*", 2))
+          break;
       }
 
     }
 
-    codeStart = ptr;
+    code_start = ptr;
 
     for (size_t i=0; i<exchange_strings.size(); i++) {
-      base = codeStart;
+      base = code_start;
       while ((ptr = strstr(base, exchange_strings[i].first.c_str())) != 0) {
-	rinfo.offset = ptr - fcontents;
-	rinfo.fromString = exchange_strings[i].first.c_str();
-	rinfo.toString = exchange_strings[i].second.c_str();
-	riVec.push_back(rinfo);
-	base = ptr + strlen(exchange_strings[i].first.c_str());
+        rinfo.offset = ptr - fcontents;
+        rinfo.from_string = exchange_strings[i].first.c_str();
+        rinfo.to_string = exchange_strings[i].second.c_str();
+        rivec.push_back(rinfo);
+        base = ptr + strlen(exchange_strings[i].first.c_str());
       }
     }
 
-    if (!riVec.empty()) {
-      ltReplaceInfo ltObj;      
-      sort(riVec.begin(), riVec.end(), ltObj);
+    if (!rivec.empty()) {
+      LtReplaceInfo ascending;
+      sort(rivec.begin(), rivec.end(), ascending);
     }
 
-    lastOffset = codeStart - fcontents;
-    for (size_t i=0; i<riVec.size(); i++) {
-      cerr << "Replace at offset " << riVec[i].offset << endl << flush;
-      converted_contents += string(fcontents + lastOffset, riVec[i].offset-lastOffset);
-      converted_contents += riVec[i].toString;
-      lastOffset = riVec[i].offset + strlen(riVec[i].fromString);
+    last_offset = code_start - fcontents;
+    for (size_t i=0; i<rivec.size(); i++) {
+      cerr << "Replace at offset " << rivec[i].offset << endl << flush;
+      converted_contents += string(fcontents + last_offset, rivec[i].offset-last_offset);
+      converted_contents += rivec[i].to_string;
+      last_offset = rivec[i].offset + strlen(rivec[i].from_string);
     }
 
-    converted_contents += string(fcontents + lastOffset, flen-lastOffset);
+    converted_contents += string(fcontents + last_offset, flen-last_offset);
 
     return true;
   }

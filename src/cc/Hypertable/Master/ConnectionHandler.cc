@@ -1,27 +1,28 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include "Common/Error.h"
-#include "Common/Exception.h"
 #include "Common/StringExt.h"
+#include "Common/Serialization.h"
 
 #include "AsyncComm/ApplicationQueue.h"
 
@@ -36,66 +37,62 @@
 #include "RequestHandlerReportSplit.h"
 
 using namespace Hypertable;
+using namespace Serialization;
+using namespace Error;
 
 /**
  *
  */
-void ConnectionHandler::handle(EventPtr &eventPtr) {
+void ConnectionHandler::handle(EventPtr &event) {
   short command = -1;
 
-  if (eventPtr->type == Event::MESSAGE) {
-    ApplicationHandler *requestHandler = 0;
+  if (event->type == Event::MESSAGE) {
+    ApplicationHandler *hp = 0;
+    const uint8_t *msg = event->message;
+    size_t remain = event->message_len;
 
-    //eventPtr->display()
+    //event->display()
 
     try {
-      if (eventPtr->messageLen < sizeof(int16_t)) {
-	std::string message = "Truncated Request";
-	throw new ProtocolException(message);
-      }
-      memcpy(&command, eventPtr->message, sizeof(int16_t));
+      command = decode_i16(&msg, &remain);
 
       // sanity check command code
-      if (command < 0 || command >= MasterProtocol::COMMAND_MAX) {
-	std::string message = (std::string)"Invalid command (" + command + ")";
-	throw ProtocolException(message);
-      }
+      if (command < 0 || command >= MasterProtocol::COMMAND_MAX)
+        HT_THROWF(PROTOCOL_ERROR, "Invalid command (%d)", command);
 
       switch (command) {
       case MasterProtocol::COMMAND_CREATE_TABLE:
-	requestHandler = new RequestHandlerCreateTable(m_comm, m_master_ptr.get(), eventPtr);
-	break;
+        hp = new RequestHandlerCreateTable(m_comm, m_master_ptr.get(), event);
+        break;
       case MasterProtocol::COMMAND_DROP_TABLE:
-	requestHandler = new RequestHandlerDropTable(m_comm, m_master_ptr.get(), eventPtr);
-	break;
+        hp = new RequestHandlerDropTable(m_comm, m_master_ptr.get(), event);
+        break;
       case MasterProtocol::COMMAND_GET_SCHEMA:
-	requestHandler = new RequestHandlerGetSchema(m_comm, m_master_ptr.get(), eventPtr);
-	break;
+        hp = new RequestHandlerGetSchema(m_comm, m_master_ptr.get(), event);
+        break;
       case MasterProtocol::COMMAND_STATUS:
-	requestHandler = new RequestHandlerStatus(m_comm, m_master_ptr.get(), eventPtr);
-	break;
+        hp = new RequestHandlerStatus(m_comm, m_master_ptr.get(), event);
+        break;
       case MasterProtocol::COMMAND_REGISTER_SERVER:
-	requestHandler = new RequestHandlerRegisterServer(m_comm, m_master_ptr.get(), eventPtr);
-	break;
+        hp = new RequestHandlerRegisterServer(m_comm, m_master_ptr.get(), event);
+        break;
       case MasterProtocol::COMMAND_REPORT_SPLIT:
-	requestHandler = new RequestHandlerReportSplit(m_comm, m_master_ptr.get(), eventPtr);
-	break;
+        hp = new RequestHandlerReportSplit(m_comm, m_master_ptr.get(), event);
+        break;
       default:
-	std::string message = (string)"Command code " + command + " not implemented";
-	throw ProtocolException(message);
+        HT_THROWF(PROTOCOL_ERROR, "Unimplemented command (%d)", command);
       }
-      m_app_queue_ptr->add( requestHandler );
+      m_app_queue_ptr->add(hp);
     }
-    catch (ProtocolException &e) {
-      ResponseCallback cb(m_comm, eventPtr);
-      std::string errMsg = e.what();
-      HT_ERRORF("Protocol error '%s'", e.what());
-      cb.error(Error::PROTOCOL_ERROR, errMsg);
+    catch (Exception &e) {
+      ResponseCallback cb(m_comm, event);
+      HT_ERROR_OUT << e << HT_END;
+      std::string errmsg = format("%s - %s", e.what(), get_text(e.code()));
+      cb.error(Error::PROTOCOL_ERROR, errmsg);
     }
   }
   else {
-    HT_INFOF("%s", eventPtr->toString().c_str());
+    HT_INFOF("%s", event->to_str().c_str());
   }
 
 }
-

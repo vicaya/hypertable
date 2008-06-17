@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <fstream>
 #include <iostream>
 #include <cerrno>
@@ -73,7 +74,7 @@ LoadDataSource::LoadDataSource(String fname, String header_fname, std::vector<St
       return;
   }
 
-  m_go_mask = new bool [ 257 ];
+  m_go_mask = new bool [257];
   memset(m_go_mask, true, 257*sizeof(bool));
 
   base = (char *)line.c_str();
@@ -113,7 +114,7 @@ LoadDataSource::LoadDataSource(String fname, String header_fname, std::vector<St
       ptr = column_name.c_str();
       key_comps.width = atoi(ptr);
       while (isdigit(*ptr))
-	ptr++;
+        ptr++;
       column_name = String(ptr);
     }
     else if (boost::algorithm::starts_with(key_columns[i], "%-")) {
@@ -122,7 +123,7 @@ LoadDataSource::LoadDataSource(String fname, String header_fname, std::vector<St
       ptr = column_name.c_str();
       key_comps.width = atoi(ptr);
       while (isdigit(*ptr))
-	ptr++;
+        ptr++;
       column_name = String(ptr);
     }
     else if (boost::algorithm::starts_with(key_columns[i], "%")) {
@@ -130,7 +131,7 @@ LoadDataSource::LoadDataSource(String fname, String header_fname, std::vector<St
       ptr = column_name.c_str();
       key_comps.width = atoi(ptr);
       while (isdigit(*ptr))
-	ptr++;
+        ptr++;
       column_name = String(ptr);
     }
     else
@@ -138,10 +139,10 @@ LoadDataSource::LoadDataSource(String fname, String header_fname, std::vector<St
 
     for (j=0; j<m_column_names.size(); j++) {
       if (m_column_names[j] == column_name) {
-	key_comps.index = j;
-	m_key_comps.push_back(key_comps);
-	m_go_mask[j] = false;
-	break;
+        key_comps.index = j;
+        m_key_comps.push_back(key_comps);
+        m_go_mask[j] = false;
+        break;
       }
     }
     if (j == m_column_names.size()) {
@@ -159,11 +160,11 @@ LoadDataSource::LoadDataSource(String fname, String header_fname, std::vector<St
   if (m_column_names.size() == 3 || m_column_names.size() == 4) {
     size_t i=m_column_names.size()-3;
     if (m_column_names[i] == "rowkey" &&
-	m_column_names[i+1] == "columnkey" &&
-	m_column_names[i+2] == "value") {
+        m_column_names[i+1] == "columnkey" &&
+        m_column_names[i+2] == "value") {
       if (i == 0 || m_column_names[0] == "timestamp") {
-	m_hyperformat = true;
-	m_leading_timestamps = (i==1);
+        m_hyperformat = true;
+        m_leading_timestamps = (i==1);
       }
     }
   }
@@ -172,7 +173,7 @@ LoadDataSource::LoadDataSource(String fname, String header_fname, std::vector<St
   m_limit = 0;
 
   if (!m_hyperformat && m_column_names.size() < 2)
-    throw Exception(Error::HQL_BAD_LOAD_FILE_FORMAT, "No columns specified in load file");
+    HT_THROW(Error::HQL_BAD_LOAD_FILE_FORMAT, "No columns specified in load file");
 
   m_cur_line = 1;
 
@@ -181,7 +182,7 @@ LoadDataSource::LoadDataSource(String fname, String header_fname, std::vector<St
 
 
 /**
- * 
+ *
  */
 bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp) {
   string line;
@@ -190,7 +191,7 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
 
   if (type_flagp)
     *type_flagp = FLAG_INSERT;
-  
+
   if (consumedp)
     *consumedp = 0;
 
@@ -200,7 +201,7 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
       m_cur_line++;
 
       if (consumedp && !m_zipped)
-	*consumedp += line.length() + 1;
+        *consumedp += line.length() + 1;
 
       m_line_buffer.clear();
 
@@ -212,27 +213,27 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
        *  Get timestamp
        */
       if (m_leading_timestamps) {
-	if ((ptr = strchr(base, '\t')) == 0) {
-	  cerr << "error: too few fields on line " << m_cur_line << endl;
-	  continue;
-	}
-	*ptr++ = 0;
-	*timestampp = strtoll(base, &endptr, 10);
-	if (*endptr != 0) {
-	  cerr << "error: invalid timestamp (" << base << ") on line " << m_cur_line << endl;
-	  continue;
-	}
-	base = ptr;
+        if ((ptr = strchr(base, '\t')) == 0) {
+          cerr << "error: too few fields on line " << m_cur_line << endl;
+          continue;
+        }
+        *ptr++ = 0;
+        *timestampp = strtoll(base, &endptr, 10);
+        if (*endptr != 0) {
+          cerr << "error: invalid timestamp (" << base << ") on line " << m_cur_line << endl;
+          continue;
+        }
+        base = ptr;
       }
       else
-	*timestampp = 0;
+        *timestampp = 0;
 
       /**
        * Get row key
        */
       if ((ptr = strchr(base, '\t')) == 0) {
-	cerr << "error: too few fields on line " << m_cur_line << endl;
-	continue;
+        cerr << "error: too few fields on line " << m_cur_line << endl;
+        continue;
       }
       keyp->row = base;
       keyp->row_len = ptr - base;
@@ -243,26 +244,26 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
        * Get column family and qualifier
        */
       if ((ptr = strchr(base, '\t')) == 0) {
-	cerr << "error: too few fields on line " << m_cur_line << endl;
-	continue;
+        cerr << "error: too few fields on line " << m_cur_line << endl;
+        continue;
       }
       *ptr = 0;
 
       if ((colon = strchr(base, ':')) != 0) {
-	*colon++ = 0;
-	keyp->column_family = base;
-	if (colon < ptr) {
-	  keyp->column_qualifier = colon;
-	  keyp->column_qualifier_len = ptr - colon;
-	}
-	else {
-	  keyp->column_qualifier = 0;
-	  keyp->column_qualifier_len = 0;
-	}
+        *colon++ = 0;
+        keyp->column_family = base;
+        if (colon < ptr) {
+          keyp->column_qualifier = colon;
+          keyp->column_qualifier_len = ptr - colon;
+        }
+        else {
+          keyp->column_qualifier = 0;
+          keyp->column_qualifier_len = 0;
+        }
       }
       else {
-	keyp->column_qualifier = 0;
-	keyp->column_qualifier_len = 0;
+        keyp->column_qualifier = 0;
+        keyp->column_qualifier_len = 0;
       }
       keyp->column_family = base;
       ptr++;
@@ -274,9 +275,9 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
       *value_lenp = strlen(ptr);
 
       if (m_zipped && consumedp) {
-	uint64_t new_offset = m_source.seek(0, BOOST_IOS::cur);
-	*consumedp = new_offset - m_offset;
-	m_offset = new_offset;
+        uint64_t new_offset = m_source.seek(0, BOOST_IOS::cur);
+        *consumedp = new_offset - m_offset;
+        m_offset = new_offset;
       }
 
       return true;
@@ -294,23 +295,23 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
       *timestampp = m_timestamp;
       // clear these, just in case they were set by the client
       if (keyp->column_qualifier || keyp->column_qualifier_len) {
-	keyp->column_qualifier = 0;
-	keyp->column_qualifier_len = 0;
+        keyp->column_qualifier = 0;
+        keyp->column_qualifier_len = 0;
       }
       if (m_values[m_next_value] == 0) {
-	*valuep = 0;
-	*value_lenp = 0;
+        *valuep = 0;
+        *value_lenp = 0;
       }
       else {
-	*valuep = (uint8_t *)m_values[m_next_value];
-	*value_lenp = strlen(m_values[m_next_value]);
+        *valuep = (uint8_t *)m_values[m_next_value];
+        *value_lenp = strlen(m_values[m_next_value]);
       }
       m_next_value++;
 
       if (m_zipped && consumedp) {
-	uint64_t new_offset = m_source.seek(0, BOOST_IOS::cur);
-	*consumedp = new_offset - m_offset;
-	m_offset = new_offset;
+        uint64_t new_offset = m_source.seek(0, BOOST_IOS::cur);
+        *consumedp = new_offset - m_offset;
+        m_offset = new_offset;
       }
 
       return true;
@@ -321,7 +322,7 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
       index = 0;
 
       if (consumedp && !m_zipped)
-	*consumedp += line.length() + 1;
+        *consumedp += line.length() + 1;
 
       m_line_buffer.clear();
       m_line_buffer.add(line.c_str(), strlen(line.c_str())+1);
@@ -330,23 +331,23 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
       base = (char *)m_line_buffer.base;
 
       while ((ptr = strchr(base, '\t')) != 0) {
-	*ptr++ = 0;
-	if (strlen(base) == 0 || !strcmp(base, "NULL") || !strcmp(base, "\\N")) {
-	  if (!m_go_mask[index]) {
-	    cout << "WARNING: Required key or timestamp field not found on line " << m_cur_line << ", skipping ..." << endl << flush;
-	    continue;
-	  }
-	  m_values.push_back(0);
-	}
-	else
-	  m_values.push_back(base);
-	base = ptr;
-	index++;
+        *ptr++ = 0;
+        if (strlen(base) == 0 || !strcmp(base, "NULL") || !strcmp(base, "\\N")) {
+          if (!m_go_mask[index]) {
+            cout << "WARNING: Required key or timestamp field not found on line " << m_cur_line << ", skipping ..." << endl << flush;
+            continue;
+          }
+          m_values.push_back(0);
+        }
+        else
+          m_values.push_back(base);
+        base = ptr;
+        index++;
       }
       if (strlen(base) == 0 || !strcmp(base, "NULL") || !strcmp(base, "\\N"))
-	m_values.push_back(0);
+        m_values.push_back(0);
       else
-	m_values.push_back(base);
+        m_values.push_back(base);
       m_limit = std::min(m_values.size(), m_column_names.size());
 
       /**
@@ -354,66 +355,66 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
        */
       m_row_key_buffer.clear();
       if (!add_row_component(0))
-	continue;
+        continue;
       size_t i;
       for (i=1; i<m_key_comps.size(); i++) {
-	m_row_key_buffer.add( " ", 1 );
-	if (!add_row_component(i))
-	  break;
+        m_row_key_buffer.add(" ", 1);
+        if (!add_row_component(i))
+          break;
       }
       if (i<m_key_comps.size())
-	continue;
+        continue;
       m_row_key_buffer.ensure(1);
       *m_row_key_buffer.ptr = 0;
 
       if (m_timestamp_index >= 0) {
-	struct tm tm;
-	time_t t;
+        struct tm tm;
+        time_t t;
 
-	if (m_values.size() <= (size_t)m_timestamp_index) {
-	  cerr << "warn: timestamp field not found on line " << m_cur_line << ", skipping..." << endl;
-	  continue;
-	}	
+        if (m_values.size() <= (size_t)m_timestamp_index) {
+          cerr << "warn: timestamp field not found on line " << m_cur_line << ", skipping..." << endl;
+          continue;
+        }
 
-	if (!parse_date_format(m_values[m_timestamp_index], &tm)) {
-	  cerr << "warn: invalid timestamp format on line " << m_cur_line << ", skipping..." << endl;
-	  continue;
-	}
+        if (!parse_date_format(m_values[m_timestamp_index], &tm)) {
+          cerr << "warn: invalid timestamp format on line " << m_cur_line << ", skipping..." << endl;
+          continue;
+        }
 
-	if ((t = timegm(&tm)) == (time_t)-1) {
-	  cerr << "warn: invalid timestamp format on line " << m_cur_line << ", skipping..." << endl;
-	  continue;
-	}
+        if ((t = timegm(&tm)) == (time_t)-1) {
+          cerr << "warn: invalid timestamp format on line " << m_cur_line << ", skipping..." << endl;
+          continue;
+        }
 
-	m_timestamp = (uint64_t)t * 1000000000LL;
+        m_timestamp = (uint64_t)t * 1000000000LL;
       }
 
       m_next_value = 0;
       while (!m_go_mask[m_next_value])
-	m_next_value++;
+        m_next_value++;
 
       keyp->row = m_row_key_buffer.base;
       keyp->row_len = m_row_key_buffer.fill();
       keyp->column_family = m_column_names[m_next_value].c_str();
       *timestampp = m_timestamp;
       if (keyp->column_qualifier || keyp->column_qualifier_len) {
-	keyp->column_qualifier = 0;
-	keyp->column_qualifier_len = 0;
+        keyp->column_qualifier = 0;
+        keyp->column_qualifier_len = 0;
       }
       if (m_values[m_next_value] == 0) {
-	*valuep = 0;
-	*value_lenp = 0;
+        *valuep = 0;
+        *value_lenp = 0;
       }
       else {
-	*valuep = (uint8_t *)m_values[m_next_value];
-	*value_lenp = strlen(m_values[m_next_value]);
+        *valuep = (uint8_t *)m_values[m_next_value];
+        *value_lenp = strlen(m_values[m_next_value]);
       }
       m_next_value++;
 
       if (m_zipped && consumedp) {
-	uint64_t new_offset = m_source.seek(0, BOOST_IOS::cur);
-	*consumedp = new_offset - m_offset;
-	m_offset = new_offset;
+        uint64_t new_offset = m_source.seek(0, BOOST_IOS::cur);
+        *consumedp = new_offset - m_offset;
+        m_offset = new_offset;
       }
 
       return true;
@@ -437,23 +438,23 @@ bool LoadDataSource::add_row_component(int index) {
 
   if ((size_t)m_key_comps[index].width > value_len) {
     size_t padding = m_key_comps[index].width - value_len;
-    m_row_key_buffer.ensure( m_key_comps[index].width );
+    m_row_key_buffer.ensure(m_key_comps[index].width);
     if (m_key_comps[index].left_justify) {
-      m_row_key_buffer.add( value, value_len );
+      m_row_key_buffer.add(value, value_len);
       memset(m_row_key_buffer.ptr, m_key_comps[index].pad_character, padding);
       m_row_key_buffer.ptr += padding;
     }
     else {
       memset(m_row_key_buffer.ptr, m_key_comps[index].pad_character, padding);
       m_row_key_buffer.ptr += padding;
-      m_row_key_buffer.add( value, value_len );
+      m_row_key_buffer.add(value, value_len);
     }
   }
   else
-    m_row_key_buffer.add( value, value_len );
+    m_row_key_buffer.add(value, value_len);
 
   return true;
-  
+
 }
 
 
@@ -480,7 +481,7 @@ bool LoadDataSource::parse_date_format(const char *str, struct tm *tm) {
   tm->tm_mon = ival - 1;
 
   ptr = end_ptr + 1;
-  
+
   /**
    * day
    */

@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -45,12 +45,12 @@ namespace Hypertable {
    */
   class ReferenceCount : noncopyable {
   public:
-    ReferenceCount() { atomic_set(&refCount, 0); }
+    ReferenceCount() { atomic_set(&refcount, 0); }
     virtual ~ReferenceCount() { return; }
     friend void intrusive_ptr_add_ref(ReferenceCount *rc);
     friend void intrusive_ptr_release(ReferenceCount *rc);
   private:
-    atomic_t refCount;
+    atomic_t refcount;
   };
 
   /**
@@ -59,7 +59,7 @@ namespace Hypertable {
    * @param rc pointer to a ReferenceCount object
    */
   inline void intrusive_ptr_add_ref(ReferenceCount *rc) {
-    atomic_inc_return(&rc->refCount);
+    atomic_inc_return(&rc->refcount);
   }
 
   /**
@@ -69,7 +69,7 @@ namespace Hypertable {
    * @param rc pointer to a ReferenceCount object
    */
   inline void intrusive_ptr_release(ReferenceCount *rc) {
-    if (atomic_sub_and_test(1, &rc->refCount))
+    if (atomic_sub_and_test(1, &rc->refcount))
       delete rc;
   }
 

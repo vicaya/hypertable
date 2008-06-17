@@ -49,7 +49,7 @@ private: // types
       page_end = buf + sz - sizeof(Page);
     }
 
-    size_t 
+    size_t
     remain() { return page_end - alloc_end; }
 
     char *
@@ -76,7 +76,7 @@ private: // helpers
 
     assert(page);
     new (page) Page(sz);
-    
+
     if (prepend)
       page->next_page = m_cur_page;
     else if (m_cur_page) {

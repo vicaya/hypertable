@@ -21,9 +21,9 @@ TODO:
 DONE:
 - Add destroy_scanner method to RangeServer
 - clientTimestamp value does not appear to be used in RangeServer::update
-- Fix timestamp issue.  In RangeServer::update the updateTimestamp is obtained
+- Fix timestamp issue.  In RangeServer::update the update_ts is obtained
   from the commit log, but the splitStartTime is obtain from the updates and
-  they are compared against one another (updateTimestamp > splitStartTime)
+  they are compared against one another (update_ts > splitStartTime)
 - Range constructor should throw exceptions
 - Put root METADATA tablet Files metadata in hyperspace ( /hypertable/root )
 - Add compression to commit log

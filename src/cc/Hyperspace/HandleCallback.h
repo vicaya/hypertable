@@ -30,7 +30,7 @@ namespace Hyperspace {
 
   /**
    * The following event masks are ORed together and
-   * passed in as the eventMask argument to Open()
+   * passed in as the event_mask argument to Open()
    * to indicate which events should be reported to
    * the application for the opened handle.
    */
@@ -66,45 +66,45 @@ namespace Hyperspace {
      *
      * @param name the name of the attribute that was set
      */
-    virtual void attr_set(std::string name) { return; }
+    virtual void attr_set(const std::string &name) { return; }
 
     /** Invoked when an attribute gets deleted from the file associated
      * with the registered handle
      *
      * @param name the name of the attribute that was deleted
      */
-    virtual void attr_del(std::string name) { return; }
+    virtual void attr_del(const std::string &name) { return; }
 
     /** Invoked when a child node gets added to the directory associated
      * with the registered handle
      *
      * @param name the name of the attribute that was deleted
-     */    
-    virtual void child_node_added(std::string name) { return; }
+     */
+    virtual void child_node_added(const std::string &name) { return; }
 
     /** Invoked when an attribute gets deleted from the file associated
      * with the registered handle
      *
      * @param name the name of the attribute that was deleted
-     */    
-    virtual void child_node_removed(std::string name) { return; }
+     */
+    virtual void child_node_removed(const std::string &name) { return; }
 
     /** Invoked when a lock gets acquired on the file associated with
      * the registered handle
      *
      * @param mode the mode in which the lock was acquired
-     */    
+     */
     virtual void lock_acquired(uint32_t mode) { return; }
 
     /** Invoked when a lock gets released on the file associated with
      * the registered handle
-     */    
+     */
     virtual void lock_released() { return; }
 
     /** Returns the event mask of this callback object
      *
      * @return the event mask
-     */    
+     */
     int get_event_mask() { return m_event_mask; }
 
   protected:

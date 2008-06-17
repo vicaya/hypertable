@@ -1,24 +1,25 @@
 /**
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cstdlib>
 #include <iostream>
 
@@ -63,15 +64,15 @@ namespace {
   };
 
   void display_log(DfsBroker::Client *dfs_client, String prefix, CommitLogReader *log_reader);
-  
+
 }
 
 
 /**
- * 
+ *
  */
 int main(int argc, char **argv) {
-  string configFile = "";
+  string cfgfile = "";
   string log_dir;
   PropertiesPtr props_ptr;
   bool verbose = false;
@@ -85,7 +86,7 @@ int main(int argc, char **argv) {
 
   for (int i=1; i<argc; i++) {
     if (!strncmp(argv[i], "--config=", 9))
-      configFile = &argv[i][9];
+      cfgfile = &argv[i][9];
     else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
       verbose = true;
     else if (log_dir == "")
@@ -96,11 +97,11 @@ int main(int argc, char **argv) {
 
   if (log_dir == "")
       Usage::dump_and_exit(usage);
-  
-  if (configFile == "")
-    configFile = System::installDir + "/conf/hypertable.cfg";
 
-  props_ptr = new Properties(configFile);
+  if (cfgfile == "")
+    cfgfile = System::install_dir + "/conf/hypertable.cfg";
+
+  props_ptr = new Properties(cfgfile);
 
   comm_ptr = new Comm();
   conn_manager_ptr = new ConnectionManager(comm_ptr.get());
@@ -109,11 +110,11 @@ int main(int argc, char **argv) {
    * Check for and connect to commit log DFS broker
    */
   {
-    const char *logHost = props_ptr->get("Hypertable.RangeServer.CommitLog.DfsBroker.Host", 0);
-    uint16_t logPort    = props_ptr->get_int("Hypertable.RangeServer.CommitLog.DfsBroker.Port", 0);
+    const char *loghost = props_ptr->get("Hypertable.RangeServer.CommitLog.DfsBroker.Host", 0);
+    uint16_t logport    = props_ptr->get_int("Hypertable.RangeServer.CommitLog.DfsBroker.Port", 0);
     struct sockaddr_in addr;
-    if (logHost != 0) {
-      InetAddr::initialize(&addr, logHost, logPort);
+    if (loghost != 0) {
+      InetAddr::initialize(&addr, loghost, logport);
       dfs_client = new DfsBroker::Client(conn_manager_ptr, addr, 600);
     }
     else {
@@ -145,28 +146,28 @@ namespace {
     while (log_reader->next_raw_block(&binfo, &header)) {
 
       if (header.check_magic(CommitLog::MAGIC_DATA)) {
-	printf("%sDATA frag=\"%s\" start=%09llu end=%09llu ", 
-	       prefix.c_str(), binfo.file_fragment, 
-	       (long long unsigned int)binfo.start_offset,
-	       (long long unsigned int)binfo.end_offset);
+        printf("%sDATA frag=\"%s\" start=%09llu end=%09llu ",
+               prefix.c_str(), binfo.file_fragment,
+               (long long unsigned int)binfo.start_offset,
+               (long long unsigned int)binfo.end_offset);
 
-	if (binfo.error == Error::OK) {
-	  printf("ztype=\"%s\" zlen=%u len=%u\n",
-		 BlockCompressionCodec::get_compressor_name(header.get_compression_type()),
-		 header.get_data_zlength(), header.get_data_length());
-	}
-	else
-	  printf("%serror = \"%s\"\n", prefix.c_str(), Error::get_text(binfo.error));
+        if (binfo.error == Error::OK) {
+          printf("ztype=\"%s\" zlen=%u len=%u\n",
+                 BlockCompressionCodec::get_compressor_name(header.get_compression_type()),
+                 header.get_data_zlength(), header.get_data_length());
+        }
+        else
+          printf("%serror = \"%s\"\n", prefix.c_str(), Error::get_text(binfo.error));
       }
       else if (header.check_magic(CommitLog::MAGIC_LINK)) {
-	const char *log_dir = (const char *)binfo.block_ptr + header.length();
-	printf("%sLINK -> %s\n", prefix.c_str(), log_dir);
-	CommitLogReader *tmp_reader = new CommitLogReader(dfs_client, log_dir);
-	display_log(dfs_client, prefix+"  ", tmp_reader);
-	delete tmp_reader;
+        const char *log_dir = (const char *)binfo.block_ptr + header.length();
+        printf("%sLINK -> %s\n", prefix.c_str(), log_dir);
+        CommitLogReader *tmp_reader = new CommitLogReader(dfs_client, log_dir);
+        display_log(dfs_client, prefix+"  ", tmp_reader);
+        delete tmp_reader;
       }
       else {
-	printf("Invalid block header!!!\n");
+        printf("Invalid block header!!!\n");
       }
     }
   }

@@ -23,7 +23,7 @@
 #include "Common/compat-c.h"
 
 #define BMZ_VER_NUM             0x0110
-#define BMZ_VER_MAJOR           (BMZ_VER_NUM >> 12) 
+#define BMZ_VER_MAJOR           (BMZ_VER_NUM >> 12)
 #define BMZ_VER_MINOR           ((BMZ_VER_NUM >> 8) & 0xf)
 #define BMZ_VER_RELEASE         ((BMZ_VER_NUM >> 4) & 0xf)
 #define BMZ_VER_PATCH           (BMZ_VER_NUM & 0xf)
@@ -50,11 +50,11 @@ bmz_init();
  * @param out - output buffer for compressed data
  * @param out_len_p - pointer to the length of output, which specifies the size
  *                    of the output buffer as input and is set to the length of
- *                    compressed data on return 
+ *                    compressed data on return
  * @param offset - starting offset of fingerprints, use 0 if you have to ask
  * @param fp_len - fingerprint length, use 50 if you have to ask
  * @param flags - compression options. See BMZ_F_* defines.
- * @param work_mem - pointer to work memory buffer, cf. bmz_pack_worklen 
+ * @param work_mem - pointer to work memory buffer, cf. bmz_pack_worklen
  * @return error code
  */
 HT_EXTERN(int)
@@ -86,7 +86,7 @@ bmz_pack_buflen(size_t in_len);
 
 /** Return size of work memory for bmz compression.
  *
- * So we don't have to allocate memory per invocation 
+ * So we don't have to allocate memory per invocation
  * when the input buffer size is fixed.
  *
  * @param in_len - input buffer length in bytes
@@ -99,12 +99,12 @@ bmz_pack_worklen(size_t in_len, size_t fp_len);
 /** Return size of work memory for bmz decompression
  *
  * @param out_len - work memory length in bytes
- * @return length in bytes 
+ * @return length in bytes
  */
 HT_EXTERN(size_t)
 bmz_unpack_worklen(size_t out_len);
 
-/** Set the verbosity of library for testing and debugging 
+/** Set the verbosity of library for testing and debugging
  *
  * @param verbosity - 0, 1, 2
  * @return old verbosity

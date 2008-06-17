@@ -1,24 +1,25 @@
 /**
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cstring>
 #include <iostream>
 #include <vector>
@@ -85,25 +86,25 @@ namespace {
     "This is a command line interface to the DFS broker.",
     (const char *)0
   };
-  
-  
+
+
   /**
    */
   class ConnectionHandler : public DispatchHandler {
   public:
 
     ConnectionHandler() : m_notified(false), m_connected(false) { return; }
-  
+
     virtual void handle(EventPtr &event_ptr) {
       boost::mutex::scoped_lock lock(m_mutex);
       m_notified = true;
       if (event_ptr->type == Event::CONNECTION_ESTABLISHED)
-	m_connected = true;
+        m_connected = true;
       else if (event_ptr->type == Event::ERROR) {
-	HT_ERRORF("%s", event_ptr->toString().c_str());
+        HT_ERRORF("%s", event_ptr->to_str().c_str());
       }
       else if (event_ptr->type == Event::MESSAGE) {
-	HT_ERRORF("%s", event_ptr->toString().c_str());	
+        HT_ERRORF("%s", event_ptr->to_str().c_str());
       }
       m_cond.notify_one();
     }
@@ -111,7 +112,7 @@ namespace {
     bool wait_for_notification() {
       boost::mutex::scoped_lock lock(m_mutex);
       if (m_notified)
-	return m_connected;
+        return m_connected;
       m_cond.wait(lock);
       return m_connected;
     }
@@ -151,7 +152,7 @@ int main(int argc, char **argv) {
     else if (!strcmp(argv[i], "--eval")) {
       i++;
       if (i == argc)
-	Usage::dump_and_exit(usage);
+        Usage::dump_and_exit(usage);
       eval = argv[i];
     }
     else
@@ -159,9 +160,9 @@ int main(int argc, char **argv) {
   }
 
   if (config_file == "")
-    config_file = System::installDir + "/conf/hypertable.cfg";
+    config_file = System::install_dir + "/conf/hypertable.cfg";
 
-  props_ptr = new Properties( config_file );
+  props_ptr = new Properties(config_file);
 
   comm = new Comm();
 
@@ -194,14 +195,14 @@ int main(int argc, char **argv) {
     client = new DfsBroker::Client(comm, addr, 15);
   }
 
-  commands.push_back( new CommandCopyFromLocal(client) );
-  commands.push_back( new CommandCopyToLocal(client) );
-  commands.push_back( new CommandLength(client) );
-  commands.push_back( new CommandMkdirs(client) );
-  commands.push_back( new CommandRemove(client) );
-  commands.push_back( new CommandRmdir(client) );
-  commands.push_back( new CommandShutdown(client) );
-  commands.push_back( new CommandExists(client) );
+  commands.push_back(new CommandCopyFromLocal(client));
+  commands.push_back(new CommandCopyToLocal(client));
+  commands.push_back(new CommandLength(client));
+  commands.push_back(new CommandMkdirs(client));
+  commands.push_back(new CommandRemove(client));
+  commands.push_back(new CommandRmdir(client));
+  commands.push_back(new CommandShutdown(client));
+  commands.push_back(new CommandExists(client));
 
   try {
 
@@ -210,24 +211,24 @@ int main(int argc, char **argv) {
      */
     if (eval != 0) {
       const char *str;
-      std::string commandStr;
+      std::string cmd_str;
       str = strtok(eval, ";");
       while (str) {
-	commandStr = str;
-	boost::trim(commandStr);
-	for (i=0; i<commands.size(); i++) {
-	  if (commands[i]->matches(commandStr.c_str())) {
-	    commands[i]->parse_command_line(commandStr.c_str());
-	    if (commands[i]->run() != Error::OK)
-	      return 1;
-	    break;
-	  }
-	}
-	if (i == commands.size()) {
-	  HT_ERRORF("Unrecognized command : %s", commandStr.c_str());
-	  return 1;
-	}
-	str = strtok(0, ";");      
+        cmd_str = str;
+        boost::trim(cmd_str);
+        for (i=0; i<commands.size(); i++) {
+          if (commands[i]->matches(cmd_str.c_str())) {
+            commands[i]->parse_command_line(cmd_str.c_str());
+            if (commands[i]->run() != Error::OK)
+              return 1;
+            break;
+          }
+        }
+        if (i == commands.size()) {
+          HT_ERRORF("Unrecognized command : %s", cmd_str.c_str());
+          return 1;
+        }
+        str = strtok(0, ";");
       }
       return 0;
     }
@@ -240,28 +241,28 @@ int main(int argc, char **argv) {
     while ((line = rl_gets()) != 0) {
 
       if (*line == 0)
-	continue;
+        continue;
 
       for (i=0; i<commands.size(); i++) {
-	if (commands[i]->matches(line)) {
-	  commands[i]->parse_command_line(line);
-	  commands[i]->run();
-	  break;
-	}
+        if (commands[i]->matches(line)) {
+          commands[i]->parse_command_line(line);
+          commands[i]->run();
+          break;
+        }
       }
 
       if (i == commands.size()) {
-	if (!strcmp(line, "quit") || !strcmp(line, "exit"))
-	  exit(0);
-	else if (!strcmp(line, "help")) {
-	  cout << endl;
-	  for (i=0; i<commands.size(); i++) {
-	    Usage::dump(commands[i]->usage());
-	    cout << endl;
-	  }
-	}
-	else
-	  cout << "Unrecognized command." << endl;
+        if (!strcmp(line, "quit") || !strcmp(line, "exit"))
+          exit(0);
+        else if (!strcmp(line, "help")) {
+          cout << endl;
+          for (i=0; i<commands.size(); i++) {
+            Usage::dump(commands[i]->usage());
+            cout << endl;
+          }
+        }
+        else
+          cout << "Unrecognized command." << endl;
       }
 
     }

@@ -1,24 +1,25 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cstdio>
 #include <string>
 #include <vector>
@@ -62,6 +63,7 @@ extern "C" {
 #include "CommandGetSequencer.h"
 
 using namespace Hypertable;
+using namespace Hyperspace;
 using namespace std;
 
 
@@ -69,23 +71,23 @@ namespace {
 
   char *line_read = 0;
 
-  bool gTestMode = false;
-  std::string gInputStr;
+  bool g_testmode = false;
+  std::string g_input_str;
 
   char *rl_gets () {
 
-    if (gTestMode) {
-      if (!getline(cin, gInputStr))
-	return 0;
-      boost::trim(gInputStr);
-      if (gInputStr.find("echo", 0) != 0 && gInputStr.find("quit", 0) != 0)
-	cout << gInputStr << endl;
-      return (char *)gInputStr.c_str();
+    if (g_testmode) {
+      if (!getline(cin, g_input_str))
+        return 0;
+      boost::trim(g_input_str);
+      if (g_input_str.find("echo", 0) != 0 && g_input_str.find("quit", 0) != 0)
+        cout << g_input_str << endl;
+      return (char *)g_input_str.c_str();
     }
     else {
       if (line_read) {
-	free (line_read);
-	line_read = (char *)NULL;
+        free (line_read);
+        line_read = (char *)NULL;
       }
 
       /* Get a line from the user. */
@@ -93,7 +95,7 @@ namespace {
 
       /* If the line has any text in it, save it on the history. */
       if (line_read && *line_read)
-	add_history (line_read);
+        add_history (line_read);
 
       return line_read;
     }
@@ -122,7 +124,7 @@ namespace {
     (const char *)0
   };
 
-  const char *helpTrailer[] = {
+  const char *help_trailer[] = {
     "echo <str>",
     "  Display <str> to stdout.",
     "",
@@ -143,15 +145,15 @@ class Notifier {
 
 public:
 
-  Notifier(const char *addressStr) {
-    DispatchHandlerPtr nullHandler(0);
+  Notifier(const char *addr_str) {
+    DispatchHandlerPtr null_handler(0);
     int error;
     m_comm = new Comm();
-    if (!InetAddr::initialize(&m_addr, addressStr)) {
+    if (!InetAddr::initialize(&m_addr, addr_str)) {
       exit(1);
     }
     InetAddr::initialize(&m_send_addr, INADDR_ANY, 0);
-    if ((error = m_comm->create_datagram_receive_socket(&m_send_addr, nullHandler)) != Error::OK) {
+    if ((error = m_comm->create_datagram_receive_socket(&m_send_addr, null_handler)) != Error::OK) {
       std::string str;
       HT_ERRORF("Problem creating UDP receive socket %s - %s", InetAddr::string_format(str, m_send_addr), Error::get_text(error));
       exit(1);
@@ -165,11 +167,11 @@ public:
   void notify() {
     if (m_comm) {
       int error;
-      CommBufPtr cbufPtr( new CommBuf(m_builder, 2) );
-      cbufPtr->append_short(0);
-      if ((error = m_comm->send_datagram(m_addr, m_send_addr, cbufPtr)) != Error::OK) {
-	HT_ERRORF("Problem sending datagram - %s", Error::get_text(error));
-	exit(1);
+      CommBufPtr cbp(new CommBuf(m_builder, 2));
+      cbp->append_i16(0);
+      if ((error = m_comm->send_datagram(m_addr, m_send_addr, cbp)) != Error::OK) {
+        HT_ERRORF("Problem sending datagram - %s", Error::get_text(error));
+        exit(1);
       }
     }
   }
@@ -183,7 +185,7 @@ private:
 
 
 /**
- * 
+ *
  */
 class SessionHandler : public SessionCallback {
 public:
@@ -201,12 +203,12 @@ int main(int argc, char **argv, char **envp) {
   const char *line;
   char *eval = 0;
   size_t i;
-  string configFile = "";
+  string cfgfile = "";
   vector<InteractiveCommand *>  commands;
   Comm *comm;
   PropertiesPtr props_ptr;
   Hyperspace::Session *session;
-  SessionHandler sessionHandler;
+  SessionHandler session_handler;
   bool verbose = false;
   int error;
   Notifier *notifier = 0;
@@ -214,22 +216,22 @@ int main(int argc, char **argv, char **envp) {
   System::initialize(argv[0]);
   ReactorFactory::initialize((uint16_t)System::get_processor_count());
 
-  configFile = System::installDir + "/conf/hypertable.cfg";
+  cfgfile = System::install_dir + "/conf/hypertable.cfg";
 
   for (int i=1; i<argc; i++) {
     if (!strncmp(argv[i], "--config=", 9))
-      configFile = &argv[i][9];
+      cfgfile = &argv[i][9];
     else if (!strcmp(argv[i], "--debug"))
       verbose = true;
     else if (!strcmp(argv[i], "--eval")) {
       i++;
       if (i == argc)
-	Usage::dump_and_exit(usage);
+        Usage::dump_and_exit(usage);
       eval = argv[i];
     }
     else if (!strcmp(argv[i], "--test-mode")) {
       Logger::set_test_mode("hyperspace");
-      gTestMode = true;
+      g_testmode = true;
     }
     else if (!strncmp(argv[i], "--notification-address=", 23))
       notifier = new Notifier(&argv[i][23]);
@@ -240,63 +242,63 @@ int main(int argc, char **argv, char **envp) {
   if (notifier == 0)
     notifier = new Notifier();
 
-  props_ptr = new Properties( configFile );
+  props_ptr = new Properties(cfgfile);
 
   if (verbose)
     props_ptr->set("Hypertable.Verbose", "true");
 
   comm = new Comm();
 
-  session = new Session(comm, props_ptr, &sessionHandler);
+  session = new Session(comm, props_ptr, &session_handler);
 
   if (!session->wait_for_connection(30)) {
     cerr << "Unable to establish session with Hyerspace, exiting..." << endl;
     exit(1);
   }
 
-  commands.push_back( new CommandMkdir(session) );
-  commands.push_back( new CommandDelete(session) );
-  commands.push_back( new CommandOpen(session) );
-  commands.push_back( new CommandCreate(session) );
-  commands.push_back( new CommandClose(session) );
-  commands.push_back( new CommandAttrSet(session) );
-  commands.push_back( new CommandAttrGet(session) );
-  commands.push_back( new CommandAttrDel(session) );
-  commands.push_back( new CommandExists(session) );
-  commands.push_back( new CommandReaddir(session) );
-  commands.push_back( new CommandLock(session) );
-  commands.push_back( new CommandTryLock(session) );
-  commands.push_back( new CommandRelease(session) );
-  commands.push_back( new CommandGetSequencer(session) );
+  commands.push_back(new CommandMkdir(session));
+  commands.push_back(new CommandDelete(session));
+  commands.push_back(new CommandOpen(session));
+  commands.push_back(new CommandCreate(session));
+  commands.push_back(new CommandClose(session));
+  commands.push_back(new CommandAttrSet(session));
+  commands.push_back(new CommandAttrGet(session));
+  commands.push_back(new CommandAttrDel(session));
+  commands.push_back(new CommandExists(session));
+  commands.push_back(new CommandReaddir(session));
+  commands.push_back(new CommandLock(session));
+  commands.push_back(new CommandTryLock(session));
+  commands.push_back(new CommandRelease(session));
+  commands.push_back(new CommandGetSequencer(session));
 
   /**
    * Non-interactive mode
    */
   if (eval != 0) {
     const char *str;
-    std::string commandStr;
+    std::string cmd_str;
     str = strtok(eval, ";");
     while (str) {
-      Global::exitStatus = 0;
-      commandStr = str;
-      boost::trim(commandStr);
+      Global::exit_status = 0;
+      cmd_str = str;
+      boost::trim(cmd_str);
       for (i=0; i<commands.size(); i++) {
-	if (commands[i]->matches(commandStr.c_str())) {
-	  commands[i]->parse_command_line(commandStr.c_str());
-	  if ((error = commands[i]->run()) != Error::OK) {
-	    cerr << Error::get_text(error) << endl;
-	    return 1;
-	  }
-	  break;
-	}
+        if (commands[i]->matches(cmd_str.c_str())) {
+          commands[i]->parse_command_line(cmd_str.c_str());
+          if ((error = commands[i]->run()) != Error::OK) {
+            cerr << Error::get_text(error) << endl;
+            return 1;
+          }
+          break;
+        }
       }
       if (i == commands.size()) {
-	HT_ERRORF("Unrecognized command : %s", commandStr.c_str());
-	return 1;
+        HT_ERRORF("Unrecognized command : %s", cmd_str.c_str());
+        return 1;
       }
-      str = strtok(0, ";");      
+      str = strtok(0, ";");
     }
-    return Global::exitStatus;
+    return Global::exit_status;
   }
 
   cout << "Welcome to the Hyperspace command interpreter.  Hyperspace" << endl;
@@ -307,55 +309,54 @@ int main(int argc, char **argv, char **envp) {
   using_history();
   while ((line = rl_gets()) != 0) {
 
-    Global::exitStatus = 0;
+    Global::exit_status = 0;
 
     if (*line == 0)
       continue;
 
     for (i=0; i<commands.size(); i++) {
       if (commands[i]->matches(line)) {
-	commands[i]->parse_command_line(line);
-	if ((error = commands[i]->run()) != Error::OK && error != -1)
-	  cout << Error::get_text(error) << endl;
-	notifier->notify();
-	break;
+        commands[i]->parse_command_line(line);
+        if ((error = commands[i]->run()) != Error::OK && error != -1)
+          cout << Error::get_text(error) << endl;
+        notifier->notify();
+        break;
       }
     }
 
     if (i == commands.size()) {
       if (!strcmp(line, "quit") || !strcmp(line, "exit")) {
-	notifier->notify();
-	exit(0);
+        notifier->notify();
+        exit(0);
       }
       else if (!strncmp(line, "echo", 4)) {
-	std::string echoStr = std::string(line);
-	echoStr = echoStr.substr(4);
-	boost::trim_if(echoStr, boost::is_any_of("\" \t"));
-	cout << echoStr << endl;
-	notifier->notify();
+        std::string echo_str = std::string(line);
+        echo_str = echo_str.substr(4);
+        boost::trim_if(echo_str, boost::is_any_of("\" \t"));
+        cout << echo_str << endl;
+        notifier->notify();
       }
       else if (!strcmp(line, "pwd")) {
-	cout << Global::cwd << endl;
-	notifier->notify();
+        cout << Global::cwd << endl;
+        notifier->notify();
       }
       else if (!strcmp(line, "help")) {
-	cout << endl;
-	for (i=0; i<commands.size(); i++) {
-	  Usage::dump(commands[i]->usage());
-	  cout << endl;
-	}
-	Usage::dump(helpTrailer);
-	notifier->notify();
+        cout << endl;
+        for (i=0; i<commands.size(); i++) {
+          Usage::dump(commands[i]->usage());
+          cout << endl;
+        }
+        Usage::dump(help_trailer);
+        notifier->notify();
       }
       else {
-	cout << "Unrecognized command." << endl;
-	notifier->notify();
+        cout << "Unrecognized command." << endl;
+        notifier->notify();
       }
     }
   }
 
   delete session;
   delete comm;
-  return Global::exitStatus;
+  return Global::exit_status;
 }
-

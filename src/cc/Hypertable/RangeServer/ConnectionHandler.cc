@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <iostream>
 
 extern "C" {
@@ -26,8 +27,8 @@ extern "C" {
 }
 
 #include "Common/Error.h"
-#include "Common/Exception.h"
 #include "Common/StringExt.h"
+#include "Common/Serialization.h"
 
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/ResponseCallback.h"
@@ -55,18 +56,20 @@ extern "C" {
 
 
 using namespace Hypertable;
+using namespace Serialization;
+using namespace Error;
 
 /**
  *
  */
-ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &appQueuePtr, RangeServerPtr rangeServerPtr, MasterClientPtr &masterClientPtr) : m_comm(comm), m_app_queue_ptr(appQueuePtr), m_range_server_ptr(rangeServerPtr), m_master_client_ptr(masterClientPtr), m_shutdown(false) {
+ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue, RangeServerPtr range_server, MasterClientPtr &master_client) : m_comm(comm), m_app_queue_ptr(app_queue), m_range_server_ptr(range_server), m_master_client_ptr(master_client), m_shutdown(false) {
   return;
 }
 
 /**
  *
  */
-ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &appQueuePtr, RangeServerPtr rangeServerPtr) : m_comm(comm), m_app_queue_ptr(appQueuePtr), m_range_server_ptr(rangeServerPtr), m_shutdown(false) {
+ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue, RangeServerPtr range_server) : m_comm(comm), m_app_queue_ptr(app_queue), m_range_server_ptr(range_server), m_shutdown(false) {
   return;
 }
 
@@ -74,109 +77,104 @@ ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &appQueuePt
 /**
  *
  */
-void ConnectionHandler::handle(EventPtr &event_ptr) {
-  short command = -1;
+void ConnectionHandler::handle(EventPtr &event) {
+  int command = -1;
 
   if (m_shutdown)
     return;
 
-  if (event_ptr->type == Event::MESSAGE) {
-    ApplicationHandler *requestHandler = 0;
+  if (event->type == Event::MESSAGE) {
+    ApplicationHandler *handler = 0;
+    const uint8_t *msg = event->message;
+    size_t remain = event->message_len;
 
-    //event_ptr->display();
+    //event->display();
 
     try {
-      if (event_ptr->messageLen < sizeof(int16_t)) {
-	std::string message = "Truncated Request";
-	throw new ProtocolException(message);
-      }
-      memcpy(&command, event_ptr->message, sizeof(int16_t));
+      command = decode_i16(&msg, &remain);
 
       // sanity check command code
-      if (command < 0 || command >= RangeServerProtocol::COMMAND_MAX) {
-	std::string message = (std::string)"Invalid command (" + command + ")";
-	throw ProtocolException(message);
-      }
+      if (command < 0 || command >= RangeServerProtocol::COMMAND_MAX)
+        HT_THROWF(PROTOCOL_ERROR, "Invalid command (%d)", command);
 
       switch (command) {
       case RangeServerProtocol::COMMAND_COMPACT:
-	requestHandler = new RequestHandlerCompact(m_comm, m_range_server_ptr.get(), event_ptr);
-	break;
+        handler = new RequestHandlerCompact(m_comm, m_range_server_ptr.get(), event);
+        break;
       case RangeServerProtocol::COMMAND_LOAD_RANGE:
-	requestHandler = new RequestHandlerLoadRange(m_comm, m_range_server_ptr.get(), event_ptr);
-	break;
+        handler = new RequestHandlerLoadRange(m_comm, m_range_server_ptr.get(), event);
+        break;
       case RangeServerProtocol::COMMAND_UPDATE:
-	requestHandler = new RequestHandlerUpdate(m_comm, m_range_server_ptr.get(), event_ptr);
-	break;
+        handler = new RequestHandlerUpdate(m_comm, m_range_server_ptr.get(), event);
+        break;
       case RangeServerProtocol::COMMAND_CREATE_SCANNER:
-	requestHandler = new RequestHandlerCreateScanner(m_comm, m_range_server_ptr.get(), event_ptr);
-	break;
+        handler = new RequestHandlerCreateScanner(m_comm, m_range_server_ptr.get(), event);
+        break;
       case RangeServerProtocol::COMMAND_DESTROY_SCANNER:
-	requestHandler = new RequestHandlerDestroyScanner(m_comm, m_range_server_ptr.get(), event_ptr);
-	break;
+        handler = new RequestHandlerDestroyScanner(m_comm, m_range_server_ptr.get(), event);
+        break;
       case RangeServerProtocol::COMMAND_FETCH_SCANBLOCK:
-	requestHandler = new RequestHandlerFetchScanblock(m_comm, m_range_server_ptr.get(), event_ptr);
-	break;
+        handler = new RequestHandlerFetchScanblock(m_comm, m_range_server_ptr.get(), event);
+        break;
       case RangeServerProtocol::COMMAND_DROP_TABLE:
-	requestHandler = new RequestHandlerDropTable(m_comm, m_range_server_ptr.get(), event_ptr);
-	break;
+        handler = new RequestHandlerDropTable(m_comm, m_range_server_ptr.get(), event);
+        break;
       case RangeServerProtocol::COMMAND_REPLAY_START:
-	requestHandler = new RequestHandlerReplayStart(m_comm, m_range_server_ptr.get(), event_ptr);
-	break;
+        handler = new RequestHandlerReplayStart(m_comm, m_range_server_ptr.get(), event);
+        break;
       case RangeServerProtocol::COMMAND_REPLAY_UPDATE:
-	requestHandler = new RequestHandlerReplayUpdate(m_comm, m_range_server_ptr.get(), event_ptr);
-	break;
+        handler = new RequestHandlerReplayUpdate(m_comm, m_range_server_ptr.get(), event);
+        break;
       case RangeServerProtocol::COMMAND_REPLAY_COMMIT:
-	requestHandler = new RequestHandlerReplayCommit(m_comm, m_range_server_ptr.get(), event_ptr);
-	break;
+        handler = new RequestHandlerReplayCommit(m_comm, m_range_server_ptr.get(), event);
+        break;
       case RangeServerProtocol::COMMAND_DROP_RANGE:
-	requestHandler = new RequestHandlerDropRange(m_comm, m_range_server_ptr.get(), event_ptr);
-	break;
+        handler = new RequestHandlerDropRange(m_comm, m_range_server_ptr.get(), event);
+        break;
       case RangeServerProtocol::COMMAND_STATUS:
-	requestHandler = new RequestHandlerStatus(m_comm, m_range_server_ptr.get(), event_ptr);
-	break;
+        handler = new RequestHandlerStatus(m_comm, m_range_server_ptr.get(), event);
+        break;
       case RangeServerProtocol::COMMAND_SHUTDOWN:
-	m_shutdown = true;
-	HT_INFO("Executing SHUTDOWN command.");
-	{
-	  ResponseCallback cb(m_comm, event_ptr);
-	  cb.response_ok();
-	}
-	m_app_queue_ptr->shutdown();
-	m_app_queue_ptr->join();
-	m_app_queue_ptr = 0;
-	m_range_server_ptr = 0;
-	m_master_client_ptr = 0;
-	return;
+        m_shutdown = true;
+        HT_INFO("Executing SHUTDOWN command.");
+        {
+          ResponseCallback cb(m_comm, event);
+          cb.response_ok();
+        }
+        m_app_queue_ptr->shutdown();
+        m_app_queue_ptr->join();
+        m_app_queue_ptr = 0;
+        m_range_server_ptr = 0;
+        m_master_client_ptr = 0;
+        return;
       case RangeServerProtocol::COMMAND_DUMP_STATS:
-	requestHandler = new RequestHandlerDumpStats(m_comm, m_range_server_ptr.get(), event_ptr);
-	break;
+        handler = new RequestHandlerDumpStats(m_comm, m_range_server_ptr.get(), event);
+        break;
       default:
-	std::string message = (string)"Command code " + command + " not implemented";
-	throw ProtocolException(message);
+        HT_THROWF(PROTOCOL_ERROR, "Unimplemented command (%d)", command);
       }
-      m_app_queue_ptr->add( requestHandler );
+      m_app_queue_ptr->add(handler);
     }
-    catch (ProtocolException &e) {
-      ResponseCallback cb(m_comm, event_ptr);
-      std::string errMsg = e.what();
-      HT_ERRORF("Protocol error '%s'", e.what());
-      cb.error(Error::PROTOCOL_ERROR, errMsg);
+    catch (Exception &e) {
+      ResponseCallback cb(m_comm, event);
+      HT_ERROR_OUT << e << HT_END;
+      std::string errmsg = format("%s - %s", e.what(), get_text(e.code()));
+      cb.error(Error::PROTOCOL_ERROR, errmsg);
     }
   }
-  else if (event_ptr->type == Event::CONNECTION_ESTABLISHED) {
+  else if (event->type == Event::CONNECTION_ESTABLISHED) {
 
-    HT_INFOF("%s", event_ptr->toString().c_str());
+    HT_INFOF("%s", event->to_str().c_str());
 
     /**
      * If this is the connection to the Master, then we need to register ourselves
      * with the master
      */
     if (m_master_client_ptr)
-      m_app_queue_ptr->add( new EventHandlerMasterConnection(m_master_client_ptr, m_range_server_ptr->get_location(), event_ptr) );
+      m_app_queue_ptr->add(new EventHandlerMasterConnection(m_master_client_ptr, m_range_server_ptr->get_location(), event));
   }
   else {
-    HT_INFOF("%s", event_ptr->toString().c_str());
+    HT_INFOF("%s", event->to_str().c_str());
   }
 
 }

@@ -19,29 +19,30 @@
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include "Common/Serialization.h"
 
 #include "DirEntry.h"
 
 using namespace Hypertable;
+using namespace Serialization;
 
 namespace Hyperspace {
 
-  size_t encoded_length_dir_entry(DirEntryT &dir_entry) {
-    return 1 + Serialization::encoded_length_string(dir_entry.name);
+  size_t encoded_length_dir_entry(const DirEntry &dir_entry) {
+    return 1 + encoded_length_vstr(dir_entry.name);
   }
 
-  void encode_dir_entry(uint8_t **buf_ptr, DirEntryT &dir_entry) {
-    uint8_t bval = (dir_entry.isDirectory) ? 1 : 0;
-    *(*buf_ptr)++ = bval;
-    Serialization::encode_string(buf_ptr, dir_entry.name);
+  void encode_dir_entry(uint8_t **bufp, const DirEntry &dir_entry) {
+    encode_bool(bufp, dir_entry.is_dir);
+    encode_vstr(bufp, dir_entry.name);
   }
 
-  bool decode_range_dir_entry(uint8_t **buf_ptr, size_t *remaining_ptr, DirEntryT &dir_entry) {
-    uint8_t bval;
-    if (!Serialization::decode_byte(buf_ptr, remaining_ptr, &bval))
-      return false;
-    dir_entry.isDirectory = (bval == 0) ? false : true;
-    return Serialization::decode_string(buf_ptr, remaining_ptr, dir_entry.name);
+  DirEntry &
+  decode_dir_entry(const uint8_t **bufp, size_t *remainp,
+                         DirEntry &dir_entry) {
+    dir_entry.is_dir = decode_bool(bufp, remainp);
+    dir_entry.name = decode_vstr(bufp, remainp);
+    return dir_entry;
   }
 }

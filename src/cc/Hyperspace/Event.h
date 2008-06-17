@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -38,10 +38,10 @@ namespace Hyperspace {
 
   class Event : public Hypertable::ReferenceCount {
   public:
-    Event(uint32_t mask) : m_mask(mask), m_notification_count(0) { 
+    Event(uint32_t mask) : m_mask(mask), m_notification_count(0) {
       boost::mutex::scoped_lock lock(ms_next_event_id_mutex);
       m_id = ms_next_event_id++;
-      return; 
+      return;
     }
     virtual ~Event() { return; }
 
@@ -57,12 +57,12 @@ namespace Hyperspace {
       boost::mutex::scoped_lock lock(m_mutex);
       m_notification_count--;
       if (m_notification_count == 0)
-	m_cond.notify_all();
+        m_cond.notify_all();
     }
     void wait_for_notifications() {
       boost::mutex::scoped_lock lock(m_mutex);
       if (m_notification_count != 0)
-	m_cond.wait(lock);
+        m_cond.wait(lock);
     }
 
     virtual uint32_t encoded_length() = 0;
@@ -89,13 +89,19 @@ namespace Hyperspace {
    */
   class EventNamed : public Event {
   public:
-    EventNamed(uint32_t mask, std::string name) : Event(mask), m_name(name) { return; }
-    virtual uint32_t encoded_length() { return 12 + Hypertable::Serialization::encoded_length_string(m_name); }
-    virtual void encode(Hypertable::CommBuf *cbuf) { 
-      cbuf->append_long(m_id);
-      cbuf->append_int(m_mask);
-      cbuf->append_string(m_name);
+    EventNamed(uint32_t mask, const std::string &name)
+        : Event(mask), m_name(name) { return; }
+
+    virtual uint32_t encoded_length() {
+      return 12 + Hypertable::Serialization::encoded_length_vstr(m_name);
     }
+
+    virtual void encode(Hypertable::CommBuf *cbuf) {
+      cbuf->append_i64(m_id);
+      cbuf->append_i32(m_mask);
+      cbuf->append_vstr(m_name);
+    }
+
   private:
     std::string m_name;
   };
@@ -109,10 +115,10 @@ namespace Hyperspace {
   public:
     EventLockAcquired(uint32_t mode) : Event(EVENT_MASK_LOCK_ACQUIRED), m_mode(mode) { return; }
     virtual uint32_t encoded_length() { return 16; }
-    virtual void encode(Hypertable::CommBuf *cbuf) { 
-      cbuf->append_long(m_id);
-      cbuf->append_int(m_mask);
-      cbuf->append_int(m_mode);
+    virtual void encode(Hypertable::CommBuf *cbuf) {
+      cbuf->append_i64(m_id);
+      cbuf->append_i32(m_mask);
+      cbuf->append_i32(m_mode);
     }
   private:
     uint32_t m_mode;
@@ -126,9 +132,9 @@ namespace Hyperspace {
   public:
     EventLockReleased() : Event(EVENT_MASK_LOCK_RELEASED) { return; }
     virtual uint32_t encoded_length() { return 12; }
-    virtual void encode(Hypertable::CommBuf *cbuf) { 
-      cbuf->append_long(m_id);
-      cbuf->append_int(m_mask);
+    virtual void encode(Hypertable::CommBuf *cbuf) {
+      cbuf->append_i64(m_id);
+      cbuf->append_i32(m_mask);
     }
   };
 
@@ -140,11 +146,11 @@ namespace Hyperspace {
   public:
     EventLockGranted(uint32_t mode, uint64_t generation) : Event(EVENT_MASK_LOCK_GRANTED), m_mode(mode), m_generation(generation) { return; }
     virtual uint32_t encoded_length() { return 24; }
-    virtual void encode(Hypertable::CommBuf *cbuf) { 
-      cbuf->append_long(m_id);
-      cbuf->append_int(m_mask);
-      cbuf->append_int(m_mode);
-      cbuf->append_long(m_generation);
+    virtual void encode(Hypertable::CommBuf *cbuf) {
+      cbuf->append_i64(m_id);
+      cbuf->append_i32(m_mask);
+      cbuf->append_i32(m_mode);
+      cbuf->append_i64(m_generation);
     }
   private:
     uint32_t m_mode;

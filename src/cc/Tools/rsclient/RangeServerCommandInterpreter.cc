@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cassert>
 #include <cstdio>
 #include <cstring>
@@ -48,27 +49,32 @@ extern "C" {
 
 #define BUFFER_SIZE 65536
 
+using namespace std;
 using namespace Hypertable;
-using namespace Hypertable::HqlParser;
+using namespace HqlParser;
+using namespace Serialization;
 
 namespace {
-  
+
   void process_event(EventPtr &event_ptr) {
     int32_t error;
-    uint8_t *ptr = event_ptr->message + 4;
-    size_t remaining = event_ptr->messageLen - 4;
+    const uint8_t *ptr = event_ptr->message + 4;
+    size_t remaining = event_ptr->message_len - 4;
     uint32_t offset, len;
     if (remaining == 0)
       cout << "success" << endl;
     else {
       while (remaining) {
-	if (!Serialization::decode_int(&ptr, &remaining, (uint32_t *)&error) ||
-	    !Serialization::decode_int(&ptr, &remaining, &offset) ||
-	    !Serialization::decode_int(&ptr, &remaining, &len)) {
-	  HT_ERROR("Response Truncated");
-	  break;
-	}
-	cout << "rejected: offset=" << offset << " span=" << len << " " << Error::get_text(error) << endl;
+        try {
+          error = decode_i32(&ptr, &remaining);
+          offset = decode_i32(&ptr, &remaining);
+          len = decode_i32(&ptr, &remaining);
+        }
+        catch (Exception &e) {
+          HT_ERROR_OUT << e << HT_END;
+          break;
+        }
+        cout << "rejected: offset=" << offset << " span=" << len << " " << Error::get_text(error) << endl;
       }
     }
   }
@@ -105,10 +111,10 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
     if (state.table_name != "") {
       table_info = m_table_map[state.table_name];
       if (table_info == 0) {
-	table_info = new TableInfo(state.table_name);
-	if ((error = table_info->load(m_hyperspace_ptr)) != Error::OK)
-	  throw Exception(error, std::string("Problem loading table '") + state.table_name + "'");
-	m_table_map[state.table_name] = table_info;
+        table_info = new TableInfo(state.table_name);
+        if ((error = table_info->load(m_hyperspace_ptr)) != Error::OK)
+          HT_THROW(error, std::string("Problem loading table '") + state.table_name + "'");
+        m_table_map[state.table_name] = table_info;
       }
       table = table_info->get_table_identifier();
       table_info->get_schema_ptr(schema_ptr);
@@ -135,9 +141,9 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
     }
     else if (state.command == COMMAND_UPDATE) {
       TestSource *tsource = 0;
-      
+
       if (!FileUtils::exists(state.input_file.c_str()))
-	throw Exception(Error::FILE_NOT_FOUND, std::string("Input file '") + state.input_file + "' does not exist");
+        HT_THROW(Error::FILE_NOT_FOUND, std::string("Input file '") + state.input_file + "' does not exist");
 
       tsource = new TestSource(state.input_file, schema_ptr.get());
 
@@ -150,75 +156,75 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 
       while (true) {
 
-	while (tsource->next(key, value)) {
-	  key_len = key.length();
-	  value_len = value.length();
-	  buf.ensure(key_len + value_len);
-	  buf.addNoCheck(key.ptr, key_len);
-	  buf.addNoCheck(value.ptr, value_len);
-	  if (buf.fill() > BUFFER_SIZE)
-	    break;
-	}
+        while (tsource->next(key, value)) {
+          key_len = key.length();
+          value_len = value.length();
+          buf.ensure(key_len + value_len);
+          buf.add_unchecked(key.ptr, key_len);
+          buf.add_unchecked(value.ptr, value_len);
+          if (buf.fill() > BUFFER_SIZE)
+            break;
+        }
 
-	/**
-	 * Sort the keys
-	 */
-	if (buf.fill()) {
-	  std::vector<ByteString> keys;
-	  struct ltByteString ltbs;
-	  uint8_t *ptr;
-	  size_t len;
+        /**
+         * Sort the keys
+         */
+        if (buf.fill()) {
+          std::vector<ByteString> keys;
+          struct LtByteString ltbs;
+          const uint8_t *ptr;
+          size_t len;
 
-	  key.ptr = ptr = buf.base;
+          key.ptr = ptr = buf.base;
 
-	  while (ptr < buf.ptr) {
-	    keys.push_back(key);
-	    key.next();
-	    key.next();
-	    ptr = key.ptr;
-	  }
+          while (ptr < buf.ptr) {
+            keys.push_back(key);
+            key.next();
+            key.next();
+            ptr = key.ptr;
+          }
 
-	  std::sort(keys.begin(), keys.end(), ltbs);
+          std::sort(keys.begin(), keys.end(), ltbs);
 
-	  send_buf = new uint8_t [ buf.fill() ];
-	  ptr = send_buf;
-	  for (size_t i=0; i<keys.size(); i++) {
-	    key = keys[i];
-	    key.next();
-	    key.next();
-	    len = key.ptr - keys[i].ptr;
-	    memcpy(ptr, keys[i].ptr, len);
-	    ptr += len;
-	  }
-	  send_buf_len = ptr - send_buf;
-	  buf.clear();
-	}
-	else
-	  send_buf_len = 0;
+          send_buf = new uint8_t [buf.fill()];
+          uint8_t *sendp = send_buf;
+          for (size_t i=0; i<keys.size(); i++) {
+            key = keys[i];
+            key.next();
+            key.next();
+            len = key.ptr - keys[i].ptr;
+            memcpy(sendp, keys[i].ptr, len);
+            sendp += len;
+          }
+          send_buf_len = sendp - send_buf;
+          buf.clear();
+        }
+        else
+          send_buf_len = 0;
 
-	if (outstanding) {
-	  if (!sync_handler.wait_for_reply(event_ptr))
-	    throw Exception(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
-	  process_event(event_ptr);
-	}
+        if (outstanding) {
+          if (!sync_handler.wait_for_reply(event_ptr))
+            HT_THROW(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
+          process_event(event_ptr);
+        }
 
-	outstanding = false;
+        outstanding = false;
 
-	if (send_buf_len > 0) {
-	  StaticBuffer mybuf(send_buf, send_buf_len);
-	  m_range_server_ptr->update(m_addr, *table, mybuf, &sync_handler);
-	  outstanding = true;
-	}
-	else
-	  break;
+        if (send_buf_len > 0) {
+          StaticBuffer mybuf(send_buf, send_buf_len);
+          m_range_server_ptr->update(m_addr, *table, mybuf, &sync_handler);
+          outstanding = true;
+        }
+        else
+          break;
       }
 
       if (outstanding) {
-	if (!sync_handler.wait_for_reply(event_ptr))
-	  throw Exception(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
-	process_event(event_ptr);
+        if (!sync_handler.wait_for_reply(event_ptr))
+          HT_THROW(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
+        process_event(event_ptr);
       }
-      
+
     }
     else if (state.command == COMMAND_CREATE_SCANNER) {
       ScanSpec scan_spec;
@@ -232,19 +238,19 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       scan_spec.row_limit = state.scan.limit;
       scan_spec.max_versions = state.scan.max_versions;
       for (size_t i=0; i<state.scan.columns.size(); i++)
-	scan_spec.columns.push_back(state.scan.columns[i].c_str());
+        scan_spec.columns.push_back(state.scan.columns[i].c_str());
       if (state.scan.row != "") {
-	scan_spec.start_row = state.scan.row.c_str();
-	scan_spec.start_row_inclusive = true;
-	scan_spec.end_row = state.scan.row.c_str();
-	scan_spec.end_row_inclusive = true;
-	scan_spec.row_limit = 1;
+        scan_spec.start_row = state.scan.row.c_str();
+        scan_spec.start_row_inclusive = true;
+        scan_spec.end_row = state.scan.row.c_str();
+        scan_spec.end_row_inclusive = true;
+        scan_spec.row_limit = 1;
       }
       else {
-	scan_spec.start_row = (state.scan.start_row == "") ? 0 : state.scan.start_row.c_str();
-	scan_spec.start_row_inclusive = state.scan.start_row_inclusive;
-	scan_spec.end_row = (state.scan.end_row == "") ? Key::END_ROW_MARKER : state.scan.end_row.c_str();
-	scan_spec.end_row_inclusive = state.scan.end_row_inclusive;
+        scan_spec.start_row = (state.scan.start_row == "") ? 0 : state.scan.start_row.c_str();
+        scan_spec.start_row_inclusive = state.scan.start_row_inclusive;
+        scan_spec.end_row = (state.scan.end_row == "") ? Key::END_ROW_MARKER : state.scan.end_row.c_str();
+        scan_spec.end_row_inclusive = state.scan.end_row_inclusive;
       }
       scan_spec.interval.first  = state.scan.start_time;
       scan_spec.interval.second = state.scan.end_time;
@@ -259,22 +265,22 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       ByteString key, value;
 
       while (scanblock.next(key, value))
-	display_scan_data(key, value, schema_ptr);
+        display_scan_data(key, value, schema_ptr);
 
       if (scanblock.eos())
-	m_cur_scanner_id = -1;
+        m_cur_scanner_id = -1;
 
     }
     else if (state.command == COMMAND_FETCH_SCANBLOCK) {
 
       if (state.scanner_id == -1) {
-	if (m_cur_scanner_id == -1)
-	  throw Exception(Error::RANGESERVER_INVALID_SCANNER_ID, "No currently open scanner");
-	scanner_id = m_cur_scanner_id;
-	m_cur_scanner_id = -1;
+        if (m_cur_scanner_id == -1)
+          HT_THROW(Error::RANGESERVER_INVALID_SCANNER_ID, "No currently open scanner");
+        scanner_id = m_cur_scanner_id;
+        m_cur_scanner_id = -1;
       }
       else
-	scanner_id = state.scanner_id;
+        scanner_id = state.scanner_id;
 
       /**
        */
@@ -283,25 +289,25 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       ByteString key, value;
 
       while (scanblock.next(key, value))
-	display_scan_data(key, value, schema_ptr);
+        display_scan_data(key, value, schema_ptr);
 
       if (scanblock.eos())
-	m_cur_scanner_id = -1;
-      
+        m_cur_scanner_id = -1;
+
     }
     else if (state.command == COMMAND_DESTROY_SCANNER) {
 
       if (state.scanner_id == -1) {
-	if (m_cur_scanner_id == -1)
-	  return;
-	scanner_id = m_cur_scanner_id;
-	m_cur_scanner_id = -1;
+        if (m_cur_scanner_id == -1)
+          return;
+        scanner_id = m_cur_scanner_id;
+        m_cur_scanner_id = -1;
       }
       else
-	scanner_id = state.scanner_id;
+        scanner_id = state.scanner_id;
 
       m_range_server_ptr->destroy_scanner(m_addr, scanner_id);
-      
+
     }
     else if (state.command == COMMAND_DROP_RANGE) {
 
@@ -311,13 +317,13 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       m_range_server_ptr->drop_range(m_addr, *table, range, &sync_handler);
 
       if (!sync_handler.wait_for_reply(event_ptr))
-	throw Exception(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
+        HT_THROW(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
 
     }
     else if (state.command == COMMAND_REPLAY_START) {
       m_range_server_ptr->replay_start(m_addr, &sync_handler);
       if (!sync_handler.wait_for_reply(event_ptr))
-	throw Exception(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
+        HT_THROW(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
     }
     else if (state.command == COMMAND_REPLAY_LOG) {
       cout << "Not implemented." << endl;
@@ -325,25 +331,25 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
     else if (state.command == COMMAND_REPLAY_COMMIT) {
       m_range_server_ptr->replay_commit(m_addr, &sync_handler);
       if (!sync_handler.wait_for_reply(event_ptr))
-	throw Exception(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
+        HT_THROW(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
     }
     else if (state.command == COMMAND_HELP) {
       const char **text = HqlHelpText::Get(state.str);
       if (text) {
-	for (size_t i=0; text[i]; i++)
-	  cout << text[i] << endl;
+        for (size_t i=0; text[i]; i++)
+          cout << text[i] << endl;
       }
       else
-	cout << endl << "no help for '" << state.str << "'" << endl << endl;
+        cout << endl << "no help for '" << state.str << "'" << endl << endl;
     }
     else if (state.command == COMMAND_SHUTDOWN) {
       m_range_server_ptr->shutdown(m_addr);
     }
     else
-      throw Exception(Error::HQL_PARSE_ERROR, "unsupported command");
+      HT_THROW(Error::HQL_PARSE_ERROR, "unsupported command");
   }
   else
-    throw Exception(Error::HQL_PARSE_ERROR, std::string("parse error at: ") + info.stop);
+    HT_THROW(Error::HQL_PARSE_ERROR, std::string("parse error at: ") + info.stop);
 }
 
 
@@ -351,25 +357,27 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 /**
  *
  */
-void RangeServerCommandInterpreter::display_scan_data(const ByteString &key, const ByteString &value, SchemaPtr &schemaPtr) {
-  Key keyComps(key);
+void
+RangeServerCommandInterpreter::display_scan_data(const ByteString &bskey,
+    const ByteString &value, SchemaPtr &schema_ptr) {
+  Key key(bskey);
   Schema::ColumnFamily *cf;
 
-  if (keyComps.flag == FLAG_DELETE_ROW) {
-    cout << keyComps.timestamp << " " << keyComps.row << " DELETE" << endl;
+  if (key.flag == FLAG_DELETE_ROW) {
+    cout << key.timestamp << " " << key.row << " DELETE" << endl;
   }
   else {
-    if (keyComps.column_family_code > 0) {
-      cf = schemaPtr->get_column_family(keyComps.column_family_code);
-      if (keyComps.flag == FLAG_DELETE_CELL)
-	cout << keyComps.timestamp << " " << keyComps.row << " " << cf->name << ":" << keyComps.column_qualifier << " DELETE" << endl;
+    if (key.column_family_code > 0) {
+      cf = schema_ptr->get_column_family(key.column_family_code);
+      if (key.flag == FLAG_DELETE_CELL)
+        cout << key.timestamp << " " << key.row << " " << cf->name << ":" << key.column_qualifier << " DELETE" << endl;
       else {
-	cout << keyComps.timestamp << " " << keyComps.row << " " << cf->name << ":" << keyComps.column_qualifier;
-	cout << endl;
+        cout << key.timestamp << " " << key.row << " " << cf->name << ":" << key.column_qualifier;
+        cout << endl;
       }
     }
     else {
-      cerr << "Bad column family (" << (int)keyComps.column_family_code << ") for row key " << keyComps.row;
+      cerr << "Bad column family (" << (int)key.column_family_code << ") for row key " << key.row;
       cerr << endl;
     }
   }

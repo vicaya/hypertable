@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -39,7 +39,6 @@
 #include "CellStore.h"
 #include "Timestamp.h"
 
-using namespace Hypertable;
 
 namespace Hypertable {
 
@@ -47,7 +46,7 @@ namespace Hypertable {
 
   public:
 
-    typedef struct {
+    struct CompactionPriorityData {
       AccessGroup *ag;
       uint64_t oldest_cached_timestamp;
       uint64_t mem_used;
@@ -56,9 +55,9 @@ namespace Hypertable {
       uint32_t deletes;
       void *user_data;
       bool in_memory;
-    } CompactionPriorityDataT;
+    };
 
-    AccessGroup(TableIdentifier *identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeSpec *range);
+    AccessGroup(TableIdentifier *identifier, SchemaPtr &schema_ptr, Schema::AccessGroup *ag, RangeSpec *range);
     virtual ~AccessGroup();
     virtual int add(const ByteString key, const ByteString value, uint64_t real_timestamp);
     bool replay_add(const ByteString key, const ByteString value, uint64_t real_timestamp);
@@ -70,9 +69,9 @@ namespace Hypertable {
     void lock() { m_mutex.lock(); m_cell_cache_ptr->lock(); }
     void unlock() { m_cell_cache_ptr->unlock(); m_mutex.unlock(); }
 
-    CellListScanner *create_scanner(ScanContextPtr &scanContextPtr);
+    CellListScanner *create_scanner(ScanContextPtr &scan_ctx);
 
-    bool include_in_scan(ScanContextPtr &scanContextPtr);
+    bool include_in_scan(ScanContextPtr &scan_ctx);
     uint64_t disk_usage();
     void add_cell_store(CellStorePtr &cellstore_ptr, uint32_t id);
     void run_compaction(Timestamp timestamp, bool major);
@@ -83,7 +82,7 @@ namespace Hypertable {
       return m_oldest_cached_timestamp;
     }
 
-    void get_compaction_priority_data(CompactionPriorityDataT &priority_data);
+    void get_compaction_priority_data(CompactionPriorityData &priority_data);
 
     void set_compaction_bit() { m_needs_compaction = true; }
 
@@ -111,7 +110,7 @@ namespace Hypertable {
 
   private:
 
-    typedef hash_map<String, uint32_t> FileRefCountMapT;
+    typedef hash_map<String, uint32_t> FileRefCountMap;
     void increment_file_refcount(const String &filename);
     bool decrement_file_refcount(const String &filename);
 
@@ -143,7 +142,7 @@ namespace Hypertable {
     bool                 m_drop;
     std::set<String>     m_gc_locked_files;
     std::set<String>     m_live_files;
-    FileRefCountMapT     m_file_refcounts;
+    FileRefCountMap      m_file_refcounts;
     bool                 m_scanners_blocked;
   };
 

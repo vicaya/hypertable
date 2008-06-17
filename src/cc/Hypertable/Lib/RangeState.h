@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -34,8 +34,8 @@ namespace Hypertable {
     enum { STEADY, SPLIT_LOG_INSTALLED, SPLIT_SHRUNK };
     RangeState() : state(STEADY), soft_limit(0), transfer_log(0) { return; }
     size_t encoded_length();
-    void encode(uint8_t **bufPtr);
-    bool decode(uint8_t **bufPtr, size_t *remainingPtr);
+    void encode(uint8_t **bufp);
+    void decode(const uint8_t **bufp, size_t *remainp);
     int state;
     uint64_t soft_limit;
     const char *transfer_log;
@@ -57,21 +57,22 @@ namespace Hypertable {
       else
 	transfer_log = 0;
     }
-    RangeStateCopy(RangeStateCopy &rsc) {
+    RangeStateCopy& operator=(RangeState &rsc) {
       state = rsc.state;
       soft_limit = rsc.soft_limit;
       if (rsc.transfer_log) {
-	transfer_log_str = rsc.transfer_log;
-	transfer_log = transfer_log_str.c_str();
+        transfer_log_str = rsc.transfer_log;
+        transfer_log = transfer_log_str.c_str();
       }
       else
-	transfer_log = 0;
+        transfer_log = 0;
+      return *this;
     }
     void set_transfer_log(const String &tl) {
       transfer_log_str = tl;
       transfer_log = transfer_log_str.c_str();
     }
-    
+
   private:
     String transfer_log_str;
   };

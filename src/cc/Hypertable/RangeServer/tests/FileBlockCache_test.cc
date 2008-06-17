@@ -19,6 +19,7 @@
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
@@ -42,13 +43,14 @@ using namespace Hypertable;
 using namespace std;
 
 namespace {
-  struct buffer_record {
+  struct BufferRecord {
     int file_id;
     uint32_t file_offset;
     uint32_t length;
   };
-  struct lt_buffer_record {
-    bool operator()(const struct buffer_record &br1, const struct buffer_record &br2) const {
+  struct LtBufferRecord {
+    bool operator()(const struct BufferRecord &br1,
+                    const struct BufferRecord &br2) const {
       if (br1.file_id == br2.file_id) {
 	if (br1.file_offset == br2.file_offset)
 	  return br1.length < br2.length;
@@ -67,9 +69,9 @@ namespace {
 
 int main(int argc, char **argv) {
   FileBlockCache *cache;
-  vector<buffer_record> input_data;
-  list<buffer_record> history;
-  buffer_record rec;
+  vector<BufferRecord> input_data;
+  list<BufferRecord> history;
+  BufferRecord rec;
   unsigned long seed = (unsigned long)getpid();
   uint64_t total_alloc = 0;
   uint64_t total_memory = TOTAL_ALLOC_LIMIT;
@@ -78,7 +80,7 @@ int main(int argc, char **argv) {
   uint8_t *block;
   uint32_t length;
   int index;
-  set<buffer_record, lt_buffer_record> lru;
+  set<BufferRecord, LtBufferRecord> lru;
   
   System::initialize(argv[0]);
 
@@ -133,7 +135,7 @@ int main(int argc, char **argv) {
    * Now verify that our idea of LRU is actually in the cache
    */
   total_alloc = 0; 
-  list<buffer_record>::iterator history_iter = history.begin();
+  list<BufferRecord>::iterator history_iter = history.begin();
   while (total_alloc < MAX_MEMORY) {
     rec.file_id = (*history_iter).file_id;
     rec.file_offset = (*history_iter).file_offset;

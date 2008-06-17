@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -36,7 +36,6 @@
 #include "RangeState.h"
 #include "Types.h"
 
-using namespace Hypertable;
 
 namespace Hypertable {
 
@@ -85,7 +84,7 @@ namespace Hypertable {
     void load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, const char *transfer_log, RangeState &range_state, uint16_t flags);
 
     /** Issues an "update" request asynchronously.  The data argument holds a sequence of key/value
-     * pairs.  Each key/value pair is encoded as two variable lenght ByteString32T records
+     * pairs.  Each key/value pair is encoded as two variable lenght ByteString records
      * back-to-back.  This method takes ownership of the data buffer.
      *
      * @param addr remote address of RangeServer connection
@@ -96,7 +95,7 @@ namespace Hypertable {
     void update(struct sockaddr_in &addr, TableIdentifier &table, StaticBuffer &buffer, DispatchHandler *handler);
 
     /** Issues an "update" request.  The data argument holds a sequence of key/value
-     * pairs.  Each key/value pair is encoded as two variable lenght ByteString32T records
+     * pairs.  Each key/value pair is encoded as two variable lenght ByteString records
      * back-to-back.  This method takes ownership of the data buffer.
      *
      * @param addr remote address of RangeServer connection
@@ -172,14 +171,14 @@ namespace Hypertable {
     void drop_table(struct sockaddr_in &addr, TableIdentifier &table);
 
     /** Issues a "status" request.  This call blocks until it receives a response from the server.
-     * 
+     *
      * @param addr remote address of RangeServer connection
      */
     void status(struct sockaddr_in &addr);
 
     /** Issues a "shutdown" request.  This call blocks until it receives a response from the
      * server or times out.
-     * 
+     *
      * @param addr remote address of RangeServer connection
      */
     void shutdown(struct sockaddr_in &addr);
@@ -219,15 +218,15 @@ namespace Hypertable {
 
   private:
 
-    void send_message(struct sockaddr_in &addr, CommBufPtr &cbufPtr, DispatchHandler *handler);
-  
+    void send_message(struct sockaddr_in &addr, CommBufPtr &cbp, DispatchHandler *handler);
+
     Comm *m_comm;
     time_t m_default_timeout;
     time_t m_timeout;
   };
 
   typedef boost::intrusive_ptr<RangeServerClient> RangeServerClientPtr;
-  
+
 
 }
 

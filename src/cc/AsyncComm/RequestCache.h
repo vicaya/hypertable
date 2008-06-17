@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -36,15 +36,15 @@ namespace Hypertable {
 
   class RequestCache {
 
-    typedef struct cache_node {
-      struct cache_node *prev, *next;
+    struct CacheNode {
+      struct CacheNode  *prev, *next;
       boost::xtime       expire;
       uint32_t           id;
       IOHandler         *handler;
       DispatchHandler   *dh;
-    } CacheNodeT;
+    };
 
-    typedef hash_map<uint32_t, CacheNodeT *> IdHandlerMapT;
+    typedef hash_map<uint32_t, CacheNode *> IdHandlerMap;
 
   public:
 
@@ -54,13 +54,13 @@ namespace Hypertable {
 
     DispatchHandler *remove(uint32_t id);
 
-    DispatchHandler *get_next_timeout(boost::xtime &now, IOHandler *&handlerp, boost::xtime *nextTimeout);
+    DispatchHandler *get_next_timeout(boost::xtime &now, IOHandler *&handlerp, boost::xtime *next_timeout);
 
     void purge_requests(IOHandler *handler);
 
   private:
-    IdHandlerMapT  m_id_map;
-    CacheNodeT    *m_head, *m_tail;
+    IdHandlerMap  m_id_map;
+    CacheNode    *m_head, *m_tail;
   };
 }
 

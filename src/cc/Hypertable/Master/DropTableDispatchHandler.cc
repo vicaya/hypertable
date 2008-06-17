@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include "AsyncComm/Protocol.h"
 
 #include "Common/Error.h"
@@ -32,7 +33,7 @@ using namespace Hypertable;
 /**
  *
  */
-DropTableDispatchHandler::DropTableDispatchHandler(TableIdentifier &table, Comm *comm, time_t timeout) : m_outstanding(0), m_client(comm, timeout), m_table_name(table.name) {
+DropTableDispatchHandler::DropTableDispatchHandler(const TableIdentifier &table, Comm *comm, time_t timeout) : m_outstanding(0), m_client(comm, timeout), m_table_name(table.name) {
   memcpy(&m_table, &table, sizeof(TableIdentifier));
   m_table.name = m_table_name.c_str();
   return;
@@ -41,7 +42,7 @@ DropTableDispatchHandler::DropTableDispatchHandler(TableIdentifier &table, Comm 
 
 
 /**
- * Adds 
+ * Adds
  */
 void DropTableDispatchHandler::add(struct sockaddr_in &addr) {
   boost::mutex::scoped_lock lock(m_mutex);
@@ -51,7 +52,7 @@ void DropTableDispatchHandler::add(struct sockaddr_in &addr) {
     m_outstanding++;
   }
   catch (Exception &e) {
-    ErrorResultT result;
+    ErrorResult result;
     result.addr = addr;
     result.error = e.code();
     result.msg = "Send error";
@@ -66,7 +67,7 @@ void DropTableDispatchHandler::add(struct sockaddr_in &addr) {
  */
 void DropTableDispatchHandler::handle(EventPtr &event_ptr) {
   boost::mutex::scoped_lock lock(m_mutex);
-  ErrorResultT result;
+  ErrorResult result;
 
   if (event_ptr->type == Event::MESSAGE) {
     if ((result.error = Protocol::response_code(event_ptr)) != Error::OK) {
@@ -88,7 +89,7 @@ void DropTableDispatchHandler::handle(EventPtr &event_ptr) {
 
 
 /**
- * 
+ *
  */
 bool DropTableDispatchHandler::wait_for_completion() {
   boost::mutex::scoped_lock lock(m_mutex);
@@ -99,8 +100,8 @@ bool DropTableDispatchHandler::wait_for_completion() {
 
 
 /**
- * 
+ *
  */
-void DropTableDispatchHandler::get_errors(vector<ErrorResultT> &errors) {
+void DropTableDispatchHandler::get_errors(std::vector<ErrorResult> &errors) {
   errors = m_errors;
 }

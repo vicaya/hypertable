@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -20,11 +20,6 @@
  */
 #ifndef HYPERTABLE_DYNAMICBUFFER_H
 #define HYPERTABLE_DYNAMICBUFFER_H
-
-extern "C" {
-#include <stdint.h>
-#include <string.h>
-}
 
 namespace Hypertable {
 
@@ -38,9 +33,9 @@ namespace Hypertable {
       size = initial_size;
       own = own_buffer;
       if (size)
-	base = ptr = new uint8_t [ size ];
+        base = ptr = new uint8_t[size];
       else
-	base = ptr = 0;
+        base = ptr = 0;
     }
 
     ~DynamicBuffer() { if (own) delete [] base; }
@@ -51,17 +46,17 @@ namespace Hypertable {
 
     void ensure(size_t len) {
       if (len > remaining())
-	grow((size_t)((fill()+len) * 3 / 2));
+        grow((fill() + len) * 3 / 2);
     }
 
     void reserve(size_t len, bool nocopy = false) {
       if (len > remaining())
-	grow(fill() + len, nocopy);
+        grow(fill() + len, nocopy);
     }
 
-    uint8_t *addNoCheck(const void *data, size_t len) {
+    uint8_t *add_unchecked(const void *data, size_t len) {
       if (data == 0)
-	return 0;
+        return 0;
       uint8_t *rptr = ptr;
       memcpy(ptr, data, len);
       ptr += len;
@@ -71,7 +66,7 @@ namespace Hypertable {
     uint8_t *add(const void *data, size_t len) {
       if (len > remaining())
 	grow((size_t)(1.5 * (size+len)));
-      return addNoCheck(data, len);
+      return add_unchecked(data, len);
     }
 
     void set(const void *data, size_t len) {
@@ -85,7 +80,7 @@ namespace Hypertable {
 
     void free() {
       if (own)
-	delete [] base;
+        delete [] base;
       base = ptr = 0;
       size = 0;
     }
@@ -93,23 +88,23 @@ namespace Hypertable {
     uint8_t *release(size_t *lenp=0) {
       uint8_t *rbuf = base;
       if (lenp)
-	*lenp = fill();
+        *lenp = fill();
       ptr = base = 0;
       size = 0;
       return rbuf;
     }
 
-    void grow(size_t newSize, bool nocopy = false) {
-      uint8_t *newBuf = new uint8_t [ newSize ];
+    void grow(size_t new_size, bool nocopy = false) {
+      uint8_t *new_buf = new uint8_t[new_size];
 
       if (!nocopy && base)
-	memcpy(newBuf, base, ptr-base);
+        memcpy(new_buf, base, ptr-base);
 
-      ptr = newBuf + (ptr-base);
+      ptr = new_buf + (ptr-base);
       if (own)
-	delete [] base;
-      base = newBuf;
-      size = newSize;
+        delete [] base;
+      base = new_buf;
+      size = new_size;
     }
 
     uint8_t *base;

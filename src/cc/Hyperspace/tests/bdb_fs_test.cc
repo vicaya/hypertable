@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -61,14 +61,14 @@ int main(int argc, char **argv) {
 
   try {
     std::vector<String> listing;
-    std::vector<DirEntryT> dir_listing;
+    std::vector<DirEntry> dir_listing;
 
     bdb_fs->mkdir(txn, "/dir1");
     bdb_fs->create(txn, "/dir1/foo", false);
     bdb_fs->set_xattr_i32(txn, "/dir1/foo", "lock.generation", 2);
     bdb_fs->unlink(txn, "/dir1/foo");
     bdb_fs->get_directory_listing(txn, "/dir1", dir_listing);
-    
+
     if (!dir_listing.empty())
       fprintf(fp, "/dir1 not empty\n");
 
@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
     if (bdb_fs->exists(txn, "/foo", &isdir)) {
       fprintf(fp, "\"/foo\" exists, and is ");
       if (!isdir)
-	fprintf(fp, "not ");
+        fprintf(fp, "not ");
       fprintf(fp, "a directory\n");
     }
 
@@ -125,8 +125,8 @@ int main(int argc, char **argv) {
 
     for (size_t i=0; i<dir_listing.size(); i++) {
       fprintf(fp, "%s", dir_listing[i].name.c_str());
-      if (dir_listing[i].isDirectory)
-	fwrite("/", 1, 1, fp);
+      if (dir_listing[i].is_dir)
+        fwrite("/", 1, 1, fp);
       fwrite("\n", 1, 1, fp);
     }
 

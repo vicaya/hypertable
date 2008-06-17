@@ -1,24 +1,25 @@
 /**
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of
  * the License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -50,7 +51,7 @@ namespace {
     "",
     (const char *)0
   };
-  
+
 }
 
 
@@ -90,14 +91,14 @@ int main(int argc, char **argv) {
 
     if (!in_b.good()) {
       if (state == 2)
-	cout << "---" << endl;
+        cout << "---" << endl;
       if (a_cached) {
-	cout << "< " << line_a << endl;
-	a_cached = false;
+        cout << "< " << line_a << endl;
+        a_cached = false;
       }
       while (in_a.good()) {
-	if (getline(in_a, line_a))
-	  cout << "< " << line_a << endl;
+        if (getline(in_a, line_a))
+          cout << "< " << line_a << endl;
       }
       break;
     }
@@ -114,7 +115,7 @@ int main(int argc, char **argv) {
       a_cached = false;
       b_cached = true;
       if (state == 2)
-	cout << "---" << endl;
+        cout << "---" << endl;
       state = 1;
       cout << "< " << line_a << endl;
     }
@@ -122,7 +123,7 @@ int main(int argc, char **argv) {
       a_cached = true;
       b_cached = false;
       if (state == 1)
-	cout << "---" << endl;
+        cout << "---" << endl;
       state = 2;
       cout << "> " << line_b << endl;
     }
@@ -140,12 +141,12 @@ int main(int argc, char **argv) {
     }
     while (in_b.good()) {
       if (getline(in_b, line_b))
-	cout << "> " << line_b << endl;
+        cout << "> " << line_b << endl;
     }
   }
 
   in_a.close();
   in_b.close();
-  
+
 
 }

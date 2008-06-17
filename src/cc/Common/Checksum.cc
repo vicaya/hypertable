@@ -33,7 +33,7 @@ namespace Hypertable {
 
 /* cf. http://en.wikipedia.org/wiki/Fletcher%27s_checksum
  */
-uint32_t 
+uint32_t
 fletcher32(const void *data8, size_t len8) {
   /* data may not be aligned properly and would segfault on
    * many systems if cast and used as 16-bit words
@@ -94,7 +94,7 @@ fletcher32a(const uint16_t *data, size_t len) {
      */
     unsigned tlen = len > 360 ? 360 : len;
     len -= tlen;
-    
+
     if (tlen >= 16) do {
       HT_F32A_DO16(data, 0);
       data += 16;
@@ -153,8 +153,8 @@ update_adler32_wp(uint32_t adler, const void *data8, size_t len) {
 
   return (b << 16) | a;
 }
- 
-uint32_t 
+
+uint32_t
 adler32_wp(const void *data, size_t len) {
   return update_adler32_wp(1, data, len);
 }
@@ -190,8 +190,8 @@ update_adler32(uint32_t adler, const void *data8, size_t len) {
   }
   return (b << 16) | a;
 }
- 
-uint32_t 
+
+uint32_t
 adler32(const void *data, size_t len) {
   return update_adler32(1, data, len);
 }

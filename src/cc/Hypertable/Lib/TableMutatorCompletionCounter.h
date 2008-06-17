@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -36,7 +36,7 @@ namespace Hypertable {
   public:
     TableMutatorCompletionCounter() : m_outstanding(0), m_retries(false), m_errors(false), m_done(false) { }
 
-    void set(size_t count) { 
+    void set(size_t count) {
       boost::mutex::scoped_lock lock(m_mutex);
       m_outstanding = count;
       m_done = (m_outstanding == 0) ? true : false;
@@ -48,8 +48,8 @@ namespace Hypertable {
       assert(m_outstanding);
       m_outstanding--;
       if (m_outstanding == 0) {
-	m_done = true;
-	m_cond.notify_all();
+        m_done = true;
+        m_cond.notify_all();
       }
     }
 
@@ -61,15 +61,15 @@ namespace Hypertable {
       expire_time.sec += (int64_t)timer.remaining();
 
       while (m_outstanding) {
-	if (!m_cond.timed_wait(lock, expire_time))
-	  throw Exception(Error::REQUEST_TIMEOUT);
+        if (!m_cond.timed_wait(lock, expire_time))
+          HT_THROW(Error::REQUEST_TIMEOUT, "");
       }
 
       return !(m_retries || m_errors);
     }
 
     void set_retries() { m_retries = true; }
-    
+
     void set_errors() { m_errors = true; }
 
     bool has_retries() { return m_retries; }

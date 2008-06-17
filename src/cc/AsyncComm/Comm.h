@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -27,10 +27,6 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/xtime.hpp>
 
-extern "C" {
-#include <stdint.h>
-}
-
 #include "Common/ReferenceCount.h"
 
 #include "DispatchHandler.h"
@@ -38,7 +34,6 @@ extern "C" {
 #include "ConnectionHandlerFactory.h"
 #include "HandlerMap.h"
 
-using namespace std;
 
 namespace Hypertable {
 
@@ -126,7 +121,7 @@ namespace Hypertable {
      * end of the connection.  The request message to send is encapsulated
      * in the cbuf_ptr object (see CommBuf) and should start with a valid header.
      * The dispatch handler given by the response_handler argument will get
-     * called back with either a response MESSAGE event or a TIMEOUT event if     
+     * called back with either a response MESSAGE event or a TIMEOUT event if
      * no response is received within the number of seconds specified by the
      * timeout argument.
      *
@@ -165,8 +160,8 @@ namespace Hypertable {
      * <pre>
      * HeaderBuilder hbuilder;
      * hbuilder.initialize_from_request(request_event_ptr->header);
-     * CommBufPtr cbufPtr( new CommBuf(hbuilder, 4) );
-     * cbufPtr->append_int(Error::OK);
+     * CommBufPtr cbp(new CommBuf(hbuilder, 4));
+     * cbp->append_i32(Error::OK);
      * </pre>
      *
      * @param addr connection identifier (remote address)
@@ -233,7 +228,7 @@ namespace Hypertable {
     int set_timer_absolute(boost::xtime expire_time, DispatchHandler *handler);
 
     /**
-     * Closes the socket connection specified by the addr argument.  This has the 
+     * Closes the socket connection specified by the addr argument.  This has the
      * effect of closing the connection and removing it from the event demultiplexer
      * (e.g epoll).  It also causes all outstanding requests on the connection to
      * get purged.

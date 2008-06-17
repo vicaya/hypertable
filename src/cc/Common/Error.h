@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -125,7 +125,7 @@ namespace Hypertable {
 
       SERIALIZATION_INPUT_OVERRUN = 0x00080001,
       SERIALIZATION_BAD_VINT      = 0x00080002,
-      SERIALIZATION_BAD_CSTR      = 0x00080003
+      SERIALIZATION_BAD_VSTR      = 0x00080003
     };
 
     const char *get_text(int error);
@@ -181,22 +181,24 @@ namespace Hypertable {
 #define HT_THROW(_code_, _msg_) \
   throw Exception(_code_, _msg_, __LINE__, __func__, __FILE__)
 
+#define HT_THROW2(_code_, _ex_, _msg_) \
+  throw Exception(_code_, _msg_, _ex_, __LINE__, __func__, __FILE__)
+
 #define HT_THROWF(_code_, _fmt_, ...) \
   throw Exception(_code_, format(_fmt_, __VA_ARGS__), \
                   __LINE__, __func__, __FILE__)
 
+#define HT_THROW2F(_code_, _ex_, _fmt_, ...) \
+  throw Exception(_code_, format(_fmt_, __VA_ARGS__), _ex_, \
+                  __LINE__, __func__, __FILE__)
+
 #define HT_TRY(_s_, _code_) do { \
   try { _code_; } \
-  catch (Exception &e) { \
-    throw Exception(e.code(), _s_, e, __LINE__, __func__, __FILE__); \
-  } \
+  catch (Exception &e) { HT_THROW2(e.code(), e, _s_); } \
   catch (std::exception &e) { \
-    throw Exception(Error::EXTERNAL, format("External exception " _s_ ": %s", \
-                    e.what()), __LINE__, __func__, __FILE__); \
+    HT_THROWF(Error::EXTERNAL, "External exception " _s_ ": %s",  e.what()); \
   } \
-  catch (...) { throw Exception(Error::EXTERNAL, "Unknown exception " _s_, \
-                                __LINE__, __func__, __FILE__); \
-  } \
+  catch (...) { HT_THROW(Error::EXTERNAL, "Unknown exception " _s_); } \
 } while (0)
 
 

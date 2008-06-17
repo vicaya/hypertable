@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -29,9 +29,10 @@
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/DispatchHandler.h"
 
-using namespace Hypertable;
 
 namespace Hyperspace {
+
+  using namespace Hypertable;
 
   class Session;
 
@@ -43,11 +44,11 @@ namespace Hyperspace {
     ClientConnectionHandler(Comm *comm, Session *session, time_t timeout);
     virtual ~ClientConnectionHandler();
 
-    virtual void handle(Hypertable::EventPtr &eventPtr);
+    virtual void handle(Hypertable::EventPtr &event_ptr);
 
     void set_session_id(uint64_t id) { m_session_id = id; }
 
-    bool disconnected() { 
+    bool disconnected() {
       boost::mutex::scoped_lock lock(m_mutex);
       return m_state == DISCONNECTED;
     }
@@ -58,11 +59,11 @@ namespace Hyperspace {
       int error;
       m_state = CONNECTING;
       if ((error = m_comm->connect(addr, dhp)) != Error::OK) {
-	std::string str;
-	HT_ERRORF("Problem establishing TCP connection with Hyperspace.Master at %s - %s",
-		     InetAddr::string_format(str, addr), Error::get_text(error));
-	m_comm->close_socket(addr);
-	m_state = DISCONNECTED;
+        std::string str;
+        HT_ERRORF("Problem establishing TCP connection with Hyperspace.Master at %s - %s",
+                     InetAddr::string_format(str, addr), Error::get_text(error));
+        m_comm->close_socket(addr);
+        m_state = DISCONNECTED;
       }
       return error;
     }
@@ -86,7 +87,7 @@ namespace Hyperspace {
     time_t m_timeout;
   };
   typedef boost::intrusive_ptr<ClientConnectionHandler> ClientConnectionHandlerPtr;
-  
+
 
 }
 

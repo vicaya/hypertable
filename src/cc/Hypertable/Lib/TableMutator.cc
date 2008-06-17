@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cstring>
 
 extern "C" {
@@ -33,13 +34,15 @@ extern "C" {
 #include "Key.h"
 #include "TableMutator.h"
 
+using namespace Hypertable;
+
 namespace {
   const uint64_t DEFAULT_MAX_MEMORY = 20000000LL;
 }
 
 
 /**
- * 
+ *
  */
 TableMutator::TableMutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, int timeout) : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr), m_range_locator_ptr(range_locator_ptr), m_table_identifier(table_identifier), m_memory_used(0), m_max_memory(DEFAULT_MAX_MEMORY), m_resends(0), m_timeout(timeout), m_last_error(Error::OK), m_last_op(0) {
 
@@ -53,7 +56,7 @@ TableMutator::TableMutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier
 
 
 /**
- * 
+ *
  */
 void TableMutator::set(uint64_t timestamp, KeySpec &key, const void *value, uint32_t value_len) {
   Timer timer(m_timeout);
@@ -68,18 +71,18 @@ void TableMutator::set(uint64_t timestamp, KeySpec &key, const void *value, uint
     sanity_check_key(key);
 
     if (key.column_family == 0)
-      throw Exception(Error::BAD_KEY, "Invalid key - column family not specified");
+      HT_THROW(Error::BAD_KEY, "Invalid key - column family not specified");
 
     {
       Key full_key;
       Schema::ColumnFamily *cf = m_schema_ptr->get_column_family(key.column_family);
       if (cf == 0)
-	throw Exception(Error::BAD_KEY, (std::string)"Invalid key - bad column family '" + key.column_family + "'");
+        HT_THROW(Error::BAD_KEY, (std::string)"Invalid key - bad column family '" + key.column_family + "'");
       full_key.row = (const char *)key.row;
       full_key.column_qualifier = (const char *)key.column_qualifier;
       full_key.column_family_code = (uint8_t)cf->id;
       full_key.timestamp = timestamp;
-    
+
       m_buffer_ptr->set(full_key, value, value_len, timer);
     }
 
@@ -92,7 +95,7 @@ void TableMutator::set(uint64_t timestamp, KeySpec &key, const void *value, uint
       timer.start();
 
       if (m_prev_buffer_ptr)
-	wait_for_previous_buffer(timer);
+        wait_for_previous_buffer(timer);
 
       m_buffer_ptr->send();
 
@@ -133,12 +136,12 @@ void TableMutator::set_delete(uint64_t timestamp, KeySpec &key) {
       full_key.row = (const char *)key.row;
       full_key.column_family_code = 0;
       full_key.column_qualifier = 0;
-      full_key.timestamp = timestamp;    
+      full_key.timestamp = timestamp;
     }
     else  {
       Schema::ColumnFamily *cf = m_schema_ptr->get_column_family(key.column_family);
       if (cf == 0)
-	throw Exception(Error::BAD_KEY, (std::string)"Invalid key - bad column family '" + key.column_family + "'");
+        HT_THROW(Error::BAD_KEY, (std::string)"Invalid key - bad column family '" + key.column_family + "'");
       full_key.row = (const char *)key.row;
       full_key.column_qualifier = (const char *)key.column_qualifier;
       full_key.column_family_code = (uint8_t)cf->id;
@@ -156,7 +159,7 @@ void TableMutator::set_delete(uint64_t timestamp, KeySpec &key) {
       timer.start();
 
       if (m_prev_buffer_ptr)
-	wait_for_previous_buffer(timer);
+        wait_for_previous_buffer(timer);
 
       m_buffer_ptr->send();
 
@@ -243,7 +246,7 @@ void TableMutator::wait_for_previous_buffer(Timer &timer) {
   while (!m_prev_buffer_ptr->wait_for_completion(timer)) {
 
     if (timer.remaining() < wait_time)
-      throw Exception(Error::REQUEST_TIMEOUT);
+      HT_THROW(Error::REQUEST_TIMEOUT, "");
 
     // wait a bit
     poll(0, 0, wait_time*1000);
@@ -277,24 +280,24 @@ void TableMutator::sanity_check_key(KeySpec &key) {
    * Sanity check the row key
    */
   if (key.row_len == 0)
-    throw Exception(Error::BAD_KEY, "Invalid row key - cannot be zero length");
+    HT_THROW(Error::BAD_KEY, "Invalid row key - cannot be zero length");
 
   if (row[key.row_len] != 0)
-    throw Exception(Error::BAD_KEY, "Invalid row key - must be followed by a '\\0' character");
+    HT_THROW(Error::BAD_KEY, "Invalid row key - must be followed by a '\\0' character");
 
   if (strlen(row) != key.row_len)
-    throw Exception(Error::BAD_KEY, (std::string)"Invalid row key - '\\0' character not allowed (offset=" + (uint32_t)strlen(row) + ")");
+    HT_THROW(Error::BAD_KEY, (std::string)"Invalid row key - '\\0' character not allowed (offset=" + (uint32_t)strlen(row) + ")");
 
   if (row[0] == (char)0xff && row[1] == (char)0xff)
-    throw Exception(Error::BAD_KEY, "Invalid row key - cannot start with character sequence 0xff 0xff");
+    HT_THROW(Error::BAD_KEY, "Invalid row key - cannot start with character sequence 0xff 0xff");
 
   /**
    * Sanity check the column qualifier
    */
   if (key.column_qualifier_len > 0) {
     if (column_qualifier[key.column_qualifier_len] != 0)
-      throw Exception(Error::BAD_KEY, "Invalid column qualifier - must be followed by a '\\0' character");
+      HT_THROW(Error::BAD_KEY, "Invalid column qualifier - must be followed by a '\\0' character");
     if (strlen(column_qualifier) != key.column_qualifier_len)
-      throw Exception(Error::BAD_KEY, (std::string)"Invalid column qualifier - '\\0' character not allowed (offset=" + (uint32_t)strlen(column_qualifier) + ")");
+      HT_THROW(Error::BAD_KEY, (std::string)"Invalid column qualifier - '\\0' character not allowed (offset=" + (uint32_t)strlen(column_qualifier) + ")");
   }
 }

@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -32,7 +32,7 @@ namespace {
     const char  *text;
   };
 
-  ErrorInfo errorInfo[] = {
+  ErrorInfo error_info[] = {
     { Error::UNPOSSIBLE,                  "But that's unpossible!" },
     { Error::EXTERNAL,                    "External error" },
     { Error::OK,                          "HYPERTABLE ok" },
@@ -120,25 +120,25 @@ namespace {
     { Error::METALOG_CHECKSUM_MISMATCH, "METALOG checksum mismatch" },
     { Error::SERIALIZATION_INPUT_OVERRUN, "SERIALIZATION input buffer overrun" },
     { Error::SERIALIZATION_BAD_VINT,      "SERIALIZATION bad vint encoding" },
-    { Error::SERIALIZATION_BAD_CSTR,      "SERIALIZATION bad c-string" },
+    { Error::SERIALIZATION_BAD_VSTR,      "SERIALIZATION bad vstr encoding" },
     { 0, 0 }
   };
 
   typedef hash_map<int, const char *>  TextMap;
 
-  TextMap &buildTextMap() {
+  TextMap &build_text_map() {
     TextMap *map = new TextMap();
-    for (int i=0; errorInfo[i].text != 0; i++)
-      (*map)[errorInfo[i].code] = errorInfo[i].text;
+    for (int i=0; error_info[i].text != 0; i++)
+      (*map)[error_info[i].code] = error_info[i].text;
     return *map;
   }
 
-  TextMap &textMap = buildTextMap();
+  TextMap &text_map = build_text_map();
 
 } // local namespace
 
 const char *Error::get_text(int error) {
-  const char *text = textMap[error];
+  const char *text = text_map[error];
   if (text == 0)
     return "ERROR NOT REGISTERED";
   return text;
@@ -148,7 +148,7 @@ namespace Hypertable {
 
 std::ostream &operator<<(std::ostream &out, const Exception &e) {
   out <<"Hypertable::Exception: "<< e.what() <<" - "
-      << Error::get_text(e.code()); 
+      << Error::get_text(e.code());
 
   if (e.line()) {
     out <<"\n\tat "<< e.func() <<'('<< e.file() <<':'<< e.line() <<')';

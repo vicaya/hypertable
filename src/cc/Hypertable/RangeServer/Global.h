@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -52,18 +52,18 @@ namespace Hypertable {
   public:
     static Hyperspace::SessionPtr hyperspace_ptr;
     static Hypertable::Filesystem *dfs;
-    static Hypertable::Filesystem *logDfs;
+    static Hypertable::Filesystem *log_dfs;
     static Hypertable::MaintenanceQueue *maintenance_queue;
     static Hypertable::RangeServerProtocol *protocol;
     static bool           verbose;
     static CommitLog     *log;
-    static std::string    logDir;
-    static uint64_t       rangeMaxBytes;
-    static int32_t        localityGroupMaxFiles;
-    static int32_t        localityGroupMergeFiles;
-    static int32_t        localityGroupMaxMemory;
-    static ScannerMap     scannerMap;
-    static Hypertable::FileBlockCache *blockCache;
+    static std::string    log_dir;
+    static uint64_t       range_max_bytes;
+    static int32_t        access_group_max_files;
+    static int32_t        access_group_merge_files;
+    static int32_t        access_group_max_mem;
+    static ScannerMap     scanner_map;
+    static Hypertable::FileBlockCache *block_cache;
     static TablePtr       metadata_table_ptr;
     static uint64_t       range_metadata_max_bytes;
     static Hypertable::MemoryTracker memory_tracker;

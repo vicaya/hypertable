@@ -8,7 +8,7 @@ using namespace Hypertable;
 namespace {
 
 void test_ex4() {
-  HT_THROW(Error::PROTOCOL_ERROR, ""); 
+  HT_THROW(Error::PROTOCOL_ERROR, "");
 }
 
 void test_ex3() {
@@ -36,6 +36,6 @@ int main(int ac, char *av[]) {
     test_ex0();
   }
   catch (Exception &e) {
-    HT_INFO_OUT <<"Exception trace: "<<  e << HT_ERROR_END;
+    HT_INFO_OUT <<"Exception trace: "<< e << HT_END;
   }
 }

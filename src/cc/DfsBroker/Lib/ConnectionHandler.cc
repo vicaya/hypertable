@@ -1,27 +1,28 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include "Common/Error.h"
-#include "Common/Exception.h"
 #include "Common/StringExt.h"
+#include "Common/Serialization.h"
 
 #include "AsyncComm/ApplicationQueue.h"
 
@@ -45,114 +46,110 @@
 #include "RequestHandlerRename.h"
 
 using namespace Hypertable;
-using namespace Hypertable::DfsBroker;
+using namespace DfsBroker;
+using namespace Serialization;
 
 /**
  *
  */
-void ConnectionHandler::handle(EventPtr &eventPtr) {
+void ConnectionHandler::handle(EventPtr &event) {
   short command = -1;
 
-  if (eventPtr->type == Event::MESSAGE) {
-    ApplicationHandler *requestHandler = 0;
+  if (event->type == Event::MESSAGE) {
+    ApplicationHandler *handler = 0;
+    const uint8_t *msg = event->message;
+    size_t remain = event->message_len;
 
-    //eventPtr->display()
+    //event->display()
 
     try {
-      if (eventPtr->messageLen < sizeof(int16_t)) {
-	std::string message = "Truncated Request";
-	throw new ProtocolException(message);
-      }
-      memcpy(&command, eventPtr->message, sizeof(int16_t));
+      command = decode_i16(&msg, &remain);
 
       // sanity check command code
-      if (command < 0 || command >= Protocol::COMMAND_MAX) {
-	std::string message = (std::string)"Invalid command (" + command + ")";
-	throw ProtocolException(message);
-      }
+      if (command < 0 || command >= Protocol::COMMAND_MAX)
+        HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%d)", command);
 
       switch (command) {
       case Protocol::COMMAND_OPEN:
-	requestHandler = new RequestHandlerOpen(m_comm, m_broker_ptr.get(), eventPtr);
-	break;
+        handler = new RequestHandlerOpen(m_comm, m_broker_ptr.get(), event);
+        break;
       case Protocol::COMMAND_CREATE:
-	requestHandler = new RequestHandlerCreate(m_comm, m_broker_ptr.get(), eventPtr);
-	break;
+        handler = new RequestHandlerCreate(m_comm, m_broker_ptr.get(), event);
+        break;
       case Protocol::COMMAND_CLOSE:
-	requestHandler = new RequestHandlerClose(m_comm, m_broker_ptr.get(), eventPtr);
-	break;
+        handler = new RequestHandlerClose(m_comm, m_broker_ptr.get(), event);
+        break;
       case Protocol::COMMAND_READ:
-	requestHandler = new RequestHandlerRead(m_comm, m_broker_ptr.get(), eventPtr);
-	break;
+        handler = new RequestHandlerRead(m_comm, m_broker_ptr.get(), event);
+        break;
       case Protocol::COMMAND_APPEND:
-	requestHandler = new RequestHandlerAppend(m_comm, m_broker_ptr.get(), eventPtr);
-	break;
+        handler = new RequestHandlerAppend(m_comm, m_broker_ptr.get(), event);
+        break;
       case Protocol::COMMAND_SEEK:
-	requestHandler = new RequestHandlerSeek(m_comm, m_broker_ptr.get(), eventPtr);
-	break;
+        handler = new RequestHandlerSeek(m_comm, m_broker_ptr.get(), event);
+        break;
       case Protocol::COMMAND_REMOVE:
-	requestHandler = new RequestHandlerRemove(m_comm, m_broker_ptr.get(), eventPtr);
-	break;
+        handler = new RequestHandlerRemove(m_comm, m_broker_ptr.get(), event);
+        break;
       case Protocol::COMMAND_LENGTH:
-	requestHandler = new RequestHandlerLength(m_comm, m_broker_ptr.get(), eventPtr);
-	break;
+        handler = new RequestHandlerLength(m_comm, m_broker_ptr.get(), event);
+        break;
       case Protocol::COMMAND_PREAD:
-	requestHandler = new RequestHandlerPread(m_comm, m_broker_ptr.get(), eventPtr);
-	break;
+        handler = new RequestHandlerPread(m_comm, m_broker_ptr.get(), event);
+        break;
       case Protocol::COMMAND_MKDIRS:
-	requestHandler = new RequestHandlerMkdirs(m_comm, m_broker_ptr.get(), eventPtr);
-	break;
+        handler = new RequestHandlerMkdirs(m_comm, m_broker_ptr.get(), event);
+        break;
       case Protocol::COMMAND_FLUSH:
-	requestHandler = new RequestHandlerFlush(m_comm, m_broker_ptr.get(), eventPtr);
-	break;
+        handler = new RequestHandlerFlush(m_comm, m_broker_ptr.get(), event);
+        break;
       case Protocol::COMMAND_RMDIR:
-	requestHandler = new RequestHandlerRmdir(m_comm, m_broker_ptr.get(), eventPtr);
-	break;
+        handler = new RequestHandlerRmdir(m_comm, m_broker_ptr.get(), event);
+        break;
       case Protocol::COMMAND_READDIR:
-	requestHandler = new RequestHandlerReaddir(m_comm, m_broker_ptr.get(), eventPtr);
-	break;
+        handler = new RequestHandlerReaddir(m_comm, m_broker_ptr.get(), event);
+        break;
       case Protocol::COMMAND_EXISTS:
-	requestHandler = new RequestHandlerExists(m_comm, m_broker_ptr.get(), eventPtr);
-	break;
+        handler = new RequestHandlerExists(m_comm, m_broker_ptr.get(), event);
+        break;
       case Protocol::COMMAND_RENAME:
-	requestHandler = new RequestHandlerRename(m_comm, m_broker_ptr.get(), eventPtr);
-	break;
+        handler = new RequestHandlerRename(m_comm, m_broker_ptr.get(), event);
+        break;
       case Protocol::COMMAND_STATUS:
-	requestHandler = new RequestHandlerStatus(m_comm, m_broker_ptr.get(), eventPtr);
-	break;
-      case Protocol::COMMAND_SHUTDOWN:
-	{
-	  uint16_t flags = 0;
-	  ResponseCallback cb(m_comm, eventPtr);
-	  if (eventPtr->messageLen >= 4)
-	    memcpy(&flags, &eventPtr->message[2], 2);
-	  if ((flags & Protocol::SHUTDOWN_FLAG_IMMEDIATE) != 0)
-	    m_app_queue_ptr->shutdown();
-	  m_broker_ptr->shutdown(&cb);
-	  exit(0);
-	}
-	break;
+        handler = new RequestHandlerStatus(m_comm, m_broker_ptr.get(), event);
+        break;
+      case Protocol::COMMAND_SHUTDOWN: {
+          uint16_t flags = 0;
+          ResponseCallback cb(m_comm, event);
+          if (event->message_len >= 4)
+            memcpy(&flags, &event->message[2], 2);
+          if ((flags & Protocol::SHUTDOWN_FLAG_IMMEDIATE) != 0)
+            m_app_queue_ptr->shutdown();
+          m_broker_ptr->shutdown(&cb);
+          exit(0);
+        }
+        break;
       default:
-	std::string message = (string)"Command code " + command + " not implemented";
-	throw ProtocolException(message);
+        HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%d)", command);
       }
-      m_app_queue_ptr->add( requestHandler );
+      m_app_queue_ptr->add(handler);
     }
-    catch (ProtocolException &e) {
-      ResponseCallback cb(m_comm, eventPtr);
-      std::string errMsg = e.what();
-      HT_ERRORF("Protocol error '%s'", e.what());
-      cb.error(Error::PROTOCOL_ERROR, errMsg);
+    catch (Exception &e) {
+      ResponseCallback cb(m_comm, event);
+      HT_ERROR_OUT << e << HT_END;
+      String errmsg = format("%s - %s", e.what(), Error::get_text(e.code()));
+      cb.error(Error::PROTOCOL_ERROR, errmsg);
     }
   }
-  else if (eventPtr->type == Event::DISCONNECT) {
-    HT_INFOF("%s : Closing all open handles from %s:%d", eventPtr->toString().c_str(),
-		inet_ntoa(eventPtr->addr.sin_addr), ntohs(eventPtr->addr.sin_port));
-    OpenFileMap &ofMap = m_broker_ptr->get_open_file_map();
-    ofMap.remove_all(eventPtr->addr);
+  else if (event->type == Event::DISCONNECT) {
+    HT_INFOF("%s : Closing all open handles from %s:%d",
+             event->to_str().c_str(), inet_ntoa(event->addr.sin_addr),
+             ntohs(event->addr.sin_port));
+    OpenFileMap &ofmap = m_broker_ptr->get_open_file_map();
+    ofmap.remove_all(event->addr);
   }
   else {
-    HT_INFOF("%s", eventPtr->toString().c_str());
+    HT_INFOF("%s", event->to_str().c_str());
   }
 
 }

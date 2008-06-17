@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -39,12 +39,12 @@ namespace Hypertable {
   public:
 
     virtual ~CellStore() { return; }
-    
+
     virtual int add(const ByteString key, const ByteString value, uint64_t real_timestamp) = 0;
 
     virtual const char *get_split_row() = 0;
 
-    virtual CellListScanner *create_scanner(ScanContextPtr &scanContextPtr) { return 0; }
+    virtual CellListScanner *create_scanner(ScanContextPtr &scan_ctx) { return 0; }
 
     /**
      * Creates a new cell store.
@@ -55,7 +55,7 @@ namespace Hypertable {
      * @return Error::OK on success, error code on failure
      */
     virtual int create(const char *fname, uint32_t blocksize, const std::string &compressor) = 0;
-    
+
     /**
      * Finalizes the creation of a cell store, by writing block index and metadata trailer.
      *
@@ -63,7 +63,7 @@ namespace Hypertable {
      * @return Error::OK on success, error code on failure
      */
     virtual int finalize(Timestamp &timestamp) = 0;
-    
+
     /**
      * Opens a cell store with possibly a restricted view.  When a range splits, the cell stores
      * that comprise the range get shared between the two newly created ranges.  This method allows
@@ -78,14 +78,14 @@ namespace Hypertable {
 
     /**
      * Loads the block index data into an in-memory map.
-     * 
+     *
      * @return Error::OK on success, error code on failure
      */
     virtual int load_index() = 0;
 
     /**
      * Returns the block size used for this cell store.  The block size is the amount of
-     * uncompressed key/value pairs to collect before compressing and storing as a 
+     * uncompressed key/value pairs to collect before compressing and storing as a
      * compressed block in the cell store.
      *
      * @return block size

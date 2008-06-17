@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include "Global.h"
 #include "TableInfoMap.h"
 
@@ -31,7 +32,7 @@ TableInfoMap::~TableInfoMap() {
 
 bool TableInfoMap::get(uint32_t id, TableInfoPtr &info) {
   boost::mutex::scoped_lock lock(m_mutex);
-  TableInfoMapT::iterator iter = m_map.find(id);
+  InfoMap::iterator iter = m_map.find(id);
   if (iter == m_map.end())
     return false;
   info = (*iter).second;
@@ -41,7 +42,7 @@ bool TableInfoMap::get(uint32_t id, TableInfoPtr &info) {
 
 void TableInfoMap::set(uint32_t id, TableInfoPtr &info) {
   boost::mutex::scoped_lock lock(m_mutex);
-  TableInfoMapT::iterator iter = m_map.find(id);
+  InfoMap::iterator iter = m_map.find(id);
   if (iter != m_map.end())
     m_map.erase(iter);
   m_map[id] = info;
@@ -50,7 +51,7 @@ void TableInfoMap::set(uint32_t id, TableInfoPtr &info) {
 
 bool TableInfoMap::remove(uint32_t id, TableInfoPtr &info) {
   boost::mutex::scoped_lock lock(m_mutex);
-  TableInfoMapT::iterator iter = m_map.find(id);
+  InfoMap::iterator iter = m_map.find(id);
   if (iter == m_map.end())
     return false;
   info = (*iter).second;
@@ -61,7 +62,7 @@ bool TableInfoMap::remove(uint32_t id, TableInfoPtr &info) {
 
 void TableInfoMap::get_all(std::vector<TableInfoPtr> &tv) {
   boost::mutex::scoped_lock lock(m_mutex);
-  for (TableInfoMapT::iterator iter = m_map.begin(); iter != m_map.end(); iter++)
+  for (InfoMap::iterator iter = m_map.begin(); iter != m_map.end(); iter++)
     tv.push_back((*iter).second);
 }
 
@@ -74,14 +75,14 @@ void TableInfoMap::clear() {
 
 void TableInfoMap::clear_ranges() {
   boost::mutex::scoped_lock lock(m_mutex);
-  for (TableInfoMapT::iterator iter = m_map.begin(); iter != m_map.end(); iter++)
+  for (InfoMap::iterator iter = m_map.begin(); iter != m_map.end(); iter++)
     (*iter).second->clear();
 }
 
 
 void TableInfoMap::atomic_merge(TableInfoMapPtr &table_info_map_ptr, CommitLogBase *replay_log) {
   boost::mutex::scoped_lock lock(m_mutex);
-  TableInfoMapT::iterator from_iter, to_iter;
+  InfoMap::iterator from_iter, to_iter;
   uint32_t table_id;
   int error;
 
@@ -97,12 +98,12 @@ void TableInfoMap::atomic_merge(TableInfoMapPtr &table_info_map_ptr, CommitLogBa
       std::vector<RangePtr> range_vec;
       (*from_iter).second->get_range_vector(range_vec);
       for (size_t i=0; i<range_vec.size(); i++)
-	(*to_iter).second->add_range(range_vec[i]);
+        (*to_iter).second->add_range(range_vec[i]);
     }
   }
 
   table_info_map_ptr->clear();
 
   if ((error = Global::log->link_log(replay_log, Global::log->get_timestamp())) != Error::OK)
-    throw Exception(error, std::string("Problem linking replay commit log '") + replay_log->get_log_dir() + "'");
+    HT_THROW(error, std::string("Problem linking replay commit log '") + replay_log->get_log_dir() + "'");
 }

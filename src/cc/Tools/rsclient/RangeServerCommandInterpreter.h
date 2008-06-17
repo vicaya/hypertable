@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -45,14 +45,14 @@ namespace Hypertable {
 
   private:
 
-    void display_scan_data(const ByteString &key, const ByteString &value, SchemaPtr &schemaPtr);
+    void display_scan_data(const ByteString &key, const ByteString &value, SchemaPtr &schema_ptr);
 
     Comm *m_comm;
     Hyperspace::SessionPtr m_hyperspace_ptr;
     struct sockaddr_in m_addr;
     RangeServerClientPtr m_range_server_ptr;
-    typedef hash_map<String, TableInfo *> MapT;
-    MapT m_table_map;
+    typedef hash_map<String, TableInfo *> TableMap;
+    TableMap m_table_map;
     int32_t m_cur_scanner_id;
 
   };

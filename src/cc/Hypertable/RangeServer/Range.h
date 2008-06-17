@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -49,11 +49,11 @@ namespace Hypertable {
    */
   class Range : public CellList {
 
-    typedef std::map<string, AccessGroup *> AccessGroupMapT;
-    typedef std::vector<AccessGroup *>  ColumnFamilyVectorT;
+    typedef std::map<String, AccessGroup *> AccessGroupMap;
+    typedef std::vector<AccessGroup *>  ColumnFamilyVector;
 
   public:
-    Range(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, SchemaPtr &schemaPtr, RangeSpec *range, RangeState *state);
+    Range(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, SchemaPtr &schema_ptr, RangeSpec *range, RangeState *state);
     virtual ~Range();
     virtual int add(const ByteString key, const ByteString value, uint64_t real_timestamp);
     int replay_add(const ByteString key, const ByteString value, uint64_t real_timestamp, uint32_t *num_addedp);
@@ -63,9 +63,9 @@ namespace Hypertable {
 
     uint64_t disk_usage();
 
-    CellListScanner *create_scanner(ScanContextPtr &scanContextPtr);
+    CellListScanner *create_scanner(ScanContextPtr &scan_ctx);
 
-    string start_row() {
+    String start_row() {
       boost::mutex::scoped_lock lock(m_mutex);
       return m_start_row;
     }
@@ -90,7 +90,7 @@ namespace Hypertable {
 
     void replay_transfer_log(CommitLogReader *commit_log_reader, uint64_t real_timestamp);
 
-    void get_compaction_priority_data(std::vector<AccessGroup::CompactionPriorityDataT> &priority_data_vector);
+    void get_compaction_priority_data(std::vector<AccessGroup::CompactionPriorityData> &priority_data_vector);
 
 
     bool test_and_set_maintenance() {
@@ -129,8 +129,13 @@ namespace Hypertable {
       return (bool)m_split_log_ptr;
     }
 
-    std::vector<AccessGroup *> &access_group_vector() { return m_access_group_vector; }
-    AccessGroup *get_access_group(string &lgName) { return m_access_group_map[lgName]; }
+    std::vector<AccessGroup *> &access_group_vector() {
+      return m_access_group_vector;
+    }
+
+    AccessGroup *get_access_group(const String &agname) {
+      return m_access_group_map[agname];
+    }
 
     void dump_stats();
 
@@ -141,7 +146,7 @@ namespace Hypertable {
     void drop() {
       boost::mutex::scoped_lock lock(m_mutex);
       for (size_t i=0; i<m_access_group_vector.size(); i++)
-	m_access_group_vector[i]->drop();
+        m_access_group_vector[i]->drop();
     }
 
     String get_name() {
@@ -153,7 +158,7 @@ namespace Hypertable {
 
     void load_cell_stores(Metadata *metadata);
 
-    bool extract_csid_from_path(String &path, uint32_t *storeIdp);
+    bool extract_csid_from_path(String &path, uint32_t *csidp);
 
     void run_compaction(bool major=false);
 
@@ -168,9 +173,9 @@ namespace Hypertable {
     String  m_start_row;
     String  m_end_row;
     String  m_name;
-    AccessGroupMapT        m_access_group_map;
+    AccessGroupMap        m_access_group_map;
     std::vector<AccessGroup *>  m_access_group_vector;
-    ColumnFamilyVectorT      m_column_family_vector;
+    ColumnFamilyVector      m_column_family_vector;
     bool       m_maintenance_in_progress;
 
     Timestamp        m_timestamp;

@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -27,10 +27,6 @@
 #include "IOHandler.h"
 #include "ConnectionHandlerFactory.h"
 
-extern "C" {
-#include <stdint.h>
-}
-
 namespace Hypertable {
 
   /**
@@ -40,7 +36,7 @@ namespace Hypertable {
 
   public:
 
-    IOHandlerAccept(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp, HandlerMapPtr &handler_map_ptr, ConnectionHandlerFactoryPtr &chfPtr) : IOHandler(sd, addr, dhp), m_handler_map_ptr(handler_map_ptr), m_handler_factory_ptr(chfPtr) {
+    IOHandlerAccept(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp, HandlerMapPtr &handler_map_ptr, ConnectionHandlerFactoryPtr &chfp) : IOHandler(sd, addr, dhp), m_handler_map_ptr(handler_map_ptr), m_handler_factory_ptr(chfp) {
       return;
     }
 

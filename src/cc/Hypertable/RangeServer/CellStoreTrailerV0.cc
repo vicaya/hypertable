@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cassert>
 #include <iostream>
 
@@ -26,8 +27,9 @@
 
 #include "CellStoreTrailerV0.h"
 
-using namespace Hypertable;
 using namespace std;
+using namespace Hypertable;
+using namespace Serialization;
 
 
 /**
@@ -61,19 +63,17 @@ void CellStoreTrailerV0::clear() {
  */
 void CellStoreTrailerV0::serialize(uint8_t *buf) {
   uint8_t *base = buf;
-  Serialization::encode_int(&buf, fix_index_offset);
-  Serialization::encode_int(&buf, var_index_offset);
-  Serialization::encode_int(&buf, filter_offset);
-  Serialization::encode_int(&buf, index_entries);
-  Serialization::encode_int(&buf, total_entries);
-  Serialization::encode_int(&buf, blocksize);
-  Serialization::encode_long(&buf, timestamp.logical);
-  Serialization::encode_long(&buf, timestamp.real);
-  uint32_t ival;
-  memcpy(&ival, &compression_ratio, 4);
-  Serialization::encode_int(&buf, ival);
-  Serialization::encode_short(&buf, compression_type);
-  Serialization::encode_short(&buf, version);
+  encode_i32(&buf, fix_index_offset);
+  encode_i32(&buf, var_index_offset);
+  encode_i32(&buf, filter_offset);
+  encode_i32(&buf, index_entries);
+  encode_i32(&buf, total_entries);
+  encode_i32(&buf, blocksize);
+  encode_i64(&buf, timestamp.logical);
+  encode_i64(&buf, timestamp.real);
+  encode_i32(&buf, compression_ratio_i32);
+  encode_i16(&buf, compression_type);
+  encode_i16(&buf, version);
   assert((buf-base) == (int)CellStoreTrailerV0::size());
   (void)base;
 }
@@ -82,21 +82,19 @@ void CellStoreTrailerV0::serialize(uint8_t *buf) {
 
 /**
  */
-void CellStoreTrailerV0::deserialize(uint8_t *buf) {
+void CellStoreTrailerV0::deserialize(const uint8_t *buf) {
   size_t remaining = CellStoreTrailerV0::size();
-  Serialization::decode_int(&buf, &remaining, &fix_index_offset);
-  Serialization::decode_int(&buf, &remaining, &var_index_offset);
-  Serialization::decode_int(&buf, &remaining, &filter_offset);
-  Serialization::decode_int(&buf, &remaining, &index_entries);
-  Serialization::decode_int(&buf, &remaining, &total_entries);
-  Serialization::decode_int(&buf, &remaining, &blocksize);
-  Serialization::decode_long(&buf, &remaining, &timestamp.logical);
-  Serialization::decode_long(&buf, &remaining, &timestamp.real);
-  uint32_t ival;
-  Serialization::decode_int(&buf, &remaining, &ival);
-  memcpy(&compression_ratio, &ival, 4);
-  Serialization::decode_short(&buf, &remaining, &compression_type);
-  Serialization::decode_short(&buf, &remaining, &version);
+  fix_index_offset = decode_i32(&buf, &remaining);
+  var_index_offset = decode_i32(&buf, &remaining);
+  filter_offset = decode_i32(&buf, &remaining);
+  index_entries = decode_i32(&buf, &remaining);
+  total_entries = decode_i32(&buf, &remaining);
+  blocksize = decode_i32(&buf, &remaining);
+  timestamp.logical = decode_i64(&buf, &remaining);
+  timestamp.real = decode_i64(&buf, &remaining);
+  compression_ratio_i32 = decode_i32(&buf, &remaining);
+  compression_type = decode_i16(&buf, &remaining);
+  version = decode_i16(&buf, &remaining);
 }
 
 

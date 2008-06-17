@@ -1,24 +1,25 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include "Common/Error.h"
 #include "Common/Logger.h"
 
@@ -33,53 +34,30 @@
 
 using namespace Hyperspace;
 using namespace Hypertable;
+using namespace Serialization;
 
-/**
- *
- */
 void RequestHandlerOpen::run() {
   ResponseCallbackOpen cb(m_comm, m_event_ptr);
-  const char *name;
-  uint32_t flags;
-  uint32_t eventMask;  
-  size_t remaining = m_event_ptr->messageLen - 2;
-  uint8_t *msgPtr = m_event_ptr->message + 2;
-  uint32_t attrCount;
-  AttributeT attr;
-  std::vector<AttributeT> initAttrs;
+  size_t remaining = m_event_ptr->message_len - 2;
+  const uint8_t *msg = m_event_ptr->message + 2;
+  Attribute attr;
+  std::vector<Attribute> attrs;
 
-  // flags
-  if (!Serialization::decode_int(&msgPtr, &remaining, &flags))
-    goto abort;
+  try {
+    uint32_t flags = decode_i32(&msg, &remaining);
+    uint32_t event_mask = decode_i32(&msg, &remaining);
+    const char *name = decode_vstr(&msg, &remaining);
+    uint32_t attr_count = decode_i32(&msg, &remaining);
 
-  // event mask
-  if (!Serialization::decode_int(&msgPtr, &remaining, &eventMask))
-    goto abort;
-
-  // directory name
-  if (!Serialization::decode_string(&msgPtr, &remaining, &name))
-    goto abort;
-
-  // initial attribute count
-  if (!Serialization::decode_int(&msgPtr, &remaining, &attrCount))
-    goto abort;
-
-  // 
-  for (uint32_t i=0; i<attrCount; i++) {
-    if (!Serialization::decode_string(&msgPtr, &remaining, &attr.name))
-      goto abort;
-    uint8_t *byte_ptr;
-    if (!Serialization::decode_byte_array(&msgPtr, &remaining, &byte_ptr, &attr.valueLen))
-      goto abort;
-    attr.value = byte_ptr;
-    initAttrs.push_back(attr);
+    while (attr_count--) {
+      attr.name = decode_vstr(&msg, &remaining);
+      attr.value = decode_vstr(&msg, &remaining, &attr.value_len);
+      attrs.push_back(attr);
+    }
+    m_master->open(&cb, m_session_id, name, flags, event_mask, attrs);
   }
-
-  m_master->open(&cb, m_session_id, name, flags, eventMask, initAttrs);
-
-  return;
-
- abort:
-  HT_ERROR("Encoding problem with OPEN message");
-  cb.error(Error::PROTOCOL_ERROR, "Encoding problem with OPEN message");
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    cb.error(e.code(), "Error handling Hyperspace open");
+  }
 }

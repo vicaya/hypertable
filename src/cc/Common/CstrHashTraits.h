@@ -31,7 +31,7 @@ struct CstrHashTraits {
   typedef CharArena key_allocator;
 
   struct hasher {
-    size_t 
+    size_t
     operator()(const char *s) const {
       register size_t ret = 0;
 
@@ -43,7 +43,7 @@ struct CstrHashTraits {
   };
 
   struct key_equal {
-    bool 
+    bool
     operator()(const char *a, const char *b) const {
       return std::strcmp(a, b) == 0;
     }
@@ -54,7 +54,7 @@ struct CstrCaseHashTraits {
   typedef CharArena key_allocator;
 
   struct hasher {
-    size_t 
+    size_t
     operator()(const char *s) const {
       register size_t ret = 0;
 
@@ -66,7 +66,7 @@ struct CstrCaseHashTraits {
   };
 
   struct key_equal {
-    bool 
+    bool
     operator()(const char *a, const char *b) const {
       for (; tolower((unsigned)*a) == tolower((unsigned)*b); ++a, ++b)
         if (!*a)

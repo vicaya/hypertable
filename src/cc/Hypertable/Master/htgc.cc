@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Luke Lu (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <iostream>
 #include "Common/Thread.h"
 #include "Common/System.h"
@@ -33,7 +34,7 @@ using namespace std;
 
 namespace {
 
-void 
+void
 do_tfgc(const char *config, bool debug, bool dryrun) {
   if (debug)
     Logger::set_level(log4cpp::Priority::DEBUG);
@@ -58,7 +59,7 @@ do_tfgc(const char *config, bool debug, bool dryrun) {
 
 } // local namespace
 
-int 
+int
 main(int ac, char *av[]) {
   char **it = av + 1, **arg_end = av + ac;
   bool debug = false, dryrun = false;

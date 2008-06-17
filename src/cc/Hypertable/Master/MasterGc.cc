@@ -1,27 +1,26 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Luke Lu (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <unistd.h>
-#include <cstring>
-#include "Common/Sweetener.h"
 #include "Common/Thread.h"
 #include "Common/Properties.h"
 #include "Common/CstrHashMap.h"
@@ -73,7 +72,7 @@ struct GcWorker {
 
     while (scanner->next(cell)) {
       if (strcmp("Files", cell.column_family)) {
-        HT_ERRORF("Unexpected column family '%s', while scanning METADATA", 
+        HT_ERRORF("Unexpected column family '%s', while scanning METADATA",
                   cell.column_family);
         continue;
       }
@@ -134,7 +133,7 @@ struct GcWorker {
   delete_cell(const Cell &cell, TableMutatorPtr &mutator) {
     HT_DEBUG_OUT <<"MasterGc: Deleting cell: ("<< cell.row_key <<", "
                  << cell.column_family <<", "<< cell.column_qualifier <<", "
-                 << cell.timestamp <<')'<< HT_DEBUG_END;
+                 << cell.timestamp <<')'<< HT_END;
 
     KeySpec key(cell.row_key, cell.column_family, cell.column_qualifier);
 
@@ -162,7 +161,7 @@ struct GcWorker {
 
   void
   insert_file(CountMap &map, const char *fname, int c) {
-    if (*fname == '#') 
+    if (*fname == '#')
       ++fname;
 
     CountMap::InsRet ret = map.insert(fname, c);
@@ -243,7 +242,7 @@ struct GcWorker {
       int remain = sleep(m_interval);
 
       if (remain)
-        break; // interrupted       
+        break; // interrupted
 
       if (m_metadata) gc();
       else HT_INFOF("MasterGc: METADATA not ready, will try again in "

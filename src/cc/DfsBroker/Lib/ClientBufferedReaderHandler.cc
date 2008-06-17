@@ -1,24 +1,25 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cassert>
 
 #include "Common/Error.h"
@@ -59,11 +60,11 @@ ClientBufferedReaderHandler::ClientBufferedReaderHandler(
 
     for (m_outstanding=0; m_outstanding<m_max_outstanding; m_outstanding++) {
       if (m_end_offset && (m_end_offset-m_outstanding_offset) < m_read_size) {
-	if ((toread = (uint32_t)(m_end_offset - m_outstanding_offset)) == 0)
-	  break;
+        if ((toread = (uint32_t)(m_end_offset - m_outstanding_offset)) == 0)
+          break;
       }
       else
-	toread = m_read_size;
+        toread = m_read_size;
 
       try { m_client->read(m_fd, toread, this); }
       catch (...) {
@@ -96,36 +97,36 @@ ClientBufferedReaderHandler::~ClientBufferedReaderHandler() {
 /**
  *
  */
-void ClientBufferedReaderHandler::handle(EventPtr &eventPtr) {
+void ClientBufferedReaderHandler::handle(EventPtr &event_ptr) {
   boost::mutex::scoped_lock lock(m_mutex);
 
   m_outstanding--;
 
-  if (eventPtr->type == Event::MESSAGE) {
-    if ((m_error = (int)Protocol::response_code(eventPtr)) != Error::OK) {
+  if (event_ptr->type == Event::MESSAGE) {
+    if ((m_error = (int)Protocol::response_code(event_ptr)) != Error::OK) {
       HT_ERRORF("DFS read error (amount=%u, fd=%d) : %s",
-		m_read_size, m_fd,
-                Protocol::string_format_message(eventPtr).c_str());
+                m_read_size, m_fd,
+                Protocol::string_format_message(event_ptr).c_str());
       m_eof = true;
       return;
     }
-    m_queue.push(eventPtr);
+    m_queue.push(event_ptr);
 
     uint64_t offset;
-    size_t amount = Filesystem::decode_response_read_header(eventPtr, &offset);
+    size_t amount = Filesystem::decode_response_read_header(event_ptr, &offset);
     m_actual_offset += amount;
 
     if (amount < m_read_size) {
       m_eof = true;
     }
   }
-  else if (eventPtr->type == Event::ERROR) {
-    HT_ERRORF("%s", eventPtr->toString().c_str());    
-    m_error = eventPtr->error;
+  else if (event_ptr->type == Event::ERROR) {
+    HT_ERRORF("%s", event_ptr->to_str().c_str());
+    m_error = event_ptr->error;
     m_eof = true;
   }
   else {
-    HT_ERRORF("%s", eventPtr->toString().c_str());
+    HT_ERRORF("%s", event_ptr->to_str().c_str());
     m_error = Error::FAILED_EXPECTATION;
   }
 
@@ -150,17 +151,16 @@ ClientBufferedReaderHandler::read(void *buf, size_t len) {
       m_cond.wait(lock);
 
     if (m_error != Error::OK)
-      throw Exception(m_error);
-      
+      HT_THROW(m_error, "");
+
     if (m_queue.empty())
-      throw Exception(Error::FAILED_EXPECTATION, "empty queue");
+      HT_THROW(Error::FAILED_EXPECTATION, "empty queue");
 
     if (m_ptr == 0) {
       uint64_t offset;
       uint32_t amount;
-      EventPtr &eventPtr = m_queue.front();
-      amount = Filesystem::decode_response_read_header(eventPtr, &offset,
-                                                       &m_ptr);
+      EventPtr &event_ptr = m_queue.front();
+      amount = Filesystem::decode_response_read_header(event_ptr, &offset, &m_ptr);
       m_end_ptr = m_ptr + amount;
     }
 
@@ -171,18 +171,18 @@ ClientBufferedReaderHandler::read(void *buf, size_t len) {
       nread = len;
       m_ptr += nleft;
       if ((m_end_ptr - m_ptr) == 0) {
-	m_queue.pop();
-	m_ptr = 0;
-	read_ahead();
+        m_queue.pop();
+        m_ptr = 0;
+        read_ahead();
       }
       break;
     }
     else if (available == 0) {
       if (m_eof && m_queue.size() == 1) {
-	m_queue.pop();
-	m_ptr = m_end_ptr = 0;
-	nread = len - nleft;
-	break;
+        m_queue.pop();
+        m_ptr = m_end_ptr = 0;
+        nread = len - nleft;
+        break;
       }
     }
 
@@ -207,14 +207,14 @@ void ClientBufferedReaderHandler::read_ahead() {
   uint32_t toread;
 
   assert(m_max_outstanding >= (m_outstanding + m_queue.size()));
-  
+
   if (m_eof)
     return;
 
   for (uint32_t i=0; i<n; i++) {
     if (m_end_offset && (m_end_offset-m_outstanding_offset) < m_read_size) {
       if ((toread = (uint32_t)(m_end_offset - m_outstanding_offset)) == 0)
-	break;
+        break;
     }
     else
       toread = m_read_size;

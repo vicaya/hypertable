@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -32,39 +32,40 @@
 
 #include "Notification.h"
 
-using namespace Hypertable;
 
 namespace Hyperspace {
 
+  using namespace Hypertable;
+
   class SessionData : public ReferenceCount {
   public:
-    SessionData(struct sockaddr_in &_addr, uint32_t leaseInterval, uint64_t _id) : addr(_addr), m_lease_interval(leaseInterval), id(_id), expired(false) {
-      boost::xtime_get(&expireTime, boost::TIME_UTC);
-      expireTime.sec += leaseInterval;
+    SessionData(struct sockaddr_in &_addr, uint32_t lease_interval, uint64_t _id) : addr(_addr), m_lease_interval(lease_interval), id(_id), expired(false) {
+      boost::xtime_get(&expire_time, boost::TIME_UTC);
+      expire_time.sec += lease_interval;
       return;
     }
 
     void add_notification(Notification *notification) {
       boost::mutex::scoped_lock lock(mutex);
       if (expired) {
-	notification->eventPtr->decrement_notification_count();
-	delete notification;
+        notification->event_ptr->decrement_notification_count();
+        delete notification;
       }
       else
-	notifications.push_back(notification);
+        notifications.push_back(notification);
     }
 
-    void purge_notifications(uint64_t eventId) {
+    void purge_notifications(uint64_t event_id) {
       boost::mutex::scoped_lock lock(mutex);
-      list<Notification *>::iterator iter = notifications.begin();
+      std::list<Notification *>::iterator iter = notifications.begin();
       while (iter != notifications.end()) {
-	if ((*iter)->eventPtr->get_id() <= eventId) {
-	  (*iter)->eventPtr->decrement_notification_count();
-	  delete *iter;
-	  iter = notifications.erase(iter);
-	}
-	else
-	  iter++;
+        if ((*iter)->event_ptr->get_id() <= event_id) {
+          (*iter)->event_ptr->decrement_notification_count();
+          delete *iter;
+          iter = notifications.erase(iter);
+        }
+        else
+          iter++;
       }
     }
 
@@ -72,36 +73,36 @@ namespace Hyperspace {
       boost::mutex::scoped_lock lock(mutex);
       boost::xtime now;
       boost::xtime_get(&now, boost::TIME_UTC);
-      if (xtime_cmp(expireTime, now) < 0) {
-	expired = true;
-	list<Notification *>::iterator iter = notifications.begin();
-	while (iter != notifications.end()) {
-	  (*iter)->eventPtr->decrement_notification_count();
-	  delete *iter;
-	  iter = notifications.erase(iter);
-	}
-	return false;
+      if (xtime_cmp(expire_time, now) < 0) {
+        expired = true;
+        std::list<Notification *>::iterator iter = notifications.begin();
+        while (iter != notifications.end()) {
+          (*iter)->event_ptr->decrement_notification_count();
+          delete *iter;
+          iter = notifications.erase(iter);
+        }
+        return false;
       }
-      memcpy(&expireTime, &now, sizeof(boost::xtime));
-      expireTime.sec += m_lease_interval;
+      memcpy(&expire_time, &now, sizeof(boost::xtime));
+      expire_time.sec += m_lease_interval;
       return true;
     }
 
     bool is_expired(boost::xtime &now) {
       boost::mutex::scoped_lock lock(mutex);
-      return (xtime_cmp(expireTime, now) < 0) ? true : false;
+      return (xtime_cmp(expire_time, now) < 0) ? true : false;
     }
 
     void expire() {
       boost::mutex::scoped_lock lock(mutex);
       if (expired)
-	return;
+        return;
       expired = true;
-      list<Notification *>::iterator iter = notifications.begin();
+      std::list<Notification *>::iterator iter = notifications.begin();
       while (iter != notifications.end()) {
-	(*iter)->eventPtr->decrement_notification_count();
-	delete *iter;
-	iter = notifications.erase(iter);
+        (*iter)->event_ptr->decrement_notification_count();
+        delete *iter;
+        iter = notifications.erase(iter);
       }
     }
 
@@ -115,16 +116,16 @@ namespace Hyperspace {
     uint32_t m_lease_interval;
     uint64_t id;
     bool expired;
-    boost::xtime expireTime;
-    set<uint64_t> handles;
-    list<Notification *> notifications;
+    boost::xtime expire_time;
+    std::set<uint64_t> handles;
+    std::list<Notification *> notifications;
   };
 
   typedef boost::intrusive_ptr<SessionData> SessionDataPtr;
 
-  struct ltSessionData {
+  struct LtSessionData {
     bool operator()(const SessionDataPtr &sd1, const SessionDataPtr &sd2) const {
-      return xtime_cmp(sd1->expireTime, sd2->expireTime) >= 0;
+      return xtime_cmp(sd1->expire_time, sd2->expire_time) >= 0;
     }
   };
 

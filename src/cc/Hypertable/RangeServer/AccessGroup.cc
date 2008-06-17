@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -37,26 +37,33 @@
 #include "MetadataNormal.h"
 #include "MetadataRoot.h"
 
+using namespace Hypertable;
 
 namespace {
   const uint32_t DEFAULT_BLOCKSIZE = 65536;
 }
 
 
-AccessGroup::AccessGroup(TableIdentifier *identifier, SchemaPtr &schemaPtr, Schema::AccessGroup *ag, RangeSpec *range) : m_identifier(identifier), m_schema_ptr(schemaPtr), m_name(ag->name), m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE), m_compression_ratio(1.0), m_is_root(false), m_oldest_cached_timestamp(0), m_collisions(0), m_needs_compaction(false), m_drop(false), m_scanners_blocked(false) {
+AccessGroup::AccessGroup(TableIdentifier *identifier, SchemaPtr &schema_ptr,
+                         Schema::AccessGroup *ag, RangeSpec *range)
+    : m_identifier(*identifier), m_schema_ptr(schema_ptr), m_name(ag->name),
+      m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE),
+      m_compression_ratio(1.0), m_is_root(false), m_oldest_cached_timestamp(0),
+      m_collisions(0), m_needs_compaction(false), m_drop(false),
+      m_scanners_blocked(false) {
   m_table_name = m_identifier.name;
   m_start_row = range->start_row;
   m_end_row = range->end_row;
   m_range_name = m_table_name + "[" + m_start_row + ".." + m_end_row + "]";
   m_cell_cache_ptr = new CellCache();
 
-  for (list<Schema::ColumnFamily *>::iterator iter = ag->columns.begin(); iter != ag->columns.end(); iter++) {
-    m_column_families.insert((uint8_t)(*iter)->id);
-  }
+  foreach(Schema::ColumnFamily *cf, ag->columns)
+    m_column_families.insert(cf->id);
+
   if (ag->blocksize != 0)
     m_blocksize = ag->blocksize;
 
-  m_compressor = (ag->compressor != "") ? ag->compressor : schemaPtr->get_compressor();
+  m_compressor = (ag->compressor != "") ? ag->compressor : schema_ptr->get_compressor();
 
   m_is_root = (m_identifier.id == 0 && *range->start_row == 0 && !strcmp(range->end_row, Key::END_ROOT_ROW));
 
@@ -89,7 +96,7 @@ AccessGroup::~AccessGroup() {
     catch (Hypertable::Exception &e) {
       // TODO: propagate exception
       HT_ERRORF("Problem updating 'File' column of METADATA (%s) - %s",
-		metadata_key.c_str(), Error::get_text(e.code()));
+                metadata_key.c_str(), Error::get_text(e.code()));
     }
   }
   return;
@@ -129,11 +136,11 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context_ptr) {
   while (m_scanners_blocked)
     m_scanner_blocked_cond.wait(lock);
 
-  scanner->add_scanner( m_cell_cache_ptr->create_scanner(scan_context_ptr) );
+  scanner->add_scanner(m_cell_cache_ptr->create_scanner(scan_context_ptr));
   if (!m_in_memory) {
     CellStoreReleaseCallback callback(this);
     for (size_t i=0; i<m_stores.size(); i++) {
-      scanner->add_scanner( m_stores[i]->create_scanner(scan_context_ptr) );
+      scanner->add_scanner(m_stores[i]->create_scanner(scan_context_ptr));
       filename = m_stores[i]->get_filename();
       callback.add_file(filename);
       increment_file_refcount(filename);
@@ -146,7 +153,7 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context_ptr) {
 bool AccessGroup::include_in_scan(ScanContextPtr &scan_context_ptr) {
   boost::mutex::scoped_lock lock(m_mutex);
   for (std::set<uint8_t>::iterator iter = m_column_families.begin(); iter != m_column_families.end(); iter++) {
-    if (scan_context_ptr->familyMask[*iter])
+    if (scan_context_ptr->family_mask[*iter])
       return true;
   }
   return false;
@@ -186,7 +193,7 @@ uint64_t AccessGroup::disk_usage() {
   return du + (uint64_t)(m_compression_ratio * (float)mu);
 }
 
-void AccessGroup::get_compaction_priority_data(CompactionPriorityDataT &priority_data) {
+void AccessGroup::get_compaction_priority_data(CompactionPriorityData &priority_data) {
   boost::mutex::scoped_lock lock(m_mutex);
   priority_data.ag = this;
   priority_data.oldest_cached_timestamp = m_oldest_cached_timestamp;
@@ -237,24 +244,21 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore_ptr, uint32_t id) {
 
 
 namespace {
-  struct ltCellStore {
-    bool operator()(const CellStorePtr &csPtr1, const CellStorePtr &csPtr2) const {
-      return !(csPtr1->disk_usage() < csPtr2->disk_usage());
+  struct LtCellStore {
+    bool operator()(const CellStorePtr &x, const CellStorePtr &y) const {
+      return !(x->disk_usage() < y->disk_usage());
     }
   };
 }
 
 
 void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
-  String cellStoreFile;
-  char md5DigestStr[33];
-  char filename[16];
-  ByteString key;
+  ByteString bskey;
   ByteString value;
-  Key keyComps;
-  CellListScannerPtr scannerPtr;
-  size_t tableIndex = 1;
-  CellStorePtr cellStorePtr;
+  Key key;
+  CellListScannerPtr scanner_ptr;
+  size_t tableidx = 1;
+  CellStorePtr cellstore;
   String metadata_key_str;
 
   if (!major && !m_needs_compaction)
@@ -266,45 +270,54 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
     boost::mutex::scoped_lock lock(m_mutex);
     if (m_in_memory) {
       if (m_cell_cache_ptr->memory_used() == 0)
-	return;
-      tableIndex = m_stores.size();
-      HT_INFOF("Starting InMemory Compaction of %s(%s)", m_range_name.c_str(), m_name.c_str());
+        return;
+      tableidx = m_stores.size();
+      HT_INFOF("Starting InMemory Compaction of %s(%s)",
+               m_range_name.c_str(), m_name.c_str());
     }
     else if (major) {
       // TODO: if the oldest CellCache entry is newer than timestamp, then return
       if (m_cell_cache_ptr->memory_used() == 0 && m_stores.size() <= (size_t)1)
-	return;
-      tableIndex = 0;
-      HT_INFOF("Starting Major Compaction of %s(%s)", m_range_name.c_str(), m_name.c_str());
+        return;
+      tableidx = 0;
+      HT_INFOF("Starting Major Compaction of %s(%s)",
+               m_range_name.c_str(), m_name.c_str());
     }
     else {
-      if (m_stores.size() > (size_t)Global::localityGroupMaxFiles) {
-	ltCellStore sortObj;
-	sort(m_stores.begin(), m_stores.end(), sortObj);
-	tableIndex = m_stores.size() - Global::localityGroupMergeFiles;
-	HT_INFOF("Starting Merging Compaction of %s(%s)", m_range_name.c_str(), m_name.c_str());
+      if (m_stores.size() > (size_t)Global::access_group_max_files) {
+        LtCellStore ascending;
+        sort(m_stores.begin(), m_stores.end(), ascending);
+        tableidx = m_stores.size() - Global::access_group_merge_files;
+        HT_INFOF("Starting Merging Compaction of %s(%s)",
+                 m_range_name.c_str(), m_name.c_str());
       }
       else {
-	if (m_cell_cache_ptr->memory_used() == 0)
-	  return;
-	tableIndex = m_stores.size();
-	HT_INFOF("Starting Minor Compaction of %s(%s)", m_range_name.c_str(), m_name.c_str());
+        if (m_cell_cache_ptr->memory_used() == 0)
+          return;
+        tableidx = m_stores.size();
+        HT_INFOF("Starting Minor Compaction of %s(%s)",
+                 m_range_name.c_str(), m_name.c_str());
       }
     }
   }
 
-  if (m_end_row == "")
-    memset(md5DigestStr, '0', 24);
-  else
-    md5_string(m_end_row.c_str(), md5DigestStr);
-  md5DigestStr[24] = 0;
-  sprintf(filename, "cs%d", m_next_table_id++);
-  cellStoreFile = (string)"/hypertable/tables/" + m_table_name + "/" + m_name + "/" + md5DigestStr + "/" + filename;
-  
-  cellStorePtr = new CellStoreV0(Global::dfs);
+  // TODO: Issue 11
+  char hash_str[33];
 
-  if (cellStorePtr->create(cellStoreFile.c_str(), m_blocksize, m_compressor) != 0) {
-    HT_ERRORF("Problem compacting locality group to file '%s'", cellStoreFile.c_str());
+  if (m_end_row == "")
+    memset(hash_str, '0', 24);
+  else
+    md5_string(m_end_row.c_str(), hash_str);
+
+  hash_str[24] = 0;
+  String cs_file = format("/hypertable/tables/%s/%s/%s/cs%d",
+                          m_table_name.c_str(), m_name.c_str(), hash_str,
+                          m_next_table_id++);
+
+  cellstore = new CellStoreV0(Global::dfs);
+
+  if (cellstore->create(cs_file.c_str(), m_blocksize, m_compressor) != 0) {
+    HT_ERRORF("Problem compacting locality group to file '%s'", cs_file.c_str());
     return;
   }
 
@@ -314,35 +327,35 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
 
     if (m_in_memory) {
       MergeScanner *mscanner = new MergeScanner(scan_context_ptr, false);
-      mscanner->add_scanner( m_cell_cache_ptr->create_scanner(scan_context_ptr) );
-      scannerPtr = mscanner;
+      mscanner->add_scanner(m_cell_cache_ptr->create_scanner(scan_context_ptr));
+      scanner_ptr = mscanner;
     }
-    else if (major || tableIndex < m_stores.size()) {
+    else if (major || tableidx < m_stores.size()) {
       MergeScanner *mscanner = new MergeScanner(scan_context_ptr, !major);
-      mscanner->add_scanner( m_cell_cache_ptr->create_scanner(scan_context_ptr) );
-      for (size_t i=tableIndex; i<m_stores.size(); i++)
-	mscanner->add_scanner( m_stores[i]->create_scanner(scan_context_ptr) );
-      scannerPtr = mscanner;
+      mscanner->add_scanner(m_cell_cache_ptr->create_scanner(scan_context_ptr));
+      for (size_t i=tableidx; i<m_stores.size(); i++)
+        mscanner->add_scanner(m_stores[i]->create_scanner(scan_context_ptr));
+      scanner_ptr = mscanner;
     }
     else
-      scannerPtr = m_cell_cache_ptr->create_scanner(scan_context_ptr);
+      scanner_ptr = m_cell_cache_ptr->create_scanner(scan_context_ptr);
   }
 
-  while (scannerPtr->get(key, value)) {
+  while (scanner_ptr->get(bskey, value)) {
 
-    if (!keyComps.load(key)) {
+    if (!key.load(bskey)) {
       HT_ERROR("Problem deserializing key/value pair");
       return;
     }
 
-    if (keyComps.timestamp <= timestamp.logical)
-      cellStorePtr->add(key, value, timestamp.real);
+    if (key.timestamp <= timestamp.logical)
+      cellstore->add(bskey, value, timestamp.real);
 
-    scannerPtr->forward();
+    scanner_ptr->forward();
   }
 
-  if (cellStorePtr->finalize(timestamp) != 0) {
-    HT_ERRORF("Problem finalizing CellStore '%s'", cellStoreFile.c_str());
+  if (cellstore->finalize(timestamp) != 0) {
+    HT_ERRORF("Problem finalizing CellStore '%s'", cs_file.c_str());
     return;
   }
 
@@ -363,14 +376,14 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
       m_cell_cache_ptr = m_cell_cache_ptr->slice_copy(timestamp.logical);
     // If inserts have arrived since we started splitting, then set the oldest cached timestamp value, otherwise clear it
     m_oldest_cached_timestamp = (m_cell_cache_ptr->size() > 0) ? timestamp.real + 1 : 0;
-    tmp_cell_cache_ptr->unlock();    
+    tmp_cell_cache_ptr->unlock();
 
     /** Drop the compacted tables from the table vector **/
-    if (tableIndex < m_stores.size()) {
-      m_stores.resize(tableIndex);
+    if (tableidx < m_stores.size()) {
+      m_stores.resize(tableidx);
       m_live_files.clear();
       for (size_t i=0; i<m_stores.size(); i++)
-	m_live_files.insert( m_stores[i]->get_filename() );
+        m_live_files.insert(m_stores[i]->get_filename());
     }
 
     if (m_in_memory) {
@@ -379,14 +392,14 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
     }
 
     /** Add the new table to the table vector **/
-    m_stores.push_back( cellStorePtr );
-    m_live_files.insert( cellStorePtr->get_filename() );
+    m_stores.push_back(cellstore);
+    m_live_files.insert(cellstore->get_filename());
 
     /** Determine in-use files to prevent from being GC'd **/
     m_gc_locked_files.clear();
-    foreach(const FileRefCountMapT::value_type &v, m_file_refcounts)
+    foreach(const FileRefCountMap::value_type &v, m_file_refcounts)
       if (m_live_files.count(v.first) == 0)
-	m_gc_locked_files.insert(v.first);
+        m_gc_locked_files.insert(v.first);
 
     /** Re-compute disk usage and compresion ratio**/
     m_disk_usage = 0;
@@ -415,7 +428,7 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
 
 
 /**
- * 
+ *
  */
 int AccessGroup::shrink(String &new_start_row) {
   boost::mutex::scoped_lock lock(m_mutex);
@@ -466,12 +479,12 @@ int AccessGroup::shrink(String &new_start_row) {
     new_cell_store = new CellStoreV0(Global::dfs);
     if ((error = new_cell_store->open(filename.c_str(), m_start_row.c_str(), m_end_row.c_str())) != Error::OK) {
       HT_ERRORF("Problem opening cell store '%s' [%s:%s] - %s",
-		   filename.c_str(), m_start_row.c_str(), m_end_row.c_str(), Error::get_text(error));
+                   filename.c_str(), m_start_row.c_str(), m_end_row.c_str(), Error::get_text(error));
       return error;
     }
     if ((error = new_cell_store->load_index()) != Error::OK) {
       HT_ERRORF("Problem loading index of cell store '%s' [%s:%s] - %s",
-		   filename.c_str(), m_start_row.c_str(), m_end_row.c_str(), Error::get_text(error));
+                   filename.c_str(), m_start_row.c_str(), m_end_row.c_str(), Error::get_text(error));
       return error;
     }
     new_stores.push_back(new_cell_store);
@@ -512,10 +525,10 @@ void AccessGroup::release_files(const std::vector<String> &files) {
     boost::mutex::scoped_lock lock(m_mutex);
     for (size_t i=0; i<files.size(); i++) {
       if (decrement_file_refcount(files[i])) {
-	if (m_gc_locked_files.count(files[i]) > 0) {
-	  m_gc_locked_files.erase(files[i]);
-	  need_files_update = true;
-	}
+        if (m_gc_locked_files.count(files[i]) > 0) {
+          m_gc_locked_files.erase(files[i]);
+          need_files_update = true;
+        }
       }
     }
   }
@@ -557,7 +570,7 @@ void AccessGroup::update_files_column() {
   catch (Hypertable::Exception &e) {
     // TODO: propagate exception
     HT_ERROR_OUT <<"Problem updating 'Files' column of METADATA: "
-                 << e << HT_ERROR_END;
+                 << e << HT_END;
   }
 }
 
@@ -566,7 +579,7 @@ void AccessGroup::update_files_column() {
  * Needs to be called with m_mutex locked
  */
 void AccessGroup::increment_file_refcount(const String &filename) {
-  FileRefCountMapT::iterator iter = m_file_refcounts.find(filename);
+  FileRefCountMap::iterator iter = m_file_refcounts.find(filename);
 
   if (iter == m_file_refcounts.end())
     m_file_refcounts[filename] = 1;
@@ -579,7 +592,7 @@ void AccessGroup::increment_file_refcount(const String &filename) {
  * Needs to be called with m_mutex locked
  */
 bool AccessGroup::decrement_file_refcount(const String &filename) {
-  FileRefCountMapT::iterator iter = m_file_refcounts.find(filename);
+  FileRefCountMap::iterator iter = m_file_refcounts.find(filename);
 
   HT_EXPECT(iter != m_file_refcounts.end(), Error::FAILED_EXPECTATION);
 

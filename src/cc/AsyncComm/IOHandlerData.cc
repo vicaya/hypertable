@@ -1,24 +1,25 @@
 /**
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 
 #include <cassert>
 #include <iostream>
@@ -35,7 +36,7 @@ extern "C" {
 #endif
 }
 
-#define DISABLE_LOG_DEBUG 1
+#define HT_DISABLE_LOG_DEBUG 1
 
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
@@ -54,89 +55,89 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
 
   if (event->events & EPOLLOUT) {
     if (handle_write_readiness()) {
-      deliver_event( new Event(Event::DISCONNECT, m_id, m_addr, Error::OK) );
+      deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
       return true;
     }
   }
 
   if (event->events & EPOLLIN) {
-    size_t nread, totalRead = 0;
+    size_t nread, total_read = 0;
     while (true) {
       if (!m_got_header) {
-	uint8_t *ptr = ((uint8_t *)&m_message_header) + (sizeof(Header::HeaderT) - m_message_header_remaining);
-	nread = FileUtils::read(m_sd, ptr, m_message_header_remaining);
-	if (nread == (size_t)-1) {
-	  if (errno != ECONNREFUSED) {
-	    HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_header_remaining, strerror(errno));
-	  }
-	  int error = (errno == ECONNREFUSED) ? Error::COMM_CONNECT_ERROR : Error::OK;
-	  deliver_event( new Event(Event::DISCONNECT, m_id, m_addr, error ) );
-	  return true;
-	}
-	else if (nread == 0 && totalRead == 0) {
-	  // eof
-	  deliver_event( new Event(Event::DISCONNECT, m_id, m_addr, Error::OK) );
-	  return true;
-	}
-	else if (nread < m_message_header_remaining) {
-	  m_message_header_remaining -= nread;
-	  return false;
-	}
-	else {
-	  m_got_header = true;
-	  m_message_header_remaining = 0;
-	  m_message = new uint8_t [ m_message_header.totalLen ];
-	  memcpy(m_message, &m_message_header, sizeof(Header::HeaderT));
-	  m_message_ptr = m_message + sizeof(Header::HeaderT);
-	  m_message_remaining = (m_message_header.totalLen) - sizeof(Header::HeaderT);
-	  totalRead += nread;
-	}
+        uint8_t *ptr = ((uint8_t *)&m_message_header) + (sizeof(Header::Common) - m_message_header_remaining);
+        nread = FileUtils::read(m_sd, ptr, m_message_header_remaining);
+        if (nread == (size_t)-1) {
+          if (errno != ECONNREFUSED) {
+            HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_header_remaining, strerror(errno));
+          }
+          int error = (errno == ECONNREFUSED) ? Error::COMM_CONNECT_ERROR : Error::OK;
+          deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, error));
+          return true;
+        }
+        else if (nread == 0 && total_read == 0) {
+          // eof
+          deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
+          return true;
+        }
+        else if (nread < m_message_header_remaining) {
+          m_message_header_remaining -= nread;
+          return false;
+        }
+        else {
+          m_got_header = true;
+          m_message_header_remaining = 0;
+          m_message = new uint8_t [m_message_header.total_len];
+          memcpy(m_message, &m_message_header, sizeof(Header::Common));
+          m_message_ptr = m_message + sizeof(Header::Common);
+          m_message_remaining = (m_message_header.total_len) - sizeof(Header::Common);
+          total_read += nread;
+        }
       }
       if (m_got_header) {
-	nread = FileUtils::read(m_sd, m_message_ptr, m_message_remaining);
-	if (nread < 0) {
-	  HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_header_remaining, strerror(errno));
-	  deliver_event( new Event(Event::DISCONNECT, m_id, m_addr, Error::OK) );
-	  return true;
-	}
-	else if (nread == 0 && totalRead == 0) {
-	  // eof
-	  deliver_event( new Event(Event::DISCONNECT, m_id, m_addr, Error::OK) );
-	  return true;
-	}
-	else if (nread < m_message_remaining) {
-	  m_message_ptr += nread;
-	  m_message_remaining -= nread;
-	}
-	else {
-	  DispatchHandler *dh = 0;
-	  uint32_t id = ((Header::HeaderT *)m_message)->id;
-	  if ((((Header::HeaderT *)m_message)->flags & Header::FLAGS_BIT_REQUEST) == 0 &&
-	      (id == 0 || (dh = m_reactor_ptr->remove_request(id)) == 0)) {
-	    if ((((Header::HeaderT *)m_message)->flags & Header::FLAGS_BIT_IGNORE_RESPONSE) == 0) {
-	      HT_WARNF("Received response for non-pending event (id=%d,version=%d,totalLen=%d)",
-			  id, ((Header::HeaderT *)m_message)->version, ((Header::HeaderT *)m_message)->totalLen);
-	    }
-	    delete [] m_message;
-	  }
-	  else
-	    deliver_event( new Event(Event::MESSAGE, m_id, m_addr, Error::OK, (Header::HeaderT *)m_message), dh );
-	  reset_incoming_message_state();
-	}
-	totalRead += nread;
+        nread = FileUtils::read(m_sd, m_message_ptr, m_message_remaining);
+        if (nread < 0) {
+          HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_header_remaining, strerror(errno));
+          deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
+          return true;
+        }
+        else if (nread == 0 && total_read == 0) {
+          // eof
+          deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
+          return true;
+        }
+        else if (nread < m_message_remaining) {
+          m_message_ptr += nread;
+          m_message_remaining -= nread;
+        }
+        else {
+          DispatchHandler *dh = 0;
+          uint32_t id = ((Header::Common *)m_message)->id;
+          if ((((Header::Common *)m_message)->flags & Header::FLAGS_BIT_REQUEST) == 0 &&
+              (id == 0 || (dh = m_reactor_ptr->remove_request(id)) == 0)) {
+            if ((((Header::Common *)m_message)->flags & Header::FLAGS_BIT_IGNORE_RESPONSE) == 0) {
+              HT_WARNF("Received response for non-pending event (id=%d,version=%d,total_len=%d)",
+                          id, ((Header::Common *)m_message)->version, ((Header::Common *)m_message)->total_len);
+            }
+            delete [] m_message;
+          }
+          else
+            deliver_event(new Event(Event::MESSAGE, m_id, m_addr, Error::OK, (Header::Common *)m_message), dh);
+          reset_incoming_message_state();
+        }
+        total_read += nread;
       }
     }
   }
 
   if (event->events & EPOLLERR) {
     HT_WARNF("Received EPOLLERR on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
-    deliver_event( new Event(Event::DISCONNECT, m_id, m_addr, Error::OK) );
+    deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
     return true;
   }
 
   if (event->events & EPOLLHUP) {
     HT_WARNF("Received EPOLLHUP on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
-    deliver_event( new Event(Event::DISCONNECT, m_id, m_addr, Error::OK) );
+    deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
     return true;
   }
 
@@ -156,15 +157,15 @@ bool IOHandlerData::handle_event(struct kevent *event) {
 
   if (event->flags & EV_EOF) {
     if (!m_connected)
-      deliver_event( new Event(Event::DISCONNECT, m_id, m_addr, Error::COMM_CONNECT_ERROR) );
+      deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::COMM_CONNECT_ERROR));
     else
-      deliver_event( new Event(Event::DISCONNECT, m_id, m_addr, Error::OK) );
+      deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
     return true;
   }
 
   if (event->filter == EVFILT_WRITE) {
     if (handle_write_readiness()) {
-      deliver_event( new Event(Event::DISCONNECT, m_id, m_addr, Error::OK) );
+      deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
       return true;
     }
   }
@@ -174,71 +175,71 @@ bool IOHandlerData::handle_event(struct kevent *event) {
     size_t nread;
     while (available > 0) {
       if (!m_got_header) {
-	uint8_t *ptr = ((uint8_t *)&m_message_header) + (sizeof(Header::HeaderT) - m_message_header_remaining);
-	if (m_message_header_remaining < available) {
-	  nread = FileUtils::read(m_sd, ptr, m_message_header_remaining);
-	  if (nread < 0) {
-	    HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_header_remaining, strerror(errno));
-	    deliver_event( new Event(Event::DISCONNECT, m_id, m_addr, Error::OK) );
-	    return true;
-	  }
-	  assert(nread == m_message_header_remaining);
-	  m_got_header = true;
-	  available -= nread;
-	  m_message_header_remaining = 0;
-	  m_message = new uint8_t [ m_message_header.totalLen ];
-	  memcpy(m_message, &m_message_header, sizeof(Header::HeaderT));
-	  m_message_ptr = m_message + sizeof(Header::HeaderT);
-	  m_message_remaining = (m_message_header.totalLen) - sizeof(Header::HeaderT);
-	}
-	else {
-	  nread = FileUtils::read(m_sd, ptr, available);
-	  if (nread < 0) {
-	    HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, available, strerror(errno));
-	    deliver_event( new Event(Event::DISCONNECT, m_id, m_addr, Error::OK) );
-	    return true;
-	  }
-	  assert(nread == available);
-	  m_message_header_remaining -= nread;
-	  return false;
-	}
+        uint8_t *ptr = ((uint8_t *)&m_message_header) + (sizeof(Header::Common) - m_message_header_remaining);
+        if (m_message_header_remaining < available) {
+          nread = FileUtils::read(m_sd, ptr, m_message_header_remaining);
+          if (nread < 0) {
+            HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_header_remaining, strerror(errno));
+            deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
+            return true;
+          }
+          assert(nread == m_message_header_remaining);
+          m_got_header = true;
+          available -= nread;
+          m_message_header_remaining = 0;
+          m_message = new uint8_t [m_message_header.total_len];
+          memcpy(m_message, &m_message_header, sizeof(Header::Common));
+          m_message_ptr = m_message + sizeof(Header::Common);
+          m_message_remaining = (m_message_header.total_len) - sizeof(Header::Common);
+        }
+        else {
+          nread = FileUtils::read(m_sd, ptr, available);
+          if (nread < 0) {
+            HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, available, strerror(errno));
+            deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
+            return true;
+          }
+          assert(nread == available);
+          m_message_header_remaining -= nread;
+          return false;
+        }
       }
       if (m_got_header) {
-	if (m_message_remaining <= available) {
-	  nread = FileUtils::read(m_sd, m_message_ptr, m_message_remaining);
-	  if (nread < 0) {
-	    HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_remaining, strerror(errno));
-	    deliver_event( new Event(Event::DISCONNECT, m_id, m_addr, Error::OK) );
-	    return true;
-	  }
-	  assert(nread == m_message_remaining);
-	  available -= nread;
+        if (m_message_remaining <= available) {
+          nread = FileUtils::read(m_sd, m_message_ptr, m_message_remaining);
+          if (nread < 0) {
+            HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_remaining, strerror(errno));
+            deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
+            return true;
+          }
+          assert(nread == m_message_remaining);
+          available -= nread;
 
-	  DispatchHandler *dh = 0;
-	  uint32_t id = ((Header::HeaderT *)m_message)->id;
-	  if ((((Header::HeaderT *)m_message)->flags & Header::FLAGS_BIT_REQUEST) == 0 &&
-	      (id == 0 || (dh = m_reactor_ptr->remove_request(id)) == 0)) {
-	    if ((((Header::HeaderT *)m_message)->flags & Header::FLAGS_BIT_IGNORE_RESPONSE) == 0) {
-	      HT_WARNF("Received response for non-pending event (id=%d)", id);
-	    }
-	    delete [] m_message;
-	  }
-	  else
-	    deliver_event( new Event(Event::MESSAGE, m_id, m_addr, Error::OK, (Header::HeaderT *)m_message), dh );
-	  reset_incoming_message_state();
-	}
-	else {
-	  nread = FileUtils::read(m_sd, m_message_ptr, available);
-	  if (nread < 0) {
-	    HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, available, strerror(errno));
-	    deliver_event( new Event(Event::DISCONNECT, m_id, m_addr, Error::OK) );
-	    return true;
-	  }
-	  assert(nread == available);
-	  m_message_ptr += nread;
-	  m_message_remaining -= nread;
-	  available = 0;
-	}
+          DispatchHandler *dh = 0;
+          uint32_t id = ((Header::Common *)m_message)->id;
+          if ((((Header::Common *)m_message)->flags & Header::FLAGS_BIT_REQUEST) == 0 &&
+              (id == 0 || (dh = m_reactor_ptr->remove_request(id)) == 0)) {
+            if ((((Header::Common *)m_message)->flags & Header::FLAGS_BIT_IGNORE_RESPONSE) == 0) {
+              HT_WARNF("Received response for non-pending event (id=%d)", id);
+            }
+            delete [] m_message;
+          }
+          else
+            deliver_event(new Event(Event::MESSAGE, m_id, m_addr, Error::OK, (Header::Common *)m_message), dh);
+          reset_incoming_message_state();
+        }
+        else {
+          nread = FileUtils::read(m_sd, m_message_ptr, available);
+          if (nread < 0) {
+            HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, available, strerror(errno));
+            deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
+            return true;
+          }
+          assert(nread == available);
+          m_message_ptr += nread;
+          m_message_remaining -= nread;
+          available = 0;
+        }
       }
     }
   }
@@ -253,14 +254,14 @@ bool IOHandlerData::handle_event(struct kevent *event) {
 bool IOHandlerData::handle_write_readiness() {
 
   if (m_connected == false) {
-    socklen_t nameLen = sizeof(m_local_addr);
+    socklen_t name_len = sizeof(m_local_addr);
     int sockerr = 0;
     socklen_t sockerr_len = sizeof(sockerr);
 
     if (getsockopt(m_sd, SOL_SOCKET, SO_ERROR, &sockerr, &sockerr_len) < 0) {
       HT_ERRORF("getsockopt(SO_ERROR) failed - %s", strerror(errno));
     }
-    
+
     if (sockerr) {
       HT_ERRORF("connect() completion error - %s", strerror(sockerr));
       return true;
@@ -274,52 +275,52 @@ bool IOHandlerData::handle_write_readiness() {
       HT_ERRORF("setsockopt(SO_RCVBUF) failed - %s", strerror(errno));
     }
 
-    if (getsockname(m_sd, (struct sockaddr *)&m_local_addr, &nameLen) < 0) {
+    if (getsockname(m_sd, (struct sockaddr *)&m_local_addr, &name_len) < 0) {
       HT_ERRORF("getsockname(%d) failed - %s", m_sd, strerror(errno));
       return true;
     }
     //clog << "Connection established." << endl;
     m_connected = true;
-    deliver_event( new Event(Event::CONNECTION_ESTABLISHED, m_id, m_addr, Error::OK) );
+    deliver_event(new Event(Event::CONNECTION_ESTABLISHED, m_id, m_addr, Error::OK));
   }
   else {
     boost::mutex::scoped_lock lock(m_mutex);
     if (flush_send_queue() != Error::OK)
       return true;
     if (m_send_queue.empty())
-      remove_poll_interest(Reactor::WRITE_READY);	
+      remove_poll_interest(Reactor::WRITE_READY);
   }
   return false;
 }
 
 
 
-int IOHandlerData::send_message(CommBufPtr &cbufPtr, time_t timeout, DispatchHandler *dispatchHandler) {
+int IOHandlerData::send_message(CommBufPtr &cbp, time_t timeout, DispatchHandler *disp_handler) {
   boost::mutex::scoped_lock lock(m_mutex);
   int error;
-  bool initiallyEmpty = m_send_queue.empty() ? true : false;
-  Header::HeaderT *mheader = (Header::HeaderT *)cbufPtr->data.base;
+  bool initially_empty = m_send_queue.empty() ? true : false;
+  Header::Common *mheader = (Header::Common *)cbp->data.base;
 
   HT_LOG_ENTER;
-  
+
   // If request, Add message ID to request cache
-  if (mheader->id != 0 && dispatchHandler != 0 && mheader->flags & Header::FLAGS_BIT_REQUEST) {
-    boost::xtime expireTime;
-    boost::xtime_get(&expireTime, boost::TIME_UTC);
-    expireTime.sec += timeout;
-    m_reactor_ptr->add_request(mheader->id, this, dispatchHandler, expireTime);
+  if (mheader->id != 0 && disp_handler != 0 && mheader->flags & Header::FLAGS_BIT_REQUEST) {
+    boost::xtime expire_time;
+    boost::xtime_get(&expire_time, boost::TIME_UTC);
+    expire_time.sec += timeout;
+    m_reactor_ptr->add_request(mheader->id, this, disp_handler, expire_time);
   }
 
-  m_send_queue.push_back(cbufPtr);
+  m_send_queue.push_back(cbp);
 
   if ((error = flush_send_queue()) != Error::OK)
     return error;
 
-  if (initiallyEmpty && !m_send_queue.empty()) {
+  if (initially_empty && !m_send_queue.empty()) {
     add_poll_interest(Reactor::WRITE_READY);
     //HT_INFO("Adding Write interest");
   }
-  else if (!initiallyEmpty && m_send_queue.empty()) {
+  else if (!initially_empty && m_send_queue.empty()) {
     remove_poll_interest(Reactor::WRITE_READY);
     //HT_INFO("Removing Write interest");
   }
@@ -336,24 +337,24 @@ int IOHandlerData::flush_send_queue() {
 
   while (!m_send_queue.empty()) {
 
-    CommBufPtr &cbufPtr = m_send_queue.front();
+    CommBufPtr &cbp = m_send_queue.front();
 
     count = 0;
     towrite = 0;
-    remaining = cbufPtr->data.size - (cbufPtr->data_ptr - cbufPtr->data.base);
+    remaining = cbp->data.size - (cbp->data_ptr - cbp->data.base);
     if (remaining > 0) {
-      vec[0].iov_base = (void *)cbufPtr->data_ptr;
+      vec[0].iov_base = (void *)cbp->data_ptr;
       vec[0].iov_len = remaining;
       towrite = remaining;
       ++count;
     }
-    if (cbufPtr->ext.base != 0) {
-      remaining = cbufPtr->ext.size - (cbufPtr->ext_ptr - cbufPtr->ext.base);
+    if (cbp->ext.base != 0) {
+      remaining = cbp->ext.size - (cbp->ext_ptr - cbp->ext.base);
       if (remaining > 0) {
-	vec[count].iov_base = (void *)cbufPtr->ext_ptr;
-	vec[count].iov_len = remaining;
-	towrite += remaining;
-	++count;
+        vec[count].iov_base = (void *)cbp->ext_ptr;
+        vec[count].iov_len = remaining;
+        towrite += remaining;
+        ++count;
       }
     }
 
@@ -364,21 +365,21 @@ int IOHandlerData::flush_send_queue() {
     }
     else if (nwritten < towrite) {
       if (nwritten == 0)
-	break;
-      remaining = cbufPtr->data.size - (cbufPtr->data_ptr - cbufPtr->data.base);
+        break;
+      remaining = cbp->data.size - (cbp->data_ptr - cbp->data.base);
       if (remaining > 0) {
-	if (nwritten < remaining) {
-	  cbufPtr->data_ptr += nwritten;
-	  break;
-	}
-	else {
-	  nwritten -= remaining;
-	  cbufPtr->data_ptr += remaining;
-	}
+        if (nwritten < remaining) {
+          cbp->data_ptr += nwritten;
+          break;
+        }
+        else {
+          nwritten -= remaining;
+          cbp->data_ptr += remaining;
+        }
       }
-      if (cbufPtr->ext.base != 0) {
-	cbufPtr->ext_ptr += nwritten;
-	break;
+      if (cbp->ext.base != 0) {
+        cbp->ext_ptr += nwritten;
+        break;
       }
     }
 

@@ -1,31 +1,28 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cassert>
 
 #include <boost/algorithm/string.hpp>
-
-extern "C" {
-#include <string.h>
-}
 
 #include "Common/Error.h"
 #include "Common/Logger.h"
@@ -41,6 +38,9 @@ extern "C" {
 #include "CellStoreV0.h"
 #include "FileBlockCache.h"
 
+using namespace std;
+using namespace Hypertable;
+
 const char CellStoreV0::DATA_BLOCK_MAGIC[10]           = { 'D','a','t','a','-','-','-','-','-','-' };
 const char CellStoreV0::INDEX_FIXED_BLOCK_MAGIC[10]    = { 'I','d','x','F','i','x','-','-','-','-' };
 const char CellStoreV0::INDEX_VARIABLE_BLOCK_MAGIC[10] = { 'I','d','x','V','a','r','-','-','-','-' };
@@ -48,8 +48,6 @@ const char CellStoreV0::INDEX_VARIABLE_BLOCK_MAGIC[10] = { 'I','d','x','V','a','
 namespace {
   const uint32_t MAX_APPENDS_OUTSTANDING = 3;
 }
-
-using namespace Hypertable;
 
 CellStoreV0::CellStoreV0(Filesystem *filesys) : m_filesys(filesys), m_filename(), m_fd(-1), m_index(),
   m_compressor(0), m_buffer(0), m_fix_index_buffer(0), m_var_index_buffer(0),
@@ -92,9 +90,9 @@ const char *CellStoreV0::get_split_row() {
 }
 
 
-CellListScanner *CellStoreV0::create_scanner(ScanContextPtr &scanContextPtr) {
-  CellStorePtr cellStorePtr(this);
-  return new CellStoreScannerV0(cellStorePtr, scanContextPtr);
+CellListScanner *CellStoreV0::create_scanner(ScanContextPtr &scan_ctx) {
+  CellStorePtr cellstore(this);
+  return new CellStoreScannerV0(cellstore, scan_ctx);
 }
 
 
@@ -121,14 +119,14 @@ int CellStoreV0::create(const char *fname, uint32_t blocksize, const std::string
 
   if (compressor.empty())
     m_trailer.compression_type = CompressorFactory::parse_block_codec_spec(
-                                  "lzo", m_compressor_args);
+        "lzo", m_compressor_args);
   else
     m_trailer.compression_type = CompressorFactory::parse_block_codec_spec(
-                                  compressor, m_compressor_args);
+        compressor, m_compressor_args);
 
   m_compressor = CompressorFactory::create_block_codec(
-                  (BlockCompressionCodec::Type)m_trailer.compression_type,
-                  m_compressor_args);
+      (BlockCompressionCodec::Type)m_trailer.compression_type,
+      m_compressor_args);
 
   try { m_fd = m_filesys->create(m_filename, true, -1, -1, -1); }
   catch (Exception &e) {
@@ -140,8 +138,8 @@ int CellStoreV0::create(const char *fname, uint32_t blocksize, const std::string
 
 
 int CellStoreV0::add(const ByteString key, const ByteString value, uint64_t real_timestamp) {
-  EventPtr eventPtr;
-  DynamicBuffer zBuffer;
+  EventPtr event_ptr;
+  DynamicBuffer zbuf;
 
   (void)real_timestamp;
 
@@ -151,23 +149,23 @@ int CellStoreV0::add(const ByteString key, const ByteString value, uint64_t real
     add_index_entry(m_last_key, m_offset);
 
     m_uncompressed_data += (float)m_buffer.fill();
-    m_compressor->deflate(m_buffer, zBuffer, header);
-    m_compressed_data += (float)zBuffer.fill();
+    m_compressor->deflate(m_buffer, zbuf, header);
+    m_compressed_data += (float)zbuf.fill();
     m_buffer.clear();
 
     uint64_t llval = ((uint64_t)m_trailer.blocksize * (uint64_t)m_uncompressed_data) / (uint64_t)m_compressed_data;
     m_uncompressed_blocksize = (uint32_t)llval;
 
     if (m_outstanding_appends >= MAX_APPENDS_OUTSTANDING) {
-      if (!m_sync_handler.wait_for_reply(eventPtr)) {
-	HT_ERRORF("Problem writing to DFS file '%s' : %s", m_filename.c_str(), Hypertable::Protocol::string_format_message(eventPtr).c_str());
-	return -1;
+      if (!m_sync_handler.wait_for_reply(event_ptr)) {
+        HT_ERRORF("Problem writing to DFS file '%s' : %s", m_filename.c_str(), Hypertable::Protocol::string_format_message(event_ptr).c_str());
+        return -1;
       }
       m_outstanding_appends--;
     }
 
-    size_t zlen = zBuffer.fill();
-    StaticBuffer send_buf(zBuffer);
+    size_t zlen = zbuf.fill();
+    StaticBuffer send_buf(zbuf);
 
     try { m_filesys->append(m_fd, send_buf, 0, &m_sync_handler); }
     catch (Exception &e) {
@@ -179,13 +177,13 @@ int CellStoreV0::add(const ByteString key, const ByteString value, uint64_t real
     m_offset += zlen;
   }
 
-  size_t keyLen = key.length();
-  size_t valueLen = value.length();
+  size_t key_len = key.length();
+  size_t value_len = value.length();
 
-  m_buffer.ensure( keyLen + valueLen );
+  m_buffer.ensure(key_len + value_len);
 
-  m_last_key.ptr = m_buffer.addNoCheck(key.ptr, keyLen);
-  m_buffer.addNoCheck(value.ptr, valueLen);
+  m_last_key.ptr = m_buffer.add_unchecked(key.ptr, key_len);
+  m_buffer.add_unchecked(value.ptr, value_len);
 
   m_trailer.total_entries++;
 
@@ -195,10 +193,10 @@ int CellStoreV0::add(const ByteString key, const ByteString value, uint64_t real
 
 
 int CellStoreV0::finalize(Timestamp &timestamp) {
-  EventPtr eventPtr;
+  EventPtr event_ptr;
   int error = -1;
   size_t zlen;
-  DynamicBuffer zBuffer(0);
+  DynamicBuffer zbuf(0);
   size_t len;
   uint8_t *base;
   ByteString key;
@@ -210,16 +208,16 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
     add_index_entry(m_last_key, m_offset);
 
     m_uncompressed_data += (float)m_buffer.fill();
-    m_compressor->deflate(m_buffer, zBuffer, header);
-    m_compressed_data += (float)zBuffer.fill();
+    m_compressor->deflate(m_buffer, zbuf, header);
+    m_compressed_data += (float)zbuf.fill();
 
-    zlen = zBuffer.fill();
-    send_buf = zBuffer;
+    zlen = zbuf.fill();
+    send_buf = zbuf;
 
     if (m_outstanding_appends >= MAX_APPENDS_OUTSTANDING) {
-      if (!m_sync_handler.wait_for_reply(eventPtr)) {
-	HT_ERRORF("Problem writing to DFS file '%s' : %s", m_filename.c_str(), Protocol::string_format_message(eventPtr).c_str());
-	goto abort;
+      if (!m_sync_handler.wait_for_reply(event_ptr)) {
+        HT_ERRORF("Problem writing to DFS file '%s' : %s", m_filename.c_str(), Protocol::string_format_message(event_ptr).c_str());
+        goto abort;
       }
       m_outstanding_appends--;
     }
@@ -244,11 +242,11 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
    */
   base = m_fix_index_buffer.release(&len);
   m_fix_index_buffer.reserve(len);
-  m_fix_index_buffer.addNoCheck(base, len);
+  m_fix_index_buffer.add_unchecked(base, len);
   delete [] base;
   base = m_var_index_buffer.release(&len);
   m_var_index_buffer.reserve(len);
-  m_var_index_buffer.addNoCheck(base, len);
+  m_var_index_buffer.add_unchecked(base, len);
   delete [] base;
 
   /**
@@ -256,11 +254,11 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
    */
   {
     BlockCompressionHeader header(INDEX_FIXED_BLOCK_MAGIC);
-    m_compressor->deflate(m_fix_index_buffer, zBuffer, header);
+    m_compressor->deflate(m_fix_index_buffer, zbuf, header);
   }
 
-  zlen = zBuffer.fill();
-  send_buf = zBuffer;
+  zlen = zbuf.fill();
+  send_buf = zbuf;
 
   try { m_filesys->append(m_fd, send_buf, 0, &m_sync_handler); }
   catch (Exception &e) {
@@ -276,7 +274,7 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
   {
     BlockCompressionHeader header(INDEX_VARIABLE_BLOCK_MAGIC);
     m_trailer.var_index_offset = m_offset;
-    m_compressor->deflate(m_var_index_buffer, zBuffer, header, m_trailer.size());
+    m_compressor->deflate(m_var_index_buffer, zbuf, header, m_trailer.size());
   }
 
   /**
@@ -292,7 +290,7 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
     // fixed portion (e.g. offset)
     memcpy(&offset, m_fix_index_buffer.ptr, sizeof(offset));
     m_fix_index_buffer.ptr += sizeof(offset);
-    m_index.insert(m_index.end(), IndexMapT::value_type(key, offset));
+    m_index.insert(m_index.end(), IndexMap::value_type(key, offset));
     if (i == m_trailer.index_entries/2) {
       record_split_row(ByteString(m_var_index_buffer.ptr));
     }
@@ -302,14 +300,14 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
   delete [] m_fix_index_buffer.release();
 
   // write filter_offset (empty for now)
-  m_trailer.filter_offset = m_offset + zBuffer.fill();
+  m_trailer.filter_offset = m_offset + zbuf.fill();
 
-  // 
-  m_trailer.serialize(zBuffer.ptr);
-  zBuffer.ptr += m_trailer.size();
+  //
+  m_trailer.serialize(zbuf.ptr);
+  zbuf.ptr += m_trailer.size();
 
-  zlen = zBuffer.fill();
-  send_buf = zBuffer;
+  zlen = zbuf.fill();
+  send_buf = zbuf;
 
   try { m_filesys->append(m_fd, send_buf); }
   catch (Exception &e) {
@@ -353,10 +351,10 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
  */
 void CellStoreV0::add_index_entry(const ByteString key, uint32_t offset) {
 
-  size_t keyLen = key.length();
-  m_var_index_buffer.ensure( keyLen );
-  memcpy(m_var_index_buffer.ptr, key.ptr, keyLen);
-  m_var_index_buffer.ptr += keyLen;
+  size_t key_len = key.length();
+  m_var_index_buffer.ensure(key_len);
+  memcpy(m_var_index_buffer.ptr, key.ptr, key_len);
+  m_var_index_buffer.ptr += key_len;
 
   // Serialize offset into fix index buffer
   m_fix_index_buffer.ensure(sizeof(offset));
@@ -404,7 +402,7 @@ int CellStoreV0::open(const char *fname, const char *start_row, const char *end_
    */
   {
     uint32_t len;
-    uint8_t *trailer_buf = new uint8_t [ m_trailer.size() ];
+    uint8_t *trailer_buf = new uint8_t [m_trailer.size()];
 
     try {
       len = m_filesys->pread(m_fd, trailer_buf, m_trailer.size(),
@@ -435,7 +433,7 @@ int CellStoreV0::open(const char *fname, const char *start_row, const char *end_
     goto abort;
   }
   if (!(m_trailer.fix_index_offset < m_trailer.var_index_offset &&
-	m_trailer.var_index_offset < m_file_length)) {
+        m_trailer.var_index_offset < m_file_length)) {
     HT_ERRORF("Bad index offsets in CellStore trailer fix=%lld, var=%lld, "
               "length=%lld, file='%s'", m_trailer.fix_index_offset,
               m_trailer.var_index_offset, m_file_length, fname);
@@ -451,66 +449,48 @@ int CellStoreV0::open(const char *fname, const char *start_row, const char *end_
 
 int CellStoreV0::load_index() {
   int error = -1;
-  uint8_t *buf = 0;
   uint32_t amount;
-  uint8_t *vbuf = 0;
-  uint8_t *fEnd;
-  uint8_t *vEnd;
+  uint8_t *fix_end;
+  uint8_t *var_end;
   uint32_t len;
   BlockCompressionHeader header;
-  DynamicBuffer input(0);
   ByteString key;
 
   m_compressor = create_block_compression_codec();
 
   amount = (m_file_length-m_trailer.size()) - m_trailer.fix_index_offset;
-  buf = new uint8_t [ amount ];
 
-  /** Read index data **/
   try {
-    len = m_filesys->pread(m_fd, buf, amount, m_trailer.fix_index_offset);
+    DynamicBuffer buf(amount);
+    /** Read index data **/
+    len = m_filesys->pread(m_fd, buf.ptr, amount, m_trailer.fix_index_offset);
+
+    if (len != amount)
+      HT_THROWF(Error::DFSBROKER_IO_ERROR, "Error loading index for "
+                "CellStore '%s' : tried to read %d but only got %d",
+                m_filename.c_str(), amount, len);
+    /** inflate fixed index **/
+    buf.ptr += (m_trailer.var_index_offset - m_trailer.fix_index_offset);
+    m_compressor->inflate(buf, m_fix_index_buffer, header);
+
+    if (!header.check_magic(INDEX_FIXED_BLOCK_MAGIC))
+      HT_THROW(Error::BLOCK_COMPRESSOR_BAD_MAGIC, "");
+
+    /** inflate variable index **/
+    DynamicBuffer vbuf(0, false);
+    amount = (m_file_length-m_trailer.size()) - m_trailer.var_index_offset;
+    vbuf.base = buf.ptr;
+    vbuf.ptr = buf.ptr + amount;
+
+    m_compressor->inflate(vbuf, m_var_index_buffer, header);
+
+    if (!header.check_magic(INDEX_VARIABLE_BLOCK_MAGIC))
+      HT_THROW(Error::BLOCK_COMPRESSOR_BAD_MAGIC, "");
   }
   catch (Exception &e) {
-    HT_ERRORF("Error reading trailer for cellstore '%s': %s",
-              m_filename.c_str(), e.what());
+    HT_ERROR_OUT <<"Error reading trailer for cellstore '"<< m_filename
+                 <<"': "<<  e << HT_END;
     goto abort;
-  }
-
-  if (len != amount) {
-    HT_ERRORF("Problem loading index for CellStore '%s' : tried to read %d "
-              "but only got %d", m_filename.c_str(), amount, len);
-    goto abort;
-  }
-
-  /** inflate fixed index **/
-  {
-    input.base = buf;
-    input.ptr = buf + (m_trailer.var_index_offset - m_trailer.fix_index_offset);
-    if ((error = m_compressor->inflate(input, m_fix_index_buffer, header)) != Error::OK) {
-      HT_ERRORF("Fixed index decompression error - %s", Error::get_text(error));
-      goto abort;
-    }
-    if (!header.check_magic(INDEX_FIXED_BLOCK_MAGIC)) {
-      error = Error::BLOCK_COMPRESSOR_BAD_MAGIC;
-      goto abort;
-    }
-  }
-
-  vbuf = buf + (m_trailer.var_index_offset-m_trailer.fix_index_offset);
-  amount = (m_file_length-m_trailer.size()) - m_trailer.var_index_offset;
-
-  /** inflate variable index **/ 
-  {
-    input.base = vbuf;
-    input.ptr = vbuf + amount;
-    if ((error = m_compressor->inflate(input, m_var_index_buffer, header)) != Error::OK) {
-      HT_ERRORF("Variable index decompression error - %s", Error::get_text(error));
-      goto abort;
-    }
-    if (!header.check_magic(INDEX_VARIABLE_BLOCK_MAGIC)) {
-      error = Error::BLOCK_COMPRESSOR_BAD_MAGIC;
-      goto abort;
-    }
   }
 
   m_index.clear();
@@ -518,15 +498,14 @@ int CellStoreV0::load_index() {
   uint32_t offset;
 
   // record end offsets for sanity checking and reset ptr
-  fEnd = m_fix_index_buffer.ptr;
+  fix_end = m_fix_index_buffer.ptr;
   m_fix_index_buffer.ptr = m_fix_index_buffer.base;
-  vEnd = m_var_index_buffer.ptr;
+  var_end = m_var_index_buffer.ptr;
   m_var_index_buffer.ptr = m_var_index_buffer.base;
 
   for (size_t i=0; i< m_trailer.index_entries; i++) {
-
-    assert(m_fix_index_buffer.ptr < fEnd);
-    assert(m_var_index_buffer.ptr < vEnd);
+    assert(m_fix_index_buffer.ptr < fix_end);
+    assert(m_var_index_buffer.ptr < var_end);
 
     // Deserialized cell key (variable portion)
     key.ptr = m_var_index_buffer.ptr;
@@ -536,8 +515,7 @@ int CellStoreV0::load_index() {
     memcpy(&offset, m_fix_index_buffer.ptr, sizeof(offset));
     m_fix_index_buffer.ptr += sizeof(offset);
 
-    m_index.insert(m_index.end(), IndexMapT::value_type(key, offset));
-
+    m_index.insert(m_index.end(), IndexMap::value_type(key, offset));
   }
 
   /**
@@ -548,9 +526,9 @@ int CellStoreV0::load_index() {
     uint32_t end = (uint32_t)m_file_length;
     size_t start_row_length = m_start_row.length() + 1;
     size_t end_row_length = m_end_row.length() + 1;
-    DynamicBuffer dbuf( 7 + std::max(start_row_length, end_row_length) );
+    DynamicBuffer dbuf(7 + std::max(start_row_length, end_row_length));
     ByteString bs;
-    CellStoreV0::IndexMapT::const_iterator iter, mid_iter, end_iter;
+    CellStoreV0::IndexMap::const_iterator iter, mid_iter, end_iter;
 
     dbuf.clear();
     append_as_byte_string(dbuf, m_start_row.c_str(), start_row_length);
@@ -571,21 +549,18 @@ int CellStoreV0::load_index() {
     size_t i=0;
     for (mid_iter=iter; iter!=end_iter; ++iter,++i) {
       if ((i%2)==0)
-	++mid_iter;
+        ++mid_iter;
     }
     if (mid_iter != m_index.end())
       record_split_row((*mid_iter).first);
-
   }
 
   error = 0;
 
  abort:
-  input.base = 0;
   delete m_compressor;
   m_compressor = 0;
   delete [] m_fix_index_buffer.release();
-  delete [] buf;
   return error;
 }
 
@@ -598,7 +573,7 @@ void CellStoreV0::display_block_info() {
   uint32_t last_offset = 0;
   uint32_t block_size;
   size_t i=0;
-  for (IndexMapT::const_iterator iter = m_index.begin(); iter != m_index.end(); iter++) {
+  for (IndexMap::const_iterator iter = m_index.begin(); iter != m_index.end(); iter++) {
     if (last_key) {
       block_size = (*iter).second - last_offset;
       cout << i << ": offset=" << last_offset << " size=" << block_size << " row=" << last_key.str() << endl;
@@ -616,7 +591,7 @@ void CellStoreV0::display_block_info() {
 
 
 void CellStoreV0::record_split_row(const ByteString key) {
-  uint8_t *ptr;
+  const uint8_t *ptr;
   key.decode_length(&ptr);
   std::string split_row = (const char *)ptr;
   if (split_row > m_start_row && split_row < m_end_row)

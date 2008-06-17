@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -36,7 +36,6 @@
 
 #include "Hypertable/Lib/Types.h"
 
-using namespace Hypertable;
 
 namespace Hypertable {
 
@@ -45,7 +44,7 @@ namespace Hypertable {
   class MasterClient : public ReferenceCount {
   public:
 
-    MasterClient(ConnectionManagerPtr &connManagerPtr, Hyperspace::SessionPtr &hyperspacePtr, time_t timeout, ApplicationQueuePtr &appQueuePtr);
+    MasterClient(ConnectionManagerPtr &conn_mgr, Hyperspace::SessionPtr &hyperspace, time_t timeout, ApplicationQueuePtr &app_queue);
     ~MasterClient();
 
     /** Sets the client connection timeout
@@ -54,15 +53,15 @@ namespace Hypertable {
      */
     void set_timeout(time_t timeout) { m_timeout = timeout; }
 
-    int initiate_connection(DispatchHandlerPtr dispatchHandlerPtr);
+    int initiate_connection(DispatchHandlerPtr dhp);
 
-    bool wait_for_connection(long maxWaitSecs);
+    bool wait_for_connection(long max_wait_secs);
 
-    int create_table(const char *tableName, const char *schemaString, DispatchHandler *handler);
-    int create_table(const char *tableName, const char *schemaString);
+    int create_table(const char *tablename, const char *schemastr, DispatchHandler *handler);
+    int create_table(const char *tablename, const char *schemastr);
 
-    int get_schema(const char *tableName, DispatchHandler *handler);
-    int get_schema(const char *tableName, std::string &schema);
+    int get_schema(const char *tablename, DispatchHandler *handler);
+    int get_schema(const char *tablename, std::string &schema);
 
     int status();
 
@@ -81,7 +80,7 @@ namespace Hypertable {
 
   private:
 
-    int send_message(CommBufPtr &cbufPtr, DispatchHandler *handler);
+    int send_message(CommBufPtr &cbp, DispatchHandler *handler);
 
     boost::mutex           m_mutex;
     bool                   m_verbose;
@@ -92,14 +91,14 @@ namespace Hypertable {
     time_t                 m_timeout;
     bool                   m_initiated;
     uint64_t               m_master_file_handle;
-    HandleCallbackPtr      m_master_file_callback_ptr;
+    Hyperspace::HandleCallbackPtr m_master_file_callback_ptr;
     struct sockaddr_in     m_master_addr;
     std::string            m_master_addr_string;
     DispatchHandlerPtr     m_dispatcher_handler_ptr;
   };
 
   typedef boost::intrusive_ptr<MasterClient> MasterClientPtr;
-  
+
 
 }
 

@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -50,7 +50,6 @@
 #include "ServerKeepaliveHandler.h"
 #include "SessionData.h"
 
-using namespace Hypertable;
 
 namespace Hyperspace {
 
@@ -62,20 +61,30 @@ namespace Hyperspace {
     static const uint32_t DEFAULT_KEEPALIVE_INTERVAL = 10;
     static const uint32_t DEFAULT_GRACEPERIOD        = 60;
 
-    Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, ServerKeepaliveHandlerPtr &keepaliveHandlerPtr);
+    Master(ConnectionManagerPtr &, PropertiesPtr &,
+           ServerKeepaliveHandlerPtr &);
     ~Master();
 
-    void mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name);
-    void unlink(ResponseCallback *cb, uint64_t sessionId, const char *name);
-    void open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name, uint32_t flags, uint32_t eventMask, std::vector<AttributeT> &initAttrs);
-    void close(ResponseCallback *cb, uint64_t sessionId, uint64_t handle);
-    void attr_set(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, const char *name, const void *value, size_t valueLen);
-    void attr_get(ResponseCallbackAttrGet *cb, uint64_t sessionId, uint64_t handle, const char *name);
-    void attr_del(ResponseCallback *cb, uint64_t sessionId, uint64_t handle, const char *name);
-    void exists(ResponseCallbackExists *cb, uint64_t sessionId, const char *name);
-    void readdir(ResponseCallbackReaddir *cb, uint64_t sessionId, uint64_t handle);
-    void lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle, uint32_t mode, bool tryAcquire);
-    void release(ResponseCallback *cb, uint64_t sessionId, uint64_t handle);
+    // Hyperspace command implementations
+    void mkdir(ResponseCallback *cb, uint64_t session_id, const char *name);
+    void unlink(ResponseCallback *cb, uint64_t session_id, const char *name);
+    void open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
+              uint32_t flags, uint32_t event_mask,
+              std::vector<Attribute> &init_attrs);
+    void close(ResponseCallback *cb, uint64_t session_id, uint64_t handle);
+    void attr_set(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
+                  const char *name, const void *value, size_t value_len);
+    void attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
+                  uint64_t handle, const char *name);
+    void attr_del(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
+                  const char *name);
+    void exists(ResponseCallbackExists *cb, uint64_t session_id,
+                const char *name);
+    void readdir(ResponseCallbackReaddir *cb, uint64_t session_id,
+                 uint64_t handle);
+    void lock(ResponseCallbackLock *cb, uint64_t session_id, uint64_t handle,
+              uint32_t mode, bool try_lock);
+    void release(ResponseCallback *cb, uint64_t session_id, uint64_t handle);
 
     /**
      * Creates a new session by allocating a new SessionData object, obtaining a
@@ -89,13 +98,13 @@ namespace Hyperspace {
     /**
      * Obtains the SessionData object for the given id from the session map.
      *
-     * @param sessionId Session ID to lookup
-     * @param sessionPtr Reference to SessionData smart pointer
+     * @param session_id Session ID to lookup
+     * @param session_data Reference to SessionData smart pointer
      * @return true if found, false otherwise
      */
-    bool get_session(uint64_t sessionId, SessionDataPtr &sessionPtr);
+    bool get_session(uint64_t session_id, SessionDataPtr &session_data);
 
-    void destroy_session(uint64_t sessionId);
+    void destroy_session(uint64_t session_id);
 
     /**
      * Attempts to renew the session lease for session with the given ID.  If
@@ -103,75 +112,89 @@ namespace Hyperspace {
      * Error::HYPERSPACE_EXPIRED_SESSION otherwise, it renews the session
      * lease by invoking the RenewLease method of the SessionData object.
      *
-     * @param sessionId Session ID to renew
+     * @param session_id Session ID to renew
      * @return Error::OK if successful
      */
-    int renew_session_lease(uint64_t sessionId);
+    int renew_session_lease(uint64_t session_id);
 
-    bool next_expired_session(SessionDataPtr &sessionPtr);
+    bool next_expired_session(SessionDataPtr &session_data);
     void remove_expired_sessions();
 
-    void create_handle(uint64_t *handlep, HandleDataPtr &handlePtr);
-    bool get_handle_data(uint64_t sessionId, HandleDataPtr &handlePtr);
-    bool remove_handle_data(uint64_t sessionId, HandleDataPtr &handlePtr);
+    void create_handle(uint64_t *handlep, HandleDataPtr &handle_data);
+    bool get_handle_data(uint64_t session_id, HandleDataPtr &handle_data);
+    bool remove_handle_data(uint64_t session_id, HandleDataPtr &handle_data);
 
-    void get_datagram_send_address(struct sockaddr_in *addr) { memcpy(addr, &m_local_addr, sizeof(m_local_addr)); }
+    void get_datagram_send_address(struct sockaddr_in *addr) {
+      memcpy(addr, &m_local_addr, sizeof(m_local_addr));
+    }
 
   private:
 
     void get_generation_number();
 
     void normalize_name(std::string name, std::string &normal);
-    void deliver_event_notifications(NodeData *node, HyperspaceEventPtr &eventPtr, bool waitForNotify=true);
-    void deliver_event_notification(HandleDataPtr &handlePtr, HyperspaceEventPtr &eventPtr, bool waitForNotify=true);
+    void deliver_event_notifications(NodeData *node, HyperspaceEventPtr &,
+                                     bool wait_for_notify=true);
+    void deliver_event_notification(HandleDataPtr &handle_data,
+                                    HyperspaceEventPtr &event_ptr,
+                                    bool wait_for_notify=true);
 
     /**
-     * Locates the parent 'node' of the given pathname.  It determines the name of the parent
-     * node by stripping off the characters incuding and after the last '/' character.  It then
-     * looks up the name in the m_node_map and sets the pointer reference 'parentNodePtr' to it.
-     * As a side effect, it also saves the child name (e.g. characters after the last '/' character
-     * to the string reference childName.  NOTE: This method locks the m_node_map_mutex.
+     * Locates the parent 'node' of the given pathname.  It determines the name
+     * of the parent node by stripping off the characters incuding and after
+     * the last '/' character.  It then looks up the name in the m_node_map and
+     * sets the pointer reference 'parent_node' to it. As a side effect, it
+     * also saves the child name (e.g. characters after the last '/' character
+     * to the string reference child_name.  NOTE: This method locks the
+     * m_node_map_mutex.
      *
-     * @param normalName Normalized (e.g. no trailing '/') name of path to find parent of
-     * @param parentNodePtr pointer reference to hold return pointer
-     * @param childName reference to string to hold the child directory entry name
+     * @param normal_name Normalized (e.g. no trailing '/') name of path to
+     *        find parent of
+     * @param parent_node pointer reference to hold return pointer
+     * @param child_name reference to string to hold the child directory entry
+     *        name
      * @return true if parent node found, false otherwise
      */
-    bool find_parent_node(std::string normalName, NodeDataPtr &parentNodePtr, std::string &childName);
-    bool destroy_handle(uint64_t handle, int *errorp, std::string &errMsg, bool waitForNotify=true);
-    void release_lock(HandleDataPtr &handlePtr, bool waitForNotify=true);
-    void lock_handle(HandleDataPtr &handlePtr, uint32_t mode);
-    void lock_handle_with_notification(HandleDataPtr &handlePtr, uint32_t mode, bool waitForNotify=true);
+    bool find_parent_node(const std::string &normal_name,
+                          NodeDataPtr &parent_node, std::string &child_name);
+    bool destroy_handle(uint64_t handle, int *errorp, std::string &errmsg,
+                        bool wait_for_notify=true);
+    void release_lock(HandleDataPtr &handle_data, bool wait_for_notify=true);
+    void lock_handle(HandleDataPtr &handle_data, uint32_t mode);
+    void lock_handle_with_notification(HandleDataPtr &handle_data,
+                                       uint32_t mode,
+                                       bool wait_for_notify=true);
 
     /**
      * Safely obtains the node with the given pathname from the NodeMap,
      * creating one and inserting it into the map if it is not found.
      *
      * @param name pathname of node
-     * @param nodePtr Reference of node smart pointer to hold return node
+     * @param node_data Reference of node smart pointer to hold return node
      */
-    void get_node(std::string name, NodeDataPtr &nodePtr) {
+    void get_node(std::string name, NodeDataPtr &node_data) {
       boost::mutex::scoped_lock lock(m_node_map_mutex);
-      NodeMapT::iterator iter = m_node_map.find(name);
+      NodeMap::iterator iter = m_node_map.find(name);
       if (iter != m_node_map.end()) {
-	nodePtr = (*iter).second;
-	return;
+        node_data = (*iter).second;
+        return;
       }
-      nodePtr = new NodeData();
-      nodePtr->name = name;
-      m_node_map[name] = nodePtr;
+      node_data = new NodeData();
+      node_data->name = name;
+      m_node_map[name] = node_data;
     }
 
-    typedef hash_map<std::string, NodeDataPtr> NodeMapT;
-    typedef hash_map<uint64_t, HandleDataPtr>  HandleMapT;
-    typedef hash_map<uint64_t, SessionDataPtr> SessionMapT;
+    typedef hash_map<std::string, NodeDataPtr> NodeMap;
+    typedef hash_map<uint64_t, HandleDataPtr>  HandleMap;
+    typedef hash_map<uint64_t, SessionDataPtr> SessionMap;
+    typedef std::vector<SessionDataPtr> SessionDataVec;
 
     bool          m_verbose;
     uint32_t      m_lease_interval;
     uint32_t      m_keep_alive_interval;
-    NodeMapT      m_node_map;
-    HandleMapT    m_handle_map;
-    SessionMapT   m_session_map;
+    NodeMap       m_node_map;
+    HandleMap     m_handle_map;
+    SessionMap    m_session_map;
     boost::mutex  m_node_map_mutex;
     boost::mutex  m_handle_map_mutex;
     boost::mutex  m_session_map_mutex;
@@ -182,14 +205,15 @@ namespace Hyperspace {
     uint64_t      m_next_session_id;
     ServerKeepaliveHandlerPtr m_keepalive_handler_ptr;
     struct sockaddr_in m_local_addr;
-    std::vector<SessionDataPtr> m_session_heap;
+    SessionDataVec m_session_heap;
 
     // BerkeleyDB state
     BerkeleyDbFilesystem *m_bdb_fs;
 
   };
+
   typedef boost::intrusive_ptr<Master> MasterPtr;
 
-}
+} // namespace Hyperspace
 
 #endif // HYPERSPACE_MASTER_H

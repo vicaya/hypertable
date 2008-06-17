@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -30,25 +30,27 @@
 
 #include "Common/atomic.h"
 
-using namespace ::boost;
-using namespace ::boost::multi_index;
-
 namespace boost {
   std::size_t hash_value(uint64_t llval);
 }
 
 namespace Hypertable {
+  using namespace boost::multi_index;
 
   class FileBlockCache {
 
     static atomic_t ms_next_file_id;
 
   public:
-    FileBlockCache(uint64_t max_memory) : m_max_memory(max_memory), m_avail_memory(max_memory) {  }
+    FileBlockCache(uint64_t max_memory)
+        : m_max_memory(max_memory), m_avail_memory(max_memory) {  }
     ~FileBlockCache();
-    bool checkout(int file_id, uint32_t file_offset, uint8_t **blockp, uint32_t *lengthp);
+
+    bool checkout(int file_id, uint32_t file_offset, uint8_t **blockp,
+                  uint32_t *lengthp);
     void checkin(int file_id, uint32_t file_offset);
-    bool insert_and_checkout(int file_id, uint32_t file_offset, uint8_t *block, uint32_t length);
+    bool insert_and_checkout(int file_id, uint32_t file_offset,
+                             uint8_t *block, uint32_t length);
     bool contains(int file_id, uint32_t file_offset);
 
     static int get_next_file_id() {
@@ -57,10 +59,13 @@ namespace Hypertable {
 
   private:
 
-    class block_cache_entry {
+    class BlockCacheEntry {
     public:
-      block_cache_entry() : file_id(-1), file_offset(0), block(0), length(0), ref_count(0) { return; }
-      block_cache_entry(int id, uint32_t offset) : file_id(id), file_offset(offset), block(0), length(0), ref_count(0) { return; }
+      BlockCacheEntry() : file_id(-1), file_offset(0), block(0), length(0),
+          ref_count(0) { return; }
+      BlockCacheEntry(int id, uint32_t offset) : file_id(id),
+          file_offset(offset), block(0), length(0), ref_count(0) { return; }
+
       int      file_id;
       uint32_t file_offset;
       uint8_t  *block;
@@ -69,23 +74,18 @@ namespace Hypertable {
       uint64_t key() const { return ((uint64_t)file_id << 32) | file_offset; }
     };
 
-    struct increment_ref_count {
-      void operator()(block_cache_entry &entry) {
-	entry.ref_count++;
+    struct DecrementRefCount {
+      void operator()(BlockCacheEntry &entry) {
+        entry.ref_count--;
       }
     };
 
-    struct decrement_ref_count {
-      void operator()(block_cache_entry &entry) {
-	entry.ref_count--;
-      }
-    };
-
-    typedef multi_index_container<
-      block_cache_entry,
+    typedef boost::multi_index_container<
+      BlockCacheEntry,
       indexed_by<
         sequenced<>,
-        hashed_unique<const_mem_fun<block_cache_entry,uint64_t,&block_cache_entry::key> >
+        hashed_unique<const_mem_fun<BlockCacheEntry, uint64_t,
+                      &BlockCacheEntry::key> >
       >
     > BlockCache;
 

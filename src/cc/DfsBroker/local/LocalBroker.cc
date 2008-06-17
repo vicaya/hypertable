@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -46,20 +46,20 @@ extern "C" {
 using namespace Hypertable;
 
 
-LocalBroker::LocalBroker(PropertiesPtr &propsPtr) : m_verbose(false) {
+LocalBroker::LocalBroker(PropertiesPtr &props) : m_verbose(false) {
   const char *root;
 
-  m_verbose = propsPtr->get_bool("Hypertable.Verbose", false);
+  m_verbose = props->get_bool("Hypertable.Verbose", false);
 
   /**
    * Determine root directory
    */
-  if ((root = propsPtr->get("DfsBroker.Local.Root", 0)) == 0) {
+  if ((root = props->get("DfsBroker.Local.Root", 0)) == 0) {
     HT_ERROR("Required property 'DfsBroker.Local.Root' not specified, exiting...");
     exit(1);
   }
 
-  m_rootdir = (root[0] == '/') ? root : System::installDir + "/" + root;
+  m_rootdir = (root[0] == '/') ? root : System::install_dir + "/" + root;
 
   // strip off the trailing '/'
   if (root[strlen(root)-1] == '/')
@@ -79,37 +79,37 @@ LocalBroker::~LocalBroker() {
 /**
  * Open
  */
-void LocalBroker::open(ResponseCallbackOpen *cb, const char *fileName, uint32_t bufferSize) {
+void LocalBroker::open(ResponseCallbackOpen *cb, const char *fname, uint32_t bufsz) {
   int fd;
-  String absFileName;
-  
+  String abspath;
+
   if (m_verbose) {
-    HT_INFOF("open file='%s' bufferSize=%d", fileName, bufferSize);
+    HT_INFOF("open file='%s' bufsz=%d", fname, bufsz);
   }
 
-  if (fileName[0] == '/')
-    absFileName = m_rootdir + fileName;
+  if (fname[0] == '/')
+    abspath = m_rootdir + fname;
   else
-    absFileName = m_rootdir + "/" + fileName;
+    abspath = m_rootdir + "/" + fname;
 
   //fd = atomic_inc_return(&ms_unique_id);
 
   /**
    * Open the file
    */
-  if ((fd = ::open(absFileName.c_str(), O_RDONLY)) == -1) {
-    HT_ERRORF("open failed: file='%s' - %s", absFileName.c_str(), strerror(errno));
+  if ((fd = ::open(abspath.c_str(), O_RDONLY)) == -1) {
+    HT_ERRORF("open failed: file='%s' - %s", abspath.c_str(), strerror(errno));
     report_error(cb);
     return;
   }
 
   {
     struct sockaddr_in addr;
-    OpenFileDataLocalPtr dataPtr(new OpenFileDataLocal(fd, O_RDONLY));
+    OpenFileDataLocalPtr fdata(new OpenFileDataLocal(fd, O_RDONLY));
 
     cb->get_address(addr);
 
-    m_open_file_map.create(fd, addr, dataPtr);
+    m_open_file_map.create(fd, addr, fdata);
 
     cb->response(fd);
   }
@@ -119,21 +119,21 @@ void LocalBroker::open(ResponseCallbackOpen *cb, const char *fileName, uint32_t 
 /**
  * Create
  */
-void LocalBroker::create(ResponseCallbackOpen *cb, const char *fileName, bool overwrite,
-	    uint32_t bufferSize, uint16_t replication, uint64_t blockSize) {
+void LocalBroker::create(ResponseCallbackOpen *cb, const char *fname, bool overwrite,
+            uint32_t bufsz, uint16_t replication, uint64_t blksz) {
   int fd;
   int flags;
-  String absFileName;
-  
+  String abspath;
+
   if (m_verbose) {
-    HT_INFOF("create file='%s' overwrite=%d bufferSize=%d replication=%d blockSize=%d",
-		fileName, (int)overwrite, bufferSize, replication, blockSize);
+    HT_INFOF("create file='%s' overwrite=%d bufsz=%d replication=%d blksz=%d",
+                fname, (int)overwrite, bufsz, replication, blksz);
   }
 
-  if (fileName[0] == '/')
-    absFileName = m_rootdir + fileName;
+  if (fname[0] == '/')
+    abspath = m_rootdir + fname;
   else
-    absFileName = m_rootdir + "/" + fileName;
+    abspath = m_rootdir + "/" + fname;
 
   //fd = atomic_inc_return(&ms_unique_id);
 
@@ -145,19 +145,19 @@ void LocalBroker::create(ResponseCallbackOpen *cb, const char *fileName, bool ov
   /**
    * Open the file
    */
-  if ((fd = ::open(absFileName.c_str(), flags, 0644)) == -1) {
-    HT_ERRORF("open failed: file='%s' - %s", absFileName.c_str(), strerror(errno));
+  if ((fd = ::open(abspath.c_str(), flags, 0644)) == -1) {
+    HT_ERRORF("open failed: file='%s' - %s", abspath.c_str(), strerror(errno));
     report_error(cb);
     return;
   }
 
   {
     struct sockaddr_in addr;
-    OpenFileDataLocalPtr dataPtr(new OpenFileDataLocal(fd, O_WRONLY));
+    OpenFileDataLocalPtr fdata(new OpenFileDataLocal(fd, O_WRONLY));
 
     cb->get_address(addr);
 
-    m_open_file_map.create(fd, addr, dataPtr);
+    m_open_file_map.create(fd, addr, fdata);
 
     cb->response(fd);
   }
@@ -180,7 +180,7 @@ void LocalBroker::close(ResponseCallback *cb, uint32_t fd) {
  * Read
  */
 void LocalBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
-  OpenFileDataLocalPtr dataPtr;
+  OpenFileDataLocalPtr fdata;
   ssize_t nread;
   uint64_t offset;
   StaticBuffer buf(new uint8_t [amount], amount);
@@ -189,21 +189,21 @@ void LocalBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
     HT_INFOF("read fd=%d amount=%d", fd, amount);
   }
 
-  if (!m_open_file_map.get(fd, dataPtr)) {
+  if (!m_open_file_map.get(fd, fdata)) {
     char errbuf[32];
     sprintf(errbuf, "%d", fd);
     cb->error(Error::DFSBROKER_BAD_FILE_HANDLE, errbuf);
     return;
   }
 
-  if ((offset = (uint64_t)lseek(dataPtr->fd, 0, SEEK_CUR)) == (uint64_t)-1) {
-    HT_ERRORF("lseek failed: fd=%d offset=0 SEEK_CUR - %s", dataPtr->fd, strerror(errno));
+  if ((offset = (uint64_t)lseek(fdata->fd, 0, SEEK_CUR)) == (uint64_t)-1) {
+    HT_ERRORF("lseek failed: fd=%d offset=0 SEEK_CUR - %s", fdata->fd, strerror(errno));
     report_error(cb);
     return;
   }
 
-  if ((nread = FileUtils::read(dataPtr->fd, buf.base, amount)) == -1) {
-    HT_ERRORF("read failed: fd=%d amount=%d - %s", dataPtr->fd, amount, strerror(errno));
+  if ((nread = FileUtils::read(fdata->fd, buf.base, amount)) == -1) {
+    HT_ERRORF("read failed: fd=%d amount=%d - %s", fdata->fd, amount, strerror(errno));
     report_error(cb);
     return;
   }
@@ -219,7 +219,7 @@ void LocalBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
  */
 void LocalBroker::append(ResponseCallbackAppend *cb, uint32_t fd,
                          uint32_t amount, const void *data, bool sync) {
-  OpenFileDataLocalPtr dataPtr;
+  OpenFileDataLocalPtr fdata;
   ssize_t nwritten;
   uint64_t offset;
 
@@ -227,33 +227,33 @@ void LocalBroker::append(ResponseCallbackAppend *cb, uint32_t fd,
     HT_INFOF("append fd=%d amount=%d", fd, amount);
   }
 
-  if (!m_open_file_map.get(fd, dataPtr)) {
+  if (!m_open_file_map.get(fd, fdata)) {
     char errbuf[32];
     sprintf(errbuf, "%d", fd);
     cb->error(Error::DFSBROKER_BAD_FILE_HANDLE, errbuf);
     return;
   }
 
-  if ((offset = (uint64_t)lseek(dataPtr->fd, 0, SEEK_CUR)) == (uint64_t)-1) {
-    HT_ERRORF("lseek failed: fd=%d offset=0 SEEK_CUR - %s", dataPtr->fd, strerror(errno));
+  if ((offset = (uint64_t)lseek(fdata->fd, 0, SEEK_CUR)) == (uint64_t)-1) {
+    HT_ERRORF("lseek failed: fd=%d offset=0 SEEK_CUR - %s", fdata->fd, strerror(errno));
     report_error(cb);
     return;
   }
 
-  if ((nwritten = FileUtils::write(dataPtr->fd, data, amount)) == -1) {
-    HT_ERRORF("write failed: fd=%d amount=%d - %s", dataPtr->fd, amount, strerror(errno));
+  if ((nwritten = FileUtils::write(fdata->fd, data, amount)) == -1) {
+    HT_ERRORF("write failed: fd=%d amount=%d - %s", fdata->fd, amount, strerror(errno));
     report_error(cb);
     return;
   }
 
-  if (sync && fsync(dataPtr->fd) != 0) {
-    HT_ERRORF("flush failed: fd=%d - %s", dataPtr->fd, strerror(errno));
+  if (sync && fsync(fdata->fd) != 0) {
+    HT_ERRORF("flush failed: fd=%d - %s", fdata->fd, strerror(errno));
     report_error(cb);
     return;
   }
 
   cb->response(offset, nwritten);
-  
+
   return;
 }
 
@@ -262,17 +262,17 @@ void LocalBroker::append(ResponseCallbackAppend *cb, uint32_t fd,
  * Seek
  */
 void LocalBroker::seek(ResponseCallback *cb, uint32_t fd, uint64_t offset) {
-  OpenFileDataLocalPtr dataPtr;
+  OpenFileDataLocalPtr fdata;
 
-  if (!m_open_file_map.get(fd, dataPtr)) {
+  if (!m_open_file_map.get(fd, fdata)) {
     char errbuf[32];
     sprintf(errbuf, "%d", fd);
     cb->error(Error::DFSBROKER_BAD_FILE_HANDLE, errbuf);
     return;
   }
 
-  if ((offset = (uint64_t)lseek(dataPtr->fd, offset, SEEK_SET)) == (uint64_t)-1) {
-    HT_ERRORF("lseek failed: fd=%d offset=%lld - %s", dataPtr->fd, offset, strerror(errno));
+  if ((offset = (uint64_t)lseek(fdata->fd, offset, SEEK_SET)) == (uint64_t)-1) {
+    HT_ERRORF("lseek failed: fd=%d offset=%lld - %s", fdata->fd, offset, strerror(errno));
     report_error(cb);
     return;
   }
@@ -284,20 +284,20 @@ void LocalBroker::seek(ResponseCallback *cb, uint32_t fd, uint64_t offset) {
 /**
  * Remove
  */
-void LocalBroker::remove(ResponseCallback *cb, const char *fileName) {
-  String absFileName;
-  
+void LocalBroker::remove(ResponseCallback *cb, const char *fname) {
+  String abspath;
+
   if (m_verbose) {
-    HT_INFOF("remove file='%s'", fileName);
+    HT_INFOF("remove file='%s'", fname);
   }
 
-  if (fileName[0] == '/')
-    absFileName = m_rootdir + fileName;
+  if (fname[0] == '/')
+    abspath = m_rootdir + fname;
   else
-    absFileName = m_rootdir + "/" + fileName;
+    abspath = m_rootdir + "/" + fname;
 
-  if (unlink(absFileName.c_str()) == -1) {
-    HT_ERRORF("unlink failed: file='%s' - %s", absFileName.c_str(), strerror(errno));
+  if (unlink(abspath.c_str()) == -1) {
+    HT_ERRORF("unlink failed: file='%s' - %s", abspath.c_str(), strerror(errno));
     report_error(cb);
     return;
   }
@@ -309,21 +309,21 @@ void LocalBroker::remove(ResponseCallback *cb, const char *fileName) {
 /**
  * Length
  */
-void LocalBroker::length(ResponseCallbackLength *cb, const char *fileName) {
-  String absFileName;
+void LocalBroker::length(ResponseCallbackLength *cb, const char *fname) {
+  String abspath;
   uint64_t length;
-  
+
   if (m_verbose) {
-    HT_INFOF("length file='%s'", fileName);
+    HT_INFOF("length file='%s'", fname);
   }
 
-  if (fileName[0] == '/')
-    absFileName = m_rootdir + fileName;
+  if (fname[0] == '/')
+    abspath = m_rootdir + fname;
   else
-    absFileName = m_rootdir + "/" + fileName;
+    abspath = m_rootdir + "/" + fname;
 
-  if ((length = FileUtils::length(absFileName)) == (uint64_t)-1) {
-    HT_ERRORF("length (stat) failed: file='%s' - %s", absFileName.c_str(), strerror(errno));
+  if ((length = FileUtils::length(abspath)) == (uint64_t)-1) {
+    HT_ERRORF("length (stat) failed: file='%s' - %s", abspath.c_str(), strerror(errno));
     report_error(cb);
     return;
   }
@@ -336,7 +336,7 @@ void LocalBroker::length(ResponseCallbackLength *cb, const char *fileName) {
  * Pread
  */
 void LocalBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset, uint32_t amount) {
-  OpenFileDataLocalPtr dataPtr;
+  OpenFileDataLocalPtr fdata;
   ssize_t nread;
   StaticBuffer buf(new uint8_t [amount], amount);
 
@@ -344,15 +344,15 @@ void LocalBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset, 
     HT_INFOF("pread fd=%d offset=%lld amount=%d", fd, offset, amount);
   }
 
-  if (!m_open_file_map.get(fd, dataPtr)) {
+  if (!m_open_file_map.get(fd, fdata)) {
     char errbuf[32];
     sprintf(errbuf, "%d", fd);
     cb->error(Error::DFSBROKER_BAD_FILE_HANDLE, errbuf);
     return;
   }
 
-  if ((nread = FileUtils::pread(dataPtr->fd, buf.base, amount, (off_t)offset)) == -1) {
-    HT_ERRORF("pread failed: fd=%d amount=%d offset=%lld - %s", dataPtr->fd, amount, offset, strerror(errno));
+  if ((nread = FileUtils::pread(fdata->fd, buf.base, amount, (off_t)offset)) == -1) {
+    HT_ERRORF("pread failed: fd=%d amount=%d offset=%lld - %s", fdata->fd, amount, offset, strerror(errno));
     report_error(cb);
     return;
   }
@@ -366,20 +366,20 @@ void LocalBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset, 
 /**
  * Mkdirs
  */
-void LocalBroker::mkdirs(ResponseCallback *cb, const char *dirName) {
-  String absDirName;
-  
+void LocalBroker::mkdirs(ResponseCallback *cb, const char *dname) {
+  String absdir;
+
   if (m_verbose) {
-    HT_INFOF("mkdirs dir='%s'", dirName);
+    HT_INFOF("mkdirs dir='%s'", dname);
   }
 
-  if (dirName[0] == '/')
-    absDirName = m_rootdir + dirName;
+  if (dname[0] == '/')
+    absdir = m_rootdir + dname;
   else
-    absDirName = m_rootdir + "/" + dirName;
+    absdir = m_rootdir + "/" + dname;
 
-  if (!FileUtils::mkdirs(absDirName)) {
-    HT_ERRORF("mkdirs failed: dirName='%s' - %s", absDirName.c_str(), strerror(errno));
+  if (!FileUtils::mkdirs(absdir)) {
+    HT_ERRORF("mkdirs failed: dname='%s' - %s", absdir.c_str(), strerror(errno));
     report_error(cb);
     return;
   }
@@ -391,29 +391,29 @@ void LocalBroker::mkdirs(ResponseCallback *cb, const char *dirName) {
 /**
  * Rmdir
  */
-void LocalBroker::rmdir(ResponseCallback *cb, const char *dirName) {
-  String absDirName;
-  String commandStr;
-  
+void LocalBroker::rmdir(ResponseCallback *cb, const char *dname) {
+  String absdir;
+  String cmd_str;
+
   if (m_verbose) {
-    HT_INFOF("rmdir dir='%s'", dirName);
+    HT_INFOF("rmdir dir='%s'", dname);
   }
 
-  if (dirName[0] == '/')
-    absDirName = m_rootdir + dirName;
+  if (dname[0] == '/')
+    absdir = m_rootdir + dname;
   else
-    absDirName = m_rootdir + "/" + dirName;
+    absdir = m_rootdir + "/" + dname;
 
-  commandStr = (String)"/bin/rm -rf " + absDirName;
-  if (system(commandStr.c_str()) != 0) {
-    HT_ERRORF("%s failed.", commandStr.c_str());
-    cb->error(Error::DFSBROKER_IO_ERROR, commandStr);
+  cmd_str = (String)"/bin/rm -rf " + absdir;
+  if (system(cmd_str.c_str()) != 0) {
+    HT_ERRORF("%s failed.", cmd_str.c_str());
+    cb->error(Error::DFSBROKER_IO_ERROR, cmd_str);
     return;
   }
-  
+
 #if 0
-  if (rmdir(absDirName.c_str()) != 0) {
-    HT_ERRORF("rmdir failed: dirName='%s' - %s", absDirName.c_str(), strerror(errno));
+  if (rmdir(absdir.c_str()) != 0) {
+    HT_ERRORF("rmdir failed: dname='%s' - %s", absdir.c_str(), strerror(errno));
     report_error(cb);
     return;
   }
@@ -425,27 +425,27 @@ void LocalBroker::rmdir(ResponseCallback *cb, const char *dirName) {
 /**
  * Readdir
  */
-void LocalBroker::readdir(ResponseCallbackReaddir *cb, const char *dirName) {
+void LocalBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
   std::vector<String> listing;
 
   int Readdir(const char *pathname, std::vector<String> &result);
 
 
-  String absDirName;
+  String absdir;
 
   if (m_verbose) {
-    HT_INFOF("Readdir dir='%s'", dirName);
-    cout << std::flush;
+    HT_INFOF("Readdir dir='%s'", dname);
+    std::cout << std::flush;
   }
 
-  if (dirName[0] == '/')
-    absDirName = m_rootdir + dirName;
+  if (dname[0] == '/')
+    absdir = m_rootdir + dname;
   else
-    absDirName = m_rootdir + "/" + dirName;
+    absdir = m_rootdir + "/" + dname;
 
-  DIR *dirp = opendir(absDirName.c_str());
+  DIR *dirp = opendir(absdir.c_str());
   if (dirp == 0) {
-    HT_ERRORF("opendir('%s') failed - %s", absDirName.c_str(), strerror(errno));
+    HT_ERRORF("opendir('%s') failed - %s", absdir.c_str(), strerror(errno));
     report_error(cb);
     return;
   }
@@ -454,19 +454,19 @@ void LocalBroker::readdir(ResponseCallbackReaddir *cb, const char *dirName) {
   struct dirent *dp;
 
   if (readdir_r(dirp, &dent, &dp) != 0) {
-    HT_ERRORF("readdir('%s') failed - %s", absDirName.c_str(), strerror(errno));
+    HT_ERRORF("readdir('%s') failed - %s", absdir.c_str(), strerror(errno));
     (void)closedir(dirp);
     report_error(cb);
     return;
   }
-    
+
   while (dp != 0) {
 
     if (dp->d_name[0] != '.' && dp->d_name[0] != 0)
       listing.push_back((String)dp->d_name);
 
     if (readdir_r(dirp, &dent, &dp) != 0) {
-      HT_ERRORF("readdir('%s') failed - %s", absDirName.c_str(), strerror(errno));
+      HT_ERRORF("readdir('%s') failed - %s", absdir.c_str(), strerror(errno));
       report_error(cb);
       return;
     }
@@ -474,7 +474,7 @@ void LocalBroker::readdir(ResponseCallbackReaddir *cb, const char *dirName) {
   (void)closedir(dirp);
 
   HT_INFOF("Sending back %d listings", listing.size());
-  cout << std::flush;
+  std::cout << std::flush;
 
   cb->response(listing);
 }
@@ -484,21 +484,21 @@ void LocalBroker::readdir(ResponseCallbackReaddir *cb, const char *dirName) {
  * Flush
  */
 void LocalBroker::flush(ResponseCallback *cb, uint32_t fd) {
-  OpenFileDataLocalPtr dataPtr;
+  OpenFileDataLocalPtr fdata;
 
   if (m_verbose) {
     HT_INFOF("flush fd=%d", fd);
   }
 
-  if (!m_open_file_map.get(fd, dataPtr)) {
+  if (!m_open_file_map.get(fd, fdata)) {
     char errbuf[32];
     sprintf(errbuf, "%d", fd);
     cb->error(Error::DFSBROKER_BAD_FILE_HANDLE, errbuf);
     return;
   }
 
-  if (fsync(dataPtr->fd) != 0) {
-    HT_ERRORF("flush failed: fd=%d - %s", dataPtr->fd, strerror(errno));
+  if (fsync(fdata->fd) != 0) {
+    HT_ERRORF("flush failed: fd=%d - %s", fdata->fd, strerror(errno));
     report_error(cb);
     return;
   }
@@ -523,19 +523,19 @@ void LocalBroker::shutdown(ResponseCallback *cb) {
 }
 
 
-void LocalBroker::exists(ResponseCallbackExists *cb, const char *fileName) {
-  String absFileName;
-  
+void LocalBroker::exists(ResponseCallbackExists *cb, const char *fname) {
+  String abspath;
+
   if (m_verbose) {
-    HT_INFOF("exists file='%s'", fileName);
+    HT_INFOF("exists file='%s'", fname);
   }
 
-  if (fileName[0] == '/')
-    absFileName = m_rootdir + fileName;
+  if (fname[0] == '/')
+    abspath = m_rootdir + fname;
   else
-    absFileName = m_rootdir + "/" + fileName;
+    abspath = m_rootdir + "/" + fname;
 
-  cb->response( FileUtils::exists(absFileName) );
+  cb->response(FileUtils::exists(abspath));
 }
 
 
@@ -546,7 +546,7 @@ LocalBroker::rename(ResponseCallback *cb, const char *src, const char *dst) {
   String adst =
     format("%s%s%s", m_rootdir.c_str(), *dst == '/' ? "" : "/", dst);
 
-  if (m_verbose) 
+  if (m_verbose)
     HT_INFOF("rename %s -> %s", asrc.c_str(), adst.c_str());
 
   if (std::rename(asrc.c_str(), adst.c_str()) != 0) {
