@@ -184,6 +184,10 @@ IF(Boost_INCLUDE_DIR)
   string(REGEX REPLACE ".*\ngcc version ([0-9.]+).*" "\\1" GCC_VERSION ${TRY_OUT})
   message(STATUS "Boost version: ${BOOST_VERSION}")
 
+  if (NOT BOOST_CHECK STREQUAL "0")
+    message(FATAL_ERROR "Boost version not compatible")
+  endif (NOT BOOST_CHECK STREQUAL "0")
+
   if (GCC_VERSION)
     message(STATUS "gcc version: ${GCC_VERSION}")
   endif (GCC_VERSION)
