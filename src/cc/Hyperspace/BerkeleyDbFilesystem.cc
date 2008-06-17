@@ -50,7 +50,8 @@ using namespace Error;
 
 /**
  */
-BerkeleyDbFilesystem::BerkeleyDbFilesystem(const std::string &basedir)
+BerkeleyDbFilesystem::BerkeleyDbFilesystem(const std::string &basedir,
+                                           bool force_recover)
     : m_base_dir(basedir), m_env(0) {
   DbTxn *txn = NULL;
 
@@ -59,8 +60,13 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(const std::string &basedir)
     DB_INIT_LOCK  |  // Initialize locking
     DB_INIT_LOG   |  // Initialize logging
     DB_INIT_MPOOL |  // Initialize the cache
-    DB_INIT_TXN |    // Initialize transactions
+    DB_INIT_TXN   |  // Initialize transactions
+    DB_RECOVER    |  // Do basic recovery
     DB_THREAD;
+
+  if (force_recover)
+    env_flags |= DB_RECOVER_FATAL;
+
   u_int32_t db_flags = DB_CREATE | DB_AUTO_COMMIT | DB_THREAD;
 
   /**
