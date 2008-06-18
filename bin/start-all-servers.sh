@@ -131,6 +131,9 @@ if [ $? != 0 ] ; then
       fi
   fi
   echo "Successfully started DFSBroker ($1)"
+else
+  echo "ERROR: DFSBroker already running."
+  exit 1
 fi
 
 
@@ -194,8 +197,12 @@ if [ $? != 0 ] ; then
 	    exit 1
 	fi
     fi
+    echo "Successfully started Hyperspace"
+else
+    echo "ERROR: Hyperspace already running."
+    exit 1
 fi
-echo "Successfully started Hyperspace"
+
 
 #
 # Start Hypertable.Master
@@ -221,8 +228,11 @@ if [ "$START_MASTER" == "true" ] ; then
 		exit 1
 	    fi
 	fi
+        echo "Successfully started Hypertable.Master"
+    else
+       echo "ERROR: Hyperspace.Master already running."
+       exit 1
     fi
-    echo "Successfully started Hypertable.Master"
 else
     exit 0
 fi
@@ -251,8 +261,11 @@ if [ "$START_RANGESERVER" == "true" ] ; then
 		exit 1
 	    fi
 	fi
+       echo "Successfully started Hypertable.RangeServer"
+    else
+       echo "ERROR: Hyperspace.RangeServer already running."
+       exit 1
     fi
-    echo "Successfully started Hypertable.RangeServer"
 else
     exit 0
 fi
