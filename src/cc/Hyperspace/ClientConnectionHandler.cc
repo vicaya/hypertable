@@ -45,8 +45,10 @@ ClientConnectionHandler::ClientConnectionHandler(Comm *comm, Session *session, t
  *
  */
 ClientConnectionHandler::~ClientConnectionHandler() {
+  /** was causing deadlock ...
   if (m_master_addr.sin_port != 0)
     m_comm->close_socket(m_master_addr);
+  */
 }
 
 

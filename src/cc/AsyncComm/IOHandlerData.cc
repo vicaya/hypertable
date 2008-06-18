@@ -254,6 +254,17 @@ bool IOHandlerData::handle_write_readiness() {
 
   if (m_connected == false) {
     socklen_t nameLen = sizeof(m_local_addr);
+    int sockerr = 0;
+    socklen_t sockerr_len = sizeof(sockerr);
+
+    if (getsockopt(m_sd, SOL_SOCKET, SO_ERROR, &sockerr, &sockerr_len) < 0) {
+      HT_ERRORF("getsockopt(SO_ERROR) failed - %s", strerror(errno));
+    }
+    
+    if (sockerr) {
+      HT_ERRORF("connect() completion error - %s", strerror(sockerr));
+      return true;
+    }
 
     int bufsize = 4*32768;
     if (setsockopt(m_sd, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize, sizeof(bufsize)) < 0) {
@@ -265,7 +276,7 @@ bool IOHandlerData::handle_write_readiness() {
 
     if (getsockname(m_sd, (struct sockaddr *)&m_local_addr, &nameLen) < 0) {
       HT_ERRORF("getsockname(%d) failed - %s", m_sd, strerror(errno));
-      exit(1);
+      return true;
     }
     //clog << "Connection established." << endl;
     m_connected = true;
