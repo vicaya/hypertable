@@ -44,9 +44,15 @@ LocationCache.cc
 MasterClient.cc
 MasterFileHandler.cc
 MasterProtocol.cc
+MetaLog.cc
+MetaLogVersion.cc
+MetaLogDfsBase.cc
+MetaLogReaderDfsBase.cc
 RangeServerMetaLogEntryFactory.cc
 RangeServerMetaLog.cc
 RangeServerMetaLogReader.cc
+MetaLogEntryBase.cc
+RangeServerMetaLogEntries.cc
 MasterMetaLogEntryFactory.cc
 MasterMetaLog.cc
 MasterMetaLogReader.cc
@@ -78,11 +84,14 @@ target_link_libraries (generate_test_data Hypertable ${CMAKE_THREAD_LIBS_INIT} $
 
 # meta log test
 add_executable(metalog_api_test tests/MetaLogApiTest.cc)
-target_link_libraries(metalog_api_test Hypertable ${BOOST_LIB} ${Log4cpp_LIBRARIES})
+target_link_libraries(metalog_api_test Hypertable ${BOOST_LIB}
+    ${Log4cpp_LIBRARIES} ${ZLIB_LIBRARIES})
 add_executable(metalog_master_test tests/MetaLogMasterTest.cc)
-target_link_libraries(metalog_master_test Hypertable ${BOOST_LIB} ${Log4cpp_LIBRARIES})
+target_link_libraries(metalog_master_test Hypertable ${BOOST_LIB}
+    ${Log4cpp_LIBRARIES} ${ZLIB_LIBRARIES})
 add_executable(metalog_rs_test tests/MetaLogRangeServerTest.cc)
-target_link_libraries(metalog_rs_test Hypertable ${BOOST_LIB} ${Log4cpp_LIBRARIES})
+target_link_libraries(metalog_rs_test HyperComm HyperDfsBroker Hypertable
+    HyperCommon ${BOOST_LIB} ${Log4cpp_LIBRARIES} ${ZLIB_LIBRARIES})
 
 # schemaTest
 add_executable (schemaTest tests/schemaTest.cc)
@@ -139,8 +148,6 @@ configure_file(${SRC_DIR}/loadDataSourceTest.dat ${DST_DIR}/loadDataSourceTest.d
 configure_file(${HYPERTABLE_SOURCE_DIR}/conf/hypertable.cfg ${DST_DIR}/hypertable.cfg)
 
 
-add_test (MetaLog-Master metalog_master_test)
-add_test (MetaLog-RangeServer metalog_rs_test)
 add_test (Schema schemaTest)
 add_test (LocationCache locationCacheTest)
 add_test (LoadDataSource loadDataSourceTest)
@@ -151,6 +158,8 @@ add_test (BlockCompressor-QUICKLZ compressor_test quicklz)
 add_test (BlockCompressor-ZLIB compressor_test zlib)
 add_test (CommitLog commit_log_test)
 add_test (LargeInsert large_insert_test)
+add_test (MetaLog-Master metalog_master_test)
+add_test (MetaLog-RangeServer metalog_rs_test)
 
 file (GLOB HEADERS *.h)
 

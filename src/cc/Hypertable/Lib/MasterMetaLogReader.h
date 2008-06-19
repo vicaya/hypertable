@@ -23,8 +23,7 @@
 #define HYPERTABLE_MASTER_METALOG_READER_H
 
 #include "Common/String.h"
-#include "MasterMetaLog.h"
-#include "MetaLogReader.h"
+#include "MetaLogReaderDfsBase.h"
 
 namespace Hypertable {
 
@@ -33,17 +32,21 @@ struct MasterStateInfo {
   MetaLogEntries transactions;
 };
 
-typedef std::vector<MasterStateInfo> MasterStates;
-class Filesystem;
+std::ostream &operator<<(std::ostream &, const MasterStateInfo &);
 
-class MasterMetaLogReader : public MetaLogReader {
+typedef std::vector<MasterStateInfo *> MasterStates;
+
+class MasterMetaLogReader : public MetaLogReaderDfsBase {
 public:
   MasterMetaLogReader(Filesystem *, const String& path);
 
-  virtual ScanEntry *next(ScanEntry *);
-  virtual MasterMetaLogEntry *read();
+  virtual ScanEntry *next(ScanEntry &);
+  virtual MetaLogEntry *read();
 
-  void load_master_states(MasterStates &);
+  const MasterStates &load_master_states(bool force = false);
+
+private:
+  MasterStates m_master_states;
 };
 typedef intrusive_ptr<MasterMetaLogReader> MasterMetaLogReaderPtr;
 

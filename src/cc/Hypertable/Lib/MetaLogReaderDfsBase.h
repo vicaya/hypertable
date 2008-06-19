@@ -19,27 +19,35 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "MasterMetaLog.h"
+#ifndef HYPERTABLE_METALOG_READER_DFS_BASE_H
+#define HYPERTABLE_METALOG_READER_DFS_BASE_H
 
-using namespace std;
-using namespace Hypertable;
+#include "Common/String.h"
+#include "MetaLogReader.h"
 
-MasterMetaLog::MasterMetaLog(Filesystem *fs, const String &path) 
-    : MetaLogDfsBase(fs, path) {
-  // TODO
-}
+namespace Hypertable {
 
-void
-MasterMetaLog::write(MetaLogEntry *e) {
-  // TODO
-}
+class Filesystem;
 
-void
-MasterMetaLog::close() {
-  // TODO
-}
+class MetaLogReaderDfsBase : public MetaLogReader {
+public:
+  MetaLogReaderDfsBase(Filesystem *fs, const String &path);
 
-void
-MasterMetaLog::purge(const MasterStates &) {
-}
+  virtual ScanEntry *next(ScanEntry &);
+
+  Filesystem &fs() { return *m_fs; }
+  int fd() { return m_fd; }
+  const String &path() const { return m_path; }
+  size_t &pos() { return m_cur; }
+  size_t size() const { return m_file_size; }
+
+private:
+  int m_fd;
+  Filesystem *m_fs;
+  String m_path;
+  size_t m_cur, m_file_size;
+};
+
+} // namespace Hypertable
+
+#endif // HYPERTABLE_METALOG_READER_DFS_BASE_H

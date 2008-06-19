@@ -22,26 +22,38 @@
 #include "Common/Compat.h"
 #include "MasterMetaLogReader.h"
 
-using namespace std;
-using namespace Hypertable;
+namespace Hypertable {
 
-MasterMetaLogReader::MasterMetaLogReader(Filesystem *, const String& path) {
+MasterMetaLogReader::MasterMetaLogReader(Filesystem *fs, const String& path)
+    : MetaLogReaderDfsBase(fs, path) {
   // TODO
 }
 
 MetaLogReader::ScanEntry *
-MasterMetaLogReader::next(ScanEntry *) {
+MasterMetaLogReader::next(ScanEntry &) {
   // TODO
   return NULL;
 }
 
-MasterMetaLogEntry *
+MetaLogEntry *
 MasterMetaLogReader::read() {
   // TODO
   return NULL;
 }
 
-void
-MasterMetaLogReader::load_master_states(MasterStates &) {
+const MasterStates &
+MasterMetaLogReader::load_master_states(bool force) {
   // TODO
+  return m_master_states;
 }
+
+std::ostream &operator<<(std::ostream &out, const MasterStateInfo &info) {
+  out <<"{ range server to recover="<< info.range_server_to_recover;
+  foreach(const MetaLogEntryPtr &ep, info.transactions) {
+    out <<"  "<< ep.get() <<'\n';
+  }
+  out << "}\n";
+  return out;
+}
+
+} // namespace Hypertable

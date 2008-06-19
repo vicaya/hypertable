@@ -122,7 +122,7 @@ fletcher32a(const uint16_t *data, size_t len) {
 #define MOD_ADLER 65521
 
 inline uint32_t
-update_adler32_wp(uint32_t adler, const void *data8, size_t len) {
+adler32_update_wp(uint32_t adler, const void *data8, size_t len) {
   const uint8_t *data = (const uint8_t *)data8;
   uint32_t a = adler & 0xffff, b = (adler >> 16) & 0xffff;
 
@@ -156,7 +156,7 @@ update_adler32_wp(uint32_t adler, const void *data8, size_t len) {
 
 uint32_t
 adler32_wp(const void *data, size_t len) {
-  return update_adler32_wp(1, data, len);
+  return adler32_update_wp(1, data, len);
 }
 
 #define HT_A32_DO1(buf,i)  a += buf[i]; b += a
@@ -166,7 +166,7 @@ adler32_wp(const void *data, size_t len) {
 #define HT_A32_DO16(buf,i) HT_A32_DO8(buf,i); HT_A32_DO8(buf,i+8);
 
 inline uint32_t
-update_adler32(uint32_t adler, const void *data8, size_t len) {
+adler32_update(uint32_t adler, const void *data8, size_t len) {
   const uint8_t *data = (const uint8_t *)data8;
   uint32_t a = adler & 0xffff, b = (adler >> 16) & 0xffff;
 
@@ -193,7 +193,7 @@ update_adler32(uint32_t adler, const void *data8, size_t len) {
 
 uint32_t
 adler32(const void *data, size_t len) {
-  return update_adler32(1, data, len);
+  return adler32_update(1, data, len);
 }
 
 uint32_t
@@ -203,7 +203,7 @@ crc32(const void *data, size_t len) {
 }
 
 uint32_t
-update_crc32(uint32_t crc, const void *data, size_t len) {
+crc32_update(uint32_t crc, const void *data, size_t len) {
   return ::crc32(crc, (Bytef *)data, len);
 }
 

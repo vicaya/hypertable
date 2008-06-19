@@ -21,17 +21,14 @@
 #ifndef HYPERTABLE_DYNAMICBUFFER_H
 #define HYPERTABLE_DYNAMICBUFFER_H
 
+
 namespace Hypertable {
 
   class DynamicBuffer {
-
   public:
 
-    DynamicBuffer() : base(0), ptr(0), size(0), own(true) { }
-
-    DynamicBuffer(size_t initial_size, bool own_buffer=true) {
-      size = initial_size;
-      own = own_buffer;
+    explicit DynamicBuffer(size_t initialSize = 0, bool own_buffer = true) :
+        size(initialSize), own(own_buffer) {
       if (size)
         base = ptr = new uint8_t[size];
       else
@@ -76,14 +73,14 @@ namespace Hypertable {
     }
 
     uint8_t *add(const void *data, size_t len) {
-      if (len > remaining())
-	grow((size_t)(1.5 * (size+len)));
+      ensure(len);
       return add_unchecked(data, len);
     }
 
     void set(const void *data, size_t len) {
-      ptr = base;
-      add(data, len);
+      clear();
+      reserve(len);
+      add_unchecked(data, len);
     }
 
     void clear() {
@@ -125,6 +122,6 @@ namespace Hypertable {
     bool own;
   };
 
-}
+} // namespace Hypertable
 
 #endif // HYPERTABLE_DYNAMICBUFFER_H

@@ -22,17 +22,19 @@
 #ifndef HYPERTABLE_RANGELOCATIONINFO_H
 #define HYPERTABLE_RANGELOCATIONINFO_H
 
-#include <string>
-
 #include "Types.h"
+
+namespace Hypertable {
 
 /** Holds range start and end row plus location */
 class RangeLocationInfo {
  public:
-  std::string start_row;
-  std::string end_row;
-  std::string location;
+  String start_row;
+  String end_row;
+  String location;
 };
+
+} // namespace Hypertable
 
 #endif // HYPERTABLE_RANGELOCATIONINFO_H
 

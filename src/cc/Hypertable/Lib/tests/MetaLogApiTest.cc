@@ -40,9 +40,8 @@ namespace {
 
 struct NullEntry : public MetaLogEntry {
   virtual void write(DynamicBuffer &)  {}
-  virtual void read(const void *buf, size_t len) {}
-  virtual bool is_valid() { return true; }
-  virtual int get_type() { return 0; }
+  virtual const uint8_t *read(StaticBuffer &) { return 0; }
+  virtual int get_type() const { return 0; }
 };
 
 struct NullLog : public MetaLog {
@@ -52,7 +51,7 @@ struct NullLog : public MetaLog {
 };
 
 struct NullReader : public MetaLogReader {
-  virtual ScanEntry *next(ScanEntry *) { return NULL; }
+  virtual ScanEntry *next(ScanEntry &) { return NULL; }
   virtual MetaLogEntry *read() { return NULL; }
 };
 
@@ -63,7 +62,6 @@ null_test() {
   MetaLogEntryPtr log_entry(new NullEntry);
 
   metalog->write(log_entry.get());
-  metalog->purge();
   metalog->close();
 
   reader->read();

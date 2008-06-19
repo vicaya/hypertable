@@ -320,11 +320,10 @@ void RangeServer::fast_recover() {
   bool exists;
   String meta_log_dir = Global::log_dir + "/meta";
   String primary_log_dir = Global::log_dir + "/primary";
-  RangeServerMetaLogReaderPtr meta_log_reader_ptr;
+  RangeServerMetaLogReaderPtr rsml_reader;
   CommitLogReaderPtr primary_log_reader;
-  RangeStates range_states;
   BlockCompressionHeaderCommitLog header;
-  uint8_t *ptr, *end;
+  const uint8_t *ptr, *end;
   uint8_t *base;
   size_t len;
   TableIdentifier table_id;
@@ -345,9 +344,18 @@ void RangeServer::fast_recover() {
     if (!exists)
       return;
 
-    meta_log_reader_ptr = new RangeServerMetaLogReader(Global::log_dfs, meta_log_dir);
+    // Load range states
+    rsml_reader = new RangeServerMetaLogReader(Global::log_dfs, meta_log_dir);
+    const RangeStates &range_states = rsml_reader->load_range_states();
 
-    meta_log_reader_ptr->load_range_states(range_states);
+    foreach(const RangeStateInfo *i, range_states) {
+      if (i->transactions.empty()) {
+        // TODO
+      }
+      else {
+        // TODO
+      }
+    }
 
     primary_log_reader = new CommitLogReader(Global::log_dfs, primary_log_dir);
 
@@ -358,7 +366,7 @@ void RangeServer::fast_recover() {
       ptr = base;
       end = base + len;
 
-      table_id.decode((const uint8_t **)&ptr, &len);
+      table_id.decode(&ptr, &len);
 
       // Fetch table info
       if (!m_replay_map_ptr->get(table_id.id, table_info_ptr))
@@ -397,7 +405,7 @@ void RangeServer::fast_recover() {
 
       }
 
-      encode_i32(&base, dbuf.ptr-(base+4));
+      encode_i32(&base, dbuf.ptr - (base + 4));
 
       replay_update(&cb, dbuf.base, dbuf.fill());
     }

@@ -45,8 +45,8 @@ namespace Hypertable {
   class Table : public ReferenceCount {
 
   public:
-    Table(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, Hyperspace::SessionPtr &hyperspace_ptr, std::string name);
-    Table(PropertiesPtr &props_ptr, Comm *comm, Hyperspace::SessionPtr &hyperspace_ptr, std::string name);
+    Table(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, Hyperspace::SessionPtr &hyperspace_ptr, String name);
+    Table(PropertiesPtr &props_ptr, Comm *comm, Hyperspace::SessionPtr &hyperspace_ptr, String name);
     virtual ~Table();
 
     /**
@@ -72,7 +72,7 @@ namespace Hypertable {
 
   private:
 
-    void initialize(std::string &name);
+    void initialize(const String &name);
 
     PropertiesPtr          m_props_ptr;
     Comm                  *m_comm;
@@ -80,7 +80,7 @@ namespace Hypertable {
     Hyperspace::SessionPtr m_hyperspace_ptr;
     SchemaPtr              m_schema_ptr;
     RangeLocatorPtr        m_range_locator_ptr;
-    TableIdentifier       m_table;
+    TableIdentifier        m_table;
   };
   typedef boost::intrusive_ptr<Table> TablePtr;
 

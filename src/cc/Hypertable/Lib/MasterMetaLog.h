@@ -23,25 +23,22 @@
 #define HYPERTABLE_MASTER_METALOG_H
 
 #include "Common/String.h"
-#include "MetaLog.h"
+#include "MetaLogDfsBase.h"
+#include "MasterMetaLogReader.h"
 
 namespace Hypertable {
 
-class MasterMetaLogEntry : public MetaLogEntry {
-public:
-};
-
-class Filesystem;
-
-class MasterMetaLog : public MetaLog {
+class MasterMetaLog : public MetaLogDfsBase {
 public:
   MasterMetaLog(Filesystem *, const String &path);
 
   virtual void write(MetaLogEntry *);
-  virtual void write(MasterMetaLogEntry *);
   virtual void close();
-  virtual void purge();
+
+  void purge(const MasterStates &);
 };
+
+typedef intrusive_ptr<MasterMetaLog> MasterMetaLogPtr;
 
 } // namespace Hypertable
 

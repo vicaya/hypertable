@@ -39,15 +39,6 @@ namespace Hypertable {
       return boost::xtime_get(this, type) != 0;
     }
 
-    /** get the current hi-res time in seconds
-     *  returns a double-precision floating-point number
-     *  returns 0 on failure.
-     */
-    double get_double(int type = TIME_UTC) {
-      if (!reset(type)) return 0.0;
-      return double(sec) + double(nsec)/1e9;
-    }
-
     /** compare with other HiResTime
      *  <: -1; ==: 0; >: 1
      */
@@ -59,6 +50,8 @@ namespace Hypertable {
     bool operator==(const HiResTime &y) const { return cmp(y) == 0; }
   };
 
-}
+  extern uint64_t get_ts64();
+
+} // namespace Hypertable
 
 #endif // HYPERTABLE_HIRES_TIME_H

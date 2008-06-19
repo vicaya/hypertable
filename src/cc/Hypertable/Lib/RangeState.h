@@ -31,16 +31,21 @@ namespace Hypertable {
    */
   class RangeState {
   public:
-    enum { STEADY, SPLIT_LOG_INSTALLED, SPLIT_SHRUNK };
+    enum StateType { STEADY, SPLIT_LOG_INSTALLED, SPLIT_SHRUNK };
     RangeState() : state(STEADY), soft_limit(0), transfer_log(0) { return; }
+    RangeState(StateType st, uint64_t slimit, const char *tlog)
+        : state(st), soft_limit(slimit), transfer_log(tlog) {}
+
     size_t encoded_length();
     void encode(uint8_t **bufp);
     void decode(const uint8_t **bufp, size_t *remainp);
+
     int state;
     uint64_t soft_limit;
     const char *transfer_log;
   };
 
+  std::ostream &operator<<(std::ostream &, const RangeState &);
 
   /**
    * Holds the storage the persistent state of a Range.
@@ -61,6 +66,7 @@ namespace Hypertable {
         transfer_log = 0;
       return *this;
     }
+
     void set_transfer_log(const String &tl) {
       m_transfer_log = tl;
       transfer_log = m_transfer_log.c_str();

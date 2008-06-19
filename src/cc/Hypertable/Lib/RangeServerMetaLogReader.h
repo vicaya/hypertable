@@ -22,33 +22,51 @@
 #ifndef HYPERTABLE_RANGE_SERVER_METALOG_READER_H
 #define HYPERTABLE_RANGE_SERVER_METALOG_READER_H
 
-#include "Common/String.h"
 #include "Types.h"
-#include "RangeServerMetaLog.h"
-#include "MetaLogReader.h"
+#include "RangeState.h"
+#include "MetaLogReaderDfsBase.h"
 
 namespace Hypertable {
 
 struct RangeStateInfo {
-  RangeSpec range;
+  RangeStateInfo(const TableIdentifier &tid, const RangeSpec &r, 
+                 uint64_t slimit, uint64_t ts)
+      : table(tid), range(r), soft_limit(slimit), timestamp(ts) {}
+
+  RangeStateInfo(const TableIdentifier &tid, const RangeSpec &r)
+      : table(TableIdentifier()), range(RangeSpec()) {
+    // constructing lookup key only no copy needed
+    table.id = tid.id;
+    range.end_row = r.end_row;
+  }
+
+  TableIdentifierManaged table;
+  RangeSpecManaged range;
+  uint64_t soft_limit;
+  uint64_t timestamp; // time when the range is loaded
   MetaLogEntries transactions; // log entries associated with current txn
 };
 
-typedef std::vector<RangeStateInfo> RangeStates;
+std::ostream &operator<<(std::ostream &, const RangeStateInfo &);
 
-class Filesystem;
+typedef std::vector<RangeStateInfo *> RangeStates;
 
-class RangeServerMetaLogReader : public MetaLogReader {
+class RangeServerMetaLogReader : public MetaLogReaderDfsBase {
 public:
+  typedef MetaLogReaderDfsBase Parent;
+
   RangeServerMetaLogReader(Filesystem *, const String& path);
+  virtual ~RangeServerMetaLogReader();
 
-  virtual ScanEntry *next(ScanEntry *);
-  virtual RangeServerMetaLogEntry *read();
+  virtual MetaLogEntry *read();
 
-  void load_range_states(RangeStates &);
+  const RangeStates &load_range_states(bool force = false);
+
+private:
+  RangeStates m_range_states;
 };
-typedef intrusive_ptr<RangeServerMetaLogReader> RangeServerMetaLogReaderPtr;
 
+typedef intrusive_ptr<RangeServerMetaLogReader> RangeServerMetaLogReaderPtr;
 
 } // namespace Hypertable
 

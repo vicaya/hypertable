@@ -24,6 +24,7 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include "Common/String.h"
 #include "Common/DynamicBuffer.h"
 #include "Common/Error.h"
 #include "Common/Logger.h"
@@ -40,7 +41,10 @@ using namespace Hyperspace;
 /**
  *
  */
-Table::Table(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, Hyperspace::SessionPtr &hyperspace_ptr, std::string name) : m_props_ptr(props_ptr), m_comm(conn_manager_ptr->get_comm()), m_conn_manager_ptr(conn_manager_ptr), m_hyperspace_ptr(hyperspace_ptr) {
+Table::Table(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr,
+             Hyperspace::SessionPtr &hyperspace_ptr, String name)
+    : m_props_ptr(props_ptr), m_comm(conn_manager_ptr->get_comm()),
+      m_conn_manager_ptr(conn_manager_ptr), m_hyperspace_ptr(hyperspace_ptr) {
 
   initialize(name);
   m_range_locator_ptr = new RangeLocator(props_ptr, m_conn_manager_ptr, m_hyperspace_ptr);
@@ -49,21 +53,22 @@ Table::Table(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, H
 /**
  *
  */
-Table::Table(PropertiesPtr &props_ptr, Comm *comm, Hyperspace::SessionPtr &hyperspace_ptr, std::string name) : m_props_ptr(props_ptr), m_comm(comm), m_conn_manager_ptr(0), m_hyperspace_ptr(hyperspace_ptr) {
+Table::Table(PropertiesPtr &props_ptr, Comm *comm, Hyperspace::SessionPtr &hyperspace_ptr, String name) : m_props_ptr(props_ptr), m_comm(comm), m_conn_manager_ptr(0), m_hyperspace_ptr(hyperspace_ptr) {
 
   initialize(name);
   m_range_locator_ptr = new RangeLocator(props_ptr, m_comm, m_hyperspace_ptr);
 }
 
 
-void Table::initialize(std::string &name) {
+void Table::initialize(const String &name) {
   int error;
-  std::string tablefile = (std::string)"/hypertable/tables/" + name;
+  String tablefile = "/hypertable/tables/"; tablefile += name;
   DynamicBuffer value_buf(0);
   uint64_t handle;
   HandleCallbackPtr null_handle_callback;
-  std::string errmsg;
+  String errmsg;
 
+  // TODO: issue 11
   /**
    * Open table file
    */

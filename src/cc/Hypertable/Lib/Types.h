@@ -51,17 +51,19 @@ namespace Hypertable {
   /** Wrapper for TableIdentifier.  Handles name allocation */
   class TableIdentifierManaged : public TableIdentifier {
   public:
-    TableIdentifierManaged(const TableIdentifier &identifier)
-        : m_name(identifier.name) {
-      id = identifier.id;
-      generation = identifier.generation;
-      name = m_name.c_str();
+    TableIdentifierManaged(const TableIdentifier &identifier) {
+      operator=(identifier);
     }
     TableIdentifierManaged &operator=(const TableIdentifier &identifier) {
-      m_name = identifier.name;
       id = identifier.id;
       generation = identifier.generation;
-      name = m_name.c_str();
+
+      if (identifier.name) {
+        m_name = identifier.name;
+        name = m_name.c_str();
+      }
+      else
+        name = 0;
       return *this;
     }
 
@@ -88,17 +90,22 @@ namespace Hypertable {
   /** RangeSpec with storage */
   class RangeSpecManaged : public RangeSpec {
   public:
-    RangeSpecManaged(const RangeSpec &range)
-        : m_start(range.start_row), m_end(range.end_row) {
-      start_row = m_start.c_str();
-      end_row = m_end.c_str();
-    }
+    RangeSpecManaged(const RangeSpec &range) { operator=(range); }
 
     RangeSpecManaged &operator=(const RangeSpec &range) {
-      m_start = range.start_row;
-      m_end = range.end_row;
-      start_row = m_start.c_str();
-      end_row = m_end.c_str();
+      if (range.start_row) {
+        m_start = range.start_row;
+        start_row = m_start.c_str();
+      }
+      else
+        start_row = 0;
+
+      if (range.end_row) {
+        m_end = range.end_row;
+        end_row = m_end.c_str();
+      }
+      else
+        end_row = 0;
       return *this;
     }
 
@@ -111,6 +118,7 @@ namespace Hypertable {
   public:
     ScanSpec();
     ScanSpec(const uint8_t **bufp, size_t *remainp) { decode(bufp, remainp); }
+
     size_t encoded_length() const;
     void encode(uint8_t **bufp) const;
     void decode(const uint8_t **bufp, size_t *remainp);

@@ -24,10 +24,10 @@
 
 #include <Common/String.h>
 #include "Types.h"
-#include "RangeServerMetaLog.h"
+#include "RangeState.h"
+#include "MetaLog.h"
 
-namespace Hypertable {
-namespace MetaLogEntryFactory {
+namespace Hypertable { namespace MetaLogEntryFactory {
 
 enum RangeServerMetaLogEntryType {
   RS_SPLIT_START        = 1,
@@ -39,32 +39,34 @@ enum RangeServerMetaLogEntryType {
   RS_MOVE_DONE          = 7
 };
 
-RangeServerMetaLogEntry *
-new_rs_split_start(const RangeSpec &old, const RangeSpec &split_off,
-                   const String &transfer_log);
+MetaLogEntry *
+new_rs_split_start(const TableIdentifier &, const RangeSpec &old,
+                   const RangeSpec &split_off, const RangeState &);
 
-RangeServerMetaLogEntry *
-new_rs_split_shrunk(const RangeSpec &old);
+MetaLogEntry *
+new_rs_split_shrunk(const TableIdentifier &, const RangeSpec &old);
 
-RangeServerMetaLogEntry *
-new_rs_split_done(const RangeSpec &old);
+MetaLogEntry *
+new_rs_split_done(const TableIdentifier &, const RangeSpec &old);
 
-RangeServerMetaLogEntry *
-new_rs_range_loaded(const RangeSpec &);
+MetaLogEntry *
+new_rs_range_loaded(const TableIdentifier &, const RangeSpec &, 
+                    const RangeState &);
 
-RangeServerMetaLogEntry *
-new_rs_move_start(const RangeSpec &, const String &transfer_log);
+MetaLogEntry *
+new_rs_move_start(const TableIdentifier &, const RangeSpec &,
+                  const RangeState &);
 
-RangeServerMetaLogEntry *
-new_rs_move_prepared(const RangeSpec &);
+MetaLogEntry *
+new_rs_move_prepared(const TableIdentifier &, const RangeSpec &);
 
-RangeServerMetaLogEntry *
-new_rs_move_done(const RangeSpec &);
+MetaLogEntry *
+new_rs_move_done(const TableIdentifier &, const RangeSpec &);
 
-RangeServerMetaLogEntry *
-new_from_payload(RangeServerMetaLogEntryType, const void *buf, size_t len);
+MetaLogEntry *
+new_from_payload(RangeServerMetaLogEntryType, uint64_t timestamp,
+                 StaticBuffer &);
 
-} // namespace MetaLogEntryFactory
-} // namespace Hypertable
+}} // namespace Hypertable::MetaLogEntryFactory
 
 #endif // HYPERTABLE_RANGE_SERVER_METALOG_ENTRY_FACTORY_H

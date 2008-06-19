@@ -671,9 +671,9 @@ void Range::replay_transfer_log(CommitLogReader *commit_log_reader, uint64_t rea
       memory_added += len;
 
       while (ptr < end) {
-        key.ptr = ptr;
+        key.ptr = (uint8_t *)ptr;
         ptr += key.length();
-        value.ptr = ptr;
+        value.ptr = (uint8_t *)ptr;
         ptr += value.length();
         add(key, value, real_timestamp);
         count++;

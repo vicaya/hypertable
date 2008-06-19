@@ -121,7 +121,13 @@ namespace Hypertable {
 
       HQL_BAD_LOAD_FILE_FORMAT  = 0x00060001,
 
-      METALOG_CHECKSUM_MISMATCH = 0x00070001,
+      METALOG_VERSION_MISMATCH  = 0x00070001,
+      METALOG_BAD_RS_HEADER     = 0x00070002,
+      METALOG_BAD_M_HEADER      = 0x00070003,
+      METALOG_ENTRY_TRUNCATED   = 0x00070004,
+      METALOG_CHECKSUM_MISMATCH = 0x00070005,
+      METALOG_ENTRY_BAD_TYPE    = 0x00070006,
+      METALOG_ENTRY_BAD_ORDER   = 0x00070007,
 
       SERIALIZATION_INPUT_OVERRUN = 0x00080001,
       SERIALIZATION_BAD_VINT      = 0x00080002,
@@ -195,9 +201,13 @@ namespace Hypertable {
 #define HT_TRY(_s_, _code_) do { \
   try { _code_; } \
   catch (Exception &e) { HT_THROW2(e.code(), e, _s_); } \
+  catch (std::bad_alloc &e) { \
+    HT_THROW(Error::EXTERNAL, "bad alloc " _s_); \
+  } \
   catch (std::exception &e) { \
     HT_THROWF(Error::EXTERNAL, "External exception " _s_ ": %s",  e.what()); \
   } \
+  catch (const char *e) { HT_THROWF(Error::EXTERNAL, "%s " _s_, e); } \
   catch (...) { HT_THROW(Error::EXTERNAL, "Unknown exception " _s_); } \
 } while (0)
 

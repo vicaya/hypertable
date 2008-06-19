@@ -27,46 +27,47 @@ using namespace std;
 namespace Hypertable {
 namespace MetaLogEntryFactory {
 
-MasterMetaLogEntry *
-new_m_load_range_start(const RangeSpec &, const String &rs_to,
-                       const String &transfer_log) {
+MetaLogEntry *
+new_m_load_range_start(const TableIdentifier &, const RangeSpec &,
+                       const RangeState &, const char *rs_to) {
   // TODO
   return NULL;
 }
 
-MasterMetaLogEntry *
-new_m_load_range_done(const RangeSpec &) {
+MetaLogEntry *
+new_m_load_range_done(const TableIdentifier &, const RangeSpec &) {
   // TODO
   return NULL;
 }
 
-MasterMetaLogEntry *
-new_m_move_range_start(const RangeSpec &, const String &rs_from,
-                       const String &rs_to) {
+MetaLogEntry *
+new_m_move_range_start(const TableIdentifier &, const RangeSpec &,
+                       const RangeState &, const char *rs_from,
+                       const char * rs_to) {
   // TODO
   return NULL;
 }
 
-MasterMetaLogEntry *
-new_m_move_range_done(const RangeSpec &) {
+MetaLogEntry *
+new_m_move_range_done(const TableIdentifier &, const RangeSpec &) {
   // TODO
   return NULL;
 }
 
-MasterMetaLogEntry *
-new_m_recovery_start(const String &rs_from) {
+MetaLogEntry *
+new_m_recovery_start(const char *rs_from) {
   // TODO
   return NULL;
 }
 
-MasterMetaLogEntry *
-new_m_recovery_done(const String &rs_from) {
+MetaLogEntry *
+new_m_recovery_done(const char *rs_from) {
   // TODO
   return NULL;
 }
 
-MasterMetaLogEntry *
-new_from_payload(MasterMetaLogEntryType, const void *buf, size_t len) {
+MetaLogEntry *
+new_from_payload(MasterMetaLogEntryType, uint64_t ts, StaticBuffer &) {
   // TODO
   return NULL;
 }

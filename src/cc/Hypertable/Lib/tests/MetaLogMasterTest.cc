@@ -20,6 +20,9 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/System.h"
+#include <iostream>
+#include "Hypertable/Lib/MasterMetaLog.h"
 #include "Hypertable/Lib/MasterMetaLogEntryFactory.h"
 #include "Hypertable/Lib/MasterMetaLogReader.h"
 
@@ -30,31 +33,31 @@ namespace {
 
 void
 write_test() {
-  MasterMetaLog *metalog = new MasterMetaLog(NULL, "/test/master.log");
-  MetaLogPtr scoped(metalog);
+  MasterMetaLogPtr metalog(new MasterMetaLog(NULL, "/test/master.log"));
   MetaLogEntryPtr log_entry(new_m_recovery_start("test_rs"));
 
   metalog->write(log_entry.get());
-  metalog->purge();
   metalog->close();
 }
 
 void
 read_test() {
-  MasterMetaLogReader *reader =
-      new MasterMetaLogReader(NULL, "/test/master.log");
-  MetaLogReaderPtr scoped(reader);
+  MasterMetaLogReaderPtr reader(
+      new MasterMetaLogReader(NULL, "/test/master.log"));
   MetaLogEntryPtr log_entry = reader->read();
-  MasterStates mstates;
+  const MasterStates &mstates = reader->load_master_states();
 
-  reader->load_master_states(mstates);
+  foreach(const MasterStateInfo *i, mstates)
+    std::cout << *i << std::endl;
 }
 
 } // local namespace
 
 int
-main() {
-  write_test();
-  read_test();
+main(int ac, char *av[]) {
+  System::initialize(av[0]);
+  //TODO
+  //write_test();
+  //read_test();
   return 0;
 }

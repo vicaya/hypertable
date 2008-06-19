@@ -27,19 +27,23 @@ namespace Hypertable {
 /**
  * Traits for CstrHashMap/Set
  */
+
+inline size_t
+hash_cstr(const char *s) {
+  register size_t ret = 0;
+
+  for (; *s; ++s)
+    ret += (ret << 3) + (unsigned)*s;
+
+  return ret;
+}
+
 struct CstrHashTraits {
   typedef CharArena key_allocator;
 
   struct hasher {
-    size_t
-    operator()(const char *s) const {
-      register size_t ret = 0;
-
-      for (; *s; ++s)
-        ret += (ret << 3) + (unsigned)*s;
-
-      return ret;
-    }
+    size_t 
+    operator()(const char *s) const { return hash_cstr(s); }
   };
 
   struct key_equal {
@@ -50,19 +54,22 @@ struct CstrHashTraits {
   };
 };
 
+inline size_t
+hash_case_cstr(const char *s) {
+  register size_t ret = 0;
+
+  for (; *s; ++s)
+    ret += (ret << 3) + tolower((unsigned)*s);
+
+  return ret;
+}
+
 struct CstrCaseHashTraits {
   typedef CharArena key_allocator;
 
   struct hasher {
-    size_t
-    operator()(const char *s) const {
-      register size_t ret = 0;
-
-      for (; *s; ++s)
-        ret += (ret << 3) + tolower((unsigned)*s);
-
-      return ret;
-    }
+    size_t 
+    operator()(const char *s) const { return hash_case_cstr(s); }
   };
 
   struct key_equal {

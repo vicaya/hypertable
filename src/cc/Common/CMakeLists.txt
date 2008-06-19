@@ -28,6 +28,7 @@ Logger.cc
 Properties.cc
 String.cc
 System.cc
+Time.cc
 Usage.cc
 md5.cc
 )

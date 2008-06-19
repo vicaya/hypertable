@@ -23,8 +23,8 @@
 
 #include <cstdio>
 #include <stdexcept>
-#include <string>
 
+#include "Common/String.h"
 #include "HashMap.h"
 
 namespace BOOST_STD_EXTENSION_NAMESPACE {

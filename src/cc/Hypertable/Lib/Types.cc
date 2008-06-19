@@ -113,42 +113,52 @@ void ScanSpec::decode(const uint8_t **bufp, size_t *remainp) {
 
 
 ostream &Hypertable::operator<<(ostream &os, const TableIdentifier &tid) {
-  os << "Table Name = " << tid.name << endl;
-  os << "Table ID   = " << tid.id << endl;
-  os << "Generation = " << tid.generation << endl;
+  os <<"{TableIdentifier: name='"<< tid.name <<"' id='" << tid.id
+     <<"' generation='"<< tid.generation <<"'}";
   return os;
 }
 
 ostream &Hypertable::operator<<(ostream &os, const RangeSpec &range) {
+  os <<"{RangeSpec:"; 
+
   if (range.start_row == 0)
-    os << "StartRow = [NULL]" << endl;
+    os <<" start=[NULL]";
   else
-    os << "StartRow = \"" << range.start_row << "\"" << endl;
+    os <<" start='"<< range.start_row <<"'";
+
   if (range.end_row == 0)
-    os << "EndRow   = [NULL]" << endl;
+    os <<" end=[NULL]";
   else
-    os << "EndRow   = \"" << range.end_row << "\"" << endl;
+    os <<" end='"<< range.end_row <<"'";
+
+  os <<'}';
   return os;
 }
 
 ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
-  os << "RowLimit    = " << scan_spec.row_limit << endl;
-  os << "MaxVersions = " << scan_spec.max_versions << endl;
-  os << "Columns     = ";
+  os <<"\n{ScanSpec: row_limit="<< scan_spec.row_limit
+     <<" max_versions="<< scan_spec.max_versions
+     <<"\n columns=(";
+
   foreach (const char *c, scan_spec.columns)
-    os << c << " ";
-  os << endl;
+    os <<"'"<< c << "' ";
+
+  os <<')';
+
   if (scan_spec.start_row)
-    os << "StartRow  = " << scan_spec.start_row << endl;
+    os <<"\n start_row='"<< scan_spec.start_row <<"'";
   else
-    os << "StartRow  = " << endl;
-  os << "StartRowInclusive = " << scan_spec.start_row_inclusive << endl;
+    os <<"\n start_row=[NULL]";
+
+  os <<"\n start_row_inclusive=" << scan_spec.start_row_inclusive;
+
   if (scan_spec.end_row)
-    os << "EndRow    = " << scan_spec.end_row << endl;
+    os <<"\n end_row='"<< scan_spec.end_row <<"'";
   else
-    os << "EndRow    = " << endl;
-  os << "EndRowInclusive = " << scan_spec.end_row_inclusive << endl;
-  os << "MinTime     = " << scan_spec.interval.first << endl;
-  os << "MaxTime     = " << scan_spec.interval.second << endl;
+    os <<"\n end_row=[NULL]";
+
+  os <<"\n end_row_inclusive="<< scan_spec.end_row_inclusive;
+  os <<"\n interval=(" << scan_spec.interval.first <<", "
+     << scan_spec.interval.second <<")\n}\n";
   return os;
 }

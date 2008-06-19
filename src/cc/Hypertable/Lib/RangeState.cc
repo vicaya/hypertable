@@ -28,14 +28,14 @@ using namespace Hypertable;
 using namespace Serialization;
 
 size_t RangeState::encoded_length() {
-  return 9 + encoded_length_str16(transfer_log);
+  return 9 + encoded_length_vstr(transfer_log);
 }
 
 
 void RangeState::encode(uint8_t **bufp) {
   *(*bufp)++ = state;
   encode_i64(bufp, soft_limit);
-  encode_str16(bufp, transfer_log);
+  encode_vstr(bufp, transfer_log);
 }
 
 
@@ -43,5 +43,20 @@ void RangeState::decode(const uint8_t **bufp, size_t *remainp) {
   HT_TRY("decoding range state",
     state = decode_byte(bufp, remainp);
     soft_limit = decode_i64(bufp, remainp);
-    transfer_log = decode_str16(bufp, remainp));
+    transfer_log = decode_vstr(bufp, remainp));
+}
+
+std::ostream& Hypertable::operator<<(std::ostream &out, const RangeState &st) {
+  out <<"{RangeState: state=";
+
+  switch (st.state) {
+  case RangeState::STEADY: out <<"STEADY";              break;
+  case RangeState::SPLIT_LOG_INSTALLED: out <<"SLI";    break;
+  case RangeState::SPLIT_SHRUNK: out <<"SHRUNK";        break;
+  default:
+    out <<"unknown ("<< st.state;
+  }
+  out <<" soft_limit="<< st.soft_limit <<" transfer_log='"<< st.transfer_log
+      <<"'}";
+  return out;
 }

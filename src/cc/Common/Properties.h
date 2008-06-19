@@ -35,13 +35,13 @@ namespace Hypertable {
 
     Properties() { return; }
 
-    Properties(std::string fname) {
+    Properties(const String &fname) {
       load(fname);
     }
 
     void load(const char *fname) throw(std::invalid_argument);
 
-    void load(std::string &fname) { load(fname.c_str());  }
+    void load(const String &fname) { load(fname.c_str());  }
 
     const char *get(const char *str, const char *defaultval = NULL);
 
@@ -56,11 +56,10 @@ namespace Hypertable {
       return (iter == m_map.end()) ? false : true;
     }
 
-    std::string set(const char *key, const char *value);
+    String set(const char *key, const char *value);
 
   private:
-
-    typedef hash_map<std::string, std::string> PropertyMap;
+    typedef hash_map<String, String> PropertyMap;
 
     PropertyMap  m_map;
   };
