@@ -470,7 +470,6 @@ bool
 BerkeleyDbFilesystem::exists(DbTxn *txn, String fname, bool *is_dir_p) {
   int ret;
   Dbt key;
-  DbtManaged data;
 
   if (is_dir_p)
     *is_dir_p = false;
@@ -479,12 +478,12 @@ BerkeleyDbFilesystem::exists(DbTxn *txn, String fname, bool *is_dir_p) {
   key.set_size(fname.length()+1);
 
   try {
-    if ((ret = m_db->get(txn, &key, &data, 0)) == DB_NOTFOUND) {
+    if ((ret = m_db->exists(txn, &key, 0)) == DB_NOTFOUND) {
       fname += "/";
       key.set_data((void *)fname.c_str());
       key.set_size(fname.length()+1);
 
-      if ((ret = m_db->get(txn, &key, &data, 0)) == DB_NOTFOUND) {
+      if ((ret = m_db->exists(txn, &key, 0)) == DB_NOTFOUND) {
         HT_DEBUG_OUT <<"'"<< fname <<"' does NOT exist."<< HT_END;
         return false;
       }
