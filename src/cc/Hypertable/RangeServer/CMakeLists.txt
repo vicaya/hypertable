@@ -77,5 +77,11 @@ target_link_libraries (csdump ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} ${Log4cpp_L
 add_executable (count_stored count_stored.cc CellStoreV0.cc CellStoreTrailerV0.cc CellStoreScannerV0.cc FileBlockCache.cc Global.cc ScanContext.cc)
 target_link_libraries (count_stored ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} ${Log4cpp_LIBRARIES} ${EXPAT_LIBRARIES} ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES} HyperDfsBroker Hypertable ${MALLOC_LIBRARY})
 
+# FileBlockCache test
+add_executable (FileBlockCache_test tests/FileBlockCache_test.cc FileBlockCache.cc)
+target_link_libraries (FileBlockCache_test HyperCommon ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} ${Log4cpp_LIBRARIES})
+
+add_test (FileBlockCache FileBlockCache_test)
+
 install (TARGETS Hypertable.RangeServer csdump count_stored
 	 RUNTIME DESTINATION ${VERSION}/bin)

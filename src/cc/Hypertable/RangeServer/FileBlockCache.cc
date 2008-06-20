@@ -20,106 +20,108 @@
  */
 
 #include <cassert>
+#include <iostream>
 
 #include "FileBlockCache.h"
 
 using namespace Hypertable;
 
+#if ULONG_MAX == 4294967295 // 2**32 -1
+namespace boost {
+  std::size_t hash_value(uint64_t llval) {
+    return (std::size_t)(llval >> 32) ^ (std::size_t)llval;
+  }
+}
+#endif
+
 atomic_t FileBlockCache::ms_next_file_id = ATOMIC_INIT(0);
 
-
 FileBlockCache::~FileBlockCache() {
-  for (BlockMapT::iterator iter = m_block_map.begin(); iter != m_block_map.end(); iter++) {
-    delete [] (*iter).second->block;
-    delete (*iter).second;
-  }
+  for (BlockCache::const_iterator iter = m_cache.begin(); iter != m_cache.end(); iter++)
+    delete [] (*iter).block;
 }
 
-bool FileBlockCache::checkout(int fileId, uint32_t offset, uint8_t **blockp, uint32_t *lengthp) {
+bool FileBlockCache::checkout(int file_id, uint32_t file_offset, uint8_t **blockp, uint32_t *lengthp) {
   boost::mutex::scoped_lock lock(m_mutex);
-  CacheKeyT key;
-  BlockMapT::iterator iter;
+  BlockCache::nth_index<1>::type &hash_index = m_cache.get<1>();
+  BlockCache::nth_index<1>::type::iterator iter;
+  uint64_t key = ((uint64_t)file_id << 32) | file_offset;
 
-  key.fileId = fileId;
-  key.offset = offset;
-
-  if ((iter = m_block_map.find(key)) == m_block_map.end())
+  if ((iter = hash_index.find(key)) == hash_index.end())
     return false;
 
-  move_to_head((*iter).second);
+  block_cache_entry entry = *iter;
+  entry.ref_count++;
 
-  (*iter).second->refCount++;
+  hash_index.erase(iter);
+  
+  std::pair<BlockCache::nth_index<0>::type::iterator, bool> insert_result = m_cache.push_back(entry);
+  assert(insert_result.second);
 
-  *blockp = (*iter).second->block;
-  *lengthp = (*iter).second->length;
+  *blockp = (*insert_result.first).block;
+  *lengthp = (*insert_result.first).length;
+
   return true;
 }
 
 
-void FileBlockCache::checkin(int fileId, uint32_t offset) {
+void FileBlockCache::checkin(int file_id, uint32_t file_offset) {
   boost::mutex::scoped_lock lock(m_mutex);
-  CacheKeyT key;
-  BlockMapT::iterator iter;
+  BlockCache::nth_index<1>::type &hash_index = m_cache.get<1>();
+  BlockCache::nth_index<1>::type::iterator iter;
+  uint64_t key = ((uint64_t)file_id << 32) | file_offset;
 
-  key.fileId = fileId;
-  key.offset = offset;
+  iter = hash_index.find(key);
 
-  iter = m_block_map.find(key);
+  assert(iter != hash_index.end() && (*iter).ref_count > 0);
 
-  assert(iter != m_block_map.end() && (*iter).second->refCount > 0);
+  hash_index.modify(iter, decrement_ref_count());
 
-  (*iter).second->refCount--;
 }
 
 
-bool FileBlockCache::insert_and_checkout(int fileId, uint32_t offset, uint8_t *block, uint32_t length) {
+bool FileBlockCache::insert_and_checkout(int file_id, uint32_t file_offset, uint8_t *block, uint32_t length) {
   boost::mutex::scoped_lock lock(m_mutex);
-  CacheValueT *cacheValue = new CacheValueT;
-  BlockMapT::iterator iter;
+  BlockCache::nth_index<1>::type &hash_index = m_cache.get<1>();
+  uint64_t key = ((uint64_t)file_id << 32) | file_offset;
 
-  cacheValue->key.fileId = fileId;
-  cacheValue->key.offset = offset;
-
-  if ((iter = m_block_map.find(cacheValue->key)) != m_block_map.end()) {
-    move_to_head((*iter).second);
-    delete cacheValue;
+  if (length > m_max_memory || hash_index.find(key) != hash_index.end())
     return false;
+
+  // make room
+  if (m_avail_memory < length) {
+    BlockCache::iterator iter = m_cache.begin();
+    while (iter != m_cache.end()) {
+      if ((*iter).ref_count == 0) {
+	m_avail_memory += (*iter).length;
+	delete [] (*iter).block;
+	iter = m_cache.erase(iter);
+	if (m_avail_memory >= length)
+	  break;
+      }
+      else
+	iter++;
+    }
   }
 
-  cacheValue->block = block;
-  cacheValue->length = length;
-  cacheValue->refCount = 1;
+  block_cache_entry entry(file_id, file_offset);
+  entry.block = block;
+  entry.length = length;
+  entry.ref_count = 1;
 
-  if (m_head == 0) {
-    cacheValue->next = cacheValue->prev = 0;
-    m_head = m_tail = cacheValue;
-  }
-  else {
-    m_head->next = cacheValue;
-    cacheValue->prev = m_head;
-    cacheValue->next = 0;
-    m_head = cacheValue;
-  }
+  std::pair<BlockCache::nth_index<0>::type::iterator, bool> insert_result = m_cache.push_back(entry);
+  assert(insert_result.second);
 
-  m_block_map[cacheValue->key] = cacheValue;
+  m_avail_memory -= length;
+  
   return true;
 }
 
 
-void FileBlockCache::move_to_head(CacheValueT *cacheValue) {
+bool FileBlockCache::contains(int file_id, uint32_t file_offset) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  BlockCache::nth_index<1>::type &hash_index = m_cache.get<1>();
+  uint64_t key = ((uint64_t)file_id << 32) | file_offset;
 
-  if (m_head == cacheValue)
-    return;
-
-  cacheValue->next->prev = cacheValue->prev;
-  if (cacheValue->prev == 0)
-    m_tail = cacheValue->next;
-  else
-    cacheValue->prev->next = cacheValue->next;
-
-  cacheValue->next = 0;
-  m_head->next = cacheValue;
-  cacheValue->prev = m_head;
-  m_head = cacheValue;
+  return (hash_index.find(key) != hash_index.end());
 }
-
