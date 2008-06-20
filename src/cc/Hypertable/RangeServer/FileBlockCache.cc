@@ -22,17 +22,17 @@
 #include <cassert>
 #include <iostream>
 
-#include "FileBlockCache.h"
-
-using namespace Hypertable;
-
 #if ULONG_MAX == 4294967295 // 2**32 -1
 namespace boost {
-  std::size_t hash_value(uint64_t llval) {
+  inline std::size_t hash_value(uint64_t llval) {
     return (std::size_t)(llval >> 32) ^ (std::size_t)llval;
   }
 }
 #endif
+
+#include "FileBlockCache.h"
+
+using namespace Hypertable;
 
 atomic_t FileBlockCache::ms_next_file_id = ATOMIC_INIT(0);
 
