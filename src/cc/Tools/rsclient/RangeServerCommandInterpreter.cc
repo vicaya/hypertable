@@ -103,9 +103,6 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 
     // if table name specified, get associated objects
     if (state.table_name != "") {
-#if defined(__APPLE__)
-      boost::to_upper(state.table_name);
-#endif
       table_info = m_table_map[state.table_name];
       if (table_info == 0) {
 	table_info = new TableInfo(state.table_name);

@@ -245,10 +245,6 @@ void Master::create_table(ResponseCallback *cb, const char *tableName, const cha
   String errMsg;
   String table_name_str = tableName;
 
-#if defined(__APPLE__)
-  boost::to_upper(table_name_str);
-#endif  
-
   if ((error = create_table(table_name_str.c_str(), schemaString, errMsg)) != Error::OK)
     cb->error(error, errMsg);
   else
@@ -527,10 +523,6 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
   HandleCallbackPtr nullHandleCallback;
   uint64_t handle;
   String table_name_str = table_name;
-
-#if defined(__APPLE__)
-  boost::to_upper(table_name_str);
-#endif
 
   /**
    * Create table file

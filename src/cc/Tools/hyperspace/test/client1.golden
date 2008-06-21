@@ -7,11 +7,11 @@ distributed systems.  Type 'help' for a description of commands.
 << BasicTest >>
 mkdir dir1
 mkdir how/now/brown/cow
-ERROR hyperspace : Hyperspace 'mkdir' error, name=/how/now/brown/cow : HYPERSPACE bad pathname
-HYPERSPACE bad pathname
+ERROR hyperspace : Hyperspace 'mkdir' error, name=/how/now/brown/cow : HYPERSPACE file not found
+HYPERSPACE file not found
 delete foo
-ERROR hyperspace : Hyperspace 'delete' error, name=/foo : HYPERSPACE bad pathname
-HYPERSPACE bad pathname
+ERROR hyperspace : Hyperspace 'delete' error, name=/foo : HYPERSPACE file not found
+HYPERSPACE file not found
 open foo flags=READ
 ERROR hyperspace : Hyperspace 'open' error, name=/foo flags=0x1 events=0x0 : HYPERSPACE bad pathname
 HYPERSPACE bad pathname
@@ -35,6 +35,7 @@ open flags=READ /
 readdir /
 (dir) dir1
       foo
+(dir) hyperspace
 close /
 delete dir1
 close foo

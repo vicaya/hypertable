@@ -44,7 +44,7 @@ namespace Hyperspace {
 
   class NodeData : public Hypertable::ReferenceCount {
   public:
-    NodeData() : fd(-1), ephemeral(false), currentLockMode(0), lockGeneration(0), exclusiveLockHandle(0) { 
+    NodeData() : ephemeral(false), currentLockMode(0), lockGeneration(0), exclusiveLockHandle(0) { 
       return;
     }
     void add_handle(uint64_t handle, HandleDataPtr &handlePtr) {
@@ -64,16 +64,8 @@ namespace Hyperspace {
       return handleMap.size();
     }
 
-    void close() {
-      if (fd != -1) {
-	::close(fd);
-	fd = -1;
-      }
-    }
-
     boost::mutex mutex;
     String      name;
-    int         fd;
     bool        ephemeral;
     typedef hash_map<uint64_t, HandleDataPtr> HandleMapT;
     HandleMapT handleMap;

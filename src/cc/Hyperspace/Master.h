@@ -38,6 +38,7 @@
 #include "AsyncComm/Event.h"
 #include "AsyncComm/ResponseCallback.h"
 
+#include "BerkeleyDbFilesystem.h"
 #include "NodeData.h"
 #include "HandleData.h"
 #include "Protocol.h"
@@ -118,7 +119,8 @@ namespace Hyperspace {
 
   private:
 
-    void report_error(ResponseCallback *cb);
+    void get_generation_number();
+
     void normalize_name(std::string name, std::string &normal);
     void deliver_event_notifications(NodeData *node, HyperspaceEventPtr &eventPtr, bool waitForNotify=true);
     void deliver_event_notification(HandleDataPtr &handlePtr, HyperspaceEventPtr &eventPtr, bool waitForNotify=true);
@@ -181,6 +183,9 @@ namespace Hyperspace {
     ServerKeepaliveHandlerPtr m_keepalive_handler_ptr;
     struct sockaddr_in m_local_addr;
     std::vector<SessionDataPtr> m_session_heap;
+
+    // BerkeleyDB state
+    BerkeleyDbFilesystem *m_bdb_fs;
 
   };
   typedef boost::intrusive_ptr<Master> MasterPtr;

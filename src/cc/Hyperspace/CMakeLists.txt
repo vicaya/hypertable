@@ -31,6 +31,7 @@ Session.cc
 add_library (Hyperspace ${Hyperspace_SRCS})
 
 set ( Master_SRCS
+BerkeleyDbFilesystem.cc
 Event.cc
 Master.cc
 RequestHandlerMkdir.cc
@@ -57,7 +58,21 @@ main.cc
 
 # Hyperspace.Master
 add_executable (Hyperspace.Master ${Master_SRCS})
-target_link_libraries (Hyperspace.Master ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} Hyperspace HyperDfsBroker HyperComm HyperCommon ${Log4cpp_LIBRARIES})
+target_link_libraries (Hyperspace.Master ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} Hyperspace HyperDfsBroker HyperComm HyperCommon ${Log4cpp_LIBRARIES} ${BDB_LIBRARY})
+
+# BerkeleyDbFilesystem test
+add_executable (bdb_fs_test tests/bdb_fs_test.cc BerkeleyDbFilesystem.cc)
+target_link_libraries (bdb_fs_test HyperCommon ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} ${Log4cpp_LIBRARIES} ${BDB_LIBRARY})
+
+#
+# Copy test files
+#
+set (SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Hyperspace/tests")
+set (DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Hyperspace")
+configure_file(${SRC_DIR}/bdb_fs_test.golden ${DST_DIR}/bdb_fs_test.golden)
+
+
+add_test (BerkeleyDbFilesystem bdb_fs_test)
 
 file (GLOB HEADERS *.h)
 

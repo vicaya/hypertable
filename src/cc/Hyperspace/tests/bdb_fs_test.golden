@@ -1,0 +1,36 @@
+HYPERSPACE file not found /foo/
+"/how" does not exist
+"/foo" exists, and is a directory
+Attribute "attr1" of directory "/foo" is 1234567
+Attribute "attr2" of directory "/foo" is 1234567890
+HYPERSPACE bad pathname /green/dog
+bar/
+bar1/
+red
+yellow
+HYPERSPACE bad pathname /foo/red/
+HYPERSPACE directory not empty /foo
+/
+/dir1/
+/foo/
+/foo/:attr1
+/foo/:attr2
+/foo/bar/
+/foo/bar1/
+/foo/red
+/foo/yellow
+/foo/yellow:temp
+/hyperspace/
+/hyperspace/metadata
+/
+/dir1/
+/foo/
+/foo/:attr1
+/foo/:attr2
+/foo/bar/
+/foo/bar1/
+/foo/red
+/foo/yellow
+/foo/yellow:temp
+/hyperspace/
+/hyperspace/metadata

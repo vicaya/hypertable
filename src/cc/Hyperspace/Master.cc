@@ -66,7 +66,6 @@ const uint32_t Master::DEFAULT_KEEPALIVE_INTERVAL;
 Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, ServerKeepaliveHandlerPtr &keepaliveHandlerPtr) : m_verbose(false), m_next_handle_number(1), m_next_session_id(1) {
   const char *dirname;
   std::string str;
-  ssize_t xattrLen;
   uint16_t port;
 
   m_verbose = propsPtr->get_bool("Hypertable.Verbose", false);
@@ -115,30 +114,12 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, Se
     exit(1);
   }
 
+  m_bdb_fs = new BerkeleyDbFilesystem(m_base_dir);
+
   /**
-   * Increment generation number and save
+   * Load and increment generation number
    */
-  if ((xattrLen = FileUtils::getxattr(m_base_dir.c_str(), "generation", &m_generation, sizeof(uint32_t))) < 0) {
-    if (errno == ENOATTR) {
-      cerr << "'generation' attribute not found on base dir, creating ..." << endl;
-      m_generation = 1;
-      if (FileUtils::setxattr(m_base_dir.c_str(), "generation", &m_generation, sizeof(uint32_t), XATTR_CREATE) == -1) {
-	HT_ERRORF("Problem creating extended attribute 'generation' on base dir '%s' - %s", m_base_dir.c_str(), strerror(errno));
-	exit(1);
-      }
-    }
-    else {
-      HT_ERRORF("Unable to read extended attribute 'generation' on base dir '%s' - %s", m_base_dir.c_str(), strerror(errno));
-      exit(1);
-    }
-  }
-  else {
-    m_generation++;
-    if (FileUtils::setxattr(m_base_dir.c_str(), "generation", &m_generation, sizeof(uint32_t), XATTR_REPLACE) == -1) {
-      HT_ERRORF("Problem creating extended attribute 'generation' on base dir '%s' - %s", m_base_dir.c_str(), strerror(errno));
-      exit(1);
-    }
-  }
+  get_generation_number();
 
   NodeDataPtr rootNodePtr = new NodeData();
   rootNodePtr->name = "/";
@@ -161,7 +142,11 @@ Master::Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &propsPtr, Se
 
 
 Master::~Master() {
+
+  delete m_bdb_fs;
+
   ::close(m_base_fd);
+
   return;
 }
 
@@ -312,13 +297,11 @@ bool Master::remove_handle_data(uint64_t handle, HandleDataPtr &handlePtr) {
  * node to prevent concurrent modifications.
  */
 void Master::mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name) {
-  std::string absName;
   NodeDataPtr parentNodePtr;
   std::string childName;
 
-  if (m_verbose) {
+  if (m_verbose)
     HT_INFOF("mkdir(sessionId=%lld, name=%s)", sessionId, name);
-  }
 
   if (!find_parent_node(name, parentNodePtr, childName)) {
     cb->error(Error::HYPERSPACE_FILE_EXISTS, "directory '/' exists");
@@ -327,19 +310,26 @@ void Master::mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name) {
 
   assert(name[0] == '/' && name[strlen(name)-1] != '/');
 
-  {
+  DbTxn *txn = m_bdb_fs->start_transaction();
+
+  try {
     boost::mutex::scoped_lock nodeLock(parentNodePtr->mutex);
 
-    absName = m_base_dir + name;
-    
-    if (::mkdir(absName.c_str(), 0755) < 0) {
-      report_error(cb);
-      return;
-    }
-    else {
+    m_bdb_fs->mkdir(txn, name);
+
+    txn->commit(0);
+
+    // deliver event notifications
+    {
       HyperspaceEventPtr eventPtr( new EventNamed(EVENT_MASK_CHILD_NODE_ADDED, childName) );
       deliver_event_notifications(parentNodePtr.get(), eventPtr);
     }
+
+  }
+  catch (Exception &e) {
+    txn->abort();
+    cb->error(e.code(), e.what());
+    return;
   }
 
   cb->response_ok();
@@ -351,14 +341,11 @@ void Master::mkdir(ResponseCallback *cb, uint64_t sessionId, const char *name) {
  * Delete
  */
 void Master::unlink(ResponseCallback *cb, uint64_t sessionId, const char *name) {
-  std::string absName;
-  struct stat statbuf;
   std::string childName;
   NodeDataPtr parentNodePtr;
 
-  if (m_verbose) {
+  if (m_verbose)
     HT_INFOF("unlink(sessionId=%lld, name=%s)", sessionId, name);
-  }
 
   if (!strcmp(name, "/")) {
     cb->error(Error::HYPERSPACE_PERMISSION_DENIED, "Cannot remove '/' directory");
@@ -372,29 +359,14 @@ void Master::unlink(ResponseCallback *cb, uint64_t sessionId, const char *name) 
 
   assert(name[0] == '/' && name[strlen(name)-1] != '/');
 
-  {
+  DbTxn *txn = m_bdb_fs->start_transaction();
+
+  try {
     boost::mutex::scoped_lock nodeLock(parentNodePtr->mutex);
 
-    absName = m_base_dir + name;
+    m_bdb_fs->unlink(txn, name);
 
-    if (stat(absName.c_str(), &statbuf) < 0) {
-      report_error(cb);
-      return;
-    }
-    else {
-      if (statbuf.st_mode & S_IFDIR) {
-	if (rmdir(absName.c_str()) < 0) {
-	  report_error(cb);
-	  return;
-	}
-      }
-      else {
-	if (::unlink(absName.c_str()) < 0) {
-	  report_error(cb);
-	  return;
-	}
-      }
-    }
+    txn->commit(0);
 
     // deliver event notifications
     {
@@ -403,7 +375,12 @@ void Master::unlink(ResponseCallback *cb, uint64_t sessionId, const char *name) 
     }
 
   }
-
+  catch (Exception &e) {
+    txn->abort();
+    cb->error(e.code(), e.what());
+    return;
+  }
+  
   cb->response_ok();
 }
 
@@ -413,7 +390,6 @@ void Master::unlink(ResponseCallback *cb, uint64_t sessionId, const char *name) 
  * Open
  */
 void Master::open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name, uint32_t flags, uint32_t eventMask, std::vector<AttributeT> &initAttrs) {
-  std::string absName;
   std::string childName;
   SessionDataPtr sessionPtr;
   NodeDataPtr nodePtr;
@@ -423,9 +399,6 @@ void Master::open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
   bool isDirectory = false;
   bool existed;
   uint64_t handle;
-  struct stat statbuf;
-  int oflags = 0;
-  ssize_t len;
   bool lockNotify = false;
   uint32_t lockMode = 0;
   uint64_t lockGeneration = 0;
@@ -437,185 +410,115 @@ void Master::open(ResponseCallbackOpen *cb, uint64_t sessionId, const char *name
 
   assert(name[0] == '/');
 
-  absName = m_base_dir + name;
+  DbTxn *txn = m_bdb_fs->start_transaction();
 
-  if (!get_session(sessionId, sessionPtr)) {
-    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
-    return;
-  }
+  try {
 
-  if (!find_parent_node(name, parentNodePtr, childName)) {
-    cb->error(Error::HYPERSPACE_BAD_PATHNAME, name);
-    return;
-  }
+    if (!get_session(sessionId, sessionPtr))
+      throw Exception(Error::HYPERSPACE_EXPIRED_SESSION, format("%llu", (long long unsigned int)sessionId));
 
-  // If path name to open is "/", then create a dummy NodeData object for
-  // the parent because the previous call will return the node itself as
-  // the parent, causing the second of the following two mutex locks to hang
-  if (!strcmp(name, "/"))
-    parentNodePtr = new NodeData();
+    if (!find_parent_node(name, parentNodePtr, childName))
+      throw Exception(Error::HYPERSPACE_BAD_PATHNAME, name);
 
-  get_node(name, nodePtr);
+    if (!initAttrs.empty() && !(flags & OPEN_FLAG_CREATE))
+      throw Exception(Error::HYPERSPACE_CREATE_FAILED, "initial attributes can only be supplied on CREATE");
 
-  {
-    boost::mutex::scoped_lock parentLock(parentNodePtr->mutex);
-    boost::mutex::scoped_lock nodeLock(nodePtr->mutex);
+    // If path name to open is "/", then create a dummy NodeData object for
+    // the parent because the previous call will return the node itself as
+    // the parent, causing the second of the following two mutex locks to hang
+    if (!strcmp(name, "/"))
+      parentNodePtr = new NodeData();
 
-    if ((flags & OPEN_FLAG_LOCK_SHARED) == OPEN_FLAG_LOCK_SHARED) {
-      if (nodePtr->exclusiveLockHandle != 0) {
-	cb->error(Error::HYPERSPACE_LOCK_CONFLICT, "");
-	return;
+    get_node(name, nodePtr);
+
+    {
+      boost::mutex::scoped_lock parentLock(parentNodePtr->mutex);
+      boost::mutex::scoped_lock nodeLock(nodePtr->mutex);
+
+      if ((flags & OPEN_FLAG_LOCK_SHARED) == OPEN_FLAG_LOCK_SHARED) {
+	if (nodePtr->exclusiveLockHandle != 0)
+	  throw Exception(Error::HYPERSPACE_LOCK_CONFLICT, "");
+	lockMode = LOCK_MODE_SHARED;
+	if (nodePtr->sharedLockHandles.empty())
+	  lockNotify = true;
       }
-      lockMode = LOCK_MODE_SHARED;
-      if (nodePtr->sharedLockHandles.empty())
+      else if ((flags & OPEN_FLAG_LOCK_EXCLUSIVE) == OPEN_FLAG_LOCK_EXCLUSIVE) {
+	if (nodePtr->exclusiveLockHandle != 0 || !nodePtr->sharedLockHandles.empty())
+	  throw Exception(Error::HYPERSPACE_LOCK_CONFLICT, "");
+	lockMode = LOCK_MODE_EXCLUSIVE;
 	lockNotify = true;
-    }
-    else if ((flags & OPEN_FLAG_LOCK_EXCLUSIVE) == OPEN_FLAG_LOCK_EXCLUSIVE) {
-      if (nodePtr->exclusiveLockHandle != 0 || !nodePtr->sharedLockHandles.empty()) {
-	cb->error(Error::HYPERSPACE_LOCK_CONFLICT, "");
-	return;
-      }
-      lockMode = LOCK_MODE_EXCLUSIVE;
-      lockNotify = true;
-    }
-
-    if (stat(absName.c_str(), &statbuf) != 0) {
-      if (errno == ENOENT)
-	existed = false;
-      else {
-	report_error(cb);
-	return;
-      }
-    }
-    else {
-      existed = true;
-      if (statbuf.st_mode & S_IFDIR) {
-	/** if (flags & OPEN_FLAG_WRITE) {
-	    cb->error(Error::HYPERSPACE_IS_DIRECTORY, "");
-	    return;
-	    } **/
-	isDirectory = true;
-	oflags = O_RDONLY;
-#if defined(__linux__)
-	oflags |= O_DIRECTORY;
-#endif
-      }
-    }
-
-    if (!isDirectory)
-      oflags = O_RDWR;
-
-    if (existed && (flags & OPEN_FLAG_CREATE) && (flags & OPEN_FLAG_EXCL)) {
-      cb->error(Error::HYPERSPACE_FILE_EXISTS, "mode=CREATE|EXCL");
-      return;
-    }
-
-    if (nodePtr->fd < 0) {
-
-      if (existed && (flags & OPEN_FLAG_TEMP)) {
-	cb->error(Error::HYPERSPACE_FILE_EXISTS, "Unable to open TEMP file because it exists and is permanent");
-	return;
       }
 
-      if (!existed) {
-	if (flags & OPEN_FLAG_CREATE)
-	  oflags |= O_CREAT;
-	if (flags & OPEN_FLAG_EXCL)
-	  oflags |= O_EXCL;
-      }
-      nodePtr->fd = ::open(absName.c_str(), oflags, 0644);
-      if (nodePtr->fd < 0) {
-	HT_ERRORF("open(%s, 0x%x, 0644) failed (errno=%d) - %s", absName.c_str(), oflags, errno, strerror(errno));
-	report_error(cb);
-	return;
-      }
+      existed = m_bdb_fs->exists(txn, name, &isDirectory);
 
-      // Read/create 'lock.generation' attribute
-
-      len = FileUtils::fgetxattr(nodePtr->fd, "lock.generation", &nodePtr->lockGeneration, sizeof(uint64_t));
-      if (len < 0) {
-	if (errno == ENOATTR) {
-	  nodePtr->lockGeneration = 1;
-	  if (FileUtils::fsetxattr(nodePtr->fd, "lock.generation", &nodePtr->lockGeneration, sizeof(uint64_t), 0) == -1) {
-	    HT_ERRORF("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
-			 name, strerror(errno));
-	    HT_ABORT;
+      if (existed) {
+	if ((flags & OPEN_FLAG_CREATE) && (flags & OPEN_FLAG_EXCL))
+	  throw Exception(Error::HYPERSPACE_FILE_EXISTS, "mode=CREATE|EXCL");
+	if ((flags & OPEN_FLAG_TEMP))
+	  throw Exception(Error::HYPERSPACE_FILE_EXISTS, format("Unable to open TEMP file '%s' because it already exists", name));
+	// Read/create 'lock.generation' attribute
+	if (nodePtr->lockGeneration == 0) {
+	  if (!m_bdb_fs->get_xattr_i64(txn, name, "lock.generation", &nodePtr->lockGeneration)) {
+	    nodePtr->lockGeneration = 1;
+	    m_bdb_fs->set_xattr_i64(txn, name, "lock.generation", nodePtr->lockGeneration);
 	  }
 	}
-	else {
-	  HT_ERRORF("Problem reading extended attribute 'lock.generation' on file '%s' - %s",
-		       name, strerror(errno));
-	  HT_ABORT;
-	}
-	len = sizeof(int64_t);
       }
-      assert(len == sizeof(int64_t));
+      else {
+	if (!(flags & OPEN_FLAG_CREATE))
+	  throw Exception(Error::HYPERSPACE_BAD_PATHNAME, name);
+	m_bdb_fs->create(txn, name, (flags & OPEN_FLAG_TEMP));
+	nodePtr->lockGeneration = 1;
+	m_bdb_fs->set_xattr_i64(txn, name, "lock.generation", nodePtr->lockGeneration);
+	// Set the initial attributes
+	for (size_t i=0; i<initAttrs.size(); i++)
+	  m_bdb_fs->set_xattr(txn, name, initAttrs[i].name, initAttrs[i].value, initAttrs[i].valueLen);
+	if (flags & OPEN_FLAG_TEMP)
+	  nodePtr->ephemeral = true;
+	created = true;
+      }
+
+      create_handle(&handle, handlePtr);
+
+      handlePtr->node = nodePtr.get();
+      handlePtr->openFlags = flags;
+      handlePtr->eventMask = eventMask;
+      handlePtr->sessionPtr = sessionPtr;
+
+      sessionPtr->add_handle(handle);
+
+      if (created) {
+	HyperspaceEventPtr eventPtr( new EventNamed(EVENT_MASK_CHILD_NODE_ADDED, childName) );
+	deliver_event_notifications(parentNodePtr.get(), eventPtr);
+      }
 
       /**
-       * Set the initial attributes
+       * If open flags LOCK_SHARED or LOCK_EXCLUSIVE, then obtain lock
        */
-      for (size_t i=0; i<initAttrs.size(); i++) {
-	if (FileUtils::fsetxattr(nodePtr->fd, initAttrs[i].name, initAttrs[i].value, initAttrs[i].valueLen, 0) == -1) {
-	  HT_ERRORF("Problem creating extended attribute '%s' on file '%s' - %s",
-		       initAttrs[i].name, name, strerror(errno));
-	  HT_ABORT;
+      if (lockMode != 0) {
+	handlePtr->node->lockGeneration++;
+	m_bdb_fs->set_xattr_i64(txn, name, "lock.generation", handlePtr->node->lockGeneration);
+	lockGeneration = handlePtr->node->lockGeneration;
+	handlePtr->node->currentLockMode = lockMode;
+
+	lock_handle(handlePtr, lockMode);
+
+	// deliver notification to handles to this same node
+	if (lockNotify) {
+	  HyperspaceEventPtr eventPtr( new EventLockAcquired(lockMode) );
+	  deliver_event_notifications(handlePtr->node, eventPtr);
 	}
       }
 
-      if (flags & OPEN_FLAG_TEMP) {
-	nodePtr->ephemeral = true;
-	::unlink(absName.c_str());
-      }
+      handlePtr->node->add_handle(handle, handlePtr);
 
+      txn->commit(0);
     }
-    else {
-      if (existed && (flags & OPEN_FLAG_TEMP) && !nodePtr->ephemeral) {
-	cb->error(Error::HYPERSPACE_FILE_EXISTS, "Unable to open TEMP file because it exists and is permanent");
-	return;
-      }
-    }
-
-    if (!existed)
-      created = true;
-
-    create_handle(&handle, handlePtr);
-
-    handlePtr->node = nodePtr.get();
-    handlePtr->openFlags = flags;
-    handlePtr->eventMask = eventMask;
-    handlePtr->sessionPtr = sessionPtr;
-
-    sessionPtr->add_handle(handle);
-
-    if (created) {
-      HyperspaceEventPtr eventPtr( new EventNamed(EVENT_MASK_CHILD_NODE_ADDED, childName) );
-      deliver_event_notifications(parentNodePtr.get(), eventPtr);
-    }
-
-    /**
-     * If open flags LOCK_SHARED or LOCK_EXCLUSIVE, then obtain lock
-     */
-    if (lockMode != 0) {
-      handlePtr->node->lockGeneration++;
-      if (FileUtils::fsetxattr(handlePtr->node->fd, "lock.generation", &handlePtr->node->lockGeneration, sizeof(uint64_t), 0) == -1) {
-	HT_ERRORF("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
-		     handlePtr->node->name.c_str(), strerror(errno));
-	exit(1);
-      }
-      lockGeneration = handlePtr->node->lockGeneration;
-      handlePtr->node->currentLockMode = lockMode;
-
-      lock_handle(handlePtr, lockMode);
-
-      // deliver notification to handles to this same node
-      if (lockNotify) {
-	HyperspaceEventPtr eventPtr( new EventLockAcquired(lockMode) );
-	deliver_event_notifications(handlePtr->node, eventPtr);
-      }
-    }
-
-    handlePtr->node->add_handle(handle, handlePtr);
-
+  }
+  catch (Exception &e) {
+    txn->abort();
+    cb->error(e.code(), e.what());
+    return;
   }
 
   cb->response(handle, created, lockGeneration);
@@ -629,6 +532,7 @@ void Master::close(ResponseCallback *cb, uint64_t sessionId, uint64_t handle) {
   SessionDataPtr sessionPtr;
   int error;
   std::string errMsg;
+  size_t n;
 
   if (m_verbose) {
     HT_INFOF("close(session=%lld, handle=%lld)", sessionId, handle);
@@ -641,12 +545,13 @@ void Master::close(ResponseCallback *cb, uint64_t sessionId, uint64_t handle) {
 
   {
     boost::mutex::scoped_lock slock(sessionPtr->mutex);
-    size_t n = sessionPtr->handles.erase(handle);
-    if (n) {
-      if (!destroy_handle(handle, &error, errMsg)) {
-	cb->error(error, errMsg);
-	return;
-      }
+    n = sessionPtr->handles.erase(handle);
+  }
+
+  if (n) {
+    if (!destroy_handle(handle, &error, errMsg)) {
+      cb->error(error, errMsg);
+      return;
     }
   }
 
@@ -669,32 +574,35 @@ void Master::attr_set(ResponseCallback *cb, uint64_t sessionId, uint64_t handle,
     HT_INFOF("attrset(session=%lld, handle=%lld, name=%s, valueLen=%d)", sessionId, handle, name, valueLen);
   }
 
-  if (!get_session(sessionId, sessionPtr)) {
-    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
-    return;
-  }
+  DbTxn *txn = m_bdb_fs->start_transaction();
 
-  if (!get_handle_data(handle, handlePtr)) {
-    cb->error(Error::HYPERSPACE_INVALID_HANDLE, std::string("handle=") + handle);
-    return;
-  }
+  try {
 
-  {
-    boost::mutex::scoped_lock nodeLock(handlePtr->node->mutex);
+    if (!get_session(sessionId, sessionPtr))
+      throw Exception(Error::HYPERSPACE_EXPIRED_SESSION, format("%llu", (long long unsigned int)sessionId));
 
-    if (FileUtils::fsetxattr(handlePtr->node->fd, name, value, valueLen, 0) == -1) {
-      HT_ERRORF("Problem creating extended attribute '%s' on file '%s' - %s",
-		   name, handlePtr->node->name.c_str(), strerror(errno));
-      HT_ABORT;
+    if (!get_handle_data(handle, handlePtr))
+      throw Exception(Error::HYPERSPACE_INVALID_HANDLE, format("handle=%llu", (long long unsigned int)handle));
+
+    {
+      boost::mutex::scoped_lock nodeLock(handlePtr->node->mutex);
+
+      m_bdb_fs->set_xattr(txn, handlePtr->node->name, name, value, valueLen);
+
+      HyperspaceEventPtr eventPtr( new EventNamed(EVENT_MASK_ATTR_SET, name) );
+      deliver_event_notifications(handlePtr->node, eventPtr);
     }
 
-    HyperspaceEventPtr eventPtr( new EventNamed(EVENT_MASK_ATTR_SET, name) );
-    deliver_event_notifications(handlePtr->node, eventPtr);
+    txn->commit(0);
+  }
+  catch (Exception &e) {
+    txn->abort();
+    cb->error(e.code(), e.what());
+    return;
   }
 
-  if ((error = cb->response_ok()) != Error::OK) {
+  if ((error = cb->response_ok()) != Error::OK)
     HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
-  }
 
 }
 
@@ -706,47 +614,40 @@ void Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t sessionId, uint64_t 
   SessionDataPtr sessionPtr;
   HandleDataPtr handlePtr;
   int error;
-  int alen;
-  uint8_t *buf = 0;
+  DynamicBuffer dbuf;
 
-  if (m_verbose) {
+  if (m_verbose)
     HT_INFOF("attrget(session=%lld, handle=%lld, name=%s)", sessionId, handle, name);
-  }
 
-  if (!get_session(sessionId, sessionPtr)) {
-    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
-    return;
-  }
+  DbTxn *txn = m_bdb_fs->start_transaction();
 
-  if (!get_handle_data(handle, handlePtr)) {
-    cb->error(Error::HYPERSPACE_INVALID_HANDLE, std::string("handle=") + handle);
+  try {
+
+    if (!get_session(sessionId, sessionPtr))
+      throw Exception(Error::HYPERSPACE_EXPIRED_SESSION, format("%llu", (long long unsigned int)sessionId));
+
+    if (!get_handle_data(handle, handlePtr))
+      throw Exception(Error::HYPERSPACE_INVALID_HANDLE, format("handle=%llu", (long long unsigned int)handle));
+
+    {
+      boost::mutex::scoped_lock nodeLock(handlePtr->node->mutex);
+      if (!m_bdb_fs->get_xattr(txn, handlePtr->node->name, name, dbuf))
+	throw Exception(Error::HYPERSPACE_ATTR_NOT_FOUND, name);
+    }
+
+    txn->commit(0);
+
+  }
+  catch (Exception &e) {
+    txn->abort();
+    cb->error(e.code(), e.what());
     return;
   }
 
   {
-    boost::mutex::scoped_lock nodeLock(handlePtr->node->mutex);
-
-    if ((alen = FileUtils::fgetxattr(handlePtr->node->fd, name, 0, 0)) < 0) {
-      HT_ERRORF("Problem determining size of extended attribute '%s' on file '%s' - %s",
-		   name, handlePtr->node->name.c_str(), strerror(errno));
-      report_error(cb);
-      return;
-    }
-
-    buf = new uint8_t [ alen + 8 ];
-
-    if ((alen = FileUtils::fgetxattr(handlePtr->node->fd, name, buf, alen)) < 0) {
-      HT_ERRORF("Problem determining size of extended attribute '%s' on file '%s' - %s",
-		   name, handlePtr->node->name.c_str(), strerror(errno));
-      HT_ABORT;
-    }
-  }
-
-  {
-    StaticBuffer buffer(buf, alen);
-    if ((error = cb->response(buffer)) != Error::OK) {
+    StaticBuffer buffer(dbuf);
+    if ((error = cb->response(buffer)) != Error::OK)
       HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
-    }
   }
   
 }
@@ -758,57 +659,69 @@ void Master::attr_del(ResponseCallback *cb, uint64_t sessionId, uint64_t handle,
   HandleDataPtr handlePtr;
   int error;
 
-  if (m_verbose) {
+  if (m_verbose)
     HT_INFOF("attrdel(session=%lld, handle=%lld, name=%s)", sessionId, handle, name);
-  }
 
-  if (!get_session(sessionId, sessionPtr)) {
-    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
-    return;
-  }
+  DbTxn *txn = m_bdb_fs->start_transaction();
 
-  if (!get_handle_data(handle, handlePtr)) {
-    cb->error(Error::HYPERSPACE_INVALID_HANDLE, std::string("handle=") + handle);
-    return;
-  }
+  try {
 
-  {
-    boost::mutex::scoped_lock nodeLock(handlePtr->node->mutex);
+    if (!get_session(sessionId, sessionPtr))
+      throw Exception(Error::HYPERSPACE_EXPIRED_SESSION, format("%llu", (long long unsigned int)sessionId));
 
-    if (FileUtils::fremovexattr(handlePtr->node->fd, name) == -1) {
-      HT_ERRORF("Problem removing extended attribute '%s' on file '%s' - %s",
-		   name, handlePtr->node->name.c_str(), strerror(errno));
-      report_error(cb);
-      return;
+    if (!get_handle_data(handle, handlePtr))
+      throw Exception(Error::HYPERSPACE_INVALID_HANDLE, format("handle=%llu", (long long unsigned int)handle));
+
+    {
+      boost::mutex::scoped_lock nodeLock(handlePtr->node->mutex);
+
+      m_bdb_fs->del_xattr(txn, handlePtr->node->name, name);
+
+      HyperspaceEventPtr eventPtr( new EventNamed(EVENT_MASK_ATTR_DEL, name) );
+      deliver_event_notifications(handlePtr->node, eventPtr);
     }
 
-    HyperspaceEventPtr eventPtr( new EventNamed(EVENT_MASK_ATTR_DEL, name) );
-    deliver_event_notifications(handlePtr->node, eventPtr);
+    txn->commit(0);
+
+  }
+  catch (Exception &e) {
+    txn->abort();
+    cb->error(e.code(), e.what());
+    return;
   }
 
-  if ((error = cb->response_ok()) != Error::OK) {
+  if ((error = cb->response_ok()) != Error::OK)
     HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
-  }
 
 }
 
 
 void Master::exists(ResponseCallbackExists *cb, uint64_t sessionId, const char *name) {
-  std::string absName;
   int error;
+  bool file_exists;
 
-  if (m_verbose) {
+  if (m_verbose)
     HT_INFOF("exists(sessionId=%lld, name=%s)", sessionId, name);
-  }
 
   assert(name[0] == '/' && name[strlen(name)-1] != '/');
 
-  absName = m_base_dir + name;
+  DbTxn *txn = m_bdb_fs->start_transaction();
 
-  if ((error = cb->response( FileUtils::exists(absName.c_str()) )) != Error::OK) {
-    HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
+  try {
+    file_exists = m_bdb_fs->exists(txn, name);
+    txn->commit(0);
   }
+  catch (Exception &e) {
+    txn->abort();
+    cb->error(e.code(), e.what());
+    return;
+  }
+
+  if ((error = cb->response(file_exists)) != Error::OK)
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
+
 }
+
 
 
 void Master::readdir(ResponseCallbackReaddir *cb, uint64_t sessionId, uint64_t handle) {
@@ -818,60 +731,32 @@ void Master::readdir(ResponseCallbackReaddir *cb, uint64_t sessionId, uint64_t h
   struct DirEntryT dentry;
   std::vector<struct DirEntryT> listing;
 
-  if (m_verbose) {
+  if (m_verbose)
     HT_INFOF("readdir(session=%lld, handle=%lld)", sessionId, handle);
-  }
 
-  if (!get_session(sessionId, sessionPtr)) {
-    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
+  DbTxn *txn = m_bdb_fs->start_transaction();
+
+  try {
+
+    if (!get_session(sessionId, sessionPtr))
+      throw Exception(Error::HYPERSPACE_EXPIRED_SESSION, format("%llu", (long long unsigned int)sessionId));
+
+    if (!get_handle_data(handle, handlePtr))
+      throw Exception(Error::HYPERSPACE_INVALID_HANDLE, format("handle=%llu", (long long unsigned int)handle));
+
+    {
+      boost::mutex::scoped_lock lock(handlePtr->node->mutex);
+
+      m_bdb_fs->get_directory_listing(txn, handlePtr->node->name, listing);
+    }
+
+    txn->commit(0);
+
+  }
+  catch (Exception &e) {
+    txn->abort();
+    cb->error(e.code(), e.what());
     return;
-  }
-
-  if (!get_handle_data(handle, handlePtr)) {
-    cb->error(Error::HYPERSPACE_INVALID_HANDLE, std::string("handle=") + handle);
-    return;
-  }
-
-  {
-    boost::mutex::scoped_lock lock(handlePtr->node->mutex);
-
-    absName = m_base_dir + handlePtr->node->name;
-
-    DIR *dirp = opendir(absName.c_str());
-
-    if (dirp == 0) {
-      report_error(cb);
-      HT_ERRORF("opendir('%s') failed - %s", absName.c_str(), strerror(errno));
-      return;
-    }
-
-    struct dirent dent;
-    struct dirent *dp;
-
-    if (readdir_r(dirp, &dent, &dp) != 0) {
-      report_error(cb);
-      HT_ERRORF("readdir('%s') failed - %s", absName.c_str(), strerror(errno));
-      (void)closedir(dirp);
-      return;
-    }
-
-    while (dp != 0) {
-
-      if (dp->d_name[0] != 0 && strcmp(dp->d_name, ".") && strcmp(dp->d_name, "..")) {
-	dentry.isDirectory = (dp->d_type == DT_DIR);
-	dentry.name = dp->d_name;
-	listing.push_back(dentry);
-      }
-
-      if (readdir_r(dirp, &dent, &dp) != 0) {
-	report_error(cb);
-	HT_ERRORF("readdir('%s') failed - %s", absName.c_str(), strerror(errno));
-	(void)closedir(dirp);
-	return;
-      }
-    }
-    (void)closedir(dirp);
-
   }
 
   cb->response(listing);
@@ -946,11 +831,18 @@ void Master::lock(ResponseCallbackLock *cb, uint64_t sessionId, uint64_t handle,
       notify = false;
 
     handlePtr->node->lockGeneration++;
-    if (FileUtils::fsetxattr(handlePtr->node->fd, "lock.generation", &handlePtr->node->lockGeneration, sizeof(uint64_t), 0) == -1) {
-      HT_ERRORF("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
-		   handlePtr->node->name.c_str(), strerror(errno));
-      exit(1);
+
+    DbTxn *txn = m_bdb_fs->start_transaction();
+    try {
+      m_bdb_fs->set_xattr_i64(txn, handlePtr->node->name, "lock.generation", handlePtr->node->lockGeneration);
+      txn->commit(0);
     }
+    catch (Exception &e) {
+      txn->abort();
+      cb->error(e.code(), e.what());
+      return;
+    }
+
     handlePtr->node->currentLockMode = mode;
 
     lock_handle(handlePtr, mode);
@@ -1076,10 +968,16 @@ void Master::release_lock(HandleDataPtr &handlePtr, bool waitForNotify) {
     if (!nextLockHandles.empty()) {
 
       handlePtr->node->lockGeneration++;
-      if (FileUtils::fsetxattr(handlePtr->node->fd, "lock.generation", &handlePtr->node->lockGeneration, sizeof(uint64_t), 0) == -1) {
-	HT_ERRORF("Problem creating extended attribute 'lock.generation' on file '%s' - %s",
-		     handlePtr->node->name.c_str(), strerror(errno));
-	exit(1);
+
+      DbTxn *txn = m_bdb_fs->start_transaction();
+      try {
+	m_bdb_fs->set_xattr_i64(txn, handlePtr->node->name, "lock.generation", handlePtr->node->lockGeneration);
+	txn->commit(0);
+      }
+      catch (Exception &e) {
+	txn->abort();
+	HT_FATALF("Problem writing extended attribute 'lock.generation' on file '%s' - %s (%s)", handlePtr->node->name.c_str(),
+		  Error::get_text(e.code()), e.what());
       }
 
       handlePtr->node->currentLockMode = nextMode;
@@ -1099,30 +997,6 @@ void Master::release_lock(HandleDataPtr &handlePtr, bool waitForNotify) {
 
   }
   
-}
-
-
-/**
- * report_error
- */
-void Master::report_error(ResponseCallback *cb) {
-  char errbuf[128];
-  errbuf[0] = 0;
-  strerror_r(errno, errbuf, 128);
-  if (errno == ENOTDIR || errno == ENAMETOOLONG || errno == ENOENT)
-    cb->error(Error::HYPERSPACE_BAD_PATHNAME, errbuf);
-  else if (errno == EACCES || errno == EPERM)
-    cb->error(Error::HYPERSPACE_PERMISSION_DENIED, errbuf);
-  else if (errno == EEXIST)
-    cb->error(Error::HYPERSPACE_FILE_EXISTS, errbuf);
-  else if (errno == ENOATTR)
-    cb->error(Error::HYPERSPACE_ATTR_NOT_FOUND, errbuf);
-  else if (errno == EISDIR)
-    cb->error(Error::HYPERSPACE_IS_DIRECTORY, errbuf);
-  else {
-    HT_ERRORF("Unknown error, errno = %d", errno);
-    cb->error(Error::HYPERSPACE_IO_ERROR, errbuf);
-  }
 }
 
 
@@ -1242,8 +1116,6 @@ bool Master::destroy_handle(uint64_t handle, int *errorp, std::string &errMsg, b
 
   if (refCount == 0) {
 
-    handlePtr->node->close();
-
     if (handlePtr->node->ephemeral) {
       std::string childName;
       NodeDataPtr parentNodePtr;
@@ -1253,12 +1125,49 @@ bool Master::destroy_handle(uint64_t handle, int *errorp, std::string &errMsg, b
 	deliver_event_notifications(parentNodePtr.get(), eventPtr, waitForNotify);
       }
 
+      // remove file from database
+      DbTxn *txn = m_bdb_fs->start_transaction();
+      try {
+	m_bdb_fs->unlink(txn, handlePtr->node->name);
+	txn->commit(0);
+      } 
+      catch (DbException &e) { 
+	txn->abort();
+	HT_FATALF("Unable to remove ephemeral file '%s' from database - %s", handlePtr->node->name.c_str(), e.what());
+      }
+
       // remove node
       NodeMapT::iterator nodeIter = m_node_map.find(handlePtr->node->name);
       if (nodeIter != m_node_map.end())
 	m_node_map.erase(nodeIter);
+
     }
   }
 
   return true;
+}
+
+
+
+/**
+ */
+void Master::get_generation_number() {
+  DbTxn *txn = m_bdb_fs->start_transaction();
+
+  try {
+
+    if (!m_bdb_fs->get_xattr_i32(txn, "/hyperspace/metadata", "generation", &m_generation))
+      m_generation = 0;
+
+    m_generation++;
+
+    m_bdb_fs->set_xattr_i32(txn, "/hyperspace/metadata", "generation", m_generation);
+
+    txn->commit(0);
+
+  } 
+  catch (DbException &e) { 
+    txn->abort();
+    HT_FATALF("Error obtaining generation number: %s", e.what());
+  } 
 }
