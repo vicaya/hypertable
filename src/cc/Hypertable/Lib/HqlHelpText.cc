@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include "Common/StringExt.h"
 
 #include "HqlHelpText.h"
@@ -73,10 +74,10 @@ namespace {
     "    [options_spec]",
     "",
     "range_spec:",
-    "    table_name '[' [start_row] \"..\" ( end_row | ?? ) ']'",
+    "    table_name '[' [start_row] \"..\" (end_row | ?? ) ']'",
     "",
     "where_clause:",
-    "    WHERE where_predicate [ && where_predicate ... ] ",
+    "    WHERE where_predicate [&& where_predicate ...] ",
     "",
     "where_predicate: ",
     "    ROW = row_key",
@@ -91,12 +92,12 @@ namespace {
     "    | TIMESTAMP <= timestamp",
     "",
     "options_spec:",
-    "    ( MAX_VERSIONS = version_count",
+    "    (MAX_VERSIONS = version_count",
     "    | LIMIT = row_count",
     "    | INTO FILE 'file_name'",
     "    | DISPLAY_TIMESTAMPS",
     "    | RETURN_DELETES",
-    "    | KEYS_ONLY )*",
+    "    | KEYS_ONLY)*",
     "",
     "timestamp:",
     "    'YYYY-MM-DD HH:MM:SS[.nanoseconds]'",
@@ -141,7 +142,7 @@ namespace {
     "LOAD RANGE range_spec",
     "",
     "range_spec:",
-    "    table_name '[' [start_row] \"..\" ( end_row | ?? ) ']'",
+    "    table_name '[' [start_row] \"..\" (end_row | ?? ) ']'",
     "",
     "This command will issue a 'load range' command to the RangeServer",
     "for the range specified with range_spec.",
@@ -171,7 +172,7 @@ namespace {
     "'banana:http://sports.espn.go.com/' of row 'acerin'.",
     "",
     (const char *)0
-  };    
+  };
 
   const char *help_text_shutdown[] = {
     "",
@@ -189,7 +190,7 @@ namespace {
     "DROP RANGE range_spec",
     "",
     "range_spec:",
-    "    table_name '[' [start_row] \"..\" ( end_row | ?? ) ']'",
+    "    table_name '[' [start_row] \"..\" (end_row | ?? ) ']'",
     "",
     "This command will issue a 'drop range' command to the RangeServer",
     "for the range specified with range_spec.",
@@ -259,13 +260,13 @@ namespace {
 
   const char *help_text_select[] = {
     "",
-    "SELECT ( '*' | column_family_name [ ',' column_family_name]* )",
+    "SELECT ('*' | column_family_name [',' column_family_name]*)",
     "    FROM table_name",
     "    [where_clause]",
     "    [options_spec]",
     "",
     "where_clause:",
-    "    WHERE where_predicate [ && where_predicate ... ] ",
+    "    WHERE where_predicate [&& where_predicate ...] ",
     "",
     "where_predicate: ",
     "    ROW = row_key",
@@ -280,19 +281,19 @@ namespace {
     "    | TIMESTAMP <= timestamp",
     "",
     "options_spec:",
-    "    ( MAX_VERSIONS = version_count",
+    "    (MAX_VERSIONS = version_count",
     "    | LIMIT = row_count",
     "    | INTO FILE 'file_name'",
     "    | DISPLAY_TIMESTAMPS",
     "    | RETURN_DELETES",
-    "    | KEYS_ONLY )*",
+    "    | KEYS_ONLY)*",
     "",
     "timestamp:",
     "    'YYYY-MM-DD HH:MM:SS[.nanoseconds]'",
     "",
     (const char *)0
   };
-    
+
   const char *help_text_describe_table[] = {
     "",
     "DESCRIBE TABLE name",
@@ -342,9 +343,9 @@ namespace {
     "  cherry,",
     "  onion,",
     "  cassis,",
-    "  ACCESS GROUP jan ( cherry ),",
-    "  ACCESS GROUP default ( banana apple ),",
-    "  ACCESS GROUP marsha ( onion cassis )",
+    "  ACCESS GROUP jan (cherry),",
+    "  ACCESS GROUP default (banana apple),",
+    "  ACCESS GROUP marsha (onion cassis)",
     ")",
     "",
     (const char *)0
@@ -358,9 +359,9 @@ namespace {
     "",
     "options:",
     "",
-    "  ( ROW_KEY_COLUMN '=' name [ '+' name ... ] |",
+    "  (ROW_KEY_COLUMN '=' name ['+' name ...] |",
     "    TIMESTAMP_COLUMN '=' name |",
-    "    HEADER_FILE '=' '\"' filename '\"' )*",
+    "    HEADER_FILE '=' '\"' filename '\"')*",
     "",
     "The following is an example of the timestamp format that is",
     "expected in the timestamp column:",
@@ -392,13 +393,13 @@ namespace {
     "",
     (const char *)0
   };
-    
+
   const char *help_text_insert[] = {
     "",
     "INSERT INTO table_name VALUES value_list",
     "",
     "value_list:",
-    "    value_spec [ ',' value_spec ... ]",
+    "    value_spec [',' value_spec ...]",
     "",
     "value_spec:",
     "    '(' row_key ',' column_key ',' value ')'",
@@ -409,18 +410,18 @@ namespace {
     "",
     (const char *)0
   };
-    
+
   const char *help_text_delete[] = {
     "",
     "DELETE Syntax",
     "",
-    "  DELETE ( '*' | column_key [ ',' column_key ...] )",
+    "  DELETE ('*' | column_key [',' column_key ...])",
     "    FROM table_name",
     "    WHERE ROW '=' row_key",
-    "    [ TIMESTAMP timestamp ]",
+    "    [TIMESTAMP timestamp]",
     "",
     "  column_key:",
-    "    column_family [ ':' column_qualifier ]",
+    "    column_family [':' column_qualifier]",
     "",
     "  timestamp:",
     "    'YYYY-MM-DD HH:MM:SS[.nanoseconds]'",
@@ -501,10 +502,10 @@ namespace {
   };
 
 
-  typedef hash_map<std::string, const char **>  HelpTextMapT;
+  typedef hash_map<std::string, const char **>  HelpTextMap;
 
-  HelpTextMapT &buildHelpTextMap() {
-    HelpTextMapT *map = new HelpTextMapT();
+  HelpTextMap &build_help_text_map() {
+    HelpTextMap *map = new HelpTextMap();
     (*map)[""] = help_text_contents;
     (*map)["contents"] = help_text_contents;
     (*map)["create table"] = help_text_create_table;
@@ -524,42 +525,42 @@ namespace {
     return *map;
   }
 
-  HelpTextMapT &textMap = buildHelpTextMap();
+  HelpTextMap &text_map = build_help_text_map();
 }
 
 
 const char **HqlHelpText::Get(const char *subject) {
-  HelpTextMapT::const_iterator iter = textMap.find(subject);
-  if (iter == textMap.end())
+  HelpTextMap::const_iterator iter = text_map.find(subject);
+  if (iter == text_map.end())
     return 0;
   return (*iter).second;
 }
 
 
 const char **HqlHelpText::Get(std::string &subject) {
-  HelpTextMapT::const_iterator iter = textMap.find(subject);
-  if (iter == textMap.end())
+  HelpTextMap::const_iterator iter = text_map.find(subject);
+  if (iter == text_map.end())
     return 0;
   return (*iter).second;
 }
 
 
 void HqlHelpText::install_range_server_client_text() {
-  textMap[""] = help_text_rsclient_contents;
-  textMap["contents"] = help_text_rsclient_contents;
-  textMap["select"] = help_text_select;
-  textMap["create"] = help_text_create_scanner;
-  textMap["create scanner"] = help_text_create_scanner;
-  textMap["destroy"] = help_text_destroy_scanner;
-  textMap["destroy scanner"] = help_text_destroy_scanner;
-  textMap["drop range"] = help_text_drop_range;
-  textMap["fetch"] = help_text_fetch_scanblock;
-  textMap["fetch scanblock"] = help_text_fetch_scanblock;
-  textMap["load"] = help_text_load_range;
-  textMap["load range"] = help_text_load_range;
-  textMap["update"] = help_text_update;
-  textMap["replay start"] = help_text_replay_start;
-  textMap["replay log"] = help_text_replay_log;
-  textMap["replay commit"] = help_text_replay_commit;
-  textMap["shutdown"] = help_text_shutdown;
+  text_map[""] = help_text_rsclient_contents;
+  text_map["contents"] = help_text_rsclient_contents;
+  text_map["select"] = help_text_select;
+  text_map["create"] = help_text_create_scanner;
+  text_map["create scanner"] = help_text_create_scanner;
+  text_map["destroy"] = help_text_destroy_scanner;
+  text_map["destroy scanner"] = help_text_destroy_scanner;
+  text_map["drop range"] = help_text_drop_range;
+  text_map["fetch"] = help_text_fetch_scanblock;
+  text_map["fetch scanblock"] = help_text_fetch_scanblock;
+  text_map["load"] = help_text_load_range;
+  text_map["load range"] = help_text_load_range;
+  text_map["update"] = help_text_update;
+  text_map["replay start"] = help_text_replay_start;
+  text_map["replay log"] = help_text_replay_log;
+  text_map["replay commit"] = help_text_replay_commit;
+  text_map["shutdown"] = help_text_shutdown;
 }

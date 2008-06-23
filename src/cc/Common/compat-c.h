@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Luke Lu (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
@@ -42,16 +42,22 @@
 #ifdef __GNUC__
 #  define HT_NORETURN __attribute__((__noreturn__))
 #  define HT_FORMAT(x) __attribute__((format x))
+#  define HT_FUNC __PRETTY_FUNCTION__
 #else
 #  define HT_NORETURN
 #  define HT_FORMAT(x)
 #  ifndef __attribute__
 #    define __attribute__(x)
 #  endif
+#  define HT_FUNC __func__
 #endif
 
-/* Probably should use pstdint.h from Hsieh for porting */
+/* We want C limit macros, even when using C++ compilers */
+#define __STDC_LIMIT_MACROS
 #include <stdint.h>
+#include <stddef.h>
+#include <string.h>
+#include <strings.h>
 #include <stdlib.h>
 
 #endif /* HYPERTABLE_COMPAT_C_H */

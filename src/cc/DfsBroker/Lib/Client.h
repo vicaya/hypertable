@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -48,7 +48,6 @@ namespace boost {
 
 #include "Protocol.h"
 
-using namespace Hypertable;
 
 namespace Hypertable {
 
@@ -103,9 +102,9 @@ namespace Hypertable {
        * @return true if connected, false otherwise
        */
       bool wait_for_connection(long max_wait_secs) {
-	if (m_conn_manager_ptr)
-	  return m_conn_manager_ptr->wait_for_connection(m_addr, max_wait_secs);
-	return true;
+        if (m_conn_manager_ptr)
+          return m_conn_manager_ptr->wait_for_connection(m_addr, max_wait_secs);
+        return true;
       }
 
       virtual void open(const String &name, DispatchHandler *handler);
@@ -115,10 +114,10 @@ namespace Hypertable {
                                 uint64_t end_offset=0);
 
       virtual void create(const String &name, bool overwrite,
-                          int32_t bufferSize, int32_t replication,
-                          int64_t blockSize, DispatchHandler *handler);
-      virtual int create(const String &name, bool overwrite, int32_t bufferSize,
-			 int32_t replication, int64_t blockSize);
+                          int32_t bufsz, int32_t replication,
+                          int64_t blksz, DispatchHandler *handler);
+      virtual int create(const String &name, bool overwrite, int32_t bufsz,
+                         int32_t replication, int64_t blksz);
 
       virtual void close(int32_t fd, DispatchHandler *handler);
       virtual void close(int32_t fd);
@@ -159,7 +158,7 @@ namespace Hypertable {
       virtual void exists(const String &name, DispatchHandler *handler);
       virtual bool exists(const String &name);
 
-      virtual void rename(const String &src, const String &dst, 
+      virtual void rename(const String &src, const String &dst,
                           DispatchHandler *handler);
       virtual void rename(const String &src, const String &dst);
 
@@ -171,7 +170,7 @@ namespace Hypertable {
       int status();
 
       /** Shuts down the DFS broker.  Issues a shutdown command to the DFS broker.
-       * If the flag is set to Protocol::SHUTDOWN_FLAG_IMMEDIATE, then the 
+       * If the flag is set to Protocol::SHUTDOWN_FLAG_IMMEDIATE, then the
        * broker will call exit(0) directly from the I/O reactor thread.  Otherwise,
        * a shutdown command will get added to the broker's application queue, allowing
        * the shutdown to be handled more gracefully.
@@ -188,17 +187,17 @@ namespace Hypertable {
        * @return timeout value in seconds
        */
       time_t get_timeout() { return m_timeout; }
-    
+
     private:
 
       /** Sends a message to the DFS broker.
        *
-       * @param cbufPtr message to send
+       * @param cbp message to send
        * @param handler response handler
        */
-      void send_message(CommBufPtr &cbufPtr, DispatchHandler *handler);
+      void send_message(CommBufPtr &cbp, DispatchHandler *handler);
 
-      typedef hash_map<uint32_t, ClientBufferedReaderHandler *> BufferedReaderMapT;
+      typedef hash_map<uint32_t, ClientBufferedReaderHandler *> BufferedReaderMap;
 
       boost::mutex          m_mutex;
       Comm                 *m_comm;
@@ -207,7 +206,7 @@ namespace Hypertable {
       time_t                m_timeout;
       MessageBuilderSimple *m_message_builder;
       Protocol              m_protocol;
-      BufferedReaderMapT    m_buffered_reader_map;
+      BufferedReaderMap    m_buffered_reader_map;
     };
   }
 }

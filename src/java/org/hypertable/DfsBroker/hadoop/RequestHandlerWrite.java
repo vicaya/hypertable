@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -34,36 +34,36 @@ public class RequestHandlerWrite extends ApplicationHandler {
     static final Logger log = Logger.getLogger("org.hypertable.DfsBroker.hadoop");
 
     public RequestHandlerWrite(Comm comm, HdfsBroker broker, Event event) {
-	super(event);
-	mComm = comm;
-	mBroker = broker;
+        super(event);
+        mComm = comm;
+        mBroker = broker;
     }
 
     public void run() {
-	int     fd, amount;
+        int     fd, amount;
         boolean sync;
-	ResponseCallbackWrite cb = new ResponseCallbackWrite(mComm, mEvent);
+        ResponseCallbackWrite cb = new ResponseCallbackWrite(mComm, mEvent);
 
-	try {
+        try {
 
-	    if (mEvent.msg.buf.remaining() < 8)
-		throw new ProtocolException("Truncated message");
+            if (mEvent.msg.buf.remaining() < 8)
+                throw new ProtocolException("Truncated message");
 
-	    fd = mEvent.msg.buf.getInt();
-	    amount = mEvent.msg.buf.getInt();
+            fd = mEvent.msg.buf.getInt();
+            amount = mEvent.msg.buf.getInt();
             sync = mEvent.msg.buf.get() != 0;
 
-	    byte [] data = new byte [ amount ];
-	    mEvent.msg.buf.get(data);
+            byte [] data = new byte [ amount ];
+            mEvent.msg.buf.get(data);
 
-	    mBroker.Write(cb, fd, amount, data, sync);
-	}
-	catch (ProtocolException e) {
-	    int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());
-	    log.severe("Protocol error (WRITE) - " + e.getMessage());
-	    if (error != Error.OK)
-		log.severe("Problem sending (WRITE) error back to client - " + Error.GetText(error));
-	}
+            mBroker.Write(cb, fd, amount, data, sync);
+        }
+        catch (ProtocolException e) {
+            int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());
+            log.severe("Protocol error (WRITE) - " + e.getMessage());
+            if (error != Error.OK)
+                log.severe("Problem sending (WRITE) error back to client - " + Error.GetText(error));
+        }
     }
 
     private Comm       mComm;

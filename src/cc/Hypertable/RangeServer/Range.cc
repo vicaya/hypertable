@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cassert>
 #include <string>
 #include <vector>
@@ -50,13 +51,18 @@ using namespace Hypertable;
 using namespace std;
 
 
-Range::Range(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, SchemaPtr &schemaPtr, RangeSpec *range, RangeState *state) : m_master_client_ptr(master_client_ptr), m_identifier(identifier), m_schema(schemaPtr), m_maintenance_in_progress(false), m_last_logical_timestamp(0), m_added_inserts(0), m_state(*state), m_error(Error::OK) {
+Range::Range(MasterClientPtr &master_client_ptr, TableIdentifier *identifier,
+             SchemaPtr &schema_ptr, RangeSpec *range, RangeState *state)
+    : m_master_client_ptr(master_client_ptr), m_identifier(*identifier),
+      m_schema(schema_ptr), m_maintenance_in_progress(false),
+      m_last_logical_timestamp(0), m_added_inserts(0), m_state(*state),
+      m_error(Error::OK) {
   AccessGroup *ag;
-  
+
   memset(m_added_deletes, 0, 3*sizeof(int64_t));
 
-  if (m_state.soft_limit == 0 || m_state.soft_limit > Global::rangeMaxBytes)
-    m_state.soft_limit = Global::rangeMaxBytes;
+  if (m_state.soft_limit == 0 || m_state.soft_limit > Global::range_max_bytes)
+    m_state.soft_limit = Global::range_max_bytes;
 
   m_start_row = range->start_row;
   m_end_row = range->end_row;
@@ -65,20 +71,20 @@ Range::Range(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, Sc
 
   m_is_root = (m_identifier.id == 0 && *range->start_row == 0 && !strcmp(range->end_row, Key::END_ROOT_ROW));
 
-  m_column_family_vector.resize( m_schema->get_max_column_family_id() + 1 );
+  m_column_family_vector.resize(m_schema->get_max_column_family_id() + 1);
 
-  list<Schema::AccessGroup *> *agList = m_schema->get_access_group_list();
+  list<Schema::AccessGroup *> *aglist = m_schema->get_access_group_list();
 
-  for (list<Schema::AccessGroup *>::iterator agIter = agList->begin(); agIter != agList->end(); agIter++) {
-    ag = new AccessGroup(identifier, m_schema, (*agIter), range);
-    m_access_group_map[(*agIter)->name] = ag;
+  for (list<Schema::AccessGroup *>::iterator ag_it = aglist->begin(); ag_it != aglist->end(); ag_it++) {
+    ag = new AccessGroup(identifier, m_schema, (*ag_it), range);
+    m_access_group_map[(*ag_it)->name] = ag;
     m_access_group_vector.push_back(ag);
-    for (list<Schema::ColumnFamily *>::iterator cfIter = (*agIter)->columns.begin(); cfIter != (*agIter)->columns.end(); cfIter++)
-      m_column_family_vector[(*cfIter)->id] = ag;
+    for (list<Schema::ColumnFamily *>::iterator cf_it = (*ag_it)->columns.begin(); cf_it != (*ag_it)->columns.end(); cf_it++)
+      m_column_family_vector[(*cf_it)->id] = ag;
   }
 
   /**
-   * Read the cell store files from METADATA and 
+   * Read the cell store files from METADATA and
    */
   if (m_is_root) {
     MetadataRoot metadata(m_schema);
@@ -108,7 +114,7 @@ Range::~Range() {
 void Range::load_cell_stores(Metadata *metadata) {
   int error;
   AccessGroup *ag;
-  CellStorePtr cellStorePtr;
+  CellStorePtr cellstore;
   uint32_t csid;
   const char *base, *ptr, *end;
   std::vector<std::string> csvec;
@@ -131,16 +137,16 @@ void Range::load_cell_stores(Metadata *metadata) {
     while (ptr < end) {
 
       while (*ptr != ';' && ptr < end)
-	ptr++;
+        ptr++;
 
       file_str = std::string(base, ptr-base);
       boost::trim(file_str);
 
       if (file_str[0] == '#')
-	file_str = file_str.substr(1);
+        file_str = file_str.substr(1);
 
       if (file_str != "")
-	csvec.push_back(file_str);
+        csvec.push_back(file_str);
 
       ++ptr;
       base = ptr;
@@ -150,24 +156,24 @@ void Range::load_cell_stores(Metadata *metadata) {
 
       HT_INFOF("Loading CellStore %s", csvec[i].c_str());
 
-      cellStorePtr = new CellStoreV0(Global::dfs);
+      cellstore = new CellStoreV0(Global::dfs);
 
       if (!extract_csid_from_path(csvec[i], &csid)) {
-	HT_ERRORF("Unable to extract cell store ID from path '%s'", csvec[i].c_str());
-	continue;
+        HT_ERRORF("Unable to extract cell store ID from path '%s'", csvec[i].c_str());
+        continue;
       }
-      if ((error = cellStorePtr->open(csvec[i].c_str(), m_start_row.c_str(), m_end_row.c_str())) != Error::OK) {
-	// this should throw an exception
-	HT_ERRORF("Problem opening cell store '%s', skipping...", csvec[i].c_str());
-	continue;
+      if ((error = cellstore->open(csvec[i].c_str(), m_start_row.c_str(), m_end_row.c_str())) != Error::OK) {
+        // this should throw an exception
+        HT_ERRORF("Problem opening cell store '%s', skipping...", csvec[i].c_str());
+        continue;
       }
-      if ((error = cellStorePtr->load_index()) != Error::OK) {
-	// this should throw an exception
-	HT_ERRORF("Problem loading index of cell store '%s', skipping...", csvec[i].c_str());
-	continue;
+      if ((error = cellstore->load_index()) != Error::OK) {
+        // this should throw an exception
+        HT_ERRORF("Problem loading index of cell store '%s', skipping...", csvec[i].c_str());
+        continue;
       }
 
-      ag->add_cell_store(cellStorePtr, csid);
+      ag->add_cell_store(cellstore, csid);
     }
 
   }
@@ -185,7 +191,7 @@ bool Range::extract_csid_from_path(std::string &path, uint32_t *csidp) {
     *csidp = 0;
   else
     *csidp = atoi(base+3);
-  
+
   return true;
 }
 
@@ -208,7 +214,7 @@ int Range::add(const ByteString key, const ByteString value, uint64_t real_times
   /**
      keys in a batch may come in out-of-order if they're supplied because
      they get sorted by row key in the client.  This *shouldn't* be a problem.
-     
+
   if (key_comps.timestamp <= m_last_logical_timestamp) {
     if (key_comps.flag == FLAG_INSERT) {
       HT_ERRORF("Problem adding key/value pair, key timestmap %llu <= %llu", key_comps.timestamp, m_last_logical_timestamp);
@@ -223,7 +229,7 @@ int Range::add(const ByteString key, const ByteString value, uint64_t real_times
     m_last_logical_timestamp = key_comps.timestamp;
 
   if (key_comps.flag == FLAG_DELETE_ROW) {
-    for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++) {
+    for (AccessGroupMap::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++) {
       (*iter).second->add(key, value, real_timestamp);
     }
   }
@@ -254,9 +260,9 @@ int Range::replay_add(const ByteString key, const ByteString value, uint64_t rea
   }
 
   if (key_comps.flag == FLAG_DELETE_ROW) {
-    for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++) {
+    for (AccessGroupMap::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++) {
       if ((*iter).second->replay_add(key, value, real_timestamp))
-	(*num_addedp)++;
+        (*num_addedp)++;
     }
   }
   else {
@@ -274,12 +280,12 @@ int Range::replay_add(const ByteString key, const ByteString value, uint64_t rea
 
 
 
-CellListScanner *Range::create_scanner(ScanContextPtr &scanContextPtr) {
-  bool return_deletes = scanContextPtr->spec ? scanContextPtr->spec->return_deletes : false;
-  MergeScanner *mscanner = new MergeScanner(scanContextPtr, return_deletes);
-  for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++) {
-    if ((*iter).second->include_in_scan(scanContextPtr))
-      mscanner->add_scanner((*iter).second->create_scanner(scanContextPtr));
+CellListScanner *Range::create_scanner(ScanContextPtr &scan_ctx) {
+  bool return_deletes = scan_ctx->spec ? scan_ctx->spec->return_deletes : false;
+  MergeScanner *mscanner = new MergeScanner(scan_ctx, return_deletes);
+  for (AccessGroupMap::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++) {
+    if ((*iter).second->include_in_scan(scan_ctx))
+      mscanner->add_scanner((*iter).second->create_scanner(scan_ctx));
   }
   return mscanner;
 }
@@ -295,12 +301,12 @@ uint64_t Range::disk_usage() {
 
 
 /**
- *  
+ *
  */
-void Range::get_compaction_priority_data(std::vector<AccessGroup::CompactionPriorityDataT> &priority_data_vector) {
+void Range::get_compaction_priority_data(std::vector<AccessGroup::CompactionPriorityData> &priority_data_vector) {
   size_t next_slot = priority_data_vector.size();
 
-  priority_data_vector.resize( priority_data_vector.size() + m_access_group_vector.size() );
+  priority_data_vector.resize(priority_data_vector.size() + m_access_group_vector.size());
 
   for (size_t i=0; i<m_access_group_vector.size(); i++) {
     m_access_group_vector[i]->get_compaction_priority_data(priority_data_vector[next_slot]);
@@ -381,35 +387,35 @@ void Range::split_install_log(Timestamp *timestampp, String &old_start_row) {
    * by collecting all of the cached rows, sorting them and then taking the middle.
    */
   if (split_rows.size() > 0) {
-    boost::mutex::scoped_lock lock(m_mutex);    
+    boost::mutex::scoped_lock lock(m_mutex);
     m_split_row = split_rows[split_rows.size()/2];
     if (m_split_row < m_start_row || m_split_row >= m_end_row) {
       split_rows.clear();
       for (size_t i=0; i<m_access_group_vector.size(); i++)
-	m_access_group_vector[i]->get_cached_rows(split_rows);
+        m_access_group_vector[i]->get_cached_rows(split_rows);
       if (split_rows.size() > 0) {
-	sort(split_rows.begin(), split_rows.end());
-	m_split_row = split_rows[split_rows.size()/2];
-	if (m_split_row < m_start_row || m_split_row >= m_end_row) {
-	  m_error = Error::RANGESERVER_ROW_OVERFLOW;
-	  throw Exception(Error::RANGESERVER_ROW_OVERFLOW,
-			  format("Unable to determine split row for range %s[%s..%s]",
-				 m_identifier.name, m_start_row.c_str(), m_end_row.c_str()));
-	}
+        sort(split_rows.begin(), split_rows.end());
+        m_split_row = split_rows[split_rows.size()/2];
+        if (m_split_row < m_start_row || m_split_row >= m_end_row) {
+          m_error = Error::RANGESERVER_ROW_OVERFLOW;
+          HT_THROWF(Error::RANGESERVER_ROW_OVERFLOW,
+                    "Unable to determine split row for range %s[%s..%s]",
+                    m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
+        }
       }
       else {
-	m_error = Error::RANGESERVER_ROW_OVERFLOW;
-	throw Exception(Error::RANGESERVER_ROW_OVERFLOW,
-			format("Unable to determine split row for range %s[%s..%s]",
-			       m_identifier.name, m_start_row.c_str(), m_end_row.c_str()));
+        m_error = Error::RANGESERVER_ROW_OVERFLOW;
+        HT_THROWF(Error::RANGESERVER_ROW_OVERFLOW,
+                  "Unable to determine split row for range %s[%s..%s]",
+                   m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
       }
-    } 
+    }
   }
   else {
     m_error = Error::RANGESERVER_ROW_OVERFLOW;
-    throw Exception(Error::RANGESERVER_ROW_OVERFLOW,
-		    format("Unable to determine split row for range %s[%s..%s]",
-			   m_identifier.name, m_start_row.c_str(), m_end_row.c_str()));
+    HT_THROWF(Error::RANGESERVER_ROW_OVERFLOW,
+              "Unable to determine split row for range %s[%s..%s]",
+              m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
   }
 
   /**
@@ -417,10 +423,10 @@ void Range::split_install_log(Timestamp *timestampp, String &old_start_row) {
    */
   md5_string(m_split_row.c_str(), md5DigestStr);
   md5DigestStr[24] = 0;
-  m_state.set_transfer_log(Global::logDir + "/" + md5DigestStr);
+  m_state.set_transfer_log(Global::log_dir + "/" + md5DigestStr);
 
   // Create transfer log dir
-  try { Global::logDfs->mkdirs(m_state.transfer_log); }
+  try { Global::log_dfs->mkdirs(m_state.transfer_log); }
   catch (Exception &e) {
     HT_ERRORF("Problem creating log directory '%s': %s",
               m_state.transfer_log, e.what());
@@ -438,7 +444,7 @@ void Range::split_install_log(Timestamp *timestampp, String &old_start_row) {
     RangeUpdateBarrier::ScopedActivator block_updates(m_update_barrier);
     boost::mutex::scoped_lock lock(m_mutex);
     if (!m_scanner_timestamp_controller.get_oldest_update_timestamp(timestampp) ||
-	timestampp->logical == 0)
+        timestampp->logical == 0)
       *timestampp = m_timestamp;
     old_start_row = m_start_row;
     m_split_log_ptr = new CommitLog(Global::dfs, m_state.transfer_log);
@@ -540,7 +546,7 @@ void Range::split_compact_and_shrink(Timestamp timestamp, String &old_start_row)
 
 
 /**
- * 
+ *
  */
 void Range::split_notify_master(String &old_start_row) {
   int error;
@@ -554,17 +560,17 @@ void Range::split_notify_master(String &old_start_row) {
 
   HT_INFOF("Reporting newly split off range %s[%s..%s] to Master", m_identifier.name, range.start_row, range.end_row);
 
-  if (m_state.soft_limit < Global::rangeMaxBytes) {
+  if (m_state.soft_limit < Global::range_max_bytes) {
     m_state.soft_limit *= 2;
-    if (m_state.soft_limit > Global::rangeMaxBytes)
-      m_state.soft_limit = Global::rangeMaxBytes;
+    if (m_state.soft_limit > Global::range_max_bytes)
+      m_state.soft_limit = Global::range_max_bytes;
   }
 
   if ((error = m_master_client_ptr->report_split(&m_identifier, range, m_state.transfer_log, m_state.soft_limit)) != Error::OK) {
-    throw Exception(error, format("Problem reporting split (table=%s, start_row=%s, end_row=%s) to master.",
-				  m_identifier.name, range.start_row, range.end_row));
+    HT_THROWF(error, "Problem reporting split (table=%s, start_row=%s, end_row=%s) to master.",
+              m_identifier.name, range.start_row, range.end_row);
   }
-  
+
 }
 
 
@@ -598,7 +604,7 @@ void Range::run_compaction(bool major) {
 
 
 /**
- * 
+ *
  */
 void Range::dump_stats() {
   std::string range_str = (std::string)m_identifier.name + "[" + m_start_row + ".." + m_end_row + "]";
@@ -620,7 +626,7 @@ void Range::dump_stats() {
 
 
 void Range::lock() {
-  for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++)
+  for (AccessGroupMap::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++)
     (*iter).second->lock();
 }
 
@@ -632,7 +638,7 @@ void Range::unlock(uint64_t real_timestamp) {
     m_timestamp.logical = m_last_logical_timestamp;
     m_timestamp.real = real_timestamp;
   }
-  for (AccessGroupMapT::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++)
+  for (AccessGroupMap::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++)
     (*iter).second->unlock();
 }
 
@@ -642,7 +648,7 @@ void Range::unlock(uint64_t real_timestamp) {
  */
 void Range::replay_transfer_log(CommitLogReader *commit_log_reader, uint64_t real_timestamp) {
   BlockCompressionHeaderCommitLog header;
-  uint8_t *base, *ptr, *end;
+  const uint8_t *base, *ptr, *end;
   size_t len;
   ByteString key, value;
   size_t nblocks = 0;
@@ -652,26 +658,25 @@ void Range::replay_transfer_log(CommitLogReader *commit_log_reader, uint64_t rea
 
   try {
 
-    while (commit_log_reader->next((const uint8_t **)&base, &len, &header)) {
+    while (commit_log_reader->next(&base, &len, &header)) {
 
       ptr = base;
       end = base + len;
 
-      table_id.decode((uint8_t **)&ptr, &len);
+      table_id.decode(&ptr, &len);
 
       if (strcmp(m_identifier.name, table_id.name))
-	throw Exception(Error::RANGESERVER_CORRUPT_COMMIT_LOG, 
-			format("Table name mis-match in split log replay \"%s\" != \"%s\"", m_identifier.name, table_id.name));
-
+        HT_THROWF(Error::RANGESERVER_CORRUPT_COMMIT_LOG,
+                  "Table name mis-match in split log replay \"%s\" != \"%s\"", m_identifier.name, table_id.name);
       memory_added += len;
 
       while (ptr < end) {
-	key.ptr = ptr;
-	ptr += key.length();
-	value.ptr = ptr;
-	ptr += value.length();
-	add(key, value, real_timestamp);
-	count++;
+        key.ptr = (uint8_t *)ptr;
+        ptr += key.length();
+        value.ptr = (uint8_t *)ptr;
+        ptr += value.length();
+        add(key, value, real_timestamp);
+        count++;
       }
       nblocks++;
     }
@@ -679,8 +684,8 @@ void Range::replay_transfer_log(CommitLogReader *commit_log_reader, uint64_t rea
     {
       boost::mutex::scoped_lock lock(m_mutex);
       HT_INFOF("Replayed %d updates (%d blocks) from split log '%s' into %s[%s..%s]",
-	       count, nblocks, commit_log_reader->get_log_dir().c_str(),
-	       m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
+               count, nblocks, commit_log_reader->get_log_dir().c_str(),
+               m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
     }
 
     Global::memory_tracker.add_memory(memory_added);

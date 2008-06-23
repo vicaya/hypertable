@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -40,66 +40,66 @@ public class SampleServer {
 
     private static class RequestHandler implements DispatchHandler {
 
-	public void handle(Event event) {
-	    if (event.type == Event.Type.CONNECTION_ESTABLISHED)
-		log.info("Connection Established.");
-	    else if (event.type == Event.Type.DISCONNECT) {
-		if (event.error == Error.COMM_CONNECT_ERROR)
-		    log.info("Connect error.");
-		else
-		    log.info("Disconnect.");
-	    }
-	    else if (event.type == Event.Type.ERROR) {
-		log.info("Error : " + Error.GetText(event.error));
-		System.exit(1);
-	    }
-	    else if (event.type == Event.Type.MESSAGE) {
-		synchronized (this) {
-		    Event newEvent = new Event(event);
-		    mQueue.offer(newEvent);
-		    notify();
-		}
-	    }
-	}
+        public void handle(Event event) {
+            if (event.type == Event.Type.CONNECTION_ESTABLISHED)
+                log.info("Connection Established.");
+            else if (event.type == Event.Type.DISCONNECT) {
+                if (event.error == Error.COMM_CONNECT_ERROR)
+                    log.info("Connect error.");
+                else
+                    log.info("Disconnect.");
+            }
+            else if (event.type == Event.Type.ERROR) {
+                log.info("Error : " + Error.GetText(event.error));
+                System.exit(1);
+            }
+            else if (event.type == Event.Type.MESSAGE) {
+                synchronized (this) {
+                    Event newEvent = new Event(event);
+                    mQueue.offer(newEvent);
+                    notify();
+                }
+            }
+        }
 
-	public synchronized Event GetRequest() throws InterruptedException {
-	    while (mQueue.isEmpty()) {
-		wait();
-	    }
-	    if (gDelay > 0)
-		wait(gDelay);
-	    return mQueue.remove();
-	}
+        public synchronized Event GetRequest() throws InterruptedException {
+            while (mQueue.isEmpty()) {
+                wait();
+            }
+            if (gDelay > 0)
+                wait(gDelay);
+            return mQueue.remove();
+        }
 
-	private LinkedList<Event> mQueue = new LinkedList<Event>();
+        private LinkedList<Event> mQueue = new LinkedList<Event>();
     }
 
     private static class HandlerFactory implements ConnectionHandlerFactory {
-	public HandlerFactory(DispatchHandler cb) {
-	    mDispatchHandler = cb;
-	}
-	public DispatchHandler newInstance() {
-	    return mDispatchHandler;
-	}
-	private DispatchHandler mDispatchHandler;
+        public HandlerFactory(DispatchHandler cb) {
+            mDispatchHandler = cb;
+        }
+        public DispatchHandler newInstance() {
+            return mDispatchHandler;
+        }
+        private DispatchHandler mDispatchHandler;
     }
 
 
     static String usage[] = {
-	"",
-	"usage: sampleServer [OPTIONS]",
-	"",
-	"OPTIONS:",
-	"  --help          Display this help text and exit",
-	"  --port=<n>      Specifies the port to connect to",
-	"  --reactors=<n>  Specifies the number of reactors",
-	"  --delay=<ms>    Specifies milliseconds to wait before echoing message (default=0)",
-	"",
-	"This is a sample program to test the AsyncComm library.  It establishes",
-	"a connection with the sampleServer and sends each line of the input file",
-	"to the server.  Each reply from the server is echoed to stdout.",
-	"",
-	null
+        "",
+        "usage: sampleServer [OPTIONS]",
+        "",
+        "OPTIONS:",
+        "  --help          Display this help text and exit",
+        "  --port=<n>      Specifies the port to connect to",
+        "  --reactors=<n>  Specifies the number of reactors",
+        "  --delay=<ms>    Specifies milliseconds to wait before echoing message (default=0)",
+        "",
+        "This is a sample program to test the AsyncComm library.  It establishes",
+        "a connection with the sampleServer and sends each line of the input file",
+        "to the server.  Each reply from the server is echoed to stdout.",
+        "",
+        null
     };
 
 
@@ -107,52 +107,52 @@ public class SampleServer {
     static int gDelay = 0;
 
     public static void main(String [] args) throws InterruptedException, IOException {
-	int port = DEFAULT_PORT;
-	short reactorCount = 1;
-	Event event;
-	HandlerFactory handlerFactory;
-	HeaderBuilder hbuilder = new HeaderBuilder();
+        int port = DEFAULT_PORT;
+        short reactorCount = 1;
+        Event event;
+        HandlerFactory handlerFactory;
+        HeaderBuilder hbuilder = new HeaderBuilder();
 
-	if (args.length == 1 && args[0].equals("--help")) {
-	    for (int i = 0; usage[i] != null; i++)
-		System.out.println(usage[i]);
-	    System.exit(0);
-	}
+        if (args.length == 1 && args[0].equals("--help")) {
+            for (int i = 0; usage[i] != null; i++)
+                System.out.println(usage[i]);
+            System.exit(0);
+        }
 
-	for (int i=0; i<args.length; i++) {
-	    if (args[i].startsWith("--port="))
-		port = Integer.parseInt(args[i].substring(7));
-	    else if (args[i].startsWith("--delay="))
-		gDelay = Integer.parseInt(args[i].substring(8));
-	    else if (args[i].startsWith("--reactors="))
-		reactorCount = Short.parseShort(args[i].substring(11));
-	    else {
-		for (int j = 0; usage[j] != null; j++)
-		    System.out.println(usage[j]);
-		System.exit(0);
-	    }
-	}
+        for (int i=0; i<args.length; i++) {
+            if (args[i].startsWith("--port="))
+                port = Integer.parseInt(args[i].substring(7));
+            else if (args[i].startsWith("--delay="))
+                gDelay = Integer.parseInt(args[i].substring(8));
+            else if (args[i].startsWith("--reactors="))
+                reactorCount = Short.parseShort(args[i].substring(11));
+            else {
+                for (int j = 0; usage[j] != null; j++)
+                    System.out.println(usage[j]);
+                System.exit(0);
+            }
+        }
 
-	ReactorFactory.Initialize(reactorCount);
+        ReactorFactory.Initialize(reactorCount);
 
-	RequestHandler requestHandler = new RequestHandler();
+        RequestHandler requestHandler = new RequestHandler();
 
-	handlerFactory = new HandlerFactory(requestHandler);
+        handlerFactory = new HandlerFactory(requestHandler);
 
-	Comm comm = new Comm(0);
-	CommBuf cbuf;
+        Comm comm = new Comm(0);
+        CommBuf cbuf;
 
-	comm.Listen(port, handlerFactory, requestHandler);
+        comm.Listen(port, handlerFactory, requestHandler);
 
-	while ((event = requestHandler.GetRequest()) != null) {
-	    hbuilder.InitializeFromRequest(event.msg);
-	    cbuf = new CommBuf(hbuilder, event.msg.totalLen-event.msg.headerLen);
-	    event.msg.RewindToProtocolHeader();
-	    cbuf.AppendBytes(event.msg.buf);
-	    int error = comm.SendResponse(event.addr, cbuf);
-	    if (error != Error.OK)
-		log.log(Level.SEVERE, "Comm.SendResponse returned " + Error.GetText(error));
-	}
+        while ((event = requestHandler.GetRequest()) != null) {
+            hbuilder.InitializeFromRequest(event.msg);
+            cbuf = new CommBuf(hbuilder, event.msg.totalLen-event.msg.headerLen);
+            event.msg.RewindToProtocolHeader();
+            cbuf.AppendBytes(event.msg.buf);
+            int error = comm.SendResponse(event.addr, cbuf);
+            if (error != Error.OK)
+                log.log(Level.SEVERE, "Comm.SendResponse returned " + Error.GetText(error));
+        }
 
     }
 

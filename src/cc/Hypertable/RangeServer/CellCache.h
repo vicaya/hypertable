@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -64,7 +64,7 @@ namespace Hypertable {
      * Creates a CellCacheScanner object that contains an shared pointer (intrusive_ptr)
      * to this CellCache.
      */
-    virtual CellListScanner *create_scanner(ScanContextPtr &scanContextPtr);
+    virtual CellListScanner *create_scanner(ScanContextPtr &scan_ctx);
 
     void lock()   { m_mutex.lock(); }
     void unlock() { m_mutex.unlock(); }
@@ -76,7 +76,7 @@ namespace Hypertable {
      * pairs that have a timestamp greater than the timestamp argument.
      * This method is called after a compaction to drop the key/value
      * pairs that were compacted to disk.
-     * 
+     *
      * @param timestamp cutoff timestamp
      * @return The new "sliced" copy of the cell cache
      */
@@ -95,7 +95,7 @@ namespace Hypertable {
      */
     uint64_t memory_used() {
       ScopedLock lock(m_mutex);
-      return m_memory_used + (m_cell_map.size() * sizeof(CellMapT::value_type));
+      return m_memory_used + (m_cell_map.size() * sizeof(CellMap::value_type));
     }
 
     uint32_t get_collision_count() { return m_collisions; }
@@ -105,14 +105,14 @@ namespace Hypertable {
     friend class CellCacheScanner;
 
   protected:
-    typedef std::map<const ByteString, uint32_t, ltByteString> CellMapT;
+    typedef std::map<const ByteString, uint32_t, LtByteString> CellMap;
 
     static const uint32_t ALLOC_BIT_MASK;
     static const uint32_t OFFSET_BIT_MASK;
 
     Mutex              m_mutex;
     std::vector<CellListPtr> m_children;
-    CellMapT           m_cell_map;
+    CellMap            m_cell_map;
     uint64_t           m_memory_used;
     uint32_t           m_deletes;
     uint32_t           m_collisions;

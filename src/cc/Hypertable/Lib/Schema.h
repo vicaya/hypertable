@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -24,8 +24,6 @@
 
 #include <list>
 
-#include <string>
-
 #include <boost/intrusive_ptr.hpp>
 #include <boost/thread/mutex.hpp>
 
@@ -34,8 +32,6 @@
 #include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
 
-using namespace Hypertable;
-using namespace std;
 
 namespace Hypertable {
 
@@ -45,8 +41,8 @@ namespace Hypertable {
     class ColumnFamily {
     public:
       ColumnFamily() : name(), ag(), id(0), max_versions(0), ttl(0) { return; }
-      string   name;
-      string   ag;
+      String   name;
+      String   ag;
       uint32_t id;
       uint32_t max_versions;
       time_t   ttl;
@@ -55,18 +51,18 @@ namespace Hypertable {
     class AccessGroup {
     public:
       AccessGroup() : name(), in_memory(false), blocksize(0), columns() { return; }
-      string name;
+      String   name;
       bool     in_memory;
       uint32_t blocksize;
-      std::string compressor;
-      list<ColumnFamily *> columns;
+      String compressor;
+      std::list<ColumnFamily *> columns;
     };
 
-    Schema(bool readIds=false);
+    Schema(bool read_ids=false);
     ~Schema();
 
-    static Schema *new_instance(const char *buf, int len, bool readIds=false);
-    friend Schema *new_instance(const char *buf, int len, bool readIds=false);
+    static Schema *new_instance(const char *buf, int len, bool read_ids=false);
+    friend Schema *new_instance(const char *buf, int len, bool read_ids=false);
 
     void open_access_group();
     void close_access_group();
@@ -77,19 +73,19 @@ namespace Hypertable {
 
     void assign_ids();
 
-    void render(std::string &output);
+    void render(String &output);
 
-    void render_hql_create_table(std::string table_name, std::string &output);
+    void render_hql_create_table(const String &table_name, String &output);
 
     bool is_valid();
 
-    const char *get_error_string() { 
+    const char *get_error_string() {
       return (m_error_string.length() == 0) ? 0 : m_error_string.c_str();
     }
 
-    void set_error_string(std::string errStr) {
+    void set_error_string(const String &errstr) {
       if (m_error_string.length() == 0)
-	m_error_string = errStr;
+        m_error_string = errstr;
     }
 
     void set_generation(const char *generation);
@@ -97,9 +93,9 @@ namespace Hypertable {
 
     size_t get_max_column_family_id() { return m_max_column_family_id; }
 
-    list<AccessGroup *> *get_access_group_list() { return &m_access_groups; }
+    std::list<AccessGroup *> *get_access_group_list() { return &m_access_groups; }
 
-    ColumnFamily *get_column_family(string name) { return m_column_family_map[name]; }
+    ColumnFamily *get_column_family(const String &name) { return m_column_family_map[name]; }
 
     ColumnFamily *get_column_family(uint32_t id) { return m_column_family_id_map[id]; }
 
@@ -107,36 +103,36 @@ namespace Hypertable {
 
     void add_column_family(ColumnFamily *cf);
 
-    void set_compressor(std::string compressor) { m_compressor = compressor; }
-    std::string &get_compressor() { return m_compressor; }
+    void set_compressor(String compressor) { m_compressor = compressor; }
+    String &get_compressor() { return m_compressor; }
 
-    typedef hash_map<string, ColumnFamily *> ColumnFamilyMapT;
-    typedef hash_map<string, AccessGroup *> AccessGroupMapT;
+    typedef hash_map<String, ColumnFamily *> ColumnFamilyMap;
+    typedef hash_map<String, AccessGroup *> AccessGroupMap;
 
   private:
 
-    typedef hash_map<uint32_t, ColumnFamily *> ColumnFamilyIdMapT;
+    typedef hash_map<uint32_t, ColumnFamily *> ColumnFamilyIdMap;
 
-    std::string m_error_string;
+    String m_error_string;
     int    m_next_column_id;
-    AccessGroupMapT m_access_group_map;
-    ColumnFamilyMapT m_column_family_map;
-    ColumnFamilyIdMapT m_column_family_id_map;
+    AccessGroupMap m_access_group_map;
+    ColumnFamilyMap m_column_family_map;
+    ColumnFamilyIdMap m_column_family_id_map;
     int32_t m_generation;
-    list<AccessGroup *> m_access_groups;
+    std::list<AccessGroup *> m_access_groups;
     AccessGroup *m_open_access_group;
     ColumnFamily  *m_open_column_family;
     bool           m_read_ids;
     bool           m_output_ids;
     size_t         m_max_column_family_id;
-    std::string    m_compressor;
+    String         m_compressor;
 
-    static void start_element_handler(void *userData, const XML_Char *name, const XML_Char **atts);
-    static void end_element_handler(void *userData, const XML_Char *name);
-    static void character_data_handler(void *userData, const XML_Char *s, int len);
+    static void start_element_handler(void *userdata, const XML_Char *name, const XML_Char **atts);
+    static void end_element_handler(void *userdata, const XML_Char *name);
+    static void character_data_handler(void *userdata, const XML_Char *s, int len);
 
-    static Schema        *ms_schema;
-    static std::string    ms_collected_text;
+    static Schema       *ms_schema;
+    static String        ms_collected_text;
     static boost::mutex  ms_mutex;
   };
 

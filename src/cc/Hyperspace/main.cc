@@ -1,24 +1,25 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -73,7 +74,7 @@ namespace {
 class HandlerFactory : public ConnectionHandlerFactory {
 
 public:
-  HandlerFactory(Comm *comm, ApplicationQueuePtr &appQueuePtr, MasterPtr &masterPtr) : m_comm(comm), m_app_queue_ptr(appQueuePtr), m_master_ptr(masterPtr) {
+  HandlerFactory(Comm *comm, ApplicationQueuePtr &app_queue, MasterPtr &master) : m_comm(comm), m_app_queue_ptr(app_queue), m_master_ptr(master) {
     return;
   }
   virtual void get_instance(DispatchHandlerPtr &dhp) {
@@ -89,103 +90,103 @@ private:
 
 
 /**
- * 
+ *
  */
 int main(int argc, char **argv) {
-  string configFile = "";
-  string pidFile = "";
+  string cfg_file = "";
+  string pidfile = "";
   PropertiesPtr props_ptr;
   bool verbose = false;
-  MasterPtr masterPtr;
-  int port, reactorCount, workerCount;
+  MasterPtr master;
+  int port, reactor_count, worker_count;
   Comm *comm;
-  ApplicationQueuePtr appQueuePtr;
-  ServerKeepaliveHandlerPtr keepaliveHandlerPtr;
-  ConnectionManagerPtr connManagerPtr;
+  ApplicationQueuePtr app_queue;
+  ServerKeepaliveHandlerPtr keepalive_handler;
+  ConnectionManagerPtr conn_mgr;
   int error;
-  struct sockaddr_in localAddr;
+  struct sockaddr_in local_addr;
 
   System::initialize(argv[0]);
-  
+
   if (argc > 1) {
     for (int i=1; i<argc; i++) {
       if (!strncmp(argv[i], "--config=", 9))
-	configFile = &argv[i][9];
+        cfg_file = &argv[i][9];
       else if (!strncmp(argv[i], "--install-dir=", 14)) {
-	System::installDir = &argv[i][14];
-	if (System::installDir.find('/',  System::installDir.length()-1) != string::npos)
-	  System::installDir = System::installDir.substr(0, System::installDir.length()-1);
+        System::install_dir = &argv[i][14];
+        if (System::install_dir.find('/',  System::install_dir.length()-1) != string::npos)
+          System::install_dir = System::install_dir.substr(0, System::install_dir.length()-1);
       }
       else if (!strncmp(argv[i], "--pidfile=", 10))
-	pidFile = &argv[i][10];
+        pidfile = &argv[i][10];
       else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
-	verbose = true;
+        verbose = true;
       else if (!strcmp(argv[i], "-?") || !strcmp(argv[i], "--help")) {
-	Usage::dump_and_exit(usage);
+        Usage::dump_and_exit(usage);
       }
       else {
-	cerr << "Hyperspace.master: Unrecognized argument '" << argv[i] << "'" << endl;
-	
-	exit(1);
+        cerr << "Hyperspace.master: Unrecognized argument '" << argv[i] << "'" << endl;
+
+        exit(1);
       }
     }
   }
 
-  if (configFile == "")
-    configFile = System::installDir + "/conf/hypertable.cfg";
+  if (cfg_file == "")
+    cfg_file = System::install_dir + "/conf/hypertable.cfg";
 
-  props_ptr = new Properties(configFile);
+  props_ptr = new Properties(cfg_file);
   if (verbose)
     props_ptr->set("Hypertable.Verbose", "true");
 
   port         = props_ptr->get_int("Hyperspace.Master.Port", Master::DEFAULT_MASTER_PORT);
-  reactorCount = props_ptr->get_int("Hyperspace.Master.Reactors", System::get_processor_count());
-  workerCount  = props_ptr->get_int("Hyperspace.Master.Workers", DEFAULT_WORKERS);
+  reactor_count = props_ptr->get_int("Hyperspace.Master.Reactors", System::get_processor_count());
+  worker_count  = props_ptr->get_int("Hyperspace.Master.Workers", DEFAULT_WORKERS);
 
-  ReactorFactory::initialize(reactorCount);
+  ReactorFactory::initialize(reactor_count);
 
   comm = new Comm();
 
-  connManagerPtr = new ConnectionManager(comm);
+  conn_mgr = new ConnectionManager(comm);
 
   if (verbose) {
     cout << "CPU count = " << System::get_processor_count() << endl;
     cout << "Hyperspace.Master.Port=" << port << endl;
-    cout << "Hyperspace.Master.Workers=" << workerCount << endl;
-    cout << "Hyperspace.Master.Reactors=" << reactorCount << endl;
+    cout << "Hyperspace.Master.Workers=" << worker_count << endl;
+    cout << "Hyperspace.Master.Reactors=" << reactor_count << endl;
   }
 
-  InetAddr::initialize(&localAddr, INADDR_ANY, port);
+  InetAddr::initialize(&local_addr, INADDR_ANY, port);
 
-  masterPtr = new Master(connManagerPtr, props_ptr, keepaliveHandlerPtr);
-  appQueuePtr = new ApplicationQueue(workerCount);
+  master = new Master(conn_mgr, props_ptr, keepalive_handler);
+  app_queue = new ApplicationQueue(worker_count);
 
-  ConnectionHandlerFactoryPtr chfPtr( new HandlerFactory(comm, appQueuePtr, masterPtr) );
-  if ((error = comm->listen(localAddr, chfPtr)) != Error::OK) {
+  ConnectionHandlerFactoryPtr chfp(new HandlerFactory(comm, app_queue, master));
+  if ((error = comm->listen(local_addr, chfp)) != Error::OK) {
     std::string str;
-    HT_ERRORF("Unable to listen for connections on %s - %s", 
-		 InetAddr::string_format(str, localAddr), Error::get_text(error));
+    HT_ERRORF("Unable to listen for connections on %s - %s",
+                 InetAddr::string_format(str, local_addr), Error::get_text(error));
     exit(1);
   }
 
-  DispatchHandlerPtr dhp(keepaliveHandlerPtr.get());
+  DispatchHandlerPtr dhp(keepalive_handler.get());
 
-  if ((error = comm->create_datagram_receive_socket(&localAddr, dhp)) != Error::OK) {
+  if ((error = comm->create_datagram_receive_socket(&local_addr, dhp)) != Error::OK) {
     std::string str;
-    HT_ERRORF("Unable to create datagram receive socket %s - %s", 
-		 InetAddr::string_format(str, localAddr), Error::get_text(error));
+    HT_ERRORF("Unable to create datagram receive socket %s - %s",
+                 InetAddr::string_format(str, local_addr), Error::get_text(error));
     exit(1);
   }
 
-  if (pidFile != "") {
-    fstream filestr (pidFile.c_str(), fstream::out);
+  if (pidfile != "") {
+    fstream filestr (pidfile.c_str(), fstream::out);
     filestr << getpid() << endl;
     filestr.close();
   }
 
-  appQueuePtr->join();
+  app_queue->join();
 
-  appQueuePtr->shutdown();
+  app_queue->shutdown();
 
   delete comm;
   return 0;

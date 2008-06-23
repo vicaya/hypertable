@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -36,7 +36,7 @@ namespace Hypertable {
   typedef boost::intrusive_ptr<TableInfoMap> TableInfoMapPtr;
 
 
-  /** 
+  /**
    * Provides a mapping from table name to TableInfo object.
    */
   class TableInfoMap : public ReferenceCount {
@@ -50,14 +50,14 @@ namespace Hypertable {
     void get_all(std::vector<TableInfoPtr> &tv);
     void clear();
     void clear_ranges();
-    
+
     void atomic_merge(TableInfoMapPtr &table_info_map_ptr, CommitLogBase *replay_log);
 
   private:
-    typedef hash_map<uint32_t, TableInfoPtr> TableInfoMapT;
+    typedef hash_map<uint32_t, TableInfoPtr> InfoMap;
 
     boost::mutex  m_mutex;
-    TableInfoMapT m_map;
+    InfoMap       m_map;
   };
 
 }

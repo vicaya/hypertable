@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <fstream>
 #include <utility>
 
@@ -173,7 +174,7 @@ namespace {
     "worldful"
   };
 
-  const char *serverIds[MAX_SERVERIDS] = {
+  const char *server_ids[MAX_SERVERIDS] = {
     "192.168.1.100:1234_282298",
     "192.168.1.101:1234_267346",
     "192.168.1.102:1234_982733",
@@ -186,20 +187,20 @@ namespace {
     "192.168.1.109:1234_629873",
     "192.168.1.110:1234_832333"
   };
-    
+
 
   ofstream outfile;
 
-  void TestLookup(LocationCache &cache, uint32_t tableId, const char *rowKey) {
+  void TestLookup(LocationCache &cache, uint32_t table_id, const char *rowkey) {
     RangeLocationInfo  range_loc_info;
-    outfile << "LOOKUP(" << tableId << ", " << rowKey << ") -> ";
+    outfile << "LOOKUP(" << table_id << ", " << rowkey << ") -> ";
 
-    if (cache.lookup(tableId, rowKey, &range_loc_info))
+    if (cache.lookup(table_id, rowkey, &range_loc_info))
       outfile << range_loc_info.location << endl;
     else
       outfile << "[NULL]" << endl;
   }
-  
+
 }
 
 
@@ -207,7 +208,7 @@ int main(int argc, char **argv) {
   LocationCache cache(68);
   NumberStream randstr("./random.dat");
   uint32_t rangei;
-  uint32_t tableId;
+  uint32_t table_id;
   uint32_t serveri;
   const char *start, *end;
   RangeLocationInfo range_loc_info;
@@ -233,19 +234,19 @@ int main(int argc, char **argv) {
   TestLookup(cache, 0, "kited");
 
   for (size_t i=0; i<2000; i++) {
-    if ((randstr.getInt() % 3) == 0)
-      TestLookup(cache, randstr.getInt() % 4, words[randstr.getInt() % MAX_WORDS]);
+    if ((randstr.get_int() % 3) == 0)
+      TestLookup(cache, randstr.get_int() % 4, words[randstr.get_int() % MAX_WORDS]);
     else {
-      rangei = randstr.getInt() % MAX_RANGES;
-      tableId = randstr.getInt() % 4;
-      serveri = randstr.getInt() % MAX_SERVERIDS;
+      rangei = randstr.get_int() % MAX_RANGES;
+      table_id = randstr.get_int() % 4;
+      serveri = randstr.get_int() % MAX_SERVERIDS;
       start = (*ranges[rangei].first == 0) ? "[NULL]" : ranges[rangei].first;
       end = (*ranges[rangei].second == 0) ? "[NULL]" : ranges[rangei].second;
-      outfile << "INSERT(" << tableId << ", " << start << ", " << end << ", " << serverIds[serveri] << endl << flush;
+      outfile << "INSERT(" << table_id << ", " << start << ", " << end << ", " << server_ids[serveri] << endl << flush;
       range_loc_info.start_row = ranges[rangei].first;
       range_loc_info.end_row   = ranges[rangei].second;
-      range_loc_info.location  = serverIds[serveri];
-      cache.insert(tableId, range_loc_info);
+      range_loc_info.location  = server_ids[serveri];
+      cache.insert(table_id, range_loc_info);
     }
   }
 

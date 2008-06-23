@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -35,7 +35,6 @@ extern "C" {
 
 #include "Logger.h"
 
-using namespace std;
 
 namespace Hypertable {
 
@@ -46,10 +45,10 @@ namespace Hypertable {
   public:
     NoTimeLayout() { }
     virtual ~NoTimeLayout() { }
-    virtual string format(const log4cpp::LoggingEvent& event) {
+    virtual std::string format(const log4cpp::LoggingEvent& event) {
       std::ostringstream message;
-      const std::string& priorityName = log4cpp::Priority::getPriorityName(event.priority);
-      message << priorityName << " " << event.categoryName << " " << event.ndc << ": " << event.message << std::endl;
+      const String& pri_name = log4cpp::Priority::getPriorityName(event.priority);
+      message << pri_name << " " << event.categoryName << " " << event.ndc << ": " << event.message << std::endl;
       return message.str();
     }
   };
@@ -66,14 +65,14 @@ namespace Hypertable {
       sprintf(m_output_file, "%s%d", name, getpid());
 
       if ((m_fd = open(m_output_file, O_CREAT | O_TRUNC | O_WRONLY, 0644)) < 0) {
-	HT_ERRORF("open(%s) failed - %s", m_output_file, strerror(errno));
-	exit(1);
+        HT_ERRORF("open(%s) failed - %s", m_output_file, strerror(errno));
+        exit(1);
       }
 
       m_log_stream.open(m_output_file);
 
       Logger::logger->removeAllAppenders();
-      m_appender = new log4cpp::FileAppender((string)name, m_fd);
+      m_appender = new log4cpp::FileAppender((String)name, m_fd);
       m_appender->setLayout(new NoTimeLayout());
       Logger::logger->setAppender(m_appender);
     }
@@ -83,36 +82,36 @@ namespace Hypertable {
 
     int get_log_file_descriptor() { return m_fd; }
 
-    ostream &get_log_stream() { return m_log_stream; }
+    std::ostream &get_log_stream() { return m_log_stream; }
 
-    void validate_and_exit(const char *goldenFile) {
-      int exitVal = 0;
-      m_log_stream << flush;
-      string command = (string)"diff " + m_output_file + " " + goldenFile;
+    void validate_and_exit(const char *golden_file) {
+      int exitval = 0;
+      m_log_stream << std::flush;
+      String command = (String)"diff " + m_output_file + " " + golden_file;
       if (system(command.c_str()))
-	exitVal = 1;
-      if (exitVal == 0)
-	unlink(m_output_file);
+        exitval = 1;
+      if (exitval == 0)
+        unlink(m_output_file);
       else
-	cerr << "Diff Error:  " << command << endl;
-      exit(exitVal);
+        std::cerr << "Diff Error:  " << command << std::endl;
+      exit(exitval);
     }
 
-    void regenerate_golden_file(const char *goldenFile) {
-      string command = (string)"cp " + m_output_file + " " + goldenFile;      
+    void regenerate_golden_file(const char *golden_file) {
+      String command = (String)"cp " + m_output_file + " " + golden_file;
       system(command.c_str());
     }
 
     void clear_output() {
       if (!m_appender->reopen()) {
-	HT_ERRORF("Problem re-opening logging output file %s", m_output_file);
-	display_error_and_exit();
+        HT_ERRORF("Problem re-opening logging output file %s", m_output_file);
+        display_error_and_exit();
       }
     }
 
     void display_error_and_exit() {
-      m_log_stream << flush;
-      cerr << "Error, see '" << m_output_file << "'" << endl;
+      m_log_stream << std::flush;
+      std::cerr << "Error, see '" << m_output_file << "'" << std::endl;
       /*
       string command = (string)"cat " + m_output_file;
       system(command.c_str());
@@ -126,9 +125,9 @@ namespace Hypertable {
     log4cpp::FileAppender *m_appender;
     const char *m_name;
     int m_fd;
-    ofstream m_log_stream;
+    std::ofstream m_log_stream;
   };
-  
+
 }
 
 #endif // HYPERTABLE_TESTHARNESS_H

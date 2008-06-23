@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -67,7 +68,7 @@ namespace {
    */
   class HandlerFactory : public ConnectionHandlerFactory {
   public:
-    HandlerFactory(Comm *comm, ApplicationQueuePtr &appQueuePtr, MasterPtr &master_ptr) : m_comm(comm), m_app_queue_ptr(appQueuePtr), m_master_ptr(master_ptr) { return; }
+    HandlerFactory(Comm *comm, ApplicationQueuePtr &app_queue, MasterPtr &master_ptr) : m_comm(comm), m_app_queue_ptr(app_queue), m_master_ptr(master_ptr) { return; }
     virtual void get_instance(DispatchHandlerPtr &dhp) {
       dhp = new ConnectionHandler(m_comm, m_app_queue_ptr, m_master_ptr);
     }
@@ -81,68 +82,68 @@ namespace {
 
 
 /**
- * 
+ *
  */
 int main(int argc, char **argv) {
-  string configFile = "";
-  string pidFile = "";
+  string cfgfile = "";
+  string pidfile = "";
   PropertiesPtr props_ptr;
   bool verbose = false;
   MasterPtr master_ptr;
-  int port, reactorCount, workerCount;
+  int port, reactor_count, worker_count;
   Comm *comm;
   ApplicationQueuePtr app_queue_ptr;
-  ConnectionManagerPtr connManagerPtr;
-  struct sockaddr_in listenAddr;
+  ConnectionManagerPtr conn_mgr;
+  struct sockaddr_in listen_addr;
 
   System::initialize(argv[0]);
-  
+
   if (argc > 1) {
     for (int i=1; i<argc; i++) {
       if (!strncmp(argv[i], "--config=", 9))
-	configFile = &argv[i][9];
+        cfgfile = &argv[i][9];
       if (!strncmp(argv[i], "--pidfile=", 10))
-	pidFile = &argv[i][10];
+        pidfile = &argv[i][10];
       else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
-	verbose = true;
+        verbose = true;
       else
-	Usage::dump_and_exit(usage);
+        Usage::dump_and_exit(usage);
     }
   }
 
-  if (configFile == "")
-    configFile = System::installDir + "/conf/hypertable.cfg";
+  if (cfgfile == "")
+    cfgfile = System::install_dir + "/conf/hypertable.cfg";
 
-  props_ptr = new Properties(configFile);
+  props_ptr = new Properties(cfgfile);
 
   if (verbose)
     props_ptr->set("Hypertable.Verbose", "true");
 
   port         = props_ptr->get_int("Hypertable.Master.Port", DEFAULT_PORT);
-  reactorCount = props_ptr->get_int("Hypertable.Master.Reactors", System::get_processor_count());
-  workerCount  = props_ptr->get_int("Hypertable.Master.Workers", DEFAULT_WORKERS);
+  reactor_count = props_ptr->get_int("Hypertable.Master.Reactors", System::get_processor_count());
+  worker_count  = props_ptr->get_int("Hypertable.Master.Workers", DEFAULT_WORKERS);
 
-  ReactorFactory::initialize(reactorCount);
+  ReactorFactory::initialize(reactor_count);
 
   comm = new Comm();
-  connManagerPtr = new ConnectionManager(comm);
+  conn_mgr = new ConnectionManager(comm);
 
   if (verbose) {
     cout << "CPU count = " << System::get_processor_count() << endl;
     cout << "Hypertable.Master.Port=" << port << endl;
-    cout << "Hypertable.Master.Workers=" << workerCount << endl;
-    cout << "Hypertable.Master.Reactors=" << reactorCount << endl;
+    cout << "Hypertable.Master.Workers=" << worker_count << endl;
+    cout << "Hypertable.Master.Reactors=" << reactor_count << endl;
   }
 
-  app_queue_ptr = new ApplicationQueue(workerCount);
-  master_ptr = new Master(connManagerPtr, props_ptr, app_queue_ptr);
+  app_queue_ptr = new ApplicationQueue(worker_count);
+  master_ptr = new Master(conn_mgr, props_ptr, app_queue_ptr);
 
-  InetAddr::initialize(&listenAddr, INADDR_ANY, port);
-  ConnectionHandlerFactoryPtr chfPtr(new HandlerFactory(comm, app_queue_ptr, master_ptr));
-  comm->listen(listenAddr, chfPtr);
+  InetAddr::initialize(&listen_addr, INADDR_ANY, port);
+  ConnectionHandlerFactoryPtr chfp(new HandlerFactory(comm, app_queue_ptr, master_ptr));
+  comm->listen(listen_addr, chfp);
 
-  if (pidFile != "") {
-    fstream filestr (pidFile.c_str(), fstream::out);
+  if (pidfile != "") {
+    fstream filestr (pidfile.c_str(), fstream::out);
     filestr << getpid() << endl;
     filestr.close();
   }

@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -43,9 +43,9 @@ namespace Hypertable {
      * to the event that triggered the request.
      *
      * @param comm pointer to the Comm object
-     * @param eventPtr smart pointer to the event that generated the request
+     * @param event_ptr smart pointer to the event that generated the request
      */
-    ResponseCallback(Comm *comm, EventPtr &eventPtr) : m_comm(comm), m_event_ptr(eventPtr) { return; }
+    ResponseCallback(Comm *comm, EventPtr &event_ptr) : m_comm(comm), m_event_ptr(event_ptr) { return; }
 
     ResponseCallback() : m_comm(0), m_event_ptr(0) { return; }
 
@@ -79,7 +79,7 @@ namespace Hypertable {
   protected:
     Comm          *m_comm;
     EventPtr       m_event_ptr;
-    HeaderBuilder  hbuilder_;
+    HeaderBuilder  m_header_builder;
   };
 
 }

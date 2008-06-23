@@ -1,23 +1,25 @@
 /**
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+#include "Common/Compat.h"
 
 #include <cstdlib>
 #include <cstring>
@@ -39,17 +41,17 @@ using namespace Hypertable;
 using namespace std;
 
 
-string System::installDir;
-string System::executableName;
+string System::install_dir;
+string System::exe_name;
 boost::mutex System::ms_mutex;
 
 void System::initialize(const char *argv0) {
   boost::mutex::scoped_lock lock(ms_mutex);
-  const char *execPath = getenv("_");
+  const char *exepath = getenv("_");
   char cwd[1024];
   int offset;
 
-  if (installDir != "")
+  if (install_dir != "")
     return;
 
   srand((unsigned)getpid());
@@ -59,58 +61,58 @@ void System::initialize(const char *argv0) {
 
   char *ptr = strrchr(argv0, '/');
   if (ptr == 0) {
-    executableName = argv0;
+    exe_name = argv0;
 #if 0
     std::string fname;
     char *path = getenv("PATH");
     char *last;
-    execPath = 0;
+    exepath = 0;
     ptr = strtok_r(path, ":", &last);
     while (ptr) {
-      fname = (std::string)ptr + "/" + executableName;
+      fname = (std::string)ptr + "/" + exe_name;
       if (FileUtils::exists(fname.c_str())) {
-	execPath = fname.c_str();
-	break;
+        exepath = fname.c_str();
+        break;
       }
-      ptr = strtok_r(0, ":", &last);      
+      ptr = strtok_r(0, ":", &last);
     }
 #endif
   }
   else
-    executableName = ptr+1;
+    exe_name = ptr+1;
 
-  offset = (execPath) ? strlen(execPath) - strlen(argv0) : -1;
-  if (execPath && offset >= 0) {
-    if (execPath[0] != '/') {
-      installDir = cwd;
-      installDir += execPath;
+  offset = (exepath) ? strlen(exepath) - strlen(argv0) : -1;
+  if (exepath && offset >= 0) {
+    if (exepath[0] != '/') {
+      install_dir = cwd;
+      install_dir += exepath;
     }
     else
-      installDir = execPath;
+      install_dir = exepath;
   }
   else {
     if (argv0[0] != '/') {
-      installDir = cwd;
-      installDir += argv0;
+      install_dir = cwd;
+      install_dir += argv0;
     }
     else
-      installDir = argv0;
+      install_dir = argv0;
   }
 
-  string::size_type pos = installDir.rfind("/bin/");
+  string::size_type pos = install_dir.rfind("/bin/");
   if (pos == string::npos) {
-    string::size_type pos = installDir.rfind("/");
+    string::size_type pos = install_dir.rfind("/");
     if (pos == string::npos)
-      installDir = ".";
+      install_dir = ".";
     else
-      installDir.erase(pos);
-    //cerr << "WARNING: " << executableName << " does not appear to have been run from an installation." << endl;
-    //cerr << "WARNING: Using '" << installDir << "' as the installation directory" << endl;
+      install_dir.erase(pos);
+    //cerr << "WARNING: " << exe_name << " does not appear to have been run from an installation." << endl;
+    //cerr << "WARNING: Using '" << install_dir << "' as the installation directory" << endl;
   }
   else
-    installDir.erase(pos);
+    install_dir.erase(pos);
 
-  Logger::initialize(executableName.c_str());
+  Logger::initialize(exe_name.c_str());
 }
 
 

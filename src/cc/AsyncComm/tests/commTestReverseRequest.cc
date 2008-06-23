@@ -1,24 +1,25 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cstdlib>
 
 extern "C" {
@@ -58,8 +59,8 @@ namespace {
 
 
 int main(int argc, char **argv) {
-  std::vector<const char *> clientArgs;
-  std::vector<const char *> serverArgs;
+  std::vector<const char *> client_args;
+  std::vector<const char *> server_args;
 
   if (argc != 1)
     Usage::dump_and_exit(usage);
@@ -69,19 +70,19 @@ int main(int argc, char **argv) {
   System::initialize(argv[0]);
   ReactorFactory::initialize(1);
 
-  clientArgs.push_back("sampleClient");
-  clientArgs.push_back("--recv-addr=localhost:12789");
-  clientArgs.push_back("datafile.txt");
-  clientArgs.push_back((const char *)0);
+  client_args.push_back("sampleClient");
+  client_args.push_back("--recv-addr=localhost:12789");
+  client_args.push_back("datafile.txt");
+  client_args.push_back((const char *)0);
 
-  serverArgs.push_back("testServer");
-  serverArgs.push_back("--connect-to=localhost:12789");
-  serverArgs.push_back((const char *)0);
+  server_args.push_back("testServer");
+  server_args.push_back("--connect-to=localhost:12789");
+  server_args.push_back((const char *)0);
 
   {
-    ServerLauncher client("./sampleClient", (char * const *)&clientArgs[0], "commTestReverseRequest.out");
+    ServerLauncher client("./sampleClient", (char * const *)&client_args[0], "commTestReverseRequest.out");
     poll(0, 0, 2000);
-    ServerLauncher server("./testServer", (char * const *)&serverArgs[0]);
+    ServerLauncher server("./testServer", (char * const *)&server_args[0]);
   }
 
   if (system("diff commTestReverseRequest.out commTestReverseRequest.golden"))

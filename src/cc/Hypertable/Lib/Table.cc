@@ -1,28 +1,30 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cstring>
 
 #include <boost/algorithm/string.hpp>
 
+#include "Common/String.h"
 #include "Common/DynamicBuffer.h"
 #include "Common/Error.h"
 #include "Common/Logger.h"
@@ -37,9 +39,12 @@ using namespace Hyperspace;
 
 
 /**
- * 
+ *
  */
-Table::Table(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, Hyperspace::SessionPtr &hyperspace_ptr, std::string name) : m_props_ptr(props_ptr), m_comm(conn_manager_ptr->get_comm()), m_conn_manager_ptr(conn_manager_ptr), m_hyperspace_ptr(hyperspace_ptr) {
+Table::Table(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr,
+             Hyperspace::SessionPtr &hyperspace_ptr, String name)
+    : m_props_ptr(props_ptr), m_comm(conn_manager_ptr->get_comm()),
+      m_conn_manager_ptr(conn_manager_ptr), m_hyperspace_ptr(hyperspace_ptr) {
 
   initialize(name);
   m_range_locator_ptr = new RangeLocator(props_ptr, m_conn_manager_ptr, m_hyperspace_ptr);
@@ -48,36 +53,37 @@ Table::Table(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, H
 /**
  *
  */
-Table::Table(PropertiesPtr &props_ptr, Comm *comm, Hyperspace::SessionPtr &hyperspace_ptr, std::string name) : m_props_ptr(props_ptr), m_comm(comm), m_conn_manager_ptr(0), m_hyperspace_ptr(hyperspace_ptr) {
+Table::Table(PropertiesPtr &props_ptr, Comm *comm, Hyperspace::SessionPtr &hyperspace_ptr, String name) : m_props_ptr(props_ptr), m_comm(comm), m_conn_manager_ptr(0), m_hyperspace_ptr(hyperspace_ptr) {
 
   initialize(name);
-  m_range_locator_ptr = new RangeLocator(props_ptr, m_comm, m_hyperspace_ptr);  
+  m_range_locator_ptr = new RangeLocator(props_ptr, m_comm, m_hyperspace_ptr);
 }
 
 
-void Table::initialize(std::string &name) {
+void Table::initialize(const String &name) {
   int error;
-  std::string tableFile = (std::string)"/hypertable/tables/" + name;
+  String tablefile = "/hypertable/tables/"; tablefile += name;
   DynamicBuffer value_buf(0);
   uint64_t handle;
-  HandleCallbackPtr nullHandleCallback;
-  std::string errMsg;
+  HandleCallbackPtr null_handle_callback;
+  String errmsg;
 
+  // TODO: issue 11
   /**
    * Open table file
    */
   m_hyperspace_ptr->set_silent_flag(true);
-  if ((error = m_hyperspace_ptr->open(tableFile, OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK) {
+  if ((error = m_hyperspace_ptr->open(tablefile, OPEN_FLAG_READ, null_handle_callback, &handle)) != Error::OK) {
     m_hyperspace_ptr->set_silent_flag(false);
     if (error == Error::HYPERSPACE_BAD_PATHNAME)
-      throw Exception(Error::TABLE_DOES_NOT_EXIST);
-    HT_ERRORF("Unable to open Hyperspace table file '%s' - %s", tableFile.c_str(), Error::get_text(error));
-    throw Exception(error);
+      HT_THROW(Error::TABLE_DOES_NOT_EXIST, "");
+    HT_ERRORF("Unable to open Hyperspace table file '%s' - %s", tablefile.c_str(), Error::get_text(error));
+    HT_THROW(error, "");
   }
   m_hyperspace_ptr->set_silent_flag(false);
 
   {
-    char *table_name = new char [ strlen(name.c_str()) + 1 ];
+    char *table_name = new char [strlen(name.c_str()) + 1];
     strcpy(table_name, name.c_str());
     m_table.name = table_name;
   }
@@ -87,8 +93,8 @@ void Table::initialize(std::string &name) {
    */
   value_buf.clear();
   if ((error = m_hyperspace_ptr->attr_get(handle, "table_id", value_buf)) != Error::OK) {
-    HT_ERRORF("Problem getting attribute 'table_id' for table file '%s' - %s", tableFile.c_str(), Error::get_text(error));
-    throw Exception(error);
+    HT_ERRORF("Problem getting attribute 'table_id' for table file '%s' - %s", tablefile.c_str(), Error::get_text(error));
+    HT_THROW(error, "");
   }
 
   assert(value_buf.fill() == sizeof(int32_t));
@@ -101,8 +107,8 @@ void Table::initialize(std::string &name) {
    */
   value_buf.clear();
   if ((error = m_hyperspace_ptr->attr_get(handle, "schema", value_buf)) != Error::OK) {
-    HT_ERRORF("Problem getting attribute 'schema' for table file '%s' - %s", tableFile.c_str(), Error::get_text(error));
-    throw Exception(error);
+    HT_ERRORF("Problem getting attribute 'schema' for table file '%s' - %s", tablefile.c_str(), Error::get_text(error));
+    HT_THROW(error, "");
   }
 
   m_hyperspace_ptr->close(handle);
@@ -111,7 +117,7 @@ void Table::initialize(std::string &name) {
 
   if (!m_schema_ptr->is_valid()) {
     HT_ERRORF("Schema Parse Error: %s", m_schema_ptr->get_error_string());
-    throw Exception(Error::BAD_SCHEMA);
+    HT_THROW(Error::BAD_SCHEMA, "");
   }
 
   m_table.generation = m_schema_ptr->get_generation();

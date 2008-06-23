@@ -17,9 +17,9 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
-#include <stdlib.h>
-#include <stdint.h>
+#include "Compat.h"
 #include <arpa/inet.h>
+#include <zlib.h>
 #include "Checksum.h"
 
 namespace Hypertable {
@@ -33,7 +33,7 @@ namespace Hypertable {
 
 /* cf. http://en.wikipedia.org/wiki/Fletcher%27s_checksum
  */
-uint32_t 
+uint32_t
 fletcher32(const void *data8, size_t len8) {
   /* data may not be aligned properly and would segfault on
    * many systems if cast and used as 16-bit words
@@ -94,7 +94,7 @@ fletcher32a(const uint16_t *data, size_t len) {
      */
     unsigned tlen = len > 360 ? 360 : len;
     len -= tlen;
-    
+
     if (tlen >= 16) do {
       HT_F32A_DO16(data, 0);
       data += 16;
@@ -122,7 +122,7 @@ fletcher32a(const uint16_t *data, size_t len) {
 #define MOD_ADLER 65521
 
 inline uint32_t
-update_adler32_wp(uint32_t adler, const void *data8, size_t len) {
+adler32_update_wp(uint32_t adler, const void *data8, size_t len) {
   const uint8_t *data = (const uint8_t *)data8;
   uint32_t a = adler & 0xffff, b = (adler >> 16) & 0xffff;
 
@@ -153,10 +153,10 @@ update_adler32_wp(uint32_t adler, const void *data8, size_t len) {
 
   return (b << 16) | a;
 }
- 
-uint32_t 
+
+uint32_t
 adler32_wp(const void *data, size_t len) {
-  return update_adler32_wp(1, data, len);
+  return adler32_update_wp(1, data, len);
 }
 
 #define HT_A32_DO1(buf,i)  a += buf[i]; b += a
@@ -166,7 +166,7 @@ adler32_wp(const void *data, size_t len) {
 #define HT_A32_DO16(buf,i) HT_A32_DO8(buf,i); HT_A32_DO8(buf,i+8);
 
 inline uint32_t
-update_adler32(uint32_t adler, const void *data8, size_t len) {
+adler32_update(uint32_t adler, const void *data8, size_t len) {
   const uint8_t *data = (const uint8_t *)data8;
   uint32_t a = adler & 0xffff, b = (adler >> 16) & 0xffff;
 
@@ -190,10 +190,21 @@ update_adler32(uint32_t adler, const void *data8, size_t len) {
   }
   return (b << 16) | a;
 }
- 
-uint32_t 
+
+uint32_t
 adler32(const void *data, size_t len) {
-  return update_adler32(1, data, len);
+  return adler32_update(1, data, len);
+}
+
+uint32_t
+crc32(const void *data, size_t len) {
+  uint32_t crc = ::crc32(0LL, Z_NULL, 0);
+  return ::crc32(crc, (Bytef *)data, len);
+}
+
+uint32_t
+crc32_update(uint32_t crc, const void *data, size_t len) {
+  return ::crc32(crc, (Bytef *)data, len);
 }
 
 } // namespace Hypertable

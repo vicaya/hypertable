@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <string>
 #include <vector>
 #include <iostream>
@@ -69,19 +70,19 @@ namespace {
 
 int main(int argc, char **argv) {
   Comm *comm;
-  ConnectionManagerPtr connManagerPtr;
+  ConnectionManagerPtr conn_mgr;
   DfsBroker::Client *client;
   std::string fname = "";
   ByteString key, value;
   bool dump_all = false;
-  CellStoreV0Ptr cellStorePtr;
+  CellStoreV0Ptr cellstore;
   bool count_keys = false;
   uint64_t key_count = 0;
   std::string start_key, end_key;
   bool got_end_key = false;
   bool hit_start = false;
   PropertiesPtr props_ptr;
-  string configFile = "";
+  string cfgfile = "";
   Key key_comps;
 
   ReactorFactory::initialize(1);
@@ -112,35 +113,35 @@ int main(int argc, char **argv) {
   if (fname == "")
       Usage::dump_and_exit(usage);
 
-  if (configFile == "")
-    configFile = System::installDir + "/conf/hypertable.cfg";
+  if (cfgfile == "")
+    cfgfile = System::install_dir + "/conf/hypertable.cfg";
 
-  props_ptr = new Properties(configFile);
+  props_ptr = new Properties(cfgfile);
 
   if (start_key == "")
     hit_start = true;
 
   comm = new Comm();
-  connManagerPtr = new ConnectionManager(comm);
+  conn_mgr = new ConnectionManager(comm);
 
-  client = new DfsBroker::Client(connManagerPtr, props_ptr);
+  client = new DfsBroker::Client(conn_mgr, props_ptr);
   if (!client->wait_for_connection(15)) {
     cerr << "error: timed out waiting for DFS broker" << endl;
     exit(1);
   }
 
-  Global::blockCache = new FileBlockCache(200000000LL);
+  Global::block_cache = new FileBlockCache(200000000LL);
 
   /**
    * Open cellStore
    */
-  cellStorePtr = new CellStoreV0(client);
+  cellstore = new CellStoreV0(client);
   CellListScanner *scanner = 0;
 
-  if (cellStorePtr->open(fname.c_str(), 0, 0) != 0)
+  if (cellstore->open(fname.c_str(), 0, 0) != 0)
     return 1;
 
-  if (cellStorePtr->load_index() != 0)
+  if (cellstore->load_index() != 0)
     return 1;
 
 
@@ -148,25 +149,25 @@ int main(int argc, char **argv) {
    * Dump keys
    */
   if (dump_all || count_keys) {
-    ScanContextPtr scanContextPtr( new ScanContext(END_OF_TIME) );
+    ScanContextPtr scan_ctx(new ScanContext(END_OF_TIME));
 
-    scanner = cellStorePtr->create_scanner(scanContextPtr);
+    scanner = cellstore->create_scanner(scan_ctx);
     while (scanner->get(key, value)) {
       key_comps.load(key);
 
       if (!hit_start) {
-	if (strcmp(key_comps.row, start_key.c_str()) <= 0) {
-	  scanner->forward();
-	  continue;
-	}
-	hit_start = true;
+        if (strcmp(key_comps.row, start_key.c_str()) <= 0) {
+          scanner->forward();
+          continue;
+        }
+        hit_start = true;
       }
       if (got_end_key && strcmp(key_comps.row, end_key.c_str()) > 0)
-	break;
+        break;
       if (count_keys)
-	key_count++;
+        key_count++;
       else
-	cout << key_comps << endl;
+        cout << key_comps << endl;
       scanner->forward();
     }
     delete scanner;
@@ -182,13 +183,13 @@ int main(int argc, char **argv) {
    */
   cout << endl;
   cout << "BLOCK INDEX:" << endl;
-  cellStorePtr->display_block_info();
+  cellstore->display_block_info();
 
 
   /**
    * Dump trailer
    */
-  CellStoreTrailer *trailer = cellStorePtr->get_trailer();
+  CellStoreTrailer *trailer = cellstore->get_trailer();
 
   cout << endl;
   cout << "TRAILER:" << endl;
@@ -196,7 +197,7 @@ int main(int argc, char **argv) {
 
   cout << endl;
   cout << "OTHER:" << endl;
-  cout << "split row '" << cellStorePtr->get_split_row() << "'" << endl;
+  cout << "split row '" << cellstore->get_split_row() << "'" << endl;
 
   return 0;
 }

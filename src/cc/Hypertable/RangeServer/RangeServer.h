@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -43,32 +43,38 @@
 #include "TableInfo.h"
 #include "TableInfoMap.h"
 
-using namespace Hypertable;
 
 namespace Hypertable {
+  using namespace Hyperspace;
 
   class ConnectionHandler;
 
   class RangeServer : public ReferenceCount {
   public:
-    RangeServer(PropertiesPtr &propsPtr, ConnectionManagerPtr &conn_manager_ptr, ApplicationQueuePtr &app_queue_ptr, Hyperspace::SessionPtr &hyperspace_ptr);
+    RangeServer(PropertiesPtr &, ConnectionManagerPtr &, ApplicationQueuePtr &,
+                Hyperspace::SessionPtr &);
     virtual ~RangeServer();
 
-    void compact(ResponseCallback *cb, TableIdentifier *table, RangeSpec *range, uint8_t compaction_type);
-    void create_scanner(ResponseCallbackCreateScanner *cb, TableIdentifier *table, RangeSpec *range, ScanSpec *scan_spec);
-    void destroy_scanner(ResponseCallback *cb, uint32_t scannerId);
-    void fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t scannerId);
-    void load_range(ResponseCallback *cb, TableIdentifier *table, RangeSpec *range, const char *transfer_log_dir, RangeState *range_state, uint16_t flags);
-    void update(ResponseCallbackUpdate *cb, TableIdentifier *table, StaticBuffer &buffer);
-    void drop_table(ResponseCallback *cb, TableIdentifier *table);
-    void dump_stats(ResponseCallback *cb);
+    // range server protocol implementations
+    void compact(ResponseCallback *, TableIdentifier *, RangeSpec *,
+                 uint8_t compaction_type);
+    void create_scanner(ResponseCallbackCreateScanner *, TableIdentifier *,
+                        RangeSpec *, ScanSpec *);
+    void destroy_scanner(ResponseCallback *cb, uint32_t scanner_id);
+    void fetch_scanblock(ResponseCallbackFetchScanblock *, uint32_t scanner_id);
+    void load_range(ResponseCallback *, TableIdentifier *, RangeSpec *,
+                    const char *transfer_log_dir, RangeState *, uint16_t flags);
+    void update(ResponseCallbackUpdate *, TableIdentifier *, StaticBuffer &);
+    void drop_table(ResponseCallback *, TableIdentifier *);
+    void dump_stats(ResponseCallback *);
 
-    void replay_start(ResponseCallback *cb);
-    void replay_update(ResponseCallback *cb, const uint8_t *data, size_t len);
-    void replay_commit(ResponseCallback *cb);
+    void replay_start(ResponseCallback *);
+    void replay_update(ResponseCallback *, const uint8_t *data, size_t len);
+    void replay_commit(ResponseCallback *);
 
-    void drop_range(ResponseCallback *cb, TableIdentifier *table, RangeSpec *range);
+    void drop_range(ResponseCallback *, TableIdentifier *, RangeSpec *);
 
+    // Other methods
     void do_maintenance();
     void log_cleanup();
 
@@ -81,13 +87,12 @@ namespace Hypertable {
     void master_change();
 
   private:
-    int initialize(PropertiesPtr &props_ptr);
+    int initialize(PropertiesPtr &);
     void fast_recover();
-    void reload_range(TableIdentifier *table, RangeSpec *range, uint64_t soft_limit, const String &split_log);
+    void reload_range(TableIdentifier *, RangeSpec *, uint64_t soft_limit,
+                      const String &split_log);
 
-    int verify_schema(TableInfoPtr &tableInfoPtr, int generation, std::string &errMsg);
-
-    typedef hash_map<string, TableInfoPtr> TableInfoMapT;
+    int verify_schema(TableInfoPtr &, int generation, std::string &errmsg);
 
     Mutex                  m_mutex;
     Mutex                  m_update_mutex_a;
@@ -101,7 +106,7 @@ namespace Hypertable {
     ConnectionManagerPtr   m_conn_manager_ptr;
     ApplicationQueuePtr    m_app_queue_ptr;
     uint64_t               m_existence_file_handle;
-    struct LockSequencerT  m_existence_file_sequencer;
+    LockSequencer          m_existence_file_sequencer;
     std::string            m_location;
     ConnectionHandler     *m_master_connection_handler;
     MasterClientPtr        m_master_client_ptr;
@@ -111,9 +116,9 @@ namespace Hypertable {
     uint64_t               m_timer_interval;
     uint64_t               m_bytes_loaded;
   };
-  typedef intrusive_ptr<RangeServer> RangeServerPtr;
-  
 
-}
+  typedef intrusive_ptr<RangeServer> RangeServerPtr;
+
+} // namespace Hypertable
 
 #endif // HYPERTABLE_RANGESERVER_H

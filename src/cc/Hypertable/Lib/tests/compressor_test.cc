@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include "Common/DynamicBuffer.h"
 #include "Common/FileUtils.h"
 #include "Common/Logger.h"
@@ -50,7 +51,6 @@ namespace {
 const char MAGIC[12] = { '-','-','-','-','-','-','-','-','-','-','-','-' };
 
 int main(int argc, char **argv) {
-  int error;
   off_t len;
   DynamicBuffer input(0);
   DynamicBuffer output1(0);
@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
   BlockCompressionCodec *compressor;
 
   BlockCompressionHeaderCommitLog header(MAGIC, 0);
-  
+
   if (argc == 1 || !strcmp(argv[1], "--help"))
     Usage::dump_and_exit(usage);
 
@@ -75,13 +75,12 @@ int main(int argc, char **argv) {
   }
   input.ptr = input.base + len;
 
-  if ((error = compressor->deflate(input, output1, header)) != Error::OK) {
-    HT_ERRORF("Problem deflating - %s", Error::get_text(error));
-    return 1;
+  try {
+    compressor->deflate(input, output1, header);
+    compressor->inflate(output1, output2, header);
   }
-
-  if ((error = compressor->inflate(output1, output2, header)) != Error::OK) {
-    HT_ERRORF("Problem inflating - %s", Error::get_text(error));
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
     return 1;
   }
 
@@ -100,13 +99,12 @@ int main(int argc, char **argv) {
   memcpy(input.base, "foo", 3);
   input.ptr = input.base + 3;
 
-  if ((error = compressor->deflate(input, output1, header)) != Error::OK) {
-    HT_ERRORF("Problem deflating - %s", Error::get_text(error));
-    return 1;
+  try {
+    compressor->deflate(input, output1, header);
+    compressor->inflate(output1, output2, header);
   }
-
-  if ((error = compressor->inflate(output1, output2, header)) != Error::OK) {
-    HT_ERRORF("Problem inflating - %s", Error::get_text(error));
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
     return 1;
   }
 

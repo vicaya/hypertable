@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -27,12 +27,14 @@
 using namespace Hypertable;
 
 namespace {
-  typedef struct {
-    uint32_t     code;
+  struct ErrorInfo {
+    int          code;
     const char  *text;
-  } ErrorInfoT;
+  };
 
-  ErrorInfoT errorInfo[] = {
+  ErrorInfo error_info[] = {
+    { Error::UNPOSSIBLE,                  "But that's unpossible!" },
+    { Error::EXTERNAL,                    "External error" },
     { Error::OK,                          "HYPERTABLE ok" },
     { Error::PROTOCOL_ERROR,              "HYPERTABLE protocol error" },
     { Error::REQUEST_TRUNCATED,           "HYPERTABLE request truncated" },
@@ -55,6 +57,7 @@ namespace {
     { Error::BLOCK_COMPRESSOR_INFLATE_ERROR,     "HYPERTABLE block compressor inflate error" },
     { Error::BLOCK_COMPRESSOR_INIT_ERROR,        "HYPERTABLE block compressor initialization error" },
     { Error::TABLE_DOES_NOT_EXIST,               "HYPERTABLE table does not exist" },
+    { Error::TOO_MANY_COLUMNS,            "HYPERTABLE too many columns" },
     { Error::FAILED_EXPECTATION,          "HYPERTABLE failed expectation" },
     { Error::MALFORMED_REQUEST,           "HYPERTABLE malformed request" },
     { Error::COMM_NOT_CONNECTED,          "COMM not connected" },
@@ -114,28 +117,33 @@ namespace {
     { Error::RANGESERVER_ROW_OVERFLOW,         "RANGE SERVER row overflow" },
     { Error::RANGESERVER_TABLE_NOT_FOUND,      "RANGE SERVER table not found" },
     { Error::HQL_BAD_LOAD_FILE_FORMAT,         "HQL bad load file format" },
+    { Error::METALOG_BAD_RS_HEADER, "METALOG bad range server metalog header" },
+    { Error::METALOG_BAD_M_HEADER,  "METALOG bad master metalog header" },
+    { Error::METALOG_ENTRY_TRUNCATED,   "METALOG entry truncated" },
     { Error::METALOG_CHECKSUM_MISMATCH, "METALOG checksum mismatch" },
+    { Error::METALOG_ENTRY_BAD_TYPE, "METALOG bad entry type" },
+    { Error::METALOG_ENTRY_BAD_ORDER, "METALOG entry out of order" },
     { Error::SERIALIZATION_INPUT_OVERRUN, "SERIALIZATION input buffer overrun" },
     { Error::SERIALIZATION_BAD_VINT,      "SERIALIZATION bad vint encoding" },
-    { Error::SERIALIZATION_BAD_CSTR,      "SERIALIZATION bad c-string" },
+    { Error::SERIALIZATION_BAD_VSTR,      "SERIALIZATION bad vstr encoding" },
     { 0, 0 }
   };
 
   typedef hash_map<int, const char *>  TextMap;
 
-  TextMap &buildTextMap() {
+  TextMap &build_text_map() {
     TextMap *map = new TextMap();
-    for (int i=0; errorInfo[i].text != 0; i++)
-      (*map)[errorInfo[i].code] = errorInfo[i].text;
+    for (int i=0; error_info[i].text != 0; i++)
+      (*map)[error_info[i].code] = error_info[i].text;
     return *map;
   }
 
-  TextMap &textMap = buildTextMap();
+  TextMap &text_map = build_text_map();
 
 } // local namespace
 
 const char *Error::get_text(int error) {
-  const char *text = textMap[error];
+  const char *text = text_map[error];
   if (text == 0)
     return "ERROR NOT REGISTERED";
   return text;
@@ -144,16 +152,23 @@ const char *Error::get_text(int error) {
 namespace Hypertable {
 
 std::ostream &operator<<(std::ostream &out, const Exception &e) {
-  out << e.what() <<" - "<< Error::get_text(e.code());
+  out <<"Hypertable::Exception: "<< e.what() <<" - "
+      << Error::get_text(e.code());
+
+  if (e.line()) {
+    out <<"\n\tat "<< e.func() <<" ("<< e.file() <<':'<< e.line() <<')';
+  }
 
   int prev_code = e.code();
 
   for (Exception *prev = e.prev; prev; prev = prev->prev) {
-    out <<": "<< prev->what();
+    out <<"\n\tat "<< (prev->func() ? prev->func() : "-") <<" ("
+        << (prev->file() ? prev->file() : "-") <<':'<< prev->line() <<"): "
+        << prev->what();
 
-    if (e.code() != prev_code) {
-      out <<" - "<< Error::get_text(e.code());
-      prev_code = e.code();
+    if (prev->code() != prev_code) {
+      out <<" - "<< Error::get_text(prev->code());
+      prev_code = prev->code();
     }
   }
   return out;

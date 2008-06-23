@@ -1,23 +1,25 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+#include "Common/Compat.h"
 
 #include <iostream>
 #include <queue>
@@ -55,8 +57,8 @@ using namespace Hypertable;
 
 namespace {
 
-  int  gDelay = 0;
-  bool gVerbose = false;
+  int  g_delay = 0;
+  bool g_verbose = false;
   const int DEFAULT_PORT = 11255;
   const char *usage[] = {
     "usage: sampleServer [OPTIONS]",
@@ -85,15 +87,15 @@ namespace {
   class RequestHandler : public ApplicationHandler {
   public:
 
-    RequestHandler(Comm *comm, EventPtr &eventPtr) : ApplicationHandler(eventPtr), m_comm(comm) { return; }
+    RequestHandler(Comm *comm, EventPtr &event_ptr) : ApplicationHandler(event_ptr), m_comm(comm) { return; }
 
     virtual void run() {
       m_header_builder.initialize_from_request(m_event_ptr->header);
-      CommBufPtr cbufPtr( new CommBuf(m_header_builder, m_event_ptr->messageLen) );
-      cbufPtr->append_bytes((uint8_t *)m_event_ptr->message, m_event_ptr->messageLen);
-      int error = m_comm->send_response(m_event_ptr->addr, cbufPtr);
+      CommBufPtr cbp(new CommBuf(m_header_builder, m_event_ptr->message_len));
+      cbp->append_bytes((uint8_t *)m_event_ptr->message, m_event_ptr->message_len);
+      int error = m_comm->send_response(m_event_ptr->addr, cbp);
       if (error != Error::OK) {
-	HT_ERRORF("Comm::send_response returned %s", Error::get_text(error));
+        HT_ERRORF("Comm::send_response returned %s", Error::get_text(error));
       }
     }
   private:
@@ -110,37 +112,37 @@ namespace {
 
   public:
 
-    Dispatcher(Comm *comm, ApplicationQueue *appQueue) : m_comm(comm), m_app_queue(appQueue) { return; }
-  
-    virtual void handle(EventPtr &eventPtr) {
-      if (gVerbose && eventPtr->type == Event::CONNECTION_ESTABLISHED) {
-	HT_INFO("Connection Established.");
+    Dispatcher(Comm *comm, ApplicationQueue *app_queue) : m_comm(comm), m_app_queue(app_queue) { return; }
+
+    virtual void handle(EventPtr &event_ptr) {
+      if (g_verbose && event_ptr->type == Event::CONNECTION_ESTABLISHED) {
+        HT_INFO("Connection Established.");
       }
-      else if (gVerbose && eventPtr->type == Event::DISCONNECT) {
-	if (eventPtr->error != 0) {
-	  HT_INFOF("Disconnect : %s", Error::get_text(eventPtr->error));
-	}
-	else {
-	  HT_INFO("Disconnect.");
-	}
+      else if (g_verbose && event_ptr->type == Event::DISCONNECT) {
+        if (event_ptr->error != 0) {
+          HT_INFOF("Disconnect : %s", Error::get_text(event_ptr->error));
+        }
+        else {
+          HT_INFO("Disconnect.");
+        }
       }
-      else if (eventPtr->type == Event::ERROR) {
-	HT_WARNF("Error : %s", Error::get_text(eventPtr->error));
+      else if (event_ptr->type == Event::ERROR) {
+        HT_WARNF("Error : %s", Error::get_text(event_ptr->error));
       }
-      else if (eventPtr->type == Event::MESSAGE) {
-	if (m_app_queue == 0) {
-	  m_header_builder.initialize_from_request(eventPtr->header);
-	  CommBufPtr cbufPtr( new CommBuf(m_header_builder, eventPtr->messageLen) );
-	  cbufPtr->append_bytes((uint8_t *)eventPtr->message, eventPtr->messageLen);
-	  if (gDelay > 0)
-	    poll(0, 0, gDelay);
-	  int error = m_comm->send_response(eventPtr->addr, cbufPtr);
-	  if (error != Error::OK) {
-	    HT_ERRORF("Comm::send_response returned %s", Error::get_text(error));
-	  }
-	}
-	else
-	  m_app_queue->add( new RequestHandler(m_comm, eventPtr) );
+      else if (event_ptr->type == Event::MESSAGE) {
+        if (m_app_queue == 0) {
+          m_header_builder.initialize_from_request(event_ptr->header);
+          CommBufPtr cbp(new CommBuf(m_header_builder, event_ptr->message_len));
+          cbp->append_bytes((uint8_t *)event_ptr->message, event_ptr->message_len);
+          if (g_delay > 0)
+            poll(0, 0, g_delay);
+          int error = m_comm->send_response(event_ptr->addr, cbp);
+          if (error != Error::OK) {
+            HT_ERRORF("Comm::send_response returned %s", Error::get_text(error));
+          }
+        }
+        else
+          m_app_queue->add(new RequestHandler(m_comm, event_ptr));
       }
     }
 
@@ -161,20 +163,20 @@ namespace {
 
     UdpDispatcher(Comm *comm) : m_comm(comm) { return; }
 
-    virtual void handle(EventPtr &eventPtr) {
-      if (eventPtr->type == Event::MESSAGE) {
-	m_header_builder.initialize_from_request(eventPtr->header);
-	CommBufPtr cbufPtr( new CommBuf(m_header_builder, eventPtr->messageLen) );
-	cbufPtr->append_bytes((uint8_t *)eventPtr->message, eventPtr->messageLen);
-	if (gDelay > 0)
-	  poll(0, 0, gDelay);
-	int error = m_comm->send_datagram(eventPtr->addr, eventPtr->localAddr, cbufPtr);
-	if (error != Error::OK) {
-	  HT_ERRORF("Comm::send_response returned %s", Error::get_text(error));
-	}
+    virtual void handle(EventPtr &event_ptr) {
+      if (event_ptr->type == Event::MESSAGE) {
+        m_header_builder.initialize_from_request(event_ptr->header);
+        CommBufPtr cbp(new CommBuf(m_header_builder, event_ptr->message_len));
+        cbp->append_bytes((uint8_t *)event_ptr->message, event_ptr->message_len);
+        if (g_delay > 0)
+          poll(0, 0, g_delay);
+        int error = m_comm->send_datagram(event_ptr->addr, event_ptr->local_addr, cbp);
+        if (error != Error::OK) {
+          HT_ERRORF("Comm::send_response returned %s", Error::get_text(error));
+        }
       }
       else {
-	HT_ERRORF("Error : %s", eventPtr->toString().c_str());
+        HT_ERRORF("Error : %s", event_ptr->to_str().c_str());
       }
     }
 
@@ -210,84 +212,84 @@ int main(int argc, char **argv) {
   Comm *comm;
   int rval, error;
   uint16_t port = DEFAULT_PORT;
-  int reactorCount = 2;
-  ConnectionHandlerFactoryPtr chfPtr;
-  ApplicationQueue *appQueue = 0;
+  int reactor_count = 2;
+  ConnectionHandlerFactoryPtr chfp;
+  ApplicationQueue *app_queue = 0;
   bool udp = false;
   DispatchHandlerPtr dhp;
-  struct sockaddr_in localAddr;
-  struct sockaddr_in clientAddr;
+  struct sockaddr_in local_addr;
+  struct sockaddr_in client_addr;
 
-  memset(&clientAddr, 0, sizeof(clientAddr));
+  memset(&client_addr, 0, sizeof(client_addr));
 
   for (int i=1; i<argc; i++) {
     if (!strcmp(argv[i], "--help"))
       Usage::dump_and_exit(usage);
     else if (!strcmp(argv[i], "--app-queue")) {
-      appQueue = new ApplicationQueue(5);
+      app_queue = new ApplicationQueue(5);
     }
     else if (!strncmp(argv[i], "--connect-to=", 13)) {
-      if (!InetAddr::initialize(&clientAddr, &argv[i][13]))
-	HT_ABORT;
+      if (!InetAddr::initialize(&client_addr, &argv[i][13]))
+        HT_ABORT;
     }
     else if (!strncmp(argv[i], "--port=", 7)) {
       rval = atoi(&argv[i][7]);
       if (rval <= 1024 || rval > 65535) {
-	cerr << "Invalid port.  Must be in the range of 1024-65535." << endl;
-	exit(1);
+        cerr << "Invalid port.  Must be in the range of 1024-65535." << endl;
+        exit(1);
       }
       port = (uint16_t)rval;
     }
     else if (!strncmp(argv[i], "--reactors=", 11))
-      reactorCount = atoi(&argv[i][11]);
+      reactor_count = atoi(&argv[i][11]);
     else if (!strncmp(argv[i], "--delay=", 8))
-      gDelay = atoi(&argv[i][8]);
+      g_delay = atoi(&argv[i][8]);
     else if (!strcmp(argv[i], "--udp"))
       udp = true;
     else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
-      gVerbose = true;
+      g_verbose = true;
     else
       Usage::dump_and_exit(usage);
   }
 
   System::initialize(argv[0]);
-  ReactorFactory::initialize(reactorCount);
+  ReactorFactory::initialize(reactor_count);
 
   comm = new Comm();
 
-  if (gVerbose) {
+  if (g_verbose) {
     cout << "Listening on port " << port << endl;
-    if (gDelay)
-      cout << "Delay = " << gDelay << endl;
+    if (g_delay)
+      cout << "Delay = " << g_delay << endl;
   }
 
-  InetAddr::initialize(&localAddr, "localhost", port);
+  InetAddr::initialize(&local_addr, "localhost", port);
 
   if (!udp) {
-    dhp = new Dispatcher(comm, appQueue);
-    
-    if (clientAddr.sin_port != 0) {
-      if ((error = comm->connect(clientAddr, localAddr, dhp)) != Error::OK) {
-	HT_ERRORF("Comm::connect error - %s", Error::get_text(error));
-	exit(1);
+    dhp = new Dispatcher(comm, app_queue);
+
+    if (client_addr.sin_port != 0) {
+      if ((error = comm->connect(client_addr, local_addr, dhp)) != Error::OK) {
+        HT_ERRORF("Comm::connect error - %s", Error::get_text(error));
+        exit(1);
       }
     }
     else {
-      chfPtr = new HandlerFactory(dhp);
-      if ((error = comm->listen(localAddr, chfPtr, dhp)) != Error::OK) {
-	HT_ERRORF("Comm::listen error - %s", Error::get_text(error));
-	exit(1);
+      chfp = new HandlerFactory(dhp);
+      if ((error = comm->listen(local_addr, chfp, dhp)) != Error::OK) {
+        HT_ERRORF("Comm::listen error - %s", Error::get_text(error));
+        exit(1);
       }
     }
   }
   else {
-    assert(clientAddr.sin_port == 0);
+    assert(client_addr.sin_port == 0);
     dhp = new UdpDispatcher(comm);
-    error = comm->create_datagram_receive_socket(&localAddr, dhp);
+    error = comm->create_datagram_receive_socket(&local_addr, dhp);
   }
 
   poll(0, 0, -1);
 
   delete comm;
   return 0;
-}  
+}

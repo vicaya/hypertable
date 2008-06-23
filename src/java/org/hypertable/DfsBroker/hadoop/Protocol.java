@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -41,33 +41,33 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
     public static final short COMMAND_EXISTS   = 15;
     public static final short COMMAND_RENAME   = 16;
     public static final short COMMAND_MAX      = 17;
-    
+
     public static final short SHUTDOWN_FLAG_IMMEDIATE = 0x0001;
 
     public static String msCommandStrings[] = {
-	"open",
-	"create",
-	"close",
-	"read",
-	"write",
-	"seek",
-	"remove",
-	"shutdown",
-	"length",
-	"pread",
-	"mkdirs",
-	"status",
-	"flush",
-	"rmdir",
-	"readdir",
-	"exists",
+        "open",
+        "create",
+        "close",
+        "read",
+        "write",
+        "seek",
+        "remove",
+        "shutdown",
+        "length",
+        "pread",
+        "mkdirs",
+        "status",
+        "flush",
+        "rmdir",
+        "readdir",
+        "exists",
         "rename"
     };
 
     public String CommandText(short command) {
-	if (command < 0 || command >= COMMAND_MAX)
-	    return "UNKNOWN (" + command + ")";
-	return msCommandStrings[command];
+        if (command < 0 || command >= COMMAND_MAX)
+            return "UNKNOWN (" + command + ")";
+        return msCommandStrings[command];
     }
 
 };

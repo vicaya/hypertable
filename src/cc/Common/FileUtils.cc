@@ -1,35 +1,44 @@
 /**
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+#include "Common/Compat.h"
+
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 
 extern "C" {
+#include <unistd.h>
 #include <errno.h>
 #include <pwd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/uio.h>
-#include <unistd.h>
+#ifdef HT_HT_XATTR_ENABLED
+# include <sys/xattr.h>
+# if defined(__linux__)
+#   include <attr/xattr.h>
+# endif
+#endif
 }
 
 #include <boost/shared_array.hpp>
@@ -51,13 +60,13 @@ ssize_t FileUtils::read(int fd, void *vptr, size_t n) {
   ptr = (char *)vptr;
   nleft = n;
   while (nleft > 0) {
-    if ( (nread = ::read(fd, ptr, nleft)) < 0) {
+    if ((nread = ::read(fd, ptr, nleft)) < 0) {
       if (errno == EINTR)
-	nread = 0;/* and call read() again */
+        nread = 0;/* and call read() again */
       else if (errno == EAGAIN)
-	break;
+        break;
       else
-	return -1;
+        return -1;
     } else if (nread == 0)
       break;/* EOF */
 
@@ -77,13 +86,13 @@ ssize_t FileUtils::pread(int fd, void *vptr, size_t n, off_t offset) {
   ptr = (char *)vptr;
   nleft = n;
   while (nleft > 0) {
-    if ( (nread = ::pread(fd, ptr, nleft, offset)) < 0) {
+    if ((nread = ::pread(fd, ptr, nleft, offset)) < 0) {
       if (errno == EINTR)
-	nread = 0;/* and call read() again */
+        nread = 0;/* and call read() again */
       else if (errno == EAGAIN)
-	break;
+        break;
       else
-	return -1;
+        return -1;
     } else if (nread == 0)
       break;/* EOF */
 
@@ -106,11 +115,11 @@ ssize_t FileUtils::write(int fd, const void *vptr, size_t n) {
   while (nleft > 0) {
     if ((nwritten = ::write(fd, ptr, nleft)) <= 0) {
       if (errno == EINTR)
-	nwritten = 0; /* and call write() again */
+        nwritten = 0; /* and call write() again */
       if (errno == EAGAIN)
-	break;
+        break;
       else
-	return -1; /* error */
+        return -1; /* error */
     }
 
     nleft -= nwritten;
@@ -145,11 +154,11 @@ ssize_t FileUtils::sendto(int fd, const void *vptr, size_t n, const struct socka
   while (nleft > 0) {
     if ((nsent = ::sendto(fd, ptr, nleft, 0, to, tolen)) <= 0) {
       if (errno == EINTR)
-	nsent = 0; /* and call sendto() again */
+        nsent = 0; /* and call sendto() again */
       if (errno == EAGAIN || errno == ENOBUFS)
-	break;
+        break;
       else
-	return -1; /* error */
+        return -1; /* error */
     }
 
     nleft -= nsent;
@@ -161,9 +170,9 @@ ssize_t FileUtils::sendto(int fd, const void *vptr, size_t n, const struct socka
 ssize_t FileUtils::recvfrom(int fd, void *vptr, size_t n, struct sockaddr *from, socklen_t *fromlen) {
   ssize_t nread;
   while (true) {
-    if ( (nread = ::recvfrom(fd, vptr, n, 0, from, fromlen)) < 0) {
+    if ((nread = ::recvfrom(fd, vptr, n, 0, from, fromlen)) < 0) {
       if (errno != EINTR)
-	break;
+        break;
     }
     else
       break;
@@ -176,7 +185,7 @@ ssize_t FileUtils::recvfrom(int fd, void *vptr, size_t n, struct sockaddr *from,
 void FileUtils::set_flags(int fd, int flags) {
   int val;
 
-  if ( (val = fcntl(fd, F_GETFL, 0)) < 0)
+  if ((val = fcntl(fd, F_GETFL, 0)) < 0)
     cerr << "fcnt(F_GETFL) failed : " << strerror(errno) << endl;
 
   val |= flags;
@@ -189,7 +198,7 @@ void FileUtils::set_flags(int fd, int flags) {
 
 /**
  */
-char *FileUtils::file_to_buffer(const std::string &fname, off_t *lenp) {
+char *FileUtils::file_to_buffer(const String &fname, off_t *lenp) {
   struct stat statbuf;
   int fd;
 
@@ -207,7 +216,7 @@ char *FileUtils::file_to_buffer(const std::string &fname, off_t *lenp) {
 
   *lenp = statbuf.st_size;
 
-  char *rbuf = new char [ *lenp + 1 ];
+  char *rbuf = new char [*lenp + 1];
 
   ssize_t nread = FileUtils::read(fd, rbuf, *lenp);
 
@@ -229,40 +238,40 @@ char *FileUtils::file_to_buffer(const std::string &fname, off_t *lenp) {
 }
 
 
-bool FileUtils::mkdirs(const std::string &dirname) {
+bool FileUtils::mkdirs(const String &dirname) {
   struct stat statbuf;
-  boost::shared_array<char> tmpDirPtr(new char [ dirname.length() + 1 ]);
-  char *tmpDir = tmpDirPtr.get();
-  char *ptr = tmpDir+1;
+  boost::shared_array<char> tmp_dir(new char [dirname.length() + 1]);
+  char *tmpdir = tmp_dir.get();
+  char *ptr = tmpdir+1;
 
-  strcpy(tmpDir, dirname.c_str());
+  strcpy(tmpdir, dirname.c_str());
 
   while ((ptr = strchr(ptr, '/')) != 0) {
     *ptr = 0;
-    if (stat(tmpDir, &statbuf) != 0) {
+    if (stat(tmpdir, &statbuf) != 0) {
       if (errno == ENOENT) {
-	if (mkdir(tmpDir, 0755) != 0) {
-	  HT_ERRORF("Problem creating directory '%s' - %s", tmpDir, strerror(errno));
-	  return false;
-	}
+        if (mkdir(tmpdir, 0755) != 0) {
+          HT_ERRORF("Problem creating directory '%s' - %s", tmpdir, strerror(errno));
+          return false;
+        }
       }
       else {
-	HT_ERRORF("Problem stat'ing directory '%s' - %s", tmpDir, strerror(errno));
-	return false;
+        HT_ERRORF("Problem stat'ing directory '%s' - %s", tmpdir, strerror(errno));
+        return false;
       }
     }
     *ptr++ = '/';
   }
 
-  if (stat(tmpDir, &statbuf) != 0) {
+  if (stat(tmpdir, &statbuf) != 0) {
     if (errno == ENOENT) {
-      if (mkdir(tmpDir, 0755) != 0) {
-	HT_ERRORF("Problem creating directory '%s' - %s", tmpDir, strerror(errno));
-	return false;
+      if (mkdir(tmpdir, 0755) != 0) {
+        HT_ERRORF("Problem creating directory '%s' - %s", tmpdir, strerror(errno));
+        return false;
       }
     }
     else {
-      HT_ERRORF("Problem stat'ing directory '%s' - %s", tmpDir, strerror(errno));
+      HT_ERRORF("Problem stat'ing directory '%s' - %s", tmpdir, strerror(errno));
       return false;
     }
   }
@@ -271,23 +280,23 @@ bool FileUtils::mkdirs(const std::string &dirname) {
 }
 
 
-bool FileUtils::exists(const std::string &fname) {
+bool FileUtils::exists(const String &fname) {
   struct stat statbuf;
   if (stat(fname.c_str(), &statbuf) != 0)
     return false;
   return true;
 }
 
-uint64_t FileUtils::size(const std::string &fname) {
+uint64_t FileUtils::size(const String &fname) {
   struct stat statbuf;
   if (stat(fname.c_str(), &statbuf) != 0)
     return 0;
   return statbuf.st_size;
-  
+
 }
 
 
-off_t FileUtils::length(const std::string &fname) {
+off_t FileUtils::length(const String &fname) {
   struct stat statbuf;
   if (stat(fname.c_str(), &statbuf) != 0)
     return (off_t)-1;
@@ -295,13 +304,13 @@ off_t FileUtils::length(const std::string &fname) {
 }
 
 
-void FileUtils::add_trailing_slash(std::string &path) {
+void FileUtils::add_trailing_slash(String &path) {
   if (path.find('/', path.length()-1) == string::npos)
     path += "/";
 }
 
 
-bool FileUtils::expand_tilde(std::string &fname) {
+bool FileUtils::expand_tilde(String &fname) {
   struct passwd pbuf;
   struct passwd *prbuf;
   char buf[256];
@@ -310,12 +319,12 @@ bool FileUtils::expand_tilde(std::string &fname) {
     return false;
 
   if (fname[1] == '/') {
-    if (getpwuid_r( getuid() , &pbuf, buf, 256, &prbuf ) != 0 || prbuf == 0)
+    if (getpwuid_r(getuid() , &pbuf, buf, 256, &prbuf) != 0 || prbuf == 0)
       return false;
-    fname = (std::string)pbuf.pw_dir + fname.substr(1);
+    fname = (String)pbuf.pw_dir + fname.substr(1);
   }
   else {
-    std::string name;
+    String name;
     size_t first_slash = fname.find_first_of('/');
 
     if (first_slash == string::npos)
@@ -323,90 +332,90 @@ bool FileUtils::expand_tilde(std::string &fname) {
     else
       name = fname.substr(1, first_slash-1);
 
-    if (getpwnam_r( name.c_str() , &pbuf, buf, 256, &prbuf ) != 0 || prbuf == 0)
+    if (getpwnam_r(name.c_str() , &pbuf, buf, 256, &prbuf) != 0 || prbuf == 0)
       return false;
 
     if (first_slash == string::npos)
       fname = pbuf.pw_dir;
     else
-      fname = (std::string)pbuf.pw_dir + fname.substr(first_slash);
+      fname = (String)pbuf.pw_dir + fname.substr(first_slash);
   }
 
   return true;
 }
 
 
-#ifdef EXTENDED_ATTRIBUTES_ENABLED
+#ifdef HT_XATTR_ENABLED
 
-int FileUtils::getxattr(const std::string &path, const std::string &name, void *value, size_t size) {
-  std::string canonicalName = (std::string)"user." + name;
+int FileUtils::getxattr(const String &path, const String &name, void *value, size_t size) {
+  String canonic = (String)"user." + name;
 #if defined(__linux__)
-  return ::getxattr(path.c_str(), canonicalName.c_str(), value, size);
+  return ::getxattr(path.c_str(), canonic.c_str(), value, size);
 #elif defined(__APPLE__)
-  return ::getxattr(path.c_str(), canonicalName.c_str(), value, size, 0, 0);
+  return ::getxattr(path.c_str(), canonic.c_str(), value, size, 0, 0);
 #else
   ImplementMe;
 #endif
 }
 
 
-int FileUtils::setxattr(const std::string &path, const std::string &name, const void *value, size_t size, int flags) {
-  std::string canonicalName = (std::string)"user." + name;
+int FileUtils::setxattr(const String &path, const String &name, const void *value, size_t size, int flags) {
+  String canonic = (String)"user." + name;
 #if defined(__linux__)
-  return ::setxattr(path.c_str(), canonicalName.c_str(), value, size, flags);
+  return ::setxattr(path.c_str(), canonic.c_str(), value, size, flags);
 #elif defined(__APPLE__)
-  return ::setxattr(path.c_str(), canonicalName.c_str(), value, size, 0, flags);
+  return ::setxattr(path.c_str(), canonic.c_str(), value, size, 0, flags);
 #else
   ImplementMe;
 #endif
 }
 
 
-int FileUtils::fgetxattr(int fd, const std::string &name, void *value, size_t size) {
-  std::string canonicalName = (std::string)"user." + name;
+int FileUtils::fgetxattr(int fd, const String &name, void *value, size_t size) {
+  String canonic = (String)"user." + name;
 #if defined(__linux__)
-  return ::fgetxattr(fd, canonicalName.c_str(), value, size);
+  return ::fgetxattr(fd, canonic.c_str(), value, size);
 #elif defined(__APPLE__)
-  return ::fgetxattr(fd, canonicalName.c_str(), value, size, 0, 0);
+  return ::fgetxattr(fd, canonic.c_str(), value, size, 0, 0);
 #else
   ImplementMe;
 #endif
 }
 
 
-int FileUtils::fsetxattr(int fd, const std::string &name, const void *value, size_t size, int flags) {
-  std::string canonicalName = (std::string)"user." + name;
+int FileUtils::fsetxattr(int fd, const String &name, const void *value, size_t size, int flags) {
+  String canonic = (String)"user." + name;
 #if defined(__linux__)
-  return ::fsetxattr(fd, canonicalName.c_str(), value, size, flags);
+  return ::fsetxattr(fd, canonic.c_str(), value, size, flags);
 #elif defined(__APPLE__)
-  return ::fsetxattr(fd, canonicalName.c_str(), value, size, 0, flags);
+  return ::fsetxattr(fd, canonic.c_str(), value, size, 0, flags);
 #else
   ImplementMe;
 #endif
 }
 
 
-int FileUtils::removexattr(const std::string &path, const std::string &name) {
-  std::string canonicalName = (std::string)"user." + name;
+int FileUtils::removexattr(const String &path, const String &name) {
+  String canonic = (String)"user." + name;
 #if defined(__linux__)
-  return ::removexattr(path.c_str(), canonicalName.c_str());
+  return ::removexattr(path.c_str(), canonic.c_str());
 #elif defined(__APPLE__)
-  return ::removexattr(path.c_str(), canonicalName.c_str(), 0);
+  return ::removexattr(path.c_str(), canonic.c_str(), 0);
 #else
   ImplementMe;
 #endif
 }
 
-int FileUtils::fremovexattr(int fd, const std::string &name) {
-  std::string canonicalName = (std::string)"user." + name;
+int FileUtils::fremovexattr(int fd, const String &name) {
+  String canonic = (String)"user." + name;
 #if defined(__linux__)
-  return ::fremovexattr(fd, canonicalName.c_str());
+  return ::fremovexattr(fd, canonic.c_str());
 #elif defined(__APPLE__)
-  return ::fremovexattr(fd, canonicalName.c_str(), 0);
+  return ::fremovexattr(fd, canonic.c_str(), 0);
 #else
   ImplementMe;
 #endif
 
 }
 
-#endif // EXTENDED_ATTRIBUTES_ENABLED
+#endif // HT_XATTR_ENABLED

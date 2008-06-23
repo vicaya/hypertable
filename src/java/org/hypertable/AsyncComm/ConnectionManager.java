@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -34,24 +34,24 @@ public class ConnectionManager implements Runnable, DispatchHandler {
     static final Logger log = Logger.getLogger("org.hypertable.AsyncComm");
 
     private static class ConnectionState {
-	public boolean             connected;
-	public  InetSocketAddress  addr;
-	public long                timeout;
-	public long                nextRetry;
-	public String              serviceName;
+        public boolean             connected;
+        public  InetSocketAddress  addr;
+        public long                timeout;
+        public long                nextRetry;
+        public String              serviceName;
     };
 
     private static class ConnectionStateComparator implements Comparator<ConnectionState> {
-	public int compare(ConnectionState cs1, ConnectionState cs2) {
-	    if (cs1.nextRetry < cs2.nextRetry)
-		return 1;
-	    else if (cs1.nextRetry == cs2.nextRetry)
-		return 0;
-	    return -1;
-	}
-	public boolean equals(Object obj) {
-	    return this.equals(obj);
-	}
+        public int compare(ConnectionState cs1, ConnectionState cs2) {
+            if (cs1.nextRetry < cs2.nextRetry)
+                return 1;
+            else if (cs1.nextRetry == cs2.nextRetry)
+                return 0;
+            return -1;
+        }
+        public boolean equals(Object obj) {
+            return this.equals(obj);
+        }
     }
 
     private Comm mComm;
@@ -61,241 +61,241 @@ public class ConnectionManager implements Runnable, DispatchHandler {
     private Thread mThread;
 
     public ConnectionManager(Comm comm) {
-	mComm = comm;
-	mConnMap = new HashMap<InetSocketAddress, ConnectionState>();
-	mRetryQueue = new PriorityQueue<ConnectionState>(11, new ConnectionStateComparator());
-	mThread = new Thread(this, "Connection Manager");
-	mThread.start();
+        mComm = comm;
+        mConnMap = new HashMap<InetSocketAddress, ConnectionState>();
+        mRetryQueue = new PriorityQueue<ConnectionState>(11, new ConnectionStateComparator());
+        mThread = new Thread(this, "Connection Manager");
+        mThread.start();
     }
 
     public synchronized void Add(InetSocketAddress addr, long timeout, String serviceName) {
-	ConnectionState connState;
+        ConnectionState connState;
 
-	if (mConnMap.containsKey(addr))
-	    return;
+        if (mConnMap.containsKey(addr))
+            return;
 
-	connState = new ConnectionState();
-	connState.connected = false;
-	connState.addr = addr;
-	connState.timeout = timeout * 1000;
-	connState.serviceName = serviceName;
-	connState.nextRetry = System.currentTimeMillis();
+        connState = new ConnectionState();
+        connState.connected = false;
+        connState.addr = addr;
+        connState.timeout = timeout * 1000;
+        connState.serviceName = serviceName;
+        connState.nextRetry = System.currentTimeMillis();
 
-	mConnMap.put(addr, connState);
+        mConnMap.put(addr, connState);
 
-	SendConnectRequest(connState);  
+        SendConnectRequest(connState);
     }
 
     /**
      */
     private void SendConnectRequest(ConnectionState connState) {
 
-	int error = mComm.Connect(connState.addr, connState.timeout, this);
-	    
-	if (error == Error.COMM_ALREADY_CONNECTED) {
-	    synchronized (connState) {
-		connState.connected = true;
-		connState.notifyAll();
-	    }
-	}
-	else if (error != Error.OK) {
-	    log.severe("Connection attempt to " + connState.serviceName + " at " + connState.addr + " failed - " + Error.GetText(error) + ".  Will retry again in %d seconds...");
-	    connState.nextRetry = System.currentTimeMillis() + connState.timeout;
-	    mRetryQueue.add(connState);
-	    notify();
-	}
+        int error = mComm.Connect(connState.addr, connState.timeout, this);
+
+        if (error == Error.COMM_ALREADY_CONNECTED) {
+            synchronized (connState) {
+                connState.connected = true;
+                connState.notifyAll();
+            }
+        }
+        else if (error != Error.OK) {
+            log.severe("Connection attempt to " + connState.serviceName + " at " + connState.addr + " failed - " + Error.GetText(error) + ".  Will retry again in %d seconds...");
+            connState.nextRetry = System.currentTimeMillis() + connState.timeout;
+            mRetryQueue.add(connState);
+            notify();
+        }
     }
 
     public void handle(Event event) {
-	synchronized (this) {
-	    ConnectionState connState = mConnMap.get(event.addr);
+        synchronized (this) {
+            ConnectionState connState = mConnMap.get(event.addr);
 
-	    if (connState != null) {
-		synchronized (connState) {
-		    if (event.type == Event.Type.CONNECTION_ESTABLISHED) {
-			connState.connected = true;
-			connState.notifyAll();
-		    }
-		    else {
-			if (!mQuietMode)
-			    log.info(event.toString() + "; will retry in " + (connState.timeout/1000) + " seconds...");
-			connState.connected = false;
-			// this logic could proably be smarter.  For example, if the last
-			// connection attempt was a long time ago, then schedule immediately
-			// otherwise, if this event is the result of an immediately prior connect
-			// attempt, then do the following
-			connState.nextRetry = System.currentTimeMillis() + connState.timeout;
-			mRetryQueue.add(connState);
-			notify();
-		    }
-		}
-	    }
-	    else {
-		log.severe("Unable to find connection for " + event.addr + " in map.");
-	    }
-	}
+            if (connState != null) {
+                synchronized (connState) {
+                    if (event.type == Event.Type.CONNECTION_ESTABLISHED) {
+                        connState.connected = true;
+                        connState.notifyAll();
+                    }
+                    else {
+                        if (!mQuietMode)
+                            log.info(event.toString() + "; will retry in " + (connState.timeout/1000) + " seconds...");
+                        connState.connected = false;
+                        // this logic could proably be smarter.  For example, if the last
+                        // connection attempt was a long time ago, then schedule immediately
+                        // otherwise, if this event is the result of an immediately prior connect
+                        // attempt, then do the following
+                        connState.nextRetry = System.currentTimeMillis() + connState.timeout;
+                        mRetryQueue.add(connState);
+                        notify();
+                    }
+                }
+            }
+            else {
+                log.severe("Unable to find connection for " + event.addr + " in map.");
+            }
+        }
     }
 
     public void run() {
-	synchronized (this) {
-	    ConnectionState connState;
+        synchronized (this) {
+            ConnectionState connState;
 
-	    while (!Thread.interrupted()) {
+            while (!Thread.interrupted()) {
 
-		try {
+                try {
 
-		    while (mRetryQueue.isEmpty())
-			wait();
+                    while (mRetryQueue.isEmpty())
+                        wait();
 
-		    connState = mRetryQueue.peek();
+                    connState = mRetryQueue.peek();
 
-		    if (!connState.connected) {
-			synchronized (connState) {
-			    long diffTime = connState.nextRetry - System.currentTimeMillis();
+                    if (!connState.connected) {
+                        synchronized (connState) {
+                            long diffTime = connState.nextRetry - System.currentTimeMillis();
 
-			    if (diffTime <= 0) {
-				mRetryQueue.remove(connState);
-				/**
-				if (!mQuietMode)
-				    log.info("Attempting to re-establish connection to " + connState.serviceName + " at " + connState.addr);
-				*/
-				SendConnectRequest(connState);
-			    }
-			    else {
-				wait(diffTime);
-			    }
-			}
-		    }
-		    else
-			mRetryQueue.remove(connState);
+                            if (diffTime <= 0) {
+                                mRetryQueue.remove(connState);
+                                /**
+                                if (!mQuietMode)
+                                    log.info("Attempting to re-establish connection to " + connState.serviceName + " at " + connState.addr);
+                                */
+                                SendConnectRequest(connState);
+                            }
+                            else {
+                                wait(diffTime);
+                            }
+                        }
+                    }
+                    else
+                        mRetryQueue.remove(connState);
 
-		}
-		catch (InterruptedException e) {
-		    e.printStackTrace();
-		}
-	    }
-	}
+                }
+                catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
-    
+
     public boolean WaitForConnection(InetSocketAddress addr, long maxWaitSecs) throws InterruptedException {
-	ConnectionState connState;
+        ConnectionState connState;
 
-	synchronized (this) {
-	    connState = mConnMap.get(addr);
-	}
+        synchronized (this) {
+            connState = mConnMap.get(addr);
+        }
 
-	synchronized (connState) {
-	    long elapsed = 0;
-	    long starttime = System.currentTimeMillis();
-	    long maxWaitMs = maxWaitSecs * 1000;
+        synchronized (connState) {
+            long elapsed = 0;
+            long starttime = System.currentTimeMillis();
+            long maxWaitMs = maxWaitSecs * 1000;
 
-	    try {
+            try {
 
-		while (!connState.connected) {
-		    elapsed = System.currentTimeMillis() - starttime;
-		    if (elapsed >= maxWaitMs)
-			return false;
-		    connState.wait(maxWaitMs - elapsed);
-		}
-	    }
-	    catch (InterruptedException e) {
-		e.printStackTrace();
-		return false;
-	    }
+                while (!connState.connected) {
+                    elapsed = System.currentTimeMillis() - starttime;
+                    if (elapsed >= maxWaitMs)
+                        return false;
+                    connState.wait(maxWaitMs - elapsed);
+                }
+            }
+            catch (InterruptedException e) {
+                e.printStackTrace();
+                return false;
+            }
 
-	}
+        }
 
-	return true;
+        return true;
     }
 
     /*****
 
     public void run() {
-	long sendtime = 0;
-	long elapsed;
+        long sendtime = 0;
+        long elapsed;
 
-	while (!Thread.interrupted()) {
+        while (!Thread.interrupted()) {
 
-	    try {
+            try {
 
-		elapsed = System.currentTimeMillis() - sendtime;
+                elapsed = System.currentTimeMillis() - sendtime;
 
-		if (elapsed < RETRY_INTERVAL_MS) {
-		    synchronized (this) {
-			wait(RETRY_INTERVAL_MS - elapsed);
-		    }
-		}		    
+                if (elapsed < RETRY_INTERVAL_MS) {
+                    synchronized (this) {
+                        wait(RETRY_INTERVAL_MS - elapsed);
+                    }
+                }
 
-		mHandler.SendConnectRequest();
-		sendtime = System.currentTimeMillis();
+                mHandler.SendConnectRequest();
+                sendtime = System.currentTimeMillis();
 
-		while (mHandler.WaitForEvent())
-		    ;
+                while (mHandler.WaitForEvent())
+                    ;
 
-		System.err.println(mWaitMessage);
-	    }
-	    catch (InterruptedException e) {
-		e.printStackTrace();
-	    }
-	}
+                System.err.println(mWaitMessage);
+            }
+            catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public static class Callback implements DispatchHandler {
 
-	public Callback(Comm comm, InetSocketAddress addr, long timeout) {
-	    mComm = comm;
-	    mAddr = addr;
-	    mTimeout = timeout;
-	    mConnected = false;
-	}
+        public Callback(Comm comm, InetSocketAddress addr, long timeout) {
+            mComm = comm;
+            mAddr = addr;
+            mTimeout = timeout;
+            mConnected = false;
+        }
 
-	public void handle(Event event) {
+        public void handle(Event event) {
 
-	    //log.fine(event.toString());
+            //log.fine(event.toString());
 
-	    synchronized (this) {
-		if (event.type == Event.Type.CONNECTION_ESTABLISHED) {
-		    mConnected = true;
-		    notifyAll();
-		}
-		else {
-		    mConnected = false;
-		    log.warning(event.toString());		    
-		    notifyAll();
-		}
-	    }
-	}
+            synchronized (this) {
+                if (event.type == Event.Type.CONNECTION_ESTABLISHED) {
+                    mConnected = true;
+                    notifyAll();
+                }
+                else {
+                    mConnected = false;
+                    log.warning(event.toString());
+                    notifyAll();
+                }
+            }
+        }
 
-	public void SendConnectRequest() {
+        public void SendConnectRequest() {
 
-	    int error = mComm.Connect(mAddr, mTimeout, this);
-	    
-	    if (error == Error.COMM_ALREADY_CONNECTED) {
-		synchronized (this) {
-		    mConnected = true;
-		    notifyAll();
-		}
-	    }
-	    else if (error != Error.OK)
-		log.severe("Connect to " + mAddr + " failed - " + Error.GetText(error));
-	}
+            int error = mComm.Connect(mAddr, mTimeout, this);
 
-	public synchronized boolean WaitForConnection(long maxWaitMs) throws InterruptedException {
-	    if (mConnected)
-		return true;
-	    wait(maxWaitMs);
-	    return mConnected;
-	}
+            if (error == Error.COMM_ALREADY_CONNECTED) {
+                synchronized (this) {
+                    mConnected = true;
+                    notifyAll();
+                }
+            }
+            else if (error != Error.OK)
+                log.severe("Connect to " + mAddr + " failed - " + Error.GetText(error));
+        }
 
-	public synchronized boolean WaitForEvent() throws InterruptedException {
-	    wait();
-	    return mConnected;
-	}
+        public synchronized boolean WaitForConnection(long maxWaitMs) throws InterruptedException {
+            if (mConnected)
+                return true;
+            wait(maxWaitMs);
+            return mConnected;
+        }
 
-	private Comm                mComm;
-	private InetSocketAddress   mAddr;
-	private long                mTimeout;
-	private boolean             mConnected = false;
+        public synchronized boolean WaitForEvent() throws InterruptedException {
+            wait();
+            return mConnected;
+        }
+
+        private Comm                mComm;
+        private InetSocketAddress   mAddr;
+        private long                mTimeout;
+        private boolean             mConnected = false;
     }
 
     private Callback mHandler;

@@ -21,7 +21,7 @@ project (HYPERTABLE)
 set(VERSION_MAJOR "0")
 set(VERSION_MINOR "9")
 set(VERSION_MICRO "0")
-set(VERSION_PATCH "6")
+set(VERSION_PATCH "7")
 set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}.${VERSION_PATCH})
 
 # Behavior compatibility
@@ -76,30 +76,25 @@ set( MALLOC_LIBRARY ${Tcmalloc_LIBRARIES} )
 
 # include directories
 include_directories(src/cc ${ZLIB_INCLUDE_DIR} ${Boost_INCLUDE_DIRS}
-                    ${Log4cpp_INCLUDE_DIR} ${EXPAT_INCLUDE_DIRS} ${BDB_INCLUDE_DIR})
+    ${Log4cpp_INCLUDE_DIR} ${EXPAT_INCLUDE_DIRS} ${BDB_INCLUDE_DIR})
 
-if (NOT ${BOOST_CHECK} STREQUAL "0")
-  message(FATAL_ERROR "Boost version not compatible")
-endif (NOT ${BOOST_CHECK} STREQUAL "0")
-
-if (${BOOST_VERSION} MATCHES "1_34")
+if (BOOST_VERSION MATCHES "1_34")
   message(STATUS "Got boost 1.34.x, prepend fix directory")
   include_directories(BEFORE src/cc/boost-1_34-fix)
-endif (${BOOST_VERSION} MATCHES "1_34")
+endif (BOOST_VERSION MATCHES "1_34")
 
-if (${GCC_VERSION} MATCHES "^[4-9]\\.")
+if (GCC_VERSION MATCHES "^([4-9]|[1-9][0-9]+)\\.")
   add_definitions(-Wno-variadic-macros)
-elseif (${GCC_VERSION} MATCHES "^3\\.")
+elseif (GCC_VERSION MATCHES "^([4-9]|[1-9][0-9]+)\\.")
   message(STATUS "Ancient gcc detected, hope it finishes despite warnings...")
-endif (${GCC_VERSION} MATCHES "^[4-9]\\.")
+endif (GCC_VERSION MATCHES "^([4-9]|[1-9][0-9]+)\\.")
 
-# link directories
-link_directories(${Boost_LIBRARY_DIRS})
-
-IF (DOXYGEN_FOUND)
-   configure_file(${HYPERTABLE_SOURCE_DIR}/doc/Doxyfile ${HYPERTABLE_BINARY_DIR}/Doxyfile)
-   add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${HYPERTABLE_BINARY_DIR}/Doxyfile)
-ENDIF (DOXYGEN_FOUND)
+if (DOXYGEN_FOUND)
+   configure_file(${HYPERTABLE_SOURCE_DIR}/doc/Doxyfile
+                  ${HYPERTABLE_BINARY_DIR}/Doxyfile)
+   add_custom_target(doc ${DOXYGEN_EXECUTABLE}
+                     ${HYPERTABLE_BINARY_DIR}/Doxyfile)
+endif (DOXYGEN_FOUND)
 
 # sub-project directories
 add_subdirectory (src/cc/Common)

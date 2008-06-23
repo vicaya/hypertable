@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cassert>
 #include <cstdlib>
 
@@ -67,7 +68,7 @@ int main(int argc, char **argv) {
   try {
 
     System::initialize(argv[0]);
-    ReactorFactory::initialize( System::get_processor_count() );
+    ReactorFactory::initialize(System::get_processor_count());
 
     comm_ptr = new Comm();
     conn_manager_ptr = new ConnectionManager(comm_ptr.get());
@@ -80,8 +81,8 @@ int main(int argc, char **argv) {
       InetAddr::initialize(&addr, "localhost", HYPERTABLE_RANGESERVER_COMMITLOG_DFSBROKER_PORT);
       dfs_client = new DfsBroker::Client(conn_manager_ptr, addr, 60);
       if (!dfs_client->wait_for_connection(10)) {
-	HT_ERROR("Unable to connect to DFS Broker, exiting...");
-	exit(1);
+        HT_ERROR("Unable to connect to DFS Broker, exiting...");
+        exit(1);
       }
     }
 
@@ -232,22 +233,22 @@ namespace {
       timestamp = log->get_timestamp();
 
       if (i == link_point) {
-	if ((error = log->link_log(link_log, timestamp)) != Error::OK)
-	  throw Hypertable::Exception(error, "Problem writing to log file");
+        if ((error = log->link_log(link_log, timestamp)) != Error::OK)
+          throw Hypertable::Exception(error, "Problem writing to log file");
       }
       else {
-	limit = (random() % 100) + 1;
-	for (size_t j=0; j<limit; j++) {
-	  payload[j] = random();
-	  *sump += payload[j];
-	}
+        limit = (random() % 100) + 1;
+        for (size_t j=0; j<limit; j++) {
+          payload[j] = random();
+          *sump += payload[j];
+        }
 
-	dbuf.base = (uint8_t *)payload;
-	dbuf.ptr = dbuf.base + (4*limit);
-	dbuf.own = false;
+        dbuf.base = (uint8_t *)payload;
+        dbuf.ptr = dbuf.base + (4*limit);
+        dbuf.own = false;
 
-	if ((error = log->write(dbuf, timestamp)) != Error::OK)
-	  throw Hypertable::Exception(error, "Problem writing to log file");
+        if ((error = log->write(dbuf, timestamp)) != Error::OK)
+          throw Hypertable::Exception(error, "Problem writing to log file");
       }
     }
   }
@@ -261,16 +262,16 @@ namespace {
 
     while (log_reader->next(&block, &block_len, &header)) {
       if (header.check_magic(CommitLog::MAGIC_LINK)) {
-	CommitLogReader *tmp_reader = new CommitLogReader(dfs_client, (const char *)block);
-	read_entries(dfs_client, tmp_reader, sump);
-	delete tmp_reader;
+        CommitLogReader *tmp_reader = new CommitLogReader(dfs_client, (const char *)block);
+        read_entries(dfs_client, tmp_reader, sump);
+        delete tmp_reader;
       }
       else {
-	assert((block_len % 4) == 0);
-	icount = block_len / 4;
-	iptr = (uint32_t *)block;
-	for (size_t i=0; i<icount; i++)
-	  *sump += iptr[i];
+        assert((block_len % 4) == 0);
+        icount = block_len / 4;
+        iptr = (uint32_t *)block;
+        for (size_t i=0; i<icount; i++)
+          *sump += iptr[i];
       }
     }
   }

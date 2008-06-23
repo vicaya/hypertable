@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cassert>
 
 extern "C" {
@@ -38,6 +39,8 @@ extern "C" {
 #include "Client.h"
 #include "HqlCommandInterpreter.h"
 
+using namespace std;
+using namespace Hypertable;
 using namespace Hyperspace;
 
 /**
@@ -52,16 +55,16 @@ Client::Client(const char *argv0, const String &config_file) {
 Client::Client(const char *argv0) {
   System::initialize(argv0);
   ReactorFactory::initialize((uint16_t)System::get_processor_count());
-  initialize( System::installDir + "/conf/hypertable.cfg" );
+  initialize(System::install_dir + "/conf/hypertable.cfg");
 }
 
 /**
- * 
+ *
  */
 void Client::create_table(const String &name, const String &schema) {
   int error;
   if ((error = m_master_client_ptr->create_table(name.c_str(), schema.c_str())) != Error::OK)
-    throw Exception(error);
+    HT_THROW(error, "");
 }
 
 
@@ -74,33 +77,34 @@ Table *Client::open_table(const String &name) {
 
 
 /**
- * 
+ *
  */
 uint32_t Client::get_table_id(const String &name) {
   int error;
+  // TODO: issue 11
   String table_file = (String)"/hypertable/tables/" + name;
   DynamicBuffer value_buf(0);
-  HandleCallbackPtr nullHandleCallback;
+  Hyperspace::HandleCallbackPtr null_handle_callback;
   uint64_t handle;
   uint32_t uval;
 
   /**
    * Open table file in Hyperspace
    */
-  if ((error = m_hyperspace_ptr->open(table_file.c_str(), OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK)
-    throw Exception(error, (String)"Hyperspace::open(" + table_file + ") failed");
+  if ((error = m_hyperspace_ptr->open(table_file.c_str(), OPEN_FLAG_READ, null_handle_callback, &handle)) != Error::OK)
+    HT_THROW(error, (String)"Hyperspace::open(" + table_file + ") failed");
 
   /**
    * Get the 'table_id' attribute
    */
   if ((error = m_hyperspace_ptr->attr_get(handle, "table_id", value_buf)) != Error::OK)
-    throw Exception(error, (String)"Hyperspace::attr_get(file='" + table_file + "', attr=table_id) failed");
+    HT_THROW(error, (String)"Hyperspace::attr_get(file='" + table_file + "', attr=table_id) failed");
 
   /**
    * Close the hyperspace file
    */
   if ((error = m_hyperspace_ptr->close(handle)) != Error::OK)
-    throw Exception(error);
+    HT_THROW(error, "");
 
   assert(value_buf.fill() == sizeof(int32_t));
 
@@ -111,13 +115,13 @@ uint32_t Client::get_table_id(const String &name) {
 
 
 /**
- * 
+ *
  */
 String Client::get_schema(const String &name) {
   int error;
   String schema;
   if ((error = m_master_client_ptr->get_schema(name.c_str(), schema)) != Error::OK)
-    throw Exception(error);
+    HT_THROW(error, "");
   return schema;
 }
 
@@ -128,17 +132,17 @@ String Client::get_schema(const String &name) {
 void Client::get_tables(std::vector<String> &tables) {
   int error;
   uint64_t handle;
-  HandleCallbackPtr nullHandleCallback;
-  std::vector<struct Hyperspace::DirEntryT> listing;
+  HandleCallbackPtr null_handle_callback;
+  std::vector<Hyperspace::DirEntry> listing;
 
-  if ((error = m_hyperspace_ptr->open("/hypertable/tables", OPEN_FLAG_READ, nullHandleCallback, &handle)) != Error::OK)
-    throw Exception(error);
+  if ((error = m_hyperspace_ptr->open("/hypertable/tables", OPEN_FLAG_READ, null_handle_callback, &handle)) != Error::OK)
+    HT_THROW(error, "");
 
   if ((error = m_hyperspace_ptr->readdir(handle, listing)) != Error::OK)
-    throw Exception(error);
+    HT_THROW(error, "");
 
   for (size_t i=0; i<listing.size(); i++) {
-    if (!listing[i].isDirectory)
+    if (!listing[i].is_dir)
       tables.push_back(listing[i].name);
   }
 
@@ -150,7 +154,7 @@ void Client::get_tables(std::vector<String> &tables) {
 void Client::drop_table(const String &name, bool if_exists) {
   int error;
   if ((error = m_master_client_ptr->drop_table(name.c_str(), if_exists)) != Error::OK)
-    throw Exception(error);
+    HT_THROW(error, "");
 }
 
 

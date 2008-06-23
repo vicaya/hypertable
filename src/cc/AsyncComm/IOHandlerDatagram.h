@@ -1,18 +1,18 @@
 /** -*- C++ -*-
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -27,7 +27,6 @@
 
 extern "C" {
 #include <netdb.h>
-#include <stdint.h>
 #include <string.h>
 #include <time.h>
 }
@@ -35,7 +34,6 @@ extern "C" {
 #include "CommBuf.h"
 #include "IOHandler.h"
 
-using namespace std;
 
 namespace Hypertable {
 
@@ -46,12 +44,12 @@ namespace Hypertable {
   public:
 
     IOHandlerDatagram(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp) : IOHandler(sd, addr, dhp), m_send_queue() {
-      m_message = new uint8_t [ 65536 ];
+      m_message = new uint8_t [65536];
     }
 
     virtual ~IOHandlerDatagram() { delete [] m_message; }
 
-    int send_message(struct sockaddr_in &addr, CommBufPtr &cbufPtr);
+    int send_message(struct sockaddr_in &addr, CommBufPtr &cbp);
 
     int flush_send_queue();
 
@@ -67,11 +65,11 @@ namespace Hypertable {
 
   private:
 
-    typedef std::pair<struct sockaddr_in, CommBufPtr> SendRecT;
+    typedef std::pair<struct sockaddr_in, CommBufPtr> SendRec;
 
     boost::mutex    m_mutex;
     uint8_t        *m_message;
-    list<SendRecT>  m_send_queue;
+    std::list<SendRec>  m_send_queue;
   };
 
   typedef boost::intrusive_ptr<IOHandlerDatagram> IOHandlerDatagramPtr;

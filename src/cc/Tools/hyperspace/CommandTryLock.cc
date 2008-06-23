@@ -1,24 +1,25 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <iostream>
 
 #include "Common/Error.h"
@@ -43,7 +44,7 @@ int CommandTryLock::run() {
   uint64_t handle;
   int error;
   uint32_t mode = 0;
-  struct LockSequencerT lockseq;
+  struct LockSequencer lockseq;
   uint32_t status;
 
   if (m_args.size() != 2) {
@@ -72,7 +73,7 @@ int CommandTryLock::run() {
     if (status == LOCK_STATUS_GRANTED)
       cout << "SEQUENCER name=" << lockseq.name << " mode=" << lockseq.mode << " generation=" << lockseq.generation << endl << flush;
     else if (status == LOCK_STATUS_BUSY)
-      cout << "busy" << endl;    
+      cout << "busy" << endl;
     else
       cout << "Unknown status: " << status << endl;
   }

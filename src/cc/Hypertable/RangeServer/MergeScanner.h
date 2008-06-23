@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -32,26 +32,25 @@
 #include "CellListScanner.h"
 #include "CellStoreReleaseCallback.h"
 
-using namespace Hypertable;
 
 namespace Hypertable {
 
   class MergeScanner : public CellListScanner {
   public:
 
-    typedef struct {
+    struct ScannerState {
       CellListScanner *scanner;
       ByteString key;
       ByteString value;
-    } ScannerStateT;
+    };
 
-    struct ltScannerState {
-      bool operator()(const ScannerStateT &ss1, const ScannerStateT &ss2) const {
-	return !(ss1.key < ss2.key);
+    struct LtScannerState {
+      bool operator()(const ScannerState &ss1, const ScannerState &ss2) const {
+        return !(ss1.key < ss2.key);
       }
     };
 
-    MergeScanner(ScanContextPtr &scanContextPtr, bool returnDeletes=true);
+    MergeScanner(ScanContextPtr &scan_ctx, bool return_dels=true);
     virtual ~MergeScanner();
     virtual void forward();
     virtual bool get(ByteString &key, ByteString &value);
@@ -68,7 +67,7 @@ namespace Hypertable {
     bool          m_done;
     bool          m_initialized;
     std::vector<CellListScanner *>  m_scanners;
-    std::priority_queue<ScannerStateT, std::vector<ScannerStateT>, ltScannerState> m_queue;
+    std::priority_queue<ScannerState, std::vector<ScannerState>, LtScannerState> m_queue;
     bool          m_delete_present;
     DynamicBuffer m_deleted_row;
     uint64_t      m_deleted_row_timestamp;

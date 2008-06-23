@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -43,22 +43,22 @@ namespace Hypertable {
    *
    * <pre>
    * {
-   *   DispatchHandlerSynchronizer syncHandler;
-   *   EventPtr eventPtr;
-   *   CommBufPtr cbufPtr( ... create protocol message here ...  );
-   *   if ((error = m_comm->send_request(m_addr, cbufPtr, &syncHandler)) != Error::OK) {
+   *   DispatchHandlerSynchronizer sync_handler;
+   *   EventPtr event_ptr;
+   *   CommBufPtr cbp(... create protocol message here ...);
+   *   if ((error = m_comm->send_request(m_addr, cbp, &sync_handler)) != Error::OK) {
    *      // log error message here ...
    *      return error;
    *   }
-   *   if (!syncHandler.wait_for_reply(eventPtr))
+   *   if (!sync_handler.wait_for_reply(event_ptr))
    *       // log error message here ...
-   *   error = (int)Protocol::response_code(eventPtr);
+   *   error = (int)Protocol::response_code(event_ptr);
    *   return error;
    * } </pre>
    *
    */
   class DispatchHandlerSynchronizer : public DispatchHandler {
-  
+
   public:
     /**
      * Constructor.  Initializes state.
@@ -75,9 +75,9 @@ namespace Hypertable {
      * It pushes the event onto the event queue and signals
      * (notify_one) the condition variable.
      *
-     * @param eventPtr shared pointer to event object
+     * @param event_ptr shared pointer to event object
      */
-    virtual void handle(EventPtr &eventPtr);
+    virtual void handle(EventPtr &event_ptr);
 
     /**
      * This method is used by a client to synchronize.  The client
@@ -88,10 +88,10 @@ namespace Hypertable {
      * queue is non-empty and then pops and returns the head of the
      * queue.
      *
-     * @param eventPtr shared pointer to event object
+     * @param event_ptr shared pointer to event object
      * @return true if next returned event is type MESSAGE and contains status Error::OK, false otherwise
      */
-    bool wait_for_reply(EventPtr &eventPtr);
+    bool wait_for_reply(EventPtr &event_ptr);
 
   private:
     std::queue<EventPtr> m_receive_queue;

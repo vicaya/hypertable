@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cassert>
 
 #include "Common/Checksum.h"
@@ -68,7 +69,7 @@ void CommitLog::initialize(Filesystem *fs, const String &log_dir, PropertiesPtr 
 
   m_compressor = CompressorFactory::create_block_codec(compressor);
 
-  FileUtils::add_trailing_slash( m_log_dir );
+  FileUtils::add_trailing_slash(m_log_dir);
 
   m_cur_fragment_fname = m_log_dir + m_cur_fragment_num;
 
@@ -99,7 +100,7 @@ uint64_t CommitLog::get_timestamp() {
 
 
 /**
- * 
+ *
  */
 int CommitLog::write(DynamicBuffer &buffer, uint64_t timestamp) {
   int error;
@@ -134,15 +135,15 @@ int CommitLog::link_log(CommitLogBase *log_base, uint64_t timestamp) {
   DynamicBuffer input;
   String &log_dir = log_base->get_log_dir();
 
-  input.ensure( header.length() );
+  input.ensure(header.length());
 
   header.set_compression_type(BlockCompressionCodec::NONE);
-  header.set_data_length( log_dir.length() + 1 );
-  header.set_data_zlength( log_dir.length() + 1 );
-  header.set_data_checksum( fletcher32(log_dir.c_str(), log_dir.length()+1) );
+  header.set_data_length(log_dir.length() + 1);
+  header.set_data_zlength(log_dir.length() + 1);
+  header.set_data_checksum(fletcher32(log_dir.c_str(), log_dir.length()+1));
 
   header.encode(&input.ptr);
-  input.add( log_dir.c_str(), log_dir.length() + 1 );
+  input.add(log_dir.c_str(), log_dir.length() + 1);
 
   try {
     boost::mutex::scoped_lock lock(m_mutex);
@@ -159,7 +160,7 @@ int CommitLog::link_log(CommitLogBase *log_base, uint64_t timestamp) {
 
     // Stitch in the fragment queue from the log being linked
     // in to the current fragment queue of the current log
-    stitch_in( log_base );
+    stitch_in(log_base);
 
   }
   catch (Hypertable::Exception &e) {
@@ -183,10 +184,10 @@ int CommitLog::close() {
   }
   catch (Hypertable::Exception &e) {
     HT_ERRORF("Problem closing commit log file '%s' - %s (%s)",
-	      m_cur_fragment_fname.c_str(), e.what(), Error::get_text(e.code()));
+              m_cur_fragment_fname.c_str(), e.what(), Error::get_text(e.code()));
     return e.code();
   }
-    
+
   m_fd = 0;
 
   return Error::OK;
@@ -195,7 +196,7 @@ int CommitLog::close() {
 
 
 /**
- * 
+ *
  */
 int CommitLog::purge(uint64_t timestamp) {
   boost::mutex::scoped_lock lock(m_mutex);
@@ -207,14 +208,14 @@ int CommitLog::purge(uint64_t timestamp) {
     while (!m_fragment_queue.empty()) {
       file_info = m_fragment_queue.front();
       if (file_info.timestamp < timestamp) {
-	fname = file_info.log_dir + file_info.num;
-	m_fs->remove(fname);
-	m_fragment_queue.pop_front();
-	HT_INFOF("Removed log fragment file='%s' timestamp=%lld", fname.c_str(), file_info.timestamp);
+        fname = file_info.log_dir + file_info.num;
+        m_fs->remove(fname);
+        m_fragment_queue.pop_front();
+        HT_INFOF("Removed log fragment file='%s' timestamp=%lld", fname.c_str(), file_info.timestamp);
       }
       else {
-	//HT_INFOF("LOG FRAGMENT PURGE breaking because %lld >= %lld", file_info.timestamp, timestamp);
-	break;
+        //HT_INFOF("LOG FRAGMENT PURGE breaking because %lld >= %lld", file_info.timestamp, timestamp);
+        break;
       }
     }
 
@@ -281,8 +282,7 @@ int CommitLog::compress_and_write(DynamicBuffer &input, BlockCompressionHeader *
   try {
     boost::mutex::scoped_lock lock(m_mutex);
 
-    if ((error = m_compressor->deflate(input, zblock, *header)) != Error::OK)
-      return error;
+    m_compressor->deflate(input, zblock, *header);
 
     size_t amount = zblock.fill();
     StaticBuffer send_buf(zblock);
@@ -319,11 +319,11 @@ void CommitLog::load_fragment_priority_map(LogFragmentPriorityMap &frag_map) {
     frag_map[m_last_timestamp] = frag_data;
   }
 
-  for (deque<CommitLogFileInfo>::reverse_iterator iter = m_fragment_queue.rbegin(); iter != m_fragment_queue.rend(); iter++) {
+  for (std::deque<CommitLogFileInfo>::reverse_iterator iter = m_fragment_queue.rbegin(); iter != m_fragment_queue.rend(); iter++) {
     cumulative_total += (*iter).size;
     frag_data.distance = distance++;
     frag_data.cumulative_size = cumulative_total;
     frag_map[(*iter).timestamp] = frag_data;
   }
-  
+
 }

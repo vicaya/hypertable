@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -57,9 +57,9 @@ namespace Hypertable {
     uint16_t get_compression_type() { return m_compression_type; }
 
     virtual size_t length() { return LENGTH; }
-    virtual void   encode(uint8_t **buf_ptr);
-    virtual void   write_header_checksum(uint8_t *base, uint8_t **buf_ptr);
-    virtual int    decode(uint8_t **buf_ptr, size_t *remaining_ptr);
+    virtual void   encode(uint8_t **bufp);
+    virtual void   write_header_checksum(uint8_t *base, uint8_t **bufp);
+    virtual void   decode(const uint8_t **bufp, size_t *remainp);
 
   protected:
     char m_magic[10];

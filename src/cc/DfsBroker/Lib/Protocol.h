@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -38,13 +38,13 @@ namespace Hypertable {
     public:
 
       static CommBuf *create_open_request(const String &fname,
-                                          uint32_t bufferSize=0);
+                                          uint32_t bufsz=0);
 
       static CommBuf *create_create_request(const String &fname,
                                             bool overwrite,
-                                            int32_t bufferSize,
+                                            int32_t bufsz,
                                             int32_t replication,
-                                            int64_t blockSize);
+                                            int64_t blksz);
 
       static CommBuf *create_close_request(int32_t fd);
 

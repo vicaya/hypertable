@@ -14,7 +14,7 @@
 #if defined(BOOST_MSVC)
 #   pragma warning( push )
 #   pragma warning( disable : 4127 ) // "conditional expression is constant"
-#endif       
+#endif
 
 #define BOOST_FUNCTION_TEMPLATE_PARMS BOOST_PP_ENUM_PARAMS(BOOST_FUNCTION_NUM_ARGS, typename T)
 
@@ -170,7 +170,7 @@ namespace boost {
                         BOOST_FUNCTION_PARMS)
 
         {
-          FunctionObj* f = 
+          FunctionObj* f =
             reinterpret_cast<FunctionObj*>(function_obj_ptr.obj_ptr);
           return (*f)(BOOST_FUNCTION_ARGS);
         }
@@ -188,7 +188,7 @@ namespace boost {
                BOOST_FUNCTION_PARMS)
 
         {
-          FunctionObj* f = 
+          FunctionObj* f =
             reinterpret_cast<FunctionObj*>(function_obj_ptr.obj_ptr);
           BOOST_FUNCTION_RETURN((*f)(BOOST_FUNCTION_ARGS));
         }
@@ -207,7 +207,7 @@ namespace boost {
                         BOOST_FUNCTION_PARMS)
 
         {
-          MemberPtr* f = 
+          MemberPtr* f =
             reinterpret_cast<MemberPtr*>(&function_obj_ptr.data);
           return boost::mem_fn(*f)(BOOST_FUNCTION_ARGS);
         }
@@ -225,7 +225,7 @@ namespace boost {
                BOOST_FUNCTION_PARMS)
 
         {
-          MemberPtr* f = 
+          MemberPtr* f =
             reinterpret_cast<MemberPtr*>(&function_obj_ptr.data);
           BOOST_FUNCTION_RETURN(boost::mem_fn(*f)(BOOST_FUNCTION_ARGS));
         }
@@ -321,7 +321,7 @@ namespace boost {
 
       /* Given the tag returned by get_function_tag, retrieve the
          actual invoker that will be used for the given function
-         object. 
+         object.
 
          Each specialization contains an "apply" nested class template
          that accepts the function object, return type, function
@@ -447,8 +447,8 @@ namespace boost {
 #endif
         // Function pointers
         template<typename FunctionPtr>
-        bool 
-        assign_to(FunctionPtr f, function_buffer& functor, 
+        bool
+        assign_to(FunctionPtr f, function_buffer& functor,
                   function_ptr_tag) const
         {
           this->clear(functor);
@@ -465,7 +465,7 @@ namespace boost {
         // Member pointers
 #if BOOST_FUNCTION_NUM_ARGS > 0
         template<typename MemberPtr>
-        bool 
+        bool
         assign_to(MemberPtr f, function_buffer& functor, member_ptr_tag) const
         {
           if (f) {
@@ -482,8 +482,8 @@ namespace boost {
         // Function objects
         // Assign to a function object using the small object optimization
         template<typename FunctionObj>
-        void 
-        assign_functor(const FunctionObj& f, function_buffer& functor, 
+        void
+        assign_functor(const FunctionObj& f, function_buffer& functor,
                        mpl::true_) const
         {
           new ((void*)&functor.data) FunctionObj(f);
@@ -491,8 +491,8 @@ namespace boost {
 
         // Assign to a function object allocated on the heap.
         template<typename FunctionObj>
-        void 
-        assign_functor(const FunctionObj& f, function_buffer& functor, 
+        void
+        assign_functor(const FunctionObj& f, function_buffer& functor,
                        mpl::false_) const
         {
 #ifndef BOOST_NO_STD_ALLOCATOR
@@ -512,12 +512,12 @@ namespace boost {
         }
 
         template<typename FunctionObj>
-        bool 
-        assign_to(const FunctionObj& f, function_buffer& functor, 
+        bool
+        assign_to(const FunctionObj& f, function_buffer& functor,
                   function_obj_tag) const
         {
           if (!boost::detail::function::has_empty_target(boost::addressof(f))) {
-            assign_functor(f, functor, 
+            assign_functor(f, functor,
                            mpl::bool_<(function_allows_small_object_optimization<FunctionObj>::value)>());
             return true;
           } else {
@@ -527,8 +527,8 @@ namespace boost {
 
         // Reference to a function object
         template<typename FunctionObj>
-        bool 
-        assign_to(const reference_wrapper<FunctionObj>& f, 
+        bool
+        assign_to(const reference_wrapper<FunctionObj>& f,
                   function_buffer& functor, function_obj_ref_tag) const
         {
           if (!boost::detail::function::has_empty_target(f.get_pointer())) {
@@ -776,14 +776,14 @@ namespace boost {
       typedef typename detail::function::get_function_tag<Functor>::type tag;
       typedef detail::function::BOOST_FUNCTION_GET_INVOKER<tag> get_invoker;
       typedef typename get_invoker::
-                         template apply<Functor, R BOOST_FUNCTION_COMMA 
+                         template apply<Functor, R BOOST_FUNCTION_COMMA
                         BOOST_FUNCTION_TEMPLATE_ARGS, Allocator>
         handler_type;
-      
+
       typedef typename handler_type::invoker_type invoker_type;
       typedef typename handler_type::manager_type manager_type;
-      
-      static const vtable_type stored_vtable = 
+
+      static const vtable_type stored_vtable =
         { { &manager_type::manage }, &invoker_type::invoke };
 
       if (stored_vtable.assign_to(f, functor)) vtable = &stored_vtable.base;
@@ -966,4 +966,4 @@ public:
 
 #if defined(BOOST_MSVC)
 #   pragma warning( pop )
-#endif       
+#endif

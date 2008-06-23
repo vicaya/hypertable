@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cstdlib>
 #include <iostream>
 
@@ -43,7 +44,7 @@ using namespace Hypertable;
 using namespace std;
 
 namespace {
-  const char *usage_str = 
+  const char *usage_str =
   "\n" \
   "usage: rsclient [OPTIONS] <host>[:<port>]\n" \
   "\n" \
@@ -65,13 +66,13 @@ namespace {
       host = location.substr(0, colon_offset);
       port = atoi(location.substr(colon_offset+1).c_str());
     }
-      
+
     memset(&addr, 0, sizeof(struct sockaddr_in));
     {
       struct hostent *he = gethostbyname(host.c_str());
       if (he == 0) {
-	herror(host.c_str());
-	exit(1);
+        herror(host.c_str());
+        exit(1);
       }
       memcpy(&addr.sin_addr.s_addr, he->h_addr_list[0], sizeof(uint32_t));
     }
@@ -81,7 +82,7 @@ namespace {
 
   class NullDispatchHandler : public DispatchHandler {
   public:
-    virtual void handle(EventPtr &eventPtr) { return; }
+    virtual void handle(EventPtr &event_ptr) { return; }
   };
 
 }
@@ -89,7 +90,7 @@ namespace {
 int main(int argc, char **argv) {
   CommandShellPtr command_shell_ptr;
   CommandInterpreterPtr interp_ptr;
-  string configFile = "";
+  string cfgfile = "";
   Comm *comm = 0;
   int error = 1;
   Hyperspace::SessionPtr hyperspace_ptr;
@@ -125,7 +126,7 @@ int main(int argc, char **argv) {
 
     po::variables_map vm;
     store(po::command_line_parser(argc, argv).
-	  options(cmdline_options).positional(p).run(), vm);
+          options(cmdline_options).positional(p).run(), vm);
     po::notify(vm);
 
     if (vm.count("help") || vm.count("server-location") == 0) {
@@ -134,11 +135,11 @@ int main(int argc, char **argv) {
     }
 
     if (vm.count("config"))
-      configFile = vm["config"].as<string>();
+      cfgfile = vm["config"].as<string>();
     else
-      configFile = System::installDir + "/conf/hypertable.cfg";
+      cfgfile = System::install_dir + "/conf/hypertable.cfg";
 
-    props_ptr = new Properties(configFile);
+    props_ptr = new Properties(cfgfile);
 
     location_str = vm["server-location"].as<string>();
 
@@ -163,7 +164,7 @@ int main(int argc, char **argv) {
     interp_ptr = new RangeServerCommandInterpreter(comm, hyperspace_ptr, addr, range_server_ptr);
 
     command_shell_ptr = new CommandShell("rsclient", interp_ptr, vm);
-    
+
     error = command_shell_ptr->run();
 
   }

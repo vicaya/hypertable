@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Luke Lu (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -39,15 +39,6 @@ namespace Hypertable {
       return boost::xtime_get(this, type) != 0;
     }
 
-    /** get the current hi-res time in seconds
-     *  returns a double-precision floating-point number  
-     *  returns 0 on failure.
-     */
-    double get_double(int type = TIME_UTC) {
-      if (!reset(type)) return 0.0;
-      return double(sec) + double(nsec)/1e9;
-    }
-
     /** compare with other HiResTime
      *  <: -1; ==: 0; >: 1
      */
@@ -59,6 +50,8 @@ namespace Hypertable {
     bool operator==(const HiResTime &y) const { return cmp(y) == 0; }
   };
 
-}
+  extern uint64_t get_ts64();
+
+} // namespace Hypertable
 
 #endif // HYPERTABLE_HIRES_TIME_H

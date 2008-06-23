@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -41,21 +41,21 @@ namespace Hyperspace {
   class Session;
 
   /**
-   * 
+   *
    */
   class ClientKeepaliveHandler : public DispatchHandler {
 
   public:
-    ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsPtr, Session *session);
+    ClientKeepaliveHandler(Comm *comm, PropertiesPtr &props, Session *session);
     virtual ~ClientKeepaliveHandler();
 
-    virtual void handle(Hypertable::EventPtr &eventPtr);
+    virtual void handle(Hypertable::EventPtr &event_ptr);
 
-    void register_handle(ClientHandleStatePtr &handleStatePtr) {
+    void register_handle(ClientHandleStatePtr &handle_state) {
       boost::mutex::scoped_lock lock(m_mutex);
-      HandleMapT::iterator iter = m_handle_map.find(handleStatePtr->handle);
+      HandleMap::iterator iter = m_handle_map.find(handle_state->handle);
       assert(iter == m_handle_map.end());
-      m_handle_map[handleStatePtr->handle] = handleStatePtr;
+      m_handle_map[handle_state->handle] = handle_state;
     }
 
     void unregister_handle(uint64_t handle) {
@@ -63,12 +63,12 @@ namespace Hyperspace {
       m_handle_map.erase(handle);
     }
 
-    bool get_handle_state(uint64_t handle, ClientHandleStatePtr &handleStatePtr) {
+    bool get_handle_state(uint64_t handle, ClientHandleStatePtr &handle_state) {
       boost::mutex::scoped_lock lock(m_mutex);
-      HandleMapT::iterator iter = m_handle_map.find(handle);
+      HandleMap::iterator iter = m_handle_map.find(handle);
       if (iter == m_handle_map.end())
-	return false;
-      handleStatePtr = (*iter).second;
+        return false;
+      handle_state = (*iter).second;
       return true;
     }
 
@@ -89,11 +89,11 @@ namespace Hyperspace {
     ClientConnectionHandlerPtr m_conn_handler_ptr;
     uint64_t m_last_known_event;
 
-    typedef hash_map<uint64_t, ClientHandleStatePtr> HandleMapT;
-    HandleMapT  m_handle_map;
+    typedef hash_map<uint64_t, ClientHandleStatePtr> HandleMap;
+    HandleMap  m_handle_map;
   };
   typedef boost::intrusive_ptr<ClientKeepaliveHandler> ClientKeepaliveHandlerPtr;
-  
+
 
 }
 

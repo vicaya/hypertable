@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Luke Lu (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -23,6 +23,9 @@
 #define HYPERTABLE_METALOG_H
 
 #include "Common/ReferenceCount.h"
+#include "Common/DynamicBuffer.h"
+#include "Common/StaticBuffer.h"
+#include "Common/Time.h"
 
 /**
  * Abstract classes/interfaces for meta log classes
@@ -31,28 +34,57 @@
 
 namespace Hypertable {
 
-class DynamicBuffer;
-
 class MetaLogEntry : public ReferenceCount {
 public:
+  MetaLogEntry() : timestamp(get_ts64()) {}
   virtual ~MetaLogEntry() {}
 
-  virtual void write(DynamicBuffer &) = 0;
-  virtual void read(const void *buf, size_t len) = 0;
-  virtual int get_type() = 0;
+  /**
+   * Serialize to buffer
+   *
+   * @param buf - output buffer
+   */
+  virtual void write(DynamicBuffer &buf) = 0;
+
+  /**
+   * Deserialize from buffer
+   *
+   * @param buf - input buffer (consumed)
+   * @return current pointer of input buffer for further reading
+   */
+  virtual const uint8_t *read(StaticBuffer &buf) = 0;
+
+  /**
+   * Get the most derived type of the entry
+   *
+   * @return type of entry
+   */
+  virtual int get_type() const = 0;
+
+  uint64_t timestamp;
+  StaticBuffer buffer;
 };
 
 typedef intrusive_ptr<MetaLogEntry> MetaLogEntryPtr;
+
+std::ostream &operator<<(std::ostream &, const MetaLogEntry *);
 
 class MetaLog : public ReferenceCount {
 public:
   virtual ~MetaLog() {}
 
-  virtual void write(MetaLogEntry *) = 0;
-  virtual void close() = 0;
+  /**
+   * Write a metalog entry
+   *
+   * @param mle - metalog entry to write
+   */
+  virtual void write(MetaLogEntry *mle) = 0;
 
-  // Remove finished entries except rs_range_loaded
-  virtual void purge() = 0;
+  /**
+   * Close the metalog 
+   * Implementation should handle multiple close calls
+   */
+  virtual void close() = 0;
 };
 
 typedef intrusive_ptr<MetaLog> MetaLogPtr;

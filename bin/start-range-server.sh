@@ -133,6 +133,8 @@ if [ $? != 0 ] ; then
       fi
   fi
   echo "Successfully started DFSBroker ($1)"
+else
+    echo "DFSBroker already running."
 fi
 
 #
@@ -187,5 +189,6 @@ if [ "$START_RANGESERVER" == "true" ] ; then
     fi
     echo "Successfully started Hypertable.RangeServer"
 else
-    exit 0
+    echo "ERROR: Hypertable.RangeServer already running."
+    exit 1
 fi

@@ -1,24 +1,25 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include "Common/Error.h"
 #include "Common/Logger.h"
 
@@ -31,25 +32,23 @@
 
 using namespace Hyperspace;
 using namespace Hypertable;
+using namespace Serialization;
 
 /**
  *
  */
 void RequestHandlerReaddir::run() {
   ResponseCallbackReaddir cb(m_comm, m_event_ptr);
-  size_t remaining = m_event_ptr->messageLen - 2;
-  uint8_t *msgPtr = m_event_ptr->message + 2;
-  uint64_t handle;
+  size_t remaining = m_event_ptr->message_len - 2;
+  const uint8_t *msg = m_event_ptr->message + 2;
 
-  // handle
-  if (!Serialization::decode_long(&msgPtr, &remaining, &handle))
-    goto abort;
+  try {
+    uint64_t handle = decode_i64(&msg, &remaining);
 
-  m_master->readdir(&cb, m_session_id, handle);
-
-  return;
-
- abort:
-  HT_ERROR("Encoding problem with READDIR message");
-  cb.error(Error::PROTOCOL_ERROR, "Encoding problem with READDIR message");
+    m_master->readdir(&cb, m_session_id, handle);
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    cb.error(e.code(), "Error handling READDIR message");
+  }
 }

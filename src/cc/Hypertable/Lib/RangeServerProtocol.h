@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -65,7 +65,7 @@ namespace Hypertable {
     static CommBuf *create_request_load_range(TableIdentifier &table, RangeSpec &range, const char *transfer_log, RangeState &range_state, uint16_t flags);
 
     /** Creates an "update" request message.  The data argument holds a sequence of key/value
-     * pairs.  Each key/value pair is encoded as two variable lenght ByteString32T records
+     * pairs.  Each key/value pair is encoded as two variable lenght ByteStringrecords
      * back-to-back.  This method transfers ownership of the data buffer to the CommBuf that
      * gets returned.
      *
@@ -129,7 +129,7 @@ namespace Hypertable {
      */
     static CommBuf *create_request_replay_start();
 
-    /** Creates a "replay update" request message.  The data argument holds a sequence of 
+    /** Creates a "replay update" request message.  The data argument holds a sequence of
      * blocks.  Each block consists of ...
      *
      * @param buffer buffer holding updates to replay

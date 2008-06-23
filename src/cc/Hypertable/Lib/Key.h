@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -30,7 +30,6 @@
 #include "Common/ByteString.h"
 #include "Common/DynamicBuffer.h"
 
-using namespace Hypertable;
 
 namespace Hypertable {
 
@@ -38,7 +37,7 @@ namespace Hypertable {
   static const uint32_t FLAG_DELETE_COLUMN_FAMILY  = 0x01;
   static const uint32_t FLAG_DELETE_CELL           = 0x02;
   static const uint32_t FLAG_INSERT                = 0xFF;
-  
+
   /** Provides access to internal components of opaque key.
    */
   class Key {
@@ -61,7 +60,7 @@ namespace Hypertable {
 #else
       memcpy(*bufp, &val, 8);
       *bufp += 8;
-#endif      
+#endif
     }
 
     static inline uint64_t decode_ts64(const uint8_t **bufp) {
@@ -107,9 +106,9 @@ namespace Hypertable {
      * Updates the timestamp of a previously loaded key by writing the
      * key back into the serialized key.
      *
-     * @param timestamp new timestamp 
+     * @param timestamp new timestamp
      */
-    void updateTimestamp(uint64_t timestamp);
+    void update_ts(uint64_t timestamp);
 
     const char    *row;
     const char    *column_qualifier;
@@ -123,7 +122,7 @@ namespace Hypertable {
 
   /**
    * Prints a one-line representation of the key to the given ostream.
-   * 
+   *
    * @param os output stream to print key to
    * @param key the key to print
    * @return the output stream
@@ -132,10 +131,11 @@ namespace Hypertable {
 
   /**
    * Builds an opaque key from a set of key components.  This function allocates
-   * memory for the key an then packs the components into the key so that keys can
-   * be lexicographically compared.  The opaque key has the following packed format:
+   * memory for the key an then packs the components into the key so that keys
+   * can be lexicographically compared.  The opaque key has the following
+   * packed format:
    * <p>
-   * &lt;rowKey&gt; NUL &lt;columnFamily&gt; &lt;columnQualifier&gt; NULL &lt;flag&gt; ~BIGENDIAN(&lt;timestamp&gt;)
+   * &lt;rowkey&gt; NUL &lt;column-family&gt; &lt;column-qualifier&gt; NULL &lt;flag&gt; ~BIGENDIAN(&lt;timestamp&gt;)
    * <p>
    * @param flag DELETE_ROW, DELETE_CELL, or INSERT
    * @param row NUL-terminated row key
@@ -144,10 +144,13 @@ namespace Hypertable {
    * @param timestamp timestamp in microseconds
    * @return newly allocated opaque key
    */
-  ByteString create_key(uint8_t flag, const char *row, uint8_t column_family_code, const char *column_qualifier, uint64_t timestamp);
+  ByteString create_key(uint8_t flag, const char *row,
+                        uint8_t column_family_code,
+                        const char *column_qualifier, uint64_t timestamp);
 
-  void create_key_and_append(DynamicBuffer &dst_buf, uint8_t flag, const char *row, uint8_t column_family_code, const char *column_qualifier, uint64_t timestamp);
-
+  void create_key_and_append(DynamicBuffer &dst_buf, uint8_t flag,
+                             const char *row, uint8_t column_family_code,
+                             const char *column_qualifier, uint64_t timestamp);
 }
 
 #endif // HYPERTABLE_KEY_H

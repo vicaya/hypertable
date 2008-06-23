@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Luke Lu (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include "Common/Checksum.h"
 #include "Common/Thread.h"
 #include "Common/Logger.h"
@@ -27,10 +28,9 @@
 
 using namespace Hypertable;
 using namespace std;
-using namespace boost;
 
-BlockCompressionCodecBmz::BlockCompressionCodecBmz(const Args &args) :
-                                                   m_workmem(0) {
+BlockCompressionCodecBmz::BlockCompressionCodecBmz(const Args &args)
+    : m_workmem(0) {
   HT_EXPECT(bmz_init() == BMZ_E_OK, Error::BLOCK_COMPRESSOR_INIT_ERROR);
   // defaults
   m_offset = 0;
@@ -47,7 +47,7 @@ BlockCompressionCodecBmz::~BlockCompressionCodecBmz() {
   _code_; \
 } while (0)
 
-int
+void
 BlockCompressionCodecBmz::set_args(const Args &args) {
   Args::const_iterator it = args.begin(), arg_end = args.end();
 
@@ -58,10 +58,9 @@ BlockCompressionCodecBmz::set_args(const Args &args) {
       _NEXT_ARG(m_offset = atoi((*it).c_str()));
     else HT_ERRORF("unknown bmz compressor argument: %s", (*it).c_str());
   }
-  return Error::OK;
 }
 
-int
+void
 BlockCompressionCodecBmz::deflate(const DynamicBuffer &input,
                                   DynamicBuffer &output,
                                   BlockCompressionHeader &header,
@@ -74,7 +73,7 @@ BlockCompressionCodecBmz::deflate(const DynamicBuffer &input,
   m_workmem.reserve(bmz_pack_worklen(inlen, m_fp_len), true);
 
   HT_EXPECT(bmz_pack(input.base, inlen, output.base + headerlen, &outlen,
-                     m_offset, m_fp_len, 0, m_workmem.base) == BMZ_E_OK, 
+                     m_offset, m_fp_len, 0, m_workmem.base) == BMZ_E_OK,
             Error::BLOCK_COMPRESSOR_DEFLATE_ERROR);
 
   // in case of an incompressible block
@@ -89,24 +88,21 @@ BlockCompressionCodecBmz::deflate(const DynamicBuffer &input,
     header.set_data_length(inlen);
     header.set_data_zlength(outlen);
   }
-  header.set_data_checksum(fletcher32(output.base + headerlen, header.get_data_zlength()));
-  
+  header.set_data_checksum(fletcher32(output.base + headerlen,
+                                      header.get_data_zlength()));
   output.ptr = output.base;
   header.encode(&output.ptr);
   output.ptr += header.get_data_zlength();
-
-  return Error::OK;
 }
 
-int
+void
 BlockCompressionCodecBmz::inflate(const DynamicBuffer &input,
                                   DynamicBuffer &output,
                                   BlockCompressionHeader &header) {
-  uint8_t *ip = input.base;
+  const uint8_t *ip = input.base;
   size_t remain = input.fill();
 
-  HT_EXPECT(header.decode(&ip, &remain) == Error::OK,
-            Error::BLOCK_COMPRESSOR_BAD_HEADER);
+  header.decode(&ip, &remain);
   HT_EXPECT(header.get_data_zlength() == remain,
             Error::BLOCK_COMPRESSOR_BAD_HEADER);
   HT_EXPECT(header.get_data_checksum() == fletcher32(ip, remain),
@@ -127,6 +123,4 @@ BlockCompressionCodecBmz::inflate(const DynamicBuffer &input,
               Error::BLOCK_COMPRESSOR_INFLATE_ERROR);
   }
   output.ptr = output.base + outlen;
-
-  return Error::OK;
 }

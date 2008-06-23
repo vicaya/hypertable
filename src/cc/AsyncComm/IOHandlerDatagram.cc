@@ -1,24 +1,25 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 
 #include <cassert>
 #include <iostream>
@@ -35,7 +36,7 @@ extern "C" {
 #endif
 }
 
-#define DISABLE_LOG_DEBUG 1
+#define HT_DISABLE_LOG_DEBUG 1
 
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
@@ -53,7 +54,7 @@ bool IOHandlerDatagram::handle_event(struct epoll_event *event) {
 
   if (event->events & EPOLLOUT) {
     if ((error = handle_write_readiness()) != Error::OK) {
-      deliver_event( new Event(Event::ERROR, 0, m_addr, error) );
+      deliver_event(new Event(Event::ERROR, 0, m_addr, error));
       return true;
     }
   }
@@ -66,21 +67,21 @@ bool IOHandlerDatagram::handle_event(struct epoll_event *event) {
 
     if ((nread = FileUtils::recvfrom(m_sd, m_message, 65536, (struct sockaddr *)&addr, &fromlen)) == (ssize_t)-1) {
       HT_ERRORF("FileUtils::recvfrom(%d) failure : %s", m_sd, strerror(errno));
-      deliver_event( new Event(Event::ERROR, m_sd, addr, Error::COMM_RECEIVE_ERROR) );
+      deliver_event(new Event(Event::ERROR, m_sd, addr, Error::COMM_RECEIVE_ERROR));
       return true;
     }
 
-    rmsg = new uint8_t [ nread ];
+    rmsg = new uint8_t [nread];
     memcpy(rmsg, m_message, nread);
 
-    deliver_event( new Event(Event::MESSAGE, 0, addr, Error::OK, (Header::HeaderT *)rmsg) );
+    deliver_event(new Event(Event::MESSAGE, 0, addr, Error::OK, (Header::Common *)rmsg));
 
     return false;
   }
 
   if (event->events & EPOLLERR) {
     HT_WARNF("Received EPOLLERR on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
-    deliver_event( new Event(Event::ERROR, 0, m_addr, Error::COMM_POLL_ERROR) );
+    deliver_event(new Event(Event::ERROR, 0, m_addr, Error::COMM_POLL_ERROR));
     return true;
   }
 
@@ -103,7 +104,7 @@ bool IOHandlerDatagram::handle_event(struct kevent *event) {
 
   if (event->filter == EVFILT_WRITE) {
     if ((error = handle_write_readiness()) != Error::OK) {
-      deliver_event( new Event(Event::ERROR, 0, m_addr, error) );
+      deliver_event(new Event(Event::ERROR, 0, m_addr, error));
       return true;
     }
   }
@@ -117,14 +118,14 @@ bool IOHandlerDatagram::handle_event(struct kevent *event) {
 
     if ((nread = FileUtils::recvfrom(m_sd, m_message, 65536, (struct sockaddr *)&addr, &fromlen)) == (ssize_t)-1) {
       HT_ERRORF("FileUtils::recvfrom(%d, len=%d) failure : %s", m_sd, available, strerror(errno));
-      deliver_event( new Event(Event::ERROR, m_sd, addr, Error::COMM_RECEIVE_ERROR) );
+      deliver_event(new Event(Event::ERROR, m_sd, addr, Error::COMM_RECEIVE_ERROR));
       return true;
     }
 
-    rmsg = new uint8_t [ nread ];
+    rmsg = new uint8_t [nread];
     memcpy(rmsg, m_message, nread);
 
-    deliver_event( new Event(Event::MESSAGE, 0, addr, Error::OK, (Header::HeaderT *)rmsg) );
+    deliver_event(new Event(Event::MESSAGE, 0, addr, Error::OK, (Header::Common *)rmsg));
 
     return false;
   }
@@ -153,26 +154,26 @@ int IOHandlerDatagram::handle_write_readiness() {
 
 
 
-int IOHandlerDatagram::send_message(struct sockaddr_in &addr, CommBufPtr &cbufPtr) {
+int IOHandlerDatagram::send_message(struct sockaddr_in &addr, CommBufPtr &cbp) {
   boost::mutex::scoped_lock lock(m_mutex);
   int error;
-  bool initiallyEmpty = m_send_queue.empty() ? true : false;
+  bool initially_empty = m_send_queue.empty() ? true : false;
 
   HT_LOG_ENTER;
 
-  //HT_INFOF("Pushing message destined for %s:%d onto send queue", 
+  //HT_INFOF("Pushing message destined for %s:%d onto send queue",
   //inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
 
-  m_send_queue.push_back(SendRecT(addr, cbufPtr));
+  m_send_queue.push_back(SendRec(addr, cbp));
 
   if ((error = flush_send_queue()) != Error::OK)
     return error;
 
-  if (initiallyEmpty && !m_send_queue.empty()) {
+  if (initially_empty && !m_send_queue.empty()) {
     add_poll_interest(Reactor::WRITE_READY);
     //HT_INFO("Adding Write interest");
   }
-  else if (!initiallyEmpty && m_send_queue.empty()) {
+  else if (!initially_empty && m_send_queue.empty()) {
     remove_poll_interest(Reactor::WRITE_READY);
     //HT_INFO("Removing Write interest");
   }
@@ -187,26 +188,26 @@ int IOHandlerDatagram::flush_send_queue() {
 
   while (!m_send_queue.empty()) {
 
-    SendRecT &sendRec = m_send_queue.front();
+    SendRec &send_rec = m_send_queue.front();
 
-    tosend = sendRec.second->data.size - (sendRec.second->data_ptr - sendRec.second->data.base);
+    tosend = send_rec.second->data.size - (send_rec.second->data_ptr - send_rec.second->data.base);
 
     assert(tosend > 0);
-    assert(sendRec.second->ext.base == 0);
+    assert(send_rec.second->ext.base == 0);
 
-    nsent = FileUtils::sendto(m_sd, sendRec.second->data_ptr, tosend,
-			      (const sockaddr*)&sendRec.first, sizeof(struct sockaddr_in));
+    nsent = FileUtils::sendto(m_sd, send_rec.second->data_ptr, tosend,
+                              (const sockaddr*)&send_rec.first, sizeof(struct sockaddr_in));
 
     if (nsent == (ssize_t)-1) {
       HT_WARNF("FileUtils::sendto(%d, len=%d, addr=%s:%d) failed : %s", m_sd, tosend,
-		  inet_ntoa(sendRec.first.sin_addr), ntohs(sendRec.first.sin_port), strerror(errno));
+                  inet_ntoa(send_rec.first.sin_addr), ntohs(send_rec.first.sin_port), strerror(errno));
       return Error::COMM_SEND_ERROR;
     }
     else if (nsent < tosend) {
       HT_WARNF("Only sent %d bytes", nsent);
       if (nsent == 0)
-	break;
-      sendRec.second->data_ptr += nsent;
+        break;
+      send_rec.second->data_ptr += nsent;
       break;
     }
 

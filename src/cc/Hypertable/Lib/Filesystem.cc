@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -26,22 +26,17 @@
 #include "Filesystem.h"
 
 using namespace Hypertable;
+using namespace Serialization;
 
 int Filesystem::decode_response_open(EventPtr &event_ptr) {
-  uint8_t *msg = event_ptr->message;
-  size_t remaining = event_ptr->messageLen;
-  int error, fd;
-
-  if (!Serialization::decode_int(&msg, &remaining, (uint32_t *)&error))
-    throw Exception(Error::RESPONSE_TRUNCATED);
+  const uint8_t *msg = event_ptr->message;
+  size_t remaining = event_ptr->message_len;
+  int error = decode_i32(&msg, &remaining);
 
   if (error != Error::OK)
-    throw Exception(error);
+    HT_THROW(error, "");
 
-  if (!Serialization::decode_int(&msg, &remaining, (uint32_t *)&fd))
-    throw Exception(Error::RESPONSE_TRUNCATED);
-
-  return fd;
+  return decode_i32(&msg, &remaining);
 }
 
 
@@ -56,26 +51,20 @@ int Filesystem::decode_response_create(EventPtr &event_ptr) {
  */
 size_t
 Filesystem::decode_response_read(EventPtr &event_ptr, void *dst, size_t len) {
-  uint8_t *msg = event_ptr->message;
-  size_t remaining = event_ptr->messageLen;
-  uint64_t offset;
-  int error;
-  uint32_t nread;
+  const uint8_t *msg = event_ptr->message;
+  size_t remaining = event_ptr->message_len;
 
-  if (!Serialization::decode_int(&msg, &remaining, (uint32_t *)&error))
-    throw Exception(Error::RESPONSE_TRUNCATED);
+  int error = decode_i32(&msg, &remaining);
 
   if (error != Error::OK)
-    throw Exception(error);
+    HT_THROW(error, "");
 
-  if (!Serialization::decode_long(&msg, &remaining, &offset))
-    throw Exception(Error::RESPONSE_TRUNCATED);
-
-  if (!Serialization::decode_int(&msg, &remaining, &nread))
-    throw Exception(Error::RESPONSE_TRUNCATED);
+  // uint64_t offset =
+  decode_i64(&msg, &remaining);
+  uint32_t nread = decode_i32(&msg, &remaining);
 
   if (remaining < nread || len < nread)
-    throw Exception(Error::RESPONSE_TRUNCATED);
+    HT_THROW(Error::RESPONSE_TRUNCATED, "");
 
   // PERF: We could just send back a pointer to msg here
   memcpy(dst, msg, nread);
@@ -89,25 +78,19 @@ Filesystem::decode_response_read(EventPtr &event_ptr, void *dst, size_t len) {
 size_t
 Filesystem::decode_response_read_header(EventPtr &event_ptr, uint64_t *offsetp,
                                         uint8_t **dstp) {
-  uint8_t *msg = event_ptr->message;
-  size_t remaining = event_ptr->messageLen;
-  int error;
-  uint32_t amount;
+  const uint8_t *msg = event_ptr->message;
+  size_t remaining = event_ptr->message_len;
 
-  if (!Serialization::decode_int(&msg, &remaining, (uint32_t *)&error))
-    throw Exception(Error::RESPONSE_TRUNCATED);
+  int error = decode_i32(&msg, &remaining);
 
   if (error != Error::OK)
-    throw Exception(error);
+    HT_THROW(error, "");
 
-  if (!Serialization::decode_long(&msg, &remaining, offsetp))
-    throw Exception(Error::RESPONSE_TRUNCATED);
-
-  if (!Serialization::decode_int(&msg, &remaining, &amount))
-    throw Exception(Error::RESPONSE_TRUNCATED);
+  *offsetp = decode_i64(&msg, &remaining);
+  uint32_t amount = decode_i32(&msg, &remaining);
 
   if (dstp)
-    *dstp = msg;
+    *dstp = (uint8_t *)msg;
 
   return amount;
 }
@@ -125,24 +108,17 @@ Filesystem::decode_response_pread(EventPtr &event_ptr, void *dst, size_t len) {
  */
 size_t
 Filesystem::decode_response_append(EventPtr &event_ptr, uint64_t *offsetp) {
-  uint8_t *msg = event_ptr->message;
-  size_t remaining = event_ptr->messageLen;
-  int error;
-  uint32_t amount;
+  const uint8_t *msg = event_ptr->message;
+  size_t remaining = event_ptr->message_len;
 
-  if (!Serialization::decode_int(&msg, &remaining, (uint32_t *)&error))
-    throw Exception(Error::RESPONSE_TRUNCATED);
+  int error = decode_i32(&msg, &remaining);
 
   if (error != Error::OK)
-    throw Exception(error);
+    HT_THROW(error, "");
 
-  if (!Serialization::decode_long(&msg, &remaining, offsetp))
-    throw Exception(Error::RESPONSE_TRUNCATED);
+  *offsetp = decode_i64(&msg, &remaining);
 
-  if (!Serialization::decode_int(&msg, &remaining, &amount))
-    throw Exception(Error::RESPONSE_TRUNCATED);
-
-  return amount;
+  return decode_i32(&msg, &remaining);
 }
 
 
@@ -150,21 +126,15 @@ Filesystem::decode_response_append(EventPtr &event_ptr, uint64_t *offsetp) {
  */
 int64_t
 Filesystem::decode_response_length(EventPtr &event_ptr) {
-  uint8_t *msg = event_ptr->message;
-  size_t remaining = event_ptr->messageLen;
-  int error;
-  int64_t len;
+  const uint8_t *msg = event_ptr->message;
+  size_t remaining = event_ptr->message_len;
 
-  if (!Serialization::decode_int(&msg, &remaining, (uint32_t *)&error))
-    throw Exception(Error::RESPONSE_TRUNCATED);
+  int error = decode_i32(&msg, &remaining);
 
   if (error != Error::OK)
-    throw Exception(error);
+    HT_THROW(error, "");
 
-  if (!Serialization::decode_long(&msg, &remaining, (uint64_t *)&len))
-    throw Exception(Error::RESPONSE_TRUNCATED);
-
-  return len;
+  return decode_i64(&msg, &remaining);
 }
 
 
@@ -173,26 +143,22 @@ Filesystem::decode_response_length(EventPtr &event_ptr) {
 void
 Filesystem::decode_response_readdir(EventPtr &event_ptr,
                                     std::vector<String> &listing) {
-  uint8_t *msg = event_ptr->message;
-  size_t remaining = event_ptr->messageLen;
-  int error;
-  uint32_t len;
-  const char *str;
+  const uint8_t *msg = event_ptr->message;
+  size_t remaining = event_ptr->message_len;
 
-  if (!Serialization::decode_int(&msg, &remaining, (uint32_t *)&error))
-    throw Exception(Error::RESPONSE_TRUNCATED);
+  int error = decode_i32(&msg, &remaining);
 
   if (error != Error::OK)
-    throw Exception(error);
+    HT_THROW(error, "");
 
   listing.clear();
-  if (!Serialization::decode_int(&msg, &remaining, &len))
-    throw Exception(Error::RESPONSE_TRUNCATED);
+
+  uint32_t len = decode_i32(&msg, &remaining);
+  uint16_t slen;
 
   for (uint32_t i=0; i<len; i++) {
-    if (!Serialization::decode_string(&msg, &remaining, &str))
-      throw Exception(Error::RESPONSE_TRUNCATED);
-    listing.push_back(str);
+    const char *str = decode_str16(&msg, &remaining, &slen);
+    listing.push_back(String(str, slen));
   }
 }
 
@@ -201,21 +167,15 @@ Filesystem::decode_response_readdir(EventPtr &event_ptr,
  */
 bool
 Filesystem::decode_response_exists(EventPtr &event_ptr) {
-  uint8_t *msg = event_ptr->message;
-  size_t remaining = event_ptr->messageLen;
-  int error;
-  bool exists;
+  const uint8_t *msg = event_ptr->message;
+  size_t remaining = event_ptr->message_len;
 
-  if (!Serialization::decode_int(&msg, &remaining, (uint32_t *)&error))
-    throw Exception(Error::RESPONSE_TRUNCATED);
+  int error = decode_i32(&msg, &remaining);
 
   if (error != Error::OK)
-    throw Exception(error);
+    HT_THROW(error, "");
 
-  if (!Serialization::decode_bool(&msg, &remaining, &exists))
-    throw Exception(Error::RESPONSE_TRUNCATED);
-
-  return exists;
+  return decode_bool(&msg, &remaining);
 }
 
 
@@ -224,12 +184,8 @@ Filesystem::decode_response_exists(EventPtr &event_ptr) {
  */
 int
 Filesystem::decode_response(EventPtr &event_ptr) {
-  uint8_t *msg = event_ptr->message;
-  size_t remaining = event_ptr->messageLen;
-  int error;
+  const uint8_t *msg = event_ptr->message;
+  size_t remaining = event_ptr->message_len;
 
-  if (!Serialization::decode_int(&msg, &remaining, (uint32_t *)&error))
-    throw Exception(Error::RESPONSE_TRUNCATED);
-
-  return error;
+  return decode_i32(&msg, &remaining);
 }

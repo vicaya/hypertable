@@ -1,24 +1,25 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cstdlib>
 
 extern "C" {
@@ -46,6 +47,7 @@ extern "C" {
 #include "CommTestThreadFunction.h"
 
 using namespace Hypertable;
+using namespace Serialization;
 
 namespace {
   const char *usage[] = {
@@ -62,45 +64,45 @@ namespace {
   public:
     ServerLauncher() {
       if ((m_child_pid = fork()) == 0) {
-	execl("./testServer", "./testServer", DEFAULT_PORT_ARG, "--delay=120000", (char *)0);
+        execl("./testServer", "./testServer", DEFAULT_PORT_ARG, "--delay=120000", (char *)0);
       }
       poll(0,0,2000);
     }
     ~ServerLauncher() {
       if (kill(m_child_pid, 9) == -1)
-	perror("kill");
+        perror("kill");
     }
     private:
       pid_t m_child_pid;
   };
 
   /**
-   * 
+   *
    */
   class ResponseHandler : public DispatchHandler {
   public:
     ResponseHandler() : m_mutex(), m_cond(), m_connected(false) { return; }
 
-    virtual void handle(EventPtr &eventPtr) {
+    virtual void handle(EventPtr &event_ptr) {
       boost::mutex::scoped_lock lock(m_mutex);
-      if (eventPtr->type == Event::CONNECTION_ESTABLISHED) {
-	m_connected = true;
-	m_cond.notify_one();
+      if (event_ptr->type == Event::CONNECTION_ESTABLISHED) {
+        m_connected = true;
+        m_cond.notify_one();
       }
-      else if (eventPtr->type == Event::ERROR) {
-	HT_INFOF("%s", eventPtr->toString().c_str());
+      else if (event_ptr->type == Event::ERROR) {
+        HT_INFOF("%s", event_ptr->to_str().c_str());
       }
       else {
-	HT_INFOF("%s", eventPtr->toString().c_str());
-	m_connected = true;
-	m_cond.notify_one();
+        HT_INFOF("%s", event_ptr->to_str().c_str());
+        m_connected = true;
+        m_cond.notify_one();
       }
     }
 
     void wait_for_connection() {
       boost::mutex::scoped_lock lock(m_mutex);
       while (!m_connected)
-	m_cond.wait(lock);
+        m_cond.wait(lock);
     }
 
   private:
@@ -116,20 +118,20 @@ int main(int argc, char **argv) {
   struct sockaddr_in addr;
   Comm *comm;
   int error;
-  EventPtr eventPtr;
+  EventPtr event_ptr;
   TestHarness harness("commTestTimeout");
   bool golden = false;
-  ResponseHandler *respHandler = new ResponseHandler();
-  DispatchHandlerPtr dispatchHandlerPtr(respHandler);
+  ResponseHandler *resp_handler = new ResponseHandler();
+  DispatchHandlerPtr dhp(resp_handler);
 
   {
     ServerLauncher slauncher;
 
     if (argc > 1) {
       if (!strcmp(argv[1], "--golden"))
-	golden = true;
+        golden = true;
       else
-	Usage::dump_and_exit(usage);
+        Usage::dump_and_exit(usage);
     }
 
     srand(8876);
@@ -141,26 +143,26 @@ int main(int argc, char **argv) {
 
     comm = new Comm();
 
-    if ((error = comm->connect(addr, dispatchHandlerPtr)) != Error::OK)
+    if ((error = comm->connect(addr, dhp)) != Error::OK)
       return 1;
 
-    respHandler->wait_for_connection();
+    resp_handler->wait_for_connection();
 
     HeaderBuilder hbuilder(Header::PROTOCOL_NONE, rand());
     std::string msg;
 
     msg = "foo";
-    CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::encoded_length_string(msg)) );
-    cbufPtr->append_string(msg);
-    if ((error = comm->send_request(addr, 5, cbufPtr, respHandler)) != Error::OK) {
+    CommBufPtr cbp(new CommBuf(hbuilder, encoded_length_str16(msg)));
+    cbp->append_str16(msg);
+    if ((error = comm->send_request(addr, 5, cbp, resp_handler)) != Error::OK) {
       HT_ERRORF("Problem sending request - %s", Error::get_text(error));
       return 1;
     }
 
     msg = "bar";
-    cbufPtr.reset (new CommBuf(hbuilder, Serialization::encoded_length_string(msg)) );
-    cbufPtr->append_string(msg);
-    if ((error = comm->send_request(addr, 5, cbufPtr, respHandler)) != Error::OK) {
+    cbp.reset(new CommBuf(hbuilder, encoded_length_str16(msg)));
+    cbp->append_str16(msg);
+    if ((error = comm->send_request(addr, 5, cbp, resp_handler)) != Error::OK) {
       HT_ERRORF("Problem sending request - %s", Error::get_text(error));
       return 1;
     }

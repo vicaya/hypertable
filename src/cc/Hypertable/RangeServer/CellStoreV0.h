@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -35,7 +35,6 @@
 #include "CellStore.h"
 #include "CellStoreTrailerV0.h"
 
-using namespace Hypertable;
 
 /**
  * Forward declarations
@@ -66,7 +65,7 @@ namespace Hypertable {
     virtual float compression_ratio() { return m_trailer.compression_ratio; }
     virtual const char *get_split_row();
     virtual std::string &get_filename() { return m_filename; }
-    virtual CellListScanner *create_scanner(ScanContextPtr &scanContextPtr);
+    virtual CellListScanner *create_scanner(ScanContextPtr &scan_ctx);
 
     BlockCompressionCodec *create_block_compression_codec();
 
@@ -88,12 +87,12 @@ namespace Hypertable {
     static const char INDEX_FIXED_BLOCK_MAGIC[10];
     static const char INDEX_VARIABLE_BLOCK_MAGIC[10];
 
-    typedef map<ByteString, uint32_t, ltByteString> IndexMapT;
+    typedef std::map<ByteString, uint32_t, LtByteString> IndexMap;
 
     Filesystem            *m_filesys;
     std::string            m_filename;
     int32_t                m_fd;
-    IndexMapT              m_index;
+    IndexMap               m_index;
     CellStoreTrailerV0     m_trailer;
     BlockCompressionCodec *m_compressor;
     DynamicBuffer          m_buffer;

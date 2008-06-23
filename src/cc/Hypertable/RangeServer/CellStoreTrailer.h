@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -23,10 +23,6 @@
 #define HYPERTABLE_CELLSTORETRAILER_H
 
 #include <iostream>
-
-extern "C" {
-#include <stdint.h>
-}
 
 namespace Hypertable {
 
@@ -59,10 +55,10 @@ namespace Hypertable {
 
     /**
      * Deserializes the trailer from the given buffer
-     * 
+     *
      * @param buf pointer to buffer containing serialized trailer
      */
-    virtual void deserialize(uint8_t *buf) = 0;
+    virtual void deserialize(const uint8_t *buf) = 0;
 
     /**
      * Prints the trailer to the given ostream

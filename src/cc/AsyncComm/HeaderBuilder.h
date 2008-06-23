@@ -1,18 +1,18 @@
 /** -*- C++ -*-
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -23,11 +23,6 @@
 #define HYPERTABLE_HEADERBUILDER_H
 
 #include <iostream>
-using namespace std;
-
-extern "C" {
-#include <stdint.h>
-}
 
 #include "Common/atomic.h"
 
@@ -73,7 +68,7 @@ namespace Hypertable {
      *
      * @param header pointer to the request message header
      */
-    void initialize_from_request(Header::HeaderT *header) {
+    void initialize_from_request(Header::Common *header) {
       m_id        = header->id;
       m_group_id  = header->gid;
       m_protocol  = header->protocol;
@@ -82,14 +77,14 @@ namespace Hypertable {
     }
 
     /** Returns the length of the header that would be generated */
-    size_t header_length() { return sizeof(Header::HeaderT); }
+    size_t header_length() { return sizeof(Header::Common); }
 
     /** Encodes the header to the given buffer.  Advances the buffer pointer by the
      * length of the header written.
      *
-     * @param bufPtr address of buffer pointer to write header to
+     * @param bufp address of buffer pointer to write header to
      */
-    void encode(uint8_t **bufPtr);
+    void encode(uint8_t **bufp);
 
     /** Sets the flags member of the header builder.  Currently this is only
      * used internally by the Comm layer and the 0th bit is a flag that
@@ -99,7 +94,7 @@ namespace Hypertable {
      */
     void set_flags(uint8_t flags) { m_flags = flags; }
 
-    /** ORs in some flag bits to the existing flags 
+    /** ORs in some flag bits to the existing flags
      *
      * @param flags flags to OR into the existing set
      */

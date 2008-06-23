@@ -1,23 +1,25 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+#include "Common/Compat.h"
 
 #include <iostream>
 using namespace std;
@@ -27,7 +29,7 @@ extern "C" {
 #include <netinet/tcp.h>
 }
 
-#define DISABLE_LOG_DEBUG 1
+#define HT_DISABLE_LOG_DEBUG 1
 
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
@@ -46,7 +48,7 @@ using namespace Hypertable;
 #if defined(__APPLE__)
 bool IOHandlerAccept::handle_event(struct kevent *event) {
   //DisplayEvent(event);
-  if (event->filter == EVFILT_READ)  
+  if (event->filter == EVFILT_READ)
     return handle_incoming_connection();
   return true;
 }
@@ -64,11 +66,11 @@ bool IOHandlerAccept::handle_event(struct epoll_event *event) {
 bool IOHandlerAccept::handle_incoming_connection() {
   int sd;
   struct sockaddr_in addr;
-  socklen_t addrLen = sizeof(sockaddr_in);
+  socklen_t addr_len = sizeof(sockaddr_in);
   int one = 1;
-  IOHandlerData *dataHandler;
+  IOHandlerData *data_handler;
 
-  if ((sd = accept(m_sd, (struct sockaddr *)&addr, &addrLen)) < 0) {
+  if ((sd = accept(m_sd, (struct sockaddr *)&addr, &addr_len)) < 0) {
     HT_ERRORF("accept() failure: %s", strerror(errno));
     return false;
   }
@@ -98,13 +100,13 @@ bool IOHandlerAccept::handle_incoming_connection() {
   DispatchHandlerPtr dhp;
   m_handler_factory_ptr->get_instance(dhp);
 
-  dataHandler = new IOHandlerData(sd, addr, dhp);
+  data_handler = new IOHandlerData(sd, addr, dhp);
 
-  IOHandlerPtr handlerPtr( dataHandler );
-  m_handler_map_ptr->insert_handler(dataHandler);
-  dataHandler->start_polling();
+  IOHandlerPtr handler(data_handler);
+  m_handler_map_ptr->insert_handler(data_handler);
+  data_handler->start_polling();
 
-  deliver_event( new Event(Event::CONNECTION_ESTABLISHED, dataHandler->connection_id(), addr, Error::OK) );
+  deliver_event(new Event(Event::CONNECTION_ESTABLISHED, data_handler->connection_id(), addr, Error::OK));
 
   return false;
  }
