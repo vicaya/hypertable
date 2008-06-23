@@ -84,14 +84,11 @@ target_link_libraries (generate_test_data Hypertable ${CMAKE_THREAD_LIBS_INIT} $
 
 # meta log test
 add_executable(metalog_api_test tests/MetaLogApiTest.cc)
-target_link_libraries(metalog_api_test Hypertable ${BOOST_LIB}
-    ${Log4cpp_LIBRARIES} ${ZLIB_LIBRARIES})
+target_link_libraries(metalog_api_test Hypertable ${Log4cpp_LIBRARIES} ${ZLIB_LIBRARIES} ${BOOST_LIB})
 add_executable(metalog_master_test tests/MetaLogMasterTest.cc)
-target_link_libraries(metalog_master_test Hypertable ${BOOST_LIB}
-    ${Log4cpp_LIBRARIES} ${ZLIB_LIBRARIES})
+target_link_libraries(metalog_master_test Hypertable ${Log4cpp_LIBRARIES} ${ZLIB_LIBRARIES} ${BOOST_LIB})
 add_executable(metalog_rs_test tests/MetaLogRangeServerTest.cc)
-target_link_libraries(metalog_rs_test HyperComm HyperDfsBroker Hypertable
-    HyperCommon ${BOOST_LIB} ${Log4cpp_LIBRARIES} ${ZLIB_LIBRARIES})
+target_link_libraries(metalog_rs_test HyperComm HyperDfsBroker Hypertable HyperCommon ${Log4cpp_LIBRARIES} ${ZLIB_LIBRARIES} ${BOOST_LIB})
 
 # schemaTest
 add_executable (schemaTest tests/schemaTest.cc)
