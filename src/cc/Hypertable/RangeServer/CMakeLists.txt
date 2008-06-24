@@ -1,24 +1,25 @@
 #
 # Copyright (C) 2008 Doug Judd (Zvents, Inc.)
-# 
+#
 # This file is part of Hypertable.
-# 
+#
 # Hypertable is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; version 2
 # of the License.
-# 
+#
 # Hypertable is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-# 
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301, USA.
+#
 
-set ( RangeServer_SRCS
+set(RangeServer_SRCS
 AccessGroup.cc
 CellCache.cc
 CellStoreReleaseCallback.cc
@@ -62,26 +63,31 @@ ScannerTimestampController.cc
 TableInfo.cc
 TableInfoMap.cc
 TimerHandler.cc
-main.cc
 )
 
+# RangeServer Lib
+add_library(HyperRanger ${RangeServer_SRCS})
+target_link_libraries(HyperRanger m HyperDfsBroker)
+
 # RangeServer
-add_executable (Hypertable.RangeServer ${RangeServer_SRCS})
-target_link_libraries (Hypertable.RangeServer ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} ${Log4cpp_LIBRARIES} ${EXPAT_LIBRARIES} ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES} HyperDfsBroker Hypertable ${MALLOC_LIBRARY} m)
+add_executable(Hypertable.RangeServer main.cc)
+target_link_libraries(Hypertable.RangeServer HyperRanger ${MALLOC_LIBRARY})
 
 # csdump
-add_executable (csdump CellStoreV0.cc CellStoreTrailerV0.cc csdump.cc CellStoreScannerV0.cc FileBlockCache.cc Global.cc ScanContext.cc)
-target_link_libraries (csdump ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} ${Log4cpp_LIBRARIES} ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES} HyperDfsBroker Hypertable HyperCommon ${MALLOC_LIBRARY})
+add_executable(csdump csdump.cc)
+target_link_libraries(csdump HyperRanger)
 
 # count_stored - program to diff two sorted files
-add_executable (count_stored count_stored.cc CellStoreV0.cc CellStoreTrailerV0.cc CellStoreScannerV0.cc FileBlockCache.cc Global.cc ScanContext.cc)
-target_link_libraries (count_stored ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} ${Log4cpp_LIBRARIES} ${EXPAT_LIBRARIES} ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES} HyperDfsBroker Hypertable ${MALLOC_LIBRARY})
+add_executable(count_stored count_stored.cc)
+target_link_libraries(count_stored HyperRanger)
 
 # FileBlockCache test
-add_executable (FileBlockCache_test tests/FileBlockCache_test.cc FileBlockCache.cc)
-target_link_libraries (FileBlockCache_test HyperCommon ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} ${Log4cpp_LIBRARIES})
+add_executable(FileBlockCache_test tests/FileBlockCache_test.cc)
+target_link_libraries(FileBlockCache_test HyperRanger)
 
-add_test (FileBlockCache FileBlockCache_test)
+add_test(FileBlockCache FileBlockCache_test)
 
-install (TARGETS Hypertable.RangeServer csdump count_stored
-	 RUNTIME DESTINATION ${VERSION}/bin)
+install(TARGETS HyperRanger Hypertable.RangeServer csdump count_stored
+        RUNTIME DESTINATION ${VERSION}/bin
+        LIBRARY DESTINATION ${VERSION}/lib
+        ARCHIVE DESTINATION ${VERSION}/lib)

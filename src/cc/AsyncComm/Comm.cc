@@ -49,7 +49,7 @@ extern "C" {
 #include "Common/System.h"
 
 #include "ReactorFactory.h"
-#include "ReactorRunner.cc"
+#include "ReactorRunner.h"
 #include "Comm.h"
 #include "IOHandlerAccept.h"
 #include "IOHandlerData.h"
