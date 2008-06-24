@@ -76,6 +76,8 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(const std::string &basedir,
     int ret;
     Dbt key, data;
 
+    m_env.set_lk_detect(DB_LOCK_DEFAULT);
+
     m_env.open(m_base_dir.c_str(), env_flags, 0);
     m_db = new Db(&m_env, 0);
     m_db->open(NULL, "namespace.db", NULL, DB_BTREE, db_flags, 0);
@@ -136,7 +138,7 @@ DbTxn *BerkeleyDbFilesystem::start_transaction() {
 
   // begin transaction
   try {
-    m_env.txn_begin(NULL, &txn, 0);
+    m_env.txn_begin(NULL, &txn, DB_READ_COMMITTED);
   }
   catch (DbException &e) {
     HT_FATALF("Error starting Berkeley DB transaction: %s", e.what());
