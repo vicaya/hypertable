@@ -94,7 +94,6 @@ bool CommitLogReader::next_raw_block(CommitLogBlockInfo *infop, BlockCompression
 
 
 bool CommitLogReader::next(const uint8_t **blockp, size_t *lenp, BlockCompressionHeaderCommitLog *header) {
-  int error;
   CommitLogBlockInfo binfo;
 
   while (next_raw_block(&binfo, header)) {
@@ -115,7 +114,7 @@ bool CommitLogReader::next(const uint8_t **blockp, size_t *lenp, BlockCompressio
                   "postion %lld (block len = %lld) - %s",
                   m_fragment_stack.top().block_stream->get_fname().c_str(),
                   binfo.start_offset, binfo.end_offset - binfo.start_offset,
-                  Error::get_text(error));
+                  Error::get_text(e.code()));
         continue;
       }
 

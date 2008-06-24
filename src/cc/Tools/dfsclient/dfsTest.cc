@@ -51,7 +51,7 @@ extern "C" {
 
 #include "DfsBroker/Lib/Client.h"
 
-#include "DfsTestThreadFunction.h"
+#include "dfsTestThreadFunction.h"
 
 using namespace Hypertable;
 using namespace std;

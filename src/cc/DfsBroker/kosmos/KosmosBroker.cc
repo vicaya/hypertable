@@ -219,7 +219,7 @@ void KosmosBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) 
  * append
  */
 void KosmosBroker::append(ResponseCallbackAppend *cb, uint32_t fd,
-                          uint32_t amount, uint8_t *data, bool sync) {
+                          uint32_t amount, const void *data, bool sync) {
   OpenFileDataKosmosPtr fdata;
   ssize_t nwritten;
   uint64_t offset;

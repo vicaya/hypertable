@@ -11,6 +11,7 @@
 
 FILE(GLOB globbed_bdb_includes /usr/local/BerkeleyDB*/include)
 FIND_PATH(BDB_INCLUDE_DIR db_cxx.h
+    NO_DEFAULT_PATH
     ${globbed_bdb_includes}
     /opt/local/include/db47
     /opt/local/include/db46     # introduced key_exists
@@ -22,6 +23,7 @@ FIND_PATH(BDB_INCLUDE_DIR db_cxx.h
 FILE(GLOB globbed_bdb_libs /usr/local/BerkeleyDB*/lib)
 SET(BDB_NAMES ${BDB_NAMES} db_cxx)
 FIND_LIBRARY(BDB_LIBRARY
+	NO_DEFAULT_PATH
   NAMES ${BDB_NAMES}
   PATHS ${globbed_bdb_libs}
         /opt/local/lib/db47

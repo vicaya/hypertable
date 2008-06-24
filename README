@@ -22,6 +22,8 @@
     ../dist/configure --enable-cxx
     make
     sudo make install
+    sudo echo "/usr/local/BerkeleyDB.4.7/lib" > /etc/ld.so.conf.d/BerkeleyDB.conf 
+    sudo /sbin/ldconfig
 
   3. Install the following libraries:
     - Boost version 1.34.1 (http://www.boost.org/)
