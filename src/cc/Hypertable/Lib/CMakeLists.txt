@@ -88,7 +88,7 @@ target_link_libraries(metalog_api_test Hypertable ${Log4cpp_LIBRARIES} ${ZLIB_LI
 add_executable(metalog_master_test tests/MetaLogMasterTest.cc)
 target_link_libraries(metalog_master_test Hypertable ${Log4cpp_LIBRARIES} ${ZLIB_LIBRARIES} ${BOOST_LIB})
 add_executable(metalog_rs_test tests/MetaLogRangeServerTest.cc)
-target_link_libraries(metalog_rs_test HyperComm HyperDfsBroker Hypertable HyperCommon ${Log4cpp_LIBRARIES} ${ZLIB_LIBRARIES} ${BOOST_LIB})
+target_link_libraries(metalog_rs_test HyperDfsBroker Hypertable HyperCommon HyperComm ${Log4cpp_LIBRARIES} ${ZLIB_LIBRARIES} ${BOOST_LIB})
 
 # schemaTest
 add_executable (schemaTest tests/schemaTest.cc)

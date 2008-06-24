@@ -686,7 +686,7 @@ Master::create_table(const char *tablename, const char *schemastr,
    * Create table file
    */
   if ((error = m_hyperspace_ptr->open(tablefile, OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE, null_handle_callback, &handle)) != Error::OK) {
-    errmsg = "Unable to create Hyperspace table file '" + tablefile + "' (" + Error::get_text(error) + ")";
+    errmsg = "Unable to create Hyperspace table file '" + tablefile + "'";
     goto abort;
   }
 
@@ -756,9 +756,8 @@ Master::create_table(const char *tablename, const char *schemastr,
       mutator_ptr->flush();
     }
     catch (Hypertable::Exception &e) {
-      // TODO: propagate exception
-      HT_ERRORF("Problem updating METADATA with new table info (row key = %s) - %s", metadata_key_str.c_str(), e.what());
-      exit(1);
+      errmsg = (String)"Problem updating METADATA with new table info (row key = " + metadata_key_str.c_str() + ") - " + e.what();
+      goto abort;
     }
 
     /**
