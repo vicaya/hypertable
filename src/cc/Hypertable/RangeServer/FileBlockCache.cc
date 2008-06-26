@@ -23,17 +23,10 @@
 #include <cassert>
 #include <iostream>
 
-#if ULONG_MAX == 4294967295 // 2**32 -1
-namespace boost {
-  inline std::size_t hash_value(uint64_t llval) {
-    return (std::size_t)(llval >> 32) ^ (std::size_t)llval;
-  }
-}
-#endif
-
 #include "FileBlockCache.h"
 
 using namespace Hypertable;
+using std::pair;
 
 atomic_t FileBlockCache::ms_next_file_id = ATOMIC_INIT(0);
 
@@ -47,8 +40,8 @@ bool
 FileBlockCache::checkout(int file_id, uint32_t file_offset, uint8_t **blockp,
                          uint32_t *lengthp) {
   boost::mutex::scoped_lock lock(m_mutex);
-  BlockCache::nth_index<1>::type &hash_index = m_cache.get<1>();
-  BlockCache::nth_index<1>::type::iterator iter;
+  HashIndex &hash_index = m_cache.get<1>();
+  HashIndex::iterator iter;
   uint64_t key = ((uint64_t)file_id << 32) | file_offset;
 
   if ((iter = hash_index.find(key)) == hash_index.end())
@@ -59,8 +52,7 @@ FileBlockCache::checkout(int file_id, uint32_t file_offset, uint8_t **blockp,
 
   hash_index.erase(iter);
   
-  std::pair<BlockCache::nth_index<0>::type::iterator, bool> insert_result =
-      m_cache.push_back(entry);
+  pair<Sequence::iterator, bool> insert_result = m_cache.push_back(entry);
   assert(insert_result.second);
 
   *blockp = (*insert_result.first).block;
@@ -72,8 +64,8 @@ FileBlockCache::checkout(int file_id, uint32_t file_offset, uint8_t **blockp,
 
 void FileBlockCache::checkin(int file_id, uint32_t file_offset) {
   boost::mutex::scoped_lock lock(m_mutex);
-  BlockCache::nth_index<1>::type &hash_index = m_cache.get<1>();
-  BlockCache::nth_index<1>::type::iterator iter;
+  HashIndex &hash_index = m_cache.get<1>();
+  HashIndex::iterator iter;
   uint64_t key = ((uint64_t)file_id << 32) | file_offset;
 
   iter = hash_index.find(key);
@@ -88,7 +80,7 @@ bool
 FileBlockCache::insert_and_checkout(int file_id, uint32_t file_offset,
                                     uint8_t *block, uint32_t length) {
   boost::mutex::scoped_lock lock(m_mutex);
-  BlockCache::nth_index<1>::type &hash_index = m_cache.get<1>();
+  HashIndex &hash_index = m_cache.get<1>();
   uint64_t key = ((uint64_t)file_id << 32) | file_offset;
 
   if (length > m_max_memory || hash_index.find(key) != hash_index.end())
@@ -115,8 +107,7 @@ FileBlockCache::insert_and_checkout(int file_id, uint32_t file_offset,
   entry.length = length;
   entry.ref_count = 1;
 
-  std::pair<BlockCache::nth_index<0>::type::iterator, bool> insert_result =
-      m_cache.push_back(entry);
+  pair<Sequence::iterator, bool> insert_result = m_cache.push_back(entry);
   assert(insert_result.second);
 
   m_avail_memory -= length;
@@ -127,7 +118,7 @@ FileBlockCache::insert_and_checkout(int file_id, uint32_t file_offset,
 
 bool FileBlockCache::contains(int file_id, uint32_t file_offset) {
   boost::mutex::scoped_lock lock(m_mutex);
-  BlockCache::nth_index<1>::type &hash_index = m_cache.get<1>();
+  HashIndex &hash_index = m_cache.get<1>();
   uint64_t key = ((uint64_t)file_id << 32) | file_offset;
 
   return (hash_index.find(key) != hash_index.end());

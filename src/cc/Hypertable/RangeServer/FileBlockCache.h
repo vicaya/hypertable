@@ -30,10 +30,6 @@
 
 #include "Common/atomic.h"
 
-namespace boost {
-  std::size_t hash_value(uint64_t llval);
-}
-
 namespace Hypertable {
   using namespace boost::multi_index;
 
@@ -80,14 +76,23 @@ namespace Hypertable {
       }
     };
 
+    struct HashI64 {
+      std::size_t operator()(uint64_t x) const {
+        return (std::size_t)(x >> 32) ^ (std::size_t)x;
+      }
+    };
+
     typedef boost::multi_index_container<
       BlockCacheEntry,
       indexed_by<
         sequenced<>,
         hashed_unique<const_mem_fun<BlockCacheEntry, uint64_t,
-                      &BlockCacheEntry::key> >
+                      &BlockCacheEntry::key>, HashI64>
       >
     > BlockCache;
+
+    typedef BlockCache::nth_index<0>::type Sequence;
+    typedef BlockCache::nth_index<1>::type HashIndex;
 
     boost::mutex  m_mutex;
     BlockCache    m_cache;
