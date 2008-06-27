@@ -2,7 +2,7 @@
 
 TableRangeMap::TableRangeMap(std::string TableName)
 {
-  m_client = new Client("mapreduce","/usr/local/0.9.0.5/conf/hypertable.cfg");
+  m_client = new Client("mapreduce", "conf/hypertable.cfg");
   
   m_user_table = m_client->open_table(TableName);
   m_meta_table = m_client->open_table("METADATA");
