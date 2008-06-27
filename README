@@ -12,7 +12,7 @@
 
   1. Install CMake (http://www.cmake.org/)
 
-  2. Install Required libraries (you may already have them installed)
+  2. Install required libraries (you may already have them installed)
     - BerkeleyDB 4.6+
       Example (generic Linux):
       tar -xzvf ~/Downloads/db-4.7.25.tar.gz
@@ -53,21 +53,21 @@
     HIGHLY RECOMMENDED (but not required):
     - tcmalloc (http://code.google.com/p/google-perftools/)
 
-  4. Checkout the source code.
+  3. Checkout the source code.
 
     mkdir ~/src
     cd ~/src
     git clone git://scm.hypertable.org/pub/repos/hypertable.git
 
-  5. Create an install directory
+  4. Create an install directory if necessary
 
     mkdir ~/hypertable
 
-  6. Create a build directory
+  5. Create a build directory
 
     mkdir -p ~/build/hypertable
 
-  7. Configure the build.
+  6. Configure the build.
 
     cd ~/build/hypertable
     cmake ~/src/hypertable
@@ -75,7 +75,7 @@
     By default hypertable gets installed in /opt/hypertable, you can
     use:
 
-    cmake -DCMAKE_INSTALL_PREFIX=<your_prefix> ~/src/hypertable
+    cmake -DCMAKE_INSTALL_PREFIX=$prefix ~/src/hypertable
 
     for your own install directory. Also by default the build is configured
     for Debug. To compile for performance/benchmark:
@@ -86,15 +86,24 @@
 
     ccmake ~/src/hypertable
 
-    to change build parameters interactively (in a curse based UI.)
+    to change build parameters interactively.
 
     To build shared libraries, e.g., for scripting language extensions:
     cmake -DBUILD_SHARED_LIBS=ON ~/src/hypertable
 
-  8. Build the software.
+  7. Build the software.
 
     make (or make -j<number_of_cpu_or_cores_plus_1> for faster compile)
     make install
+
+    Note, if it's a shared library install, you might need to do:
+    echo $prefix/$version/lib' | \
+        sudo tee /etc/ld.so.conf.d/hypertable
+    sudo /sbin/ldconfig
+
+    Or, you can use the usual LD_LIBRARY_PATH (most Unix like OS) and
+    DYLD_LIBRARY_PATH (Mac OS X) to specify non-standard shared library
+    directories.
 
 ===================================
 === HOW TO RUN REGRESSION TESTS ===
@@ -108,9 +117,9 @@
    *** WARNING: THIS STEP MUST BE PERFORMED PRIOR TO RUNNING THE TEST ***
    **********************************************************************
 
-  VERSION=0.9.0.7
+  version=0.9.0.7
 
-  cd ~/hypertable/$VERSION
+  cd $prefix/$version
   bin/kill-servers.sh
   bin/start-all-servers.sh local
 
