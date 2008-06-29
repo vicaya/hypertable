@@ -78,14 +78,9 @@ main(int ac, char *av[]) {
     Config::init(ac, av);
     ReactorFactory::initialize(REACTOR_THREADS);
 
-    // reasonable assumption for regression test
-    struct sockaddr_in addr;
-    InetAddr::initialize(&addr, "localhost", DFSBROKER_PORT);
+    DfsBroker::Client *client = new DfsBroker::Client("localhost",
+        DFSBROKER_PORT, DFS_TIMEOUT);
 
-    Comm *comm = new Comm();
-    ConnectionManagerPtr conn_mgr = new ConnectionManager(comm);
-    DfsBroker::Client *client = new DfsBroker::Client(conn_mgr, addr,
-                                                      DFS_TIMEOUT);
     if (!client->wait_for_connection(DFS_TIMEOUT)) {
       HT_ERROR("Unable to connect to DFS");
       return 1;

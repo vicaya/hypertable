@@ -22,10 +22,11 @@
 #ifndef HYPERTABLE_DFSBROKER_CLIENT_H
 #define HYPERTABLE_DFSBROKER_CLIENT_H
 
-#include <boost/thread/mutex.hpp>
-
+#include "Common/Mutex.h"
 #include "Common/HashMap.h"
 #include "Common/Properties.h"
+
+#include "AsyncComm/Comm.h"
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "AsyncComm/ConnectionManager.h"
 
@@ -33,25 +34,10 @@
 
 #include "ClientBufferedReaderHandler.h"
 
-/**
- * Forward declarations
- */
-namespace Hypertable {
-  class DispatchHandler;
-  class Comm;
-  class CommBuf;
-  class MessageBuilderSimple;
-}
-namespace boost {
-  class thread;
-}
-
 #include "Protocol.h"
 
 
-namespace Hypertable {
-
-  namespace DfsBroker {
+namespace Hypertable { namespace DfsBroker {
 
     /** Proxy class for DFS broker.  As specified in the general contract for
      * a Filesystem, commands that operate on the same file descriptor
@@ -95,6 +81,14 @@ namespace Hypertable {
        */
       Client(Comm *comm, struct sockaddr_in &addr, time_t timeout);
 
+      /** Convenient contructor for dfs testing
+       *
+       * @param host - dfs hostname
+       * @param port - dfs port
+       * @param timeout - timeout for requests
+       */
+      Client(const char *host, int port, time_t timeout);
+
       /** Waits up to max_wait_secs for a connection to be established with the DFS
        * broker.
        *
@@ -102,8 +96,8 @@ namespace Hypertable {
        * @return true if connected, false otherwise
        */
       bool wait_for_connection(long max_wait_secs) {
-        if (m_conn_manager_ptr)
-          return m_conn_manager_ptr->wait_for_connection(m_addr, max_wait_secs);
+        if (m_conn_mgr)
+          return m_conn_mgr->wait_for_connection(m_addr, max_wait_secs);
         return true;
       }
 
@@ -197,19 +191,21 @@ namespace Hypertable {
        */
       void send_message(CommBufPtr &cbp, DispatchHandler *handler);
 
-      typedef hash_map<uint32_t, ClientBufferedReaderHandler *> BufferedReaderMap;
+      typedef hash_map<uint32_t, ClientBufferedReaderHandler *>
+          BufferedReaderMap;
 
-      boost::mutex          m_mutex;
-      Comm                 *m_comm;
-      ConnectionManagerPtr  m_conn_manager_ptr;
+      Mutex                 m_mutex;
+      CommPtr               m_comm;
+      ConnectionManagerPtr  m_conn_mgr;
       struct sockaddr_in    m_addr;
       time_t                m_timeout;
-      MessageBuilderSimple *m_message_builder;
       Protocol              m_protocol;
-      BufferedReaderMap    m_buffered_reader_map;
+      BufferedReaderMap     m_buffered_reader_map;
     };
-  }
-}
+
+    typedef intrusive_ptr<Client> ClientPtr;
+
+}} // namespace Hypertable::DfsBroker
 
 
 #endif // HYPERTABLE_DFSBROKER_CLIENT_H
