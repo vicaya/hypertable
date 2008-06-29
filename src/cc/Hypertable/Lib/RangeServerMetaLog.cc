@@ -42,8 +42,8 @@ struct OrderByTimestamp {
 
 } // local namespace
 
-RangeServerMetaLog::RangeServerMetaLog(Filesystem *fs, const String &path) :
-                                       Parent(fs, path) {
+RangeServerMetaLog::RangeServerMetaLog(Filesystem *fs, const String &path)
+    : Parent(fs, path) {
   uint8_t buf[RSML_HEADER_SIZE], *p = buf;
   memcpy(buf, RSML_PREFIX, strlen(RSML_PREFIX));
   p += strlen(RSML_PREFIX);

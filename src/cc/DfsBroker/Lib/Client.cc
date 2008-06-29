@@ -33,24 +33,21 @@
 
 using namespace Hypertable;
 using namespace Hypertable::DfsBroker;
-typedef boost::mutex::scoped_lock ScopedLock;
 
-Client::Client(ConnectionManagerPtr &conn_manager_ptr,
-               struct sockaddr_in &addr, time_t timeout) :
-               m_conn_manager_ptr(conn_manager_ptr), m_addr(addr),
-               m_timeout(timeout) {
-  m_comm = conn_manager_ptr->get_comm();
-  conn_manager_ptr->add(m_addr, m_timeout, "DFS Broker");
+Client::Client(ConnectionManagerPtr &conn_mgr, struct sockaddr_in &addr,
+               time_t timeout)
+    : m_conn_mgr(conn_mgr), m_addr(addr), m_timeout(timeout) {
+  m_comm = conn_mgr->get_comm();
+  conn_mgr->add(m_addr, m_timeout, "DFS Broker");
 }
 
 
-Client::Client(ConnectionManagerPtr &conn_manager_ptr,
-               PropertiesPtr &props_ptr) :
-               m_conn_manager_ptr(conn_manager_ptr) {
+Client::Client(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props_ptr)
+    : m_conn_mgr(conn_mgr) {
   const char *host;
   uint16_t port;
 
-  m_comm = conn_manager_ptr->get_comm();
+  m_comm = conn_mgr->get_comm();
   {
     if ((port = (uint16_t)props_ptr->get_int("DfsBroker.Port", 0)) == 0)
       HT_THROW(Error::DFSBROKER_INVALID_CONFIG,
@@ -66,15 +63,22 @@ Client::Client(ConnectionManagerPtr &conn_manager_ptr,
     InetAddr::initialize(&m_addr, host, port);
   }
 
-  conn_manager_ptr->add(m_addr, 10, "DFS Broker");
+  conn_mgr->add(m_addr, 10, "DFS Broker");
 
 }
 
-Client::Client(Comm *comm, struct sockaddr_in &addr, time_t timeout) :
-               m_comm(comm), m_conn_manager_ptr(0), m_addr(addr),
-               m_timeout(timeout) {
+Client::Client(Comm *comm, struct sockaddr_in &addr, time_t timeout)
+    : m_comm(comm), m_conn_mgr(0), m_addr(addr), m_timeout(timeout) {
 }
 
+Client::Client(const char *host, int port, time_t timeout)
+    : m_timeout(timeout) {
+  InetAddr::initialize(&m_addr, host, port);
+
+  m_comm = new Comm();
+  m_conn_mgr = new ConnectionManager(m_comm.get());
+  m_conn_mgr->add(m_addr, timeout, "DFS Broker");
+}
 
 void
 Client::open(const String &name, DispatchHandler *handler) {
