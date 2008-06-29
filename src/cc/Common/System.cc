@@ -45,7 +45,7 @@ string System::install_dir;
 string System::exe_name;
 boost::mutex System::ms_mutex;
 
-void System::initialize(const char *argv0) {
+void System::_init(const char *argv0) {
   boost::mutex::scoped_lock lock(ms_mutex);
   const char *exepath = getenv("_");
   char cwd[1024];

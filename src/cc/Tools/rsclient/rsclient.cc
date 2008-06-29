@@ -23,13 +23,10 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <boost/program_options.hpp>
-namespace po = boost::program_options;
-
 #include "AsyncComm/DispatchHandler.h"
 
 #include "Common/InetAddr.h"
-#include "Common/System.h"
+#include "Common/Config.h"
 
 #include "Hyperspace/Session.h"
 
@@ -88,67 +85,48 @@ namespace {
 }
 
 int main(int argc, char **argv) {
-  CommandShellPtr command_shell_ptr;
-  CommandInterpreterPtr interp_ptr;
+  CommandShellPtr shell;
+  CommandInterpreterPtr interp;
   string cfgfile = "";
   Comm *comm = 0;
   int error = 1;
-  Hyperspace::SessionPtr hyperspace_ptr;
-  RangeServerClientPtr range_server_ptr;
+  Hyperspace::SessionPtr hyperspace;
+  RangeServerClientPtr client;
   struct sockaddr_in addr;
   DispatchHandlerPtr null_handler_ptr = new NullDispatchHandler();
   PropertiesPtr props_ptr;
   std::string location_str;
 
-  System::initialize(argv[0]);
-  ReactorFactory::initialize((uint16_t)System::get_processor_count());
-
   try {
-
-    po::options_description generic(usage_str);
-    generic.add_options()
-      ("help", "Display this help message")
-      ;
-
+    Config::Desc generic(usage_str);
     CommandShell::add_options(generic);
 
     // Hidden options: server location
-    po::options_description hidden("Hidden options");
+    Config::Desc hidden("Hidden options");
     hidden.add_options()
-      ("server-location", po::value<string>(), "server location")
-      ;
+      ("server-location", Config::value<string>(), "server location");
 
-    po::options_description cmdline_options;
-    cmdline_options.add(generic).add(hidden);
-
-    po::positional_options_description p;
+    Config::PositionalDesc p;
     p.add("server-location", -1);
 
-    po::variables_map vm;
-    store(po::command_line_parser(argc, argv).
-          options(cmdline_options).positional(p).run(), vm);
-    po::notify(vm);
+    Config::init(argc, argv, &generic, &hidden, &p);
+    ReactorFactory::initialize(System::get_processor_count() + 1);
 
-    if (vm.count("help") || vm.count("server-location") == 0) {
+    if (Config::varmap.count("server-location") == 0) {
       cout << generic << "\n";
       return 1;
     }
 
-    if (vm.count("config"))
-      cfgfile = vm["config"].as<string>();
-    else
-      cfgfile = System::install_dir + "/conf/hypertable.cfg";
+    props_ptr  = new Properties(Config::cfgfile);
 
-    props_ptr = new Properties(cfgfile);
-
-    location_str = vm["server-location"].as<string>();
+    location_str = Config::varmap["server-location"].as<string>();
 
     build_inet_address(addr, props_ptr, location_str);
 
     comm = new Comm();
 
     // Create Range Server client object
-    range_server_ptr = new RangeServerClient(comm, 30);
+    client = new RangeServerClient(comm, 30);
 
     // connect to RangeServer
     if ((error = comm->connect(addr, null_handler_ptr)) != Error::OK) {
@@ -157,22 +135,21 @@ int main(int argc, char **argv) {
     }
 
     // Connect to Hyperspace
-    hyperspace_ptr = new Hyperspace::Session(comm, props_ptr, 0);
-    if (!hyperspace_ptr->wait_for_connection(30))
+    hyperspace = new Hyperspace::Session(comm, props_ptr, 0);
+    if (!hyperspace->wait_for_connection(30))
       exit(1);
 
-    interp_ptr = new RangeServerCommandInterpreter(comm, hyperspace_ptr, addr, range_server_ptr);
+    interp = new RangeServerCommandInterpreter(comm, hyperspace, addr, client);
 
-    command_shell_ptr = new CommandShell("rsclient", interp_ptr, vm);
+    shell = new CommandShell("rsclient", interp, Config::varmap);
 
-    error = command_shell_ptr->run();
-
+    error = shell->run();
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
   }
   catch(exception& e) {
-    cerr << "error: " << e.what() << "\n";
-  }
-  catch(...) {
-    cerr << "Exception of unknown type!\n";
+    HT_ERROR_OUT << e.what() << HT_END;
   }
 
   return error;

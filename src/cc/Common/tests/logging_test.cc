@@ -1,6 +1,6 @@
 #include "Common/Compat.h"
 #include "Common/Logger.h"
-#include "Common/System.h"
+#include "Common/Config.h"
 #include <stdio.h>
 #include <signal.h>
 #include <setjmp.h>
@@ -80,7 +80,7 @@ void test_basic_logging(const char *msg) {
 } // local namespace
 
 int main(int ac, char *av[]) {
-  System::initialize(av[0]);
+  Config::init(ac, av);
   test_basic_logging(av[0]);
   return 1; // normal exits in sig handlers
 }

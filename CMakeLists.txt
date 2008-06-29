@@ -18,13 +18,13 @@
 
 project(HYPERTABLE)
 
+# Hypertable version components
 set(VERSION_MAJOR "0")
 set(VERSION_MINOR "9")
 set(VERSION_MICRO "0")
 set(VERSION_PATCH "7")
-set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}.${VERSION_PATCH})
 
-# Behavior compatibility
+# cmake behavior compatibility
 mark_as_advanced(CMAKE_BACKWARDS_COMPATIBILITY)
 cmake_minimum_required(VERSION 2.4.6)
 if (COMMAND cmake_policy)
@@ -39,11 +39,22 @@ if (NOT CMAKE_BUILD_TYPE)
       "Options: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif (NOT CMAKE_BUILD_TYPE)
 
-# installprefix
+# install directory prefix
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX "/opt/hypertable"
       CACHE PATH "installation directory prefix" FORCE)
 endif (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+
+# A more informative hypertable version string
+set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}.${VERSION_PATCH})
+exec_program(git ${HYPERTABLE_SOURCE_DIR} ARGS describe --long
+             OUTPUT_VARIABLE HT_GIT_VERSION RETURN_VALUE GIT_RETURN)
+if (GIT_RETURN STREQUAL "0")
+  set(HT_VCS_STRING ${HT_GIT_VERSION})
+else (GIT_RETURN STREQUAL "0")
+  set(HT_VCS_STRING "release tarball")
+endif (GIT_RETURN STREQUAL "0")
+set(VERSION_STRING "Hypertable ${VERSION} (${HT_VCS_STRING})")
 
 # Enable testing
 enable_testing()
@@ -76,8 +87,9 @@ find_package(Readline REQUIRED)
 set(MALLOC_LIBRARY ${Tcmalloc_LIBRARIES})
 
 # include directories
-include_directories(src/cc ${ZLIB_INCLUDE_DIR} ${Boost_INCLUDE_DIRS}
-    ${Log4cpp_INCLUDE_DIR} ${EXPAT_INCLUDE_DIRS} ${BDB_INCLUDE_DIR})
+include_directories(src/cc ${HYPERTABLE_BINARY_DIR}/src/cc
+    ${ZLIB_INCLUDE_DIR} ${Boost_INCLUDE_DIRS} ${Log4cpp_INCLUDE_DIR}
+    ${EXPAT_INCLUDE_DIRS} ${BDB_INCLUDE_DIR} ${READLINE_INCLUDE_DIR})
 
 if (BOOST_VERSION MATCHES "1_34")
   message(STATUS "Got boost 1.34.x, prepend fix directory")
