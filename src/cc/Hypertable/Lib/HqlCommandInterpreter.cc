@@ -234,30 +234,35 @@ void HqlCommandInterpreter::execute_line(const String &line) {
 
       file_size = FileUtils::size(state.input_file.c_str());
 
-      printf("\nLoading ");
-      const char *format = "%3lld,";
-      if (file_size > 1000000000000LL) {
-        printf(format, file_size/1000000000000LL);
-        format = "%03lld,";
+      if (!m_silent && !m_test_mode) {
+	printf("\nLoading ");
+	const char *format = "%3lld,";
+	if (file_size > 1000000000000LL) {
+	  printf(format, file_size/1000000000000LL);
+	  format = "%03lld,";
+	}
+	if (file_size > 1000000000LL) {
+	  printf(format, (file_size%1000000000000LL) / 1000000000LL);
+	  format = "%03lld,";
+	}
+	if (file_size > 1000000LL) {
+	  printf(format, (file_size%1000000000LL) / 1000000LL);
+	  format = "%03lld,";
+	}
+	if (file_size > 1000LL) {
+	  printf(format, (file_size%1000000LL) / 1000LL);
+	  printf("%03lld", file_size % 1000LL);
+	}
+	else
+	  printf("%3lld", file_size % 1000LL);
+	printf(" bytes of input data...\n");
+	fflush(stdout);
       }
-      if (file_size > 1000000000LL) {
-        printf(format, (file_size%1000000000000LL) / 1000000000LL);
-        format = "%03lld,";
-      }
-      if (file_size > 1000000LL) {
-        printf(format, (file_size%1000000000LL) / 1000000LL);
-        format = "%03lld,";
-      }
-      if (file_size > 1000LL) {
-        printf(format, (file_size%1000000LL) / 1000LL);
-        printf("%03lld", file_size % 1000LL);
-      }
-      else
-        printf("%3lld", file_size % 1000LL);
-      printf(" bytes of input data...\n");
-      fflush(stdout);
 
-      boost::progress_display show_progress(file_size);
+      boost::progress_display *show_progress = 0;
+
+      if (!m_silent && !m_test_mode)
+	show_progress = new boost::progress_display(file_size);
 
       auto_ptr<LoadDataSource> lds(new LoadDataSource(state.input_file, state.header_file, state.key_columns, state.timestamp_column));
 
@@ -291,7 +296,8 @@ void HqlCommandInterpreter::execute_line(const String &line) {
               fprintf(outfp, "%s\t%s\t%s\n", (const char *)key.row, key.column_family, (const char *)value);
           }
         }
-        show_progress += consumed;
+	if (!m_silent && !m_test_mode)
+	  *show_progress += consumed;
       }
 
       if (into_table) {
@@ -308,22 +314,26 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       else
         fclose(outfp);
 
-      if (show_progress.count() < file_size)
-        show_progress += file_size - show_progress.count();
+      if (!m_silent && !m_test_mode && show_progress->count() < file_size)
+        *show_progress += file_size - show_progress->count();
+
+      delete show_progress;
 
       stopwatch.stop();
 
-      printf("Load complete.\n");
-      printf("\n");
-      printf("  Elapsed time:  %.2f s\n", stopwatch.elapsed());
-      printf("Avg value size:  %.2f bytes\n", (double)total_values_size / insert_count);
-      printf("  Avg key size:  %.2f bytes\n", (double)total_rowkey_size / insert_count);
-      printf("    Throughput:  %.2f bytes/s\n", (double)file_size / stopwatch.elapsed());
-      printf(" Total inserts:  %llu\n", (long long unsigned int)insert_count);
-      printf("    Throughput:  %.2f inserts/s\n", (double)insert_count / stopwatch.elapsed());
-      if (mutator_ptr)
-        printf("       Resends:  %llu\n", (long long unsigned int)mutator_ptr->get_resend_count());
-      printf("\n");
+      if (!m_silent && !m_test_mode) {
+	printf("Load complete.\n");
+	printf("\n");
+	printf("  Elapsed time:  %.2f s\n", stopwatch.elapsed());
+	printf("Avg value size:  %.2f bytes\n", (double)total_values_size / insert_count);
+	printf("  Avg key size:  %.2f bytes\n", (double)total_rowkey_size / insert_count);
+	printf("    Throughput:  %.2f bytes/s\n", (double)file_size / stopwatch.elapsed());
+	printf(" Total inserts:  %llu\n", (long long unsigned int)insert_count);
+	printf("    Throughput:  %.2f inserts/s\n", (double)insert_count / stopwatch.elapsed());
+	if (mutator_ptr)
+	  printf("       Resends:  %llu\n", (long long unsigned int)mutator_ptr->get_resend_count());
+	printf("\n");
+      }
 
       /*
       printf("Load complete (%.2fs elapsed_time, %.2f bytes/s, %.2f inserts/s)\n",

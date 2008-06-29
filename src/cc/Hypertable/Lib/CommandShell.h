@@ -38,6 +38,9 @@ namespace Hypertable {
     CommandShell(std::string program_name, CommandInterpreterPtr &interp_ptr, po::variables_map &vm);
     int run();
 
+    bool silent() { return m_silent; }
+    bool test_mode() { return m_test_mode; }
+
     static void add_options(po::options_description &desc);
 
     static std::string ms_history_file;
@@ -52,6 +55,8 @@ namespace Hypertable {
 
     std::string m_accum;
     bool m_batch_mode;
+    bool m_silent;
+    bool m_test_mode;
     bool m_no_prompt;
     bool m_cont;
     char *m_line_read;

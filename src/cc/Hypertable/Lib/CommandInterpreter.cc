@@ -29,7 +29,7 @@ using namespace Hypertable;
 /**
  */
 CommandInterpreter::CommandInterpreter() :
-    m_timestamp_output_format(TIMESTAMP_FORMAT_DEFAULT) {
+    m_timestamp_output_format(TIMESTAMP_FORMAT_DEFAULT), m_silent(false), m_test_mode(false) {
 }
 
 
