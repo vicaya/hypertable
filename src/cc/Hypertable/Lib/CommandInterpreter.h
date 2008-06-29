@@ -32,9 +32,13 @@ namespace Hypertable {
     CommandInterpreter();
     virtual void execute_line(const String &line) = 0;
     void set_timestamp_output_format(const String &format);
+    void set_silent(bool silent) { m_silent = silent; }
+    void set_test_mode(bool mode) { m_test_mode = mode; }
 
   protected:
     int m_timestamp_output_format;
+    bool m_silent;
+    bool m_test_mode;
 
     enum { TIMESTAMP_FORMAT_DEFAULT, TIMESTAMP_FORMAT_USECS };
 

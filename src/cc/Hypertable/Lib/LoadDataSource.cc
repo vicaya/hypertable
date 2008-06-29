@@ -324,6 +324,10 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
       if (consumedp && !m_zipped)
         *consumedp += line.length() + 1;
 
+      boost::trim(line);
+      if (line.length() == 0)
+	continue;
+
       m_line_buffer.clear();
       m_line_buffer.add(line.c_str(), strlen(line.c_str())+1);
       m_values.clear();

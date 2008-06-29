@@ -80,6 +80,9 @@ int main(int argc, char **argv) {
 
     command_shell_ptr = new CommandShell("hypertable", interp_ptr, vm);
 
+    interp_ptr->set_silent( command_shell_ptr->silent() );
+    interp_ptr->set_test_mode( command_shell_ptr->test_mode() );
+
     return command_shell_ptr->run();
 
   }

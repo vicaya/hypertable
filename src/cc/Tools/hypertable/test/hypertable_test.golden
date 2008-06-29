@@ -59,3 +59,9 @@ INSERT INTO hypertable VALUES ('2008-06-28 01:00:03', 'k1', 'a', 'a22');
 SELECT * FROM hypertable WHERE ROW = 'k1' && TIMESTAMP < '2008-06-28 01:00:01' DISPLAY_TIMESTAMPS;
 2008-06-28 01:00:00.000000000	k1	a	a11
 2008-06-28 01:00:00.000000000	k1	b	b11
+DROP TABLE IF EXISTS hypertable;
+CREATE TABLE hypertable ( TestColumnFamily );
+LOAD DATA INFILE ROW_KEY_COLUMN=rowkey "hypertable_test.tsv" INTO TABLE hypertable;
+SELECT * FROM hypertable;
+key1	TestColumnFamily	tcf1
+key2	TestColumnFamily	tcf2

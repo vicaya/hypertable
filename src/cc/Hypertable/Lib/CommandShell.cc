@@ -77,8 +77,15 @@ namespace {
 
 /**
  */
-CommandShell::CommandShell(std::string program_name, CommandInterpreterPtr &interp_ptr, po::variables_map &vm) : m_program_name(program_name), m_interp_ptr(interp_ptr), m_varmap(vm), m_batch_mode(false), m_no_prompt(false), m_cont(false), m_line_read(0) {
+CommandShell::CommandShell(std::string program_name, CommandInterpreterPtr &interp_ptr, po::variables_map &vm) : m_program_name(program_name), m_interp_ptr(interp_ptr), m_varmap(vm), m_batch_mode(false), m_silent(false), m_test_mode(false), m_no_prompt(false), m_cont(false), m_line_read(0) {
   m_prompt_str = program_name + "> ";
+  m_batch_mode = m_varmap.count("batch") ? true : false;
+  if (m_batch_mode)
+    m_silent = true;
+  else
+    m_silent = m_varmap.count("silent") ? true : false;
+  m_test_mode = m_varmap.count("test-mode") ? true : false;
+  m_no_prompt = m_varmap.count("no-prompt") ? true : false;
 }
 
 
@@ -92,11 +99,11 @@ char *CommandShell::rl_gets () {
   }
 
   /* Get a line from the user. */
-  if (m_batch_mode || m_no_prompt) {
+  if (m_batch_mode || m_no_prompt || m_silent || m_test_mode) {
     if (!getline(cin, m_input_str))
       return 0;
     boost::trim(m_input_str);
-    if (m_input_str.find("quit", 0) != 0)
+    if (m_input_str.find("quit", 0) != 0 && !m_silent)
       cout << m_input_str << endl;
     return (char *)m_input_str.c_str();
   }
@@ -106,7 +113,7 @@ char *CommandShell::rl_gets () {
     m_line_read = readline("         -> ");
 
   /* If the line has any text in it, save it on the history. */
-  if (!m_batch_mode && m_line_read && *m_line_read)
+  if (!m_batch_mode && !m_test_mode && m_line_read && *m_line_read)
     add_history (m_line_read);
 
   return m_line_read;
@@ -119,6 +126,8 @@ void CommandShell::add_options(po::options_description &desc) {
     ("batch", "Disable interactive behavior")
     ("config", po::value<std::string>(), "Configuration file.  The default config file is \"conf/hypertable.cfg\" relative to the toplevel install directory")
     ("no-prompt", "Do not display an input prompt")
+    ("silent", "Be silent. Don't echo commands or display progress")
+    ("test-mode", "Don't display anything that might change from run to run (e.g. timing statistics)")
     ("timestamp-format", po::value<std::string>(), "Output format for timestamp.  Currently the only formats are 'default' and 'usecs'")
     ;
 }
@@ -137,15 +146,13 @@ int CommandShell::run() {
 
   ms_history_file = (std::string)getenv("HOME") + "/." + m_program_name + "_history";
 
-  m_batch_mode = m_varmap.count("batch") ? true : false;
-  m_no_prompt = m_varmap.count("no-prompt") ? true : false;
   if (m_varmap.count("timestamp-format"))
     timestamp_format = m_varmap["timestamp-format"].as<string>();
 
   if (timestamp_format != "")
     m_interp_ptr->set_timestamp_output_format(timestamp_format);
 
-  if (!m_batch_mode) {
+  if (!m_batch_mode && !m_silent) {
 
     read_history(ms_history_file.c_str());
 

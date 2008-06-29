@@ -1,3 +1,10 @@
+
+Welcome to the rsclient command interpreter.
+For information about Hypertable, visit http://www.hypertable.org/
+
+Type 'help' for a list of commands, or 'help shell' for a
+list of shell meta commands.
+
 UPDATE Test2 "Test2-data.txt";
 success
 success
