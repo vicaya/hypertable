@@ -207,8 +207,6 @@ namespace Hypertable {
   catch (std::exception &e) { \
     HT_THROWF(Error::EXTERNAL, "External exception " _s_ ": %s",  e.what()); \
   } \
-  catch (const char *e) { HT_THROWF(Error::EXTERNAL, "%s " _s_, e); } \
-  catch (...) { HT_THROW(Error::EXTERNAL, "Unknown exception " _s_); } \
 } while (0)
 
 

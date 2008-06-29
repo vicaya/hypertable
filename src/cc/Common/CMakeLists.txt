@@ -20,6 +20,7 @@
 set(Common_SRCS
 Checksum.cc
 code_search_and_replace.cc
+Config.cc
 Error.cc
 FileUtils.cc
 InetAddr.cc
@@ -31,6 +32,7 @@ String.cc
 System.cc
 Time.cc
 Usage.cc
+Version.cc
 md5.cc
 )
 
@@ -62,6 +64,7 @@ add_test(Common-Exception exception_test)
 add_test(Common-Logging logging_test)
 add_test(Common-Serialization sertest)
 
+configure_file(Version.h.in ${HYPERTABLE_BINARY_DIR}/src/cc/Common/Version.h)
 file(GLOB HEADERS *.h)
 
 install(FILES ${HEADERS} DESTINATION ${VERSION}/include/Common)

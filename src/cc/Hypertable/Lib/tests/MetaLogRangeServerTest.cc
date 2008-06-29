@@ -20,7 +20,7 @@
  */
 
 #include "Common/Compat.h"
-#include "Common/System.h"
+#include "Common/Config.h"
 #include "Common/InetAddr.h"
 #include <iostream>
 #include <fstream>
@@ -75,7 +75,7 @@ read_test(Filesystem *fs, const String &fname) {
 int
 main(int ac, char *av[]) {
   try {
-    System::initialize(av[0]);
+    Config::init(ac, av);
     ReactorFactory::initialize(REACTOR_THREADS);
 
     // reasonable assumption for regression test
@@ -102,10 +102,6 @@ main(int ac, char *av[]) {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    return 1;
-  }
-  catch (...) {
-    HT_ERROR_OUT << "Caught unexpected unknown exception" << HT_END;
     return 1;
   }
   return 0;

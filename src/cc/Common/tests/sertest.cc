@@ -1,5 +1,5 @@
 #include "Common/Compat.h"
-#include "Common/System.h"
+#include "Common/Config.h"
 #include "Common/Logger.h"
 #include "Common/Serialization.h"
 
@@ -174,7 +174,7 @@ void test_ser() {
 } // local namespace
 
 int main(int ac, char *av[]) {
-  System::initialize(av[0]);
+  Config::init(ac, av);
 
   try {
     test_ser();

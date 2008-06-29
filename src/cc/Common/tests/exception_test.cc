@@ -1,7 +1,7 @@
 #include "Common/Compat.h"
 #include "Common/Error.h"
 #include "Common/Logger.h"
-#include "Common/System.h"
+#include "Common/Config.h"
 
 using namespace Hypertable;
 
@@ -33,7 +33,7 @@ void test_ex0(uint8_t x) {
 } // namespace ExceptionTest
 
 int main(int ac, char *av[]) {
-  System::initialize(av[0]);
+  Config::init(ac, av);
 
   try {
     ExceptionTest::test_ex0(0);

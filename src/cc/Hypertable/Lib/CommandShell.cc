@@ -51,7 +51,7 @@ using namespace Hypertable;
 using namespace std;
 
 
-std::string CommandShell::ms_history_file = "";
+String CommandShell::ms_history_file = "";
 
 namespace {
   void termination_handler (int signum) {
@@ -77,7 +77,11 @@ namespace {
 
 /**
  */
-CommandShell::CommandShell(std::string program_name, CommandInterpreterPtr &interp_ptr, po::variables_map &vm) : m_program_name(program_name), m_interp_ptr(interp_ptr), m_varmap(vm), m_batch_mode(false), m_silent(false), m_test_mode(false), m_no_prompt(false), m_cont(false), m_line_read(0) {
+CommandShell::CommandShell(const String &program_name,
+    CommandInterpreterPtr &interp_ptr, const Config::VarMap &vm)
+    : m_program_name(program_name), m_interp_ptr(interp_ptr), m_varmap(vm),
+      m_batch_mode(false), m_silent(false), m_test_mode(false),
+      m_no_prompt(false), m_cont(false), m_line_read(0) {
   m_prompt_str = program_name + "> ";
   m_batch_mode = m_varmap.count("batch") ? true : false;
   if (m_batch_mode)
@@ -121,14 +125,13 @@ char *CommandShell::rl_gets () {
 
 
 
-void CommandShell::add_options(po::options_description &desc) {
+void CommandShell::add_options(Config::Desc &desc) {
   desc.add_options()
     ("batch", "Disable interactive behavior")
-    ("config", po::value<std::string>(), "Configuration file.  The default config file is \"conf/hypertable.cfg\" relative to the toplevel install directory")
     ("no-prompt", "Do not display an input prompt")
     ("silent", "Be silent. Don't echo commands or display progress")
     ("test-mode", "Don't display anything that might change from run to run (e.g. timing statistics)")
-    ("timestamp-format", po::value<std::string>(), "Output format for timestamp.  Currently the only formats are 'default' and 'usecs'")
+    ("timestamp-format", Config::value<std::string>(), "Output format for timestamp.  Currently the only formats are 'default' and 'usecs'")
     ;
 }
 
@@ -139,15 +142,15 @@ void CommandShell::add_options(po::options_description &desc) {
 int CommandShell::run() {
   const char *line;
   queue<string> command_queue;
-  std::string command;
-  std::string timestamp_format;
-  std::string source_commands;
+  String command;
+  String timestamp_format;
+  String source_commands;
   const char *base, *ptr;
 
-  ms_history_file = (std::string)getenv("HOME") + "/." + m_program_name + "_history";
+  ms_history_file = (String)getenv("HOME") + "/." + m_program_name + "_history";
 
   if (m_varmap.count("timestamp-format"))
-    timestamp_format = m_varmap["timestamp-format"].as<string>();
+    timestamp_format = m_varmap["timestamp-format"].as<String>();
 
   if (timestamp_format != "")
     m_interp_ptr->set_timestamp_output_format(timestamp_format);
@@ -212,7 +215,7 @@ int CommandShell::run() {
           cout << "syntax error: source or '.' must be followed by a space character" << endl;
           continue;
         }
-        std::string fname = base;
+        String fname = base;
         trim_if(fname, boost::is_any_of(" \t\n\r;"));
         off_t flen;
         if ((base = FileUtils::file_to_buffer(fname.c_str(), &flen)) == 0)
@@ -232,9 +235,9 @@ int CommandShell::run() {
         line = source_commands.c_str();
       }
       else if (!strncasecmp(line, "system", 6) || !strncmp(line, "\\!", 2)) {
-        std::string command = line;
+        String command = line;
         size_t offset = command.find_first_of(' ');
-        if (offset != std::string::npos) {
+        if (offset != String::npos) {
           command = command.substr(offset+1);
           trim_if(command, boost::is_any_of(" \t\n\r;"));
           system(command.c_str());
@@ -284,7 +287,7 @@ int CommandShell::run() {
         command = command_queue.front();
         command_queue.pop();
         if (!strncmp(command.c_str(), "pause", 5)) {
-          std::string sec_str = command.substr(5);
+          String sec_str = command.substr(5);
           boost::trim(sec_str);
           char *endptr;
           long secs = strtol(sec_str.c_str(), &endptr, 0);

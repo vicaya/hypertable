@@ -28,8 +28,9 @@
 #include <log4cpp/Category.hh>
 
 namespace Hypertable { namespace Logger {
+  using log4cpp::Priority;
 
-  void initialize(const String &name, int level = log4cpp::Priority::DEBUG,
+  void initialize(const String &name, int level = Priority::DEBUG,
                   bool flush_per_log = true, std::ostream &out = std::cout);
   void set_level(int level);
   void set_test_mode(const String &name);

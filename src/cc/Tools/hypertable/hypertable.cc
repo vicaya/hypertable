@@ -22,10 +22,7 @@
 #include "Common/Compat.h"
 #include <iostream>
 
-#include <boost/program_options.hpp>
-namespace po = boost::program_options;
-
-#include "Common/System.h"
+#include "Common/Config.h"
 
 #include "Hypertable/Lib/Client.h"
 #include "Hypertable/Lib/HqlCommandInterpreter.h"
@@ -34,63 +31,31 @@ namespace po = boost::program_options;
 using namespace Hypertable;
 using namespace std;
 
-namespace {
-  const char *usage_str =
-  "\n" \
-  "usage: hypertable [OPTIONS]\n" \
-  "\n" \
-  "OPTIONS";
-}
-
 int main(int argc, char **argv) {
-  CommandShellPtr command_shell_ptr;
-  CommandInterpreterPtr interp_ptr;
-  string cfgfile = "";
+  CommandShellPtr shell;
+  CommandInterpreterPtr interp;
   Client *hypertable;
 
-  System::initialize(argv[0]);
-  ReactorFactory::initialize((uint16_t)System::get_processor_count());
-
   try {
+    CommandShell::add_options(Config::description(argv[0]));
+    Config::init(argc, argv);
+    ReactorFactory::initialize(System::get_processor_count() + 1);
 
-    po::options_description desc(usage_str);
-    desc.add_options()
-      ("help", "Display this help message")
-      ;
+    hypertable = new Client(argv[0], Config::cfgfile);
 
-    CommandShell::add_options(desc);
+    interp = hypertable->create_hql_interpreter();
 
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    po::notify(vm);
+    shell = new CommandShell("hypertable", interp, Config::varmap);
+    interp->set_silent(shell->silent());
+    interp->set_test_mode(shell->test_mode());
 
-    if (vm.count("help")) {
-      cout << desc << "\n";
-      return 1;
-    }
-
-    if (vm.count("config"))
-      cfgfile = vm["config"].as<string>();
-    else
-      cfgfile = System::install_dir + "/conf/hypertable.cfg";
-
-    hypertable = new Client(argv[0], cfgfile);
-
-    interp_ptr = hypertable->create_hql_interpreter();
-
-    command_shell_ptr = new CommandShell("hypertable", interp_ptr, vm);
-
-    interp_ptr->set_silent( command_shell_ptr->silent() );
-    interp_ptr->set_test_mode( command_shell_ptr->test_mode() );
-
-    return command_shell_ptr->run();
-
+    return shell->run();
+  }
+  catch(Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
   }
   catch(exception& e) {
-    cerr << "error: " << e.what() << "\n";
-  }
-  catch(...) {
-    cerr << "Exception of unknown type!\n";
+    HT_ERROR_OUT << e.what() << HT_END;
   }
 
   return 1;
