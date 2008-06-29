@@ -12,7 +12,8 @@
 
   1. Install CMake (http://www.cmake.org/)
 
-  2. Install required libraries (you may already have them installed)
+  2. Install Required libraries (you may already have them installed)
+
     - BerkeleyDB 4.6+
       Example (generic Linux):
       tar -xzvf ~/Downloads/db-4.7.25.tar.gz
@@ -41,7 +42,7 @@
 
       Note: if distribution has version older than 1.34.1+, try the generic way.
 
-    - log4cpp dev lib(http://log4cpp.sourceforge.net/)
+    - log4cpp dev lib (http://log4cpp.sourceforge.net/)
 
     - expat dev lib (http://sourceforge.net/projects/expat;
       yum: expat-devel; apt-get: libexpat1-dev)
@@ -59,7 +60,7 @@
     cd ~/src
     git clone git://scm.hypertable.org/pub/repos/hypertable.git
 
-  4. Create an install directory if necessary
+  4. Create an install directory
 
     mkdir ~/hypertable
 
