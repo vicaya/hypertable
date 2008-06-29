@@ -42,7 +42,10 @@ void ScanContext::initialize(uint64_t ts, ScanSpec *ss, RangeSpec *range_, Schem
   // set time interval
   if (ss) {
     interval.first = ss->interval.first;
-    interval.second = (ss->interval.second != 0) ? std::min(ts, ss->interval.second) : ts;
+    if (ts == 0)
+      interval.second = ss->interval.second;
+    else
+      interval.second = (ss->interval.second != 0) ? std::min(ts, ss->interval.second) : ts;
   }
   else {
     interval.first = 0;

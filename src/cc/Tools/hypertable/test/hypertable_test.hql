@@ -21,4 +21,14 @@ insert into Pages VALUES ('2008-01-28 22:00:03',  "calendar.boston.com/abington-
 select "http-code" from Pages where ROW = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern" display_timestamps;
 delete * from Pages where ROW = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern" TIMESTAMP '2008-01-28 22:00:10';
 select "http-code" from Pages where ROW = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern" display_timestamps;
+DROP TABLE IF EXISTS hypertable;
+CREATE TABLE hypertable (
+a,
+b
+);
+INSERT INTO hypertable VALUES ('2008-06-28 01:00:00', 'k1', 'a', 'a11'),('2008-06-28 01:00:00', 'k1', 'b', 'b11');
+INSERT INTO hypertable VALUES ('2008-06-28 01:00:01', 'k2', 'a', 'a21'),('2008-06-28 01:00:01', 'k2', 'b', 'b21');
+INSERT INTO hypertable VALUES ('2008-06-28 01:00:02', 'k2', 'b', 'b22');
+INSERT INTO hypertable VALUES ('2008-06-28 01:00:03', 'k1', 'a', 'a22');
+SELECT * FROM hypertable WHERE ROW = 'k1' && TIMESTAMP < '2008-06-28 01:00:01' DISPLAY_TIMESTAMPS;
 quit
