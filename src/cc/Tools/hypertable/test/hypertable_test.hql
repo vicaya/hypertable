@@ -35,4 +35,10 @@ DROP TABLE IF EXISTS hypertable;
 CREATE TABLE hypertable ( TestColumnFamily );
 LOAD DATA INFILE ROW_KEY_COLUMN=rowkey "hypertable_test.tsv" INTO TABLE hypertable;
 SELECT * FROM hypertable;
+DROP TABLE IF EXISTS test;
+CREATE TABLE test ( e, d );
+INSERT INTO test VALUES("k1", "e", "x");
+INSERT INTO test VALUES("k1", "d", "x");
+DELETE d FROM test WHERE ROW = "k1";
+SELECT * FROM test;
 quit

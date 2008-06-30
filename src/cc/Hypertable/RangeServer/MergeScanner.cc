@@ -284,7 +284,7 @@ void MergeScanner::initialize() {
         forward();
     }
     else if (key.flag == FLAG_DELETE_COLUMN_FAMILY) {
-      size_t len = (key.column_qualifier - key.row) + strlen(key.column_qualifier) + 1;
+      size_t len = key.column_qualifier - key.row;
       m_deleted_column_family.clear();
       m_deleted_column_family.ensure(len);
       memcpy(m_deleted_column_family.base, key.row, len);
