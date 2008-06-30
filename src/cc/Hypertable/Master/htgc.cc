@@ -25,57 +25,41 @@
 #include "Common/System.h"
 #include "Common/Logger.h"
 #include "Common/Error.h"
+#include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/Client.h"
 #include "DfsBroker/Lib/Client.h"
 #include "MasterGc.h"
 
 using namespace Hypertable;
-using namespace std;
 
 namespace {
 
 void
-do_tfgc(const char *config, bool debug, bool dryrun) {
-  if (debug)
-    Logger::set_level(log4cpp::Priority::DEBUG);
-
-  try {
-    PropertiesPtr props = new Properties(config);
-    Comm *comm = new Comm();
-    ConnectionManagerPtr conn_mgr = new ConnectionManager(comm);
-    DfsBroker::Client *fs = new DfsBroker::Client(conn_mgr, props);
-    ClientPtr ht_ptr = new Hypertable::Client("testgc", config);
-    TablePtr table_ptr;
-
-    table_ptr = ht_ptr->open_table("METADATA");
-
-    master_gc_once(table_ptr, fs, dryrun);
-  }
-  catch (exception &e) {
-    cerr << "Error: "<< e.what() << endl;
-    exit(1);
-  }
+do_tfgc(const String &config, bool dryrun) {
+  PropertiesPtr props = new Properties(config);
+  Comm *comm = new Comm();
+  ConnectionManagerPtr conn_mgr = new ConnectionManager(comm);
+  DfsBroker::Client *fs = new DfsBroker::Client(conn_mgr, props);
+  ClientPtr client = new Hypertable::Client("htgc", config);
+  TablePtr table = client->open_table("METADATA");
+  master_gc_once(table, fs, dryrun);
 }
 
 } // local namespace
 
 int
 main(int ac, char *av[]) {
-  char **it = av + 1, **arg_end = av + ac;
-  bool debug = false, dryrun = false;
-  char *config = "conf/hypertable.cfg";
-  System::initialize(av[0]);
-
-  for (; it < arg_end; ++it) {
-    if (!strcmp("-d", *it))
-      debug = true;
-    else if (!strcmp("-n", *it))
-      dryrun = true;
-    else if (!strcmp("-f", *it))
-      config = *++it;
+  try {
+    Config::Desc desc("Usage: htgc [options]\nOptions");
+    desc.add_options()
+      ("dryrun,n", "Dryrun, don't modify (delete files etc.)")
+      ;
+    Config::init_with_comm(ac, av, &desc);
+    do_tfgc(Config::cfgfile, Config::varmap.count("dryrun"));
   }
-  ReactorFactory::initialize(4);
-  do_tfgc(config, debug, dryrun);
-
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    return 1;
+  }
   return 0;
 }

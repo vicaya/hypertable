@@ -73,7 +73,10 @@ Client::Client(Comm *comm, struct sockaddr_in &addr, time_t timeout)
 
 Client::Client(const char *host, int port, time_t timeout)
     : m_timeout(timeout) {
-  InetAddr::initialize(&m_addr, host, port);
+  if (port)
+    InetAddr::initialize(&m_addr, host, port);
+  else
+    InetAddr::initialize(&m_addr, host);
 
   m_comm = new Comm();
   m_conn_mgr = new ConnectionManager(m_comm.get());

@@ -34,6 +34,7 @@ CommandShell.cc
 CommitLogBlockStream.cc
 CommitLog.cc
 CommitLogReader.cc
+Config.cc
 Defaults.cc
 EventHandlerMasterChange.cc
 Filesystem.cc
@@ -91,6 +92,10 @@ add_executable(metalog_master_test tests/MetaLogMasterTest.cc)
 target_link_libraries(metalog_master_test HyperDfsBroker)
 add_executable(metalog_rs_test tests/MetaLogRangeServerTest.cc)
 target_link_libraries(metalog_rs_test HyperDfsBroker)
+
+# meta log dumper
+add_executable(dump_metalog tests/DumpMetaLog.cc)
+target_link_libraries(dump_metalog HyperDfsBroker)
 
 # schemaTest
 add_executable(schemaTest tests/schemaTest.cc)
@@ -171,7 +176,7 @@ install(FILES ${HEADERS} DESTINATION ${VERSION}/include/Hypertable/Lib)
 
 install(TARGETS generate_test_data RUNTIME DESTINATION ${VERSION}/bin)
 
-install(TARGETS Hypertable
+install(TARGETS Hypertable dump_metalog
         RUNTIME DESTINATION ${VERSION}/bin
         LIBRARY DESTINATION ${VERSION}/lib
         ARCHIVE DESTINATION ${VERSION}/lib)

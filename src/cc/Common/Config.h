@@ -1,4 +1,4 @@
-/**
+/** -*- C++ -*-
  * Copyright (C) 2007 Luke Lu (Zvents, Inc.)
  *
  * This file is part of Hypertable.
@@ -41,9 +41,8 @@ namespace Hypertable { namespace Config {
   Desc &description(const char *name = NULL);
   void description(const Desc &);
 
-  // init helpers
+  // init helpers - don't call directly unless...
   void init_default_options();
-
   void parse_args(int argc, char *argv[], const Desc *desc = NULL,
                   const Desc *hidden = NULL, const PositionalDesc *p = NULL);
   void init_default_actions();

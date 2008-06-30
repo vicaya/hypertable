@@ -20,10 +20,8 @@
  */
 
 #include "Common/Compat.h"
-#include <iostream>
 
-#include "Common/Config.h"
-
+#include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/Client.h"
 #include "Hypertable/Lib/HqlCommandInterpreter.h"
 #include "Hypertable/Lib/CommandShell.h"
@@ -38,10 +36,9 @@ int main(int argc, char **argv) {
 
   try {
     CommandShell::add_options(Config::description(argv[0]));
-    Config::init(argc, argv);
-    ReactorFactory::initialize(System::get_processor_count() + 1);
+    Config::init_with_comm(argc, argv);
 
-    hypertable = new Client(argv[0], Config::cfgfile);
+    hypertable = new Hypertable::Client(argv[0], Config::cfgfile);
 
     interp = hypertable->create_hql_interpreter();
 

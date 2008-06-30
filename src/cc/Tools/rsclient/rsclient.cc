@@ -20,16 +20,15 @@
  */
 
 #include "Common/Compat.h"
-#include <cstdlib>
 #include <iostream>
+
+#include "Common/InetAddr.h"
 
 #include "AsyncComm/DispatchHandler.h"
 
-#include "Common/InetAddr.h"
-#include "Common/Config.h"
-
 #include "Hyperspace/Session.h"
 
+#include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/Client.h"
 #include "Hypertable/Lib/CommandShell.h"
 #include "Hypertable/Lib/HqlCommandInterpreter.h"
@@ -109,15 +108,14 @@ int main(int argc, char **argv) {
     Config::PositionalDesc p;
     p.add("server-location", -1);
 
-    Config::init(argc, argv, &generic, &hidden, &p);
-    ReactorFactory::initialize(System::get_processor_count() + 1);
+    Config::init_with_comm(argc, argv, &generic, &hidden, &p);
 
     if (Config::varmap.count("server-location") == 0) {
-      cout << generic << "\n";
+      cout << Config::description() << "\n";
       return 1;
     }
 
-    props_ptr  = new Properties(Config::cfgfile);
+    props_ptr = new Properties(Config::cfgfile);
 
     location_str = Config::varmap["server-location"].as<string>();
 
