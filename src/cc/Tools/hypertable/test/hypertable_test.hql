@@ -41,4 +41,11 @@ INSERT INTO test VALUES("k1", "e", "x");
 INSERT INTO test VALUES("k1", "d", "x");
 DELETE d FROM test WHERE ROW = "k1";
 SELECT * FROM test;
+DROP TABLE IF EXISTS test;
+CREATE TABLE test ( c, b );
+INSERT INTO test VALUES('2008-06-30 00:00:01', "k1", "b", "x");
+INSERT INTO test VALUES('2008-06-30 00:00:02', "k1", "c", "c1");
+INSERT INTO test VALUES('2008-06-30 00:00:03', "k1", "c", "c2");
+DELETE c FROM test WHERE ROW = "k1";
+SELECT * FROM test END_TIME='2008-06-30 00:00:04';
 quit
