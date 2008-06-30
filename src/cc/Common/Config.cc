@@ -77,7 +77,7 @@ void parse_args(int argc, char *argv[], const Desc *desc, const Desc *hidden,
       parser.positional(*p);
 
     store(parser.run(), varmap);
-    notify(varmap);    
+    notify(varmap);
   }
   catch (std::exception &e) {
     HT_ERROR_OUT << e.what() << HT_END;

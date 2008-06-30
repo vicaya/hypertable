@@ -20,7 +20,6 @@
  */
 
 #include "Common/Compat.h"
-#include "Common/Config.h"
 #include "Common/InetAddr.h"
 #include <iostream>
 #include <fstream>
@@ -28,6 +27,7 @@
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ReactorFactory.h"
 #include "AsyncComm/ConnectionManager.h"
+#include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/RangeServerMetaLogEntryFactory.h"
 #include "Hypertable/Lib/RangeServerMetaLogReader.h"
 #include "Hypertable/Lib/RangeServerMetaLog.h"
@@ -37,7 +37,6 @@ using namespace MetaLogEntryFactory;
 
 namespace {
 
-const int REACTOR_THREADS = 2;
 const int DFS_TIMEOUT = 15; 
 const int DFSBROKER_PORT = 38030;
 
@@ -75,8 +74,11 @@ read_test(Filesystem *fs, const String &fname) {
 int
 main(int ac, char *av[]) {
   try {
-    Config::init(ac, av);
-    ReactorFactory::initialize(REACTOR_THREADS);
+    Config::Desc desc("Usage: metalog_rs_test [options]\nOptions");
+    desc.add_options()
+      ("save", "Don't delete generated the log files")
+      ;
+    Config::init_with_comm(ac, av, &desc);
 
     DfsBroker::Client *client = new DfsBroker::Client("localhost",
         DFSBROKER_PORT, DFS_TIMEOUT);
@@ -93,7 +95,8 @@ main(int ac, char *av[]) {
     write_test(client, logfile);
     read_test(client, logfile);
 
-    client->rmdir(testdir);
+    if (!Config::varmap.count("save"))
+      client->rmdir(testdir);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
