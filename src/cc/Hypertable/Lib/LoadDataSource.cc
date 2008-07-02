@@ -34,7 +34,9 @@
 
 extern "C" {
 #include <strings.h>
+#include <sys/types.h>
 #include <time.h>
+#include <unistd.h>
 }
 
 #include "Common/DynamicBuffer.h"
@@ -52,11 +54,16 @@ using namespace std;
 /**
  *
  */
-LoadDataSource::LoadDataSource(String fname, String header_fname, std::vector<String> &key_columns, String timestamp_column) : m_go_mask(0), m_source(fname), m_cur_line(0), m_line_buffer(0), m_row_key_buffer(0), m_hyperformat(false), m_leading_timestamps(false), m_timestamp_index(-1), m_timestamp(0), m_offset(0), m_zipped(false) {
+LoadDataSource::LoadDataSource(String fname, String header_fname, std::vector<String> &key_columns, String timestamp_column, int row_uniquify_chars) : m_go_mask(0), m_source(fname), m_cur_line(0), m_line_buffer(0), m_row_key_buffer(0), m_hyperformat(false), m_leading_timestamps(false), m_timestamp_index(-1), m_timestamp(0), m_offset(0), m_zipped(false), m_rsgen(0), m_row_uniquify_chars(row_uniquify_chars) {
   string line, column_name;
   char *base, *ptr;
   int index = 0;
   KeyComponentInfo key_comps;
+
+  if (row_uniquify_chars) {
+    srandom((unsigned long)getpid());
+    m_rsgen = new FixedRandomStringGenerator(row_uniquify_chars);
+  }
 
   if (boost::algorithm::ends_with(fname, ".gz")) {
     m_fin.push(gzip_decompressor());
@@ -235,8 +242,19 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
         cerr << "error: too few fields on line " << m_cur_line << endl;
         continue;
       }
-      keyp->row = base;
-      keyp->row_len = ptr - base;
+      if (m_rsgen) {
+	keyp->row_len = (ptr-base) + m_row_uniquify_chars + 1;
+	m_row_key_buffer.clear();
+	m_row_key_buffer.ensure(keyp->row_len + 1);
+	m_row_key_buffer.add_unchecked(base, ptr-base);
+	m_row_key_buffer.add_unchecked(" ", 1);
+	m_rsgen->write((char *)m_row_key_buffer.ptr);
+	keyp->row = m_row_key_buffer.base;
+      }
+      else {
+	keyp->row = base;
+	keyp->row_len = ptr - base;
+      }
       *ptr++ = 0;
       base = ptr;
 
@@ -397,8 +415,19 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
       while (!m_go_mask[m_next_value])
         m_next_value++;
 
-      keyp->row = m_row_key_buffer.base;
-      keyp->row_len = m_row_key_buffer.fill();
+      if (m_rsgen) {
+	m_row_key_buffer.ensure(m_row_uniquify_chars + 2);
+	keyp->row = m_row_key_buffer.base;
+	keyp->row_len = m_row_key_buffer.fill() + m_row_uniquify_chars + 1;
+	m_row_key_buffer.add_unchecked(" ", 1);
+	m_rsgen->write((char *)m_row_key_buffer.ptr);
+	m_row_key_buffer.ptr += m_row_uniquify_chars;
+      }
+      else {
+	keyp->row = m_row_key_buffer.base;
+	keyp->row_len = m_row_key_buffer.fill();
+      }
+
       keyp->column_family = m_column_names[m_next_value].c_str();
       *timestampp = m_timestamp;
       if (keyp->column_qualifier || keyp->column_qualifier_len) {

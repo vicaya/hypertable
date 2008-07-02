@@ -38,6 +38,7 @@ Config.cc
 Defaults.cc
 EventHandlerMasterChange.cc
 Filesystem.cc
+FixedRandomStringGenerator.cc
 HqlCommandInterpreter.cc
 HqlHelpText.cc
 Key.cc

@@ -35,6 +35,7 @@
 #include "Common/String.h"
 
 #include "DataSource.h"
+#include "FixedRandomStringGenerator.h"
 
 
 namespace Hypertable {
@@ -42,8 +43,8 @@ namespace Hypertable {
   class LoadDataSource {
 
   public:
-    LoadDataSource(String fname, String header_fname, std::vector<String> &key_columns, String timestamp_column);
-    virtual ~LoadDataSource() { delete [] m_go_mask; return; }
+    LoadDataSource(String fname, String header_fname, std::vector<String> &key_columns, String timestamp_column, int row_uniquify_chars=0);
+    virtual ~LoadDataSource() { delete [] m_go_mask; delete m_rsgen; return; }
     bool has_timestamps() { return m_leading_timestamps || (m_timestamp_index != -1); }
     virtual bool next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp);
 
@@ -80,6 +81,8 @@ namespace Hypertable {
     int m_limit;
     uint64_t m_offset;
     bool m_zipped;
+    FixedRandomStringGenerator *m_rsgen;
+    int m_row_uniquify_chars;
   };
 
 }

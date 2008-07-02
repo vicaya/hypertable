@@ -117,7 +117,7 @@ namespace Hypertable {
 
     class hql_interpreter_state {
     public:
-      hql_interpreter_state() : command(0), cf(0), ag(0), nanoseconds(0), delete_all_columns(false), delete_time(0), if_exists(false), replay(false), scanner_id(-1) {
+      hql_interpreter_state() : command(0), cf(0), ag(0), nanoseconds(0), delete_all_columns(false), delete_time(0), if_exists(false), replay(false), scanner_id(-1), row_uniquify_chars(0) {
         memset(&tmval, 0, sizeof(tmval));
       }
       int command;
@@ -147,6 +147,7 @@ namespace Hypertable {
       std::string range_start_row;
       std::string range_end_row;
       int32_t scanner_id;
+      int32_t row_uniquify_chars;
     };
 
     struct set_command {
@@ -408,6 +409,15 @@ namespace Hypertable {
         display_string("set_timestamp_column");
         state.timestamp_column = std::string(str, end-str);
         trim_if(state.timestamp_column, boost::is_any_of("'\""));
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct set_row_uniquify_chars {
+      set_row_uniquify_chars(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(const unsigned int &nchars) const {
+        display_string("set_row_uniquify_chars");
+        state.row_uniquify_chars = nchars;
       }
       hql_interpreter_state &state;
     };
@@ -849,6 +859,7 @@ namespace Hypertable {
           token_t ROW          = as_lower_d["row"];
           token_t ROW_KEY_COLUMN = as_lower_d["row_key_column"];
           token_t TIMESTAMP_COLUMN = as_lower_d["timestamp_column"];
+          token_t ROW_UNIQUIFY_CHARS = as_lower_d["row_uniquify_chars"];
           token_t HEADER_FILE  = as_lower_d["header_file"];
           token_t START_ROW    = as_lower_d["start_row"];
           token_t END_ROW      = as_lower_d["end_row"];
@@ -1181,6 +1192,7 @@ namespace Hypertable {
             = ROW_KEY_COLUMN >> EQUAL >> user_identifier[add_row_key_column(self.state)] >> *(PLUS >> user_identifier[add_row_key_column(self.state)])
             | TIMESTAMP_COLUMN >> EQUAL >> user_identifier[set_timestamp_column(self.state)]
             | HEADER_FILE >> EQUAL >> string_literal[set_header_file(self.state)]
+	    | ROW_UNIQUIFY_CHARS >> EQUAL >> uint_p[set_row_uniquify_chars(self.state)]
             ;
 
           /**
