@@ -27,13 +27,10 @@
 
 using namespace Hypertable;
 
-/**
- *
- */
-void MasterFileHandler::attr_set(std::string name) {
+
+void MasterFileHandler::attr_set(const std::string &name) {
   if (name == "address") {
     EventPtr nullevent;
-    m_app_queue_ptr->add(new EventHandlerMasterChange(m_master_client,
-                                                      nullevent));
+    m_app_queue->add(new EventHandlerMasterChange(m_master_client, nullevent));
   }
 }

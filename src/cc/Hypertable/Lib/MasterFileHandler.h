@@ -32,20 +32,17 @@
 namespace Hypertable {
 
   using namespace Hyperspace;
-  /**
-   *
-   */
+
   class MasterFileHandler : public Hyperspace::HandleCallback {
   public:
-
     MasterFileHandler(MasterClient *master_client,
                       ApplicationQueuePtr &app_queue)
       : HandleCallback(EVENT_MASK_ATTR_SET), m_master_client(master_client),
-        m_app_queue_ptr(app_queue) { }
+        m_app_queue(app_queue) { }
 
-    virtual void attr_set(std::string name);
+    virtual void attr_set(const std::string &name);
     MasterClient         *m_master_client;
-    ApplicationQueuePtr   m_app_queue_ptr;
+    ApplicationQueuePtr   m_app_queue;
   };
 }
 
