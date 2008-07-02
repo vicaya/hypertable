@@ -264,7 +264,8 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       if (!m_silent && !m_test_mode)
 	show_progress = new boost::progress_display(file_size);
 
-      auto_ptr<LoadDataSource> lds(new LoadDataSource(state.input_file, state.header_file, state.key_columns, state.timestamp_column));
+      auto_ptr<LoadDataSource> lds(new LoadDataSource(state.input_file, state.header_file, state.key_columns,
+						      state.timestamp_column, state.row_uniquify_chars));
 
       if (!into_table) {
         display_timestamps = lds->has_timestamps();
@@ -452,5 +453,5 @@ void HqlCommandInterpreter::execute_line(const String &line) {
   }
   else
     HT_THROW(Error::HQL_PARSE_ERROR, std::string("parse error at: ") + info.stop);
-
+  
 }
