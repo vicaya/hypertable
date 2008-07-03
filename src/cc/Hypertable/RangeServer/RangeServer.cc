@@ -509,7 +509,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
   try {
     DynamicBuffer rbuf;
 
-    if (strcmp(range->start_row, range->end_row) > 0)
+    if (*scan_spec->end_row && strcmp(scan_spec->start_row, scan_spec->end_row) > 0)
       HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "start_row > end_row");
 
     if (!m_live_map_ptr->get(table->id, table_info))

@@ -624,7 +624,7 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
   }
 
   if (saved_error != Error::OK) {
-    HT_ERRORF("DROP TABLE failed '%s' - %s", err_msg.c_str(), Error::get_text(error));
+    HT_ERRORF("DROP TABLE failed '%s' - %s", err_msg.c_str(), Error::get_text(saved_error));
     cb->error(saved_error, err_msg);
     return;
   }
