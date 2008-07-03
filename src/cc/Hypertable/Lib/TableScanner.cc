@@ -52,6 +52,9 @@ TableScanner::TableScanner(PropertiesPtr &props_ptr, Comm *comm,
       m_rows_seen(0), m_timeout(timeout) {
   char *str;
 
+  if (scan_spec.start_row && scan_spec.end_row && strcmp(scan_spec.start_row, scan_spec.end_row) > 0)
+    HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "start_row > end_row");
+
   if (m_timeout == 0 ||
       (m_timeout = props_ptr->get_int("Hypertable.Client.Timeout", 0)) == 0 ||
       (m_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0)) == 0)

@@ -46,6 +46,7 @@ CREATE TABLE test ( c, b );
 INSERT INTO test VALUES('2008-06-30 00:00:01', "k1", "b", "x");
 INSERT INTO test VALUES('2008-06-30 00:00:02', "k1", "c", "c1");
 INSERT INTO test VALUES('2008-06-30 00:00:03', "k1", "c", "c2");
+SELECT * FROM test WHERE ROW > 'z' && ROW < 'a';
 DELETE c FROM test WHERE ROW = "k1";
 SELECT * FROM test END_TIME='2008-06-30 00:00:04';
 quit
