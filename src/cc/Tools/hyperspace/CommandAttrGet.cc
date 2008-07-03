@@ -1,24 +1,25 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <iostream>
 
 #include "Common/DynamicBuffer.h"
@@ -61,36 +62,36 @@ int CommandAttrGet::run() {
   if ((error = m_session->attr_get(handle, m_args[1].first, value)) == Error::OK) {
     if (m_args.size() == 3) {
       if (m_args[2].first == "short") {
-	if (value.fill() != 2) {
-	  cerr << "Expected 2 byte short, but got " << value.fill() << " bytes" << endl;
-	  return Error::HYPERSPACE_BAD_ATTRIBUTE;
-	}
-	short sval;
-	memcpy(&sval, value.base, 2);
-	cout << sval << endl;
+        if (value.fill() != 2) {
+          cerr << "Expected 2 byte short, but got " << value.fill() << " bytes" << endl;
+          return Error::HYPERSPACE_BAD_ATTRIBUTE;
+        }
+        short sval;
+        memcpy(&sval, value.base, 2);
+        cout << sval << endl;
       }
       else if (m_args[2].first == "int") {
-	if (value.fill() != 4) {
-	  cerr << "Expected 4 byte int, but got " << value.fill() << " bytes" << endl;
-	  return Error::HYPERSPACE_BAD_ATTRIBUTE;
-	}
-	uint32_t ival;
-	memcpy(&ival, value.base, 4);
-	cout << ival << endl;
+        if (value.fill() != 4) {
+          cerr << "Expected 4 byte int, but got " << value.fill() << " bytes" << endl;
+          return Error::HYPERSPACE_BAD_ATTRIBUTE;
+        }
+        uint32_t ival;
+        memcpy(&ival, value.base, 4);
+        cout << ival << endl;
       }
       else if (m_args[2].first == "long") {
-	if (value.fill() != 8) {
-	  cerr << "Expected 8 byte int, but got " << value.fill() << " bytes" << endl;
-	  return Error::HYPERSPACE_BAD_ATTRIBUTE;
-	}
-	uint64_t lval;
-	memcpy(&lval, value.base, 8);
-	cout << lval << endl;
+        if (value.fill() != 8) {
+          cerr << "Expected 8 byte int, but got " << value.fill() << " bytes" << endl;
+          return Error::HYPERSPACE_BAD_ATTRIBUTE;
+        }
+        uint64_t lval;
+        memcpy(&lval, value.base, 8);
+        cout << lval << endl;
       }
     }
     else {
-      std::string valStr = std::string((const char *)value.base, value.fill());
-      cout << valStr << endl;
+      std::string valstr = std::string((const char *)value.base, value.fill());
+      cout << valstr << endl;
     }
   }
 

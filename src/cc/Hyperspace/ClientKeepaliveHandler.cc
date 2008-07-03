@@ -1,31 +1,31 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 extern "C" {
 #include <poll.h>
 }
 
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
-#include "Common/Exception.h"
 #include "Common/StringExt.h"
 
 #include "ClientKeepaliveHandler.h"
@@ -33,28 +33,30 @@ extern "C" {
 #include "Protocol.h"
 #include "Session.h"
 
+using namespace std;
 using namespace Hypertable;
 using namespace Hyperspace;
+using namespace Serialization;
 
-ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsPtr, Session *session) : m_comm(comm), m_session(session), m_session_id(0), m_last_known_event(0) {
+ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &props_ptr, Session *session) : m_comm(comm), m_session(session), m_session_id(0), m_last_known_event(0) {
   int error;
-  uint16_t masterPort;
-  const char *masterHost;
+  uint16_t master_port;
+  const char *master_host;
 
-  m_verbose = propsPtr->get_bool("Hypertable.Verbose", false);
-  masterHost = propsPtr->get("Hyperspace.Master.Host", "localhost");
-  masterPort = (uint16_t)propsPtr->get_int("Hyperspace.Master.Port", Master::DEFAULT_MASTER_PORT);
-  m_lease_interval = (uint32_t)propsPtr->get_int("Hyperspace.Lease.Interval", Master::DEFAULT_LEASE_INTERVAL);
-  m_keep_alive_interval = (uint32_t)propsPtr->get_int("Hyperspace.KeepAlive.Interval", Master::DEFAULT_KEEPALIVE_INTERVAL);
-  
-  if (!InetAddr::initialize(&m_master_addr, masterHost, masterPort))
+  m_verbose = props_ptr->get_bool("Hypertable.Verbose", false);
+  master_host = props_ptr->get("Hyperspace.Master.Host", "localhost");
+  master_port = (uint16_t)props_ptr->get_int("Hyperspace.Master.Port", Master::DEFAULT_MASTER_PORT);
+  m_lease_interval = (uint32_t)props_ptr->get_int("Hyperspace.Lease.Interval", Master::DEFAULT_LEASE_INTERVAL);
+  m_keep_alive_interval = (uint32_t)props_ptr->get_int("Hyperspace.KeepAlive.Interval", Master::DEFAULT_KEEPALIVE_INTERVAL);
+
+  if (!InetAddr::initialize(&m_master_addr, master_host, master_port))
     exit(1);
 
   if (m_verbose) {
     cout << "Hyperspace.KeepAlive.Interval=" << m_keep_alive_interval << endl;
     cout << "Hyperspace.Lease.Interval=" << m_lease_interval << endl;
-    cout << "Hyperspace.Master.Host=" << masterHost << endl;
-    cout << "Hyperspace.Master.Port=" << masterPort << endl;
+    cout << "Hyperspace.Master.Host=" << master_host << endl;
+    cout << "Hyperspace.Master.Port=" << master_port << endl;
   }
 
   boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC);
@@ -70,9 +72,9 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &propsP
     exit(1);
   }
 
-  CommBufPtr commBufPtr( Hyperspace::Protocol::create_client_keepalive_request(m_session_id, m_last_known_event) );
+  CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(m_session_id, m_last_known_event));
 
-  if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, commBufPtr) != Error::OK)) {
+  if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp) != Error::OK)) {
     HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
     exit(1);
   }
@@ -97,171 +99,163 @@ ClientKeepaliveHandler::~ClientKeepaliveHandler() {
 /**
  *
  */
-void ClientKeepaliveHandler::handle(Hypertable::EventPtr &eventPtr) {
+void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
   boost::mutex::scoped_lock lock(m_mutex);
   int error;
-  uint16_t command = (uint16_t)-1;
+  int command = -1;
 
   /**
   if (m_verbose) {
-    HT_INFOF("%s", eventPtr->toString().c_str());
+    HT_INFOF("%s", event->to_str().c_str());
   }
   **/
 
-  if (eventPtr->type == Hypertable::Event::MESSAGE) {
-    uint8_t *msgPtr = eventPtr->message;
-    size_t remaining = eventPtr->messageLen;
+  if (event->type == Hypertable::Event::MESSAGE) {
+    const uint8_t *msg = event->message;
+    size_t remaining = event->message_len;
 
     try {
-
-      if (!Serialization::decode_short(&msgPtr, &remaining, &command))
-	throw ProtocolException("Truncated Request");
+      command = decode_i16(&msg, &remaining);
 
       // sanity check command code
       if (command >= Protocol::COMMAND_MAX)
-	throw ProtocolException((std::string)"Invalid command (" + command + ")");
+        HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%d)", command);
 
       switch (command) {
       case Protocol::COMMAND_KEEPALIVE:
-	{
-	  uint64_t sessionId;
-	  int state;
-	  uint32_t notificationCount;
-	  uint64_t handle, eventId;
-	  uint32_t eventMask;
-	  const char *name;
+        {
+          uint64_t session_id;
+          int state;
+          uint32_t notifications;
+          uint64_t handle, event_id;
+          uint32_t event_mask;
+          const char *name;
 
-	  if (m_session->get_state() == Session::STATE_EXPIRED)
-	    return;
+          if (m_session->get_state() == Session::STATE_EXPIRED)
+            return;
 
-	  // update jeopardy time
-	  memcpy(&m_jeopardy_time, &m_last_keep_alive_send_time, sizeof(boost::xtime));
-	  m_jeopardy_time.sec += m_lease_interval;
+          // update jeopardy time
+          memcpy(&m_jeopardy_time, &m_last_keep_alive_send_time, sizeof(boost::xtime));
+          m_jeopardy_time.sec += m_lease_interval;
 
-	  if (!Serialization::decode_long(&msgPtr, &remaining, &sessionId))
-	    throw ProtocolException("Truncated Request");
+          session_id = decode_i64(&msg, &remaining);
+          error = decode_i32(&msg, &remaining);
 
-	  if (!Serialization::decode_int(&msgPtr, &remaining, (uint32_t *)&error))
-	    throw ProtocolException("Truncated Request");
+          if (error != Error::OK) {
+            if (error != Error::HYPERSPACE_EXPIRED_SESSION) {
+              HT_ERRORF("Master session error - %s", Error::get_text(error));
+            }
+            expire_session();
+            return;
+          }
 
-	  if (error != Error::OK) {
-	    if (error != Error::HYPERSPACE_EXPIRED_SESSION) {
-	      HT_ERRORF("Master session error - %s", Error::get_text(error));
-	    }
-	    expire_session();
-	    return;
-	  }
+          if (m_session_id == 0) {
+            m_session_id = session_id;
+            if (!m_conn_handler_ptr) {
+              m_conn_handler_ptr = new ClientConnectionHandler(m_comm, m_session, m_lease_interval);
+              m_conn_handler_ptr->set_verbose_mode(m_verbose);
+              m_conn_handler_ptr->set_session_id(m_session_id);
+            }
+          }
 
-	  if (m_session_id == 0) {
-	    m_session_id = sessionId;
-	    if (!m_conn_handler_ptr) {
-	      m_conn_handler_ptr = new ClientConnectionHandler(m_comm, m_session, m_lease_interval);
-	      m_conn_handler_ptr->set_verbose_mode(m_verbose);
-	      m_conn_handler_ptr->set_session_id(m_session_id);
-	    }
-	  }
+          notifications = decode_i32(&msg, &remaining);
 
-	  if (!Serialization::decode_int(&msgPtr, &remaining, &notificationCount)) {
-	    throw ProtocolException("Truncated Request");
-	  }
+          for (uint32_t i=0; i<notifications; i++) {
+            handle = decode_i64(&msg, &remaining);
+            event_id = decode_i64(&msg, &remaining);
+            event_mask = decode_i32(&msg, &remaining);
 
-	  for (uint32_t i=0; i<notificationCount; i++) {
+            HandleMap::iterator iter = m_handle_map.find(handle);
+            //HT_INFOF("LastKnownEvent=%lld, event_id=%lld event_mask=%d", m_last_known_event, event_id, event_mask);
+            //HT_INFOF("handle=%lldm, event_id=%lld, event_mask=%d", handle, event_id, event_mask);
+            assert (iter != m_handle_map.end());
+            ClientHandleStatePtr handle_state = (*iter).second;
 
-	    if (!Serialization::decode_long(&msgPtr, &remaining, &handle) ||
-		!Serialization::decode_long(&msgPtr, &remaining, &eventId) ||
-		!Serialization::decode_int(&msgPtr, &remaining, &eventMask))
-	      throw ProtocolException("Truncated Request");
+            if (event_mask == EVENT_MASK_ATTR_SET ||
+                event_mask == EVENT_MASK_ATTR_DEL ||
+                event_mask == EVENT_MASK_CHILD_NODE_ADDED ||
+                event_mask == EVENT_MASK_CHILD_NODE_REMOVED) {
+              name = decode_vstr(&msg, &remaining);
 
-	    HandleMapT::iterator iter = m_handle_map.find(handle);
-	    //HT_INFOF("LastKnownEvent=%lld, eventId=%lld eventMask=%d", m_last_known_event, eventId, eventMask);
-	    //HT_INFOF("handle=%lldm, eventId=%lld, eventMask=%d", handle, eventId, eventMask);
-	    assert (iter != m_handle_map.end());
-	    ClientHandleStatePtr handleStatePtr = (*iter).second;
+              if (event_id <= m_last_known_event)
+                continue;
 
-	    if (eventMask == EVENT_MASK_ATTR_SET || eventMask == EVENT_MASK_ATTR_DEL ||
-		eventMask == EVENT_MASK_CHILD_NODE_ADDED || eventMask == EVENT_MASK_CHILD_NODE_REMOVED) {
-	      if (!Serialization::decode_string(&msgPtr, &remaining, &name))
-		throw ProtocolException("Truncated Request");
-	      if (eventId <= m_last_known_event)
-		continue;
-	      if (handleStatePtr->callbackPtr) {
-		if (eventMask == EVENT_MASK_ATTR_SET)
-		  handleStatePtr->callbackPtr->attr_set(name);
-		else if (eventMask == EVENT_MASK_ATTR_DEL)
-		  handleStatePtr->callbackPtr->attr_del(name);
-		else if (eventMask == EVENT_MASK_CHILD_NODE_ADDED)
-		  handleStatePtr->callbackPtr->child_node_added(name);
-		else
-		  handleStatePtr->callbackPtr->child_node_removed(name);
-	      }
-	    }
-	    else if (eventMask == EVENT_MASK_LOCK_ACQUIRED) {
-	      uint32_t mode;
-	      if (!Serialization::decode_int(&msgPtr, &remaining, &mode))
-		throw ProtocolException("Truncated Request");
-	      if (eventId <= m_last_known_event)
-		continue;
-	      if (handleStatePtr->callbackPtr)
-		handleStatePtr->callbackPtr->lock_acquired(mode);
-	    }
-	    else if (eventMask == EVENT_MASK_LOCK_RELEASED) {
-	      if (eventId <= m_last_known_event)
-		continue;
-	      if (handleStatePtr->callbackPtr)
-		handleStatePtr->callbackPtr->lock_released();
-	    }
-	    else if (eventMask == EVENT_MASK_LOCK_GRANTED) {
-	      uint32_t mode;
-	      if (!Serialization::decode_int(&msgPtr, &remaining, &mode) ||
-		  !Serialization::decode_long(&msgPtr, &remaining, &handleStatePtr->lockGeneration))
-		throw ProtocolException("Truncated Request");
-	      if (eventId <= m_last_known_event)
-		continue;
-	      handleStatePtr->lockStatus = LOCK_STATUS_GRANTED;
-	      handleStatePtr->sequencer->generation = handleStatePtr->lockGeneration;
-	      handleStatePtr->sequencer->mode = mode;
-	      handleStatePtr->cond.notify_all();
-	    }
+              if (handle_state->callback) {
+                if (event_mask == EVENT_MASK_ATTR_SET)
+                  handle_state->callback->attr_set(name);
+                else if (event_mask == EVENT_MASK_ATTR_DEL)
+                  handle_state->callback->attr_del(name);
+                else if (event_mask == EVENT_MASK_CHILD_NODE_ADDED)
+                  handle_state->callback->child_node_added(name);
+                else
+                  handle_state->callback->child_node_removed(name);
+              }
+            }
+            else if (event_mask == EVENT_MASK_LOCK_ACQUIRED) {
+              uint32_t mode = decode_i32(&msg, &remaining);
 
-	    m_last_known_event = eventId;
-	  }
-	  
-	  /**
-	  if (m_verbose) {
-	    HT_INFOF("sessionId = %lld", m_session_id);
-	  }
-	  **/
+              if (event_id <= m_last_known_event)
+                continue;
+              if (handle_state->callback)
+                handle_state->callback->lock_acquired(mode);
+            }
+            else if (event_mask == EVENT_MASK_LOCK_RELEASED) {
+              if (event_id <= m_last_known_event)
+                continue;
+              if (handle_state->callback)
+                handle_state->callback->lock_released();
+            }
+            else if (event_mask == EVENT_MASK_LOCK_GRANTED) {
+              uint32_t mode = decode_i32(&msg, &remaining);
+              handle_state->lock_generation = decode_i64(&msg, &remaining);
 
-	  if (m_conn_handler_ptr->disconnected())
-	    m_conn_handler_ptr->initiate_connection(m_master_addr);
-	  else
-	    state = m_session->state_transition(Session::STATE_SAFE);
+              if (event_id <= m_last_known_event)
+                continue;
 
-	  if (notificationCount > 0) {
-	    CommBufPtr commBufPtr( Hyperspace::Protocol::create_client_keepalive_request(m_session_id, m_last_known_event) );
-	    boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC);
-	    if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, commBufPtr) != Error::OK)) {
-	      HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
-	      exit(1);
-	    }
-	  }
+              handle_state->lock_status = LOCK_STATUS_GRANTED;
+              handle_state->sequencer->generation = handle_state->lock_generation;
+              handle_state->sequencer->mode = mode;
+              handle_state->cond.notify_all();
+            }
 
-	  assert(m_session_id == sessionId);
-	}
-	break;
+            m_last_known_event = event_id;
+          }
+
+          /**
+          if (m_verbose) {
+            HT_INFOF("session_id = %lld", m_session_id);
+          }
+          **/
+
+          if (m_conn_handler_ptr->disconnected())
+            m_conn_handler_ptr->initiate_connection(m_master_addr);
+          else
+            state = m_session->state_transition(Session::STATE_SAFE);
+
+          if (notifications > 0) {
+            CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(m_session_id, m_last_known_event));
+            boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC);
+            if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp) != Error::OK)) {
+              HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
+              exit(1);
+            }
+          }
+
+          assert(m_session_id == session_id);
+        }
+        break;
       default:
-	throw ProtocolException((string)"Command code " + command + " not implemented");
+        HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%d)", command);
       }
     }
-    catch (ProtocolException &e) {
-      std::string errMsg = e.what();
-      HT_ERRORF("Protocol error '%s'", e.what());
+    catch (Exception &e) {
+      HT_ERROR_OUT << e << HT_END;
     }
   }
-  else if (eventPtr->type == Hypertable::Event::TIMER) {
+  else if (event->type == Hypertable::Event::TIMER) {
     boost::xtime now;
     int state;
-    
+
     // !!! fix - what about re-ordered packets?
 
     if ((state = m_session->get_state()) == Session::STATE_EXPIRED)
@@ -271,7 +265,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &eventPtr) {
 
     if (state == Session::STATE_SAFE) {
       if (xtime_cmp(m_jeopardy_time, now) < 0) {
-	m_session->state_transition(Session::STATE_JEOPARDY);
+        m_session->state_transition(Session::STATE_JEOPARDY);
       }
     }
     else if (m_session->expired()) {
@@ -279,11 +273,11 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &eventPtr) {
       return;
     }
 
-    CommBufPtr commBufPtr( Hyperspace::Protocol::create_client_keepalive_request(m_session_id, m_last_known_event) );
+    CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(m_session_id, m_last_known_event));
 
     boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC);
-    
-    if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, commBufPtr) != Error::OK)) {
+
+    if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp) != Error::OK)) {
       HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
       exit(1);
     }
@@ -294,7 +288,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &eventPtr) {
     }
   }
   else {
-    HT_INFOF("%s", eventPtr->toString().c_str());
+    HT_INFOF("%s", event->to_str().c_str());
   }
 }
 

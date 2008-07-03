@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -39,7 +39,7 @@ namespace Hypertable {
     void enter() {
       boost::mutex::scoped_lock lock(m_mutex);
       while (m_hold_updates)
-	m_updates_unblocked_cond.wait(lock);
+        m_updates_unblocked_cond.wait(lock);
       m_update_counter++;
     }
 
@@ -49,7 +49,7 @@ namespace Hypertable {
       boost::mutex::scoped_lock lock(m_mutex);
       m_update_counter--;
       if (m_hold_updates && m_update_counter == 0)
-	m_updates_quiesced_cond.notify_one();
+        m_updates_quiesced_cond.notify_one();
     }
 
     /**
@@ -58,7 +58,7 @@ namespace Hypertable {
       boost::mutex::scoped_lock lock(m_mutex);
       m_hold_updates = true;
       while (m_update_counter > 0)
-	m_updates_quiesced_cond.wait(lock);
+        m_updates_quiesced_cond.wait(lock);
     }
 
     /**
@@ -72,10 +72,10 @@ namespace Hypertable {
     class ScopedActivator {
     public:
       ScopedActivator(RangeUpdateBarrier &barrier) : m_barrier(barrier) {
-	m_barrier.put_up();
+        m_barrier.put_up();
       }
       ~ScopedActivator() {
-	m_barrier.take_down();
+        m_barrier.take_down();
       }
     private:
       RangeUpdateBarrier &m_barrier;

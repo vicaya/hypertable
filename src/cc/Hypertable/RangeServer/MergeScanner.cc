@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cassert>
 
 #include "Common/Logger.h"
@@ -30,13 +31,13 @@
 using namespace Hypertable;
 
 /**
- * 
+ *
  */
-MergeScanner::MergeScanner(ScanContextPtr &scanContextPtr, bool returnDeletes) : CellListScanner(scanContextPtr), m_done(false), m_initialized(false), m_scanners(), m_queue(), m_delete_present(false), m_deleted_row(0), m_deleted_column_family(0), m_deleted_cell(0), m_return_deletes(returnDeletes), m_row_count(0), m_row_limit(0), m_cell_count(0), m_cell_limit(0), m_cell_cutoff(0), m_prev_key(0) {
-  if (scanContextPtr->spec != 0)
-    m_row_limit = scanContextPtr->spec->row_limit;
-  m_start_timestamp = scanContextPtr->interval.first;
-  m_end_timestamp = scanContextPtr->interval.second;
+MergeScanner::MergeScanner(ScanContextPtr &scan_ctx, bool return_dels) : CellListScanner(scan_ctx), m_done(false), m_initialized(false), m_scanners(), m_queue(), m_delete_present(false), m_deleted_row(0), m_deleted_column_family(0), m_deleted_cell(0), m_return_deletes(return_dels), m_row_count(0), m_row_limit(0), m_cell_count(0), m_cell_limit(0), m_cell_cutoff(0), m_prev_key(0) {
+  if (scan_ctx->spec != 0)
+    m_row_limit = scan_ctx->spec->row_limit;
+  m_start_timestamp = scan_ctx->interval.first;
+  m_end_timestamp = scan_ctx->interval.second;
 }
 
 
@@ -57,8 +58,8 @@ MergeScanner::~MergeScanner() {
 
 
 void MergeScanner::forward() {
-  ScannerStateT sstate;
-  Key keyComps;
+  ScannerState sstate;
+  Key key;
   size_t len;
 
   if (m_queue.empty())
@@ -77,153 +78,153 @@ void MergeScanner::forward() {
       m_queue.pop();
       sstate.scanner->forward();
       if (sstate.scanner->get(sstate.key, sstate.value))
-	m_queue.push(sstate);
+        m_queue.push(sstate);
 
       if (m_queue.empty())
-	return;
+        return;
 
       sstate = m_queue.top();
 
-      if (!keyComps.load(sstate.key)) {
-	HT_ERROR("Problem decoding key!");
+      if (!key.load(sstate.key)) {
+        HT_ERROR("Problem decoding key!");
       }
-      else if (keyComps.timestamp < m_start_timestamp) {
-	continue;
+      else if (key.timestamp < m_start_timestamp) {
+        continue;
       }
-      else if (keyComps.flag == FLAG_DELETE_ROW) {
-	len = strlen(keyComps.row) + 1;
-	if (m_delete_present && m_deleted_row.fill() == len && !memcmp(m_deleted_row.base, keyComps.row, len)) {
-	  if (m_deleted_row_timestamp < keyComps.timestamp)
-	    m_deleted_row_timestamp = keyComps.timestamp;
-	}
-	else {
-	  m_deleted_row.clear();
-	  m_deleted_row.ensure(len);
-	  memcpy(m_deleted_row.base, keyComps.row, len);
-	  m_deleted_row.ptr = m_deleted_row.base + len;
-	  m_deleted_row_timestamp = keyComps.timestamp;
-	  m_delete_present = true;
-	}
-	if (m_return_deletes)
-	  break;
+      else if (key.flag == FLAG_DELETE_ROW) {
+        len = strlen(key.row) + 1;
+        if (m_delete_present && m_deleted_row.fill() == len && !memcmp(m_deleted_row.base, key.row, len)) {
+          if (m_deleted_row_timestamp < key.timestamp)
+            m_deleted_row_timestamp = key.timestamp;
+        }
+        else {
+          m_deleted_row.clear();
+          m_deleted_row.ensure(len);
+          memcpy(m_deleted_row.base, key.row, len);
+          m_deleted_row.ptr = m_deleted_row.base + len;
+          m_deleted_row_timestamp = key.timestamp;
+          m_delete_present = true;
+        }
+        if (m_return_deletes)
+          break;
       }
-      else if (keyComps.flag == FLAG_DELETE_COLUMN_FAMILY) {
-	len = keyComps.column_qualifier - keyComps.row;
-	if (m_delete_present && m_deleted_column_family.fill() == len && !memcmp(m_deleted_column_family.base, keyComps.row, len)) {
-	  if (m_deleted_column_family_timestamp < keyComps.timestamp)
-	    m_deleted_column_family_timestamp = keyComps.timestamp;
-	}
-	else {
-	  m_deleted_column_family.clear();
-	  m_deleted_column_family.ensure(len);
-	  memcpy(m_deleted_column_family.base, keyComps.row, len);
-	  m_deleted_column_family.ptr = m_deleted_column_family.base + len;
-	  m_deleted_column_family_timestamp = keyComps.timestamp;
-	  m_delete_present = true;
-	}
-	if (m_return_deletes)
-	  break;
+      else if (key.flag == FLAG_DELETE_COLUMN_FAMILY) {
+        len = key.column_qualifier - key.row;
+        if (m_delete_present && m_deleted_column_family.fill() == len && !memcmp(m_deleted_column_family.base, key.row, len)) {
+          if (m_deleted_column_family_timestamp < key.timestamp)
+            m_deleted_column_family_timestamp = key.timestamp;
+        }
+        else {
+          m_deleted_column_family.clear();
+          m_deleted_column_family.ensure(len);
+          memcpy(m_deleted_column_family.base, key.row, len);
+          m_deleted_column_family.ptr = m_deleted_column_family.base + len;
+          m_deleted_column_family_timestamp = key.timestamp;
+          m_delete_present = true;
+        }
+        if (m_return_deletes)
+          break;
       }
-      else if (keyComps.flag == FLAG_DELETE_CELL) {
-	len = (keyComps.column_qualifier - keyComps.row) + strlen(keyComps.column_qualifier) + 1;
-	if (m_delete_present && m_deleted_cell.fill() == len && !memcmp(m_deleted_cell.base, keyComps.row, len)) {
-	  if (m_deleted_cell_timestamp < keyComps.timestamp)
-	    m_deleted_cell_timestamp = keyComps.timestamp;
-	}
-	else {
-	  m_deleted_cell.clear();
-	  m_deleted_cell.ensure(len);
-	  memcpy(m_deleted_cell.base, keyComps.row, len);
-	  m_deleted_cell.ptr = m_deleted_cell.base + len;
-	  m_deleted_cell_timestamp = keyComps.timestamp;
-	  m_delete_present = true;
-	}
-	if (m_return_deletes)
-	  break;
+      else if (key.flag == FLAG_DELETE_CELL) {
+        len = (key.column_qualifier - key.row) + strlen(key.column_qualifier) + 1;
+        if (m_delete_present && m_deleted_cell.fill() == len && !memcmp(m_deleted_cell.base, key.row, len)) {
+          if (m_deleted_cell_timestamp < key.timestamp)
+            m_deleted_cell_timestamp = key.timestamp;
+        }
+        else {
+          m_deleted_cell.clear();
+          m_deleted_cell.ensure(len);
+          memcpy(m_deleted_cell.base, key.row, len);
+          m_deleted_cell.ptr = m_deleted_cell.base + len;
+          m_deleted_cell_timestamp = key.timestamp;
+          m_delete_present = true;
+        }
+        if (m_return_deletes)
+          break;
       }
       else {
-	if (keyComps.timestamp >= m_end_timestamp)
-	  continue;
-	if (!m_return_deletes && m_delete_present) {
-	  if (m_deleted_cell.fill() > 0) {
-	    len = (keyComps.column_qualifier - keyComps.row) + strlen(keyComps.column_qualifier) + 1;
-	    if (m_deleted_cell.fill() == len && !memcmp(m_deleted_cell.base, keyComps.row, len)) {
-	      if (keyComps.timestamp <= m_deleted_cell_timestamp)
-		continue;
-	      break;
-	    }
-	    m_deleted_cell.clear();
-	  }
-	  if (m_deleted_column_family.fill() > 0) {
-	    len = keyComps.column_qualifier - keyComps.row;
-	    if (m_deleted_column_family.fill() == len && !memcmp(m_deleted_column_family.base, keyComps.row, len)) {
-	      if (keyComps.timestamp <= m_deleted_column_family_timestamp)
-		continue;
-	      break;
-	    }
-	    m_deleted_column_family.clear();
-	  }
-	  if (m_deleted_row.fill() > 0) {
-	    len = strlen(keyComps.row) + 1;
-	    if (m_deleted_row.fill() == len && !memcmp(m_deleted_row.base, keyComps.row, len)) {
-	      if (keyComps.timestamp <= m_deleted_row_timestamp)
-		continue;
-	      break;
-	    }
-	    m_deleted_row.clear();
-	  }
-	  m_delete_present = false;
-	}
-	break;
+        if (key.timestamp >= m_end_timestamp)
+          continue;
+        if (!m_return_deletes && m_delete_present) {
+          if (m_deleted_cell.fill() > 0) {
+            len = (key.column_qualifier - key.row) + strlen(key.column_qualifier) + 1;
+            if (m_deleted_cell.fill() == len && !memcmp(m_deleted_cell.base, key.row, len)) {
+              if (key.timestamp <= m_deleted_cell_timestamp)
+                continue;
+              break;
+            }
+            m_deleted_cell.clear();
+          }
+          if (m_deleted_column_family.fill() > 0) {
+            len = key.column_qualifier - key.row;
+            if (m_deleted_column_family.fill() == len && !memcmp(m_deleted_column_family.base, key.row, len)) {
+              if (key.timestamp <= m_deleted_column_family_timestamp)
+                continue;
+              break;
+            }
+            m_deleted_column_family.clear();
+          }
+          if (m_deleted_row.fill() > 0) {
+            len = strlen(key.row) + 1;
+            if (m_deleted_row.fill() == len && !memcmp(m_deleted_row.base, key.row, len)) {
+              if (key.timestamp <= m_deleted_row_timestamp)
+                continue;
+              break;
+            }
+            m_deleted_row.clear();
+          }
+          m_delete_present = false;
+        }
+        break;
       }
     }
 
-    uint8_t *prev_key;
+    const uint8_t *prev_key;
     size_t prev_key_len = sstate.key.decode_length(&prev_key);
 
     if (m_prev_key.fill() != 0) {
 
       if (m_row_limit) {
-	if (strcmp(keyComps.row, (const char *)m_prev_key.base)) {
-	  m_row_count++;
-	  if (m_row_count >= m_row_limit) {
-	    m_done = true;
-	    return;
-	  }
-	  m_prev_key.set(prev_key, prev_key_len);
-	  m_cell_limit = m_scan_context_ptr->familyInfo[keyComps.column_family_code].max_versions;
-	  m_cell_cutoff = m_scan_context_ptr->familyInfo[keyComps.column_family_code].cutoffTime;
-	  m_cell_count = 0;
-	  return;
-	}
+        if (strcmp(key.row, (const char *)m_prev_key.base)) {
+          m_row_count++;
+          if (m_row_count >= m_row_limit) {
+            m_done = true;
+            return;
+          }
+          m_prev_key.set(prev_key, prev_key_len);
+          m_cell_limit = m_scan_context_ptr->family_info[key.column_family_code].max_versions;
+          m_cell_cutoff = m_scan_context_ptr->family_info[key.column_family_code].cutoff_time;
+          m_cell_count = 0;
+          return;
+        }
       }
 
       if (prev_key_len == m_prev_key.fill() && prev_key_len > 9 && !memcmp(prev_key, m_prev_key.base, prev_key_len-9)) {
-	if (m_cell_limit) {
-	  m_cell_count++;
-	  m_prev_key.set(prev_key, prev_key_len);
-	  if (m_cell_count >= m_cell_limit)
-	    continue;
-	}
+        if (m_cell_limit) {
+          m_cell_count++;
+          m_prev_key.set(prev_key, prev_key_len);
+          if (m_cell_count >= m_cell_limit)
+            continue;
+        }
       }
       else {
-	m_prev_key.set(prev_key, prev_key_len);
-	m_cell_limit = m_scan_context_ptr->familyInfo[keyComps.column_family_code].max_versions;
-	m_cell_cutoff = m_scan_context_ptr->familyInfo[keyComps.column_family_code].cutoffTime;
-	m_cell_count = 0;
+        m_prev_key.set(prev_key, prev_key_len);
+        m_cell_limit = m_scan_context_ptr->family_info[key.column_family_code].max_versions;
+        m_cell_cutoff = m_scan_context_ptr->family_info[key.column_family_code].cutoff_time;
+        m_cell_count = 0;
       }
 
     }
     else {
       m_prev_key.set(prev_key, prev_key_len);
-      m_cell_limit = m_scan_context_ptr->familyInfo[keyComps.column_family_code].max_versions;
-      m_cell_cutoff = m_scan_context_ptr->familyInfo[keyComps.column_family_code].cutoffTime;
+      m_cell_limit = m_scan_context_ptr->family_info[key.column_family_code].max_versions;
+      m_cell_cutoff = m_scan_context_ptr->family_info[key.column_family_code].cutoff_time;
       m_cell_count = 0;
     }
 
     break;
   }
-  
+
 
 }
 
@@ -235,7 +236,7 @@ bool MergeScanner::get(ByteString &key, ByteString &value) {
     initialize();
 
   if (!m_queue.empty() && !m_done) {
-    const ScannerStateT &sstate = m_queue.top();
+    const ScannerState &sstate = m_queue.top();
     // check for row or cell limit
     key = sstate.key;
     value = sstate.value;
@@ -247,7 +248,7 @@ bool MergeScanner::get(ByteString &key, ByteString &value) {
 
 
 void MergeScanner::initialize() {
-  ScannerStateT sstate;
+  ScannerState sstate;
   while (!m_queue.empty())
     m_queue.pop();
   for (size_t i=0; i<m_scanners.size(); i++) {
@@ -258,66 +259,66 @@ void MergeScanner::initialize() {
   }
   while (!m_queue.empty()) {
     sstate = m_queue.top();
-    Key keyComps;
-    if (!keyComps.load(sstate.key)) {
+    Key key;
+    if (!key.load(sstate.key)) {
       assert(!"MergeScanner::initialize() - Problem decoding key!");
     }
 
-    if (keyComps.timestamp < m_start_timestamp) {
+    if (key.timestamp < m_start_timestamp) {
       m_queue.pop();
       sstate.scanner->forward();
       if (sstate.scanner->get(sstate.key, sstate.value))
-	m_queue.push(sstate);
+        m_queue.push(sstate);
       continue;
     }
 
-    if (keyComps.flag == FLAG_DELETE_ROW) {
-      size_t len = strlen(keyComps.row) + 1;
+    if (key.flag == FLAG_DELETE_ROW) {
+      size_t len = strlen(key.row) + 1;
       m_deleted_row.clear();
       m_deleted_row.ensure(len);
-      memcpy(m_deleted_row.base, keyComps.row, len);
+      memcpy(m_deleted_row.base, key.row, len);
       m_deleted_row.ptr = m_deleted_row.base + len;
-      m_deleted_row_timestamp = keyComps.timestamp;
+      m_deleted_row_timestamp = key.timestamp;
       m_delete_present = true;
       if (!m_return_deletes)
-	forward();
+        forward();
     }
-    else if (keyComps.flag == FLAG_DELETE_COLUMN_FAMILY) {
-      size_t len = (keyComps.column_qualifier - keyComps.row) + strlen(keyComps.column_qualifier) + 1;
+    else if (key.flag == FLAG_DELETE_COLUMN_FAMILY) {
+      size_t len = (key.column_qualifier - key.row) + strlen(key.column_qualifier) + 1;
       m_deleted_column_family.clear();
       m_deleted_column_family.ensure(len);
-      memcpy(m_deleted_column_family.base, keyComps.row, len);
+      memcpy(m_deleted_column_family.base, key.row, len);
       m_deleted_column_family.ptr = m_deleted_column_family.base + len;
-      m_deleted_column_family_timestamp = keyComps.timestamp;
+      m_deleted_column_family_timestamp = key.timestamp;
       m_delete_present = true;
       if (!m_return_deletes)
-	forward();
+        forward();
     }
-    else if (keyComps.flag == FLAG_DELETE_CELL) {
-      size_t len = (keyComps.column_qualifier - keyComps.row) + strlen(keyComps.column_qualifier) + 1;
+    else if (key.flag == FLAG_DELETE_CELL) {
+      size_t len = (key.column_qualifier - key.row) + strlen(key.column_qualifier) + 1;
       m_deleted_cell.clear();
       m_deleted_cell.ensure(len);
-      memcpy(m_deleted_cell.base, keyComps.row, len);
+      memcpy(m_deleted_cell.base, key.row, len);
       m_deleted_cell.ptr = m_deleted_cell.base + len;
-      m_deleted_cell_timestamp = keyComps.timestamp;
+      m_deleted_cell_timestamp = key.timestamp;
       m_delete_present = true;
       if (!m_return_deletes)
-	forward();
+        forward();
     }
     else {
-      if (keyComps.timestamp >= m_end_timestamp) {
-	m_queue.pop();
-	sstate.scanner->forward();
-	if (sstate.scanner->get(sstate.key, sstate.value))
-	  m_queue.push(sstate);
-	continue;
+      if (key.timestamp >= m_end_timestamp) {
+        m_queue.pop();
+        sstate.scanner->forward();
+        if (sstate.scanner->get(sstate.key, sstate.value))
+          m_queue.push(sstate);
+        continue;
       }
       m_delete_present = false;
-      uint8_t *ptr;
+      const uint8_t *ptr;
       size_t len = sstate.key.decode_length(&ptr);
       m_prev_key.set(ptr, len);
-      m_cell_limit = m_scan_context_ptr->familyInfo[keyComps.column_family_code].max_versions;
-      m_cell_cutoff = m_scan_context_ptr->familyInfo[keyComps.column_family_code].cutoffTime;
+      m_cell_limit = m_scan_context_ptr->family_info[key.column_family_code].max_versions;
+      m_cell_cutoff = m_scan_context_ptr->family_info[key.column_family_code].cutoff_time;
       m_cell_count = 0;
     }
     break;

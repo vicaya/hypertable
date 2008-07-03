@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cassert>
 #include <iostream>
 
@@ -45,13 +46,13 @@ CellCache::~CellCache() {
   uint64_t mem_freed = 0;
   uint32_t offset;
   uint8_t *ptr;
-#ifdef STAT  
+#ifdef STAT
   uint32_t skipped = 0;
 #endif
 
-  for (CellMapT::iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++) {
+  for (CellMap::iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++) {
     if (((*iter).second & ALLOC_BIT_MASK) == 0) {
-      ptr = (*iter).first.ptr;
+      ptr = (uint8_t *)(*iter).first.ptr;
       offset = (*iter).second & OFFSET_BIT_MASK;
       mem_freed += offset + ByteString(ptr + offset).length();
       delete [] ptr;
@@ -86,21 +87,21 @@ int CellCache::add(const ByteString key, const ByteString value, uint64_t real_t
 
   (void)real_timestamp;
 
-  new_key.ptr = ptr = new uint8_t [ total_len ];
+  new_key.ptr = ptr = new uint8_t [total_len];
 
   memcpy(ptr, key.ptr, key_len);
   ptr += key_len;
 
   value.write(ptr);
 
-  if ( ! m_cell_map.insert(CellMapT::value_type(new_key, key_len)).second ) {
+  if (! m_cell_map.insert(CellMap::value_type(new_key, key_len)).second) {
     m_collisions++;
     HT_WARNF("Collision detected key insert (row = %s)", new_key.str());
     delete [] new_key.ptr;
   }
   else {
     m_memory_used += total_len;
-    if ( key.ptr[ key_len - 9] <= FLAG_DELETE_CELL )
+    if (key.ptr[key_len - 9] <= FLAG_DELETE_CELL)
       m_deletes++;
   }
 
@@ -119,7 +120,7 @@ const char *CellCache::get_split_row() {
 void CellCache::get_split_rows(std::vector<std::string> &split_rows) {
   boost::mutex::scoped_lock lock(m_mutex);
   if (m_cell_map.size() > 2) {
-    CellMapT::const_iterator iter = m_cell_map.begin();
+    CellMap::const_iterator iter = m_cell_map.begin();
     size_t i=0, mid = m_cell_map.size() / 2;
     for (i=0; i<mid; i++)
       iter++;
@@ -132,7 +133,7 @@ void CellCache::get_split_rows(std::vector<std::string> &split_rows) {
 void CellCache::get_rows(std::vector<std::string> &rows) {
   boost::mutex::scoped_lock lock(m_mutex);
   const char *row, *last_row = "";
-  for (CellMapT::const_iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++) {
+  for (CellMap::const_iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++) {
     row = (*iter).first.str();
     if (strcmp(row, last_row)) {
       rows.push_back(row);
@@ -143,9 +144,9 @@ void CellCache::get_rows(std::vector<std::string> &rows) {
 
 
 
-CellListScanner *CellCache::create_scanner(ScanContextPtr &scanContextPtr) {
-  CellCachePtr cellCachePtr(this);
-  return new CellCacheScanner(cellCachePtr, scanContextPtr);
+CellListScanner *CellCache::create_scanner(ScanContextPtr &scan_ctx) {
+  CellCachePtr cellcache(this);
+  return new CellCacheScanner(cellcache, scan_ctx);
 }
 
 
@@ -154,22 +155,22 @@ CellListScanner *CellCache::create_scanner(ScanContextPtr &scanContextPtr) {
  * This must be called with the cell cache locked
  */
 CellCache *CellCache::slice_copy(uint64_t timestamp) {
-  Key keyComps;
+  Key key;
 #ifdef STAT
   uint64_t dropped = 0;
 #endif
 
   CellCachePtr child_ptr = new CellCache();
 
-  for (CellMapT::iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++) {
+  for (CellMap::iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++) {
 
-    if (!keyComps.load((*iter).first)) {
+    if (!key.load((*iter).first)) {
       HT_ERROR("Problem deserializing key/value pair");
       continue;
     }
 
-    if (keyComps.timestamp > timestamp) {
-      child_ptr->m_cell_map.insert(CellMapT::value_type((*iter).first, (*iter).second));
+    if (key.timestamp > timestamp) {
+      child_ptr->m_cell_map.insert(CellMap::value_type((*iter).first, (*iter).second));
       (*iter).second |= ALLOC_BIT_MASK;  // mark this entry in the "old" map so it doesn't get deleted
     }
 #ifdef STAT
@@ -192,7 +193,7 @@ CellCache *CellCache::slice_copy(uint64_t timestamp) {
 
 
 /**
- * 
+ *
  */
 CellCache *CellCache::purge_deletes() {
   Key key_comps;
@@ -204,7 +205,7 @@ CellCache *CellCache::purge_deletes() {
   uint64_t      deleted_column_family_timestamp = 0;
   DynamicBuffer deleted_cell(0);
   uint64_t      deleted_cell_timestamp = 0;
-  CellMapT::iterator iter;
+  CellMap::iterator iter;
 
   HT_INFO("Purging deletes from CellCache");
 
@@ -213,7 +214,7 @@ CellCache *CellCache::purge_deletes() {
   iter = m_cell_map.begin();
 
   while (iter != m_cell_map.end()) {
-    
+
     if (!key_comps.load((*iter).first)) {
       HT_ERROR("Problem deserializing key/value pair");
       iter++;
@@ -223,84 +224,84 @@ CellCache *CellCache::purge_deletes() {
     if (key_comps.flag == FLAG_INSERT) {
 
       if (delete_present) {
-	if (deleted_cell.fill() > 0) {
-	  len = (key_comps.column_qualifier - key_comps.row) + strlen(key_comps.column_qualifier) + 1;
-	  if (deleted_cell.fill() == len && !memcmp(deleted_cell.base, key_comps.row, len)) {
-	    if (key_comps.timestamp > deleted_cell_timestamp) {
-	      child_ptr->m_cell_map.insert(CellMapT::value_type((*iter).first, (*iter).second));
-	      (*iter).second |= ALLOC_BIT_MASK;  // mark this entry in the "old" map so it doesn't get deleted
-	    }
-	    iter++;
-	    continue;
-	  }
-	  deleted_cell.clear();
-	}
-	if (deleted_column_family.fill() > 0) {
-	  len = key_comps.column_qualifier - key_comps.row;
-	  if (deleted_column_family.fill() == len && !memcmp(deleted_column_family.base, key_comps.row, len)) {
-	    if (key_comps.timestamp > deleted_column_family_timestamp) {
-	      child_ptr->m_cell_map.insert(CellMapT::value_type((*iter).first, (*iter).second));
-	      (*iter).second |= ALLOC_BIT_MASK;  // mark this entry in the "old" map so it doesn't get deleted
-	    }
-	    iter++;
-	    continue;
-	  }
-	  deleted_column_family.clear();
-	}
-	if (deleted_row.fill() > 0) {
-	  len = strlen(key_comps.row) + 1;
-	  if (deleted_row.fill() == len && !memcmp(deleted_row.base, key_comps.row, len)) {
-	    if (key_comps.timestamp > deleted_row_timestamp) {
-	      child_ptr->m_cell_map.insert(CellMapT::value_type((*iter).first, (*iter).second));
-	      (*iter).second |= ALLOC_BIT_MASK;  // mark this entry in the "old" map so it doesn't get deleted
-	    }
-	    iter++;
-	    continue;
-	  }
-	  deleted_row.clear();
-	}
-	delete_present = false;
+        if (deleted_cell.fill() > 0) {
+          len = (key_comps.column_qualifier - key_comps.row) + strlen(key_comps.column_qualifier) + 1;
+          if (deleted_cell.fill() == len && !memcmp(deleted_cell.base, key_comps.row, len)) {
+            if (key_comps.timestamp > deleted_cell_timestamp) {
+              child_ptr->m_cell_map.insert(CellMap::value_type((*iter).first, (*iter).second));
+              (*iter).second |= ALLOC_BIT_MASK;  // mark this entry in the "old" map so it doesn't get deleted
+            }
+            iter++;
+            continue;
+          }
+          deleted_cell.clear();
+        }
+        if (deleted_column_family.fill() > 0) {
+          len = key_comps.column_qualifier - key_comps.row;
+          if (deleted_column_family.fill() == len && !memcmp(deleted_column_family.base, key_comps.row, len)) {
+            if (key_comps.timestamp > deleted_column_family_timestamp) {
+              child_ptr->m_cell_map.insert(CellMap::value_type((*iter).first, (*iter).second));
+              (*iter).second |= ALLOC_BIT_MASK;  // mark this entry in the "old" map so it doesn't get deleted
+            }
+            iter++;
+            continue;
+          }
+          deleted_column_family.clear();
+        }
+        if (deleted_row.fill() > 0) {
+          len = strlen(key_comps.row) + 1;
+          if (deleted_row.fill() == len && !memcmp(deleted_row.base, key_comps.row, len)) {
+            if (key_comps.timestamp > deleted_row_timestamp) {
+              child_ptr->m_cell_map.insert(CellMap::value_type((*iter).first, (*iter).second));
+              (*iter).second |= ALLOC_BIT_MASK;  // mark this entry in the "old" map so it doesn't get deleted
+            }
+            iter++;
+            continue;
+          }
+          deleted_row.clear();
+        }
+        delete_present = false;
       }
-      child_ptr->m_cell_map.insert(CellMapT::value_type((*iter).first, (*iter).second));
+      child_ptr->m_cell_map.insert(CellMap::value_type((*iter).first, (*iter).second));
       (*iter).second |= ALLOC_BIT_MASK;  // mark this entry in the "old" map so it doesn't get deleted
       iter++;
     }
     else {
       if (key_comps.flag == FLAG_DELETE_ROW) {
-	len = strlen(key_comps.row) + 1;
-	if (delete_present && deleted_row.fill() == len && !memcmp(deleted_row.base, key_comps.row, len)) {
-	  if (deleted_row_timestamp < key_comps.timestamp)
-	    deleted_row_timestamp = key_comps.timestamp;
-	}
-	else {
-	  deleted_row.set(key_comps.row, len);
-	  deleted_row_timestamp = key_comps.timestamp;
-	  delete_present = true;
-	}
+        len = strlen(key_comps.row) + 1;
+        if (delete_present && deleted_row.fill() == len && !memcmp(deleted_row.base, key_comps.row, len)) {
+          if (deleted_row_timestamp < key_comps.timestamp)
+            deleted_row_timestamp = key_comps.timestamp;
+        }
+        else {
+          deleted_row.set(key_comps.row, len);
+          deleted_row_timestamp = key_comps.timestamp;
+          delete_present = true;
+        }
       }
       else if (key_comps.flag == FLAG_DELETE_COLUMN_FAMILY) {
-	len = key_comps.column_qualifier - key_comps.row;
-	if (delete_present && deleted_column_family.fill() == len && !memcmp(deleted_column_family.base, key_comps.row, len)) {
-	  if (deleted_column_family_timestamp < key_comps.timestamp)
-	    deleted_column_family_timestamp = key_comps.timestamp;
-	}
-	else {
-	  deleted_column_family.set(key_comps.row, len);
-	  deleted_column_family_timestamp = key_comps.timestamp;
-	  delete_present = true;
-	}
+        len = key_comps.column_qualifier - key_comps.row;
+        if (delete_present && deleted_column_family.fill() == len && !memcmp(deleted_column_family.base, key_comps.row, len)) {
+          if (deleted_column_family_timestamp < key_comps.timestamp)
+            deleted_column_family_timestamp = key_comps.timestamp;
+        }
+        else {
+          deleted_column_family.set(key_comps.row, len);
+          deleted_column_family_timestamp = key_comps.timestamp;
+          delete_present = true;
+        }
       }
       else if (key_comps.flag == FLAG_DELETE_CELL) {
-	len = (key_comps.column_qualifier - key_comps.row) + strlen(key_comps.column_qualifier) + 1;
-	if (delete_present && deleted_cell.fill() == len && !memcmp(deleted_cell.base, key_comps.row, len)) {
-	  if (deleted_cell_timestamp < key_comps.timestamp)
-	    deleted_cell_timestamp = key_comps.timestamp;
-	}
-	else {
-	  deleted_cell.set(key_comps.row, len);
-	  deleted_cell_timestamp = key_comps.timestamp;
-	  delete_present = true;
-	}
+        len = (key_comps.column_qualifier - key_comps.row) + strlen(key_comps.column_qualifier) + 1;
+        if (delete_present && deleted_cell.fill() == len && !memcmp(deleted_cell.base, key_comps.row, len)) {
+          if (deleted_cell_timestamp < key_comps.timestamp)
+            deleted_cell_timestamp = key_comps.timestamp;
+        }
+        else {
+          deleted_cell.set(key_comps.row, len);
+          deleted_cell_timestamp = key_comps.timestamp;
+          delete_present = true;
+        }
       }
       iter++;
     }

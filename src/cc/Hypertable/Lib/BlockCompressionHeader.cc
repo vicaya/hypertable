@@ -1,28 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
-extern "C" {
-#include <stdint.h>
-#include <string.h>
-}
+#include "Common/Compat.h"
 
 #include "Common/Serialization.h"
 #include "Common/Checksum.h"
@@ -33,73 +30,75 @@ extern "C" {
 #include "BlockCompressionHeader.h"
 
 using namespace Hypertable;
+using namespace Serialization;
 
 const size_t BlockCompressionHeader::LENGTH;
 
 
 /**
  */
-void BlockCompressionHeader::encode(uint8_t **buf_ptr) {
-  uint8_t *base = *buf_ptr;
-  memcpy(*buf_ptr, m_magic, 10);
-  (*buf_ptr) += 10;
-  *(*buf_ptr)++ = (uint8_t)length();
-  *(*buf_ptr)++ = (uint8_t)m_compression_type;
-  Serialization::encode_int(buf_ptr, m_data_checksum);
-  Serialization::encode_int(buf_ptr, m_data_length);
-  Serialization::encode_int(buf_ptr, m_data_zlength);
-  if ((size_t)(*buf_ptr - base) + 2 == length())
-    write_header_checksum(base, buf_ptr);
+void BlockCompressionHeader::encode(uint8_t **bufp) {
+  uint8_t *base = *bufp;
+  memcpy(*bufp, m_magic, 10);
+  (*bufp) += 10;
+  *(*bufp)++ = (uint8_t)length();
+  *(*bufp)++ = (uint8_t)m_compression_type;
+  encode_i32(bufp, m_data_checksum);
+  encode_i32(bufp, m_data_length);
+  encode_i32(bufp, m_data_zlength);
+
+  if ((size_t)(*bufp - base) + 2 == length())
+    write_header_checksum(base, bufp);
 }
 
-void BlockCompressionHeader::write_header_checksum(uint8_t *base, uint8_t **buf_ptr) {
-  uint16_t checksum16 = (uint16_t)(fletcher32(base, *buf_ptr-base) >> 16);
-  Serialization::encode_short(buf_ptr, checksum16);
+void BlockCompressionHeader::write_header_checksum(uint8_t *base, uint8_t **bufp) {
+  uint16_t checksum16 = fletcher32(base, *bufp-base);
+  encode_i16(bufp, checksum16);
 }
 
 
 /**
  */
-int BlockCompressionHeader::decode(uint8_t **buf_ptr, size_t *remaining_ptr) {
-  uint8_t *base = *buf_ptr;
+void BlockCompressionHeader::decode(const uint8_t **bufp, size_t *remainp) {
+  const uint8_t *base = *bufp;
   uint16_t header_length;
-  uint8_t bval = 0;
 
-  if (*remaining_ptr < length())
-    return Error::BLOCK_COMPRESSOR_TRUNCATED;
+  if (*remainp < length())
+    HT_THROW(Error::BLOCK_COMPRESSOR_TRUNCATED, "");
 
   // verify checksum
-  {
-    uint16_t header_checksum, header_checksum_computed;
-    size_t remaining = 2;
-    uint8_t *ptr = *buf_ptr + length() - 2;
-    header_checksum_computed = (uint16_t)(fletcher32(*buf_ptr, length()-2) >> 16);
-    Serialization::decode_short(&ptr, &remaining, &header_checksum);
-    if (header_checksum_computed != header_checksum)
-      return Error::BLOCK_COMPRESSOR_BAD_HEADER;
+  uint16_t header_checksum, header_checksum_computed;
+  size_t remaining = 2;
+  const uint8_t *ptr = *bufp + length() - 2;
+  header_checksum_computed = fletcher32(*bufp, length() - 2);
+  header_checksum = decode_i16(&ptr, &remaining);
+
+  if (header_checksum_computed != header_checksum)
+    HT_THROW(Error::BLOCK_COMPRESSOR_BAD_HEADER, "Header checksum mismatch");
+
+  memcpy(m_magic, *bufp, 10);
+  (*bufp) += 10;
+  *remainp -= 10;
+
+  header_length = decode_byte(bufp, remainp);
+
+  if (header_length != length())
+    HT_THROWF(Error::BLOCK_COMPRESSOR_BAD_HEADER, "Unexpected header length"
+              ": %lu, expecting: %lu", (Lu)header_length, (Lu)length());
+
+  m_compression_type = decode_byte(bufp, remainp);
+
+  if (m_compression_type >= BlockCompressionCodec::COMPRESSION_TYPE_LIMIT)
+    HT_THROWF(Error::BLOCK_COMPRESSOR_BAD_HEADER, "Bad compression type: %d",
+              (int)m_compression_type);
+
+  m_data_checksum = decode_i32(bufp, remainp);
+  m_data_length = decode_i32(bufp, remainp);
+  m_data_zlength = decode_i32(bufp, remainp);
+
+  if ((size_t)(*bufp - base) == length() - 2) {
+    *bufp += 2;
+    *remainp -= 2;
   }
-
-  memcpy(m_magic, *buf_ptr, 10);
-  (*buf_ptr) += 10;
-  *remaining_ptr -= 10;
-
-  Serialization::decode_byte(buf_ptr, remaining_ptr, &bval);
-  header_length = bval;
-  HT_EXPECT(header_length == length(), Error::FAILED_EXPECTATION);
-
-  Serialization::decode_byte(buf_ptr, remaining_ptr, &bval);
-  m_compression_type = bval;
-  HT_EXPECT(m_compression_type < BlockCompressionCodec::COMPRESSION_TYPE_LIMIT, Error::FAILED_EXPECTATION);  
-
-  Serialization::decode_int(buf_ptr, remaining_ptr, &m_data_checksum);
-  Serialization::decode_int(buf_ptr, remaining_ptr, &m_data_length);
-  Serialization::decode_int(buf_ptr, remaining_ptr, &m_data_zlength);
-
-  if ((size_t)(*buf_ptr - base) == length() - 2) {
-    *buf_ptr += 2;
-    *remaining_ptr -= 2;
-  }
-
-  return Error::OK;
 }
 

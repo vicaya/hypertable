@@ -1,24 +1,25 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cstdlib>
 
 extern "C" {
@@ -44,6 +45,7 @@ extern "C" {
 
 #include "CommTestThreadFunction.h"
 
+using namespace std;
 using namespace Hypertable;
 
 namespace {
@@ -55,13 +57,13 @@ namespace {
   };
 
   /**
-   * 
+   *
    */
   class TimerHandler : public DispatchHandler {
   public:
     TimerHandler(const char *msg, ostream &out) : m_msg(msg), m_out(out) { return; }
-    virtual void handle(EventPtr &eventPtr) {
-      m_out << eventPtr->toString().c_str() << " (" << m_msg << ")" << endl;
+    virtual void handle(EventPtr &event_ptr) {
+      m_out << event_ptr->to_str().c_str() << " (" << m_msg << ")" << endl;
     }
   private:
     const char *m_msg;
@@ -94,8 +96,8 @@ int main(int argc, char **argv) {
   int error;
   TestHarness harness("commTestTimer");
   bool golden = false;
-  TimerHandler *timerHandler;
-  uint32_t waitTime = 0;
+  TimerHandler *timer_handler;
+  uint32_t wait_time = 0;
   ostream &out = harness.get_log_stream();
 
   if (argc > 1) {
@@ -113,16 +115,16 @@ int main(int argc, char **argv) {
   comm = new Comm();
 
   for (int i=0; history[i].msg; i++) {
-    timerHandler = new TimerHandler(history[i].msg, out);
-    if ((error = comm->set_timer(history[i].delay*1000, timerHandler)) != Error::OK) {
+    timer_handler = new TimerHandler(history[i].msg, out);
+    if ((error = comm->set_timer(history[i].delay*1000, timer_handler)) != Error::OK) {
       HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
       exit(1);
     }
-    if (history[i].delay > waitTime)
-      waitTime = history[i].delay;
+    if (history[i].delay > wait_time)
+      wait_time = history[i].delay;
   }
 
-  poll(0, 0, (waitTime+1)*1000);
+  poll(0, 0, (wait_time+1)*1000);
 
   if (!golden)
     harness.validate_and_exit("commTestTimer.golden");

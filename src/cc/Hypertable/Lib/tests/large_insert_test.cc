@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cstdlib>
 #include <iostream>
 
@@ -29,10 +30,11 @@
 #include "Hypertable/Lib/Defaults.h"
 
 using namespace std;
+using namespace Hypertable;
 
 namespace {
 
-  const char *schema = 
+  const char *schema =
   "<Schema>"
   "  <AccessGroup name=\"default\">"
   "    <ColumnFamily>"
@@ -40,7 +42,7 @@ namespace {
   "    </ColumnFamily>"
   "  </AccessGroup>"
   "</Schema>";
-  
+
   const char *usage[] = {
     "usage: large_insert_test [<seed>]",
     "",
@@ -60,7 +62,7 @@ namespace {
       ptr += 4;
     }
   }
-  
+
 
 }
 
@@ -68,7 +70,7 @@ namespace {
 int main(int argc, char **argv) {
   Client *hypertable;
   unsigned long seed = 1234;
-  uint8_t *buf = new uint8_t [ 1048576 ];
+  uint8_t *buf = new uint8_t [1048576];
   char keybuf[32];
   uint8_t sent_digest[16];
   uint8_t received_digest[16];
@@ -113,7 +115,7 @@ int main(int argc, char **argv) {
     md5_starts(&md5_ctx);
 
     /** Add a big one **/
-    load_buffer_with_random(buf, 1000000);    
+    load_buffer_with_random(buf, 1000000);
     sprintf(keybuf, "%05u", (unsigned)1001);
     key.row = keybuf;
     key.row_len = strlen(keybuf);
@@ -143,7 +145,7 @@ int main(int argc, char **argv) {
 
     scanner_ptr = 0;
     table_ptr = 0;
-    
+
 
     /**
      * Validate large object returned by FETCH_SCANBLOCK
@@ -173,7 +175,7 @@ int main(int argc, char **argv) {
     }
 
     /** Add a big one **/
-    load_buffer_with_random(buf, 1000000);    
+    load_buffer_with_random(buf, 1000000);
     sprintf(keybuf, "%05u", (unsigned)1001);
     key.row = keybuf;
     key.row_len = strlen(keybuf);
@@ -205,12 +207,9 @@ int main(int argc, char **argv) {
     table_ptr = 0;
   }
   catch (Exception &e) {
-    if (e.what())
-      HT_ERRORF("%s (%s)", Error::get_text(e.code()), e.what());
-    else
-      HT_ERRORF("%s", Error::get_text(e.code()));
+    HT_ERROR_OUT << e << HT_END;
     return 1;
   }
-  
+
   return 0;
 }

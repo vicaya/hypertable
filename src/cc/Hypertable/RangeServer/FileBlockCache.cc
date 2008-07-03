@@ -1,125 +1,125 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cassert>
+#include <iostream>
 
 #include "FileBlockCache.h"
 
 using namespace Hypertable;
+using std::pair;
 
 atomic_t FileBlockCache::ms_next_file_id = ATOMIC_INIT(0);
 
-
 FileBlockCache::~FileBlockCache() {
-  for (BlockMapT::iterator iter = m_block_map.begin(); iter != m_block_map.end(); iter++) {
-    delete [] (*iter).second->block;
-    delete (*iter).second;
-  }
+  for (BlockCache::const_iterator iter = m_cache.begin();
+       iter != m_cache.end(); ++iter)
+    delete [] (*iter).block;
 }
 
-bool FileBlockCache::checkout(int fileId, uint32_t offset, uint8_t **blockp, uint32_t *lengthp) {
+bool
+FileBlockCache::checkout(int file_id, uint32_t file_offset, uint8_t **blockp,
+                         uint32_t *lengthp) {
   boost::mutex::scoped_lock lock(m_mutex);
-  CacheKeyT key;
-  BlockMapT::iterator iter;
+  HashIndex &hash_index = m_cache.get<1>();
+  HashIndex::iterator iter;
+  uint64_t key = ((uint64_t)file_id << 32) | file_offset;
 
-  key.fileId = fileId;
-  key.offset = offset;
-
-  if ((iter = m_block_map.find(key)) == m_block_map.end())
+  if ((iter = hash_index.find(key)) == hash_index.end())
     return false;
 
-  move_to_head((*iter).second);
+  BlockCacheEntry entry = *iter;
+  entry.ref_count++;
 
-  (*iter).second->refCount++;
+  hash_index.erase(iter);
+  
+  pair<Sequence::iterator, bool> insert_result = m_cache.push_back(entry);
+  assert(insert_result.second);
 
-  *blockp = (*iter).second->block;
-  *lengthp = (*iter).second->length;
+  *blockp = (*insert_result.first).block;
+  *lengthp = (*insert_result.first).length;
+
   return true;
 }
 
 
-void FileBlockCache::checkin(int fileId, uint32_t offset) {
+void FileBlockCache::checkin(int file_id, uint32_t file_offset) {
   boost::mutex::scoped_lock lock(m_mutex);
-  CacheKeyT key;
-  BlockMapT::iterator iter;
+  HashIndex &hash_index = m_cache.get<1>();
+  HashIndex::iterator iter;
+  uint64_t key = ((uint64_t)file_id << 32) | file_offset;
 
-  key.fileId = fileId;
-  key.offset = offset;
+  iter = hash_index.find(key);
 
-  iter = m_block_map.find(key);
+  assert(iter != hash_index.end() && (*iter).ref_count > 0);
 
-  assert(iter != m_block_map.end() && (*iter).second->refCount > 0);
-
-  (*iter).second->refCount--;
+  hash_index.modify(iter, DecrementRefCount());
 }
 
 
-bool FileBlockCache::insert_and_checkout(int fileId, uint32_t offset, uint8_t *block, uint32_t length) {
+bool
+FileBlockCache::insert_and_checkout(int file_id, uint32_t file_offset,
+                                    uint8_t *block, uint32_t length) {
   boost::mutex::scoped_lock lock(m_mutex);
-  CacheValueT *cacheValue = new CacheValueT;
-  BlockMapT::iterator iter;
+  HashIndex &hash_index = m_cache.get<1>();
+  uint64_t key = ((uint64_t)file_id << 32) | file_offset;
 
-  cacheValue->key.fileId = fileId;
-  cacheValue->key.offset = offset;
-
-  if ((iter = m_block_map.find(cacheValue->key)) != m_block_map.end()) {
-    move_to_head((*iter).second);
-    delete cacheValue;
+  if (length > m_max_memory || hash_index.find(key) != hash_index.end())
     return false;
+
+  // make room
+  if (m_avail_memory < length) {
+    BlockCache::iterator iter = m_cache.begin();
+    while (iter != m_cache.end()) {
+      if ((*iter).ref_count == 0) {
+	m_avail_memory += (*iter).length;
+	delete [] (*iter).block;
+	iter = m_cache.erase(iter);
+	if (m_avail_memory >= length)
+	  break;
+      }
+      else
+	++iter;
+    }
   }
 
-  cacheValue->block = block;
-  cacheValue->length = length;
-  cacheValue->refCount = 1;
+  BlockCacheEntry entry(file_id, file_offset);
+  entry.block = block;
+  entry.length = length;
+  entry.ref_count = 1;
 
-  if (m_head == 0) {
-    cacheValue->next = cacheValue->prev = 0;
-    m_head = m_tail = cacheValue;
-  }
-  else {
-    m_head->next = cacheValue;
-    cacheValue->prev = m_head;
-    cacheValue->next = 0;
-    m_head = cacheValue;
-  }
+  pair<Sequence::iterator, bool> insert_result = m_cache.push_back(entry);
+  assert(insert_result.second);
 
-  m_block_map[cacheValue->key] = cacheValue;
+  m_avail_memory -= length;
+  
   return true;
 }
 
 
-void FileBlockCache::move_to_head(CacheValueT *cacheValue) {
+bool FileBlockCache::contains(int file_id, uint32_t file_offset) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  HashIndex &hash_index = m_cache.get<1>();
+  uint64_t key = ((uint64_t)file_id << 32) | file_offset;
 
-  if (m_head == cacheValue)
-    return;
-
-  cacheValue->next->prev = cacheValue->prev;
-  if (cacheValue->prev == 0)
-    m_tail = cacheValue->next;
-  else
-    cacheValue->prev->next = cacheValue->next;
-
-  cacheValue->next = 0;
-  m_head->next = cacheValue;
-  cacheValue->prev = m_head;
-  m_head = cacheValue;
+  return (hash_index.find(key) != hash_index.end());
 }
-

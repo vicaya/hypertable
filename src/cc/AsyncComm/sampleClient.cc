@@ -1,23 +1,25 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+#include "Common/Compat.h"
 
 #include <queue>
 #include <cstdio>
@@ -53,6 +55,7 @@ extern "C" {
 #include "HeaderBuilder.h"
 
 using namespace Hypertable;
+using namespace Serialization;
 
 namespace {
   const char *DEFAULT_HOST = "localhost";
@@ -79,7 +82,7 @@ namespace {
     "to the server.  Each reply from the server is echoed to stdout.",
     (const char *)0
   };
-  bool gVerbose = false;
+  bool g_verbose = false;
 }
 
 
@@ -96,9 +99,9 @@ public:
   ResponseHandler() : m_queue(), m_mutex(), m_cond() { return; }
   virtual ~ResponseHandler() { return; }
 
-  virtual void handle(EventPtr &eventPtr) = 0;
+  virtual void handle(EventPtr &event_ptr) = 0;
 
-  virtual bool get_response(EventPtr &eventPtr) = 0;
+  virtual bool get_response(EventPtr &event_ptr) = 0;
 
 protected:
   queue<EventPtr>   m_queue;
@@ -121,31 +124,31 @@ class ResponseHandlerTCP : public ResponseHandler {
 public:
 
   ResponseHandlerTCP() : ResponseHandler(), m_connected(false) { return; }
-  
-  virtual void handle(EventPtr &eventPtr) {
+
+  virtual void handle(EventPtr &event_ptr) {
     boost::mutex::scoped_lock lock(m_mutex);
-    if (eventPtr->type == Event::CONNECTION_ESTABLISHED) {
-      if (gVerbose)
-	HT_INFOF("Connection Established - %s", eventPtr->toString().c_str());
+    if (event_ptr->type == Event::CONNECTION_ESTABLISHED) {
+      if (g_verbose)
+        HT_INFOF("Connection Established - %s", event_ptr->to_str().c_str());
       m_connected = true;
       m_cond.notify_one();
     }
-    else if (eventPtr->type == Event::DISCONNECT) {
-      if (eventPtr->error != 0) {
-	HT_INFOF("Disconnect : %s", Error::get_text(eventPtr->error));
+    else if (event_ptr->type == Event::DISCONNECT) {
+      if (event_ptr->error != 0) {
+        HT_INFOF("Disconnect : %s", Error::get_text(event_ptr->error));
       }
       else {
-	HT_INFO("Disconnect.");
+        HT_INFO("Disconnect.");
       }
       m_connected = false;
       m_cond.notify_one();
     }
-    else if (eventPtr->type == Event::ERROR) {
-      HT_INFOF("Error : %s", Error::get_text(eventPtr->error));
+    else if (event_ptr->type == Event::ERROR) {
+      HT_INFOF("Error : %s", Error::get_text(event_ptr->error));
       //exit(1);
     }
-    else if (eventPtr->type == Event::MESSAGE) {
-      m_queue.push(eventPtr);
+    else if (event_ptr->type == Event::MESSAGE) {
+      m_queue.push(event_ptr);
       m_cond.notify_one();
     }
   }
@@ -158,14 +161,14 @@ public:
     return m_connected;
   }
 
-  virtual bool get_response(EventPtr &eventPtr) {
+  virtual bool get_response(EventPtr &event_ptr) {
     boost::mutex::scoped_lock lock(m_mutex);
     while (m_queue.empty()) {
       if (m_connected == false)
-	return false;
+        return false;
       m_cond.wait(lock);
     }
-    eventPtr = m_queue.front();
+    event_ptr = m_queue.front();
     m_queue.pop();
     return true;
   }
@@ -205,25 +208,25 @@ class ResponseHandlerUDP : public ResponseHandler {
 public:
 
   ResponseHandlerUDP() : ResponseHandler() { return; }
-  
-  virtual void handle(EventPtr &eventPtr) {
+
+  virtual void handle(EventPtr &event_ptr) {
     boost::mutex::scoped_lock lock(m_mutex);
-    if (eventPtr->type == Event::MESSAGE) {
-      m_queue.push(eventPtr);
+    if (event_ptr->type == Event::MESSAGE) {
+      m_queue.push(event_ptr);
       m_cond.notify_one();
     }
     else {
-      HT_INFOF("%s", eventPtr->toString().c_str());
+      HT_INFOF("%s", event_ptr->to_str().c_str());
       //exit(1);
     }
   }
 
-  virtual bool get_response(EventPtr &eventPtr) {
+  virtual bool get_response(EventPtr &event_ptr) {
     boost::mutex::scoped_lock lock(m_mutex);
     while (m_queue.empty()) {
       m_cond.wait(lock);
     }
-    eventPtr = m_queue.front();
+    event_ptr = m_queue.front();
     m_queue.pop();
     return true;
   }
@@ -243,23 +246,23 @@ int main(int argc, char **argv) {
   struct sockaddr_in addr;
   uint16_t port = DEFAULT_PORT;
   time_t timeout = DEFAULT_TIMEOUT;
-  int reactorCount = 1;
-  const char *inputFile = 0;
+  int reactor_count = 1;
+  const char *in_file = 0;
   HeaderBuilder hbuilder;
   int error;
-  EventPtr eventPtr;
-  ConnectionHandlerFactoryPtr chfPtr;
+  EventPtr event_ptr;
+  ConnectionHandlerFactoryPtr chfp;
   DispatchHandlerPtr dhp;
-  ResponseHandler *respHandler;
-  bool udpMode = false;
+  ResponseHandler *resp_handler;
+  bool udp_mode = false;
   string line;
   int outstanding = 0;
-  int maxOutstanding = 50;
+  int max_outstanding = 50;
   const char *str;
-  struct sockaddr_in localAddr;
+  struct sockaddr_in local_addr;
 
-  memset(&localAddr, 0, sizeof(localAddr));
-  
+  memset(&local_addr, 0, sizeof(local_addr));
+
   if (argc == 1)
     Usage::dump_and_exit(usage);
 
@@ -272,31 +275,31 @@ int main(int argc, char **argv) {
     else if (!strncmp(argv[i], "--port=", 7)) {
       rval = atoi(&argv[i][7]);
       if (rval <= 1024 || rval > 65535) {
-	cerr << "Invalid port.  Must be in the range of 1024-65535." << endl;
-	exit(1);
+        cerr << "Invalid port.  Must be in the range of 1024-65535." << endl;
+        exit(1);
       }
       port = rval;
     }
     else if (!strncmp(argv[i], "--timeout=", 10))
       timeout = (time_t)atoi(&argv[i][10]);
     else if (!strcmp(argv[i], "--udp"))
-      udpMode = true;
+      udp_mode = true;
     else if (!strncmp(argv[i], "--reactors=", 11))
-      reactorCount = atoi(&argv[i][11]);
+      reactor_count = atoi(&argv[i][11]);
     else if (!strncmp(argv[i], "--recv-addr=", 12)) {
-      if (!InetAddr::initialize(&localAddr, &argv[i][12]))
-	HT_ABORT;
+      if (!InetAddr::initialize(&local_addr, &argv[i][12]))
+        HT_ABORT;
     }
     else if (!strcmp(argv[i], "--verbose")) {
-      gVerbose = true;
+      g_verbose = true;
     }
-    else if (inputFile == 0)
-      inputFile = argv[i];
+    else if (in_file == 0)
+      in_file = argv[i];
     else
       Usage::dump_and_exit(usage);
   }
 
-  if (inputFile == 0)
+  if (in_file == 0)
     Usage::dump_and_exit(usage);
 
   if (!InetAddr::initialize(&addr, host, port))
@@ -304,102 +307,106 @@ int main(int argc, char **argv) {
 
   comm = new Comm();
 
-  ifstream myfile(inputFile);
+  ifstream myfile(in_file);
 
   if (!myfile.is_open()) {
-    HT_ERRORF("Unable to open file '%s' : %s", inputFile, strerror(errno));
+    HT_ERRORF("Unable to open file '%s' : %s", in_file, strerror(errno));
     return 0;
   }
 
-  if (udpMode) {
-    assert(localAddr.sin_port == 0);
-    respHandler = new ResponseHandlerUDP();
-    dhp = respHandler;
+  if (udp_mode) {
+    assert(local_addr.sin_port == 0);
+    resp_handler = new ResponseHandlerUDP();
+    dhp = resp_handler;
     port++;
-    InetAddr::initialize(&localAddr, INADDR_ANY, port);
-    if ((error = comm->create_datagram_receive_socket(&localAddr, dhp)) != Error::OK) {
+    InetAddr::initialize(&local_addr, INADDR_ANY, port);
+    if ((error = comm->create_datagram_receive_socket(&local_addr, dhp)) != Error::OK) {
       std::string str;
-      HT_ERRORF("Problem creating UDP receive socket %s - %s", InetAddr::string_format(str, localAddr), Error::get_text(error));
+      HT_ERRORF("Problem creating UDP receive socket %s - %s", InetAddr::string_format(str, local_addr), Error::get_text(error));
       exit(1);
     }
   }
   else {
-    respHandler = new ResponseHandlerTCP();
-    dhp = respHandler;
+    resp_handler = new ResponseHandlerTCP();
+    dhp = resp_handler;
 
-    if (localAddr.sin_port == 0) {
+    if (local_addr.sin_port == 0) {
       if ((error = comm->connect(addr, dhp)) != Error::OK) {
-	HT_ERRORF("Comm::connect error - %s", Error::get_text(error));
-	exit(1);
+        HT_ERRORF("Comm::connect error - %s", Error::get_text(error));
+        exit(1);
       }
     }
     else {
-      chfPtr = new HandlerFactory(dhp);
-      if ((error = comm->listen(localAddr, chfPtr, dhp)) != Error::OK) {
-	HT_ERRORF("Comm::listen error - %s", Error::get_text(error));
-	exit(1);
+      chfp = new HandlerFactory(dhp);
+      if ((error = comm->listen(local_addr, chfp, dhp)) != Error::OK) {
+        HT_ERRORF("Comm::listen error - %s", Error::get_text(error));
+        exit(1);
       }
     }
-    if (!((ResponseHandlerTCP *)respHandler)->wait_for_connection())
+    if (!((ResponseHandlerTCP *)resp_handler)->wait_for_connection())
       exit(1);
 
   }
 
-  while (!myfile.eof() ) {
+  while (!myfile.eof()) {
     getline (myfile,line);
     if (line.length() > 0) {
-      CommBufPtr cbufPtr( new CommBuf(hbuilder, Serialization::encoded_length_string(line)) );
-      cbufPtr->append_string(line);
+      CommBufPtr cbp(new CommBuf(hbuilder, encoded_length_str16(line)));
+      cbp->append_str16(line);
       int retries = 0;
 
-      if (udpMode) {
-	if ((error = comm->send_datagram(addr, localAddr, cbufPtr)) != Error::OK) {
-	  HT_ERRORF("Problem sending datagram - %s", Error::get_text(error));
-	  return 1;
-	}
+      if (udp_mode) {
+        if ((error = comm->send_datagram(addr, local_addr, cbp)) != Error::OK) {
+          HT_ERRORF("Problem sending datagram - %s", Error::get_text(error));
+          return 1;
+        }
       }
       else {
-	while ((error = comm->send_request(addr, timeout, cbufPtr, respHandler)) != Error::OK) {
-	  if (error == Error::COMM_NOT_CONNECTED) {
-	    if (retries == 5) {
-	      HT_ERROR("Connection timeout.");
-	      return 1;
-	    }
-	    poll(0, 0, 1000);
-	    retries++;
-	  }
-	  else {
-	    HT_ERRORF("CommEngine::send_message returned '%s'", Error::get_text(error));
-	    return 1;
-	  }
-	}
+        while ((error = comm->send_request(addr, timeout, cbp, resp_handler)) != Error::OK) {
+          if (error == Error::COMM_NOT_CONNECTED) {
+            if (retries == 5) {
+              HT_ERROR("Connection timeout.");
+              return 1;
+            }
+            poll(0, 0, 1000);
+            retries++;
+          }
+          else {
+            HT_ERRORF("CommEngine::send_message returned '%s'", Error::get_text(error));
+            return 1;
+          }
+        }
       }
       outstanding++;
 
-      if (outstanding  > maxOutstanding) {
-	if (!respHandler->get_response(eventPtr))
-	  break;
-	if (!Serialization::decode_string(&eventPtr->message, &eventPtr->messageLen, &str))
-	  cout << "ERROR: deserialization problem." << endl;
-	else {
-	  if (*str != 0)
-	    cout << "ECHO: " << str << endl;
-	  else
-	    cout << "[NULL]" << endl;
-	}
-	outstanding--;
+      if (outstanding  > max_outstanding) {
+        if (!resp_handler->get_response(event_ptr))
+          break;
+        try {
+          str = decode_str16(&event_ptr->message, &event_ptr->message_len);
+          if (*str != 0)
+            cout << "ECHO: " << str << endl;
+          else
+            cout << "[NULL]" << endl;
+        }
+        catch (Exception &e) {
+          cout <<"Error: "<< e << endl;
+        }
+        outstanding--;
       }
     }
   }
 
-  while (outstanding > 0 && respHandler->get_response(eventPtr)) {
-    if (!Serialization::decode_string(&eventPtr->message, &eventPtr->messageLen, &str))
-      cout << "ERROR: deserialization problem." << endl;
-    else {
+  while (outstanding > 0 && resp_handler->get_response(event_ptr)) {
+    try {
+      str = decode_str16(&event_ptr->message, &event_ptr->message_len);
       if (str != 0)
-	cout << "ECHO: " << str << endl;
+        cout << "ECHO: " << str << endl;
       else
-	cout << "[NULL]" << endl;
+        cout << "[NULL]" << endl;
+    }
+    catch (Exception &e) {
+      cout <<"Error: "<< e << endl;
     }
     //cout << "out = " << outstanding << endl;
     outstanding--;

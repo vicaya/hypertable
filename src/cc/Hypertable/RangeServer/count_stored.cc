@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -55,21 +56,21 @@ namespace {
     (const char *)0
   };
 
-  typedef struct {
+  struct RangeCellStoreInfo {
     std::string start_row;
     std::string end_row;
     std::vector<std::string> cell_stores;
-  } RangeCellStoreInfoT;
+  };
 
-  typedef struct {
+  struct CellStoreInfo {
     std::string start_row;
     std::string end_row;
     std::string file;
-  } CellStoreInfoT;
-  
+  };
+
 }
 
-void fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_name, std::vector<CellStoreInfoT> &file_vector);
+void fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_name, std::vector<CellStoreInfo> &file_vector);
 
 
 int main(int argc, char **argv) {
@@ -77,13 +78,13 @@ int main(int argc, char **argv) {
   ConnectionManagerPtr conn_manager_ptr;
   DfsBroker::Client *client;
   ClientPtr hypertable_client_ptr;
-  std::vector<CellStoreInfoT> file_vector;
+  std::vector<CellStoreInfo> file_vector;
   const char *table_name = 0;
   bool hit_start = false;
   PropertiesPtr props_ptr;
   string config_file = "";
   CellStoreV0Ptr cell_store_ptr;
-  ScanContextPtr scan_context_ptr( new ScanContext(END_OF_TIME) );
+  ScanContextPtr scan_context_ptr(new ScanContext(END_OF_TIME));
   ByteString key;
   ByteString value;
   uint64_t total_count = 0;
@@ -112,7 +113,7 @@ int main(int argc, char **argv) {
   }
 
   if (config_file == "")
-    config_file = System::installDir + "/conf/hypertable.cfg";
+    config_file = System::install_dir + "/conf/hypertable.cfg";
 
   props_ptr = new Properties(config_file);
 
@@ -125,7 +126,7 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  Global::blockCache = new FileBlockCache(200000000LL);
+  Global::block_cache = new FileBlockCache(200000000LL);
 
   fill_cell_store_vector(hypertable_client_ptr, table_name, file_vector);
 
@@ -151,14 +152,14 @@ int main(int argc, char **argv) {
     while (scanner->get(key, value)) {
       row = key.str();
       if (!hit_start) {
-	if (strcmp(row, file_vector[i].start_row.c_str()) <= 0) {
-	  scanner->forward();
-	  continue;
-	}
-	hit_start = true;
+        if (strcmp(row, file_vector[i].start_row.c_str()) <= 0) {
+          scanner->forward();
+          continue;
+        }
+        hit_start = true;
       }
       if (strcmp(row, file_vector[i].end_row.c_str()) > 0)
-	break;
+        break;
       store_count++;
       scanner->forward();
     }
@@ -179,7 +180,7 @@ int main(int argc, char **argv) {
 /**
  *
  */
-void fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_name, std::vector<CellStoreInfoT> &file_vector) {
+void fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_name, std::vector<CellStoreInfo> &file_vector) {
   TablePtr table_ptr;
   TableScannerPtr scanner_ptr;
   ScanSpec scan_spec;
@@ -187,8 +188,8 @@ void fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_
   uint32_t table_id;
   char start_row[16];
   char end_row[16];
-  RangeCellStoreInfoT range_cell_store_info;
-  CellStoreInfoT cell_store_info;
+  RangeCellStoreInfo range_cell_store_info;
+  CellStoreInfo cell_store_info;
 
   try {
 
@@ -208,7 +209,7 @@ void fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_
     scan_spec.columns.push_back("Files");
     scan_spec.columns.push_back("StartRow");
 
-    // Create a scanner on the 'METADATA' table 
+    // Create a scanner on the 'METADATA' table
     scanner_ptr = table_ptr->create_scanner(scan_spec);
 
   }
@@ -225,22 +226,22 @@ void fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_
   while (scanner_ptr->next(cell)) {
     if (strcmp(cell.row_key, range_cell_store_info.end_row.c_str())) {
       if (range_cell_store_info.end_row != "") {
-	const char *end_row_cstr = strchr(range_cell_store_info.end_row.c_str(), ':');
-	if (end_row_cstr == 0) {
-	  cerr << "error: mal-formed end row (missing colon) - " << range_cell_store_info.end_row << endl;
-	  exit(1);
-	}
-	end_row_cstr++;
-	cell_store_info.start_row = range_cell_store_info.start_row;
-	cell_store_info.end_row = end_row_cstr;
-	for (size_t i=0; i<range_cell_store_info.cell_stores.size(); i++) {
-	  cell_store_info.file = range_cell_store_info.cell_stores[i];
-	  file_vector.push_back(cell_store_info);
-	}
+        const char *end_row_cstr = strchr(range_cell_store_info.end_row.c_str(), ':');
+        if (end_row_cstr == 0) {
+          cerr << "error: mal-formed end row (missing colon) - " << range_cell_store_info.end_row << endl;
+          exit(1);
+        }
+        end_row_cstr++;
+        cell_store_info.start_row = range_cell_store_info.start_row;
+        cell_store_info.end_row = end_row_cstr;
+        for (size_t i=0; i<range_cell_store_info.cell_stores.size(); i++) {
+          cell_store_info.file = range_cell_store_info.cell_stores[i];
+          file_vector.push_back(cell_store_info);
+        }
       }
       range_cell_store_info.start_row = "";
       range_cell_store_info.end_row = cell.row_key;
-      range_cell_store_info.cell_stores.clear();      
+      range_cell_store_info.cell_stores.clear();
     }
 
     if (!strcmp(cell.column_family, "StartRow"))
@@ -250,8 +251,8 @@ void fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_
       char *ptr, *save_ptr;
       ptr = strtok_r((char *)files.c_str(), "\n\r;", &save_ptr);
       while (ptr) {
-	range_cell_store_info.cell_stores.push_back(ptr);
-	ptr = strtok_r(0, "\n\r;", &save_ptr);
+        range_cell_store_info.cell_stores.push_back(ptr);
+        ptr = strtok_r(0, "\n\r;", &save_ptr);
       }
     }
     else {

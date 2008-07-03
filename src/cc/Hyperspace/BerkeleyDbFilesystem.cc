@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <vector>
 
 #include <boost/algorithm/string.hpp>
@@ -30,31 +31,54 @@
 #include "BerkeleyDbFilesystem.h"
 #include "DbtManaged.h"
 
+using namespace boost::algorithm;
 using namespace Hyperspace;
 using namespace Hypertable;
+using namespace Error;
+
+#define HT_DEBUG_ATTR(_txn_, _fn_, _an_, _k_, _v_) \
+  HT_DEBUG_OUT <<"txn="<< (_txn_) <<" fname='"<< (_fn_) <<"' attr='"<< (_an_) \
+      <<"' key='"<< (char *)(_k_).get_data() <<"' value='"<< (_v_) <<"'" \
+      << HT_END
+
+#define HT_DEBUG_ATTR_(_txn_, _fn_, _an_, _k_, _v_, _l_) \
+  HT_DEBUG_OUT <<"txn="<< (_txn_) <<" fname='"<< (_fn_); \
+  if ((_an_) == "n/a") _out_ <<"' attr='"<< (_an_); \
+  _out_ <<"' key='" << (char *)(_k_).get_data(); \
+  if (_l_) _out_ <<"' value='"<< HT_HEAD_(_v_, _l_, 10); \
+  _out_ <<"'"<< HT_END
 
 /**
  */
-BerkeleyDbFilesystem::BerkeleyDbFilesystem(const std::string &basedir) : m_base_dir(basedir), m_env(0) {
+BerkeleyDbFilesystem::BerkeleyDbFilesystem(const std::string &basedir,
+                                           bool force_recover)
+    : m_base_dir(basedir), m_env(0) {
   DbTxn *txn = NULL;
 
-  u_int32_t env_flags = 
+  u_int32_t env_flags =
     DB_CREATE |      // If the environment does not exist, create it
-    DB_INIT_LOCK  |  // Initialize locking 
-    DB_INIT_LOG   |  // Initialize logging 
-    DB_INIT_MPOOL |  // Initialize the cache 
-    DB_INIT_TXN |    // Initialize transactions 
+    DB_INIT_LOCK  |  // Initialize locking
+    DB_INIT_LOG   |  // Initialize logging
+    DB_INIT_MPOOL |  // Initialize the cache
+    DB_INIT_TXN   |  // Initialize transactions
+    DB_RECOVER    |  // Do basic recovery
     DB_THREAD;
+
+  if (force_recover)
+    env_flags |= DB_RECOVER_FATAL;
+
   u_int32_t db_flags = DB_CREATE | DB_AUTO_COMMIT | DB_THREAD;
 
   /**
    * Open Berkeley DB environment and namespace database
    */
-  try { 
+  try {
     int ret;
     Dbt key, data;
 
-    m_env.open(m_base_dir.c_str(), env_flags, 0); 
+    m_env.set_lk_detect(DB_LOCK_DEFAULT);
+
+    m_env.open(m_base_dir.c_str(), env_flags, 0);
     m_db = new Db(&m_env, 0);
     m_db->open(NULL, "namespace.db", NULL, DB_BTREE, db_flags, 0);
 
@@ -80,35 +104,33 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(const std::string &basedir) : m_base_
       free(data.get_data());
     txn->commit(0);
 
-  } 
-  catch(DbException &e) { 
-    if (txn)
-      txn->abort();
-    HT_FATALF("Error initializing Berkeley DB (dir=%s) - %s", m_base_dir.c_str(), e.what());
-  }  
-  
+  }
+  catch(DbException &e) {
+    txn->abort();
+    HT_FATALF("Error initializing Berkeley DB (dir=%s) - %s",
+              m_base_dir.c_str(), e.what());
+  }
+  HT_DEBUG_OUT <<"namespace initialized"<< HT_END;
 }
-
 
 
 /**
  */
 BerkeleyDbFilesystem::~BerkeleyDbFilesystem() {
-
   /**
    * Close Berkeley DB "namespace" database and environment
    */
-  try { 
+  try {
     m_db->close(0);
     delete m_db;
     m_env.close(0);
   }
-  catch(DbException &e) { 
-    HT_ERRORF("Error closing Berkeley DB (dir=%s) - %s", m_base_dir.c_str(), e.what());
+  catch(DbException &e) {
+    HT_ERRORF("Error closing Berkeley DB (dir=%s) - %s",
+              m_base_dir.c_str(), e.what());
   }
-
+  HT_DEBUG_OUT <<"namespace closed"<< HT_END;
 }
-
 
 
 DbTxn *BerkeleyDbFilesystem::start_transaction() {
@@ -116,49 +138,42 @@ DbTxn *BerkeleyDbFilesystem::start_transaction() {
 
   // begin transaction
   try {
-    m_env.txn_begin(NULL, &txn, 0); 
+    m_env.txn_begin(NULL, &txn, DB_READ_COMMITTED);
   }
   catch (DbException &e) {
     HT_FATALF("Error starting Berkeley DB transaction: %s", e.what());
-  } 
+  }
+  HT_DEBUG_OUT <<"txn="<< txn << HT_END;
 
   return txn;
 }
 
 
-
 /**
  */
-bool BerkeleyDbFilesystem::get_xattr_i32(DbTxn *txn, std::string fname, const std::string &aname, uint32_t *valuep) {
+bool
+BerkeleyDbFilesystem::get_xattr_i32(DbTxn *txn, const String &fname,
+    const String &aname, uint32_t *valuep) {
   int ret;
   Dbt key;
   DbtManaged data;
-  bool isdir;
+  String keystr = fname;
 
-  if (!exists(txn, fname, &isdir))
-    throw Exception(Error::HYPERSPACE_FILE_NOT_FOUND, fname);
-
-  if (isdir)
-    fname += "/";
-
-  std::string key_str = fname + ":" + aname;
-
-  key.set_data((void *)key_str.c_str());
-  key.set_size(key_str.length()+1);
+  build_attr_key(txn, keystr, aname, key);
 
   try {
-
     if ((ret = m_db->get(txn, &key, &data, 0)) == 0) {
-      uint8_t *ptr = (uint8_t *)data.get_data();
+      const uint8_t *ptr = (uint8_t *)data.get_data();
       size_t remaining = data.get_size();
-      *valuep = Serialization::decode_i32((const uint8_t **)&ptr, &remaining);
+      *valuep = Serialization::decode_i32(&ptr, &remaining);
+      HT_DEBUG_ATTR(txn, fname, aname, key, *valuep);
       return true;
     }
   }
   catch (DbException &e) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
-    throw Exception(Error::HYPERSPACE_BERKELEYDB_ERROR, e.what());
-  } 
+    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+  }
 
   return false;
 }
@@ -167,22 +182,15 @@ bool BerkeleyDbFilesystem::get_xattr_i32(DbTxn *txn, std::string fname, const st
 
 /**
  */
-void BerkeleyDbFilesystem::set_xattr_i32(DbTxn *txn, std::string fname, const std::string &aname, uint32_t value) {
+void
+BerkeleyDbFilesystem::set_xattr_i32(DbTxn *txn, const String &fname,
+                                    const String &aname, uint32_t value) {
   int ret;
   Dbt key, data;
   uint32_t uval;
-  bool isdir;
+  String keystr = fname;
 
-  if (!exists(txn, fname, &isdir))
-    throw Exception(Error::HYPERSPACE_FILE_NOT_FOUND, fname);
-
-  if (isdir)
-    fname += "/";
-
-  std::string key_str = fname + ":" + aname;
-
-  key.set_data((void *)key_str.c_str());
-  key.set_size(key_str.length()+1);
+  build_attr_key(txn, keystr, aname, key);
 
   uint8_t *ptr = (uint8_t *)&uval;
   Serialization::encode_i32(&ptr, value);
@@ -192,51 +200,42 @@ void BerkeleyDbFilesystem::set_xattr_i32(DbTxn *txn, std::string fname, const st
 
   try {
     ret = m_db->put(txn, &key, &data, 0);
+    HT_DEBUG_ATTR(txn, fname, aname, key, value);
   }
   catch (DbException &e) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
-    throw Exception(Error::HYPERSPACE_BERKELEYDB_ERROR, e.what());
-  } 
+    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+  }
 
-  assert(ret == 0);
-
-  return;
+  HT_EXPECT(ret == 0, HYPERSPACE_BERKELEYDB_ERROR);
 }
 
 
 /**
  */
-bool BerkeleyDbFilesystem::get_xattr_i64(DbTxn *txn, std::string fname, const std::string &aname, uint64_t *valuep) {
+bool
+BerkeleyDbFilesystem::get_xattr_i64(DbTxn *txn, const String &fname,
+    const String &aname, uint64_t *valuep) {
   int ret;
   Dbt key;
   DbtManaged data;
-  bool isdir;
+  String keystr = fname;
 
-  if (!exists(txn, fname, &isdir))
-    throw Exception(Error::HYPERSPACE_FILE_NOT_FOUND, fname);
-
-  if (isdir)
-    fname += "/";
-
-  std::string key_str = fname + ":" + aname;
-
-  key.set_data((void *)key_str.c_str());
-  key.set_size(key_str.length()+1);
+  build_attr_key(txn, keystr, aname, key);
 
   try {
-  
     if ((ret = m_db->get(txn, &key, &data, 0)) == 0) {
-      uint8_t *ptr = (uint8_t *)data.get_data();
+      const uint8_t *ptr = (uint8_t *)data.get_data();
       size_t remaining = data.get_size();
-      *valuep = Serialization::decode_i64((const uint8_t **)&ptr, &remaining);
+      *valuep = Serialization::decode_i64(&ptr, &remaining);
+      HT_DEBUG_ATTR(txn, fname, aname, key, *valuep);
       return true;
     }
-
   }
   catch (DbException &e) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
-    throw Exception(Error::HYPERSPACE_BERKELEYDB_ERROR, e.what());
-  } 
+    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+  }
 
   return false;
 }
@@ -245,22 +244,15 @@ bool BerkeleyDbFilesystem::get_xattr_i64(DbTxn *txn, std::string fname, const st
 
 /**
  */
-void BerkeleyDbFilesystem::set_xattr_i64(DbTxn *txn, std::string fname, const std::string &aname, uint64_t value) {
+void
+BerkeleyDbFilesystem::set_xattr_i64(DbTxn *txn, const String &fname,
+                                    const String &aname, uint64_t value) {
   int ret;
   Dbt key, data;
   uint64_t uval;
-  bool isdir;
+  String keystr = fname;
 
-  if (!exists(txn, fname, &isdir))
-    throw Exception(Error::HYPERSPACE_FILE_NOT_FOUND, fname);
-
-  if (isdir)
-    fname += "/";
-
-  std::string key_str = fname + ":" + aname;
-
-  key.set_data((void *)key_str.c_str());
-  key.set_size(key_str.length()+1);
+  build_attr_key(txn, keystr, aname, key);
 
   uint8_t *ptr = (uint8_t *)&uval;
   Serialization::encode_i64(&ptr, value);
@@ -270,132 +262,104 @@ void BerkeleyDbFilesystem::set_xattr_i64(DbTxn *txn, std::string fname, const st
 
   try {
     ret = m_db->put(txn, &key, &data, 0);
+    HT_DEBUG_ATTR(txn, fname, aname, key, value);
   }
   catch (DbException &e) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
-    throw Exception(Error::HYPERSPACE_BERKELEYDB_ERROR, e.what());
-  } 
+    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+  }
 
-  assert(ret == 0);
-
-  return;
+  HT_EXPECT(ret == 0, HYPERSPACE_BERKELEYDB_ERROR);
 }
-
 
 
 /**
  */
-void BerkeleyDbFilesystem::set_xattr(DbTxn *txn, std::string fname, const std::string &aname, const void *value, size_t value_len) {
+void
+BerkeleyDbFilesystem::set_xattr(DbTxn *txn, const String &fname,
+    const String &aname, const void *value, size_t value_len) {
   int ret;
   Dbt key, data;
-  bool isdir;
+  String keystr = fname;
 
-  if (!exists(txn, fname, &isdir))
-    throw Exception(Error::HYPERSPACE_FILE_NOT_FOUND, fname);
-
-  if (isdir)
-    fname += "/";
-
-  std::string key_str = fname + ":" + aname;
-
-  key.set_data((void *)key_str.c_str());
-  key.set_size(key_str.length()+1);
-
+  build_attr_key(txn, keystr, aname, key);
   data.set_data((void *)value);
   data.set_size(value_len);
 
   try {
+    HT_DEBUG_ATTR_(txn, fname, aname, key, value, value_len);
     ret = m_db->put(txn, &key, &data, 0);
   }
   catch (DbException &e) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
-    throw Exception(Error::HYPERSPACE_BERKELEYDB_ERROR, e.what());
-  } 
+    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+  }
 
-  assert(ret == 0);
-
-  return;  
+  HT_EXPECT(ret == 0, HYPERSPACE_BERKELEYDB_ERROR);
 }
-
 
 
 /**
  */
-bool BerkeleyDbFilesystem::get_xattr(DbTxn *txn, std::string fname, const std::string &aname, DynamicBuffer &vbuf) {
+bool
+BerkeleyDbFilesystem::get_xattr(DbTxn *txn, const String &fname,
+                                const String &aname, DynamicBuffer &vbuf) {
   int ret;
   Dbt key;
   DbtManaged data;
-  bool isdir;
+  String keystr = fname;
 
-  if (!exists(txn, fname, &isdir))
-    throw Exception(Error::HYPERSPACE_FILE_NOT_FOUND, fname);
-
-  if (isdir)
-    fname += "/";
-
-  std::string key_str = fname + ":" + aname;
-
-  key.set_data((void *)key_str.c_str());
-  key.set_size(key_str.length()+1);
+  build_attr_key(txn, keystr, aname, key);
 
   try {
     if ((ret = m_db->get(txn, &key, &data, 0)) == 0) {
       vbuf.reserve(data.get_size());
       memcpy(vbuf.base, (uint8_t *)data.get_data(), data.get_size());
       vbuf.ptr += data.get_size();
+      HT_DEBUG_ATTR_(txn, fname, aname, key, vbuf.base, data.get_size());
       return true;
     }
   }
   catch (DbException &e) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
-    throw Exception(Error::HYPERSPACE_BERKELEYDB_ERROR, e.what());
-  } 
+    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+  }
 
   return false;
 }
 
 
-
-void BerkeleyDbFilesystem::del_xattr(DbTxn *txn, std::string fname, const std::string &aname) {
+void
+BerkeleyDbFilesystem::del_xattr(DbTxn *txn, const String &fname,
+                                const String &aname) {
   int ret;
   Dbt key;
-  bool isdir;
+  String keystr = fname;
 
-  if (!exists(txn, fname, &isdir))
-    throw Exception(Error::HYPERSPACE_FILE_NOT_FOUND, fname);
-
-  if (isdir)
-    fname += "/";
-
-  std::string key_str = fname + ":" + aname;
-
-  key.set_data((void *)key_str.c_str());
-  key.set_size(key_str.length()+1);
+  build_attr_key(txn, keystr, aname, key);
 
   try {
     if ((ret = m_db->del(txn, &key, 0)) == DB_NOTFOUND)
-      throw Exception(Error::HYPERSPACE_ATTR_NOT_FOUND, aname);
+      HT_THROW(HYPERSPACE_ATTR_NOT_FOUND, aname);
+    HT_DEBUG_ATTR_(txn, fname, aname, key, "", 0);
   }
   catch (DbException &e) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
-    throw Exception(Error::HYPERSPACE_BERKELEYDB_ERROR, e.what());
-  } 
-
+    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+  }
 }
-
 
 
 /**
  */
-void BerkeleyDbFilesystem::mkdir(DbTxn *txn, const std::string &name) {
+void BerkeleyDbFilesystem::mkdir(DbTxn *txn, const String &name) {
   int ret;
   Dbt key;
   DbtManaged data;
   size_t lastslash = name.rfind('/', name.length()-1);
-  std::string dirname = name.substr(0, lastslash+1);
+  String dirname = name.substr(0, lastslash+1);
 
   try {
-
     /**
      * Make sure parent directory exists
      */
@@ -403,12 +367,14 @@ void BerkeleyDbFilesystem::mkdir(DbTxn *txn, const std::string &name) {
     key.set_size(dirname.length()+1);
 
     if ((ret = m_db->get(txn, &key, &data, 0)) == DB_NOTFOUND)
-      throw Exception(Error::HYPERSPACE_FILE_NOT_FOUND, dirname);
+      HT_THROW(HYPERSPACE_FILE_NOT_FOUND, dirname);
 
     // formulate directory name
     dirname = name;
     if (dirname[dirname.length()-1] != '/')
       dirname += "/";
+
+    HT_DEBUG_OUT <<"dirname='"<< dirname <<"'"<< HT_END;
 
     /**
      * Make sure directory does not already exists
@@ -417,7 +383,7 @@ void BerkeleyDbFilesystem::mkdir(DbTxn *txn, const std::string &name) {
     key.set_size(dirname.length()+1);
 
     if ((ret = m_db->get(txn, &key, &data, 0)) != DB_NOTFOUND)
-      throw Exception(Error::HYPERSPACE_FILE_EXISTS, dirname);
+      HT_THROW(HYPERSPACE_FILE_EXISTS, dirname);
 
     /**
      * Create directory entry
@@ -432,13 +398,12 @@ void BerkeleyDbFilesystem::mkdir(DbTxn *txn, const std::string &name) {
   }
   catch (DbException &e) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
-    throw Exception(Error::HYPERSPACE_BERKELEYDB_ERROR, e.what());
-  } 
-  
+    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+  }
 }
 
 
-void BerkeleyDbFilesystem::unlink(DbTxn *txn, const std::string &name) {
+void BerkeleyDbFilesystem::unlink(DbTxn *txn, const String &name) {
   std::vector<String> delkeys;
   DbtManaged keym, datam;
   Dbt key;
@@ -448,70 +413,65 @@ void BerkeleyDbFilesystem::unlink(DbTxn *txn, const std::string &name) {
   String str;
 
   try {
-
     m_db->cursor(txn, &cursorp, 0);
 
     keym.set_str(name);
 
     if (cursorp->get(&keym, &datam, DB_SET_RANGE) != DB_NOTFOUND) {
-
       do {
+        str = keym.get_str();
 
-	str = keym.get_str();
-
-	if (str.length() > name.length()) {
-	  if (str[name.length()] == '/') {
-	    if (str.length() > name.length()+1 && str[name.length()+1] != ':') {
-	      cursorp->close();
-	      throw Exception(Error::HYPERSPACE_DIR_NOT_EMPTY, name);
-	    }
-	    looks_like_dir = true;
-	    delkeys.push_back(keym.get_str());
-	  }
-	  else if (str[name.length()] == ':') {
-	    looks_like_file = true;
-	    delkeys.push_back(keym.get_str());
-	  }
-	}
-	else {
-	  delkeys.push_back(keym.get_str());
-	  looks_like_file = true;
-	}
+        if (str.length() > name.length()) {
+          if (str[name.length()] == '/') {
+            if (str.length() > name.length()+1 && str[name.length()+1] != ':') {
+              cursorp->close();
+              HT_THROW(HYPERSPACE_DIR_NOT_EMPTY, name);
+            }
+            looks_like_dir = true;
+            delkeys.push_back(keym.get_str());
+          }
+          else if (str[name.length()] == ':') {
+            looks_like_file = true;
+            delkeys.push_back(keym.get_str());
+          }
+        }
+        else {
+          delkeys.push_back(keym.get_str());
+          looks_like_file = true;
+        }
 
       } while (cursorp->get(&keym, &datam, DB_NEXT) != DB_NOTFOUND &&
-	       boost::algorithm::starts_with(keym.get_str(), name.c_str()));
-
+               starts_with(keym.get_str(), name.c_str()));
     }
 
     cursorp->close();
     cursorp = 0;
 
-    HT_EXPECT(!(looks_like_dir && looks_like_file), Error::FAILED_EXPECTATION);
+    HT_EXPECT(!(looks_like_dir && looks_like_file), FAILED_EXPECTATION);
 
     if (delkeys.empty())
-      throw Exception(Error::HYPERSPACE_FILE_NOT_FOUND, name);
+      HT_THROW(HYPERSPACE_FILE_NOT_FOUND, name);
 
     for (size_t i=0; i<delkeys.size(); i++) {
       key.set_data((void *)delkeys[i].c_str());
       key.set_size(delkeys[i].length()+1);
-      HT_EXPECT(m_db->del(txn, &key, 0) != DB_NOTFOUND, Error::FAILED_EXPECTATION);
+      HT_EXPECT(m_db->del(txn, &key, 0) != DB_NOTFOUND, FAILED_EXPECTATION);
+      HT_DEBUG_ATTR_(txn, name, "n/a", key, "", 0);
     }
-
   }
   catch (DbException &e) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
     if (cursorp)
       cursorp->close();
-    throw Exception(Error::HYPERSPACE_BERKELEYDB_ERROR, e.what());
-  } 
-
+    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+  }
 }
 
 
-bool BerkeleyDbFilesystem::exists(DbTxn *txn, std::string fname, bool *is_dir_p) {
+bool
+BerkeleyDbFilesystem::exists(DbTxn *txn, String fname, bool *is_dir_p) {
   int ret;
   Dbt key;
-  DbtManaged data;
 
   if (is_dir_p)
     *is_dir_p = false;
@@ -520,23 +480,25 @@ bool BerkeleyDbFilesystem::exists(DbTxn *txn, std::string fname, bool *is_dir_p)
   key.set_size(fname.length()+1);
 
   try {
-
-    if ((ret = m_db->get(txn, &key, &data, 0)) == DB_NOTFOUND) {
+    if ((ret = m_db->exists(txn, &key, 0)) == DB_NOTFOUND) {
       fname += "/";
       key.set_data((void *)fname.c_str());
       key.set_size(fname.length()+1);
-      if ((ret = m_db->get(txn, &key, &data, 0)) == DB_NOTFOUND)
-	return false;
-      if (is_dir_p)
-	*is_dir_p = true;
-    }
 
+      if ((ret = m_db->exists(txn, &key, 0)) == DB_NOTFOUND) {
+        HT_DEBUG_OUT <<"'"<< fname <<"' does NOT exist."<< HT_END;
+        return false;
+      }
+      if (is_dir_p)
+        *is_dir_p = true;
+    }
   }
   catch (DbException &e) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
-    throw Exception(Error::HYPERSPACE_BERKELEYDB_ERROR, e.what());
+    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
 
+  HT_DEBUG_OUT <<"'"<< fname <<"' exists."<< HT_END;
   return true;
 }
 
@@ -544,27 +506,29 @@ bool BerkeleyDbFilesystem::exists(DbTxn *txn, std::string fname, bool *is_dir_p)
 /**
  *
  */
-void BerkeleyDbFilesystem::create(DbTxn *txn, const std::string &fname, bool temp) {
+void
+BerkeleyDbFilesystem::create(DbTxn *txn, const String &fname, bool temp) {
   int ret;
   Dbt key;
   DbtManaged data;
 
+  HT_DEBUG_OUT <<"txn="<< txn <<" fname='"<< fname <<"' temp="<< temp << HT_END;
+
   try {
-
     if (exists(txn, fname, 0))
-      throw Exception(Error::HYPERSPACE_FILE_EXISTS, fname);
+      HT_THROW(HYPERSPACE_FILE_EXISTS, fname);
 
-    if (boost::algorithm::ends_with(fname, "/"))
-      throw Exception(Error::HYPERSPACE_IS_DIRECTORY, fname);
+    if (ends_with(fname, "/"))
+      HT_THROW(HYPERSPACE_IS_DIRECTORY, fname);
 
-    size_t lastslash = fname.rfind('/', fname.length()-1);
-    std::string parent_dir = fname.substr(0, lastslash+1);
+    size_t lastslash = fname.rfind('/', fname.length() - 1);
+    String parent_dir = fname.substr(0, lastslash + 1);
 
     key.set_data((void *)parent_dir.c_str());
     key.set_size(parent_dir.length()+1);
 
     if ((ret = m_db->get(txn, &key, &data, 0)) == DB_NOTFOUND)
-      throw Exception(Error::HYPERSPACE_BAD_PATHNAME, fname);
+      HT_THROW(HYPERSPACE_BAD_PATHNAME, fname);
 
     key.set_data((void *)fname.c_str());
     key.set_size(fname.length()+1);
@@ -572,84 +536,85 @@ void BerkeleyDbFilesystem::create(DbTxn *txn, const std::string &fname, bool tem
     ret = m_db->put(txn, &key, &data, 0);
 
     if (temp) {
-      std::string temp_key = fname + ":temp";
+      String temp_key = fname + ":temp";
       key.set_data((void *)temp_key.c_str());
       key.set_size(temp_key.length()+1);
       ret = m_db->put(txn, &key, &data, 0);
     }
-
   }
   catch (DbException &e) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
-    throw Exception(Error::HYPERSPACE_BERKELEYDB_ERROR, e.what());
-  } 
-  
+    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+  }
 }
 
 
-
-void BerkeleyDbFilesystem::get_directory_listing(DbTxn *txn, std::string fname, std::vector<DirEntryT> &listing) {
+void
+BerkeleyDbFilesystem::get_directory_listing(DbTxn *txn, String fname,
+                                            std::vector<DirEntry> &listing) {
   DbtManaged keym, datam;
   Dbt key;
   Dbc *cursorp = 0;
   String str, last_str;
-  DirEntryT entry;
+  DirEntry entry;
   size_t offset;
 
   try {
-
     m_db->cursor(txn, &cursorp, 0);
 
-    if (!boost::algorithm::ends_with(fname, "/"))
+    if (!ends_with(fname, "/"))
       fname += "/";
 
+    HT_DEBUG_OUT <<"txn="<< txn <<" dir='"<< fname <<"'"<< HT_END;
     keym.set_str(fname);
 
     if (cursorp->get(&keym, &datam, DB_SET_RANGE) != DB_NOTFOUND) {
 
-      if (!boost::algorithm::starts_with(keym.get_str(), fname.c_str())) {
-	cursorp->close();
-	throw Exception(Error::HYPERSPACE_BAD_PATHNAME, fname);
+      if (!starts_with(keym.get_str(), fname.c_str())) {
+        cursorp->close();
+        HT_THROW(HYPERSPACE_BAD_PATHNAME, fname);
       }
 
       do {
+        str = keym.get_str();
 
-	str = keym.get_str();
+        if (str.length() > fname.length()) {
+          if (str[fname.length()] != ':') {
+            str = str.substr(fname.length());
 
-	if (str.length() > fname.length()) {
-	  if (str[fname.length()] != ':') {
-	    str = str.substr(fname.length());
-	    if ((offset = str.find('/')) != std::string::npos) {
-	      entry.name = str.substr(0, offset);
-	      if (entry.name != last_str) {
-		entry.isDirectory = true;
-		listing.push_back(entry);
-		last_str = entry.name;
-	      }
-	    }
-	    else {
-	      if ((offset = str.find(':')) != std::string::npos) {
-		entry.name = str.substr(0, offset);
-		if (entry.name != last_str) {
-		  entry.isDirectory = false;
-		  listing.push_back(entry);
-		  last_str = entry.name;
-		}
-	      }
-	      else {
-		entry.name = str;
-		if (entry.name != last_str) {
-		  entry.isDirectory = false;
-		  listing.push_back(entry);
-		  last_str = entry.name;
-		}
-	      }
-	    }
-	  }
-	}
+            if ((offset = str.find('/')) != String::npos) {
+              entry.name = str.substr(0, offset);
 
+              if (entry.name != last_str) {
+                entry.is_dir = true;
+                listing.push_back(entry);
+                last_str = entry.name;
+              }
+            }
+            else {
+              if ((offset = str.find(':')) != String::npos) {
+                entry.name = str.substr(0, offset);
+
+                if (entry.name != last_str) {
+                  entry.is_dir = false;
+                  listing.push_back(entry);
+                  last_str = entry.name;
+                }
+              }
+              else {
+                entry.name = str;
+
+                if (entry.name != last_str) {
+                  entry.is_dir = false;
+                  listing.push_back(entry);
+                  last_str = entry.name;
+                }
+              }
+            }
+          }
+        }
       } while (cursorp->get(&keym, &datam, DB_NEXT) != DB_NOTFOUND &&
-	       boost::algorithm::starts_with(keym.get_str(), fname.c_str()));
+               starts_with(keym.get_str(), fname.c_str()));
 
     }
 
@@ -661,20 +626,22 @@ void BerkeleyDbFilesystem::get_directory_listing(DbTxn *txn, std::string fname, 
     HT_ERRORF("Berkeley DB error: %s", e.what());
     if (cursorp)
       cursorp->close();
-    throw Exception(Error::HYPERSPACE_BERKELEYDB_ERROR, e.what());
-  } 
-  
+    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+  }
 }
 
 
-void BerkeleyDbFilesystem::get_all_names(DbTxn *txn, std::vector<std::string> &names) {
+void
+BerkeleyDbFilesystem::get_all_names(DbTxn *txn,
+                                    std::vector<String> &names) {
   DbtManaged keym, datam;
   Dbc *cursorp = NULL;
   int ret;
 
-  try {
+  HT_DEBUG_OUT <<"txn="<< txn << HT_END;
 
-    m_db->cursor(txn, &cursorp, 0); 
+  try {
+    m_db->cursor(txn, &cursorp, 0);
 
     while ((ret = cursorp->get(&keym, &datam, DB_NEXT)) == 0) {
       names.push_back(keym.get_str());
@@ -687,6 +654,24 @@ void BerkeleyDbFilesystem::get_all_names(DbTxn *txn, std::vector<std::string> &n
     HT_FATALF("Berkeley DB error: %s", e.what());
   }
 
-  if (cursorp != NULL) 
-    cursorp->close(); 
+  if (cursorp != NULL)
+    cursorp->close();
+}
+
+void
+BerkeleyDbFilesystem::build_attr_key(DbTxn *txn, String &keystr,
+                                     const String &aname, Dbt &key) {
+  bool isdir;
+
+  if (!exists(txn, keystr, &isdir))
+    HT_THROW(HYPERSPACE_FILE_NOT_FOUND, keystr);
+
+  if (isdir)
+    keystr += "/";
+
+  keystr += ":";
+  keystr += aname;
+
+  key.set_data((void *)keystr.c_str());
+  key.set_size(keystr.length() + 1);
 }

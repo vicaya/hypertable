@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -29,6 +29,9 @@
 namespace Hypertable {
   namespace Error {
     enum Code {
+      UNPOSSIBLE         = -3,
+      EXTERNAL           = -2,
+      FAILED_EXPECTATION = -1,
       OK                 = 0,
       PROTOCOL_ERROR     = 1,
       REQUEST_TRUNCATED  = 2,
@@ -52,8 +55,8 @@ namespace Hypertable {
       BLOCK_COMPRESSOR_INFLATE_ERROR     = 20,
       BLOCK_COMPRESSOR_INIT_ERROR        = 21,
       TABLE_DOES_NOT_EXIST               = 22,
-      FAILED_EXPECTATION                 = 23,
-      MALFORMED_REQUEST                  = 24,
+      MALFORMED_REQUEST                  = 23,
+      TOO_MANY_COLUMNS                   = 24,
 
       COMM_NOT_CONNECTED       = 0x00010001,
       COMM_BROKEN_CONNECTION   = 0x00010002,
@@ -118,11 +121,17 @@ namespace Hypertable {
 
       HQL_BAD_LOAD_FILE_FORMAT  = 0x00060001,
 
-      METALOG_CHECKSUM_MISMATCH = 0x00070001,
+      METALOG_VERSION_MISMATCH  = 0x00070001,
+      METALOG_BAD_RS_HEADER     = 0x00070002,
+      METALOG_BAD_M_HEADER      = 0x00070003,
+      METALOG_ENTRY_TRUNCATED   = 0x00070004,
+      METALOG_CHECKSUM_MISMATCH = 0x00070005,
+      METALOG_ENTRY_BAD_TYPE    = 0x00070006,
+      METALOG_ENTRY_BAD_ORDER   = 0x00070007,
 
       SERIALIZATION_INPUT_OVERRUN = 0x00080001,
       SERIALIZATION_BAD_VINT      = 0x00080002,
-      SERIALIZATION_BAD_CSTR      = 0x00080003
+      SERIALIZATION_BAD_VSTR      = 0x00080003
     };
 
     const char *get_text(int error);
@@ -137,27 +146,71 @@ namespace Hypertable {
     const Exception &operator=(const Exception &); // not assignable
 
     int m_error;
+    int m_line;
+    const char *m_func;
+    const char *m_file;
+
   public:
     typedef std::runtime_error Parent;
 
-    Exception(int error) : Parent(""), m_error(error), prev(0) {}
-    Exception(int error, const String &msg) :
-              Parent(msg), m_error(error), prev(0) {}
-    Exception(int error, const String &msg, const Exception &ex) :
-              Parent(msg), m_error(error), prev(new Exception(ex)) {}
+    Exception(int error, int l = 0, const char *fn = 0, const char *fl = 0)
+        : Parent(""), m_error(error), m_line(l), m_func(fn), m_file(fl),
+          prev(0) {}
+    Exception(int error, const String &msg, int l = 0, const char *fn = 0,
+              const char *fl = 0)
+        : Parent(msg), m_error(error), m_line(l), m_func(fn), m_file(fl),
+          prev(0) {}
+    Exception(int error, const String &msg, const Exception &ex,
+              int l = 0, const char *fn = 0, const char *fl = 0)
+        : Parent(msg), m_error(error), m_line(l), m_func(fn), m_file(fl),
+          prev(new Exception(ex)) {}
     // copy ctor is required for exceptions
-    Exception(const Exception &ex) : Parent(ex) {
-      m_error = ex.m_error;
+    Exception(const Exception &ex) : Parent(ex), m_error(ex.m_error),
+        m_line(ex.m_line), m_func(ex.m_func), m_file(ex.m_file) {
       prev = ex.prev ? new Exception(*ex.prev) : 0;
     }
     ~Exception() throw() { delete prev; }
 
     int code() const { return m_error; }
+    int line() const { return m_line; }
+    const char *func() const { return m_func; }
+    const char *file() const { return m_file; }
 
     Exception *prev;    // exception chain/list
   };
 
   std::ostream &operator<<(std::ostream &out, const Exception &e);
+
+/**
+ * Convenience macros to create an exception stack trace
+ */
+#define HT_THROW(_code_, _msg_) \
+  throw Exception(_code_, _msg_, __LINE__, HT_FUNC, __FILE__)
+
+#define HT_THROW2(_code_, _ex_, _msg_) \
+  throw Exception(_code_, _msg_, _ex_, __LINE__, HT_FUNC, __FILE__)
+
+#define HT_THROWF(_code_, _fmt_, ...) \
+  throw Exception(_code_, format(_fmt_, __VA_ARGS__), \
+                  __LINE__, HT_FUNC, __FILE__)
+
+#define HT_THROW2F(_code_, _ex_, _fmt_, ...) \
+  throw Exception(_code_, format(_fmt_, __VA_ARGS__), _ex_, \
+                  __LINE__, HT_FUNC, __FILE__)
+
+#define HT_TRY(_s_, _code_) do { \
+  try { _code_; } \
+  catch (Exception &e) { HT_THROW2(e.code(), e, _s_); } \
+  catch (std::bad_alloc &e) { \
+    HT_THROW(Error::EXTERNAL, "bad alloc " _s_); \
+  } \
+  catch (std::exception &e) { \
+    HT_THROWF(Error::EXTERNAL, "External exception " _s_ ": %s",  e.what()); \
+  } \
+  catch (const char *e) { HT_THROWF(Error::EXTERNAL, "%s " _s_, e); } \
+  catch (...) { HT_THROW(Error::EXTERNAL, "Unknown exception " _s_); } \
+} while (0)
+
 
 } // namespace Hypertable
 

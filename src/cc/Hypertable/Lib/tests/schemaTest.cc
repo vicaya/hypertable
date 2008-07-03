@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 extern "C" {
 #include <errno.h>
 #include <stdio.h>
@@ -45,7 +46,7 @@ namespace {
     "output file 'schemaTest.golden' will be generated",
     0
   };
-  const char *badSchemas[] = {
+  const char *bad_schemas[] = {
     "bad-schema-1.xml",
     "bad-schema-2.xml",
     "bad-schema-3.xml",
@@ -75,12 +76,12 @@ int main(int argc, char **argv) {
       Usage::dump_and_exit(usage);
   }
 
-  for (int i=0; badSchemas[i] != 0; ++i) {
-    if ((buf = FileUtils::file_to_buffer(badSchemas[i], &len)) == 0)
+  for (int i=0; bad_schemas[i] != 0; ++i) {
+    if ((buf = FileUtils::file_to_buffer(bad_schemas[i], &len)) == 0)
       harness.display_error_and_exit();
     schema = Schema::new_instance(buf, len);
     if (!schema->is_valid()) {
-      HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());      
+      HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
     }
     delete schema;
     delete [] buf;
@@ -107,14 +108,14 @@ int main(int argc, char **argv) {
   schema->close_column_family();
   schema->close_access_group();
 
-  std::string schemaStr;
-  schema->render(schemaStr);
-  FileUtils::write(harness.get_log_file_descriptor(), schemaStr.c_str(), strlen(schemaStr.c_str()));
+  std::string schemastr;
+  schema->render(schemastr);
+  FileUtils::write(harness.get_log_file_descriptor(), schemastr.c_str(), strlen(schemastr.c_str()));
 
-  schemaStr = "";
+  schemastr = "";
   schema->assign_ids();
-  schema->render(schemaStr);
-  FileUtils::write(harness.get_log_file_descriptor(), schemaStr.c_str(), strlen(schemaStr.c_str()));
+  schema->render(schemastr);
+  FileUtils::write(harness.get_log_file_descriptor(), schemastr.c_str(), strlen(schemastr.c_str()));
 
   delete schema;
 

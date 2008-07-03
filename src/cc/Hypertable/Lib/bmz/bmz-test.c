@@ -45,7 +45,7 @@ typedef long unsigned Lu;
   double t1; \
   HT_MEASURE(t1, TIMES(_times_, _code_)); \
   printf("%16s: %.3fs (%.3fMB/s)\n", \
-         _label_, t1, (_n_) / 1e6 / t1 *( _times_)); \
+         _label_, t1, (_n_) / 1e6 / t1 *(_times_)); \
   fflush(stdout); fflush(stderr); \
 } while (0)
 
@@ -253,7 +253,7 @@ test_from_string(const char *data, size_t len) {
 
     if (opt & O_HASH_MASK16X2)
       BENCH("hash mask16x2", bmz_bench_hash(data, len, BMZ_HASH_MASK16X2),
-            len, n); 
+            len, n);
 
     if (opt & O_HASH_MASK)
       BENCH("hash mask", bmz_bench_hash(data, len, BMZ_HASH_MASK), len, n);
@@ -376,7 +376,7 @@ test_from_file(const char *fname) {
 
     if (!data) DIE("error alloc'ing %ld bytes", len);
 
-    if ((len = read(fd, data, len)) != st.st_size) 
+    if ((len = read(fd, data, len)) != st.st_size)
       DIE("error reading %s (expecting %ld bytes, got %ld",
           fname, (long)st.st_size, len);
   }
@@ -409,7 +409,7 @@ show_usage() {
          "--check-hash                  verify rolling hashes\n"
          "--bench-lut                   benchmarks for lookup table\n"
          "--times       <number>        number of repeats for the test\n"
-         );
+);
   exit(0);
 }
 
@@ -441,7 +441,7 @@ main(int ac, char *av[]) {
     else if (!strcmp("--hash-mask16x2", *ia))   s_options |= O_HASH_MASK16X2;
     else if (!strcmp("--hash-mask", *ia))       s_options |= O_HASH_MASK;
     else if (!strcmp("--hash-mask32x2", *ia))   s_options |= O_HASH_MASK32X2;
-    else if (!strcmp("--help", *ia))            show_usage(); 
+    else if (!strcmp("--help", *ia))            show_usage();
     else if (!strcmp("--", *ia)) {
       ++ia;
       break;

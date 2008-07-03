@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -48,14 +48,15 @@
 #include "MasterGc.h"
 
 namespace Hypertable {
+  using namespace Hyperspace;
 
   class Master : public ReferenceCount {
   public:
-    Master(ConnectionManagerPtr &connManagerPtr, PropertiesPtr &props_ptr, ApplicationQueuePtr &appQueuePtr);
+    Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props_ptr, ApplicationQueuePtr &app_queue);
     ~Master();
 
-    void create_table(ResponseCallback *cb, const char *tableName, const char *schemaString);
-    void get_schema(ResponseCallbackGetSchema *cb, const char *tableName);
+    void create_table(ResponseCallback *cb, const char *tablename, const char *schemastr);
+    void get_schema(ResponseCallbackGetSchema *cb, const char *tablename);
     void register_server(ResponseCallback *cb, const char *location, struct sockaddr_in &addr);
     void report_split(ResponseCallback *cb, TableIdentifier &table, RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit);
     void drop_table(ResponseCallback *cb, const char *table_name, bool if_exists);
@@ -66,7 +67,7 @@ namespace Hypertable {
     void join();
 
   protected:
-    int create_table(const char *tableName, const char *schemaString, String &errMsg);
+    int create_table(const char *tablename, const char *schemastr, String &errmsg);
 
   private:
     bool initialize();
@@ -84,7 +85,7 @@ namespace Hypertable {
     HyperspaceSessionHandler m_hyperspace_session_handler;
     uint64_t m_master_file_handle;
     uint64_t m_servers_dir_handle;
-    struct LockSequencerT m_master_file_sequencer;
+    LockSequencer m_master_file_sequencer;
     HandleCallbackPtr m_servers_dir_callback_ptr;
     TablePtr m_metadata_table_ptr;
     uint64_t m_max_range_bytes;
@@ -92,10 +93,10 @@ namespace Hypertable {
     /** temporary vairables **/
     bool m_initialized;
 
-    typedef hash_map<String, RangeServerStatePtr> ServerMapT;
+    typedef hash_map<String, RangeServerStatePtr> ServerMap;
 
-    ServerMapT  m_server_map;
-    ServerMapT::iterator m_server_map_iter;
+    ServerMap  m_server_map;
+    ServerMap::iterator m_server_map_iter;
 
     ThreadGroup m_threads;
   };

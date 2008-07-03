@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -59,32 +59,32 @@ namespace Hypertable {
     public:
       bool                connected;
       struct sockaddr_in  addr;
-      struct sockaddr_in  localAddr;
+      struct sockaddr_in  local_addr;
       time_t              timeout;
-      DispatchHandlerPtr  handlerPtr;
+      DispatchHandlerPtr  handler;
       boost::mutex        mutex;
       boost::condition    cond;
-      boost::xtime        nextRetry;
-      std::string         serviceName;
+      boost::xtime        next_retry;
+      std::string         service_name;
     };
     typedef boost::intrusive_ptr<ConnectionState> ConnectionStatePtr;
 
 
-    struct ltConnectionState {
+    struct LtConnectionState {
       bool operator()(const ConnectionStatePtr &cs1, const ConnectionStatePtr &cs2) const {
-	return xtime_cmp(cs1->nextRetry, cs2->nextRetry) >= 0;
+        return xtime_cmp(cs1->next_retry, cs2->next_retry) >= 0;
       }
     };
 
-    typedef struct {
+    struct SharedImpl {
       Comm              *comm;
       boost::mutex       mutex;
-      boost::condition   retryCond;
+      boost::condition   retry_cond;
       boost::thread     *thread;
-      SockAddrMapT<ConnectionStatePtr>  connMap;
-      std::priority_queue<ConnectionStatePtr, std::vector<ConnectionStatePtr>, ltConnectionState> retryQueue;
-      bool quietMode;
-    } SharedImplT;
+      SockAddrMap<ConnectionStatePtr>  conn_map;
+      std::priority_queue<ConnectionStatePtr, std::vector<ConnectionStatePtr>, LtConnectionState> retry_queue;
+      bool quiet_mode;
+    };
 
     /**
      * Constructor.  Creates a thread to do connection retry attempts.
@@ -92,10 +92,10 @@ namespace Hypertable {
      * @param comm Pointer to the comm object
      */
     ConnectionManager(Comm *comm) {
-      m_impl = new SharedImplT;
+      m_impl = new SharedImpl;
       m_impl->comm = comm;
       m_impl->thread = new boost::thread(*this);
-      m_impl->quietMode = false;
+      m_impl->quiet_mode = false;
     }
 
     /**
@@ -109,7 +109,7 @@ namespace Hypertable {
     /**
      * Destructor.  TBD.
      */
-    virtual ~ConnectionManager() { 
+    virtual ~ConnectionManager() {
       return;
     }
 
@@ -125,19 +125,19 @@ namespace Hypertable {
      *
      * @param addr The IP address to maintain a connection to
      * @param timeout When connection dies, wait this many seconds before attempting to reestablish
-     * @param serviceName The name of the serivce at the other end of the connection used for descriptive log messages
+     * @param service_name The name of the serivce at the other end of the connection used for descriptive log messages
      */
-    void add(struct sockaddr_in &addr, time_t timeout, const char *serviceName);
+    void add(struct sockaddr_in &addr, time_t timeout, const char *service_name);
 
     /**
      * Same as above method except installs a dispatch handler on the connection
      *
      * @param addr The IP address to maintain a connection to
      * @param timeout The timeout value (in seconds) that gets passed into Comm::connect and also used as the waiting period betweeen connection attempts
-     * @param serviceName The name of the serivce at the other end of the connection used for descriptive log messages
-     * @param handlerPtr This is the default handler to install on the connection.  All events get changed through to this handler.
+     * @param service_name The name of the serivce at the other end of the connection used for descriptive log messages
+     * @param handler This is the default handler to install on the connection.  All events get changed through to this handler.
      */
-    void add(struct sockaddr_in &addr, time_t timeout, const char *serviceName, DispatchHandlerPtr &handlerPtr);
+    void add(struct sockaddr_in &addr, time_t timeout, const char *service_name, DispatchHandlerPtr &handler);
 
     /**
      * Adds a connection to the connection manager with a specific local address.
@@ -150,26 +150,26 @@ namespace Hypertable {
      * re-establishing the connection if it ever gets broken.
      *
      * @param addr The IP address to maintain a connection to
-     * @param localAddr The local address to bind to
+     * @param local_addr The local address to bind to
      * @param timeout When connection dies, wait this many seconds before attempting to reestablish
-     * @param serviceName The name of the serivce at the other end of the connection used for descriptive log messages
+     * @param service_name The name of the serivce at the other end of the connection used for descriptive log messages
      */
-    void add(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, const char *serviceName);
+    void add(struct sockaddr_in &addr, struct sockaddr_in &local_addr, time_t timeout, const char *service_name);
 
     /**
      * Same as above method except installs a dispatch handler on the connection
      *
      * @param addr The IP address to maintain a connection to
-     * @param localAddr The local address to bind to
+     * @param local_addr The local address to bind to
      * @param timeout The timeout value (in seconds) that gets passed into Comm::connect and also used as the waiting period betweeen connection attempts
-     * @param serviceName The name of the serivce at the other end of the connection used for descriptive log messages
-     * @param handlerPtr This is the default handler to install on the connection.  All events get changed through to this handler.
+     * @param service_name The name of the serivce at the other end of the connection used for descriptive log messages
+     * @param handler This is the default handler to install on the connection.  All events get changed through to this handler.
      */
-    void add(struct sockaddr_in &addr, struct sockaddr_in &localAddr, time_t timeout, const char *serviceName, DispatchHandlerPtr &handlerPtr);
+    void add(struct sockaddr_in &addr, struct sockaddr_in &local_addr, time_t timeout, const char *service_name, DispatchHandlerPtr &handler);
 
     /**
      * Removes a connection from the connection manager
-     * 
+     *
      * @param addr remote address of connection to remove
      * @return Error code (Error::OK on success)
      */
@@ -178,14 +178,14 @@ namespace Hypertable {
     /**
      * This method blocks until the connection to the given address is established.
      * The given address must have been previously added with a call to Add.  If
-     * the connection is not established within maxWaitSecs, then the method returns
+     * the connection is not established within max_wait_secs, then the method returns
      * false.
      *
      * @param addr the address of the connection to wait for
-     * @param maxWaitSecs The maximum time to wait for the connection before returning
+     * @param max_wait_secs The maximum time to wait for the connection before returning
      * @return true if connected, false otherwise
      */
-    bool wait_for_connection(struct sockaddr_in &addr, long maxWaitSecs);
+    bool wait_for_connection(struct sockaddr_in &addr, long max_wait_secs);
 
     /**
      * Returns the Comm object associated with this connection manager
@@ -195,13 +195,13 @@ namespace Hypertable {
     Comm *get_comm() { return m_impl->comm; }
 
     /**
-     * This method sets a 'quietMode' flag which can disable the generation
+     * This method sets a 'quiet_mode' flag which can disable the generation
      * of log messages upon failed connection attempts.  It is set to false
      * by default.
      *
-     * @param mode The new value for the quietMode flag
+     * @param mode The new value for the quiet_mode flag
      */
-    void set_quiet_mode(bool mode) { m_impl->quietMode = mode; }
+    void set_quiet_mode(bool mode) { m_impl->quiet_mode = mode; }
 
     /**
      * This is the comm layer dispatch callback method.  It should only get
@@ -217,9 +217,9 @@ namespace Hypertable {
 
   private:
 
-    void send_connect_request(ConnectionState *connState);
+    void send_connect_request(ConnectionState *conn_state);
 
-    SharedImplT *m_impl;
+    SharedImpl *m_impl;
 
   };
   typedef boost::intrusive_ptr<ConnectionManager> ConnectionManagerPtr;

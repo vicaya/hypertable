@@ -1,26 +1,26 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include "Common/Error.h"
-#include "Common/Exception.h"
 #include "Common/StringExt.h"
 
 #include "AsyncComm/ApplicationQueue.h"
@@ -40,119 +40,108 @@
 #include "RequestHandlerStatus.h"
 #include "ServerConnectionHandler.h"
 
+using namespace std;
 using namespace Hypertable;
 using namespace Hyperspace;
+using namespace Serialization;
 
 
 /**
  *
  */
-void ServerConnectionHandler::handle(EventPtr &eventPtr) {
-  uint16_t command = (uint16_t)-1;
+void ServerConnectionHandler::handle(EventPtr &event) {
+  int command = -1;
   int error;
 
-  HT_INFOF("%s", eventPtr->toString().c_str());
+  HT_INFOF("%s", event->to_str().c_str());
 
-  if (eventPtr->type == Hypertable::Event::MESSAGE) {
-    ApplicationHandler *requestHandler = 0;
-    uint8_t *msgPtr = eventPtr->message;
-    size_t remaining = eventPtr->messageLen;
+  if (event->type == Hypertable::Event::MESSAGE) {
+    ApplicationHandler *handler = 0;
+    const uint8_t *msg = event->message;
+    size_t remaining = event->message_len;
 
     try {
-
-      if (!Serialization::decode_short(&msgPtr, &remaining, &command)) {
-	std::string message = "Truncated Request";
-	throw new ProtocolException(message);
-      }
+      command = decode_i16(&msg, &remaining);
 
       // sanity check command code
-      if (command >= Protocol::COMMAND_MAX) {
-	std::string message = (std::string)"Invalid command (" + command + ")";
-	throw ProtocolException(message);
-      }
+      if (command >= Protocol::COMMAND_MAX)
+        HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%d)", command);
 
-      if (command != Protocol::COMMAND_HANDSHAKE && 
-	  (error = m_master_ptr->renew_session_lease(m_session_id)) != Error::OK) {
-	ResponseCallback cb(m_comm, eventPtr);
-	HT_INFOF("Session handle %lld expired", m_session_id);
-	cb.error(error, "");
-	return;
+      if (command != Protocol::COMMAND_HANDSHAKE &&
+          (error = m_master_ptr->renew_session_lease(m_session_id)) != Error::OK) {
+        ResponseCallback cb(m_comm, event);
+        HT_INFOF("Session handle %lld expired", m_session_id);
+        cb.error(error, "");
+        return;
       }
 
       switch (command) {
-      case Protocol::COMMAND_HANDSHAKE:
-	{
-	  ResponseCallback cb(m_comm, eventPtr);
-	  if (!Serialization::decode_long(&msgPtr, &remaining, &m_session_id)) {
-	    std::string message = "Truncated Request";
-	    throw new ProtocolException(message);
-	  }
-	  if (m_session_id == 0) {
-	    std::string message = "Bad Session ID: 0";
-	    throw new ProtocolException(message);
-	  }
-	  cb.response_ok();
-	}
-	return;
+      case Protocol::COMMAND_HANDSHAKE: {
+          ResponseCallback cb(m_comm, event);
+          m_session_id = decode_i64(&msg, &remaining);
+          if (m_session_id == 0)
+            HT_THROW(Error::PROTOCOL_ERROR, "Bad session id: 0");
+
+          cb.response_ok();
+        }
+        return;
       case Protocol::COMMAND_OPEN:
-	requestHandler = new RequestHandlerOpen(m_comm, m_master_ptr.get(), m_session_id, eventPtr);
-	break;
+        handler = new RequestHandlerOpen(m_comm, m_master_ptr.get(), m_session_id, event);
+        break;
       case Protocol::COMMAND_CLOSE:
-	requestHandler = new RequestHandlerClose(m_comm, m_master_ptr.get(), m_session_id, eventPtr);
-	break;
+        handler = new RequestHandlerClose(m_comm, m_master_ptr.get(), m_session_id, event);
+        break;
       case Protocol::COMMAND_MKDIR:
-	requestHandler = new RequestHandlerMkdir(m_comm, m_master_ptr.get(), m_session_id, eventPtr);
-	break;
+        handler = new RequestHandlerMkdir(m_comm, m_master_ptr.get(), m_session_id, event);
+        break;
       case Protocol::COMMAND_DELETE:
-	requestHandler = new RequestHandlerDelete(m_comm, m_master_ptr.get(), m_session_id, eventPtr);
-	break;
+        handler = new RequestHandlerDelete(m_comm, m_master_ptr.get(), m_session_id, event);
+        break;
       case Protocol::COMMAND_ATTRSET:
-	requestHandler = new RequestHandlerAttrSet(m_comm, m_master_ptr.get(), m_session_id, eventPtr);
-	break;
+        handler = new RequestHandlerAttrSet(m_comm, m_master_ptr.get(), m_session_id, event);
+        break;
       case Protocol::COMMAND_ATTRGET:
-	requestHandler = new RequestHandlerAttrGet(m_comm, m_master_ptr.get(), m_session_id, eventPtr);
-	break;
+        handler = new RequestHandlerAttrGet(m_comm, m_master_ptr.get(), m_session_id, event);
+        break;
       case Protocol::COMMAND_ATTRDEL:
-	requestHandler = new RequestHandlerAttrDel(m_comm, m_master_ptr.get(), m_session_id, eventPtr);
-	break;
+        handler = new RequestHandlerAttrDel(m_comm, m_master_ptr.get(), m_session_id, event);
+        break;
       case Protocol::COMMAND_EXISTS:
-	requestHandler = new RequestHandlerExists(m_comm, m_master_ptr.get(), m_session_id, eventPtr);
-	break;
+        handler = new RequestHandlerExists(m_comm, m_master_ptr.get(), m_session_id, event);
+        break;
       case Protocol::COMMAND_READDIR:
-	requestHandler = new RequestHandlerReaddir(m_comm, m_master_ptr.get(), m_session_id, eventPtr);
-	break;
+        handler = new RequestHandlerReaddir(m_comm, m_master_ptr.get(), m_session_id, event);
+        break;
       case Protocol::COMMAND_LOCK:
-	requestHandler = new RequestHandlerLock(m_comm, m_master_ptr.get(), m_session_id, eventPtr);
-	break;
+        handler = new RequestHandlerLock(m_comm, m_master_ptr.get(), m_session_id, event);
+        break;
       case Protocol::COMMAND_RELEASE:
-	requestHandler = new RequestHandlerRelease(m_comm, m_master_ptr.get(), m_session_id, eventPtr);
-	break;
+        handler = new RequestHandlerRelease(m_comm, m_master_ptr.get(), m_session_id, event);
+        break;
       case Protocol::COMMAND_STATUS:
-	requestHandler = new RequestHandlerStatus(m_comm, m_master_ptr.get(), m_session_id, eventPtr);
-	break;
+        handler = new RequestHandlerStatus(m_comm, m_master_ptr.get(), m_session_id, event);
+        break;
       default:
-	std::string message = (string)"Command code " + command + " not implemented";
-	throw ProtocolException(message);
+        HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%d)", command);
       }
-      m_app_queue_ptr->add(requestHandler);
+      m_app_queue_ptr->add(handler);
     }
-    catch (ProtocolException &e) {
-      ResponseCallback cb(m_comm, eventPtr);
-      std::string errMsg = e.what();
-      HT_ERRORF("Protocol error '%s'", e.what());
-      cb.error(Error::PROTOCOL_ERROR, errMsg);
+    catch (Exception &e) {
+      ResponseCallback cb(m_comm, event);
+      HT_ERROR_OUT << e << HT_END;
+      String errmsg = format("%s - %s", e.what(), Error::get_text(e.code()));
+      cb.error(Error::PROTOCOL_ERROR, errmsg);
     }
   }
-  else if (eventPtr->type == Hypertable::Event::CONNECTION_ESTABLISHED) {
-    HT_INFOF("%s", eventPtr->toString().c_str());    
+  else if (event->type == Hypertable::Event::CONNECTION_ESTABLISHED) {
+    HT_INFOF("%s", event->to_str().c_str());
   }
-  else if (eventPtr->type == Hypertable::Event::DISCONNECT) {
+  else if (event->type == Hypertable::Event::DISCONNECT) {
     m_master_ptr->destroy_session(m_session_id);
     cout << flush;
   }
   else {
-    HT_INFOF("%s", eventPtr->toString().c_str());
+    HT_INFOF("%s", event->to_str().c_str());
   }
 
 }
-

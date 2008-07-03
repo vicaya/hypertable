@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cassert>
 #include <iostream>
 
@@ -49,11 +50,11 @@ namespace {
     }
     else {
       timestamp = ~timestamp;
-      uint8_t *tsPtr = (uint8_t *)&timestamp;
-      tsPtr += sizeof(int64_t);
+      uint8_t *tsp = (uint8_t *)&timestamp;
+      tsp += sizeof(int64_t);
       for (size_t i=0; i<sizeof(int64_t); i++) {
-	tsPtr--;
-	*ptr++ = *tsPtr;
+        tsp--;
+        *ptr++ = *tsp;
       }
     }
     return ptr-buf;
@@ -72,7 +73,7 @@ namespace Hypertable {
     size_t len = strlen(row) + 4 + sizeof(int64_t);
     if (column_qualifier != 0)
       len += strlen(column_qualifier);
-    uint8_t *ptr = new uint8_t [ len + Serialization::encoded_length_vi32(len) ];  // !!! could probably just make this 6
+    uint8_t *ptr = new uint8_t [len + Serialization::encoded_length_vi32(len)];  // !!! could probably just make this 6
     ByteString bs(ptr);
     Serialization::encode_vi32(&ptr, len);
     write_key(ptr, flag, row, column_family_code, column_qualifier, timestamp);
@@ -96,7 +97,7 @@ namespace Hypertable {
    * TODO: Re-implement below function in terms of this function
    */
   bool Key::load(ByteString key) {
-    size_t len = key.decode_length((uint8_t **)&row);
+    size_t len = key.decode_length((const uint8_t **)&row);
     const uint8_t *endptr = (const uint8_t *)row + len;
 
     while (key.ptr < endptr && *key.ptr != 0)
@@ -133,26 +134,26 @@ namespace Hypertable {
     return true;
   }
 
-  void Key::updateTimestamp(uint64_t ts) {
+  void Key::update_ts(uint64_t ts) {
     uint8_t *ptr = timestamp_ptr;
     encode_ts64(&ptr, ts);
   }
 
 
 
-  std::ostream &operator<<(std::ostream &os, const Key &keyComps) {
-    os << "row='" << keyComps.row << "' ";
-    if (keyComps.flag == FLAG_DELETE_ROW)
-      os << "ts=" << keyComps.timestamp << " DELETE";
+  std::ostream &operator<<(std::ostream &os, const Key &key) {
+    os << "row='" << key.row << "' ";
+    if (key.flag == FLAG_DELETE_ROW)
+      os << "ts=" << key.timestamp << " DELETE";
     else {
-      os << "family=" << (int)keyComps.column_family_code;
-      if (keyComps.column_qualifier) 
-	os << " qualifier='" << keyComps.column_qualifier << "'";
-      os << " ts=" << keyComps.timestamp;
-      if (keyComps.flag == FLAG_DELETE_CELL)
-	os << " DELETE";
-      else if (keyComps.flag == FLAG_DELETE_COLUMN_FAMILY)
-	os << " DELETE_COLUMN_FAMILY";
+      os << "family=" << (int)key.column_family_code;
+      if (key.column_qualifier)
+        os << " qualifier='" << key.column_qualifier << "'";
+      os << " ts=" << key.timestamp;
+      if (key.flag == FLAG_DELETE_CELL)
+        os << " DELETE";
+      else if (key.flag == FLAG_DELETE_COLUMN_FAMILY)
+        os << " DELETE_COLUMN_FAMILY";
     }
     return os;
   }

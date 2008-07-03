@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -34,20 +34,20 @@ namespace Hypertable {
 
   class CellStoreScannerV0 : public CellListScanner {
   public:
-    CellStoreScannerV0(CellStorePtr &cellStorePtr, ScanContextPtr &scanContextPtr);
+    CellStoreScannerV0(CellStorePtr &cellstore, ScanContextPtr &scan_ctx);
     virtual ~CellStoreScannerV0();
     virtual void forward();
     virtual bool get(ByteString &key, ByteString &value);
 
   private:
 
-    typedef struct {
+    struct BlockInfo {
       uint32_t offset;
       uint32_t zlength;
-      uint8_t *base;
-      uint8_t *ptr;
-      uint8_t *end;
-    } BlockInfoT;
+      const uint8_t *base;
+      const uint8_t *ptr;
+      const uint8_t *end;
+    };
 
     bool fetch_next_block();
     bool fetch_next_block_readahead();
@@ -55,12 +55,12 @@ namespace Hypertable {
 
     CellStorePtr            m_cell_store_ptr;
     CellStoreV0            *m_cell_store_v0;
-    CellStoreV0::IndexMapT &m_index;
+    CellStoreV0::IndexMap  &m_index;
 
-    CellStoreV0::IndexMapT::iterator m_iter;
-    CellStoreV0::IndexMapT::iterator m_end_iter;
+    CellStoreV0::IndexMap::iterator m_iter;
+    CellStoreV0::IndexMap::iterator m_end_iter;
 
-    BlockInfoT            m_block;
+    BlockInfo             m_block;
     ByteString            m_cur_key;
     ByteString            m_cur_value;
     BlockCompressionCodec *m_zcodec;

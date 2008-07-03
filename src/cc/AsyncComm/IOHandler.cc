@@ -1,24 +1,25 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 
 #include <cstdio>
 #include <iostream>
@@ -53,10 +54,10 @@ void IOHandler::add_poll_interest(int mode) {
   if (m_poll_interest & Reactor::WRITE_READY)
     event.events |= EPOLLOUT;
 
-  if (epoll_ctl(m_reactor_ptr->pollFd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
+  if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
     /**
-    HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_MOD, sd=%d) (mode=%x) : %s", 
-		 m_reactor_ptr->pollFd, m_sd, mode, strerror(errno));
+    HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_MOD, sd=%d) (mode=%x) : %s",
+                 m_reactor_ptr->poll_fd, m_sd, mode, strerror(errno));
     *((int *)0) = 1;
     **/
   }
@@ -78,7 +79,7 @@ void IOHandler::remove_poll_interest(int mode) {
   if (m_poll_interest & Reactor::WRITE_READY)
     event.events |= EPOLLOUT;
 
-  if (epoll_ctl(m_reactor_ptr->pollFd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
+  if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
     HT_ERRORF("epoll_ctl(EPOLL_CTL_MOD, sd=%d) (mode=%x) : %s", m_sd, mode, strerror(errno));
     exit(1);
   }
@@ -129,8 +130,8 @@ void IOHandler::add_poll_interest(int mode) {
     count++;
   }
   assert(count > 0);
-    
-  if (kevent(m_reactor_ptr->kQueue, events, count, 0, 0, 0) == -1) {
+
+  if (kevent(m_reactor_ptr->kqd, events, count, 0, 0, 0) == -1) {
     HT_ERRORF("kevent(sd=%d) (mode=%x) : %s", m_sd, mode, strerror(errno));
     exit(1);
   }
@@ -151,7 +152,7 @@ void IOHandler::remove_poll_interest(int mode) {
     count++;
   }
 
-  if (kevent(m_reactor_ptr->kQueue, devents, count, 0, 0, 0) == -1 && errno != ENOENT) {
+  if (kevent(m_reactor_ptr->kqd, devents, count, 0, 0, 0) == -1 && errno != ENOENT) {
     HT_ERRORF("kevent(sd=%d) (mode=%x) : %s", m_sd, mode, strerror(errno));
     exit(1);
   }
@@ -239,9 +240,9 @@ void IOHandler::display_event(struct kevent *event) {
     if ((event->flags & EV_EOF) || (event->flags & EV_ERROR)) {
       clog << "{";
       if (event->flags & EV_EOF)
-	clog << " EV_EOF";
+        clog << " EV_EOF";
       if (event->flags & EV_ERROR)
-	clog << " EV_ERROR";
+        clog << " EV_ERROR";
       clog << "}";
     }
     else

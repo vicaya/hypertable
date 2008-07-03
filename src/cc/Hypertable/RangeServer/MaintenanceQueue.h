@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -32,18 +32,18 @@ namespace Hypertable {
    */
   class MaintenanceQueue : public ReferenceCount {
 
-    struct ltMaintenanceTask {
+    struct LtMaintenanceTask {
       bool operator()(const MaintenanceTask *sm1, const MaintenanceTask *sm2) const {
-	return xtime_cmp(sm1->start_time, sm2->start_time) >= 0;
+        return xtime_cmp(sm1->start_time, sm2->start_time) >= 0;
       }
     };
 
-    typedef std::priority_queue<MaintenanceTask *, std::vector<MaintenanceTask *>, ltMaintenanceTask> MaintenanceQueueT;
+    typedef std::priority_queue<MaintenanceTask *, std::vector<MaintenanceTask *>, LtMaintenanceTask> TaskQueue;
 
     class MaintenanceQueueState {
     public:
       MaintenanceQueueState() : shutdown(false) { return; }
-      MaintenanceQueueT  queue;
+      TaskQueue          queue;
       boost::mutex       mutex;
       boost::condition   cond;
       bool               shutdown;
@@ -56,43 +56,43 @@ namespace Hypertable {
       Worker(MaintenanceQueueState &state) : m_state(state) { return; }
 
       void operator()() {
-	boost::xtime now, next_work;
-	MaintenanceTask *task = 0;
+        boost::xtime now, next_work;
+        MaintenanceTask *task = 0;
 
-	while (true) {
+        while (true) {
 
-	  {
-	    boost::mutex::scoped_lock lock(m_state.mutex);
+          {
+            boost::mutex::scoped_lock lock(m_state.mutex);
 
-	    boost::xtime_get(&now, boost::TIME_UTC);
+            boost::xtime_get(&now, boost::TIME_UTC);
 
-	    while (m_state.queue.empty() || xtime_cmp((m_state.queue.top())->start_time, now) > 0) {
+            while (m_state.queue.empty() || xtime_cmp((m_state.queue.top())->start_time, now) > 0) {
 
-	      if (m_state.shutdown)
-		return;
+              if (m_state.shutdown)
+                return;
 
-	      if (m_state.queue.empty())
-		m_state.cond.wait(lock);
-	      else {
-		next_work = (m_state.queue.top())->start_time;
-		m_state.cond.timed_wait(lock, next_work);
-	      }
-	      boost::xtime_get(&now, boost::TIME_UTC);
-	    }
+              if (m_state.queue.empty())
+                m_state.cond.wait(lock);
+              else {
+                next_work = (m_state.queue.top())->start_time;
+                m_state.cond.timed_wait(lock, next_work);
+              }
+              boost::xtime_get(&now, boost::TIME_UTC);
+            }
 
-	    task = m_state.queue.top();
-	    m_state.queue.pop();
-	  }
+            task = m_state.queue.top();
+            m_state.queue.pop();
+          }
 
-	  try {
-	    task->execute();
-	  }
-	  catch(Hypertable::Exception &e) {
-	    HT_ERRORF("%s (%s)", Error::get_text(e.code()), e.what());
-	  }
+          try {
+            task->execute();
+          }
+          catch(Hypertable::Exception &e) {
+            HT_ERRORF("%s (%s)", Error::get_text(e.code()), e.what());
+          }
 
-	  delete task;
-	}
+          delete task;
+        }
       }
 
     private:
@@ -115,7 +115,7 @@ namespace Hypertable {
       Worker Worker(m_state);
       assert (worker_count > 0);
       for (int i=0; i<worker_count; ++i)
-	m_threads.create_thread(Worker);
+        m_threads.create_thread(Worker);
       //threads
     }
 
@@ -135,8 +135,8 @@ namespace Hypertable {
      */
     void join() {
       if (!joined) {
-	m_threads.join_all();
-	joined = true;
+        m_threads.join_all();
+        joined = true;
       }
     }
 

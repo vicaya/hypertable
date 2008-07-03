@@ -66,15 +66,15 @@ void test_basic_logging(const char *msg) {
   TRY_FATAL(HT_FATALF("%s", msg));
   HT_LOG_ENTER;
   HT_LOG_EXIT;
-  HT_DEBUG_OUT << msg << HT_DEBUG_END;
-  HT_INFO_OUT << msg << HT_INFO_END;
-  HT_NOTICE_OUT << msg << HT_NOTICE_END;
-  HT_WARN_OUT << msg << HT_WARN_END;
-  HT_ERROR_OUT << msg <<  HT_ERROR_END;
-  HT_CRIT_OUT << msg << HT_CRIT_END;
-  HT_ALERT_OUT << msg <<  HT_ALERT_END;
-  HT_EMERG_OUT << msg <<  HT_EMERG_END;
-  TRY_FATAL(HT_FATAL_OUT << msg <<  HT_FATAL_END);
+  HT_DEBUG_OUT << msg << HT_END;
+  HT_INFO_OUT << msg << HT_END;
+  HT_NOTICE_OUT << msg << HT_END;
+  HT_WARN_OUT << msg << HT_END;
+  HT_ERROR_OUT << msg <<  HT_END;
+  HT_CRIT_OUT << msg << HT_END;
+  HT_ALERT_OUT << msg <<  HT_END;
+  HT_EMERG_OUT << msg <<  HT_END;
+  TRY_FATAL(HT_FATAL_OUT << msg <<  HT_END);
 }
 
 } // local namespace

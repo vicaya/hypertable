@@ -1,24 +1,25 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -68,19 +69,19 @@ namespace {
     (const char *)0
   };
 
-  void test_copy(DfsBroker::Client *client, const String &testDir) {
-    String outfileA = testDir + "/output.a";
-    String outfileB = testDir + "/output.b";
+  void test_copy(DfsBroker::Client *client, const String &testdir) {
+    String outfileA = testdir + "/output.a";
+    String outfileB = testdir + "/output.b";
 
-    dfsTestThreadFunction threadFunc(client, "/usr/share/dict/words");
+    DfsTestThreadFunction thread_func(client, "/usr/share/dict/words");
 
-    threadFunc.set_dfs_file(outfileA);
-    threadFunc.set_output_file("output.a");
-    Thread thread1(threadFunc);
+    thread_func.set_dfs_file(outfileA);
+    thread_func.set_output_file("output.a");
+    Thread thread1(thread_func);
 
-    threadFunc.set_dfs_file(outfileB);
-    threadFunc.set_output_file("output.b");
-    Thread thread2(threadFunc);
+    thread_func.set_dfs_file(outfileB);
+    thread_func.set_output_file("output.b");
+    Thread thread2(thread_func);
 
     thread1.join();
     thread2.join();
@@ -92,11 +93,11 @@ namespace {
       exit(1);
   }
 
-  void test_readdir(DfsBroker::Client *client, const String &testDir) {
+  void test_readdir(DfsBroker::Client *client, const String &testdir) {
     ofstream filestr ("dfsTest.out");
     vector<string> listing;
-    
-    client->readdir(testDir, listing);
+
+    client->readdir(testdir, listing);
 
     sort(listing.begin(), listing.end());
 
@@ -131,7 +132,7 @@ int main(int argc, char **argv) {
   try {
     struct sockaddr_in addr;
     Comm *comm;
-    ConnectionManagerPtr connManagerPtr;
+    ConnectionManagerPtr conn_mgr;
     DfsBroker::Client *client;
 
     if (argc != 1)
@@ -143,28 +144,28 @@ int main(int argc, char **argv) {
     InetAddr::initialize(&addr, "localhost", DEFAULT_DFSBROKER_PORT);
 
     comm = new Comm();
-    connManagerPtr = new ConnectionManager(comm);
-    client = new DfsBroker::Client(connManagerPtr, addr, 15);
+    conn_mgr = new ConnectionManager(comm);
+    client = new DfsBroker::Client(conn_mgr, addr, 15);
 
     if (!client->wait_for_connection(15)) {
       HT_ERROR("Unable to connect to DFS");
       return 1;
     }
-    String testDir = format("/dfsTest%d", getpid());
-    client->mkdirs(testDir);
+    String testdir = format("/dfsTest%d", getpid());
+    client->mkdirs(testdir);
 
-    test_copy(client, testDir);
-    test_readdir(client, testDir);
-    test_rename(client, testDir);
+    test_copy(client, testdir);
+    test_readdir(client, testdir);
+    test_rename(client, testdir);
 
-    client->rmdir(testDir);
+    client->rmdir(testdir);
   }
   catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_ERROR_END;
+    HT_ERROR_OUT << e << HT_END;
     return 1;
   }
   catch (...) {
-    HT_ERROR_OUT << "unexpected exception caught" << HT_ERROR_END;
+    HT_ERROR_OUT << "unexpected exception caught" << HT_END;
     return 1;
   }
   return 0;

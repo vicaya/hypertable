@@ -6,44 +6,43 @@
 #  Kfs_FOUND       - True if Kfs found.
 
 
-IF (Kfs_INCLUDE_DIR)
+if (Kfs_INCLUDE_DIR)
   # Already in cache, be silent
-  SET(Kfs_FIND_QUIETLY TRUE)
-ENDIF (Kfs_INCLUDE_DIR)
+  set(Kfs_FIND_QUIETLY TRUE)
+endif (Kfs_INCLUDE_DIR)
 
-FIND_PATH(Kfs_INCLUDE_DIR kfs/KfsClient.h
-  /home/doug/src/kosmosfs/build/release/include
+find_path(Kfs_INCLUDE_DIR kfs/KfsClient.h
+  /opt/kfs/include
   /opt/local/include
   /usr/local/include
-  /usr/include
 )
 
-SET(Kfs_NAMES kfsClient)
-FIND_LIBRARY(Kfs_LIBRARY
+set(Kfs_NAMES kfsClient)
+find_library(Kfs_LIBRARY
   NAMES ${Kfs_NAMES}
-  PATHS /home/doug/src/kosmosfs/build/release/lib /usr/lib /usr/local/lib /opt/local/lib
+  PATHS /opt/kfs/lib /opt/local/lib /usr/local/lib
 )
 
-IF (Kfs_INCLUDE_DIR AND Kfs_LIBRARY)
-   SET(Kfs_FOUND TRUE)
-    SET( Kfs_LIBRARIES ${Kfs_LIBRARY} )
-ELSE (Kfs_INCLUDE_DIR AND Kfs_LIBRARY)
-   SET(Kfs_FOUND FALSE)
-   SET( Kfs_LIBRARIES )
-ENDIF (Kfs_INCLUDE_DIR AND Kfs_LIBRARY)
+if (Kfs_INCLUDE_DIR AND Kfs_LIBRARY)
+   set(Kfs_FOUND TRUE)
+    set( Kfs_LIBRARIES ${Kfs_LIBRARY})
+else (Kfs_INCLUDE_DIR AND Kfs_LIBRARY)
+   set(Kfs_FOUND FALSE)
+   set( Kfs_LIBRARIES)
+endif (Kfs_INCLUDE_DIR AND Kfs_LIBRARY)
 
-IF (Kfs_FOUND)
-   IF (NOT Kfs_FIND_QUIETLY)
-      MESSAGE(STATUS "Found KFS: ${Kfs_LIBRARY}")
-   ENDIF (NOT Kfs_FIND_QUIETLY)
-ELSE (Kfs_FOUND)
-   IF (Kfs_FIND_REQUIRED)
-      MESSAGE(STATUS "Looked for KFS libraries named ${Kfs_NAMES}.")
-      MESSAGE(FATAL_ERROR "Could NOT find KFS library")
-   ENDIF (Kfs_FIND_REQUIRED)
-ENDIF (Kfs_FOUND)
+if (Kfs_FOUND)
+   if (NOT Kfs_FIND_QUIETLY)
+      message(STATUS "Found KFS: ${Kfs_LIBRARY}")
+   endif (NOT Kfs_FIND_QUIETLY)
+else (Kfs_FOUND)
+   if (Kfs_FIND_REQUIRED)
+      message(STATUS "Looked for KFS libraries named ${Kfs_NAMES}.")
+      message(FATAL_ERROR "Could NOT find KFS library")
+   endif (Kfs_FIND_REQUIRED)
+endif (Kfs_FOUND)
 
-MARK_AS_ADVANCED(
+mark_as_advanced(
   Kfs_LIBRARY
   Kfs_INCLUDE_DIR
-  )
+)

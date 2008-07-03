@@ -1,12 +1,12 @@
-/**
- * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
+/** -*- c++ -*-
+ * Copyright (C) 2008 Luke Lu (Zvents, Inc.)
  * 
  * This file is part of Hypertable.
  * 
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or any later version.
+ * as published by the Free Software Foundation; version 2 of the
+ * License.
  * 
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,25 +19,28 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_EXCEPTION_H
-#define HYPERTABLE_EXCEPTION_H
-
-#include <stdexcept>
-#include <string>
+#ifndef HYPERTABLE_RANGE_SERVER_METALOG_VERSION_H
+#define HYPERTABLE_RANGE_SERVER_METALOG_VERSION_H
 
 namespace Hypertable {
 
-  class ProtocolException : public std::runtime_error {
-  public:
-    ProtocolException(const std::string &msg) : std::runtime_error(msg) {}
-  };
+// sizes
+enum {
+  ML_ENTRY_HEADER_SIZE = 4 + 1 + 8 + 4,
+  RSML_HEADER_SIZE = 5 + 2,
+  MML_HEADER_SIZE = 3 + 2
+};
 
-  class RuntimeException : public std::runtime_error {
-  public:
-    RuntimeException(const std::string &msg) : std::runtime_error(msg) {}
-  };
+// range server constants
+extern const uint16_t RSML_VERSION;
+extern const char *RSML_PREFIX;
 
-}
+// master constants
+extern const uint16_t MML_VERSION;
+extern const char *MML_PREFIX;
 
-#endif // HYPERTABLE_EXCEPTION_H
+} // namespace Hypertable
+
+#endif // HYPERTABLE_RANGE_SERVER_METALOG_VERSION_H
+
 

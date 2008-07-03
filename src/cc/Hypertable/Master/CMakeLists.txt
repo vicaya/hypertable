@@ -1,22 +1,22 @@
 #
 # Copyright (C) 2008 Doug Judd (Zvents, Inc.)
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-# 
+#
 
-set ( Master_SRCS
+set(Master_SRCS
 ConnectionHandler.cc
 DropTableDispatchHandler.cc
 EventHandlerServerJoined.cc
@@ -36,10 +36,10 @@ main.cc
 )
 
 # Hypertable.Master
-add_executable (Hypertable.Master ${Master_SRCS})
-target_link_libraries (Hypertable.Master ${BOOST_LIB} ${Log4cpp_LIBRARIES} ${EXPAT_LIBRARIES} HyperDfsBroker Hypertable ${MALLOC_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+add_executable(Hypertable.Master ${Master_SRCS})
+target_link_libraries(Hypertable.Master HyperDfsBroker ${MALLOC_LIBRARY})
 
 add_executable(htgc htgc.cc MasterGc.cc)
-target_link_libraries (htgc ${Log4cpp_LIBRARIES} ${EXPAT_LIBRARIES} HyperDfsBroker Hypertable ${BOOST_LIB} ${ZLIB_LIBRARIES} ${MALLOC_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} )
+target_link_libraries(htgc HyperDfsBroker)
 
-install (TARGETS Hypertable.Master htgc RUNTIME DESTINATION ${VERSION}/bin)
+install(TARGETS Hypertable.Master htgc RUNTIME DESTINATION ${VERSION}/bin)

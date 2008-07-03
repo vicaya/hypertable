@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -29,24 +29,24 @@ import java.nio.ByteOrder;
 public class CommBuf {
 
     public CommBuf(HeaderBuilder hbuilder, int len) {
-	len += hbuilder.HeaderLength();
-	data = ByteBuffer.allocate(len);
-	data.order(ByteOrder.LITTLE_ENDIAN);
-	hbuilder.SetTotalLen(len);
-	hbuilder.Encode(data);
+        len += hbuilder.HeaderLength();
+        data = ByteBuffer.allocate(len);
+        data.order(ByteOrder.LITTLE_ENDIAN);
+        hbuilder.SetTotalLen(len);
+        hbuilder.Encode(data);
     }
 
     public CommBuf(HeaderBuilder hbuilder, int len, byte [] extBytes, int extBytesLen) {
-	len += hbuilder.HeaderLength();
-	data = ByteBuffer.allocate(len);
-	data.order(ByteOrder.LITTLE_ENDIAN);
-	if (extBytesLen > 0) {
-	    ext = ByteBuffer.allocate(extBytesLen);
-	    ext.order(ByteOrder.LITTLE_ENDIAN);
-	    ext.put(extBytes, 0, extBytesLen);
-	}
-	hbuilder.SetTotalLen(len+extBytesLen);
-	hbuilder.Encode(data);
+        len += hbuilder.HeaderLength();
+        data = ByteBuffer.allocate(len);
+        data.order(ByteOrder.LITTLE_ENDIAN);
+        if (extBytesLen > 0) {
+            ext = ByteBuffer.allocate(extBytesLen);
+            ext.order(ByteOrder.LITTLE_ENDIAN);
+            ext.put(extBytes, 0, extBytesLen);
+        }
+        hbuilder.SetTotalLen(len+extBytesLen);
+        hbuilder.Encode(data);
     }
 
     /**
@@ -56,9 +56,9 @@ public class CommBuf {
      * what is remaining to be sent.
      */
     public void ResetDataPointers() {
-	data.flip();
-	if (ext != null)
-	    ext.flip();
+        data.flip();
+        if (ext != null)
+            ext.flip();
     }
 
     /**
@@ -81,7 +81,7 @@ public class CommBuf {
      * advancing the primary buffer pointer
      */
     public void AppendShort(short sval) { data.putShort(sval); }
-    
+
     /**
      * Appends an integer (32 bit) to the the primary buffer,
      * advancing the primary buffer pointer
@@ -101,7 +101,7 @@ public class CommBuf {
      * @see Serialization::EncodeByteArray
      */
     public void AppendByteArray(byte [] bytes, int len) { Serialization.EncodeByteArray(data, bytes, len); }
-    
+
     /**
      * Appends a string to the primary buffer.  A string is
      * encoded as a length, followed by the characters, followed by

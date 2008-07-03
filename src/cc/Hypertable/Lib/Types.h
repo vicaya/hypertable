@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -25,11 +25,6 @@
 #include <utility>
 #include <vector>
 
-extern "C" {
-#include <stddef.h>
-#include <stdint.h>
-}
-
 #include "Common/ByteString.h"
 #include "Common/String.h"
 
@@ -39,32 +34,36 @@ namespace Hypertable {
   class TableIdentifier {
   public:
     TableIdentifier() : name(0), id(0), generation(0) { return; }
-    size_t encoded_length();
-    void encode(uint8_t **bufPtr);
-    bool decode(uint8_t **bufPtr, size_t *remainingPtr);
+    explicit TableIdentifier(const char *s) : name(s), id(0), generation(0) {}
+    TableIdentifier(const uint8_t **bufp, size_t *remainp) {
+      decode(bufp, remainp);
+    }
+
+    size_t encoded_length() const;
+    void encode(uint8_t **bufp) const;
+    void decode(const uint8_t **bufp, size_t *remainp);
+
     const char *name;
     uint32_t id;
     uint32_t generation;
   };
 
   /** Wrapper for TableIdentifier.  Handles name allocation */
-  class TableIdentifierCopy : public TableIdentifier {
+  class TableIdentifierManaged : public TableIdentifier {
   public:
-    TableIdentifierCopy(const TableIdentifier *identifier) : m_name(identifier->name) {
-      id = identifier->id;
-      generation = identifier->generation;
-      name = m_name.c_str();
+    TableIdentifierManaged(const TableIdentifier &identifier) {
+      operator=(identifier);
     }
-    TableIdentifierCopy(const TableIdentifier &identifier) : m_name(identifier.name) {
+    TableIdentifierManaged &operator=(const TableIdentifier &identifier) {
       id = identifier.id;
       generation = identifier.generation;
-      name = m_name.c_str();
-    }
-    TableIdentifierCopy &operator=(const TableIdentifier &identifier) {
-      m_name = identifier.name;
-      id = identifier.id;
-      generation = identifier.generation;
-      name = m_name.c_str();
+
+      if (identifier.name) {
+        m_name = identifier.name;
+        name = m_name.c_str();
+      }
+      else
+        name = 0;
       return *this;
     }
 
@@ -76,20 +75,54 @@ namespace Hypertable {
   class RangeSpec {
   public:
     RangeSpec() : start_row(0), end_row(0) { return; }
-    size_t encoded_length();
-    void encode(uint8_t **bufPtr);
-    bool decode(uint8_t **bufPtr, size_t *remainingPtr);
+    RangeSpec(const char *start, const char *end)
+        : start_row(start), end_row(end) {}
+    RangeSpec(const uint8_t **bufp, size_t *remainp) { decode(bufp, remainp); }
+
+    size_t encoded_length() const;
+    void encode(uint8_t **bufp) const;
+    void decode(const uint8_t **bufp, size_t *remainp);
+
     const char *start_row;
     const char *end_row;
+  };
+
+  /** RangeSpec with storage */
+  class RangeSpecManaged : public RangeSpec {
+  public:
+    RangeSpecManaged(const RangeSpec &range) { operator=(range); }
+
+    RangeSpecManaged &operator=(const RangeSpec &range) {
+      if (range.start_row) {
+        m_start = range.start_row;
+        start_row = m_start.c_str();
+      }
+      else
+        start_row = 0;
+
+      if (range.end_row) {
+        m_end = range.end_row;
+        end_row = m_end.c_str();
+      }
+      else
+        end_row = 0;
+      return *this;
+    }
+
+  private:
+    String m_start, m_end;
   };
 
   /** Scan specification */
   class ScanSpec {
   public:
     ScanSpec();
-    size_t encoded_length();
-    void encode(uint8_t **bufPtr);
-    bool decode(uint8_t **bufPtr, size_t *remainingPtr);
+    ScanSpec(const uint8_t **bufp, size_t *remainp) { decode(bufp, remainp); }
+
+    size_t encoded_length() const;
+    void encode(uint8_t **bufp) const;
+    void decode(const uint8_t **bufp, size_t *remainp);
+
     uint32_t row_limit;
     uint32_t max_versions;
     std::vector<const char *> columns;
@@ -103,13 +136,14 @@ namespace Hypertable {
 
   extern const uint64_t END_OF_TIME;
 
-  std::ostream &operator<<(std::ostream &os, const TableIdentifier &table_identifier);
+  std::ostream &operator<<(std::ostream &os, const TableIdentifier &);
 
-  std::ostream &operator<<(std::ostream &os, const RangeSpec &range);
+  std::ostream &operator<<(std::ostream &os, const RangeSpec &);
 
-  std::ostream &operator<<(std::ostream &os, const ScanSpec &scannerSpec);
+  std::ostream &operator<<(std::ostream &os, const ScanSpec &);
 
-}
+
+} // namespace Hypertable
 
 
 #endif // HYPERTABLE_REQUEST_H

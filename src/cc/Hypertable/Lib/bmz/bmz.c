@@ -414,7 +414,7 @@ update_hash_mod16x2(UInt32 h, int in, int out, UInt32 pow1, UInt32 pow2,
          update_hash_mod32((h & BM_MASK16), in, out, pow2, b2, m2);
 }
 
-/* Faster hash using mask instead of mod 
+/* Faster hash using mask instead of mod
  * m needs to be power-of-2
  */
 #define R_HASH_MASK_BODY(int_type) \
@@ -1178,7 +1178,7 @@ bmz_pack_auxlen(size_t in_len, size_t fp_len) {
 size_t
 bmz_pack_worklen(size_t in_len, size_t fp_len) {
   BM_CHECK(fp_len > 0);
-  return in_len + bmz_pack_auxlen(in_len, fp_len); 
+  return in_len + bmz_pack_auxlen(in_len, fp_len);
 }
 
 size_t
@@ -1363,7 +1363,7 @@ bmz_bm_unpack(const void *src, size_t in_len, void *dst, size_t *out_len_p) {
         BM_NEED_OUT(len);
         last_ip = ip;
         cp = out + pos;
-        
+
         while (len--) *op++ = *cp++;
       }
     }
@@ -1425,7 +1425,7 @@ bmz_bm_dump(const void *src, size_t in_len) {
       ++cpos;
     }
   }
-  BM_LOG(1, "%llu pointers, avg pointee size: %.3f, avg pointer size: %.3f\n", 
+  BM_LOG(1, "%llu pointers, avg pointee size: %.3f, avg pointer size: %.3f\n",
          (unsigned long long)nptrs, (double)tot_pte_sz / nptrs,
          (double)tot_ptr_sz / nptrs);
   return BMZ_E_OK;

@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -21,12 +21,13 @@
 #ifndef HYPERTABLE_LOGGER_H
 #define HYPERTABLE_LOGGER_H
 
+#include "Error.h"
 #include "String.h"
 #include <iostream>
 #include "FixedStream.h"
 #include <log4cpp/Category.hh>
 
-namespace Hypertable { namespace Logger { 
+namespace Hypertable { namespace Logger {
 
   void initialize(const String &name, int level = log4cpp::Priority::DEBUG,
                   bool flush_per_log = true, std::ostream &out = std::cout);
@@ -69,150 +70,142 @@ namespace Hypertable { namespace Logger {
 } while (0)
 
 // stream interface macro helpers
-#define HT_OUT(_enabled_) do { if (Logger::logger->_enabled_()) { \
+#define HT_OUT(_enabled_, _l_) do { if (Logger::logger->_enabled_()) { \
   char logbuf[1024]; \
-  FixedOstream out(logbuf, sizeof(logbuf)); \
+  log4cpp::Priority::PriorityLevel _level_ = log4cpp::Priority::_l_; \
+  FixedOstream _out_(logbuf, sizeof(logbuf)); \
   if (Logger::show_line_numbers) \
-    out <<"("<< __FILE__ <<':'<< __LINE__ <<") "; \
-  out
+    _out_ <<"("<< __FILE__ <<':'<< __LINE__ <<") "; \
+  _out_
 
-#define HT_OUT2(_enabled_) do { if (Logger::logger->_enabled_()) { \
+#define HT_OUT2(_enabled_, _l_) do { if (Logger::logger->_enabled_()) { \
   char logbuf[1024]; \
-  FixedOstream out(logbuf, sizeof(logbuf)); \
-  out << __func__; \
+  log4cpp::Priority::PriorityLevel _level_ = log4cpp::Priority::_l_; \
+  FixedOstream _out_(logbuf, sizeof(logbuf)); \
+  _out_ << __func__; \
   if (Logger::show_line_numbers) \
-    out << " ("<< __FILE__ <<':'<< __LINE__ <<")"; \
-  out <<": "
+    _out_ << " ("<< __FILE__ <<':'<< __LINE__ <<")"; \
+  _out_ <<": "
 
-#define HT_END(_cat_) ""; Logger::logger->_cat_(out.str()); \
+#define HT_END ""; Logger::logger->log(_level_, _out_.str()); \
+  if (_level_ == log4cpp::Priority::FATAL) HT_ABORT; \
 } /* if enabled */ } while (0)
 
 #define HT_OUT_DISABLED do { if (0) {
-#define HT_END_DISABLED }} while (0)
+
+// helpers for printing a first n bytes
+#define HT_HEAD_(_x_, _l_, _n_) \
+  String((char *)(_x_), 0, (_n_) < (_l_) ? (_n_) : (_l_))
+
+#define HT_HEAD(_x_, _n_) \
+  String(_x_, 0, (_n_) < (_x_).length() ? (_n_) : (_x_).length())
+
 
 // Logging macros interface starts here
-#ifndef DISABLE_LOG_ALL
+#ifndef HT_DISABLE_LOG_ALL
 
-#ifndef DISABLE_LOG_DEBUG
+#ifndef HT_DISABLE_LOG_DEBUG
 
 #define HT_LOG_ENTER do { \
   if (Logger::logger->isDebugEnabled()) {\
     if (Logger::show_line_numbers) \
-      Logger::logger->debug("(%s:%d) %s() ENTER", __FILE__, __LINE__, __func__); \
+      Logger::logger->debug("(%s:%d) %s() ENTER", __FILE__, __LINE__, HT_FUNC); \
     else \
-      Logger::logger->debug("%s() ENTER", __func__); \
+      Logger::logger->debug("%s() ENTER", HT_FUNC); \
   } \
 } while(0)
 
 #define HT_LOG_EXIT do { \
   if (Logger::logger->isDebugEnabled()) { \
     if (Logger::show_line_numbers) \
-      Logger::logger->debug("(%s:%d) %s() EXIT", __FILE__, __LINE__, __func__); \
+      Logger::logger->debug("(%s:%d) %s() EXIT", __FILE__, __LINE__, HT_FUNC); \
     else \
-      Logger::logger->debug("%s() EXIT", __func__); \
+      Logger::logger->debug("%s() EXIT", HT_FUNC); \
   } \
 } while(0)
 
-#define HT_TRACE
-
 #define HT_DEBUG(msg) HT_LOG(isDebugEnabled, debug, msg)
 #define HT_DEBUGF(msg, ...) HT_LOGF(isDebugEnabled, debug, msg, __VA_ARGS__)
-#define HT_DEBUG_OUT HT_OUT2(isDebugEnabled)
-#define HT_DEBUG_END HT_END(debug)
+#define HT_DEBUG_OUT HT_OUT2(isDebugEnabled, DEBUG)
 #else
 #define HT_LOG_ENTER
 #define HT_LOG_EXIT
 #define HT_DEBUG(msg)
 #define HT_DEBUGF(msg, ...)
 #define HT_DEBUG_OUT HT_OUT_DISABLED
-#define HT_DEBUG_END HT_END_DISABLED
 #endif
 
-#ifndef DISABLE_LOG_INFO
+#ifndef HT_DISABLE_LOG_INFO
 #define HT_INFO(msg) HT_LOG(isInfoEnabled, info, msg)
 #define HT_INFOF(msg, ...) HT_LOGF(isInfoEnabled, info, msg, __VA_ARGS__)
-#define HT_INFO_OUT HT_OUT(isInfoEnabled)
-#define HT_INFO_END HT_END(info)
+#define HT_INFO_OUT HT_OUT(isInfoEnabled, INFO)
 #else
 #define HT_INFO(msg)
 #define HT_INFOF(msg, ...)
 #define HT_INFO_OUT HT_OUT_DISABLED
-#define HT_INFO_END HT_END_DISABLED
 #endif
 
-#ifndef DISABLE_LOG_NOTICE
+#ifndef HT_DISABLE_LOG_NOTICE
 #define HT_NOTICE(msg) HT_LOG(isNoticeEnabled, notice, msg)
 #define HT_NOTICEF(msg, ...) HT_LOGF(isNoticeEnabled, notice, msg, __VA_ARGS__)
-#define HT_NOTICE_OUT HT_OUT(isNoticeEnabled)
-#define HT_NOTICE_END HT_END(notice)
+#define HT_NOTICE_OUT HT_OUT(isNoticeEnabled, NOTICE)
 #else
 #define HT_NOTICE(msg)
 #define HT_NOTICEF(msg, ...)
 #define HT_NOTICE_OUT HT_OUT_DISABLED
-#define HT_NOTICE_END HT_END_DISABLED
 #endif
 
-#ifndef DISABLE_LOG_WARN
+#ifndef HT_DISABLE_LOG_WARN
 #define HT_WARN(msg) HT_LOG(isWarnEnabled, warn, msg)
 #define HT_WARNF(msg, ...) HT_LOGF(isWarnEnabled, warn, msg, __VA_ARGS__)
-#define HT_WARN_OUT HT_OUT2(isWarnEnabled)
-#define HT_WARN_END HT_END(warn)
+#define HT_WARN_OUT HT_OUT2(isWarnEnabled, WARN)
 #else
 #define HT_WARN(msg)
 #define HT_WARNF(msg, ...)
 #define HT_WARN_OUT HT_OUT_DISABLED
-#define HT_WARN_END HT_END_DISABLED
 #endif
 
-#ifndef DISABLE_LOG_ERROR
+#ifndef HT_DISABLE_LOG_ERROR
 #define HT_ERROR(msg) HT_LOG(isErrorEnabled, error, msg)
 #define HT_ERRORF(msg, ...) HT_LOGF(isErrorEnabled, error, msg, __VA_ARGS__)
-#define HT_ERROR_OUT HT_OUT2(isErrorEnabled)
-#define HT_ERROR_END HT_END(error)
+#define HT_ERROR_OUT HT_OUT2(isErrorEnabled, ERROR)
 #else
 #define HT_ERROR(msg)
 #define HT_ERRORF(msg, ...)
 #define HT_ERROR_OUT HT_OUT_DISABLED
-#define HT_ERROR_END HT_END_DISABLED
 #endif
 
-#ifndef DISABLE_LOG_CRIT
+#ifndef HT_DISABLE_LOG_CRIT
 #define HT_CRIT(msg) HT_LOG(isCritEnabled, crit, msg)
 #define HT_CRITF(msg, ...) HT_LOGF(isCritEnabled, crit, msg, __VA_ARGS__)
-#define HT_CRIT_OUT HT_OUT2(isCritEnabled)
-#define HT_CRIT_END HT_END(crit)
+#define HT_CRIT_OUT HT_OUT2(isCritEnabled, CRIT)
 #else
 #define HT_CRIT(msg)
 #define HT_CRITF(msg, ...)
 #define HT_CRIT_OUT HT_OUT_DISABLED
-#define HT_CRIT_END HT_END_DISABLED
 #endif
 
-#ifndef DISABLE_LOG_ALERT
+#ifndef HT_DISABLE_LOG_ALERT
 #define HT_ALERT(msg) HT_LOG(isAlertEnabled, alert, msg)
 #define HT_ALERTF(msg, ...) HT_LOGF(isAlertEnabled, alert, msg, __VA_ARGS__)
-#define HT_ALERT_OUT HT_OUT2(isAlertEnabled)
-#define HT_ALERT_END HT_END(alert)
+#define HT_ALERT_OUT HT_OUT2(isAlertEnabled, ALERT)
 #else
 #define HT_ALERT(msg)
 #define HT_ALERTF(msg, ...)
 #define HT_ALERT_OUT HT_OUT_DISABLED
-#define HT_ALERT_END HT_END_DISABLED
 #endif
 
-#ifndef DISABLE_LOG_EMERG
+#ifndef HT_DISABLE_LOG_EMERG
 #define HT_EMERG(msg) HT_LOG(isEmergEnabled, emerg, msg)
 #define HT_EMERGF(msg, ...) HT_LOGF(isEmergEnabled, emerg, msg, __VA_ARGS__)
-#define HT_EMERG_OUT HT_OUT2(isEmergEnabled)
-#define HT_EMERG_END HT_END(emerg)
+#define HT_EMERG_OUT HT_OUT2(isEmergEnabled, EMERG)
 #else
 #define HT_EMERG(msg)
 #define HT_EMERGF(msg, ...)
 #define HT_EMERG_OUT HT_OUT_DISABLED
-#define HT_EMERG_END HT_END_DISABLED
 #endif
 
-#ifndef DISABLE_LOG_FATAL
+#ifndef HT_DISABLE_LOG_FATAL
 #define HT_FATAL(msg) do { \
   if (Logger::logger->isFatalEnabled()) { \
     if (Logger::show_line_numbers) \
@@ -231,26 +224,25 @@ namespace Hypertable { namespace Logger {
     HT_ABORT; \
   } \
 } while (0)
-#define HT_FATAL_OUT HT_OUT2(isFatalEnabled)
-#define HT_FATAL_END ""; Logger::logger->fatal(out.str()); HT_ABORT; \
-} /* if enabled */ } while (0)
-#define HT_EXPECT(_e_, _code_) do { if (_e_); else \
-  HT_FATAL("failed expectation: " #_e_); \
+#define HT_FATAL_OUT HT_OUT2(isFatalEnabled, FATAL)
+#define HT_EXPECT(_e_, _code_) do { if (_e_); else { \
+    if (_code_ == Error::FAILED_EXPECTATION) \
+      HT_FATAL("failed expectation: " #_e_); \
+    HT_THROW(_code_, "failed expectation: " #_e_); } \
 } while (0)
 #else
 #define HT_FATAL(msg)
 #define HT_FATALF(msg, ...)
 #define HT_FATAL_OUT HT_OUT_DISABLED
-#define HT_FATAL_END HT_END_DISABLED
-#define HT_EXPECT(_e_, _code_) do { if (_e_); else throw \
-  Exception(_code_, "failed expectation: " #_e_); \
+#define HT_EXPECT(_e_, _code_) do { if (_e_); else \
+  HT_THROW(_code_, "failed expectation: " #_e_); \
 } while (0)
 #endif
 
-#else // HYPERTABLE_DISABLE_LOGGING
+#else // HT_DISABLE_LOGGING
 
 #define HT_DEBUG(msg)
-#define HT_DEBUGF(msg, ...) 
+#define HT_DEBUGF(msg, ...)
 #define HT_INFO(msg)
 #define HT_INFOF(msg, ...)
 #define HT_NOTICE(msg)
@@ -270,24 +262,15 @@ namespace Hypertable { namespace Logger {
 #define HT_LOG_ENTER
 #define HT_LOG_EXIT
 #define HT_DEBUG_OUT HT_OUT_DISABLED
-#define HT_DEBUG_END HT_END_DISABLED
 #define HT_INFO_OUT HT_OUT_DISABLED
-#define HT_INFO_END HT_END_DISABLED
 #define HT_NOTICE_OUT HT_OUT_DISABLED
-#define HT_NOTICE_END HT_END_DISABLED
 #define HT_WARN_OUT HT_OUT_DISABLED
-#define HT_WARN_END HT_END_DISABLED
 #define HT_ERROR_OUT HT_OUT_DISABLED
-#define HT_ERROR_END HT_END_DISABLED
 #define HT_CRIT_OUT HT_OUT_DISABLED
-#define HT_CRIT_END HT_END_DISABLED
 #define HT_ALERT_OUT HT_OUT_DISABLED
-#define HT_ALERT_END HT_END_DISABLED
 #define HT_EMERG_OUT HT_OUT_DISABLED
-#define HT_EMERG_END HT_END_DISABLED
 #define HT_FATAL_OUT HT_OUT_DISABLED
-#define HT_FATAL_END HT_END_DISABLED
 
-#endif // HYPERTABLE_DISABLE_LOGGING
+#endif // HT_DISABLE_LOGGING
 
 #endif // HYPERTABLE_LOGGER_H

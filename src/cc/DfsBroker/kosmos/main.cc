@@ -1,24 +1,25 @@
 /**
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -64,14 +65,14 @@ namespace {
 
 
 /**
- * 
+ *
  */
 int main(int argc, char **argv) {
-  string configFile = "";
-  string pidFile = "";
-  Hypertable::PropertiesPtr propsPtr;
+  string cfg_file = "";
+  string pidfile = "";
+  Hypertable::PropertiesPtr props;
   bool verbose = false;
-  int port, reactorCount, workerCount;
+  int port, reactor_count, worker_count;
   Comm *comm;
   BrokerPtr broker_ptr;
   ApplicationQueuePtr app_queue_ptr;
@@ -79,60 +80,60 @@ int main(int argc, char **argv) {
   int error;
 
   System::initialize(argv[0]);
-  
+
   if (argc > 1) {
     for (int i=1; i<argc; i++) {
       if (!strncmp(argv[i], "--config=", 9))
-	configFile = &argv[i][9];
+        cfg_file = &argv[i][9];
       if (!strncmp(argv[i], "--pidfile=", 10))
-	pidFile = &argv[i][10];
+        pidfile = &argv[i][10];
       else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
-	verbose = true;
+        verbose = true;
       else
-	Usage::dump_and_exit(usage);
+        Usage::dump_and_exit(usage);
     }
   }
 
-  if (configFile == "")
-    configFile = System::installDir + "/conf/hypertable.cfg";
+  if (cfg_file == "")
+    cfg_file = System::install_dir + "/conf/hypertable.cfg";
 
-  if (!FileUtils::exists(configFile.c_str())) {
-    cerr << "Error: Unable to open config file '" << configFile << "'" << endl;
+  if (!FileUtils::exists(cfg_file.c_str())) {
+    cerr << "Error: Unable to open config file '" << cfg_file << "'" << endl;
     exit(0);
   }
 
-  propsPtr = new Hypertable::Properties(configFile);
+  props = new Hypertable::Properties(cfg_file);
   if (verbose)
-    propsPtr->set("Hypertable.Verbose", "true");
+    props->set("Hypertable.Verbose", "true");
 
-  port         = propsPtr->get_int("DfsBroker.Port",     DEFAULT_PORT);
-  workerCount  = propsPtr->get_int("DfsBroker.Workers",  DEFAULT_WORKERS);
-  reactorCount = propsPtr->get_int("Kfs.Reactors", System::get_processor_count());
+  port         = props->get_int("DfsBroker.Port",     DEFAULT_PORT);
+  worker_count  = props->get_int("DfsBroker.Workers",  DEFAULT_WORKERS);
+  reactor_count = props->get_int("Kfs.Reactors", System::get_processor_count());
 
-  ReactorFactory::initialize(reactorCount);
+  ReactorFactory::initialize(reactor_count);
 
   comm = new Comm();
 
   if (verbose) {
     cout << "CPU count = " << System::get_processor_count() << endl;
     cout << "DfsBroker.Port=" << port << endl;
-    cout << "DfsBroker.Workers=" << workerCount << endl;
-    cout << "Kfs.reactors=" << reactorCount << endl;
+    cout << "DfsBroker.Workers=" << worker_count << endl;
+    cout << "Kfs.reactors=" << reactor_count << endl;
   }
 
   InetAddr::initialize(&listen_addr, INADDR_ANY, port);
 
-  broker_ptr = new KosmosBroker(propsPtr);
-  app_queue_ptr = new ApplicationQueue(workerCount);
+  broker_ptr = new KosmosBroker(props);
+  app_queue_ptr = new ApplicationQueue(worker_count);
   ConnectionHandlerFactoryPtr chf_ptr(new DfsBroker::ConnectionHandlerFactory(comm, app_queue_ptr, broker_ptr));
   if ((error = comm->listen(listen_addr, chf_ptr)) != Error::OK) {
-    std::string addrStr;
-    HT_ERRORF("Problem listening for connections on %s - %s", InetAddr::string_format(addrStr, listen_addr), Error::get_text(error));
+    std::string addr_str;
+    HT_ERRORF("Problem listening for connections on %s - %s", InetAddr::string_format(addr_str, listen_addr), Error::get_text(error));
     return 1;
   }
 
-  if (pidFile != "") {
-    fstream filestr (pidFile.c_str(), fstream::out);
+  if (pidfile != "") {
+    fstream filestr (pidfile.c_str(), fstream::out);
     filestr << getpid() << endl;
     filestr.close();
   }

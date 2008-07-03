@@ -1,25 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
-#include <string>
+#include "Common/Compat.h"
 #include <vector>
 
 extern "C" {
@@ -77,13 +77,13 @@ bool CommitLogReader::next_raw_block(CommitLogBlockInfo *infop, BlockCompression
     return false;
 
   if (m_fragment_stack.top().block_stream == 0)
-    m_fragment_stack.top().block_stream = new CommitLogBlockStream(m_fs, m_fragment_stack.top().log_dir, format("%u", m_fragment_stack.top().num) );
+    m_fragment_stack.top().block_stream = new CommitLogBlockStream(m_fs, m_fragment_stack.top().log_dir, format("%u", m_fragment_stack.top().num));
 
   if (!m_fragment_stack.top().block_stream->next(infop, header)) {
     delete m_fragment_stack.top().block_stream;
     m_fragment_stack.top().block_stream = 0;
     m_fragment_stack.top().timestamp = m_last_timestamp;
-    m_fragment_queue.push_back( m_fragment_stack.top() );
+    m_fragment_queue.push_back(m_fragment_stack.top());
     m_fragment_stack.pop();
     goto try_again;
   }
@@ -94,7 +94,6 @@ bool CommitLogReader::next_raw_block(CommitLogBlockInfo *infop, BlockCompression
 
 
 bool CommitLogReader::next(const uint8_t **blockp, size_t *lenp, BlockCompressionHeaderCommitLog *header) {
-  int error;
   CommitLogBlockInfo binfo;
 
   while (next_raw_block(&binfo, header)) {
@@ -106,29 +105,32 @@ bool CommitLogReader::next(const uint8_t **blockp, size_t *lenp, BlockCompressio
       zblock.base = binfo.block_ptr;
       zblock.ptr = binfo.block_ptr + binfo.block_len;
 
-      load_compressor(header->get_compression_type());
-
-      // Decompress
-      if ((error = m_compressor->inflate(zblock, m_block_buffer, *header)) != Error::OK) {
-	HT_ERRORF("Inflate error in CommitLog fragment %s starting at postion %lld (block len = %lld) - %s",
-		  m_fragment_stack.top().block_stream->get_fname().c_str(),
-		  binfo.start_offset, binfo.end_offset - binfo.start_offset,
-		  Error::get_text(error));
-	continue;
+      try {
+        load_compressor(header->get_compression_type());
+        m_compressor->inflate(zblock, m_block_buffer, *header);
+      }
+      catch (Exception &e) {
+        HT_ERRORF("Inflate error in CommitLog fragment %s starting at "
+                  "postion %lld (block len = %lld) - %s",
+                  m_fragment_stack.top().block_stream->get_fname().c_str(),
+                  binfo.start_offset, binfo.end_offset - binfo.start_offset,
+                  Error::get_text(e.code()));
+        continue;
       }
 
       m_last_timestamp = header->get_timestamp();
- 
+
       zblock.release();
       *blockp = m_block_buffer.base;
       *lenp = m_block_buffer.fill();
       return true;
     }
 
-    HT_ERRORF("Corruption detected in CommitLog fragment %s starting at postion %lld for %lld bytes - %s",
-	      m_fragment_stack.top().block_stream->get_fname().c_str(),
-	      binfo.start_offset, binfo.end_offset - binfo.start_offset,
-	      Error::get_text(binfo.error));
+    HT_ERRORF("Corruption detected in CommitLog fragment %s starting at "
+              "postion %lld for %lld bytes - %s",
+              m_fragment_stack.top().block_stream->get_fname().c_str(),
+              binfo.start_offset, binfo.end_offset - binfo.start_offset,
+              Error::get_text(binfo.error));
   }
 
   return false;
@@ -142,8 +144,8 @@ void CommitLogReader::load_fragments(String &log_dir) {
   vector<CommitLogFileInfo> fragment_vector;
   struct reverse_sort_clfi fragment_ordering_obj;
 
-  FileUtils::add_trailing_slash( log_dir );
-  
+  FileUtils::add_trailing_slash(log_dir);
+
   m_fs->readdir(log_dir, listing);
 
   if (listing.size() == 0)
@@ -163,7 +165,7 @@ void CommitLogReader::load_fragments(String &log_dir) {
       file_info.block_stream = 0;
       file_info.size = m_fs->length(log_dir + listing[i]);
       if (file_info.size > 0)
-	fragment_vector.push_back(file_info);
+        fragment_vector.push_back(file_info);
     }
   }
 

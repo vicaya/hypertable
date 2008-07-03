@@ -1,24 +1,25 @@
 #
-# Copyright (C) 2008 Doug Judd (Zvents, Inc.)
-# 
+# Copyright(C) 2008 Doug Judd (Zvents, Inc.)
+#
 # This file is part of Hypertable.
-# 
+#
 # Hypertable is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; version 2 of
 # the License.
-# 
+#
 # Hypertable is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-# 
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301, USA.
+#
 
-set ( Hyperspace_SRCS
+set(Hyperspace_SRCS
 ClientKeepaliveHandler.cc
 ClientConnectionHandler.cc
 DirEntry.cc
@@ -28,9 +29,10 @@ Session.cc
 )
 
 # Hyperspace library
-add_library (Hyperspace ${Hyperspace_SRCS})
+add_library(Hyperspace ${Hyperspace_SRCS})
+target_link_libraries(Hyperspace ${BDB_LIBRARIES} HyperComm HyperCommon)
 
-set ( Master_SRCS
+set(Master_SRCS
 BerkeleyDbFilesystem.cc
 Event.cc
 Master.cc
@@ -57,30 +59,27 @@ main.cc
 )
 
 # Hyperspace.Master
-add_executable (Hyperspace.Master ${Master_SRCS})
-target_link_libraries (Hyperspace.Master ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} Hyperspace HyperDfsBroker HyperComm HyperCommon ${Log4cpp_LIBRARIES} ${BDB_LIBRARY})
+add_executable(Hyperspace.Master ${Master_SRCS})
+target_link_libraries(Hyperspace.Master Hyperspace ${MALLOC_LIBRARY})
 
 # BerkeleyDbFilesystem test
-add_executable (bdb_fs_test tests/bdb_fs_test.cc BerkeleyDbFilesystem.cc)
-target_link_libraries (bdb_fs_test HyperCommon ${CMAKE_THREAD_LIBS_INIT} ${BOOST_LIB} ${Log4cpp_LIBRARIES} ${BDB_LIBRARY})
+add_executable(bdb_fs_test tests/bdb_fs_test.cc BerkeleyDbFilesystem.cc)
+target_link_libraries(bdb_fs_test ${BDB_LIBRARIES} HyperCommon)
 
 #
 # Copy test files
 #
-set (SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Hyperspace/tests")
-set (DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Hyperspace")
+set(SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Hyperspace/tests")
+set(DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Hyperspace")
 configure_file(${SRC_DIR}/bdb_fs_test.golden ${DST_DIR}/bdb_fs_test.golden)
 
+add_test(BerkeleyDbFilesystem bdb_fs_test)
 
-add_test (BerkeleyDbFilesystem bdb_fs_test)
+file(GLOB HEADERS *.h)
 
-file (GLOB HEADERS *.h)
+install(FILES ${HEADERS} DESTINATION ${VERSION}/include/Hyperspace)
 
-install (FILES ${HEADERS} DESTINATION ${VERSION}/include/Hyperspace)
-
-install (TARGETS Hyperspace.Master RUNTIME DESTINATION ${VERSION}/bin)
-
-install (TARGETS Hyperspace
-         RUNTIME DESTINATION ${VERSION}/bin
-         LIBRARY DESTINATION ${VERSION}/lib
-         ARCHIVE DESTINATION ${VERSION}/lib)
+install(TARGETS Hyperspace Hyperspace.Master
+        RUNTIME DESTINATION ${VERSION}/bin
+        LIBRARY DESTINATION ${VERSION}/lib
+        ARCHIVE DESTINATION ${VERSION}/lib)

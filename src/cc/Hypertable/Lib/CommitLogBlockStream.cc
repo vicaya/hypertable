@@ -1,24 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include "Common/Checksum.h"
 #include "Common/Error.h"
 #include "Common/Logger.h"
@@ -51,7 +52,7 @@ void CommitLogBlockStream::load(const String &log_dir, const String &fragment) {
   m_cur_offset = 0;
   m_file_length = m_fs->length(m_fname);
   m_fd = m_fs->open_buffered(m_fname, READAHEAD_BUFFER_SIZE, 2);
-}  
+}
 
 void CommitLogBlockStream::close() {
   if (m_fd != -1) {
@@ -60,7 +61,7 @@ void CommitLogBlockStream::close() {
     }
     catch (Hypertable::Exception &e) {
       HT_ERRORF("Problem closing file %s - %s (%s)",
-		m_fname.c_str(), e.what(), Error::get_text(e.code()));
+                m_fname.c_str(), e.what(), Error::get_text(e.code()));
     }
     m_fd = -1;
   }
@@ -115,15 +116,18 @@ bool CommitLogBlockStream::next(CommitLogBlockInfo *infop, BlockCompressionHeade
 int CommitLogBlockStream::load_next_valid_header(BlockCompressionHeaderCommitLog *header) {
   uint32_t nread;
   size_t remaining = BlockCompressionHeaderCommitLog::LENGTH;
+  try {
+    nread = m_fs->read(m_fd, m_block_buffer.base,
+                       BlockCompressionHeaderCommitLog::LENGTH);
+    HT_EXPECT(nread == BlockCompressionHeaderCommitLog::LENGTH, -1);
 
-  nread = m_fs->read(m_fd, m_block_buffer.base, BlockCompressionHeaderCommitLog::LENGTH);
-
-  HT_EXPECT(nread == BlockCompressionHeaderCommitLog::LENGTH, Error::FAILED_EXPECTATION);
-
-  m_block_buffer.ptr = m_block_buffer.base;
-
-  HT_EXPECT(header->decode(&m_block_buffer.ptr, &remaining) == Error::OK, Error::FAILED_EXPECTATION);
-
+    m_block_buffer.ptr = m_block_buffer.base;
+    header->decode((const uint8_t **)&m_block_buffer.ptr, &remaining);
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    return e.code();
+  }
   return Error::OK;
 }
 

@@ -1,24 +1,25 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
@@ -69,84 +70,84 @@ namespace {
 
 
 /**
- * 
+ *
  */
 int main(int argc, char **argv) {
-  string configFile = "";
-  string pidFile = "";
+  string cfg_file = "";
+  string pidfile = "";
   PropertiesPtr props_ptr;
   bool verbose = false;
-  int reactorCount, workerCount;
+  int reactor_count, worker_count;
   uint16_t port = 0;
   Comm *comm;
-  BrokerPtr brokerPtr;
-  ApplicationQueuePtr appQueuePtr;
-  struct sockaddr_in listenAddr;
+  BrokerPtr broker;
+  ApplicationQueuePtr app_queue;
+  struct sockaddr_in listen_addr;
   int error;
 
   System::initialize(argv[0]);
-  
+
   if (argc > 1) {
     for (int i=1; i<argc; i++) {
       if (!strncmp(argv[i], "--config=", 9))
-	configFile = &argv[i][9];
+        cfg_file = &argv[i][9];
       else if (!strncmp(argv[i], "--listen-port=", 14))
-	port = (uint16_t)atoi(&argv[i][14]);
+        port = (uint16_t)atoi(&argv[i][14]);
       else if (!strncmp(argv[i], "--pidfile=", 10))
-	pidFile = &argv[i][10];
+        pidfile = &argv[i][10];
       else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
-	verbose = true;
+        verbose = true;
       else
-	Usage::dump_and_exit(usage);
+        Usage::dump_and_exit(usage);
     }
   }
 
-  if (configFile == "")
-    configFile = System::installDir + "/conf/hypertable.cfg";
+  if (cfg_file == "")
+    cfg_file = System::install_dir + "/conf/hypertable.cfg";
 
-  if (!FileUtils::exists(configFile.c_str())) {
-    cerr << "Error: Unable to open config file '" << configFile << "'" << endl;
+  if (!FileUtils::exists(cfg_file.c_str())) {
+    cerr << "Error: Unable to open config file '" << cfg_file << "'" << endl;
     exit(0);
   }
 
-  props_ptr = new Properties(configFile);
+  props_ptr = new Properties(cfg_file);
   if (verbose)
     props_ptr->set("verbose", "true");
 
   if (port == 0)
     port       = props_ptr->get_int("DfsBroker.Local.Port",     DEFAULT_PORT);
-  reactorCount = props_ptr->get_int("DfsBroker.Local.Reactors", System::get_processor_count());
-  workerCount  = props_ptr->get_int("DfsBroker.Local.Workers",  DEFAULT_WORKERS);
+  reactor_count = props_ptr->get_int("DfsBroker.Local.Reactors", System::get_processor_count());
+  worker_count  = props_ptr->get_int("DfsBroker.Local.Workers",  DEFAULT_WORKERS);
 
-  ReactorFactory::initialize(reactorCount);
+  ReactorFactory::initialize(reactor_count);
 
   comm = new Comm();
 
   if (verbose) {
     cout << "CPU count = " << System::get_processor_count() << endl;
     cout << "DfsBroker.Local.Port=" << port << endl;
-    cout << "DfsBroker.Local.Reactors=" << reactorCount << endl;
-    cout << "DfsBroker.Local.Workers=" << workerCount << endl;
+    cout << "DfsBroker.Local.Reactors=" << reactor_count << endl;
+    cout << "DfsBroker.Local.Workers=" << worker_count << endl;
   }
 
-  InetAddr::initialize(&listenAddr, INADDR_ANY, port);
+  InetAddr::initialize(&listen_addr, INADDR_ANY, port);
 
-  brokerPtr = new LocalBroker(props_ptr);
-  appQueuePtr = new ApplicationQueue(workerCount);
-  ConnectionHandlerFactoryPtr chfPtr(new DfsBroker::ConnectionHandlerFactory(comm, appQueuePtr, brokerPtr));
-  if ((error = comm->listen(listenAddr, chfPtr)) != Error::OK) {
-    std::string addrStr;
-    HT_ERRORF("Problem listening for connections on %s - %s", InetAddr::string_format(addrStr, listenAddr), Error::get_text(error));
+  broker = new LocalBroker(props_ptr);
+  app_queue = new ApplicationQueue(worker_count);
+  ConnectionHandlerFactoryPtr chfp(new DfsBroker::ConnectionHandlerFactory(comm, app_queue, broker));
+  if ((error = comm->listen(listen_addr, chfp)) != Error::OK) {
+    std::string addr_str;
+    HT_ERRORF("Problem listening for connections on %s - %s", InetAddr::string_format(addr_str, listen_addr), Error::get_text(error));
     return 1;
   }
 
-  if (pidFile != "") {
-    fstream filestr (pidFile.c_str(), fstream::out);
+  if (pidfile != "") {
+    fstream filestr (pidfile.c_str(), fstream::out);
     filestr << getpid() << endl;
     filestr.close();
   }
 
-  appQueuePtr->join();
+  app_queue->join();
 
   delete comm;
   return 0;

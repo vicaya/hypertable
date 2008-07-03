@@ -1,26 +1,25 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
-#include <string>
-
+#include "Common/Compat.h"
 
 #include <cstdlib>
 #include <cstring>
@@ -60,7 +59,7 @@ namespace {
     exit(1);
   }
 
-  const char *help_text = 
+  const char *help_text =
   "\n" \
   "Interpreter Meta Commands\n" \
   "-------------------------\n" \
@@ -174,70 +173,70 @@ int CommandShell::run() {
     try {
 
       if (*line == 0)
-	continue;
+        continue;
 
       if (!strncasecmp(line, "help shell", 10)) {
-	cout << help_text;
-	continue;
+        cout << help_text;
+        continue;
       }
       else if (!strncasecmp(line, "help", 4) || !strncmp(line, "\\h", 2) || *line == '?') {
-	command = line;
-	std::transform( command.begin(), command.end(), command.begin(), ::tolower );
-	trim_if(command, boost::is_any_of(" \t\n\r;"));
-	m_interp_ptr->execute_line(command);
-	continue;
+        command = line;
+        std::transform(command.begin(), command.end(), command.begin(), ::tolower);
+        trim_if(command, boost::is_any_of(" \t\n\r;"));
+        m_interp_ptr->execute_line(command);
+        continue;
       }
       else if (!strcasecmp(line, "quit") || !strcasecmp(line, "exit") || !strcmp(line, "\\q")) {
-	if (!m_batch_mode)
-	  write_history(ms_history_file.c_str());
-	return 0;
+        if (!m_batch_mode)
+          write_history(ms_history_file.c_str());
+        return 0;
       }
       else if (!strcasecmp(line, "print") || !strcmp(line, "\\p")) {
-	cout << m_accum << endl;
-	continue;
+        cout << m_accum << endl;
+        continue;
       }
       else if (!strcasecmp(line, "clear") || !strcmp(line, "\\c")) {
-	m_accum = "";
-	m_cont = false;
-	continue;
+        m_accum = "";
+        m_cont = false;
+        continue;
       }
       else if (!strncmp(line, "source", 6) || line[0] == '.') {
-	if ((base = strchr(line, ' ')) == 0) {
-	  cout << "syntax error: source or '.' must be followed by a space character" << endl;
-	  continue;
-	}
-	std::string fname = base;
-	trim_if(fname, boost::is_any_of(" \t\n\r;"));
-	off_t flen;
-	if ((base = FileUtils::file_to_buffer(fname.c_str(), &flen)) == 0)
-	  continue;
-	source_commands = "";
-	ptr = strtok((char *)base, "\n\r");
-	while (ptr != 0) {
-	  command = ptr;
-	  boost::trim(command);
-	  if (command.find("#") != 0)
-	    source_commands += command + " ";
-	  ptr = strtok(0, "\n\r");
-	}
-	if (source_commands == "")
-	  continue;
-	delete [] base;
-	line = source_commands.c_str();
+        if ((base = strchr(line, ' ')) == 0) {
+          cout << "syntax error: source or '.' must be followed by a space character" << endl;
+          continue;
+        }
+        std::string fname = base;
+        trim_if(fname, boost::is_any_of(" \t\n\r;"));
+        off_t flen;
+        if ((base = FileUtils::file_to_buffer(fname.c_str(), &flen)) == 0)
+          continue;
+        source_commands = "";
+        ptr = strtok((char *)base, "\n\r");
+        while (ptr != 0) {
+          command = ptr;
+          boost::trim(command);
+          if (command.find("#") != 0)
+            source_commands += command + " ";
+          ptr = strtok(0, "\n\r");
+        }
+        if (source_commands == "")
+          continue;
+        delete [] base;
+        line = source_commands.c_str();
       }
       else if (!strncasecmp(line, "system", 6) || !strncmp(line, "\\!", 2)) {
-	std::string command = line;
-	size_t offset = command.find_first_of(' ');
-	if (offset != std::string::npos) {
-	  command = command.substr(offset+1);
-	  trim_if(command, boost::is_any_of(" \t\n\r;"));
-	  system(command.c_str());
-	}
-	continue;
+        std::string command = line;
+        size_t offset = command.find_first_of(' ');
+        if (offset != std::string::npos) {
+          command = command.substr(offset+1);
+          trim_if(command, boost::is_any_of(" \t\n\r;"));
+          system(command.c_str());
+        }
+        continue;
       }
       else if (!strcasecmp(line, "status") || !strcmp(line, "\\s")) {
-	cout << endl << "no status." << endl << endl;
-	continue;
+        cout << endl << "no status." << endl << endl;
+        continue;
       }
 
 
@@ -247,61 +246,61 @@ int CommandShell::run() {
       base = line;
       ptr = strchr(base, ';');
       while (ptr) {
-	m_accum += string(base, ptr-base);
-	if (m_accum.size() > 0) {
-	  boost::trim(m_accum);
-	  if (m_accum.find("#") != 0)
-	    command_queue.push(m_accum);
-	  m_accum = "";
-	  m_cont = false;
-	}
-	base = ptr+1;
-	ptr = strchr(base, ';');
+        m_accum += string(base, ptr-base);
+        if (m_accum.size() > 0) {
+          boost::trim(m_accum);
+          if (m_accum.find("#") != 0)
+            command_queue.push(m_accum);
+          m_accum = "";
+          m_cont = false;
+        }
+        base = ptr+1;
+        ptr = strchr(base, ';');
       }
       command = string(base);
       boost::trim(command);
       if (command != "" && command.find("#") != 0) {
-	m_accum += command;
-	boost::trim(m_accum);
+        m_accum += command;
+        boost::trim(m_accum);
       }
       if (m_accum != "") {
-	m_cont = true;
-	m_accum += " ";
+        m_cont = true;
+        m_accum += " ";
       }
 
       while (!command_queue.empty()) {
-	if (command_queue.front() == "quit" || command_queue.front() == "exit") {
-	  if (!m_batch_mode)
-	    write_history(ms_history_file.c_str());
-	  return 0;
-	}
-	command = command_queue.front();
-	command_queue.pop();
-	if (!strncmp(command.c_str(), "pause", 5)) {
-	  std::string sec_str = command.substr(5);
-	  boost::trim(sec_str);
-	  char *endptr;
-	  long secs = strtol(sec_str.c_str(), &endptr, 0);
-	  if (secs == 0 && errno == EINVAL || *endptr != 0) {
-	    cout << "error: invalid seconds specification" << endl;
-	    if (m_batch_mode)
-	      return 1;
-	  }
-	  else
-	    poll(0, 0, secs*1000);
-	}
-	else
-	  m_interp_ptr->execute_line(command);
+        if (command_queue.front() == "quit" || command_queue.front() == "exit") {
+          if (!m_batch_mode)
+            write_history(ms_history_file.c_str());
+          return 0;
+        }
+        command = command_queue.front();
+        command_queue.pop();
+        if (!strncmp(command.c_str(), "pause", 5)) {
+          std::string sec_str = command.substr(5);
+          boost::trim(sec_str);
+          char *endptr;
+          long secs = strtol(sec_str.c_str(), &endptr, 0);
+          if (secs == 0 && errno == EINVAL || *endptr != 0) {
+            cout << "error: invalid seconds specification" << endl;
+            if (m_batch_mode)
+              return 1;
+          }
+          else
+            poll(0, 0, secs*1000);
+        }
+        else
+          m_interp_ptr->execute_line(command);
       }
 
     }
     catch (Hypertable::Exception &e) {
       cerr << "Error: " << e.what() << " - " << Error::get_text(e.code()) << endl;
       if (m_batch_mode)
-	return 1;
+        return 1;
       m_accum = "";
       while (!command_queue.empty())
-	command_queue.pop();
+        command_queue.pop();
       m_cont=false;
     }
 

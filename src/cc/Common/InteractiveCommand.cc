@@ -1,23 +1,25 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+#include "Common/Compat.h"
 
 #include <cassert>
 #include <cstring>
@@ -34,15 +36,15 @@ using namespace std;
  *
  */
 void InteractiveCommand::parse_command_line(const char *line) {
-  size_t commandLen = strlen(this->command_text());
+  size_t cmd_len = strlen(this->command_text());
   const char *base, *ptr;
   string key, value;
 
-  assert(!strncmp(line, command_text(), commandLen));
+  assert(!strncmp(line, command_text(), cmd_len));
 
   m_args.clear();
 
-  ptr = line + commandLen;
+  ptr = line + cmd_len;
 
   while (true) {
 
@@ -57,34 +59,34 @@ void InteractiveCommand::parse_command_line(const char *line) {
 
     if (*ptr == '\"') {
       if (!parse_string_literal(ptr, key, &ptr))
-	exit(1);
+        exit(1);
     }
     else {
       base = ptr;
       while (true) {
-	if (*ptr == '=') {
-	  key = string(base, ptr-base);
-	  base = ++ptr;
-	  if (*base == '\"') {
-	    if (!parse_string_literal(base, value, &ptr))
-	      exit(1);
-	    break;
-	  }
-	  else {
-	    for (ptr=base; *ptr && !isspace(*ptr); ptr++)
-	      ;
-	    value = string(base, ptr-base);
-	    break;
-	  }
-	}
-	else if (*ptr == 0 || isspace(*ptr)) {
-	  key = string(base, ptr-base);
-	  break;
-	}
-	ptr++;
+        if (*ptr == '=') {
+          key = string(base, ptr-base);
+          base = ++ptr;
+          if (*base == '\"') {
+            if (!parse_string_literal(base, value, &ptr))
+              exit(1);
+            break;
+          }
+          else {
+            for (ptr=base; *ptr && !isspace(*ptr); ptr++)
+              ;
+            value = string(base, ptr-base);
+            break;
+          }
+        }
+        else if (*ptr == 0 || isspace(*ptr)) {
+          key = string(base, ptr-base);
+          break;
+        }
+        ptr++;
       }
     }
-    m_args.push_back( pair<string, string>(key, value) );
+    m_args.push_back(pair<string, string>(key, value));
   }
 
 }

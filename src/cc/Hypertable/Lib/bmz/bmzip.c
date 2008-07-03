@@ -248,7 +248,7 @@ do_unpack(const void *in, size_t in_len, size_t buf_len) {
 
   parse_bmz_header(bp, &version, &orig_size, &checksum, &options);
 
-  if (orig_size > INT_MAX && sizeof(size_t) == 4) 
+  if (orig_size > INT_MAX && sizeof(size_t) == 4)
     DIE("original file size %llu requires 64-bit version of bmzip",
         (Llu)orig_size);
 
@@ -275,7 +275,7 @@ do_unpack(const void *in, size_t in_len, size_t buf_len) {
       DIE("error decompressing (error %d)", ret);
   }
   if (orig_size != outlen)
-    WARN("size mismatch (expecting %llu, got %llu)", 
+    WARN("size mismatch (expecting %llu, got %llu)",
          (Llu)orig_size, (Llu)outlen);
 
   write(1, out, outlen);

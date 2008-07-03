@@ -1,24 +1,25 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include <cstdlib>
 
 extern "C" {
@@ -66,13 +67,13 @@ namespace {
   public:
     ServerLauncher() {
       if ((m_child_pid = fork()) == 0) {
-	execl("./testServer", "./testServer", DEFAULT_PORT_ARG, "--app-queue", "--udp", (char *)0);
+        execl("./testServer", "./testServer", DEFAULT_PORT_ARG, "--app-queue", "--udp", (char *)0);
       }
       poll(0,0,2000);
     }
     ~ServerLauncher() {
       if (kill(m_child_pid, 9) == -1)
-	perror("kill");
+        perror("kill");
     }
     private:
       pid_t m_child_pid;
@@ -111,27 +112,27 @@ int main(int argc, char **argv) {
 
   poll(0, 0, 2000);
 
-  CommTestDatagramThreadFunction threadFunc(comm, addr, "./words");
+  CommTestDatagramThreadFunction thread_func(comm, addr, "./words");
 
-  threadFunc.set_output_file("commTestDatagram.output.1");
-  threadFunc.set_receive_port(DEFAULT_PORT + 1);
-  thread1 = new boost::thread(threadFunc);
+  thread_func.set_output_file("commTestDatagram.output.1");
+  thread_func.set_receive_port(DEFAULT_PORT + 1);
+  thread1 = new boost::thread(thread_func);
 
-  threadFunc.set_output_file("commTestDatagram.output.2");
-  threadFunc.set_receive_port(DEFAULT_PORT + 2);
-  thread2 = new boost::thread(threadFunc);
+  thread_func.set_output_file("commTestDatagram.output.2");
+  thread_func.set_receive_port(DEFAULT_PORT + 2);
+  thread2 = new boost::thread(thread_func);
 
   thread1->join();
   thread2->join();
 
-  std::string tmpFile = (std::string)"/tmp/commTestDatagram" + (int)getpid();
-  std::string commandStr = (std::string)"head -" + (int)MAX_MESSAGES + " ./words > " + tmpFile  + " ; diff " + tmpFile + " commTestDatagram.output.1";
+  std::string tmp_file = (std::string)"/tmp/commTestDatagram" + (int)getpid();
+  std::string cmd_str = (std::string)"head -" + (int)MAX_MESSAGES + " ./words > " + tmp_file  + " ; diff " + tmp_file + " commTestDatagram.output.1";
 
-  if (system(commandStr.c_str()))
+  if (system(cmd_str.c_str()))
     return 1;
 
-  commandStr = (std::string)"unlink " + tmpFile;
-  if (system(commandStr.c_str()))
+  cmd_str = (std::string)"unlink " + tmp_file;
+  if (system(cmd_str.c_str()))
     return 1;
 
   if (system("diff commTestDatagram.output.1 commTestDatagram.output.2"))

@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -22,6 +22,7 @@
 #ifndef HYPERTABLE_FILESYSTEM_H
 #define HYPERTABLE_FILESYSTEM_H
 
+#include <vector>
 #include "Common/String.h"
 #include "Common/StaticBuffer.h"
 #include "AsyncComm/DispatchHandler.h"
@@ -89,26 +90,26 @@ namespace Hypertable {
      *
      * @param name absolute path name of file to open
      * @param overwrite overwrite the file if it exists
-     * @param bufferSize buffer size to use for the underlying FS
+     * @param bufsz buffer size to use for the underlying FS
      * @param replication replication factor to use for this file
-     * @param blockSize block size to use for the underlying FS
+     * @param blksz block size to use for the underlying FS
      * @param handler dispatch handler
      */
-    virtual void create(const String &name, bool overwrite, int32_t bufferSize,
-		        int32_t replication, int64_t blockSize,
+    virtual void create(const String &name, bool overwrite, int32_t bufsz,
+                        int32_t replication, int64_t blksz,
                         DispatchHandler *handler) = 0;
 
     /** Creates a file.  Issues a create file request and waits for completion
      *
      * @param name absolute path name of file to open
      * @param overwrite overwrite the file if it exists
-     * @param bufferSize buffer size to use for the underlying FS
+     * @param bufsz buffer size to use for the underlying FS
      * @param replication replication factor to use for this file
-     * @param blockSize block size to use for the underlying FS
+     * @param blksz block size to use for the underlying FS
      * @return file descriptor
      */
-    virtual int create(const String &name, bool overwrite, int32_t bufferSize,
-		       int32_t replication, int64_t blockSize) = 0;
+    virtual int create(const String &name, bool overwrite, int32_t bufsz,
+                       int32_t replication, int64_t blksz) = 0;
 
     /** Decodes the response from a create request
      *
@@ -350,7 +351,7 @@ namespace Hypertable {
      * @param force don't throw an error if file does not exist
      */
     virtual void rmdir(const String &name, bool force = true) = 0;
-    
+
     /** Obtains a listing of all files in a directory asynchronously.  Issues a
      * readdir request.  The caller will get notified of successful completion
      * or error via the given dispatch handler.
@@ -420,17 +421,17 @@ namespace Hypertable {
     static bool decode_response_exists(EventPtr &event_ptr);
 
     /** Rename path asynchronously
-     * 
-     * @param src - source path 
+     *
+     * @param src - source path
      * @param dst - destination path
      * @param handler - dispatch/callback handler
      */
-    virtual void rename(const String &src, const String &dst, 
+    virtual void rename(const String &src, const String &dst,
                         DispatchHandler *handler) = 0;
 
     /** Rename a path
      *
-     * @param src - source path 
+     * @param src - source path
      * @param dst - destination path
      */
     virtual void rename(const String &src, const String &dst) = 0;

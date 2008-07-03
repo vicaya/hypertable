@@ -39,9 +39,8 @@
 #include "HandleCallback.h"
 #include "LockSequencer.h"
 #include "Protocol.h"
+#include "DirEntry.h"
 
-using namespace Hypertable;
-using namespace Hyperspace;
 
 namespace Hyperspace {
 
@@ -66,7 +65,7 @@ namespace Hyperspace {
     /** Atomically open and lock file shared, fail if can't */
     OPEN_FLAG_LOCK_SHARED    = 0x00044,
     /** atomically open and lock file exclusive, fail if can't */
-    OPEN_FLAG_LOCK_EXCLUSIVE = 0x00084  
+    OPEN_FLAG_LOCK_EXCLUSIVE = 0x00084
   };
 
   /**
@@ -83,35 +82,39 @@ namespace Hyperspace {
     virtual void jeopardy() = 0;
   };
 
-  /**
+  /*
    * %Hyperspace session.  Provides the API for %Hyperspace, a namespace and
-   * lock service.  This service is modeled after <a href="http://labs.google.com/papers/chubby.html">
-   * Chubby</a>.  Presently it is implemented as just a single server, but ultimately
-   * it will get re-written using a distributed consensus protocol for high availablility.
-   * For now, it provides the same functionality (albeit less available) and the same API.
-   * This allows us to get the system up and running and since the API is the same as the
-   * API for the highly-available version, minimal code changes will be needed when we
-   * swap out this one for the highly available one.
+   * lock service.  This service is modeled after
+   * <a href="http://labs.google.com/papers/chubby.html">Chubby</a>.
+   * Presently it is implemented as just a single server, but ultimately
+   * it will get re-written using a distributed consensus protocol for high
+   * availablility.  For now, it provides the same functionality (albeit less
+   * available) and the same API.
+   * This allows us to get the system up and running and since the API is the
+   * same as the API for the highly-available version, minimal code changes
+   * will be needed when we swap out this one for the highly available one.
    * <p>
-   * %Session establishes a session with the master which includes a TCP connection and
-   * the initiation of regular heartbeat UDP messages.  As soon as the master receives the
-   * first heartbeat message from the client %Session object, it creates the session
-   * and grants a lease.  Each heartbeat that the master receives from the client
-   * causes the master to extend the lease.  In this mode of operation, the session 
-   * is in the SAFE state.  If the master does not receive a heartbeat message before
-   * the lease expiration time, then the session transitions to the EXPIRED state and
+   * %Session establishes a session with the master which includes a TCP
+   * connection and the initiation of regular heartbeat UDP messages.  As soon
+   * as the master receives the first heartbeat message from the client
+   * %Session object, it creates the session and grants a lease. Each heartbeat
+   * that the master receives from the client causes the master to extend the
+   * lease.  In this mode of operation, the session is in the SAFE state.  If
+   * the master does not receive a heartbeat message before the lease
+   * expiration time, then the session transitions to the EXPIRED state and
    * the master drops the session.
    * <p>
-   * Whenever the client receives a heartbeat UDP response message, it advances its
-   * conservative estimate of what it thinks the lease expiration time is.  If the
-   * lease expires, then the client will put the session in the JEOPARDY state and will
-   * continue sending heartbeats for a period of time known as the 'grace period'.
-   * During the JEOPARDY state, all %Hyperspace commands are suspended.  If
-   * a heartbeat response message is received during the grace period, then it will switch
-   * back to SAFE mode and allow pending commands to proceed.  Otherwise, the session expires.
+   * Whenever the client receives a heartbeat UDP response message, it advances
+   * its conservative estimate of what it thinks the lease expiration time is.
+   * If the lease expires, then the client will put the session in the JEOPARDY
+   * state and will continue sending heartbeats for a period of time known as
+   * the 'grace period'. During the JEOPARDY state, all %Hyperspace commands
+   * are suspended.  If a heartbeat response message is received during the
+   * grace period, then it will switch back to SAFE mode and allow pending
+   * commands to proceed.  Otherwise, the session expires.
    * <p>
-   * The following set of properties are available to configure the protocol (default
-   * values are shown):
+   * The following set of properties are available to configure the protocol
+   * (default values are shown):
    * <pre>
    * Hyperspace.Lease.Interval=20
    * Hyperspace.KeepAlive.Interval=10
@@ -125,7 +128,7 @@ namespace Hyperspace {
     /** %Session state values
      * \anchor SessionState
      */
-    enum {
+    enum State {
       /** session has expired */
       STATE_EXPIRED,
       /** session is in jeopardy */
@@ -134,14 +137,15 @@ namespace Hyperspace {
       STATE_SAFE
     };
 
-    /** Constructor.  Establishes a connection to %Hyperspace master and initiates keepalive
-     * pings.  The location of the master is determined by the following two properties of
-     * the config file:
+    /** Constructor.  Establishes a connection to %Hyperspace master and
+     * initiates keepalive pings.  The location of the master is determined by
+     * the following two properties of the config file:
      * <pre>
      * Hyperspace.Master.host
      * Hyperspace.Master.port
      * </pre>
-     * The session callback is used to notify the application of session state changes.
+     * The session callback is used to notify the application of session state
+     * changes.
      *
      * @param comm pointer to the Comm object
      * @param props_ptr smart pointer to properties object
@@ -152,36 +156,40 @@ namespace Hyperspace {
     virtual ~Session();
 
     /** Opens a file.  The open mode
-     * is determined by the bits in the flags argument and the callbackPtr
+     * is determined by the bits in the flags argument and the callback
      * argument is registered as the callback for this handle.  The events
      * that should be reported on this handle are determined by the event
-     * mask inside callbackPtr (see HandleCallback#get_event_mask).
+     * mask inside callback (see HandleCallback#get_event_mask).
      *
      * @param name pathname of file to open
      * @param flags OR'ed together set of open flags (see \ref OpenFlags)
-     * @param callbackPtr smart pointer to handle callback
+     * @param callback smart pointer to handle callback
      * @param handlep address of variable to hold returned handle
      * @return Error::OK on success or error code on failure
      */
-    int open(const std::string &name, uint32_t flags, HandleCallbackPtr &callbackPtr, uint64_t *handlep);
+    int open(const std::string &name, uint32_t flags,
+             HandleCallbackPtr &callback, uint64_t *handlep);
 
     /** Creates a file.  This method is basically
-     * the same as the #open method except that it implicitly sets the 
+     * the same as the #open method except that it implicitly sets the
      * OPEN_FLAG_CREATE and OPEN_FLAG_EXCL open flags and supplies a set of
      * initial attributes to be set when the file is created.  The flags argument
-     * controls other open modes and the callbackPtr
+     * controls other open modes and the callback
      * argument is registered as the callback for this handle.  The events
      * that should be reported on this handle are determined by the event
-     * mask inside callbackPtr (see HandleCallback#get_event_mask).
+     * mask inside callback (see HandleCallback#get_event_mask).
      *
      * @param name pathname of file to create
      * @param flags OR'ed together set of open flags (see \ref OpenFlags)
-     * @param callbackPtr smart pointer to handle callback
-     * @param initAttrs vector of attributes to be atomically set when the file is created
+     * @param callback smart pointer to handle callback
+     * @param init_attrs vector of attributes to be atomically set when the
+     *        file is created
      * @param handlep address of variable to hold returned handle
      * @return Error::OK on success or error code on failure
      */
-    int create(const std::string &name, uint32_t flags, HandleCallbackPtr &callbackPtr, std::vector<AttributeT> &initAttrs, uint64_t *handlep);
+    int create(const std::string &name, uint32_t flags,
+               HandleCallbackPtr &callback, std::vector<Attribute> &init_attrs,
+               uint64_t *handlep);
 
     /*
     int cancel(uint64_t handle);
@@ -197,8 +205,8 @@ namespace Hyperspace {
     /**
      * Creates a directory.  The name
      * argument should be the absolute path to the file.  All of the directories
-     * up to, but not including, the last path component must be valid.  Otherwise,
-     * Error::HYPERSPACE_BAD_PATHNAME will be returned.
+     * up to, but not including, the last path component must be valid.
+     * Otherwise, Error::HYPERSPACE_BAD_PATHNAME will be returned.
      *
      * @param name absolute pathname of directory to create
      * @return Error::OK on success or error code on failure
@@ -213,7 +221,8 @@ namespace Hyperspace {
      * @param value_len length of new value
      * @return Error::OK on success or error code on failure
      */
-    int attr_set(uint64_t handle, std::string name, const void *value, size_t value_len);
+    int attr_set(uint64_t handle, const std::string &name,
+                 const void *value, size_t value_len);
 
     /** Gets an extended attribute of a file.
      *
@@ -222,7 +231,8 @@ namespace Hyperspace {
      * @param value reference to DynamicBuffer to hold returned value
      * @return Error::OK on success or error code on failure
      */
-    int attr_get(uint64_t handle, std::string name, DynamicBuffer &value);
+    int attr_get(uint64_t handle, const std::string &name,
+                 DynamicBuffer &value);
 
     /** Deletes an extended attribute of a file.
      *
@@ -230,7 +240,7 @@ namespace Hyperspace {
      * @param name name of extended attribute
      * @return Error::OK on success or error code on failure
      */
-    int attr_del(uint64_t handle, std::string name);
+    int attr_del(uint64_t handle, const std::string &name);
 
     /** Checks for the existence of a file.
      *
@@ -240,7 +250,7 @@ namespace Hyperspace {
      */
     int exists(const std::string &name, bool *existsp);
 
-    /** Removes a file or directory.  Directory must be empty, otherwise 
+    /** Removes a file or directory.  Directory must be empty, otherwise
      * Error::HYPERSPACE_IO_ERROR will be returned.
      *
      * @param name absolute path name of file or directory to delete
@@ -248,53 +258,57 @@ namespace Hyperspace {
      */
     int unlink(const std::string &name);
 
-    /** Gets a directory listing.  The listing comes back as a vector of DireEntryT
-     * structures which contains a name and boolean flag indicating if the entry is an
-     * element or not.
-     * 
+    /** Gets a directory listing.  The listing comes back as a vector of
+     * DireEntry which contains a name and boolean flag indicating if the
+     * entry is an element or not.
+     *
      * @param handle handle of directory to scan
-     * @param listing reference to vector of DirEntryT structures to hold result
+     * @param listing reference to vector of DirEntry structures to hold result
      * @return Error::OK on success or error code on failure
      */
-    int readdir(uint64_t handle, std::vector<struct DirEntryT> &listing);
+    int readdir(uint64_t handle, std::vector<DirEntry> &listing);
 
 
-    /** Locks a file.  The mode argument indicates
-     * the type of lock to be acquired and takes a value of either LOCK_MODE_SHARED
+    /** Locks a file.  The mode argument indicates the type of lock to be
+     * acquired and takes a value of either LOCK_MODE_SHARED
      * or LOCK_MODE_EXCLUSIVE (see \ref LockMode).  Upon success, the structure
      * pointed to by sequencerp will get filled in with information about the
      * lock, including a generation number.  Some services operate on resources
-     * on behalf of clients, but require that the client have the resource locked.
-     * The LockSequencerT object can be passed by the client to the service in
-     * each request so that the service can call check_sequencer (not yet implemented)
-     * to verify that the client indeed has the current up-to-date lock.
+     * on behalf of clients, but require that the client have the resource
+     * locked. The LockSequencer object can be passed by the client to the
+     * service in each request so that the service can call check_sequencer
+     * (not yet implemented) to verify that the client indeed has the current
+     * up-to-date lock.
      *
      * @param handle handle of file or directory to lock
      * @param mode lock mode (see \ref LockMode)
-     * @param sequencerp address of LockSequencerT return structure
-     * @return Error::OK on success or error code on failure     
+     * @param sequencerp address of LockSequencer return structure
+     * @return Error::OK on success or error code on failure
      */
-    int lock(uint64_t handle, uint32_t mode, struct LockSequencerT *sequencerp);
+    int lock(uint64_t handle, uint32_t mode, LockSequencer *sequencerp);
 
-    /** Attempts to lock a file.  The mode argument
-     * indicates the type of lock to be acquired and takes a value of either LOCK_MODE_SHARED
+    /** Attempts to lock a file.  The mode argument indicates the type of lock
+     * to be acquired and takes a value of either LOCK_MODE_SHARED
      * or LOCK_MODE_EXCLUSIVE (see \ref LockMode).  The result of the attempt
      * will get returned in the statusp argument and will contain either
      * LOCK_STATUS_BUSY or LOCK_STATUS_GRANTED.  Upon success, the structure
      * pointed to by sequencerp will get filled in with information about the
      * lock, including a generation number.  Some services operate on resources
      * on behalf of clients, but require that the client have the resource locked.
-     * The LockSequencerT object can be passed by the client to the service in
-     * each request so that the service can call #check_sequencer (not yet implemented)
-     * to verify that the client indeed has the current up-to-date lock.
+     * The LockSequencer object can be passed by the client to the service in
+     * each request so that the service can call check_sequencer (not yet
+     * implemented) to verify that the client indeed has the current up-to-date
+     * lock.
      *
      * @param handle handle of file or directory to lock
      * @param mode lock mode (see \ref LockMode)
-     * @param statusp address of variable to hold the status of the attempt (see \ref LockStatus)
-     * @param sequencerp address of LockSequencerT return structure
-     * @return Error::OK on success or error code on failure     
+     * @param statusp address of variable to hold the status of the attempt
+     *        (see \ref LockStatus)
+     * @param sequencerp address of LockSequencer return structure
+     * @return Error::OK on success or error code on failure
      */
-    int try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp, struct LockSequencerT *sequencerp);
+    int try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp,
+                 LockSequencer *sequencerp);
 
     /** Releases any file handle locks.
      *
@@ -306,19 +320,20 @@ namespace Hyperspace {
     /** Gets the lock sequencer of a locked file or directory handle.
      *
      * @param handle locked file or directory handle
-     * @param sequencerp address of LockSequencerT return structure
+     * @param sequencerp address of LockSequencer return structure
      * @return Error::OK on success or error code on failure
      */
-    int get_sequencer(uint64_t handle, struct LockSequencerT *sequencerp);
+    int get_sequencer(uint64_t handle, LockSequencer *sequencerp);
 
     /** Checks to see if a lock sequencer is valid.
      *
-     * <b>NOTE: This method is not yet implemented and always returns Error::OK</b>
+     * <b>NOTE: This method is not yet implemented and always returns
+     * Error::OK</b>
      *
      * @param sequencer lock sequencer to validate
      * @return Error::OK on success or error code on failure
      */
-    int check_sequencer(struct LockSequencerT &sequencer);
+    int check_sequencer(LockSequencer &sequencer);
 
     /** Check the status of the Hyperspace master server
      *
@@ -368,9 +383,9 @@ namespace Hyperspace {
   private:
 
     bool wait_for_safe();
-    int send_message(CommBufPtr &cbufPtr, DispatchHandler *handler);
-    void normalize_name(std::string name, std::string &normal);
-    int open(ClientHandleStatePtr &handleStatePtr, CommBufPtr &cbufPtr, uint64_t *handlep);
+    int send_message(CommBufPtr &, DispatchHandler *);
+    void normalize_name(const std::string &name, std::string &normal);
+    int open(ClientHandleStatePtr &, CommBufPtr &, uint64_t *handlep);
 
     boost::mutex m_mutex;
     boost::condition m_cond;
@@ -386,11 +401,11 @@ namespace Hyperspace {
     ClientKeepaliveHandlerPtr m_keepalive_handler_ptr;
     SessionCallback *m_session_callback;
   };
-  typedef boost::intrusive_ptr<Session> SessionPtr;
-  
 
-}
+  typedef boost::intrusive_ptr<Session> SessionPtr;
+
+
+} // namespace Hyperspace
 
 
 #endif // HYPERSPACE_SESSION_H
-

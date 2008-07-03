@@ -1,18 +1,18 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -28,14 +28,14 @@
 
 namespace Hypertable {
 
-  typedef struct {
+  struct FailedRegion {
     int error;
     uint8_t *base;
     uint32_t len;
-  } FailedRegionT;
+  };
 
   /**
-   * 
+   *
    */
   class TableMutatorSendBuffer : public ReferenceCount {
   public:
@@ -59,7 +59,7 @@ namespace Hypertable {
       m_range_locator->invalidate(m_table_identifier, (const char *)ptr);
     }
     void add_errors(int error, uint32_t offset, uint32_t len) {
-      FailedRegionT failed;
+      FailedRegion failed;
       failed.error = error;
       failed.base = pending_updates.base + offset;
       failed.len = len;
@@ -67,7 +67,7 @@ namespace Hypertable {
       counterp->set_errors();
     }
     void add_errors_all(uint32_t error) {
-      FailedRegionT failed;
+      FailedRegion failed;
       failed.error = (int)error;
       failed.base = pending_updates.base;
       failed.len = pending_updates.size;
@@ -84,7 +84,7 @@ namespace Hypertable {
       clear();
       dispatch_handler_ptr = 0;
     }
-    void get_failed_regions(std::vector<FailedRegionT> &errors) {
+    void get_failed_regions(std::vector<FailedRegion> &errors) {
       errors.insert(errors.end(), failed_regions.begin(), failed_regions.end());
     }
 
@@ -96,7 +96,7 @@ namespace Hypertable {
     struct sockaddr_in addr;
     TableMutatorCompletionCounter *counterp;
     DispatchHandlerPtr dispatch_handler_ptr;
-    std::vector<FailedRegionT> failed_regions;
+    std::vector<FailedRegion> failed_regions;
   private:
     TableIdentifier *m_table_identifier;
     RangeLocator *m_range_locator;

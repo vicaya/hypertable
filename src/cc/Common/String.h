@@ -32,7 +32,7 @@ namespace Hypertable {
   typedef long unsigned int Lu;         // shortcut for printf format
   typedef long long unsigned int Llu;   // ditto
 
-  /** 
+  /**
    * return a String using printf like format facilities
    * vanilla snprintf is about 1.5x faster than this, which is about:
    *   10x faster than boost::format;

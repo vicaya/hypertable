@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2007 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -40,7 +40,7 @@ extern "C" {
 
 #include "DispatchHandler.h"
 #include "ReactorFactory.h"
-#include "Timer.h"
+#include "ExpireTimer.h"
 
 namespace Hypertable {
 
@@ -70,32 +70,32 @@ namespace Hypertable {
     virtual ~IOHandler() { return; }
 
     void deliver_event(Event *event) {
-      memcpy(&event->localAddr, &m_local_addr, sizeof(m_local_addr));
+      memcpy(&event->local_addr, &m_local_addr, sizeof(m_local_addr));
       if (!m_dispatch_handler_ptr) {
-	HT_INFOF("%s", event->toString().c_str());
-	delete event;
+        HT_INFOF("%s", event->to_str().c_str());
+        delete event;
       }
       else {
-	EventPtr eventPtr(event);
-	m_dispatch_handler_ptr->handle(eventPtr);
+        EventPtr event_ptr(event);
+        m_dispatch_handler_ptr->handle(event_ptr);
       }
     }
 
     void deliver_event(Event *event, DispatchHandler *dh) {
-      memcpy(&event->localAddr, &m_local_addr, sizeof(m_local_addr));
+      memcpy(&event->local_addr, &m_local_addr, sizeof(m_local_addr));
       if (!dh) {
-	if (!m_dispatch_handler_ptr) {
-	  HT_INFOF("%s", event->toString().c_str());
-	  delete event;
-	}
-	else {
-	  EventPtr eventPtr(event);
-	  m_dispatch_handler_ptr->handle(eventPtr);
-	}
+        if (!m_dispatch_handler_ptr) {
+          HT_INFOF("%s", event->to_str().c_str());
+          delete event;
+        }
+        else {
+          EventPtr event_ptr(event);
+          m_dispatch_handler_ptr->handle(event_ptr);
+        }
       }
       else {
-	EventPtr eventPtr(event);
-	dh->handle(eventPtr);
+        EventPtr event_ptr(event);
+        dh->handle(event_ptr);
       }
     }
 
@@ -107,10 +107,10 @@ namespace Hypertable {
       memset(&event, 0, sizeof(struct epoll_event));
       event.data.ptr = this;
       event.events = EPOLLIN | EPOLLERR | EPOLLHUP;
-      if (epoll_ctl(m_reactor_ptr->pollFd, EPOLL_CTL_ADD, m_sd, &event) < 0) {
-	HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN|EPOLLERR|EPOLLHUP) failed : %s",
-		     m_reactor_ptr->pollFd, m_sd, strerror(errno));
-	exit(1);
+      if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_ADD, m_sd, &event) < 0) {
+        HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN|EPOLLERR|EPOLLHUP) failed : %s",
+                     m_reactor_ptr->poll_fd, m_sd, strerror(errno));
+        exit(1);
       }
       m_poll_interest |= Reactor::READ_READY;
 #endif
@@ -124,8 +124,8 @@ namespace Hypertable {
 
     struct sockaddr_in &get_local_address() { return m_local_addr; }
 
-    void get_local_address(struct sockaddr_in *addrPtr) {
-      memcpy(addrPtr, &m_local_addr, sizeof(struct sockaddr_in));
+    void get_local_address(struct sockaddr_in *addrp) {
+      memcpy(addrp, &m_local_addr, sizeof(struct sockaddr_in));
     }
 
     void set_alias(struct sockaddr_in &alias) {
@@ -140,11 +140,11 @@ namespace Hypertable {
 
     void get_reactor(ReactorPtr &reactor_ptr) { reactor_ptr = m_reactor_ptr; }
 
-    void shutdown() { 
-      struct TimerT timer;
+    void shutdown() {
+      ExpireTimer timer;
       m_reactor_ptr->schedule_removal(this);
-      boost::xtime_get(&timer.expireTime, boost::TIME_UTC);
-      timer.expireTime.nsec += 200000000LL;
+      boost::xtime_get(&timer.expire_time, boost::TIME_UTC);
+      timer.expire_time.nsec += 200000000LL;
       timer.handler = 0;
       m_reactor_ptr->add_timer(timer);
     }
@@ -156,10 +156,10 @@ namespace Hypertable {
       remove_poll_interest(Reactor::READ_READY|Reactor::WRITE_READY);
 #elif defined(__linux__)
       struct epoll_event event;  // this is necessary for < Linux 2.6.9
-      if (epoll_ctl(m_reactor_ptr->pollFd, EPOLL_CTL_DEL, m_sd, &event) < 0) {
-	HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_DEL, %d) failed : %s",
-		     m_reactor_ptr->pollFd, m_sd, strerror(errno));
-	exit(1);
+      if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_DEL, m_sd, &event) < 0) {
+        HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_DEL, %d) failed : %s",
+                     m_reactor_ptr->poll_fd, m_sd, strerror(errno));
+        exit(1);
       }
       m_poll_interest = 0;
 #endif

@@ -31,17 +31,17 @@ namespace Hyperspace {
    * of these objects gets passed back to the application via a call to
    * Readdir()
    */
-  struct DirEntryT {
+  struct DirEntry {
     /** Directory entry name. */
     std::string name;
     /** Boolean value indicating whether or not this entry is a directory */
-    bool isDirectory;
+    bool is_dir;
   };
 
-  struct ltDirEntry {
-    bool operator()(const struct DirEntryT &de1, const struct DirEntryT &de2) const {
+  struct LtDirEntry {
+    bool operator()(const struct DirEntry &de1, const struct DirEntry &de2) const {
       if (de1.name == de2.name)
-	return (int)de1.isDirectory < (int)de2.isDirectory;
+        return (int)de1.is_dir < (int)de2.is_dir;
       return de1.name < de2.name;
     }
   };
@@ -52,23 +52,24 @@ namespace Hyperspace {
    * @param dir_entry the directory entry
    * @return the exact number of bytes required to encode dir_entry
    */
-  size_t encoded_length_dir_entry(DirEntryT &dir_entry);
+  size_t encoded_length_dir_entry(const DirEntry &dir_entry);
 
   /** Encodes (serializes) the given directory entry to a buffer.
    *
    * @param buf_ptr address of pointer to buffer to receive encoded directory entry (pointer is advanced passed the encoded entry)
    * @param dir_entry the directory entry to encode
    */
-  void encode_dir_entry(uint8_t **buf_ptr, DirEntryT &dir_entry);
+  void encode_dir_entry(uint8_t **buf_ptr, const DirEntry &dir_entry);
 
   /** Decodes (unserializes) a directory entry from a buffer
-   * 
+   *
    * @param buf_ptr address of pointer to buffer containing encoded directory entry (advanced after decode)
    * @param remaining_ptr address of count variable holding the number of bytes remaining in buffer (decremented after decode)
    * @param dir_entry the directory entry to encode
    */
-  bool decode_range_dir_entry(uint8_t **buf_ptr, size_t *remaining_ptr, DirEntryT &dir_entry);
-  
+  DirEntry &decode_dir_entry(const uint8_t **buf_ptr,
+                             size_t *remaining_ptr, DirEntry &dir_entry);
+
 }
 
 #endif // HYPERSPACE_DIRENTRY_H

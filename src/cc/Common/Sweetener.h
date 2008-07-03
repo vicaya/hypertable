@@ -17,8 +17,8 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef HYPERTABLE_SWEETNER_H
-#define HYPERTABLE_SWEETNER_H
+#ifndef HYPERTABLE_SWEETENER_H
+#define HYPERTABLE_SWEETENER_H
 
 /* Some syntactic sugars */
 
@@ -26,4 +26,4 @@
 
 #define foreach BOOST_FOREACH
 
-#endif // HYPERTABLE_SWEETNER_H
+#endif // HYPERTABLE_SWEETENER_H

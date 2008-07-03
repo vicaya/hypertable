@@ -1,48 +1,45 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
+#include "Common/Compat.h"
 #include "ApacheLogParser.h"
 
-extern "C" {
-#include <limits.h>
-#include <stdlib.h>
 #include <time.h>
-}
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 
-namespace io = boost::iostreams;
+namespace Io = boost::iostreams;
+namespace Fn = boost::algorithm;
 
 using namespace Hypertable;
-using namespace boost::iostreams;
 
 
 /**
  *
  */
 void ApacheLogParser::load(std::string filename) {
-  if (boost::algorithm::ends_with(filename, ".gz"))
-    m_fin.push(gzip_decompressor());
-  m_fin.push(file_source(filename));
+  if (Fn::ends_with(filename, ".gz"))
+    m_fin.push(Io::gzip_decompressor());
+  m_fin.push(Io::file_source(filename));
 }
 
 

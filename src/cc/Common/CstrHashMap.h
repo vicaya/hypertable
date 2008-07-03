@@ -21,19 +21,19 @@
 #define HYPERTABLE_CHARSTR_HASHMAP_H
 
 #include "HashMap.h"
-#include "CharStrHashTraits.h"
+#include "CstrHashTraits.h"
 
 namespace Hypertable {
 
 /**
  * A hash map for storing and lookup char *strings efficiently
  */
-template <typename DataT, class TraitsT = CharStrHashTraits>
-class CharStrHashMap : public hash_map<const char *, DataT, 
-                                       typename TraitsT::hasher, 
+template <typename DataT, class TraitsT = CstrHashTraits>
+class CstrHashMap : public hash_map<const char *, DataT,
+                                       typename TraitsT::hasher,
                                        typename TraitsT::key_equal> {
 private:
-  typedef hash_map<const char *, DataT, typename TraitsT::hasher, 
+  typedef hash_map<const char *, DataT, typename TraitsT::hasher,
                    typename TraitsT::key_equal> Base;
 public:
   typedef typename Base::iterator iterator;
@@ -55,18 +55,18 @@ private:
     return rv;
   }
 
-public: 
-  CharStrHashMap() {}
-  CharStrHashMap(size_t n_buckets) : Base(n_buckets) {}
-  ~CharStrHashMap() {}
+public:
+  CstrHashMap() {}
+  CstrHashMap(size_t n_buckets) : Base(n_buckets) {}
+  ~CstrHashMap() {}
 
   // hides all insert methods in base class
-  InsRet 
+  InsRet
   insert(const char *key, const DataT &data) {
     return insert_key(key, Base::insert(value_type(key, data)));
   }
 
-  InsRet 
+  InsRet
   insert_noresize(const char *key, const DataT &data) {
     return insert_key(key, Base::insert_noresize(value_type(key, data)));
   }
