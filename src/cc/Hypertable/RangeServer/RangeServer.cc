@@ -509,6 +509,9 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
   try {
     DynamicBuffer rbuf;
 
+    if (strcmp(range->start_row, range->end_row) > 0)
+      HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "start_row > end_row");
+
     if (!m_live_map_ptr->get(table->id, table_info))
       throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND, (String)"unknown table '" + table->name + "'");
 
