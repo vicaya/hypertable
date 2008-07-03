@@ -61,7 +61,6 @@ Table.cc
 TableMutator.cc
 TableMutatorDispatchHandler.cc
 TableMutatorScatterBuffer.cc
-TableRangeMap.cc
 TableScanner.cc
 TestSource.cc
 Types.cc
@@ -112,9 +111,6 @@ target_link_libraries(bmzip Hypertable ${Log4cpp_LIBRARIES})
 add_executable (commit_log_test tests/commit_log_test.cc)
 target_link_libraries (commit_log_test HyperDfsBroker Hypertable ${BOOST_LIB} ${Log4cpp_LIBRARIES} ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES})
 
-add_executable (table_range_map_test tests/rangeMapTest.cc)
-target_link_libraries (table_range_map_test Hypertable ${BOOST_LIB} log4cpp ${ZLIB_LIBRARIES} expat)
-
 add_executable (large_insert_test tests/large_insert_test.cc)
 target_link_libraries (large_insert_test HyperDfsBroker Hypertable HyperCommon ${BOOST_LIB} ${Log4cpp_LIBRARIES} ${ZLIB_LIBRARIES} ${Lzo2_LIBRARIES} ${EXPAT_LIBRARIES})
 
@@ -153,7 +149,6 @@ add_test (BlockCompressor-NONE compressor_test none)
 add_test (BlockCompressor-QUICKLZ compressor_test quicklz)
 add_test (BlockCompressor-ZLIB compressor_test zlib)
 add_test (CommitLog commit_log_test)
-add_test (TableRangeTest table_range_map_test)
 add_test (LargeInsert large_insert_test)
 
 file (GLOB HEADERS *.h)
