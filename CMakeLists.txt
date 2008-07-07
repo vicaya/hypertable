@@ -56,7 +56,7 @@ endif (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 add_definitions(-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_REENTRANT)
 
 # Uncomment the following to build dynamic libraries
-set (BUILD_SHARED_LIBS ON)
+#set (BUILD_SHARED_LIBS ON)
 
 # Locate required packages
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
@@ -127,9 +127,9 @@ add_subdirectory(src/cc/Tools/serverup)
 add_subdirectory(src/cc/DfsBroker/Lib)
 add_subdirectory(src/cc/DfsBroker/local)
 
-if (JNI_FOUND)
+if (JAVA_INCLUDE_PATH)
   add_subdirectory(contrib/cc/MapReduce)
-endif (JNI_FOUND)
+endif (JAVA_INCLUDE_PATH)
 #add_subdirectory(examples/simple_bench)
 IF (Kfs_FOUND)
    add_subdirectory(src/cc/DfsBroker/kosmos)
