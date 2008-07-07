@@ -1,15 +1,18 @@
-#include <iostream>
-#include <string>
+#include <Common/Compat.h>
 #include <Common/Error.h>
 #include <Common/System.h>
 
 #include "TableInputFormat.h"
 
 #include <Hypertable/Lib/Client.h>
-#include <Hypertable/Lib/TableRangeMap.h>
+#include "TableRangeMap.h"
 #include <Hypertable/Lib/RangeLocationInfo.h>
 
+#include <iostream>
+#include <string>
+
 using namespace Hypertable;
+using namespace Mapreduce;
 using namespace std;
 
 extern "C" JNIEXPORT jobjectArray JNICALL Java_TableInputFormat_getRangeVector
@@ -32,7 +35,7 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_TableInputFormat_getRangeVector
   jobjectArray mappings = env->NewObjectArray(vec->size()*3, stringClass, NULL);
   jstring str = NULL;
   
-  for (int k = 0; k < vec->size(); k++) {
+  for (unsigned int k = 0; k < vec->size(); k++) {
     RangeLocationInfo range(vec->at(k));
 
     string start_row = range.start_row;
