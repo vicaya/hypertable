@@ -1,4 +1,4 @@
-//package org.apache.hadoop.hypertable.mapred;
+package org.hypertable.mapreduce;
 
 import java.io.IOException;
 import java.util.Map;
@@ -17,7 +17,7 @@ import org.apache.hadoop.mapred.JobConfigurable;
 import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
 
-//import org.apache.hadoop.hypertable.mapred.TableSplit;
+import org.hypertable.mapreduce.TableSplit;
 
 public class TableInputFormat implements InputFormat<Text, MapWritable>, JobConfigurable
 {
@@ -55,16 +55,16 @@ public class TableInputFormat implements InputFormat<Text, MapWritable>, JobConf
     
     InputSplit[] splits = new InputSplit[rangeVector.length/3];
     
-    for (int i = 0; i < (rangeVector.length/3); i++) {
-      Text start = new Text(rangeVector[i*3]);
-      Text end = new Text(rangeVector[i*3+1]);
+    for (int i = 0; i < (rangeVector.length); i+=3) {
+      Text start = new Text(rangeVector[i]);
+      Text end = new Text(rangeVector[i+1]);
       
-      int u = rangeVector[i*3+2].indexOf("_");
-      Text location = new Text(rangeVector[i*3+2].substring(0,u));
+      int u = rangeVector[i+2].indexOf("_");
+      Text location = new Text(rangeVector[i+2].substring(0,u));
       
       splits[i] = new TableSplit(m_tableName, start, end, location);
     }
-    
+
     return splits;
   }
  
@@ -73,7 +73,7 @@ public class TableInputFormat implements InputFormat<Text, MapWritable>, JobConf
   }
 
   static {
-    System.loadLibrary("hypertable");
+    System.loadLibrary("MapReduce");
   }
   /**
     This JNI function returns a range vector for a
@@ -83,3 +83,4 @@ public class TableInputFormat implements InputFormat<Text, MapWritable>, JobConf
   */
   private native String[] getRangeVector(String tableName);
 }
+

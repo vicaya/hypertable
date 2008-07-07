@@ -1,11 +1,11 @@
-//package org.apache.hadoop.hypertable.mapred;
+package org.hypertable.mapreduce;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.InputSplit;
+import org.hypertable.mapreduce.InputSplit;
 
 public class TableSplit implements InputSplit {
   private Text m_tableName;

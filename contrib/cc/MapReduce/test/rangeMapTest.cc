@@ -1,9 +1,11 @@
-#include "Hypertable/Lib/TableRangeMap.h"
+#include <Common/Compat.h>
+#include "../TableRangeMap.h"
 #include <cstdio>
 #include <vector>
 
 using namespace std;
 using namespace Hypertable;
+using namespace Mapreduce;
 
 int main(int argc, char *argv[])
 {
