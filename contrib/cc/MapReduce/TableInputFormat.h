@@ -2,6 +2,7 @@
 #include <jni.h>
 /* Header for class TableInputFormat */
 
+namespace Mapreduce {
 #ifndef _Included_TableInputFormat
 #define _Included_TableInputFormat
 #ifdef __cplusplus
@@ -19,3 +20,5 @@ JNIEXPORT jobjectArray JNICALL Java_TableInputFormat_getRangeVector
 }
 #endif
 #endif
+}
+

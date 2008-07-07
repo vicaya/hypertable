@@ -15,46 +15,50 @@ using namespace Hypertable;
 using namespace Mapreduce;
 using namespace std;
 
-extern "C" JNIEXPORT jobjectArray JNICALL Java_TableInputFormat_getRangeVector
-  (JNIEnv *env, jobject, jstring jtableName)
-{
-  string tableName;
-  
-  const char *raw_name = env->GetStringUTFChars(const_cast<jstring>(jtableName), NULL);
-  tableName = raw_name;
-  env->ReleaseStringUTFChars(jtableName, raw_name);
-  
-  TableRangeMap map(tableName);
-  
-  vector<RangeLocationInfo> *vec;
-  vector<RangeLocationInfo>::iterator it;
-  
-  vec = map.getMap();
-  
-  jclass stringClass = env->FindClass("Ljava/lang/String;");
-  jobjectArray mappings = env->NewObjectArray(vec->size()*3, stringClass, NULL);
-  jstring str = NULL;
-  
-  for (unsigned int k = 0; k < vec->size(); k++) {
-    RangeLocationInfo range(vec->at(k));
+namespace Mapreduce {
 
-    string start_row = range.start_row;
-    string end_row = range.end_row;
-    string location = range.location;
+  extern "C" JNIEXPORT jobjectArray JNICALL Java_TableInputFormat_getRangeVector
+    (JNIEnv *env, jobject, jstring jtableName)
+    {
+      string tableName;
 
-    str = env->NewStringUTF(start_row.c_str());
-    env->SetObjectArrayElement(mappings, k*3, str);
-    env->DeleteLocalRef(str);
-    
-    str = env->NewStringUTF(end_row.c_str());
-    env->SetObjectArrayElement(mappings, k*3+1, str);
-    env->DeleteLocalRef(str);
-    
-    str = env->NewStringUTF(location.c_str());
-    env->SetObjectArrayElement(mappings, k*3+2, str);
-    env->DeleteLocalRef(str);
-  }
+      const char *raw_name = env->GetStringUTFChars(const_cast<jstring>(jtableName), NULL);
+      tableName = raw_name;
+      env->ReleaseStringUTFChars(jtableName, raw_name);
 
-  delete vec;  
-  return mappings;
+      TableRangeMap map(tableName);
+
+      vector<RangeLocationInfo> *vec;
+      vector<RangeLocationInfo>::iterator it;
+
+      vec = map.getMap();
+
+      jclass stringClass = env->FindClass("Ljava/lang/String;");
+      jobjectArray mappings = env->NewObjectArray(vec->size()*3, stringClass, NULL);
+      jstring str = NULL;
+
+      for (unsigned int k = 0; k < vec->size(); k++) {
+        RangeLocationInfo range(vec->at(k));
+
+        string start_row = range.start_row;
+        string end_row = range.end_row;
+        string location = range.location;
+
+        str = env->NewStringUTF(start_row.c_str());
+        env->SetObjectArrayElement(mappings, k*3, str);
+        env->DeleteLocalRef(str);
+
+        str = env->NewStringUTF(end_row.c_str());
+        env->SetObjectArrayElement(mappings, k*3+1, str);
+        env->DeleteLocalRef(str);
+
+        str = env->NewStringUTF(location.c_str());
+        env->SetObjectArrayElement(mappings, k*3+2, str);
+        env->DeleteLocalRef(str);
+      }
+
+      delete vec;  
+      return mappings;
+    }
 }
+

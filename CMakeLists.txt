@@ -73,6 +73,12 @@ find_package(BerkeleyDB REQUIRED)
 find_package(Readline REQUIRED)
 find_package(JNI REQUIRED)
 
+if (HADOOP_INCLUDE_PATH)
+  message(STATUS "Hadoop includes located at: ${HADOOP_INCLUDE_PATH}")
+else (HADOOP_INCLUDE_PATH)
+  message(STATUS "Please set HADOOP_INCLUDE_PATH variable")
+endif(HADOOP_INCLUDE_PATH)
+
 if (JAVA_INCLUDE_PATH)
   message (STATUS "JNI at: ${JAVA_INCLUDE_PATH}")
 else (JAVA_INCLUDE_PATH)
