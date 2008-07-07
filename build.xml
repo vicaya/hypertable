@@ -9,6 +9,9 @@
 
   <property name="src.dir" value="${basedir}/src/java"/>
   <property name="lib.dir" value="${basedir}/lib"/>
+  
+  <property name="contrib.dir" value="${basedir}/contrib"/>
+  <property name="mapred.src" value="${contrib.dir}/java/MapReduce/"/>
 
   <property name="build.dir" value="${basedir}/build"/>
   <property name="build.classes" value="${build.dir}/classes"/>
@@ -46,6 +49,9 @@
 	<javac srcdir="${src.dir}" destdir="${build.classes}" debug="true">
 	  <classpath refid="project.classpath"/>
 	</javac>
+        <javac srcdir="${mapred.src}" destdir="${build.classes}" debug="true">
+          <classpath refid="project.classpath"/>
+        </javac>
   </target>
 
   <!-- ================================================================== -->

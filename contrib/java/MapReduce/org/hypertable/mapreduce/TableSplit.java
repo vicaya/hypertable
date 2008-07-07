@@ -5,7 +5,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 import org.apache.hadoop.io.Text;
-import org.hypertable.mapreduce.InputSplit;
+import org.apache.hadoop.mapred.InputSplit;
 
 public class TableSplit implements InputSplit {
   private Text m_tableName;
