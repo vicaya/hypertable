@@ -73,7 +73,7 @@ public class TableInputFormat implements InputFormat<Text, MapWritable>, JobConf
   }
 
   static {
-    System.loadLibrary("MapReduce");
+    System.loadLibrary("MapReduceJNI");
   }
   /**
     This JNI function returns a range vector for a

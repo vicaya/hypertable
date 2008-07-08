@@ -5,7 +5,7 @@ namespace Mapreduce
 {
   TableRangeMap::TableRangeMap(std::string TableName)
   {
-    m_client = new Client("mapreduce", "conf/hypertable.cfg");
+    m_client = new Client("HT_RangeMapInfo");
 
     m_user_table = m_client->open_table(TableName);
     m_meta_table = m_client->open_table("METADATA");

@@ -7,7 +7,7 @@ TableReader::TableReader(HadoopPipes::MapContext& context)
   std::string tableName = job->get("hypertable.table.name");
   bool allColumns = job->getBoolean("hypertable.table.columns.all");
 
-  m_client = new Client("MR", "conf/hypertable.cfg");
+  m_client = new Client("HT_Reader");
 
   m_table = m_client->open_table(tableName);
 
