@@ -55,3 +55,4 @@ int main(int argc, char *argv[]) {
                               TableReduce, void, void, Mapreduce::TableReader,
                               TableWriter>());
 }
+
