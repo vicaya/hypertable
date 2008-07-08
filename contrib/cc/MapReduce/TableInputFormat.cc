@@ -17,7 +17,7 @@ using namespace std;
 
 namespace Mapreduce {
 
-  extern "C" JNIEXPORT jobjectArray JNICALL Java_TableInputFormat_getRangeVector
+  extern "C" JNIEXPORT jobjectArray JNICALL Java_org_hypertable_mapreduce_TableInputFormat_getRangeVector
     (JNIEnv *env, jobject, jstring jtableName)
     {
       string tableName;

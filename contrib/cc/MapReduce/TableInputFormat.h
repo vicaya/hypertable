@@ -12,7 +12,7 @@ extern "C" {
  * Method:    getRangeVector
  * Signature: (Ljava/lang/String;)[Ljava/lang/String;
  */
-JNIEXPORT jobjectArray JNICALL Java_TableInputFormat_getRangeVector
+JNIEXPORT jobjectArray JNICALL Java_org_hypertable_mapreduce_TableInputFormat_getRangeVector
   (JNIEnv *, jobject, jstring);
 
 #ifdef __cplusplus
