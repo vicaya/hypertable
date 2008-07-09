@@ -44,7 +44,7 @@ namespace Hypertable {
   public:
     OpenFileDataKosmos(int _fd, int _flags) : fd(_fd), flags(_flags) { return; }
     virtual ~OpenFileDataKosmos() {
-      KFS::KfsClient *clnt = KFS::KfsClient::Instance();
+      KFS::KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();
       clnt->Close(fd);
     }
     int  fd;

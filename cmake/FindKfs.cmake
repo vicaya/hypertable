@@ -15,12 +15,13 @@ find_path(Kfs_INCLUDE_DIR kfs/KfsClient.h
   /opt/kfs/include
   /opt/local/include
   /usr/local/include
+  $ENV{HOME}/src/kosmosfs/build/include
 )
 
 set(Kfs_NAMES kfsClient)
 find_library(Kfs_LIBRARY
   NAMES ${Kfs_NAMES}
-  PATHS /opt/kfs/lib /opt/local/lib /usr/local/lib
+  PATHS /opt/kfs/lib /opt/local/lib /usr/local/lib $ENV{HOME}/src/kosmosfs/build/lib/static
 )
 
 if (Kfs_INCLUDE_DIR AND Kfs_LIBRARY)
