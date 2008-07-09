@@ -18,19 +18,24 @@ import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
 
 import org.hypertable.mapreduce.TableSplit;
+import org.apache.hadoop.conf.Configuration;
 
 public class TableInputFormat implements InputFormat<Text, MapWritable>, JobConfigurable
 {
-  
   private Text m_tableName;
+  private String m_configPath;
 
   public TableInputFormat() {
+    Configuration conf = new Configuration();
+    m_configPath = conf.get("hypertable.config.path",
+        "/opt/hypertable/0.9.0.7/conf/hypertable.cfg");
   }
 
   public void configure(JobConf job)
   {
     Path[] tableNames = job.getInputPaths();
     m_tableName = new Text(tableNames[0].getName());
+    job.set("hypertable.config.path", m_configPath);
   }
   
   class DummyRecordReader implements RecordReader<Text, MapWritable> {
@@ -48,7 +53,7 @@ public class TableInputFormat implements InputFormat<Text, MapWritable>, JobConf
   }
   
   public InputSplit[] getSplits(JobConf job, int numSplits) throws IOException {
-    String[] rangeVector = getRangeVector(m_tableName.toString());
+    String[] rangeVector = getRangeVector(m_tableName.toString(), m_configPath);
     if (rangeVector == null || rangeVector.length == 0) {
       throw new IOException("No input split could be created.");
     }
@@ -81,6 +86,6 @@ public class TableInputFormat implements InputFormat<Text, MapWritable>, JobConf
     odd field is a starting row and the next consecutive
     even field is an ending row.
   */
-  private native String[] getRangeVector(String tableName);
+  private native String[] getRangeVector(String tableName, String configPath);
 }
 

@@ -1,13 +1,15 @@
 #include "TableReader.h"
+#include <iostream>
 
 namespace Mapreduce {
 TableReader::TableReader(HadoopPipes::MapContext& context)
 {    
   const HadoopPipes::JobConf *job = context.getJobConf();
   std::string tableName = job->get("hypertable.table.name");
+  std::string configPath = job->get("hypertable.config.path");
   bool allColumns = job->getBoolean("hypertable.table.columns.all");
 
-  m_client = new Client("HT_Reader");
+  m_client = new Client("HT_Reader", configPath);
 
   m_table = m_client->open_table(tableName);
 
@@ -58,6 +60,8 @@ bool TableReader::next(std::string& key, std::string& value) {
     s[cell.value_len] = 0;
     value = s;
     delete s;
+
+    std::cout << key << ":" << value << std::endl;
     return true;
   } else {
     return false;

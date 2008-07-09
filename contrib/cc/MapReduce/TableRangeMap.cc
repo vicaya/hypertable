@@ -3,9 +3,10 @@
 
 namespace Mapreduce
 {
-  TableRangeMap::TableRangeMap(std::string TableName)
+  TableRangeMap::TableRangeMap(const std::string& TableName,
+      const std::string& ConfigPath)
   {
-    m_client = new Client("HT_RangeMapInfo");
+    m_client = new Client("HT_RangeMapInfo", ConfigPath);
 
     m_user_table = m_client->open_table(TableName);
     m_meta_table = m_client->open_table("METADATA");

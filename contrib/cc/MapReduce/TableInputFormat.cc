@@ -17,16 +17,23 @@ using namespace std;
 
 namespace Mapreduce {
 
-  extern "C" JNIEXPORT jobjectArray JNICALL Java_org_hypertable_mapreduce_TableInputFormat_getRangeVector
-    (JNIEnv *env, jobject, jstring jtableName)
+  extern "C" JNIEXPORT jobjectArray JNICALL 
+    Java_org_hypertable_mapreduce_TableInputFormat_getRangeVector
+    (JNIEnv *env, jobject, jstring jtableName, jstring jconfigPath)
     {
       string tableName;
+      string configPath;
+
+      const char *raw_config_path = 
+        env->GetStringUTFChars(const_cast<jstring>(jconfigPath), NULL);
+      configPath = raw_config_path;
+      env->ReleaseStringUTFChars(jconfigPath, raw_config_path);
 
       const char *raw_name = env->GetStringUTFChars(const_cast<jstring>(jtableName), NULL);
       tableName = raw_name;
       env->ReleaseStringUTFChars(jtableName, raw_name);
 
-      TableRangeMap map(tableName);
+      TableRangeMap map(tableName, configPath);
 
       vector<RangeLocationInfo> *vec;
       vector<RangeLocationInfo>::iterator it;

@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
     return -1;
 
   try {
-    TableRangeMap meta_range_map(argv[1]);
+    TableRangeMap meta_range_map(argv[1], "/opt/hypertable/0.9.0.7/conf/hypertable.cfg");
     std::vector<RangeLocationInfo> *rangemap;
     cout << "Getting map..." << endl;
     rangemap = meta_range_map.getMap();
