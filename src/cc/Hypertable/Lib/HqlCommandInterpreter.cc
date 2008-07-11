@@ -53,12 +53,16 @@ namespace {
     std::vector<std::pair<Cell, int> > failed_mutations;
 
     mutator->get_failed(failed_mutations);
+
     if (!failed_mutations.empty()) {
       for (size_t i=0; i<failed_mutations.size(); i++) {
         cout << "Failed: (" << failed_mutations[i].first.row_key << ","
              << failed_mutations[i].first.column_family;
-        if (failed_mutations[i].first.column_qualifier && *(failed_mutations[i].first.column_qualifier))
+
+        if (failed_mutations[i].first.column_qualifier &&
+            *(failed_mutations[i].first.column_qualifier))
           cout << ":" << failed_mutations[i].first.column_qualifier;
+
         cout << "," << failed_mutations[i].first.timestamp << ") - "
              << Error::get_text(failed_mutations[i].second) << endl;
       }
@@ -73,8 +77,8 @@ namespace {
 /**
  *
  */
-HqlCommandInterpreter::HqlCommandInterpreter(Client *client) : m_client(client) {
-  return;
+HqlCommandInterpreter::HqlCommandInterpreter(Client *client)
+    : m_client(client) {
 }
 
 
@@ -82,8 +86,8 @@ HqlCommandInterpreter::HqlCommandInterpreter(Client *client) : m_client(client) 
  *
  */
 void HqlCommandInterpreter::execute_line(const String &line) {
-  std::string schema_str;
-  std::string out_str;
+  String schema_str;
+  String out_str;
   hql_interpreter_state state;
   hql_interpreter interp(state);
   parse_info<> info;
@@ -95,14 +99,17 @@ void HqlCommandInterpreter::execute_line(const String &line) {
 
     if (state.command == COMMAND_SHOW_CREATE_TABLE) {
       schema_str = m_client->get_schema(state.table_name);
-      schema = Schema::new_instance(schema_str.c_str(), strlen(schema_str.c_str()), true);
+      schema = Schema::new_instance(schema_str.c_str(),
+                                    schema_str.length(), true);
       if (!schema->is_valid())
         HT_THROW(Error::BAD_SCHEMA, schema->get_error_string());
+
       schema->render_hql_create_table(state.table_name, out_str);
       cout << out_str << flush;
     }
     else if (state.command == COMMAND_HELP) {
       const char **text = HqlHelpText::Get(state.str);
+
       if (text) {
         for (size_t i=0; text[i]; i++)
           cout << text[i] << endl;
@@ -113,23 +120,26 @@ void HqlCommandInterpreter::execute_line(const String &line) {
     else if (state.command == COMMAND_CREATE_TABLE) {
       schema = new Schema();
       schema->set_compressor(state.table_compressor);
-      for (Schema::AccessGroupMap::const_iterator ag_iter = state.ag_map.begin(); ag_iter != state.ag_map.end(); ag_iter++)
-        schema->add_access_group((*ag_iter).second);
+
+      foreach(const Schema::AccessGroupMap::value_type &v, state.ag_map)
+        schema->add_access_group(v.second);
+
       if (state.ag_map.find("default") == state.ag_map.end()) {
         Schema::AccessGroup *ag = new Schema::AccessGroup();
         ag->name = "default";
         schema->add_access_group(ag);
       }
-      for (Schema::ColumnFamilyMap::const_iterator cf_iter = state.cf_map.begin(); cf_iter != state.cf_map.end(); cf_iter++) {
-        if ((*cf_iter).second->ag == "")
-          (*cf_iter).second->ag = "default";
-        schema->add_column_family((*cf_iter).second);
+      foreach(const Schema::ColumnFamilyMap::value_type &v, state.cf_map) {
+        if (v.second->ag == "")
+          v.second->ag = "default";
+        schema->add_column_family(v.second);
       }
       const char *error_str = schema->get_error_string();
+
       if (error_str)
         HT_THROW(Error::HQL_PARSE_ERROR, error_str);
-      schema->render(schema_str);
 
+      schema->render(schema_str);
       m_client->create_table(state.table_name, schema_str.c_str());
 
     }
@@ -158,9 +168,11 @@ void HqlCommandInterpreter::execute_line(const String &line) {
         scan_spec.row_limit = 1;
       }
       else {
-        scan_spec.start_row = (state.scan.start_row == "") ? 0 : state.scan.start_row.c_str();
+        scan_spec.start_row = (state.scan.start_row == "") ? 0
+            : state.scan.start_row.c_str();
         scan_spec.start_row_inclusive = state.scan.start_row_inclusive;
-        scan_spec.end_row = (state.scan.end_row == "") ? Key::END_ROW_MARKER : state.scan.end_row.c_str();
+        scan_spec.end_row = (state.scan.end_row == "") ? Key::END_ROW_MARKER
+            : state.scan.end_row.c_str();
         scan_spec.end_row_inclusive = state.scan.end_row_inclusive;
       }
       scan_spec.interval.first  = state.scan.start_time;
@@ -180,7 +192,9 @@ void HqlCommandInterpreter::execute_line(const String &line) {
             nsec = cell.timestamp % 1000000000LL;
             unix_time = cell.timestamp / 1000000000LL;
             gmtime_r(&unix_time, &tms);
-            printf("%d-%02d-%02d %02d:%02d:%02d.%09d\t", tms.tm_year+1900, tms.tm_mon+1, tms.tm_mday, tms.tm_hour, tms.tm_min, tms.tm_sec, nsec);
+            printf("%d-%02d-%02d %02d:%02d:%02d.%09d\t", tms.tm_year+1900,
+                   tms.tm_mon+1, tms.tm_mday, tms.tm_hour, tms.tm_min,
+                   tms.tm_sec, nsec);
           }
         }
         if (!state.scan.keys_only) {
@@ -192,9 +206,11 @@ void HqlCommandInterpreter::execute_line(const String &line) {
           else
             printf("%s", cell.row_key);
           if (cell.flag != FLAG_INSERT)
-            printf("\t%s\tDELETE\n", std::string((const char *)cell.value, cell.value_len).c_str());
+            printf("\t%s\tDELETE\n", String((const char *)cell.value,
+                                            cell.value_len).c_str());
           else
-            printf("\t%s\n", std::string((const char *)cell.value, cell.value_len).c_str());
+            printf("\t%s\n", String((const char *)cell.value,
+                                     cell.value_len).c_str());
         }
         else
           printf("%s\n", cell.row_key);
@@ -220,7 +236,8 @@ void HqlCommandInterpreter::execute_line(const String &line) {
 
       if (state.table_name == "") {
         if (state.output_file == "")
-          HT_THROW(Error::HQL_PARSE_ERROR, "LOAD DATA INFILE ... INTO FILE - bad filename");
+          HT_THROW(Error::HQL_PARSE_ERROR,
+                   "LOAD DATA INFILE ... INTO FILE - bad filename");
         outfp = fopen(state.output_file.c_str(), "w");
         into_table = false;
       }
@@ -264,8 +281,9 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       if (!m_silent && !m_test_mode)
 	show_progress = new boost::progress_display(file_size);
 
-      auto_ptr<LoadDataSource> lds(new LoadDataSource(state.input_file, state.header_file, state.key_columns,
-						      state.timestamp_column, state.row_uniquify_chars));
+      auto_ptr<LoadDataSource> lds(new LoadDataSource(state.input_file,
+          state.header_file, state.key_columns, state.timestamp_column,
+          state.row_uniquify_chars, state.dupkeycols));
 
       if (!into_table) {
         display_timestamps = lds->has_timestamps();
@@ -292,9 +310,12 @@ void HqlCommandInterpreter::execute_line(const String &line) {
           }
           else {
             if (display_timestamps)
-              fprintf(outfp, "%llu\t%s\t%s\t%s\n", (long long unsigned int)timestamp, (const char *)key.row, key.column_family, (const char *)value);
+              fprintf(outfp, "%llu\t%s\t%s\t%s\n", (Llu)timestamp,
+                      (const char *)key.row, key.column_family,
+                      (const char *)value);
             else
-              fprintf(outfp, "%s\t%s\t%s\n", (const char *)key.row, key.column_family, (const char *)value);
+              fprintf(outfp, "%s\t%s\t%s\n", (const char *)key.row,
+                      key.column_family, (const char *)value);
           }
         }
 	if (!m_silent && !m_test_mode)
@@ -326,28 +347,27 @@ void HqlCommandInterpreter::execute_line(const String &line) {
 	printf("Load complete.\n");
 	printf("\n");
 	printf("  Elapsed time:  %.2f s\n", stopwatch.elapsed());
-	printf("Avg value size:  %.2f bytes\n", (double)total_values_size / insert_count);
-	printf("  Avg key size:  %.2f bytes\n", (double)total_rowkey_size / insert_count);
-	printf("    Throughput:  %.2f bytes/s\n", (double)file_size / stopwatch.elapsed());
-	printf(" Total inserts:  %llu\n", (long long unsigned int)insert_count);
-	printf("    Throughput:  %.2f inserts/s\n", (double)insert_count / stopwatch.elapsed());
+	printf("Avg value size:  %.2f bytes\n",
+               (double)total_values_size / insert_count);
+	printf("  Avg key size:  %.2f bytes\n",
+               (double)total_rowkey_size / insert_count);
+	printf("    Throughput:  %.2f bytes/s\n",
+               (double)file_size / stopwatch.elapsed());
+	printf(" Total inserts:  %llu\n", (Llu)insert_count);
+	printf("    Throughput:  %.2f inserts/s\n",
+               (double)insert_count / stopwatch.elapsed());
 	if (mutator_ptr)
-	  printf("       Resends:  %llu\n", (long long unsigned int)mutator_ptr->get_resend_count());
+	  printf("       Resends:  %llu\n",
+                 (Llu)mutator_ptr->get_resend_count());
 	printf("\n");
       }
-
-      /*
-      printf("Load complete (%.2fs elapsed_time, %.2f bytes/s, %.2f inserts/s)\n",
-             elapsed_time, (double)file_size / elapsed_time, (double)insert_count / elapsed_time);
-      */
-
     }
     else if (state.command == COMMAND_INSERT) {
       TablePtr table_ptr;
       TableMutatorPtr mutator_ptr;
       KeySpec key;
       char *column_qualifier;
-      std::string tmp_str;
+      String tmp_str;
 
       table_ptr = m_client->open_table(state.table_name);
 
@@ -357,7 +377,8 @@ void HqlCommandInterpreter::execute_line(const String &line) {
         key.row = state.inserts[i].row_key.c_str();
         key.row_len = state.inserts[i].row_key.length();
         key.column_family = state.inserts[i].column_key.c_str();
-        if ((column_qualifier = strchr(state.inserts[i].column_key.c_str(), ':')) != 0) {
+        if ((column_qualifier = strchr(state.inserts[i].column_key.c_str(), ':')
+            ) != 0) {
           *column_qualifier++ = 0;
           key.column_qualifier = column_qualifier;
           key.column_qualifier_len = strlen(column_qualifier);
@@ -367,7 +388,9 @@ void HqlCommandInterpreter::execute_line(const String &line) {
           key.column_qualifier_len = 0;
         }
         try {
-          mutator_ptr->set(state.inserts[i].timestamp, key, (uint8_t *)state.inserts[i].value.c_str(), (uint32_t)state.inserts[i].value.length());
+          mutator_ptr->set(state.inserts[i].timestamp, key,
+                           (uint8_t *)state.inserts[i].value.c_str(),
+                           (uint32_t)state.inserts[i].value.length());
         }
         catch (Hypertable::Exception &e) {
           display_mutation_errors(e.code(), mutator_ptr.get());
@@ -386,7 +409,7 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       TableMutatorPtr mutator_ptr;
       KeySpec key;
       char *column_qualifier;
-      std::string tmp_str;
+      String tmp_str;
 
       table_ptr = m_client->open_table(state.table_name);
 
@@ -411,7 +434,8 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       else {
         for (size_t i=0; i<state.delete_columns.size(); i++) {
           key.column_family = state.delete_columns[i].c_str();
-          if ((column_qualifier = strchr(state.delete_columns[i].c_str(), ':')) != 0) {
+          if ((column_qualifier = strchr(state.delete_columns[i].c_str(), ':'))
+              != 0) {
             *column_qualifier++ = 0;
             key.column_qualifier = column_qualifier;
             key.column_qualifier_len = strlen(column_qualifier);
@@ -436,7 +460,7 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       }
     }
     else if (state.command == COMMAND_SHOW_TABLES) {
-      std::vector<std::string> tables;
+      std::vector<String> tables;
       m_client->get_tables(tables);
       if (tables.empty())
         cout << "Empty set" << endl;
@@ -449,9 +473,9 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       m_client->drop_table(state.table_name, state.if_exists);
     }
     else
-      HT_THROW(Error::HQL_PARSE_ERROR, std::string("unsupported command: ") + line);
+      HT_THROW(Error::HQL_PARSE_ERROR, String("unsupported command: ") + line);
   }
   else
-    HT_THROW(Error::HQL_PARSE_ERROR, std::string("parse error at: ") + info.stop);
-  
+    HT_THROW(Error::HQL_PARSE_ERROR, String("parse error at: ") + info.stop);
+
 }

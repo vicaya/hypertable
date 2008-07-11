@@ -51,11 +51,32 @@ using namespace boost::iostreams;
 using namespace Hypertable;
 using namespace std;
 
+namespace {
+
+  enum TypeMask {
+    ROW_KEY =           (1 << 0),
+    TIMESTAMP =         (1 << 1)
+  };
+
+  inline bool should_skip(int idx, const uint32_t *masks, bool dupkeycols) {
+    uint32_t bm = masks[idx];
+    return bm && ((bm & TIMESTAMP) || !(dupkeycols && (bm & ROW_KEY)));
+  }
+
+} // local namespace
+
 /**
  *
  */
-LoadDataSource::LoadDataSource(String fname, String header_fname, std::vector<String> &key_columns, String timestamp_column, int row_uniquify_chars) : m_go_mask(0), m_source(fname), m_cur_line(0), m_line_buffer(0), m_row_key_buffer(0), m_hyperformat(false), m_leading_timestamps(false), m_timestamp_index(-1), m_timestamp(0), m_offset(0), m_zipped(false), m_rsgen(0), m_row_uniquify_chars(row_uniquify_chars) {
-  string line, column_name;
+LoadDataSource::LoadDataSource(const String &fname, const String &header_fname,
+    const std::vector<String> &key_columns, const String &timestamp_column,
+    int row_uniquify_chars, bool dupkeycols)
+    : m_type_mask(0), m_source(fname), m_cur_line(0), m_line_buffer(0),
+      m_row_key_buffer(0), m_hyperformat(false), m_leading_timestamps(false),
+      m_timestamp_index(-1), m_timestamp(0), m_offset(0), m_zipped(false),
+      m_rsgen(0), m_row_uniquify_chars(row_uniquify_chars),
+      m_dupkeycols(dupkeycols) {
+  String line, column_name;
   char *base, *ptr;
   int index = 0;
   KeyComponentInfo key_comps;
@@ -81,8 +102,9 @@ LoadDataSource::LoadDataSource(String fname, String header_fname, std::vector<St
       return;
   }
 
-  m_go_mask = new bool [257];
-  memset(m_go_mask, true, 257*sizeof(bool));
+  // Assuming max column size of 256
+  m_type_mask = new uint32_t [257];
+  memset(m_type_mask, 0, 257*sizeof(uint32_t));
 
   base = (char *)line.c_str();
   if (*base == '#') {
@@ -96,7 +118,7 @@ LoadDataSource::LoadDataSource(String fname, String header_fname, std::vector<St
     column_name = String(base);
     if (timestamp_column != "" && timestamp_column == column_name) {
       m_timestamp_index = index;
-      m_go_mask[index] = false;
+      m_type_mask[index] |= TIMESTAMP;
     }
     base = ptr;
     index++;
@@ -148,12 +170,13 @@ LoadDataSource::LoadDataSource(String fname, String header_fname, std::vector<St
       if (m_column_names[j] == column_name) {
         key_comps.index = j;
         m_key_comps.push_back(key_comps);
-        m_go_mask[j] = false;
+        m_type_mask[j] |= ROW_KEY;
         break;
       }
     }
     if (j == m_column_names.size()) {
-      cout << "ERROR: key column '" << column_name << "' not found in input file" << endl;
+      cout << "ERROR: key column '" << column_name
+           << "' not found in input file" << endl;
       exit(1);
     }
   }
@@ -161,7 +184,7 @@ LoadDataSource::LoadDataSource(String fname, String header_fname, std::vector<St
   if (m_key_comps.empty()) {
     key_comps.clear();
     m_key_comps.push_back(key_comps);
-    m_go_mask[0] = false;
+    m_type_mask[0] |= ROW_KEY;
   }
 
   if (m_column_names.size() == 3 || m_column_names.size() == 4) {
@@ -180,7 +203,8 @@ LoadDataSource::LoadDataSource(String fname, String header_fname, std::vector<St
   m_limit = 0;
 
   if (!m_hyperformat && m_column_names.size() < 2)
-    HT_THROW(Error::HQL_BAD_LOAD_FILE_FORMAT, "No columns specified in load file");
+    HT_THROW(Error::HQL_BAD_LOAD_FILE_FORMAT,
+             "No columns specified in load file");
 
   m_cur_line = 1;
 
@@ -191,8 +215,10 @@ LoadDataSource::LoadDataSource(String fname, String header_fname, std::vector<St
 /**
  *
  */
-bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp) {
-  string line;
+bool
+LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp,
+    uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp) {
+  String line;
   int index;
   char *base, *ptr, *colon, *endptr;
 
@@ -227,7 +253,8 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
         *ptr++ = 0;
         *timestampp = strtoll(base, &endptr, 10);
         if (*endptr != 0) {
-          cerr << "error: invalid timestamp (" << base << ") on line " << m_cur_line << endl;
+          cerr << "error: invalid timestamp (" << base << ") on line "
+               << m_cur_line << endl;
           continue;
         }
         base = ptr;
@@ -302,11 +329,13 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
     }
   }
   else {
-
-    while (!m_go_mask[m_next_value])
+    // skip timestamp and rowkey (if needed)
+    while (m_next_value < m_limit &&
+           should_skip(m_next_value, m_type_mask, m_dupkeycols))
       m_next_value++;
 
-    if (m_next_value > 0 && m_next_value < (size_t)m_limit) {
+    // get from parsed cells if available
+    if (m_next_value > 0 && m_next_value < m_limit) {
       keyp->row = m_row_key_buffer.base;
       keyp->row_len = m_row_key_buffer.fill();
       keyp->column_family = m_column_names[m_next_value].c_str();
@@ -354,15 +383,19 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
 
       while ((ptr = strchr(base, '\t')) != 0) {
         *ptr++ = 0;
-        if (strlen(base) == 0 || !strcmp(base, "NULL") || !strcmp(base, "\\N")) {
-          if (!m_go_mask[index]) {
-            cout << "WARNING: Required key or timestamp field not found on line " << m_cur_line << ", skipping ..." << endl << flush;
+
+        if (strlen(base) == 0 || !strcmp(base, "NULL") ||
+            !strcmp(base, "\\N")) {
+          if (m_type_mask[index]) {
+            cout << "WARNING: Required key or timestamp field not found "
+                "on line " << m_cur_line << ", skipping ..." << endl << flush;
             continue;
           }
           m_values.push_back(0);
         }
         else
           m_values.push_back(base);
+
         base = ptr;
         index++;
       }
@@ -370,6 +403,7 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
         m_values.push_back(0);
       else
         m_values.push_back(base);
+
       m_limit = std::min(m_values.size(), m_column_names.size());
 
       /**
@@ -378,6 +412,7 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
       m_row_key_buffer.clear();
       if (!add_row_component(0))
         continue;
+
       size_t i;
       for (i=1; i<m_key_comps.size(); i++) {
         m_row_key_buffer.add(" ", 1);
@@ -385,7 +420,8 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
           break;
       }
       if (i<m_key_comps.size())
-        continue;
+        continue;       // rowkey not found. warning in add_row_component.
+
       m_row_key_buffer.ensure(1);
       *m_row_key_buffer.ptr = 0;
 
@@ -394,17 +430,20 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
         time_t t;
 
         if (m_values.size() <= (size_t)m_timestamp_index) {
-          cerr << "warn: timestamp field not found on line " << m_cur_line << ", skipping..." << endl;
+          cerr << "warn: timestamp field not found on line " << m_cur_line
+               << ", skipping..." << endl;
           continue;
         }
 
         if (!parse_date_format(m_values[m_timestamp_index], &tm)) {
-          cerr << "warn: invalid timestamp format on line " << m_cur_line << ", skipping..." << endl;
+          cerr << "warn: invalid timestamp format on line " << m_cur_line
+               << ", skipping..." << endl;
           continue;
         }
 
         if ((t = timegm(&tm)) == (time_t)-1) {
-          cerr << "warn: invalid timestamp format on line " << m_cur_line << ", skipping..." << endl;
+          cerr << "warn: invalid timestamp format on line " << m_cur_line
+               << ", skipping..." << endl;
           continue;
         }
 
@@ -412,7 +451,7 @@ bool LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *k
       }
 
       m_next_value = 0;
-      while (!m_go_mask[m_next_value])
+      while (should_skip(m_next_value, m_type_mask, m_dupkeycols))
         m_next_value++;
 
       if (m_rsgen) {
@@ -465,7 +504,8 @@ bool LoadDataSource::add_row_component(int index) {
   size_t value_len = strlen(value);
 
   if ((size_t)m_key_comps[index].index >= m_values.size() || value == 0) {
-    cout << "WARNING: Required key field not found on line " << m_cur_line << ", skipping ..." << endl << flush;
+    cout << "WARNING: Required key field not found on line " << m_cur_line
+         << ", skipping ..." << endl << flush;
     return false;
   }
 
@@ -500,28 +540,31 @@ bool LoadDataSource::parse_date_format(const char *str, struct tm *tm) {
   /**
    * year
    */
-  if ((ival = strtol(ptr, &end_ptr, 10)) == 0 || (end_ptr - ptr) != 4 || *end_ptr != '-')
+  if ((ival = strtol(ptr, &end_ptr, 10)) == 0 || (end_ptr - ptr) != 4 ||
+      *end_ptr != '-')
     return false;
-  tm->tm_year = ival - 1900;
 
+  tm->tm_year = ival - 1900;
   ptr = end_ptr + 1;
 
   /**
    * month
    */
-  if ((ival = strtol(ptr, &end_ptr, 10)) == 0 || (end_ptr - ptr) != 2 || *end_ptr != '-')
+  if ((ival = strtol(ptr, &end_ptr, 10)) == 0 || (end_ptr - ptr) != 2 ||
+      *end_ptr != '-')
     return false;
-  tm->tm_mon = ival - 1;
 
+  tm->tm_mon = ival - 1;
   ptr = end_ptr + 1;
 
   /**
    * day
    */
-  if ((ival = strtol(ptr, &end_ptr, 10)) == 0 || (end_ptr - ptr) != 2 || *end_ptr != ' ')
+  if ((ival = strtol(ptr, &end_ptr, 10)) == 0 || (end_ptr - ptr) != 2 ||
+      *end_ptr != ' ')
     return false;
-  tm->tm_mday = ival;
 
+  tm->tm_mday = ival;
   ptr = end_ptr + 1;
 
   /**

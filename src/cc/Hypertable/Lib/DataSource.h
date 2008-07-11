@@ -30,7 +30,9 @@ namespace Hypertable {
   class DataSource {
   public:
     virtual ~DataSource() { return; }
-    virtual bool next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp);
+    virtual bool next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp,
+                      uint8_t **valuep, uint32_t *value_lenp,
+                      uint32_t *consumedp);
   };
 
 }
