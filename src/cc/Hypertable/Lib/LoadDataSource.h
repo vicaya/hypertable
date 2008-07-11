@@ -43,16 +43,26 @@ namespace Hypertable {
   class LoadDataSource {
 
   public:
-    LoadDataSource(String fname, String header_fname, std::vector<String> &key_columns, String timestamp_column, int row_uniquify_chars=0);
-    virtual ~LoadDataSource() { delete [] m_go_mask; delete m_rsgen; return; }
-    bool has_timestamps() { return m_leading_timestamps || (m_timestamp_index != -1); }
-    virtual bool next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp);
+    LoadDataSource(const String &fname, const String &header_fname,
+                   const std::vector<String> &key_columns,
+                   const String &timestamp_column, int row_uniquify_chars = 0,
+                   bool dupkeycol = false);
+
+    virtual ~LoadDataSource() { delete [] m_type_mask; return; }
+
+    bool has_timestamps() {
+      return m_leading_timestamps || (m_timestamp_index != -1);
+    }
+
+    virtual bool next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp,
+        uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp);
 
   private:
 
     class KeyComponentInfo {
     public:
-      KeyComponentInfo() : index(0), width(0), left_justify(false), pad_character(' ') { return; }
+      KeyComponentInfo()
+          : index(0), width(0), left_justify(false), pad_character(' ') {}
       void clear() { index=0; width=0; left_justify=false; pad_character=' '; }
       int index;
       int width;
@@ -67,7 +77,7 @@ namespace Hypertable {
     std::vector<String> m_column_names;
     std::vector<const char *> m_values;
     std::vector<KeyComponentInfo> m_key_comps;
-    bool *m_go_mask;
+    uint32_t *m_type_mask;
     size_t m_next_value;
     boost::iostreams::filtering_istream m_fin;
     boost::iostreams::file_source m_source;
@@ -78,11 +88,12 @@ namespace Hypertable {
     bool m_leading_timestamps;
     int m_timestamp_index;
     uint64_t m_timestamp;
-    int m_limit;
+    size_t m_limit;
     uint64_t m_offset;
     bool m_zipped;
     FixedRandomStringGenerator *m_rsgen;
     int m_row_uniquify_chars;
+    bool m_dupkeycols;
   };
 
 }
