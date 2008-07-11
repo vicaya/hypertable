@@ -27,11 +27,13 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 
+#include "Common/CrashTest.h"
 #include "Common/Properties.h"
 #include "AsyncComm/Comm.h"
 #include "Hyperspace/Session.h"
 #include "Hypertable/Lib/CommitLog.h"
 #include "Hypertable/Lib/RangeServerClient.h"
+#include "Hypertable/Lib/RangeServerMetaLog.h"
 #include "Hypertable/Lib/RangeServerProtocol.h"
 #include "Hypertable/Lib/Schema.h"
 #include "Hypertable/Lib/Filesystem.h"
@@ -56,7 +58,10 @@ namespace Hypertable {
     static Hypertable::MaintenanceQueue *maintenance_queue;
     static Hypertable::RangeServerProtocol *protocol;
     static bool           verbose;
-    static CommitLog     *log;
+    static CommitLog     *user_log;
+    static CommitLog     *metadata_log;
+    static CommitLog     *root_log;
+    static Hypertable::RangeServerMetaLog *range_log;
     static std::string    log_dir;
     static uint64_t       range_max_bytes;
     static int32_t        access_group_max_files;
@@ -69,6 +74,7 @@ namespace Hypertable {
     static Hypertable::MemoryTracker memory_tracker;
     static uint64_t       log_prune_threshold_min;
     static uint64_t       log_prune_threshold_max;
+    static Hypertable::CrashTest *crash_test;
   };
 }
 

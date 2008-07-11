@@ -790,7 +790,7 @@ Master::create_table(const char *tablename, const char *schemastr,
     try {
       RangeState range_state;
       range_state.soft_limit = soft_limit;
-      rsc.load_range(addr, table, range, 0, range_state, 0);
+      rsc.load_range(addr, table, range, 0, range_state);
     }
     catch (Exception &e) {
       String addr_str;

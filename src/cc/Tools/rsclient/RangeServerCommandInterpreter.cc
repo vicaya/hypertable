@@ -320,8 +320,8 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
         HT_THROW(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
 
     }
-    else if (state.command == COMMAND_REPLAY_START) {
-      m_range_server_ptr->replay_start(m_addr, &sync_handler);
+    else if (state.command == COMMAND_REPLAY_BEGIN) {
+      m_range_server_ptr->replay_begin(m_addr, false, &sync_handler);  // fix me!!  added metadata boolean
       if (!sync_handler.wait_for_reply(event_ptr))
         HT_THROW(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
     }

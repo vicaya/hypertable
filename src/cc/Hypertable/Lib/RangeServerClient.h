@@ -67,10 +67,9 @@ namespace Hypertable {
      * @param range range specification
      * @param transfer_log transfer log
      * @param range_state range state
-     * @param flags load flags
      * @param handler response handler
      */
-    void load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, const char *transfer_log, RangeState &range_state, uint16_t flags, DispatchHandler *handler);
+    void load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, const char *transfer_log, RangeState &range_state, DispatchHandler *handler);
 
     /** Issues a "load range" request.
      *
@@ -79,9 +78,8 @@ namespace Hypertable {
      * @param range range specification
      * @param transfer_log transfer log
      * @param range_state range state
-     * @param flags load flags
      */
-    void load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, const char *transfer_log, RangeState &range_state, uint16_t flags);
+    void load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, const char *transfer_log, RangeState &range_state);
 
     /** Issues an "update" request asynchronously.  The data argument holds a sequence of key/value
      * pairs.  Each key/value pair is encoded as two variable lenght ByteString records
@@ -185,12 +183,24 @@ namespace Hypertable {
 
     void dump_stats(struct sockaddr_in &addr);
 
-    /** Issues a "replay start" request.
+    /** Issues a "replay begin" request.
      *
      * @param addr remote address of RangeServer connection
+     * @param group replay group to begin (METADATA_ROOT, METADATA, USER)
      * @param handler response handler
      */
-    void replay_start(struct sockaddr_in &addr, DispatchHandler *handler);
+    void replay_begin(struct sockaddr_in &addr, uint16_t group, DispatchHandler *handler);
+
+    /** Issues a "replay load range" request.
+     *
+     * @param addr remote address of RangeServer connection
+     * @param table table identifier
+     * @param range range specification
+     * @param range_state range state object
+     * @param handler response handler
+     */
+    void replay_load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range,
+			   RangeState &range_state, DispatchHandler *handler);
 
     /** Issues a "replay update" request.
      *

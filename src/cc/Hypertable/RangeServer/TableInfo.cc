@@ -31,7 +31,7 @@ using namespace Hypertable;
  *
  */
 TableInfo::TableInfo(MasterClientPtr &master_client_ptr,
-                     TableIdentifier *identifier, SchemaPtr &schema_ptr)
+                     const TableIdentifier *identifier, SchemaPtr &schema_ptr)
     : m_mutex(), m_master_client_ptr(master_client_ptr),
       m_identifier(*identifier), m_schema(schema_ptr) {
 }
@@ -47,7 +47,7 @@ void TableInfo::dump_range_table() {
 /**
  *
  */
-bool TableInfo::get_range(RangeSpec *range, RangePtr &range_ptr) {
+bool TableInfo::get_range(const RangeSpec *range, RangePtr &range_ptr) {
   boost::mutex::scoped_lock lock(m_mutex);
   string end_row = range->end_row;
 
@@ -70,7 +70,7 @@ bool TableInfo::get_range(RangeSpec *range, RangePtr &range_ptr) {
 /**
  *
  */
-bool TableInfo::remove_range(RangeSpec *range, RangePtr &range_ptr) {
+bool TableInfo::remove_range(const RangeSpec *range, RangePtr &range_ptr) {
   boost::mutex::scoped_lock lock(m_mutex);
   string end_row = range->end_row;
 

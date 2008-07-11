@@ -52,9 +52,11 @@ namespace {
     "usage: dumplog [options] <log-dir>",
     "",
     "  options:",
+    "    --block-summary  Display commit log block information only",
     "    --config=<file>  Read configuration from <file>.  The default config file",
     "                     is \"conf/hypertable.cfg\" relative to the toplevel",
     "                     install directory",
+    "    --display-values Display values (assumes they're printable)",
     "    --help           Display this help text and exit",
     "    --verbose,-v     Display 'true' if up, 'false' otherwise",
     "",
@@ -63,7 +65,8 @@ namespace {
     (const char *)0
   };
 
-  void display_log(DfsBroker::Client *dfs_client, String prefix, CommitLogReader *log_reader);
+  void display_log(DfsBroker::Client *dfs_client, String prefix, CommitLogReader *log_reader, bool display_values);
+  void display_log_block_summary(DfsBroker::Client *dfs_client, String prefix, CommitLogReader *log_reader);
 
 }
 
@@ -80,13 +83,19 @@ int main(int argc, char **argv) {
   ConnectionManagerPtr conn_manager_ptr;
   DfsBroker::Client *dfs_client;
   CommitLogReader *log_reader;
+  bool block_summary = false;
+  bool display_values = false;
 
   System::initialize(argv[0]);
   ReactorFactory::initialize((uint16_t)System::get_processor_count());
 
   for (int i=1; i<argc; i++) {
-    if (!strncmp(argv[i], "--config=", 9))
+    if (!strcmp(argv[i], "--block-summary"))
+      block_summary = true;
+    else if (!strncmp(argv[i], "--config=", 9))
       cfgfile = &argv[i][9];
+    else if (!strcmp(argv[i], "--display-values"))
+      display_values = true;
     else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
       verbose = true;
     else if (log_dir == "")
@@ -129,8 +138,12 @@ int main(int argc, char **argv) {
 
   log_reader = new CommitLogReader(dfs_client, log_dir);
 
-  printf("LOG %s\n", log_dir.c_str());
-  display_log(dfs_client, "", log_reader);
+  if (block_summary) {
+    printf("LOG %s\n", log_dir.c_str());
+    display_log_block_summary(dfs_client, "", log_reader);
+  }
+  else
+    display_log(dfs_client, "", log_reader, display_values);
 
   delete log_reader;
 
@@ -139,36 +152,78 @@ int main(int argc, char **argv) {
 
 namespace {
 
-  void display_log(DfsBroker::Client *dfs_client, String prefix, CommitLogReader *log_reader) {
+  void display_log(DfsBroker::Client *dfs_client, String prefix, CommitLogReader *log_reader, bool display_values) {
+    BlockCompressionHeaderCommitLog header;
+    const uint8_t *base;
+    size_t len;
+    const uint8_t *ptr, *end;
+    TableIdentifier table_id;
+    ByteString bs;
+    Key key;
+    String value;
+    uint32_t blockno=0;
+
+    while (log_reader->next(&base, &len, &header)) {
+
+      HT_EXPECT(header.check_magic(CommitLog::MAGIC_DATA), Error::FAILED_EXPECTATION);
+
+      ptr = base;
+      end = base + len;
+
+      table_id.decode(&ptr, &len);
+
+      while (ptr < end) {
+
+	// extract the key
+	bs.ptr = ptr;
+	key.load(bs);
+	cout << key;
+	bs.next();
+
+	if (display_values) {
+	  const uint8_t *vptr;
+	  size_t slen = bs.decode_length(&vptr);
+	  cout << " value='" << std::string((char *)vptr, slen) << "'";
+	}
+
+	//cout << " bno=" << blockno << endl;
+	cout << endl;
+
+	// skip value
+	bs.next();
+
+	ptr = bs.ptr;
+	if (ptr > end)
+	  HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding value");
+
+      }
+      blockno++;
+    }
+  }
+
+
+
+  void display_log_block_summary(DfsBroker::Client *dfs_client, String prefix, CommitLogReader *log_reader) {
     CommitLogBlockInfo binfo;
     BlockCompressionHeaderCommitLog header;
 
     while (log_reader->next_raw_block(&binfo, &header)) {
 
-      if (header.check_magic(CommitLog::MAGIC_DATA)) {
-        printf("%sDATA frag=\"%s\" start=%09llu end=%09llu ",
-               prefix.c_str(), binfo.file_fragment,
-               (long long unsigned int)binfo.start_offset,
-               (long long unsigned int)binfo.end_offset);
+      HT_EXPECT(header.check_magic(CommitLog::MAGIC_DATA), Error::FAILED_EXPECTATION);
 
-        if (binfo.error == Error::OK) {
-          printf("ztype=\"%s\" zlen=%u len=%u\n",
-                 BlockCompressionCodec::get_compressor_name(header.get_compression_type()),
-                 header.get_data_zlength(), header.get_data_length());
-        }
-        else
-          printf("%serror = \"%s\"\n", prefix.c_str(), Error::get_text(binfo.error));
+      printf("%sDATA frag=\"%s\" ts=%llu start=%09llu end=%09llu ",
+	     prefix.c_str(), binfo.file_fragment, 
+	     (long long unsigned int)header.get_timestamp(),
+	     (long long unsigned int)binfo.start_offset,
+	     (long long unsigned int)binfo.end_offset);
+
+      if (binfo.error == Error::OK) {
+	printf("ztype=\"%s\" zlen=%u len=%u\n",
+	       BlockCompressionCodec::get_compressor_name(header.get_compression_type()),
+	       header.get_data_zlength(), header.get_data_length());
       }
-      else if (header.check_magic(CommitLog::MAGIC_LINK)) {
-        const char *log_dir = (const char *)binfo.block_ptr + header.length();
-        printf("%sLINK -> %s\n", prefix.c_str(), log_dir);
-        CommitLogReader *tmp_reader = new CommitLogReader(dfs_client, log_dir);
-        display_log(dfs_client, prefix+"  ", tmp_reader);
-        delete tmp_reader;
-      }
-      else {
-        printf("Invalid block header!!!\n");
-      }
+      else
+	printf("%serror = \"%s\"\n", prefix.c_str(), Error::get_text(binfo.error));
     }
   }
 

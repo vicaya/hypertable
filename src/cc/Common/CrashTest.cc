@@ -1,12 +1,12 @@
-/** -*- c++ -*-
+/**
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; version 2 of the
- * License.
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or any later version.
  *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,29 +19,25 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "HyperspaceSessionHandler.h"
+#include "Compat.h"
+#include "CrashTest.h"
+#include "Error.h"
+#include "Logger.h"
 
-using namespace Hyperspace;
+using namespace Hypertable;
 
-/**
- *
- */
-void HyperspaceSessionHandler::safe() {
-  HT_INFO("Hyperspace session state change:  SAFE");
+void CrashTest::parse_option(String option) {
+  char *istr = strchr(option.c_str(), ':');
+  HT_EXPECT(istr != 0, Error::FAILED_EXPECTATION);
+  *istr++ = 0;
+  m_countdown_map[option.c_str()] = atoi(istr);
 }
 
-/**
- *
- */
-void HyperspaceSessionHandler::jeopardy() {
-  HT_INFO("Hyperspace session state change:  JEOPARDY");
-}
-
-/**
- *
- */
-void HyperspaceSessionHandler::expired() {
-  HT_ERROR("Hyperspace session expired.  Exiting...");
-  _exit(1);
+void CrashTest::maybe_crash(const String &label) {
+  CountDownMap::iterator iter = m_countdown_map.find(label);
+  if (iter != m_countdown_map.end()) {
+    if ((*iter).second == 0)
+      HT_ABORT;
+    m_countdown_map[label] = (*iter).second - 1;
+  }
 }

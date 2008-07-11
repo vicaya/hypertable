@@ -20,6 +20,7 @@
  */
 
 #include "Common/Compat.h"
+#include <cassert>
 #include <vector>
 
 extern "C" {
@@ -85,6 +86,13 @@ bool CommitLogReader::next_raw_block(CommitLogBlockInfo *infop, BlockCompression
     m_fragment_stack.top().timestamp = m_last_timestamp;
     m_fragment_queue.push_back(m_fragment_stack.top());
     m_fragment_stack.pop();
+    goto try_again;
+  }
+
+  if (header->check_magic(CommitLog::MAGIC_LINK)) {
+    assert(header->get_compression_type() == BlockCompressionCodec::NONE);
+    String log_dir = (const char *)(infop->block_ptr + header->length());
+    load_fragments(log_dir);
     goto try_again;
   }
 

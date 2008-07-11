@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_REQUESTHANDLERREPLAYSTART_H
-#define HYPERTABLE_REQUESTHANDLERREPLAYSTART_H
+#ifndef HYPERTABLE_REQUESTHANDLERREPLAYBEGIN_H
+#define HYPERTABLE_REQUESTHANDLERREPLAYBEGIN_H
 
 #include "Common/Runnable.h"
 
@@ -33,9 +33,9 @@ namespace Hypertable {
 
   class RangeServer;
 
-  class RequestHandlerReplayStart : public ApplicationHandler {
+  class RequestHandlerReplayBegin : public ApplicationHandler {
   public:
-    RequestHandlerReplayStart(Comm *comm, RangeServer *rs, EventPtr &event_ptr) : ApplicationHandler(event_ptr), m_comm(comm), m_range_server(rs) {
+    RequestHandlerReplayBegin(Comm *comm, RangeServer *rs, EventPtr &event_ptr) : ApplicationHandler(event_ptr), m_comm(comm), m_range_server(rs) {
       return;
     }
 
@@ -48,4 +48,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_REQUESTHANDLERREPLAYSTART_H
+#endif // HYPERTABLE_REQUESTHANDLERREPLAYBEGIN_H

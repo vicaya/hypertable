@@ -42,7 +42,7 @@ namespace Hypertable {
   class TableInfo : public ReferenceCount {
 
   public:
-    TableInfo(MasterClientPtr &master_client_ptr, TableIdentifier *identifier, SchemaPtr &schema_ptr);
+    TableInfo(MasterClientPtr &master_client_ptr, const TableIdentifier *identifier, SchemaPtr &schema_ptr);
     const char *get_name() { return m_identifier.name; }
     uint32_t get_id() { return m_identifier.id; }
     SchemaPtr &get_schema() {
@@ -53,8 +53,8 @@ namespace Hypertable {
       boost::mutex::scoped_lock lock(m_mutex);
       m_schema = schema_ptr;
     }
-    bool get_range(RangeSpec *range, RangePtr &range_ptr);
-    bool remove_range(RangeSpec *range, RangePtr &range_ptr);
+    bool get_range(const RangeSpec *range, RangePtr &range_ptr);
+    bool remove_range(const RangeSpec *range, RangePtr &range_ptr);
     void add_range(RangePtr &range_ptr);
     bool find_containing_range(std::string row, RangePtr &range_ptr);
 

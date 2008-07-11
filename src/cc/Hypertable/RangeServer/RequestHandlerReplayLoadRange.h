@@ -18,27 +18,34 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#ifndef HYPERTABLE_DEFAULTS_H
-#define HYPERTABLE_DEFAULTS_H
+
+#ifndef HYPERTABLE_REQUESTHANDLERREPLAYLOADRANGE_H
+#define HYPERTABLE_REQUESTHANDLERREPLAYLOADRANGE_H
+
+#include "Common/Runnable.h"
+
+#include "AsyncComm/ApplicationHandler.h"
+#include "AsyncComm/Comm.h"
+#include "AsyncComm/Event.h"
+
 
 namespace Hypertable {
 
-  extern const int HYPERTABLE_CLIENT_TIMEOUT;
+  class RangeServer;
 
-  extern const int HYPERTABLE_LOCATIONCACHE_MAXENTRIES;
+  class RequestHandlerReplayLoadRange : public ApplicationHandler {
+  public:
+    RequestHandlerReplayLoadRange(Comm *comm, RangeServer *rs, EventPtr &event_ptr) : ApplicationHandler(event_ptr), m_comm(comm), m_range_server(rs) {
+      return;
+    }
 
-  extern const int HYPERTABLE_MASTER_CLIENT_TIMEOUT;
-  extern const int HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT;
+    virtual void run();
 
-  extern const char *HYPERTABLE_RANGESERVER_COMMITLOG_DFSBROKER_HOST;
-  extern const uint16_t HYPERTABLE_RANGESERVER_COMMITLOG_DFSBROKER_PORT;
-
-  extern const uint32_t HYPERTABLE_DATA_TRANSFER_BLOCKSIZE;
-
-  extern const int64_t HYPERTABLE_RANGESERVER_COMMITLOG_ROLLLIMIT;
-
-  extern const char *HYPERTABLE_RANGESERVER_COMMITLOG_COMPRESSOR;
+  private:
+    Comm        *m_comm;
+    RangeServer *m_range_server;
+  };
 
 }
 
-#endif // HYPERTABLE_DEFAULTS_H
+#endif // HYPERTABLE_REQUESTHANDLERREPLAYLOADRANGE_H

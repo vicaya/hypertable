@@ -29,7 +29,7 @@
 #include "Hypertable/Lib/Types.h"
 
 #include "RangeServer.h"
-#include "RequestHandlerLoadRange.h"
+#include "RequestHandlerReplayLoadRange.h"
 
 using namespace Hypertable;
 using namespace Serialization;
@@ -37,26 +37,23 @@ using namespace Serialization;
 /**
  *
  */
-void RequestHandlerLoadRange::run() {
+void RequestHandlerReplayLoadRange::run() {
   ResponseCallback cb(m_comm, m_event_ptr);
   TableIdentifier table;
   RangeSpec range;
   RangeState range_state;
-  const char *transfer_log_dir;
   size_t remaining = m_event_ptr->message_len - 2;
   const uint8_t *p = m_event_ptr->message + 2;
 
   try {
     table.decode(&p, &remaining);
     range.decode(&p, &remaining);
-    transfer_log_dir = decode_str16(&p, &remaining);
     range_state.decode(&p, &remaining);
 
-    m_range_server->load_range(&cb, &table, &range, transfer_log_dir,
-                               &range_state);
+    m_range_server->replay_load_range(&cb, &table, &range, &range_state);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    cb.error(Error::PROTOCOL_ERROR, "Error handling LoadRange message");
+    cb.error(Error::PROTOCOL_ERROR, "Error handling REPLAY LOAD RANGE message");
   }
 }

@@ -5,8 +5,8 @@
  *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; version 2 of the
- * License.
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or any later version.
  *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,29 +19,24 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "HyperspaceSessionHandler.h"
+#ifndef HYPERTABLE_CRASHTEST_H
+#define HYPERTABLE_CRASHTEST_H
 
-using namespace Hyperspace;
+#include "HashMap.h"
+#include "String.h"
+#include "StringExt.h"
 
-/**
- *
- */
-void HyperspaceSessionHandler::safe() {
-  HT_INFO("Hyperspace session state change:  SAFE");
+namespace Hypertable {
+
+  class CrashTest {
+  public:
+    void parse_option(String option);
+    void maybe_crash(const String &label);
+  private:
+    typedef hash_map<String, uint32_t> CountDownMap;
+    CountDownMap m_countdown_map;
+  };
+
 }
 
-/**
- *
- */
-void HyperspaceSessionHandler::jeopardy() {
-  HT_INFO("Hyperspace session state change:  JEOPARDY");
-}
-
-/**
- *
- */
-void HyperspaceSessionHandler::expired() {
-  HT_ERROR("Hyperspace session expired.  Exiting...");
-  _exit(1);
-}
+#endif // HYPERTABLE_CRASHTEST_H

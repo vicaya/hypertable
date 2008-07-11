@@ -80,30 +80,42 @@ void TableInfoMap::clear_ranges() {
 }
 
 
-void TableInfoMap::atomic_merge(TableInfoMapPtr &table_info_map_ptr, CommitLogBase *replay_log) {
+void TableInfoMap::merge(TableInfoMapPtr &table_info_map_ptr) {
   boost::mutex::scoped_lock lock(m_mutex);
   InfoMap::iterator from_iter, to_iter;
-  uint32_t table_id;
-  int error;
+  std::vector<RangePtr> range_vec;
 
   for (from_iter = table_info_map_ptr->m_map.begin(); from_iter != table_info_map_ptr->m_map.end(); from_iter++) {
 
-    table_id = (*from_iter).second->get_id();
+    to_iter = m_map.find( (*from_iter).first );
 
-    to_iter = m_map.find(table_id);
-
+    range_vec.clear();
     if (to_iter == m_map.end())
-      m_map[table_id] = (*from_iter).second;
+      m_map[ (*from_iter).first ] = (*from_iter).second;
     else {
-      std::vector<RangePtr> range_vec;
       (*from_iter).second->get_range_vector(range_vec);
       for (size_t i=0; i<range_vec.size(); i++)
-        (*to_iter).second->add_range(range_vec[i]);
+	(*to_iter).second->add_range(range_vec[i]);
     }
+
   }
 
   table_info_map_ptr->clear();
-
-  if ((error = Global::log->link_log(replay_log, Global::log->get_timestamp())) != Error::OK)
-    HT_THROW(error, std::string("Problem linking replay commit log '") + replay_log->get_log_dir() + "'");
 }
+
+
+
+void TableInfoMap::dump() {
+  InfoMap::iterator table_iter;
+  std::vector<RangePtr> range_vec;
+
+  for (table_iter = m_map.begin(); table_iter != m_map.end(); table_iter++)
+    (*table_iter).second->get_range_vector(range_vec);
+
+  std::cout << std::endl;
+  for (size_t i=0; i<range_vec.size(); i++)
+    std::cout << "tidump " << range_vec[i]->get_name() << "\n";
+  std::cout << std::flush;
+  
+}
+
