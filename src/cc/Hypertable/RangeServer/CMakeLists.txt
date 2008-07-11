@@ -49,7 +49,8 @@ RequestHandlerDumpStats.cc
 RequestHandlerFetchScanblock.cc
 RequestHandlerDropTable.cc
 RequestHandlerLoadRange.cc
-RequestHandlerReplayStart.cc
+RequestHandlerReplayBegin.cc
+RequestHandlerReplayLoadRange.cc
 RequestHandlerReplayUpdate.cc
 RequestHandlerReplayCommit.cc
 RequestHandlerStatus.cc

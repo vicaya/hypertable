@@ -101,6 +101,11 @@ int main(int argc, char **argv) {
           pidfile = &argv[i][10];
         else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
           Global::verbose = true;
+        else if (!strncmp(argv[i], "--crash-test=", 13)) {
+	  if (Global::crash_test == 0)
+	    Global::crash_test = new CrashTest();
+	  Global::crash_test->parse_option(&argv[i][13]);
+	}
         else
           Usage::dump_and_exit(usage);
       }

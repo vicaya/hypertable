@@ -51,8 +51,8 @@ using namespace Hypertable;
 using namespace std;
 
 
-Range::Range(MasterClientPtr &master_client_ptr, TableIdentifier *identifier,
-             SchemaPtr &schema_ptr, RangeSpec *range, RangeState *state)
+Range::Range(MasterClientPtr &master_client_ptr, const TableIdentifier *identifier,
+             SchemaPtr &schema_ptr, const RangeSpec *range, const RangeState *state)
     : m_master_client_ptr(master_client_ptr), m_identifier(*identifier),
       m_schema(schema_ptr), m_maintenance_in_progress(false),
       m_last_logical_timestamp(0), m_added_inserts(0), m_state(*state),
@@ -83,9 +83,6 @@ Range::Range(MasterClientPtr &master_client_ptr, TableIdentifier *identifier,
       m_column_family_vector[(*cf_it)->id] = ag;
   }
 
-  /**
-   * Read the cell store files from METADATA and
-   */
   if (m_is_root) {
     MetadataRoot metadata(m_schema);
     load_cell_stores(&metadata);
@@ -433,9 +430,13 @@ void Range::split_install_log(Timestamp *timestampp, String &old_start_row) {
     HT_ABORT;
   }
 
-  /***************************************************/
-  /** TBD: Write RS_SPLIT_START entry into meta-log **/
-  /***************************************************/
+  /**
+   * Write SPLIT_START MetaLog entry
+   */
+  Global::range_log->log_split_start(m_identifier,
+				    RangeSpec(m_start_row.c_str(), m_end_row.c_str()),
+				    RangeSpec(m_start_row.c_str(), m_split_row.c_str()),
+				    m_state);
 
   /**
    * Create and install the split log
@@ -449,6 +450,9 @@ void Range::split_install_log(Timestamp *timestampp, String &old_start_row) {
     old_start_row = m_start_row;
     m_split_log_ptr = new CommitLog(Global::dfs, m_state.transfer_log);
   }
+
+  if (Global::crash_test)
+    Global::crash_test->maybe_crash("split-1");
 
 }
 
@@ -468,9 +472,13 @@ void Range::split_compact_and_shrink(Timestamp timestamp, String &old_start_row)
       m_access_group_vector[i]->run_compaction(timestamp, true);
   }
 
-  /****************************************************/
-  /** TBD: Write RS_SPLIT_SHRUNK entry into meta-log **/
-  /****************************************************/
+  /**
+   * Write SPLIT_SHRUNK MetaLog entry
+   */
+  Global::range_log->log_split_shrunk(m_identifier, RangeSpec(m_split_row.c_str(), m_end_row.c_str()));
+
+  if (Global::crash_test)
+    Global::crash_test->maybe_crash("split-2");
 
   try {
     String files;
@@ -520,6 +528,9 @@ void Range::split_compact_and_shrink(Timestamp timestamp, String &old_start_row)
     HT_ABORT;
   }
 
+  if (Global::crash_test)
+    Global::crash_test->maybe_crash("split-3");
+
   /**
    *  Shrink the range
    */
@@ -551,6 +562,7 @@ void Range::split_compact_and_shrink(Timestamp timestamp, String &old_start_row)
 void Range::split_notify_master(String &old_start_row) {
   int error;
   RangeSpec range;
+  uint64_t soft_limit = m_state.soft_limit;
 
   range.start_row = old_start_row.c_str();
   range.end_row = m_start_row.c_str();
@@ -560,16 +572,26 @@ void Range::split_notify_master(String &old_start_row) {
 
   HT_INFOF("Reporting newly split off range %s[%s..%s] to Master", m_identifier.name, range.start_row, range.end_row);
 
-  if (m_state.soft_limit < Global::range_max_bytes) {
-    m_state.soft_limit *= 2;
-    if (m_state.soft_limit > Global::range_max_bytes)
-      m_state.soft_limit = Global::range_max_bytes;
+  if (soft_limit < Global::range_max_bytes) {
+    soft_limit *= 2;
+    if (soft_limit > Global::range_max_bytes)
+      soft_limit = Global::range_max_bytes;
   }
 
-  if ((error = m_master_client_ptr->report_split(&m_identifier, range, m_state.transfer_log, m_state.soft_limit)) != Error::OK) {
+  if ((error = m_master_client_ptr->report_split(&m_identifier, range, m_state.transfer_log, soft_limit)) != Error::OK) {
     HT_THROWF(error, "Problem reporting split (table=%s, start_row=%s, end_row=%s) to master.",
               m_identifier.name, range.start_row, range.end_row);
   }
+
+  if (Global::crash_test)
+    Global::crash_test->maybe_crash("split-4");
+
+  /**
+   * Write SPLIT_DONE MetaLog entry
+   */
+  Global::range_log->log_split_done(m_identifier, RangeSpec(m_start_row.c_str(), m_end_row.c_str()));
+
+  m_state.soft_limit = soft_limit;
 
 }
 

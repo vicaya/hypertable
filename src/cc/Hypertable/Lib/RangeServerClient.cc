@@ -38,15 +38,15 @@ RangeServerClient::~RangeServerClient() {
   return;
 }
 
-void RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, const char *transfer_log, RangeState &range_state, uint16_t flags, DispatchHandler *handler) {
-  CommBufPtr cbp(RangeServerProtocol::create_request_load_range(table, range, transfer_log, range_state, flags));
+void RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, const char *transfer_log, RangeState &range_state, DispatchHandler *handler) {
+  CommBufPtr cbp(RangeServerProtocol::create_request_load_range(table, range, transfer_log, range_state));
   send_message(addr, cbp, handler);
 }
 
-void RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, const char *transfer_log, RangeState &range_state, uint16_t flags) {
+void RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, const char *transfer_log, RangeState &range_state) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
-  CommBufPtr cbp(RangeServerProtocol::create_request_load_range(table, range, transfer_log, range_state, flags));
+  CommBufPtr cbp(RangeServerProtocol::create_request_load_range(table, range, transfer_log, range_state));
   send_message(addr, cbp, &sync_handler);
   if (!sync_handler.wait_for_reply(event_ptr))
     HT_THROW((int)Protocol::response_code(event_ptr),
@@ -177,11 +177,16 @@ void RangeServerClient::dump_stats(struct sockaddr_in &addr) {
 }
 
 
-void RangeServerClient::replay_start(struct sockaddr_in &addr, DispatchHandler *handler) {
-  CommBufPtr cbp(RangeServerProtocol::create_request_replay_start());
+void RangeServerClient::replay_begin(struct sockaddr_in &addr, uint16_t group, DispatchHandler *handler) {
+  CommBufPtr cbp(RangeServerProtocol::create_request_replay_begin(group));
   send_message(addr, cbp, handler);
 }
 
+void RangeServerClient::replay_load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range,
+					  RangeState &range_state, DispatchHandler *handler) {
+  CommBufPtr cbp(RangeServerProtocol::create_request_replay_load_range(table, range, range_state));
+  send_message(addr, cbp, handler);
+}
 
 void RangeServerClient::replay_update(struct sockaddr_in &addr, StaticBuffer &buffer, DispatchHandler *handler) {
   CommBufPtr cbp(RangeServerProtocol::create_request_replay_update(buffer));

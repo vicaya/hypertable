@@ -37,7 +37,10 @@ namespace Hypertable {
   MaintenanceQueue      *Global::maintenance_queue = 0;
   RangeServerProtocol   *Global::protocol = 0;
   bool                   Global::verbose = false;
-  CommitLog             *Global::log = 0;
+  CommitLog             *Global::user_log = 0;
+  CommitLog             *Global::metadata_log = 0;
+  CommitLog             *Global::root_log = 0;
+  RangeServerMetaLog    *Global::range_log = 0;
   std::string            Global::log_dir = "";
   uint64_t               Global::range_max_bytes = 0;
   int32_t                Global::access_group_max_files = 0;
@@ -50,5 +53,6 @@ namespace Hypertable {
   MemoryTracker          Global::memory_tracker;
   uint64_t               Global::log_prune_threshold_min = 0;
   uint64_t               Global::log_prune_threshold_max = 0;
+  CrashTest             *Global::crash_test = 0;
 
 }

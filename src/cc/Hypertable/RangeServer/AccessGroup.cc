@@ -44,8 +44,8 @@ namespace {
 }
 
 
-AccessGroup::AccessGroup(TableIdentifier *identifier, SchemaPtr &schema_ptr,
-                         Schema::AccessGroup *ag, RangeSpec *range)
+AccessGroup::AccessGroup(const TableIdentifier *identifier, SchemaPtr &schema_ptr,
+                         Schema::AccessGroup *ag, const RangeSpec *range)
     : m_identifier(*identifier), m_schema_ptr(schema_ptr), m_name(ag->name),
       m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE),
       m_compression_ratio(1.0), m_is_root(false), m_oldest_cached_timestamp(0),

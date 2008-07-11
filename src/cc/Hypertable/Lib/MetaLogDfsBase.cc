@@ -33,7 +33,7 @@ using namespace Serialization;
 namespace {
   const uint32_t DFS_BUFFER_SIZE = -1;  // use dfs defaults
   const uint32_t DFS_NUM_REPLICAS = -1; // ditto
-  const uint32_t DFS_BLOCK_SIZE = -1;   // ditto
+  const int64_t DFS_BLOCK_SIZE = -1;   // ditto
   const size_t ML_ENTRY_BUFFER_RESERVE = ML_ENTRY_HEADER_SIZE + 512;
 } // local namespace
 

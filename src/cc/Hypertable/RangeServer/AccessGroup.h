@@ -57,7 +57,7 @@ namespace Hypertable {
       bool in_memory;
     };
 
-    AccessGroup(TableIdentifier *identifier, SchemaPtr &schema_ptr, Schema::AccessGroup *ag, RangeSpec *range);
+    AccessGroup(const TableIdentifier *identifier, SchemaPtr &schema_ptr, Schema::AccessGroup *ag, const RangeSpec *range);
     virtual ~AccessGroup();
     virtual int add(const ByteString key, const ByteString value, uint64_t real_timestamp);
     bool replay_add(const ByteString key, const ByteString value, uint64_t real_timestamp);

@@ -22,15 +22,26 @@
 #include "Common/Compat.h"
 #include "AsyncComm/ResponseCallback.h"
 
-#include "RequestHandlerReplayStart.h"
+#include "RequestHandlerReplayBegin.h"
 #include "RangeServer.h"
 
 using namespace Hypertable;
+using namespace Serialization;
 
 /**
  *
  */
-void RequestHandlerReplayStart::run() {
+void RequestHandlerReplayBegin::run() {
   ResponseCallback cb(m_comm, m_event_ptr);
-  m_range_server->replay_start(&cb);
+  size_t remaining = m_event_ptr->message_len - 2;
+  const uint8_t *p = m_event_ptr->message + 2;
+
+  try {
+    uint16_t group = decode_i16(&p, &remaining);
+    m_range_server->replay_begin(&cb, group);
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    cb.error(Error::PROTOCOL_ERROR, "Error handling ReplayBegin message");
+  }
 }

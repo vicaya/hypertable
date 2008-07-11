@@ -22,6 +22,7 @@
 #ifndef HYPERTABLE_TABLEINFOMAP_H
 #define HYPERTABLE_TABLEINFOMAP_H
 
+#include <map>
 #include <string>
 
 #include <boost/intrusive_ptr.hpp>
@@ -50,11 +51,14 @@ namespace Hypertable {
     void get_all(std::vector<TableInfoPtr> &tv);
     void clear();
     void clear_ranges();
+    bool empty() { return m_map.empty(); }
 
-    void atomic_merge(TableInfoMapPtr &table_info_map_ptr, CommitLogBase *replay_log);
+    void merge(TableInfoMapPtr &table_info_map_ptr);
+
+    void dump();
 
   private:
-    typedef hash_map<uint32_t, TableInfoPtr> InfoMap;
+    typedef std::map<uint32_t, TableInfoPtr> InfoMap;
 
     boost::mutex  m_mutex;
     InfoMap       m_map;

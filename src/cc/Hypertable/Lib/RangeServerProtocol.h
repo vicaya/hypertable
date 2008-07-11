@@ -33,25 +33,30 @@ namespace Hypertable {
   class RangeServerProtocol : public Protocol {
 
   public:
-    static const short COMMAND_LOAD_RANGE       = 0;
-    static const short COMMAND_UPDATE           = 1;
-    static const short COMMAND_CREATE_SCANNER   = 2;
-    static const short COMMAND_FETCH_SCANBLOCK  = 3;
-    static const short COMMAND_COMPACT          = 4;
-    static const short COMMAND_STATUS           = 5;
-    static const short COMMAND_SHUTDOWN         = 6;
-    static const short COMMAND_DUMP_STATS       = 7;
-    static const short COMMAND_DESTROY_SCANNER  = 8;
-    static const short COMMAND_DROP_TABLE       = 9;
-    static const short COMMAND_REPLAY_START     = 10;
-    static const short COMMAND_REPLAY_UPDATE    = 11;
-    static const short COMMAND_REPLAY_COMMIT    = 12;
-    static const short COMMAND_DROP_RANGE       = 13;
-    static const short COMMAND_MAX              = 14;
-
-    static const uint16_t LOAD_RANGE_FLAG_REPLAY = 0x0001;
+    static const short COMMAND_LOAD_RANGE        = 0;
+    static const short COMMAND_UPDATE            = 1;
+    static const short COMMAND_CREATE_SCANNER    = 2;
+    static const short COMMAND_FETCH_SCANBLOCK   = 3;
+    static const short COMMAND_COMPACT           = 4;
+    static const short COMMAND_STATUS            = 5;
+    static const short COMMAND_SHUTDOWN          = 6;
+    static const short COMMAND_DUMP_STATS        = 7;
+    static const short COMMAND_DESTROY_SCANNER   = 8;
+    static const short COMMAND_DROP_TABLE        = 9;
+    static const short COMMAND_DROP_RANGE        = 10;
+    static const short COMMAND_REPLAY_BEGIN      = 11;
+    static const short COMMAND_REPLAY_LOAD_RANGE = 12;
+    static const short COMMAND_REPLAY_UPDATE     = 13;
+    static const short COMMAND_REPLAY_COMMIT     = 14;
+    static const short COMMAND_MAX               = 15;
 
     static const char *m_command_strings[];
+
+    enum RangeGroup {
+      GROUP_METADATA_ROOT,
+      GROUP_METADATA,
+      GROUP_USER
+    };
 
     /** Creates a "load range" request message
      *
@@ -59,10 +64,9 @@ namespace Hypertable {
      * @param range range specification
      * @param transfer_log transfer log to replay
      * @param range_state range state
-     * @param flags load flags
      * @return protocol message
      */
-    static CommBuf *create_request_load_range(TableIdentifier &table, RangeSpec &range, const char *transfer_log, RangeState &range_state, uint16_t flags);
+    static CommBuf *create_request_load_range(TableIdentifier &table, RangeSpec &range, const char *transfer_log, RangeState &range_state);
 
     /** Creates an "update" request message.  The data argument holds a sequence of key/value
      * pairs.  Each key/value pair is encoded as two variable lenght ByteStringrecords
@@ -123,11 +127,18 @@ namespace Hypertable {
      */
     static CommBuf *create_request_drop_table(TableIdentifier &table);
 
-    /** Creates a "replay start" request message.
+    /** Creates a "replay begin" request message.
+     *
+     * @param group replay group to begin (METADATA_ROOT, METADATA, USER)
+     * @return protocol message
+     */
+    static CommBuf *create_request_replay_begin(uint16_t group);
+
+    /** Creates a "replay load range" request message.
      *
      * @return protocol message
      */
-    static CommBuf *create_request_replay_start();
+    static CommBuf *create_request_replay_load_range(TableIdentifier &table, RangeSpec &range, RangeState &range_state);
 
     /** Creates a "replay update" request message.  The data argument holds a sequence of
      * blocks.  Each block consists of ...

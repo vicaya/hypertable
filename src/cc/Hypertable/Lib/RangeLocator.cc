@@ -513,8 +513,8 @@ int RangeLocator::read_root_location(Timer &timer) {
   DynamicBuffer value(0);
   std::string addr_str;
 
-  if ((error = m_hyperspace_ptr->attr_get(m_root_file_handle, "location", value)) != Error::OK) {
-    HT_ERRORF("Problem reading 'location' attribute of Hyperspace file /hypertable/root - %s", Error::get_text(error));
+  if ((error = m_hyperspace_ptr->attr_get(m_root_file_handle, "Location", value)) != Error::OK) {
+    HT_ERRORF("Problem reading 'Location' attribute of Hyperspace file /hypertable/root - %s", Error::get_text(error));
     return error;
   }
 
@@ -525,7 +525,7 @@ int RangeLocator::read_root_location(Timer &timer) {
   m_cache_ptr->insert(0, m_root_range_info, true);
 
   if (!LocationCache::location_to_addr((const char *)value.base, m_root_addr)) {
-    HT_ERROR("Bad format of 'location' attribute of /hypertable/root Hyperspace file");
+    HT_ERROR("Bad format of 'Location' attribute of /hypertable/root Hyperspace file");
     return Error::BAD_ROOT_LOCATION;
   }
 

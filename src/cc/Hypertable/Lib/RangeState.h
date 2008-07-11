@@ -35,6 +35,7 @@ namespace Hypertable {
     RangeState() : state(STEADY), soft_limit(0), transfer_log(0) { return; }
     RangeState(StateType st, uint64_t slimit, const char *tlog)
         : state(st), soft_limit(slimit), transfer_log(tlog) {}
+    void clear() { state = STEADY; soft_limit = 0; transfer_log = 0; }
 
     size_t encoded_length();
     void encode(uint8_t **bufp);

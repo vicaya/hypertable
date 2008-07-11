@@ -44,11 +44,8 @@ struct OrderByTimestamp {
 
 RangeServerMetaLog::RangeServerMetaLog(Filesystem *fs, const String &path)
     : Parent(fs, path) {
-  if (fs->length(path)) {
-    RangeServerMetaLogReaderPtr rdr = new RangeServerMetaLogReader(fs, path);
-    const RangeStates &rs = rdr->load_range_states();
-    purge(rs);
-  }
+  if (fs->length(path))
+    return;
   uint8_t buf[RSML_HEADER_SIZE], *p = buf;
   memcpy(buf, RSML_PREFIX, strlen(RSML_PREFIX));
   p += strlen(RSML_PREFIX);

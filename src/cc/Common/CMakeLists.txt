@@ -19,6 +19,7 @@
 
 set(Common_SRCS
 Checksum.cc
+CrashTest.cc
 code_search_and_replace.cc
 Config.cc
 Error.cc

@@ -261,18 +261,11 @@ namespace {
     BlockCompressionHeaderCommitLog header;
 
     while (log_reader->next(&block, &block_len, &header)) {
-      if (header.check_magic(CommitLog::MAGIC_LINK)) {
-        CommitLogReader *tmp_reader = new CommitLogReader(dfs_client, (const char *)block);
-        read_entries(dfs_client, tmp_reader, sump);
-        delete tmp_reader;
-      }
-      else {
-        assert((block_len % 4) == 0);
-        icount = block_len / 4;
-        iptr = (uint32_t *)block;
-        for (size_t i=0; i<icount; i++)
-          *sump += iptr[i];
-      }
+      assert((block_len % 4) == 0);
+      icount = block_len / 4;
+      iptr = (uint32_t *)block;
+      for (size_t i=0; i<icount; i++)
+	*sump += iptr[i];
     }
   }
 

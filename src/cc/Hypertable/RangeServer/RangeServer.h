@@ -62,13 +62,14 @@ namespace Hypertable {
                         RangeSpec *, ScanSpec *);
     void destroy_scanner(ResponseCallback *cb, uint32_t scanner_id);
     void fetch_scanblock(ResponseCallbackFetchScanblock *, uint32_t scanner_id);
-    void load_range(ResponseCallback *, TableIdentifier *, RangeSpec *,
-                    const char *transfer_log_dir, RangeState *, uint16_t flags);
+    void load_range(ResponseCallback *, const TableIdentifier *, const RangeSpec *,
+                    const char *transfer_log_dir, const RangeState *);
     void update(ResponseCallbackUpdate *, TableIdentifier *, StaticBuffer &);
     void drop_table(ResponseCallback *, TableIdentifier *);
     void dump_stats(ResponseCallback *);
 
-    void replay_start(ResponseCallback *);
+    void replay_begin(ResponseCallback *, uint16_t group);
+    void replay_load_range(ResponseCallback *, const TableIdentifier *, const RangeSpec *, const RangeState *);
     void replay_update(ResponseCallback *, const uint8_t *data, size_t len);
     void replay_commit(ResponseCallback *);
 
@@ -89,10 +90,9 @@ namespace Hypertable {
   private:
     int initialize(PropertiesPtr &);
     void fast_recover();
-    void reload_range(TableIdentifier *, RangeSpec *, uint64_t soft_limit,
-                      const String &split_log);
-
+    void replay_log(CommitLogReaderPtr &log_reader_ptr);
     int verify_schema(TableInfoPtr &, int generation, std::string &errmsg);
+    void schedule_log_cleanup_compactions(std::vector<RangePtr> &range_vec, CommitLog *log, uint64_t prune_threshold);
 
     Mutex                  m_mutex;
     Mutex                  m_update_mutex_a;
@@ -115,6 +115,8 @@ namespace Hypertable {
     long                   m_last_commit_log_clean;
     uint64_t               m_timer_interval;
     uint64_t               m_bytes_loaded;
+    uint64_t               m_log_roll_limit;
+    int                    m_replay_group;
   };
 
   typedef intrusive_ptr<RangeServer> RangeServerPtr;

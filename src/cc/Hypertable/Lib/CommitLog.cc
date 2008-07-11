@@ -35,6 +35,7 @@
 #include "Hypertable/Lib/BlockCompressionCodec.h"
 #include "Hypertable/Lib/BlockCompressionHeaderCommitLog.h"
 
+#include "Defaults.h"
 #include "CommitLog.h"
 #include "CommitLogReader.h"
 
@@ -43,13 +44,23 @@ using namespace Hypertable;
 const char CommitLog::MAGIC_DATA[10] = { 'C','O','M','M','I','T','D','A','T','A' };
 const char CommitLog::MAGIC_LINK[10] = { 'C','O','M','M','I','T','L','I','N','K' };
 
+namespace {
+  struct forward_sort_clfi {
+    bool operator()(const CommitLogFileInfo &clfi1, const CommitLogFileInfo &clfi2) const {
+      return clfi1.num < clfi2.num;
+    }
+  };
+}
+
+
 
 CommitLog::~CommitLog() {
   delete m_compressor;
   close();
 }
 
-void CommitLog::initialize(Filesystem *fs, const String &log_dir, PropertiesPtr &props_ptr) {
+
+void CommitLog::initialize(Filesystem *fs, const String &log_dir, PropertiesPtr &props_ptr, CommitLogBase *init_log) {
   String compressor;
   m_fs = fs;
   m_log_dir = log_dir;
@@ -57,12 +68,12 @@ void CommitLog::initialize(Filesystem *fs, const String &log_dir, PropertiesPtr 
   m_cur_fragment_num = 0;
 
   if (props_ptr) {
-    m_max_fragment_size = props_ptr->get_int64("Hypertable.RangeServer.CommitLog.RollLimit", 100000000LL);
-    compressor = props_ptr->get("Hypertable.RangeServer.CommitLog.Compressor", "lzo");
+    m_max_fragment_size = props_ptr->get_int64("Hypertable.RangeServer.CommitLog.RollLimit", HYPERTABLE_RANGESERVER_COMMITLOG_ROLLLIMIT);
+    compressor = props_ptr->get("Hypertable.RangeServer.CommitLog.Compressor", HYPERTABLE_RANGESERVER_COMMITLOG_COMPRESSOR);
   }
   else {
-    m_max_fragment_size = 268435456LL;
-    compressor = "lzo";
+    m_max_fragment_size = HYPERTABLE_RANGESERVER_COMMITLOG_ROLLLIMIT;
+    compressor = HYPERTABLE_RANGESERVER_COMMITLOG_COMPRESSOR;
   }
 
   HT_INFOF("RollLimit = %lld", m_max_fragment_size);
@@ -70,6 +81,14 @@ void CommitLog::initialize(Filesystem *fs, const String &log_dir, PropertiesPtr 
   m_compressor = CompressorFactory::create_block_codec(compressor);
 
   FileUtils::add_trailing_slash(m_log_dir);
+
+  if (init_log) {
+    stitch_in(init_log);
+    foreach (const CommitLogFileInfo &frag, m_fragment_queue) {
+      if (frag.num >= m_cur_fragment_num)
+	m_cur_fragment_num = frag.num + 1;
+    }
+  }
 
   m_cur_fragment_fname = m_log_dir + m_cur_fragment_num;
 

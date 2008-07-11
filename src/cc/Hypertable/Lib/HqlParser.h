@@ -70,7 +70,8 @@ namespace Hypertable {
       COMMAND_LOAD_RANGE,
       COMMAND_SHUTDOWN,
       COMMAND_UPDATE,
-      COMMAND_REPLAY_START,
+      COMMAND_REPLAY_BEGIN,
+      COMMAND_REPLAY_LOAD_RANGE,
       COMMAND_REPLAY_LOG,
       COMMAND_REPLAY_COMMIT,
       COMMAND_DROP_RANGE,
@@ -1003,7 +1004,7 @@ namespace Hypertable {
             | shutdown_statement[set_command(self.state, COMMAND_SHUTDOWN)]
             | drop_range_statement[set_command(self.state, COMMAND_DROP_RANGE)]
             | replay_start_statement[set_command(self.state,
-                COMMAND_REPLAY_START)]
+                COMMAND_REPLAY_BEGIN)]
             | replay_log_statement[set_command(self.state, COMMAND_REPLAY_LOG)]
             | replay_commit_statement[set_command(self.state,
                 COMMAND_REPLAY_COMMIT)]
