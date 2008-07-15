@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/**
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
  *
  * This file is part of Hypertable.
@@ -19,21 +19,9 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_TIMESTAMP_H
-#define HYPERTABLE_TIMESTAMP_H
+#include "MaintenanceQueue.h"
 
-namespace Hypertable {
+bool Hypertable::MaintenanceQueue::ms_pause = false;
+boost::mutex Hypertable::MaintenanceQueue::ms_mutex;
+boost::condition Hypertable::MaintenanceQueue::ms_cond;
 
-  class Timestamp {
-  public:
-    Timestamp(uint64_t l, uint64_t r) : logical(l), real(r) { return; }
-    Timestamp() : logical(0), real(0) { return; }
-    void clear() { logical = real = 0; }
-    bool operator<(const Timestamp& ts) const { return logical<ts.logical; }
-    uint64_t logical;
-    uint64_t real;
-  };
-
-}
-
-#endif // HYPERTABLE_TIMESTAMP_H

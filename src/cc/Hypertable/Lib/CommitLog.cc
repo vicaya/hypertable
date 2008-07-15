@@ -89,6 +89,16 @@ void CommitLog::initialize(Filesystem *fs, const String &log_dir, PropertiesPtr 
 	m_cur_fragment_num = frag.num + 1;
     }
   }
+  else {  // chose one past the max one found in the directory
+    uint32_t num;
+    std::vector<String> listing;
+    m_fs->readdir(m_log_dir, listing);
+    for (size_t i=0; i<listing.size(); i++) {
+      num = atoi(listing[i].c_str());
+      if (num >= m_cur_fragment_num)
+	m_cur_fragment_num = num + 1;
+    }
+  }
 
   m_cur_fragment_fname = m_log_dir + m_cur_fragment_num;
 

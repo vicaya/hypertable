@@ -37,7 +37,7 @@ void CrashTest::maybe_crash(const String &label) {
   CountDownMap::iterator iter = m_countdown_map.find(label);
   if (iter != m_countdown_map.end()) {
     if ((*iter).second == 0)
-      HT_ABORT;
+      _exit(1);
     m_countdown_map[label] = (*iter).second - 1;
   }
 }

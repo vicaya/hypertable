@@ -134,11 +134,13 @@ bool CommitLogReader::next(const uint8_t **blockp, size_t *lenp, BlockCompressio
       return true;
     }
 
-    HT_ERRORF("Corruption detected in CommitLog fragment %s starting at "
-              "postion %lld for %lld bytes - %s",
-              m_fragment_stack.top().block_stream->get_fname().c_str(),
-              binfo.start_offset, binfo.end_offset - binfo.start_offset,
-              Error::get_text(binfo.error));
+    HT_WARNF("Corruption detected in CommitLog fragment %s starting at "
+	     "postion %lld for %lld bytes - %s",
+	     m_fragment_stack.top().block_stream->get_fname().c_str(),
+	     binfo.start_offset, binfo.end_offset - binfo.start_offset,
+	     Error::get_text(binfo.error));
+    m_fragment_stack.pop();
+
   }
 
   return false;

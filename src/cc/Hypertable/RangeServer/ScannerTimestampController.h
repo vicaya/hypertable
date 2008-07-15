@@ -28,8 +28,7 @@
 #include <boost/multi_index/identity.hpp>
 #include <boost/thread/mutex.hpp>
 
-#include "Timestamp.h"
-
+#include "Hypertable/Lib/Timestamp.h"
 
 namespace Hypertable {
   using namespace boost::multi_index;

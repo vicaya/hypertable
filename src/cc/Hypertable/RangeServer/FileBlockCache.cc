@@ -102,6 +102,9 @@ FileBlockCache::insert_and_checkout(int file_id, uint32_t file_offset,
     }
   }
 
+  if (m_avail_memory < length)
+    return false;
+
   BlockCacheEntry entry(file_id, file_offset);
   entry.block = block;
   entry.length = length;

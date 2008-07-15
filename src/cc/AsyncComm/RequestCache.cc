@@ -28,6 +28,7 @@ using namespace std;
 
 #include "Common/Logger.h"
 
+#include "IOHandlerData.h"
 #include "RequestCache.h"
 using namespace Hypertable;
 
@@ -131,6 +132,7 @@ void RequestCache::purge_requests(IOHandler *handler) {
   for (CacheNode *node = m_tail; node != 0; node = node->next) {
     if (node->handler == handler) {
       HT_DEBUGF("Purging request id %d", node->id);
+      handler->deliver_event(new Event(Event::ERROR, 0, ((IOHandlerData *)handler)->get_address(), Error::COMM_REQUEST_TIMEOUT), node->dh);
       node->handler = 0;  // mark for deletion
     }
   }

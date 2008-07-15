@@ -67,7 +67,8 @@ RangeServerMetaLog::purge(const RangeStates &rs) {
 
   foreach(const RangeStateInfo *i, rs) {
     if (i->transactions.empty()) {
-      RangeState state(RangeState::STEADY, i->soft_limit, 0);
+      RangeState state;
+      state.soft_limit = i->range_state.soft_limit;  // fix me!!!
       entries.push_back(new_rs_range_loaded(i->table, i->range, state));
     }
     else foreach (const MetaLogEntryPtr &p, i->transactions)

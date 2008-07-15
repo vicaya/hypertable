@@ -23,6 +23,15 @@
 #define HYPERTABLE_MAINTENANCEQUEUE_H
 
 #include <cassert>
+#include <queue>
+
+#include <boost/thread.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/condition.hpp>
+
+#include "Common/Error.h"
+#include "Common/Logger.h"
+#include "Common/ReferenceCount.h"
 
 #include "MaintenanceTask.h"
 
@@ -31,6 +40,10 @@ namespace Hypertable {
   /**
    */
   class MaintenanceQueue : public ReferenceCount {
+
+    static bool             ms_pause;
+    static boost::mutex     ms_mutex;
+    static boost::condition ms_cond;
 
     struct LtMaintenanceTask {
       bool operator()(const MaintenanceTask *sm1, const MaintenanceTask *sm2) const {
@@ -85,6 +98,15 @@ namespace Hypertable {
           }
 
           try {
+
+	    // maybe pause
+	    {
+	      boost::mutex::scoped_lock lock(m_state.mutex);
+	      while (ms_pause)
+		ms_cond.wait(lock);
+	    }
+
+	    
             task->execute();
           }
           catch(Hypertable::Exception &e) {
@@ -138,6 +160,21 @@ namespace Hypertable {
         m_threads.join_all();
         joined = true;
       }
+    }
+
+    /**
+     * Stops queue processing
+     */
+    void stop() {
+      ms_pause = true;
+    }
+
+    /**
+     * Starts queue processing
+     */
+    void start() {
+      ms_pause = false;
+      ms_cond.notify_all();
     }
 
     /**

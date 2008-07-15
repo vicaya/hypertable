@@ -33,11 +33,11 @@
 #include "Common/HashMap.h"
 
 #include "Hypertable/Lib/Schema.h"
+#include "Hypertable/Lib/Timestamp.h"
 #include "Hypertable/Lib/Types.h"
 
 #include "CellCache.h"
 #include "CellStore.h"
-#include "Timestamp.h"
 
 
 namespace Hypertable {

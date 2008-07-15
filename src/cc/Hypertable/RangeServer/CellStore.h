@@ -26,9 +26,10 @@
 
 #include "Common/ByteString.h"
 
+#include "Hypertable/Lib/Timestamp.h"
+
 #include "CellList.h"
 #include "CellStoreTrailer.h"
-#include "Timestamp.h"
 
 namespace Hypertable {
 

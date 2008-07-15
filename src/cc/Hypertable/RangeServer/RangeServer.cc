@@ -39,6 +39,7 @@ extern "C" {
 #include "Hypertable/Lib/CommitLog.h"
 #include "Hypertable/Lib/Defaults.h"
 #include "Hypertable/Lib/RangeServerMetaLogReader.h"
+#include "Hypertable/Lib/RangeServerMetaLogEntries.h"
 #include "Hypertable/Lib/RangeServerProtocol.h"
 
 #include "DfsBroker/Lib/Client.h"
@@ -194,7 +195,12 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
   m_master_connection_handler = new ConnectionHandler(comm, m_app_queue_ptr, this, m_master_client_ptr);
   m_master_client_ptr->initiate_connection(m_master_connection_handler);
 
-  fast_recover();
+  // Halt maintenance queue processing during recovery
+  Global::maintenance_queue->stop();
+
+  local_recover();
+
+  Global::maintenance_queue->start();
 
   Global::log_prune_threshold_min = props_ptr->get_int64("Hypertable.RangeServer.CommitLog.PruneThreshold.Min",
                                                          2 * Global::user_log->get_max_fragment_size());
@@ -306,13 +312,12 @@ int RangeServer::initialize(PropertiesPtr &props_ptr) {
 
 /**
  */
-void RangeServer::fast_recover() {
+void RangeServer::local_recover() {
   String meta_log_fname = Global::log_dir + "/range_txn/0.log";
   RangeServerMetaLogReaderPtr rsml_reader;
   CommitLogReaderPtr root_log_reader_ptr;
   CommitLogReaderPtr metadata_log_reader_ptr;
   CommitLogReaderPtr user_log_reader_ptr;
-  RangeState range_state;
 
   try {
 
@@ -336,8 +341,7 @@ void RangeServer::fast_recover() {
       foreach(const RangeStateInfo *i, range_states) {
 	if (i->table.id == 0 && i->range.end_row && !strcmp(i->range.end_row, Key::END_ROOT_ROW)) {
 	  HT_EXPECT(i->transactions.empty(), Error::FAILED_EXPECTATION);
-	  range_state.clear();
-	  replay_load_range(0, &i->table, &i->range, &range_state);
+	  replay_load_range(0, &i->table, &i->range, &i->range_state);
 	}
       }
 
@@ -357,16 +361,8 @@ void RangeServer::fast_recover() {
       m_replay_map_ptr->clear();
 
       foreach(const RangeStateInfo *i, range_states) {
-	if (i->table.id == 0 && !(i->range.end_row && !strcmp(i->range.end_row, Key::END_ROOT_ROW))) {
-	  if (i->transactions.empty()) {
-	    range_state.clear();
-	    range_state.soft_limit = i->soft_limit;
-	    replay_load_range(0, &i->table, &i->range, &range_state);
-	  }
-	  else {
-	    // TODO fix me !!!
-	  }
-	}
+	if (i->table.id == 0 && !(i->range.end_row && !strcmp(i->range.end_row, Key::END_ROOT_ROW)))
+	  replay_load_range(0, &i->table, &i->range, &i->range_state);
       }
 
       if (!m_replay_map_ptr->empty()) {
@@ -385,16 +381,8 @@ void RangeServer::fast_recover() {
       m_replay_map_ptr->clear();
 
       foreach(const RangeStateInfo *i, range_states) {
-	if (i->table.id != 0) {
-	  if (i->transactions.empty()) {
-	    range_state.clear();
-	    range_state.soft_limit = i->soft_limit;
-	    replay_load_range(0, &i->table, &i->range, &range_state);
-	  }
-	  else {
-	    // TODO fix me !!!
-	  }
-	}
+	if (i->table.id != 0)
+	  replay_load_range(0, &i->table, &i->range, &i->range_state);
       }
 
       if (!m_replay_map_ptr->empty()) {
@@ -419,6 +407,7 @@ void RangeServer::fast_recover() {
     Global::user_log = new CommitLog(Global::log_dfs, Global::log_dir + "/user", m_props_ptr, user_log_reader_ptr.get());
 
     Global::range_log = new RangeServerMetaLog(Global::log_dfs, meta_log_fname);
+
   }
   catch (Exception &e) {
     HT_ERRORF("Problem attempting fast recovery - %s - %s", Error::get_text(e.code()), e.what());
@@ -1786,7 +1775,7 @@ void RangeServer::log_cleanup() {
     table_vec[i]->get_range_vector(range_vec);
 
   // compute prune threshold
-  prune_threshold = ((double)(m_bytes_loaded / m_timer_interval) / 1000000.0) * (double)Global::log_prune_threshold_max;
+  prune_threshold = (double)(((double)(m_bytes_loaded / m_timer_interval) / 1000000.0) * (double)Global::log_prune_threshold_max);
   if (prune_threshold < Global::log_prune_threshold_min)
     prune_threshold = Global::log_prune_threshold_min;
   else if (prune_threshold > Global::log_prune_threshold_max)

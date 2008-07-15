@@ -56,7 +56,7 @@ typedef RangeServerMetaLogReader Reader;
 
 void load_entry(Reader &rd, RsiSet &rsi_set, RangeLoaded *ep) {
   RangeStateInfo *rsi = new RangeStateInfo(ep->table, ep->range,
-      ep->range_state.soft_limit, ep->timestamp);
+      ep->range_state, ep->timestamp);
   RsiInsRes res = rsi_set.insert(rsi);
 
   if (!res.second) {
@@ -76,8 +76,7 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitStart *ep) {
         "%lu/%lu in %s", (Lu)rd.pos(), (Lu)rd.size(), rd.path().c_str());
 
   (*it)->transactions.push_back(ep);
-  // soft limit changes upon split
-  (*it)->soft_limit = ep->range_state.soft_limit;
+  (*it)->range_state = ep->range_state;
 }
 
 void load_entry(Reader &rd, RsiSet &rsi_set, SplitDone *ep) {
@@ -91,6 +90,7 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitDone *ep) {
         "%lu/%lu in %s", (Lu)rd.pos(), (Lu)rd.size(), rd.path().c_str());
 
   (*it)->transactions.clear();
+  (*it)->range_state.clear();
 }
 
 void load_entry(Reader &rd, RsiSet &rsi_set, SplitShrunk *ep) {
@@ -106,6 +106,7 @@ void load_entry(Reader &rd, RsiSet &rsi_set, SplitShrunk *ep) {
   (*it)->transactions.push_back(ep);
   // update shrunk range
   (*it)->range = ep->range;
+  (*it)->range_state = ep->range_state;
 }
 
 void load_entry(Reader &rd, RsiSet &rsi_set, MoveStart *ep) {

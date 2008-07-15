@@ -33,6 +33,7 @@
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/RangeState.h"
 #include "Hypertable/Lib/Schema.h"
+#include "Hypertable/Lib/Timestamp.h"
 
 #include "AccessGroup.h"
 #include "CellStore.h"
@@ -40,7 +41,6 @@
 #include "Metadata.h"
 #include "RangeUpdateBarrier.h"
 #include "ScannerTimestampController.h"
-#include "Timestamp.h"
 
 namespace Hypertable {
 
@@ -156,6 +156,8 @@ namespace Hypertable {
       return (String)m_name;
     }
 
+    int get_state() { return m_state.state; }
+
   private:
 
     void load_cell_stores(Metadata *metadata);
@@ -164,9 +166,9 @@ namespace Hypertable {
 
     void run_compaction(bool major=false);
 
-    void split_install_log(Timestamp *timestampp, String &old_start_row);
-    void split_compact_and_shrink(Timestamp timestamp, String &old_start_row);
-    void split_notify_master(String &old_start_row);
+    void split_install_log();
+    void split_compact_and_shrink();
+    void split_notify_master();
 
     boost::mutex        m_mutex;
     MasterClientPtr     m_master_client_ptr;

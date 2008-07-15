@@ -89,7 +89,7 @@ namespace Hypertable {
 
   private:
     int initialize(PropertiesPtr &);
-    void fast_recover();
+    void local_recover();
     void replay_log(CommitLogReaderPtr &log_reader_ptr);
     int verify_schema(TableInfoPtr &, int generation, std::string &errmsg);
     void schedule_log_cleanup_compactions(std::vector<RangePtr> &range_vec, CommitLog *log, uint64_t prune_threshold);

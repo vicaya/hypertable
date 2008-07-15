@@ -51,9 +51,10 @@ public:
   }
 
   void
-  log_split_shrunk(const TableIdentifier &table, const RangeSpec &range) {
+  log_split_shrunk(const TableIdentifier &table, const RangeSpec &range,
+		   const RangeState &state) {
     MetaLogEntryPtr entry(MetaLogEntryFactory::new_rs_split_shrunk(
-                          table, range));
+                          table, range, state));
     write(entry.get());
   }
 

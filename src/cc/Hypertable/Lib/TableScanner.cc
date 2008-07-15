@@ -279,7 +279,7 @@ void TableScanner::find_range_and_start_scan(const char *row_key, Timer &timer) 
       m_range_server.create_scanner(m_cur_addr, m_table_identifier, range, m_scan_spec, m_scanblock);
     }
     catch (Exception &e) {
-      HT_ERRORF("%s", e.what());
+      HT_ERRORF("%s - %s", e.what(), Error::get_text(e.code()));
       HT_THROW(e.code(), String("Problem creating scanner on ") + m_table_identifier.name + "[" + range.start_row + ".." + range.end_row + "]");
     }
   }

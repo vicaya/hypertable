@@ -22,8 +22,9 @@
 #ifndef HYPERTABLE_CELLSTORETRAILERV0_H
 #define HYPERTABLE_CELLSTORETRAILERV0_H
 
+#include "Hypertable/Lib/Timestamp.h"
+
 #include "CellStoreTrailer.h"
-#include "Timestamp.h"
 
 namespace Hypertable {
 

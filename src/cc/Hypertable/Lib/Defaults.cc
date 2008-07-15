@@ -22,12 +22,12 @@
 #include "Common/Compat.h"
 #include "Defaults.h"
 
-const int Hypertable::HYPERTABLE_CLIENT_TIMEOUT = 300;
+const int Hypertable::HYPERTABLE_CLIENT_TIMEOUT = 60;
 
 const int Hypertable::HYPERTABLE_LOCATIONCACHE_MAXENTRIES = 1000000;
 
-const int Hypertable::HYPERTABLE_MASTER_CLIENT_TIMEOUT = 300;
-const int Hypertable::HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT = 300;
+const int Hypertable::HYPERTABLE_MASTER_CLIENT_TIMEOUT = 120;
+const int Hypertable::HYPERTABLE_RANGESERVER_CLIENT_TIMEOUT = 120;
 
 const char *Hypertable::HYPERTABLE_RANGESERVER_COMMITLOG_DFSBROKER_HOST = "localhost";
 const uint16_t Hypertable::HYPERTABLE_RANGESERVER_COMMITLOG_DFSBROKER_PORT = 38030;

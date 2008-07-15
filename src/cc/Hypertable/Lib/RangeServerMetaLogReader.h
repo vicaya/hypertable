@@ -30,11 +30,11 @@ namespace Hypertable {
 
 struct RangeStateInfo {
   RangeStateInfo(const TableIdentifier &tid, const RangeSpec &r, 
-                 uint64_t slimit, uint64_t ts)
-      : table(tid), range(r), soft_limit(slimit), timestamp(ts) {}
+                 const RangeState &state, uint64_t ts)
+    : table(tid), range(r), range_state(state), timestamp(ts) {}
 
   RangeStateInfo(const TableIdentifier &tid, const RangeSpec &r)
-      : table(TableIdentifier()), range(RangeSpec()) {
+    : table(TableIdentifier()), range(RangeSpec()) {
     // constructing lookup key only no copy needed
     table.id = tid.id;
     range.end_row = r.end_row;
@@ -42,7 +42,7 @@ struct RangeStateInfo {
 
   TableIdentifierManaged table;
   RangeSpecManaged range;
-  uint64_t soft_limit;
+  RangeStateManaged range_state;
   uint64_t timestamp; // time when the range is loaded
   MetaLogEntries transactions; // log entries associated with current txn
 };

@@ -92,6 +92,17 @@ Range::Range(MasterClientPtr &master_client_ptr, const TableIdentifier *identifi
     load_cell_stores(&metadata);
   }
 
+  /**
+   * re-open transfer log if split was in progress
+   */
+  if (m_state.state == RangeState::SPLIT_LOG_INSTALLED) {
+    m_split_log_ptr = new CommitLog(Global::dfs, m_state.transfer_log);
+    m_split_row = m_state.split_point;
+  }
+
+  std::cout << "Range object for " << m_name << " constructed\n";
+  std::cout << *state << endl;
+
   return;
 }
 
@@ -313,7 +324,6 @@ void Range::get_compaction_priority_data(std::vector<AccessGroup::CompactionPrio
 
 
 void Range::split() {
-  Timestamp timestamp;
   String old_start_row;
 
   HT_EXPECT(m_maintenance_in_progress, Error::FAILED_EXPECTATION);
@@ -324,17 +334,13 @@ void Range::split() {
     switch (m_state.state) {
 
     case (RangeState::STEADY):
-      split_install_log(&timestamp, old_start_row);
-      m_state.state = RangeState::SPLIT_LOG_INSTALLED;
+      split_install_log();
 
     case (RangeState::SPLIT_LOG_INSTALLED):
-      split_compact_and_shrink(timestamp, old_start_row);
-      m_state.state = RangeState::SPLIT_SHRUNK;
+      split_compact_and_shrink();
 
     case (RangeState::SPLIT_SHRUNK):
-      split_notify_master(old_start_row);
-      m_state.state = RangeState::STEADY;
-      m_state.transfer_log = "";
+      split_notify_master();
 
     }
 
@@ -351,10 +357,9 @@ void Range::split() {
 
 
 
-
 /**
  */
-void Range::split_install_log(Timestamp *timestampp, String &old_start_row) {
+void Range::split_install_log() {
   std::vector<String> split_rows;
   char md5DigestStr[33];
 
@@ -415,10 +420,12 @@ void Range::split_install_log(Timestamp *timestampp, String &old_start_row) {
               m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
   }
 
+  m_state.set_split_point(m_split_row);
+
   /**
    * Create split (transfer) log
    */
-  md5_string(m_split_row.c_str(), md5DigestStr);
+  md5_string(m_state.split_point, md5DigestStr);
   md5DigestStr[24] = 0;
   m_state.set_transfer_log(Global::log_dir + "/" + md5DigestStr);
 
@@ -431,25 +438,25 @@ void Range::split_install_log(Timestamp *timestampp, String &old_start_row) {
   }
 
   /**
-   * Write SPLIT_START MetaLog entry
-   */
-  Global::range_log->log_split_start(m_identifier,
-				    RangeSpec(m_start_row.c_str(), m_end_row.c_str()),
-				    RangeSpec(m_start_row.c_str(), m_split_row.c_str()),
-				    m_state);
-
-  /**
    * Create and install the split log
    */
   {
     RangeUpdateBarrier::ScopedActivator block_updates(m_update_barrier);
     boost::mutex::scoped_lock lock(m_mutex);
-    if (!m_scanner_timestamp_controller.get_oldest_update_timestamp(timestampp) ||
-        timestampp->logical == 0)
-      *timestampp = m_timestamp;
-    old_start_row = m_start_row;
+    if (!m_scanner_timestamp_controller.get_oldest_update_timestamp(&m_state.timestamp) ||
+        m_state.timestamp.logical == 0)
+      m_state.timestamp = m_timestamp;
     m_split_log_ptr = new CommitLog(Global::dfs, m_state.transfer_log);
   }
+
+  /**
+   * Write SPLIT_START MetaLog entry
+   */
+  m_state.state = RangeState::SPLIT_LOG_INSTALLED;
+  Global::range_log->log_split_start(m_identifier,
+				    RangeSpec(m_start_row.c_str(), m_end_row.c_str()),
+				    RangeSpec(m_start_row.c_str(), m_state.split_point),
+				    m_state);
 
   if (Global::crash_test)
     Global::crash_test->maybe_crash("split-1");
@@ -461,24 +468,17 @@ void Range::split_install_log(Timestamp *timestampp, String &old_start_row) {
 /**
  *
  */
-void Range::split_compact_and_shrink(Timestamp timestamp, String &old_start_row) {
+void Range::split_compact_and_shrink() {
   int error;
+  String old_start_row = m_start_row;
 
   /**
    * Perform major compactions
    */
   {
     for (size_t i=0; i<m_access_group_vector.size(); i++)
-      m_access_group_vector[i]->run_compaction(timestamp, true);
+      m_access_group_vector[i]->run_compaction(m_state.timestamp, true);
   }
-
-  /**
-   * Write SPLIT_SHRUNK MetaLog entry
-   */
-  Global::range_log->log_split_shrunk(m_identifier, RangeSpec(m_split_row.c_str(), m_end_row.c_str()));
-
-  if (Global::crash_test)
-    Global::crash_test->maybe_crash("split-2");
 
   try {
     String files;
@@ -496,12 +496,12 @@ void Range::split_compact_and_shrink(Timestamp timestamp, String &old_start_row)
     key.column_qualifier = 0;
     key.column_qualifier_len = 0;
     key.column_family = "StartRow";
-    mutator_ptr->set(key, (uint8_t *)m_split_row.c_str(), m_split_row.length());
+    mutator_ptr->set(key, (uint8_t *)m_state.split_point, strlen(m_state.split_point));
 
     /**
      * Create an entry for the new range
      */
-    metadata_key_str = std::string("") + (uint32_t)m_identifier.id + ":" + m_split_row;
+    metadata_key_str = std::string("") + (uint32_t)m_identifier.id + ":" + m_state.split_point;
     key.row = metadata_key_str.c_str();
     key.row_len = metadata_key_str.length();
     key.column_qualifier = 0;
@@ -523,13 +523,10 @@ void Range::split_compact_and_shrink(Timestamp timestamp, String &old_start_row)
   }
   catch (Hypertable::Exception &e) {
     // TODO: propagate exception
-    HT_ERRORF("Problem updating ROOT METADATA range (new=%s, existing=%s) - %s", m_split_row.c_str(), m_end_row.c_str(), Error::get_text(e.code()));
+    HT_ERRORF("Problem updating ROOT METADATA range (new=%s, existing=%s) - %s", m_state.split_point, m_end_row.c_str(), Error::get_text(e.code()));
     // need to unblock updates and then return error
     HT_ABORT;
   }
-
-  if (Global::crash_test)
-    Global::crash_test->maybe_crash("split-3");
 
   /**
    *  Shrink the range
@@ -540,7 +537,7 @@ void Range::split_compact_and_shrink(Timestamp timestamp, String &old_start_row)
     boost::mutex::scoped_lock lock(m_mutex);
 
     // Shrink access groups
-    m_start_row = m_split_row;
+    m_start_row = m_state.split_point;
     m_name = std::string(m_identifier.name) + "[" + m_start_row + ".." + m_end_row + "]";
     m_split_row = "";
     for (size_t i=0; i<m_access_group_vector.size(); i++)
@@ -553,18 +550,30 @@ void Range::split_compact_and_shrink(Timestamp timestamp, String &old_start_row)
     m_split_log_ptr = 0;
   }
 
+  /**
+   * Write SPLIT_SHRUNK MetaLog entry
+   */
+  m_state.state = RangeState::SPLIT_SHRUNK;
+  m_state.timestamp.clear();
+  m_state.set_old_start_row(old_start_row);
+  m_state.clear_split_point();
+  Global::range_log->log_split_shrunk(m_identifier, RangeSpec(m_start_row.c_str(), m_end_row.c_str()), m_state);
+
+  if (Global::crash_test)
+    Global::crash_test->maybe_crash("split-2");
+
 }
 
 
 /**
  *
  */
-void Range::split_notify_master(String &old_start_row) {
+void Range::split_notify_master() {
   int error;
   RangeSpec range;
   uint64_t soft_limit = m_state.soft_limit;
 
-  range.start_row = old_start_row.c_str();
+  range.start_row = m_state.old_start_row;
   range.end_row = m_start_row.c_str();
 
   // update the latest generation, this should probably be protected
@@ -583,15 +592,23 @@ void Range::split_notify_master(String &old_start_row) {
               m_identifier.name, range.start_row, range.end_row);
   }
 
+  /**
+   * NOTE: try the following crash and make sure that the master does
+   * not try to load the range twice.
+   */
+
   if (Global::crash_test)
-    Global::crash_test->maybe_crash("split-4");
+    Global::crash_test->maybe_crash("split-3");
+
+  m_state.soft_limit = soft_limit;
 
   /**
    * Write SPLIT_DONE MetaLog entry
    */
+  m_state.state = RangeState::STEADY;
+  m_state.clear_transfer_log();
+  m_state.clear_old_start_row();
   Global::range_log->log_split_done(m_identifier, RangeSpec(m_start_row.c_str(), m_end_row.c_str()));
-
-  m_state.soft_limit = soft_limit;
 
 }
 

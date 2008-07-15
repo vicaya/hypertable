@@ -55,6 +55,7 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
 
   if (event->events & EPOLLOUT) {
     if (handle_write_readiness()) {
+      m_reactor_ptr->cancel_requests(this);
       deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
       return true;
     }
@@ -70,12 +71,14 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
           if (errno != ECONNREFUSED) {
             HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_header_remaining, strerror(errno));
           }
+	  m_reactor_ptr->cancel_requests(this);
           int error = (errno == ECONNREFUSED) ? Error::COMM_CONNECT_ERROR : Error::OK;
           deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, error));
           return true;
         }
         else if (nread == 0 && total_read == 0) {
           // eof
+	  m_reactor_ptr->cancel_requests(this);
           deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
           return true;
         }
@@ -97,11 +100,13 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
         nread = FileUtils::read(m_sd, m_message_ptr, m_message_remaining);
         if (nread < 0) {
           HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_header_remaining, strerror(errno));
+	  m_reactor_ptr->cancel_requests(this);
           deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
           return true;
         }
         else if (nread == 0 && total_read == 0) {
           // eof
+	  m_reactor_ptr->cancel_requests(this);
           deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
           return true;
         }
@@ -131,12 +136,14 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
 
   if (event->events & EPOLLERR) {
     HT_WARNF("Received EPOLLERR on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+    m_reactor_ptr->cancel_requests(this);
     deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
     return true;
   }
 
   if (event->events & EPOLLHUP) {
     HT_WARNF("Received EPOLLHUP on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+    m_reactor_ptr->cancel_requests(this);
     deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
     return true;
   }
@@ -156,6 +163,7 @@ bool IOHandlerData::handle_event(struct kevent *event) {
   assert(m_sd == (int)event->ident);
 
   if (event->flags & EV_EOF) {
+    m_reactor_ptr->cancel_requests(this);
     if (!m_connected)
       deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::COMM_CONNECT_ERROR));
     else
@@ -165,6 +173,7 @@ bool IOHandlerData::handle_event(struct kevent *event) {
 
   if (event->filter == EVFILT_WRITE) {
     if (handle_write_readiness()) {
+      m_reactor_ptr->cancel_requests(this);
       deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
       return true;
     }
@@ -180,6 +189,7 @@ bool IOHandlerData::handle_event(struct kevent *event) {
           nread = FileUtils::read(m_sd, ptr, m_message_header_remaining);
           if (nread < 0) {
             HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_header_remaining, strerror(errno));
+	    m_reactor_ptr->cancel_requests(this);
             deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
             return true;
           }
@@ -196,6 +206,7 @@ bool IOHandlerData::handle_event(struct kevent *event) {
           nread = FileUtils::read(m_sd, ptr, available);
           if (nread < 0) {
             HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, available, strerror(errno));
+	    m_reactor_ptr->cancel_requests(this);
             deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
             return true;
           }
@@ -209,6 +220,7 @@ bool IOHandlerData::handle_event(struct kevent *event) {
           nread = FileUtils::read(m_sd, m_message_ptr, m_message_remaining);
           if (nread < 0) {
             HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_remaining, strerror(errno));
+	    m_reactor_ptr->cancel_requests(this);
             deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
             return true;
           }
@@ -232,6 +244,7 @@ bool IOHandlerData::handle_event(struct kevent *event) {
           nread = FileUtils::read(m_sd, m_message_ptr, available);
           if (nread < 0) {
             HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, available, strerror(errno));
+	    m_reactor_ptr->cancel_requests(this);
             deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
             return true;
           }

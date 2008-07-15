@@ -33,6 +33,7 @@ FileBlockCache.cc
 FillScanBlock.cc
 Global.cc
 HyperspaceSessionHandler.cc
+MaintenanceQueue.cc
 MaintenanceTaskCompaction.cc
 MaintenanceTaskLogCleanup.cc
 MaintenanceTaskSplit.cc

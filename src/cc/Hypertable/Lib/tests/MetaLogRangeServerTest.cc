@@ -50,12 +50,18 @@ write_test(Filesystem *fs, const String &fname) {
   metalog->log_range_loaded(table, range, state);
 
   RangeSpec split_off("0", "H");
-  RangeState st(RangeState::SPLIT_LOG_INSTALLED, 6400000, "/test/split.log");
+  RangeState st;
+  st.state = RangeState::SPLIT_LOG_INSTALLED;
+  st.soft_limit = 6400000;
+  st.transfer_log = "/test/split.log";
   metalog->log_split_start(table, range, split_off, st);
-  metalog->log_split_shrunk(table, range);
+  st.old_start_row = "0";
+  metalog->log_split_shrunk(table, range, st);
 
   RangeSpec r3("Z", "z");
-  RangeState s3(RangeState::STEADY, 6400000, NULL);
+  RangeState s3;
+  s3.state = RangeState::STEADY;
+  s3.soft_limit = 6400000;
   metalog->log_range_loaded(table, r3, s3);
 }
 
