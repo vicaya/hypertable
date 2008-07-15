@@ -65,10 +65,13 @@ add_test(Common-Exception exception_test)
 add_test(Common-Logging logging_test)
 add_test(Common-Serialization sertest)
 
-configure_file(Version.h.in ${HYPERTABLE_BINARY_DIR}/src/cc/Common/Version.h)
+set(VERSION_H ${HYPERTABLE_BINARY_DIR}/src/cc/Common/Version.h)
+
+configure_file(Version.h.in ${VERSION_H})
+
 file(GLOB HEADERS *.h)
 
-install(FILES ${HEADERS} DESTINATION ${VERSION}/include/Common)
+install(FILES ${HEADERS} ${VERSION_H} DESTINATION ${VERSION}/include/Common)
 
 install(TARGETS HyperCommon
         RUNTIME DESTINATION ${VERSION}/bin
