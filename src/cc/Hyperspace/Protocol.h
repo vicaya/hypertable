@@ -51,7 +51,7 @@ namespace Hyperspace {
 
     virtual const char *command_text(short command);
 
-    static CommBuf *create_client_keepalive_request(uint64_t session_id, uint64_t last_known_event);
+    static CommBuf *create_client_keepalive_request(uint64_t session_id, uint64_t last_known_event, bool shutdown=false);
     static CommBuf *create_server_keepalive_request(uint64_t session_id, int error);
     static CommBuf *create_server_keepalive_request(SessionDataPtr &session_data);
     static CommBuf *create_handshake_request(uint64_t session_id);

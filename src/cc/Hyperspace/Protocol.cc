@@ -69,12 +69,13 @@ const char *Hyperspace::Protocol::command_text(short command) {
 /**
  *
  */
-CommBuf *Hyperspace::Protocol::create_client_keepalive_request(uint64_t session_id, uint64_t last_known_event) {
+CommBuf *Hyperspace::Protocol::create_client_keepalive_request(uint64_t session_id, uint64_t last_known_event, bool shutdown) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
-  CommBuf *cbuf = new CommBuf(hbuilder, 18);
+  CommBuf *cbuf = new CommBuf(hbuilder, 19);
   cbuf->append_i16(COMMAND_KEEPALIVE);
   cbuf->append_i64(session_id);
   cbuf->append_i64(last_known_event);
+  cbuf->append_bool(shutdown);
   return cbuf;
 }
 

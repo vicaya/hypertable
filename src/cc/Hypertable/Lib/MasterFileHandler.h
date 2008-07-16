@@ -38,10 +38,10 @@ namespace Hypertable {
   class MasterFileHandler : public Hyperspace::HandleCallback {
   public:
 
-    MasterFileHandler(MasterClientPtr master_client, ApplicationQueuePtr &app_queue) : HandleCallback(EVENT_MASK_ATTR_SET), m_master_client_ptr(master_client), m_app_queue_ptr(app_queue) { return; }
+    MasterFileHandler(MasterClient *master_client, ApplicationQueuePtr &app_queue) : HandleCallback(EVENT_MASK_ATTR_SET), m_master_client(master_client), m_app_queue_ptr(app_queue) { return; }
     virtual void attr_set(std::string name);
-    MasterClientPtr      m_master_client_ptr;
-    ApplicationQueuePtr  m_app_queue_ptr;
+    MasterClient         *m_master_client;
+    ApplicationQueuePtr   m_app_queue_ptr;
   };
 }
 

@@ -79,6 +79,7 @@ Session::Session(Comm *comm, PropertiesPtr &props_ptr, SessionCallback *callback
 }
 
 Session::~Session() {
+  m_keepalive_handler_ptr->destroy_session();
 }
 
 

@@ -73,12 +73,16 @@ void ServerKeepaliveHandler::handle(Hypertable::EventPtr &event) {
 
       switch (command) {
       case Protocol::COMMAND_KEEPALIVE: {
-          uint64_t session_id;
           SessionDataPtr session_ptr;
-          uint64_t last_known_event;
 
-          session_id = decode_i64(&msg, &remaining);
-          last_known_event = decode_i64(&msg, &remaining);
+          uint64_t session_id = decode_i64(&msg, &remaining);
+          uint64_t last_known_event = decode_i64(&msg, &remaining);
+	  bool shutdown = decode_bool(&msg, &remaining);
+
+	  if (shutdown) {
+	    m_master->destroy_session(session_id);
+	    return;
+	  }
 
           if (session_id == 0) {
             session_id = m_master->create_session(event->addr);

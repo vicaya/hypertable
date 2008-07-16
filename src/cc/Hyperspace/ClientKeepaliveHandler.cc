@@ -87,13 +87,6 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &props_
   return;
 }
 
-/**
- *
- */
-ClientKeepaliveHandler::~ClientKeepaliveHandler() {
-  m_comm->close_socket(m_local_addr);
-}
-
 
 
 /**
@@ -301,4 +294,18 @@ void ClientKeepaliveHandler::expire_session() {
   poll(0,0,2000);
   m_conn_handler_ptr = 0;
   return;
+}
+
+
+void ClientKeepaliveHandler::destroy_session() {
+  int error;
+
+  CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(m_session_id, m_last_known_event, true));
+
+  if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp) != Error::OK))
+    HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
+
+  poll(0, 0, 1000);
+
+  m_comm->close_socket(m_local_addr);
 }

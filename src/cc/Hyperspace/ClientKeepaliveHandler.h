@@ -47,7 +47,6 @@ namespace Hyperspace {
 
   public:
     ClientKeepaliveHandler(Comm *comm, PropertiesPtr &props, Session *session);
-    virtual ~ClientKeepaliveHandler();
 
     virtual void handle(Hypertable::EventPtr &event_ptr);
 
@@ -73,6 +72,8 @@ namespace Hyperspace {
     }
 
     void expire_session();
+
+    void destroy_session();
 
   private:
     boost::mutex       m_mutex;
