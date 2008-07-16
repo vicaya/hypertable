@@ -65,16 +65,18 @@ bool IOHandlerDatagram::handle_event(struct epoll_event *event) {
     struct sockaddr_in addr;
     socklen_t fromlen = sizeof(struct sockaddr_in);
 
-    if ((nread = FileUtils::recvfrom(m_sd, m_message, 65536, (struct sockaddr *)&addr, &fromlen)) == (ssize_t)-1) {
+    while ((nread = FileUtils::recvfrom(m_sd, m_message, 65536, (struct sockaddr *)&addr, &fromlen)) != (ssize_t)-1) {
+      rmsg = new uint8_t [nread];
+      memcpy(rmsg, m_message, nread);
+      deliver_event(new Event(Event::MESSAGE, 0, addr, Error::OK, (Header::Common *)rmsg));
+      fromlen = sizeof(struct sockaddr_in);
+    }
+
+    if (errno != EAGAIN) {
       HT_ERRORF("FileUtils::recvfrom(%d) failure : %s", m_sd, strerror(errno));
       deliver_event(new Event(Event::ERROR, m_sd, addr, Error::COMM_RECEIVE_ERROR));
       return true;
     }
-
-    rmsg = new uint8_t [nread];
-    memcpy(rmsg, m_message, nread);
-
-    deliver_event(new Event(Event::MESSAGE, 0, addr, Error::OK, (Header::Common *)rmsg));
 
     return false;
   }

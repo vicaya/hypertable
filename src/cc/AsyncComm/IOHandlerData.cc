@@ -76,12 +76,6 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
           deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, error));
           return true;
         }
-        else if (nread == 0 && total_read == 0) {
-          // eof
-	  m_reactor_ptr->cancel_requests(this);
-          deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
-          return true;
-        }
         else if (nread < m_message_header_remaining) {
           m_message_header_remaining -= nread;
           return false;
@@ -100,12 +94,6 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
         nread = FileUtils::read(m_sd, m_message_ptr, m_message_remaining);
         if (nread < 0) {
           HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_header_remaining, strerror(errno));
-	  m_reactor_ptr->cancel_requests(this);
-          deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
-          return true;
-        }
-        else if (nread == 0 && total_read == 0) {
-          // eof
 	  m_reactor_ptr->cancel_requests(this);
           deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
           return true;

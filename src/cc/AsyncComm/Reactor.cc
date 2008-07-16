@@ -93,10 +93,20 @@ Reactor::Reactor() : m_mutex(), m_interrupt_in_progress(false) {
     exit(1);
   }
 
+  // get the assigned address
+  socklen_t namelen = sizeof(addr);
+  getsockname(m_interrupt_sd, (sockaddr *)&addr, &namelen);
+
+  // connect to ourself
+  if (connect(m_interrupt_sd, (const struct sockaddr *)&addr, sizeof(addr)) < 0) {
+    HT_ERRORF("connect(interrupt_sd) failed - %s", strerror(errno));
+    exit(1);
+  }
+
 #if defined(__linux__)
   struct epoll_event event;
   memset(&event, 0, sizeof(struct epoll_event));
-  event.events = EPOLLERR | EPOLLHUP;
+  event.events = EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP | EPOLLET;
   if (epoll_ctl(poll_fd, EPOLL_CTL_ADD, m_interrupt_sd, &event) < 0) {
     HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLERR|EPOLLHUP) failed : %s",
                  poll_fd, m_interrupt_sd, strerror(errno));
@@ -188,17 +198,22 @@ void Reactor::poll_loop_interrupt() {
   m_interrupt_in_progress = true;
 
 #if defined(__linux__)
-  struct epoll_event event;
 
-  memset(&event, 0, sizeof(struct epoll_event));
-  event.events = EPOLLOUT | EPOLLERR | EPOLLHUP;
+  char buf[8];
+  ssize_t n;
 
-  if (epoll_ctl(poll_fd, EPOLL_CTL_MOD, m_interrupt_sd, &event) < 0) {
-    /**
-    HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_MOD, sd=%d) : %s",
-                 poll_fd, m_interrupt_sd, strerror(errno));
-    DUMP_CORE;
-    **/
+  /**
+   * Send and receive 1 byte to ourselves to cause epoll_wait to return
+   */
+
+  if ((n = FileUtils::send(m_interrupt_sd, "1", 1)) < 0) {
+    HT_ERRORF("send(interrupt_sd) failed - %s", strerror(errno));
+    exit(1);
+  }
+
+  if ((n = FileUtils::recv(m_interrupt_sd, buf, 8)) == -1) {
+    HT_ERRORF("recv(interrupt_sd) failed - %s", strerror(errno));
+    exit(1);
   }
 
 #elif defined(__APPLE__)
@@ -224,17 +239,7 @@ void Reactor::poll_loop_continue() {
   if (!m_interrupt_in_progress)
     return;
 
-#if defined(__linux__)
-  struct epoll_event event;
-
-  memset(&event, 0, sizeof(struct epoll_event));
-  event.events = EPOLLERR | EPOLLHUP;
-
-  if (epoll_ctl(poll_fd, EPOLL_CTL_MOD, m_interrupt_sd, &event) < 0) {
-    HT_ERRORF("epoll_ctl(EPOLL_CTL_MOD, sd=%d) : %s", m_interrupt_sd, strerror(errno));
-    exit(1);
-  }
-#elif defined(__APPLE__)
+#if defined(__APPLE__)
   struct kevent devent;
 
   EV_SET(&devent, m_interrupt_sd, EVFILT_WRITE, EV_DELETE, 0, 0, 0);

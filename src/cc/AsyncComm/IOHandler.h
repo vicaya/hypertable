@@ -106,7 +106,7 @@ namespace Hypertable {
       struct epoll_event event;
       memset(&event, 0, sizeof(struct epoll_event));
       event.data.ptr = this;
-      event.events = EPOLLIN | EPOLLERR | EPOLLHUP;
+      event.events = EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP | EPOLLET;
       if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_ADD, m_sd, &event) < 0) {
         HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN|EPOLLERR|EPOLLHUP) failed : %s",
                      m_reactor_ptr->poll_fd, m_sd, strerror(errno));

@@ -41,48 +41,13 @@ using namespace Hypertable;
 #if defined(__linux__)
 
 void IOHandler::add_poll_interest(int mode) {
-  struct epoll_event event;
-
   m_poll_interest |= mode;
-
-  memset(&event, 0, sizeof(struct epoll_event));
-  event.data.ptr = this;
-  event.events = EPOLLERR | EPOLLHUP;
-
-  if (m_poll_interest & Reactor::READ_READY)
-    event.events |= EPOLLIN;
-  if (m_poll_interest & Reactor::WRITE_READY)
-    event.events |= EPOLLOUT;
-
-  if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
-    /**
-    HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_MOD, sd=%d) (mode=%x) : %s",
-                 m_reactor_ptr->poll_fd, m_sd, mode, strerror(errno));
-    *((int *)0) = 1;
-    **/
-  }
 }
 
 
 
 void IOHandler::remove_poll_interest(int mode) {
-  struct epoll_event event;
-
   m_poll_interest &= ~mode;
-
-  memset(&event, 0, sizeof(struct epoll_event));
-  event.data.ptr = this;
-  event.events = EPOLLERR | EPOLLHUP;
-
-  if (m_poll_interest & Reactor::READ_READY)
-    event.events |= EPOLLIN;
-  if (m_poll_interest & Reactor::WRITE_READY)
-    event.events |= EPOLLOUT;
-
-  if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
-    HT_ERRORF("epoll_ctl(EPOLL_CTL_MOD, sd=%d) (mode=%x) : %s", m_sd, mode, strerror(errno));
-    exit(1);
-  }
 }
 
 

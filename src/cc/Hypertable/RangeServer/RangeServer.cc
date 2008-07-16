@@ -1775,7 +1775,7 @@ void RangeServer::log_cleanup() {
     table_vec[i]->get_range_vector(range_vec);
 
   // compute prune threshold
-  prune_threshold = (double)(((double)(m_bytes_loaded / m_timer_interval) / 1000000.0) * (double)Global::log_prune_threshold_max);
+  prune_threshold = (uint64_t)((((double)m_bytes_loaded / (double)m_timer_interval) / 1000000.0) * (double)Global::log_prune_threshold_max);
   if (prune_threshold < Global::log_prune_threshold_min)
     prune_threshold = Global::log_prune_threshold_min;
   else if (prune_threshold > Global::log_prune_threshold_max)

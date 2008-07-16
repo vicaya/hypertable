@@ -167,10 +167,51 @@ ssize_t FileUtils::sendto(int fd, const void *vptr, size_t n, const struct socka
   return n - nleft;
 }
 
+
+
+ssize_t FileUtils::send(int fd, const void *vptr, size_t n) {
+  size_t nleft;
+  ssize_t nsent;
+  const char *ptr;
+
+  ptr = (const char *)vptr;
+  nleft = n;
+  while (nleft > 0) {
+    if ((nsent = ::send(fd, ptr, nleft, 0)) <= 0) {
+      if (errno == EINTR)
+        nsent = 0; /* and call sendto() again */
+      if (errno == EAGAIN || errno == ENOBUFS)
+        break;
+      else
+        return -1; /* error */
+    }
+
+    nleft -= nsent;
+    ptr   += nsent;
+  }
+  return n - nleft;
+}
+
+
+
 ssize_t FileUtils::recvfrom(int fd, void *vptr, size_t n, struct sockaddr *from, socklen_t *fromlen) {
   ssize_t nread;
   while (true) {
     if ((nread = ::recvfrom(fd, vptr, n, 0, from, fromlen)) < 0) {
+      if (errno != EINTR)
+        break;
+    }
+    else
+      break;
+  }
+  return nread;
+}
+
+
+ssize_t FileUtils::recv(int fd, void *vptr, size_t n) {
+  ssize_t nread;
+  while (true) {
+    if ((nread = ::recv(fd, vptr, n, 0)) < 0) {
       if (errno != EINTR)
         break;
     }

@@ -37,7 +37,9 @@ namespace Hypertable {
     static ssize_t write(int fd, const void *vptr, size_t n);
     static ssize_t writev(int fd, const struct iovec *vector, int count);
     static ssize_t sendto(int fd, const void *vptr, size_t n, const struct sockaddr *to, socklen_t tolen);
+    static ssize_t send(int fd, const void *vptr, size_t n);
     static ssize_t recvfrom(int fd, void *vptr, size_t n, struct sockaddr *from, socklen_t *fromlen);
+    static ssize_t recv(int fd, void *vptr, size_t n);
     static void set_flags(int fd, int flags);
     static char *file_to_buffer(const String &fname, off_t *lenp);
     static bool mkdirs(const String &dirname);
