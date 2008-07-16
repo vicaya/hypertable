@@ -79,7 +79,6 @@ int main(int argc, char **argv) {
   {
     ConnectionManagerPtr conn_manager_ptr;
     ApplicationQueuePtr app_queue_ptr;
-    CommPtr comm_ptr;
     string cfgfile = "";
     string pidfile = "";
     int reactor_count;
@@ -136,17 +135,17 @@ int main(int argc, char **argv) {
 
     reactor_count = props_ptr->get_int("Hypertable.RangeServer.Reactors", System::get_processor_count());
     ReactorFactory::initialize(reactor_count);
-    comm_ptr = new Comm();
+    Comm *comm = Comm::instance();
 
     worker_count = props_ptr->get_int("Hypertable.RangeServer.Workers", DEFAULT_WORKERS);
 
-    conn_manager_ptr = new ConnectionManager(comm_ptr.get());
+    conn_manager_ptr = new ConnectionManager(comm);
     app_queue_ptr = new ApplicationQueue(worker_count);
 
     /**
      * Connect to Hyperspace
      */
-    Global::hyperspace_ptr = new Hyperspace::Session(comm_ptr.get(), props_ptr, new HyperspaceSessionHandler());
+    Global::hyperspace_ptr = new Hyperspace::Session(comm, props_ptr, new HyperspaceSessionHandler());
     if (!Global::hyperspace_ptr->wait_for_connection(30)) {
       HT_ERROR("Unable to connect to hyperspace, exiting...");
       exit(1);
@@ -170,7 +169,7 @@ int main(int argc, char **argv) {
     }
 
     // install maintenance timer
-    timer_handler_ptr = new TimerHandler(comm_ptr.get(), range_server_ptr.get());
+    timer_handler_ptr = new TimerHandler(comm, range_server_ptr.get());
 
     app_queue_ptr->join();
 

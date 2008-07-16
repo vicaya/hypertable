@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
 
   ReactorFactory::initialize(reactor_count);
 
-  comm = new Comm();
+  comm = Comm::instance();
   conn_mgr = new ConnectionManager(comm);
 
   if (verbose) {
@@ -150,6 +150,5 @@ int main(int argc, char **argv) {
 
   master_ptr->join();
 
-  delete comm;
   return 0;
 }

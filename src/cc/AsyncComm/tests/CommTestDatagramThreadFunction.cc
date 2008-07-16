@@ -112,8 +112,9 @@ void CommTestDatagramThreadFunction::operator()() {
 
   InetAddr::initialize(&local_addr, INADDR_ANY, m_port);
 
-  if ((error = m_comm->create_datagram_receive_socket(&local_addr, dhp)) != Error::OK) {
-    HT_ERRORF("Problem opening datagram receive port %d - %s", m_port, Error::get_text(error));
+  try { m_comm->create_datagram_receive_socket(&local_addr, dhp); }
+  catch (Exception &e) {
+    HT_ERROR_OUT <<"create datagram receiving port "<< e << HT_END;
     return;
   }
 

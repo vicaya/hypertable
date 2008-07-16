@@ -305,7 +305,7 @@ int main(int argc, char **argv) {
   if (!InetAddr::initialize(&addr, host, port))
     exit(1);
 
-  comm = new Comm();
+  comm = Comm::instance();
 
   ifstream myfile(in_file);
 
@@ -320,11 +320,7 @@ int main(int argc, char **argv) {
     dhp = resp_handler;
     port++;
     InetAddr::initialize(&local_addr, INADDR_ANY, port);
-    if ((error = comm->create_datagram_receive_socket(&local_addr, dhp)) != Error::OK) {
-      std::string str;
-      HT_ERRORF("Problem creating UDP receive socket %s - %s", InetAddr::string_format(str, local_addr), Error::get_text(error));
-      exit(1);
-    }
+    comm->create_datagram_receive_socket(&local_addr, dhp);
   }
   else {
     resp_handler = new ResponseHandlerTCP();
@@ -338,10 +334,7 @@ int main(int argc, char **argv) {
     }
     else {
       chfp = new HandlerFactory(dhp);
-      if ((error = comm->listen(local_addr, chfp, dhp)) != Error::OK) {
-        HT_ERRORF("Comm::listen error - %s", Error::get_text(error));
-        exit(1);
-      }
+      comm->listen(local_addr, chfp, dhp);
     }
     if (!((ResponseHandlerTCP *)resp_handler)->wait_for_connection())
       exit(1);
@@ -417,7 +410,6 @@ int main(int argc, char **argv) {
 
   ReactorFactory::destroy();
 
-  delete comm;
   return 0;
 }
 

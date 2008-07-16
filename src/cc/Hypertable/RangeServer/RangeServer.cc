@@ -67,7 +67,6 @@ namespace {
  * Constructor
  */
 RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, ApplicationQueuePtr &app_queue_ptr, Hyperspace::SessionPtr &hyperspace_ptr) : m_props_ptr(props_ptr), m_verbose(false), m_conn_manager_ptr(conn_manager_ptr), m_app_queue_ptr(app_queue_ptr), m_hyperspace_ptr(hyperspace_ptr), m_last_commit_log_clean(0), m_bytes_loaded(0) {
-  int error;
   uint16_t port;
   uint32_t maintenance_threads = 1;
   Comm *comm = conn_manager_ptr->get_comm();
@@ -182,10 +181,7 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
     ConnectionHandlerFactoryPtr chfp(new HandlerFactory(comm, m_app_queue_ptr, this));
     struct sockaddr_in addr;
     InetAddr::initialize(&addr, INADDR_ANY, port);  // Listen on any interface
-    if ((error = comm->listen(addr, chfp)) != Error::OK) {
-      HT_ERRORF("Listen error address=%s:%d - %s", inet_ntoa(addr.sin_addr), port, Error::get_text(error));
-      exit(1);
-    }
+    comm->listen(addr, chfp);
   }
 
   /**

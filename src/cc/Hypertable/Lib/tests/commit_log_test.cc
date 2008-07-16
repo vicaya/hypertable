@@ -58,7 +58,6 @@ namespace {
 
 
 int main(int argc, char **argv) {
-  CommPtr comm_ptr;
   ConnectionManagerPtr conn_manager_ptr;
   DfsBroker::Client *dfs_client;
 
@@ -70,8 +69,7 @@ int main(int argc, char **argv) {
     System::initialize(argv[0]);
     ReactorFactory::initialize(System::get_processor_count());
 
-    comm_ptr = new Comm();
-    conn_manager_ptr = new ConnectionManager(comm_ptr.get());
+    conn_manager_ptr = new ConnectionManager();
 
     /**
      * connect to DFS broker

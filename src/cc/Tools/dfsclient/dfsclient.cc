@@ -164,7 +164,7 @@ int main(int argc, char **argv) {
 
   props_ptr = new Properties(config_file);
 
-  comm = new Comm();
+  comm = Comm::instance();
 
   {
     const char *host;

@@ -255,7 +255,7 @@ int main(int argc, char **argv) {
   System::initialize(argv[0]);
   ReactorFactory::initialize(reactor_count);
 
-  comm = new Comm();
+  comm = Comm::instance();
 
   if (g_verbose) {
     cout << "Listening on port " << port << endl;
@@ -276,20 +276,16 @@ int main(int argc, char **argv) {
     }
     else {
       chfp = new HandlerFactory(dhp);
-      if ((error = comm->listen(local_addr, chfp, dhp)) != Error::OK) {
-        HT_ERRORF("Comm::listen error - %s", Error::get_text(error));
-        exit(1);
-      }
+      comm->listen(local_addr, chfp, dhp);
     }
   }
   else {
     assert(client_addr.sin_port == 0);
     dhp = new UdpDispatcher(comm);
-    error = comm->create_datagram_receive_socket(&local_addr, dhp);
+    comm->create_datagram_receive_socket(&local_addr, dhp);
   }
 
   poll(0, 0, -1);
 
-  delete comm;
   return 0;
 }

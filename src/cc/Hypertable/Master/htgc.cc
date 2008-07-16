@@ -37,8 +37,7 @@ namespace {
 void
 do_tfgc(const String &config, bool dryrun) {
   PropertiesPtr props = new Properties(config);
-  Comm *comm = new Comm();
-  ConnectionManagerPtr conn_mgr = new ConnectionManager(comm);
+  ConnectionManagerPtr conn_mgr = new ConnectionManager();
   DfsBroker::Client *fs = new DfsBroker::Client(conn_mgr, props);
   ClientPtr client = new Hypertable::Client("htgc", config);
   TablePtr table = client->open_table("METADATA");

@@ -39,11 +39,11 @@ extern "C" {
 #include "Common/ReferenceCount.h"
 #include "Common/SockAddrMap.h"
 
+#include "Comm.h"
 #include "DispatchHandler.h"
 
 namespace Hypertable {
 
-  class Comm;
   class Event;
 
   /**
@@ -71,7 +71,8 @@ namespace Hypertable {
 
 
     struct LtConnectionState {
-      bool operator()(const ConnectionStatePtr &cs1, const ConnectionStatePtr &cs2) const {
+      bool operator()(const ConnectionStatePtr &cs1,
+                      const ConnectionStatePtr &cs2) const {
         return xtime_cmp(cs1->next_retry, cs2->next_retry) >= 0;
       }
     };
@@ -82,7 +83,8 @@ namespace Hypertable {
       boost::condition   retry_cond;
       boost::thread     *thread;
       SockAddrMap<ConnectionStatePtr>  conn_map;
-      std::priority_queue<ConnectionStatePtr, std::vector<ConnectionStatePtr>, LtConnectionState> retry_queue;
+      std::priority_queue<ConnectionStatePtr, std::vector<ConnectionStatePtr>,
+          LtConnectionState> retry_queue;
       bool quiet_mode;
     };
 
@@ -91,9 +93,9 @@ namespace Hypertable {
      *
      * @param comm Pointer to the comm object
      */
-    ConnectionManager(Comm *comm) {
+    ConnectionManager(Comm *comm = 0) {
       m_impl = new SharedImpl;
-      m_impl->comm = comm;
+      m_impl->comm = comm ? comm : Comm::instance();
       m_impl->thread = new boost::thread(*this);
       m_impl->quiet_mode = false;
     }
@@ -115,17 +117,20 @@ namespace Hypertable {
 
     /**
      * Adds a connection to the connection manager.  The address structure addr
-     * holds an address that the connection manager should maintain a connection to.
-     * This method first checks to see if the address is already registered with the
-     * connection manager and returns immediately if it is.  Otherwise, it adds the
-     * address to an internal connection map, attempts to establish a connection to
-     * the address, and then returns.  From here on out, the internal manager thread
-     * will maintian the connection by continually re-establishing the connection if
-     * it ever gets broken.
+     * holds an address that the connection manager should maintain a
+     * connection to.  This method first checks to see if the address is
+     * already registered with the connection manager and returns immediately
+     * if it is.  Otherwise, it adds the address to an internal connection map,
+     * attempts to establish a connection to the address, and then returns.
+     * From here on out, the internal manager thread will maintian the
+     * connection by continually re-establishing the connection if it ever gets
+     * broken.
      *
      * @param addr The IP address to maintain a connection to
-     * @param timeout When connection dies, wait this many seconds before attempting to reestablish
-     * @param service_name The name of the serivce at the other end of the connection used for descriptive log messages
+     * @param timeout When connection dies, wait this many seconds before
+     *        attempting to reestablish
+     * @param service_name The name of the serivce at the other end of the
+     *        connection used for descriptive log messages
      */
     void add(struct sockaddr_in &addr, time_t timeout, const char *service_name);
 
@@ -133,26 +138,33 @@ namespace Hypertable {
      * Same as above method except installs a dispatch handler on the connection
      *
      * @param addr The IP address to maintain a connection to
-     * @param timeout The timeout value (in seconds) that gets passed into Comm::connect and also used as the waiting period betweeen connection attempts
-     * @param service_name The name of the serivce at the other end of the connection used for descriptive log messages
-     * @param handler This is the default handler to install on the connection.  All events get changed through to this handler.
+     * @param timeout The timeout value (in seconds) that gets passed into
+     *        Comm::connect and also used as the waiting period betweeen
+     *        connection attempts
+     * @param service_name The name of the serivce at the other end of the
+     *        connection used for descriptive log messages
+     * @param handler This is the default handler to install on the connection.
+     *        All events get changed through to this handler.
      */
     void add(struct sockaddr_in &addr, time_t timeout, const char *service_name, DispatchHandlerPtr &handler);
 
     /**
-     * Adds a connection to the connection manager with a specific local address.
-     * The address structure addr holds an address that the connection manager should
-     * maintain a connection to.  This method first checks to see if the address is
-     * already registered with the connection manager and returns immediately if it is.
-     * Otherwise, it adds the address to an internal connection map, attempts to
-     * establish a connection to the address, and then returns.  From here on out,
-     * the internal manager thread will maintian the connection by continually
+     * Adds a connection to the connection manager with a specific local
+     * address.  The address structure addr holds an address that the
+     * connection manager should maintain a connection to.  This method first
+     * checks to see if the address is already registered with the connection
+     * manager and returns immediately if it is.  Otherwise, it adds the
+     * address to an internal connection map, attempts to establish a
+     * connection to the address, and then returns.  From here on out, the
+     * internal manager thread will maintian the connection by continually
      * re-establishing the connection if it ever gets broken.
      *
      * @param addr The IP address to maintain a connection to
      * @param local_addr The local address to bind to
-     * @param timeout When connection dies, wait this many seconds before attempting to reestablish
-     * @param service_name The name of the serivce at the other end of the connection used for descriptive log messages
+     * @param timeout When connection dies, wait this many seconds before
+     *        attempting to reestablish
+     * @param service_name The name of the serivce at the other end of the
+     *        connection used for descriptive log messages
      */
     void add(struct sockaddr_in &addr, struct sockaddr_in &local_addr, time_t timeout, const char *service_name);
 
@@ -161,9 +173,13 @@ namespace Hypertable {
      *
      * @param addr The IP address to maintain a connection to
      * @param local_addr The local address to bind to
-     * @param timeout The timeout value (in seconds) that gets passed into Comm::connect and also used as the waiting period betweeen connection attempts
-     * @param service_name The name of the serivce at the other end of the connection used for descriptive log messages
-     * @param handler This is the default handler to install on the connection.  All events get changed through to this handler.
+     * @param timeout The timeout value (in seconds) that gets passed into
+     *        Comm::connect and also used as the waiting period betweeen
+     *        connection attempts
+     * @param service_name The name of the serivce at the other end of the
+     *        connection used for descriptive log messages
+     * @param handler This is the default handler to install on the connection.
+     *        All events get changed through to this handler.
      */
     void add(struct sockaddr_in &addr, struct sockaddr_in &local_addr, time_t timeout, const char *service_name, DispatchHandlerPtr &handler);
 
@@ -176,13 +192,14 @@ namespace Hypertable {
     int remove(struct sockaddr_in &addr);
 
     /**
-     * This method blocks until the connection to the given address is established.
-     * The given address must have been previously added with a call to Add.  If
-     * the connection is not established within max_wait_secs, then the method returns
-     * false.
+     * This method blocks until the connection to the given address is
+     * established.  The given address must have been previously added with a
+     * call to Add.  If the connection is not established within max_wait_secs,
+     * then the method returns false.
      *
      * @param addr the address of the connection to wait for
-     * @param max_wait_secs The maximum time to wait for the connection before returning
+     * @param max_wait_secs The maximum time to wait for the connection before
+     *        returning
      * @return true if connected, false otherwise
      */
     bool wait_for_connection(struct sockaddr_in &addr, long max_wait_secs);
@@ -210,8 +227,8 @@ namespace Hypertable {
     virtual void handle(EventPtr &event);
 
     /**
-     * This is the Boost thread "run" method.  It is called by the manager thread
-     * when it starts up.
+     * This is the Boost thread "run" method.  It is called by the manager
+     * thread when it starts up.
      */
     void operator()();
 

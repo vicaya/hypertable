@@ -57,6 +57,7 @@ namespace Hypertable {
       TABLE_DOES_NOT_EXIST               = 22,
       MALFORMED_REQUEST                  = 23,
       TOO_MANY_COLUMNS                   = 24,
+      BAD_DOMAIN_NAME                    = 25,
 
       COMM_NOT_CONNECTED       = 0x00010001,
       COMM_BROKEN_CONNECTION   = 0x00010002,
@@ -67,6 +68,9 @@ namespace Hypertable {
       COMM_RECEIVE_ERROR       = 0x00010007,
       COMM_POLL_ERROR          = 0x00010008,
       COMM_CONFLICTING_ADDRESS = 0x00010009,
+      COMM_SOCKET_ERROR        = 0x0001000A,
+      COMM_BIND_ERROR          = 0x0001000B,
+      COMM_LISTEN_ERROR        = 0x0001000C,
 
       DFSBROKER_BAD_FILE_HANDLE   = 0x00020001,
       DFSBROKER_IO_ERROR          = 0x00020002,

@@ -66,25 +66,22 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &props_
   InetAddr::initialize(&m_local_addr, INADDR_ANY, 0);
 
   DispatchHandlerPtr dhp(this);
-  if ((error = m_comm->create_datagram_receive_socket(&m_local_addr, dhp)) != Error::OK) {
-    std::string str;
-    HT_ERRORF("Unable to create datagram receive socket %s - %s", InetAddr::string_format(str, m_local_addr), Error::get_text(error));
-    exit(1);
-  }
+  m_comm->create_datagram_receive_socket(&m_local_addr, dhp);
 
-  CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(m_session_id, m_last_known_event));
+  CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(
+      m_session_id, m_last_known_event));
 
-  if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp) != Error::OK)) {
+  if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp)
+      != Error::OK)) {
     HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
     exit(1);
   }
 
-  if ((error = m_comm->set_timer(m_keep_alive_interval*1000, this)) != Error::OK) {
+  if ((error = m_comm->set_timer(m_keep_alive_interval*1000, this))
+      != Error::OK) {
     HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
     exit(1);
   }
-
-  return;
 }
 
 
@@ -128,7 +125,8 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
             return;
 
           // update jeopardy time
-          memcpy(&m_jeopardy_time, &m_last_keep_alive_send_time, sizeof(boost::xtime));
+          memcpy(&m_jeopardy_time, &m_last_keep_alive_send_time,
+                 sizeof(boost::xtime));
           m_jeopardy_time.sec += m_lease_interval;
 
           session_id = decode_i64(&msg, &remaining);
@@ -145,7 +143,8 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
           if (m_session_id == 0) {
             m_session_id = session_id;
             if (!m_conn_handler_ptr) {
-              m_conn_handler_ptr = new ClientConnectionHandler(m_comm, m_session, m_lease_interval);
+              m_conn_handler_ptr = new ClientConnectionHandler(m_comm,
+                  m_session, m_lease_interval);
               m_conn_handler_ptr->set_verbose_mode(m_verbose);
               m_conn_handler_ptr->set_session_id(m_session_id);
             }
@@ -159,8 +158,6 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
             event_mask = decode_i32(&msg, &remaining);
 
             HandleMap::iterator iter = m_handle_map.find(handle);
-            //HT_INFOF("LastKnownEvent=%lld, event_id=%lld event_mask=%d", m_last_known_event, event_id, event_mask);
-            //HT_INFOF("handle=%lldm, event_id=%lld, event_mask=%d", handle, event_id, event_mask);
             assert (iter != m_handle_map.end());
             ClientHandleStatePtr handle_state = (*iter).second;
 
@@ -206,7 +203,8 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
                 continue;
 
               handle_state->lock_status = LOCK_STATUS_GRANTED;
-              handle_state->sequencer->generation = handle_state->lock_generation;
+              handle_state->sequencer->generation =
+                  handle_state->lock_generation;
               handle_state->sequencer->mode = mode;
               handle_state->cond.notify_all();
             }
@@ -226,9 +224,11 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
             state = m_session->state_transition(Session::STATE_SAFE);
 
           if (notifications > 0) {
-            CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(m_session_id, m_last_known_event));
+            CommBufPtr cbp(Protocol::create_client_keepalive_request(
+                m_session_id, m_last_known_event));
             boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC);
-            if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp) != Error::OK)) {
+            if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp)
+                != Error::OK)) {
               HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
               exit(1);
             }
@@ -266,16 +266,19 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
       return;
     }
 
-    CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(m_session_id, m_last_known_event));
+    CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(
+        m_session_id, m_last_known_event));
 
     boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC);
 
-    if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp) != Error::OK)) {
+    if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp)
+        != Error::OK)) {
       HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
       exit(1);
     }
 
-    if ((error = m_comm->set_timer(m_keep_alive_interval*1000, this)) != Error::OK) {
+    if ((error = m_comm->set_timer(m_keep_alive_interval*1000, this))
+        != Error::OK) {
       HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
       exit(1);
     }

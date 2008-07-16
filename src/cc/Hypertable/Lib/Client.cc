@@ -173,7 +173,7 @@ void Client::initialize(const String &config_file) {
 
   m_props_ptr = new Properties(config_file);
 
-  m_comm = new Comm();
+  m_comm = Comm::instance();
   m_conn_manager_ptr = new ConnectionManager(m_comm);
 
   m_hyperspace_ptr = new Hyperspace::Session(m_comm, m_props_ptr);

@@ -33,15 +33,33 @@ extern "C" {
 #include <sys/utsname.h>
 }
 
+#include "Logger.h"
 #include "InetAddr.h"
 #include "StringExt.h"
 
-using namespace Hypertable;
+namespace Hypertable {
 
-/**
- *
- */
-bool InetAddr::initialize(struct sockaddr_in *addr, const char *host, uint16_t port) {
+InetAddr::InetAddr() {
+  HT_EXPECT(sizeof(sockaddr_in) == sizeof(InetAddr), Error::UNPOSSIBLE);
+  memset(this, 0, sizeof(InetAddr));
+}
+
+InetAddr::InetAddr(const String &host, uint16_t port) {
+  HT_EXPECT(sizeof(sockaddr_in) == sizeof(InetAddr), Error::UNPOSSIBLE);
+  HT_EXPECT(initialize(this, host.c_str(), port), Error::BAD_DOMAIN_NAME);
+}
+
+InetAddr::InetAddr(const String &endpoint) {
+  HT_EXPECT(sizeof(sockaddr_in) == sizeof(InetAddr), Error::UNPOSSIBLE);
+  HT_EXPECT(initialize(this, endpoint.c_str()), Error::BAD_DOMAIN_NAME);
+}
+
+InetAddr::InetAddr(uint32_t ip32, uint16_t port) {
+  HT_EXPECT(sizeof(sockaddr_in) == sizeof(InetAddr), Error::UNPOSSIBLE);
+  initialize(this, ip32, port);
+}
+
+bool InetAddr::initialize(sockaddr_in *addr, const char *host, uint16_t port) {
   memset(addr, 0, sizeof(struct sockaddr_in));
   {
     struct hostent *he = gethostbyname(host);
@@ -57,24 +75,26 @@ bool InetAddr::initialize(struct sockaddr_in *addr, const char *host, uint16_t p
   return true;
 }
 
-bool InetAddr::initialize(struct sockaddr_in *addr, const char *addr_str) {
-  const char *colon = strchr(addr_str, ':');
-  uint16_t port;
-  String host;
+Endpoint InetAddr::parse_endpoint(const char *endpoint, int default_port) {
+  const char *colon = strchr(endpoint, ':');
 
   if (colon) {
-    host = String(addr_str, colon-addr_str);
-    port = (uint16_t)atoi(colon+1);
-    return initialize(addr, host.c_str(), port);
+    String host = String(endpoint, colon - endpoint);
+    return Endpoint(host, atoi(colon + 1));
   }
-
-  return initialize(addr, "localhost", (uint16_t)atoi(addr_str));
+  return Endpoint(endpoint, default_port);
 }
 
-/**
- *
- */
-bool InetAddr::initialize(struct sockaddr_in *addr, uint32_t haddr, uint16_t port) {
+bool InetAddr::initialize(sockaddr_in *addr, const char *addr_str) {
+  Endpoint e = parse_endpoint(addr_str);
+
+  if (e.port)
+    return initialize(addr, e.host.c_str(), e.port);
+
+  return initialize(addr, "localhost", atoi(addr_str));
+}
+
+bool InetAddr::initialize(sockaddr_in *addr, uint32_t haddr, uint16_t port) {
   memset(addr, 0 , sizeof(sockaddr_in));
   addr->sin_family = AF_INET;
   addr->sin_addr.s_addr = htonl(haddr);
@@ -82,21 +102,37 @@ bool InetAddr::initialize(struct sockaddr_in *addr, uint32_t haddr, uint16_t por
   return true;
 }
 
-/**
- *
- */
-const char *InetAddr::string_format(String &addr_str, struct sockaddr_in &addr) {
-  addr_str = (String)inet_ntoa(addr.sin_addr) + ":" + ntohs(addr.sin_port);
+String InetAddr::format(const sockaddr_in &addr, int sep) {
+  // inet_ntoa is not thread safe on many platforms and deprecated
+  const uint8_t *ip = (uint8_t *)&addr.sin_addr.s_addr;
+  return Hypertable::format("%d.%d.%d.%d%c%d", (int)ip[0], (int)ip[1],
+      (int)ip[2],(int)ip[3], sep, (int)ntohs(addr.sin_port));
+}
+
+const char *InetAddr::string_format(String &addr_str, const sockaddr_in &addr) {
+  addr_str = InetAddr::format(addr);
   return addr_str.c_str();
 }
 
-
-/**
- *
- */
-String &InetAddr::get_hostname(String &hostname) {
+String InetAddr::get_hostname() {
   struct utsname u;
   uname(&u);
-  hostname = u.nodename;
+  return u.nodename;
+}
+
+String &InetAddr::get_hostname(String &hostname) {
+  hostname = get_hostname();
   return hostname;
 }
+
+std::ostream &operator<<(std::ostream &out, const Endpoint &e) {
+  out << e.host <<':'<< e.port;
+  return out;
+}
+
+std::ostream &operator<<(std::ostream &out, const sockaddr_in &a) {
+  out << InetAddr::format(a);
+  return out;
+}
+
+} // namespace Hypertable

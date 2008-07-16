@@ -74,7 +74,6 @@ void fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_
 
 
 int main(int argc, char **argv) {
-  Comm *comm;
   ConnectionManagerPtr conn_manager_ptr;
   DfsBroker::Client *client;
   ClientPtr hypertable_client_ptr;
@@ -117,8 +116,7 @@ int main(int argc, char **argv) {
 
   props_ptr = new Properties(config_file);
 
-  comm = new Comm();
-  conn_manager_ptr = new ConnectionManager(comm);
+  conn_manager_ptr = new ConnectionManager();
 
   client = new DfsBroker::Client(conn_manager_ptr, props_ptr);
   if (!client->wait_for_connection(15)) {

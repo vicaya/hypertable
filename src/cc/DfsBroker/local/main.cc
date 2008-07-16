@@ -83,7 +83,6 @@ int main(int argc, char **argv) {
   BrokerPtr broker;
   ApplicationQueuePtr app_queue;
   struct sockaddr_in listen_addr;
-  int error;
 
   System::initialize(argv[0]);
 
@@ -121,7 +120,7 @@ int main(int argc, char **argv) {
 
   ReactorFactory::initialize(reactor_count);
 
-  comm = new Comm();
+  comm = Comm::instance();
 
   if (verbose) {
     cout << "CPU count = " << System::get_processor_count() << endl;
@@ -135,11 +134,7 @@ int main(int argc, char **argv) {
   broker = new LocalBroker(props_ptr);
   app_queue = new ApplicationQueue(worker_count);
   ConnectionHandlerFactoryPtr chfp(new DfsBroker::ConnectionHandlerFactory(comm, app_queue, broker));
-  if ((error = comm->listen(listen_addr, chfp)) != Error::OK) {
-    std::string addr_str;
-    HT_ERRORF("Problem listening for connections on %s - %s", InetAddr::string_format(addr_str, listen_addr), Error::get_text(error));
-    return 1;
-  }
+  comm->listen(listen_addr, chfp);
 
   if (pidfile != "") {
     fstream filestr (pidfile.c_str(), fstream::out);
@@ -149,6 +144,5 @@ int main(int argc, char **argv) {
 
   app_queue->join();
 
-  delete comm;
   return 0;
 }

@@ -86,7 +86,6 @@ int main(int argc, char **argv) {
   boost::thread  *thread1, *thread2;
   struct sockaddr_in addr;
   ServerLauncher slauncher;
-  Comm *comm;
 
   if (argc != 1)
     Usage::dump_and_exit(usage);
@@ -108,11 +107,9 @@ int main(int argc, char **argv) {
   addr.sin_family = AF_INET;
   addr.sin_port = htons(DEFAULT_PORT);
 
-  comm = new Comm();
-
   poll(0, 0, 2000);
 
-  CommTestDatagramThreadFunction thread_func(comm, addr, "./words");
+  CommTestDatagramThreadFunction thread_func(Comm::instance(), addr, "./words");
 
   thread_func.set_output_file("commTestDatagram.output.1");
   thread_func.set_receive_port(DEFAULT_PORT + 1);
@@ -140,7 +137,6 @@ int main(int argc, char **argv) {
 
   ReactorFactory::destroy();
 
-  delete comm;
   delete thread1;
   delete thread2;
 

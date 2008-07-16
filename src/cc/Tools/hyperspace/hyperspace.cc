@@ -147,17 +147,12 @@ public:
 
   Notifier(const char *addr_str) {
     DispatchHandlerPtr null_handler(0);
-    int error;
-    m_comm = new Comm();
+    m_comm = Comm::instance();
     if (!InetAddr::initialize(&m_addr, addr_str)) {
       exit(1);
     }
     InetAddr::initialize(&m_send_addr, INADDR_ANY, 0);
-    if ((error = m_comm->create_datagram_receive_socket(&m_send_addr, null_handler)) != Error::OK) {
-      std::string str;
-      HT_ERRORF("Problem creating UDP receive socket %s - %s", InetAddr::string_format(str, m_send_addr), Error::get_text(error));
-      exit(1);
-    }
+    m_comm->create_datagram_receive_socket(&m_send_addr, null_handler);
   }
 
   Notifier() : m_comm(0) {
@@ -247,7 +242,7 @@ int main(int argc, char **argv, char **envp) {
   if (verbose)
     props_ptr->set("Hypertable.Verbose", "true");
 
-  comm = new Comm();
+  comm = Comm::instance();
 
   session = new Session(comm, props_ptr, &session_handler);
 
@@ -357,6 +352,5 @@ int main(int argc, char **argv, char **envp) {
   }
 
   delete session;
-  delete comm;
   return Global::exit_status;
 }

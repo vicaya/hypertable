@@ -77,7 +77,6 @@ int main(int argc, char **argv) {
   BrokerPtr broker_ptr;
   ApplicationQueuePtr app_queue_ptr;
   struct sockaddr_in listen_addr;
-  int error;
 
   System::initialize(argv[0]);
 
@@ -112,7 +111,7 @@ int main(int argc, char **argv) {
 
   ReactorFactory::initialize(reactor_count);
 
-  comm = new Comm();
+  comm = Comm::instance();
 
   if (verbose) {
     cout << "CPU count = " << System::get_processor_count() << endl;
@@ -126,11 +125,7 @@ int main(int argc, char **argv) {
   broker_ptr = new KosmosBroker(props);
   app_queue_ptr = new ApplicationQueue(worker_count);
   ConnectionHandlerFactoryPtr chf_ptr(new DfsBroker::ConnectionHandlerFactory(comm, app_queue_ptr, broker_ptr));
-  if ((error = comm->listen(listen_addr, chf_ptr)) != Error::OK) {
-    std::string addr_str;
-    HT_ERRORF("Problem listening for connections on %s - %s", InetAddr::string_format(addr_str, listen_addr), Error::get_text(error));
-    return 1;
-  }
+  comm->listen(listen_addr, chf_ptr);
 
   if (pidfile != "") {
     fstream filestr (pidfile.c_str(), fstream::out);
@@ -140,6 +135,5 @@ int main(int argc, char **argv) {
 
   app_queue_ptr->join();
 
-  delete comm;
   return 0;
 }

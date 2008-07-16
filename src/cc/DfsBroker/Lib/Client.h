@@ -195,7 +195,7 @@ namespace Hypertable { namespace DfsBroker {
           BufferedReaderMap;
 
       Mutex                 m_mutex;
-      CommPtr               m_comm;
+      Comm                 *m_comm;
       ConnectionManagerPtr  m_conn_mgr;
       struct sockaddr_in    m_addr;
       time_t                m_timeout;

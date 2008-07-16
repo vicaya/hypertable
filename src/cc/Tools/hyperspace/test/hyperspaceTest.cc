@@ -120,7 +120,6 @@ namespace {
 int main(int argc, char **argv) {
   std::vector<const char *> master_args;
   std::vector<const char *> client_args;
-  int error;
   Comm *comm;
   struct sockaddr_in addr;
   char master_install_dir[2048];
@@ -136,16 +135,12 @@ int main(int argc, char **argv) {
   System::initialize(argv[0]);
   ReactorFactory::initialize(1);
 
-  comm = new Comm();
+  comm = Comm::instance();
 
   if (!InetAddr::initialize(&addr, "23451"))
     exit(1);
 
-  if ((error = comm->create_datagram_receive_socket(&addr, dhp)) != Error::OK) {
-    std::string str;
-    HT_ERRORF("Problem creating UDP receive socket %s - %s", InetAddr::string_format(str, addr), Error::get_text(error));
-    exit(1);
-  }
+  comm->create_datagram_receive_socket(&addr, dhp);
 
   system("/bin/rm -rf ./hsroot");
 

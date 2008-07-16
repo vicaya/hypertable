@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
   const char *host_prop = 0;
   const char *port_prop = 0;
   const char *port_str = 0;
-  CommPtr comm_ptr;
+  Comm *comm;
   ConnectionManagerPtr conn_mgr;
   DfsBroker::Client *client;
   Hyperspace::SessionPtr hyperspace;
@@ -169,8 +169,8 @@ int main(int argc, char **argv) {
 
   props_ptr->set("silent", "true");
 
-  comm_ptr = new Comm();
-  conn_mgr = new ConnectionManager(comm_ptr.get());
+  comm = Comm::instance();
+  conn_mgr = new ConnectionManager(comm);
   conn_mgr->set_quiet_mode(true);
 
   if (server_name == "dfsbroker") {
@@ -211,7 +211,7 @@ int main(int argc, char **argv) {
     conn_mgr->add(addr, 30, "Range Server");
     if (!conn_mgr->wait_for_connection(addr, 2))
       goto abort;
-    range_server = new RangeServerClient(comm_ptr.get(), 30);
+    range_server = new RangeServerClient(comm, 30);
     try {
       range_server->status(addr);
     }

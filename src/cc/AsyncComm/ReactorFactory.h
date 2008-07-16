@@ -35,9 +35,10 @@
 
 namespace Hypertable {
 
-  /** This class is a static class that is used to setup and manage I/O reactors.
-   * Since the I/O reactor threads are a process-wide resource, the methods of
-   * this class are static.
+  /**
+   * This class is a static class that is used to setup and manage I/O
+   * reactors.  Since the I/O reactor threads are a process-wide resource, the
+   * methods of this class are static.
    */
   class ReactorFactory {
 
@@ -54,13 +55,14 @@ namespace Hypertable {
      */
     static void destroy();
 
-    /** This method returns the 'next' reactor.  It returns pointers to reactors
-     * in round-robin fashion and is used by the Comm subsystem to evenly distribute
-     * descriptors across all of the reactors.
+    /** This method returns the 'next' reactor.  It returns pointers to
+     * reactors in round-robin fashion and is used by the Comm subsystem to
+     * evenly distribute descriptors across all of the reactors.
      */
     static void get_reactor(ReactorPtr &reactor_ptr) {
       assert(ms_reactors.size() > 0);
-      reactor_ptr = ms_reactors[atomic_inc_return(&ms_next_reactor) % ms_reactors.size()];
+      reactor_ptr = ms_reactors[atomic_inc_return(&ms_next_reactor)
+                                % ms_reactors.size()];
     }
 
     /** vector of reactors */

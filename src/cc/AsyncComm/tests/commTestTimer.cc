@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
   System::initialize(argv[0]);
   ReactorFactory::initialize(1);
 
-  comm = new Comm();
+  comm = Comm::instance();
 
   for (int i=0; history[i].msg; i++) {
     timer_handler = new TimerHandler(history[i].msg, out);
@@ -130,8 +130,6 @@ int main(int argc, char **argv) {
     harness.validate_and_exit("commTestTimer.golden");
 
   harness.regenerate_golden_file("commTestTimer.golden");
-
-  delete comm;
 
   return 0;
 }

@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
 
   props_ptr->set("silent", "true");
 
-  comm = new Comm();
+  comm = Comm::instance();
   conn_mgr = new ConnectionManager(comm);
 
   //conn_mgr->set_quiet_mode(true);

@@ -29,16 +29,62 @@ extern "C" {
 
 namespace Hypertable {
 
-  class InetAddr {
+  /**
+   * High-level entry point to a service
+   */
+  struct Endpoint {
+    Endpoint(const String &host, uint16_t port) : host(host), port(port) {}
 
-  public:
-    static bool initialize(struct sockaddr_in *addr, const char *host, uint16_t port);
-    static bool initialize(struct sockaddr_in *addr, const char *addr_str);
-    static bool initialize(struct sockaddr_in *addr, uint32_t haddr, uint16_t port);
-    static const char *string_format(String &addr_str, struct sockaddr_in &addr);
-    static String &get_hostname(String &hostname);
+    String host;
+    uint16_t port;
   };
 
-}
+  std::ostream &operator<<(std::ostream &, const Endpoint &);
+
+  /**
+   * Encapsulate an internet address
+   */
+  struct InetAddr : sockaddr_in {
+    InetAddr();
+    InetAddr(const String &host, uint16_t port);
+    InetAddr(const String &endpoint);
+    InetAddr(uint32_t ip32, uint16_t port);
+
+    String format(int sep = ':') { return InetAddr::format(*this, sep); }
+
+    // convenient/legacy static methods
+    /** Initialize addr from host port */
+    static bool initialize(sockaddr_in *addr, const char *host, uint16_t port);
+
+    /** Initialize addr from an endpoint string (host:port) */
+    static bool initialize(sockaddr_in *addr, const char *addr_str);
+
+    /**
+     * parse an endpoint string in (host:port) format
+     *
+     * @param endpoint - input
+     * @param defport - default port
+     * @return Endpoint tuple
+     */
+    static Endpoint parse_endpoint(const char *endpoint, int defport = 0);
+    static Endpoint parse_endpoint(const String &endpoint, int defport = 0) {
+      return parse_endpoint(endpoint.c_str(), defport);
+    }
+
+    /** Initialize addr from an integer ip address and port */
+    static bool initialize(sockaddr_in *addr, uint32_t haddr, uint16_t port);
+
+    /** Format a socket address */
+    static const char *string_format(String &addr_str, const sockaddr_in &addr);
+    static String format(const sockaddr_in &addr, int sep = ':');
+
+    /** Get the hostname of the current host */
+    static String &get_hostname(String &hostname);
+    static String get_hostname();
+  };
+
+  std::ostream &operator<<(std::ostream &, const sockaddr_in &);
+
+} // namespace Hypertable
 
 #endif // HYPERTABLE_INETADDR_H

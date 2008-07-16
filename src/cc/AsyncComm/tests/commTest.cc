@@ -95,8 +95,7 @@ int main(int argc, char **argv) {
 
   InetAddr::initialize(&addr, "localhost", DEFAULT_PORT);
 
-  comm = new Comm();
-
+  comm = Comm::instance();
   conn_mgr = new ConnectionManager(comm);
   conn_mgr->add(addr, 5, "testServer");
   if (!conn_mgr->wait_for_connection(addr, 30)) {
@@ -130,7 +129,6 @@ int main(int argc, char **argv) {
 
   ReactorFactory::destroy();
 
-  delete comm;
   delete thread1;
   delete thread2;
 

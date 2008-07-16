@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
 
     build_inet_address(addr, props_ptr, location_str);
 
-    comm = new Comm();
+    comm = Comm::instance();
 
     // Create Range Server client object
     client = new RangeServerClient(comm, 30);

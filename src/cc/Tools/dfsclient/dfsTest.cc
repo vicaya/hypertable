@@ -131,7 +131,6 @@ namespace {
 int main(int argc, char **argv) {
   try {
     struct sockaddr_in addr;
-    Comm *comm;
     ConnectionManagerPtr conn_mgr;
     DfsBroker::Client *client;
 
@@ -143,8 +142,7 @@ int main(int argc, char **argv) {
 
     InetAddr::initialize(&addr, "localhost", DEFAULT_DFSBROKER_PORT);
 
-    comm = new Comm();
-    conn_mgr = new ConnectionManager(comm);
+    conn_mgr = new ConnectionManager();
     client = new DfsBroker::Client(conn_mgr, addr, 15);
 
     if (!client->wait_for_connection(15)) {

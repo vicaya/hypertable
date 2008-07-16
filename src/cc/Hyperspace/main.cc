@@ -103,7 +103,6 @@ int main(int argc, char **argv) {
   ApplicationQueuePtr app_queue;
   ServerKeepaliveHandlerPtr keepalive_handler;
   ConnectionManagerPtr conn_mgr;
-  int error;
   struct sockaddr_in local_addr;
 
   System::initialize(argv[0]);
@@ -145,7 +144,7 @@ int main(int argc, char **argv) {
 
   ReactorFactory::initialize(reactor_count);
 
-  comm = new Comm();
+  comm = Comm::instance();
 
   conn_mgr = new ConnectionManager(comm);
 
@@ -162,21 +161,11 @@ int main(int argc, char **argv) {
   app_queue = new ApplicationQueue(worker_count);
 
   ConnectionHandlerFactoryPtr chfp(new HandlerFactory(comm, app_queue, master));
-  if ((error = comm->listen(local_addr, chfp)) != Error::OK) {
-    std::string str;
-    HT_ERRORF("Unable to listen for connections on %s - %s",
-                 InetAddr::string_format(str, local_addr), Error::get_text(error));
-    exit(1);
-  }
+  comm->listen(local_addr, chfp);
 
   DispatchHandlerPtr dhp(keepalive_handler.get());
 
-  if ((error = comm->create_datagram_receive_socket(&local_addr, dhp)) != Error::OK) {
-    std::string str;
-    HT_ERRORF("Unable to create datagram receive socket %s - %s",
-                 InetAddr::string_format(str, local_addr), Error::get_text(error));
-    exit(1);
-  }
+  comm->create_datagram_receive_socket(&local_addr, dhp);
 
   if (pidfile != "") {
     fstream filestr (pidfile.c_str(), fstream::out);
@@ -188,6 +177,5 @@ int main(int argc, char **argv) {
 
   app_queue->shutdown();
 
-  delete comm;
   return 0;
 }

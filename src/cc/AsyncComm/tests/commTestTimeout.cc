@@ -141,7 +141,7 @@ int main(int argc, char **argv) {
 
     InetAddr::initialize(&addr, "localhost", DEFAULT_PORT);
 
-    comm = new Comm();
+    comm = Comm::instance();
 
     if ((error = comm->connect(addr, dhp)) != Error::OK)
       return 1;
@@ -168,9 +168,7 @@ int main(int argc, char **argv) {
     }
 
     poll(0, 0, 8000);
-
-    delete comm;
-
+    Comm::destroy();
   }
 
   if (!golden)

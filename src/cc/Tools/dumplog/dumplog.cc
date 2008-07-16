@@ -79,7 +79,6 @@ int main(int argc, char **argv) {
   string log_dir;
   PropertiesPtr props_ptr;
   bool verbose = false;
-  CommPtr comm_ptr;
   ConnectionManagerPtr conn_manager_ptr;
   DfsBroker::Client *dfs_client;
   CommitLogReader *log_reader;
@@ -112,8 +111,7 @@ int main(int argc, char **argv) {
 
   props_ptr = new Properties(cfgfile);
 
-  comm_ptr = new Comm();
-  conn_manager_ptr = new ConnectionManager(comm_ptr.get());
+  conn_manager_ptr = new ConnectionManager();
 
   /**
    * Check for and connect to commit log DFS broker

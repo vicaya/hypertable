@@ -69,7 +69,6 @@ namespace {
 
 
 int main(int argc, char **argv) {
-  Comm *comm;
   ConnectionManagerPtr conn_mgr;
   DfsBroker::Client *client;
   std::string fname = "";
@@ -121,8 +120,7 @@ int main(int argc, char **argv) {
   if (start_key == "")
     hit_start = true;
 
-  comm = new Comm();
-  conn_mgr = new ConnectionManager(comm);
+  conn_mgr = new ConnectionManager();
 
   client = new DfsBroker::Client(conn_mgr, props_ptr);
   if (!client->wait_for_connection(15)) {

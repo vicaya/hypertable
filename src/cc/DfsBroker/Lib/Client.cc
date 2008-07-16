@@ -78,8 +78,8 @@ Client::Client(const char *host, int port, time_t timeout)
   else
     InetAddr::initialize(&m_addr, host);
 
-  m_comm = new Comm();
-  m_conn_mgr = new ConnectionManager(m_comm.get());
+  m_comm = Comm::instance();
+  m_conn_mgr = new ConnectionManager(m_comm);
   m_conn_mgr->add(m_addr, timeout, "DFS Broker");
 }
 
