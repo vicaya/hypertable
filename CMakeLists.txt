@@ -67,7 +67,7 @@ endif (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 add_definitions(-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_REENTRANT)
 
 # Uncomment the following to build dynamic libraries
-set (BUILD_SHARED_LIBS ON)
+# set (BUILD_SHARED_LIBS ON)
 
 # Locate required packages
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
@@ -89,11 +89,25 @@ if (JAVA_INCLUDE_PATH)
   if (HADOOP_INCLUDE_PATH)
     message(STATUS "Hadoop includes located at: ${HADOOP_INCLUDE_PATH}")
   else (HADOOP_INCLUDE_PATH)
-    message(STATUS "Please set HADOOP_INCLUDE_PATH variable")
+    message(STATUS "Hadoop includes not found. Please set HADOOP_INCLUDE_PATH variable")
   endif(HADOOP_INCLUDE_PATH)
+  
+  if (HADOOP_LIB_PATH)
+    message(STATUS "Hadoop libraries located at: ${HADOOP_LIB_PATH}")
+  else (HADOOP_LIB_PATH)
+    message(STATUS "Hadoop libraries not found. Please set HADOOP_LIB_PATH variable")
+  endif (HADOOP_LIB_PATH)
+  
+  if (NOT BUILD_SHARED_LIBS)
+    message(STATUS "You decided not to build shared libraries. MapReduce will be disabled")
+  endif (NOT BUILD_SHARED_LIBS)
 else (JAVA_INCLUDE_PATH)
-  message(STATUS "Java headers not found. Mapreduce support will be disabled.")
+  message(STATUS "Java JNI not found. Mapreduce support will be disabled.")
 endif(JAVA_INCLUDE_PATH)
+
+if (JAVA_INCLUDE_PATH AND HADOOP_LIB_PATH AND HADOOP_INCLUDE_PATH AND BUILD_SHARED_LIBS)
+  set(BUILD_MAPREDUCE ON)
+endif (JAVA_INCLUDE_PATH AND HADOOP_LIB_PATH AND HADOOP_INCLUDE_PATH AND BUILD_SHARED_LIBS)
 
 # set malloc library
 set(MALLOC_LIBRARY ${Tcmalloc_LIBRARIES})
@@ -139,9 +153,12 @@ add_subdirectory(src/cc/Tools/serverup)
 add_subdirectory(src/cc/DfsBroker/Lib)
 add_subdirectory(src/cc/DfsBroker/local)
 
-if (JAVA_INCLUDE_PATH)
+if (BUILD_MAPREDUCE)
   add_subdirectory(contrib/cc/MapReduce)
-endif (JAVA_INCLUDE_PATH)
+else (BUILD_MAPREDUCE)
+  message(STATUS "MapReduce support disabled.")
+endif (BUILD_MAPREDUCE)
+
 #add_subdirectory(examples/simple_bench)
 IF (Kfs_FOUND)
    add_subdirectory(src/cc/DfsBroker/kosmos)
