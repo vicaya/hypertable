@@ -49,7 +49,39 @@ atomic_t IOHandlerData::ms_next_connection_id = ATOMIC_INIT(1);
 
 #if defined(__linux__)
 
+namespace {
+  /**
+   */
+  ssize_t socket_read(int fd, void *vptr, size_t n) {
+    size_t nleft;
+    ssize_t nread;
+    char *ptr;
+
+    ptr = (char *)vptr;
+    nleft = n;
+    while (nleft > 0) {
+      if ((nread = ::read(fd, ptr, nleft)) < 0) {
+	if (errno == EINTR) {
+	  nread = 0; /* and call read() again */
+	  continue;
+	}
+	if (nleft < n)
+	  break;
+	return -1;
+      }
+      else if (nread == 0)
+	break; /* EOF */
+
+      nleft -= nread;
+      ptr   += nread;
+    }
+    return n - nleft;
+  }
+}
+
 bool IOHandlerData::handle_event(struct epoll_event *event) {
+
+  errno = 0;
 
   //DisplayEvent(event);
 
@@ -66,8 +98,10 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
     while (true) {
       if (!m_got_header) {
         uint8_t *ptr = ((uint8_t *)&m_message_header) + (sizeof(Header::Common) - m_message_header_remaining);
-        nread = FileUtils::read(m_sd, ptr, m_message_header_remaining);
+        nread = socket_read(m_sd, ptr, m_message_header_remaining);
         if (nread == (size_t)-1) {
+	  if (errno == EAGAIN)
+	    return false;
           if (errno != ECONNREFUSED) {
             HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_header_remaining, strerror(errno));
           }
@@ -76,9 +110,14 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
           deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, error));
           return true;
         }
+	else if (nread == 0) {
+	  m_reactor_ptr->cancel_requests(this);
+          deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
+          return true;
+	}
         else if (nread < m_message_header_remaining) {
           m_message_header_remaining -= nread;
-          return false;
+	  return false;
         }
         else {
           m_got_header = true;
@@ -91,16 +130,24 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
         }
       }
       if (m_got_header) {
-        nread = FileUtils::read(m_sd, m_message_ptr, m_message_remaining);
+        nread = socket_read(m_sd, m_message_ptr, m_message_remaining);
         if (nread < 0) {
+	  if (errno == EAGAIN)
+	    return false;
           HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_header_remaining, strerror(errno));
 	  m_reactor_ptr->cancel_requests(this);
           deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
           return true;
         }
+	else if (nread == 0) {
+	  m_reactor_ptr->cancel_requests(this);
+          deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
+          return true;
+	}
         else if (nread < m_message_remaining) {
           m_message_ptr += nread;
           m_message_remaining -= nread;
+	  return false;
         }
         else {
           DispatchHandler *dh = 0;

@@ -964,6 +964,13 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
 
       key.ptr = mod_ptr;
 
+      if (*mod_ptr == 0) {
+	send_back_ptr = mod_ptr;
+	mod_ptr = (uint8_t *)mod_end;
+	error = Error::BAD_KEY;
+	break;
+      }
+
       row = key.str();
 
       // Look for containing range, add to stop mods if not found
@@ -1151,7 +1158,8 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
 
     if (send_back_ptr) {
       SendBackRec send_back;
-      send_back.error = Error::RANGESERVER_OUT_OF_RANGE;
+      send_back.error = error ? error : Error::RANGESERVER_OUT_OF_RANGE;
+      error = Error::OK;
       send_back.offset = send_back_ptr - buffer.base;
       send_back.len = mod_ptr - send_back_ptr;
       send_back_vector.push_back(send_back);
@@ -1760,9 +1768,12 @@ void RangeServer::log_cleanup() {
   /**
    * If we've got METADATA ranges, process them first
    */
-  if (table_vec[0]->get_id() == 0) {
+  if (table_vec[0]->get_id() == 0 && Global::metadata_log) {
     first_user_table = 1;
     table_vec[0]->get_range_vector(range_vec);
+    // skip root
+    if (!range_vec.empty() && range_vec[0]->end_row() == Key::END_ROOT_ROW)
+      range_vec.erase(range_vec.begin());
     schedule_log_cleanup_compactions(range_vec, Global::metadata_log, m_log_roll_limit);
   }
 

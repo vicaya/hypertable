@@ -212,7 +212,8 @@ int Range::add(const ByteString key, const ByteString value, uint64_t real_times
   if (m_error)
     return m_error;
 
-  HT_EXPECT(key_comps.load(key), Error::FAILED_EXPECTATION);
+  if (!key_comps.load(key))
+    return Error::BAD_KEY;
 
   if (key_comps.column_family_code >= m_column_family_vector.size()) {
     HT_ERRORF("Bad column family (%d)", key_comps.column_family_code);

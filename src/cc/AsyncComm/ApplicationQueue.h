@@ -112,6 +112,11 @@ namespace Hypertable {
                 rec = 0;
               }
             }
+	    if (rec == 0) {
+	      m_state.cond.wait(lock);
+	      if (m_state.shutdown)
+		return;
+	    }
           }
 
           if (rec) {

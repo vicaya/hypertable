@@ -179,9 +179,12 @@ int main(int argc, char **argv) {
 
 	progress_meter += 1;
       }
+
+      mutator_ptr->flush();
     }
     catch (Hypertable::Exception &e) {
       cerr << "error: " << Error::get_text(e.code()) << " - " << e.what() << endl;
+      _exit(1);
     }
   }
 
@@ -195,6 +198,6 @@ int main(int argc, char **argv) {
 	 total_written / stopwatch.elapsed());
   printf("    Throughput:  %.2f inserts/s\n",
 	 (double)R / stopwatch.elapsed());
-  
+
 }
 

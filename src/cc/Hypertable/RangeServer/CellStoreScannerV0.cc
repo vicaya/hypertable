@@ -455,7 +455,7 @@ bool CellStoreScannerV0::fetch_next_block_readahead() {
       HT_ERROR_OUT <<"Error reading cell store ("
                    << m_cell_store_ptr->get_filename() <<") block: "
                    << e << HT_END;
-      return false;
+      HT_THROW2(e.code(), e, e.what());
     }
     // Errors should've been caught by checksum/decompression
     HT_EXPECT(nread == m_block.zlength, Error::UNPOSSIBLE);

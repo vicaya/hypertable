@@ -98,6 +98,7 @@ namespace Hypertable {
 
     bool         m_verbose;
     String       m_root_dir;
+    bool         m_no_flush;
   };
 
 }

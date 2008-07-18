@@ -22,7 +22,7 @@
 #include "Common/Compat.h"
 #include "Defaults.h"
 
-const int Hypertable::HYPERTABLE_CLIENT_TIMEOUT = 60;
+const int Hypertable::HYPERTABLE_CLIENT_TIMEOUT = 120;
 
 const int Hypertable::HYPERTABLE_LOCATIONCACHE_MAXENTRIES = 1000000;
 

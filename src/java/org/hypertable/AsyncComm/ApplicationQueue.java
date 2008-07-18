@@ -78,6 +78,9 @@ public class ApplicationQueue {
                                 rec = null;
                             }
                         }
+			if (rec == null) {
+                            mQueue.wait();
+			}
                     }
 
                     if (rec != null) {

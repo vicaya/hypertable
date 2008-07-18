@@ -308,7 +308,6 @@ void ClientKeepaliveHandler::destroy_session() {
   if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp) != Error::OK))
     HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
 
-  poll(0, 0, 1000);
+  //m_comm->close_socket(m_local_addr);
 
-  m_comm->close_socket(m_local_addr);
 }

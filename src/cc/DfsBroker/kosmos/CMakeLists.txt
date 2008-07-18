@@ -21,7 +21,7 @@ include_directories(${Kfs_INCLUDE_DIR})
 
 # kosmosBroker
 add_executable(kosmosBroker main.cc KosmosBroker.cc)
-target_link_libraries(kosmosBroker ${Kfs_LIBRARY} HyperDfsBroker
+target_link_libraries(kosmosBroker ${Kfs_LIBRARIES} HyperDfsBroker
                       ${MALLOC_LIBRARY})
 
 install(TARGETS kosmosBroker RUNTIME DESTINATION ${VERSION}/bin)
