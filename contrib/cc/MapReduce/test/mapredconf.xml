@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<configuration>
+
+<property>
+  <name>mapred.reduce.tasks</name>
+  <value>2</value>
+</property>
+
+<property>
+  <name>hadoop.pipes.executable</name>
+  <value>/mapreduce/applications/mapred#mapred</value>
+</property>
+
+<property>
+  <name>hadoop.pipes.java.recordreader</name>
+  <value>false</value>
+</property>
+
+<property>
+  <name>hadoop.pipes.java.mapper</name>
+  <value>false</value>
+</property>
+
+<property>
+  <name>hadoop.pipes.java.reducer</name>
+  <value>false</value>
+</property>
+
+<property>
+  <name>mapred.cache.files</name>
+  <value>/mapred/applications/mapred#mapred</value>
+</property>
+
+<property>
+  <name>keep.failed.task.files</name>
+  <value>true</value>
+</property>
+
+<property>
+  <name>hypertable.table.name</name>
+  <value>Test</value>
+</property>
+
+<property>
+  <name>hypertable.table.columns.all</name>
+  <value>true</value>
+</property>
+
+<property>
+  <name>hypertable.table.columns</name>
+  <value>a</value>
+</property>
+
+</configuration>
+
