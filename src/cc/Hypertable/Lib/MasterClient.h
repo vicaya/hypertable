@@ -74,6 +74,8 @@ namespace Hypertable {
     int drop_table(const char *table_name, bool if_exists, DispatchHandler *handler);
     int drop_table(const char *table_name, bool if_exists);
 
+    int shutdown();
+
     int reload_master();
 
     void set_verbose_flag(bool verbose) { m_verbose = verbose; }

@@ -80,13 +80,21 @@ namespace Hypertable {
     return cbuf;
   }
 
+  CommBuf *MasterProtocol::create_shutdown_request() {
+    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
+    CommBuf *cbuf = new CommBuf(hbuilder, 2);
+    cbuf->append_i16(COMMAND_SHUTDOWN);
+    return cbuf;
+  }
+
   const char *MasterProtocol::m_command_strings[] = {
     "create table",
     "get schema",
     "status",
     "register server",
     "report split",
-    "drop table"
+    "drop table",
+    "shutdown"
   };
 
   const char *MasterProtocol::command_text(short command) {

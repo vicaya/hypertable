@@ -472,6 +472,9 @@ void HqlCommandInterpreter::execute_line(const String &line) {
     else if (state.command == COMMAND_DROP_TABLE) {
       m_client->drop_table(state.table_name, state.if_exists);
     }
+    else if (state.command == COMMAND_SHUTDOWN) {
+      m_client->shutdown();
+    }
     else
       HT_THROW(Error::HQL_PARSE_ERROR, String("unsupported command: ") + line);
   }

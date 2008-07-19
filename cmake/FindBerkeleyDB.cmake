@@ -16,6 +16,7 @@ find_path(BDB_INCLUDE_DIR db_cxx.h NO_DEFAULT_PATH
     /usr/local/include/db4
     /usr/local/include
     /usr/include/db4
+    /usr/include
     )
 
 set(BDB_NAMES ${BDB_NAMES} db_cxx)

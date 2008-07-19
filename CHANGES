@@ -1,3 +1,44 @@
+Version 0.9.0.7:
+(2008-07-18)
+
+  * Got RangeServer recovery working
+  * Added shutdown command to hypertable command interpreter
+  * Fixed ApplicationQueue spin problem (c++ & java) plus other bugs
+  * Merged in Mateusz Berezecki's Hadoop MapReduce contribution
+  * Added random_write_test
+  * Made Comm a singleton as intended
+  * Added explicit Hyperspace session destroy mechanism
+  * Changed epoll usage from level to edge triggered
+  * Added option to preserve key columns as regular columns
+  * Upgraded to latest KFS code
+  * Check for and throw exception on bad scan spec (start > end)
+  * Added ROW_UNIQUIFY_CHARS option to LOAD DATA INFILE
+  * Added utility to dump metalog
+  * Added convenient constructor (host, port) for DfsBroker client.
+  * Added version check in case of shared libraries
+  * Added Hypertable::Config to make init easier
+  * Added a regression test to ensure that deletes are retroactively applied
+  * [issue 120] Fixed problem with MergeScanner not properly handling deletes
+  * [issue 118] Fixed segfault on empty .tsv line; Fixed output supress flags
+  * [issue 119] Fixed problem where end timestamp was getting ignored
+  * Doc: added notes on shared library install usage.
+  * Cleanup build documentation
+  * Avoid hash_value redefintion with boost 1.35+
+  * Build: link libraries cleanup
+  * [issue 115] Fixed Hyperspace Berkeley DB deadlock problem
+  * Fixed Master error handling logic in create_table
+  * Fixed link problem on XCode 2.4
+  * Added RangeServer metalog classes and tests
+  * Use native 'exists' instead of 'get' for BDB FS 'exists' calls.
+  * Made BDB FS do basic recovery on init
+  * Added support to print "pretty functions" in exception trace
+  * Changed TableIdentifierCopy etc. to *Managed for what they really are
+  * Added some documentation for tricky part of DynamicBuffer
+  * Updated serialization test for str16 and bytes32
+  * remove HT_TRY_DECODE in favor of HT_TRY
+  * Added script to find & replace with perl regex
+  * Coding convention/guideline sweep
+
 Version 0.9.0.6:
 (2008-06-14)
 

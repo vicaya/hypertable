@@ -60,10 +60,6 @@ atomic_t Comm::ms_next_request_id = ATOMIC_INIT(1);
 Comm *Comm::ms_instance = NULL;
 Mutex Comm::ms_mutex;
 
-struct comm_guard {
-  ~comm_guard() { Comm::destroy(); }
-} comm_guard;
-
 Comm::Comm() {
   if (ReactorFactory::ms_reactors.size() == 0) {
     HT_ERROR("ReactorFactory::initialize must be called before creating "

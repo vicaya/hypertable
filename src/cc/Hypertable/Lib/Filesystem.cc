@@ -63,7 +63,10 @@ Filesystem::decode_response_read(EventPtr &event_ptr, void *dst, size_t len) {
   decode_i64(&msg, &remaining);
   uint32_t nread = decode_i32(&msg, &remaining);
 
-  if (remaining < nread || len < nread)
+  if (nread == (uint32_t)-1)
+    return 0;
+
+  if (remaining < nread)
     HT_THROW(Error::RESPONSE_TRUNCATED, "");
 
   // PERF: We could just send back a pointer to msg here

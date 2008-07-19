@@ -157,13 +157,8 @@ void RangeServerClient::status(struct sockaddr_in &addr) {
 }
 
 void RangeServerClient::shutdown(struct sockaddr_in &addr) {
-  DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
   CommBufPtr cbp(RangeServerProtocol::create_request_shutdown());
-  send_message(addr, cbp, &sync_handler);
-  if (!sync_handler.wait_for_reply(event_ptr))
-    HT_THROW((int)Protocol::response_code(event_ptr),
-             String("RangeServer shutdown() failure : ") + Protocol::string_format_message(event_ptr));
+  send_message(addr, cbp, 0);
 }
 
 void RangeServerClient::dump_stats(struct sockaddr_in &addr) {

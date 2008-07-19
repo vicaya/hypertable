@@ -157,6 +157,12 @@ void Client::drop_table(const String &name, bool if_exists) {
     HT_THROW(error, "");
 }
 
+void Client::shutdown() {
+  int error;
+  if ((error = m_master_client_ptr->shutdown()) != Error::OK)
+    HT_THROW(error, "");
+}
+
 
 HqlCommandInterpreter *Client::create_hql_interpreter() {
   return new HqlCommandInterpreter(this);

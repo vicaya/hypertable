@@ -35,6 +35,7 @@
 #include "RequestHandlerStatus.h"
 #include "RequestHandlerRegisterServer.h"
 #include "RequestHandlerReportSplit.h"
+#include "RequestHandlerShutdown.h"
 
 using namespace Hypertable;
 using namespace Serialization;
@@ -78,6 +79,9 @@ void ConnectionHandler::handle(EventPtr &event) {
         break;
       case MasterProtocol::COMMAND_REPORT_SPLIT:
         hp = new RequestHandlerReportSplit(m_comm, m_master_ptr.get(), event);
+        break;
+      case MasterProtocol::COMMAND_SHUTDOWN:
+        hp = new RequestHandlerShutdown(m_comm, m_master_ptr.get(), event);
         break;
       default:
         HT_THROWF(PROTOCOL_ERROR, "Unimplemented command (%d)", command);

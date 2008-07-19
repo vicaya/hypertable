@@ -50,6 +50,7 @@ extern "C" {
 #include "RequestHandlerReplayUpdate.h"
 #include "RequestHandlerReplayCommit.h"
 #include "RequestHandlerDropRange.h"
+#include "RequestHandlerShutdown.h"
 
 #include "ConnectionHandler.h"
 #include "EventHandlerMasterConnection.h"
@@ -140,17 +141,8 @@ void ConnectionHandler::handle(EventPtr &event) {
         break;
       case RangeServerProtocol::COMMAND_SHUTDOWN:
         m_shutdown = true;
-        HT_INFO("Executing SHUTDOWN command.");
-        {
-          ResponseCallback cb(m_comm, event);
-          cb.response_ok();
-        }
-        m_app_queue_ptr->shutdown();
-        m_app_queue_ptr->join();
-        m_app_queue_ptr = 0;
-        m_range_server_ptr = 0;
-        m_master_client_ptr = 0;
-        return;
+        handler = new RequestHandlerShutdown(m_comm, m_range_server_ptr.get(), event);
+        break;
       case RangeServerProtocol::COMMAND_DUMP_STATS:
         handler = new RequestHandlerDumpStats(m_comm, m_range_server_ptr.get(), event);
         break;

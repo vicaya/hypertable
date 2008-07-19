@@ -22,6 +22,7 @@
 #ifndef HYPERTABLE_MASTER_H
 #define HYPERTABLE_MASTER_H
 
+#include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
 
 #include "Common/Thread.h"
@@ -60,6 +61,7 @@ namespace Hypertable {
     void register_server(ResponseCallback *cb, const char *location, struct sockaddr_in &addr);
     void report_split(ResponseCallback *cb, TableIdentifier &table, RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit);
     void drop_table(ResponseCallback *cb, const char *table_name, bool if_exists);
+    void shutdown(ResponseCallback *cb);
 
     void server_joined(const String &location);
     void server_left(const String &location);
@@ -97,8 +99,10 @@ namespace Hypertable {
 
     ServerMap  m_server_map;
     ServerMap::iterator m_server_map_iter;
+    boost::condition  m_no_servers_cond;
 
     ThreadGroup m_threads;
+
   };
   typedef boost::intrusive_ptr<Master> MasterPtr;
 

@@ -39,6 +39,7 @@ namespace {
     "SELECT ............. Selects (and display) cells from a table",
     "SHOW CREATE TABLE .. Displays CREATE TABLE command used to create table",
     "SHOW TABLES ........ Displays the list of tables",
+    "SHUTDOWN ........... Shuts servers down gracefully",
     "",
     "Statements must be terminated with ';' to execute.  For more information on",
     "a specific statement, type 'help <statement>', where <statement> is one from",
@@ -174,7 +175,7 @@ namespace {
     (const char *)0
   };
 
-  const char *help_text_shutdown[] = {
+  const char *help_text_shutdown_rangeserver[] = {
     "",
     "SHUTDOWN",
     "",
@@ -513,6 +514,18 @@ namespace {
     (const char *)0
   };
 
+  const char *help_text_shutdown[] = {
+    "",
+    "SHUTDOWN",
+    "",
+    "Issues a shutdown request to the Master which, in turn, issues a shutdown",
+    "request to all RangeServers.  Upon receiving a shutdown request, each",
+    "RangeServer will quiesce, close its commit logs, destroy its Hyperspace",
+    "session and then exit.",
+    "",
+    (const char *)0
+  };
+
 
   typedef hash_map<std::string, const char **>  HelpTextMap;
 
@@ -534,6 +547,7 @@ namespace {
     (*map)["show tables"] = help_text_show_tables;
     (*map)["drop"] = help_text_drop_table;
     (*map)["drop table"] = help_text_drop_table;
+    (*map)["shutdown"] = help_text_shutdown;
     return *map;
   }
 
@@ -574,5 +588,5 @@ void HqlHelpText::install_range_server_client_text() {
   text_map["replay start"] = help_text_replay_start;
   text_map["replay log"] = help_text_replay_log;
   text_map["replay commit"] = help_text_replay_commit;
-  text_map["shutdown"] = help_text_shutdown;
+  text_map["shutdown"] = help_text_shutdown_rangeserver;
 }

@@ -27,6 +27,7 @@ extern "C" {
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 }
@@ -226,6 +227,8 @@ void Master::server_left(const String &location) {
   m_hyperspace_ptr->unlink(hsfname);
   m_hyperspace_ptr->close((*iter).second->hyperspace_handle);
   m_server_map.erase(iter);
+  if (m_server_map.empty())
+    m_no_servers_cond.notify_all();
 
   HT_INFOF("RangeServer lost it's lock on file %s, deleting ...", hsfname.c_str());
   cout << flush;
@@ -638,6 +641,41 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
   cb->response_ok();
   cout << flush;
 }
+
+  void Master::shutdown(ResponseCallback *cb) {
+    RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30);
+
+    HT_INFO("SHUTDOWN");
+    std::cout << endl;
+
+    {
+      boost::mutex::scoped_lock lock(m_mutex);
+      boost::xtime expire_time;
+
+      // issue shutdown commands
+      for (ServerMap::iterator iter = m_server_map.begin(); iter != m_server_map.end(); iter++)
+	rsc.shutdown((*iter).second->addr);
+
+      boost::xtime_get(&expire_time, boost::TIME_UTC);
+      expire_time.sec += (int64_t)30;
+
+      m_no_servers_cond.timed_wait(lock, expire_time);
+      if (!m_server_map.empty()) {
+	String err_msg = format("%d RangeServers failed to shutdown", (int)m_server_map.size());
+	cb->error(Error::REQUEST_TIMEOUT, err_msg);
+	return;
+      }
+
+      m_hyperspace_ptr = 0;
+    }
+
+    cb->response_ok();
+
+    poll(0, 0, 1000);
+
+    _exit(0);
+
+  }
 
 
 int

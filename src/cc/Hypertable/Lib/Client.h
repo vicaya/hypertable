@@ -110,6 +110,11 @@ namespace Hypertable {
     void drop_table(const String &name, bool if_exists);
 
     /**
+     * Shuts down servers
+     */
+    void shutdown();
+
+    /**
      * Creates an HQL command interpreter
      *
      * @return a newly created interpreter object

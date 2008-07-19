@@ -75,6 +75,8 @@ namespace Hypertable {
 
     void drop_range(ResponseCallback *, TableIdentifier *, RangeSpec *);
 
+    void shutdown(ResponseCallback *cb);
+
     // Other methods
     void do_maintenance();
     void log_cleanup();

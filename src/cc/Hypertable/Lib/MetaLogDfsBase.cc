@@ -35,12 +35,48 @@ namespace {
   const uint32_t DFS_NUM_REPLICAS = -1; // ditto
   const int64_t DFS_BLOCK_SIZE = -1;   // ditto
   const size_t ML_ENTRY_BUFFER_RESERVE = ML_ENTRY_HEADER_SIZE + 512;
+  const size_t DFS_XFER_SIZE = 32768;
 } // local namespace
 
 MetaLogDfsBase::MetaLogDfsBase(Filesystem *fs, const String &path) :
     m_fs(fs), m_path(path) {
-  if (fs)
-    m_fd = create(path);
+  if (fs) {
+    if (fs->exists(path)) {
+      String tmp_path = path + ".tmp";
+      int tmp_fd;
+      size_t toread, nread, nwritten;
+      uint8_t *buf = 0;
+      try {
+	m_fs->rename(path, tmp_path);
+	tmp_fd = m_fs->open(tmp_path);
+	m_fd = m_fs->create(path, false, DFS_BUFFER_SIZE, DFS_NUM_REPLICAS,
+			    DFS_BLOCK_SIZE);
+	toread = nread = DFS_XFER_SIZE;
+	while (nread == DFS_XFER_SIZE) {
+	  buf = new uint8_t [ DFS_XFER_SIZE ];
+	  nread = m_fs->read(tmp_fd, buf, DFS_XFER_SIZE);
+	  if (nread > 0) {
+	    StaticBuffer sbuf(buf, nread);
+	    nwritten = m_fs->append(m_fd, sbuf, 0);
+	    if (nwritten != nread) {
+	      delete buf;
+	      buf = 0;
+	      HT_THROW(Error::DFSBROKER_IO_ERROR, "problem making copying of metalog");
+	    }
+	  }
+	}
+	buf = 0;
+	m_fs->close(tmp_fd);
+	m_fs->remove(tmp_path);
+      }
+      catch (Exception &e) {
+	delete [] buf;
+	HT_THROW2F(e.code(), e, "Error opening metalog: %s", path.c_str());
+      }
+    }
+    else 
+      m_fd = create(path);
+  }
 }
 
 int

@@ -1676,6 +1676,45 @@ void RangeServer::drop_range(ResponseCallback *cb, TableIdentifier *table, Range
   cb->response_ok();
 }
 
+void RangeServer::shutdown(ResponseCallback *cb) {
+  std::vector<TableInfoPtr> table_vec;
+  std::vector<RangePtr> range_vec;
+
+  (void)cb;
+
+  Global::maintenance_queue->stop();
+
+  // block updates
+  m_update_mutex_a.lock();
+  m_update_mutex_b.lock();
+
+  // get the tables
+  m_live_map_ptr->get_all(table_vec);
+
+  // add all ranges into the range vector
+  for (size_t i=0; i<table_vec.size(); i++)
+    table_vec[i]->get_range_vector(range_vec);
+
+  // increment the update counters
+  for (size_t i=0; i<range_vec.size(); i++)
+    range_vec[i]->increment_update_counter();
+
+  m_hyperspace_ptr = 0;
+
+  if (Global::range_log)
+    Global::range_log->close();
+
+  if (Global::root_log)
+    Global::root_log->close();
+
+  if (Global::metadata_log)
+    Global::metadata_log->close();
+
+  if (Global::user_log)
+    Global::user_log->close();
+
+}
+
 
 
 int RangeServer::verify_schema(TableInfoPtr &table_info_ptr, int generation, String &err_msg) {

@@ -212,6 +212,22 @@ int MasterClient::drop_table(const char *table_name, bool if_exists) {
   return error;
 }
 
+int MasterClient::shutdown() {
+  DispatchHandlerSynchronizer sync_handler;
+  EventPtr event_ptr;
+  CommBufPtr cbp(MasterProtocol::create_shutdown_request());
+  int error = send_message(cbp, &sync_handler);
+  if (error == Error::OK) {
+    if (!sync_handler.wait_for_reply(event_ptr)) {
+      if (m_verbose)
+        HT_ERRORF("Master 'shutdown' error : %s", MasterProtocol::string_format_message(event_ptr).c_str());
+      error = (int)MasterProtocol::response_code(event_ptr);
+    }
+  }
+  return error;
+}
+
+
 
 
 int MasterClient::send_message(CommBufPtr &cbp, DispatchHandler *handler) {

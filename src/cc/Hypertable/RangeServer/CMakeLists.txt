@@ -56,6 +56,7 @@ RequestHandlerReplayUpdate.cc
 RequestHandlerReplayCommit.cc
 RequestHandlerStatus.cc
 RequestHandlerUpdate.cc
+RequestHandlerShutdown.cc
 ResponseCallbackCreateScanner.cc
 ResponseCallbackFetchScanblock.cc
 ResponseCallbackUpdate.cc
