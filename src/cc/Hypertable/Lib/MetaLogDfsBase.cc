@@ -39,7 +39,7 @@ namespace {
 } // local namespace
 
 MetaLogDfsBase::MetaLogDfsBase(Filesystem *fs, const String &path) :
-    m_fs(fs), m_path(path) {
+    m_fs(fs), m_path(path), m_newfile(true) {
   if (fs) {
     if (fs->exists(path)) {
       String tmp_path = path + ".tmp";
@@ -64,6 +64,8 @@ MetaLogDfsBase::MetaLogDfsBase(Filesystem *fs, const String &path) :
 	      HT_THROW(Error::DFSBROKER_IO_ERROR, "problem making copying of metalog");
 	    }
 	  }
+
+	  m_newfile = false;
 	}
 	buf = 0;
 	m_fs->close(tmp_fd);

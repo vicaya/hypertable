@@ -49,6 +49,8 @@ protected:
   const String& path() const { return m_path; }
   Mutex &mutex() { return m_mutex; }
 
+  bool m_newfile;
+
 private:
   Mutex m_mutex;
   int m_fd;
