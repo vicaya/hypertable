@@ -296,12 +296,12 @@ public class HdfsBroker {
             byte [] data = new byte [ amount ];
             int nread = 0;
 
-            try {
-                ofd.is.readFully(data, 0, data.length);
-                nread = data.length;
-            }
-            catch (EOFException e) {
-                nread = ofd.is.read(data, 0, data.length);
+            while (nread < amount) {
+                int r = ofd.is.read(data, 0, amount - nread);
+
+                if (r < 0) break;
+
+                nread += r;
             }
 
             error = cb.response(offset, nread, data);
@@ -382,12 +382,12 @@ public class HdfsBroker {
 
             int nread = 0;
 
-            try {
-                ofd.is.readFully(data, 0, data.length);
-                nread = data.length;
-            }
-            catch (EOFException e) {
-                nread = ofd.is.read(data, 0, data.length);
+            while (nread < amount) {
+                int r = ofd.is.read(data, 0, amount - nread);
+
+                if (r < 0) break;
+
+                nread += r;
             }
 
             error = cb.response(offset, nread, data);
