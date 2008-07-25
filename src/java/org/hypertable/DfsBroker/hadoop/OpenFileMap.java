@@ -50,6 +50,8 @@ public class OpenFileMap {
     }
 
     public synchronized void RemoveAll(InetSocketAddress addr) {
+	int icount = 0;
+	int ocount = 0;
         for (Iterator<Map.Entry<Integer,OpenFileData>> iter = mFileMap.entrySet().iterator(); iter.hasNext();) {
             try {
                 Map.Entry<Integer,OpenFileData> entry = iter.next();
@@ -58,9 +60,11 @@ public class OpenFileMap {
                 if (ofd.addr.equals(addr)) {
                     if (ofd.is != null) {
                         ofd.is.close();
+			icount++;
                     }
                     else if (ofd.os != null) {
                         ofd.os.close();
+			ocount++;
                     }
                     iter.remove();
                 }
@@ -70,6 +74,8 @@ public class OpenFileMap {
             }
         }
         mFileMap.clear();
+	java.lang.System.out.println("Closed " + icount + " input streams and " +
+				     ocount + " output streams for client connection " + addr);
     }
 
     private HashMap<Integer, OpenFileData> mFileMap = new HashMap<Integer, OpenFileData>();

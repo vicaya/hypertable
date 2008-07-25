@@ -297,7 +297,7 @@ public class HdfsBroker {
             int nread = 0;
 
             while (nread < amount) {
-                int r = ofd.is.read(data, 0, amount - nread);
+                int r = ofd.is.read(data, nread, amount - nread);
 
                 if (r < 0) break;
 

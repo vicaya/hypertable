@@ -126,7 +126,7 @@ if [ $? != 0 ] ; then
       $HYPERTABLE_HOME/bin/serverup dfsbroker
       if [ $? != 0 ] ; then
 	  tail -100 $LOGFILE
-	  echo "Problem statring DfsBroker ($1)";
+	  echo "Problem starting DfsBroker ($1)";
 	  exit 1
       fi
   fi
@@ -157,7 +157,7 @@ if [ $? != 0 ] ; then
 	$HYPERTABLE_HOME/bin/serverup hyperspace
 	if [ $? != 0 ] ; then
 	    tail -100 $LOGFILE
-	    echo "Problem statring Hyperspace";
+	    echo "Problem starting Hyperspace";
 	    exit 1
 	fi
     fi
@@ -186,7 +186,7 @@ if [ "$START_MASTER" == "true" ] ; then
 	    $HYPERTABLE_HOME/bin/serverup master
 	    if [ $? != 0 ] ; then
 		tail -100 $LOGFILE
-		echo "Problem statring Hypertable.Master";
+		echo "Problem starting Hypertable.Master";
 		exit 1
 	    fi
 	fi

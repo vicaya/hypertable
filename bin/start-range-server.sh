@@ -128,7 +128,7 @@ if [ $? != 0 ] ; then
       $HYPERTABLE_HOME/bin/serverup dfsbroker
       if [ $? != 0 ] ; then
 	  tail -100 $LOGFILE
-	  echo "Problem statring DfsBroker ($1)";
+	  echo "Problem starting DfsBroker ($1)";
 	  exit 1
       fi
   fi
@@ -154,7 +154,7 @@ if [ "$START_COMMITLOG_BROKER" == "yes" ] ; then
       $HYPERTABLE_HOME/bin/serverup --host=localhost --port=38031 dfsbroker
       if [ $? != 0 ] ; then
 	  tail -100 $LOGFILE
-	  echo "Problem statring Commit Log DfsBroker (local)";
+	  echo "Problem starting Commit Log DfsBroker (local)";
 	  exit 1
       fi
   fi
@@ -182,7 +182,7 @@ if [ "$START_RANGESERVER" == "true" ] ; then
 	    $HYPERTABLE_HOME/bin/serverup rangeserver
 	    if [ $? != 0 ] ; then
 		tail -100 $LOGFILE
-		echo "Problem statring Hypertable.RangeServer";
+		echo "Problem starting Hypertable.RangeServer";
 		exit 1
 	    fi
 	fi
