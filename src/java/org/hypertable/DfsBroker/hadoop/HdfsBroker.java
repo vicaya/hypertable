@@ -39,6 +39,8 @@ import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.ResponseCallback;
 import org.hypertable.Common.Error;
 
+import org.apache.hadoop.fs.FileStatus;
+
 /**
  * This is the actual HdfsBroker object that contains all of the application
  * logic.  It has a method for each of the request types (e.g. Open, Close,
@@ -520,7 +522,11 @@ public class HdfsBroker {
             if (mVerbose)
                 log.info("Readdir('" + dirName + "')");
 
-            Path [] paths = mFilesystem.listPaths(new Path(dirName));
+            FileStatus[] statuses = mFilesystem.listStatus(new Path(dirName));
+            Path[] paths = new Path[statuses.length];
+            for (int k = 0; k < statuses.length; k++) {
+              paths[k] = statuses[k].getPath();
+            }
 
             String [] listing = new String [ paths.length ];
             for (int i=0; i<paths.length; i++) {
