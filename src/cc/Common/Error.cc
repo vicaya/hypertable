@@ -102,6 +102,7 @@ namespace {
     { Error::MASTER_TABLE_EXISTS,         "MASTER table exists" },
     { Error::MASTER_BAD_SCHEMA,           "MASTER bad schema" },
     { Error::MASTER_NOT_RUNNING,          "MASTER not running" },
+    { Error::MASTER_NO_RANGESERVERS,      "MASTER no range servers" },
     { Error::RANGESERVER_GENERATION_MISMATCH,  "RANGE SERVER generation mismatch" },
     { Error::RANGESERVER_RANGE_ALREADY_LOADED, "RANGE SERVER range already loaded" },
     { Error::RANGESERVER_RANGE_MISMATCH,       "RANGE SERVER range mismatch" },

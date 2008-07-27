@@ -21,6 +21,11 @@
 #ifndef HYPERTABLE_DYNAMICBUFFER_H
 #define HYPERTABLE_DYNAMICBUFFER_H
 
+#include <cstring>
+
+extern "C" {
+#include <stdint.h>
+}
 
 namespace Hypertable {
 

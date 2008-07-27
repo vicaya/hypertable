@@ -91,10 +91,8 @@ namespace Hypertable {
             boost::mutex::scoped_lock lock(m_state.queue_mutex);
 
             while (m_state.queue.empty()) {
-              if (m_state.shutdown) {
-                HT_INFO("shutdown!");
+              if (m_state.shutdown)
                 return;
-              }
               m_state.cond.wait(lock);
             }
 
@@ -113,6 +111,8 @@ namespace Hypertable {
               }
             }
 	    if (rec == 0) {
+	      if (m_state.shutdown)
+		return;
 	      m_state.cond.wait(lock);
 	      if (m_state.shutdown)
 		return;
@@ -160,6 +160,13 @@ namespace Hypertable {
       for (int i=0; i<worker_count; ++i)
         m_threads.create_thread(Worker);
       //threads
+    }
+
+    ~ApplicationQueue() {
+      if (!joined) {
+	shutdown();
+	join();
+      }
     }
 
     /**

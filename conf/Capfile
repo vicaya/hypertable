@@ -1,0 +1,101 @@
+set :source_machine, "motherlode000"
+set :install_dir,  "/data1/doug/hypertable" 
+set :hypertable_version, "0.9.0.7"
+set :dfs, "hadoop"
+set :config, "/home/doug/conf/cluster1-standard.cfg"
+set :cluster, "cluster1"
+
+if "#{cluster}" == "cluster1"
+  role :master, "motherlode001"
+  role :slave,  "motherlode001", "motherlode002", "motherlode003", "motherlode004", "motherlode005", "motherlode006", "motherlode007", "motherlode008"
+end
+
+role :localhost, "localhost"
+
+set :config_file, "#{config}".split('/')[-1]
+set :config_option, "--config=#{install_dir}/#{hypertable_version}/conf/#{config_file}"
+
+
+ desc <<-DESC
+    Copies config file to installation on localhost.
+    This task runs on localhost and copies the config file specified \
+    by the variable 'config' (default=#{config}) \
+    to the installation directory specified by the variable 'install_dir' \
+    (default=#{install_dir})
+ DESC
+task :copy_config, :roles => :localhost do
+  run("cp #{config} #{install_dir}/#{hypertable_version}/conf")
+end
+
+ desc <<-DESC
+    rsyncs installation directory to cluster.  For each machine in the \
+    cluster, his commannd  rsyncs the installation from the source installation \
+    machine specified by the variable 'source_machine' (default=#{source_machine})
+ DESC
+task :rsync_installation, :roles => [:master, :slave] do 
+  run "rsync -av --exclude=log --exclude=demo --exclude=fs --exclude=hyperspace #{source_machine}:#{install_dir}/#{hypertable_version} #{install_dir}"
+end
+
+ desc <<-DESC
+    Distributes installation.  This task copiles the config file and \
+    then rsyncs the installation to each machine in the cluster
+ DESC
+task :dist do
+  transaction do
+    copy_config
+    rsync_installation
+  end
+end
+
+desc "Starts all processes."
+task :start do
+  transaction do
+    start_master
+    start_slaves
+  end
+end
+
+desc "Starts master processes."
+task :start_master, :roles => :master do
+  run <<-CMD
+   #{install_dir}/#{hypertable_version}/bin/start-dfsbroker.sh #{dfs} #{config_option} &&
+   #{install_dir}/#{hypertable_version}/bin/start-hyperspace.sh #{config_option} &&
+   #{install_dir}/#{hypertable_version}/bin/start-master.sh #{config_option}
+  CMD
+end
+
+desc "Stops master processes."
+task :stop_master, :roles => :master do 
+  run "#{install_dir}/#{hypertable_version}/bin/stop-servers.sh"
+end
+
+desc "Starts slave processes."
+task :start_slaves, :roles => :slave do
+  run <<-CMD
+   #{install_dir}/#{hypertable_version}/bin/start-dfsbroker.sh #{dfs} #{config_option} &&
+   #{install_dir}/#{hypertable_version}/bin/start-rangeserver.sh #{config_option}
+  CMD
+end
+
+desc "Stops slave processes."
+task :stop_slaves, :roles => :slave do 
+  run "#{install_dir}/#{hypertable_version}/bin/stop-servers.sh"
+end
+
+desc "Stops all servers."
+task :stop, :roles => [:master, :slave] do 
+  transaction do
+    stop_slaves
+    stop_master
+  end
+end
+
+desc "Starts DFS brokers."
+task :start_brokers, :roles => [:master, :slave] do 
+  run "#{install_dir}/#{hypertable_version}/bin/start-dfsbroker.sh #{dfs} #{config_option}"
+end
+
+desc "Cleans database, removing all tables."
+task :cleandb, :roles => [:master, :slave] do 
+  run "#{install_dir}/#{hypertable_version}/bin/clean-database.sh"
+end

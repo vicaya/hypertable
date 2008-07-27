@@ -171,14 +171,15 @@ install(FILES demo/Test-schema.xml DESTINATION ${VERSION}/demo)
 install(FILES conf/hypertable.cfg DESTINATION ${VERSION}/conf)
 install(FILES conf/METADATA.xml DESTINATION ${VERSION}/conf)
 install(FILES lib/commons-logging-1.0.4.jar DESTINATION ${VERSION}/java/lib)
-install(FILES lib/hadoop-0.16.4-core.jar DESTINATION ${VERSION}/java/lib)
+install(FILES lib/hadoop-0.17.1-core.jar DESTINATION ${VERSION}/java/lib)
 install(FILES lib/junit-4.3.1.jar DESTINATION ${VERSION}/java/lib)
 install(FILES lib/log4j-1.2.13.jar DESTINATION ${VERSION}/java/lib)
 install(FILES lib/hypertable-${VERSION}.jar DESTINATION ${VERSION}/java/lib)
 install(FILES build/hypertable-${VERSION}.jar DESTINATION ${VERSION}/java/lib
         OPTIONAL)
-install(PROGRAMS bin/jrun bin/start-master.sh bin/start-all-servers.sh
-                 bin/start-range-server.sh bin/kill-servers.sh bin/slaves.sh
+install(PROGRAMS bin/jrun bin/clean-database.sh bin/start-master.sh 
+		 bin/start-hyperspace.sh bin/start-rangeserver.sh
+		 bin/start-all-servers.sh bin/stop-servers.sh bin/slaves.sh
 	DESTINATION ${VERSION}/bin)
 install(FILES test/create-test-tables.hql DESTINATION ${VERSION}/test)
 install(DIRECTORY examples/apache_log DESTINATION ${VERSION}/examples

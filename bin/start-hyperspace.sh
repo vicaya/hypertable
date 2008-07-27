@@ -55,95 +55,56 @@ if [ ! -d $HYPERTABLE_HOME/log ] ; then
     mkdir $HYPERTABLE_HOME/log
 fi
 
-
-RANGESERVER_OPTS=
-MASTER_OPTS=
-HYPERSPACE_OPTS=
-
-START_RANGESERVER="true"
-START_MASTER="true"
+VALGRIND=
 
 usage() {
     echo ""
-    echo "usage: start-all-servers.sh [OPTIONS] (local|hadoop|kfs) [<global-server-options>]"
+    echo "usage: start-hyperspace.sh [OPTIONS] [<server-options>]"
     echo ""
     echo "OPTIONS:"
     echo "  --valgrind  run broker with valgrind"
     echo ""
 }
 
-
 while [ "$1" != "${1##[-+]}" ]; do
     case $1 in
-	'')    
-	    usage
-	    exit 1;;
-	--valgrind-rangeserver)
-	    RANGESERVER_OPTS="--valgrind "
-	    shift
-	    ;;
-	--valgrind-master)
-	    MASTER_OPTS="--valgrind "
-	    shift
-	    ;;
-	--valgrind-hyperspace)
-	    HYPERSPACE_OPTS="--valgrind "
-	    shift
-	    ;;
-	--no-rangeserver)
-	    START_RANGESERVER="false"
-	    shift
-	    ;;
-	--no-master)
-	    START_MASTER="false"
+	--valgrind)
+	    VALGRIND="valgrind -v --log-file=vg --leak-check=full --num-callers=20 "
 	    shift
 	    ;;
 	*)     
-	    usage
-	    exit 1;;
+	    break
+	    ;;
     esac
 done
 
-if [ "$#" -eq 0 ]; then
-    usage
-    exit 1
+PIDFILE=$HYPERTABLE_HOME/run/Hyperspace.pid
+LOGFILE=$HYPERTABLE_HOME/log/Hyperspace.log
+
+if [ ! -d $HYPERTABLE_HOME/hyperspace ] ; then
+    mkdir $HYPERTABLE_HOME/hyperspace
 fi
 
-DFS=$1
-shift
-
-
-#
-# Start DfsBroker
-#
-$HYPERTABLE_HOME/bin/start-dfsbroker.sh $DFS $@
+let RETRY_COUNT=0
+$HYPERTABLE_HOME/bin/serverup hyperspace
 if [ $? != 0 ] ; then
-    echo "Error starting DfsBroker ($DFS)"
+    nohup $HYPERTABLE_HOME/bin/Hyperspace.Master --pidfile=$PIDFILE --verbose $@ 1>& $LOGFILE &
+
+  $HYPERTABLE_HOME/bin/serverup hyperspace
+  while [ $? != 0 ] ; do
+      let RETRY_COUNT=++RETRY_COUNT
+      let REPORT=RETRY_COUNT%3
+      if [ $RETRY_COUNT == 10 ] ; then
+	  echo "ERROR: Hyperspace did not come up"
+	  exit 1
+      elif [ $REPORT == 0 ] ; then
+        echo "Waiting for Hyperspace to come up ..."
+      fi
+      sleep 1
+      $HYPERTABLE_HOME/bin/serverup hyperspace
+  done
+  echo "Successfully started Hyperspace"
+else
+  echo "WARNING: Hyperspace already running."
 fi
 
-
-#
-# Start Hyperspace
-#
-$HYPERTABLE_HOME/bin/start-hyperspace.sh $HYPERSPACE_OPTS $@
-if [ $? != 0 ] ; then
-    echo "Error starting Hyperspace"
-fi
-
-
-#
-# Start Hypertable.Master
-#
-$HYPERTABLE_HOME/bin/start-master.sh $MASTER_OPTS $@
-if [ $? != 0 ] ; then
-    echo "Error starting Hypertable.Master"
-fi
-
-
-#
-# Start Hypertable.RangeServer
-#
-$HYPERTABLE_HOME/bin/start-rangeserver.sh $RANGESERVER_OPTS $@
-if [ $? != 0 ] ; then
-    echo "Error starting Hypertable.RangeServer"
-fi

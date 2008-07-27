@@ -55,143 +55,53 @@ if [ ! -d $HYPERTABLE_HOME/log ] ; then
     mkdir $HYPERTABLE_HOME/log
 fi
 
-VALGRIND_RANGESERVER=
-VALGRIND_MASTER=
+VALGRIND=
 
-START_RANGESERVER="true"
-START_MASTER="true"
-
-CONFIG_OPT=
+usage() {
+    echo ""
+    echo "usage: start-master.sh [OPTIONS] [<server-options>]"
+    echo ""
+    echo "OPTIONS:"
+    echo "  --valgrind  run broker with valgrind"
+    echo ""
+}
 
 while [ "$1" != "${1##[-+]}" ]; do
     case $1 in
-	'')    
-	    echo $"$0: Usage: start-master.sh [local|hadoop|kosmos]"
-	    exit 1;;
-	--valgrind-master)
-	    VALGRIND_MASTER="valgrind -v --log-file=vg "
-	    shift
-	    ;;
-	--no-master)
-	    START_MASTER="false"
-	    shift
-	    ;;
-	--config)
-	    shift
-	    CONFIG_OPT="--config=$1"
+	--valgrind)
+	    VALGRIND="valgrind -v --log-file=vg --leak-check=full --num-callers=20 "
 	    shift
 	    ;;
 	*)     
-	    echo $"$0: Usage: start-master.sh [local|hadoop|kosmos]"
-	    exit 1;;
+	    break
+	    ;;
     esac
 done
 
-if [ "$#" -eq 0 ]; then
-    echo $"$0: Usage: start-master.sh [local|hadoop|kosmos]"
-    exit 1
-fi
+PIDFILE=$HYPERTABLE_HOME/run/Hypertable.Master.pid
+LOGFILE=$HYPERTABLE_HOME/log/Hypertable.Master.log
 
-START_COMMITLOG_BROKER=no
-if [ "$1" == "hadoop" ] ; then
-      START_COMMITLOG_BROKER=yes
-fi
 
-#
-# Start DfsBroker
-#
-PIDFILE=$HYPERTABLE_HOME/run/DfsBroker.$1.pid
-LOGFILE=$HYPERTABLE_HOME/log/DfsBroker.$1.log
-
-$HYPERTABLE_HOME/bin/serverup dfsbroker
+let RETRY_COUNT=0
+$HYPERTABLE_HOME/bin/serverup master
 if [ $? != 0 ] ; then
+    nohup $HYPERTABLE_HOME/bin/Hypertable.Master --pidfile=$PIDFILE --verbose $@ 1>& $LOGFILE &
 
-  if [ "$1" == "hadoop" ] ; then
-      nohup $HYPERTABLE_HOME/bin/jrun --pidfile $PIDFILE org.hypertable.DfsBroker.hadoop.main $CONFIG_OPT --verbose 1>& $LOGFILE &
-  elif [ "$1" == "kosmos" ] ; then
-      nohup $HYPERTABLE_HOME/bin/kosmosBroker $CONFIG_OPT --pidfile=$PIDFILE --verbose 1>& $LOGFILE &   
-  elif [ "$1" == "local" ] ; then
-      nohup $HYPERTABLE_HOME/bin/localBroker $CONFIG_OPT --pidfile=$PIDFILE --verbose 1>& $LOGFILE &    
-  else
-      echo $"$0: Usage: start-master.sh [local|hadoop|kosmos]"      
-      exit 1
-  fi
-
-  sleep 1
-  $HYPERTABLE_HOME/bin/serverup dfsbroker
-  if [ $? != 0 ] ; then
-      echo -n "DfsBroker ($1) hasn't come up yet, trying again in 5 seconds ..."
-      sleep 5
-      echo ""
-      $HYPERTABLE_HOME/bin/serverup dfsbroker
-      if [ $? != 0 ] ; then
-	  tail -100 $LOGFILE
-	  echo "Problem starting DfsBroker ($1)";
+  $HYPERTABLE_HOME/bin/serverup master
+  while [ $? != 0 ] ; do
+      let RETRY_COUNT=++RETRY_COUNT
+      let REPORT=RETRY_COUNT%3
+      if [ $RETRY_COUNT == 10 ] ; then
+	  echo "ERROR: Hypertable.Master did not come up"
 	  exit 1
+      elif [ $REPORT == 0 ] ; then
+        echo "Waiting for Hypertable.Master to come up ..."
       fi
-  fi
-  echo "Successfully started DFSBroker ($1)"
+      sleep 1
+      $HYPERTABLE_HOME/bin/serverup master
+  done
+  echo "Successfully started Hypertable.Master"
 else
-    echo "WARNING: DFSBroker already running."
+  echo "WARNING: Hypertable.Master already running."
 fi
 
-#
-# Start Hyperspace
-#
-PIDFILE=$HYPERTABLE_HOME/run/Hyperspace.pid
-LOGFILE=$HYPERTABLE_HOME/log/Hyperspace.log
-
-if [ ! -d $HYPERTABLE_HOME/hyperspace ] ; then
-    mkdir $HYPERTABLE_HOME/hyperspace
-fi
-
-$HYPERTABLE_HOME/bin/serverup hyperspace
-if [ $? != 0 ] ; then
-    nohup $HYPERTABLE_HOME/bin/Hyperspace.Master $CONFIG_OPT --pidfile=$PIDFILE --verbose 1>& $LOGFILE &
-    sleep 1
-    $HYPERTABLE_HOME/bin/serverup hyperspace
-    if [ $? != 0 ] ; then
-	echo -n "Hyperspace hasn't come up yet, trying again in 5 seconds ..."
-	sleep 5
-	echo ""
-	$HYPERTABLE_HOME/bin/serverup hyperspace
-	if [ $? != 0 ] ; then
-	    tail -100 $LOGFILE
-	    echo "Problem starting Hyperspace";
-	    exit 1
-	fi
-    fi
-    echo "Successfully started Hyperspace"
-else
-    echo "WARNING: Hyperspace already running."
-fi
-
-#
-# Start Hypertable.Master
-#
-if [ "$START_MASTER" == "true" ] ; then
-
-    PIDFILE=$HYPERTABLE_HOME/run/Hypertable.Master.pid
-    LOGFILE=$HYPERTABLE_HOME/log/Hypertable.Master.log
-
-    $HYPERTABLE_HOME/bin/serverup master
-    if [ $? != 0 ] ; then
-	nohup $VALGRIND_MASTER $HYPERTABLE_HOME/bin/Hypertable.Master $CONFIG_OPT --pidfile=$PIDFILE --verbose 1>& $LOGFILE &
-	sleep 1
-	$HYPERTABLE_HOME/bin/serverup master
-	if [ $? != 0 ] ; then
-	    echo -n "Hypertable.Master hasn't come up yet, trying again in 5 seconds ..."
-	    sleep 5
-	    echo ""
-	    $HYPERTABLE_HOME/bin/serverup master
-	    if [ $? != 0 ] ; then
-		tail -100 $LOGFILE
-		echo "Problem starting Hypertable.Master";
-		exit 1
-	    fi
-	fi
-    fi
-    echo "Successfully started Hypertable.Master"
-else
-    echo "ERROR: Hypertable.Master already running."
-fi

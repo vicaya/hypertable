@@ -587,7 +587,19 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
     scan_spec.interval.first = 0;
     scan_spec.interval.second = 0;
     scan_spec.return_deletes=false;
+    int max_wait=5;
 
+    while (!m_metadata_table_ptr && max_wait) {
+      poll(0, 0, 1000);
+      max_wait--;
+    }
+
+    if (!m_metadata_table_ptr) {
+      HT_ERROR("Aborting DropTable because no RangeServers have registered");
+      cb->error(Error::MASTER_NO_RANGESERVERS, "");
+      return;
+    }
+      
     scanner_ptr = m_metadata_table_ptr->create_scanner(scan_spec);
 
     while (scanner_ptr->next(cell)) {
@@ -779,6 +791,17 @@ Master::create_table(const char *tablename, const char *schemastr,
     KeySpec key;
     String metadata_key_str;
     struct sockaddr_in addr;
+    int max_wait=5;
+
+    while (!m_metadata_table_ptr && max_wait) {
+      poll(0, 0, 1000);
+      max_wait--;
+    }
+
+    if (!m_metadata_table_ptr) {
+      HT_ERROR("Aborting DropTable because no RangeServers have registered");
+      return Error::MASTER_NO_RANGESERVERS;
+    }
 
     mutator_ptr = m_metadata_table_ptr->create_mutator();
 

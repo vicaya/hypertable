@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2007 Doug Judd (Zvents, Inc.)
+# Copyright 2008 Doug Judd (Zvents, Inc.)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,20 +44,38 @@ popd >& /dev/null
 
 
 #
-# Clear state
+# Stop rangeserver
 #
-rm -rf $HYPERTABLE_HOME/log/hypertable/*
-$HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable/servers"
-$HYPERTABLE_HOME/bin/dfsclient --eval "rmdir /hypertable/tables"
-rm -rf $HYPERTABLE_HOME/hyperspace/*
+pidfile="$HYPERTABLE_HOME/run/Hypertable.RangeServer.pid"
+if [ -f $pidfile ] ; then
+    kill -9 `cat $pidfile`
+    rm $pidfile
+fi
 
+#
+# Stop master
+#
+pidfile="$HYPERTABLE_HOME/run/Hypertable.Master.pid"
+if [ -f $pidfile ] ; then
+    kill -9 `cat $pidfile`
+    rm $pidfile
+fi
 
 #
-# Stop servers
+# Stop hyperspace
 #
-for pidfile in $HYPERTABLE_HOME/run/*.pid ; do
-    if [ "$pidfile" != "$HYPERTABLE_HOME/run/*.pid" ] ; then
-	kill -9 `cat $pidfile`
+pidfile="$HYPERTABLE_HOME/run/Hyperspace.pid"
+if [ -f $pidfile ] ; then
+    kill -9 `cat $pidfile`
+    rm $pidfile
+fi
+
+#
+# Stop dfsbroker
+#
+for pidfile in $HYPERTABLE_HOME/run/DfsBroker.*.pid ; do
+    if [ "$pidfile" != "$HYPERTABLE_HOME/run/DfsBroker.*.pid" ] ; then
+	kill `cat $pidfile`
 	rm $pidfile
     fi
 done

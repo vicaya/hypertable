@@ -39,7 +39,7 @@ namespace {
 } // local namespace
 
 MetaLogDfsBase::MetaLogDfsBase(Filesystem *fs, const String &path) :
-    m_fs(fs), m_path(path), m_newfile(true) {
+  m_newfile(true), m_fs(fs), m_path(path) {
   if (fs) {
     if (fs->exists(path)) {
       String tmp_path = path + ".tmp";

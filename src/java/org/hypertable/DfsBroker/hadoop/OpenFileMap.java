@@ -60,10 +60,12 @@ public class OpenFileMap {
                 if (ofd.addr.equals(addr)) {
                     if (ofd.is != null) {
                         ofd.is.close();
+                        ofd.is = null;
 			icount++;
                     }
                     else if (ofd.os != null) {
                         ofd.os.close();
+			ofd.os = null;
 			ocount++;
                     }
                     iter.remove();
@@ -76,6 +78,35 @@ public class OpenFileMap {
         mFileMap.clear();
 	java.lang.System.out.println("Closed " + icount + " input streams and " +
 				     ocount + " output streams for client connection " + addr);
+    }
+
+    public synchronized void RemoveAll() {
+	int icount = 0;
+	int ocount = 0;
+        for (Iterator<Map.Entry<Integer,OpenFileData>> iter = mFileMap.entrySet().iterator(); iter.hasNext();) {
+            try {
+                Map.Entry<Integer,OpenFileData> entry = iter.next();
+                int id = entry.getKey();
+                OpenFileData ofd = entry.getValue();
+		if (ofd.is != null) {
+		    ofd.is.close();
+		    ofd.is = null;
+		    icount++;
+		}
+		else if (ofd.os != null) {
+		    ofd.os.close();
+		    ofd.os = null;
+		    ocount++;
+		}
+		iter.remove();
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        mFileMap.clear();
+	java.lang.System.out.println("Closed " + icount + " input streams and " +
+				     ocount + " output streams");
     }
 
     private HashMap<Integer, OpenFileData> mFileMap = new HashMap<Integer, OpenFileData>();
