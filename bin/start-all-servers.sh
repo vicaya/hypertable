@@ -68,7 +68,11 @@ usage() {
     echo "usage: start-all-servers.sh [OPTIONS] (local|hadoop|kfs) [<global-server-options>]"
     echo ""
     echo "OPTIONS:"
-    echo "  --valgrind  run broker with valgrind"
+    echo "  --valgrind-rangeserver  run Hypertable.RangeServer with valgrind"
+    echo "  --valgrind-master       run Hypertable.Master with valgrind"
+    echo "  --valgrind-hyperspace   run Hyperspace.Master with valgrind"
+    echo "  --no-rangeserver        do not launch the range server"
+    echo "  --no-master             do not launch the Hypertable master"
     echo ""
 }
 
@@ -134,16 +138,21 @@ fi
 #
 # Start Hypertable.Master
 #
-$HYPERTABLE_HOME/bin/start-master.sh $MASTER_OPTS $@
-if [ $? != 0 ] ; then
-    echo "Error starting Hypertable.Master"
+if [ $START_MASTER == "true" ] ; then
+    $HYPERTABLE_HOME/bin/start-master.sh $MASTER_OPTS $@
+    if [ $? != 0 ] ; then
+	echo "Error starting Hypertable.Master"
+    fi
 fi
 
 
 #
 # Start Hypertable.RangeServer
 #
-$HYPERTABLE_HOME/bin/start-rangeserver.sh $RANGESERVER_OPTS $@
-if [ $? != 0 ] ; then
-    echo "Error starting Hypertable.RangeServer"
+if [ $START_RANGESERVER == "true" ] ; then
+    $HYPERTABLE_HOME/bin/start-rangeserver.sh $RANGESERVER_OPTS $@
+    if [ $? != 0 ] ; then
+	echo "Error starting Hypertable.RangeServer"
+    fi
 fi
+

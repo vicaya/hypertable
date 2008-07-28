@@ -400,9 +400,12 @@ void RangeServer::local_recover() {
     if (metadata_log_reader_ptr)
       Global::metadata_log = new CommitLog(Global::log_dfs, Global::log_dir + "/metadata", m_props_ptr, metadata_log_reader_ptr.get());
 
-    Global::user_log = new CommitLog(Global::log_dfs, Global::log_dir + "/user", m_props_ptr, user_log_reader_ptr.get());
-
-    Global::range_log = new RangeServerMetaLog(Global::log_dfs, meta_log_fname);
+    {
+      boost::mutex::scoped_lock lock(m_mutex);
+      Global::user_log = new CommitLog(Global::log_dfs, Global::log_dir + "/user", m_props_ptr, user_log_reader_ptr.get());
+      Global::range_log = new RangeServerMetaLog(Global::log_dfs, meta_log_fname);
+      m_cond.notify_all();
+    }
 
   }
   catch (Exception &e) {
@@ -499,6 +502,8 @@ void RangeServer::compact(ResponseCallback *cb, TableIdentifier *table, RangeSpe
     cout << "Compaction type = " << (major ? "major" : "minor") << endl;
   }
 
+  wait_for_recovery_finish();
+
   /**
    * Fetch table info
    */
@@ -564,6 +569,8 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
     cout << *range;
     cout << *scan_spec;
   }
+
+  //wait_for_recovery_finish();
 
   try {
     DynamicBuffer rbuf;
@@ -703,6 +710,8 @@ void RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 
   if (Global::verbose)
     cout << "load_range " << *table << " " << *range << endl;
+
+  wait_for_recovery_finish();
 
   try {
 
@@ -849,7 +858,7 @@ void RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 
   }
   catch (Hypertable::Exception &e) {
-    HT_ERRORF("%s '%s'", Error::get_text(error), e.what());
+    HT_ERRORF("%s '%s'", Error::get_text(e.code()), e.what());
     if (cb && (error = cb->error(e.code(), e.what())) != Error::OK) {
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
     }
@@ -891,7 +900,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
   string errmsg;
   int error = Error::OK;
   TableInfoPtr table_info_ptr;
-  uint64_t initial_timestamp = Global::user_log->get_timestamp();
+  uint64_t initial_timestamp;
   uint64_t update_timestamp = 0;
   uint64_t min_timestamp = 0;
   const char *row;
@@ -925,6 +934,10 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
     cout << "RangeServer::update" << endl;
     cout << *table;
   }
+
+  wait_for_recovery_finish();
+
+  initial_timestamp = Global::user_log->get_timestamp();
 
   // TODO: Sanity check mod data (checksum validation)
 
@@ -1306,6 +1319,8 @@ void RangeServer::drop_table(ResponseCallback *cb, TableIdentifier *table) {
     cout << flush;
   }
 
+  wait_for_recovery_finish();
+
   // create METADATA table mutator for clearing 'Location' columns
   mutator_ptr = Global::metadata_table_ptr->create_mutator();
 
@@ -1330,7 +1345,7 @@ void RangeServer::drop_table(ResponseCallback *cb, TableIdentifier *table) {
       range_vector.clear();
     }
     else {
-      HT_ERRORF("drop_table '%s' - table not found", table->name);
+      HT_ERRORF("drop_table '%s' id=%u - table not found", table->name, table->id);
     }
     mutator_ptr->flush();
   }
@@ -1339,6 +1354,10 @@ void RangeServer::drop_table(ResponseCallback *cb, TableIdentifier *table) {
     cb->error(e.code(), "Problem clearing 'Location' columns of METADATA");
     return;
   }
+
+  // write range transaction entry
+  if (Global::range_log)
+    Global::range_log->log_drop_table(*table);
 
   if (Global::verbose) {
     HT_INFOF("Successfully dropped table '%s'", table->name);
@@ -1798,6 +1817,8 @@ void RangeServer::log_cleanup() {
   std::vector<RangePtr> range_vec;
   uint64_t prune_threshold;
   size_t first_user_table = 0;
+
+  wait_for_recovery_finish();
 
   m_live_map_ptr->get_all(table_vec);
 

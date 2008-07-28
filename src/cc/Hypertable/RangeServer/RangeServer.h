@@ -22,6 +22,9 @@
 #ifndef HYPERTABLE_RANGESERVER_H
 #define HYPERTABLE_RANGESERVER_H
 
+#include <boost/thread/condition.hpp>
+
+#include "Common/Logger.h"
 #include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
 #include "Common/HashMap.h"
@@ -37,6 +40,7 @@
 #include "Hypertable/Lib/RangeState.h"
 #include "Hypertable/Lib/Types.h"
 
+#include "Global.h"
 #include "ResponseCallbackCreateScanner.h"
 #include "ResponseCallbackFetchScanblock.h"
 #include "ResponseCallbackUpdate.h"
@@ -89,6 +93,16 @@ namespace Hypertable {
 
     void master_change();
 
+    void wait_for_recovery_finish() {
+      if (Global::user_log == 0) {
+	boost::mutex::scoped_lock lock(m_mutex);
+	if (Global::user_log == 0) {
+	  HT_INFO("Waiting for recovery to complete...");
+	  m_cond.wait(lock);
+	}
+      }
+    }
+
   private:
     int initialize(PropertiesPtr &);
     void local_recover();
@@ -97,6 +111,7 @@ namespace Hypertable {
     void schedule_log_cleanup_compactions(std::vector<RangePtr> &range_vec, CommitLog *log, uint64_t prune_threshold);
 
     Mutex                  m_mutex;
+    boost::condition       m_cond;
     Mutex                  m_update_mutex_a;
     Mutex                  m_update_mutex_b;
     PropertiesPtr          m_props_ptr;

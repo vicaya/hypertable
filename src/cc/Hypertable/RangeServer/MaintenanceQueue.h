@@ -42,7 +42,6 @@ namespace Hypertable {
   class MaintenanceQueue : public ReferenceCount {
 
     static bool             ms_pause;
-    static boost::mutex     ms_mutex;
     static boost::condition ms_cond;
 
     struct LtMaintenanceTask {
@@ -105,7 +104,6 @@ namespace Hypertable {
 	      while (ms_pause)
 		ms_cond.wait(lock);
 	    }
-
 	    
             task->execute();
           }

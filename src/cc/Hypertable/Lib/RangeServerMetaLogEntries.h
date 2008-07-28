@@ -105,6 +105,18 @@ public:
   virtual int get_type() const { return MetaLogEntryFactory::RS_MOVE_DONE; }
 };
 
+class DropTable : public MetaLogEntryRangeBase {
+public:
+  DropTable() {}
+  DropTable(const TableIdentifier &t) {
+    table = t;
+  }
+
+  virtual void write(DynamicBuffer &);
+  virtual const uint8_t *read(StaticBuffer &);
+  virtual int get_type() const { return MetaLogEntryFactory::RS_DROP_TABLE; }
+};
+
 
 }} // namespace Hypertable::RangeServerTxn
 

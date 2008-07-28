@@ -22,10 +22,16 @@
 #include "Common/Compat.h"
 #include <vector>
 
+#include "Common/Error.h"
 #include "Common/String.h"
+
 #include "Defaults.h"
 #include "Key.h"
 #include "TableScanner.h"
+
+extern "C" {
+#include <poll.h>
+}
 
 using namespace Hypertable;
 
@@ -240,8 +246,20 @@ void TableScanner::find_range_and_start_scan(const char *row_key, Timer &timer) 
 
   timer.start();
 
-  if (!m_cache_ptr->lookup(m_table_identifier.id, row_key, &m_range_info))
-    m_range_locator_ptr->find_loop(&m_table_identifier, row_key, &m_range_info, timer, false);
+ try_again:
+
+  try {
+    if (!m_cache_ptr->lookup(m_table_identifier.id, row_key, &m_range_info))
+      m_range_locator_ptr->find_loop(&m_table_identifier, row_key, &m_range_info, timer, false);
+  }
+  catch (Exception &e) {
+    if (e.code() == Error::REQUEST_TIMEOUT)
+      HT_THROW2(e.code(), e, e.what());
+    poll(0, 0, 1000);
+    if (timer.expired())
+      HT_THROW(Error::REQUEST_TIMEOUT, "");
+    goto try_again;
+  }
 
   m_started = true;
 

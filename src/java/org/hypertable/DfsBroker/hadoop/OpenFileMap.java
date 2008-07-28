@@ -58,20 +58,18 @@ public class OpenFileMap {
                 int id = entry.getKey();
                 OpenFileData ofd = entry.getValue();
                 if (ofd.addr.equals(addr)) {
+		    if (ofd.os != null) {
+                        ofd.os.close();
+			ocount++;
+                    }
                     if (ofd.is != null) {
                         ofd.is.close();
-                        ofd.is = null;
 			icount++;
-                    }
-                    else if (ofd.os != null) {
-                        ofd.os.close();
-			ofd.os = null;
-			ocount++;
                     }
                     iter.remove();
                 }
             }
-            catch (IOException e) {
+            catch (Throwable e) {
                 e.printStackTrace();
             }
         }
@@ -88,19 +86,17 @@ public class OpenFileMap {
                 Map.Entry<Integer,OpenFileData> entry = iter.next();
                 int id = entry.getKey();
                 OpenFileData ofd = entry.getValue();
+		if (ofd.os != null) {
+		    ofd.os.close();
+		    ocount++;
+		}
 		if (ofd.is != null) {
 		    ofd.is.close();
-		    ofd.is = null;
 		    icount++;
-		}
-		else if (ofd.os != null) {
-		    ofd.os.close();
-		    ofd.os = null;
-		    ocount++;
 		}
 		iter.remove();
             }
-            catch (IOException e) {
+            catch (Throwable e) {
                 e.printStackTrace();
             }
         }

@@ -36,7 +36,8 @@ enum RangeServerMetaLogEntryType {
   RS_RANGE_LOADED       = 4,
   RS_MOVE_START         = 5,
   RS_MOVE_PREPARED      = 6,
-  RS_MOVE_DONE          = 7
+  RS_MOVE_DONE          = 7,
+  RS_DROP_TABLE         = 8
 };
 
 MetaLogEntry *
@@ -63,6 +64,9 @@ new_rs_move_prepared(const TableIdentifier &, const RangeSpec &);
 
 MetaLogEntry *
 new_rs_move_done(const TableIdentifier &, const RangeSpec &);
+
+MetaLogEntry *
+new_rs_drop_table(const TableIdentifier &);
 
 MetaLogEntry *
 new_from_payload(RangeServerMetaLogEntryType, uint64_t timestamp,

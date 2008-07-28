@@ -93,6 +93,13 @@ public:
     MetaLogEntryPtr entry(MetaLogEntryFactory::new_rs_move_done(table, range));
     write(entry.get());
   }
+
+  void
+  log_drop_table(const TableIdentifier &table) {
+    MetaLogEntryPtr entry(MetaLogEntryFactory::new_rs_drop_table(table));
+    write(entry.get());
+  }
+
 };
 
 typedef intrusive_ptr<RangeServerMetaLog> RangeServerMetaLogPtr;
