@@ -100,5 +100,8 @@ end
 
 desc "Cleans database, removing all tables."
 task :cleandb, :roles => [:master, :slave] do 
-  run "#{install_dir}/#{hypertable_version}/bin/clean-database.sh"
+  run <<-CMD
+   #{install_dir}/#{hypertable_version}/bin/start-dfsbroker.sh #{dfs} #{config_option} &&
+   #{install_dir}/#{hypertable_version}/bin/clean-database.sh
+  CMD
 end

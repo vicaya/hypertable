@@ -42,6 +42,17 @@ cd $HYPERTABLE_HOME
 export HYPERTABLE_HOME=`pwd`
 popd >& /dev/null
 
+#
+# Stop dfsbroker
+#
+for pidfile in $HYPERTABLE_HOME/run/DfsBroker.*.pid ; do
+    if [ "$pidfile" != "$HYPERTABLE_HOME/run/DfsBroker.*.pid" ] ; then
+	kill `cat $pidfile`
+	rm $pidfile
+    fi
+done
+
+sleep 2
 
 #
 # Stop rangeserver
@@ -70,12 +81,3 @@ if [ -f $pidfile ] ; then
     rm $pidfile
 fi
 
-#
-# Stop dfsbroker
-#
-for pidfile in $HYPERTABLE_HOME/run/DfsBroker.*.pid ; do
-    if [ "$pidfile" != "$HYPERTABLE_HOME/run/DfsBroker.*.pid" ] ; then
-	kill `cat $pidfile`
-	rm $pidfile
-    fi
-done
