@@ -2,17 +2,14 @@ set :source_machine, "motherlode000"
 set :install_dir,  "/data1/doug/hypertable" 
 set :hypertable_version, "0.9.0.7"
 set :dfs, "hadoop"
-set :cluster, "cluster1"
 set :default_config, "/home/doug/conf/cluster1-standard.cfg"
 
 set(:config) do
   "#{default_config}"
 end unless exists?(:config)
 
-if "#{cluster}" == "cluster1"
-  role :master, "motherlode001"
-  role :slave,  "motherlode001", "motherlode002", "motherlode003", "motherlode004", "motherlode005", "motherlode006", "motherlode007", "motherlode008"
-end
+role :master, "motherlode001"
+role :slave,  "motherlode001", "motherlode002", "motherlode003", "motherlode004", "motherlode005", "motherlode006", "motherlode007", "motherlode008"
 
 role :localhost, "localhost"
 

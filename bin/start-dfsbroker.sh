@@ -102,7 +102,7 @@ if [ $? != 0 ] ; then
           exit 1
       fi
       nohup $HYPERTABLE_HOME/bin/jrun --pidfile $PIDFILE org.hypertable.DfsBroker.hadoop.main --verbose $@ 1>& $LOGFILE &
-  elif [ "$DFS" == "kosmos" ] ; then
+  elif [ "$DFS" == "kfs" ] ; then
       $HYPERTABLE_HOME/bin/kosmosBroker --pidfile=$PIDFILE --verbose 1>& $LOGFILE &   
   elif [ "$DFS" == "local" ] ; then
       $HYPERTABLE_HOME/bin/localBroker --pidfile=$PIDFILE --verbose 1>& $LOGFILE &    
