@@ -30,6 +30,7 @@ using namespace std;
 extern "C" {
 #if defined(__APPLE__)
 #include <arpa/inet.h>
+#include <netinet/ip.h>
 #endif
 #include <errno.h>
 #include <fcntl.h>
@@ -243,7 +244,7 @@ int Comm::send_response(struct sockaddr_in &addr, CommBufPtr &cbuf_ptr) {
 
 
 void
-Comm::create_datagram_receive_socket(struct sockaddr_in *addr,
+Comm::create_datagram_receive_socket(struct sockaddr_in *addr, int tos,
                                      DispatchHandlerPtr &dhp) {
   IOHandlerPtr handler;
   IOHandlerDatagram *dg_handler;
@@ -269,6 +270,19 @@ Comm::create_datagram_receive_socket(struct sockaddr_in *addr,
 
   if (setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0) {
     HT_WARNF("setsockopt(SO_REUSEADDR) failure: %s", strerror(errno));
+  }
+
+  if (tos) {
+    int opt;
+#if defined(__linux__)
+    opt = tos;
+    setsockopt(sd, SOL_IP, IP_TOS, &opt, sizeof(opt));
+    opt = tos;
+    setsockopt(sd, SOL_SOCKET, SO_PRIORITY, &opt, sizeof(opt));    
+#elif defined(__APPLE__)
+    opt = IPTOS_LOWDELAY;       /* see <netinet/in.h> */
+    setsockopt(sd, IPPROTO_IP, IP_TOS, &opt, sizeof(opt));
+#endif
   }
 
   // bind socket

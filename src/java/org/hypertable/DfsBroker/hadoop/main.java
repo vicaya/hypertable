@@ -35,6 +35,7 @@ import org.hypertable.Common.System;
 import org.hypertable.Common.Usage;
 
 
+
 public class main {
 
     static final Logger log = Logger.getLogger("org.hypertable.DfsBroker.hadoop");
@@ -57,6 +58,16 @@ public class main {
 
 
     static final String DEFAULT_PORT = "38030";
+
+    private static HdfsBroker ms_broker;
+
+    // Example shutdown hook class
+    private static class ShutdownHook extends Thread {
+	public void run() {
+	    java.lang.System.out.println("ShutdownHook called");
+	    ms_broker.mOpenFileMap.RemoveAll();
+	}
+    }
 
     private static class HandlerFactory implements ConnectionHandlerFactory {
         public HandlerFactory(Comm comm, ApplicationQueue appQueue, HdfsBroker broker) {
@@ -83,7 +94,6 @@ public class main {
         HandlerFactory handlerFactory;
         Comm comm;
         ApplicationQueue requestQueue;
-        HdfsBroker broker;
         boolean verbose = false;
 
         if (args.length == 1 && args[0].equals("--help"))
@@ -98,6 +108,9 @@ public class main {
             else
                 Usage.DumpAndExit(usage);
         }
+
+	ShutdownHook sh = new ShutdownHook();
+        Runtime.getRuntime().addShutdownHook(sh);
 
         if (configFile == null)
             configFile = System.installDir + "/conf/hypertable.cfg";
@@ -134,8 +147,8 @@ public class main {
         requestQueue = new ApplicationQueue(workerCount);
 
         try {
-            broker = new HdfsBroker(comm, props);
-            handlerFactory = new HandlerFactory(comm, requestQueue, broker);
+            ms_broker = new HdfsBroker(comm, props);
+            handlerFactory = new HandlerFactory(comm, requestQueue, ms_broker);
             comm.Listen(port, handlerFactory, null);
         }
         catch (Exception e) {

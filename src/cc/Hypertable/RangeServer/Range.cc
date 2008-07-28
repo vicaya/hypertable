@@ -431,7 +431,10 @@ void Range::split_install_log() {
   m_state.set_transfer_log(Global::log_dir + "/" + md5DigestStr);
 
   // Create transfer log dir
-  try { Global::log_dfs->mkdirs(m_state.transfer_log); }
+  try { 
+    Global::log_dfs->rmdir(m_state.transfer_log); 
+    Global::log_dfs->mkdirs(m_state.transfer_log); 
+  }
   catch (Exception &e) {
     HT_ERRORF("Problem creating log directory '%s': %s",
               m_state.transfer_log, e.what());

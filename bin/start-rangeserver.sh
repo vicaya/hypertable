@@ -59,7 +59,7 @@ VALGRIND=
 
 usage() {
     echo ""
-    echo "usage: start-master.sh [OPTIONS] [<server-options>]"
+    echo "usage: start-rangeserver.sh [OPTIONS] [<server-options>]"
     echo ""
     echo "OPTIONS:"
     echo "  --valgrind  run broker with valgrind"
@@ -78,30 +78,30 @@ while [ "$1" != "${1##[-+]}" ]; do
     esac
 done
 
-PIDFILE=$HYPERTABLE_HOME/run/Hypertable.Master.pid
-LOGFILE=$HYPERTABLE_HOME/log/Hypertable.Master.log
+PIDFILE=$HYPERTABLE_HOME/run/Hypertable.RangeServer.pid
+LOGFILE=$HYPERTABLE_HOME/log/Hypertable.RangeServer.log
 
 
 let RETRY_COUNT=0
-$HYPERTABLE_HOME/bin/serverup master
+$HYPERTABLE_HOME/bin/serverup rangeserver
 if [ $? != 0 ] ; then
-    nohup $HYPERTABLE_HOME/bin/Hypertable.Master --pidfile=$PIDFILE --verbose $@ 1>& $LOGFILE &
+    nohup $HYPERTABLE_HOME/bin/Hypertable.RangeServer --pidfile=$PIDFILE --verbose $@ 1>& $LOGFILE &
 
-  $HYPERTABLE_HOME/bin/serverup master
+  $HYPERTABLE_HOME/bin/serverup rangeserver
   while [ $? != 0 ] ; do
       let RETRY_COUNT=++RETRY_COUNT
       let REPORT=RETRY_COUNT%3
       if [ $RETRY_COUNT == 10 ] ; then
-	  echo "ERROR: Hypertable.Master did not come up"
+	  echo "ERROR: Hypertable.RangeServer did not come up"
 	  exit 1
       elif [ $REPORT == 0 ] ; then
-        echo "Waiting for Hypertable.Master to come up ..."
+        echo "Waiting for Hypertable.RangeServer to come up ..."
       fi
       sleep 1
-      $HYPERTABLE_HOME/bin/serverup master
+      $HYPERTABLE_HOME/bin/serverup rangeserver
   done
-  echo "Successfully started Hypertable.Master"
+  echo "Successfully started Hypertable.RangeServer"
 else
-  echo "WARNING: Hypertable.Master already running."
+  echo "WARNING: Hypertable.RangeServer already running."
 fi
 

@@ -249,6 +249,9 @@ Master::create_table(ResponseCallback *cb, const char *tablename,
   int error;
   String errmsg;
 
+  HT_INFOF("Entering create_table for %s", tablename);
+  std::cout << flush;
+
   if ((error = create_table(tablename, schemastr, errmsg)) != Error::OK)
     cb->error(error, errmsg);
   else
@@ -397,8 +400,10 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
       const char *schemastr = FileUtils::file_to_buffer(metadata_schema_file.c_str(), &schemalen);
 
       if ((error = create_table("METADATA", schemastr, errmsg)) != Error::OK) {
-        HT_ERRORF("Problem creating METADATA table - %s", Error::get_text(error));
-        return;
+	if (error != Error::MASTER_TABLE_EXISTS) {
+	  HT_ERRORF("Problem creating METADATA table - %s, exiting...", Error::get_text(error));
+	  _exit(1);
+	}
       }
     }
 
@@ -406,6 +411,12 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
      * Open METADATA table
      */
     m_metadata_table_ptr = new Table(m_props_ptr, m_conn_manager_ptr->get_comm(), m_hyperspace_ptr, "METADATA");
+
+    // If table exists, then ranges should already have been assigned
+    if (error == Error::MASTER_TABLE_EXISTS) {
+      m_initialized = true;
+      return;
+    }
 
     m_metadata_table_ptr->get_identifier(&table);
     table.name = "METADATA";
@@ -528,6 +539,9 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
   uint64_t handle;
   String table_name_str = table_name;
 
+  HT_INFOF("Entering drop_table for %s", table_name);
+  std::cout << flush;
+
   /**
    * Create table file
    */
@@ -587,7 +601,19 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
     scan_spec.interval.first = 0;
     scan_spec.interval.second = 0;
     scan_spec.return_deletes=false;
+    int max_wait=5;
 
+    while (!m_metadata_table_ptr && max_wait) {
+      poll(0, 0, 1000);
+      max_wait--;
+    }
+
+    if (!m_metadata_table_ptr) {
+      HT_ERROR("Aborting DropTable because no RangeServers have registered");
+      cb->error(Error::MASTER_NO_RANGESERVERS, "");
+      return;
+    }
+      
     scanner_ptr = m_metadata_table_ptr->create_scanner(scan_spec);
 
     while (scanner_ptr->next(cell)) {
@@ -779,6 +805,17 @@ Master::create_table(const char *tablename, const char *schemastr,
     KeySpec key;
     String metadata_key_str;
     struct sockaddr_in addr;
+    int max_wait=5;
+
+    while (!m_metadata_table_ptr && max_wait) {
+      poll(0, 0, 1000);
+      max_wait--;
+    }
+
+    if (!m_metadata_table_ptr) {
+      HT_ERROR("Aborting DropTable because no RangeServers have registered");
+      return Error::MASTER_NO_RANGESERVERS;
+    }
 
     mutator_ptr = m_metadata_table_ptr->create_mutator();
 

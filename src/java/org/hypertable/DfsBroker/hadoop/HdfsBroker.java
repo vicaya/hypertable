@@ -601,5 +601,5 @@ public class HdfsBroker {
     private Configuration mConf = new Configuration();
     private FileSystem    mFilesystem;
     private boolean       mVerbose = false;
-    private OpenFileMap   mOpenFileMap = new OpenFileMap();
+    public  OpenFileMap   mOpenFileMap = new OpenFileMap();
 }

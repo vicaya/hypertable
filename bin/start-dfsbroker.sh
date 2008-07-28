@@ -55,51 +55,24 @@ if [ ! -d $HYPERTABLE_HOME/log ] ; then
     mkdir $HYPERTABLE_HOME/log
 fi
 
-
-RANGESERVER_OPTS=
-MASTER_OPTS=
-HYPERSPACE_OPTS=
-
-START_RANGESERVER="true"
-START_MASTER="true"
+VALGRIND=
 
 usage() {
     echo ""
-    echo "usage: start-all-servers.sh [OPTIONS] (local|hadoop|kfs) [<global-server-options>]"
+    echo "usage: start-dfsbroker.sh [OPTIONS] (local|hadoop|kfs) [<server-options>]"
     echo ""
     echo "OPTIONS:"
-    echo "  --valgrind-rangeserver  run Hypertable.RangeServer with valgrind"
-    echo "  --valgrind-master       run Hypertable.Master with valgrind"
-    echo "  --valgrind-hyperspace   run Hyperspace.Master with valgrind"
-    echo "  --no-rangeserver        do not launch the range server"
-    echo "  --no-master             do not launch the Hypertable master"
+    echo "  --valgrind  run broker with valgrind"
     echo ""
 }
-
 
 while [ "$1" != "${1##[-+]}" ]; do
     case $1 in
 	'')    
 	    usage
 	    exit 1;;
-	--valgrind-rangeserver)
-	    RANGESERVER_OPTS="--valgrind "
-	    shift
-	    ;;
-	--valgrind-master)
-	    MASTER_OPTS="--valgrind "
-	    shift
-	    ;;
-	--valgrind-hyperspace)
-	    HYPERSPACE_OPTS="--valgrind "
-	    shift
-	    ;;
-	--no-rangeserver)
-	    START_RANGESERVER="false"
-	    shift
-	    ;;
-	--no-master)
-	    START_MASTER="false"
+	--valgrind)
+	    VALGRIND="valgrind -v --log-file=vg --leak-check=full --num-callers=20 "
 	    shift
 	    ;;
 	*)     
@@ -116,43 +89,43 @@ fi
 DFS=$1
 shift
 
+PIDFILE=$HYPERTABLE_HOME/run/DfsBroker.$DFS.pid
+LOGFILE=$HYPERTABLE_HOME/log/DfsBroker.$DFS.log
 
-#
-# Start DfsBroker
-#
-$HYPERTABLE_HOME/bin/start-dfsbroker.sh $DFS $@
+let RETRY_COUNT=0
+$HYPERTABLE_HOME/bin/serverup dfsbroker
 if [ $? != 0 ] ; then
-    echo "Error starting DfsBroker ($DFS)"
-fi
 
+  if [ "$DFS" == "hadoop" ] ; then
+      if [ "n$VALGRIND" != "n" ] ; then
+	  echo "ERROR: hadoop broker cannot be run with valgrind"
+          exit 1
+      fi
+      nohup $HYPERTABLE_HOME/bin/jrun --pidfile $PIDFILE org.hypertable.DfsBroker.hadoop.main --verbose $@ 1>& $LOGFILE &
+  elif [ "$DFS" == "kfs" ] ; then
+      $HYPERTABLE_HOME/bin/kosmosBroker --pidfile=$PIDFILE --verbose 1>& $LOGFILE &   
+  elif [ "$DFS" == "local" ] ; then
+      $HYPERTABLE_HOME/bin/localBroker --pidfile=$PIDFILE --verbose 1>& $LOGFILE &    
+  else
+      usage
+      exit 1
+  fi
 
-#
-# Start Hyperspace
-#
-$HYPERTABLE_HOME/bin/start-hyperspace.sh $HYPERSPACE_OPTS $@
-if [ $? != 0 ] ; then
-    echo "Error starting Hyperspace"
-fi
-
-
-#
-# Start Hypertable.Master
-#
-if [ $START_MASTER == "true" ] ; then
-    $HYPERTABLE_HOME/bin/start-master.sh $MASTER_OPTS $@
-    if [ $? != 0 ] ; then
-	echo "Error starting Hypertable.Master"
-    fi
-fi
-
-
-#
-# Start Hypertable.RangeServer
-#
-if [ $START_RANGESERVER == "true" ] ; then
-    $HYPERTABLE_HOME/bin/start-rangeserver.sh $RANGESERVER_OPTS $@
-    if [ $? != 0 ] ; then
-	echo "Error starting Hypertable.RangeServer"
-    fi
+  $HYPERTABLE_HOME/bin/serverup dfsbroker
+  while [ $? != 0 ] ; do
+      let RETRY_COUNT=++RETRY_COUNT
+      let REPORT=RETRY_COUNT%3
+      if [ $RETRY_COUNT == 10 ] ; then
+	  echo "ERROR: DfsBroker ($DFS) did not come up"
+	  exit 1
+      elif [ $REPORT == 0 ] ; then
+        echo "Waiting for DfsBroker ($DFS) to come up ..."
+      fi
+      sleep 1
+      $HYPERTABLE_HOME/bin/serverup dfsbroker
+  done
+  echo "Successfully started DFSBroker ($DFS)"
+else
+  echo "WARNING: DFSBroker already running."
 fi
 

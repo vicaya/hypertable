@@ -66,6 +66,12 @@ new_rs_move_done(const TableIdentifier &table, const RangeSpec &range) {
 }
 
 MetaLogEntry *
+new_rs_drop_table(const TableIdentifier &table) {
+  return new DropTable(table);
+}
+
+
+MetaLogEntry *
 new_from_payload(RangeServerMetaLogEntryType t, uint64_t timestamp,
                  StaticBuffer &buf) {
   MetaLogEntry *p = 0;
@@ -78,6 +84,7 @@ new_from_payload(RangeServerMetaLogEntryType t, uint64_t timestamp,
     case RS_MOVE_START:    p = new MoveStart();         break;
     case RS_MOVE_PREPARED: p = new MovePrepared();      break;
     case RS_MOVE_DONE:     p = new MoveDone();          break;
+    case RS_DROP_TABLE:    p = new DropTable();         break;
     default: HT_THROWF(Error::METALOG_ENTRY_BAD_TYPE, "unknown type (%d)", t);
   }
   p->timestamp = timestamp;

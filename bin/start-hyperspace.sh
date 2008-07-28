@@ -59,7 +59,7 @@ VALGRIND=
 
 usage() {
     echo ""
-    echo "usage: start-master.sh [OPTIONS] [<server-options>]"
+    echo "usage: start-hyperspace.sh [OPTIONS] [<server-options>]"
     echo ""
     echo "OPTIONS:"
     echo "  --valgrind  run broker with valgrind"
@@ -78,30 +78,33 @@ while [ "$1" != "${1##[-+]}" ]; do
     esac
 done
 
-PIDFILE=$HYPERTABLE_HOME/run/Hypertable.Master.pid
-LOGFILE=$HYPERTABLE_HOME/log/Hypertable.Master.log
+PIDFILE=$HYPERTABLE_HOME/run/Hyperspace.pid
+LOGFILE=$HYPERTABLE_HOME/log/Hyperspace.log
 
+if [ ! -d $HYPERTABLE_HOME/hyperspace ] ; then
+    mkdir $HYPERTABLE_HOME/hyperspace
+fi
 
 let RETRY_COUNT=0
-$HYPERTABLE_HOME/bin/serverup master
+$HYPERTABLE_HOME/bin/serverup hyperspace
 if [ $? != 0 ] ; then
-    nohup $HYPERTABLE_HOME/bin/Hypertable.Master --pidfile=$PIDFILE --verbose $@ 1>& $LOGFILE &
+    nohup $HYPERTABLE_HOME/bin/Hyperspace.Master --pidfile=$PIDFILE --verbose $@ 1>& $LOGFILE &
 
-  $HYPERTABLE_HOME/bin/serverup master
+  $HYPERTABLE_HOME/bin/serverup hyperspace
   while [ $? != 0 ] ; do
       let RETRY_COUNT=++RETRY_COUNT
       let REPORT=RETRY_COUNT%3
       if [ $RETRY_COUNT == 10 ] ; then
-	  echo "ERROR: Hypertable.Master did not come up"
+	  echo "ERROR: Hyperspace did not come up"
 	  exit 1
       elif [ $REPORT == 0 ] ; then
-        echo "Waiting for Hypertable.Master to come up ..."
+        echo "Waiting for Hyperspace to come up ..."
       fi
       sleep 1
-      $HYPERTABLE_HOME/bin/serverup master
+      $HYPERTABLE_HOME/bin/serverup hyperspace
   done
-  echo "Successfully started Hypertable.Master"
+  echo "Successfully started Hyperspace"
 else
-  echo "WARNING: Hypertable.Master already running."
+  echo "WARNING: Hyperspace already running."
 fi
 

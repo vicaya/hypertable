@@ -22,6 +22,5 @@
 #include "MaintenanceQueue.h"
 
 bool Hypertable::MaintenanceQueue::ms_pause = false;
-boost::mutex Hypertable::MaintenanceQueue::ms_mutex;
 boost::condition Hypertable::MaintenanceQueue::ms_cond;
 

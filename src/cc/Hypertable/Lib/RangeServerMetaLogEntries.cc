@@ -42,3 +42,19 @@ SplitStart::read(StaticBuffer &in) {
     split_off.decode(&p, &remain);
     return p);
 }
+
+void
+DropTable::write(DynamicBuffer &buf) {
+  buf.ensure(table.encoded_length());
+  table.encode(&buf.ptr);
+}
+
+const uint8_t *
+DropTable::read(StaticBuffer &in) {
+  buffer = in;
+  const uint8_t *p = buffer.base;
+  size_t remain = buffer.size;
+  HT_TRY("decoding drop table",
+    table.decode(&p, &remain));
+  return p;
+}

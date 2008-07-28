@@ -22,7 +22,12 @@
 #ifndef HYPERTABLE_FIXEDRANDOMSTRINGGENERATOR_H
 #define HYPERTABLE_FIXEDRANDOMSTRINGGENERATOR_H
 
+#include <cstring>
 #include <vector>
+
+extern "C" {
+#include <stdint.h>
+}
 
 namespace Hypertable {
 

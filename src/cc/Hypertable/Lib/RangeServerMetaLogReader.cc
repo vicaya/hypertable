@@ -121,6 +121,22 @@ void load_entry(Reader &rd, RsiSet &rsi_set, MoveDone *ep) {
   // TODO
 }
 
+void load_entry(Reader &rd, RsiSet &rsi_set, DropTable *ep) {
+  RsiSet::iterator it = rsi_set.begin();
+  RsiSet::iterator tmpit;
+  
+  while (it != rsi_set.end()) {
+    if ((*it)->table.id == ep->table.id) {
+      tmpit = it;
+      ++it;
+      rsi_set.erase(tmpit);
+    }
+    else
+      ++it;
+  }
+}
+
+
 } // local namespace
 
 namespace Hypertable {
@@ -189,6 +205,8 @@ RangeServerMetaLogReader::load_range_states(bool force) {
       load_entry(*this, rsi_set, (MovePrepared *)p);    break;
     case RS_MOVE_DONE:
       load_entry(*this, rsi_set, (MoveDone *)p);        break;
+    case RS_DROP_TABLE:
+      load_entry(*this, rsi_set, (DropTable *)p);        break;
     default:
       HT_FATALF("Bad code: unhandled entry type: %d", p->get_type());
     }
