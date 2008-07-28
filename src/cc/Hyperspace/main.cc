@@ -165,7 +165,7 @@ int main(int argc, char **argv) {
 
   DispatchHandlerPtr dhp(keepalive_handler.get());
 
-  comm->create_datagram_receive_socket(&local_addr, dhp);
+  comm->create_datagram_receive_socket(&local_addr, 0x10, dhp);
 
   if (pidfile != "") {
     fstream filestr (pidfile.c_str(), fstream::out);

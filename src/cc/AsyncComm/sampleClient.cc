@@ -320,7 +320,7 @@ int main(int argc, char **argv) {
     dhp = resp_handler;
     port++;
     InetAddr::initialize(&local_addr, INADDR_ANY, port);
-    comm->create_datagram_receive_socket(&local_addr, dhp);
+    comm->create_datagram_receive_socket(&local_addr, 0, dhp);
   }
   else {
     resp_handler = new ResponseHandlerTCP();

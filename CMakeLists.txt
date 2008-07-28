@@ -177,9 +177,10 @@ install(FILES lib/log4j-1.2.13.jar DESTINATION ${VERSION}/java/lib)
 install(FILES lib/hypertable-${VERSION}.jar DESTINATION ${VERSION}/java/lib)
 install(FILES build/hypertable-${VERSION}.jar DESTINATION ${VERSION}/java/lib
         OPTIONAL)
-install(PROGRAMS bin/jrun bin/clean-database.sh bin/start-master.sh 
-		 bin/start-hyperspace.sh bin/start-rangeserver.sh
-		 bin/start-all-servers.sh bin/stop-servers.sh bin/slaves.sh
+install(PROGRAMS bin/jrun bin/clean-database.sh bin/start-dfsbroker.sh
+		 bin/start-master.sh bin/start-hyperspace.sh
+		 bin/start-rangeserver.sh bin/start-all-servers.sh
+		 bin/stop-servers.sh bin/slaves.sh
 	DESTINATION ${VERSION}/bin)
 install(FILES test/create-test-tables.hql DESTINATION ${VERSION}/test)
 install(DIRECTORY examples/apache_log DESTINATION ${VERSION}/examples

@@ -194,10 +194,11 @@ namespace Hypertable {
      * consist of either MESSAGE events or ERROR events.
      *
      * @param addr address of the socket
+     * @param tos TOS value to set on IP packet
      * @param handler_ptr default dispatch handler to handle the deliver of
      *        events
      */
-    void create_datagram_receive_socket(struct sockaddr_in *addr,
+    void create_datagram_receive_socket(struct sockaddr_in *addr, int tos,
                                         DispatchHandlerPtr &handler_ptr);
 
     /**

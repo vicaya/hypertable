@@ -282,7 +282,7 @@ int main(int argc, char **argv) {
   else {
     assert(client_addr.sin_port == 0);
     dhp = new UdpDispatcher(comm);
-    comm->create_datagram_receive_socket(&local_addr, dhp);
+    comm->create_datagram_receive_socket(&local_addr, 0, dhp);
   }
 
   poll(0, 0, -1);

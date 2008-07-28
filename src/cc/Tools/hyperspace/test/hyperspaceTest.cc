@@ -140,7 +140,7 @@ int main(int argc, char **argv) {
   if (!InetAddr::initialize(&addr, "23451"))
     exit(1);
 
-  comm->create_datagram_receive_socket(&addr, dhp);
+  comm->create_datagram_receive_socket(&addr, 0x10, dhp);
 
   system("/bin/rm -rf ./hsroot");
 

@@ -66,7 +66,7 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &props_
   InetAddr::initialize(&m_local_addr, INADDR_ANY, 0);
 
   DispatchHandlerPtr dhp(this);
-  m_comm->create_datagram_receive_socket(&m_local_addr, dhp);
+  m_comm->create_datagram_receive_socket(&m_local_addr, 0x10, dhp);
 
   CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(
       m_session_id, m_last_known_event));

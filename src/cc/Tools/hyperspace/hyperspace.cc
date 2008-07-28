@@ -152,7 +152,7 @@ public:
       exit(1);
     }
     InetAddr::initialize(&m_send_addr, INADDR_ANY, 0);
-    m_comm->create_datagram_receive_socket(&m_send_addr, null_handler);
+    m_comm->create_datagram_receive_socket(&m_send_addr, 0x10, null_handler);
   }
 
   Notifier() : m_comm(0) {
