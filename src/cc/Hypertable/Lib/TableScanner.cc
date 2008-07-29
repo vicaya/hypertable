@@ -56,9 +56,10 @@ TableScanner::TableScanner(PropertiesPtr &props_ptr, Comm *comm,
       m_table_identifier(*table_identifier), m_started(false),
       m_eos(false), m_readahead(true), m_fetch_outstanding(false),
       m_rows_seen(0), m_timeout(timeout) {
-  char *str;
 
-  if (scan_spec.start_row && scan_spec.end_row && strcmp(scan_spec.start_row, scan_spec.end_row) > 0)
+  if (scan_spec.row_intervals.size() &&
+      scan_spec.row_intervals[0].start && scan_spec.row_intervals[0].end &&
+      strcmp(scan_spec.row_intervals[0].start, scan_spec.row_intervals[0].end) > 0)
     HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "start_row > end_row");
 
   if (m_timeout == 0 ||
@@ -70,43 +71,32 @@ TableScanner::TableScanner(PropertiesPtr &props_ptr, Comm *comm,
 
   m_range_server.set_default_timeout(m_timeout);
 
-  m_scan_spec.row_limit = scan_spec.row_limit;
-  m_scan_spec.max_versions = scan_spec.max_versions;
+  m_scan_spec_builder.set_row_limit(scan_spec.row_limit);
+  m_scan_spec_builder.set_max_versions(scan_spec.max_versions);
 
-  // deep copy columns vector
-  for (size_t i=0; i<scan_spec.columns.size(); i++) {
-    str = new char [strlen(scan_spec.columns[i]) + 1];
-    strcpy(str, scan_spec.columns[i]);
-    m_scan_spec.columns.push_back(str);
-  }
+  for (size_t i=0; i<scan_spec.columns.size(); i++)
+    m_scan_spec_builder.add_column(scan_spec.columns[i]);
 
-  // deep copy start row
-  if (scan_spec.start_row) {
-    str = new char [strlen(scan_spec.start_row) + 1];
-    strcpy(str, scan_spec.start_row);
-    m_scan_spec.start_row = str;
-  }
+  HT_EXPECT(scan_spec.row_intervals.size() <= 1, Error::FAILED_EXPECTATION);
+
+  if (scan_spec.row_intervals.size() == 1)
+    m_scan_spec_builder.add_row_interval(scan_spec.row_intervals[0].start,
+					 scan_spec.row_intervals[0].start_inclusive,
+					 scan_spec.row_intervals[0].end,
+					 scan_spec.row_intervals[0].end_inclusive);
   else
-    m_scan_spec.start_row = 0;
-  m_scan_spec.start_row_inclusive = scan_spec.start_row_inclusive;
+    m_scan_spec_builder.add_row_interval("", false, Key::END_ROW_MARKER, false);
 
-  // deep copy end row
-  if (scan_spec.end_row) {
-    str = new char [strlen(scan_spec.end_row) + 1];
-    strcpy(str, scan_spec.end_row);
-    m_scan_spec.end_row = str;
-  }
-  else
-    m_scan_spec.end_row = 0;
-  m_scan_spec.end_row_inclusive = scan_spec.end_row_inclusive;
-
-  if (m_scan_spec.row_limit == 1 ||
-      ((m_scan_spec.start_row && m_scan_spec.end_row) && !strcmp(m_scan_spec.start_row, m_scan_spec.end_row)))
+  if (m_scan_spec_builder.row_limit == 1 ||
+      (scan_spec.row_intervals.size() == 1 &&
+       (scan_spec.row_intervals[0].start && scan_spec.row_intervals[0].end) &&
+       !strcmp(scan_spec.row_intervals[0].start, scan_spec.row_intervals[0].end)))
     m_readahead = false;
 
-  memcpy(&m_scan_spec.interval, &scan_spec.interval, sizeof(m_scan_spec.interval));
+  m_scan_spec_builder.set_time_interval(scan_spec.time_interval.first,
+					scan_spec.time_interval.second);
 
-  m_scan_spec.return_deletes = scan_spec.return_deletes;
+  m_scan_spec_builder.set_return_deletes(scan_spec.return_deletes);
 
 }
 
@@ -115,10 +105,6 @@ TableScanner::TableScanner(PropertiesPtr &props_ptr, Comm *comm,
  *
  */
 TableScanner::~TableScanner() {
-  for (size_t i=0; i<m_scan_spec.columns.size(); i++)
-    delete [] m_scan_spec.columns[i];
-  delete [] m_scan_spec.start_row;
-  delete [] m_scan_spec.end_row;
 
   // if there is an outstanding fetch, wait for it to come back or timeout
   if (m_fetch_outstanding)
@@ -137,12 +123,12 @@ bool TableScanner::next(Cell &cell) {
     return false;
 
   if (!m_started)
-    find_range_and_start_scan(m_scan_spec.start_row, timer);
+    find_range_and_start_scan(m_scan_spec_builder.row_intervals[0].start, timer);
 
   while (!m_scanblock.more()) {
     if (m_scanblock.eos()) {
       if (!strcmp(m_range_info.end_row.c_str(), Key::END_ROW_MARKER) ||
-          (m_scan_spec.end_row && (strcmp(m_scan_spec.end_row, m_range_info.end_row.c_str()) <= 0))) {
+          (m_scan_spec_builder.row_intervals[0].end && (strcmp(m_scan_spec_builder.row_intervals[0].end, m_range_info.end_row.c_str()) <= 0))) {
         m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
         m_eos = true;
         return false;
@@ -183,16 +169,16 @@ bool TableScanner::next(Cell &cell) {
       HT_THROW(Error::BAD_KEY, "");
 
     // check for end row
-    if (m_scan_spec.end_row) {
-      if (m_scan_spec.end_row_inclusive) {
-        if (strcmp(key.row, m_scan_spec.end_row) > 0) {
+    if (m_scan_spec_builder.row_intervals[0].end) {
+      if (m_scan_spec_builder.row_intervals[0].end_inclusive) {
+        if (strcmp(key.row, m_scan_spec_builder.row_intervals[0].end) > 0) {
           m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
           m_eos = true;
           return false;
         }
       }
       else {
-        if (strcmp(key.row, m_scan_spec.end_row) >= 0) {
+        if (strcmp(key.row, m_scan_spec_builder.row_intervals[0].end) >= 0) {
           m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
           m_eos = true;
           return false;
@@ -209,7 +195,7 @@ bool TableScanner::next(Cell &cell) {
     if (strcmp(m_cur_row.c_str(), key.row)) {
       m_rows_seen++;
       m_cur_row = key.row;
-      if (m_scan_spec.row_limit > 0 && m_rows_seen > m_scan_spec.row_limit) {
+      if (m_scan_spec_builder.row_limit > 0 && m_rows_seen > m_scan_spec_builder.row_limit) {
         m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
         m_eos = true;
         return false;
@@ -274,7 +260,7 @@ void TableScanner::find_range_and_start_scan(const char *row_key, Timer &timer) 
 
   try {
     m_range_server.set_timeout((time_t)(timer.remaining() + 0.5));
-    m_range_server.create_scanner(m_cur_addr, m_table_identifier, range, m_scan_spec, m_scanblock);
+    m_range_server.create_scanner(m_cur_addr, m_table_identifier, range, m_scan_spec_builder, m_scanblock);
   }
   catch (Exception &e) {
 
@@ -294,7 +280,7 @@ void TableScanner::find_range_and_start_scan(const char *row_key, Timer &timer) 
     // create the scanner
     try {
       m_range_server.set_timeout((time_t)(timer.remaining() + 0.5));
-      m_range_server.create_scanner(m_cur_addr, m_table_identifier, range, m_scan_spec, m_scanblock);
+      m_range_server.create_scanner(m_cur_addr, m_table_identifier, range, m_scan_spec_builder, m_scanblock);
     }
     catch (Exception &e) {
       HT_ERRORF("%s - %s", e.what(), Error::get_text(e.code()));

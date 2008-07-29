@@ -48,7 +48,7 @@ namespace Hypertable {
 
     struct CompactionPriorityData {
       AccessGroup *ag;
-      uint64_t oldest_cached_timestamp;
+      int64_t oldest_cached_timestamp;
       uint64_t mem_used;
       uint64_t disk_used;
       uint64_t log_space_pinned;
@@ -59,8 +59,8 @@ namespace Hypertable {
 
     AccessGroup(const TableIdentifier *identifier, SchemaPtr &schema_ptr, Schema::AccessGroup *ag, const RangeSpec *range);
     virtual ~AccessGroup();
-    virtual int add(const ByteString key, const ByteString value, uint64_t real_timestamp);
-    bool replay_add(const ByteString key, const ByteString value, uint64_t real_timestamp);
+    virtual int add(const ByteString key, const ByteString value, int64_t real_timestamp);
+    bool replay_add(const ByteString key, const ByteString value, int64_t real_timestamp);
 
     virtual const char *get_split_row();
     virtual void get_split_rows(std::vector<String> &split_rows, bool include_cache);
@@ -77,7 +77,7 @@ namespace Hypertable {
     void run_compaction(Timestamp timestamp, bool major);
 
     void get_compaction_timestamp(Timestamp &timestamp);
-    uint64_t get_oldest_cached_timestamp() {
+    int64_t get_oldest_cached_timestamp() {
       boost::mutex::scoped_lock lock(m_mutex);
       return m_oldest_cached_timestamp;
     }
@@ -135,7 +135,7 @@ namespace Hypertable {
     String               m_compressor;
     bool                 m_is_root;
     Timestamp            m_compaction_timestamp;
-    uint64_t             m_oldest_cached_timestamp;
+    int64_t              m_oldest_cached_timestamp;
     uint64_t             m_collisions;
     bool                 m_needs_compaction;
     bool                 m_in_memory;

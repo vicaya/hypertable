@@ -52,7 +52,7 @@ namespace Hypertable {
      * @param real_timestamp real commit log timestamp
      * @return zero
      */
-    virtual int add(const ByteString key, const ByteString value, uint64_t real_timestamp);
+    virtual int add(const ByteString key, const ByteString value, int64_t real_timestamp);
 
     virtual const char *get_split_row();
 
@@ -80,7 +80,7 @@ namespace Hypertable {
      * @param timestamp cutoff timestamp
      * @return The new "sliced" copy of the cell cache
      */
-    CellCache *slice_copy(uint64_t timestamp);
+    CellCache *slice_copy(int64_t timestamp);
 
     /**
      * Purges all deleted pairs along with the corresponding delete entries.

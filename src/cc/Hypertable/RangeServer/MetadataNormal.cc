@@ -53,18 +53,17 @@ MetadataNormal::~MetadataNormal() {
 
 void MetadataNormal::reset_files_scan() {
   ScanSpec scan_spec;
+  RowInterval ri;
 
   scan_spec.row_limit = 1;
   scan_spec.max_versions = 1;
-  scan_spec.start_row = m_metadata_key.c_str();
-  scan_spec.start_row_inclusive = true;
-  scan_spec.end_row = m_metadata_key.c_str();
-  scan_spec.end_row_inclusive = true;
+  ri.start = m_metadata_key.c_str();
+  ri.end   = m_metadata_key.c_str();
+  scan_spec.row_intervals.push_back(ri);
   scan_spec.columns.clear();
   scan_spec.columns.push_back("Files");
 
   m_files_scanner_ptr = Global::metadata_table_ptr->create_scanner(scan_spec);
-
 }
 
 

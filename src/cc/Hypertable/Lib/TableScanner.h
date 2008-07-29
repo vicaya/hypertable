@@ -64,7 +64,7 @@ namespace Hypertable {
     SchemaPtr           m_schema_ptr;
     RangeLocatorPtr     m_range_locator_ptr;
     LocationCachePtr    m_cache_ptr;
-    ScanSpec            m_scan_spec;
+    ScanSpecBuilder     m_scan_spec_builder;
     RangeServerClient   m_range_server;
     TableIdentifierManaged m_table_identifier;
     bool                m_started;
@@ -77,7 +77,7 @@ namespace Hypertable {
     bool                m_fetch_outstanding;
     DispatchHandlerSynchronizer  m_sync_handler;
     EventPtr            m_event_ptr;
-    uint32_t            m_rows_seen;
+    int32_t             m_rows_seen;
     int                 m_timeout;
   };
   typedef boost::intrusive_ptr<TableScanner> TableScannerPtr;

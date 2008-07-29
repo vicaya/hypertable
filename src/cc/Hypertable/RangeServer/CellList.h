@@ -49,7 +49,7 @@ namespace Hypertable {
      * @param real_timestamp real commit log timestamp
      * @return Error::OK on success, error code on failure
      */
-    virtual int add(const ByteString key, const ByteString value, uint64_t real_timestamp) = 0;
+    virtual int add(const ByteString key, const ByteString value, int64_t real_timestamp) = 0;
 
     /**
      * Creates a scanner on this cell list.

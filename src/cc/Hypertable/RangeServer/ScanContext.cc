@@ -35,17 +35,17 @@ using namespace Hypertable;
 /**
  *
  */
-void ScanContext::initialize(uint64_t ts, ScanSpec *ss, RangeSpec *range_, SchemaPtr &sp) {
+void ScanContext::initialize(int64_t ts, ScanSpec *ss, RangeSpec *range_, SchemaPtr &sp) {
   Schema::ColumnFamily *cf;
   uint32_t max_versions = 0;
 
   // set time interval
   if (ss) {
-    interval.first = ss->interval.first;
+    interval.first = ss->time_interval.first;
     if (ts == 0)
-      interval.second = ss->interval.second;
+      interval.second = ss->time_interval.second;
     else
-      interval.second = (ss->interval.second != 0) ? std::min(ts, ss->interval.second) : ts;
+      interval.second = (ss->time_interval.second != 0) ? std::min(ts, ss->time_interval.second) : ts;
   }
   else {
     interval.first = 0;
@@ -122,24 +122,24 @@ void ScanContext::initialize(uint64_t ts, ScanSpec *ss, RangeSpec *range_, Schem
   /**
    * Create Start Key and End Key
    */
-  if (spec) {
+  if (spec && !spec->row_intervals.empty()) {
 
     // start row
-    start_row = spec->start_row;
-    if (!spec->start_row_inclusive)
+    start_row = spec->row_intervals[0].start;
+    if (!spec->row_intervals[0].start_inclusive)
       start_row.append(1,1);  // bump to next row
 
     // end row
-    if (spec->end_row[0] == 0)
+    if (spec->row_intervals[0].end[0] == 0)
       end_row = Key::END_ROW_MARKER;
     else {
-      end_row = spec->end_row;
-      if (spec->end_row_inclusive) {
-        uint8_t last_char = spec->end_row[strlen(spec->end_row)-1];
+      end_row = spec->row_intervals[0].end;
+      if (spec->row_intervals[0].end_inclusive) {
+        uint8_t last_char = spec->row_intervals[0].end[end_row.length()-1];
         if (last_char == 0xff)
           end_row.append(1,1);    // bump to next row
         else
-          end_row[strlen(spec->end_row)-1] = (last_char+1);
+          end_row[end_row.length()-1] = (last_char+1);
       }
     }
   }

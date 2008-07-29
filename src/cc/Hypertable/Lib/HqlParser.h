@@ -44,6 +44,7 @@
 #include "Common/FileUtils.h"
 
 #include "Schema.h"
+#include "ScanSpec.h"
 
 
 namespace Hypertable {
@@ -93,21 +94,26 @@ namespace Hypertable {
       String value;
     };
 
+    class hql_interpreter_row_interval {
+    public:
+      hql_interpreter_row_interval() : start_inclusive(true),
+				       end_inclusive(true) { }
+      String start;
+      bool start_inclusive;
+      String end;
+      bool end_inclusive;
+    };
+
     class hql_interpreter_scan_state {
     public:
       hql_interpreter_scan_state()
-          : start_row_inclusive(true), end_row_inclusive(true), limit(0),
-            max_versions(0), start_time(0), end_time(0),
-            display_timestamps(false), return_deletes(false),
-            keys_only(false) { }
+	: limit(0), max_versions(0), start_time(0), end_time(0),
+	  display_timestamps(false), return_deletes(false),
+	  keys_only(false) { }
       std::vector<String> columns;
-      String row;
-      String start_row;
-      bool start_row_inclusive;
-      String end_row;
-      bool end_row_inclusive;
       uint32_t limit;
       uint32_t max_versions;
+      hql_interpreter_row_interval row_interval;
       uint64_t start_time;
       uint64_t end_time;
       String outfile;
@@ -474,14 +480,11 @@ namespace Hypertable {
       scan_set_row(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const {
         display_string("scan_set_row");
-        if (state.scan.row != "")
-          HT_THROW(Error::HQL_PARSE_ERROR,
-                   "SELECT ROW predicate multiply defined.");
-        else if (state.scan.start_row != "" || state.scan.end_row != "")
-          HT_THROW(Error::HQL_PARSE_ERROR,
-                   "SELECT conflicting row specifications.");
-        state.scan.row = String(str, end-str);
-        trim_if(state.scan.row, is_any_of("'\""));
+        state.scan.row_interval.start = String(str, end-str);
+        trim_if(state.scan.row_interval.start, is_any_of("'\""));
+        state.scan.row_interval.start_inclusive = true;
+        state.scan.row_interval.end = state.scan.row_interval.start;
+        state.scan.row_interval.end_inclusive = true;
       }
       hql_interpreter_state &state;
     };
@@ -490,33 +493,28 @@ namespace Hypertable {
       scan_set_row_prefix(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const {
         display_string("scan_set_row_prefix");
-        if (state.scan.row != "")
-          HT_THROW(Error::HQL_PARSE_ERROR,
-                   "SELECT ROW predicate multiply defined.");
-        else if (state.scan.start_row != "" || state.scan.end_row != "")
-          HT_THROW(Error::HQL_PARSE_ERROR,
-                   "SELECT conflicting row specifications.");
-        state.scan.start_row = String(str, end-str);
-        trim_if(state.scan.start_row, is_any_of("'\""));
-        state.scan.start_row_inclusive = true;
-        str = state.scan.start_row.c_str();
-        end = str + state.scan.start_row.length();
+        state.scan.row_interval.start = String(str, end-str);
+        trim_if(state.scan.row_interval.start, is_any_of("'\""));
+        state.scan.row_interval.start_inclusive = true;
+
+        str = state.scan.row_interval.start.c_str();
+        end = str + state.scan.row_interval.start.length();
         const char *ptr;
         for (ptr=end-1; ptr>str; --ptr) {
           if (*ptr < (char)0xff) {
-            state.scan.end_row = String(str, ptr-str);
-            state.scan.end_row.append(1, (*ptr)+1);
+            state.scan.row_interval.end = String(str, ptr-str);
+            state.scan.row_interval.end.append(1, (*ptr)+1);
             ptr++;
             if (ptr < end)
-              state.scan.end_row += String(ptr, end-ptr);
+              state.scan.row_interval.end += String(ptr, end-ptr);
             break;
           }
         }
         if (ptr == str) {
-          state.scan.end_row  = state.scan.start_row;
-          state.scan.end_row.append(4, (char)0xff);
+          state.scan.row_interval.end  = state.scan.row_interval.start;
+          state.scan.row_interval.end.append(4, (char)0xff);
         }
-        state.scan.end_row_inclusive = false;
+        state.scan.row_interval.end_inclusive = false;
       }
       hql_interpreter_state &state;
     };
@@ -526,15 +524,9 @@ namespace Hypertable {
           : state(state_), inclusive(inclusive_) { }
       void operator()(char const *str, char const *end) const {
         display_string("scan_set_start_row");
-        if (state.scan.row != "")
-          HT_THROW(Error::HQL_PARSE_ERROR,
-                   "SELECT conflicting row specifications.");
-        if (state.scan.start_row != "")
-          HT_THROW(Error::HQL_PARSE_ERROR,
-                   "SELECT row range lower bound specified more than once.");
-        state.scan.start_row = String(str, end-str);
-        trim_if(state.scan.start_row, is_any_of("'\""));
-        state.scan.start_row_inclusive = inclusive;
+        state.scan.row_interval.start = String(str, end-str);
+        trim_if(state.scan.row_interval.start, is_any_of("'\""));
+        state.scan.row_interval.start_inclusive = inclusive;
       }
       hql_interpreter_state &state;
       bool inclusive;
@@ -545,15 +537,9 @@ namespace Hypertable {
           : state(state_), inclusive(inclusive_) { }
       void operator()(char const *str, char const *end) const {
         display_string("scan_set_end_row");
-        if (state.scan.row != "")
-          HT_THROW(Error::HQL_PARSE_ERROR,
-                   "SELECT conflicting row specifications.");
-        if (state.scan.end_row != "")
-          HT_THROW(Error::HQL_PARSE_ERROR,
-                   "SELECT row range upper bound specified more than once.");
-        state.scan.end_row = String(str, end-str);
-        trim_if(state.scan.end_row, is_any_of("'\""));
-        state.scan.end_row_inclusive = inclusive;
+        state.scan.row_interval.end = String(str, end-str);
+        trim_if(state.scan.row_interval.end, is_any_of("'\""));
+        state.scan.row_interval.end_inclusive = inclusive;
       }
       hql_interpreter_state &state;
       bool inclusive;

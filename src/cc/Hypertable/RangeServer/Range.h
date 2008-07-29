@@ -55,13 +55,13 @@ namespace Hypertable {
   public:
     Range(MasterClientPtr &master_client_ptr, const TableIdentifier *identifier, SchemaPtr &schema_ptr, const RangeSpec *range, const RangeState *state);
     virtual ~Range();
-    virtual int add(const ByteString key, const ByteString value, uint64_t real_timestamp);
+    virtual int add(const ByteString key, const ByteString value, int64_t real_timestamp);
     virtual const char *get_split_row() { return 0; }
 
-    int replay_add(const ByteString key, const ByteString value, uint64_t real_timestamp, uint32_t *num_addedp);
+    int replay_add(const ByteString key, const ByteString value, int64_t real_timestamp, uint32_t *num_addedp);
 
     void lock();
-    void unlock(uint64_t real_timestamp);
+    void unlock(int64_t real_timestamp);
 
     uint64_t disk_usage();
 
@@ -87,10 +87,10 @@ namespace Hypertable {
       return (String)m_identifier.name;
     }
 
-    uint64_t get_latest_timestamp();
+    int64_t get_latest_timestamp();
     bool get_scan_timestamp(Timestamp &ts);
 
-    void replay_transfer_log(CommitLogReader *commit_log_reader, uint64_t real_timestamp);
+    void replay_transfer_log(CommitLogReader *commit_log_reader, int64_t real_timestamp);
 
     void get_compaction_priority_data(std::vector<AccessGroup::CompactionPriorityData> &priority_data_vector);
 
@@ -183,8 +183,8 @@ namespace Hypertable {
     bool       m_maintenance_in_progress;
 
     Timestamp        m_timestamp;
-    uint64_t         m_last_logical_timestamp;
-    String      m_split_row;
+    int64_t          m_last_logical_timestamp;
+    String           m_split_row;
     CommitLogPtr     m_split_log_ptr;
 
     RangeUpdateBarrier m_update_barrier;

@@ -31,6 +31,7 @@
 
 #include "Hypertable/Lib/Key.h"
 #include "Hypertable/Lib/Schema.h"
+#include "Hypertable/Lib/ScanSpec.h"
 #include "Hypertable/Lib/Types.h"
 
 namespace Hypertable {
@@ -51,7 +52,7 @@ namespace Hypertable {
     RangeSpec *range;
     std::string start_row;
     std::string end_row;
-    std::pair<uint64_t, uint64_t> interval;
+    std::pair<int64_t, int64_t> interval;
     bool family_mask[256];
     CellFilterInfo family_info[256];
 
@@ -63,7 +64,7 @@ namespace Hypertable {
      * @param range_ range specifier
      * @param sp shared pointer to schema object
      */
-    ScanContext(uint64_t ts, ScanSpec *ss, RangeSpec *range_, SchemaPtr &sp) {
+    ScanContext(int64_t ts, ScanSpec *ss, RangeSpec *range_, SchemaPtr &sp) {
       initialize(ts, ss, range_, sp);
     }
 
@@ -73,7 +74,7 @@ namespace Hypertable {
      * @param ts scan timestamp (point in time when scan began)
      * @param sp shared pointer to schema object
      */
-    ScanContext(uint64_t ts, SchemaPtr &sp) {
+    ScanContext(int64_t ts, SchemaPtr &sp) {
       initialize(ts, 0, 0, sp);
     }
 
@@ -82,7 +83,7 @@ namespace Hypertable {
      *
      * @param ts scan timestamp (point in time when scan began)
      */
-    ScanContext(uint64_t ts) {
+    ScanContext(int64_t ts) {
       SchemaPtr schema_ptr;
       initialize(ts, 0, 0, schema_ptr);
     }
@@ -102,7 +103,7 @@ namespace Hypertable {
      * @param range_ range specifier
      * @param sp shared pointer to schema object
      */
-    void initialize(uint64_t ts, ScanSpec *ss, RangeSpec *range_, SchemaPtr &sp);
+    void initialize(int64_t ts, ScanSpec *ss, RangeSpec *range_, SchemaPtr &sp);
 
   };
 

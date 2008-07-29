@@ -53,10 +53,6 @@ struct GcWorker {
 
     scan_spec.columns.clear();
     scan_spec.columns.push_back("Files");
-    scan_spec.start_row = "";
-    scan_spec.start_row_inclusive = false;
-    scan_spec.end_row = Key::END_ROW_MARKER;
-    scan_spec.end_row_inclusive = false;
 
     scanner = m_metadata->create_scanner(scan_spec);
 

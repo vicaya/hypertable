@@ -41,8 +41,8 @@ namespace Hypertable {
       real    = Serialization::decode_i64(bufp, remainp);
     }
     bool operator<(const Timestamp& ts) const { return logical<ts.logical; }
-    uint64_t logical;
-    uint64_t real;
+    int64_t logical;
+    int64_t real;
   };
 
 }

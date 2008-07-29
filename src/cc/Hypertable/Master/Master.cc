@@ -582,6 +582,7 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
     String location_str;
     std::set<String> unique_locations;
     TableIdentifier table;
+    RowInterval ri;
 
     table.name = table_name_str.c_str();
     table.id = ival;
@@ -594,13 +595,14 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
     scan_spec.max_versions = 1;
     scan_spec.columns.clear();
     scan_spec.columns.push_back("Location");
-    scan_spec.start_row = start_row;
-    scan_spec.start_row_inclusive = true;
-    scan_spec.end_row = end_row;
-    scan_spec.end_row_inclusive = true;
-    scan_spec.interval.first = 0;
-    scan_spec.interval.second = 0;
-    scan_spec.return_deletes=false;
+
+    ri.start = start_row;
+    ri.end = end_row;
+    scan_spec.row_intervals.push_back(ri);
+
+    scan_spec.time_interval.first = 0;
+    scan_spec.time_interval.second = 0;
+
     int max_wait=5;
 
     while (!m_metadata_table_ptr && max_wait) {

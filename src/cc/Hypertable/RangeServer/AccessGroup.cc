@@ -107,7 +107,7 @@ AccessGroup::~AccessGroup() {
  * Also, at the end of compaction processing, when m_cell_cache_ptr gets reset to a new value,
  * the CellCache should be locked as well.
  */
-int AccessGroup::add(const ByteString key, const ByteString value, uint64_t real_timestamp) {
+int AccessGroup::add(const ByteString key, const ByteString value, int64_t real_timestamp) {
   // assumes timestamps are coming in order
   if (m_oldest_cached_timestamp == 0)
     m_oldest_cached_timestamp = real_timestamp;
@@ -117,7 +117,7 @@ int AccessGroup::add(const ByteString key, const ByteString value, uint64_t real
 
 /**
  */
-bool AccessGroup::replay_add(const ByteString key, const ByteString value, uint64_t real_timestamp) {
+bool AccessGroup::replay_add(const ByteString key, const ByteString value, int64_t real_timestamp) {
   if (real_timestamp > m_compaction_timestamp.real) {
     if (m_oldest_cached_timestamp == 0)
       m_oldest_cached_timestamp = real_timestamp;

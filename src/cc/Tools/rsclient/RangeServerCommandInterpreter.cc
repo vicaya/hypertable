@@ -43,6 +43,7 @@ extern "C" {
 #include "Hypertable/Lib/LoadDataSource.h"
 #include "Hypertable/Lib/RangeState.h"
 #include "Hypertable/Lib/ScanBlock.h"
+#include "Hypertable/Lib/ScanSpec.h"
 #include "Hypertable/Lib/TestSource.h"
 
 #include "RangeServerCommandInterpreter.h"
@@ -228,6 +229,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
     }
     else if (state.command == COMMAND_CREATE_SCANNER) {
       ScanSpec scan_spec;
+      RowInterval ri;
 
       range.start_row = state.range_start_row.c_str();
       range.end_row = state.range_end_row.c_str();
@@ -239,21 +241,19 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       scan_spec.max_versions = state.scan.max_versions;
       for (size_t i=0; i<state.scan.columns.size(); i++)
         scan_spec.columns.push_back(state.scan.columns[i].c_str());
-      if (state.scan.row != "") {
-        scan_spec.start_row = state.scan.row.c_str();
-        scan_spec.start_row_inclusive = true;
-        scan_spec.end_row = state.scan.row.c_str();
-        scan_spec.end_row_inclusive = true;
-        scan_spec.row_limit = 1;
-      }
-      else {
-        scan_spec.start_row = (state.scan.start_row == "") ? 0 : state.scan.start_row.c_str();
-        scan_spec.start_row_inclusive = state.scan.start_row_inclusive;
-        scan_spec.end_row = (state.scan.end_row == "") ? Key::END_ROW_MARKER : state.scan.end_row.c_str();
-        scan_spec.end_row_inclusive = state.scan.end_row_inclusive;
-      }
-      scan_spec.interval.first  = state.scan.start_time;
-      scan_spec.interval.second = state.scan.end_time;
+
+      ri.start = (state.scan.row_interval.start == "") ? 0
+	: state.scan.row_interval.start.c_str();
+      ri.start_inclusive = state.scan.row_interval.start_inclusive;
+
+      ri.end = (state.scan.row_interval.end == "") ? Key::END_ROW_MARKER
+	: state.scan.row_interval.end.c_str();
+      ri.end_inclusive = state.scan.row_interval.end_inclusive;
+
+      scan_spec.row_intervals.push_back(ri);
+
+      scan_spec.time_interval.first  = state.scan.start_time;
+      scan_spec.time_interval.second = state.scan.end_time;
       scan_spec.return_deletes = state.scan.return_deletes;
 
       /**

@@ -137,7 +137,7 @@ int CellStoreV0::create(const char *fname, uint32_t blocksize, const std::string
 }
 
 
-int CellStoreV0::add(const ByteString key, const ByteString value, uint64_t real_timestamp) {
+int CellStoreV0::add(const ByteString key, const ByteString value, int64_t real_timestamp) {
   EventPtr event_ptr;
   DynamicBuffer zbuf;
 
