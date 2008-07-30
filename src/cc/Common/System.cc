@@ -21,6 +21,8 @@
 
 #include "Common/Compat.h"
 
+#include <boost/algorithm/string.hpp>
+
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -43,18 +45,17 @@ using namespace std;
 
 string System::install_dir;
 string System::exe_name;
+bool   System::ms_initialized = false;
 boost::mutex System::ms_mutex;
 
-void System::_init(const char *argv0) {
+String System::locate_install_dir(const char *argv0) {
   boost::mutex::scoped_lock lock(ms_mutex);
   const char *exepath = getenv("_");
   char cwd[1024];
   int offset;
 
   if (install_dir != "")
-    return;
-
-  srand((unsigned)getpid());
+    return install_dir;
 
   getcwd(cwd, 1024);
   strcat(cwd, "/");
@@ -112,7 +113,34 @@ void System::_init(const char *argv0) {
   else
     install_dir.erase(pos);
 
-  Logger::initialize(exe_name.c_str());
+  return install_dir;
+}
+
+
+void System::_init(const String &install_directory) {
+  boost::mutex::scoped_lock lock(ms_mutex);
+
+  // seed the random number generator
+  srandom((unsigned)getpid());
+
+  // set installation directory
+  install_dir = install_directory;
+  while (boost::ends_with(install_dir, "/"))
+    install_dir = install_dir.substr(0, install_dir.length()-1);
+	 
+  // determine executable name
+  if (exe_name == "") {
+    const char *exepath = getenv("_");
+    const char *ptr = strrchr(exepath, '/');
+    if (ptr == 0)
+      exe_name = exepath;
+    else
+      exe_name = ptr+1;
+  }
+
+  // initialize logging system
+  Logger::initialize(exe_name);
+
 }
 
 

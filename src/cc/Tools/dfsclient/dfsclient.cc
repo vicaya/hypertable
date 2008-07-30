@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
   ConnectionHandler *conn_handler = new ConnectionHandler();
   DispatchHandlerPtr handler_ptr = conn_handler;
 
-  System::initialize(argv[0]);
+  System::initialize(System::locate_install_dir(argv[0]));
   ReactorFactory::initialize((uint16_t)System::get_processor_count());
 
   for (int i=1; i<argc; i++) {

@@ -252,7 +252,7 @@ int main(int argc, char **argv) {
       Usage::dump_and_exit(usage);
   }
 
-  System::initialize(argv[0]);
+  System::initialize(System::locate_install_dir(argv[0]));
   ReactorFactory::initialize(reactor_count);
 
   comm = Comm::instance();

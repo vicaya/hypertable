@@ -62,7 +62,7 @@ int main(int argc, char **argv) {
   if (argc == 1 || !strcmp(argv[1], "--help"))
     Usage::dump_and_exit(usage);
 
-  System::initialize(argv[0]);
+  System::initialize(System::locate_install_dir(argv[0]));
 
   compressor = CompressorFactory::create_block_codec(argv[1]);
 

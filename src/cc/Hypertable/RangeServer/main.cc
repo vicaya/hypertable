@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
     int worker_count;
     TimerHandlerPtr timer_handler_ptr;
 
-    System::initialize(argv[0]);
+    System::initialize(System::locate_install_dir(argv[0]));
     Global::verbose = false;
 
     if (argc > 1) {

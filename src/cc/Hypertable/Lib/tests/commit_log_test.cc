@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
 
   try {
 
-    System::initialize(argv[0]);
+    System::initialize(System::locate_install_dir(argv[0]));
     ReactorFactory::initialize(System::get_processor_count());
 
     conn_manager_ptr = new ConnectionManager();

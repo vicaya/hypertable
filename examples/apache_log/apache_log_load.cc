@@ -166,7 +166,7 @@ int main(int argc, char **argv) {
   try {
 
     // Create Hypertable client object
-    client_ptr = new Client(argv[0]);
+    client_ptr = new Client( System::locate_install_dir(argv[0]) );
 
     // Open the 'LogDb' table
     table_ptr = client_ptr->open_table("LogDb");
