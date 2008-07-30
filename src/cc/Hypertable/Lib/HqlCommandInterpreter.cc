@@ -49,7 +49,7 @@ using namespace HqlParser;
 
 namespace {
 
-  void display_mutation_errors(int error, TableMutator *mutator) {
+  bool display_mutation_errors(int error, const char *what, TableMutator *mutator) {
     std::vector<std::pair<Cell, int> > failed_mutations;
 
     mutator->get_failed(failed_mutations);
@@ -67,8 +67,11 @@ namespace {
              << Error::get_text(failed_mutations[i].second) << endl;
       }
     }
-    else
-      cerr << "Error: " << Error::get_text(error) << endl;
+    else {
+      cerr << "Error: " << Error::get_text(error) << " - " << what << endl;
+      return false;
+    }
+    return true;
   }
 
 }
@@ -162,15 +165,18 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       for (size_t i=0; i<state.scan.columns.size(); i++)
         scan_spec.columns.push_back(state.scan.columns[i].c_str());
 
-      ri.start = (state.scan.row_interval.start == "") ? ""
-	: state.scan.row_interval.start.c_str();
-      ri.start_inclusive = state.scan.row_interval.start_inclusive;
-
-      ri.end = (state.scan.row_interval.end == "") ? Key::END_ROW_MARKER
-	: state.scan.row_interval.end.c_str();
-      ri.end_inclusive = state.scan.row_interval.end_inclusive;
-
-      scan_spec.row_intervals.push_back(ri);
+      for (size_t i=0; i<state.scan.row_intervals.size(); i++) {
+	if (state.scan.row_intervals[i].start.compare(state.scan.row_intervals[i].end) > 0 ||
+	    (state.scan.row_intervals[i].start.compare(state.scan.row_intervals[i].end) == 0 &&
+	     !(state.scan.row_intervals[i].start_inclusive || state.scan.row_intervals[i].end_inclusive)))
+	  HT_THROW(Error::HQL_PARSE_ERROR, "Bad row range");
+	ri.start = (state.scan.row_intervals[i].start == "") ? ""
+	  : state.scan.row_intervals[i].start.c_str();
+	ri.start_inclusive = state.scan.row_intervals[i].start_inclusive;
+	ri.end = state.scan.row_intervals[i].end.c_str();
+	ri.end_inclusive = state.scan.row_intervals[i].end_inclusive;
+	scan_spec.row_intervals.push_back(ri);
+      }
 
       scan_spec.time_interval.first  = state.scan.start_time;
       scan_spec.time_interval.second = state.scan.end_time;
@@ -301,7 +307,8 @@ void HqlCommandInterpreter::execute_line(const String &line) {
             }
             catch (Hypertable::Exception &e) {
               do {
-                display_mutation_errors(e.code(), mutator_ptr.get());
+                if (!display_mutation_errors(e.code(), e.what(), mutator_ptr.get()))
+		  return;
               } while (!mutator_ptr->retry(30));
             }
           }
@@ -326,7 +333,8 @@ void HqlCommandInterpreter::execute_line(const String &line) {
         }
         catch (Exception &e) {
           do {
-            display_mutation_errors(e.code(), mutator_ptr.get());
+            if (!display_mutation_errors(e.code(), e.what(), mutator_ptr.get()))
+	      return;
           } while (!mutator_ptr->retry(30));
         }
       }
@@ -390,7 +398,8 @@ void HqlCommandInterpreter::execute_line(const String &line) {
                            (uint32_t)state.inserts[i].value.length());
         }
         catch (Hypertable::Exception &e) {
-          display_mutation_errors(e.code(), mutator_ptr.get());
+          if (!display_mutation_errors(e.code(), e.what(), mutator_ptr.get()))
+	    return;
         }
       }
 
@@ -398,7 +407,8 @@ void HqlCommandInterpreter::execute_line(const String &line) {
         mutator_ptr->flush();
       }
       catch (Exception &e) {
-        display_mutation_errors(e.code(), mutator_ptr.get());
+        if (!display_mutation_errors(e.code(), e.what(), mutator_ptr.get()))
+	  return;
       }
     }
     else if (state.command == COMMAND_DELETE) {
@@ -424,7 +434,7 @@ void HqlCommandInterpreter::execute_line(const String &line) {
           mutator_ptr->set_delete(state.delete_time, key);
         }
         catch (Hypertable::Exception &e) {
-          display_mutation_errors(e.code(), mutator_ptr.get());
+          display_mutation_errors(e.code(), e.what(), mutator_ptr.get());
           return;
         }
       }
@@ -445,7 +455,8 @@ void HqlCommandInterpreter::execute_line(const String &line) {
             mutator_ptr->set_delete(state.delete_time, key);
           }
           catch (Hypertable::Exception &e) {
-            display_mutation_errors(e.code(), mutator_ptr.get());
+            if (!display_mutation_errors(e.code(), e.what(), mutator_ptr.get()))
+	      return;
           }
         }
       }
@@ -453,7 +464,8 @@ void HqlCommandInterpreter::execute_line(const String &line) {
         mutator_ptr->flush();
       }
       catch (Exception &e) {
-        display_mutation_errors(e.code(), mutator_ptr.get());
+        if (!display_mutation_errors(e.code(), e.what(), mutator_ptr.get()))
+	  return;
       }
     }
     else if (state.command == COMMAND_SHOW_TABLES) {

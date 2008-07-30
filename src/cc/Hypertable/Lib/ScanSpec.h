@@ -102,7 +102,7 @@ namespace Hypertable {
      */
     void add_column(const String &str) {
       m_strings.push_back(str);
-      columns.push_back(m_strings[m_strings.size()-1].c_str());
+      columns.push_back(m_strings.back().c_str());
     }
 
     /**
@@ -113,7 +113,7 @@ namespace Hypertable {
     void add_row(const String &str) {
       RowInterval ri;
       m_strings.push_back(str);
-      ri.start = ri.end = m_strings[m_strings.size()-1].c_str();
+      ri.start = ri.end = m_strings.back().c_str();
       ri.start_inclusive = ri.end_inclusive = true;
       row_intervals.push_back(ri);
     }
@@ -130,10 +130,10 @@ namespace Hypertable {
 			  const String &end, bool end_inclusive) {
       RowInterval ri;
       m_strings.push_back(start);
-      ri.start = m_strings[m_strings.size()-1].c_str();
+      ri.start = m_strings.back().c_str();
       ri.start_inclusive = start_inclusive;
       m_strings.push_back(end);
-      ri.end = m_strings[m_strings.size()-1].c_str();
+      ri.end = m_strings.back().c_str();
       ri.end_inclusive = end_inclusive;
       row_intervals.push_back(ri);      
     }
@@ -169,6 +169,7 @@ namespace Hypertable {
     std::vector<String> m_strings;
   };
 
+  extern const int64_t BEGINNING_OF_TIME;
   extern const int64_t END_OF_TIME;
 
   std::ostream &operator<<(std::ostream &os, const RowInterval &);

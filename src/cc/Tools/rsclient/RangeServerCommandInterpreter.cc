@@ -242,15 +242,18 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       for (size_t i=0; i<state.scan.columns.size(); i++)
         scan_spec.columns.push_back(state.scan.columns[i].c_str());
 
-      ri.start = (state.scan.row_interval.start == "") ? 0
-	: state.scan.row_interval.start.c_str();
-      ri.start_inclusive = state.scan.row_interval.start_inclusive;
-
-      ri.end = (state.scan.row_interval.end == "") ? Key::END_ROW_MARKER
-	: state.scan.row_interval.end.c_str();
-      ri.end_inclusive = state.scan.row_interval.end_inclusive;
-
-      scan_spec.row_intervals.push_back(ri);
+      for (size_t i=0; i<state.scan.row_intervals.size(); i++) {
+	if (state.scan.row_intervals[i].start > state.scan.row_intervals[i].end ||
+	    (state.scan.row_intervals[i].start == state.scan.row_intervals[i].end &&
+	     !(state.scan.row_intervals[i].start_inclusive || state.scan.row_intervals[i].end_inclusive)))
+	  HT_THROW(Error::HQL_PARSE_ERROR, "Bad row range");
+	ri.start = (state.scan.row_intervals[i].start == "") ? ""
+	  : state.scan.row_intervals[i].start.c_str();
+	ri.start_inclusive = state.scan.row_intervals[i].start_inclusive;
+	ri.end = state.scan.row_intervals[i].end.c_str();
+	ri.end_inclusive = state.scan.row_intervals[i].end_inclusive;
+	scan_spec.row_intervals.push_back(ri);
+      }
 
       scan_spec.time_interval.first  = state.scan.start_time;
       scan_spec.time_interval.second = state.scan.end_time;

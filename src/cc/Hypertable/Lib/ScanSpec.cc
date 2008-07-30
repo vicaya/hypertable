@@ -31,6 +31,7 @@ using namespace std;
 using namespace Hypertable;
 using namespace Serialization;
 
+const int64_t Hypertable::BEGINNING_OF_TIME = std::numeric_limits<int64_t>::min();
 const int64_t Hypertable::END_OF_TIME = std::numeric_limits<int64_t>::max();
 
 RowInterval::RowInterval() : start(0), start_inclusive(true),
