@@ -153,6 +153,7 @@ add_subdirectory(src/cc/Tools/serverup)
 add_subdirectory(src/cc/DfsBroker/Lib)
 add_subdirectory(src/cc/DfsBroker/local)
 add_subdirectory(src/cc/Benchmark/random)
+add_subdirectory(examples)
 
 if (BUILD_MAPREDUCE)
   add_subdirectory(contrib/cc/MapReduce)

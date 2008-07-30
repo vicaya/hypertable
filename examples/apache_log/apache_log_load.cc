@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+#include "Common/Compat.h"
 
 #include <cstdio>
 #include <cstring>
@@ -222,8 +223,10 @@ int main(int argc, char **argv) {
       mutator_ptr->set(key, entry.user_agent);
     }
     catch (Exception &e) {
-      cerr << "Exception caught: " << Error::get_text(e.code()) << endl;
+      cerr << "Exception caught: " << Error::get_text(e.code()) << " - " << e.what() << endl;
       do {
+	if (!mutator_ptr->need_retry())
+	  _exit(1);
 	handle_mutation_failure(mutator_ptr);
       } while (!mutator_ptr->retry(RETRY_TIMEOUT));
     }
@@ -236,6 +239,8 @@ int main(int argc, char **argv) {
   catch (Exception &e) {
     cerr << "Exception caught: " << Error::get_text(e.code()) << endl;
     do {
+      if (!mutator_ptr->need_retry())
+	_exit(1);
       handle_mutation_failure(mutator_ptr);
     } while (!mutator_ptr->retry(RETRY_TIMEOUT));
   }

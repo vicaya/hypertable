@@ -2,7 +2,7 @@
 BOOST_INCLUDE_DIR=/usr/local/include/boost-1_34_1
 BOOST_THREAD_LIB=boost_thread-gcc41-mt
 BOOST_IOSTREAMS_LIB=boost_iostreams-gcc41-mt
-HYPERTABLE_INSTALL_DIR=/home/doug/hypertable/0.9.0.5
+HYPERTABLE_INSTALL_DIR=/home/doug/hypertable/0.9.0.8
 
 CFLAGS=-g -I$(BOOST_INCLUDE_DIR) -I$(HYPERTABLE_INSTALL_DIR)/include
 LDFLAGS=-L$(HYPERTABLE_INSTALL_DIR)/lib -lHypertable -lHyperComm -lHyperCommon -llog4cpp -lexpat -l$(BOOST_THREAD_LIB) -l$(BOOST_IOSTREAMS_LIB) -lHyperspace -lz

@@ -72,4 +72,8 @@ SELECT * FROM test WHERE ('a' <= ROW <= 'e') and '2008-07-28 00:00:02' <= TIMEST
 SELECT * FROM test WHERE ('a' <= ROW <= 'e') and '2008-07-28 00:00:02' < TIMESTAMP <= '2008-07-28 00:00:07';
 SELECT * FROM test WHERE ('a' <= ROW <= 'e') and '2008-07-28 00:00:02' < TIMESTAMP < '2008-07-28 00:00:07';
 SELECT * FROM test WHERE ROW =^ 'b';
+SELECT * FROM test WHERE (ROW = 'a' or ROW = 'c' or ROW = 'g');
+SELECT * FROM test WHERE ('a' < ROW <= 'c' or ROW = 'g' or ROW = 'c');
+SELECT * FROM test WHERE (ROW < 'c' or ROW > 'd');
+SELECT * FROM test WHERE (ROW < 'b' or ROW =^ 'b');
 quit

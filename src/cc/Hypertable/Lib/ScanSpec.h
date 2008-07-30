@@ -67,6 +67,15 @@ namespace Hypertable {
       return_deletes = 0;
     }
 
+    void base_copy(ScanSpec &other) {
+      other.row_limit = row_limit;
+      other.max_versions = max_versions;
+      other.columns = columns;
+      other.time_interval = time_interval;
+      other.return_deletes = return_deletes;
+      other.row_intervals.clear();
+    }
+
     int32_t row_limit;
     uint32_t max_versions;
     std::vector<const char *> columns;

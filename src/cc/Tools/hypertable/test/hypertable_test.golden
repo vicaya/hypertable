@@ -143,3 +143,30 @@ cz	b	n
 SELECT * FROM test WHERE ROW =^ 'b';
 b	b	n
 bz	b	n
+SELECT * FROM test WHERE (ROW = 'a' or ROW = 'c' or ROW = 'g');
+a	b	n
+c	b	n
+g	b	n
+SELECT * FROM test WHERE ('a' < ROW <= 'c' or ROW = 'g' or ROW = 'c');
+az	b	n
+b	b	n
+bz	b	n
+c	b	n
+g	b	n
+c	b	n
+SELECT * FROM test WHERE (ROW < 'c' or ROW > 'd');
+a	b	n
+az	b	n
+b	b	n
+bz	b	n
+dz	b	n
+e	b	n
+fz	b	n
+g	b	n
+gz	b	n
+k1	b	x
+SELECT * FROM test WHERE (ROW < 'b' or ROW =^ 'b');
+a	b	n
+az	b	n
+b	b	n
+bz	b	n
