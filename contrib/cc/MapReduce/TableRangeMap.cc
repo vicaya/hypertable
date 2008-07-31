@@ -7,14 +7,12 @@ namespace Mapreduce
   TableRangeMap::TableRangeMap(const std::string TableName,
       const std::string RootPath)
   {
-    std::cerr << "TableRangeMap : Client(" << RootPath << std::endl;
     m_client = new Client(RootPath);
 
     m_user_table = m_client->open_table(TableName);
     m_meta_table = m_client->open_table("METADATA");
 
     m_user_table->get_identifier(&m_table_id);
-    std::cout << "Successfuly created TableRangeMap" << std::endl;
   }
 
   std::vector<RangeLocationInfo> *TableRangeMap::getMap()

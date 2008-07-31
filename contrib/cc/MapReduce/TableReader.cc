@@ -9,7 +9,6 @@ TableReader::TableReader(HadoopPipes::MapContext& context)
   std::string rootPath = job->get("hypertable.root.path");
   bool allColumns = job->getBoolean("hypertable.table.columns.all");
 
-  std::cout << "TableReader : Client(\"" << rootPath << "\")" << std::endl;
   m_client = new Client(rootPath);
 
   m_table = m_client->open_table(tableName);
@@ -41,7 +40,6 @@ TableReader::TableReader(HadoopPipes::MapContext& context)
 
 TableReader::~TableReader()
 {
-  std::cerr << "~TableReader called" << std::endl;
 }
 
 bool TableReader::next(std::string& key, std::string& value) {
@@ -55,7 +53,6 @@ bool TableReader::next(std::string& key, std::string& value) {
     value = s;
     delete s;
 
-    std::cout << key << ":" << value << std::endl;
     return true;
   } else {
     return false;

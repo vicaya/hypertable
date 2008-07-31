@@ -8,7 +8,6 @@
 #include "TableRangeMap.h"
 #include <Hypertable/Lib/RangeLocationInfo.h>
 
-#include <iostream>
 #include <string>
 
 using namespace Hypertable;
@@ -33,7 +32,6 @@ namespace Mapreduce {
       tableName = raw_name;
       env->ReleaseStringUTFChars(jtableName, raw_name);
 
-      std::cout << "TableRangeMap(\"" << tableName <<"\",\""<<rootPath<<"\")"<<std::endl;
       TableRangeMap map(tableName, rootPath);
 
       vector<RangeLocationInfo> *vec;
@@ -65,7 +63,6 @@ namespace Mapreduce {
         env->DeleteLocalRef(str);
       }
 
-      std::cerr << "Calling dtors in the JNI" << std::endl;
       delete vec;
       return mappings;
     }
