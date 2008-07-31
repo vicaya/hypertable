@@ -2,6 +2,7 @@
 #define _HAVE_HYPERTABLE_BINDINGS
 
 #include <Common/Compat.h>
+#include <Common/System.h>
 #include <Hypertable/Lib/Client.h>
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
@@ -15,7 +16,7 @@
 #include <boost/python/def.hpp>
 
 using namespace boost::python;
-using Hypertable::ScanSpec;
+using Hypertable::ScanSpecBuilder;
 
 class TableScanner {
 private:
@@ -48,9 +49,9 @@ public:
   
   TableScanner create_scanner(object pyspec)
   {
-    extract<ScanSpec&> ex(pyspec);
+    extract<ScanSpecBuilder&> ex(pyspec);
 
-    ScanSpec& spec = ex();
+    ScanSpecBuilder& spec = ex();
     return TableScanner(m_table_ptr->create_scanner(spec, 10));
   }
 };
@@ -62,12 +63,7 @@ private:
 public:
   Client(const std::string& argv0)
   {
-    m_client = new Hypertable::Client(argv0.c_str());
-  }
-  
-  Client(const std::string& argv0, const std::string& config)
-  {
-    m_client = new Hypertable::Client(argv0.c_str(), config);
+    m_client = new Hypertable::Client(Hypertable::System::locate_install_dir(argv0.c_str()));
   }
   
   Table open_table(const std::string& name)
@@ -92,7 +88,6 @@ std::string cell_value(Hypertable::Cell& c)
 BOOST_PYTHON_MODULE(ht)
 {
   class_<Client>("Client", init<const std::string& >())
-    .def(init<const std::string&, const std::string& >())
     .def("open_table", &Client::open_table)
     ;
   
@@ -104,14 +99,9 @@ BOOST_PYTHON_MODULE(ht)
     .def("next", &TableScanner::next)
     ;
     
-  class_<ScanSpec>("ScanSpec", "scan spec docstring")
-    .def_readwrite("row_limit", &ScanSpec::row_limit)
-    .def_readwrite("max_versions", &ScanSpec::max_versions)
-    .def_readwrite("columns", &ScanSpec::columns)
-    .def_readwrite("start_row", &ScanSpec::start_row)
-    .def_readwrite("start_row_inclusive", &ScanSpec::start_row_inclusive)
-    .def_readwrite("end_row", &ScanSpec::end_row)
-    .def_readwrite("end_row_inclusive", &ScanSpec::end_row_inclusive)
+  class_<ScanSpecBuilder>("ScanSpecBuilder", "scan spec docstring")
+    .def("add_row_interval", &ScanSpecBuilder::add_row_interval)
+    .def("add_column", &ScanSpecBuilder::add_column)
     ;
 
   class_<Hypertable::Cell>("Cell")

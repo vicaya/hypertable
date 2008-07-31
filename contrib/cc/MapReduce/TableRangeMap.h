@@ -16,8 +16,8 @@ namespace Mapreduce
 
   class TableRangeMap {
   public:
-    TableRangeMap(const std::string& TableName, const std::string& ConfigPath);
-    ~TableRangeMap() {}
+    TableRangeMap(const std::string TableName, const std::string ConfigPath);
+    ~TableRangeMap() { std::cerr << "~TableRangeMap called. This destroys ClientPtr" << std::endl; }
   
     std::vector<RangeLocationInfo> *getMap();
 

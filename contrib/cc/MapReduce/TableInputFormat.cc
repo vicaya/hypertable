@@ -19,21 +19,22 @@ namespace Mapreduce {
 
   extern "C" JNIEXPORT jobjectArray JNICALL 
     Java_org_hypertable_mapreduce_TableInputFormat_getRangeVector
-    (JNIEnv *env, jobject, jstring jtableName, jstring jconfigPath)
+    (JNIEnv *env, jobject, jstring jtableName, jstring jrootPath)
     {
       string tableName;
-      string configPath;
+      string rootPath;
 
-      const char *raw_config_path = 
-        env->GetStringUTFChars(const_cast<jstring>(jconfigPath), NULL);
-      configPath = raw_config_path;
-      env->ReleaseStringUTFChars(jconfigPath, raw_config_path);
+      const char *raw_root_path = 
+        env->GetStringUTFChars(const_cast<jstring>(jrootPath), NULL);
+      rootPath = raw_root_path;
+      env->ReleaseStringUTFChars(jrootPath, raw_root_path);
 
       const char *raw_name = env->GetStringUTFChars(const_cast<jstring>(jtableName), NULL);
       tableName = raw_name;
       env->ReleaseStringUTFChars(jtableName, raw_name);
 
-      TableRangeMap map(tableName, configPath);
+      std::cout << "TableRangeMap(\"" << tableName <<"\",\""<<rootPath<<"\")"<<std::endl;
+      TableRangeMap map(tableName, rootPath);
 
       vector<RangeLocationInfo> *vec;
       vector<RangeLocationInfo>::iterator it;
@@ -64,7 +65,8 @@ namespace Mapreduce {
         env->DeleteLocalRef(str);
       }
 
-      delete vec;  
+      std::cerr << "Calling dtors in the JNI" << std::endl;
+      delete vec;
       return mappings;
     }
 }

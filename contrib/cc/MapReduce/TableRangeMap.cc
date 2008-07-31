@@ -1,51 +1,42 @@
 #include <Common/Compat.h>
 #include "TableRangeMap.h"
+#include <iostream>
 
 namespace Mapreduce
 {
-  TableRangeMap::TableRangeMap(const std::string& TableName,
-      const std::string& ConfigPath)
+  TableRangeMap::TableRangeMap(const std::string TableName,
+      const std::string RootPath)
   {
-    m_client = new Client("HT_RangeMapInfo", ConfigPath);
+    std::cerr << "TableRangeMap : Client(" << RootPath << std::endl;
+    m_client = new Client(RootPath);
 
     m_user_table = m_client->open_table(TableName);
     m_meta_table = m_client->open_table("METADATA");
 
     m_user_table->get_identifier(&m_table_id);
+    std::cout << "Successfuly created TableRangeMap" << std::endl;
   }
 
   std::vector<RangeLocationInfo> *TableRangeMap::getMap()
   {
-    char startrow[16];
-    std::string endrow;
-    ScanSpec meta_scan_spec;
+    char tmprow[16];
+    std::string endrow, startrow;
+    ScanSpecBuilder meta_scan_builder;
     TableScannerPtr scanner;
     std::vector<RangeLocationInfo> *range_vector;
     Cell cell;
 
-    snprintf(startrow, 16, "%u:", m_table_id.id);
+    snprintf(tmprow, 16, "%u:", m_table_id.id);
 
-    /* set up start row */
-    meta_scan_spec.start_row = startrow;
-    meta_scan_spec.start_row_inclusive = true;
-
-    /* set up an end row for the range query */
-    endrow = startrow;
-    endrow.append(1,0xff);
-    endrow.append(1,0xff);
-    meta_scan_spec.end_row = endrow.c_str();
-    meta_scan_spec.end_row_inclusive = true;
-
-    /* get latest version only */
-    meta_scan_spec.max_versions = 1;
-    meta_scan_spec.return_deletes = false;
-
+    startrow = tmprow;
+   
+    meta_scan_builder.add_row_interval(startrow, true, startrow + "\xff\xff", true); 
+    
     /* select columns */
-    meta_scan_spec.columns.clear();
-    meta_scan_spec.columns.push_back("StartRow");
-    meta_scan_spec.columns.push_back("Location");
+    meta_scan_builder.add_column("StartRow");
+    meta_scan_builder.add_column("Location");
 
-    scanner = m_meta_table->create_scanner(meta_scan_spec);
+    scanner = m_meta_table->create_scanner(meta_scan_builder);
 
     range_vector = new std::vector<RangeLocationInfo>();
     while (scanner->next(cell))
