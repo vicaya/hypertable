@@ -128,15 +128,8 @@ void System::_init(const String &install_directory) {
   while (boost::ends_with(install_dir, "/"))
     install_dir = install_dir.substr(0, install_dir.length()-1);
 	 
-  // determine executable name
-  if (exe_name == "") {
-    const char *exepath = getenv("_");
-    const char *ptr = strrchr(exepath, '/');
-    if (ptr == 0)
-      exe_name = exepath;
-    else
-      exe_name = ptr+1;
-  }
+  if (exe_name == "")
+    exe_name = "unknown";
 
   // initialize logging system
   Logger::initialize(exe_name);
