@@ -20,6 +20,9 @@
  */
 
 #include "Common/Compat.h"
+#include "Schema.h"
+
+
 #include <cassert>
 #include <cstdio>
 #include <cstring>
@@ -118,30 +121,36 @@ void HqlCommandInterpreter::execute_line(const String &line) {
         cout << endl << "no help for '" << state.str << "'" << endl << endl;
     }
     else if (state.command == COMMAND_CREATE_TABLE) {
-      schema = new Schema();
-      schema->set_compressor(state.table_compressor);
+      if (!state.clone_table_name.empty()) {
+        schema_str = m_client->get_schema(state.clone_table_name);
+        schema = Schema::new_instance(schema_str.c_str(), strlen(schema_str.c_str()), true);
+        schema_str.clear();
+        schema->render(schema_str);
+        m_client->create_table(state.table_name, schema_str.c_str());
+      } else {
+        schema = new Schema();
+        schema->set_compressor(state.table_compressor);
 
-      foreach(const Schema::AccessGroupMap::value_type &v, state.ag_map)
-        schema->add_access_group(v.second);
+        foreach(const Schema::AccessGroupMap::value_type &v, state.ag_map)
+          schema->add_access_group(v.second);
 
-      if (state.ag_map.find("default") == state.ag_map.end()) {
-        Schema::AccessGroup *ag = new Schema::AccessGroup();
-        ag->name = "default";
-        schema->add_access_group(ag);
+        if (state.ag_map.find("default") == state.ag_map.end()) {
+          Schema::AccessGroup *ag = new Schema::AccessGroup();
+          ag->name = "default";
+          schema->add_access_group(ag);
+        }
+        foreach(const Schema::ColumnFamilyMap::value_type &v, state.cf_map) {
+          if (v.second->ag == "")
+            v.second->ag = "default";
+          schema->add_column_family(v.second);
+        }
+        const char *error_str = schema->get_error_string();
+
+        if (error_str)
+          HT_THROW(Error::HQL_PARSE_ERROR, error_str);
+        schema->render(schema_str);
+        m_client->create_table(state.table_name, schema_str.c_str());
       }
-      foreach(const Schema::ColumnFamilyMap::value_type &v, state.cf_map) {
-        if (v.second->ag == "")
-          v.second->ag = "default";
-        schema->add_column_family(v.second);
-      }
-      const char *error_str = schema->get_error_string();
-
-      if (error_str)
-        HT_THROW(Error::HQL_PARSE_ERROR, error_str);
-
-      schema->render(schema_str);
-      m_client->create_table(state.table_name, schema_str.c_str());
-
     }
     else if (state.command == COMMAND_DESCRIBE_TABLE) {
       schema_str = m_client->get_schema(state.table_name);

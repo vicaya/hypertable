@@ -126,6 +126,7 @@ namespace Hypertable {
       }
       int command;
       String table_name;
+      String clone_table_name;
       String str;
       String output_file;
       String input_file;
@@ -175,7 +176,17 @@ namespace Hypertable {
       }
       hql_interpreter_state &state;
     };
-
+    
+    struct set_clone_table_name {
+      set_clone_table_name(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const {
+        display_string("set_clone_table_name");
+        state.clone_table_name = String(str, end-str);
+        trim_if(state.clone_table_name, is_any_of("'\""));
+      }
+      hql_interpreter_state &state;
+    };
+    
     struct set_range_start_row {
       set_range_start_row(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const {
@@ -950,6 +961,7 @@ namespace Hypertable {
           Token YES          = as_lower_d["yes"];
           Token NO           = as_lower_d["no"];
           Token OFF          = as_lower_d["off"];
+          Token LIKE         = as_lower_d["like"];
 
           /**
            * Start grammar definition
@@ -1122,6 +1134,7 @@ namespace Hypertable {
             =  CREATE >> TABLE
                       >> *(table_option)
                       >> user_identifier[set_table_name(self.state)]
+                      >> *(LIKE >> user_identifier[set_clone_table_name(self.state)])
                       >> !(create_definitions)
             ;
 
