@@ -32,6 +32,7 @@
 #include "Hypertable/Lib/Client.h"
 #include "Hypertable/Lib/Key.h"
 #include "Hypertable/Lib/KeySpec.h"
+#include "Hypertable/Lib/ScanSpec.h"
 
 #include "CellStoreV0.h"
 #include "CellStoreScannerV0.h"
@@ -182,6 +183,7 @@ void fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_
   TablePtr table_ptr;
   TableScannerPtr scanner_ptr;
   ScanSpec scan_spec;
+  RowInterval ri;
   Cell cell;
   uint32_t table_id;
   char start_row[16];
@@ -199,10 +201,10 @@ void fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_
     // Set up the scan specification
     scan_spec.max_versions = 1;
     sprintf(start_row, "%d:", table_id);
-    scan_spec.start_row = start_row;
+    ri.start = start_row;
     sprintf(end_row, "%d:%s", table_id, Key::END_ROW_MARKER);
-    scan_spec.end_row = end_row;
-    scan_spec.start_row_inclusive = scan_spec.end_row_inclusive = true;
+    ri.end = end_row;
+    scan_spec.row_intervals.push_back(ri);
     scan_spec.columns.clear();
     scan_spec.columns.push_back("Files");
     scan_spec.columns.push_back("StartRow");

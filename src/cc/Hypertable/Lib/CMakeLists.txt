@@ -64,7 +64,9 @@ RangeServerClient.cc
 RangeServerProtocol.cc
 RangeState.cc
 RootFileHandler.cc
+RowIntervalScanner.cc
 ScanBlock.cc
+ScanSpec.cc
 Schema.cc
 Table.cc
 TableMutator.cc

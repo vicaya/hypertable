@@ -266,7 +266,7 @@ int main(int argc, char **argv) {
   if (argc == 1)
     Usage::dump_and_exit(usage);
 
-  System::initialize(argv[0]);
+  System::initialize(System::locate_install_dir(argv[0]));
   ReactorFactory::initialize(1);
 
   for (int i=1; i<argc; i++) {

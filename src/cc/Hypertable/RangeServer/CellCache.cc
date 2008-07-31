@@ -79,7 +79,7 @@ CellCache::~CellCache() {
 
 /**
  */
-int CellCache::add(const ByteString key, const ByteString value, uint64_t real_timestamp) {
+int CellCache::add(const ByteString key, const ByteString value, int64_t real_timestamp) {
   ByteString new_key;
   uint8_t *ptr;
   size_t key_len = key.length();
@@ -154,7 +154,7 @@ CellListScanner *CellCache::create_scanner(ScanContextPtr &scan_ctx) {
 /**
  * This must be called with the cell cache locked
  */
-CellCache *CellCache::slice_copy(uint64_t timestamp) {
+CellCache *CellCache::slice_copy(int64_t timestamp) {
   Key key;
 #ifdef STAT
   uint64_t dropped = 0;
@@ -200,11 +200,11 @@ CellCache *CellCache::purge_deletes() {
   size_t len;
   bool          delete_present = false;
   DynamicBuffer deleted_row(0);
-  uint64_t      deleted_row_timestamp = 0;
+  int64_t       deleted_row_timestamp = 0;
   DynamicBuffer deleted_column_family(0);
-  uint64_t      deleted_column_family_timestamp = 0;
+  int64_t       deleted_column_family_timestamp = 0;
   DynamicBuffer deleted_cell(0);
-  uint64_t      deleted_cell_timestamp = 0;
+  int64_t       deleted_cell_timestamp = 0;
   CellMap::iterator iter;
 
   HT_INFO("Purging deletes from CellCache");

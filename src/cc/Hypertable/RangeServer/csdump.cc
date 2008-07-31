@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
   Key key_comps;
 
   ReactorFactory::initialize(1);
-  System::initialize(argv[0]);
+  System::initialize(System::locate_install_dir(argv[0]));
 
   for (int i=1; i<argc; i++) {
     if (!strcmp(argv[i], "-a"))

@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
   int index;
   set<BufferRecord, LtBufferRecord> lru;
   
-  System::initialize(argv[0]);
+  System::initialize(System::locate_install_dir(argv[0]));
 
   for (int i=1; i<argc; i++) {
     if (!strncmp(argv[i], "--seed=", 7))

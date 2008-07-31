@@ -112,7 +112,7 @@ namespace Hypertable {
 
     const char    *row;
     const char    *column_qualifier;
-    uint64_t       timestamp;
+    int64_t        timestamp;
     uint8_t        column_family_code;
     uint8_t        flag;
     uint8_t       *timestamp_ptr;
@@ -146,11 +146,11 @@ namespace Hypertable {
    */
   ByteString create_key(uint8_t flag, const char *row,
                         uint8_t column_family_code,
-                        const char *column_qualifier, uint64_t timestamp);
+                        const char *column_qualifier, int64_t timestamp);
 
   void create_key_and_append(DynamicBuffer &dst_buf, uint8_t flag,
                              const char *row, uint8_t column_family_code,
-                             const char *column_qualifier, uint64_t timestamp);
+                             const char *column_qualifier, int64_t timestamp);
 }
 
 #endif // HYPERTABLE_KEY_H

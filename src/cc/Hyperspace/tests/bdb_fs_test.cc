@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
   int ret = 0;
   bool isdir;
 
-  System::initialize(argv[0]);
+  System::initialize(System::locate_install_dir(argv[0]));
 
   strcpy(filename, "/tmp/bdb_fs_test.XXXXXX");
   mktemp(filename);

@@ -43,6 +43,12 @@ export HYPERTABLE_HOME=`pwd`
 popd >& /dev/null
 
 
+$HYPERTABLE_HOME/bin/serverup dfsbroker
+if [ $? != 0 ] ; then
+    echo "ERROR: DfsBroker not running, database not cleaned"
+    exit 1
+fi
+
 #
 # Stop rangeserver
 #

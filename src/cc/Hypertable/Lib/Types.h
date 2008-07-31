@@ -113,34 +113,10 @@ namespace Hypertable {
     String m_start, m_end;
   };
 
-  /** Scan specification */
-  class ScanSpec {
-  public:
-    ScanSpec();
-    ScanSpec(const uint8_t **bufp, size_t *remainp) { decode(bufp, remainp); }
-
-    size_t encoded_length() const;
-    void encode(uint8_t **bufp) const;
-    void decode(const uint8_t **bufp, size_t *remainp);
-
-    uint32_t row_limit;
-    uint32_t max_versions;
-    std::vector<const char *> columns;
-    const char *start_row;
-    bool start_row_inclusive;
-    const char *end_row;
-    bool end_row_inclusive;
-    std::pair<uint64_t,uint64_t> interval;
-    bool return_deletes;
-  };
-
-  extern const uint64_t END_OF_TIME;
 
   std::ostream &operator<<(std::ostream &os, const TableIdentifier &);
 
   std::ostream &operator<<(std::ostream &os, const RangeSpec &);
-
-  std::ostream &operator<<(std::ostream &os, const ScanSpec &);
 
 
 } // namespace Hypertable

@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_TABLESCANNER_H
-#define HYPERTABLE_TABLESCANNER_H
+#ifndef HYPERTABLE_ROWINTERVALSCANNER_H
+#define HYPERTABLE_ROWINTERVALSCANNER_H
 
 #include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
@@ -30,18 +30,17 @@
 #include "Cell.h"
 #include "RangeLocator.h"
 #include "RangeServerClient.h"
-#include "RowIntervalScanner.h"
 #include "ScanBlock.h"
 #include "Schema.h"
 #include "Types.h"
 
 namespace Hypertable {
 
-  class TableScanner : public ReferenceCount {
+  class RowIntervalScanner : public ReferenceCount {
 
   public:
     /**
-     * Constructs a TableScanner object.
+     * Constructs a RowIntervalScanner object.
      *
      * @param props_ptr smart pointer to configuration properties object
      * @param comm pointer to the Comm layer
@@ -51,18 +50,40 @@ namespace Hypertable {
      * @param scan_spec reference to scan specification object
      * @param timeout maximum time in seconds to allow scanner methods to execute before throwing an exception
      */
-    TableScanner(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpec &scan_spec, int timeout);
+    RowIntervalScanner(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpec &scan_spec, int timeout);
+
+    virtual ~RowIntervalScanner();
 
     bool next(Cell &cell);
 
+    int32_t get_rows_seen() { return m_rows_seen; }
+    void    set_rows_seen(int32_t n) { m_rows_seen = n; }
+
+    void find_range_and_start_scan(const char *row_key, Timer &timer);
+
   private:
 
-    std::vector<RowIntervalScannerPtr>  m_ri_scanners;
-    bool      m_eos;
-    size_t    m_scanneri;
-    int32_t   m_rows_seen;
+    Comm               *m_comm;
+    SchemaPtr           m_schema_ptr;
+    RangeLocatorPtr     m_range_locator_ptr;
+    LocationCachePtr    m_cache_ptr;
+    ScanSpecBuilder     m_scan_spec_builder;
+    RangeServerClient   m_range_server;
+    TableIdentifierManaged m_table_identifier;
+    bool                m_started;
+    bool                m_eos;
+    ScanBlock           m_scanblock;
+    std::string         m_cur_row;
+    RangeLocationInfo   m_range_info;
+    struct sockaddr_in  m_cur_addr;
+    bool                m_readahead;
+    bool                m_fetch_outstanding;
+    DispatchHandlerSynchronizer  m_sync_handler;
+    EventPtr            m_event_ptr;
+    int32_t             m_rows_seen;
+    int                 m_timeout;
   };
-  typedef boost::intrusive_ptr<TableScanner> TableScannerPtr;
+  typedef boost::intrusive_ptr<RowIntervalScanner> RowIntervalScannerPtr;
 }
 
-#endif // HYPERTABLE_TABLESCANNER_H
+#endif // HYPERTABLE_ROWINTERVALSCANNER_H

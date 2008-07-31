@@ -30,11 +30,17 @@ namespace Hypertable {
 
   class System {
   public:
+
     // must be inlined to do proper version check
-    static inline void initialize(const char *argv0) {
+    static inline void initialize(const String &install_directory) {
+      if (ms_initialized)
+	return;
       check_version();
-      _init(argv0);
+      _init(install_directory);
+      ms_initialized = true;
     }
+
+    static String locate_install_dir(const char *argv0);
 
     static String install_dir;
     static String exe_name;
@@ -42,8 +48,9 @@ namespace Hypertable {
     static int get_processor_count();
 
   private:
-    static void _init(const char *argv0);
+    static void _init(const String &install_directory);
 
+    static bool ms_initialized;
     static boost::mutex ms_mutex;
   };
 

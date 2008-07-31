@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
+#include "Common/Compat.h"
 
 #include <cstdio>
 
@@ -52,7 +53,7 @@ int main(int argc, char **argv) {
   ClientPtr client_ptr;
   TablePtr table_ptr;
   TableScannerPtr scanner_ptr;
-  ScanSpec scan_spec;
+  ScanSpecBuilder scan_spec_builder;
   Cell cell;
   String end_row;
 
@@ -64,23 +65,22 @@ int main(int argc, char **argv) {
   try {
 
     // Create Hypertable client object
-    client_ptr = new Client(argv[0]);
+    client_ptr = new Client( System::locate_install_dir(argv[0]) );
 
     // Open the 'LogDb' table
     table_ptr = client_ptr->open_table("LogDb");
 
-    // setup scan_spec start_row and end_row
-    scan_spec.start_row = argv[1];
+    // setup row interval
     end_row = (String)argv[1];
-    end_row.append(1, 0xff);
-    scan_spec.end_row = end_row.c_str();
+    end_row.append(1, 0xff);  // next minimum row
+    scan_spec_builder.add_row_interval(argv[1], true, end_row, false);
 
     // setup scan_spec columns
     for (int i=2; i<argc; i++)
-      scan_spec.columns.push_back(argv[i]);
+      scan_spec_builder.add_column(argv[i]);
 
     // Create a scanner on the 'LogDb' table 
-    scanner_ptr = table_ptr->create_scanner(scan_spec);
+    scanner_ptr = table_ptr->create_scanner(scan_spec_builder);
 
   }
   catch (std::exception &e) {

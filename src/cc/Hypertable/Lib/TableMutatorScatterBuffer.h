@@ -64,6 +64,7 @@ namespace Hypertable {
     void get_failed_mutations(std::vector<std::pair<Cell, int> > &failed_mutations) {
       failed_mutations = m_failed_mutations;
     }
+    size_t get_failure_count() { return m_failed_mutations.size(); }
 
   private:
 

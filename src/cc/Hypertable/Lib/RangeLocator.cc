@@ -38,6 +38,7 @@ extern "C" {
 #include "RootFileHandler.h"
 #include "RangeLocator.h"
 #include "ScanBlock.h"
+#include "ScanSpec.h"
 
 using namespace Hypertable;
 
@@ -238,6 +239,7 @@ RangeLocator::find(TableIdentifier *table, const char *row_key,
   std::string start_row;
   std::string end_row;
   struct sockaddr_in addr;
+  RowInterval ri;
   bool inclusive = (row_key == 0 || *row_key == 0) ? true : false;
 
   if (m_root_stale) {
@@ -278,15 +280,18 @@ RangeLocator::find(TableIdentifier *table, const char *row_key,
   meta_key_ptr = meta_keys.start+2;
   if (hard ||
       !m_cache_ptr->lookup(0, meta_key_ptr, rane_loc_infop, inclusive)) {
+
     meta_scan_spec.row_limit = METADATA_READAHEAD_COUNT;
     meta_scan_spec.max_versions = 1;
-    meta_scan_spec.columns.clear();
     meta_scan_spec.columns.push_back("StartRow");
     meta_scan_spec.columns.push_back("Location");
-    meta_scan_spec.start_row = meta_keys.start;
-    meta_scan_spec.start_row_inclusive = true;
-    meta_scan_spec.end_row = 0;
-    meta_scan_spec.end_row_inclusive = false;
+
+    ri.start = meta_keys.start;
+    ri.start_inclusive = true;
+    ri.end = 0;
+    ri.end_inclusive = false;
+    meta_scan_spec.row_intervals.push_back(ri);
+
     meta_scan_spec.return_deletes = false;
     // meta_scan_spec.interval = ????;
 
@@ -331,15 +336,19 @@ RangeLocator::find(TableIdentifier *table, const char *row_key,
     return Error::INVALID_METADATA;
   }
 
+  meta_scan_spec.clear();
+
   meta_scan_spec.row_limit = METADATA_READAHEAD_COUNT;
   meta_scan_spec.max_versions = 1;
-  meta_scan_spec.columns.clear();
   meta_scan_spec.columns.push_back("StartRow");
   meta_scan_spec.columns.push_back("Location");
-  meta_scan_spec.start_row = meta_keys.start+2;
-  meta_scan_spec.start_row_inclusive = true;
-  meta_scan_spec.end_row = meta_keys.end+2;
-  meta_scan_spec.end_row_inclusive = true;
+
+  ri.start = meta_keys.start+2;
+  ri.start_inclusive = true;
+  ri.end = meta_keys.end+2;;
+  ri.end_inclusive = true;
+  meta_scan_spec.row_intervals.push_back(ri);
+
   // meta_scan_spec.interval = ????;
 
   if (m_conn_manager_ptr &&

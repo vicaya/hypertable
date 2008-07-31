@@ -59,7 +59,7 @@ namespace Hypertable { namespace Config {
    */
   inline void init(int argc, char *argv[], const Desc *desc = NULL,
                    const Desc *hidden = NULL, const PositionalDesc *p = NULL) {
-    System::initialize(argv[0]);
+    System::initialize(System::locate_install_dir(argv[0]));
     if (desc) description(*desc);
     init_default_options();
     parse_args(argc, argv, desc, hidden, p);

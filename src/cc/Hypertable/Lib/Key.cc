@@ -69,7 +69,7 @@ namespace Hypertable {
   const char *Key::END_ROW_MARKER = (const char *)end_row_chars;
   const char *Key::END_ROOT_ROW   = (const char *)end_root_row_chars;
 
-  ByteString create_key(uint8_t flag, const char *row, uint8_t column_family_code, const char *column_qualifier, uint64_t timestamp) {
+  ByteString create_key(uint8_t flag, const char *row, uint8_t column_family_code, const char *column_qualifier, int64_t timestamp) {
     size_t len = strlen(row) + 4 + sizeof(int64_t);
     if (column_qualifier != 0)
       len += strlen(column_qualifier);
@@ -80,7 +80,7 @@ namespace Hypertable {
     return bs;
   }
 
-  void create_key_and_append(DynamicBuffer &dst_buf, uint8_t flag, const char *row, uint8_t column_family_code, const char *column_qualifier, uint64_t timestamp) {
+  void create_key_and_append(DynamicBuffer &dst_buf, uint8_t flag, const char *row, uint8_t column_family_code, const char *column_qualifier, int64_t timestamp) {
     size_t len = strlen(row) + 4 + sizeof(int64_t);
     if (column_qualifier != 0)
       len += strlen(column_qualifier);

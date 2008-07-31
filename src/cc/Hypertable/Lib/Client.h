@@ -48,17 +48,17 @@ namespace Hypertable {
     /**
      * Constructs the object using the specified config file
      *
-     * @param argv0 the zero'th argument in the vector passed into main
+     * @param install_dir path to Hypertable installation directory
      * @param config_file name of configuration file
      */
-    Client(const char *argv0, const String &config_file);
+    Client(const String &install_dir, const String &config_file);
 
     /**
      * Constructs the object using the default config file
      *
-     * @param argv0 the zero'th argument in the vector passed into main
+     * @param install_dir path to Hypertable installation directory
      */
-    Client(const char *argv0);
+    Client(const String &install_dir);
 
     /**
      * Creates a table

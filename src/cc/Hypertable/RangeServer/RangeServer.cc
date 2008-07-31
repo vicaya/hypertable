@@ -458,7 +458,7 @@ void RangeServer::replay_log(CommitLogReaderPtr &log_reader_ptr) {
   TableIdentifier table_id;
   DynamicBuffer dbuf;
   const uint8_t *ptr, *end;
-  uint64_t timestamp;
+  int64_t timestamp;
   TableInfoPtr table_info_ptr;
   RangePtr range_ptr;
   ByteString key, value;
@@ -606,13 +606,18 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
     cout << *scan_spec;
   }
 
+  if (scan_spec->row_intervals.size() > 1)
+    HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "RangeServer::create_scanner too many row intervals");
+
   if (!m_replay_finished)
     wait_for_recovery_finish(table, range);
 
   try {
     DynamicBuffer rbuf;
 
-    if (*scan_spec->end_row && strcmp(scan_spec->start_row, scan_spec->end_row) > 0)
+    if (!scan_spec->row_intervals.empty() &&
+	*scan_spec->row_intervals[0].end &&
+	strcmp(scan_spec->row_intervals[0].start, scan_spec->row_intervals[0].end) > 0)
       HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "start_row > end_row");
 
     if (!m_live_map_ptr->get(table->id, table_info))
@@ -741,7 +746,6 @@ void RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
   bool is_root = table->id == 0 && (*range->start_row == 0) && !strcmp(range->end_row, Key::END_ROOT_ROW);
   TableScannerPtr scanner_ptr;
   TableMutatorPtr mutator_ptr;
-  ScanSpec scan_spec;
   KeySpec key;
   String metadata_key_str;
 
@@ -866,7 +870,7 @@ void RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
      * concurrently access it.
      */
     if (transfer_log_dir && *transfer_log_dir) {
-      uint64_t timestamp;
+      int64_t timestamp;
       CommitLogReaderPtr commit_log_reader_ptr = new CommitLogReader(Global::dfs, transfer_log_dir);
       CommitLog *log;
       if (is_root)
@@ -938,9 +942,9 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
   string errmsg;
   int error = Error::OK;
   TableInfoPtr table_info_ptr;
-  uint64_t initial_timestamp;
-  uint64_t update_timestamp = 0;
-  uint64_t min_timestamp = 0;
+  int64_t initial_timestamp;
+  int64_t update_timestamp = 0;
+  int64_t min_timestamp = 0;
   const char *row;
   String split_row;
   vector<UpdateRec> rootmods;
@@ -954,8 +958,8 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
   String end_row;
   std::vector<MinTimestampRec>  min_ts_vector;
   MinTimestampRec  min_ts_rec;
-  uint64_t next_timestamp;
-  uint64_t temp_timestamp;
+  int64_t next_timestamp;
+  int64_t temp_timestamp;
   uint64_t memory_added = 0;
   uint64_t items_added = 0;
   bool split_pending;
@@ -1484,7 +1488,6 @@ void RangeServer::replay_load_range(ResponseCallback *cb, const TableIdentifier 
   bool register_table = false;
   TableScannerPtr scanner_ptr;
   TableMutatorPtr mutator_ptr;
-  ScanSpec scan_spec;
   KeySpec key;
   String metadata_key_str;
 
@@ -1568,7 +1571,7 @@ void RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data, size_
   size_t remaining = len;
   const char *row;
   String err_msg;
-  uint64_t timestamp;
+  int64_t timestamp;
   RangePtr range_ptr;
   String end_row;
   uint32_t count;
@@ -1901,7 +1904,7 @@ void RangeServer::log_cleanup() {
 void RangeServer::schedule_log_cleanup_compactions(std::vector<RangePtr> &range_vec, CommitLog *log, uint64_t prune_threshold) {
   std::vector<AccessGroup::CompactionPriorityData> priority_data_vec;
   LogFragmentPriorityMap log_frag_map;
-  uint64_t timestamp, oldest_cached_timestamp = 0;
+  int64_t timestamp, oldest_cached_timestamp = 0;
 
   range_vec.clear();
 

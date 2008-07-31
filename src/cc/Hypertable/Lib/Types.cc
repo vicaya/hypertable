@@ -32,8 +32,6 @@ using namespace std;
 using namespace Hypertable;
 using namespace Serialization;
 
-const uint64_t Hypertable::END_OF_TIME = (uint64_t)-1;
-
 size_t TableIdentifier::encoded_length() const {
   return 8 + encoded_length_vstr(name);
 }
@@ -67,51 +65,6 @@ void RangeSpec::decode(const uint8_t **bufp, size_t *remainp) {
 }
 
 
-ScanSpec::ScanSpec() : row_limit(0), max_versions(0), start_row(0),
-    start_row_inclusive(true), end_row(0), end_row_inclusive(true),
-    interval(0, END_OF_TIME), return_deletes(false) {
-}
-
-size_t ScanSpec::encoded_length() const {
-  size_t len = encoded_length_vi32(row_limit) +
-               encoded_length_vi32(max_versions) +
-               encoded_length_vstr(start_row) + 1 +
-               encoded_length_vstr(end_row) + 1 +
-               encoded_length_vi32(columns.size());
-  foreach(const char *c, columns) len += encoded_length_vstr(c);
-  return len + 8 + 8 + 1;
-}
-
-void ScanSpec::encode(uint8_t **bufp) const {
-  encode_vi32(bufp, row_limit);
-  encode_vi32(bufp, max_versions);
-  encode_vstr(bufp, start_row);
-  encode_bool(bufp, start_row_inclusive);
-  encode_vstr(bufp, end_row);
-  encode_bool(bufp, end_row_inclusive);
-  encode_vi32(bufp, columns.size());
-  foreach(const char *c, columns) encode_vstr(bufp, c);
-  encode_i64(bufp, interval.first);
-  encode_i64(bufp, interval.second);
-  encode_bool(bufp, return_deletes);
-}
-
-void ScanSpec::decode(const uint8_t **bufp, size_t *remainp) {
-  HT_TRY("decoding scan spec",
-    row_limit = decode_vi32(bufp, remainp);
-    max_versions = decode_vi32(bufp, remainp);
-    start_row = decode_vstr(bufp, remainp);
-    start_row_inclusive = decode_i8(bufp, remainp);
-    end_row = decode_vstr(bufp, remainp);
-    end_row_inclusive = decode_i8(bufp, remainp);
-    for (size_t nc = decode_vi32(bufp, remainp); nc--;)
-      columns.push_back(decode_vstr(bufp, remainp));
-    interval.first = decode_i64(bufp, remainp);
-    interval.second = decode_i64(bufp, remainp);
-    return_deletes = decode_i8(bufp, remainp));
-}
-
-
 ostream &Hypertable::operator<<(ostream &os, const TableIdentifier &tid) {
   os <<"{TableIdentifier: name='"<< tid.name <<"' id='" << tid.id
      <<"' generation='"<< tid.generation <<"'}";
@@ -135,30 +88,3 @@ ostream &Hypertable::operator<<(ostream &os, const RangeSpec &range) {
   return os;
 }
 
-ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
-  os <<"\n{ScanSpec: row_limit="<< scan_spec.row_limit
-     <<" max_versions="<< scan_spec.max_versions
-     <<"\n columns=(";
-
-  foreach (const char *c, scan_spec.columns)
-    os <<"'"<< c << "' ";
-
-  os <<')';
-
-  if (scan_spec.start_row)
-    os <<"\n start_row='"<< scan_spec.start_row <<"'";
-  else
-    os <<"\n start_row=[NULL]";
-
-  os <<"\n start_row_inclusive=" << scan_spec.start_row_inclusive;
-
-  if (scan_spec.end_row)
-    os <<"\n end_row='"<< scan_spec.end_row <<"'";
-  else
-    os <<"\n end_row=[NULL]";
-
-  os <<"\n end_row_inclusive="<< scan_spec.end_row_inclusive;
-  os <<"\n interval=(" << scan_spec.interval.first <<", "
-     << scan_spec.interval.second <<")\n}\n";
-  return os;
-}

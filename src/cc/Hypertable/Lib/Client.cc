@@ -46,14 +46,14 @@ using namespace Hyperspace;
 /**
  *
  */
-Client::Client(const char *argv0, const String &config_file) {
-  System::initialize(argv0);
+Client::Client(const String &install_dir, const String &config_file) {
+  System::initialize(install_dir);
   ReactorFactory::initialize((uint16_t)System::get_processor_count());
   initialize(config_file);
 }
 
-Client::Client(const char *argv0) {
-  System::initialize(argv0);
+Client::Client(const String &install_dir) {
+  System::initialize(install_dir);
   ReactorFactory::initialize((uint16_t)System::get_processor_count());
   initialize(System::install_dir + "/conf/hypertable.cfg");
 }

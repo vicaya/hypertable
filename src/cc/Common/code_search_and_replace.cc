@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
   string license_name;
   char *ptr;
 
-  System::initialize(argv[0]);
+  System::initialize(System::locate_install_dir(argv[0]));
 
   try {
 

@@ -55,7 +55,7 @@ read_test() {
 
 int
 main(int ac, char *av[]) {
-  System::initialize(av[0]);
+  System::initialize(System::locate_install_dir(av[0]));
   //TODO
   //write_test();
   //read_test();

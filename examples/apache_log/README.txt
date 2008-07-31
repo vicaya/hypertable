@@ -4,7 +4,7 @@ variables in the Makefile:
 
 BOOST_INCLUDE_DIR=/usr/local/include/boost-1_34_1
 BOOST_THREAD_LIB=boost_thread-gcc41-mt
-HYPERTABLE_INSTALL_DIR=/home/doug/hypertable/0.9.0.5
+HYPERTABLE_INSTALL_DIR=/home/doug/hypertable/0.9.0.8
 
 They should be modified to reflect your particular Boost
 installation and Hypertable installation.

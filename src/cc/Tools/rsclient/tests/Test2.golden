@@ -508,7 +508,7 @@ CREATE SCANNER ON Test2[..??] WHERE ROW >= "Abama" LIMIT=4;
 1189631332230211 Abarambo cassis:http://www.psa.ac.uk/awards2003/toynbee.htm
 1189631333541743 Abarambo cassis:http://www.usatoday.com/sports/bbw/columnist/nightengale/2005-01-19-majors_x.htm
 DESTROY SCANNER;
-CREATE SCANNER ON Test2[..??] WHERE ROW >= "Abama" LIMIT=2 MAX_VERSIONS=1;
+CREATE SCANNER ON Test2[..??] WHERE ROW >= "Abama" LIMIT=2 REVS=1;
 1189631333674696 Abama plum:http://pbskids.org/sesame/index.html
 1189631333353299 Abama plum:http://www.baseball-reference.com/r/roberda07.shtml
 1189631333025117 Abama broccoli:http://www.sirlinksalot.net/bertandernie.html

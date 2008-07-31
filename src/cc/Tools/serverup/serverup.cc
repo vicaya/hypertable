@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
   int error;
   bool verbose = false;
 
-  System::initialize(argv[0]);
+  System::initialize(System::locate_install_dir(argv[0]));
   ReactorFactory::initialize((uint16_t)System::get_processor_count());
 
   for (int i=1; i<argc; i++) {

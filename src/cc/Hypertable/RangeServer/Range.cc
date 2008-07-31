@@ -206,7 +206,7 @@ bool Range::extract_csid_from_path(std::string &path, uint32_t *csidp) {
 
 /**
  */
-int Range::add(const ByteString key, const ByteString value, uint64_t real_timestamp) {
+int Range::add(const ByteString key, const ByteString value, int64_t real_timestamp) {
   Key key_comps;
 
   if (m_error)
@@ -256,7 +256,7 @@ int Range::add(const ByteString key, const ByteString value, uint64_t real_times
 
 /**
  */
-int Range::replay_add(const ByteString key, const ByteString value, uint64_t real_timestamp, uint32_t *num_addedp) {
+int Range::replay_add(const ByteString key, const ByteString value, int64_t real_timestamp, uint32_t *num_addedp) {
   Key key_comps;
 
   HT_EXPECT(key_comps.load(key), Error::FAILED_EXPECTATION);
@@ -674,7 +674,7 @@ void Range::lock() {
 }
 
 
-void Range::unlock(uint64_t real_timestamp) {
+void Range::unlock(int64_t real_timestamp) {
   // This is a performance optimization to maintain the logical timestamp without excessive locking
   {
     boost::mutex::scoped_lock lock(m_mutex);
@@ -689,7 +689,7 @@ void Range::unlock(uint64_t real_timestamp) {
 
 /**
  */
-void Range::replay_transfer_log(CommitLogReader *commit_log_reader, uint64_t real_timestamp) {
+void Range::replay_transfer_log(CommitLogReader *commit_log_reader, int64_t real_timestamp) {
   BlockCompressionHeaderCommitLog header;
   const uint8_t *base, *ptr, *end;
   size_t len;
@@ -747,7 +747,7 @@ void Range::replay_transfer_log(CommitLogReader *commit_log_reader, uint64_t rea
 
 /**
  */
-uint64_t Range::get_latest_timestamp() {
+int64_t Range::get_latest_timestamp() {
   boost::mutex::scoped_lock lock(m_mutex);
   return m_timestamp.logical;
 }

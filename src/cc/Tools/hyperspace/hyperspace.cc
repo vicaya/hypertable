@@ -208,7 +208,7 @@ int main(int argc, char **argv, char **envp) {
   int error;
   Notifier *notifier = 0;
 
-  System::initialize(argv[0]);
+  System::initialize(System::locate_install_dir(argv[0]));
   ReactorFactory::initialize((uint16_t)System::get_processor_count());
 
   cfgfile = System::install_dir + "/conf/hypertable.cfg";

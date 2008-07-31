@@ -55,7 +55,7 @@ namespace Hypertable {
     virtual ~CellStoreV0();
 
     virtual int create(const char *fname, uint32_t blocksize, const std::string &compressor);
-    virtual int add(const ByteString key, const ByteString value, uint64_t real_timestamp);
+    virtual int add(const ByteString key, const ByteString value, int64_t real_timestamp);
     virtual int finalize(Timestamp &timestamp);
     virtual int open(const char *fname, const char *start_row, const char *end_row);
     virtual int load_index();

@@ -169,6 +169,17 @@ namespace Hypertable {
         m_prev_buffer_ptr->get_failed_mutations(failed_mutations);
     }
 
+    /**
+     * Indicates whether or not there are failed updates to be retried
+     *
+     * @return true if there are failed updates to retry, false otherwise
+     */
+    bool need_retry() {
+      if (m_prev_buffer_ptr)
+        return m_prev_buffer_ptr->get_failure_count() > 0;
+      return false;
+    }
+
   private:
 
     enum Operation {

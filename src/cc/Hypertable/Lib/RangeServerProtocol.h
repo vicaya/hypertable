@@ -25,6 +25,7 @@
 #include "AsyncComm/Protocol.h"
 
 #include "RangeState.h"
+#include "ScanSpec.h"
 #include "Types.h"
 
 namespace Hypertable {

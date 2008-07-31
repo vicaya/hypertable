@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
   ApplicationQueuePtr app_queue;
   struct sockaddr_in listen_addr;
 
-  System::initialize(argv[0]);
+  System::initialize(System::locate_install_dir(argv[0]));
 
   if (argc > 1) {
     for (int i=1; i<argc; i++) {
