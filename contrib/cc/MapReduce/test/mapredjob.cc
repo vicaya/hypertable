@@ -50,7 +50,6 @@ public:
 };
 
 int main(int argc, char *argv[]) {
-  Hypertable::System::initialize(argv[0]);
   return HadoopPipes::runTask(HadoopPipes::TemplateFactory<TableMap, 
                               TableReduce, void, void, Mapreduce::TableReader,
                               TableWriter>());

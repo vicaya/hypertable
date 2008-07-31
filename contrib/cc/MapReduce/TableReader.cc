@@ -6,14 +6,14 @@ TableReader::TableReader(HadoopPipes::MapContext& context)
 {    
   const HadoopPipes::JobConf *job = context.getJobConf();
   std::string tableName = job->get("hypertable.table.name");
-  std::string configPath = job->get("hypertable.config.path");
+  std::string rootPath = job->get("hypertable.root.path");
   bool allColumns = job->getBoolean("hypertable.table.columns.all");
 
-  m_client = new Client("HT_Reader", configPath);
+  m_client = new Client(rootPath);
 
   m_table = m_client->open_table(tableName);
 
-  ScanSpec scan_spec;
+  ScanSpecBuilder scan_spec_builder;
 
   std::string start_row;
   std::string end_row;
@@ -24,26 +24,18 @@ TableReader::TableReader(HadoopPipes::MapContext& context)
   HadoopUtils::deserializeString(start_row, stream);
   HadoopUtils::deserializeString(end_row, stream);
 
-  scan_spec.start_row = start_row.c_str();
-  scan_spec.start_row_inclusive = true;
-
-  scan_spec.end_row = end_row.c_str();
-  scan_spec.end_row_inclusive = true;
-
-  scan_spec.return_deletes = false;
+  scan_spec_builder.add_row_interval(start_row, true, end_row, true);
 
   if (allColumns == false) {
     std::vector<std::string> columns;
     using namespace boost::algorithm;
     
     split(columns, job->get("hypertable.table.columns"), is_any_of(", "));
-      BOOST_FOREACH(const std::string &c, columns) {
-        scan_spec.columns.push_back(c.c_str());
-      }
-      m_scanner = m_table->create_scanner(scan_spec);
-  } else {
-    m_scanner = m_table->create_scanner(scan_spec);
+    BOOST_FOREACH(const std::string &c, columns) {
+      scan_spec_builder.add_column(c);
+    }
   }
+  m_scanner = m_table->create_scanner(scan_spec_builder);
 }
 
 TableReader::~TableReader()
@@ -61,7 +53,6 @@ bool TableReader::next(std::string& key, std::string& value) {
     value = s;
     delete s;
 
-    std::cout << key << ":" << value << std::endl;
     return true;
   } else {
     return false;

@@ -23,19 +23,19 @@ import org.apache.hadoop.conf.Configuration;
 public class TableInputFormat implements InputFormat<Text, MapWritable>, JobConfigurable
 {
   private Text m_tableName;
-  private String m_configPath;
+  private String m_rootPath;
 
   public TableInputFormat() {
     Configuration conf = new Configuration();
-    m_configPath = conf.get("hypertable.config.path",
-        "/opt/hypertable/0.9.0.7/conf/hypertable.cfg");
+    m_rootPath = conf.get("hypertable.root.path",
+        "/opt/hypertable/0.9.0.7/");
   }
 
   public void configure(JobConf job)
   {
     Path[] tableNames = job.getInputPaths();
     m_tableName = new Text(tableNames[0].getName());
-    job.set("hypertable.config.path", m_configPath);
+    job.set("hypertable.root.path", m_rootPath);
   }
   
   class DummyRecordReader implements RecordReader<Text, MapWritable> {
@@ -53,7 +53,7 @@ public class TableInputFormat implements InputFormat<Text, MapWritable>, JobConf
   }
   
   public InputSplit[] getSplits(JobConf job, int numSplits) throws IOException {
-    String[] rangeVector = getRangeVector(m_tableName.toString(), m_configPath);
+    String[] rangeVector = getRangeVector(m_tableName.toString(), m_rootPath);
     if (rangeVector == null || rangeVector.length == 0) {
       throw new IOException("No input split could be created.");
     }
