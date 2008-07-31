@@ -38,7 +38,7 @@ using namespace Hypertable;
 using namespace Hyperspace;
 using namespace Serialization;
 
-ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &props_ptr, Session *session) : m_comm(comm), m_session(session), m_session_id(0), m_last_known_event(0) {
+ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &props_ptr, Session *session) : m_dead(false), m_comm(comm), m_session(session), m_session_id(0), m_last_known_event(0) {
   int error;
   uint16_t master_port;
   const char *master_host;
@@ -93,6 +93,9 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
   boost::mutex::scoped_lock lock(m_mutex);
   int error;
   int command = -1;
+
+  if (m_dead)
+    return;
 
   /**
   if (m_verbose) {
@@ -308,6 +311,7 @@ void ClientKeepaliveHandler::destroy_session() {
   if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp) != Error::OK))
     HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
 
+  m_dead = true;
   //m_comm->close_socket(m_local_addr);
 
 }
