@@ -158,24 +158,33 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       uint32_t nsec;
       time_t unix_time;
       struct tm tms;
-      RowInterval ri;
+      RowInterval  ri;
+      CellInterval ci;
 
       scan_spec.row_limit = state.scan.limit;
       scan_spec.max_versions = state.scan.max_versions;
       for (size_t i=0; i<state.scan.columns.size(); i++)
         scan_spec.columns.push_back(state.scan.columns[i].c_str());
 
+      if (state.scan.row_intervals.size() && state.scan.cell_intervals.size())
+	HT_THROW(Error::HQL_PARSE_ERROR, "ROW predicates and CELL predicates can't be combined");
+
       for (size_t i=0; i<state.scan.row_intervals.size(); i++) {
-	if (state.scan.row_intervals[i].start.compare(state.scan.row_intervals[i].end) > 0 ||
-	    (state.scan.row_intervals[i].start.compare(state.scan.row_intervals[i].end) == 0 &&
-	     !(state.scan.row_intervals[i].start_inclusive || state.scan.row_intervals[i].end_inclusive)))
-	  HT_THROW(Error::HQL_PARSE_ERROR, "Bad row range");
-	ri.start = (state.scan.row_intervals[i].start == "") ? ""
-	  : state.scan.row_intervals[i].start.c_str();
+	ri.start = state.scan.row_intervals[i].start.c_str();
 	ri.start_inclusive = state.scan.row_intervals[i].start_inclusive;
 	ri.end = state.scan.row_intervals[i].end.c_str();
 	ri.end_inclusive = state.scan.row_intervals[i].end_inclusive;
 	scan_spec.row_intervals.push_back(ri);
+      }
+
+      for (size_t i=0; i<state.scan.cell_intervals.size(); i++) {
+	ci.start_row = state.scan.cell_intervals[i].start_row.c_str();
+	ci.start_column = state.scan.cell_intervals[i].start_column.c_str();
+	ci.start_inclusive = state.scan.cell_intervals[i].start_inclusive;
+	ci.end_row = state.scan.cell_intervals[i].end_row.c_str();
+	ci.end_column = state.scan.cell_intervals[i].end_column.c_str();
+	ci.end_inclusive = state.scan.cell_intervals[i].end_inclusive;
+	scan_spec.cell_intervals.push_back(ci);
       }
 
       scan_spec.time_interval.first  = state.scan.start_time;

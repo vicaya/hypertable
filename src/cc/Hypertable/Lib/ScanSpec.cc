@@ -57,6 +57,33 @@ void RowInterval::decode(const uint8_t **bufp, size_t *remainp) {
     end_inclusive = decode_bool(bufp, remainp));
 }
 
+CellInterval::CellInterval() : start_row(0), start_column(0), start_inclusive(true),
+			       end_row(0), end_column(0), end_inclusive(true) { }
+
+size_t CellInterval::encoded_length() const {
+  return 2 + encoded_length_vstr(start_row) + encoded_length_vstr(start_column) + encoded_length_vstr(end_row) + encoded_length_vstr(end_column);
+}
+
+void CellInterval::encode(uint8_t **bufp) const {
+  encode_vstr(bufp, start_row);
+  encode_vstr(bufp, start_column);
+  encode_bool(bufp, start_inclusive);
+  encode_vstr(bufp, end_row);
+  encode_vstr(bufp, end_column);
+  encode_bool(bufp, end_inclusive);
+}
+
+
+void CellInterval::decode(const uint8_t **bufp, size_t *remainp) {
+  HT_TRY("decoding cell interval",
+    start_row = decode_vstr(bufp, remainp);
+    start_column = decode_vstr(bufp, remainp);
+    start_inclusive = decode_bool(bufp, remainp);
+    end_row = decode_vstr(bufp, remainp);
+    end_column = decode_vstr(bufp, remainp);
+    end_inclusive = decode_bool(bufp, remainp));
+}
+
 ScanSpec::ScanSpec() : row_limit(0), max_versions(0),
        time_interval(0, END_OF_TIME), return_deletes(false) {
 }
@@ -65,9 +92,11 @@ size_t ScanSpec::encoded_length() const {
   size_t len = encoded_length_vi32(row_limit) +
                encoded_length_vi32(max_versions) +
                encoded_length_vi32(columns.size()) +
-               encoded_length_vi32(row_intervals.size());
+               encoded_length_vi32(row_intervals.size()) +
+               encoded_length_vi32(cell_intervals.size());
   foreach(const char *c, columns) len += encoded_length_vstr(c);
   foreach(const RowInterval &ri, row_intervals) len += ri.encoded_length();
+  foreach(const CellInterval &ci, cell_intervals) len += ci.encoded_length();
   return len + 8 + 8 + 1;
 }
 
@@ -78,6 +107,8 @@ void ScanSpec::encode(uint8_t **bufp) const {
   foreach(const char *c, columns) encode_vstr(bufp, c);
   encode_vi32(bufp, row_intervals.size());
   foreach(const RowInterval &ri, row_intervals) ri.encode(bufp);
+  encode_vi32(bufp, cell_intervals.size());
+  foreach(const CellInterval &ci, cell_intervals) ci.encode(bufp);
   encode_i64(bufp, time_interval.first);
   encode_i64(bufp, time_interval.second);
   encode_bool(bufp, return_deletes);
@@ -85,6 +116,7 @@ void ScanSpec::encode(uint8_t **bufp) const {
 
 void ScanSpec::decode(const uint8_t **bufp, size_t *remainp) {
   RowInterval ri;
+  CellInterval ci;
   HT_TRY("decoding scan spec",
     row_limit = decode_vi32(bufp, remainp);
     max_versions = decode_vi32(bufp, remainp);
@@ -93,6 +125,10 @@ void ScanSpec::decode(const uint8_t **bufp, size_t *remainp) {
     for (size_t nri = decode_vi32(bufp, remainp); nri--;) {
       ri.decode(bufp, remainp);
       row_intervals.push_back(ri);
+    }
+    for (size_t nci = decode_vi32(bufp, remainp); nci--;) {
+      ci.decode(bufp, remainp);
+      cell_intervals.push_back(ci);
     }
     time_interval.first = decode_i64(bufp, remainp);
     time_interval.second = decode_i64(bufp, remainp);
@@ -122,21 +158,51 @@ ostream &Hypertable::operator<<(ostream &os, const RowInterval &ri) {
   return os;
 }
 
+ostream &Hypertable::operator<<(ostream &os, const CellInterval &ci) {
+  os <<"{CellInterval: ";
+  if (ci.start_row)
+    os << "\"" << ci.start_row << "\",\"" << ci.start_column << "\"";
+  else
+    os << "NULL";
+  if (ci.start_inclusive)
+    os << " <= cell ";
+  else
+    os << " < cell ";
+  if (ci.end_inclusive)
+    os << "<= ";
+  else
+    os << "< ";
+  if (ci.end_row)
+    os << "\"" << ci.end_row << "\",\"" << ci.end_column << "\"";
+  else
+    os << "0xff 0xff";
+  os << "}";
+  return os;
+}
+
 
 ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
   os <<"\n{ScanSpec: row_limit="<< scan_spec.row_limit
-     <<" max_versions="<< scan_spec.max_versions
-     <<"\n rows=";
+     <<" max_versions="<< scan_spec.max_versions;
 
-  foreach(const RowInterval &ri, scan_spec.row_intervals)
-    os << " " << ri;
+  if (!scan_spec.row_intervals.empty()) {
+    os << "\n rows=";
+    foreach(const RowInterval &ri, scan_spec.row_intervals)
+      os << " " << ri;
+  }
 
-  os << "\n columns=(";
+  if (!scan_spec.cell_intervals.empty()) {
+    os << "\n cells=";
+    foreach(const CellInterval &ci, scan_spec.cell_intervals)
+      os << " " << ci;
+  }
 
-  foreach (const char *c, scan_spec.columns)
-    os <<"'"<< c << "' ";
-
-  os <<')';
+  if (!scan_spec.columns.empty()) {
+    os << "\n columns=(";
+    foreach (const char *c, scan_spec.columns)
+      os <<"'"<< c << "' ";
+    os <<')';
+  }
 
   os <<"\n time_interval=(" << scan_spec.time_interval.first <<", "
      << scan_spec.time_interval.second <<")\n}\n";
