@@ -53,7 +53,9 @@
 #endif
 
 /* We want C limit macros, even when using C++ compilers */
-#define __STDC_LIMIT_MACROS
+#ifndef __STDC_LIMIT_MACROS
+#  define __STDC_LIMIT_MACROS
+#endif
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
