@@ -47,18 +47,29 @@ TableScanner::TableScanner(PropertiesPtr &props_ptr, Comm *comm,
   : m_eos(false), m_scanneri(0), m_rows_seen(0) {
 
   RowIntervalScannerPtr ri_scanner_ptr;
-  ScanSpec ri_scan_spec;
+  ScanSpec interval_scan_spec;
   Timer timer(timeout);
 
   if (scan_spec.row_intervals.empty()) {
-    ri_scanner_ptr = new RowIntervalScanner(props_ptr, comm, table_identifier, schema_ptr, range_locator_ptr, scan_spec, timeout);
-    m_ri_scanners.push_back(ri_scanner_ptr);
+    if (scan_spec.cell_intervals.empty()) {
+      ri_scanner_ptr = new RowIntervalScanner(props_ptr, comm, table_identifier, schema_ptr, range_locator_ptr, scan_spec, timeout);
+      m_ri_scanners.push_back(ri_scanner_ptr);
+    }
+    else {
+      for (size_t i=0; i<scan_spec.cell_intervals.size(); i++) {
+	scan_spec.base_copy(interval_scan_spec);
+	interval_scan_spec.cell_intervals.push_back(scan_spec.cell_intervals[i]);
+	ri_scanner_ptr = new RowIntervalScanner(props_ptr, comm, table_identifier, schema_ptr, range_locator_ptr, interval_scan_spec, timeout);
+	m_ri_scanners.push_back(ri_scanner_ptr);
+	ri_scanner_ptr->find_range_and_start_scan(scan_spec.cell_intervals[i].start_row, timer);
+      }
+    }
   }
   else {
     for (size_t i=0; i<scan_spec.row_intervals.size(); i++) {
-      scan_spec.base_copy(ri_scan_spec);
-      ri_scan_spec.row_intervals.push_back(scan_spec.row_intervals[i]);
-      ri_scanner_ptr = new RowIntervalScanner(props_ptr, comm, table_identifier, schema_ptr, range_locator_ptr, ri_scan_spec, timeout);
+      scan_spec.base_copy(interval_scan_spec);
+      interval_scan_spec.row_intervals.push_back(scan_spec.row_intervals[i]);
+      ri_scanner_ptr = new RowIntervalScanner(props_ptr, comm, table_identifier, schema_ptr, range_locator_ptr, interval_scan_spec, timeout);
       m_ri_scanners.push_back(ri_scanner_ptr);
       ri_scanner_ptr->find_range_and_start_scan(scan_spec.row_intervals[i].start, timer);
     }

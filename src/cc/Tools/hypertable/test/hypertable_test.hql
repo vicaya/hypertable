@@ -157,4 +157,5 @@ SELECT * from test WHERE CELL =^ "foo","tag:a";
 SELECT * from test WHERE CELL > "old","tag:abacate";
 SELECT * from test WHERE CELL >= "old","tag:abacate";
 SELECT * from test WHERE "old","tag:foo" < CELL >= "old","tag:abacate";
+SELECT * FROM test WHERE ( CELL = "maui","tag:abaisance" OR CELL = "foo","tag:adage" OR CELL = "cow","tag:Ab" OR CELL =^ "foo","tag:acya");
 quit

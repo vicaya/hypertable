@@ -594,7 +594,7 @@ namespace Hypertable {
 	    state.scan.current_ci.set_start(state.scan.current_cell_row, state.scan.current_cell_column, true);
 	    state.scan.current_ci.set_end(state.scan.current_cell_row, state.scan.current_cell_column, true);
 	  }
-	  if (state.scan.current_relop == RELOP_LT) {
+	  else if (state.scan.current_relop == RELOP_LT) {
 	    if (state.scan.current_ci.end_set)
 	      HT_THROW(Error::HQL_PARSE_ERROR, "Bad cell expression");
 	    state.scan.current_ci.set_end(state.scan.current_cell_row, state.scan.current_cell_column, false);
@@ -627,6 +627,8 @@ namespace Hypertable {
 
 	  state.scan.cell_intervals.push_back(state.scan.current_ci);
 	  state.scan.current_ci.clear();
+	  state.scan.current_cell_row = "";
+	  state.scan.current_cell_column = "";
 	  state.scan.current_relop = 0;
 	}
       }
@@ -1506,8 +1508,13 @@ namespace Hypertable {
 	      >> COMMA >> string_literal[scan_set_cell_column(self.state)]
 	    ;
 
-	  cell_predicate
+	  cell_interval
 	    = !(cell_spec >> relop) >> CELL >> relop >> cell_spec
+	    ;
+
+	  cell_predicate
+	    = cell_interval
+	    | LPAREN >> cell_interval >> *( OR >> cell_interval ) >> RPAREN
 	    ;
 
           where_predicate
@@ -1618,6 +1625,7 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(where_clause);
           BOOST_SPIRIT_DEBUG_RULE(where_predicate);
           BOOST_SPIRIT_DEBUG_RULE(time_predicate);
+          BOOST_SPIRIT_DEBUG_RULE(cell_interval);
           BOOST_SPIRIT_DEBUG_RULE(cell_predicate);
           BOOST_SPIRIT_DEBUG_RULE(cell_spec);
           BOOST_SPIRIT_DEBUG_RULE(relop);
@@ -1675,7 +1683,7 @@ namespace Hypertable {
           update_statement, create_scanner_statement, destroy_scanner_statement,
           fetch_scanblock_statement, shutdown_statement, drop_range_statement,
           replay_start_statement, replay_log_statement, replay_commit_statement,
-          cell_predicate, cell_spec;
+          cell_interval, cell_predicate, cell_spec;
         };
 
       hql_interpreter_state &state;
