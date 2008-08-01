@@ -122,26 +122,77 @@ void ScanContext::initialize(int64_t ts, ScanSpec *ss, RangeSpec *range_, Schema
   /**
    * Create Start Key and End Key
    */
-  if (spec && !spec->row_intervals.empty()) {
+  if (spec) {
+    if (!spec->row_intervals.empty()) {
 
-    // start row
-    start_row = spec->row_intervals[0].start;
-    if (!spec->row_intervals[0].start_inclusive)
-      start_row.append(1,1);  // bump to next row
+      // start row
+      start_row = spec->row_intervals[0].start;
+      if (!spec->row_intervals[0].start_inclusive)
+	start_row.append(1,1);  // bump to next row
 
-    // end row
-    if (spec->row_intervals[0].end[0] == 0)
-      end_row = Key::END_ROW_MARKER;
-    else {
-      end_row = spec->row_intervals[0].end;
-      if (spec->row_intervals[0].end_inclusive) {
-        uint8_t last_char = spec->row_intervals[0].end[end_row.length()-1];
-        if (last_char == 0xff)
-          end_row.append(1,1);    // bump to next row
-        else
-          end_row[end_row.length()-1] = (last_char+1);
+      // end row
+      if (spec->row_intervals[0].end[0] == 0)
+	end_row = Key::END_ROW_MARKER;
+      else {
+	end_row = spec->row_intervals[0].end;
+	if (spec->row_intervals[0].end_inclusive) {
+	  uint8_t last_char = spec->row_intervals[0].end[end_row.length()-1];
+	  if (last_char == 0xff)
+	    end_row.append(1,1);    // bump to next row
+	  else
+	    end_row[end_row.length()-1] = (last_char+1);
+	}
       }
     }
+    else if (!spec->cell_intervals.empty()) {
+      std::string column_family_str;
+      Schema::ColumnFamily *cf;
+
+      if (*spec->cell_intervals[0].start_column) {
+	const char *ptr = strchr(spec->cell_intervals[0].start_column, ':');
+	if (ptr == 0)
+	  HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC,
+		   format("Bad cell spec (%s)", spec->cell_intervals[0].start_column));
+	column_family_str = std::string(spec->cell_intervals[0].start_column, ptr-spec->cell_intervals[0].start_column);
+	if ((cf = schema_ptr->get_column_family(column_family_str)) == 0)
+	  HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC,
+		   format("Bad column family (%s)", column_family_str.c_str()));
+	ptr++;
+	start_row = spec->cell_intervals[0].start_row + std::string(1, 0) + std::string(1, (char)cf->id) + ptr;
+	if (!spec->cell_intervals[0].start_inclusive)
+	  start_row.append(1,1);  // bump to next cell
+      }
+      else {
+	// start row
+	start_row = spec->cell_intervals[0].start_row;
+      }
+
+      if (*spec->cell_intervals[0].end_column) {
+	const char *ptr = strchr(spec->cell_intervals[0].end_column, ':');
+	if (ptr == 0)
+	  HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC,
+		   format("Bad cell spec (%s)", spec->cell_intervals[0].end_column));
+	column_family_str = std::string(spec->cell_intervals[0].end_column, ptr-spec->cell_intervals[0].end_column);
+	if ((cf = schema_ptr->get_column_family(column_family_str)) == 0)
+	  HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC,
+		   format("Bad column family (%s)", column_family_str.c_str()));
+	ptr++;
+	end_row = spec->cell_intervals[0].end_row + std::string(1, 0) + std::string(1, (char)cf->id) + ptr;
+	if (spec->cell_intervals[0].end_inclusive)
+	  end_row.append(1,1);  // bump to next cell
+      }
+      else {
+	// end row
+	end_row = spec->cell_intervals[0].end_row;
+      }
+    }
+    else {
+      start_row = "";
+      end_row = Key::END_ROW_MARKER;
+    }
+
+    if (start_row.compare(end_row) > 0)
+      HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "start_cell > end_cell");
   }
   else {
     start_row = "";

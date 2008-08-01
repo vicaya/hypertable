@@ -58,14 +58,14 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
   // compute start row
   // this is wrong ...
   m_start_row = m_cell_store_v0->get_start_row();
-  if (m_start_row < scan_ctx->start_row) {
+  if (m_start_row.compare(scan_ctx->start_row) < 0) {
     start_inclusive = true;
     m_start_row = scan_ctx->start_row;
   }
 
   // compute end row
   m_end_row = m_cell_store_v0->get_end_row();
-  if (scan_ctx->end_row < m_end_row) {
+  if (scan_ctx->end_row.compare(m_end_row) < 0) {
     m_end_inclusive = false;
     m_end_row = scan_ctx->end_row;
   }

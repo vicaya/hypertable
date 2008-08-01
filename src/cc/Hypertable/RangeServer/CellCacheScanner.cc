@@ -36,8 +36,8 @@ using namespace Hypertable;
  */
 CellCacheScanner::CellCacheScanner(CellCachePtr &cellcache, ScanContextPtr &scan_ctx) : CellListScanner(scan_ctx), m_cell_cache_ptr(cellcache), m_cell_cache_mutex(cellcache->m_mutex), m_cur_key(0), m_cur_value(0), m_eos(false) {
   ByteString bs;
-  size_t start_row_len = strlen(scan_ctx->start_row.c_str()) + 1;
-  size_t end_row_len = strlen(scan_ctx->end_row.c_str()) + 1;
+  size_t start_row_len = scan_ctx->start_row.length() + 1;
+  size_t end_row_len = scan_ctx->end_row.length() + 1;
   DynamicBuffer dbuf(7 + std::max(start_row_len, end_row_len));
 
   {

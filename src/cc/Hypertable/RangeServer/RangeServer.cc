@@ -606,19 +606,21 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
     cout << *scan_spec;
   }
 
-  if (scan_spec->row_intervals.size() > 1)
-    HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "RangeServer::create_scanner too many row intervals");
-
   if (!m_replay_finished)
     wait_for_recovery_finish(table, range);
 
   try {
     DynamicBuffer rbuf;
 
-    if (!scan_spec->row_intervals.empty() &&
-	*scan_spec->row_intervals[0].end &&
-	strcmp(scan_spec->row_intervals[0].start, scan_spec->row_intervals[0].end) > 0)
-      HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "start_row > end_row");
+    if (scan_spec->row_intervals.size() > 0) {
+      if (scan_spec->row_intervals.size() > 1)
+	HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "can only scan one row interval");
+      if (scan_spec->cell_intervals.size() > 0)
+	HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "both row and cell intervals defined");
+    }
+
+    if (scan_spec->cell_intervals.size() > 1)
+      HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "can only scan one cell interval");
 
     if (!m_live_map_ptr->get(table->id, table_info))
       throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND, (String)"unknown table '" + table->name + "'");

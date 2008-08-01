@@ -80,6 +80,9 @@ namespace Hypertable {
     bool                m_fetch_outstanding;
     DispatchHandlerSynchronizer  m_sync_handler;
     EventPtr            m_event_ptr;
+    std::string         m_start_row;
+    std::string         m_end_row;
+    bool                m_end_inclusive;
     int32_t             m_rows_seen;
     int                 m_timeout;
   };

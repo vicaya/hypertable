@@ -90,7 +90,7 @@ INSERT INTO test VALUES('2008-07-28 00:00:10', "fz", "b", "n");
 INSERT INTO test VALUES('2008-07-28 00:00:11', "g", "b", "n");
 INSERT INTO test VALUES('2008-07-28 00:00:12', "gz", "b", "n");
 SELECT * FROM test WHERE ('z' < ROW < 'a');
-Error: Bad row range - HYPERTABLE HQL parse error
+Error: start_row > end_row - RANGE SERVER bad scan specification
 DELETE c FROM test WHERE ROW = "k1";
 SELECT * FROM test WHERE TIMESTAMP < '2008-06-30 00:00:04';
 k1	b	x
@@ -170,3 +170,191 @@ a	b	n
 az	b	n
 b	b	n
 bz	b	n
+DROP TABLE IF EXISTS test;
+CREATE TABLE test ( tag );
+INSERT INTO test VALUES("how", "tag:A", "n");
+INSERT INTO test VALUES("now", "tag:a", "n");
+INSERT INTO test VALUES("brown", "tag:aa", "n");
+INSERT INTO test VALUES("cow", "tag:aal", "n");
+INSERT INTO test VALUES("how", "tag:aalii", "n");
+INSERT INTO test VALUES("now", "tag:aam", "n");
+INSERT INTO test VALUES("brown", "tag:Aani", "n");
+INSERT INTO test VALUES("cow", "tag:aardvark", "n");
+INSERT INTO test VALUES("how", "tag:aardwolf", "n");
+INSERT INTO test VALUES("now", "tag:Aaron", "n");
+INSERT INTO test VALUES("brown", "tag:Aaronic", "n");
+INSERT INTO test VALUES("cow", "tag:Aaronical", "n");
+INSERT INTO test VALUES("how", "tag:Aaronite", "n");
+INSERT INTO test VALUES("now", "tag:Aaronitic", "n");
+INSERT INTO test VALUES("brown", "tag:Aaru", "n");
+INSERT INTO test VALUES("cow", "tag:Ab", "n");
+INSERT INTO test VALUES("old", "tag:aba", "n");
+INSERT INTO test VALUES("macdonald", "tag:Ababdeh", "n");
+INSERT INTO test VALUES("had", "tag:Ababua", "n");
+INSERT INTO test VALUES("a", "tag:abac", "n");
+INSERT INTO test VALUES("farm", "tag:abaca", "n");
+INSERT INTO test VALUES("old", "tag:abacate", "n");
+INSERT INTO test VALUES("macdonald", "tag:abacay", "n");
+INSERT INTO test VALUES("had", "tag:abacinate", "n");
+INSERT INTO test VALUES("a", "tag:abacination", "n");
+INSERT INTO test VALUES("farm", "tag:abaciscus", "n");
+INSERT INTO test VALUES("old", "tag:abacist", "n");
+INSERT INTO test VALUES("macdonald", "tag:aback", "n");
+INSERT INTO test VALUES("had", "tag:abactinal", "n");
+INSERT INTO test VALUES("a", "tag:abactinally", "n");
+INSERT INTO test VALUES("farm", "tag:abaction", "n");
+INSERT INTO test VALUES("old", "tag:abactor", "n");
+INSERT INTO test VALUES("macdonald", "tag:abaculus", "n");
+INSERT INTO test VALUES("had", "tag:abacus", "n");
+INSERT INTO test VALUES("a", "tag:Abadite", "n");
+INSERT INTO test VALUES("farm", "tag:abaff", "n");
+INSERT INTO test VALUES("kaui", "tag:abaft", "n");
+INSERT INTO test VALUES("maui", "tag:abaisance", "n");
+INSERT INTO test VALUES("oahu", "tag:abaiser", "n");
+INSERT INTO test VALUES("kaui", "tag:abaissed", "n");
+INSERT INTO test VALUES("maui", "tag:abalienate", "n");
+INSERT INTO test VALUES("oahu", "tag:abalienation", "n");
+INSERT INTO test VALUES("bar", "tag:abalone", "n");
+INSERT INTO test VALUES("bar", "tag:Abama", "n");
+INSERT INTO test VALUES("bar", "tag:abampere", "n");
+INSERT INTO test VALUES("bar", "tag:abandon", "n");
+INSERT INTO test VALUES("bar", "tag:abandonable", "n");
+INSERT INTO test VALUES("bar", "tag:abandoned", "n");
+INSERT INTO test VALUES("bar", "tag:abandonedly", "n");
+INSERT INTO test VALUES("bar", "tag:acutonodose", "n");
+INSERT INTO test VALUES("foo", "tag:acutorsion", "n");
+INSERT INTO test VALUES("foo", "tag:acyanoblepsia", "n");
+INSERT INTO test VALUES("foo", "tag:acyanopsia", "n");
+INSERT INTO test VALUES("bar", "tag:acyclic", "n");
+INSERT INTO test VALUES("foo", "tag:acyesis", "n");
+INSERT INTO test VALUES("foo", "tag:acyetic", "n");
+INSERT INTO test VALUES("foo", "tag:acystia", "n");
+INSERT INTO test VALUES("bar", "tag:ad", "n");
+INSERT INTO test VALUES("foo", "tag:Ada", "n");
+INSERT INTO test VALUES("foo", "tag:adactyl", "n");
+INSERT INTO test VALUES("foo", "tag:adactylia", "n");
+INSERT INTO test VALUES("foo", "tag:adactylism", "n");
+INSERT INTO test VALUES("foo", "tag:adactylous", "n");
+INSERT INTO test VALUES("foo", "tag:adage", "n");
+INSERT INTO test VALUES("bar", "tag:adagial", "n");
+INSERT INTO test VALUES("foo", "tag:adagietto", "n");
+INSERT INTO test VALUES("foo", "tag:adamantoblast", "n");
+INSERT INTO test VALUES("bar", "tag:adamantoblastoma", "n");
+INSERT INTO test VALUES("foo", "tag:adamantoid", "n");
+SELECT * from test WHERE "farm","tag:abaca" < CELL < "had","tag:abacinate";
+farm	tag:abaciscus	n
+farm	tag:abaction	n
+farm	tag:abaff	n
+foo	tag:Ada	n
+foo	tag:acutorsion	n
+foo	tag:acyanoblepsia	n
+foo	tag:acyanopsia	n
+foo	tag:acyesis	n
+foo	tag:acyetic	n
+foo	tag:acystia	n
+foo	tag:adactyl	n
+foo	tag:adactylia	n
+foo	tag:adactylism	n
+foo	tag:adactylous	n
+foo	tag:adage	n
+foo	tag:adagietto	n
+foo	tag:adamantoblast	n
+foo	tag:adamantoid	n
+had	tag:Ababua	n
+SELECT * from test WHERE "farm","tag:abaca" <= CELL < "had","tag:abacinate";
+farm	tag:abaca	n
+farm	tag:abaciscus	n
+farm	tag:abaction	n
+farm	tag:abaff	n
+foo	tag:Ada	n
+foo	tag:acutorsion	n
+foo	tag:acyanoblepsia	n
+foo	tag:acyanopsia	n
+foo	tag:acyesis	n
+foo	tag:acyetic	n
+foo	tag:acystia	n
+foo	tag:adactyl	n
+foo	tag:adactylia	n
+foo	tag:adactylism	n
+foo	tag:adactylous	n
+foo	tag:adage	n
+foo	tag:adagietto	n
+foo	tag:adamantoblast	n
+foo	tag:adamantoid	n
+had	tag:Ababua	n
+SELECT * from test WHERE "farm","tag:abaca" < CELL <= "had","tag:abacinate";
+farm	tag:abaciscus	n
+farm	tag:abaction	n
+farm	tag:abaff	n
+foo	tag:Ada	n
+foo	tag:acutorsion	n
+foo	tag:acyanoblepsia	n
+foo	tag:acyanopsia	n
+foo	tag:acyesis	n
+foo	tag:acyetic	n
+foo	tag:acystia	n
+foo	tag:adactyl	n
+foo	tag:adactylia	n
+foo	tag:adactylism	n
+foo	tag:adactylous	n
+foo	tag:adage	n
+foo	tag:adagietto	n
+foo	tag:adamantoblast	n
+foo	tag:adamantoid	n
+had	tag:Ababua	n
+had	tag:abacinate	n
+SELECT * from test WHERE "farm","tag:abaca" <= CELL <= "had","tag:abacinate";
+farm	tag:abaca	n
+farm	tag:abaciscus	n
+farm	tag:abaction	n
+farm	tag:abaff	n
+foo	tag:Ada	n
+foo	tag:acutorsion	n
+foo	tag:acyanoblepsia	n
+foo	tag:acyanopsia	n
+foo	tag:acyesis	n
+foo	tag:acyetic	n
+foo	tag:acystia	n
+foo	tag:adactyl	n
+foo	tag:adactylia	n
+foo	tag:adactylism	n
+foo	tag:adactylous	n
+foo	tag:adage	n
+foo	tag:adagietto	n
+foo	tag:adamantoblast	n
+foo	tag:adamantoid	n
+had	tag:Ababua	n
+had	tag:abacinate	n
+SELECT * from test WHERE CELL = "foo","tag:adactylism";
+foo	tag:adactylism	n
+SELECT * from test WHERE CELL =^ "foo","tag:ac";
+foo	tag:acutorsion	n
+foo	tag:acyanoblepsia	n
+foo	tag:acyanopsia	n
+foo	tag:acyesis	n
+foo	tag:acyetic	n
+foo	tag:acystia	n
+SELECT * from test WHERE CELL =^ "foo","tag:a";
+foo	tag:acutorsion	n
+foo	tag:acyanoblepsia	n
+foo	tag:acyanopsia	n
+foo	tag:acyesis	n
+foo	tag:acyetic	n
+foo	tag:acystia	n
+foo	tag:adactyl	n
+foo	tag:adactylia	n
+foo	tag:adactylism	n
+foo	tag:adactylous	n
+foo	tag:adage	n
+foo	tag:adagietto	n
+foo	tag:adamantoblast	n
+foo	tag:adamantoid	n
+SELECT * from test WHERE CELL > "old","tag:abacate";
+old	tag:abacist	n
+old	tag:abactor	n
+SELECT * from test WHERE CELL >= "old","tag:abacate";
+old	tag:abacate	n
+old	tag:abacist	n
+old	tag:abactor	n
+SELECT * from test WHERE "old","tag:foo" < CELL >= "old","tag:abacate";
+Error: Bad cell expression - HYPERTABLE HQL parse error
