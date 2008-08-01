@@ -166,6 +166,7 @@ BOOST_PYTHON_MODULE(ht)
   class_<ScanSpecBuilder>("ScanSpecBuilder", "scan spec docstring")
     .def("add_row_interval", &ScanSpecBuilder::add_row_interval)
     .def("add_column", &ScanSpecBuilder::add_column)
+    .def("clear", &ScanSpecBuilder::clear)
     ;
 
   class_<Hypertable::Cell>("Cell")

@@ -1,21 +1,22 @@
 import ht
+import random
 
 # create client
 client = ht.Client("/opt/hypertable/0.9.0.7/")
 
 # open the table
-table = client.open_table("my_table")
+table = client.open_table("dummy4")
 
 # create scan specification
-scan_spec_builder = ht.ScanSpecBuilder()
-scan_spec_builder.add_row_interval("\x00", True, "\xff\xff", True)
-scan_spec_builder.add_column("a")
+#scan_spec_builder = ht.ScanSpecBuilder()
+#scan_spec_builder.add_row_interval("\x00", True, "\xff\xff", True)
+#scan_spec_builder.add_column("a")
 
 # initialize the scanner with it
-scanner = table.create_scanner(scan_spec_builder)
+#scanner = table.create_scanner(scan_spec_builder)
 
 # create cell holding consecutive values from the scanner
-cell = ht.Cell()
+#cell = ht.Cell()
 
 # scan it!
 #while scanner.next(cell):
@@ -28,14 +29,18 @@ cell = ht.Cell()
 
 mutator = table.create_mutator(10)
 
-families = ['a','b','c']
-
-for i in range(1,100000):
+families = ['meta', 'blob']
+k = 100000000
+i = 0
+while i < k :
   row = "row-%s" % (i)
-  family = families[i % 3]
+  family = families[i % 2]
   qualifier = ""
-  value = "value:%s" % i
-
+  value = 'a' * 10 * 1024 
+  if i % 5000 == 0:
+    print "%s/%s" % (i,k)
+    mutator.flush()
   mutator.set(row, family, qualifier, value, len(value)) 
+  i = i + 1
 
-mutator.flush()
+
