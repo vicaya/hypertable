@@ -156,7 +156,7 @@ if (BUILD_MAPREDUCE)
 else (BUILD_MAPREDUCE)
   message(STATUS "MapReduce support disabled.")
 endif (BUILD_MAPREDUCE)
-add_subdirectory(contrib/cc/PythonBinding)
+#add_subdirectory(contrib/cc/PythonBinding)
 
 IF (Kfs_FOUND)
    add_subdirectory(src/cc/DfsBroker/kosmos)

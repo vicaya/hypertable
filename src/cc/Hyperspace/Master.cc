@@ -856,8 +856,12 @@ Master::lock(ResponseCallbackLock *cb, uint64_t session_id, uint64_t handle,
       assert(mode == LOCK_MODE_SHARED);
 
       if (!pending_lock_reqs.empty()) {
-        pending_lock_reqs.push_back(LockRequest(handle, mode));
-        cb->response(LOCK_STATUS_PENDING);
+        if (try_lock)
+          cb->response(LOCK_STATUS_BUSY);
+        else {
+	  pending_lock_reqs.push_back(LockRequest(handle, mode));
+	  cb->response(LOCK_STATUS_PENDING);
+	}
         return;
       }
     }
