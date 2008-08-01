@@ -24,7 +24,7 @@
 
 /* Check if stdint is included correctly */
 #ifndef SIZE_MAX
-# error Did you forgot to include "Common/Compat.h" in your *.cc or *.c?
+# error Forgot to include "Common/Compat.h" _first_ in your *.cc or *.c?
 #endif
 
 /* Selection of implementation */
