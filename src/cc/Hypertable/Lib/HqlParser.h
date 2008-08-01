@@ -215,6 +215,7 @@ namespace Hypertable {
       }
       int command;
       String table_name;
+      String clone_table_name;
       String str;
       String output_file;
       String input_file;
@@ -261,6 +262,16 @@ namespace Hypertable {
         display_string("set_table_name");
         state.table_name = String(str, end-str);
         trim_if(state.table_name, is_any_of("'\""));
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct set_clone_table_name {
+      set_clone_table_name(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const {
+        display_string("set_clone_table_name");
+        state.clone_table_name = String(str, end-str);
+        trim_if(state.clone_table_name, is_any_of("'\""));
       }
       hql_interpreter_state &state;
     };
@@ -693,7 +704,7 @@ namespace Hypertable {
 	}
 	else {
 	  state.scan.current_rowkey_set = true;
-	  state.scan.current_cell_row = "";	  
+	  state.scan.current_cell_row = "";
 	}
       }
       hql_interpreter_state &state;
@@ -905,7 +916,7 @@ namespace Hypertable {
       hql_interpreter_state &state;
       int relop;
     };
-      
+
     struct scan_set_time {
       scan_set_time(hql_interpreter_state &state_) : state(state_){ }
       void operator()(char const *str, char const *end) const {
@@ -1221,6 +1232,7 @@ namespace Hypertable {
           Token OFF          = as_lower_d["off"];
           Token AND          = as_lower_d["and"];
           Token OR           = as_lower_d["or"];
+          Token LIKE         = as_lower_d["like"];
 
           /**
            * Start grammar definition
@@ -1390,10 +1402,11 @@ namespace Hypertable {
             ;
 
           create_table_statement
-            =  CREATE >> TABLE
-                      >> *(table_option)
-                      >> user_identifier[set_table_name(self.state)]
-                      >> !(create_definitions)
+            = CREATE >> TABLE
+              >> *(table_option)
+              >> user_identifier[set_table_name(self.state)]
+              >> *(LIKE >> user_identifier[set_clone_table_name(self.state)])
+              >> !(create_definitions)
             ;
 
           table_option
