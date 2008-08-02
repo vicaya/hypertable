@@ -16,11 +16,14 @@ insert into hypertable VALUES ('2007-12-02 08:00:00', 'lowrey', 'apple:0', 'noth
 insert into hypertable VALUES ('2028-02-17 08:00:01', 'lowrey', 'apple:0', 'nothing');
 insert into hypertable VALUES ('2028-02-17 08:00:00', 'season', 'apple:1', 'nothing');
 drop table if exists Pages;
-create table Pages ( "refer-url", "http-code", timestamp, rowkey, ACCESS GROUP default ( "refer-url", "http-code", timestamp, rowkey ) );
-insert into Pages VALUES ('2008-01-28 22:00:03',  "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern", 'http-code', '200' );
+create table Pages ("refer-url", "http-code", timestamp, rowkey, ACCESS GROUP default ("refer-url", "http-code"), ACCESS GROUP misc (timestamp, rowkey));
+insert into Pages VALUES ('2008-01-28 22:00:03',  "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern", 'http-code', '200');
 select "http-code" from Pages where ROW = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern" display_timestamps;
 delete * from Pages where ROW = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern" TIMESTAMP '2008-01-28 22:00:10';
 select "http-code" from Pages where ROW = "calendar.boston.com/abington-ma/venues/show/457680-the-cellar-tavern" display_timestamps;
+DROP TABLE IF EXISTS Pages_clone;
+CREATE TABLE Pages_clone LIKE Pages;
+SHOW CREATE TABLE Pages_clone;
 DROP TABLE IF EXISTS hypertable;
 CREATE TABLE hypertable (
 a,

@@ -1,8 +1,9 @@
 Version 0.9.0.8:
 (2008-08-01)
 
-  * Fixed a potential macro redefinition in compat-c.h (thanks to Leon Mergen <leon@solatis.com>)
-  * Clarify some documentation based on user feedback
+  * Added schema cloning (CREATE TABLE x LIKE y) (thanks to bithckr)
+  * Fixed a potential macro redefinition in compat-c.h (thanks to Leon Mergen)
+  * Clarified some documentation based on user feedback
   * Added fix for ignored 'try' in Hyperspace try_lock (thanks to liaoguangxian)
   * Added CELL expressions
   * Fixed bad reference to freed Hyperspace Session object
