@@ -128,7 +128,7 @@ RowIntervalScanner::RowIntervalScanner(PropertiesPtr &props_ptr, Comm *comm,
     m_scan_spec_builder.add_row_interval("", false, Key::END_ROW_MARKER, false);
   }
 
-  if (m_scan_spec_builder.row_limit == 1 ||
+  if (m_scan_spec_builder.get().row_limit == 1 ||
       (scan_spec.row_intervals.size() == 1 &&
        (scan_spec.row_intervals[0].start && scan_spec.row_intervals[0].end) &&
        !strcmp(scan_spec.row_intervals[0].start, scan_spec.row_intervals[0].end)))
@@ -236,7 +236,7 @@ bool RowIntervalScanner::next(Cell &cell) {
     if (strcmp(m_cur_row.c_str(), key.row)) {
       m_rows_seen++;
       m_cur_row = key.row;
-      if (m_scan_spec_builder.row_limit > 0 && m_rows_seen > m_scan_spec_builder.row_limit) {
+      if (m_scan_spec_builder.get().row_limit > 0 && m_rows_seen > m_scan_spec_builder.get().row_limit) {
         m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
         m_eos = true;
         return false;
@@ -301,7 +301,7 @@ void RowIntervalScanner::find_range_and_start_scan(const char *row_key, Timer &t
 
   try {
     m_range_server.set_timeout((time_t)(timer.remaining() + 0.5));
-    m_range_server.create_scanner(m_cur_addr, m_table_identifier, range, m_scan_spec_builder, m_scanblock);
+    m_range_server.create_scanner(m_cur_addr, m_table_identifier, range, m_scan_spec_builder.get(), m_scanblock);
   }
   catch (Exception &e) {
 
@@ -321,7 +321,7 @@ void RowIntervalScanner::find_range_and_start_scan(const char *row_key, Timer &t
     // create the scanner
     try {
       m_range_server.set_timeout((time_t)(timer.remaining() + 0.5));
-      m_range_server.create_scanner(m_cur_addr, m_table_identifier, range, m_scan_spec_builder, m_scanblock);
+      m_range_server.create_scanner(m_cur_addr, m_table_identifier, range, m_scan_spec_builder.get(), m_scanblock);
     }
     catch (Exception &e) {
       HT_ERRORF("%s - %s", e.what(), Error::get_text(e.code()));

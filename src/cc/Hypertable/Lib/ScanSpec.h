@@ -22,6 +22,8 @@
 #ifndef HYPERTABLE_SCANSPEC_H
 #define HYPERTABLE_SCANSPEC_H
 
+#include <boost/noncopyable.hpp>
+
 #include <vector>
 
 namespace Hypertable {
@@ -113,21 +115,21 @@ namespace Hypertable {
    * Helper class for building a ScanSpec.  This class manages the allocation
    * of all string members.
    */
-  class ScanSpecBuilder : public ScanSpec {
+  class ScanSpecBuilder : boost::noncopyable {
   public:
     /**
      * Sets the maximum number of rows to return in the scan.
      *
      * @param n row limit
      */
-    void set_row_limit(int32_t n) { row_limit = n; }
+    void set_row_limit(int32_t n) { m_scan_spec.row_limit = n; }
 
     /**
      * Sets the maximum number of revisions of each cell to return in the scan.
      *
      * @param n maximum revisions
      */
-    void set_max_versions(uint32_t n) { max_versions = n; }
+    void set_max_versions(uint32_t n) { m_scan_spec.max_versions = n; }
 
     /**
      * Adds a column family to be returned by the scan.
@@ -136,7 +138,7 @@ namespace Hypertable {
      */
     void add_column(const String &str) {
       m_strings.push_back(str);
-      columns.push_back(m_strings.back().c_str());
+      m_scan_spec.columns.push_back(m_strings.back().c_str());
     }
 
     /**
@@ -149,7 +151,7 @@ namespace Hypertable {
       m_strings.push_back(str);
       ri.start = ri.end = m_strings.back().c_str();
       ri.start_inclusive = ri.end_inclusive = true;
-      row_intervals.push_back(ri);
+      m_scan_spec.row_intervals.push_back(ri);
     }
 
     /**
@@ -169,7 +171,7 @@ namespace Hypertable {
       m_strings.push_back(end);
       ri.end = m_strings.back().c_str();
       ri.end_inclusive = end_inclusive;
-      row_intervals.push_back(ri);      
+      m_scan_spec.row_intervals.push_back(ri);      
     }
 
     /**
@@ -184,7 +186,7 @@ namespace Hypertable {
       m_strings.push_back(column);
       ci.start_column = ci.end_column = m_strings.back().c_str();
       ci.start_inclusive = ci.end_inclusive = true;
-      cell_intervals.push_back(ci);
+      m_scan_spec.cell_intervals.push_back(ci);
     }
 
     /**
@@ -210,7 +212,7 @@ namespace Hypertable {
       m_strings.push_back(end_column);
       ci.end_column = m_strings.back().c_str();
       ci.end_inclusive = end_inclusive;
-      cell_intervals.push_back(ci);
+      m_scan_spec.cell_intervals.push_back(ci);
     }
 
     /**
@@ -221,27 +223,35 @@ namespace Hypertable {
      * @param end end time in nanoseconds
      */
     void set_time_interval(int64_t start, int64_t end) {
-      time_interval.first = start;
-      time_interval.second = end;
+      m_scan_spec.time_interval.first = start;
+      m_scan_spec.time_interval.second = end;
     }
 
     /**
      * Internal use only.
      */
     void set_return_deletes(bool val) {
-      return_deletes = val;
+      m_scan_spec.return_deletes = val;
     }
 
     /**
      * Clears the state.
      */
     void clear() {
-      ScanSpec::clear();
+      m_scan_spec.clear();
       m_strings.clear();
     }
+
+    /**
+     * Returns the built ScanSpec object
+     *
+     * @return reference to built ScanSpec object
+     */
+    ScanSpec &get() { return m_scan_spec; }
     
   private:
     std::vector<String> m_strings;
+    ScanSpec m_scan_spec;
   };
 
   extern const int64_t BEGINNING_OF_TIME;
