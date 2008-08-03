@@ -50,9 +50,13 @@ atomic_t IOHandlerData::ms_next_connection_id = ATOMIC_INIT(1);
 #if defined(__linux__)
 
 namespace {
+
   /**
+   * Used to read data off a socket that is monotored with edge-triggered epoll.
+   * When this function returns with *errnop set to EAGAIN, it is safe to call
+   * epoll_wait on this socket.
    */
-  ssize_t socket_read(int fd, void *vptr, size_t n) {
+  ssize_t et_socket_read(int fd, void *vptr, size_t n, int *errnop) {
     size_t nleft;
     ssize_t nread;
     char *ptr;
@@ -65,6 +69,7 @@ namespace {
 	  nread = 0; /* and call read() again */
 	  continue;
 	}
+	*errnop = errno;
 	if (nleft < n)
 	  break;
 	return -1;
@@ -77,11 +82,25 @@ namespace {
     }
     return n - nleft;
   }
+
+  ssize_t et_socket_writev(int fd, const struct iovec *vector, int count, int *errnop) {
+    ssize_t nwritten;
+    while ((nwritten = ::writev(fd, vector, count)) <= 0) {
+      if (errno == EINTR) {
+	nwritten = 0; /* and call write() again */
+	continue;
+      }
+      *errnop = errno;
+      return -1;
+    }
+    return nwritten;
+  }
+
+
 }
 
 bool IOHandlerData::handle_event(struct epoll_event *event) {
-
-  errno = 0;
+  int error = 0;
 
   //DisplayEvent(event);
 
@@ -94,30 +113,34 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
   }
 
   if (event->events & EPOLLIN) {
-    size_t nread, total_read = 0;
+    size_t nread;
     while (true) {
       if (!m_got_header) {
         uint8_t *ptr = ((uint8_t *)&m_message_header) + (sizeof(Header::Common) - m_message_header_remaining);
-        nread = socket_read(m_sd, ptr, m_message_header_remaining);
+        nread = et_socket_read(m_sd, ptr, m_message_header_remaining, &error);
         if (nread == (size_t)-1) {
-	  if (errno == EAGAIN)
+	  if (error == EAGAIN)
 	    return false;
           if (errno != ECONNREFUSED) {
             HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_header_remaining, strerror(errno));
           }
 	  m_reactor_ptr->cancel_requests(this);
-          int error = (errno == ECONNREFUSED) ? Error::COMM_CONNECT_ERROR : Error::OK;
+	  error = (errno == ECONNREFUSED) ? Error::COMM_CONNECT_ERROR : Error::OK;
           deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, error));
           return true;
         }
 	else if (nread == 0) {
+	  if (error == EAGAIN)
+	    return false;
 	  m_reactor_ptr->cancel_requests(this);
           deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
           return true;
 	}
         else if (nread < m_message_header_remaining) {
           m_message_header_remaining -= nread;
-	  return false;
+	  if (error == EAGAIN)
+	    return false;
+	  error = 0;
         }
         else {
           m_got_header = true;
@@ -126,13 +149,12 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
           memcpy(m_message, &m_message_header, sizeof(Header::Common));
           m_message_ptr = m_message + sizeof(Header::Common);
           m_message_remaining = (m_message_header.total_len) - sizeof(Header::Common);
-          total_read += nread;
         }
       }
       if (m_got_header) {
-        nread = socket_read(m_sd, m_message_ptr, m_message_remaining);
+        nread = et_socket_read(m_sd, m_message_ptr, m_message_remaining, &error);
         if (nread < 0) {
-	  if (errno == EAGAIN)
+	  if (error == EAGAIN)
 	    return false;
           HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_header_remaining, strerror(errno));
 	  m_reactor_ptr->cancel_requests(this);
@@ -140,6 +162,8 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
           return true;
         }
 	else if (nread == 0) {
+	  if (error == EAGAIN)
+	    return false;
 	  m_reactor_ptr->cancel_requests(this);
           deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
           return true;
@@ -147,7 +171,9 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
         else if (nread < m_message_remaining) {
           m_message_ptr += nread;
           m_message_remaining -= nread;
-	  return false;
+	  if (error == EAGAIN)
+	    return false;
+	  error = 0;
         }
         else {
           DispatchHandler *dh = 0;
@@ -164,7 +190,6 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
             deliver_event(new Event(Event::MESSAGE, m_id, m_addr, Error::OK, (Header::Common *)m_message), dh);
           reset_incoming_message_state();
         }
-        total_read += nread;
       }
     }
   }
@@ -382,6 +407,7 @@ int IOHandlerData::flush_send_queue() {
   ssize_t nwritten, towrite, remaining;
   struct iovec vec[2];
   int count;
+  int error = 0;
 
   while (!m_send_queue.empty()) {
 
@@ -406,19 +432,31 @@ int IOHandlerData::flush_send_queue() {
       }
     }
 
-    nwritten = FileUtils::writev(m_sd, vec, count);
+    nwritten = et_socket_writev(m_sd, vec, count, &error);
     if (nwritten == (ssize_t)-1) {
+      if (error == EAGAIN)
+	return Error::OK;
       HT_WARNF("FileUtils::writev(%d, len=%d) failed : %s", m_sd, towrite, strerror(errno));
       return Error::COMM_BROKEN_CONNECTION;
     }
     else if (nwritten < towrite) {
-      if (nwritten == 0)
-        break;
+      if (nwritten == 0) {
+	if (error == EAGAIN)
+	  break;
+	if (error) {
+	  HT_WARNF("FileUtils::writev(%d, len=%d) failed : %s", m_sd, towrite, strerror(error));
+	  return Error::COMM_BROKEN_CONNECTION;
+	}
+	continue;
+      }
       remaining = cbp->data.size - (cbp->data_ptr - cbp->data.base);
       if (remaining > 0) {
         if (nwritten < remaining) {
           cbp->data_ptr += nwritten;
-          break;
+	  if (error == EAGAIN)
+	    break;
+	  error = 0;
+	  continue;
         }
         else {
           nwritten -= remaining;
@@ -427,7 +465,10 @@ int IOHandlerData::flush_send_queue() {
       }
       if (cbp->ext.base != 0) {
         cbp->ext_ptr += nwritten;
-        break;
+	if (error == EAGAIN)
+	  break;
+	error = 0;
+	continue;
       }
     }
 
