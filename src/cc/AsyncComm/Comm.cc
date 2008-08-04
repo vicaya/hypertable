@@ -177,7 +177,7 @@ Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chf_ptr,
     HT_THROWF(Error::COMM_BIND_ERROR, "binding to %s: %s",
               InetAddr::format(addr).c_str(), strerror(errno));
 
-  if (::listen(sd, 64) < 0)
+  if (::listen(sd, 1000) < 0)
     HT_THROWF(Error::COMM_LISTEN_ERROR, "listening: %s", strerror(errno));
 
   handler = accept_handler = new IOHandlerAccept(sd, addr, default_handler_ptr,

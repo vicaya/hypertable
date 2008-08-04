@@ -81,3 +81,43 @@ if [ -f $pidfile ] ; then
     rm $pidfile
 fi
 
+
+#
+# Wait for Dfs broker to shutdown
+#
+$HYPERTABLE_HOME/bin/serverup dfsbroker
+while [ $? == 0 ] ; do
+    sleep 2
+    echo "Waiting for DFS Broker to shutdown ..."
+    $HYPERTABLE_HOME/bin/serverup dfsbroker
+done
+
+#
+# Wait for RangeServer to shutdown
+#
+$HYPERTABLE_HOME/bin/serverup rangeserver
+while [ $? == 0 ] ; do
+    sleep 2
+    echo "Waiting for RangeServer to shutdown ..."
+    $HYPERTABLE_HOME/bin/serverup rangeserver
+done
+
+#
+# Wait for Master to shutdown
+#
+$HYPERTABLE_HOME/bin/serverup master
+while [ $? == 0 ] ; do
+    sleep 2
+    echo "Waiting for Hypertable.Master to shutdown ..."
+    $HYPERTABLE_HOME/bin/serverup master
+done
+
+#
+# Wait for Hyperspace to shutdown
+#
+$HYPERTABLE_HOME/bin/serverup hyperspace
+while [ $? == 0 ] ; do
+    sleep 2
+    echo "Waiting for Hyperspace to shutdown ..."
+    $HYPERTABLE_HOME/bin/serverup hyperspace
+done

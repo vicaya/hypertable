@@ -27,7 +27,7 @@
 
 #include "Defaults.h"
 #include "Key.h"
-#include "RowIntervalScanner.h"
+#include "IntervalScanner.h"
 
 extern "C" {
 #include <poll.h>
@@ -42,7 +42,7 @@ using namespace Hypertable;
 
 /**
  */
-RowIntervalScanner::RowIntervalScanner(PropertiesPtr &props_ptr, Comm *comm,
+IntervalScanner::IntervalScanner(PropertiesPtr &props_ptr, Comm *comm,
 				       TableIdentifier *table_identifier,
 				       SchemaPtr &schema_ptr,
 				       RangeLocatorPtr &range_locator_ptr,
@@ -145,7 +145,7 @@ RowIntervalScanner::RowIntervalScanner(PropertiesPtr &props_ptr, Comm *comm,
 /**
  *
  */
-RowIntervalScanner::~RowIntervalScanner() {
+IntervalScanner::~IntervalScanner() {
 
   // if there is an outstanding fetch, wait for it to come back or timeout
   if (m_fetch_outstanding)
@@ -154,7 +154,7 @@ RowIntervalScanner::~RowIntervalScanner() {
 
 
 
-bool RowIntervalScanner::next(Cell &cell) {
+bool IntervalScanner::next(Cell &cell) {
   int error;
   ByteString bskey, value;
   Key key;
@@ -267,7 +267,7 @@ bool RowIntervalScanner::next(Cell &cell) {
 
 
 
-void RowIntervalScanner::find_range_and_start_scan(const char *row_key, Timer &timer) {
+void IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &timer) {
   RangeSpec  range;
   DynamicBuffer dbuf(0);
 

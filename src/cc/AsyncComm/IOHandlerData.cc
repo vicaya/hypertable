@@ -113,7 +113,7 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
   }
 
   if (event->events & EPOLLIN) {
-    size_t nread;
+    size_t nread, total_read = 0;
     while (true) {
       if (!m_got_header) {
         uint8_t *ptr = ((uint8_t *)&m_message_header) + (sizeof(Header::Common) - m_message_header_remaining);
@@ -132,18 +132,22 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
 	else if (nread == 0) {
 	  if (error == EAGAIN)
 	    return false;
-	  m_reactor_ptr->cancel_requests(this);
-          deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
-          return true;
+	  if (total_read == 0) {
+	    m_reactor_ptr->cancel_requests(this);
+	    deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
+	    return true;
+	  }
 	}
         else if (nread < m_message_header_remaining) {
           m_message_header_remaining -= nread;
+	  total_read += nread;
 	  if (error == EAGAIN)
 	    return false;
 	  error = 0;
         }
         else {
           m_got_header = true;
+	  total_read += nread;
           m_message_header_remaining = 0;
           m_message = new uint8_t [m_message_header.total_len];
           memcpy(m_message, &m_message_header, sizeof(Header::Common));
@@ -164,13 +168,16 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
 	else if (nread == 0) {
 	  if (error == EAGAIN)
 	    return false;
-	  m_reactor_ptr->cancel_requests(this);
-          deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
-          return true;
+	  if (total_read == 0) {
+	    m_reactor_ptr->cancel_requests(this);
+	    deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
+	    return true;
+	  }
 	}
         else if (nread < m_message_remaining) {
           m_message_ptr += nread;
           m_message_remaining -= nread;
+	  total_read += nread;
 	  if (error == EAGAIN)
 	    return false;
 	  error = 0;
@@ -178,6 +185,7 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
         else {
           DispatchHandler *dh = 0;
           uint32_t id = ((Header::Common *)m_message)->id;
+	  total_read += nread;
           if ((((Header::Common *)m_message)->flags & Header::FLAGS_BIT_REQUEST) == 0 &&
               (id == 0 || (dh = m_reactor_ptr->remove_request(id)) == 0)) {
             if ((((Header::Common *)m_message)->flags & Header::FLAGS_BIT_IGNORE_RESPONSE) == 0) {
