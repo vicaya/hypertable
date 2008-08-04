@@ -411,6 +411,8 @@ int IOHandlerData::send_message(CommBufPtr &cbp, time_t timeout, DispatchHandler
 
 
 
+#if defined(__linux__)
+
 int IOHandlerData::flush_send_queue() {
   ssize_t nwritten, towrite, remaining;
   struct iovec vec[2];
@@ -486,3 +488,70 @@ int IOHandlerData::flush_send_queue() {
 
   return Error::OK;
 }
+
+#elif defined(__APPLE__)
+
+int IOHandlerData::flush_send_queue() {
+  ssize_t nwritten, towrite, remaining;
+  struct iovec vec[2];
+  int count;
+
+  while (!m_send_queue.empty()) {
+
+    CommBufPtr &cbp = m_send_queue.front();
+
+    count = 0;
+    towrite = 0;
+    remaining = cbp->data.size - (cbp->data_ptr - cbp->data.base);
+    if (remaining > 0) {
+      vec[0].iov_base = (void *)cbp->data_ptr;
+      vec[0].iov_len = remaining;
+      towrite = remaining;
+      ++count;
+    }
+    if (cbp->ext.base != 0) {
+      remaining = cbp->ext.size - (cbp->ext_ptr - cbp->ext.base);
+      if (remaining > 0) {
+        vec[count].iov_base = (void *)cbp->ext_ptr;
+        vec[count].iov_len = remaining;
+        towrite += remaining;
+        ++count;
+      }
+    }
+
+    nwritten = FileUtils::writev(m_sd, vec, count);
+    if (nwritten == (ssize_t)-1) {
+      HT_WARNF("FileUtils::writev(%d, len=%d) failed : %s", m_sd, towrite, strerror(errno));
+      return Error::COMM_BROKEN_CONNECTION;
+    }
+    else if (nwritten < towrite) {
+      if (nwritten == 0)
+        break;
+      remaining = cbp->data.size - (cbp->data_ptr - cbp->data.base);
+      if (remaining > 0) {
+        if (nwritten < remaining) {
+          cbp->data_ptr += nwritten;
+          break;
+        }
+        else {
+          nwritten -= remaining;
+          cbp->data_ptr += remaining;
+        }
+      }
+      if (cbp->ext.base != 0) {
+        cbp->ext_ptr += nwritten;
+        break;
+      }
+    }
+
+    // buffer written successfully, now remove from queue (which will destroy buffer)
+    m_send_queue.pop_front();
+  }
+
+  return Error::OK;
+}
+
+
+#else
+  ImplementMe;
+#endif
