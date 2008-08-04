@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_ROWINTERVALSCANNER_H
-#define HYPERTABLE_ROWINTERVALSCANNER_H
+#ifndef HYPERTABLE_INTERVALSCANNER_H
+#define HYPERTABLE_INTERVALSCANNER_H
 
 #include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
@@ -36,11 +36,11 @@
 
 namespace Hypertable {
 
-  class RowIntervalScanner : public ReferenceCount {
+  class IntervalScanner : public ReferenceCount {
 
   public:
     /**
-     * Constructs a RowIntervalScanner object.
+     * Constructs a IntervalScanner object.
      *
      * @param props_ptr smart pointer to configuration properties object
      * @param comm pointer to the Comm layer
@@ -50,9 +50,9 @@ namespace Hypertable {
      * @param scan_spec reference to scan specification object
      * @param timeout maximum time in seconds to allow scanner methods to execute before throwing an exception
      */
-    RowIntervalScanner(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpec &scan_spec, int timeout);
+    IntervalScanner(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpec &scan_spec, int timeout);
 
-    virtual ~RowIntervalScanner();
+    virtual ~IntervalScanner();
 
     bool next(Cell &cell);
 
@@ -80,10 +80,13 @@ namespace Hypertable {
     bool                m_fetch_outstanding;
     DispatchHandlerSynchronizer  m_sync_handler;
     EventPtr            m_event_ptr;
+    std::string         m_start_row;
+    std::string         m_end_row;
+    bool                m_end_inclusive;
     int32_t             m_rows_seen;
     int                 m_timeout;
   };
-  typedef boost::intrusive_ptr<RowIntervalScanner> RowIntervalScannerPtr;
+  typedef boost::intrusive_ptr<IntervalScanner> IntervalScannerPtr;
 }
 
-#endif // HYPERTABLE_ROWINTERVALSCANNER_H
+#endif // HYPERTABLE_INTERVALSCANNER_H

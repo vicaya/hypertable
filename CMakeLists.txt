@@ -22,7 +22,7 @@ project(HYPERTABLE)
 set(VERSION_MAJOR "0")
 set(VERSION_MINOR "9")
 set(VERSION_MICRO "0")
-set(VERSION_PATCH "7")
+set(VERSION_PATCH "9")
 
 # cmake behavior compatibility
 mark_as_advanced(CMAKE_BACKWARDS_COMPATIBILITY)
@@ -156,7 +156,7 @@ if (BUILD_MAPREDUCE)
 else (BUILD_MAPREDUCE)
   message(STATUS "MapReduce support disabled.")
 endif (BUILD_MAPREDUCE)
-add_subdirectory(contrib/cc/PythonBinding)
+#add_subdirectory(contrib/cc/PythonBinding)
 
 IF (Kfs_FOUND)
    add_subdirectory(src/cc/DfsBroker/kosmos)

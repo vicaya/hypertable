@@ -90,8 +90,8 @@ if [ $? != 0 ] ; then
   $HYPERTABLE_HOME/bin/serverup rangeserver
   while [ $? != 0 ] ; do
       let RETRY_COUNT=++RETRY_COUNT
-      let REPORT=RETRY_COUNT%3
-      if [ $RETRY_COUNT == 10 ] ; then
+      let REPORT=RETRY_COUNT%10
+      if [ $RETRY_COUNT == 200 ] ; then
 	  echo "ERROR: Hypertable.RangeServer did not come up"
 	  exit 1
       elif [ $REPORT == 0 ] ; then

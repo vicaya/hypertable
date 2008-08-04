@@ -51,6 +51,23 @@ Schema *Schema::ms_schema = 0;
 String Schema::ms_collected_text = "";
 boost::mutex Schema::ms_mutex;
 
+namespace {
+
+bool hql_needs_quotes(const char *name) {
+  if (!isalpha(*name))
+    return true;
+  else {
+    for (; *name; name++) {
+      if (!isalnum(*name)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+} // local namespace
+
 
 /**
  */
@@ -349,97 +366,64 @@ void Schema::render(String &output) {
 }
 
 void Schema::render_hql_create_table(const String &table_name, String &output) {
-  bool needs_quotes = false;
-  const char *ptr;
-
   output += "\n";
   output += "CREATE TABLE ";
+
   if (m_compressor != "")
     output += (String)"COMPRESSOR=\"" + m_compressor + "\" ";
+
   output += table_name + " (\n";
 
-  for (ColumnFamilyMap::const_iterator cf_iter = m_column_family_map.begin(); cf_iter != m_column_family_map.end(); cf_iter++) {
-
+  foreach(const ColumnFamilyMap::value_type &v, m_column_family_map) {
     // check to see if column family name needs quotes around it
-    needs_quotes = false;
-    ptr = (*cf_iter).first.c_str();
-    if (!isalpha(*ptr))
-      needs_quotes = true;
-    else {
-      for (; *ptr; ptr++) {
-        if (!isalnum(*ptr)) {
-          needs_quotes = true;
-          break;
-        }
-      }
-    }
-
-    if (needs_quotes)
-      output += (String)"  '" + (*cf_iter).first + "'";
+    if (hql_needs_quotes(v.first.c_str()))
+      output += (String)"  '" + v.first + "'";
     else
-      output += (String)"  " + (*cf_iter).first;
-    if ((*cf_iter).second->max_versions != 0)
-      output += (String)" MAX_VERSIONS=" + (*cf_iter).second->max_versions;
-    if ((*cf_iter).second->ttl != 0)
-      output += (String)" TTL=" + (uint32_t)(*cf_iter).second->ttl;
+      output += (String)"  " + v.first;
+
+    if (v.second->max_versions != 0)
+      output += (String)" MAX_VERSIONS=" + v.second->max_versions;
+
+    if (v.second->ttl != 0)
+      output += (String)" TTL=" + (uint32_t)v.second->ttl;
+
     output += (String)",\n";
   }
 
-  size_t i=1;
-  for (list<AccessGroup *>::iterator ag_iter = m_access_groups.begin(); ag_iter != m_access_groups.end(); ag_iter++, i++) {
+  size_t i = 1;
+
+  foreach(const AccessGroup *ag, m_access_groups) {
     output += (String)"  ACCESS GROUP ";
 
-    needs_quotes = false;
-    ptr = (*ag_iter)->name.c_str();
-    if (!isalpha(*ptr))
-      needs_quotes = true;
-    else {
-      for (++ptr; *ptr; ptr++) {
-        if (!isalnum(*ptr)) {
-          needs_quotes = true;
-          break;
-        }
-      }
-    }
-    if (needs_quotes)
-      output += (String)"'" + (*ag_iter)->name + "'";
+    if (hql_needs_quotes(ag->name.c_str()))
+      output += (String)"'" + ag->name + "'";
     else
-      output += (*ag_iter)->name;
+      output += ag->name;
 
-    if ((*ag_iter)->in_memory)
+    if (ag->in_memory)
       output += (String)" IN_MEMORY";
-    if ((*ag_iter)->blocksize != 0)
-      output += (String)" BLOCKSIZE=" + (*ag_iter)->blocksize;
-    if ((*ag_iter)->compressor != "")
-      output += (String)" COMPRESSOR=\"" + (*ag_iter)->compressor + "\"";
-    if (!(*ag_iter)->columns.empty()) {
+
+    if (ag->blocksize != 0)
+      output += (String)" BLOCKSIZE=" + ag->blocksize;
+
+    if (ag->compressor != "")
+      output += (String)" COMPRESSOR=\"" + ag->compressor + "\"";
+
+    if (!ag->columns.empty()) {
       bool display_comma = false;
       output += (String)" (";
-      for (list<ColumnFamily *>::iterator cfl_iter = (*ag_iter)->columns.begin(); cfl_iter != (*ag_iter)->columns.end(); cfl_iter++) {
 
+      foreach(const ColumnFamily *cf, ag->columns) {
         // check to see if column family name needs quotes around it
-        needs_quotes = false;
-        ptr = (*cfl_iter)->name.c_str();
-        if (!isalpha(*ptr))
-          needs_quotes = true;
-        else {
-          for (++ptr; *ptr; ptr++) {
-            if (!isalnum(*ptr)) {
-              needs_quotes = true;
-              break;
-            }
-          }
-        }
-
         if (display_comma)
-          output += (String)",";
+          output += (String)", ";
         else
           display_comma = true;
 
-        if (needs_quotes)
-          output += (String)" '" + (*cfl_iter)->name + "'";
+        if (hql_needs_quotes(cf->name.c_str()))
+          output += (String)"'" + cf->name + "'";
         else
-          output += (String)" " + (*cfl_iter)->name;
+          output += cf->name;
       }
       output += (String)")";
     }
@@ -451,7 +435,6 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
 
   output += ")\n";
   output += "\n";
-
 }
 
 

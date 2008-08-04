@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
     CommandShell::add_options(Config::description(argv[0]));
     Config::init_with_comm(argc, argv);
 
-    hypertable = new Hypertable::Client(System::locate_install_dir(argv[0]), Config::cfgfile);
+    hypertable = new Hypertable::Client(System::install_dir, Config::cfgfile);
 
     interp = hypertable->create_hql_interpreter();
 

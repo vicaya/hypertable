@@ -20,6 +20,9 @@
  */
 
 #include "Common/Compat.h"
+#include "Schema.h"
+
+
 #include <cassert>
 #include <cstdio>
 #include <cstring>
@@ -121,30 +124,36 @@ void HqlCommandInterpreter::execute_line(const String &line) {
         cout << endl << "no help for '" << state.str << "'" << endl << endl;
     }
     else if (state.command == COMMAND_CREATE_TABLE) {
-      schema = new Schema();
-      schema->set_compressor(state.table_compressor);
+      if (!state.clone_table_name.empty()) {
+        schema_str = m_client->get_schema(state.clone_table_name);
+        schema = Schema::new_instance(schema_str.c_str(), strlen(schema_str.c_str()), true);
+        schema_str.clear();
+        schema->render(schema_str);
+        m_client->create_table(state.table_name, schema_str.c_str());
+      } else {
+        schema = new Schema();
+        schema->set_compressor(state.table_compressor);
 
-      foreach(const Schema::AccessGroupMap::value_type &v, state.ag_map)
-        schema->add_access_group(v.second);
+        foreach(const Schema::AccessGroupMap::value_type &v, state.ag_map)
+          schema->add_access_group(v.second);
 
-      if (state.ag_map.find("default") == state.ag_map.end()) {
-        Schema::AccessGroup *ag = new Schema::AccessGroup();
-        ag->name = "default";
-        schema->add_access_group(ag);
+        if (state.ag_map.find("default") == state.ag_map.end()) {
+          Schema::AccessGroup *ag = new Schema::AccessGroup();
+          ag->name = "default";
+          schema->add_access_group(ag);
+        }
+        foreach(const Schema::ColumnFamilyMap::value_type &v, state.cf_map) {
+          if (v.second->ag == "")
+            v.second->ag = "default";
+          schema->add_column_family(v.second);
+        }
+        const char *error_str = schema->get_error_string();
+
+        if (error_str)
+          HT_THROW(Error::HQL_PARSE_ERROR, error_str);
+        schema->render(schema_str);
+        m_client->create_table(state.table_name, schema_str.c_str());
       }
-      foreach(const Schema::ColumnFamilyMap::value_type &v, state.cf_map) {
-        if (v.second->ag == "")
-          v.second->ag = "default";
-        schema->add_column_family(v.second);
-      }
-      const char *error_str = schema->get_error_string();
-
-      if (error_str)
-        HT_THROW(Error::HQL_PARSE_ERROR, error_str);
-
-      schema->render(schema_str);
-      m_client->create_table(state.table_name, schema_str.c_str());
-
     }
     else if (state.command == COMMAND_DESCRIBE_TABLE) {
       schema_str = m_client->get_schema(state.table_name);
@@ -158,24 +167,33 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       uint32_t nsec;
       time_t unix_time;
       struct tm tms;
-      RowInterval ri;
+      RowInterval  ri;
+      CellInterval ci;
 
       scan_spec.row_limit = state.scan.limit;
       scan_spec.max_versions = state.scan.max_versions;
       for (size_t i=0; i<state.scan.columns.size(); i++)
         scan_spec.columns.push_back(state.scan.columns[i].c_str());
 
+      if (state.scan.row_intervals.size() && state.scan.cell_intervals.size())
+	HT_THROW(Error::HQL_PARSE_ERROR, "ROW predicates and CELL predicates can't be combined");
+
       for (size_t i=0; i<state.scan.row_intervals.size(); i++) {
-	if (state.scan.row_intervals[i].start.compare(state.scan.row_intervals[i].end) > 0 ||
-	    (state.scan.row_intervals[i].start.compare(state.scan.row_intervals[i].end) == 0 &&
-	     !(state.scan.row_intervals[i].start_inclusive || state.scan.row_intervals[i].end_inclusive)))
-	  HT_THROW(Error::HQL_PARSE_ERROR, "Bad row range");
-	ri.start = (state.scan.row_intervals[i].start == "") ? ""
-	  : state.scan.row_intervals[i].start.c_str();
+	ri.start = state.scan.row_intervals[i].start.c_str();
 	ri.start_inclusive = state.scan.row_intervals[i].start_inclusive;
 	ri.end = state.scan.row_intervals[i].end.c_str();
 	ri.end_inclusive = state.scan.row_intervals[i].end_inclusive;
 	scan_spec.row_intervals.push_back(ri);
+      }
+
+      for (size_t i=0; i<state.scan.cell_intervals.size(); i++) {
+	ci.start_row = state.scan.cell_intervals[i].start_row.c_str();
+	ci.start_column = state.scan.cell_intervals[i].start_column.c_str();
+	ci.start_inclusive = state.scan.cell_intervals[i].start_inclusive;
+	ci.end_row = state.scan.cell_intervals[i].end_row.c_str();
+	ci.end_column = state.scan.cell_intervals[i].end_column.c_str();
+	ci.end_inclusive = state.scan.cell_intervals[i].end_inclusive;
+	scan_spec.cell_intervals.push_back(ci);
       }
 
       scan_spec.time_interval.first  = state.scan.start_time;

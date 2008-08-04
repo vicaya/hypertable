@@ -73,13 +73,13 @@
     cd ~/build/hypertable
     cmake ~/src/hypertable
 
-    By default hypertable gets installed in /opt/hypertable, you can
-    use:
+    By default, hypertable gets installed in /opt/hypertable. To install into
+    your own install directory, say $prefix, you can use:
 
     cmake -DCMAKE_INSTALL_PREFIX=$prefix ~/src/hypertable
 
-    for your own install directory. Also by default the build is configured
-    for Debug. To compile for performance/benchmark:
+    Also default the build is configured for Debug. To compile for
+    performance/benchmark:
 
     cmake -DCMAKE_BUILD_TYPE=Release ~/src/Hypertable
 

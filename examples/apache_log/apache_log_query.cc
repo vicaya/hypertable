@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
       scan_spec_builder.add_column(argv[i]);
 
     // Create a scanner on the 'LogDb' table 
-    scanner_ptr = table_ptr->create_scanner(scan_spec_builder);
+    scanner_ptr = table_ptr->create_scanner(scan_spec_builder.get());
 
   }
   catch (std::exception &e) {

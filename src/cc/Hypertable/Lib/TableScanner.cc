@@ -25,6 +25,7 @@
 #include "Common/Error.h"
 #include "Common/String.h"
 
+#include "Defaults.h"
 #include "TableScanner.h"
 
 extern "C" {
@@ -46,20 +47,37 @@ TableScanner::TableScanner(PropertiesPtr &props_ptr, Comm *comm,
                            ScanSpec &scan_spec, int timeout)
   : m_eos(false), m_scanneri(0), m_rows_seen(0) {
 
-  RowIntervalScannerPtr ri_scanner_ptr;
-  ScanSpec ri_scan_spec;
+  IntervalScannerPtr ri_scanner_ptr;
+  ScanSpec interval_scan_spec;
+  
+  if (timeout == 0 ||
+      (timeout = props_ptr->get_int("Hypertable.Client.Timeout", 0)) == 0 ||
+      (timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0)) == 0)
+    timeout = HYPERTABLE_CLIENT_TIMEOUT;
+  
   Timer timer(timeout);
 
   if (scan_spec.row_intervals.empty()) {
-    ri_scanner_ptr = new RowIntervalScanner(props_ptr, comm, table_identifier, schema_ptr, range_locator_ptr, scan_spec, timeout);
-    m_ri_scanners.push_back(ri_scanner_ptr);
+    if (scan_spec.cell_intervals.empty()) {
+      ri_scanner_ptr = new IntervalScanner(props_ptr, comm, table_identifier, schema_ptr, range_locator_ptr, scan_spec, timeout);
+      m_interval_scanners.push_back(ri_scanner_ptr);
+    }
+    else {
+      for (size_t i=0; i<scan_spec.cell_intervals.size(); i++) {
+	scan_spec.base_copy(interval_scan_spec);
+	interval_scan_spec.cell_intervals.push_back(scan_spec.cell_intervals[i]);
+	ri_scanner_ptr = new IntervalScanner(props_ptr, comm, table_identifier, schema_ptr, range_locator_ptr, interval_scan_spec, timeout);
+	m_interval_scanners.push_back(ri_scanner_ptr);
+	ri_scanner_ptr->find_range_and_start_scan(scan_spec.cell_intervals[i].start_row, timer);
+      }
+    }
   }
   else {
     for (size_t i=0; i<scan_spec.row_intervals.size(); i++) {
-      scan_spec.base_copy(ri_scan_spec);
-      ri_scan_spec.row_intervals.push_back(scan_spec.row_intervals[i]);
-      ri_scanner_ptr = new RowIntervalScanner(props_ptr, comm, table_identifier, schema_ptr, range_locator_ptr, ri_scan_spec, timeout);
-      m_ri_scanners.push_back(ri_scanner_ptr);
+      scan_spec.base_copy(interval_scan_spec);
+      interval_scan_spec.row_intervals.push_back(scan_spec.row_intervals[i]);
+      ri_scanner_ptr = new IntervalScanner(props_ptr, comm, table_identifier, schema_ptr, range_locator_ptr, interval_scan_spec, timeout);
+      m_interval_scanners.push_back(ri_scanner_ptr);
       ri_scanner_ptr->find_range_and_start_scan(scan_spec.row_intervals[i].start, timer);
     }
   }
@@ -75,15 +93,15 @@ bool TableScanner::next(Cell &cell) {
 
  try_again:
 
-  if (m_ri_scanners[m_scanneri]->next(cell))
+  if (m_interval_scanners[m_scanneri]->next(cell))
     return true;
 
-  m_rows_seen += m_ri_scanners[m_scanneri]->get_rows_seen();
+  m_rows_seen += m_interval_scanners[m_scanneri]->get_rows_seen();
 
   m_scanneri++;
 
-  if (m_scanneri < m_ri_scanners.size()) {
-    m_ri_scanners[m_scanneri]->set_rows_seen(m_rows_seen);
+  if (m_scanneri < m_interval_scanners.size()) {
+    m_interval_scanners[m_scanneri]->set_rows_seen(m_rows_seen);
     goto try_again;
   }
   

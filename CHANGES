@@ -1,3 +1,33 @@
+Version 0.9.0.9:
+(2008-08-03)
+
+  * Fixed Linux epoll problems
+  * Removed deadlock in Master::drop_table()
+  * Modified shutdown scripts to wait for service shutdown before returning
+  * Changed default listen() pending connection backlock from 64 to 1000
+  * Modified RangeServers to wait random interval [0..2] secs before starting
+
+Version 0.9.0.8:
+(2008-08-01)
+
+  * Added schema cloning (CREATE TABLE x LIKE y) (thanks to bithckr)
+  * Fixed a potential macro redefinition in compat-c.h (thanks to Leon Mergen)
+  * Clarified some documentation based on user feedback
+  * Added fix for ignored 'try' in Hyperspace try_lock (thanks to liaoguangxian)
+  * Added CELL expressions
+  * Fixed bad reference to freed Hyperspace Session object
+  * ported mapreduce connector to the newer API
+  * Changed Hypertable::Client constructor to accept install dir
+  * Got TableScanner working with multiple row intervals
+  * Overhauled HQL WHERE clause (scan predicate)
+  * Modified ScanSpec to include vector of row ranges; Added ScanSpecBuilder
+  * Set TOS field on Hyperspace UDP packets to Minimize delay
+  * Fixed deadlock issues in RangeServer during replay
+  * Added drop_table RangeMetaLog entry
+  * Overhauled launch scripts; Upgraded to Hadoop 0.17.1
+  * Avoid using fs->length(path) to judge whether a RangeServerMetaLog file is empty, which doesn't work well in Hadoop DFS.
+  * Fixed a bug in Read/PositionRead due to misuse of readFully().
+
 Version 0.9.0.7:
 (2008-07-18)
 

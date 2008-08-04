@@ -626,19 +626,21 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
     }
 
     if (!unique_locations.empty()) {
-      boost::mutex::scoped_lock lock(m_mutex);
       DropTableDispatchHandler sync_handler(table, m_conn_manager_ptr->get_comm(), 30);
       RangeServerStatePtr state_ptr;
       ServerMap::iterator iter;
 
-      for (std::set<String>::iterator loc_iter = unique_locations.begin(); loc_iter != unique_locations.end(); loc_iter++) {
-        if ((iter = m_server_map.find(*loc_iter)) != m_server_map.end()) {
-          sync_handler.add((*iter).second->addr);
-        }
-        else {
-          saved_error = Error::RANGESERVER_UNAVAILABLE;
-          err_msg = *loc_iter;
-        }
+      {
+	boost::mutex::scoped_lock lock(m_mutex);
+	for (std::set<String>::iterator loc_iter = unique_locations.begin(); loc_iter != unique_locations.end(); loc_iter++) {
+	  if ((iter = m_server_map.find(*loc_iter)) != m_server_map.end()) {
+	    sync_handler.add((*iter).second->addr);
+	  }
+	  else {
+	    saved_error = Error::RANGESERVER_UNAVAILABLE;
+	    err_msg = *loc_iter;
+	  }
+	}
       }
 
       if (!sync_handler.wait_for_completion()) {

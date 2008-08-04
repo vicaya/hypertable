@@ -30,7 +30,7 @@
 #include "Cell.h"
 #include "RangeLocator.h"
 #include "RangeServerClient.h"
-#include "RowIntervalScanner.h"
+#include "IntervalScanner.h"
 #include "ScanBlock.h"
 #include "Schema.h"
 #include "Types.h"
@@ -57,7 +57,7 @@ namespace Hypertable {
 
   private:
 
-    std::vector<RowIntervalScannerPtr>  m_ri_scanners;
+    std::vector<IntervalScannerPtr>  m_interval_scanners;
     bool      m_eos;
     size_t    m_scanneri;
     int32_t   m_rows_seen;

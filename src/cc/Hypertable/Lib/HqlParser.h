@@ -25,8 +25,8 @@
 //#define BOOST_SPIRIT_DEBUG  ///$$$ DEFINE THIS WHEN DEBUGGING $$$///
 
 #ifdef BOOST_SPIRIT_DEBUG
-#define display_string(str) cerr << str << endl
-#define display_string_with_val(str, val) cerr << str << " val=" << val << endl
+#define display_string(str) std::cerr << str << std::endl
+#define display_string_with_val(str, val) std::cerr << str << " val=" << val << std::endl
 #else
 #define display_string(str)
 #define display_string_with_val(str, val)
@@ -137,6 +137,42 @@ namespace Hypertable {
       bool end_set;
     };
 
+    class hql_interpreter_cell_interval {
+    public:
+      hql_interpreter_cell_interval() : start_inclusive(true), start_set(false),
+					end_inclusive(true), end_set(false) { }
+
+      void clear() {
+	start_row = start_column = "";
+	end_row = end_column = "";
+	start_inclusive = end_inclusive = true;
+	start_set = end_set = false;
+      }
+
+      bool empty() { return !(start_set || end_set); }
+
+      void set_start(const String &row, const String &column, bool inclusive) {
+	start_row = row;
+	start_column = column;
+	start_inclusive = inclusive;
+	start_set = true;
+      }
+      void set_end(const String &row, const String &column, bool inclusive) {
+	end_row = row;
+	end_column = column;
+	end_inclusive = inclusive;
+	end_set = true;
+      }
+      String start_row;
+      String start_column;
+      bool start_inclusive;
+      bool start_set;
+      String end_row;
+      String end_column;
+      bool end_inclusive;
+      bool end_set;
+    };
+
     class hql_interpreter_scan_state {
     public:
       hql_interpreter_scan_state()
@@ -156,6 +192,10 @@ namespace Hypertable {
       bool   current_rowkey_set;
       std::vector<hql_interpreter_row_interval> row_intervals;
       hql_interpreter_row_interval current_ri;
+      std::vector<hql_interpreter_cell_interval> cell_intervals;
+      hql_interpreter_cell_interval current_ci;
+      String current_cell_row;
+      String current_cell_column;
       int64_t start_time;
       bool    start_time_set;
       int64_t end_time;
@@ -175,6 +215,7 @@ namespace Hypertable {
       }
       int command;
       String table_name;
+      String clone_table_name;
       String str;
       String output_file;
       String input_file;
@@ -221,6 +262,16 @@ namespace Hypertable {
         display_string("set_table_name");
         state.table_name = String(str, end-str);
         trim_if(state.table_name, is_any_of("'\""));
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct set_clone_table_name {
+      set_clone_table_name(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const {
+        display_string("set_clone_table_name");
+        state.clone_table_name = String(str, end-str);
+        trim_if(state.clone_table_name, is_any_of("'\""));
       }
       hql_interpreter_state &state;
     };
@@ -530,6 +581,71 @@ namespace Hypertable {
       hql_interpreter_state &state;
     };
 
+    struct scan_set_cell_row {
+      scan_set_cell_row(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const {
+        display_string("scan_set_cell_row");
+	state.scan.current_cell_row = String(str, end-str);
+        trim_if(state.scan.current_cell_row, is_any_of("'\""));
+      }
+      hql_interpreter_state &state;
+    };
+
+    struct scan_set_cell_column {
+      scan_set_cell_column(hql_interpreter_state &state_) : state(state_) { }
+      void operator()(char const *str, char const *end) const {
+        display_string("scan_set_cell_column");
+	state.scan.current_cell_column = String(str, end-str);
+        trim_if(state.scan.current_cell_column, is_any_of("'\""));
+
+	if (state.scan.current_relop != 0) {
+	  if (state.scan.current_relop == RELOP_EQ) {
+	    if (!state.scan.current_ci.empty())
+	      HT_THROW(Error::HQL_PARSE_ERROR, "Bad cell expression");
+	    state.scan.current_ci.set_start(state.scan.current_cell_row, state.scan.current_cell_column, true);
+	    state.scan.current_ci.set_end(state.scan.current_cell_row, state.scan.current_cell_column, true);
+	  }
+	  else if (state.scan.current_relop == RELOP_LT) {
+	    if (state.scan.current_ci.end_set)
+	      HT_THROW(Error::HQL_PARSE_ERROR, "Bad cell expression");
+	    state.scan.current_ci.set_end(state.scan.current_cell_row, state.scan.current_cell_column, false);
+	  }
+	  else if (state.scan.current_relop == RELOP_LE) {
+	    if (state.scan.current_ci.end_set)
+	      HT_THROW(Error::HQL_PARSE_ERROR, "Bad cell expression");
+	    state.scan.current_ci.set_end(state.scan.current_cell_row, state.scan.current_cell_column, true);
+	  }
+	  else if (state.scan.current_relop == RELOP_GT) {
+	    if (state.scan.current_ci.start_set)
+	      HT_THROW(Error::HQL_PARSE_ERROR, "Bad cell expression");
+	    state.scan.current_ci.set_start(state.scan.current_cell_row, state.scan.current_cell_column, false);
+	  }
+	  else if (state.scan.current_relop == RELOP_GE) {
+	    if (state.scan.current_ci.start_set)
+	      HT_THROW(Error::HQL_PARSE_ERROR, "Bad cell expression");
+	    state.scan.current_ci.set_start(state.scan.current_cell_row, state.scan.current_cell_column, true);
+	  }
+	  else if (state.scan.current_relop == RELOP_SW) {
+	    if (!state.scan.current_ci.empty())
+	      HT_THROW(Error::HQL_PARSE_ERROR, "Bad cell expression");
+	    state.scan.current_ci.set_start(state.scan.current_cell_row, state.scan.current_cell_column, true);
+	    state.scan.current_cell_column.append(1, 0xff);
+	    state.scan.current_ci.set_end(state.scan.current_cell_row, state.scan.current_cell_column, false);
+	  }
+
+	  if (!state.scan.current_ci.end_set)
+	    state.scan.current_ci.end_row = Key::END_ROW_MARKER;
+
+	  state.scan.cell_intervals.push_back(state.scan.current_ci);
+	  state.scan.current_ci.clear();
+	  state.scan.current_cell_row = "";
+	  state.scan.current_cell_column = "";
+	  state.scan.current_relop = 0;
+	}
+      }
+      hql_interpreter_state &state;
+    };
+
     struct scan_set_row {
       scan_set_row(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const {
@@ -586,8 +702,10 @@ namespace Hypertable {
 	  state.scan.current_rowkey_set = false;
 	  state.scan.current_relop = 0;
 	}
-	else
+	else {
 	  state.scan.current_rowkey_set = true;
+	  state.scan.current_cell_row = "";
+	}
       }
       hql_interpreter_state &state;
     };
@@ -771,13 +889,34 @@ namespace Hypertable {
 	  state.scan.current_rowkey_set = false;
 	  state.scan.current_relop = 0;
 	}
+	else if (state.scan.current_cell_row != "" && state.scan.current_ci.empty()) {
+	  if (relop == RELOP_EQ) {
+	    state.scan.current_ci.set_start(state.scan.current_cell_row, state.scan.current_cell_column, true);
+	    state.scan.current_ci.set_end(state.scan.current_cell_row, state.scan.current_cell_column, true);
+	  }
+	  else if (relop == RELOP_LT)
+	    state.scan.current_ci.set_start(state.scan.current_cell_row, state.scan.current_cell_column, false);
+	  else if (relop == RELOP_LE)
+	    state.scan.current_ci.set_start(state.scan.current_cell_row, state.scan.current_cell_column, true);
+	  else if (relop == RELOP_GT)
+	    state.scan.current_ci.set_end(state.scan.current_cell_row, state.scan.current_cell_column, false);
+	  else if (relop == RELOP_GE)
+	    state.scan.current_ci.set_end(state.scan.current_cell_row, state.scan.current_cell_column, true);
+	  else if (relop == RELOP_SW) {
+	    HT_THROW(Error::HQL_PARSE_ERROR,
+		     "Bad use of starts with operator (=^)");
+	  }
+	  state.scan.current_cell_row = "";
+	  state.scan.current_cell_column = "";
+	  state.scan.current_relop = 0;
+	}
 	else
 	  state.scan.current_relop = relop;
       }
       hql_interpreter_state &state;
       int relop;
     };
-      
+
     struct scan_set_time {
       scan_set_time(hql_interpreter_state &state_) : state(state_){ }
       void operator()(char const *str, char const *end) const {
@@ -1044,6 +1183,7 @@ namespace Hypertable {
           Token FROM         = as_lower_d["from"];
           Token WHERE        = as_lower_d["where"];
           Token ROW          = as_lower_d["row"];
+          Token CELL         = as_lower_d["cell"];
           Token ROW_KEY_COLUMN = as_lower_d["row_key_column"];
           Token TIMESTAMP_COLUMN = as_lower_d["timestamp_column"];
           Token HEADER_FILE  = as_lower_d["header_file"];
@@ -1092,6 +1232,7 @@ namespace Hypertable {
           Token OFF          = as_lower_d["off"];
           Token AND          = as_lower_d["and"];
           Token OR           = as_lower_d["or"];
+          Token LIKE         = as_lower_d["like"];
 
           /**
            * Start grammar definition
@@ -1261,10 +1402,11 @@ namespace Hypertable {
             ;
 
           create_table_statement
-            =  CREATE >> TABLE
-                      >> *(table_option)
-                      >> user_identifier[set_table_name(self.state)]
-                      >> !(create_definitions)
+            = CREATE >> TABLE
+              >> *(table_option)
+              >> user_identifier[set_table_name(self.state)]
+              >> *(LIKE >> user_identifier[set_clone_table_name(self.state)])
+              >> !(create_definitions)
             ;
 
           table_option
@@ -1374,8 +1516,23 @@ namespace Hypertable {
 	    *( OR >> row_interval[scan_add_row_interval(self.state)]) >> RPAREN
 	    ;
 
+	  cell_spec
+	    = string_literal[scan_set_cell_row(self.state)]
+	      >> COMMA >> string_literal[scan_set_cell_column(self.state)]
+	    ;
+
+	  cell_interval
+	    = !(cell_spec >> relop) >> CELL >> relop >> cell_spec
+	    ;
+
+	  cell_predicate
+	    = cell_interval
+	    | LPAREN >> cell_interval >> *( OR >> cell_interval ) >> RPAREN
+	    ;
+
           where_predicate
-	    = row_predicate
+	    = cell_predicate
+	    | row_predicate
 	    | time_predicate
 	    ;
 
@@ -1481,6 +1638,9 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(where_clause);
           BOOST_SPIRIT_DEBUG_RULE(where_predicate);
           BOOST_SPIRIT_DEBUG_RULE(time_predicate);
+          BOOST_SPIRIT_DEBUG_RULE(cell_interval);
+          BOOST_SPIRIT_DEBUG_RULE(cell_predicate);
+          BOOST_SPIRIT_DEBUG_RULE(cell_spec);
           BOOST_SPIRIT_DEBUG_RULE(relop);
           BOOST_SPIRIT_DEBUG_RULE(row_interval);
           BOOST_SPIRIT_DEBUG_RULE(row_predicate);
@@ -1535,7 +1695,8 @@ namespace Hypertable {
           drop_table_statement, load_range_statement, range_spec,
           update_statement, create_scanner_statement, destroy_scanner_statement,
           fetch_scanblock_statement, shutdown_statement, drop_range_statement,
-          replay_start_statement, replay_log_statement, replay_commit_statement;
+          replay_start_statement, replay_log_statement, replay_commit_statement,
+          cell_interval, cell_predicate, cell_spec;
         };
 
       hql_interpreter_state &state;

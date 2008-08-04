@@ -22,6 +22,8 @@
 #ifndef HYPERTABLE_SCANSPEC_H
 #define HYPERTABLE_SCANSPEC_H
 
+#include <boost/noncopyable.hpp>
+
 #include <vector>
 
 namespace Hypertable {
@@ -44,6 +46,28 @@ namespace Hypertable {
     const char *end;
     bool end_inclusive;
   };
+
+
+  /**
+   * Represents a cell interval.  c-string data members are not managed
+   * so caller must handle deallocation.
+   */
+  class CellInterval {
+  public:
+    CellInterval();
+    CellInterval(const uint8_t **bufp, size_t *remainp) { decode(bufp, remainp); }
+
+    size_t encoded_length() const;
+    void encode(uint8_t **bufp) const;
+    void decode(const uint8_t **bufp, size_t *remainp);
+
+    const char *start_row;
+    const char *start_column;
+    bool start_inclusive;
+    const char *end_row;
+    const char *end_column;
+    bool end_inclusive;
+  };
   
 
   /**
@@ -63,6 +87,7 @@ namespace Hypertable {
       max_versions = 0;
       columns.clear();
       row_intervals.clear();
+      cell_intervals.clear();
       time_interval.first = time_interval.second = 0;
       return_deletes = 0;
     }
@@ -74,12 +99,14 @@ namespace Hypertable {
       other.time_interval = time_interval;
       other.return_deletes = return_deletes;
       other.row_intervals.clear();
+      other.cell_intervals.clear();
     }
 
     int32_t row_limit;
     uint32_t max_versions;
     std::vector<const char *> columns;
     std::vector<RowInterval> row_intervals;
+    std::vector<CellInterval> cell_intervals;
     std::pair<int64_t,int64_t> time_interval;
     bool return_deletes;
   };
@@ -88,21 +115,21 @@ namespace Hypertable {
    * Helper class for building a ScanSpec.  This class manages the allocation
    * of all string members.
    */
-  class ScanSpecBuilder : public ScanSpec {
+  class ScanSpecBuilder : boost::noncopyable {
   public:
     /**
      * Sets the maximum number of rows to return in the scan.
      *
      * @param n row limit
      */
-    void set_row_limit(int32_t n) { row_limit = n; }
+    void set_row_limit(int32_t n) { m_scan_spec.row_limit = n; }
 
     /**
      * Sets the maximum number of revisions of each cell to return in the scan.
      *
      * @param n maximum revisions
      */
-    void set_max_versions(uint32_t n) { max_versions = n; }
+    void set_max_versions(uint32_t n) { m_scan_spec.max_versions = n; }
 
     /**
      * Adds a column family to be returned by the scan.
@@ -111,7 +138,7 @@ namespace Hypertable {
      */
     void add_column(const String &str) {
       m_strings.push_back(str);
-      columns.push_back(m_strings.back().c_str());
+      m_scan_spec.columns.push_back(m_strings.back().c_str());
     }
 
     /**
@@ -124,7 +151,7 @@ namespace Hypertable {
       m_strings.push_back(str);
       ri.start = ri.end = m_strings.back().c_str();
       ri.start_inclusive = ri.end_inclusive = true;
-      row_intervals.push_back(ri);
+      m_scan_spec.row_intervals.push_back(ri);
     }
 
     /**
@@ -144,7 +171,48 @@ namespace Hypertable {
       m_strings.push_back(end);
       ri.end = m_strings.back().c_str();
       ri.end_inclusive = end_inclusive;
-      row_intervals.push_back(ri);      
+      m_scan_spec.row_intervals.push_back(ri);      
+    }
+
+    /**
+     * Adds a cell to be returned in the scan
+     *
+     * @param str row key
+     */
+    void add_cell(const String &row, const String &column) {
+      CellInterval ci;
+      m_strings.push_back(row);
+      ci.start_row = ci.end_row = m_strings.back().c_str();
+      m_strings.push_back(column);
+      ci.start_column = ci.end_column = m_strings.back().c_str();
+      ci.start_inclusive = ci.end_inclusive = true;
+      m_scan_spec.cell_intervals.push_back(ci);
+    }
+
+    /**
+     * Adds a cell interval to be returned in the scan.
+     *
+     * @param start_row start row
+     * @param start_column start column
+     * @param start_inclusive true if interval should include start row
+     * @param end_row end row
+     * @param end_column end column
+     * @param end_inclusive true if interval should include end row
+     */
+    void add_cell_interval(const String &start_row, const String &start_column, bool start_inclusive,
+			   const String &end_row, const String &end_column, bool end_inclusive) {
+      CellInterval ci;
+      m_strings.push_back(start_row);
+      ci.start_row = m_strings.back().c_str();
+      m_strings.push_back(start_column);
+      ci.start_column = m_strings.back().c_str();
+      ci.start_inclusive = start_inclusive;
+      m_strings.push_back(end_row);
+      ci.end_row = m_strings.back().c_str();
+      m_strings.push_back(end_column);
+      ci.end_column = m_strings.back().c_str();
+      ci.end_inclusive = end_inclusive;
+      m_scan_spec.cell_intervals.push_back(ci);
     }
 
     /**
@@ -155,33 +223,43 @@ namespace Hypertable {
      * @param end end time in nanoseconds
      */
     void set_time_interval(int64_t start, int64_t end) {
-      time_interval.first = start;
-      time_interval.second = end;
+      m_scan_spec.time_interval.first = start;
+      m_scan_spec.time_interval.second = end;
     }
 
     /**
      * Internal use only.
      */
     void set_return_deletes(bool val) {
-      return_deletes = val;
+      m_scan_spec.return_deletes = val;
     }
 
     /**
      * Clears the state.
      */
     void clear() {
-      ScanSpec::clear();
+      m_scan_spec.clear();
       m_strings.clear();
     }
+
+    /**
+     * Returns the built ScanSpec object
+     *
+     * @return reference to built ScanSpec object
+     */
+    ScanSpec &get() { return m_scan_spec; }
     
   private:
     std::vector<String> m_strings;
+    ScanSpec m_scan_spec;
   };
 
   extern const int64_t BEGINNING_OF_TIME;
   extern const int64_t END_OF_TIME;
 
   std::ostream &operator<<(std::ostream &os, const RowInterval &);
+
+  std::ostream &operator<<(std::ostream &os, const CellInterval &);
 
   std::ostream &operator<<(std::ostream &os, const ScanSpec &);
 

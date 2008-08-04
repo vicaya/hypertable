@@ -45,7 +45,7 @@ namespace {
     "a specific statement, type 'help <statement>', where <statement> is one from",
     "the preceeding list.",
     "",
-    (const char *)0
+    0
   };
 
   const char *help_text_rsclient_contents[] = {
@@ -65,7 +65,7 @@ namespace {
     "a specific statement, type 'help <statement>', where <statement> is one from",
     "the preceeding list.",
     "",
-    (const char *)0
+    0
   };
 
   const char *help_text_create_scanner[] = {
@@ -78,22 +78,32 @@ namespace {
     "    table_name '[' [start_row] \"..\" (end_row | ?? ) ']'",
     "",
     "where_clause:",
-    "    WHERE where_predicate [&& where_predicate ...] ",
+    "    WHERE where_predicate [AND where_predicate ...] ",
     "",
     "where_predicate: ",
-    "    ROW = row_key",
-    "    | ROW > row_key",
-    "    | ROW >= row_key",
-    "    | ROW < row_key",
-    "    | ROW <= row_key",
-    "    | ROW STARTS WITH substr",
-    "    | TIMESTAMP >  timestamp",
-    "    | TIMESTAMP >= timestamp",
-    "    | TIMESTAMP <  timestamp",
-    "    | TIMESTAMP <= timestamp",
+    "    cell_predicate",
+    "    | row_predicate",
+    "    | timestamp_predicate",
+    "",
+    "relop: '=' | '<' | '<=' | '>' | '>=' | '=^'",
+    "",
+    "cell_spec: row_key ',' qualified_column",
+    "",
+    "cell_predicate: ",
+    "    [cell_spec relop] CELL relop cell_spec",
+    "    | '(' [cell_spec relop] CELL relop cell_spec",
+    "          (OR [cell_spec relop] CELL relop cell_spec)* ')'",
+    "",
+    "row_predicate: ",
+    "    [row_key relop] ROW relop row_key",
+    "    | '(' [row_key relop] ROW relop row_key",
+    "          (OR [row_key relop] ROW relop row_key)* ')'",
+    "",
+    "timestamp_predicate: ",
+    "    [timestamp relop] TIMESTAMP relop timestamp",
     "",
     "options_spec:",
-    "    (MAX_VERSIONS = version_count",
+    "    (REVS = revision_count",
     "    | LIMIT = row_count",
     "    | INTO FILE 'file_name'",
     "    | DISPLAY_TIMESTAMPS",
@@ -111,7 +121,7 @@ namespace {
     "",
     "  CREATE SCANNER ON Test[..??]",
     "",
-    (const char *)0
+    0
   };
 
   const char *help_text_destroy_scanner[] = {
@@ -123,7 +133,7 @@ namespace {
     "the scanner corresponding to that ID will be destroyed, otherwise",
     "the \"current\" or most recently created scanner will get destroyed.",
     "",
-    (const char *)0
+    0
   };
 
   const char *help_text_fetch_scanblock[] = {
@@ -135,7 +145,7 @@ namespace {
     "corresponding to that ID will be destroyed, otherwise the",
     "\"current\" or most recently created scanner will get destroyed.",
     "",
-    (const char *)0
+    0
   };
 
   const char *help_text_load_range[] = {
@@ -148,7 +158,7 @@ namespace {
     "This command will issue a 'load range' command to the RangeServer",
     "for the range specified with range_spec.",
     "",
-    (const char *)0
+    0
   };
 
   const char *help_text_update[] = {
@@ -172,7 +182,7 @@ namespace {
     "third example line above, it generates a 'delete cell' for the column",
     "'banana:http://sports.espn.go.com/' of row 'acerin'.",
     "",
-    (const char *)0
+    0
   };
 
   const char *help_text_shutdown_rangeserver[] = {
@@ -183,7 +193,7 @@ namespace {
     "return immediately, but the RangeServer will wait for all",
     "running requests to complete before shutting down.",
     "",
-    (const char *)0
+    0
   };
 
   const char *help_text_drop_range[] = {
@@ -196,7 +206,7 @@ namespace {
     "This command will issue a 'drop range' command to the RangeServer",
     "for the range specified with range_spec.",
     "",
-    (const char *)0
+    0
   };
 
   const char *help_text_replay_start[] = {
@@ -207,7 +217,7 @@ namespace {
     "This has the effect of clearing the replay table/range map, droppin any",
     "existing replay commit log and creating a new one."
     "",
-    (const char *)0
+    0
   };
 
   const char *help_text_replay_log[] = {
@@ -217,7 +227,7 @@ namespace {
     "This command will issue a 'replay log' command to the RangeServer.",
     "[...]",
     "",
-    (const char *)0
+    0
   };
 
   const char *help_text_replay_commit[] = {
@@ -228,13 +238,14 @@ namespace {
     "This has the effect of atomically merging the 'replay' range map into the",
     "'live' range map and linking the replay log into the main log.",
     "",
-    (const char *)0
+    0
   };
 
 
   const char *help_text_create_table[] = {
     "",
     "CREATE TABLE [table_option ...] name '(' [create_definition, ...] ')'",
+    "CREATE TABLE name LIKE example_name",
     "",
     "table_option:",
     "    COMPRESSOR '=' string_literal",
@@ -256,7 +267,7 @@ namespace {
     "    | BLOCKSIZE '=' value",
     "    | COMPRESSOR '=' string_literal",
     "",
-    (const char *)0
+    0
   };
 
   const char *help_text_select[] = {
@@ -270,14 +281,23 @@ namespace {
     "    WHERE where_predicate [AND where_predicate ...] ",
     "",
     "where_predicate: ",
-    "    row_predicate",
+    "    cell_predicate",
+    "    | row_predicate",
     "    | timestamp_predicate",
+    "",
+    "relop: '=' | '<' | '<=' | '>' | '>=' | '=^'",
+    "",
+    "cell_spec: row_key ',' qualified_column",
+    "",
+    "cell_predicate: ",
+    "    [cell_spec relop] CELL relop cell_spec",
+    "    | '(' [cell_spec relop] CELL relop cell_spec",
+    "          (OR [cell_spec relop] CELL relop cell_spec)* ')'",
     "",
     "row_predicate: ",
     "    [row_key relop] ROW relop row_key",
-    "    | '(' [row_key relop] ROW relop row_key ([row_key relop] ROW relop row_key)* ')'",
-    "",
-    "relop: '=' | '<' | '<=' | '>' | '>=' | '=^'",
+    "    | '(' [row_key relop] ROW relop row_key",
+    "          (OR [row_key relop] ROW relop row_key)* ')'",
     "",
     "timestamp_predicate: ",
     "    [timestamp relop] TIMESTAMP relop timestamp",
@@ -293,12 +313,29 @@ namespace {
     "timestamp:",
     "    'YYYY-MM-DD HH:MM:SS[.nanoseconds]'",
     "",
-    "NOTES:",
     "The parser only accepts a single timestamp predicate.  The '=^' operator is the",
     "\"starts with\" operator.  It will return all rows that have the same prefix as the",
     "operand.",
     "",
-    (const char *)0
+    "EXAMPLES:",
+    "",
+    "SELECT * FROM test WHERE ('a' <= ROW <= 'e') and '2008-07-28 00:00:02' < TIMESTAMP < '2008-07-28 00:00:07';",
+    "SELECT * FROM test WHERE ROW =^ 'b';",
+    "SELECT * FROM test WHERE (ROW = 'a' or ROW = 'c' or ROW = 'g');",
+    "SELECT * FROM test WHERE ('a' < ROW <= 'c' or ROW = 'g' or ROW = 'c');",
+    "SELECT * FROM test WHERE (ROW < 'c' or ROW > 'd');",
+    "SELECT * FROM test WHERE (ROW < 'b' or ROW =^ 'b');",
+    "SELECT * FROM test WHERE \"farm\",\"tag:abaca\" < CELL <= \"had\",\"tag:abacinate\";",
+    "SELECT * FROM test WHERE \"farm\",\"tag:abaca\" <= CELL <= \"had\",\"tag:abacinate\";",
+    "SELECT * FROM test WHERE CELL = \"foo\",\"tag:adactylism\";",
+    "SELECT * FROM test WHERE CELL =^ \"foo\",\"tag:ac\";",
+    "SELECT * FROM test WHERE CELL =^ \"foo\",\"tag:a\";",
+    "SELECT * FROM test WHERE CELL > \"old\",\"tag:abacate\";",
+    "SELECT * FROM test WHERE CELL >= \"old\",\"tag:abacate\";",
+    "SELECT * FROM test WHERE \"old\",\"tag:foo\" < CELL >= \"old\",\"tag:abacate\";",
+    "SELECT * FROM test WHERE ( CELL = \"maui\",\"tag:abaisance\" OR CELL = \"foo\",\"tag:adage\" OR CELL = \"cow\",\"tag:Ab\" OR CELL =^ \"foo\",\"tag:acya\");",
+    "",
+    0
   };
 
   const char *help_text_describe_table[] = {
@@ -333,7 +370,7 @@ namespace {
     "  </AccessGroup>",
     "</Schema>",
     "",
-    (const char *)0
+    0
   };
 
   const char *help_text_show_create_table[] = {
@@ -355,7 +392,7 @@ namespace {
     "  ACCESS GROUP marsha (onion cassis)",
     ")",
     "",
-    (const char *)0
+    0
   };
 
   const char *help_text_load_data_infile[] = {
@@ -410,7 +447,7 @@ namespace {
     "The maximum number of characters you can specify is 21 and each character",
     "represents 6 random bits.",
     "",
-    (const char *)0
+    0
   };
 
   const char *help_text_insert[] = {
@@ -427,7 +464,7 @@ namespace {
     "timestamp:",
     "    'YYYY-MM-DD HH:MM:SS[.nanoseconds]'",
     "",
-    (const char *)0
+    0
   };
 
   const char *help_text_delete[] = {
@@ -492,7 +529,7 @@ namespace {
     "",
     "hypertable> SELECT * FROM CrawlDb;",
     "",
-    (const char *)0
+    0
   };
 
   const char *help_text_show_tables[] = {
@@ -506,7 +543,7 @@ namespace {
     "CrawlDb",
     "Query-Log",
     "",
-    (const char *)0
+    0
   };
 
   const char *help_text_drop_table[] = {
@@ -517,7 +554,7 @@ namespace {
     "then the command will succeed (i.e. won't generate an error) if a table",
     "by the name of 'name' does not exist.",
     "",
-    (const char *)0
+    0
   };
 
   const char *help_text_shutdown[] = {
@@ -529,7 +566,7 @@ namespace {
     "RangeServer will quiesce, close its commit logs, destroy its Hyperspace",
     "session and then exit.",
     "",
-    (const char *)0
+    0
   };
 
 

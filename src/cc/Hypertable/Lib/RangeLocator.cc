@@ -300,6 +300,8 @@ RangeLocator::find(TableIdentifier *table, const char *row_key,
       m_range_server.create_scanner(addr, m_metadata_table, range, meta_scan_spec, scan_block);
     }
     catch (Exception &e) {
+      if (e.code() == Error::RANGESERVER_RANGE_NOT_FOUND)
+	m_cache_ptr->invalidate(0, meta_keys.start);
       return e.code();
     }
 
@@ -363,6 +365,8 @@ RangeLocator::find(TableIdentifier *table, const char *row_key,
                                   meta_scan_spec, scan_block);
   }
   catch (Exception &e) {
+    if (e.code() == Error::RANGESERVER_RANGE_NOT_FOUND)
+      m_cache_ptr->invalidate(0, meta_keys.start+2);
     return e.code();
   }
 
