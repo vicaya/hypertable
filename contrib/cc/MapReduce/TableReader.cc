@@ -35,7 +35,7 @@ TableReader::TableReader(HadoopPipes::MapContext& context)
       scan_spec_builder.add_column(c);
     }
   }
-  m_scanner = m_table->create_scanner(scan_spec_builder);
+  m_scanner = m_table->create_scanner(scan_spec_builder.get());
 }
 
 TableReader::~TableReader()

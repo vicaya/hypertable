@@ -34,7 +34,7 @@ namespace Mapreduce
     meta_scan_builder.add_column("StartRow");
     meta_scan_builder.add_column("Location");
 
-    scanner = m_meta_table->create_scanner(meta_scan_builder);
+    scanner = m_meta_table->create_scanner(meta_scan_builder.get());
 
     range_vector = new std::vector<RangeLocationInfo>();
     while (scanner->next(cell))
