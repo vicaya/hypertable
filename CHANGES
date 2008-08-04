@@ -1,3 +1,12 @@
+Version 0.9.0.9:
+(2008-08-03)
+
+  * Fixed Linux epoll problems
+  * Removed deadlock in Master::drop_table()
+  * Modified shutdown scripts to wait for service shutdown before returning
+  * Changed default listen() pending connection backlock from 64 to 1000
+  * Modified RangeServers to wait random interval [0..2] secs before starting
+
 Version 0.9.0.8:
 (2008-08-01)
 
