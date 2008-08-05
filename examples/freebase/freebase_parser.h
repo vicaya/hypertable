@@ -29,33 +29,33 @@
 
 #include "Hypertable/Lib/KeySpec.h"
 
-typedef struct {
+struct InsertRec {
   Hypertable::KeySpec key;
   const void *value;
   uint32_t value_len;
-} InsertRecT;
+};
 
-typedef struct {
+struct ColumnInfo {
   const char *name;
   size_t name_len;
   const char *value;
   size_t value_len;
-} ColumnInfoT;
+};
 
 class freebase_parser {
 
  public:
   freebase_parser();
   bool load(const std::string fname);
-  InsertRecT *next(int *countp);
+  InsertRec *next(int *countp);
 
  private:
   std::string m_fname;
   std::ifstream m_fin;
   std::string m_header_line;
   std::string m_line;
-  std::vector<ColumnInfoT> m_column_info;
-  InsertRecT *m_inserts;
+  std::vector<ColumnInfo> m_column_info;
+  InsertRec *m_inserts;
   std::string m_category;
   int m_column_name;
   int m_column_id;

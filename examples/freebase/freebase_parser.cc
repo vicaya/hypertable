@@ -33,7 +33,7 @@ freebase_parser::freebase_parser() : m_lineno(0) {
  *
  */
 bool freebase_parser::load(const std::string fname) {
-  ColumnInfoT cinfo;
+  ColumnInfo cinfo;
 
   m_fin.open(fname.c_str());
 
@@ -81,7 +81,7 @@ bool freebase_parser::load(const std::string fname) {
   cinfo.value_len = 0;
   m_column_info.push_back(cinfo);
 
-  m_inserts = new InsertRecT [ m_column_info.size() ];
+  m_inserts = new InsertRec [ m_column_info.size() ];
 
   if (m_column_name != 0) {
     cerr << "error: 'name' not found in column position 0 in file '" << m_fname << "'" << endl;
@@ -107,9 +107,8 @@ bool freebase_parser::load(const std::string fname) {
 
 
 
-InsertRecT *freebase_parser::next(int *countp) {
-  char *base;
-  char *ptr = base;
+InsertRec *freebase_parser::next(int *countp) {
+  char *base, *ptr;
   size_t nfields=0;
 
   while (!m_fin.eof()) {
@@ -140,10 +139,6 @@ InsertRecT *freebase_parser::next(int *countp) {
 
     if (nfields < 2)
       continue;
-    else if (*m_column_info[0].value == 0) {
-      cerr << "error: 'name' field not found on line " << m_lineno << " of file '" << m_fname << "'" << endl;
-      continue;
-    }
     else if (*m_column_info[1].value == 0) {
       cerr << "error: 'id' field not found on line " << m_lineno << " of file '" << m_fname << "'" << endl;
       continue;
@@ -153,24 +148,29 @@ InsertRecT *freebase_parser::next(int *countp) {
     size_t row_key_len = m_column_info[1].value_len;
 
     // set 'name' column
-    m_inserts[0].key.row = row_key;
-    m_inserts[0].key.row_len = row_key_len;
-    m_inserts[0].key.column_family = "name";
-    m_inserts[0].key.column_qualifier = 0;
-    m_inserts[0].key.column_qualifier_len = 0;
-    m_inserts[0].value = m_column_info[0].value;
-    m_inserts[0].value_len = m_column_info[0].value_len;    
+
+    size_t j=0;
+    if (*m_column_info[0].value != 0) {
+      m_inserts[j].key.row = row_key;
+      m_inserts[j].key.row_len = row_key_len;
+      m_inserts[j].key.column_family = "name";
+      m_inserts[j].key.column_qualifier = 0;
+      m_inserts[j].key.column_qualifier_len = 0;
+      m_inserts[j].value = m_column_info[0].value;
+      m_inserts[j].value_len = m_column_info[0].value_len;    
+      j++;
+    }
 
     // set 'category' column
-    m_inserts[1].key.row = row_key;
-    m_inserts[1].key.row_len = row_key_len;
-    m_inserts[1].key.column_family = "category";
-    m_inserts[1].key.column_qualifier = 0;
-    m_inserts[1].key.column_qualifier_len = 0;
-    m_inserts[1].value = m_category.c_str();
-    m_inserts[1].value_len = m_category.length();
+    m_inserts[j].key.row = row_key;
+    m_inserts[j].key.row_len = row_key_len;
+    m_inserts[j].key.column_family = "category";
+    m_inserts[j].key.column_qualifier = 0;
+    m_inserts[j].key.column_qualifier_len = 0;
+    m_inserts[j].value = m_category.c_str();
+    m_inserts[j].value_len = m_category.length();
+    j++;
 
-    size_t j=2;
     for (size_t i=2; i<nfields; i++) {
       if (*m_column_info[i].value) {
 	m_inserts[j].key.row = row_key;

@@ -37,34 +37,6 @@ using namespace std;
 
 namespace {
 
-  /**
-   * Prints an exception to stderr
-   */
-  void report_error(Exception &e) {
-    cerr << "error: "
-	 << Error::get_text(e.code())
-	 << " - " << e.what() << endl;
-  }
-
-  /**
-   * Prints an mutator exception to stderr
-   */
-  void handle_mutation_failure(TableMutatorPtr &mutator_ptr) {
-    std::vector<std::pair<Cell, int> > failed_mutations;
-
-    mutator_ptr->get_failed(failed_mutations);
-    if (!failed_mutations.empty()) {
-      for (size_t i=0; i<failed_mutations.size(); i++) {
-	cerr << "Failed: (" << failed_mutations[i].first.row_key << "," 
-	     << failed_mutations[i].first.column_family;
-	if (failed_mutations[i].first.column_qualifier)
-	  cerr << ":" << failed_mutations[i].first.column_qualifier;
-	cerr << "," << failed_mutations[i].first.timestamp << ") - "
-	     << Error::get_text(failed_mutations[i].second) << endl;
-      }
-    }
-  }
-
   const char *usage = 
     "\n"
     "  usage: freebase_load <file>\n"
@@ -102,7 +74,7 @@ int main(int argc, char **argv) {
   KeySpec key;
   const char *inputfile;
   String row;
-  InsertRecT *recs;
+  InsertRec *recs;
   int count;
 
   if (argc == 2)
@@ -128,7 +100,7 @@ int main(int argc, char **argv) {
 
   }
   catch (Exception &e) {
-    report_error(e);
+    cerr << "Exception caught: " << Error::get_text(e.code()) << " - " << e.what() << endl;
     return 1;
   }
 
