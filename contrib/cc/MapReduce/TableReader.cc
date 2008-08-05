@@ -46,7 +46,16 @@ bool TableReader::next(std::string& key, std::string& value) {
   Cell cell;
 
   if (m_scanner->next(cell)) {
-    key = cell.row_key;
+    std::string key_composition;
+
+    key_composition = cell.row_key;
+    key_composition.append(":");
+    key_composition.append(cell.column_family);
+    key_composition.append(":");
+    key_composition.append(cell.column_qualifier);
+
+    key = key_composition;
+
     char *s = new char[cell.value_len+1];
     memcpy(s, cell.value, cell.value_len);
     s[cell.value_len] = 0;
