@@ -185,3 +185,5 @@ install(DIRECTORY examples/apache_log DESTINATION ${VERSION}/examples
         USE_SOURCE_PERMISSIONS)
 install(DIRECTORY examples/hql_tutorial DESTINATION ${VERSION}/examples
         USE_SOURCE_PERMISSIONS)
+install(DIRECTORY examples/freebase DESTINATION ${VERSION}/examples
+        USE_SOURCE_PERMISSIONS)
