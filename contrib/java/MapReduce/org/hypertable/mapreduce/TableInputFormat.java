@@ -10,6 +10,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;
 
+import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
@@ -33,7 +34,7 @@ public class TableInputFormat implements InputFormat<Text, MapWritable>, JobConf
 
   public void configure(JobConf job)
   {
-    Path[] tableNames = job.getInputPaths();
+    Path[] tableNames = FileInputFormat.getInputPaths(job);
     m_tableName = new Text(tableNames[0].getName());
     job.set("hypertable.root.path", m_rootPath);
   }

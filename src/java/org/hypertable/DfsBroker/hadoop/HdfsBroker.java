@@ -224,7 +224,7 @@ public class HdfsBroker {
             if (mVerbose)
                 log.info("Getting length of file '" + fileName);
 
-            length = mFilesystem.getLength(new Path(fileName));
+            length = mFilesystem.getFileStatus(new Path(fileName)).getLen();
 
             error = cb.response(length);
 
@@ -415,7 +415,7 @@ public class HdfsBroker {
             if (mVerbose)
                 log.info("Removing file '" + fileName);
 
-            if (!mFilesystem.delete(new Path(fileName)))
+            if (!mFilesystem.delete(new Path(fileName), false))
                 throw new IOException("Problem deleting file '" + fileName + "'");
 
             error = cb.response_ok();
@@ -486,7 +486,7 @@ public class HdfsBroker {
             if (mVerbose)
                 log.info("Removing directory '" + fileName + "'");
 
-            if (!mFilesystem.delete(new Path(fileName))) {
+            if (!mFilesystem.delete(new Path(fileName), true)) {
                 if (!mFilesystem.exists(new Path(fileName)))
                     throw new FileNotFoundException("Problem deleting path '" + fileName + "'");
                 else
