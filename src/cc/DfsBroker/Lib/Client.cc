@@ -393,7 +393,7 @@ Client::shutdown(uint16_t flags, DispatchHandler *handler) {
 }
 
 
-int
+void
 Client::status() {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
@@ -406,11 +406,12 @@ Client::status() {
       HT_THROW(Protocol::response_code(event_ptr.get()),
                m_protocol.string_format_message(event_ptr).c_str());
 
-    return decode_response(event_ptr);
+    int error = decode_response(event_ptr);
+    if (error != Error::OK)
+      HT_THROW(error, "");
   }
   catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    return e.code();
+    HT_THROW2(e.code(), e, e.what());
   }
 }
 

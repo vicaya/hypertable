@@ -158,10 +158,8 @@ namespace Hypertable { namespace DfsBroker {
 
       /** Checks the status of the DFS broker.  Issues a status command and waits
        * for it to return.
-       *
-       * @return Error::OK if broker is up and OK, otherwise an error code
        */
-      int status();
+      void status();
 
       /** Shuts down the DFS broker.  Issues a shutdown command to the DFS broker.
        * If the flag is set to Protocol::SHUTDOWN_FLAG_IMMEDIATE, then the

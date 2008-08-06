@@ -30,6 +30,8 @@ public class ApplicationQueue {
 
     static final Logger log = Logger.getLogger("org.hypertable.AsyncComm.ApplicationQueue");
 
+    static private boolean ms_shutdown = false;
+
     private static class UsageRec {
         long    threadGroup = 0;
         boolean running = false;
@@ -62,6 +64,8 @@ public class ApplicationQueue {
                     synchronized (mQueue) {
 
                         while (mQueue.isEmpty()) {
+			    if (ms_shutdown)
+				return;
                             mQueue.wait();
                         }
 
@@ -79,7 +83,11 @@ public class ApplicationQueue {
                             }
                         }
 			if (rec == null) {
+			    if (ms_shutdown)
+				return;
                             mQueue.wait();
+			    if (ms_shutdown)
+				return;
 			}
                     }
 
@@ -139,6 +147,7 @@ public class ApplicationQueue {
     }
 
     public void Shutdown() {
+	ms_shutdown = true;
         for (int i=0; i<threads.length; i++) {
             threads[i].interrupt();
         }

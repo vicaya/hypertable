@@ -177,8 +177,12 @@ int main(int argc, char **argv) {
     client = new DfsBroker::Client(conn_mgr, addr, 30);
     if (!client->wait_for_connection(2))
       goto abort;
-    if ((error = client->status()) != Error::OK)
+    try {
+      client->status();
+    }
+    catch (Hypertable::Exception &e) {
       goto abort;
+    }
   }
   else if (server_name == "hyperspace") {
     hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), props_ptr, 0);

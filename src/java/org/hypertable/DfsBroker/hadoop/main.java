@@ -60,12 +60,14 @@ public class main {
     static final String DEFAULT_PORT = "38030";
 
     private static HdfsBroker ms_broker;
+    private static ApplicationQueue ms_app_queue;
 
     // Example shutdown hook class
     private static class ShutdownHook extends Thread {
 	public void run() {
 	    java.lang.System.out.println("ShutdownHook called");
 	    ms_broker.mOpenFileMap.RemoveAll();
+	    ms_app_queue.Shutdown();
 	}
     }
 
@@ -93,7 +95,6 @@ public class main {
         Properties props = new Properties();
         HandlerFactory handlerFactory;
         Comm comm;
-        ApplicationQueue requestQueue;
         boolean verbose = false;
 
         if (args.length == 1 && args[0].equals("--help"))
@@ -144,11 +145,11 @@ public class main {
 
         comm = new Comm(0);
         //Global.protocol = new Protocol();
-        requestQueue = new ApplicationQueue(workerCount);
+        ms_app_queue = new ApplicationQueue(workerCount);
 
         try {
             ms_broker = new HdfsBroker(comm, props);
-            handlerFactory = new HandlerFactory(comm, requestQueue, ms_broker);
+            handlerFactory = new HandlerFactory(comm, ms_app_queue, ms_broker);
             comm.Listen(port, handlerFactory, null);
         }
         catch (Exception e) {
@@ -156,7 +157,7 @@ public class main {
             java.lang.System.exit(1);
         }
 
-        requestQueue.Join();
+        ms_app_queue.Join();
     }
 
 }

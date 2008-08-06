@@ -126,17 +126,20 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
           }
 	  m_reactor_ptr->cancel_requests(this);
 	  error = (errno == ECONNREFUSED) ? Error::COMM_CONNECT_ERROR : Error::OK;
+	  //HT_ERRORF("read returned -1 : %s", strerror(errno));
           deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, error));
           return true;
         }
 	else if (nread == 0) {
 	  if (error == EAGAIN)
 	    return false;
-	  if (total_read == 0) {
+	  if (m_connected && total_read == 0) {
 	    m_reactor_ptr->cancel_requests(this);
+	    HT_ERRORF("read returned 0 : %s", strerror(errno));
 	    deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
 	    return true;
 	  }
+	  return false;
 	}
         else if (nread < m_message_header_remaining) {
           m_message_header_remaining -= nread;
@@ -168,11 +171,13 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
 	else if (nread == 0) {
 	  if (error == EAGAIN)
 	    return false;
-	  if (total_read == 0) {
+	  if (m_connected && total_read == 0) {
 	    m_reactor_ptr->cancel_requests(this);
+	    HT_ERRORF("read returned 0 : %s", strerror(errno));
 	    deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
 	    return true;
 	  }
+	  return false;
 	}
         else if (nread < m_message_remaining) {
           m_message_ptr += nread;
