@@ -115,13 +115,6 @@ int main(int argc, char **argv) {
      */
     srandom((unsigned)getpid());
 
-    /**
-     * Wait a random period between 0 and 2 seconds so that Hyperspace and the Master
-     * don't get bombarded with connection requests
-     */
-    long wait_millis = random() % 2000;
-    poll(0, 0, wait_millis);
-
     if (cfgfile == "")
       cfgfile = System::install_dir + "/conf/hypertable.cfg";
 

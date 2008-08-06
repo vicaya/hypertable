@@ -1,6 +1,6 @@
 set :source_machine, "motherlode000"
 set :install_dir,  "/data1/doug/hypertable" 
-set :hypertable_version, "0.9.0.7"
+set :hypertable_version, "0.9.0.9"
 set :dfs, "hadoop"
 set :default_config, "/home/doug/conf/cluster1-standard.cfg"
 
@@ -72,6 +72,7 @@ end
 desc "Starts slave processes."
 task :start_slaves, :roles => :slave do
   run <<-CMD
+   `let l=$RANDOM%5 r=$RANDOM%1000; sleep $l.$r` &&
    #{install_dir}/#{hypertable_version}/bin/start-dfsbroker.sh #{dfs} #{config_option} &&
    #{install_dir}/#{hypertable_version}/bin/start-rangeserver.sh #{config_option}
   CMD
