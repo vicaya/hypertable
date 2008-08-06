@@ -46,10 +46,10 @@
   </target>
 
   <target name="compile" depends="prepare" description="Standard compile">
-	<javac srcdir="${src.dir}" destdir="${build.classes}" debug="true">
+	<javac srcdir="${src.dir}" destdir="${build.classes}" deprecation="yes" debug="true">
 	  <classpath refid="project.classpath"/>
 	</javac>
-        <javac srcdir="${mapred.src}" destdir="${build.classes}" debug="true">
+        <javac srcdir="${mapred.src}" destdir="${build.classes}" deprecation="yes" debug="true">
           <classpath refid="project.classpath"/>
         </javac>
   </target>
