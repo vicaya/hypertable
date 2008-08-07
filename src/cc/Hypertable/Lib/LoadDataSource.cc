@@ -81,10 +81,8 @@ LoadDataSource::LoadDataSource(const String &fname, const String &header_fname,
   int index = 0;
   KeyComponentInfo key_comps;
 
-  if (row_uniquify_chars) {
-    srandom((unsigned long)getpid());
+  if (row_uniquify_chars)
     m_rsgen = new FixedRandomStringGenerator(row_uniquify_chars);
-  }
 
   if (boost::algorithm::ends_with(fname, ".gz")) {
     m_fin.push(gzip_decompressor());

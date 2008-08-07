@@ -49,7 +49,10 @@ using namespace Hyperspace;
 Client::Client(const String &install_dir, const String &config_file) {
   System::initialize(install_dir);
   ReactorFactory::initialize((uint16_t)System::get_processor_count());
-  initialize(config_file);
+  if (config_file == "")
+    initialize(System::install_dir + "/conf/hypertable.cfg");
+  else
+    initialize(config_file);
 }
 
 Client::Client(const String &install_dir) {

@@ -22,6 +22,7 @@
 #ifndef HYPERTABLE_SYSTEM_H
 #define HYPERTABLE_SYSTEM_H
 
+#include <boost/random.hpp>
 #include <boost/thread/mutex.hpp>
 #include "Common/Version.h"
 #include "String.h"
@@ -47,11 +48,14 @@ namespace Hypertable {
 
     static int get_processor_count();
 
+    static uint32_t rand32() { return ms_rng(); }
+
   private:
     static void _init(const String &install_directory);
 
     static bool ms_initialized;
     static boost::mutex ms_mutex;
+    static boost::mt19937 ms_rng;
   };
 
 }

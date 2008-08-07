@@ -110,11 +110,6 @@ int main(int argc, char **argv) {
       }
     }
 
-    /**
-     * Seed random number generator with PID
-     */
-    srandom((unsigned)getpid());
-
     if (cfgfile == "")
       cfgfile = System::install_dir + "/conf/hypertable.cfg";
 

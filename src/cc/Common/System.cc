@@ -47,6 +47,7 @@ string System::install_dir;
 string System::exe_name;
 bool   System::ms_initialized = false;
 boost::mutex System::ms_mutex;
+boost::mt19937 System::ms_rng;
 
 String System::locate_install_dir(const char *argv0) {
   boost::mutex::scoped_lock lock(ms_mutex);
@@ -121,7 +122,7 @@ void System::_init(const String &install_directory) {
   boost::mutex::scoped_lock lock(ms_mutex);
 
   // seed the random number generator
-  srandom((unsigned)getpid());
+  ms_rng.seed((uint32_t)getpid());
 
   // set installation directory
   install_dir = install_directory;

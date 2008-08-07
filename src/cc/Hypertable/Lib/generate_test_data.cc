@@ -143,13 +143,10 @@ int main(int argc, char **argv) {
   if (tablename == "")
     Usage::dump_and_exit(usage);
 
-  if (cfgfile == "")
-    cfgfile = System::install_dir + "/conf/hypertable.cfg";
+  client = new Client(System::locate_install_dir(argv[0]), cfgfile);
 
   if (!tdata.load(System::install_dir + "/demo"))
     exit(1);
-
-  client = new Client(argv[0], cfgfile);
 
   try {
     schemaspec = client->get_schema(tablename);
@@ -184,8 +181,6 @@ int main(int argc, char **argv) {
   else if (tdata.words.size() < row_limit)
     row_limit = tdata.words.size();
 
-  srand(seed);
-
   /**
    * Output header line
    */
@@ -207,11 +202,11 @@ int main(int argc, char **argv) {
     }
 
     // row key
-    index = rand() % row_limit;
+    index = System::rand32() % row_limit;
     rowkey = tdata.words[index].get();
 
-    index = rand();
-    modval = rand() % 49;
+    index = System::rand32();
+    modval = System::rand32() % 49;
     if (!no_deletes && (index % 49) == (size_t)modval) {
       if (gen_timestamps)
         cout << timestamp << "\t" << rowkey << "\tDELETE" << endl;
@@ -220,14 +215,14 @@ int main(int argc, char **argv) {
       continue;
     }
 
-    index = rand();
+    index = System::rand32();
     family = (index % cfmax) + 1;
 
-    index = rand() % cqlimit;
+    index = System::rand32() % cqlimit;
     qualifier = tdata.urls[index].get();
 
-    index = rand();
-    modval = rand() % 29;
+    index = System::rand32();
+    modval = System::rand32() % 29;
     if (!no_deletes && (index % 29) == 0) {
       if (gen_timestamps)
         cout << timestamp << "\t" << rowkey << "\t" << cfnames[family] << ":" << qualifier << "\tDELETE" << endl;
@@ -236,7 +231,7 @@ int main(int argc, char **argv) {
       continue;
     }
 
-    index = rand() % tdata.content.size();
+    index = System::rand32() % tdata.content.size();
     content = tdata.content[index].get();
 
     if ((ptr = strchr(content, '\n')) != 0)

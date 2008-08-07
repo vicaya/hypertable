@@ -27,7 +27,6 @@
 #include <fstream>
 
 #include <boost/progress.hpp>
-#include <boost/shared_array.hpp>
 #include <boost/timer.hpp>
 #include <boost/thread/xtime.hpp>
 
@@ -47,15 +46,15 @@
 using namespace Hypertable;
 using namespace std;
 
-
 namespace {
+
   const char *usage[] = {
-    "usage: random_write_test [options] <total-bytes>",
+    "usage: random_read_test [options] <total-bytes>",
     "",
     "  options:",
-    "    --blocksize=<n>         Size of value to write",
+    "    --blocksize=<n>         Size of values supplied in write test",
     "    --checksum-file=<file>  Write keys + value checksum, one per line, to <file>",
-    "    --config=<file>         Read Hypertable config properties from <file>",
+    "    --config=<file>         Use <file> as Hypertable config file",
     "    --seed=<n>              Random number generator seed",
     "",
     "  This program ...",
@@ -63,18 +62,18 @@ namespace {
     (const char *)0
   };
 
-}
 
+
+}
 
 int main(int argc, char **argv) {
   ClientPtr hypertable_client_ptr;
   TablePtr table_ptr;
-  TableMutatorPtr mutator_ptr;
-  KeySpec key;
-  boost::shared_array<char> random_chars;
-  char *value_ptr;
-  uint64_t total = 0;
+  ScanSpecBuilder scan_spec;
+  TableScannerPtr scanner_ptr;
+  Cell cell;
   size_t blocksize = 0;
+  uint64_t total = 0;
   unsigned long seed = 1234;
   String config_file;
   bool write_checksums = false;
@@ -116,14 +115,8 @@ int main(int argc, char **argv) {
 
   size_t R = total / blocksize;
 
-  random_chars.reset( new char [ R + blocksize ] );
-
-  fill_buffer_with_random_ascii(random_chars.get(), R + blocksize);
-
-  srandom(seed);
-
   try {
-	
+
     if (config_file != "")
       hypertable_client_ptr = new Hypertable::Client(System::locate_install_dir(argv[0]), config_file);
     else
@@ -131,22 +124,15 @@ int main(int argc, char **argv) {
 
     table_ptr = hypertable_client_ptr->open_table("RandomTest");
 
-    mutator_ptr = table_ptr->create_mutator();
-	
   }
   catch (Hypertable::Exception &e) {
     cerr << "error: " << Error::get_text(e.code()) << " - " << e.what() << endl;
     return 1;
   }
 
-  memset(&key, 0, sizeof(key));
-  key.column_family = "Field";
-
   char key_data[32];
 
-  key.row_len = 12;
-  key.row = key_data;  // Row key: a random 12-digit number.
-  key_data[key.row_len] = '\0';
+  key_data[12] = '\0';  // Row key: a random 12-digit number.
 
   Stopwatch stopwatch;
 
@@ -155,26 +141,31 @@ int main(int argc, char **argv) {
 
     try {
 
-      value_ptr = random_chars.get();
-
       for (size_t i = 0; i < R; ++i) {
 
 	fill_buffer_with_random_ascii(key_data, 12);
 
-	if (write_checksums) {
-	  checksum = fletcher32(value_ptr, blocksize);
-	  checksum_out << key_data << "\t" << checksum << "\n";
-	}
-      
-	mutator_ptr->set(key, value_ptr, blocksize);
+	scan_spec.clear();
+	scan_spec.add_column("Field");
+	scan_spec.add_row(key_data);
 
-	value_ptr++;
+	TableScanner *scanner_ptr=table_ptr->create_scanner(scan_spec.get());
+        int n = 0;
+        while (scanner_ptr->next(cell)) {
+	  if (write_checksums) {
+	    checksum = fletcher32(cell.value, cell.value_len);
+	    checksum_out << key_data << "\t" << checksum << "\n";
+	  }
+          ++n;
+        }
+        if (n != 1) {
+          printf("Wrong number of results: %d (key=%s, i=%d)\n", n, key_data, (int)i);
+        }
+	delete scanner_ptr;
 
 	progress_meter += 1;
-
       }
 
-      mutator_ptr->flush();
     }
     catch (Hypertable::Exception &e) {
       cerr << "error: " << Error::get_text(e.code()) << " - " << e.what() << endl;
@@ -187,13 +178,13 @@ int main(int argc, char **argv) {
   if (write_checksums)
     checksum_out.close();
 
-  double total_written = (double)total + (double)(R*12);
+  double total_read = (double)total + (double)(R*12);
   
   printf("  Elapsed time:  %.2f s\n", stopwatch.elapsed());
-  printf(" Total inserts:  %llu\n", (Llu)R);
+  printf(" Total scanned:  %llu\n", (Llu)R);
   printf("    Throughput:  %.2f bytes/s\n",
-	 total_written / stopwatch.elapsed());
-  printf("    Throughput:  %.2f inserts/s\n",
+	 total_read / stopwatch.elapsed());
+  printf("    Throughput:  %.2f scanned cells/s\n",
 	 (double)R / stopwatch.elapsed());
 
 }
