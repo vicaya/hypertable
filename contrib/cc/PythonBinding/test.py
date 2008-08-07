@@ -1,28 +1,46 @@
 import ht
+import random
 
 # create client
-client = ht.Client("ht", "/opt/hypertable/0.9.0.7/conf/hypertable.cfg")
+client = ht.Client("/opt/hypertable/0.9.0.9/")
 
 # open the table
-table = client.open_table("METADATA")
+table = client.open_table("dummy4")
 
 # create scan specification
-scan_spec = ht.ScanSpec()
-scan_spec.start_row = "\x00"
-scan_spec.end_row = "\xff\xff"
-scan_spec.start_row_inclusive = True
-scan_spec.end_row_inclusive = True
-scan_spec.max_versions = 1
+#scan_spec_builder = ht.ScanSpecBuilder()
+#scan_spec_builder.add_row_interval("\x00", True, "\xff\xff", True)
+#scan_spec_builder.add_column("a")
 
 # initialize the scanner with it
-scanner = table.create_scanner(scan_spec)
+#scanner = table.create_scanner(scan_spec_builder)
 
 # create cell holding consecutive values from the scanner
-cell = ht.Cell()
+#cell = ht.Cell()
 
 # scan it!
-while scanner.next(cell):
+#while scanner.next(cell):
   # note that instead of cell.value and cell.value_len fields
   # you get single cell.value() function returning the value from the cell
-  print "%s:%s %s" % (cell.row_key, cell.column_family, cell.value())
+  #print "%s:%s %s" % (cell.row_key, cell.column_family, cell.value())
+
+
+# create table mutator
+
+mutator = table.create_mutator(10)
+
+families = ['meta', 'blob']
+k = 10000
+i = 1 
+while i < k+1 :
+  row = "row-%s" % (i)
+  family = families[0]
+  qualifier = ""
+  value = 'a' * 10 * 1024 
+  if i % 5000 == 0:
+    print "%s/%s" % (i,k)
+  mutator.set(row, family, qualifier, value, len(value)) 
+  i = i + 1
+
+mutator.flush()
 

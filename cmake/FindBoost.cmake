@@ -9,6 +9,7 @@
 #  BOOST_THREAD_LIB - The name of the boost thread library
 #  BOOST_PROGRAM_OPTIONS_LIB - The name of the boost program options library
 #  BOOST_IOSTREAMS_LIB - The name of the boost program options library
+#  BOOST_PYTHON_LIB - The name of the boost python library
 # ----------------------------------------------------------------------------
 #
 # Usage:
@@ -114,10 +115,12 @@ if (Boost_INCLUDE_DIR)
   FIND_BOOST_LIBRARY(BOOST_THREAD_LIB thread ${Boost_PARENT})
   FIND_BOOST_LIBRARY(BOOST_PROGRAM_OPTIONS_LIB program_options ${Boost_PARENT})
   FIND_BOOST_LIBRARY(BOOST_IOSTREAMS_LIB iostreams ${Boost_PARENT})
+  FIND_BOOST_LIBRARY(BOOST_PYTHON_LIB python ${Boost_PARENT})
 
   message(STATUS "Boost thread lib: ${BOOST_THREAD_LIB}")
   message(STATUS "Boost program options lib: ${BOOST_PROGRAM_OPTIONS_LIB}")
   message(STATUS "Boost iostreams lib: ${BOOST_IOSTREAMS_LIB}")
+  message(STATUS "Boost python lib: ${BOOST_PYTHON_LIB}")
   get_filename_component(Boost_LIBRARY_DIR ${BOOST_THREAD_LIB} PATH)
   message(STATUS "Boost lib dir: ${Boost_LIBRARY_DIR}")
 

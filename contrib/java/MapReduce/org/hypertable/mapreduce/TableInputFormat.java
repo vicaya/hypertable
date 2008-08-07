@@ -28,8 +28,7 @@ public class TableInputFormat implements InputFormat<Text, MapWritable>, JobConf
 
   public TableInputFormat() {
     Configuration conf = new Configuration();
-    m_rootPath = conf.get("hypertable.root.path",
-        "/opt/hypertable/0.9.0.7/");
+    m_rootPath = conf.get("hypertable.root.path","you didn't configure hadoop");
   }
 
   public void configure(JobConf job)
