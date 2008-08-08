@@ -38,7 +38,8 @@ target_link_libraries(HyperDfsCmds HyperDfsBroker)
 
 # dfsclient - command interpreter
 add_executable(dfsclient dfsclient.cc)
-target_link_libraries(dfsclient HyperDfsCmds)
+target_link_libraries(dfsclient HyperDfsCmds ${NCURSES_LIBRARY} ${READLINE_LIBRARY})
+
 
 # dfsTest
 add_executable(dfsTest dfsTest.cc dfsTestThreadFunction.cc)
