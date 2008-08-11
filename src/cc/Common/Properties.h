@@ -58,7 +58,13 @@ namespace Hypertable {
 
     String set(const char *key, const char *value);
 
+    int set_int(const String &key, int value);
+
+    int64_t set_int64(const String &key, int64_t value);
+
   private:
+
+    int64_t parse_int_value(const String &key, const String &value);
     typedef hash_map<String, String> PropertyMap;
 
     PropertyMap  m_map;
