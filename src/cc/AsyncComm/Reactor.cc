@@ -106,9 +106,9 @@ Reactor::Reactor() : m_mutex(), m_interrupt_in_progress(false) {
 #if defined(__linux__)
   struct epoll_event event;
   memset(&event, 0, sizeof(struct epoll_event));
-  event.events = EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP | EPOLLET;
+  event.events = EPOLLIN | EPOLLOUT | POLLRDHUP | EPOLLET;
   if (epoll_ctl(poll_fd, EPOLL_CTL_ADD, m_interrupt_sd, &event) < 0) {
-    HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLERR|EPOLLHUP) failed : %s",
+    HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN | EPOLLOUT | POLLRDHUP | EPOLLET) failed : %s",
                  poll_fd, m_interrupt_sd, strerror(errno));
     exit(1);
   }

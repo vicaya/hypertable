@@ -66,6 +66,8 @@ void IOHandler::display_event(struct epoll_event *event) {
     strcat(buf, "EPOLLERR ");
   else if (event->events & EPOLLHUP)
     strcat(buf, "EPOLLHUP ");
+  else if (event->events & POLLRDHUP)
+    strcat(buf, "POLLRDHUP ");
   else if (event->events & EPOLLET)
     strcat(buf, "EPOLLET ");
   else if (event->events & EPOLLONESHOT)

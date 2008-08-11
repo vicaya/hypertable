@@ -70,43 +70,49 @@ bool IOHandlerAccept::handle_incoming_connection() {
   int one = 1;
   IOHandlerData *data_handler;
 
-  if ((sd = accept(m_sd, (struct sockaddr *)&addr, &addr_len)) < 0) {
-    HT_ERRORF("accept() failure: %s", strerror(errno));
-    return false;
-  }
+  while (true) {
 
-  HT_DEBUGF("Just accepted incoming connection, fd=%d (%s:%d)", m_sd, inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+    if ((sd = accept(m_sd, (struct sockaddr *)&addr, &addr_len)) < 0) {
+      if (errno == EAGAIN)
+	break;
+      HT_ERRORF("accept() failure: %s", strerror(errno));
+      break;
+    }
 
-  // Set to non-blocking
-  FileUtils::set_flags(sd, O_NONBLOCK);
+    HT_DEBUGF("Just accepted incoming connection, fd=%d (%s:%d)", m_sd, inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+
+    // Set to non-blocking
+    FileUtils::set_flags(sd, O_NONBLOCK);
 
 #if defined(__linux__)
-  if (setsockopt(sd, SOL_TCP, TCP_NODELAY, &one, sizeof(one)) < 0)
-    HT_WARNF("setsockopt(TCP_NODELAY) failure: %s", strerror(errno));
+    if (setsockopt(sd, SOL_TCP, TCP_NODELAY, &one, sizeof(one)) < 0)
+      HT_WARNF("setsockopt(TCP_NODELAY) failure: %s", strerror(errno));
 #elif defined(__APPLE__)
-  if (setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one)) < 0)
-    HT_WARNF("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
+    if (setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one)) < 0)
+      HT_WARNF("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
 #endif
 
-  int bufsize = 4*32768;
+    int bufsize = 4*32768;
 
-  if (setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize, sizeof(bufsize)) < 0) {
-    HT_WARNF("setsockopt(SO_SNDBUF) failed - %s", strerror(errno));
+    if (setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize, sizeof(bufsize)) < 0) {
+      HT_WARNF("setsockopt(SO_SNDBUF) failed - %s", strerror(errno));
+    }
+    if (setsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char *)&bufsize, sizeof(bufsize)) < 0) {
+      HT_WARNF("setsockopt(SO_RCVBUF) failed - %s", strerror(errno));
+    }
+
+    DispatchHandlerPtr dhp;
+    m_handler_factory_ptr->get_instance(dhp);
+
+    data_handler = new IOHandlerData(sd, addr, dhp);
+
+    IOHandlerPtr handler(data_handler);
+    m_handler_map_ptr->insert_handler(data_handler);
+    data_handler->start_polling();
+
+    deliver_event(new Event(Event::CONNECTION_ESTABLISHED, data_handler->connection_id(), addr, Error::OK));
+  
   }
-  if (setsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char *)&bufsize, sizeof(bufsize)) < 0) {
-    HT_WARNF("setsockopt(SO_RCVBUF) failed - %s", strerror(errno));
-  }
-
-  DispatchHandlerPtr dhp;
-  m_handler_factory_ptr->get_instance(dhp);
-
-  data_handler = new IOHandlerData(sd, addr, dhp);
-
-  IOHandlerPtr handler(data_handler);
-  m_handler_map_ptr->insert_handler(data_handler);
-  data_handler->start_polling();
-
-  deliver_event(new Event(Event::CONNECTION_ESTABLISHED, data_handler->connection_id(), addr, Error::OK));
 
   return false;
  }

@@ -120,7 +120,7 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
         nread = et_socket_read(m_sd, ptr, m_message_header_remaining, &error);
         if (nread == (size_t)-1) {
 	  if (error == EAGAIN)
-	    return false;
+	    break;
           if (errno != ECONNREFUSED) {
             HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_header_remaining, strerror(errno));
           }
@@ -130,22 +130,13 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
           deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, error));
           return true;
         }
-	else if (nread == 0) {
-	  if (error == EAGAIN)
-	    return false;
-	  if (m_connected && total_read == 0) {
-	    m_reactor_ptr->cancel_requests(this);
-	    HT_ERRORF("read returned 0 : %s", strerror(errno));
-	    deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
-	    return true;
-	  }
-	  return false;
-	}
         else if (nread < m_message_header_remaining) {
+	  if (nread == 0)
+	    break;
           m_message_header_remaining -= nread;
 	  total_read += nread;
 	  if (error == EAGAIN)
-	    return false;
+	    break;
 	  error = 0;
         }
         else {
@@ -162,29 +153,20 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
         nread = et_socket_read(m_sd, m_message_ptr, m_message_remaining, &error);
         if (nread < 0) {
 	  if (error == EAGAIN)
-	    return false;
+	    break;
           HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd, m_message_header_remaining, strerror(errno));
 	  m_reactor_ptr->cancel_requests(this);
           deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
           return true;
         }
-	else if (nread == 0) {
-	  if (error == EAGAIN)
-	    return false;
-	  if (m_connected && total_read == 0) {
-	    m_reactor_ptr->cancel_requests(this);
-	    HT_ERRORF("read returned 0 : %s", strerror(errno));
-	    deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
-	    return true;
-	  }
-	  return false;
-	}
         else if (nread < m_message_remaining) {
+	  if (nread == 0)
+	    break;
           m_message_ptr += nread;
           m_message_remaining -= nread;
 	  total_read += nread;
 	  if (error == EAGAIN)
-	    return false;
+	    break;
 	  error = 0;
         }
         else {
@@ -207,15 +189,22 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
     }
   }
 
+  if (event->events & POLLRDHUP) {
+    HT_INFOF("Received POLLRDHUP on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+    m_reactor_ptr->cancel_requests(this);
+    deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
+    return true;
+  }
+
   if (event->events & EPOLLERR) {
-    HT_WARNF("Received EPOLLERR on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+    HT_ERRORF("Received EPOLLERR on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
     m_reactor_ptr->cancel_requests(this);
     deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
     return true;
   }
 
   if (event->events & EPOLLHUP) {
-    HT_WARNF("Received EPOLLHUP on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+    HT_INFOF("Received EPOLLHUP on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
     m_reactor_ptr->cancel_requests(this);
     deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
     return true;

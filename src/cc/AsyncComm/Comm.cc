@@ -161,6 +161,9 @@ Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chf_ptr,
   if ((sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
     HT_THROW(Error::COMM_SOCKET_ERROR, strerror(errno));
 
+  // Set to non-blocking
+  FileUtils::set_flags(sd, O_NONBLOCK);
+
 #if defined(__linux__)
   if (setsockopt(sd, SOL_TCP, TCP_NODELAY, &one, sizeof(one)) < 0)
     HT_ERRORF("setting TCP_NODEPLAY: %s", strerror(errno));
