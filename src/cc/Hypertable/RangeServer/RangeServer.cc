@@ -1868,8 +1868,6 @@ void RangeServer::schedule_log_cleanup_compactions(std::vector<RangePtr> &range_
   LogFragmentPriorityMap log_frag_map;
   int64_t timestamp, oldest_cached_timestamp = 0;
 
-  range_vec.clear();
-
   // Load up a vector of compaction priority data
   for (size_t i=0; i<range_vec.size(); i++) {
     size_t start = priority_data_vec.size();
