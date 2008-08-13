@@ -39,6 +39,7 @@ extern "C" {
 
 #include "Logger.h"
 #include "Properties.h"
+#include "StringExt.h"
 
 using namespace std;
 using namespace Hypertable;
@@ -121,34 +122,12 @@ const char *Properties::get(const char *str, const char *defaultval) {
  *
  */
 int64_t Properties::get_int64(const char *str, int64_t defaultval) {
-  const char *ptr;
 
   PropertyMap::iterator iter = m_map.find(str);
   if (iter == m_map.end())
     return defaultval;
 
-  for (ptr = (*iter).second.c_str(); isdigit(*ptr); ptr++)
-    ;
-
-  uint64_t factor = 1LL;
-  if (*ptr != 0) {
-    if (!strcasecmp(ptr, "k"))
-      factor = 1000LL;
-    else if (!strcasecmp(ptr, "m"))
-      factor = 1000000LL;
-    else if (!strcasecmp(ptr, "g"))
-      factor = 1000000000LL;
-    else
-      throw std::invalid_argument(string("Invalid value for integer property '") + str + "' (value=" + (*iter).second + ")");
-  }
-
-  string numstr = string((*iter).second.c_str(), ptr-(*iter).second.c_str());
-
-  int64_t llval = strtoll(numstr.c_str(), 0, 0);
-  if (llval == 0 && errno == EINVAL)
-    throw std::invalid_argument(string("Could not convert property '") + str + "' (value=" + (*iter).second + ") to an integer");
-
-  return llval * factor;
+  return parse_int_value(str, (*iter).second);
 }
 
 int Properties::get_int(const char *str, int defaultval) {
@@ -187,4 +166,64 @@ std::string Properties::set(const char *key, const char *value) {
   m_map[key] = value;
 
   return oldval;
+}
+
+
+int Properties::set_int(const String &key, int value) {
+  int64_t old_val = 0;
+
+  if (value > numeric_limits<int>::max())
+    throw std::invalid_argument(string("Integer value too large for property '") + key + "'");
+
+  PropertyMap::iterator iter = m_map.find(key);
+  if (iter != m_map.end()) {
+    old_val = parse_int_value(key, (*iter).second);
+    if (old_val > numeric_limits<int>::max())
+      throw std::invalid_argument(string("Integer value too large for property '") + key + "'");
+  }
+
+  m_map[key] = std::string("") + value;
+
+  return old_val;
+}
+
+
+int64_t Properties::set_int64(const String &key, int64_t value) {
+  int64_t old_val = 0;
+
+  PropertyMap::iterator iter = m_map.find(key);
+  if (iter != m_map.end())
+    old_val = parse_int_value(key, (*iter).second);
+
+  m_map[key] = std::string("") + (long long)value;
+
+  return old_val;
+}
+
+
+int64_t Properties::parse_int_value(const String &key, const String &value) {
+  const char *ptr;
+
+  for (ptr = value.c_str(); isdigit(*ptr); ptr++)
+    ;
+
+  uint64_t factor = 1LL;
+  if (*ptr != 0) {
+    if (!strcasecmp(ptr, "k"))
+      factor = 1000LL;
+    else if (!strcasecmp(ptr, "m"))
+      factor = 1000000LL;
+    else if (!strcasecmp(ptr, "g"))
+      factor = 1000000000LL;
+    else
+      throw std::invalid_argument(string("Invalid value for integer property '") + key + "' (value=" + value + ")");
+  }
+
+  string numstr = string(value.c_str(), ptr-value.c_str());
+
+  int64_t llval = strtoll(numstr.c_str(), 0, 0);
+  if (llval == 0 && errno == EINVAL)
+    throw std::invalid_argument(string("Could not convert property '") + key + "' (value=" + value + ") to an integer");
+
+  return llval * factor;
 }

@@ -73,7 +73,6 @@ public class OpenFileMap {
                 e.printStackTrace();
             }
         }
-        mFileMap.clear();
 	java.lang.System.out.println("Closed " + icount + " input streams and " +
 				     ocount + " output streams for client connection " + addr);
     }
