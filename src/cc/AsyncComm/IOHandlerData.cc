@@ -56,7 +56,7 @@ namespace {
    * When this function returns with *errnop set to EAGAIN, it is safe to call
    * epoll_wait on this socket.
    */
-  ssize_t et_socket_read(int fd, void *vptr, size_t n, int *errnop) {
+  ssize_t et_socket_read(int fd, void *vptr, size_t n, int *errnop, bool *eofp) {
     size_t nleft;
     ssize_t nread;
     char *ptr;
@@ -74,8 +74,10 @@ namespace {
 	  break;
 	return -1;
       }
-      else if (nread == 0)
-	break; /* EOF */
+      else if (nread == 0) {
+	*eofp = true;
+	break;
+      }
 
       nleft -= nread;
       ptr   += nread;
@@ -101,6 +103,7 @@ namespace {
 
 bool IOHandlerData::handle_event(struct epoll_event *event) {
   int error = 0;
+  bool eof = false;
 
   //DisplayEvent(event);
 
@@ -113,11 +116,11 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
   }
 
   if (event->events & EPOLLIN) {
-    size_t nread, total_read = 0;
+    size_t nread;
     while (true) {
       if (!m_got_header) {
         uint8_t *ptr = ((uint8_t *)&m_message_header) + (sizeof(Header::Common) - m_message_header_remaining);
-        nread = et_socket_read(m_sd, ptr, m_message_header_remaining, &error);
+        nread = et_socket_read(m_sd, ptr, m_message_header_remaining, &error, &eof);
         if (nread == (size_t)-1) {
 	  if (error == EAGAIN)
 	    break;
@@ -131,26 +134,24 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
           return true;
         }
         else if (nread < m_message_header_remaining) {
-	  if (nread == 0)
-	    break;
           m_message_header_remaining -= nread;
-	  total_read += nread;
 	  if (error == EAGAIN)
 	    break;
 	  error = 0;
         }
         else {
           m_got_header = true;
-	  total_read += nread;
           m_message_header_remaining = 0;
           m_message = new uint8_t [m_message_header.total_len];
           memcpy(m_message, &m_message_header, sizeof(Header::Common));
           m_message_ptr = m_message + sizeof(Header::Common);
           m_message_remaining = (m_message_header.total_len) - sizeof(Header::Common);
         }
+	if (eof)
+	  break;
       }
       if (m_got_header) {
-        nread = et_socket_read(m_sd, m_message_ptr, m_message_remaining, &error);
+        nread = et_socket_read(m_sd, m_message_ptr, m_message_remaining, &error, &eof);
         if (nread < 0) {
 	  if (error == EAGAIN)
 	    break;
@@ -160,11 +161,8 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
           return true;
         }
         else if (nread < m_message_remaining) {
-	  if (nread == 0)
-	    break;
           m_message_ptr += nread;
           m_message_remaining -= nread;
-	  total_read += nread;
 	  if (error == EAGAIN)
 	    break;
 	  error = 0;
@@ -172,7 +170,6 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
         else {
           DispatchHandler *dh = 0;
           uint32_t id = ((Header::Common *)m_message)->id;
-	  total_read += nread;
           if ((((Header::Common *)m_message)->flags & Header::FLAGS_BIT_REQUEST) == 0 &&
               (id == 0 || (dh = m_reactor_ptr->remove_request(id)) == 0)) {
             if ((((Header::Common *)m_message)->flags & Header::FLAGS_BIT_IGNORE_RESPONSE) == 0) {
@@ -185,16 +182,27 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
             deliver_event(new Event(Event::MESSAGE, m_id, m_addr, Error::OK, (Header::Common *)m_message), dh);
           reset_incoming_message_state();
         }
+	if (eof)
+	  break;
       }
     }
   }
 
+#if defined(HT_EPOLLET)
   if (event->events & POLLRDHUP) {
-    HT_INFOF("Received POLLRDHUP on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+    HT_DEBUGF("Received POLLRDHUP on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
     m_reactor_ptr->cancel_requests(this);
     deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
     return true;
   }
+#else
+  if (eof) {
+    HT_DEBUGF("Received EOF on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+    m_reactor_ptr->cancel_requests(this);
+    deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
+    return true;
+  }
+#endif
 
   if (event->events & EPOLLERR) {
     HT_ERRORF("Received EPOLLERR on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
@@ -204,7 +212,7 @@ bool IOHandlerData::handle_event(struct epoll_event *event) {
   }
 
   if (event->events & EPOLLHUP) {
-    HT_INFOF("Received EPOLLHUP on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+    HT_DEBUGF("Received EPOLLHUP on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
     m_reactor_ptr->cancel_requests(this);
     deliver_event(new Event(Event::DISCONNECT, m_id, m_addr, Error::OK));
     return true;

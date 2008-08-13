@@ -104,14 +104,24 @@ Reactor::Reactor() : m_mutex(), m_interrupt_in_progress(false) {
   }
 
 #if defined(__linux__)
+#if defined(HT_EPOLLET)
   struct epoll_event event;
   memset(&event, 0, sizeof(struct epoll_event));
   event.events = EPOLLIN | EPOLLOUT | POLLRDHUP | EPOLLET;
   if (epoll_ctl(poll_fd, EPOLL_CTL_ADD, m_interrupt_sd, &event) < 0) {
     HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN | EPOLLOUT | POLLRDHUP | EPOLLET) failed : %s",
-                 poll_fd, m_interrupt_sd, strerror(errno));
+	      poll_fd, m_interrupt_sd, strerror(errno));
     exit(1);
   }
+#else
+  struct epoll_event event;
+  memset(&event, 0, sizeof(struct epoll_event));
+  if (epoll_ctl(poll_fd, EPOLL_CTL_ADD, m_interrupt_sd, &event) < 0) {
+    HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, 0) failed : %s",
+	      poll_fd, m_interrupt_sd, strerror(errno));
+    exit(1);
+  }
+#endif
 #endif
 
   memset(&m_next_wakeup, 0, sizeof(m_next_wakeup));
@@ -199,6 +209,8 @@ void Reactor::poll_loop_interrupt() {
 
 #if defined(__linux__)
 
+#if defined(HT_EPOLLET)
+
   char buf[8];
   ssize_t n;
 
@@ -215,6 +227,21 @@ void Reactor::poll_loop_interrupt() {
     HT_ERRORF("recv(interrupt_sd) failed - %s", strerror(errno));
     exit(1);
   }
+
+#else
+
+  struct epoll_event event;
+  memset(&event, 0, sizeof(struct epoll_event));
+  event.events = EPOLLOUT;
+  if (epoll_ctl(poll_fd, EPOLL_CTL_MOD, m_interrupt_sd, &event) < 0) {
+    /**
+       HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_MOD, sd=%d) : %s",
+       npoll_fd, m_interrupt_sd, strerror(errno));
+       DUMP_CORE;
+    **/
+  }
+
+#endif
 
 #elif defined(__APPLE__)
   struct kevent event;
@@ -239,7 +266,21 @@ void Reactor::poll_loop_continue() {
   if (!m_interrupt_in_progress)
     return;
 
-#if defined(__APPLE__)
+#if defined(__linux__)
+
+#if !defined(HT_EPOLLET)
+  struct epoll_event event;
+
+  memset(&event, 0, sizeof(struct epoll_event));
+  event.events = EPOLLERR | EPOLLHUP;
+
+  if (epoll_ctl(poll_fd, EPOLL_CTL_MOD, m_interrupt_sd, &event) < 0) {
+    HT_ERRORF("epoll_ctl(EPOLL_CTL_MOD, sd=%d) : %s", m_interrupt_sd, strerror(errno));
+    exit(1);
+  }
+#endif
+
+#elif defined(__APPLE__)
   struct kevent devent;
 
   EV_SET(&devent, m_interrupt_sd, EVFILT_WRITE, EV_DELETE, 0, 0, 0);
@@ -248,6 +289,8 @@ void Reactor::poll_loop_continue() {
     HT_ERRORF("kevent(sd=%d) : %s", m_interrupt_sd, strerror(errno));
     exit(1);
   }
+#else
+  ImplementMe();
 #endif
   m_interrupt_in_progress = false;
 }

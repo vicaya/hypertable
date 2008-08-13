@@ -170,7 +170,7 @@ std::string Properties::set(const char *key, const char *value) {
 
 
 int Properties::set_int(const String &key, int value) {
-  int64_t old_val;
+  int64_t old_val = 0;
 
   if (value > numeric_limits<int>::max())
     throw std::invalid_argument(string("Integer value too large for property '") + key + "'");
@@ -189,7 +189,7 @@ int Properties::set_int(const String &key, int value) {
 
 
 int64_t Properties::set_int64(const String &key, int64_t value) {
-  int64_t old_val;
+  int64_t old_val = 0;
 
   PropertyMap::iterator iter = m_map.find(key);
   if (iter != m_map.end())
