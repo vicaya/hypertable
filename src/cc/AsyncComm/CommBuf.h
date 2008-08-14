@@ -28,6 +28,7 @@
 
 #include "Common/ByteString.h"
 #include "Common/Logger.h"
+#include "Common/ReferenceCount.h"
 #include "Common/Serialization.h"
 #include "Common/StaticBuffer.h"
 
@@ -64,7 +65,7 @@ namespace Hypertable {
    * </pre>
    *
    */
-  class CommBuf {
+  class CommBuf : public ReferenceCount {
   public:
 
     /**
@@ -269,7 +270,7 @@ namespace Hypertable {
     const uint8_t *ext_ptr;
   };
 
-  typedef boost::shared_ptr<CommBuf> CommBufPtr;
+  typedef boost::intrusive_ptr<CommBuf> CommBufPtr;
 
 }
 

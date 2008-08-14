@@ -39,21 +39,16 @@ const char *CommandAttrDel::ms_usage[] = {
   (const char *)0
 };
 
-int CommandAttrDel::run() {
+void CommandAttrDel::run() {
   uint64_t handle;
 
-  if (m_args.size() != 2) {
-    cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
-    return -1;
-  }
+  if (m_args.size() != 2)
+    HT_THROW(Error::PARSE_ERROR, "Wrong number of arguments.  Type 'help' for usage.");
 
-  if (m_args[0].second != "" || m_args[1].second != "") {
-    cerr << "Invalid character '=' in argument." << endl;
-    return -1;
-  }
+  if (m_args[0].second != "" || m_args[1].second != "")
+    HT_THROW(Error::PARSE_ERROR, "Invalid character '=' in argument.");
 
-  if (!Util::get_handle(m_args[0].first, &handle))
-    return -1;
+  handle = Util::get_handle(m_args[0].first);
 
-  return m_session->attr_del(handle, m_args[1].first);
+  m_session->attr_del(handle, m_args[1].first);
 }

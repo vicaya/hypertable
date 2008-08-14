@@ -120,7 +120,6 @@ RangeLocator::RangeLocator(PropertiesPtr &props_ptr, Comm *comm,
 
 
 void RangeLocator::initialize() {
-  int error;
   DynamicBuffer valbuf(0);
   HandleCallbackPtr null_handle_callback;
   uint64_t handle;
@@ -128,20 +127,11 @@ void RangeLocator::initialize() {
 
   m_root_handler_ptr = new RootFileHandler(this);
 
-  if ((error = m_hyperspace_ptr->open("/hypertable/root", OPEN_FLAG_READ, m_root_handler_ptr, &m_root_file_handle)) != Error::OK) {
-    HT_ERRORF("Unable to open Hyperspace file '/hypertable/root' (%s)", Error::get_text(error));
-    HT_THROW(error, "");
-  }
+  m_root_file_handle = m_hyperspace_ptr->open("/hypertable/root", OPEN_FLAG_READ, m_root_handler_ptr);
 
-  if ((error = m_hyperspace_ptr->open("/hypertable/tables/METADATA", OPEN_FLAG_READ, null_handle_callback, &handle)) != Error::OK) {
-    HT_ERRORF("Unable to open Hyperspace file '/hypertable/tables/METADATA' (%s)", Error::get_text(error));
-    HT_THROW(error, "");
-  }
+  handle = m_hyperspace_ptr->open("/hypertable/tables/METADATA", OPEN_FLAG_READ, null_handle_callback);
 
-  if ((error = m_hyperspace_ptr->attr_get(handle, "schema", valbuf)) != Error::OK) {
-    HT_ERROR("Problem getting 'schema' attribute from METADATA hyperspace file");
-    HT_THROW(error, "");
-  }
+  m_hyperspace_ptr->attr_get(handle, "schema", valbuf);
 
   m_hyperspace_ptr->close(handle);
 
@@ -522,14 +512,10 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
  *
  */
 int RangeLocator::read_root_location(Timer &timer) {
-  int error;
   DynamicBuffer value(0);
   std::string addr_str;
 
-  if ((error = m_hyperspace_ptr->attr_get(m_root_file_handle, "Location", value)) != Error::OK) {
-    HT_ERRORF("Problem reading 'Location' attribute of Hyperspace file /hypertable/root - %s", Error::get_text(error));
-    return error;
-  }
+  m_hyperspace_ptr->attr_get(m_root_file_handle, "Location", value);
 
   m_root_range_info.start_row  = "";
   m_root_range_info.end_row    = Key::END_ROOT_ROW;

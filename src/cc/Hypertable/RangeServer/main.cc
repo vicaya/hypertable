@@ -87,93 +87,99 @@ int main(int argc, char **argv) {
     int worker_count;
     TimerHandlerPtr timer_handler_ptr;
 
-    System::initialize(System::locate_install_dir(argv[0]));
-    Global::verbose = false;
+    try {
 
-    if (argc > 1) {
-      for (int i=1; i<argc; i++) {
-        if (!strncmp(argv[i], "--config=", 9))
-          cfgfile = &argv[i][9];
-        else if (!strncmp(argv[i], "--log-broker=", 13))
-          logbroker = &argv[i][13];
-        else if (!strncmp(argv[i], "--pidfile=", 10))
-          pidfile = &argv[i][10];
-        else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
-          Global::verbose = true;
-        else if (!strncmp(argv[i], "--crash-test=", 13)) {
-	  if (Global::crash_test == 0)
-	    Global::crash_test = new CrashTest();
-	  Global::crash_test->parse_option(&argv[i][13]);
+      System::initialize(System::locate_install_dir(argv[0]));
+      Global::verbose = false;
+
+      if (argc > 1) {
+	for (int i=1; i<argc; i++) {
+	  if (!strncmp(argv[i], "--config=", 9))
+	    cfgfile = &argv[i][9];
+	  else if (!strncmp(argv[i], "--log-broker=", 13))
+	    logbroker = &argv[i][13];
+	  else if (!strncmp(argv[i], "--pidfile=", 10))
+	    pidfile = &argv[i][10];
+	  else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
+	    Global::verbose = true;
+	  else if (!strncmp(argv[i], "--crash-test=", 13)) {
+	    if (Global::crash_test == 0)
+	      Global::crash_test = new CrashTest();
+	    Global::crash_test->parse_option(&argv[i][13]);
+	  }
+	  else
+	    Usage::dump_and_exit(usage);
 	}
-        else
-          Usage::dump_and_exit(usage);
       }
-    }
 
-    if (cfgfile == "")
-      cfgfile = System::install_dir + "/conf/hypertable.cfg";
+      if (cfgfile == "")
+	cfgfile = System::install_dir + "/conf/hypertable.cfg";
 
-    props_ptr = new Properties(cfgfile);
-    if (Global::verbose)
-      props_ptr->set("Hypertable.Verbose", "true");
+      props_ptr = new Properties(cfgfile);
+      if (Global::verbose)
+	props_ptr->set("Hypertable.Verbose", "true");
 
-    if (logbroker != 0) {
-      char *portstr = strchr(logbroker, ':');
-      if (portstr == 0) {
-        HT_ERROR("Invalid address format for --log-broker, must be <host>:<port>");
-        exit(1);
+      if (logbroker != 0) {
+	char *portstr = strchr(logbroker, ':');
+	if (portstr == 0) {
+	  HT_ERROR("Invalid address format for --log-broker, must be <host>:<port>");
+	  exit(1);
+	}
+	*portstr++ = 0;
+	props_ptr->set("Hypertable.RangeServer.CommitLog.DfsBroker.Host", logbroker);
+	props_ptr->set("Hypertable.RangeServer.CommitLog.DfsBroker.Port", portstr);
       }
-      *portstr++ = 0;
-      props_ptr->set("Hypertable.RangeServer.CommitLog.DfsBroker.Host", logbroker);
-      props_ptr->set("Hypertable.RangeServer.CommitLog.DfsBroker.Port", portstr);
+
+      reactor_count = props_ptr->get_int("Hypertable.RangeServer.Reactors", System::get_processor_count());
+      ReactorFactory::initialize(reactor_count);
+      Comm *comm = Comm::instance();
+
+      worker_count = props_ptr->get_int("Hypertable.RangeServer.Workers", DEFAULT_WORKERS);
+
+      conn_manager_ptr = new ConnectionManager(comm);
+      app_queue_ptr = new ApplicationQueue(worker_count);
+
+      /**
+       * Connect to Hyperspace
+       */
+      Global::hyperspace_ptr = new Hyperspace::Session(comm, props_ptr, new HyperspaceSessionHandler());
+      if (!Global::hyperspace_ptr->wait_for_connection(30)) {
+	HT_ERROR("Unable to connect to hyperspace, exiting...");
+	exit(1);
+      }
+
+      Global::range_metadata_max_bytes = props_ptr->get_int64("Hypertable.RangeServer.Range.MetadataMaxBytes", 0LL);
+
+      if (Global::verbose) {
+	cout << "CPU count = " << System::get_processor_count() << endl;
+	cout << "Hypertable.RangeServer.Reactors=" << reactor_count << endl;
+	if (Global::range_metadata_max_bytes != 0)
+	  cout << "Hypertable.RangeServer.Range.MetadataMaxBytes=" << Global::range_metadata_max_bytes << endl;
+      }
+
+      RangeServerPtr range_server_ptr = new RangeServer(props_ptr, conn_manager_ptr, app_queue_ptr, Global::hyperspace_ptr);
+
+      if (pidfile != "") {
+	fstream filestr (pidfile.c_str(), fstream::out);
+	filestr << getpid() << endl;
+	filestr.close();
+      }
+
+      // install maintenance timer
+      timer_handler_ptr = new TimerHandler(comm, range_server_ptr.get());
+
+      app_queue_ptr->join();
+
+      Global::metadata_table_ptr = 0;
+
+      ReactorFactory::destroy();
+
+      HT_ERROR("Exiting RangeServer.");
+
     }
-
-    reactor_count = props_ptr->get_int("Hypertable.RangeServer.Reactors", System::get_processor_count());
-    ReactorFactory::initialize(reactor_count);
-    Comm *comm = Comm::instance();
-
-    worker_count = props_ptr->get_int("Hypertable.RangeServer.Workers", DEFAULT_WORKERS);
-
-    conn_manager_ptr = new ConnectionManager(comm);
-    app_queue_ptr = new ApplicationQueue(worker_count);
-
-    /**
-     * Connect to Hyperspace
-     */
-    Global::hyperspace_ptr = new Hyperspace::Session(comm, props_ptr, new HyperspaceSessionHandler());
-    if (!Global::hyperspace_ptr->wait_for_connection(30)) {
-      HT_ERROR("Unable to connect to hyperspace, exiting...");
-      exit(1);
+    catch (Exception &e) {
+      HT_ERROR_OUT << e << HT_END;
     }
-
-    Global::range_metadata_max_bytes = props_ptr->get_int64("Hypertable.RangeServer.Range.MetadataMaxBytes", 0LL);
-
-    if (Global::verbose) {
-      cout << "CPU count = " << System::get_processor_count() << endl;
-      cout << "Hypertable.RangeServer.Reactors=" << reactor_count << endl;
-      if (Global::range_metadata_max_bytes != 0)
-        cout << "Hypertable.RangeServer.Range.MetadataMaxBytes=" << Global::range_metadata_max_bytes << endl;
-    }
-
-    RangeServerPtr range_server_ptr = new RangeServer(props_ptr, conn_manager_ptr, app_queue_ptr, Global::hyperspace_ptr);
-
-    if (pidfile != "") {
-      fstream filestr (pidfile.c_str(), fstream::out);
-      filestr << getpid() << endl;
-      filestr.close();
-    }
-
-    // install maintenance timer
-    timer_handler_ptr = new TimerHandler(comm, range_server_ptr.get());
-
-    app_queue_ptr->join();
-
-    Global::metadata_table_ptr = 0;
-
-    ReactorFactory::destroy();
-
-    HT_ERROR("Exiting RangeServer.");
-
   }
   exit(1);
 }

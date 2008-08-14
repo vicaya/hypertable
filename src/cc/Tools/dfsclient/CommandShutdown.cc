@@ -41,7 +41,7 @@ const char *CommandShutdown::ms_usage[] = {
 };
 
 
-int CommandShutdown::run() {
+void CommandShutdown::run() {
   DispatchHandlerSynchronizer sync_handler;
   uint16_t flags = 0;
   EventPtr event_ptr;
@@ -49,17 +49,14 @@ int CommandShutdown::run() {
   if (m_args.size() > 0) {
     if (m_args[0].first == "now")
       flags |= DfsBroker::Protocol::SHUTDOWN_FLAG_IMMEDIATE;
-    else {
-      Usage::dump(ms_usage);
-      return -1;
-    }
+    else
+      HT_THROWF(Error::PARSE_ERROR, "Invalid argument - %s", m_args[0].first.c_str());
   }
 
   m_client->shutdown(flags, &sync_handler);
 
   sync_handler.wait_for_reply(event_ptr);
 
-  return Error::OK;
 }
 
 

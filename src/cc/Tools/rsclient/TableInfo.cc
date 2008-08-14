@@ -37,48 +37,33 @@ namespace Hypertable {
     strcpy((char *)m_table.name, table_name.c_str());
   }
 
-  int TableInfo::load(Hyperspace::SessionPtr &hyperspace_ptr) {
+  void TableInfo::load(Hyperspace::SessionPtr &hyperspace_ptr) {
     String table_file = (String)"/hypertable/tables/" + m_table.name;
     DynamicBuffer valbuf(0);
-    int error;
     HandleCallbackPtr null_handle_callback;
     uint64_t handle;
 
-    if ((error = hyperspace_ptr->open(table_file.c_str(), OPEN_FLAG_READ, null_handle_callback, &handle)) != Error::OK) {
-      HT_ERRORF("Unable to open Hyperspace file '%s' (%s)", table_file.c_str(), Error::get_text(error));
-      return error;
-    }
+    handle = hyperspace_ptr->open(table_file.c_str(), OPEN_FLAG_READ, null_handle_callback);
 
-    if ((error = hyperspace_ptr->attr_get(handle, "schema", valbuf)) != Error::OK) {
-      HT_ERRORF("Problem getting 'schema' attribute for '%s' - %s", m_table.name, Error::get_text(error));
-      return error;
-    }
+    hyperspace_ptr->attr_get(handle, "schema", valbuf);
 
     Schema *schema = Schema::new_instance((const char *)valbuf.base, valbuf.fill(), true);
-    if (!schema->is_valid()) {
-      HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
-      delete schema;
-      return Error::RANGESERVER_SCHEMA_PARSE_ERROR;
-    }
+    if (!schema->is_valid())
+      HT_THROWF(Error::RANGESERVER_SCHEMA_PARSE_ERROR,
+		"Schema Parse Error: %s", schema->get_error_string());
     m_schema_ptr = schema;
 
     m_table.generation = schema->get_generation();
 
     valbuf.clear();
-    if ((error = hyperspace_ptr->attr_get(handle, "table_id", valbuf)) != Error::OK) {
-      HT_ERRORF("Problem getting attribute 'table_id' from '%s' - %s", m_table.name, Error::get_text(error));
-      return error;
-    }
+    hyperspace_ptr->attr_get(handle, "table_id", valbuf);
 
-    if (valbuf.fill() != sizeof(int32_t)) {
-      HT_ERRORF("%s/table_id contains a bad value", table_file.c_str());
-      return Error::INVALID_METADATA;
-    }
+    if (valbuf.fill() != sizeof(int32_t))
+      HT_THROWF(Error::INVALID_METADATA, "%s/table_id contains a bad value", table_file.c_str());
 
     memcpy(&m_table.id, valbuf.base, sizeof(int32_t));
 
     hyperspace_ptr->close(handle);
 
-    return Error::OK;
   }
 }

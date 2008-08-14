@@ -44,13 +44,12 @@ const char *CommandOpen::ms_usage[] = {
   (const char *)0
 };
 
-int CommandOpen::run() {
+void CommandOpen::run() {
   std::string fname = "";
   int flags = 0;
   int event_mask = 0;
   char *str, *last;
   uint64_t handle;
-  int error;
 
   for (size_t i=0; i<m_args.size(); i++) {
     if (m_args[i].first == "flags") {
@@ -93,31 +92,26 @@ int CommandOpen::run() {
         str = strtok_r(0, " \t|", &last);
       }
     }
-    else if (fname != "" || m_args[i].second != "") {
-      cerr << "Invalid arguments.  Type 'help' for usage." << endl;
-      return -1;
-    }
+    else if (fname != "" || m_args[i].second != "")
+      HT_THROW(Error::PARSE_ERROR, "Invalid arguments.  Type 'help' for usage.");
     else
       fname = m_args[i].first;
   }
 
-  if (flags == 0) {
-    cerr << "Error: no flags supplied." << endl;
-    return -1;
-  }
-  else if (fname == "") {
-    cerr << "Error: no filename supplied." << endl;
-    return -1;
-  }
+  if (flags == 0)
+    flags = OPEN_FLAG_READ;
+
+  if (fname == "")
+    HT_THROW(Error::PARSE_ERROR, "Error: no filename supplied.");
 
   //HT_INFOF("open(%s, 0x%x, 0x%x)", fname.c_str(), flags, event_mask);
 
   HandleCallbackPtr callback = new FileHandleCallback(event_mask);
 
-  if ((error = m_session->open(fname, flags, callback, &handle)) == Error::OK) {
-    std::string normal_name;
-    Util::normalize_pathname(fname, normal_name);
-    Global::file_map[normal_name] = handle;
-  }
-  return error;
+  handle = m_session->open(fname, flags, callback);
+
+  std::string normal_name;
+  Util::normalize_pathname(fname, normal_name);
+  Global::file_map[normal_name] = handle;
+
 }

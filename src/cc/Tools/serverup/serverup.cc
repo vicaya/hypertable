@@ -103,133 +103,134 @@ int main(int argc, char **argv) {
   RangeServerClient *range_server;
   ApplicationQueuePtr app_queue;
   int error;
-  bool verbose = false;
+  bool silent = false;
 
-  System::initialize(System::locate_install_dir(argv[0]));
-  ReactorFactory::initialize((uint16_t)System::get_processor_count());
+  try {
 
-  for (int i=1; i<argc; i++) {
-    if (!strncmp(argv[i], "--config=", 9))
-      cfgfile = &argv[i][9];
-    else if (!strncmp(argv[i], "--host=", 7))
-      host_name = &argv[i][7];
-    else if (!strncmp(argv[i], "--port=", 7))
-      port_str = &argv[i][7];
-    else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
-      verbose = true;
-    else if (argv[i][0] == '-' || server_name != "")
-      Usage::dump_and_exit(usage);
-    else
-      server_name = argv[i];
-  }
+    System::initialize(System::locate_install_dir(argv[0]));
+    ReactorFactory::initialize((uint16_t)System::get_processor_count());
 
-  if (cfgfile == "")
-    cfgfile = System::install_dir + "/conf/hypertable.cfg";
-
-  props_ptr = new Properties(cfgfile);
-
-  if (server_name == "dfsbroker") {
-    host_prop = "DfsBroker.Host";
-    port_prop = "DfsBroker.Port";
-  }
-  else if (server_name == "hyperspace") {
-    host_prop = "Hyperspace.Master.Host";
-    port_prop = "Hyperspace.Master.Port";
-  }
-  else if (server_name == "master") {
-    host_prop = "Hypertable.Master.Host";
-    port_prop = "Hypertable.Master.Port";
-  }
-  else if (server_name == "rangeserver") {
-    if (host_name == "")
-      host_name = "localhost";
-    port_prop = "Hypertable.RangeServer.Port";
-  }
-  else
-    Usage::dump_and_exit(usage);
-
-  {
-    if (host_name == "")
-      host_name = props_ptr->get(host_prop, "localhost");
-    else if (server_name != "rangeserver")
-      props_ptr->set(host_prop, host_name.c_str());
-
-    if (port_str != 0)
-      props_ptr->set(port_prop, port_str);
-
-    port = props_ptr->get_int(port_prop, 0);
-    if (port == 0 || port < 1024 || port >= 65536) {
-      HT_ERRORF("%s not specified or out of range : %d", port_prop, port);
-      return 1;
+    for (int i=1; i<argc; i++) {
+      if (!strncmp(argv[i], "--config=", 9))
+	cfgfile = &argv[i][9];
+      else if (!strncmp(argv[i], "--host=", 7))
+	host_name = &argv[i][7];
+      else if (!strncmp(argv[i], "--port=", 7))
+	port_str = &argv[i][7];
+      else if (!strcmp(argv[i], "--silent"))
+	silent = true;
+      else if (argv[i][0] == '-' || server_name != "")
+	Usage::dump_and_exit(usage);
+      else
+	server_name = argv[i];
     }
 
-    if (!InetAddr::initialize(&addr, host_name.c_str(), (uint16_t)port))
-      goto abort;
-  }
+    if (cfgfile == "")
+      cfgfile = System::install_dir + "/conf/hypertable.cfg";
 
-  props_ptr->set("silent", "true");
+    props_ptr = new Properties(cfgfile);
 
-  comm = Comm::instance();
-  conn_mgr = new ConnectionManager(comm);
-  conn_mgr->set_quiet_mode(true);
+    if (server_name == "dfsbroker") {
+      host_prop = "DfsBroker.Host";
+      port_prop = "DfsBroker.Port";
+    }
+    else if (server_name == "hyperspace") {
+      host_prop = "Hyperspace.Master.Host";
+      port_prop = "Hyperspace.Master.Port";
+    }
+    else if (server_name == "master") {
+      host_prop = "Hypertable.Master.Host";
+      port_prop = "Hypertable.Master.Port";
+    }
+    else if (server_name == "rangeserver") {
+      if (host_name == "")
+	host_name = "localhost";
+      port_prop = "Hypertable.RangeServer.Port";
+    }
+    else
+      Usage::dump_and_exit(usage);
 
-  if (server_name == "dfsbroker") {
-    client = new DfsBroker::Client(conn_mgr, addr, 30);
-    if (!client->wait_for_connection(2))
-      goto abort;
-    try {
+    {
+      if (host_name == "")
+	host_name = props_ptr->get(host_prop, "localhost");
+      else if (server_name != "rangeserver")
+	props_ptr->set(host_prop, host_name.c_str());
+
+      if (port_str != 0)
+	props_ptr->set(port_prop, port_str);
+
+      port = props_ptr->get_int(port_prop, 0);
+      if (port == 0 || port < 1024 || port >= 65536) {
+	HT_ERRORF("%s not specified or out of range : %d", port_prop, port);
+	return 1;
+      }
+
+      if (!InetAddr::initialize(&addr, host_name.c_str(), (uint16_t)port))
+	HT_THROWF(Error::PARSE_ERROR, "Unable to construct address from host=%s port=%u", host_name.c_str(), port);
+    }
+
+    props_ptr->set("silent", "true");
+
+    comm = Comm::instance();
+    conn_mgr = new ConnectionManager(comm);
+    conn_mgr->set_quiet_mode(true);
+
+    if (server_name == "dfsbroker") {
+      client = new DfsBroker::Client(conn_mgr, addr, 30);
+      if (!client->wait_for_connection(2))
+	goto abort;
       client->status();
     }
-    catch (Hypertable::Exception &e) {
-      goto abort;
+    else if (server_name == "hyperspace") {
+      hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), props_ptr, 0);
+      if (!hyperspace->wait_for_connection(2))
+	goto abort;
+      if ((error = hyperspace->status()) != Error::OK)
+	goto abort;
     }
-  }
-  else if (server_name == "hyperspace") {
-    hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), props_ptr, 0);
-    if (!hyperspace->wait_for_connection(2))
-      goto abort;
-    if ((error = hyperspace->status()) != Error::OK)
-      goto abort;
-  }
-  else if (server_name == "master") {
-    MasterClientPtr  master;
+    else if (server_name == "master") {
+      MasterClientPtr  master;
 
-    hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), props_ptr, 0);
+      hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), props_ptr, 0);
 
-    if (!hyperspace->wait_for_connection(2))
-      goto abort;
+      if (!hyperspace->wait_for_connection(2))
+	goto abort;
 
-    app_queue = new ApplicationQueue(1);
-    master = new MasterClient(conn_mgr, hyperspace, 30, app_queue);
-    master->set_verbose_flag(false);
-    if (master->initiate_connection(0) != Error::OK)
-      goto abort;
+      app_queue = new ApplicationQueue(1);
+      master = new MasterClient(conn_mgr, hyperspace, 30, app_queue);
+      master->set_verbose_flag(false);
+      if (master->initiate_connection(0) != Error::OK)
+	goto abort;
 
-    if (!master->wait_for_connection(2))
-      goto abort;
+      if (!master->wait_for_connection(2))
+	goto abort;
 
-    if ((error = master->status()) != Error::OK)
-      goto abort;
-  }
-  else if (server_name == "rangeserver") {
-    conn_mgr->add(addr, 30, "Range Server");
-    if (!conn_mgr->wait_for_connection(addr, 2))
-      goto abort;
-    range_server = new RangeServerClient(comm, 30);
-    try {
+      if ((error = master->status()) != Error::OK)
+	goto abort;
+    }
+    else if (server_name == "rangeserver") {
+      conn_mgr->add(addr, 30, "Range Server");
+      if (!conn_mgr->wait_for_connection(addr, 2))
+	goto abort;
+      range_server = new RangeServerClient(comm, 30);
       range_server->status(addr);
     }
-    catch (Exception &e) {
-      goto abort;
-    }
+
+    if (!silent)
+      cout << "true" << endl;
+
+    return 0;
+
+  abort:
+    if (!silent)
+      cout << "false" << endl;
+    return 1;
+
+  }
+  catch (Exception &e) {
+    HT_ERRORF("%s - %s", Error::get_text(e.code()), e.what());
+    return 1;
   }
 
-  if (verbose)
-    cout << "true" << endl;
   return 0;
-
- abort:
-  if (verbose)
-    cout << "false" << endl;
-  return 1;
 }

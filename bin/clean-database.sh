@@ -43,7 +43,7 @@ export HYPERTABLE_HOME=`pwd`
 popd >& /dev/null
 
 
-$HYPERTABLE_HOME/bin/serverup dfsbroker
+$HYPERTABLE_HOME/bin/serverup --silent dfsbroker
 if [ $? != 0 ] ; then
     echo "ERROR: DfsBroker not running, database not cleaned"
     exit 1
@@ -99,39 +99,39 @@ sleep 2
 #
 # Wait for Dfs broker to shutdown
 #
-$HYPERTABLE_HOME/bin/serverup dfsbroker
+$HYPERTABLE_HOME/bin/serverup --silent dfsbroker
 while [ $? == 0 ] ; do
     sleep 2
     echo "Waiting for DFS Broker to shutdown ..."
-    $HYPERTABLE_HOME/bin/serverup dfsbroker
+    $HYPERTABLE_HOME/bin/serverup --silent dfsbroker
 done
 
 #
 # Wait for RangeServer to shutdown
 #
-$HYPERTABLE_HOME/bin/serverup rangeserver
+$HYPERTABLE_HOME/bin/serverup --silent rangeserver
 while [ $? == 0 ] ; do
     sleep 2
     echo "Waiting for RangeServer to shutdown ..."
-    $HYPERTABLE_HOME/bin/serverup rangeserver
+    $HYPERTABLE_HOME/bin/serverup --silent rangeserver
 done
 
 #
 # Wait for Master to shutdown
 #
-$HYPERTABLE_HOME/bin/serverup master
+$HYPERTABLE_HOME/bin/serverup --silent master
 while [ $? == 0 ] ; do
     sleep 2
     echo "Waiting for Hypertable.Master to shutdown ..."
-    $HYPERTABLE_HOME/bin/serverup master
+    $HYPERTABLE_HOME/bin/serverup --silent master
 done
 
 #
 # Wait for Hyperspace to shutdown
 #
-$HYPERTABLE_HOME/bin/serverup hyperspace
+$HYPERTABLE_HOME/bin/serverup --silent hyperspace
 while [ $? == 0 ] ; do
     sleep 2
     echo "Waiting for Hyperspace to shutdown ..."
-    $HYPERTABLE_HOME/bin/serverup hyperspace
+    $HYPERTABLE_HOME/bin/serverup --silent hyperspace
 done

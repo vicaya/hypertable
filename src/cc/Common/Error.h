@@ -58,6 +58,7 @@ namespace Hypertable {
       MALFORMED_REQUEST                  = 23,
       TOO_MANY_COLUMNS                   = 24,
       BAD_DOMAIN_NAME                    = 25,
+      PARSE_ERROR                        = 26,
 
       COMM_NOT_CONNECTED       = 0x00010001,
       COMM_BROKEN_CONNECTION   = 0x00010002,

@@ -83,11 +83,11 @@ LOGFILE=$HYPERTABLE_HOME/log/Hypertable.RangeServer.log
 
 
 let RETRY_COUNT=0
-$HYPERTABLE_HOME/bin/serverup rangeserver
+$HYPERTABLE_HOME/bin/serverup --silent rangeserver
 if [ $? != 0 ] ; then
     nohup $HYPERTABLE_HOME/bin/Hypertable.RangeServer --pidfile=$PIDFILE --verbose $@ 1>& $LOGFILE &
 
-  $HYPERTABLE_HOME/bin/serverup rangeserver
+  $HYPERTABLE_HOME/bin/serverup --silent rangeserver
   while [ $? != 0 ] ; do
       let RETRY_COUNT=++RETRY_COUNT
       let REPORT=RETRY_COUNT%10
@@ -98,7 +98,7 @@ if [ $? != 0 ] ; then
         echo "Waiting for Hypertable.RangeServer to come up ..."
       fi
       sleep 1
-      $HYPERTABLE_HOME/bin/serverup rangeserver
+      $HYPERTABLE_HOME/bin/serverup --silent rangeserver
   done
   echo "Successfully started Hypertable.RangeServer"
 else

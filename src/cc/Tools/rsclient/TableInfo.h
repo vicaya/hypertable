@@ -35,7 +35,7 @@ namespace Hypertable {
   public:
     TableInfo(const String &table_name);
 
-    int load(Hyperspace::SessionPtr &hyperspace_ptr);
+    void load(Hyperspace::SessionPtr &hyperspace_ptr);
 
     TableIdentifier *get_table_identifier() { return &m_table; }
     void get_schema_ptr(SchemaPtr &schema_ptr) { schema_ptr = m_schema_ptr; }

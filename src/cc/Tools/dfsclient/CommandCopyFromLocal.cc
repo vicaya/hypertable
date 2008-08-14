@@ -46,10 +46,9 @@ const char *CommandCopyFromLocal::ms_usage[] = {
 };
 
 
-int CommandCopyFromLocal::run() {
+void CommandCopyFromLocal::run() {
   DispatchHandlerSynchronizer sync_handler;
   int32_t fd = 0;
-  int error = Error::OK;
   EventPtr event_ptr;
   FILE *fp = 0;
   size_t nread;
@@ -57,54 +56,44 @@ int CommandCopyFromLocal::run() {
   uint8_t *buf;
   StaticBuffer send_buf;
 
-  if (m_args.size() != 2) {
-    cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
-    return -1;
-  }
-
-  if ((fp = fopen(m_args[src_arg].first.c_str(), "r")) == 0) {
-    perror(m_args[src_arg].first.c_str());
-    goto abort;
-  }
+  if (m_args.size() != 2)
+    HT_THROW(Error::PARSE_ERROR, "Wrong number of arguments.  Type 'help' for usage.");
 
   try {
-  fd = m_client->create(m_args[src_arg+1].first, true, -1, -1, -1);
 
-  // send 3 appends
-  for (int i=0; i<3; i++) {
-    buf = new uint8_t [BUFFER_SIZE];
-    if ((nread = fread(buf, 1, BUFFER_SIZE, fp)) == 0)
-      goto done;
-    send_buf.set(buf, nread, true);
-    m_client->append(fd, send_buf, 0, &sync_handler);
-  }
+    if ((fp = fopen(m_args[src_arg].first.c_str(), "r")) == 0)
+      HT_THROW(Error::EXTERNAL, strerror(errno));
 
-  while (true) {
+    fd = m_client->create(m_args[src_arg+1].first, true, -1, -1, -1);
 
-    if (!sync_handler.wait_for_reply(event_ptr)) {
-      HT_ERRORF("%s", event_ptr->to_str().c_str());
-      goto abort;
+    // send 3 appends
+    for (int i=0; i<3; i++) {
+      buf = new uint8_t [BUFFER_SIZE];
+      if ((nread = fread(buf, 1, BUFFER_SIZE, fp)) == 0)
+	goto done;
+      send_buf.set(buf, nread, true);
+      m_client->append(fd, send_buf, 0, &sync_handler);
     }
 
-    buf = new uint8_t [BUFFER_SIZE];
-    if ((nread = fread(buf, 1, BUFFER_SIZE, fp)) == 0)
-      break;
-    send_buf.set(buf, nread, true);
-    m_client->append(fd, send_buf, 0, &sync_handler);
-  }
+    while (true) {
 
-done:
-  m_client->close(fd);
+      if (!sync_handler.wait_for_reply(event_ptr))
+	HT_THROW(event_ptr->error, event_ptr->to_str());
+
+      buf = new uint8_t [BUFFER_SIZE];
+      if ((nread = fread(buf, 1, BUFFER_SIZE, fp)) == 0)
+	break;
+      send_buf.set(buf, nread, true);
+      m_client->append(fd, send_buf, 0, &sync_handler);
+    }
+
+  done:
+    m_client->close(fd);
 
   }
   catch (Exception &e) {
-    HT_ERRORF("%s", e.what());
+    if (fp)
+      fclose(fp);
+    HT_THROW(e.code(), e.what());
   }
-
-abort:
-  if (fp)
-    fclose(fp);
-  if (error != 0)
-    cerr << Error::get_text(error) << endl;
-  return error;
 }

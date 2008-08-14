@@ -61,7 +61,6 @@ Table::Table(PropertiesPtr &props_ptr, Comm *comm, Hyperspace::SessionPtr &hyper
 
 
 void Table::initialize(const String &name) {
-  int error;
   String tablefile = "/hypertable/tables/"; tablefile += name;
   DynamicBuffer value_buf(0);
   uint64_t handle;
@@ -72,15 +71,15 @@ void Table::initialize(const String &name) {
   /**
    * Open table file
    */
-  m_hyperspace_ptr->set_silent_flag(true);
-  if ((error = m_hyperspace_ptr->open(tablefile, OPEN_FLAG_READ, null_handle_callback, &handle)) != Error::OK) {
-    m_hyperspace_ptr->set_silent_flag(false);
-    if (error == Error::HYPERSPACE_BAD_PATHNAME)
-      HT_THROW(Error::TABLE_DOES_NOT_EXIST, "");
-    HT_ERRORF("Unable to open Hyperspace table file '%s' - %s", tablefile.c_str(), Error::get_text(error));
-    HT_THROW(error, "");
+  try {
+    handle = m_hyperspace_ptr->open(tablefile, OPEN_FLAG_READ, null_handle_callback);
   }
-  m_hyperspace_ptr->set_silent_flag(false);
+  catch (Exception &e) {
+    if (e.code() == Error::HYPERSPACE_BAD_PATHNAME)
+      HT_THROW2(Error::TABLE_DOES_NOT_EXIST, e, "");
+    HT_THROW2F(e.code(), e,
+	       "Unable to open Hyperspace table file '%s'", tablefile.c_str());
+  }
 
   {
     char *table_name = new char [strlen(name.c_str()) + 1];
@@ -92,10 +91,7 @@ void Table::initialize(const String &name) {
    * Get table_id attribute
    */
   value_buf.clear();
-  if ((error = m_hyperspace_ptr->attr_get(handle, "table_id", value_buf)) != Error::OK) {
-    HT_ERRORF("Problem getting attribute 'table_id' for table file '%s' - %s", tablefile.c_str(), Error::get_text(error));
-    HT_THROW(error, "");
-  }
+  m_hyperspace_ptr->attr_get(handle, "table_id", value_buf);
 
   assert(value_buf.fill() == sizeof(int32_t));
 
@@ -106,10 +102,7 @@ void Table::initialize(const String &name) {
    * Get schema attribute
    */
   value_buf.clear();
-  if ((error = m_hyperspace_ptr->attr_get(handle, "schema", value_buf)) != Error::OK) {
-    HT_ERRORF("Problem getting attribute 'schema' for table file '%s' - %s", tablefile.c_str(), Error::get_text(error));
-    HT_THROW(error, "");
-  }
+  m_hyperspace_ptr->attr_get(handle, "schema", value_buf);
 
   m_hyperspace_ptr->close(handle);
 

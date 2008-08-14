@@ -39,24 +39,19 @@ const char *CommandAttrSet::ms_usage[] = {
   (const char *)0
 };
 
-int CommandAttrSet::run() {
+void CommandAttrSet::run() {
   uint64_t handle;
   const char *value;
 
-  if (m_args.size() != 2) {
-    cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
-    return -1;
-  }
+  if (m_args.size() != 2)
+    HT_THROW(Error::PARSE_ERROR, "Wrong number of arguments.  Type 'help' for usage.");
 
-  if (m_args[0].second != "") {
-    cerr << "Invalid argument - " << m_args[0].second << endl;
-    return -1;
-  }
+  if (m_args[0].second != "")
+    HT_THROWF(Error::PARSE_ERROR, "Invalid argument - %s", m_args[0].second.c_str());
 
-  if (!Util::get_handle(m_args[0].first, &handle))
-    return -1;
+  handle = Util::get_handle(m_args[0].first);
 
   value = m_args[1].second.c_str();
 
-  return m_session->attr_set(handle, m_args[1].first, value, strlen(value));
+  m_session->attr_set(handle, m_args[1].first, value, strlen(value));
 }

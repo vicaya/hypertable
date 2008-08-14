@@ -38,28 +38,19 @@ const char *CommandExists::ms_usage[] = {
   (const char *)0
 };
 
-int CommandExists::run() {
-  int error;
-  bool exists;
+void CommandExists::run() {
 
-  if (m_args.size() != 1) {
-    cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
-    return -1;
+  if (m_args.size() != 1)
+    HT_THROW(Error::PARSE_ERROR, "Wrong number of arguments.  Type 'help' for usage.");
+
+  if (m_args[0].second != "")
+    HT_THROWF(Error::PARSE_ERROR, "Invalid argument - %s", m_args[0].second.c_str());
+
+  if (m_session->exists(m_args[0].first))
+    cout << "true" << endl;
+  else {
+    cout << "false" << endl;
+    Global::exit_status = 1;
   }
 
-  if (m_args[0].second != "") {
-    cerr << "Invalid argument - " << m_args[0].second << endl;
-    return -1;
-  }
-
-  if ((error = m_session->exists(m_args[0].first, &exists)) == Error::OK) {
-    if (exists)
-      cout << "true" << endl;
-    else {
-      cout << "false" << endl;
-      Global::exit_status = 1;
-    }
-  }
-
-  return error;
 }

@@ -25,6 +25,7 @@ extern "C" {
 }
 
 #include "Common/Error.h"
+#include "Common/Logger.h"
 #include "Common/System.h"
 
 #include "MasterClient.h"
@@ -36,12 +37,14 @@ using namespace Hypertable;
  *
  */
 void EventHandlerMasterChange::run() {
-  int error;
 
   poll(0, 0, System::rand32() % 3000);  // Randomly wait between 0 and 3 seconds
 
-  if ((error = m_master_client->reload_master()) != Error::OK) {
-    HT_ERRORF("Problem reloading master connection - %s", Error::get_text(error));
+  try {
+    m_master_client->reload_master();
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
   }
 
 }

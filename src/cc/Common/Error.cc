@@ -57,6 +57,7 @@ namespace {
     { Error::BLOCK_COMPRESSOR_INFLATE_ERROR,     "HYPERTABLE block compressor inflate error" },
     { Error::BLOCK_COMPRESSOR_INIT_ERROR,        "HYPERTABLE block compressor initialization error" },
     { Error::TABLE_DOES_NOT_EXIST,               "HYPERTABLE table does not exist" },
+    { Error::PARSE_ERROR,                        "HYPERTABLE parse error" },
     { Error::TOO_MANY_COLUMNS,            "HYPERTABLE too many columns" },
     { Error::BAD_DOMAIN_NAME,             "HYPERTABLE bad domain name" },
     { Error::FAILED_EXPECTATION,          "HYPERTABLE failed expectation" },

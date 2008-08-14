@@ -83,11 +83,11 @@ LOGFILE=$HYPERTABLE_HOME/log/Hypertable.Master.log
 
 
 let RETRY_COUNT=0
-$HYPERTABLE_HOME/bin/serverup master
+$HYPERTABLE_HOME/bin/serverup --silent master
 if [ $? != 0 ] ; then
     nohup $HYPERTABLE_HOME/bin/Hypertable.Master --pidfile=$PIDFILE --verbose $@ 1>& $LOGFILE &
 
-  $HYPERTABLE_HOME/bin/serverup master
+  $HYPERTABLE_HOME/bin/serverup --silent master
   while [ $? != 0 ] ; do
       let RETRY_COUNT=++RETRY_COUNT
       let REPORT=RETRY_COUNT%3
@@ -98,7 +98,7 @@ if [ $? != 0 ] ; then
         echo "Waiting for Hypertable.Master to come up ..."
       fi
       sleep 1
-      $HYPERTABLE_HOME/bin/serverup master
+      $HYPERTABLE_HOME/bin/serverup --silent master
   done
   echo "Successfully started Hypertable.Master"
 else

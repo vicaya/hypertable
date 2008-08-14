@@ -29,5 +29,10 @@ using namespace Hypertable;
  *
  */
 void EventHandlerServerLeft::run() {
-  m_master_ptr->server_left(m_location);
+  try {
+    m_master_ptr->server_left(m_location);
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+  }
 }

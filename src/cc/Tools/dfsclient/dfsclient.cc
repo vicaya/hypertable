@@ -219,8 +219,7 @@ int main(int argc, char **argv) {
         for (i=0; i<commands.size(); i++) {
           if (commands[i]->matches(cmd_str.c_str())) {
             commands[i]->parse_command_line(cmd_str.c_str());
-            if (commands[i]->run() != Error::OK)
-              return 1;
+            commands[i]->run();
             break;
           }
         }
@@ -269,6 +268,7 @@ int main(int argc, char **argv) {
   }
   catch (Exception &e) {
     HT_ERRORF("exception: %s - %s", Error::get_text(e.code()), e.what());
+    return 1;
   }
 
   return 0;

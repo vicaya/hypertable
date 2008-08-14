@@ -52,33 +52,37 @@ void DfsTestThreadFunction::operator()() {
   CommandCopyToLocal cmd_cp_to_local(m_client);
   CommandRemove cmd_rm(m_client);
 
-  cmd_cp_from_local.push_arg(m_input_file, "");
-  cmd_cp_from_local.push_arg(m_dfs_file, "");
-  if (cmd_cp_from_local.run() != 0)
-    exit(1);
+  try {
 
-  cmd_cp_to_local.push_arg(m_dfs_file, "");
-  cmd_cp_to_local.push_arg(m_output_file, "");
-  if (cmd_cp_to_local.run() != 0)
-    exit(1);
+    cmd_cp_from_local.push_arg(m_input_file, "");
+    cmd_cp_from_local.push_arg(m_dfs_file, "");
+    cmd_cp_from_local.run();
 
-  // Determine original file size
-  struct stat statbuf;
-  if (stat(m_input_file.c_str(), &statbuf) != 0) {
-    cerr << "Unable to stat file '" << m_input_file << "' - " << strerror(errno) << endl;
-    exit(1);
+    cmd_cp_to_local.push_arg(m_dfs_file, "");
+    cmd_cp_to_local.push_arg(m_output_file, "");
+    cmd_cp_to_local.run();
+
+    // Determine original file size
+    struct stat statbuf;
+    if (stat(m_input_file.c_str(), &statbuf) != 0)
+      HT_THROW(Error::EXTERNAL, (std::string)"Unable to stat file '" + m_input_file + "' - " + strerror(errno));
+
+    origsz = statbuf.st_size;
+
+    // Make sure file exists
+    HT_EXPECT(m_client->exists(m_dfs_file), Error::FAILED_EXPECTATION);
+
+    // Determine DFS file size
+    dfssz = m_client->length(m_dfs_file);
+
+    if (origsz != dfssz) {
+      HT_ERRORF("Length mismatch: %ld != %ld", origsz, dfssz);
+      exit(1);
+    }
   }
-  origsz = statbuf.st_size;
-
-  // Make sure file exists
-  HT_EXPECT(m_client->exists(m_dfs_file), Error::FAILED_EXPECTATION);
-
-  // Determine DFS file size
-  dfssz = m_client->length(m_dfs_file);
-
-  if (origsz != dfssz) {
-    HT_ERRORF("Length mismatch: %ld != %ld", origsz, dfssz);
-    exit(1);
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    _exit(1);
   }
 
   /**

@@ -542,7 +542,8 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
     }
   }
   catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
+    if (e.code() != Error::HYPERSPACE_BAD_PATHNAME)
+      HT_ERROR_OUT << e << HT_END;
     txn->abort();
     cb->error(e.code(), e.what());
     return;

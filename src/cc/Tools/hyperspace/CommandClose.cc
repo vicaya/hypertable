@@ -39,26 +39,17 @@ const char *CommandClose::ms_usage[] = {
   (const char *)0
 };
 
-int CommandClose::run() {
+void CommandClose::run() {
   uint64_t handle;
-  int error;
 
-  if (m_args.size() != 1) {
-    cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
-    return -1;
-  }
+  if (m_args.size() != 1)
+    HT_THROW(Error::PARSE_ERROR, "Wrong number of arguments.  Type 'help' for usage.");
 
-  if (m_args[0].second != "") {
-    cerr << "Invalid character '=' in argument." << endl;
-    return -1;
-  }
+  if (m_args[0].second != "")
+    HT_THROW(Error::PARSE_ERROR, "Invalid character '=' in argument.");
 
-  if (!Util::get_handle(m_args[0].first, &handle))
-    return -1;
+  handle = Util::get_handle(m_args[0].first);
 
-  if ((error = m_session->close(handle)) != Error::OK) {
-    HT_ERRORF("Error executing CLOSE request - %s", Error::get_text(error));
-  }
+  m_session->close(handle);
 
-  return error;
 }

@@ -36,21 +36,15 @@ const char *CommandExists::ms_usage[] = {
 };
 
 
-int CommandExists::run() {
-  bool exists = false;
+void CommandExists::run() {
 
-  if (m_args.size() < 1) {
-    cerr << "Error: no filename supplied" << endl;
-    return -1;
-  }
+  if (m_args.size() < 1)
+    HT_THROW(Error::PARSE_ERROR, "Error: no filename supplied");
 
-  exists = m_client->exists(m_args[0].first);
-
-  if (exists)
+  if (m_client->exists(m_args[0].first))
     cout << "true" << endl;
   else
     cout << "false" << endl;
 
-  return Error::OK;
 }
 

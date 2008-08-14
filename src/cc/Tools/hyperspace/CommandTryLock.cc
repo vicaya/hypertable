@@ -40,44 +40,33 @@ const char *CommandTryLock::ms_usage[] = {
   (const char *)0
 };
 
-int CommandTryLock::run() {
+void CommandTryLock::run() {
   uint64_t handle;
-  int error;
   uint32_t mode = 0;
   struct LockSequencer lockseq;
   uint32_t status;
 
-  if (m_args.size() != 2) {
-    cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
-    return -1;
-  }
+  if (m_args.size() != 2)
+    HT_THROW(Error::PARSE_ERROR, "Wrong number of arguments.  Type 'help' for usage.");
 
-  if (m_args[0].second != "" || m_args[1].second != "") {
-    cerr << "Invalid character '=' in argument." << endl;
-    return -1;
-  }
+  if (m_args[0].second != "" || m_args[1].second != "")
+    HT_THROW(Error::PARSE_ERROR, "Invalid character '=' in argument.");
 
   if (m_args[1].first == "SHARED")
     mode = LOCK_MODE_SHARED;
   else if (m_args[1].first == "EXCLUSIVE")
     mode = LOCK_MODE_EXCLUSIVE;
-  else {
-    cerr << "Invalid mode value (" << m_args[1].second << ")" << endl;
-    return -1;
-  }
+  else
+    HT_THROWF(Error::PARSE_ERROR, "Invalid mode value (%s)", m_args[1].second.c_str());
 
-  if (!Util::get_handle(m_args[0].first, &handle))
-    return -1;
+  handle = Util::get_handle(m_args[0].first);
 
-  if ((error = m_session->try_lock(handle, mode, &status, &lockseq)) == Error::OK) {
-    if (status == LOCK_STATUS_GRANTED)
-      cout << "SEQUENCER name=" << lockseq.name << " mode=" << lockseq.mode << " generation=" << lockseq.generation << endl << flush;
-    else if (status == LOCK_STATUS_BUSY)
-      cout << "busy" << endl;
-    else
-      cout << "Unknown status: " << status << endl;
-  }
+  m_session->try_lock(handle, mode, &status, &lockseq);
 
-
-  return error;
+  if (status == LOCK_STATUS_GRANTED)
+    cout << "SEQUENCER name=" << lockseq.name << " mode=" << lockseq.mode << " generation=" << lockseq.generation << endl << flush;
+  else if (status == LOCK_STATUS_BUSY)
+    cout << "busy" << endl;
+  else
+    cout << "Unknown status: " << status << endl;
 }

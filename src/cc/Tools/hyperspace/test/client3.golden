@@ -25,8 +25,7 @@ busy
 release lockfile
 close lockfile
 open lockfile flags=READ|WRITE|LOCK_EXCLUSIVE
-ERROR hyperspace : Hyperspace 'open' error, name=/lockfile flags=0x87 events=0x0 : HYPERSPACE lock conflict
-HYPERSPACE lock conflict
+ERROR hyperspace : main: Hyperspace 'open' error, name=/lockfile flags=0x87 events=0x0 - HYPERSPACE lock conflict
 open lockfile flags=READ|WRITE|LOCK_SHARED
 close lockfile
 

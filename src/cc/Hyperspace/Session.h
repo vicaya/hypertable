@@ -164,11 +164,10 @@ namespace Hyperspace {
      * @param name pathname of file to open
      * @param flags OR'ed together set of open flags (see \ref OpenFlags)
      * @param callback smart pointer to handle callback
-     * @param handlep address of variable to hold returned handle
-     * @return Error::OK on success or error code on failure
+     * @return opened file handle
      */
-    int open(const std::string &name, uint32_t flags,
-             HandleCallbackPtr &callback, uint64_t *handlep);
+    uint64_t open(const std::string &name, uint32_t flags,
+		  HandleCallbackPtr &callback);
 
     /** Creates a file.  This method is basically
      * the same as the #open method except that it implicitly sets the
@@ -187,9 +186,8 @@ namespace Hyperspace {
      * @param handlep address of variable to hold returned handle
      * @return Error::OK on success or error code on failure
      */
-    int create(const std::string &name, uint32_t flags,
-               HandleCallbackPtr &callback, std::vector<Attribute> &init_attrs,
-               uint64_t *handlep);
+    uint64_t create(const std::string &name, uint32_t flags,
+		    HandleCallbackPtr &callback, std::vector<Attribute> &init_attrs);
 
     /*
     int cancel(uint64_t handle);
@@ -200,7 +198,7 @@ namespace Hyperspace {
      *
      * @param handle file handle to close
      */
-    int close(uint64_t handle);
+    void close(uint64_t handle);
 
     /**
      * Creates a directory.  The name
@@ -209,9 +207,8 @@ namespace Hyperspace {
      * Otherwise, Error::HYPERSPACE_BAD_PATHNAME will be returned.
      *
      * @param name absolute pathname of directory to create
-     * @return Error::OK on success or error code on failure
      */
-    int mkdir(const std::string &name);
+    void mkdir(const std::string &name);
 
     /** Sets an extended attribute of a file.
      *
@@ -219,44 +216,39 @@ namespace Hyperspace {
      * @param name name of extended attribute
      * @param value pointer to new value
      * @param value_len length of new value
-     * @return Error::OK on success or error code on failure
      */
-    int attr_set(uint64_t handle, const std::string &name,
-                 const void *value, size_t value_len);
+    void attr_set(uint64_t handle, const std::string &name,
+		  const void *value, size_t value_len);
 
     /** Gets an extended attribute of a file.
      *
      * @param handle file handle
      * @param name name of extended attribute
      * @param value reference to DynamicBuffer to hold returned value
-     * @return Error::OK on success or error code on failure
      */
-    int attr_get(uint64_t handle, const std::string &name,
-                 DynamicBuffer &value);
+    void attr_get(uint64_t handle, const std::string &name,
+		  DynamicBuffer &value);
 
     /** Deletes an extended attribute of a file.
      *
      * @param handle file handle
      * @param name name of extended attribute
-     * @return Error::OK on success or error code on failure
      */
-    int attr_del(uint64_t handle, const std::string &name);
+    void attr_del(uint64_t handle, const std::string &name);
 
     /** Checks for the existence of a file.
      *
      * @param name absolute name of file or directory to check for
-     * @param existsp address of boolean variable to hold result
-     * @return Error::OK on success or error code on failure
+     * @return true if exists, false otherwise
      */
-    int exists(const std::string &name, bool *existsp);
+    bool exists(const std::string &name);
 
     /** Removes a file or directory.  Directory must be empty, otherwise
      * Error::HYPERSPACE_IO_ERROR will be returned.
      *
      * @param name absolute path name of file or directory to delete
-     * @return Error::OK on success or error code on failure
      */
-    int unlink(const std::string &name);
+    void unlink(const std::string &name);
 
     /** Gets a directory listing.  The listing comes back as a vector of
      * DireEntry which contains a name and boolean flag indicating if the
@@ -264,9 +256,8 @@ namespace Hyperspace {
      *
      * @param handle handle of directory to scan
      * @param listing reference to vector of DirEntry structures to hold result
-     * @return Error::OK on success or error code on failure
      */
-    int readdir(uint64_t handle, std::vector<DirEntry> &listing);
+    void readdir(uint64_t handle, std::vector<DirEntry> &listing);
 
 
     /** Locks a file.  The mode argument indicates the type of lock to be
@@ -283,9 +274,8 @@ namespace Hyperspace {
      * @param handle handle of file or directory to lock
      * @param mode lock mode (see \ref LockMode)
      * @param sequencerp address of LockSequencer return structure
-     * @return Error::OK on success or error code on failure
      */
-    int lock(uint64_t handle, uint32_t mode, LockSequencer *sequencerp);
+    void lock(uint64_t handle, uint32_t mode, LockSequencer *sequencerp);
 
     /** Attempts to lock a file.  The mode argument indicates the type of lock
      * to be acquired and takes a value of either LOCK_MODE_SHARED
@@ -305,25 +295,22 @@ namespace Hyperspace {
      * @param statusp address of variable to hold the status of the attempt
      *        (see \ref LockStatus)
      * @param sequencerp address of LockSequencer return structure
-     * @return Error::OK on success or error code on failure
      */
-    int try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp,
-                 LockSequencer *sequencerp);
+    void try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp,
+		  LockSequencer *sequencerp);
 
     /** Releases any file handle locks.
      *
      * @param handle locked file or directory handle
-     * @return Error::OK on success or error code on failure
      */
-    int release(uint64_t handle);
+    void release(uint64_t handle);
 
     /** Gets the lock sequencer of a locked file or directory handle.
      *
      * @param handle locked file or directory handle
      * @param sequencerp address of LockSequencer return structure
-     * @return Error::OK on success or error code on failure
      */
-    int get_sequencer(uint64_t handle, LockSequencer *sequencerp);
+    void get_sequencer(uint64_t handle, LockSequencer *sequencerp);
 
     /** Checks to see if a lock sequencer is valid.
      *
@@ -331,9 +318,8 @@ namespace Hyperspace {
      * Error::OK</b>
      *
      * @param sequencer lock sequencer to validate
-     * @return Error::OK on success or error code on failure
      */
-    int check_sequencer(LockSequencer &sequencer);
+    void check_sequencer(LockSequencer &sequencer);
 
     /** Check the status of the Hyperspace master server
      *
@@ -347,12 +333,6 @@ namespace Hyperspace {
      * @return true if connected, false otherwise
      */
     bool wait_for_connection(long max_wait_secs);
-
-    /** Sets silent flag.  Turns on or off log output
-     *
-     * @param silent value of silent flag
-     */
-    void set_silent_flag(bool silent) { m_silent = silent; }
 
     /** Sets verbose flag.  Turns on or off (default) verbose logging
      *
@@ -385,7 +365,7 @@ namespace Hyperspace {
     bool wait_for_safe();
     int send_message(CommBufPtr &, DispatchHandler *);
     void normalize_name(const std::string &name, std::string &normal);
-    int open(ClientHandleStatePtr &, CommBufPtr &, uint64_t *handlep);
+    uint64_t open(ClientHandleStatePtr &, CommBufPtr &);
 
     boost::mutex m_mutex;
     boost::condition m_cond;
