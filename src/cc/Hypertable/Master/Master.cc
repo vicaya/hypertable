@@ -302,6 +302,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
   uint32_t lock_status;
   LockSequencer lock_sequencer;
   String hsfname;
+  bool exists = false;
 
   try {
     boost::mutex::scoped_lock lock(m_mutex);
@@ -357,7 +358,6 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
    * TEMPORARY: Load root and second-level METADATA ranges
    */
   if (!m_initialized) {
-    int error;
     TableIdentifier table;
     RangeSpec range;
     RangeServerClient rsc(m_conn_manager_ptr->get_comm(), 30);
@@ -374,8 +374,11 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 	create_table("METADATA", schemastr);
       }
       catch (Exception &e) {
-	HT_ERROR_OUT << e << HT_END;
-	HT_ABORT;
+	if (e.code() != Error::MASTER_TABLE_EXISTS) {
+	  HT_ERROR_OUT << e << HT_END;
+	  HT_ABORT;
+	}
+	exists = true;
       }
     }
 
@@ -385,7 +388,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
     m_metadata_table_ptr = new Table(m_props_ptr, m_conn_manager_ptr->get_comm(), m_hyperspace_ptr, "METADATA");
 
     // If table exists, then ranges should already have been assigned
-    if (error == Error::MASTER_TABLE_EXISTS) {
+    if (exists) {
       m_initialized = true;
       return;
     }

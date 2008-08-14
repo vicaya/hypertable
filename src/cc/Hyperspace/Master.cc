@@ -57,6 +57,47 @@ const uint32_t Master::DEFAULT_MASTER_PORT;
 const uint32_t Master::DEFAULT_LEASE_INTERVAL;
 const uint32_t Master::DEFAULT_KEEPALIVE_INTERVAL;
 
+#define HT_BDBTXN_BEGIN \
+  do { \
+    DbTxn *txn = m_bdb_fs->start_transaction(); \
+    try
+
+#define HT_BDBTXN_END_CB(_cb_) \
+    catch (Exception &e) { \
+      if (e.code() != Error::HYPERSPACE_BERKELEYDB_DEADLOCK) { \
+        if (e.code() == Error::HYPERSPACE_BERKELEYDB_ERROR) \
+          HT_ERROR_OUT << e << HT_END; \
+        else \
+          HT_WARNF("%s - %s", Error::get_text(e.code()), e.what()); \
+        txn->abort(); \
+        _cb_->error(e.code(), e.what()); \
+        return; \
+      } \
+      HT_WARN("Berkeley DB deadlock encountered"); \
+      poll(0, 0, (System::rand32() % 100) + 1); \
+      continue; \
+    } \
+    break; \
+  } while (true)
+
+#define HT_BDBTXN_END(...) \
+    catch (Exception &e) { \
+      if (e.code() != Error::HYPERSPACE_BERKELEYDB_DEADLOCK) { \
+        if (e.code() == Error::HYPERSPACE_BERKELEYDB_ERROR) \
+          HT_ERROR_OUT << e << HT_END; \
+        else \
+          HT_WARNF("%s - %s", Error::get_text(e.code()), e.what()); \
+        txn->abort(); \
+        return __VA_ARGS__; \
+      } \
+      HT_WARN("Berkeley DB deadlock encountered"); \
+      poll(0, 0, (System::rand32() % 100) + 1); \
+      continue; \
+    } \
+    break; \
+  } while (true)
+
+
 /**
  * Sets up the m_base_dir variable to be the absolute path of the root of the
  * Hyperspace directory (with no trailing slash); Locks this root directory to
@@ -323,9 +364,7 @@ Master::mkdir(ResponseCallback *cb, uint64_t session_id, const char *name) {
 
   assert(name[0] == '/' && name[strlen(name)-1] != '/');
 
-  DbTxn *txn = m_bdb_fs->start_transaction();
-
-  try {
+  HT_BDBTXN_BEGIN {
     boost::mutex::scoped_lock node_lock(parent_node->mutex);
 
     m_bdb_fs->mkdir(txn, name);
@@ -337,12 +376,7 @@ Master::mkdir(ResponseCallback *cb, uint64_t session_id, const char *name) {
                                             child_name));
     deliver_event_notifications(parent_node.get(), event);
   }
-  catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    txn->abort();
-    cb->error(e.code(), e.what());
-    return;
-  }
+  HT_BDBTXN_END_CB(cb);
 
   cb->response_ok();
 }
@@ -374,9 +408,7 @@ Master::unlink(ResponseCallback *cb, uint64_t session_id, const char *name) {
 
   assert(name[0] == '/' && name[strlen(name)-1] != '/');
 
-  DbTxn *txn = m_bdb_fs->start_transaction();
-
-  try {
+  HT_BDBTXN_BEGIN {
     boost::mutex::scoped_lock node_lock(parent_node->mutex);
 
     m_bdb_fs->unlink(txn, name);
@@ -388,12 +420,7 @@ Master::unlink(ResponseCallback *cb, uint64_t session_id, const char *name) {
                                                 child_name));
     deliver_event_notifications(parent_node.get(), event_ptr);
   }
-  catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    txn->abort();
-    cb->error(e.code(), e.what());
-    return;
-  }
+  HT_BDBTXN_END_CB(cb);
 
   cb->response_ok();
 }
@@ -426,9 +453,7 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
 
   assert(name[0] == '/');
 
-  DbTxn *txn = m_bdb_fs->start_transaction();
-
-  try {
+  HT_BDBTXN_BEGIN {
     if (!get_session(session_id, session_data))
       HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
 
@@ -541,13 +566,7 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
       txn->commit(0);
     }
   }
-  catch (Exception &e) {
-    if (e.code() != Error::HYPERSPACE_BAD_PATHNAME)
-      HT_ERROR_OUT << e << HT_END;
-    txn->abort();
-    cb->error(e.code(), e.what());
-    return;
-  }
+  HT_BDBTXN_END_CB(cb);
 
   cb->response(handle, created, lock_generation);
 }
@@ -605,9 +624,7 @@ Master::attr_set(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
              session_id, handle, name, value_len);
   }
 
-  DbTxn *txn = m_bdb_fs->start_transaction();
-
-  try {
+  HT_BDBTXN_BEGIN {
     if (!get_session(session_id, session_data))
       HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
 
@@ -625,12 +642,7 @@ Master::attr_set(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
 
     txn->commit(0);
   }
-  catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    txn->abort();
-    cb->error(e.code(), e.what());
-    return;
-  }
+  HT_BDBTXN_END_CB(cb);
 
   if ((error = cb->response_ok()) != Error::OK)
     HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
@@ -652,9 +664,7 @@ Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
     HT_INFOF("attrget(session=%lld, handle=%lld, name=%s)",
              session_id, handle, name);
 
-  DbTxn *txn = m_bdb_fs->start_transaction();
-
-  try {
+  HT_BDBTXN_BEGIN {
     if (!get_session(session_id, session_data))
       HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
 
@@ -669,12 +679,7 @@ Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
 
     txn->commit(0);
   }
-  catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    txn->abort();
-    cb->error(e.code(), e.what());
-    return;
-  }
+  HT_BDBTXN_END_CB(cb);
 
   StaticBuffer buffer(dbuf);
 
@@ -693,9 +698,7 @@ void Master::attr_del(ResponseCallback *cb, uint64_t session_id, uint64_t handle
     HT_INFOF("attrdel(session=%lld, handle=%lld, name=%s)",
              session_id, handle, name);
 
-  DbTxn *txn = m_bdb_fs->start_transaction();
-
-  try {
+  HT_BDBTXN_BEGIN {
     if (!get_session(session_id, session_data))
       HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
 
@@ -713,12 +716,7 @@ void Master::attr_del(ResponseCallback *cb, uint64_t session_id, uint64_t handle
 
     txn->commit(0);
   }
-  catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    txn->abort();
-    cb->error(e.code(), e.what());
-    return;
-  }
+  HT_BDBTXN_END_CB(cb);
 
   if ((error = cb->response_ok()) != Error::OK)
     HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
@@ -736,18 +734,11 @@ Master::exists(ResponseCallbackExists *cb, uint64_t session_id,
 
   assert(name[0] == '/' && name[strlen(name)-1] != '/');
 
-  DbTxn *txn = m_bdb_fs->start_transaction();
-
-  try {
+  HT_BDBTXN_BEGIN {
     file_exists = m_bdb_fs->exists(txn, name);
     txn->commit(0);
   }
-  catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    txn->abort();
-    cb->error(e.code(), e.what());
-    return;
-  }
+  HT_BDBTXN_END_CB(cb);
 
   if ((error = cb->response(file_exists)) != Error::OK)
     HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
@@ -766,9 +757,7 @@ Master::readdir(ResponseCallbackReaddir *cb, uint64_t session_id,
   if (m_verbose)
     HT_INFOF("readdir(session=%lld, handle=%lld)", session_id, handle);
 
-  DbTxn *txn = m_bdb_fs->start_transaction();
-
-  try {
+  HT_BDBTXN_BEGIN {
     if (!get_session(session_id, session_data))
       HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
 
@@ -783,12 +772,7 @@ Master::readdir(ResponseCallbackReaddir *cb, uint64_t session_id,
 
     txn->commit(0);
   }
-  catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    txn->abort();
-    cb->error(e.code(), e.what());
-    return;
-  }
+  HT_BDBTXN_END_CB(cb);
 
   cb->response(listing);
 }
@@ -874,18 +858,12 @@ Master::lock(ResponseCallbackLock *cb, uint64_t session_id, uint64_t handle,
 
     handle_data->node->lock_generation++;
 
-    DbTxn *txn = m_bdb_fs->start_transaction();
-    try {
+    HT_BDBTXN_BEGIN {
       m_bdb_fs->set_xattr_i64(txn, handle_data->node->name, "lock.generation",
                               handle_data->node->lock_generation);
       txn->commit(0);
     }
-    catch (Exception &e) {
-      HT_ERROR_OUT << e << HT_END;
-      txn->abort();
-      cb->error(e.code(), e.what());
-      return;
-    }
+    HT_BDBTXN_END_CB(cb);
 
     handle_data->node->cur_lock_mode = mode;
     lock_handle(handle_data, mode);
@@ -1014,17 +992,12 @@ void Master::release_lock(HandleDataPtr &handle_data, bool wait_for_notify) {
     if (!next_lock_handles.empty()) {
       handle_data->node->lock_generation++;
 
-      DbTxn *txn = m_bdb_fs->start_transaction();
-      try {
+      HT_BDBTXN_BEGIN {
         m_bdb_fs->set_xattr_i64(txn, handle_data->node->name, "lock.generation",
                                 handle_data->node->lock_generation);
         txn->commit(0);
       }
-      catch (Exception &e) {
-        txn->abort();
-        HT_FATAL_OUT <<"Problem writing attribute 'lock.generation' on file '"
-            << handle_data->node->name <<"': "<< e << HT_END;
-      }
+      HT_BDBTXN_END();
 
       handle_data->node->cur_lock_mode = next_mode;
 
@@ -1166,17 +1139,11 @@ Master::destroy_handle(uint64_t handle, int *errorp, std::string &errmsg,
       }
 
       // remove file from database
-      DbTxn *txn = m_bdb_fs->start_transaction();
-
-      try {
+      HT_BDBTXN_BEGIN {
         m_bdb_fs->unlink(txn, handle_data->node->name);
         txn->commit(0);
       }
-      catch (DbException &e) {
-        txn->abort();
-        HT_FATALF("Unable to remove ephemeral file '%s' from database - %s",
-                  handle_data->node->name.c_str(), e.what());
-      }
+      HT_BDBTXN_END(false);
 
       // remove node
       NodeMap::iterator node_it = m_node_map.find(handle_data->node->name);
@@ -1193,9 +1160,8 @@ Master::destroy_handle(uint64_t handle, int *errorp, std::string &errmsg,
 /**
  */
 void Master::get_generation_number() {
-  DbTxn *txn = m_bdb_fs->start_transaction();
 
-  try {
+  HT_BDBTXN_BEGIN {
     if (!m_bdb_fs->get_xattr_i32(txn, "/hyperspace/metadata", "generation",
                                  &m_generation))
       m_generation = 0;
@@ -1205,8 +1171,6 @@ void Master::get_generation_number() {
                             m_generation);
     txn->commit(0);
   }
-  catch (DbException &e) {
-    txn->abort();
-    HT_FATALF("Error obtaining generation number: %s", e.what());
-  }
+  HT_BDBTXN_END();
+
 }
