@@ -457,10 +457,25 @@ void Range::split_install_log() {
    * Write SPLIT_START MetaLog entry
    */
   m_state.state = RangeState::SPLIT_LOG_INSTALLED;
-  Global::range_log->log_split_start(m_identifier,
-				    RangeSpec(m_start_row.c_str(), m_end_row.c_str()),
-				    RangeSpec(m_start_row.c_str(), m_state.split_point),
-				    m_state);
+  for (int i=0; true; i++) {
+    try {
+      Global::range_log->log_split_start(m_identifier,
+					 RangeSpec(m_start_row.c_str(), m_end_row.c_str()),
+					 RangeSpec(m_start_row.c_str(), m_state.split_point),
+					 m_state);
+      break;
+    }
+    catch (Exception &e) {
+      if (i<3) {
+	HT_ERRORF("%s - %s", Error::get_text(e.code()), e.what());
+	poll(0, 0, 5000);
+	continue;
+      }
+      HT_ERRORF("Problem writing SPLIT_LOG_INSTALLED meta log entry for %s split-point='%s'",
+		m_name.c_str(), m_state.split_point);
+      HT_FATAL_OUT << e << HT_END;
+    }
+  }
 
   if (Global::crash_test)
     Global::crash_test->maybe_crash("split-1");
@@ -561,7 +576,23 @@ void Range::split_compact_and_shrink() {
   m_state.timestamp.clear();
   m_state.set_old_start_row(old_start_row);
   m_state.clear_split_point();
-  Global::range_log->log_split_shrunk(m_identifier, RangeSpec(m_start_row.c_str(), m_end_row.c_str()), m_state);
+
+  for (int i=0; true; i++) {
+    try {
+      Global::range_log->log_split_shrunk(m_identifier, RangeSpec(m_start_row.c_str(), m_end_row.c_str()), m_state);
+      break;
+    }
+    catch (Exception &e) {
+      if (i<3) {
+	HT_ERRORF("%s - %s", Error::get_text(e.code()), e.what());
+	poll(0, 0, 5000);
+	continue;
+      }
+      HT_ERRORF("Problem writing SPLIT_SHRUNK meta log entry for %s split-point='%s'",
+		m_name.c_str(), m_state.split_point);
+      HT_FATAL_OUT << e << HT_END;
+    }
+  }
 
   if (Global::crash_test)
     Global::crash_test->maybe_crash("split-2");
@@ -612,7 +643,23 @@ void Range::split_notify_master() {
   m_state.state = RangeState::STEADY;
   m_state.clear_transfer_log();
   m_state.clear_old_start_row();
-  Global::range_log->log_split_done(m_identifier, RangeSpec(m_start_row.c_str(), m_end_row.c_str()));
+
+  for (int i=0; true; i++) {
+    try {
+      Global::range_log->log_split_done(m_identifier, RangeSpec(m_start_row.c_str(), m_end_row.c_str()));
+      break;
+    }
+    catch (Exception &e) {
+      if (i<2) {
+	HT_ERRORF("%s - %s", Error::get_text(e.code()), e.what());
+	poll(0, 0, 5000);
+	continue;
+      }
+      HT_ERRORF("Problem writing SPLIT_DONE meta log entry for %s split-point='%s'",
+		m_name.c_str(), m_state.split_point);
+      HT_FATAL_OUT << e << HT_END;
+    }
+  }
 
 }
 

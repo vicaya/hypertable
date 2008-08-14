@@ -74,7 +74,7 @@ const uint32_t Master::DEFAULT_KEEPALIVE_INTERVAL;
         return; \
       } \
       HT_WARN("Berkeley DB deadlock encountered"); \
-      poll(0, 0, (System::rand32() % 100) + 1); \
+      poll(0, 0, (System::rand32() % 3000) + 1); \
       continue; \
     } \
     break; \
@@ -91,7 +91,7 @@ const uint32_t Master::DEFAULT_KEEPALIVE_INTERVAL;
         return __VA_ARGS__; \
       } \
       HT_WARN("Berkeley DB deadlock encountered"); \
-      poll(0, 0, (System::rand32() % 100) + 1); \
+      poll(0, 0, (System::rand32() % 3000) + 1); \
       continue; \
     } \
     break; \

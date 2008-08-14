@@ -139,7 +139,7 @@ ConnectionManager::wait_for_connection(struct sockaddr_in &addr,
     while (!conn_statePtr->connected) {
       conn_statePtr->cond.timed_wait(conn_lock, drop_time);
       boost::xtime_get(&now, boost::TIME_UTC);
-      if (xtime_cmp(now, drop_time) >= 0)
+      if (!conn_statePtr->connected && xtime_cmp(now, drop_time) >= 0)
         return false;
     }
   }
