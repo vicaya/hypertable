@@ -58,6 +58,8 @@ namespace {
     { Error::BLOCK_COMPRESSOR_INIT_ERROR,        "HYPERTABLE block compressor initialization error" },
     { Error::TABLE_DOES_NOT_EXIST,               "HYPERTABLE table does not exist" },
     { Error::PARSE_ERROR,                        "HYPERTABLE parse error" },
+    { Error::CONNECT_ERROR_MASTER,               "HYPERTABLE Master connect error" },
+    { Error::CONNECT_ERROR_HYPERSPACE,           "HYPERTABLE Hyperspace connect error" },
     { Error::TOO_MANY_COLUMNS,            "HYPERTABLE too many columns" },
     { Error::BAD_DOMAIN_NAME,             "HYPERTABLE bad domain name" },
     { Error::FAILED_EXPECTATION,          "HYPERTABLE failed expectation" },

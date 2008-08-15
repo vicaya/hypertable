@@ -54,7 +54,7 @@ namespace Hypertable {
      *
      * @param install_dir path to Hypertable installation directory
      * @param config_file name of configuration file
-     * @param timeout maximum method call time in seconds
+     * @param timeout method call timeout in seconds
      */
     Client(const String &install_dir, const String &config_file, time_t timeout=-1);
 
@@ -62,7 +62,7 @@ namespace Hypertable {
      * Constructs the object using the default config file
      *
      * @param install_dir path to Hypertable installation directory
-     * @param timeout maximum method call time in seconds
+     * @param timeout method call timeout in seconds
      */
     Client(const String &install_dir, time_t timeout=-1);
 

@@ -39,7 +39,7 @@ extern "C" {
 using namespace Hypertable;
 using namespace KFS;
 
-KosmosBroker::KosmosBroker(PropertiesPtr &props) : m_verbose(false), m_no_flush(false) {
+KosmosBroker::KosmosBroker(PropertiesPtr &props) : m_verbose(false), m_flush(false) {
 
   const char *meta_name;
   int meta_port;
@@ -49,7 +49,7 @@ KosmosBroker::KosmosBroker(PropertiesPtr &props) : m_verbose(false), m_no_flush(
   meta_name = props->get("Kfs.MetaServer.Name", "");
   meta_port = props->get_int("Kfs.MetaServer.Port", -1);
 
-  m_no_flush = props->get_bool("Kfs.Broker.NoFlush");
+  m_flush = props->get_bool("Kfs.Broker.Flush");
 
   std::cerr << "Server: " << meta_name << " " << meta_port << std::endl;
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient(meta_name, meta_port);
@@ -234,7 +234,7 @@ void KosmosBroker::append(ResponseCallbackAppend *cb, uint32_t fd,
     HT_INFOF("append fd=%d amount=%d", fd, amount);
   }
 
-  if (m_no_flush)
+  if (!m_flush)
     sync = false;
 
   if (!m_open_file_map.get(fd, fdata)) {
@@ -461,10 +461,12 @@ void KosmosBroker::rmdir(ResponseCallback *cb, const char *dname) {
     absdir = m_root_dir + "/" + dname;
 
   if ((res = clnt->Rmdirs(absdir.c_str())) != 0) {
-    string errmsg = KFS::ErrorCodeToStr(res);
-    HT_ERRORF("rmdir failed: dname='%s' - %s", absdir.c_str(), errmsg.c_str());
-    ReportError(cb, res);
-    return;
+    if (res != -ENOENT && res != -ENOTDIR) {
+      string errmsg = KFS::ErrorCodeToStr(res);
+      HT_ERRORF("rmdir failed: dname='%s' - %s", absdir.c_str(), errmsg.c_str());
+      ReportError(cb, res);
+      return;
+    }
   }
 
   cb->response_ok();
@@ -483,7 +485,7 @@ void KosmosBroker::flush(ResponseCallback *cb, uint32_t fd) {
     HT_INFOF("flush fd=%d", fd);
   }
 
-  if (!m_no_flush) {
+  if (m_flush) {
     if (!m_open_file_map.get(fd, fdata)) {
       char errbuf[32];
       sprintf(errbuf, "%d", fd);

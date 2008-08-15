@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
     for (int i=1; i<argc; i++) {
       if (!strncmp(argv[i], "--config=", 9))
         cfg_file = &argv[i][9];
-      if (!strncmp(argv[i], "--pidfile=", 10))
+      else if (!strncmp(argv[i], "--pidfile=", 10))
         pidfile = &argv[i][10];
       else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
         verbose = true;

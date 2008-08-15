@@ -424,8 +424,8 @@ void RangeServer::local_recover() {
 
   }
   catch (Exception &e) {
-    HT_ERRORF("Problem attempting fast recovery - %s - %s", Error::get_text(e.code()), e.what());
-    _exit(1);
+    HT_ERROR_OUT << e << HT_END;
+    HT_ABORT;
   }
 }
 

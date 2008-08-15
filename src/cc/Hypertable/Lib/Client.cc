@@ -33,6 +33,7 @@ extern "C" {
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
 #include "Common/System.h"
+#include "Common/Timer.h"
 
 #include "Hyperspace/DirEntry.h"
 
@@ -184,10 +185,18 @@ void Client::initialize(const String &config_file) {
   m_props_ptr->set_int("Hyperspace.Client.Timeout", (int)m_timeout);
 
   m_hyperspace_ptr = new Hyperspace::Session(m_comm, m_props_ptr);
-  while (!m_hyperspace_ptr->wait_for_connection(2)) {
-    cout << "Waiting for connection to Hyperspace..." << flush;
-    poll(0, 0, 5000);
-    cout << endl << flush;
+
+  {
+    Timer timer((double)m_timeout, true);
+
+    while (!m_hyperspace_ptr->wait_for_connection(3)) {
+      if (timer.expired())
+	HT_THROW(Error::CONNECT_ERROR_HYPERSPACE, "");
+      cout << "Waiting for connection to Hyperspace..." << flush;
+      poll(0, 0, System::rand32() % 5000);
+      cout << endl << flush;
+    }
+
   }
 
   m_app_queue_ptr = new ApplicationQueue(1);
