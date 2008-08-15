@@ -10,12 +10,23 @@
 === HOW TO BUILD ===
 ====================
 
-  1. Install CMake (http://www.cmake.org/)
+  1. Install development environment (if necessary)
 
-  2. Install Required libraries (you may already have them installed)
+    - A standard C++ compiler (e.g.: GCC 4.0+ recommended)
+      apt-get: g++; yum: gcc-c++; source: http://gcc.gnu.org/ (*)
+
+    - GNU make 3.81+
+      apt-get: make; yum: make
+
+    - cmake 2.4.6+
+      apt-get: cmake; yum: cmake; source: http://www.cmake.org/
+
+  2. Install required libraries
 
     - BerkeleyDB 4.6+
-      Example (generic Linux):
+      apt-get: libdb4.6++-dev; yum: db4-devel
+
+      Building from source for generic Linux distribution:
       tar -xzvf ~/Downloads/db-4.7.25.tar.gz
       cd db-4.7.25/build_unix/
       ../dist/configure --enable-cxx
@@ -25,59 +36,42 @@
           sudo tee /etc/ld.so.conf.d/BerkeleyDB.conf
       sudo /sbin/ldconfig
 
-      Example (using apt-get, typical on Debian variants (Ubuntu etc.)):
-      sudo apt-get install libdb4.6++-dev
-
-      Example (using yum, typical on Redhat variants (CentOS, Fedora etc.)):
-      sudo yum install db4-devel
-
-      Note: if distribution has version older than 4.6+, try the generic way.
-
-    - Boost version 1.34.1+ (http://www.boost.org/)
-      Example (using apt-get)
-      sudo apt-get libboost-.*-dev
-
-      Example (using yum)
-      sudo yum install boost-devel
-
+    - Boost version 1.34.1+
+      apt-get: libboost-.*-dev; yum: boost-devel; source: http://www.boost.org/
       Note: if distribution has version older than 1.34.1+, try the generic way.
 
-    - log4cpp dev lib (http://log4cpp.sourceforge.net/)
+    - log4cpp 1.0+ dev lib
+      apt-get: liblog4cpp5-dev; yum: log4cpp-devel;
+      source: http://log4cpp.sourceforge.net/
 
-      There is a bug in log4cpp that causes is to crash when trying to log
-      messages larger than 1023 characters.  We've created a patch to fix the
-      problem (thanks goes to Josh Taylor for coming up with this patch).  The
-      following shell transcript illustrates how to build and install log4cpp:
+    - expat 0.9+ dev lib
+      yum: expat-devel; apt-get: libexpat1-dev
+      source: http://sourceforge.net/projects/expat
 
-      $ wget http://www.hypertable.org/pub/0003-Fixed-bug-in-StringUtil-vform.patch
-      $ tar -xzvf ~/download/log4cpp-1.0.tar.gz
-      $ cd log4cpp-1.0
-      $ patch -p1 < ../0003-Fixed-bug-in-StringUtil-vform.patch
-      $ ./configure
-      $ make
-      $ sudo make install
+    - readline dev lib
+      apt-get: libreadline5-dev; yum: readline-devel;
+      source: http://tiswww.case.edu/php/chet/readline/rltop.html
 
-      NOTE: If your row keys are reasonably small, you may not run into this problem
+    - ncurses dev lib (usually auto installed by installing the above)
 
-    - expat dev lib (http://sourceforge.net/projects/expat;
-      yum: expat-devel; apt-get: libexpat1-dev)
+    - zlib dev lib
+      apt-get: zlib1g-dev; yum: zlib-devel; source: http://zlib.net/
 
-    - readline dev lib (yum: readline-devel; apt-get: libreadline5-dev)
+    RECOMMENDED (but not required):
+    - tcmalloc
+      apt-get: libgoogle-perftools-dev; yum: google-perftools-devel
+      source: http://code.google.com/p/google-perftools/
 
-    - ncurses dev lib (usually auto installed by installing above)
-
-    - zlib dev lib (yum: zlib-devel; apt-get: zlib1g-dev)
-
-    HIGHLY RECOMMENDED (but not required):
-    - tcmalloc (http://code.google.com/p/google-perftools/)
-
-  3. Checkout the source code.
+  3. Checkout the source code or download source tarball
 
     mkdir ~/src
     cd ~/src
     git clone git://scm.hypertable.org/pub/repos/hypertable.git
 
-  4. Create an install directory
+    or if tarball:
+    tar zxvf <path_to_tarball>
+
+  4. Create an install directory (optional)
 
     mkdir ~/hypertable
 
@@ -95,12 +89,12 @@
 
     cmake -DCMAKE_INSTALL_PREFIX=$prefix ~/src/hypertable
 
-    Also default the build is configured for Debug. To compile for
-    performance/benchmark:
+    By default the build is configured for debug. To make a release build for
+    production/performance test/benchmark:
 
     cmake -DCMAKE_BUILD_TYPE=Release ~/src/hypertable
 
-    Note, one can also use:
+    Note, you can also use:
 
     ccmake ~/src/hypertable
 
@@ -109,7 +103,7 @@
     To build shared libraries, e.g., for scripting language extensions:
     cmake -DBUILD_SHARED_LIBS=ON ~/src/hypertable
 
-  7. Build the software.
+  7. Build Hypertable binaries.
 
     make (or make -j<number_of_cpu_or_cores_plus_1> for faster compile)
     make install
@@ -123,6 +117,12 @@
     DYLD_LIBRARY_PATH (Mac OS X) to specify non-standard shared library
     directories.
 
+
+  * Note: Most OS distributions have their own package managers. Popular ones
+    include apt-get for Ubuntu/Debian and yum for Redhat/Fedora/CentOS.
+    To install an apt-get package: sudo apt-get install <package>;
+    a yum package: sudo yum install <package>.
+
 ===================================
 === HOW TO RUN REGRESSION TESTS ===
 ===================================
@@ -135,10 +135,10 @@
    *** WARNING: THIS STEP MUST BE PERFORMED PRIOR TO RUNNING THE TEST ***
    **********************************************************************
 
-  version=0.9.0.7
+  version=0.9.1.0 # substitute with appropriate version
 
   cd $prefix/$version
-  bin/kill-servers.sh
+  bin/clean-database.sh
   bin/start-all-servers.sh local
 
 3. Run the regression tests
