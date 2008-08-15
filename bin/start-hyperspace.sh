@@ -86,11 +86,11 @@ if [ ! -d $HYPERTABLE_HOME/hyperspace ] ; then
 fi
 
 let RETRY_COUNT=0
-$HYPERTABLE_HOME/bin/serverup --silent hyperspace
+$HYPERTABLE_HOME/bin/serverup --silent --host=localhost hyperspace
 if [ $? != 0 ] ; then
     nohup $HYPERTABLE_HOME/bin/Hyperspace.Master --pidfile=$PIDFILE --verbose $@ 1>& $LOGFILE &
 
-  $HYPERTABLE_HOME/bin/serverup --silent hyperspace
+  $HYPERTABLE_HOME/bin/serverup --silent --host=localhost hyperspace
   while [ $? != 0 ] ; do
       let RETRY_COUNT=++RETRY_COUNT
       let REPORT=RETRY_COUNT%3
@@ -101,7 +101,7 @@ if [ $? != 0 ] ; then
         echo "Waiting for Hyperspace to come up ..."
       fi
       sleep 1
-      $HYPERTABLE_HOME/bin/serverup --silent hyperspace
+      $HYPERTABLE_HOME/bin/serverup --silent --host=localhost hyperspace
   done
   echo "Successfully started Hyperspace"
 else
