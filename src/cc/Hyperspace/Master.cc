@@ -445,6 +445,7 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
   bool lock_notifiy = false;
   uint32_t lock_mode = 0;
   uint64_t lock_generation = 0;
+  bool create_notification_delivered = false;
 
   if (m_verbose) {
     HT_INFOF("open(session_id=%lld, fname=%s, flags=0x%x, event_mask=0x%x)",
@@ -453,118 +454,118 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
 
   assert(name[0] == '/');
 
+  if (!get_session(session_id, session_data))
+    HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
+
+  if (!find_parent_node(name, parent_node, child_name))
+    HT_THROW(Error::HYPERSPACE_BAD_PATHNAME, name);
+
+  if (!init_attrs.empty() && !(flags & OPEN_FLAG_CREATE))
+    HT_THROW(Error::HYPERSPACE_CREATE_FAILED,
+	     "initial attributes can only be supplied on CREATE");
+
+  // If path name to open is "/", then create a dummy NodeData object for
+  // the parent because the previous call will return the node itself as
+  // the parent, causing the second of the following two mutex locks to hang
+  if (!strcmp(name, "/"))
+    parent_node = new NodeData();
+
+  get_node(name, node_data);
+
   HT_BDBTXN_BEGIN {
-    if (!get_session(session_id, session_data))
-      HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
+    boost::mutex::scoped_lock parent_lock(parent_node->mutex);
+    boost::mutex::scoped_lock node_lock(node_data->mutex);
 
-    if (!find_parent_node(name, parent_node, child_name))
-      HT_THROW(Error::HYPERSPACE_BAD_PATHNAME, name);
+    if ((flags & OPEN_FLAG_LOCK_SHARED) == OPEN_FLAG_LOCK_SHARED) {
+      if (node_data->exclusive_lock_handle != 0)
+	HT_THROW(Error::HYPERSPACE_LOCK_CONFLICT, "");
+      lock_mode = LOCK_MODE_SHARED;
+      if (node_data->shared_lock_handles.empty())
+	lock_notifiy = true;
+    }
+    else if ((flags & OPEN_FLAG_LOCK_EXCLUSIVE) == OPEN_FLAG_LOCK_EXCLUSIVE) {
+      if (node_data->exclusive_lock_handle != 0 ||
+	  !node_data->shared_lock_handles.empty())
+	HT_THROW(Error::HYPERSPACE_LOCK_CONFLICT, "");
+      lock_mode = LOCK_MODE_EXCLUSIVE;
+      lock_notifiy = true;
+    }
 
-    if (!init_attrs.empty() && !(flags & OPEN_FLAG_CREATE))
-      HT_THROW(Error::HYPERSPACE_CREATE_FAILED,
-               "initial attributes can only be supplied on CREATE");
+    existed = m_bdb_fs->exists(txn, name, &is_dir);
 
-    // If path name to open is "/", then create a dummy NodeData object for
-    // the parent because the previous call will return the node itself as
-    // the parent, causing the second of the following two mutex locks to hang
-    if (!strcmp(name, "/"))
-      parent_node = new NodeData();
+    if (existed) {
+      if ((flags & OPEN_FLAG_CREATE) && (flags & OPEN_FLAG_EXCL))
+	HT_THROW(Error::HYPERSPACE_FILE_EXISTS, "mode=CREATE|EXCL");
 
-    get_node(name, node_data);
-
-    {
-      boost::mutex::scoped_lock parent_lock(parent_node->mutex);
-      boost::mutex::scoped_lock node_lock(node_data->mutex);
-
-      if ((flags & OPEN_FLAG_LOCK_SHARED) == OPEN_FLAG_LOCK_SHARED) {
-        if (node_data->exclusive_lock_handle != 0)
-          HT_THROW(Error::HYPERSPACE_LOCK_CONFLICT, "");
-        lock_mode = LOCK_MODE_SHARED;
-        if (node_data->shared_lock_handles.empty())
-          lock_notifiy = true;
+      if ((flags & OPEN_FLAG_TEMP))
+	HT_THROWF(Error::HYPERSPACE_FILE_EXISTS, "Unable to open TEMP file "
+		  "'%s' because it already exists", name);
+      // Read/create 'lock.generation' attribute
+      if (node_data->lock_generation == 0) {
+	if (!m_bdb_fs->get_xattr_i64(txn, name, "lock.generation",
+				     &node_data->lock_generation)) {
+	  node_data->lock_generation = 1;
+	  m_bdb_fs->set_xattr_i64(txn, name, "lock.generation",
+				  node_data->lock_generation);
+	}
       }
-      else if ((flags & OPEN_FLAG_LOCK_EXCLUSIVE) == OPEN_FLAG_LOCK_EXCLUSIVE) {
-        if (node_data->exclusive_lock_handle != 0 ||
-            !node_data->shared_lock_handles.empty())
-          HT_THROW(Error::HYPERSPACE_LOCK_CONFLICT, "");
-        lock_mode = LOCK_MODE_EXCLUSIVE;
-        lock_notifiy = true;
-      }
+    }
+    else {
+      if (!(flags & OPEN_FLAG_CREATE))
+	HT_THROW(Error::HYPERSPACE_BAD_PATHNAME, name);
 
-      existed = m_bdb_fs->exists(txn, name, &is_dir);
+      m_bdb_fs->create(txn, name, (flags & OPEN_FLAG_TEMP));
+      node_data->lock_generation = 1;
+      m_bdb_fs->set_xattr_i64(txn, name, "lock.generation",
+			      node_data->lock_generation);
+      // Set the initial attributes
+      for (size_t i=0; i<init_attrs.size(); i++)
+	m_bdb_fs->set_xattr(txn, name, init_attrs[i].name,
+			    init_attrs[i].value, init_attrs[i].value_len);
+      if (flags & OPEN_FLAG_TEMP)
+	node_data->ephemeral = true;
+      created = true;
+    }
 
-      if (existed) {
-        if ((flags & OPEN_FLAG_CREATE) && (flags & OPEN_FLAG_EXCL))
-          HT_THROW(Error::HYPERSPACE_FILE_EXISTS, "mode=CREATE|EXCL");
-
-        if ((flags & OPEN_FLAG_TEMP))
-          HT_THROWF(Error::HYPERSPACE_FILE_EXISTS, "Unable to open TEMP file "
-                    "'%s' because it already exists", name);
-        // Read/create 'lock.generation' attribute
-        if (node_data->lock_generation == 0) {
-          if (!m_bdb_fs->get_xattr_i64(txn, name, "lock.generation",
-                                       &node_data->lock_generation)) {
-            node_data->lock_generation = 1;
-            m_bdb_fs->set_xattr_i64(txn, name, "lock.generation",
-                                    node_data->lock_generation);
-          }
-        }
-      }
-      else {
-        if (!(flags & OPEN_FLAG_CREATE))
-          HT_THROW(Error::HYPERSPACE_BAD_PATHNAME, name);
-
-        m_bdb_fs->create(txn, name, (flags & OPEN_FLAG_TEMP));
-        node_data->lock_generation = 1;
-        m_bdb_fs->set_xattr_i64(txn, name, "lock.generation",
-                                node_data->lock_generation);
-        // Set the initial attributes
-        for (size_t i=0; i<init_attrs.size(); i++)
-          m_bdb_fs->set_xattr(txn, name, init_attrs[i].name,
-                              init_attrs[i].value, init_attrs[i].value_len);
-        if (flags & OPEN_FLAG_TEMP)
-          node_data->ephemeral = true;
-        created = true;
-      }
-
+    if (!handle_data)
       create_handle(&handle, handle_data);
 
-      handle_data->node = node_data.get();
-      handle_data->open_flags = flags;
-      handle_data->event_mask = event_mask;
-      handle_data->session_data = session_data;
+    handle_data->node = node_data.get();
+    handle_data->open_flags = flags;
+    handle_data->event_mask = event_mask;
+    handle_data->session_data = session_data;
 
-      session_data->add_handle(handle);
+    session_data->add_handle(handle);
 
-      if (created) {
-        HyperspaceEventPtr event(new EventNamed(EVENT_MASK_CHILD_NODE_ADDED,
-                                                child_name));
-        deliver_event_notifications(parent_node.get(), event);
-      }
-
-      /**
-       * If open flags LOCK_SHARED or LOCK_EXCLUSIVE, then obtain lock
-       */
-      if (lock_mode != 0) {
-        handle_data->node->lock_generation++;
-        m_bdb_fs->set_xattr_i64(txn, name, "lock.generation",
-                                handle_data->node->lock_generation);
-        lock_generation = handle_data->node->lock_generation;
-        handle_data->node->cur_lock_mode = lock_mode;
-
-        lock_handle(handle_data, lock_mode);
-
-        // deliver notification to handles to this same node
-        if (lock_notifiy) {
-          HyperspaceEventPtr event(new EventLockAcquired(lock_mode));
-          deliver_event_notifications(handle_data->node, event);
-        }
-      }
-
-      handle_data->node->add_handle(handle, handle_data);
-
-      txn->commit(0);
+    if (created && !create_notification_delivered) {
+      HyperspaceEventPtr event(new EventNamed(EVENT_MASK_CHILD_NODE_ADDED,
+					      child_name));
+      deliver_event_notifications(parent_node.get(), event);
+      create_notification_delivered = true;
     }
+
+    /**
+     * If open flags LOCK_SHARED or LOCK_EXCLUSIVE, then obtain lock
+     */
+    if (lock_mode != 0) {
+      handle_data->node->lock_generation++;
+      m_bdb_fs->set_xattr_i64(txn, name, "lock.generation",
+			      handle_data->node->lock_generation);
+      lock_generation = handle_data->node->lock_generation;
+      handle_data->node->cur_lock_mode = lock_mode;
+
+      lock_handle(handle_data, lock_mode);
+
+      // deliver notification to handles to this same node
+      if (lock_notifiy) {
+	HyperspaceEventPtr event(new EventLockAcquired(lock_mode));
+	deliver_event_notifications(handle_data->node, event);
+      }
+    }
+
+    handle_data->node->add_handle(handle, handle_data);
+
+    txn->commit(0);
   }
   HT_BDBTXN_END_CB(cb);
 
@@ -624,21 +625,19 @@ Master::attr_set(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
              session_id, handle, name, value_len);
   }
 
+  if (!get_session(session_id, session_data))
+    HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
+
+  if (!get_handle_data(handle, handle_data))
+    HT_THROWF(Error::HYPERSPACE_INVALID_HANDLE, "handle=%llu", (Llu)handle);
+
   HT_BDBTXN_BEGIN {
-    if (!get_session(session_id, session_data))
-      HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
+    boost::mutex::scoped_lock node_lock(handle_data->node->mutex);
 
-    if (!get_handle_data(handle, handle_data))
-      HT_THROWF(Error::HYPERSPACE_INVALID_HANDLE, "handle=%llu", (Llu)handle);
+    m_bdb_fs->set_xattr(txn, handle_data->node->name, name, value, value_len);
 
-    {
-      boost::mutex::scoped_lock node_lock(handle_data->node->mutex);
-
-      m_bdb_fs->set_xattr(txn, handle_data->node->name, name, value, value_len);
-
-      HyperspaceEventPtr event(new EventNamed(EVENT_MASK_ATTR_SET, name));
-      deliver_event_notifications(handle_data->node, event);
-    }
+    HyperspaceEventPtr event(new EventNamed(EVENT_MASK_ATTR_SET, name));
+    deliver_event_notifications(handle_data->node, event);
 
     txn->commit(0);
   }
@@ -664,19 +663,18 @@ Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
     HT_INFOF("attrget(session=%lld, handle=%lld, name=%s)",
              session_id, handle, name);
 
+  if (!get_session(session_id, session_data))
+    HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
+
+  if (!get_handle_data(handle, handle_data))
+    HT_THROWF(Error::HYPERSPACE_INVALID_HANDLE, "handle=%llu", (Llu)handle);
+
   HT_BDBTXN_BEGIN {
-    if (!get_session(session_id, session_data))
-      HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
+    boost::mutex::scoped_lock node_lock(handle_data->node->mutex);
 
-    if (!get_handle_data(handle, handle_data))
-      HT_THROWF(Error::HYPERSPACE_INVALID_HANDLE, "handle=%llu", (Llu)handle);
-
-    {
-      boost::mutex::scoped_lock node_lock(handle_data->node->mutex);
-      if (!m_bdb_fs->get_xattr(txn, handle_data->node->name, name, dbuf))
-        HT_THROW(Error::HYPERSPACE_ATTR_NOT_FOUND, name);
-    }
-
+    if (!m_bdb_fs->get_xattr(txn, handle_data->node->name, name, dbuf))
+      HT_THROW(Error::HYPERSPACE_ATTR_NOT_FOUND, name);
+    
     txn->commit(0);
   }
   HT_BDBTXN_END_CB(cb);
@@ -698,21 +696,20 @@ void Master::attr_del(ResponseCallback *cb, uint64_t session_id, uint64_t handle
     HT_INFOF("attrdel(session=%lld, handle=%lld, name=%s)",
              session_id, handle, name);
 
+  if (!get_session(session_id, session_data))
+    HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
+
+  if (!get_handle_data(handle, handle_data))
+    HT_THROWF(Error::HYPERSPACE_INVALID_HANDLE, "handle=%llu", (Llu)handle);
+
+
   HT_BDBTXN_BEGIN {
-    if (!get_session(session_id, session_data))
-      HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
+    boost::mutex::scoped_lock node_lock(handle_data->node->mutex);
 
-    if (!get_handle_data(handle, handle_data))
-      HT_THROWF(Error::HYPERSPACE_INVALID_HANDLE, "handle=%llu", (Llu)handle);
+    m_bdb_fs->del_xattr(txn, handle_data->node->name, name);
 
-    {
-      boost::mutex::scoped_lock node_lock(handle_data->node->mutex);
-
-      m_bdb_fs->del_xattr(txn, handle_data->node->name, name);
-
-      HyperspaceEventPtr event(new EventNamed(EVENT_MASK_ATTR_DEL, name));
-      deliver_event_notifications(handle_data->node, event);
-    }
+    HyperspaceEventPtr event(new EventNamed(EVENT_MASK_ATTR_DEL, name));
+    deliver_event_notifications(handle_data->node, event);
 
     txn->commit(0);
   }
@@ -757,19 +754,16 @@ Master::readdir(ResponseCallbackReaddir *cb, uint64_t session_id,
   if (m_verbose)
     HT_INFOF("readdir(session=%lld, handle=%lld)", session_id, handle);
 
+  if (!get_session(session_id, session_data))
+    HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
+
+  if (!get_handle_data(handle, handle_data))
+    HT_THROWF(Error::HYPERSPACE_INVALID_HANDLE, "handle=%llu", (Llu)handle);
+
+
   HT_BDBTXN_BEGIN {
-    if (!get_session(session_id, session_data))
-      HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
-
-    if (!get_handle_data(handle, handle_data))
-      HT_THROWF(Error::HYPERSPACE_INVALID_HANDLE, "handle=%llu", (Llu)handle);
-
-    {
-      boost::mutex::scoped_lock lock(handle_data->node->mutex);
-
-      m_bdb_fs->get_directory_listing(txn, handle_data->node->name, listing);
-    }
-
+    boost::mutex::scoped_lock lock(handle_data->node->mutex);
+    m_bdb_fs->get_directory_listing(txn, handle_data->node->name, listing);
     txn->commit(0);
   }
   HT_BDBTXN_END_CB(cb);
