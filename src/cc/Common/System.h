@@ -49,6 +49,7 @@ namespace Hypertable {
     static int get_processor_count();
 
     static uint32_t rand32() { return ms_rng(); }
+    static uint64_t rand64() { return (uint64_t)rand32() << 32 | rand32(); }
 
   private:
     static void _init(const String &install_directory);

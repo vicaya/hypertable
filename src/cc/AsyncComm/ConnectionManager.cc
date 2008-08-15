@@ -187,16 +187,10 @@ ConnectionManager::send_connect_request(ConnectionState *conn_state) {
 
     // reschedule
     boost::xtime_get(&conn_state->next_retry, boost::TIME_UTC);
-    int32_t sec_addition;
-    if (System::rand32() % 2)
-      sec_addition = conn_state->timeout + (System::rand32() % 2);
-    else
-      sec_addition = conn_state->timeout - (System::rand32() % 2);
-    if (sec_addition < 1)
-      sec_addition = 1;
+    int32_t sec_addition = std::max(1L, conn_state->timeout
+                                    + ((System::rand32() & 1) ? 1 : -1));
     conn_state->next_retry.sec += sec_addition;
-    conn_state->next_retry.nsec = ((int64_t)System::rand32() << 32)
-                                  | System::rand32();
+    conn_state->next_retry.nsec = System::rand64();
 
     // add to retry heap
     m_impl->retry_queue.push(conn_state);
