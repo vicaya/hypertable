@@ -63,7 +63,8 @@ int main(int argc, char **argv) {
   /**
    *  hypertable_test
    */
-  cmd_str = "./hypertable --test-mode --config hypertable.cfg < hypertable_test.hql > hypertable_test.output 2>&1";
+  cmd_str = "./hypertable --test-mode --config hypertable.cfg "
+      "< hypertable_test.hql > hypertable_test.output 2>&1";
   if (system(cmd_str.c_str()) != 0)
     return 1;
 

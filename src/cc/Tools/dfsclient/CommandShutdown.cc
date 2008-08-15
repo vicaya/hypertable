@@ -50,7 +50,8 @@ void CommandShutdown::run() {
     if (m_args[0].first == "now")
       flags |= DfsBroker::Protocol::SHUTDOWN_FLAG_IMMEDIATE;
     else
-      HT_THROWF(Error::PARSE_ERROR, "Invalid argument - %s", m_args[0].first.c_str());
+      HT_THROWF(Error::COMMAND_PARSE_ERROR, "Invalid argument - %s",
+                m_args[0].first.c_str());
   }
 
   m_client->shutdown(flags, &sync_handler);

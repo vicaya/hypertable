@@ -28,9 +28,12 @@
 namespace Hypertable {
   using namespace Serialization;
 
-  CommBuf *MasterProtocol::create_create_table_request(const char *tablename, const char *schemastr) {
+  CommBuf *
+  MasterProtocol::create_create_table_request(const char *tablename,
+                                              const char *schemastr) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
-    CommBuf *cbuf = new CommBuf(hbuilder, 2 + encoded_length_vstr(tablename) + encoded_length_vstr(schemastr));
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + encoded_length_vstr(tablename)
+        + encoded_length_vstr(schemastr));
     cbuf->append_i16(COMMAND_CREATE_TABLE);
     cbuf->append_vstr(tablename);
     cbuf->append_vstr(schemastr);
@@ -52,7 +55,8 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *MasterProtocol::create_register_server_request(const String &location) {
+  CommBuf *
+  MasterProtocol::create_register_server_request(const String &location) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
     CommBuf *cbuf = new CommBuf(hbuilder, 2 + encoded_length_vstr(location));
     cbuf->append_i16(COMMAND_REGISTER_SERVER);
@@ -60,9 +64,13 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *MasterProtocol::create_report_split_request(TableIdentifier *table, RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit) {
+  CommBuf *
+  MasterProtocol::create_report_split_request(const TableIdentifier *table,
+      const RangeSpec &range, const char *transfer_log_dir,
+      uint64_t soft_limit) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
-    CommBuf *cbuf = new CommBuf(hbuilder, 2 + table->encoded_length() + range.encoded_length() + encoded_length_vstr(transfer_log_dir) + 8);
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + table->encoded_length()
+        + range.encoded_length() + encoded_length_vstr(transfer_log_dir) + 8);
     cbuf->append_i16(COMMAND_REPORT_SPLIT);
     table->encode(cbuf->get_data_ptr_address());
     range.encode(cbuf->get_data_ptr_address());
@@ -71,7 +79,9 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *MasterProtocol::create_drop_table_request(const char *table_name, bool if_exists) {
+  CommBuf *
+  MasterProtocol::create_drop_table_request(const char *table_name,
+                                            bool if_exists) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_MASTER);
     CommBuf *cbuf = new CommBuf(hbuilder, 3 + encoded_length_vstr(table_name));
     cbuf->append_i16(COMMAND_DROP_TABLE);

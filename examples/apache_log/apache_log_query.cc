@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or any later version.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
@@ -32,7 +32,7 @@ using namespace std;
 
 namespace {
 
-  const char *usage = 
+  const char *usage =
     "\n"
     "  usage: apache_log_query <row-prefix> [ <cf> ... ]\n"
     "\n"
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
   Cell cell;
   String end_row;
 
-  if (argc <= 1) { 
+  if (argc <= 1) {
     cout << usage << endl;
     return 0;
   }
@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
     for (int i=2; i<argc; i++)
       scan_spec_builder.add_column(argv[i]);
 
-    // Create a scanner on the 'LogDb' table 
+    // Create a scanner on the 'LogDb' table
     scanner_ptr = table_ptr->create_scanner(scan_spec_builder.get());
 
   }
@@ -93,7 +93,8 @@ int main(int argc, char **argv) {
     printf("%s\t%s", cell.row_key, cell.column_family);
     if (*cell.column_qualifier)
       printf(":%s", cell.column_qualifier);
-    printf("\t%s\n", std::string((const char *)cell.value, cell.value_len).c_str());
+    printf("\t%s\n", std::string((const char *)cell.value,
+           cell.value_len).c_str());
   }
 
   return 0;

@@ -61,7 +61,8 @@ namespace {
    */
   class TimerHandler : public DispatchHandler {
   public:
-    TimerHandler(const char *msg, ostream &out) : m_msg(msg), m_out(out) { return; }
+    TimerHandler(const char *msg, ostream &out)
+      : m_msg(msg), m_out(out) { return; }
     virtual void handle(EventPtr &event_ptr) {
       m_out << event_ptr->to_str().c_str() << " (" << m_msg << ")" << endl;
     }
@@ -116,7 +117,8 @@ int main(int argc, char **argv) {
 
   for (int i=0; history[i].msg; i++) {
     timer_handler = new TimerHandler(history[i].msg, out);
-    if ((error = comm->set_timer(history[i].delay*1000, timer_handler)) != Error::OK) {
+    if ((error = comm->set_timer(history[i].delay*1000, timer_handler))
+        != Error::OK) {
       HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
       exit(1);
     }

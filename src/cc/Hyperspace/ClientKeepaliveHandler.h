@@ -34,7 +34,6 @@
 
 #include "ClientConnectionHandler.h"
 #include "ClientHandleState.h"
-#include "HandleCallback.h"
 
 namespace Hyperspace {
 
@@ -94,10 +93,10 @@ namespace Hyperspace {
     typedef hash_map<uint64_t, ClientHandleStatePtr> HandleMap;
     HandleMap  m_handle_map;
   };
-  typedef boost::intrusive_ptr<ClientKeepaliveHandler> ClientKeepaliveHandlerPtr;
 
+  typedef intrusive_ptr<ClientKeepaliveHandler> ClientKeepaliveHandlerPtr;
 
-}
+} // namespace Hypertable
 
 #endif // HYPERSPACE_CLIENTKEEPALIVEHANDLER_H
 

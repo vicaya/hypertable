@@ -35,9 +35,10 @@ namespace Hyperspace {
 
   class RequestHandlerAttrGet : public ApplicationHandler {
   public:
-    RequestHandlerAttrGet(Comm *comm, Master *master, uint64_t session_id, EventPtr &event_ptr) : ApplicationHandler(event_ptr), m_comm(comm), m_master(master), m_session_id(session_id) {
-      return;
-    }
+    RequestHandlerAttrGet(Comm *comm, Master *master, uint64_t session_id,
+                          EventPtr &event_ptr)
+      : ApplicationHandler(event_ptr), m_comm(comm), m_master(master),
+        m_session_id(session_id) { }
 
     virtual void run();
 

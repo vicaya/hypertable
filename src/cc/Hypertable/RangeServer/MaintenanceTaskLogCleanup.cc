@@ -29,7 +29,8 @@ using namespace Hypertable;
 /**
  *
  */
-MaintenanceTaskLogCleanup::MaintenanceTaskLogCleanup(RangeServer *range_server) : MaintenanceTask(), m_range_server(range_server) {
+MaintenanceTaskLogCleanup::MaintenanceTaskLogCleanup(RangeServer *range_server)
+  : MaintenanceTask(), m_range_server(range_server) {
 }
 
 

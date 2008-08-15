@@ -54,7 +54,7 @@ namespace {
     "",
     "  options:",
     "    --blocksize=<n>         Size of value to write",
-    "    --checksum-file=<file>  Write keys + value checksum, one per line, to <file>",
+    "    --checksum-file=<file>  Write keys + value checksums to <file>",
     "    --config=<file>         Read Hypertable config properties from <file>",
     "    --seed=<n>              Random number generator seed",
     "",
@@ -84,24 +84,24 @@ int main(int argc, char **argv) {
   for (size_t i=1; i<(size_t)argc; i++) {
     if (argv[i][0] == '-') {
       if (!strncmp(argv[i], "--blocksize=", 12)) {
-	blocksize = atoi(&argv[i][12]);
+        blocksize = atoi(&argv[i][12]);
       }
       else if (!strncmp(argv[i], "--seed=", 7)) {
-	seed = atoi(&argv[i][7]);
+        seed = atoi(&argv[i][7]);
       }
       else if (!strncmp(argv[i], "--checksum-file=", 16)) {
-	checksum_out.open(&argv[i][16]);
-	write_checksums = true;
+        checksum_out.open(&argv[i][16]);
+        write_checksums = true;
       }
       else if (!strncmp(argv[i], "--config=", 9)) {
-	config_file = &argv[i][9];
+        config_file = &argv[i][9];
       }
       else
-	Usage::dump_and_exit(usage);
+        Usage::dump_and_exit(usage);
     }
     else {
       if (total != 0)
-	Usage::dump_and_exit(usage);
+        Usage::dump_and_exit(usage);
       total = strtoll(argv[i], 0, 0);
     }
   }
@@ -123,16 +123,16 @@ int main(int argc, char **argv) {
   srandom(seed);
 
   try {
-	
     if (config_file != "")
-      hypertable_client_ptr = new Hypertable::Client(System::locate_install_dir(argv[0]), config_file);
+      hypertable_client_ptr = new Hypertable::Client(
+          System::locate_install_dir(argv[0]), config_file);
     else
-      hypertable_client_ptr = new Hypertable::Client(System::locate_install_dir(argv[0]));
+      hypertable_client_ptr = new Hypertable::Client(
+          System::locate_install_dir(argv[0]));
 
     table_ptr = hypertable_client_ptr->open_table("RandomTest");
 
     mutator_ptr = table_ptr->create_mutator();
-	
   }
   catch (Hypertable::Exception &e) {
     cerr << "error: " << Error::get_text(e.code()) << " - " << e.what() << endl;
@@ -158,25 +158,25 @@ int main(int argc, char **argv) {
 
       for (size_t i = 0; i < R; ++i) {
 
-	fill_buffer_with_random_ascii(key_data, 12);
+        fill_buffer_with_random_ascii(key_data, 12);
 
-	if (write_checksums) {
-	  checksum = fletcher32(value_ptr, blocksize);
-	  checksum_out << key_data << "\t" << checksum << "\n";
-	}
-      
-	mutator_ptr->set(key, value_ptr, blocksize);
+        if (write_checksums) {
+          checksum = fletcher32(value_ptr, blocksize);
+          checksum_out << key_data << "\t" << checksum << "\n";
+        }
+        mutator_ptr->set(key, value_ptr, blocksize);
 
-	value_ptr++;
+        value_ptr++;
 
-	progress_meter += 1;
+        progress_meter += 1;
 
       }
 
       mutator_ptr->flush();
     }
     catch (Hypertable::Exception &e) {
-      cerr << "error: " << Error::get_text(e.code()) << " - " << e.what() << endl;
+      cerr << "error: " << Error::get_text(e.code()) << " - " << e.what()
+           << endl;
       _exit(1);
     }
   }
@@ -187,12 +187,10 @@ int main(int argc, char **argv) {
     checksum_out.close();
 
   double total_written = (double)total + (double)(R*12);
-  
   printf("  Elapsed time:  %.2f s\n", stopwatch.elapsed());
   printf(" Total inserts:  %llu\n", (Llu)R);
   printf("    Throughput:  %.2f bytes/s\n",
-	 total_written / stopwatch.elapsed());
+         total_written / stopwatch.elapsed());
   printf("    Throughput:  %.2f inserts/s\n",
-	 (double)R / stopwatch.elapsed());
-
+         (double)R / stopwatch.elapsed());
 }

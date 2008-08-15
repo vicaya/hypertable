@@ -41,7 +41,8 @@ public class ConnectionManager implements Runnable, DispatchHandler {
         public String              serviceName;
     };
 
-    private static class ConnectionStateComparator implements Comparator<ConnectionState> {
+    private static class ConnectionStateComparator implements
+                         Comparator<ConnectionState> {
         public int compare(ConnectionState cs1, ConnectionState cs2) {
             if (cs1.nextRetry < cs2.nextRetry)
                 return 1;
@@ -63,12 +64,14 @@ public class ConnectionManager implements Runnable, DispatchHandler {
     public ConnectionManager(Comm comm) {
         mComm = comm;
         mConnMap = new HashMap<InetSocketAddress, ConnectionState>();
-        mRetryQueue = new PriorityQueue<ConnectionState>(11, new ConnectionStateComparator());
+        mRetryQueue = new PriorityQueue<ConnectionState>(11,
+            new ConnectionStateComparator());
         mThread = new Thread(this, "Connection Manager");
         mThread.start();
     }
 
-    public synchronized void Add(InetSocketAddress addr, long timeout, String serviceName) {
+    public synchronized void Add(InetSocketAddress addr, long timeout,
+                                 String serviceName) {
         ConnectionState connState;
 
         if (mConnMap.containsKey(addr))
@@ -99,8 +102,12 @@ public class ConnectionManager implements Runnable, DispatchHandler {
             }
         }
         else if (error != Error.OK) {
-            log.severe("Connection attempt to " + connState.serviceName + " at " + connState.addr + " failed - " + Error.GetText(error) + ".  Will retry again in %d seconds...");
-            connState.nextRetry = System.currentTimeMillis() + connState.timeout;
+            log.severe("Connection attempt to " + connState.serviceName
+                       + " at " + connState.addr + " failed - "
+                       + Error.GetText(error)
+                       + ".  Will retry again in %d seconds...");
+            connState.nextRetry = System.currentTimeMillis()
+                                  + connState.timeout;
             mRetryQueue.add(connState);
             notify();
         }
@@ -118,20 +125,24 @@ public class ConnectionManager implements Runnable, DispatchHandler {
                     }
                     else {
                         if (!mQuietMode)
-                            log.info(event.toString() + "; will retry in " + (connState.timeout/1000) + " seconds...");
+                            log.info(event.toString() + "; will retry in "
+                                + (connState.timeout/1000) + " seconds...");
                         connState.connected = false;
-                        // this logic could proably be smarter.  For example, if the last
-                        // connection attempt was a long time ago, then schedule immediately
-                        // otherwise, if this event is the result of an immediately prior connect
+                        // this logic could proably be smarter.  For example,
+                        // if the last connection attempt was a long time ago,
+                        // then schedule immediately otherwise, if this event
+                        // is the result of an immediately prior connect
                         // attempt, then do the following
-                        connState.nextRetry = System.currentTimeMillis() + connState.timeout;
+                        connState.nextRetry = System.currentTimeMillis()
+                                              + connState.timeout;
                         mRetryQueue.add(connState);
                         notify();
                     }
                 }
             }
             else {
-                log.severe("Unable to find connection for " + event.addr + " in map.");
+                log.severe("Unable to find connection for " + event.addr
+                           + " in map.");
             }
         }
     }
@@ -151,13 +162,17 @@ public class ConnectionManager implements Runnable, DispatchHandler {
 
                     if (!connState.connected) {
                         synchronized (connState) {
-                            long diffTime = connState.nextRetry - System.currentTimeMillis();
+                            long diffTime = connState.nextRetry
+                                            - System.currentTimeMillis();
 
                             if (diffTime <= 0) {
                                 mRetryQueue.remove(connState);
                                 /**
                                 if (!mQuietMode)
-                                    log.info("Attempting to re-establish connection to " + connState.serviceName + " at " + connState.addr);
+                                    log.info("Attempting to re-establish "
+                                             "connection to "
+                                             + connState.serviceName + " at "
+                                             + connState.addr);
                                 */
                                 SendConnectRequest(connState);
                             }
@@ -177,7 +192,8 @@ public class ConnectionManager implements Runnable, DispatchHandler {
         }
     }
 
-    public boolean WaitForConnection(InetSocketAddress addr, long maxWaitSecs) throws InterruptedException {
+    public boolean WaitForConnection(InetSocketAddress addr, long maxWaitSecs)
+                                     throws InterruptedException {
         ConnectionState connState;
 
         synchronized (this) {
@@ -208,98 +224,4 @@ public class ConnectionManager implements Runnable, DispatchHandler {
         return true;
     }
 
-    /*****
-
-    public void run() {
-        long sendtime = 0;
-        long elapsed;
-
-        while (!Thread.interrupted()) {
-
-            try {
-
-                elapsed = System.currentTimeMillis() - sendtime;
-
-                if (elapsed < RETRY_INTERVAL_MS) {
-                    synchronized (this) {
-                        wait(RETRY_INTERVAL_MS - elapsed);
-                    }
-                }
-
-                mHandler.SendConnectRequest();
-                sendtime = System.currentTimeMillis();
-
-                while (mHandler.WaitForEvent())
-                    ;
-
-                System.err.println(mWaitMessage);
-            }
-            catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public static class Callback implements DispatchHandler {
-
-        public Callback(Comm comm, InetSocketAddress addr, long timeout) {
-            mComm = comm;
-            mAddr = addr;
-            mTimeout = timeout;
-            mConnected = false;
-        }
-
-        public void handle(Event event) {
-
-            //log.fine(event.toString());
-
-            synchronized (this) {
-                if (event.type == Event.Type.CONNECTION_ESTABLISHED) {
-                    mConnected = true;
-                    notifyAll();
-                }
-                else {
-                    mConnected = false;
-                    log.warning(event.toString());
-                    notifyAll();
-                }
-            }
-        }
-
-        public void SendConnectRequest() {
-
-            int error = mComm.Connect(mAddr, mTimeout, this);
-
-            if (error == Error.COMM_ALREADY_CONNECTED) {
-                synchronized (this) {
-                    mConnected = true;
-                    notifyAll();
-                }
-            }
-            else if (error != Error.OK)
-                log.severe("Connect to " + mAddr + " failed - " + Error.GetText(error));
-        }
-
-        public synchronized boolean WaitForConnection(long maxWaitMs) throws InterruptedException {
-            if (mConnected)
-                return true;
-            wait(maxWaitMs);
-            return mConnected;
-        }
-
-        public synchronized boolean WaitForEvent() throws InterruptedException {
-            wait();
-            return mConnected;
-        }
-
-        private Comm                mComm;
-        private InetSocketAddress   mAddr;
-        private long                mTimeout;
-        private boolean             mConnected = false;
-    }
-
-    private Callback mHandler;
-    private Thread   mThread;
-    private String   mWaitMessage;
-    */
 }

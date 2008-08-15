@@ -43,21 +43,19 @@ using namespace Hypertable;
 /**
  */
 IntervalScanner::IntervalScanner(PropertiesPtr &props_ptr, Comm *comm,
-				 TableIdentifier *table_identifier,
-				 SchemaPtr &schema_ptr,
-				 RangeLocatorPtr &range_locator_ptr,
-				 ScanSpec &scan_spec, int timeout)
-    : m_comm(comm), m_schema_ptr(schema_ptr),
-      m_range_locator_ptr(range_locator_ptr),
-      m_range_server(comm, HYPERTABLE_CLIENT_TIMEOUT),
-      m_table_identifier(*table_identifier), m_started(false),
-      m_eos(false), m_readahead(true), m_fetch_outstanding(false),
-      m_end_inclusive(false), m_rows_seen(0), m_timeout(timeout) {
+    const TableIdentifier *table_identifier, SchemaPtr &schema_ptr,
+    RangeLocatorPtr &range_locator_ptr, const ScanSpec &scan_spec, int timeout)
+  : m_comm(comm), m_schema_ptr(schema_ptr),
+    m_range_locator_ptr(range_locator_ptr),
+    m_range_server(comm, HYPERTABLE_CLIENT_TIMEOUT),
+    m_table_identifier(*table_identifier), m_started(false),
+    m_eos(false), m_readahead(true), m_fetch_outstanding(false),
+    m_end_inclusive(false), m_rows_seen(0), m_timeout(timeout) {
   const char *start_row, *end_row;
 
   if (!scan_spec.row_intervals.empty() && !scan_spec.cell_intervals.empty())
     HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC,
-	     "ROW predicates and CELL predicates can't be combined");
+             "ROW predicates and CELL predicates can't be combined");
 
   if (m_timeout == 0 ||
       (m_timeout = props_ptr->get_int("Hypertable.Client.Timeout", 0)) == 0 ||
@@ -80,40 +78,51 @@ IntervalScanner::IntervalScanner(PropertiesPtr &props_ptr, Comm *comm,
   HT_EXPECT(scan_spec.row_intervals.size() <= 1, Error::FAILED_EXPECTATION);
 
   if (!scan_spec.row_intervals.empty()) {
-    start_row = (scan_spec.row_intervals[0].start == 0) ? "" : scan_spec.row_intervals[0].start;
-    end_row = (scan_spec.row_intervals[0].end == 0) ? Key::END_ROW_MARKER : scan_spec.row_intervals[0].end;
+    start_row = (scan_spec.row_intervals[0].start == 0) ? ""
+        : scan_spec.row_intervals[0].start;
+    end_row = (scan_spec.row_intervals[0].end == 0) ? Key::END_ROW_MARKER
+        : scan_spec.row_intervals[0].end;
     int cmpval = strcmp(start_row, end_row);
     if (cmpval > 0)
       HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "start_row > end_row");
-    if (cmpval == 0 && !scan_spec.row_intervals[0].start_inclusive && !scan_spec.row_intervals[0].end_inclusive)
+    if (cmpval == 0 && !scan_spec.row_intervals[0].start_inclusive
+        && !scan_spec.row_intervals[0].end_inclusive)
       HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "empty row interval");
     m_start_row = start_row;
     m_end_row = end_row;
     m_end_inclusive = scan_spec.row_intervals[0].end_inclusive;
-    m_scan_spec_builder.add_row_interval(start_row, scan_spec.row_intervals[0].start_inclusive,
-					 end_row, scan_spec.row_intervals[0].end_inclusive);
+    m_scan_spec_builder.add_row_interval(start_row,
+        scan_spec.row_intervals[0].start_inclusive, end_row,
+        scan_spec.row_intervals[0].end_inclusive);
   }
   else if (!scan_spec.cell_intervals.empty()) {
-    start_row = (scan_spec.cell_intervals[0].start_row == 0) ? "" : scan_spec.cell_intervals[0].start_row;
+    start_row = (scan_spec.cell_intervals[0].start_row == 0) ? ""
+        : scan_spec.cell_intervals[0].start_row;
     if (scan_spec.cell_intervals[0].start_column == 0)
-      HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "Bad cell interval (start_column == NULL)");
-    end_row = (scan_spec.cell_intervals[0].end_row == 0) ? Key::END_ROW_MARKER : scan_spec.cell_intervals[0].end_row;
+      HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC,
+               "Bad cell interval (start_column == NULL)");
+    end_row = (scan_spec.cell_intervals[0].end_row == 0) ? Key::END_ROW_MARKER
+        : scan_spec.cell_intervals[0].end_row;
     if (scan_spec.cell_intervals[0].end_column == 0)
-      HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "Bad cell interval (end_column == NULL)");
+      HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC,
+               "Bad cell interval (end_column == NULL)");
     int cmpval = strcmp(start_row, end_row);
     if (cmpval > 0)
       HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "start_row > end_row");
     if (cmpval == 0) {
-      int cmpval = strcmp(scan_spec.cell_intervals[0].start_column, scan_spec.cell_intervals[0].end_column);
+      int cmpval = strcmp(scan_spec.cell_intervals[0].start_column,
+                          scan_spec.cell_intervals[0].end_column);
       if (cmpval > 0)
-	HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "start_column > end_column");
-      if (cmpval == 0 && !scan_spec.cell_intervals[0].start_inclusive && !scan_spec.cell_intervals[0].end_inclusive)
-	HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "empty cell interval");
+        HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "start_column > end_column");
+      if (cmpval == 0 && !scan_spec.cell_intervals[0].start_inclusive
+          && !scan_spec.cell_intervals[0].end_inclusive)
+        HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "empty cell interval");
     }
-    m_scan_spec_builder.add_cell_interval(start_row, scan_spec.cell_intervals[0].start_column,
-					  scan_spec.cell_intervals[0].start_inclusive,
-					  end_row, scan_spec.cell_intervals[0].end_column,
-					  scan_spec.cell_intervals[0].end_inclusive);
+    m_scan_spec_builder.add_cell_interval(start_row,
+        scan_spec.cell_intervals[0].start_column,
+        scan_spec.cell_intervals[0].start_inclusive,
+        end_row, scan_spec.cell_intervals[0].end_column,
+        scan_spec.cell_intervals[0].end_inclusive);
     m_start_row = scan_spec.cell_intervals[0].start_row;
     m_end_row = scan_spec.cell_intervals[0].end_row;
     m_end_inclusive = true;
@@ -124,11 +133,12 @@ IntervalScanner::IntervalScanner(PropertiesPtr &props_ptr, Comm *comm,
     m_scan_spec_builder.add_row_interval("", false, Key::END_ROW_MARKER, false);
   }
 
-  if (m_scan_spec_builder.get().row_limit == 1 || m_start_row.compare(m_end_row) == 0)
+  if (m_scan_spec_builder.get().row_limit == 1
+      || m_start_row.compare(m_end_row) == 0)
     m_readahead = false;
 
   m_scan_spec_builder.set_time_interval(scan_spec.time_interval.first,
-					scan_spec.time_interval.second);
+                                        scan_spec.time_interval.second);
 
   m_scan_spec_builder.set_return_deletes(scan_spec.return_deletes);
 
@@ -164,7 +174,8 @@ bool IntervalScanner::next(Cell &cell) {
     if (m_scanblock.eos()) {
       if (!strcmp(m_range_info.end_row.c_str(), Key::END_ROW_MARKER) ||
           m_end_row.compare(m_range_info.end_row) <= 0) {
-        m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
+        m_range_server.destroy_scanner(m_cur_addr,
+                                       m_scanblock.get_scanner_id(), 0);
         m_eos = true;
         return false;
       }
@@ -176,13 +187,15 @@ bool IntervalScanner::next(Cell &cell) {
       if (m_fetch_outstanding) {
         if (!m_sync_handler.wait_for_reply(m_event_ptr)) {
           m_fetch_outstanding = false;
-          HT_ERRORF("RangeServer 'fetch scanblock' error : %s", Protocol::string_format_message(m_event_ptr).c_str());
+          HT_ERRORF("RangeServer 'fetch scanblock' error : %s",
+                    Protocol::string_format_message(m_event_ptr).c_str());
           HT_THROW((int)Protocol::response_code(m_event_ptr), "");
         }
         else {
           error = m_scanblock.load(m_event_ptr);
           if (m_readahead && !m_scanblock.eos()) {
-            m_range_server.fetch_scanblock(m_cur_addr, m_scanblock.get_scanner_id(), &m_sync_handler);
+            m_range_server.fetch_scanblock(m_cur_addr,
+                m_scanblock.get_scanner_id(), &m_sync_handler);
             m_fetch_outstanding = true;
           }
           else
@@ -192,7 +205,8 @@ bool IntervalScanner::next(Cell &cell) {
       else {
         timer.start();
         m_range_server.set_timeout((time_t)(timer.remaining() + 0.5));
-        m_range_server.fetch_scanblock(m_cur_addr, m_scanblock.get_scanner_id(), m_scanblock);
+        m_range_server.fetch_scanblock(m_cur_addr,
+            m_scanblock.get_scanner_id(), m_scanblock);
       }
 
     }
@@ -206,23 +220,26 @@ bool IntervalScanner::next(Cell &cell) {
     // check for end row
 
     if (!strcmp(key.row, Key::END_ROW_MARKER)) {
-      m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
+      m_range_server.destroy_scanner(m_cur_addr,
+                                     m_scanblock.get_scanner_id(), 0);
       m_eos = true;
       return false;
     }
 
     if (m_end_inclusive) {
       if (strcmp(key.row, m_end_row.c_str()) > 0) {
-	m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
-	m_eos = true;
-	return false;
+        m_range_server.destroy_scanner(m_cur_addr,
+                                       m_scanblock.get_scanner_id(), 0);
+        m_eos = true;
+        return false;
       }
     }
     else {
       if (strcmp(key.row, m_end_row.c_str()) >= 0) {
-	m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
-	m_eos = true;
-	return false;
+        m_range_server.destroy_scanner(m_cur_addr,
+                                       m_scanblock.get_scanner_id(), 0);
+        m_eos = true;
+        return false;
       }
     }
 
@@ -230,8 +247,10 @@ bool IntervalScanner::next(Cell &cell) {
     if (strcmp(m_cur_row.c_str(), key.row)) {
       m_rows_seen++;
       m_cur_row = key.row;
-      if (m_scan_spec_builder.get().row_limit > 0 && m_rows_seen > m_scan_spec_builder.get().row_limit) {
-        m_range_server.destroy_scanner(m_cur_addr, m_scanblock.get_scanner_id(), 0);
+      if (m_scan_spec_builder.get().row_limit > 0
+          && m_rows_seen > m_scan_spec_builder.get().row_limit) {
+        m_range_server.destroy_scanner(m_cur_addr,
+                                       m_scanblock.get_scanner_id(), 0);
         m_eos = true;
         return false;
       }
@@ -261,7 +280,8 @@ bool IntervalScanner::next(Cell &cell) {
 
 
 
-void IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &timer) {
+void
+IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &timer) {
   RangeSpec  range;
   DynamicBuffer dbuf(0);
 
@@ -271,7 +291,8 @@ void IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &time
 
   try {
     if (!m_cache_ptr->lookup(m_table_identifier.id, row_key, &m_range_info))
-      m_range_locator_ptr->find_loop(&m_table_identifier, row_key, &m_range_info, timer, false);
+      m_range_locator_ptr->find_loop(&m_table_identifier, row_key,
+                                     &m_range_info, timer, false);
   }
   catch (Exception &e) {
     if (e.code() == Error::REQUEST_TIMEOUT)
@@ -285,32 +306,42 @@ void IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &time
   m_started = true;
 
   while (true) {
-    dbuf.ensure(m_range_info.start_row.length() + m_range_info.end_row.length() + 2);
-    range.start_row = (const char *)dbuf.add_unchecked(m_range_info.start_row.c_str(), m_range_info.start_row.length()+1);
-    range.end_row   = (const char *)dbuf.add_unchecked(m_range_info.end_row.c_str(), m_range_info.end_row.length()+1);
-    if (!LocationCache::location_to_addr(m_range_info.location.c_str(), m_cur_addr)) {
+    dbuf.ensure(m_range_info.start_row.length()
+                + m_range_info.end_row.length() + 2);
+    range.start_row = (char *)dbuf.add_unchecked(m_range_info.start_row.c_str(),
+        m_range_info.start_row.length()+1);
+    range.end_row   = (char *)dbuf.add_unchecked(m_range_info.end_row.c_str(),
+        m_range_info.end_row.length()+1);
+    if (!LocationCache::location_to_addr(m_range_info.location.c_str(),
+        m_cur_addr)) {
       HT_ERRORF("Invalid location found in METADATA entry range [%s..%s] - %s",
-		range.start_row, range.end_row, m_range_info.location.c_str());
+                range.start_row, range.end_row, m_range_info.location.c_str());
       HT_THROW(Error::INVALID_METADATA, "");
     }
 
     try {
       m_range_server.set_timeout((time_t)(timer.remaining() + 0.5));
-      m_range_server.create_scanner(m_cur_addr, m_table_identifier, range, m_scan_spec_builder.get(), m_scanblock);
+      m_range_server.create_scanner(m_cur_addr, m_table_identifier, range,
+                                    m_scan_spec_builder.get(), m_scanblock);
     }
     catch (Exception &e) {
       double remaining = timer.remaining();
 
-      if ((e.code() != Error::REQUEST_TIMEOUT && e.code() != Error::RANGESERVER_RANGE_NOT_FOUND) || remaining <= 3.0) {
-	HT_ERRORF("%s - %s", e.what(), Error::get_text(e.code()));
-	HT_THROW(e.code(), String("Problem creating scanner on ") + m_table_identifier.name + "[" + range.start_row + ".." + range.end_row + "]");
+      if (e.code() != Error::REQUEST_TIMEOUT
+          && e.code() != Error::RANGESERVER_RANGE_NOT_FOUND
+          || remaining <= 3.0) {
+        HT_ERRORF("%s - %s", e.what(), Error::get_text(e.code()));
+        HT_THROW(e.code(), String("Problem creating scanner on ")
+                 + m_table_identifier.name + "[" + range.start_row + ".."
+                 + range.end_row + "]");
       }
 
       // wait a few seconds
       poll(0, 0, 3000);
 
       // try again, the hard way
-      m_range_locator_ptr->find_loop(&m_table_identifier, row_key, &m_range_info, timer, true);
+      m_range_locator_ptr->find_loop(&m_table_identifier, row_key,
+                                     &m_range_info, timer, true);
       continue;
     }
     break;
@@ -318,7 +349,8 @@ void IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &time
 
   // maybe kick off readahead
   if (m_readahead && !m_scanblock.eos()) {
-    m_range_server.fetch_scanblock(m_cur_addr, m_scanblock.get_scanner_id(), &m_sync_handler);
+    m_range_server.fetch_scanblock(m_cur_addr, m_scanblock.get_scanner_id(),
+                                   &m_sync_handler);
     m_fetch_outstanding = true;
   }
   else

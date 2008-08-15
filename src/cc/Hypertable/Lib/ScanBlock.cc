@@ -92,7 +92,7 @@ bool ScanBlock::next(SerializedKey &key, ByteString &value) {
   key = (*m_iter).first;
   value = (*m_iter).second;
 
-  m_iter++;
+  ++m_iter;
 
   return true;
 }

@@ -34,10 +34,15 @@ namespace {
 
 /**
  */
-CommitLogBlockStream::CommitLogBlockStream(Filesystem *fs) : m_fs(fs), m_fd(-1), m_cur_offset(0), m_file_length(0),m_block_buffer(BlockCompressionHeaderCommitLog::LENGTH) {
+CommitLogBlockStream::CommitLogBlockStream(Filesystem *fs)
+  : m_fs(fs), m_fd(-1), m_cur_offset(0), m_file_length(0),
+    m_block_buffer(BlockCompressionHeaderCommitLog::LENGTH) {
 }
 
-CommitLogBlockStream::CommitLogBlockStream(Filesystem *fs, const String &log_dir, const String &fragment) : m_fs(fs), m_fd(-1), m_cur_offset(0), m_file_length(0), m_block_buffer(BlockCompressionHeaderCommitLog::LENGTH) {
+CommitLogBlockStream::CommitLogBlockStream(Filesystem *fs,
+    const String &log_dir, const String &fragment)
+  : m_fs(fs), m_fd(-1), m_cur_offset(0), m_file_length(0),
+    m_block_buffer(BlockCompressionHeaderCommitLog::LENGTH) {
   load(log_dir, fragment);
 }
 
@@ -67,7 +72,9 @@ void CommitLogBlockStream::close() {
   }
 }
 
-bool CommitLogBlockStream::next(CommitLogBlockInfo *infop, BlockCompressionHeaderCommitLog *header) {
+bool
+CommitLogBlockStream::next(CommitLogBlockInfo *infop,
+                           BlockCompressionHeaderCommitLog *header) {
   uint32_t nread;
 
   assert(m_fd != -1);
@@ -94,7 +101,8 @@ bool CommitLogBlockStream::next(CommitLogBlockInfo *infop, BlockCompressionHeade
     return true;
   }
 
-  m_block_buffer.ensure(BlockCompressionHeaderCommitLog::LENGTH + header->get_data_zlength());
+  m_block_buffer.ensure(BlockCompressionHeaderCommitLog::LENGTH
+                        + header->get_data_zlength());
 
   nread = m_fs->read(m_fd, m_block_buffer.ptr, header->get_data_zlength());
 
@@ -113,7 +121,9 @@ bool CommitLogBlockStream::next(CommitLogBlockInfo *infop, BlockCompressionHeade
 
 /**
  */
-int CommitLogBlockStream::load_next_valid_header(BlockCompressionHeaderCommitLog *header) {
+int
+CommitLogBlockStream::load_next_valid_header(
+    BlockCompressionHeaderCommitLog *header) {
   uint32_t nread;
   size_t remaining = BlockCompressionHeaderCommitLog::LENGTH;
   try {

@@ -31,8 +31,8 @@ namespace Hypertable {
     Timestamp(uint64_t l, uint64_t r) : logical(l), real(r) { return; }
     Timestamp() : logical(0), real(0) { return; }
     void clear() { logical = real = 0; }
-    size_t encoded_length() { return 16; }
-    void encode(uint8_t **bufp) {
+    size_t encoded_length() const { return 16; }
+    void encode(uint8_t **bufp) const {
       Serialization::encode_i64(bufp, logical);
       Serialization::encode_i64(bufp, real);
     }

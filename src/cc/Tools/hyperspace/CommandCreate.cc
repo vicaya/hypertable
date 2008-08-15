@@ -36,12 +36,13 @@ using namespace Hyperspace;
 using namespace std;
 
 const char *CommandCreate::ms_usage[] = {
-  "create <fname> flags=[READ|WRITE|LOCK|TEMP|LOCK_SHARED|LOCK_EXCLUSIVE] [OPTIONS]",
+  "create <fname> flags=[READ|WRITE|LOCK|TEMP|LOCK_SHARED|LOCK_EXCLUSIVE] "
+      "[OPTIONS]",
   "OPTIONS:",
-  "  attr:<name>=<value>  This can be used to specify extended attributes that should",
+  "  attr:<name>=<value>  This can be used to specify extended attributes that",
   "                       get created atomically when the file is created",
-  "  event-mask=<mask>  This indicates which events should be delivered on this handle.",
-  "                     The <mask> value can take any combination of the following:",
+  "  event-mask=<mask>  This indicates which events should be delivered.",
+  "                     The <mask> can take any combination of the following:",
   "                     ATTR_SET|ATTR_DEL|LOCK_ACQUIRED|LOCK_RELEASED",
   "  This command issues an CREATE request to Hyperspace.",
   (const char *)0
@@ -96,15 +97,16 @@ void CommandCreate::run() {
       init_attrs.push_back(attr);
     }
     else if (fname != "" || m_args[i].second != "")
-      HT_THROW(Error::PARSE_ERROR, "Invalid arguments.  Type 'help' for usage.");
+      HT_THROW(Error::COMMAND_PARSE_ERROR,
+               "Invalid arguments.  Type 'help' for usage.");
     else
       fname = m_args[i].first;
   }
 
   if (flags == 0)
-    HT_THROW(Error::PARSE_ERROR, "Error: no flags supplied.");
+    HT_THROW(Error::COMMAND_PARSE_ERROR, "Error: no flags supplied.");
   else if (fname == "")
-    HT_THROW(Error::PARSE_ERROR, "Error: no filename supplied.");
+    HT_THROW(Error::COMMAND_PARSE_ERROR, "Error: no filename supplied.");
 
   //HT_INFOF("create(%s, 0x%x, 0x%x)", fname.c_str(), flags, event_mask);
 

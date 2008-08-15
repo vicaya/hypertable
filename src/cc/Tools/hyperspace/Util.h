@@ -28,8 +28,9 @@ namespace Hyperspace {
 
   namespace Util {
 
-    extern void normalize_pathname(std::string name, std::string &normal_name);
-    extern uint64_t get_handle(std::string name);
+    extern void normalize_pathname(const std::string &name,
+                                   std::string &normal_name);
+    extern uint64_t get_handle(const std::string &name);
   }
 
 }

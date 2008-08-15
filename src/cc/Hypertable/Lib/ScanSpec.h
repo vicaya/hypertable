@@ -37,7 +37,9 @@ namespace Hypertable {
   class RowInterval {
   public:
     RowInterval();
-    RowInterval(const uint8_t **bufp, size_t *remainp) { decode(bufp, remainp); }
+    RowInterval(const uint8_t **bufp, size_t *remainp) {
+      decode(bufp, remainp);
+    }
 
     size_t encoded_length() const;
     void encode(uint8_t **bufp) const;
@@ -57,7 +59,9 @@ namespace Hypertable {
   class CellInterval {
   public:
     CellInterval();
-    CellInterval(const uint8_t **bufp, size_t *remainp) { decode(bufp, remainp); }
+    CellInterval(const uint8_t **bufp, size_t *remainp) {
+      decode(bufp, remainp);
+    }
 
     size_t encoded_length() const;
     void encode(uint8_t **bufp) const;
@@ -70,7 +74,7 @@ namespace Hypertable {
     const char *end_column;
     bool end_inclusive;
   };
-  
+
 
   /**
    * Represents a scan predicate.
@@ -95,7 +99,7 @@ namespace Hypertable {
       return_deletes = 0;
     }
 
-    void base_copy(ScanSpec &other) {
+    void base_copy(ScanSpec &other) const {
       other.row_limit = row_limit;
       other.max_versions = max_versions;
       other.columns = columns;
@@ -166,7 +170,7 @@ namespace Hypertable {
      * @param end_inclusive true if interval should include end row
      */
     void add_row_interval(const String &start, bool start_inclusive,
-			  const String &end, bool end_inclusive) {
+                          const String &end, bool end_inclusive) {
       RowInterval ri;
       m_strings.push_back(start);
       ri.start = m_strings.back().c_str();
@@ -174,7 +178,7 @@ namespace Hypertable {
       m_strings.push_back(end);
       ri.end = m_strings.back().c_str();
       ri.end_inclusive = end_inclusive;
-      m_scan_spec.row_intervals.push_back(ri);      
+      m_scan_spec.row_intervals.push_back(ri);
     }
 
     /**
@@ -202,8 +206,9 @@ namespace Hypertable {
      * @param end_column end column
      * @param end_inclusive true if interval should include end row
      */
-    void add_cell_interval(const String &start_row, const String &start_column, bool start_inclusive,
-			   const String &end_row, const String &end_column, bool end_inclusive) {
+    void add_cell_interval(const String &start_row, const String &start_column,
+                           bool start_inclusive, const String &end_row,
+                           const String &end_column, bool end_inclusive) {
       CellInterval ci;
       m_strings.push_back(start_row);
       ci.start_row = m_strings.back().c_str();
@@ -251,7 +256,7 @@ namespace Hypertable {
      * @return reference to built ScanSpec object
      */
     ScanSpec &get() { return m_scan_spec; }
-    
+
   private:
     std::vector<String> m_strings;
     ScanSpec m_scan_spec;
@@ -264,6 +269,5 @@ namespace Hypertable {
   std::ostream &operator<<(std::ostream &os, const ScanSpec &);
 
 } // namespace Hypertable
-
 
 #endif // HYPERTABLE_SCANSPEC_H

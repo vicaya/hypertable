@@ -27,9 +27,9 @@ namespace Mapreduce
     snprintf(tmprow, 16, "%u:", m_table_id.id);
 
     startrow = tmprow;
-   
-    meta_scan_builder.add_row_interval(startrow, true, startrow + "\xff\xff", true); 
-    
+
+    meta_scan_builder.add_row_interval(startrow, true, startrow + "\xff\xff", true);
+
     /* select columns */
     meta_scan_builder.add_column("StartRow");
     meta_scan_builder.add_column("Location");
@@ -41,7 +41,7 @@ namespace Mapreduce
     {
       RangeLocationInfo range;
       char *v;
-      /* 
+      /*
          the first cell is a StartRow and the start of the range
          is encoded within the cell value, so extract it first.
          */

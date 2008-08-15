@@ -35,9 +35,8 @@ namespace Hypertable {
 
   class RequestHandlerDropRange : public ApplicationHandler {
   public:
-    RequestHandlerDropRange(Comm *comm, RangeServer *rs, EventPtr &event_ptr) : ApplicationHandler(event_ptr), m_comm(comm), m_range_server(rs) {
-      return;
-    }
+    RequestHandlerDropRange(Comm *comm, RangeServer *rs, EventPtr &event_ptr)
+      : ApplicationHandler(event_ptr), m_comm(comm), m_range_server(rs) { }
 
     virtual void run();
 

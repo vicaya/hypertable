@@ -58,7 +58,7 @@ namespace Hypertable {
       MALFORMED_REQUEST                  = 23,
       TOO_MANY_COLUMNS                   = 24,
       BAD_DOMAIN_NAME                    = 25,
-      PARSE_ERROR                        = 26,
+      COMMAND_PARSE_ERROR                = 26,
       CONNECT_ERROR_MASTER               = 27,
       CONNECT_ERROR_HYPERSPACE           = 28,
 
@@ -196,19 +196,21 @@ namespace Hypertable {
 /**
  * Convenience macros to create an exception stack trace
  */
-#define HT_THROW(_code_, _msg_) \
-  throw Exception(_code_, _msg_, __LINE__, HT_FUNC, __FILE__)
+#define HT_EXCEPTION(_code_, _msg_) \
+  Exception(_code_, _msg_, __LINE__, HT_FUNC, __FILE__)
 
-#define HT_THROW2(_code_, _ex_, _msg_) \
-  throw Exception(_code_, _msg_, _ex_, __LINE__, HT_FUNC, __FILE__)
+#define HT_EXCEPTION2(_code_, _ex_, _msg_) \
+  Exception(_code_, _msg_, _ex_, __LINE__, HT_FUNC, __FILE__)
+
+#define HT_THROW(_code_, _msg_) throw HT_EXCEPTION(_code_, _msg_)
+
+#define HT_THROW2(_code_, _ex_, _msg_) throw HT_EXCEPTION2(_code_, _ex_, _msg_)
 
 #define HT_THROWF(_code_, _fmt_, ...) \
-  throw Exception(_code_, format(_fmt_, __VA_ARGS__), \
-                  __LINE__, HT_FUNC, __FILE__)
+  throw HT_EXCEPTION(_code_, format(_fmt_, __VA_ARGS__))
 
 #define HT_THROW2F(_code_, _ex_, _fmt_, ...) \
-  throw Exception(_code_, format(_fmt_, __VA_ARGS__), _ex_, \
-                  __LINE__, HT_FUNC, __FILE__)
+  throw HT_EXCEPTION2(_code_, _ex_, format(_fmt_, __VA_ARGS__))
 
 #define HT_TRY(_s_, _code_) do { \
   try { _code_; } \

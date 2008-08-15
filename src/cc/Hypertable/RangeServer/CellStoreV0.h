@@ -55,10 +55,12 @@ namespace Hypertable {
     CellStoreV0(Filesystem *filesys);
     virtual ~CellStoreV0();
 
-    virtual int create(const char *fname, uint32_t blocksize, const std::string &compressor);
+    virtual int create(const char *fname, uint32_t blocksize,
+                       const std::string &compressor);
     virtual int add(const Key &key, const ByteString value);
     virtual int finalize();
-    virtual int open(const char *fname, const char *start_row, const char *end_row);
+    virtual int open(const char *fname, const char *start_row,
+                     const char *end_row);
     virtual int load_index();
     virtual uint32_t get_blocksize() { return m_trailer.blocksize; }
     virtual int64_t get_revision();

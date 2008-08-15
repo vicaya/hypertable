@@ -113,7 +113,9 @@ namespace Hyperspace {
    */
   class EventLockAcquired : public Event {
   public:
-    EventLockAcquired(uint32_t mode) : Event(EVENT_MASK_LOCK_ACQUIRED), m_mode(mode) { return; }
+    EventLockAcquired(uint32_t mode)
+      : Event(EVENT_MASK_LOCK_ACQUIRED), m_mode(mode) { return; }
+
     virtual uint32_t encoded_length() { return 16; }
     virtual void encode(Hypertable::CommBuf *cbuf) {
       cbuf->append_i64(m_id);
@@ -144,7 +146,10 @@ namespace Hyperspace {
    */
   class EventLockGranted : public Event {
   public:
-    EventLockGranted(uint32_t mode, uint64_t generation) : Event(EVENT_MASK_LOCK_GRANTED), m_mode(mode), m_generation(generation) { return; }
+    EventLockGranted(uint32_t mode, uint64_t generation)
+      : Event(EVENT_MASK_LOCK_GRANTED), m_mode(mode), m_generation(generation)
+      { }
+
     virtual uint32_t encoded_length() { return 24; }
     virtual void encode(Hypertable::CommBuf *cbuf) {
       cbuf->append_i64(m_id);

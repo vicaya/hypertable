@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -36,7 +36,7 @@ using namespace std;
 
 namespace {
 
-  /** 
+  /**
    * This function returns  the page that is
    * referenced in the given GET request.
    */
@@ -46,9 +46,9 @@ namespace {
     if (!strncmp(request, "GET ", 4)) {
       base = request + 4;
       if ((ptr = strchr(base, ' ')) != 0)
-	retstr = String(base, ptr-base);
+        retstr = String(base, ptr-base);
       else
-	retstr = base;
+        retstr = base;
     }
     else
       retstr = "-";
@@ -61,16 +61,15 @@ namespace {
    * given time structure
    */
   String format_timestamp(struct tm tm) {
-    return format("%d-%02d-%02d %02d:%02d:%02d", tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+    return format("%d-%02d-%02d %02d:%02d:%02d", tm.tm_year+1900, tm.tm_mon+1,
+                  tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
   }
 
   /**
    * Prints an exception to stderr
    */
   void report_error(Exception &e) {
-    cerr << "error: "
-	 << Error::get_text(e.code())
-	 << " - " << e.what() << endl;
+    cerr << e << endl;
   }
 
   /**
@@ -82,17 +81,17 @@ namespace {
     mutator_ptr->get_failed(failed_mutations);
     if (!failed_mutations.empty()) {
       for (size_t i=0; i<failed_mutations.size(); i++) {
-	cerr << "Failed: (" << failed_mutations[i].first.row_key << "," 
-	     << failed_mutations[i].first.column_family;
-	if (failed_mutations[i].first.column_qualifier)
-	  cerr << ":" << failed_mutations[i].first.column_qualifier;
-	cerr << "," << failed_mutations[i].first.timestamp << ") - "
-	     << Error::get_text(failed_mutations[i].second) << endl;
+        cerr << "Failed: (" << failed_mutations[i].first.row_key << ","
+             << failed_mutations[i].first.column_family;
+        if (failed_mutations[i].first.column_qualifier)
+          cerr << ":" << failed_mutations[i].first.column_qualifier;
+        cerr << "," << failed_mutations[i].first.timestamp << ") - "
+             << Error::get_text(failed_mutations[i].second) << endl;
       }
     }
   }
 
-  const char *usage = 
+  const char *usage =
     "\n"
     "  usage: apache_log_load [--time-order] <file>\n"
     "\n"
@@ -223,11 +222,11 @@ int main(int argc, char **argv) {
       mutator_ptr->set(key, entry.user_agent);
     }
     catch (Exception &e) {
-      cerr << "Exception caught: " << Error::get_text(e.code()) << " - " << e.what() << endl;
+      HT_ERROR_OUT << e << HT_END;
       do {
-	if (!mutator_ptr->need_retry())
-	  _exit(1);
-	handle_mutation_failure(mutator_ptr);
+        if (!mutator_ptr->need_retry())
+          _exit(1);
+        handle_mutation_failure(mutator_ptr);
       } while (!mutator_ptr->retry(RETRY_TIMEOUT));
     }
   }
@@ -237,10 +236,10 @@ int main(int argc, char **argv) {
     mutator_ptr->flush();
   }
   catch (Exception &e) {
-    cerr << "Exception caught: " << Error::get_text(e.code()) << endl;
+    HT_ERROR_OUT << e << HT_END;
     do {
       if (!mutator_ptr->need_retry())
-	_exit(1);
+        _exit(1);
       handle_mutation_failure(mutator_ptr);
     } while (!mutator_ptr->retry(RETRY_TIMEOUT));
   }

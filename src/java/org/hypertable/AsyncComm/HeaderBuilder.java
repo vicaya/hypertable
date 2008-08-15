@@ -61,7 +61,10 @@ public class HeaderBuilder {
     }
 
 
-    public int AssignUniqueId() { mId = msNextId.incrementAndGet(); return mId; }
+    public int AssignUniqueId() {
+        mId = msNextId.incrementAndGet();
+        return mId;
+    }
 
     public void SetFlags(byte flags) { mFlags = flags; }
 

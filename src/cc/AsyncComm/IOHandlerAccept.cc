@@ -74,12 +74,13 @@ bool IOHandlerAccept::handle_incoming_connection() {
 
     if ((sd = accept(m_sd, (struct sockaddr *)&addr, &addr_len)) < 0) {
       if (errno == EAGAIN)
-	break;
+        break;
       HT_ERRORF("accept() failure: %s", strerror(errno));
       break;
     }
 
-    HT_DEBUGF("Just accepted incoming connection, fd=%d (%s:%d)", m_sd, inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+    HT_DEBUGF("Just accepted incoming connection, fd=%d (%s:%d)",
+              m_sd, inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
 
     // Set to non-blocking
     FileUtils::set_flags(sd, O_NONBLOCK);
@@ -94,10 +95,12 @@ bool IOHandlerAccept::handle_incoming_connection() {
 
     int bufsize = 4*32768;
 
-    if (setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize, sizeof(bufsize)) < 0) {
+    if (setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize, sizeof(bufsize))
+        < 0) {
       HT_WARNF("setsockopt(SO_SNDBUF) failed - %s", strerror(errno));
     }
-    if (setsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char *)&bufsize, sizeof(bufsize)) < 0) {
+    if (setsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char *)&bufsize, sizeof(bufsize))
+        < 0) {
       HT_WARNF("setsockopt(SO_RCVBUF) failed - %s", strerror(errno));
     }
 
@@ -110,8 +113,8 @@ bool IOHandlerAccept::handle_incoming_connection() {
     m_handler_map_ptr->insert_handler(data_handler);
     data_handler->start_polling();
 
-    deliver_event(new Event(Event::CONNECTION_ESTABLISHED, data_handler->connection_id(), addr, Error::OK));
-  
+    deliver_event(new Event(Event::CONNECTION_ESTABLISHED,
+                            data_handler->connection_id(), addr, Error::OK));
   }
 
   return false;

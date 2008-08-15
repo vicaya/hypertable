@@ -39,7 +39,7 @@ const char *CommandLength::ms_usage[] = {
 void CommandLength::run() {
 
   if (m_args.size() < 1)
-    HT_THROW(Error::PARSE_ERROR, "Error: no filename supplied");
+    HT_THROW(Error::COMMAND_PARSE_ERROR, "Error: no filename supplied");
 
   cout << m_client->length(m_args[0].first) << endl;
 

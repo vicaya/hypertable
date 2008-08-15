@@ -35,6 +35,7 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include "Common/Mutex.h"
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/StringExt.h"
@@ -202,7 +203,7 @@ Master::~Master() {
 
 
 uint64_t Master::create_session(struct sockaddr_in &addr) {
-  boost::mutex::scoped_lock lock(m_session_map_mutex);
+  ScopedLock lock(m_session_map_mutex);
   SessionDataPtr session_data;
   uint64_t session_id = m_next_session_id++;
   session_data = new SessionData(addr, m_lease_interval, session_id);
@@ -213,7 +214,7 @@ uint64_t Master::create_session(struct sockaddr_in &addr) {
 
 
 bool Master::get_session(uint64_t session_id, SessionDataPtr &session_data) {
-  boost::mutex::scoped_lock lock(m_session_map_mutex);
+  ScopedLock lock(m_session_map_mutex);
   SessionMap::iterator iter = m_session_map.find(session_id);
   if (iter == m_session_map.end())
     return false;
@@ -222,7 +223,7 @@ bool Master::get_session(uint64_t session_id, SessionDataPtr &session_data) {
 }
 
 void Master::destroy_session(uint64_t session_id) {
-  boost::mutex::scoped_lock lock(m_session_map_mutex);
+  ScopedLock lock(m_session_map_mutex);
   SessionDataPtr session_data;
   SessionMap::iterator iter = m_session_map.find(session_id);
   if (iter == m_session_map.end())
@@ -236,7 +237,7 @@ void Master::destroy_session(uint64_t session_id) {
 
 
 int Master::renew_session_lease(uint64_t session_id) {
-  boost::mutex::scoped_lock lock(m_session_map_mutex);
+  ScopedLock lock(m_session_map_mutex);
 
   SessionMap::iterator iter = m_session_map.find(session_id);
   if (iter == m_session_map.end())
@@ -249,7 +250,7 @@ int Master::renew_session_lease(uint64_t session_id) {
 }
 
 bool Master::next_expired_session(SessionDataPtr &session_data) {
-  boost::mutex::scoped_lock lock(m_session_map_mutex);
+  ScopedLock lock(m_session_map_mutex);
   struct LtSessionData ascending;
   boost::xtime now;
 
@@ -286,7 +287,7 @@ void Master::remove_expired_sessions() {
     session_data->expire();
 
     {
-      boost::mutex::scoped_lock slock(session_data->mutex);
+      ScopedLock slock(session_data->mutex);
       HandleDataPtr handle_data;
       foreach(uint64_t handle, session_data->handles) {
         if (m_verbose) {
@@ -308,7 +309,7 @@ void Master::remove_expired_sessions() {
  *
  */
 void Master::create_handle(uint64_t *handlep, HandleDataPtr &handle_data) {
-  boost::mutex::scoped_lock lock(m_handle_map_mutex);
+  ScopedLock lock(m_handle_map_mutex);
   *handlep = ++m_next_handle_number;
   handle_data = new HandleData();
   handle_data->id = *handlep;
@@ -320,7 +321,7 @@ void Master::create_handle(uint64_t *handlep, HandleDataPtr &handle_data) {
  *
  */
 bool Master::get_handle_data(uint64_t handle, HandleDataPtr &handle_data) {
-  boost::mutex::scoped_lock lock(m_handle_map_mutex);
+  ScopedLock lock(m_handle_map_mutex);
   HandleMap::iterator iter = m_handle_map.find(handle);
   if (iter == m_handle_map.end())
     return false;
@@ -332,7 +333,7 @@ bool Master::get_handle_data(uint64_t handle, HandleDataPtr &handle_data) {
  *
  */
 bool Master::remove_handle_data(uint64_t handle, HandleDataPtr &handle_data) {
-  boost::mutex::scoped_lock lock(m_handle_map_mutex);
+  ScopedLock lock(m_handle_map_mutex);
   HandleMap::iterator iter = m_handle_map.find(handle);
   if (iter == m_handle_map.end())
     return false;
@@ -365,7 +366,7 @@ Master::mkdir(ResponseCallback *cb, uint64_t session_id, const char *name) {
   assert(name[0] == '/' && name[strlen(name)-1] != '/');
 
   HT_BDBTXN_BEGIN {
-    boost::mutex::scoped_lock node_lock(parent_node->mutex);
+    ScopedLock node_lock(parent_node->mutex);
 
     m_bdb_fs->mkdir(txn, name);
 
@@ -420,7 +421,7 @@ Master::unlink(ResponseCallback *cb, uint64_t session_id, const char *name) {
   assert(name[0] == '/' && name[strlen(name)-1] != '/');
 
   HT_BDBTXN_BEGIN {
-    boost::mutex::scoped_lock node_lock(parent_node->mutex);
+    ScopedLock node_lock(parent_node->mutex);
 
     m_bdb_fs->unlink(txn, name);
 
@@ -473,7 +474,7 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
 
   if (!init_attrs.empty() && !(flags & OPEN_FLAG_CREATE))
     HT_THROW(Error::HYPERSPACE_CREATE_FAILED,
-	     "initial attributes can only be supplied on CREATE");
+             "initial attributes can only be supplied on CREATE");
 
   // If path name to open is "/", then create a dummy NodeData object for
   // the parent because the previous call will return the node itself as
@@ -484,20 +485,20 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
   get_node(name, node_data);
 
   HT_BDBTXN_BEGIN {
-    boost::mutex::scoped_lock parent_lock(parent_node->mutex);
-    boost::mutex::scoped_lock node_lock(node_data->mutex);
+    ScopedLock parent_lock(parent_node->mutex);
+    ScopedLock node_lock(node_data->mutex);
 
     if ((flags & OPEN_FLAG_LOCK_SHARED) == OPEN_FLAG_LOCK_SHARED) {
       if (node_data->exclusive_lock_handle != 0)
-	HT_THROW(Error::HYPERSPACE_LOCK_CONFLICT, "");
+        HT_THROW(Error::HYPERSPACE_LOCK_CONFLICT, "");
       lock_mode = LOCK_MODE_SHARED;
       if (node_data->shared_lock_handles.empty())
-	lock_notifiy = true;
+        lock_notifiy = true;
     }
     else if ((flags & OPEN_FLAG_LOCK_EXCLUSIVE) == OPEN_FLAG_LOCK_EXCLUSIVE) {
       if (node_data->exclusive_lock_handle != 0 ||
-	  !node_data->shared_lock_handles.empty())
-	HT_THROW(Error::HYPERSPACE_LOCK_CONFLICT, "");
+          !node_data->shared_lock_handles.empty())
+        HT_THROW(Error::HYPERSPACE_LOCK_CONFLICT, "");
       lock_mode = LOCK_MODE_EXCLUSIVE;
       lock_notifiy = true;
     }
@@ -506,35 +507,35 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
 
     if (existed) {
       if ((flags & OPEN_FLAG_CREATE) && (flags & OPEN_FLAG_EXCL))
-	HT_THROW(Error::HYPERSPACE_FILE_EXISTS, "mode=CREATE|EXCL");
+        HT_THROW(Error::HYPERSPACE_FILE_EXISTS, "mode=CREATE|EXCL");
 
       if ((flags & OPEN_FLAG_TEMP))
-	HT_THROWF(Error::HYPERSPACE_FILE_EXISTS, "Unable to open TEMP file "
-		  "'%s' because it already exists", name);
+        HT_THROWF(Error::HYPERSPACE_FILE_EXISTS, "Unable to open TEMP file "
+                  "'%s' because it already exists", name);
       // Read/create 'lock.generation' attribute
       if (node_data->lock_generation == 0) {
-	if (!m_bdb_fs->get_xattr_i64(txn, name, "lock.generation",
-				     &node_data->lock_generation)) {
-	  node_data->lock_generation = 1;
-	  m_bdb_fs->set_xattr_i64(txn, name, "lock.generation",
-				  node_data->lock_generation);
-	}
+        if (!m_bdb_fs->get_xattr_i64(txn, name, "lock.generation",
+                                     &node_data->lock_generation)) {
+          node_data->lock_generation = 1;
+          m_bdb_fs->set_xattr_i64(txn, name, "lock.generation",
+                                  node_data->lock_generation);
+        }
       }
     }
     else {
       if (!(flags & OPEN_FLAG_CREATE))
-	HT_THROW(Error::HYPERSPACE_BAD_PATHNAME, name);
+        HT_THROW(Error::HYPERSPACE_BAD_PATHNAME, name);
 
       m_bdb_fs->create(txn, name, (flags & OPEN_FLAG_TEMP));
       node_data->lock_generation = 1;
       m_bdb_fs->set_xattr_i64(txn, name, "lock.generation",
-			      node_data->lock_generation);
+                              node_data->lock_generation);
       // Set the initial attributes
       for (size_t i=0; i<init_attrs.size(); i++)
-	m_bdb_fs->set_xattr(txn, name, init_attrs[i].name,
-			    init_attrs[i].value, init_attrs[i].value_len);
+        m_bdb_fs->set_xattr(txn, name, init_attrs[i].name,
+                            init_attrs[i].value, init_attrs[i].value_len);
       if (flags & OPEN_FLAG_TEMP)
-	node_data->ephemeral = true;
+        node_data->ephemeral = true;
       created = true;
     }
 
@@ -550,7 +551,7 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
 
     if (created && !create_notification_delivered) {
       HyperspaceEventPtr event(new EventNamed(EVENT_MASK_CHILD_NODE_ADDED,
-					      child_name));
+                                              child_name));
       deliver_event_notifications(parent_node.get(), event);
       create_notification_delivered = true;
     }
@@ -561,7 +562,7 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
     if (lock_mode != 0) {
       handle_data->node->lock_generation++;
       m_bdb_fs->set_xattr_i64(txn, name, "lock.generation",
-			      handle_data->node->lock_generation);
+                              handle_data->node->lock_generation);
       lock_generation = handle_data->node->lock_generation;
       handle_data->node->cur_lock_mode = lock_mode;
 
@@ -569,8 +570,8 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
 
       // deliver notification to handles to this same node
       if (lock_notifiy) {
-	HyperspaceEventPtr event(new EventLockAcquired(lock_mode));
-	deliver_event_notifications(handle_data->node, event);
+        HyperspaceEventPtr event(new EventLockAcquired(lock_mode));
+        deliver_event_notifications(handle_data->node, event);
       }
     }
 
@@ -603,7 +604,7 @@ void Master::close(ResponseCallback *cb, uint64_t session_id, uint64_t handle) {
   }
 
   {
-    boost::mutex::scoped_lock slock(session_data->mutex);
+    ScopedLock slock(session_data->mutex);
     n = session_data->handles.erase(handle);
   }
 
@@ -643,7 +644,7 @@ Master::attr_set(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
     HT_THROWF(Error::HYPERSPACE_INVALID_HANDLE, "handle=%llu", (Llu)handle);
 
   HT_BDBTXN_BEGIN {
-    boost::mutex::scoped_lock node_lock(handle_data->node->mutex);
+    ScopedLock node_lock(handle_data->node->mutex);
 
     m_bdb_fs->set_xattr(txn, handle_data->node->name, name, value, value_len);
 
@@ -681,11 +682,11 @@ Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
     HT_THROWF(Error::HYPERSPACE_INVALID_HANDLE, "handle=%llu", (Llu)handle);
 
   HT_BDBTXN_BEGIN {
-    boost::mutex::scoped_lock node_lock(handle_data->node->mutex);
+    ScopedLock node_lock(handle_data->node->mutex);
 
     if (!m_bdb_fs->get_xattr(txn, handle_data->node->name, name, dbuf))
       HT_THROW(Error::HYPERSPACE_ATTR_NOT_FOUND, name);
-    
+
     txn->commit(0);
   }
   HT_BDBTXN_END_CB(cb);
@@ -697,8 +698,9 @@ Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
 }
 
 
-
-void Master::attr_del(ResponseCallback *cb, uint64_t session_id, uint64_t handle, const char *name) {
+void
+Master::attr_del(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
+                 const char *name) {
   SessionDataPtr session_data;
   HandleDataPtr handle_data;
   int error;
@@ -715,7 +717,7 @@ void Master::attr_del(ResponseCallback *cb, uint64_t session_id, uint64_t handle
 
 
   HT_BDBTXN_BEGIN {
-    boost::mutex::scoped_lock node_lock(handle_data->node->mutex);
+    ScopedLock node_lock(handle_data->node->mutex);
 
     m_bdb_fs->del_xattr(txn, handle_data->node->name, name);
 
@@ -773,7 +775,7 @@ Master::readdir(ResponseCallbackReaddir *cb, uint64_t session_id,
 
 
   HT_BDBTXN_BEGIN {
-    boost::mutex::scoped_lock lock(handle_data->node->mutex);
+    ScopedLock lock(handle_data->node->mutex);
     m_bdb_fs->get_directory_listing(txn, handle_data->node->name, listing);
     txn->commit(0);
   }
@@ -819,7 +821,7 @@ Master::lock(ResponseCallbackLock *cb, uint64_t session_id, uint64_t handle,
   }
 
   {
-    boost::mutex::scoped_lock lock(handle_data->node->mutex);
+    ScopedLock lock(handle_data->node->mutex);
     NodeData::LockRequestList &pending_lock_reqs =
         handle_data->node->pending_lock_reqs;
 
@@ -849,9 +851,9 @@ Master::lock(ResponseCallbackLock *cb, uint64_t session_id, uint64_t handle,
         if (try_lock)
           cb->response(LOCK_STATUS_BUSY);
         else {
-	  pending_lock_reqs.push_back(LockRequest(handle, mode));
-	  cb->response(LOCK_STATUS_PENDING);
-	}
+          pending_lock_reqs.push_back(LockRequest(handle, mode));
+          cb->response(LOCK_STATUS_PENDING);
+        }
         return;
       }
     }
@@ -942,7 +944,7 @@ Master::release(ResponseCallback *cb, uint64_t session_id, uint64_t handle) {
 
 
 void Master::release_lock(HandleDataPtr &handle_data, bool wait_for_notify) {
-  boost::mutex::scoped_lock lock(handle_data->node->mutex);
+  ScopedLock lock(handle_data->node->mutex);
   vector<HandleDataPtr> next_lock_handles;
   int next_mode = 0;
 
@@ -1030,8 +1032,11 @@ Master::deliver_event_notifications(NodeData *node,
 
   // log event
   for (HandleMap::iterator iter = node->handle_map.begin();
-       iter != node->handle_map.end(); iter++) {
-    //HT_INFOF("Delivering notification (%d == %d)", (*iter).second->event_mask, event_ptr->get_mask());
+       iter != node->handle_map.end(); ++iter) {
+    /*
+    HT_DEBUGF("Delivering notification (%d == %d)", (*iter).second->event_mask,
+              event_ptr->get_mask());
+    */
     if ((*iter).second->event_mask & event_ptr->get_mask()) {
       (*iter).second->session_data->add_notification(
           new Notification((*iter).first, event_ptr));
@@ -1078,7 +1083,7 @@ Master::find_parent_node(const std::string &normal_name,
   child_name.clear();
 
   if (last_slash > 0) {
-    boost::mutex::scoped_lock lock(m_node_map_mutex);
+    ScopedLock lock(m_node_map_mutex);
     std::string parent_name(normal_name, 0, last_slash);
     child_name.append(normal_name, last_slash + 1,
                       normal_name.length() - last_slash - 1);
@@ -1094,7 +1099,7 @@ Master::find_parent_node(const std::string &normal_name,
     return true;
   }
   else if (last_slash == 0) {
-    boost::mutex::scoped_lock lock(m_node_map_mutex);
+    ScopedLock lock(m_node_map_mutex);
     std::string parent_name = "/";
     node_it = m_node_map.find(parent_name);
     assert (node_it != m_node_map.end());
@@ -1123,7 +1128,7 @@ Master::destroy_handle(uint64_t handle, int *errorp, std::string &errmsg,
   }
 
   {
-    boost::mutex::scoped_lock lock(handle_data->node->mutex);
+    ScopedLock lock(handle_data->node->mutex);
 
     handle_data->node->remove_handle(handle_data->id);
     refcount = handle_data->node->reference_count();
@@ -1177,5 +1182,4 @@ void Master::get_generation_number() {
     txn->commit(0);
   }
   HT_BDBTXN_END();
-
 }

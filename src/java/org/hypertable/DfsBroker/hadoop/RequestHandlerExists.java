@@ -31,7 +31,8 @@ import org.hypertable.Common.Error;
 
 public class RequestHandlerExists extends ApplicationHandler {
 
-    static final Logger log = Logger.getLogger("org.hypertable.DfsBroker.hadoop");
+    static final Logger log = Logger.getLogger(
+        "org.hypertable.DfsBroker.hadoop");
 
     public RequestHandlerExists(Comm comm, HdfsBroker broker, Event event) {
         super(event);
@@ -46,7 +47,8 @@ public class RequestHandlerExists extends ApplicationHandler {
         try {
 
             if ((fileName = Serialization.DecodeString(mEvent.msg.buf)) == null)
-                throw new ProtocolException("Filename not properly encoded in request packet");
+                throw new ProtocolException(
+                    "Filename not properly encoded in request packet");
 
             mBroker.Exists(cb, fileName);
 
@@ -55,7 +57,8 @@ public class RequestHandlerExists extends ApplicationHandler {
             int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());
             log.severe("Protocol error (EXISTS) - " + e.getMessage());
             if (error != Error.OK)
-                log.severe("Problem sending (EXISTS) error back to client - " + Error.GetText(error));
+                log.severe("Problem sending (EXISTS) error back to client - "
+                           + Error.GetText(error));
         }
     }
 

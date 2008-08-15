@@ -49,6 +49,14 @@ namespace Hypertable {
     InetAddr(const String &host, uint16_t port);
     InetAddr(const String &endpoint);
     InetAddr(uint32_t ip32, uint16_t port);
+    InetAddr(const sockaddr_in &addr) { operator=(addr); }
+
+    InetAddr &operator=(const sockaddr_in &addr) {
+      if (this != &addr)
+        memcpy(this, &addr, sizeof(sockaddr_in));
+
+      return *this;
+    }
 
     String format(int sep = ':') { return InetAddr::format(*this, sep); }
 

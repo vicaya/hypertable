@@ -71,9 +71,9 @@ namespace {
     "  --recv-addr=<addr>  Let the server connect to us by listening for",
     "                  connection request on <addr> (host:port).  The address",
     "                  that the server is connecting from should be the same",
-    "                  as what's specified with --host and --port or the defaults.",
+    "                  as in --host and --port or the defaults.",
     "                  (TCP only)",
-    "  --timeout=<t>   Specifies the connection timeout in seconds (default=10)",
+    "  --timeout=<t>   Connection timeout in seconds (default=10)",
     "  --verbose       Generate verbose output",
     "  --udp           Operate in UDP mode instead of TCP",
     "",
@@ -355,7 +355,8 @@ int main(int argc, char **argv) {
         }
       }
       else {
-        while ((error = comm->send_request(addr, timeout, cbp, resp_handler)) != Error::OK) {
+        while ((error = comm->send_request(addr, timeout, cbp, resp_handler))
+                != Error::OK) {
           if (error == Error::COMM_NOT_CONNECTED) {
             if (retries == 5) {
               HT_ERROR("Connection timeout.");
@@ -365,7 +366,8 @@ int main(int argc, char **argv) {
             retries++;
           }
           else {
-            HT_ERRORF("CommEngine::send_message returned '%s'", Error::get_text(error));
+            HT_ERRORF("CommEngine::send_message returned '%s'",
+                      Error::get_text(error));
             return 1;
           }
         }

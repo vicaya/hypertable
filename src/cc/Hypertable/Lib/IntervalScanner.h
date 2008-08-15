@@ -44,13 +44,16 @@ namespace Hypertable {
      *
      * @param props_ptr smart pointer to configuration properties object
      * @param comm pointer to the Comm layer
-     * @param table_identifier pointer to the identifier of the table being mutated
+     * @param table_identifier pointer to the identifier of the table
      * @param schema_ptr smart pointer to schema object for table
      * @param range_locator_ptr smart pointer to range locator
      * @param scan_spec reference to scan specification object
-     * @param timeout maximum time in seconds to allow scanner methods to execute before throwing an exception
+     * @param timeout maximum time in seconds to allow scanner methods to
+     *        execute before throwing an exception
      */
-    IntervalScanner(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, ScanSpec &scan_spec, int timeout);
+    IntervalScanner(PropertiesPtr &props_ptr, Comm *comm,
+                    const TableIdentifier *table_identifier, SchemaPtr &,
+                    RangeLocatorPtr &, const ScanSpec &, int timeout);
 
     virtual ~IntervalScanner();
 
@@ -86,7 +89,9 @@ namespace Hypertable {
     int32_t             m_rows_seen;
     int                 m_timeout;
   };
-  typedef boost::intrusive_ptr<IntervalScanner> IntervalScannerPtr;
-}
+
+  typedef intrusive_ptr<IntervalScanner> IntervalScannerPtr;
+
+} // namespace Hypertable
 
 #endif // HYPERTABLE_INTERVALSCANNER_H

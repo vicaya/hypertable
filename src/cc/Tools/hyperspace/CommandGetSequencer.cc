@@ -44,15 +44,17 @@ void CommandGetSequencer::run() {
   struct LockSequencer lockseq;
 
   if (m_args.size() != 1)
-    HT_THROW(Error::PARSE_ERROR, "Wrong number of arguments.  Type 'help' for usage.");
+    HT_THROW(Error::COMMAND_PARSE_ERROR,
+             "Wrong number of arguments.  Type 'help' for usage.");
 
   if (m_args[0].second != "")
-    HT_THROW(Error::PARSE_ERROR, "Invalid character '=' in argument.");
+    HT_THROW(Error::COMMAND_PARSE_ERROR, "Invalid character '=' in argument.");
 
   handle = Util::get_handle(m_args[0].first);
 
   m_session->get_sequencer(handle, &lockseq);
 
-  cout << "SEQUENCER name=" << lockseq.name << " mode=" << lockseq.mode << " generation=" << lockseq.generation << endl << flush;
+  cout << "SEQUENCER name=" << lockseq.name << " mode=" << lockseq.mode
+       << " generation=" << lockseq.generation << endl << flush;
 
 }

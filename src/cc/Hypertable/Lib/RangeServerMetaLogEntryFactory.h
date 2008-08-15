@@ -46,13 +46,13 @@ new_rs_split_start(const TableIdentifier &, const RangeSpec &old,
 
 MetaLogEntry *
 new_rs_split_shrunk(const TableIdentifier &, const RangeSpec &old,
-		    const RangeState &);
+                    const RangeState &);
 
 MetaLogEntry *
 new_rs_split_done(const TableIdentifier &, const RangeSpec &old);
 
 MetaLogEntry *
-new_rs_range_loaded(const TableIdentifier &, const RangeSpec &, 
+new_rs_range_loaded(const TableIdentifier &, const RangeSpec &,
                     const RangeState &);
 
 MetaLogEntry *

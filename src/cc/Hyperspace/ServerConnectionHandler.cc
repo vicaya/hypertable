@@ -68,7 +68,8 @@ void ServerConnectionHandler::handle(EventPtr &event) {
         HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%d)", command);
 
       if (command != Protocol::COMMAND_HANDSHAKE &&
-          (error = m_master_ptr->renew_session_lease(m_session_id)) != Error::OK) {
+          (error = m_master_ptr->renew_session_lease(m_session_id))
+            != Error::OK) {
         ResponseCallback cb(m_comm, event);
         HT_INFOF("Session handle %lld expired", m_session_id);
         cb.error(error, "");
@@ -86,40 +87,52 @@ void ServerConnectionHandler::handle(EventPtr &event) {
         }
         return;
       case Protocol::COMMAND_OPEN:
-        handler = new RequestHandlerOpen(m_comm, m_master_ptr.get(), m_session_id, event);
+        handler = new RequestHandlerOpen(m_comm, m_master_ptr.get(),
+                                         m_session_id, event);
         break;
       case Protocol::COMMAND_CLOSE:
-        handler = new RequestHandlerClose(m_comm, m_master_ptr.get(), m_session_id, event);
+        handler = new RequestHandlerClose(m_comm, m_master_ptr.get(),
+                                          m_session_id, event);
         break;
       case Protocol::COMMAND_MKDIR:
-        handler = new RequestHandlerMkdir(m_comm, m_master_ptr.get(), m_session_id, event);
+        handler = new RequestHandlerMkdir(m_comm, m_master_ptr.get(),
+                                          m_session_id, event);
         break;
       case Protocol::COMMAND_DELETE:
-        handler = new RequestHandlerDelete(m_comm, m_master_ptr.get(), m_session_id, event);
+        handler = new RequestHandlerDelete(m_comm, m_master_ptr.get(),
+                                           m_session_id, event);
         break;
       case Protocol::COMMAND_ATTRSET:
-        handler = new RequestHandlerAttrSet(m_comm, m_master_ptr.get(), m_session_id, event);
+        handler = new RequestHandlerAttrSet(m_comm, m_master_ptr.get(),
+                                            m_session_id, event);
         break;
       case Protocol::COMMAND_ATTRGET:
-        handler = new RequestHandlerAttrGet(m_comm, m_master_ptr.get(), m_session_id, event);
+        handler = new RequestHandlerAttrGet(m_comm, m_master_ptr.get(),
+                                            m_session_id, event);
         break;
       case Protocol::COMMAND_ATTRDEL:
-        handler = new RequestHandlerAttrDel(m_comm, m_master_ptr.get(), m_session_id, event);
+        handler = new RequestHandlerAttrDel(m_comm, m_master_ptr.get(),
+                                            m_session_id, event);
         break;
       case Protocol::COMMAND_EXISTS:
-        handler = new RequestHandlerExists(m_comm, m_master_ptr.get(), m_session_id, event);
+        handler = new RequestHandlerExists(m_comm, m_master_ptr.get(),
+                                           m_session_id, event);
         break;
       case Protocol::COMMAND_READDIR:
-        handler = new RequestHandlerReaddir(m_comm, m_master_ptr.get(), m_session_id, event);
+        handler = new RequestHandlerReaddir(m_comm, m_master_ptr.get(),
+                                            m_session_id, event);
         break;
       case Protocol::COMMAND_LOCK:
-        handler = new RequestHandlerLock(m_comm, m_master_ptr.get(), m_session_id, event);
+        handler = new RequestHandlerLock(m_comm, m_master_ptr.get(),
+                                         m_session_id, event);
         break;
       case Protocol::COMMAND_RELEASE:
-        handler = new RequestHandlerRelease(m_comm, m_master_ptr.get(), m_session_id, event);
+        handler = new RequestHandlerRelease(m_comm, m_master_ptr.get(),
+                                            m_session_id, event);
         break;
       case Protocol::COMMAND_STATUS:
-        handler = new RequestHandlerStatus(m_comm, m_master_ptr.get(), m_session_id, event);
+        handler = new RequestHandlerStatus(m_comm, m_master_ptr.get(),
+                                           m_session_id, event);
         break;
       default:
         HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%d)", command);

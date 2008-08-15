@@ -144,7 +144,7 @@ Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chf_ptr) {
 }
 
 
-int Comm::set_alias(struct sockaddr_in &addr, struct sockaddr_in &alias) {
+int Comm::set_alias(const sockaddr_in &addr, const sockaddr_in &alias) {
   ScopedLock lock(ms_mutex);
   return m_handler_map_ptr->set_alias(addr, alias);
 }
@@ -191,7 +191,7 @@ Comm::listen(struct sockaddr_in &addr, ConnectionHandlerFactoryPtr &chf_ptr,
 
 
 int
-Comm::send_request(struct sockaddr_in &addr, time_t timeout,
+Comm::send_request(const sockaddr_in &addr, time_t timeout,
                    CommBufPtr &cbuf_ptr, DispatchHandler *resp_handler) {
   ScopedLock lock(ms_mutex);
   IOHandlerDataPtr data_handler;
@@ -281,7 +281,7 @@ Comm::create_datagram_receive_socket(struct sockaddr_in *addr, int tos,
     opt = tos;
     setsockopt(sd, SOL_IP, IP_TOS, &opt, sizeof(opt));
     opt = tos;
-    setsockopt(sd, SOL_SOCKET, SO_PRIORITY, &opt, sizeof(opt));    
+    setsockopt(sd, SOL_SOCKET, SO_PRIORITY, &opt, sizeof(opt));
 #elif defined(__APPLE__)
     opt = IPTOS_LOWDELAY;       /* see <netinet/in.h> */
     setsockopt(sd, IPPROTO_IP, IP_TOS, &opt, sizeof(opt));

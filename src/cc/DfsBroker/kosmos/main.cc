@@ -49,9 +49,9 @@ namespace {
     "usage: kosmosBroker [OPTIONS]",
     "",
     "OPTIONS:",
-    "  --config=<file>   Read configuration from <file>.  The default config file is",
-    "                    \"conf/hypertable.cfg\" relative to the toplevel install directory",
-    "  --pidfile=<fname> Write the process ID to <fname> upon successful startup",
+    "  --config=<file>   Read configuration from <file>.  The default file is",
+    "                    \"conf/hypertable.cfg",
+    "  --pidfile=<fname> Write the process ID to <fname> on successful startup",
     "  --help            Display this help text and exit",
     "  --verbose,-v      Generate verbose output",
     ""
@@ -124,7 +124,8 @@ int main(int argc, char **argv) {
 
   broker_ptr = new KosmosBroker(props);
   app_queue_ptr = new ApplicationQueue(worker_count);
-  ConnectionHandlerFactoryPtr chf_ptr(new DfsBroker::ConnectionHandlerFactory(comm, app_queue_ptr, broker_ptr));
+  ConnectionHandlerFactoryPtr chf_ptr(new DfsBroker::ConnectionHandlerFactory(
+                                      comm, app_queue_ptr, broker_ptr));
   comm->listen(listen_addr, chf_ptr);
 
   if (pidfile != "") {

@@ -26,7 +26,6 @@
 #include "Common/Serialization.h"
 
 #include "Common/Error.h"
-#include "Common/InetAddr.h"
 #include "Common/Logger.h"
 
 #include "Client.h"
@@ -34,7 +33,7 @@
 using namespace Hypertable;
 using namespace Hypertable::DfsBroker;
 
-Client::Client(ConnectionManagerPtr &conn_mgr, struct sockaddr_in &addr,
+Client::Client(ConnectionManagerPtr &conn_mgr, const sockaddr_in &addr,
                time_t timeout)
     : m_conn_mgr(conn_mgr), m_addr(addr), m_timeout(timeout) {
   m_comm = conn_mgr->get_comm();
@@ -67,7 +66,7 @@ Client::Client(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props_ptr)
 
 }
 
-Client::Client(Comm *comm, struct sockaddr_in &addr, time_t timeout)
+Client::Client(Comm *comm, const sockaddr_in &addr, time_t timeout)
     : m_comm(comm), m_conn_mgr(0), m_addr(addr), m_timeout(timeout) {
 }
 
@@ -691,6 +690,5 @@ Client::send_message(CommBufPtr &cbp, DispatchHandler *handler) {
   int error = m_comm->send_request(m_addr, m_timeout, cbp, handler);
 
   if (error != Error::OK)
-    HT_THROWF(error, "DFS send_request to %s:%d failed",
-              inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+    HT_THROWF(error, "DFS send_request to %s failed", m_addr.format().c_str());
 }

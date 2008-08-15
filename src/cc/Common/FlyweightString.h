@@ -31,11 +31,12 @@ namespace Hypertable {
   class FlyweightString {
   public:
     ~FlyweightString() {
-      for (std::set<const char *, LtCstr>::iterator iter = m_strings.begin(); iter != m_strings.end(); iter++)
+      for (Strings::iterator iter = m_strings.begin(); iter != m_strings.end();
+           ++iter)
         delete [] *iter;
     }
     const char *get(const char *str) {
-      std::set<const char *, LtCstr>::iterator iter = m_strings.find(str);
+      Strings::iterator iter = m_strings.find(str);
       if (iter != m_strings.end())
         return *iter;
       char *constant_str = new char [strlen(str) + 1];
@@ -45,7 +46,9 @@ namespace Hypertable {
     }
 
   private:
-    std::set<const char *, LtCstr>  m_strings;
+    typedef std::set<const char *, LtCstr>  Strings;
+
+    Strings m_strings;
   };
 
 }

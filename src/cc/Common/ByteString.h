@@ -90,7 +90,9 @@ namespace Hypertable {
     }
   }
 
-  inline void append_as_byte_string(DynamicBuffer &dst_buf, const void *value, uint32_t value_len) {
+  inline void
+  append_as_byte_string(DynamicBuffer &dst_buf, const void *value,
+                        uint32_t value_len) {
     dst_buf.ensure(7 + value_len);
     Serialization::encode_vi32(&dst_buf.ptr, value_len);
     if (value_len > 0) {

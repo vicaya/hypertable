@@ -40,7 +40,8 @@ void ServerLockFileHandler::lock_acquired(uint32_t mode) {
  */
 void ServerLockFileHandler::lock_released() {
   EventPtr nullevent;
-  m_app_queue_ptr->add(new EventHandlerServerLeft(m_master_ptr, m_state_ptr->location, nullevent));
+  m_app_queue_ptr->add(new EventHandlerServerLeft(m_master_ptr,
+                       m_state_ptr->location, nullevent));
 }
 
 

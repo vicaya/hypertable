@@ -51,7 +51,8 @@ namespace Hypertable {
 
     void operator()();
 
-    void add_request(uint32_t id, IOHandler *handler, DispatchHandler *dh, boost::xtime &expire) {
+    void add_request(uint32_t id, IOHandler *handler, DispatchHandler *dh,
+                     boost::xtime &expire) {
       boost::mutex::scoped_lock lock(m_mutex);
       boost::xtime now;
       m_request_cache.insert(id, handler, dh, expire);
@@ -99,17 +100,20 @@ namespace Hypertable {
     void poll_loop_continue();
 
   protected:
+    typedef std::priority_queue<ExpireTimer, std::vector<ExpireTimer>, LtTimer>
+            TimerHeap;
+
     boost::mutex    m_mutex;
     RequestCache    m_request_cache;
-    std::priority_queue<ExpireTimer, std::vector<ExpireTimer>, LtTimer> m_timer_heap;
+    TimerHeap       m_timer_heap;
     int             m_interrupt_sd;
     bool            m_interrupt_in_progress;
     boost::xtime    m_next_wakeup;
     std::set<IOHandler *> m_removed_handlers;
   };
-  typedef boost::intrusive_ptr<Reactor> ReactorPtr;
 
+  typedef intrusive_ptr<Reactor> ReactorPtr;
 
-}
+} // namespace Hypertable
 
 #endif // HYPERTABLE_REACTOR_H

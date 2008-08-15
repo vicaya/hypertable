@@ -21,17 +21,17 @@ using Hypertable::ScanSpecBuilder;
 class TableScanner {
 private:
   Hypertable::TableScannerPtr m_scanner;
-  
+
 public:
   TableScanner() {}
   TableScanner(Hypertable::TableScannerPtr ptr) : m_scanner(ptr)
   {
   }
-  
+
   bool next(Hypertable::Cell& cell)
   {
     return m_scanner->next(cell);
-  }  
+  }
 };
 
 class KeySpec {
@@ -40,7 +40,7 @@ private:
   std::string m_key_str;
   std::string m_column_qualifier;
   std::string m_column_family;
- 
+
 public:
   KeySpec(std::string& key, std::string column_family, std::string column_qualifier)
   {
@@ -84,21 +84,21 @@ public:
 class Table {
 private:
   Hypertable::TablePtr m_table_ptr;
-  
+
 public:
   Table()
   {
   }
-  
+
   Table(Hypertable::TablePtr ptr) : m_table_ptr(ptr)
   {
   }
- 
+
   TableMutator create_mutator(unsigned int timeout)
   {
     return TableMutator(m_table_ptr->create_mutator(timeout));
   }
-  
+
   TableScanner create_scanner(object pyspec)
   {
     extract<ScanSpecBuilder&> ex(pyspec);
@@ -111,16 +111,16 @@ public:
 class Client {
 private:
   Hypertable::ClientPtr m_client;
-  
+
 public:
   Client(const std::string& argv0)
   {
     m_client = new Hypertable::Client(Hypertable::System::locate_install_dir(argv0.c_str()));
   }
-  
+
   Table open_table(const std::string& name)
   {
-    Hypertable::TablePtr t = m_client->open_table(name); 
+    Hypertable::TablePtr t = m_client->open_table(name);
     return Table(t);
   }
 
@@ -148,7 +148,7 @@ BOOST_PYTHON_MODULE(ht)
     .def("open_table", &Client::open_table)
     .def("create_table", &Client::create_table)
     ;
-  
+
   class_<Table>("Table", "Table representation")
     .def("create_scanner", &Table::create_scanner)
     .def("create_mutator", &Table::create_mutator)
@@ -162,7 +162,7 @@ BOOST_PYTHON_MODULE(ht)
   class_<TableScanner>("TableScanner")
     .def("next", &TableScanner::next)
     ;
-    
+
   class_<ScanSpecBuilder>("ScanSpecBuilder", "scan spec docstring")
     .def("add_row_interval", &ScanSpecBuilder::add_row_interval)
     .def("add_column", &ScanSpecBuilder::add_column)

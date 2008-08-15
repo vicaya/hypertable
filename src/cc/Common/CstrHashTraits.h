@@ -42,7 +42,7 @@ struct CstrHashTraits {
   typedef CharArena key_allocator;
 
   struct hasher {
-    size_t 
+    size_t
     operator()(const char *s) const { return hash_cstr(s); }
   };
 
@@ -68,7 +68,7 @@ struct CstrCaseHashTraits {
   typedef CharArena key_allocator;
 
   struct hasher {
-    size_t 
+    size_t
     operator()(const char *s) const { return hash_case_cstr(s); }
   };
 

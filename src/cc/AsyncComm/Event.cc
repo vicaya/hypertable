@@ -69,7 +69,7 @@ namespace Hypertable {
 
     if (type != TIMER) {
       dstr += " from=";
-      dstr += (String)inet_ntoa(addr.sin_addr) + ":" + (int)ntohs(addr.sin_port);
+      dstr += addr.format();
     }
 
     return dstr;

@@ -50,11 +50,13 @@ namespace Hypertable {
 
     RequestCache() : m_id_map(), m_head(0), m_tail(0) { return; }
 
-    void insert(uint32_t id, IOHandler *handler, DispatchHandler *dh, boost::xtime &expire);
+    void insert(uint32_t id, IOHandler *handler, DispatchHandler *dh,
+                boost::xtime &expire);
 
     DispatchHandler *remove(uint32_t id);
 
-    DispatchHandler *get_next_timeout(boost::xtime &now, IOHandler *&handlerp, boost::xtime *next_timeout);
+    DispatchHandler *get_next_timeout(boost::xtime &now, IOHandler *&handlerp,
+                                      boost::xtime *next_timeout);
 
     void purge_requests(IOHandler *handler);
 

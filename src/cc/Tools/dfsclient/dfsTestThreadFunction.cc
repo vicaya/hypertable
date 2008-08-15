@@ -65,7 +65,8 @@ void DfsTestThreadFunction::operator()() {
     // Determine original file size
     struct stat statbuf;
     if (stat(m_input_file.c_str(), &statbuf) != 0)
-      HT_THROW(Error::EXTERNAL, (std::string)"Unable to stat file '" + m_input_file + "' - " + strerror(errno));
+      HT_THROW(Error::EXTERNAL, (std::string)"Unable to stat file '"
+               + m_input_file + "' - " + strerror(errno));
 
     origsz = statbuf.st_size;
 

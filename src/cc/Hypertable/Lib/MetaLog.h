@@ -81,7 +81,7 @@ public:
   virtual void write(MetaLogEntry *mle) = 0;
 
   /**
-   * Close the metalog 
+   * Close the metalog
    * Implementation should handle multiple close calls
    */
   virtual void close() = 0;

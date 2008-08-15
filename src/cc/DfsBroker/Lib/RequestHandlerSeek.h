@@ -37,9 +37,8 @@ namespace Hypertable {
 
     class RequestHandlerSeek : public ApplicationHandler {
     public:
-      RequestHandlerSeek(Comm *comm, Broker *broker, EventPtr &event_ptr) : ApplicationHandler(event_ptr), m_comm(comm), m_broker(broker) {
-        return;
-      }
+      RequestHandlerSeek(Comm *comm, Broker *broker, EventPtr &event_ptr)
+        : ApplicationHandler(event_ptr), m_comm(comm), m_broker(broker) { }
 
       virtual void run();
 

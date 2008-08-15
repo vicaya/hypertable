@@ -4,9 +4,9 @@
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at 
+# You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0 
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,7 +26,7 @@ while [ -h "$this" ]; do
   fi
 done
 
-# convert relative path to absolute path                                                                                                                                   
+# convert relative path to absolute path
 bin=`dirname "$this"`
 script=`basename "$this"`
 bin=`cd "$bin"; pwd`
@@ -46,10 +46,10 @@ popd >& /dev/null
 # Stop dfsbroker
 #
 for pidfile in $HYPERTABLE_HOME/run/DfsBroker.*.pid ; do
-    if [ "$pidfile" != "$HYPERTABLE_HOME/run/DfsBroker.*.pid" ] ; then
-	kill `cat $pidfile`
-	rm $pidfile
-    fi
+  if [ "$pidfile" != "$HYPERTABLE_HOME/run/DfsBroker.*.pid" ] ; then
+    kill `cat $pidfile`
+    rm $pidfile
+  fi
 done
 
 sleep 2
@@ -59,8 +59,8 @@ sleep 2
 #
 pidfile="$HYPERTABLE_HOME/run/Hypertable.RangeServer.pid"
 if [ -f $pidfile ] ; then
-    kill -9 `cat $pidfile`
-    rm $pidfile
+  kill -9 `cat $pidfile`
+  rm $pidfile
 fi
 
 #
@@ -68,8 +68,8 @@ fi
 #
 pidfile="$HYPERTABLE_HOME/run/Hypertable.Master.pid"
 if [ -f $pidfile ] ; then
-    kill -9 `cat $pidfile`
-    rm $pidfile
+  kill -9 `cat $pidfile`
+  rm $pidfile
 fi
 
 #
@@ -77,8 +77,8 @@ fi
 #
 pidfile="$HYPERTABLE_HOME/run/Hyperspace.pid"
 if [ -f $pidfile ] ; then
-    kill -9 `cat $pidfile`
-    rm $pidfile
+  kill -9 `cat $pidfile`
+  rm $pidfile
 fi
 
 
@@ -87,9 +87,9 @@ fi
 #
 $HYPERTABLE_HOME/bin/serverup --silent --host=localhost dfsbroker
 while [ $? == 0 ] ; do
-    sleep 2
-    echo "Waiting for DFS Broker to shutdown ..."
-    $HYPERTABLE_HOME/bin/serverup --silent --host=localhost dfsbroker
+  sleep 2
+  echo "Waiting for DFS Broker to shutdown ..."
+  $HYPERTABLE_HOME/bin/serverup --silent --host=localhost dfsbroker
 done
 
 #
@@ -97,9 +97,9 @@ done
 #
 $HYPERTABLE_HOME/bin/serverup --silent --host=localhost rangeserver
 while [ $? == 0 ] ; do
-    sleep 2
-    echo "Waiting for RangeServer to shutdown ..."
-    $HYPERTABLE_HOME/bin/serverup --silent --host=localhost rangeserver
+  sleep 2
+  echo "Waiting for RangeServer to shutdown ..."
+  $HYPERTABLE_HOME/bin/serverup --silent --host=localhost rangeserver
 done
 
 #
@@ -107,9 +107,9 @@ done
 #
 $HYPERTABLE_HOME/bin/serverup --silent --host=localhost master
 while [ $? == 0 ] ; do
-    sleep 2
-    echo "Waiting for Hypertable.Master to shutdown ..."
-    $HYPERTABLE_HOME/bin/serverup --silent --host=localhost master
+  sleep 2
+  echo "Waiting for Hypertable.Master to shutdown ..."
+  $HYPERTABLE_HOME/bin/serverup --silent --host=localhost master
 done
 
 #
@@ -117,7 +117,7 @@ done
 #
 $HYPERTABLE_HOME/bin/serverup --silent --host=localhost hyperspace
 while [ $? == 0 ] ; do
-    sleep 2
-    echo "Waiting for Hyperspace to shutdown ..."
-    $HYPERTABLE_HOME/bin/serverup --silent --host=localhost hyperspace
+  sleep 2
+  echo "Waiting for Hyperspace to shutdown ..."
+  $HYPERTABLE_HOME/bin/serverup --silent --host=localhost hyperspace
 done

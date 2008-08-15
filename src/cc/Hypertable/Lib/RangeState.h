@@ -33,7 +33,7 @@ namespace Hypertable {
   public:
     enum StateType { STEADY, SPLIT_LOG_INSTALLED, SPLIT_SHRUNK };
     RangeState() : state(STEADY), soft_limit(0), transfer_log(0),
-		   split_point(0), old_start_row(0) { return; }
+                   split_point(0), old_start_row(0) { return; }
 
     void clear() {
       state = STEADY;
@@ -42,8 +42,8 @@ namespace Hypertable {
       transfer_log = split_point = old_start_row = 0;
     }
 
-    size_t encoded_length();
-    void encode(uint8_t **bufp);
+    size_t encoded_length() const;
+    void encode(uint8_t **bufp) const;
     void decode(const uint8_t **bufp, size_t *remainp);
 
     int state;
@@ -69,27 +69,31 @@ namespace Hypertable {
       state = rs.state;
       timestamp = rs.timestamp;
       soft_limit = rs.soft_limit;
+
       if (rs.transfer_log) {
         m_transfer_log = rs.transfer_log;
         transfer_log = m_transfer_log.c_str();
       }
       else
         transfer_log = 0;
+
       if (rs.split_point) {
         m_split_point = rs.split_point;
         split_point = m_split_point.c_str();
       }
       else
-	split_point = 0;
+        split_point = 0;
+
       if (rs.old_start_row) {
-	m_old_start_row = rs.old_start_row;
-	old_start_row = m_old_start_row.c_str();
+        m_old_start_row = rs.old_start_row;
+        old_start_row = m_old_start_row.c_str();
       }
       else
-	old_start_row = 0;
+        old_start_row = 0;
+
       return *this;
     }
-    
+
     void set_transfer_log(const String &tl) {
       m_transfer_log = tl;
       transfer_log = m_transfer_log.c_str();
@@ -126,7 +130,6 @@ namespace Hypertable {
     String m_old_start_row;
   };
 
-}
-
+} // namespace Hypertable
 
 #endif // HYPERTABLE_RANGESTATE_H

@@ -51,7 +51,8 @@ void Properties::load(const char *fname) throw(std::invalid_argument) {
   std::string valstr;
 
   if (stat(fname, &statbuf) != 0)
-    throw std::invalid_argument(string("Could not stat properties file '") + fname + "' - " + string(strerror(errno)));
+    throw std::invalid_argument(string("Could not stat properties file '")
+        + fname + "' - " + string(strerror(errno)));
 
   ifstream ifs(fname);
   string line;
@@ -134,7 +135,8 @@ int Properties::get_int(const char *str, int defaultval) {
   int64_t llval = get_int64(str, defaultval);
 
   if (llval > numeric_limits<int>::max())
-    throw std::invalid_argument(string("Integer value too large for property '") + str + "'");
+    throw std::invalid_argument(string("Integer value too large for property '")
+                                + str + "'");
 
   return (int)llval;
 }
@@ -144,12 +146,15 @@ bool Properties::get_bool(const char *str, bool defaultval) {
   if (iter == m_map.end())
     return defaultval;
 
-  if (!strcasecmp((*iter).second.c_str(), "true") || !strcmp((*iter).second.c_str(), "1"))
+  if (!strcasecmp((*iter).second.c_str(), "true")
+      || !strcmp((*iter).second.c_str(), "1"))
     return true;
-  else if (!strcasecmp((*iter).second.c_str(), "false") || !strcmp((*iter).second.c_str(), "0"))
+  else if (!strcasecmp((*iter).second.c_str(), "false")
+           || !strcmp((*iter).second.c_str(), "0"))
     return false;
 
-  HT_ERRORF("Invalid value for property '%s' (%s), using defaultval value", str, (*iter).second.c_str());
+  HT_ERRORF("Invalid value for property '%s' (%s), using defaultval value",
+            str, (*iter).second.c_str());
 
   return defaultval;
 }
@@ -173,13 +178,15 @@ int Properties::set_int(const String &key, int value) {
   int64_t old_val = 0;
 
   if (value > numeric_limits<int>::max())
-    throw std::invalid_argument(string("Integer value too large for property '") + key + "'");
+    throw std::invalid_argument(string("Integer value too large for property '")
+                                + key + "'");
 
   PropertyMap::iterator iter = m_map.find(key);
   if (iter != m_map.end()) {
     old_val = parse_int_value(key, (*iter).second);
     if (old_val > numeric_limits<int>::max())
-      throw std::invalid_argument(string("Integer value too large for property '") + key + "'");
+      throw std::invalid_argument(string("Integer value too large for property "
+                                  "'") + key + "'");
   }
 
   m_map[key] = std::string("") + value;
@@ -216,14 +223,16 @@ int64_t Properties::parse_int_value(const String &key, const String &value) {
     else if (!strcasecmp(ptr, "g"))
       factor = 1000000000LL;
     else
-      throw std::invalid_argument(string("Invalid value for integer property '") + key + "' (value=" + value + ")");
+      throw std::invalid_argument(string("Invalid value for integer property '")
+                                  + key + "' (value=" + value + ")");
   }
 
   string numstr = string(value.c_str(), ptr-value.c_str());
 
   int64_t llval = strtoll(numstr.c_str(), 0, 0);
   if (llval == 0 && errno == EINVAL)
-    throw std::invalid_argument(string("Could not convert property '") + key + "' (value=" + value + ") to an integer");
+    throw std::invalid_argument(string("Could not convert property '") + key
+                                + "' (value=" + value + ") to an integer");
 
   return llval * factor;
 }

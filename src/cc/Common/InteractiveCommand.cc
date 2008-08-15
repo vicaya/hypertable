@@ -93,7 +93,9 @@ void InteractiveCommand::parse_command_line(const char *line) {
 
 
 
-bool InteractiveCommand::parse_string_literal(const char *str, std::string &text, const char **endptr) {
+bool
+InteractiveCommand::parse_string_literal(const char *str, std::string &text,
+                                         const char **endptr) {
   int lastchar = *str;
   const char *ptr, *base;
 

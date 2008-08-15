@@ -1,0 +1,4 @@
+#!/bin/sh
+# coding convention police :)
+# real problems: long lines, tabs and trailing spaces
+srcgrep -E '.{81,}|	|  *$' | cut -f1 -d: | sort -u

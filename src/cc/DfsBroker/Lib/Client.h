@@ -22,6 +22,7 @@
 #ifndef HYPERTABLE_DFSBROKER_CLIENT_H
 #define HYPERTABLE_DFSBROKER_CLIENT_H
 
+#include "Common/InetAddr.h"
 #include "Common/Mutex.h"
 #include "Common/HashMap.h"
 #include "Common/Properties.h"
@@ -39,11 +40,11 @@
 
 namespace Hypertable { namespace DfsBroker {
 
-    /** Proxy class for DFS broker.  As specified in the general contract for
-     * a Filesystem, commands that operate on the same file descriptor
-     * are serialized by the underlying filesystem.  In other words, if you issue
-     * three asynchronous commands, they will get carried out and their responses
-     * will come back in the same order in which they were issued.
+    /** Proxy class for DFS broker.  As specified in the general contract for a
+     * Filesystem, commands that operate on the same file descriptor are
+     * serialized by the underlying filesystem.  In other words, if you issue
+     * three asynchronous commands, they will get carried out and their
+     * responses will come back in the same order in which they were issued.
      */
     class Client : public Filesystem {
     public:
@@ -58,7 +59,8 @@ namespace Hypertable { namespace DfsBroker {
        * @param addr address of DFS broker to connect to
        * @param timeout timeout value to use in requests
        */
-      Client(ConnectionManagerPtr &conn_manager_ptr, struct sockaddr_in &addr, time_t timeout);
+      Client(ConnectionManagerPtr &conn_manager_ptr, const sockaddr_in &addr,
+             time_t timeout);
 
       /** Constructor with Properties object.  The following properties are read
        * to determine the location of the broker and the request timeout value:
@@ -79,7 +81,7 @@ namespace Hypertable { namespace DfsBroker {
        * @param addr remote address of already connected DfsBroker
        * @param timeout timeout value to use in requests
        */
-      Client(Comm *comm, struct sockaddr_in &addr, time_t timeout);
+      Client(Comm *comm, const sockaddr_in &addr, time_t timeout);
 
       /** Convenient contructor for dfs testing
        *
@@ -89,8 +91,8 @@ namespace Hypertable { namespace DfsBroker {
        */
       Client(const char *host, int port, time_t timeout);
 
-      /** Waits up to max_wait_secs for a connection to be established with the DFS
-       * broker.
+      /** Waits up to max_wait_secs for a connection to be established with the
+       * DFS broker.
        *
        * @param max_wait_secs maximum amount of time to wait
        * @return true if connected, false otherwise
@@ -156,16 +158,17 @@ namespace Hypertable { namespace DfsBroker {
                           DispatchHandler *handler);
       virtual void rename(const String &src, const String &dst);
 
-      /** Checks the status of the DFS broker.  Issues a status command and waits
-       * for it to return.
+      /** Checks the status of the DFS broker.  Issues a status command and
+       * waits for it to return.
        */
       void status();
 
-      /** Shuts down the DFS broker.  Issues a shutdown command to the DFS broker.
-       * If the flag is set to Protocol::SHUTDOWN_FLAG_IMMEDIATE, then the
-       * broker will call exit(0) directly from the I/O reactor thread.  Otherwise,
-       * a shutdown command will get added to the broker's application queue, allowing
-       * the shutdown to be handled more gracefully.
+      /** Shuts down the DFS broker.  Issues a shutdown command to the DFS
+       * broker.  If the flag is set to Protocol::SHUTDOWN_FLAG_IMMEDIATE, then
+       * the broker will call exit(0) directly from the I/O reactor thread.
+       * Otherwise, a shutdown command will get added to the broker's
+       * application queue, allowing the shutdown to be handled more
+       * gracefully.
        *
        * @param flags controls how broker gets shut down
        * @param handler response handler
@@ -195,7 +198,7 @@ namespace Hypertable { namespace DfsBroker {
       Mutex                 m_mutex;
       Comm                 *m_comm;
       ConnectionManagerPtr  m_conn_mgr;
-      struct sockaddr_in    m_addr;
+      InetAddr              m_addr;
       time_t                m_timeout;
       Protocol              m_protocol;
       BufferedReaderMap     m_buffered_reader_map;

@@ -47,8 +47,8 @@ public class SampleClient {
         "  --timeout=<t>  Specifies the connectin timeout value",
         "  --reactors=<n>  Specifies the number of reactors",
         "",
-        "This is a sample program to test the AsyncComm library.  It establishes",
-        "a connection with the sampleServer and sends each line of the input file",
+        "This is a sample program to test the AsyncComm library.  It connects",
+        "to the sampleServer and sends each line of the input file",
         "to the server.  Each reply from the server is echoed to stdout.",
         "",
         null
@@ -90,7 +90,8 @@ public class SampleClient {
             }
         }
 
-        public synchronized boolean WaitForConnection() throws InterruptedException {
+        public synchronized boolean WaitForConnection()
+                                    throws InterruptedException {
             if (mConnected)
                 return true;
             wait();
@@ -112,7 +113,8 @@ public class SampleClient {
 
     static boolean msShutdown = false;
 
-    public static void main(String [] args) throws InterruptedException, IOException {
+    public static void main(String [] args)
+                            throws InterruptedException, IOException {
         int port = DEFAULT_PORT;
         String host = "localhost";
         short reactorCount = 1;
@@ -185,12 +187,14 @@ public class SampleClient {
 
         while ((str = in.readLine()) != null) {
             hbuilder.AssignUniqueId();
-            cbuf = new CommBuf(hbuilder, Serialization.EncodedLengthString(str));
+            cbuf = new CommBuf(hbuilder,
+                Serialization.EncodedLengthString(str));
             cbuf.AppendString(str);
             retries = 0;
             if (msShutdown == true)
                 System.exit(1);
-            while ((error = comm.SendRequest(addr, cbuf, respHandler)) != Error.OK) {
+            while ((error = comm.SendRequest(addr, cbuf, respHandler))
+                   != Error.OK) {
                 if (msShutdown == true)
                     System.exit(1);
                 if (error == Error.COMM_NOT_CONNECTED) {
@@ -205,7 +209,8 @@ public class SampleClient {
                     retries++;
                 }
                 else {
-                    System.err.println("CommEngine.SendMessage returned '" + Error.GetText(error) + "'");
+                    System.err.println("CommEngine.SendMessage returned '"
+                                       + Error.GetText(error) + "'");
                     System.exit(1);
                 }
             }

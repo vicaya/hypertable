@@ -37,9 +37,8 @@ namespace Hypertable {
 
     class RequestHandlerFlush : public ApplicationHandler {
     public:
-      RequestHandlerFlush(Comm *comm, Broker *broker, EventPtr &event_ptr) : ApplicationHandler(event_ptr), m_comm(comm), m_broker(broker) {
-        return;
-      }
+      RequestHandlerFlush(Comm *comm, Broker *broker, EventPtr &event_ptr)
+        : ApplicationHandler(event_ptr), m_comm(comm), m_broker(broker) { }
 
       virtual void run();
 

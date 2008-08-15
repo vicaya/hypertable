@@ -160,7 +160,8 @@ ClientBufferedReaderHandler::read(void *buf, size_t len) {
       uint64_t offset;
       uint32_t amount;
       EventPtr &event_ptr = m_queue.front();
-      amount = Filesystem::decode_response_read_header(event_ptr, &offset, &m_ptr);
+      amount = Filesystem::decode_response_read_header(event_ptr,
+                                                       &offset, &m_ptr);
       m_end_ptr = m_ptr + amount;
     }
 

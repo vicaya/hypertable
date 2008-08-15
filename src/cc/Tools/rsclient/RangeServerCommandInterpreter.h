@@ -40,13 +40,15 @@ namespace Hypertable {
 
   class RangeServerCommandInterpreter : public CommandInterpreter {
   public:
-    RangeServerCommandInterpreter(Comm *comm, Hyperspace::SessionPtr &hyperspace_ptr, struct sockaddr_in addr, RangeServerClientPtr &range_server_ptr);
+    RangeServerCommandInterpreter(Comm *, Hyperspace::SessionPtr &,
+        const sockaddr_in addr, RangeServerClientPtr &);
 
     virtual void execute_line(const String &line);
 
   private:
 
-    void display_scan_data(const SerializedKey &key, const ByteString &value, SchemaPtr &schema_ptr);
+    void display_scan_data(const SerializedKey &key, const ByteString &value,
+                           SchemaPtr &schema_ptr);
 
     Comm *m_comm;
     Hyperspace::SessionPtr m_hyperspace_ptr;
@@ -57,7 +59,9 @@ namespace Hypertable {
     int32_t m_cur_scanner_id;
 
   };
-  typedef boost::intrusive_ptr<RangeServerCommandInterpreter> RangeServerCommandInterpreterPtr;
+
+  typedef intrusive_ptr<RangeServerCommandInterpreter>
+          RangeServerCommandInterpreterPtr;
 
 }
 

@@ -28,11 +28,19 @@ namespace Hyperspace {
 
   class FileHandleCallback : public HandleCallback {
   public:
-    FileHandleCallback(uint32_t event_mask) : HandleCallback(event_mask) { return; }
-    virtual void attr_set(const std::string &name) { std::cout << "ATTR SET " << name << std::endl; }
-    virtual void attr_del(const std::string &name) { std::cout <<  "ATTR DEL " << name << std::endl; }
-    virtual void child_node_added(const std::string &name) { std::cout << "CHILD NODE ADDED " << name << std::endl; }
-    virtual void child_node_removed(const std::string &name) { std::cout << "CHILD NODE REMOVED " << name << std::endl; }
+    FileHandleCallback(uint32_t event_mask) : HandleCallback(event_mask) { }
+    virtual void attr_set(const std::string &name) {
+      std::cout << "ATTR SET " << name << std::endl;
+    }
+    virtual void attr_del(const std::string &name) {
+      std::cout <<  "ATTR DEL " << name << std::endl;
+    }
+    virtual void child_node_added(const std::string &name) {
+      std::cout << "CHILD NODE ADDED " << name << std::endl;
+    }
+    virtual void child_node_removed(const std::string &name) {
+      std::cout << "CHILD NODE REMOVED " << name << std::endl;
+    }
     virtual void lock_acquired(uint32_t mode) {
       if (mode == LOCK_MODE_SHARED)
         std::cout << "LOCK ACQUIRED shared" << std::endl;

@@ -58,15 +58,17 @@ namespace Hypertable {
      */
     virtual void run() = 0;
 
-    /** Returns the thread group that this request belongs to.  This value is taken
-     * from the associated event object (see Event#thread_group).
+    /** Returns the thread group that this request belongs to.  This value is
+     * taken from the associated event object (see Event#thread_group).
      */
-    uint64_t get_thread_group() { return (m_event_ptr) ? m_event_ptr->thread_group : 0; }
+    uint64_t get_thread_group() {
+      return (m_event_ptr) ?  m_event_ptr->thread_group : 0;
+    }
 
   protected:
     EventPtr m_event_ptr;
   };
 
-}
+} // namespace Hypertable
 
 #endif // HYPERTABLE_APPLICATIONHANDLER_H

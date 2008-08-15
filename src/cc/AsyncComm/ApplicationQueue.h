@@ -26,9 +26,9 @@
 #include <list>
 
 #include <boost/thread/condition.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/thread.hpp>
 
+#include "Common/Thread.h"
+#include "Common/Mutex.h"
 #include "Common/Logger.h"
 #include "Common/HashMap.h"
 #include "Common/ReferenceCount.h"
@@ -39,8 +39,9 @@
 namespace Hypertable {
 
   /**
-   * Provides application work queue and worker threads.  It maintains a queue of requests and a pool
-   * of threads that pull requests off the queue and carry them out.
+   * Provides application work queue and worker threads.  It maintains a queue
+   * of requests and a pool of threads that pull requests off the queue and
+   * carry them out.
    */
   class ApplicationQueue : public ReferenceCount {
 
@@ -62,13 +63,17 @@ namespace Hypertable {
       UsageRec             *usage;
     };
 
+    typedef std::list<WorkRec *> WorkQueue;
+
     class ApplicationQueueState {
     public:
-      ApplicationQueueState() : queue(), usage_map(), queue_mutex(), usage_mutex(), cond(), shutdown(false) { return; }
-      std::list<WorkRec *> queue;
+      ApplicationQueueState() : queue(), usage_map(), queue_mutex(),
+          usage_mutex(), cond(), shutdown(false) { return; }
+
+      WorkQueue           queue;
       UsageRecMap         usage_map;
-      boost::mutex        queue_mutex;
-      boost::mutex        usage_mutex;
+      Mutex               queue_mutex;
+      Mutex               usage_mutex;
       boost::condition    cond;
       bool                shutdown;
     };
@@ -76,19 +81,16 @@ namespace Hypertable {
     class Worker {
 
     public:
-
-      Worker(ApplicationQueueState &qstate) : m_state(qstate) {
-        return;
-      }
+      Worker(ApplicationQueueState &qstate) : m_state(qstate) { return; }
 
       void operator()() {
         WorkRec *rec = 0;
-        std::list<WorkRec *>::iterator iter;
+        WorkQueue::iterator iter;
 
         while (true) {
 
           {  // !!! maybe ditch this block specifier
-            boost::mutex::scoped_lock lock(m_state.queue_mutex);
+            ScopedLock lock(m_state.queue_mutex);
 
             while (m_state.queue.empty()) {
               if (m_state.shutdown)
@@ -97,9 +99,10 @@ namespace Hypertable {
             }
 
             {
-              boost::mutex::scoped_lock ulock(m_state.usage_mutex);
+              ScopedLock ulock(m_state.usage_mutex);
 
-              for (iter = m_state.queue.begin(); iter != m_state.queue.end(); iter++) {
+              for (iter = m_state.queue.begin(); iter != m_state.queue.end();
+                   ++iter) {
                 rec = (*iter);
                 if (rec->usage == 0 || !rec->usage->running) {
                   if (rec->usage)
@@ -110,19 +113,19 @@ namespace Hypertable {
                 rec = 0;
               }
             }
-	    if (rec == 0) {
-	      if (m_state.shutdown)
-		return;
-	      m_state.cond.wait(lock);
-	      if (m_state.shutdown)
-		return;
-	    }
+            if (rec == 0) {
+              if (m_state.shutdown)
+                return;
+              m_state.cond.wait(lock);
+              if (m_state.shutdown)
+                return;
+            }
           }
 
           if (rec) {
             rec->handler->run();
             if (rec->usage) {
-              boost::mutex::scoped_lock ulock(m_state.usage_mutex);
+              ScopedLock ulock(m_state.usage_mutex);
               rec->usage->running = false;
               rec->usage->outstanding--;
               if (rec->usage->outstanding == 0) {
@@ -141,9 +144,9 @@ namespace Hypertable {
       ApplicationQueueState &m_state;
     };
 
-    boost::mutex           m_mutex;
+    Mutex                  m_mutex;
     ApplicationQueueState  m_state;
-    boost::thread_group    m_threads;
+    ThreadGroup            m_threads;
     bool joined;
 
   public:
@@ -164,15 +167,15 @@ namespace Hypertable {
 
     ~ApplicationQueue() {
       if (!joined) {
-	shutdown();
-	join();
+        shutdown();
+        join();
       }
     }
 
     /**
      * Shuts down the application queue.  All outstanding requests are carried
-     * out and then all threads exit.  #join can be called to wait for completion
-     * of the shutdown.
+     * out and then all threads exit.  #join can be called to wait for
+     * completion of the shutdown.
      */
     void shutdown() {
       m_state.shutdown = true;
@@ -180,11 +183,12 @@ namespace Hypertable {
     }
 
     /**
-     * Waits for a shutdown to complete.  This method returns when all application
-     * queue threads exit.
+     * Waits for a shutdown to complete.  This method returns when all
+     * application queue threads exit.
      */
+
     void join() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       if (!joined) {
         m_threads.join_all();
         joined = true;
@@ -192,10 +196,11 @@ namespace Hypertable {
     }
 
     /**
-     * Adds a request (application handler) to the request queue.  The request queue
-     * is designed to support the serialization of related requests.  Requests are
-     * related by the thread group ID value in the ApplicationHandler.  This thread
-     * group ID is constructed in the Event object
+     * Adds a request (application handler) to the request queue.  The request
+     * queue is designed to support the serialization of related requests.
+     * Requests are related by the thread group ID value in the
+     * ApplicationHandler.  This thread group ID is constructed in the Event
+     * object
      */
     void add(ApplicationHandler *app_handler) {
       UsageRecMap::iterator uiter;
@@ -204,8 +209,9 @@ namespace Hypertable {
       rec->usage = 0;
 
       if (thread_group != 0) {
-        boost::mutex::scoped_lock ulock(m_state.usage_mutex);
-        if ((uiter = m_state.usage_map.find(thread_group)) != m_state.usage_map.end()) {
+        ScopedLock ulock(m_state.usage_mutex);
+        if ((uiter = m_state.usage_map.find(thread_group))
+            != m_state.usage_map.end()) {
           rec->usage = (*uiter).second;
           rec->usage->outstanding++;
         }
@@ -217,15 +223,15 @@ namespace Hypertable {
       }
 
       {
-        boost::mutex::scoped_lock lock(m_state.queue_mutex);
+        ScopedLock lock(m_state.queue_mutex);
         m_state.queue.push_back(rec);
         m_state.cond.notify_one();
       }
     }
   };
+
   typedef boost::intrusive_ptr<ApplicationQueue> ApplicationQueuePtr;
 
-}
-
+} // namespace Hypertable
 
 #endif // HYPERTABLE_APPLICATIONQUEUE_H

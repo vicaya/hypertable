@@ -33,9 +33,11 @@ import org.hypertable.Common.Error;
 
 public class RequestHandlerStatus extends ApplicationHandler {
 
-    static final Logger log = Logger.getLogger("org.hypertable.DfsBroker.hadoop");
+    static final Logger log = Logger.getLogger(
+        "org.hypertable.DfsBroker.hadoop");
 
-    public RequestHandlerStatus(Comm comm, ApplicationQueue appQueue, Event event) {
+    public RequestHandlerStatus(Comm comm, ApplicationQueue appQueue,
+                                Event event) {
         super(event);
         mComm = comm;
         mAppQueue = appQueue;

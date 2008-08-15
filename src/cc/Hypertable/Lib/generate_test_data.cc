@@ -156,7 +156,7 @@ int main(int argc, char **argv) {
     return e.code();
   }
 
-  schema = Schema::new_instance(schemaspec.c_str(), strlen(schemaspec.c_str()), true);
+  schema = Schema::new_instance(schemaspec.c_str(), schemaspec.length(), true);
   if (!schema->is_valid()) {
     HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
     exit(1);
@@ -166,9 +166,9 @@ int main(int argc, char **argv) {
   cfnames.resize(cfmax+1);
 
   list<Schema::AccessGroup *> *aglist = schema->get_access_group_list();
-  for (list<Schema::AccessGroup *>::iterator iter = aglist->begin(); iter != aglist->end(); iter++) {
-    for (list<Schema::ColumnFamily *>::iterator cf_it = (*iter)->columns.begin(); cf_it != (*iter)->columns.end(); cf_it++)
-      cfnames[(*cf_it)->id] = (*cf_it)->name;
+  foreach(Schema::AccessGroup *ag, *aglist) {
+    foreach(Schema::ColumnFamily *cf, ag->columns)
+      cfnames[cf->id] = cf->name;
   }
 
   if (cqlimit == 0)
@@ -225,9 +225,11 @@ int main(int argc, char **argv) {
     modval = System::rand32() % 29;
     if (!no_deletes && (index % 29) == 0) {
       if (gen_timestamps)
-        cout << timestamp << "\t" << rowkey << "\t" << cfnames[family] << ":" << qualifier << "\tDELETE" << endl;
+        cout << timestamp << "\t" << rowkey << "\t" << cfnames[family] << ":"
+             << qualifier << "\tDELETE" << endl;
       else
-        cout << rowkey << "\t" << cfnames[family] << ":" << qualifier << "\tDELETE" << endl;
+        cout << rowkey << "\t" << cfnames[family] << ":" << qualifier
+             << "\tDELETE" << endl;
       continue;
     }
 
@@ -240,9 +242,11 @@ int main(int argc, char **argv) {
       value = content;
 
     if (gen_timestamps)
-      cout << timestamp << "\t" << rowkey << "\t" << cfnames[family] << ":" << qualifier << "\t" << value << endl;
+      cout << timestamp << "\t" << rowkey << "\t" << cfnames[family] << ":"
+           << qualifier << "\t" << value << endl;
     else
-      cout << rowkey << "\t" << cfnames[family] << ":" << qualifier << "\t" << value << endl;
+      cout << rowkey << "\t" << cfnames[family] << ":" << qualifier << "\t"
+           << value << endl;
   }
 
   return 0;

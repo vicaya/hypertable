@@ -28,13 +28,23 @@ namespace Hypertable {
 
   class MaintenanceTask {
   public:
-    MaintenanceTask(boost::xtime start_time_) : start_time(start_time_), m_retry(false) { return; }
-    MaintenanceTask(boost::xtime start_time_, time_t retry_delay_seconds) : start_time(start_time_), m_retry(true), m_retry_delay_seconds(retry_delay_seconds) { return; }
-    MaintenanceTask() : m_retry(false) { boost::xtime_get(&start_time, boost::TIME_UTC); return; }
-    MaintenanceTask(time_t retry_delay_seconds) : m_retry(true), m_retry_delay_seconds(retry_delay_seconds) { boost::xtime_get(&start_time, boost::TIME_UTC); return; }
-    virtual ~MaintenanceTask() { return; }
+    MaintenanceTask(boost::xtime start_time_)
+      : start_time(start_time_), m_retry(false) { }
+    MaintenanceTask(boost::xtime start_time_, time_t retry_delay_seconds)
+      : start_time(start_time_), m_retry(true),
+        m_retry_delay_seconds(retry_delay_seconds) { }
+    MaintenanceTask() : m_retry(false) {
+      boost::xtime_get(&start_time, boost::TIME_UTC);
+    }
+    MaintenanceTask(time_t retry_delay_seconds)
+      : m_retry(true), m_retry_delay_seconds(retry_delay_seconds) {
+      boost::xtime_get(&start_time, boost::TIME_UTC);
+    }
+
+    virtual ~MaintenanceTask() { }
     virtual void execute() = 0;
     boost::xtime start_time;
+
   private:
     bool m_retry;
     time_t m_retry_delay_seconds;

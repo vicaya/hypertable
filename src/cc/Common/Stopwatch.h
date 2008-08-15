@@ -72,7 +72,8 @@ namespace Hypertable {
         stop();
         start();
       }
-      return (double)elapsed_time.sec + ((double)elapsed_time.nsec / 1000000000.0);
+      return (double)elapsed_time.sec
+            + ((double)elapsed_time.nsec / 1000000000.0);
     }
 
   private:

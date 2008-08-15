@@ -105,22 +105,21 @@ namespace {
     "usage: hyperspace [OPTIONS]",
     "",
     "OPTIONS:",
-    "  --config=<file>  Read configuration from <file>.  The default config file is",
-    "                   \"conf/hypertable.cfg\" relative to the toplevel install",
+    "  --config=<file>  Read configuration from <file>.  The default file is",
+    "                   \"conf/hypertable.cfg\" relative to the install root",
     "                   directory",
     "  --debug          Turn on debugging output",
     "  --eval <cmds>    Evaluates the commands in the string <cmds>.  Several",
-    "                   commands can be supplied in <cmds> by separating them with",
-    "                   semicolons",
+    "                   commands can be separated in <cmds> by with semicolons",
     "  --no-prompt      Don't display a command prompt",
-    "  --notification-address=[<host>:]<port>  Send notification datagram to this",
-    "                   address after each command.",
+    "  --notification-address=[<host>:]<port>  Send notification datagram to",
+    "                   the address after each command.",
     "  --help           Display this help text and exit",
-    "  --test-mode      Suppress file line number information from error messages to",
+    "  --test-mode      Suppress file line number information from messages to",
     "                   simplify diff'ing test output.",
     "",
-    "This is a command interpreter for Hyperspace, a global namespace and lock service",
-    "for loosely-coupled distributed systems.",
+    "This is a command interpreter for Hyperspace, a global namespace and lock",
+    "service for loosely-coupled distributed systems.",
     (const char *)0
   };
 
@@ -164,7 +163,8 @@ public:
       int error;
       CommBufPtr cbp(new CommBuf(m_builder, 2));
       cbp->append_i16(0);
-      if ((error = m_comm->send_datagram(m_addr, m_send_addr, cbp)) != Error::OK) {
+      if ((error = m_comm->send_datagram(m_addr, m_send_addr, cbp))
+          != Error::OK) {
         HT_ERRORF("Problem sending datagram - %s", Error::get_text(error));
         exit(1);
       }
@@ -184,9 +184,9 @@ private:
  */
 class SessionHandler : public SessionCallback {
 public:
-  virtual void jeopardy() { cout << "SESSION CALLBACK: Jeopardy" << endl << flush; }
-  virtual void safe() { cout << "SESSION CALLBACK: Safe" << endl << flush; }
-  virtual void expired() { cout << "SESSION CALLBACK: Expired" << endl << flush; }
+  virtual void jeopardy() { cout << "SESSION CALLBACK: Jeopardy" << endl; }
+  virtual void safe() { cout << "SESSION CALLBACK: Safe" << endl; }
+  virtual void expired() { cout << "SESSION CALLBACK: Expired" << endl; }
 };
 
 
@@ -274,21 +274,21 @@ int main(int argc, char **argv, char **envp) {
       std::string cmd_str;
       str = strtok(eval, ";");
       while (str) {
-	Global::exit_status = 0;
-	cmd_str = str;
-	boost::trim(cmd_str);
-	for (i=0; i<commands.size(); i++) {
-	  if (commands[i]->matches(cmd_str.c_str())) {
-	    commands[i]->parse_command_line(cmd_str.c_str());
-	    commands[i]->run();
-	    break;
-	  }
-	}
-	if (i == commands.size()) {
-	  HT_ERRORF("Unrecognized command : %s", cmd_str.c_str());
-	  return 1;
-	}
-	str = strtok(0, ";");
+        Global::exit_status = 0;
+        cmd_str = str;
+        boost::trim(cmd_str);
+        for (i=0; i<commands.size(); i++) {
+          if (commands[i]->matches(cmd_str.c_str())) {
+            commands[i]->parse_command_line(cmd_str.c_str());
+            commands[i]->run();
+            break;
+          }
+        }
+        if (i == commands.size()) {
+          HT_ERRORF("Unrecognized command : %s", cmd_str.c_str());
+          return 1;
+        }
+        str = strtok(0, ";");
       }
     }
     catch (Exception &e) {
@@ -300,7 +300,8 @@ int main(int argc, char **argv, char **envp) {
 
   cout << "Welcome to the Hyperspace command interpreter.  Hyperspace" << endl;
   cout << "is a global namespace and lock service for loosely-coupled" << endl;
-  cout << "distributed systems.  Type 'help' for a description of commands." << endl;
+  cout << "distributed systems.  Type 'help' for a description of commands."
+       << endl;
   cout << endl << flush;
 
   using_history();
@@ -311,46 +312,46 @@ int main(int argc, char **argv, char **envp) {
       Global::exit_status = 0;
 
       if (*line == 0)
-	continue;
+        continue;
 
       for (i=0; i<commands.size(); i++) {
-	if (commands[i]->matches(line)) {
-	  commands[i]->parse_command_line(line);
-	  commands[i]->run();
-	  notifier->notify();
-	  break;
-	}
+        if (commands[i]->matches(line)) {
+          commands[i]->parse_command_line(line);
+          commands[i]->run();
+          notifier->notify();
+          break;
+        }
       }
 
       if (i == commands.size()) {
-	if (!strcmp(line, "quit") || !strcmp(line, "exit")) {
-	  notifier->notify();
-	  exit(0);
-	}
-	else if (!strncmp(line, "echo", 4)) {
-	  std::string echo_str = std::string(line);
-	  echo_str = echo_str.substr(4);
-	  boost::trim_if(echo_str, boost::is_any_of("\" \t"));
-	  cout << echo_str << endl;
-	  notifier->notify();
-	}
-	else if (!strcmp(line, "pwd")) {
-	  cout << Global::cwd << endl;
-	  notifier->notify();
-	}
-	else if (!strcmp(line, "help")) {
-	  cout << endl;
-	  for (i=0; i<commands.size(); i++) {
-	    Usage::dump(commands[i]->usage());
-	    cout << endl;
-	  }
-	  Usage::dump(help_trailer);
-	  notifier->notify();
-	}
-	else {
-	  cout << "Unrecognized command." << endl;
-	  notifier->notify();
-	}
+        if (!strcmp(line, "quit") || !strcmp(line, "exit")) {
+          notifier->notify();
+          exit(0);
+        }
+        else if (!strncmp(line, "echo", 4)) {
+          std::string echo_str = std::string(line);
+          echo_str = echo_str.substr(4);
+          boost::trim_if(echo_str, boost::is_any_of("\" \t"));
+          cout << echo_str << endl;
+          notifier->notify();
+        }
+        else if (!strcmp(line, "pwd")) {
+          cout << Global::cwd << endl;
+          notifier->notify();
+        }
+        else if (!strcmp(line, "help")) {
+          cout << endl;
+          for (i=0; i<commands.size(); i++) {
+            Usage::dump(commands[i]->usage());
+            cout << endl;
+          }
+          Usage::dump(help_trailer);
+          notifier->notify();
+        }
+        else {
+          cout << "Unrecognized command." << endl;
+          notifier->notify();
+        }
       }
     }
     catch (Exception &e) {

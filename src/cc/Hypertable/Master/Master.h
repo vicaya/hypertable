@@ -53,14 +53,19 @@ namespace Hypertable {
 
   class Master : public ReferenceCount {
   public:
-    Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props_ptr, ApplicationQueuePtr &app_queue);
+    Master(ConnectionManagerPtr &, PropertiesPtr &, ApplicationQueuePtr &);
     ~Master();
 
-    void create_table(ResponseCallback *cb, const char *tablename, const char *schemastr);
+    void create_table(ResponseCallback *cb, const char *tablename,
+                      const char *schemastr);
     void get_schema(ResponseCallbackGetSchema *cb, const char *tablename);
-    void register_server(ResponseCallback *cb, const char *location, struct sockaddr_in &addr);
-    void report_split(ResponseCallback *cb, TableIdentifier &table, RangeSpec &range, const char *transfer_log_dir, uint64_t soft_limit);
-    void drop_table(ResponseCallback *cb, const char *table_name, bool if_exists);
+    void register_server(ResponseCallback *cb, const char *location,
+                         const sockaddr_in &addr);
+    void report_split(ResponseCallback *cb, const TableIdentifier &table,
+                      const RangeSpec &range, const char *transfer_log_dir,
+                      uint64_t soft_limit);
+    void drop_table(ResponseCallback *cb, const char *table_name,
+                    bool if_exists);
     void shutdown(ResponseCallback *cb);
 
     void server_joined(const String &location);

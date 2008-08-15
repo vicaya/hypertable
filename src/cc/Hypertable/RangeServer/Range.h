@@ -53,7 +53,8 @@ namespace Hypertable {
     typedef std::vector<AccessGroup *>  ColumnFamilyVector;
 
   public:
-    Range(MasterClientPtr &master_client_ptr, const TableIdentifier *identifier, SchemaPtr &schema_ptr, const RangeSpec *range, const RangeState *state);
+    Range(MasterClientPtr &, const TableIdentifier *, SchemaPtr &,
+          const RangeSpec *range, const RangeState *);
     virtual ~Range();
     virtual int add(const Key &key, const ByteString value);
     virtual const char *get_split_row() { return 0; }
@@ -62,7 +63,7 @@ namespace Hypertable {
       boost::mutex::scoped_lock lock(m_mutex);
       uint32_t total = 0;
       for (size_t i=0; i<m_access_group_vector.size(); i++)
-	total += m_access_group_vector[i]->get_total_entries();
+        total += m_access_group_vector[i]->get_total_entries();
       return total;
     }
 
@@ -83,7 +84,8 @@ namespace Hypertable {
      *
      * @return the end row of the range
      *
-     * This does not need to be protected by a lock because the end row of a range never changes.
+     * This does not need to be protected by a lock because the end row of a
+     * range never changes.
      */
     String end_row() {
       return m_end_row;
@@ -97,8 +99,10 @@ namespace Hypertable {
 
     void replay_transfer_log(CommitLogReader *commit_log_reader);
 
-    void get_compaction_priority_data(std::vector<AccessGroup::CompactionPriorityData> &priority_data_vector);
-
+    typedef std::vector<AccessGroup::CompactionPriorityData>
+            CompactionPriorityData;
+    void
+    get_compaction_priority_data(CompactionPriorityData &priority_data_vector);
 
     bool test_and_set_maintenance() {
       boost::mutex::scoped_lock lock(m_mutex);

@@ -21,7 +21,8 @@
 #include "Common/Compat.h"
 
 namespace {
-  const char cb64[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  const char cb64[] =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 }
 
 
@@ -40,16 +41,16 @@ void fill_buffer_with_random_ascii(char *buf, size_t len) {
     if (out_i == len)
       break;
 
-    buf[out_i++] = cb64[ ((in[in_i] & 0x03) << 4) | ((in[in_i+1] & 0xf0) >> 4) ];
+    buf[out_i++] = cb64[((in[in_i] & 0x03) << 4) | ((in[in_i+1] & 0xf0) >> 4)];
     if (out_i == len)
       break;
 
-    buf[out_i++] = cb64[ ((in[in_i+1] & 0x0f) << 2) | ((in[in_i+2] & 0xc0) >> 6) ];
+    buf[out_i++] = cb64[((in[in_i+1] & 0x0f) << 2)|((in[in_i+2] & 0xc0) >> 6)];
     if (out_i == len)
       break;
 
     buf[out_i++] = cb64[ in[in_i+2] & 0x3f ];
-    
+
     in_i += 3;
   }
 

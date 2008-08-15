@@ -49,8 +49,10 @@ namespace Hypertable {
     CommitLogReader(Filesystem *fs, String log_dir);
     virtual ~CommitLogReader();
 
-    bool next_raw_block(CommitLogBlockInfo *infop, BlockCompressionHeaderCommitLog *header);
-    bool next(const uint8_t **blockp, size_t *lenp, BlockCompressionHeaderCommitLog *header);
+    bool next_raw_block(CommitLogBlockInfo *,
+                        BlockCompressionHeaderCommitLog *);
+    bool next(const uint8_t **blockp, size_t *lenp,
+              BlockCompressionHeaderCommitLog *);
 
     LogFragmentQueue &get_fragment_queue() { return m_fragment_queue; }
 
@@ -72,9 +74,10 @@ namespace Hypertable {
     BlockCompressionCodec *m_compressor;
 
   };
-  typedef boost::intrusive_ptr<CommitLogReader> CommitLogReaderPtr;
 
-}
+  typedef intrusive_ptr<CommitLogReader> CommitLogReaderPtr;
+
+} // namespace Hypertable
 
 #endif // HYPERTABLE_COMMITLOGREADER_H
 

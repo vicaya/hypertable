@@ -33,10 +33,12 @@ using namespace Hypertable;
 /**
  *
  */
-TimerHandler::TimerHandler(Comm *comm, RangeServer *range_server) : m_comm(comm), m_range_server(range_server) {
+TimerHandler::TimerHandler(Comm *comm, RangeServer *range_server)
+  : m_comm(comm), m_range_server(range_server) {
   int error;
 
-  if ((error = m_comm->set_timer(range_server->get_timer_interval(), this)) != Error::OK) {
+  if ((error = m_comm->set_timer(range_server->get_timer_interval(), this))
+      != Error::OK) {
     HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
     exit(1);
   }
@@ -55,7 +57,8 @@ void TimerHandler::handle(Hypertable::EventPtr &event_ptr) {
 
     if (event_ptr->type == Hypertable::Event::TIMER) {
       m_range_server->do_maintenance();
-      if ((error = m_comm->set_timer(m_range_server->get_timer_interval(), this)) != Error::OK) {
+      if ((error = m_comm->set_timer(m_range_server->get_timer_interval(),
+          this)) != Error::OK) {
         HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
         exit(1);
       }

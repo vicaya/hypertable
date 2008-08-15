@@ -1,4 +1,5 @@
-include_directories("../../../src/cc" ${JAVA_INCLUDE_PATH} ${JAVA_INCLUDE_PATH2} ${HADOOP_INCLUDE_PATH})
+include_directories(${JAVA_INCLUDE_PATH} ${JAVA_INCLUDE_PATH2}
+                    ${HADOOP_INCLUDE_PATH})
 link_directories(${HADOOP_LIB_PATH})
 
 add_library(MapReduce TableReader.cc)

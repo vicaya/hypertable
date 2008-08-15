@@ -38,12 +38,14 @@ public class Comm {
         mConnMap = new ConnectionMap();
     }
 
-    public int Connect(InetSocketAddress addr, long timeout, DispatchHandler defaultHandler) {
+    public int Connect(InetSocketAddress addr, long timeout,
+                       DispatchHandler defaultHandler) {
         try {
             SocketChannel channel = SocketChannel.open();
             channel.configureBlocking(false);
             channel.connect(addr);
-            IOHandlerData handler = new IOHandlerData(channel, defaultHandler, mConnMap);
+            IOHandlerData handler = new IOHandlerData(channel, defaultHandler,
+                                                      mConnMap);
             handler.SetTimeout(timeout);
             handler.SetRemoteAddress(addr);
             mConnMap.Put(addr, handler);
@@ -56,13 +58,15 @@ public class Comm {
         return Error.OK;
     }
 
-    public int Listen(int port, ConnectionHandlerFactory handlerFactory, DispatchHandler acceptHandler) {
+    public int Listen(int port, ConnectionHandlerFactory handlerFactory,
+                      DispatchHandler acceptHandler) {
         try {
             ServerSocketChannel channel = ServerSocketChannel.open();
             channel.socket().setReuseAddress(true);
             channel.socket().bind(new InetSocketAddress(port));
             channel.configureBlocking(false);
-            IOHandlerAccept handler = new IOHandlerAccept(channel, acceptHandler, mConnMap, handlerFactory);
+            IOHandlerAccept handler = new IOHandlerAccept(channel,
+                acceptHandler, mConnMap, handlerFactory);
             handler.SetInterest(SelectionKey.OP_ACCEPT);
         }
         catch (IOException e) {
@@ -72,7 +76,8 @@ public class Comm {
         return Error.OK;
     }
 
-    public int SendRequest(InetSocketAddress addr, CommBuf cbuf, DispatchHandler responseHandler) {
+    public int SendRequest(InetSocketAddress addr, CommBuf cbuf,
+                           DispatchHandler responseHandler) {
         IOHandlerData handler = (IOHandlerData)mConnMap.Get(addr);
         int id;
         if (handler == null)

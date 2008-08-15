@@ -32,7 +32,9 @@ namespace Hypertable {
 
   class CommandCopyFromLocal : public InteractiveCommand {
   public:
-    CommandCopyFromLocal(DfsBroker::Client *client) : m_client(client) { return; }
+    CommandCopyFromLocal(DfsBroker::Client *client)
+        : m_client(client) { }
+
     virtual const char *command_text() { return "copyFromLocal"; }
     virtual const char **usage() { return ms_usage; }
     virtual void run();

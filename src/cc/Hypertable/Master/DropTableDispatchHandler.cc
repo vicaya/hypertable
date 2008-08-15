@@ -33,7 +33,9 @@ using namespace Hypertable;
 /**
  *
  */
-DropTableDispatchHandler::DropTableDispatchHandler(const TableIdentifier &table, Comm *comm, time_t timeout) : m_outstanding(0), m_client(comm, timeout), m_table_name(table.name) {
+DropTableDispatchHandler::DropTableDispatchHandler(const TableIdentifier &table,
+                                                   Comm *comm, time_t timeout)
+  : m_outstanding(0), m_client(comm, timeout), m_table_name(table.name) {
   memcpy(&m_table, &table, sizeof(TableIdentifier));
   m_table.name = m_table_name.c_str();
   return;

@@ -52,11 +52,10 @@ namespace {
     "usage: localBroker [OPTIONS]",
     "",
     "OPTIONS:",
-    "  --config=<file>       Read configuration from <file>.  The default config",
-    "                        file is \"conf/hypertable.cfg\" relative to the toplevel",
-    "                        install directory",
+    "  --config=<file>       Read configuration from <file>.  The default ",
+    "                        file is \"conf/hypertable.cfg\" ",
     "  --listen-port=<port>  Listen for connections on port <port>",
-    "  --pidfile=<fname>     Write the process ID to <fname> upon successful startup",
+    "  --pidfile=<fname>     Write the process ID to <fname> on startup",
     "  --help                Display this help text and exit",
     "  --verbose,-v          Generate verbose output",
     "",
@@ -115,8 +114,10 @@ int main(int argc, char **argv) {
 
   if (port == 0)
     port       = props_ptr->get_int("DfsBroker.Local.Port",     DEFAULT_PORT);
-  reactor_count = props_ptr->get_int("DfsBroker.Local.Reactors", System::get_processor_count());
-  worker_count  = props_ptr->get_int("DfsBroker.Local.Workers",  DEFAULT_WORKERS);
+  reactor_count = props_ptr->get_int("DfsBroker.Local.Reactors",
+                                     System::get_processor_count());
+  worker_count  = props_ptr->get_int("DfsBroker.Local.Workers",
+                                     DEFAULT_WORKERS);
 
   ReactorFactory::initialize(reactor_count);
 
@@ -133,7 +134,8 @@ int main(int argc, char **argv) {
 
   broker = new LocalBroker(props_ptr);
   app_queue = new ApplicationQueue(worker_count);
-  ConnectionHandlerFactoryPtr chfp(new DfsBroker::ConnectionHandlerFactory(comm, app_queue, broker));
+  ConnectionHandlerFactoryPtr chfp(new DfsBroker::ConnectionHandlerFactory(
+                                   comm, app_queue, broker));
   comm->listen(listen_addr, chfp);
 
   if (pidfile != "") {

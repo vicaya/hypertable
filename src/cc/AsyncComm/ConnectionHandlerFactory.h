@@ -34,7 +34,8 @@ namespace Hypertable {
     virtual ~ConnectionHandlerFactory() { }
     virtual void get_instance(DispatchHandlerPtr &dhp) = 0;
   };
-  typedef boost::intrusive_ptr<ConnectionHandlerFactory> ConnectionHandlerFactoryPtr;
+
+  typedef intrusive_ptr<ConnectionHandlerFactory> ConnectionHandlerFactoryPtr;
 }
 
 #endif // HYPERTABLE_CONNECTIONHANDLERFACTORY_H

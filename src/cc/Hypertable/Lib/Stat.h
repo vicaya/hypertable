@@ -31,7 +31,7 @@ namespace Hypertable {
   public:
     RangeStat() { return; }
     RangeStat(const uint8_t **bufp, size_t *remainp) {
-	    decode(bufp, remainp);
+      decode(bufp, remainp);
     }
 
     TableIdentifierManaged table_identifier;
@@ -54,7 +54,9 @@ namespace Hypertable {
   class RangeServerStat {
   public:
     RangeServerStat() { return; }
-    RangeServerStat(const uint8_t **bufp, size_t *remainp) { decode(bufp, remainp); }
+    RangeServerStat(const uint8_t **bufp, size_t *remainp) {
+      decode(bufp, remainp);
+    }
 
     size_t encoded_length() const;
     void encode(uint8_t **bufp) const;
@@ -63,13 +65,10 @@ namespace Hypertable {
     std::vector<RangeStat> range_stats;
   };
 
-
   std::ostream &operator<<(std::ostream &os, const RangeStat &);
 
   std::ostream &operator<<(std::ostream &os, const RangeServerStat &);
 
-
 } // namespace Hypertable
-
 
 #endif // HYPERTABLE_REQUEST_H

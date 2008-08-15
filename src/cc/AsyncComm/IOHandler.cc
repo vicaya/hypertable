@@ -79,7 +79,8 @@ void IOHandler::remove_poll_interest(int mode) {
     event.events |= EPOLLOUT;
 
   if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
-    HT_ERRORF("epoll_ctl(EPOLL_CTL_MOD, sd=%d) (mode=%x) : %s", m_sd, mode, strerror(errno));
+    HT_ERRORF("epoll_ctl(EPOLL_CTL_MOD, sd=%d) (mode=%x) : %s",
+              m_sd, mode, strerror(errno));
     exit(1);
   }
 #endif
@@ -156,7 +157,8 @@ void IOHandler::remove_poll_interest(int mode) {
     count++;
   }
 
-  if (kevent(m_reactor_ptr->kqd, devents, count, 0, 0, 0) == -1 && errno != ENOENT) {
+  if (kevent(m_reactor_ptr->kqd, devents, count, 0, 0, 0) == -1
+      && errno != ENOENT) {
     HT_ERRORF("kevent(sd=%d) (mode=%x) : %s", m_sd, mode, strerror(errno));
     exit(1);
   }

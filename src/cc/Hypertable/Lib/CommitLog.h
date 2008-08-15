@@ -56,13 +56,14 @@ namespace Hypertable {
   typedef std::map<int64_t, LogFragmentPriorityData> LogFragmentPriorityMap;
 
   /**
-   * Commit log for persisting range updates.  The commit log is a directory that contains
-   * a growing number of files that contain compressed blocks of "commits".  The files
-   * are named starting with '0' and will periodically roll, which means that a trailer
-   * is written to the end of the file, the file is closed, and then the numeric name is
-   * incremented by one and opened.  Periodically when old parts of the log are no
-   * longer needed, they get purged.  The size of each log fragment file is determined by
-   * the following config file property:
+   * Commit log for persisting range updates.  The commit log is a directory
+   * that contains a growing number of files that contain compressed blocks of
+   * "commits".  The files are named starting with '0' and will periodically
+   * roll, which means that a trailer is written to the end of the file, the
+   * file is closed, and then the numeric name is incremented by one and
+   * opened.  Periodically when old parts of the log are no longer needed, they
+   * get purged.  The size of each log fragment file is determined by the
+   * following config file property:
    *<pre>
    * Hypertable.RangeServer.CommitLog.RollLimit
    *</pre>
@@ -78,7 +79,8 @@ namespace Hypertable {
      * @param props_ptr reference to properties map
      * @param init_log base log to pull fragments from
      */
-    CommitLog(Filesystem *fs, const String &log_dir, PropertiesPtr &props_ptr, CommitLogBase *init_log=0) : CommitLogBase(log_dir) {
+    CommitLog(Filesystem *fs, const String &log_dir, PropertiesPtr &props_ptr,
+              CommitLogBase *init_log=0) : CommitLogBase(log_dir) {
       initialize(fs, log_dir, props_ptr, init_log);
     }
 
@@ -151,9 +153,11 @@ namespace Hypertable {
 
   private:
 
-    void initialize(Filesystem *fs, const String &log_dir, PropertiesPtr &props_ptr, CommitLogBase *init_log);
+    void initialize(Filesystem *fs, const String &log_dir,
+                    PropertiesPtr &props_ptr, CommitLogBase *init_log);
     int roll();
-    int compress_and_write(DynamicBuffer &input, BlockCompressionHeader *header, int64_t revision);
+    int compress_and_write(DynamicBuffer &input, BlockCompressionHeader *header,
+                           int64_t revision);
 
     boost::mutex            m_mutex;
     Filesystem             *m_fs;
@@ -165,9 +169,9 @@ namespace Hypertable {
     int32_t                 m_fd;
   };
 
-  typedef boost::intrusive_ptr<CommitLog> CommitLogPtr;
+  typedef intrusive_ptr<CommitLog> CommitLogPtr;
 
-}
+} // namespace Hypertable
 
 #endif // HYPERTABLE_COMMITLOG_H
 

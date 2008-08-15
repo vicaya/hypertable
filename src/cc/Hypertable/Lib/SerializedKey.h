@@ -40,14 +40,14 @@ namespace Hypertable {
 
       // common case
       if (*ptr1 != *ptr2) {
-	if ( *ptr1 == 0xD0 ) // see Key.h
-	  len2 -= 8;
-	else if ( *ptr2 == 0xD0 ) // see Key.h
-	  len1 -= 8;
-	else {
-	  len1 -= 8;
-	  len2 -= 8;
-	}
+        if ( *ptr1 == 0xD0 ) // see Key.h
+          len2 -= 8;
+        else if ( *ptr2 == 0xD0 ) // see Key.h
+          len1 -= 8;
+        else {
+          len1 -= 8;
+          len2 -= 8;
+        }
       }
       int len = (len1 < len2) ? len1 : len2;
       int cmp = memcmp(ptr1+1, ptr2+1, len-1);

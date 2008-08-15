@@ -33,7 +33,8 @@ namespace Hypertable {
   class Timer {
   public:
 
-    Timer(double value, bool start_timer=false) : m_running(false), m_remaining(value) {
+    Timer(double value, bool start_timer=false)
+      : m_running(false), m_remaining(value) {
       if (start_timer)
         start();
     }
@@ -49,10 +50,12 @@ namespace Hypertable {
       boost::xtime stop_time;
       boost::xtime_get(&stop_time, boost::TIME_UTC);
       if (start_time.sec == stop_time.sec)
-        m_remaining -= (double)(stop_time.nsec - start_time.nsec) / 1000000000.0;
+        m_remaining -= (double)(stop_time.nsec
+                        - start_time.nsec) / 1000000000.0;
       else {
         m_remaining -= stop_time.sec - start_time.sec;
-        m_remaining -= ((1000000000.0 - (double)start_time.nsec) + (double)stop_time.nsec) / 1000000000.0;
+        m_remaining -= ((1000000000.0 - (double)start_time.nsec)
+                        + (double)stop_time.nsec) / 1000000000.0;
       }
       m_running = false;
     }

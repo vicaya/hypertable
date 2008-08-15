@@ -132,7 +132,7 @@ namespace Hypertable {
      * @param service_name The name of the serivce at the other end of the
      *        connection used for descriptive log messages
      */
-    void add(struct sockaddr_in &addr, time_t timeout, const char *service_name);
+    void add(const sockaddr_in &addr, time_t timeout, const char *service_name);
 
     /**
      * Same as above method except installs a dispatch handler on the connection
@@ -146,7 +146,8 @@ namespace Hypertable {
      * @param handler This is the default handler to install on the connection.
      *        All events get changed through to this handler.
      */
-    void add(struct sockaddr_in &addr, time_t timeout, const char *service_name, DispatchHandlerPtr &handler);
+    void add(const sockaddr_in &addr, time_t timeout, const char *service_name,
+             DispatchHandlerPtr &handler);
 
     /**
      * Adds a connection to the connection manager with a specific local
@@ -166,7 +167,8 @@ namespace Hypertable {
      * @param service_name The name of the serivce at the other end of the
      *        connection used for descriptive log messages
      */
-    void add(struct sockaddr_in &addr, struct sockaddr_in &local_addr, time_t timeout, const char *service_name);
+    void add(const sockaddr_in &addr, const sockaddr_in &local_addr,
+             time_t timeout, const char *service_name);
 
     /**
      * Same as above method except installs a dispatch handler on the connection
@@ -181,7 +183,9 @@ namespace Hypertable {
      * @param handler This is the default handler to install on the connection.
      *        All events get changed through to this handler.
      */
-    void add(struct sockaddr_in &addr, struct sockaddr_in &local_addr, time_t timeout, const char *service_name, DispatchHandlerPtr &handler);
+    void add(const sockaddr_in &addr, const sockaddr_in &local_addr,
+             time_t timeout, const char *service_name,
+             DispatchHandlerPtr &handler);
 
     /**
      * Removes a connection from the connection manager
@@ -202,7 +206,7 @@ namespace Hypertable {
      *        returning
      * @return true if connected, false otherwise
      */
-    bool wait_for_connection(struct sockaddr_in &addr, long max_wait_secs);
+    bool wait_for_connection(const sockaddr_in &addr, long max_wait_secs);
 
     /**
      * Returns the Comm object associated with this connection manager

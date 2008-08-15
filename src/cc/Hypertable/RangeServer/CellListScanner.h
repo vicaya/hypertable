@@ -34,8 +34,9 @@ namespace Hypertable {
   class CellListScanner : public ReferenceCount {
   public:
     CellListScanner() { return; }
-    CellListScanner(ScanContextPtr &scan_ctx) : m_scan_context_ptr(scan_ctx) { return; }
+    CellListScanner(ScanContextPtr &scan_ctx) : m_scan_context_ptr(scan_ctx) { }
     virtual ~CellListScanner() { return; }
+
     virtual void forward() = 0;
     virtual bool get(Key &key, ByteString &value) = 0;
 

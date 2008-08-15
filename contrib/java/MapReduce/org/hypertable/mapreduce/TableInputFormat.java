@@ -37,7 +37,7 @@ public class TableInputFormat implements InputFormat<Text, MapWritable>, JobConf
     m_tableName = new Text(tableNames[0].getName());
     job.set("hypertable.root.path", m_rootPath);
   }
-  
+
   class DummyRecordReader implements RecordReader<Text, MapWritable> {
     public void close() { }
     public Text createKey() { return new Text(); }
@@ -46,35 +46,35 @@ public class TableInputFormat implements InputFormat<Text, MapWritable>, JobConf
     public float getProgress() { return 0.0f; }
     public boolean next(Text k, MapWritable v) { return false; }
   }
-  
-  public RecordReader<Text, MapWritable> getRecordReader(InputSplit split, JobConf job, Reporter reporter) 
+
+  public RecordReader<Text, MapWritable> getRecordReader(InputSplit split, JobConf job, Reporter reporter)
   throws IOException {
     return new DummyRecordReader();
   }
-  
+
   public InputSplit[] getSplits(JobConf job, int numSplits) throws IOException {
     String[] rangeVector = getRangeVector(m_tableName.toString(), m_rootPath);
     if (rangeVector == null || rangeVector.length == 0) {
       throw new IOException("No input split could be created.");
     }
-    
+
     InputSplit[] splits = new InputSplit[rangeVector.length/3];
-    
+
     for (int i = 0; i < (rangeVector.length); i+=3) {
       Text start = new Text(rangeVector[i]);
       Text end = new Text(rangeVector[i+1]);
-      
+
       int u = rangeVector[i+2].indexOf("_");
       Text location = new Text(rangeVector[i+2].substring(0,u));
-      
+
       splits[i] = new TableSplit(m_tableName, start, end, location);
     }
 
     return splits;
   }
- 
+
   public void validateInput(JobConf job) {
-    
+
   }
 
   static {

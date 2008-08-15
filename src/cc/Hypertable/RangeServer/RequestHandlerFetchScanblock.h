@@ -35,9 +35,8 @@ namespace Hypertable {
 
   class RequestHandlerFetchScanblock : public ApplicationHandler {
   public:
-    RequestHandlerFetchScanblock(Comm *comm, RangeServer *rs, EventPtr &event_ptr) : ApplicationHandler(event_ptr), m_comm(comm), m_range_server(rs) {
-      return;
-    }
+    RequestHandlerFetchScanblock(Comm *comm, RangeServer *rs, EventPtr &event)
+      : ApplicationHandler(event), m_comm(comm), m_range_server(rs) { }
 
     virtual void run();
 

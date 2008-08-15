@@ -29,7 +29,7 @@
 namespace Hypertable {
 
 struct RangeStateInfo {
-  RangeStateInfo(const TableIdentifier &tid, const RangeSpec &r, 
+  RangeStateInfo(const TableIdentifier &tid, const RangeSpec &r,
                  const RangeState &state, uint64_t ts)
     : table(tid), range(r), range_state(state), timestamp(ts) {}
 

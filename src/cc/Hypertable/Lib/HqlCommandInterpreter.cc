@@ -52,7 +52,8 @@ using namespace HqlParser;
 
 namespace {
 
-  bool display_mutation_errors(int error, const char *what, TableMutator *mutator) {
+  bool
+  display_mutation_errors(int error, const char *what, TableMutator *mutator) {
     std::vector<std::pair<Cell, int> > failed_mutations;
 
     mutator->get_failed(failed_mutations);
@@ -77,7 +78,7 @@ namespace {
     return true;
   }
 
-}
+} // local namespace
 
 
 /**
@@ -127,7 +128,8 @@ void HqlCommandInterpreter::execute_line(const String &line) {
     else if (state.command == COMMAND_CREATE_TABLE) {
       if (!state.clone_table_name.empty()) {
         schema_str = m_client->get_schema(state.clone_table_name);
-        schema = Schema::new_instance(schema_str.c_str(), strlen(schema_str.c_str()), true);
+        schema = Schema::new_instance(schema_str.c_str(),
+                                      schema_str.length(), true);
         schema_str.clear();
         schema->render(schema_str);
         m_client->create_table(state.table_name, schema_str.c_str());
@@ -172,21 +174,22 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       CellInterval ci;
 
       if (state.scan.outfile != "") {
-	FileUtils::expand_tilde(state.scan.outfile);
-	if ((outfp = fopen(state.scan.outfile.c_str(), "w")) == 0)
-	  HT_THROW(Error::EXTERNAL, format("Unable to open file '%s' for writing - %s", state.scan.outfile.c_str(), strerror(errno)));
-	if (state.scan.display_timestamps) {
-	  if (state.scan.keys_only)
-	    fprintf(outfp, "#timestamp\trowkey\n");
-	  else
-	    fprintf(outfp, "#timestamp\trowkey\tcolumnkey\tvalue\n");
-	}
-	else {
-	  if (state.scan.keys_only)
-	    fprintf(outfp, "#rowkey\n");
-	  else
-	    fprintf(outfp, "#rowkey\tcolumnkey\tvalue\n");
-	}
+        FileUtils::expand_tilde(state.scan.outfile);
+        if ((outfp = fopen(state.scan.outfile.c_str(), "w")) == 0)
+          HT_THROWF(Error::EXTERNAL, "Couldn't open file '%s' for writing - %s",
+                    state.scan.outfile.c_str(), strerror(errno));
+        if (state.scan.display_timestamps) {
+          if (state.scan.keys_only)
+            fprintf(outfp, "#timestamp\trowkey\n");
+          else
+            fprintf(outfp, "#timestamp\trowkey\tcolumnkey\tvalue\n");
+        }
+        else {
+          if (state.scan.keys_only)
+            fprintf(outfp, "#rowkey\n");
+          else
+            fprintf(outfp, "#rowkey\tcolumnkey\tvalue\n");
+        }
       }
 
       scan_spec.row_limit = state.scan.limit;
@@ -195,24 +198,25 @@ void HqlCommandInterpreter::execute_line(const String &line) {
         scan_spec.columns.push_back(state.scan.columns[i].c_str());
 
       if (state.scan.row_intervals.size() && state.scan.cell_intervals.size())
-	HT_THROW(Error::HQL_PARSE_ERROR, "ROW predicates and CELL predicates can't be combined");
+        HT_THROW(Error::HQL_PARSE_ERROR,
+                 "ROW predicates and CELL predicates can't be combined");
 
       for (size_t i=0; i<state.scan.row_intervals.size(); i++) {
-	ri.start = state.scan.row_intervals[i].start.c_str();
-	ri.start_inclusive = state.scan.row_intervals[i].start_inclusive;
-	ri.end = state.scan.row_intervals[i].end.c_str();
-	ri.end_inclusive = state.scan.row_intervals[i].end_inclusive;
-	scan_spec.row_intervals.push_back(ri);
+        ri.start = state.scan.row_intervals[i].start.c_str();
+        ri.start_inclusive = state.scan.row_intervals[i].start_inclusive;
+        ri.end = state.scan.row_intervals[i].end.c_str();
+        ri.end_inclusive = state.scan.row_intervals[i].end_inclusive;
+        scan_spec.row_intervals.push_back(ri);
       }
 
       for (size_t i=0; i<state.scan.cell_intervals.size(); i++) {
-	ci.start_row = state.scan.cell_intervals[i].start_row.c_str();
-	ci.start_column = state.scan.cell_intervals[i].start_column.c_str();
-	ci.start_inclusive = state.scan.cell_intervals[i].start_inclusive;
-	ci.end_row = state.scan.cell_intervals[i].end_row.c_str();
-	ci.end_column = state.scan.cell_intervals[i].end_column.c_str();
-	ci.end_inclusive = state.scan.cell_intervals[i].end_inclusive;
-	scan_spec.cell_intervals.push_back(ci);
+        ci.start_row = state.scan.cell_intervals[i].start_row.c_str();
+        ci.start_column = state.scan.cell_intervals[i].start_column.c_str();
+        ci.start_inclusive = state.scan.cell_intervals[i].start_inclusive;
+        ci.end_row = state.scan.cell_intervals[i].end_row.c_str();
+        ci.end_column = state.scan.cell_intervals[i].end_column.c_str();
+        ci.end_inclusive = state.scan.cell_intervals[i].end_inclusive;
+        scan_spec.cell_intervals.push_back(ci);
       }
 
       scan_spec.time_interval.first  = state.scan.start_time;
@@ -232,9 +236,9 @@ void HqlCommandInterpreter::execute_line(const String &line) {
             nsec = cell.timestamp % 1000000000LL;
             unix_time = cell.timestamp / 1000000000LL;
             gmtime_r(&unix_time, &tms);
-            fprintf(outfp, "%d-%02d-%02d %02d:%02d:%02d.%09d\t", tms.tm_year+1900,
-		    tms.tm_mon+1, tms.tm_mday, tms.tm_hour, tms.tm_min,
-		    tms.tm_sec, nsec);
+            fprintf(outfp, "%d-%02d-%02d %02d:%02d:%02d.%09d\t",
+                    tms.tm_year+1900, tms.tm_mon+1, tms.tm_mday, tms.tm_hour,
+                    tms.tm_min, tms.tm_sec, nsec);
           }
         }
         if (!state.scan.keys_only) {
@@ -290,34 +294,34 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       file_size = FileUtils::size(state.input_file.c_str());
 
       if (!m_silent && !m_test_mode) {
-	printf("\nLoading ");
-	const char *format = "%3lld,";
-	if (file_size > 1000000000000LL) {
-	  printf(format, file_size/1000000000000LL);
-	  format = "%03lld,";
-	}
-	if (file_size > 1000000000LL) {
-	  printf(format, (file_size%1000000000000LL) / 1000000000LL);
-	  format = "%03lld,";
-	}
-	if (file_size > 1000000LL) {
-	  printf(format, (file_size%1000000000LL) / 1000000LL);
-	  format = "%03lld,";
-	}
-	if (file_size > 1000LL) {
-	  printf(format, (file_size%1000000LL) / 1000LL);
-	  printf("%03lld", file_size % 1000LL);
-	}
-	else
-	  printf("%3lld", file_size % 1000LL);
-	printf(" bytes of input data...\n");
-	fflush(stdout);
+        printf("\nLoading ");
+        const char *format = "%3lld,";
+        if (file_size > 1000000000000LL) {
+          printf(format, file_size/1000000000000LL);
+          format = "%03lld,";
+        }
+        if (file_size > 1000000000LL) {
+          printf(format, (file_size%1000000000000LL) / 1000000000LL);
+          format = "%03lld,";
+        }
+        if (file_size > 1000000LL) {
+          printf(format, (file_size%1000000000LL) / 1000000LL);
+          format = "%03lld,";
+        }
+        if (file_size > 1000LL) {
+          printf(format, (file_size%1000000LL) / 1000LL);
+          printf("%03lld", file_size % 1000LL);
+        }
+        else
+          printf("%3lld", file_size % 1000LL);
+        printf(" bytes of input data...\n");
+        fflush(stdout);
       }
 
       boost::progress_display *show_progress = 0;
 
       if (!m_silent && !m_test_mode)
-	show_progress = new boost::progress_display(file_size);
+        show_progress = new boost::progress_display(file_size);
 
       auto_ptr<LoadDataSource> lds(new LoadDataSource(state.input_file,
           state.header_file, state.key_columns, state.timestamp_column,
@@ -342,8 +346,9 @@ void HqlCommandInterpreter::execute_line(const String &line) {
             }
             catch (Hypertable::Exception &e) {
               do {
-                if (!display_mutation_errors(e.code(), e.what(), mutator_ptr.get()))
-		  return;
+                if (!display_mutation_errors(e.code(), e.what(),
+                    mutator_ptr.get()))
+                  return;
               } while (!mutator_ptr->retry(30));
             }
           }
@@ -357,8 +362,8 @@ void HqlCommandInterpreter::execute_line(const String &line) {
                       key.column_family, (const char *)value);
           }
         }
-	if (!m_silent && !m_test_mode)
-	  *show_progress += consumed;
+        if (!m_silent && !m_test_mode)
+          *show_progress += consumed;
       }
 
       if (into_table) {
@@ -369,7 +374,7 @@ void HqlCommandInterpreter::execute_line(const String &line) {
         catch (Exception &e) {
           do {
             if (!display_mutation_errors(e.code(), e.what(), mutator_ptr.get()))
-	      return;
+              return;
           } while (!mutator_ptr->retry(30));
         }
       }
@@ -382,22 +387,22 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       stopwatch.stop();
 
       if (!m_silent && !m_test_mode) {
-	printf("Load complete.\n");
-	printf("\n");
-	printf("  Elapsed time:  %.2f s\n", stopwatch.elapsed());
-	printf("Avg value size:  %.2f bytes\n",
+        printf("Load complete.\n");
+        printf("\n");
+        printf("  Elapsed time:  %.2f s\n", stopwatch.elapsed());
+        printf("Avg value size:  %.2f bytes\n",
                (double)total_values_size / insert_count);
-	printf("  Avg key size:  %.2f bytes\n",
+        printf("  Avg key size:  %.2f bytes\n",
                (double)total_rowkey_size / insert_count);
-	printf("    Throughput:  %.2f bytes/s\n",
+        printf("    Throughput:  %.2f bytes/s\n",
                (double)file_size / stopwatch.elapsed());
-	printf(" Total inserts:  %llu\n", (Llu)insert_count);
-	printf("    Throughput:  %.2f inserts/s\n",
+        printf(" Total inserts:  %llu\n", (Llu)insert_count);
+        printf("    Throughput:  %.2f inserts/s\n",
                (double)insert_count / stopwatch.elapsed());
-	if (mutator_ptr)
-	  printf("       Resends:  %llu\n",
+        if (mutator_ptr)
+          printf("       Resends:  %llu\n",
                  (Llu)mutator_ptr->get_resend_count());
-	printf("\n");
+        printf("\n");
       }
     }
     else if (state.command == COMMAND_INSERT) {
@@ -425,14 +430,14 @@ void HqlCommandInterpreter::execute_line(const String &line) {
           key.column_qualifier = 0;
           key.column_qualifier_len = 0;
         }
-	key.timestamp = state.inserts[i].timestamp;
+        key.timestamp = state.inserts[i].timestamp;
         try {
           mutator_ptr->set(key, (uint8_t *)state.inserts[i].value.c_str(),
                            (uint32_t)state.inserts[i].value.length());
         }
         catch (Hypertable::Exception &e) {
           if (!display_mutation_errors(e.code(), e.what(), mutator_ptr.get()))
-	    return;
+            return;
         }
       }
 
@@ -441,7 +446,7 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       }
       catch (Exception &e) {
         if (!display_mutation_errors(e.code(), e.what(), mutator_ptr.get()))
-	  return;
+          return;
       }
     }
     else if (state.command == COMMAND_DELETE) {
@@ -460,9 +465,9 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       key.row_len = state.delete_row.length();
 
       if (state.delete_time != 0)
-	key.timestamp = ++state.delete_time;
+        key.timestamp = ++state.delete_time;
       else
-	key.timestamp = AUTO_ASSIGN;
+        key.timestamp = AUTO_ASSIGN;
 
       if (state.delete_all_columns) {
         try {
@@ -491,7 +496,7 @@ void HqlCommandInterpreter::execute_line(const String &line) {
           }
           catch (Hypertable::Exception &e) {
             if (!display_mutation_errors(e.code(), e.what(), mutator_ptr.get()))
-	      return;
+              return;
           }
         }
       }
@@ -500,7 +505,7 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       }
       catch (Exception &e) {
         if (!display_mutation_errors(e.code(), e.what(), mutator_ptr.get()))
-	  return;
+          return;
       }
     }
     else if (state.command == COMMAND_SHOW_TABLES) {

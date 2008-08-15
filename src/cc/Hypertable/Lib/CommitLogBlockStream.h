@@ -48,12 +48,13 @@ namespace Hypertable {
   public:
 
     CommitLogBlockStream(Filesystem *fs);
-    CommitLogBlockStream(Filesystem *fs, const String &log_dir, const String &fragment);
+    CommitLogBlockStream(Filesystem *fs, const String &log_dir,
+                         const String &fragment);
     virtual ~CommitLogBlockStream();
 
     void load(const String &log_dir, const String &fragment);
     void close();
-    bool next(CommitLogBlockInfo *infop, BlockCompressionHeaderCommitLog *header);
+    bool next(CommitLogBlockInfo *, BlockCompressionHeaderCommitLog *);
 
     String &get_fname() { return m_fname; }
 
@@ -69,7 +70,8 @@ namespace Hypertable {
     uint64_t      m_file_length;
     DynamicBuffer m_block_buffer;
   };
-  typedef boost::intrusive_ptr<CommitLogBlockStream> CommitLogBlockStreamPtr;
+
+  typedef intrusive_ptr<CommitLogBlockStream> CommitLogBlockStreamPtr;
 
 }
 

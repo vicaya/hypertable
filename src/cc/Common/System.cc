@@ -64,21 +64,6 @@ String System::locate_install_dir(const char *argv0) {
   char *ptr = strrchr(argv0, '/');
   if (ptr == 0) {
     exe_name = argv0;
-#if 0
-    std::string fname;
-    char *path = getenv("PATH");
-    char *last;
-    exepath = 0;
-    ptr = strtok_r(path, ":", &last);
-    while (ptr) {
-      fname = (std::string)ptr + "/" + exe_name;
-      if (FileUtils::exists(fname.c_str())) {
-        exepath = fname.c_str();
-        break;
-      }
-      ptr = strtok_r(0, ":", &last);
-    }
-#endif
   }
   else
     exe_name = ptr+1;
@@ -108,8 +93,6 @@ String System::locate_install_dir(const char *argv0) {
       install_dir = ".";
     else
       install_dir.erase(pos);
-    //cerr << "WARNING: " << exe_name << " does not appear to have been run from an installation." << endl;
-    //cerr << "WARNING: Using '" << install_dir << "' as the installation directory" << endl;
   }
   else
     install_dir.erase(pos);
@@ -128,13 +111,12 @@ void System::_init(const String &install_directory) {
   install_dir = install_directory;
   while (boost::ends_with(install_dir, "/"))
     install_dir = install_dir.substr(0, install_dir.length()-1);
-	 
+
   if (exe_name == "")
     exe_name = "unknown";
 
   // initialize logging system
   Logger::initialize(exe_name);
-
 }
 
 

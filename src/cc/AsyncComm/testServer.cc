@@ -28,7 +28,6 @@ using namespace std;
 
 extern "C" {
 #include <arpa/inet.h>
-#include <netinet/in.h>
 #include <poll.h>
 #include <pthread.h>
 #include <stdint.h>
@@ -69,7 +68,7 @@ namespace {
     "  --port=<n>      Specifies the port to listen on (default=11255)",
     "  --app-queue     Use an application queue for handling requests",
     "  --reactors=<n>  Specifies the number of reactors (default=1)",
-    "  --delay=<ms>    Specifies milliseconds to wait before echoing message (default=0)",
+    "  --delay=<ms>    Milliseconds to wait before echoing message (default=0)",
     "  --udp           Operate in UDP mode instead of TCP",
     "  --verbose,-v    Generate verbose output",
     ""
@@ -87,12 +86,14 @@ namespace {
   class RequestHandler : public ApplicationHandler {
   public:
 
-    RequestHandler(Comm *comm, EventPtr &event_ptr) : ApplicationHandler(event_ptr), m_comm(comm) { return; }
+    RequestHandler(Comm *comm, EventPtr &event_ptr)
+      : ApplicationHandler(event_ptr), m_comm(comm) { return; }
 
     virtual void run() {
       m_header_builder.initialize_from_request(m_event_ptr->header);
       CommBufPtr cbp(new CommBuf(m_header_builder, m_event_ptr->message_len));
-      cbp->append_bytes((uint8_t *)m_event_ptr->message, m_event_ptr->message_len);
+      cbp->append_bytes((uint8_t *)m_event_ptr->message,
+                        m_event_ptr->message_len);
       int error = m_comm->send_response(m_event_ptr->addr, cbp);
       if (error != Error::OK) {
         HT_ERRORF("Comm::send_response returned %s", Error::get_text(error));
@@ -112,7 +113,8 @@ namespace {
 
   public:
 
-    Dispatcher(Comm *comm, ApplicationQueue *app_queue) : m_comm(comm), m_app_queue(app_queue) { return; }
+    Dispatcher(Comm *comm, ApplicationQueue *app_queue)
+      : m_comm(comm), m_app_queue(app_queue) { return; }
 
     virtual void handle(EventPtr &event_ptr) {
       if (g_verbose && event_ptr->type == Event::CONNECTION_ESTABLISHED) {
@@ -133,12 +135,14 @@ namespace {
         if (m_app_queue == 0) {
           m_header_builder.initialize_from_request(event_ptr->header);
           CommBufPtr cbp(new CommBuf(m_header_builder, event_ptr->message_len));
-          cbp->append_bytes((uint8_t *)event_ptr->message, event_ptr->message_len);
+          cbp->append_bytes((uint8_t *)event_ptr->message,
+                            event_ptr->message_len);
           if (g_delay > 0)
             poll(0, 0, g_delay);
           int error = m_comm->send_response(event_ptr->addr, cbp);
           if (error != Error::OK) {
-            HT_ERRORF("Comm::send_response returned %s", Error::get_text(error));
+            HT_ERRORF("Comm::send_response returned %s",
+                      Error::get_text(error));
           }
         }
         else
@@ -167,10 +171,12 @@ namespace {
       if (event_ptr->type == Event::MESSAGE) {
         m_header_builder.initialize_from_request(event_ptr->header);
         CommBufPtr cbp(new CommBuf(m_header_builder, event_ptr->message_len));
-        cbp->append_bytes((uint8_t *)event_ptr->message, event_ptr->message_len);
+        cbp->append_bytes((uint8_t *)event_ptr->message,
+                          event_ptr->message_len);
         if (g_delay > 0)
           poll(0, 0, g_delay);
-        int error = m_comm->send_datagram(event_ptr->addr, event_ptr->local_addr, cbp);
+        int error = m_comm->send_datagram(event_ptr->addr,
+                                          event_ptr->local_addr, cbp);
         if (error != Error::OK) {
           HT_ERRORF("Comm::send_response returned %s", Error::get_text(error));
         }
@@ -192,7 +198,8 @@ namespace {
    */
   class HandlerFactory : public ConnectionHandlerFactory {
   public:
-    HandlerFactory(DispatchHandlerPtr &dhp) : m_dispatch_handler_ptr(dhp) { return; }
+    HandlerFactory(DispatchHandlerPtr &dhp)
+      : m_dispatch_handler_ptr(dhp) { return; }
 
     virtual void get_instance(DispatchHandlerPtr &dhp) {
       dhp = m_dispatch_handler_ptr;

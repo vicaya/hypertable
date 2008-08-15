@@ -24,6 +24,7 @@
 
 #include <deque>
 
+#include "Common/Mutex.h"
 #include "Common/Error.h"
 #include "Common/ReferenceCount.h"
 #include "Common/Timer.h"
@@ -87,7 +88,7 @@ namespace Hypertable {
      * @param hard don't consult cache
      * @return Error::OK on success or error code on failure
      */
-    void find_loop(TableIdentifier *table, const char *row_key,
+    void find_loop(const TableIdentifier *table, const char *row_key,
                    RangeLocationInfo *range_loc_infop, Timer &timer, bool hard);
 
     /** Locates the range that contains the given row key.
@@ -99,7 +100,7 @@ namespace Hypertable {
      * @param hard don't consult cache
      * @return Error::OK on success or error code on failure
      */
-    int find(TableIdentifier *table, const char *row_key,
+    int find(const TableIdentifier *table, const char *row_key,
              RangeLocationInfo *range_loc_infop, Timer &timer, bool hard);
 
     /**
@@ -109,7 +110,7 @@ namespace Hypertable {
      * @param row_key row key to invalidate
      * @return true if invalidated, false if not cached
      */
-    bool invalidate(TableIdentifier *table, const char *row_key) {
+    bool invalidate(const TableIdentifier *table, const char *row_key) {
       return m_cache_ptr->invalidate(table->id, row_key);
     }
 
@@ -131,7 +132,7 @@ namespace Hypertable {
      * Clears the error history
      */
     void clear_error_history() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       m_last_errors.clear();
     }
 
@@ -139,9 +140,9 @@ namespace Hypertable {
      * Displays the error history
      */
     void dump_error_history() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       foreach(Exception &e, m_last_errors)
-	HT_ERROR_OUT << e << HT_END;
+        HT_ERROR_OUT << e << HT_END;
       m_last_errors.clear();
     }
 
@@ -151,7 +152,7 @@ namespace Hypertable {
     int process_metadata_scanblock(ScanBlock &scan_block);
     int read_root_location(Timer &timer);
 
-    boost::mutex           m_mutex;
+    Mutex                  m_mutex;
     ConnectionManagerPtr   m_conn_manager_ptr;
     Hyperspace::SessionPtr m_hyperspace_ptr;
     LocationCachePtr       m_cache_ptr;
@@ -171,23 +172,7 @@ namespace Hypertable {
 
   typedef boost::intrusive_ptr<RangeLocator> RangeLocatorPtr;
 
-}
-
-#define RECORD_ERROR(_code_, _msg_) \
-  do { \
-    boost::mutex::scoped_lock lock(m_mutex); \
-    m_last_errors.push_back( Exception(_code_, _msg_, __LINE__, HT_FUNC, __FILE__) ); \
-    while (m_last_errors.size() > MAX_ERROR_QUEUE_LENGTH) \
-      m_last_errors.pop_front(); \
-  } while (false)
-
-#define RECORD_ERROR2(_code_, _ex_, _msg_)	\
-  do { \
-    boost::mutex::scoped_lock lock(m_mutex); \
-    m_last_errors.push_back( Exception(_code_, _msg_, _ex_, __LINE__, HT_FUNC, __FILE__) ); \
-    while (m_last_errors.size() > MAX_ERROR_QUEUE_LENGTH) \
-      m_last_errors.pop_front(); \
-  } while (false)
+} // namespace Hypertable
 
 
 #endif // HYPERTABLE_RANGELOCATOR_H

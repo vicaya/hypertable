@@ -32,7 +32,8 @@ import org.hypertable.Common.Error;
 
 public class RequestHandlerRename extends ApplicationHandler {
 
-    static final Logger log = Logger.getLogger("org.hypertable.DfsBroker.hadoop");
+    static final Logger log = Logger.getLogger(
+        "org.hypertable.DfsBroker.hadoop");
 
     public RequestHandlerRename(Comm comm, HdfsBroker broker, Event event) {
         super(event);

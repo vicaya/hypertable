@@ -36,7 +36,7 @@ public:
 
   /**
    * purge metalog of old/redundant entries
-   * 
+   *
    * @param range_states - range states to write
    */
   void purge(const RangeStates &);
@@ -52,7 +52,7 @@ public:
 
   void
   log_split_shrunk(const TableIdentifier &table, const RangeSpec &range,
-		   const RangeState &state) {
+                   const RangeState &state) {
     MetaLogEntryPtr entry(MetaLogEntryFactory::new_rs_split_shrunk(
                           table, range, state));
     write(entry.get());

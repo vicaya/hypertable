@@ -4,7 +4,7 @@
 # READLINE_LIBRARIES, the libraries needed to use BerkeleyDB.
 # READLINE_FOUND, If false, do not try to use BerkeleyDB.
 # also defined, but not for general use are
-# READLINE_LIBRARY, NCURSES_LIBRARY 
+# READLINE_LIBRARY, NCURSES_LIBRARY
 
 find_path(READLINE_INCLUDE_DIR readline/readline.h
     /opt/local/include

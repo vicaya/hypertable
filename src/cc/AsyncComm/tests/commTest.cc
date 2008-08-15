@@ -63,7 +63,8 @@ namespace {
   public:
     ServerLauncher() {
       if ((m_child_pid = fork()) == 0) {
-        execl("./testServer", "./testServer", DEFAULT_PORT_ARG, "--app-queue", (char *)0);
+        execl("./testServer", "./testServer", DEFAULT_PORT_ARG, "--app-queue",
+              (char *)0);
       }
       poll(0,0,2000);
     }
@@ -114,13 +115,14 @@ int main(int argc, char **argv) {
   thread1->join();
   thread2->join();
 
-  std::string tmp_file = (std::string)"/tmp/commTest" + (int)getpid();
-  std::string cmd_str = (std::string)"head -" + (int)MAX_MESSAGES + " ./words > " + tmp_file  + " ; diff " + tmp_file + " commTest.output.1";
+  String tmp_file = (String)"/tmp/commTest" + (int)getpid();
+  String cmd_str = (String)"head -" + (int)MAX_MESSAGES + " ./words > "
+      + tmp_file  + " ; diff " + tmp_file + " commTest.output.1";
 
   if (system(cmd_str.c_str()))
     return 1;
 
-  cmd_str = (std::string)"unlink " + tmp_file;
+  cmd_str = (String)"unlink " + tmp_file;
   if (system(cmd_str.c_str()))
     return 1;
 

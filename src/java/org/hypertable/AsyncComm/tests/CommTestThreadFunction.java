@@ -34,7 +34,8 @@ import org.hypertable.Common.Error;
 
 class CommTestThreadFunction implements Runnable {
 
-    public CommTestThreadFunction(Comm comm, InetSocketAddress addr, String input) {
+    public CommTestThreadFunction(Comm comm, InetSocketAddress addr,
+                                  String input) {
         mComm = comm;
         mAddr = addr;
         mInputFile = input;
@@ -56,15 +57,19 @@ class CommTestThreadFunction implements Runnable {
         int retries;
 
         try {
-            BufferedReader infile  = new BufferedReader(new FileReader(mInputFile));
-            BufferedWriter outfile = new BufferedWriter(new FileWriter(mOutputFile));
+            BufferedReader infile  = new BufferedReader(new FileReader(
+                                                        mInputFile));
+            BufferedWriter outfile = new BufferedWriter(new FileWriter(
+                                                        mOutputFile));
 
             while ((str = infile.readLine()) != null) {
                 hbuilder.AssignUniqueId();
-                cbuf = new CommBuf(hbuilder, Serialization.EncodedLengthString(str));
+                cbuf = new CommBuf(hbuilder,
+                    Serialization.EncodedLengthString(str));
                 cbuf.AppendString(str);
                 retries = 0;
-                while ((error = mComm.SendRequest(mAddr, cbuf, respHandler)) != Error.OK) {
+                while ((error = mComm.SendRequest(mAddr, cbuf, respHandler))
+                       != Error.OK) {
                     if (error == Error.COMM_NOT_CONNECTED) {
                         if (retries == 5) {
                             System.out.println("Connection timeout.");
@@ -77,7 +82,8 @@ class CommTestThreadFunction implements Runnable {
                         retries++;
                     }
                     else {
-                        System.err.println("CommEngine.SendMessage returned '" + Error.GetText(error) + "'");
+                        System.err.println("CommEngine.SendMessage returned '"
+                                           + Error.GetText(error) + "'");
                         System.exit(1);
                     }
                 }
@@ -94,7 +100,8 @@ class CommTestThreadFunction implements Runnable {
                 }
             }
 
-            while (outstanding > 0 && (event = respHandler.GetResponse()) != null) {
+            while (outstanding > 0 && (event = respHandler.GetResponse())
+                   != null) {
                 event.msg.RewindToProtocolHeader();
                 str = Serialization.DecodeString(event.msg.buf);
                 outfile.write(str);

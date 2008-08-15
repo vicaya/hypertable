@@ -35,7 +35,10 @@ using namespace Hypertable;
 /**
  *
  */
-ClientConnectionHandler::ClientConnectionHandler(Comm *comm, Session *session, time_t timeout) : m_comm(comm), m_session(session), m_session_id(0), m_state(DISCONNECTED), m_verbose(false), m_timeout(timeout) {
+ClientConnectionHandler::ClientConnectionHandler(Comm *comm, Session *session,
+                                                 time_t timeout)
+  : m_comm(comm), m_session(session), m_session_id(0), m_state(DISCONNECTED),
+    m_verbose(false), m_timeout(timeout) {
   memset(&m_master_addr, 0, sizeof(struct sockaddr_in));
   return;
 }
@@ -63,7 +66,8 @@ void ClientConnectionHandler::handle(Hypertable::EventPtr &event_ptr) {
   if (event_ptr->type == Hypertable::Event::MESSAGE) {
 
     if (Protocol::response_code(event_ptr.get()) != Error::OK) {
-      HT_ERRORF("Connection handshake error: %s", Protocol::string_format_message(event_ptr.get()).c_str());
+      HT_ERRORF("Connection handshake error: %s",
+                Protocol::string_format_message(event_ptr.get()).c_str());
       m_comm->close_socket(event_ptr->addr);
       m_state = DISCONNECTED;
       return;
@@ -89,10 +93,13 @@ void ClientConnectionHandler::handle(Hypertable::EventPtr &event_ptr) {
 
     memcpy(&m_master_addr, &event_ptr->addr, sizeof(struct sockaddr_in));
 
-    CommBufPtr cbp(Hyperspace::Protocol::create_handshake_request(m_session_id));
+    CommBufPtr cbp(Hyperspace::Protocol::create_handshake_request(
+                   m_session_id));
 
-    if ((error = m_comm->send_request(event_ptr->addr, m_timeout, cbp, this)) != Error::OK) {
-      HT_ERRORF("Problem sending handshake request - %s", Error::get_text(error));
+    if ((error = m_comm->send_request(event_ptr->addr, m_timeout, cbp, this))
+        != Error::OK) {
+      HT_ERRORF("Problem sending handshake request - %s",
+                Error::get_text(error));
       m_comm->close_socket(event_ptr->addr);
       m_state = DISCONNECTED;
     }

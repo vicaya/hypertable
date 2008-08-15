@@ -53,10 +53,10 @@ namespace {
     "usage: Hyperspace.Master [OPTIONS]",
     "",
     "OPTIONS:",
-    "  --config=<file>   Read configuration from <file>.  The default config file is",
-    "                    \"conf/hypertable.cfg\" relative to the toplevel install directory",
+    "  --config=<file>   Read configuration from <file>.  The default file is",
+    "                    \"conf/hypertable.cfg\" ",
     "  --install-dir=<dir> Set the installation directory to <dir>",
-    "  --pidfile=<fname> Write the process ID to <fname> upon successful startup",
+    "  --pidfile=<fname> Write the process ID to <fname> upon startup",
     "  --help            Display this help text and exit",
     "  --verbose,-v      Generate verbose output",
     ""
@@ -74,9 +74,9 @@ namespace {
 class HandlerFactory : public ConnectionHandlerFactory {
 
 public:
-  HandlerFactory(Comm *comm, ApplicationQueuePtr &app_queue, MasterPtr &master) : m_comm(comm), m_app_queue_ptr(app_queue), m_master_ptr(master) {
-    return;
-  }
+  HandlerFactory(Comm *comm, ApplicationQueuePtr &app_queue, MasterPtr &master)
+    : m_comm(comm), m_app_queue_ptr(app_queue), m_master_ptr(master) { }
+
   virtual void get_instance(DispatchHandlerPtr &dhp) {
     dhp = new ServerConnectionHandler(m_comm, m_app_queue_ptr, m_master_ptr);
   }
@@ -113,8 +113,10 @@ int main(int argc, char **argv) {
         cfg_file = &argv[i][9];
       else if (!strncmp(argv[i], "--install-dir=", 14)) {
         System::install_dir = &argv[i][14];
-        if (System::install_dir.find('/',  System::install_dir.length()-1) != string::npos)
-          System::install_dir = System::install_dir.substr(0, System::install_dir.length()-1);
+        if (System::install_dir.find('/',  System::install_dir.length()-1)
+            != string::npos)
+          System::install_dir = System::install_dir.substr(0,
+              System::install_dir.length()-1);
       }
       else if (!strncmp(argv[i], "--pidfile=", 10))
         pidfile = &argv[i][10];
@@ -124,8 +126,8 @@ int main(int argc, char **argv) {
         Usage::dump_and_exit(usage);
       }
       else {
-        cerr << "Hyperspace.master: Unrecognized argument '" << argv[i] << "'" << endl;
-
+        cerr << "Hyperspace.master: Unrecognized argument '" << argv[i] << "'"
+             << endl;
         exit(1);
       }
     }
@@ -138,9 +140,12 @@ int main(int argc, char **argv) {
   if (verbose)
     props_ptr->set("Hypertable.Verbose", "true");
 
-  port         = props_ptr->get_int("Hyperspace.Master.Port", Master::DEFAULT_MASTER_PORT);
-  reactor_count = props_ptr->get_int("Hyperspace.Master.Reactors", System::get_processor_count());
-  worker_count  = props_ptr->get_int("Hyperspace.Master.Workers", DEFAULT_WORKERS);
+  port = props_ptr->get_int("Hyperspace.Master.Port",
+                            Master::DEFAULT_MASTER_PORT);
+  reactor_count = props_ptr->get_int("Hyperspace.Master.Reactors",
+                                     System::get_processor_count());
+  worker_count = props_ptr->get_int("Hyperspace.Master.Workers",
+                                    DEFAULT_WORKERS);
 
   ReactorFactory::initialize(reactor_count);
 

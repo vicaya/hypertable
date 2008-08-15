@@ -25,9 +25,8 @@
 #include <queue>
 #include <vector>
 
-#include <boost/thread/mutex.hpp>
-
 #include "Common/atomic.h"
+#include "Common/Mutex.h"
 #include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
 #include "Common/SockAddrMap.h"
@@ -173,7 +172,7 @@ namespace Hyperspace {
      * @param node_data Reference of node smart pointer to hold return node
      */
     void get_node(std::string name, NodeDataPtr &node_data) {
-      boost::mutex::scoped_lock lock(m_node_map_mutex);
+      ScopedLock lock(m_node_map_mutex);
       NodeMap::iterator iter = m_node_map.find(name);
       if (iter != m_node_map.end()) {
         node_data = (*iter).second;
@@ -195,9 +194,9 @@ namespace Hyperspace {
     NodeMap       m_node_map;
     HandleMap     m_handle_map;
     SessionMap    m_session_map;
-    boost::mutex  m_node_map_mutex;
-    boost::mutex  m_handle_map_mutex;
-    boost::mutex  m_session_map_mutex;
+    Mutex         m_node_map_mutex;
+    Mutex         m_handle_map_mutex;
+    Mutex         m_session_map_mutex;
     std::string   m_base_dir;
     int           m_base_fd;
     uint32_t      m_generation;

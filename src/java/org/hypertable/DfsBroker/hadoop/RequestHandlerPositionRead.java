@@ -31,9 +31,11 @@ import org.hypertable.Common.Error;
 
 public class RequestHandlerPositionRead extends ApplicationHandler {
 
-    static final Logger log = Logger.getLogger("org.hypertable.DfsBroker.hadoop");
+    static final Logger log = Logger.getLogger(
+        "org.hypertable.DfsBroker.hadoop");
 
-    public RequestHandlerPositionRead(Comm comm, HdfsBroker broker, Event event) {
+    public RequestHandlerPositionRead(Comm comm, HdfsBroker broker,
+                                      Event event) {
         super(event);
         mComm = comm;
         mBroker = broker;
@@ -42,7 +44,8 @@ public class RequestHandlerPositionRead extends ApplicationHandler {
     public void run() {
         int   fd, amount;
         long  offset;
-        ResponseCallbackPositionRead cb = new ResponseCallbackPositionRead(mComm, mEvent);
+        ResponseCallbackPositionRead cb =
+            new ResponseCallbackPositionRead(mComm, mEvent);
 
         try {
 
@@ -62,7 +65,8 @@ public class RequestHandlerPositionRead extends ApplicationHandler {
             int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());
             log.severe("Protocol error (PREAD) - " + e.getMessage());
             if (error != Error.OK)
-                log.severe("Problem sending (PREAD) error back to client - " + Error.GetText(error));
+                log.severe("Problem sending (PREAD) error back to client - "
+                           + Error.GetText(error));
         }
     }
 

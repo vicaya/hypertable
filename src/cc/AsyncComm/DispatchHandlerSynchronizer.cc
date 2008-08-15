@@ -32,7 +32,8 @@ using namespace Hypertable;
 /**
  *
  */
-DispatchHandlerSynchronizer::DispatchHandlerSynchronizer() : m_receive_queue(), m_mutex(), m_cond() {
+DispatchHandlerSynchronizer::DispatchHandlerSynchronizer()
+  : m_receive_queue(), m_mutex(), m_cond() {
   return;
 }
 
@@ -61,7 +62,8 @@ bool DispatchHandlerSynchronizer::wait_for_reply(EventPtr &event_ptr) {
   event_ptr = m_receive_queue.front();
   m_receive_queue.pop();
 
-  if (event_ptr->type == Event::MESSAGE && Protocol::response_code(event_ptr.get()) == Error::OK)
+  if (event_ptr->type == Event::MESSAGE
+      && Protocol::response_code(event_ptr.get()) == Error::OK)
     return true;
 
   return false;

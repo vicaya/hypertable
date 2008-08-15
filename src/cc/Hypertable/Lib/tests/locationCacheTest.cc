@@ -35,7 +35,8 @@ namespace {
   const char *usage[] = {
     "usage: locationCacheTest",
     "",
-    "Validates LocationCache class.  Generates output file './locationCacheTest.output' and",
+    "Validates LocationCache class.  Generates output file "
+    "'./locationCacheTest.output' and",
     "diffs it against ./locationCacheTest.golden'.",
     0
   };
@@ -235,14 +236,16 @@ int main(int argc, char **argv) {
 
   for (size_t i=0; i<2000; i++) {
     if ((randstr.get_int() % 3) == 0)
-      TestLookup(cache, randstr.get_int() % 4, words[randstr.get_int() % MAX_WORDS]);
+      TestLookup(cache, randstr.get_int() % 4,
+                 words[randstr.get_int() % MAX_WORDS]);
     else {
       rangei = randstr.get_int() % MAX_RANGES;
       table_id = randstr.get_int() % 4;
       serveri = randstr.get_int() % MAX_SERVERIDS;
       start = (*ranges[rangei].first == 0) ? "[NULL]" : ranges[rangei].first;
       end = (*ranges[rangei].second == 0) ? "[NULL]" : ranges[rangei].second;
-      outfile << "INSERT(" << table_id << ", " << start << ", " << end << ", " << server_ids[serveri] << endl << flush;
+      outfile << "INSERT(" << table_id << ", " << start << ", " << end << ", "
+              << server_ids[serveri] << endl << flush;
       range_loc_info.start_row = ranges[rangei].first;
       range_loc_info.end_row   = ranges[rangei].second;
       range_loc_info.location  = server_ids[serveri];

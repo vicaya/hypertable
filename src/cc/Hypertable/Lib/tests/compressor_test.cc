@@ -69,7 +69,8 @@ int main(int argc, char **argv) {
   if (!compressor)
     return 1;
 
-  if ((input.base = (uint8_t *)FileUtils::file_to_buffer("./good-schema-1.xml", &len)) == 0) {
+  if ((input.base = (uint8_t *)FileUtils::file_to_buffer("./good-schema-1.xml",
+      &len)) == 0) {
     HT_ERROR("Problem loading './good-schema-1.xml'");
     return 1;
   }
@@ -85,7 +86,8 @@ int main(int argc, char **argv) {
   }
 
   if (input.fill() != output2.fill()) {
-    HT_ERRORF("Input length (%ld) does not match output length (%ld) after %s codec", input.fill(), output2.fill(), argv[0]);
+    HT_ERRORF("Input length (%ld) does not match output length (%ld) after %s "
+              "codec", input.fill(), output2.fill(), argv[0]);
     return 1;
   }
 
@@ -111,7 +113,8 @@ int main(int argc, char **argv) {
   }
 
   if (input.fill() != output2.fill()) {
-    HT_ERRORF("Input length (%ld) does not match output length (%ld) after %s codec", input.fill(), output2.fill(), argv[0]);
+    HT_ERRORF("Input length (%ld) does not match output length (%ld) after %s "
+              "codec", input.fill(), output2.fill(), argv[0]);
     return 1;
   }
 

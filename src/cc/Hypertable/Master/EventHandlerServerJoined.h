@@ -34,15 +34,16 @@ namespace Hypertable {
 
   class EventHandlerServerJoined : public ApplicationHandler {
   public:
-    EventHandlerServerJoined(MasterPtr &master, std::string &location, EventPtr &event_ptr) : ApplicationHandler(event_ptr), m_master_ptr(master), m_location(location) {
-      return;
-    }
+    EventHandlerServerJoined(MasterPtr &master, const String &location,
+                             EventPtr &event_ptr)
+      : ApplicationHandler(event_ptr), m_master_ptr(master),
+        m_location(location) { }
 
     virtual void run();
 
   private:
     MasterPtr    m_master_ptr;
-    std::string  m_location;
+    String       m_location;
   };
 
 }

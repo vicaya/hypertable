@@ -41,9 +41,11 @@ import org.hypertable.Common.Error;
  */
 public class ConnectionHandler implements DispatchHandler {
 
-    static final Logger log = Logger.getLogger("org.hypertable.DfsBroker.hadoop");
+    static final Logger log = Logger.getLogger(
+        "org.hypertable.DfsBroker.hadoop");
 
-    public ConnectionHandler(Comm comm, ApplicationQueue appQueue, HdfsBroker broker) {
+    public ConnectionHandler(Comm comm, ApplicationQueue appQueue,
+                             HdfsBroker broker) {
         mComm = comm;
         mAppQueue = appQueue;
         mBroker = broker;
@@ -68,10 +70,12 @@ public class ConnectionHandler implements DispatchHandler {
                 requestHandler = new RequestHandlerClose(mComm, mBroker, event);
                 break;
             case Protocol.COMMAND_CREATE:
-                requestHandler = new RequestHandlerCreate(mComm, mBroker, event);
+                requestHandler = new RequestHandlerCreate(mComm, mBroker,
+                                                          event);
                 break;
             case Protocol.COMMAND_LENGTH:
-                requestHandler = new RequestHandlerLength(mComm, mBroker, event);
+                requestHandler = new RequestHandlerLength(mComm, mBroker,
+                                                          event);
                 break;
             case Protocol.COMMAND_READ:
                 requestHandler = new RequestHandlerRead(mComm, mBroker, event);
@@ -83,19 +87,24 @@ public class ConnectionHandler implements DispatchHandler {
                 requestHandler = new RequestHandlerSeek(mComm, mBroker, event);
                 break;
             case Protocol.COMMAND_REMOVE:
-                requestHandler = new RequestHandlerRemove(mComm, mBroker, event);
+                requestHandler = new RequestHandlerRemove(mComm, mBroker,
+                                                          event);
                 break;
             case Protocol.COMMAND_PREAD:
-                requestHandler = new RequestHandlerPositionRead(mComm, mBroker, event);
+                requestHandler = new RequestHandlerPositionRead(mComm, mBroker,
+                                                                event);
                 break;
             case Protocol.COMMAND_MKDIRS:
-                requestHandler = new RequestHandlerMkdirs(mComm, mBroker, event);
+                requestHandler = new RequestHandlerMkdirs(mComm, mBroker,
+                                                          event);
                 break;
             case Protocol.COMMAND_SHUTDOWN:
-                requestHandler = new RequestHandlerShutdown(mComm, mAppQueue, event);
+                requestHandler = new RequestHandlerShutdown(mComm, mAppQueue,
+                                                            event);
                 break;
             case Protocol.COMMAND_STATUS:
-                requestHandler = new RequestHandlerStatus(mComm, mAppQueue, event);
+                requestHandler = new RequestHandlerStatus(mComm, mAppQueue,
+                                                          event);
                 break;
             case Protocol.COMMAND_FLUSH:
                 requestHandler = new RequestHandlerFlush(mComm, mBroker, event);
@@ -104,18 +113,22 @@ public class ConnectionHandler implements DispatchHandler {
                 requestHandler = new RequestHandlerRmdir(mComm, mBroker, event);
                 break;
             case Protocol.COMMAND_READDIR:
-                requestHandler = new RequestHandlerReaddir(mComm, mBroker, event);
+                requestHandler = new RequestHandlerReaddir(mComm, mBroker,
+                                                           event);
                 break;
             case Protocol.COMMAND_EXISTS:
-                requestHandler = new RequestHandlerExists(mComm, mBroker, event);
+                requestHandler = new RequestHandlerExists(mComm, mBroker,
+                                                          event);
                 break;
             case Protocol.COMMAND_RENAME:
-                requestHandler = new RequestHandlerRename(mComm, mBroker, event);
+                requestHandler = new RequestHandlerRename(mComm, mBroker,
+                                                          event);
                 break;
             default:
                 ResponseCallback cb = new ResponseCallback(mComm, event);
                 log.severe("Command code " + command + " not implemented");
-                cb.error(Error.PROTOCOL_ERROR, "Command code " + command + " not implemented");
+                cb.error(Error.PROTOCOL_ERROR, "Command code " + command
+                         + " not implemented");
                 return;
             }
 
@@ -123,7 +136,8 @@ public class ConnectionHandler implements DispatchHandler {
 
         }
         else if (event.type == Event.Type.DISCONNECT) {
-            log.info(event.toString() + " : Closing all open handles from " + event.addr);
+            log.info(event.toString() + " : Closing all open handles from "
+                     + event.addr);
             OpenFileMap ofMap = mBroker.GetOpenFileMap();
             ofMap.RemoveAll(event.addr);
         }

@@ -167,16 +167,15 @@ namespace Hyperspace {
      * @return opened file handle
      */
     uint64_t open(const std::string &name, uint32_t flags,
-		  HandleCallbackPtr &callback);
+                  HandleCallbackPtr &callback);
 
-    /** Creates a file.  This method is basically
-     * the same as the #open method except that it implicitly sets the
-     * OPEN_FLAG_CREATE and OPEN_FLAG_EXCL open flags and supplies a set of
-     * initial attributes to be set when the file is created.  The flags argument
-     * controls other open modes and the callback
-     * argument is registered as the callback for this handle.  The events
-     * that should be reported on this handle are determined by the event
-     * mask inside callback (see HandleCallback#get_event_mask).
+    /** Creates a file.  This method is basically the same as the #open method
+     * except that it implicitly sets the OPEN_FLAG_CREATE and OPEN_FLAG_EXCL
+     * open flags and supplies a set of initial attributes to be set when the
+     * file is created.  The flags argument controls other open modes and the
+     * callback argument is registered as the callback for this handle.  The
+     * events that should be reported on this handle are determined by the
+     * event mask inside callback (see HandleCallback#get_event_mask).
      *
      * @param name pathname of file to create
      * @param flags OR'ed together set of open flags (see \ref OpenFlags)
@@ -187,7 +186,8 @@ namespace Hyperspace {
      * @return Error::OK on success or error code on failure
      */
     uint64_t create(const std::string &name, uint32_t flags,
-		    HandleCallbackPtr &callback, std::vector<Attribute> &init_attrs);
+                    HandleCallbackPtr &callback,
+                    std::vector<Attribute> &init_attrs);
 
     /*
     int cancel(uint64_t handle);
@@ -218,7 +218,7 @@ namespace Hyperspace {
      * @param value_len length of new value
      */
     void attr_set(uint64_t handle, const std::string &name,
-		  const void *value, size_t value_len);
+                  const void *value, size_t value_len);
 
     /** Gets an extended attribute of a file.
      *
@@ -227,7 +227,7 @@ namespace Hyperspace {
      * @param value reference to DynamicBuffer to hold returned value
      */
     void attr_get(uint64_t handle, const std::string &name,
-		  DynamicBuffer &value);
+                  DynamicBuffer &value);
 
     /** Deletes an extended attribute of a file.
      *
@@ -278,17 +278,17 @@ namespace Hyperspace {
     void lock(uint64_t handle, uint32_t mode, LockSequencer *sequencerp);
 
     /** Attempts to lock a file.  The mode argument indicates the type of lock
-     * to be acquired and takes a value of either LOCK_MODE_SHARED
-     * or LOCK_MODE_EXCLUSIVE (see \ref LockMode).  The result of the attempt
-     * will get returned in the statusp argument and will contain either
+     * to be acquired and takes a value of either LOCK_MODE_SHARED or
+     * LOCK_MODE_EXCLUSIVE (see \ref LockMode).  The result of the attempt will
+     * get returned in the statusp argument and will contain either
      * LOCK_STATUS_BUSY or LOCK_STATUS_GRANTED.  Upon success, the structure
      * pointed to by sequencerp will get filled in with information about the
      * lock, including a generation number.  Some services operate on resources
-     * on behalf of clients, but require that the client have the resource locked.
-     * The LockSequencer object can be passed by the client to the service in
-     * each request so that the service can call check_sequencer (not yet
-     * implemented) to verify that the client indeed has the current up-to-date
-     * lock.
+     * on behalf of clients, but require that the client have the resource
+     * locked.  The LockSequencer object can be passed by the client to the
+     * service in each request so that the service can call check_sequencer
+     * (not yet implemented) to verify that the client indeed has the current
+     * up-to-date lock.
      *
      * @param handle handle of file or directory to lock
      * @param mode lock mode (see \ref LockMode)
@@ -297,7 +297,7 @@ namespace Hyperspace {
      * @param sequencerp address of LockSequencer return structure
      */
     void try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp,
-		  LockSequencer *sequencerp);
+                  LockSequencer *sequencerp);
 
     /** Releases any file handle locks.
      *
@@ -384,8 +384,6 @@ namespace Hyperspace {
 
   typedef boost::intrusive_ptr<Session> SessionPtr;
 
-
 } // namespace Hyperspace
-
 
 #endif // HYPERSPACE_SESSION_H

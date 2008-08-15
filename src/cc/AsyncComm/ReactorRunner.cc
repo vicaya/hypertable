@@ -58,7 +58,8 @@ void ReactorRunner::operator()() {
 #if defined(__linux__)
   struct epoll_event events[256];
 
-  while ((n = epoll_wait(m_reactor_ptr->poll_fd, events, 256, timeout.get_millis())) >= 0 || errno == EINTR) {
+  while ((n = epoll_wait(m_reactor_ptr->poll_fd, events, 256,
+          timeout.get_millis())) >= 0 || errno == EINTR) {
     m_reactor_ptr->get_removed_handlers(removed_handlers);
     HT_DEBUGF("epoll_wait returned %d events", n);
     for (int i=0; i<n; i++) {
@@ -77,12 +78,14 @@ void ReactorRunner::operator()() {
       return;
   }
 
-  HT_ERRORF("epoll_wait(%d) failed : %s", m_reactor_ptr->poll_fd, strerror(errno));
+  HT_ERRORF("epoll_wait(%d) failed : %s", m_reactor_ptr->poll_fd,
+            strerror(errno));
 
 #elif defined(__APPLE__)
   struct kevent events[32];
 
-  while ((n = kevent(m_reactor_ptr->kqd, NULL, 0, events, 32, timeout.get_timespec())) >= 0 || errno == EINTR) {
+  while ((n = kevent(m_reactor_ptr->kqd, NULL, 0, events, 32,
+          timeout.get_timespec())) >= 0 || errno == EINTR) {
     m_reactor_ptr->get_removed_handlers(removed_handlers);
     for (int i=0; i<n; i++) {
       handler = (IOHandler *)events[i].udata;
@@ -107,19 +110,23 @@ void ReactorRunner::operator()() {
 
 
 
-void ReactorRunner::cleanup_and_remove_handlers(std::set<IOHandler *> &handlers) {
+void
+ReactorRunner::cleanup_and_remove_handlers(std::set<IOHandler *> &handlers) {
   foreach(IOHandler *handler, handlers) {
 #if defined(__linux__)
     struct epoll_event event;
     memset(&event, 0, sizeof(struct epoll_event));
-    if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_DEL, handler->get_sd(), &event) < 0) {
-      HT_ERRORF("epoll_ctl(EPOLL_CTL_DEL, %d) failure, %s", handler->get_sd(), strerror(errno));
+    if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_DEL, handler->get_sd(),
+        &event) < 0) {
+      HT_ERRORF("epoll_ctl(EPOLL_CTL_DEL, %d) failure, %s", handler->get_sd(),
+                strerror(errno));
     }
 #elif defined(__APPLE__)
     struct kevent devents[2];
     EV_SET(&devents[0], handler->get_sd(), EVFILT_READ, EV_DELETE, 0, 0, 0);
     EV_SET(&devents[1], handler->get_sd(), EVFILT_WRITE, EV_DELETE, 0, 0, 0);
-    if (kevent(m_reactor_ptr->kqd, devents, 2, NULL, 0, NULL) == -1 && errno != ENOENT) {
+    if (kevent(m_reactor_ptr->kqd, devents, 2, NULL, 0, NULL) == -1
+        && errno != ENOENT) {
       HT_ERRORF("kevent(%d) : %s", handler->get_sd(), strerror(errno));
     }
 #else

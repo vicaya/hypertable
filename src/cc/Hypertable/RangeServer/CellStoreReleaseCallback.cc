@@ -30,7 +30,8 @@ using namespace std;
 
 /**
  */
-CellStoreReleaseCallback::CellStoreReleaseCallback(AccessGroup *ag) : m_access_group(ag) {
+CellStoreReleaseCallback::CellStoreReleaseCallback(AccessGroup *ag)
+  : m_access_group(ag) {
 }
 
 void CellStoreReleaseCallback::operator()() const {

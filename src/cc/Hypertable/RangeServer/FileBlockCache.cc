@@ -51,7 +51,7 @@ FileBlockCache::checkout(int file_id, uint32_t file_offset, uint8_t **blockp,
   entry.ref_count++;
 
   hash_index.erase(iter);
-  
+
   pair<Sequence::iterator, bool> insert_result = m_cache.push_back(entry);
   assert(insert_result.second);
 
@@ -91,14 +91,14 @@ FileBlockCache::insert_and_checkout(int file_id, uint32_t file_offset,
     BlockCache::iterator iter = m_cache.begin();
     while (iter != m_cache.end()) {
       if ((*iter).ref_count == 0) {
-	m_avail_memory += (*iter).length;
-	delete [] (*iter).block;
-	iter = m_cache.erase(iter);
-	if (m_avail_memory >= length)
-	  break;
+        m_avail_memory += (*iter).length;
+        delete [] (*iter).block;
+        iter = m_cache.erase(iter);
+        if (m_avail_memory >= length)
+          break;
       }
       else
-	++iter;
+        ++iter;
     }
   }
 
@@ -114,7 +114,7 @@ FileBlockCache::insert_and_checkout(int file_id, uint32_t file_offset,
   assert(insert_result.second);
 
   m_avail_memory -= length;
-  
+
   return true;
 }
 

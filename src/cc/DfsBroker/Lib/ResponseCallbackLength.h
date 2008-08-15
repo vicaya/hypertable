@@ -33,7 +33,8 @@ namespace Hypertable {
 
     class ResponseCallbackLength : public ResponseCallback {
     public:
-      ResponseCallbackLength(Comm *comm, EventPtr &event_ptr) : ResponseCallback(comm, event_ptr) { return; }
+      ResponseCallbackLength(Comm *comm, EventPtr &event_ptr)
+        : ResponseCallback(comm, event_ptr) { }
       int response(uint64_t offset);
 
     };

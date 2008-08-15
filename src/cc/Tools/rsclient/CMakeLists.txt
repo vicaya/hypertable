@@ -13,13 +13,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301, USA.
 #
 
 set(SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Tools/rsclient")
 set(DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Tools/rsclient")
 
-set(TEST_DEPENDENCIES ${DST_DIR}/Test1-data.txt ${DST_DIR}/Test2-data.txt ${DST_DIR}/Test4-data.txt)
+set(TEST_DEPENDENCIES ${DST_DIR}/Test1-data.txt ${DST_DIR}/Test2-data.txt
+    ${DST_DIR}/Test4-data.txt)
 
 set(rsclient_SRCS
 rsclient.cc

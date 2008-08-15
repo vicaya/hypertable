@@ -36,7 +36,8 @@ using namespace std;
 
 
 CellCache::~CellCache() {
-  for (CellMap::iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++)
+  for (CellMap::iterator iter = m_cell_map.begin();
+       iter != m_cell_map.end(); ++iter)
     delete [] (uint8_t *)(*iter).first.ptr;
   Global::memory_tracker.remove_memory(m_memory_used);
   Global::memory_tracker.remove_items(m_cell_map.size());
@@ -89,7 +90,7 @@ void CellCache::get_split_rows(std::vector<std::string> &split_rows) {
     CellMap::const_iterator iter = m_cell_map.begin();
     size_t i=0, mid = m_cell_map.size() / 2;
     for (i=0; i<mid; i++)
-      iter++;
+      ++iter;
     split_rows.push_back((*iter).first.row());
   }
 }
@@ -99,7 +100,8 @@ void CellCache::get_split_rows(std::vector<std::string> &split_rows) {
 void CellCache::get_rows(std::vector<std::string> &rows) {
   boost::mutex::scoped_lock lock(m_mutex);
   const char *row, *last_row = "";
-  for (CellMap::const_iterator iter = m_cell_map.begin(); iter != m_cell_map.end(); iter++) {
+  for (CellMap::const_iterator iter = m_cell_map.begin();
+       iter != m_cell_map.end(); ++iter) {
     row = (*iter).first.row();
     if (strcmp(row, last_row)) {
       rows.push_back(row);

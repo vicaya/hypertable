@@ -28,7 +28,8 @@ import java.util.HashMap;
 
 public class ApplicationQueue {
 
-    static final Logger log = Logger.getLogger("org.hypertable.AsyncComm.ApplicationQueue");
+    static final Logger log = Logger.getLogger(
+        "org.hypertable.AsyncComm.ApplicationQueue");
 
     static private boolean ms_shutdown = false;
 
@@ -48,7 +49,8 @@ public class ApplicationQueue {
         LinkedList<WorkRec> mQueue;
         HashMap<Long, UsageRec> mUsageMap;
 
-        Worker(LinkedList<WorkRec> workQueue, HashMap<Long, UsageRec> usageMap) {
+        Worker(LinkedList<WorkRec> workQueue, HashMap<Long, UsageRec>
+               usageMap) {
             mQueue    = workQueue;
             mUsageMap = usageMap;
         }
@@ -64,8 +66,8 @@ public class ApplicationQueue {
                     synchronized (mQueue) {
 
                         while (mQueue.isEmpty()) {
-			    if (ms_shutdown)
-				return;
+                            if (ms_shutdown)
+                                return;
                             mQueue.wait();
                         }
 
@@ -82,13 +84,13 @@ public class ApplicationQueue {
                                 rec = null;
                             }
                         }
-			if (rec == null) {
-			    if (ms_shutdown)
-				return;
+                        if (rec == null) {
+                            if (ms_shutdown)
+                                return;
                             mQueue.wait();
-			    if (ms_shutdown)
-				return;
-			}
+                            if (ms_shutdown)
+                                return;
+                        }
                     }
 
                     if (rec != null) {
@@ -147,7 +149,7 @@ public class ApplicationQueue {
     }
 
     public void Shutdown() {
-	ms_shutdown = true;
+        ms_shutdown = true;
         for (int i=0; i<threads.length; i++) {
             threads[i].interrupt();
         }

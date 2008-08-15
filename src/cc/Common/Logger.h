@@ -112,7 +112,7 @@ namespace Hypertable { namespace Logger {
 #define HT_LOG_ENTER do { \
   if (Logger::logger->isDebugEnabled()) {\
     if (Logger::show_line_numbers) \
-      Logger::logger->debug("(%s:%d) %s() ENTER", __FILE__, __LINE__, HT_FUNC); \
+      Logger::logger->debug("(%s:%d) %s() ENTER", __FILE__, __LINE__, HT_FUNC);\
     else \
       Logger::logger->debug("%s() ENTER", HT_FUNC); \
   } \

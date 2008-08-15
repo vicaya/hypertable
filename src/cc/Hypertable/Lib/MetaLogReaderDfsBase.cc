@@ -87,7 +87,7 @@ MetaLogReaderDfsBase::next(ScanEntry &entry) {
     return &entry;
   }
   catch (Exception &e) {
-    HT_THROW2F(e.code(), e, "Error reading metalog: %s: read %lu/%lu",
-               m_path.c_str(), (unsigned long)m_cur, (unsigned long)m_file_size);
+    HT_THROW2F(e.code(), e, "Error reading metalog: %s: read %llu/%llu",
+               m_path.c_str(), (Llu)m_cur, (Llu)m_file_size);
   }
 }

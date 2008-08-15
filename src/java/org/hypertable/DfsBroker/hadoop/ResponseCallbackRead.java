@@ -37,10 +37,10 @@ public class ResponseCallbackRead extends ResponseCallback {
     int response(long offset, int nread, byte [] data) {
         mHeaderBuilder.InitializeFromRequest(mEvent.msg);
         CommBuf cbuf;
-	if (nread > 0)
-	    cbuf = new CommBuf(mHeaderBuilder, 16, data, nread);
-	else
-	    cbuf = new CommBuf(mHeaderBuilder, 16);
+        if (nread > 0)
+            cbuf = new CommBuf(mHeaderBuilder, 16, data, nread);
+        else
+            cbuf = new CommBuf(mHeaderBuilder, 16);
         cbuf.AppendInt(Error.OK);
         cbuf.AppendLong(offset);
         cbuf.AppendInt(nread);

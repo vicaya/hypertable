@@ -55,9 +55,14 @@ namespace Hypertable {
     return m_command_strings[command];
   }
 
-  CommBuf *RangeServerProtocol::create_request_load_range(TableIdentifier &table, RangeSpec &range, const char *transfer_log, RangeState &range_state) {
+  CommBuf *
+  RangeServerProtocol::create_request_load_range(const TableIdentifier &table,
+      const RangeSpec &range, const char *transfer_log,
+      const RangeState &range_state) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
-    CommBuf *cbuf = new CommBuf(hbuilder, 2 + table.encoded_length() + range.encoded_length() + encoded_length_str16(transfer_log) + range_state.encoded_length());
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + table.encoded_length()
+        + range.encoded_length() + encoded_length_str16(transfer_log)
+        + range_state.encoded_length());
     cbuf->append_i16(COMMAND_LOAD_RANGE);
     table.encode(cbuf->get_data_ptr_address());
     range.encode(cbuf->get_data_ptr_address());
@@ -66,7 +71,9 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::create_request_update(TableIdentifier &table, uint32_t count, StaticBuffer &buffer) {
+  CommBuf *
+  RangeServerProtocol::create_request_update(const TableIdentifier &table,
+      uint32_t count, StaticBuffer &buffer) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
     CommBuf *cbuf = new CommBuf(hbuilder, 6 + table.encoded_length(), buffer);
     cbuf->append_i16(COMMAND_UPDATE);
@@ -75,9 +82,12 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::create_request_create_scanner(TableIdentifier &table, RangeSpec &range, ScanSpec &scan_spec) {
+  CommBuf *RangeServerProtocol::
+  create_request_create_scanner(const TableIdentifier &table,
+      const RangeSpec &range, const ScanSpec &scan_spec) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
-    CommBuf *cbuf = new CommBuf(hbuilder, 2 + table.encoded_length() + range.encoded_length() + scan_spec.encoded_length());
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + table.encoded_length()
+        + range.encoded_length() + scan_spec.encoded_length());
     cbuf->append_i16(COMMAND_CREATE_SCANNER);
     table.encode(cbuf->get_data_ptr_address());
     range.encode(cbuf->get_data_ptr_address());
@@ -101,7 +111,8 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::create_request_drop_table(TableIdentifier &table) {
+  CommBuf *
+  RangeServerProtocol::create_request_drop_table(const TableIdentifier &table) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
     CommBuf *cbuf = new CommBuf(hbuilder, 2 + table.encoded_length());
     cbuf->append_i16(COMMAND_DROP_TABLE);
@@ -138,9 +149,12 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::create_request_replay_load_range(TableIdentifier &table, RangeSpec &range, RangeState &range_state) {
+  CommBuf *RangeServerProtocol::
+  create_request_replay_load_range(const TableIdentifier &table,
+      const RangeSpec &range, const RangeState &range_state) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
-    CommBuf *cbuf = new CommBuf(hbuilder, 2 + table.encoded_length() + range.encoded_length() + range_state.encoded_length());
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + table.encoded_length()
+        + range.encoded_length() + range_state.encoded_length());
     cbuf->append_i16(COMMAND_REPLAY_LOAD_RANGE);
     table.encode(cbuf->get_data_ptr_address());
     range.encode(cbuf->get_data_ptr_address());
@@ -148,7 +162,8 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::create_request_replay_update(StaticBuffer &buffer) {
+  CommBuf *
+  RangeServerProtocol::create_request_replay_update(StaticBuffer &buffer) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
     CommBuf *cbuf = new CommBuf(hbuilder, 2, buffer);
     cbuf->append_i16(COMMAND_REPLAY_UPDATE);
@@ -162,9 +177,12 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::create_request_drop_range(TableIdentifier &table, RangeSpec &range) {
+  CommBuf *
+  RangeServerProtocol::create_request_drop_range(const TableIdentifier &table,
+                                                 const RangeSpec &range) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
-    CommBuf *cbuf = new CommBuf(hbuilder, 2 + table.encoded_length() + range.encoded_length());
+    CommBuf *cbuf = new CommBuf(hbuilder, 2 + table.encoded_length()
+                                + range.encoded_length());
     cbuf->append_i16(COMMAND_DROP_RANGE);
     table.encode(cbuf->get_data_ptr_address());
     range.encode(cbuf->get_data_ptr_address());
@@ -178,5 +196,4 @@ namespace Hypertable {
     return cbuf;
   }
 
-}
-
+} // namespace Hypertable

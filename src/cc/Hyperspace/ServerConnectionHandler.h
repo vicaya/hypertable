@@ -34,8 +34,11 @@ namespace Hyperspace {
    */
   class ServerConnectionHandler : public DispatchHandler {
   public:
-    ServerConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue, MasterPtr &master)
-      : m_comm(comm), m_app_queue_ptr(app_queue), m_master_ptr(master), m_session_id(0) { return; }
+    ServerConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue,
+                            MasterPtr &master)
+      : m_comm(comm), m_app_queue_ptr(app_queue), m_master_ptr(master),
+        m_session_id(0) { }
+
     virtual void handle(EventPtr &event_ptr);
 
   private:

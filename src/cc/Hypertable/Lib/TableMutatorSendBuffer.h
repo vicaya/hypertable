@@ -39,7 +39,11 @@ namespace Hypertable {
    */
   class TableMutatorSendBuffer : public ReferenceCount {
   public:
-    TableMutatorSendBuffer(TableIdentifier *tid, TableMutatorCompletionCounter *cc, RangeLocator *rl) : counterp(cc), send_count(0), retry_count(0), m_table_identifier(tid), m_range_locator(rl) { return; }
+    TableMutatorSendBuffer(const TableIdentifier *tid,
+        TableMutatorCompletionCounter *cc, RangeLocator *rl)
+      : counterp(cc), send_count(0), retry_count(0), m_table_identifier(tid),
+        m_range_locator(rl) { }
+
     void add_retries(uint32_t count, uint32_t offset, uint32_t len) {
       accum.add(pending_updates.base+offset, len);
       counterp->set_retries();
@@ -102,11 +106,12 @@ namespace Hypertable {
     uint32_t retry_count;
 
   private:
-    TableIdentifier *m_table_identifier;
+    const TableIdentifier *m_table_identifier;
     RangeLocator *m_range_locator;
   };
-  typedef boost::intrusive_ptr<TableMutatorSendBuffer> TableMutatorSendBufferPtr;
 
-}
+  typedef intrusive_ptr<TableMutatorSendBuffer> TableMutatorSendBufferPtr;
+
+} // namespace Hypertable
 
 #endif // HYPERTABLE_TABLEMUTATORSENDBUFFER_H

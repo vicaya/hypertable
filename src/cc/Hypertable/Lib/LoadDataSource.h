@@ -55,8 +55,8 @@ namespace Hypertable {
     }
 
     virtual bool next(uint32_t *type_flagp, KeySpec *keyp,
-		      uint8_t **valuep, uint32_t *value_lenp,
-		      uint32_t *consumedp);
+                      uint8_t **valuep, uint32_t *value_lenp,
+                      uint32_t *consumedp);
 
   private:
 

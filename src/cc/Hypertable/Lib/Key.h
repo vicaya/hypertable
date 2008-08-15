@@ -46,10 +46,10 @@ namespace Hypertable {
   class Key {
   public:
 
-    static const uint8_t CONTROL_MASK_HAVE_REVISION  = 0x80;
-    static const uint8_t CONTROL_MASK_HAVE_TIMESTAMP = 0x40;
-    static const uint8_t CONTROL_MASK_AUTO_TIMESTAMP = 0x20;
-    static const uint8_t CONTROL_MASK_SHARED         = 0x10;
+    static const uint8_t HAVE_REVISION  = 0x80;
+    static const uint8_t HAVE_TIMESTAMP = 0x40;
+    static const uint8_t AUTO_TIMESTAMP = 0x20;
+    static const uint8_t REV_IS_TS      = 0x10;
 
     static const char *END_ROW_MARKER;
     static const char *END_ROOT_ROW;
@@ -111,7 +111,7 @@ namespace Hypertable {
     bool load(SerializedKey key);
     inline size_t len_row() const {
       return(strlen(row) + 1);
-    } 
+    }
     inline size_t len_column_family() const {
       return(column_qualifier - row);
     }
@@ -145,7 +145,8 @@ namespace Hypertable {
   /**
    * Prints a one-line representation of the key to the given ostream.
    */
-  inline std::ostream &operator<<(std::ostream &os, const SerializedKey &serkey) {
+  inline std::ostream &
+  operator<<(std::ostream &os, const SerializedKey &serkey) {
     Key key(serkey);
     os << key;
     return os;
@@ -158,32 +159,31 @@ namespace Hypertable {
    * can be lexicographically compared.  The opaque key has the following
    * packed format:
    * <p>
-   * &lt;rowkey&gt; NUL &lt;column-family&gt; &lt;column-qualifier&gt; NULL &lt;flag&gt; ~BIGENDIAN(&lt;timestamp&gt;)
+   * [rowkey][column-family][column-qualifier][flag][~BIGENDIAN(timestamp)]
    * <p>
    * @param flag DELETE_ROW, DELETE_CELL, or INSERT
    * @param row NUL-terminated row key
    * @param column_family_code column family
    * @param column_qualifier NUL-terminated column qualifier
-   * @param timestamp timestamp in microseconds 
-   * @param revision 
+   * @param timestamp timestamp in microseconds
+   * @param revision
    * @return newly allocated opaque key
    */
   ByteString create_key(uint8_t flag, const char *row,
-			uint8_t column_family_code,
+                        uint8_t column_family_code,
                         const char *column_qualifier,
-			int64_t timestamp = AUTO_ASSIGN,
-			int64_t revision = AUTO_ASSIGN);
+                        int64_t timestamp = AUTO_ASSIGN,
+                        int64_t revision = AUTO_ASSIGN);
 
   void create_key_and_append(DynamicBuffer &dst_buf, const char *row);
 
   void create_key_and_append(DynamicBuffer &dst_buf, uint8_t flag,
                              const char *row, uint8_t column_family_code,
                              const char *column_qualifier,
-			     int64_t timestamp = AUTO_ASSIGN,
-			     int64_t revision = AUTO_ASSIGN);
-  
+                             int64_t timestamp = AUTO_ASSIGN,
+                             int64_t revision = AUTO_ASSIGN);
 
-}
+} // namespace Hypertable
 
 #endif // HYPERTABLE_KEY_H
 

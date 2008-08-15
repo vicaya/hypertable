@@ -57,8 +57,10 @@ public abstract class Protocol {
 
     public abstract String CommandText(short command);
 
-    public static CommBuf CreateErrorMessage(HeaderBuilder hbuilder, int error, String msg) {
-        CommBuf cbuf = new CommBuf(hbuilder, 4 + Serialization.EncodedLengthString(msg));
+    public static CommBuf CreateErrorMessage(HeaderBuilder hbuilder, int error,
+                                             String msg) {
+        CommBuf cbuf = new CommBuf(hbuilder, 4
+                                   + Serialization.EncodedLengthString(msg));
         cbuf.AppendInt(error);
         cbuf.AppendString(msg);
         return cbuf;

@@ -116,34 +116,44 @@ public class Error {
         return mTextMap.get(lcode);
     }
 
-    static private HashMap<Integer, String> mTextMap = new HashMap<Integer, String>();
+    static private HashMap<Integer, String> mTextMap =
+        new HashMap<Integer, String>();
 
     static {
         mTextMap.put(OK,                         "HYPERTABLE ok");
         mTextMap.put(PROTOCOL_ERROR,             "HYPERTABLE protocol error");
-        mTextMap.put(REQUEST_TRUNCATED,          "HYPERTABLE request truncated");
-        mTextMap.put(RESPONSE_TRUNCATED,         "HYPERTABLE response truncated");
+        mTextMap.put(REQUEST_TRUNCATED,  "HYPERTABLE request truncated");
+        mTextMap.put(RESPONSE_TRUNCATED, "HYPERTABLE response truncated");
         mTextMap.put(REQUEST_TIMEOUT,            "HYPERTABLE request timeout");
         mTextMap.put(LOCAL_IO_ERROR,             "HYPERTABLE local i/o error");
-        mTextMap.put(BAD_ROOT_LOCATION,          "HYPERTABLE bad root location");
+        mTextMap.put(BAD_ROOT_LOCATION,  "HYPERTABLE bad root location");
         mTextMap.put(BAD_SCHEMA,                 "HYPERTABLE bad schema");
         mTextMap.put(INVALID_METADATA,           "HYPERTABLE invalid metadata");
         mTextMap.put(BAD_KEY,                    "HYPERTABLE bad key");
-        mTextMap.put(METADATA_NOT_FOUND,         "HYPERTABLE metadata not found");
+        mTextMap.put(METADATA_NOT_FOUND, "HYPERTABLE metadata not found");
         mTextMap.put(HQL_PARSE_ERROR,            "HYPERTABLE HQL parse error");
         mTextMap.put(FILE_NOT_FOUND,             "HYPERTABLE file not found");
-        mTextMap.put(BLOCK_COMPRESSOR_UNSUPPORTED_TYPE,  "HYPERTABLE block compressor unsupported type");
-        mTextMap.put(BLOCK_COMPRESSOR_INVALID_ARG,       "HYPERTABLE block compressor invalid arg");
-        mTextMap.put(BLOCK_COMPRESSOR_TRUNCATED,         "HYPERTABLE block compressor block truncated");
-        mTextMap.put(BLOCK_COMPRESSOR_BAD_HEADER,        "HYPERTABLE block compressor bad block header");
-        mTextMap.put(BLOCK_COMPRESSOR_BAD_MAGIC,         "HYPERTABLE block compressor bad magic string");
-        mTextMap.put(BLOCK_COMPRESSOR_CHECKSUM_MISMATCH, "HYPERTABLE block compressor block checksum mismatch");
-        mTextMap.put(BLOCK_COMPRESSOR_DEFLATE_ERROR,     "HYPERTABLE block compressor deflate error");
-        mTextMap.put(BLOCK_COMPRESSOR_INFLATE_ERROR,     "HYPERTABLE block compressor inflate error");
-        mTextMap.put(BLOCK_COMPRESSOR_INIT_ERROR,        "HYPERTABLE block compressor initialization error");
-        mTextMap.put(TABLE_DOES_NOT_EXIST,       "HYPERTABLE table does not exist");
-        mTextMap.put(FAILED_EXPECTATION,         "HYPERTABLE failed expectation");
-        mTextMap.put(MALFORMED_REQUEST,          "HYPERTABLE malformed request");
+        mTextMap.put(BLOCK_COMPRESSOR_UNSUPPORTED_TYPE,
+            "HYPERTABLE block compressor unsupported type");
+        mTextMap.put(BLOCK_COMPRESSOR_INVALID_ARG,
+            "HYPERTABLE block compressor invalid arg");
+        mTextMap.put(BLOCK_COMPRESSOR_TRUNCATED,
+            "HYPERTABLE block compressor block truncated");
+        mTextMap.put(BLOCK_COMPRESSOR_BAD_HEADER,
+            "HYPERTABLE block compressor bad block header");
+        mTextMap.put(BLOCK_COMPRESSOR_BAD_MAGIC,
+            "HYPERTABLE block compressor bad magic string");
+        mTextMap.put(BLOCK_COMPRESSOR_CHECKSUM_MISMATCH,
+            "HYPERTABLE block compressor block checksum mismatch");
+        mTextMap.put(BLOCK_COMPRESSOR_DEFLATE_ERROR,
+            "HYPERTABLE block compressor deflate error");
+        mTextMap.put(BLOCK_COMPRESSOR_INFLATE_ERROR,
+            "HYPERTABLE block compressor inflate error");
+        mTextMap.put(BLOCK_COMPRESSOR_INIT_ERROR,
+            "HYPERTABLE block compressor initialization error");
+        mTextMap.put(TABLE_DOES_NOT_EXIST, "HYPERTABLE table does not exist");
+        mTextMap.put(FAILED_EXPECTATION,   "HYPERTABLE failed expectation");
+        mTextMap.put(MALFORMED_REQUEST,    "HYPERTABLE malformed request");
         mTextMap.put(COMM_NOT_CONNECTED,         "COMM not connected");
         mTextMap.put(COMM_BROKEN_CONNECTION,     "COMM broken connection");
         mTextMap.put(COMM_CONNECT_ERROR,         "COMM connect error");
@@ -156,20 +166,24 @@ public class Error {
         mTextMap.put(DFSBROKER_IO_ERROR,         "DFS BROKER i/o error");
         mTextMap.put(DFSBROKER_FILE_NOT_FOUND,   "DFS BROKER file not found");
         mTextMap.put(DFSBROKER_BAD_FILENAME,     "DFS BROKER bad filename");
-        mTextMap.put(DFSBROKER_PERMISSION_DENIED,"DFS BROKER permission denied");
+        mTextMap.put(DFSBROKER_PERMISSION_DENIED,
+            "DFS BROKER permission denied");
         mTextMap.put(DFSBROKER_INVALID_ARGUMENT, "DFS BROKER invalid argument");
         mTextMap.put(HYPERSPACE_IO_ERROR,        "HYPERSPACE i/o error");
         mTextMap.put(HYPERSPACE_CREATE_FAILED,   "HYPERSPACE create failed");
         mTextMap.put(HYPERSPACE_FILE_NOT_FOUND,  "HYPERSPACE file not found");
-        mTextMap.put(HYPERSPACE_ATTR_NOT_FOUND,  "HYPERSPACE attribute not found");
+        mTextMap.put(HYPERSPACE_ATTR_NOT_FOUND,
+            "HYPERSPACE attribute not found");
         mTextMap.put(HYPERSPACE_DELETE_ERROR,    "HYPERSPACE delete error");
         mTextMap.put(HYPERSPACE_BAD_PATHNAME,    "HYPERSPACE bad pathname");
-        mTextMap.put(HYPERSPACE_PERMISSION_DENIED, "HYPERSPACE permission denied");
+        mTextMap.put(HYPERSPACE_PERMISSION_DENIED,
+            "HYPERSPACE permission denied");
         mTextMap.put(HYPERSPACE_EXPIRED_SESSION, "HYPERSPACE expired session");
         mTextMap.put(HYPERSPACE_FILE_EXISTS,     "HYPERSPACE file exists");
         mTextMap.put(HYPERSPACE_IS_DIRECTORY,    "HYPERSPACE is directory");
         mTextMap.put(HYPERSPACE_INVALID_HANDLE,  "HYPERSPACE invalid handle");
-        mTextMap.put(HYPERSPACE_REQUEST_CANCELLED,"HYPERSPACE request cancelled");
+        mTextMap.put(HYPERSPACE_REQUEST_CANCELLED,
+            "HYPERSPACE request cancelled");
         mTextMap.put(HYPERSPACE_MODE_RESTRICTION,"HYPERSPACE mode restriction");
         mTextMap.put(HYPERSPACE_ALREADY_LOCKED,  "HYPERSPACE already locked");
         mTextMap.put(HYPERSPACE_LOCK_CONFLICT,   "HYPERSPACE lock conflict");
@@ -178,24 +192,41 @@ public class Error {
         mTextMap.put(MASTER_TABLE_EXISTS,        "MASTER table exists");
         mTextMap.put(MASTER_TABLE_EXISTS,        "MASTER bad schema");
         mTextMap.put(MASTER_NOT_RUNNING,         "MASTER not running");
-        mTextMap.put(RANGESERVER_GENERATION_MISMATCH,   "RANGE SERVER generation mismatch");
-        mTextMap.put(RANGESERVER_RANGE_ALREADY_LOADED,  "RANGE SERVER range already loaded");
-        mTextMap.put(RANGESERVER_RANGE_MISMATCH,        "RANGE SERVER range mismatch");
-        mTextMap.put(RANGESERVER_NONEXISTENT_RANGE,     "RANGE SERVER non-existent range");
-        mTextMap.put(RANGESERVER_OUT_OF_RANGE,          "RANGE SERVER out of range");
-        mTextMap.put(RANGESERVER_RANGE_NOT_FOUND,       "RANGE SERVER range not found");
-        mTextMap.put(RANGESERVER_INVALID_SCANNER_ID,    "RANGE SERVER invalid scanner id");
-        mTextMap.put(RANGESERVER_SCHEMA_PARSE_ERROR,    "RANGE SERVER schema parse error");
-        mTextMap.put(RANGESERVER_SCHEMA_INVALID_CFID,   "RANGE SERVER invalid column family id");
-        mTextMap.put(RANGESERVER_INVALID_COLUMNFAMILY,  "RANGE SERVER invalid column family");
-        mTextMap.put(RANGESERVER_TRUNCATED_COMMIT_LOG,  "RANGE SERVER truncated commit log");
-        mTextMap.put(RANGESERVER_NO_METADATA_FOR_RANGE, "RANGE SERVER no metadata for range");
-        mTextMap.put(RANGESERVER_CORRUPT_COMMIT_LOG,    "RANGE SERVER corrupt commit log");
-        mTextMap.put(RANGESERVER_SHUTTING_DOWN,         "RANGE SERVER shutting down");
-        mTextMap.put(RANGESERVER_UNAVAILABLE,           "RANGE SERVER unavailable");
-        mTextMap.put(RANGESERVER_TIMESTAMP_ORDER_ERROR, "RANGE SERVER supplied timestamp is not strictly increasing");
-        mTextMap.put(RANGESERVER_ROW_OVERFLOW,          "RANGE SERVER row overflow");
-        mTextMap.put(RANGESERVER_TABLE_NOT_FOUND,       "RANGE SERVER table not found");
+        mTextMap.put(RANGESERVER_GENERATION_MISMATCH,
+            "RANGE SERVER generation mismatch");
+        mTextMap.put(RANGESERVER_RANGE_ALREADY_LOADED,
+            "RANGE SERVER range already loaded");
+        mTextMap.put(RANGESERVER_RANGE_MISMATCH,
+            "RANGE SERVER range mismatch");
+        mTextMap.put(RANGESERVER_NONEXISTENT_RANGE,
+            "RANGE SERVER non-existent range");
+        mTextMap.put(RANGESERVER_OUT_OF_RANGE,
+            "RANGE SERVER out of range");
+        mTextMap.put(RANGESERVER_RANGE_NOT_FOUND,
+            "RANGE SERVER range not found");
+        mTextMap.put(RANGESERVER_INVALID_SCANNER_ID,
+            "RANGE SERVER invalid scanner id");
+        mTextMap.put(RANGESERVER_SCHEMA_PARSE_ERROR,
+            "RANGE SERVER schema parse error");
+        mTextMap.put(RANGESERVER_SCHEMA_INVALID_CFID,
+            "RANGE SERVER invalid column family id");
+        mTextMap.put(RANGESERVER_INVALID_COLUMNFAMILY,
+            "RANGE SERVER invalid column family");
+        mTextMap.put(RANGESERVER_TRUNCATED_COMMIT_LOG,
+            "RANGE SERVER truncated commit log");
+        mTextMap.put(RANGESERVER_NO_METADATA_FOR_RANGE,
+            "RANGE SERVER no metadata for range");
+        mTextMap.put(RANGESERVER_CORRUPT_COMMIT_LOG,
+            "RANGE SERVER corrupt commit log");
+        mTextMap.put(RANGESERVER_SHUTTING_DOWN,
+            "RANGE SERVER shutting down");
+        mTextMap.put(RANGESERVER_UNAVAILABLE,
+            "RANGE SERVER unavailable");
+        mTextMap.put(RANGESERVER_TIMESTAMP_ORDER_ERROR,
+            "RANGE SERVER supplied timestamp is not strictly increasing");
+        mTextMap.put(RANGESERVER_ROW_OVERFLOW,    "RANGE SERVER row overflow");
+        mTextMap.put(RANGESERVER_TABLE_NOT_FOUND,
+            "RANGE SERVER table not found");
         mTextMap.put(HQL_BAD_LOAD_FILE_FORMAT,    "HQL bad load file format");
     }
 }

@@ -31,7 +31,8 @@ using namespace Hypertable;
 
 int ResponseCallback::error(int error, const String &msg) {
   m_header_builder.initialize_from_request(m_event_ptr->header);
-  CommBufPtr cbp(Protocol::create_error_message(m_header_builder, error, msg.c_str()));
+  CommBufPtr cbp(Protocol::create_error_message(m_header_builder, error,
+                                                msg.c_str()));
   return m_comm->send_response(m_event_ptr->addr, cbp);
 }
 

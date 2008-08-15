@@ -58,7 +58,8 @@ namespace Hypertable {
      * @param scan_ctx smart pointer to scan context
      * @return pointer to newly allocated scanner
      */
-    virtual CellListScanner *create_scanner(ScanContextPtr &scan_ctx) { return 0; }
+    virtual CellListScanner *
+    create_scanner(ScanContextPtr &scan_ctx) { return 0; }
 
     /**
      * Returns a split row for this cell list.  This should be an approximation

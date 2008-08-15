@@ -41,10 +41,12 @@ const char *CommandMkdir::ms_usage[] = {
 void CommandMkdir::run() {
 
   if (m_args.size() != 1)
-    HT_THROW(Error::PARSE_ERROR, "Wrong number of arguments.  Type 'help' for usage.");
+    HT_THROW(Error::COMMAND_PARSE_ERROR,
+             "Wrong number of arguments.  Type 'help' for usage.");
 
   if (m_args[0].second != "")
-    HT_THROWF(Error::PARSE_ERROR, "Invalid argument - %s", m_args[0].second.c_str());
+    HT_THROWF(Error::COMMAND_PARSE_ERROR,
+              "Invalid argument - %s", m_args[0].second.c_str());
 
   m_session->mkdir(m_args[0].first);
 }

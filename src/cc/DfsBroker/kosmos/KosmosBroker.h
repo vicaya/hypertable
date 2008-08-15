@@ -57,7 +57,8 @@ namespace Hypertable {
   class OpenFileDataKosmosPtr : public OpenFileDataPtr {
   public:
     OpenFileDataKosmosPtr() : OpenFileDataPtr() { return; }
-    OpenFileDataKosmosPtr(OpenFileDataKosmos *ofdl) : OpenFileDataPtr(ofdl, true) { return; }
+    OpenFileDataKosmosPtr(OpenFileDataKosmos *ofdl)
+      : OpenFileDataPtr(ofdl, true) { return; }
     OpenFileDataKosmos *operator->() const {
       return (OpenFileDataKosmos *)get();
     }
@@ -72,9 +73,11 @@ namespace Hypertable {
     KosmosBroker(PropertiesPtr &props);
     virtual ~KosmosBroker();
 
-    virtual void open(ResponseCallbackOpen *cb, const char *fname, uint32_t bufsz);
-    virtual void create(ResponseCallbackOpen *cb, const char *fname, bool overwrite,
-                        uint32_t bufsz, uint16_t replication, uint64_t blksz);
+    virtual void open(ResponseCallbackOpen *cb, const char *fname,
+                      uint32_t bufsz);
+    virtual void create(ResponseCallbackOpen *cb, const char *fname,
+                        bool overwrite, uint32_t bufsz, uint16_t replication,
+                        uint64_t blksz);
     virtual void close(ResponseCallback *cb, uint32_t fd);
     virtual void read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount);
     virtual void append(ResponseCallbackAppend *cb, uint32_t fd,
@@ -82,7 +85,8 @@ namespace Hypertable {
     virtual void seek(ResponseCallback *cb, uint32_t fd, uint64_t offset);
     virtual void remove(ResponseCallback *cb, const char *fname);
     virtual void length(ResponseCallbackLength *cb, const char *fname);
-    virtual void pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset, uint32_t amount);
+    virtual void pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
+                       uint32_t amount);
     virtual void mkdirs(ResponseCallback *cb, const char *dname);
     virtual void rmdir(ResponseCallback *cb, const char *dname);
     virtual void flush(ResponseCallback *cb, uint32_t fd);

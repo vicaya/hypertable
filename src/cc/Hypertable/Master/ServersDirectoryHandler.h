@@ -38,8 +38,11 @@ namespace Hypertable {
   public:
     ServersDirectoryHandler(MasterPtr master,
                             ApplicationQueuePtr &app_queue)
-        : Hyperspace::HandleCallback(EVENT_MASK_CHILD_NODE_ADDED), m_master_ptr(master), m_app_queue_ptr(app_queue) { return; }
-    virtual void child_node_added(std::string name);
+      : Hyperspace::HandleCallback(EVENT_MASK_CHILD_NODE_ADDED),
+        m_master_ptr(master), m_app_queue_ptr(app_queue) { }
+
+    virtual void child_node_added(const std::string &name);
+
     MasterPtr           m_master_ptr;
     ApplicationQueuePtr m_app_queue_ptr;
   };

@@ -60,7 +60,7 @@ void CommandCopyToLocal::run() {
   uint8_t *dst;
 
   if (m_args.size() < 2)
-    HT_THROW(Error::PARSE_ERROR, "Insufficient number of arguments");
+    HT_THROW(Error::COMMAND_PARSE_ERROR, "Insufficient number of arguments");
 
   if (!strcmp(m_args[0].first.c_str(), "--seek") && m_args[0].second != "") {
     start_off = strtol(m_args[0].second.c_str(), 0, 10);
@@ -83,17 +83,16 @@ void CommandCopyToLocal::run() {
     m_client->read(fd, BUFFER_SIZE, &sync_handler);
 
     while (sync_handler.wait_for_reply(event_ptr)) {
-
-      amount = Filesystem::decode_response_read_header(event_ptr, &offset, &dst);
-
+      amount = Filesystem::decode_response_read_header(event_ptr, &offset,
+                                                       &dst);
       if (amount > 0) {
-	if (fwrite(dst, amount, 1, fp) != 1)
-	  HT_THROW(Error::EXTERNAL, strerror(errno));
+        if (fwrite(dst, amount, 1, fp) != 1)
+          HT_THROW(Error::EXTERNAL, strerror(errno));
       }
 
       if (amount < (uint32_t)BUFFER_SIZE) {
-	sync_handler.wait_for_reply(event_ptr);
-	break;
+        sync_handler.wait_for_reply(event_ptr);
+        break;
       }
 
       m_client->read(fd, BUFFER_SIZE, &sync_handler);

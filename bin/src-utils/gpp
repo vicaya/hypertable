@@ -34,7 +34,7 @@ if (/([\s\S]*\n# \d+ "([^"]+)"[^\n]*\n)([\s\S]*)/) {
   # the pragma is needed for certain template constructs in headers
   print { open my $hh, "|bcpp -i 2 -bcl > $hfile 2>>$logfile"; $hh or die }
       "#pragma GCC system_header\n", $header;
-  print { open my $fh, "|bcpp -i 2 -bcl > $xfile 2>>$logfile"; $fh or die } 
+  print { open my $fh, "|bcpp -i 2 -bcl > $xfile 2>>$logfile"; $fh or die }
       "#include \"$hfile\"\n", $body;
 }
 else {

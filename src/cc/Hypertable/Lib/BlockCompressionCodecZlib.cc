@@ -33,7 +33,9 @@ using namespace Hypertable;
 /**
  *
  */
-BlockCompressionCodecZlib::BlockCompressionCodecZlib(const Args &args) : m_inflate_initialized(false), m_deflate_initialized(false), m_level(Z_BEST_SPEED) {
+BlockCompressionCodecZlib::BlockCompressionCodecZlib(const Args &args)
+  : m_inflate_initialized(false), m_deflate_initialized(false),
+    m_level(Z_BEST_SPEED) {
   if (!args.empty())
     set_args(args);
 }
@@ -82,8 +84,11 @@ void BlockCompressionCodecZlib::set_args(const Args &args) {
 /**
  *
  */
-void BlockCompressionCodecZlib::deflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader &header, size_t reserve) {
-  uint32_t avail_out = input.fill() + 6 + (((input.fill() / 16000) + 1) * 5);  // see http://www.zlib.net/zlib_tech.html
+void
+BlockCompressionCodecZlib::deflate(const DynamicBuffer &input,
+    DynamicBuffer &output, BlockCompressionHeader &header, size_t reserve) {
+  // see http://www.zlib.net/zlib_tech.html
+  uint32_t avail_out = input.fill() + 6 + (((input.fill() / 16000) + 1) * 5);
 
   if (!m_deflate_initialized) {
     memset(&m_stream_deflate, 0, sizeof(m_stream_deflate));
@@ -124,7 +129,8 @@ void BlockCompressionCodecZlib::deflate(const DynamicBuffer &input, DynamicBuffe
     header.set_data_zlength(zlen);
   }
 
-  header.set_data_checksum(fletcher32(output.base + header.length(), header.get_data_zlength()));
+  header.set_data_checksum(fletcher32(output.base + header.length(),
+                           header.get_data_zlength()));
 
   deflateReset(&m_stream_deflate);
 
@@ -137,7 +143,9 @@ void BlockCompressionCodecZlib::deflate(const DynamicBuffer &input, DynamicBuffe
 /**
  *
  */
-void BlockCompressionCodecZlib::inflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader &header) {
+void
+BlockCompressionCodecZlib::inflate(const DynamicBuffer &input,
+    DynamicBuffer &output, BlockCompressionHeader &header) {
   int ret;
   const uint8_t *msg_ptr = input.base;
   size_t remaining = input.fill();

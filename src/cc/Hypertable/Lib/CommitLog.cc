@@ -41,13 +41,16 @@
 
 using namespace Hypertable;
 
-const char CommitLog::MAGIC_DATA[10] = { 'C','O','M','M','I','T','D','A','T','A' };
-const char CommitLog::MAGIC_LINK[10] = { 'C','O','M','M','I','T','L','I','N','K' };
+const char CommitLog::MAGIC_DATA[10] =
+    { 'C','O','M','M','I','T','D','A','T','A' };
+const char CommitLog::MAGIC_LINK[10] =
+    { 'C','O','M','M','I','T','L','I','N','K' };
 
 namespace {
   struct forward_sort_clfi {
-    bool operator()(const CommitLogFileInfo &clfi1, const CommitLogFileInfo &clfi2) const {
-      return clfi1.num < clfi2.num;
+    bool
+    operator()(const CommitLogFileInfo &x, const CommitLogFileInfo &y) const {
+      return x.num < y.num;
     }
   };
 }
@@ -60,7 +63,9 @@ CommitLog::~CommitLog() {
 }
 
 
-void CommitLog::initialize(Filesystem *fs, const String &log_dir, PropertiesPtr &props_ptr, CommitLogBase *init_log) {
+void
+CommitLog::initialize(Filesystem *fs, const String &log_dir,
+                      PropertiesPtr &props_ptr, CommitLogBase *init_log) {
   String compressor;
   m_fs = fs;
   m_log_dir = log_dir;
@@ -68,8 +73,11 @@ void CommitLog::initialize(Filesystem *fs, const String &log_dir, PropertiesPtr 
   m_cur_fragment_num = 0;
 
   if (props_ptr) {
-    m_max_fragment_size = props_ptr->get_int64("Hypertable.RangeServer.CommitLog.RollLimit", HYPERTABLE_RANGESERVER_COMMITLOG_ROLLLIMIT);
-    compressor = props_ptr->get("Hypertable.RangeServer.CommitLog.Compressor", HYPERTABLE_RANGESERVER_COMMITLOG_COMPRESSOR);
+    m_max_fragment_size = props_ptr->get_int64(
+        "Hypertable.RangeServer.CommitLog.RollLimit",
+        HYPERTABLE_RANGESERVER_COMMITLOG_ROLLLIMIT);
+    compressor = props_ptr->get("Hypertable.RangeServer.CommitLog.Compressor",
+        HYPERTABLE_RANGESERVER_COMMITLOG_COMPRESSOR);
   }
   else {
     m_max_fragment_size = HYPERTABLE_RANGESERVER_COMMITLOG_ROLLLIMIT;
@@ -86,7 +94,7 @@ void CommitLog::initialize(Filesystem *fs, const String &log_dir, PropertiesPtr 
     stitch_in(init_log);
     foreach (const CommitLogFileInfo &frag, m_fragment_queue) {
       if (frag.num >= m_cur_fragment_num)
-	m_cur_fragment_num = frag.num + 1;
+        m_cur_fragment_num = frag.num + 1;
     }
   }
   else {  // chose one past the max one found in the directory
@@ -96,7 +104,7 @@ void CommitLog::initialize(Filesystem *fs, const String &log_dir, PropertiesPtr 
     for (size_t i=0; i<listing.size(); i++) {
       num = atoi(listing[i].c_str());
       if (num >= m_cur_fragment_num)
-	m_cur_fragment_num = num + 1;
+        m_cur_fragment_num = num + 1;
     }
   }
 
@@ -107,7 +115,8 @@ void CommitLog::initialize(Filesystem *fs, const String &log_dir, PropertiesPtr 
     m_fd = m_fs->create(m_cur_fragment_fname, true, 8192, 3, 67108864);
   }
   catch (Hypertable::Exception &e) {
-    HT_ERRORF("Problem initializing commit log '%s' - %s (%s)", m_log_dir.c_str(), e.what(), Error::get_text(e.code()));
+    HT_ERRORF("Problem initializing commit log '%s' - %s (%s)",
+              m_log_dir.c_str(), e.what(), Error::get_text(e.code()));
     throw;
   }
 }
@@ -160,7 +169,8 @@ int CommitLog::write(DynamicBuffer &buffer, int64_t revision) {
  */
 int CommitLog::link_log(CommitLogBase *log_base) {
   int error;
-  BlockCompressionHeaderCommitLog header(MAGIC_LINK, log_base->get_latest_revision());
+  BlockCompressionHeaderCommitLog header(MAGIC_LINK,
+                                         log_base->get_latest_revision());
   DynamicBuffer input;
   String &log_dir = log_base->get_log_dir();
 
@@ -213,7 +223,8 @@ int CommitLog::close() {
   }
   catch (Hypertable::Exception &e) {
     HT_ERRORF("Problem closing commit log file '%s' - %s (%s)",
-              m_cur_fragment_fname.c_str(), e.what(), Error::get_text(e.code()));
+              m_cur_fragment_fname.c_str(), e.what(),
+              Error::get_text(e.code()));
     return e.code();
   }
 
@@ -240,10 +251,14 @@ int CommitLog::purge(int64_t revision) {
         fname = file_info.log_dir + file_info.num;
         m_fs->remove(fname);
         m_fragment_queue.pop_front();
-        HT_INFOF("Removed log fragment file='%s' revision=%lld", fname.c_str(), file_info.revision);
+        HT_INFOF("Removed log fragment file='%s' revision=%lld", fname.c_str(),
+                 file_info.revision);
       }
       else {
-        //HT_INFOF("LOG FRAGMENT PURGE breaking because %lld >= %lld", file_info.revision, revision);
+        /*
+        HT_INFOF("LOG FRAGMENT PURGE breaking because %lld >= %lld",
+                 file_info.revision, revision);
+        */
         break;
       }
     }
@@ -278,11 +293,12 @@ int CommitLog::roll() {
     file_info.purge_log_dir = false;
     file_info.block_stream = 0;
 
-    if (m_fragment_queue.empty() || m_fragment_queue.back().revision < file_info.revision)
+    if (m_fragment_queue.empty() || m_fragment_queue.back().revision
+        < file_info.revision)
       m_fragment_queue.push_back(file_info);
     else {
       m_fragment_queue.push_back(file_info);
-      sort(m_fragment_queue.begin(), m_fragment_queue.end());      
+      sort(m_fragment_queue.begin(), m_fragment_queue.end());
     }
 
     m_latest_revision = 0;
@@ -307,7 +323,9 @@ int CommitLog::roll() {
 /**
  *
  */
-int CommitLog::compress_and_write(DynamicBuffer &input, BlockCompressionHeader *header, int64_t revision) {
+int
+CommitLog::compress_and_write(DynamicBuffer &input,
+    BlockCompressionHeader *header, int64_t revision) {
   int error = Error::OK;
   EventPtr event_ptr;
   DynamicBuffer zblock;
@@ -353,7 +371,8 @@ void CommitLog::load_fragment_priority_map(LogFragmentPriorityMap &frag_map) {
     frag_map[m_latest_revision] = frag_data;
   }
 
-  for (std::deque<CommitLogFileInfo>::reverse_iterator iter = m_fragment_queue.rbegin(); iter != m_fragment_queue.rend(); iter++) {
+  for (std::deque<CommitLogFileInfo>::reverse_iterator iter
+       = m_fragment_queue.rbegin(); iter != m_fragment_queue.rend(); ++iter) {
     cumulative_total += (*iter).size;
     frag_data.distance = distance++;
     frag_data.cumulative_size = cumulative_total;

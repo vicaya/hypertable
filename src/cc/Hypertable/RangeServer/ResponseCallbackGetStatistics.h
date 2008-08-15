@@ -32,7 +32,9 @@ namespace Hypertable {
 
   class ResponseCallbackGetStatistics : public ResponseCallback {
   public:
-    ResponseCallbackGetStatistics(Comm *comm, EventPtr &event_ptr) : ResponseCallback(comm, event_ptr) { return; }
+    ResponseCallbackGetStatistics(Comm *comm, EventPtr &event_ptr)
+      : ResponseCallback(comm, event_ptr) { }
+
     int response(StaticBuffer &ext);
   };
 

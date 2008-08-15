@@ -49,7 +49,8 @@ import org.apache.hadoop.fs.FileStatus;
  */
 public class HdfsBroker {
 
-    static final Logger log = Logger.getLogger("org.hypertable.DfsBroker.hadoop");
+    static final Logger log = Logger.getLogger(
+        "org.hypertable.DfsBroker.hadoop");
 
     protected static AtomicInteger msUniqueId = new AtomicInteger(0);
 
@@ -63,25 +64,26 @@ public class HdfsBroker {
             mVerbose = false;
         str = props.getProperty("HdfsBroker.fs.default.name");
         if (str == null) {
-            java.lang.System.err.println("error: 'HdfsBroker.fs.default.name' property not specified.");
-            java.lang.System.exit(1);
+            System.err.println(
+                "error: 'HdfsBroker.fs.default.name' property not specified.");
+            System.exit(1);
         }
 
         if (mVerbose) {
-            java.lang.System.out.println("HdfsBroker.Server.fs.default.name=" + str);
+            System.out.println("HdfsBroker.Server.fs.default.name=" + str);
         }
 
         mConf.set("fs.default.name", str);
         mConf.set("dfs.client.buffer.dir", "/tmp");
         mConf.setInt("dfs.client.block.write.retries", 3);
 
-	try {
-	    mFilesystem = FileSystem.get(mConf);
-	}
-	catch (Exception e) {
-	    log.severe("ERROR: Unable to establish connection to HDFS.");
-	    System.exit(1);
-	}
+        try {
+            mFilesystem = FileSystem.get(mConf);
+        }
+        catch (Exception e) {
+            log.severe("ERROR: Unable to establish connection to HDFS.");
+            System.exit(1);
+        }
     }
 
 
@@ -112,7 +114,8 @@ public class HdfsBroker {
             fd = msUniqueId.incrementAndGet();
 
             if (mVerbose)
-                log.info("Opening file '" + fileName + "' bs=" + bufferSize + " handle = " + fd);
+                log.info("Opening file '" + fileName + "' bs=" + bufferSize
+                         + " handle = " + fd);
 
             ofd = mOpenFileMap.Create(fd, cb.GetAddress());
 
@@ -128,12 +131,14 @@ public class HdfsBroker {
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
-            log.info("I/O exception while opening file '" + fileName + "' - " + e.getMessage());
+            log.info("I/O exception while opening file '" + fileName + "' - "
+                     + e.getMessage());
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
         }
 
         if (error != Error.OK)
-            log.severe("Problem sending response to 'open' command - " + Error.GetText(error));
+            log.severe("Problem sending response to 'open' command - "
+                       + Error.GetText(error));
     }
 
 
@@ -172,8 +177,9 @@ public class HdfsBroker {
             log.severe("Error sending CLOSE response back");
     }
 
-    public void Create(ResponseCallbackCreate cb, String fileName, boolean overwrite,
-                       int bufferSize, short replication, long blockSize) {
+    public void Create(ResponseCallbackCreate cb, String fileName,
+                       boolean overwrite, int bufferSize, short replication,
+                       long blockSize) {
         int fd;
         OpenFileData ofd;
         int error = Error.OK;
@@ -201,7 +207,8 @@ public class HdfsBroker {
             if (blockSize == -1)
                 blockSize = mFilesystem.getDefaultBlockSize();
 
-            ofd.os = mFilesystem.create(new Path(fileName), overwrite, bufferSize, replication, blockSize);
+            ofd.os = mFilesystem.create(new Path(fileName), overwrite,
+                                        bufferSize, replication, blockSize);
 
             error = cb.response(fd);
         }
@@ -210,12 +217,14 @@ public class HdfsBroker {
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
-            log.info("I/O exception while creating file '" + fileName + "' - " + e.getMessage());
+            log.info("I/O exception while creating file '" + fileName + "' - "
+                     + e.getMessage());
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
         }
 
         if (error != Error.OK)
-            log.severe("Problem sending response to 'create' command - " + Error.GetText(error));
+            log.severe("Problem sending response to 'create' command - "
+                       + Error.GetText(error));
     }
 
 
@@ -241,12 +250,14 @@ public class HdfsBroker {
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
-            log.info("I/O exception while getting length of file '" + fileName + "' - " + e.getMessage());
+            log.info("I/O exception while getting length of file '" + fileName
+                     + "' - " + e.getMessage());
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
         }
 
         if (error != Error.OK)
-            log.severe("Problem sending response to 'length' command - " + Error.GetText(error));
+            log.severe("Problem sending response to 'length' command - "
+                       + Error.GetText(error));
     }
 
 
@@ -262,7 +273,8 @@ public class HdfsBroker {
                 log.info("Making directory '" + fileName + "'");
 
             if (!mFilesystem.mkdirs(new Path(fileName)))
-                throw new IOException("Problem creating directory '" + fileName + "'");
+                throw new IOException("Problem creating directory '"
+                                      + fileName + "'");
 
             error = cb.response_ok();
 
@@ -272,12 +284,14 @@ public class HdfsBroker {
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
-            log.info("I/O exception while making directory '" + fileName + "' - " + e.getMessage());
+            log.info("I/O exception while making directory '" + fileName
+                     + "' - " + e.getMessage());
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
         }
 
         if (error != Error.OK)
-            log.severe("Problem sending response to 'mkdirs' command - " + Error.GetText(error));
+            log.severe("Problem sending response to 'mkdirs' command - "
+                       + Error.GetText(error));
     }
 
 
@@ -298,7 +312,8 @@ public class HdfsBroker {
             */
 
             if (ofd.is == null)
-                throw new IOException("File handle " + fd + " not open for reading");
+                throw new IOException("File handle " + fd
+                                      + " not open for reading");
 
             long offset = ofd.is.getPos();
 
@@ -343,7 +358,8 @@ public class HdfsBroker {
             }
 
             if (ofd.os == null)
-                throw new IOException("File handle " + ofd + " not open for writing");
+                throw new IOException("File handle " + ofd
+                                      + " not open for writing");
 
             long offset = ofd.os.getPos();
 
@@ -366,7 +382,8 @@ public class HdfsBroker {
             log.severe("Error sending WRITE response back");
     }
 
-    public void PositionRead(ResponseCallbackPositionRead cb, int fd, long offset, int amount) {
+    public void PositionRead(ResponseCallbackPositionRead cb, int fd,
+                             long offset, int amount) {
         int error = Error.OK;
         OpenFileData ofd;
 
@@ -383,7 +400,8 @@ public class HdfsBroker {
             */
 
             if (ofd.is == null)
-                throw new IOException("File handle " + fd + " not open for reading");
+                throw new IOException("File handle " + fd
+                                      + " not open for reading");
 
             byte [] data = new byte [ amount ];
 
@@ -423,7 +441,8 @@ public class HdfsBroker {
                 log.info("Removing file '" + fileName);
 
             if (!mFilesystem.delete(new Path(fileName), false))
-                throw new IOException("Problem deleting file '" + fileName + "'");
+                throw new IOException("Problem deleting file '" + fileName
+                                      + "'");
 
             error = cb.response_ok();
 
@@ -433,12 +452,14 @@ public class HdfsBroker {
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
-            log.info("I/O exception while removing file '" + fileName + "' - " + e.getMessage());
+            log.info("I/O exception while removing file '" + fileName + "' - "
+                     + e.getMessage());
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
         }
 
         if (error != Error.OK)
-            log.severe("Problem sending response to 'remove' command - " + Error.GetText(error));
+            log.severe("Problem sending response to 'remove' command - "
+                       + Error.GetText(error));
     }
 
     public void Seek(ResponseCallback cb, int fd, long offset) {
@@ -456,7 +477,8 @@ public class HdfsBroker {
                 log.info("Seek request handle=" + fd + " offset=" + offset);
 
             if (ofd.is == null)
-                throw new IOException("File handle " + fd + " not open for reading");
+                throw new IOException("File handle " + fd
+                                      + " not open for reading");
 
             ofd.is.seek(offset);
 
@@ -495,9 +517,11 @@ public class HdfsBroker {
 
             if (!mFilesystem.delete(new Path(fileName), true)) {
                 if (!mFilesystem.exists(new Path(fileName)))
-                    throw new FileNotFoundException("Problem deleting path '" + fileName + "'");
+                    throw new FileNotFoundException("Problem deleting path '"
+                                                    + fileName + "'");
                 else
-                    throw new IOException("Problem deleting path '" + fileName + "'");
+                    throw new IOException("Problem deleting path '" + fileName
+                                          + "'");
             }
 
             error = cb.response_ok();
@@ -508,12 +532,14 @@ public class HdfsBroker {
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
-            log.info("I/O exception while removing directory '" + fileName + "' - " + e.getMessage());
+            log.info("I/O exception while removing directory '" + fileName
+                     + "' - " + e.getMessage());
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
         }
 
         if (error != Error.OK)
-            log.severe("Problem sending response to 'rmdir' command - " + Error.GetText(error));
+            log.severe("Problem sending response to 'rmdir' command - "
+                       + Error.GetText(error));
     }
 
 
@@ -553,12 +579,14 @@ public class HdfsBroker {
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
-            log.info("I/O exception while reading directory '" + dirName + "' - " + e.getMessage());
+            log.info("I/O exception while reading directory '" + dirName
+                     + "' - " + e.getMessage());
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
         }
 
         if (error != Error.OK)
-            log.severe("Problem sending response to 'readdir' command - " + Error.GetText(error));
+            log.severe("Problem sending response to 'readdir' command - "
+                       + Error.GetText(error));
     }
 
     /**
@@ -578,12 +606,14 @@ public class HdfsBroker {
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
-            log.info("I/O exception while checking for existence of file '" + fileName + "' - " + e.getMessage());
+            log.info("I/O exception while checking for existence of file '"
+                     + fileName + "' - " + e.getMessage());
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.getMessage());
         }
 
         if (error != Error.OK)
-            log.severe("Problem sending response to 'exists' command - " + Error.GetText(error));
+            log.severe("Problem sending response to 'exists' command - "
+                       + Error.GetText(error));
     }
 
     /**

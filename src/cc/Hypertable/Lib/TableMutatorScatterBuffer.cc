@@ -39,12 +39,12 @@ namespace {
  *
  */
 TableMutatorScatterBuffer::TableMutatorScatterBuffer(PropertiesPtr &props_ptr,
-    Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr,
+    Comm *comm, const TableIdentifier *table_identifier, SchemaPtr &schema_ptr,
     RangeLocatorPtr &range_locator_ptr)
-    : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr),
-      m_range_locator_ptr(range_locator_ptr),
-      m_range_server(comm, HYPERTABLE_CLIENT_TIMEOUT),
-      m_table_identifier(*table_identifier), m_full(false), m_resends(0) {
+  : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr),
+    m_range_locator_ptr(range_locator_ptr),
+    m_range_server(comm, HYPERTABLE_CLIENT_TIMEOUT),
+    m_table_identifier(*table_identifier), m_full(false), m_resends(0) {
 
   m_range_locator_ptr->get_location_cache(m_cache_ptr);
 }
@@ -54,27 +54,33 @@ TableMutatorScatterBuffer::TableMutatorScatterBuffer(PropertiesPtr &props_ptr,
 /**
  *
  */
-void TableMutatorScatterBuffer::set(Key &key, const void *value, uint32_t value_len, Timer &timer) {
+void
+TableMutatorScatterBuffer::set(const Key &key, const void *value,
+                               uint32_t value_len, Timer &timer) {
   RangeLocationInfo range_info;
   TableMutatorSendBufferMap::const_iterator iter;
 
   if (!m_cache_ptr->lookup(m_table_identifier.id, key.row, &range_info)) {
     timer.start();
-    m_range_locator_ptr->find_loop(&m_table_identifier, key.row, &range_info, timer, false);
+    m_range_locator_ptr->find_loop(&m_table_identifier, key.row, &range_info,
+                                   timer, false);
   }
 
   iter = m_buffer_map.find(range_info.location);
 
   if (iter == m_buffer_map.end()) {
-    m_buffer_map[range_info.location] = new TableMutatorSendBuffer(&m_table_identifier, &m_completion_counter, m_range_locator_ptr.get());
+    m_buffer_map[range_info.location] = new TableMutatorSendBuffer(
+        &m_table_identifier, &m_completion_counter, m_range_locator_ptr.get());
     iter = m_buffer_map.find(range_info.location);
 
-    if (!LocationCache::location_to_addr(range_info.location.c_str(), (*iter).second->addr))
+    if (!LocationCache::location_to_addr(range_info.location.c_str(),
+        (*iter).second->addr))
       HT_THROW(Error::INVALID_METADATA, range_info.location);
   }
 
   (*iter).second->key_offsets.push_back((*iter).second->accum.fill());
-  create_key_and_append((*iter).second->accum, FLAG_INSERT, key.row, key.column_family_code, key.column_qualifier, key.timestamp);
+  create_key_and_append((*iter).second->accum, FLAG_INSERT, key.row,
+      key.column_family_code, key.column_qualifier, key.timestamp);
   append_as_byte_string((*iter).second->accum, value, value_len);
 
   if ((*iter).second->accum.fill() > MAX_SEND_BUFFER_SIZE)
@@ -85,22 +91,25 @@ void TableMutatorScatterBuffer::set(Key &key, const void *value, uint32_t value_
 /**
  *
  */
-void TableMutatorScatterBuffer::set_delete(Key &key, Timer &timer) {
+void TableMutatorScatterBuffer::set_delete(const Key &key, Timer &timer) {
   RangeLocationInfo range_info;
   TableMutatorSendBufferMap::const_iterator iter;
 
   if (!m_cache_ptr->lookup(m_table_identifier.id, key.row, &range_info)) {
     timer.start();
-    m_range_locator_ptr->find_loop(&m_table_identifier, key.row, &range_info, timer, false);
+    m_range_locator_ptr->find_loop(&m_table_identifier, key.row, &range_info,
+                                   timer, false);
   }
 
   iter = m_buffer_map.find(range_info.location);
 
   if (iter == m_buffer_map.end()) {
-    m_buffer_map[range_info.location] = new TableMutatorSendBuffer(&m_table_identifier, &m_completion_counter, m_range_locator_ptr.get());
+    m_buffer_map[range_info.location] = new TableMutatorSendBuffer(
+        &m_table_identifier, &m_completion_counter, m_range_locator_ptr.get());
     iter = m_buffer_map.find(range_info.location);
 
-    if (!LocationCache::location_to_addr(range_info.location.c_str(), (*iter).second->addr))
+    if (!LocationCache::location_to_addr(range_info.location.c_str(),
+        (*iter).second->addr))
       HT_THROW(Error::INVALID_METADATA, range_info.location);
   }
 
@@ -113,7 +122,8 @@ void TableMutatorScatterBuffer::set_delete(Key &key, Timer &timer) {
   else
     key_flag = FLAG_DELETE_COLUMN_FAMILY;
 
-  create_key_and_append((*iter).second->accum, key_flag, key.row, key.column_family_code, key.column_qualifier, key.timestamp);
+  create_key_and_append((*iter).second->accum, key_flag, key.row,
+      key.column_family_code, key.column_qualifier, key.timestamp);
   append_as_byte_string((*iter).second->accum, 0, 0);
 
   if ((*iter).second->accum.fill() > MAX_SEND_BUFFER_SIZE)
@@ -125,24 +135,30 @@ void TableMutatorScatterBuffer::set_delete(Key &key, Timer &timer) {
 /**
  *
  */
-void TableMutatorScatterBuffer::set(SerializedKey key, ByteString value, Timer &timer) {
+void
+TableMutatorScatterBuffer::set(SerializedKey key, ByteString value,
+                               Timer &timer) {
   RangeLocationInfo range_info;
   TableMutatorSendBufferMap::const_iterator iter;
   const uint8_t *ptr = key.ptr;
   size_t len = Serialization::decode_vi32(&ptr);
 
-  if (!m_cache_ptr->lookup(m_table_identifier.id, (const char *)ptr+1, &range_info)) {
+  if (!m_cache_ptr->lookup(m_table_identifier.id, (const char *)ptr+1,
+                           &range_info)) {
     timer.start();
-    m_range_locator_ptr->find_loop(&m_table_identifier, (const char *)ptr+1, &range_info, timer, false);
+    m_range_locator_ptr->find_loop(&m_table_identifier, (const char *)ptr+1,
+                                   &range_info, timer, false);
   }
 
   iter = m_buffer_map.find(range_info.location);
 
   if (iter == m_buffer_map.end()) {
-    m_buffer_map[range_info.location] = new TableMutatorSendBuffer(&m_table_identifier, &m_completion_counter, m_range_locator_ptr.get());
+    m_buffer_map[range_info.location] = new TableMutatorSendBuffer(
+        &m_table_identifier, &m_completion_counter, m_range_locator_ptr.get());
     iter = m_buffer_map.find(range_info.location);
 
-    if (!LocationCache::location_to_addr(range_info.location.c_str(), (*iter).second->addr))
+    if (!LocationCache::location_to_addr(range_info.location.c_str(),
+        (*iter).second->addr))
       HT_THROW(Error::INVALID_METADATA, range_info.location);
   }
 
@@ -186,7 +202,8 @@ void TableMutatorScatterBuffer::send() {
 
   m_completion_counter.set(m_buffer_map.size());
 
-  for (TableMutatorSendBufferMap::const_iterator iter = m_buffer_map.begin(); iter != m_buffer_map.end(); iter++) {
+  for (TableMutatorSendBufferMap::const_iterator iter = m_buffer_map.begin();
+       iter != m_buffer_map.end(); ++iter) {
     send_buffer_ptr = (*iter).second;
 
     if ((len = send_buffer_ptr->accum.fill()) == 0) {
@@ -197,15 +214,17 @@ void TableMutatorScatterBuffer::send() {
     send_buffer_ptr->pending_updates.set(new uint8_t [len], len);
 
     if (send_buffer_ptr->resend()) {
-      memcpy(send_buffer_ptr->pending_updates.base, send_buffer_ptr->accum.base, len);
+      memcpy(send_buffer_ptr->pending_updates.base,
+             send_buffer_ptr->accum.base, len);
       send_buffer_ptr->send_count = send_buffer_ptr->retry_count;
     }
     else {
       send_vec.clear();
       send_vec.reserve(send_buffer_ptr->key_offsets.size());
       for (size_t i=0; i<send_buffer_ptr->key_offsets.size(); i++) {
-	send_rec.key.ptr = send_buffer_ptr->accum.base + send_buffer_ptr->key_offsets[i];
-	send_rec.offset = send_buffer_ptr->key_offsets[i];
+        send_rec.key.ptr = send_buffer_ptr->accum.base
+                           + send_buffer_ptr->key_offsets[i];
+        send_rec.offset = send_buffer_ptr->key_offsets[i];
         send_vec.push_back(send_rec);
       }
       sort(send_vec.begin(), send_vec.end());
@@ -219,8 +238,10 @@ void TableMutatorScatterBuffer::send() {
         memcpy(ptr, send_vec[i].key.ptr, key.ptr - send_vec[i].key.ptr);
         ptr += key.ptr - send_vec[i].key.ptr;
       }
-      HT_EXPECT((size_t)(ptr-send_buffer_ptr->pending_updates.base)==len, Error::FAILED_EXPECTATION);
-      send_buffer_ptr->dispatch_handler_ptr = new TableMutatorDispatchHandler(send_buffer_ptr.get());
+      HT_EXPECT((size_t)(ptr-send_buffer_ptr->pending_updates.base)==len,
+                Error::FAILED_EXPECTATION);
+      send_buffer_ptr->dispatch_handler_ptr =
+          new TableMutatorDispatchHandler(send_buffer_ptr.get());
 
       send_buffer_ptr->send_count = send_buffer_ptr->key_offsets.size();
     }
@@ -233,11 +254,14 @@ void TableMutatorScatterBuffer::send() {
      */
     try {
       send_buffer_ptr->pending_updates.own = false;
-      m_range_server.update(send_buffer_ptr->addr, m_table_identifier, send_buffer_ptr->send_count, send_buffer_ptr->pending_updates, send_buffer_ptr->dispatch_handler_ptr.get());
+      m_range_server.update(send_buffer_ptr->addr, m_table_identifier,
+          send_buffer_ptr->send_count, send_buffer_ptr->pending_updates,
+          send_buffer_ptr->dispatch_handler_ptr.get());
     }
     catch (Exception &e) {
       if (e.code() == Error::COMM_NOT_CONNECTED) {
-        send_buffer_ptr->add_retries(send_buffer_ptr->send_count, 0, send_buffer_ptr->pending_updates.size);
+        send_buffer_ptr->add_retries(send_buffer_ptr->send_count, 0,
+                                     send_buffer_ptr->pending_updates.size);
         m_completion_counter.decrement();
       }
     }
@@ -265,13 +289,14 @@ bool TableMutatorScatterBuffer::wait_for_completion(Timer &timer) {
       TableMutatorSendBufferPtr send_buffer_ptr;
       std::vector<FailedRegion> failed_regions;
 
-      for (TableMutatorSendBufferMap::const_iterator iter = m_buffer_map.begin(); iter != m_buffer_map.end(); iter++)
-        (*iter).second->get_failed_regions(failed_regions);
+      for (TableMutatorSendBufferMap::const_iterator it = m_buffer_map.begin();
+           it != m_buffer_map.end(); ++it)
+        (*it).second->get_failed_regions(failed_regions);
 
       if (!failed_regions.empty()) {
         Cell cell;
         Key key;
-	ByteString bs;
+        ByteString bs;
         const uint8_t *endptr;
         Schema::ColumnFamily *cf;
         for (size_t i=0; i<failed_regions.size(); i++) {
@@ -288,7 +313,8 @@ bool TableMutatorScatterBuffer::wait_for_completion(Timer &timer) {
             bs.next();
             cell.value_len = bs.decode_length(&cell.value);
             bs.next();
-            m_failed_mutations.push_back(std::make_pair(cell, failed_regions[i].error));
+            m_failed_mutations.push_back(std::make_pair(cell,
+                                         failed_regions[i].error));
           }
         }
       }
@@ -307,17 +333,19 @@ bool TableMutatorScatterBuffer::wait_for_completion(Timer &timer) {
 }
 
 
-TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer(Timer &timer) {
+TableMutatorScatterBuffer *
+TableMutatorScatterBuffer::create_redo_buffer(Timer &timer) {
   TableMutatorSendBufferPtr send_buffer_ptr;
   SerializedKey key;
   ByteString value, bs;
   TableMutatorScatterBuffer *redo_buffer = 0;
 
   try {
+    redo_buffer = new TableMutatorScatterBuffer(m_props_ptr, m_comm,
+        &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
 
-    redo_buffer = new TableMutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
-
-    for (TableMutatorSendBufferMap::const_iterator iter = m_buffer_map.begin(); iter != m_buffer_map.end(); iter++) {
+    for (TableMutatorSendBufferMap::const_iterator iter = m_buffer_map.begin();
+         iter != m_buffer_map.end(); ++iter) {
       send_buffer_ptr = (*iter).second;
 
       if (send_buffer_ptr->accum.fill()) {
@@ -347,6 +375,7 @@ TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer(Timer &
 
 
 void TableMutatorScatterBuffer::reset() {
-  for (TableMutatorSendBufferMap::const_iterator iter = m_buffer_map.begin(); iter != m_buffer_map.end(); iter++)
+  for (TableMutatorSendBufferMap::const_iterator iter = m_buffer_map.begin();
+       iter != m_buffer_map.end(); ++iter)
     (*iter).second->reset();
 }

@@ -61,25 +61,30 @@ namespace Hypertable {
     virtual ~RangeServer();
 
     // range server protocol implementations
-    void compact(ResponseCallback *, TableIdentifier *, RangeSpec *,
+    void compact(ResponseCallback *, const TableIdentifier *, const RangeSpec *,
                  uint8_t compaction_type);
-    void create_scanner(ResponseCallbackCreateScanner *, TableIdentifier *,
-                        RangeSpec *, ScanSpec *);
+    void create_scanner(ResponseCallbackCreateScanner *,
+                        const TableIdentifier *,
+                        const  RangeSpec *, const ScanSpec *);
     void destroy_scanner(ResponseCallback *cb, uint32_t scanner_id);
     void fetch_scanblock(ResponseCallbackFetchScanblock *, uint32_t scanner_id);
-    void load_range(ResponseCallback *, const TableIdentifier *, const RangeSpec *,
-                    const char *transfer_log_dir, const RangeState *);
-    void update(ResponseCallbackUpdate *, TableIdentifier *, uint32_t count, StaticBuffer &);
-    void drop_table(ResponseCallback *, TableIdentifier *);
+    void load_range(ResponseCallback *, const TableIdentifier *,
+                    const RangeSpec *, const char *transfer_log_dir,
+                    const RangeState *);
+    void update(ResponseCallbackUpdate *, const TableIdentifier *,
+                uint32_t count, StaticBuffer &);
+    void drop_table(ResponseCallback *, const TableIdentifier *);
     void dump_stats(ResponseCallback *);
     void get_statistics(ResponseCallbackGetStatistics *);
 
     void replay_begin(ResponseCallback *, uint16_t group);
-    void replay_load_range(ResponseCallback *, const TableIdentifier *, const RangeSpec *, const RangeState *);
+    void replay_load_range(ResponseCallback *, const TableIdentifier *,
+                           const RangeSpec *, const RangeState *);
     void replay_update(ResponseCallback *, const uint8_t *data, size_t len);
     void replay_commit(ResponseCallback *);
 
-    void drop_range(ResponseCallback *, TableIdentifier *, RangeSpec *);
+    void drop_range(ResponseCallback *, const TableIdentifier *,
+                    const RangeSpec *);
 
     void shutdown(ResponseCallback *cb);
 
@@ -96,15 +101,19 @@ namespace Hypertable {
     void master_change();
 
     void wait_for_recovery_finish();
-    void wait_for_recovery_finish(TableIdentifier *table, RangeSpec *range);
+    void wait_for_recovery_finish(const TableIdentifier *table,
+                                  const RangeSpec *range);
 
   private:
     void initialize(PropertiesPtr &);
     void local_recover();
     void replay_log(CommitLogReaderPtr &log_reader_ptr);
     void verify_schema(TableInfoPtr &, int generation);
-    void schedule_log_cleanup_compactions(std::vector<RangePtr> &range_vec, CommitLog *log, uint64_t prune_threshold);
-    void transform_key(ByteString &bskey, DynamicBuffer *dest_bufp, int64_t revision, int64_t *revisionp);
+    void
+    schedule_log_cleanup_compactions(std::vector<RangePtr> &range_vec,
+                                     CommitLog *log, uint64_t prune_threshold);
+    void transform_key(ByteString &bskey, DynamicBuffer *dest_bufp,
+                       int64_t revision, int64_t *revisionp);
 
     Mutex                  m_mutex;
     boost::condition       m_root_replay_finished_cond;

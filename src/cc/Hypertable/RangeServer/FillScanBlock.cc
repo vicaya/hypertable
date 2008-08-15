@@ -25,7 +25,9 @@
 
 namespace Hypertable {
 
-  bool FillScanBlock(CellListScannerPtr &scanner, DynamicBuffer &dbuf, size_t *countp) {
+  bool
+  FillScanBlock(CellListScannerPtr &scanner, DynamicBuffer &dbuf,
+                size_t *countp) {
     Key key;
     ByteString value;
     size_t value_len;
@@ -54,7 +56,7 @@ namespace Hypertable {
         dbuf.add_unchecked(value.ptr, value_len);
         remaining -= (key.length + value_len);
         scanner->forward();
-	(*countp)++;
+        (*countp)++;
       }
       else
         break;

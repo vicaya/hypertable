@@ -45,14 +45,17 @@ namespace Hypertable {
   class Table : public ReferenceCount {
 
   public:
-    Table(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr, Hyperspace::SessionPtr &hyperspace_ptr, String name);
-    Table(PropertiesPtr &props_ptr, Comm *comm, Hyperspace::SessionPtr &hyperspace_ptr, String name);
+    Table(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr,
+          Hyperspace::SessionPtr &hyperspace_ptr, const String &name);
+    Table(PropertiesPtr &, Comm *, Hyperspace::SessionPtr &,
+          const String &name);
     virtual ~Table();
 
     /**
      * Creates a mutator on this table
      *
-     * @param timeout maximum time in seconds to allow mutator methods to execute before throwing an exception
+     * @param timeout maximum time in seconds to allow mutator methods to
+     *        execute before throwing an exception
      * @return newly constructed mutator object
      */
     TableMutator *create_mutator(int timeout=0);
@@ -61,14 +64,17 @@ namespace Hypertable {
      * Creates a scanner on this table
      *
      * @param scan_spec scan specification
-     * @param timeout maximum time in seconds to allow scanner methods to execute before throwing an exception
+     * @param timeout maximum time in seconds to allow scanner methods to
+     *        execute before throwing an exception
      * @return pointer to scanner object
      */
-    TableScanner *create_scanner(ScanSpec &scan_spec, int timeout=0);
+    TableScanner *create_scanner(const ScanSpec &scan_spec, int timeout=0);
 
     void get_identifier(TableIdentifier *table_id_p) {
       memcpy(table_id_p, &m_table, sizeof(TableIdentifier));
     }
+
+    const TableIdentifier &identifier() const { return m_table; }
 
   private:
 
@@ -82,8 +88,9 @@ namespace Hypertable {
     RangeLocatorPtr        m_range_locator_ptr;
     TableIdentifier        m_table;
   };
-  typedef boost::intrusive_ptr<Table> TablePtr;
 
-}
+  typedef intrusive_ptr<Table> TablePtr;
+
+} // namesapce Hypertable
 
 #endif // HYPERTABLE_TABLE_H

@@ -103,7 +103,8 @@ int main(int argc, char **argv) {
       fprintf(fp, "Attribute \"attr1\" of directory \"/foo\" is %u\n", ival);
 
     if (bdb_fs->get_xattr_i64(txn, "/foo", "attr2", &lval))
-      fprintf(fp, "Attribute \"attr2\" of directory \"/foo\" is %llu\n", (long long unsigned int)lval);
+      fprintf(fp, "Attribute \"attr2\" of directory \"/foo\" is %llu\n",
+              (long long unsigned int)lval);
 
     if (bdb_fs->get_xattr_i32(txn, "/foo", "attr3", &ival))
       fprintf(fp, "Attribute \"attr3\" of directory \"/foo\" is %u\n", ival);
@@ -166,7 +167,8 @@ int main(int argc, char **argv) {
   catch (Exception &e) {
     txn->abort();
     if (e.what())
-      HT_ERRORF("Caught exception: %s - %s", Error::get_text(e.code()), e.what());
+      HT_ERRORF("Caught exception: %s - %s", Error::get_text(e.code()),
+                e.what());
     else
       HT_ERRORF("Caught exception: %s", Error::get_text(e.code()));
     ret = 1;

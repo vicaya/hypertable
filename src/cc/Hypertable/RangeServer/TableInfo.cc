@@ -39,8 +39,10 @@ TableInfo::TableInfo(MasterClientPtr &master_client_ptr,
 
 void TableInfo::dump_range_table() {
   boost::mutex::scoped_lock lock(m_mutex);
-  for (RangeMap::iterator iter = m_range_map.begin(); iter != m_range_map.end(); iter++) {
-    cout << m_identifier.name << "[" << (*iter).second->start_row() << ".." << (*iter).second->end_row() << "]" << endl;
+  for (RangeMap::iterator iter = m_range_map.begin();
+       iter != m_range_map.end(); ++iter) {
+    cout << m_identifier.name << "[" << (*iter).second->start_row() << ".."
+         << (*iter).second->end_row() << "]" << endl;
   }
 }
 
@@ -55,7 +57,7 @@ bool TableInfo::get_range(const RangeSpec *range, RangePtr &range_ptr) {
 
   if (iter == m_range_map.end()) {
     std::cout << "TableInfo couldn't find end row (" << end_row << ")";
-    for (iter = m_range_map.begin(); iter != m_range_map.end(); iter++)
+    for (iter = m_range_map.begin(); iter != m_range_map.end(); ++iter)
       std::cout << "TableInfo map: " << (*iter).first << "\n";
     std::cout << flush;
     return false;
@@ -66,7 +68,8 @@ bool TableInfo::get_range(const RangeSpec *range, RangePtr &range_ptr) {
   string start_row = range_ptr->start_row();
 
   if (strcmp(start_row.c_str(), range->start_row)) {
-    std::cout << "TableInfo start row mismatch '" << start_row << "' != '" << range->start_row << "'" << endl;
+    std::cout << "TableInfo start row mismatch '" << start_row << "' != '"
+              << range->start_row << "'" << endl;
     return false;
   }
 
@@ -133,7 +136,8 @@ bool TableInfo::find_containing_range(std::string row, RangePtr &range_ptr) {
 
 void TableInfo::get_range_vector(std::vector<RangePtr> &range_vec) {
   boost::mutex::scoped_lock lock(m_mutex);
-  for (RangeMap::iterator iter = m_range_map.begin(); iter != m_range_map.end(); iter++)
+  for (RangeMap::iterator iter = m_range_map.begin();
+       iter != m_range_map.end(); ++iter)
     range_vec.push_back((*iter).second);
 }
 

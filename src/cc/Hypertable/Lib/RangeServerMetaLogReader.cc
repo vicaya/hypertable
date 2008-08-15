@@ -138,7 +138,7 @@ void load_entry(Reader &rd, RsiSet &rsi_set, MoveDone *ep) {
 void load_entry(Reader &rd, RsiSet &rsi_set, DropTable *ep) {
   RsiSet::iterator it = rsi_set.begin();
   RsiSet::iterator tmpit;
-  
+
   while (it != rsi_set.end()) {
     if ((*it)->table.id == ep->table.id) {
       tmpit = it;
@@ -235,7 +235,7 @@ std::ostream &operator<<(std::ostream &out, const RangeStateInfo &info) {
   if (info.transactions.size()) {
     out <<"\n  transactions=(\n";
 
-    foreach(const MetaLogEntryPtr &ptr, info.transactions) 
+    foreach(const MetaLogEntryPtr &ptr, info.transactions)
       out <<"    "<< ptr.get() <<'\n';
 
     out <<"  )";

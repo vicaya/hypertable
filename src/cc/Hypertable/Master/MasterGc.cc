@@ -136,7 +136,8 @@ struct GcWorker {
                  << cell.column_family <<", "<< cell.column_qualifier <<", "
                  << cell.timestamp <<')'<< HT_END;
 
-    KeySpec key(cell.row_key, cell.column_family, cell.column_qualifier, cell.timestamp);
+    KeySpec key(cell.row_key, cell.column_family, cell.column_qualifier,
+                cell.timestamp);
 
     if (!m_dryrun)
       mutator->set_delete(key);

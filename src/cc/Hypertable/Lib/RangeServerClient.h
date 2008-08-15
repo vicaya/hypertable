@@ -24,6 +24,7 @@
 
 #include <boost/intrusive_ptr.hpp>
 
+#include "Common/InetAddr.h"
 #include "Common/StaticBuffer.h"
 #include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
@@ -70,7 +71,9 @@ namespace Hypertable {
      * @param range_state range state
      * @param handler response handler
      */
-    void load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, const char *transfer_log, RangeState &range_state, DispatchHandler *handler);
+    void load_range(const sockaddr_in &addr, const TableIdentifier &table,
+                    const RangeSpec &range, const char *transfer_log,
+                    const RangeState &range_state, DispatchHandler *handler);
 
     /** Issues a "load range" request.
      *
@@ -80,11 +83,14 @@ namespace Hypertable {
      * @param transfer_log transfer log
      * @param range_state range state
      */
-    void load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, const char *transfer_log, RangeState &range_state);
+    void load_range(const sockaddr_in &addr, const TableIdentifier &table,
+                    const RangeSpec &range, const char *transfer_log,
+                    const RangeState &range_state);
 
-    /** Issues an "update" request asynchronously.  The data argument holds a sequence of key/value
-     * pairs.  Each key/value pair is encoded as two variable lenght ByteString records
-     * back-to-back.  This method takes ownership of the data buffer.
+    /** Issues an "update" request asynchronously.  The data argument holds a
+     * sequence of key/value pairs.  Each key/value pair is encoded as two
+     * variable lenght ByteString records back-to-back.  This method takes
+     * ownership of the data buffer.
      *
      * @param addr remote address of RangeServer connection
      * @param table table identifier
@@ -92,18 +98,21 @@ namespace Hypertable {
      * @param buffer buffer holding key/value pairs
      * @param handler response handler
      */
-    void update(struct sockaddr_in &addr, TableIdentifier &table, uint32_t count, StaticBuffer &buffer, DispatchHandler *handler);
+    void update(const sockaddr_in &addr, const TableIdentifier &table,
+                uint32_t count, StaticBuffer &buffer, DispatchHandler *handler);
 
-    /** Issues an "update" request.  The data argument holds a sequence of key/value
-     * pairs.  Each key/value pair is encoded as two variable lenght ByteString records
-     * back-to-back.  This method takes ownership of the data buffer.
+    /** Issues an "update" request.  The data argument holds a sequence of
+     * key/value pairs.  Each key/value pair is encoded as two variable lenght
+     * ByteString records back-to-back.  This method takes ownership of the
+     * data buffer.
      *
      * @param addr remote address of RangeServer connection
      * @param table table identifier
      * @param count number of key/value pairs in buffer
      * @param buffer buffer holding key/value pairs
      */
-    void update(struct sockaddr_in &addr, TableIdentifier &table, uint32_t count, StaticBuffer &buffer);
+    void update(const sockaddr_in &addr, const TableIdentifier &table,
+                uint32_t count, StaticBuffer &buffer);
 
     /** Issues a "create scanner" request asynchronously.
      *
@@ -113,7 +122,9 @@ namespace Hypertable {
      * @param scan_spec scan specification
      * @param handler response handler
      */
-    void create_scanner(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, ScanSpec &scan_spec, DispatchHandler *handler);
+    void create_scanner(const sockaddr_in &addr, const TableIdentifier &table,
+                        const RangeSpec &range, const ScanSpec &scan_spec,
+                        DispatchHandler *handler);
 
     /** Issues a "create scanner" request.
      *
@@ -123,7 +134,9 @@ namespace Hypertable {
      * @param scan_spec scan specification
      * @param scan_block block of return key/value pairs
      */
-    void create_scanner(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, ScanSpec &scan_spec, ScanBlock &scan_block);
+    void create_scanner(const sockaddr_in &addr, const TableIdentifier &table,
+                        const RangeSpec &range, const ScanSpec &scan_spec,
+                        ScanBlock &scan_block);
 
     /** Issues a "destroy scanner" request asynchronously.
      *
@@ -131,14 +144,15 @@ namespace Hypertable {
      * @param scanner_id Scanner ID returned from a call to create_scanner.
      * @param handler response handler
      */
-    void destroy_scanner(struct sockaddr_in &addr, int scanner_id, DispatchHandler *handler);
+    void destroy_scanner(const sockaddr_in &addr, int scanner_id,
+                         DispatchHandler *handler);
 
     /** Issues a "destroy scanner" request.
      *
      * @param addr remote address of RangeServer connection
      * @param scanner_id scanner ID returned from a call to create_scanner.
      */
-    void destroy_scanner(struct sockaddr_in &addr, int scanner_id);
+    void destroy_scanner(const sockaddr_in &addr, int scanner_id);
 
     /** Issues a "fetch scanblock" request asynchronously.
      *
@@ -146,7 +160,8 @@ namespace Hypertable {
      * @param scanner_id Scanner ID returned from a call to create_scanner.
      * @param handler response handler
      */
-    void fetch_scanblock(struct sockaddr_in &addr, int scanner_id, DispatchHandler *handler);
+    void fetch_scanblock(const sockaddr_in &addr, int scanner_id,
+                         DispatchHandler *handler);
 
     /** Issues a "fetch scanblock" request.
      *
@@ -154,7 +169,8 @@ namespace Hypertable {
      * @param scanner_id scanner ID returned from a call to create_scanner.
      * @param scan_block block of return key/value pairs
      */
-    void fetch_scanblock(struct sockaddr_in &addr, int scanner_id, ScanBlock &scan_block);
+    void fetch_scanblock(const sockaddr_in &addr, int scanner_id,
+                         ScanBlock &scan_block);
 
     /** Issues a "drop table" request asynchronously.
      *
@@ -162,31 +178,38 @@ namespace Hypertable {
      * @param table table identifier
      * @param handler response handler
      */
-    void drop_table(struct sockaddr_in &addr, TableIdentifier &table, DispatchHandler *handler);
+    void drop_table(const sockaddr_in &addr, const TableIdentifier &table,
+                    DispatchHandler *handler);
 
     /** Issues a "drop table" request.
      *
      * @param addr remote address of RangeServer connection
      * @param table table identifier
      */
-    void drop_table(struct sockaddr_in &addr, TableIdentifier &table);
+    void drop_table(const sockaddr_in &addr, const TableIdentifier &table);
 
-    /** Issues a "status" request.  This call blocks until it receives a response from the server.
+    /** Issues a "status" request.  This call blocks until it receives a
+     * response from the server.
      *
      * @param addr remote address of RangeServer connection
      */
-    void status(struct sockaddr_in &addr);
+    void status(const sockaddr_in &addr);
 
-    /** Issues a "shutdown" request.  This call blocks until it receives a response from the
-     * server or times out.
+    /** Issues a "shutdown" request.  This call blocks until it receives a
+     * response from the server or times out.
      *
      * @param addr remote address of RangeServer connection
      */
-    void shutdown(struct sockaddr_in &addr);
+    void shutdown(const sockaddr_in &addr);
 
-    void dump_stats(struct sockaddr_in &addr);
+    void dump_stats(const sockaddr_in &addr);
 
-    void get_statistics(struct sockaddr_in &addr, RangeServerStat &stat);
+    /** Issues a "get_statistics" request.  This call blocks until it receives a
+     * response from the server or times out.
+     *
+     * @param addr remote address of RangeServer connection
+     */
+    void get_statistics(const sockaddr_in &addr, RangeServerStat &stat);
 
     /** Issues a "replay begin" request.
      *
@@ -194,18 +217,21 @@ namespace Hypertable {
      * @param group replay group to begin (METADATA_ROOT, METADATA, USER)
      * @param handler response handler
      */
-    void replay_begin(struct sockaddr_in &addr, uint16_t group, DispatchHandler *handler);
+    void replay_begin(const sockaddr_in &addr, uint16_t group,
+                      DispatchHandler *handler);
 
     /** Issues a "replay load range" request.
      *
      * @param addr remote address of RangeServer connection
      * @param table table identifier
      * @param range range specification
-     * @param range_state range state object
+     * @param state range state object
      * @param handler response handler
      */
-    void replay_load_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range,
-			   RangeState &range_state, DispatchHandler *handler);
+    void replay_load_range(const sockaddr_in &addr,
+                           const TableIdentifier &table,
+                           const RangeSpec &range, const RangeState &state,
+                           DispatchHandler *handler);
 
     /** Issues a "replay update" request.
      *
@@ -213,14 +239,15 @@ namespace Hypertable {
      * @param buffer buffer holding replay updates
      * @param handler response handler
      */
-    void replay_update(struct sockaddr_in &addr, StaticBuffer &buffer, DispatchHandler *handler);
+    void replay_update(const sockaddr_in &addr, StaticBuffer &buffer,
+                       DispatchHandler *handler);
 
     /** Issues a "replay commit" request.
      *
      * @param addr remote address of RangeServer connection
      * @param handler response handler
      */
-    void replay_commit(struct sockaddr_in &addr, DispatchHandler *handler);
+    void replay_commit(const sockaddr_in &addr, DispatchHandler *handler);
 
     /** Issues a "load range" request asynchronously.
      *
@@ -229,11 +256,13 @@ namespace Hypertable {
      * @param range range specification
      * @param handler response handler
      */
-    void drop_range(struct sockaddr_in &addr, TableIdentifier &table, RangeSpec &range, DispatchHandler *handler);
+    void drop_range(const sockaddr_in &addr, const TableIdentifier &table,
+                    const RangeSpec &range, DispatchHandler *handler);
 
   private:
 
-    void send_message(struct sockaddr_in &addr, CommBufPtr &cbp, DispatchHandler *handler);
+    void send_message(const sockaddr_in &addr, CommBufPtr &cbp,
+                      DispatchHandler *handler);
 
     Comm *m_comm;
     time_t m_default_timeout;
@@ -242,7 +271,6 @@ namespace Hypertable {
 
   typedef boost::intrusive_ptr<RangeServerClient> RangeServerClientPtr;
 
-
-}
+} // namespace Hypertable
 
 #endif // HYPERTABLE_RANGESERVERCLIENT_H

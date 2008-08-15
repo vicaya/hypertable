@@ -72,7 +72,7 @@ ostream &Hypertable::operator<<(ostream &os, const TableIdentifier &tid) {
 }
 
 ostream &Hypertable::operator<<(ostream &os, const RangeSpec &range) {
-  os <<"{RangeSpec:"; 
+  os <<"{RangeSpec:";
 
   if (range.start_row == 0)
     os <<" start=[NULL]";

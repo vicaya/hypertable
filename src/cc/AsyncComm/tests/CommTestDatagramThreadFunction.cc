@@ -126,7 +126,8 @@ void CommTestDatagramThreadFunction::operator()() {
 
       CommBufPtr cbp(new CommBuf(hbuilder, encoded_length_str16(line)));
       cbp->append_str16(line);
-      if ((error = m_comm->send_datagram(m_addr, local_addr, cbp)) != Error::OK) {
+      if ((error = m_comm->send_datagram(m_addr, local_addr, cbp))
+          != Error::OK) {
         HT_ERRORF("Problem sending datagram - %s", Error::get_text(error));
         return;
       }

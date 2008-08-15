@@ -109,25 +109,25 @@ namespace Hypertable {
     class hql_interpreter_row_interval {
     public:
       hql_interpreter_row_interval() : start_inclusive(true), start_set(false),
-				       end(Key::END_ROW_MARKER),
-				       end_inclusive(true), end_set(false) { }
+          end(Key::END_ROW_MARKER), end_inclusive(true), end_set(false) { }
+
       void clear() {
-	start = "";
-	end = Key::END_ROW_MARKER;
-	start_inclusive = end_inclusive = true;
-	start_set = end_set = false;
+        start = "";
+        end = Key::END_ROW_MARKER;
+        start_inclusive = end_inclusive = true;
+        start_set = end_set = false;
       }
       bool empty() { return !(start_set || end_set); }
 
       void set_start(const String &s, bool inclusive) {
-	start = s;
-	start_inclusive = inclusive;
-	start_set = true;
+        start = s;
+        start_inclusive = inclusive;
+        start_set = true;
       }
       void set_end(const String &s, bool inclusive) {
-	end = s;
-	end_inclusive = inclusive;
-	end_set = true;
+        end = s;
+        end_inclusive = inclusive;
+        end_set = true;
       }
       String start;
       bool start_inclusive;
@@ -140,28 +140,28 @@ namespace Hypertable {
     class hql_interpreter_cell_interval {
     public:
       hql_interpreter_cell_interval() : start_inclusive(true), start_set(false),
-					end_inclusive(true), end_set(false) { }
+                                        end_inclusive(true), end_set(false) { }
 
       void clear() {
-	start_row = start_column = "";
-	end_row = end_column = "";
-	start_inclusive = end_inclusive = true;
-	start_set = end_set = false;
+        start_row = start_column = "";
+        end_row = end_column = "";
+        start_inclusive = end_inclusive = true;
+        start_set = end_set = false;
       }
 
       bool empty() { return !(start_set || end_set); }
 
       void set_start(const String &row, const String &column, bool inclusive) {
-	start_row = row;
-	start_column = column;
-	start_inclusive = inclusive;
-	start_set = true;
+        start_row = row;
+        start_column = column;
+        start_inclusive = inclusive;
+        start_set = true;
       }
       void set_end(const String &row, const String &column, bool inclusive) {
-	end_row = row;
-	end_column = column;
-	end_inclusive = inclusive;
-	end_set = true;
+        end_row = row;
+        end_column = column;
+        end_inclusive = inclusive;
+        end_set = true;
       }
       String start_row;
       String start_column;
@@ -176,11 +176,12 @@ namespace Hypertable {
     class hql_interpreter_scan_state {
     public:
       hql_interpreter_scan_state()
-	: limit(0), max_versions(0), display_timestamps(false),
-	  return_deletes(false), keys_only(false), current_rowkey_set(false),
-	  start_time(TIMESTAMP_MIN), start_time_set(false),
-	  end_time(TIMESTAMP_MAX), end_time_set(false),
-	  current_timestamp_set(false), current_relop(0) { }
+        : limit(0), max_versions(0), display_timestamps(false),
+          return_deletes(false), keys_only(false), current_rowkey_set(false),
+          start_time(TIMESTAMP_MIN), start_time_set(false),
+          end_time(TIMESTAMP_MAX), end_time_set(false),
+          current_timestamp_set(false), current_relop(0) { }
+
       std::vector<String> columns;
       uint32_t limit;
       uint32_t max_versions;
@@ -578,9 +579,9 @@ namespace Hypertable {
       scan_add_row_interval(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const {
         display_string("scan_add_row_interval");
-	HT_EXPECT(!state.scan.current_ri.empty(), Error::FAILED_EXPECTATION);
-	state.scan.row_intervals.push_back(state.scan.current_ri);
-	state.scan.current_ri.clear();
+        HT_EXPECT(!state.scan.current_ri.empty(), Error::FAILED_EXPECTATION);
+        state.scan.row_intervals.push_back(state.scan.current_ri);
+        state.scan.current_ri.clear();
       }
       hql_interpreter_state &state;
     };
@@ -589,7 +590,7 @@ namespace Hypertable {
       scan_set_cell_row(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const {
         display_string("scan_set_cell_row");
-	state.scan.current_cell_row = String(str, end-str);
+        state.scan.current_cell_row = String(str, end-str);
         trim_if(state.scan.current_cell_row, is_any_of("'\""));
       }
       hql_interpreter_state &state;
@@ -599,53 +600,61 @@ namespace Hypertable {
       scan_set_cell_column(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const {
         display_string("scan_set_cell_column");
-	state.scan.current_cell_column = String(str, end-str);
+        state.scan.current_cell_column = String(str, end-str);
         trim_if(state.scan.current_cell_column, is_any_of("'\""));
 
-	if (state.scan.current_relop != 0) {
-	  if (state.scan.current_relop == RELOP_EQ) {
-	    if (!state.scan.current_ci.empty())
-	      HT_THROW(Error::HQL_PARSE_ERROR, "Bad cell expression");
-	    state.scan.current_ci.set_start(state.scan.current_cell_row, state.scan.current_cell_column, true);
-	    state.scan.current_ci.set_end(state.scan.current_cell_row, state.scan.current_cell_column, true);
-	  }
-	  else if (state.scan.current_relop == RELOP_LT) {
-	    if (state.scan.current_ci.end_set)
-	      HT_THROW(Error::HQL_PARSE_ERROR, "Bad cell expression");
-	    state.scan.current_ci.set_end(state.scan.current_cell_row, state.scan.current_cell_column, false);
-	  }
-	  else if (state.scan.current_relop == RELOP_LE) {
-	    if (state.scan.current_ci.end_set)
-	      HT_THROW(Error::HQL_PARSE_ERROR, "Bad cell expression");
-	    state.scan.current_ci.set_end(state.scan.current_cell_row, state.scan.current_cell_column, true);
-	  }
-	  else if (state.scan.current_relop == RELOP_GT) {
-	    if (state.scan.current_ci.start_set)
-	      HT_THROW(Error::HQL_PARSE_ERROR, "Bad cell expression");
-	    state.scan.current_ci.set_start(state.scan.current_cell_row, state.scan.current_cell_column, false);
-	  }
-	  else if (state.scan.current_relop == RELOP_GE) {
-	    if (state.scan.current_ci.start_set)
-	      HT_THROW(Error::HQL_PARSE_ERROR, "Bad cell expression");
-	    state.scan.current_ci.set_start(state.scan.current_cell_row, state.scan.current_cell_column, true);
-	  }
-	  else if (state.scan.current_relop == RELOP_SW) {
-	    if (!state.scan.current_ci.empty())
-	      HT_THROW(Error::HQL_PARSE_ERROR, "Bad cell expression");
-	    state.scan.current_ci.set_start(state.scan.current_cell_row, state.scan.current_cell_column, true);
-	    state.scan.current_cell_column.append(1, 0xff);
-	    state.scan.current_ci.set_end(state.scan.current_cell_row, state.scan.current_cell_column, false);
-	  }
+        if (state.scan.current_relop != 0) {
+          if (state.scan.current_relop == RELOP_EQ) {
+            if (!state.scan.current_ci.empty())
+              HT_THROW(Error::HQL_PARSE_ERROR, "Bad cell expression");
+            state.scan.current_ci.set_start(state.scan.current_cell_row,
+                state.scan.current_cell_column, true);
+            state.scan.current_ci.set_end(state.scan.current_cell_row,
+                state.scan.current_cell_column, true);
+          }
+          else if (state.scan.current_relop == RELOP_LT) {
+            if (state.scan.current_ci.end_set)
+              HT_THROW(Error::HQL_PARSE_ERROR, "Bad cell expression");
+            state.scan.current_ci.set_end(state.scan.current_cell_row,
+                state.scan.current_cell_column, false);
+          }
+          else if (state.scan.current_relop == RELOP_LE) {
+            if (state.scan.current_ci.end_set)
+              HT_THROW(Error::HQL_PARSE_ERROR, "Bad cell expression");
+            state.scan.current_ci.set_end(state.scan.current_cell_row,
+                state.scan.current_cell_column, true);
+          }
+          else if (state.scan.current_relop == RELOP_GT) {
+            if (state.scan.current_ci.start_set)
+              HT_THROW(Error::HQL_PARSE_ERROR, "Bad cell expression");
+            state.scan.current_ci.set_start(state.scan.current_cell_row,
+                state.scan.current_cell_column, false);
+          }
+          else if (state.scan.current_relop == RELOP_GE) {
+            if (state.scan.current_ci.start_set)
+              HT_THROW(Error::HQL_PARSE_ERROR, "Bad cell expression");
+            state.scan.current_ci.set_start(state.scan.current_cell_row,
+                state.scan.current_cell_column, true);
+          }
+          else if (state.scan.current_relop == RELOP_SW) {
+            if (!state.scan.current_ci.empty())
+              HT_THROW(Error::HQL_PARSE_ERROR, "Bad cell expression");
+            state.scan.current_ci.set_start(state.scan.current_cell_row,
+                state.scan.current_cell_column, true);
+            state.scan.current_cell_column.append(1, 0xff);
+            state.scan.current_ci.set_end(state.scan.current_cell_row,
+                state.scan.current_cell_column, false);
+          }
 
-	  if (!state.scan.current_ci.end_set)
-	    state.scan.current_ci.end_row = Key::END_ROW_MARKER;
+          if (!state.scan.current_ci.end_set)
+            state.scan.current_ci.end_row = Key::END_ROW_MARKER;
 
-	  state.scan.cell_intervals.push_back(state.scan.current_ci);
-	  state.scan.current_ci.clear();
-	  state.scan.current_cell_row = "";
-	  state.scan.current_cell_column = "";
-	  state.scan.current_relop = 0;
-	}
+          state.scan.cell_intervals.push_back(state.scan.current_ci);
+          state.scan.current_ci.clear();
+          state.scan.current_cell_row = "";
+          state.scan.current_cell_column = "";
+          state.scan.current_relop = 0;
+        }
       }
       hql_interpreter_state &state;
     };
@@ -654,62 +663,62 @@ namespace Hypertable {
       scan_set_row(hql_interpreter_state &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const {
         display_string("scan_set_row");
-	state.scan.current_rowkey = String(str, end-str);
+        state.scan.current_rowkey = String(str, end-str);
         trim_if(state.scan.current_rowkey, is_any_of("'\""));
-	if (state.scan.current_relop != 0) {
-	  if (state.scan.current_relop == RELOP_EQ) {
-	    if (!state.scan.current_ri.empty())
-	      HT_THROW(Error::HQL_PARSE_ERROR, "Incompatible row expressions.");
-	    state.scan.current_ri.set_start(state.scan.current_rowkey, true);
-	    state.scan.current_ri.set_end(state.scan.current_rowkey, true);
-	  }
-	  else if (state.scan.current_relop == RELOP_LT) {
-	    if (state.scan.current_ri.end_set)
-	      HT_THROW(Error::HQL_PARSE_ERROR, "Incompatible row expressions.");
-	    state.scan.current_ri.set_end(state.scan.current_rowkey, false);
-	  }
-	  else if (state.scan.current_relop == RELOP_LE) {
-	    if (state.scan.current_ri.end_set)
-	      HT_THROW(Error::HQL_PARSE_ERROR, "Incompatible row expressions.");
-	    state.scan.current_ri.set_end(state.scan.current_rowkey, true);
-	  }
-	  else if (state.scan.current_relop == RELOP_GT) {
-	    if (state.scan.current_ri.start_set)
-	      HT_THROW(Error::HQL_PARSE_ERROR, "Incompatible row expressions.");
-	    state.scan.current_ri.set_start(state.scan.current_rowkey, false);
-	  }
-	  else if (state.scan.current_relop == RELOP_GE) {
-	    if (state.scan.current_ri.start_set)
-	      HT_THROW(Error::HQL_PARSE_ERROR, "Incompatible row expressions.");
-	    state.scan.current_ri.set_start(state.scan.current_rowkey, true);
-	  }
-	  else if (state.scan.current_relop == RELOP_SW) {
-	    if (!state.scan.current_ri.empty())
-	      HT_THROW(Error::HQL_PARSE_ERROR, "Incompatible row expressions.");
-	    state.scan.current_ri.set_start(state.scan.current_rowkey, true);
-	    str = state.scan.current_rowkey.c_str();
-	    end = str + state.scan.current_rowkey.length();
-	    const char *ptr;
-	    for (ptr=end-1; ptr>str; --ptr) {
-	      if (*ptr < (char)0xff) {
-		String temp_str = String(str, ptr-str);
-		temp_str.append(1, (*ptr)+1);
-		state.scan.current_ri.set_end(temp_str, false);
-		break;
-	      }
-	    }
-	    if (ptr == str) {
-	      state.scan.current_rowkey.append(4, (char)0xff);
-	      state.scan.current_ri.set_end(state.scan.current_rowkey, false);
-	    }
-	  }
-	  state.scan.current_rowkey_set = false;
-	  state.scan.current_relop = 0;
-	}
-	else {
-	  state.scan.current_rowkey_set = true;
-	  state.scan.current_cell_row = "";
-	}
+        if (state.scan.current_relop != 0) {
+          if (state.scan.current_relop == RELOP_EQ) {
+            if (!state.scan.current_ri.empty())
+              HT_THROW(Error::HQL_PARSE_ERROR, "Incompatible row expressions.");
+            state.scan.current_ri.set_start(state.scan.current_rowkey, true);
+            state.scan.current_ri.set_end(state.scan.current_rowkey, true);
+          }
+          else if (state.scan.current_relop == RELOP_LT) {
+            if (state.scan.current_ri.end_set)
+              HT_THROW(Error::HQL_PARSE_ERROR, "Incompatible row expressions.");
+            state.scan.current_ri.set_end(state.scan.current_rowkey, false);
+          }
+          else if (state.scan.current_relop == RELOP_LE) {
+            if (state.scan.current_ri.end_set)
+              HT_THROW(Error::HQL_PARSE_ERROR, "Incompatible row expressions.");
+            state.scan.current_ri.set_end(state.scan.current_rowkey, true);
+          }
+          else if (state.scan.current_relop == RELOP_GT) {
+            if (state.scan.current_ri.start_set)
+              HT_THROW(Error::HQL_PARSE_ERROR, "Incompatible row expressions.");
+            state.scan.current_ri.set_start(state.scan.current_rowkey, false);
+          }
+          else if (state.scan.current_relop == RELOP_GE) {
+            if (state.scan.current_ri.start_set)
+              HT_THROW(Error::HQL_PARSE_ERROR, "Incompatible row expressions.");
+            state.scan.current_ri.set_start(state.scan.current_rowkey, true);
+          }
+          else if (state.scan.current_relop == RELOP_SW) {
+            if (!state.scan.current_ri.empty())
+              HT_THROW(Error::HQL_PARSE_ERROR, "Incompatible row expressions.");
+            state.scan.current_ri.set_start(state.scan.current_rowkey, true);
+            str = state.scan.current_rowkey.c_str();
+            end = str + state.scan.current_rowkey.length();
+            const char *ptr;
+            for (ptr=end-1; ptr>str; --ptr) {
+              if (*ptr < (char)0xff) {
+                String temp_str = String(str, ptr-str);
+                temp_str.append(1, (*ptr)+1);
+                state.scan.current_ri.set_end(temp_str, false);
+                break;
+              }
+            }
+            if (ptr == str) {
+              state.scan.current_rowkey.append(4, (char)0xff);
+              state.scan.current_ri.set_end(state.scan.current_rowkey, false);
+            }
+          }
+          state.scan.current_rowkey_set = false;
+          state.scan.current_relop = 0;
+        }
+        else {
+          state.scan.current_rowkey_set = true;
+          state.scan.current_cell_row = "";
+        }
       }
       hql_interpreter_state &state;
     };
@@ -816,107 +825,114 @@ namespace Hypertable {
 
     struct scan_set_relop {
       scan_set_relop(hql_interpreter_state &state_, int relop_)
-	: state(state_), relop(relop_) { }
+        : state(state_), relop(relop_) { }
       void operator()(char const *str, char const *end) const {
-	process();
+        process();
       }
       void operator()(const char c) const {
-	process();
+        process();
       }
       void process() const {
         display_string("scan_set_relop");
-	if (state.scan.current_timestamp_set) {
-	  if (relop == RELOP_EQ) {
-	    if (state.scan.start_time_set || state.scan.end_time_set)
-	      HT_THROW(Error::HQL_PARSE_ERROR, "Bad timestamp expression");
-	    state.scan.start_time = state.scan.current_timestamp;
-	    state.scan.start_time_set = true;
-	    state.scan.end_time = state.scan.current_timestamp;
-	    state.scan.end_time_set = true;
-	  }
-	  else if (relop == RELOP_GT) {
-	    if (state.scan.end_time_set ||
-		(state.scan.start_time_set &&
-		 state.scan.start_time >= state.scan.current_timestamp))
-	      HT_THROW(Error::HQL_PARSE_ERROR, "Bad timestamp expression");
-	    state.scan.end_time = state.scan.current_timestamp;
-	    state.scan.end_time_set = true;
-	  }
-	  else if (relop == RELOP_GE) {
-	    if (state.scan.end_time_set ||
-		(state.scan.start_time_set &&
-		 state.scan.start_time > state.scan.current_timestamp))
-	      HT_THROW(Error::HQL_PARSE_ERROR, "Bad timestamp expression");
-	    state.scan.end_time = state.scan.current_timestamp+1;
-	    state.scan.end_time_set = true;
-	  }
-	  else if (relop == RELOP_LT) {
-	    if (state.scan.start_time_set ||
-		(state.scan.end_time_set &&
-		 state.scan.end_time <= (state.scan.current_timestamp+1)))
-	      HT_THROW(Error::HQL_PARSE_ERROR, "Bad timestamp expression");
-	    state.scan.start_time = state.scan.current_timestamp+1;
-	    state.scan.start_time_set = true;
-	  }
-	  else if (relop == RELOP_LE) {
-	    if (state.scan.start_time_set ||
-		(state.scan.end_time_set &&
-		 state.scan.end_time <= state.scan.current_timestamp))
-	      HT_THROW(Error::HQL_PARSE_ERROR, "Bad timestamp expression");
-	    state.scan.start_time = state.scan.current_timestamp;
-	    state.scan.start_time_set = true;
-	  }
-	  else if (relop == RELOP_SW) {
-	    HT_THROW(Error::HQL_PARSE_ERROR,
-		     "Invalid timestamp operator (=^)");
-	  }
-	  state.scan.current_timestamp_set = false;
-	  state.scan.current_relop = 0;
-	}
-	else if (state.scan.current_rowkey_set) {
-	  HT_EXPECT(state.scan.current_rowkey_set, Error::FAILED_EXPECTATION);
-	  if (relop == RELOP_EQ) {
-	    state.scan.current_ri.set_start(state.scan.current_rowkey, true);
-	    state.scan.current_ri.set_end(state.scan.current_rowkey, true);
-	  }
-	  else if (relop == RELOP_LT)
-	    state.scan.current_ri.set_start(state.scan.current_rowkey, false);
-	  else if (relop == RELOP_LE)
-	    state.scan.current_ri.set_start(state.scan.current_rowkey, true);
-	  else if (relop == RELOP_GT)
-	    state.scan.current_ri.set_end(state.scan.current_rowkey, false);
-	  else if (relop == RELOP_GE)
-	    state.scan.current_ri.set_end(state.scan.current_rowkey, true);
-	  else if (relop == RELOP_SW) {
-	    HT_THROW(Error::HQL_PARSE_ERROR,
-		     "Bad use of starts with operator (=^)");
-	  }
-	  state.scan.current_rowkey_set = false;
-	  state.scan.current_relop = 0;
-	}
-	else if (state.scan.current_cell_row != "" && state.scan.current_ci.empty()) {
-	  if (relop == RELOP_EQ) {
-	    state.scan.current_ci.set_start(state.scan.current_cell_row, state.scan.current_cell_column, true);
-	    state.scan.current_ci.set_end(state.scan.current_cell_row, state.scan.current_cell_column, true);
-	  }
-	  else if (relop == RELOP_LT)
-	    state.scan.current_ci.set_start(state.scan.current_cell_row, state.scan.current_cell_column, false);
-	  else if (relop == RELOP_LE)
-	    state.scan.current_ci.set_start(state.scan.current_cell_row, state.scan.current_cell_column, true);
-	  else if (relop == RELOP_GT)
-	    state.scan.current_ci.set_end(state.scan.current_cell_row, state.scan.current_cell_column, false);
-	  else if (relop == RELOP_GE)
-	    state.scan.current_ci.set_end(state.scan.current_cell_row, state.scan.current_cell_column, true);
-	  else if (relop == RELOP_SW) {
-	    HT_THROW(Error::HQL_PARSE_ERROR,
-		     "Bad use of starts with operator (=^)");
-	  }
-	  state.scan.current_cell_row = "";
-	  state.scan.current_cell_column = "";
-	  state.scan.current_relop = 0;
-	}
-	else
-	  state.scan.current_relop = relop;
+        if (state.scan.current_timestamp_set) {
+          if (relop == RELOP_EQ) {
+            if (state.scan.start_time_set || state.scan.end_time_set)
+              HT_THROW(Error::HQL_PARSE_ERROR, "Bad timestamp expression");
+            state.scan.start_time = state.scan.current_timestamp;
+            state.scan.start_time_set = true;
+            state.scan.end_time = state.scan.current_timestamp;
+            state.scan.end_time_set = true;
+          }
+          else if (relop == RELOP_GT) {
+            if (state.scan.end_time_set ||
+                (state.scan.start_time_set &&
+                 state.scan.start_time >= state.scan.current_timestamp))
+              HT_THROW(Error::HQL_PARSE_ERROR, "Bad timestamp expression");
+            state.scan.end_time = state.scan.current_timestamp;
+            state.scan.end_time_set = true;
+          }
+          else if (relop == RELOP_GE) {
+            if (state.scan.end_time_set ||
+                (state.scan.start_time_set &&
+                 state.scan.start_time > state.scan.current_timestamp))
+              HT_THROW(Error::HQL_PARSE_ERROR, "Bad timestamp expression");
+            state.scan.end_time = state.scan.current_timestamp+1;
+            state.scan.end_time_set = true;
+          }
+          else if (relop == RELOP_LT) {
+            if (state.scan.start_time_set ||
+                (state.scan.end_time_set &&
+                 state.scan.end_time <= (state.scan.current_timestamp+1)))
+              HT_THROW(Error::HQL_PARSE_ERROR, "Bad timestamp expression");
+            state.scan.start_time = state.scan.current_timestamp+1;
+            state.scan.start_time_set = true;
+          }
+          else if (relop == RELOP_LE) {
+            if (state.scan.start_time_set ||
+                (state.scan.end_time_set &&
+                 state.scan.end_time <= state.scan.current_timestamp))
+              HT_THROW(Error::HQL_PARSE_ERROR, "Bad timestamp expression");
+            state.scan.start_time = state.scan.current_timestamp;
+            state.scan.start_time_set = true;
+          }
+          else if (relop == RELOP_SW) {
+            HT_THROW(Error::HQL_PARSE_ERROR,
+                     "Invalid timestamp operator (=^)");
+          }
+          state.scan.current_timestamp_set = false;
+          state.scan.current_relop = 0;
+        }
+        else if (state.scan.current_rowkey_set) {
+          HT_EXPECT(state.scan.current_rowkey_set, Error::FAILED_EXPECTATION);
+          if (relop == RELOP_EQ) {
+            state.scan.current_ri.set_start(state.scan.current_rowkey, true);
+            state.scan.current_ri.set_end(state.scan.current_rowkey, true);
+          }
+          else if (relop == RELOP_LT)
+            state.scan.current_ri.set_start(state.scan.current_rowkey, false);
+          else if (relop == RELOP_LE)
+            state.scan.current_ri.set_start(state.scan.current_rowkey, true);
+          else if (relop == RELOP_GT)
+            state.scan.current_ri.set_end(state.scan.current_rowkey, false);
+          else if (relop == RELOP_GE)
+            state.scan.current_ri.set_end(state.scan.current_rowkey, true);
+          else if (relop == RELOP_SW) {
+            HT_THROW(Error::HQL_PARSE_ERROR,
+                     "Bad use of starts with operator (=^)");
+          }
+          state.scan.current_rowkey_set = false;
+          state.scan.current_relop = 0;
+        }
+        else if (state.scan.current_cell_row != ""
+                 && state.scan.current_ci.empty()) {
+          if (relop == RELOP_EQ) {
+            state.scan.current_ci.set_start(state.scan.current_cell_row,
+                state.scan.current_cell_column, true);
+            state.scan.current_ci.set_end(state.scan.current_cell_row,
+                state.scan.current_cell_column, true);
+          }
+          else if (relop == RELOP_LT)
+            state.scan.current_ci.set_start(state.scan.current_cell_row,
+                state.scan.current_cell_column, false);
+          else if (relop == RELOP_LE)
+            state.scan.current_ci.set_start(state.scan.current_cell_row,
+                state.scan.current_cell_column, true);
+          else if (relop == RELOP_GT)
+            state.scan.current_ci.set_end(state.scan.current_cell_row,
+                state.scan.current_cell_column, false);
+          else if (relop == RELOP_GE)
+            state.scan.current_ci.set_end(state.scan.current_cell_row,
+                state.scan.current_cell_column, true);
+          else if (relop == RELOP_SW) {
+            HT_THROW(Error::HQL_PARSE_ERROR,
+                     "Bad use of starts with operator (=^)");
+          }
+          state.scan.current_cell_row = "";
+          state.scan.current_cell_column = "";
+          state.scan.current_relop = 0;
+        }
+        else
+          state.scan.current_relop = relop;
       }
       hql_interpreter_state &state;
       int relop;
@@ -927,57 +943,58 @@ namespace Hypertable {
       void operator()(char const *str, char const *end) const {
         display_string("scan_set_time");
         time_t t = timegm(&state.tmval);
-	state.scan.current_timestamp = (int64_t)t * 1000000000LL + state.nanoseconds;
-	if (state.scan.current_relop != 0) {
-	  if (state.scan.current_relop == RELOP_EQ) {
-	    if (state.scan.start_time_set || state.scan.end_time_set)
-	      HT_THROW(Error::HQL_PARSE_ERROR, "Bad timestamp expression");
-	    state.scan.start_time = state.scan.current_timestamp;
-	    state.scan.start_time_set = true;
-	    state.scan.end_time = state.scan.current_timestamp+1;
-	    state.scan.end_time_set = true;
-	  }
-	  else if (state.scan.current_relop == RELOP_LT) {
-	    if (state.scan.end_time_set ||
-		(state.scan.start_time_set &&
-		 state.scan.start_time >= state.scan.current_timestamp))
-	      HT_THROW(Error::HQL_PARSE_ERROR, "Bad timestamp expression");
-	    state.scan.end_time = state.scan.current_timestamp;
-	    state.scan.end_time_set = true;
-	  }
-	  else if (state.scan.current_relop == RELOP_LE) {
-	    if (state.scan.end_time_set ||
-		(state.scan.start_time_set &&
-		 state.scan.start_time > state.scan.current_timestamp))
-	      HT_THROW(Error::HQL_PARSE_ERROR, "Bad timestamp expression");
-	    state.scan.end_time = state.scan.current_timestamp+1;
-	    state.scan.end_time_set = true;
-	  }
-	  else if (state.scan.current_relop == RELOP_GT) {
-	    if (state.scan.start_time_set ||
-		(state.scan.end_time_set &&
-		 state.scan.end_time <= (state.scan.current_timestamp+1)))
-	      HT_THROW(Error::HQL_PARSE_ERROR, "Bad timestamp expression");
-	    state.scan.start_time = state.scan.current_timestamp+1;
-	    state.scan.start_time_set = true;
-	  }
-	  else if (state.scan.current_relop == RELOP_GE) {
-	    if (state.scan.start_time_set ||
-		(state.scan.end_time_set &&
-		 state.scan.end_time <= state.scan.current_timestamp))
-	      HT_THROW(Error::HQL_PARSE_ERROR, "Bad timestamp expression");
-	    state.scan.start_time = state.scan.current_timestamp;
-	    state.scan.start_time_set = true;
-	  }
-	  else if (state.scan.current_relop == RELOP_SW) {
-	    HT_THROW(Error::HQL_PARSE_ERROR,
-		     "Invalid timestamp operator (=^)");
-	  }
-	  state.scan.current_relop = 0;
-	  state.scan.current_timestamp_set = false;
-	}
-	else
-	  state.scan.current_timestamp_set = true;
+        state.scan.current_timestamp = (int64_t)t * 1000000000LL
+                                        + state.nanoseconds;
+        if (state.scan.current_relop != 0) {
+          if (state.scan.current_relop == RELOP_EQ) {
+            if (state.scan.start_time_set || state.scan.end_time_set)
+              HT_THROW(Error::HQL_PARSE_ERROR, "Bad timestamp expression");
+            state.scan.start_time = state.scan.current_timestamp;
+            state.scan.start_time_set = true;
+            state.scan.end_time = state.scan.current_timestamp+1;
+            state.scan.end_time_set = true;
+          }
+          else if (state.scan.current_relop == RELOP_LT) {
+            if (state.scan.end_time_set ||
+                (state.scan.start_time_set &&
+                 state.scan.start_time >= state.scan.current_timestamp))
+              HT_THROW(Error::HQL_PARSE_ERROR, "Bad timestamp expression");
+            state.scan.end_time = state.scan.current_timestamp;
+            state.scan.end_time_set = true;
+          }
+          else if (state.scan.current_relop == RELOP_LE) {
+            if (state.scan.end_time_set ||
+                (state.scan.start_time_set &&
+                 state.scan.start_time > state.scan.current_timestamp))
+              HT_THROW(Error::HQL_PARSE_ERROR, "Bad timestamp expression");
+            state.scan.end_time = state.scan.current_timestamp+1;
+            state.scan.end_time_set = true;
+          }
+          else if (state.scan.current_relop == RELOP_GT) {
+            if (state.scan.start_time_set ||
+                (state.scan.end_time_set &&
+                 state.scan.end_time <= (state.scan.current_timestamp+1)))
+              HT_THROW(Error::HQL_PARSE_ERROR, "Bad timestamp expression");
+            state.scan.start_time = state.scan.current_timestamp+1;
+            state.scan.start_time_set = true;
+          }
+          else if (state.scan.current_relop == RELOP_GE) {
+            if (state.scan.start_time_set ||
+                (state.scan.end_time_set &&
+                 state.scan.end_time <= state.scan.current_timestamp))
+              HT_THROW(Error::HQL_PARSE_ERROR, "Bad timestamp expression");
+            state.scan.start_time = state.scan.current_timestamp;
+            state.scan.start_time_set = true;
+          }
+          else if (state.scan.current_relop == RELOP_SW) {
+            HT_THROW(Error::HQL_PARSE_ERROR,
+                     "Invalid timestamp operator (=^)");
+          }
+          state.scan.current_relop = 0;
+          state.scan.current_timestamp_set = false;
+        }
+        else
+          state.scan.current_timestamp_set = true;
         memset(&state.tmval, 0, sizeof(state.tmval));
         state.nanoseconds = 0;
       }
@@ -1108,7 +1125,7 @@ namespace Hypertable {
     struct hql_interpreter : public grammar<hql_interpreter> {
       hql_interpreter(hql_interpreter_state &state_) : state(state_) { }
 
-      template <typename Scanner>
+      template <typename ScannerT>
       struct definition {
 
         definition(hql_interpreter const &self)  {
@@ -1496,50 +1513,50 @@ namespace Hypertable {
             = WHERE >> where_predicate >> *(AND >> where_predicate)
             ;
 
-	  relop
-	    = SW[scan_set_relop(self.state, RELOP_SW)]
-	    | EQUAL[scan_set_relop(self.state, RELOP_EQ)]
-	    | LE[scan_set_relop(self.state, RELOP_LE)]
-	    | LT[scan_set_relop(self.state, RELOP_LT)]
-	    | GE[scan_set_relop(self.state, RELOP_GE)]
-	    | GT[scan_set_relop(self.state, RELOP_GT)]
-	    ;
+          relop
+            = SW[scan_set_relop(self.state, RELOP_SW)]
+            | EQUAL[scan_set_relop(self.state, RELOP_EQ)]
+            | LE[scan_set_relop(self.state, RELOP_LE)]
+            | LT[scan_set_relop(self.state, RELOP_LT)]
+            | GE[scan_set_relop(self.state, RELOP_GE)]
+            | GT[scan_set_relop(self.state, RELOP_GT)]
+            ;
 
-	  time_predicate
-	    = !(date_expression[scan_set_time(self.state)] >> relop) >>
-	    TIMESTAMP >> relop >> date_expression[scan_set_time(self.state)]
-	    ;
+          time_predicate
+            = !(date_expression[scan_set_time(self.state)] >> relop) >>
+            TIMESTAMP >> relop >> date_expression[scan_set_time(self.state)]
+            ;
 
-	  row_interval
-	    = !(string_literal[scan_set_row(self.state)] >> relop) >>
-	    ROW >> relop >> string_literal[scan_set_row(self.state)]
-	    ;
+          row_interval
+            = !(string_literal[scan_set_row(self.state)] >> relop) >>
+            ROW >> relop >> string_literal[scan_set_row(self.state)]
+            ;
 
-	  row_predicate
-	    = row_interval[scan_add_row_interval(self.state)]
-	    | LPAREN >> row_interval[scan_add_row_interval(self.state)] >>
-	    *( OR >> row_interval[scan_add_row_interval(self.state)]) >> RPAREN
-	    ;
+          row_predicate
+            = row_interval[scan_add_row_interval(self.state)]
+            | LPAREN >> row_interval[scan_add_row_interval(self.state)] >>
+            *( OR >> row_interval[scan_add_row_interval(self.state)]) >> RPAREN
+            ;
 
-	  cell_spec
-	    = string_literal[scan_set_cell_row(self.state)]
-	      >> COMMA >> string_literal[scan_set_cell_column(self.state)]
-	    ;
+          cell_spec
+            = string_literal[scan_set_cell_row(self.state)]
+              >> COMMA >> string_literal[scan_set_cell_column(self.state)]
+            ;
 
-	  cell_interval
-	    = !(cell_spec >> relop) >> CELL >> relop >> cell_spec
-	    ;
+          cell_interval
+            = !(cell_spec >> relop) >> CELL >> relop >> cell_spec
+            ;
 
-	  cell_predicate
-	    = cell_interval
-	    | LPAREN >> cell_interval >> *( OR >> cell_interval ) >> RPAREN
-	    ;
+          cell_predicate
+            = cell_interval
+            | LPAREN >> cell_interval >> *( OR >> cell_interval ) >> RPAREN
+            ;
 
           where_predicate
-	    = cell_predicate
-	    | row_predicate
-	    | time_predicate
-	    ;
+            = cell_predicate
+            | row_predicate
+            | time_predicate
+            ;
 
           option_spec
             = MAX_VERSIONS >> EQUAL >> uint_p[scan_set_max_versions(self.state)]
@@ -1603,7 +1620,7 @@ namespace Hypertable {
                 set_timestamp_column(self.state)]
             | HEADER_FILE >> EQUAL >> string_literal[
                 set_header_file(self.state)]
-	    | ROW_UNIQUIFY_CHARS >> EQUAL >> uint_p[
+            | ROW_UNIQUIFY_CHARS >> EQUAL >> uint_p[
                 set_row_uniquify_chars(self.state)]
             | DUP_KEY_COLS >> EQUAL >> boolean_literal[
                 set_dup_key_cols(self.state)]
@@ -1679,12 +1696,12 @@ namespace Hypertable {
         }
 #endif
 
-        rule<Scanner> const&
+        rule<ScannerT> const&
         start() const { return statement; }
 
         symbols<> keywords;
 
-        rule<Scanner> boolean_literal, column_definition, column_name,
+        rule<ScannerT> boolean_literal, column_definition, column_name,
           column_option, create_definition, create_definitions,
           create_table_statement, duration, identifier, user_identifier,
           max_versions_option, statement, single_string_literal,
@@ -1702,7 +1719,7 @@ namespace Hypertable {
           fetch_scanblock_statement, shutdown_statement, drop_range_statement,
           replay_start_statement, replay_log_statement, replay_commit_statement,
           cell_interval, cell_predicate, cell_spec;
-        };
+      };
 
       hql_interpreter_state &state;
     };

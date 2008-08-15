@@ -38,16 +38,22 @@ using namespace Hypertable;
 using namespace Hyperspace;
 using namespace Serialization;
 
-ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &props_ptr, Session *session) : m_dead(false), m_comm(comm), m_session(session), m_session_id(0), m_last_known_event(0) {
+ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm,
+    PropertiesPtr &props_ptr, Session *session)
+  : m_dead(false), m_comm(comm), m_session(session), m_session_id(0),
+    m_last_known_event(0) {
   int error;
   uint16_t master_port;
   const char *master_host;
 
   m_verbose = props_ptr->get_bool("Hypertable.Verbose", false);
   master_host = props_ptr->get("Hyperspace.Master.Host", "localhost");
-  master_port = (uint16_t)props_ptr->get_int("Hyperspace.Master.Port", Master::DEFAULT_MASTER_PORT);
-  m_lease_interval = (uint32_t)props_ptr->get_int("Hyperspace.Lease.Interval", Master::DEFAULT_LEASE_INTERVAL);
-  m_keep_alive_interval = (uint32_t)props_ptr->get_int("Hyperspace.KeepAlive.Interval", Master::DEFAULT_KEEPALIVE_INTERVAL);
+  master_port = (uint16_t)props_ptr->get_int("Hyperspace.Master.Port",
+                                             Master::DEFAULT_MASTER_PORT);
+  m_lease_interval = (uint32_t)props_ptr->get_int(
+      "Hyperspace.Lease.Interval", Master::DEFAULT_LEASE_INTERVAL);
+  m_keep_alive_interval = (uint32_t)props_ptr->get_int(
+      "Hyperspace.KeepAlive.Interval", Master::DEFAULT_KEEPALIVE_INTERVAL);
 
   if (!InetAddr::initialize(&m_master_addr, master_host, master_port))
     exit(1);
@@ -306,9 +312,11 @@ void ClientKeepaliveHandler::expire_session() {
 void ClientKeepaliveHandler::destroy_session() {
   int error;
 
-  CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(m_session_id, m_last_known_event, true));
+  CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(
+                 m_session_id, m_last_known_event, true));
 
-  if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp) != Error::OK))
+  if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp)
+      != Error::OK))
     HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
 
   m_dead = true;

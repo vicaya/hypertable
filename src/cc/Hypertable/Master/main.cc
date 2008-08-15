@@ -50,9 +50,9 @@ namespace {
     "usage: Hypertable.Master [OPTIONS]",
     "",
     "OPTIONS:",
-    "  --config=<file>   Read configuration from <file>.  The default config file is",
-    "                    \"conf/hypertable.cfg\" relative to the toplevel install directory",
-    "  --pidfile=<fname> Write the process ID to <fname> upon successful startup",
+    "  --config=<file>   Read configuration from <file>.  The default file is",
+    "                    \"conf/hypertable.cfg\" from install root directory",
+    "  --pidfile=<fname> Write the process ID to <fname> upon startup",
     "  --help            Display this help text and exit",
     "  --verbose,-v      Generate verbose output",
     ""
@@ -68,7 +68,10 @@ namespace {
    */
   class HandlerFactory : public ConnectionHandlerFactory {
   public:
-    HandlerFactory(Comm *comm, ApplicationQueuePtr &app_queue, MasterPtr &master_ptr) : m_comm(comm), m_app_queue_ptr(app_queue), m_master_ptr(master_ptr) { return; }
+    HandlerFactory(Comm *comm, ApplicationQueuePtr &app_queue,
+                   MasterPtr &master_ptr)
+      : m_comm(comm), m_app_queue_ptr(app_queue), m_master_ptr(master_ptr) { }
+
     virtual void get_instance(DispatchHandlerPtr &dhp) {
       dhp = new ConnectionHandler(m_comm, m_app_queue_ptr, m_master_ptr);
     }
@@ -102,14 +105,14 @@ int main(int argc, char **argv) {
 
     if (argc > 1) {
       for (int i=1; i<argc; i++) {
-	if (!strncmp(argv[i], "--config=", 9))
-	  cfgfile = &argv[i][9];
-	else if (!strncmp(argv[i], "--pidfile=", 10))
-	  pidfile = &argv[i][10];
-	else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
-	  verbose = true;
-	else
-	  Usage::dump_and_exit(usage);
+        if (!strncmp(argv[i], "--config=", 9))
+          cfgfile = &argv[i][9];
+        else if (!strncmp(argv[i], "--pidfile=", 10))
+          pidfile = &argv[i][10];
+        else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v"))
+          verbose = true;
+        else
+          Usage::dump_and_exit(usage);
       }
     }
 
@@ -122,8 +125,10 @@ int main(int argc, char **argv) {
       props_ptr->set("Hypertable.Verbose", "true");
 
     port         = props_ptr->get_int("Hypertable.Master.Port", DEFAULT_PORT);
-    reactor_count = props_ptr->get_int("Hypertable.Master.Reactors", System::get_processor_count());
-    worker_count  = props_ptr->get_int("Hypertable.Master.Workers", DEFAULT_WORKERS);
+    reactor_count = props_ptr->get_int("Hypertable.Master.Reactors",
+                                       System::get_processor_count());
+    worker_count  = props_ptr->get_int("Hypertable.Master.Workers",
+                                       DEFAULT_WORKERS);
 
     ReactorFactory::initialize(reactor_count);
 
@@ -141,7 +146,8 @@ int main(int argc, char **argv) {
     master_ptr = new Master(conn_mgr, props_ptr, app_queue_ptr);
 
     InetAddr::initialize(&listen_addr, INADDR_ANY, port);
-    ConnectionHandlerFactoryPtr chfp(new HandlerFactory(comm, app_queue_ptr, master_ptr));
+    ConnectionHandlerFactoryPtr chfp(new HandlerFactory(comm, app_queue_ptr,
+                                     master_ptr));
     comm->listen(listen_addr, chfp);
 
     if (pidfile != "") {

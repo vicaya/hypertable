@@ -32,7 +32,9 @@ using namespace std;
 #include "RequestCache.h"
 using namespace Hypertable;
 
-void RequestCache::insert(uint32_t id, IOHandler *handler, DispatchHandler *dh, boost::xtime &expire) {
+void
+RequestCache::insert(uint32_t id, IOHandler *handler, DispatchHandler *dh,
+                     boost::xtime &expire) {
   CacheNode *node = new CacheNode;
 
   HT_DEBUGF("Adding id %d", id);
@@ -93,7 +95,9 @@ DispatchHandler *RequestCache::remove(uint32_t id) {
 
 
 
-DispatchHandler *RequestCache::get_next_timeout(boost::xtime &now, IOHandler *&handlerp, boost::xtime *next_timeout) {
+DispatchHandler *
+RequestCache::get_next_timeout(boost::xtime &now, IOHandler *&handlerp,
+                               boost::xtime *next_timeout) {
 
   while (m_head && xtime_cmp(m_head->expire, now) <= 0) {
 
@@ -132,7 +136,9 @@ void RequestCache::purge_requests(IOHandler *handler) {
   for (CacheNode *node = m_tail; node != 0; node = node->next) {
     if (node->handler == handler) {
       HT_DEBUGF("Purging request id %d", node->id);
-      handler->deliver_event(new Event(Event::ERROR, 0, ((IOHandlerData *)handler)->get_address(), Error::COMM_REQUEST_TIMEOUT), node->dh);
+      handler->deliver_event(new Event(Event::ERROR, 0,
+          ((IOHandlerData *)handler)->get_address(),
+          Error::COMM_REQUEST_TIMEOUT), node->dh);
       node->handler = 0;  // mark for deletion
     }
   }

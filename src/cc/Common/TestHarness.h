@@ -47,8 +47,10 @@ namespace Hypertable {
     virtual ~NoTimeLayout() { }
     virtual std::string format(const log4cpp::LoggingEvent& event) {
       std::ostringstream message;
-      const String& pri_name = log4cpp::Priority::getPriorityName(event.priority);
-      message << pri_name << " " << event.categoryName << " " << event.ndc << ": " << event.message << std::endl;
+      const String& pri_name =
+          log4cpp::Priority::getPriorityName(event.priority);
+      message << pri_name << " " << event.categoryName << " " << event.ndc
+              << ": " << event.message << std::endl;
       return message.str();
     }
   };
@@ -64,7 +66,8 @@ namespace Hypertable {
       // open temporary output file
       sprintf(m_output_file, "%s%d", name, getpid());
 
-      if ((m_fd = open(m_output_file, O_CREAT | O_TRUNC | O_WRONLY, 0644)) < 0) {
+      if ((m_fd = open(m_output_file, O_CREAT | O_TRUNC | O_WRONLY, 0644))
+          < 0) {
         HT_ERRORF("open(%s) failed - %s", m_output_file, strerror(errno));
         exit(1);
       }

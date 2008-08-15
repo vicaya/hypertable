@@ -44,10 +44,12 @@ void CommandAttrSet::run() {
   const char *value;
 
   if (m_args.size() < 2)
-    HT_THROW(Error::PARSE_ERROR, "Wrong number of arguments.  Type 'help' for usage.");
+    HT_THROW(Error::COMMAND_PARSE_ERROR,
+             "Wrong number of arguments.  Type 'help' for usage.");
 
   if (m_args[0].second != "")
-    HT_THROWF(Error::PARSE_ERROR, "Invalid argument - %s", m_args[0].second.c_str());
+    HT_THROWF(Error::COMMAND_PARSE_ERROR,
+              "Invalid argument - %s", m_args[0].second.c_str());
 
   handle = Util::get_handle(m_args[0].first);
 

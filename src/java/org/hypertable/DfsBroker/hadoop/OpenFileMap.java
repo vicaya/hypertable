@@ -50,21 +50,22 @@ public class OpenFileMap {
     }
 
     public synchronized void RemoveAll(InetSocketAddress addr) {
-	int icount = 0;
-	int ocount = 0;
-        for (Iterator<Map.Entry<Integer,OpenFileData>> iter = mFileMap.entrySet().iterator(); iter.hasNext();) {
+        int icount = 0;
+        int ocount = 0;
+        for (Iterator<Map.Entry<Integer,OpenFileData>> iter
+             = mFileMap.entrySet().iterator(); iter.hasNext();) {
             try {
                 Map.Entry<Integer,OpenFileData> entry = iter.next();
                 int id = entry.getKey();
                 OpenFileData ofd = entry.getValue();
                 if (ofd.addr.equals(addr)) {
-		    if (ofd.os != null) {
+                    if (ofd.os != null) {
                         ofd.os.close();
-			ocount++;
+                        ocount++;
                     }
                     if (ofd.is != null) {
                         ofd.is.close();
-			icount++;
+                        icount++;
                     }
                     iter.remove();
                 }
@@ -73,37 +74,39 @@ public class OpenFileMap {
                 e.printStackTrace();
             }
         }
-	java.lang.System.out.println("Closed " + icount + " input streams and " +
-				     ocount + " output streams for client connection " + addr);
+        System.out.println("Closed " + icount + " input streams and " + ocount
+                           + " output streams for client connection " + addr);
     }
 
     public synchronized void RemoveAll() {
-	int icount = 0;
-	int ocount = 0;
-        for (Iterator<Map.Entry<Integer,OpenFileData>> iter = mFileMap.entrySet().iterator(); iter.hasNext();) {
+        int icount = 0;
+        int ocount = 0;
+        for (Iterator<Map.Entry<Integer,OpenFileData>> iter
+             = mFileMap.entrySet().iterator(); iter.hasNext();) {
             try {
                 Map.Entry<Integer,OpenFileData> entry = iter.next();
                 int id = entry.getKey();
                 OpenFileData ofd = entry.getValue();
-		if (ofd.os != null) {
-		    ofd.os.close();
-		    ocount++;
-		}
-		if (ofd.is != null) {
-		    ofd.is.close();
-		    icount++;
-		}
-		iter.remove();
+                if (ofd.os != null) {
+                    ofd.os.close();
+                    ocount++;
+                }
+                if (ofd.is != null) {
+                    ofd.is.close();
+                    icount++;
+                }
+                iter.remove();
             }
             catch (Throwable e) {
                 e.printStackTrace();
             }
         }
         mFileMap.clear();
-	java.lang.System.out.println("Closed " + icount + " input streams and " +
-				     ocount + " output streams");
+        System.out.println("Closed " + icount + " input streams and " + ocount
+                           + " output streams");
     }
 
-    private HashMap<Integer, OpenFileData> mFileMap = new HashMap<Integer, OpenFileData>();
+    private HashMap<Integer, OpenFileData> mFileMap =
+        new HashMap<Integer, OpenFileData>();
 }
 

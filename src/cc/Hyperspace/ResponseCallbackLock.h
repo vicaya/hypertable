@@ -31,7 +31,10 @@ namespace Hyperspace {
 
   class ResponseCallbackLock : public Hypertable::ResponseCallback {
   public:
-    ResponseCallbackLock(Hypertable::Comm *comm, Hypertable::EventPtr &event_ptr) : Hypertable::ResponseCallback(comm, event_ptr) { return; }
+    ResponseCallbackLock(Hypertable::Comm *comm,
+                         Hypertable::EventPtr &event_ptr)
+      : Hypertable::ResponseCallback(comm, event_ptr) { }
+
     int response(uint32_t status, uint64_t lock_generation=0);
   };
 

@@ -37,7 +37,11 @@ namespace Hypertable {
    */
   class HandlerFactory : public ConnectionHandlerFactory {
   public:
-    HandlerFactory(Comm *comm, ApplicationQueuePtr &app_queue, RangeServerPtr range_server) : m_comm(comm), m_app_queue_ptr(app_queue), m_range_server_ptr(range_server) { return; }
+    HandlerFactory(Comm *comm, ApplicationQueuePtr &app_queue,
+                   RangeServerPtr range_server)
+      : m_comm(comm), m_app_queue_ptr(app_queue),
+        m_range_server_ptr(range_server) { }
+
     virtual void get_instance(DispatchHandlerPtr &dhp) {
       dhp = new ConnectionHandler(m_comm, m_app_queue_ptr, m_range_server_ptr);
     }

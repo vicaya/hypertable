@@ -35,7 +35,7 @@ namespace Hypertable {
     // must be inlined to do proper version check
     static inline void initialize(const String &install_directory) {
       if (ms_initialized)
-	return;
+        return;
       check_version();
       _init(install_directory);
       ms_initialized = true;

@@ -35,9 +35,8 @@ namespace Hypertable {
 
   class RequestHandlerGetSchema : public ApplicationHandler {
   public:
-    RequestHandlerGetSchema(Comm *comm, Master *master, EventPtr &event_ptr) : ApplicationHandler(event_ptr), m_comm(comm), m_master(master) {
-      return;
-    }
+    RequestHandlerGetSchema(Comm *comm, Master *master, EventPtr &event_ptr)
+      : ApplicationHandler(event_ptr), m_comm(comm), m_master(master) { }
 
     virtual void run();
 

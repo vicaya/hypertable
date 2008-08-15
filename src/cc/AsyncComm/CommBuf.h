@@ -101,7 +101,8 @@ namespace Hypertable {
      * @param len the length of the primary buffer to allocate
      * @param buffer extended buffer
      */
-    CommBuf(HeaderBuilder &hbuilder, uint32_t len, StaticBuffer &buffer) : ext(buffer) {
+    CommBuf(HeaderBuilder &hbuilder, uint32_t len, StaticBuffer &buffer)
+      : ext(buffer) {
       len += hbuilder.header_length();
       data.set(new uint8_t [len], len, true);
       data_ptr = data.base;
@@ -117,7 +118,8 @@ namespace Hypertable {
      * what is remaining to be sent.
      */
     void reset_data_pointers() {
-      HT_EXPECT((data_ptr - data.base) == (int)data.size, Error::FAILED_EXPECTATION);
+      HT_EXPECT((data_ptr - data.base) == (int)data.size,
+                Error::FAILED_EXPECTATION);
       data_ptr = data.base;
       ext_ptr = ext.base;
     }
@@ -270,9 +272,9 @@ namespace Hypertable {
     const uint8_t *ext_ptr;
   };
 
-  typedef boost::intrusive_ptr<CommBuf> CommBufPtr;
+  typedef intrusive_ptr<CommBuf> CommBufPtr;
 
-}
+} // namespace Hypertable
 
 
 #endif // HYPERTABLE_COMMBUF_H

@@ -5,16 +5,17 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-# 
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301, USA.
+#
 
 project(HYPERTABLE)
 
@@ -102,23 +103,26 @@ if (JAVA_INCLUDE_PATH)
   else (HADOOP_INCLUDE_PATH)
     message(STATUS "Please set HADOOP_INCLUDE_PATH variable for Hadoop support")
   endif(HADOOP_INCLUDE_PATH)
-  
+
   if (HADOOP_LIB_PATH)
     message(STATUS "Hadoop libraries located at: ${HADOOP_LIB_PATH}")
   else (HADOOP_LIB_PATH)
     message(STATUS "Please set HADOOP_LIB_PATH variable for Hadoop support")
   endif (HADOOP_LIB_PATH)
-  
+
   if (NOT BUILD_SHARED_LIBS)
-    message(STATUS "Not building shared libraries. Hadoop map-reduce support will be disabled")
+    message(STATUS "Not building shared libraries. "
+            "Hadoop map-reduce support will be disabled")
   endif (NOT BUILD_SHARED_LIBS)
 else (JAVA_INCLUDE_PATH)
   message(STATUS "Java JNI not found. Hadoop support will be disabled.")
 endif(JAVA_INCLUDE_PATH)
 
-if (JAVA_INCLUDE_PATH AND HADOOP_LIB_PATH AND HADOOP_INCLUDE_PATH AND BUILD_SHARED_LIBS)
+if (JAVA_INCLUDE_PATH AND HADOOP_LIB_PATH AND HADOOP_INCLUDE_PATH
+    AND BUILD_SHARED_LIBS)
   set(BUILD_MAPREDUCE ON)
-endif (JAVA_INCLUDE_PATH AND HADOOP_LIB_PATH AND HADOOP_INCLUDE_PATH AND BUILD_SHARED_LIBS)
+endif (JAVA_INCLUDE_PATH AND HADOOP_LIB_PATH AND HADOOP_INCLUDE_PATH
+       AND BUILD_SHARED_LIBS)
 
 # set malloc library
 set(MALLOC_LIBRARY ${Tcmalloc_LIBRARIES})
@@ -195,10 +199,10 @@ install(FILES lib/hypertable-${VERSION}.jar DESTINATION ${VERSION}/java/lib)
 install(FILES ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}.jar
         DESTINATION ${VERSION}/java/lib OPTIONAL)
 install(PROGRAMS bin/jrun bin/clean-database.sh bin/start-dfsbroker.sh
-		 bin/start-master.sh bin/start-hyperspace.sh
-		 bin/start-rangeserver.sh bin/start-all-servers.sh
-		 bin/stop-servers.sh bin/slaves.sh
-	DESTINATION ${VERSION}/bin)
+                 bin/start-master.sh bin/start-hyperspace.sh
+                 bin/start-rangeserver.sh bin/start-all-servers.sh
+                 bin/stop-servers.sh bin/slaves.sh
+        DESTINATION ${VERSION}/bin)
 install(FILES test/create-test-tables.hql DESTINATION ${VERSION}/test)
 install(DIRECTORY examples/apache_log DESTINATION ${VERSION}/examples
         USE_SOURCE_PERMISSIONS)

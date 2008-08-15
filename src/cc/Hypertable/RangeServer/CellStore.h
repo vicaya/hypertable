@@ -33,7 +33,8 @@
 namespace Hypertable {
 
   /**
-   * Abstract base class for persistent cell lists (ones that are stored on disk).
+   * Abstract base class for persistent cell lists (ones that are stored on
+   * disk).
    */
   class CellStore : public CellList {
   public:
@@ -46,36 +47,44 @@ namespace Hypertable {
 
     virtual uint32_t get_total_entries() = 0;
 
-    virtual CellListScanner *create_scanner(ScanContextPtr &scan_ctx) { return 0; }
+    virtual CellListScanner *
+    create_scanner(ScanContextPtr &scan_ctx) { return 0; }
 
     /**
      * Creates a new cell store.
      *
      * @param fname name of file to contain the cell store
      * @param blocksize amount of uncompressed data to compress into a block
-     * @param compressor string indicating compressor type and arguments (e.g. "zlib --best")
+     * @param compressor string indicating compressor type and arguments
+     *        (e.g. "zlib --best")
      * @return Error::OK on success, error code on failure
      */
-    virtual int create(const char *fname, uint32_t blocksize, const std::string &compressor) = 0;
+    virtual int create(const char *fname, uint32_t blocksize,
+                       const std::string &compressor) = 0;
 
     /**
-     * Finalizes the creation of a cell store, by writing block index and metadata trailer.
+     * Finalizes the creation of a cell store, by writing block index and
+     * metadata trailer.
      *
      * @return Error::OK on success, error code on failure
      */
     virtual int finalize() = 0;
 
     /**
-     * Opens a cell store with possibly a restricted view.  When a range splits, the cell stores
-     * that comprise the range get shared between the two newly created ranges.  This method allows
-     * each of the two ranges to open the same cell store but view different portions of it.
+     * Opens a cell store with possibly a restricted view.  When a range
+     * splits, the cell stores that comprise the range get shared between the
+     * two newly created ranges.  This method allows each of the two ranges to
+     * open the same cell store but view different portions of it.
      *
      * @param fname pathname of file containing cell store
-     * @param start_row restricts view of this store to key/value pairs that are greater than this value
-     * @param end_row restricts view of this store to key/value pairs that are less than or equal to this value
+     * @param start_row restricts view of this store to key/value pairs that
+     *        are greater than this value
+     * @param end_row restricts view of this store to key/value pairs that are
+     *        less than or equal to this value
      * @return Error::OK on success, error code on failure
      */
-    virtual int open(const char *fname, const char *start_row, const char *end_row) = 0;
+    virtual int open(const char *fname, const char *start_row,
+                     const char *end_row) = 0;
 
     /**
      * Loads the block index data into an in-memory map.
@@ -85,9 +94,9 @@ namespace Hypertable {
     virtual int load_index() = 0;
 
     /**
-     * Returns the block size used for this cell store.  The block size is the amount of
-     * uncompressed key/value pairs to collect before compressing and storing as a
-     * compressed block in the cell store.
+     * Returns the block size used for this cell store.  The block size is the
+     * amount of uncompressed key/value pairs to collect before compressing and
+     * storing as a compressed block in the cell store.
      *
      * @return block size
      */
@@ -99,8 +108,9 @@ namespace Hypertable {
     virtual int64_t get_revision() = 0;
 
     /**
-     * Returns the disk used by this cell store.  If the cell store is opened with
-     * a restricted range, then it returns an estimate of the disk used by that range.
+     * Returns the disk used by this cell store.  If the cell store is opened
+     * with a restricted range, then it returns an estimate of the disk used by
+     * that range.
      *
      * @return disk used by this cell store or portion thereof
      */
@@ -129,8 +139,8 @@ namespace Hypertable {
 
   };
 
-  typedef boost::intrusive_ptr<CellStore> CellStorePtr;
+  typedef intrusive_ptr<CellStore> CellStorePtr;
 
-}
+} // namespace Hypertable
 
 #endif // HYPERTABLE_CELLSTORE_H

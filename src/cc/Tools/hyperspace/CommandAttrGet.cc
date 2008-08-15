@@ -46,10 +46,11 @@ void CommandAttrGet::run() {
   DynamicBuffer value(0);
 
   if (m_args.size() < 2 || m_args.size() > 3)
-    HT_THROW(Error::PARSE_ERROR, "Wrong number of arguments.  Type 'help' for usage.");
+    HT_THROW(Error::COMMAND_PARSE_ERROR,
+             "Wrong number of arguments.  Type 'help' for usage.");
 
   if (m_args[0].second != "" || m_args[1].second != "")
-    HT_THROW(Error::PARSE_ERROR, "Invalid character '=' in argument.");
+    HT_THROW(Error::COMMAND_PARSE_ERROR, "Invalid character '=' in argument.");
 
   handle = Util::get_handle(m_args[0].first);
 
@@ -58,21 +59,24 @@ void CommandAttrGet::run() {
   if (m_args.size() == 3) {
     if (m_args[2].first == "short") {
       if (value.fill() != 2)
-	HT_THROWF(Error::HYPERSPACE_BAD_ATTRIBUTE, "Expected 2 byte short, but got %lu bytes", (Lu)value.fill());
+        HT_THROWF(Error::HYPERSPACE_BAD_ATTRIBUTE,
+                  "Expected 2 byte short, but got %lu bytes", (Lu)value.fill());
       short sval;
       memcpy(&sval, value.base, 2);
       cout << sval << endl;
     }
     else if (m_args[2].first == "int") {
       if (value.fill() != 4)
-	HT_THROWF(Error::HYPERSPACE_BAD_ATTRIBUTE, "Expected 4 byte int, but got %lu bytes", (Lu)value.fill());
+        HT_THROWF(Error::HYPERSPACE_BAD_ATTRIBUTE,
+                  "Expected 4 byte int, but got %lu bytes", (Lu)value.fill());
       uint32_t ival;
       memcpy(&ival, value.base, 4);
       cout << ival << endl;
     }
     else if (m_args[2].first == "long") {
       if (value.fill() != 8)
-	HT_THROWF(Error::HYPERSPACE_BAD_ATTRIBUTE, "Expected 8 byte int, but got %lu bytes", (Lu)value.fill());
+        HT_THROWF(Error::HYPERSPACE_BAD_ATTRIBUTE,
+                  "Expected 8 byte int, but got %lu bytes", (Lu)value.fill());
       uint64_t lval;
       memcpy(&lval, value.base, 8);
       cout << lval << endl;

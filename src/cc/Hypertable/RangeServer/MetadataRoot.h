@@ -22,7 +22,6 @@
 #ifndef HYPERTABLE_METADATAROOT_H
 #define HYPERTABLE_METADATAROOT_H
 
-#include <string>
 #include <vector>
 
 #include "Hypertable/Lib/Schema.h"
@@ -38,11 +37,11 @@ namespace Hypertable {
     MetadataRoot(SchemaPtr &schema_ptr);
     virtual ~MetadataRoot();
     virtual void reset_files_scan();
-    virtual bool get_next_files(std::string &ag_name, std::string &files);
-    virtual void write_files(std::string &ag_name, std::string &files);
+    virtual bool get_next_files(String &ag_name, String &files);
+    virtual void write_files(const String &ag_name, const String &files);
 
   private:
-    std::vector< std::string > m_agnames;
+    std::vector<String> m_agnames;
     size_t  m_next;
     uint64_t m_handle;
   };

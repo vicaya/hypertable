@@ -33,7 +33,10 @@ namespace Hyperspace {
 
   class ResponseCallbackReaddir : public Hypertable::ResponseCallback {
   public:
-    ResponseCallbackReaddir(Hypertable::Comm *comm, Hypertable::EventPtr &event_ptr) : Hypertable::ResponseCallback(comm, event_ptr) { return; }
+    ResponseCallbackReaddir(Hypertable::Comm *comm,
+                            Hypertable::EventPtr &event_ptr)
+      : Hypertable::ResponseCallback(comm, event_ptr) { }
+
     int response(std::vector<DirEntry> &listing);
   };
 

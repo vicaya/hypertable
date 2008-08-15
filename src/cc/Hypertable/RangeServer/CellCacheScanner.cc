@@ -34,23 +34,28 @@ using namespace Hypertable;
 /**
  *
  */
-CellCacheScanner::CellCacheScanner(CellCachePtr &cellcache, ScanContextPtr &scan_ctx) : CellListScanner(scan_ctx), m_cell_cache_ptr(cellcache), m_cell_cache_mutex(cellcache->m_mutex), m_cur_value(0), m_eos(false) {
-  
+CellCacheScanner::CellCacheScanner(CellCachePtr &cellcache,
+                                   ScanContextPtr &scan_ctx)
+  : CellListScanner(scan_ctx), m_cell_cache_ptr(cellcache),
+    m_cell_cache_mutex(cellcache->m_mutex), m_cur_value(0), m_eos(false) {
+
   {
     boost::mutex::scoped_lock lock(m_cell_cache_mutex);
 
-    m_start_iter = m_cell_cache_ptr->m_cell_map.lower_bound(scan_ctx->start_key);
+    m_start_iter =
+        m_cell_cache_ptr->m_cell_map.lower_bound(scan_ctx->start_key);
     m_end_iter = m_cell_cache_ptr->m_cell_map.lower_bound(scan_ctx->end_key);
 
     m_cur_iter = m_start_iter;
 
     while (m_cur_iter != m_end_iter) {
       m_cur_key.load( (*m_cur_iter).first );
-      if (m_cur_key.flag == FLAG_DELETE_ROW || m_scan_context_ptr->family_mask[m_cur_key.column_family_code]) {
+      if (m_cur_key.flag == FLAG_DELETE_ROW
+          || m_scan_context_ptr->family_mask[m_cur_key.column_family_code]) {
         m_cur_value.ptr = m_cur_key.serial.ptr + (*m_cur_iter).second;
         return;
       }
-      m_cur_iter++;
+      ++m_cur_iter;
     }
     m_eos = true;
     return;
@@ -73,15 +78,16 @@ bool CellCacheScanner::get(Key &key, ByteString &value) {
 void CellCacheScanner::forward() {
   boost::mutex::scoped_lock lock(m_cell_cache_mutex);
 
-  m_cur_iter++;
+  ++m_cur_iter;
   while (m_cur_iter != m_end_iter) {
 
     m_cur_key.load( (*m_cur_iter).first );
-    if (m_cur_key.flag == FLAG_DELETE_ROW || m_scan_context_ptr->family_mask[m_cur_key.column_family_code]) {
+    if (m_cur_key.flag == FLAG_DELETE_ROW
+        || m_scan_context_ptr->family_mask[m_cur_key.column_family_code]) {
       m_cur_value.ptr = m_cur_key.serial.ptr + (*m_cur_iter).second;
       return;
     }
-    m_cur_iter++;
+    ++m_cur_iter;
   }
   m_eos = true;
 }

@@ -36,7 +36,10 @@ namespace Hypertable {
 
   public:
 
-    IOHandlerAccept(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp, HandlerMapPtr &handler_map_ptr, ConnectionHandlerFactoryPtr &chfp) : IOHandler(sd, addr, dhp), m_handler_map_ptr(handler_map_ptr), m_handler_factory_ptr(chfp) {
+    IOHandlerAccept(int sd, sockaddr_in &addr, DispatchHandlerPtr &dhp,
+                    HandlerMapPtr &hmap, ConnectionHandlerFactoryPtr &chfp)
+      : IOHandler(sd, addr, dhp), m_handler_map_ptr(hmap),
+        m_handler_factory_ptr(chfp) {
       return;
     }
 
@@ -59,7 +62,7 @@ namespace Hypertable {
     ConnectionHandlerFactoryPtr m_handler_factory_ptr;
   };
 
-  typedef boost::intrusive_ptr<IOHandlerAccept> IOHandlerAcceptPtr;
+  typedef intrusive_ptr<IOHandlerAccept> IOHandlerAcceptPtr;
 
 }
 

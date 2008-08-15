@@ -41,7 +41,8 @@ namespace {
  */
 BlockCompressionCodecLzo::BlockCompressionCodecLzo(const Args &args) {
   if (lzo_init() != LZO_E_OK)
-    HT_THROW(Error::BLOCK_COMPRESSOR_INIT_ERROR, "Problem initializing lzo library");
+    HT_THROW(Error::BLOCK_COMPRESSOR_INIT_ERROR,
+             "Problem initializing lzo library");
   m_workmem = new uint8_t [LZO1X_1_MEM_COMPRESS + 4];
   memcpy(&m_workmem[LZO1X_1_MEM_COMPRESS], fence_marker, 4);
 }
@@ -59,7 +60,9 @@ BlockCompressionCodecLzo::~BlockCompressionCodecLzo() {
 /**
  *
  */
-void BlockCompressionCodecLzo::deflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader &header, size_t reserve) {
+void
+BlockCompressionCodecLzo::deflate(const DynamicBuffer &input,
+    DynamicBuffer &output, BlockCompressionHeader &header, size_t reserve) {
   uint32_t avail_out = (input.fill() + input.fill() / 16 + 64 + 3 + 4);
   int ret;
   lzo_uint out_len = avail_out;
@@ -71,7 +74,8 @@ void BlockCompressionCodecLzo::deflate(const DynamicBuffer &input, DynamicBuffer
   fence_ptr = output.base + header.length() + (avail_out-4);
   memcpy(fence_ptr, fence_marker, 4);
 
-  ret = lzo1x_1_compress(input.base, input.fill(), output.base+header.length(), &out_len, m_workmem);
+  ret = lzo1x_1_compress(input.base, input.fill(), output.base+header.length(),
+                         &out_len, m_workmem);
   assert(ret == LZO_E_OK);
 
   /* check for an incompressible block */
@@ -86,21 +90,25 @@ void BlockCompressionCodecLzo::deflate(const DynamicBuffer &input, DynamicBuffer
     header.set_data_length(input.fill());
     header.set_data_zlength(out_len);
   }
-  header.set_data_checksum(fletcher32(output.base + header.length(), header.get_data_zlength()));
+  header.set_data_checksum(fletcher32(output.base + header.length(),
+                           header.get_data_zlength()));
 
   output.ptr = output.base;
   header.encode(&output.ptr);
   output.ptr += header.get_data_zlength();
 
   HT_EXPECT(!memcmp(fence_ptr, fence_marker, 4), Error::FAILED_EXPECTATION);
-  HT_EXPECT(!memcmp(&m_workmem[LZO1X_1_MEM_COMPRESS], fence_marker, 4), Error::FAILED_EXPECTATION);
+  HT_EXPECT(!memcmp(&m_workmem[LZO1X_1_MEM_COMPRESS], fence_marker, 4),
+            Error::FAILED_EXPECTATION);
 }
 
 
 /**
  *
  */
-void BlockCompressionCodecLzo::inflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader &header) {
+void
+BlockCompressionCodecLzo::inflate(const DynamicBuffer &input,
+    DynamicBuffer &output, BlockCompressionHeader &header) {
   int ret;
   const uint8_t *msg_ptr = input.base;
   size_t remaining = input.fill();
@@ -109,13 +117,15 @@ void BlockCompressionCodecLzo::inflate(const DynamicBuffer &input, DynamicBuffer
   header.decode(&msg_ptr, &remaining);
 
   if (header.get_data_zlength() != remaining) {
-    HT_ERRORF("Block decompression error, header zlength = %d, actual = %d", header.get_data_zlength(), remaining);
+    HT_ERRORF("Block decompression error, header zlength = %d, actual = %d",
+              header.get_data_zlength(), remaining);
     HT_THROW(Error::BLOCK_COMPRESSOR_BAD_HEADER, "");
   }
 
   uint32_t checksum = fletcher32(msg_ptr, remaining);
   if (checksum != header.get_data_checksum()) {
-    HT_ERRORF("Compressed block checksum mismatch header=%d, computed=%d", header.get_data_checksum(), checksum);
+    HT_ERRORF("Compressed block checksum mismatch header=%d, computed=%d",
+              header.get_data_checksum(), checksum);
     HT_THROW(Error::BLOCK_COMPRESSOR_CHECKSUM_MISMATCH, "");
   }
 
@@ -126,7 +136,8 @@ void BlockCompressionCodecLzo::inflate(const DynamicBuffer &input, DynamicBuffer
     memcpy(output.base, msg_ptr, header.get_data_length());
   else {
     new_len = header.get_data_length();
-    ret = lzo1x_decompress(msg_ptr, header.get_data_zlength(), output.base, &new_len, 0);
+    ret = lzo1x_decompress(msg_ptr, header.get_data_zlength(), output.base,
+                           &new_len, 0);
     if (ret != LZO_E_OK || new_len != header.get_data_length()) {
       HT_ERRORF("Lzo decompression error, rval = %d", ret);
       HT_THROW(Error::BLOCK_COMPRESSOR_INFLATE_ERROR, "");

@@ -87,7 +87,7 @@ namespace Hypertable {
      * @param addr connection identifier (remote address)
      * @param alias alias connection identifier
      */
-    int set_alias(struct sockaddr_in &addr, struct sockaddr_in &alias);
+    int set_alias(const sockaddr_in &addr, const sockaddr_in &alias);
 
     /**
      * Tells the communication subsystem to listen for connection requests on
@@ -148,7 +148,7 @@ namespace Hypertable {
      *        request
      * @return Error::OK on success or error code on failure
      */
-    int send_request(struct sockaddr_in &addr, time_t timeout,
+    int send_request(const sockaddr_in &addr, time_t timeout,
                      CommBufPtr &cbuf_ptr, DispatchHandler *response_handler);
 
     /**
@@ -205,7 +205,7 @@ namespace Hypertable {
      * Sends a datagram to a remote address.  The remote address is specified
      * by the addr argument and the local socket address to send it from is
      * specified by the send_addr argument.  The send_addr argument must refer
-     * to a socket that was created with a call to 
+     * to a socket that was created with a call to
      * \create_datagram_receive_socket.
      *
      * @param addr remote address to send datagram to

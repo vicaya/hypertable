@@ -95,7 +95,8 @@ add_executable(FileBlockCache_test tests/FileBlockCache_test.cc)
 target_link_libraries(FileBlockCache_test HyperRanger)
 
 # CellStoreScanner test
-add_executable(CellStoreScanner_test tests/CellStoreScanner_test.cc ${TEST_DEPENDENCIES})
+add_executable(CellStoreScanner_test tests/CellStoreScanner_test.cc
+               ${TEST_DEPENDENCIES})
 target_link_libraries(CellStoreScanner_test HyperRanger)
 
 configure_file(${SRC_DIR}/CellStoreScanner_test.golden

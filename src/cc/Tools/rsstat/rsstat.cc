@@ -57,7 +57,7 @@ namespace {
     "usage: rsstat [options]",
     "",
     "  options:",
-    "    --config=<file>  Read configuration from <file>.  The default config file",
+    "    --config=<file>  Read configuration from <file>.  The default file",
     "                     is \"conf/hypertable.cfg\" relative to the toplevel",
     "                     install directory",
     "    --host=<name>    Connect to the server running on host <name>",

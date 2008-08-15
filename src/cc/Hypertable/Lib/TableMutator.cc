@@ -45,27 +45,29 @@ namespace {
  *
  */
 TableMutator::TableMutator(PropertiesPtr &props_ptr, Comm *comm,
-    TableIdentifier *table_identifier, SchemaPtr &schema_ptr,
+    const TableIdentifier *table_identifier, SchemaPtr &schema_ptr,
     RangeLocatorPtr &range_locator_ptr, int timeout)
-    : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr),
-      m_range_locator_ptr(range_locator_ptr),
-      m_table_identifier(*table_identifier), m_memory_used(0),
-      m_max_memory(DEFAULT_MAX_MEMORY), m_resends(0), m_timeout(timeout),
-      m_last_error(Error::OK), m_last_op(0) {
+  : m_props_ptr(props_ptr), m_comm(comm), m_schema_ptr(schema_ptr),
+    m_range_locator_ptr(range_locator_ptr),
+    m_table_identifier(*table_identifier), m_memory_used(0),
+    m_max_memory(DEFAULT_MAX_MEMORY), m_resends(0), m_timeout(timeout),
+    m_last_error(Error::OK), m_last_op(0) {
 
   if (m_timeout == 0 ||
       (m_timeout = props_ptr->get_int("Hypertable.Client.Timeout", 0)) == 0 ||
       (m_timeout = props_ptr->get_int("Hypertable.Request.Timeout", 0)) == 0)
     m_timeout = HYPERTABLE_CLIENT_TIMEOUT;
 
-  m_buffer_ptr = new TableMutatorScatterBuffer(props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+  m_buffer_ptr = new TableMutatorScatterBuffer(props_ptr, m_comm,
+      &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
 }
 
 
 /**
  *
  */
-void TableMutator::set(KeySpec &key, const void *value, uint32_t value_len) {
+void
+TableMutator::set(const KeySpec &key, const void *value, uint32_t value_len) {
   Timer timer(m_timeout);
 
   if (m_last_error != Error::OK)
@@ -82,9 +84,11 @@ void TableMutator::set(KeySpec &key, const void *value, uint32_t value_len) {
 
     {
       Key full_key;
-      Schema::ColumnFamily *cf = m_schema_ptr->get_column_family(key.column_family);
+      Schema::ColumnFamily *cf =
+          m_schema_ptr->get_column_family(key.column_family);
       if (cf == 0)
-        HT_THROW(Error::BAD_KEY, (std::string)"Invalid key - bad column family '" + key.column_family + "'");
+        HT_THROW(Error::BAD_KEY, (String)"Invalid key - bad column family '"
+                 + key.column_family + "'");
       full_key.row = (const char *)key.row;
       full_key.column_qualifier = (const char *)key.column_qualifier;
       full_key.column_family_code = (uint8_t)cf->id;
@@ -108,7 +112,8 @@ void TableMutator::set(KeySpec &key, const void *value, uint32_t value_len) {
 
       m_prev_buffer_ptr = m_buffer_ptr;
 
-      m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+      m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm,
+          &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
       m_memory_used = 0;
     }
 
@@ -125,7 +130,7 @@ void TableMutator::set(KeySpec &key, const void *value, uint32_t value_len) {
 
 
 
-void TableMutator::set_delete(KeySpec &key) {
+void TableMutator::set_delete(const KeySpec &key) {
   Key full_key;
   Timer timer(m_timeout);
 
@@ -146,9 +151,11 @@ void TableMutator::set_delete(KeySpec &key) {
       full_key.revision = key.revision;
     }
     else  {
-      Schema::ColumnFamily *cf = m_schema_ptr->get_column_family(key.column_family);
+      Schema::ColumnFamily *cf =
+          m_schema_ptr->get_column_family(key.column_family);
       if (cf == 0)
-        HT_THROW(Error::BAD_KEY, (std::string)"Invalid key - bad column family '" + key.column_family + "'");
+        HT_THROW(Error::BAD_KEY, (String)"Invalid key - bad column family '"
+                 + key.column_family + "'");
       full_key.row = (const char *)key.row;
       full_key.column_qualifier = (const char *)key.column_qualifier;
       full_key.column_family_code = (uint8_t)cf->id;
@@ -173,7 +180,8 @@ void TableMutator::set_delete(KeySpec &key) {
 
       m_prev_buffer_ptr = m_buffer_ptr;
 
-      m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm, &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
+      m_buffer_ptr = new TableMutatorScatterBuffer(m_props_ptr, m_comm,
+          &m_table_identifier, m_schema_ptr, m_range_locator_ptr);
       m_memory_used = 0;
     }
   }
@@ -279,7 +287,7 @@ void TableMutator::wait_for_previous_buffer(Timer &timer) {
 
 
 
-void TableMutator::sanity_check_key(KeySpec &key) {
+void TableMutator::sanity_check_key(const KeySpec &key) {
   const char *row = (const char *)key.row;
   const char *column_qualifier = (const char *)key.column_qualifier;
 
@@ -290,21 +298,27 @@ void TableMutator::sanity_check_key(KeySpec &key) {
     HT_THROW(Error::BAD_KEY, "Invalid row key - cannot be zero length");
 
   if (row[key.row_len] != 0)
-    HT_THROW(Error::BAD_KEY, "Invalid row key - must be followed by a '\\0' character");
+    HT_THROW(Error::BAD_KEY,
+             "Invalid row key - must be followed by a '\\0' character");
 
   if (strlen(row) != key.row_len)
-    HT_THROW(Error::BAD_KEY, (std::string)"Invalid row key - '\\0' character not allowed (offset=" + (uint32_t)strlen(row) + ")");
+    HT_THROW(Error::BAD_KEY, (String)"Invalid row key - '\\0' character not "
+             "allowed (offset=" + (uint32_t)strlen(row) + ")");
 
   if (row[0] == (char)0xff && row[1] == (char)0xff)
-    HT_THROW(Error::BAD_KEY, "Invalid row key - cannot start with character sequence 0xff 0xff");
+    HT_THROW(Error::BAD_KEY, "Invalid row key - cannot start with character "
+             "sequence 0xff 0xff");
 
   /**
    * Sanity check the column qualifier
    */
   if (key.column_qualifier_len > 0) {
     if (column_qualifier[key.column_qualifier_len] != 0)
-      HT_THROW(Error::BAD_KEY, "Invalid column qualifier - must be followed by a '\\0' character");
+      HT_THROW(Error::BAD_KEY, "Invalid column qualifier - must be followed by "
+               "a '\\0' character");
     if (strlen(column_qualifier) != key.column_qualifier_len)
-      HT_THROW(Error::BAD_KEY, (std::string)"Invalid column qualifier - '\\0' character not allowed (offset=" + (uint32_t)strlen(column_qualifier) + ")");
+      HT_THROW(Error::BAD_KEY, (String)"Invalid column qualifier - '\\0' "
+               "character not allowed (offset="
+               + (uint32_t)strlen(column_qualifier) + ")");
   }
 }

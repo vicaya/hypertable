@@ -75,14 +75,19 @@ namespace {
           HT_ERROR_OUT << e << HT_END;
           break;
         }
-        cout << "rejected: offset=" << offset << " span=" << len << " " << Error::get_text(error) << endl;
+        cout << "rejected: offset=" << offset << " span=" << len << " "
+             << Error::get_text(error) << endl;
       }
     }
   }
 
 }
 
-RangeServerCommandInterpreter::RangeServerCommandInterpreter(Comm *comm, Hyperspace::SessionPtr &hyperspace_ptr, struct sockaddr_in addr, RangeServerClientPtr &range_server_ptr) : m_comm(comm), m_hyperspace_ptr(hyperspace_ptr), m_addr(addr), m_range_server_ptr(range_server_ptr), m_cur_scanner_id(-1) {
+RangeServerCommandInterpreter::RangeServerCommandInterpreter(Comm *comm,
+    Hyperspace::SessionPtr &hyperspace_ptr, const sockaddr_in addr,
+    RangeServerClientPtr &range_server_ptr)
+  : m_comm(comm), m_hyperspace_ptr(hyperspace_ptr), m_addr(addr),
+    m_range_server_ptr(range_server_ptr), m_cur_scanner_id(-1) {
   HqlHelpText::install_range_server_client_text();
   return;
 }
@@ -92,8 +97,8 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
   TableIdentifier *table = 0;
   RangeSpec range;
   TableInfo *table_info;
-  std::string schema_str;
-  std::string out_str;
+  String schema_str;
+  String out_str;
   SchemaPtr schema_ptr;
   hql_interpreter_state state;
   hql_interpreter interp(state);
@@ -113,7 +118,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       if (table_info == 0) {
         table_info = new TableInfo(state.table_name);
         table_info->load(m_hyperspace_ptr);
-	m_table_map[state.table_name] = table_info;
+        m_table_map[state.table_name] = table_info;
       }
       table = table_info->get_table_identifier();
       table_info->get_schema_ptr(schema_ptr);
@@ -142,7 +147,8 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       TestSource *tsource = 0;
 
       if (!FileUtils::exists(state.input_file.c_str()))
-        HT_THROW(Error::FILE_NOT_FOUND, std::string("Input file '") + state.input_file + "' does not exist");
+        HT_THROW(Error::FILE_NOT_FOUND, String("Input file '")
+                 + state.input_file + "' does not exist");
 
       tsource = new TestSource(state.input_file, schema_ptr.get());
 
@@ -198,16 +204,17 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
           }
           send_buf_len = sendp - send_buf;
           buf.clear();
-	  send_count = keys.size();
+          send_count = keys.size();
         }
         else {
           send_buf_len = 0;
-	  send_count = 0;
-	}
+          send_count = 0;
+        }
 
         if (outstanding) {
           if (!sync_handler.wait_for_reply(event_ptr))
-            HT_THROW(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
+            HT_THROW(Protocol::response_code(event_ptr),
+                     (Protocol::string_format_message(event_ptr)));
           process_event(event_ptr);
         }
 
@@ -215,7 +222,8 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 
         if (send_buf_len > 0) {
           StaticBuffer mybuf(send_buf, send_buf_len);
-          m_range_server_ptr->update(m_addr, *table, send_count, mybuf, &sync_handler);
+          m_range_server_ptr->update(m_addr, *table, send_count, mybuf,
+                                     &sync_handler);
           outstanding = true;
         }
         else
@@ -224,7 +232,8 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 
       if (outstanding) {
         if (!sync_handler.wait_for_reply(event_ptr))
-          HT_THROW(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
+          HT_THROW(Protocol::response_code(event_ptr),
+                   (Protocol::string_format_message(event_ptr)));
         process_event(event_ptr);
       }
 
@@ -245,16 +254,19 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
         scan_spec.columns.push_back(state.scan.columns[i].c_str());
 
       for (size_t i=0; i<state.scan.row_intervals.size(); i++) {
-	if (state.scan.row_intervals[i].start > state.scan.row_intervals[i].end ||
-	    (state.scan.row_intervals[i].start == state.scan.row_intervals[i].end &&
-	     !(state.scan.row_intervals[i].start_inclusive || state.scan.row_intervals[i].end_inclusive)))
-	  HT_THROW(Error::HQL_PARSE_ERROR, "Bad row range");
-	ri.start = (state.scan.row_intervals[i].start == "") ? ""
-	  : state.scan.row_intervals[i].start.c_str();
-	ri.start_inclusive = state.scan.row_intervals[i].start_inclusive;
-	ri.end = state.scan.row_intervals[i].end.c_str();
-	ri.end_inclusive = state.scan.row_intervals[i].end_inclusive;
-	scan_spec.row_intervals.push_back(ri);
+        if (state.scan.row_intervals[i].start
+            > state.scan.row_intervals[i].end
+            || (state.scan.row_intervals[i].start
+            == state.scan.row_intervals[i].end
+            && !(state.scan.row_intervals[i].start_inclusive
+            || state.scan.row_intervals[i].end_inclusive)))
+          HT_THROW(Error::HQL_PARSE_ERROR, "Bad row range");
+        ri.start = (state.scan.row_intervals[i].start == "") ? ""
+          : state.scan.row_intervals[i].start.c_str();
+        ri.start_inclusive = state.scan.row_intervals[i].start_inclusive;
+        ri.end = state.scan.row_intervals[i].end.c_str();
+        ri.end_inclusive = state.scan.row_intervals[i].end_inclusive;
+        scan_spec.row_intervals.push_back(ri);
       }
 
       scan_spec.time_interval.first  = state.scan.start_time;
@@ -263,7 +275,8 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 
       /**
        */
-      m_range_server_ptr->create_scanner(m_addr, *table, range, scan_spec, scanblock);
+      m_range_server_ptr->create_scanner(m_addr, *table, range, scan_spec,
+                                         scanblock);
 
       m_cur_scanner_id = scanblock.get_scanner_id();
 
@@ -281,7 +294,8 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 
       if (state.scanner_id == -1) {
         if (m_cur_scanner_id == -1)
-          HT_THROW(Error::RANGESERVER_INVALID_SCANNER_ID, "No currently open scanner");
+          HT_THROW(Error::RANGESERVER_INVALID_SCANNER_ID,
+                   "No currently open scanner");
         scanner_id = m_cur_scanner_id;
         m_cur_scanner_id = -1;
       }
@@ -324,13 +338,16 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       m_range_server_ptr->drop_range(m_addr, *table, range, &sync_handler);
 
       if (!sync_handler.wait_for_reply(event_ptr))
-        HT_THROW(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
+        HT_THROW(Protocol::response_code(event_ptr),
+                 (Protocol::string_format_message(event_ptr)));
 
     }
     else if (state.command == COMMAND_REPLAY_BEGIN) {
-      m_range_server_ptr->replay_begin(m_addr, false, &sync_handler);  // fix me!!  added metadata boolean
+      // fix me!!  added metadata boolean
+      m_range_server_ptr->replay_begin(m_addr, false, &sync_handler);
       if (!sync_handler.wait_for_reply(event_ptr))
-        HT_THROW(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
+        HT_THROW(Protocol::response_code(event_ptr),
+                 (Protocol::string_format_message(event_ptr)));
     }
     else if (state.command == COMMAND_REPLAY_LOG) {
       cout << "Not implemented." << endl;
@@ -338,7 +355,8 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
     else if (state.command == COMMAND_REPLAY_COMMIT) {
       m_range_server_ptr->replay_commit(m_addr, &sync_handler);
       if (!sync_handler.wait_for_reply(event_ptr))
-        HT_THROW(Protocol::response_code(event_ptr), (Protocol::string_format_message(event_ptr)));
+        HT_THROW(Protocol::response_code(event_ptr),
+                 (Protocol::string_format_message(event_ptr)));
     }
     else if (state.command == COMMAND_HELP) {
       const char **text = HqlHelpText::Get(state.str);
@@ -356,7 +374,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       HT_THROW(Error::HQL_PARSE_ERROR, "unsupported command");
   }
   else
-    HT_THROW(Error::HQL_PARSE_ERROR, std::string("parse error at: ") + info.stop);
+    HT_THROW(Error::HQL_PARSE_ERROR, String("parse error at: ") + info.stop);
 }
 
 
@@ -366,8 +384,8 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
  */
 void
 RangeServerCommandInterpreter::display_scan_data(const SerializedKey &serkey,
-						 const ByteString &value,
-						 SchemaPtr &schema_ptr) {
+                                                 const ByteString &value,
+                                                 SchemaPtr &schema_ptr) {
   Key key(serkey);
   Schema::ColumnFamily *cf;
 
@@ -376,20 +394,24 @@ RangeServerCommandInterpreter::display_scan_data(const SerializedKey &serkey,
   }
   else if (key.flag == FLAG_DELETE_COLUMN_FAMILY) {
      cf = schema_ptr->get_column_family(key.column_family_code);
-     cout << key.timestamp << " " << key.row << " " << cf->name << " DELETE" << endl;
+     cout << key.timestamp << " " << key.row << " " << cf->name << " DELETE"
+          << endl;
   }
   else {
     if (key.column_family_code > 0) {
       cf = schema_ptr->get_column_family(key.column_family_code);
       if (key.flag == FLAG_DELETE_CELL)
-        cout << key.timestamp << " " << key.row << " " << cf->name << ":" << key.column_qualifier << " DELETE" << endl;
+        cout << key.timestamp << " " << key.row << " " << cf->name << ":"
+             << key.column_qualifier << " DELETE" << endl;
       else {
-        cout << key.timestamp << " " << key.row << " " << cf->name << ":" << key.column_qualifier;
+        cout << key.timestamp << " " << key.row << " " << cf->name << ":"
+             << key.column_qualifier;
         cout << endl;
       }
     }
     else {
-      cerr << "Bad column family (" << (int)key.column_family_code << ") for row key " << key.row;
+      cerr << "Bad column family (" << (int)key.column_family_code
+           << ") for row key " << key.row;
       cerr << endl;
     }
   }

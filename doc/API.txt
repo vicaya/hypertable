@@ -41,7 +41,7 @@ namespace hypertable {
    *  to create a table scanner and controls what subset of the table
    *  is to be scanned.
    */
-  public class ScannerSpecification {    
+  public class ScannerSpecification {
     public void SetStartRow(String row);
     public void SetEndRow(String row);
     public void AddColumnFamily(String columnFamily);

@@ -39,7 +39,7 @@ const char *CommandRemove::ms_usage[] = {
 void CommandRemove::run() {
 
   if (m_args.size() < 1)
-    HT_THROW(Error::PARSE_ERROR, "No filename supplied.");
+    HT_THROW(Error::COMMAND_PARSE_ERROR, "No filename supplied.");
 
   m_client->remove(m_args[0].first);
 

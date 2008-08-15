@@ -38,8 +38,9 @@ namespace Hypertable {
   class ConnectionHandler : public DispatchHandler {
   public:
 
-    ConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue, RangeServerPtr range_server, MasterClientPtr &master_client);
-    ConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue, RangeServerPtr range_server);
+    ConnectionHandler(Comm *, ApplicationQueuePtr &, RangeServerPtr,
+                      MasterClientPtr &);
+    ConnectionHandler(Comm *, ApplicationQueuePtr &, RangeServerPtr);
 
     virtual void handle(EventPtr &event_ptr);
 

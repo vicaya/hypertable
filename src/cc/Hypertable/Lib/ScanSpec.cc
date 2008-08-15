@@ -33,7 +33,7 @@ using namespace Hypertable;
 using namespace Serialization;
 
 RowInterval::RowInterval() : start(0), start_inclusive(true),
-			     end(0), end_inclusive(true) { }
+                             end(0), end_inclusive(true) { }
 
 size_t RowInterval::encoded_length() const {
   return 2 + encoded_length_vstr(start) + encoded_length_vstr(end);
@@ -55,11 +55,13 @@ void RowInterval::decode(const uint8_t **bufp, size_t *remainp) {
     end_inclusive = decode_bool(bufp, remainp));
 }
 
-CellInterval::CellInterval() : start_row(0), start_column(0), start_inclusive(true),
-			       end_row(0), end_column(0), end_inclusive(true) { }
+CellInterval::CellInterval()
+    : start_row(0), start_column(0), start_inclusive(true), end_row(0),
+      end_column(0), end_inclusive(true) { }
 
 size_t CellInterval::encoded_length() const {
-  return 2 + encoded_length_vstr(start_row) + encoded_length_vstr(start_column) + encoded_length_vstr(end_row) + encoded_length_vstr(end_column);
+  return 2 + encoded_length_vstr(start_row) + encoded_length_vstr(start_column)
+      + encoded_length_vstr(end_row) + encoded_length_vstr(end_column);
 }
 
 void CellInterval::encode(uint8_t **bufp) const {
@@ -82,8 +84,9 @@ void CellInterval::decode(const uint8_t **bufp, size_t *remainp) {
     end_inclusive = decode_bool(bufp, remainp));
 }
 
-ScanSpec::ScanSpec() : row_limit(0), max_versions(0),
-		       time_interval(TIMESTAMP_MIN, TIMESTAMP_MAX), return_deletes(false) {
+ScanSpec::ScanSpec()
+  : row_limit(0), max_versions(0), time_interval(TIMESTAMP_MIN, TIMESTAMP_MAX),
+    return_deletes(false) {
 }
 
 size_t ScanSpec::encoded_length() const {

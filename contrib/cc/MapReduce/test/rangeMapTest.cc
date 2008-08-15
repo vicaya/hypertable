@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     cout << "Getting map..." << endl;
     rangemap = meta_range_map.getMap();
     cout << "Done correctly and safely." << endl;
-    
+
     cout << "rangemap size is " << rangemap->size() << endl;
     vector<RangeLocationInfo>::iterator it;
     for (it = rangemap->begin(); it != rangemap->end(); ++it)
@@ -30,13 +30,13 @@ int main(int argc, char *argv[])
         cout << "START> ";
       else
         cout << r.start_row << "> ";
-      
+
       cout << "end row:<";
       if (r.end_row == "\xff\xff")
         cout << "END> ";
       else
         cout << r.end_row << "> ";
-        
+
       cout << "location: " << r.location << endl;
     }
   } catch (std::exception &e) {

@@ -34,7 +34,7 @@ new_rs_split_start(const TableIdentifier &table, const RangeSpec &old,
 
 MetaLogEntry *
 new_rs_split_shrunk(const TableIdentifier &table, const RangeSpec &old,
-		    const RangeState &state) {
+                    const RangeState &state) {
   return new SplitShrunk(table, old, state);
 }
 

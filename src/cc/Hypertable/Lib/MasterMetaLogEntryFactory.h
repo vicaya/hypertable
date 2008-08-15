@@ -27,7 +27,7 @@
 #include "MetaLog.h"
 
 namespace Hypertable { namespace MetaLogEntryFactory {
-  
+
 enum MasterMetaLogEntryType {
   M_LOAD_RANGE_START    = 101,
   M_LOAD_RANGE_DONE     = 102,

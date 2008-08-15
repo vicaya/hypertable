@@ -95,22 +95,23 @@ ostream &Hypertable::operator<<(ostream &os, const RangeStat &stat) {
   os << " {" << endl
      << "  table =" << stat.table_identifier << endl
      << "  range_spec =" << stat.range_spec << endl
-     << "  disk_usage = " << stat.disk_usage 
+     << "  disk_usage = " << stat.disk_usage
      << "  memory_usage = "<< stat.memory_usage << endl
-     << "  added_inserts = " << stat.added_inserts 
-     << "  cached_cells = " << stat.cached_cells 
+     << "  added_inserts = " << stat.added_inserts
+     << "  cached_cells = " << stat.cached_cells
      << "  collided_cells = " << stat.collided_cells << endl
-     << "  added_row_deletes = " << stat.added_deletes[0] 
-     << "  added_cf_deletes = " << stat.added_deletes[1] 
+     << "  added_row_deletes = " << stat.added_deletes[0]
+     << "  added_cf_deletes = " << stat.added_deletes[1]
      << "  added_cell_deletes = " << stat.added_deletes[2] << endl
      << " }";
   return os;
 }
 
 ostream &Hypertable::operator<<(ostream &os, const RangeServerStat &stat) {
-  os << "{RangeServerStat: range_stats_number = " << stat.range_stats.size() << endl;
+  os << "{RangeServerStat: range_stats_number = " << stat.range_stats.size()
+     <<'\n';
   for (size_t i = 0; i < stat.range_stats.size(); ++i) {
-    os << " range_stats[" << i << "] = " << stat.range_stats[i] << endl;
+    os << " range_stats[" << i << "] = " << stat.range_stats[i] <<'\n';
   }
 
   os << "}";

@@ -69,7 +69,9 @@ const char *Hyperspace::Protocol::command_text(short command) {
 /**
  *
  */
-CommBuf *Hyperspace::Protocol::create_client_keepalive_request(uint64_t session_id, uint64_t last_known_event, bool shutdown) {
+CommBuf *
+Hyperspace::Protocol::create_client_keepalive_request(uint64_t session_id,
+    uint64_t last_known_event, bool shutdown) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
   CommBuf *cbuf = new CommBuf(hbuilder, 19);
   cbuf->append_i16(COMMAND_KEEPALIVE);
@@ -83,7 +85,9 @@ CommBuf *Hyperspace::Protocol::create_client_keepalive_request(uint64_t session_
 /**
  *
  */
-CommBuf *Hyperspace::Protocol::create_server_keepalive_request(uint64_t session_id, int error) {
+CommBuf *
+Hyperspace::Protocol::create_server_keepalive_request(uint64_t session_id,
+                                                      int error) {
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
   CommBuf *cbuf = new CommBuf(hbuilder, 18);
   cbuf->append_i16(COMMAND_KEEPALIVE);
@@ -97,14 +101,17 @@ CommBuf *Hyperspace::Protocol::create_server_keepalive_request(uint64_t session_
 /**
  *
  */
-CommBuf *Hyperspace::Protocol::create_server_keepalive_request(SessionDataPtr &session_data) {
+CommBuf *
+Hyperspace::Protocol::create_server_keepalive_request(
+    SessionDataPtr &session_data) {
   boost::mutex::scoped_lock lock(session_data->mutex);
   CommBuf *cbuf = 0;
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE);
   uint32_t len = 18;
   list<Notification *>::iterator iter;
 
-  for (iter = session_data->notifications.begin(); iter != session_data->notifications.end(); iter++) {
+  for (iter = session_data->notifications.begin();
+       iter != session_data->notifications.end(); ++iter) {
     len += 8;  // handle
     len += (*iter)->event_ptr->encoded_length();
   }
@@ -114,13 +121,10 @@ CommBuf *Hyperspace::Protocol::create_server_keepalive_request(SessionDataPtr &s
   cbuf->append_i64(session_data->id);
   cbuf->append_i32(Error::OK);
   cbuf->append_i32(session_data->notifications.size());
-  for (iter = session_data->notifications.begin(); iter != session_data->notifications.end(); iter++) {
+  for (iter = session_data->notifications.begin();
+       iter != session_data->notifications.end(); ++iter) {
     cbuf->append_i64((*iter)->handle);
     (*iter)->event_ptr->encode(cbuf);
-    /**
-    HT_ERRORF("Encoding session=%lld handle=%lld event_mask=%d event_id=%lld",
-                 session_data->id, (*iter)->handle, (*iter)->event_ptr->get_mask(), (*iter)->event_ptr->get_id());
-    **/
   }
 
   return cbuf;
@@ -142,11 +146,15 @@ CommBuf *Hyperspace::Protocol::create_handshake_request(uint64_t session_id) {
 /**
  *
  */
-CommBuf *Hyperspace::Protocol::create_open_request(const std::string &name, uint32_t flags, HandleCallbackPtr &callback, std::vector<Attribute> &init_attrs) {
+CommBuf *
+Hyperspace::Protocol::create_open_request(const std::string &name,
+    uint32_t flags, HandleCallbackPtr &callback,
+    std::vector<Attribute> &init_attrs) {
   size_t len = 14 + encoded_length_vstr(name.size());
   HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, filename_to_group(name));
   for (size_t i=0; i<init_attrs.size(); i++)
-    len += encoded_length_vstr(name.size()) + encoded_length_vstr(init_attrs[i].value_len);
+    len += encoded_length_vstr(name.size())
+           + encoded_length_vstr(init_attrs[i].value_len);
 
   CommBuf *cbuf = new CommBuf(hbuilder, len);
 
@@ -170,7 +178,8 @@ CommBuf *Hyperspace::Protocol::create_open_request(const std::string &name, uint
 
 
 CommBuf *Hyperspace::Protocol::create_close_request(uint64_t handle) {
-  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE,
+                         (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
   CommBuf *cbuf = new CommBuf(hbuilder, 10);
   cbuf->append_i16(COMMAND_CLOSE);
   cbuf->append_i64(handle);
@@ -195,9 +204,13 @@ CommBuf *Hyperspace::Protocol::create_delete_request(const std::string &name) {
 }
 
 
-CommBuf *Hyperspace::Protocol::create_attr_set_request(uint64_t handle, const std::string &name, const void *value, size_t value_len) {
-  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
-  CommBuf *cbuf = new CommBuf(hbuilder, 10 + encoded_length_vstr(name.size()) + encoded_length_vstr(value_len));
+CommBuf *
+Hyperspace::Protocol::create_attr_set_request(uint64_t handle,
+    const std::string &name, const void *value, size_t value_len) {
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE,
+                         (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
+  CommBuf *cbuf = new CommBuf(hbuilder, 10 + encoded_length_vstr(name.size())
+                              + encoded_length_vstr(value_len));
   cbuf->append_i16(COMMAND_ATTRSET);
   cbuf->append_i64(handle);
   cbuf->append_vstr(name);
@@ -206,8 +219,11 @@ CommBuf *Hyperspace::Protocol::create_attr_set_request(uint64_t handle, const st
 }
 
 
-CommBuf *Hyperspace::Protocol::create_attr_get_request(uint64_t handle, const std::string &name) {
-  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
+CommBuf *
+Hyperspace::Protocol::create_attr_get_request(uint64_t handle,
+                                              const std::string &name) {
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE,
+                         (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
   CommBuf *cbuf = new CommBuf(hbuilder, 10 + encoded_length_vstr(name.size()));
   cbuf->append_i16(COMMAND_ATTRGET);
   cbuf->append_i64(handle);
@@ -216,8 +232,11 @@ CommBuf *Hyperspace::Protocol::create_attr_get_request(uint64_t handle, const st
 }
 
 
-CommBuf *Hyperspace::Protocol::create_attr_del_request(uint64_t handle, const std::string &name) {
-  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
+CommBuf *
+Hyperspace::Protocol::create_attr_del_request(uint64_t handle,
+                                              const std::string &name) {
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE,
+                         (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
   CommBuf *cbuf = new CommBuf(hbuilder, 10 + encoded_length_vstr(name.size()));
   cbuf->append_i16(COMMAND_ATTRDEL);
   cbuf->append_i64(handle);
@@ -227,7 +246,8 @@ CommBuf *Hyperspace::Protocol::create_attr_del_request(uint64_t handle, const st
 
 
 CommBuf *Hyperspace::Protocol::create_readdir_request(uint64_t handle) {
-  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE,
+                         (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
   CommBuf *cbuf = new CommBuf(hbuilder, 10);
   cbuf->append_i16(COMMAND_READDIR);
   cbuf->append_i64(handle);
@@ -244,8 +264,11 @@ CommBuf *Hyperspace::Protocol::create_exists_request(const std::string &name) {
 }
 
 
-CommBuf *Hyperspace::Protocol::create_lock_request(uint64_t handle, uint32_t mode, bool try_lock) {
-  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
+CommBuf *
+Hyperspace::Protocol::create_lock_request(uint64_t handle, uint32_t mode,
+                                          bool try_lock) {
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE,
+                         (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
   CommBuf *cbuf = new CommBuf(hbuilder, 15);
   cbuf->append_i16(COMMAND_LOCK);
   cbuf->append_i64(handle);
@@ -256,7 +279,8 @@ CommBuf *Hyperspace::Protocol::create_lock_request(uint64_t handle, uint32_t mod
 
 
 CommBuf *Hyperspace::Protocol::create_release_request(uint64_t handle) {
-  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE, (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
+  HeaderBuilder hbuilder(Header::PROTOCOL_HYPERSPACE,
+                         (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL));
   CommBuf *cbuf = new CommBuf(hbuilder, 10);
   cbuf->append_i16(COMMAND_RELEASE);
   cbuf->append_i64(handle);

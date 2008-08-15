@@ -36,7 +36,9 @@ namespace Hypertable {
     virtual ~InteractiveCommand() { return; }
 
     void parse_command_line(const char *line);
-    bool matches(const char *line) { return !strncmp(line, command_text(), strlen(command_text())); }
+    bool matches(const char *line) {
+      return !strncmp(line, command_text(), strlen(command_text()));
+    }
 
     virtual const char *command_text() = 0;
     virtual const char **usage() = 0;
@@ -50,7 +52,8 @@ namespace Hypertable {
   protected:
     std::vector< std::pair<std::string, std::string> >  m_args;
 
-    bool parse_string_literal(const char *str, std::string &text, const char **endptr);
+    bool parse_string_literal(const char *str, std::string &text,
+                              const char **endptr);
   };
 
 }

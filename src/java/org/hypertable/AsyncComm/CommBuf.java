@@ -36,7 +36,8 @@ public class CommBuf {
         hbuilder.Encode(data);
     }
 
-    public CommBuf(HeaderBuilder hbuilder, int len, byte [] extBytes, int extBytesLen) {
+    public CommBuf(HeaderBuilder hbuilder, int len, byte [] extBytes,
+                   int extBytesLen) {
         len += hbuilder.HeaderLength();
         data = ByteBuffer.allocate(len);
         data.order(ByteOrder.LITTLE_ENDIAN);
@@ -64,7 +65,9 @@ public class CommBuf {
     /**
      * Append a boolean to the primary buffer
      */
-    public void AppendBool(boolean bval) { data.put((bval) ? (byte)1 : (byte)0); }
+    public void AppendBool(boolean bval) {
+        data.put((bval) ? (byte)1 : (byte)0);
+    }
 
     /**
      * Append a byte of data to the primary buffer
@@ -100,7 +103,9 @@ public class CommBuf {
      *
      * @see Serialization::EncodeByteArray
      */
-    public void AppendByteArray(byte [] bytes, int len) { Serialization.EncodeByteArray(data, bytes, len); }
+    public void AppendByteArray(byte [] bytes, int len) {
+        Serialization.EncodeByteArray(data, bytes, len);
+    }
 
     /**
      * Appends a string to the primary buffer.  A string is
@@ -109,7 +114,9 @@ public class CommBuf {
      *
      * @see Serialization::EncodeString
      */
-    public void AppendString(String str) { Serialization.EncodeString(data, str); }
+    public void AppendString(String str) {
+      Serialization.EncodeString(data, str);
+    }
 
     public ByteBuffer data = null;
     public ByteBuffer ext = null;

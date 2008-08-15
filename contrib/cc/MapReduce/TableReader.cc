@@ -3,7 +3,7 @@
 
 namespace Mapreduce {
 TableReader::TableReader(HadoopPipes::MapContext& context)
-{    
+{
   const HadoopPipes::JobConf *job = context.getJobConf();
   std::string tableName = job->get("hypertable.table.name");
   std::string rootPath = job->get("hypertable.root.path");
@@ -29,7 +29,7 @@ TableReader::TableReader(HadoopPipes::MapContext& context)
   if (allColumns == false) {
     std::vector<std::string> columns;
     using namespace boost::algorithm;
-    
+
     split(columns, job->get("hypertable.table.columns"), is_any_of(", "));
     BOOST_FOREACH(const std::string &c, columns) {
       scan_spec_builder.add_column(c);

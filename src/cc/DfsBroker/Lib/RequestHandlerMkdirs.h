@@ -37,9 +37,8 @@ namespace Hypertable {
 
     class RequestHandlerMkdirs : public ApplicationHandler {
     public:
-      RequestHandlerMkdirs(Comm *comm, Broker *broker, EventPtr &event_ptr) : ApplicationHandler(event_ptr), m_comm(comm), m_broker(broker) {
-        return;
-      }
+      RequestHandlerMkdirs(Comm *comm, Broker *broker, EventPtr &event_ptr)
+        : ApplicationHandler(event_ptr), m_comm(comm), m_broker(broker) { }
 
       virtual void run();
 

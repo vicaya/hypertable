@@ -34,8 +34,9 @@ using namespace Serialization;
 /**
  *
  */
-TableMutatorDispatchHandler::TableMutatorDispatchHandler(TableMutatorSendBuffer *send_buffer) : m_send_buffer(send_buffer) {
-  return;
+TableMutatorDispatchHandler::TableMutatorDispatchHandler(
+    TableMutatorSendBuffer *send_buffer)
+  : m_send_buffer(send_buffer) {
 }
 
 

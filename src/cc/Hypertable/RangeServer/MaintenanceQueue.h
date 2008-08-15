@@ -25,10 +25,10 @@
 #include <cassert>
 #include <queue>
 
-#include <boost/thread.hpp>
-#include <boost/thread/mutex.hpp>
 #include <boost/thread/condition.hpp>
 
+#include "Common/Mutex.h"
+#include "Common/Thread.h"
 #include "Common/Error.h"
 #include "Common/Logger.h"
 #include "Common/ReferenceCount.h"
@@ -45,18 +45,20 @@ namespace Hypertable {
     static boost::condition ms_cond;
 
     struct LtMaintenanceTask {
-      bool operator()(const MaintenanceTask *sm1, const MaintenanceTask *sm2) const {
+      bool
+      operator()(const MaintenanceTask *sm1, const MaintenanceTask *sm2) const {
         return xtime_cmp(sm1->start_time, sm2->start_time) >= 0;
       }
     };
 
-    typedef std::priority_queue<MaintenanceTask *, std::vector<MaintenanceTask *>, LtMaintenanceTask> TaskQueue;
+    typedef std::priority_queue<MaintenanceTask *,
+            std::vector<MaintenanceTask *>, LtMaintenanceTask> TaskQueue;
 
     class MaintenanceQueueState {
     public:
       MaintenanceQueueState() : shutdown(false) { return; }
       TaskQueue          queue;
-      boost::mutex       mutex;
+      Mutex              mutex;
       boost::condition   cond;
       bool               shutdown;
     };
@@ -74,11 +76,12 @@ namespace Hypertable {
         while (true) {
 
           {
-            boost::mutex::scoped_lock lock(m_state.mutex);
+            ScopedLock lock(m_state.mutex);
 
             boost::xtime_get(&now, boost::TIME_UTC);
 
-            while (m_state.queue.empty() || xtime_cmp((m_state.queue.top())->start_time, now) > 0) {
+            while (m_state.queue.empty() ||
+                   xtime_cmp((m_state.queue.top())->start_time, now) > 0) {
 
               if (m_state.shutdown)
                 return;
@@ -98,13 +101,13 @@ namespace Hypertable {
 
           try {
 
-	    // maybe pause
-	    {
-	      boost::mutex::scoped_lock lock(m_state.mutex);
-	      while (ms_pause)
-		ms_cond.wait(lock);
-	    }
-	    
+            // maybe pause
+            {
+              ScopedLock lock(m_state.mutex);
+              while (ms_pause)
+                ms_cond.wait(lock);
+            }
+
             task->execute();
           }
           catch(Hypertable::Exception &e) {
@@ -120,7 +123,7 @@ namespace Hypertable {
     };
 
     MaintenanceQueueState  m_state;
-    boost::thread_group    m_threads;
+    ThreadGroup            m_threads;
     bool joined;
 
   public:
@@ -141,8 +144,8 @@ namespace Hypertable {
 
     /**
      * Shuts down the application queue.  All outstanding requests are carried
-     * out and then all threads exit.  #join can be called to wait for completion
-     * of the shutdown.
+     * out and then all threads exit.  #join can be called to wait for
+     * completion of the shutdown.
      */
     void shutdown() {
       m_state.shutdown = true;
@@ -150,8 +153,8 @@ namespace Hypertable {
     }
 
     /**
-     * Waits for a shutdown to complete.  This method returns when all application
-     * queue threads exit.
+     * Waits for a shutdown to complete.  This method returns when all
+     * application queue threads exit.
      */
     void join() {
       if (!joined) {
@@ -176,20 +179,21 @@ namespace Hypertable {
     }
 
     /**
-     * Adds a request (application handler) to the request queue.  The request queue
-     * is designed to support the serialization of related requests.  Requests are
-     * related by the thread group ID value in the ApplicationHandler.  This thread
-     * group ID is constructed in the Event object
+     * Adds a request (application handler) to the request queue.  The request
+     * queue is designed to support the serialization of related requests.
+     * Requests are related by the thread group ID value in the
+     * ApplicationHandler.  This thread group ID is constructed in the Event
+     * object
      */
     void add(MaintenanceTask *task) {
-      boost::mutex::scoped_lock lock(m_state.mutex);
+      ScopedLock lock(m_state.mutex);
       m_state.queue.push(task);
       m_state.cond.notify_one();
     }
   };
+
   typedef boost::intrusive_ptr<MaintenanceQueue> MaintenanceQueuePtr;
 
-}
-
+} // namespace Hypertable
 
 #endif // HYPERTABLE_MAINTENANCEQUEUE_H

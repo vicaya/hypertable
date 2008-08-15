@@ -65,15 +65,19 @@ using namespace Error;
 /**
  *
  */
-ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue, RangeServerPtr range_server, MasterClientPtr &master_client) : m_comm(comm), m_app_queue_ptr(app_queue), m_range_server_ptr(range_server), m_master_client_ptr(master_client), m_shutdown(false) {
-  return;
+ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue,
+    RangeServerPtr range_server, MasterClientPtr &master_client)
+  : m_comm(comm), m_app_queue_ptr(app_queue), m_range_server_ptr(range_server),
+    m_master_client_ptr(master_client), m_shutdown(false) {
 }
 
 /**
  *
  */
-ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue, RangeServerPtr range_server) : m_comm(comm), m_app_queue_ptr(app_queue), m_range_server_ptr(range_server), m_shutdown(false) {
-  return;
+ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue,
+                                     RangeServerPtr range_server)
+  : m_comm(comm), m_app_queue_ptr(app_queue), m_range_server_ptr(range_server),
+    m_shutdown(false) {
 }
 
 
@@ -102,53 +106,69 @@ void ConnectionHandler::handle(EventPtr &event) {
 
       switch (command) {
       case RangeServerProtocol::COMMAND_COMPACT:
-        handler = new RequestHandlerCompact(m_comm, m_range_server_ptr.get(), event);
+        handler = new RequestHandlerCompact(m_comm, m_range_server_ptr.get(),
+                                            event);
         break;
       case RangeServerProtocol::COMMAND_LOAD_RANGE:
-        handler = new RequestHandlerLoadRange(m_comm, m_range_server_ptr.get(), event);
+        handler = new RequestHandlerLoadRange(m_comm, m_range_server_ptr.get(),
+                                              event);
         break;
       case RangeServerProtocol::COMMAND_UPDATE:
-        handler = new RequestHandlerUpdate(m_comm, m_range_server_ptr.get(), event);
+        handler = new RequestHandlerUpdate(m_comm, m_range_server_ptr.get(),
+                                           event);
         break;
       case RangeServerProtocol::COMMAND_CREATE_SCANNER:
-        handler = new RequestHandlerCreateScanner(m_comm, m_range_server_ptr.get(), event);
+        handler = new RequestHandlerCreateScanner(m_comm,
+            m_range_server_ptr.get(), event);
         break;
       case RangeServerProtocol::COMMAND_DESTROY_SCANNER:
-        handler = new RequestHandlerDestroyScanner(m_comm, m_range_server_ptr.get(), event);
+        handler = new RequestHandlerDestroyScanner(m_comm,
+            m_range_server_ptr.get(), event);
         break;
       case RangeServerProtocol::COMMAND_FETCH_SCANBLOCK:
-        handler = new RequestHandlerFetchScanblock(m_comm, m_range_server_ptr.get(), event);
+        handler = new RequestHandlerFetchScanblock(m_comm,
+            m_range_server_ptr.get(), event);
         break;
       case RangeServerProtocol::COMMAND_DROP_TABLE:
-        handler = new RequestHandlerDropTable(m_comm, m_range_server_ptr.get(), event);
+        handler = new RequestHandlerDropTable(m_comm, m_range_server_ptr.get(),
+                                              event);
         break;
       case RangeServerProtocol::COMMAND_REPLAY_BEGIN:
-        handler = new RequestHandlerReplayBegin(m_comm, m_range_server_ptr.get(), event);
+        handler = new RequestHandlerReplayBegin(m_comm,
+            m_range_server_ptr.get(), event);
         break;
       case RangeServerProtocol::COMMAND_REPLAY_LOAD_RANGE:
-        handler = new RequestHandlerReplayLoadRange(m_comm, m_range_server_ptr.get(), event);
+        handler = new RequestHandlerReplayLoadRange(m_comm,
+            m_range_server_ptr.get(), event);
         break;
       case RangeServerProtocol::COMMAND_REPLAY_UPDATE:
-        handler = new RequestHandlerReplayUpdate(m_comm, m_range_server_ptr.get(), event);
+        handler = new RequestHandlerReplayUpdate(m_comm,
+            m_range_server_ptr.get(), event);
         break;
       case RangeServerProtocol::COMMAND_REPLAY_COMMIT:
-        handler = new RequestHandlerReplayCommit(m_comm, m_range_server_ptr.get(), event);
+        handler = new RequestHandlerReplayCommit(m_comm,
+            m_range_server_ptr.get(), event);
         break;
       case RangeServerProtocol::COMMAND_DROP_RANGE:
-        handler = new RequestHandlerDropRange(m_comm, m_range_server_ptr.get(), event);
+        handler = new RequestHandlerDropRange(m_comm, m_range_server_ptr.get(),
+                                              event);
         break;
       case RangeServerProtocol::COMMAND_STATUS:
-        handler = new RequestHandlerStatus(m_comm, m_range_server_ptr.get(), event);
+        handler = new RequestHandlerStatus(m_comm, m_range_server_ptr.get(),
+                                           event);
         break;
       case RangeServerProtocol::COMMAND_SHUTDOWN:
         m_shutdown = true;
-        handler = new RequestHandlerShutdown(m_comm, m_range_server_ptr.get(), event);
+        handler = new RequestHandlerShutdown(m_comm, m_range_server_ptr.get(),
+                                             event);
         break;
       case RangeServerProtocol::COMMAND_DUMP_STATS:
-        handler = new RequestHandlerDumpStats(m_comm, m_range_server_ptr.get(), event);
+        handler = new RequestHandlerDumpStats(m_comm, m_range_server_ptr.get(),
+                                              event);
         break;
       case RangeServerProtocol::COMMAND_GET_STATISTICS:
-        handler = new RequestHandlerGetStatistics(m_comm, m_range_server_ptr.get(), event);
+        handler = new RequestHandlerGetStatistics(m_comm,
+            m_range_server_ptr.get(), event);
         break;
       default:
         HT_THROWF(PROTOCOL_ERROR, "Unimplemented command (%d)", command);
@@ -167,11 +187,12 @@ void ConnectionHandler::handle(EventPtr &event) {
     HT_INFOF("%s", event->to_str().c_str());
 
     /**
-     * If this is the connection to the Master, then we need to register ourselves
-     * with the master
+     * If this is the connection to the Master, then we need to register
+     * ourselves with the master
      */
     if (m_master_client_ptr)
-      m_app_queue_ptr->add(new EventHandlerMasterConnection(m_master_client_ptr, m_range_server_ptr->get_location(), event));
+      m_app_queue_ptr->add(new EventHandlerMasterConnection(m_master_client_ptr,
+                           m_range_server_ptr->get_location(), event));
   }
   else {
     HT_INFOF("%s", event->to_str().c_str());

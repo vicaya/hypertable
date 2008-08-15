@@ -37,9 +37,8 @@ namespace Hypertable {
 
     class RequestHandlerLength : public ApplicationHandler {
     public:
-      RequestHandlerLength(Comm *comm, Broker *broker, EventPtr &event_ptr) : ApplicationHandler(event_ptr), m_comm(comm), m_broker(broker) {
-        return;
-      }
+      RequestHandlerLength(Comm *comm, Broker *broker, EventPtr &event_ptr)
+        : ApplicationHandler(event_ptr), m_comm(comm), m_broker(broker) { }
 
       virtual void run();
 

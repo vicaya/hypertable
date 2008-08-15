@@ -56,7 +56,8 @@ namespace Hypertable {
      * @param config_file name of configuration file
      * @param timeout method call timeout in seconds
      */
-    Client(const String &install_dir, const String &config_file, time_t timeout=-1);
+    Client(const String &install_dir, const String &config_file,
+           time_t timeout=-1);
 
     /**
      * Constructs the object using the default config file

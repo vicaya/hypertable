@@ -68,19 +68,22 @@ namespace Hypertable {
      * @param range_state range state
      * @return protocol message
      */
-    static CommBuf *create_request_load_range(TableIdentifier &table, RangeSpec &range, const char *transfer_log, RangeState &range_state);
+    static CommBuf *create_request_load_range(const TableIdentifier &table,
+        const RangeSpec &range, const char *transfer_log,
+        const RangeState &range_state);
 
-    /** Creates an "update" request message.  The data argument holds a sequence of key/value
-     * pairs.  Each key/value pair is encoded as two variable lenght ByteStringrecords
-     * back-to-back.  This method transfers ownership of the data buffer to the CommBuf that
-     * gets returned.
+    /** Creates an "update" request message.  The data argument holds a
+     * sequence of key/value pairs.  Each key/value pair is encoded as two
+     * variable lenght ByteStringrecords back-to-back.  This method transfers
+     * ownership of the data buffer to the CommBuf that gets returned.
      *
      * @param table table identifier
      * @param count number of key/value pairs in buffer
      * @param buffer buffer holding key/value pairs
      * @return protocol message
      */
-    static CommBuf *create_request_update(TableIdentifier &table, uint32_t count, StaticBuffer &buffer);
+    static CommBuf *create_request_update(const TableIdentifier &table,
+                                          uint32_t count, StaticBuffer &buffer);
 
     /** Creates a "create scanner" request message.
      *
@@ -89,7 +92,8 @@ namespace Hypertable {
      * @param scan_spec scan specification
      * @return protocol message
      */
-    static CommBuf *create_request_create_scanner(TableIdentifier &table, RangeSpec &range, ScanSpec &scan_spec);
+    static CommBuf *create_request_create_scanner(const TableIdentifier &table,
+        const RangeSpec &range, const ScanSpec &scan_spec);
 
     /** Creates a "destroy scanner" request message.
      *
@@ -128,7 +132,7 @@ namespace Hypertable {
      * @param table table identifier
      * @return protocol message
      */
-    static CommBuf *create_request_drop_table(TableIdentifier &table);
+    static CommBuf *create_request_drop_table(const TableIdentifier &table);
 
     /** Creates a "replay begin" request message.
      *
@@ -141,10 +145,11 @@ namespace Hypertable {
      *
      * @return protocol message
      */
-    static CommBuf *create_request_replay_load_range(TableIdentifier &table, RangeSpec &range, RangeState &range_state);
+    static CommBuf *create_request_replay_load_range(const TableIdentifier &,
+        const RangeSpec &range, const RangeState &range_state);
 
-    /** Creates a "replay update" request message.  The data argument holds a sequence of
-     * blocks.  Each block consists of ...
+    /** Creates a "replay update" request message.  The data argument holds a
+     * sequence of blocks.  Each block consists of ...
      *
      * @param buffer buffer holding updates to replay
      * @return protocol message
@@ -163,7 +168,8 @@ namespace Hypertable {
      * @param range range specification
      * @return protocol message
      */
-    static CommBuf *create_request_drop_range(TableIdentifier &table, RangeSpec &range);
+    static CommBuf *create_request_drop_range(const TableIdentifier &table,
+                                              const RangeSpec &range);
 
     /** Creates a "get statistics" request message.
      *

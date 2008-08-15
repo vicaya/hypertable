@@ -34,9 +34,8 @@ namespace Hypertable {
 
   class EventHandlerMasterChange : public ApplicationHandler {
   public:
-    EventHandlerMasterChange(MasterClient *master_client, EventPtr &event_ptr) : ApplicationHandler(event_ptr), m_master_client(master_client) {
-      return;
-    }
+    EventHandlerMasterChange(MasterClient *master_client, EventPtr &event_ptr)
+      : ApplicationHandler(event_ptr), m_master_client(master_client) { }
 
     virtual void run();
 

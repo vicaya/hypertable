@@ -32,7 +32,8 @@ using namespace Serialization;
 
 int ResponseCallbackGetSchema::response(const char *schema) {
   m_header_builder.initialize_from_request(m_event_ptr->header);
-  CommBufPtr cbp(new CommBuf(m_header_builder, 4 + encoded_length_vstr(schema)));
+  CommBufPtr cbp(new CommBuf(m_header_builder, 4
+                 + encoded_length_vstr(schema)));
   cbp->append_i32(Error::OK);
   cbp->append_vstr(schema);
   return m_comm->send_response(m_event_ptr->addr, cbp);

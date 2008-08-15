@@ -31,15 +31,15 @@ mutator = table.create_mutator(10)
 
 families = ['meta', 'blob']
 k = 10000
-i = 1 
+i = 1
 while i < k+1 :
   row = "row-%s" % (i)
   family = families[0]
   qualifier = ""
-  value = 'a' * 10 * 1024 
+  value = 'a' * 10 * 1024
   if i % 5000 == 0:
     print "%s/%s" % (i,k)
-  mutator.set(row, family, qualifier, value, len(value)) 
+  mutator.set(row, family, qualifier, value, len(value))
   i = i + 1
 
 mutator.flush()

@@ -42,7 +42,8 @@ BlockCompressionCodecNone::BlockCompressionCodecNone(const Args &) {
  *
  */
 void
-BlockCompressionCodecNone::deflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader &header, size_t reserve) {
+BlockCompressionCodecNone::deflate(const DynamicBuffer &input,
+    DynamicBuffer &output, BlockCompressionHeader &header, size_t reserve) {
   output.clear();
   output.reserve(header.length() + input.fill() + reserve);
 
@@ -50,7 +51,8 @@ BlockCompressionCodecNone::deflate(const DynamicBuffer &input, DynamicBuffer &ou
   memcpy(output.base+header.length(), input.base, input.fill());
   header.set_data_length(input.fill());
   header.set_data_zlength(input.fill());
-  header.set_data_checksum(fletcher32(output.base + header.length(), header.get_data_zlength()));
+  header.set_data_checksum(fletcher32(output.base + header.length(),
+                           header.get_data_zlength()));
 
   output.ptr = output.base;
   header.encode(&output.ptr);
@@ -62,7 +64,8 @@ BlockCompressionCodecNone::deflate(const DynamicBuffer &input, DynamicBuffer &ou
  *
  */
 void
-BlockCompressionCodecNone::inflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader &header) {
+BlockCompressionCodecNone::inflate(const DynamicBuffer &input,
+    DynamicBuffer &output, BlockCompressionHeader &header) {
 
   const uint8_t *msg_ptr = input.base;
   size_t remaining = input.fill();

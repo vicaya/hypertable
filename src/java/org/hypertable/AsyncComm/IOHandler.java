@@ -35,7 +35,8 @@ public abstract class IOHandler {
 
     protected static final Logger log = Logger.getLogger("org.hypertable");
 
-    public IOHandler(AbstractSelectableChannel chan, DispatchHandler dh, ConnectionMap cm) {
+    public IOHandler(AbstractSelectableChannel chan, DispatchHandler dh,
+                     ConnectionMap cm) {
         mChannel = chan;
         mDispatchHandler = dh;
         mConnMap = cm;

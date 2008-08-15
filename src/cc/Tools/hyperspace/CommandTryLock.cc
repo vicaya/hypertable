@@ -47,24 +47,27 @@ void CommandTryLock::run() {
   uint32_t status;
 
   if (m_args.size() != 2)
-    HT_THROW(Error::PARSE_ERROR, "Wrong number of arguments.  Type 'help' for usage.");
+    HT_THROW(Error::COMMAND_PARSE_ERROR,
+             "Wrong number of arguments.  Type 'help' for usage.");
 
   if (m_args[0].second != "" || m_args[1].second != "")
-    HT_THROW(Error::PARSE_ERROR, "Invalid character '=' in argument.");
+    HT_THROW(Error::COMMAND_PARSE_ERROR, "Invalid character '=' in argument.");
 
   if (m_args[1].first == "SHARED")
     mode = LOCK_MODE_SHARED;
   else if (m_args[1].first == "EXCLUSIVE")
     mode = LOCK_MODE_EXCLUSIVE;
   else
-    HT_THROWF(Error::PARSE_ERROR, "Invalid mode value (%s)", m_args[1].second.c_str());
+    HT_THROWF(Error::COMMAND_PARSE_ERROR,
+              "Invalid mode value (%s)", m_args[1].second.c_str());
 
   handle = Util::get_handle(m_args[0].first);
 
   m_session->try_lock(handle, mode, &status, &lockseq);
 
   if (status == LOCK_STATUS_GRANTED)
-    cout << "SEQUENCER name=" << lockseq.name << " mode=" << lockseq.mode << " generation=" << lockseq.generation << endl << flush;
+    cout << "SEQUENCER name=" << lockseq.name << " mode=" << lockseq.mode
+         << " generation=" << lockseq.generation << endl << flush;
   else if (status == LOCK_STATUS_BUSY)
     cout << "busy" << endl;
   else

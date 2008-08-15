@@ -13,7 +13,7 @@
 class TableMap: public HadoopPipes::Mapper {
 public:
   TableMap(HadoopPipes::MapContext& context) { }
-  
+
   void map(HadoopPipes::MapContext& context)
   {
     context.emit("cells", "1");
@@ -50,7 +50,7 @@ public:
 };
 
 int main(int argc, char *argv[]) {
-  return HadoopPipes::runTask(HadoopPipes::TemplateFactory<TableMap, 
+  return HadoopPipes::runTask(HadoopPipes::TemplateFactory<TableMap,
                               TableReduce, void, void, Mapreduce::TableReader,
                               TableWriter>());
 }

@@ -31,7 +31,9 @@ namespace Hypertable {
 
   class ResponseCallbackUpdate : public ResponseCallback {
   public:
-    ResponseCallbackUpdate(Comm *comm, EventPtr &event_ptr) : ResponseCallback(comm, event_ptr) { return; }
+    ResponseCallbackUpdate(Comm *comm, EventPtr &event_ptr)
+      : ResponseCallback(comm, event_ptr) { }
+
     int response(StaticBuffer &ext);
     using ResponseCallback::response_ok;
   };

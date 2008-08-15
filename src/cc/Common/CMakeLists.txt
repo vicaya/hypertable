@@ -79,4 +79,4 @@ install(TARGETS HyperCommon
         ARCHIVE DESTINATION ${VERSION}/lib)
 
 install(TARGETS code_search_and_replace
-	RUNTIME DESTINATION ${VERSION}/bin)
+        RUNTIME DESTINATION ${VERSION}/bin)

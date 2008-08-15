@@ -35,7 +35,8 @@ namespace Hypertable {
 
   class ServerLauncher {
   public:
-    ServerLauncher(const char *path, char *const argv[], const char *outfile=0) {
+    ServerLauncher(const char *path, char *const argv[],
+                   const char *outfile = 0) {
       int fd[2];
       m_path = path;
       if (pipe(fd) < 0) {
@@ -62,7 +63,8 @@ namespace Hypertable {
     }
 
     ~ServerLauncher() {
-      std::cerr << "Killing '" << m_path << "' pid=" << m_child_pid << std::endl << std::flush;
+      std::cerr << "Killing '" << m_path << "' pid=" << m_child_pid
+                << std::endl << std::flush;
       if (kill(m_child_pid, 9) == -1)
         perror("kill");
     }

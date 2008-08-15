@@ -1,5 +1,5 @@
 
-ConnectionHandler.java 
+ConnectionHandler.java
   This is the connection dispatch handler that gets registered with AsyncComm
   for each incoming connection.  For MESSAGE events, it inspects the incoming
   message, extracts the command code, creates a RequestHandler to carry out the

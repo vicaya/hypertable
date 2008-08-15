@@ -64,7 +64,8 @@ namespace {
   public:
     ServerLauncher() {
       if ((m_child_pid = fork()) == 0) {
-        execl("./testServer", "./testServer", DEFAULT_PORT_ARG, "--delay=120000", (char *)0);
+        execl("./testServer", "./testServer", DEFAULT_PORT_ARG,
+              "--delay=120000", (char *)0);
       }
       poll(0,0,2000);
     }

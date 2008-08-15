@@ -39,9 +39,9 @@ const char *CommandMkdirs::ms_usage[] = {
 void CommandMkdirs::run() {
 
   if (m_args.size() < 1)
-    HT_THROW(Error::PARSE_ERROR, "No directory name supplied.");
+    HT_THROW(Error::COMMAND_PARSE_ERROR, "No directory name supplied.");
 
   m_client->mkdirs(m_args[0].first);
-  
+
 }
 

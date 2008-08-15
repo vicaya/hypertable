@@ -47,7 +47,8 @@ namespace {
   "OPTIONS";
 
   struct lt_decreasing_length {
-    bool operator()(const pair<string, string> &m1, const pair<string, string> &m2) const {
+    bool operator()(const pair<string, string> &m1,
+                    const pair<string, string> &m2) const {
       if (m1.first == m2.first) {
         cout << "error: multiple mappings for '" << m1.first << "'" << endl;
         exit(1);
@@ -56,7 +57,9 @@ namespace {
     }
   };
 
-  bool convert_file(string input_filename, string license_filename, vector< pair<string, string> > &exchange_strings, string &converted_contents);
+  bool convert_file(string input_filename, string license_filename,
+                    vector< pair<string, string> > &exchange_strings,
+                    string &converted_contents);
 
 }
 
@@ -80,9 +83,12 @@ int main(int argc, char **argv) {
     po::options_description generic(usage_str);
     generic.add_options()
       ("help", "Display this help message")
-      ("map-file", po::value<string>(), "File containing lines of string mappings of the form:  <from> '\\t' <to>")
-      ("mapping", po::value< vector<string> >(), "String mapping.  Example: --mapping=\"foo\\tbar\"")
-      ("license-file", po::value<string>(), "File containing source code header comment")
+      ("map-file", po::value<string>(), "File containing lines of string "
+          "mappings of the form:  <from> '\\t' <to>")
+      ("mapping", po::value< vector<string> >(), "String mapping.  Example: "
+          "--mapping=\"foo\\tbar\"")
+      ("license-file", po::value<string>(), "File containing source code "
+          "header comment")
       ;
 
     // Hidden options: server location
@@ -107,8 +113,10 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    if (vm.count("map-file") == 0 && vm.count("license-file") == 0 && vm.count("mapping") == 0) {
-      cout << "error: --map-file, --mapping, and/or --license-file must be supplied." << endl;
+    if (vm.count("map-file") == 0 && vm.count("license-file") == 0
+        && vm.count("mapping") == 0) {
+      cout << "error: --map-file, --mapping, and/or --license-file must be "
+              "supplied." << endl;
       return 1;
     }
 
@@ -158,7 +166,8 @@ int main(int argc, char **argv) {
     for (size_t i=0; i<input_file.size(); i++) {
       converted_contents = "";
       cout << "Converting '" << input_file[i] << "'" << endl << flush;
-      if (!convert_file(input_file[i], license_name, exchange_strings, converted_contents))
+      if (!convert_file(input_file[i], license_name, exchange_strings,
+                        converted_contents))
         cerr << "Problem converting '" << input_file[i] << "'" << endl;
       else {
         orig_name = input_file[i];
@@ -197,7 +206,10 @@ namespace {
     }
   };
 
-  bool convert_file(string input_filename, string license_filename, vector< pair<string, string> > &exchange_strings, string &converted_contents) {
+  bool
+  convert_file(string input_filename, string license_filename,
+               vector< pair<string, string> > &exchange_strings,
+               string &converted_contents) {
     off_t last_offset, flen, license_len;
     char *fcontents = FileUtils::file_to_buffer(input_filename.c_str(), &flen);
     char *ptr = fcontents;
@@ -210,7 +222,8 @@ namespace {
 
     if (license_filename != "") {
 
-      converted_contents = FileUtils::file_to_buffer(license_filename.c_str(), &license_len);
+      converted_contents =
+          FileUtils::file_to_buffer(license_filename.c_str(), &license_len);
 
       boost::trim(converted_contents);
       converted_contents += "\n\n";
@@ -221,12 +234,14 @@ namespace {
           ptr++;
 
         if (strncmp(ptr, "/*", 2)) {
-          cerr << "Comment header not found in '" << input_filename << "'" << endl;
+          cerr << "Comment header not found in '" << input_filename << "'"
+               << endl;
           return false;
         }
 
         if ((ptr = strstr(ptr, "*/")) == 0) {
-          cerr << "Unable to find end of comment header in '" << input_filename << "'" << endl;
+          cerr << "Unable to find end of comment header in '"
+               << input_filename << "'" << endl;
           return false;
         }
 
@@ -262,7 +277,8 @@ namespace {
     last_offset = code_start - fcontents;
     for (size_t i=0; i<rivec.size(); i++) {
       cerr << "Replace at offset " << rivec[i].offset << endl << flush;
-      converted_contents += string(fcontents + last_offset, rivec[i].offset-last_offset);
+      converted_contents += string(fcontents + last_offset,
+                                   rivec[i].offset-last_offset);
       converted_contents += rivec[i].to_string;
       last_offset = rivec[i].offset + strlen(rivec[i].from_string);
     }

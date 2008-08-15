@@ -35,7 +35,7 @@ namespace Mapreduce {
     virtual void emit(const std::string& key, const std::string& value) {
       std::cout << "key = " << key.c_str() << " value = " << value.c_str() << std::endl;
       /*
-       * Insert data here. 
+       * Insert data here.
        * Note: Think of configuration mechanism for that, so
        * users can run MR without writing their own Writers per job
        * m_mutator->set(...);

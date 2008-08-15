@@ -28,7 +28,8 @@
 using namespace Hypertable;
 
 namespace {
-  const char cb64[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  const char cb64[] =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 }
 
 
@@ -58,19 +59,20 @@ void FixedRandomStringGenerator::write(char *buf) {
     if (indexo == m_nchars)
       break;
 
-    buf[indexo++] = cb64[ ((in[indexi] & 0x03) << 4) | ((in[indexi+1] & 0xf0) >> 4) ];
+    buf[indexo++] = cb64[((in[indexi] & 0x03) << 4)
+                         | ((in[indexi+1] & 0xf0) >> 4)];
     if (indexo == m_nchars)
       break;
 
-    buf[indexo++] = cb64[ ((in[indexi+1] & 0x0f) << 2) | ((in[indexi+2] & 0xc0) >> 6) ];
+    buf[indexo++] = cb64[((in[indexi+1] & 0x0f) << 2)
+                         | ((in[indexi+2] & 0xc0) >> 6)];
     if (indexo == m_nchars)
       break;
 
     buf[indexo++] = cb64[ in[indexi+2] & 0x3f ];
-    
+
     indexi += 3;
   }
 
   buf[indexo] = 0;
-  
 }

@@ -65,16 +65,19 @@ bool IOHandlerDatagram::handle_event(struct epoll_event *event) {
     struct sockaddr_in addr;
     socklen_t fromlen = sizeof(struct sockaddr_in);
 
-    while ((nread = FileUtils::recvfrom(m_sd, m_message, 65536, (struct sockaddr *)&addr, &fromlen)) != (ssize_t)-1) {
+    while ((nread = FileUtils::recvfrom(m_sd, m_message, 65536,
+            (struct sockaddr *)&addr, &fromlen)) != (ssize_t)-1) {
       rmsg = new uint8_t [nread];
       memcpy(rmsg, m_message, nread);
-      deliver_event(new Event(Event::MESSAGE, 0, addr, Error::OK, (Header::Common *)rmsg));
+      deliver_event(new Event(Event::MESSAGE, 0, addr, Error::OK,
+                              (Header::Common *)rmsg));
       fromlen = sizeof(struct sockaddr_in);
     }
 
     if (errno != EAGAIN) {
       HT_ERRORF("FileUtils::recvfrom(%d) failure : %s", m_sd, strerror(errno));
-      deliver_event(new Event(Event::ERROR, m_sd, addr, Error::COMM_RECEIVE_ERROR));
+      deliver_event(new Event(Event::ERROR, m_sd, addr,
+                              Error::COMM_RECEIVE_ERROR));
       return true;
     }
 
@@ -82,7 +85,8 @@ bool IOHandlerDatagram::handle_event(struct epoll_event *event) {
   }
 
   if (event->events & EPOLLERR) {
-    HT_WARNF("Received EPOLLERR on descriptor %d (%s:%d)", m_sd, inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+    HT_WARNF("Received EPOLLERR on descriptor %d (%s)",
+             m_sd, InetAddr::format(m_addr));
     deliver_event(new Event(Event::ERROR, 0, m_addr, Error::COMM_POLL_ERROR));
     return true;
   }
@@ -118,16 +122,20 @@ bool IOHandlerDatagram::handle_event(struct kevent *event) {
     struct sockaddr_in addr;
     socklen_t fromlen = sizeof(struct sockaddr_in);
 
-    if ((nread = FileUtils::recvfrom(m_sd, m_message, 65536, (struct sockaddr *)&addr, &fromlen)) == (ssize_t)-1) {
-      HT_ERRORF("FileUtils::recvfrom(%d, len=%d) failure : %s", m_sd, available, strerror(errno));
-      deliver_event(new Event(Event::ERROR, m_sd, addr, Error::COMM_RECEIVE_ERROR));
+    if ((nread = FileUtils::recvfrom(m_sd, m_message, 65536,
+        (sockaddr *)&addr, &fromlen)) == (ssize_t)-1) {
+      HT_ERRORF("FileUtils::recvfrom(%d, len=%d) failure : %s", m_sd, available,
+                strerror(errno));
+      deliver_event(new Event(Event::ERROR, m_sd, addr,
+                              Error::COMM_RECEIVE_ERROR));
       return true;
     }
 
     rmsg = new uint8_t [nread];
     memcpy(rmsg, m_message, nread);
 
-    deliver_event(new Event(Event::MESSAGE, 0, addr, Error::OK, (Header::Common *)rmsg));
+    deliver_event(new Event(Event::MESSAGE, 0, addr, Error::OK,
+                            (Header::Common *)rmsg));
 
     return false;
   }
@@ -192,17 +200,19 @@ int IOHandlerDatagram::flush_send_queue() {
 
     SendRec &send_rec = m_send_queue.front();
 
-    tosend = send_rec.second->data.size - (send_rec.second->data_ptr - send_rec.second->data.base);
-
+    tosend = send_rec.second->data.size - (send_rec.second->data_ptr
+                                           - send_rec.second->data.base);
     assert(tosend > 0);
     assert(send_rec.second->ext.base == 0);
 
     nsent = FileUtils::sendto(m_sd, send_rec.second->data_ptr, tosend,
-                              (const sockaddr*)&send_rec.first, sizeof(struct sockaddr_in));
+                              (sockaddr *)&send_rec.first,
+                              sizeof(struct sockaddr_in));
 
     if (nsent == (ssize_t)-1) {
-      HT_WARNF("FileUtils::sendto(%d, len=%d, addr=%s:%d) failed : %s", m_sd, tosend,
-                  inet_ntoa(send_rec.first.sin_addr), ntohs(send_rec.first.sin_port), strerror(errno));
+      HT_WARNF("FileUtils::sendto(%d, len=%d, addr=%s:%d) failed : %s", m_sd,
+               tosend, InetAddr::format(send_rec.first).c_str(),
+               strerror(errno));
       return Error::COMM_SEND_ERROR;
     }
     else if (nsent < tosend) {
@@ -213,7 +223,7 @@ int IOHandlerDatagram::flush_send_queue() {
       break;
     }
 
-    // buffer written successfully, now remove from queue (which will destroy buffer)
+    // buffer written successfully, now remove from queue (destroys buffer)
     m_send_queue.pop_front();
   }
 

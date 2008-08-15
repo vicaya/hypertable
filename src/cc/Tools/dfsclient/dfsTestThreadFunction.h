@@ -31,7 +31,8 @@ namespace Hypertable {
 
 class DfsTestThreadFunction {
  public:
-  DfsTestThreadFunction(DfsBroker::Client *client, std::string input) : m_client(client) {
+  DfsTestThreadFunction(DfsBroker::Client *client, const std::string &input)
+    : m_client(client) {
     m_input_file = input;
   }
   void set_dfs_file(std::string dfsfile) {

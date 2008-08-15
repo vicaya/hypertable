@@ -57,7 +57,8 @@ namespace Hypertable {
 
   public:
 
-    IOHandler(int sd, struct sockaddr_in &addr, DispatchHandlerPtr &dhp) : m_addr(addr), m_sd(sd), m_dispatch_handler_ptr(dhp) {
+    IOHandler(int sd, const sockaddr_in &addr, DispatchHandlerPtr &dhp)
+        : m_addr(addr), m_sd(sd), m_dispatch_handler_ptr(dhp) {
       ReactorFactory::get_reactor(m_reactor_ptr);
       m_poll_interest = 0;
       socklen_t namelen = sizeof(m_local_addr);
@@ -115,13 +116,14 @@ namespace Hypertable {
 #if defined(HT_EPOLLET)
       event.events = EPOLLIN | EPOLLOUT | POLLRDHUP | EPOLLET;
       if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_ADD, m_sd, &event) < 0) {
-        HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN|EPOLLOUT|POLLRDHUP|EPOLLET) failed : %s",
-		  m_reactor_ptr->poll_fd, m_sd, strerror(errno));
+        HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN|EPOLLOUT|POLLRDHUP"
+                  "|EPOLLET) failed : %s", m_reactor_ptr->poll_fd, m_sd,
+                  strerror(errno));
 #else
       event.events = EPOLLIN;
       if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_ADD, m_sd, &event) < 0) {
-	HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN) failed : %s",
-		  m_reactor_ptr->poll_fd, m_sd, strerror(errno));
+        HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN) failed : %s",
+                  m_reactor_ptr->poll_fd, m_sd, strerror(errno));
 #endif
         exit(1);
       }
@@ -141,11 +143,11 @@ namespace Hypertable {
       memcpy(addrp, &m_local_addr, sizeof(struct sockaddr_in));
     }
 
-    void set_alias(struct sockaddr_in &alias) {
+    void set_alias(const sockaddr_in &alias) {
       memcpy(&m_alias, &alias, sizeof(m_alias));
     }
 
-    void get_alias(struct sockaddr_in *aliasp) {
+    void get_alias(sockaddr_in *aliasp) {
       memcpy(aliasp, &m_alias, sizeof(m_alias));
     }
 

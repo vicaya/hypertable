@@ -40,7 +40,8 @@ class IOHandlerData extends IOHandler {
 
     private static AtomicInteger msNextId = new AtomicInteger(1);
 
-    public IOHandlerData(SocketChannel chan, DispatchHandler dh, ConnectionMap cm) {
+    public IOHandlerData(SocketChannel chan, DispatchHandler dh,
+                         ConnectionMap cm) {
         super(chan, dh, cm);
         mSocketChannel = chan;
         header = ByteBuffer.allocate(1024);
@@ -70,24 +71,28 @@ class IOHandlerData extends IOHandler {
                 selkey.cancel();
                 if (mAddr != null)
                     mConnMap.Remove(mAddr);
-                DeliverEvent( new Event(Event.Type.DISCONNECT, mAddr, Error.COMM_BROKEN_CONNECTION) );
+                DeliverEvent(new Event(Event.Type.DISCONNECT, mAddr,
+                                       Error.COMM_BROKEN_CONNECTION));
                 mReactor.CancelRequests(this);
             }
 
             if (selkey.isConnectable()) {
                 try {
                     if (mSocketChannel.finishConnect() == false) {
-			mSocketChannel.close();
+                        mSocketChannel.close();
                         System.err.println("Connection error");
                         return;
                     }
-                    mAddr = new InetSocketAddress(socket.getInetAddress(), socket.getPort());
-                    DeliverEvent( new Event(Event.Type.CONNECTION_ESTABLISHED, mAddr, Error.OK) );
+                    mAddr = new InetSocketAddress(socket.getInetAddress(),
+                                                  socket.getPort());
+                    DeliverEvent(new Event(Event.Type.CONNECTION_ESTABLISHED,
+                                           mAddr, Error.OK));
                     SetInterest(SelectionKey.OP_READ);
                     mConnMap.Put(mAddr, this);
                 }
                 catch (ConnectException e) {
-                    DeliverEvent( new Event(Event.Type.DISCONNECT, mAddr, Error.COMM_CONNECT_ERROR) );
+                    DeliverEvent(new Event(Event.Type.DISCONNECT, mAddr,
+                                           Error.COMM_CONNECT_ERROR));
                     mReactor.CancelRequests(this);
                 }
                 return;
@@ -101,7 +106,8 @@ class IOHandlerData extends IOHandler {
                         if (nread == -1) {
                             mSocketChannel.close();
                             mConnMap.Remove(mAddr);
-                            DeliverEvent( new Event(Event.Type.DISCONNECT, mAddr, Error.COMM_BROKEN_CONNECTION) );
+                            DeliverEvent(new Event(Event.Type.DISCONNECT, mAddr,
+                                         Error.COMM_BROKEN_CONNECTION) );
                             mReactor.CancelRequests(this);
                             return;
                         }
@@ -119,23 +125,28 @@ class IOHandlerData extends IOHandler {
                     if (mGotHeader) {
                         nread = mSocketChannel.read(message.buf);
                         if (nread == -1) {
-			    mSocketChannel.close();
+                            mSocketChannel.close();
                             mConnMap.Remove(mAddr);
-                            DeliverEvent( new Event(Event.Type.DISCONNECT, mAddr, Error.COMM_BROKEN_CONNECTION) );
+                            DeliverEvent(new Event(Event.Type.DISCONNECT, mAddr,
+                                         Error.COMM_BROKEN_CONNECTION) );
                             return;
                         }
                         if (message.buf.hasRemaining())
                             return;
                         message.buf.flip();
                         if ((message.flags & Message.FLAGS_MASK_REQUEST) == 0) {
-                            DispatchHandler handler = mReactor.RemoveRequest(message.id);
+                            DispatchHandler handler =
+                                mReactor.RemoveRequest(message.id);
                             if (handler == null)
-                                log.info("Received response for non-pending event (id=" + message.id + ")");
+                                log.info("Received response for non-pending "
+                                         +"event (id="+ message.id + ")");
                             else
-                                DeliverEvent( new Event(Event.Type.MESSAGE, mAddr, Error.OK, message), handler );
+                                DeliverEvent(new Event(Event.Type.MESSAGE,
+                                    mAddr, Error.OK, message), handler);
                         }
                         else
-                            DeliverEvent( new Event(Event.Type.MESSAGE, mAddr, Error.OK, message) );
+                            DeliverEvent(new Event(Event.Type.MESSAGE, mAddr,
+                                                   Error.OK, message));
                         mGotHeader = false;
                         header.clear();
                         header.limit(Message.HEADER_LENGTH);
@@ -162,15 +173,16 @@ class IOHandlerData extends IOHandler {
             }
         }
         catch (IOException e) {
-	    try {
-		mSocketChannel.close();
-	    }
-	    catch(Exception e2) {
-		e2.printStackTrace();
-	    }
+            try {
+                mSocketChannel.close();
+            }
+            catch(Exception e2) {
+                e2.printStackTrace();
+            }
             if (mAddr != null)
                 mConnMap.Remove(mAddr);
-            DeliverEvent( new Event(Event.Type.DISCONNECT, mAddr, Error.COMM_BROKEN_CONNECTION) );
+            DeliverEvent(new Event(Event.Type.DISCONNECT, mAddr,
+                         Error.COMM_BROKEN_CONNECTION));
             e.printStackTrace();
         }
     }

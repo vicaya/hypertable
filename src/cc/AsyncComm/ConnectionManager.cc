@@ -44,7 +44,7 @@ using namespace Hypertable;
 using namespace std;
 
 void
-ConnectionManager::add(struct sockaddr_in &addr, time_t timeout,
+ConnectionManager::add(const sockaddr_in &addr, time_t timeout,
                        const char *service_name, DispatchHandlerPtr &handler) {
   boost::mutex::scoped_lock lock(m_impl->mutex);
   SockAddrMap<ConnectionStatePtr> iter;
@@ -72,7 +72,7 @@ ConnectionManager::add(struct sockaddr_in &addr, time_t timeout,
 
 
 void
-ConnectionManager::add(struct sockaddr_in &addr, time_t timeout,
+ConnectionManager::add(const sockaddr_in &addr, time_t timeout,
                        const char *service_name) {
   DispatchHandlerPtr null_disp_handler;
   add(addr, timeout, service_name, null_disp_handler);
@@ -80,7 +80,7 @@ ConnectionManager::add(struct sockaddr_in &addr, time_t timeout,
 
 
 void
-ConnectionManager::add(struct sockaddr_in &addr, struct sockaddr_in &local_addr,
+ConnectionManager::add(const sockaddr_in &addr, const sockaddr_in &local_addr,
     time_t timeout, const char *service_name, DispatchHandlerPtr &handler) {
   boost::mutex::scoped_lock lock(m_impl->mutex);
   SockAddrMap<ConnectionStatePtr> iter;
@@ -108,7 +108,7 @@ ConnectionManager::add(struct sockaddr_in &addr, struct sockaddr_in &local_addr,
 
 
 void
-ConnectionManager::add(struct sockaddr_in &addr, struct sockaddr_in &local_addr,
+ConnectionManager::add(const sockaddr_in &addr, const sockaddr_in &local_addr,
                        time_t timeout, const char *service_name) {
   DispatchHandlerPtr null_disp_handler;
   add(addr, local_addr, timeout, service_name, null_disp_handler);
@@ -116,9 +116,9 @@ ConnectionManager::add(struct sockaddr_in &addr, struct sockaddr_in &local_addr,
 
 
 bool
-ConnectionManager::wait_for_connection(struct sockaddr_in &addr,
+ConnectionManager::wait_for_connection(const sockaddr_in &addr,
                                        long max_wait_secs) {
-  ConnectionStatePtr conn_statePtr;
+  ConnectionStatePtr conn_state;
 
   {
     boost::mutex::scoped_lock lock(m_impl->mutex);
@@ -126,20 +126,20 @@ ConnectionManager::wait_for_connection(struct sockaddr_in &addr,
         m_impl->conn_map.find(addr);
     if (iter == m_impl->conn_map.end())
       return false;
-    conn_statePtr = (*iter).second;
+    conn_state = (*iter).second;
   }
 
   {
-    boost::mutex::scoped_lock conn_lock(conn_statePtr->mutex);
+    boost::mutex::scoped_lock conn_lock(conn_state->mutex);
     boost::xtime drop_time, now;
 
     boost::xtime_get(&drop_time, boost::TIME_UTC);
     drop_time.sec += max_wait_secs;
 
-    while (!conn_statePtr->connected) {
-      conn_statePtr->cond.timed_wait(conn_lock, drop_time);
+    while (!conn_state->connected) {
+      conn_state->cond.timed_wait(conn_lock, drop_time);
       boost::xtime_get(&now, boost::TIME_UTC);
-      if (!conn_statePtr->connected && xtime_cmp(now, drop_time) >= 0)
+      if (!conn_state->connected && xtime_cmp(now, drop_time) >= 0)
         return false;
     }
   }
@@ -195,7 +195,8 @@ ConnectionManager::send_connect_request(ConnectionState *conn_state) {
     if (sec_addition < 1)
       sec_addition = 1;
     conn_state->next_retry.sec += sec_addition;
-    conn_state->next_retry.nsec = ((int64_t)System::rand32() << 32) | System::rand32();
+    conn_state->next_retry.nsec = ((int64_t)System::rand32() << 32)
+                                  | System::rand32();
 
     // add to retry heap
     m_impl->retry_queue.push(conn_state);
@@ -291,28 +292,28 @@ ConnectionManager::handle(EventPtr &event_ptr) {
  */
 void ConnectionManager::operator()() {
   boost::mutex::scoped_lock lock(m_impl->mutex);
-  ConnectionStatePtr conn_statePtr;
+  ConnectionStatePtr conn_state;
 
   while (true) {
 
     while (m_impl->retry_queue.empty())
       m_impl->retry_cond.wait(lock);
 
-    conn_statePtr = m_impl->retry_queue.top();
+    conn_state = m_impl->retry_queue.top();
 
-    if (!conn_statePtr->connected) {
+    if (!conn_state->connected) {
       {
-        boost::mutex::scoped_lock conn_lock(conn_statePtr->mutex);
+        boost::mutex::scoped_lock conn_lock(conn_state->mutex);
         boost::xtime now;
         boost::xtime_get(&now, boost::TIME_UTC);
 
-        if (xtime_cmp(conn_statePtr->next_retry, now) <= 0) {
+        if (xtime_cmp(conn_state->next_retry, now) <= 0) {
           m_impl->retry_queue.pop();
-          send_connect_request(conn_statePtr.get());
+          send_connect_request(conn_state.get());
           continue;
         }
       }
-      m_impl->retry_cond.timed_wait(lock, conn_statePtr->next_retry);
+      m_impl->retry_cond.timed_wait(lock, conn_state->next_retry);
     }
     else
       m_impl->retry_queue.pop();

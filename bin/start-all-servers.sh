@@ -4,9 +4,9 @@
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at 
+# You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0 
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -49,10 +49,10 @@ popd >& /dev/null
 # Make sure log and run directories exist
 #
 if [ ! -d $HYPERTABLE_HOME/run ] ; then
-    mkdir $HYPERTABLE_HOME/run
+  mkdir $HYPERTABLE_HOME/run
 fi
 if [ ! -d $HYPERTABLE_HOME/log ] ; then
-    mkdir $HYPERTABLE_HOME/log
+  mkdir $HYPERTABLE_HOME/log
 fi
 
 
@@ -64,53 +64,55 @@ START_RANGESERVER="true"
 START_MASTER="true"
 
 usage() {
-    echo ""
-    echo "usage: start-all-servers.sh [OPTIONS] (local|hadoop|kfs) [<global-server-options>]"
-    echo ""
-    echo "OPTIONS:"
-    echo "  --valgrind-rangeserver  run Hypertable.RangeServer with valgrind"
-    echo "  --valgrind-master       run Hypertable.Master with valgrind"
-    echo "  --valgrind-hyperspace   run Hyperspace.Master with valgrind"
-    echo "  --no-rangeserver        do not launch the range server"
-    echo "  --no-master             do not launch the Hypertable master"
-    echo ""
+  echo ""
+  echo "usage: start-all-servers.sh [OPTIONS] <dfs-choice> [<global-options>]"
+  echo ""
+  echo "OPTIONS:"
+  echo "  --valgrind-rangeserver  run Hypertable.RangeServer with valgrind"
+  echo "  --valgrind-master     run Hypertable.Master with valgrind"
+  echo "  --valgrind-hyperspace   run Hyperspace.Master with valgrind"
+  echo "  --no-rangeserver    do not launch the range server"
+  echo "  --no-master       do not launch the Hypertable master"
+  echo ""
+  echo "DFS choices: kfs, hadoop, local"
+  echo ""
 }
 
 
 while [ "$1" != "${1##[-+]}" ]; do
-    case $1 in
-	'')    
-	    usage
-	    exit 1;;
-	--valgrind-rangeserver)
-	    RANGESERVER_OPTS="--valgrind "
-	    shift
-	    ;;
-	--valgrind-master)
-	    MASTER_OPTS="--valgrind "
-	    shift
-	    ;;
-	--valgrind-hyperspace)
-	    HYPERSPACE_OPTS="--valgrind "
-	    shift
-	    ;;
-	--no-rangeserver)
-	    START_RANGESERVER="false"
-	    shift
-	    ;;
-	--no-master)
-	    START_MASTER="false"
-	    shift
-	    ;;
-	*)     
-	    usage
-	    exit 1;;
-    esac
+  case $1 in
+    '')
+      usage
+      exit 1;;
+    --valgrind-rangeserver)
+      RANGESERVER_OPTS="--valgrind "
+      shift
+      ;;
+    --valgrind-master)
+      MASTER_OPTS="--valgrind "
+      shift
+      ;;
+    --valgrind-hyperspace)
+      HYPERSPACE_OPTS="--valgrind "
+      shift
+      ;;
+    --no-rangeserver)
+      START_RANGESERVER="false"
+      shift
+      ;;
+    --no-master)
+      START_MASTER="false"
+      shift
+      ;;
+    *)
+      usage
+      exit 1;;
+  esac
 done
 
 if [ "$#" -eq 0 ]; then
-    usage
-    exit 1
+  usage
+  exit 1
 fi
 
 DFS=$1
@@ -122,7 +124,7 @@ shift
 #
 $HYPERTABLE_HOME/bin/start-dfsbroker.sh $DFS $@
 if [ $? != 0 ] ; then
-    echo "Error starting DfsBroker ($DFS)"
+  echo "Error starting DfsBroker ($DFS)"
 fi
 
 
@@ -131,7 +133,7 @@ fi
 #
 $HYPERTABLE_HOME/bin/start-hyperspace.sh $HYPERSPACE_OPTS $@
 if [ $? != 0 ] ; then
-    echo "Error starting Hyperspace"
+  echo "Error starting Hyperspace"
 fi
 
 
@@ -139,10 +141,10 @@ fi
 # Start Hypertable.Master
 #
 if [ $START_MASTER == "true" ] ; then
-    $HYPERTABLE_HOME/bin/start-master.sh $MASTER_OPTS $@
-    if [ $? != 0 ] ; then
-	echo "Error starting Hypertable.Master"
-    fi
+  $HYPERTABLE_HOME/bin/start-master.sh $MASTER_OPTS $@
+  if [ $? != 0 ] ; then
+    echo "Error starting Hypertable.Master"
+  fi
 fi
 
 
@@ -150,9 +152,9 @@ fi
 # Start Hypertable.RangeServer
 #
 if [ $START_RANGESERVER == "true" ] ; then
-    $HYPERTABLE_HOME/bin/start-rangeserver.sh $RANGESERVER_OPTS $@
-    if [ $? != 0 ] ; then
-	echo "Error starting Hypertable.RangeServer"
-    fi
+  $HYPERTABLE_HOME/bin/start-rangeserver.sh $RANGESERVER_OPTS $@
+  if [ $? != 0 ] ; then
+    echo "Error starting Hypertable.RangeServer"
+  fi
 fi
 

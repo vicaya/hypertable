@@ -43,14 +43,16 @@ namespace Hypertable {
     HandleCallbackPtr null_handle_callback;
     uint64_t handle;
 
-    handle = hyperspace_ptr->open(table_file.c_str(), OPEN_FLAG_READ, null_handle_callback);
+    handle = hyperspace_ptr->open(table_file.c_str(), OPEN_FLAG_READ,
+                                  null_handle_callback);
 
     hyperspace_ptr->attr_get(handle, "schema", valbuf);
 
-    Schema *schema = Schema::new_instance((const char *)valbuf.base, valbuf.fill(), true);
+    Schema *schema = Schema::new_instance((const char *)valbuf.base,
+                                          valbuf.fill(), true);
     if (!schema->is_valid())
       HT_THROWF(Error::RANGESERVER_SCHEMA_PARSE_ERROR,
-		"Schema Parse Error: %s", schema->get_error_string());
+                "Schema Parse Error: %s", schema->get_error_string());
     m_schema_ptr = schema;
 
     m_table.generation = schema->get_generation();
@@ -59,7 +61,8 @@ namespace Hypertable {
     hyperspace_ptr->attr_get(handle, "table_id", valbuf);
 
     if (valbuf.fill() != sizeof(int32_t))
-      HT_THROWF(Error::INVALID_METADATA, "%s/table_id contains a bad value", table_file.c_str());
+      HT_THROWF(Error::INVALID_METADATA, "%s/table_id contains a bad value",
+                table_file.c_str());
 
     memcpy(&m_table.id, valbuf.base, sizeof(int32_t));
 

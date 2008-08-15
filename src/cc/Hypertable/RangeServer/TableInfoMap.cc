@@ -63,7 +63,7 @@ bool TableInfoMap::remove(uint32_t id, TableInfoPtr &info) {
 
 void TableInfoMap::get_all(std::vector<TableInfoPtr> &tv) {
   boost::mutex::scoped_lock lock(m_mutex);
-  for (InfoMap::iterator iter = m_map.begin(); iter != m_map.end(); iter++)
+  for (InfoMap::iterator iter = m_map.begin(); iter != m_map.end(); ++iter)
     tv.push_back((*iter).second);
 }
 
@@ -82,7 +82,7 @@ void TableInfoMap::clear() {
 
 void TableInfoMap::clear_ranges() {
   boost::mutex::scoped_lock lock(m_mutex);
-  for (InfoMap::iterator iter = m_map.begin(); iter != m_map.end(); iter++)
+  for (InfoMap::iterator iter = m_map.begin(); iter != m_map.end(); ++iter)
     (*iter).second->clear();
 }
 
@@ -92,7 +92,8 @@ void TableInfoMap::merge(TableInfoMapPtr &table_info_map_ptr) {
   InfoMap::iterator from_iter, to_iter;
   std::vector<RangePtr> range_vec;
 
-  for (from_iter = table_info_map_ptr->m_map.begin(); from_iter != table_info_map_ptr->m_map.end(); from_iter++) {
+  for (from_iter = table_info_map_ptr->m_map.begin();
+       from_iter != table_info_map_ptr->m_map.end(); ++from_iter) {
 
     to_iter = m_map.find( (*from_iter).first );
 
@@ -101,22 +102,24 @@ void TableInfoMap::merge(TableInfoMapPtr &table_info_map_ptr) {
       m_map[ (*from_iter).first ] = (*from_iter).second;
       (*from_iter).second->get_range_vector(range_vec);
       for (size_t i=0; i<range_vec.size(); i++) {
-	if (range_vec[i]->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
-	    range_vec[i]->get_state() == RangeState::SPLIT_SHRUNK) {
+        if (range_vec[i]->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
+            range_vec[i]->get_state() == RangeState::SPLIT_SHRUNK) {
           if (!range_vec[i]->test_and_set_maintenance())
-	    Global::maintenance_queue->add(new MaintenanceTaskSplit(range_vec[i]));
-	}
+            Global::maintenance_queue->add(new MaintenanceTaskSplit(
+                                           range_vec[i]));
+        }
       }
     }
     else {
       (*from_iter).second->get_range_vector(range_vec);
       for (size_t i=0; i<range_vec.size(); i++) {
-	(*to_iter).second->add_range(range_vec[i]);
-	if (range_vec[i]->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
-	    range_vec[i]->get_state() == RangeState::SPLIT_SHRUNK) {
+        (*to_iter).second->add_range(range_vec[i]);
+        if (range_vec[i]->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
+            range_vec[i]->get_state() == RangeState::SPLIT_SHRUNK) {
           if (!range_vec[i]->test_and_set_maintenance())
-	    Global::maintenance_queue->add(new MaintenanceTaskSplit(range_vec[i]));
-	}
+            Global::maintenance_queue->add(new MaintenanceTaskSplit(
+                                           range_vec[i]));
+        }
       }
     }
 
@@ -131,13 +134,11 @@ void TableInfoMap::dump() {
   InfoMap::iterator table_iter;
   std::vector<RangePtr> range_vec;
 
-  for (table_iter = m_map.begin(); table_iter != m_map.end(); table_iter++)
+  for (table_iter = m_map.begin(); table_iter != m_map.end(); ++table_iter)
     (*table_iter).second->get_range_vector(range_vec);
 
   std::cout << std::endl;
   for (size_t i=0; i<range_vec.size(); i++)
     std::cout << "tidump " << range_vec[i]->get_name() << "\n";
   std::cout << std::flush;
-  
 }
-

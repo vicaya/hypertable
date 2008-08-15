@@ -35,7 +35,10 @@ namespace Hypertable {
      */
     class ConnectionHandler : public DispatchHandler {
     public:
-      ConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue, BrokerPtr &broker) : m_comm(comm), m_app_queue_ptr(app_queue), m_broker_ptr(broker) { return; }
+      ConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue,
+                        BrokerPtr &broker)
+        : m_comm(comm), m_app_queue_ptr(app_queue), m_broker_ptr(broker) { }
+
       virtual void handle(EventPtr &event_ptr);
 
     private:

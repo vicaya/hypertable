@@ -44,11 +44,13 @@ namespace Hypertable {
       }
       else {
         uint64_t nanos = expire.nsec + (1000000000LL - now.nsec);
-        duration_ts.tv_sec = ((expire.sec - now.sec) - 1) + (nanos / 1000000000LL);
+        duration_ts.tv_sec = ((expire.sec - now.sec) - 1)
+                              + (nanos / 1000000000LL);
         duration_ts.tv_nsec = nanos % 1000000000LL;
       }
       ts_ptr = &duration_ts;
-      duration_millis = (int)((duration_ts.tv_sec * 1000) + (duration_ts.tv_nsec / 1000000));
+      duration_millis = (int)((duration_ts.tv_sec * 1000)
+                              + (duration_ts.tv_nsec / 1000000));
       assert(duration_millis >= 0);
     }
 

@@ -80,7 +80,8 @@ int main(int argc, char **argv) {
   server_args.push_back((const char *)0);
 
   {
-    ServerLauncher client("./sampleClient", (char * const *)&client_args[0], "commTestReverseRequest.out");
+    ServerLauncher client("./sampleClient", (char * const *)&client_args[0],
+                          "commTestReverseRequest.out");
     poll(0, 0, 2000);
     ServerLauncher server("./testServer", (char * const *)&server_args[0]);
   }

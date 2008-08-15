@@ -49,7 +49,8 @@ namespace Hypertable {
     /**
      * Constructor.
      */
-    DropTableDispatchHandler(const TableIdentifier &table, Comm *comm, time_t timeout);
+    DropTableDispatchHandler(const TableIdentifier &table, Comm *comm,
+                             time_t timeout);
 
     /**
      * Adds

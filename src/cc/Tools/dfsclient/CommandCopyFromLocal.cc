@@ -57,7 +57,8 @@ void CommandCopyFromLocal::run() {
   StaticBuffer send_buf;
 
   if (m_args.size() != 2)
-    HT_THROW(Error::PARSE_ERROR, "Wrong number of arguments.  Type 'help' for usage.");
+    HT_THROW(Error::COMMAND_PARSE_ERROR,
+             "Wrong number of arguments.  Type 'help' for usage.");
 
   try {
 
@@ -70,7 +71,7 @@ void CommandCopyFromLocal::run() {
     for (int i=0; i<3; i++) {
       buf = new uint8_t [BUFFER_SIZE];
       if ((nread = fread(buf, 1, BUFFER_SIZE, fp)) == 0)
-	goto done;
+        goto done;
       send_buf.set(buf, nread, true);
       m_client->append(fd, send_buf, 0, &sync_handler);
     }
@@ -78,11 +79,11 @@ void CommandCopyFromLocal::run() {
     while (true) {
 
       if (!sync_handler.wait_for_reply(event_ptr))
-	HT_THROW(event_ptr->error, event_ptr->to_str());
+        HT_THROW(event_ptr->error, event_ptr->to_str());
 
       buf = new uint8_t [BUFFER_SIZE];
       if ((nread = fread(buf, 1, BUFFER_SIZE, fp)) == 0)
-	break;
+        break;
       send_buf.set(buf, nread, true);
       m_client->append(fd, send_buf, 0, &sync_handler);
     }

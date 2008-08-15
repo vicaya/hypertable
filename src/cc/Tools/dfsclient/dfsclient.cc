@@ -77,10 +77,10 @@ namespace {
     "usage: dfsclient [OPTIONS]",
     "",
     "OPTIONS:",
-    "  --config=<file>  Read configuration from <file>.  The default config file is",
-    "                   \"conf/hypertable.cfg\" relative to the toplevel install directory",
-    "  --eval <cmds>    Evaluates the commands in the string <cmds>.  Several commands can",
-    "                   be supplied in <cmds> by separating them with semicolons",
+    "  --config=<file>  Read configuration from <file>.  The default file is",
+    "                   \"conf/hypertable.cfg\" relative to the install root",
+    "  --eval <cmds>    Evaluates the commands in the string <cmds>.  Several",
+    "                   commands be separated with semicolons",
     "  --help           Display this help text and exit",
     ""
     "This is a command line interface to the DFS broker.",
@@ -172,12 +172,14 @@ int main(int argc, char **argv) {
     struct sockaddr_in addr;
 
     if ((port = (uint16_t)props_ptr->get_int("DfsBroker.Port", 0)) == 0) {
-      HT_ERRORF("DfsBroker.Port property not found in config file '%s'", config_file.c_str());
+      HT_ERRORF("DfsBroker.Port property not found in config file '%s'",
+                config_file.c_str());
       return 1;
     }
 
     if ((host = props_ptr->get("DfsBroker.Host", (const char *)0)) == 0) {
-      HT_ERRORF("DfsBroker.Host property not found in config file '%s'", config_file.c_str());
+      HT_ERRORF("DfsBroker.Host property not found in config file '%s'",
+                config_file.c_str());
       return 1;
     }
 
@@ -232,7 +234,8 @@ int main(int argc, char **argv) {
       return 0;
     }
 
-    cout << "Welcome to dsftool, a command-line interface to the DFS broker." << endl;
+    cout << "Welcome to dsftool, a command-line interface to the DFS broker."
+         << endl;
     cout << "Type 'help' for a description of commands." << endl;
     cout << endl << flush;
 

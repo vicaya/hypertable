@@ -27,13 +27,13 @@
 using namespace Hypertable;
 using namespace Serialization;
 
-size_t RangeState::encoded_length() {
+size_t RangeState::encoded_length() const {
   return 9 + 8 + encoded_length_vstr(transfer_log) +
-    encoded_length_vstr(split_point) + encoded_length_vstr(old_start_row);
+      encoded_length_vstr(split_point) + encoded_length_vstr(old_start_row);
 }
 
 
-void RangeState::encode(uint8_t **bufp) {
+void RangeState::encode(uint8_t **bufp) const {
   *(*bufp)++ = state;
   encode_i64(bufp, timestamp);
   encode_i64(bufp, soft_limit);

@@ -53,7 +53,7 @@ namespace {
     "",
     "  options:",
     "    --block-summary  Display commit log block information only",
-    "    --config=<file>  Read configuration from <file>.  The default config file",
+    "    --config=<file>  Read configuration from <file>.  The default file",
     "                     is \"conf/hypertable.cfg\" relative to the toplevel",
     "                     install directory",
     "    --display-values Display values (assumes they're printable)",
@@ -65,15 +65,14 @@ namespace {
     (const char *)0
   };
 
-  void display_log(DfsBroker::Client *dfs_client, String prefix, CommitLogReader *log_reader, bool display_values);
-  void display_log_block_summary(DfsBroker::Client *dfs_client, String prefix, CommitLogReader *log_reader);
+  void display_log(DfsBroker::Client *dfs_client, const String &prefix,
+      CommitLogReader *log_reader, bool display_values);
+  void display_log_block_summary(DfsBroker::Client *dfs_client,
+      const String &prefix, CommitLogReader *log_reader);
 
-}
+} // local namespace
 
 
-/**
- *
- */
 int main(int argc, char **argv) {
   string cfgfile = "";
   string log_dir;
@@ -117,8 +116,10 @@ int main(int argc, char **argv) {
    * Check for and connect to commit log DFS broker
    */
   {
-    const char *loghost = props_ptr->get("Hypertable.RangeServer.CommitLog.DfsBroker.Host", 0);
-    uint16_t logport    = props_ptr->get_int("Hypertable.RangeServer.CommitLog.DfsBroker.Port", 0);
+    const char *loghost = props_ptr->get(
+        "Hypertable.RangeServer.CommitLog.DfsBroker.Host", 0);
+    uint16_t logport    = props_ptr->get_int(
+        "Hypertable.RangeServer.CommitLog.DfsBroker.Port", 0);
     struct sockaddr_in addr;
     if (loghost != 0) {
       InetAddr::initialize(&addr, loghost, logport);
@@ -150,7 +151,9 @@ int main(int argc, char **argv) {
 
 namespace {
 
-  void display_log(DfsBroker::Client *dfs_client, String prefix, CommitLogReader *log_reader, bool display_values) {
+  void
+  display_log(DfsBroker::Client *dfs_client, const String &prefix,
+              CommitLogReader *log_reader, bool display_values) {
     BlockCompressionHeaderCommitLog header;
     const uint8_t *base;
     size_t len;
@@ -163,7 +166,8 @@ namespace {
 
     while (log_reader->next(&base, &len, &header)) {
 
-      HT_EXPECT(header.check_magic(CommitLog::MAGIC_DATA), Error::FAILED_EXPECTATION);
+      HT_EXPECT(header.check_magic(CommitLog::MAGIC_DATA),
+                Error::FAILED_EXPECTATION);
 
       ptr = base;
       end = base + len;
@@ -172,27 +176,27 @@ namespace {
 
       while (ptr < end) {
 
-	// extract the key
-	bs.ptr = ptr;
-	key.load(bs);
-	cout << key;
-	bs.next();
+        // extract the key
+        bs.ptr = ptr;
+        key.load(bs);
+        cout << key;
+        bs.next();
 
-	if (display_values) {
-	  const uint8_t *vptr;
-	  size_t slen = bs.decode_length(&vptr);
-	  cout << " value='" << std::string((char *)vptr, slen) << "'";
-	}
+        if (display_values) {
+          const uint8_t *vptr;
+          size_t slen = bs.decode_length(&vptr);
+          cout << " value='" << std::string((char *)vptr, slen) << "'";
+        }
 
-	//cout << " bno=" << blockno << endl;
-	cout << endl;
+        //cout << " bno=" << blockno << endl;
+        cout << endl;
 
-	// skip value
-	bs.next();
+        // skip value
+        bs.next();
 
-	ptr = bs.ptr;
-	if (ptr > end)
-	  HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding value");
+        ptr = bs.ptr;
+        if (ptr > end)
+          HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding value");
 
       }
       blockno++;
@@ -201,28 +205,30 @@ namespace {
 
 
 
-  void display_log_block_summary(DfsBroker::Client *dfs_client, String prefix, CommitLogReader *log_reader) {
+  void
+  display_log_block_summary(DfsBroker::Client *dfs_client, const String &prefix,
+      CommitLogReader *log_reader) {
     CommitLogBlockInfo binfo;
     BlockCompressionHeaderCommitLog header;
 
     while (log_reader->next_raw_block(&binfo, &header)) {
 
-      HT_EXPECT(header.check_magic(CommitLog::MAGIC_DATA), Error::FAILED_EXPECTATION);
+      HT_EXPECT(header.check_magic(CommitLog::MAGIC_DATA),
+                Error::FAILED_EXPECTATION);
 
       printf("%sDATA frag=\"%s\" rev=%llu start=%09llu end=%09llu ",
-	     prefix.c_str(), binfo.file_fragment, 
-	     (long long unsigned int)header.get_revision(),
-	     (long long unsigned int)binfo.start_offset,
-	     (long long unsigned int)binfo.end_offset);
+             prefix.c_str(), binfo.file_fragment, (Llu)header.get_revision(),
+             (Llu)binfo.start_offset, (Llu)binfo.end_offset);
 
       if (binfo.error == Error::OK) {
-	printf("ztype=\"%s\" zlen=%u len=%u\n",
-	       BlockCompressionCodec::get_compressor_name(header.get_compression_type()),
-	       header.get_data_zlength(), header.get_data_length());
+        printf("ztype=\"%s\" zlen=%u len=%u\n", BlockCompressionCodec::
+               get_compressor_name(header.get_compression_type()),
+               header.get_data_zlength(), header.get_data_length());
       }
       else
-	printf("%serror = \"%s\"\n", prefix.c_str(), Error::get_text(binfo.error));
+        printf("%serror = \"%s\"\n", prefix.c_str(),
+               Error::get_text(binfo.error));
     }
   }
 
-}
+} // local namespace

@@ -93,10 +93,11 @@ public class SampleServer {
         "  --help          Display this help text and exit",
         "  --port=<n>      Specifies the port to connect to",
         "  --reactors=<n>  Specifies the number of reactors",
-        "  --delay=<ms>    Specifies milliseconds to wait before echoing message (default=0)",
+        "  --delay=<ms>    Specifies milliseconds to wait before echoing ",
+        "                  message (default=0)",
         "",
-        "This is a sample program to test the AsyncComm library.  It establishes",
-        "a connection with the sampleServer and sends each line of the input file",
+        "This is a sample program to test the AsyncComm library.  It connects",
+        "to the sampleServer and sends each line of the input file",
         "to the server.  Each reply from the server is echoed to stdout.",
         "",
         null
@@ -106,7 +107,8 @@ public class SampleServer {
     static final int DEFAULT_PORT = 11255;
     static int gDelay = 0;
 
-    public static void main(String [] args) throws InterruptedException, IOException {
+    public static void main(String [] args)
+                            throws InterruptedException, IOException {
         int port = DEFAULT_PORT;
         short reactorCount = 1;
         Event event;
@@ -146,12 +148,14 @@ public class SampleServer {
 
         while ((event = requestHandler.GetRequest()) != null) {
             hbuilder.InitializeFromRequest(event.msg);
-            cbuf = new CommBuf(hbuilder, event.msg.totalLen-event.msg.headerLen);
+            cbuf = new CommBuf(hbuilder,
+                event.msg.totalLen-event.msg.headerLen);
             event.msg.RewindToProtocolHeader();
             cbuf.AppendBytes(event.msg.buf);
             int error = comm.SendResponse(event.addr, cbuf);
             if (error != Error.OK)
-                log.log(Level.SEVERE, "Comm.SendResponse returned " + Error.GetText(error));
+                log.log(Level.SEVERE, "Comm.SendResponse returned "
+                        + Error.GetText(error));
         }
 
     }

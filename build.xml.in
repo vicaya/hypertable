@@ -1,5 +1,5 @@
 <!-- Hypertable -->
-<project name="hypertable" default="compile" basedir="@HYPERTABLE_SOURCE_DIR@"> 
+<project name="hypertable" default="compile" basedir="@HYPERTABLE_SOURCE_DIR@">
 
   <property name="Name" value="Hypertable"/>
   <property name="name" value="hypertable"/>
@@ -9,7 +9,7 @@
 
   <property name="src.dir" value="${basedir}/src/java"/>
   <property name="lib.dir" value="${basedir}/lib"/>
-  
+
   <property name="contrib.dir" value="${basedir}/contrib"/>
   <property name="mapred.src" value="${contrib.dir}/java/MapReduce/"/>
 
@@ -42,7 +42,7 @@
 
 
   <target name="prepare">
-        <mkdir dir="${build.classes}"/>
+    <mkdir dir="${build.classes}"/>
   </target>
 
   <target name="compile" depends="prepare" description="Standard compile">
@@ -62,8 +62,7 @@
   <!--                                                                    -->
   <!-- ================================================================== -->
   <target name="jar" depends="compile">
-    <jar jarfile="${build.dir}/${final.name}.jar"
-         basedir="${build.classes}">
+    <jar destfile="${build.dir}/${final.name}.jar" basedir="${build.classes}">
       <manifest>
         <section name="org/hypertable">
           <attribute name="Implementation-Title" value="Hypertable"/>
@@ -72,7 +71,6 @@
       </manifest>
     </jar>
   </target>
-
 
   <target name="clean">
     <delete dir="${build.dir}"/>

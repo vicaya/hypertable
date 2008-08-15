@@ -38,7 +38,8 @@ import org.hypertable.Common.Usage;
 
 public class main {
 
-    static final Logger log = Logger.getLogger("org.hypertable.DfsBroker.hadoop");
+    static final Logger log = Logger.getLogger(
+        "org.hypertable.DfsBroker.hadoop");
 
     static String usage[] = {
         "",
@@ -64,15 +65,16 @@ public class main {
 
     // Example shutdown hook class
     private static class ShutdownHook extends Thread {
-	public void run() {
-	    java.lang.System.out.println("ShutdownHook called");
-	    ms_broker.mOpenFileMap.RemoveAll();
-	    ms_app_queue.Shutdown();
-	}
+        public void run() {
+            java.lang.System.out.println("ShutdownHook called");
+            ms_broker.mOpenFileMap.RemoveAll();
+            ms_app_queue.Shutdown();
+        }
     }
 
     private static class HandlerFactory implements ConnectionHandlerFactory {
-        public HandlerFactory(Comm comm, ApplicationQueue appQueue, HdfsBroker broker) {
+        public HandlerFactory(Comm comm, ApplicationQueue appQueue,
+                              HdfsBroker broker) {
             mComm = comm;
             mAppQueue = appQueue;
             mBroker = broker;
@@ -86,7 +88,8 @@ public class main {
         private HdfsBroker mBroker;
     }
 
-    public static void main(String [] args) throws IOException, InterruptedException {
+    public static void main(String [] args)
+                            throws IOException, InterruptedException {
         int port;
         short reactorCount;
         int   workerCount;
@@ -110,7 +113,7 @@ public class main {
                 Usage.DumpAndExit(usage);
         }
 
-	ShutdownHook sh = new ShutdownHook();
+        ShutdownHook sh = new ShutdownHook();
         Runtime.getRuntime().addShutdownHook(sh);
 
         if (configFile == null)
@@ -128,11 +131,13 @@ public class main {
 
         // Determine reactor count
         str = props.getProperty("HdfsBroker.Reactors");
-        reactorCount = (str == null) ? (short)System.processorCount : Short.parseShort(str);
+        reactorCount = (str == null) ? (short)System.processorCount
+                                     : Short.parseShort(str);
 
         // Determine worker count
         str = props.getProperty("HdfsBroker.Workers");
-        workerCount = (str == null) ? (short)System.processorCount : Integer.parseInt(str);
+        workerCount = (str == null) ? (short)System.processorCount
+                                    : Integer.parseInt(str);
 
         if (verbose) {
             java.lang.System.out.println("Num CPUs=" + System.processorCount);
@@ -147,9 +152,9 @@ public class main {
         //Global.protocol = new Protocol();
         ms_app_queue = new ApplicationQueue(workerCount);
 
-	ms_broker = new HdfsBroker(comm, props);
-	handlerFactory = new HandlerFactory(comm, ms_app_queue, ms_broker);
-	comm.Listen(port, handlerFactory, null);
+        ms_broker = new HdfsBroker(comm, props);
+        handlerFactory = new HandlerFactory(comm, ms_app_queue, ms_broker);
+        comm.Listen(port, handlerFactory, null);
 
         ms_app_queue.Join();
     }

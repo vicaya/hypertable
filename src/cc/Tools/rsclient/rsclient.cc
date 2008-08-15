@@ -49,8 +49,10 @@ namespace {
   /**
    *
    */
-  void build_inet_address(struct sockaddr_in &addr, PropertiesPtr &props_ptr, std::string &location) {
-    std::string host;
+  void
+  build_inet_address(sockaddr_in &addr, PropertiesPtr &props_ptr,
+                     String &location) {
+    String host;
     uint16_t port;
     size_t colon_offset;
 
@@ -94,7 +96,7 @@ int main(int argc, char **argv) {
   struct sockaddr_in addr;
   DispatchHandlerPtr null_handler_ptr = new NullDispatchHandler();
   PropertiesPtr props_ptr;
-  std::string location_str;
+  String location_str;
 
   try {
     Config::Desc generic(usage_str);

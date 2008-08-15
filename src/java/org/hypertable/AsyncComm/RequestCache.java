@@ -34,7 +34,8 @@ class RequestCache {
         DispatchHandler dh;
     }
 
-    public synchronized void Insert(int id, IOHandlerData handler, DispatchHandler dh, long expire) {
+    public synchronized void Insert(int id, IOHandlerData handler,
+                                    DispatchHandler dh, long expire) {
 
         CacheNode node = new CacheNode();
 
@@ -113,7 +114,8 @@ class RequestCache {
         }
     }
 
-    private HashMap<Integer, CacheNode>  mIdMap = new HashMap<Integer, CacheNode>();
+    private HashMap<Integer, CacheNode>  mIdMap = new HashMap<Integer,
+                                                      CacheNode>();
     private CacheNode mHead, mTail;
 
 }

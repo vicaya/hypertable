@@ -27,7 +27,6 @@
 extern "C" {
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/utsname.h>
@@ -81,6 +80,7 @@ bool InetAddr::initialize(sockaddr_in *addr, const char *host, uint16_t port) {
     if (he == 0) {
       String errmsg = (String)"gethostbyname(\"" + host + "\")";
       herror(errmsg.c_str());
+      HT_THROW(Error::BAD_DOMAIN_NAME, errmsg);
       return false;
     }
 #else

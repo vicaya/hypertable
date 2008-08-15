@@ -37,7 +37,7 @@ using namespace MetaLogEntryFactory;
 
 namespace {
 
-const int DFS_TIMEOUT = 15; 
+const int DFS_TIMEOUT = 15;
 const int DFSBROKER_PORT = 38030;
 
 void
@@ -71,7 +71,7 @@ read_test(Filesystem *fs, const String &fname) {
   MetaLogEntryPtr log_entry = reader->read();
   const RangeStates &rstates = reader->load_range_states();
   std::ofstream fout("rsmltest.out");
-  
+
   foreach(const RangeStateInfo *i, rstates) fout << *i;
 }
 

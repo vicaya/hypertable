@@ -49,10 +49,10 @@ namespace {
   const char *usage[] = {
     "usage: hyperspaceTest",
     "",
-    "This program tests Hyperspace using the hyperspace command interpreter.  It",
-    "Launches a Hyperspace server configured to use ./hyperspace as it's root",
-    "directory.  It then launches several hyperspace command interpreters and",
-    "issues commands to them, capturing the output for diffing.",
+    "This program tests Hyperspace using the hyperspace command interpreter.",
+    "It launches a Hyperspace server configured to use ./hyperspace as its",
+    "root directory.  It then launches several hyperspace command interpreters",
+    "and issues commands to them, capturing the output for diffing.",
     0
   };
 
@@ -168,10 +168,14 @@ int main(int argc, char **argv) {
   link("../../Hyperspace/Hyperspace.Master", "./Hyperspace.Master");
 
   {
-    ServerLauncher master("./Hyperspace.Master", (char * const *)&master_args[0]);
-    ServerLauncher client1("./hyperspace", (char * const *)&client_args[0], "client1.out");
-    ServerLauncher client2("./hyperspace", (char * const *)&client_args[0], "client2.out");
-    ServerLauncher client3("./hyperspace", (char * const *)&client_args[0], "client3.out");
+    ServerLauncher master("./Hyperspace.Master",
+                          (char * const *)&master_args[0]);
+    ServerLauncher client1("./hyperspace",
+                           (char * const *)&client_args[0], "client1.out");
+    ServerLauncher client2("./hyperspace",
+                           (char * const *)&client_args[0], "client2.out");
+    ServerLauncher client3("./hyperspace",
+                           (char * const *)&client_args[0], "client3.out");
 
     g_fd1 = client1.get_write_descriptor();
     g_fd2 = client2.get_write_descriptor();
@@ -240,7 +244,8 @@ namespace {
     IssueCommand(g_fd1, "attrget foo testattr");
     IssueCommand(g_fd1, "attrdel foo testattr");
     IssueCommand(g_fd1, "delete foo");
-    IssueCommand(g_fd1, "create foo flags=READ|WRITE attr:msg1=\"Hello, World!\" attr:msg2=\"How now brown cow\"");
+    IssueCommand(g_fd1, "create foo flags=READ|WRITE "
+        "attr:msg1=\"Hello, World!\" attr:msg2=\"How now brown cow\"");
     IssueCommand(g_fd2, "open foo flags=READ");
     IssueCommand(g_fd3, "open foo flags=READ");
     IssueCommand(g_fd2, "attrget foo msg1");
@@ -254,7 +259,9 @@ namespace {
   void NotificationTest() {
     OutputTestHeader("<< NotificationTest >>");
     IssueCommand(g_fd1, "mkdir dir1");
-    IssueCommand(g_fd1, "open dir1 flags=READ|CREATE|WRITE event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED");
+    IssueCommand(g_fd1, "open dir1 flags=READ|CREATE|WRITE "
+        "event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED"
+        "|LOCK_ACQUIRED|LOCK_RELEASED");
     IssueCommand(g_fd2, "mkdir dir1/foo");
     IssueCommand(g_fd2, "delete dir1/foo");
     IssueCommand(g_fd2, "open dir1 flags=READ|WRITE|LOCK");
@@ -270,7 +277,9 @@ namespace {
 
   void LockTest() {
     OutputTestHeader("<< LockTest >>");
-    IssueCommand(g_fd1, "open lockfile flags=READ|CREATE|WRITE event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED");
+    IssueCommand(g_fd1, "open lockfile flags=READ|CREATE|WRITE "
+        "event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED"
+        "|LOCK_ACQUIRED|LOCK_RELEASED");
     IssueCommand(g_fd2, "open lockfile flags=READ|WRITE|LOCK");
     IssueCommand(g_fd3, "open lockfile flags=READ|WRITE|LOCK");
     IssueCommand(g_fd2, "lock lockfile EXCLUSIVE");
@@ -305,7 +314,9 @@ namespace {
   void EphemeralFileTest() {
     OutputTestHeader("<< EphemeralFileTest >>");
     IssueCommand(g_fd1, "mkdir dir1");
-    IssueCommand(g_fd1, "open dir1 flags=READ|CREATE|WRITE event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED");
+    IssueCommand(g_fd1, "open dir1 flags=READ|CREATE|WRITE "
+        "event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED"
+        "|LOCK_ACQUIRED|LOCK_RELEASED");
     IssueCommand(g_fd2, "open dir1/foo flags=READ|CREATE|WRITE|TEMP");
     IssueCommand(g_fd2, "close dir1/foo");
     IssueCommand(g_fd1, "close dir1");
@@ -315,7 +326,9 @@ namespace {
   void SessionExpirationTest() {
     OutputTestHeader("<< SessionExpirationTest >>");
     IssueCommand(g_fd1, "mkdir dir1");
-    IssueCommand(g_fd1, "open dir1 flags=READ|CREATE|WRITE event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED");
+    IssueCommand(g_fd1, "open dir1 flags=READ|CREATE|WRITE "
+        "event-mask=ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED"
+        "|LOCK_ACQUIRED|LOCK_RELEASED");
     IssueCommand(g_fd2, "open dir1/foo flags=READ|CREATE|WRITE|TEMP");
     IssueCommand(g_fd2, "open dir1 flags=READ|WRITE|LOCK");
     IssueCommand(g_fd2, "lock dir1 EXCLUSIVE");

@@ -31,7 +31,8 @@ import static org.junit.Assert.*;
 
 public class CommTest {
 
-    static final Logger log = Logger.getLogger("org.hypertable.AsyncComm.CommTest");
+    static final Logger log = Logger.getLogger(
+        "org.hypertable.AsyncComm.CommTest");
 
     static final int DEFAULT_PORT = 32998;
     static final String DEFAULT_PORT_ARG = "--port=32998";
@@ -60,8 +61,9 @@ public class CommTest {
 
         public ServerLauncher() {
             try {
-                ProcessBuilder pbuilder = new ProcessBuilder("java", "-classpath", System.getProperty("java.class.path"),
-                                                             "org.hypertable.AsyncComm.SampleServer", DEFAULT_PORT_ARG);
+                ProcessBuilder pbuilder = new ProcessBuilder("java",
+                    "-classpath", System.getProperty("java.class.path"),
+                    "org.hypertable.AsyncComm.SampleServer", DEFAULT_PORT_ARG);
                 pbuilder.redirectErrorStream(true);
                 mProc = pbuilder.start();
                 Integer intObj = new Integer(0);
@@ -69,7 +71,8 @@ public class CommTest {
                     intObj.wait(2000);
                 }
 
-                mOutputRedirectorThread = new Thread(new OutputRedirector(mProc), "CommTest Output Redirector");
+                mOutputRedirectorThread = new Thread(
+                    new OutputRedirector(mProc), "CommTest Output Redirector");
                 mOutputRedirectorThread.start();
             }
             catch (Exception e) {
@@ -107,12 +110,14 @@ public class CommTest {
             (new File("/tmp/CommTest.output.1")).delete();
             (new File("/tmp/CommTest.output.2")).delete();
 
-            CommTestThreadFunction threadFunc1 = new CommTestThreadFunction(mComm, mAddr, "/usr/share/dict/words");
+            CommTestThreadFunction threadFunc1 = new CommTestThreadFunction(
+                mComm, mAddr, "/usr/share/dict/words");
             threadFunc1.SetOutputFile("/tmp/CommTest.output.1");
             mThread1 = new Thread(threadFunc1, "CommTest thread 1");
             mThread1.start();
 
-            CommTestThreadFunction threadFunc2 = new CommTestThreadFunction(mComm, mAddr, "/usr/share/dict/words");
+            CommTestThreadFunction threadFunc2 = new CommTestThreadFunction(
+                mComm, mAddr, "/usr/share/dict/words");
             threadFunc2.SetOutputFile("/tmp/CommTest.output.2");
             mThread2 = new Thread(threadFunc2, "CommTest thread 2");
             mThread2.start();
@@ -140,7 +145,8 @@ public class CommTest {
             byte [] buf = new byte [ 128 ];
             int nread, rval = 0;
 
-            pbuilder = new ProcessBuilder("diff", "/usr/share/dict/words", "/tmp/CommTest.output.1");
+            pbuilder = new ProcessBuilder("diff", "/usr/share/dict/words",
+                "/tmp/CommTest.output.1");
             pbuilder.redirectErrorStream(true);
             proc = pbuilder.start();
             istream = proc.getInputStream();
@@ -148,7 +154,8 @@ public class CommTest {
                 System.out.print(new String(buf, 0, nread));
             assertTrue(proc.waitFor() == 0);
 
-            pbuilder = new ProcessBuilder("diff", "/tmp/CommTest.output.1", "/tmp/CommTest.output.2");
+            pbuilder = new ProcessBuilder("diff", "/tmp/CommTest.output.1",
+                "/tmp/CommTest.output.2");
             pbuilder.redirectErrorStream(true);
             proc = pbuilder.start();
             istream = proc.getInputStream();

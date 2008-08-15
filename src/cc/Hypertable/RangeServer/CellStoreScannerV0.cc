@@ -58,7 +58,7 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
   }
   else {
     start_key_offset = m_key_buf.fill();
-    if (m_start_row != "") 
+    if (m_start_row != "")
       m_start_row.append(1,1);  // bump to next row
     create_key_and_append(m_key_buf, m_start_row.c_str());
   }
@@ -71,7 +71,7 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
   }
   else {
     end_key_offset = m_key_buf.fill();
-    if (m_end_row != Key::END_ROW_MARKER) 
+    if (m_end_row != Key::END_ROW_MARKER)
       m_end_row.append(1,1);  // bump to next row
     create_key_and_append(m_key_buf, m_end_row.c_str());
   }
@@ -112,11 +112,11 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
     if ((end_iter = m_index.upper_bound(m_end_key)) == m_index.end())
       m_end_offset = m_cell_store_v0->m_trailer.fix_index_offset;
     else {
-      end_iter++;
+      ++end_iter;
       if (end_iter == m_index.end())
-	m_end_offset = m_cell_store_v0->m_trailer.fix_index_offset;
+        m_end_offset = m_cell_store_v0->m_trailer.fix_index_offset;
       else
-	m_end_offset = (*end_iter).second;
+        m_end_offset = (*end_iter).second;
     }
 
     try {
@@ -146,14 +146,16 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
     m_block.ptr = m_cur_value.ptr + m_cur_value.length();
     if (m_block.ptr >= m_block.end) {
       if (m_readahead) {
-	if (!fetch_next_block_readahead()) {
-	  HT_ERRORF("Unable to find start of range (row='%s') in %s", m_start_row.c_str(), m_cell_store_ptr->get_filename().c_str());
-	  return;
-	}
+        if (!fetch_next_block_readahead()) {
+          HT_ERRORF("Unable to find start of range (row='%s') in %s",
+              m_start_row.c_str(), m_cell_store_ptr->get_filename().c_str());
+          return;
+        }
       }
       else if (!fetch_next_block()) {
-	HT_ERRORF("Unable to find start of range (row='%s') in %s", m_start_row.c_str(), m_cell_store_ptr->get_filename().c_str());
-	return;
+        HT_ERRORF("Unable to find start of range (row='%s') in %s",
+            m_start_row.c_str(), m_cell_store_ptr->get_filename().c_str());
+        return;
       }
     }
     m_cur_key.ptr = m_block.ptr;
@@ -203,7 +205,8 @@ CellStoreScannerV0::~CellStoreScannerV0() {
 #ifdef STAT
     cout << flush;
     cout << "STAT[~CellStoreScannerV0]\tget\t" << m_returned << "\t";
-    cout << m_cell_store_v0->get_filename() << "[" << m_start_row << ".." << m_end_row << "]" << endl;
+    cout << m_cell_store_v0->get_filename() << "[" << m_start_row << ".."
+         << m_end_row << "]" << endl;
 #endif
   }
   catch (Exception &e) {
@@ -265,7 +268,8 @@ void CellStoreScannerV0::forward() {
       HT_ERROR("Problem parsing key!");
       break;
     }
-    if (m_key.flag == FLAG_DELETE_ROW || m_scan_context_ptr->family_mask[m_key.column_family_code])
+    if (m_key.flag == FLAG_DELETE_ROW
+        || m_scan_context_ptr->family_mask[m_key.column_family_code])
       break;
   }
 }
@@ -273,14 +277,13 @@ void CellStoreScannerV0::forward() {
 
 
 /**
- * This method fetches the 'next' compressed block of key/value pairs from
- * the underlying CellStore.
+ * This method fetches the 'next' compressed block of key/value pairs from the
+ * underlying CellStore.
  *
- * Preconditions required to call this method:
- *  1. m_block is cleared and m_iter points to the m_index entry of the first block to fetch
- *    'or'
- *  2. m_block is loaded with the current block and m_iter points to the m_index entry of
- *     the current block
+ * Preconditions required to call this method: 1. m_block is cleared and m_iter
+ * points to the m_index entry of the first block to fetch 'or' 2. m_block is
+ * loaded with the current block and m_iter points to the m_index entry of the
+ * current block
  *
  * @return true if next block successfully fetched, false if no next block
  */
@@ -289,7 +292,7 @@ bool CellStoreScannerV0::fetch_next_block() {
   if (m_block.base != 0 && m_block.ptr >= m_block.end) {
     Global::block_cache->checkin(m_file_id, m_block.offset);
     memset(&m_block, 0, sizeof(m_block));
-    m_iter++;
+    ++m_iter;
   }
 
   if (m_block.base == 0 && m_iter != m_index.end()) {
@@ -299,9 +302,10 @@ bool CellStoreScannerV0::fetch_next_block() {
     m_block.offset = (*m_iter).second;
 
     CellStoreV0::IndexMap::iterator it_next = m_iter;
-    it_next++;
+    ++it_next;
     if (it_next == m_index.end()) {
-      m_block.zlength = m_cell_store_v0->m_trailer.fix_index_offset - m_block.offset;
+      m_block.zlength =
+          m_cell_store_v0->m_trailer.fix_index_offset - m_block.offset;
       if (m_end_row.c_str()[0] != (char)0xff)
         m_check_for_range_end = true;
     }
@@ -383,7 +387,7 @@ bool CellStoreScannerV0::fetch_next_block_readahead() {
   if (m_block.base != 0 && m_block.ptr >= m_block.end) {
     delete [] m_block.base;
     memset(&m_block, 0, sizeof(m_block));
-    m_iter++;
+    ++m_iter;
   }
 
   if (m_block.base == 0 && m_iter != m_index.end()) {
@@ -395,9 +399,10 @@ bool CellStoreScannerV0::fetch_next_block_readahead() {
     assert(m_block.offset == m_start_offset);
 
     CellStoreV0::IndexMap::iterator it_next = m_iter;
-    it_next++;
+    ++it_next;
     if (it_next == m_index.end()) {
-      m_block.zlength = m_cell_store_v0->m_trailer.fix_index_offset - m_block.offset;
+      m_block.zlength =
+          m_cell_store_v0->m_trailer.fix_index_offset - m_block.offset;
       if (m_end_row.c_str()[0] != (char)0xff)
         m_check_for_range_end = true;
     }

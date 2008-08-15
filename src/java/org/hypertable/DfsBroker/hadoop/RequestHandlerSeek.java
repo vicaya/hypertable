@@ -31,7 +31,8 @@ import org.hypertable.Common.Error;
 
 public class RequestHandlerSeek extends ApplicationHandler {
 
-    static final Logger log = Logger.getLogger("org.hypertable.DfsBroker.hadoop");
+    static final Logger log = Logger.getLogger(
+        "org.hypertable.DfsBroker.hadoop");
 
     public RequestHandlerSeek(Comm comm, HdfsBroker broker, Event event) {
         super(event);
@@ -59,7 +60,8 @@ public class RequestHandlerSeek extends ApplicationHandler {
             int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());
             log.severe("Protocol error (SEEK) - " + e.getMessage());
             if (error != Error.OK)
-                log.severe("Problem sending (SEEK) error back to client - " + Error.GetText(error));
+                log.severe("Problem sending (SEEK) error back to client - "
+                           + Error.GetText(error));
         }
     }
 

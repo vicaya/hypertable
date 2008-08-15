@@ -44,15 +44,15 @@ namespace {
 }
 
 
-AccessGroup::AccessGroup(const TableIdentifier *identifier, SchemaPtr &schema_ptr,
-                         Schema::AccessGroup *ag, const RangeSpec *range)
-    : m_identifier(*identifier), m_schema_ptr(schema_ptr), m_name(ag->name),
-      m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE),
-      m_compression_ratio(1.0), m_is_root(false), 
-      m_compaction_revision(0), m_earliest_cached_revision(TIMESTAMP_NULL),
-      m_earliest_cached_revision_saved(TIMESTAMP_NULL),
-      m_collisions(0), m_needs_compaction(false), m_drop(false),
-      m_scanners_blocked(false) {
+AccessGroup::AccessGroup(const TableIdentifier *identifier,
+    SchemaPtr &schema_ptr, Schema::AccessGroup *ag, const RangeSpec *range)
+  : m_identifier(*identifier), m_schema_ptr(schema_ptr), m_name(ag->name),
+    m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE),
+    m_compression_ratio(1.0), m_is_root(false), m_compaction_revision(0),
+    m_earliest_cached_revision(TIMESTAMP_NULL),
+    m_earliest_cached_revision_saved(TIMESTAMP_NULL),
+    m_collisions(0), m_needs_compaction(false), m_drop(false),
+    m_scanners_blocked(false) {
   m_table_name = m_identifier.name;
   m_start_row = range->start_row;
   m_end_row = range->end_row;
@@ -65,9 +65,11 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier, SchemaPtr &schema_pt
   if (ag->blocksize != 0)
     m_blocksize = ag->blocksize;
 
-  m_compressor = (ag->compressor != "") ? ag->compressor : schema_ptr->get_compressor();
+  m_compressor = (ag->compressor != "") ? ag->compressor
+                                        : schema_ptr->get_compressor();
 
-  m_is_root = (m_identifier.id == 0 && *range->start_row == 0 && !strcmp(range->end_row, Key::END_ROOT_ROW));
+  m_is_root = (m_identifier.id == 0 && *range->start_row == 0
+               && !strcmp(range->end_row, Key::END_ROOT_ROW));
 
   m_in_memory = ag->in_memory;
 }
@@ -79,7 +81,7 @@ AccessGroup::~AccessGroup() {
       HT_ERROR("~AccessGroup has drop bit set, but table is METADATA");
       return;
     }
-    String metadata_key = String("") + (uint32_t)m_identifier.id + ":" + m_end_row;
+    String metadata_key = format("%u:%s", m_identifier.id, m_end_row.c_str());
     TableMutatorPtr mutator_ptr;
     KeySpec key;
 
@@ -105,9 +107,9 @@ AccessGroup::~AccessGroup() {
 }
 
 /**
- * This should be called with the CellCache locked
- * Also, at the end of compaction processing, when m_cell_cache_ptr gets reset to a new value,
- * the CellCache should be locked as well.
+ * This should be called with the CellCache locked Also, at the end of
+ * compaction processing, when m_cell_cache_ptr gets reset to a new value, the
+ * CellCache should be locked as well.
  */
 int AccessGroup::add(const Key &key, const ByteString value) {
   if (key.revision > m_compaction_revision || m_in_memory) {
@@ -129,7 +131,8 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context_ptr) {
 
   scanner->add_scanner(m_cell_cache_ptr->create_scanner(scan_context_ptr));
   if (m_immutable_cache_ptr)
-    scanner->add_scanner(m_immutable_cache_ptr->create_scanner(scan_context_ptr));
+    scanner->add_scanner(m_immutable_cache_ptr->create_scanner(
+                         scan_context_ptr));
   if (!m_in_memory) {
     CellStoreReleaseCallback callback(this);
     for (size_t i=0; i<m_stores.size(); i++) {
@@ -145,7 +148,8 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context_ptr) {
 
 bool AccessGroup::include_in_scan(ScanContextPtr &scan_context_ptr) {
   boost::mutex::scoped_lock lock(m_mutex);
-  for (std::set<uint8_t>::iterator iter = m_column_families.begin(); iter != m_column_families.end(); iter++) {
+  for (std::set<uint8_t>::iterator iter = m_column_families.begin();
+       iter != m_column_families.end(); ++iter) {
     if (scan_context_ptr->family_mask[*iter])
       return true;
   }
@@ -162,7 +166,9 @@ const char *AccessGroup::get_split_row() {
   return "";
 }
 
-void AccessGroup::get_split_rows(std::vector<String> &split_rows, bool include_cache) {
+void
+AccessGroup::get_split_rows(std::vector<String> &split_rows,
+                            bool include_cache) {
   boost::mutex::scoped_lock lock(m_mutex);
   const char *row;
   for (size_t i=0; i<m_stores.size(); i++) {
@@ -196,7 +202,9 @@ uint64_t AccessGroup::memory_usage() {
   return mu;
 }
 
-void AccessGroup::get_compaction_priority_data(CompactionPriorityData &priority_data) {
+void
+AccessGroup::get_compaction_priority_data(
+    CompactionPriorityData &priority_data) {
   boost::mutex::scoped_lock lock(m_mutex);
   priority_data.ag = this;
 
@@ -209,7 +217,8 @@ void AccessGroup::get_compaction_priority_data(CompactionPriorityData &priority_
   if (m_immutable_cache_ptr)
     mu += m_immutable_cache_ptr->memory_used();
   priority_data.mem_used = mu;
-  priority_data.disk_used = m_disk_usage + (uint64_t)(m_compression_ratio * (float)mu);
+  priority_data.disk_used = m_disk_usage + (uint64_t)(m_compression_ratio
+                                                      * (float)mu);
   priority_data.in_memory = m_in_memory;
   priority_data.deletes = m_cell_cache_ptr->get_delete_count();
   if (m_immutable_cache_ptr)
@@ -240,7 +249,8 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore_ptr, uint32_t id) {
 
   if (m_in_memory) {
     ScanContextPtr scan_context_ptr = new ScanContext(m_schema_ptr);
-    CellListScannerPtr scanner_ptr = cellstore_ptr->create_scanner(scan_context_ptr);
+    CellListScannerPtr scanner_ptr =
+        cellstore_ptr->create_scanner(scan_context_ptr);
     ByteString key, value;
     Key key_comps;
     m_cell_cache_ptr = new CellCache();
@@ -284,40 +294,41 @@ void AccessGroup::run_compaction(bool major) {
     {
       boost::mutex::scoped_lock lock(m_mutex);
       if (m_in_memory) {
-	if (m_immutable_cache_ptr->memory_used() == 0) {
-	  m_immutable_cache_ptr = 0;
-	  HT_THROW(Error::OK, "");
-	}
-	tableidx = m_stores.size();
-	HT_INFOF("Starting InMemory Compaction of %s(%s)",
-		 m_range_name.c_str(), m_name.c_str());
+        if (m_immutable_cache_ptr->memory_used() == 0) {
+          m_immutable_cache_ptr = 0;
+          HT_THROW(Error::OK, "");
+        }
+        tableidx = m_stores.size();
+        HT_INFOF("Starting InMemory Compaction of %s(%s)",
+                 m_range_name.c_str(), m_name.c_str());
       }
       else if (major) {
-	if (m_immutable_cache_ptr->memory_used() == 0 && m_stores.size() <= (size_t)1) {
-	  m_immutable_cache_ptr = 0;
-	  HT_THROW(Error::OK, "");
-	}
-	tableidx = 0;
-	HT_INFOF("Starting Major Compaction of %s(%s)",
-		 m_range_name.c_str(), m_name.c_str());
+        if (m_immutable_cache_ptr->memory_used() == 0
+            && m_stores.size() <= (size_t)1) {
+          m_immutable_cache_ptr = 0;
+          HT_THROW(Error::OK, "");
+        }
+        tableidx = 0;
+        HT_INFOF("Starting Major Compaction of %s(%s)",
+                 m_range_name.c_str(), m_name.c_str());
       }
       else {
-	if (m_stores.size() > (size_t)Global::access_group_max_files) {
-	  LtCellStore ascending;
-	  sort(m_stores.begin(), m_stores.end(), ascending);
-	  tableidx = m_stores.size() - Global::access_group_merge_files;
-	  HT_INFOF("Starting Merging Compaction of %s(%s)",
-		   m_range_name.c_str(), m_name.c_str());
-	}
-	else {
-	  if (m_immutable_cache_ptr->memory_used() == 0) {
-	    m_immutable_cache_ptr = 0;
-	    HT_THROW(Error::OK, "");
-	  }
-	  tableidx = m_stores.size();
-	  HT_INFOF("Starting Minor Compaction of %s(%s)",
-		   m_range_name.c_str(), m_name.c_str());
-	}
+        if (m_stores.size() > (size_t)Global::access_group_max_files) {
+          LtCellStore ascending;
+          sort(m_stores.begin(), m_stores.end(), ascending);
+          tableidx = m_stores.size() - Global::access_group_merge_files;
+          HT_INFOF("Starting Merging Compaction of %s(%s)",
+                   m_range_name.c_str(), m_name.c_str());
+        }
+        else {
+          if (m_immutable_cache_ptr->memory_used() == 0) {
+            m_immutable_cache_ptr = 0;
+            HT_THROW(Error::OK, "");
+          }
+          tableidx = m_stores.size();
+          HT_INFOF("Starting Minor Compaction of %s(%s)",
+                   m_range_name.c_str(), m_name.c_str());
+        }
       }
     }
 
@@ -340,32 +351,35 @@ void AccessGroup::run_compaction(bool major) {
 
     hash_str[24] = 0;
     String cs_file = format("/hypertable/tables/%s/%s/%s/cs%d",
-			    m_table_name.c_str(), m_name.c_str(), hash_str,
-			    m_next_table_id++);
+                            m_table_name.c_str(), m_name.c_str(), hash_str,
+                            m_next_table_id++);
 
     cellstore = new CellStoreV0(Global::dfs);
 
     if (cellstore->create(cs_file.c_str(), m_blocksize, m_compressor) != 0)
-      HT_THROW(Error::UNPOSSIBLE, format("Problem compacting locality group to file '%s'", cs_file.c_str()));
+      HT_THROWF(Error::UNPOSSIBLE, "Problem compacting locality group to file "
+                "'%s'", cs_file.c_str());
 
     {
       boost::mutex::scoped_lock lock(m_mutex);
       ScanContextPtr scan_context_ptr = new ScanContext(m_schema_ptr);
 
       if (m_in_memory) {
-	MergeScanner *mscanner = new MergeScanner(scan_context_ptr, false);
-	mscanner->add_scanner(m_immutable_cache_ptr->create_scanner(scan_context_ptr));
-	scanner_ptr = mscanner;
+        MergeScanner *mscanner = new MergeScanner(scan_context_ptr, false);
+        mscanner->add_scanner(m_immutable_cache_ptr->create_scanner(
+                              scan_context_ptr));
+        scanner_ptr = mscanner;
       }
       else if (major || tableidx < m_stores.size()) {
-	MergeScanner *mscanner = new MergeScanner(scan_context_ptr, !major);
-	mscanner->add_scanner(m_immutable_cache_ptr->create_scanner(scan_context_ptr));
-	for (size_t i=tableidx; i<m_stores.size(); i++)
-	  mscanner->add_scanner(m_stores[i]->create_scanner(scan_context_ptr));
-	scanner_ptr = mscanner;
+        MergeScanner *mscanner = new MergeScanner(scan_context_ptr, !major);
+        mscanner->add_scanner(m_immutable_cache_ptr->create_scanner(
+                              scan_context_ptr));
+        for (size_t i=tableidx; i<m_stores.size(); i++)
+          mscanner->add_scanner(m_stores[i]->create_scanner(scan_context_ptr));
+        scanner_ptr = mscanner;
       }
       else
-	scanner_ptr = m_immutable_cache_ptr->create_scanner(scan_context_ptr);
+        scanner_ptr = m_immutable_cache_ptr->create_scanner(scan_context_ptr);
     }
 
     while (scanner_ptr->get(key, value)) {
@@ -374,7 +388,8 @@ void AccessGroup::run_compaction(bool major) {
     }
 
     if (cellstore->finalize() != 0)
-      HT_THROW(Error::UNPOSSIBLE, format("Problem finalizing CellStore '%s'", cs_file.c_str()));
+      HT_THROWF(Error::UNPOSSIBLE, "Problem finalizing CellStore '%s'",
+                cs_file.c_str());
 
     /**
      * Install new CellCache and CellStore
@@ -383,54 +398,54 @@ void AccessGroup::run_compaction(bool major) {
       boost::mutex::scoped_lock lock(m_mutex);
 
       if (m_in_memory) {
-	merge_caches();
-	m_stores.clear();
-	m_live_files.clear();
+        merge_caches();
+        m_stores.clear();
+        m_live_files.clear();
       }
       else {
 
-	m_immutable_cache_ptr = 0;
+        m_immutable_cache_ptr = 0;
 
-	/** Drop the compacted tables from the table vector **/
-	if (tableidx < m_stores.size()) {
-	  m_stores.resize(tableidx);
-	  m_live_files.clear();
-	  for (size_t i=0; i<m_stores.size(); i++)
-	    m_live_files.insert(m_stores[i]->get_filename());
-	}
+        /** Drop the compacted tables from the table vector **/
+        if (tableidx < m_stores.size()) {
+          m_stores.resize(tableidx);
+          m_live_files.clear();
+          for (size_t i=0; i<m_stores.size(); i++)
+            m_live_files.insert(m_stores[i]->get_filename());
+        }
       }
 
       /** Add the new cell store to the table vector, or delete it if
        * it contains no entries
        */
       if (cellstore->get_total_entries() > 0) {
-	m_stores.push_back(cellstore);
-	m_live_files.insert(cellstore->get_filename());
+        m_stores.push_back(cellstore);
+        m_live_files.insert(cellstore->get_filename());
       }
       else {
-	String fname = cellstore->get_filename();
-	cellstore = 0;
-	Global::dfs->remove(fname);
+        String fname = cellstore->get_filename();
+        cellstore = 0;
+        Global::dfs->remove(fname);
       }
 
       /** Determine in-use files to prevent from being GC'd **/
       m_gc_locked_files.clear();
       foreach(const FileRefCountMap::value_type &v, m_file_refcounts)
-	if (m_live_files.count(v.first) == 0)
-	  m_gc_locked_files.insert(v.first);
+        if (m_live_files.count(v.first) == 0)
+          m_gc_locked_files.insert(v.first);
 
       /** Re-compute disk usage and compresion ratio**/
       m_disk_usage = 0;
       m_compression_ratio = 0.0;
       for (size_t i=0; i<m_stores.size(); i++) {
-	double disk_usage = m_stores[i]->disk_usage();
+        double disk_usage = m_stores[i]->disk_usage();
         m_disk_usage += (uint64_t)disk_usage;
         m_compression_ratio += m_stores[i]->compression_ratio() * disk_usage;
       }
       m_compression_ratio /= m_disk_usage;
 
       if (cellstore)
-	m_compaction_revision = cellstore->get_revision();
+        m_compaction_revision = cellstore->get_revision();
 
       m_scanners_blocked = true;
     }
@@ -445,7 +460,8 @@ void AccessGroup::run_compaction(bool major) {
 
     m_earliest_cached_revision_saved = TIMESTAMP_NULL;
 
-    HT_INFOF("Finished Compaction of %s(%s)", m_range_name.c_str(), m_name.c_str());
+    HT_INFOF("Finished Compaction of %s(%s)", m_range_name.c_str(),
+             m_name.c_str());
 
   }
   catch (Exception &e) {
@@ -515,14 +531,17 @@ int AccessGroup::shrink(String &new_start_row) {
   for (size_t i=0; i<m_stores.size(); i++) {
     String filename = m_stores[i]->get_filename();
     new_cell_store = new CellStoreV0(Global::dfs);
-    if ((error = new_cell_store->open(filename.c_str(), m_start_row.c_str(), m_end_row.c_str())) != Error::OK) {
+    if ((error = new_cell_store->open(filename.c_str(), m_start_row.c_str(),
+        m_end_row.c_str())) != Error::OK) {
       HT_ERRORF("Problem opening cell store '%s' [%s:%s] - %s",
-                   filename.c_str(), m_start_row.c_str(), m_end_row.c_str(), Error::get_text(error));
+                filename.c_str(), m_start_row.c_str(), m_end_row.c_str(),
+                Error::get_text(error));
       return error;
     }
     if ((error = new_cell_store->load_index()) != Error::OK) {
       HT_ERRORF("Problem loading index of cell store '%s' [%s:%s] - %s",
-                   filename.c_str(), m_start_row.c_str(), m_end_row.c_str(), Error::get_text(error));
+                filename.c_str(), m_start_row.c_str(), m_end_row.c_str(),
+                Error::get_text(error));
       return error;
     }
     new_stores.push_back(new_cell_store);

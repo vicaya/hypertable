@@ -19,13 +19,8 @@
  * 02110-1301, USA.
  */
 
-#include <boost/intrusive_ptr.hpp>
-#include <boost/thread/mutex.hpp>
-
-extern "C" {
-#include <netinet/in.h>
-}
-
+#include "Common/Mutex.h"
+#include "Common/InetAddr.h"
 #include "Common/HashMap.h"
 #include "Common/Logger.h"
 #include "Common/ReferenceCount.h"
@@ -33,15 +28,13 @@ extern "C" {
 
 namespace Hypertable {
 
-  /**
-   *
-   */
   class OpenFileData : public ReferenceCount {
   public:
     virtual ~OpenFileData() { return; }
     struct sockaddr_in addr;
   };
-  typedef boost::intrusive_ptr<OpenFileData> OpenFileDataPtr;
+
+  typedef intrusive_ptr<OpenFileData> OpenFileDataPtr;
 
 
   class OpenFileMap {
@@ -49,13 +42,13 @@ namespace Hypertable {
   public:
 
     void create(int fd, struct sockaddr_in &addr, OpenFileDataPtr &fdata) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       fdata->addr = addr;
       m_file_map[fd] = fdata;
     }
 
     bool get(int fd, OpenFileDataPtr &fdata) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       FileMap::iterator iter = m_file_map.find(fd);
       if (iter != m_file_map.end()) {
         fdata = (*iter).second;
@@ -65,7 +58,7 @@ namespace Hypertable {
     }
 
     bool remove(int fd, OpenFileDataPtr &fdata) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       FileMap::iterator iter = m_file_map.find(fd);
       if (iter != m_file_map.end()) {
         fdata = (*iter).second;
@@ -76,14 +69,14 @@ namespace Hypertable {
     }
 
     void remove(int fd) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       FileMap::iterator iter = m_file_map.find(fd);
       if (iter != m_file_map.end())
         m_file_map.erase(iter);
     }
 
     void remove_all(struct sockaddr_in &addr) {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       FileMap::iterator iter = m_file_map.begin();
 
       while (iter != m_file_map.end()) {
@@ -91,17 +84,18 @@ namespace Hypertable {
             (*iter).second->addr.sin_port == addr.sin_port &&
             (*iter).second->addr.sin_addr.s_addr == addr.sin_addr.s_addr) {
           FileMap::iterator del_it = iter;
-          HT_ERRORF("Removing handle %d from open file map because of lost owning client connection", (*iter).first);
-          iter++;
+          HT_ERRORF("Removing handle %d from open file map because of lost "
+                    "owning client connection", (*iter).first);
+          ++iter;
           m_file_map.erase(del_it);
         }
         else
-          iter++;
+          ++iter;
       }
     }
 
     void remove_all() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      ScopedLock lock(m_mutex);
       m_file_map.clear();
     }
 
@@ -109,7 +103,7 @@ namespace Hypertable {
 
     typedef hash_map<int, OpenFileDataPtr> FileMap;
 
-    boost::mutex  m_mutex;
+    Mutex         m_mutex;
     FileMap       m_file_map;
   };
 }

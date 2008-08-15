@@ -27,7 +27,9 @@ using namespace Hypertable;
 /**
  *
  */
-MaintenanceTaskCompaction::MaintenanceTaskCompaction(RangePtr &range_ptr, bool major) : MaintenanceTask(), m_range_ptr(range_ptr), m_major(major) {
+MaintenanceTaskCompaction::MaintenanceTaskCompaction(RangePtr &range_ptr,
+                                                     bool major)
+  : MaintenanceTask(), m_range_ptr(range_ptr), m_major(major) {
 }
 
 

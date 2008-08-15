@@ -66,7 +66,8 @@ bool TestSource::next(ByteString &key, ByteString &value) {
     else {
       timestamp = strtoll(ptr, 0, 0);
       if (timestamp == 0 && errno == EINVAL) {
-        cerr << "Invalid timestamp (" << ptr << ") on line " << (m_cur_line-1) << endl;
+        cerr << "Invalid timestamp (" << ptr << ") on line " << (m_cur_line-1)
+             << endl;
         continue;
       }
       if (m_min_timestamp == 0 || timestamp < m_min_timestamp)
@@ -134,14 +135,16 @@ bool TestSource::next(ByteString &key, ByteString &value) {
 }
 
 
-bool TestSource::create_row_delete(const char *row, int64_t timestamp, ByteString &key, ByteString &value) {
+bool
+TestSource::create_row_delete(const char *row, int64_t timestamp,
+                              ByteString &key, ByteString &value) {
   int32_t keylen = strlen(row) + 13;
   uint8_t control = 0;
 
   if (timestamp == AUTO_ASSIGN)
-    control = Key::CONTROL_MASK_AUTO_TIMESTAMP;
+    control = Key::AUTO_TIMESTAMP;
   else if (timestamp)
-    control = Key::CONTROL_MASK_HAVE_TIMESTAMP;
+    control = Key::HAVE_TIMESTAMP;
 
   m_key_buffer.clear();
   m_key_buffer.ensure(keylen+6);
@@ -163,7 +166,9 @@ bool TestSource::create_row_delete(const char *row, int64_t timestamp, ByteStrin
 }
 
 
-bool TestSource::create_column_delete(const char *row, const char *column, int64_t timestamp, ByteString &key, ByteString &value) {
+bool
+TestSource::create_column_delete(const char *row, const char *column,
+    int64_t timestamp, ByteString &key, ByteString &value) {
   int32_t keylen = 0;
   string cfstr;
   const char *qualifier = "";
@@ -172,9 +177,9 @@ bool TestSource::create_column_delete(const char *row, const char *column, int64
   bool col_family_delete = false;
 
   if (timestamp == AUTO_ASSIGN)
-    control = Key::CONTROL_MASK_AUTO_TIMESTAMP;
+    control = Key::AUTO_TIMESTAMP;
   else if (timestamp)
-    control = Key::CONTROL_MASK_HAVE_TIMESTAMP;
+    control = Key::HAVE_TIMESTAMP;
 
   if (ptr == 0) { // column family delete
     col_family_delete = true;
@@ -190,7 +195,7 @@ bool TestSource::create_column_delete(const char *row, const char *column, int64
     cerr << "Column family '" << cfstr << "' not found in schema" << endl;
     return false;
   }
-  
+
   if(col_family_delete) {
     m_key_buffer.clear();
     keylen = strlen(row) + 13;
@@ -234,7 +239,10 @@ bool TestSource::create_column_delete(const char *row, const char *column, int64
 }
 
 
-bool TestSource::create_insert(const char *row, const char *column, int64_t timestamp, const char *value_str, ByteString &key, ByteString &value) {
+bool
+TestSource::create_insert(const char *row, const char *column,
+    int64_t timestamp, const char *value_str, ByteString &key,
+    ByteString &value) {
   int32_t keylen = 0;
   string cfstr;
   const char *qualifier;
@@ -242,9 +250,9 @@ bool TestSource::create_insert(const char *row, const char *column, int64_t time
   uint8_t control = 0;
 
   if (timestamp == AUTO_ASSIGN)
-    control = Key::CONTROL_MASK_AUTO_TIMESTAMP;
+    control = Key::AUTO_TIMESTAMP;
   else if (timestamp)
-    control = Key::CONTROL_MASK_HAVE_TIMESTAMP;
+    control = Key::HAVE_TIMESTAMP;
 
   if (ptr == 0) {
     cerr << "Bad column family specifier (no family)" << endl;

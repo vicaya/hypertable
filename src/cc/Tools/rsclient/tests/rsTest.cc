@@ -58,7 +58,7 @@ namespace {
 }
 
 int main(int argc, char **argv) {
-  std::string cmd_str;
+  String cmd_str;
 
   System::initialize(argv[0]);
 
@@ -72,7 +72,8 @@ int main(int argc, char **argv) {
   /**
    * Initialize
    */
-  cmd_str = (std::string)"../hypertable/hypertable --config hypertable.cfg --test-mode < initialize.hql > init.out";
+  cmd_str = "../hypertable/hypertable --config hypertable.cfg --test-mode"
+            " < initialize.hql > init.out";
   if (system(cmd_str.c_str()) != 0)
     return 1;
 
@@ -80,11 +81,12 @@ int main(int argc, char **argv) {
   /**
    *  Test1
    */
-  cmd_str = (std::string)"./rsclient --test-mode --config hypertable.cfg localhost < Test1.cmd > Test1.output";
+  cmd_str = "./rsclient --test-mode --config hypertable.cfg localhost"
+            "< Test1.cmd > Test1.output";
   if (system(cmd_str.c_str()) != 0)
     return 1;
 
-  cmd_str = (std::string)"diff Test1.output Test1.golden";
+  cmd_str = (String)"diff Test1.output Test1.golden";
   if (system(cmd_str.c_str()) != 0)
     return 1;
 
@@ -92,11 +94,12 @@ int main(int argc, char **argv) {
    *  Test2
    */
 
-  cmd_str = (std::string)"./rsclient --test-mode --config hypertable.cfg localhost < Test2.cmd > Test2.output";
+  cmd_str = "./rsclient --test-mode --config hypertable.cfg localhost"
+            " < Test2.cmd > Test2.output";
   if (system(cmd_str.c_str()) != 0)
     return 1;
 
-  cmd_str = (std::string)"diff Test2.output Test2.golden";
+  cmd_str = (String)"diff Test2.output Test2.golden";
   if (system(cmd_str.c_str()) != 0)
     return 1;
 
@@ -104,11 +107,12 @@ int main(int argc, char **argv) {
    *  Test3
    */
 
-  cmd_str = (std::string)"./rsclient --test-mode --config hypertable.cfg localhost < Test3.cmd > Test3.output";
+  cmd_str = "./rsclient --test-mode --config hypertable.cfg localhost"
+            " < Test3.cmd > Test3.output";
   if (system(cmd_str.c_str()) != 0)
     return 1;
 
-  cmd_str = (std::string)"diff Test3.output Test3.golden";
+  cmd_str = (String)"diff Test3.output Test3.golden";
   if (system(cmd_str.c_str()) != 0)
     return 1;
 
@@ -116,7 +120,8 @@ int main(int argc, char **argv) {
    *  Test4
    */
 
-  cmd_str = (std::string)"./rsclient --test-mode --config hypertable.cfg localhost < Test4.cmd > Test4.output";
+  cmd_str = "./rsclient --test-mode --config hypertable.cfg localhost"
+            " < Test4.cmd > Test4.output";
   if (system(cmd_str.c_str()) != 0)
     return 1;
 

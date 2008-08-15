@@ -31,7 +31,8 @@ import org.hypertable.Common.Error;
 
 public class RequestHandlerWrite extends ApplicationHandler {
 
-    static final Logger log = Logger.getLogger("org.hypertable.DfsBroker.hadoop");
+    static final Logger log = Logger.getLogger(
+        "org.hypertable.DfsBroker.hadoop");
 
     public RequestHandlerWrite(Comm comm, HdfsBroker broker, Event event) {
         super(event);
@@ -62,7 +63,8 @@ public class RequestHandlerWrite extends ApplicationHandler {
             int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());
             log.severe("Protocol error (WRITE) - " + e.getMessage());
             if (error != Error.OK)
-                log.severe("Problem sending (WRITE) error back to client - " + Error.GetText(error));
+                log.severe("Problem sending (WRITE) error back to client - "
+                           + Error.GetText(error));
         }
     }
 

@@ -51,25 +51,37 @@ namespace Hyperspace {
 
     virtual const char *command_text(short command);
 
-    static CommBuf *create_client_keepalive_request(uint64_t session_id, uint64_t last_known_event, bool shutdown=false);
-    static CommBuf *create_server_keepalive_request(uint64_t session_id, int error);
-    static CommBuf *create_server_keepalive_request(SessionDataPtr &session_data);
+    static CommBuf *create_client_keepalive_request(uint64_t session_id,
+        uint64_t last_known_event, bool shutdown=false);
+    static CommBuf *
+    create_server_keepalive_request(uint64_t session_id, int error);
+    static CommBuf *
+    create_server_keepalive_request(SessionDataPtr &session_data);
     static CommBuf *create_handshake_request(uint64_t session_id);
 
-    static CommBuf *create_open_request(const std::string &name, uint32_t flags, HandleCallbackPtr &callback, std::vector<Attribute> &init_attrs);
+    static CommBuf *
+    create_open_request(const std::string &name, uint32_t flags,
+        HandleCallbackPtr &callback, std::vector<Attribute> &init_attrs);
     static CommBuf *create_close_request(uint64_t handle);
     static CommBuf *create_mkdir_request(const std::string &name);
     static CommBuf *create_delete_request(const std::string &name);
-    static CommBuf *create_attr_set_request(uint64_t handle, const std::string &name, const void *value, size_t value_len);
-    static CommBuf *create_attr_get_request(uint64_t handle, const std::string &name);
-    static CommBuf *create_attr_del_request(uint64_t handle, const std::string &name);
+    static CommBuf *
+    create_attr_set_request(uint64_t handle, const std::string &name,
+                            const void *value, size_t value_len);
+    static CommBuf *
+    create_attr_get_request(uint64_t handle, const std::string &name);
+    static CommBuf *
+    create_attr_del_request(uint64_t handle, const std::string &name);
     static CommBuf *create_readdir_request(uint64_t handle);
     static CommBuf *create_exists_request(const std::string &name);
 
-    static CommBuf *create_lock_request(uint64_t handle, uint32_t mode, bool try_lock);
+    static CommBuf *
+    create_lock_request(uint64_t handle, uint32_t mode, bool try_lock);
     static CommBuf *create_release_request(uint64_t handle);
 
-    static CommBuf *create_event_notification(uint64_t handle, const std::string &name, const void *value, size_t value_len);
+    static CommBuf *
+    create_event_notification(uint64_t handle, const std::string &name,
+                              const void *value, size_t value_len);
 
     static CommBuf *create_status_request();
 

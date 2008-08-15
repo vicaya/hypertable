@@ -1,8 +1,8 @@
 /** -*- c++ -*-
  * Copyright (C) 2008 Luke Lu (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
@@ -12,7 +12,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -39,14 +39,14 @@ public:
   virtual void write(DynamicBuffer &);
   virtual const uint8_t *read(StaticBuffer &);
 
-  /** Helper method for serialization 
-   * 
+  /** Helper method for serialization
+   *
    * @param p - a pointer between buffer.base and buffer.base + buffer.size
    * @return remaining space in bytes (base + size - p)
    * @throw input overrun exception if p violate precondition.
    */
   size_t buffer_remain(const uint8_t *p) {
-    if (p < buffer.base && p > buffer.base + buffer.size) 
+    if (p < buffer.base && p > buffer.base + buffer.size)
       HT_THROW(Error::METALOG_ENTRY_TRUNCATED, "checking buffer space");
     return buffer.base + buffer.size - p;
   }

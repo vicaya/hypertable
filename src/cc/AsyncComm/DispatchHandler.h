@@ -29,18 +29,18 @@
 namespace Hypertable {
 
   /**
-   * Abstract base class that is the main callback class of the Comm layer.  An objects
-   * of this class gets installed for each connection that is established to handle
-   * connection related events.  An object of this class is also supplied when
-   * sending a request message and is the mechanism by which the application is notified
-   * of the response or a timeout.
+   * Abstract base class that is the main callback class of the Comm layer.  An
+   * objects of this class gets installed for each connection that is
+   * established to handle connection related events.  An object of this class
+   * is also supplied when sending a request message and is the mechanism by
+   * which the application is notified of the response or a timeout.
    */
   class DispatchHandler : public ReferenceCount {
   public:
 
-    /** Callback method.  When the Comm layer needs to deliver an event
-     * to the application, this method is called to do so.  The set of event
-     * types include, CONNECTION_ESTABLISHED, DISCONNECT, MESSAGE, ERROR, and TIMER.
+    /** Callback method.  When the Comm layer needs to deliver an event to the
+     * application, this method is called to do so.  The set of event types
+     * include, CONNECTION_ESTABLISHED, DISCONNECT, MESSAGE, ERROR, and TIMER.
      *
      * @param event_ptr smart pointer to Event object
      */
@@ -48,8 +48,9 @@ namespace Hypertable {
 
     virtual ~DispatchHandler() { return; }
   };
-  typedef boost::intrusive_ptr<DispatchHandler> DispatchHandlerPtr;
 
-}
+  typedef intrusive_ptr<DispatchHandler> DispatchHandlerPtr;
+
+} // namespace Hypertable
 
 #endif // HYPERTABLE_DISPATCHHANDLER_H

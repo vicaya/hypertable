@@ -24,10 +24,7 @@
 
 #include <iostream>
 
-extern "C" {
-#include <netinet/in.h>
-}
-
+#include "Common/InetAddr.h"
 #include "Common/String.h"
 #include "Common/ReferenceCount.h"
 
@@ -36,17 +33,16 @@ extern "C" {
 namespace Hypertable {
 
   /**
-   * Objects of the is class represent communication events.  They get passed up to
-   * the application through dispatch handlers (see DispatchHandler).
+   * Objects of the is class represent communication events.  They get passed
+   * up to the application through dispatch handlers (see DispatchHandler).
    */
   class Event : public ReferenceCount {
 
   public:
-
     enum Type { CONNECTION_ESTABLISHED, DISCONNECT, MESSAGE, ERROR, TIMER };
 
-    /** Initializes the event object with message data.  If a message header is supplied,
-     * then the thread_group member is initialized as follows:
+    /** Initializes the event object with message data.  If a message header is
+     * supplied, then the thread_group member is initialized as follows:
      * <pre>
      * thread_group = ((uint64_t)conn_id << 32) | header->gid;
      * </pre>
@@ -57,12 +53,13 @@ namespace Hypertable {
      * @param cid connection ID
      * @param a remote address of connection on which this event was generated
      * @param err error code associated with this event
-     * @param h pointer to message data for MESSAGE events (<b>NOTE:</b> this object
+     * @param h pointer to message data for MESSAGE events (NOTE: this object
      * takes ownership of this data and deallocates it when it gets destroyed)
      */
-    Event(Type ct, int cid, struct sockaddr_in &a, int err=0,
-          Header::Common *h=0)
+    Event(Type ct, int cid, const sockaddr_in &a, int err = 0,
+          Header::Common *h = 0)
       : type(ct), addr(a), conn_id(cid), error(err), header(h) {
+
       if (h != 0) {
         message = ((uint8_t *)header) + header->header_len;
         message_len = header->total_len - header->header_len;
@@ -103,7 +100,7 @@ namespace Hypertable {
     Type type;
 
     /** Remote address from which event was generated. */
-    struct sockaddr_in addr;
+    InetAddr addr;
 
     /** Local address to which event was delivered. */
     struct sockaddr_in local_addr;
@@ -119,7 +116,9 @@ namespace Hypertable {
     /** Points to the beginning of the message header. */
     Header::Common *header;
 
-    /** Points to the beginning of the message, immediately following the header. */
+    /** Points to the beginning of the message, immediately following the
+     * header.
+     */
     const uint8_t *message;
 
     /** Length of the message without the header. */
@@ -137,18 +136,20 @@ namespace Hypertable {
 
     /** Generates a one-line string representation of the event.  For example:
      * <pre>
-     *   Event: type=MESSAGE protocol=hyperspace id=2 gid=0 header_len=16 total_len=20 from=127.0.0.1:38040
+     *   Event: type=MESSAGE protocol=hyperspace id=2 gid=0 header_len=16 \
+     *   total_len=20 from=127.0.0.1:38040
      * </pre>
      */
     String to_str();
 
-    /** Displays a one-line string representation of the event to stdout.  See <a href="#to_str">to_str</a>.
+    /** Displays a one-line string representation of the event to stdout.
+     * @see to_str
      */
     void display() { std::cerr << to_str() << std::endl; }
   };
 
   typedef boost::intrusive_ptr<Event> EventPtr;
 
-}
+} // namespace Hypertable
 
 #endif // HYPERTABLE_EVENT_H

@@ -45,7 +45,9 @@ uint32_t ScannerMap::put(CellListScannerPtr &scanner_ptr, RangePtr &range_ptr) {
 /**
  *
  */
-bool ScannerMap::get(uint32_t id, CellListScannerPtr &scanner_ptr, RangePtr &range_ptr) {
+bool
+ScannerMap::get(uint32_t id, CellListScannerPtr &scanner_ptr,
+                RangePtr &range_ptr) {
   boost::mutex::scoped_lock lock(m_mutex);
   CellListScannerMap::iterator iter = m_scanner_map.find(id);
   if (iter == m_scanner_map.end())
@@ -74,14 +76,15 @@ void ScannerMap::purge_expired(time_t expire_time) {
   while (iter != m_scanner_map.end()) {
     if ((now - (*iter).second.last_access) > expire_time) {
       CellListScannerMap::iterator tmp_iter = iter;
-      HT_WARNF("Destroying scanner %d because it has not been used in %u seconds", (*iter).first, (uint32_t)expire_time);
-      iter++;
+      HT_WARNF("Destroying scanner %d because it has not been used in %u "
+               "seconds", (*iter).first, (uint32_t)expire_time);
+      ++iter;
       (*tmp_iter).second.scanner_ptr = 0;
       (*tmp_iter).second.range_ptr = 0;
       m_scanner_map.erase(tmp_iter);
     }
     else
-      iter++;
+      ++iter;
   }
 
 }

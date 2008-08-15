@@ -42,8 +42,9 @@ namespace Hypertable {
   /**
    * Less than operator for LocationCacheKey
    */
-  inline bool operator<(const CommitLogFileInfo &fi1, const CommitLogFileInfo &fi2) {
-    return fi1.revision < fi2.revision;
+  inline bool
+  operator<(const CommitLogFileInfo &x, const CommitLogFileInfo &y) {
+    return x.revision < y.revision;
   }
 
   typedef std::deque<CommitLogFileInfo> LogFragmentQueue;
@@ -52,16 +53,21 @@ namespace Hypertable {
    */
   class CommitLogBase : public ReferenceCount {
   public:
-    CommitLogBase(const String &log_dir) : m_log_dir(log_dir), m_latest_revision(0) {
+    CommitLogBase(const String &log_dir)
+        : m_log_dir(log_dir), m_latest_revision(0) {
       size_t lastslash = log_dir.find_last_of('/');
+
       if (lastslash == log_dir.length()-1)
         lastslash = log_dir.find_last_of('/', log_dir.length()-2);
-      m_log_name = (lastslash == String::npos) ? log_dir : log_dir.substr(lastslash+1);
+
+      m_log_name = (lastslash == String::npos) ? log_dir
+                                               : log_dir.substr(lastslash+1);
       return;
     }
 
     void stitch_in(CommitLogBase *other) {
-      m_fragment_queue.insert(m_fragment_queue.end(), other->m_fragment_queue.begin(), other->m_fragment_queue.end());
+      m_fragment_queue.insert(m_fragment_queue.end(),
+          other->m_fragment_queue.begin(), other->m_fragment_queue.end());
     }
 
     String &get_log_dir() { return m_log_dir; }
@@ -74,9 +80,10 @@ namespace Hypertable {
     LogFragmentQueue m_fragment_queue;
     int64_t          m_latest_revision;
   };
-  typedef boost::intrusive_ptr<CommitLogBase> CommitLogBasePtr;
 
-}
+  typedef intrusive_ptr<CommitLogBase> CommitLogBasePtr;
+
+} // namespace Hypertable
 
 #endif // HYPERTABLE_COMMITLOGBASE_H
 

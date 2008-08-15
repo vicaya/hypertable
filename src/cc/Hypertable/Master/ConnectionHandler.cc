@@ -75,7 +75,8 @@ void ConnectionHandler::handle(EventPtr &event) {
         hp = new RequestHandlerStatus(m_comm, m_master_ptr.get(), event);
         break;
       case MasterProtocol::COMMAND_REGISTER_SERVER:
-        hp = new RequestHandlerRegisterServer(m_comm, m_master_ptr.get(), event);
+        hp = new RequestHandlerRegisterServer(m_comm, m_master_ptr.get(),
+                                              event);
         break;
       case MasterProtocol::COMMAND_REPORT_SPLIT:
         hp = new RequestHandlerReportSplit(m_comm, m_master_ptr.get(), event);

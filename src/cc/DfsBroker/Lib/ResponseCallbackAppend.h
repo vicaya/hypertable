@@ -33,9 +33,10 @@ namespace Hypertable {
 
     class ResponseCallbackAppend : public ResponseCallback {
     public:
-      ResponseCallbackAppend(Comm *comm, EventPtr &event_ptr) : ResponseCallback(comm, event_ptr) { return; }
-      int response(uint64_t offset, uint32_t amount);
+      ResponseCallbackAppend(Comm *comm, EventPtr &event_ptr)
+        : ResponseCallback(comm, event_ptr) { }
 
+      int response(uint64_t offset, uint32_t amount);
     };
   }
 

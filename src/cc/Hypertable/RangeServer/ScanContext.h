@@ -48,8 +48,8 @@ namespace Hypertable {
   public:
 
     SchemaPtr schema_ptr;
-    ScanSpec *spec;
-    RangeSpec *range;
+    const ScanSpec *spec;
+    const RangeSpec *range;
     DynamicBuffer dbuf;
     SerializedKey start_key, end_key;
     String start_row, end_row;
@@ -64,11 +64,12 @@ namespace Hypertable {
      *
      * @param rev scan revision
      * @param ss scan specification
-     * @param range_ range specifier
+     * @param range range specifier
      * @param sp shared pointer to schema object
      */
-    ScanContext(int64_t rev, ScanSpec *ss, RangeSpec *range_, SchemaPtr &sp) {
-      initialize(rev, ss, range_, sp);
+    ScanContext(int64_t rev, const ScanSpec *ss, const RangeSpec *range,
+                SchemaPtr &sp) {
+      initialize(rev, ss, range, sp);
     }
 
     /**
@@ -105,24 +106,24 @@ namespace Hypertable {
 
     /**
      * Initializes the scan context.  Sets up the family_mask filter that
-     * allows for quick lookups to see if a family is included in the scan.  Also sets
-     * up family_info entries for the column families that are included in the scan
-     * which contains cell garbage collection info for each family (e.g. cutoff
-     * timestamp and number of copies to keep).  Also sets up end_row to be the
-     * last possible key in spec->end_row.
+     * allows for quick lookups to see if a family is included in the scan.
+     * Also sets up family_info entries for the column families that are
+     * included in the scan which contains cell garbage collection info for
+     * each family (e.g. cutoff timestamp and number of copies to keep).  Also
+     * sets up end_row to be the last possible key in spec->end_row.
      *
      * @param rev scan revision
      * @param ss scan specification
-     * @param range_ range specifier
+     * @param range range specifier
      * @param sp shared pointer to schema object
      */
-    void initialize(int64_t rev, ScanSpec *ss, RangeSpec *range_, SchemaPtr &sp);
+    void initialize(int64_t rev, const ScanSpec *ss, const RangeSpec *range,
+                    SchemaPtr &sp);
 
   };
 
-  typedef boost::intrusive_ptr<ScanContext> ScanContextPtr;
+  typedef intrusive_ptr<ScanContext> ScanContextPtr;
 
-
-}
+} // namespace Hypertable
 
 #endif // HYPERTABLE_SCANCONTEXT_H

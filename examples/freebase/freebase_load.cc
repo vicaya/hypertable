@@ -1,18 +1,18 @@
 /**
  * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
- * 
+ *
  * This file is part of Hypertable.
- * 
+ *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
  * License.
- * 
+ *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -37,7 +37,7 @@ using namespace std;
 
 namespace {
 
-  const char *usage = 
+  const char *usage =
     "\n"
     "  usage: freebase_load <file>\n"
     "\n"
@@ -100,18 +100,18 @@ int main(int argc, char **argv) {
 
   }
   catch (Exception &e) {
-    cerr << "Exception caught: " << Error::get_text(e.code()) << " - " << e.what() << endl;
+    HT_ERROR_OUT << e << HT_END;
     return 1;
   }
 
   while ((recs = parser.next(&count)) != 0) {
     for (int i=0; i<count; i++) {
       try {
-	mutator_ptr->set(recs[i].key, recs[i].value, recs[i].value_len);
+        mutator_ptr->set(recs[i].key, recs[i].value, recs[i].value_len);
       }
       catch (Exception &e) {
-	cerr << "Exception caught: " << Error::get_text(e.code()) << " - " << e.what() << endl;
-	_exit(1);
+        HT_ERROR_OUT << e << HT_END;
+        _exit(1);
       }
     }
   }

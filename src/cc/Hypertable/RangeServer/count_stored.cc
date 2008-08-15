@@ -58,20 +58,22 @@ namespace {
   };
 
   struct RangeCellStoreInfo {
-    std::string start_row;
-    std::string end_row;
-    std::vector<std::string> cell_stores;
+    String start_row;
+    String end_row;
+    std::vector<String> cell_stores;
   };
 
   struct CellStoreInfo {
-    std::string start_row;
-    std::string end_row;
-    std::string file;
+    String start_row;
+    String end_row;
+    String file;
   };
 
 }
 
-void fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_name, std::vector<CellStoreInfo> &file_vector);
+void
+fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_name,
+                       std::vector<CellStoreInfo> &file_vector);
 
 
 int main(int argc, char **argv) {
@@ -162,7 +164,9 @@ int main(int argc, char **argv) {
     }
     delete scanner;
 
-    cout << store_count << "\t" << file_vector[i].file << "[" << file_vector[i].start_row << ".." << file_vector[i].end_row << "]" << endl;
+    cout << store_count << "\t" << file_vector[i].file << "["
+         << file_vector[i].start_row << ".." << file_vector[i].end_row << "]"
+         << endl;
     total_count += store_count;
 
   }
@@ -177,7 +181,9 @@ int main(int argc, char **argv) {
 /**
  *
  */
-void fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_name, std::vector<CellStoreInfo> &file_vector) {
+void
+fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_name,
+                       std::vector<CellStoreInfo> &file_vector) {
   TablePtr table_ptr;
   TableScannerPtr scanner_ptr;
   ScanSpec scan_spec;
@@ -224,9 +230,11 @@ void fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_
   while (scanner_ptr->next(cell)) {
     if (strcmp(cell.row_key, range_cell_store_info.end_row.c_str())) {
       if (range_cell_store_info.end_row != "") {
-        const char *end_row_cstr = strchr(range_cell_store_info.end_row.c_str(), ':');
+        const char *end_row_cstr =
+            strchr(range_cell_store_info.end_row.c_str(), ':');
         if (end_row_cstr == 0) {
-          cerr << "error: mal-formed end row (missing colon) - " << range_cell_store_info.end_row << endl;
+          cerr << "error: mal-formed end row (missing colon) - "
+               << range_cell_store_info.end_row << endl;
           exit(1);
         }
         end_row_cstr++;
@@ -243,9 +251,10 @@ void fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_
     }
 
     if (!strcmp(cell.column_family, "StartRow"))
-      range_cell_store_info.start_row = std::string((const char *)cell.value, cell.value_len);
+      range_cell_store_info.start_row =
+          String((const char *)cell.value, cell.value_len);
     else if (!strcmp(cell.column_family, "Files")) {
-      std::string files = std::string((const char *)cell.value, cell.value_len);
+      String files = String((const char *)cell.value, cell.value_len);
       char *ptr, *save_ptr;
       ptr = strtok_r((char *)files.c_str(), "\n\r;", &save_ptr);
       while (ptr) {
@@ -254,15 +263,18 @@ void fill_cell_store_vector(ClientPtr &hypertable_client_ptr, const char *table_
       }
     }
     else {
-      cerr << "Unexpected column family encountered: '" << cell.column_family << endl;
+      cerr << "Unexpected column family encountered: '" << cell.column_family
+           << endl;
       exit(1);
     }
   }
 
   if (!range_cell_store_info.cell_stores.empty()) {
-    const char *end_row_cstr = strchr(range_cell_store_info.end_row.c_str(), ':');
+    const char *end_row_cstr = strchr(range_cell_store_info.end_row.c_str(),
+                                      ':');
     if (end_row_cstr == 0) {
-      cerr << "error: mal-formed end row (missing colon) - " << range_cell_store_info.end_row << endl;
+      cerr << "error: mal-formed end row (missing colon) - "
+           << range_cell_store_info.end_row << endl;
       exit(1);
     }
     end_row_cstr++;

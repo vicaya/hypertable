@@ -27,12 +27,8 @@
 #include <map>
 #include <set>
 
-#include <boost/thread/mutex.hpp>
-
-extern "C" {
-#include <netinet/in.h>
-}
-
+#include "Common/Mutex.h"
+#include "Common/InetAddr.h"
 #include "Common/ReferenceCount.h"
 #include "Common/StringExt.h"
 
@@ -122,7 +118,7 @@ namespace Hypertable {
     typedef std::map<LocationCacheKey, Value *> LocationMap;
     typedef std::set<const char *, LtCstr> LocationStrSet;
 
-    boost::mutex   m_mutex;
+    Mutex          m_mutex;
     LocationMap    m_location_map;
     LocationStrSet m_location_strings;
     Value         *m_head;
@@ -130,9 +126,9 @@ namespace Hypertable {
     uint32_t       m_max_entries;
   };
 
-  typedef boost::intrusive_ptr<LocationCache> LocationCachePtr;
+  typedef intrusive_ptr<LocationCache> LocationCachePtr;
 
-}
+} // namespace Hypertable
 
 
 #endif // HYPERTABLE_LOCATIONCACHE_H

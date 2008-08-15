@@ -71,11 +71,11 @@ namespace {
 LoadDataSource::LoadDataSource(const String &fname, const String &header_fname,
     const std::vector<String> &key_columns, const String &timestamp_column,
     int row_uniquify_chars, bool dupkeycols)
-    : m_type_mask(0), m_source(fname), m_cur_line(0), m_line_buffer(0),
-      m_row_key_buffer(0), m_hyperformat(false), m_leading_timestamps(false),
-      m_timestamp_index(-1), m_timestamp(AUTO_ASSIGN), m_offset(0), m_zipped(false),
-      m_rsgen(0), m_row_uniquify_chars(row_uniquify_chars),
-      m_dupkeycols(dupkeycols) {
+  : m_type_mask(0), m_source(fname), m_cur_line(0), m_line_buffer(0),
+    m_row_key_buffer(0), m_hyperformat(false), m_leading_timestamps(false),
+    m_timestamp_index(-1), m_timestamp(AUTO_ASSIGN), m_offset(0),
+    m_zipped(false), m_rsgen(0), m_row_uniquify_chars(row_uniquify_chars),
+    m_dupkeycols(dupkeycols) {
   String line, column_name;
   char *base, *ptr, *colon_ptr;
   int index = 0;
@@ -273,7 +273,7 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
           continue;
         }
         *ptr++ = 0;
-	keyp->timestamp = strtoll(base, &endptr, 10);
+        keyp->timestamp = strtoll(base, &endptr, 10);
         if (*endptr != 0) {
           cerr << "error: invalid timestamp (" << base << ") on line "
                << m_cur_line << endl;
@@ -282,7 +282,7 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
         base = ptr;
       }
       else
-	keyp->timestamp = AUTO_ASSIGN;
+        keyp->timestamp = AUTO_ASSIGN;
 
       /**
        * Get row key
@@ -292,17 +292,17 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
         continue;
       }
       if (m_rsgen) {
-	keyp->row_len = (ptr-base) + m_row_uniquify_chars + 1;
-	m_row_key_buffer.clear();
-	m_row_key_buffer.ensure(keyp->row_len + 1);
-	m_row_key_buffer.add_unchecked(base, ptr-base);
-	m_row_key_buffer.add_unchecked(" ", 1);
-	m_rsgen->write((char *)m_row_key_buffer.ptr);
-	keyp->row = m_row_key_buffer.base;
+        keyp->row_len = (ptr-base) + m_row_uniquify_chars + 1;
+        m_row_key_buffer.clear();
+        m_row_key_buffer.ensure(keyp->row_len + 1);
+        m_row_key_buffer.add_unchecked(base, ptr-base);
+        m_row_key_buffer.add_unchecked(" ", 1);
+        m_rsgen->write((char *)m_row_key_buffer.ptr);
+        keyp->row = m_row_key_buffer.base;
       }
       else {
-	keyp->row = base;
-	keyp->row_len = ptr - base;
+        keyp->row = base;
+        keyp->row_len = ptr - base;
       }
       *ptr++ = 0;
       base = ptr;
@@ -370,8 +370,9 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
         keyp->column_qualifier_len = 0;
       }
       else {
-	keyp->column_qualifier = m_column_info[m_next_value].qualifier.c_str();
-        keyp->column_qualifier_len = m_column_info[m_next_value].qualifier.length();
+        keyp->column_qualifier = m_column_info[m_next_value].qualifier.c_str();
+        keyp->column_qualifier_len =
+            m_column_info[m_next_value].qualifier.length();
       }
       if (m_values[m_next_value] == 0) {
         *valuep = 0;
@@ -401,7 +402,7 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
 
       boost::trim(line);
       if (line.length() == 0)
-	continue;
+        continue;
 
       m_line_buffer.clear();
       m_line_buffer.add(line.c_str(), strlen(line.c_str())+1);
@@ -478,23 +479,23 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
         m_timestamp = (uint64_t)t * 1000000000LL;
       }
       else
-	m_timestamp = AUTO_ASSIGN;
+        m_timestamp = AUTO_ASSIGN;
 
       m_next_value = 0;
       while (should_skip(m_next_value, m_type_mask, m_dupkeycols))
         m_next_value++;
 
       if (m_rsgen) {
-	m_row_key_buffer.ensure(m_row_uniquify_chars + 2);
-	keyp->row = m_row_key_buffer.base;
-	keyp->row_len = m_row_key_buffer.fill() + m_row_uniquify_chars + 1;
-	m_row_key_buffer.add_unchecked(" ", 1);
-	m_rsgen->write((char *)m_row_key_buffer.ptr);
-	m_row_key_buffer.ptr += m_row_uniquify_chars;
+        m_row_key_buffer.ensure(m_row_uniquify_chars + 2);
+        keyp->row = m_row_key_buffer.base;
+        keyp->row_len = m_row_key_buffer.fill() + m_row_uniquify_chars + 1;
+        m_row_key_buffer.add_unchecked(" ", 1);
+        m_rsgen->write((char *)m_row_key_buffer.ptr);
+        m_row_key_buffer.ptr += m_row_uniquify_chars;
       }
       else {
-	keyp->row = m_row_key_buffer.base;
-	keyp->row_len = m_row_key_buffer.fill();
+        keyp->row = m_row_key_buffer.base;
+        keyp->row_len = m_row_key_buffer.fill();
       }
 
       keyp->column_family = m_column_info[m_next_value].family.c_str();
@@ -505,8 +506,9 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
         keyp->column_qualifier_len = 0;
       }
       else {
-	keyp->column_qualifier = m_column_info[m_next_value].qualifier.c_str();
-        keyp->column_qualifier_len = m_column_info[m_next_value].qualifier.length();
+        keyp->column_qualifier = m_column_info[m_next_value].qualifier.c_str();
+        keyp->column_qualifier_len =
+            m_column_info[m_next_value].qualifier.length();
       }
 
       if (m_values[m_next_value] == 0) {

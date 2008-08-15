@@ -33,15 +33,15 @@ namespace Hypertable {
   class MetadataNormal : public Metadata {
 
   public:
-    MetadataNormal(TableIdentifier *identifier, std::string &end_row);
+    MetadataNormal(const TableIdentifier *identifier, const String &end_row);
     virtual ~MetadataNormal();
     virtual void reset_files_scan();
-    virtual bool get_next_files(std::string &ag_name, std::string &files);
-    virtual void write_files(std::string &ag_name, std::string &files);
+    virtual bool get_next_files(String &ag_name, String &files);
+    virtual void write_files(const String &ag_name, const String &files);
 
   private:
     TableScannerPtr         m_files_scanner_ptr;
-    std::string             m_metadata_key;
+    String                  m_metadata_key;
   };
 }
 

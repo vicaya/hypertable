@@ -39,7 +39,8 @@ namespace Hyperspace {
 
   class SessionData : public ReferenceCount {
   public:
-    SessionData(struct sockaddr_in &_addr, uint32_t lease_interval, uint64_t _id) : addr(_addr), m_lease_interval(lease_interval), id(_id), expired(false) {
+    SessionData(const sockaddr_in &_addr, uint32_t lease_interval, uint64_t _id)
+      : addr(_addr), m_lease_interval(lease_interval), id(_id), expired(false) {
       boost::xtime_get(&expire_time, boost::TIME_UTC);
       expire_time.sec += lease_interval;
       return;
@@ -65,7 +66,7 @@ namespace Hyperspace {
           iter = notifications.erase(iter);
         }
         else
-          iter++;
+          ++iter;
       }
     }
 
@@ -124,8 +125,8 @@ namespace Hyperspace {
   typedef boost::intrusive_ptr<SessionData> SessionDataPtr;
 
   struct LtSessionData {
-    bool operator()(const SessionDataPtr &sd1, const SessionDataPtr &sd2) const {
-      return xtime_cmp(sd1->expire_time, sd2->expire_time) >= 0;
+    bool operator()(const SessionDataPtr &x, const SessionDataPtr &y) const {
+      return xtime_cmp(x->expire_time, y->expire_time) >= 0;
     }
   };
 

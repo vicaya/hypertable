@@ -88,7 +88,7 @@ Reactor::Reactor() : m_mutex(), m_interrupt_in_progress(false) {
   addr.sin_port = 0;
 
   // bind socket
-  if ((bind(m_interrupt_sd, (const sockaddr *)&addr, sizeof(sockaddr_in))) < 0) {
+  if ((bind(m_interrupt_sd, (sockaddr *)&addr, sizeof(sockaddr_in))) < 0) {
     HT_ERRORF("bind() failure: %s", strerror(errno));
     exit(1);
   }
@@ -98,7 +98,7 @@ Reactor::Reactor() : m_mutex(), m_interrupt_in_progress(false) {
   getsockname(m_interrupt_sd, (sockaddr *)&addr, &namelen);
 
   // connect to ourself
-  if (connect(m_interrupt_sd, (const struct sockaddr *)&addr, sizeof(addr)) < 0) {
+  if (connect(m_interrupt_sd, (sockaddr *)&addr, sizeof(addr)) < 0) {
     HT_ERRORF("connect(interrupt_sd) failed - %s", strerror(errno));
     exit(1);
   }
@@ -109,8 +109,8 @@ Reactor::Reactor() : m_mutex(), m_interrupt_in_progress(false) {
   memset(&event, 0, sizeof(struct epoll_event));
   event.events = EPOLLIN | EPOLLOUT | POLLRDHUP | EPOLLET;
   if (epoll_ctl(poll_fd, EPOLL_CTL_ADD, m_interrupt_sd, &event) < 0) {
-    HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN | EPOLLOUT | POLLRDHUP | EPOLLET) failed : %s",
-	      poll_fd, m_interrupt_sd, strerror(errno));
+    HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN|EPOLLOUT|POLLRDHUP|"
+              "EPOLLET) failed : %s", poll_fd, m_interrupt_sd, strerror(errno));
     exit(1);
   }
 #else
@@ -118,7 +118,7 @@ Reactor::Reactor() : m_mutex(), m_interrupt_in_progress(false) {
   memset(&event, 0, sizeof(struct epoll_event));
   if (epoll_ctl(poll_fd, EPOLL_CTL_ADD, m_interrupt_sd, &event) < 0) {
     HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, 0) failed : %s",
-	      poll_fd, m_interrupt_sd, strerror(errno));
+              poll_fd, m_interrupt_sd, strerror(errno));
     exit(1);
   }
 #endif
@@ -141,8 +141,10 @@ void Reactor::handle_timeouts(PollTimeout &next_timeout) {
 
     boost::xtime_get(&now, boost::TIME_UTC);
 
-    while ((dh = m_request_cache.get_next_timeout(now, handler, &next_req_timeout)) != 0) {
-      handler->deliver_event(new Event(Event::ERROR, 0, ((IOHandlerData *)handler)->get_address(), Error::COMM_REQUEST_TIMEOUT), dh);
+    while ((dh = m_request_cache.get_next_timeout(now, handler,
+                                                  &next_req_timeout)) != 0) {
+      handler->deliver_event(new Event(Event::ERROR, 0, ((IOHandlerData *)
+          handler)->get_address(), Error::COMM_REQUEST_TIMEOUT), dh);
     }
 
     if (next_req_timeout.sec != 0) {
@@ -160,7 +162,8 @@ void Reactor::handle_timeouts(PollTimeout &next_timeout) {
       while (!m_timer_heap.empty()) {
         timer = m_timer_heap.top();
         if (xtime_cmp(timer.expire_time, now) > 0) {
-          if (next_req_timeout.sec == 0 || xtime_cmp(timer.expire_time, next_req_timeout) < 0) {
+          if (next_req_timeout.sec == 0
+              || xtime_cmp(timer.expire_time, next_req_timeout) < 0) {
             next_timeout.set(now, timer.expire_time);
             memcpy(&m_next_wakeup, &timer.expire_time, sizeof(m_next_wakeup));
           }
@@ -187,7 +190,8 @@ void Reactor::handle_timeouts(PollTimeout &next_timeout) {
 
     if (!m_timer_heap.empty()) {
       timer = m_timer_heap.top();
-      if (next_req_timeout.sec == 0 || xtime_cmp(timer.expire_time, next_req_timeout) < 0) {
+      if (next_req_timeout.sec == 0
+          || xtime_cmp(timer.expire_time, next_req_timeout) < 0) {
         next_timeout.set(now, timer.expire_time);
         memcpy(&m_next_wakeup, &timer.expire_time, sizeof(m_next_wakeup));
       }
@@ -275,7 +279,8 @@ void Reactor::poll_loop_continue() {
   event.events = EPOLLERR | EPOLLHUP;
 
   if (epoll_ctl(poll_fd, EPOLL_CTL_MOD, m_interrupt_sd, &event) < 0) {
-    HT_ERRORF("epoll_ctl(EPOLL_CTL_MOD, sd=%d) : %s", m_interrupt_sd, strerror(errno));
+    HT_ERRORF("epoll_ctl(EPOLL_CTL_MOD, sd=%d) : %s", m_interrupt_sd,
+              strerror(errno));
     exit(1);
   }
 #endif

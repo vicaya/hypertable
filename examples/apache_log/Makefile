@@ -14,13 +14,13 @@ conf/hypertable.cfg:
 	-cp $(HYPERTABLE_INSTALL_DIR)/conf/hypertable.cfg conf
 
 apache_log_load: apache_log_load.o
-	g++ -o apache_log_load apache_log_load.o $(LDFLAGS) 
+	g++ -o apache_log_load apache_log_load.o $(LDFLAGS)
 
 apache_log_load.o: apache_log_load.cc
 	g++ $(CFLAGS) -c apache_log_load.cc
 
 apache_log_query: apache_log_query.o
-	g++ -o apache_log_query apache_log_query.o $(LDFLAGS) 
+	g++ -o apache_log_query apache_log_query.o $(LDFLAGS)
 
 apache_log_query.o: apache_log_query.cc
 	g++ $(CFLAGS) -c apache_log_query.cc

@@ -31,7 +31,8 @@ import org.hypertable.Common.Error;
 
 public class RequestHandlerOpen extends ApplicationHandler {
 
-    static final Logger log = Logger.getLogger("org.hypertable.DfsBroker.hadoop");
+    static final Logger log = Logger.getLogger(
+        "org.hypertable.DfsBroker.hadoop");
 
     public RequestHandlerOpen(Comm comm, HdfsBroker broker, Event event) {
         super(event);
@@ -52,7 +53,8 @@ public class RequestHandlerOpen extends ApplicationHandler {
             bufferSize = mEvent.msg.buf.getInt();
 
             if ((fileName = Serialization.DecodeString(mEvent.msg.buf)) == null)
-                throw new ProtocolException("Filename not properly encoded in request packet");
+                throw new ProtocolException(
+                    "Filename not properly encoded in request packet");
 
             mBroker.Open(cb, fileName, bufferSize);
 
@@ -61,7 +63,8 @@ public class RequestHandlerOpen extends ApplicationHandler {
             int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());
             log.severe("Protocol error (OPEN) - " + e.getMessage());
             if (error != Error.OK)
-                log.severe("Problem sending (OPEN) error back to client - " + Error.GetText(error));
+                log.severe("Problem sending (OPEN) error back to client - "
+                           + Error.GetText(error));
         }
     }
 

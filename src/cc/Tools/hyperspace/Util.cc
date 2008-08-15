@@ -28,7 +28,9 @@
 
 using namespace Hypertable;
 
-void Hyperspace::Util::normalize_pathname(std::string name, std::string &normal_name) {
+void
+Hyperspace::Util::normalize_pathname(const std::string &name,
+                                     std::string &normal_name) {
   normal_name = "";
   if (name[0] != '/')
     normal_name += "/";
@@ -39,14 +41,15 @@ void Hyperspace::Util::normalize_pathname(std::string name, std::string &normal_
     normal_name += name.substr(0, name.length()-1);
 }
 
-uint64_t Hyperspace::Util::get_handle(std::string name) {
+uint64_t Hyperspace::Util::get_handle(const std::string &name) {
   std::string normal_name;
 
   normalize_pathname(name, normal_name);
 
   Global::FileMap::iterator iter = Global::file_map.find(normal_name);
   if (iter == Global::file_map.end())
-    HT_THROWF(Error::PARSE_ERROR, "Unable to find '%s' in open file map", normal_name.c_str());
+    HT_THROWF(Error::COMMAND_PARSE_ERROR,
+              "Unable to find '%s' in open file map" , normal_name.c_str());
 
   return (*iter).second;
 }

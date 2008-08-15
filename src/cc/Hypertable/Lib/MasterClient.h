@@ -44,7 +44,8 @@ namespace Hypertable {
   class MasterClient : public ReferenceCount {
   public:
 
-    MasterClient(ConnectionManagerPtr &conn_mgr, Hyperspace::SessionPtr &hyperspace, time_t timeout, ApplicationQueuePtr &app_queue);
+    MasterClient(ConnectionManagerPtr &, Hyperspace::SessionPtr &,
+                 time_t timeout, ApplicationQueuePtr &);
     ~MasterClient();
 
     /** Sets the client connection timeout
@@ -57,7 +58,8 @@ namespace Hypertable {
 
     bool wait_for_connection(long max_wait_secs);
 
-    int create_table(const char *tablename, const char *schemastr, DispatchHandler *handler);
+    int create_table(const char *tablename, const char *schemastr,
+                     DispatchHandler *handler);
     int create_table(const char *tablename, const char *schemastr);
 
     int get_schema(const char *tablename, DispatchHandler *handler);
@@ -68,10 +70,13 @@ namespace Hypertable {
     int register_server(std::string &location, DispatchHandler *handler);
     int register_server(std::string &location);
 
-    int report_split(TableIdentifier *table, RangeSpec &range, const char *log_dir, uint64_t soft_limit, DispatchHandler *handler);
-    int report_split(TableIdentifier *table, RangeSpec &range, const char *log_dir, uint64_t soft_limit);
+    int report_split(const TableIdentifier *table, const RangeSpec &range,
+                     const char *log_dir, uint64_t soft_limit,
+                     DispatchHandler *handler);
+    int report_split(const TableIdentifier *table, const RangeSpec &range,
+                     const char *log_dir, uint64_t soft_limit);
 
-    int drop_table(const char *table_name, bool if_exists, DispatchHandler *handler);
+    int drop_table(const char *table_name, bool if_exists, DispatchHandler *);
     int drop_table(const char *table_name, bool if_exists);
 
     int shutdown();

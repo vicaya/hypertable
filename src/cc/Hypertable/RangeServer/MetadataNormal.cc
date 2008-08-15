@@ -36,8 +36,10 @@ using namespace Hypertable;
 /**
  *
  */
-MetadataNormal::MetadataNormal(TableIdentifier *identifier, std::string &end_row) : m_files_scanner_ptr(0) {
-  m_metadata_key = std::string("") + (uint32_t)identifier->id + ":" + end_row;
+MetadataNormal::MetadataNormal(const TableIdentifier *identifier,
+                               const String &end_row)
+  : m_files_scanner_ptr(0) {
+  m_metadata_key = String("") + (uint32_t)identifier->id + ":" + end_row;
 }
 
 
@@ -68,15 +70,15 @@ void MetadataNormal::reset_files_scan() {
 
 
 
-bool MetadataNormal::get_next_files(std::string &ag_name, std::string &files) {
+bool MetadataNormal::get_next_files(String &ag_name, String &files) {
   Cell cell;
 
   assert(m_files_scanner_ptr);
 
   if (m_files_scanner_ptr->next(cell)) {
     assert(!strcmp(cell.column_family, "Files"));
-    ag_name = std::string(cell.column_qualifier);
-    files = std::string((const char *)cell.value, cell.value_len);
+    ag_name = String(cell.column_qualifier);
+    files = String((const char *)cell.value, cell.value_len);
     return true;
   }
 
@@ -86,7 +88,7 @@ bool MetadataNormal::get_next_files(std::string &ag_name, std::string &files) {
 
 
 
-void MetadataNormal::write_files(std::string &ag_name, std::string &files) {
+void MetadataNormal::write_files(const String &ag_name, const String &files) {
   TableMutatorPtr mutator_ptr;
   KeySpec key;
 

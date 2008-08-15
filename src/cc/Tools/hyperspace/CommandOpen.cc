@@ -36,11 +36,13 @@ using namespace Hyperspace;
 using namespace std;
 
 const char *CommandOpen::ms_usage[] = {
-  "open <fname> flags=[READ|WRITE|LOCK|CREATE|EXCL|TEMP|LOCK_SHARED|LOCK_EXCLUSIVE] [event-mask=<mask>]",
+  "open <fname> flags=[READ|WRITE|LOCK|CREATE|EXCL|TEMP|LOCK_SHARED"
+      "|LOCK_EXCLUSIVE] [event-mask=<mask>]",
   "  This command issues an OPEN request to Hyperspace.  The optional",
   "  parameter event-mask may take a value that is the combination of",
   "  the following strings:",
-  "    ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED|LOCK_RELEASED",
+  "    ATTR_SET|ATTR_DEL|CHILD_NODE_ADDED|CHILD_NODE_REMOVED|LOCK_ACQUIRED"
+      "|LOCK_RELEASED",
   (const char *)0
 };
 
@@ -93,7 +95,8 @@ void CommandOpen::run() {
       }
     }
     else if (fname != "" || m_args[i].second != "")
-      HT_THROW(Error::PARSE_ERROR, "Invalid arguments.  Type 'help' for usage.");
+      HT_THROW(Error::COMMAND_PARSE_ERROR,
+               "Invalid arguments.  Type 'help' for usage.");
     else
       fname = m_args[i].first;
   }
@@ -102,7 +105,7 @@ void CommandOpen::run() {
     flags = OPEN_FLAG_READ;
 
   if (fname == "")
-    HT_THROW(Error::PARSE_ERROR, "Error: no filename supplied.");
+    HT_THROW(Error::COMMAND_PARSE_ERROR, "Error: no filename supplied.");
 
   //HT_INFOF("open(%s, 0x%x, 0x%x)", fname.c_str(), flags, event_mask);
 

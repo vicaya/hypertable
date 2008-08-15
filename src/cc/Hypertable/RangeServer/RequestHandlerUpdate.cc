@@ -46,7 +46,7 @@ void RequestHandlerUpdate::run() {
   try {
     table.decode(&p, &remaining);
     uint32_t count = Serialization::decode_i32(&p, &remaining);
-    
+
     mods.base = (uint8_t *)p;
     mods.size = remaining;
     mods.own = false;

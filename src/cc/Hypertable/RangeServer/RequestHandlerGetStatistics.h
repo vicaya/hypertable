@@ -36,9 +36,8 @@ namespace Hypertable {
 
   class RequestHandlerGetStatistics : public ApplicationHandler {
   public:
-    RequestHandlerGetStatistics(Comm *comm, RangeServer *rs, EventPtr &event_ptr) : ApplicationHandler(event_ptr), m_comm(comm), m_range_server(rs) {
-      return;
-    }
+    RequestHandlerGetStatistics(Comm *comm, RangeServer *rs, EventPtr &event)
+      : ApplicationHandler(event), m_comm(comm), m_range_server(rs) { }
 
     virtual void run();
 

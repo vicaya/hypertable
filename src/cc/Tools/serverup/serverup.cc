@@ -54,7 +54,7 @@ namespace {
     "usage: serverup [options] <servername>",
     "",
     "  options:",
-    "    --config=<file>  Read configuration from <file>.  The default config file",
+    "    --config=<file>  Read configuration from <file>.  The default file",
     "                     is \"conf/hypertable.cfg\" relative to the toplevel",
     "                     install directory",
     "    --wait=<sec>     wait seconds until give up",
@@ -63,12 +63,12 @@ namespace {
     "    --help           Display this help text and exit",
     "    --verbose,-v     Display 'true' if up, 'false' otherwise",
     "",
-    "  This program check checks to see if the server, specified by <servername>,",
-    "  is up.  It does this by determining the host and port that the server is",
-    "  listening on from the command line options, or if not supplied, from the",
+    "  This program check checks to see if the server, named <servername>,",
+    "  is up.  It first determines the host and port that the server is",
+    "  listening on from the command line options, or if not supplied, the",
     "  the config file.  It then establishes a connection with the server and,",
     "  sends a STATUS request.  If the response from the STATUS request is OK,",
-    "  then the program terminates with an exit status of 0.  If a failure occurs,",
+    "  then the program exits with status of 0.  If a failure occurs,",
     "  or a non-OK error code is returned from the STATUS request, the program",
     "  terminates with an exit status of 1.  <servername> may be one of the",
     "  following values:",
@@ -114,19 +114,19 @@ int main(int argc, char **argv) {
 
     for (int i=1; i<argc; i++) {
       if (!strncmp(argv[i], "--config=", 9))
-	cfgfile = &argv[i][9];
+        cfgfile = &argv[i][9];
       else if (!strncmp(argv[i], "--wait=", 7))
-	wait_secs = atoi(&argv[i][7]);
+        wait_secs = atoi(&argv[i][7]);
       else if (!strncmp(argv[i], "--host=", 7))
-	host_name = &argv[i][7];
+        host_name = &argv[i][7];
       else if (!strncmp(argv[i], "--port=", 7))
-	port_str = &argv[i][7];
+        port_str = &argv[i][7];
       else if (!strcmp(argv[i], "--silent"))
-	silent = true;
+        silent = true;
       else if (argv[i][0] == '-' || server_name != "")
-	Usage::dump_and_exit(usage);
+        Usage::dump_and_exit(usage);
       else
-	server_name = argv[i];
+        server_name = argv[i];
     }
 
     if (cfgfile == "")
@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
     }
     else if (server_name == "rangeserver") {
       if (host_name == "")
-	host_name = "localhost";
+        host_name = "localhost";
       port_prop = "Hypertable.RangeServer.Port";
     }
     else
@@ -156,21 +156,22 @@ int main(int argc, char **argv) {
 
     {
       if (host_name == "")
-	host_name = props_ptr->get(host_prop, "localhost");
+        host_name = props_ptr->get(host_prop, "localhost");
       else if (server_name != "rangeserver")
-	props_ptr->set(host_prop, host_name.c_str());
+        props_ptr->set(host_prop, host_name.c_str());
 
       if (port_str != 0)
-	props_ptr->set(port_prop, port_str);
+        props_ptr->set(port_prop, port_str);
 
       port = props_ptr->get_int(port_prop, 0);
       if (port == 0 || port < 1024 || port >= 65536) {
-	HT_ERRORF("%s not specified or out of range : %d", port_prop, port);
-	return 1;
+        HT_ERRORF("%s not specified or out of range : %d", port_prop, port);
+        return 1;
       }
 
       if (!InetAddr::initialize(&addr, host_name.c_str(), (uint16_t)port))
-	HT_THROWF(Error::PARSE_ERROR, "Unable to construct address from host=%s port=%u", host_name.c_str(), port);
+        HT_THROWF(Error::COMMAND_PARSE_ERROR, "Unable to construct address "
+                  "from host=%s port=%u", host_name.c_str(), port);
     }
 
     props_ptr->set("silent", "true");
@@ -182,15 +183,15 @@ int main(int argc, char **argv) {
     if (server_name == "dfsbroker") {
       client = new DfsBroker::Client(conn_mgr, addr, 30);
       if (!client->wait_for_connection(wait_secs))
-	goto abort;
+        goto abort;
       client->status();
     }
     else if (server_name == "hyperspace") {
       hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), props_ptr, 0);
       if (!hyperspace->wait_for_connection(wait_secs))
-	goto abort;
+        goto abort;
       if ((error = hyperspace->status()) != Error::OK)
-	goto abort;
+        goto abort;
     }
     else if (server_name == "master") {
       MasterClientPtr  master;
@@ -198,24 +199,24 @@ int main(int argc, char **argv) {
       hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), props_ptr, 0);
 
       if (!hyperspace->wait_for_connection(wait_secs))
-	goto abort;
+        goto abort;
 
       app_queue = new ApplicationQueue(1);
       master = new MasterClient(conn_mgr, hyperspace, 30, app_queue);
       master->set_verbose_flag(false);
       if (master->initiate_connection(0) != Error::OK)
-	goto abort;
+        goto abort;
 
       if (!master->wait_for_connection(wait_secs))
-	goto abort;
+        goto abort;
 
       if ((error = master->status()) != Error::OK)
-	goto abort;
+        goto abort;
     }
     else if (server_name == "rangeserver") {
       conn_mgr->add(addr, 30, "Range Server");
       if (!conn_mgr->wait_for_connection(addr, wait_secs))
-	goto abort;
+        goto abort;
       range_server = new RangeServerClient(comm, 30);
       range_server->status(addr);
     }

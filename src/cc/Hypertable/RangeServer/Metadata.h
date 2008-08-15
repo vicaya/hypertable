@@ -28,8 +28,8 @@ namespace Hypertable {
   public:
     virtual ~Metadata() { return; }
     virtual void reset_files_scan() = 0;
-    virtual bool get_next_files(std::string &ag_name, std::string &files) = 0;
-    virtual void write_files(std::string &ag_name, std::string &files) = 0;
+    virtual bool get_next_files(String &ag_name, String &files) = 0;
+    virtual void write_files(const String &ag_name, const String &files) = 0;
   };
 
 }

@@ -60,7 +60,8 @@ public class System {
     public static int processorCount;
 
     public static void main(String [] args) {
-        java.lang.System.out.println("Installation Directory = '" + installDir + "'");
+        java.lang.System.out.println("Installation Directory = '"
+                                     + installDir + "'");
     }
 
 

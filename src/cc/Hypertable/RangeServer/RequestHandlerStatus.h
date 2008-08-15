@@ -35,9 +35,8 @@ namespace Hypertable {
 
   class RequestHandlerStatus : public ApplicationHandler {
   public:
-    RequestHandlerStatus(Comm *comm, RangeServer *rs, EventPtr &event_ptr) : ApplicationHandler(event_ptr), m_comm(comm), m_range_server(rs) {
-      return;
-    }
+    RequestHandlerStatus(Comm *comm, RangeServer *rs, EventPtr &event_ptr)
+      : ApplicationHandler(event_ptr), m_comm(comm), m_range_server(rs) { }
 
     virtual void run();
 

@@ -144,7 +144,9 @@ ssize_t FileUtils::writev(int fd, const struct iovec *vector, int count) {
 }
 
 
-ssize_t FileUtils::sendto(int fd, const void *vptr, size_t n, const struct sockaddr *to, socklen_t tolen) {
+ssize_t
+FileUtils::sendto(int fd, const void *vptr, size_t n, const sockaddr *to,
+                  socklen_t tolen) {
   size_t nleft;
   ssize_t nsent;
   const char *ptr;
@@ -194,7 +196,9 @@ ssize_t FileUtils::send(int fd, const void *vptr, size_t n) {
 
 
 
-ssize_t FileUtils::recvfrom(int fd, void *vptr, size_t n, struct sockaddr *from, socklen_t *fromlen) {
+ssize_t
+FileUtils::recvfrom(int fd, void *vptr, size_t n, sockaddr *from,
+                    socklen_t *fromlen) {
   ssize_t nread;
   while (true) {
     if ((nread = ::recvfrom(fd, vptr, n, 0, from, fromlen)) < 0) {
@@ -292,12 +296,14 @@ bool FileUtils::mkdirs(const String &dirname) {
     if (stat(tmpdir, &statbuf) != 0) {
       if (errno == ENOENT) {
         if (mkdir(tmpdir, 0755) != 0) {
-          HT_ERRORF("Problem creating directory '%s' - %s", tmpdir, strerror(errno));
+          HT_ERRORF("Problem creating directory '%s' - %s",
+                    tmpdir, strerror(errno));
           return false;
         }
       }
       else {
-        HT_ERRORF("Problem stat'ing directory '%s' - %s", tmpdir, strerror(errno));
+        HT_ERRORF("Problem stat'ing directory '%s' - %s",
+                  tmpdir, strerror(errno));
         return false;
       }
     }
@@ -307,12 +313,14 @@ bool FileUtils::mkdirs(const String &dirname) {
   if (stat(tmpdir, &statbuf) != 0) {
     if (errno == ENOENT) {
       if (mkdir(tmpdir, 0755) != 0) {
-        HT_ERRORF("Problem creating directory '%s' - %s", tmpdir, strerror(errno));
+        HT_ERRORF("Problem creating directory '%s' - %s",
+                  tmpdir, strerror(errno));
         return false;
       }
     }
     else {
-      HT_ERRORF("Problem stat'ing directory '%s' - %s", tmpdir, strerror(errno));
+      HT_ERRORF("Problem stat'ing directory '%s' - %s",
+                tmpdir, strerror(errno));
       return false;
     }
   }
@@ -388,7 +396,9 @@ bool FileUtils::expand_tilde(String &fname) {
 
 #ifdef HT_XATTR_ENABLED
 
-int FileUtils::getxattr(const String &path, const String &name, void *value, size_t size) {
+int
+FileUtils::getxattr(const String &path, const String &name, void *value,
+                    size_t size) {
   String canonic = (String)"user." + name;
 #if defined(__linux__)
   return ::getxattr(path.c_str(), canonic.c_str(), value, size);
@@ -400,7 +410,9 @@ int FileUtils::getxattr(const String &path, const String &name, void *value, siz
 }
 
 
-int FileUtils::setxattr(const String &path, const String &name, const void *value, size_t size, int flags) {
+int
+FileUtils::setxattr(const String &path, const String &name, const void *value,
+                    size_t size, int flags) {
   String canonic = (String)"user." + name;
 #if defined(__linux__)
   return ::setxattr(path.c_str(), canonic.c_str(), value, size, flags);
@@ -424,7 +436,9 @@ int FileUtils::fgetxattr(int fd, const String &name, void *value, size_t size) {
 }
 
 
-int FileUtils::fsetxattr(int fd, const String &name, const void *value, size_t size, int flags) {
+int
+FileUtils::fsetxattr(int fd, const String &name, const void *value,
+                     size_t size, int flags) {
   String canonic = (String)"user." + name;
 #if defined(__linux__)
   return ::fsetxattr(fd, canonic.c_str(), value, size, flags);

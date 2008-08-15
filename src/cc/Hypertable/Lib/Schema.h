@@ -48,15 +48,20 @@ namespace Hypertable {
       time_t   ttl;
     };
 
+    typedef std::list<ColumnFamily *> ColumnFamilies;
+
     class AccessGroup {
     public:
-      AccessGroup() : name(), in_memory(false), blocksize(0), columns() { return; }
+      AccessGroup() : name(), in_memory(false), blocksize(0), columns() { }
+
       String   name;
       bool     in_memory;
       uint32_t blocksize;
       String compressor;
-      std::list<ColumnFamily *> columns;
+      ColumnFamilies  columns;
     };
+
+    typedef std::list<AccessGroup *> AccessGroups;
 
     Schema(bool read_ids=false);
     ~Schema();
@@ -93,11 +98,14 @@ namespace Hypertable {
 
     size_t get_max_column_family_id() { return m_max_column_family_id; }
 
-    std::list<AccessGroup *> *get_access_group_list() { return &m_access_groups; }
+    AccessGroups *
+    get_access_group_list() { return &m_access_groups; }
 
-    ColumnFamily *get_column_family(const String &name) { return m_column_family_map[name]; }
+    ColumnFamily *
+    get_column_family(const String &name) { return m_column_family_map[name]; }
 
-    ColumnFamily *get_column_family(uint32_t id) { return m_column_family_id_map[id]; }
+    ColumnFamily *
+    get_column_family(uint32_t id) { return m_column_family_id_map[id]; }
 
     void add_access_group(AccessGroup *ag);
 
@@ -119,24 +127,27 @@ namespace Hypertable {
     ColumnFamilyMap m_column_family_map;
     ColumnFamilyIdMap m_column_family_id_map;
     int32_t m_generation;
-    std::list<AccessGroup *> m_access_groups;
-    AccessGroup *m_open_access_group;
+    AccessGroups   m_access_groups;
+    AccessGroup   *m_open_access_group;
     ColumnFamily  *m_open_column_family;
     bool           m_read_ids;
     bool           m_output_ids;
     size_t         m_max_column_family_id;
     String         m_compressor;
 
-    static void start_element_handler(void *userdata, const XML_Char *name, const XML_Char **atts);
+    static void
+    start_element_handler(void *userdata, const XML_Char *name,
+                          const XML_Char **atts);
     static void end_element_handler(void *userdata, const XML_Char *name);
-    static void character_data_handler(void *userdata, const XML_Char *s, int len);
+    static void
+    character_data_handler(void *userdata, const XML_Char *s, int len);
 
     static Schema       *ms_schema;
     static String        ms_collected_text;
     static boost::mutex  ms_mutex;
   };
 
-  typedef boost::intrusive_ptr<Schema> SchemaPtr;
+  typedef intrusive_ptr<Schema> SchemaPtr;
 
 }
 

@@ -55,7 +55,8 @@ namespace {
 
   public:
 
-    ResponseHandler() : m_queue(), m_mutex(), m_cond(), m_connected(true) { return; }
+    ResponseHandler()
+      : m_queue(), m_mutex(), m_cond(), m_connected(true) { return; }
 
     virtual void handle(EventPtr &event_ptr) {
       boost::mutex::scoped_lock lock(m_mutex);
@@ -117,7 +118,8 @@ void CommTestThreadFunction::operator()() {
       CommBufPtr cbp(new CommBuf(hbuilder, encoded_length_str16(line)));
       cbp->append_str16(line);
       int retries = 0;
-      while ((error = m_comm->send_request(m_addr, 30, cbp, resp_handler)) != Error::OK) {
+      while ((error = m_comm->send_request(m_addr, 30, cbp, resp_handler))
+              != Error::OK) {
         if (error == Error::COMM_NOT_CONNECTED) {
           if (retries == 5) {
             HT_ERROR("Connection timeout.");
@@ -127,7 +129,8 @@ void CommTestThreadFunction::operator()() {
           retries++;
         }
         else {
-          HT_ERRORF("CommEngine::send_message returned '%s'", Error::get_text(error));
+          HT_ERRORF("CommEngine::send_message returned '%s'",
+                    Error::get_text(error));
           return;
         }
       }

@@ -42,8 +42,9 @@ namespace Hypertable {
 
     ScanBlock();
 
-    /** Loads scanblock data returned from RangeServer.  Both the CREATE_SCANNER and
-     * FETCH_SCANBLOCK methods return a block of key/value pairs.
+    /** Loads scanblock data returned from RangeServer.  Both the
+     * CREATE_SCANNER and FETCH_SCANBLOCK methods return a block of key/value
+     * pairs.
      *
      * @param event_ptr smart pointer to response MESSAGE event
      * @return Error::OK on success or error code on failure
@@ -59,8 +60,9 @@ namespace Hypertable {
     /** Resets iterator to first key/value pair in the scanblock. */
     void reset() { m_iter = m_vec.begin(); }
 
-    /** Returns the next key/value pair in the scanblock.  <b>NOTE:</b> invoking
-     * the #load method invalidates all pointers previously returned from this method.
+    /** Returns the next key/value pair in the scanblock.  <b>NOTE:</b>
+     * invoking the #load method invalidates all pointers previously returned
+     * from this method.
      *
      * @param key reference to return key pointer
      * @param value reference to return value pointer

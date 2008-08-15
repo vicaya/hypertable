@@ -35,9 +35,10 @@ namespace Hypertable {
 
     class ResponseCallbackRead : public ResponseCallback {
     public:
-      ResponseCallbackRead(Comm *comm, EventPtr &event_ptr) : ResponseCallback(comm, event_ptr) { return; }
-      int response(uint64_t offset, StaticBuffer &buffer);
+      ResponseCallbackRead(Comm *comm, EventPtr &event_ptr)
+        : ResponseCallback(comm, event_ptr) { }
 
+      int response(uint64_t offset, StaticBuffer &buffer);
     };
   }
 

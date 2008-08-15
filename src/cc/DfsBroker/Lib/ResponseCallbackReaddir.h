@@ -35,7 +35,9 @@ namespace Hypertable {
 
     class ResponseCallbackReaddir : public ResponseCallback {
     public:
-      ResponseCallbackReaddir(Comm *comm, EventPtr &event_ptr) : ResponseCallback(comm, event_ptr) { return; }
+      ResponseCallbackReaddir(Comm *comm, EventPtr &event_ptr)
+        : ResponseCallback(comm, event_ptr) { }
+
       int response(std::vector<std::string> &listing);
     };
   }

@@ -55,7 +55,7 @@ LocalBroker::LocalBroker(PropertiesPtr &props) : m_verbose(false) {
    * Determine root directory
    */
   if ((root = props->get("DfsBroker.Local.Root", 0)) == 0) {
-    HT_ERROR("Required property 'DfsBroker.Local.Root' not specified, exiting...");
+    HT_ERROR("Required property 'DfsBroker.Local.Root' not found, exiting...");
     exit(1);
   }
 
@@ -79,7 +79,8 @@ LocalBroker::~LocalBroker() {
 /**
  * Open
  */
-void LocalBroker::open(ResponseCallbackOpen *cb, const char *fname, uint32_t bufsz) {
+void
+LocalBroker::open(ResponseCallbackOpen *cb, const char *fname, uint32_t bufsz) {
   int fd;
   String abspath;
 
@@ -119,8 +120,9 @@ void LocalBroker::open(ResponseCallbackOpen *cb, const char *fname, uint32_t buf
 /**
  * Create
  */
-void LocalBroker::create(ResponseCallbackOpen *cb, const char *fname, bool overwrite,
-            uint32_t bufsz, uint16_t replication, uint64_t blksz) {
+void
+LocalBroker::create(ResponseCallbackOpen *cb, const char *fname, bool overwrite,
+                    uint32_t bufsz, uint16_t replication, uint64_t blksz) {
   int fd;
   int flags;
   String abspath;
@@ -197,13 +199,15 @@ void LocalBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
   }
 
   if ((offset = (uint64_t)lseek(fdata->fd, 0, SEEK_CUR)) == (uint64_t)-1) {
-    HT_ERRORF("lseek failed: fd=%d offset=0 SEEK_CUR - %s", fdata->fd, strerror(errno));
+    HT_ERRORF("lseek failed: fd=%d offset=0 SEEK_CUR - %s", fdata->fd,
+              strerror(errno));
     report_error(cb);
     return;
   }
 
   if ((nread = FileUtils::read(fdata->fd, buf.base, amount)) == -1) {
-    HT_ERRORF("read failed: fd=%d amount=%d - %s", fdata->fd, amount, strerror(errno));
+    HT_ERRORF("read failed: fd=%d amount=%d - %s", fdata->fd, amount,
+              strerror(errno));
     report_error(cb);
     return;
   }
@@ -235,13 +239,15 @@ void LocalBroker::append(ResponseCallbackAppend *cb, uint32_t fd,
   }
 
   if ((offset = (uint64_t)lseek(fdata->fd, 0, SEEK_CUR)) == (uint64_t)-1) {
-    HT_ERRORF("lseek failed: fd=%d offset=0 SEEK_CUR - %s", fdata->fd, strerror(errno));
+    HT_ERRORF("lseek failed: fd=%d offset=0 SEEK_CUR - %s", fdata->fd,
+              strerror(errno));
     report_error(cb);
     return;
   }
 
   if ((nwritten = FileUtils::write(fdata->fd, data, amount)) == -1) {
-    HT_ERRORF("write failed: fd=%d amount=%d - %s", fdata->fd, amount, strerror(errno));
+    HT_ERRORF("write failed: fd=%d amount=%d - %s", fdata->fd, amount,
+              strerror(errno));
     report_error(cb);
     return;
   }
@@ -272,7 +278,8 @@ void LocalBroker::seek(ResponseCallback *cb, uint32_t fd, uint64_t offset) {
   }
 
   if ((offset = (uint64_t)lseek(fdata->fd, offset, SEEK_SET)) == (uint64_t)-1) {
-    HT_ERRORF("lseek failed: fd=%d offset=%lld - %s", fdata->fd, offset, strerror(errno));
+    HT_ERRORF("lseek failed: fd=%d offset=%lld - %s", fdata->fd, offset,
+              strerror(errno));
     report_error(cb);
     return;
   }
@@ -297,7 +304,8 @@ void LocalBroker::remove(ResponseCallback *cb, const char *fname) {
     abspath = m_rootdir + "/" + fname;
 
   if (unlink(abspath.c_str()) == -1) {
-    HT_ERRORF("unlink failed: file='%s' - %s", abspath.c_str(), strerror(errno));
+    HT_ERRORF("unlink failed: file='%s' - %s", abspath.c_str(),
+              strerror(errno));
     report_error(cb);
     return;
   }
@@ -323,7 +331,8 @@ void LocalBroker::length(ResponseCallbackLength *cb, const char *fname) {
     abspath = m_rootdir + "/" + fname;
 
   if ((length = FileUtils::length(abspath)) == (uint64_t)-1) {
-    HT_ERRORF("length (stat) failed: file='%s' - %s", abspath.c_str(), strerror(errno));
+    HT_ERRORF("length (stat) failed: file='%s' - %s", abspath.c_str(),
+              strerror(errno));
     report_error(cb);
     return;
   }
@@ -335,7 +344,9 @@ void LocalBroker::length(ResponseCallbackLength *cb, const char *fname) {
 /**
  * Pread
  */
-void LocalBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset, uint32_t amount) {
+void
+LocalBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
+                   uint32_t amount) {
   OpenFileDataLocalPtr fdata;
   ssize_t nread;
   StaticBuffer buf(new uint8_t [amount], amount);
@@ -351,8 +362,10 @@ void LocalBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset, 
     return;
   }
 
-  if ((nread = FileUtils::pread(fdata->fd, buf.base, amount, (off_t)offset)) == -1) {
-    HT_ERRORF("pread failed: fd=%d amount=%d offset=%lld - %s", fdata->fd, amount, offset, strerror(errno));
+  if ((nread = FileUtils::pread(fdata->fd, buf.base, amount, (off_t)offset))
+      == -1) {
+    HT_ERRORF("pread failed: fd=%d amount=%d offset=%lld - %s", fdata->fd,
+              amount, offset, strerror(errno));
     report_error(cb);
     return;
   }
@@ -379,7 +392,8 @@ void LocalBroker::mkdirs(ResponseCallback *cb, const char *dname) {
     absdir = m_rootdir + "/" + dname;
 
   if (!FileUtils::mkdirs(absdir)) {
-    HT_ERRORF("mkdirs failed: dname='%s' - %s", absdir.c_str(), strerror(errno));
+    HT_ERRORF("mkdirs failed: dname='%s' - %s", absdir.c_str(),
+              strerror(errno));
     report_error(cb);
     return;
   }

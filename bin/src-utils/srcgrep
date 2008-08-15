@@ -1,0 +1,3 @@
+#!/bin/sh
+git grep -I -E "$@" | egrep -v \
+  '/quicklz.c|/lzo/|\.(xml|hql|tsv|golden|dat|dump)|/boost-1_34-fix|/gen-|t[0-9]+\.txt'

@@ -27,14 +27,17 @@
 namespace Hypertable {
 
   /**
-   * Tracks outstanding RangeServer update requests.  This class is used to track the state of
-   * outstanding RangeServer update requests for a scatter send.  It is initialized with the number
-   * of updates issued.  When each update returns or times out the counter is decremented and
-   * when all updates have completed or timed out, an object of this class will signal completion.
+   * Tracks outstanding RangeServer update requests.  This class is used to
+   * track the state of outstanding RangeServer update requests for a scatter
+   * send.  It is initialized with the number of updates issued.  When each
+   * update returns or times out the counter is decremented and when all
+   * updates have completed or timed out, an object of this class will signal
+   * completion.
    */
   class TableMutatorCompletionCounter {
   public:
-    TableMutatorCompletionCounter() : m_outstanding(0), m_retries(false), m_errors(false), m_done(false) { }
+    TableMutatorCompletionCounter()
+      : m_outstanding(0), m_retries(false), m_errors(false), m_done(false) { }
 
     void set(size_t count) {
       boost::mutex::scoped_lock lock(m_mutex);

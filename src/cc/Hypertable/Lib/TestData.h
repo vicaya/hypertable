@@ -34,25 +34,26 @@ namespace Hypertable {
 
   class TestData {
   public:
-    bool load(std::string datadir) {
+    bool load(const String &datadir) {
       struct stat statbuf;
       char *contentdata, *worddata, *urldata;
       char *base, *ptr, *last, *str;
       off_t len;
-      std::string shakespearefile = datadir + "/shakespeare.txt";
-      std::string shakespearegz = datadir + "/shakespeare.txt.gz";
-      std::string wordsfile = datadir + "/words";
-      std::string wordsgz = datadir + "/words.gz";
-      std::string urlsfile = datadir + "/urls.txt";
-      std::string urlsgz = datadir + "/urls.txt.gz";
-      std::string syscmd;
+      String shakespearefile = datadir + "/shakespeare.txt";
+      String shakespearegz = datadir + "/shakespeare.txt.gz";
+      String wordsfile = datadir + "/words";
+      String wordsgz = datadir + "/words.gz";
+      String urlsfile = datadir + "/urls.txt";
+      String urlsgz = datadir + "/urls.txt.gz";
+      String syscmd;
 
       /**
        * Load content vector
        */
       if (stat(shakespearefile.c_str(), &statbuf) != 0) {
         if (stat(shakespearegz.c_str(), &statbuf) != 0) {
-          HT_ERRORF("Unable to stat file 'shakespeare.txt.gz' : %s", strerror(errno));
+          HT_ERRORF("Unable to stat file 'shakespeare.txt.gz' : %s",
+                    strerror(errno));
           return false;
         }
         syscmd = "zcat " + shakespearegz + " > " + shakespearefile;
@@ -61,11 +62,13 @@ namespace Hypertable {
           return false;
         }
         if (stat(shakespearefile.c_str(), &statbuf) != 0) {
-          HT_ERRORF("Unable to stat file '%s' : %s", shakespearefile.c_str(), strerror(errno));
+          HT_ERRORF("Unable to stat file '%s' : %s", shakespearefile.c_str(),
+                    strerror(errno));
           return false;
         }
       }
-      if ((contentdata = FileUtils::file_to_buffer(shakespearefile.c_str(), &len)) == 0)
+      if ((contentdata = FileUtils::file_to_buffer(shakespearefile.c_str(),
+          &len)) == 0)
         return false;
       base = contentdata;
       while ((ptr = strstr(base, "\n\n")) != 0) {
@@ -83,7 +86,8 @@ namespace Hypertable {
        */
       if (stat(wordsfile.c_str(), &statbuf) != 0) {
         if (stat(wordsgz.c_str(), &statbuf) != 0) {
-          HT_ERRORF("Unable to stat file '%s' : %s", wordsgz.c_str(), strerror(errno));
+          HT_ERRORF("Unable to stat file '%s' : %s", wordsgz.c_str(),
+                    strerror(errno));
           return false;
         }
         syscmd = "zcat " + wordsgz + " > " + wordsfile;
@@ -92,7 +96,8 @@ namespace Hypertable {
           return false;
         }
         if (stat(wordsfile.c_str(), &statbuf) != 0) {
-          HT_ERRORF("Unable to stat file '%s' : %s", wordsfile.c_str(), strerror(errno));
+          HT_ERRORF("Unable to stat file '%s' : %s", wordsfile.c_str(),
+                    strerror(errno));
           return false;
         }
       }
@@ -122,7 +127,8 @@ namespace Hypertable {
           return false;
         }
         if (stat(urlsfile.c_str(), &statbuf) != 0) {
-          HT_ERRORF("Unable to stat file '%s' : %s", urlsfile.c_str(), strerror(errno));
+          HT_ERRORF("Unable to stat file '%s' : %s", urlsfile.c_str(),
+                    strerror(errno));
           return false;
         }
       }
@@ -144,6 +150,6 @@ namespace Hypertable {
     std::vector<CharPtr> urls;
   };
 
-}
+} // namespace Hypertable
 
 #endif // HYPERTABLE_TESTDATA_H

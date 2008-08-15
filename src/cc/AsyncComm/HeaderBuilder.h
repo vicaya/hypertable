@@ -32,13 +32,14 @@ namespace Hypertable {
 
   /**
    * Builds a response or request header for messages sent over the Comm layer.
-   * An object of this type gets passed into the CommBuf constructor and is used to generate
-   * the message header.
+   * An object of this type gets passed into the CommBuf constructor and is
+   * used to generate the message header.
    *
-   * <p><b>NOTE:</b> The reason for this class is that someday it will support a recipient list
-   * which will be a variable sized set of addresses that the message should be delivered to.  By
-   * encapsulating the construction of message headers into a class like this one, variable sized
-   * headers can be easily supported.
+   * <p>NOTE: The reason for this class is that someday it will support a
+   * recipient list which will be a variable sized set of addresses that the
+   * message should be delivered to.  By encapsulating the construction of
+   * message headers into a class like this one, variable sized headers can be
+   * easily supported.
    */
   class HeaderBuilder {
 
@@ -46,25 +47,27 @@ namespace Hypertable {
 
     /** Constructor.  Initializes all members to 0.
      */
-    HeaderBuilder() : m_id(0), m_group_id(0), m_total_len(0), m_protocol(0), m_flags(0) {
-      return;
-    }
+    HeaderBuilder()
+        : m_id(0), m_group_id(0), m_total_len(0), m_protocol(0), m_flags(0) { }
 
-    /** Constructor.  Initializes the m_protocol and m_group_id members with the
-     * supplied arguments, all other members are set to 0.
+    /** Constructor.  Initializes the m_protocol and m_group_id members with
+     * the supplied arguments, all other members are set to 0.
      *
-     * @param protocol application protocol, can be one of PROTOCOL_NONE, PROTOCOL_DFSBROKER,
-     *                 PROTOCOL_HYPERSPACE, PROTOCOL_HYPERTABLE_MASTER,
+     * @param protocol application protocol, can be one of PROTOCOL_NONE,
+     *                 PROTOCOL_DFSBROKER, PROTOCOL_HYPERSPACE,
+     *                 PROTOCOL_HYPERTABLE_MASTER,
      *                 PROTOCOL_HYPERTABLE_RANGESERVER (see Header)
-     * @param gid the group ID.  If the server is using an ApplicationQueue, then request
-     *            messages with the same group ID will get carried out in series
+     * @param gid the group ID.  If the server is using an ApplicationQueue,
+     *            then request messages with the same group ID will get
+     *            carried out in series
      */
-    HeaderBuilder(uint8_t protocol, uint32_t gid=0) : m_id(0), m_group_id(gid), m_total_len(0), m_protocol(protocol), m_flags(0) {
-      return;
-    }
+    HeaderBuilder(uint8_t protocol, uint32_t gid=0)
+        : m_id(0), m_group_id(gid), m_total_len(0), m_protocol(protocol),
+          m_flags(0) { }
 
-    /** This method is used to initialize a response header from a give request header.  It
-     * pulls the ID, the group ID, and the flags from the given request header.
+    /** This method is used to initialize a response header from a give request
+     * header.  It pulls the ID, the group ID, and the flags from the given
+     * request header.
      *
      * @param header pointer to the request message header
      */
@@ -79,8 +82,8 @@ namespace Hypertable {
     /** Returns the length of the header that would be generated */
     size_t header_length() { return sizeof(Header::Common); }
 
-    /** Encodes the header to the given buffer.  Advances the buffer pointer by the
-     * length of the header written.
+    /** Encodes the header to the given buffer.  Advances the buffer pointer by
+     * the length of the header written.
      *
      * @param bufp address of buffer pointer to write header to
      */
@@ -126,7 +129,7 @@ namespace Hypertable {
     uint8_t   m_flags;
   };
 
-}
+} // namespace Hypertable
 
 
 #endif // HYPERTABLE_HEADERBUILDER_H

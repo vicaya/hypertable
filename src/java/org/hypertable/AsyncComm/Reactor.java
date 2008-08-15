@@ -90,7 +90,8 @@ class Reactor implements Runnable {
         }
     }
 
-    void AddRequest(int id, IOHandlerData handler, DispatchHandler dh, long expire) {
+    void AddRequest(int id, IOHandlerData handler, DispatchHandler dh,
+                    long expire) {
         mRequestCache.Insert(id, handler, dh, expire);
     }
 
@@ -105,7 +106,9 @@ class Reactor implements Runnable {
         long now = System.currentTimeMillis();
         RequestCache.CacheNode node;
         while ((node = mRequestCache.GetNextTimeout(now)) != null) {
-            node.handler.DeliverEvent(  new Event(Event.Type.ERROR, node.handler.GetAddress(), Error.COMM_REQUEST_TIMEOUT, null), node.dh );
+            node.handler.DeliverEvent(new Event(Event.Type.ERROR,
+                node.handler.GetAddress(), Error.COMM_REQUEST_TIMEOUT, null),
+                node.dh);
         }
     }
 

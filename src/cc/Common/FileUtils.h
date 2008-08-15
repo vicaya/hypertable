@@ -36,9 +36,11 @@ namespace Hypertable {
     static ssize_t pread(int fd, void *vptr, size_t n, off_t offset);
     static ssize_t write(int fd, const void *vptr, size_t n);
     static ssize_t writev(int fd, const struct iovec *vector, int count);
-    static ssize_t sendto(int fd, const void *vptr, size_t n, const struct sockaddr *to, socklen_t tolen);
+    static ssize_t sendto(int fd, const void *vptr, size_t n,
+                          const sockaddr *to, socklen_t tolen);
     static ssize_t send(int fd, const void *vptr, size_t n);
-    static ssize_t recvfrom(int fd, void *vptr, size_t n, struct sockaddr *from, socklen_t *fromlen);
+    static ssize_t recvfrom(int fd, void *vptr, size_t n,
+                            struct sockaddr *from, socklen_t *fromlen);
     static ssize_t recv(int fd, void *vptr, size_t n);
     static void set_flags(int fd, int flags);
     static char *file_to_buffer(const String &fname, off_t *lenp);
@@ -49,10 +51,15 @@ namespace Hypertable {
     static void add_trailing_slash(String &path);
     static bool expand_tilde(String &fname);
 #ifdef HT_XATTR_ENABLED
-    static int getxattr(const String &path, const String &name, void *value, size_t size);
+    static int
+    getxattr(const String &path, const String &name, void *value, size_t size);
     static int fgetxattr(int fd, const String &name, void *value, size_t size);
-    static int setxattr(const String &path, const String &name, const void *value, size_t size, int flags);
-    static int fsetxattr(int fd, const String &name, const void *value, size_t size, int flags);
+    static int
+    setxattr(const String &path, const String &name, const void *value,
+             size_t size, int flags);
+    static int
+    fsetxattr(int fd, const String &name, const void *value, size_t size,
+              int flags);
     static int removexattr(const String &path, const String &name);
     static int fremovexattr(int fd, const String &name);
 #endif

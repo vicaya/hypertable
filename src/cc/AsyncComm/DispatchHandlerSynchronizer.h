@@ -46,7 +46,8 @@ namespace Hypertable {
    *   DispatchHandlerSynchronizer sync_handler;
    *   EventPtr event_ptr;
    *   CommBufPtr cbp(... create protocol message here ...);
-   *   if ((error = m_comm->send_request(m_addr, cbp, &sync_handler)) != Error::OK) {
+   *   if ((error = m_comm->send_request(m_addr, cbp, &sync_handler))
+   *       != Error::OK) {
    *      // log error message here ...
    *      return error;
    *   }
@@ -89,7 +90,8 @@ namespace Hypertable {
      * queue.
      *
      * @param event_ptr shared pointer to event object
-     * @return true if next returned event is type MESSAGE and contains status Error::OK, false otherwise
+     * @return true if next returned event is type MESSAGE and contains
+     *         status Error::OK, false otherwise
      */
     bool wait_for_reply(EventPtr &event_ptr);
 
@@ -98,7 +100,8 @@ namespace Hypertable {
     boost::mutex         m_mutex;
     boost::condition     m_cond;
   };
-}
+
+} // namespace Hypertable
 
 
 #endif // DISPATCHHANDLERSYNCHRONIZER_H

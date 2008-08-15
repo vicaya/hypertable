@@ -37,22 +37,27 @@ namespace Hypertable {
 
     /**
      * This class serves as the connection handler factory.  An object of this
-     * class is registered with the AsyncComm system by passing it as a parameter
-     * to the Listen method.  When a connection request arrives, the newInstance
-     * method of this class is called which creates an DfsBroker::connection_handler
-     * that will be used to service the connection.
+     * class is registered with the AsyncComm system by passing it as a
+     * parameter to the Listen method.  When a connection request arrives, the
+     * newInstance method of this class is called which creates an
+     * DfsBroker::connection_handler that will be used to service the
+     * connection.
      */
-    class ConnectionHandlerFactory : public Hypertable::ConnectionHandlerFactory {
+    class ConnectionHandlerFactory
+      : public Hypertable::ConnectionHandlerFactory {
     public:
       /**
-       * Constructor.  Saves a copy of the pointers to the Comm, ApplicationQueue, and Broker
-       * objects which are required in the DfsBroker::connection_handler constructor.
+       * Constructor.  Saves a copy of the pointers to the Comm,
+       * ApplicationQueue, and Broker objects which are required in the
+       * DfsBroker::connection_handler constructor.
        *
        * @param comm pointer to the AsyncComm object
        * @param app_queue pointer to the application work queue
        * @param broker abstract pointer to the broker object
        */
-      ConnectionHandlerFactory(Comm *comm, ApplicationQueuePtr &app_queue, BrokerPtr &broker) : m_comm(comm), m_app_queue_ptr(app_queue), m_broker_ptr(broker) { return; }
+      ConnectionHandlerFactory(Comm *comm, ApplicationQueuePtr &app_queue,
+                               BrokerPtr &broker)
+        : m_comm(comm), m_app_queue_ptr(app_queue), m_broker_ptr(broker) { }
 
       /**
        * Returns a newly constructed DfsBroker::connection_handler object

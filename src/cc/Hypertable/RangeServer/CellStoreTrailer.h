@@ -72,7 +72,8 @@ namespace Hypertable {
   /**
    * ostream shift function for CellStoreTrailer objects
    */
-  inline std::ostream &operator <<(std::ostream &os, CellStoreTrailer &trailer) {
+  inline std::ostream &
+  operator <<(std::ostream &os, CellStoreTrailer &trailer) {
     trailer.display(os);
     return os;
   }

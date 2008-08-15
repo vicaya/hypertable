@@ -42,7 +42,7 @@ namespace Hypertable {
   class TableInfo : public ReferenceCount {
 
   public:
-    TableInfo(MasterClientPtr &master_client_ptr, const TableIdentifier *identifier, SchemaPtr &schema_ptr);
+    TableInfo(MasterClientPtr &, const TableIdentifier *, SchemaPtr &);
     const char *get_name() { return m_identifier.name; }
     uint32_t get_id() { return m_identifier.id; }
     SchemaPtr &get_schema() {

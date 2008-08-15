@@ -110,12 +110,14 @@ int main(int argc, char **argv) {
 
   std::string schemastr;
   schema->render(schemastr);
-  FileUtils::write(harness.get_log_file_descriptor(), schemastr.c_str(), strlen(schemastr.c_str()));
+  FileUtils::write(harness.get_log_file_descriptor(), schemastr.c_str(),
+                   schemastr.length());
 
   schemastr = "";
   schema->assign_ids();
   schema->render(schemastr);
-  FileUtils::write(harness.get_log_file_descriptor(), schemastr.c_str(), strlen(schemastr.c_str()));
+  FileUtils::write(harness.get_log_file_descriptor(), schemastr.c_str(),
+                   schemastr.length());
 
   delete schema;
 

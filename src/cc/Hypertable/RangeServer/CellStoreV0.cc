@@ -41,17 +41,22 @@
 using namespace std;
 using namespace Hypertable;
 
-const char CellStoreV0::DATA_BLOCK_MAGIC[10]           = { 'D','a','t','a','-','-','-','-','-','-' };
-const char CellStoreV0::INDEX_FIXED_BLOCK_MAGIC[10]    = { 'I','d','x','F','i','x','-','-','-','-' };
-const char CellStoreV0::INDEX_VARIABLE_BLOCK_MAGIC[10] = { 'I','d','x','V','a','r','-','-','-','-' };
+const char CellStoreV0::DATA_BLOCK_MAGIC[10]           =
+    { 'D','a','t','a','-','-','-','-','-','-' };
+const char CellStoreV0::INDEX_FIXED_BLOCK_MAGIC[10]    =
+    { 'I','d','x','F','i','x','-','-','-','-' };
+const char CellStoreV0::INDEX_VARIABLE_BLOCK_MAGIC[10] =
+    { 'I','d','x','V','a','r','-','-','-','-' };
 
 namespace {
   const uint32_t MAX_APPENDS_OUTSTANDING = 3;
 }
 
-CellStoreV0::CellStoreV0(Filesystem *filesys) : m_filesys(filesys), m_filename(), m_fd(-1),
-  m_compressor(0), m_buffer(0), m_fix_index_buffer(0), m_var_index_buffer(0),
-  m_outstanding_appends(0), m_offset(0), m_last_key(0), m_file_length(0), m_disk_usage(0), m_file_id(0), m_uncompressed_blocksize(0) {
+CellStoreV0::CellStoreV0(Filesystem *filesys)
+  : m_filesys(filesys), m_filename(), m_fd(-1), m_compressor(0), m_buffer(0),
+    m_fix_index_buffer(0), m_var_index_buffer(0), m_outstanding_appends(0),
+    m_offset(0), m_last_key(0), m_file_length(0), m_disk_usage(0), m_file_id(0),
+    m_uncompressed_blocksize(0) {
   m_file_id = FileBlockCache::get_next_file_id();
   assert(sizeof(float) == 4);
 }
@@ -96,7 +101,9 @@ CellListScanner *CellStoreV0::create_scanner(ScanContextPtr &scan_ctx) {
 }
 
 
-int CellStoreV0::create(const char *fname, uint32_t blocksize, const std::string &compressor) {
+int
+CellStoreV0::create(const char *fname, uint32_t blocksize,
+                    const std::string &compressor) {
   m_buffer.reserve(blocksize*4);
 
   m_fd = -1;
@@ -154,12 +161,14 @@ int CellStoreV0::add(const Key &key, const ByteString value) {
     m_compressed_data += (float)zbuf.fill();
     m_buffer.clear();
 
-    uint64_t llval = ((uint64_t)m_trailer.blocksize * (uint64_t)m_uncompressed_data) / (uint64_t)m_compressed_data;
+    uint64_t llval = ((uint64_t)m_trailer.blocksize
+        * (uint64_t)m_uncompressed_data) / (uint64_t)m_compressed_data;
     m_uncompressed_blocksize = (uint32_t)llval;
 
     if (m_outstanding_appends >= MAX_APPENDS_OUTSTANDING) {
       if (!m_sync_handler.wait_for_reply(event_ptr)) {
-        HT_ERRORF("Problem writing to DFS file '%s' : %s", m_filename.c_str(), Hypertable::Protocol::string_format_message(event_ptr).c_str());
+        HT_ERRORF("Problem writing to DFS file '%s' : %s", m_filename.c_str(),
+            Hypertable::Protocol::string_format_message(event_ptr).c_str());
         return -1;
       }
       m_outstanding_appends--;
@@ -216,7 +225,8 @@ int CellStoreV0::finalize() {
 
     if (m_outstanding_appends >= MAX_APPENDS_OUTSTANDING) {
       if (!m_sync_handler.wait_for_reply(event_ptr)) {
-        HT_ERRORF("Problem writing to DFS file '%s' : %s", m_filename.c_str(), Protocol::string_format_message(event_ptr).c_str());
+        HT_ERRORF("Problem writing to DFS file '%s' : %s", m_filename.c_str(),
+                  Protocol::string_format_message(event_ptr).c_str());
         goto abort;
       }
       m_outstanding_appends--;
@@ -371,7 +381,9 @@ void CellStoreV0::add_index_entry(const SerializedKey key, uint32_t offset) {
 /**
  *
  */
-int CellStoreV0::open(const char *fname, const char *start_row, const char *end_row) {
+int
+CellStoreV0::open(const char *fname, const char *start_row,
+                  const char *end_row) {
   m_start_row = (start_row) ? start_row : "";
   m_end_row = (end_row) ? end_row : Key::END_ROW_MARKER;
 
@@ -495,11 +507,12 @@ int CellStoreV0::load_index() {
   }
   catch (Exception &e) {
     if (inflating_fixed)
-      HT_ERROR_OUT <<"Error inflating FIXED index for cellstore '"<< m_filename
-                 <<"': "<<  e << HT_END;
+      HT_ERROR_OUT <<"Error inflating FIXED index for cellstore '"
+          << m_filename <<"': "<<  e << HT_END;
     else
-      HT_ERROR_OUT <<"Error inflating VARIABLE index for cellstore '"<< m_filename
-                 <<"': "<<  e << HT_END;
+      HT_ERROR_OUT <<"Error inflating VARIABLE index for cellstore '"
+          << m_filename <<"': "<<  e << HT_END;
+
     HT_ERROR_OUT << m_trailer << HT_END;
     goto abort;
   }
@@ -584,10 +597,12 @@ void CellStoreV0::display_block_info() {
   uint32_t last_offset = 0;
   uint32_t block_size;
   size_t i=0;
-  for (IndexMap::const_iterator iter = m_index.begin(); iter != m_index.end(); iter++) {
+  for (IndexMap::const_iterator iter = m_index.begin();
+       iter != m_index.end(); ++iter) {
     if (last_key) {
       block_size = (*iter).second - last_offset;
-      cout << i << ": offset=" << last_offset << " size=" << block_size << " row=" << last_key.row() << endl;
+      cout << i << ": offset=" << last_offset << " size=" << block_size
+           << " row=" << last_key.row() << endl;
       i++;
     }
     last_offset = (*iter).second;
@@ -595,7 +610,8 @@ void CellStoreV0::display_block_info() {
   }
   if (last_key) {
     block_size = m_trailer.filter_offset - last_offset;
-    cout << i << ": offset=" << last_offset << " size=" << block_size << " row=" << last_key.row() << endl;
+    cout << i << ": offset=" << last_offset << " size=" << block_size
+         << " row=" << last_key.row() << endl;
   }
 }
 

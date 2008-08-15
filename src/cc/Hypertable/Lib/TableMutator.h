@@ -43,8 +43,8 @@ namespace Hypertable {
    * Provides the ability to mutate a table in the form of adding and deleting
    * rows and cells.  Objects of this class are used to collect mutations and
    * periodically flush them to the appropriate range servers.  There is a 1 MB
-   * buffer of mutations for each range server.  When one of the buffers fills up
-   * all the buffers are flushed to their respective range servers.
+   * buffer of mutations for each range server.  When one of the buffers fills
+   * up all the buffers are flushed to their respective range servers.
    */
   class TableMutator : public ReferenceCount {
 
@@ -55,12 +55,15 @@ namespace Hypertable {
      *
      * @param props_ptr smart pointer to configuration properties object
      * @param comm pointer to the Comm layer
-     * @param table_identifier pointer to the identifier of the table being mutated
+     * @param table_identifier pointer to the identifier of the table
      * @param schema_ptr smart pointer to schema object for table
      * @param range_locator_ptr smart pointer to range locator
-     * @param timeout maximum time in seconds to allow methods to execute before throwing an exception
+     * @param timeout maximum time in seconds to allow methods to execute
+     *        before throwing an exception
      */
-    TableMutator(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr, int timeout);
+    TableMutator(PropertiesPtr &props_ptr, Comm *comm,
+                 const TableIdentifier *table_identifier, SchemaPtr &schema_ptr,
+                 RangeLocatorPtr &range_locator_ptr, int timeout);
 
     virtual ~TableMutator() { return; }
 
@@ -71,7 +74,7 @@ namespace Hypertable {
      * @param value pointer to the value to store in the cell
      * @param value_len length of data pointed to by value
      */
-    void set(KeySpec &key, const void *value, uint32_t value_len);
+    void set(const KeySpec &key, const void *value, uint32_t value_len);
 
     /**
      * Inserts a cell into the table.
@@ -79,7 +82,7 @@ namespace Hypertable {
      * @param key key of the cell being inserted
      * @param value null-terminated c-string value
      */
-    void set(KeySpec &key, const char *value) {
+    void set(const KeySpec &key, const char *value) {
       if (value)
         set(key, value, strlen(value));
       else
@@ -93,7 +96,7 @@ namespace Hypertable {
      *
      * @param key key of the row or cell(s) being deleted
      */
-    void set_delete(KeySpec &key);
+    void set_delete(const KeySpec &key);
 
     /**
      * Flushes the accumulated mutations to their respective range servers.
@@ -157,7 +160,7 @@ namespace Hypertable {
 
     void wait_for_previous_buffer(Timer &timer);
 
-    void sanity_check_key(KeySpec &key);
+    void sanity_check_key(const KeySpec &key);
 
     PropertiesPtr        m_props_ptr;
     Comm                *m_comm;

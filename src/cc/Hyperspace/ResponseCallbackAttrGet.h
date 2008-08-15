@@ -33,7 +33,10 @@ namespace Hyperspace {
 
   class ResponseCallbackAttrGet : public Hypertable::ResponseCallback {
   public:
-    ResponseCallbackAttrGet(Hypertable::Comm *comm, Hypertable::EventPtr &event_ptr) : Hypertable::ResponseCallback(comm, event_ptr) { return; }
+    ResponseCallbackAttrGet(Hypertable::Comm *comm,
+                            Hypertable::EventPtr &event_ptr)
+      : Hypertable::ResponseCallback(comm, event_ptr) { }
+
     int response(Hypertable::StaticBuffer &buffer);
   };
 

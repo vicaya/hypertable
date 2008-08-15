@@ -22,8 +22,6 @@
 #ifndef HYPERTABLE_PROTOCOL_H
 #define HYPERTABLE_PROTOCOL_H
 
-#include <string>
-
 #include "Event.h"
 #include "HeaderBuilder.h"
 
@@ -38,12 +36,17 @@ namespace Hypertable {
     virtual ~Protocol() { return; }
 
     static int32_t response_code(Event *event);
-    static int32_t response_code(EventPtr &event_ptr) { return response_code(event_ptr.get()); }
+    static int32_t response_code(EventPtr &event_ptr) {
+      return response_code(event_ptr.get());
+    }
 
-    static std::string string_format_message(Event *event);
-    static std::string string_format_message(EventPtr &event_ptr) { return string_format_message(event_ptr.get()); }
+    static String string_format_message(Event *event);
+    static String string_format_message(EventPtr &event_ptr) {
+      return string_format_message(event_ptr.get());
+    }
 
-    static CommBuf *create_error_message(HeaderBuilder &hbuilder, int error, const char *msg);
+    static CommBuf *
+    create_error_message(HeaderBuilder &hbuilder, int error, const char *msg);
 
     virtual const char *command_text(short command) = 0;
 

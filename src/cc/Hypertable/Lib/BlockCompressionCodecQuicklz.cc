@@ -38,7 +38,8 @@ using namespace Hypertable;
  *
  */
 BlockCompressionCodecQuicklz::BlockCompressionCodecQuicklz(const Args &args) {
-  size_t amount = ((SCRATCH_DECOMPRESS) < (SCRATCH_COMPRESS)) ? (SCRATCH_COMPRESS) : (SCRATCH_DECOMPRESS);
+  size_t amount = ((SCRATCH_DECOMPRESS) < (SCRATCH_COMPRESS))
+      ? (SCRATCH_COMPRESS) : (SCRATCH_DECOMPRESS);
   m_workmem = new uint8_t [amount];
 }
 
@@ -55,7 +56,9 @@ BlockCompressionCodecQuicklz::~BlockCompressionCodecQuicklz() {
 /**
  *
  */
-void BlockCompressionCodecQuicklz::deflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader &header, size_t reserve) {
+void
+BlockCompressionCodecQuicklz::deflate(const DynamicBuffer &input,
+    DynamicBuffer &output, BlockCompressionHeader &header, size_t reserve) {
   uint32_t avail_out = input.fill() + 400;
   size_t len;
 
@@ -63,7 +66,8 @@ void BlockCompressionCodecQuicklz::deflate(const DynamicBuffer &input, DynamicBu
   output.reserve(header.length() + avail_out + reserve);
 
   // compress
-  len = qlz_compress((char *)input.base, (char *)output.base+header.length(), input.fill(), (char *)m_workmem);
+  len = qlz_compress((char *)input.base, (char *)output.base+header.length(),
+                     input.fill(), (char *)m_workmem);
 
   /* check for an incompressible block */
   if (len >= input.fill()) {
@@ -77,7 +81,8 @@ void BlockCompressionCodecQuicklz::deflate(const DynamicBuffer &input, DynamicBu
     header.set_data_length(input.fill());
     header.set_data_zlength(len);
   }
-  header.set_data_checksum(fletcher32(output.base + header.length(), header.get_data_zlength()));
+  header.set_data_checksum(fletcher32(output.base + header.length(),
+                           header.get_data_zlength()));
 
   output.ptr = output.base;
   header.encode(&output.ptr);
@@ -88,7 +93,8 @@ void BlockCompressionCodecQuicklz::deflate(const DynamicBuffer &input, DynamicBu
 /**
  *
  */
-void BlockCompressionCodecQuicklz::inflate(const DynamicBuffer &input, DynamicBuffer &output, BlockCompressionHeader &header) {
+void BlockCompressionCodecQuicklz::inflate(const DynamicBuffer &input,
+    DynamicBuffer &output, BlockCompressionHeader &header) {
   const uint8_t *msg_ptr = input.base;
   size_t remaining = input.fill();
 
@@ -114,7 +120,8 @@ void BlockCompressionCodecQuicklz::inflate(const DynamicBuffer &input, DynamicBu
   else {
     size_t len;
     // decompress
-    len = qlz_decompress((char *)msg_ptr, (char *)output.base, (char *)m_workmem);
+    len = qlz_decompress((char *)msg_ptr, (char *)output.base,
+                         (char *)m_workmem);
     HT_EXPECT(len == header.get_data_length(), -1);
   }
   output.ptr = output.base + header.get_data_length();

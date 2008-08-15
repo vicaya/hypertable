@@ -45,7 +45,8 @@ namespace Hypertable {
         exit(1);
       }
       if (statbuf.st_size < (off_t)sizeof(int32_t)) {
-        HT_ERRORF("Number stream file '%s' is not big enough, must be at least 4 bytes long", fname);
+        HT_ERRORF("Number stream file '%s' is not big enough, must be at least "
+                  "4 bytes long", fname);
         exit(1);
       }
 

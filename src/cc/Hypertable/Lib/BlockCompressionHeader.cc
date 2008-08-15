@@ -51,7 +51,8 @@ void BlockCompressionHeader::encode(uint8_t **bufp) {
     write_header_checksum(base, bufp);
 }
 
-void BlockCompressionHeader::write_header_checksum(uint8_t *base, uint8_t **bufp) {
+void
+BlockCompressionHeader::write_header_checksum(uint8_t *base, uint8_t **bufp) {
   uint16_t checksum16 = fletcher32(base, *bufp-base);
   encode_i16(bufp, checksum16);
 }

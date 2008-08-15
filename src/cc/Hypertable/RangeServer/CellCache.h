@@ -41,7 +41,8 @@ namespace Hypertable {
   class CellCache : public CellList {
 
   public:
-    CellCache() : CellList(), m_memory_used(0), m_deletes(0), m_collisions(0), m_frozen(false) { return; }
+    CellCache() : CellList(), m_memory_used(0), m_deletes(0), m_collisions(0),
+        m_frozen(false) { }
     virtual ~CellCache();
 
     /**
@@ -63,9 +64,8 @@ namespace Hypertable {
 
     virtual uint32_t get_total_entries() { return m_cell_map.size(); }
 
-    /**
-     * Creates a CellCacheScanner object that contains an shared pointer (intrusive_ptr)
-     * to this CellCache.
+    /** Creates a CellCacheScanner object that contains an shared pointer
+     * (intrusive_ptr) to this CellCache.
      */
     virtual CellListScanner *create_scanner(ScanContextPtr &scan_ctx);
 
@@ -74,9 +74,8 @@ namespace Hypertable {
 
     size_t size() { return m_cell_map.size(); }
 
-    /**
-     * Returns the amount of memory used by the CellCache.  This is the summation
-     * of the lengths of all the keys and values in the map.
+    /** Returns the amount of memory used by the CellCache.  This is the
+     * summation of the lengths of all the keys and values in the map.
      */
     uint64_t memory_used() {
       ScopedLock lock(m_mutex);
@@ -103,9 +102,9 @@ namespace Hypertable {
     bool               m_frozen;
   };
 
-  typedef boost::intrusive_ptr<CellCache> CellCachePtr;
+  typedef intrusive_ptr<CellCache> CellCachePtr;
 
-}
+} // namespace Hypertable;
 
 #endif // HYPERTABLE_CELLCACHE_H
 

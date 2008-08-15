@@ -32,11 +32,12 @@ namespace Hypertable {
 
     static const size_t LENGTH = 26;
 
-    BlockCompressionHeader() : m_data_length(0), m_data_zlength(0), m_data_checksum(0), m_compression_type((uint16_t)-1)
-    { return; }
+    BlockCompressionHeader() : m_data_length(0), m_data_zlength(0),
+        m_data_checksum(0), m_compression_type((uint16_t)-1) { }
 
-    BlockCompressionHeader(const char *magic) : m_data_length(0), m_data_zlength(0), m_data_checksum(0), m_compression_type((uint16_t)-1)
-      { memcpy(m_magic, magic, 10); }
+    BlockCompressionHeader(const char *magic)
+      : m_data_length(0), m_data_zlength(0), m_data_checksum(0),
+        m_compression_type((uint16_t)-1) { memcpy(m_magic, magic, 10); }
 
     virtual ~BlockCompressionHeader() { return; }
 
@@ -50,7 +51,8 @@ namespace Hypertable {
     void     set_data_zlength(uint32_t zlength) { m_data_zlength = zlength; }
     uint32_t get_data_zlength() { return m_data_zlength; }
 
-    void     set_data_checksum(uint32_t checksum) { m_data_checksum = checksum; }
+    void
+    set_data_checksum(uint32_t checksum) { m_data_checksum = checksum; }
     uint32_t get_data_checksum() { return m_data_checksum; }
 
     void     set_compression_type(uint16_t type) { m_compression_type = type; }

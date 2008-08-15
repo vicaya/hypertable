@@ -43,10 +43,11 @@ void CommandAttrDel::run() {
   uint64_t handle;
 
   if (m_args.size() != 2)
-    HT_THROW(Error::PARSE_ERROR, "Wrong number of arguments.  Type 'help' for usage.");
+    HT_THROW(Error::COMMAND_PARSE_ERROR,
+             "Wrong number of arguments.  Type 'help' for usage.");
 
   if (m_args[0].second != "" || m_args[1].second != "")
-    HT_THROW(Error::PARSE_ERROR, "Invalid character '=' in argument.");
+    HT_THROW(Error::COMMAND_PARSE_ERROR, "Invalid character '=' in argument.");
 
   handle = Util::get_handle(m_args[0].first);
 

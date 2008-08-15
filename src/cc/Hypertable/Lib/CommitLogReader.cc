@@ -51,8 +51,9 @@ using namespace std;
 
 namespace {
   struct reverse_sort_clfi {
-    bool operator()(const CommitLogFileInfo &clfi1, const CommitLogFileInfo &clfi2) const {
-      return clfi1.num >= clfi2.num;
+    bool
+    operator()(const CommitLogFileInfo &x, const CommitLogFileInfo &y) const {
+      return x.num >= y.num;
     }
   };
 }
@@ -60,7 +61,9 @@ namespace {
 
 /**
  */
-CommitLogReader::CommitLogReader(Filesystem *fs, String log_dir) : CommitLogBase(log_dir), m_fs(fs), m_block_buffer(256), m_revision(0), m_compressor(0) {
+CommitLogReader::CommitLogReader(Filesystem *fs, String log_dir)
+    : CommitLogBase(log_dir), m_fs(fs), m_block_buffer(256), m_revision(0),
+      m_compressor(0) {
   load_fragments(log_dir);
 }
 
@@ -70,15 +73,18 @@ CommitLogReader::~CommitLogReader() {
 
 
 
-bool CommitLogReader::next_raw_block(CommitLogBlockInfo *infop, BlockCompressionHeaderCommitLog *header) {
-
+bool
+CommitLogReader::next_raw_block(CommitLogBlockInfo *infop,
+                                BlockCompressionHeaderCommitLog *header) {
  try_again:
 
   if (m_fragment_stack.empty())
     return false;
 
   if (m_fragment_stack.top().block_stream == 0)
-    m_fragment_stack.top().block_stream = new CommitLogBlockStream(m_fs, m_fragment_stack.top().log_dir, format("%u", m_fragment_stack.top().num));
+    m_fragment_stack.top().block_stream = new CommitLogBlockStream(m_fs,
+        m_fragment_stack.top().log_dir,
+        format("%u", m_fragment_stack.top().num));
 
   if (!m_fragment_stack.top().block_stream->next(infop, header)) {
     delete m_fragment_stack.top().block_stream;
@@ -102,7 +108,9 @@ bool CommitLogReader::next_raw_block(CommitLogBlockInfo *infop, BlockCompression
 
 
 
-bool CommitLogReader::next(const uint8_t **blockp, size_t *lenp, BlockCompressionHeaderCommitLog *header) {
+bool
+CommitLogReader::next(const uint8_t **blockp, size_t *lenp,
+                      BlockCompressionHeaderCommitLog *header) {
   CommitLogBlockInfo binfo;
 
   while (next_raw_block(&binfo, header)) {
@@ -128,10 +136,10 @@ bool CommitLogReader::next(const uint8_t **blockp, size_t *lenp, BlockCompressio
       }
 
       if (header->get_revision() > m_latest_revision)
-	m_latest_revision = header->get_revision();
+        m_latest_revision = header->get_revision();
 
       if (header->get_revision() > m_revision)
-	m_revision = header->get_revision();
+        m_revision = header->get_revision();
 
       zblock.release();
       *blockp = m_block_buffer.base;
@@ -140,10 +148,10 @@ bool CommitLogReader::next(const uint8_t **blockp, size_t *lenp, BlockCompressio
     }
 
     HT_WARNF("Corruption detected in CommitLog fragment %s starting at "
-	     "postion %lld for %lld bytes - %s",
-	     m_fragment_stack.top().block_stream->get_fname().c_str(),
-	     binfo.start_offset, binfo.end_offset - binfo.start_offset,
-	     Error::get_text(binfo.error));
+             "postion %lld for %lld bytes - %s",
+             m_fragment_stack.top().block_stream->get_fname().c_str(),
+             binfo.start_offset, binfo.end_offset - binfo.start_offset,
+             Error::get_text(binfo.error));
     m_fragment_stack.pop();
   }
 
@@ -171,7 +179,8 @@ void CommitLogReader::load_fragments(String &log_dir) {
     char *endptr;
     long num = strtol(listing[i].c_str(), &endptr, 10);
     if (*endptr != 0) {
-      HT_WARNF("Invalid file '%s' found in commit log directory '%s'", listing[i].c_str(), log_dir.c_str());
+      HT_WARNF("Invalid file '%s' found in commit log directory '%s'",
+               listing[i].c_str(), log_dir.c_str());
     }
     else {
       file_info.num = (uint32_t)num;
@@ -205,12 +214,14 @@ void CommitLogReader::load_compressor(uint16_t ztype) {
   if (m_compressor != 0 && ztype == m_compressor_type)
     return;
   if (ztype >= BlockCompressionCodec::COMPRESSION_TYPE_LIMIT)
-    throw Hypertable::Exception(Error::BLOCK_COMPRESSOR_UNSUPPORTED_TYPE, (String)"Invalid compression type - " + ztype);
+    HT_THROW(Error::BLOCK_COMPRESSOR_UNSUPPORTED_TYPE,
+             (String)"Invalid compression type - " + ztype);
 
   compressor_ptr = m_compressor_map[ztype];
 
   if (!compressor_ptr) {
-    compressor_ptr = CompressorFactory::create_block_codec((BlockCompressionCodec::Type)ztype);
+    compressor_ptr = CompressorFactory::create_block_codec(
+        (BlockCompressionCodec::Type)ztype);
     m_compressor_map[ztype] = compressor_ptr;
   }
 

@@ -50,9 +50,10 @@ namespace Hypertable {
 
   public:
 
-    TableMutatorScatterBuffer(PropertiesPtr &props_ptr, Comm *comm, TableIdentifier *table_identifier, SchemaPtr &schema_ptr, RangeLocatorPtr &range_locator_ptr);
-    void set(Key &key, const void *value, uint32_t value_len, Timer &timer);
-    void set_delete(Key &key, Timer &timer);
+    TableMutatorScatterBuffer(PropertiesPtr &, Comm *, const TableIdentifier *,
+                              SchemaPtr &, RangeLocatorPtr &);
+    void set(const Key &, const void *value, uint32_t value_len, Timer &timer);
+    void set_delete(const Key &key, Timer &timer);
     void set(SerializedKey key, ByteString value, Timer &timer);
     bool full() { return m_full; }
     void send();
@@ -61,7 +62,8 @@ namespace Hypertable {
     void reset();
     TableMutatorScatterBuffer *create_redo_buffer(Timer &timer);
     uint64_t get_resend_count() { return m_resends; }
-    void get_failed_mutations(std::vector<std::pair<Cell, int> > &failed_mutations) {
+    void
+    get_failed_mutations(std::vector<std::pair<Cell, int> > &failed_mutations) {
       failed_mutations = m_failed_mutations;
     }
     size_t get_failure_count() { return m_failed_mutations.size(); }
@@ -70,7 +72,8 @@ namespace Hypertable {
 
     friend class TableMutatorDispatchHandler;
 
-    typedef hash_map<String, TableMutatorSendBufferPtr> TableMutatorSendBufferMap;
+    typedef hash_map<String, TableMutatorSendBufferPtr>
+            TableMutatorSendBufferMap;
 
     PropertiesPtr        m_props_ptr;
     Comm                *m_comm;
@@ -87,9 +90,9 @@ namespace Hypertable {
     FlyweightString      m_constant_strings;
 
   };
-  typedef boost::intrusive_ptr<TableMutatorScatterBuffer> TableMutatorScatterBufferPtr;
 
+  typedef intrusive_ptr<TableMutatorScatterBuffer> TableMutatorScatterBufferPtr;
 
-}
+} // namespace Hypertable
 
 #endif // HYPERTABLE_TABLEMUTATORSCATTERBUFFER_H

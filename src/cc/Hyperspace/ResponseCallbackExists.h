@@ -31,7 +31,10 @@ namespace Hyperspace {
 
   class ResponseCallbackExists : public Hypertable::ResponseCallback {
   public:
-    ResponseCallbackExists(Hypertable::Comm *comm, Hypertable::EventPtr &event_ptr) : Hypertable::ResponseCallback(comm, event_ptr) { return; }
+    ResponseCallbackExists(Hypertable::Comm *comm,
+                           Hypertable::EventPtr &event_ptr)
+      : Hypertable::ResponseCallback(comm, event_ptr) { }
+
     int response(bool exists);
   };
 

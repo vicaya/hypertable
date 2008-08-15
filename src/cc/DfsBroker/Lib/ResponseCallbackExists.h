@@ -33,7 +33,8 @@ namespace Hypertable {
 
     class ResponseCallbackExists : public ResponseCallback {
     public:
-      ResponseCallbackExists(Comm *comm, EventPtr &event_ptr) : ResponseCallback(comm, event_ptr) { return; }
+      ResponseCallbackExists(Comm *comm, EventPtr &event_ptr)
+        : ResponseCallback(comm, event_ptr) { }
       int response(bool exists);
 
     };

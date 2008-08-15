@@ -31,7 +31,9 @@ namespace Hypertable {
 
   class ResponseCallbackCreateScanner : public ResponseCallback {
   public:
-    ResponseCallbackCreateScanner(Comm *comm, EventPtr &event_ptr) : ResponseCallback(comm, event_ptr) { return; }
+    ResponseCallbackCreateScanner(Comm *comm, EventPtr &event_ptr)
+      : ResponseCallback(comm, event_ptr) { }
+
     int response(short moreflag, int32_t id, StaticBuffer &ext);
   };
 

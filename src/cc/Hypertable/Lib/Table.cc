@@ -42,18 +42,22 @@ using namespace Hyperspace;
  *
  */
 Table::Table(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_manager_ptr,
-             Hyperspace::SessionPtr &hyperspace_ptr, String name)
+             Hyperspace::SessionPtr &hyperspace_ptr, const String &name)
     : m_props_ptr(props_ptr), m_comm(conn_manager_ptr->get_comm()),
       m_conn_manager_ptr(conn_manager_ptr), m_hyperspace_ptr(hyperspace_ptr) {
 
   initialize(name);
-  m_range_locator_ptr = new RangeLocator(props_ptr, m_conn_manager_ptr, m_hyperspace_ptr);
+  m_range_locator_ptr = new RangeLocator(props_ptr, m_conn_manager_ptr,
+                                         m_hyperspace_ptr);
 }
 
 /**
  *
  */
-Table::Table(PropertiesPtr &props_ptr, Comm *comm, Hyperspace::SessionPtr &hyperspace_ptr, String name) : m_props_ptr(props_ptr), m_comm(comm), m_conn_manager_ptr(0), m_hyperspace_ptr(hyperspace_ptr) {
+Table::Table(PropertiesPtr &props_ptr, Comm *comm,
+             Hyperspace::SessionPtr &hyperspace_ptr, const String &name)
+  : m_props_ptr(props_ptr), m_comm(comm), m_conn_manager_ptr(0),
+    m_hyperspace_ptr(hyperspace_ptr) {
 
   initialize(name);
   m_range_locator_ptr = new RangeLocator(props_ptr, m_comm, m_hyperspace_ptr);
@@ -72,13 +76,14 @@ void Table::initialize(const String &name) {
    * Open table file
    */
   try {
-    handle = m_hyperspace_ptr->open(tablefile, OPEN_FLAG_READ, null_handle_callback);
+    handle = m_hyperspace_ptr->open(tablefile, OPEN_FLAG_READ,
+                                    null_handle_callback);
   }
   catch (Exception &e) {
     if (e.code() == Error::HYPERSPACE_BAD_PATHNAME)
       HT_THROW2(Error::TABLE_DOES_NOT_EXIST, e, "");
-    HT_THROW2F(e.code(), e,
-	       "Unable to open Hyperspace table file '%s'", tablefile.c_str());
+    HT_THROW2F(e.code(), e, "Unable to open Hyperspace table file '%s'",
+               tablefile.c_str());
   }
 
   {
@@ -106,7 +111,8 @@ void Table::initialize(const String &name) {
 
   m_hyperspace_ptr->close(handle);
 
-  m_schema_ptr = Schema::new_instance((const char *)value_buf.base, strlen((const char *)value_buf.base), true);
+  m_schema_ptr = Schema::new_instance((const char *)value_buf.base,
+      strlen((const char *)value_buf.base), true);
 
   if (!m_schema_ptr->is_valid()) {
     HT_ERRORF("Schema Parse Error: %s", m_schema_ptr->get_error_string());
@@ -124,11 +130,13 @@ Table::~Table() {
 
 
 TableMutator *Table::create_mutator(int timeout) {
-  return new TableMutator(m_props_ptr, m_comm, &m_table, m_schema_ptr, m_range_locator_ptr, timeout);
+  return new TableMutator(m_props_ptr, m_comm, &m_table, m_schema_ptr,
+      m_range_locator_ptr, timeout);
 }
 
 
 
-TableScanner *Table::create_scanner(ScanSpec &scan_spec, int timeout) {
-  return new TableScanner(m_props_ptr, m_comm, &m_table, m_schema_ptr, m_range_locator_ptr, scan_spec, timeout);
+TableScanner *Table::create_scanner(const ScanSpec &scan_spec, int timeout) {
+  return new TableScanner(m_props_ptr, m_comm, &m_table, m_schema_ptr,
+      m_range_locator_ptr, scan_spec, timeout);
 }

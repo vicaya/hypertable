@@ -45,15 +45,16 @@ namespace Hypertable {
      * @param comm pointer to the Comm object
      * @param event_ptr smart pointer to the event that generated the request
      */
-    ResponseCallback(Comm *comm, EventPtr &event_ptr) : m_comm(comm), m_event_ptr(event_ptr) { return; }
+    ResponseCallback(Comm *comm, EventPtr &event_ptr)
+      : m_comm(comm), m_event_ptr(event_ptr) { return; }
 
     ResponseCallback() : m_comm(0), m_event_ptr(0) { return; }
 
     virtual ~ResponseCallback() { return; }
 
     /**
-     * Sends an error response back to the client.  The format of the response consists
-     * of the 4-byte error code followed by the error message string.
+     * Sends an error response back to the client.  The format of the response
+     * consists of the 4-byte error code followed by the error message string.
      *
      * @param error error code
      * @param msg error message
@@ -74,7 +75,9 @@ namespace Hypertable {
      *
      * @param addr reference to address structure to hold result
      */
-    void get_address(struct sockaddr_in &addr) { memcpy(&addr, &m_event_ptr->addr, sizeof(addr)); }
+    void get_address(struct sockaddr_in &addr) {
+      memcpy(&addr, &m_event_ptr->addr, sizeof(addr));
+    }
 
   protected:
     Comm          *m_comm;
@@ -82,6 +85,6 @@ namespace Hypertable {
     HeaderBuilder  m_header_builder;
   };
 
-}
+} // namespace Hypertable
 
 #endif // HYPERTABLE_RESPONSECALLBACK_H

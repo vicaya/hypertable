@@ -130,8 +130,10 @@ void CommandShell::add_options(Config::Desc &desc) {
     ("batch", "Disable interactive behavior")
     ("no-prompt", "Do not display an input prompt")
     ("silent", "Be silent. Don't echo commands or display progress")
-    ("test-mode", "Don't display anything that might change from run to run (e.g. timing statistics)")
-    ("timestamp-format", Config::value<std::string>(), "Output format for timestamp.  Currently the only formats are 'default' and 'usecs'")
+    ("test-mode", "Don't display anything that might change from run to run "
+        "(e.g. timing statistics)")
+    ("timestamp-format", Config::value<std::string>(), "Output format for "
+        "timestamp.  Currently the only formats are 'default' and 'usecs'")
     ;
 }
 
@@ -160,8 +162,10 @@ int CommandShell::run() {
     read_history(ms_history_file.c_str());
 
     cout << endl;
-    cout << "Welcome to the " << m_program_name << " command interpreter." << endl;
-    cout << "For information about Hypertable, visit http://www.hypertable.org/" << endl;
+    cout << "Welcome to the " << m_program_name << " command interpreter."
+         << endl;
+    cout << "For information about Hypertable, visit http://www.hypertable.org/"
+         << endl;
     cout << endl;
     cout << "Type 'help' for a list of commands, or 'help shell' for a" << endl;
     cout << "list of shell meta commands." << endl;
@@ -189,14 +193,17 @@ int CommandShell::run() {
         cout << help_text;
         continue;
       }
-      else if (!strncasecmp(line, "help", 4) || !strncmp(line, "\\h", 2) || *line == '?') {
+      else if (!strncasecmp(line, "help", 4)
+               || !strncmp(line, "\\h", 2) || *line == '?') {
         command = line;
-        std::transform(command.begin(), command.end(), command.begin(), ::tolower);
+        std::transform(command.begin(), command.end(), command.begin(),
+                       ::tolower);
         trim_if(command, boost::is_any_of(" \t\n\r;"));
         m_interp_ptr->execute_line(command);
         continue;
       }
-      else if (!strcasecmp(line, "quit") || !strcasecmp(line, "exit") || !strcmp(line, "\\q")) {
+      else if (!strcasecmp(line, "quit") || !strcasecmp(line, "exit")
+               || !strcmp(line, "\\q")) {
         if (!m_batch_mode)
           write_history(ms_history_file.c_str());
         return 0;
@@ -212,7 +219,8 @@ int CommandShell::run() {
       }
       else if (!strncmp(line, "source", 6) || line[0] == '.') {
         if ((base = strchr(line, ' ')) == 0) {
-          cout << "syntax error: source or '.' must be followed by a space character" << endl;
+          cout << "syntax error: source or '.' must be followed by a space "
+              "character" << endl;
           continue;
         }
         String fname = base;
@@ -279,7 +287,8 @@ int CommandShell::run() {
       }
 
       while (!command_queue.empty()) {
-        if (command_queue.front() == "quit" || command_queue.front() == "exit") {
+        if (command_queue.front() == "quit"
+            || command_queue.front() == "exit") {
           if (!m_batch_mode)
             write_history(ms_history_file.c_str());
           return 0;
@@ -305,7 +314,8 @@ int CommandShell::run() {
 
     }
     catch (Hypertable::Exception &e) {
-      cerr << "Error: " << e.what() << " - " << Error::get_text(e.code()) << endl;
+      cerr << "Error: " << e.what() << " - " << Error::get_text(e.code())
+           << endl;
       if (m_batch_mode)
         return 1;
       m_accum = "";

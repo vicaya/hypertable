@@ -31,29 +31,30 @@
 
 namespace Hypertable {
 
-  const int64_t TIMESTAMP_MIN  = std::numeric_limits<int64_t>::min();
-  const int64_t TIMESTAMP_MAX  = std::numeric_limits<int64_t>::max();
-  const int64_t TIMESTAMP_NULL = std::numeric_limits<int64_t>::min() + 1;
-  const int64_t TIMESTAMP_AUTO = std::numeric_limits<int64_t>::min() + 2;
-  const int64_t AUTO_ASSIGN    = std::numeric_limits<int64_t>::min() + 2;
+  const int64_t TIMESTAMP_MIN  = INT64_MIN;
+  const int64_t TIMESTAMP_MAX  = INT64_MAX;
+  const int64_t TIMESTAMP_NULL = INT64_MIN + 1;
+  const int64_t TIMESTAMP_AUTO = INT64_MIN + 2;
+  const int64_t AUTO_ASSIGN    = INT64_MIN + 2;
 
   class KeySpec {
   public:
 
     KeySpec() : row(0), row_len(0), column_family(0), column_qualifier(0),
-		column_qualifier_len(0), timestamp(AUTO_ASSIGN), revision(AUTO_ASSIGN) {}
+                column_qualifier_len(0), timestamp(AUTO_ASSIGN),
+                revision(AUTO_ASSIGN) {}
 
     explicit KeySpec(const char *r, const char *cf, const char *cq,
-		     int64_t ts = AUTO_ASSIGN)
+                     int64_t ts = AUTO_ASSIGN)
       : row(r), row_len(r ? strlen(r) : 0), column_family(cf),
-	column_qualifier(cq), column_qualifier_len(cq ? strlen(cq) : 0),
-	timestamp(ts), revision(AUTO_ASSIGN) {}
+        column_qualifier(cq), column_qualifier_len(cq ? strlen(cq) : 0),
+        timestamp(ts), revision(AUTO_ASSIGN) {}
 
     explicit KeySpec(const char *r, const char *cf,
-		     int64_t ts = AUTO_ASSIGN)
+                     int64_t ts = AUTO_ASSIGN)
       : row(r), row_len(r ? strlen(r) : 0), column_family(cf),
-	column_qualifier(0), column_qualifier_len(0),
-	timestamp(ts), revision(AUTO_ASSIGN) {}
+        column_qualifier(0), column_qualifier_len(0),
+        timestamp(ts), revision(AUTO_ASSIGN) {}
 
     void clear() {
       row = 0;
@@ -98,7 +99,7 @@ namespace Hypertable {
       m_key_spec.column_qualifier_len = m_strings.back().length();
     }
 
-    void set_timestamp(int64_t timestamp) { 
+    void set_timestamp(int64_t timestamp) {
       m_key_spec.timestamp = timestamp;
     }
 
@@ -121,7 +122,7 @@ namespace Hypertable {
     std::vector<String> m_strings;
     KeySpec m_key_spec;
   };
-  
+
 
 }
 

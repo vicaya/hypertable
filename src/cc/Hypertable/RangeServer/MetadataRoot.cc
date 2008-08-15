@@ -39,14 +39,17 @@ MetadataRoot::MetadataRoot(SchemaPtr &schema_ptr) : m_next(0) {
   HandleCallbackPtr null_callback;
   typedef std::list<Schema::AccessGroup *> AgList;
   AgList *ag_list = schema_ptr->get_access_group_list();
-  for (AgList::iterator ag_iter = ag_list->begin(); ag_iter != ag_list->end(); ag_iter++)
+  for (AgList::iterator ag_iter = ag_list->begin();
+       ag_iter != ag_list->end(); ++ag_iter)
     m_agnames.push_back((*ag_iter)->name);
 
   try {
-    m_handle = Global::hyperspace_ptr->open("/hypertable/root", OPEN_FLAG_READ, null_callback);
+    m_handle = Global::hyperspace_ptr->open("/hypertable/root", OPEN_FLAG_READ,
+                                            null_callback);
   }
   catch (Exception &e) {
-    HT_ERRORF("Problem opening Hyperspace root file '/hypertable/root' - %s - %s", Error::get_text(e.code()), e.what());
+    HT_ERRORF("Problem opening Hyperspace root file '/hypertable/root' - %s - "
+              "%s", Error::get_text(e.code()), e.what());
     HT_ABORT;
   }
 
@@ -74,11 +77,11 @@ void MetadataRoot::reset_files_scan() {
 
 
 
-bool MetadataRoot::get_next_files(std::string &ag_name, std::string &files) {
+bool MetadataRoot::get_next_files(String &ag_name, String &files) {
 
   while (m_next < m_agnames.size()) {
     DynamicBuffer value(0);
-    std::string attrname = (std::string)"files." + m_agnames[m_next];
+    String attrname = (String)"files." + m_agnames[m_next];
     m_next++;
 
     try {
@@ -87,8 +90,9 @@ bool MetadataRoot::get_next_files(std::string &ag_name, std::string &files) {
     catch (Exception &e) {
       if (e.code() == Error::HYPERSPACE_ATTR_NOT_FOUND)
         continue;
-      HT_ERRORF("Problem getting attribute '%s' on Hyperspace file '/hypertable/root' - %s",
-		attrname.c_str(), Error::get_text(e.code()));
+      HT_ERRORF("Problem getting attribute '%s' on Hyperspace file "
+                "'/hypertable/root' - %s", attrname.c_str(),
+                Error::get_text(e.code()));
       return false;
     }
     files = (const char *)value.base;
@@ -100,14 +104,16 @@ bool MetadataRoot::get_next_files(std::string &ag_name, std::string &files) {
 
 
 
-void MetadataRoot::write_files(std::string &ag_name, std::string &files) {
-  std::string attrname = (std::string)"files." + ag_name;
+void MetadataRoot::write_files(const String &ag_name, const String &files) {
+  String attrname = (String)"files." + ag_name;
 
   try {
-    Global::hyperspace_ptr->attr_set(m_handle, attrname.c_str(), files.c_str(), files.length());
+    Global::hyperspace_ptr->attr_set(m_handle, attrname.c_str(), files.c_str(),
+                                     files.length());
   }
   catch (Exception &e) {
-    HT_THROW2(e.code(), e, (std::string)"Problem creating attribute '" + attrname + "' on Hyperspace file '/hypertable/root'");
+    HT_THROW2(e.code(), e, (String)"Problem creating attribute '" + attrname
+              + "' on Hyperspace file '/hypertable/root'");
   }
 
 }

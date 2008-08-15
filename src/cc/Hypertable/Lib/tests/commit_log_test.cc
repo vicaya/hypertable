@@ -51,10 +51,11 @@ namespace {
 
   void test1(DfsBroker::Client *dfs_client);
   void test_link(DfsBroker::Client *dfs_client);
-  void write_entries(CommitLog *log, int num_entries, uint64_t *sump, CommitLogBase *link_log);
-  void read_entries(DfsBroker::Client *dfs_client, CommitLogReader *log_reader, uint64_t *sump);
+  void write_entries(CommitLog *log, int num_entries, uint64_t *sump,
+                     CommitLogBase *link_log);
+  void read_entries(DfsBroker::Client *dfs_client, CommitLogReader *log_reader,
+                    uint64_t *sump);
 }
-
 
 
 int main(int argc, char **argv) {
@@ -76,7 +77,8 @@ int main(int argc, char **argv) {
      */
     {
       struct sockaddr_in addr;
-      InetAddr::initialize(&addr, "localhost", HYPERTABLE_RANGESERVER_COMMITLOG_DFSBROKER_PORT);
+      InetAddr::initialize(&addr, "localhost",
+                           HYPERTABLE_RANGESERVER_COMMITLOG_DFSBROKER_PORT);
       dfs_client = new DfsBroker::Client(conn_manager_ptr, addr, 60);
       if (!dfs_client->wait_for_connection(10)) {
         HT_ERROR("Unable to connect to DFS Broker, exiting...");
@@ -216,7 +218,9 @@ namespace {
     HT_EXPECT(sum_read == sum_written, Error::FAILED_EXPECTATION);
   }
 
-  void write_entries(CommitLog *log, int num_entries, uint64_t *sump, CommitLogBase *link_log) {
+  void
+  write_entries(CommitLog *log, int num_entries, uint64_t *sump,
+                CommitLogBase *link_log) {
     int error;
     int64_t revision;
     uint32_t limit;
@@ -232,7 +236,7 @@ namespace {
 
       if (i == link_point) {
         if ((error = log->link_log(link_log)) != Error::OK)
-          throw Hypertable::Exception(error, "Problem writing to log file");
+          HT_THROW(error, "Problem writing to log file");
       }
       else {
         limit = (random() % 100) + 1;
@@ -246,12 +250,14 @@ namespace {
         dbuf.own = false;
 
         if ((error = log->write(dbuf, revision)) != Error::OK)
-          throw Hypertable::Exception(error, "Problem writing to log file");
+          HT_THROW(error, "Problem writing to log file");
       }
     }
   }
 
-  void read_entries(DfsBroker::Client *dfs_client, CommitLogReader *log_reader, uint64_t *sump) {
+  void
+  read_entries(DfsBroker::Client *dfs_client, CommitLogReader *log_reader,
+               uint64_t *sump) {
     const uint8_t *block;
     size_t block_len;
     uint32_t *iptr;
@@ -263,7 +269,7 @@ namespace {
       icount = block_len / 4;
       iptr = (uint32_t *)block;
       for (size_t i=0; i<icount; i++)
-	*sump += iptr[i];
+        *sump += iptr[i];
     }
   }
 

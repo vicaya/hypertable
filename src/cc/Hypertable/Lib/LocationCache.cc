@@ -43,12 +43,15 @@ LocationCache::insert(uint32_t table_id, RangeLocationInfo &range_loc_info,
   LocationMap::iterator iter;
   LocationCacheKey key;
 
-  //cout << table_id << " start=" << start_row << " end=" << end_row << " location=" << location << endl << flush;
+  /*
+  HT_DEBUG_OUT << table_id << " start=" << start_row << " end=" << end_row
+      << " location=" << location << HT_END;
+  */
 
   newval->start_row = range_loc_info.start_row;
-  newval->end_row   = range_loc_info.end_row;
-  newval->location  = get_constant_location_str(range_loc_info.location.c_str());
-  newval->pegged    = pegged;
+  newval->end_row = range_loc_info.end_row;
+  newval->location = get_constant_location_str(range_loc_info.location.c_str());
+  newval->pegged = pegged;
 
   key.table_id = table_id;
   key.end_row = (range_loc_info.end_row == "") ? 0 : newval->end_row.c_str();
@@ -78,7 +81,7 @@ LocationCache::insert(uint32_t table_id, RangeLocationInfo &range_loc_info,
     m_head = newval;
   }
 
-  // Insert the new entry into the map, recording an iterator to the entry in the map
+  // Insert the new entry into the map, recording an iterator to the entry
   {
     std::pair<LocationMap::iterator, bool> old_entry;
     LocationMap::value_type map_value(key, newval);
@@ -94,10 +97,10 @@ LocationCache::insert(uint32_t table_id, RangeLocationInfo &range_loc_info,
  */
 LocationCache::~LocationCache() {
   for (LocationStrSet::iterator iter = m_location_strings.begin();
-      iter != m_location_strings.end(); iter++)
+      iter != m_location_strings.end(); ++iter)
     delete [] *iter;
   for (LocationMap::iterator lm_it = m_location_map.begin();
-      lm_it != m_location_map.end(); lm_it++)
+      lm_it != m_location_map.end(); ++lm_it)
     delete (*lm_it).second;
 }
 

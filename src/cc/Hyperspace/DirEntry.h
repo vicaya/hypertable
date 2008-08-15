@@ -39,10 +39,10 @@ namespace Hyperspace {
   };
 
   struct LtDirEntry {
-    bool operator()(const struct DirEntry &de1, const struct DirEntry &de2) const {
-      if (de1.name == de2.name)
-        return (int)de1.is_dir < (int)de2.is_dir;
-      return de1.name < de2.name;
+    bool operator()(const struct DirEntry &x, const struct DirEntry &y) const {
+      if (x.name == y.name)
+        return (int)x.is_dir < (int)y.is_dir;
+      return x.name < y.name;
     }
   };
 
@@ -56,15 +56,18 @@ namespace Hyperspace {
 
   /** Encodes (serializes) the given directory entry to a buffer.
    *
-   * @param buf_ptr address of pointer to buffer to receive encoded directory entry (pointer is advanced passed the encoded entry)
+   * @param buf_ptr address of pointer to buffer to receive encoded directory
+   *        entry (pointer is advanced passed the encoded entry)
    * @param dir_entry the directory entry to encode
    */
   void encode_dir_entry(uint8_t **buf_ptr, const DirEntry &dir_entry);
 
   /** Decodes (unserializes) a directory entry from a buffer
    *
-   * @param buf_ptr address of pointer to buffer containing encoded directory entry (advanced after decode)
-   * @param remaining_ptr address of count variable holding the number of bytes remaining in buffer (decremented after decode)
+   * @param buf_ptr address of pointer to buffer containing encoded directory
+   *        entry (advanced after decode)
+   * @param remaining_ptr address of count variable holding the number of bytes
+   *        remaining in buffer (decremented after decode)
    * @param dir_entry the directory entry to encode
    */
   DirEntry &decode_dir_entry(const uint8_t **buf_ptr,

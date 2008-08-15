@@ -59,9 +59,9 @@ namespace Hyperspace {
       int error;
       m_state = CONNECTING;
       if ((error = m_comm->connect(addr, dhp)) != Error::OK) {
-        std::string str;
-        HT_ERRORF("Problem establishing TCP connection with Hyperspace.Master at %s - %s",
-                     InetAddr::string_format(str, addr), Error::get_text(error));
+        HT_ERRORF("Problem establishing TCP connection with Hyperspace.Master "
+                  "at %s - %s", InetAddr::format(addr).c_str(),
+                  Error::get_text(error));
         m_comm->close_socket(addr);
         m_state = DISCONNECTED;
       }
@@ -86,9 +86,9 @@ namespace Hyperspace {
     struct sockaddr_in m_master_addr;
     time_t m_timeout;
   };
-  typedef boost::intrusive_ptr<ClientConnectionHandler> ClientConnectionHandlerPtr;
 
+  typedef intrusive_ptr<ClientConnectionHandler> ClientConnectionHandlerPtr;
 
-}
+} // namespace Hypertable
 
 #endif // HYPERSPACE_CLIENTCONNECTIONHANDLER_H

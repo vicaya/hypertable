@@ -51,32 +51,34 @@ int main(int argc, char **argv) {
   testnames.push_back("loadDataSourceTest-qualified-header");
 
   for(size_t i = 0; i < testnames.size(); i++) {
-	std::string output_fn = testnames[i] + ".output";
-	if ((fd = open(output_fn.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0644)) < 0) {
-	  perror("open");
-	  return 1;
-	}
+    String output_fn = testnames[i] + ".output";
 
-	close(2);
-	dup(fd);
+    if ((fd = open(output_fn.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0644)) < 0) {
+      perror("open");
+      return 1;
+    }
 
-	key_columns.clear();
-	std::string dat_fn = testnames[i] + ".dat";
-	lds = new LoadDataSource(dat_fn.c_str(), "", key_columns, "");
+    close(2);
+    dup(fd);
 
-	while (lds->next(0, &key, &value, &value_len, 0)) {
-	  cerr << "row=" << (const char *)key.row << " column_family=" << key.column_family;
-	  if (key.column_qualifier_len > 0)
-	    cerr << " column_qualifier=" << (const char *)key.column_qualifier;
-	  cerr << " value=" << (const char *)value << endl;
-	}
+    key_columns.clear();
+    String dat_fn = testnames[i] + ".dat";
+    lds = new LoadDataSource(dat_fn.c_str(), "", key_columns, "");
 
-	delete lds;
+    while (lds->next(0, &key, &value, &value_len, 0)) {
+      cerr << "row=" << (const char *)key.row
+           << " column_family=" << key.column_family;
+      if (key.column_qualifier_len > 0)
+        cerr << " column_qualifier=" << (const char *)key.column_qualifier;
+      cerr << " value=" << (const char *)value << endl;
+    }
 
-	std::string golden_fn = testnames[i] + ".golden";
-	std::string sys_cmd = "diff " + output_fn + " " + golden_fn;
-	if (system(sys_cmd.c_str()) != 0)
-	  return 1;
+    delete lds;
+
+    String golden_fn = testnames[i] + ".golden";
+    String sys_cmd = "diff " + output_fn + " " + golden_fn;
+    if (system(sys_cmd.c_str()) != 0)
+      return 1;
   }
 
   return 0;

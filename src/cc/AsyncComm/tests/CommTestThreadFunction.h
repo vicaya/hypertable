@@ -19,11 +19,9 @@
  * 02110-1301, USA.
  */
 
-extern "C" {
-#include <netinet/in.h>
-}
-
 #define MAX_MESSAGES 50000
+
+#include "Common/InetAddr.h"
 
 /**
  *  Forward declarations
@@ -34,7 +32,8 @@ namespace Hypertable {
 
 class CommTestThreadFunction {
  public:
-  CommTestThreadFunction(Hypertable::Comm *comm, struct sockaddr_in &addr, const char *input) : m_comm(comm), m_addr(addr) {
+  CommTestThreadFunction(Hypertable::Comm *comm, const sockaddr_in &addr,
+                         const char *input) : m_comm(comm), m_addr(addr) {
     m_input_file = input;
   }
   void set_output_file(const char *output) {
