@@ -47,6 +47,7 @@ RequestHandlerCreateScanner.cc
 RequestHandlerDestroyScanner.cc
 RequestHandlerDropRange.cc
 RequestHandlerDumpStats.cc
+RequestHandlerGetStatistics.cc
 RequestHandlerFetchScanblock.cc
 RequestHandlerDropTable.cc
 RequestHandlerLoadRange.cc
@@ -59,6 +60,7 @@ RequestHandlerUpdate.cc
 RequestHandlerShutdown.cc
 ResponseCallbackCreateScanner.cc
 ResponseCallbackFetchScanblock.cc
+ResponseCallbackGetStatistics.cc
 ResponseCallbackUpdate.cc
 ScanContext.cc
 ScannerMap.cc

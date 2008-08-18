@@ -68,6 +68,7 @@ RootFileHandler.cc
 ScanBlock.cc
 ScanSpec.cc
 Schema.cc
+Stat.cc
 Table.cc
 TableMutator.cc
 TableMutatorDispatchHandler.cc

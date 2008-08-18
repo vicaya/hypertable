@@ -38,6 +38,7 @@ extern "C" {
 
 #include "Hypertable/Lib/CommitLog.h"
 #include "Hypertable/Lib/Defaults.h"
+#include "Hypertable/Lib/Stat.h"
 #include "Hypertable/Lib/RangeServerMetaLogReader.h"
 #include "Hypertable/Lib/RangeServerMetaLogEntries.h"
 #include "Hypertable/Lib/RangeServerProtocol.h"
@@ -1405,6 +1406,31 @@ void RangeServer::dump_stats(ResponseCallback *cb) {
   cb->response_ok();
 }
 
+void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
+  std::vector<TableInfoPtr> table_vec;
+  std::vector<RangePtr> range_vec;
+  RangeServerStat stat;
+
+  HT_INFO("get_statistics");
+
+  m_live_map_ptr->get_all(table_vec);
+
+  for (size_t i=0; i<table_vec.size(); i++) {
+    range_vec.clear();
+    table_vec[i]->get_range_vector(range_vec);
+    for (size_t i=0; i<range_vec.size(); i++) {
+      RangeStat rstat;
+      range_vec[i]->get_statistics(&rstat);
+      stat.range_stats.push_back(rstat);
+    }
+  }
+
+  StaticBuffer ext(stat.encoded_length());
+  uint8_t *bufp = ext.base;
+  stat.encode(&bufp);
+
+  cb->response(ext);
+}
 
 /**
  *

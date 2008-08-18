@@ -714,6 +714,45 @@ void Range::dump_stats() {
   cout << flush;
 }
 
+void Range::get_statistics(RangeStat *stat) {
+  uint64_t collisions = 0;
+  uint64_t cached = 0;
+  uint64_t disk_usage = 0;
+  uint64_t memory_usage = 0;
+
+  stat->added_inserts = m_added_inserts;
+  stat->added_deletes[0] = m_added_deletes[0];
+  stat->added_deletes[1] = m_added_deletes[1];
+  stat->added_deletes[2] = m_added_deletes[2];
+
+  for (size_t i=0; i<m_access_group_vector.size(); i++) {
+    collisions += m_access_group_vector[i]->get_collision_count();
+    cached += m_access_group_vector[i]->get_cached_count();
+    disk_usage += m_access_group_vector[i]->disk_usage();
+    memory_usage += m_access_group_vector[i]->memory_usage();
+  }
+
+  stat->collided_cells = collisions;
+  stat->cached_cells = cached;
+  stat->disk_usage = disk_usage;
+  stat->memory_usage = memory_usage;
+
+
+
+  {
+    boost::mutex::scoped_lock lock(m_mutex);
+
+    stat->table_identifier = m_identifier;
+
+    RangeSpec spec;
+    // these may change during a shrink
+    spec.start_row = m_start_row.c_str();
+    spec.end_row = m_end_row.c_str();
+
+    stat->range_spec = spec;
+  }
+}
+
 
 void Range::lock() {
   for (AccessGroupMap::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++)

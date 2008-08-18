@@ -171,6 +171,20 @@ void RangeServerClient::dump_stats(struct sockaddr_in &addr) {
              String("RangeServer dump_stats() failure : ") + Protocol::string_format_message(event_ptr));
 }
 
+void RangeServerClient::get_statistics(struct sockaddr_in &addr, RangeServerStat &stat) {
+  DispatchHandlerSynchronizer sync_handler;
+  EventPtr event_ptr;
+  CommBufPtr cbp(RangeServerProtocol::create_request_get_statistics());
+  send_message(addr, cbp, &sync_handler);
+  if (!sync_handler.wait_for_reply(event_ptr))
+    HT_THROW((int)Protocol::response_code(event_ptr),
+             String("RangeServer get_statistics() failure : ") + Protocol::string_format_message(event_ptr));
+
+  const uint8_t *ptr = event_ptr->message + 4;
+  size_t remaining = event_ptr->message_len;
+  stat.decode(&ptr, &remaining);
+}
+
 
 void RangeServerClient::replay_begin(struct sockaddr_in &addr, uint16_t group, DispatchHandler *handler) {
   CommBufPtr cbp(RangeServerProtocol::create_request_replay_begin(group));

@@ -49,7 +49,8 @@ namespace Hypertable {
     static const short COMMAND_REPLAY_LOAD_RANGE = 12;
     static const short COMMAND_REPLAY_UPDATE     = 13;
     static const short COMMAND_REPLAY_COMMIT     = 14;
-    static const short COMMAND_MAX               = 15;
+    static const short COMMAND_GET_STATISTICS    = 15;
+    static const short COMMAND_MAX               = 16;
 
     static const char *m_command_strings[];
 
@@ -162,6 +163,12 @@ namespace Hypertable {
      * @return protocol message
      */
     static CommBuf *create_request_drop_range(TableIdentifier &table, RangeSpec &range);
+
+    /** Creates a "get statistics" request message.
+     *
+     * @return protocol message
+     */
+    static CommBuf *create_request_get_statistics();
 
     virtual const char *command_text(short command);
   };
