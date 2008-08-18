@@ -63,7 +63,10 @@ Session::Session(Comm *comm, PropertiesPtr &props_ptr, SessionCallback *callback
   master_port = (uint16_t)props_ptr->get_int("Hyperspace.Master.Port", Master::DEFAULT_MASTER_PORT);
   m_grace_period = (uint32_t)props_ptr->get_int("Hyperspace.GracePeriod", Master::DEFAULT_GRACEPERIOD);
   m_lease_interval = (uint32_t)props_ptr->get_int("Hyperspace.Lease.Interval", Master::DEFAULT_LEASE_INTERVAL);
-  m_timeout = m_lease_interval * 2;
+
+  m_timeout = (uint32_t)props_ptr->get_int("Hyperspace.Client.Timeout", 0);
+  if (m_timeout == 0)
+    m_timeout = m_lease_interval * 2;
 
   if (!InetAddr::initialize(&m_master_addr, master_host, master_port))
     exit(1);
@@ -83,7 +86,7 @@ Session::~Session() {
 }
 
 
-int Session::open(ClientHandleStatePtr &handle_state, CommBufPtr &cbuf_ptr, uint64_t *handlep) {
+uint64_t Session::open(ClientHandleStatePtr &handle_state, CommBufPtr &cbuf_ptr) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
 
@@ -106,37 +109,25 @@ int Session::open(ClientHandleStatePtr &handle_state, CommBufPtr &cbuf_ptr, uint
   if (error == Error::OK) {
     if (!sync_handler.wait_for_reply(event_ptr)) {
       error = (int)Protocol::response_code(event_ptr.get());
-      if (!m_silent) {
-        HT_ERRORF("Hyperspace 'open' error, name=%s flags=0x%x events=0x%x : "
-            "%s", handle_state->normal_name.c_str(), handle_state->open_flags,
-            handle_state->event_mask, Error::get_text(error));
-        if (m_verbose)
-          HT_ERRORF("%s", Protocol::string_format_message(event_ptr.get()).c_str());
-      }
+      HT_THROWF(error,  "Hyperspace 'open' error, name=%s flags=0x%x events=0x%x",
+		handle_state->normal_name.c_str(), handle_state->open_flags,
+		handle_state->event_mask);
     }
     else {
       const uint8_t *ptr = event_ptr->message + 4;
       size_t remaining = event_ptr->message_len - 4;
-      try {
-        *handlep = decode_i64(&ptr, &remaining);
-        decode_byte(&ptr, &remaining);
-        handle_state->lock_generation = decode_i64(&ptr, &remaining);
-        /** if (createdp) *createdp = cbyte ? true : false; **/
-        handle_state->handle = *handlep;
-        m_keepalive_handler_ptr->register_handle(handle_state);
-      }
-      catch (Exception &e) {
-        HT_ERROR_OUT << e << HT_END;
-        return e.code();
-      }
+      handle_state->handle = decode_i64(&ptr, &remaining);
+      decode_byte(&ptr, &remaining);
+      handle_state->lock_generation = decode_i64(&ptr, &remaining);
+      /** if (createdp) *createdp = cbyte ? true : false; **/
+      m_keepalive_handler_ptr->register_handle(handle_state);
+      return handle_state->handle;
     }
   }
-  else {
-    state_transition(Session::STATE_JEOPARDY);
-    goto try_again;
-  }
 
-  return error;
+  state_transition(Session::STATE_JEOPARDY);
+  goto try_again;
+
 }
 
 
@@ -144,7 +135,7 @@ int Session::open(ClientHandleStatePtr &handle_state, CommBufPtr &cbuf_ptr, uint
 /**
  *
  */
-int Session::open(const std::string &name, uint32_t flags, HandleCallbackPtr &callback, uint64_t *handlep) {
+uint64_t Session::open(const std::string &name, uint32_t flags, HandleCallbackPtr &callback) {
   ClientHandleStatePtr handle_state(new ClientHandleState());
   std::vector<Attribute> empty_attrs;
 
@@ -155,8 +146,7 @@ int Session::open(const std::string &name, uint32_t flags, HandleCallbackPtr &ca
 
   CommBufPtr cbuf_ptr(Protocol::create_open_request(handle_state->normal_name, flags, callback, empty_attrs));
 
-  return open(handle_state, cbuf_ptr, handlep);
-
+  return open(handle_state, cbuf_ptr);
 }
 
 
@@ -164,7 +154,7 @@ int Session::open(const std::string &name, uint32_t flags, HandleCallbackPtr &ca
 /**
  *
  */
-int Session::create(const std::string &name, uint32_t flags, HandleCallbackPtr &callback, std::vector<Attribute> &init_attrs, uint64_t *handlep) {
+uint64_t Session::create(const std::string &name, uint32_t flags, HandleCallbackPtr &callback, std::vector<Attribute> &init_attrs) {
   ClientHandleStatePtr handle_state(new ClientHandleState());
 
   handle_state->open_flags = flags | OPEN_FLAG_CREATE | OPEN_FLAG_EXCL;
@@ -174,7 +164,7 @@ int Session::create(const std::string &name, uint32_t flags, HandleCallbackPtr &
 
   CommBufPtr cbuf_ptr(Protocol::create_open_request(handle_state->normal_name, handle_state->open_flags, callback, init_attrs));
 
-  return open(handle_state, cbuf_ptr, handlep);
+  return open(handle_state, cbuf_ptr);
 }
 
 
@@ -182,32 +172,25 @@ int Session::create(const std::string &name, uint32_t flags, HandleCallbackPtr &
 /**
  *
  */
-int Session::close(uint64_t handle) {
+void Session::close(uint64_t handle) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_close_request(handle));
 
  try_again:
   if (!wait_for_safe())
-    return Error::HYPERSPACE_EXPIRED_SESSION;
+    HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
   int error = send_message(cbuf_ptr, &sync_handler);
   if (error == Error::OK) {
-    if (!sync_handler.wait_for_reply(event_ptr)) {
-      error = (int)Protocol::response_code(event_ptr.get());
-      if (!m_silent) {
-        HT_ERRORF("Hyperspace 'close' error : %s", Error::get_text(error));
-        if (m_verbose)
-          HT_ERRORF("%s", Protocol::string_format_message(event_ptr.get()).c_str());
-      }
-    }
+    if (!sync_handler.wait_for_reply(event_ptr))
+      HT_THROW((int)Protocol::response_code(event_ptr.get()),
+	       "Hyperspace 'close' error");
   }
   else {
     state_transition(Session::STATE_JEOPARDY);
     goto try_again;
   }
-
-  return error;
 }
 
 
@@ -215,7 +198,7 @@ int Session::close(uint64_t handle) {
 /**
  *
  */
-int Session::mkdir(const std::string &name) {
+void Session::mkdir(const std::string &name) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   std::string normal_name;
@@ -226,29 +209,23 @@ int Session::mkdir(const std::string &name) {
 
  try_again:
   if (!wait_for_safe())
-    return Error::HYPERSPACE_EXPIRED_SESSION;
+    HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
   int error = send_message(cbuf_ptr, &sync_handler);
   if (error == Error::OK) {
-    if (!sync_handler.wait_for_reply(event_ptr)) {
-      error = (int)Protocol::response_code(event_ptr.get());
-      if (!m_silent) {
-        HT_ERRORF("Hyperspace 'mkdir' error, name=%s : %s", normal_name.c_str(), Error::get_text(error));
-        if (m_verbose)
-          HT_ERRORF("%s", Protocol::string_format_message(event_ptr.get()).c_str());
-      }
-    }
+    if (!sync_handler.wait_for_reply(event_ptr))
+      HT_THROWF((int)Protocol::response_code(event_ptr.get()),
+		"Hyperspace 'mkdir' error, name=%s", normal_name.c_str());
   }
   else {
     state_transition(Session::STATE_JEOPARDY);
     goto try_again;
   }
 
-  return error;
 }
 
 
-int Session::unlink(const std::string &name) {
+void Session::unlink(const std::string &name) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   std::string normal_name;
@@ -259,29 +236,23 @@ int Session::unlink(const std::string &name) {
 
  try_again:
   if (!wait_for_safe())
-    return Error::HYPERSPACE_EXPIRED_SESSION;
+    HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
   int error = send_message(cbuf_ptr, &sync_handler);
   if (error == Error::OK) {
-    if (!sync_handler.wait_for_reply(event_ptr)) {
-      error = (int)Protocol::response_code(event_ptr.get());
-      if (!m_silent) {
-        HT_ERRORF("Hyperspace 'delete' error, name=%s : %s", normal_name.c_str(), Error::get_text(error));
-        if (m_verbose)
-          HT_ERRORF("%s", Protocol::string_format_message(event_ptr.get()).c_str());
-      }
-    }
+    if (!sync_handler.wait_for_reply(event_ptr))
+      HT_THROWF((int)Protocol::response_code(event_ptr.get()),
+		"Hyperspace 'unlink' error, name=%s", normal_name.c_str());
   }
   else {
     state_transition(Session::STATE_JEOPARDY);
     goto try_again;
   }
 
-  return error;
 }
 
 
-int Session::exists(const std::string &name, bool *existsp) {
+bool Session::exists(const std::string &name) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   std::string normal_name;
@@ -292,142 +263,122 @@ int Session::exists(const std::string &name, bool *existsp) {
 
  try_again:
   if (!wait_for_safe())
-    return Error::HYPERSPACE_EXPIRED_SESSION;
+    HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
   int error = send_message(cbuf_ptr, &sync_handler);
   if (error == Error::OK) {
     if (!sync_handler.wait_for_reply(event_ptr)) {
-      error = (int)Protocol::response_code(event_ptr.get());
-      if (!m_silent) {
-        HT_ERRORF("Hyperspace 'exists' error, name=%s : %s", normal_name.c_str(), Error::get_text(error));
-        if (m_verbose)
-          HT_ERRORF("%s", Protocol::string_format_message(event_ptr.get()).c_str());
-      }
+      HT_THROWF((int)Protocol::response_code(event_ptr.get()),
+		"Hyperspace 'exists' error, name=%s", normal_name.c_str());
     }
     else {
       const uint8_t *ptr = event_ptr->message + 4;
       size_t remaining = event_ptr->message_len - 4;
-      try {
-        uint8_t bval = decode_byte(&ptr, &remaining);
-        *existsp = (bval == 0) ? false : true;
-      }
-      catch (Exception &e) {
-        HT_ERROR_OUT << e << HT_END;
-        return e.code();
-      }
+      uint8_t bval = decode_byte(&ptr, &remaining);
+      return (bval == 0) ? false : true;
     }
   }
-  else {
-    state_transition(Session::STATE_JEOPARDY);
-    goto try_again;
-  }
 
-  return error;
+  state_transition(Session::STATE_JEOPARDY);
+  goto try_again;
 }
 
 
 
 /**
  */
-int Session::attr_set(uint64_t handle, const std::string &name, const void *value, size_t value_len) {
+void Session::attr_set(uint64_t handle, const std::string &name, const void *value, size_t value_len) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_attr_set_request(handle, name, value, value_len));
 
  try_again:
   if (!wait_for_safe())
-    return Error::HYPERSPACE_EXPIRED_SESSION;
+    HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
   int error = send_message(cbuf_ptr, &sync_handler);
   if (error == Error::OK) {
     if (!sync_handler.wait_for_reply(event_ptr)) {
-      error = (int)Protocol::response_code(event_ptr.get());
-      if (!m_silent) {
-        HT_ERRORF("Hyperspace 'attrset' error, name=%s : %s", name.c_str(), Error::get_text(error));
-        if (m_verbose)
-          HT_ERRORF("%s", Protocol::string_format_message(event_ptr.get()).c_str());
-      }
+      ClientHandleStatePtr handle_state;
+      String fname = "UNKNOWN";
+      if (m_keepalive_handler_ptr->get_handle_state(handle, handle_state))
+	fname = handle_state->normal_name.c_str();
+      HT_THROWF((int)Protocol::response_code(event_ptr.get()),
+		"Problem setting attribute '%s' of hyperspace file '%s'", name.c_str(),
+		fname.c_str());
     }
-  }
-  else {
-    state_transition(Session::STATE_JEOPARDY);
-    goto try_again;
+    return;
   }
 
-  return error;
+  state_transition(Session::STATE_JEOPARDY);
+  goto try_again;
 }
 
 
 /**
  *
  */
-int Session::attr_get(uint64_t handle, const std::string &name, DynamicBuffer &value) {
+void Session::attr_get(uint64_t handle, const std::string &name, DynamicBuffer &value) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_attr_get_request(handle, name));
 
  try_again:
   if (!wait_for_safe())
-    return Error::HYPERSPACE_EXPIRED_SESSION;
+    HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
   int error = send_message(cbuf_ptr, &sync_handler);
   if (error == Error::OK) {
     if (!sync_handler.wait_for_reply(event_ptr)) {
-      error = (int)Protocol::response_code(event_ptr.get());
-      if (!m_silent) {
-        HT_ERRORF("Hyperspace 'attrget' error, name=%s : %s", name.c_str(), Error::get_text(error));
-        if (m_verbose)
-          HT_ERRORF("%s", Protocol::string_format_message(event_ptr.get()).c_str());
-      }
+      ClientHandleStatePtr handle_state;
+      String fname = "UNKNOWN";
+      if (m_keepalive_handler_ptr->get_handle_state(handle, handle_state))
+	fname = handle_state->normal_name.c_str();
+      HT_THROWF((int)Protocol::response_code(event_ptr.get()),
+		"Problem getting attribute '%s' of hyperspace file '%s'", name.c_str(),
+		fname.c_str());
     }
     else {
       uint32_t attr_val_len = 0;
       const uint8_t *ptr = event_ptr->message + 4;
       size_t remaining = event_ptr->message_len - 4;
-      try {
-        void *attr_val = decode_bytes32(&ptr, &remaining, &attr_val_len);
-        value.clear();
-        value.ensure(attr_val_len+1);
-        value.add_unchecked(attr_val, attr_val_len);
-        // nul-terminate to make caller's lives easier
-        *value.ptr = 0;
-      }
-      catch (Exception &e) {
-        HT_ERROR_OUT << e << HT_END;
-        return e.code();
-      }
+      void *attr_val = decode_bytes32(&ptr, &remaining, &attr_val_len);
+      value.clear();
+      value.ensure(attr_val_len+1);
+      value.add_unchecked(attr_val, attr_val_len);
+      // nul-terminate to make caller's lives easier
+      *value.ptr = 0;
     }
   }
   else {
     state_transition(Session::STATE_JEOPARDY);
     goto try_again;
   }
-
-  return error;
 }
 
 
 /**
  *
  */
-int Session::attr_del(uint64_t handle, const std::string &name) {
+void Session::attr_del(uint64_t handle, const std::string &name) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_attr_del_request(handle, name));
 
  try_again:
   if (!wait_for_safe())
-    return Error::HYPERSPACE_EXPIRED_SESSION;
+    HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
   int error = send_message(cbuf_ptr, &sync_handler);
   if (error == Error::OK) {
     if (!sync_handler.wait_for_reply(event_ptr)) {
-      error = (int)Protocol::response_code(event_ptr.get());
-      if (!m_silent) {
-        HT_ERRORF("Hyperspace 'attrdel' error, name=%s : %s", name.c_str(), Error::get_text(error));
-        if (m_verbose)
-          HT_ERRORF("%s", Protocol::string_format_message(event_ptr.get()).c_str());
-      }
+      ClientHandleStatePtr handle_state;
+      String fname = "UNKNOWN";
+      if (m_keepalive_handler_ptr->get_handle_state(handle, handle_state))
+	fname = handle_state->normal_name.c_str();
+      HT_THROWF((int)Protocol::response_code(event_ptr.get()),
+		"Problem deleting attribute '%s' of hyperspace file '%s'", name.c_str(),
+		fname.c_str());
     }
   }
   else {
@@ -435,28 +386,23 @@ int Session::attr_del(uint64_t handle, const std::string &name) {
     goto try_again;
   }
 
-  return error;
 }
 
 
-int Session::readdir(uint64_t handle, std::vector<DirEntry> &listing) {
+void Session::readdir(uint64_t handle, std::vector<DirEntry> &listing) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_readdir_request(handle));
 
  try_again:
   if (!wait_for_safe())
-    return Error::HYPERSPACE_EXPIRED_SESSION;
+    HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
   int error = send_message(cbuf_ptr, &sync_handler);
   if (error == Error::OK) {
     if (!sync_handler.wait_for_reply(event_ptr)) {
-      error = (int)Protocol::response_code(event_ptr.get());
-      if (!m_silent) {
-        HT_ERRORF("Hyperspace 'readdir' error : %s", Error::get_text(error));
-        if (m_verbose)
-          HT_ERRORF("%s", Protocol::string_format_message(event_ptr.get()).c_str());
-      }
+      HT_THROW((int)Protocol::response_code(event_ptr.get()),
+	       "Hyperspace 'readdir' error");
     }
     else {
       const uint8_t *ptr = event_ptr->message + 4;
@@ -467,9 +413,7 @@ int Session::readdir(uint64_t handle, std::vector<DirEntry> &listing) {
         entry_cnt = decode_i32(&ptr, &remaining);
       }
       catch (Exception &e) {
-        if (!m_silent)
-          HT_ERROR_OUT << e << HT_END;
-        return Error::PROTOCOL_ERROR;
+	HT_THROW2(Error::PROTOCOL_ERROR, e, "");
       }
       listing.clear();
       for (uint32_t i=0; i<entry_cnt; i++) {
@@ -477,10 +421,8 @@ int Session::readdir(uint64_t handle, std::vector<DirEntry> &listing) {
           decode_dir_entry(&ptr, &remaining, dentry);
         }
         catch (Exception &e) {
-          if (!m_silent)
-            HT_ERRORF("Problem decoding entry %d of READDIR return packet: "
-                      "%s - %s", i, e.what(), Error::get_text(e.code()));
-          return Error::PROTOCOL_ERROR;
+	  HT_THROW2F(Error::PROTOCOL_ERROR, e, 
+		     "Problem decoding entry %d of READDIR return packet", i);
         }
         listing.push_back(dentry);
       }
@@ -490,13 +432,11 @@ int Session::readdir(uint64_t handle, std::vector<DirEntry> &listing) {
     state_transition(Session::STATE_JEOPARDY);
     goto try_again;
   }
-
-  return error;
 }
 
 
 
-int Session::lock(uint64_t handle, uint32_t mode, LockSequencer *sequencerp) {
+void Session::lock(uint64_t handle, uint32_t mode, LockSequencer *sequencerp) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_lock_request(handle, mode, false));
@@ -504,14 +444,14 @@ int Session::lock(uint64_t handle, uint32_t mode, LockSequencer *sequencerp) {
   uint32_t status = 0;
 
   if (!m_keepalive_handler_ptr->get_handle_state(handle, handle_state))
-    return Error::HYPERSPACE_INVALID_HANDLE;
+    HT_THROW(Error::HYPERSPACE_INVALID_HANDLE, "");
 
   if (handle_state->lock_status != 0)
-    return Error::HYPERSPACE_ALREADY_LOCKED;
+    HT_THROW(Error::HYPERSPACE_ALREADY_LOCKED, "");
 
  try_again:
   if (!wait_for_safe())
-    return Error::HYPERSPACE_EXPIRED_SESSION;
+    HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
   {
     boost::mutex::scoped_lock lock(handle_state->mutex);
@@ -522,14 +462,9 @@ int Session::lock(uint64_t handle, uint32_t mode, LockSequencer *sequencerp) {
 
   int error = send_message(cbuf_ptr, &sync_handler);
   if (error == Error::OK) {
-    if (!sync_handler.wait_for_reply(event_ptr)) {
-      error = (int)Protocol::response_code(event_ptr.get());
-      if (!m_silent) {
-        HT_ERRORF("Hyperspace 'lock' error, name='%s' : %s", handle_state->normal_name.c_str(), Error::get_text(error));
-        if (m_verbose)
-          HT_ERRORF("%s", Protocol::string_format_message(event_ptr.get()).c_str());
-      }
-    }
+    if (!sync_handler.wait_for_reply(event_ptr))
+      HT_THROWF((int)Protocol::response_code(event_ptr.get()),
+		"Hyperspace 'lock' error, name='%s'", handle_state->normal_name.c_str());
     else {
       boost::mutex::scoped_lock lock(handle_state->mutex);
       const uint8_t *ptr = event_ptr->message + 4;
@@ -549,13 +484,12 @@ int Session::lock(uint64_t handle, uint32_t mode, LockSequencer *sequencerp) {
           while (handle_state->lock_status == LOCK_STATUS_PENDING)
             handle_state->cond.wait(lock);
           if (handle_state->lock_status == LOCK_STATUS_CANCELLED)
-            return Error::HYPERSPACE_REQUEST_CANCELLED;
+            HT_THROW(Error::HYPERSPACE_REQUEST_CANCELLED, "");
           assert(handle_state->lock_status == LOCK_STATUS_GRANTED);
         }
       }
       catch (Exception &e) {
-        HT_ERROR_OUT << e << HT_END;
-        return e.code();
+	HT_THROW2(e.code(), e, "lock response decode error");
       }
     }
   }
@@ -564,37 +498,31 @@ int Session::lock(uint64_t handle, uint32_t mode, LockSequencer *sequencerp) {
     goto try_again;
   }
 
-  return error;
 }
 
 
 
-int Session::try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp, LockSequencer *sequencerp) {
+void Session::try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp, LockSequencer *sequencerp) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_lock_request(handle, mode, true));
   ClientHandleStatePtr handle_state;
 
   if (!m_keepalive_handler_ptr->get_handle_state(handle, handle_state))
-    return Error::HYPERSPACE_INVALID_HANDLE;
+    HT_THROW(Error::HYPERSPACE_INVALID_HANDLE, "");
 
   if (handle_state->lock_status != 0)
-    return Error::HYPERSPACE_ALREADY_LOCKED;
+    HT_THROW(Error::HYPERSPACE_ALREADY_LOCKED, "");
 
  try_again:
   if (!wait_for_safe())
-    return Error::HYPERSPACE_EXPIRED_SESSION;
+    HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
   int error = send_message(cbuf_ptr, &sync_handler);
   if (error == Error::OK) {
-    if (!sync_handler.wait_for_reply(event_ptr)) {
-      error = (int)Protocol::response_code(event_ptr.get());
-      if (!m_silent) {
-        HT_ERRORF("Hyperspace 'trylock' error, name='%s' : %s", handle_state->normal_name.c_str(), Error::get_text(error));
-        if (m_verbose)
-          HT_ERRORF("%s", Protocol::string_format_message(event_ptr.get()).c_str());
-      }
-    }
+    if (!sync_handler.wait_for_reply(event_ptr))
+      HT_THROWF((int)Protocol::response_code(event_ptr.get()),
+		"Hyperspace 'try_lock' error, name='%s'", handle_state->normal_name.c_str());
     else {
       boost::mutex::scoped_lock lock(handle_state->mutex);
       const uint8_t *ptr = event_ptr->message + 4;
@@ -613,8 +541,7 @@ int Session::try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp, LockSeq
         }
       }
       catch (Exception &e) {
-        HT_ERROR_OUT << e << HT_END;
-        return e.code();
+	HT_THROW2(e.code(), e, "try_lock response decode error");
       }
     }
   }
@@ -623,34 +550,28 @@ int Session::try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp, LockSeq
     goto try_again;
   }
 
-  return error;
 }
 
 
-int Session::release(uint64_t handle) {
+void Session::release(uint64_t handle) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_release_request(handle));
   ClientHandleStatePtr handle_state;
 
   if (!m_keepalive_handler_ptr->get_handle_state(handle, handle_state))
-    return Error::HYPERSPACE_INVALID_HANDLE;
+    HT_THROW(Error::HYPERSPACE_INVALID_HANDLE, "");
 
  try_again:
   if (!wait_for_safe())
-    return Error::HYPERSPACE_EXPIRED_SESSION;
+    HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
   int error = send_message(cbuf_ptr, &sync_handler);
   if (error == Error::OK) {
     boost::mutex::scoped_lock lock(handle_state->mutex);
-    if (!sync_handler.wait_for_reply(event_ptr)) {
-      error = (int)Protocol::response_code(event_ptr.get());
-      if (!m_silent) {
-        HT_ERRORF("Hyperspace 'release' error : %s", Error::get_text(error));
-        if (m_verbose)
-          HT_ERRORF("%s", Protocol::string_format_message(event_ptr.get()).c_str());
-      }
-    }
+    if (!sync_handler.wait_for_reply(event_ptr))
+      HT_THROW((int)Protocol::response_code(event_ptr.get()),
+	       "Hyperspace 'release' error");
     handle_state->lock_status = 0;
     handle_state->cond.notify_all();
   }
@@ -659,33 +580,30 @@ int Session::release(uint64_t handle) {
     goto try_again;
   }
 
-  return error;
 }
 
 
 
-int Session::get_sequencer(uint64_t handle, LockSequencer *sequencerp) {
+void Session::get_sequencer(uint64_t handle, LockSequencer *sequencerp) {
   ClientHandleStatePtr handle_state;
 
   if (!m_keepalive_handler_ptr->get_handle_state(handle, handle_state))
-    return Error::HYPERSPACE_INVALID_HANDLE;
+    HT_THROW(Error::HYPERSPACE_INVALID_HANDLE, "");
 
   if (handle_state->lock_generation == 0)
-    return Error::HYPERSPACE_NOT_LOCKED;
+    HT_THROW(Error::HYPERSPACE_NOT_LOCKED, "");
 
   sequencerp->name = handle_state->normal_name;
   sequencerp->mode = handle_state->lock_mode;
   sequencerp->generation = handle_state->lock_generation;
 
-  return Error::OK;
 }
 
 
 /**
  */
-int Session::check_sequencer(LockSequencer &sequencer) {
+void Session::check_sequencer(LockSequencer &sequencer) {
   HT_WARN("CheckSequencer not implemented.");
-  return Error::OK;
 }
 
 
@@ -698,14 +616,8 @@ int Session::status() {
   CommBufPtr cbuf_ptr(Protocol::create_status_request());
   int error = send_message(cbuf_ptr, &sync_handler);
   if (error == Error::OK) {
-    if (!sync_handler.wait_for_reply(event_ptr)) {
+    if (!sync_handler.wait_for_reply(event_ptr))
       error = (int)Protocol::response_code(event_ptr);
-      if (!m_silent) {
-        HT_ERRORF("Hyperspace 'status' error : %s", Error::get_text(error));
-        if (m_verbose)
-          HT_ERRORF("%s", Protocol::string_format_message(event_ptr.get()).c_str());
-      }
-    }
   }
   return error;
 }

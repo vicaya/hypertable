@@ -89,7 +89,6 @@ RangeServerCommandInterpreter::RangeServerCommandInterpreter(Comm *comm, Hypersp
 
 
 void RangeServerCommandInterpreter::execute_line(const String &line) {
-  int error;
   TableIdentifier *table = 0;
   RangeSpec range;
   TableInfo *table_info;
@@ -113,9 +112,8 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       table_info = m_table_map[state.table_name];
       if (table_info == 0) {
         table_info = new TableInfo(state.table_name);
-        if ((error = table_info->load(m_hyperspace_ptr)) != Error::OK)
-          HT_THROW(error, std::string("Problem loading table '") + state.table_name + "'");
-        m_table_map[state.table_name] = table_info;
+        table_info->load(m_hyperspace_ptr);
+	m_table_map[state.table_name] = table_info;
       }
       table = table_info->get_table_identifier();
       table_info->get_schema_ptr(schema_ptr);

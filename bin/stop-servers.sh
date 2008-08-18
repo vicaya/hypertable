@@ -85,39 +85,39 @@ fi
 #
 # Wait for Dfs broker to shutdown
 #
-$HYPERTABLE_HOME/bin/serverup dfsbroker
+$HYPERTABLE_HOME/bin/serverup --silent --host=localhost dfsbroker
 while [ $? == 0 ] ; do
     sleep 2
     echo "Waiting for DFS Broker to shutdown ..."
-    $HYPERTABLE_HOME/bin/serverup dfsbroker
+    $HYPERTABLE_HOME/bin/serverup --silent --host=localhost dfsbroker
 done
 
 #
 # Wait for RangeServer to shutdown
 #
-$HYPERTABLE_HOME/bin/serverup rangeserver
+$HYPERTABLE_HOME/bin/serverup --silent --host=localhost rangeserver
 while [ $? == 0 ] ; do
     sleep 2
     echo "Waiting for RangeServer to shutdown ..."
-    $HYPERTABLE_HOME/bin/serverup rangeserver
+    $HYPERTABLE_HOME/bin/serverup --silent --host=localhost rangeserver
 done
 
 #
 # Wait for Master to shutdown
 #
-$HYPERTABLE_HOME/bin/serverup master
+$HYPERTABLE_HOME/bin/serverup --silent --host=localhost master
 while [ $? == 0 ] ; do
     sleep 2
     echo "Waiting for Hypertable.Master to shutdown ..."
-    $HYPERTABLE_HOME/bin/serverup master
+    $HYPERTABLE_HOME/bin/serverup --silent --host=localhost master
 done
 
 #
 # Wait for Hyperspace to shutdown
 #
-$HYPERTABLE_HOME/bin/serverup hyperspace
+$HYPERTABLE_HOME/bin/serverup --silent --host=localhost hyperspace
 while [ $? == 0 ] ; do
     sleep 2
     echo "Waiting for Hyperspace to shutdown ..."
-    $HYPERTABLE_HOME/bin/serverup hyperspace
+    $HYPERTABLE_HOME/bin/serverup --silent --host=localhost hyperspace
 done

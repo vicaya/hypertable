@@ -40,7 +40,6 @@ using namespace Serialization;
  *
  */
 MasterClient::MasterClient(ConnectionManagerPtr &conn_mgr, Hyperspace::SessionPtr &hyperspace, time_t timeout, ApplicationQueuePtr &app_queue) : m_verbose(true), m_conn_manager_ptr(conn_mgr), m_hyperspace_ptr(hyperspace), m_app_queue_ptr(app_queue), m_timeout(timeout), m_initiated(false) {
-  int error;
 
   m_comm = m_conn_manager_ptr->get_comm();
   memset(&m_master_addr, 0, sizeof(m_master_addr));
@@ -49,12 +48,13 @@ MasterClient::MasterClient(ConnectionManagerPtr &conn_mgr, Hyperspace::SessionPt
    * Open /hypertable/master Hyperspace file to discover the master.
    */
   m_master_file_callback_ptr = new MasterFileHandler(this, m_app_queue_ptr);
-  if ((error = m_hyperspace_ptr->open("/hypertable/master", OPEN_FLAG_READ, m_master_file_callback_ptr, &m_master_file_handle)) != Error::OK) {
-    if (error != Error::HYPERSPACE_FILE_NOT_FOUND && error != Error::HYPERSPACE_BAD_PATHNAME) {
-      HT_ERRORF("Unable to open Hyperspace file '/hypertable/master' - %s", Error::get_text(error));
-      exit(1);
-    }
-    m_master_file_handle = 0;
+  m_master_file_handle = 0;
+  try {
+    m_master_file_handle = m_hyperspace_ptr->open("/hypertable/master", OPEN_FLAG_READ, m_master_file_callback_ptr);
+  }
+  catch (Exception &e) {
+    if (e.code() != Error::HYPERSPACE_FILE_NOT_FOUND && e.code() != Error::HYPERSPACE_BAD_PATHNAME)
+      HT_THROW2(e.code(), e, e.what());
   }
 }
 
@@ -73,7 +73,13 @@ int MasterClient::initiate_connection(DispatchHandlerPtr dhp) {
   m_dispatcher_handler_ptr = dhp;
   if (m_master_file_handle == 0)
     return Error::MASTER_NOT_RUNNING;
-  return reload_master();
+  try {
+    reload_master();
+  }
+  catch (Exception &e) {
+    return e.code();
+  }
+  return Error::OK;
 }
 
 
@@ -247,17 +253,13 @@ int MasterClient::send_message(CommBufPtr &cbp, DispatchHandler *handler) {
 /**
  *
  */
-int MasterClient::reload_master() {
+void MasterClient::reload_master() {
   boost::mutex::scoped_lock lock(m_mutex);
   int error;
   DynamicBuffer value(0);
   std::string addr_str;
 
-  if ((error = m_hyperspace_ptr->attr_get(m_master_file_handle, "address", value)) != Error::OK) {
-    if (m_verbose)
-      HT_ERRORF("Problem reading 'address' attribute of Hyperspace file /hypertable/master - %s", Error::get_text(error));
-    return Error::MASTER_NOT_RUNNING;
-  }
+  m_hyperspace_ptr->attr_get(m_master_file_handle, "address", value);
 
   addr_str = (const char *)value.base;
 
@@ -279,7 +281,6 @@ int MasterClient::reload_master() {
     m_conn_manager_ptr->add(m_master_addr, 15, "Master", m_dispatcher_handler_ptr);
   }
 
-  return Error::OK;
 }
 
 

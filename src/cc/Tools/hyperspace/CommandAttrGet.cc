@@ -41,59 +41,46 @@ const char *CommandAttrGet::ms_usage[] = {
 };
 
 
-int CommandAttrGet::run() {
+void CommandAttrGet::run() {
   uint64_t handle;
-  int error;
   DynamicBuffer value(0);
 
-  if (m_args.size() < 2 || m_args.size() > 3) {
-    cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
-    return -1;
-  }
+  if (m_args.size() < 2 || m_args.size() > 3)
+    HT_THROW(Error::PARSE_ERROR, "Wrong number of arguments.  Type 'help' for usage.");
 
-  if (m_args[0].second != "" || m_args[1].second != "") {
-    cerr << "Invalid character '=' in argument." << endl;
-    return -1;
-  }
+  if (m_args[0].second != "" || m_args[1].second != "")
+    HT_THROW(Error::PARSE_ERROR, "Invalid character '=' in argument.");
 
-  if (!Util::get_handle(m_args[0].first, &handle))
-    return -1;
+  handle = Util::get_handle(m_args[0].first);
 
-  if ((error = m_session->attr_get(handle, m_args[1].first, value)) == Error::OK) {
-    if (m_args.size() == 3) {
-      if (m_args[2].first == "short") {
-        if (value.fill() != 2) {
-          cerr << "Expected 2 byte short, but got " << value.fill() << " bytes" << endl;
-          return Error::HYPERSPACE_BAD_ATTRIBUTE;
-        }
-        short sval;
-        memcpy(&sval, value.base, 2);
-        cout << sval << endl;
-      }
-      else if (m_args[2].first == "int") {
-        if (value.fill() != 4) {
-          cerr << "Expected 4 byte int, but got " << value.fill() << " bytes" << endl;
-          return Error::HYPERSPACE_BAD_ATTRIBUTE;
-        }
-        uint32_t ival;
-        memcpy(&ival, value.base, 4);
-        cout << ival << endl;
-      }
-      else if (m_args[2].first == "long") {
-        if (value.fill() != 8) {
-          cerr << "Expected 8 byte int, but got " << value.fill() << " bytes" << endl;
-          return Error::HYPERSPACE_BAD_ATTRIBUTE;
-        }
-        uint64_t lval;
-        memcpy(&lval, value.base, 8);
-        cout << lval << endl;
-      }
+  m_session->attr_get(handle, m_args[1].first, value);
+
+  if (m_args.size() == 3) {
+    if (m_args[2].first == "short") {
+      if (value.fill() != 2)
+	HT_THROWF(Error::HYPERSPACE_BAD_ATTRIBUTE, "Expected 2 byte short, but got %lu bytes", (Lu)value.fill());
+      short sval;
+      memcpy(&sval, value.base, 2);
+      cout << sval << endl;
     }
-    else {
-      std::string valstr = std::string((const char *)value.base, value.fill());
-      cout << valstr << endl;
+    else if (m_args[2].first == "int") {
+      if (value.fill() != 4)
+	HT_THROWF(Error::HYPERSPACE_BAD_ATTRIBUTE, "Expected 4 byte int, but got %lu bytes", (Lu)value.fill());
+      uint32_t ival;
+      memcpy(&ival, value.base, 4);
+      cout << ival << endl;
+    }
+    else if (m_args[2].first == "long") {
+      if (value.fill() != 8)
+	HT_THROWF(Error::HYPERSPACE_BAD_ATTRIBUTE, "Expected 8 byte int, but got %lu bytes", (Lu)value.fill());
+      uint64_t lval;
+      memcpy(&lval, value.base, 8);
+      cout << lval << endl;
     }
   }
+  else {
+    std::string valstr = std::string((const char *)value.base, value.fill());
+    cout << valstr << endl;
+  }
 
-  return error;
 }

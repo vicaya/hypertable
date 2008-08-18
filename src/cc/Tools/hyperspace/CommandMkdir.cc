@@ -38,17 +38,13 @@ const char *CommandMkdir::ms_usage[] = {
   (const char *)0
 };
 
-int CommandMkdir::run() {
+void CommandMkdir::run() {
 
-  if (m_args.size() != 1) {
-    cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
-    return -1;
-  }
+  if (m_args.size() != 1)
+    HT_THROW(Error::PARSE_ERROR, "Wrong number of arguments.  Type 'help' for usage.");
 
-  if (m_args[0].second != "") {
-    cerr << "Invalid argument - " << m_args[0].second << endl;
-    return -1;
-  }
+  if (m_args[0].second != "")
+    HT_THROWF(Error::PARSE_ERROR, "Invalid argument - %s", m_args[0].second.c_str());
 
-  return m_session->mkdir(m_args[0].first);
+  m_session->mkdir(m_args[0].first);
 }

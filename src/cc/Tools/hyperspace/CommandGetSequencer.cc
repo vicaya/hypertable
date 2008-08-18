@@ -39,26 +39,20 @@ const char *CommandGetSequencer::ms_usage[] = {
   (const char *)0
 };
 
-int CommandGetSequencer::run() {
+void CommandGetSequencer::run() {
   uint64_t handle;
-  int error;
   struct LockSequencer lockseq;
 
-  if (m_args.size() != 1) {
-    cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
-    return -1;
-  }
+  if (m_args.size() != 1)
+    HT_THROW(Error::PARSE_ERROR, "Wrong number of arguments.  Type 'help' for usage.");
 
-  if (m_args[0].second != "") {
-    cerr << "Invalid character '=' in argument." << endl;
-    return -1;
-  }
+  if (m_args[0].second != "")
+    HT_THROW(Error::PARSE_ERROR, "Invalid character '=' in argument.");
 
-  if (!Util::get_handle(m_args[0].first, &handle))
-    return -1;
+  handle = Util::get_handle(m_args[0].first);
 
-  if ((error = m_session->get_sequencer(handle, &lockseq)) == Error::OK)
-    cout << "SEQUENCER name=" << lockseq.name << " mode=" << lockseq.mode << " generation=" << lockseq.generation << endl << flush;
+  m_session->get_sequencer(handle, &lockseq);
 
-  return error;
+  cout << "SEQUENCER name=" << lockseq.name << " mode=" << lockseq.mode << " generation=" << lockseq.generation << endl << flush;
+
 }

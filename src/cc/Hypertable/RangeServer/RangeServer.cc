@@ -172,8 +172,7 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
   m_live_map_ptr = new TableInfoMap();
   m_replay_map_ptr = new TableInfoMap();
 
-  if (initialize(props_ptr) != Error::OK)
-    exit(1);
+  initialize(props_ptr);
 
   /**
    * Listen for incoming connections
@@ -230,25 +229,13 @@ RangeServer::~RangeServer() {
  * - Clear any Range server state (including any partially created commit logs)
  * - Open the commit log
  */
-int RangeServer::initialize(PropertiesPtr &props_ptr) {
-  int error;
-  bool exists;
+void RangeServer::initialize(PropertiesPtr &props_ptr) {
   String top_dir;
 
-  /**
-   * Create /hypertable/servers directory
-   */
-  if ((error = m_hyperspace_ptr->exists("/hypertable/servers", &exists)) != Error::OK) {
-    HT_ERRORF("Problem checking existence of '/hypertable/servers' Hyperspace directory - %s", Error::get_text(error));
-    return error;
-  }
-
-  if (!exists) {
-    m_hyperspace_ptr->mkdir("/hypertable");
-    if ((error = m_hyperspace_ptr->mkdir("/hypertable/servers")) != Error::OK) {
-      HT_ERRORF("Problem creating directory '/hypertable/servers' - %s", Error::get_text(error));
-      return error;
-    }
+  if (!m_hyperspace_ptr->exists("/hypertable/servers")) {
+    if (!m_hyperspace_ptr->exists("/hypertable"))
+      m_hyperspace_ptr->mkdir("/hypertable");
+    m_hyperspace_ptr->mkdir("/hypertable/servers");
   }
 
   top_dir = (String)"/hypertable/servers/" + m_location;
@@ -261,24 +248,19 @@ int RangeServer::initialize(PropertiesPtr &props_ptr) {
   uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE | OPEN_FLAG_LOCK;
   HandleCallbackPtr null_callback;
 
-  if ((error = m_hyperspace_ptr->open(top_dir.c_str(), oflags, null_callback, &m_existence_file_handle)) != Error::OK) {
-    HT_ERRORF("Problem creating Hyperspace server existance file '%s' - %s", top_dir.c_str(), Error::get_text(error));
-    exit(1);
-  }
+  m_existence_file_handle = m_hyperspace_ptr->open(top_dir.c_str(), oflags, null_callback);
 
   while (true) {
 
     lock_status = 0;
 
-    if ((error = m_hyperspace_ptr->try_lock(m_existence_file_handle, LOCK_MODE_EXCLUSIVE, &lock_status, &m_existence_file_sequencer)) != Error::OK) {
-      HT_ERRORF("Problem obtaining exclusive lock on master Hyperspace file '%s' - %s", top_dir.c_str(), Error::get_text(error));
-      exit(1);
-    }
+    m_hyperspace_ptr->try_lock(m_existence_file_handle, LOCK_MODE_EXCLUSIVE, &lock_status, &m_existence_file_sequencer);
 
     if (lock_status == LOCK_STATUS_GRANTED)
       break;
 
     cout << "Waiting for exclusive lock on hyperspace:/" << top_dir << " ..." << endl;
+    poll(0, 0, 5000);
   }
 
   Global::log_dir = top_dir + "/log";
@@ -294,15 +276,13 @@ int RangeServer::initialize(PropertiesPtr &props_ptr) {
     Global::log_dfs->mkdirs(path);
   }
   catch (Exception &e) {
-    HT_ERRORF("Problem creating commit log directory '%s': %s",
-              path.c_str(), e.what());
-    return error;
+    HT_THROW2F(e.code(), e, "Problem creating commit log directory '%s': %s",
+	       path.c_str(), e.what());
   }
 
   if (Global::verbose)
     cout << "log_dir=" << Global::log_dir << endl;
 
-  return Error::OK;
 }
 
 
@@ -765,11 +745,9 @@ void RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       register_table = true;
     }
 
-    /**
-     * Verify schema, this will create the Schema object and add it to table_info_ptr if it doesn't exist
-     */
-    if ((error = verify_schema(table_info_ptr, table->generation, errmsg)) != Error::OK)
-      HT_THROW(error, errmsg);
+    // Verify schema, this will create the Schema object and add it to
+    // table_info_ptr if it doesn't exist
+    verify_schema(table_info_ptr, table->generation);
 
     if (register_table)
       m_live_map_ptr->set(table->id, table_info_ptr);
@@ -820,17 +798,17 @@ void RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 
       HT_INFO("Loading root METADATA range");
 
-      if ((error = m_hyperspace_ptr->open("/hypertable/root", oflags, null_callback, &handle)) != Error::OK) {
-	HT_ERRORF("Problem creating Hyperspace root file '/hypertable/root' - %s", Error::get_text(error));
+      try {
+	handle = m_hyperspace_ptr->open("/hypertable/root", oflags, null_callback);
+	m_hyperspace_ptr->attr_set(handle, "Location", m_location.c_str(), strlen(m_location.c_str()));
+	m_hyperspace_ptr->close(handle);
+      }
+      catch (Exception &e) {
+	HT_ERROR_OUT << "Problem setting attribute 'location' on Hyperspace file '/hypertable/root'" << HT_END;
+	HT_ERROR_OUT << e << HT_END;
 	HT_ABORT;
       }
 
-      if ((error = m_hyperspace_ptr->attr_set(handle, "Location", m_location.c_str(), strlen(m_location.c_str()))) != Error::OK) {
-	HT_ERRORF("Problem creating attribute 'location' on Hyperspace file '/hypertable/root' - %s", Error::get_text(error));
-	HT_ABORT;
-      }
-
-      m_hyperspace_ptr->close(handle);
     }
 
     /**
@@ -1002,11 +980,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
     }
 
     // verify schema
-    if ((error = verify_schema(table_info_ptr, table->generation, errmsg)) != Error::OK) {
-      HT_ERRORF("%s", errmsg.c_str());
-      cb->error(error, errmsg);
-      return;
-    }
+    verify_schema(table_info_ptr, table->generation);
 
     mod_end = buffer.base + buffer.size;
     mod_ptr = buffer.base;
@@ -1511,12 +1485,9 @@ void RangeServer::replay_load_range(ResponseCallback *cb, const TableIdentifier 
       register_table = true;
     }
 
-    /**
-     * Verify schema, this will create the Schema object and add it to table_info_ptr if it doesn't exist
-     */
-    if ((error = verify_schema(table_info_ptr, table->generation, errmsg)) != Error::OK)
-      HT_THROW(error, errmsg);
-
+    // Verify schema, this will create the Schema object and add it to
+    // table_info_ptr if it doesn't exist
+    verify_schema(table_info_ptr, table->generation);
 
     if (register_table)
       m_replay_map_ptr->set(table->id, table_info_ptr);
@@ -1781,44 +1752,33 @@ void RangeServer::shutdown(ResponseCallback *cb) {
 
 
 
-int RangeServer::verify_schema(TableInfoPtr &table_info_ptr, int generation, String &err_msg) {
+void RangeServer::verify_schema(TableInfoPtr &table_info_ptr, int generation) {
   String tablefile = (String)"/hypertable/tables/" + table_info_ptr->get_name();
   DynamicBuffer valbuf;
   HandleCallbackPtr null_handle_callback;
-  int error;
   uint64_t handle;
   SchemaPtr schema_ptr = table_info_ptr->get_schema();
 
   if (schema_ptr.get() == 0 || schema_ptr->get_generation() < generation) {
 
-    if ((error = m_hyperspace_ptr->open(tablefile.c_str(), OPEN_FLAG_READ, null_handle_callback, &handle)) != Error::OK) {
-      HT_ERRORF("Unable to open Hyperspace file '%s' (%s)", tablefile.c_str(), Error::get_text(error));
-      exit(1);
-    }
+    handle = m_hyperspace_ptr->open(tablefile.c_str(), OPEN_FLAG_READ, null_handle_callback);
 
-    if ((error = m_hyperspace_ptr->attr_get(handle, "schema", valbuf)) != Error::OK) {
-      err_msg = (String)"Problem getting 'schema' attribute for '" + tablefile + "'";
-      return error;
-    }
+    m_hyperspace_ptr->attr_get(handle, "schema", valbuf);
 
     m_hyperspace_ptr->close(handle);
 
     schema_ptr = Schema::new_instance((const char *)valbuf.base, valbuf.fill(), true);
-    if (!schema_ptr->is_valid()) {
-      err_msg = (String)"Schema Parse Error for table '" + table_info_ptr->get_name() + "' : " + schema_ptr->get_error_string();
-      return Error::RANGESERVER_SCHEMA_PARSE_ERROR;
-    }
+    if (!schema_ptr->is_valid())
+      HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR,
+	       (String)"Schema Parse Error for table '" + table_info_ptr->get_name() + "' : " + schema_ptr->get_error_string());
 
     table_info_ptr->update_schema(schema_ptr);
 
     // Generation check ...
-    if (schema_ptr->get_generation() < generation) {
-      err_msg = (String)"Fetched Schema generation for table '" + table_info_ptr->get_name() + "' is " + schema_ptr->get_generation() + " but supplied is " + generation;
-      return Error::RANGESERVER_GENERATION_MISMATCH;
-    }
+    if (schema_ptr->get_generation() < generation)
+      HT_THROW(Error::RANGESERVER_GENERATION_MISMATCH, (String)"Fetched Schema generation for table '" + table_info_ptr->get_name() + "' is " + schema_ptr->get_generation() + " but supplied is " + generation);
   }
 
-  return Error::OK;
 }
 
 

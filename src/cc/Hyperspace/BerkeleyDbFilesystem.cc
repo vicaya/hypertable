@@ -172,7 +172,10 @@ BerkeleyDbFilesystem::get_xattr_i32(DbTxn *txn, const String &fname,
   }
   catch (DbException &e) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
-    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+    if (e.get_errno() == DB_LOCK_DEADLOCK)
+      HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else
+      HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
 
   return false;
@@ -204,7 +207,10 @@ BerkeleyDbFilesystem::set_xattr_i32(DbTxn *txn, const String &fname,
   }
   catch (DbException &e) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
-    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+    if (e.get_errno() == DB_LOCK_DEADLOCK)
+      HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else
+      HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
 
   HT_EXPECT(ret == 0, HYPERSPACE_BERKELEYDB_ERROR);
@@ -234,7 +240,10 @@ BerkeleyDbFilesystem::get_xattr_i64(DbTxn *txn, const String &fname,
   }
   catch (DbException &e) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
-    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+    if (e.get_errno() == DB_LOCK_DEADLOCK)
+      HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else
+      HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
 
   return false;
@@ -266,7 +275,10 @@ BerkeleyDbFilesystem::set_xattr_i64(DbTxn *txn, const String &fname,
   }
   catch (DbException &e) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
-    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+    if (e.get_errno() == DB_LOCK_DEADLOCK)
+      HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else
+      HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
 
   HT_EXPECT(ret == 0, HYPERSPACE_BERKELEYDB_ERROR);
@@ -292,7 +304,10 @@ BerkeleyDbFilesystem::set_xattr(DbTxn *txn, const String &fname,
   }
   catch (DbException &e) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
-    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+    if (e.get_errno() == DB_LOCK_DEADLOCK)
+      HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else
+      HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
 
   HT_EXPECT(ret == 0, HYPERSPACE_BERKELEYDB_ERROR);
@@ -322,7 +337,10 @@ BerkeleyDbFilesystem::get_xattr(DbTxn *txn, const String &fname,
   }
   catch (DbException &e) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
-    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+    if (e.get_errno() == DB_LOCK_DEADLOCK)
+      HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else
+      HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
 
   return false;
@@ -345,7 +363,10 @@ BerkeleyDbFilesystem::del_xattr(DbTxn *txn, const String &fname,
   }
   catch (DbException &e) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
-    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+    if (e.get_errno() == DB_LOCK_DEADLOCK)
+      HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else
+      HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
 }
 
@@ -398,7 +419,10 @@ void BerkeleyDbFilesystem::mkdir(DbTxn *txn, const String &name) {
   }
   catch (DbException &e) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
-    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+    if (e.get_errno() == DB_LOCK_DEADLOCK)
+      HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else
+      HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
 }
 
@@ -463,7 +487,10 @@ void BerkeleyDbFilesystem::unlink(DbTxn *txn, const String &name) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
     if (cursorp)
       cursorp->close();
-    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+    if (e.get_errno() == DB_LOCK_DEADLOCK)
+      HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else
+      HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
 }
 
@@ -495,7 +522,10 @@ BerkeleyDbFilesystem::exists(DbTxn *txn, String fname, bool *is_dir_p) {
   }
   catch (DbException &e) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
-    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+     if (e.get_errno() == DB_LOCK_DEADLOCK)
+      HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else
+      HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
 
   HT_DEBUG_OUT <<"'"<< fname <<"' exists."<< HT_END;
@@ -544,8 +574,11 @@ BerkeleyDbFilesystem::create(DbTxn *txn, const String &fname, bool temp) {
   }
   catch (DbException &e) {
     HT_ERRORF("Berkeley DB error: %s", e.what());
-    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
-  }
+     if (e.get_errno() == DB_LOCK_DEADLOCK)
+      HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else
+      HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+   }
 }
 
 
@@ -626,8 +659,11 @@ BerkeleyDbFilesystem::get_directory_listing(DbTxn *txn, String fname,
     HT_ERRORF("Berkeley DB error: %s", e.what());
     if (cursorp)
       cursorp->close();
-    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
-  }
+    if (e.get_errno() == DB_LOCK_DEADLOCK)
+      HT_THROW(HYPERSPACE_BERKELEYDB_DEADLOCK, e.what());
+    else
+      HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
+   }
 }
 
 

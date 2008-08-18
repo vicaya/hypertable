@@ -47,13 +47,12 @@ const char *CommandCreate::ms_usage[] = {
   (const char *)0
 };
 
-int CommandCreate::run() {
+void CommandCreate::run() {
   std::string fname = "";
   int flags = 0;
   int event_mask = 0;
   char *str, *last;
   uint64_t handle;
-  int error;
   std::vector<Attribute> init_attrs;
   Attribute attr;
 
@@ -96,31 +95,25 @@ int CommandCreate::run() {
       attr.value_len = strlen((const char *)attr.value);
       init_attrs.push_back(attr);
     }
-    else if (fname != "" || m_args[i].second != "") {
-      cerr << "Invalid arguments.  Type 'help' for usage." << endl;
-      return -1;
-    }
+    else if (fname != "" || m_args[i].second != "")
+      HT_THROW(Error::PARSE_ERROR, "Invalid arguments.  Type 'help' for usage.");
     else
       fname = m_args[i].first;
   }
 
-  if (flags == 0) {
-    cerr << "Error: no flags supplied." << endl;
-    return -1;
-  }
-  else if (fname == "") {
-    cerr << "Error: no filename supplied." << endl;
-    return -1;
-  }
+  if (flags == 0)
+    HT_THROW(Error::PARSE_ERROR, "Error: no flags supplied.");
+  else if (fname == "")
+    HT_THROW(Error::PARSE_ERROR, "Error: no filename supplied.");
 
   //HT_INFOF("create(%s, 0x%x, 0x%x)", fname.c_str(), flags, event_mask);
 
   HandleCallbackPtr callback = new FileHandleCallback(event_mask);
 
-  if ((error = m_session->create(fname, flags, callback, init_attrs, &handle)) == Error::OK) {
-    std::string normal_name;
-    Util::normalize_pathname(fname, normal_name);
-    Global::file_map[normal_name] = handle;
-  }
-  return error;
+  handle = m_session->create(fname, flags, callback, init_attrs);
+
+  std::string normal_name;
+  Util::normalize_pathname(fname, normal_name);
+  Global::file_map[normal_name] = handle;
+
 }

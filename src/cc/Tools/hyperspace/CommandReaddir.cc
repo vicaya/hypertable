@@ -42,35 +42,28 @@ const char *CommandReaddir::ms_usage[] = {
 };
 
 
-int CommandReaddir::run() {
+void CommandReaddir::run() {
   uint64_t handle;
-  int error;
   std::vector<struct DirEntry> listing;
 
-  if (m_args.size() != 1) {
-    cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
-    return -1;
+  if (m_args.size() != 1)
+    HT_THROW(Error::PARSE_ERROR, "Wrong number of arguments.  Type 'help' for usage.");
+
+  if (m_args[0].second != "")
+    HT_THROW(Error::PARSE_ERROR, "Invalid character '=' in argument.");
+
+  handle = Util::get_handle(m_args[0].first);
+
+  m_session->readdir(handle, listing);
+  
+  struct LtDirEntry ascending;
+  sort(listing.begin(), listing.end(), ascending);
+  for (size_t i=0; i<listing.size(); i++) {
+    if (listing[i].is_dir)
+      cout << "(dir) ";
+    else
+      cout << "      ";
+    cout << listing[i].name << endl;
   }
 
-  if (m_args[0].second != "") {
-    cerr << "Invalid character '=' in argument." << endl;
-    return -1;
-  }
-
-  if (!Util::get_handle(m_args[0].first, &handle))
-    return -1;
-
-  if ((error = m_session->readdir(handle, listing)) == Error::OK) {
-    struct LtDirEntry ascending;
-    sort(listing.begin(), listing.end(), ascending);
-    for (size_t i=0; i<listing.size(); i++) {
-      if (listing[i].is_dir)
-        cout << "(dir) ";
-      else
-        cout << "      ";
-      cout << listing[i].name << endl;
-    }
-  }
-
-  return error;
 }

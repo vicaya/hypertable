@@ -46,7 +46,7 @@ using namespace Hyperspace;
 /**
  *
  */
-Client::Client(const String &install_dir, const String &config_file) {
+Client::Client(const String &install_dir, const String &config_file, time_t timeout) : m_timeout(timeout) {
   System::initialize(install_dir);
   ReactorFactory::initialize((uint16_t)System::get_processor_count());
   if (config_file == "")
@@ -55,7 +55,7 @@ Client::Client(const String &install_dir, const String &config_file) {
     initialize(config_file);
 }
 
-Client::Client(const String &install_dir) {
+Client::Client(const String &install_dir, time_t timeout) : m_timeout(timeout) {
   System::initialize(install_dir);
   ReactorFactory::initialize((uint16_t)System::get_processor_count());
   initialize(System::install_dir + "/conf/hypertable.cfg");
@@ -83,7 +83,6 @@ Table *Client::open_table(const String &name) {
  *
  */
 uint32_t Client::get_table_id(const String &name) {
-  int error;
   // TODO: issue 11
   String table_file = (String)"/hypertable/tables/" + name;
   DynamicBuffer value_buf(0);
@@ -94,20 +93,17 @@ uint32_t Client::get_table_id(const String &name) {
   /**
    * Open table file in Hyperspace
    */
-  if ((error = m_hyperspace_ptr->open(table_file.c_str(), OPEN_FLAG_READ, null_handle_callback, &handle)) != Error::OK)
-    HT_THROW(error, (String)"Hyperspace::open(" + table_file + ") failed");
+  handle = m_hyperspace_ptr->open(table_file.c_str(), OPEN_FLAG_READ, null_handle_callback);
 
   /**
    * Get the 'table_id' attribute
    */
-  if ((error = m_hyperspace_ptr->attr_get(handle, "table_id", value_buf)) != Error::OK)
-    HT_THROW(error, (String)"Hyperspace::attr_get(file='" + table_file + "', attr=table_id) failed");
+  m_hyperspace_ptr->attr_get(handle, "table_id", value_buf);
 
   /**
    * Close the hyperspace file
    */
-  if ((error = m_hyperspace_ptr->close(handle)) != Error::OK)
-    HT_THROW(error, "");
+  m_hyperspace_ptr->close(handle);
 
   assert(value_buf.fill() == sizeof(int32_t));
 
@@ -133,16 +129,13 @@ String Client::get_schema(const String &name) {
 /**
  */
 void Client::get_tables(std::vector<String> &tables) {
-  int error;
   uint64_t handle;
   HandleCallbackPtr null_handle_callback;
   std::vector<Hyperspace::DirEntry> listing;
 
-  if ((error = m_hyperspace_ptr->open("/hypertable/tables", OPEN_FLAG_READ, null_handle_callback, &handle)) != Error::OK)
-    HT_THROW(error, "");
+  handle = m_hyperspace_ptr->open("/hypertable/tables", OPEN_FLAG_READ, null_handle_callback);
 
-  if ((error = m_hyperspace_ptr->readdir(handle, listing)) != Error::OK)
-    HT_THROW(error, "");
+  m_hyperspace_ptr->readdir(handle, listing);
 
   for (size_t i=0; i<listing.size(); i++) {
     if (!listing[i].is_dir)
@@ -178,12 +171,17 @@ HqlCommandInterpreter *Client::create_hql_interpreter() {
 
 
 void Client::initialize(const String &config_file) {
-  time_t master_timeout;
 
   m_props_ptr = new Properties(config_file);
 
+  if (m_timeout == -1) {
+    m_timeout = (time_t)m_props_ptr->get_int("Hypertable.Client.Timeout", HYPERTABLE_CLIENT_TIMEOUT);
+  }
+
   m_comm = Comm::instance();
   m_conn_manager_ptr = new ConnectionManager(m_comm);
+  
+  m_props_ptr->set_int("Hyperspace.Client.Timeout", (int)m_timeout);
 
   m_hyperspace_ptr = new Hyperspace::Session(m_comm, m_props_ptr);
   while (!m_hyperspace_ptr->wait_for_connection(2)) {
@@ -194,9 +192,7 @@ void Client::initialize(const String &config_file) {
 
   m_app_queue_ptr = new ApplicationQueue(1);
 
-  master_timeout = m_props_ptr->get_int("Hypertable.Master.Client.Timeout", 180);
-
-  m_master_client_ptr = new MasterClient(m_conn_manager_ptr, m_hyperspace_ptr, master_timeout, m_app_queue_ptr);
+  m_master_client_ptr = new MasterClient(m_conn_manager_ptr, m_hyperspace_ptr, m_timeout, m_app_queue_ptr);
   if (m_master_client_ptr->initiate_connection(0) != Error::OK) {
     HT_ERROR("Unable to establish connection with Master, exiting...");
     exit(1);

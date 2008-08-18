@@ -36,15 +36,17 @@ using namespace Hyperspace;
  *
  */
 MetadataRoot::MetadataRoot(SchemaPtr &schema_ptr) : m_next(0) {
-  int error;
   HandleCallbackPtr null_callback;
   typedef std::list<Schema::AccessGroup *> AgList;
   AgList *ag_list = schema_ptr->get_access_group_list();
   for (AgList::iterator ag_iter = ag_list->begin(); ag_iter != ag_list->end(); ag_iter++)
     m_agnames.push_back((*ag_iter)->name);
 
-  if ((error = Global::hyperspace_ptr->open("/hypertable/root", OPEN_FLAG_READ, null_callback, &m_handle)) != Error::OK) {
-    HT_ERRORF("Problem creating Hyperspace root file '/hypertable/root' - %s", Error::get_text(error));
+  try {
+    m_handle = Global::hyperspace_ptr->open("/hypertable/root", OPEN_FLAG_READ, null_callback);
+  }
+  catch (Exception &e) {
+    HT_ERRORF("Problem opening Hyperspace root file '/hypertable/root' - %s - %s", Error::get_text(e.code()), e.what());
     HT_ABORT;
   }
 
@@ -56,9 +58,11 @@ MetadataRoot::MetadataRoot(SchemaPtr &schema_ptr) : m_next(0) {
  *
  */
 MetadataRoot::~MetadataRoot() {
-  int error;
-  if ((error = Global::hyperspace_ptr->close(m_handle)) != Error::OK) {
-    HT_WARNF("Problem closing Hyperspace handle - %s", Error::get_text(error));
+  try {
+    Global::hyperspace_ptr->close(m_handle);
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
   }
 }
 
@@ -71,37 +75,39 @@ void MetadataRoot::reset_files_scan() {
 
 
 bool MetadataRoot::get_next_files(std::string &ag_name, std::string &files) {
-  int error;
 
   while (m_next < m_agnames.size()) {
     DynamicBuffer value(0);
     std::string attrname = (std::string)"files." + m_agnames[m_next];
     m_next++;
-    Global::hyperspace_ptr->set_silent_flag(true);
-    if ((error = Global::hyperspace_ptr->attr_get(m_handle, attrname.c_str(), value)) != Error::OK) {
-      if (error == Error::HYPERSPACE_ATTR_NOT_FOUND)
+
+    try {
+      Global::hyperspace_ptr->attr_get(m_handle, attrname.c_str(), value);
+    }
+    catch (Exception &e) {
+      if (e.code() == Error::HYPERSPACE_ATTR_NOT_FOUND)
         continue;
       HT_ERRORF("Problem getting attribute '%s' on Hyperspace file '/hypertable/root' - %s",
-                   attrname.c_str(), Error::get_text(error));
-      Global::hyperspace_ptr->set_silent_flag(false);
+		attrname.c_str(), Error::get_text(e.code()));
       return false;
     }
     files = (const char *)value.base;
-    Global::hyperspace_ptr->set_silent_flag(false);
     return true;
   }
 
-  Global::hyperspace_ptr->set_silent_flag(false);
   return false;
 }
 
 
 
 void MetadataRoot::write_files(std::string &ag_name, std::string &files) {
-  int error;
   std::string attrname = (std::string)"files." + ag_name;
 
-  if ((error = Global::hyperspace_ptr->attr_set(m_handle, attrname.c_str(), files.c_str(), files.length())) != Error::OK)
-    throw Hypertable::Exception(error, (std::string)"Problem creating attribute '" + attrname + "' on Hyperspace file '/hypertable/root'");
+  try {
+    Global::hyperspace_ptr->attr_set(m_handle, attrname.c_str(), files.c_str(), files.length());
+  }
+  catch (Exception &e) {
+    HT_THROW2(e.code(), e, (std::string)"Problem creating attribute '" + attrname + "' on Hyperspace file '/hypertable/root'");
+  }
 
 }

@@ -40,22 +40,17 @@ const char *CommandRelease::ms_usage[] = {
   (const char *)0
 };
 
-int CommandRelease::run() {
+void CommandRelease::run() {
   uint64_t handle;
   struct LockSequencer lockseq;
 
-  if (m_args.size() != 1) {
-    cerr << "Wrong number of arguments.  Type 'help' for usage." << endl;
-    return -1;
-  }
+  if (m_args.size() != 1)
+    HT_THROW(Error::PARSE_ERROR, "Wrong number of arguments.  Type 'help' for usage.");
 
-  if (m_args[0].second != "") {
-    cerr << "Invalid character '=' in argument." << endl;
-    return -1;
-  }
+  if (m_args[0].second != "")
+    HT_THROW(Error::PARSE_ERROR, "Invalid character '=' in argument.");
 
-  if (!Util::get_handle(m_args[0].first, &handle))
-    return -1;
+  handle = Util::get_handle(m_args[0].first);
 
-  return m_session->release(handle);
+  m_session->release(handle);
 }

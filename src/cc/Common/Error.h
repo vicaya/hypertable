@@ -58,6 +58,7 @@ namespace Hypertable {
       MALFORMED_REQUEST                  = 23,
       TOO_MANY_COLUMNS                   = 24,
       BAD_DOMAIN_NAME                    = 25,
+      PARSE_ERROR                        = 26,
 
       COMM_NOT_CONNECTED       = 0x00010001,
       COMM_BROKEN_CONNECTION   = 0x00010002,
@@ -99,6 +100,7 @@ namespace Hypertable {
       HYPERSPACE_BAD_ATTRIBUTE     = 0x00030011,
       HYPERSPACE_BERKELEYDB_ERROR  = 0x00030012,
       HYPERSPACE_DIR_NOT_EMPTY     = 0x00030013,
+      HYPERSPACE_BERKELEYDB_DEADLOCK = 0x00030014,
 
       MASTER_TABLE_EXISTS    = 0x00040001,
       MASTER_BAD_SCHEMA      = 0x00040002,

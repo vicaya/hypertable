@@ -36,13 +36,12 @@ const char *CommandRmdir::ms_usage[] = {
 };
 
 
-int CommandRmdir::run() {
-  if (m_args.size() < 1) {
-    cerr << "Error:  no filename supplied." << endl;
-    return -1;
-  }
+void CommandRmdir::run() {
+
+  if (m_args.size() < 1)
+    HT_THROW(Error::PARSE_ERROR, "No filename supplied.");
 
   m_client->rmdir(m_args[0].first);
-  return Error::OK;
+
 }
 

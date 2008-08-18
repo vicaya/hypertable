@@ -40,7 +40,7 @@ namespace Hypertable {
 
     virtual const char *command_text() = 0;
     virtual const char **usage() = 0;
-    virtual int run() = 0;
+    virtual void run() = 0;
 
     void clear_args() { m_args.clear(); }
     void push_arg(std::string key, std::string value) {

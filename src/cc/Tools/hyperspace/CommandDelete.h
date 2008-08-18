@@ -35,7 +35,7 @@ namespace Hyperspace {
     CommandDelete(Session *session) : m_session(session) { return; }
     virtual const char *command_text() { return "delete"; }
     virtual const char **usage() { return ms_usage; }
-    virtual int run();
+    virtual void run();
 
   private:
     static const char *ms_usage[];

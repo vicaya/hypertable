@@ -69,7 +69,7 @@ namespace Hypertable {
     void join();
 
   protected:
-    int create_table(const char *tablename, const char *schemastr, String &errmsg);
+    void create_table(const char *tablename, const char *schemastr);
 
   private:
     bool initialize();

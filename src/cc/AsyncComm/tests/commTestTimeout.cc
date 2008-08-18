@@ -160,7 +160,7 @@ int main(int argc, char **argv) {
     }
 
     msg = "bar";
-    cbp.reset(new CommBuf(hbuilder, encoded_length_str16(msg)));
+    cbp = new CommBuf(hbuilder, encoded_length_str16(msg));
     cbp->append_str16(msg);
     if ((error = comm->send_request(addr, 5, cbp, resp_handler)) != Error::OK) {
       HT_ERRORF("Problem sending request - %s", Error::get_text(error));

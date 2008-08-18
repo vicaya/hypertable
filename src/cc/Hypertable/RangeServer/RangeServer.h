@@ -97,10 +97,10 @@ namespace Hypertable {
     void wait_for_recovery_finish(TableIdentifier *table, RangeSpec *range);
 
   private:
-    int initialize(PropertiesPtr &);
+    void initialize(PropertiesPtr &);
     void local_recover();
     void replay_log(CommitLogReaderPtr &log_reader_ptr);
-    int verify_schema(TableInfoPtr &, int generation, std::string &errmsg);
+    void verify_schema(TableInfoPtr &, int generation);
     void schedule_log_cleanup_compactions(std::vector<RangePtr> &range_vec, CommitLog *log, uint64_t prune_threshold);
 
     Mutex                  m_mutex;

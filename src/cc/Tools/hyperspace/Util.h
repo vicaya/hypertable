@@ -22,12 +22,14 @@
 #ifndef HYPERTABLE_UTIL_H
 #define HYPERTABLE_UTIL_H
 
+#include "Common/Error.h"
+
 namespace Hyperspace {
 
   namespace Util {
 
     extern void normalize_pathname(std::string name, std::string &normal_name);
-    extern bool get_handle(std::string name, uint64_t *handlep);
+    extern uint64_t get_handle(std::string name);
   }
 
 }

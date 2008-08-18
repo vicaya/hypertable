@@ -24,6 +24,10 @@
 
 #include <string>
 
+extern "C" {
+#include <time.h>
+}
+
 #include "Common/Properties.h"
 #include "Common/ReferenceCount.h"
 #include "Common/String.h"
@@ -50,15 +54,17 @@ namespace Hypertable {
      *
      * @param install_dir path to Hypertable installation directory
      * @param config_file name of configuration file
+     * @param timeout maximum method call time in seconds
      */
-    Client(const String &install_dir, const String &config_file);
+    Client(const String &install_dir, const String &config_file, time_t timeout=-1);
 
     /**
      * Constructs the object using the default config file
      *
      * @param install_dir path to Hypertable installation directory
+     * @param timeout maximum method call time in seconds
      */
-    Client(const String &install_dir);
+    Client(const String &install_dir, time_t timeout=-1);
 
     /**
      * Creates a table
@@ -131,6 +137,7 @@ namespace Hypertable {
     ApplicationQueuePtr     m_app_queue_ptr;
     Hyperspace::SessionPtr  m_hyperspace_ptr;
     MasterClientPtr         m_master_client_ptr;
+    time_t                  m_timeout;
   };
   typedef boost::intrusive_ptr<Client> ClientPtr;
 

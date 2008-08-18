@@ -76,7 +76,7 @@ namespace Hypertable {
 
     int shutdown();
 
-    int reload_master();
+    void reload_master();
 
     void set_verbose_flag(bool verbose) { m_verbose = verbose; }
 

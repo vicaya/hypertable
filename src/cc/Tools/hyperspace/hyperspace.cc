@@ -202,10 +202,9 @@ int main(int argc, char **argv, char **envp) {
   vector<InteractiveCommand *>  commands;
   Comm *comm;
   PropertiesPtr props_ptr;
-  Hyperspace::Session *session;
+  Hyperspace::SessionPtr session_ptr;
   SessionHandler session_handler;
   bool verbose = false;
-  int error;
   Notifier *notifier = 0;
 
   System::initialize(System::locate_install_dir(argv[0]));
@@ -244,54 +243,57 @@ int main(int argc, char **argv, char **envp) {
 
   comm = Comm::instance();
 
-  session = new Session(comm, props_ptr, &session_handler);
+  session_ptr = new Session(comm, props_ptr, &session_handler);
 
-  if (!session->wait_for_connection(30)) {
+  if (!session_ptr->wait_for_connection(30)) {
     cerr << "Unable to establish session with Hyerspace, exiting..." << endl;
     exit(1);
   }
 
-  commands.push_back(new CommandMkdir(session));
-  commands.push_back(new CommandDelete(session));
-  commands.push_back(new CommandOpen(session));
-  commands.push_back(new CommandCreate(session));
-  commands.push_back(new CommandClose(session));
-  commands.push_back(new CommandAttrSet(session));
-  commands.push_back(new CommandAttrGet(session));
-  commands.push_back(new CommandAttrDel(session));
-  commands.push_back(new CommandExists(session));
-  commands.push_back(new CommandReaddir(session));
-  commands.push_back(new CommandLock(session));
-  commands.push_back(new CommandTryLock(session));
-  commands.push_back(new CommandRelease(session));
-  commands.push_back(new CommandGetSequencer(session));
+  commands.push_back(new CommandMkdir(session_ptr.get()));
+  commands.push_back(new CommandDelete(session_ptr.get()));
+  commands.push_back(new CommandOpen(session_ptr.get()));
+  commands.push_back(new CommandCreate(session_ptr.get()));
+  commands.push_back(new CommandClose(session_ptr.get()));
+  commands.push_back(new CommandAttrSet(session_ptr.get()));
+  commands.push_back(new CommandAttrGet(session_ptr.get()));
+  commands.push_back(new CommandAttrDel(session_ptr.get()));
+  commands.push_back(new CommandExists(session_ptr.get()));
+  commands.push_back(new CommandReaddir(session_ptr.get()));
+  commands.push_back(new CommandLock(session_ptr.get()));
+  commands.push_back(new CommandTryLock(session_ptr.get()));
+  commands.push_back(new CommandRelease(session_ptr.get()));
+  commands.push_back(new CommandGetSequencer(session_ptr.get()));
 
   /**
    * Non-interactive mode
    */
   if (eval != 0) {
-    const char *str;
-    std::string cmd_str;
-    str = strtok(eval, ";");
-    while (str) {
-      Global::exit_status = 0;
-      cmd_str = str;
-      boost::trim(cmd_str);
-      for (i=0; i<commands.size(); i++) {
-        if (commands[i]->matches(cmd_str.c_str())) {
-          commands[i]->parse_command_line(cmd_str.c_str());
-          if ((error = commands[i]->run()) != Error::OK) {
-            cerr << Error::get_text(error) << endl;
-            return 1;
-          }
-          break;
-        }
+    try {
+      const char *str;
+      std::string cmd_str;
+      str = strtok(eval, ";");
+      while (str) {
+	Global::exit_status = 0;
+	cmd_str = str;
+	boost::trim(cmd_str);
+	for (i=0; i<commands.size(); i++) {
+	  if (commands[i]->matches(cmd_str.c_str())) {
+	    commands[i]->parse_command_line(cmd_str.c_str());
+	    commands[i]->run();
+	    break;
+	  }
+	}
+	if (i == commands.size()) {
+	  HT_ERRORF("Unrecognized command : %s", cmd_str.c_str());
+	  return 1;
+	}
+	str = strtok(0, ";");
       }
-      if (i == commands.size()) {
-        HT_ERRORF("Unrecognized command : %s", cmd_str.c_str());
-        return 1;
-      }
-      str = strtok(0, ";");
+    }
+    catch (Exception &e) {
+      HT_ERROR_OUT << e.what() << " - " << Error::get_text(e.code()) << HT_END;
+      return 1;
     }
     return Global::exit_status;
   }
@@ -304,53 +306,58 @@ int main(int argc, char **argv, char **envp) {
   using_history();
   while ((line = rl_gets()) != 0) {
 
-    Global::exit_status = 0;
+    try {
 
-    if (*line == 0)
-      continue;
+      Global::exit_status = 0;
 
-    for (i=0; i<commands.size(); i++) {
-      if (commands[i]->matches(line)) {
-        commands[i]->parse_command_line(line);
-        if ((error = commands[i]->run()) != Error::OK && error != -1)
-          cout << Error::get_text(error) << endl;
-        notifier->notify();
-        break;
+      if (*line == 0)
+	continue;
+
+      for (i=0; i<commands.size(); i++) {
+	if (commands[i]->matches(line)) {
+	  commands[i]->parse_command_line(line);
+	  commands[i]->run();
+	  notifier->notify();
+	  break;
+	}
+      }
+
+      if (i == commands.size()) {
+	if (!strcmp(line, "quit") || !strcmp(line, "exit")) {
+	  notifier->notify();
+	  exit(0);
+	}
+	else if (!strncmp(line, "echo", 4)) {
+	  std::string echo_str = std::string(line);
+	  echo_str = echo_str.substr(4);
+	  boost::trim_if(echo_str, boost::is_any_of("\" \t"));
+	  cout << echo_str << endl;
+	  notifier->notify();
+	}
+	else if (!strcmp(line, "pwd")) {
+	  cout << Global::cwd << endl;
+	  notifier->notify();
+	}
+	else if (!strcmp(line, "help")) {
+	  cout << endl;
+	  for (i=0; i<commands.size(); i++) {
+	    Usage::dump(commands[i]->usage());
+	    cout << endl;
+	  }
+	  Usage::dump(help_trailer);
+	  notifier->notify();
+	}
+	else {
+	  cout << "Unrecognized command." << endl;
+	  notifier->notify();
+	}
       }
     }
-
-    if (i == commands.size()) {
-      if (!strcmp(line, "quit") || !strcmp(line, "exit")) {
-        notifier->notify();
-        exit(0);
-      }
-      else if (!strncmp(line, "echo", 4)) {
-        std::string echo_str = std::string(line);
-        echo_str = echo_str.substr(4);
-        boost::trim_if(echo_str, boost::is_any_of("\" \t"));
-        cout << echo_str << endl;
-        notifier->notify();
-      }
-      else if (!strcmp(line, "pwd")) {
-        cout << Global::cwd << endl;
-        notifier->notify();
-      }
-      else if (!strcmp(line, "help")) {
-        cout << endl;
-        for (i=0; i<commands.size(); i++) {
-          Usage::dump(commands[i]->usage());
-          cout << endl;
-        }
-        Usage::dump(help_trailer);
-        notifier->notify();
-      }
-      else {
-        cout << "Unrecognized command." << endl;
-        notifier->notify();
-      }
+    catch (Exception &e) {
+      HT_ERROR_OUT << e.what() << " - " << Error::get_text(e.code()) << HT_END;
+      notifier->notify();
     }
   }
 
-  delete session;
   return Global::exit_status;
 }
