@@ -33,6 +33,7 @@
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/RangeState.h"
 #include "Hypertable/Lib/Schema.h"
+#include "Hypertable/Lib/Stat.h"
 #include "Hypertable/Lib/Timestamp.h"
 
 #include "AccessGroup.h"
@@ -140,6 +141,7 @@ namespace Hypertable {
     }
 
     void dump_stats();
+    void get_statistics(RangeStat *stat);
 
     uint64_t get_size_limit() { return m_state.soft_limit; }
 

@@ -51,6 +51,7 @@ namespace Hypertable {
   /** Wrapper for TableIdentifier.  Handles name allocation */
   class TableIdentifierManaged : public TableIdentifier {
   public:
+    TableIdentifierManaged() { name = NULL; id = 0; generation = 0; }
     TableIdentifierManaged(const TableIdentifier &identifier) {
       operator=(identifier);
     }
@@ -90,6 +91,7 @@ namespace Hypertable {
   /** RangeSpec with storage */
   class RangeSpecManaged : public RangeSpec {
   public:
+    RangeSpecManaged() { start_row = end_row = 0; }
     RangeSpecManaged(const RangeSpec &range) { operator=(range); }
 
     RangeSpecManaged &operator=(const RangeSpec &range) {

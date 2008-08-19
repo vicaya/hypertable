@@ -73,6 +73,7 @@ namespace Hypertable {
 
     bool include_in_scan(ScanContextPtr &scan_ctx);
     uint64_t disk_usage();
+    uint64_t memory_usage();
     void add_cell_store(CellStorePtr &cellstore_ptr, uint32_t id);
     void run_compaction(Timestamp timestamp, bool major);
 

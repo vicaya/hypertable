@@ -193,6 +193,10 @@ uint64_t AccessGroup::disk_usage() {
   return du + (uint64_t)(m_compression_ratio * (float)mu);
 }
 
+uint64_t AccessGroup::memory_usage() {
+  return m_cell_cache_ptr->memory_used();
+}
+
 void AccessGroup::get_compaction_priority_data(CompactionPriorityData &priority_data) {
   boost::mutex::scoped_lock lock(m_mutex);
   priority_data.ag = this;

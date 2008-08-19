@@ -35,6 +35,7 @@
 #include "RangeServerProtocol.h"
 #include "RangeState.h"
 #include "Types.h"
+#include "Stat.h"
 
 
 namespace Hypertable {
@@ -182,6 +183,8 @@ namespace Hypertable {
     void shutdown(struct sockaddr_in &addr);
 
     void dump_stats(struct sockaddr_in &addr);
+
+    void get_statistics(struct sockaddr_in &addr, RangeServerStat &stat);
 
     /** Issues a "replay begin" request.
      *

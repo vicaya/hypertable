@@ -45,6 +45,7 @@ namespace Hypertable {
     "replay load range",
     "replay update",
     "replay commit",
+    "get statistics",
     (const char *)0
   };
 
@@ -166,6 +167,13 @@ namespace Hypertable {
     cbuf->append_i16(COMMAND_DROP_RANGE);
     table.encode(cbuf->get_data_ptr_address());
     range.encode(cbuf->get_data_ptr_address());
+    return cbuf;
+  }
+
+  CommBuf *RangeServerProtocol::create_request_get_statistics() {
+    HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
+    CommBuf *cbuf = new CommBuf(hbuilder, 2);
+    cbuf->append_i16(COMMAND_GET_STATISTICS);
     return cbuf;
   }
 

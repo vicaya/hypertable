@@ -43,6 +43,7 @@
 #include "Global.h"
 #include "ResponseCallbackCreateScanner.h"
 #include "ResponseCallbackFetchScanblock.h"
+#include "ResponseCallbackGetStatistics.h"
 #include "ResponseCallbackUpdate.h"
 #include "TableInfo.h"
 #include "TableInfoMap.h"
@@ -71,6 +72,7 @@ namespace Hypertable {
     void update(ResponseCallbackUpdate *, TableIdentifier *, StaticBuffer &);
     void drop_table(ResponseCallback *, TableIdentifier *);
     void dump_stats(ResponseCallback *);
+    void get_statistics(ResponseCallbackGetStatistics *);
 
     void replay_begin(ResponseCallback *, uint16_t group);
     void replay_load_range(ResponseCallback *, const TableIdentifier *, const RangeSpec *, const RangeState *);

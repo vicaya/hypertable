@@ -39,6 +39,7 @@ extern "C" {
 #include "RequestHandlerCompact.h"
 #include "RequestHandlerDestroyScanner.h"
 #include "RequestHandlerDumpStats.h"
+#include "RequestHandlerGetStatistics.h"
 #include "RequestHandlerLoadRange.h"
 #include "RequestHandlerUpdate.h"
 #include "RequestHandlerCreateScanner.h"
@@ -145,6 +146,9 @@ void ConnectionHandler::handle(EventPtr &event) {
         break;
       case RangeServerProtocol::COMMAND_DUMP_STATS:
         handler = new RequestHandlerDumpStats(m_comm, m_range_server_ptr.get(), event);
+        break;
+      case RangeServerProtocol::COMMAND_GET_STATISTICS:
+        handler = new RequestHandlerGetStatistics(m_comm, m_range_server_ptr.get(), event);
         break;
       default:
         HT_THROWF(PROTOCOL_ERROR, "Unimplemented command (%d)", command);
