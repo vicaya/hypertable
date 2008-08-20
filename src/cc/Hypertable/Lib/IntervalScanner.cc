@@ -280,43 +280,33 @@ void IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &time
 
   m_started = true;
 
-  dbuf.ensure(m_range_info.start_row.length() + m_range_info.end_row.length() + 2);
-  range.start_row = (const char *)dbuf.add_unchecked(m_range_info.start_row.c_str(), m_range_info.start_row.length()+1);
-  range.end_row   = (const char *)dbuf.add_unchecked(m_range_info.end_row.c_str(), m_range_info.end_row.length()+1);
-  if (!LocationCache::location_to_addr(m_range_info.location.c_str(), m_cur_addr)) {
-    HT_ERRORF("Invalid location found in METADATA entry range [%s..%s] - %s",
-                 range.start_row, range.end_row, m_range_info.location.c_str());
-    HT_THROW(Error::INVALID_METADATA, "");
-  }
-
-  try {
-    m_range_server.set_timeout((time_t)(timer.remaining() + 0.5));
-    m_range_server.create_scanner(m_cur_addr, m_table_identifier, range, m_scan_spec_builder.get(), m_scanblock);
-  }
-  catch (Exception &e) {
-
-    // try again, the hard way
-    m_range_locator_ptr->find_loop(&m_table_identifier, row_key, &m_range_info, timer, true);
-
-    // reset the range information
+  while (true) {
     dbuf.ensure(m_range_info.start_row.length() + m_range_info.end_row.length() + 2);
     range.start_row = (const char *)dbuf.add_unchecked(m_range_info.start_row.c_str(), m_range_info.start_row.length()+1);
     range.end_row   = (const char *)dbuf.add_unchecked(m_range_info.end_row.c_str(), m_range_info.end_row.length()+1);
     if (!LocationCache::location_to_addr(m_range_info.location.c_str(), m_cur_addr)) {
       HT_ERRORF("Invalid location found in METADATA entry range [%s..%s] - %s",
-                   range.start_row, range.end_row, m_range_info.location.c_str());
+		range.start_row, range.end_row, m_range_info.location.c_str());
       HT_THROW(Error::INVALID_METADATA, "");
     }
 
-    // create the scanner
     try {
       m_range_server.set_timeout((time_t)(timer.remaining() + 0.5));
       m_range_server.create_scanner(m_cur_addr, m_table_identifier, range, m_scan_spec_builder.get(), m_scanblock);
     }
     catch (Exception &e) {
-      HT_ERRORF("%s - %s", e.what(), Error::get_text(e.code()));
-      HT_THROW(e.code(), String("Problem creating scanner on ") + m_table_identifier.name + "[" + range.start_row + ".." + range.end_row + "]");
+      double remaining = timer.remaining();
+
+      if (remaining <= 3.0) {
+	HT_ERRORF("%s - %s", e.what(), Error::get_text(e.code()));
+	HT_THROW(e.code(), String("Problem creating scanner on ") + m_table_identifier.name + "[" + range.start_row + ".." + range.end_row + "]");
+      }
+
+      // wait a few seconds
+      poll(0, 0, 3000);
+      continue;
     }
+    break;
   }
 
   // maybe kick off readahead
