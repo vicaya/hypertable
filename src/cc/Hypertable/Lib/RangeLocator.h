@@ -24,6 +24,7 @@
 
 #include <deque>
 
+#include "Common/Error.h"
 #include "Common/ReferenceCount.h"
 #include "Common/Timer.h"
 
@@ -126,6 +127,24 @@ namespace Hypertable {
       cache_ptr = m_cache_ptr;
     }
 
+    /**
+     * Clears the error history
+     */
+    void clear_error_history() {
+      boost::mutex::scoped_lock lock(m_mutex);
+      m_last_errors.clear();
+    }
+
+    /**
+     * Displays the error history
+     */
+    void dump_error_history() {
+      boost::mutex::scoped_lock lock(m_mutex);
+      foreach(Exception &e, m_last_errors)
+	HT_ERROR_OUT << e << HT_END;
+      m_last_errors.clear();
+    }
+
   private:
 
     void initialize();
@@ -146,12 +165,29 @@ namespace Hypertable {
     uint8_t                m_startrow_cid;
     uint8_t                m_location_cid;
     TableIdentifier        m_metadata_table;
-    std::deque<std::string> m_last_errors;
+    std::deque<Exception>  m_last_errors;
 
   };
 
   typedef boost::intrusive_ptr<RangeLocator> RangeLocatorPtr;
 
 }
+
+#define RECORD_ERROR(_code_, _msg_) \
+  do { \
+    boost::mutex::scoped_lock lock(m_mutex); \
+    m_last_errors.push_back( Exception(_code_, _msg_, __LINE__, HT_FUNC, __FILE__) ); \
+    while (m_last_errors.size() > MAX_ERROR_QUEUE_LENGTH) \
+      m_last_errors.pop_front(); \
+  } while (false)
+
+#define RECORD_ERROR2(_code_, _ex_, _msg_)	\
+  do { \
+    boost::mutex::scoped_lock lock(m_mutex); \
+    m_last_errors.push_back( Exception(_code_, _msg_, _ex_, __LINE__, HT_FUNC, __FILE__) ); \
+    while (m_last_errors.size() > MAX_ERROR_QUEUE_LENGTH) \
+      m_last_errors.pop_front(); \
+  } while (false)
+
 
 #endif // HYPERTABLE_RANGELOCATOR_H

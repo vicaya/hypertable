@@ -304,6 +304,9 @@ void IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &time
 
       // wait a few seconds
       poll(0, 0, 3000);
+
+      // try again, the hard way
+      m_range_locator_ptr->find_loop(&m_table_identifier, row_key, &m_range_info, timer, true);
       continue;
     }
     break;

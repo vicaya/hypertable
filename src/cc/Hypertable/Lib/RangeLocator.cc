@@ -181,7 +181,7 @@ RangeLocator::find_loop(TableIdentifier *table, const char *row_key,
 
   if (error == Error::TABLE_DOES_NOT_EXIST) {
     boost::mutex::scoped_lock lock(m_mutex);
-    m_last_errors.clear();
+    clear_error_history();
     HT_THROW(error, (std::string)"Table '" + table->name + "' is being dropped.");
   }
 
@@ -189,10 +189,7 @@ RangeLocator::find_loop(TableIdentifier *table, const char *row_key,
 
     // check for timer expiration
     if (timer.remaining() < wait_time) {
-      boost::mutex::scoped_lock lock(m_mutex);
-      for (std::deque<std::string>::iterator iter = m_last_errors.begin(); iter != m_last_errors.end(); iter++)
-        HT_ERRORF("%s", (*iter).c_str());
-      m_last_errors.clear();
+      dump_error_history();
       HT_THROW(Error::REQUEST_TIMEOUT, (String)"Locating range for row = '" + row_key + "'");
     }
 
@@ -204,15 +201,12 @@ RangeLocator::find_loop(TableIdentifier *table, const char *row_key,
     // try again
     if ((error = find(table, row_key, rane_loc_infop, timer, true)) == Error::TABLE_DOES_NOT_EXIST) {
       boost::mutex::scoped_lock lock(m_mutex);
-      m_last_errors.clear();
+      clear_error_history();
       HT_THROW(error, (std::string)"Table '" + table->name + "' is being dropped.");
     }
   }
 
-  {
-    boost::mutex::scoped_lock lock(m_mutex);
-    m_last_errors.clear();
-  }
+  clear_error_history();
 }
 
 
@@ -292,6 +286,7 @@ RangeLocator::find(TableIdentifier *table, const char *row_key,
     catch (Exception &e) {
       if (e.code() == Error::RANGESERVER_RANGE_NOT_FOUND)
 	m_cache_ptr->invalidate(0, meta_keys.start);
+      RECORD_ERROR2(e.code(), e, format("Problem creating scanner for start row '%s' on METADATA[..??]", meta_keys.start));
       return e.code();
     }
 
@@ -305,8 +300,10 @@ RangeLocator::find(TableIdentifier *table, const char *row_key,
     }
 
     if (!m_cache_ptr->lookup(0, meta_key_ptr, rane_loc_infop, inclusive)) {
-      HT_ERRORF("Unable to find metadata for row '%s' row_key=%s",
-                meta_keys.start, row_key);
+      String err_msg = format("Unable to find metadata for row '%s' row_key=%s",
+			      meta_keys.start, row_key);
+      HT_ERRORF("%s", err_msg.c_str());
+      RECORD_ERROR(Error::METADATA_NOT_FOUND, err_msg);
       return Error::METADATA_NOT_FOUND;
     }
   }
@@ -323,8 +320,10 @@ RangeLocator::find(TableIdentifier *table, const char *row_key,
 
   if (!LocationCache::location_to_addr(
       rane_loc_infop->location.c_str(), addr)) {
-    HT_ERRORF("Invalid location found in METADATA entry for row '%s' - %s",
-              start_row.c_str(), rane_loc_infop->location.c_str());
+    String err_msg = format("Invalid location found in METADATA entry for row '%s' - %s",
+			    start_row.c_str(), rane_loc_infop->location.c_str());
+    HT_ERRORF("%s", err_msg.c_str());
+    RECORD_ERROR(Error::INVALID_METADATA, err_msg);
     return Error::INVALID_METADATA;
   }
 
@@ -357,6 +356,7 @@ RangeLocator::find(TableIdentifier *table, const char *row_key,
   catch (Exception &e) {
     if (e.code() == Error::RANGESERVER_RANGE_NOT_FOUND)
       m_cache_ptr->invalidate(0, meta_keys.start+2);
+    RECORD_ERROR2(e.code(), e, format("Problem creating scanner on second-level METADATA (start row = %s)", ri.start));
     return e.code();
   }
 
@@ -373,10 +373,8 @@ RangeLocator::find(TableIdentifier *table, const char *row_key,
     row_key = "";
 
   if (!m_cache_ptr->lookup(table->id, row_key, rane_loc_infop, inclusive)) {
-    boost::mutex::scoped_lock lock(m_mutex);
-    m_last_errors.push_back((std::string)"RangeLocator failed to find metadata for table '" + table->name + "' row '" + row_key + "'");
-    while (m_last_errors.size() > MAX_ERROR_QUEUE_LENGTH)
-      m_last_errors.pop_front();
+    RECORD_ERROR(Error::METADATA_NOT_FOUND, 
+		 (String)"RangeLocator failed to find metadata for table '" + table->name + "' row '" + row_key + "'");
     return Error::METADATA_NOT_FOUND;
   }
 
@@ -407,12 +405,16 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
   while (scan_block.next(bskey, value)) {
 
     if (!key.load(bskey)) {
-      HT_ERRORF("METADATA lookup for '%s' returned bad key", bskey.str());
+      String err_msg = format("METADATA lookup for '%s' returned bad key", bskey.str());
+      HT_ERRORF("%s", err_msg.c_str());
+      RECORD_ERROR(Error::INVALID_METADATA, err_msg);
       return Error::INVALID_METADATA;
     }
 
     if ((stripped_key = strchr(key.row, ':')) == 0) {
-      HT_ERRORF("Bad row key found in METADATA - '%s'", key.row);
+      String err_msg = format("Bad row key found in METADATA - '%s'", key.row);
+      HT_ERRORF("%s", err_msg.c_str());
+      RECORD_ERROR(Error::INVALID_METADATA, err_msg);
       return Error::INVALID_METADATA;
     }
     stripped_key++;
@@ -426,9 +428,10 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
            */
           if (!LocationCache::location_to_addr(
               range_loc_info.location.c_str(), addr)) {
-            HT_ERRORF("Invalid location found in METADATA entry for row '%s' "
-                      "- %s", range_loc_info.end_row.c_str(),
-                      range_loc_info.location.c_str());
+	    String err_msg = format("Invalid location found in METADATA entry for row '%s' - %s",
+				    range_loc_info.end_row.c_str(), range_loc_info.location.c_str());
+	    RECORD_ERROR(Error::INVALID_METADATA, err_msg);
+            HT_ERRORF("%s", err_msg.c_str());
             return Error::INVALID_METADATA;
           }
           if (m_conn_manager_ptr)
@@ -438,11 +441,9 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
           //cout << "(1) cache insert table=" << table_id << " start=" << range_loc_info.start_row << " end=" << range_loc_info.end_row << " loc=" << range_loc_info.location << endl;
         }
         else {
-          boost::mutex::scoped_lock lock(m_mutex);
-          m_last_errors.push_back(format("Incomplete METADATA record found in "
-              "root range under row key '%s'", range_loc_info.end_row.c_str()));
-          while (m_last_errors.size() > MAX_ERROR_QUEUE_LENGTH)
-            m_last_errors.pop_front();
+	  RECORD_ERROR(Error::INVALID_METADATA,
+		       format("Incomplete METADATA record found under row key '%s' (got_location=%s)",
+			      range_loc_info.end_row.c_str(), got_location ? "true" : "false"));
         }
         range_loc_info.start_row = "";
         range_loc_info.end_row = "";
@@ -486,8 +487,10 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
      */
     if (!LocationCache::location_to_addr(
         range_loc_info.location.c_str(), addr)) {
-      HT_ERRORF("Invalid location found in METADATA entry for row '%s' - %s",
-          range_loc_info.end_row.c_str(), range_loc_info.location.c_str());
+      String err_msg = format("Invalid location found in METADATA entry for row '%s' - %s",
+			      range_loc_info.end_row.c_str(), range_loc_info.location.c_str());
+      RECORD_ERROR(Error::INVALID_METADATA, err_msg);
+      HT_ERRORF("%s", err_msg.c_str());
       return Error::INVALID_METADATA;
     }
     if (m_conn_manager_ptr)
@@ -525,6 +528,7 @@ int RangeLocator::read_root_location(Timer &timer) {
 
   if (!LocationCache::location_to_addr((const char *)value.base, m_root_addr)) {
     HT_ERROR("Bad format of 'Location' attribute of /hypertable/root Hyperspace file");
+    RECORD_ERROR(Error::BAD_ROOT_LOCATION, "Bad format of 'Location' attribute of /hypertable/root Hyperspace file");
     return Error::BAD_ROOT_LOCATION;
   }
 
@@ -535,7 +539,7 @@ int RangeLocator::read_root_location(Timer &timer) {
     if (!m_conn_manager_ptr->wait_for_connection(m_root_addr, (time_t)(timer.remaining() + 0.5))) {
       std::string addr_str;
       HT_ERRORF("Timeout (20s) waiting for root RangeServer connection - %s",
-                   InetAddr::string_format(addr_str, m_root_addr));
+		InetAddr::string_format(addr_str, m_root_addr));
     }
   }
 
