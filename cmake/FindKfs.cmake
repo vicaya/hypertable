@@ -18,44 +18,38 @@ find_path(Kfs_INCLUDE_DIR kfs/KfsClient.h
   $ENV{HOME}/src/kosmosfs/build/include
 )
 
-set(Kfs_NAMES kfsClient)
-find_library(KfsClient_LIBRARY
-  NAMES ${Kfs_NAMES}
-  PATHS /opt/kfs/lib/static /opt/kfs/lib /opt/local/lib /usr/local/lib $ENV{HOME}/src/kosmosfs/build/lib/static
-)
+macro(FIND_KFS_LIB lib)
+  find_library(${lib}_LIB NAMES ${lib}
+    PATHS /opt/kfs/lib/static /opt/kfs/lib /opt/local/lib /usr/local/lib
+          $ENV{HOME}/src/kosmosfs/build/lib/static
+  )
+endmacro(FIND_KFS_LIB lib libname)
 
-set(Kfs_NAMES kfsIO)
-find_library(KfsIO_LIBRARY
-  NAMES ${Kfs_NAMES}
-  PATHS /opt/kfs/lib/static /opt/kfs/lib /opt/local/lib /usr/local/lib $ENV{HOME}/src/kosmosfs/build/lib/static
-)
+FIND_KFS_LIB(KfsClient)
+FIND_KFS_LIB(KfsIO)
+FIND_KFS_LIB(KfsCommon)
 
-set(Kfs_NAMES kfsCommon)
-find_library(KfsCommon_LIBRARY
-  NAMES ${Kfs_NAMES}
-  PATHS /opt/kfs/lib/static /opt/kfs/lib /opt/local/lib /usr/local/lib $ENV{HOME}/src/kosmosfs/build/lib/static
-)
-
-if (Kfs_INCLUDE_DIR AND KfsClient_LIBRARY)
-   set(Kfs_FOUND TRUE)
-    set( Kfs_LIBRARIES ${KfsClient_LIBRARY} ${KfsIO_LIBRARY} ${KfsCommon_LIBRARY})
+if (Kfs_INCLUDE_DIR AND KfsClient_LIB)
+  set(Kfs_FOUND TRUE)
+  set( Kfs_LIBRARIES ${KfsClient_LIB} ${KfsIO_LIB} ${KfsCommon_LIB})
 else (Kfs_INCLUDE_DIR AND KfsClient_LIBRARY)
    set(Kfs_FOUND FALSE)
    set( Kfs_LIBRARIES)
-endif (Kfs_INCLUDE_DIR AND KfsClient_LIBRARY)
+endif (Kfs_INCLUDE_DIR AND KfsClient_LIB)
 
 if (Kfs_FOUND)
    if (NOT Kfs_FIND_QUIETLY)
-      message(STATUS "Found KFS: ${KfsClient_LIBRARY}")
+      message(STATUS "Found KFS: ${Kfs_LIBRARIES}")
    endif (NOT Kfs_FIND_QUIETLY)
 else (Kfs_FOUND)
    if (Kfs_FIND_REQUIRED)
-      message(STATUS "Looked for KFS libraries named ${Kfs_NAMES}.")
-      message(FATAL_ERROR "Could NOT find KFS library")
+      message(FATAL_ERROR "Could NOT find KFS libraries")
    endif (Kfs_FIND_REQUIRED)
 endif (Kfs_FOUND)
 
 mark_as_advanced(
-  Kfs_LIBRARY
   Kfs_INCLUDE_DIR
+  KfsClient_LIB
+  KfsIO_LIB
+  KfsCommon_LIB
 )
