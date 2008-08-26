@@ -111,12 +111,12 @@ namespace {
   }
 
   void test_rename(DfsBroker::Client *client, const String &testdir) {
-    char *magic = "the quick brown fox jumps over a lazy dog";
+    const char *magic = "the quick brown fox jumps over a lazy dog";
     char buf[1024];
     String file_a = testdir +"/filename.a";
     String file_b = testdir +"/filename.b";
     int fd = client->create(file_a, true, -1, -1, -1);
-    StaticBuffer sbuf(magic, strlen(magic) + 1, false);
+    StaticBuffer sbuf((char *)magic, strlen(magic) + 1, false);
     client->append(fd, sbuf);
     client->close(fd);
     client->rename(file_a, file_b);

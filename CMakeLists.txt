@@ -135,6 +135,10 @@ endif (BOOST_VERSION MATCHES "1_34")
 
 if (GCC_VERSION MATCHES "^([4-9]|[1-9][0-9]+)\\.")
   add_definitions(-Wno-variadic-macros)
+  # turn off deprecated feature warnings for gcc 4.3+
+  if (GCC_VERSION MATCHES "^([4-9]|[1-9][0-9]+)\\.([3-9]|[1-9][0-9]+)")
+    add_definitions(-Wno-deprecated)
+  endif (GCC_VERSION MATCHES "^([4-9]|[1-9][0-9]+)\\.([3-9]|[1-9][0-9]+)")
 elseif (GCC_VERSION MATCHES "^([4-9]|[1-9][0-9]+)\\.")
   message(STATUS "Ancient gcc detected, hope it finishes despite warnings...")
 endif (GCC_VERSION MATCHES "^([4-9]|[1-9][0-9]+)\\.")

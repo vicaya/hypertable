@@ -41,18 +41,15 @@ using namespace std;
 
 int main(int argc, char **argv) {
   BerkeleyDbFilesystem *bdb_fs;
-  char filename[32];
   FILE *fp;
   int ret = 0;
   bool isdir;
 
   System::initialize(System::locate_install_dir(argv[0]));
 
-  strcpy(filename, "/tmp/bdb_fs_test.XXXXXX");
-  mktemp(filename);
-
   fp = fopen("./bdb_fs_test.output", "w");
 
+  String filename = format("/tmp/bdb_fs_test%d", getpid());
   FileUtils::mkdirs(filename);
 
   bdb_fs = new BerkeleyDbFilesystem(filename);

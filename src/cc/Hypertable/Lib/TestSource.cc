@@ -27,10 +27,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/shared_array.hpp>
 
-extern "C" {
-#include <strings.h>
-}
-
 #include "Common/DynamicBuffer.h"
 
 #include "Key.h"
@@ -48,6 +44,7 @@ bool TestSource::next(ByteString &key, ByteString &value) {
   char *column;
   char *value_str;
   int64_t timestamp;
+  static char emptybuf[] = { 0 };
 
   while (getline(m_fin, line)) {
     m_cur_line++;
@@ -106,7 +103,7 @@ bool TestSource::next(ByteString &key, ByteString &value) {
     }
 
     if ((value_str = strtok_r(0, "\t", &last)) == 0)
-      value_str = "";
+      value_str = emptybuf;
 
     if (!strcmp(value_str, "DELETE")) {
       if (!create_column_delete(rowkey, column, timestamp, key, value)) {

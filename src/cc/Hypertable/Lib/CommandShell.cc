@@ -291,7 +291,7 @@ int CommandShell::run() {
           boost::trim(sec_str);
           char *endptr;
           long secs = strtol(sec_str.c_str(), &endptr, 0);
-          if (secs == 0 && errno == EINVAL || *endptr != 0) {
+          if ((secs == 0 && errno == EINVAL) || *endptr != 0) {
             cout << "error: invalid seconds specification" << endl;
             if (m_batch_mode)
               return 1;

@@ -43,7 +43,7 @@ using namespace Error;
 
 #define HT_DEBUG_ATTR_(_txn_, _fn_, _an_, _k_, _v_, _l_) \
   HT_DEBUG_OUT <<"txn="<< (_txn_) <<" fname='"<< (_fn_); \
-  if ((_an_) == "n/a") _out_ <<"' attr='"<< (_an_); \
+  if ((_an_) == String()) _out_ <<"' attr='"<< (_an_); \
   _out_ <<"' key='" << (char *)(_k_).get_data(); \
   if (_l_) _out_ <<"' value='"<< HT_HEAD_(_v_, _l_, 10); \
   _out_ <<"'"<< HT_END
@@ -480,7 +480,7 @@ void BerkeleyDbFilesystem::unlink(DbTxn *txn, const String &name) {
       key.set_data((void *)delkeys[i].c_str());
       key.set_size(delkeys[i].length()+1);
       HT_EXPECT(m_db->del(txn, &key, 0) != DB_NOTFOUND, FAILED_EXPECTATION);
-      HT_DEBUG_ATTR_(txn, name, "n/a", key, "", 0);
+      HT_DEBUG_ATTR_(txn, name, "", key, "", 0);
     }
   }
   catch (DbException &e) {
