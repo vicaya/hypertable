@@ -447,9 +447,7 @@ void Range::split_install_log() {
   {
     RangeUpdateBarrier::ScopedActivator block_updates(m_update_barrier);
     boost::mutex::scoped_lock lock(m_mutex);
-    if (!m_scanner_timestamp_controller.get_oldest_update_timestamp(&m_state.timestamp) ||
-        m_state.timestamp.logical == 0)
-      m_state.timestamp = m_timestamp;
+    m_state.timestamp = m_timestamp;
     m_split_log_ptr = new CommitLog(Global::dfs, m_state.transfer_log);
   }
 
@@ -679,14 +677,6 @@ void Range::run_compaction(bool major) {
     timestamp = m_timestamp;
   }
 
-  /**
-   * The following code ensures that pending updates that have not been
-   * committed on this range do not get included in the compaction scan
-   */
-  Timestamp temp_timestamp;
-  if (m_scanner_timestamp_controller.get_oldest_update_timestamp(&temp_timestamp) && temp_timestamp < timestamp)
-    timestamp = temp_timestamp;
-
   for (size_t i=0; i<m_access_group_vector.size(); i++)
     m_access_group_vector[i]->run_compaction(timestamp, major);
 
@@ -841,9 +831,9 @@ int64_t Range::get_latest_timestamp() {
 
 /**
  */
-bool Range::get_scan_timestamp(Timestamp &ts) {
+void Range::get_scan_timestamp(Timestamp &ts) {
   boost::mutex::scoped_lock lock(m_mutex);
-  return m_scanner_timestamp_controller.get_oldest_update_timestamp(&ts);
+  ts = m_timestamp;
 }
 
 

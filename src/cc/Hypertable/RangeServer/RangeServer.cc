@@ -614,7 +614,9 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
 
     range_ptr->get_scan_timestamp(scan_timestamp);
 
-    scan_ctx = new ScanContext(scan_timestamp.logical, scan_spec, range, schema_ptr);
+    int64_t timestamp = (scan_timestamp.logical) ? scan_timestamp.logical + 1 : 0;
+
+    scan_ctx = new ScanContext(timestamp, scan_spec, range, schema_ptr);
 
     scanner_ptr = range_ptr->create_scanner(scan_ctx);
 
@@ -891,9 +893,9 @@ void RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 
 namespace {
 
-  struct UpdateRec {
+  struct UpdateExtent {
     const uint8_t *base;
-    size_t len;
+    uint64_t len;
   };
 
   struct SendBackRec {
@@ -902,10 +904,11 @@ namespace {
     uint32_t len;
   };
 
-  struct MinTimestampRec {
+  struct RangeUpdateInfo {
     RangePtr range_ptr;
-    Timestamp timestamp;
+    UpdateExtent extent;
   };
+
 }
 
 
@@ -916,8 +919,6 @@ namespace {
 void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, StaticBuffer &buffer) {
   uint8_t *mod_ptr;
   const uint8_t *mod_end;
-  const uint8_t *add_base_ptr;
-  const uint8_t *add_end_ptr;
   uint8_t *ts_ptr;
   const uint8_t auto_ts[8] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
   string errmsg;
@@ -925,33 +926,34 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
   TableInfoPtr table_info_ptr;
   int64_t initial_timestamp;
   int64_t update_timestamp = 0;
-  int64_t min_timestamp = 0;
   const char *row;
   String split_row;
-  vector<UpdateRec> rootmods;
-  vector<UpdateRec> gomods;
-  vector<UpdateRec> splitmods;
-  UpdateRec update;
   CommitLogPtr splitlog;
-  size_t rootsz = 0;
-  size_t gosz = 0;
-  size_t splitsz = 0;
   String end_row;
-  std::vector<MinTimestampRec>  min_ts_vector;
-  MinTimestampRec  min_ts_rec;
   int64_t next_timestamp;
   int64_t temp_timestamp;
-  uint64_t memory_added = 0;
-  uint64_t items_added = 0;
   bool split_pending;
   ByteString key, value;
   bool a_locked = false;
   bool b_locked = false;
   vector<SendBackRec> send_back_vector;
   const uint8_t *send_back_ptr = 0;
+  uint32_t total_added = 0;
+  uint32_t split_added = 0;
   uint32_t misses = 0;
+  std::vector<RangeUpdateInfo> range_vector;
+  vector<UpdateExtent> root_extents;
+  vector<UpdateExtent> go_extents;
+  size_t rootsz = 0;
+  size_t gosz = 0;
+  UpdateExtent extent;
+  UpdateExtent split_extent;
+  RangeUpdateInfo rui;
 
-  min_ts_vector.reserve(50);
+  memset(&extent, 0, sizeof(UpdateExtent));
+  memset(&split_extent, 0, sizeof(UpdateExtent));
+
+  //range_vector.reserve(50);
 
   if (Global::verbose) {
     cout << "RangeServer::update" << endl;
@@ -985,9 +987,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
 
     mod_end = buffer.base + buffer.size;
     mod_ptr = buffer.base;
-
-    gomods.clear();
-
+    
     m_update_mutex_a.lock();
     a_locked = true;
 
@@ -1007,7 +1007,7 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
       row = key.str();
 
       // Look for containing range, add to stop mods if not found
-      if (!table_info_ptr->find_containing_range(row, min_ts_rec.range_ptr)) {
+      if (!table_info_ptr->find_containing_range(row, rui.range_ptr)) {
         if (send_back_ptr == 0)
           send_back_ptr = mod_ptr;
         key.next(); // skip key
@@ -1026,34 +1026,33 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
         send_back_ptr = 0;
       }
 
-      add_base_ptr = mod_ptr;
-
       /** Increment update count (block if maintenance in progress) **/
-      min_ts_rec.range_ptr->increment_update_counter();
+      rui.range_ptr->increment_update_counter();
 
       // Make sure range didn't just shrink
-      if (strcmp(row, (min_ts_rec.range_ptr->start_row()).c_str()) <= 0) {
-        min_ts_rec.range_ptr->decrement_update_counter();
+      if (strcmp(row, (rui.range_ptr->start_row()).c_str()) <= 0) {
+        rui.range_ptr->decrement_update_counter();
         continue;
       }
-
-      /** Obtain the most recently seen timestamp **/
-      min_timestamp = min_ts_rec.range_ptr->get_latest_timestamp();
 
       /** Obtain "update timestamp" **/
       update_timestamp = Global::user_log->get_timestamp();
 
-      end_row = min_ts_rec.range_ptr->end_row();
+      end_row = rui.range_ptr->end_row();
 
       /** Fetch range split information **/
-      split_pending = min_ts_rec.range_ptr->get_split_info(split_row, splitlog);
+      split_pending = rui.range_ptr->get_split_info(split_row, splitlog);
 
-      splitmods.clear();
-      splitsz = 0;
+      if (split_pending) {
+	split_extent.base = mod_ptr;
+	split_extent.len = 0;
+      }
+      else {
+	extent.base = mod_ptr;
+	extent.len = 0;
+      }
 
       next_timestamp = 0;
-      min_ts_rec.timestamp.logical = 0;
-      min_ts_rec.timestamp.real = update_timestamp;
 
       while (mod_ptr < mod_end && (end_row == "" || (strcmp(row, end_row.c_str()) <= 0))) {
 
@@ -1063,130 +1062,70 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
           if (next_timestamp == 0)
 	    next_timestamp = update_timestamp;
 	  temp_timestamp = ++next_timestamp;
-          if (min_ts_rec.timestamp.logical == 0 || temp_timestamp < min_ts_rec.timestamp.logical)
-            min_ts_rec.timestamp.logical = temp_timestamp;
           Key::encode_ts64(&ts_ptr, temp_timestamp);
         }
-        else {
-          uint8_t flag = *(ts_ptr-1);
-          temp_timestamp = Key::decode_ts64((const uint8_t **)&ts_ptr);
-          if (flag > FLAG_DELETE_CELL && temp_timestamp <= min_timestamp) {
-            error = Error::RANGESERVER_TIMESTAMP_ORDER_ERROR;
-            errmsg = (string)"Update timestamp " + (long long)temp_timestamp + " is <= previously seen timestamp of " + (long long)min_timestamp;
-            min_ts_rec.range_ptr->decrement_update_counter();
-            m_update_mutex_a.unlock();
-            goto abort;
-          }
-          if (min_ts_rec.timestamp.logical == 0 || temp_timestamp < min_ts_rec.timestamp.logical)
-            min_ts_rec.timestamp.logical = temp_timestamp;
-        }
 
-        update.base = mod_ptr;
+	if (split_pending) {
+	  if (strcmp(row, split_row.c_str()) > 0) {
+	    split_extent.len = mod_ptr - split_extent.base;
+	    split_pending = false;
+	    extent.base = mod_ptr;
+	  }
+	  else
+	    split_added++;
+	}
+
+	total_added++;
+
         key.next(); // skip key
         key.next(); // skip value
         mod_ptr = (uint8_t *)key.ptr;
-        update.len = mod_ptr - update.base;
-        if (split_pending && strcmp(row, split_row.c_str()) <= 0) {
-          splitmods.push_back(update);
-          splitsz += update.len;
-        }
-        else if (min_ts_rec.range_ptr->is_root()) {
-          rootmods.push_back(update);
-          rootsz += update.len;
-	}
-	else {
-          gomods.push_back(update);
-          gosz += update.len;
-        }
+
         if (mod_ptr < mod_end)
           row = key.str();
       }
 
-      add_end_ptr = mod_ptr;
-
-      // force scans to only see updates before the earliest time in this range
-      min_ts_rec.timestamp.logical--;
-      min_ts_rec.range_ptr->add_update_timestamp(min_ts_rec.timestamp);
-      min_ts_vector.push_back(min_ts_rec);
-
-      if (splitsz > 0) {
-        DynamicBuffer dbuf(splitsz + table->encoded_length());
-
-        table->encode(&dbuf.ptr);
-
-        items_added += splitmods.size();
-        memory_added += splitsz;
-
-        for (size_t i=0; i<splitmods.size(); i++) {
-          memcpy(dbuf.ptr, splitmods[i].base, splitmods[i].len);
-          dbuf.ptr += splitmods[i].len;
-        }
-
-        HT_EXPECT(dbuf.fill() <= (splitsz + table->encoded_length()), Error::FAILED_EXPECTATION);
-
-	if ((error = splitlog->write(dbuf, update_timestamp)) != Error::OK) {
-	  errmsg = (string)"Problem writing " + (int)dbuf.fill() + " bytes to split log";
-	  m_update_mutex_a.unlock();
-	  goto abort;
+      if (split_pending) {
+	split_extent.len = mod_ptr - split_extent.base;
+	rui.extent.base = split_extent.base;
+	rui.extent.len = split_extent.len;
+      }
+      else {
+	extent.len = mod_ptr - extent.base;
+	rui.extent.base = extent.base;
+	rui.extent.len = extent.len;
+	if (rui.range_ptr->is_root()) {
+	  rootsz += extent.len;
+	  root_extents.push_back(extent);
+	}
+	else {
+	  gosz += extent.len;
+	  go_extents.push_back(extent);
 	}
       }
 
-      /**
-       * Apply the modifications
-       */
-      min_ts_rec.range_ptr->lock();
-      {
-        uint8_t *ptr = (uint8_t *)add_base_ptr;
-        while (ptr < add_end_ptr) {
-          key.ptr = ptr;
-          ptr += key.length();
-          value.ptr = ptr;
-          ptr += value.length();
-          if ((error = min_ts_rec.range_ptr->add(key, value, update_timestamp)) != Error::OK) {
-            SendBackRec send_back;
-            send_back.error = error;
-            send_back.offset = key.ptr - buffer.base;
-            send_back.len = add_end_ptr - key.ptr;
-            send_back_vector.push_back(send_back);
-            break;
-          }
-        }
-      }
-      min_ts_rec.range_ptr->unlock(update_timestamp);
+      range_vector.push_back(rui);
+      rui.range_ptr = 0;
 
-      /**
-       * Split and Compaction processing
-       */
-      if (!min_ts_rec.range_ptr->maintenance_in_progress()) {
-        std::vector<AccessGroup::CompactionPriorityData> priority_data_vec;
-        std::vector<AccessGroup *> compactions;
-        uint64_t disk_usage = 0;
+      if (split_extent.len > 0) {
+        DynamicBuffer dbuf(split_extent.len + table->encoded_length());
 
-        min_ts_rec.range_ptr->get_compaction_priority_data(priority_data_vec);
-        for (size_t i=0; i<priority_data_vec.size(); i++) {
-          disk_usage += priority_data_vec[i].disk_used;
-          if (!priority_data_vec[i].in_memory && priority_data_vec[i].mem_used >= (uint32_t)Global::access_group_max_mem)
-            compactions.push_back(priority_data_vec[i].ag);
-        }
+        table->encode(&dbuf.ptr);
 
-        if (!min_ts_rec.range_ptr->is_root() &&
-            (disk_usage > min_ts_rec.range_ptr->get_size_limit() ||
-             (Global::range_metadata_max_bytes && table->id == 0 && disk_usage > Global::range_metadata_max_bytes))) {
-          if (!min_ts_rec.range_ptr->test_and_set_maintenance())
-            Global::maintenance_queue->add(new MaintenanceTaskSplit(min_ts_rec.range_ptr));
-        }
-        else if (!compactions.empty()) {
-          if (!min_ts_rec.range_ptr->test_and_set_maintenance()) {
-            for (size_t i=0; i<compactions.size(); i++)
-              compactions[i]->set_compaction_bit();
-            Global::maintenance_queue->add(new MaintenanceTaskCompaction(min_ts_rec.range_ptr, false));
-          }
-        }
+	// compute items added
+
+	memcpy(dbuf.ptr, split_extent.base, split_extent.len);
+	dbuf.ptr += split_extent.len;
+
+	if ((error = splitlog->write(dbuf, update_timestamp)) != Error::OK)
+	  HT_THROW(error, (string)"Problem writing " + (int)dbuf.fill() + " bytes to split log");
+
+	memset(&split_extent, 0, sizeof(split_extent));
       }
 
-      if (Global::verbose) {
-        HT_INFOF("Added %d (%d split off) updates to '%s'", gomods.size()+splitmods.size(), splitmods.size(), table->name);
-      }
+      if (Global::verbose)
+        HT_INFOF("Added %d (%d split off) updates to '%s'", total_added, split_added, table->name);
+
     }
 
     if (send_back_ptr) {
@@ -1200,8 +1139,10 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
     }
 
     m_update_mutex_b.lock();
-    m_update_mutex_a.unlock();
     b_locked = true;
+
+    m_update_mutex_a.unlock();
+    a_locked = false;
 
     /**
      * Commit ROOT mutations
@@ -1211,21 +1152,18 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
 
       table->encode(&dbuf.ptr);
 
-      items_added += rootmods.size();
-      memory_added += rootsz;
+      // compute items added
 
-      for (size_t i=0; i<rootmods.size(); i++) {
-        memcpy(dbuf.ptr, rootmods[i].base, rootmods[i].len);
-        dbuf.ptr += rootmods[i].len;
+      for (size_t i=0; i<root_extents.size(); i++) {
+        memcpy(dbuf.ptr, root_extents[i].base, root_extents[i].len);
+        dbuf.ptr += root_extents[i].len;
       }
 
       HT_EXPECT(dbuf.fill() <= (rootsz + table->encoded_length()), Error::FAILED_EXPECTATION);
 
-      if ((error = Global::root_log->write(dbuf, initial_timestamp)) != Error::OK) {
-	errmsg = (string)"Problem writing " + (int)dbuf.fill() + " bytes to ROOT commit log";
-	m_update_mutex_b.unlock();
-	goto abort;
-      }
+      if ((error = Global::root_log->write(dbuf, initial_timestamp)) != Error::OK)
+	HT_THROW(error, (string)"Problem writing " + (int)dbuf.fill() + " bytes to ROOT commit log");
+
     }
 
     /**
@@ -1237,28 +1175,81 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
 
       table->encode(&dbuf.ptr);
 
-      items_added += gomods.size();
-      memory_added += gosz;
+      // compute items added
 
-      for (size_t i=0; i<gomods.size(); i++) {
-        memcpy(dbuf.ptr, gomods[i].base, gomods[i].len);
-        dbuf.ptr += gomods[i].len;
+      for (size_t i=0; i<go_extents.size(); i++) {
+        memcpy(dbuf.ptr, go_extents[i].base, go_extents[i].len);
+        dbuf.ptr += go_extents[i].len;
       }
 
       HT_EXPECT(dbuf.fill() <= (gosz + table->encoded_length()), Error::FAILED_EXPECTATION);
 
-      if ((error = log->write(dbuf, initial_timestamp)) != Error::OK) {
-	errmsg = (string)"Problem writing " + (int)dbuf.fill() + " bytes to commit log (" + log->get_log_dir() + ")";
-	m_update_mutex_b.unlock();
-	goto abort;
+      if ((error = log->write(dbuf, initial_timestamp)) != Error::OK)
+	HT_THROW(error, (string)"Problem writing " + (int)dbuf.fill() + " bytes to commit log (" + log->get_log_dir() + ")");
+
+    }
+
+    for (size_t rangei=0; rangei<range_vector.size(); rangei++) {
+
+      /**
+       * Apply the modifications
+       */
+      range_vector[rangei].range_ptr->lock();
+      {
+        uint8_t *ptr = (uint8_t *)range_vector[rangei].extent.base;
+	uint8_t *end = (uint8_t *)range_vector[rangei].extent.base + range_vector[rangei].extent.len;
+        while (ptr < end) {
+          key.ptr = ptr;
+          ptr += key.length();
+          value.ptr = ptr;
+          ptr += value.length();
+          if ((error = range_vector[rangei].range_ptr->add(key, value, update_timestamp)) != Error::OK) {
+            SendBackRec send_back;
+            send_back.error = error;
+            send_back.offset = key.ptr - buffer.base;
+            send_back.len = end - key.ptr;
+            send_back_vector.push_back(send_back);
+            break;
+          }
+        }
+      }
+      range_vector[rangei].range_ptr->unlock(update_timestamp);
+
+      range_vector[rangei].range_ptr->decrement_update_counter();
+
+      /**
+       * Split and Compaction processing
+       */
+      if (!range_vector[rangei].range_ptr->maintenance_in_progress()) {
+        std::vector<AccessGroup::CompactionPriorityData> priority_data_vec;
+        std::vector<AccessGroup *> compactions;
+        uint64_t disk_usage = 0;
+
+        range_vector[rangei].range_ptr->get_compaction_priority_data(priority_data_vec);
+        for (size_t i=0; i<priority_data_vec.size(); i++) {
+          disk_usage += priority_data_vec[i].disk_used;
+          if (!priority_data_vec[i].in_memory && priority_data_vec[i].mem_used >= (uint32_t)Global::access_group_max_mem)
+            compactions.push_back(priority_data_vec[i].ag);
+        }
+
+        if (!range_vector[rangei].range_ptr->is_root() &&
+            (disk_usage > range_vector[rangei].range_ptr->get_size_limit() ||
+             (Global::range_metadata_max_bytes && table->id == 0 && disk_usage > Global::range_metadata_max_bytes))) {
+          if (!range_vector[rangei].range_ptr->test_and_set_maintenance())
+            Global::maintenance_queue->add(new MaintenanceTaskSplit(range_vector[rangei].range_ptr));
+        }
+        else if (!compactions.empty()) {
+          if (!range_vector[rangei].range_ptr->test_and_set_maintenance()) {
+            for (size_t i=0; i<compactions.size(); i++)
+              compactions[i]->set_compaction_bit();
+            Global::maintenance_queue->add(new MaintenanceTaskCompaction(range_vector[rangei].range_ptr, false));
+          }
+        }
       }
     }
 
-    m_update_mutex_b.unlock();
-
-    if (Global::verbose && misses) {
+    if (Global::verbose && misses)
       HT_INFOF("Sent back %d updates because out-of-range", misses);
-    }
 
     error = Error::OK;
   }
@@ -1266,33 +1257,16 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
     HT_ERRORF("Exception caught: %s", Error::get_text(e.code()));
     error = e.code();
     errmsg = e.what();
-    if (b_locked)
-      m_update_mutex_b.unlock();
-    else if (a_locked)
-      m_update_mutex_a.unlock();
   }
+
+  if (b_locked)
+    m_update_mutex_b.unlock();
+  else if (a_locked)
+    m_update_mutex_a.unlock();
 
   m_bytes_loaded += buffer.size;
 
- abort:
-
-  Global::memory_tracker.add_memory(memory_added);
-  Global::memory_tracker.add_items(items_added);
-
-  {
-    uint64_t mt_memory = Global::memory_tracker.get_memory();
-    uint64_t mt_items = Global::memory_tracker.get_items();
-    uint64_t vm_estimate = mt_memory + (mt_items*120);
-    HT_INFOF("drj mem=%lld items=%lld vm-est%lld", mt_memory, mt_items, vm_estimate);
-  }
-
   splitlog = 0;
-
-  // unblock scanner timestamp and decrement update counter
-  for (size_t i=0; i<min_ts_vector.size(); i++) {
-    min_ts_vector[i].range_ptr->remove_update_timestamp(min_ts_vector[i].timestamp);
-    min_ts_vector[i].range_ptr->decrement_update_counter();
-  }
 
   if (error == Error::OK) {
     /**
@@ -1306,21 +1280,18 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
         encode_i32(&ptr, send_back_vector[i].offset);
         encode_i32(&ptr, send_back_vector[i].len);
       }
-      if ((error = cb->response(ext)) != Error::OK) {
+      if ((error = cb->response(ext)) != Error::OK)
         HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
-      }
     }
     else {
-      if ((error = cb->response_ok()) != Error::OK) {
+      if ((error = cb->response_ok()) != Error::OK)
         HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
-      }
     }
   }
   else {
     HT_ERRORF("%s '%s'", Error::get_text(error), errmsg.c_str());
-    if ((error = cb->error(error, errmsg)) != Error::OK) {
+    if ((error = cb->error(error, errmsg)) != Error::OK)
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
-    }
   }
 }
 

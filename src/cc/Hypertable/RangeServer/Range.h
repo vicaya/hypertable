@@ -41,7 +41,6 @@
 #include "MaintenanceTask.h"
 #include "Metadata.h"
 #include "RangeUpdateBarrier.h"
-#include "ScannerTimestampController.h"
 
 namespace Hypertable {
 
@@ -89,7 +88,7 @@ namespace Hypertable {
     }
 
     int64_t get_latest_timestamp();
-    bool get_scan_timestamp(Timestamp &ts);
+    void get_scan_timestamp(Timestamp &ts);
 
     void replay_transfer_log(CommitLogReader *commit_log_reader, int64_t real_timestamp);
 
@@ -115,14 +114,6 @@ namespace Hypertable {
     }
     void decrement_update_counter() {
       m_update_barrier.exit();
-    }
-
-    void add_update_timestamp(Timestamp &ts) {
-      m_scanner_timestamp_controller.add_update_timestamp(ts);
-    }
-
-    void remove_update_timestamp(Timestamp &ts) {
-      m_scanner_timestamp_controller.remove_update_timestamp(ts);
     }
 
     bool get_split_info(String &split_row, CommitLogPtr &split_log_ptr) {
@@ -191,7 +182,6 @@ namespace Hypertable {
 
     RangeUpdateBarrier m_update_barrier;
     bool             m_is_root;
-    ScannerTimestampController m_scanner_timestamp_controller;
     uint64_t         m_added_deletes[3];
     uint64_t         m_added_inserts;
     RangeStateManaged m_state;

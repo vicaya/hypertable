@@ -64,7 +64,6 @@ ResponseCallbackGetStatistics.cc
 ResponseCallbackUpdate.cc
 ScanContext.cc
 ScannerMap.cc
-ScannerTimestampController.cc
 TableInfo.cc
 TableInfoMap.cc
 TimerHandler.cc
