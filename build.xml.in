@@ -1,9 +1,9 @@
 <!-- Hypertable -->
-<project name="hypertable" default="compile" basedir="."> 
+<project name="hypertable" default="compile" basedir="@HYPERTABLE_SOURCE_DIR@"> 
 
   <property name="Name" value="Hypertable"/>
   <property name="name" value="hypertable"/>
-  <property name="version" value="0.9.0.12"/>
+  <property name="version" value="@VERSION@"/>
   <property name="final.name" value="${name}-${version}"/>
   <property name="year" value="2008"/>
 
@@ -24,10 +24,10 @@
   <property name="test.dir" location="test" />
 
   <path id="project.classpath">
-	<pathelement location="${build.classes}" />
-	<fileset dir="${lib.dir}">
-	  <include name="*.jar"/>
-	</fileset>
+    <pathelement location="${build.classes}" />
+    <fileset dir="${lib.dir}">
+      <include name="*.jar"/>
+    </fileset>
   </path>
 
   <!-- Default target: usage.  Prints out instructions. -->
@@ -36,26 +36,28 @@
     <echo message="And for developers:"/>
     <echo message="Use 'ant clean' to clean compiled files." />
     <echo message="Use 'ant compile' to compile the source code." />
-    <echo message="Use 'ant tar' to build a release tarball." />
+    <echo message="Use 'ant jar' to build a release tarball." />
     <echo message="Use 'ant test' to run unit tests." />
   </target>
 
 
   <target name="prepare">
-	<mkdir dir="${build.classes}"/>
+        <mkdir dir="${build.classes}"/>
   </target>
 
   <target name="compile" depends="prepare" description="Standard compile">
-	<javac srcdir="${src.dir}" destdir="${build.classes}" deprecation="yes" debug="true">
-	  <classpath refid="project.classpath"/>
-	</javac>
-        <javac srcdir="${mapred.src}" destdir="${build.classes}" deprecation="yes" debug="true">
-          <classpath refid="project.classpath"/>
-        </javac>
+    <javac srcdir="${src.dir}" destdir="${build.classes}" deprecation="yes"
+           debug="true">
+      <classpath refid="project.classpath"/>
+    </javac>
+    <javac srcdir="${mapred.src}" destdir="${build.classes}" deprecation="yes"
+           debug="true">
+      <classpath refid="project.classpath"/>
+    </javac>
   </target>
 
   <!-- ================================================================== -->
-  <!-- Make hypertable.jar                                                    -->
+  <!-- Make hypertable.jar                                                -->
   <!-- ================================================================== -->
   <!--                                                                    -->
   <!-- ================================================================== -->
@@ -73,37 +75,17 @@
 
 
   <target name="clean">
-	<delete dir="${build.dir}"/>
+    <delete dir="${build.dir}"/>
   </target>
 
   <target name="test" depends="compile" description="Execute tests">
-     <junit showoutput="true" haltonfailure="true">
+    <junit showoutput="true" haltonfailure="true">
       <classpath refid="project.classpath" />
       <formatter type="brief" usefile="false" />
       <batchtest fork="true">
-	<fileset dir="${build.classes}" includes="**/*Test.class" />
+        <fileset dir="${build.classes}" includes="**/*Test.class" />
       </batchtest>
     </junit>
   </target>
-
-  <!--
-  <target name="compile-tests" depends="compile" description="Compile the tests">
-	<javac srcdir="${test.dir}" destdir="${build.test.dir}" debug="true">
-	  <classpath refid="project.classpath" />
-	</javac>
-  </target>
-
-  <target name="test" depends="compile-tests" description="Run the tests">
-	<junit haltonfailure="true">
-	  <classpath refid="project.classpath" />
-	  <formatter type="brief" usefile="false" />
-	  <batchtest>
-		<fileset dir="${build.test.dir}" includes="**/*Test.class" />
-	  </batchtest>
-	  <sysproperty key="doc.dir" value="${doc.dir}" />
-	  <sysproperty key="index.dir" value="${index.dir}" />
-	</junit>
-  </target>
-  -->
 
 </project>

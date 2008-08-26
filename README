@@ -66,9 +66,7 @@
 
     - ncurses dev lib (usually auto installed by installing above)
 
-    - gcc (if it's not already installed)
-      Example (using apt-get)
-      sudo apt-get install g++
+    - zlib dev lib (yum: zlib-devel; apt-get: zlib1g-dev)
 
     HIGHLY RECOMMENDED (but not required):
     - tcmalloc (http://code.google.com/p/google-perftools/)

@@ -87,31 +87,33 @@ find_package(Doxygen)
 find_package(Tcmalloc)
 find_package(BerkeleyDB REQUIRED)
 find_package(Readline REQUIRED)
+find_package(Ant)
 find_package(JNI)
 find_package(PythonLibs)
 
 if (PYTHON_LIBS_FOUND)
   message (STATUS "Python libraries found at : ${PYTHON_LIBS_FOUND}")
 endif (PYTHON_LIBS_FOUND)
+
 if (JAVA_INCLUDE_PATH)
   message(STATUS "Java headers found at: ${JAVA_INCLUDE_PATH}")
   if (HADOOP_INCLUDE_PATH)
     message(STATUS "Hadoop includes located at: ${HADOOP_INCLUDE_PATH}")
   else (HADOOP_INCLUDE_PATH)
-    message(STATUS "Hadoop includes not found. Please set HADOOP_INCLUDE_PATH variable")
+    message(STATUS "Please set HADOOP_INCLUDE_PATH variable for Hadoop support")
   endif(HADOOP_INCLUDE_PATH)
   
   if (HADOOP_LIB_PATH)
     message(STATUS "Hadoop libraries located at: ${HADOOP_LIB_PATH}")
   else (HADOOP_LIB_PATH)
-    message(STATUS "Hadoop libraries not found. Please set HADOOP_LIB_PATH variable")
+    message(STATUS "Please set HADOOP_LIB_PATH variable for Hadoop support")
   endif (HADOOP_LIB_PATH)
   
   if (NOT BUILD_SHARED_LIBS)
-    message(STATUS "You decided not to build shared libraries. MapReduce will be disabled")
+    message(STATUS "Not building shared libraries. Hadoop map-reduce support will be disabled")
   endif (NOT BUILD_SHARED_LIBS)
 else (JAVA_INCLUDE_PATH)
-  message(STATUS "Java JNI not found. Mapreduce support will be disabled.")
+  message(STATUS "Java JNI not found. Hadoop support will be disabled.")
 endif(JAVA_INCLUDE_PATH)
 
 if (JAVA_INCLUDE_PATH AND HADOOP_LIB_PATH AND HADOOP_INCLUDE_PATH AND BUILD_SHARED_LIBS)
@@ -159,13 +161,21 @@ add_subdirectory(examples)
 if (BUILD_MAPREDUCE)
   add_subdirectory(contrib/cc/MapReduce)
 else (BUILD_MAPREDUCE)
-  message(STATUS "MapReduce support disabled.")
+  message(STATUS "Hadoop map-reduce support disabled.")
 endif (BUILD_MAPREDUCE)
 #add_subdirectory(contrib/cc/PythonBinding)
 
 IF (Kfs_FOUND)
    add_subdirectory(src/cc/DfsBroker/kosmos)
 ENDIF (Kfs_FOUND)
+
+# Java stuff
+if (ANT_FOUND)
+  configure_file(build.xml.in build.xml @ONLY)
+  add_custom_target(HypertableJavaComponents ALL ant -f build.xml
+                    -Dbuild.dir=${HYPERTABLE_BINARY_DIR}/java jar
+                    DEPENDS HyperDfsBroker)
+endif (ANT_FOUND)
 
 install(FILES demo/metadata-test.xml DESTINATION ${VERSION}/demo)
 install(FILES demo/testdata.txt.bz2 DESTINATION ${VERSION}/demo)
@@ -178,8 +188,8 @@ install(FILES lib/hadoop-0.18.2-core.jar DESTINATION ${VERSION}/java/lib)
 install(FILES lib/junit-4.3.1.jar DESTINATION ${VERSION}/java/lib)
 install(FILES lib/log4j-1.2.13.jar DESTINATION ${VERSION}/java/lib)
 install(FILES lib/hypertable-${VERSION}.jar DESTINATION ${VERSION}/java/lib)
-install(FILES build/hypertable-${VERSION}.jar DESTINATION ${VERSION}/java/lib
-        OPTIONAL)
+install(FILES ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}.jar
+        DESTINATION ${VERSION}/java/lib OPTIONAL)
 install(PROGRAMS bin/jrun bin/clean-database.sh bin/start-dfsbroker.sh
 		 bin/start-master.sh bin/start-hyperspace.sh
 		 bin/start-rangeserver.sh bin/start-all-servers.sh
