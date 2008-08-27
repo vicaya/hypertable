@@ -30,6 +30,7 @@ extern "C" {
 #include <time.h>
 }
 
+#include "Common/Error.h"
 #include "Common/atomic.h"
 
 #include "CommBuf.h"
@@ -75,6 +76,9 @@ namespace Hypertable {
     int connection_id() { return m_id; }
 
   private:
+    void handle_message_header();
+    void handle_message_body();
+    void handle_disconnect(int error = Error::OK);
 
     static atomic_t ms_next_connection_id;
 
@@ -90,7 +94,7 @@ namespace Hypertable {
     int                 m_id;
   };
 
-  typedef boost::intrusive_ptr<IOHandlerData> IOHandlerDataPtr;
+  typedef intrusive_ptr<IOHandlerData> IOHandlerDataPtr;
 }
 
 #endif // HYPERTABLE_IOHANDLERDATA_H
