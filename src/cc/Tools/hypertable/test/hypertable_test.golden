@@ -373,3 +373,74 @@ foo	tag:adage	n
 cow	tag:Ab	n
 foo	tag:acyanoblepsia	n
 foo	tag:acyanopsia	n
+#
+# Issue 154
+#
+CREATE TABLE bug ( F MAX_VERSIONS=1 );
+SELECT * FROM bug;
+INSERT INTO bug VALUES ('R','F:Q','V1');
+SELECT * FROM bug;
+R	F:Q	V1
+DELETE 'F:Q' FROM bug WHERE ROW = 'R';
+SELECT * FROM bug;
+INSERT INTO bug VALUES ('R','F:Q','V2');
+SELECT * FROM bug;
+R	F:Q	V2
+DELETE 'F:Q' FROM bug WHERE ROW = 'R';
+SELECT * FROM bug;
+INSERT INTO bug VALUES ('R','F:Q','V3');
+SELECT * FROM bug;
+R	F:Q	V3
+DELETE 'F:Q' FROM bug WHERE ROW = 'R';
+SELECT * FROM bug;
+INSERT INTO bug VALUES ('R','F:Q','V4');
+SELECT * FROM bug;
+R	F:Q	V4
+DELETE 'F:Q' FROM bug WHERE ROW = 'R';
+SELECT * FROM bug;
+INSERT INTO bug VALUES ('R','F:Q','V5');
+SELECT * FROM bug;
+R	F:Q	V5
+DELETE 'F:Q' FROM bug WHERE ROW = 'R';
+SELECT * FROM bug;
+INSERT INTO bug VALUES ('R','F:Q','V6');
+SELECT * FROM bug;
+R	F:Q	V6
+DROP TABLE bug;
+CREATE TABLE bug ( F MAX_VERSIONS=2 );
+SELECT * FROM bug;
+INSERT INTO bug VALUES ('R','F:Q','V1');
+SELECT * FROM bug;
+R	F:Q	V1
+DELETE 'F:Q' FROM bug WHERE ROW = 'R';
+SELECT * FROM bug;
+INSERT INTO bug VALUES ('R','F:Q','V2');
+SELECT * FROM bug;
+R	F:Q	V2
+DELETE 'F:Q' FROM bug WHERE ROW = 'R';
+SELECT * FROM bug;
+INSERT INTO bug VALUES ('R','F:Q','V3');
+SELECT * FROM bug;
+R	F:Q	V3
+DELETE 'F:Q' FROM bug WHERE ROW = 'R';
+SELECT * FROM bug;
+INSERT INTO bug VALUES ('R','F:Q','V4');
+SELECT * FROM bug;
+R	F:Q	V4
+DELETE 'F:Q' FROM bug WHERE ROW = 'R';
+SELECT * FROM bug;
+INSERT INTO bug VALUES ('R','F:Q','V5');
+SELECT * FROM bug;
+R	F:Q	V5
+DELETE 'F:Q' FROM bug WHERE ROW = 'R';
+SELECT * FROM bug;
+INSERT INTO bug VALUES ('R','F:Q','V6');
+INSERT INTO bug VALUES ('R','F:Q','V7');
+SELECT * FROM bug;
+R	F:Q	V7
+R	F:Q	V6
+INSERT INTO bug VALUES ('R','F:Q','V8');
+SELECT * FROM bug;
+R	F:Q	V8
+R	F:Q	V7
+DROP TABLE bug;

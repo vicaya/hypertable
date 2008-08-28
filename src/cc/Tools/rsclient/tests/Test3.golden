@@ -405,6 +405,7 @@ CREATE SCANNER ON Test3[..??];
 1189631332218881 A apple:http://www.nielsenmedia.com/DMAs.html
 1189631332816922 A apple:http://www.sesameworkshop.org/sesamestreet/
 1189631333315161 A apple:http://www.usdoj.gov/usao/iln/osc/documents/ag_letter_december_30_2003.pdf
+1189631333004425 A apple:http://www.victoriacross.net
 1189631333503737 A onion:http://sports.espn.go.com/mlb/players/profile?statsId=6305
 1189631333262250 A onion:http://sports.espn.go.com/mlb/players/profile?statsId=6305
 1189631332925429 A onion:http://sports.espn.go.com/mlb/players/profile?statsId=6305
@@ -442,6 +443,7 @@ CREATE SCANNER ON Test3[..??];
 1189631333461047 Aani cherry:http://www.victoriacross.net
 1189631333302665 Aani banana:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
 1189631333575440 Aani banana:http://www.psa.ac.uk/awards2003/toynbee.htm
+1189631332672394 Aani apple:http://www.nielsenmedia.com/DMAs.html
 1189631333556507 Aani apple:http://www.psa.ac.uk/awards2003/toynbee.htm
 1189631333307949 Aani onion:http://www.baseball-reference.com/r/roberda07.shtml
 1189631333632645 Aani onion:http://www.klamathtribes.org
@@ -452,6 +454,7 @@ CREATE SCANNER ON Test3[..??];
 1189631333201826 Aaron plum:http://toughpigs.com/anthernie00.htm
 1189631332557033 Aaron plum:http://www.housing.berkeley.edu/housing/
 1189631333422758 Aaron plum:http://www.mtv.com/news/articles/1508677/20050831/duff_hilary.jhtml?headlines=true
+1189631333068644 Aaron broccoli:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
 1189631333603257 Aaron broccoli:http://www.baseball-reference.com/r/roberda07.shtml
 1189631332888125 Aaron broccoli:http://www.fcc.gov/fcc-bin/tvq?call=KOCB
 1189631333584518 Aaron broccoli:http://www.klamathtribes.org
@@ -479,6 +482,7 @@ CREATE SCANNER ON Test3[..??];
 1189631333081640 Aaron banana:http://www.victoriacross.net
 1189631332964538 Aaron banana:http://www.victoriacross.net
 1189631333113657 Aaron apple:http://pbskids.org/sesame/index.html
+1189631333271918 Aaron apple:http://sports.espn.go.com/mlb/players/profile?statsId=6305
 1189631333447158 Aaron apple:http://toughpigs.com/anthernie00.htm
 1189631332939022 Aaron apple:http://www.baseball-reference.com/r/roberda07.shtml
 1189631333521379 Aaron apple:http://www.fcc.gov/fcc-bin/tvq?call=KOCB
@@ -487,6 +491,7 @@ CREATE SCANNER ON Test3[..??];
 1189631333653481 Aaron apple:http://www.nielsenmedia.com/DMAs.html
 1189631332893236 Aaron apple:http://www.sirlinksalot.net/bertandernie.html
 1189631332956810 Aaron apple:http://www.usatoday.com/sports/bbw/columnist/nightengale/2005-01-19-majors_x.htm
+1189631333425901 Aaron apple:http://www.victoriacross.net
 1189631333030206 Aaron onion:http://www.guardian.co.uk/Columnists/Archive/0,5673,-25,0.html
 1189631332878130 Aaron onion:http://www.klamathtribes.org
 1189631332705622 Aaron onion:http://www.mtv.com/news/articles/1508677/20050831/duff_hilary.jhtml?headlines=true
@@ -742,6 +747,7 @@ CREATE SCANNER ON Test3[..??];
 1189631333513019 Ab apple:http://www.fcc.gov/fcc-bin/tvq?call=KOCB
 1189631333592533 Ab apple:http://www.housing.berkeley.edu/housing/
 1189631333269102 Ab apple:http://www.klamathtribes.org
+1189631333104640 Ab apple:http://www.nielsenmedia.com/DMAs.html
 1189631333506193 Ab apple:http://www.psa.ac.uk/awards2003/toynbee.htm
 1189631333468750 Ab apple:http://www.sesameworkshop.org/sesamestreet/
 1189631333685148 Ab apple:http://www.usdoj.gov/usao/iln/osc/documents/ag_letter_december_30_2003.pdf
@@ -937,10 +943,6 @@ CREATE SCANNER ON Test3[..??];
 1189631332540031 Abarambo cherry:http://www.fcc.gov/fcc-bin/tvq?call=KOCB
 1189631333615524 Abarambo cherry:http://www.housing.berkeley.edu/housing/
 1189631332617084 Abarambo cherry:http://www.lsbu.ac.uk/news-php/news.php?newsid=86
-1189631331968861 Abarambo cherry:http://www.lsbu.ac.uk/news-php/news.php?newsid=86
-1189631332842340 Abarambo cherry:http://www.mtv.com/news/articles/1508677/20050831/duff_hilary.jhtml?headlines=true
-1189631332438657 Abarambo cherry:http://www.mtv.com/news/articles/1508677/20050831/duff_hilary.jhtml?headlines=true
-1189631332227541 Abarambo cherry:http://www.psa.ac.uk/awards2003/toynbee.htm
 DESTROY SCANNER;
 CREATE SCANNER ON Test3[..??] MAX_VERSIONS=2;
 1189631333354075 A plum:http://sports.espn.go.com/mlb/players/profile?statsId=6305
@@ -1005,6 +1007,7 @@ CREATE SCANNER ON Test3[..??] MAX_VERSIONS=2;
 1189631332218881 A apple:http://www.nielsenmedia.com/DMAs.html
 1189631332816922 A apple:http://www.sesameworkshop.org/sesamestreet/
 1189631333315161 A apple:http://www.usdoj.gov/usao/iln/osc/documents/ag_letter_december_30_2003.pdf
+1189631333004425 A apple:http://www.victoriacross.net
 1189631333503737 A onion:http://sports.espn.go.com/mlb/players/profile?statsId=6305
 1189631333262250 A onion:http://sports.espn.go.com/mlb/players/profile?statsId=6305
 1189631333239324 A onion:http://www.eighttribes.org/modoc/
@@ -1040,6 +1043,7 @@ CREATE SCANNER ON Test3[..??] MAX_VERSIONS=2;
 1189631333461047 Aani cherry:http://www.victoriacross.net
 1189631333302665 Aani banana:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
 1189631333575440 Aani banana:http://www.psa.ac.uk/awards2003/toynbee.htm
+1189631332672394 Aani apple:http://www.nielsenmedia.com/DMAs.html
 1189631333556507 Aani apple:http://www.psa.ac.uk/awards2003/toynbee.htm
 1189631333307949 Aani onion:http://www.baseball-reference.com/r/roberda07.shtml
 1189631333632645 Aani onion:http://www.klamathtribes.org
@@ -1050,6 +1054,7 @@ CREATE SCANNER ON Test3[..??] MAX_VERSIONS=2;
 1189631333201826 Aaron plum:http://toughpigs.com/anthernie00.htm
 1189631332557033 Aaron plum:http://www.housing.berkeley.edu/housing/
 1189631333422758 Aaron plum:http://www.mtv.com/news/articles/1508677/20050831/duff_hilary.jhtml?headlines=true
+1189631333068644 Aaron broccoli:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
 1189631333603257 Aaron broccoli:http://www.baseball-reference.com/r/roberda07.shtml
 1189631332888125 Aaron broccoli:http://www.fcc.gov/fcc-bin/tvq?call=KOCB
 1189631333584518 Aaron broccoli:http://www.klamathtribes.org
@@ -1077,6 +1082,7 @@ CREATE SCANNER ON Test3[..??] MAX_VERSIONS=2;
 1189631333081640 Aaron banana:http://www.victoriacross.net
 1189631332964538 Aaron banana:http://www.victoriacross.net
 1189631333113657 Aaron apple:http://pbskids.org/sesame/index.html
+1189631333271918 Aaron apple:http://sports.espn.go.com/mlb/players/profile?statsId=6305
 1189631333447158 Aaron apple:http://toughpigs.com/anthernie00.htm
 1189631332939022 Aaron apple:http://www.baseball-reference.com/r/roberda07.shtml
 1189631333521379 Aaron apple:http://www.fcc.gov/fcc-bin/tvq?call=KOCB
@@ -1085,6 +1091,7 @@ CREATE SCANNER ON Test3[..??] MAX_VERSIONS=2;
 1189631333653481 Aaron apple:http://www.nielsenmedia.com/DMAs.html
 1189631332893236 Aaron apple:http://www.sirlinksalot.net/bertandernie.html
 1189631332956810 Aaron apple:http://www.usatoday.com/sports/bbw/columnist/nightengale/2005-01-19-majors_x.htm
+1189631333425901 Aaron apple:http://www.victoriacross.net
 1189631333030206 Aaron onion:http://www.guardian.co.uk/Columnists/Archive/0,5673,-25,0.html
 1189631332878130 Aaron onion:http://www.klamathtribes.org
 1189631332705622 Aaron onion:http://www.mtv.com/news/articles/1508677/20050831/duff_hilary.jhtml?headlines=true
@@ -1337,6 +1344,7 @@ CREATE SCANNER ON Test3[..??] MAX_VERSIONS=2;
 1189631333513019 Ab apple:http://www.fcc.gov/fcc-bin/tvq?call=KOCB
 1189631333592533 Ab apple:http://www.housing.berkeley.edu/housing/
 1189631333269102 Ab apple:http://www.klamathtribes.org
+1189631333104640 Ab apple:http://www.nielsenmedia.com/DMAs.html
 1189631333506193 Ab apple:http://www.psa.ac.uk/awards2003/toynbee.htm
 1189631333468750 Ab apple:http://www.sesameworkshop.org/sesamestreet/
 1189631333685148 Ab apple:http://www.usdoj.gov/usao/iln/osc/documents/ag_letter_december_30_2003.pdf
@@ -1389,6 +1397,7 @@ CREATE SCANNER ON Test3[..??] MAX_VERSIONS=2;
 1189631333673100 Ababua broccoli:http://www.eighttribes.org/modoc/
 1189631333709308 Ababua cassis:http://www.usatoday.com/sports/bbw/columnist/nightengale/2005-01-19-majors_x.htm
 1189631333449674 Abadite plum:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
+1189631333508214 Abadite plum:http://www.usatoday.com/sports/bbw/columnist/nightengale/2005-01-19-majors_x.htm
 1189631333453813 Abadite broccoli:http://sports.espn.go.com/mlb/players/profile?statsId=6305
 1189631333269750 Abadite broccoli:http://toughpigs.com/anthernie00.htm
 1189631333545653 Abadite broccoli:http://www.baseball-reference.com/r/roberda07.shtml
@@ -1535,11 +1544,4 @@ CREATE SCANNER ON Test3[..??] MAX_VERSIONS=2;
 1189631332842340 Abarambo cherry:http://www.mtv.com/news/articles/1508677/20050831/duff_hilary.jhtml?headlines=true
 1189631332438657 Abarambo cherry:http://www.mtv.com/news/articles/1508677/20050831/duff_hilary.jhtml?headlines=true
 1189631332227541 Abarambo cherry:http://www.psa.ac.uk/awards2003/toynbee.htm
-1189631333459814 Abarambo cherry:http://www.usdoj.gov/usao/iln/osc/documents/ag_letter_december_30_2003.pdf
-1189631333301899 Abarambo cherry:http://www.victoriacross.net
-1189631333049487 Abarambo banana:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
-1189631333474345 Abarambo banana:http://toughpigs.com/anthernie00.htm
-1189631332754769 Abarambo banana:http://toughpigs.com/anthernie00.htm
-1189631333138680 Abarambo banana:http://www.housing.berkeley.edu/housing/
-1189631332660918 Abarambo banana:http://www.sirlinksalot.net/bertandernie.html
 DESTROY SCANNER;

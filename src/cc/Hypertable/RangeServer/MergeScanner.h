@@ -50,7 +50,7 @@ namespace Hypertable {
       }
     };
 
-    MergeScanner(ScanContextPtr &scan_ctx, bool return_dels=true);
+    MergeScanner(ScanContextPtr &scan_ctx, bool return_everything=true);
     virtual ~MergeScanner();
     virtual void forward();
     virtual bool get(ByteString &key, ByteString &value);
@@ -75,7 +75,7 @@ namespace Hypertable {
     int64_t       m_deleted_column_family_timestamp;
     DynamicBuffer m_deleted_cell;
     int64_t       m_deleted_cell_timestamp;
-    bool          m_return_deletes;
+    bool          m_return_everything;
     int32_t       m_row_count;
     int32_t       m_row_limit;
     uint32_t      m_cell_count;
