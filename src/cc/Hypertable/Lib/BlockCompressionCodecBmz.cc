@@ -110,10 +110,11 @@ BlockCompressionCodecBmz::inflate(const DynamicBuffer &input,
 
   size_t outlen = header.get_data_length();
 
+  output.reserve(outlen);
+
   if (header.get_compression_type() == NONE)
     memcpy(output.base, ip, outlen);
   else {
-    output.reserve(outlen);
     m_workmem.reserve(bmz_unpack_worklen(outlen), true);
 
     HT_EXPECT(bmz_unpack(ip, header.get_data_zlength(), output.base, &outlen,

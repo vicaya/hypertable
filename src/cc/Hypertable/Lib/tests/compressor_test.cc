@@ -85,12 +85,12 @@ int main(int argc, char **argv) {
   }
 
   if (input.fill() != output2.fill()) {
-    HT_ERRORF("Input length (%ld) does not match output length (%ld) after lzo codec", input.fill(), output2.fill());
+    HT_ERRORF("Input length (%ld) does not match output length (%ld) after %s codec", input.fill(), output2.fill(), argv[0]);
     return 1;
   }
 
   if (memcmp(input.base, output2.base, input.fill())) {
-    HT_ERROR("Input does not match output after lzo codec");
+    HT_ERRORF("Input does not match output after %s codec", argv[0]);
     return 1;
   }
 
@@ -98,6 +98,8 @@ int main(int argc, char **argv) {
 
   memcpy(input.base, "foo", 3);
   input.ptr = input.base + 3;
+
+  output2.free();
 
   try {
     compressor->deflate(input, output1, header);
@@ -109,12 +111,12 @@ int main(int argc, char **argv) {
   }
 
   if (input.fill() != output2.fill()) {
-    HT_ERRORF("Input length (%ld) does not match output length (%ld) after lzo codec", input.fill(), output2.fill());
+    HT_ERRORF("Input length (%ld) does not match output length (%ld) after %s codec", input.fill(), output2.fill(), argv[0]);
     return 1;
   }
 
   if (memcmp(input.base, output2.base, input.fill())) {
-    HT_ERROR("Input does not match output after lzo codec");
+    HT_ERRORF("Input does not match output after %s codec", argv[0]);
     return 1;
   }
 
