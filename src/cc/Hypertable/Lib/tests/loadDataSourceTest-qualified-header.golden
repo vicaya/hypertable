@@ -1,0 +1,12 @@
+row=events.mercurynews.com/venues column_family=datetime value=2008-01-25 15:19:32
+row=events.mercurynews.com/venues column_family=url column_qualifier=referral value=events.mercurynews.com/search
+row=events.mercurynews.com/venues column_family=http-code value=200
+row=events.mercurynews.com/venues column_family=url column_qualifier=affiliate value=http://www.amazon.com
+row=www.zvents.com/events/auto_complete_for_artist_name column_family=datetime value=2008-01-25 15:19:32
+row=www.zvents.com/events/auto_complete_for_artist_name column_family=url column_qualifier=referral value=www.zvents.com/indio-ca/events/show/81296496-coachella
+row=www.zvents.com/events/auto_complete_for_artist_name column_family=http-code value=200
+row=www.zvents.com/events/auto_complete_for_artist_name column_family=url column_qualifier=affiliate value=http://www.ebay.com
+row=events.mercurynews.com/events column_family=datetime value=2008-01-25 15:19:35
+row=events.mercurynews.com/events column_family=url column_qualifier=referral value=events.mercurynews.com/search
+row=events.mercurynews.com/events column_family=http-code value=404
+row=events.mercurynews.com/events column_family=url column_qualifier=affiliate value=http://www.googlesyndicate.com

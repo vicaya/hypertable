@@ -46,30 +46,39 @@ int main(int argc, char **argv) {
   int fd;
   std::vector<String> key_columns;
 
-  if ((fd = open("loadDataSourceTest.output", O_WRONLY|O_CREAT|O_TRUNC, 0644)) < 0) {
-    perror("open");
-    return 1;
+  vector<String> testnames;
+  testnames.push_back("loadDataSourceTest");
+  testnames.push_back("loadDataSourceTest-header");
+  testnames.push_back("loadDataSourceTest-qualified-header");
+
+  for(size_t i = 0; i < testnames.size(); i++) {
+	std::string output_fn = testnames[i] + ".output";
+	if ((fd = open(output_fn.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0644)) < 0) {
+	  perror("open");
+	  return 1;
+	}
+
+	close(2);
+	dup(fd);
+
+	key_columns.clear();
+	std::string dat_fn = testnames[i] + ".dat";
+	lds = new LoadDataSource(dat_fn.c_str(), "", key_columns, "");
+
+	while (lds->next(0, &timestamp, &key, &value, &value_len, 0)) {
+	  cerr << "row=" << (const char *)key.row << " column_family=" << key.column_family;
+	  if (key.column_qualifier_len > 0)
+		cerr << " column_qualifier=" << (const char *)key.column_qualifier;
+	  cerr << " value=" << (const char *)value << endl;
+	}
+
+	delete lds;
+
+	std::string golden_fn = testnames[i] + ".golden";
+	std::string sys_cmd = "diff " + output_fn + " " + golden_fn;
+	if (system(sys_cmd.c_str()) != 0)
+	  return 1;
   }
-
-  close(2);
-  dup(fd);
-
-  lds = new LoadDataSource("loadDataSourceTest.dat", "", key_columns, "");
-
-  while (lds->next(0, &timestamp, &key, &value, &value_len, 0)) {
-    cerr << "row=" << (const char *)key.row << " column_family=" << key.column_family;
-    if (key.column_qualifier_len > 0)
-      cerr << " column_qualifier=" << (const char *)key.column_qualifier;
-    cerr << " value=" << (const char *)value << endl;
-  }
-
-  delete lds;
-
-  close(2);
-  dup(1);
-
-  if (system("diff loadDataSourceTest.output loadDataSourceTest.golden") != 0)
-    return 1;
 
   return 0;
 }

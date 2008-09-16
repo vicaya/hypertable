@@ -77,9 +77,10 @@ LoadDataSource::LoadDataSource(const String &fname, const String &header_fname,
       m_rsgen(0), m_row_uniquify_chars(row_uniquify_chars),
       m_dupkeycols(dupkeycols) {
   String line, column_name;
-  char *base, *ptr;
+  char *base, *ptr, *colon_ptr;
   int index = 0;
   KeyComponentInfo key_comps;
+  ColumnInfo cinfo;
 
   if (row_uniquify_chars)
     m_rsgen = new FixedRandomStringGenerator(row_uniquify_chars);
@@ -110,19 +111,42 @@ LoadDataSource::LoadDataSource(const String &fname, const String &header_fname,
     while (isspace(*base))
       base++;
   }
-  while ((ptr = strchr(base, '\t')) != 0) {
-    *ptr++ = 0;
-    m_column_names.push_back(base);
-    column_name = String(base);
-    if (timestamp_column != "" && timestamp_column == column_name) {
+
+  ptr = strchr(base, '\t');
+
+  while (base) {
+
+    if (ptr)
+      *ptr++ = 0;
+
+    colon_ptr = strchr(base, ':');
+    if (colon_ptr) {
+      cinfo.family = String(base, colon_ptr - base);
+      cinfo.qualifier = colon_ptr+1;
+    }
+    else {
+      cinfo.family = base;
+      cinfo.qualifier = "";
+    }
+
+    m_column_info.push_back(cinfo);
+
+    if (timestamp_column != "" && timestamp_column == cinfo.family) {
       m_timestamp_index = index;
       m_type_mask[index] |= TIMESTAMP;
     }
-    base = ptr;
+
     index++;
     HT_EXPECT(index < 256, Error::TOO_MANY_COLUMNS);
+
+    if (ptr) {
+      base = ptr;
+      ptr = strchr(base, '\t');
+    }
+    else
+      base = 0;
   }
-  m_column_names.push_back(base);
+
 
   /**
    * Set up row key columns
@@ -164,15 +188,15 @@ LoadDataSource::LoadDataSource(const String &fname, const String &header_fname,
     else
       column_name = key_columns[i];
 
-    for (j=0; j<m_column_names.size(); j++) {
-      if (m_column_names[j] == column_name) {
+    for (j=0; j<m_column_info.size(); j++) {
+      if (m_column_info[j].family == column_name) {
         key_comps.index = j;
         m_key_comps.push_back(key_comps);
         m_type_mask[j] |= ROW_KEY;
         break;
       }
     }
-    if (j == m_column_names.size()) {
+    if (j == m_column_info.size()) {
       cout << "ERROR: key column '" << column_name
            << "' not found in input file" << endl;
       exit(1);
@@ -185,22 +209,22 @@ LoadDataSource::LoadDataSource(const String &fname, const String &header_fname,
     m_type_mask[0] |= ROW_KEY;
   }
 
-  if (m_column_names.size() == 3 || m_column_names.size() == 4) {
-    size_t i=m_column_names.size()-3;
-    if (m_column_names[i] == "rowkey" &&
-        m_column_names[i+1] == "columnkey" &&
-        m_column_names[i+2] == "value") {
-      if (i == 0 || m_column_names[0] == "timestamp") {
+  if (m_column_info.size() == 3 || m_column_info.size() == 4) {
+    size_t i=m_column_info.size()-3;
+    if (m_column_info[i].family == "rowkey" &&
+        m_column_info[i+1].family == "columnkey" &&
+        m_column_info[i+2].family == "value") {
+      if (i == 0 || m_column_info[0].family == "timestamp") {
         m_hyperformat = true;
         m_leading_timestamps = (i==1);
       }
     }
   }
 
-  m_next_value = m_column_names.size();
+  m_next_value = m_column_info.size();
   m_limit = 0;
 
-  if (!m_hyperformat && m_column_names.size() < 2)
+  if (!m_hyperformat && m_column_info.size() < 2)
     HT_THROW(Error::HQL_BAD_LOAD_FILE_FORMAT,
              "No columns specified in load file");
 
@@ -336,12 +360,16 @@ LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp,
     if (m_next_value > 0 && m_next_value < m_limit) {
       keyp->row = m_row_key_buffer.base;
       keyp->row_len = m_row_key_buffer.fill();
-      keyp->column_family = m_column_names[m_next_value].c_str();
+      keyp->column_family = m_column_info[m_next_value].family.c_str();
       *timestampp = m_timestamp;
       // clear these, just in case they were set by the client
-      if (keyp->column_qualifier || keyp->column_qualifier_len) {
+      if (m_column_info[m_next_value].qualifier.empty()) {
         keyp->column_qualifier = 0;
         keyp->column_qualifier_len = 0;
+      }
+      else {
+	keyp->column_qualifier = m_column_info[m_next_value].qualifier.c_str();
+        keyp->column_qualifier_len = m_column_info[m_next_value].qualifier.length();
       }
       if (m_values[m_next_value] == 0) {
         *valuep = 0;
@@ -402,7 +430,7 @@ LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp,
       else
         m_values.push_back(base);
 
-      m_limit = std::min(m_values.size(), m_column_names.size());
+      m_limit = std::min(m_values.size(), m_column_info.size());
 
       /**
        * setup row key
@@ -465,12 +493,18 @@ LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp,
 	keyp->row_len = m_row_key_buffer.fill();
       }
 
-      keyp->column_family = m_column_names[m_next_value].c_str();
+      keyp->column_family = m_column_info[m_next_value].family.c_str();
       *timestampp = m_timestamp;
-      if (keyp->column_qualifier || keyp->column_qualifier_len) {
+
+      if (m_column_info[m_next_value].qualifier.empty()) {
         keyp->column_qualifier = 0;
         keyp->column_qualifier_len = 0;
       }
+      else {
+	keyp->column_qualifier = m_column_info[m_next_value].qualifier.c_str();
+        keyp->column_qualifier_len = m_column_info[m_next_value].qualifier.length();
+      }
+
       if (m_values[m_next_value] == 0) {
         *valuep = 0;
         *value_lenp = 0;

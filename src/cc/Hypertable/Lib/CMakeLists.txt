@@ -158,6 +158,14 @@ configure_file(${SRC_DIR}/loadDataSourceTest.golden
                ${DST_DIR}/loadDataSourceTest.golden)
 configure_file(${SRC_DIR}/loadDataSourceTest.dat
                ${DST_DIR}/loadDataSourceTest.dat)
+configure_file(${SRC_DIR}/loadDataSourceTest-header.golden
+               ${DST_DIR}/loadDataSourceTest-header.golden)
+configure_file(${SRC_DIR}/loadDataSourceTest-header.dat
+               ${DST_DIR}/loadDataSourceTest-header.dat)
+configure_file(${SRC_DIR}/loadDataSourceTest-qualified-header.golden
+               ${DST_DIR}/loadDataSourceTest-qualified-header.golden)
+configure_file(${SRC_DIR}/loadDataSourceTest-qualified-header.dat
+               ${DST_DIR}/loadDataSourceTest-qualified-header.dat)
 configure_file(${HYPERTABLE_SOURCE_DIR}/conf/hypertable.cfg
                ${DST_DIR}/hypertable.cfg)
 

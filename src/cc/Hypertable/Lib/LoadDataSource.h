@@ -74,7 +74,12 @@ namespace Hypertable {
 
     bool add_row_component(int index);
 
-    std::vector<String> m_column_names;
+    struct ColumnInfo {
+      String family;
+      String qualifier;
+    };
+
+    std::vector<ColumnInfo> m_column_info;
     std::vector<const char *> m_values;
     std::vector<KeyComponentInfo> m_key_comps;
     uint32_t *m_type_mask;

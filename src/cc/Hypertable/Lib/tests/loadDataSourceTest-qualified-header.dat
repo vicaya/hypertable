@@ -1,0 +1,4 @@
+# page	datetime	url:referral	http-code	url:affiliate
+events.mercurynews.com/venues	2008-01-25 15:19:32	events.mercurynews.com/search	200	http://www.amazon.com
+www.zvents.com/events/auto_complete_for_artist_name	2008-01-25 15:19:32	www.zvents.com/indio-ca/events/show/81296496-coachella	200	http://www.ebay.com
+events.mercurynews.com/events	2008-01-25 15:19:35	events.mercurynews.com/search	404	http://www.googlesyndicate.com
