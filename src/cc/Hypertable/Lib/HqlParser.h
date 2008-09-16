@@ -742,6 +742,7 @@ namespace Hypertable {
           HT_THROW(Error::HQL_PARSE_ERROR,
                    "SELECT INTO FILE multiply defined.");
         state.scan.outfile = String(str, end-str);
+        trim_if(state.scan.outfile, is_any_of("'\""));
       }
       hql_interpreter_state &state;
     };

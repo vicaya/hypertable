@@ -98,6 +98,7 @@ void HqlCommandInterpreter::execute_line(const String &line) {
   hql_interpreter interp(state);
   parse_info<> info;
   Schema *schema;
+  FILE *outfp = stdout;
 
   info = parse(line.c_str(), interp, space_p);
 
@@ -170,6 +171,24 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       RowInterval  ri;
       CellInterval ci;
 
+      if (state.scan.outfile != "") {
+	FileUtils::expand_tilde(state.scan.outfile);
+	if ((outfp = fopen(state.scan.outfile.c_str(), "w")) == 0)
+	  HT_THROW(Error::EXTERNAL, format("Unable to open file '%s' for writing - %s", state.scan.outfile.c_str(), strerror(errno)));
+	if (state.scan.display_timestamps) {
+	  if (state.scan.keys_only)
+	    fprintf(outfp, "#timestamp\trowkey\n");
+	  else
+	    fprintf(outfp, "#timestamp\trowkey\tcolumnkey\tvalue\n");
+	}
+	else {
+	  if (state.scan.keys_only)
+	    fprintf(outfp, "#rowkey\n");
+	  else
+	    fprintf(outfp, "#rowkey\tcolumnkey\tvalue\n");
+	}
+      }
+
       scan_spec.row_limit = state.scan.limit;
       scan_spec.max_versions = state.scan.max_versions;
       for (size_t i=0; i<state.scan.columns.size(); i++)
@@ -207,34 +226,34 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       while (scanner_ptr->next(cell)) {
         if (state.scan.display_timestamps) {
           if (m_timestamp_output_format == TIMESTAMP_FORMAT_USECS) {
-            printf("%llu\t", (long long unsigned int)cell.timestamp);
+            fprintf(outfp, "%llu\t", (long long unsigned int)cell.timestamp);
           }
           else {
             nsec = cell.timestamp % 1000000000LL;
             unix_time = cell.timestamp / 1000000000LL;
             gmtime_r(&unix_time, &tms);
-            printf("%d-%02d-%02d %02d:%02d:%02d.%09d\t", tms.tm_year+1900,
-                   tms.tm_mon+1, tms.tm_mday, tms.tm_hour, tms.tm_min,
-                   tms.tm_sec, nsec);
+            fprintf(outfp, "%d-%02d-%02d %02d:%02d:%02d.%09d\t", tms.tm_year+1900,
+		    tms.tm_mon+1, tms.tm_mday, tms.tm_hour, tms.tm_min,
+		    tms.tm_sec, nsec);
           }
         }
         if (!state.scan.keys_only) {
           if (cell.column_family) {
-            printf("%s\t%s", cell.row_key, cell.column_family);
+            fprintf(outfp, "%s\t%s", cell.row_key, cell.column_family);
             if (*cell.column_qualifier)
-              printf(":%s", cell.column_qualifier);
+              fprintf(outfp, ":%s", cell.column_qualifier);
           }
           else
-            printf("%s", cell.row_key);
+            fprintf(outfp, "%s", cell.row_key);
           if (cell.flag != FLAG_INSERT)
-            printf("\t%s\tDELETE\n", String((const char *)cell.value,
+            fprintf(outfp, "\t%s\tDELETE\n", String((const char *)cell.value,
                                             cell.value_len).c_str());
           else
-            printf("\t%s\n", String((const char *)cell.value,
+            fprintf(outfp, "\t%s\n", String((const char *)cell.value,
                                      cell.value_len).c_str());
         }
         else
-          printf("%s\n", cell.row_key);
+          fprintf(outfp, "%s\n", cell.row_key);
       }
     }
     else if (state.command == COMMAND_LOAD_DATA) {
@@ -253,7 +272,6 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       Stopwatch stopwatch;
       bool into_table = true;
       bool display_timestamps = false;
-      FILE *outfp = 0;
 
       if (state.table_name == "") {
         if (state.output_file == "")
@@ -356,8 +374,6 @@ void HqlCommandInterpreter::execute_line(const String &line) {
           } while (!mutator_ptr->retry(30));
         }
       }
-      else
-        fclose(outfp);
 
       if (!m_silent && !m_test_mode && show_progress->count() < file_size)
         *show_progress += file_size - show_progress->count();
@@ -507,5 +523,8 @@ void HqlCommandInterpreter::execute_line(const String &line) {
   }
   else
     HT_THROW(Error::HQL_PARSE_ERROR, String("parse error at: ") + info.stop);
+
+  if (outfp && outfp != stdout)
+    fclose(outfp);
 
 }
