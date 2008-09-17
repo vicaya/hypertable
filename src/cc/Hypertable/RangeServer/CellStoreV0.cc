@@ -431,7 +431,7 @@ CellStoreV0::open(const char *fname, const char *start_row,
 
     if (len != m_trailer.size()) {
       HT_ERRORF("Problem reading trailer for CellStore file '%s' - only read "
-                "%d of %d bytes", m_filename.c_str(), len, m_trailer.size());
+                "%u of %lu bytes", m_filename.c_str(), len, m_trailer.size());
       delete [] trailer_buf;
       goto abort;
     }
@@ -448,9 +448,9 @@ CellStoreV0::open(const char *fname, const char *start_row,
   }
   if (!(m_trailer.fix_index_offset < m_trailer.var_index_offset &&
         m_trailer.var_index_offset < m_file_length)) {
-    HT_ERRORF("Bad index offsets in CellStore trailer fix=%lld, var=%lld, "
-              "length=%lld, file='%s'", m_trailer.fix_index_offset,
-              m_trailer.var_index_offset, m_file_length, fname);
+    HT_ERRORF("Bad index offsets in CellStore trailer fix=%u, var=%u, "
+              "length=%llu, file='%s'", m_trailer.fix_index_offset,
+              m_trailer.var_index_offset, (Llu)m_file_length, fname);
     goto abort;
   }
 

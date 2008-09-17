@@ -77,7 +77,7 @@ void DfsTestThreadFunction::operator()() {
     dfssz = m_client->length(m_dfs_file);
 
     if (origsz != dfssz) {
-      HT_ERRORF("Length mismatch: %ld != %ld", origsz, dfssz);
+      HT_ERRORF("Length mismatch: %lld != %lld", origsz, dfssz);
       exit(1);
     }
   }

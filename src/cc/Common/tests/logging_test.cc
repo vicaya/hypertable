@@ -1,6 +1,7 @@
 #include "Common/Compat.h"
 #include "Common/Logger.h"
 #include "Common/Config.h"
+#include <sstream>
 #include <stdio.h>
 #include <signal.h>
 #include <setjmp.h>
@@ -9,15 +10,16 @@ using namespace Hypertable;
 
 namespace {
 
-int n_sigs = 0;
-const int N_EXPECTED_SIGS = 3;
+volatile int n_sigs = 0;
+volatile bool last_try = false;
+const int N_EXPECTED_SIGS = 4;
 jmp_buf jmp_ctx;
 
 #define DEF_SIG_HANDLER(_sig_) \
 void _sig_##_handler(int) { \
-  if (++n_sigs >= N_EXPECTED_SIGS) { \
-    HT_INFO("Caught " #_sig_ " signal, exiting..."); \
-    exit(0); \
+  if (++n_sigs >= N_EXPECTED_SIGS && !last_try) { \
+    HT_INFO("Caught unexpected " #_sig_ " signal, aborting..."); \
+    exit(1); \
   } \
   HT_INFO("Caught " #_sig_ " signal, continuing..."); \
   longjmp(jmp_ctx, 1); \
@@ -73,8 +75,23 @@ void test_basic_logging(const char *msg) {
   HT_ERROR_OUT << msg <<  HT_END;
   HT_CRIT_OUT << msg << HT_END;
   HT_ALERT_OUT << msg <<  HT_END;
-  HT_EMERG_OUT << msg <<  HT_END;
+  TRY_FATAL(HT_EMERG_OUT << msg <<  HT_END);
+  last_try = true;
   TRY_FATAL(HT_FATAL_OUT << msg <<  HT_END);
+  HT_EXPECT(n_sigs == N_EXPECTED_SIGS, -1);
+}
+
+// testing the workaround of log4cpp > 1k message segfault on certain platforms
+void test_big_message() {
+  std::ostringstream s;
+
+  for (int i = 0; i < 2000; ++i)
+    s << char('0' + (i % 10));
+
+  String buf = s.str();
+
+  HT_INFOF("%s %d", buf.c_str(), 1);
+  HT_INFO_OUT << buf << HT_END;
 }
 
 } // local namespace
@@ -82,5 +99,6 @@ void test_basic_logging(const char *msg) {
 int main(int ac, char *av[]) {
   Config::init(ac, av);
   test_basic_logging(av[0]);
-  return 1; // normal exits in sig handlers
+  test_big_message();
+  return 0;
 }

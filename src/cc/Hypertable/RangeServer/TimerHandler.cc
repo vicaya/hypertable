@@ -68,6 +68,6 @@ void TimerHandler::handle(Hypertable::EventPtr &event_ptr) {
     }
   }
   catch (Hypertable::Exception &e) {
-    HT_ERRORF("%s '%s'", e.code(), e.what());
+    HT_ERROR_OUT << e << HT_END;
   }
 }

@@ -123,9 +123,9 @@ bool IOHandlerDatagram::handle_event(struct kevent *event) {
     socklen_t fromlen = sizeof(struct sockaddr_in);
 
     if ((nread = FileUtils::recvfrom(m_sd, m_message, 65536,
-        (sockaddr *)&addr, &fromlen)) == (ssize_t)-1) {
-      HT_ERRORF("FileUtils::recvfrom(%d, len=%d) failure : %s", m_sd, available,
-                strerror(errno));
+        (struct sockaddr *)&addr, &fromlen)) == (ssize_t)-1) {
+      HT_ERRORF("FileUtils::recvfrom(%d, len=%d) failure : %s", m_sd,
+                (int)available, strerror(errno));
       deliver_event(new Event(Event::ERROR, m_sd, addr,
                               Error::COMM_RECEIVE_ERROR));
       return true;
@@ -211,12 +211,12 @@ int IOHandlerDatagram::flush_send_queue() {
 
     if (nsent == (ssize_t)-1) {
       HT_WARNF("FileUtils::sendto(%d, len=%d, addr=%s:%d) failed : %s", m_sd,
-               tosend, InetAddr::format(send_rec.first).c_str(),
-               strerror(errno));
+               (int)tosend, inet_ntoa(send_rec.first.sin_addr),
+               ntohs(send_rec.first.sin_port), strerror(errno));
       return Error::COMM_SEND_ERROR;
     }
     else if (nsent < tosend) {
-      HT_WARNF("Only sent %d bytes", nsent);
+      HT_WARNF("Only sent %d bytes", (int)nsent);
       if (nsent == 0)
         break;
       send_rec.second->data_ptr += nsent;

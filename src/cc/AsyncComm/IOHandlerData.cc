@@ -239,7 +239,7 @@ bool IOHandlerData::handle_event(struct kevent *event) {
           nread = FileUtils::read(m_sd, ptr, m_message_header_remaining);
           if (nread == (size_t)-1) {
             HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd,
-                      m_message_header_remaining, strerror(errno));
+                      (int)m_message_header_remaining, strerror(errno));
             handle_disconnect();
             return true;
           }
@@ -251,7 +251,7 @@ bool IOHandlerData::handle_event(struct kevent *event) {
           nread = FileUtils::read(m_sd, ptr, available);
           if (nread == (size_t)-1) {
             HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd,
-                      available, strerror(errno));
+                      (int)available, strerror(errno));
             handle_disconnect();
             return true;
           }
@@ -265,7 +265,7 @@ bool IOHandlerData::handle_event(struct kevent *event) {
           nread = FileUtils::read(m_sd, m_message_ptr, m_message_remaining);
           if (nread == (size_t)-1) {
             HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd,
-                      m_message_remaining, strerror(errno));
+                      (int)m_message_remaining, strerror(errno));
             handle_disconnect();
             return true;
           }
@@ -277,7 +277,7 @@ bool IOHandlerData::handle_event(struct kevent *event) {
           nread = FileUtils::read(m_sd, m_message_ptr, available);
           if (nread == (size_t)-1) {
             HT_ERRORF("FileUtils::read(%d, len=%d) failure : %s", m_sd,
-                      available, strerror(errno));
+                      (int)available, strerror(errno));
             handle_disconnect();
             return true;
           }
@@ -529,7 +529,7 @@ int IOHandlerData::flush_send_queue() {
 
     nwritten = FileUtils::writev(m_sd, vec, count);
     if (nwritten == (ssize_t)-1) {
-      HT_WARNF("FileUtils::writev(%d, len=%d) failed : %s", m_sd, towrite,
+      HT_WARNF("FileUtils::writev(%d, len=%d) failed : %s", m_sd, (int)towrite,
                strerror(errno));
       return Error::COMM_BROKEN_CONNECTION;
     }

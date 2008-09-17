@@ -808,7 +808,7 @@ void Range::replay_transfer_log(CommitLogReader *commit_log_reader) {
     {
       boost::mutex::scoped_lock lock(m_mutex);
       HT_INFOF("Replayed %d updates (%d blocks) from split log '%s' into "
-               "%s[%s..%s]", count, nblocks,
+               "%s[%s..%s]", (int)count, (int)nblocks,
                commit_log_reader->get_log_dir().c_str(),
                m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
     }

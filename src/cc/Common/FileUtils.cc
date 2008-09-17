@@ -273,7 +273,7 @@ char *FileUtils::file_to_buffer(const String &fname, off_t *lenp) {
   }
 
   if (nread < *lenp) {
-    HT_WARNF("short read (%d of %d bytes)", nread, *lenp);
+    HT_WARNF("short read (%d of %d bytes)", (int)nread, (int)*lenp);
     *lenp = nread;
   }
 

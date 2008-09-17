@@ -44,6 +44,8 @@ namespace Hypertable { namespace Logger {
 }} // namespace Hypertable::Logger
 
 
+#define HT_LOG_BUFSZ 1024
+
 // This should generate a core dump
 #ifdef HT_USE_ABORT
 #define HT_ABORT abort()
@@ -55,18 +57,21 @@ namespace Hypertable { namespace Logger {
 #define HT_LOG(_enabled_, _cat_, msg) do { \
   if (Logger::logger->_enabled_()) { \
     if (Logger::show_line_numbers) \
-      Logger::logger->_cat_("(%s:%d) %s", __FILE__, __LINE__, msg); \
+      Logger::logger->log(log4cpp::Priority::_cat_, Hypertable::format( \
+          "(%s:%d) %s", __FILE__, __LINE__, msg)); \
     else \
-      Logger::logger->_cat_("%s", msg); \
+      Logger::logger->log(log4cpp::Priority::_cat_, msg); \
   } \
 } while (0)
 
-#define HT_LOGF(_enabled_, _cat_, msg, ...) do { \
+#define HT_LOGF(_enabled_, _cat_, fmt, ...) do { \
   if (Logger::logger->_enabled_()) { \
     if (Logger::show_line_numbers) \
-      Logger::logger->_cat_("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__); \
+      Logger::logger->log(log4cpp::Priority::_cat_, Hypertable::format( \
+          "(%s:%d) " fmt, __FILE__, __LINE__, __VA_ARGS__)); \
     else \
-      Logger::logger->_cat_(msg, __VA_ARGS__);  \
+      Logger::logger->log(log4cpp::Priority::_cat_, Hypertable::format( \
+          fmt, __VA_ARGS__));  \
   } \
 } while (0)
 
@@ -127,8 +132,8 @@ namespace Hypertable { namespace Logger {
   } \
 } while(0)
 
-#define HT_DEBUG(msg) HT_LOG(isDebugEnabled, debug, msg)
-#define HT_DEBUGF(msg, ...) HT_LOGF(isDebugEnabled, debug, msg, __VA_ARGS__)
+#define HT_DEBUG(msg) HT_LOG(isDebugEnabled, DEBUG, msg)
+#define HT_DEBUGF(msg, ...) HT_LOGF(isDebugEnabled, DEBUG, msg, __VA_ARGS__)
 #define HT_DEBUG_OUT HT_OUT2(isDebugEnabled, DEBUG)
 #else
 #define HT_LOG_ENTER
@@ -139,8 +144,8 @@ namespace Hypertable { namespace Logger {
 #endif
 
 #ifndef HT_DISABLE_LOG_INFO
-#define HT_INFO(msg) HT_LOG(isInfoEnabled, info, msg)
-#define HT_INFOF(msg, ...) HT_LOGF(isInfoEnabled, info, msg, __VA_ARGS__)
+#define HT_INFO(msg) HT_LOG(isInfoEnabled, INFO, msg)
+#define HT_INFOF(msg, ...) HT_LOGF(isInfoEnabled, INFO, msg, __VA_ARGS__)
 #define HT_INFO_OUT HT_OUT(isInfoEnabled, INFO)
 #else
 #define HT_INFO(msg)
@@ -149,8 +154,8 @@ namespace Hypertable { namespace Logger {
 #endif
 
 #ifndef HT_DISABLE_LOG_NOTICE
-#define HT_NOTICE(msg) HT_LOG(isNoticeEnabled, notice, msg)
-#define HT_NOTICEF(msg, ...) HT_LOGF(isNoticeEnabled, notice, msg, __VA_ARGS__)
+#define HT_NOTICE(msg) HT_LOG(isNoticeEnabled, NOTICE, msg)
+#define HT_NOTICEF(msg, ...) HT_LOGF(isNoticeEnabled, NOTICE, msg, __VA_ARGS__)
 #define HT_NOTICE_OUT HT_OUT(isNoticeEnabled, NOTICE)
 #else
 #define HT_NOTICE(msg)
@@ -159,8 +164,8 @@ namespace Hypertable { namespace Logger {
 #endif
 
 #ifndef HT_DISABLE_LOG_WARN
-#define HT_WARN(msg) HT_LOG(isWarnEnabled, warn, msg)
-#define HT_WARNF(msg, ...) HT_LOGF(isWarnEnabled, warn, msg, __VA_ARGS__)
+#define HT_WARN(msg) HT_LOG(isWarnEnabled, WARN, msg)
+#define HT_WARNF(msg, ...) HT_LOGF(isWarnEnabled, WARN, msg, __VA_ARGS__)
 #define HT_WARN_OUT HT_OUT2(isWarnEnabled, WARN)
 #else
 #define HT_WARN(msg)
@@ -169,8 +174,8 @@ namespace Hypertable { namespace Logger {
 #endif
 
 #ifndef HT_DISABLE_LOG_ERROR
-#define HT_ERROR(msg) HT_LOG(isErrorEnabled, error, msg)
-#define HT_ERRORF(msg, ...) HT_LOGF(isErrorEnabled, error, msg, __VA_ARGS__)
+#define HT_ERROR(msg) HT_LOG(isErrorEnabled, ERROR, msg)
+#define HT_ERRORF(msg, ...) HT_LOGF(isErrorEnabled, ERROR, msg, __VA_ARGS__)
 #define HT_ERROR_OUT HT_OUT2(isErrorEnabled, ERROR)
 #else
 #define HT_ERROR(msg)
@@ -179,8 +184,8 @@ namespace Hypertable { namespace Logger {
 #endif
 
 #ifndef HT_DISABLE_LOG_CRIT
-#define HT_CRIT(msg) HT_LOG(isCritEnabled, crit, msg)
-#define HT_CRITF(msg, ...) HT_LOGF(isCritEnabled, crit, msg, __VA_ARGS__)
+#define HT_CRIT(msg) HT_LOG(isCritEnabled, CRIT, msg)
+#define HT_CRITF(msg, ...) HT_LOGF(isCritEnabled, CRIT, msg, __VA_ARGS__)
 #define HT_CRIT_OUT HT_OUT2(isCritEnabled, CRIT)
 #else
 #define HT_CRIT(msg)
@@ -189,8 +194,8 @@ namespace Hypertable { namespace Logger {
 #endif
 
 #ifndef HT_DISABLE_LOG_ALERT
-#define HT_ALERT(msg) HT_LOG(isAlertEnabled, alert, msg)
-#define HT_ALERTF(msg, ...) HT_LOGF(isAlertEnabled, alert, msg, __VA_ARGS__)
+#define HT_ALERT(msg) HT_LOG(isAlertEnabled, ALERT, msg)
+#define HT_ALERTF(msg, ...) HT_LOGF(isAlertEnabled, ALERT, msg, __VA_ARGS__)
 #define HT_ALERT_OUT HT_OUT2(isAlertEnabled, ALERT)
 #else
 #define HT_ALERT(msg)
@@ -199,8 +204,8 @@ namespace Hypertable { namespace Logger {
 #endif
 
 #ifndef HT_DISABLE_LOG_EMERG
-#define HT_EMERG(msg) HT_LOG(isEmergEnabled, emerg, msg)
-#define HT_EMERGF(msg, ...) HT_LOGF(isEmergEnabled, emerg, msg, __VA_ARGS__)
+#define HT_EMERG(msg) HT_LOG(isEmergEnabled, EMERG, msg)
+#define HT_EMERGF(msg, ...) HT_LOGF(isEmergEnabled, EMERG, msg, __VA_ARGS__)
 #define HT_EMERG_OUT HT_OUT2(isEmergEnabled, EMERG)
 #else
 #define HT_EMERG(msg)
@@ -210,22 +215,12 @@ namespace Hypertable { namespace Logger {
 
 #ifndef HT_DISABLE_LOG_FATAL
 #define HT_FATAL(msg) do { \
-  if (Logger::logger->isFatalEnabled()) { \
-    if (Logger::show_line_numbers) \
-      Logger::logger->fatal("(%s:%d) %s", __FILE__, __LINE__, msg); \
-    else \
-      Logger::logger->fatal("%s", msg); \
-    HT_ABORT; \
-  } \
+  HT_LOG(isFatalEnabled, FATAL, msg); \
+  HT_ABORT; \
 } while (0)
 #define HT_FATALF(msg, ...) do { \
-  if (Logger::logger->isFatalEnabled()) { \
-    if (Logger::show_line_numbers) \
-      Logger::logger->fatal("(%s:%d) " msg, __FILE__, __LINE__, __VA_ARGS__); \
-    else \
-      Logger::logger->fatal(msg, __VA_ARGS__);  \
-    HT_ABORT; \
-  } \
+  HT_LOGF(isFatalEnabled, FATAL, msg, __VA_ARGS__); \
+  HT_ABORT; \
 } while (0)
 #define HT_FATAL_OUT HT_OUT2(isFatalEnabled, FATAL)
 #define HT_EXPECT(_e_, _code_) do { if (_e_); else { \

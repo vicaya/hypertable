@@ -130,8 +130,8 @@ KosmosBroker::create(ResponseCallbackOpen *cb, const char *fname,
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();
 
   if (m_verbose) {
-    HT_INFOF("create file='%s' overwrite=%d bufsz=%d replication=%d blksz=%d",
-                fname, (int)overwrite, bufsz, replication, blksz);
+    HT_INFOF("create file='%s' overwrite=%d bufsz=%d replication=%d blksz=%llu",
+                fname, (int)overwrite, bufsz, replication, (Llu)blksz);
   }
 
   if (fname[0] == '/')
@@ -572,7 +572,7 @@ void KosmosBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
          stripped_listing.push_back(listing[i]);
        }
 
-  HT_INFOF("Sending back %d listings", stripped_listing.size());
+  HT_INFOF("Sending back %d listings", (int)stripped_listing.size());
 
   cb->response(stripped_listing);
 }

@@ -177,12 +177,12 @@ ConnectionManager::send_connect_request(ConnectionState *conn_state) {
       HT_ERRORF("Connection attempt to %s at %s failed - %s.  Will retry "
                 "again in %d seconds...", conn_state->service_name.c_str(),
                 InetAddr::format(conn_state->addr).c_str(),
-                Error::get_text(error), conn_state->timeout);
+                Error::get_text(error), (int)conn_state->timeout);
     }
     else {
       HT_ERRORF("Connection attempt to service at %s failed - %s.  Will retry "
                 "again in %d seconds...", InetAddr::format(conn_state->addr)
-                .c_str(), Error::get_text(error), conn_state->timeout);
+                .c_str(), Error::get_text(error), (int)conn_state->timeout);
     }
 
     // reschedule
@@ -255,8 +255,8 @@ ConnectionManager::handle(EventPtr &event_ptr) {
              event_ptr->type == Event::DISCONNECT) {
       if (!m_impl->quiet_mode) {
         HT_INFOF("%s; Problem connecting to %s, will retry in %d seconds...",
-                    event_ptr->to_str().c_str(),
-                    conn_state->service_name.c_str(), conn_state->timeout);
+                 event_ptr->to_str().c_str(), conn_state->service_name.c_str(),
+                 (int)conn_state->timeout);
       }
       conn_state->connected = false;
       // this logic could proably be smarter.  For example, if the last

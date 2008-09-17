@@ -40,7 +40,7 @@ String format(const char *fmt, ...) {
     if (n > -1 && n < size)
       break;    // worked!
 
-    if (n > -1)         // glibc 2.1
+    if (n > -1)         // glibc 2.1+/iso c99
       size = n + 1;     //   exactly what's needed
     else                // glibc 2.0
       size *= 2;        //   double the size and try again

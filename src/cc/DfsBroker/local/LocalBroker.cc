@@ -128,8 +128,8 @@ LocalBroker::create(ResponseCallbackOpen *cb, const char *fname, bool overwrite,
   String abspath;
 
   if (m_verbose) {
-    HT_INFOF("create file='%s' overwrite=%d bufsz=%d replication=%d blksz=%d",
-                fname, (int)overwrite, bufsz, replication, blksz);
+    HT_INFOF("create file='%s' overwrite=%d bufsz=%d replication=%d blksz=%llu",
+                fname, (int)overwrite, bufsz, replication, (Llu)blksz);
   }
 
   if (fname[0] == '/')
@@ -487,7 +487,7 @@ void LocalBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
   }
   (void)closedir(dirp);
 
-  HT_INFOF("Sending back %d listings", listing.size());
+  HT_INFOF("Sending back %d listings", (int)listing.size());
   std::cout << std::flush;
 
   cb->response(listing);

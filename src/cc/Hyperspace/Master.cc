@@ -136,7 +136,7 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
     m_base_dir = System::install_dir + "/" + str;
 
   if ((m_base_fd = ::open(m_base_dir.c_str(), O_RDONLY)) < 0) {
-    HT_WARNF("Unable to open base directory '%s' - will create.",
+    HT_WARNF("Unable to open base directory '%s' - %s - will create.",
              m_base_dir.c_str(), strerror(errno));
     if (!FileUtils::mkdirs(m_base_dir.c_str())) {
       HT_ERRORF("Unable to create base directory %s - %s",
@@ -634,7 +634,7 @@ Master::attr_set(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
 
   if (m_verbose) {
     HT_INFOF("attrset(session=%lld, handle=%lld, name=%s, value_len=%d)",
-             session_id, handle, name, value_len);
+             session_id, handle, name, (int)value_len);
   }
 
   if (!get_session(session_id, session_data))

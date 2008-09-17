@@ -712,8 +712,8 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
     id = (more) ? Global::scanner_map.put(scanner_ptr, range_ptr) : 0;
 
     if (Global::verbose) {
-      HT_INFOF("Successfully created scanner (id=%d) on table '%s', returning "
-               "%d k/v pairs", id, table->name, count);
+      HT_INFOF("Successfully created scanner (id=%u) on table '%s', returning "
+               "%d k/v pairs", id, table->name, (int)count);
     }
 
     /**
@@ -785,8 +785,8 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
     }
 
     if (Global::verbose) {
-      HT_INFOF("Successfully fetched %d bytes (%d k/v pairs) of scan data",
-               ext.size-4, count);
+      HT_INFOF("Successfully fetched %u bytes (%d k/v pairs) of scan data",
+               ext.size-4, (int)count);
     }
   }
 

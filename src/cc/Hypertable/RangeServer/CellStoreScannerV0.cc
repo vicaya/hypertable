@@ -355,7 +355,7 @@ bool CellStoreScannerV0::fetch_next_block() {
         if (!Global::block_cache->checkout(m_file_id, m_block.offset,
                                           (uint8_t **)&m_block.base, &len)) {
           HT_FATALF("Problem checking out block from cache file_id=%d, "
-                    "offset=%ld", m_file_id, (uint32_t)m_block.offset);
+                    "offset=%u", m_file_id, m_block.offset);
         }
       }
     }
