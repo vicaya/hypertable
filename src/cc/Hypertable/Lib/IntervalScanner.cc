@@ -71,8 +71,11 @@ IntervalScanner::IntervalScanner(PropertiesPtr &props_ptr, Comm *comm,
   m_scan_spec_builder.set_row_limit(scan_spec.row_limit);
   m_scan_spec_builder.set_max_versions(scan_spec.max_versions);
 
-  for (size_t i=0; i<scan_spec.columns.size(); i++)
+  for (size_t i=0; i<scan_spec.columns.size(); i++) {
+    if (m_schema_ptr->get_column_family(scan_spec.columns[i]) == 0)
+      HT_THROW(Error::RANGESERVER_INVALID_COLUMNFAMILY, scan_spec.columns[i]);
     m_scan_spec_builder.add_column(scan_spec.columns[i]);
+  }
 
   HT_EXPECT(scan_spec.row_intervals.size() <= 1, Error::FAILED_EXPECTATION);
 
@@ -297,7 +300,7 @@ void IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &time
     catch (Exception &e) {
       double remaining = timer.remaining();
 
-      if (remaining <= 3.0) {
+      if (e.code() != Error::REQUEST_TIMEOUT || remaining <= 3.0) {
 	HT_ERRORF("%s - %s", e.what(), Error::get_text(e.code()));
 	HT_THROW(e.code(), String("Problem creating scanner on ") + m_table_identifier.name + "[" + range.start_row + ".." + range.end_row + "]");
       }
