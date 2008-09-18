@@ -300,7 +300,7 @@ void IntervalScanner::find_range_and_start_scan(const char *row_key, Timer &time
     catch (Exception &e) {
       double remaining = timer.remaining();
 
-      if (e.code() != Error::REQUEST_TIMEOUT || remaining <= 3.0) {
+      if ((e.code() != Error::REQUEST_TIMEOUT && e.code() != Error::RANGESERVER_RANGE_NOT_FOUND) || remaining <= 3.0) {
 	HT_ERRORF("%s - %s", e.what(), Error::get_text(e.code()));
 	HT_THROW(e.code(), String("Problem creating scanner on ") + m_table_identifier.name + "[" + range.start_row + ".." + range.end_row + "]");
       }
