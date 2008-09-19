@@ -22,6 +22,8 @@
 #ifndef HYPERTABLE_TABLEMUTATOR_H
 #define HYPERTABLE_TABLEMUTATOR_H
 
+#include <iostream>
+
 #include "AsyncComm/ConnectionManager.h"
 
 #include "Common/Properties.h"
@@ -134,10 +136,13 @@ namespace Hypertable {
      *
      * @param failed_mutations reference to vector of Cell/error pairs
      */
-    void get_failed(std::vector<std::pair<Cell, int> > &failed_mutations) {
+    void get_failed(FailedMutations &failed_mutations) {
       if (m_prev_buffer_ptr)
         m_prev_buffer_ptr->get_failed_mutations(failed_mutations);
     }
+
+    /** Show failed mutations */
+    void show_failed(const Exception &, std::ostream & = std::cout);
 
     /**
      * Indicates whether or not there are failed updates to be retried
@@ -180,10 +185,9 @@ namespace Hypertable {
     const void *m_last_value;
     uint32_t    m_last_value_len;
   };
-  typedef boost::intrusive_ptr<TableMutator> TableMutatorPtr;
 
+  typedef intrusive_ptr<TableMutator> TableMutatorPtr;
 
-
-}
+} // namespace Hypertable
 
 #endif // HYPERTABLE_TABLEMUTATOR_H

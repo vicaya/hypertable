@@ -27,7 +27,7 @@
 
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 
-#include "Cell.h"
+#include "Cells.h"
 #include "RangeLocator.h"
 #include "RangeServerClient.h"
 #include "IntervalScanner.h"
@@ -60,13 +60,18 @@ namespace Hypertable {
     bool next(Cell &cell);
 
   private:
-
     std::vector<IntervalScannerPtr>  m_interval_scanners;
+
     bool      m_eos;
     size_t    m_scanneri;
-    int32_t   m_rows_seen;
+    int64_t   m_rows_seen;
   };
-  typedef boost::intrusive_ptr<TableScanner> TableScannerPtr;
-}
+
+  typedef intrusive_ptr<TableScanner> TableScannerPtr;
+
+  void copy(TableScanner &, CellsBuilder &);
+  inline void copy(TableScannerPtr &p, CellsBuilder &v) { copy(*p.get(), v); }
+
+} // namespace Hypertable
 
 #endif // HYPERTABLE_TABLESCANNER_H

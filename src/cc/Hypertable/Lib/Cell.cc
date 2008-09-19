@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+/**
+ * Copyright (C) 2008 Luke Lu (Zvents, Inc.)
  *
  * This file is part of Hypertable.
  *
@@ -19,30 +19,26 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_CELL_H
-#define HYPERTABLE_CELL_H
-
-#include <iosfwd>
+#include "Common/Compat.h"
+#include "Common/Logger.h"
+#include "Cell.h"
 
 namespace Hypertable {
 
-  /** Encapsulates decomposed key and value */
-  class Cell {
-  public:
-    Cell() : row_key(0), column_family(0), column_qualifier(0), timestamp(0),
-             value(0), value_len(0), flag(0) { }
+std::ostream &operator<<(std::ostream &os, const Cell &cell) {
+  os <<"{Cell:";
 
-    const char *row_key;
-    const char *column_family;
-    const char *column_qualifier;
-    uint64_t timestamp;
-    const uint8_t *value;
-    uint32_t value_len;
-    uint8_t flag;
-  };
+  HT_DUMP_CSTR(os, key, cell.row_key);
+  HT_DUMP_CSTR(os, cf, cell.column_family);
+  HT_DUMP_CSTR(os, cq, cell.column_qualifier);
+  HT_DUMP_CSTR(os, val, cell.value);
 
-  std::ostream &operator<<(std::ostream &, const Cell &);
+  os <<" len="<< cell.value_len
+     <<" ts="<< cell.timestamp
+     << " flag="<< cell.flag;
+
+  os <<'}';
+  return os;
+}
 
 } // namespace Hypertable
-
-#endif // HYPERTABLE_CELL_H

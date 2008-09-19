@@ -29,22 +29,27 @@ namespace Hypertable {
 
   class CommandInterpreter : public ReferenceCount {
   public:
+    enum { TIMESTAMP_FORMAT_DEFAULT, TIMESTAMP_FORMAT_USECS };
+
     CommandInterpreter();
     virtual void execute_line(const String &line) = 0;
     void set_timestamp_output_format(const String &format);
     void set_silent(bool silent) { m_silent = silent; }
     void set_test_mode(bool mode) { m_test_mode = mode; }
 
+    bool silent_mode() { return m_silent; }
+    bool test_mode() { return m_test_mode; }
+    bool normal_mode() { return !(m_silent || m_test_mode); }
+    int timestamp_output_format() { return m_timestamp_output_format; }
+
   protected:
     int m_timestamp_output_format;
     bool m_silent;
     bool m_test_mode;
-
-    enum { TIMESTAMP_FORMAT_DEFAULT, TIMESTAMP_FORMAT_USECS };
-
   };
-  typedef boost::intrusive_ptr<CommandInterpreter> CommandInterpreterPtr;
 
-}
+  typedef intrusive_ptr<CommandInterpreter> CommandInterpreterPtr;
+
+} // namespace Hypertable
 
 #endif // HYPERTABLE_COMMANDINTERPRETER_H

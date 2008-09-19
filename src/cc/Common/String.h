@@ -33,13 +33,20 @@ namespace Hypertable {
   typedef long long unsigned int Llu;   // ditto
 
   /**
-   * return a String using printf like format facilities
+   * Return a String using printf like format facilities
    * vanilla snprintf is about 1.5x faster than this, which is about:
    *   10x faster than boost::format;
    *   1.5x faster than std::string append (operator+=);
    *   3.5x faster than std::string operator+;
    */
   String format(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
-}
+
+  /**
+   * Return decimal number string separated by a separator (default: comma)
+   * for every 3 digits. Only 10-15% slower than sprintf("%lld", n);
+   */
+  String format_number(int64_t n, int sep = ',');
+
+} // namespace Hypertable
 
 #endif // HYPERTABLE_STRING_H

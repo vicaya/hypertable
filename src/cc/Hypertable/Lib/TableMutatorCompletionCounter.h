@@ -84,7 +84,7 @@ namespace Hypertable {
     bool is_complete() { return m_done; }
 
   private:
-    Mutex        m_mutex;
+    Mutex m_mutex;
     boost::condition m_cond;
     size_t m_outstanding;
     bool m_retries;

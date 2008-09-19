@@ -74,6 +74,8 @@ namespace {
     { Error::BAD_DOMAIN_NAME,             "HYPERTABLE bad domain name" },
     { Error::FAILED_EXPECTATION,          "HYPERTABLE failed expectation" },
     { Error::MALFORMED_REQUEST,           "HYPERTABLE malformed request" },
+    { Error::BAD_MEMORY_ALLOCATION,       "HYPERTABLE bad memory allocation"},
+    { Error::BAD_SCAN_SPEC,               "HYPERTABLE bad scan specification"},
     { Error::COMM_NOT_CONNECTED,          "COMM not connected" },
     { Error::COMM_BROKEN_CONNECTION,      "COMM broken connection" },
     { Error::COMM_CONNECT_ERROR,          "COMM connect error" },

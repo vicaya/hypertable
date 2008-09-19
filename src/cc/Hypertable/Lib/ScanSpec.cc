@@ -32,9 +32,6 @@ using namespace std;
 using namespace Hypertable;
 using namespace Serialization;
 
-RowInterval::RowInterval() : start(0), start_inclusive(true),
-                             end(0), end_inclusive(true) { }
-
 size_t RowInterval::encoded_length() const {
   return 2 + encoded_length_vstr(start) + encoded_length_vstr(end);
 }
@@ -54,10 +51,6 @@ void RowInterval::decode(const uint8_t **bufp, size_t *remainp) {
     end = decode_vstr(bufp, remainp);
     end_inclusive = decode_bool(bufp, remainp));
 }
-
-CellInterval::CellInterval()
-    : start_row(0), start_column(0), start_inclusive(true), end_row(0),
-      end_column(0), end_inclusive(true) { }
 
 size_t CellInterval::encoded_length() const {
   return 2 + encoded_length_vstr(start_row) + encoded_length_vstr(start_column)
@@ -82,11 +75,6 @@ void CellInterval::decode(const uint8_t **bufp, size_t *remainp) {
     end_row = decode_vstr(bufp, remainp);
     end_column = decode_vstr(bufp, remainp);
     end_inclusive = decode_bool(bufp, remainp));
-}
-
-ScanSpec::ScanSpec()
-  : row_limit(0), max_versions(0), time_interval(TIMESTAMP_MIN, TIMESTAMP_MAX),
-    return_deletes(false) {
 }
 
 size_t ScanSpec::encoded_length() const {
@@ -208,4 +196,23 @@ ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
   os <<"\n time_interval=(" << scan_spec.time_interval.first <<", "
      << scan_spec.time_interval.second <<")\n}\n";
   return os;
+}
+
+
+ScanSpecBuilder::ScanSpecBuilder(const ScanSpec &ss) {
+  set_row_limit(ss.row_limit);
+  set_max_versions(ss.max_versions);
+  set_time_interval(ss.time_interval.first, ss.time_interval.second);
+  set_return_deletes(ss.return_deletes);
+
+  foreach(const char *c, ss.columns)
+    add_column(c);
+
+  foreach(const RowInterval &ri, ss.row_intervals)
+    add_row_interval(ri.start, ri.start_inclusive,
+                     ri.end, ri.end_inclusive);
+
+  foreach(const CellInterval &ci, ss.cell_intervals)
+    add_cell_interval(ci.start_row, ci.start_column, ci.start_inclusive,
+                      ci.end_row, ci.end_column, ci.end_inclusive);
 }

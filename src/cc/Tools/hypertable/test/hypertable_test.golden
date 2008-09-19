@@ -99,7 +99,7 @@ INSERT INTO test VALUES('2008-07-28 00:00:10', "fz", "b", "n");
 INSERT INTO test VALUES('2008-07-28 00:00:11', "g", "b", "n");
 INSERT INTO test VALUES('2008-07-28 00:00:12', "gz", "b", "n");
 SELECT * FROM test WHERE ('z' < ROW < 'a');
-Error: start_row > end_row - RANGE SERVER bad scan specification
+Error: start_row > end_row - HYPERTABLE bad scan specification
 DELETE c FROM test WHERE ROW = "k1";
 SELECT * FROM test WHERE TIMESTAMP < '2008-06-30 00:00:04';
 k1	b	x

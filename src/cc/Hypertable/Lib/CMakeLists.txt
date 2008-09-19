@@ -39,6 +39,7 @@ Defaults.cc
 EventHandlerMasterChange.cc
 Filesystem.cc
 FixedRandomStringGenerator.cc
+HqlInterpreter.cc
 HqlCommandInterpreter.cc
 HqlHelpText.cc
 IntervalScanner.cc

@@ -129,7 +129,6 @@ TableMutator::set(const KeySpec &key, const void *value, uint32_t value_len) {
 }
 
 
-
 void TableMutator::set_delete(const KeySpec &key) {
   Key full_key;
   Timer timer(m_timeout);
@@ -253,7 +252,6 @@ bool TableMutator::retry(int timeout) {
 }
 
 
-
 void TableMutator::wait_for_previous_buffer(Timer &timer) {
   TableMutatorScatterBuffer *redo_buffer = 0;
   int wait_time = 1;
@@ -284,7 +282,6 @@ void TableMutator::wait_for_previous_buffer(Timer &timer) {
   }
 
 }
-
 
 
 void TableMutator::sanity_check_key(const KeySpec &key) {
@@ -321,4 +318,25 @@ void TableMutator::sanity_check_key(const KeySpec &key) {
                "character not allowed (offset="
                + (uint32_t)strlen(column_qualifier) + ")");
   }
+}
+
+
+void TableMutator::show_failed(const Exception &e, std::ostream &out) {
+  FailedMutations failed_mutations;
+
+  get_failed(failed_mutations);
+
+  if (!failed_mutations.empty()) {
+    foreach(const FailedMutation &v, failed_mutations) {
+      out << "Failed: (" << v.first.row_key << "," << v.first.column_family;
+
+      if (v.first.column_qualifier && *(v.first.column_qualifier))
+        out << ":" << v.first.column_qualifier;
+
+      out << "," << v.first.timestamp << ") - "
+          << Error::get_text(v.second) << '\n';
+    }
+    out.flush();
+  }
+  else throw e;
 }

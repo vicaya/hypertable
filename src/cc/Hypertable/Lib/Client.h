@@ -43,7 +43,7 @@ extern "C" {
 namespace Hypertable {
 
   class Comm;
-  class HqlCommandInterpreter;
+  class HqlInterpreter;
 
   class Client : public ReferenceCount {
 
@@ -122,11 +122,11 @@ namespace Hypertable {
     void shutdown();
 
     /**
-     * Creates an HQL command interpreter
+     * Creates an HQL interpreter
      *
      * @return a newly created interpreter object
      */
-    HqlCommandInterpreter *create_hql_interpreter();
+    HqlInterpreter *create_hql_interpreter();
 
   private:
 
@@ -140,8 +140,8 @@ namespace Hypertable {
     MasterClientPtr         m_master_client_ptr;
     time_t                  m_timeout;
   };
-  typedef boost::intrusive_ptr<Client> ClientPtr;
 
+  typedef intrusive_ptr<Client> ClientPtr;
 
 }
 

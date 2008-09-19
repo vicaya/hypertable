@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
 
     hypertable = new Hypertable::Client(System::install_dir, Config::cfgfile);
 
-    interp = hypertable->create_hql_interpreter();
+    interp = new HqlCommandInterpreter(hypertable);
 
     shell = new CommandShell("hypertable", interp, Config::varmap);
     interp->set_silent(shell->silent());

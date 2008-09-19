@@ -112,3 +112,10 @@ bool TableScanner::next(Cell &cell) {
   m_eos = true;
   return false;
 }
+
+void Hypertable::copy(TableScanner &scanner, CellsBuilder &b) {
+  Cell cell;
+
+  while (scanner.next(cell))
+    b.add(cell);
+}

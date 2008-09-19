@@ -43,6 +43,7 @@
 #  define HT_NORETURN __attribute__((__noreturn__))
 #  define HT_FORMAT(x) __attribute__((format x))
 #  define HT_FUNC __PRETTY_FUNCTION__
+#  define HT_COND(x, _prob_) __builtin_expect(x, _prob_)
 #else
 #  define HT_NORETURN
 #  define HT_FORMAT(x)
@@ -50,7 +51,11 @@
 #    define __attribute__(x)
 #  endif
 #  define HT_FUNC __func__
+#  define HT_COND(x, _prob_) (x)
 #endif
+
+#define HT_LIKELY(x) HT_COND(x, 1)
+#define HT_UNLIKELY(x) HT_COND(x, 0)
 
 /* We want C limit macros, even when using C++ compilers */
 #ifndef __STDC_LIMIT_MACROS

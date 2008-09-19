@@ -23,6 +23,7 @@
 #include "String.h"
 
 using namespace std;
+using namespace Hypertable;
 
 namespace Hypertable {
 
@@ -58,6 +59,37 @@ String format(const char *fmt, ...) {
   free(p);
 
   return ret;
+}
+
+char const *const digits = "0123456789";
+
+String format_number(int64_t n, int sep) {
+  char buf[30], *p = buf, *p0 = buf;
+  int ndigits = 0;
+  uint64_t num; // for edge cases when -n is still negative when n < 0
+
+  if (n < 0) {
+    *p++ = '-';
+    p0 = p;
+    num = -n;
+  }
+  else
+    num = n;
+
+  if (num == 0)
+    *p++ = '0';
+  else for (; num != 0; num /= 10) {
+    *p++ = digits[num % 10];
+    ++ndigits;
+
+    if (num >= 10 && ndigits % 3 == 0)
+      *p++ = sep;
+  }
+
+  int len = ndigits + (ndigits - 1) / 3;
+  std::reverse(p0, p0 + len);
+
+  return String(buf, len + p0 - buf);
 }
 
 } // namespace Hypertable

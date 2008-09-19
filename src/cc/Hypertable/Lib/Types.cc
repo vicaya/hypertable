@@ -20,11 +20,8 @@
  */
 
 #include "Common/Compat.h"
-#include <cstring>
-#include <iostream>
-
-#include "AsyncComm/CommBuf.h"
 #include "Common/Serialization.h"
+#include "Common/Logger.h"
 
 #include "Types.h"
 
@@ -74,15 +71,8 @@ ostream &Hypertable::operator<<(ostream &os, const TableIdentifier &tid) {
 ostream &Hypertable::operator<<(ostream &os, const RangeSpec &range) {
   os <<"{RangeSpec:";
 
-  if (range.start_row == 0)
-    os <<" start=[NULL]";
-  else
-    os <<" start='"<< range.start_row <<"'";
-
-  if (range.end_row == 0)
-    os <<" end=[NULL]";
-  else
-    os <<" end='"<< range.end_row <<"'";
+  HT_DUMP_CSTR(os, start, range.start_row);
+  HT_DUMP_CSTR(os, end, range.end_row);
 
   os <<'}';
   return os;

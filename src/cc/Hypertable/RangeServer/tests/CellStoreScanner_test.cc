@@ -640,7 +640,7 @@ int main(int argc, char **argv) {
     for (size_t i=0; i<keyv.size(); i++) {
       ssbuilder.clear();
       column = String("tag:") + keyv[i].column_qualifier;
-      ssbuilder.add_cell(keyv[i].row, column);
+      ssbuilder.add_cell(keyv[i].row, column.c_str());
       scan_ctx_ptr = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                      schema_ptr);
       scanner_ptr = cs->create_scanner(scan_ctx_ptr);

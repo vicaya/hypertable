@@ -102,6 +102,6 @@ namespace Hypertable {
     bool m_dupkeycols;
   };
 
-}
+} // namespace Hypertable
 
 #endif // HYPERTABLE_LOADDATASOURCE_H

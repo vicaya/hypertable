@@ -54,7 +54,7 @@ IntervalScanner::IntervalScanner(PropertiesPtr &props_ptr, Comm *comm,
   const char *start_row, *end_row;
 
   if (!scan_spec.row_intervals.empty() && !scan_spec.cell_intervals.empty())
-    HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC,
+    HT_THROW(Error::BAD_SCAN_SPEC,
              "ROW predicates and CELL predicates can't be combined");
 
   if (m_timeout == 0 ||
@@ -63,7 +63,6 @@ IntervalScanner::IntervalScanner(PropertiesPtr &props_ptr, Comm *comm,
     m_timeout = HYPERTABLE_CLIENT_TIMEOUT;
 
   m_range_locator_ptr->get_location_cache(m_cache_ptr);
-
   m_range_server.set_default_timeout(m_timeout);
 
   m_scan_spec_builder.set_row_limit(scan_spec.row_limit);
@@ -84,10 +83,10 @@ IntervalScanner::IntervalScanner(PropertiesPtr &props_ptr, Comm *comm,
         : scan_spec.row_intervals[0].end;
     int cmpval = strcmp(start_row, end_row);
     if (cmpval > 0)
-      HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "start_row > end_row");
+      HT_THROW(Error::BAD_SCAN_SPEC, "start_row > end_row");
     if (cmpval == 0 && !scan_spec.row_intervals[0].start_inclusive
         && !scan_spec.row_intervals[0].end_inclusive)
-      HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "empty row interval");
+      HT_THROW(Error::BAD_SCAN_SPEC, "empty row interval");
     m_start_row = start_row;
     m_end_row = end_row;
     m_end_inclusive = scan_spec.row_intervals[0].end_inclusive;
@@ -99,24 +98,24 @@ IntervalScanner::IntervalScanner(PropertiesPtr &props_ptr, Comm *comm,
     start_row = (scan_spec.cell_intervals[0].start_row == 0) ? ""
         : scan_spec.cell_intervals[0].start_row;
     if (scan_spec.cell_intervals[0].start_column == 0)
-      HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC,
+      HT_THROW(Error::BAD_SCAN_SPEC,
                "Bad cell interval (start_column == NULL)");
     end_row = (scan_spec.cell_intervals[0].end_row == 0) ? Key::END_ROW_MARKER
         : scan_spec.cell_intervals[0].end_row;
     if (scan_spec.cell_intervals[0].end_column == 0)
-      HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC,
+      HT_THROW(Error::BAD_SCAN_SPEC,
                "Bad cell interval (end_column == NULL)");
     int cmpval = strcmp(start_row, end_row);
     if (cmpval > 0)
-      HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "start_row > end_row");
+      HT_THROW(Error::BAD_SCAN_SPEC, "start_row > end_row");
     if (cmpval == 0) {
       int cmpval = strcmp(scan_spec.cell_intervals[0].start_column,
                           scan_spec.cell_intervals[0].end_column);
       if (cmpval > 0)
-        HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "start_column > end_column");
+        HT_THROW(Error::BAD_SCAN_SPEC, "start_column > end_column");
       if (cmpval == 0 && !scan_spec.cell_intervals[0].start_inclusive
           && !scan_spec.cell_intervals[0].end_inclusive)
-        HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC, "empty cell interval");
+        HT_THROW(Error::BAD_SCAN_SPEC, "empty cell interval");
     }
     m_scan_spec_builder.add_cell_interval(start_row,
         scan_spec.cell_intervals[0].start_column,
@@ -141,7 +140,6 @@ IntervalScanner::IntervalScanner(PropertiesPtr &props_ptr, Comm *comm,
                                         scan_spec.time_interval.second);
 
   m_scan_spec_builder.set_return_deletes(scan_spec.return_deletes);
-
 }
 
 

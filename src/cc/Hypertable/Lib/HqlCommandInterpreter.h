@@ -23,7 +23,7 @@
 #define HYPERTABLE_HQLCOMMANDINTERPRETER_H
 
 #include "CommandInterpreter.h"
-
+#include "HqlInterpreter.h"
 
 namespace Hypertable {
 
@@ -32,13 +32,16 @@ namespace Hypertable {
   class HqlCommandInterpreter : public CommandInterpreter {
   public:
     HqlCommandInterpreter(Client *client);
+    HqlCommandInterpreter(HqlInterpreter *interp);
 
     virtual void execute_line(const String &line);
 
   private:
-    Client *m_client;
+    HqlInterpreterPtr m_interp;
   };
-  typedef boost::intrusive_ptr<HqlCommandInterpreter> HqlCommandInterpreterPtr;
-}
+
+  typedef intrusive_ptr<HqlCommandInterpreter> HqlCommandInterpreterPtr;
+
+} // namespace Hypertable
 
 #endif // HYPERTABLE_HQLCOMMANDINTERPRETER_H

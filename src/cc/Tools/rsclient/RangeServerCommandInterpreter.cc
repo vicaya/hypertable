@@ -52,7 +52,7 @@ extern "C" {
 
 using namespace std;
 using namespace Hypertable;
-using namespace HqlParser;
+using namespace Hql;
 using namespace Serialization;
 
 namespace {
@@ -100,15 +100,15 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
   String schema_str;
   String out_str;
   SchemaPtr schema_ptr;
-  hql_interpreter_state state;
-  hql_interpreter interp(state);
+  Hql::ParserState state;
+  Hql::Parser parser(state);
   parse_info<> info;
   DispatchHandlerSynchronizer sync_handler;
   ScanBlock scanblock;
   int32_t scanner_id;
   EventPtr event_ptr;
 
-  info = parse(line.c_str(), interp, space_p);
+  info = parse(line.c_str(), parser, space_p);
 
   if (info.full) {
 
@@ -239,45 +239,10 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 
     }
     else if (state.command == COMMAND_CREATE_SCANNER) {
-      ScanSpec scan_spec;
-      RowInterval ri;
-
       range.start_row = state.range_start_row.c_str();
       range.end_row = state.range_end_row.c_str();
-
-      /**
-       * Create Scan specification
-       */
-      scan_spec.row_limit = state.scan.limit;
-      scan_spec.max_versions = state.scan.max_versions;
-      for (size_t i=0; i<state.scan.columns.size(); i++)
-        scan_spec.columns.push_back(state.scan.columns[i].c_str());
-
-      for (size_t i=0; i<state.scan.row_intervals.size(); i++) {
-        if (state.scan.row_intervals[i].start
-            > state.scan.row_intervals[i].end
-            || (state.scan.row_intervals[i].start
-            == state.scan.row_intervals[i].end
-            && !(state.scan.row_intervals[i].start_inclusive
-            || state.scan.row_intervals[i].end_inclusive)))
-          HT_THROW(Error::HQL_PARSE_ERROR, "Bad row range");
-        ri.start = (state.scan.row_intervals[i].start == "") ? ""
-          : state.scan.row_intervals[i].start.c_str();
-        ri.start_inclusive = state.scan.row_intervals[i].start_inclusive;
-        ri.end = state.scan.row_intervals[i].end.c_str();
-        ri.end_inclusive = state.scan.row_intervals[i].end_inclusive;
-        scan_spec.row_intervals.push_back(ri);
-      }
-
-      scan_spec.time_interval.first  = state.scan.start_time;
-      scan_spec.time_interval.second = state.scan.end_time;
-      scan_spec.return_deletes = state.scan.return_deletes;
-
-      /**
-       */
-      m_range_server_ptr->create_scanner(m_addr, *table, range, scan_spec,
-                                         scanblock);
-
+      m_range_server_ptr->create_scanner(m_addr, *table, range,
+          state.scan.builder.get(), scanblock);
       m_cur_scanner_id = scanblock.get_scanner_id();
 
       SerializedKey key;
@@ -359,7 +324,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
                  (Protocol::string_format_message(event_ptr)));
     }
     else if (state.command == COMMAND_HELP) {
-      const char **text = HqlHelpText::Get(state.str);
+      const char **text = HqlHelpText::get(state.str);
       if (text) {
         for (size_t i=0; text[i]; i++)
           cout << text[i] << endl;

@@ -20,6 +20,9 @@
  */
 
 #include "Common/Compat.h"
+
+#include <iostream>
+
 #include "Common/StringExt.h"
 
 #include "HqlHelpText.h"
@@ -598,15 +601,7 @@ namespace {
 }
 
 
-const char **HqlHelpText::Get(const char *subject) {
-  HelpTextMap::const_iterator iter = text_map.find(subject);
-  if (iter == text_map.end())
-    return 0;
-  return (*iter).second;
-}
-
-
-const char **HqlHelpText::Get(std::string &subject) {
+const char **HqlHelpText::get(const String &subject) {
   HelpTextMap::const_iterator iter = text_map.find(subject);
   if (iter == text_map.end())
     return 0;

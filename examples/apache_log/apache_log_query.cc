@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
     // setup row interval
     end_row = (String)argv[1];
     end_row.append(1, 0xff);  // next minimum row
-    scan_spec_builder.add_row_interval(argv[1], true, end_row, false);
+    scan_spec_builder.add_row_interval(argv[1], true, end_row.c_str(), false);
 
     // setup scan_spec columns
     for (int i=2; i<argc; i++)

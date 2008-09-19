@@ -46,6 +46,9 @@
 
 namespace Hypertable {
 
+  typedef std::pair<Cell, int> FailedMutation;
+  typedef std::vector<FailedMutation> FailedMutations;
+
   class TableMutatorScatterBuffer : public ReferenceCount {
 
   public:
@@ -63,7 +66,7 @@ namespace Hypertable {
     TableMutatorScatterBuffer *create_redo_buffer(Timer &timer);
     uint64_t get_resend_count() { return m_resends; }
     void
-    get_failed_mutations(std::vector<std::pair<Cell, int> > &failed_mutations) {
+    get_failed_mutations(FailedMutations &failed_mutations) {
       failed_mutations = m_failed_mutations;
     }
     size_t get_failure_count() { return m_failed_mutations.size(); }

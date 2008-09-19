@@ -84,7 +84,6 @@ namespace {
       *ptr++ = (char)0xff;
       *ptr++ = (char)0xff;
       *ptr = 0;
-
     }
     ~MetaKeyBuilder() {
       delete [] start;

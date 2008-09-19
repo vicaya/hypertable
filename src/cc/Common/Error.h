@@ -61,6 +61,8 @@ namespace Hypertable {
       COMMAND_PARSE_ERROR                = 26,
       CONNECT_ERROR_MASTER               = 27,
       CONNECT_ERROR_HYPERSPACE           = 28,
+      BAD_MEMORY_ALLOCATION              = 29,
+      BAD_SCAN_SPEC                      = 30,
 
       COMM_NOT_CONNECTED       = 0x00010001,
       COMM_BROKEN_CONNECTION   = 0x00010002,
@@ -166,16 +168,16 @@ namespace Hypertable {
     typedef std::runtime_error Parent;
 
     Exception(int error, int l = 0, const char *fn = 0, const char *fl = 0)
-        : Parent(""), m_error(error), m_line(l), m_func(fn), m_file(fl),
-          prev(0) {}
+      : Parent(""), m_error(error), m_line(l), m_func(fn), m_file(fl), prev(0)
+      { }
     Exception(int error, const String &msg, int l = 0, const char *fn = 0,
               const char *fl = 0)
-        : Parent(msg), m_error(error), m_line(l), m_func(fn), m_file(fl),
-          prev(0) {}
+      : Parent(msg), m_error(error), m_line(l), m_func(fn), m_file(fl), prev(0)
+      { }
     Exception(int error, const String &msg, const Exception &ex,
               int l = 0, const char *fn = 0, const char *fl = 0)
-        : Parent(msg), m_error(error), m_line(l), m_func(fn), m_file(fl),
-          prev(new Exception(ex)) {}
+      : Parent(msg), m_error(error), m_line(l), m_func(fn), m_file(fl),
+        prev(new Exception(ex)) { }
     // copy ctor is required for exceptions
     Exception(const Exception &ex) : Parent(ex), m_error(ex.m_error),
         m_line(ex.m_line), m_func(ex.m_func), m_file(ex.m_file) {
@@ -203,7 +205,7 @@ namespace Hypertable {
   Exception(_code_, _msg_, _ex_, __LINE__, HT_FUNC, __FILE__)
 
 #define HT_THROW(_code_, _msg_) throw HT_EXCEPTION(_code_, _msg_)
-
+#define HT_THROW_(_code_) HT_THROW(_code_, "")
 #define HT_THROW2(_code_, _ex_, _msg_) throw HT_EXCEPTION2(_code_, _ex_, _msg_)
 
 #define HT_THROWF(_code_, _fmt_, ...) \

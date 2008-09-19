@@ -167,8 +167,8 @@ void Client::shutdown() {
 }
 
 
-HqlCommandInterpreter *Client::create_hql_interpreter() {
-  return new HqlCommandInterpreter(this);
+HqlInterpreter *Client::create_hql_interpreter() {
+  return new HqlInterpreter(this);
 }
 
 
@@ -215,6 +215,3 @@ void Client::initialize(const String &config_file) {
     exit(1);
   }
 }
-
-
-
