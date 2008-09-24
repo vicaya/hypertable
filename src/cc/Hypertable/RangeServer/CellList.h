@@ -28,6 +28,8 @@
 
 #include "ScanContext.h"
 
+#include "Hypertable/Lib/Key.h"
+
 namespace Hypertable {
 
   class CellList;
@@ -44,12 +46,11 @@ namespace Hypertable {
     /**
      * Inserts a key/value pair into the cell list.
      *
-     * @param key ByteString representing key
+     * @param key key object
      * @param value ByteString representing value
-     * @param real_timestamp real commit log timestamp
      * @return Error::OK on success, error code on failure
      */
-    virtual int add(const ByteString key, const ByteString value, int64_t real_timestamp) = 0;
+    virtual int add(const Key &key, const ByteString value) = 0;
 
     /**
      * Creates a scanner on this cell list.

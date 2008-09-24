@@ -47,7 +47,7 @@ bool TestSource::next(ByteString &key, ByteString &value) {
   char *rowkey;
   char *column;
   char *value_str;
-  uint64_t timestamp;
+  int64_t timestamp;
 
   while (getline(m_fin, line)) {
     m_cur_line++;
@@ -64,7 +64,7 @@ bool TestSource::next(ByteString &key, ByteString &value) {
     }
 
     if (!strcasecmp(ptr, "AUTO")) {
-      timestamp = 0;
+      timestamp = AUTO_ASSIGN;
     }
     else {
       timestamp = strtoll(ptr, 0, 0);
@@ -137,13 +137,20 @@ bool TestSource::next(ByteString &key, ByteString &value) {
 }
 
 
-bool TestSource::create_row_delete(const char *row, uint64_t timestamp, ByteString &key, ByteString &value) {
-  int32_t keylen = strlen(row) + 12;
+bool TestSource::create_row_delete(const char *row, int64_t timestamp, ByteString &key, ByteString &value) {
+  int32_t keylen = strlen(row) + 13;
+  uint8_t control = 0;
+
+  if (timestamp == AUTO_ASSIGN)
+    control = Key::CONTROL_MASK_AUTO_TIMESTAMP;
+  else if (timestamp)
+    control = Key::CONTROL_MASK_HAVE_TIMESTAMP;
 
   m_key_buffer.clear();
-  m_key_buffer.ensure(sizeof(int32_t)+keylen);
+  m_key_buffer.ensure(keylen+6);
 
   Serialization::encode_vi32(&m_key_buffer.ptr, keylen);
+  *m_key_buffer.ptr++ = control;
   m_key_buffer.add_unchecked(row, strlen(row)+1);
   *m_key_buffer.ptr++ = 0;
   *m_key_buffer.ptr++ = 0;
@@ -159,11 +166,17 @@ bool TestSource::create_row_delete(const char *row, uint64_t timestamp, ByteStri
 }
 
 
-bool TestSource::create_column_delete(const char *row, const char *column, uint64_t timestamp, ByteString &key, ByteString &value) {
+bool TestSource::create_column_delete(const char *row, const char *column, int64_t timestamp, ByteString &key, ByteString &value) {
   int32_t keylen = 0;
   string cfstr;
   const char *qualifier;
   const char *ptr = strchr(column, ':');
+  uint8_t control = 0;
+
+  if (timestamp == AUTO_ASSIGN)
+    control = Key::CONTROL_MASK_AUTO_TIMESTAMP;
+  else if (timestamp)
+    control = Key::CONTROL_MASK_HAVE_TIMESTAMP;
 
   if (ptr == 0) {
     cerr << "Bad column family specifier (no family)" << endl;
@@ -180,10 +193,11 @@ bool TestSource::create_column_delete(const char *row, const char *column, uint6
   }
 
   m_key_buffer.clear();
-  keylen = strlen(row) + strlen(qualifier) + 12;
-  m_key_buffer.ensure(sizeof(int32_t)+keylen);
+  keylen = strlen(row) + strlen(qualifier) + 13;
+  m_key_buffer.ensure(keylen+6);
 
   Serialization::encode_vi32(&m_key_buffer.ptr, keylen);
+  *m_key_buffer.ptr++ = control;
   m_key_buffer.add_unchecked(row, strlen(row)+1);
   *m_key_buffer.ptr++ = cf->id;
   m_key_buffer.add_unchecked(qualifier, strlen(qualifier)+1);
@@ -199,11 +213,17 @@ bool TestSource::create_column_delete(const char *row, const char *column, uint6
 }
 
 
-bool TestSource::create_insert(const char *row, const char *column, uint64_t timestamp, const char *value_str, ByteString &key, ByteString &value) {
+bool TestSource::create_insert(const char *row, const char *column, int64_t timestamp, const char *value_str, ByteString &key, ByteString &value) {
   int32_t keylen = 0;
   string cfstr;
   const char *qualifier;
   const char *ptr = strchr(column, ':');
+  uint8_t control = 0;
+
+  if (timestamp == AUTO_ASSIGN)
+    control = Key::CONTROL_MASK_AUTO_TIMESTAMP;
+  else if (timestamp)
+    control = Key::CONTROL_MASK_HAVE_TIMESTAMP;
 
   if (ptr == 0) {
     cerr << "Bad column family specifier (no family)" << endl;
@@ -220,10 +240,11 @@ bool TestSource::create_insert(const char *row, const char *column, uint64_t tim
   }
 
   m_key_buffer.clear();
-  keylen = strlen(row) + strlen(qualifier) + 12;
-  m_key_buffer.ensure(keylen+sizeof(int32_t));
+  keylen = strlen(row) + strlen(qualifier) + 13;
+  m_key_buffer.ensure(keylen+6);
 
   Serialization::encode_vi32(&m_key_buffer.ptr, keylen);
+  *m_key_buffer.ptr++ = control;
   m_key_buffer.add_unchecked(row, strlen(row)+1);
   *m_key_buffer.ptr++ = cf->id;
   m_key_buffer.add_unchecked(qualifier, strlen(qualifier)+1);

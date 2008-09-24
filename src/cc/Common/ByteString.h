@@ -99,44 +99,6 @@ namespace Hypertable {
       *dst_buf.ptr = 0;
     }
   }
-
-  /**
-   * Less than operator for ByteString
-   */
-  inline bool operator<(const ByteString bs1, const ByteString bs2) {
-    const uint8_t *ptr1, *ptr2;
-    size_t len1 = bs1.decode_length(&ptr1);
-    size_t len2 = bs2.decode_length(&ptr2);
-    size_t len = (len1 < len2) ? len1 : len2;
-    int cmp = memcmp(ptr1, ptr2, len);
-    return (cmp==0) ? len1 < len2 : cmp < 0;
-  }
-
-  /**
-   * Equality operator for ByteString
-   */
-  inline bool operator==(const ByteString bs1, const ByteString bs2) {
-    const uint8_t *ptr1, *ptr2;
-    size_t len1 = bs1.decode_length(&ptr1);
-    size_t len2 = bs2.decode_length(&ptr2);
-    if (len1 != len2)
-      return false;
-    return memcmp(ptr1, ptr2, len1) == 0;
-  }
-
-  /**
-   * Inequality operator for ByteString
-   */
-  inline bool operator!=(const ByteString bs1, const ByteString bs2) {
-    return !(bs1 == bs2);
-  }
-
-  struct LtByteString {
-    bool operator()(const ByteString bs1, const ByteString bs2) const {
-      return bs1 < bs2;
-    }
-  };
-
 }
 
 

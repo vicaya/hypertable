@@ -212,6 +212,7 @@ success
 success
 success
 success
+success
 CREATE SCANNER ON Test1[..??];
 1181153478099511 A apple:http://www.lib.utexas.edu/
 1181153478459079 Aaronitic onion:http://prola.aps.org/abstract/PRI/v13/i5/p307_1
@@ -727,48 +728,6 @@ CREATE SCANNER ON Test1[..??];
 1181153477765696 Amphitryon plum:http://html.newsnet5.com/newschannel5/stationhistory/
 1181153478447447 Amphiuma banana:http://terraserver-usa.com/image.aspx?s=14&lon=-90.356562&lat=31.987973&w=2
 1181153477543614 Amphiuma onion:http://www.apple.com/server/documentation/
-1181153478152194 Amphiumidae cherry:http://terraserver-usa.com/image.aspx?s=14&lon=-74.155096&lat=40.745951&w=2
-1181153477604976 Ampullariidae onion:http://www.britannica.com/eb/article?tocId=12258
-1181153478523915 Amritsar onion:http://www.1id.army.mil/
-1181153478375984 Amsonia plum:http://maps.google.com/maps?ll=48.840666,-99.746588&spn=0.11,0.18
-1181153478311383 Amsonia plum:http://www.redwall.org/dave/bellmakr.html
-1181153477764911 Amueixa onion:http://www.ville-montfort-l-amaury.fr
-1181153477597371 Amusgo yam:http://maps.google.com/maps?ll=48.945231,-98.996864&spn=0.11,0.18&t=h
-1181153477882287 Amusgo apple:http://alces.sel.uaf.edu/gregg/ns/nsmap.html
-1181153477665129 Amyridaceae cherry:http://maps.google.com/maps?ll=47.951113,-100.533608&spn=0.11,0.18
-1181153478425274 Anabaptism banana:http://topozone.com/map.asp?lat=37.468517&lon=-96.263014&s=200&size=m&layer=DRG100&datum=nad83
-1181153478532948 Anabaptist apple:http://ufo2000.sourceforge.net
-1181153477959033 Anabaptistical yam:http://outdoorsculpture.wwu.edu/number20.htm
-1181153478495913 Anabaptistry plum:http://wikisophia.org/
-1181153477987881 Anabaptistry broccoli:http://members.tripod.com/90north/nobilenorthpole.htm
-1181153477905371 Anabas banana:http://www.questia.com/PM.qst?a=o&d=9488659
-1181153477545006 Anablepidae banana:http://www.bloomberg.com/apps/quote?ticker=3103:JP
-1181153478344441 Anableps yam:http://www.af.mil/main/disclaimer.asp
-1181153477803201 Anableps cherry:http://www.plattegronden.nl/cgi-local/imap.cgi?vlaardingen+vlaa+d+5+a+4+b+4
-1181153478042703 Anacanthini apple:http://home.ecn.ab.ca/~jsavard/crypto/co040411.htm
-1181153477877862 Anacardium cherry:http://www.gold-net.com.au/archivemagazines/feb20/78152744.html#13
-1181153477548629 Anacardium cherry:http://www.unipg.it/facvet/
-1181153478446533 Anaclete yam:http://www.sdu.nl/staatscourant/gemeentes/gemprovin.htm#NH
-1181153477548443 Anacreon plum:http://www.bartleby.com/cgi-bin/texis/webinator/65search?query=Angelus+Family
-1181153477665834 Anacreontically broccoli:http://www.og-elsengrund.de.vu
-1181153478243425 Anagallis apple:http://www.upenn.edu/ldi/davis.html
-1181153478025278 Anagyris onion:http://www.opengeodb.de/suche/
-1181153477981938 Anaitis cherry:http://www.charlie-peterson.com
-1181153477702563 Anaitis banana:http://maps.google.com/maps?ll=27.750652,-98.07046&spn=0.11,0.18&t=h
-1181153477545742 Anam plum:http://www.hauptschule-wolverothe.de/
-1181153478530852 Anamite broccoli:http://topozone.com/map.asp?lat=42.124442&lon=-77.035463&s=200&size=m&layer=DRG100&datum=nad83
-1181153477853650 Anamite yam:http://www.google.com/search?q=Astra+A-50
-1181153477769343 Anamite onion:http://terraserver-usa.com/image.aspx?s=14&lon=-93.470067&lat=37.028804&w=2
-1181153477998991 Ananism banana:http://www.wipo.int/article6ter/en/
-1181153478349297 Ananta cherry:http://www.performancepoetry.com
-1181153477896784 Ananta cassis:http://www.socialistworker.co.uk/1746/sw174609.htm
-1181153477709421 Anaphe apple:http://tafftrail.org.uk
-1181153478130060 Anaptomorphus yam:http://www.wellington.vic.gov.au/
-1181153478519723 Anaryan cassis:http://userpages.umbc.edu/~sjoshi1/mirror/corbrep97.shtml
-1181153477778853 Anasa yam:http://www.infinityplus.co.uk/stories/colderwar.htm
-1181153477701519 Anasazi onion:http://www.world-mysteries.com/sar_7.htm#Ancient%20Indian
-1181153478564025 Anaspides banana:http://www.google.com/search?q=Airsource+Pro
-1181153478026734 Anastasia yam:http://maps.yahoo.com/maps_result?lat=35.507791&lon=-94.057883&mag=4
 DESTROY SCANNER;
 CREATE SCANNER ON Test1[..??] WHERE ROW = "Agamemnon";
 1181153478609060 Agamemnon plum:http://maps.google.com/maps?ll=43.297884,-91.989187&spn=0.11,0.18&t=h

@@ -60,7 +60,7 @@ namespace {
 
 /**
  */
-CommitLogReader::CommitLogReader(Filesystem *fs, String log_dir) : CommitLogBase(log_dir), m_fs(fs), m_block_buffer(256), m_compressor(0) {
+CommitLogReader::CommitLogReader(Filesystem *fs, String log_dir) : CommitLogBase(log_dir), m_fs(fs), m_block_buffer(256), m_revision(0), m_compressor(0) {
   load_fragments(log_dir);
 }
 
@@ -83,9 +83,10 @@ bool CommitLogReader::next_raw_block(CommitLogBlockInfo *infop, BlockCompression
   if (!m_fragment_stack.top().block_stream->next(infop, header)) {
     delete m_fragment_stack.top().block_stream;
     m_fragment_stack.top().block_stream = 0;
-    m_fragment_stack.top().timestamp = m_last_timestamp;
+    m_fragment_stack.top().revision = m_revision;
     m_fragment_queue.push_back(m_fragment_stack.top());
     m_fragment_stack.pop();
+    m_revision = 0;
     goto try_again;
   }
 
@@ -126,7 +127,11 @@ bool CommitLogReader::next(const uint8_t **blockp, size_t *lenp, BlockCompressio
         continue;
       }
 
-      m_last_timestamp = header->get_timestamp();
+      if (header->get_revision() > m_latest_revision)
+	m_latest_revision = header->get_revision();
+
+      if (header->get_revision() > m_revision)
+	m_revision = header->get_revision();
 
       zblock.release();
       *blockp = m_block_buffer.base;
@@ -140,8 +145,9 @@ bool CommitLogReader::next(const uint8_t **blockp, size_t *lenp, BlockCompressio
 	     binfo.start_offset, binfo.end_offset - binfo.start_offset,
 	     Error::get_text(binfo.error));
     m_fragment_stack.pop();
-
   }
+
+  sort(m_fragment_queue.begin(), m_fragment_queue.end());
 
   return false;
 }
@@ -171,7 +177,7 @@ void CommitLogReader::load_fragments(String &log_dir) {
       file_info.num = (uint32_t)num;
       file_info.log_dir = log_dir;
       file_info.purge_log_dir = false;
-      file_info.timestamp = 0;
+      file_info.revision = 0;
       file_info.block_stream = 0;
       file_info.size = m_fs->length(log_dir + listing[i]);
       if (file_info.size > 0)

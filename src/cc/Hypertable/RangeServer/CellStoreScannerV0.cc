@@ -35,48 +35,54 @@ namespace {
   const uint32_t MINIMUM_READAHEAD_AMOUNT = 65536;
 }
 
-//#define STAT 1
-
 
 CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
                                        ScanContextPtr &scan_ctx) :
     CellListScanner(scan_ctx), m_cell_store_ptr(cellstore),
     m_cell_store_v0(dynamic_cast< CellStoreV0*>(m_cell_store_ptr.get())),
-    m_index(m_cell_store_v0->m_index),
-    m_check_for_range_end(false), m_end_inclusive(true),
+    m_index(m_cell_store_v0->m_index), m_check_for_range_end(false),
     m_readahead(true), m_fd(-1), m_start_offset(0), m_end_offset(0),
     m_returned(0) {
-  ByteString bskey;
-  DynamicBuffer dbuf(0);
-  bool start_inclusive = false;
+  int start_key_offset = -1, end_key_offset = -1;
 
   assert(m_cell_store_v0);
   m_file_id = m_cell_store_v0->m_file_id;
   m_zcodec = m_cell_store_v0->create_block_compression_codec();
   memset(&m_block, 0, sizeof(m_block));
 
-  // compute start row
-  // this is wrong ...
+  // compute start key (and row)
   m_start_row = m_cell_store_v0->get_start_row();
   if (m_start_row.compare(scan_ctx->start_row) < 0) {
-    start_inclusive = true;
     m_start_row = scan_ctx->start_row;
+    m_start_key.ptr = scan_ctx->start_key.ptr;
+  }
+  else {
+    start_key_offset = m_key_buf.fill();
+    if (m_start_row != "") 
+      m_start_row.append(1,1);  // bump to next row
+    create_key_and_append(m_key_buf, m_start_row.c_str());
   }
 
   // compute end row
   m_end_row = m_cell_store_v0->get_end_row();
   if (scan_ctx->end_row.compare(m_end_row) < 0) {
-    m_end_inclusive = false;
     m_end_row = scan_ctx->end_row;
+    m_end_key.ptr = scan_ctx->end_key.ptr;
+  }
+  else {
+    end_key_offset = m_key_buf.fill();
+    if (m_end_row != Key::END_ROW_MARKER) 
+      m_end_row.append(1,1);  // bump to next row
+    create_key_and_append(m_key_buf, m_end_row.c_str());
   }
 
-  append_as_byte_string(dbuf, m_start_row.c_str());
-  bskey.ptr = dbuf.base;
+  if (start_key_offset != -1)
+    m_start_key.ptr = m_key_buf.base + start_key_offset;
 
-  if (start_inclusive)
-    m_iter = m_index.lower_bound(bskey);
-  else
-    m_iter = m_index.upper_bound(bskey);
+  if (end_key_offset != -1)
+    m_end_key.ptr = m_key_buf.base + end_key_offset;
+
+  m_iter = m_index.lower_bound(m_start_key);
 
   m_cur_key.ptr = 0;
 
@@ -96,6 +102,7 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
     }
   }
   else {
+    CellStoreV0::IndexMap::iterator end_iter;
     uint32_t buf_size = m_cell_store_ptr->get_blocksize();
 
     if (buf_size < MINIMUM_READAHEAD_AMOUNT)
@@ -103,19 +110,14 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
 
     m_start_offset = (*m_iter).second;
 
-    dbuf.clear();
-    append_as_byte_string(dbuf, m_end_row.c_str());
-    bskey.ptr = dbuf.base;
-
-    if ((m_end_iter = m_index.upper_bound(bskey)) == m_index.end())
+    if ((end_iter = m_index.upper_bound(m_end_key)) == m_index.end())
       m_end_offset = m_cell_store_v0->m_trailer.fix_index_offset;
     else {
-      CellStoreV0::IndexMap::iterator iter_next = m_end_iter;
-      iter_next++;
-      if (iter_next == m_index.end())
-        m_end_offset = m_cell_store_v0->m_trailer.fix_index_offset;
+      end_iter++;
+      if (end_iter == m_index.end())
+	m_end_offset = m_cell_store_v0->m_trailer.fix_index_offset;
       else
-        m_end_offset = (*iter_next).second;
+	m_end_offset = (*end_iter).second;
     }
 
     try {
@@ -141,61 +143,41 @@ CellStoreScannerV0::CellStoreScannerV0(CellStorePtr &cellstore,
   m_cur_key.ptr = m_block.ptr;
   m_cur_value.ptr = m_block.ptr + m_cur_key.length();
 
-  if (start_inclusive) {
-    while (strcmp(m_cur_key.str(), m_start_row.c_str()) < 0) {
-      m_block.ptr = m_cur_value.ptr + m_cur_value.length();
-      if (m_block.ptr >= m_block.end) {
-        m_iter = m_index.end();
-        HT_ERRORF("Unable to find start of range (row='%s') in %s", m_start_row.c_str(), m_cell_store_ptr->get_filename().c_str());
-        return;
+  while (m_cur_key < m_start_key) {
+    m_block.ptr = m_cur_value.ptr + m_cur_value.length();
+    if (m_block.ptr >= m_block.end) {
+      if (m_readahead) {
+	if (!fetch_next_block_readahead()) {
+	  HT_ERRORF("Unable to find start of range (row='%s') in %s", m_start_row.c_str(), m_cell_store_ptr->get_filename().c_str());
+	  return;
+	}
       }
-      m_cur_key.ptr = m_block.ptr;
-      m_cur_value.ptr = m_block.ptr + m_cur_key.length();
-    }
-  }
-  else {
-    while (strcmp(m_cur_key.str(), m_start_row.c_str()) <= 0) {
-      m_block.ptr = m_cur_value.ptr + m_cur_value.length();
-      if (m_block.ptr >= m_block.end) {
-        if (m_readahead) {
-          if (!fetch_next_block_readahead())
-            return;
-        }
-        else if (!fetch_next_block())
-          return;
+      else if (!fetch_next_block()) {
+	HT_ERRORF("Unable to find start of range (row='%s') in %s", m_start_row.c_str(), m_cell_store_ptr->get_filename().c_str());
+	return;
       }
-      m_cur_key.ptr = m_block.ptr;
-      m_cur_value.ptr = m_block.ptr + m_cur_key.length();
     }
+    m_cur_key.ptr = m_block.ptr;
+    m_cur_value.ptr = m_block.ptr + m_cur_key.length();
   }
-
 
   /**
    * End of range check
    */
-  if (m_end_inclusive) {
-    if (strcmp(m_cur_key.str(), m_end_row.c_str()) > 0) {
-      m_iter = m_index.end();
-      return;
-    }
-  }
-  else {
-    if (strcmp(m_cur_key.str(), m_end_row.c_str()) >= 0) {
-      m_iter = m_index.end();
-      return;
-    }
+  if (m_cur_key >= m_end_key) {
+    m_iter = m_index.end();
+    return;
   }
 
 
   /**
    * Column family check
    */
-  Key key;
-  if (!key.load(m_cur_key)) {
+  if (!m_key.load(m_cur_key)) {
     HT_ERROR("Problem parsing key!");
   }
-  else if (key.flag != FLAG_DELETE_ROW &&
-           !m_scan_context_ptr->family_mask[key.column_family_code])
+  else if (m_key.flag != FLAG_DELETE_ROW &&
+           !m_scan_context_ptr->family_mask[m_key.column_family_code])
     forward();
 
 }
@@ -234,7 +216,7 @@ CellStoreScannerV0::~CellStoreScannerV0() {
 }
 
 
-bool CellStoreScannerV0::get(ByteString &key, ByteString &value) {
+bool CellStoreScannerV0::get(Key &key, ByteString &value) {
 
   if (m_iter == m_index.end())
     return false;
@@ -243,7 +225,7 @@ bool CellStoreScannerV0::get(ByteString &key, ByteString &value) {
   m_returned++;
 #endif
 
-  key = m_cur_key;
+  key = m_key;
   value = m_cur_value;
 
   return true;
@@ -252,7 +234,6 @@ bool CellStoreScannerV0::get(ByteString &key, ByteString &value) {
 
 
 void CellStoreScannerV0::forward() {
-  Key key;
 
   while (true) {
 
@@ -273,29 +254,19 @@ void CellStoreScannerV0::forward() {
     m_cur_key.ptr = m_block.ptr;
     m_cur_value.ptr = m_block.ptr + m_cur_key.length();
 
-    if (m_check_for_range_end) {
-      if (m_end_inclusive) {
-        if (strcmp(m_cur_key.str(), m_end_row.c_str()) > 0) {
-          m_iter = m_index.end();
-          return;
-        }
-      }
-      else {
-        if (strcmp(m_cur_key.str(), m_end_row.c_str()) >= 0) {
-          m_iter = m_index.end();
-          return;
-        }
-      }
+    if (m_check_for_range_end && m_cur_key >= m_end_key) {
+      m_iter = m_index.end();
+      return;
     }
 
     /**
      * Column family check
      */
-    if (!key.load(m_cur_key)) {
+    if (!m_key.load(m_cur_key)) {
       HT_ERROR("Problem parsing key!");
       break;
     }
-    if (key.flag == FLAG_DELETE_ROW || m_scan_context_ptr->family_mask[key.column_family_code])
+    if (m_key.flag == FLAG_DELETE_ROW || m_scan_context_ptr->family_mask[m_key.column_family_code])
       break;
   }
 }
@@ -336,7 +307,7 @@ bool CellStoreScannerV0::fetch_next_block() {
         m_check_for_range_end = true;
     }
     else {
-      if (strcmp((*it_next).first.str(), m_end_row.c_str()) >= 0)
+      if (strcmp((*it_next).first.row(), m_end_row.c_str()) >= 0)
         m_check_for_range_end = true;
       m_block.zlength = (*it_next).second - m_block.offset;
     }
@@ -432,7 +403,7 @@ bool CellStoreScannerV0::fetch_next_block_readahead() {
         m_check_for_range_end = true;
     }
     else {
-      if (strcmp((*it_next).first.str(), m_end_row.c_str()) >= 0)
+      if (strcmp((*it_next).first.row(), m_end_row.c_str()) >= 0)
         m_check_for_range_end = true;
       m_block.zlength = (*it_next).second - m_block.offset;
     }

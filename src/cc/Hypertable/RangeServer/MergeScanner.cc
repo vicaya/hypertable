@@ -36,8 +36,9 @@ using namespace Hypertable;
 MergeScanner::MergeScanner(ScanContextPtr &scan_ctx, bool return_everything) : CellListScanner(scan_ctx), m_done(false), m_initialized(false), m_scanners(), m_queue(), m_delete_present(false), m_deleted_row(0), m_deleted_column_family(0), m_deleted_cell(0), m_return_everything(return_everything), m_row_count(0), m_row_limit(0), m_cell_count(0), m_cell_limit(0), m_cell_cutoff(0), m_prev_key(0) {
   if (scan_ctx->spec != 0)
     m_row_limit = scan_ctx->spec->row_limit;
-  m_start_timestamp = scan_ctx->interval.first;
-  m_end_timestamp = scan_ctx->interval.second;
+  m_start_timestamp = scan_ctx->time_interval.first;
+  m_end_timestamp = scan_ctx->time_interval.second;
+  m_revision = scan_ctx->revision;
 }
 
 
@@ -85,89 +86,87 @@ void MergeScanner::forward() {
 
       sstate = m_queue.top();
 
-      if (!key.load(sstate.key)) {
-        HT_ERROR("Problem decoding key!");
-      }
-      else if (key.timestamp < m_start_timestamp && !m_return_everything) {
+      if (sstate.key.timestamp < m_start_timestamp && !m_return_everything) {
         continue;
       }
-      else if (key.flag == FLAG_DELETE_ROW) {
-        len = strlen(key.row) + 1;
-        if (m_delete_present && m_deleted_row.fill() == len && !memcmp(m_deleted_row.base, key.row, len)) {
-          if (m_deleted_row_timestamp < key.timestamp)
-            m_deleted_row_timestamp = key.timestamp;
+      else if (sstate.key.flag == FLAG_DELETE_ROW) {
+        len = strlen(sstate.key.row) + 1;
+        if (m_delete_present && m_deleted_row.fill() == len && !memcmp(m_deleted_row.base, sstate.key.row, len)) {
+          if (m_deleted_row_timestamp < sstate.key.timestamp)
+            m_deleted_row_timestamp = sstate.key.timestamp;
         }
         else {
           m_deleted_row.clear();
           m_deleted_row.ensure(len);
-          memcpy(m_deleted_row.base, key.row, len);
+          memcpy(m_deleted_row.base, sstate.key.row, len);
           m_deleted_row.ptr = m_deleted_row.base + len;
-          m_deleted_row_timestamp = key.timestamp;
+          m_deleted_row_timestamp = sstate.key.timestamp;
           m_delete_present = true;
         }
         if (m_return_everything)
           break;
       }
-      else if (key.flag == FLAG_DELETE_COLUMN_FAMILY) {
-        len = key.column_qualifier - key.row;
-        if (m_delete_present && m_deleted_column_family.fill() == len && !memcmp(m_deleted_column_family.base, key.row, len)) {
-          if (m_deleted_column_family_timestamp < key.timestamp)
-            m_deleted_column_family_timestamp = key.timestamp;
+      else if (sstate.key.flag == FLAG_DELETE_COLUMN_FAMILY) {
+        len = sstate.key.column_qualifier - sstate.key.row;
+        if (m_delete_present && m_deleted_column_family.fill() == len && !memcmp(m_deleted_column_family.base, sstate.key.row, len)) {
+          if (m_deleted_column_family_timestamp < sstate.key.timestamp)
+            m_deleted_column_family_timestamp = sstate.key.timestamp;
         }
         else {
           m_deleted_column_family.clear();
           m_deleted_column_family.ensure(len);
-          memcpy(m_deleted_column_family.base, key.row, len);
+          memcpy(m_deleted_column_family.base, sstate.key.row, len);
           m_deleted_column_family.ptr = m_deleted_column_family.base + len;
-          m_deleted_column_family_timestamp = key.timestamp;
+          m_deleted_column_family_timestamp = sstate.key.timestamp;
           m_delete_present = true;
         }
         if (m_return_everything)
           break;
       }
-      else if (key.flag == FLAG_DELETE_CELL) {
-        len = (key.column_qualifier - key.row) + strlen(key.column_qualifier) + 1;
-        if (m_delete_present && m_deleted_cell.fill() == len && !memcmp(m_deleted_cell.base, key.row, len)) {
-          if (m_deleted_cell_timestamp < key.timestamp)
-            m_deleted_cell_timestamp = key.timestamp;
+      else if (sstate.key.flag == FLAG_DELETE_CELL) {
+        len = (sstate.key.column_qualifier - sstate.key.row) + strlen(sstate.key.column_qualifier) + 1;
+        if (m_delete_present && m_deleted_cell.fill() == len && !memcmp(m_deleted_cell.base, sstate.key.row, len)) {
+          if (m_deleted_cell_timestamp < sstate.key.timestamp)
+            m_deleted_cell_timestamp = sstate.key.timestamp;
         }
         else {
           m_deleted_cell.clear();
           m_deleted_cell.ensure(len);
-          memcpy(m_deleted_cell.base, key.row, len);
+          memcpy(m_deleted_cell.base, sstate.key.row, len);
           m_deleted_cell.ptr = m_deleted_cell.base + len;
-          m_deleted_cell_timestamp = key.timestamp;
+          m_deleted_cell_timestamp = sstate.key.timestamp;
           m_delete_present = true;
         }
         if (m_return_everything)
           break;
       }
       else {
-        if (key.timestamp >= m_end_timestamp && !m_return_everything)
+        if (sstate.key.revision > m_revision ||
+	    (sstate.key.timestamp >= m_end_timestamp && !m_return_everything))
           continue;
         if (!m_return_everything && m_delete_present) {
           if (m_deleted_cell.fill() > 0) {
-            len = (key.column_qualifier - key.row) + strlen(key.column_qualifier) + 1;
-            if (m_deleted_cell.fill() == len && !memcmp(m_deleted_cell.base, key.row, len)) {
-              if (key.timestamp <= m_deleted_cell_timestamp)
+            len = (sstate.key.column_qualifier - sstate.key.row) + strlen(sstate.key.column_qualifier) + 1;
+            if (m_deleted_cell.fill() == len && !memcmp(m_deleted_cell.base, sstate.key.row, len)) {
+              if (sstate.key.timestamp < m_deleted_cell_timestamp)
                 continue;
               break;
             }
             m_deleted_cell.clear();
           }
           if (m_deleted_column_family.fill() > 0) {
-            len = key.column_qualifier - key.row;
-            if (m_deleted_column_family.fill() == len && !memcmp(m_deleted_column_family.base, key.row, len)) {
-              if (key.timestamp <= m_deleted_column_family_timestamp)
+            len = sstate.key.column_qualifier - sstate.key.row;
+            if (m_deleted_column_family.fill() == len && !memcmp(m_deleted_column_family.base, sstate.key.row, len)) {
+              if (sstate.key.timestamp < m_deleted_column_family_timestamp)
                 continue;
               break;
             }
             m_deleted_column_family.clear();
           }
           if (m_deleted_row.fill() > 0) {
-            len = strlen(key.row) + 1;
-            if (m_deleted_row.fill() == len && !memcmp(m_deleted_row.base, key.row, len)) {
-              if (key.timestamp <= m_deleted_row_timestamp)
+            len = strlen(sstate.key.row) + 1;
+            if (m_deleted_row.fill() == len && !memcmp(m_deleted_row.base, sstate.key.row, len)) {
+              if (sstate.key.timestamp < m_deleted_row_timestamp)
                 continue;
               break;
             }
@@ -179,27 +178,27 @@ void MergeScanner::forward() {
       }
     }
 
-    const uint8_t *prev_key;
-    size_t prev_key_len = sstate.key.decode_length(&prev_key);
+    const uint8_t *prev_key = (const uint8_t *)sstate.key.row;
+    size_t prev_key_len = sstate.key.flag_ptr - (const uint8_t *)sstate.key.row + 1;
 
     if (m_prev_key.fill() != 0) {
 
       if (m_row_limit) {
-        if (strcmp(key.row, (const char *)m_prev_key.base)) {
+        if (strcmp(sstate.key.row, (const char *)m_prev_key.base)) {
           m_row_count++;
           if (!m_return_everything && m_row_count >= m_row_limit) {
             m_done = true;
             return;
           }
           m_prev_key.set(prev_key, prev_key_len);
-          m_cell_limit = m_scan_context_ptr->family_info[key.column_family_code].max_versions;
-          m_cell_cutoff = m_scan_context_ptr->family_info[key.column_family_code].cutoff_time;
+          m_cell_limit = m_scan_context_ptr->family_info[sstate.key.column_family_code].max_versions;
+          m_cell_cutoff = m_scan_context_ptr->family_info[sstate.key.column_family_code].cutoff_time;
           m_cell_count = 0;
           return;
         }
       }
 
-      if (prev_key_len == m_prev_key.fill() && prev_key_len > 9 && !memcmp(prev_key, m_prev_key.base, prev_key_len-9)) {
+      if (prev_key_len == m_prev_key.fill() && !memcmp(prev_key, m_prev_key.base, prev_key_len)) {
         if (m_cell_limit) {
           m_cell_count++;
           m_prev_key.set(prev_key, prev_key_len);
@@ -209,28 +208,24 @@ void MergeScanner::forward() {
       }
       else {
         m_prev_key.set(prev_key, prev_key_len);
-        m_cell_limit = m_scan_context_ptr->family_info[key.column_family_code].max_versions;
-        m_cell_cutoff = m_scan_context_ptr->family_info[key.column_family_code].cutoff_time;
+        m_cell_limit = m_scan_context_ptr->family_info[sstate.key.column_family_code].max_versions;
+        m_cell_cutoff = m_scan_context_ptr->family_info[sstate.key.column_family_code].cutoff_time;
         m_cell_count = 0;
       }
 
     }
     else {
       m_prev_key.set(prev_key, prev_key_len);
-      m_cell_limit = m_scan_context_ptr->family_info[key.column_family_code].max_versions;
-      m_cell_cutoff = m_scan_context_ptr->family_info[key.column_family_code].cutoff_time;
+      m_cell_limit = m_scan_context_ptr->family_info[sstate.key.column_family_code].max_versions;
+      m_cell_cutoff = m_scan_context_ptr->family_info[sstate.key.column_family_code].cutoff_time;
       m_cell_count = 0;
     }
 
     break;
   }
-
-
 }
 
-
-
-bool MergeScanner::get(ByteString &key, ByteString &value) {
+bool MergeScanner::get(Key &key, ByteString &value) {
 
   if (!m_initialized)
     initialize();
@@ -245,8 +240,6 @@ bool MergeScanner::get(ByteString &key, ByteString &value) {
   return false;
 }
 
-
-
 void MergeScanner::initialize() {
   ScannerState sstate;
   while (!m_queue.empty())
@@ -259,12 +252,8 @@ void MergeScanner::initialize() {
   }
   while (!m_queue.empty()) {
     sstate = m_queue.top();
-    Key key;
-    if (!key.load(sstate.key)) {
-      assert(!"MergeScanner::initialize() - Problem decoding key!");
-    }
 
-    if (key.timestamp < m_start_timestamp && !m_return_everything) {
+    if (sstate.key.timestamp < m_start_timestamp && !m_return_everything) {
       m_queue.pop();
       sstate.scanner->forward();
       if (sstate.scanner->get(sstate.key, sstate.value))
@@ -272,41 +261,42 @@ void MergeScanner::initialize() {
       continue;
     }
 
-    if (key.flag == FLAG_DELETE_ROW) {
-      size_t len = strlen(key.row) + 1;
+    if (sstate.key.flag == FLAG_DELETE_ROW) {
+      size_t len = strlen(sstate.key.row) + 1;
       m_deleted_row.clear();
       m_deleted_row.ensure(len);
-      memcpy(m_deleted_row.base, key.row, len);
+      memcpy(m_deleted_row.base, sstate.key.row, len);
       m_deleted_row.ptr = m_deleted_row.base + len;
-      m_deleted_row_timestamp = key.timestamp;
+      m_deleted_row_timestamp = sstate.key.timestamp;
       m_delete_present = true;
       if (!m_return_everything)
         forward();
     }
-    else if (key.flag == FLAG_DELETE_COLUMN_FAMILY) {
-      size_t len = key.column_qualifier - key.row;
+    else if (sstate.key.flag == FLAG_DELETE_COLUMN_FAMILY) {
+      size_t len = sstate.key.column_qualifier - sstate.key.row;
       m_deleted_column_family.clear();
       m_deleted_column_family.ensure(len);
-      memcpy(m_deleted_column_family.base, key.row, len);
+      memcpy(m_deleted_column_family.base, sstate.key.row, len);
       m_deleted_column_family.ptr = m_deleted_column_family.base + len;
-      m_deleted_column_family_timestamp = key.timestamp;
+      m_deleted_column_family_timestamp = sstate.key.timestamp;
       m_delete_present = true;
       if (!m_return_everything)
         forward();
     }
-    else if (key.flag == FLAG_DELETE_CELL) {
-      size_t len = (key.column_qualifier - key.row) + strlen(key.column_qualifier) + 1;
+    else if (sstate.key.flag == FLAG_DELETE_CELL) {
+      size_t len = (sstate.key.column_qualifier - sstate.key.row) + strlen(sstate.key.column_qualifier) + 1;
       m_deleted_cell.clear();
       m_deleted_cell.ensure(len);
-      memcpy(m_deleted_cell.base, key.row, len);
+      memcpy(m_deleted_cell.base, sstate.key.row, len);
       m_deleted_cell.ptr = m_deleted_cell.base + len;
-      m_deleted_cell_timestamp = key.timestamp;
+      m_deleted_cell_timestamp = sstate.key.timestamp;
       m_delete_present = true;
       if (!m_return_everything)
         forward();
     }
     else {
-      if (key.timestamp >= m_end_timestamp && !m_return_everything) {
+      if (sstate.key.revision > m_revision ||
+	  (sstate.key.timestamp >= m_end_timestamp && !m_return_everything)) {
         m_queue.pop();
         sstate.scanner->forward();
         if (sstate.scanner->get(sstate.key, sstate.value))
@@ -314,16 +304,13 @@ void MergeScanner::initialize() {
         continue;
       }
       m_delete_present = false;
-      const uint8_t *ptr;
-      size_t len = sstate.key.decode_length(&ptr);
-      m_prev_key.set(ptr, len);
-      m_cell_limit = m_scan_context_ptr->family_info[key.column_family_code].max_versions;
-      m_cell_cutoff = m_scan_context_ptr->family_info[key.column_family_code].cutoff_time;
+      m_prev_key.set(sstate.key.row, sstate.key.flag_ptr - (const uint8_t *)sstate.key.row + 1);
+      m_cell_limit = m_scan_context_ptr->family_info[sstate.key.column_family_code].max_versions;
+      m_cell_cutoff = m_scan_context_ptr->family_info[sstate.key.column_family_code].cutoff_time;
       m_cell_count = 0;
     }
     break;
   }
-
   m_initialized = true;
 }
 

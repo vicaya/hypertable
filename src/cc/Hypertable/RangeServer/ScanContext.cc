@@ -27,6 +27,7 @@
 
 #include "Hypertable/Lib/Key.h"
 
+#include "Global.h"
 #include "ScanContext.h"
 
 using namespace std;
@@ -35,25 +36,26 @@ using namespace Hypertable;
 /**
  *
  */
-void ScanContext::initialize(int64_t ts, ScanSpec *ss, RangeSpec *range_, SchemaPtr &sp) {
+void ScanContext::initialize(int64_t rev, ScanSpec *ss, RangeSpec *range_, SchemaPtr &sp) {
   Schema::ColumnFamily *cf;
   uint32_t max_versions = 0;
+  boost::xtime xtnow;
+  int64_t now;
+
+  boost::xtime_get(&xtnow, boost::TIME_UTC);
+  now = ((int64_t)xtnow.sec * 1000000000LL) + (int64_t)xtnow.nsec;
+
+  revision = rev;
 
   // set time interval
   if (ss) {
-    interval.first = ss->time_interval.first;
-    if (ts == 0)
-      interval.second = ss->time_interval.second;
-    else
-      interval.second = (ss->time_interval.second != 0) ? std::min(ts, ss->time_interval.second) : ts;
+    time_interval.first = ss->time_interval.first;
+    time_interval.second = ss->time_interval.second;
   }
   else {
-    interval.first = 0;
-    interval.second = ts;
+    time_interval.first = TIMESTAMP_MIN;
+    time_interval.second = TIMESTAMP_MAX;
   }
-
-  if (interval.second == 0)
-    interval.second = END_OF_TIME;
 
   spec = ss;
   range = range_;
@@ -81,7 +83,7 @@ void ScanContext::initialize(int64_t ts, ScanSpec *ss, RangeSpec *range_, Schema
         if (cf->ttl == 0)
           family_info[cf->id].cutoff_time = 0;
         else
-          family_info[cf->id].cutoff_time = ts - ((uint64_t)cf->ttl * 1000000000LL);
+          family_info[cf->id].cutoff_time = now - ((uint64_t)cf->ttl * 1000000000LL);
         if (max_versions == 0)
           family_info[cf->id].max_versions = cf->max_versions;
         else {
@@ -104,7 +106,7 @@ void ScanContext::initialize(int64_t ts, ScanSpec *ss, RangeSpec *range_, Schema
           if ((*cf_it)->ttl == 0)
             family_info[(*cf_it)->id].cutoff_time = 0;
           else
-            family_info[(*cf_it)->id].cutoff_time = ts - ((uint64_t)(*cf_it)->ttl * 1000000000LL);
+            family_info[(*cf_it)->id].cutoff_time = now - ((uint64_t)(*cf_it)->ttl * 1000000000LL);
 
           if (max_versions == 0)
             family_info[(*cf_it)->id].max_versions = (*cf_it)->max_versions;
@@ -122,7 +124,13 @@ void ScanContext::initialize(int64_t ts, ScanSpec *ss, RangeSpec *range_, Schema
   /**
    * Create Start Key and End Key
    */
+
+  String start_qualifier, end_qualifier;
+  uint8_t start_family = 0;
+  uint8_t end_family = 0;
+
   if (spec) {
+
     if (!spec->row_intervals.empty()) {
 
       // start row
@@ -157,10 +165,13 @@ void ScanContext::initialize(int64_t ts, ScanSpec *ss, RangeSpec *range_, Schema
 	if ((cf = schema_ptr->get_column_family(column_family_str)) == 0)
 	  HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC,
 		   format("Bad column family (%s)", column_family_str.c_str()));
-	ptr++;
-	start_row = spec->cell_intervals[0].start_row + std::string(1, 0) + std::string(1, (char)cf->id) + ptr;
+
+	start_family = cf->id;
+	start_qualifier = ptr+1;
+
+	start_row = spec->cell_intervals[0].start_row;
 	if (!spec->cell_intervals[0].start_inclusive)
-	  start_row.append(1,1);  // bump to next cell
+	  start_qualifier.append(1,1);  // bump to next cell
       }
       else {
 	// start row
@@ -176,10 +187,13 @@ void ScanContext::initialize(int64_t ts, ScanSpec *ss, RangeSpec *range_, Schema
 	if ((cf = schema_ptr->get_column_family(column_family_str)) == 0)
 	  HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC,
 		   format("Bad column family (%s)", column_family_str.c_str()));
-	ptr++;
-	end_row = spec->cell_intervals[0].end_row + std::string(1, 0) + std::string(1, (char)cf->id) + ptr;
+
+	end_family = cf->id;
+	end_qualifier = ptr+1;
+
+	end_row = spec->cell_intervals[0].end_row;
 	if (spec->cell_intervals[0].end_inclusive)
-	  end_row.append(1,1);  // bump to next cell
+	  end_qualifier.append(1,1);  // bump to next cell
       }
       else {
 	// end row
@@ -198,5 +212,17 @@ void ScanContext::initialize(int64_t ts, ScanSpec *ss, RangeSpec *range_, Schema
     start_row = "";
     end_row = Key::END_ROW_MARKER;
   }
+
+  assert(start_row <= end_row);
+
+  dbuf.reserve(start_row.length() + start_qualifier.length() + end_row.length() + end_qualifier.length() + 64);
+
+  create_key_and_append(dbuf, 0, start_row.c_str(), start_family, start_qualifier.c_str(), TIMESTAMP_MIN, TIMESTAMP_MIN);
+  size_t offset = dbuf.ptr - dbuf.base;
+  create_key_and_append(dbuf, 0, end_row.c_str(), end_family, end_qualifier.c_str(), TIMESTAMP_MIN, TIMESTAMP_MIN);
+
+  start_key.ptr = dbuf.base;
+  end_key.ptr = dbuf.base + offset;
+
 
 }

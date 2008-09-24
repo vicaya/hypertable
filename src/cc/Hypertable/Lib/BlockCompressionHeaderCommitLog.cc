@@ -31,16 +31,16 @@ using namespace Serialization;
 
 const size_t BlockCompressionHeaderCommitLog::LENGTH;
 
-BlockCompressionHeaderCommitLog::BlockCompressionHeaderCommitLog() : BlockCompressionHeader(), m_timestamp(0) {
+BlockCompressionHeaderCommitLog::BlockCompressionHeaderCommitLog() : BlockCompressionHeader(), m_revision(0) {
 }
 
-BlockCompressionHeaderCommitLog::BlockCompressionHeaderCommitLog(const char *magic, uint64_t timestamp) : BlockCompressionHeader(magic), m_timestamp(timestamp) {
+BlockCompressionHeaderCommitLog::BlockCompressionHeaderCommitLog(const char *magic, int64_t revision) : BlockCompressionHeader(magic), m_revision(revision) {
 }
 
 void BlockCompressionHeaderCommitLog::encode(uint8_t **bufp) {
   uint8_t *base = *bufp;
   BlockCompressionHeader::encode(bufp);
-  encode_i64(bufp, m_timestamp);
+  encode_i64(bufp, m_revision);
   if ((size_t)(*bufp - base) + 2 == length())
     write_header_checksum(base, bufp);
 }
@@ -51,7 +51,7 @@ void BlockCompressionHeaderCommitLog::decode(const uint8_t **bufp,
   const uint8_t *base = *bufp;
 
   BlockCompressionHeader::decode(bufp, remainp);
-  m_timestamp = decode_i64(bufp, remainp);
+  m_revision = decode_i64(bufp, remainp);
 
   if ((size_t)(*bufp - base) == length() - 2) {
     *bufp += 2;

@@ -54,16 +54,16 @@ void RangeServerClient::load_range(struct sockaddr_in &addr, TableIdentifier &ta
 }
 
 
-void RangeServerClient::update(struct sockaddr_in &addr, TableIdentifier &table, StaticBuffer &buffer, DispatchHandler *handler) {
-  CommBufPtr cbp(RangeServerProtocol::create_request_update(table, buffer));
+void RangeServerClient::update(struct sockaddr_in &addr, TableIdentifier &table, uint32_t count, StaticBuffer &buffer, DispatchHandler *handler) {
+  CommBufPtr cbp(RangeServerProtocol::create_request_update(table, count, buffer));
   send_message(addr, cbp, handler);
 }
 
 
-void RangeServerClient::update(struct sockaddr_in &addr, TableIdentifier &table, StaticBuffer &buffer) {
+void RangeServerClient::update(struct sockaddr_in &addr, TableIdentifier &table, uint32_t count, StaticBuffer &buffer) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
-  CommBufPtr cbp(RangeServerProtocol::create_request_update(table, buffer));
+  CommBufPtr cbp(RangeServerProtocol::create_request_update(table, count, buffer));
   send_message(addr, cbp, &sync_handler);
   if (!sync_handler.wait_for_reply(event_ptr))
     HT_THROW((int)Protocol::response_code(event_ptr),

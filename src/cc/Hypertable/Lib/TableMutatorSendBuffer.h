@@ -39,27 +39,26 @@ namespace Hypertable {
    */
   class TableMutatorSendBuffer : public ReferenceCount {
   public:
-    TableMutatorSendBuffer(TableIdentifier *tid, TableMutatorCompletionCounter *cc, RangeLocator *rl) : counterp(cc), m_table_identifier(tid), m_range_locator(rl), m_resend(false) { return; }
-    void add_retries(uint32_t offset, uint32_t len) {
+    TableMutatorSendBuffer(TableIdentifier *tid, TableMutatorCompletionCounter *cc, RangeLocator *rl) : counterp(cc), send_count(0), retry_count(0), m_table_identifier(tid), m_range_locator(rl) { return; }
+    void add_retries(uint32_t count, uint32_t offset, uint32_t len) {
       accum.add(pending_updates.base+offset, len);
-      m_resend = true;
       counterp->set_retries();
+      retry_count += count;
       // invalidate row key
-      const uint8_t *ptr = pending_updates.base+offset;
-      Serialization::decode_vi32(&ptr);
-      m_range_locator->invalidate(m_table_identifier, (const char *)ptr);
+      SerializedKey key(pending_updates.base+offset);
+      m_range_locator->invalidate(m_table_identifier, key.row());
     }
     void add_retries_all() {
       accum.add(pending_updates.base, pending_updates.size);
-      m_resend = true;
       counterp->set_retries();
+      retry_count = send_count;
       // invalidate row key
-      const uint8_t *ptr = pending_updates.base;
-      Serialization::decode_vi32(&ptr);
-      m_range_locator->invalidate(m_table_identifier, (const char *)ptr);
+      SerializedKey key(pending_updates.base);
+      m_range_locator->invalidate(m_table_identifier, key.row());
     }
-    void add_errors(int error, uint32_t offset, uint32_t len) {
+    void add_errors(int error, uint32_t count, uint32_t offset, uint32_t len) {
       FailedRegion failed;
+      (void)count;
       failed.error = error;
       failed.base = pending_updates.base + offset;
       failed.len = len;
@@ -79,6 +78,8 @@ namespace Hypertable {
       accum.clear();
       pending_updates.free();
       failed_regions.clear();
+      send_count = 0;
+      retry_count = 0;
     }
     void reset() {
       clear();
@@ -88,7 +89,7 @@ namespace Hypertable {
       errors.insert(errors.end(), failed_regions.begin(), failed_regions.end());
     }
 
-    bool resend() { return m_resend; }
+    bool resend() { return retry_count > 0; }
 
     std::vector<uint64_t> key_offsets;
     DynamicBuffer accum;
@@ -97,10 +98,12 @@ namespace Hypertable {
     TableMutatorCompletionCounter *counterp;
     DispatchHandlerPtr dispatch_handler_ptr;
     std::vector<FailedRegion> failed_regions;
+    uint32_t send_count;
+    uint32_t retry_count;
+
   private:
     TableIdentifier *m_table_identifier;
     RangeLocator *m_range_locator;
-    bool m_resend;
   };
   typedef boost::intrusive_ptr<TableMutatorSendBuffer> TableMutatorSendBufferPtr;
 

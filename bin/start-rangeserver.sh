@@ -85,7 +85,7 @@ LOGFILE=$HYPERTABLE_HOME/log/Hypertable.RangeServer.log
 let RETRY_COUNT=0
 $HYPERTABLE_HOME/bin/serverup --silent --host=localhost rangeserver
 if [ $? != 0 ] ; then
-    nohup $HYPERTABLE_HOME/bin/Hypertable.RangeServer --pidfile=$PIDFILE --verbose $@ 1>& $LOGFILE &
+    nohup $VALGRIND $HYPERTABLE_HOME/bin/Hypertable.RangeServer --pidfile=$PIDFILE --verbose $@ 1>& $LOGFILE &
 
   $HYPERTABLE_HOME/bin/serverup --silent --host=localhost rangeserver
   while [ $? != 0 ] ; do

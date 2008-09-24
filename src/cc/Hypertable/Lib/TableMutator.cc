@@ -65,7 +65,7 @@ TableMutator::TableMutator(PropertiesPtr &props_ptr, Comm *comm,
 /**
  *
  */
-void TableMutator::set(uint64_t timestamp, KeySpec &key, const void *value, uint32_t value_len) {
+void TableMutator::set(KeySpec &key, const void *value, uint32_t value_len) {
   Timer timer(m_timeout);
 
   if (m_last_error != Error::OK)
@@ -88,8 +88,7 @@ void TableMutator::set(uint64_t timestamp, KeySpec &key, const void *value, uint
       full_key.row = (const char *)key.row;
       full_key.column_qualifier = (const char *)key.column_qualifier;
       full_key.column_family_code = (uint8_t)cf->id;
-      full_key.timestamp = timestamp;
-
+      full_key.timestamp = key.timestamp;
       m_buffer_ptr->set(full_key, value, value_len, timer);
     }
 
@@ -115,7 +114,6 @@ void TableMutator::set(uint64_t timestamp, KeySpec &key, const void *value, uint
   }
   catch (Exception &e) {
     m_last_error = e.code();
-    memcpy(&m_last_timestamp, &timestamp, sizeof(timestamp));
     memcpy(&m_last_key, &key, sizeof(key));
     m_last_value = value;
     m_last_value_len = value_len;
@@ -126,7 +124,7 @@ void TableMutator::set(uint64_t timestamp, KeySpec &key, const void *value, uint
 
 
 
-void TableMutator::set_delete(uint64_t timestamp, KeySpec &key) {
+void TableMutator::set_delete(KeySpec &key) {
   Key full_key;
   Timer timer(m_timeout);
 
@@ -143,7 +141,7 @@ void TableMutator::set_delete(uint64_t timestamp, KeySpec &key) {
       full_key.row = (const char *)key.row;
       full_key.column_family_code = 0;
       full_key.column_qualifier = 0;
-      full_key.timestamp = timestamp;
+      full_key.timestamp = key.timestamp;
     }
     else  {
       Schema::ColumnFamily *cf = m_schema_ptr->get_column_family(key.column_family);
@@ -152,7 +150,7 @@ void TableMutator::set_delete(uint64_t timestamp, KeySpec &key) {
       full_key.row = (const char *)key.row;
       full_key.column_qualifier = (const char *)key.column_qualifier;
       full_key.column_family_code = (uint8_t)cf->id;
-      full_key.timestamp = timestamp;
+      full_key.timestamp = key.timestamp;
     }
 
     m_buffer_ptr->set_delete(full_key, timer);
@@ -178,7 +176,6 @@ void TableMutator::set_delete(uint64_t timestamp, KeySpec &key) {
   }
   catch (Exception &e) {
     m_last_error = e.code();
-    memcpy(&m_last_timestamp, &timestamp, sizeof(timestamp));
     memcpy(&m_last_key, &key, sizeof(key));
     throw;
   }
@@ -230,9 +227,9 @@ bool TableMutator::retry(int timeout) {
       m_timeout = timeout;
 
     if (m_last_op == SET)
-      set(m_last_timestamp, m_last_key, m_last_value, m_last_value_len);
+      set(m_last_key, m_last_value, m_last_value_len);
     else if (m_last_op == SET_DELETE)
-      set_delete(m_last_timestamp, m_last_key);
+      set_delete(m_last_key);
     if (m_last_op == FLUSH)
       flush();
   }

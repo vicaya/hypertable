@@ -93,9 +93,9 @@ namespace Hypertable {
 
     class insert_record {
     public:
-      insert_record() : timestamp(0) { }
+      insert_record() : timestamp(AUTO_ASSIGN) { }
       void clear() {
-        timestamp = 0;
+        timestamp = AUTO_ASSIGN;
         row_key = "";
         column_key = "";
         value = "";
@@ -178,8 +178,8 @@ namespace Hypertable {
       hql_interpreter_scan_state()
 	: limit(0), max_versions(0), display_timestamps(false),
 	  return_deletes(false), keys_only(false), current_rowkey_set(false),
-	  start_time(BEGINNING_OF_TIME), start_time_set(false),
-	  end_time(END_OF_TIME), end_time_set(false),
+	  start_time(TIMESTAMP_MIN), start_time_set(false),
+	  end_time(TIMESTAMP_MAX), end_time_set(false),
 	  current_timestamp_set(false), current_relop(0) { }
       std::vector<String> columns;
       uint32_t limit;

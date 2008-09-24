@@ -88,10 +88,11 @@ namespace Hypertable {
      *
      * @param addr remote address of RangeServer connection
      * @param table table identifier
+     * @param count number of key/value pairs in buffer
      * @param buffer buffer holding key/value pairs
      * @param handler response handler
      */
-    void update(struct sockaddr_in &addr, TableIdentifier &table, StaticBuffer &buffer, DispatchHandler *handler);
+    void update(struct sockaddr_in &addr, TableIdentifier &table, uint32_t count, StaticBuffer &buffer, DispatchHandler *handler);
 
     /** Issues an "update" request.  The data argument holds a sequence of key/value
      * pairs.  Each key/value pair is encoded as two variable lenght ByteString records
@@ -99,9 +100,10 @@ namespace Hypertable {
      *
      * @param addr remote address of RangeServer connection
      * @param table table identifier
+     * @param count number of key/value pairs in buffer
      * @param buffer buffer holding key/value pairs
      */
-    void update(struct sockaddr_in &addr, TableIdentifier &table, StaticBuffer &buffer);
+    void update(struct sockaddr_in &addr, TableIdentifier &table, uint32_t count, StaticBuffer &buffer);
 
     /** Issues a "create scanner" request asynchronously.
      *

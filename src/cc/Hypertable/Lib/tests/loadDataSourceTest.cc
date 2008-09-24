@@ -39,7 +39,6 @@ using namespace std;
 
 int main(int argc, char **argv) {
   LoadDataSource  *lds;
-  uint64_t timestamp;
   KeySpec key;
   uint8_t *value;
   uint32_t value_len;
@@ -65,10 +64,10 @@ int main(int argc, char **argv) {
 	std::string dat_fn = testnames[i] + ".dat";
 	lds = new LoadDataSource(dat_fn.c_str(), "", key_columns, "");
 
-	while (lds->next(0, &timestamp, &key, &value, &value_len, 0)) {
+	while (lds->next(0, &key, &value, &value_len, 0)) {
 	  cerr << "row=" << (const char *)key.row << " column_family=" << key.column_family;
 	  if (key.column_qualifier_len > 0)
-		cerr << " column_qualifier=" << (const char *)key.column_qualifier;
+	    cerr << " column_qualifier=" << (const char *)key.column_qualifier;
 	  cerr << " value=" << (const char *)value << endl;
 	}
 

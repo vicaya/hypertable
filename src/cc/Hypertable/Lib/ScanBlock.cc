@@ -66,7 +66,8 @@ int ScanBlock::load(EventPtr &event_ptr) {
   }
   uint8_t *p = (uint8_t *)msg;
   uint8_t *endp = p + len;
-  ByteString key, value;
+  SerializedKey key;
+  ByteString value;
 
   while (p < endp) {
     key.ptr = p;
@@ -81,7 +82,7 @@ int ScanBlock::load(EventPtr &event_ptr) {
 }
 
 
-bool ScanBlock::next(ByteString &key, ByteString &value) {
+bool ScanBlock::next(SerializedKey &key, ByteString &value) {
 
   assert(m_error == Error::OK);
 

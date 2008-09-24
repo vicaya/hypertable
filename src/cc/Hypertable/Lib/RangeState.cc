@@ -28,14 +28,14 @@ using namespace Hypertable;
 using namespace Serialization;
 
 size_t RangeState::encoded_length() {
-  return 9 + timestamp.encoded_length() + encoded_length_vstr(transfer_log) +
+  return 9 + 8 + encoded_length_vstr(transfer_log) +
     encoded_length_vstr(split_point) + encoded_length_vstr(old_start_row);
 }
 
 
 void RangeState::encode(uint8_t **bufp) {
   *(*bufp)++ = state;
-  timestamp.encode(bufp);
+  encode_i64(bufp, timestamp);
   encode_i64(bufp, soft_limit);
   encode_vstr(bufp, transfer_log);
   encode_vstr(bufp, split_point);
@@ -46,7 +46,7 @@ void RangeState::encode(uint8_t **bufp) {
 void RangeState::decode(const uint8_t **bufp, size_t *remainp) {
   HT_TRY("decoding range state",
     state = decode_byte(bufp, remainp);
-    timestamp.decode(bufp, remainp);
+    timestamp = decode_i64(bufp, remainp);
     soft_limit = decode_i64(bufp, remainp);
     transfer_log = decode_vstr(bufp, remainp);
     split_point = decode_vstr(bufp, remainp);
@@ -64,7 +64,7 @@ std::ostream& Hypertable::operator<<(std::ostream &out, const RangeState &st) {
   default:
     out <<"unknown ("<< st.state;
   }
-  out << " ts.logical=" << st.timestamp.logical << " ts.real=" << st.timestamp.real;
+  out << " timestamp=" << st.timestamp;
   out <<" soft_limit="<< st.soft_limit;
   if (st.transfer_log)
     out <<" transfer_log='"<< st.transfer_log << "'";

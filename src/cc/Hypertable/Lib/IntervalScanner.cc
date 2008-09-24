@@ -149,7 +149,8 @@ IntervalScanner::~IntervalScanner() {
 
 bool IntervalScanner::next(Cell &cell) {
   int error;
-  ByteString bskey, value;
+  SerializedKey serkey;
+  ByteString value;
   Key key;
   Timer timer(m_timeout);
 
@@ -197,9 +198,9 @@ bool IntervalScanner::next(Cell &cell) {
     }
   }
 
-  if (m_scanblock.next(bskey, value)) {
+  if (m_scanblock.next(serkey, value)) {
     Schema::ColumnFamily *cf;
-    if (!key.load(bskey))
+    if (!key.load(serkey))
       HT_THROW(Error::BAD_KEY, "");
 
     // check for end row

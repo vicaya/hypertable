@@ -40,20 +40,20 @@ namespace Hypertable {
 
     struct ScannerState {
       CellListScanner *scanner;
-      ByteString key;
+      Key key;
       ByteString value;
     };
 
     struct LtScannerState {
       bool operator()(const ScannerState &ss1, const ScannerState &ss2) const {
-        return !(ss1.key < ss2.key);
+        return !(ss1.key.serial < ss2.key.serial);
       }
     };
 
     MergeScanner(ScanContextPtr &scan_ctx, bool return_everything=true);
     virtual ~MergeScanner();
     virtual void forward();
-    virtual bool get(ByteString &key, ByteString &value);
+    virtual bool get(Key &key, ByteString &value);
     void add_scanner(CellListScanner *scanner);
 
     void install_release_callback(CellStoreReleaseCallback &cb) {
@@ -83,6 +83,7 @@ namespace Hypertable {
     uint64_t      m_cell_cutoff;
     int64_t       m_start_timestamp;
     int64_t       m_end_timestamp;
+    int64_t       m_revision;
     DynamicBuffer m_prev_key;
     CellStoreReleaseCallback m_release_callback;
   };

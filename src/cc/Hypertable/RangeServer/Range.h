@@ -55,13 +55,11 @@ namespace Hypertable {
   public:
     Range(MasterClientPtr &master_client_ptr, const TableIdentifier *identifier, SchemaPtr &schema_ptr, const RangeSpec *range, const RangeState *state);
     virtual ~Range();
-    virtual int add(const ByteString key, const ByteString value, int64_t real_timestamp);
+    virtual int add(const Key &key, const ByteString value);
     virtual const char *get_split_row() { return 0; }
 
-    int replay_add(const ByteString key, const ByteString value, int64_t real_timestamp, uint32_t *num_addedp);
-
     void lock();
-    void unlock(int64_t real_timestamp);
+    void unlock();
 
     uint64_t disk_usage();
 
@@ -87,10 +85,9 @@ namespace Hypertable {
       return (String)m_identifier.name;
     }
 
-    int64_t get_latest_timestamp();
-    void get_scan_timestamp(Timestamp &ts);
+    int64_t get_scan_revision();
 
-    void replay_transfer_log(CommitLogReader *commit_log_reader, int64_t real_timestamp);
+    void replay_transfer_log(CommitLogReader *commit_log_reader);
 
     void get_compaction_priority_data(std::vector<AccessGroup::CompactionPriorityData> &priority_data_vector);
 
@@ -163,20 +160,20 @@ namespace Hypertable {
     void split_compact_and_shrink();
     void split_notify_master();
 
-    boost::mutex        m_mutex;
-    MasterClientPtr     m_master_client_ptr;
+    boost::mutex     m_mutex;
+    MasterClientPtr  m_master_client_ptr;
     TableIdentifierManaged m_identifier;
-    SchemaPtr           m_schema;
-    String  m_start_row;
-    String  m_end_row;
-    String  m_name;
-    AccessGroupMap        m_access_group_map;
+    SchemaPtr        m_schema;
+    String           m_start_row;
+    String           m_end_row;
+    String           m_name;
+    AccessGroupMap   m_access_group_map;
     std::vector<AccessGroup *>  m_access_group_vector;
-    ColumnFamilyVector      m_column_family_vector;
-    bool       m_maintenance_in_progress;
+    ColumnFamilyVector  m_column_family_vector;
+    bool             m_maintenance_in_progress;
+    int64_t          m_revision;
+    int64_t          m_latest_revision;
 
-    Timestamp        m_timestamp;
-    int64_t          m_last_logical_timestamp;
     String           m_split_row;
     CommitLogPtr     m_split_log_ptr;
 

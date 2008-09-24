@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
   ConnectionManagerPtr conn_mgr;
   DfsBroker::Client *client;
   std::string fname = "";
-  ByteString key, value;
+  ByteString value;
   bool dump_all = false;
   CellStoreV0Ptr cellstore;
   bool count_keys = false;
@@ -92,6 +92,10 @@ int main(int argc, char **argv) {
       dump_all = true;
     else if (!strcmp(argv[i], "-c") || !strcmp(argv[i], "--count"))
       count_keys = true;
+    else if (!strncmp(argv[i], "--config=", 9)) {
+      cfgfile = &argv[i][9];
+      boost::trim_if(cfgfile, boost::is_any_of("'\""));
+    }
     else if (!strncmp(argv[i], "--start-key=", 12)) {
       start_key = &argv[i][12];
       boost::trim_if(start_key, boost::is_any_of("'\""));
@@ -147,11 +151,10 @@ int main(int argc, char **argv) {
    * Dump keys
    */
   if (dump_all || count_keys) {
-    ScanContextPtr scan_ctx(new ScanContext(END_OF_TIME));
+    ScanContextPtr scan_ctx(new ScanContext());
 
     scanner = cellstore->create_scanner(scan_ctx);
-    while (scanner->get(key, value)) {
-      key_comps.load(key);
+    while (scanner->get(key_comps, value)) {
 
       if (!hit_start) {
         if (strcmp(key_comps.row, start_key.c_str()) <= 0) {

@@ -19,6 +19,11 @@
 # 02110-1301, USA.
 #
 
+set(SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Hypertable/RangeServer/tests")
+set(DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Hypertable/RangeServer")
+
+set(TEST_DEPENDENCIES ${DST_DIR}/words)
+
 set(RangeServer_SRCS
 AccessGroup.cc
 CellCache.cc
@@ -89,7 +94,22 @@ target_link_libraries(count_stored HyperRanger)
 add_executable(FileBlockCache_test tests/FileBlockCache_test.cc)
 target_link_libraries(FileBlockCache_test HyperRanger)
 
+# CellStoreScanner test
+add_executable(CellStoreScanner_test tests/CellStoreScanner_test.cc ${TEST_DEPENDENCIES})
+target_link_libraries(CellStoreScanner_test HyperRanger)
+
+configure_file(${SRC_DIR}/CellStoreScanner_test.golden
+               ${DST_DIR}/CellStoreScanner_test.golden)
+
+add_custom_command(SOURCE ${HYPERTABLE_SOURCE_DIR}/test/words.gz
+    COMMAND gzip ARGS -d < ${HYPERTABLE_SOURCE_DIR}/test/words.gz
+                         > ${DST_DIR}/words
+    OUTPUT ${DST_DIR}/words)
+
+set(ADDITIONAL_MAKE_CLEAN_FILES ${DST_DIR}/words)
+
 add_test(FileBlockCache FileBlockCache_test)
+add_test(CellStoreScanner CellStoreScanner_test)
 
 install(TARGETS HyperRanger Hypertable.RangeServer csdump count_stored
         RUNTIME DESTINATION ${VERSION}/bin

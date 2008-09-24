@@ -37,7 +37,7 @@ namespace Hypertable {
     CellStoreScannerV0(CellStorePtr &cellstore, ScanContextPtr &scan_ctx);
     virtual ~CellStoreScannerV0();
     virtual void forward();
-    virtual bool get(ByteString &key, ByteString &value);
+    virtual bool get(Key &key, ByteString &value);
 
   private:
 
@@ -58,14 +58,16 @@ namespace Hypertable {
     CellStoreV0::IndexMap  &m_index;
 
     CellStoreV0::IndexMap::iterator m_iter;
-    CellStoreV0::IndexMap::iterator m_end_iter;
 
     BlockInfo             m_block;
-    ByteString            m_cur_key;
+    Key                   m_key;
+    SerializedKey         m_cur_key;
     ByteString            m_cur_value;
+    SerializedKey         m_start_key;
+    SerializedKey         m_end_key;
+    DynamicBuffer         m_key_buf;
     BlockCompressionCodec *m_zcodec;
     bool                  m_check_for_range_end;
-    bool                  m_end_inclusive;
     int                   m_file_id;
     std::string           m_start_row;
     std::string           m_end_row;

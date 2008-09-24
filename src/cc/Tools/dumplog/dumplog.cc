@@ -209,9 +209,9 @@ namespace {
 
       HT_EXPECT(header.check_magic(CommitLog::MAGIC_DATA), Error::FAILED_EXPECTATION);
 
-      printf("%sDATA frag=\"%s\" ts=%llu start=%09llu end=%09llu ",
+      printf("%sDATA frag=\"%s\" rev=%llu start=%09llu end=%09llu ",
 	     prefix.c_str(), binfo.file_fragment, 
-	     (long long unsigned int)header.get_timestamp(),
+	     (long long unsigned int)header.get_revision(),
 	     (long long unsigned int)binfo.start_offset,
 	     (long long unsigned int)binfo.end_offset);
 

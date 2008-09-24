@@ -45,11 +45,13 @@ void RequestHandlerUpdate::run() {
 
   try {
     table.decode(&p, &remaining);
+    uint32_t count = Serialization::decode_i32(&p, &remaining);
+    
     mods.base = (uint8_t *)p;
     mods.size = remaining;
     mods.own = false;
 
-    m_range_server->update(&cb, &table, mods);
+    m_range_server->update(&cb, &table, count, mods);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

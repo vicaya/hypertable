@@ -36,17 +36,17 @@ namespace Hypertable {
     static const size_t LENGTH = BlockCompressionHeader::LENGTH + 8;
 
     BlockCompressionHeaderCommitLog();
-    BlockCompressionHeaderCommitLog(const char *magic, uint64_t timestamp);
+    BlockCompressionHeaderCommitLog(const char *magic, int64_t revision);
 
-    void set_timestamp(uint64_t timestamp) { m_timestamp = timestamp; }
-    uint64_t get_timestamp() { return m_timestamp; }
+    void set_revision(int64_t revision) { m_revision = revision; }
+    int64_t get_revision() { return m_revision; }
 
     virtual size_t length() { return LENGTH; }
     virtual void   encode(uint8_t **bufp);
     virtual void   decode(const uint8_t **bufp, size_t *remainp);
 
   private:
-    uint64_t m_timestamp;
+    int64_t m_revision;
   };
 
 }

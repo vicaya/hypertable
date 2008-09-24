@@ -37,7 +37,7 @@ namespace Hypertable {
     CellCacheScanner(CellCachePtr &cellcache, ScanContextPtr &scan_ctx);
     virtual ~CellCacheScanner() { return; }
     virtual void forward();
-    virtual bool get(ByteString &key, ByteString &value);
+    virtual bool get(Key &key, ByteString &value);
 
   private:
     CellCache::CellMap::iterator   m_start_iter;
@@ -45,7 +45,7 @@ namespace Hypertable {
     CellCache::CellMap::iterator   m_cur_iter;
     CellCachePtr                   m_cell_cache_ptr;
     boost::mutex                  &m_cell_cache_mutex;
-    ByteString                     m_cur_key;
+    Key                            m_cur_key;
     ByteString                     m_cur_value;
     bool                           m_eos;
 

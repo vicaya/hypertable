@@ -118,11 +118,11 @@ void CommitLog::initialize(Filesystem *fs, const String &log_dir, PropertiesPtr 
 /**
  *
  */
-uint64_t CommitLog::get_timestamp() {
+int64_t CommitLog::get_timestamp() {
   boost::mutex::scoped_lock lock(m_mutex);
   boost::xtime now;
   boost::xtime_get(&now, boost::TIME_UTC);
-  return ((uint64_t)now.sec * 1000000000LL) + (uint64_t)now.nsec;
+  return ((int64_t)now.sec * 1000000000LL) + (int64_t)now.nsec;
 }
 
 
@@ -131,14 +131,14 @@ uint64_t CommitLog::get_timestamp() {
 /**
  *
  */
-int CommitLog::write(DynamicBuffer &buffer, uint64_t timestamp) {
+int CommitLog::write(DynamicBuffer &buffer, int64_t revision) {
   int error;
-  BlockCompressionHeaderCommitLog header(MAGIC_DATA, timestamp);
+  BlockCompressionHeaderCommitLog header(MAGIC_DATA, revision);
 
   /**
    * Compress and write the commit block
    */
-  if ((error = compress_and_write(buffer, &header, timestamp)) != Error::OK)
+  if ((error = compress_and_write(buffer, &header, revision)) != Error::OK)
     return error;
 
   /**
@@ -158,9 +158,9 @@ int CommitLog::write(DynamicBuffer &buffer, uint64_t timestamp) {
 
 /**
  */
-int CommitLog::link_log(CommitLogBase *log_base, uint64_t timestamp) {
+int CommitLog::link_log(CommitLogBase *log_base) {
   int error;
-  BlockCompressionHeaderCommitLog header(MAGIC_LINK, timestamp);
+  BlockCompressionHeaderCommitLog header(MAGIC_LINK, log_base->get_latest_revision());
   DynamicBuffer input;
   String &log_dir = log_base->get_log_dir();
 
@@ -180,8 +180,8 @@ int CommitLog::link_log(CommitLogBase *log_base, uint64_t timestamp) {
     StaticBuffer send_buf(input);
 
     m_fs->append(m_fd, send_buf, Filesystem::O_FLUSH);
-    assert(timestamp != 0);
-    m_last_timestamp = timestamp;
+    if (log_base->get_latest_revision() > m_latest_revision)
+      m_latest_revision = log_base->get_latest_revision();
     m_cur_fragment_length += amount;
 
     if ((error = roll()) != Error::OK)
@@ -227,7 +227,7 @@ int CommitLog::close() {
 /**
  *
  */
-int CommitLog::purge(uint64_t timestamp) {
+int CommitLog::purge(int64_t revision) {
   boost::mutex::scoped_lock lock(m_mutex);
   CommitLogFileInfo file_info;
   String fname;
@@ -236,14 +236,14 @@ int CommitLog::purge(uint64_t timestamp) {
 
     while (!m_fragment_queue.empty()) {
       file_info = m_fragment_queue.front();
-      if (file_info.timestamp < timestamp) {
+      if (file_info.revision <= revision) {
         fname = file_info.log_dir + file_info.num;
         m_fs->remove(fname);
         m_fragment_queue.pop_front();
-        HT_INFOF("Removed log fragment file='%s' timestamp=%lld", fname.c_str(), file_info.timestamp);
+        HT_INFOF("Removed log fragment file='%s' revision=%lld", fname.c_str(), file_info.revision);
       }
       else {
-        //HT_INFOF("LOG FRAGMENT PURGE breaking because %lld >= %lld", file_info.timestamp, timestamp);
+        //HT_INFOF("LOG FRAGMENT PURGE breaking because %lld >= %lld", file_info.revision, revision);
         break;
       }
     }
@@ -264,7 +264,7 @@ int CommitLog::purge(uint64_t timestamp) {
 int CommitLog::roll() {
   CommitLogFileInfo file_info;
 
-  if (m_last_timestamp == 0)
+  if (m_latest_revision == 0)
     return Error::OK;
 
   try {
@@ -274,13 +274,18 @@ int CommitLog::roll() {
     file_info.log_dir = m_log_dir;
     file_info.num = m_cur_fragment_num;
     file_info.size = m_cur_fragment_length;
-    file_info.timestamp = m_last_timestamp;
+    file_info.revision = m_latest_revision;
     file_info.purge_log_dir = false;
     file_info.block_stream = 0;
 
-    m_fragment_queue.push_back(file_info);
+    if (m_fragment_queue.empty() || m_fragment_queue.back().revision < file_info.revision)
+      m_fragment_queue.push_back(file_info);
+    else {
+      m_fragment_queue.push_back(file_info);
+      sort(m_fragment_queue.begin(), m_fragment_queue.end());      
+    }
 
-    m_last_timestamp = 0;
+    m_latest_revision = 0;
     m_cur_fragment_length = 0;
 
     m_cur_fragment_num++;
@@ -302,7 +307,7 @@ int CommitLog::roll() {
 /**
  *
  */
-int CommitLog::compress_and_write(DynamicBuffer &input, BlockCompressionHeader *header, uint64_t timestamp) {
+int CommitLog::compress_and_write(DynamicBuffer &input, BlockCompressionHeader *header, int64_t revision) {
   int error = Error::OK;
   EventPtr event_ptr;
   DynamicBuffer zblock;
@@ -317,9 +322,9 @@ int CommitLog::compress_and_write(DynamicBuffer &input, BlockCompressionHeader *
     StaticBuffer send_buf(zblock);
 
     m_fs->append(m_fd, send_buf, Filesystem::O_FLUSH);
-    assert(timestamp != 0);
-    assert(timestamp != 0);
-    m_last_timestamp = timestamp;
+    assert(revision != 0);
+    if (revision > m_latest_revision)
+      m_latest_revision = revision;
     m_cur_fragment_length += amount;
   }
   catch (Exception &e) {
@@ -342,17 +347,17 @@ void CommitLog::load_fragment_priority_map(LogFragmentPriorityMap &frag_map) {
   uint32_t distance = 0;
   LogFragmentPriorityData frag_data;
 
-  if (m_last_timestamp != 0) {
+  if (m_latest_revision != 0) {
     frag_data.distance = distance++;
     frag_data.cumulative_size = cumulative_total;
-    frag_map[m_last_timestamp] = frag_data;
+    frag_map[m_latest_revision] = frag_data;
   }
 
   for (std::deque<CommitLogFileInfo>::reverse_iterator iter = m_fragment_queue.rbegin(); iter != m_fragment_queue.rend(); iter++) {
     cumulative_total += (*iter).size;
     frag_data.distance = distance++;
     frag_data.cumulative_size = cumulative_total;
-    frag_map[(*iter).timestamp] = frag_data;
+    frag_map[(*iter).revision] = frag_data;
   }
 
 }

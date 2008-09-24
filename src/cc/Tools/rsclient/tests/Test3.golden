@@ -341,6 +341,9 @@ success
 success
 success
 success
+success
+success
+success
 CREATE SCANNER ON Test3[..??];
 1189631333354075 A plum:http://sports.espn.go.com/mlb/players/profile?statsId=6305
 1189631332683722 A plum:http://sports.espn.go.com/mlb/players/profile?statsId=6305
@@ -896,53 +899,6 @@ CREATE SCANNER ON Test3[..??];
 1189631332976976 Abantes onion:http://pbskids.org/sesame/index.html
 1189631333347557 Abantes onion:http://www.baseball-reference.com/r/roberda07.shtml
 1189631333149345 Abantes onion:http://www.eighttribes.org/modoc/
-1189631333505118 Abantes onion:http://www.lsbu.ac.uk/news-php/news.php?newsid=86
-1189631333169117 Abantes onion:http://www.mtv.com/news/articles/1508677/20050831/duff_hilary.jhtml?headlines=true
-1189631333578939 Abantes cassis:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
-1189631333156244 Abantes cassis:http://pbskids.org/sesame/index.html
-1189631333031474 Abantes cassis:http://www.freebornhall.com/History/ResidenceHalls/
-1189631333049811 Abantes cassis:http://www.guardian.co.uk/Columnists/Archive/0,5673,-25,0.html
-1189631333361760 Abantes cassis:http://www.nielsenmedia.com/DMAs.html
-1189631333554142 Abantes cassis:http://www.sirlinksalot.net/bertandernie.html
-1189631332877378 Abantes cassis:http://www.usatoday.com/sports/bbw/columnist/nightengale/2005-01-19-majors_x.htm
-1189631332836152 Abarambo plum:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
-1189631333233699 Abarambo plum:http://pbskids.org/sesame/index.html
-1189631332424639 Abarambo plum:http://sports.espn.go.com/mlb/players/profile?statsId=6305
-1189631333209916 Abarambo plum:http://toughpigs.com/anthernie00.htm
-1189631332982680 Abarambo plum:http://www.baseball-reference.com/r/roberda07.shtml
-1189631332701169 Abarambo plum:http://www.eighttribes.org/modoc/
-1189631333510796 Abarambo plum:http://www.housing.berkeley.edu/housing/
-1189631333354943 Abarambo plum:http://www.klamathtribes.org
-1189631331861154 Abarambo plum:http://www.klamathtribes.org
-1189631331948574 Abarambo broccoli:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
-1189631333387254 Abarambo broccoli:http://pbskids.org/sesame/index.html
-1189631332256737 Abarambo broccoli:http://www.eighttribes.org/modoc/
-1189631332677347 Abarambo broccoli:http://www.guardian.co.uk/Columnists/Archive/0,5673,-25,0.html
-1189631332950863 Abarambo broccoli:http://www.nielsenmedia.com/DMAs.html
-1189631333623650 Abarambo broccoli:http://www.sesameworkshop.org/sesamestreet/
-1189631333026152 Abarambo yam:http://toughpigs.com/anthernie00.htm
-1189631333317550 Abarambo yam:http://www.baseball-reference.com/r/roberda07.shtml
-1189631332186061 Abarambo yam:http://www.baseball-reference.com/r/roberda07.shtml
-1189631332222633 Abarambo yam:http://www.fcc.gov/fcc-bin/tvq?call=KOCB
-1189631332616469 Abarambo yam:http://www.guardian.co.uk/Columnists/Archive/0,5673,-25,0.html
-1189631333686718 Abarambo yam:http://www.klamathtribes.org
-1189631332871422 Abarambo yam:http://www.klamathtribes.org
-1189631333616840 Abarambo yam:http://www.lsbu.ac.uk/news-php/news.php?newsid=86
-1189631333602157 Abarambo yam:http://www.lsbu.ac.uk/news-php/news.php?newsid=86
-1189631333183085 Abarambo yam:http://www.nielsenmedia.com/DMAs.html
-1189631333413995 Abarambo yam:http://www.sesameworkshop.org/sesamestreet/
-1189631332320721 Abarambo yam:http://www.sesameworkshop.org/sesamestreet/
-1189631333164762 Abarambo yam:http://www.sirlinksalot.net/bertandernie.html
-1189631333300493 Abarambo yam:http://www.usatoday.com/sports/bbw/columnist/nightengale/2005-01-19-majors_x.htm
-1189631331836281 Abarambo yam:http://www.victoriacross.net
-1189631333382622 Abarambo cherry:http://pbskids.org/sesame/index.html
-1189631333409030 Abarambo cherry:http://www.baseball-reference.com/r/roberda07.shtml
-1189631331998971 Abarambo cherry:http://www.baseball-reference.com/r/roberda07.shtml
-1189631332922366 Abarambo cherry:http://www.eighttribes.org/modoc/
-1189631333667297 Abarambo cherry:http://www.fcc.gov/fcc-bin/tvq?call=KOCB
-1189631332540031 Abarambo cherry:http://www.fcc.gov/fcc-bin/tvq?call=KOCB
-1189631333615524 Abarambo cherry:http://www.housing.berkeley.edu/housing/
-1189631332617084 Abarambo cherry:http://www.lsbu.ac.uk/news-php/news.php?newsid=86
 DESTROY SCANNER;
 CREATE SCANNER ON Test3[..??] MAX_VERSIONS=2;
 1189631333354075 A plum:http://sports.espn.go.com/mlb/players/profile?statsId=6305
@@ -1499,49 +1455,4 @@ CREATE SCANNER ON Test3[..??] MAX_VERSIONS=2;
 1189631333156244 Abantes cassis:http://pbskids.org/sesame/index.html
 1189631333031474 Abantes cassis:http://www.freebornhall.com/History/ResidenceHalls/
 1189631333049811 Abantes cassis:http://www.guardian.co.uk/Columnists/Archive/0,5673,-25,0.html
-1189631333361760 Abantes cassis:http://www.nielsenmedia.com/DMAs.html
-1189631333554142 Abantes cassis:http://www.sirlinksalot.net/bertandernie.html
-1189631332877378 Abantes cassis:http://www.usatoday.com/sports/bbw/columnist/nightengale/2005-01-19-majors_x.htm
-1189631332836152 Abarambo plum:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
-1189631333233699 Abarambo plum:http://pbskids.org/sesame/index.html
-1189631332424639 Abarambo plum:http://sports.espn.go.com/mlb/players/profile?statsId=6305
-1189631333209916 Abarambo plum:http://toughpigs.com/anthernie00.htm
-1189631332982680 Abarambo plum:http://www.baseball-reference.com/r/roberda07.shtml
-1189631332701169 Abarambo plum:http://www.eighttribes.org/modoc/
-1189631333510796 Abarambo plum:http://www.housing.berkeley.edu/housing/
-1189631333354943 Abarambo plum:http://www.klamathtribes.org
-1189631331861154 Abarambo plum:http://www.klamathtribes.org
-1189631331948574 Abarambo broccoli:http://haynese.winthrop.edu/india/medals/VC/1CSingh.html
-1189631333387254 Abarambo broccoli:http://pbskids.org/sesame/index.html
-1189631332256737 Abarambo broccoli:http://www.eighttribes.org/modoc/
-1189631332677347 Abarambo broccoli:http://www.guardian.co.uk/Columnists/Archive/0,5673,-25,0.html
-1189631332950863 Abarambo broccoli:http://www.nielsenmedia.com/DMAs.html
-1189631333623650 Abarambo broccoli:http://www.sesameworkshop.org/sesamestreet/
-1189631333026152 Abarambo yam:http://toughpigs.com/anthernie00.htm
-1189631333317550 Abarambo yam:http://www.baseball-reference.com/r/roberda07.shtml
-1189631332186061 Abarambo yam:http://www.baseball-reference.com/r/roberda07.shtml
-1189631332222633 Abarambo yam:http://www.fcc.gov/fcc-bin/tvq?call=KOCB
-1189631332616469 Abarambo yam:http://www.guardian.co.uk/Columnists/Archive/0,5673,-25,0.html
-1189631333686718 Abarambo yam:http://www.klamathtribes.org
-1189631332871422 Abarambo yam:http://www.klamathtribes.org
-1189631333616840 Abarambo yam:http://www.lsbu.ac.uk/news-php/news.php?newsid=86
-1189631333602157 Abarambo yam:http://www.lsbu.ac.uk/news-php/news.php?newsid=86
-1189631333183085 Abarambo yam:http://www.nielsenmedia.com/DMAs.html
-1189631333413995 Abarambo yam:http://www.sesameworkshop.org/sesamestreet/
-1189631332320721 Abarambo yam:http://www.sesameworkshop.org/sesamestreet/
-1189631333164762 Abarambo yam:http://www.sirlinksalot.net/bertandernie.html
-1189631333300493 Abarambo yam:http://www.usatoday.com/sports/bbw/columnist/nightengale/2005-01-19-majors_x.htm
-1189631331836281 Abarambo yam:http://www.victoriacross.net
-1189631333382622 Abarambo cherry:http://pbskids.org/sesame/index.html
-1189631333409030 Abarambo cherry:http://www.baseball-reference.com/r/roberda07.shtml
-1189631331998971 Abarambo cherry:http://www.baseball-reference.com/r/roberda07.shtml
-1189631332922366 Abarambo cherry:http://www.eighttribes.org/modoc/
-1189631333667297 Abarambo cherry:http://www.fcc.gov/fcc-bin/tvq?call=KOCB
-1189631332540031 Abarambo cherry:http://www.fcc.gov/fcc-bin/tvq?call=KOCB
-1189631333615524 Abarambo cherry:http://www.housing.berkeley.edu/housing/
-1189631332617084 Abarambo cherry:http://www.lsbu.ac.uk/news-php/news.php?newsid=86
-1189631331968861 Abarambo cherry:http://www.lsbu.ac.uk/news-php/news.php?newsid=86
-1189631332842340 Abarambo cherry:http://www.mtv.com/news/articles/1508677/20050831/duff_hilary.jhtml?headlines=true
-1189631332438657 Abarambo cherry:http://www.mtv.com/news/articles/1508677/20050831/duff_hilary.jhtml?headlines=true
-1189631332227541 Abarambo cherry:http://www.psa.ac.uk/awards2003/toynbee.htm
 DESTROY SCANNER;

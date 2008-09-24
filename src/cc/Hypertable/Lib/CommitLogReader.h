@@ -63,6 +63,7 @@ namespace Hypertable {
     LogFragmentStack  m_fragment_stack;
     size_t            m_cur_log_offset;
     DynamicBuffer     m_block_buffer;
+    int64_t           m_revision;
 
     typedef hash_map<uint16_t, BlockCompressionCodecPtr> CompressorMap;
 

@@ -24,8 +24,6 @@
 
 #include "Common/String.h"
 
-#include "Timestamp.h"
-
 namespace Hypertable {
 
   /**
@@ -39,7 +37,7 @@ namespace Hypertable {
 
     void clear() {
       state = STEADY;
-      timestamp.clear();
+      timestamp = 0;
       //soft_limit = 0;  NOTE: this should not be cleared
       transfer_log = split_point = old_start_row = 0;
     }
@@ -49,7 +47,7 @@ namespace Hypertable {
     void decode(const uint8_t **bufp, size_t *remainp);
 
     int state;
-    Timestamp timestamp;
+    int64_t timestamp;
     uint64_t soft_limit;
     const char *transfer_log;
     const char *split_point;

@@ -76,10 +76,11 @@ namespace Hypertable {
      * gets returned.
      *
      * @param table table identifier
+     * @param count number of key/value pairs in buffer
      * @param buffer buffer holding key/value pairs
      * @return protocol message
      */
-    static CommBuf *create_request_update(TableIdentifier &table, StaticBuffer &buffer);
+    static CommBuf *create_request_update(TableIdentifier &table, uint32_t count, StaticBuffer &buffer);
 
     /** Creates a "create scanner" request message.
      *

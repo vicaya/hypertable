@@ -66,11 +66,12 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::create_request_update(TableIdentifier &table, StaticBuffer &buffer) {
+  CommBuf *RangeServerProtocol::create_request_update(TableIdentifier &table, uint32_t count, StaticBuffer &buffer) {
     HeaderBuilder hbuilder(Header::PROTOCOL_HYPERTABLE_RANGESERVER);
-    CommBuf *cbuf = new CommBuf(hbuilder, 2 + table.encoded_length(), buffer);
+    CommBuf *cbuf = new CommBuf(hbuilder, 6 + table.encoded_length(), buffer);
     cbuf->append_i16(COMMAND_UPDATE);
     table.encode(cbuf->get_data_ptr_address());
+    cbuf->append_i32(count);
     return cbuf;
   }
 

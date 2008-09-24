@@ -33,10 +33,11 @@ namespace Hypertable {
 
   class CellListScanner : public ReferenceCount {
   public:
+    CellListScanner() { return; }
     CellListScanner(ScanContextPtr &scan_ctx) : m_scan_context_ptr(scan_ctx) { return; }
     virtual ~CellListScanner() { return; }
     virtual void forward() = 0;
-    virtual bool get(ByteString &key, ByteString &value) = 0;
+    virtual bool get(Key &key, ByteString &value) = 0;
 
   protected:
     ScanContextPtr m_scan_context_ptr;

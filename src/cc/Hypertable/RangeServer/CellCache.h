@@ -29,6 +29,8 @@
 #include "CellListScanner.h"
 #include "CellList.h"
 
+#include "Hypertable/Lib/SerializedKey.h"
+
 namespace Hypertable {
 
   /**
@@ -39,7 +41,7 @@ namespace Hypertable {
   class CellCache : public CellList {
 
   public:
-    CellCache() : CellList(), m_memory_used(0), m_deletes(0), m_collisions(0) { return; }
+    CellCache() : CellList(), m_memory_used(0), m_deletes(0), m_collisions(0), m_frozen(false) { return; }
     virtual ~CellCache();
 
     /**
@@ -49,10 +51,9 @@ namespace Hypertable {
      *
      * @param key key to be inserted
      * @param value value to inserted
-     * @param real_timestamp real commit log timestamp
      * @return zero
      */
-    virtual int add(const ByteString key, const ByteString value, int64_t real_timestamp);
+    virtual int add(const Key &key, const ByteString value);
 
     virtual const char *get_split_row();
 
@@ -66,28 +67,10 @@ namespace Hypertable {
      */
     virtual CellListScanner *create_scanner(ScanContextPtr &scan_ctx);
 
-    void lock()   { m_mutex.lock(); }
-    void unlock() { m_mutex.unlock(); }
+    void lock()   { if (!m_frozen) m_mutex.lock(); }
+    void unlock() { if (!m_frozen) m_mutex.unlock(); }
 
     size_t size() { return m_cell_map.size(); }
-
-    /**
-     * Makes a copy of this CellCache, but only includes the key/value
-     * pairs that have a timestamp greater than the timestamp argument.
-     * This method is called after a compaction to drop the key/value
-     * pairs that were compacted to disk.
-     *
-     * @param timestamp cutoff timestamp
-     * @return The new "sliced" copy of the cell cache
-     */
-    CellCache *slice_copy(int64_t timestamp);
-
-    /**
-     * Purges all deleted pairs along with the corresponding delete entries.
-     *
-     * @return The new "purged" copy of the cell cache
-     */
-    CellCache *purge_deletes();
 
     /**
      * Returns the amount of memory used by the CellCache.  This is the summation
@@ -102,20 +85,20 @@ namespace Hypertable {
 
     uint32_t get_delete_count() { return m_deletes; }
 
+    void freeze() { m_frozen = true; }
+    void unfreeze() { m_frozen = false; }
+
     friend class CellCacheScanner;
 
   protected:
-    typedef std::map<const ByteString, uint32_t, LtByteString> CellMap;
-
-    static const uint32_t ALLOC_BIT_MASK;
-    static const uint32_t OFFSET_BIT_MASK;
+    typedef std::map<const SerializedKey, uint32_t> CellMap;
 
     Mutex              m_mutex;
-    std::vector<CellListPtr> m_children;
     CellMap            m_cell_map;
     uint64_t           m_memory_used;
     uint32_t           m_deletes;
     uint32_t           m_collisions;
+    bool               m_frozen;
   };
 
   typedef boost::intrusive_ptr<CellCache> CellCachePtr;

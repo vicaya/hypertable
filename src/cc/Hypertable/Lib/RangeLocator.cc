@@ -387,7 +387,7 @@ RangeLocator::find(TableIdentifier *table, const char *row_key,
  */
 int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
   RangeLocationInfo range_loc_info;
-  ByteString bskey;
+  SerializedKey serkey;
   ByteString value;
   Key key;
   const char *stripped_key;
@@ -402,10 +402,10 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
   bool got_end_row = false;
   bool got_location = false;
 
-  while (scan_block.next(bskey, value)) {
+  while (scan_block.next(serkey, value)) {
 
-    if (!key.load(bskey)) {
-      String err_msg = format("METADATA lookup for '%s' returned bad key", bskey.str());
+    if (!key.load(serkey)) {
+      String err_msg = format("METADATA lookup for '%s' returned bad key", serkey.str()+1);
       HT_ERRORF("%s", err_msg.c_str());
       RECORD_ERROR(Error::INVALID_METADATA, err_msg);
       return Error::INVALID_METADATA;
@@ -476,7 +476,7 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block) {
     }
     else {
       HT_ERRORF("METADATA lookup on row '%s' returned incorrect column (id=%d)",
-                bskey.str(), key.column_family_code);
+                serkey.row(), key.column_family_code);
     }
   }
 

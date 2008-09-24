@@ -69,7 +69,7 @@ namespace Hypertable {
     void fetch_scanblock(ResponseCallbackFetchScanblock *, uint32_t scanner_id);
     void load_range(ResponseCallback *, const TableIdentifier *, const RangeSpec *,
                     const char *transfer_log_dir, const RangeState *);
-    void update(ResponseCallbackUpdate *, TableIdentifier *, StaticBuffer &);
+    void update(ResponseCallbackUpdate *, TableIdentifier *, uint32_t count, StaticBuffer &);
     void drop_table(ResponseCallback *, TableIdentifier *);
     void dump_stats(ResponseCallback *);
     void get_statistics(ResponseCallbackGetStatistics *);
@@ -104,6 +104,7 @@ namespace Hypertable {
     void replay_log(CommitLogReaderPtr &log_reader_ptr);
     void verify_schema(TableInfoPtr &, int generation);
     void schedule_log_cleanup_compactions(std::vector<RangePtr> &range_vec, CommitLog *log, uint64_t prune_threshold);
+    void transform_key(ByteString &bskey, DynamicBuffer *dest_bufp, int64_t revision, int64_t *revisionp);
 
     Mutex                  m_mutex;
     boost::condition       m_root_replay_finished_cond;

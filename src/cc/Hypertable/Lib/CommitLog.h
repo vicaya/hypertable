@@ -53,7 +53,7 @@ namespace Hypertable {
     uint64_t cumulative_size;
   } LogFragmentPriorityData;
 
-  typedef std::map<uint64_t, LogFragmentPriorityData> LogFragmentPriorityMap;
+  typedef std::map<int64_t, LogFragmentPriorityData> LogFragmentPriorityMap;
 
   /**
    * Commit log for persisting range updates.  The commit log is a directory that contains
@@ -100,23 +100,22 @@ namespace Hypertable {
      *
      * @return microseconds since the epoch
      */
-    uint64_t get_timestamp();
+    int64_t get_timestamp();
 
     /** Writes a block of updates to the commit log.
      *
      * @param buffer block of updates to commit
-     * @param timestamp current commit log time obtained with a call to #get_timestamp
+     * @param revision most recent revision in buffer
      * @return Error::OK on success or error code on failure
      */
-    int write(DynamicBuffer &buffer, uint64_t timestamp);
+    int write(DynamicBuffer &buffer, int64_t revision);
 
     /** Links an external log into this log.
      *
      * @param log_base pointer to commit log object to link in
-     * @param timestamp current commit log time obtained with a call to #get_timestamp
      * @return Error::OK on success or error code on failure
      */
-    int link_log(CommitLogBase *log_base, uint64_t timestamp);
+    int link_log(CommitLogBase *log_base);
 
     /** Closes the log.  Writes the trailer and closes the file
      *
@@ -125,15 +124,15 @@ namespace Hypertable {
     int close();
 
     /** Purges the log.  Removes all of the log fragments that have
-     * a timestamp that is less than the given timestamp.
+     * a revision that is less than the given revision.
      *
-     * @param timestamp real cutoff timestamp
+     * @param revision real cutoff revision
      */
-    int purge(uint64_t timestamp);
+    int purge(int64_t revision);
 
     /** Fills up a map of per-fragment priority information.  One
      * entry per log fragment is inserted into this map.  The key
-     * is the timestamp of the fragment (e.g. the real timestamp
+     * is the revision of the fragment (e.g. the real revision
      * of the most recent data in the fragment file).  The value
      * is a structure that contains information regarding how
      * expensive it is to keep this fragment around.
@@ -154,7 +153,7 @@ namespace Hypertable {
 
     void initialize(Filesystem *fs, const String &log_dir, PropertiesPtr &props_ptr, CommitLogBase *init_log);
     int roll();
-    int compress_and_write(DynamicBuffer &input, BlockCompressionHeader *header, uint64_t timestamp);
+    int compress_and_write(DynamicBuffer &input, BlockCompressionHeader *header, int64_t revision);
 
     boost::mutex            m_mutex;
     Filesystem             *m_fs;

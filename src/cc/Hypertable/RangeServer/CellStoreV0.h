@@ -31,6 +31,7 @@
 
 #include "Hypertable/Lib/BlockCompressionCodec.h"
 #include "Hypertable/Lib/Filesystem.h"
+#include "Hypertable/Lib/SerializedKey.h"
 
 #include "CellStore.h"
 #include "CellStoreTrailerV0.h"
@@ -55,12 +56,12 @@ namespace Hypertable {
     virtual ~CellStoreV0();
 
     virtual int create(const char *fname, uint32_t blocksize, const std::string &compressor);
-    virtual int add(const ByteString key, const ByteString value, int64_t real_timestamp);
-    virtual int finalize(Timestamp &timestamp);
+    virtual int add(const Key &key, const ByteString value);
+    virtual int finalize();
     virtual int open(const char *fname, const char *start_row, const char *end_row);
     virtual int load_index();
     virtual uint32_t get_blocksize() { return m_trailer.blocksize; }
-    virtual void get_timestamp(Timestamp &timestamp);
+    virtual int64_t get_revision();
     virtual uint64_t disk_usage() { return m_disk_usage; }
     virtual float compression_ratio() { return m_trailer.compression_ratio; }
     virtual const char *get_split_row();
@@ -80,14 +81,14 @@ namespace Hypertable {
 
   protected:
 
-    void add_index_entry(const ByteString key, uint32_t offset);
-    void record_split_row(const ByteString key);
+    void add_index_entry(const SerializedKey key, uint32_t offset);
+    void record_split_row(const SerializedKey key);
 
     static const char DATA_BLOCK_MAGIC[10];
     static const char INDEX_FIXED_BLOCK_MAGIC[10];
     static const char INDEX_VARIABLE_BLOCK_MAGIC[10];
 
-    typedef std::map<ByteString, uint32_t, LtByteString> IndexMap;
+    typedef std::map<SerializedKey, uint32_t> IndexMap;
 
     Filesystem            *m_filesys;
     std::string            m_filename;

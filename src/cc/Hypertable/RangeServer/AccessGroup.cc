@@ -48,7 +48,8 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier, SchemaPtr &schema_pt
                          Schema::AccessGroup *ag, const RangeSpec *range)
     : m_identifier(*identifier), m_schema_ptr(schema_ptr), m_name(ag->name),
       m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE),
-      m_compression_ratio(1.0), m_is_root(false), m_oldest_cached_timestamp(0),
+      m_compression_ratio(1.0), m_is_root(false), 
+      m_compaction_revision(0), m_earliest_cached_revision(0),
       m_collisions(0), m_needs_compaction(false), m_drop(false),
       m_scanners_blocked(false) {
   m_table_name = m_identifier.name;
@@ -107,24 +108,13 @@ AccessGroup::~AccessGroup() {
  * Also, at the end of compaction processing, when m_cell_cache_ptr gets reset to a new value,
  * the CellCache should be locked as well.
  */
-int AccessGroup::add(const ByteString key, const ByteString value, int64_t real_timestamp) {
-  // assumes timestamps are coming in order
-  if (m_oldest_cached_timestamp == 0)
-    m_oldest_cached_timestamp = real_timestamp;
-  return m_cell_cache_ptr->add(key, value, real_timestamp);
-}
-
-
-/**
- */
-bool AccessGroup::replay_add(const ByteString key, const ByteString value, int64_t real_timestamp) {
-  if (real_timestamp > m_compaction_timestamp.real) {
-    if (m_oldest_cached_timestamp == 0)
-      m_oldest_cached_timestamp = real_timestamp;
-    m_cell_cache_ptr->add(key, value, real_timestamp);
-    return true;
+int AccessGroup::add(const Key &key, const ByteString value) {
+  if (key.revision > m_compaction_revision || m_in_memory) {
+    if (m_earliest_cached_revision == 0)
+      m_earliest_cached_revision = key.revision;
+    return m_cell_cache_ptr->add(key, value);
   }
-  return false;
+  return Error::OK;
 }
 
 
@@ -137,6 +127,8 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context_ptr) {
     m_scanner_blocked_cond.wait(lock);
 
   scanner->add_scanner(m_cell_cache_ptr->create_scanner(scan_context_ptr));
+  if (m_immutable_cache_ptr)
+    scanner->add_scanner(m_immutable_cache_ptr->create_scanner(scan_context_ptr));
   if (!m_in_memory) {
     CellStoreReleaseCallback callback(this);
     for (size_t i=0; i<m_stores.size(); i++) {
@@ -190,22 +182,32 @@ uint64_t AccessGroup::disk_usage() {
   boost::mutex::scoped_lock lock(m_mutex);
   uint64_t du = (m_in_memory) ? 0 : m_disk_usage;
   uint64_t mu = m_cell_cache_ptr->memory_used();
+  if (m_immutable_cache_ptr)
+    mu += m_immutable_cache_ptr->memory_used();
   return du + (uint64_t)(m_compression_ratio * (float)mu);
 }
 
 uint64_t AccessGroup::memory_usage() {
-  return m_cell_cache_ptr->memory_used();
+  boost::mutex::scoped_lock lock(m_mutex);
+  uint64_t mu = m_cell_cache_ptr->memory_used();
+  if (m_immutable_cache_ptr)
+    mu += m_immutable_cache_ptr->memory_used();
+  return mu;
 }
 
 void AccessGroup::get_compaction_priority_data(CompactionPriorityData &priority_data) {
   boost::mutex::scoped_lock lock(m_mutex);
   priority_data.ag = this;
-  priority_data.oldest_cached_timestamp = m_oldest_cached_timestamp;
+  priority_data.earliest_cached_revision = m_earliest_cached_revision;
   uint64_t mu = m_cell_cache_ptr->memory_used();
+  if (m_immutable_cache_ptr)
+    mu += m_immutable_cache_ptr->memory_used();
   priority_data.mem_used = mu;
   priority_data.disk_used = m_disk_usage + (uint64_t)(m_compression_ratio * (float)mu);
   priority_data.in_memory = m_in_memory;
   priority_data.deletes = m_cell_cache_ptr->get_delete_count();
+  if (m_immutable_cache_ptr)
+    priority_data.deletes += m_immutable_cache_ptr->get_delete_count();
 }
 
 
@@ -221,23 +223,23 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore_ptr, uint32_t id) {
   m_disk_usage += cellstore_ptr->disk_usage();
   m_compression_ratio = cellstore_ptr->compression_ratio();
 
-  // Record the most recent compaction timestamp
-  if (m_compaction_timestamp.logical == 0)
-    cellstore_ptr->get_timestamp(m_compaction_timestamp);
+  // Record the most recent compaction revision
+  if (m_compaction_revision == 0)
+    m_compaction_revision = cellstore_ptr->get_revision();
   else {
-    Timestamp timestamp;
-    cellstore_ptr->get_timestamp(timestamp);
-    if (timestamp.real > m_compaction_timestamp.real)
-      m_compaction_timestamp = timestamp;
+    int64_t revision = cellstore_ptr->get_revision();
+    if (revision > m_compaction_revision)
+      m_compaction_revision = revision;
   }
 
   if (m_in_memory) {
-    ScanContextPtr scan_context_ptr = new ScanContext(END_OF_TIME, m_schema_ptr);
+    ScanContextPtr scan_context_ptr = new ScanContext(m_schema_ptr);
     CellListScannerPtr scanner_ptr = cellstore_ptr->create_scanner(scan_context_ptr);
     ByteString key, value;
+    Key key_comps;
     m_cell_cache_ptr = new CellCache();
-    while (scanner_ptr->get(key, value)) {
-      m_cell_cache_ptr->add(key, value, m_compaction_timestamp.real);
+    while (scanner_ptr->get(key_comps, value)) {
+      m_cell_cache_ptr->add(key_comps, value);
       scanner_ptr->forward();
     }
   }
@@ -245,7 +247,6 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore_ptr, uint32_t id) {
   m_stores.push_back(cellstore_ptr);
 
 }
-
 
 namespace {
   struct LtCellStore {
@@ -256,7 +257,7 @@ namespace {
 }
 
 
-void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
+void AccessGroup::run_compaction(bool major) {
   ByteString bskey;
   ByteString value;
   Key key;
@@ -268,21 +269,26 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
   if (!major && !m_needs_compaction)
     return;
 
+  HT_EXPECT(m_immutable_cache_ptr, Error::FAILED_EXPECTATION);
+
   m_needs_compaction = false;
 
   {
     boost::mutex::scoped_lock lock(m_mutex);
     if (m_in_memory) {
-      if (m_cell_cache_ptr->memory_used() == 0)
+      if (m_immutable_cache_ptr->memory_used() == 0) {
+	m_immutable_cache_ptr = 0;
         return;
+      }
       tableidx = m_stores.size();
       HT_INFOF("Starting InMemory Compaction of %s(%s)",
                m_range_name.c_str(), m_name.c_str());
     }
     else if (major) {
-      // TODO: if the oldest CellCache entry is newer than timestamp, then return
-      if (m_cell_cache_ptr->memory_used() == 0 && m_stores.size() <= (size_t)1)
+      if (m_immutable_cache_ptr->memory_used() == 0 && m_stores.size() <= (size_t)1) {
+	m_immutable_cache_ptr = 0;
         return;
+      }
       tableidx = 0;
       HT_INFOF("Starting Major Compaction of %s(%s)",
                m_range_name.c_str(), m_name.c_str());
@@ -296,8 +302,10 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
                  m_range_name.c_str(), m_name.c_str());
       }
       else {
-        if (m_cell_cache_ptr->memory_used() == 0)
+        if (m_immutable_cache_ptr->memory_used() == 0) {
+	  m_immutable_cache_ptr = 0;
           return;
+	}
         tableidx = m_stores.size();
         HT_INFOF("Starting Minor Compaction of %s(%s)",
                  m_range_name.c_str(), m_name.c_str());
@@ -305,130 +313,129 @@ void AccessGroup::run_compaction(Timestamp timestamp, bool major) {
     }
   }
 
-  // TODO: Issue 11
-  char hash_str[33];
+  try {
 
-  if (m_end_row == "")
-    memset(hash_str, '0', 24);
-  else
-    md5_string(m_end_row.c_str(), hash_str);
+    // TODO: Issue 11
+    char hash_str[33];
 
-  hash_str[24] = 0;
-  String cs_file = format("/hypertable/tables/%s/%s/%s/cs%d",
-                          m_table_name.c_str(), m_name.c_str(), hash_str,
-                          m_next_table_id++);
-
-  cellstore = new CellStoreV0(Global::dfs);
-
-  if (cellstore->create(cs_file.c_str(), m_blocksize, m_compressor) != 0) {
-    HT_ERRORF("Problem compacting locality group to file '%s'", cs_file.c_str());
-    return;
-  }
-
-  {
-    boost::mutex::scoped_lock lock(m_mutex);
-    ScanContextPtr scan_context_ptr = new ScanContext(timestamp.logical+1, m_schema_ptr);
-
-    if (m_in_memory) {
-      MergeScanner *mscanner = new MergeScanner(scan_context_ptr, false);
-      mscanner->add_scanner(m_cell_cache_ptr->create_scanner(scan_context_ptr));
-      scanner_ptr = mscanner;
-    }
-    else if (major || tableidx < m_stores.size()) {
-      MergeScanner *mscanner = new MergeScanner(scan_context_ptr, !major);
-      mscanner->add_scanner(m_cell_cache_ptr->create_scanner(scan_context_ptr));
-      for (size_t i=tableidx; i<m_stores.size(); i++)
-        mscanner->add_scanner(m_stores[i]->create_scanner(scan_context_ptr));
-      scanner_ptr = mscanner;
-    }
+    if (m_end_row == "")
+      memset(hash_str, '0', 24);
     else
-      scanner_ptr = m_cell_cache_ptr->create_scanner(scan_context_ptr);
-  }
+      md5_string(m_end_row.c_str(), hash_str);
 
-  while (scanner_ptr->get(bskey, value)) {
+    hash_str[24] = 0;
+    String cs_file = format("/hypertable/tables/%s/%s/%s/cs%d",
+			    m_table_name.c_str(), m_name.c_str(), hash_str,
+			    m_next_table_id++);
 
-    if (!key.load(bskey)) {
-      HT_ERROR("Problem deserializing key/value pair");
+    cellstore = new CellStoreV0(Global::dfs);
+
+    if (cellstore->create(cs_file.c_str(), m_blocksize, m_compressor) != 0) {
+      HT_ERRORF("Problem compacting locality group to file '%s'", cs_file.c_str());
       return;
     }
 
-    if (key.timestamp <= timestamp.logical)
-      cellstore->add(bskey, value, timestamp.real);
+    {
+      boost::mutex::scoped_lock lock(m_mutex);
+      ScanContextPtr scan_context_ptr = new ScanContext(m_schema_ptr);
 
-    scanner_ptr->forward();
+      if (m_in_memory) {
+	MergeScanner *mscanner = new MergeScanner(scan_context_ptr, false);
+	mscanner->add_scanner(m_immutable_cache_ptr->create_scanner(scan_context_ptr));
+	scanner_ptr = mscanner;
+      }
+      else if (major || tableidx < m_stores.size()) {
+	MergeScanner *mscanner = new MergeScanner(scan_context_ptr, !major);
+	mscanner->add_scanner(m_immutable_cache_ptr->create_scanner(scan_context_ptr));
+	for (size_t i=tableidx; i<m_stores.size(); i++)
+	  mscanner->add_scanner(m_stores[i]->create_scanner(scan_context_ptr));
+	scanner_ptr = mscanner;
+      }
+      else
+	scanner_ptr = m_immutable_cache_ptr->create_scanner(scan_context_ptr);
+    }
+
+    while (scanner_ptr->get(key, value)) {
+      cellstore->add(key, value);
+      scanner_ptr->forward();
+    }
+
+    if (cellstore->finalize() != 0) {
+      HT_ERRORF("Problem finalizing CellStore '%s'", cs_file.c_str());
+      return;
+    }
+
+    /**
+     * Install new CellCache and CellStore
+     */
+    {
+      boost::mutex::scoped_lock lock(m_mutex);
+
+      if (m_in_memory) {
+	merge_caches();
+	m_stores.clear();
+	m_live_files.clear();
+      }
+      else {
+
+	m_immutable_cache_ptr = 0;
+
+	/** Drop the compacted tables from the table vector **/
+	if (tableidx < m_stores.size()) {
+	  m_stores.resize(tableidx);
+	  m_live_files.clear();
+	  for (size_t i=0; i<m_stores.size(); i++)
+	    m_live_files.insert(m_stores[i]->get_filename());
+	}
+      }
+
+      /** Add the new table to the table vector **/
+      m_stores.push_back(cellstore);
+      m_live_files.insert(cellstore->get_filename());
+
+      /** Determine in-use files to prevent from being GC'd **/
+      m_gc_locked_files.clear();
+      foreach(const FileRefCountMap::value_type &v, m_file_refcounts)
+	if (m_live_files.count(v.first) == 0)
+	  m_gc_locked_files.insert(v.first);
+
+      /** Re-compute disk usage and compresion ratio**/
+      m_disk_usage = 0;
+      m_compression_ratio = 0.0;
+      for (size_t i=0; i<m_stores.size(); i++) {
+	m_disk_usage += m_stores[i]->disk_usage();
+	m_compression_ratio += m_stores[i]->compression_ratio();
+      }
+      m_compression_ratio /= m_stores.size();
+
+      m_compaction_revision = cellstore->get_revision();
+
+      m_scanners_blocked = true;
+    }
+
+    update_files_column();
+
+    /**
+     * un-block scanners
+     */
+    m_scanners_blocked = false;
+    m_scanner_blocked_cond.notify_all();
+
+    HT_INFOF("Finished Compaction of %s(%s)", m_range_name.c_str(), m_name.c_str());
+
   }
-
-  if (cellstore->finalize(timestamp) != 0) {
-    HT_ERRORF("Problem finalizing CellStore '%s'", cs_file.c_str());
-    return;
-  }
-
-  /**
-   * Install new CellCache and CellStore
-   */
-  {
+  catch (Exception &e) {
     boost::mutex::scoped_lock lock(m_mutex);
-    CellCachePtr tmp_cell_cache_ptr;
-
-    /** Slice and install new CellCache **/
-    tmp_cell_cache_ptr = m_cell_cache_ptr;
-    tmp_cell_cache_ptr->lock();
-    m_collisions += m_cell_cache_ptr->get_collision_count();
-    if (m_in_memory)
-      m_cell_cache_ptr = m_cell_cache_ptr->purge_deletes();
-    else
-      m_cell_cache_ptr = m_cell_cache_ptr->slice_copy(timestamp.logical);
-    // If inserts have arrived since we started splitting, then set the oldest cached timestamp value, otherwise clear it
-    m_oldest_cached_timestamp = (m_cell_cache_ptr->size() > 0) ? timestamp.real + 1 : 0;
-    tmp_cell_cache_ptr->unlock();
-
-    /** Drop the compacted tables from the table vector **/
-    if (tableidx < m_stores.size()) {
-      m_stores.resize(tableidx);
-      m_live_files.clear();
-      for (size_t i=0; i<m_stores.size(); i++)
-        m_live_files.insert(m_stores[i]->get_filename());
+    HT_ERROR_OUT << e << HT_END;
+    merge_caches();
+    if (m_scanners_blocked) {
+      m_scanners_blocked = false;
+      m_scanner_blocked_cond.notify_all();
     }
-
-    if (m_in_memory) {
-      m_stores.clear();
-      m_live_files.clear();
-    }
-
-    /** Add the new table to the table vector **/
-    m_stores.push_back(cellstore);
-    m_live_files.insert(cellstore->get_filename());
-
-    /** Determine in-use files to prevent from being GC'd **/
-    m_gc_locked_files.clear();
-    foreach(const FileRefCountMap::value_type &v, m_file_refcounts)
-      if (m_live_files.count(v.first) == 0)
-        m_gc_locked_files.insert(v.first);
-
-    /** Re-compute disk usage and compresion ratio**/
-    m_disk_usage = 0;
-    m_compression_ratio = 0.0;
-    for (size_t i=0; i<m_stores.size(); i++) {
-      m_disk_usage += m_stores[i]->disk_usage();
-      m_compression_ratio += m_stores[i]->compression_ratio();
-    }
-    m_compression_ratio /= m_stores.size();
-
-    m_compaction_timestamp = timestamp;
-
-    m_scanners_blocked = true;
   }
 
-  update_files_column();
-
-  /**
-   * un-block scanners
-   */
-  m_scanners_blocked = false;
-  m_scanner_blocked_cond.notify_all();
-
-  HT_INFOF("Finished Compaction of %s(%s)", m_range_name.c_str(), m_name.c_str());
 }
+
 
 
 /**
@@ -439,10 +446,11 @@ int AccessGroup::shrink(String &new_start_row) {
   int error;
   CellCachePtr old_cell_cache_ptr = m_cell_cache_ptr;
   CellCachePtr new_cell_cache_ptr;
-  ScanContextPtr scan_context_ptr = new ScanContext(END_OF_TIME, m_schema_ptr);
+  ScanContextPtr scan_context_ptr = new ScanContext(m_schema_ptr);
   CellListScannerPtr cell_cache_scanner_ptr;
   ByteString key;
   ByteString value;
+  Key key_comps;
   std::vector<CellStorePtr> new_stores;
   CellStore *new_cell_store;
   uint64_t memory_added = 0;
@@ -461,9 +469,9 @@ int AccessGroup::shrink(String &new_start_row) {
   /**
    * Shrink the CellCache
    */
-  while (cell_cache_scanner_ptr->get(key, value)) {
-    if (strcmp(key.str(), m_start_row.c_str()) > 0) {
-      add(key, value, 0);
+  while (cell_cache_scanner_ptr->get(key_comps, value)) {
+    if (strcmp(key_comps.row, m_start_row.c_str()) > 0) {
+      add(key_comps, value);
       memory_added += key.length() + value.length();
       items_added++;
     }
@@ -499,15 +507,6 @@ int AccessGroup::shrink(String &new_start_row) {
   return Error::OK;
 }
 
-
-
-/**
- *
- */
-void AccessGroup::get_compaction_timestamp(Timestamp &timestamp) {
-  boost::mutex::scoped_lock lock(m_mutex);
-  timestamp = m_compaction_timestamp;
-}
 
 
 /**
@@ -607,3 +606,34 @@ bool AccessGroup::decrement_file_refcount(const String &filename) {
 
   return false;
 }
+
+
+void AccessGroup::initiate_compaction() {
+  boost::mutex::scoped_lock lock(m_mutex);
+  HT_EXPECT(!m_immutable_cache_ptr, Error::FAILED_EXPECTATION);
+  m_immutable_cache_ptr = m_cell_cache_ptr;
+  m_immutable_cache_ptr->freeze();
+  m_cell_cache_ptr = new CellCache();
+}
+
+
+
+void AccessGroup::merge_caches() {
+  CellListScannerPtr scanner_ptr;
+  Key key;
+  ByteString value;
+
+  m_immutable_cache_ptr->unfreeze();
+  if (m_cell_cache_ptr->size() > 0) {
+    ScanContextPtr scan_context_ptr = new ScanContext(m_schema_ptr);
+    scanner_ptr = m_cell_cache_ptr->create_scanner(scan_context_ptr);
+    while (scanner_ptr->get(key, value)) {
+      m_immutable_cache_ptr->add(key, value);
+      scanner_ptr->forward();
+    }
+  }
+  m_cell_cache_ptr = m_immutable_cache_ptr;
+  m_immutable_cache_ptr = 0;
+}
+
+

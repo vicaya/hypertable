@@ -49,7 +49,7 @@ namespace {
   const uint32_t MAX_APPENDS_OUTSTANDING = 3;
 }
 
-CellStoreV0::CellStoreV0(Filesystem *filesys) : m_filesys(filesys), m_filename(), m_fd(-1), m_index(),
+CellStoreV0::CellStoreV0(Filesystem *filesys) : m_filesys(filesys), m_filename(), m_fd(-1),
   m_compressor(0), m_buffer(0), m_fix_index_buffer(0), m_var_index_buffer(0),
   m_outstanding_appends(0), m_offset(0), m_last_key(0), m_file_length(0), m_disk_usage(0), m_file_id(0), m_uncompressed_blocksize(0) {
   m_file_id = FileBlockCache::get_next_file_id();
@@ -78,8 +78,8 @@ BlockCompressionCodec *CellStoreV0::create_block_compression_codec() {
 
 
 
-void CellStoreV0::get_timestamp(Timestamp &timestamp) {
-  timestamp = m_trailer.timestamp;
+int64_t CellStoreV0::get_revision() {
+  return m_trailer.revision;
 }
 
 
@@ -137,11 +137,12 @@ int CellStoreV0::create(const char *fname, uint32_t blocksize, const std::string
 }
 
 
-int CellStoreV0::add(const ByteString key, const ByteString value, int64_t real_timestamp) {
+int CellStoreV0::add(const Key &key, const ByteString value) {
   EventPtr event_ptr;
   DynamicBuffer zbuf;
 
-  (void)real_timestamp;
+  if (key.revision > m_trailer.revision)
+    m_trailer.revision = key.revision;
 
   if (m_buffer.fill() > m_uncompressed_blocksize) {
     BlockCompressionHeader header(DATA_BLOCK_MAGIC);
@@ -177,12 +178,11 @@ int CellStoreV0::add(const ByteString key, const ByteString value, int64_t real_
     m_offset += zlen;
   }
 
-  size_t key_len = key.length();
   size_t value_len = value.length();
 
-  m_buffer.ensure(key_len + value_len);
+  m_buffer.ensure(key.length + value_len);
 
-  m_last_key.ptr = m_buffer.add_unchecked(key.ptr, key_len);
+  m_last_key.ptr = m_buffer.add_unchecked(key.serial.ptr, key.length);
   m_buffer.add_unchecked(value.ptr, value_len);
 
   m_trailer.total_entries++;
@@ -192,14 +192,14 @@ int CellStoreV0::add(const ByteString key, const ByteString value, int64_t real_
 
 
 
-int CellStoreV0::finalize(Timestamp &timestamp) {
+int CellStoreV0::finalize() {
   EventPtr event_ptr;
   int error = -1;
   size_t zlen;
   DynamicBuffer zbuf(0);
   size_t len;
   uint8_t *base;
-  ByteString key;
+  SerializedKey key;
   StaticBuffer send_buf;
 
   if (m_buffer.fill() > 0) {
@@ -233,7 +233,6 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
   }
 
   m_trailer.fix_index_offset = m_offset;
-  m_trailer.timestamp = timestamp;
   m_trailer.compression_ratio = m_compressed_data / m_uncompressed_data;
   m_trailer.version = 0;
 
@@ -292,7 +291,7 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
     m_fix_index_buffer.ptr += sizeof(offset);
     m_index.insert(m_index.end(), IndexMap::value_type(key, offset));
     if (i == m_trailer.index_entries/2) {
-      record_split_row(ByteString(m_var_index_buffer.ptr));
+      record_split_row(m_var_index_buffer.ptr);
     }
   }
 
@@ -349,7 +348,7 @@ int CellStoreV0::finalize(Timestamp &timestamp) {
 /**
  *
  */
-void CellStoreV0::add_index_entry(const ByteString key, uint32_t offset) {
+void CellStoreV0::add_index_entry(const SerializedKey key, uint32_t offset) {
 
   size_t key_len = key.length();
   m_var_index_buffer.ensure(key_len);
@@ -454,7 +453,7 @@ int CellStoreV0::load_index() {
   uint8_t *var_end;
   uint32_t len;
   BlockCompressionHeader header;
-  ByteString key;
+  SerializedKey key;
 
   m_compressor = create_block_compression_codec();
 
@@ -527,19 +526,19 @@ int CellStoreV0::load_index() {
     size_t start_row_length = m_start_row.length() + 1;
     size_t end_row_length = m_end_row.length() + 1;
     DynamicBuffer dbuf(7 + std::max(start_row_length, end_row_length));
-    ByteString bs;
+    SerializedKey serkey;
     CellStoreV0::IndexMap::const_iterator iter, mid_iter, end_iter;
 
     dbuf.clear();
-    append_as_byte_string(dbuf, m_start_row.c_str(), start_row_length);
-    bs.ptr = dbuf.base;
-    iter = m_index.upper_bound(bs);
+    create_key_and_append(dbuf, m_start_row.c_str());
+    serkey.ptr = dbuf.base;
+    iter = m_index.upper_bound(serkey);
     start = (*iter).second;
 
     dbuf.clear();
-    append_as_byte_string(dbuf, m_end_row.c_str(), end_row_length);
-    bs.ptr = dbuf.base;
-    if ((end_iter = m_index.lower_bound(bs)) == m_index.end())
+    create_key_and_append(dbuf, m_end_row.c_str());
+    serkey.ptr = dbuf.base;
+    if ((end_iter = m_index.lower_bound(serkey)) == m_index.end())
       end = m_file_length;
     else
       end = (*end_iter).second;
@@ -569,14 +568,14 @@ int CellStoreV0::load_index() {
  *
  */
 void CellStoreV0::display_block_info() {
-  ByteString last_key;
+  SerializedKey last_key;
   uint32_t last_offset = 0;
   uint32_t block_size;
   size_t i=0;
   for (IndexMap::const_iterator iter = m_index.begin(); iter != m_index.end(); iter++) {
     if (last_key) {
       block_size = (*iter).second - last_offset;
-      cout << i << ": offset=" << last_offset << " size=" << block_size << " row=" << last_key.str() << endl;
+      cout << i << ": offset=" << last_offset << " size=" << block_size << " row=" << last_key.row() << endl;
       i++;
     }
     last_offset = (*iter).second;
@@ -584,17 +583,14 @@ void CellStoreV0::display_block_info() {
   }
   if (last_key) {
     block_size = m_trailer.filter_offset - last_offset;
-    cout << i << ": offset=" << last_offset << " size=" << block_size << " row=" << last_key.str() << endl;
+    cout << i << ": offset=" << last_offset << " size=" << block_size << " row=" << last_key.row() << endl;
   }
 }
 
 
 
-void CellStoreV0::record_split_row(const ByteString key) {
-  const uint8_t *ptr;
-  key.decode_length(&ptr);
-  std::string split_row = (const char *)ptr;
+void CellStoreV0::record_split_row(const SerializedKey key) {
+  std::string split_row = key.row();
   if (split_row > m_start_row && split_row < m_end_row)
     m_split_row = split_row;
-  //cout << "record_split_row = " << m_split_row << endl;
 }

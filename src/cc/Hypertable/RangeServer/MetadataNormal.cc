@@ -97,6 +97,6 @@ void MetadataNormal::write_files(std::string &ag_name, std::string &files) {
   key.column_family = "Files";
   key.column_qualifier = ag_name.c_str();
   key.column_qualifier_len = ag_name.length();
-  mutator_ptr->set(0, key, (uint8_t *)files.c_str(), files.length());
+  mutator_ptr->set(key, (uint8_t *)files.c_str(), files.length());
   mutator_ptr->flush();
 }

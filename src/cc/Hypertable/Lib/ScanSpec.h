@@ -26,6 +26,8 @@
 
 #include <vector>
 
+#include "Key.h"
+
 namespace Hypertable {
 
   /**
@@ -88,7 +90,8 @@ namespace Hypertable {
       columns.clear();
       row_intervals.clear();
       cell_intervals.clear();
-      time_interval.first = time_interval.second = 0;
+      time_interval.first = TIMESTAMP_MIN;
+      time_interval.second = TIMESTAMP_MAX;
       return_deletes = 0;
     }
 
@@ -253,9 +256,6 @@ namespace Hypertable {
     std::vector<String> m_strings;
     ScanSpec m_scan_spec;
   };
-
-  extern const int64_t BEGINNING_OF_TIME;
-  extern const int64_t END_OF_TIME;
 
   std::ostream &operator<<(std::ostream &os, const RowInterval &);
 

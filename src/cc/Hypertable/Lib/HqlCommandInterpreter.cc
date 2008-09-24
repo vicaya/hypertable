@@ -259,7 +259,6 @@ void HqlCommandInterpreter::execute_line(const String &line) {
     else if (state.command == COMMAND_LOAD_DATA) {
       TablePtr table_ptr;
       TableMutatorPtr mutator_ptr;
-      uint64_t timestamp;
       KeySpec key;
       uint8_t *value;
       uint32_t value_len;
@@ -332,14 +331,14 @@ void HqlCommandInterpreter::execute_line(const String &line) {
           fprintf(outfp, "rowkey\tcolumnkey\tvalue\n");
       }
 
-      while (lds->next(0, &timestamp, &key, &value, &value_len, &consumed)) {
+      while (lds->next(0, &key, &value, &value_len, &consumed)) {
         if (value_len > 0) {
           insert_count++;
           total_values_size += value_len;
           total_rowkey_size += key.row_len;
           if (into_table) {
             try {
-              mutator_ptr->set(timestamp, key, value, value_len);
+              mutator_ptr->set(key, value, value_len);
             }
             catch (Hypertable::Exception &e) {
               do {
@@ -350,7 +349,7 @@ void HqlCommandInterpreter::execute_line(const String &line) {
           }
           else {
             if (display_timestamps)
-              fprintf(outfp, "%llu\t%s\t%s\t%s\n", (Llu)timestamp,
+              fprintf(outfp, "%llu\t%s\t%s\t%s\n", (Llu)key.timestamp,
                       (const char *)key.row, key.column_family,
                       (const char *)value);
             else
@@ -426,9 +425,9 @@ void HqlCommandInterpreter::execute_line(const String &line) {
           key.column_qualifier = 0;
           key.column_qualifier_len = 0;
         }
+	key.timestamp = state.inserts[i].timestamp;
         try {
-          mutator_ptr->set(state.inserts[i].timestamp, key,
-                           (uint8_t *)state.inserts[i].value.c_str(),
+          mutator_ptr->set(key, (uint8_t *)state.inserts[i].value.c_str(),
                            (uint32_t)state.inserts[i].value.length());
         }
         catch (Hypertable::Exception &e) {
@@ -461,11 +460,13 @@ void HqlCommandInterpreter::execute_line(const String &line) {
       key.row_len = state.delete_row.length();
 
       if (state.delete_time != 0)
-        state.delete_time++;
+	key.timestamp = ++state.delete_time;
+      else
+	key.timestamp = AUTO_ASSIGN;
 
       if (state.delete_all_columns) {
         try {
-          mutator_ptr->set_delete(state.delete_time, key);
+          mutator_ptr->set_delete(key);
         }
         catch (Hypertable::Exception &e) {
           display_mutation_errors(e.code(), e.what(), mutator_ptr.get());
@@ -486,7 +487,7 @@ void HqlCommandInterpreter::execute_line(const String &line) {
             key.column_qualifier_len = 0;
           }
           try {
-            mutator_ptr->set_delete(state.delete_time, key);
+            mutator_ptr->set_delete(key);
           }
           catch (Hypertable::Exception &e) {
             if (!display_mutation_errors(e.code(), e.what(), mutator_ptr.get()))

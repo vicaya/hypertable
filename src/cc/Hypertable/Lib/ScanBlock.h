@@ -26,6 +26,7 @@
 
 #include "AsyncComm/Event.h"
 #include "Common/ByteString.h"
+#include "SerializedKey.h"
 
 namespace Hypertable {
 
@@ -37,7 +38,7 @@ namespace Hypertable {
   class ScanBlock {
   public:
 
-    typedef std::vector< std::pair<ByteString, ByteString> > Vector;
+    typedef std::vector< std::pair<SerializedKey, ByteString> > Vector;
 
     ScanBlock();
 
@@ -65,7 +66,7 @@ namespace Hypertable {
      * @param value reference to return value pointer
      * @return true if key/value returned, false if no more key/value pairs
      */
-    bool next(ByteString &key, ByteString &value);
+    bool next(SerializedKey &key, ByteString &value);
 
     /** Returns true if this is the final scanblock returned by the scanner.
      *

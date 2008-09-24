@@ -84,12 +84,11 @@ int main(int argc, char **argv) {
   PropertiesPtr props_ptr;
   string config_file = "";
   CellStoreV0Ptr cell_store_ptr;
-  ScanContextPtr scan_context_ptr(new ScanContext(END_OF_TIME));
-  ByteString key;
+  ScanContextPtr scan_context_ptr(new ScanContext());
+  Key key;
   ByteString value;
   uint64_t total_count = 0;
   uint64_t store_count = 0;
-  const char *row;
 
   for (int i=1; i<argc; i++) {
     if (argv[i][0] == '-')
@@ -149,15 +148,14 @@ int main(int argc, char **argv) {
 
     scanner = cell_store_ptr->create_scanner(scan_context_ptr);
     while (scanner->get(key, value)) {
-      row = key.str();
       if (!hit_start) {
-        if (strcmp(row, file_vector[i].start_row.c_str()) <= 0) {
+        if (strcmp(key.row, file_vector[i].start_row.c_str()) <= 0) {
           scanner->forward();
           continue;
         }
         hit_start = true;
       }
-      if (strcmp(row, file_vector[i].end_row.c_str()) > 0)
+      if (strcmp(key.row, file_vector[i].end_row.c_str()) > 0)
         break;
       store_count++;
       scanner->forward();

@@ -67,28 +67,11 @@ namespace Hypertable {
     /**
      * Inserts a cell into the table.
      *
-     * NOTE: Use of this method is discouraged.  The system uses timestamps
-     * internally to do maintenance and bookkeeping.  Timestamps must be assigned
-     * in ascending order and there must be no collisions.  Incorrect use of this
-     * method to insert data into a table can result in data loss.
-     *
-     * @param timestamp timestamp (nanoseconds) of cell
      * @param key key of the cell being inserted
      * @param value pointer to the value to store in the cell
      * @param value_len length of data pointed to by value
      */
-    void set(uint64_t timestamp, KeySpec &key, const void *value, uint32_t value_len);
-
-    /**
-     * Inserts a cell into the table.
-     *
-     * @param key key of the cell being inserted
-     * @param value pointer to the value to store in the cell
-     * @param value_len length of data pointed to by value
-     */
-    void set(KeySpec &key, const void *value, uint32_t value_len) {
-      set(0, key, value, value_len);
-    }
+    void set(KeySpec &key, const void *value, uint32_t value_len);
 
     /**
      * Inserts a cell into the table.
@@ -98,9 +81,9 @@ namespace Hypertable {
      */
     void set(KeySpec &key, const char *value) {
       if (value)
-        set(0, key, value, strlen(value));
+        set(key, value, strlen(value));
       else
-        set(0, key, 0, 0);
+        set(key, 0, 0);
     }
 
 
@@ -108,25 +91,9 @@ namespace Hypertable {
      * Deletes an entire row, a column family in a particular row, or a specific
      * cell within a row.
      *
-     * NOTE: Use of this method is discouraged.  The system uses timestamps
-     * internally to do maintenance and bookkeeping.  Timestamps must be assigned
-     * in ascending order and there must be no collisions.  Incorrect use of this
-     * method to insert data into a table can result in data loss.
-     *
-     * @param timestamp timestamp (nanoseconds) of cell
      * @param key key of the row or cell(s) being deleted
      */
-    void set_delete(uint64_t timestamp, KeySpec &key);
-
-    /**
-     * Deletes an entire row, a column family in a particular row, or a specific
-     * cell within a row.
-     *
-     * @param key key of the row or cell(s) being deleted
-     */
-    void set_delete(KeySpec &key) {
-      set_delete(0, key);
-    }
+    void set_delete(KeySpec &key);
 
     /**
      * Flushes the accumulated mutations to their respective range servers.
@@ -206,7 +173,6 @@ namespace Hypertable {
 
     int32_t     m_last_error;
     int         m_last_op;
-    uint64_t    m_last_timestamp;
     KeySpec     m_last_key;
     const void *m_last_value;
     uint32_t    m_last_value_len;

@@ -26,7 +26,6 @@
 
 #include "Common/ByteString.h"
 
-#include "Hypertable/Lib/Timestamp.h"
 
 #include "CellList.h"
 #include "CellStoreTrailer.h"
@@ -41,7 +40,7 @@ namespace Hypertable {
 
     virtual ~CellStore() { return; }
 
-    virtual int add(const ByteString key, const ByteString value, int64_t real_timestamp) = 0;
+    virtual int add(const Key &key, const ByteString value) = 0;
 
     virtual const char *get_split_row() = 0;
 
@@ -60,10 +59,9 @@ namespace Hypertable {
     /**
      * Finalizes the creation of a cell store, by writing block index and metadata trailer.
      *
-     * @param timestamp timestamp (both real and logical) of most recent update in the store
      * @return Error::OK on success, error code on failure
      */
-    virtual int finalize(Timestamp &timestamp) = 0;
+    virtual int finalize() = 0;
 
     /**
      * Opens a cell store with possibly a restricted view.  When a range splits, the cell stores
@@ -94,12 +92,9 @@ namespace Hypertable {
     virtual uint32_t get_blocksize() = 0;
 
     /**
-     * Returns the timestamp of the latest (newest) key/value pair in this cell store.
-     * All key timestamps in this cell store are less than or equal to this value.
-     *
-     * @param timestamp reference to return object to hold timestamp(s)
+     * Returns the compaction revision of this cell store
      */
-    virtual void get_timestamp(Timestamp &timestamp) = 0;
+    virtual int64_t get_revision() = 0;
 
     /**
      * Returns the disk used by this cell store.  If the cell store is opened with

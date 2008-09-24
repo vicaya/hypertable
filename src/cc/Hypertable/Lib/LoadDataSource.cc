@@ -73,7 +73,7 @@ LoadDataSource::LoadDataSource(const String &fname, const String &header_fname,
     int row_uniquify_chars, bool dupkeycols)
     : m_type_mask(0), m_source(fname), m_cur_line(0), m_line_buffer(0),
       m_row_key_buffer(0), m_hyperformat(false), m_leading_timestamps(false),
-      m_timestamp_index(-1), m_timestamp(0), m_offset(0), m_zipped(false),
+      m_timestamp_index(-1), m_timestamp(AUTO_ASSIGN), m_offset(0), m_zipped(false),
       m_rsgen(0), m_row_uniquify_chars(row_uniquify_chars),
       m_dupkeycols(dupkeycols) {
   String line, column_name;
@@ -238,7 +238,7 @@ LoadDataSource::LoadDataSource(const String &fname, const String &header_fname,
  *
  */
 bool
-LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp,
+LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
     uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp) {
   String line;
   int index;
@@ -273,7 +273,7 @@ LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp,
           continue;
         }
         *ptr++ = 0;
-        *timestampp = strtoll(base, &endptr, 10);
+	keyp->timestamp = strtoll(base, &endptr, 10);
         if (*endptr != 0) {
           cerr << "error: invalid timestamp (" << base << ") on line "
                << m_cur_line << endl;
@@ -282,7 +282,7 @@ LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp,
         base = ptr;
       }
       else
-        *timestampp = 0;
+	keyp->timestamp = AUTO_ASSIGN;
 
       /**
        * Get row key
@@ -351,6 +351,7 @@ LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp,
     }
   }
   else {
+
     // skip timestamp and rowkey (if needed)
     while (m_next_value < m_limit &&
            should_skip(m_next_value, m_type_mask, m_dupkeycols))
@@ -361,7 +362,8 @@ LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp,
       keyp->row = m_row_key_buffer.base;
       keyp->row_len = m_row_key_buffer.fill();
       keyp->column_family = m_column_info[m_next_value].family.c_str();
-      *timestampp = m_timestamp;
+      keyp->timestamp = m_timestamp;
+
       // clear these, just in case they were set by the client
       if (m_column_info[m_next_value].qualifier.empty()) {
         keyp->column_qualifier = 0;
@@ -475,6 +477,8 @@ LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp,
 
         m_timestamp = (uint64_t)t * 1000000000LL;
       }
+      else
+	m_timestamp = AUTO_ASSIGN;
 
       m_next_value = 0;
       while (should_skip(m_next_value, m_type_mask, m_dupkeycols))
@@ -494,7 +498,7 @@ LoadDataSource::next(uint32_t *type_flagp, uint64_t *timestampp, KeySpec *keyp,
       }
 
       keyp->column_family = m_column_info[m_next_value].family.c_str();
-      *timestampp = m_timestamp;
+      keyp->timestamp = m_timestamp;
 
       if (m_column_info[m_next_value].qualifier.empty()) {
         keyp->column_qualifier = 0;

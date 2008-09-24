@@ -22,32 +22,105 @@
 #ifndef HYPERTABLE_KEYSPEC_H
 #define HYPERTABLE_KEYSPEC_H
 
+#include <boost/noncopyable.hpp>
+
+#include <vector>
+
 #include "Common/String.h"
 
 namespace Hypertable {
 
+  const int64_t TIMESTAMP_MIN  = std::numeric_limits<int64_t>::min();
+  const int64_t TIMESTAMP_MAX  = std::numeric_limits<int64_t>::max();
+  const int64_t TIMESTAMP_NULL = std::numeric_limits<int64_t>::min() + 1;
+  const int64_t TIMESTAMP_AUTO = std::numeric_limits<int64_t>::min() + 2;
+  const int64_t AUTO_ASSIGN    = std::numeric_limits<int64_t>::min() + 2;
+
   class KeySpec {
   public:
+
     KeySpec() : row(0), row_len(0), column_family(0), column_qualifier(0),
-        column_qualifier_len(0) {}
+		column_qualifier_len(0), timestamp(AUTO_ASSIGN), revision(AUTO_ASSIGN) {}
 
-    explicit KeySpec(const char *r, const char *cf, const char *cq = 0)
-        : row(r), row_len(r ? strlen(r) : 0), column_family(cf),
-          column_qualifier(cq), column_qualifier_len(cq ? strlen(cq) : 0) {}
+    explicit KeySpec(const char *r, const char *cf, const char *cq,
+		     int64_t ts = 0)
+      : row(r), row_len(r ? strlen(r) : 0), column_family(cf),
+	column_qualifier(cq), column_qualifier_len(cq ? strlen(cq) : 0),
+	timestamp(ts), revision(AUTO_ASSIGN) {}
 
-    explicit KeySpec(const String &r, const String &cf = String(),
-                     const String & cq = String())
-        : row(r.size() ? r.c_str() : 0), row_len(r.length()),
-          column_family(cf.size() ? cf.c_str() : 0),
-          column_qualifier(cq.size() ? cq.c_str() : 0),
-          column_qualifier_len(cq.length()) {}
+    explicit KeySpec(const char *r, const char *cf,
+		     int64_t ts = 0)
+      : row(r), row_len(r ? strlen(r) : 0), column_family(cf),
+	column_qualifier(0), column_qualifier_len(0),
+	timestamp(ts), revision(AUTO_ASSIGN) {}
+
+    void clear() {
+      row = 0;
+      row_len = 0;
+      column_family = 0;
+      column_qualifier = 0;
+      column_qualifier_len = 0;
+      timestamp = AUTO_ASSIGN;
+      revision = AUTO_ASSIGN;
+    }
 
     const void  *row;
     size_t       row_len;
     const char  *column_family;
     const void  *column_qualifier;
     size_t       column_qualifier_len;
+    int64_t      timestamp;
+    int64_t      revision;  // internal use only
   };
+
+
+  /**
+   * Helper class for building a KeySpec.  This class manages the allocation
+   * of all string members.
+   */
+  class KeySpecBuilder : boost::noncopyable {
+  public:
+    void set_row(const String &row) {
+      m_strings.push_back(row);
+      m_key_spec.row = m_strings.back().c_str();
+      m_key_spec.row_len = m_strings.back().length();
+    }
+
+    void set_column_family(const String &cf) {
+      m_strings.push_back(cf);
+      m_key_spec.column_family = m_strings.back().c_str();
+    }
+
+    void set_column_qualifier(const String &cq) {
+      m_strings.push_back(cq);
+      m_key_spec.column_qualifier = m_strings.back().c_str();
+      m_key_spec.column_qualifier_len = m_strings.back().length();
+    }
+
+    void set_timestamp(int64_t timestamp) { 
+      m_key_spec.timestamp = timestamp;
+    }
+
+    /**
+     * Clears the state.
+     */
+    void clear() {
+      m_key_spec.clear();
+      m_strings.clear();
+    }
+
+    /**
+     * Returns the built KeySpec object
+     *
+     * @return reference to built KeySpec object
+     */
+    KeySpec &get() { return m_key_spec; }
+
+  private:
+    std::vector<String> m_strings;
+    KeySpec m_key_spec;
+  };
+  
 
 }
 

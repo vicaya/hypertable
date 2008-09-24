@@ -341,6 +341,9 @@ success
 success
 success
 success
+success
+success
+success
 CREATE SCANNER ON Test2[..??] WHERE ROW >= "Abama" LIMIT=4;
 1189631333674696 Abama plum:http://pbskids.org/sesame/index.html
 1189631333353299 Abama plum:http://www.baseball-reference.com/r/roberda07.shtml

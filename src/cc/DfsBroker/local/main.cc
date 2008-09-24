@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
 
   props_ptr = new Properties(cfg_file);
   if (verbose)
-    props_ptr->set("verbose", "true");
+    props_ptr->set("Hypertable.Verbose", "true");
 
   if (port == 0)
     port       = props_ptr->get_int("DfsBroker.Local.Port",     DEFAULT_PORT);

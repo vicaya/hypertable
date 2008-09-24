@@ -54,7 +54,7 @@ void TableMutatorDispatchHandler::handle(EventPtr &event_ptr) {
     else {
       const uint8_t *ptr = event_ptr->message + 4;
       size_t remaining = event_ptr->message_len - 4;
-      uint32_t offset, len;
+      uint32_t count, offset, len;
 
       if (remaining == 0) {
         m_send_buffer->clear();
@@ -63,6 +63,7 @@ void TableMutatorDispatchHandler::handle(EventPtr &event_ptr) {
         while (remaining) {
           try {
             error = decode_i32(&ptr, &remaining);
+            count = decode_i32(&ptr, &remaining);
             offset = decode_i32(&ptr, &remaining);
             len = decode_i32(&ptr, &remaining);
           }
@@ -71,9 +72,9 @@ void TableMutatorDispatchHandler::handle(EventPtr &event_ptr) {
             break;
           }
           if (error == Error::RANGESERVER_OUT_OF_RANGE)
-            m_send_buffer->add_retries(offset, len);
+            m_send_buffer->add_retries(count, offset, len);
           else
-            m_send_buffer->add_errors(error, offset, len);
+            m_send_buffer->add_errors(error, count, offset, len);
         }
       }
     }

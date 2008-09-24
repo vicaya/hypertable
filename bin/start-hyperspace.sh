@@ -88,7 +88,7 @@ fi
 let RETRY_COUNT=0
 $HYPERTABLE_HOME/bin/serverup --silent --host=localhost hyperspace
 if [ $? != 0 ] ; then
-    nohup $HYPERTABLE_HOME/bin/Hyperspace.Master --pidfile=$PIDFILE --verbose $@ 1>& $LOGFILE &
+    nohup $VALGRIND $HYPERTABLE_HOME/bin/Hyperspace.Master --pidfile=$PIDFILE --verbose $@ 1>& $LOGFILE &
 
   $HYPERTABLE_HOME/bin/serverup --silent --host=localhost hyperspace
   while [ $? != 0 ] ; do

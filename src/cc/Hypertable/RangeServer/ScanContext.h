@@ -50,43 +50,55 @@ namespace Hypertable {
     SchemaPtr schema_ptr;
     ScanSpec *spec;
     RangeSpec *range;
-    std::string start_row;
-    std::string end_row;
-    std::pair<int64_t, int64_t> interval;
+    DynamicBuffer dbuf;
+    SerializedKey start_key, end_key;
+    String start_row, end_row;
+    int64_t revision;
+    std::pair<int64_t, int64_t> time_interval;
     bool family_mask[256];
     CellFilterInfo family_info[256];
 
     /**
      * Constructor.
      *
-     * @param ts scan timestamp (point in time when scan began)
+     * @param rev scan revision
      * @param ss scan specification
      * @param range_ range specifier
      * @param sp shared pointer to schema object
      */
-    ScanContext(int64_t ts, ScanSpec *ss, RangeSpec *range_, SchemaPtr &sp) {
-      initialize(ts, ss, range_, sp);
+    ScanContext(int64_t rev, ScanSpec *ss, RangeSpec *range_, SchemaPtr &sp) {
+      initialize(rev, ss, range_, sp);
     }
 
     /**
      * Constructor.
      *
-     * @param ts scan timestamp (point in time when scan began)
+     * @param rev scan revision
      * @param sp shared pointer to schema object
      */
-    ScanContext(int64_t ts, SchemaPtr &sp) {
-      initialize(ts, 0, 0, sp);
+    ScanContext(int64_t rev, SchemaPtr &sp) {
+      initialize(rev, 0, 0, sp);
     }
 
     /**
      * Constructor.  Calls initialize() with an empty schema pointer.
      *
-     * @param ts scan timestamp (point in time when scan began)
+     * @param rev scan revision
      */
-    ScanContext(int64_t ts) {
+    ScanContext(int64_t rev=TIMESTAMP_MAX) {
       SchemaPtr schema_ptr;
-      initialize(ts, 0, 0, schema_ptr);
+      initialize(rev, 0, 0, schema_ptr);
     }
+
+    /**
+     * Constructor.
+     *
+     * @param sp shared pointer to schema object
+     */
+    ScanContext(SchemaPtr &sp) {
+      initialize(TIMESTAMP_MAX, 0, 0, sp);
+    }
+
 
   private:
 
@@ -98,12 +110,12 @@ namespace Hypertable {
      * timestamp and number of copies to keep).  Also sets up end_row to be the
      * last possible key in spec->end_row.
      *
-     * @param ts scan timestamp (point in time when scan began)
+     * @param rev scan revision
      * @param ss scan specification
      * @param range_ range specifier
      * @param sp shared pointer to schema object
      */
-    void initialize(int64_t ts, ScanSpec *ss, RangeSpec *range_, SchemaPtr &sp);
+    void initialize(int64_t rev, ScanSpec *ss, RangeSpec *range_, SchemaPtr &sp);
 
   };
 

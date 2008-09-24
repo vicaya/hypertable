@@ -432,7 +432,7 @@ void Master::register_server(ResponseCallback *cb, const char *location, struct 
 
     try {
       key.column_family = "StartRow";
-      mutator_ptr->set(0, key, (uint8_t *)Key::END_ROOT_ROW, strlen(Key::END_ROOT_ROW));
+      mutator_ptr->set(key, (uint8_t *)Key::END_ROOT_ROW, strlen(Key::END_ROOT_ROW));
       mutator_ptr->flush();
     }
     catch (Hypertable::Exception &e) {
@@ -566,9 +566,6 @@ void Master::drop_table(ResponseCallback *cb, const char *table_name, bool if_ex
       ri.start = start_row;
       ri.end = end_row;
       scan_spec.row_intervals.push_back(ri);
-
-      scan_spec.time_interval.first = 0;
-      scan_spec.time_interval.second = 0;
 
       int max_wait=5;
 
@@ -768,7 +765,7 @@ Master::create_table(const char *tablename, const char *schemastr) {
     key.column_qualifier_len = 0;
 
     key.column_family = "StartRow";
-    mutator_ptr->set(0, key, 0, 0);
+    mutator_ptr->set(key, 0, 0);
     mutator_ptr->flush();
 
     /**

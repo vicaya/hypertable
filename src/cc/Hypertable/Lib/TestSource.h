@@ -42,19 +42,19 @@ namespace Hypertable {
 
     bool next(ByteString &key, ByteString &value);
     void clear_min_timestamp() { m_min_timestamp = 0; }
-    uint64_t get_min_timestamp() { return m_min_timestamp; }
+    int64_t get_min_timestamp() { return m_min_timestamp; }
 
   private:
-    bool create_row_delete(const char *row, uint64_t timestamp, ByteString &key, ByteString &value);
-    bool create_column_delete(const char *row, const char *column, uint64_t timestamp, ByteString &key, ByteString &value);
-    bool create_insert(const char *row, const char *column, uint64_t timestamp, const char *value_str, ByteString &key, ByteString &value);
+    bool create_row_delete(const char *row, int64_t timestamp, ByteString &key, ByteString &value);
+    bool create_column_delete(const char *row, const char *column, int64_t timestamp, ByteString &key, ByteString &value);
+    bool create_insert(const char *row, const char *column, int64_t timestamp, const char *value_str, ByteString &key, ByteString &value);
 
     Schema *m_schema;
     std::ifstream m_fin;
     long m_cur_line;
     DynamicBuffer m_key_buffer;
     DynamicBuffer m_value_buffer;
-    uint64_t m_min_timestamp;
+    int64_t m_min_timestamp;
   };
 
 }

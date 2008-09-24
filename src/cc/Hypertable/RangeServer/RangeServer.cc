@@ -38,6 +38,7 @@ extern "C" {
 
 #include "Hypertable/Lib/CommitLog.h"
 #include "Hypertable/Lib/Defaults.h"
+#include "Hypertable/Lib/Key.h"
 #include "Hypertable/Lib/Stat.h"
 #include "Hypertable/Lib/RangeServerMetaLogReader.h"
 #include "Hypertable/Lib/RangeServerMetaLogEntries.h"
@@ -439,14 +440,15 @@ void RangeServer::replay_log(CommitLogReaderPtr &log_reader_ptr) {
   TableIdentifier table_id;
   DynamicBuffer dbuf;
   const uint8_t *ptr, *end;
-  int64_t timestamp;
+  int64_t revision;
   TableInfoPtr table_info_ptr;
   RangePtr range_ptr;
-  ByteString key, value;
+  SerializedKey key;
+  ByteString value;
 
   while (log_reader_ptr->next((const uint8_t **)&base, &len, &header)) {
 
-    timestamp = header.get_timestamp();
+    revision = header.get_revision();
 
     ptr = base;
     end = base + len;
@@ -461,7 +463,7 @@ void RangeServer::replay_log(CommitLogReaderPtr &log_reader_ptr) {
     dbuf.clear();
 
     dbuf.ptr += 4;  // skip size
-    encode_i64(&dbuf.ptr, timestamp);
+    encode_i64(&dbuf.ptr, revision);
     table_id.encode(&dbuf.ptr);
     base = dbuf.ptr;
 
@@ -480,7 +482,7 @@ void RangeServer::replay_log(CommitLogReaderPtr &log_reader_ptr) {
 	HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding value");
 
       // Look for containing range, add to stop mods if not found
-      if (!table_info_ptr->find_containing_range(key.str(), range_ptr))
+      if (!table_info_ptr->find_containing_range(key.row(), range_ptr))
 	continue;
 
       // add key/value pair to buffer
@@ -566,7 +568,7 @@ void RangeServer::compact(ResponseCallback *cb, TableIdentifier *table, RangeSpe
 
 
 /**
- *  CreateScanner
+ * CreateScanner
  */
 void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentifier *table, RangeSpec *range, ScanSpec *scan_spec) {
   int error = Error::OK;
@@ -576,7 +578,6 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
   CellListScannerPtr scanner_ptr;
   bool more = true;
   uint32_t id;
-  Timestamp scan_timestamp;
   SchemaPtr schema_ptr;
   ScanContextPtr scan_ctx;
 
@@ -612,11 +613,7 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
 
     schema_ptr = table_info->get_schema();
 
-    range_ptr->get_scan_timestamp(scan_timestamp);
-
-    int64_t timestamp = (scan_timestamp.logical) ? scan_timestamp.logical + 1 : 0;
-
-    scan_ctx = new ScanContext(timestamp, scan_spec, range, schema_ptr);
+    scan_ctx = new ScanContext( range_ptr->get_scan_revision() , scan_spec, range, schema_ptr);
 
     scanner_ptr = range_ptr->create_scanner(scan_ctx);
 
@@ -625,12 +622,13 @@ void RangeServer::create_scanner(ResponseCallbackCreateScanner *cb, TableIdentif
       throw Hypertable::Exception(Error::RANGESERVER_RANGE_NOT_FOUND,
                                   (String)"(b) " + table->name + "[" + range->start_row + ".." + range->end_row + "]");
 
-    more = FillScanBlock(scanner_ptr, rbuf);
+    size_t count;
+    more = FillScanBlock(scanner_ptr, rbuf, &count);
 
     id = (more) ? Global::scanner_map.put(scanner_ptr, range_ptr) : 0;
 
     if (Global::verbose) {
-      HT_INFOF("Successfully created scanner (id=%d) on table '%s'", id, table->name);
+      HT_INFOF("Successfully created scanner (id=%d) on table '%s', returning %d k/v pairs", id, table->name, count);
     }
 
     /**
@@ -682,7 +680,8 @@ void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t s
     goto abort;
   }
 
-  more = FillScanBlock(scanner_ptr, rbuf);
+  size_t count;
+  more = FillScanBlock(scanner_ptr, rbuf, &count);
 
   if (!more)
     Global::scanner_map.remove(scanner_id);
@@ -699,7 +698,7 @@ void RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb, uint32_t s
     }
 
     if (Global::verbose) {
-      HT_INFOF("Successfully fetched %d bytes of scan data", ext.size-4);
+      HT_INFOF("Successfully fetched %d bytes (%d k/v pairs) of scan data", ext.size-4, count);
     }
   }
 
@@ -790,7 +789,7 @@ void RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       key.column_family = "Location";
       key.column_qualifier = 0;
       key.column_qualifier_len = 0;
-      mutator_ptr->set(0, key, (uint8_t *)m_location.c_str(), strlen(m_location.c_str()));
+      mutator_ptr->set(key, (uint8_t *)m_location.c_str(), strlen(m_location.c_str()));
       mutator_ptr->flush();
 
     }
@@ -853,7 +852,6 @@ void RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
      * concurrently access it.
      */
     if (transfer_log_dir && *transfer_log_dir) {
-      int64_t timestamp;
       CommitLogReaderPtr commit_log_reader_ptr = new CommitLogReader(Global::dfs, transfer_log_dir);
       CommitLog *log;
       if (is_root)
@@ -863,9 +861,8 @@ void RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       else
 	log = Global::user_log;
       
-      timestamp = Global::user_log->get_timestamp();
-      range_ptr->replay_transfer_log(commit_log_reader_ptr.get(), timestamp);
-      if ((error = log->link_log(commit_log_reader_ptr.get(), timestamp)) != Error::OK)
+      range_ptr->replay_transfer_log(commit_log_reader_ptr.get());
+      if ((error = log->link_log(commit_log_reader_ptr.get())) != Error::OK)
 	HT_THROW(error, (String)"Unable to link transfer log (" + transfer_log_dir + ") into commit log (" + log->get_log_dir().c_str() + ")");
     }
 
@@ -891,6 +888,42 @@ void RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 }
 
 
+
+void RangeServer::transform_key(ByteString &bskey, DynamicBuffer *dest_bufp, int64_t auto_revision, int64_t *revisionp) {
+  size_t len;
+  const uint8_t *ptr;
+
+  len = bskey.decode_length(&ptr);
+
+  if (*ptr == Key::CONTROL_MASK_AUTO_TIMESTAMP) {
+    dest_bufp->ensure( (ptr-bskey.ptr) + len + 9 );
+    Serialization::encode_vi32(&dest_bufp->ptr, len+8);
+    memcpy(dest_bufp->ptr, ptr, len);
+    *dest_bufp->ptr = Key::CONTROL_MASK_HAVE_REVISION | Key::CONTROL_MASK_HAVE_TIMESTAMP | Key::CONTROL_MASK_SHARED;
+    dest_bufp->ptr += len;
+    Key::encode_ts64(&dest_bufp->ptr, auto_revision);
+    *revisionp = auto_revision;
+    bskey.ptr = ptr + len;
+  }
+  else if (*ptr == Key::CONTROL_MASK_HAVE_TIMESTAMP) {
+    dest_bufp->ensure( (ptr-bskey.ptr) + len + 9 );
+    Serialization::encode_vi32(&dest_bufp->ptr, len+8);
+    memcpy(dest_bufp->ptr, ptr, len);
+    *dest_bufp->ptr = Key::CONTROL_MASK_HAVE_REVISION | Key::CONTROL_MASK_HAVE_TIMESTAMP;
+    dest_bufp->ptr += len;
+    Key::encode_ts64(&dest_bufp->ptr, auto_revision);
+    *revisionp = auto_revision;
+    bskey.ptr = ptr + len;
+  }
+  else {
+    HT_EXPECT(false, Error::FAILED_EXPECTATION);
+  }
+
+  return;
+}
+
+
+
 namespace {
 
   struct UpdateExtent {
@@ -900,13 +933,16 @@ namespace {
 
   struct SendBackRec {
     int error;
+    uint32_t count;
     uint32_t offset;
     uint32_t len;
   };
 
   struct RangeUpdateInfo {
     RangePtr range_ptr;
-    UpdateExtent extent;
+    DynamicBuffer *bufp;
+    uint64_t offset;
+    uint64_t len;
   };
 
 }
@@ -916,44 +952,42 @@ namespace {
 /**
  * Update
  */
-void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, StaticBuffer &buffer) {
-  uint8_t *mod_ptr;
-  const uint8_t *mod_end;
-  uint8_t *ts_ptr;
-  const uint8_t auto_ts[8] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, uint32_t count, StaticBuffer &buffer) {
+  const uint8_t *mod_ptr, *mod_end;
   string errmsg;
   int error = Error::OK;
   TableInfoPtr table_info_ptr;
-  int64_t initial_timestamp;
-  int64_t update_timestamp = 0;
+  int64_t auto_revision = Global::user_log->get_timestamp();
+  int64_t last_revision;
   const char *row;
   String split_row;
   CommitLogPtr splitlog;
   String end_row;
-  int64_t next_timestamp;
-  int64_t temp_timestamp;
   bool split_pending;
-  ByteString key, value;
+  SerializedKey key;
+  ByteString value;
   bool a_locked = false;
   bool b_locked = false;
   vector<SendBackRec> send_back_vector;
   const uint8_t *send_back_ptr = 0;
   uint32_t total_added = 0;
   uint32_t split_added = 0;
-  uint32_t misses = 0;
   std::vector<RangeUpdateInfo> range_vector;
-  vector<UpdateExtent> root_extents;
-  vector<UpdateExtent> go_extents;
-  size_t rootsz = 0;
-  size_t gosz = 0;
-  UpdateExtent extent;
-  UpdateExtent split_extent;
+  DynamicBuffer root_buf;
+  DynamicBuffer go_buf;
+  DynamicBuffer split_buf;
+  std::vector<DynamicBuffer> split_bufs;
+  DynamicBuffer *cur_bufp;
+  size_t send_back_count = 0;
+  uint32_t misses = 0;
   RangeUpdateInfo rui;
 
-  memset(&extent, 0, sizeof(UpdateExtent));
-  memset(&split_extent, 0, sizeof(UpdateExtent));
-
-  //range_vector.reserve(50);
+  // Pre-allocate the go_buf - each key could expand by 8 or 9 bytes,
+  // if auto-assigned (8 for the ts or rev and maybe 1 for possible
+  // increase in vint length)
+  const uint32_t encoded_table_len = table->encoded_length();
+  go_buf.reserve(encoded_table_len + buffer.size + (count * 9));
+  table->encode(&go_buf.ptr);
 
   if (Global::verbose) {
     cout << "RangeServer::update" << endl;
@@ -963,17 +997,16 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
   if (!m_replay_finished)
     wait_for_recovery_finish();
 
-  initial_timestamp = Global::user_log->get_timestamp();
-
   // TODO: Sanity check mod data (checksum validation)
 
   try {
 
     // Fetch table info
     if (!m_live_map_ptr->get(table->id, table_info_ptr)) {
-      StaticBuffer ext(new uint8_t [12], 12);
+      StaticBuffer ext(new uint8_t [16], 16);
       uint8_t *ptr = ext.base;
       encode_i32(&ptr, Error::RANGESERVER_TABLE_NOT_FOUND);
+      encode_i32(&ptr, count);
       encode_i32(&ptr, 0);
       encode_i32(&ptr, buffer.size);
       HT_ERRORF("Unable to find table info for table '%s'", table->name);
@@ -987,24 +1020,31 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
 
     mod_end = buffer.base + buffer.size;
     mod_ptr = buffer.base;
-    
+
     m_update_mutex_a.lock();
     a_locked = true;
 
     send_back_ptr = 0;
+    send_back_count = 0;
 
     while (mod_ptr < mod_end) {
 
       key.ptr = mod_ptr;
 
-      if (*mod_ptr == 0) {
-	send_back_ptr = mod_ptr;
-	mod_ptr = (uint8_t *)mod_end;
-	error = Error::BAD_KEY;
-	break;
-      }
+      row = key.row();
 
-      row = key.str();
+      // If the row key starts with '\0' then the buffer is probably
+      // corrupt, so mark the remaing key/value pairs as bad
+      if (*row == 0) {
+        SendBackRec send_back;
+        send_back.error = Error::BAD_KEY;
+        send_back.count = count;  // fix me !!!!
+        send_back.offset = mod_ptr - buffer.base;
+        send_back.len = mod_end - mod_ptr;
+        send_back_vector.push_back(send_back);
+	mod_ptr = mod_end;
+	continue;
+      }
 
       // Look for containing range, add to stop mods if not found
       if (!table_info_ptr->find_containing_range(row, rui.range_ptr)) {
@@ -1012,18 +1052,20 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
           send_back_ptr = mod_ptr;
         key.next(); // skip key
         key.next(); // skip value;
-        mod_ptr = (uint8_t *)key.ptr;
-        misses++;
+        mod_ptr = key.ptr;
+        send_back_count++;
         continue;
       }
 
       if (send_back_ptr) {
         SendBackRec send_back;
         send_back.error = Error::RANGESERVER_OUT_OF_RANGE;
+        send_back.count = send_back_count;
         send_back.offset = send_back_ptr - buffer.base;
         send_back.len = mod_ptr - send_back_ptr;
         send_back_vector.push_back(send_back);
         send_back_ptr = 0;
+	send_back_count = 0;
       }
 
       /** Increment update count (block if maintenance in progress) **/
@@ -1035,107 +1077,90 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
         continue;
       }
 
-      /** Obtain "update timestamp" **/
-      update_timestamp = Global::user_log->get_timestamp();
-
       end_row = rui.range_ptr->end_row();
 
       /** Fetch range split information **/
       split_pending = rui.range_ptr->get_split_info(split_row, splitlog);
 
-      if (split_pending) {
-	split_extent.base = mod_ptr;
-	split_extent.len = 0;
-      }
-      else {
-	extent.base = mod_ptr;
-	extent.len = 0;
+      if (split_pending)
+	cur_bufp = &split_buf;
+      else if (rui.range_ptr->is_root())
+	cur_bufp = &root_buf;
+      else
+	cur_bufp = &go_buf;
+
+      if (cur_bufp->ptr == 0) {
+	cur_bufp->reserve(encoded_table_len);
+	table->encode(&cur_bufp->ptr);
       }
 
-      next_timestamp = 0;
+      rui.bufp = cur_bufp;
+      rui.offset = cur_bufp->fill();
 
       while (mod_ptr < mod_end && (end_row == "" || (strcmp(row, end_row.c_str()) <= 0))) {
 
-        // If timestamp value is set to AUTO (zero one's compliment), then assign a timestamp
-        ts_ptr = mod_ptr + key.length() - 8;
-        if (!memcmp(ts_ptr, auto_ts, 8)) {
-          if (next_timestamp == 0)
-	    next_timestamp = update_timestamp;
-	  temp_timestamp = ++next_timestamp;
-          Key::encode_ts64(&ts_ptr, temp_timestamp);
-        }
-
 	if (split_pending) {
 	  if (strcmp(row, split_row.c_str()) > 0) {
-	    split_extent.len = mod_ptr - split_extent.base;
+	    rui.len = cur_bufp->fill() - rui.offset;
+	    range_vector.push_back(rui);
+	    cur_bufp = &go_buf;
+	    // increment update count again (for the second half)
+	    rui.range_ptr->increment_update_counter();
+	    rui.bufp = cur_bufp;
+	    rui.offset = cur_bufp->fill();
 	    split_pending = false;
-	    extent.base = mod_ptr;
 	  }
 	  else
 	    split_added++;
 	}
 
+	// This will transform keys that need to be assigned a
+	// timestamp and/or revision number by re-writing the key
+	// with the added timestamp and/or revision tacked on to the end
+	transform_key(key, cur_bufp, ++auto_revision, &last_revision);
+
+	// Now copy the value (with sanity check)
+        mod_ptr = key.ptr;
+        key.next(); // skip value
+	HT_EXPECT(key.ptr <= mod_end, Error::FAILED_EXPECTATION);
+	cur_bufp->add(mod_ptr, key.ptr-mod_ptr);
+        mod_ptr = key.ptr;
+
 	total_added++;
 
-        key.next(); // skip key
-        key.next(); // skip value
-        mod_ptr = (uint8_t *)key.ptr;
-
         if (mod_ptr < mod_end)
-          row = key.str();
+          row = key.row();
       }
 
-      if (split_pending) {
-	split_extent.len = mod_ptr - split_extent.base;
-	rui.extent.base = split_extent.base;
-	rui.extent.len = split_extent.len;
-      }
-      else {
-	extent.len = mod_ptr - extent.base;
-	rui.extent.base = extent.base;
-	rui.extent.len = extent.len;
-	if (rui.range_ptr->is_root()) {
-	  rootsz += extent.len;
-	  root_extents.push_back(extent);
-	}
-	else {
-	  gosz += extent.len;
-	  go_extents.push_back(extent);
-	}
-      }
-
+      rui.len = cur_bufp->fill() - rui.offset;
       range_vector.push_back(rui);
       rui.range_ptr = 0;
+      rui.bufp = 0;
 
-      if (split_extent.len > 0) {
-        DynamicBuffer dbuf(split_extent.len + table->encoded_length());
-
-        table->encode(&dbuf.ptr);
-
-	// compute items added
-
-	memcpy(dbuf.ptr, split_extent.base, split_extent.len);
-	dbuf.ptr += split_extent.len;
-
-	if ((error = splitlog->write(dbuf, update_timestamp)) != Error::OK)
-	  HT_THROW(error, (string)"Problem writing " + (int)dbuf.fill() + " bytes to split log");
-
-	memset(&split_extent, 0, sizeof(split_extent));
+      // if there were split-off updates, write the split log entry
+      if (split_buf.fill() > encoded_table_len) {
+	if ((error = splitlog->write(split_buf, last_revision)) != Error::OK)
+	  HT_THROW(error, (string)"Problem writing " + (int)split_buf.fill() + " bytes to split log");
+	splitlog = 0;
+	split_bufs.push_back(split_buf);
+	split_buf.own = false;
+	split_buf.clear();
       }
-
-      if (Global::verbose)
-        HT_INFOF("Added %d (%d split off) updates to '%s'", total_added, split_added, table->name);
 
     }
 
+    if (Global::verbose)
+      HT_INFOF("Added %d (%d split off) updates to '%s'", total_added, split_added, table->name);
+
     if (send_back_ptr) {
       SendBackRec send_back;
-      send_back.error = error ? error : Error::RANGESERVER_OUT_OF_RANGE;
-      error = Error::OK;
+      send_back.error = Error::RANGESERVER_OUT_OF_RANGE;
+      send_back.count = send_back_count;
       send_back.offset = send_back_ptr - buffer.base;
       send_back.len = mod_ptr - send_back_ptr;
       send_back_vector.push_back(send_back);
       send_back_ptr = 0;
+      send_back_count = 0;
     }
 
     m_update_mutex_b.lock();
@@ -1147,46 +1172,18 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
     /**
      * Commit ROOT mutations
      */
-    if (rootsz > 0) {
-      DynamicBuffer dbuf(rootsz + table->encoded_length());
-
-      table->encode(&dbuf.ptr);
-
-      // compute items added
-
-      for (size_t i=0; i<root_extents.size(); i++) {
-        memcpy(dbuf.ptr, root_extents[i].base, root_extents[i].len);
-        dbuf.ptr += root_extents[i].len;
-      }
-
-      HT_EXPECT(dbuf.fill() <= (rootsz + table->encoded_length()), Error::FAILED_EXPECTATION);
-
-      if ((error = Global::root_log->write(dbuf, initial_timestamp)) != Error::OK)
-	HT_THROW(error, (string)"Problem writing " + (int)dbuf.fill() + " bytes to ROOT commit log");
-
+    if (root_buf.fill() > encoded_table_len) {
+      if ((error = Global::root_log->write(root_buf, last_revision)) != Error::OK)
+	HT_THROW(error, (string)"Problem writing " + (int)root_buf.fill() + " bytes to ROOT commit log");
     }
 
     /**
      * Commit valid (go) mutations
      */
-    if (gosz > 0) {
-      DynamicBuffer dbuf(gosz + table->encoded_length());
+    if (go_buf.fill() > encoded_table_len) {
       CommitLog *log = (table->id == 0) ? Global::metadata_log : Global::user_log;
-
-      table->encode(&dbuf.ptr);
-
-      // compute items added
-
-      for (size_t i=0; i<go_extents.size(); i++) {
-        memcpy(dbuf.ptr, go_extents[i].base, go_extents[i].len);
-        dbuf.ptr += go_extents[i].len;
-      }
-
-      HT_EXPECT(dbuf.fill() <= (gosz + table->encoded_length()), Error::FAILED_EXPECTATION);
-
-      if ((error = log->write(dbuf, initial_timestamp)) != Error::OK)
-	HT_THROW(error, (string)"Problem writing " + (int)dbuf.fill() + " bytes to commit log (" + log->get_log_dir() + ")");
-
+      if ((error = log->write(go_buf, last_revision)) != Error::OK)
+	HT_THROW(error, (string)"Problem writing " + (int)go_buf.fill() + " bytes to commit log (" + log->get_log_dir() + ")");
     }
 
     for (size_t rangei=0; rangei<range_vector.size(); rangei++) {
@@ -1196,24 +1193,20 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
        */
       range_vector[rangei].range_ptr->lock();
       {
-        uint8_t *ptr = (uint8_t *)range_vector[rangei].extent.base;
-	uint8_t *end = (uint8_t *)range_vector[rangei].extent.base + range_vector[rangei].extent.len;
+	Key key_comps;
+        uint8_t *ptr = range_vector[rangei].bufp->base + range_vector[rangei].offset;
+	uint8_t *end = ptr + range_vector[rangei].len;
         while (ptr < end) {
           key.ptr = ptr;
-          ptr += key.length();
+	  key_comps.load(key);
+          ptr += key_comps.length;
           value.ptr = ptr;
           ptr += value.length();
-          if ((error = range_vector[rangei].range_ptr->add(key, value, update_timestamp)) != Error::OK) {
-            SendBackRec send_back;
-            send_back.error = error;
-            send_back.offset = key.ptr - buffer.base;
-            send_back.len = end - key.ptr;
-            send_back_vector.push_back(send_back);
-            break;
-          }
+	  error = range_vector[rangei].range_ptr->add(key_comps, value);
+	  HT_EXPECT(error == Error::OK, Error::FAILED_EXPECTATION);
         }
       }
-      range_vector[rangei].range_ptr->unlock(update_timestamp);
+      range_vector[rangei].range_ptr->unlock();
 
       range_vector[rangei].range_ptr->decrement_update_counter();
 
@@ -1266,19 +1259,21 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, Sta
 
   m_bytes_loaded += buffer.size;
 
-  splitlog = 0;
-
   if (error == Error::OK) {
     /**
      * Send back response
      */
     if (!send_back_vector.empty()) {
-      StaticBuffer ext(new uint8_t [send_back_vector.size() * 12], send_back_vector.size() * 12);
+      StaticBuffer ext(new uint8_t [send_back_vector.size() * 16], send_back_vector.size() * 16);
       uint8_t *ptr = ext.base;
       for (size_t i=0; i<send_back_vector.size(); i++) {
         encode_i32(&ptr, send_back_vector[i].error);
+	encode_i32(&ptr, send_back_vector[i].count);
         encode_i32(&ptr, send_back_vector[i].offset);
         encode_i32(&ptr, send_back_vector[i].len);
+	HT_INFOF("omega Sending back error %x, count %d, offset %d, len %d",
+		 send_back_vector[i].error, send_back_vector[i].count,
+		 send_back_vector[i].offset, send_back_vector[i].len);
       }
       if ((error = cb->response(ext)) != Error::OK)
         HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
@@ -1451,18 +1446,11 @@ void RangeServer::replay_begin(ResponseCallback *cb, uint16_t group) {
 /**
  */
 void RangeServer::replay_load_range(ResponseCallback *cb, const TableIdentifier *table, const RangeSpec *range, const RangeState *range_state) {
-  String errmsg;
   int error = Error::OK;
   SchemaPtr schema_ptr;
   TableInfoPtr table_info_ptr;
   RangePtr range_ptr;
-  string table_dfsdir;
-  string range_dfsdir;
   bool register_table = false;
-  TableScannerPtr scanner_ptr;
-  TableMutatorPtr mutator_ptr;
-  KeySpec key;
-  String metadata_key_str;
 
   if (Global::verbose) {
     cout << "replay_load_range" << endl;
@@ -1533,7 +1521,9 @@ void RangeServer::replay_load_range(ResponseCallback *cb, const TableIdentifier 
 void RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data, size_t len) {
   TableIdentifier table_identifier;
   TableInfoPtr table_info_ptr;
-  ByteString key, value;
+  SerializedKey serkey;
+  ByteString bsvalue;
+  Key key;
   const uint8_t *ptr = data;
   const uint8_t *end_ptr = data + len;
   const uint8_t *block_end_ptr;
@@ -1541,12 +1531,9 @@ void RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data, size_
   size_t remaining = len;
   const char *row;
   String err_msg;
-  int64_t timestamp;
+  int64_t revision;
   RangePtr range_ptr;
   String end_row;
-  uint32_t count;
-  uint64_t memory_added = 0;
-  uint64_t items_added = 0;
   int error;
 
   if (Global::verbose) {
@@ -1558,15 +1545,15 @@ void RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data, size_
 
     while (ptr < end_ptr) {
 
-      // decode key/value block size + timestamp
+      // decode key/value block size + revision
       block_size = decode_i32(&ptr, &remaining);
-      timestamp = decode_i64(&ptr, &remaining);
+      revision = decode_i64(&ptr, &remaining);
 
       if (m_replay_log_ptr) {
 	DynamicBuffer dbuf(0, false);
 	dbuf.base = (uint8_t *)ptr;
 	dbuf.ptr = dbuf.base + remaining;
-	if ((error = m_replay_log_ptr->write(dbuf, timestamp)) != Error::OK)
+	if ((error = m_replay_log_ptr->write(dbuf, revision)) != Error::OK)
 	  HT_THROW(error, "");
       }
 
@@ -1587,7 +1574,7 @@ void RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data, size_
 
       while (ptr < block_end_ptr) {
 
-        row = ByteString(ptr).str();
+        row = SerializedKey(ptr).row();
 
         // Look for containing range, add to stop mods if not found
         if (!table_info_ptr->find_containing_range(row, range_ptr))
@@ -1596,38 +1583,34 @@ void RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data, size_
 
         end_row = range_ptr->end_row();
 
-	key.ptr = ptr;
+	serkey.ptr = ptr;
         while (ptr < block_end_ptr &&
                (end_row == "" || (strcmp(row, end_row.c_str()) <= 0))) {
 
           // extract the key
-          ptr += key.length();
+          ptr += serkey.length();
 
           if (ptr > end_ptr)
             HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding key");
 
-          value.ptr = ptr;
-          ptr += value.length();
+          bsvalue.ptr = ptr;
+          ptr += bsvalue.length();
 
           if (ptr > end_ptr)
             HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding value");
 
-          HT_EXPECT(range_ptr->replay_add(key, value, timestamp, &count) == Error::OK, Error::FAILED_EXPECTATION);
+	  key.load(serkey);
 
-          if (count) {
-            items_added += count;
-            memory_added += count * (ptr - key.ptr);
-          }
+	  range_ptr->lock();
+          HT_EXPECT(range_ptr->add(key, bsvalue) == Error::OK, Error::FAILED_EXPECTATION);
+	  range_ptr->unlock();
 
-	  key.ptr = ptr;
+	  serkey.ptr = ptr;
 	  if (ptr < block_end_ptr)
-	    row = key.str();
+	    row = serkey.row();
         }
       }
     }
-
-    Global::memory_tracker.add_memory(memory_added);
-    Global::memory_tracker.add_items(items_added);
 
   }
   catch (Exception &e) {
@@ -1661,7 +1644,7 @@ void RangeServer::replay_commit(ResponseCallback *cb) {
     else if (m_replay_group == RangeServerProtocol::GROUP_USER)
       log = Global::user_log;
 
-    if ((error = log->link_log(m_replay_log_ptr.get(), Global::user_log->get_timestamp())) != Error::OK)
+    if ((error = log->link_log(m_replay_log_ptr.get())) != Error::OK)
       HT_THROW(error, std::string("Problem linking replay log (") + m_replay_log_ptr->get_log_dir() + ") into commit log (" + log->get_log_dir() + ")");
 
     m_live_map_ptr->merge(m_replay_map_ptr);
@@ -1863,7 +1846,7 @@ void RangeServer::log_cleanup() {
 void RangeServer::schedule_log_cleanup_compactions(std::vector<RangePtr> &range_vec, CommitLog *log, uint64_t prune_threshold) {
   std::vector<AccessGroup::CompactionPriorityData> priority_data_vec;
   LogFragmentPriorityMap log_frag_map;
-  int64_t timestamp, oldest_cached_timestamp = 0;
+  int64_t revision, earliest_cached_revision = 0;
 
   // Load up a vector of compaction priority data
   for (size_t i=0; i<range_vec.size(); i++) {
@@ -1871,9 +1854,9 @@ void RangeServer::schedule_log_cleanup_compactions(std::vector<RangePtr> &range_
     range_vec[i]->get_compaction_priority_data(priority_data_vec);
     for (size_t j=start; j<priority_data_vec.size(); j++) {
       priority_data_vec[j].user_data = (void *)i;
-      if ((timestamp = priority_data_vec[j].ag->get_oldest_cached_timestamp()) != 0) {
-	if (oldest_cached_timestamp == 0 || timestamp < oldest_cached_timestamp)
-	  oldest_cached_timestamp = timestamp;
+      if ((revision = priority_data_vec[j].ag->get_earliest_cached_revision()) != 0) {
+	if (earliest_cached_revision == 0 || revision < earliest_cached_revision)
+	  earliest_cached_revision = revision;
       }
     }
   }
@@ -1886,10 +1869,10 @@ void RangeServer::schedule_log_cleanup_compactions(std::vector<RangePtr> &range_
    */
   for (size_t i=0; i<priority_data_vec.size(); i++) {
 
-    if (priority_data_vec[i].oldest_cached_timestamp == 0)
+    if (priority_data_vec[i].earliest_cached_revision == 0)
       continue;
 
-    LogFragmentPriorityMap::iterator map_iter = log_frag_map.lower_bound(priority_data_vec[i].oldest_cached_timestamp);
+    LogFragmentPriorityMap::iterator map_iter = log_frag_map.lower_bound(priority_data_vec[i].earliest_cached_revision);
 
     // this should never happen
     if (map_iter == log_frag_map.end())
@@ -1906,8 +1889,8 @@ void RangeServer::schedule_log_cleanup_compactions(std::vector<RangePtr> &range_
   }
 
   // Purge the commit log
-  if (oldest_cached_timestamp != 0)
-    log->purge(oldest_cached_timestamp);
+  if (earliest_cached_revision != 0)
+    log->purge(earliest_cached_revision);
 
 }
 

@@ -149,8 +149,10 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       uint8_t *send_buf = 0;
       size_t   send_buf_len = 0;
       DynamicBuffer buf(BUFFER_SIZE);
-      ByteString key, value;
+      SerializedKey key;
+      ByteString value;
       size_t key_len, value_len;
+      uint32_t send_count = 0;
       bool outstanding = false;
 
       while (true) {
@@ -169,8 +171,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
          * Sort the keys
          */
         if (buf.fill()) {
-          std::vector<ByteString> keys;
-          struct LtByteString ltbs;
+          std::vector<SerializedKey> keys;
           const uint8_t *ptr;
           size_t len;
 
@@ -183,7 +184,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
             ptr = key.ptr;
           }
 
-          std::sort(keys.begin(), keys.end(), ltbs);
+          std::sort(keys.begin(), keys.end());
 
           send_buf = new uint8_t [buf.fill()];
           uint8_t *sendp = send_buf;
@@ -197,9 +198,12 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
           }
           send_buf_len = sendp - send_buf;
           buf.clear();
+	  send_count = keys.size();
         }
-        else
+        else {
           send_buf_len = 0;
+	  send_count = 0;
+	}
 
         if (outstanding) {
           if (!sync_handler.wait_for_reply(event_ptr))
@@ -211,7 +215,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 
         if (send_buf_len > 0) {
           StaticBuffer mybuf(send_buf, send_buf_len);
-          m_range_server_ptr->update(m_addr, *table, mybuf, &sync_handler);
+          m_range_server_ptr->update(m_addr, *table, send_count, mybuf, &sync_handler);
           outstanding = true;
         }
         else
@@ -263,7 +267,8 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 
       m_cur_scanner_id = scanblock.get_scanner_id();
 
-      ByteString key, value;
+      SerializedKey key;
+      ByteString value;
 
       while (scanblock.next(key, value))
         display_scan_data(key, value, schema_ptr);
@@ -287,7 +292,8 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
        */
       m_range_server_ptr->fetch_scanblock(m_addr, scanner_id, scanblock);
 
-      ByteString key, value;
+      SerializedKey key;
+      ByteString value;
 
       while (scanblock.next(key, value))
         display_scan_data(key, value, schema_ptr);
@@ -359,9 +365,10 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
  *
  */
 void
-RangeServerCommandInterpreter::display_scan_data(const ByteString &bskey,
-    const ByteString &value, SchemaPtr &schema_ptr) {
-  Key key(bskey);
+RangeServerCommandInterpreter::display_scan_data(const SerializedKey &serkey,
+						 const ByteString &value,
+						 SchemaPtr &schema_ptr) {
+  Key key(serkey);
   Schema::ColumnFamily *cf;
 
   if (key.flag == FLAG_DELETE_ROW) {

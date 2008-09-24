@@ -218,7 +218,7 @@ namespace {
 
   void write_entries(CommitLog *log, int num_entries, uint64_t *sump, CommitLogBase *link_log) {
     int error;
-    uint64_t timestamp;
+    int64_t revision;
     uint32_t limit;
     uint32_t payload[101];
     size_t link_point = 50;
@@ -228,10 +228,10 @@ namespace {
       link_point = random() % 50;
 
     for (size_t i=0; i<50; i++) {
-      timestamp = log->get_timestamp();
+      revision = log->get_timestamp();
 
       if (i == link_point) {
-        if ((error = log->link_log(link_log, timestamp)) != Error::OK)
+        if ((error = log->link_log(link_log)) != Error::OK)
           throw Hypertable::Exception(error, "Problem writing to log file");
       }
       else {
@@ -245,7 +245,7 @@ namespace {
         dbuf.ptr = dbuf.base + (4*limit);
         dbuf.own = false;
 
-        if ((error = log->write(dbuf, timestamp)) != Error::OK)
+        if ((error = log->write(dbuf, revision)) != Error::OK)
           throw Hypertable::Exception(error, "Problem writing to log file");
       }
     }

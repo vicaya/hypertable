@@ -25,10 +25,10 @@
 
 namespace Hypertable {
 
-  bool FillScanBlock(CellListScannerPtr &scanner, DynamicBuffer &dbuf) {
-    ByteString key;
+  bool FillScanBlock(CellListScannerPtr &scanner, DynamicBuffer &dbuf, size_t *countp) {
+    Key key;
     ByteString value;
-    size_t key_len, value_len;
+    size_t value_len;
     bool more = true;
     size_t limit = HYPERTABLE_DATA_TRANSFER_BLOCKSIZE;
     size_t remaining = HYPERTABLE_DATA_TRANSFER_BLOCKSIZE;
@@ -36,23 +36,25 @@ namespace Hypertable {
 
     assert(dbuf.base == 0);
 
+    *countp = 0;
+
     while ((more = scanner->get(key, value))) {
-      key_len = key.length();
       value_len = value.length();
       if (dbuf.base == 0) {
-        if (key_len + value_len > limit) {
-          limit = key_len + value_len;
+        if (key.length + value_len > limit) {
+          limit = key.length + value_len;
           remaining = limit;
         }
         dbuf.reserve(limit+4);
         // skip encoded length
         dbuf.ptr = dbuf.base + 4;
       }
-      if (key_len + value_len <= remaining) {
-        dbuf.add_unchecked(key.ptr, key_len);
+      if (key.length + value_len <= remaining) {
+        dbuf.add_unchecked(key.serial.ptr, key.length);
         dbuf.add_unchecked(value.ptr, value_len);
-        remaining -= (key_len + value_len);
+        remaining -= (key.length + value_len);
         scanner->forward();
+	(*countp)++;
       }
       else
         break;

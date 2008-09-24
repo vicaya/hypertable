@@ -50,8 +50,7 @@ void CellStoreTrailerV0::clear() {
   index_entries = 0;
   total_entries = 0;
   blocksize = 0;
-  timestamp.logical = 0;
-  timestamp.real = 0;
+  revision = 0;
   compression_ratio = 0.0;
   compression_type = 0;
   version = 0;
@@ -69,8 +68,7 @@ void CellStoreTrailerV0::serialize(uint8_t *buf) {
   encode_i32(&buf, index_entries);
   encode_i32(&buf, total_entries);
   encode_i32(&buf, blocksize);
-  encode_i64(&buf, timestamp.logical);
-  encode_i64(&buf, timestamp.real);
+  encode_i64(&buf, revision);
   encode_i32(&buf, compression_ratio_i32);
   encode_i16(&buf, compression_type);
   encode_i16(&buf, version);
@@ -91,8 +89,7 @@ void CellStoreTrailerV0::deserialize(const uint8_t *buf) {
     index_entries = decode_i32(&buf, &remaining);
     total_entries = decode_i32(&buf, &remaining);
     blocksize = decode_i32(&buf, &remaining);
-    timestamp.logical = decode_i64(&buf, &remaining);
-    timestamp.real = decode_i64(&buf, &remaining);
+    revision = decode_i64(&buf, &remaining);
     compression_ratio_i32 = decode_i32(&buf, &remaining);
     compression_type = decode_i16(&buf, &remaining);
     version = decode_i16(&buf, &remaining));
@@ -109,8 +106,7 @@ void CellStoreTrailerV0::display(std::ostream &os) {
   os << "index_entries = " << index_entries << endl;
   os << "total_entries = " << total_entries << endl;
   os << "blocksize = " << blocksize << endl;
-  os << "timestamp logical = " << timestamp.logical << endl;
-  os << "timestamp real = " << timestamp.real << endl;
+  os << "revision = " << revision << endl;
   os << "compression_ratio = " << compression_ratio << endl;
   os << "compression_type = " << compression_type << endl;
   os << "version = " << version << endl;

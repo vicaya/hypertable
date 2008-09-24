@@ -55,8 +55,8 @@ Range::Range(MasterClientPtr &master_client_ptr, const TableIdentifier *identifi
              SchemaPtr &schema_ptr, const RangeSpec *range, const RangeState *state)
     : m_master_client_ptr(master_client_ptr), m_identifier(*identifier),
       m_schema(schema_ptr), m_maintenance_in_progress(false),
-      m_last_logical_timestamp(0), m_added_inserts(0), m_state(*state),
-      m_error(Error::OK) {
+      m_revision(0), m_latest_revision(0),
+      m_added_inserts(0), m_state(*state), m_error(Error::OK) {
   AccessGroup *ag;
 
   memset(m_added_deletes, 0, 3*sizeof(int64_t));
@@ -181,6 +181,9 @@ void Range::load_cell_stores(Metadata *metadata) {
         continue;
       }
 
+      if (cellstore->get_revision() > m_latest_revision)
+	m_latest_revision = cellstore->get_revision();
+
       ag->add_cell_store(cellstore, csid);
     }
 
@@ -206,83 +209,30 @@ bool Range::extract_csid_from_path(std::string &path, uint32_t *csidp) {
 
 /**
  */
-int Range::add(const ByteString key, const ByteString value, int64_t real_timestamp) {
-  Key key_comps;
+int Range::add(const Key &key, const ByteString value) {
 
   if (m_error)
     return m_error;
 
-  if (!key_comps.load(key))
-    return Error::BAD_KEY;
-
-  if (key_comps.column_family_code >= m_column_family_vector.size()) {
-    HT_ERRORF("Bad column family (%d)", key_comps.column_family_code);
+  if (key.column_family_code >= m_column_family_vector.size()) {
+    HT_ERRORF("Bad column family (%d)", key.column_family_code);
     return Error::RANGESERVER_INVALID_COLUMNFAMILY;
   }
 
-  /**
-     keys in a batch may come in out-of-order if they're supplied because
-     they get sorted by row key in the client.  This *shouldn't* be a problem.
-
-  if (key_comps.timestamp <= m_last_logical_timestamp) {
-    if (key_comps.flag == FLAG_INSERT) {
-      HT_ERRORF("Problem adding key/value pair, key timestmap %llu <= %llu", key_comps.timestamp, m_last_logical_timestamp);
-      return Error::RANGESERVER_TIMESTAMP_ORDER_ERROR;
-    }
+  if (key.flag == FLAG_DELETE_ROW) {
+    for (AccessGroupMap::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++)
+      (*iter).second->add(key, value);
   }
   else
-    m_last_logical_timestamp = key_comps.timestamp;
-  */
+    m_column_family_vector[key.column_family_code]->add(key, value);
 
-  if (key_comps.timestamp > m_last_logical_timestamp)
-    m_last_logical_timestamp = key_comps.timestamp;
-
-  if (key_comps.flag == FLAG_DELETE_ROW) {
-    for (AccessGroupMap::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++) {
-      (*iter).second->add(key, value, real_timestamp);
-    }
-  }
-  else
-    m_column_family_vector[key_comps.column_family_code]->add(key, value, real_timestamp);
-
-  if (key_comps.flag == FLAG_INSERT)
+  if (key.flag == FLAG_INSERT)
     m_added_inserts++;
   else
-    m_added_deletes[key_comps.flag]++;
+    m_added_deletes[key.flag]++;
 
-  return Error::OK;
-}
-
-
-/**
- */
-int Range::replay_add(const ByteString key, const ByteString value, int64_t real_timestamp, uint32_t *num_addedp) {
-  Key key_comps;
-
-  HT_EXPECT(key_comps.load(key), Error::FAILED_EXPECTATION);
-
-  *num_addedp = 0;
-
-  if (key_comps.column_family_code >= m_column_family_vector.size()) {
-    HT_ERRORF("Bad column family (%d)", key_comps.column_family_code);
-    return Error::RANGESERVER_INVALID_COLUMNFAMILY;
-  }
-
-  if (key_comps.flag == FLAG_DELETE_ROW) {
-    for (AccessGroupMap::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++) {
-      if ((*iter).second->replay_add(key, value, real_timestamp))
-        (*num_addedp)++;
-    }
-  }
-  else {
-    if (m_column_family_vector[key_comps.column_family_code]->replay_add(key, value, real_timestamp))
-      (*num_addedp)++;
-  }
-
-  if (key_comps.flag == FLAG_INSERT)
-    m_added_inserts++;
-  else
-    m_added_deletes[key_comps.flag]++;
+  if (key.revision > m_revision)
+    m_revision = key.revision;
 
   return Error::OK;
 }
@@ -447,7 +397,8 @@ void Range::split_install_log() {
   {
     RangeUpdateBarrier::ScopedActivator block_updates(m_update_barrier);
     boost::mutex::scoped_lock lock(m_mutex);
-    m_state.timestamp = m_timestamp;
+    for (size_t i=0; i<m_access_group_vector.size(); i++)
+      m_access_group_vector[i]->initiate_compaction();
     m_split_log_ptr = new CommitLog(Global::dfs, m_state.transfer_log);
   }
 
@@ -494,7 +445,7 @@ void Range::split_compact_and_shrink() {
    */
   {
     for (size_t i=0; i<m_access_group_vector.size(); i++)
-      m_access_group_vector[i]->run_compaction(m_state.timestamp, true);
+      m_access_group_vector[i]->run_compaction(true);
   }
 
   try {
@@ -532,7 +483,7 @@ void Range::split_compact_and_shrink() {
       key.column_qualifier = m_access_group_vector[i]->get_name();
       key.column_qualifier_len = strlen(m_access_group_vector[i]->get_name());
       m_access_group_vector[i]->get_files(files);
-      mutator_ptr->set(0, key, (uint8_t *)files.c_str(), files.length());
+      mutator_ptr->set(key, (uint8_t *)files.c_str(), files.length());
     }
 
     mutator_ptr->flush();
@@ -571,7 +522,7 @@ void Range::split_compact_and_shrink() {
    * Write SPLIT_SHRUNK MetaLog entry
    */
   m_state.state = RangeState::SPLIT_SHRUNK;
-  m_state.timestamp.clear();
+  m_state.timestamp = 0;
   m_state.set_old_start_row(old_start_row);
   m_state.clear_split_point();
 
@@ -669,17 +620,18 @@ void Range::compact(bool major) {
 
 
 void Range::run_compaction(bool major) {
-  Timestamp timestamp;
 
   {
     RangeUpdateBarrier::ScopedActivator block_updates(m_update_barrier);
     boost::mutex::scoped_lock lock(m_mutex);
-    timestamp = m_timestamp;
+    for (size_t i=0; i<m_access_group_vector.size(); i++) {
+      if (major || m_access_group_vector[i]->needs_compaction())
+	m_access_group_vector[i]->initiate_compaction();
+    }
   }
 
   for (size_t i=0; i<m_access_group_vector.size(); i++)
-    m_access_group_vector[i]->run_compaction(timestamp, major);
-
+    m_access_group_vector[i]->run_compaction(major);
 }
 
 
@@ -747,16 +699,18 @@ void Range::get_statistics(RangeStat *stat) {
 void Range::lock() {
   for (AccessGroupMap::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++)
     (*iter).second->lock();
+  m_revision = 0;
 }
 
 
-void Range::unlock(int64_t real_timestamp) {
-  // This is a performance optimization to maintain the logical timestamp without excessive locking
+void Range::unlock() {
+
   {
     boost::mutex::scoped_lock lock(m_mutex);
-    m_timestamp.logical = m_last_logical_timestamp;
-    m_timestamp.real = real_timestamp;
+    if (m_revision > m_latest_revision)
+      m_latest_revision = m_revision;
   }
+
   for (AccessGroupMap::iterator iter = m_access_group_map.begin(); iter != m_access_group_map.end(); iter++)
     (*iter).second->unlock();
 }
@@ -765,15 +719,17 @@ void Range::unlock(int64_t real_timestamp) {
 
 /**
  */
-void Range::replay_transfer_log(CommitLogReader *commit_log_reader, int64_t real_timestamp) {
+void Range::replay_transfer_log(CommitLogReader *commit_log_reader) {
   BlockCompressionHeaderCommitLog header;
   const uint8_t *base, *ptr, *end;
   size_t len;
   ByteString key, value;
+  Key key_comps;
   size_t nblocks = 0;
   size_t count = 0;
   TableIdentifier table_id;
-  uint64_t memory_added = 0;
+
+  m_revision = 0;
 
   try {
 
@@ -787,18 +743,21 @@ void Range::replay_transfer_log(CommitLogReader *commit_log_reader, int64_t real
       if (strcmp(m_identifier.name, table_id.name))
         HT_THROWF(Error::RANGESERVER_CORRUPT_COMMIT_LOG,
                   "Table name mis-match in split log replay \"%s\" != \"%s\"", m_identifier.name, table_id.name);
-      memory_added += len;
 
       while (ptr < end) {
         key.ptr = (uint8_t *)ptr;
-        ptr += key.length();
+	key_comps.load(key);
+	ptr += key_comps.length;
         value.ptr = (uint8_t *)ptr;
         ptr += value.length();
-        add(key, value, real_timestamp);
+        add(key_comps, value);
         count++;
       }
       nblocks++;
     }
+
+    if (m_revision > m_latest_revision)
+      m_latest_revision = m_revision;
 
     {
       boost::mutex::scoped_lock lock(m_mutex);
@@ -807,33 +766,23 @@ void Range::replay_transfer_log(CommitLogReader *commit_log_reader, int64_t real
                m_identifier.name, m_start_row.c_str(), m_end_row.c_str());
     }
 
-    Global::memory_tracker.add_memory(memory_added);
-    Global::memory_tracker.add_items(count);
-
     m_added_inserts = 0;
     memset(m_added_deletes, 0, 3*sizeof(int64_t));
 
   }
   catch (Hypertable::Exception &e) {
     HT_ERRORF("Problem replaying split log - %s '%s'", Error::get_text(e.code()), e.what());
+    if (m_revision > m_latest_revision)
+      m_latest_revision = m_revision;
     throw;
   }
 }
 
 
-/**
- */
-int64_t Range::get_latest_timestamp() {
-  boost::mutex::scoped_lock lock(m_mutex);
-  return m_timestamp.logical;
-}
-
 
 /**
  */
-void Range::get_scan_timestamp(Timestamp &ts) {
+int64_t Range::get_scan_revision() {
   boost::mutex::scoped_lock lock(m_mutex);
-  ts = m_timestamp;
+  return m_latest_revision;
 }
-
-

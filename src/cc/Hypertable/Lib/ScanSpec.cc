@@ -25,14 +25,12 @@
 
 #include "Common/Serialization.h"
 
+#include "KeySpec.h"
 #include "ScanSpec.h"
 
 using namespace std;
 using namespace Hypertable;
 using namespace Serialization;
-
-const int64_t Hypertable::BEGINNING_OF_TIME = std::numeric_limits<int64_t>::min();
-const int64_t Hypertable::END_OF_TIME = std::numeric_limits<int64_t>::max();
 
 RowInterval::RowInterval() : start(0), start_inclusive(true),
 			     end(0), end_inclusive(true) { }
@@ -85,7 +83,7 @@ void CellInterval::decode(const uint8_t **bufp, size_t *remainp) {
 }
 
 ScanSpec::ScanSpec() : row_limit(0), max_versions(0),
-       time_interval(0, END_OF_TIME), return_deletes(false) {
+		       time_interval(TIMESTAMP_MIN, TIMESTAMP_MAX), return_deletes(false) {
 }
 
 size_t ScanSpec::encoded_length() const {

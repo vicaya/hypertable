@@ -33,7 +33,6 @@
 #include "Common/HashMap.h"
 
 #include "Hypertable/Lib/Schema.h"
-#include "Hypertable/Lib/Timestamp.h"
 #include "Hypertable/Lib/Types.h"
 
 #include "CellCache.h"
@@ -48,7 +47,7 @@ namespace Hypertable {
 
     struct CompactionPriorityData {
       AccessGroup *ag;
-      int64_t oldest_cached_timestamp;
+      int64_t earliest_cached_revision;
       uint64_t mem_used;
       uint64_t disk_used;
       uint64_t log_space_pinned;
@@ -59,8 +58,7 @@ namespace Hypertable {
 
     AccessGroup(const TableIdentifier *identifier, SchemaPtr &schema_ptr, Schema::AccessGroup *ag, const RangeSpec *range);
     virtual ~AccessGroup();
-    virtual int add(const ByteString key, const ByteString value, int64_t real_timestamp);
-    bool replay_add(const ByteString key, const ByteString value, int64_t real_timestamp);
+    virtual int add(const Key &key, const ByteString value);
 
     virtual const char *get_split_row();
     virtual void get_split_rows(std::vector<String> &split_rows, bool include_cache);
@@ -75,12 +73,11 @@ namespace Hypertable {
     uint64_t disk_usage();
     uint64_t memory_usage();
     void add_cell_store(CellStorePtr &cellstore_ptr, uint32_t id);
-    void run_compaction(Timestamp timestamp, bool major);
+    void run_compaction(bool major);
 
-    void get_compaction_timestamp(Timestamp &timestamp);
-    int64_t get_oldest_cached_timestamp() {
+    int64_t get_earliest_cached_revision() {
       boost::mutex::scoped_lock lock(m_mutex);
-      return m_oldest_cached_timestamp;
+      return m_earliest_cached_revision;
     }
 
     void get_compaction_priority_data(CompactionPriorityData &priority_data);
@@ -88,6 +85,8 @@ namespace Hypertable {
     void set_compaction_bit() { m_needs_compaction = true; }
 
     bool needs_compaction() { return m_needs_compaction; }
+
+    void initiate_compaction();
 
     const char *get_name() { return m_name.c_str(); }
 
@@ -116,6 +115,7 @@ namespace Hypertable {
     bool decrement_file_refcount(const String &filename);
 
     void update_files_column();
+    void merge_caches();
 
     Mutex                m_mutex;
     boost::condition     m_scanner_blocked_cond;
@@ -129,14 +129,15 @@ namespace Hypertable {
     String               m_range_name;
     std::vector<CellStorePtr> m_stores;
     CellCachePtr         m_cell_cache_ptr;
+    CellCachePtr         m_immutable_cache_ptr;
     uint32_t             m_next_table_id;
     uint64_t             m_disk_usage;
     uint32_t             m_blocksize;
     float                m_compression_ratio;
     String               m_compressor;
     bool                 m_is_root;
-    Timestamp            m_compaction_timestamp;
-    int64_t              m_oldest_cached_timestamp;
+    int64_t              m_compaction_revision;
+    int64_t              m_earliest_cached_revision;
     uint64_t             m_collisions;
     bool                 m_needs_compaction;
     bool                 m_in_memory;

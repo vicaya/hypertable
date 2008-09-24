@@ -114,15 +114,18 @@ struct GcWorker {
 
   void
   delete_row(const string &row, TableMutatorPtr &mutator) {
+    KeySpec key;
+
     if (row.empty())
       return;
 
-    KeySpec key(row);
+    key.row = row.c_str();
+    key.row_len = row.length();
 
     HT_DEBUGF("MasterGc: Deleting row %s", (char *)key.row);
 
     if (!m_dryrun)
-      mutator->set_delete(0, key);
+      mutator->set_delete(key);
   }
 
   void
@@ -131,10 +134,10 @@ struct GcWorker {
                  << cell.column_family <<", "<< cell.column_qualifier <<", "
                  << cell.timestamp <<')'<< HT_END;
 
-    KeySpec key(cell.row_key, cell.column_family, cell.column_qualifier);
+    KeySpec key(cell.row_key, cell.column_family, cell.column_qualifier, cell.timestamp);
 
     if (!m_dryrun)
-      mutator->set_delete(cell.timestamp, key);
+      mutator->set_delete(key);
   }
 
   void

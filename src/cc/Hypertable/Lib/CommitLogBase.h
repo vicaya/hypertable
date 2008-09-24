@@ -34,10 +34,17 @@ namespace Hypertable {
     String     log_dir;
     uint32_t   num;
     uint64_t   size;
-    uint64_t   timestamp;
+    int64_t    revision;
     bool       purge_log_dir;
     CommitLogBlockStream *block_stream;
   } CommitLogFileInfo;
+
+  /**
+   * Less than operator for LocationCacheKey
+   */
+  inline bool operator<(const CommitLogFileInfo &fi1, const CommitLogFileInfo &fi2) {
+    return fi1.revision < fi2.revision;
+  }
 
   typedef std::deque<CommitLogFileInfo> LogFragmentQueue;
 
@@ -45,7 +52,7 @@ namespace Hypertable {
    */
   class CommitLogBase : public ReferenceCount {
   public:
-    CommitLogBase(const String &log_dir) : m_log_dir(log_dir), m_last_timestamp(0) {
+    CommitLogBase(const String &log_dir) : m_log_dir(log_dir), m_latest_revision(0) {
       size_t lastslash = log_dir.find_last_of('/');
       if (lastslash == log_dir.length()-1)
         lastslash = log_dir.find_last_of('/', log_dir.length()-2);
@@ -59,11 +66,13 @@ namespace Hypertable {
 
     String &get_log_dir() { return m_log_dir; }
 
+    int64_t get_latest_revision() { return m_latest_revision; }
+
   protected:
     String           m_log_dir;
     String           m_log_name;
     LogFragmentQueue m_fragment_queue;
-    uint64_t         m_last_timestamp;
+    int64_t          m_latest_revision;
   };
   typedef boost::intrusive_ptr<CommitLogBase> CommitLogBasePtr;
 

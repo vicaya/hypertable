@@ -22,7 +22,6 @@
 #ifndef HYPERTABLE_CELLSTORETRAILERV0_H
 #define HYPERTABLE_CELLSTORETRAILERV0_H
 
-#include "Hypertable/Lib/Timestamp.h"
 
 #include "CellStoreTrailer.h"
 
@@ -33,7 +32,7 @@ namespace Hypertable {
     CellStoreTrailerV0();
     virtual ~CellStoreTrailerV0() { return; }
     virtual void clear();
-    virtual size_t size() { return 48; }
+    virtual size_t size() { return 40; }
     virtual void serialize(uint8_t *buf);
     virtual void deserialize(const uint8_t *buf);
     virtual void display(std::ostream &os);
@@ -44,7 +43,7 @@ namespace Hypertable {
     uint32_t  index_entries;
     uint32_t  total_entries;
     uint32_t  blocksize;
-    Timestamp timestamp;
+    int64_t   revision;
     union {
       float compression_ratio;
       uint32_t compression_ratio_i32;

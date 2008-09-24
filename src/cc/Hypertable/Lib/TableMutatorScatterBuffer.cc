@@ -125,15 +125,15 @@ void TableMutatorScatterBuffer::set_delete(Key &key, Timer &timer) {
 /**
  *
  */
-void TableMutatorScatterBuffer::set(ByteString key, ByteString value, Timer &timer) {
+void TableMutatorScatterBuffer::set(SerializedKey key, ByteString value, Timer &timer) {
   RangeLocationInfo range_info;
   TableMutatorSendBufferMap::const_iterator iter;
   const uint8_t *ptr = key.ptr;
   size_t len = Serialization::decode_vi32(&ptr);
 
-  if (!m_cache_ptr->lookup(m_table_identifier.id, (const char *)ptr, &range_info)) {
+  if (!m_cache_ptr->lookup(m_table_identifier.id, (const char *)ptr+1, &range_info)) {
     timer.start();
-    m_range_locator_ptr->find_loop(&m_table_identifier, (const char *)ptr, &range_info, timer, false);
+    m_range_locator_ptr->find_loop(&m_table_identifier, (const char *)ptr+1, &range_info, timer, false);
   }
 
   iter = m_buffer_map.find(range_info.location);
@@ -156,20 +156,20 @@ void TableMutatorScatterBuffer::set(ByteString key, ByteString value, Timer &tim
 
 
 namespace {
-  struct LtByteStringChronological {
-    bool operator()(const ByteString bs1, const ByteString bs2) const {
-      const uint8_t *ptr1, *ptr2;
-      size_t len1 = bs1.decode_length(&ptr1);
-      size_t len2 = bs2.decode_length(&ptr2);
-      int rval = strcmp((const char *)ptr1, (const char *)ptr2);
-      if (rval == 0) {
-        ptr1 += len1 - 8;
-        ptr2 += len2 - 8;
-        return memcmp(ptr1, ptr2, 8) > 0;  // this gives chronological
-      }
-      return rval < 0;
-    }
+
+  struct SendRec {
+    SerializedKey key;
+    uint64_t offset;
   };
+
+  inline bool operator<(const SendRec sr1, const SendRec sr2) {
+    const char *row1 = sr1.key.row();
+    const char *row2 = sr2.key.row();
+    int rval = strcmp(row1, row2);
+    if (rval == 0)
+      return sr1.offset < sr2.offset;
+    return rval < 0;
+  }
 }
 
 
@@ -178,10 +178,10 @@ namespace {
  */
 void TableMutatorScatterBuffer::send() {
   TableMutatorSendBufferPtr send_buffer_ptr;
-  struct LtByteStringChronological swo_bs;
-  std::vector<ByteString> kvec;
+  std::vector<SendRec> send_vec;
   uint8_t *ptr;
-  ByteString bs;
+  SerializedKey key;
+  SendRec send_rec;
   size_t len;
 
   m_completion_counter.set(m_buffer_map.size());
@@ -198,25 +198,31 @@ void TableMutatorScatterBuffer::send() {
 
     if (send_buffer_ptr->resend()) {
       memcpy(send_buffer_ptr->pending_updates.base, send_buffer_ptr->accum.base, len);
+      send_buffer_ptr->send_count = send_buffer_ptr->retry_count;
     }
     else {
-      kvec.clear();
-      kvec.reserve(send_buffer_ptr->key_offsets.size());
-      for (size_t i=0; i<send_buffer_ptr->key_offsets.size(); i++)
-        kvec.push_back((ByteString)(send_buffer_ptr->accum.base + send_buffer_ptr->key_offsets[i]));
-      sort(kvec.begin(), kvec.end(), swo_bs);
+      send_vec.clear();
+      send_vec.reserve(send_buffer_ptr->key_offsets.size());
+      for (size_t i=0; i<send_buffer_ptr->key_offsets.size(); i++) {
+	send_rec.key.ptr = send_buffer_ptr->accum.base + send_buffer_ptr->key_offsets[i];
+	send_rec.offset = send_buffer_ptr->key_offsets[i];
+        send_vec.push_back(send_rec);
+      }
+      sort(send_vec.begin(), send_vec.end());
 
       ptr = send_buffer_ptr->pending_updates.base;
 
-      for (size_t i=0; i<kvec.size(); i++) {
-        bs = kvec[i];
-        bs.next();  // skip key
-        bs.next();  // skip value
-        memcpy(ptr, kvec[i].ptr, bs.ptr - kvec[i].ptr);
-        ptr += bs.ptr - kvec[i].ptr;
+      for (size_t i=0; i<send_vec.size(); i++) {
+        key = send_vec[i].key;
+        key.next();  // skip key
+        key.next();  // skip value
+        memcpy(ptr, send_vec[i].key.ptr, key.ptr - send_vec[i].key.ptr);
+        ptr += key.ptr - send_vec[i].key.ptr;
       }
       HT_EXPECT((size_t)(ptr-send_buffer_ptr->pending_updates.base)==len, Error::FAILED_EXPECTATION);
       send_buffer_ptr->dispatch_handler_ptr = new TableMutatorDispatchHandler(send_buffer_ptr.get());
+
+      send_buffer_ptr->send_count = send_buffer_ptr->key_offsets.size();
     }
 
     send_buffer_ptr->accum.free();
@@ -227,10 +233,10 @@ void TableMutatorScatterBuffer::send() {
      */
     try {
       send_buffer_ptr->pending_updates.own = false;
-      m_range_server.update(send_buffer_ptr->addr, m_table_identifier, send_buffer_ptr->pending_updates, send_buffer_ptr->dispatch_handler_ptr.get());
+      m_range_server.update(send_buffer_ptr->addr, m_table_identifier, send_buffer_ptr->send_count, send_buffer_ptr->pending_updates, send_buffer_ptr->dispatch_handler_ptr.get());
     }
     catch (Exception &e) {
-      send_buffer_ptr->add_retries(0, send_buffer_ptr->pending_updates.size);
+      send_buffer_ptr->add_retries(send_buffer_ptr->send_count, 0, send_buffer_ptr->pending_updates.size);
       m_completion_counter.decrement();
     }
     send_buffer_ptr->pending_updates.own = true;
@@ -263,14 +269,14 @@ bool TableMutatorScatterBuffer::wait_for_completion(Timer &timer) {
       if (!failed_regions.empty()) {
         Cell cell;
         Key key;
-        ByteString bs;
+	ByteString bs;
         const uint8_t *endptr;
         Schema::ColumnFamily *cf;
         for (size_t i=0; i<failed_regions.size(); i++) {
           bs.ptr = failed_regions[i].base;
           endptr = bs.ptr + failed_regions[i].len;
           while (bs.ptr < endptr) {
-            key.load(bs);
+            key.load((SerializedKey)bs);
             cell.row_key = key.row;
             cf = m_schema_ptr->get_column_family(key.column_family_code);
             HT_EXPECT(cf, Error::FAILED_EXPECTATION);
@@ -301,7 +307,8 @@ bool TableMutatorScatterBuffer::wait_for_completion(Timer &timer) {
 
 TableMutatorScatterBuffer *TableMutatorScatterBuffer::create_redo_buffer(Timer &timer) {
   TableMutatorSendBufferPtr send_buffer_ptr;
-  ByteString key, value, bs;
+  SerializedKey key;
+  ByteString value, bs;
   TableMutatorScatterBuffer *redo_buffer = 0;
 
   try {

@@ -30,6 +30,7 @@
 
 #include "Hypertable/Lib/CommandInterpreter.h"
 #include "Hypertable/Lib/RangeServerClient.h"
+#include "Hypertable/Lib/SerializedKey.h"
 
 #include "TableInfo.h"
 
@@ -45,7 +46,7 @@ namespace Hypertable {
 
   private:
 
-    void display_scan_data(const ByteString &key, const ByteString &value, SchemaPtr &schema_ptr);
+    void display_scan_data(const SerializedKey &key, const ByteString &value, SchemaPtr &schema_ptr);
 
     Comm *m_comm;
     Hyperspace::SessionPtr m_hyperspace_ptr;
