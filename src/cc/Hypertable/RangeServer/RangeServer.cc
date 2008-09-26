@@ -161,8 +161,10 @@ RangeServer::RangeServer(PropertiesPtr &props_ptr, ConnectionManagerPtr &conn_ma
     struct sockaddr_in addr;
 
     InetAddr::get_hostname(host_str);
-    if (!InetAddr::initialize(&addr, host_str.c_str(), port))
-      exit(1);
+    if (!InetAddr::initialize(&addr, host_str.c_str(), port)) {
+      if (!InetAddr::initialize(&addr, "localhost", port))
+	exit(1);
+    }
 
     m_location = (String)inet_ntoa(addr.sin_addr) + "_" + (int)port;
   }

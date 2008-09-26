@@ -126,8 +126,10 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props_ptr, Applica
       struct hostent *he;
       InetAddr::get_hostname(host_str);
       if ((he = gethostbyname(host_str.c_str())) == 0) {
-        HT_ERRORF("Problem obtaining address for hostname '%s'", host_str.c_str());
-        exit(1);
+	if ((he = gethostbyname("localhost")) == 0) {
+	  HT_ERRORF("Problem obtaining address for hostname '%s'", host_str.c_str());
+	  exit(1);
+	}
       }
       addr_str = String(inet_ntoa(*(struct in_addr *)*he->h_addr_list)) + ":" + (int)port;
       m_hyperspace_ptr->attr_set(m_master_file_handle, "address", addr_str.c_str(), strlen(addr_str.c_str()));
