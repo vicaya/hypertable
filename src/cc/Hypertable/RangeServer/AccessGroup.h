@@ -138,6 +138,7 @@ namespace Hypertable {
     bool                 m_is_root;
     int64_t              m_compaction_revision;
     int64_t              m_earliest_cached_revision;
+    int64_t              m_earliest_cached_revision_saved;
     uint64_t             m_collisions;
     bool                 m_needs_compaction;
     bool                 m_in_memory;

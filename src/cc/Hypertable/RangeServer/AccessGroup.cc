@@ -49,7 +49,8 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier, SchemaPtr &schema_pt
     : m_identifier(*identifier), m_schema_ptr(schema_ptr), m_name(ag->name),
       m_next_table_id(0), m_disk_usage(0), m_blocksize(DEFAULT_BLOCKSIZE),
       m_compression_ratio(1.0), m_is_root(false), 
-      m_compaction_revision(0), m_earliest_cached_revision(0),
+      m_compaction_revision(0), m_earliest_cached_revision(TIMESTAMP_NULL),
+      m_earliest_cached_revision_saved(TIMESTAMP_NULL),
       m_collisions(0), m_needs_compaction(false), m_drop(false),
       m_scanners_blocked(false) {
   m_table_name = m_identifier.name;
@@ -110,7 +111,7 @@ AccessGroup::~AccessGroup() {
  */
 int AccessGroup::add(const Key &key, const ByteString value) {
   if (key.revision > m_compaction_revision || m_in_memory) {
-    if (m_earliest_cached_revision == 0)
+    if (m_earliest_cached_revision == TIMESTAMP_NULL)
       m_earliest_cached_revision = key.revision;
     return m_cell_cache_ptr->add(key, value);
   }
@@ -198,7 +199,12 @@ uint64_t AccessGroup::memory_usage() {
 void AccessGroup::get_compaction_priority_data(CompactionPriorityData &priority_data) {
   boost::mutex::scoped_lock lock(m_mutex);
   priority_data.ag = this;
-  priority_data.earliest_cached_revision = m_earliest_cached_revision;
+
+  if (m_earliest_cached_revision_saved != TIMESTAMP_NULL)
+    priority_data.earliest_cached_revision = m_earliest_cached_revision_saved;
+  else
+    priority_data.earliest_cached_revision = m_earliest_cached_revision;
+
   uint64_t mu = m_cell_cache_ptr->memory_used();
   if (m_immutable_cache_ptr)
     mu += m_immutable_cache_ptr->memory_used();
@@ -266,51 +272,60 @@ void AccessGroup::run_compaction(bool major) {
   CellStorePtr cellstore;
   String metadata_key_str;
 
-  if (!major && !m_needs_compaction)
-    return;
+  try {
 
-  HT_EXPECT(m_immutable_cache_ptr, Error::FAILED_EXPECTATION);
+    if (!major && !m_needs_compaction)
+      HT_THROW(Error::OK, "");
 
-  m_needs_compaction = false;
+    HT_EXPECT(m_immutable_cache_ptr, Error::FAILED_EXPECTATION);
 
-  {
-    boost::mutex::scoped_lock lock(m_mutex);
-    if (m_in_memory) {
-      if (m_immutable_cache_ptr->memory_used() == 0) {
-	m_immutable_cache_ptr = 0;
-        return;
+    m_needs_compaction = false;
+
+    {
+      boost::mutex::scoped_lock lock(m_mutex);
+      if (m_in_memory) {
+	if (m_immutable_cache_ptr->memory_used() == 0) {
+	  m_immutable_cache_ptr = 0;
+	  HT_THROW(Error::OK, "");
+	}
+	tableidx = m_stores.size();
+	HT_INFOF("Starting InMemory Compaction of %s(%s)",
+		 m_range_name.c_str(), m_name.c_str());
       }
-      tableidx = m_stores.size();
-      HT_INFOF("Starting InMemory Compaction of %s(%s)",
-               m_range_name.c_str(), m_name.c_str());
-    }
-    else if (major) {
-      if (m_immutable_cache_ptr->memory_used() == 0 && m_stores.size() <= (size_t)1) {
-	m_immutable_cache_ptr = 0;
-        return;
-      }
-      tableidx = 0;
-      HT_INFOF("Starting Major Compaction of %s(%s)",
-               m_range_name.c_str(), m_name.c_str());
-    }
-    else {
-      if (m_stores.size() > (size_t)Global::access_group_max_files) {
-        LtCellStore ascending;
-        sort(m_stores.begin(), m_stores.end(), ascending);
-        tableidx = m_stores.size() - Global::access_group_merge_files;
-        HT_INFOF("Starting Merging Compaction of %s(%s)",
-                 m_range_name.c_str(), m_name.c_str());
+      else if (major) {
+	if (m_immutable_cache_ptr->memory_used() == 0 && m_stores.size() <= (size_t)1) {
+	  m_immutable_cache_ptr = 0;
+	  HT_THROW(Error::OK, "");
+	}
+	tableidx = 0;
+	HT_INFOF("Starting Major Compaction of %s(%s)",
+		 m_range_name.c_str(), m_name.c_str());
       }
       else {
-        if (m_immutable_cache_ptr->memory_used() == 0) {
-	  m_immutable_cache_ptr = 0;
-          return;
+	if (m_stores.size() > (size_t)Global::access_group_max_files) {
+	  LtCellStore ascending;
+	  sort(m_stores.begin(), m_stores.end(), ascending);
+	  tableidx = m_stores.size() - Global::access_group_merge_files;
+	  HT_INFOF("Starting Merging Compaction of %s(%s)",
+		   m_range_name.c_str(), m_name.c_str());
 	}
-        tableidx = m_stores.size();
-        HT_INFOF("Starting Minor Compaction of %s(%s)",
-                 m_range_name.c_str(), m_name.c_str());
+	else {
+	  if (m_immutable_cache_ptr->memory_used() == 0) {
+	    m_immutable_cache_ptr = 0;
+	    HT_THROW(Error::OK, "");
+	  }
+	  tableidx = m_stores.size();
+	  HT_INFOF("Starting Minor Compaction of %s(%s)",
+		   m_range_name.c_str(), m_name.c_str());
+	}
       }
     }
+
+  }
+  catch (Exception &e) {
+    if (m_earliest_cached_revision_saved != TIMESTAMP_NULL)
+      m_earliest_cached_revision = m_earliest_cached_revision_saved;
+    return;
   }
 
   try {
@@ -330,10 +345,8 @@ void AccessGroup::run_compaction(bool major) {
 
     cellstore = new CellStoreV0(Global::dfs);
 
-    if (cellstore->create(cs_file.c_str(), m_blocksize, m_compressor) != 0) {
-      HT_ERRORF("Problem compacting locality group to file '%s'", cs_file.c_str());
-      return;
-    }
+    if (cellstore->create(cs_file.c_str(), m_blocksize, m_compressor) != 0)
+      HT_THROW(Error::UNPOSSIBLE, format("Problem compacting locality group to file '%s'", cs_file.c_str()));
 
     {
       boost::mutex::scoped_lock lock(m_mutex);
@@ -360,10 +373,8 @@ void AccessGroup::run_compaction(bool major) {
       scanner_ptr->forward();
     }
 
-    if (cellstore->finalize() != 0) {
-      HT_ERRORF("Problem finalizing CellStore '%s'", cs_file.c_str());
-      return;
-    }
+    if (cellstore->finalize() != 0)
+      HT_THROW(Error::UNPOSSIBLE, format("Problem finalizing CellStore '%s'", cs_file.c_str()));
 
     /**
      * Install new CellCache and CellStore
@@ -421,6 +432,8 @@ void AccessGroup::run_compaction(bool major) {
     m_scanners_blocked = false;
     m_scanner_blocked_cond.notify_all();
 
+    m_earliest_cached_revision_saved = TIMESTAMP_NULL;
+
     HT_INFOF("Finished Compaction of %s(%s)", m_range_name.c_str(), m_name.c_str());
 
   }
@@ -428,6 +441,8 @@ void AccessGroup::run_compaction(bool major) {
     boost::mutex::scoped_lock lock(m_mutex);
     HT_ERROR_OUT << e << HT_END;
     merge_caches();
+    if (m_earliest_cached_revision_saved != TIMESTAMP_NULL)
+      m_earliest_cached_revision = m_earliest_cached_revision_saved;
     if (m_scanners_blocked) {
       m_scanners_blocked = false;
       m_scanner_blocked_cond.notify_all();
@@ -614,6 +629,8 @@ void AccessGroup::initiate_compaction() {
   m_immutable_cache_ptr = m_cell_cache_ptr;
   m_immutable_cache_ptr->freeze();
   m_cell_cache_ptr = new CellCache();
+  m_earliest_cached_revision_saved = m_earliest_cached_revision;
+  m_earliest_cached_revision = TIMESTAMP_NULL;
 }
 
 
