@@ -299,6 +299,7 @@ void RangeServer::local_recover() {
   CommitLogReaderPtr root_log_reader_ptr;
   CommitLogReaderPtr metadata_log_reader_ptr;
   CommitLogReaderPtr user_log_reader_ptr;
+  std::vector<RangePtr> rangev;
 
   try {
 
@@ -329,6 +330,13 @@ void RangeServer::local_recover() {
       if (!m_replay_map_ptr->empty()) {
 	root_log_reader_ptr = new CommitLogReader(Global::log_dfs, Global::log_dir + "/root");
 	replay_log(root_log_reader_ptr);
+
+	// Perform any range specific post-replay tasks
+	rangev.clear();
+	m_replay_map_ptr->get_range_vector(rangev);
+	foreach(RangePtr &range_ptr, rangev)
+	  range_ptr->post_replay();
+
 	m_live_map_ptr->merge(m_replay_map_ptr);	
       }
 
@@ -357,6 +365,13 @@ void RangeServer::local_recover() {
       if (!m_replay_map_ptr->empty()) {
 	metadata_log_reader_ptr = new CommitLogReader(Global::log_dfs, Global::log_dir + "/metadata");
 	replay_log(metadata_log_reader_ptr);
+
+	// Perform any range specific post-replay tasks
+	rangev.clear();
+	m_replay_map_ptr->get_range_vector(rangev);
+	foreach(RangePtr &range_ptr, rangev)
+	  range_ptr->post_replay();
+
 	m_live_map_ptr->merge(m_replay_map_ptr);
       }
 
@@ -385,6 +400,13 @@ void RangeServer::local_recover() {
       if (!m_replay_map_ptr->empty()) {
 	user_log_reader_ptr = new CommitLogReader(Global::log_dfs, Global::log_dir + "/user");
 	replay_log(user_log_reader_ptr);
+
+	// Perform any range specific post-replay tasks
+	rangev.clear();
+	m_replay_map_ptr->get_range_vector(rangev);
+	foreach(RangePtr &range_ptr, rangev)
+	  range_ptr->post_replay();
+
 	m_live_map_ptr->merge(m_replay_map_ptr);
       }
 
@@ -983,6 +1005,8 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, uin
   size_t send_back_count = 0;
   uint32_t misses = 0;
   RangeUpdateInfo rui;
+  std::set<Range *> reference_set;
+  std::pair<std::set<Range *>::iterator, bool> reference_set_state;
 
   // Pre-allocate the go_buf - each key could expand by 8 or 9 bytes,
   // if auto-assigned (8 for the ts or rev and maybe 1 for possible
@@ -1071,11 +1095,16 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, uin
       }
 
       /** Increment update count (block if maintenance in progress) **/
-      rui.range_ptr->increment_update_counter();
+      reference_set_state = reference_set.insert(rui.range_ptr.get());
+      if (reference_set_state.second)
+	rui.range_ptr->increment_update_counter();
 
       // Make sure range didn't just shrink
       if (strcmp(row, (rui.range_ptr->start_row()).c_str()) <= 0) {
-        rui.range_ptr->decrement_update_counter();
+	if (reference_set_state.second) {
+	  rui.range_ptr->decrement_update_counter();
+	  reference_set.erase(rui.range_ptr.get());
+	}
         continue;
       }
 
@@ -1106,8 +1135,6 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, uin
 	    rui.len = cur_bufp->fill() - rui.offset;
 	    range_vector.push_back(rui);
 	    cur_bufp = &go_buf;
-	    // increment update count again (for the second half)
-	    rui.range_ptr->increment_update_counter();
 	    rui.bufp = cur_bufp;
 	    rui.offset = cur_bufp->fill();
 	    split_pending = false;
@@ -1210,8 +1237,6 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, uin
       }
       range_vector[rangei].range_ptr->unlock();
 
-      range_vector[rangei].range_ptr->decrement_update_counter();
-
       /**
        * Split and Compaction processing
        */
@@ -1253,6 +1278,10 @@ void RangeServer::update(ResponseCallbackUpdate *cb, TableIdentifier *table, uin
     error = e.code();
     errmsg = e.what();
   }
+
+  // decrement usage counters for all referenced ranges
+  for (std::set<Range *>::iterator iter = reference_set.begin(); iter != reference_set.end(); iter++)
+    (*iter)->decrement_update_counter();
 
   if (b_locked)
     m_update_mutex_b.unlock();
@@ -1639,6 +1668,8 @@ void RangeServer::replay_commit(ResponseCallback *cb) {
 
   try {
     CommitLog *log = 0;
+    std::vector<RangePtr> rangev;
+
     if (m_replay_group == RangeServerProtocol::GROUP_METADATA_ROOT)
       log = Global::root_log;
     else if (m_replay_group == RangeServerProtocol::GROUP_METADATA)
@@ -1648,6 +1679,11 @@ void RangeServer::replay_commit(ResponseCallback *cb) {
 
     if ((error = log->link_log(m_replay_log_ptr.get())) != Error::OK)
       HT_THROW(error, std::string("Problem linking replay log (") + m_replay_log_ptr->get_log_dir() + ") into commit log (" + log->get_log_dir() + ")");
+
+    // Perform any range specific post-replay tasks
+    m_replay_map_ptr->get_range_vector(rangev);
+    foreach(RangePtr &range_ptr, rangev)
+      range_ptr->post_replay();
 
     m_live_map_ptr->merge(m_replay_map_ptr);
 

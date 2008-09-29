@@ -49,6 +49,7 @@ namespace Hypertable {
     void set(uint32_t id, TableInfoPtr &info);
     bool remove(uint32_t id, TableInfoPtr &info);
     void get_all(std::vector<TableInfoPtr> &tv);
+    void get_range_vector(std::vector<RangePtr> &range_vec);
     void clear();
     void clear_ranges();
     bool empty() { return m_map.empty(); }

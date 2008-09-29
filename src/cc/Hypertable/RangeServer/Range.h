@@ -104,7 +104,10 @@ namespace Hypertable {
     }
 
     void split();
+
     void compact(bool major=false);
+
+    void post_replay();
 
     void increment_update_counter() {
       m_update_barrier.enter();

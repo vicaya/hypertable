@@ -92,14 +92,6 @@ Range::Range(MasterClientPtr &master_client_ptr, const TableIdentifier *identifi
     load_cell_stores(&metadata);
   }
 
-  /**
-   * re-open transfer log if split was in progress
-   */
-  if (m_state.state == RangeState::SPLIT_LOG_INSTALLED) {
-    m_split_log_ptr = new CommitLog(Global::dfs, m_state.transfer_log);
-    m_split_row = m_state.split_point;
-  }
-
   std::cout << "Range object for " << m_name << " constructed\n";
   std::cout << *state << endl;
 
@@ -632,6 +624,26 @@ void Range::run_compaction(bool major) {
 
   for (size_t i=0; i<m_access_group_vector.size(); i++)
     m_access_group_vector[i]->run_compaction(major);
+}
+
+
+void Range::post_replay() {
+
+  if (m_state.state == RangeState::SPLIT_LOG_INSTALLED) {
+    CommitLogReaderPtr commit_log_reader_ptr = new CommitLogReader(Global::dfs, m_state.transfer_log);
+    replay_transfer_log(commit_log_reader_ptr.get());
+    commit_log_reader_ptr = 0;
+
+    // re-initiate compaction
+    for (size_t i=0; i<m_access_group_vector.size(); i++)
+      m_access_group_vector[i]->initiate_compaction();
+
+    m_split_log_ptr = new CommitLog(Global::dfs, m_state.transfer_log);
+    m_split_row = m_state.split_point;
+    HT_INFOF("Restored range state to SPLIT_LOG_INSTALLED (split point = '%s' split log = '%s')",
+	     m_state.split_point, m_state.transfer_log);
+  }
+  
 }
 
 

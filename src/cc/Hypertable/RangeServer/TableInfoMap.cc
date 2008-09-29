@@ -67,6 +67,12 @@ void TableInfoMap::get_all(std::vector<TableInfoPtr> &tv) {
     tv.push_back((*iter).second);
 }
 
+void TableInfoMap::get_range_vector(std::vector<RangePtr> &range_vec) {
+  boost::mutex::scoped_lock lock(m_mutex);
+  for (InfoMap::iterator iter = m_map.begin(); iter != m_map.end(); iter++)
+    (*iter).second->get_range_vector(range_vec);
+}
+
 
 void TableInfoMap::clear() {
   boost::mutex::scoped_lock lock(m_mutex);
