@@ -1,3 +1,24 @@
+Version 0.9.0.11:
+(2008-09-30)
+
+  * Fixed problem with commit log garbage collection
+  * Overhaul: cleaned up AccessGroup compaction logic
+  * Overhaul: separated timestamp from revision number
+  * Overhaul: eliminated timestamp order restriction
+  * Overhaul: cleaned up RangeServer::update()
+  * Check for bad column name in ScanSpec and throw exception
+  * Upgraded to Hadoop 0.18.1
+  * Add support for qualified columns in LOAD DATA INFILE
+  * Got SELECT ... INTO FILE working again
+  * Updated README to include log4cpp patch instructions
+  * Fixed NULL pointer deref in BMZ on uncompressible data
+  * [issue154] Fixed problem in MergeScanner causing max_versions probs
+  * Fixed retry logic inside IntervalScanner
+  * Added a RangeServer::get_statistics() method and rsstat tool (Donald)
+  * Fixed a number of issues getting KFS broker up and running
+  * Modified Capfile to allow a dfs= variable override to specify which dfs.
+  * Modified scripts to only test for servers on localhost
+
 Version 0.9.0.10:
 (2008-08-14)
 
